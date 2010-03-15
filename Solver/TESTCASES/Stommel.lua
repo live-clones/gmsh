@@ -29,12 +29,12 @@ Msg.barrier()
 
 claw = dgConservationLawShallowWater2d()
 claw:addBoundaryCondition('Wall',claw:newBoundaryWall())
-zero = functionConstant({0}):getName();
-claw:setCoriolisFactor(functionC("tmp.dylib","coriolis",1,{"XYZ"}):getName())
-claw:setQuadraticDissipation(zero)
-claw:setLinearDissipation(functionConstant({1e-6}):getName())
-claw:setSource(functionC("tmp.dylib","wind",2,{"XYZ"}):getName())
-claw:setBathymetry(functionConstant({1000}):getName())
+XYZ = functionCoordinates.get();
+claw:setCoriolisFactor(functionC("tmp.dylib","coriolis",1,{XYZ}))
+claw:setQuadraticDissipation(functionConstant({0}))
+claw:setLinearDissipation(functionConstant({1e-6}))
+claw:setSource(functionC("tmp.dylib","wind",2,{XYZ}))
+claw:setBathymetry(functionConstant({1000}))
 groups = dgGroupCollection(model, dimension, order)
 groups:buildGroupsOfInterfaces()
 solution = dgDofContainer(groups, claw:getNbFields())
@@ -50,3 +50,4 @@ for i=1,60000 do
     solution:exportMsh(string.format('output/solution-%06d',i))
   end
 end
+

@@ -6,7 +6,7 @@ dg = dgSystemOfEquations(model)
 dg:setOrder(1)
 
 -- initial condition
-function initial_condition( xyz , f )
+function initial_condition(xyz ,f)
    for i=0,xyz:size1()-1 do
       x = xyz:get(i,0)
       y = xyz:get(i,1)
@@ -20,19 +20,14 @@ end
 
 -- conservation law
 -- advection speed
-v=fullMatrix(3,1);
-v:set(0,0,0)
-v:set(1,0,0)
-v:set(2,0,0.15)
-
-law = dgConservationLawAdvectionDiffusion(functionConstant(v):getName(),'')
+law = dgConservationLawAdvectionDiffusion.advectionLaw(functionConstant({0,0,0.15}))
 dg:setConservationLaw(law)
 
 -- boundary condition
-outside=fullMatrix(1,1)
-outside:set(0,0,0.15)
---freestreem=law:newOutsideValueBoundary(functionConstant(outside):getName())
-freestream=law:newOutsideValueBoundary(functionLua(1,'initial_condition',{'XYZ'}):getName())
+--freestreem=law:newOutsideValueBoundary(functionConstant({0,0,0.15}))
+
+xyz = functionCoordinates.get()
+freestream=law:newOutsideValueBoundary(functionLua(1,'initial_condition',{functionCoordinates:get()}))
 
 law:addBoundaryCondition('wall',law:new0FluxBoundary())
 law:addBoundaryCondition('inlet',freestream)
@@ -41,7 +36,7 @@ law:addBoundaryCondition('symmetry',law:newSymmetryBoundary())
 
 dg:setup()
 
-dg:L2Projection(functionLua(1,'initial_condition',{'XYZ'}):getName())
+dg:L2Projection(functionLua(1,'initial_condition',{xyz}))
 dg:exportSolution('output/Adv3D-00000')
 
 print'***exporting init solution ***'

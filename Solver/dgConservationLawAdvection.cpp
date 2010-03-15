@@ -9,10 +9,10 @@
 class dgConservationLawAdvectionDiffusion::advection : public dataCacheDouble {
   dataCacheDouble &sol, &v;
   public:
-  advection(std::string vFunctionName, dataCacheMap &cacheMap):
+  advection(const function *vFunction, dataCacheMap &cacheMap):
     dataCacheDouble(cacheMap,1,3),
-    sol(cacheMap.get("Solution",this)),
-    v(cacheMap.get(vFunctionName,this))
+    sol(cacheMap.getSolution(this)),
+    v(cacheMap.get(vFunction,this))
   {};
   void _eval () { 
     for(int i=0; i< sol().size1(); i++) {
@@ -26,9 +26,9 @@ class dgConservationLawAdvectionDiffusion::advection : public dataCacheDouble {
 class dgConservationLawAdvectionDiffusion::maxConvectiveSpeed : public dataCacheDouble {
   dataCacheDouble &v;
   public:
-  maxConvectiveSpeed(std::string vFunctionName,dataCacheMap &cacheMap):
+  maxConvectiveSpeed(const function *vFunction,dataCacheMap &cacheMap):
     dataCacheDouble(cacheMap,1,1),
-    v(cacheMap.get(vFunctionName,this))
+    v(cacheMap.get(vFunction,this))
   {
   };
   void _eval () {
@@ -42,12 +42,12 @@ class dgConservationLawAdvectionDiffusion::maxConvectiveSpeed : public dataCache
 class dgConservationLawAdvectionDiffusion::riemann : public dataCacheDouble {
   dataCacheDouble &normals, &solLeft, &solRight,&v;
   public:
-  riemann(std::string vFunctionName, dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight):
+  riemann(const function *vFunction, dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight):
     dataCacheDouble(cacheMapLeft,1,2),
-    normals(cacheMapLeft.get("Normals", this)),
-    solLeft(cacheMapLeft.get("Solution", this)),
-    solRight(cacheMapRight.get("Solution", this)),
-    v(cacheMapLeft.get(vFunctionName,this))
+    normals(cacheMapLeft.getNormals(this)),
+    solLeft(cacheMapLeft.getSolution(this)),
+    solRight(cacheMapRight.getSolution(this)),
+    v(cacheMapLeft.get(vFunction,this))
   {};
   void _eval () { 
     for(int i=0; i< _value.size1(); i++) {
@@ -65,10 +65,10 @@ class dgConservationLawAdvectionDiffusion::riemann : public dataCacheDouble {
 class dgConservationLawAdvectionDiffusion::diffusion : public dataCacheDouble {
   dataCacheDouble &solgrad, &nu;
   public:
-  diffusion(std::string nuFunctionName, dataCacheMap &cacheMap):
+  diffusion(const function * nuFunction, dataCacheMap &cacheMap):
     dataCacheDouble(cacheMap,1,3),
-    solgrad(cacheMap.get("SolutionGradient",this)),
-    nu(cacheMap.get(nuFunctionName,this))
+    solgrad(cacheMap.getSolutionGradient(this)),
+    nu(cacheMap.get(nuFunction,this))
   {};
   void _eval () { 
     for(int i=0; i< solgrad().size1()/3; i++) {
@@ -79,45 +79,48 @@ class dgConservationLawAdvectionDiffusion::diffusion : public dataCacheDouble {
   }
 };
 dataCacheDouble *dgConservationLawAdvectionDiffusion::newConvectiveFlux( dataCacheMap &cacheMap) const {
-  if( !_vFunctionName.empty())
-    return new advection(_vFunctionName,cacheMap);
-  else
-    return NULL;
+  return _vFunction ? new advection(_vFunction,cacheMap) : NULL;
 }
 dataCacheDouble *dgConservationLawAdvectionDiffusion::newMaxConvectiveSpeed( dataCacheMap &cacheMap) const {
-  return new maxConvectiveSpeed(_vFunctionName,cacheMap);
+  return _vFunction ? new maxConvectiveSpeed(_vFunction,cacheMap) : NULL ;
+
 }
 dataCacheDouble *dgConservationLawAdvectionDiffusion::newMaximumDiffusivity( dataCacheMap &cacheMap) const {
-  if( !_nuFunctionName.empty())
-    return &cacheMap.get(_nuFunctionName);
-  else
-    return NULL;
+  return _nuFunction ? &cacheMap.get(_nuFunction) : NULL;
 }
 dataCacheDouble *dgConservationLawAdvectionDiffusion::newRiemannSolver( dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight) const {
-  if( !_vFunctionName.empty())
-    return new riemann(_vFunctionName,cacheMapLeft, cacheMapRight);
-  else
-    return NULL;
+  return _vFunction ? new riemann(_vFunction,cacheMapLeft, cacheMapRight) : NULL;
 }
 dataCacheDouble *dgConservationLawAdvectionDiffusion::newDiffusiveFlux( dataCacheMap &cacheMap) const {
-  if( !_nuFunctionName.empty())
-    return new diffusion(_nuFunctionName,cacheMap);
-  else
-    return NULL;
+  return _nuFunction ? new diffusion(_nuFunction,cacheMap) : NULL;
 }
-dgConservationLawAdvectionDiffusion::dgConservationLawAdvectionDiffusion(std::string vFunctionName, std::string nuFunctionName) 
+
+dgConservationLawAdvectionDiffusion *dgConservationLawAdvectionDiffusion::diffusionLaw(const function *nu) {
+  return new dgConservationLawAdvectionDiffusion(NULL, nu);
+}
+dgConservationLawAdvectionDiffusion *dgConservationLawAdvectionDiffusion::advectionLaw(const function *v) {
+  return new dgConservationLawAdvectionDiffusion(v,NULL);
+}
+
+dgConservationLawAdvectionDiffusion::dgConservationLawAdvectionDiffusion(const function *vFunction, const function *nuFunction) 
 {
-  _vFunctionName = vFunctionName;
-  _nuFunctionName = nuFunctionName;
+  _vFunction = vFunction;
+  _nuFunction = nuFunction;
   _nbf = 1;
 }
 #include "Bindings.h"
 void dgConservationLawAdvectionDiffusionRegisterBindings (binding *b){
   classBinding *cb = b->addClass<dgConservationLawAdvectionDiffusion>("dgConservationLawAdvectionDiffusion");
   methodBinding *cm;
-  cm = cb->setConstructor<dgConservationLawAdvectionDiffusion,std::string,std::string>();
+  cm = cb->setConstructor<dgConservationLawAdvectionDiffusion,const function *, const function*>();
   cm->setArgNames("v","nu",NULL);
   cm->setDescription("A new advection-diffusion law. The advection speed is given by 'v' vector function and the (scalar) diffusivity is given by the function 'nu'.");
+  cm = cb->addMethod("diffusionLaw",dgConservationLawAdvectionDiffusion::diffusionLaw);
+  cm->setDescription("static method to create an instance with diffusion only.");
+  cm->setArgNames("nu",NULL);
+  cm = cb->addMethod("advectionLaw",dgConservationLawAdvectionDiffusion::advectionLaw);
+  cm->setDescription("static method to create an instance with advection only.");
+  cm->setArgNames("v",NULL);
   cb->setParentClass<dgConservationLaw>();
   cb->setDescription("Advection and diffusion of a scalar, the advection and diffusion are provided by functions.");
 }

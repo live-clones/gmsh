@@ -8,18 +8,18 @@ class dgConservationLawShallowWater2d : public dgConservationLaw {
   class riemann;
   class boundaryWall;
   class maxConvectiveSpeed;
-  std::string _linearDissipation, _quadraticDissipation, _source, _coriolisFactor, _bathymetry;
+  const function *_linearDissipation, *_quadraticDissipation, *_source, *_coriolisFactor, *_bathymetry;
   public:
   dataCacheDouble *newConvectiveFlux( dataCacheMap &cacheMap) const;
   dataCacheDouble *newRiemannSolver( dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight) const;
   dataCacheDouble *newDiffusiveFlux( dataCacheMap &cacheMap) const;
   dataCacheDouble *newSourceTerm (dataCacheMap &cacheMap) const;
   dataCacheDouble *newMaxConvectiveSpeed (dataCacheMap &cacheMap) const;
-  inline void setCoriolisFactor(std::string coriolisFactor){_coriolisFactor = coriolisFactor;}
-  inline void setLinearDissipation(std::string linearDissipation){_linearDissipation = linearDissipation;}
-  inline void setQuadraticDissipation(std::string quadraticDissipation){_quadraticDissipation = quadraticDissipation;}
-  inline void setSource(std::string source){_source = source;}
-  inline void setBathymetry(std::string bathymetry) {_bathymetry = bathymetry;}
+  inline void setCoriolisFactor(const function *coriolisFactor){_coriolisFactor = coriolisFactor;}
+  inline void setLinearDissipation(const function *linearDissipation){_linearDissipation = linearDissipation;}
+  inline void setQuadraticDissipation(const function *quadraticDissipation){_quadraticDissipation = quadraticDissipation;}
+  inline void setSource(const function *source){_source = source;}
+  inline void setBathymetry(const function *bathymetry) {_bathymetry = bathymetry;}
   dgConservationLawShallowWater2d() 
   {
     _nbf = 3; // eta u v
@@ -30,9 +30,9 @@ class dgConservationLawShallowWater2d : public dgConservationLaw {
 class dgConservationLawShallowWater2d::maxConvectiveSpeed: public dataCacheDouble {
   dataCacheDouble &sol, &_bathymetry;
   public:
-  maxConvectiveSpeed(dataCacheMap &cacheMap, std::string bathymetry):
+  maxConvectiveSpeed(dataCacheMap &cacheMap, const function *bathymetry):
     dataCacheDouble(cacheMap,1,1),
-    sol(cacheMap.get("Solution",this)),
+    sol(cacheMap.getSolution(this)),
     _bathymetry(cacheMap.get(bathymetry,this))
   {};
   void _eval () { 
@@ -50,9 +50,9 @@ class dgConservationLawShallowWater2d::maxConvectiveSpeed: public dataCacheDoubl
 class dgConservationLawShallowWater2d::advection: public dataCacheDouble {
   dataCacheDouble &sol, &_bathymetry;
   public:
-  advection(dataCacheMap &cacheMap, std::string bathymetry):
+  advection(dataCacheMap &cacheMap, const function *bathymetry):
     dataCacheDouble(cacheMap,1,9),
-    sol(cacheMap.get("Solution",this)),
+    sol(cacheMap.getSolution(this)),
     _bathymetry(cacheMap.get(bathymetry,this))
   {};
   void _eval () { 
@@ -82,14 +82,14 @@ class dgConservationLawShallowWater2d::source: public dataCacheDouble {
   dataCacheDouble &solution,&solutionGradient;
   dataCacheDouble &_coriolisFactor, &_source, &_linearDissipation, &_quadraticDissipation;
   public :
-  source(dataCacheMap &cacheMap, std::string linearDissipation, std::string quadraticDissipation, std::string coriolisFactor, std::string source) : 
+  source(dataCacheMap &cacheMap, const function *linearDissipation, const function *quadraticDissipation, const function *coriolisFactor, const function *source) : 
     dataCacheDouble(cacheMap,1,3),
     _coriolisFactor(cacheMap.get(coriolisFactor,this)),
     _source(cacheMap.get(source,this)),
     _linearDissipation(cacheMap.get(linearDissipation,this)),
     _quadraticDissipation(cacheMap.get(quadraticDissipation,this)),
-    solution(cacheMap.get("Solution",this)),
-    solutionGradient(cacheMap.get("SolutionGradient",this))
+    solution(cacheMap.getSolution(this)),
+    solutionGradient(cacheMap.getSolutionGradient(this))
   {
   }
   void _eval () {
@@ -112,11 +112,11 @@ class dgConservationLawShallowWater2d::source: public dataCacheDouble {
 class dgConservationLawShallowWater2d::riemann:public dataCacheDouble {
   dataCacheDouble &normals, &solL, &solR, &_bathymetry;
   public:
-  riemann(dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight, std::string bathymetry):
+  riemann(dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight, const function *bathymetry):
     dataCacheDouble(cacheMapLeft,1,6),
-    normals(cacheMapLeft.get("Normals", this)),
-    solL(cacheMapLeft.get("Solution", this)),
-    solR(cacheMapRight.get("Solution", this)),
+    normals(cacheMapLeft.getNormals( this)),
+    solL(cacheMapLeft.getSolution( this)),
+    solR(cacheMapRight.getSolution( this)),
     _bathymetry(cacheMapLeft.get(bathymetry, this))
   {};
   void _eval () { 
@@ -185,8 +185,8 @@ class dgConservationLawShallowWater2d::boundaryWall : public dgBoundaryCondition
     public:
     term(dataCacheMap &cacheMap):
     dataCacheDouble(cacheMap,1,3),
-    sol(cacheMap.get("Solution",this)),
-    normals(cacheMap.get("Normals",this)){}
+    sol(cacheMap.getSolution(this)),
+    normals(cacheMap.getNormals(this)){}
     void _eval () { 
       int nQP = sol().size1();
       for(int i=0; i< nQP; i++) {

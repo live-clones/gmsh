@@ -6,10 +6,10 @@
 class dgConservationLawMaxwell::advection : public dataCacheDouble {
   dataCacheDouble &sol, &mu_eps;
   public:
-  advection(std::string mu_epsFunctionName,dataCacheMap &cacheMap):
+  advection(const function *mu_epsFunction,dataCacheMap &cacheMap):
     dataCacheDouble(cacheMap,1,18),
-    sol(cacheMap.get("Solution",this)), 
-    mu_eps(cacheMap.get(mu_epsFunctionName,this))
+    sol(cacheMap.getSolution(this)), 
+    mu_eps(cacheMap.get(mu_epsFunction,this))
   {};
   void _eval () { 
     int nQP = sol().size1();
@@ -49,15 +49,14 @@ class dgConservationLawMaxwell::advection : public dataCacheDouble {
 
 
 class dgConservationLawMaxwell::source: public dataCacheDouble {
-  dataCacheDouble &xyz, &solution;
+  dataCacheDouble &solution;
   public :
   source(dataCacheMap &cacheMap) : 
     dataCacheDouble(cacheMap,1,6),
-    xyz(cacheMap.get("XYZ",this)),
-    solution(cacheMap.get("Solution",this))
+    solution(cacheMap.getSolution(this))
   {}
   void _eval () {
-    int nQP = xyz().size1();
+    int nQP = _value.size1();
     for (int i=0; i<nQP; i++) {
     
       _value (i,0) = 0;
@@ -74,12 +73,12 @@ class dgConservationLawMaxwell::source: public dataCacheDouble {
 class dgConservationLawMaxwell::riemann:public dataCacheDouble {
   dataCacheDouble &normals, &solL, &solR, &mu_eps;
   public:
-  riemann(std::string mu_epsFunctionName,dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight):
+  riemann(const function *mu_epsFunction,dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight):
     dataCacheDouble(cacheMapLeft,1,12),
-    normals(cacheMapLeft.get("Normals", this)),
-    solL(cacheMapLeft.get("Solution", this)),
-    solR(cacheMapRight.get("Solution", this)),
-    mu_eps(cacheMapLeft.get(mu_epsFunctionName,this))
+    normals(cacheMapLeft.getNormals( this)),
+    solL(cacheMapLeft.getSolution( this)),
+    solR(cacheMapRight.getSolution( this)),
+    mu_eps(cacheMapLeft.get(mu_epsFunction,this))
   {};
   void _eval () { 
     int nQP = solL().size1();
@@ -154,18 +153,12 @@ class dgConservationLawMaxwell::riemann:public dataCacheDouble {
 
 
 dataCacheDouble *dgConservationLawMaxwell::newConvectiveFlux( dataCacheMap &cacheMap) const {
-  if( !_mu_epsFunctionName.empty())
-    return new advection(_mu_epsFunctionName,cacheMap);
-  else
-    return NULL; 
+    return _mu_epsFunction ?  new advection(_mu_epsFunction,cacheMap) : NULL;
 }
 
 
 dataCacheDouble *dgConservationLawMaxwell::newRiemannSolver( dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight) const {
-  if( !_mu_epsFunctionName.empty())
-    return new riemann(_mu_epsFunctionName,cacheMapLeft, cacheMapRight);
-  else
-    return NULL;
+  return _mu_epsFunction ? new riemann(_mu_epsFunction,cacheMapLeft, cacheMapRight) : NULL;
 }
 
 
@@ -173,9 +166,9 @@ dataCacheDouble *dgConservationLawMaxwell::newSourceTerm (dataCacheMap &cacheMap
   return new source(cacheMap);
 }
 
-dgConservationLawMaxwell::dgConservationLawMaxwell(std::string mu_epsFunctionName)
+dgConservationLawMaxwell::dgConservationLawMaxwell(const function *mu_epsFunction)
 {
-   _mu_epsFunctionName = mu_epsFunctionName;
+   _mu_epsFunction = mu_epsFunction;
   _nbf = 6;
 }
 
@@ -186,8 +179,8 @@ class dgBoundaryConditionMaxwellWall : public dgBoundaryCondition {
     public:
     term(dataCacheMap &cacheMap):
       dataCacheDouble(cacheMap,1,6),
-      sol(cacheMap.get("Solution",this)),
-      normals(cacheMap.get("Normals",this))
+      sol(cacheMap.getSolution(this)),
+      normals(cacheMap.getNormals(this))
       {}
     void _eval () { 
       int nQP = sol().size1();
@@ -235,9 +228,9 @@ void dgConservationLawMaxwellRegisterBindings (binding *b){
   methodBinding *cm;
    cm = cb->addMethod("newBoundaryWall",&dgConservationLawMaxwell::newBoundaryWall);
    cm->setDescription("wall boundary");
-  cm = cb->setConstructor<dgConservationLawMaxwell, std::string>(); 
+  cm = cb->setConstructor<dgConservationLawMaxwell, const function *>(); 
   cm->setArgNames("mu_eps",NULL);
   cm->setDescription("A new Maxwell conservation law.");
   cb->setParentClass<dgConservationLaw>();
- cb->setDescription("Advection for Maxwell equation.");
+  cb->setDescription("Advection for Maxwell equation.");
 }

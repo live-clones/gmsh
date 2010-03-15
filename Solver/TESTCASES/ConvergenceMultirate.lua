@@ -50,15 +50,16 @@ elseif (order == 5) then
 end
 
 print'*** Create a dg solver ***'
-velF = functionLua(3, 'velocity', {'XYZ'}):getName()
-law=dgConservationLawAdvectionDiffusion(velF,"")
+xyzF = functionCoordinates.get()
+velF = functionLua(3, 'velocity', {xyzF})
+nuF = functionConstant({0})
+law = dgConservationLawAdvectionDiffusion(velF, nuF)
 
--- law:addBoundaryCondition('Walls',law:newOutsideValueBoundary(functionConstant(g):getName()))
--- law:addBoundaryCondition('Top',law:newOutsideValueBoundary(functionConstant(g):getName()))
+-- law:addBoundaryCondition('Walls',law:newOutsideValueBoundary(functionConstant(g)))
+-- law:addBoundaryCondition('Top',law:newOutsideValueBoundary(functionConstant(g)))
 law:addBoundaryCondition('Walls',law:new0FluxBoundary())
 law:addBoundaryCondition('Top',law:new0FluxBoundary())
-FS = functionLua(1, 'initial_condition', {'XYZ'}):getName()
-
+FS = functionLua(1, 'initial_condition', {xyzF})
 GC=dgGroupCollection(myModel,2,order)
 solTmp=dgDofContainer(GC,1)
 solTmp:L2Projection(FS)
@@ -84,7 +85,7 @@ end
 
 --multirateRK=dgRungeKuttaMultirate43(GC,law)
 multirateRK=dgRungeKuttaMultirate22(GC,law)
-integrator=dgFunctionIntegrator(functionLua(1, 'L2Norm', {'Solution'}):getName())
+integrator=dgFunctionIntegrator(functionLua(1, 'L2Norm', {functionSolution.get()}))
 
 oldnorm=1
 for n=0,3 do

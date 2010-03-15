@@ -9,6 +9,7 @@
 #include "fullMatrix.h"
 class dataCacheDouble;
 class dataCacheMap;
+class function;
 
 class dgConservationLaw;
 class binding;
@@ -62,8 +63,8 @@ class dgConservationLaw {
   }
 
   //a generic boundary condition using the Riemann solver of the conservation Law
-  dgBoundaryCondition *newOutsideValueBoundary(std::string outsideValueFunctionName);
-  dgBoundaryCondition *newNeumannBoundary(const std::string fluxFunctionName);
+  dgBoundaryCondition *newOutsideValueBoundary(const function *outsideValueFunction);
+  dgBoundaryCondition *newNeumannBoundary(const function *fluxFunction);
   dgBoundaryCondition *new0FluxBoundary();
   dgBoundaryCondition *newSymmetryBoundary();
 

@@ -53,7 +53,6 @@ function *function::get(std::string functionName, bool acceptNull)
   }
   return it->second;
 }
-
 //dataCacheMap members
 
 dataCacheElement &dataCacheMap::getElement(dataCache *caller) 
@@ -63,37 +62,60 @@ dataCacheElement &dataCacheMap::getElement(dataCache *caller)
   return *_cacheElement;
 }
 
-dataCacheDouble &dataCacheMap::get(const std::string &functionName, dataCache *caller) 
+static dataCacheDouble &returnDataCacheDouble(dataCacheDouble *data, dataCache *caller)
 {
-  dataCacheDouble *&r= _cacheDoubleMap[functionName];
-  if(r==NULL)
-    r = function::get(functionName)->newDataCache(this);
+  if(data==NULL) throw;
   if(caller)
-    r->addMeAsDependencyOf(caller);
-  return *r;
+    data->addMeAsDependencyOf(caller);
+  return *data;
 }
+dataCacheDouble &dataCacheMap::get(const function *f, dataCache *caller) 
+{
+  dataCacheDouble *&r= _cacheDoubleMap[f];
+  if(r==NULL)
+    r = const_cast<function*>(f)->newDataCache(this);
+  return returnDataCacheDouble(r,caller);
+}
+dataCacheDouble &dataCacheMap::getSolution(dataCacheDouble *caller) 
+{
+  return returnDataCacheDouble(_solution,caller);
+}
+dataCacheDouble &dataCacheMap::getSolutionGradient(dataCacheDouble *caller)
+{
+  return returnDataCacheDouble(_solutionGradient,caller);
+}
+dataCacheDouble &dataCacheMap::getParametricCoordinates(dataCacheDouble *caller) 
+{
+  return returnDataCacheDouble(_parametricCoordinates,caller);
+}
+dataCacheDouble &dataCacheMap::getNormals(dataCacheDouble *caller)
+{
+  returnDataCacheDouble(_normals,caller);
+  return *_normals;
+}
+
+
+
+
+
 dataCacheDouble &dataCacheMap::provideSolution(int nbFields)
 {
-  dataCacheDouble *r = new providedDataDouble(*this,1, nbFields);
-  _cacheDoubleMap["Solution"] = r;
-  return *r;
+  _solution = new providedDataDouble(*this,1, nbFields);
+  return *_solution;
 }
 dataCacheDouble &dataCacheMap::provideSolutionGradient(int nbFields){
-  dataCacheDouble *r = new providedDataDouble(*this,3, nbFields);
-  _cacheDoubleMap["SolutionGradient"] = r;
-  return *r;
+  _solutionGradient =  new providedDataDouble(*this,3, nbFields);
+  return *_solutionGradient;
 }
 dataCacheDouble &dataCacheMap::provideParametricCoordinates()
 {
-  dataCacheDouble *r = new providedDataDouble(*this,1, 3);
-  _cacheDoubleMap["UVW"] = r;
-  return *r;
+  _parametricCoordinates = new providedDataDouble(*this,1, 3);
+  return *_parametricCoordinates;
 }
 dataCacheDouble &dataCacheMap::provideNormals()
 {
-  dataCacheDouble *r = new providedDataDouble(*this,1, 3);
-  _cacheDoubleMap["Normals"] = r;
-  return *r;
+  _normals = new providedDataDouble(*this,1, 3);
+  return *_normals;
 }
 
 dataCacheMap::~dataCacheMap()
@@ -107,17 +129,16 @@ dataCacheMap::~dataCacheMap()
 // now some example of functions
 
 // get XYZ coordinates
-class functionXYZ : public function {
- private:
+class functionCoordinates : public function {
+  static functionCoordinates *_instance;
   class data : public dataCacheDouble{
-   private:
     dataCacheElement &_element;
     dataCacheDouble &_uvw;
-  int count;
-   public:
+    int count;
+    public:
     data(dataCacheMap *m) : 
       dataCacheDouble(*m, 1,3),
-      _element(m->getElement(this)), _uvw(m->get("UVW", this))
+      _element(m->getElement(this)), _uvw(m->getParametricCoordinates(this))
     {
     }
     void _eval()
@@ -133,17 +154,56 @@ class functionXYZ : public function {
     ~data(){
     }
   };
+  functionCoordinates(){};// constructor is private only 1 instance can exists, call get to access the instance
  public:
   dataCacheDouble *newDataCache(dataCacheMap *m)
   {
     return new data(m);
   }
+  static function *get() {
+    if(!_instance)
+      _instance = new functionCoordinates();
+    return _instance;
+  }
 };
+functionCoordinates *functionCoordinates::_instance = NULL;
+
+class functionSolution : public function {
+  static functionSolution *_instance;
+  functionSolution(){};// constructor is private only 1 instance can exists, call get to access the instance
+ public:
+  dataCacheDouble *newDataCache(dataCacheMap *m)
+  {
+    return &m->getSolution(NULL);
+  }
+  static function *get() {
+    if(!_instance)
+      _instance = new functionSolution();
+    return _instance;
+  }
+};
+functionSolution *functionSolution::_instance = NULL;
+
+class functionSolutionGradient : public function {
+  static functionSolutionGradient *_instance;
+  functionSolutionGradient(){};// constructor is private only 1 instance can exists, call get to access the instance
+ public:
+  dataCacheDouble *newDataCache(dataCacheMap *m)
+  {
+    return &m->getSolutionGradient(NULL);
+  }
+  static function *get() {
+    if(!_instance)
+      _instance = new functionSolutionGradient();
+    return _instance;
+  }
+};
+functionSolutionGradient *functionSolutionGradient::_instance = NULL;
 
 class functionStructuredGridFile : public function {
   public:
   class data;
-  std::string _coordFunction;
+  const function *_coordFunction;
   int n[3];
   double d[3],o[3];
   double get(int i,int j, int k){
@@ -186,7 +246,7 @@ class functionStructuredGridFile : public function {
   dataCacheDouble *newDataCache(dataCacheMap* m) {
     return new data(this,m);
   }
-  functionStructuredGridFile(const std::string filename, const std::string coordFunction){
+  functionStructuredGridFile(const std::string filename, const function *coordFunction){
     _coordFunction=coordFunction;
     std::ifstream input(filename.c_str());
     if(!input)
@@ -258,6 +318,7 @@ functionConstant::functionConstant(std::vector<double> source){
   function::add(_name,this);
 }
 
+
 // function that enables to interpolate a DG solution using
 // geometrical search in a mesh 
 
@@ -277,7 +338,7 @@ class functionMesh2Mesh::data : public dataCacheDouble {
 public:
   data(dataCacheMap &m, dgDofContainer *sys) :
     _dofContainer(sys), 
-    xyz(m.get("XYZ",this)),
+    xyz(m.get(functionCoordinates::get(),this)),
     dataCacheDouble(m,1, sys->getNbFields())
   {
   }
@@ -311,6 +372,12 @@ public:
     }
   }
 };
+
+dataCacheDouble *functionMesh2Mesh::newDataCache(dataCacheMap *m)
+{
+  return new data(*m,_dofContainer);
+}
+
 void dataCacheMap::setNbEvaluationPoints(int nbEvaluationPoints) {
   _nbEvaluationPoints = nbEvaluationPoints;
   for(std::set<dataCacheDouble*>::iterator it = _toResize.begin(); it!= _toResize.end(); it++){
@@ -318,12 +385,6 @@ void dataCacheMap::setNbEvaluationPoints(int nbEvaluationPoints) {
     (*it)->_valid = false;
   }
 }
-
-dataCacheDouble *functionMesh2Mesh::newDataCache(dataCacheMap *m)
-{
-  return new data(*m,_dofContainer);
-}
-
 
 dataCacheDouble::dataCacheDouble(dataCacheMap &map,int nRowByPoint, int nCol):
   dataCache(&map),_cacheMap(map),_value(nRowByPoint==0?1:nRowByPoint*map.getNbEvaluationPoints(),nCol){
@@ -338,7 +399,7 @@ void dataCacheDouble::resize() {
 //functionC
 class functionC : public function {
   void (*callback)(void);
-  std::vector<std::string> _dependenciesName;
+  std::vector<const function*> _dependenciesF;
   int _nbCol;
   class data : public dataCacheDouble{
     const functionC *_function;
@@ -348,9 +409,9 @@ class functionC : public function {
       dataCacheDouble(*m,1,f->_nbCol)
     {
       _function = f;
-      _dependencies.resize ( _function->_dependenciesName.size());
-      for (int i=0;i<_function->_dependenciesName.size();i++)
-        _dependencies[i] = &m->get(_function->_dependenciesName[i],this);
+      _dependencies.resize ( _function->_dependenciesF.size());
+      for (int i=0;i<_function->_dependenciesF.size();i++)
+        _dependencies[i] = &m->get(_function->_dependenciesF[i],this);
 
     }
     void _eval()
@@ -394,8 +455,8 @@ class functionC : public function {
     }
   };
   public:
-  functionC (std::string file, std::string symbol, int nbCol, std::vector<std::string> dependencies):
-      _dependenciesName(dependencies),_nbCol(nbCol)
+  functionC (std::string file, std::string symbol, int nbCol, std::vector<const function *> dependencies):
+      _dependenciesF(dependencies),_nbCol(nbCol)
   {
     void *dlHandler;
     dlHandler = dlopen(file.c_str(),RTLD_NOW);
@@ -419,10 +480,6 @@ class functionC : public function {
 
 #include "Bindings.h"
 
-void function::registerDefaultFunctions()
-{
-  function::add("XYZ", new functionXYZ);
-}
 void function::registerBindings(binding *b){
   classBinding *cb = b->addClass<function>("function");
   cb->setDescription("A generic function that can be evaluated on a set of points. Functions can call other functions and their values are cached so that if two different functions call the same function f, f is only evaluated once.");
@@ -437,10 +494,28 @@ void function::registerBindings(binding *b){
   mb->setDescription("A new constant function wich values 'v' everywhere. v can be a row-vector.");
   cb->setParentClass<function>();
 
+  cb = b->addClass<functionCoordinates>("functionCoordinates");
+  cb->setDescription("A function to access the coordinates (xyz). This is a single-instance class, use the 'get' member to access the instance.");
+  mb = cb->addMethod("get",&functionCoordinates::get);
+  mb->setDescription("return the unique instance of this class");
+  cb->setParentClass<function>();
+
+  cb = b->addClass<functionSolution>("functionSolution");
+  cb->setDescription("A function to access the solution. This is a single-instance class, use the 'get' member to access the instance.");
+  mb = cb->addMethod("get",&functionCoordinates::get);
+  mb->setDescription("return the unique instance of this class");
+  cb->setParentClass<function>();
+
+  cb = b->addClass<functionSolutionGradient>("functionSolutionGradient");
+  cb->setDescription("A function to access the gradient of the solution. This is a single-instance class, use the 'get' member to access the instance.");
+  mb = cb->addMethod("get",&functionCoordinates::get);
+  mb->setDescription("return the unique instance of this class");
+  cb->setParentClass<function>();
+
   cb = b->addClass<functionStructuredGridFile>("functionStructuredGridFile");
   cb->setParentClass<function>();
   cb->setDescription("A function to interpolate through data given on a structured grid");
-  mb = cb->setConstructor<functionStructuredGridFile,std::string, std::string>();
+  mb = cb->setConstructor<functionStructuredGridFile,std::string, const function*>();
   mb->setArgNames("fileName","coordinateFunction",NULL);
   mb->setDescription("Tri-linearly interpolate through data in file 'fileName' at coordinate given by 'coordinateFunction'.\nThe file format is :\nx0 y0 z0\ndx dy dz\nnx ny nz\nv(0,0,0) v(0,0,1) v(0 0 2) ..."); 
 
@@ -454,7 +529,7 @@ void function::registerBindings(binding *b){
 #if defined(HAVE_DLOPEN)
   cb = b->addClass<functionC>("functionC");
   cb->setDescription("A function that compile a C code");
-  mb = cb->setConstructor<functionC,std::string, std::string,int,std::vector<std::string> >();
+  mb = cb->setConstructor<functionC,std::string, std::string,int,std::vector<const function*> >();
   mb->setArgNames("file", "symbol", "nbCol", "arguments",NULL);
   mb->setDescription("  ");
   cb->setParentClass<function>();

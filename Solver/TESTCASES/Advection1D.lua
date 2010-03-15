@@ -26,21 +26,10 @@ order=1
 dimension=1
 
 -- conservation law
--- advection speed
-v=fullMatrix(3,1);
-v:set(0,0,0.15)
-v:set(1,0,0)
-v:set(2,0,0)
--- diffusivity
-nu=fullMatrix(1,1);
-nu:set(0,0,0)
-
-law = dgConservationLawAdvectionDiffusion(functionConstant(v):getName(), '') 
+law = dgConservationLawAdvectionDiffusion.advectionLaw(functionConstant({0.15,0,0})) 
 
 -- boundary condition
-outside=fullMatrix(1,1)
-outside:set(0,0,0.)
-bndcondition=law:newOutsideValueBoundary(functionConstant(outside):getName())
+bndcondition=law:newOutsideValueBoundary(functionConstant({0}))
 law:addBoundaryCondition('Left',bndcondition)
 law:addBoundaryCondition('Right',bndcondition)
 
@@ -53,7 +42,7 @@ limiter = dgSlopeLimiter(law)
 rk:setLimiter(limiter) 
 
 -- build solution vector
-FS = functionLua(1, 'initial_condition', {'XYZ'}):getName()
+FS = functionLua(1, 'initial_condition', {functionCoordinates.get()})
 solution = dgDofContainer(groups, law:getNbFields())
 solution:L2Projection(FS)
 

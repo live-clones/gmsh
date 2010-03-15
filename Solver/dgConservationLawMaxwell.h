@@ -5,7 +5,7 @@
 
 
 class dgConservationLawMaxwell : public dgConservationLaw {
-  std::string _mu_epsFunctionName;
+  const function *_mu_epsFunction;
   class advection;
   class source;
   class riemann;
@@ -14,7 +14,7 @@ class dgConservationLawMaxwell : public dgConservationLaw {
   dataCacheDouble *newRiemannSolver( dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight) const;
   dataCacheDouble *newSourceTerm (dataCacheMap &cacheMap) const;
   dgBoundaryCondition *newBoundaryWall () ;
-  dgConservationLawMaxwell(std::string mu_epsFunctionName);
+  dgConservationLawMaxwell(const function *mu_epsFunction);
 
 };
 class binding;

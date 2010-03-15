@@ -22,8 +22,10 @@ myModel   = GModel  ()
 --myModel:load('box.geo')
 --myModel:load('box.msh')
 --myModel:load('square_quads.msh')
-myModel:load('square_part.msh')
+-- myModel:load('square_part.msh')
+myModel:load('square.geo')
 myModel:mesh(2)
+myModel:save('square.msh')
 
 print'*** Create a dg solver ***'
 DG = dgSystemOfEquations (myModel)
@@ -33,7 +35,7 @@ DG:setConservationLaw(law)
 law:addBoundaryCondition('Border',law:newBoundaryWall())
 DG:setup()
 
-initialCondition = functionLua(3,'initial_condition',{'XYZ'}):getName()
+initialCondition = functionLua(3,'initial_condition',{functionCoordinates.get()})
 
 print'*** setting the initial solution ***'
 

@@ -10,11 +10,11 @@ class binding;
 class functionLua : public function {
   lua_State *_L;
   std::string _luaFunctionName;
-  std::vector<std::string> _dependenciesName;
+  std::vector<const function*> _dependenciesF;
   int _nbCol;
   class data;
  public:
-  functionLua (int nbCol, std::string luaFunctionName, std::vector<std::string> dependenciesName, lua_State *L);
+  functionLua (int nbCol, std::string luaFunctionName, std::vector<const function*> dependencies, lua_State *L);
 
   dataCacheDouble *newDataCache(dataCacheMap *m);
   static void registerBindings(binding *b);

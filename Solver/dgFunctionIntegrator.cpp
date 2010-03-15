@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 
-dgFunctionIntegrator::dgFunctionIntegrator(std::string fName):_fName(fName){}
+dgFunctionIntegrator::dgFunctionIntegrator(const function *f):_f(f){}
 
 void dgFunctionIntegrator::compute(dgDofContainer *sol,fullMatrix<double> &result){
   int nbFields=sol->getNbFields();
@@ -14,8 +14,7 @@ void dgFunctionIntegrator::compute(dgDofContainer *sol,fullMatrix<double> &resul
   dataCacheDouble &UVW=cacheMap.provideParametricCoordinates();
   dataCacheDouble &solutionQPe=cacheMap.provideSolution(nbFields);
   dataCacheElement &cacheElement=cacheMap.getElement();
-  function *f=function::get(_fName);
-  dataCacheDouble *F=f->newDataCache(&cacheMap);
+  dataCacheDouble &F=cacheMap.get(_f);
   int nbRowResult=result.size1();
   result.scale(0.0);
   for(int iGroup=0;iGroup<sol->getGroups()->getNbElementGroups();iGroup++){
@@ -32,7 +31,7 @@ void dgFunctionIntegrator::compute(dgDofContainer *sol,fullMatrix<double> &resul
       for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
         const double detJ = group.getDetJ (iElement, iPt);
         for (int k=0;k<nbRowResult;k++){
-          result(0,k) += (*F)(iPt,k)*detJ*IPMatrix(iPt,3);
+          result(0,k) += F(iPt,k)*detJ*IPMatrix(iPt,3);
         }
       }
     }
@@ -44,8 +43,8 @@ void dgFunctionIntegrator::registerBindings(binding *b){
   classBinding *cb = b->addClass<dgFunctionIntegrator>("dgFunctionIntegrator");
   cb->setDescription("Integrates a function, using the compute function");
   methodBinding *mb;
-  mb = cb->setConstructor<dgFunctionIntegrator,std::string>();
-  mb->setArgNames("functionName",NULL);
+  mb = cb->setConstructor<dgFunctionIntegrator,const function*>();
+  mb->setArgNames("function",NULL);
   mb->setDescription("a new dgFunctionIntegrator, get the solution using the compute method");
   mb = cb->addMethod("compute", &dgFunctionIntegrator::compute);
   mb->setArgNames("dofContainer","result",NULL);

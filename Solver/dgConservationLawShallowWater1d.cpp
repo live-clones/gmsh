@@ -9,7 +9,7 @@ class dgConservationLawShallowWater1d::advection: public dataCacheDouble {
   public:
   advection(dataCacheMap &cacheMap):
     dataCacheDouble(cacheMap,1,9),
-    sol(cacheMap.get("Solution",this))
+    sol(cacheMap.getSolution(this))
   {};
   void _eval () { 
     int nQP = _value.size1();
@@ -28,7 +28,7 @@ class dgConservationLawShallowWater1d::maxConvectiveSpeed : public dataCacheDoub
   public:
   maxConvectiveSpeed(dataCacheMap &cacheMap):
     dataCacheDouble(cacheMap,1,1),
-    sol(cacheMap.get("Solution",this))
+    sol(cacheMap.getSolution(this))
   {
   };
   void _eval () {
@@ -45,9 +45,9 @@ class dgConservationLawShallowWater1d::source: public dataCacheDouble {
   public :
   source(dataCacheMap &cacheMap) : 
     dataCacheDouble(cacheMap,1,3),
-    xyz(cacheMap.get("XYZ",this)),
-    solution(cacheMap.get("Solution",this)),
-    solutionGradient(cacheMap.get("SolutionGradient",this))
+    xyz(cacheMap.getParametricCoordinates(this)),
+    solution(cacheMap.getSolution(this)),
+    solutionGradient(cacheMap.getSolutionGradient(this))
   {}
   void _eval () {
     int nQP =_value.size1();
@@ -64,9 +64,9 @@ class dgConservationLawShallowWater1d::riemann:public dataCacheDouble {
   public:
   riemann(dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight):
     dataCacheDouble(cacheMapLeft,1,6),
-    normals(cacheMapLeft.get("Normals", this)),
-    solL(cacheMapLeft.get("Solution", this)),
-    solR(cacheMapRight.get("Solution", this))
+    normals(cacheMapLeft.getNormals(this)),
+    solL(cacheMapLeft.getSolution(this)),
+    solR(cacheMapRight.getSolution(this))
   {};
   void _eval () { 
     int nQP = solL().size1();
@@ -102,8 +102,8 @@ class dgConservationLawShallowWater1d::boundaryWall : public dgBoundaryCondition
     public:
     term(dataCacheMap &cacheMap):
     dataCacheDouble(cacheMap,1,3),
-    sol(cacheMap.get("Solution",this)),
-    normals(cacheMap.get("Normals",this)){}
+    sol(cacheMap.getSolution(this)),
+    normals(cacheMap.getNormals(this)){}
     void _eval () { 
       int nQP = sol().size1();
       for(int i=0; i< nQP; i++) {
@@ -130,7 +130,7 @@ class dgConservationLawShallowWater1d::clipToPhysics : public dataCacheDouble {
 public:
   clipToPhysics(dataCacheMap &cacheMap, double hMin):
     dataCacheDouble(cacheMap,1,4),
-    sol(cacheMap.get("Solution",this))
+    sol(cacheMap.getSolution(this))
   {
     _hMin=hMin;
   };

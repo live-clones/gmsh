@@ -6,6 +6,7 @@
 #include "linearSystemCSR.h"
 class dgGroupCollection;
 class dgGroupOfElements;
+class function;
 
 class dgDofContainer {
 private:
@@ -42,7 +43,7 @@ public:
   void save(const std::string name);
   void load(const std::string name);
   void setAll(double v);
-  void L2Projection(std::string functionName);
+  void L2Projection(const function *f);
   void Mesh2Mesh_BuildL2Projection(linearSystemCSRGmm<double> &projector,dgDofContainer &donor);
   void multAddInverseMassMatrixL2Projection(linearSystemCSRGmm<double> &projector); // this method should be private
   void Mesh2Mesh_ApplyL2Projection(linearSystemCSRGmm<double> &projector,dgDofContainer &donor);

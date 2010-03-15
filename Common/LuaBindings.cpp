@@ -365,7 +365,6 @@ binding::binding(){
   dgFunctionIntegrator::registerBindings(this);
   fullMatrix<double>::registerBindings(this);
   function::registerBindings(this);
-  function::registerDefaultFunctions();
   functionLua::registerBindings(this);
   gmshOptions::registerBindings(this);
   Msg::registerBindings(this);

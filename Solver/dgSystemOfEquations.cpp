@@ -92,8 +92,8 @@ cm = cb->addMethod("RK44_TransformNodalValue",&dgSystemOfEquations::RK44_Transfo
 }
 
 // do a L2 projection
-void dgSystemOfEquations::L2Projection (std::string functionName){
-  _solution->L2Projection(functionName);
+void dgSystemOfEquations::L2Projection (const function *f){
+  _solution->L2Projection(f);
 }
 
 // ok, we can setup the groups and create solution vectors

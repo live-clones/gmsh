@@ -41,7 +41,7 @@ public:
   void setup (); // setup the groups and allocate
   void exportSolution (std::string filename); // export the solution
   void limitSolution (); // apply the limiter on the solution
-  void L2Projection (std::string functionName); // assign the solution to a given function
+  void L2Projection (const function *f); // assign the solution to a given function
   double RK44(double dt);
   double RK44_limiter(double dt);
   double RK44_TransformNodalValue(double dt);

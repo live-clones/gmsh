@@ -1,10 +1,11 @@
 #include <string>
 class dgDofContainer;
 class binding;
+class function;
 class dgFunctionIntegrator{
-  std::string _fName;
+  const function *_f;
   public:
-  dgFunctionIntegrator(std::string fName);
+  dgFunctionIntegrator(const function *f);
   void compute(dgDofContainer *sol,fullMatrix<double> &result);
   static void registerBindings(binding *b);
 };

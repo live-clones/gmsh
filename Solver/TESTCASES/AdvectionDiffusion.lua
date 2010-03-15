@@ -2,35 +2,15 @@ model = GModel  ()
 model:load ('square.geo')
 model:load ('square.msh')
 
-model2 = GModel()
-model2:load('')
-
-vmodel = {GModel(),GModel()}
-vmodel[1]:load('')
-vmodel[2]:load('')
-
 dg = dgSystemOfEquations (model)
-dg:setOrder(3)
+dg:setOrder(4)
 
 -- conservation law
-
--- advection speed
-v=fullMatrix(3,1);
-v:set(0,0,0.15)
-v:set(1,0,0.05)
-v:set(2,0,0)
-
--- diffusivity
-nu=fullMatrix(1,1);
-nu:set(0,0,0.001)
-
-law = dgConservationLawAdvectionDiffusion(functionConstant(v):getName(),functionConstant(nu):getName())
+law = dgConservationLawAdvectionDiffusion(functionConstant({0.15,0.05,0}),functionConstant({0.001}))
 dg:setConservationLaw(law)
 
 -- boundary condition
-outside=fullMatrix(1,1)
-outside:set(0,0,0.)
-law:addBoundaryCondition('Border',law:newOutsideValueBoundary(functionConstant(outside):getName()))
+law:addBoundaryCondition('Border',law:newOutsideValueBoundary(functionConstant({0,0,0})))
 
 dg:setup()
 
@@ -43,13 +23,13 @@ function initial_condition( xyz , f )
     f:set (i, 0, math.exp(-100*((x-0.2)^2 +(y-0.3)^2)))
   end
 end
-dg:L2Projection(functionLua(1,'initial_condition',{'XYZ'}):getName())
+dg:L2Projection(functionLua(1,'initial_condition',{functionCoordinates.get()}))
 
 dg:exportSolution('output/Advection_00000')
 
 -- main loop
 for i=1,10000 do
-  norm = dg:RK44(0.01)
+  norm = dg:RK44(0.001)
   if (i % 10 == 0) then 
     print('iter',i,norm)
     dg:exportSolution(string.format("output/Advection-%05d", i)) 

@@ -3,8 +3,9 @@
 #include "dgConservationLaw.h"
 //AdvectionDiffusion diffusion equation
 //dc/dt + v div(c) - nu lapl(c) = 0
+class function;
 class dgConservationLawAdvectionDiffusion : public dgConservationLaw {
-  std::string _vFunctionName,_nuFunctionName;
+  const function *_vFunction, *_nuFunction;
   class advection;
   class riemann;
   class diffusion;
@@ -15,7 +16,9 @@ class dgConservationLawAdvectionDiffusion : public dgConservationLaw {
   dataCacheDouble *newMaxConvectiveSpeed( dataCacheMap &cacheMap) const;
   dataCacheDouble *newRiemannSolver( dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight) const;
   dataCacheDouble *newDiffusiveFlux( dataCacheMap &cacheMap) const;
-  dgConservationLawAdvectionDiffusion(std::string vFunctionName, std::string nuFunctionName);
+  dgConservationLawAdvectionDiffusion(const function *vFunction, const function *nuFunction);
+  static dgConservationLawAdvectionDiffusion *diffusionLaw(const function *nuFunction);
+  static dgConservationLawAdvectionDiffusion *advectionLaw(const function *vFunction);
 };
 class binding;
 void dgConservationLawAdvectionDiffusionRegisterBindings (binding *b);

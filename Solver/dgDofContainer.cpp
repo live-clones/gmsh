@@ -217,7 +217,7 @@ void dgDofContainer::load(const std::string name) {
   fclose(f);
 }
 
-void dgDofContainer::L2Projection(std::string functionName){
+void dgDofContainer::L2Projection(const function *f){
   scale(0.);
   dgDofContainer rhs(&_groups, _nbFields);
   for (int iGroup=0;iGroup<_groups.getNbElementGroups();iGroup++) {
@@ -227,7 +227,7 @@ void dgDofContainer::L2Projection(std::string functionName){
     cacheMap.setNbEvaluationPoints(group.getNbIntegrationPoints());
     dataCacheElement &cacheElement = cacheMap.getElement();
     cacheMap.provideParametricCoordinates().set(group.getIntegrationPointsMatrix());
-    dataCacheDouble &sourceTerm = cacheMap.get(functionName);
+    dataCacheDouble &sourceTerm = cacheMap.get(f);
     fullMatrix<double> source;
     for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {
       cacheElement.set(group.getElement(iElement));
