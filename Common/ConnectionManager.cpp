@@ -86,7 +86,7 @@ void ConnectionManager::runCommand(int commandIndex, int optionIndex, int option
     commandArg = buttonSwitch[commandIndex];
   }
 
-  run(inputArg + " " + meshArg + " " + commandArg);
+  run(inputArg + " " + meshArg + " " + commandArg + " " + extraArguments);
 }
 
 #if !defined(HAVE_FLTK)

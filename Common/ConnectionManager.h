@@ -18,6 +18,8 @@ class ConnectionManager {
   std::string name;
   // the executable command (e.g. "/usr/bin/getdp.exe")
   std::string executable;
+  // any extra arguments to pass to the solver (e.g. "-ksp_monitor")
+  std::string extraArguments;
   // the name of the input file for the remote program (e.g. "")
   std::string inputFileName;
   // the command line switch to specify the input file (e.g. "%s")

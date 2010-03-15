@@ -1179,6 +1179,43 @@ std::string opt_solver_executable4(OPT_ARGS_STR)
   return opt_solver_executable(4, action, val);
 }
 
+std::string opt_solver_extra_arguments(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    ConnectionManager::get(num)->extraArguments = val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->solver[num]->input[3]->value
+      (ConnectionManager::get(num)->extraArguments.c_str());
+#endif
+  return ConnectionManager::get(num)->extraArguments;
+}
+
+std::string opt_solver_extra_arguments0(OPT_ARGS_STR)
+{
+  return opt_solver_extra_arguments(0, action, val);
+}
+
+std::string opt_solver_extra_arguments1(OPT_ARGS_STR)
+{
+  return opt_solver_extra_arguments(1, action, val);
+}
+
+std::string opt_solver_extra_arguments2(OPT_ARGS_STR)
+{
+  return opt_solver_extra_arguments(2, action, val);
+}
+
+std::string opt_solver_extra_arguments3(OPT_ARGS_STR)
+{
+  return opt_solver_extra_arguments(3, action, val);
+}
+
+std::string opt_solver_extra_arguments4(OPT_ARGS_STR)
+{
+  return opt_solver_extra_arguments(4, action, val);
+}
+
 std::string opt_solver_help(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)

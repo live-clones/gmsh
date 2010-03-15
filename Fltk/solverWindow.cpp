@@ -318,6 +318,9 @@ static void solver_ok_cb(Fl_Widget *w, void *data)
   opt_solver_mesh_name
     (num, GMSH_SET, FlGui::instance()->solver[num]->input[1]->value());
 
+  opt_solver_extra_arguments
+    (num, GMSH_SET, FlGui::instance()->solver[num]->input[3]->value());
+
   bool retry = false;
 
   std::string input = FlGui::instance()->solver[num]->input[0]->value();
@@ -423,7 +426,7 @@ solverWindow::solverWindow(int num, int deltaFontSize)
   }
 
   int width = 32 * FL_NORMAL_SIZE;
-  int height = (5 + numOptions) * BH + 5 * WB;
+  int height = (6 + numOptions) * BH + 5 * WB;
   int BBS = (width - 9 * WB) / 6;
   int LL = width - (int)(2.75 * BBS);
   
@@ -472,13 +475,17 @@ solverWindow::solverWindow(int num, int deltaFontSize)
         (width - 2 * WB - BBS, 2 * WB + 3 * BH, BBS, BH, "Choose");
       b5->callback(solver_choose_mesh_cb, (void *)num);
 
-      for(int i = 0; i < 3; i++) {
+      input[3] = new Fl_Input
+        (2 * WB, 2 * WB + 4 * BH, LL, BH, "Extra arguments");
+      input[3]->callback(solver_ok_cb, (void *)num);
+
+      for(int i = 0; i < 4; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
       }
 
       for(int i = 0; i < numOptions; i++) {
         Fl_Choice *c = new Fl_Choice
-          (2 * WB, 2 * WB + (4 + i) * BH, LL, BH, 
+          (2 * WB, 2 * WB + (5 + i) * BH, LL, BH, 
            ConnectionManager::get(num)->optionName[i].c_str());
         c->align(FL_ALIGN_RIGHT);
         choice.push_back(c);
@@ -490,7 +497,7 @@ solverWindow::solverWindow(int num, int deltaFontSize)
         arg[num][i][0] = num;
         arg[num][i][1] = i;
         command[i] = new Fl_Button
-          ((2 + i) * WB + i * BBS, 3 * WB + (4 + numOptions) * BH,
+          ((2 + i) * WB + i * BBS, 3 * WB + (5 + numOptions) * BH,
            BBS, BH, ConnectionManager::get(num)->buttonName[i].c_str());
         command[i]->callback(solver_command_cb, (void *)arg[num][i]);
         if(ConnectionManager::get(num)->buttonName[i].empty())
@@ -499,7 +506,7 @@ solverWindow::solverWindow(int num, int deltaFontSize)
 
       {
         Fl_Button *b = new Fl_Button
-          (width - 2 * WB - BBS, 3 * WB + (4 + numOptions) * BH, BBS, BH, "Kill");
+          (width - 2 * WB - BBS, 3 * WB + (5 + numOptions) * BH, BBS, BH, "Kill");
         b->callback(solver_kill_cb, (void *)num);
       }
      
