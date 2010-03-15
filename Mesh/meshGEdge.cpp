@@ -98,10 +98,7 @@ static double F_Lc(GEdge *ge, double t)
   SVector3 der = ge->firstDer(t);
   const double d = norm(der);
 
-  //printf("lc_here=%g d=%g nb =%g\n", lc_here,d,  d/lc_here);
-
   return d / lc_here;
-
 }
 
 static double F_Transfinite(GEdge *ge, double t_)
@@ -273,15 +270,16 @@ void meshGEdge::operator() (GEdge *ge)
   ge->setLength(length);
   Points.clear();
 
-  if(length == 0. && CTX::instance()->mesh.toleranceEdgeLength == 0.)
-    Msg::Error("Curve %d has a zero length", ge->tag());
-  else
-    Msg::Debug("Curve %d has a zero length", ge->tag());
-
-  if(length < CTX::instance()->mesh.toleranceEdgeLength) {
-    //    printf("AAAAAAAAAAAAAAAAAAAARGHHHHHHHHHHHHHHHHHHHHHHHH\n");
-    ge->setTooSmall(true);
+  if(length == 0.){
+    if(CTX::instance()->mesh.toleranceEdgeLength == 0.)
+      Msg::Error("Curve %d has a zero length", ge->tag());
+    else
+      Msg::Debug("Curve %d has a zero length", ge->tag());
   }
+
+  if(length < CTX::instance()->mesh.toleranceEdgeLength)
+    ge->setTooSmall(true);
+
   // Integrate detJ/lc du 
   double a;
   int N;
