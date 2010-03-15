@@ -72,13 +72,27 @@ dataCacheDouble &dataCacheMap::get(const std::string &functionName, dataCache *c
     r->addMeAsDependencyOf(caller);
   return *r;
 }
-
-dataCacheDouble &dataCacheMap::provideData(std::string name,int nRowByPoints, int nCol)
+dataCacheDouble &dataCacheMap::provideSolution(int nbFields)
 {
-  if (_cacheDoubleMap[name] != NULL)
-    throw;
-  dataCacheDouble *r = new providedDataDouble(*this,nRowByPoints, nCol);
-  _cacheDoubleMap[name] = r;
+  dataCacheDouble *r = new providedDataDouble(*this,1, nbFields);
+  _cacheDoubleMap["Solution"] = r;
+  return *r;
+}
+dataCacheDouble &dataCacheMap::provideSolutionGradient(int nbFields){
+  dataCacheDouble *r = new providedDataDouble(*this,3, nbFields);
+  _cacheDoubleMap["SolutionGradient"] = r;
+  return *r;
+}
+dataCacheDouble &dataCacheMap::provideParametricCoordinates()
+{
+  dataCacheDouble *r = new providedDataDouble(*this,1, 3);
+  _cacheDoubleMap["UVW"] = r;
+  return *r;
+}
+dataCacheDouble &dataCacheMap::provideNormals()
+{
+  dataCacheDouble *r = new providedDataDouble(*this,1, 3);
+  _cacheDoubleMap["Normals"] = r;
   return *r;
 }
 

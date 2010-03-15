@@ -18,7 +18,7 @@ void coriolis (fullMatrix<double> &sol, fullMatrix<double> &xyz) {
 ]]
 
 if (Msg.getCommRank() == 0 ) then
-  cfile = io.popen("g++ -O3 -pipe -m32 -shared -o tmp.dylib -I ../../Numeric -I../../Common -I../../build/Common -x c++ - ","w");
+  cfile = io.popen("g++-4.2 -O3 -pipe -m32 -shared -o tmp.dylib -I ../../Numeric -I../../Common -I../../build/Common -x c++ - ","w");
   cfile:write("#include\"fullMatrix.h\"\nextern \"C\" {")
   cfile:write(CFunctions)
   cfile:write("}")

@@ -82,8 +82,8 @@ void dgAlgorithm::computeElementaryTimeSteps ( //dofManager &dof, // the DOF man
   const int nbFields = claw.getNbFields();
   dataCacheMap cacheMap;
   cacheMap.setNbEvaluationPoints(group.getNbIntegrationPoints());
-  dataCacheDouble &sol = cacheMap.provideData("Solution",1,nbFields);
-  dataCacheDouble &UVW = cacheMap.provideData("UVW",1,3);
+  dataCacheDouble &sol = cacheMap.provideSolution(nbFields);
+  dataCacheDouble &UVW = cacheMap.provideParametricCoordinates();
   UVW.set(group.getIntegrationPointsMatrix());
   dataCacheElement &cacheElement = cacheMap.getElement();
   // provided dataCache

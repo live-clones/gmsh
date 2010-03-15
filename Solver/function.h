@@ -194,10 +194,13 @@ class dataCacheMap {
   //list of dgDofContainer whom gradient are needed
   std::map<dgDofContainer*,dataCacheDouble*> gradientFields;
   // end dg Part
+  dataCacheDouble &provideSolution(int nbFields);
+  dataCacheDouble &provideSolutionGradient(int nbFields);
+  dataCacheDouble &provideParametricCoordinates();
+  dataCacheDouble &provideNormals();
 
   dataCacheDouble &get(const std::string &functionName, dataCache *caller=0);
   dataCacheElement &getElement(dataCache *caller=0);
-  dataCacheDouble &provideData(std::string name, int nRowByPoints, int nCol);
   dataCacheMap(){
     _cacheElement = new dataCacheElement(this);
     _nbEvaluationPoints = 0;

@@ -11,7 +11,7 @@ class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
     public:
     term(dgConservationLaw *claw, dataCacheMap &cacheMapLeft,const std::string outsideValueFunctionName):
       dataCacheDouble(cacheMapLeft, 1, claw->getNbFields()),
-      solutionRight(cacheMapRight.provideData("Solution",1,claw->getNbFields())),
+      solutionRight(cacheMapRight.provideSolution(claw->getNbFields())),
       outsideValue(cacheMapLeft.get(outsideValueFunctionName,this)),
       _claw(claw)
     {
@@ -51,7 +51,7 @@ class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
     public:
     maximumDiffusivity(dgConservationLaw *claw, dataCacheMap &cacheMapLeft,const std::string outsideValueFunctionName):
       dataCacheDouble(cacheMapLeft, 1, claw->getNbFields()),
-      solutionRight(cacheMapRight.provideData("Solution",1,claw->getNbFields())),
+      solutionRight(cacheMapRight.provideSolution(claw->getNbFields())),
       outsideValue(cacheMapLeft.get(outsideValueFunctionName,this)),
       _claw(claw)
     {

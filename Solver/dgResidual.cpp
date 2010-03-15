@@ -11,9 +11,9 @@ dgResidualVolume::dgResidualVolume(const dgConservationLaw &claw):
   _claw(claw),
   _nbFields(_claw.getNbFields()),
   _cacheElement(_cacheMap->getElement()),
-  _UVW(_cacheMap->provideData("UVW", 1, 3)),
-  _solutionQPe(_cacheMap->provideData("Solution", 1, _nbFields)),
-  _gradientSolutionQPe(_cacheMap->provideData("SolutionGradient", 3, _nbFields)),
+  _UVW(_cacheMap->provideParametricCoordinates()),
+  _solutionQPe(_cacheMap->provideSolution(_nbFields)),
+  _gradientSolutionQPe(_cacheMap->provideSolutionGradient(_nbFields)),
   _sourceTerm(_claw.newSourceTerm(*_cacheMap)),
   _convectiveFlux(_claw.newConvectiveFlux(*_cacheMap)),
   _diffusiveFlux(_claw.newDiffusiveFlux(*_cacheMap))
@@ -268,13 +268,13 @@ dgResidualInterface::dgResidualInterface (const dgConservationLaw &claw) :
   _nbFields(claw.getNbFields()),
   _cacheElementLeft(_cacheMapLeft->getElement()),
   _cacheElementRight(_cacheMapRight->getElement()),
-  _uvwLeft(_cacheMapLeft->provideData("UVW",1,3)),
-  _uvwRight(_cacheMapRight->provideData("UVW",1,3)),
-  _solutionQPLeft(_cacheMapLeft->provideData("Solution",1,_nbFields)),
-  _solutionQPRight(_cacheMapRight->provideData("Solution",1,_nbFields)),
-  _gradientSolutionLeft(_cacheMapLeft->provideData("SolutionGradient",3,_nbFields)),
-  _gradientSolutionRight(_cacheMapRight->provideData("SolutionGradient",3,_nbFields)),
-  _normals(_cacheMapLeft->provideData("Normals",1,1)),
+  _uvwLeft(_cacheMapLeft->provideParametricCoordinates()),
+  _uvwRight(_cacheMapRight->provideParametricCoordinates()),
+  _solutionQPLeft(_cacheMapLeft->provideSolution(_nbFields)),
+  _solutionQPRight(_cacheMapRight->provideSolution(_nbFields)),
+  _gradientSolutionLeft(_cacheMapLeft->provideSolutionGradient(_nbFields)),
+  _gradientSolutionRight(_cacheMapRight->provideSolutionGradient(_nbFields)),
+  _normals(_cacheMapLeft->provideNormals()),
   _riemannSolver(claw.newRiemannSolver(*_cacheMapLeft,*_cacheMapRight)),
   _diffusiveFluxLeft(claw.newDiffusiveFlux(*_cacheMapLeft)),
   _diffusiveFluxRight(claw.newDiffusiveFlux(*_cacheMapRight)),
@@ -418,10 +418,10 @@ void dgResidualBoundary::compute1Group(
   cacheMapLeft.setNbEvaluationPoints(group.getNbIntegrationPoints());
   const fullMatrix<double> &DPsiLeftDx = left.getDPsiDx();
   // provided dataCache
-  dataCacheDouble &uvw=cacheMapLeft.provideData("UVW",1,3);
-  dataCacheDouble &solutionQPLeft = cacheMapLeft.provideData("Solution",1,nbFields);
-  dataCacheDouble &gradientSolutionLeft = cacheMapLeft.provideData("SolutionGradient",3,nbFields);
-  dataCacheDouble &normals = cacheMapLeft.provideData("Normals",1,1);
+  dataCacheDouble &uvw=cacheMapLeft.provideParametricCoordinates();
+  dataCacheDouble &solutionQPLeft = cacheMapLeft.provideSolution(nbFields);
+  dataCacheDouble &gradientSolutionLeft = cacheMapLeft.provideSolutionGradient(nbFields);
+  dataCacheDouble &normals = cacheMapLeft.provideNormals();
   dataCacheElement &cacheElementLeft = cacheMapLeft.getElement();
   // required data
   // inviscid

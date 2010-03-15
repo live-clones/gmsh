@@ -11,8 +11,8 @@ dgFunctionIntegrator::dgFunctionIntegrator(std::string fName):_fName(fName){}
 void dgFunctionIntegrator::compute(dgDofContainer *sol,fullMatrix<double> &result){
   int nbFields=sol->getNbFields();
   dataCacheMap cacheMap;
-  dataCacheDouble &UVW=cacheMap.provideData("UVW", 1, 3);
-  dataCacheDouble &solutionQPe=cacheMap.provideData("Solution", 1, nbFields);
+  dataCacheDouble &UVW=cacheMap.provideParametricCoordinates();
+  dataCacheDouble &solutionQPe=cacheMap.provideSolution(nbFields);
   dataCacheElement &cacheElement=cacheMap.getElement();
   function *f=function::get(_fName);
   dataCacheDouble *F=f->newDataCache(&cacheMap);
