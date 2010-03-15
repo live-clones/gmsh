@@ -62,7 +62,7 @@ FS = functionLua(1, 'initial_condition', {'XYZ'}):getName()
 GC=dgGroupCollection(myModel,2,order)
 solTmp=dgDofContainer(GC,1)
 solTmp:L2Projection(FS)
-dt=GC:splitGroupsForMultirate(20,1,law,solTmp)
+dt=GC:splitGroupsForMultirate(100,1,law,solTmp)
 GC:buildGroupsOfInterfaces(myModel,2,order)
 solution=dgDofContainer(GC,1)
 solutionRef=dgDofContainer(GC,1)
@@ -82,8 +82,8 @@ for i=1,nRefSteps do
   end
 end
 
-multirateRK=dgRungeKuttaMultirate43(GC,law)
---multirateRK=dgRungeKuttaMultirate22(GC,law)
+--multirateRK=dgRungeKuttaMultirate43(GC,law)
+multirateRK=dgRungeKuttaMultirate22(GC,law)
 integrator=dgFunctionIntegrator(functionLua(1, 'L2Norm', {'Solution'}):getName())
 
 oldnorm=1

@@ -479,16 +479,21 @@ dgRungeKuttaMultirate22::dgRungeKuttaMultirate22(dgGroupCollection *gc,dgConserv
 double dgRungeKuttaMultirate22::iterate(double dt, dgDofContainer *solution){
 	_solution=solution;
 	_dt=dt;
-	computeInputForK(0,0,false);
-	computeInputForK(1,0,false);
+	computeInputForK(0,0,false,-1);
+	computeInputForK(1,0,false,-1);
 	
 	return solution->norm();
 }
 
-void dgRungeKuttaMultirate22::computeInputForK(int iK,int exponent,bool isBuffer){
+void dgRungeKuttaMultirate22::computeInputForK(int iK,int exponent,bool isBuffer,int upperLeveliK){
 	if(exponent>_maxExponent){
 		return;
 	}
+#ifdef MULTIRATEVERBOSE
+  for(int i=0;i<exponent;i++)
+    printf("\t");
+  printf("Exponent %d, %s, input   K%d\n",exponent,isBuffer?"    Buffer":"Not buffer",iK);
+#endif
 	double localDt=_dt/pow(2.0,(double)exponent);
 	// compute K[iK] for this exponent and buffer
 	
@@ -515,20 +520,49 @@ void dgRungeKuttaMultirate22::computeInputForK(int iK,int exponent,bool isBuffer
 			if(AOuter22[iK][i]!=0.0)
 				_currentInput->axpy(gVo,*_K[i],AOuter22[iK][i]*localDt*2);
 		}
+    // We need to update input for the neighboring elements with bigger time step.
+    // if there is no corresponding K to be computed
+    if( (iK>0 && iK<3) ){
+      std::vector<dgGroupOfElements *>&gVbigger=_bulkGroupsOfElements[exponent-1].first;
+      _currentInput->scale(gVbigger,0.0);
+      _currentInput->axpy(gVbigger,*_solution,1.0);
+      int idOuter2Bulk[10]={0,0,0,1};
+      for(int i=0;i<iK;i++){
+        if(AOuter22[iK][i]!=0.0){
+          _currentInput->axpy(gVbigger,*_K[idOuter2Bulk[i]],AOuter22[iK][i]*localDt*2);
+        }
+      }
+      std::vector<dgGroupOfElements *>&gViBigger=_innerBufferGroupsOfElements[exponent-1].first;
+      _currentInput->scale(gViBigger,0.0);
+      _currentInput->axpy(gViBigger,*_solution,1.0);
+      // shift
+      int s=0;
+      if(upperLeveliK>=2){
+        for(int i=0;i<2;i++){
+          _currentInput->axpy(gViBigger,*_K[i],b22[i]*localDt*2);
+        }
+        s+=2;
+      }
+      for(int i=0;i<iK;i++){
+        if(AOuter22[iK][i]!=0.0){
+          _currentInput->axpy(gViBigger,*_K[idOuter2Bulk[i]+s],AOuter22[iK][i]*localDt*2);
+        }
+      }
+    }
 	}
 	
 	if(!isBuffer){
 		switch(iK){
 			case 0:
-				computeInputForK(0,exponent+1,true);
+				computeInputForK(0,exponent+1,true,iK);
 				break;
 			case 1:
-				computeInputForK(3,exponent+1,true);
+				computeInputForK(3,exponent+1,true,iK);
 				break;
 		}
 	}
 	else{
-		computeInputForK(iK%2,exponent,false);
+		computeInputForK(iK%2,exponent,false,iK);
 	}
 	
 	if(exponent==0){
@@ -536,7 +570,7 @@ void dgRungeKuttaMultirate22::computeInputForK(int iK,int exponent,bool isBuffer
 		switch(iK){
 			case 0:
 				for(int i=1;i<3;i++){
-					computeInputForK(i,exponent+1,true);
+					computeInputForK(i,exponent+1,true,iK);
 				}
 				break;
 			case 1:
@@ -552,18 +586,22 @@ void dgRungeKuttaMultirate22::computeInputForK(int iK,int exponent,bool isBuffer
 			updateSolution(exponent, false);
 		if(iK==3)
 			updateSolution(exponent, true);
-		switch(iK){
-			case 0:
-		for(int i=1;i<3;i++){
-			computeInputForK(i, exponent+1, true);
-		}
-		break;
-	}
+    switch(iK%2){
+      case 0:
+        for(int i=1;i<3;i++){
+          computeInputForK(i, exponent+1, true,iK);
+        }
+        break;
+    }
  }
 }
 
 void dgRungeKuttaMultirate22::updateSolution(int exponent,bool isBuffer){
-	//Msg::Info("Updating solution at level %d %s",exponent,isBuffer?"Buffer":"Bulk");
+#ifdef MULTIRATEVERBOSE
+  for(int i=0;i<exponent;i++)
+    printf("\t");
+  printf("Updating solution at level %d %s\n",exponent,isBuffer?"Buffer":"Bulk");
+#endif
 	double localDt=_dt/pow(2.0,(double)exponent);
 	if(isBuffer){
 		std::vector<dgGroupOfElements *>&gVi=_innerBufferGroupsOfElements[exponent].first;
