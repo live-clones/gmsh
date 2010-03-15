@@ -317,7 +317,7 @@ class StructuredField : public Field
 
 class UTMField : public Field
 {
-  int field_id, zone;
+  int iField, zone;
   double a, b, n, n2, n3, n4, n5, e, e2, e1, e12, e13, e14, J1, J2, J3, J4,
     Ap, Bp, Cp, Dp, Ep, e4, e6, ep, ep2, ep4, k0, mu_fact;
  public:
@@ -329,10 +329,10 @@ class UTMField : public Field
   }
   UTMField()
   {
-    field_id = 1;
+    iField = 1;
     zone = 0;
     options["IField"] = new FieldOptionInt
-      (field_id, "Index of the field to evaluate");
+      (iField, "Index of the field to evaluate");
     options["Zone"] = new FieldOptionInt
       (zone, "Zone of the UTM projection");
     a = 6378137; // Equatorial Radius
@@ -397,15 +397,15 @@ class UTMField : public Field
       meridionalarc * k0 + k0 * nu * slat * clat / 2 * p2 +
       k0 * nu * slat * clat3 / 24 * (5 - tlat2 + 9 * ep2 * clat2 +
                                      4 * ep4 * clat4) * p4;
-    Field *field = GModel::current()->getFields()->get(field_id);
-    if(!field) return MAX_LC;
+    Field *field = GModel::current()->getFields()->get(iField);
+    if(!field || iField == id) return MAX_LC;
     return (*field)(utm_x, utm_y, 0);
   }
 };
 
 class LonLatField : public Field
 {
-  int field_id;
+  int iField;
  public:
   std::string getDescription()
   {
@@ -414,9 +414,9 @@ class LonLatField : public Field
   }
   LonLatField()
   {
-    field_id = 1;
+    iField = 1;
     options["IField"] = new FieldOptionInt
-      (field_id, "Index of the field to evaluate.");
+      (iField, "Index of the field to evaluate.");
   }
   const char *getName()
   {
@@ -424,8 +424,8 @@ class LonLatField : public Field
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
-    Field *field = GModel::current()->getFields()->get(field_id);
-    if(!field) return MAX_LC;
+    Field *field = GModel::current()->getFields()->get(iField);
+    if(!field || iField == id) return MAX_LC;
     return (*field)(atan2(y, x), asin(z / sqrt(x * x + y * y + z * z)), 0);
   }
 };
@@ -585,7 +585,7 @@ class ThresholdField : public Field
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     Field *field = GModel::current()->getFields()->get(iField);
-    if(!field) return MAX_LC;
+    if(!field || iField == id) return MAX_LC;
     double r = ((*field) (x, y, z) - dmin) / (dmax - dmin);
     r = std::max(std::min(r, 1.), 0.);
     double lc;
@@ -621,7 +621,7 @@ public:
   virtual void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0)
   {
     Field *field = GModel::current()->getFields()->get(iField);
-    if(!field) {
+    if(!field || iField == id) {
       metr(0,0) = 1/(MAX_LC*MAX_LC);
       metr(1,1) = 1/(MAX_LC*MAX_LC);
       metr(2,2) = 1/(MAX_LC*MAX_LC);
@@ -708,7 +708,7 @@ class GradientField : public Field
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     Field *field = GModel::current()->getFields()->get(iField);
-    if(!field) return MAX_LC;
+    if(!field || iField == id) return MAX_LC;
     double gx, gy, gz;
     switch (kind) {
     case 0:    /* x */
@@ -776,7 +776,7 @@ class CurvatureField : public Field
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     Field *field = GModel::current()->getFields()->get(iField);
-    if(!field) return MAX_LC;
+    if(!field || iField == id) return MAX_LC;
     double grad[6][3];
     grad_norm(*field, x + delta / 2, y, z, grad[0]);
     grad_norm(*field, x - delta / 2, y, z, grad[1]);
@@ -816,7 +816,7 @@ class MaxEigenHessianField : public Field
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     Field *field = GModel::current()->getFields()->get(iField);
-    if(!field) return MAX_LC;
+    if(!field || iField == id) return MAX_LC;
     double mat[3][3], eig[3];
     mat[1][0] = mat[0][1] = (*field) (x + delta / 2 , y + delta / 2, z)
       + (*field) (x - delta / 2 , y - delta / 2, z)
@@ -868,7 +868,7 @@ class LaplacianField : public Field
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     Field *field = GModel::current()->getFields()->get(iField);
-    if(!field) return MAX_LC;
+    if(!field || iField == id) return MAX_LC;
     return ((*field) (x + delta , y, z)+ (*field) (x - delta , y, z)
             +(*field) (x, y + delta , z)+ (*field) (x, y - delta , z)
             +(*field) (x, y, z + delta )+ (*field) (x, y, z - delta )
@@ -904,7 +904,7 @@ class MeanField : public Field
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     Field *field = GModel::current()->getFields()->get(iField);
-    if(!field) return MAX_LC;
+    if(!field || iField == id) return MAX_LC;
     return ((*field) (x + delta , y, z) + (*field) (x - delta, y, z)
             + (*field) (x, y + delta, z) + (*field) (x, y - delta, z)
             + (*field) (x, y, z + delta) + (*field) (x, y, z - delta)
@@ -1013,13 +1013,13 @@ class ParametricField : public Field
 {
   MathEvalExpression expr[3];
   std::string f[3];
-  int ifield;
+  int iField;
  public:
   ParametricField()
   {
-    ifield = 1;
+    iField = 1;
     options["IField"] = new FieldOptionInt
-      (ifield, "Field index");
+      (iField, "Field index");
     options["FX"] = new FieldOptionString
       (f[0], "X component of parametric function", &update_needed);
     options["FY"] = new FieldOptionString
@@ -1044,8 +1044,8 @@ class ParametricField : public Field
       }
       update_needed = false;
     }
-    Field *field = GModel::current()->getFields()->get(ifield);
-    if(!field) return MAX_LC;
+    Field *field = GModel::current()->getFields()->get(iField);
+    if(!field || iField == id) return MAX_LC;
     return (*field)(expr[0].evaluate(x, y, z),
                     expr[1].evaluate(x, y, z),
                     expr[2].evaluate(x, y, z));
@@ -1130,7 +1130,7 @@ class MinField : public Field
     double v = MAX_LC;
     for(std::list<int>::iterator it = idlist.begin(); it != idlist.end(); it++) {
       Field *f = (GModel::current()->getFields()->get(*it));
-      if(f) v = std::min(v, (*f) (x, y, z, ge));
+      if(f && *it != id) v = std::min(v, (*f) (x, y, z, ge));
     }
     return v;
   }
@@ -1158,7 +1158,7 @@ class MaxField : public Field
     double v = -MAX_LC;
     for(std::list<int>::iterator it = idlist.begin(); it != idlist.end(); it++) {
       Field *f = (GModel::current()->getFields()->get(*it));
-      if(f) v = std::max(v, (*f) (x, y, z, ge));
+      if(f && *it != id) v = std::max(v, (*f) (x, y, z, ge));
     }
     return v;
   }
@@ -1170,13 +1170,13 @@ class MaxField : public Field
 
 class RestrictField : public Field
 {
-  int ifield;
+  int iField;
   std::list<int> edges, faces, regions;
  public:
   RestrictField()
   {
-    ifield = 1;
-    options["IField"] = new FieldOptionInt(ifield, "Field index");
+    iField = 1;
+    options["IField"] = new FieldOptionInt(iField, "Field index");
     options["EdgesList"] = new FieldOptionList(edges, "Curve indices");
     options["FacesList"] = new FieldOptionList(faces, "Surface indices");
     options["RegionsList"] = new FieldOptionList(regions, "Volume indices");
@@ -1188,8 +1188,8 @@ class RestrictField : public Field
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
-    Field *f = (GModel::current()->getFields()->get(ifield));
-    if(!f) return MAX_LC;
+    Field *f = (GModel::current()->getFields()->get(iField));
+    if(!f || iField == id) return MAX_LC;
     if(!ge) return (*f) (x, y, z);
     if((ge->dim() == 0) ||
        (ge->dim() == 1 && std::find
