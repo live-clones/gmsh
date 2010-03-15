@@ -31,6 +31,7 @@
 #include "drawContext.h"
 #include "GmshMessage.h"
 #include "linearSystemCSR.h"
+#include "dgMesh2MeshProjection.h"
 
 extern "C" {
   #include "lua.h"
@@ -369,6 +370,7 @@ binding::binding(){
   gmshOptions::registerBindings(this);
   Msg::registerBindings(this);
   linearSystemCSRGmm<double>::registerBindings(this);
+  dgMesh2MeshProjection::registerBindings(this);
 }
 binding *binding::_instance=NULL;
 #endif

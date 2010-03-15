@@ -32,12 +32,14 @@ dgDofContainer::dgDofContainer (dgGroupCollection *groups, int nbFields):
   // create proxys for each group
   int offset = 0;
   _dataProxys.resize(_groups.getNbElementGroups()+_groups.getNbGhostGroups());
+  _groupFirstDofId.resize(_groups.getNbElementGroups()+_groups.getNbGhostGroups());
   for (int i=0;i<_groups.getNbElementGroups();i++){    
     dgGroupOfElements *group = _groups.getElementGroup(i);
     _groupId[group] = i;
     int nbNodes    = group->getNbNodes();
     int nbElements = group->getNbElements();
     _dataProxys[i] = new fullMatrix<double> (&(*_data)(offset),nbNodes, _nbFields*nbElements);
+    _groupFirstDofId[i] = offset;
     offset += nbNodes*_nbFields*nbElements;
   }  
 
@@ -51,16 +53,18 @@ dgDofContainer::dgDofContainer (dgGroupCollection *groups, int nbFields):
     _dataSizeGhost += nbNodes*_nbFields*nbElements;
   }
 
-  _dataProxys.resize(_groups.getNbElementGroups()+_groups.getNbGhostGroups());
   _ghostData = new fullVector<double>(_dataSizeGhost);
-  offset=0;
+  int ghostOffset=0;
   for (int i=0;i<_groups.getNbGhostGroups();i++){    
     dgGroupOfElements *group = _groups.getGhostGroup(i);
     int nbNodes    = group->getNbNodes();
     int nbElements = group->getNbElements();
-    _groupId[group] = i+_groups.getNbElementGroups();
-    _dataProxys[i+_groups.getNbElementGroups()] = new fullMatrix<double> (&(*_ghostData)(offset),nbNodes, _nbFields*nbElements);
+    int gid = i+_groups.getNbElementGroups();
+    _groupId[group] = gid;
+    _dataProxys[gid] = new fullMatrix<double> (&(*_ghostData)(ghostOffset),nbNodes, _nbFields*nbElements);
+    _groupFirstDofId[gid] = offset;
     offset += nbNodes*_nbFields*nbElements;
+    ghostOffset += nbNodes*_nbFields*nbElements;
   }  
 
 }
@@ -251,9 +255,10 @@ void dgDofContainer::Mesh2Mesh_BuildL2Projection(linearSystemCSRGmm<double> &pro
 // evauate quad
 // add to matrix correct indices
 
-// For multigrid, the donor and receiver are inverted :S
   dgGroupCollection* dGroups = donor.getGroups();
   dgGroupCollection* rGroups = this->getGroups();
+  if (rGroups->getElementGroup(0)->getDimUVW() > dGroups->getElementGroup(0)->getDimUVW())
+    Msg::Fatal("Cannot build projection matrix from lower dim to higher dim. Use the transpose.");
   std::vector<int> rGroupsStartIGlobal(rGroups->getNbElementGroups() + 1);
   int jGlobal = 0; // indices in global container
   rGroupsStartIGlobal[0] = 0;
@@ -261,9 +266,9 @@ void dgDofContainer::Mesh2Mesh_BuildL2Projection(linearSystemCSRGmm<double> &pro
     rGroupsStartIGlobal[i] = rGroupsStartIGlobal[i-1] + rGroups->getElementGroup(i-1)->getNbElements()*rGroups->getElementGroup(i-1)->getNbNodes();
   
   projector.allocate(rGroupsStartIGlobal[rGroupsStartIGlobal.size()-1]);
-//   fullMatrix<double> buffer = fullMatrix<double> (3,6);
-  for (int jGroup=0;jGroup<dGroups->getNbElementGroups();jGroup++) {// for 3d.groups
-    const dgGroupOfElements &dGroup = *dGroups->getElementGroup(jGroup);
+  // integration over donor function space
+  for (int jGroup=0;jGroup<dGroups->getNbElementGroups();jGroup++) {// for donor groups
+    const dgGroupOfElements &dGroup = *dGroups->getElementGroup(jGroup); 
     fullMatrix<double> iPtsMatrix = dGroup.getIntegrationPointsMatrix();
     for (int jElement=0 ; jElement<dGroup.getNbElements() ;++jElement) {// for elements
       double rShapeFun[256];
@@ -271,7 +276,7 @@ void dgDofContainer::Mesh2Mesh_BuildL2Projection(linearSystemCSRGmm<double> &pro
       GModel *rModel = rGroups->getModel();
       GModel *dModel = dGroups->getModel();
       MElement* dElem = dGroup.getElement(jElement);
-      for (int iPt =0; iPt< dGroup.getNbIntegrationPoints(); iPt++) {
+      for (int iPt =0; iPt< iPtsMatrix.size1(); iPt++) {
         double x=0,y=0,z=0;
         dElem->getFunctionSpace()->f(iPtsMatrix(iPt,0),iPtsMatrix(iPt,1),iPtsMatrix(iPt,2),dShapeFun);      
         for (int iVer=0; iVer < dElem->getNumVertices(); iVer++) {
@@ -279,25 +284,27 @@ void dgDofContainer::Mesh2Mesh_BuildL2Projection(linearSystemCSRGmm<double> &pro
           y += dElem->getVertex(iVer)->y()*dShapeFun[iVer];
           z += dElem->getVertex(iVer)->z()*dShapeFun[iVer];
         }
-        z = 0; // dummy projection to 2d mesh
-        SPoint3 p(x,y,z); // find p in 2D mesh
+        if (rGroups->getElementGroup(0)->getDimUVW() == 2) {
+          z = 0; // dummy projection to 2d mesh
+        }
+        SPoint3 p(x,y,z); // find p in receiver mesh
         MElement *rElem = rGroups->getModel()->getMeshElementByCoord(p);
         int iGroup,iElement;
         rGroups->find(rElem,iGroup,iElement);
         if (iElement == -1)
-          Msg::Error("Integration point not found in receiver mesh.");
+          Msg::Fatal("Integration point not found in receiver mesh.");
         const dgGroupOfElements &rGroup = *rGroups->getElementGroup(iGroup);      
         double U[3],X[3]={x,y,z};
         rElem->xyz2uvw(X,U);
         dGroup.getFunctionSpace().f(iPtsMatrix(iPt,0),iPtsMatrix(iPt,1),iPtsMatrix(iPt,2),dShapeFun);
         rGroup.getFunctionSpace().f(U[0],U[1],U[2],rShapeFun);
         const double detJ = dGroup.getDetJ (jElement, iPt);
-        int iGlobal = rGroupsStartIGlobal[iGroup]+rGroup.getNbNodes()*iElement;
+//         int iGlobal = rGroupsStartIGlobal[iGroup]+rGroup.getNbNodes()*iElement;
+        int iGlobal = this->getDofId(iGroup,iElement,0,0); // works only for one field !
         for (int jNode=0;jNode<dGroup.getNbNodes();jNode++){
           for (int iNode=0;iNode<rGroup.getNbNodes();iNode++){
             double val = rShapeFun[iNode]*dShapeFun[jNode]*iPtsMatrix(iPt,3)*detJ;
             projector.addToMatrix(iGlobal+iNode,jGlobal+jNode,val);
-//             buffer(iGlobal+iNode,jGlobal+jNode) += val;
           }
         }
       }
@@ -305,7 +312,6 @@ void dgDofContainer::Mesh2Mesh_BuildL2Projection(linearSystemCSRGmm<double> &pro
     }
   }
   multAddInverseMassMatrixL2Projection(projector);
-//   buffer.print();
 }
 
 void dgDofContainer::multAddInverseMassMatrixL2Projection(linearSystemCSRGmm<double> &projector){
@@ -337,11 +343,17 @@ void dgDofContainer::multAddInverseMassMatrixL2Projection(linearSystemCSRGmm<dou
   }
 }
 
-void dgDofContainer::Mesh2Mesh_ApplyL2Projection(linearSystemCSRGmm<double> &projector,dgDofContainer &donor){
-  scale(0.);
+void dgDofContainer::Mesh2Mesh_ApplyL2Projection(linearSystemCSRGmm<double> &projector,dgDofContainer &donor, int transpose, int copy){
+  dgDofContainer* dDof = &donor;
+  dgDofContainer* rDof = this;
+  if (transpose) {
+    rDof = &donor;
+    dDof = this;
+  }
+  setAll(0);
 
-  dgGroupCollection* dGroups = donor.getGroups();
-  dgGroupCollection* rGroups = this->getGroups();
+  dgGroupCollection* dGroups = dDof->getGroups();
+  dgGroupCollection* rGroups = rDof->getGroups();
   std::vector<int> dGroupsStartIGlobal(dGroups->getNbElementGroups() + 1);
   int iGlobal = 0; // indices in global container
   dGroupsStartIGlobal[0] = 0;
@@ -353,12 +365,11 @@ void dgDofContainer::Mesh2Mesh_ApplyL2Projection(linearSystemCSRGmm<double> &pro
   double *values;
   projector.getMatrix(startIndex,columns,values);
 
-int nbFields = 1; // TO DEFINE !!!
+  int nbFields = 1; // TO DEFINE !!!
 
   for (int iGroup=0;iGroup<rGroups->getNbElementGroups();iGroup++) {// for 2d.groups
     const dgGroupOfElements &rGroup = *rGroups->getElementGroup(iGroup);
 //    fullMatrix<double> buffer = fullMatrix<double> (rGroup.getNbNodes(),rGroup.getNbElements() * _nbFields);
-    this->getGroupProxy(iGroup).scale(0);
     for (int iElement=0 ; iElement<rGroup.getNbElements() ;++iElement) {// for elements
       for (int iNode = 0 ; iNode<rGroup.getNbNodes() ;++iNode) {
         int jGroup = 0;
@@ -370,7 +381,12 @@ int nbFields = 1; // TO DEFINE !!!
           int jElement = (jGlobal-dGroupsStartIGlobal[jGroup])/dGroups->getElementGroup(jGroup)->getNbNodes();
           int jNode = jGlobal-dGroupsStartIGlobal[jGroup]-jElement*dGroups->getElementGroup(jGroup)->getNbNodes();
           for (int m = 0; m < nbFields; m++){
-            this->getGroupProxy(iGroup)(iNode,iElement*nbFields+m) += values[i]*(donor.getGroupProxy(jGroup))(jNode,jElement*nbFields+m);
+            double val = values[i];
+            if (copy) val = (fabs(values[i]) > 1e-8) ? 1 : 0;
+            if (transpose)
+              this->getGroupProxy(jGroup)(jNode,jElement*nbFields+m) += val*donor.getGroupProxy(iGroup)(iNode,iElement*nbFields+m);
+            else
+              this->getGroupProxy(iGroup)(iNode,iElement*nbFields+m) += val*donor.getGroupProxy(jGroup)(jNode,jElement*nbFields+m);
 //             printf("%d %d %d %f %f %f\n",iGlobal,jGlobal,i, buffer(iNode,iElement*nbFields+m),values[i],(donor.getGroupProxy(jGroup))(jNode,jElement*nbFields+m));
           }
         }
@@ -529,7 +545,7 @@ void dgDofContainer::exportMsh(const std::string name)
       name_oss<<"_"<<Msg::GetCommRank();
     FILE *f = fopen (name_oss.str().c_str(),"w");
     if(!f){
-      Msg::Error("Unable to open export file '%s'", name.c_str());
+      Msg::Fatal("Unable to open export file '%s'", name.c_str());
     }
 
     int COUNT = 0;
@@ -592,7 +608,6 @@ void dgDofContainer::exportMsh(const std::string name)
   */
 }
 
-
 #include "LuaBindings.h"
 void dgDofContainer::registerBindings(binding *b){
   classBinding *cb = b->addClass<dgDofContainer>("dgDofContainer");
@@ -627,5 +642,5 @@ void dgDofContainer::registerBindings(binding *b){
   cm->setArgNames("projector","donor",NULL);
   cm = cb->addMethod("Mesh2Mesh_ApplyL2Projection",&dgDofContainer::Mesh2Mesh_ApplyL2Projection);
   cm->setDescription("Apply L2 projection matrix from donor to this dofContainer.");
-  cm->setArgNames("projector","donor",NULL);
+  cm->setArgNames("projector","donor","transpose","copy",NULL);
 }

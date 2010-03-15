@@ -25,15 +25,25 @@ private:
   double *sendBuf, *recvBuf;
   std::vector<fullMatrix<double> *> _dataProxys; // proxys 
   std::map<const dgGroupOfElements*,int> _groupId;
+  std::vector<int> _groupFirstDofId;
   int _mshStep;
 public:
   void scale(double f);
+  inline int getDofId (int groupId, int elementId, int fieldId, int nodeId) const {
+    const fullMatrix<double> &proxy = getGroupProxy(groupId);
+    return _groupFirstDofId[groupId]+(elementId*_nbFields+fieldId)*proxy.size1()+nodeId;
+  }
+  inline int getGroupFirstDofId(int groupId) {
+    return _groupFirstDofId[groupId];
+  }
+  inline fullVector<double> &getVector() {return *_data;}
   void scale(std::vector<dgGroupOfElements*>groups, double f);
   double norm();
   double norm(std::vector<dgGroupOfElements*>groups);
   void axpy(dgDofContainer &x, double a=1.);
   void axpy(std::vector<dgGroupOfElements*>groups,dgDofContainer &x, double a=1.);
   inline fullMatrix<double> &getGroupProxy(int gId){ return *(_dataProxys[gId]); }
+  inline const fullMatrix<double> &getGroupProxy(int gId) const { return *(_dataProxys[gId]); }
   inline fullMatrix<double> &getGroupProxy(const dgGroupOfElements* g){ return *(_dataProxys[_groupId[g]]); }
   dgDofContainer (dgGroupCollection *groups, int nbFields);
   ~dgDofContainer ();  
@@ -46,7 +56,7 @@ public:
   void L2Projection(const function *f);
   void Mesh2Mesh_BuildL2Projection(linearSystemCSRGmm<double> &projector,dgDofContainer &donor);
   void multAddInverseMassMatrixL2Projection(linearSystemCSRGmm<double> &projector); // this method should be private
-  void Mesh2Mesh_ApplyL2Projection(linearSystemCSRGmm<double> &projector,dgDofContainer &donor);
+  void Mesh2Mesh_ApplyL2Projection(linearSystemCSRGmm<double> &projector,dgDofContainer &donor, int transpose, int copy);
   void exportMsh(const std::string name);
   void exportGroupIdMsh();
   void exportMultirateGroupMsh();

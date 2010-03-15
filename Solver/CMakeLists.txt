@@ -32,6 +32,7 @@ set(SRC
   luaFunction.cpp
   functionSpace.cpp
   dgFunctionIntegrator.cpp
+  dgMesh2MeshProjection.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Solver *.h) 
