@@ -81,8 +81,7 @@ bool CellComplex::insert_cells(std::vector<MElement*>& elements,
 	}
 	if(!subdomain) {
 	  int ori = cell->getFacetOri(newCell);
-	  cell->addBoundaryCell( ori, newCell, true);
-	  newCell->addCoboundaryCell( ori, cell, true);
+	  cell->addBoundaryCell( ori, newCell, true, true);
 	}
       }
     }
@@ -267,9 +266,6 @@ int CellComplex::reduceComplex(bool omit)
   int count = 0;
   for(int i = 3; i > 0; i--) count = count + reduction(i);
 
-  printf(" %d volumes, %d faces, %d edges and %d vertices. \n",
-         getSize(3), getSize(2), getSize(1), getSize(0));
-
   if(omit){
     int omitted = 0;
     _store.clear();
@@ -290,12 +286,15 @@ int CellComplex::reduceComplex(bool omit)
     }
   }
   
+  printf(" %d volumes, %d faces, %d edges and %d vertices. \n",
+       getSize(3), getSize(2), getSize(1), getSize(0));
+
   combine(3);
   reduction(2);
   combine(2);
   reduction(1);
   combine(1);
-
+  
   printf(" %d volumes, %d faces, %d edges and %d vertices. \n",
 	 getSize(3), getSize(2), getSize(1), getSize(0));
   
@@ -332,10 +331,6 @@ int CellComplex::coreduceComplex(bool omit)
     }
   } 
   
-  printf(" %d volumes, %d faces, %d edges and %d vertices. \n",
-	 getSize(3), getSize(2), getSize(1), getSize(0));
-
-  
   int omitted = 0;
   if(omit){
     _store.clear();
@@ -352,6 +347,9 @@ int CellComplex::coreduceComplex(bool omit)
       coreduction(cell, omitted);
     }
   }
+
+  printf(" %d volumes, %d faces, %d edges and %d vertices. \n",
+	 getSize(3), getSize(2), getSize(1), getSize(0));
   
   cocombine(0);
   coreduction(1);
@@ -508,7 +506,7 @@ bool CellComplex::coherent()
         }
         if(!bdCell->hasCoboundary(cell)){
           printf("Warning! Incoherent boundary/coboundary pair! Fixed. \n");
-	  bdCell->addCoboundaryCell(ori, cell);
+	  bdCell->addCoboundaryCell(ori, cell, false, false);
           coherent = false;
         }
         
@@ -527,7 +525,7 @@ bool CellComplex::coherent()
         }
         if(!cbdCell->hasBoundary(cell)){
           printf("Warning! Incoherent coboundary/boundary pair! Fixed. \n");
-	  cbdCell->addBoundaryCell(ori, cell);
+	  cbdCell->addBoundaryCell(ori, cell, false, false);
           coherent = false;
         }
         

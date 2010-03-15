@@ -75,7 +75,7 @@ class Cell
    // get the number of vertices this cell has
   int getNumVertices() const { 
     if(_image == NULL) printf("ERROR: No image mesh element for cell. \n");
-    return _image->getNumVertices(); }
+    return _image->getNumPrimaryVertices(); }
   // get the number of facets of this cell
   int getNumFacets() const;
   // get the vertices on a facet of this cell
@@ -143,14 +143,14 @@ class Cell
     orig ? coboundary = _ocbd : coboundary = _cbd; }
   
   // add (co)boundary cell
-  virtual bool addBoundaryCell(int orientation, Cell* cell, 
-			       bool orig=false, bool other=false); 
-  virtual bool addCoboundaryCell(int orientation, Cell* cell, 
-				 bool orig=false, bool other=false);
+  virtual void addBoundaryCell(int orientation, Cell* cell, 
+			       bool orig=false, bool other=true); 
+  virtual void addCoboundaryCell(int orientation, Cell* cell, 
+				 bool orig=false, bool other=true);
   
   // remove (co)boundary cell
-  virtual int removeBoundaryCell(Cell* cell, bool other=true);
-  virtual int removeCoboundaryCell(Cell* cell, bool other=true);
+  virtual void removeBoundaryCell(Cell* cell, bool other=true);
+  virtual void removeCoboundaryCell(Cell* cell, bool other=true);
   
   // true if has given cell on (original) (co)boundary
   virtual bool hasBoundary(Cell* cell, bool orig=false);

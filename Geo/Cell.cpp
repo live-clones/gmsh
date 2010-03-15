@@ -36,8 +36,8 @@ Cell::Cell(MElement* image) :
 {
   _dim = image->getDim();
   _image = image;
-  for(int i = 0; i < image->getNumVertices(); i++) 
-    _vs.push_back(image->getVertex(i)->getNum()); 
+  for(int i = 0; i < getNumVertices(); i++) 
+    _vs.push_back(getVertex(i)->getNum()); 
   std::sort(_vs.begin(), _vs.end());
 }
 
@@ -167,65 +167,58 @@ void Cell::restoreCell(){
   _immune = false;   
 }
 
-bool Cell::addBoundaryCell(int orientation, Cell* cell, 
+void Cell::addBoundaryCell(int orientation, Cell* cell, 
 			   bool orig, bool other) 
 {
   if(orig) _obd.insert( std::make_pair(cell, orientation ) );
-  if(other) cell->addCoboundaryCell(orientation, this);
   biter it = _bd.find(cell);
   if(it != _bd.end()){
-    (*it).second = (*it).second + orientation;
-    if((*it).second == 0) {
+    int newOrientation = (*it).second + orientation;
+    if(newOrientation != 0) (*it).second = newOrientation;
+    else {
       _bd.erase(it);
       (*it).first->removeCoboundaryCell(this,false);
-      return false;
+      return;
     }
-    return true;
   }
-  _bd.insert( std::make_pair(cell, orientation ) );
-  return true;
+  else _bd.insert( std::make_pair(cell, orientation ) );
+  if(other) cell->addCoboundaryCell(orientation, this, orig, false);
 }
 
-bool Cell::addCoboundaryCell(int orientation, Cell* cell, 
+void Cell::addCoboundaryCell(int orientation, Cell* cell, 
 			     bool orig, bool other) 
 {
   if(orig) _ocbd.insert( std::make_pair(cell, orientation ) );
-  if(other) cell->addBoundaryCell(orientation, this);
   biter it = _cbd.find(cell);
   if(it != _cbd.end()){
-    (*it).second = (*it).second + orientation;
-    if((*it).second == 0) {
+    int newOrientation = (*it).second + orientation;
+    if(newOrientation != 0) (*it).second = newOrientation;
+    else {
       _cbd.erase(it);
       (*it).first->removeBoundaryCell(this,false);
-      return false;
+      return;
     }
-    return true;
   }
-  _cbd.insert( std::make_pair(cell, orientation ) );
-  return true;
+  else _cbd.insert( std::make_pair(cell, orientation ) );
+  if(other) cell->addBoundaryCell(orientation, this, orig, false);
 }
 
-int Cell::removeBoundaryCell(Cell* cell, bool other) 
+void Cell::removeBoundaryCell(Cell* cell, bool other) 
 {
   biter it = _bd.find(cell);
   if(it != _bd.end()){
     _bd.erase(it);
     if(other) (*it).first->removeCoboundaryCell(this, false);
-    return (*it).second;
   }
-  
-  return 0;
 }
  
-int Cell::removeCoboundaryCell(Cell* cell, bool other) 
+void Cell::removeCoboundaryCell(Cell* cell, bool other) 
 {
   biter it = _cbd.find(cell);
   if(it != _cbd.end()){
     _cbd.erase(it);
     if(other) (*it).first->removeBoundaryCell(this, false);
-    return (*it).second;
   }
-  return 0;
 }
    
 bool Cell::hasBoundary(Cell* cell, bool orig)
@@ -329,7 +322,7 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell()
     Cell* cell = (*it).first;
     int ori = (*it).second;
     cell->removeCoboundaryCell(c1); 
-    if(this->addBoundaryCell(ori, cell)) cell->addCoboundaryCell(ori, this);
+    this->addBoundaryCell(ori, cell, false, true);
   }
   for(biter it = c2Boundary.begin(); it != c2Boundary.end(); it++){
     Cell* cell = (*it).first;
@@ -338,13 +331,11 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell()
     cell->removeCoboundaryCell(c2);    
     if(co){
       biter it2 = c1Boundary.find(cell);
-      if(it2 == c1Boundary.end() && this->addBoundaryCell(ori, cell)) { 
-	cell->addCoboundaryCell(ori, this);
+      if(it2 == c1Boundary.end()){
+	this->addBoundaryCell(ori, cell, false, true);
       }
     }
-    else{
-      if(this->addBoundaryCell(ori, cell)) cell->addCoboundaryCell(ori, this);
-    }
+    else this->addBoundaryCell(ori, cell, false, true);
   }
 
   // coboundary cells
@@ -357,7 +348,7 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell()
     Cell* cell = (*it).first;
     int ori = (*it).second;
     cell->removeBoundaryCell(c1); 
-    if(this->addCoboundaryCell(ori, cell)) cell->addBoundaryCell(ori, this);
+    this->addCoboundaryCell(ori, cell, false, true);
   }
   for(biter it = c2Coboundary.begin(); it != c2Coboundary.end(); it++){
     Cell* cell = (*it).first;
@@ -366,13 +357,11 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell()
     cell->removeBoundaryCell(c2);    
     if(!co){
       biter it2 = c1Coboundary.find(cell);
-      if(it2 == c1Coboundary.end() && this->addCoboundaryCell(ori, cell)){
-	cell->addBoundaryCell(ori, this); 
+      if(it2 == c1Coboundary.end()){
+	this->addCoboundaryCell(ori, cell, false, true);
       }
     }
-    else {
-      if(this->addCoboundaryCell(ori, cell)) cell->addBoundaryCell(ori, this);
-    }
+    else this->addCoboundaryCell(ori, cell, false, true);
   }
 
 }
