@@ -37,6 +37,7 @@ void CellComplex::panic_exit(){
   }
   for(unsigned int i = 0; i < _newcells.size(); i++) delete _newcells.at(i);
   _newcells.clear();
+  printf("ERROR: No proper cell complex could be constructed!\n");
 }
 
 bool CellComplex::insert_cells(std::vector<MElement*>& elements,
@@ -45,65 +46,42 @@ bool CellComplex::insert_cells(std::vector<MElement*>& elements,
   // add highest dimensional cells
   for(unsigned int i=0; i < elements.size(); i++){
     MElement* element = elements.at(i);    
-    int dim = element->getDim();
-    int type = element->getType();
     
-    // simplex types
-    if( !(type == TYPE_PNT || type == TYPE_LIN || type == TYPE_TRI
-	  || type == TYPE_TET )){
+    int type = element->getType();   
+    if(_simplicial && !(type == TYPE_PNT || type == TYPE_LIN 
+		     || type == TYPE_TRI || type == TYPE_TET) ){
       _simplicial = false;
     }
     //FIXME: no getFaceInfo methods for these MElements
     if(type == TYPE_PYR){
-      printf("Error: mesh element %d not implemented yet! \n", type);
+      printf("ERROR: mesh element %d not implemented! \n", type);
       return false;
     }
     Cell* cell = new Cell(element);
     cell->setInSubdomain(subdomain);
-    std::pair<citer, bool> insertInfo = _cells[dim].insert(cell);
+    std::pair<citer, bool> insertInfo = _cells[cell->getDim()].insert(cell);
     if(!insertInfo.second) delete cell;  
   }
   
   // add lower dimensional cells recursively
-  MElementFactory factory;
   for (int dim = 3; dim > 0; dim--){
     for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
       Cell* cell = *cit;
-      std::vector<MVertex*> vertices;
-      for(int i = 0; i < cell->getNumFacets(); i++){ 
-        cell->getFacetVertices(i, vertices);
-        int type = cell->getImageMElement()->getType();
-        int newtype = 0;
-        //FIXME: high order meshes don't create high order cells
-        if(dim == 3){
-          if(type == TYPE_TET) newtype = MSH_TRI_3;
-	  else if(type == TYPE_HEX) newtype = MSH_QUA_4;
-	  else if(type == TYPE_PRI) {
-	    if(vertices.size() == 3) newtype = MSH_TRI_3;
-	    else if(vertices.size() == 4) newtype = MSH_QUA_4;
-	  }
-        }
-        else if(dim == 2) newtype = MSH_LIN_2;
-	else if(dim == 1)  newtype = MSH_PNT;
-	if(newtype == 0){
-	  printf("Error: mesh element %d not implemented yet! \n", type);
-	  return false;
-	}
-	
-	MElement* element = factory.create(newtype, vertices, 0, 
-					   cell->getImageMElement()->
-					   getPartition());
-        Cell* newCell = new Cell(element);
+      std::vector<Cell*> bdCells;
+      if(!cell->findBoundaryCells(bdCells)) return false;
+      for(unsigned int i = 0; i < bdCells.size(); i++){
+	Cell* newCell = bdCells.at(i);
 	newCell->setInSubdomain(subdomain);
-        newCell->setDeleteImage(true);
-        std::pair<citer, bool> insertInfo = _cells[dim-1].insert(newCell);
-        if(!insertInfo.second){
-          delete newCell; 
-          newCell = *(insertInfo.first);
-        }
-        if(!subdomain) {
-          int ori = cell->getFacetOri(newCell);
-          cell->addBoundaryCell( ori, newCell, true);
+	newCell->setDeleteImage(true);
+	std::pair<citer, bool> insertInfo = 
+	  _cells[newCell->getDim()].insert(newCell);
+	if(!insertInfo.second){ // the cell was already in the cell complex
+	  delete newCell; 
+	  newCell = *(insertInfo.first); 
+	}
+	if(!subdomain) {
+	  int ori = cell->getFacetOri(newCell);
+	  cell->addBoundaryCell( ori, newCell, true);
 	  newCell->addCoboundaryCell( ori, cell, true);
 	}
       }
@@ -132,9 +110,7 @@ void CellComplex::insertCell(Cell* cell)
 {
   _newcells.push_back(cell);      
   std::pair<citer, bool> insertInfo = _cells[cell->getDim()].insert(cell);
-  if(!insertInfo.second){
-    //printf("Warning: Cell not inserted! \n");
-  }
+  if(!insertInfo.second) printf("Warning: Cell not inserted! \n");
 }
 
 void CellComplex::removeCell(Cell* cell, bool other)
@@ -178,15 +154,15 @@ void CellComplex::enqueueCells(std::map<Cell*, int, Less_Cell>& cells,
   }
 }
 
-int CellComplex::coreduction(Cell* generator, int omitted)
+int CellComplex::coreduction(Cell* startCell, int omitted)
 {  
   int coreductions = 0;
   
   std::queue<Cell*> Q;
   std::set<Cell*, Less_Cell> Qset;
   
-  Q.push(generator);
-  Qset.insert(generator);
+  Q.push(startCell);
+  Qset.insert(startCell);
   
   std::map<Cell*, int, Less_Cell > bd_s;
   std::map<Cell*, int, Less_Cell > cbd_c;
@@ -304,7 +280,7 @@ int CellComplex::reduceComplex(bool omit)
       
       citer cit = firstCell(getDim());
       Cell* cell = *cit;
-      removeCell(cell);
+      removeCell(cell, false);
       
       omitted++;
       std::set< Cell*, Less_Cell > omittedCells;
@@ -420,9 +396,9 @@ int CellComplex::cocombine(int dim)
 
         if(!(*c1 == *c2) && abs(or1) == abs(or2)
            && inSameDomain(s, c1) && inSameDomain(s, c2)
-           && c1->getNumVertices() < getSize(dim) 
+           && c1->getNumSortedVertices() < getSize(dim) 
 	   // heuristics for mammoth cell birth control
-           && c2->getNumVertices() < getSize(dim)){
+           && c2->getNumSortedVertices() < getSize(dim)){
 
 	  removeCell(s);
           
@@ -482,9 +458,9 @@ int CellComplex::combine(int dim)
 
         if(!(*c1 == *c2) && abs(or1) == abs(or2)
            && inSameDomain(s, c1) && inSameDomain(s, c2)
-           && c1->getNumVertices() < getSize(dim) 
+           && c1->getNumSortedVertices() < getSize(dim) 
 	   // heuristics for mammoth cell birth control
-           && c2->getNumVertices() < getSize(dim)){
+           && c2->getNumSortedVertices() < getSize(dim)){
 
           removeCell(s);
           

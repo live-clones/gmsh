@@ -61,7 +61,7 @@ class CellComplex
   void insertCell(Cell* cell);
   
   // queued coreduction presented in Mrozek's paper
-  int coreduction(Cell* generator, int omitted=0);
+  int coreduction(Cell* startCell, int omitted=0);
   
  public: 
   

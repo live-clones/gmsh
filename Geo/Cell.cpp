@@ -14,14 +14,14 @@ bool Less_Cell::operator()(const Cell* c1, const Cell* c2) const
 {  
   //cells with fever vertices first
   
-  if(c1->getNumVertices() != c2->getNumVertices()){
-    return (c1->getNumVertices() < c2->getNumVertices());
+  if(c1->getNumSortedVertices() != c2->getNumSortedVertices()){
+    return (c1->getNumSortedVertices() < c2->getNumSortedVertices());
   }
 
   // "natural number" -like ordering 
   // (the number of a vertice corresponds a digit)
   
-  for(int i=0; i < c1->getNumVertices();i++){
+  for(int i=0; i < c1->getNumSortedVertices();i++){
     if(c1->getSortedVertex(i) < c2->getSortedVertex(i)) return true;
     else if (c1->getSortedVertex(i) > c2->getSortedVertex(i)) return false;
   }
@@ -44,6 +44,37 @@ Cell::Cell(MElement* image) :
 Cell::~Cell() 
 {
   if(_delimage) delete _image; 
+}
+
+bool Cell::findBoundaryCells(std::vector<Cell*>& bdCells)
+{
+  bdCells.clear();
+  MElementFactory factory;
+  for(int i = 0; i < getNumFacets(); i++){
+    std::vector<MVertex*> vertices;
+    getFacetVertices(i, vertices);
+    int type = _image->getType();
+    int newtype = 0;
+    if(_dim == 3){
+      if(type == TYPE_TET) newtype = MSH_TRI_3;
+      else if(type == TYPE_HEX) newtype = MSH_QUA_4;
+      else if(type == TYPE_PRI) {
+	if(vertices.size() == 3) newtype = MSH_TRI_3;
+	else if(vertices.size() == 4) newtype = MSH_QUA_4;
+      }
+    }
+    else if(_dim == 2) newtype = MSH_LIN_2;
+    else if(_dim == 1) newtype = MSH_PNT;
+    if(newtype == 0){
+      printf("Error: mesh element %d not implemented yet! \n", type);
+      return false;
+    }
+    MElement* element = factory.create(newtype, vertices, 0, 
+				       _image->getPartition());
+    Cell* cell = new Cell(element);
+    bdCells.push_back(cell);
+  }
+  return true;
 }
 
 int Cell::getNumFacets() const 
@@ -121,11 +152,11 @@ void Cell::printCell()
 {
   printf("%d-cell: \n" , getDim());
   printf("Vertices: ");
-  for(int i = 0; i < this->getNumVertices(); i++){
+  for(int i = 0; i < this->getNumSortedVertices(); i++){
     printf("%d ", this->getSortedVertex(i));
   }
-  printf(", in subdomain: %d\n", inSubdomain());
-  printf("Combined: %d \n" , isCombined() );
+  printf(", in subdomain: %d, ", inSubdomain());
+  printf("combined: %d. \n" , isCombined() );
 };
 
 void Cell::restoreCell(){
@@ -252,7 +283,7 @@ void Cell::printCoboundary(bool orig)
 CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell() 
 {  
   // use "smaller" cell as c2
-  if(c1->getNumVertices() < c2->getNumVertices()){
+  if(c1->getNumSortedVertices() < c2->getNumSortedVertices()){
     Cell* temp = c1;
     c1 = c2;
     c2 = temp;
@@ -265,12 +296,12 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell()
   _image = NULL;
 
   // vertices
-  _vs.reserve(c1->getNumVertices() + c2->getNumVertices());
-  for(int i = 0; i < c1->getNumVertices(); i++){
+  _vs.reserve(c1->getNumSortedVertices() + c2->getNumSortedVertices());
+  for(int i = 0; i < c1->getNumSortedVertices(); i++){
     _vs.push_back(c1->getSortedVertex(i));
   }
   std::vector<int> v;
-  for(int i = 0; i < c2->getNumVertices(); i++){
+  for(int i = 0; i < c2->getNumSortedVertices(); i++){
     if(!this->hasVertex(c2->getSortedVertex(i))){
       v.push_back(c2->getSortedVertex(i)); 
     }

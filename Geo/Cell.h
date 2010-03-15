@@ -18,10 +18,9 @@
 #include <set>
 #include <list>
 #include <map>
-#include <queue>
 #include "CellComplex.h"
 #include "MElement.h"
-//#include "GModel.h"
+#include "MVertex.h"
 
 class Cell;
 
@@ -69,38 +68,41 @@ class Cell
   // sorted vertices of this cell (used for ordering of the cells)
   std::vector<int> _vs;
 
-  virtual MVertex* getVertex(int vertex) const { 
+  // get vertex 
+  MVertex* getVertex(int vertex) const { 
     if(_image == NULL) printf("ERROR: No image mesh element for cell. \n");
     return _image->getVertex(vertex); }  
- 
+   // get the number of vertices this cell has
+  int getNumVertices() const { 
+    if(_image == NULL) printf("ERROR: No image mesh element for cell. \n");
+    return _image->getNumVertices(); }
+  // get the number of facets of this cell
+  int getNumFacets() const;
+  // get the vertices on a facet of this cell
+  void getFacetVertices(const int num, std::vector<MVertex*> &v) const;
+  
  public:
 
  Cell() : _combined(false), _index(0), _immune(false), _image(NULL), 
     _delimage(false), _subdomain(false) {}
   Cell(MElement* image);
-  virtual ~Cell();
-  
+  ~Cell();
+
   // the mesh element this cell is represented by
-  virtual MElement* getImageMElement() const { 
+  MElement* getImageMElement() const { 
     if(_image == NULL) printf("ERROR: No image mesh element for cell. \n");
     return _image; }
-  // get the number of vertices this cell has
-  virtual int getNumVertices() const { 
-    if(_image == NULL) return _vs.size();
-    else return _image->getNumVertices(); }
-  // get the number of facets of this cell
-  virtual int getNumFacets() const;
-  // get the vertices on a facet of this cell
-  virtual void getFacetVertices(const int num, std::vector<MVertex*> &v) const;
-  // get boundary cell orientation
-  virtual int getFacetOri(Cell* cell);
   // get/set whether the image mesh element should be deleted when
   // this cell gets deleted 
   // (was the mesh element in the original mesh,
   // is it needed after homology computation for visualization?) 
-  virtual void setDeleteImage(bool delimage) { _delimage = delimage; }
-  virtual bool getDeleteImage() const { return _delimage; }
-  
+  void setDeleteImage(bool delimage) { _delimage = delimage; }
+  bool getDeleteImage() const { return _delimage; }
+
+  // find the cells on the boundary of this cell 
+  bool findBoundaryCells(std::vector<Cell*>& bdCells);
+  // get boundary cell orientation
+  int getFacetOri(Cell* cell);
 
   virtual int getDim() const { return _dim; };
   virtual int getIndex() const { return _index; };
@@ -109,6 +111,7 @@ class Cell
   virtual bool getImmune() const { return _immune; };
   virtual bool inSubdomain() const { return _subdomain; }
   virtual void setInSubdomain(bool subdomain)  { _subdomain = subdomain; }
+  virtual int getNumSortedVertices() const { return _vs.size(); }
   virtual int getSortedVertex(int vertex) const { return _vs.at(vertex); }
   
   // restores the cell information to its original state before reduction
@@ -172,32 +175,22 @@ class Cell
   
   // equivalence
   bool operator==(const Cell& c2) const {  
-    if(this->getNumVertices() != c2.getNumVertices()){
+    if(this->getNumSortedVertices() != c2.getNumSortedVertices()){
       return false;
     }
-    for(int i=0; i < this->getNumVertices();i++){
+    for(int i=0; i < this->getNumSortedVertices();i++){
       if(this->getSortedVertex(i) != c2.getSortedVertex(i)){
 	return false;
       }
     }
     return true;
   }
-  /*
-  Cell operator=(const Cell& c2) {
-    Cell cell;
-    cell._ocbd = c2._ocbd;
-
-    return cell;
-  }
-  Cell(const Cell& c2){ *this = c2; }*/
 };
 
 // A cell that is a combination of cells of same dimension
 class CombinedCell : public Cell{
   
  private:
-  // sorted list of vertices
-  std::vector<int> _vs;
   // list of cells this cell is a combination of
   std::list< std::pair<int, Cell*> > _cells;
   
@@ -206,9 +199,6 @@ class CombinedCell : public Cell{
   CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co=false);
   ~CombinedCell() {}
   
-  int getNumVertices() const { return _vs.size(); } 
-  int getSortedVertex(int vertex) const { return _vs.at(vertex); }
-
   void getCells(std::list< std::pair<int, Cell*> >& cells) { cells = _cells; }
   int getNumCells() {return _cells.size();}
   
