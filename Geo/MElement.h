@@ -65,7 +65,7 @@ class MElement
 
   // get/set the partition to which the element belongs
   virtual int getPartition() const { return _partition; }
-  virtual void setPartition(int num){_partition = (short)num; }
+  virtual void setPartition(int num){ _partition = (short)num; }
 
   // get/set the visibility flag
   virtual char getVisibility() const;
