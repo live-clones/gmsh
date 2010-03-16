@@ -26,8 +26,8 @@ void dgFunctionIntegrator::compute(dgDofContainer *sol,fullMatrix<double> &resul
     group.getCollocationMatrix().mult(solProxy  , solutionQP); 
     fullMatrix<double> IPMatrix = group.getIntegrationPointsMatrix();
     for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {
-      solutionQPe.setAsProxy(solutionQP, iElement*nbFields, nbFields );
       cacheElement.set(group.getElement(iElement));
+      solutionQPe.setAsProxy(solutionQP, iElement*nbFields, nbFields );
       for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
         const double detJ = group.getDetJ (iElement, iPt);
         for (int k=0;k<nbRowResult;k++){

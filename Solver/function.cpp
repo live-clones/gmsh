@@ -502,7 +502,7 @@ void function::registerBindings(binding *b){
 
   cb = b->addClass<functionSolution>("functionSolution");
   cb->setDescription("A function to access the solution. This is a single-instance class, use the 'get' member to access the instance.");
-  mb = cb->addMethod("get",&functionCoordinates::get);
+  mb = cb->addMethod("get",&functionSolution::get);
   mb->setDescription("return the unique instance of this class");
   cb->setParentClass<function>();
 
