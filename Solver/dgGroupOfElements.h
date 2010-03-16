@@ -250,7 +250,7 @@ class dgGroupCollection {
   void buildGroupsOfElements (GModel *model,int dimension, int order, std::vector<std::string>* physicalTags);
   void buildGroupsOfInterfaces ();
 
-  double splitGroupsForMultirate(int maxLevels,int bufferSize,dgConservationLaw *claw, dgDofContainer *solution);
+  double splitGroupsForMultirate(int maxLevels,int innerBufferSize,int outerBufferSize,dgConservationLaw *claw, dgDofContainer *solution);
   void splitGroupsByVerticalLayer(std::vector<std::string> topLevelTags);
 
   void find (MElement *elementToFind, int &iGroup, int &ithElementOfGroup);

@@ -18,6 +18,7 @@
 #else
 #include <string.h>
 #endif
+//#define TEST
 
 
 static fullMatrix<double> * dgGetIntegrationRule (MElement *e, int p){
@@ -758,7 +759,7 @@ void dgGroupCollection::buildParallelStructure()
 }
 
 // Split the groups of elements depending on their local time step
-double dgGroupCollection::splitGroupsForMultirate(int maxLevels,int bufferSize,dgConservationLaw *claw, dgDofContainer *solution) {
+double dgGroupCollection::splitGroupsForMultirate(int maxLevels,int innerBufferSize,int outerBufferSize,dgConservationLaw *claw, dgDofContainer *solution) {
   // What are the levels/layers:
   // bulk: elements that are time stepped using the "normal" 4 stage Runge-Kutta
   // innerBuffer: elements that use the small time step but talks to elements using the big time step
@@ -856,6 +857,7 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,int bufferSize,d
 
   // We pass two times by each exponent level: one for the normal(bulk) + innerBuffer groups, and one for the outerBuffer groups
   for(int currentExponent=dtMaxExponent;currentExponent>=0;(!isOuterBufferLayer)?currentExponent--:currentExponent=currentExponent){
+    int currentBufferSize=isOuterBufferLayer?outerBufferSize:innerBufferSize;
     double currentDt=dtRef/pow(2.0,(double)currentExponent);
     // element for the new groups at this level:
     // mapNewGroups[oldGroupId][oldElementId]
@@ -868,7 +870,7 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,int bufferSize,d
       // For buffer AND non buffer layers
       lowerLevelGroupIdStart=lowerLevelGroupIdEnd;
       // We add bufferSize elements (most of the time, bufferSize=1 is enough)
-      for(int iLoop=0;iLoop<bufferSize;iLoop++){
+      for(int iLoop=0;iLoop<currentBufferSize;iLoop++){
         for(int iInterface=0;iInterface<miniInterfaceV->size();iInterface++){
           dgMiniInterface &interface=miniInterfaceV->at(iInterface);
           bool toAdd=false;
@@ -917,7 +919,7 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,int bufferSize,d
 
 #define MAXBUFFERSIZE 100000
       if(currentExponent>0){
-        for(int iLoop=0;iLoop<bufferSize;iLoop++){
+        for(int iLoop=0;iLoop<currentBufferSize;iLoop++){
           for (std::map<int, std::vector<int> >::iterator it = mapNewGroups.begin(); it !=mapNewGroups.end() ; ++it){
             for(int i=0;i<it->second.size();i++){
               bool inInnerBuffer=false;
@@ -969,9 +971,22 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,int bufferSize,d
             oldGroupIds[currentNewGroupId]=it->first;
             newGroup=new dgGroupOfElements(forBulkV,oldGroup->getOrder(),oldGroup->getGhostPartition());
             newGroup->copyPrivateDataFrom(oldGroup);
+            #ifdef TEST
+            if(currentExponent==0){
+              newGroup->_multirateExponent=currentExponent+1;
+              newGroup->_multirateOuterBuffer=true;
+              newGroup->_multirateInnerBuffer=false;
+            }
+            else{
+              newGroup->_multirateExponent=currentExponent;
+              newGroup->_multirateOuterBuffer=false;
+              newGroup->_multirateInnerBuffer=true;
+            }
+            #else
             newGroup->_multirateExponent=currentExponent;
             newGroup->_multirateOuterBuffer=false;
             newGroup->_multirateInnerBuffer=false;
+            #endif
             newGroups.resize(currentNewGroupId+1);
             newGroups[currentNewGroupId]=newGroup;
             currentNewGroupId++;
@@ -1237,7 +1252,7 @@ void dgGroupCollection::registerBindings(binding *b)
   cm->setDescription("Build the group of interfaces, i.e. boundary interfaces and inter-element interfaces");
   cm = cb->addMethod("splitGroupsForMultirate",&dgGroupCollection::splitGroupsForMultirate);
   cm->setDescription("Split the groups according to their own stable time step");
-  cm->setArgNames("maxLevels","bufferSize","claw","solution",NULL);
+  cm->setArgNames("maxLevels","innerBufferSize","outerBufferSize","claw","solution",NULL);
   cm = cb->addMethod("splitGroupsByVerticalLayer",&dgGroupCollection::splitGroupsByVerticalLayer);
   cm->setDescription("Split the groups according vertical layer structure. The first is defined by the topLevelTags.");
   cm->setArgNames("topLevelTags",NULL);
