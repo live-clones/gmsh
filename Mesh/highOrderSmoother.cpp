@@ -441,8 +441,6 @@ void highOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
   
   std::vector<MElement*> layer, v;
 
-  double minD;
-
   if (!v.size()) return;
 
   const int nbLayers = 10; //2, originally :)

@@ -257,9 +257,9 @@ void backgroundMesh::unset (){
   _current = 0;
 }
 
-backgroundMesh::backgroundMesh (GFace *_gf)
+backgroundMesh::backgroundMesh(GFace *_gf)
 {
- for (int i=0;i<_gf->triangles.size();i++){
+ for (unsigned int i = 0; i < _gf->triangles.size(); i++){
    MTriangle *e = _gf->triangles[i];
    MVertex *news[3];
    for (int j=0;j<3;j++){
@@ -268,7 +268,7 @@ backgroundMesh::backgroundMesh (GFace *_gf)
      if (it == _3Dto2D.end()){
        SPoint2 p;
        bool success = reparamMeshVertexOnFace(e->getVertex(j), _gf, p);       
-       newv = new MVertex (p.x(),p.y(),0.0);
+       newv = new MVertex (p.x(), p.y(), 0.0);
        _vertices.push_back(newv);
        _3Dto2D[e->getVertex(j)] = newv;
        _2Dto3D[newv] = e->getVertex(j);
@@ -278,13 +278,13 @@ backgroundMesh::backgroundMesh (GFace *_gf)
    }
    _triangles.push_back(new MTriangle(news[0],news[1],news[2]));
  }
- _octree = buildMElementOctree (_triangles); 
+ _octree = buildMElementOctree(_triangles); 
  if (CTX::instance()->mesh.lcFromPoints)
-    propagate1dMesh(_gf);
+   propagate1dMesh(_gf);
  else {
-   std::map<MVertex*,MVertex*>::iterator itv2 = _2Dto3D.begin();
+   std::map<MVertex*, MVertex*>::iterator itv2 = _2Dto3D.begin();
    for ( ; itv2 != _2Dto3D.end(); ++itv2){
-     _sizes[itv2->first] = 1.e22;
+     _sizes[itv2->first] = LC_MAX;
    }
  }
  updateSizes(_gf);
@@ -292,13 +292,14 @@ backgroundMesh::backgroundMesh (GFace *_gf)
  _2Dto3D.clear();
 }
 
-backgroundMesh::~backgroundMesh (){
-  for (int i=0;i<_vertices.size();i++) delete _vertices[i];
-  for (int i=0;i<_triangles.size();i++) delete _triangles[i];
+backgroundMesh::~backgroundMesh()
+{
+  for (unsigned int i = 0; i < _vertices.size(); i++) delete _vertices[i];
+  for (int i = 0; i < _triangles.size(); i++) delete _triangles[i];
   delete _octree;
 }
 
-void backgroundMesh::propagate1dMesh (GFace * _gf)
+void backgroundMesh::propagate1dMesh(GFace *_gf)
 {
   std::list<GEdge*> e = _gf->edges();
   std::list<GEdge*>::const_iterator it = e.begin();
@@ -306,15 +307,15 @@ void backgroundMesh::propagate1dMesh (GFace * _gf)
   
   linearSystem<double> *_lsys = 0;
 #if defined(HAVE_PETSC) && !defined(HAVE_TAUCS)
-    _lsys = new linearSystemPETSc<double>;
+  _lsys = new linearSystemPETSc<double>;
 #elif defined(HAVE_GMM) && !defined(HAVE_TAUCS)
-    linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
-    _lsysb->setGmres(1);
-    _lsys = _lsysb;
+  linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
+  _lsysb->setGmres(1);
+  _lsys = _lsysb;
 #elif defined(HAVE_TAUCS) 
-    _lsys = new linearSystemCSRTaucs<double>;
+  _lsys = new linearSystemCSRTaucs<double>;
 #else
-    _lsys = new linearSystemFull<double>;
+  _lsys = new linearSystemFull<double>;
 #endif
     
   dofManager<double> myAssembler(_lsys);
@@ -338,7 +339,7 @@ void backgroundMesh::propagate1dMesh (GFace * _gf)
       }
     }
   }
-  std::map<MVertex*,double>::iterator itv = sizes.begin();
+  std::map<MVertex*, double>::iterator itv = sizes.begin();
   for ( ; itv != sizes.end(); ++itv){
     myAssembler.fixVertex(itv->first, 0, 1, itv->second);
   }
@@ -346,14 +347,14 @@ void backgroundMesh::propagate1dMesh (GFace * _gf)
   simpleFunction<double> ONE(1.0);
   laplaceTerm l(0, 1, &ONE);
 
-  for (unsigned int k= 0; k< _gf->triangles.size(); k++){
+  for (unsigned int k = 0; k < _gf->triangles.size(); k++){
     MTriangle *t = _gf->triangles[k];
     myAssembler.numberVertex(t->getVertex(0), 0, 1);
     myAssembler.numberVertex(t->getVertex(1), 0, 1);
     myAssembler.numberVertex(t->getVertex(2), 0, 1); 
   }
   
-  for (unsigned int k= 0; k< _gf->triangles.size(); k++){
+  for (unsigned int k = 0; k < _gf->triangles.size(); k++){
     MTriangle *t = _gf->triangles[k];
     SElement se(t);
     l.addToMatrix(myAssembler, &se);    
@@ -370,7 +371,8 @@ void backgroundMesh::propagate1dMesh (GFace * _gf)
   delete _lsys;
 }
 
-void backgroundMesh::updateSizes (GFace * _gf){
+void backgroundMesh::updateSizes(GFace *_gf)
+{
   std::map<MVertex*,double>::iterator itv = _sizes.begin();
   for ( ; itv != _sizes.end(); ++itv){    
     SPoint2 p;
@@ -381,12 +383,12 @@ void backgroundMesh::updateSizes (GFace * _gf){
     }
     else if (v->onWhat()->dim() == 1){
       double u;
-      v->getParameter(0,u);
-      lc = BGM_MeshSize(v->onWhat(), u,0,v->x(),v->y(),v->z());
+      v->getParameter(0, u);
+      lc = BGM_MeshSize(v->onWhat(), u, 0, v->x(), v->y(), v->z());
     }
     else{
       bool success = reparamMeshVertexOnFace(v, _gf, p);       
-      lc = BGM_MeshSize(_gf, p.x(),p.y(),v->x(),v->y(),v->z());
+      lc = BGM_MeshSize(_gf, p.x(), p.y(), v->x(), v->y(), v->z());
     }
     //    printf("2D -- %g %g 3D -- %g %g\n",p.x(),p.y(),v->x(),v->y());
     itv->second = std::min(lc,itv->second);
@@ -397,7 +399,6 @@ void backgroundMesh::updateSizes (GFace * _gf){
   // ---------------------
   // now do some diffusion
   // ---------------------
-
 
   std::list<GEdge*> e = _gf->edges();
   std::list<GEdge*>::const_iterator it = e.begin();
@@ -472,7 +473,8 @@ void backgroundMesh::updateSizes (GFace * _gf){
   delete _lsys;
 }
 
-double backgroundMesh::operator() (double u, double v, double w) const {
+double backgroundMesh::operator() (double u, double v, double w) const
+{
   double uv[3] = {u, v, w};
   double uv2[3];
   //  return 1.0;
@@ -489,7 +491,8 @@ double backgroundMesh::operator() (double u, double v, double w) const {
   return itv1->second * (1-uv2[0]-uv2[1]) + itv2->second * uv2[0] + itv3->second * uv2[1];
 }
 
-void backgroundMesh::print (const std::string &filename, GFace *gf) const {
+void backgroundMesh::print (const std::string &filename, GFace *gf) const
+{
   FILE *f = fopen (filename.c_str(),"w");
   fprintf(f,"View \"Background Mesh\"{\n");
   for(int i=0;i<_triangles.size();i++){

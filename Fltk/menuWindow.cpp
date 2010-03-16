@@ -446,7 +446,7 @@ void file_watch_cb(Fl_Widget *w, void *data)
   for(unsigned int i = 0; i < GModel::list.size(); i++)
     allFiles.insert(GetFileNameWithoutPath(GModel::list[i]->getFileName()));
   for(unsigned int i = 0; i < PView::list.size(); i++)
-    for(unsigned int j = 0; j < PView::list[i]->getData()->getNumTimeSteps(); j++)
+    for(int j = 0; j < PView::list[i]->getData()->getNumTimeSteps(); j++)
       allFiles.insert(GetFileNameWithoutPath(PView::list[i]->getData()->getFileName(j)));
 
   for(unsigned int i = 0; i < matches.size(); i++)

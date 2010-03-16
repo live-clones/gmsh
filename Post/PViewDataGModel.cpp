@@ -114,7 +114,7 @@ MElement *PViewDataGModel::_getElement(int step, int ent, int ele)
 
 std::string PViewDataGModel::getFileName(int step)
 {
-  if(step < 0 || step > _steps.size() - 1) return PViewData::getFileName();
+  if(step < 0 || step > (int)_steps.size() - 1) return PViewData::getFileName();
   return _steps[step]->getFileName();
 }
 
