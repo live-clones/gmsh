@@ -42,7 +42,8 @@ static int MElementInEle(void *a, double *x)
   return e->isInside(uvw[0], uvw[1], uvw[2]) ? 1 : 0;
 }
 
-Octree * buildMElementOctree (GModel *m){
+Octree *buildMElementOctree (GModel *m)
+{
   SBoundingBox3d bb = m->bounds();
   double min[3] = {bb.min().x(), bb.min().y(), bb.min().z()};
   double size[3] = {bb.max().x() - bb.min().x(),
@@ -60,7 +61,8 @@ Octree * buildMElementOctree (GModel *m){
   return _octree;
 }
 
-Octree * buildMElementOctree (std::vector<MElement*> &v){
+Octree *buildMElementOctree(std::vector<MElement*> &v)
+{
   SBoundingBox3d bb;
   for (unsigned int i=0;i<v.size();i++){
     for(unsigned int j=0;j<v[i]->getNumVertices();j++){
@@ -73,11 +75,10 @@ Octree * buildMElementOctree (std::vector<MElement*> &v){
   double size[3] = {bb.max().x() - bb.min().x(),
 		    bb.max().y() - bb.min().y(),
 		    bb.max().z() - bb.min().z()};
-  //  printf("%d --> %g %g %g -- %g %g %g\n",v.size(),min[0],min[1],min[2],size[0],size[1],size[2]);
   const int maxElePerBucket = 100; // memory vs. speed trade-off
   Octree *_octree = Octree_Create(maxElePerBucket, min, size,
 				  MElementBB, MElementCentroid, MElementInEle);
-  for (unsigned int i=0;i<v.size();i++)
+  for (unsigned int i = 0; i < v.size(); i++)
     Octree_Insert(v[i], _octree);
   Octree_Arrange(_octree);
   return _octree;

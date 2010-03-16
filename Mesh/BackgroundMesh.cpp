@@ -259,37 +259,37 @@ void backgroundMesh::unset (){
 
 backgroundMesh::backgroundMesh(GFace *_gf)
 {
- for (unsigned int i = 0; i < _gf->triangles.size(); i++){
-   MTriangle *e = _gf->triangles[i];
-   MVertex *news[3];
-   for (int j=0;j<3;j++){
-     std::map<MVertex*,MVertex*>::iterator it = _3Dto2D.find(e->getVertex(j));
-     MVertex *newv =0;
-     if (it == _3Dto2D.end()){
-       SPoint2 p;
-       bool success = reparamMeshVertexOnFace(e->getVertex(j), _gf, p);       
-       newv = new MVertex (p.x(), p.y(), 0.0);
-       _vertices.push_back(newv);
-       _3Dto2D[e->getVertex(j)] = newv;
-       _2Dto3D[newv] = e->getVertex(j);
-     }
-     else newv = it->second;
-     news[j] = newv;
-   }
-   _triangles.push_back(new MTriangle(news[0],news[1],news[2]));
- }
- _octree = buildMElementOctree(_triangles); 
- if (CTX::instance()->mesh.lcFromPoints)
-   propagate1dMesh(_gf);
- else {
-   std::map<MVertex*, MVertex*>::iterator itv2 = _2Dto3D.begin();
-   for ( ; itv2 != _2Dto3D.end(); ++itv2){
-     _sizes[itv2->first] = LC_MAX;
-   }
- }
- updateSizes(_gf);
- _3Dto2D.clear();
- _2Dto3D.clear();
+  for (unsigned int i = 0; i < _gf->triangles.size(); i++){
+    MTriangle *e = _gf->triangles[i];
+    MVertex *news[3];
+    for (int j=0;j<3;j++){
+      std::map<MVertex*,MVertex*>::iterator it = _3Dto2D.find(e->getVertex(j));
+      MVertex *newv =0;
+      if (it == _3Dto2D.end()){
+        SPoint2 p;
+        bool success = reparamMeshVertexOnFace(e->getVertex(j), _gf, p);       
+        newv = new MVertex (p.x(), p.y(), 0.0);
+        _vertices.push_back(newv);
+        _3Dto2D[e->getVertex(j)] = newv;
+        _2Dto3D[newv] = e->getVertex(j);
+      }
+      else newv = it->second;
+      news[j] = newv;
+    }
+    _triangles.push_back(new MTriangle(news[0],news[1],news[2]));
+  }
+  _octree = buildMElementOctree(_triangles); 
+  if (CTX::instance()->mesh.lcFromPoints)
+    propagate1dMesh(_gf);
+  else {
+    std::map<MVertex*, MVertex*>::iterator itv2 = _2Dto3D.begin();
+    for ( ; itv2 != _2Dto3D.end(); ++itv2){
+      _sizes[itv2->first] = MAX_LC;
+    }
+  }
+  updateSizes(_gf);
+  _3Dto2D.clear();
+  _2Dto3D.clear();
 }
 
 backgroundMesh::~backgroundMesh()
@@ -317,24 +317,24 @@ void backgroundMesh::propagate1dMesh(GFace *_gf)
 #else
   _lsys = new linearSystemFull<double>;
 #endif
-    
+  
   dofManager<double> myAssembler(_lsys);
-
+  
   for( ; it != e.end(); ++it ){
     if (!(*it)->isSeam(_gf)){
       for(unsigned int i = 0; i < (*it)->lines.size(); i++ ){
 	MVertex *v1 = (*it)->lines[i]->getVertex(0);
 	MVertex *v2 = (*it)->lines[i]->getVertex(1);
-	double d = sqrt ((v1->x()-v2->x())*(v1->x()-v2->x())+
-			 (v1->y()-v2->y())*(v1->y()-v2->y())+
-			 (v1->z()-v2->z())*(v1->z()-v2->z()));
+	double d = sqrt((v1->x() - v2->x()) * (v1->x() - v2->x()) +
+                        (v1->y() - v2->y()) * (v1->y() - v2->y()) +
+                        (v1->z() - v2->z()) * (v1->z()  -v2->z()));
 	for (int k=0;k<2;k++){
 	  MVertex *v = (*it)->lines[i]->getVertex(k);
-	  std::map<MVertex*,double>::iterator itv = sizes.find(v);
-	  if (itv==sizes.end())
+	  std::map<MVertex*, double>::iterator itv = sizes.find(v);
+	  if (itv == sizes.end())
 	    sizes[v] = d;
 	  else 
-	    itv->second = 0.5* ( itv->second + d );
+	    itv->second = 0.5 * (itv->second + d);
 	}      
       }
     }
@@ -435,10 +435,10 @@ void backgroundMesh::updateSizes(GFace *_gf)
   }
 
   double DT = 0.01;
-  simpleFunction<double>  ONEOVERDT(1.0/DT);
-  simpleFunction<double>  ONE(1.0);
+  simpleFunction<double> ONEOVERDT(1.0/DT);
+  simpleFunction<double> ONE(1.0);
   helmholtzTerm<double> diffusionTerm(0,1, 1, &ONE,&ONEOVERDT);
-  helmholtzTerm<double>      massTerm(0,1, 1, 0,&ONEOVERDT);
+  helmholtzTerm<double> massTerm(0,1, 1, 0,&ONEOVERDT);
 
   for (unsigned int k= 0; k< _gf->triangles.size(); k++){
     MTriangle *t = _gf->triangles[k];
@@ -452,9 +452,9 @@ void backgroundMesh::updateSizes(GFace *_gf)
     SElement se(e);
     diffusionTerm.addToMatrix(myAssembler, &se);  
     massTerm.elementMatrix(&se,mass_matrix);
-    for (int i=0;i<e->getNumVertices();i++){
+    for (int i = 0; i < e->getNumVertices();i++){
       double TERM = 0.0;
-      for (int j=0;j<e->getNumVertices();j++){
+      for (int j = 0; j < e->getNumVertices();j++){
 	MVertex *v_2D = _3Dto2D[ e->getVertex(j) ];	
 	TERM+=_sizes[v_2D] * mass_matrix(i,j);
       }
@@ -487,7 +487,6 @@ double backgroundMesh::operator() (double u, double v, double w) const
   std::map<MVertex*,double>::const_iterator itv1 = _sizes.find(e->getVertex(0));
   std::map<MVertex*,double>::const_iterator itv2 = _sizes.find(e->getVertex(1));
   std::map<MVertex*,double>::const_iterator itv3 = _sizes.find(e->getVertex(2));
-  //  printf("%g %g -> %g\n",u,v, itv1->second * (1-uv2[0]-uv2[2]) + itv2->second * uv2[0] + itv3->second * uv2[1]);
   return itv1->second * (1-uv2[0]-uv2[1]) + itv2->second * uv2[0] + itv3->second * uv2[1];
 }
 
@@ -521,6 +520,6 @@ void backgroundMesh::print (const std::string &filename, GFace *gf) const
   }
   fprintf(f,"};\n");
   fclose(f);
-  
 }
+
 backgroundMesh* backgroundMesh::_current = 0;

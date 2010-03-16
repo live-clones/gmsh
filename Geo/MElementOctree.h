@@ -7,7 +7,7 @@ class Octree;
 class GModel;
 class MElement;
 
-Octree * buildMElementOctree (GModel *);
-Octree * buildMElementOctree (std::vector<MElement*> &);
+Octree *buildMElementOctree(GModel *);
+Octree *buildMElementOctree(std::vector<MElement*> &);
 
 #endif
