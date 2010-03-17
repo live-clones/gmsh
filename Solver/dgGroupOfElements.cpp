@@ -556,7 +556,7 @@ void dgGroupCollection::buildGroupsOfInterfaces()
       if (!groupStart->isFullGhost(*this)) {
         std::vector<dgMiniInterface> group(groupStart, groupEnd);
         if (groupStart->connections.size() == 1) {
-          _boundaryGroups.push_back (new dgGroupOfFaces (*this, group, pOrder) );
+          _faceGroups.push_back (new dgGroupOfFaces (*this, group, pOrder) );
         } else {
           _faceGroups.push_back (new dgGroupOfFaces (*this, group, pOrder) );
         }
@@ -1193,8 +1193,6 @@ dgGroupCollection::~dgGroupCollection()
     delete _elementGroups[i];
   for (int i=0; i< _faceGroups.size(); i++)
     delete _faceGroups[i];
-  for (int i=0; i< _boundaryGroups.size(); i++)
-    delete _boundaryGroups[i];
   for (int i=0; i< _ghostGroups.size(); i++)
     delete _ghostGroups[i];
 }

@@ -219,7 +219,6 @@ class dgGroupCollection {
   GModel *_model;
   std::vector<dgGroupOfElements*> _elementGroups; //volume
   std::vector<dgGroupOfFaces*> _faceGroups; //interface
-  std::vector<dgGroupOfFaces*> _boundaryGroups; //boundary
   std::vector<dgGroupOfElements*> _ghostGroups; //ghost volume
 
   //{group,id} of the elements to send to each partition for a scatter operation
