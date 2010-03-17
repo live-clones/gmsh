@@ -6,6 +6,7 @@ class dgConservationLawShallowWater2d : public dgConservationLaw {
   class advection;
   class source;
   class riemann;
+  class clipToPhysics;
   class boundaryWall;
   class maxConvectiveSpeed;
   const function *_linearDissipation, *_quadraticDissipation, *_source, *_coriolisFactor, *_bathymetry;
@@ -15,6 +16,7 @@ class dgConservationLawShallowWater2d : public dgConservationLaw {
   dataCacheDouble *newDiffusiveFlux( dataCacheMap &cacheMap) const;
   dataCacheDouble *newSourceTerm (dataCacheMap &cacheMap) const;
   dataCacheDouble *newMaxConvectiveSpeed (dataCacheMap &cacheMap) const;
+  dataCacheDouble *newClipToPhysics (dataCacheMap &cacheMap) const;
   inline void setCoriolisFactor(const function *coriolisFactor){_coriolisFactor = coriolisFactor;}
   inline void setLinearDissipation(const function *linearDissipation){_linearDissipation = linearDissipation;}
   inline void setQuadraticDissipation(const function *quadraticDissipation){_quadraticDissipation = quadraticDissipation;}
@@ -25,6 +27,32 @@ class dgConservationLawShallowWater2d : public dgConservationLaw {
     _nbf = 3; // eta u v
   }
   dgBoundaryCondition *newBoundaryWall();
+};
+
+class dgConservationLawShallowWater2d::clipToPhysics : public dataCacheDouble {
+  dataCacheDouble &sol, &_bathymetry;
+  double _hMin;
+public:
+  clipToPhysics(dataCacheMap &cacheMap, const function *bathymetry, double hMin):
+    dataCacheDouble(cacheMap,1,3),
+    sol(cacheMap.getSolution(this)),
+    _bathymetry(cacheMap.get(bathymetry,this))
+  {
+    _hMin=hMin;
+  };
+  void _eval () { 
+    const int nQP = _value.size1();
+    for (size_t k = 0 ; k < nQP; k++ ){
+      double h = _bathymetry(k,0);
+      _value(k,0) = sol(k,0);
+      _value(k,1) = sol(k,1);
+      _value(k,2) = sol(k,2);
+      double H = sol(k,0)+h;
+      if (H < _hMin){
+	_value(k,0) = _hMin;
+      }
+    }
+  }
 };
 
 class dgConservationLawShallowWater2d::maxConvectiveSpeed: public dataCacheDouble {
@@ -225,6 +253,10 @@ dataCacheDouble *dgConservationLawShallowWater2d::newSourceTerm (dataCacheMap &c
 
 dgBoundaryCondition *dgConservationLawShallowWater2d::newBoundaryWall(){
   return new boundaryWall(this);
+}
+
+dataCacheDouble *dgConservationLawShallowWater2d::newClipToPhysics( dataCacheMap &cacheMap) const {
+  return new clipToPhysics(cacheMap, _bathymetry, 1e-5);
 }
 
 #include "Bindings.h"

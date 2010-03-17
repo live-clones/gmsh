@@ -35,7 +35,7 @@ model:load ('step.msh')
 order = 1
 dimension = 2
 
-FS = functionLua(4, 'free_stream', {'XYZ'}):getName()
+FS = functionLua(4, 'free_stream', {XYZ})
 
 -- boundary condition
 law=dgPerfectGasLaw2d()

@@ -2,34 +2,39 @@
      Function for initial conditions
 --]]
 
+
 function initial_condition( xyz , f )
   for i=0,xyz:size1()-1 do
-    x = xyz:get(i,0)
-    y = xyz:get(i,1)
-    z = xyz:get(i,2)
-    if (x<0.0) then
-     f:set (i, 0, 40)
+     f:set (i, 0, 3.14)
      f:set (i, 1, 0)
-    else
-     f:set (i, 0, 20)
-     f:set (i, 1, 0)
-    end	
   end
 end
+
+PI = 3.14159
+T= 0.05
+Amax = 3.15
+
+function inlet( FCT )
+    FCT:set(0,0,Amax*math.sin(2*PI*t/T)*math.step(T/2-t)) 
+    FCT:set(0,1, 0) 
+end
+
+xyz = functionCoordinates.get()
 
 --[[ 
      Example of a lua program driving the DG code
 --]]
 
 model = GModel()
-model:load ('edge.msh')
-order=1
+model:load ('aorta.msh')
+order=3
 dimension=1
 
 -- boundary condition
+inlet_bc = functionLua(2, 'inlet')
 law = dgConservationLawShallowWater1d()
-law:addBoundaryCondition('Left',law:newBoundaryWall())
-law:addBoundaryCondition('Right',law:newBoundaryWall())
+law:addBoundaryCondition('Inlet',law:newOutsideValueBoundary(inlet_bc))
+law:addBoundaryCondition('Outlet',law:newBoundaryWall())
 law:setBathymetry(functionConstant({0}))
 law:setLinearDissipation(functionConstant({0}))
 
@@ -38,26 +43,21 @@ groups:buildGroupsOfInterfaces()
 
 rk=dgRungeKutta()
 limiter = dgSlopeLimiter(law)
-rk:setLimiter(limiter) 
 
 -- build solution vector
-xyz = functionCoordinates.get()
 FS = functionLua(2, 'initial_condition', {xyz})
 solution = dgDofContainer(groups, law:getNbFields())
 solution:L2Projection(FS)
 
 print'*** print initial sol ***'
---solution:exportMsh('output/init')
-limiter:apply(solution)
-solution:exportMsh('output/init_limit')
+solution:exportMsh('output/init')
 
 print'*** solve ***'
 --dt = 0.00001;
 CFL = 0.2;
-for i=1,15000 do 
+for i=1,9000 do 
     dt = CFL * rk:computeInvSpectralRadius(law,solution);  
     norm = rk:iterate44(law,dt,solution)
---  norm = rk:iterateEuler(law,dt,solution)
     if (i % 100 == 0) then 
        print('|ITER|',i,'|NORM|',norm,'|DT|',dt,'|CPU|',os.clock() - x)
     end

@@ -1372,7 +1372,7 @@ void partitionAndRemesh(GFaceCompound *gf)
   gf->model()->createTopologyFromFaces(pFaces);
    
   Msg::Info("Multiscale Partition SUCCESSFULLY PERFORMED : %d parts", NF );
-  gf->model()->writeMSH("multiscalePARTS.msh", 2.0, false, true);
+  gf->model()->writeMSH("multiscalePARTS.msh", 2.2, false, true);
  
   //Remesh new faces (Compound Lines and Compound Surfaces)
   //-----------------------------------------------------
@@ -1418,12 +1418,12 @@ void partitionAndRemesh(GFaceCompound *gf)
 
   Msg::Info("*** Starting Mesh of surface %d ...", gf->tag());
 
-  //lloydAlgorithm lloyd(10,0);
+  //lloydAlgorithm
   for (int i=0; i < NF; i++){
     GFace *gfc =  gf->model()->getFaceByTag(numf + NF + i );
     meshGFace mgf;
     mgf(gfc);
-    //    gfc->lloyd(20,0);
+    //gfc->lloyd(20,0);
 
     for(unsigned int j = 0; j < gfc->triangles.size(); ++j){
       MTriangle *t = gfc->triangles[j];

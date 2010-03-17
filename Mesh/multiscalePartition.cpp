@@ -218,6 +218,7 @@ static int getAspectRatio(std::vector<MElement *> &elements,
 static void getGenusAndRatio(std::vector<MElement *> &elements, int & genus, int &AR, int &NB)
 {
   std::vector<std::vector<MEdge> > boundaries;
+  boundaries.clear();
   genus = getGenus(elements, boundaries);  
   NB = boundaries.size();
   AR = getAspectRatio(elements, boundaries);
@@ -252,7 +253,7 @@ static void printLevel(std::vector<MElement *> &elements, int recur, int region)
 {
   char fn[256];
   sprintf(fn, "part_%d_%d.msh", recur, region);
-  double version = 2.0;
+  double version = 2.2;
 
   std::set<MVertex*> vs;
   for (unsigned int i = 0; i < elements.size(); i++){
@@ -293,7 +294,7 @@ multiscalePartition::multiscalePartition(std::vector<MElement *> &elements,
   options.num_partitions = nbParts;
   options.partitioner = 1; //1 CHACO, 2 METIS
   if (options.partitioner == 1){
-    options.global_method = 2;// 1 Multilevel-KL, 2 Spectral
+    options.global_method = 1;// 1 Multilevel-KL, 2 Spectral
     options.mesh_dims[0] = nbParts;
   }
   
@@ -346,7 +347,7 @@ void multiscalePartition::partition(partitionLevel & level, int nbParts,
     int genus, AR, NB;
     getGenusAndRatio(regions[i], genus, AR, NB);
 
-    //printLevel (nextLevel->elements, nextLevel->recur,nextLevel->region);  
+    printLevel (nextLevel->elements, nextLevel->recur,nextLevel->region);  
 
     if (genus < 0) {
       Msg::Error("Genus partition is negative G=%d!", genus);
@@ -359,7 +360,7 @@ void multiscalePartition::partition(partitionLevel & level, int nbParts,
 		nextLevel->recur,nextLevel->region, genus, AR, nbParts);  
       partition(*nextLevel, nbParts, MULTILEVEL);
     }
-    else if (genus == 0  &&  AR > 3  || genus == 0  &&  NB > 1){
+    else if (genus == 0  &&  AR > 5 ){// || genus == 0  &&  NB > 1){
       int nbParts = 2;
       Msg::Info("Mesh partition: level (%d-%d)  is ZERO-GENUS (AR=%d NB=%d) ---> LAPLACIAN partition %d parts",
  		nextLevel->recur,nextLevel->region, AR, NB, nbParts);  

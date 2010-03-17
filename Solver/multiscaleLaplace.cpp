@@ -249,8 +249,7 @@ static void recur_compute_centers_ (double R, double a1, double a2,
 
   SPoint2 PL (R*cos(a1),R*sin(a1));
   SPoint2 PR (R*cos(a2),R*sin(a2));
-  centers.push_back(std::make_pair(PL,zero));  
-  centers.push_back(std::make_pair(PR,zero)); 
+ 
  
   std::vector<SPoint2> centersChild;
   centersChild.clear();
@@ -271,8 +270,9 @@ static void recur_compute_centers_ (double R, double a1, double a2,
   //add the center of real holes ... 
   std::vector<std::vector<MEdge> > boundaries;
   connected_bounds(root->elements, boundaries);
-  int toadd = 0;
-  if (root->children.size()==0  || boundaries.size()-1 != root->children.size() ){
+  int added = 0;
+  int toadd = boundaries.size()-1 - root->children.size();
+  if (root->children.size()==0  || (root->children.size()> 0 && toadd > 0) ){
     for (unsigned int i = 0; i < boundaries.size(); i++){
       std::vector<MEdge> me = boundaries[i];
       SPoint2 c(0.0,0.0);
@@ -295,22 +295,24 @@ static void recur_compute_centers_ (double R, double a1, double a2,
 	SPoint2 p = *it2;
 	double dist = sqrt ((c.x() - p.x())*(c.x() - p.x())+
 			    (c.y() - p.y())*(c.y() - p.y()));
-	if (dist < 0.6*rad)  newCenter = false;//0.6
+	if (dist < 0.5*rad)  newCenter = false;//0.6
       }
    
-      if (std::abs(rad/root->radius) < 0.6 && std::abs(rad) < 0.95 && newCenter){//0.6
-	toadd++;
+      if (std::abs(rad/root->radius) < 0.65 && std::abs(rad) < 0.95 && newCenter){//0.6
+	added++;
 	centers.push_back(std::make_pair(c,zero));  
       }
     }
   }
-  if (toadd !=  boundaries.size()-1-root->children.size() ) {
-    printf("!!!!!!!! ARG added =%d != %d\n",  toadd, boundaries.size()-1- root->children.size());
+  if (added !=  toadd && root->children.size()> 0)  {
+    printf("!!!!!!!! ARG added =%d != %d (bounds=%d, child=%d)\n",  added, boundaries.size()-1- root->children.size(), boundaries.size(), root->children.size());
     //exit(1);
   }
 
   //sort centers
   std::sort(centers.begin(),centers.end(), sort_pred(PL,PR));
+  centers.insert(centers.begin(), std::make_pair(PL,zero));  
+  centers.push_back(std::make_pair(PR,zero));
 
   for (int i=1;i<centers.size()-1;i++){
     multiscaleLaplaceLevel* m1 = centers[i-1].second;
@@ -820,7 +822,7 @@ multiscaleLaplace::multiscaleLaplace (std::vector<MElement *> &elements,
   //Compute centers for the cut
   int nbElems = 0;
   recur_compute_centers_ (1.0, M_PI, 0.0, root, nbElems);
-  printf("CENTERS: elements =%d, recur nbElems = %d \n", elements.size(), nbElems);
+  //printf("CENTERS: elements =%d, recur nbElems = %d \n", elements.size(), nbElems);
 
   //Partition the mesh in left and right
   cut (elements); 
@@ -943,7 +945,7 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
     MElement *e = level.elements[i];
     std::vector<SPoint2> localCoord;
     double local_size = localSize(e,solution);
-    if (local_size < 1.e-5*global_size) //1.e-5
+    if (local_size < 5.e-4*global_size) //1.e-5
       tooSmall.push_back(e);
     else  goodSize.push_back(e);
   }
@@ -992,7 +994,7 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
 //       double area = fabs(triangle_area(q0, q1, q2));   
 //       totArea  += area;
       double local_size = localSize(e,solution);
-      if (local_size < 5.e-7 * global_size) //1.e-7
+      if (local_size < 5.e-6 * global_size) //1.e-7
 	really_small_elements = true;
     }
     //center *= (1./regions_[i].size());
@@ -1174,6 +1176,10 @@ void multiscaleLaplace::cut (std::vector<MElement *> &elements)
   recur_cut_ (1.0, M_PI, 0.0, root,left,right);
   connected_left_right(left, right);
 
+  printLevel ("Rootcut-left.msh",left,0,2.2);  
+  printLevel ("Rootcut-right.msh",right,0,2.2);  
+  printLevel ("Rootcut-all.msh",elements, 0,2.2);  
+
   if ( elements.size() != left.size()+right.size()) {
     Msg::Error("Cutting laplace wrong nb elements (%d) != left + right (%d)",  elements.size(), left.size()+right.size());
     exit(1);
@@ -1183,9 +1189,6 @@ void multiscaleLaplace::cut (std::vector<MElement *> &elements)
   elements.insert(elements.end(),left.begin(),left.end());
   elements.insert(elements.end(),right.begin(),right.end());
 
-  printLevel ("Rootcut-left.msh",left,0,2.2);  
-  printLevel ("Rootcut-right.msh",right,0,2.2);  
-  printLevel ("Rootcut-all.msh",elements, 0,2.2);  
   //exit(1);
 
 }

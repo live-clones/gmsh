@@ -534,7 +534,7 @@ bool GFaceCompound::parametrize() const
 
   double AR = checkAspectRatio();
   if (floor(AR)  > AR_MAX){
-    Msg::Warning("Geometrical aspect ratio too high %d ", AR);
+    Msg::Warning("Geometrical aspect ratio too high AR=%d ", (int)AR);
     //exit(1);
     paramOK = true; //false;
   }
@@ -1890,12 +1890,7 @@ double GFaceCompound::checkAspectRatio() const
   double AR = 2*3.14*area3D/(tot_length*tot_length);
   
   if (areaMin < limit && nb > 2) {
-    Msg::Warning("Geometrical aspect ratio too high (a_2D=%g)", areaMin);
-    SBoundingBox3d bboxH = bounds();
-    double H = getSizeH();
-    double D = getSizeBB(_U0);
-    double eta = H/D;
-    int nbSplit =  -2;
+    Msg::Warning("Too small triangles in mapping (a_2D=%g)", areaMin);
   }
   else {
     Msg::Debug("Geometrical aspect ratio is OK  :-)");

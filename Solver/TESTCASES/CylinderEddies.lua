@@ -21,8 +21,8 @@ end
 --]]
 
 order = 5
-
-FS = functionLua(4, 'free_stream', {'XYZ'}):getName()
+xyz = functionCoordinates.get()
+FS = functionLua(4, 'free_stream', {xyz})
 
 -- diffusivity
 mu=fullMatrix(1,1);
