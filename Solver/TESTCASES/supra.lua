@@ -28,10 +28,8 @@ function valueLeft(f)
   end
 end
 
-law = dgConservationLawAdvectionDiffusion('',functionLua(1,'diffusivity',{'Solution'}):getName())
-print(law)
+law = dgConservationLawAdvectionDiffusion.diffusionLaw(functionLua(1,'diffusivity',{functionSolution.get()}))
 dg:setConservationLaw(law)
-print(law)
 
 -- boundary condition
 --[[
@@ -42,8 +40,8 @@ outsideRight:set(0,0,1)
 --]]
 law:addBoundaryCondition('Top',law:new0FluxBoundary())
 law:addBoundaryCondition('Bottom',law:new0FluxBoundary())
-leftFunction=functionLua(1,'valueLeft',{}):getName()
-rightFunction=functionLua(1,'valueRight',{}):getName()
+leftFunction=functionLua(1,'valueLeft',{})
+rightFunction=functionLua(1,'valueRight',{})
 --[[
 law:addBoundaryCondition('Left',law:newNeumannBoundary(leftFunction))
 law:addBoundaryCondition('Right',law:newNeumannBoundary(rightFunction))
@@ -62,7 +60,7 @@ function initial_condition( xyz , f )
     f:set (i, 0,0*math.exp(-100*((x-0.2)^2 +(y-0.3)^2)))
   end
 end
-dg:L2Projection(functionLua(1,'initial_condition',{'XYZ'}):getName())
+dg:L2Projection(functionLua(1,'initial_condition',{functionCoordinates.get()}))
 
 dg:exportSolution('output/supra-00000')
 
@@ -70,7 +68,7 @@ dg:exportSolution('output/supra-00000')
 for i=1,150000 do
   norm = dg:RK44_limiter(dt)
   t=t+dt
-  if (i % 100 == 0) then 
+  if (i % 1 == 0) then 
     print('iter',i,norm)
     dg:exportSolution(string.format("output/supra-%05d", i)) 
   end

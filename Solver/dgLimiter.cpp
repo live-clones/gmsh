@@ -22,6 +22,8 @@ int dgSlopeLimiter::apply ( dgDofContainer *solution)
   fullMatrix<double> TempL, TempR;
   for( int iGFace=0; iGFace<groups->getNbFaceGroups(); iGFace++) {
     dgGroupOfFaces* group = groups->getFaceGroup(iGFace);  
+    if (group->getNbGroupOfConnections()!=2) // skip boundaries and bifurcations
+      continue;
     const dgGroupOfConnections &left = group->getGroupOfConnections(0);
     const dgGroupOfConnections &right = group->getGroupOfConnections(1);
     const dgGroupOfElements *groupLeft = &left.getGroupOfElements();

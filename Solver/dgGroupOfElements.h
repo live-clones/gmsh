@@ -236,11 +236,9 @@ class dgGroupCollection {
   inline GModel* getModel() {return _model;}
   inline int getNbElementGroups() const {return _elementGroups.size();}
   inline int getNbFaceGroups() const {return _faceGroups.size();}
-  inline int getNbBoundaryGroups() const {return _boundaryGroups.size();}
   inline int getNbGhostGroups() const {return _ghostGroups.size();}
   inline dgGroupOfElements *getElementGroup(int i) const {return i<getNbElementGroups()?_elementGroups[i]:_ghostGroups[i-getNbElementGroups()];}
   inline dgGroupOfFaces *getFaceGroup(int i) const {return _faceGroups[i];}
-  inline dgGroupOfFaces *getBoundaryGroup(int i) const {return _boundaryGroups[i];}
   inline dgGroupOfElements *getGhostGroup(int i) const {return _ghostGroups[i];}
 
   inline int getNbImageElementsOnPartition(int partId) const {return _elementsToSend[partId].size();}

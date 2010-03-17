@@ -81,7 +81,6 @@ dgRungeKuttaMultirate::dgRungeKuttaMultirate(dgGroupCollection* gc,dgConservatio
   _law=law;
   _residualVolume=new dgResidualVolume(*_law);
   _residualInterface=new dgResidualInterface(*_law);
-  _residualBoundary=new dgResidualBoundary(*_law);
   _gc=gc;
   _K=new dgDofContainer*[nStages];
   for(int i=0;i<nStages;i++){
@@ -113,32 +112,15 @@ dgRungeKuttaMultirate::dgRungeKuttaMultirate(dgGroupCollection* gc,dgConservatio
   }
   for(int iGroup=0;iGroup<gc->getNbFaceGroups();iGroup++){
     dgGroupOfFaces *gf=gc->getFaceGroup(iGroup);
-    const dgGroupOfElements *ge[2];
-    ge[0]=&gf->getGroupOfConnections(0).getGroupOfElements();
-    ge[1]=&gf->getGroupOfConnections(1).getGroupOfElements();
-    for(int i=0;i<2;i++){
-      if(ge[i]->getIsInnerMultirateBuffer()){
-        _innerBufferGroupsOfElements[ge[i]->getMultirateExponent()].second.push_back(gf);
+    for(int i=0;i<gf->getNbGroupOfConnections();i++){
+      const dgGroupOfElements *ge = &gf->getGroupOfConnections(0).getGroupOfElements();
+      if(ge->getIsInnerMultirateBuffer()){
+        _innerBufferGroupsOfElements[ge->getMultirateExponent()].second.push_back(gf);
       }
-      else if(ge[i]->getIsOuterMultirateBuffer()){
-        _outerBufferGroupsOfElements[ge[i]->getMultirateExponent()].second.push_back(gf);
+      else if(ge->getIsOuterMultirateBuffer()){
+        _outerBufferGroupsOfElements[ge->getMultirateExponent()].second.push_back(gf);
       }else{
-        _bulkGroupsOfElements[ge[i]->getMultirateExponent()].second.push_back(gf);
-      }
-    }
-  }
-  for(int iGroup=0;iGroup<gc->getNbBoundaryGroups();iGroup++){
-    dgGroupOfFaces *gf=gc->getBoundaryGroup(iGroup);
-    const dgGroupOfElements *ge[1];
-    ge[0]=&gf->getGroupOfConnections(0).getGroupOfElements();
-    for(int i=0;i<1;i++){
-      if(ge[i]->getIsInnerMultirateBuffer()){
-        _innerBufferGroupsOfElements[ge[i]->getMultirateExponent()].second.push_back(gf);
-      }
-      else if(ge[i]->getIsOuterMultirateBuffer()){
-        _outerBufferGroupsOfElements[ge[i]->getMultirateExponent()].second.push_back(gf);
-      }else{
-        _bulkGroupsOfElements[ge[i]->getMultirateExponent()].second.push_back(gf);
+        _bulkGroupsOfElements[ge->getMultirateExponent()].second.push_back(gf);
       }
     }
   }
@@ -163,7 +145,6 @@ dgRungeKuttaMultirate::~dgRungeKuttaMultirate(){
   delete _currentInput;
   delete _residualVolume;
   delete _residualInterface;
-  delete _residualBoundary;
 }
 
 void dgRungeKuttaMultirate::computeK(int iK,int exponent,bool isBuffer){
@@ -191,7 +172,7 @@ void dgRungeKuttaMultirate::computeK(int iK,int exponent,bool isBuffer){
     for(std::set<dgGroupOfFaces *>::iterator it=gOFSet.begin();it!=gOFSet.end();it++){
       dgGroupOfFaces *faces=*it;
       if(faces->getNbGroupOfConnections()==1){
-        _residualBoundary->computeAndMap1Group(*faces,*_currentInput,*_residual);
+        _residualInterface->computeAndMap1Group(*faces,*_currentInput,*_residual);
       }
       else{
         const dgGroupOfElements *gL = &faces->getGroupOfConnections(0).getGroupOfElements();
@@ -243,7 +224,7 @@ void dgRungeKuttaMultirate::computeK(int iK,int exponent,bool isBuffer){
     for(int i=0;i<vf.size();i++){
       dgGroupOfFaces *faces=vf[i];
       if(faces->getNbGroupOfConnections()==1){
-        _residualBoundary->computeAndMap1Group(*faces,*_currentInput,*_residual);
+        _residualInterface->computeAndMap1Group(*faces,*_currentInput,*_residual);
       }
       else{
         const dgGroupOfElements *gL = &faces->getGroupOfConnections(0).getGroupOfElements();

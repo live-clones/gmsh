@@ -3,7 +3,7 @@ model:load ('square.geo')
 model:load ('square.msh')
 
 dg = dgSystemOfEquations (model)
-dg:setOrder(4)
+dg:setOrder(1)
 
 -- conservation law
 law = dgConservationLawAdvectionDiffusion(functionConstant({0.15,0.05,0}),functionConstant({0.001}))

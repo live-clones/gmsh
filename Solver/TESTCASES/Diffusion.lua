@@ -7,15 +7,12 @@ dg:setOrder(1)
 
 -- conservation law
 -- advection speed
-nu=fullMatrix(1,1);
-nu:set(0,0,0.01)
-law = dgConservationLawAdvectionDiffusion('',functionConstant(nu):getName())
+law = dgConservationLawAdvectionDiffusion.diffusionLaw(functionConstant({0.01}))
 dg:setConservationLaw(law)
 
 -- boundary condition
-outside=fullMatrix(1,1)
-outside:set(0,0,0.)
-law:addBoundaryCondition('Border',law:new0FluxBoundary())
+law:addBoundaryCondition('Border',law:newOutsideValueBoundary(functionConstant({1})))
+--law:addBoundaryCondition('Border',law:new0FluxBoundary())
 
 dg:setup()
 
@@ -28,14 +25,14 @@ function initial_condition( xyz , f )
     f:set (i, 0, math.exp(-100*((x-0.2)^2 +(y-0.3)^2)))
   end
 end
-dg:L2Projection(functionLua(1,'initial_condition',{'XYZ'}):getName())
+-- dg:L2Projection(functionLua(1,'initial_condition',{functionCoordinates.get()}))
 
 dg:exportSolution('output/Diffusion_00000')
 
 -- main loop
-for i=1,10000 do
-  --norm = dg:RK44(0.001)
-  norm = dg:RK44_TransformNodalValue(0.00001)
+for i=1,100 do
+  norm = dg:RK44(0.01)
+  --norm = dg:RK44_TransformNodalValue(0.00001)
   if (i % 50 == 0) then 
     print('iter',i,norm)
     dg:exportSolution(string.format("output/Diffusion-%05d", i)) 

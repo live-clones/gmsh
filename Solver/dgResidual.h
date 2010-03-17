@@ -42,19 +42,6 @@ class dgResidualInterface {
   ~dgResidualInterface();
 };
 
-class dgResidualBoundary {
-  const dgConservationLaw &_claw;
-  public :
-  void compute1Group ( //dofManager &dof, // the DOF manager (maybe useless here)
-				     dgGroupOfFaces &group, 
-				     const fullMatrix<double> &solution, // solution !! at faces nodes
-				     const fullMatrix<double> &solutionLeft, 
-				     fullMatrix<double> &residual // residual !! at faces nodes
-            );
-  void computeAndMap1Group (dgGroupOfFaces &faces, dgDofContainer &solution, dgDofContainer &residual);
-  dgResidualBoundary (const dgConservationLaw &claw);
-};
-
 class dgResidual {
   const dgConservationLaw &_claw;
   public:

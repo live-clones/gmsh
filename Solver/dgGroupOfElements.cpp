@@ -1236,15 +1236,10 @@ void dgGroupCollection::registerBindings(binding *b)
   cm->setDescription("return the number of dgGroupOfElements");
   cm = cb->addMethod("getNbFaceGroups", &dgGroupCollection::getNbFaceGroups);
   cm->setDescription("return the number of dgGroupOfFaces (interior ones, not the domain boundaries)");
-  cm = cb->addMethod("getNbBoundaryGroups", &dgGroupCollection::getNbBoundaryGroups);
-  cm->setDescription("return the number of group of boundary faces");
   cm = cb->addMethod("getElementGroup", &dgGroupCollection::getElementGroup);
   cm->setDescription("get 1 group of elements");
   cm->setArgNames("id", NULL);
   cm = cb->addMethod("getFaceGroup", &dgGroupCollection::getFaceGroup);
   cm->setDescription("get 1 group of faces");
-  cm->setArgNames("id", NULL);
-  cm = cb->addMethod("getBoundaryGroup", &dgGroupCollection::getBoundaryGroup);
-  cm->setDescription("get 1 group of boundary faces");
   cm->setArgNames("id", NULL);
 }
