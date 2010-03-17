@@ -209,8 +209,8 @@ public:
   const polynomialBasis * getPolynomialBasis() const {return _fsFace;}
   inline MElement* getFace (int iElement) const {return _faces[iElement];}  
 public: // should be more generic on the number of connections
-  void mapToInterface(int nFields, const fullMatrix<double> &vLeft, const fullMatrix<double> &vRight, fullMatrix<double> &v);
-  void mapFromInterface(int nFields, const fullMatrix<double> &v, fullMatrix<double> &vLeft, fullMatrix<double> &vRight);
+  void mapToInterface (int nFields, std::vector<const fullMatrix<double> *> &proxies, fullMatrix<double> &v);
+  void mapFromInterface (int nFields, const fullMatrix<double> &v, std::vector<fullMatrix<double> *> &proxies);
   void mapLeftFromInterface(int nFields, const fullMatrix<double> &v, fullMatrix<double> &vLeft);
   void mapRightFromInterface(int nFields, const fullMatrix<double> &v, fullMatrix<double> &vRight);
 };

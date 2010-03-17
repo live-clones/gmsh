@@ -10,6 +10,7 @@ class dgGroupOfElements;
 class dgGroupOfFaces;
 class binding;
 #include "fullMatrix.h"
+#include <vector>
 
 class dgResidualVolume {
   dataCacheMap *_cacheMap;
@@ -27,20 +28,14 @@ class dgResidualVolume {
 };
 
 class dgResidualInterface {
-  dataCacheMap *_cacheMapLeft, *_cacheMapRight;
   const dgConservationLaw &_claw;
   int _nbFields;
-  dataCacheElement &_cacheElementLeft, &_cacheElementRight;
-  dataCacheDouble &_uvwLeft, &_uvwRight, &_solutionQPLeft, &_solutionQPRight, &_gradientSolutionLeft, &_gradientSolutionRight;
-  dataCacheDouble &_normals;
-  dataCacheDouble *_riemannSolver, *_maximumDiffusivityLeft,*_maximumDiffusivityRight, *_diffusiveFluxLeft, *_diffusiveFluxRight;
   public:
   dgResidualInterface (const dgConservationLaw &claw);
   void compute1Group ( //dofManager &dof, // the DOF manager (maybe useless here)
 				     dgGroupOfFaces &group, 
 				     const fullMatrix<double> &solution, // solution !! at faces nodes
-				     fullMatrix<double> &solutionLeft, 
-				     fullMatrix<double> &solutionRight, 
+             const std::vector<const fullMatrix<double>*> & solutionOnElements,
 				     fullMatrix<double> &residual // residual !! at faces nodes
             );
   void computeAndMap1Group (dgGroupOfFaces &faces, dgDofContainer &solution, dgDofContainer &residual);
@@ -53,7 +48,7 @@ class dgResidualBoundary {
   void compute1Group ( //dofManager &dof, // the DOF manager (maybe useless here)
 				     dgGroupOfFaces &group, 
 				     const fullMatrix<double> &solution, // solution !! at faces nodes
-				     fullMatrix<double> &solutionLeft, 
+				     const fullMatrix<double> &solutionLeft, 
 				     fullMatrix<double> &residual // residual !! at faces nodes
             );
   void computeAndMap1Group (dgGroupOfFaces &faces, dgDofContainer &solution, dgDofContainer &residual);

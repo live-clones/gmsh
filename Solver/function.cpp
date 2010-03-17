@@ -58,8 +58,8 @@ function *function::get(std::string functionName, bool acceptNull)
 dataCacheElement &dataCacheMap::getElement(dataCache *caller) 
 {
   if(caller)
-    _cacheElement->addMeAsDependencyOf(caller);
-  return *_cacheElement;
+    _cacheElement.addMeAsDependencyOf(caller);
+  return _cacheElement;
 }
 
 static dataCacheDouble &returnDataCacheDouble(dataCacheDouble *data, dataCache *caller)

@@ -198,8 +198,11 @@ void dgRungeKuttaMultirate::computeK(int iK,int exponent,bool isBuffer){
         const dgGroupOfElements *gR = &faces->getGroupOfConnections(1).getGroupOfElements();
         fullMatrix<double> solInterface(faces->getNbNodes(),faces->getNbElements()*2*_law->getNbFields());
         fullMatrix<double> residuInterface(faces->getNbNodes(),faces->getNbElements()*2*_law->getNbFields());
-        faces->mapToInterface(_law->getNbFields(), _currentInput->getGroupProxy(gL), _currentInput->getGroupProxy(gR), solInterface);
-        _residualInterface->compute1Group(*faces,solInterface,_currentInput->getGroupProxy(gL), _currentInput->getGroupProxy(gR),residuInterface);
+        std::vector<const fullMatrix<double>*> proxies(2);
+        proxies[0] = &_currentInput->getGroupProxy(gL);
+        proxies[1] = &_currentInput->getGroupProxy(gR);
+        faces->mapToInterface(_law->getNbFields(), proxies, solInterface);
+        _residualInterface->compute1Group(*faces,solInterface, proxies, residuInterface);
         if(gL->getMultirateExponent()==exponent && gL->getIsMultirateBuffer()){
           faces->mapLeftFromInterface(_law->getNbFields(), residuInterface,_residual->getGroupProxy(gL));
         }
@@ -247,8 +250,11 @@ void dgRungeKuttaMultirate::computeK(int iK,int exponent,bool isBuffer){
         const dgGroupOfElements *gR = &faces->getGroupOfConnections(1).getGroupOfElements();
         fullMatrix<double> solInterface(faces->getNbNodes(),faces->getNbElements()*2*_law->getNbFields());
         fullMatrix<double> residuInterface(faces->getNbNodes(),faces->getNbElements()*2*_law->getNbFields());
-        faces->mapToInterface(_law->getNbFields(), _currentInput->getGroupProxy(gL), _currentInput->getGroupProxy(gR), solInterface);
-        _residualInterface->compute1Group(*faces,solInterface,_currentInput->getGroupProxy(gL), _currentInput->getGroupProxy(gR),residuInterface);
+        std::vector<const fullMatrix<double>*> proxies(2);
+        proxies[0] = &_currentInput->getGroupProxy(gL);
+        proxies[1] = &_currentInput->getGroupProxy(gR);
+        faces->mapToInterface(_law->getNbFields(), proxies, solInterface);
+        _residualInterface->compute1Group(*faces,solInterface, proxies, residuInterface);
         if(gL->getMultirateExponent()==exponent && !gL->getIsMultirateBuffer()){
           faces->mapLeftFromInterface(_law->getNbFields(), residuInterface,_residual->getGroupProxy(gL));
         }

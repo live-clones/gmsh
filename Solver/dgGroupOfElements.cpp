@@ -196,59 +196,32 @@ dgGroupOfConnections::dgGroupOfConnections(const dgGroupOfElements &elementGroup
   _fs = _elementGroup.getElement(0)->getFunctionSpace(pOrder);
 }
 
-void dgGroupOfFaces::mapToInterface ( int nFields,
-    const fullMatrix<double> &vLeft,
-    const fullMatrix<double> &vRight,
-    fullMatrix<double> &v)
+void dgGroupOfFaces::mapToInterface (int nFields, std::vector<const fullMatrix<double> *> &proxies, fullMatrix<double> &v)
 {
-  if(_connections.size()==1){
-    for(int i=0; i<getNbElements(); i++) {
-      const std::vector<int> &closureLeft = _connections[0]->getClosure(i);
-      for (int iField=0; iField<nFields; iField++){
-        for(size_t j =0; j < closureLeft.size(); j++){
-          v(j, i*nFields + iField) = vLeft(closureLeft[j], _connections[0]->getElementId(i)*nFields + iField);
+  int nbConnections = getNbGroupOfConnections();
+  for (int i=0; i<getNbElements(); i++) {
+    for (int iConnection = 0; iConnection<getNbGroupOfConnections(); iConnection++) {
+      const std::vector<int> &closure = _connections[iConnection]->getClosure(i);
+      for (int iField=0; iField<nFields; iField++) {
+        for(size_t j =0; j < closure.size(); j++) {
+          v(j, (i*nbConnections+iConnection)*nFields + iField) =
+            (*proxies[iConnection])(closure[j],_connections[iConnection]->getElementId(i)*nFields + iField);
         }
-      }
-    }
-    
-  }else{
-    for(int i=0; i<getNbElements(); i++) {
-      const std::vector<int> &closureLeft = _connections[0]->getClosure(i);
-      const std::vector<int> &closureRight = _connections[1]->getClosure(i);
-      for (int iField=0; iField<nFields; iField++){
-        for(size_t j =0; j < closureLeft.size(); j++){
-          v(j, i*2*nFields + iField) = vLeft(closureLeft[j],_connections[0]->getElementId(i)*nFields + iField);
-        }
-        for(size_t j =0; j < closureRight.size(); j++)
-          v(j, (i*2+1)*nFields + iField) = vRight(closureRight[j],_connections[1]->getElementId(i)*nFields + iField);
       }
     }
   }
 }
 
-void dgGroupOfFaces::mapFromInterface ( int nFields,
-    const fullMatrix<double> &v,
-    fullMatrix<double> &vLeft,
-    fullMatrix<double> &vRight
-    )
+void dgGroupOfFaces::mapFromInterface (int nFields, const fullMatrix<double> &v, std::vector< fullMatrix<double> *> &proxies)
 {
-  if(_connections.size()==1){
-    for(int i=0; i<getNbElements(); i++) {
-      const std::vector<int> &closureLeft = _connections[0]->getClosure(i);
+  int nbConnections = getNbGroupOfConnections();
+  for (int i=0; i<getNbElements(); i++) {
+    for (int iConnection = 0; iConnection<getNbGroupOfConnections(); iConnection++) {
+      const std::vector<int> &closure = _connections[iConnection]->getClosure(i);
       for (int iField=0; iField<nFields; iField++){
-        for(size_t j =0; j < closureLeft.size(); j++)
-          vLeft(closureLeft[j], _connections[0]->getElementId(i)*nFields + iField) += v(j, i*nFields + iField);
-      }
-    }
-  }else{
-    for(int i=0; i<getNbElements(); i++) {
-      const std::vector<int> &closureLeft = _connections[0]->getClosure(i);
-      const std::vector<int> &closureRight = _connections[1]->getClosure(i);
-      for (int iField=0; iField<nFields; iField++){
-        for(size_t j =0; j < closureLeft.size(); j++)
-          vLeft(closureLeft[j], _connections[0]->getElementId(i)*nFields + iField) += v(j, i*2*nFields + iField);
-        for(size_t j =0; j < closureRight.size(); j++)
-	  vRight(closureRight[j], _connections[1]->getElementId(i)*nFields + iField) += v(j, (i*2+1)*nFields + iField);
+        for(size_t j =0; j < closure.size(); j++)
+        (*proxies[iConnection])(closure[j], _connections[iConnection]->getElementId(i)*nFields + iField) +=
+          v(j, (i*nbConnections+iConnection)*nFields + iField);
       }
     }
   }

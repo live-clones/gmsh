@@ -164,7 +164,6 @@ class dataCacheMap {
   int _nbEvaluationPoints;
   // keep track of the current element and all the dataCaches that
   // depend on it
-  dataCacheElement *_cacheElement;
   std::map<const function*, dataCacheDouble*> _cacheDoubleMap;
   class providedDataDouble : public dataCacheDouble
   // for data provided by the algorithm and that does not have an _eval function
@@ -179,6 +178,7 @@ class dataCacheMap {
   std::set<dataCache*> _toDelete;
   std::set<dataCacheDouble*> _toResize;
 
+  dataCacheElement _cacheElement;
  protected:
   void addDataCache(dataCache *data){
     _toDelete.insert(data);
@@ -205,8 +205,8 @@ class dataCacheMap {
 
   dataCacheDouble &get(const function *f, dataCache *caller=0);
   dataCacheElement &getElement(dataCache *caller=0);
-  dataCacheMap(){
-    _cacheElement = new dataCacheElement(this);
+  dataCacheMap():_cacheElement(this){
+    _toDelete.erase(&_cacheElement);
     _normals = _solution = _solutionGradient = _parametricCoordinates = 0;
     _nbEvaluationPoints = 0;
   }

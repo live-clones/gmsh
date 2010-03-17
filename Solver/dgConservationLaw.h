@@ -45,6 +45,7 @@ class dgConservationLaw {
   virtual dataCacheDouble *newConvectiveFlux (dataCacheMap &cacheMap) const {return NULL;}
   virtual dataCacheDouble *newMaxConvectiveSpeed (dataCacheMap &cacheMap) const {return NULL;}
   virtual dataCacheDouble *newRiemannSolver (dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight) const {return NULL;}
+  virtual dataCacheDouble *newBifurcationRiemannSolver (dataCacheMap &cacheMap0, dataCacheMap &cacheMap1, dataCacheMap &cacheMap2) const {return NULL;}
   virtual dataCacheDouble *newClipToPhysics (dataCacheMap &cacheMap) const {return NULL;}
 
   inline const dgBoundaryCondition *getBoundaryCondition(const std::string tag) const {

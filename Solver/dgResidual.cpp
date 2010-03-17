@@ -261,134 +261,127 @@ void dgResidualVolume::computeAndMap1Group(dgGroupOfElements &group, dgDofContai
 }
 
 
-dgResidualInterface::dgResidualInterface (const dgConservationLaw &claw) :
-  _cacheMapLeft (new dataCacheMap),
-  _cacheMapRight (new dataCacheMap),
-  _claw(claw),
-  _nbFields(claw.getNbFields()),
-  _cacheElementLeft(_cacheMapLeft->getElement()),
-  _cacheElementRight(_cacheMapRight->getElement()),
-  _uvwLeft(_cacheMapLeft->provideParametricCoordinates()),
-  _uvwRight(_cacheMapRight->provideParametricCoordinates()),
-  _solutionQPLeft(_cacheMapLeft->provideSolution(_nbFields)),
-  _solutionQPRight(_cacheMapRight->provideSolution(_nbFields)),
-  _gradientSolutionLeft(_cacheMapLeft->provideSolutionGradient(_nbFields)),
-  _gradientSolutionRight(_cacheMapRight->provideSolutionGradient(_nbFields)),
-  _normals(_cacheMapLeft->provideNormals()),
-  _riemannSolver(claw.newRiemannSolver(*_cacheMapLeft,*_cacheMapRight)),
-  _diffusiveFluxLeft(claw.newDiffusiveFlux(*_cacheMapLeft)),
-  _diffusiveFluxRight(claw.newDiffusiveFlux(*_cacheMapRight)),
-  _maximumDiffusivityLeft(claw.newMaximumDiffusivity(*_cacheMapLeft)),
-  _maximumDiffusivityRight(claw.newMaximumDiffusivity(*_cacheMapRight))
+dgResidualInterface::dgResidualInterface (const dgConservationLaw &claw):
+  _claw (claw)
 {
+  _nbFields = _claw.getNbFields(); 
 }
 
 void dgResidualInterface::compute1Group ( //dofManager &dof, // the DOF manager (maybe useless here)
 				     dgGroupOfFaces &group, 
 				     const fullMatrix<double> &solution, // solution !! at faces nodes
-				     fullMatrix<double> &solutionLeft, 
-				     fullMatrix<double> &solutionRight, 
+             const std::vector<const fullMatrix<double>*> & solutionOnElements,
 				     fullMatrix<double> &residual // residual !! at faces nodes
 				      )
 { 
   // A) global operations before entering the loop over the faces
   // A1 ) copy locally some references from the group for the sake of lisibility
-  const dgGroupOfConnections &left = group.getGroupOfConnections(0);
-  const dgGroupOfConnections &right = group.getGroupOfConnections(1);
-  const dgGroupOfElements &groupLeft = left.getGroupOfElements();
-  const dgGroupOfElements &groupRight = right.getGroupOfElements();
-  int nbFaces = group.getNbElements();
-  //get matrices needed to compute the gradient on both sides
-  const fullMatrix<double> &DPsiLeftDx = left.getDPsiDx();
-  const fullMatrix<double> &DPsiRightDx = right.getDPsiDx();
+  int nbConnections = group.getNbGroupOfConnections();
+  std::vector<dataCacheMap> caches(nbConnections);
+  std::vector<const dgGroupOfConnections*> connections(nbConnections);
+  std::vector<const dgGroupOfElements*> elementGroups(nbConnections);
+  std::vector<dataCacheDouble*> diffusiveFluxes(nbConnections), maximumDiffusivities(nbConnections);
+  for (int i=0; i<nbConnections; i++) {
+    connections[i] = &group.getGroupOfConnections(i);
+    elementGroups[i] = &connections[i]->getGroupOfElements();
+    caches[i].provideParametricCoordinates();
+    caches[i].provideSolution(_nbFields);
+    caches[i].provideSolutionGradient(_nbFields);
+    caches[i].provideNormals();
+    diffusiveFluxes[i] =_claw.newDiffusiveFlux(caches[i]);
+    maximumDiffusivities[i] = _claw.newMaximumDiffusivity(caches[i]); 
+    caches[i].setNbEvaluationPoints(group.getNbIntegrationPoints());
+  }
+  dataCacheDouble *riemannSolver = NULL;
+  if (nbConnections == 2)
+    riemannSolver = _claw.newRiemannSolver(caches[0], caches[1]); 
+  if (nbConnections == 3)
+    riemannSolver = _claw.newBifurcationRiemannSolver(caches[0], caches[1], caches[2]); 
+    
   // ----- 1 ----  get the solution at quadrature points
-  fullMatrix<double> solutionQP (group.getNbIntegrationPoints(),nbFaces * _nbFields*2);
-  group.getCollocationMatrix().mult(solution, solutionQP); 
+  int nbFaces = group.getNbElements();
+  fullMatrix<double> solutionQP (group.getNbIntegrationPoints(), nbFaces * _nbFields*nbConnections);
+  group.getCollocationMatrix().mult (solution, solutionQP); 
   // needed tocompute normal fluxes  at integration points
-  fullMatrix<double> NormalFluxQP ( group.getNbIntegrationPoints(), nbFaces*_nbFields*2);
-  // create one dataCache for each side
-  _cacheMapLeft->setNbEvaluationPoints(group.getNbIntegrationPoints());
-  _cacheMapRight->setNbEvaluationPoints(group.getNbIntegrationPoints());
-  fullMatrix<double> dPsiLeftDx,dPsiRightDx,dofsLeft,dofsRight,normalFluxQP;
-  int p = groupLeft.getOrder();
-  int dim = left.getElement(0)->getDim();
+  fullMatrix<double> NormalFluxQP (group.getNbIntegrationPoints(), nbFaces*_nbFields*nbConnections);
+  fullMatrix<double> normalFluxQP, dofs, dPsiDx;
+  int p = elementGroups[0]->getOrder();
+  int dim = connections[0]->getElement(0)->getDim();
   for (int iFace=0 ; iFace < nbFaces ; ++iFace) {
-    // B1 )  adjust the proxies for this element
-    //      NB  : the B1 section will almost completely disapear 
-    //      if we write a function (from the function class) for moving proxies across big matrices
-    // give the current elements to the dataCacheMap 
-    _cacheElementLeft.set(left.getElement(iFace));
-    _cacheElementRight.set(left.getElement(iFace));
-    // proxies for the solution
-    _solutionQPLeft.setAsProxy(solutionQP, iFace*2*_nbFields, _nbFields);
-    _solutionQPRight.setAsProxy(solutionQP, (iFace*2+1)*_nbFields, _nbFields);
-    _normals.setAsProxy(left.getNormals(), iFace*group.getNbIntegrationPoints(),group.getNbIntegrationPoints());
-    // proxies needed to compute the gradient of the solution and the IP term
-    dPsiLeftDx.setAsProxy(DPsiLeftDx,iFace*groupLeft.getNbNodes(),groupLeft.getNbNodes());
-    dPsiRightDx.setAsProxy(DPsiRightDx,iFace*groupRight.getNbNodes(),groupRight.getNbNodes());
-    dofsLeft.setAsProxy(solutionLeft, _nbFields*left.getElementId(iFace), _nbFields);
-    dofsRight.setAsProxy(solutionRight, _nbFields*right.getElementId(iFace), _nbFields);
-    _uvwLeft.setAsProxy(left.getIntegrationPointsOnElement(iFace));
-    _uvwRight.setAsProxy(right.getIntegrationPointsOnElement(iFace));
-    // proxies for the flux
-    normalFluxQP.setAsProxy(NormalFluxQP, iFace*_nbFields*2, _nbFields*2);
-    // B2 ) compute the gradient of the solution
-    if(_gradientSolutionLeft.somethingDependOnMe()){
-      dPsiLeftDx.mult(dofsLeft, _gradientSolutionLeft.set());
-      dPsiRightDx.mult(dofsRight, _gradientSolutionRight.set());
+    for (int i=0; i<nbConnections; i++) {
+      // B1 )  adjust the proxies for this element
+      caches[i].getElement().set(connections[i]->getElement(iFace));
+      caches[i].getParametricCoordinates(NULL).setAsProxy(connections[i]->getIntegrationPointsOnElement(iFace));
+      caches[i].getSolution(NULL).setAsProxy(solutionQP, (iFace*nbConnections+i)*_nbFields, _nbFields);
+      caches[i].getNormals(NULL).setAsProxy(connections[i]->getNormals(), iFace*group.getNbIntegrationPoints(), group.getNbIntegrationPoints());
+      // B2 ) compute the gradient of the solution
+      if(caches[i].getSolutionGradient(NULL).somethingDependOnMe()) {
+        dofs.setAsProxy(*solutionOnElements[i], _nbFields*connections[i]->getElementId(iFace), _nbFields);
+        dPsiDx.setAsProxy(connections[i]->getDPsiDx(),iFace*elementGroups[i]->getNbNodes(),elementGroups[i]->getNbNodes());
+        dPsiDx.mult(dofs, caches[i].getSolutionGradient(NULL).set());
+      }
     }
+    // proxies for the flux
+    normalFluxQP.setAsProxy(NormalFluxQP, iFace*_nbFields*nbConnections, _nbFields*nbConnections);
     // B3 ) compute fluxes    
-    if (_diffusiveFluxLeft) {
+    if (diffusiveFluxes[0] && nbConnections==2) { // IP only implemented for 2-sides faces (not for bifurcations)
       for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
         const double detJ = group.getDetJ (iFace, iPt);
         //just for the lisibility :
-        const fullMatrix<double> &dfl = (*_diffusiveFluxLeft)();
-        const fullMatrix<double> &dfr = (*_diffusiveFluxRight)();
+        const fullMatrix<double> &dfl = (*diffusiveFluxes[0])();
+        const fullMatrix<double> &dfr = (*diffusiveFluxes[1])();
+        const fullMatrix<double> &n = (caches[0].getNormals(NULL))();
         for (int k=0;k<_nbFields;k++) { 
           double meanNormalFlux =
-              ((dfl(iPt,k+_nbFields*0 )+dfr(iPt,k+_nbFields*0)) * _normals(0,iPt)
-              +(dfl(iPt,k+_nbFields*1 )+dfr(iPt,k+_nbFields*1)) * _normals(1,iPt)
-              +(dfl(iPt,k+_nbFields*2 )+dfr(iPt,k+_nbFields*2)) * _normals(2,iPt))/2;
-          double minl = std::min(groupLeft.getElementVolume(left.getElementId(iFace)),
-                                 groupRight.getElementVolume(right.getElementId(iFace))
+              ((dfl(iPt,k+_nbFields*0)+dfr(iPt,k+_nbFields*0)) * n(0,iPt)
+              +(dfl(iPt,k+_nbFields*1)+dfr(iPt,k+_nbFields*1)) * n(1,iPt)
+              +(dfl(iPt,k+_nbFields*2)+dfr(iPt,k+_nbFields*2)) * n(2,iPt))/2;
+          double minl = std::min(elementGroups[0]->getElementVolume(connections[0]->getElementId(iFace)),
+                                 elementGroups[1]->getElementVolume(connections[1]->getElementId(iFace))
                                 )/group.getInterfaceSurface(iFace);
-          double nu = std::max((*_maximumDiffusivityRight)(iPt,0),(*_maximumDiffusivityLeft)(iPt,0));
+          double nu = std::max((*maximumDiffusivities[1])(iPt,0),(*maximumDiffusivities[0])(iPt,0));
           double mu = (p+1)*(p+dim)/dim*nu/minl;
-          double solutionJumpPenalty = (_solutionQPLeft(iPt,k)-_solutionQPRight(iPt,k))/2*mu;
+          double solutionJumpPenalty = (caches[0].getSolution(NULL)(iPt,k)-caches[1].getSolution(NULL)(iPt,k))/2*mu;
           normalFluxQP(iPt,k) -= (meanNormalFlux+solutionJumpPenalty)*detJ;
           normalFluxQP(iPt,k+_nbFields) += (meanNormalFlux+solutionJumpPenalty)*detJ;
         }
       }
     }
-    if (_riemannSolver) {
+    if (riemannSolver) {
       for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
         const double detJ = group.getDetJ (iFace, iPt);
-        for (int k=0;k<_nbFields*2;k++)
-          normalFluxQP(iPt,k) += (*_riemannSolver)(iPt,k)*detJ;
+        for (int k=0;k<_nbFields*nbConnections;k++)
+          normalFluxQP(iPt,k) += (*riemannSolver)(iPt,k)*detJ;
       }
     }
   }
   // C ) redistribute the flux to the residual (at Faces nodes)
-  if(_riemannSolver || _diffusiveFluxLeft)
+  if(riemannSolver || diffusiveFluxes[0])
     residual.gemm(group.getRedistributionMatrix(),NormalFluxQP);
 }
 
 
 void dgResidualInterface::computeAndMap1Group (dgGroupOfFaces &faces, dgDofContainer &solution, dgDofContainer &residual)
 {
-  fullMatrix<double> solInterface(faces.getNbNodes(),faces.getNbElements()*2*_nbFields);
-  fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements()*2*_nbFields);
-  const dgGroupOfElements *groupLeft = &faces.getGroupOfConnections(0).getGroupOfElements();
-  const dgGroupOfElements *groupRight = &faces.getGroupOfConnections(1).getGroupOfElements();
-  faces.mapToInterface(_nbFields, solution.getGroupProxy(groupLeft), solution.getGroupProxy(groupRight), solInterface);
-  compute1Group(faces,solInterface,solution.getGroupProxy(groupLeft), solution.getGroupProxy(groupRight),residuInterface);
-  faces.mapFromInterface(_nbFields, residuInterface,residual.getGroupProxy(groupLeft), residual.getGroupProxy(groupRight));
+  int nbConnections = faces.getNbGroupOfConnections();
+  fullMatrix<double> solInterface(faces.getNbNodes(),faces.getNbElements()*_nbFields*nbConnections);
+  fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements()*_nbFields*nbConnections);
+
+  std::vector<const dgGroupOfElements *> elGroups(nbConnections);
+  std::vector<const fullMatrix<double> *> solutionProxies(nbConnections);
+  std::vector<fullMatrix<double> *> residualProxies(nbConnections);
+  for (int i=0; i<nbConnections; i++) {
+    elGroups[i] = &faces.getGroupOfConnections(i).getGroupOfElements();
+    solutionProxies[i] = &solution.getGroupProxy(elGroups[i]);
+    residualProxies[i] = &residual.getGroupProxy(elGroups[i]);
+  }
+  faces.mapToInterface(_nbFields, solutionProxies, solInterface);
+  compute1Group(faces, solInterface, solutionProxies, residuInterface);
+  faces.mapFromInterface(_nbFields, residuInterface, residualProxies);
 }
 
 dgResidualInterface::~dgResidualInterface () 
 {
-  delete _cacheMapLeft;
-  delete _cacheMapRight;
 }
 
 
@@ -398,7 +391,7 @@ dgResidualBoundary::dgResidualBoundary(const dgConservationLaw &claw):_claw(claw
 void dgResidualBoundary::compute1Group(
 				     dgGroupOfFaces &group, 
 				     const fullMatrix<double> &solution, // solution !! at faces nodes
-				     fullMatrix<double> &solutionLeft, 
+				     const fullMatrix<double> &solutionLeft, 
 				     fullMatrix<double> &residual // residual !! at faces nodes
             )
 {
@@ -486,12 +479,21 @@ void dgResidualBoundary::compute1Group(
 void dgResidualBoundary::computeAndMap1Group(dgGroupOfFaces &faces, dgDofContainer &solution, dgDofContainer &residual)
 {
   int _nbFields = _claw.getNbFields();
-  fullMatrix<double> solInterface(faces.getNbNodes(),faces.getNbElements()*_nbFields);
-  fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements()*_nbFields);
-  const dgGroupOfElements &groupLeft = faces.getGroupOfConnections(0).getGroupOfElements();
-  faces.mapToInterface(_nbFields, solution.getGroupProxy(&groupLeft), solution.getGroupProxy(&groupLeft), solInterface);
-  compute1Group(faces,solInterface,solution.getGroupProxy(&groupLeft),residuInterface);
-  faces.mapFromInterface(_nbFields, residuInterface, residual.getGroupProxy(&groupLeft), residual.getGroupProxy(&groupLeft));
+  int nbConnections = faces.getNbGroupOfConnections();
+  fullMatrix<double> solInterface(faces.getNbNodes(), faces.getNbElements()*_nbFields*nbConnections);
+  fullMatrix<double> residuInterface(faces.getNbNodes(), faces.getNbElements()*_nbFields*nbConnections);
+
+  std::vector<const dgGroupOfElements *> elGroups(nbConnections);
+  std::vector<const fullMatrix<double> *> solutionProxies(nbConnections);
+  std::vector<fullMatrix<double> *> residualProxies(nbConnections);
+  for (int i=0; i<nbConnections; i++) {
+    elGroups[i] = &faces.getGroupOfConnections(i).getGroupOfElements();
+    solutionProxies[i] = &solution.getGroupProxy(elGroups[i]);
+    residualProxies[i] = &residual.getGroupProxy(elGroups[i]);
+  }
+  faces.mapToInterface(_nbFields, solutionProxies, solInterface);
+  compute1Group(faces, solInterface, *solutionProxies[0],residuInterface);
+  faces.mapFromInterface(_nbFields, residuInterface, residualProxies);
 }
 
 void dgResidual::compute(dgGroupCollection &groups, dgDofContainer &solution, dgDofContainer &residual)
@@ -540,9 +542,9 @@ void dgResidual::registerBindings (binding *b)
   mb = cb->addMethod("computeAndMap1Group",&dgResidualInterface::computeAndMap1Group);
   mb->setDescription("compute the residual for one group given a dgDofContainer solution"); 
   mb->setArgNames("group", "solution", "residual", NULL);
-  mb = cb->addMethod("compute1Group", &dgResidualInterface::compute1Group);
-  mb->setDescription("compute the residual for one group given fullMatrices with the solution at faces nodes and at element nodes"); 
-  mb->setArgNames("group", "solutionFaces", "solutionGroupLeft", "solutionGroupRight", "residual", NULL);
+//  mb = cb->addMethod("compute1Group", &dgResidualInterface::compute1Group);
+  //mb->setDescription("compute the residual for one group given fullMatrices with the solution at faces nodes and at element nodes"); 
+  //mb->setArgNames("group", "solutionFaces", "solutionOnElements", "residual", NULL);
 
   cb = b->addClass<dgResidualBoundary>("dgResidualBoundary");
   cb->setDescription("compute the residual for one boundary dgGroupOfFaces");
