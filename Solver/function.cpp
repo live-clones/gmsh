@@ -7,10 +7,60 @@
 #include "dgDofContainer.h"
 #include "dgGroupOfElements.h"
 #include "GModel.h"
-
 #if defined(HAVE_DLOPEN)
   #include "dlfcn.h"
 #endif
+
+class functionNew : public function{
+  protected :
+  std::vector<function*> dep;
+  virtual void call (fullMatrix<double> &res) {throw;}
+  virtual void call (const fullMatrix<double> &arg0, const fullMatrix<double> &res) {throw;};
+  virtual void call (const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &res) {throw;};
+  virtual void call (const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, fullMatrix<double> &res) {throw;};
+  virtual void call (const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, fullMatrix<double> &res) {throw;};
+  virtual void call (const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, const fullMatrix<double> &arg4, fullMatrix<double> &res) {throw;};
+  virtual void call (const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, const fullMatrix<double> &arg4, const fullMatrix<double> &arg5, fullMatrix<double> &res) {throw;};
+  public :
+  virtual void call (fullMatrix<double> &res, std::vector<const fullMatrix<double>*> &depM) {
+    switch (dep.size()) {
+      case 0 : call(res); break;
+      case 1 : call(*depM[0], res); break;
+      case 2 : call(*depM[0], *depM[1], res); break;
+      case 3 : call(*depM[0], *depM[1], *depM[2], res); break;
+      case 4 : call(*depM[0], *depM[1], *depM[2], *depM[3], res); break;
+      case 5 : call(*depM[0], *depM[1], *depM[2], *depM[3], *depM[4], res); break;
+      case 6 : call(*depM[0], *depM[1], *depM[2], *depM[3], *depM[4], *depM[5], res); break;
+      default : Msg::Error("function are not implemented for %i arguments\n", dep.size());
+    }
+  }
+  int _nbCol;
+  class data : public dataCacheDouble {
+    functionNew *_function;
+    std::vector<dataCacheDouble *> _dependencies;
+    std::vector<const fullMatrix<double> *> _depM;
+    public:
+    data(functionNew *f, dataCacheMap *m):
+      dataCacheDouble(*m,1,f->_nbCol)
+    {
+      _function = f;
+      _dependencies.resize ( _function->dep.size());
+      _depM.resize (_function->dep.size());
+      for (int i=0;i<_function->dep.size();i++)
+        _dependencies[i] = &m->get(_function->dep[i],this);
+    }
+    void _eval()
+    {
+      for(int i=0;i<_dependencies.size(); i++)
+        _depM[i] = &(*_dependencies[i])();
+      _function->call(_value, _depM);
+    }
+  };
+  dataCacheDouble *newDataCache(dataCacheMap *m)
+  {
+    return new data(this, m);
+  }
+};
 
 // dataCache members
 dataCache::dataCache(dataCacheMap *cacheMap) : _valid(false) {
@@ -395,7 +445,6 @@ void dataCacheDouble::resize() {
   _value = fullMatrix<double>(_nRowByPoint==0?1:_nRowByPoint*_cacheMap.getNbEvaluationPoints(),_value.size2());
 }
 
-#if defined(HAVE_DLOPEN)
 //functionC
 class functionC : public function {
   void (*callback)(void);
@@ -455,6 +504,7 @@ class functionC : public function {
     }
   };
   public:
+#if defined(HAVE_DLOPEN)
   functionC (std::string file, std::string symbol, int nbCol, std::vector<const function *> dependencies):
       _dependenciesF(dependencies),_nbCol(nbCol)
   {
@@ -470,12 +520,12 @@ class functionC : public function {
     _name = oss.str();
     function::add(_name,this);
   }
+#endif
   dataCacheDouble *newDataCache(dataCacheMap *m)
   {
     return new data(this,m);
   }
 };
-#endif
 
 
 #include "Bindings.h"

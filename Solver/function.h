@@ -187,12 +187,6 @@ class dataCacheMap {
     _toResize.insert(data);
   }
  public:
-  // dg Part
-  //list of dgDofContainer that have to be evaluated, this not work as a function as it depends on the algorithm
-  std::map<dgDofContainer*,dataCacheDouble*> fields;
-  //list of dgDofContainer whom gradient are needed
-  std::map<dgDofContainer*,dataCacheDouble*> gradientFields;
-  // end dg Part
   dataCacheDouble *_solution, *_solutionGradient, *_parametricCoordinates, *_normals;
   dataCacheDouble &getSolution(dataCacheDouble *caller);
   dataCacheDouble &getSolutionGradient(dataCacheDouble *caller);

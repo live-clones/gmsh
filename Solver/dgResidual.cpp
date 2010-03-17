@@ -270,7 +270,7 @@ dgResidualInterface::dgResidualInterface (const dgConservationLaw &claw):
 void dgResidualInterface::compute1Group ( //dofManager &dof, // the DOF manager (maybe useless here)
 				     dgGroupOfFaces &group, 
 				     const fullMatrix<double> &solution, // solution !! at faces nodes
-             const std::vector<const fullMatrix<double>*> & solutionOnElements,
+             const std::vector<const fullMatrix<double>*> solutionOnElements,
 				     fullMatrix<double> &residual // residual !! at faces nodes
 				      )
 { 
@@ -450,7 +450,7 @@ void dgResidual::registerBindings (binding *b)
   mb = cb->addMethod("computeAndMap1Group",&dgResidualInterface::computeAndMap1Group);
   mb->setDescription("compute the residual for one group given a dgDofContainer solution"); 
   mb->setArgNames("group", "solution", "residual", NULL);
-//  mb = cb->addMethod("compute1Group", &dgResidualInterface::compute1Group);
-  //mb->setDescription("compute the residual for one group given fullMatrices with the solution at faces nodes and at element nodes"); 
-  //mb->setArgNames("group", "solutionFaces", "solutionOnElements", "residual", NULL);
+  mb = cb->addMethod("compute1Group", &dgResidualInterface::compute1Group);
+  mb->setDescription("compute the residual for one group given fullMatrices with the solution at faces nodes and at element nodes"); 
+  mb->setArgNames("group", "solutionFaces", "solutionOnElements", "residual", NULL);
 }

@@ -112,8 +112,6 @@ dgRungeKuttaMultirate::dgRungeKuttaMultirate(dgGroupCollection* gc,dgConservatio
   }
   for(int iGroup=0;iGroup<gc->getNbFaceGroups();iGroup++){
     dgGroupOfFaces *gf=gc->getFaceGroup(iGroup);
-    /*if(gf->getNbGroupOfConnections()!=2)
-      continue;*/
     for(int i=0;i<gf->getNbGroupOfConnections();i++){
       const dgGroupOfElements *ge = &gf->getGroupOfConnections(i).getGroupOfElements();
       if(ge->getIsInnerMultirateBuffer()){
@@ -126,23 +124,6 @@ dgRungeKuttaMultirate::dgRungeKuttaMultirate(dgGroupCollection* gc,dgConservatio
       }
     }
   }
-  /*for(int iGroup=0;iGroup<gc->getNbFaceGroups();iGroup++){
-    dgGroupOfFaces *gf=gc->getFaceGroup(iGroup);
-    if(gf->getNbGroupOfConnections()!=1)
-      continue;
-    const dgGroupOfElements *ge[1];
-    ge[0]=&gf->getGroupOfConnections(0).getGroupOfElements();
-    for(int i=0;i<1;i++){
-      if(ge[i]->getIsInnerMultirateBuffer()){
-        _innerBufferGroupsOfElements[ge[i]->getMultirateExponent()].second.push_back(gf);
-      }
-      else if(ge[i]->getIsOuterMultirateBuffer()){
-        _outerBufferGroupsOfElements[ge[i]->getMultirateExponent()].second.push_back(gf);
-      }else{
-        _bulkGroupsOfElements[ge[i]->getMultirateExponent()].second.push_back(gf);
-      }
-    }
-  }*/
   // Removing duplicate entries
   for(int iExp=0;iExp<=_maxExponent;iExp++){
     std::vector<dgGroupOfFaces*>*v[3];

@@ -160,6 +160,32 @@ class luaStack<std::vector<type > >{
     return name+luaStack<type>::getName();
   }
 };
+template<class type>
+class luaStack<std::vector<type > &>{
+  public:
+  static std::vector<type>  get(lua_State *L, int ia){
+    std::vector<type> v;
+    size_t size=lua_objlen(L,ia);
+    v.resize(size);
+    for(size_t i=0;i<size;i++){
+      lua_rawgeti(L, ia, i+1);
+      v[i]=luaStack<type>::get(L,-1);
+      lua_pop(L,1);
+    }
+    return v;
+  }
+  static void push(lua_State *L, const std::vector<type>& v){
+    lua_createtable(L, v.size(), 0);
+    for(size_t i=0;i<v.size;i++){
+      luaStack<type>::push(L,v[i]);
+      lua_rawseti(L, 2, i+1);
+    }
+  }
+  static std::string getName(){
+    std::string name="vector of ";
+    return name+luaStack<type>::getName();
+  }
+};
 
 template<>
 class luaStack<double>{
