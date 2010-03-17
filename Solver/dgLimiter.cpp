@@ -52,11 +52,12 @@ int dgSlopeLimiter::apply ( dgDofContainer *solution)
         }  
         AVGL /= (double) fSize;
         AVGR /= (double) fSize;
-        MINLeft ( iElementL , k ) = std::min ( AVGR , MINLeft ( iElementL , k ) );  
-        MAXLeft ( iElementL , k ) = std::max ( AVGR , MAXLeft ( iElementL , k ) );  
-        MINRight ( iElementR , k ) = std::min ( AVGL , MINRight ( iElementR , k ) );  
-        MAXRight ( iElementR , k ) = std::max ( AVGL , MAXRight ( iElementR , k ) );  
+        MINLeft (0, iElementL*nbFields+k ) = std::min ( AVGR , MINLeft (0, iElementL*nbFields+k ) );  
+        MAXLeft (0, iElementL*nbFields+k) = std::max ( AVGR , MAXLeft (0, iElementL*nbFields+k ) );  
+        MINRight (0, iElementR*nbFields+k) = std::min ( AVGL , MINRight (0, iElementR*nbFields+k ) );  
+        MAXRight (0, iElementR*nbFields+k) = std::max ( AVGL , MAXRight (0, iElementR*nbFields+k ) );  
       }    
+
     }
   }
 
@@ -76,9 +77,9 @@ int dgSlopeLimiter::apply ( dgDofContainer *solution)
       {
         double AVG = 0.;   
         double locMax = -1.e22; 
-        double locMin =  1.e22; 
-        double neighMax = MAXG (iElement,k);    
-        double neighMin = MING (iElement,k);    
+        double locMin =  1.e22;
+        double neighMax = MAXG (0, iElement*nbFields+k);    
+        double neighMin = MING (0, iElement*nbFields+k);    
         for (int i=0; i<fSize; ++i)  
         {
           AVG += Temp(i,k);   

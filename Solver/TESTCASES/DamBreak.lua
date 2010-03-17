@@ -11,7 +11,7 @@ function initial_condition( xyz , f )
      f:set (i, 0, 40)
      f:set (i, 1, 0)
     else
-     f:set (i, 0, 5)
+     f:set (i, 0, 20)
      f:set (i, 1, 0)
     end	
   end
@@ -42,7 +42,8 @@ limiter = dgSlopeLimiter(law)
 rk:setLimiter(limiter) 
 
 -- build solution vector
-FS = functionLua(1, 'initial_condition', {'XYZ'}):getName()
+xyz = functionCoordinates.get()
+FS = functionLua(1, 'initial_condition', {xyz})
 solution = dgDofContainer(groups, law:getNbFields())
 solution:L2Projection(FS)
 
