@@ -8,7 +8,7 @@ class dgConservationLawShallowWater1d::advection: public dataCacheDouble {
   dataCacheDouble &sol;
   public:
   advection(dataCacheMap &cacheMap):
-    dataCacheDouble(cacheMap,1,9),
+    dataCacheDouble(cacheMap,1,6),
     sol(cacheMap.getSolution(this))
   {};
   void _eval () { 
@@ -19,6 +19,12 @@ class dgConservationLawShallowWater1d::advection: public dataCacheDouble {
       // flux_x
       _value(i,0) = (h+eta)*u;
       _value(i,1) = .5*u*u + g*eta;
+      // flux_y
+      _value(i,2) = 0;
+      _value(i,3) = 0;
+      // flux_z
+      _value(i,4) = 0;
+      _value(i,5) = 0;
     }
   }
 };
@@ -44,7 +50,7 @@ class dgConservationLawShallowWater1d::source: public dataCacheDouble {
   dataCacheDouble &xyz, &solution,&solutionGradient;
   public :
   source(dataCacheMap &cacheMap) : 
-    dataCacheDouble(cacheMap,1,3),
+    dataCacheDouble(cacheMap,1,2),
     xyz(cacheMap.getParametricCoordinates(this)),
     solution(cacheMap.getSolution(this)),
     solutionGradient(cacheMap.getSolutionGradient(this))
@@ -63,7 +69,7 @@ class dgConservationLawShallowWater1d::riemann:public dataCacheDouble {
   dataCacheDouble &normals, &solL, &solR;
   public:
   riemann(dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight):
-    dataCacheDouble(cacheMapLeft,1,6),
+    dataCacheDouble(cacheMapLeft,1,4),
     normals(cacheMapLeft.getNormals(this)),
     solL(cacheMapLeft.getSolution(this)),
     solR(cacheMapRight.getSolution(this))
@@ -101,7 +107,7 @@ class dgConservationLawShallowWater1d::boundaryWall : public dgBoundaryCondition
     dataCacheDouble &sol,&normals;
     public:
     term(dataCacheMap &cacheMap):
-    dataCacheDouble(cacheMap,1,3),
+    dataCacheDouble(cacheMap,1,2),
     sol(cacheMap.getSolution(this)),
     normals(cacheMap.getNormals(this)){}
     void _eval () { 
@@ -129,7 +135,7 @@ class dgConservationLawShallowWater1d::clipToPhysics : public dataCacheDouble {
   double _hMin;
 public:
   clipToPhysics(dataCacheMap &cacheMap, double hMin):
-    dataCacheDouble(cacheMap,1,4),
+    dataCacheDouble(cacheMap,1,2),
     sol(cacheMap.getSolution(this))
   {
     _hMin=hMin;
