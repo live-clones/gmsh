@@ -1,7 +1,5 @@
 #include "dgConservationLawShallowWater1d.h"
 #include "function.h"
-static double g = 9.81;
-static double RHO = 1.0;
 
 class dgConservationLawShallowWater1d : public dgConservationLaw {
   class advection;
@@ -10,7 +8,7 @@ class dgConservationLawShallowWater1d : public dgConservationLaw {
   class boundaryWall;
   class clipToPhysics;
   class maxConvectiveSpeed;
-  const function  *_bathymetry, *_linearDissipation;
+  const function  *_bathymetry, *_linearDissipation, *_pressure, *_celerity;
   public:
   dataCacheDouble *newConvectiveFlux( dataCacheMap &cacheMap) const;
   dataCacheDouble *newMaxConvectiveSpeed( dataCacheMap &cacheMap) const;
@@ -18,14 +16,19 @@ class dgConservationLawShallowWater1d : public dgConservationLaw {
   dataCacheDouble *newDiffusiveFlux( dataCacheMap &cacheMap) const;
   dataCacheDouble *newSourceTerm (dataCacheMap &cacheMap) const;
   dataCacheDouble *newClipToPhysics (dataCacheMap &cacheMap) const;
-  inline void setBathymetry(const function *bathymetry) {_bathymetry = bathymetry;}
-  inline void setLinearDissipation(const function *linearDissipation){_linearDissipation = linearDissipation;}
+  inline void setPressureFlux(const function *pressure) { _pressure = pressure;}
+  inline void setCelerity(const function *celerity) { _celerity = celerity;}
+  inline void setBathymetry(const function *bathymetry) { _bathymetry = bathymetry;}
+  inline void setLinearDissipation(const function *linearDissipation){ _linearDissipation = linearDissipation;}
+  inline const function* getPressureFlux() {return _pressure;};
   dgConservationLawShallowWater1d() 
   {
     _nbf = 2; // eta u
     fullMatrix<double> zero(1,1);
     zero(0,0) = 0.0;
     functionConstant *fzero = new functionConstant(&zero);
+    _pressure = fzero;
+    _celerity = fzero;
     _bathymetry = fzero;
     _linearDissipation = fzero;
   }
@@ -58,41 +61,40 @@ public:
 };
 
 class dgConservationLawShallowWater1d::maxConvectiveSpeed : public dataCacheDouble {
-  dataCacheDouble &sol, &_bathymetry;
+  dataCacheDouble &sol, &_celerity;
   public:
-  maxConvectiveSpeed(dataCacheMap &cacheMap, const function *bathymetry):
+  maxConvectiveSpeed(dataCacheMap &cacheMap, const function *celerity):
     dataCacheDouble(cacheMap,1,1),
     sol(cacheMap.getSolution(this)),
-    _bathymetry(cacheMap.get(bathymetry,this))
+    _celerity(cacheMap.get(celerity,this))
   {};
   void _eval () {
     int nQP = sol().size1();
     for(int i=0; i< nQP; i++) {
-      double h = _bathymetry(i,0);
-      double eta = sol(i,0);
-      const double c = sqrt(g*eta);
-      _value(i,0) = sol(i,1) + c;
+      _value(i,0) = sol(i,1) + _celerity(i,0);
     }
   }
 };
 
 class dgConservationLawShallowWater1d::advection: public dataCacheDouble {
-  dataCacheDouble &sol, &_bathymetry;
+  dataCacheDouble &sol, &_bathymetry, &_pressure;
   public:
-  advection(dataCacheMap &cacheMap, const function *bathymetry):
+  advection(dataCacheMap &cacheMap, const function *bathymetry, const function *pressure):
     dataCacheDouble(cacheMap,1,6),
     sol(cacheMap.getSolution(this)),
-    _bathymetry(cacheMap.get(bathymetry,this))
+    _bathymetry(cacheMap.get(bathymetry,this)), 
+    _pressure(cacheMap.get(pressure,this))
   {};
   void _eval () { 
     int nQP = _value.size1();
     for(int i=0; i< nQP; i++) {
       double h = _bathymetry(i,0);
+      double p = _pressure(i,0);
       double eta = sol(i,0);
       double u = sol(i,1);
       // flux_x
       _value(i,0) = (h+eta)*u;
-      _value(i,1) = .5*u*u + g*eta;
+      _value(i,1) = .5*u*u + p;
       // flux_y
       _value(i,2) = 0;
       _value(i,3) = 0;
@@ -125,48 +127,56 @@ class dgConservationLawShallowWater1d::source: public dataCacheDouble {
   }
 };
 class dgConservationLawShallowWater1d::riemann:public dataCacheDouble {
-  dataCacheDouble &normals, &solL, &solR, &_bathymetry;;
+  dataCacheDouble &normals, &solL, &solR, &_bathymetryL, &_bathymetryR;
+  dataCacheDouble &_pressureL, &_pressureR,  &_celerityL, &_celerityR;
   public:
-  riemann(dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight, const function *bathymetry):
+  riemann(dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight, const function *bathymetry, 
+	  const function *pressure, const function *celerity):
     dataCacheDouble(cacheMapLeft,1,4),
     normals(cacheMapLeft.getNormals(this)),
     solL(cacheMapLeft.getSolution(this)),
     solR(cacheMapRight.getSolution(this)),
-    _bathymetry(cacheMapLeft.get(bathymetry, this))
+    _bathymetryL(cacheMapLeft.get(bathymetry, this)), 
+    _bathymetryR(cacheMapRight.get(bathymetry, this)), 
+    _pressureL(cacheMapLeft.get(pressure, this)), 
+    _pressureR(cacheMapRight.get(pressure, this)),
+    _celerityL(cacheMapLeft.get(celerity, this)), 
+    _celerityR(cacheMapRight.get(celerity, this))
   {};
   void _eval () { 
     int nQP = solL().size1();
     for(int i=0; i< nQP; i++) {
-      double h = _bathymetry(i,0);
+      double hL = _bathymetryL(i,0);  double hR = _bathymetryR(i,0);
       double n0 = normals(0,i);
-      double HL = solL(i,0) + h, HR = solR(i,0) + h;
+      double HL = solL(i,0) + hL, HR = solR(i,0) + hR;
       double uL = solL(i,1) , uR = solR(i,1) ;
       double sqHL = sqrt(HL), sqHR = sqrt(HR);
       double F1,F2;
-      //---------
-      //ROE 
-      //---------
+
+//       //---------
+//       //ROE 
+//       //---------
 //       double HuL = uL*HL, HuR = uR*HR;
 //       double HM = (HL+HR)/2, HJ = (HL-HR)/2;
 //       double HuM = (HuL+HuR)/2, HuJ = (HuL-HuR)/2;
 //       double u_roe = (sqHL*uL + sqHR*uR) / (sqHL + sqHR);
-//       double c_roe = sqrt(g*HM);
+//       double c_roe = sqrt(g*HM); //????
 //       double H = HM + (HuJ - u_roe *HJ) / c_roe;
 //       double Hu = HuM + (c_roe - u_roe*u_roe/c_roe) *HJ + u_roe/c_roe *HuJ;
 //       double u = Hu / H;
-//       double p = RHO*g*(H-h);
+//       double p = RHO*g*(H-h); //????
 //       F1 = H*u*n0;
 //       F2 = (.5*u*u + p/RHO)*n0;
 
 //     //---------
 //     //LAX 
 //     //---------
-      double pL = RHO*g*solL(i,0);
-      double pR = RHO*g*solR(i,0);
+      double pL = _pressureL(i,0);
+      double pR = _pressureR(i,0);
       F1 = .5*( HL*uL + HR*uR )*n0;
-      F2 = .5*( .5*uL*uL+pL/RHO  + .5*uR*uR+pR/RHO )*n0;       
-      double maxlambdaL = uL + sqrt(g*HL); 
-      double maxlambdaR = uR + sqrt(g*HR);  
+      F2 = .5*( .5*uL*uL+pL  + .5*uR*uR+pR )*n0;       
+      double maxlambdaL = uL + _celerityL(i,0); 
+      double maxlambdaR = uR + _celerityR(i,0);  
       const double aMax = std::max(maxlambdaL,maxlambdaR);
       F1 += aMax*(HL-HR);
       F2 += aMax*(uL-uR);
@@ -174,28 +184,27 @@ class dgConservationLawShallowWater1d::riemann:public dataCacheDouble {
 //     //---------
 //     //HLL 
 //     //---------
-//     double cL = sqrt(g*HL);
-//     double cR = sqrt(g*HR);
-//     double pL = RHO*g*solL(i,0);
-//     double pR = RHO*g*solR(i,0);
-//     double ustar = (sqHL*uL + sqHR*uR) / (sqHL + sqHR); 
-//     double Hstar = (HL+HR)*.5;
-//     double cstar =  sqrt(g*Hstar);   
-//     double SL = std::min(uL - cL, ustar - cstar);
-//     double SR = std::min(uR + cR,  ustar + cstar);
-//     if (SL >= 0.){
-//       F1 =  HL*uL*n0;  
-//       F2 =  (.5*uL*uL + pL/RHO )*n0  ;
-//     }
-//     else if (SR <=0.){
-//       F1 =  HR*uR*n0;  
-//       F2 =  (.5*uR*uR + pR/RHO )*n0  ;
-//     }
-//     else{
-//       F1 = (SR*HL*uL*n0-SL*HR*uR*n0 + SL*SR*(HR-HL))/(SR-SL);
-//       F2 = (SR*(.5*uL*uL + pL/RHO )*n0-SL*(.5*uR*uR + pR/RHO )*n0  + SL*SR*(uR-uL))/(SR-SL);
-//     }
 
+//       double pL = _pressureL(i,0);
+//       double pR = _pressureR(i,0);
+//       double ustar = (sqHL*uL + sqHR*uR) / (sqHL + sqHR); 
+//       double Hstar = (HL+HR)*.5;
+//       double cstar =  sqrt(g*Hstar); //????   
+//       double SL = std::min(uL - _celerityL(i,0), ustar - cstar);
+//       double SR = std::min(uR + _celerityR(i,0),  ustar + cstar);
+//       if (SL >= 0.){
+// 	F1 =  HL*uL*n0;  
+// 	F2 =  (.5*uL*uL + pL/RHO )*n0  ;
+//       }
+//       else if (SR <=0.){
+// 	F1 =  HR*uR*n0;  
+// 	F2 =  (.5*uR*uR + pR/RHO )*n0  ;
+//       }
+//       else{
+// 	F1 = (SR*HL*uL*n0-SL*HR*uR*n0 + SL*SR*(HR-HL))/(SR-SL);
+// 	F2 = (SR*(.5*uL*uL + pL/RHO )*n0-SL*(.5*uR*uR + pR/RHO )*n0  + SL*SR*(uR-uL))/(SR-SL);
+//       }
+      
     //-------------
 
       _value(i,0) = -F1;
@@ -211,39 +220,41 @@ class dgConservationLawShallowWater1d::riemann:public dataCacheDouble {
 
 class dgConservationLawShallowWater1d::boundaryWall : public dgBoundaryCondition {
   class term : public dataCacheDouble {
-    dataCacheDouble &sol,&normals;
+    dataCacheDouble &sol,&normals, &_pressure;
     public:
-    term(dataCacheMap &cacheMap):
+    term(dataCacheMap &cacheMap, const function *pressure):
     dataCacheDouble(cacheMap,1,2),
     sol(cacheMap.getSolution(this)),
-    normals(cacheMap.getNormals(this)){}
+    _pressure(cacheMap.get(pressure,this)),
+    normals(cacheMap.getNormals(this))
+    {}
     void _eval () { 
       int nQP = sol().size1();
       for(int i=0; i< nQP; i++) {
-        double nx = normals(0,i);
-        double eta = sol(i,0);
-
+        double n0 = normals(0,i);
+        double p = _pressure(i,0);
         _value(i,0) = 0;
-        _value(i,1) = -g*eta*nx;
+        _value(i,1) = -p*n0;
       }
     }
   };
   public:
-  boundaryWall(dgConservationLaw *claw) : dgBoundaryCondition(claw){}
+  dgConservationLawShallowWater1d *_claw; 
+  boundaryWall(dgConservationLawShallowWater1d *claw) : dgBoundaryCondition(claw){_claw=claw;}
   dataCacheDouble *newBoundaryTerm(dataCacheMap &cacheMapLeft) const {
-    return new term(cacheMapLeft);
+    return new term(cacheMapLeft, _claw->getPressureFlux());
   }
 };
 
 
 dataCacheDouble *dgConservationLawShallowWater1d::newMaxConvectiveSpeed( dataCacheMap &cacheMap) const {
-  return new maxConvectiveSpeed(cacheMap, _bathymetry);
+  return new maxConvectiveSpeed(cacheMap, _celerity);
 }
 dataCacheDouble *dgConservationLawShallowWater1d::newConvectiveFlux( dataCacheMap &cacheMap) const {
-  return new advection(cacheMap, _bathymetry);
+  return new advection(cacheMap, _bathymetry, _pressure);
 }
 dataCacheDouble *dgConservationLawShallowWater1d::newRiemannSolver( dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight) const {
-  return new riemann(cacheMapLeft, cacheMapRight, _bathymetry);
+  return new riemann(cacheMapLeft, cacheMapRight, _bathymetry, _pressure, _celerity);
 }
 dataCacheDouble *dgConservationLawShallowWater1d::newDiffusiveFlux( dataCacheMap &cacheMap) const {
   return 0;
@@ -276,4 +287,10 @@ void dgConservationLawShallowWater1dRegisterBindings (binding *b){
   cm = cb->addMethod("setBathymetry", &dgConservationLawShallowWater1d::setBathymetry);
   cm->setDescription("set the function to evaluate the bathymetry h (H = h+eta)");
   cm->setArgNames("h",NULL);
+  cm = cb->addMethod("setPressureFlux", &dgConservationLawShallowWater1d::setPressureFlux);
+  cm->setDescription("set the function to evaluate the pressure flux");
+  cm->setArgNames("pressureFlux",NULL);
+  cm = cb->addMethod("setCelerity", &dgConservationLawShallowWater1d::setCelerity);
+  cm->setDescription("set the function to the celerity of the waves");
+  cm->setArgNames("celerity",NULL);
 }

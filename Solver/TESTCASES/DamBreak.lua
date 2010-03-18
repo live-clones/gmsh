@@ -2,6 +2,8 @@
      Function for initial conditions
 --]]
 
+g = 9.81;
+
 function initial_condition( xyz , f )
   for i=0,xyz:size1()-1 do
     x = xyz:get(i,0)
@@ -17,6 +19,19 @@ function initial_condition( xyz , f )
   end
 end
 
+function pressureFlux (solution, f)
+  for i=0,f:size1()-1 do
+     p = g*solution:get(i,0)
+     f:set (i, 0, p)
+  end
+end
+function celerity (solution, bathymetry, f)
+  for i=0,f:size1()-1 do
+    c = math.sqrt(g*(bathymetry:get(i,0)+solution:get(i,0)))
+    f:set (i, 0, c)
+  end
+end
+
 --[[ 
      Example of a lua program driving the DG code
 --]]
@@ -26,12 +41,17 @@ model:load ('edge.msh')
 order=1
 dimension=1
 
+bathymetry = functionConstant({0})
+dissipation = functionConstant({0})
+
 -- boundary condition
 law = dgConservationLawShallowWater1d()
 law:addBoundaryCondition('Left',law:newBoundaryWall())
 law:addBoundaryCondition('Right',law:newBoundaryWall())
---law:setBathymetry(functionConstant({0}))
---law:setLinearDissipation(functionConstant({0}))
+law:setLinearDissipation(dissipation)
+law:setBathymetry(bathymetry)
+law:setPressureFlux(functionLua(1,'pressureFlux',{functionSolution.get()}))
+law:setCelerity(functionLua(1,'celerity',{functionSolution.get(), bathymetry}))
 
 groups = dgGroupCollection(model, dimension, order)
 groups:buildGroupsOfInterfaces()

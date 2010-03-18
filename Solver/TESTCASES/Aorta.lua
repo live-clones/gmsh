@@ -17,7 +17,7 @@ t=0
 Amax = 3.15
 
 function inlet( FCT )
-  FCT:set(0,0,Amax*math.sin(2*PI*t/T)) 
+  FCT:set(0,0,Amax*math.sin(2*PI*t/T)*atan(1000*(T/2-t)) 
   FCT:set(0,1, 0) 
 end
 

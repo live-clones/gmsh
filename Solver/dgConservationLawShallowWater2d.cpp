@@ -17,11 +17,11 @@ class dgConservationLawShallowWater2d : public dgConservationLaw {
   dataCacheDouble *newSourceTerm (dataCacheMap &cacheMap) const;
   dataCacheDouble *newMaxConvectiveSpeed (dataCacheMap &cacheMap) const;
   dataCacheDouble *newClipToPhysics (dataCacheMap &cacheMap) const;
-  inline void setCoriolisFactor(const function *coriolisFactor){_coriolisFactor = coriolisFactor;}
-  inline void setLinearDissipation(const function *linearDissipation){_linearDissipation = linearDissipation;}
-  inline void setQuadraticDissipation(const function *quadraticDissipation){_quadraticDissipation = quadraticDissipation;}
-  inline void setSource(const function *source){_source = source;}
-  inline void setBathymetry(const function *bathymetry) {_bathymetry = bathymetry;}
+  inline void setCoriolisFactor(const function *coriolisFactor){ _coriolisFactor = coriolisFactor;}
+  inline void setLinearDissipation(const function *linearDissipation){ _linearDissipation = linearDissipation;}
+  inline void setQuadraticDissipation(const function *quadraticDissipation){ _quadraticDissipation = quadraticDissipation;}
+  inline void setSource(const function *source){ _source = source;}
+  inline void setBathymetry(const function *bathymetry) { _bathymetry = bathymetry;}
   dgConservationLawShallowWater2d() 
   {
     _nbf = 3; // eta u v
