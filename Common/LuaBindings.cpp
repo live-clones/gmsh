@@ -348,8 +348,8 @@ binding::binding(){
   dgBoundaryCondition::registerBindings(this);
   dgConservationLaw::registerBindings(this);
   dgConservationLawAdvectionDiffusionRegisterBindings(this);
-   dgConservationLawMaxwellRegisterBindings(this);
-   dgConservationLawShallowWater1dRegisterBindings(this);
+  dgConservationLawMaxwellRegisterBindings(this);
+  dgConservationLawShallowWater1dRegisterBindings(this);
   dgConservationLawShallowWater2dRegisterBindings(this);
   dgConservationLawWaveEquationRegisterBindings(this);
   dgDofContainer::registerBindings(this);
@@ -361,6 +361,7 @@ binding::binding(){
   dgRungeKutta::registerBindings(this);
   dgRungeKuttaMultirate43::registerBindings(this);
   dgRungeKuttaMultirate22::registerBindings(this);
+  dgRungeKuttaMultirateConservative::registerBindings(this);
   dgSlopeLimiterRegisterBindings(this);
   dgSupraTransformNodalValueRegisterBindings(this);
   dgSystemOfEquations::registerBindings(this);
