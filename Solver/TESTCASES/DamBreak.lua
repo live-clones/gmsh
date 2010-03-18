@@ -30,8 +30,8 @@ dimension=1
 law = dgConservationLawShallowWater1d()
 law:addBoundaryCondition('Left',law:newBoundaryWall())
 law:addBoundaryCondition('Right',law:newBoundaryWall())
-law:setBathymetry(functionConstant({0}))
-law:setLinearDissipation(functionConstant({0}))
+--law:setBathymetry(functionConstant({0}))
+--law:setLinearDissipation(functionConstant({0}))
 
 groups = dgGroupCollection(model, dimension, order)
 groups:buildGroupsOfInterfaces()

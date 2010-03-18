@@ -1,6 +1,7 @@
 #include "dgConservationLawShallowWater1d.h"
 #include "function.h"
 static double g = 9.81;
+static double RHO = 1.0;
 
 class dgConservationLawShallowWater1d : public dgConservationLaw {
   class advection;
@@ -22,6 +23,11 @@ class dgConservationLawShallowWater1d : public dgConservationLaw {
   dgConservationLawShallowWater1d() 
   {
     _nbf = 2; // eta u
+    fullMatrix<double> zero(1,1);
+    zero(0,0) = 0.0;
+    functionConstant *fzero = new functionConstant(&zero);
+    _bathymetry = fzero;
+    _linearDissipation = fzero;
   }
   dgBoundaryCondition *newBoundaryWall();
 };
@@ -132,29 +138,75 @@ class dgConservationLawShallowWater1d::riemann:public dataCacheDouble {
     int nQP = solL().size1();
     for(int i=0; i< nQP; i++) {
       double h = _bathymetry(i,0);
-      double nx = normals(0,i);
+      double n0 = normals(0,i);
       double HL = solL(i,0) + h, HR = solR(i,0) + h;
-      double uL = nx*solL(i,1) , uR = nx*solR(i,1) ;
-      double HuL = uL*HL, HuR = uR*HR;
-      double HM = (HL+HR)/2, HJ = (HL-HR)/2;
-      double HuM = (HuL+HuR)/2, HuJ = (HuL-HuR)/2;
+      double uL = solL(i,1) , uR = solR(i,1) ;
       double sqHL = sqrt(HL), sqHR = sqrt(HR);
-      double u_roe = (sqHL*uL + sqHR*uR) / (sqHL + sqHR);
-      double c_roe = sqrt(g*HM);
-      double H = HM + (HuJ - u_roe *HJ) / c_roe;
-      double Hu = HuM + (c_roe - u_roe*u_roe/c_roe) *HJ + u_roe/c_roe *HuJ;
-      double u = Hu / H;
-      double eta  = H-h;
+      double F1,F2;
+      //---------
+      //ROE 
+      //---------
+//       double HuL = uL*HL, HuR = uR*HR;
+//       double HM = (HL+HR)/2, HJ = (HL-HR)/2;
+//       double HuM = (HuL+HuR)/2, HuJ = (HuL-HuR)/2;
+//       double u_roe = (sqHL*uL + sqHR*uR) / (sqHL + sqHR);
+//       double c_roe = sqrt(g*HM);
+//       double H = HM + (HuJ - u_roe *HJ) / c_roe;
+//       double Hu = HuM + (c_roe - u_roe*u_roe/c_roe) *HJ + u_roe/c_roe *HuJ;
+//       double u = Hu / H;
+//       double p = RHO*g*(H-h);
+//       F1 = H*u*n0;
+//       F2 = (.5*u*u + p/RHO)*n0;
 
-      double Fun = .5*u*u +g*eta;
-      double Feta = (h+eta)*u;
+//     //---------
+//     //LAX 
+//     //---------
+      double pL = RHO*g*solL(i,0);
+      double pR = RHO*g*solR(i,0);
+      F1 = .5*( HL*uL + HR*uR )*n0;
+      F2 = .5*( .5*uL*uL+pL/RHO  + .5*uR*uR+pR/RHO )*n0;       
+      double maxlambdaL = uL + sqrt(g*HL); 
+      double maxlambdaR = uR + sqrt(g*HR);  
+      const double aMax = std::max(maxlambdaL,maxlambdaR);
+      F1 += aMax*(HL-HR);
+      F2 += aMax*(uL-uR);
 
-      _value(i,0) = -Feta;
-      _value(i,1) = -Fun*nx;
+//     //---------
+//     //HLL 
+//     //---------
+//     double cL = sqrt(g*HL);
+//     double cR = sqrt(g*HR);
+//     double pL = RHO*g*solL(i,0);
+//     double pR = RHO*g*solR(i,0);
+//     double ustar = (sqHL*uL + sqHR*uR) / (sqHL + sqHR); 
+//     double Hstar = (HL+HR)*.5;
+//     double cstar =  sqrt(g*Hstar);   
+//     double SL = std::min(uL - cL, ustar - cstar);
+//     double SR = std::min(uR + cR,  ustar + cstar);
+//     if (SL >= 0.){
+//       F1 =  HL*uL*n0;  
+//       F2 =  (.5*uL*uL + pL/RHO )*n0  ;
+//     }
+//     else if (SR <=0.){
+//       F1 =  HR*uR*n0;  
+//       F2 =  (.5*uR*uR + pR/RHO )*n0  ;
+//     }
+//     else{
+//       F1 = (SR*HL*uL*n0-SL*HR*uR*n0 + SL*SR*(HR-HL))/(SR-SL);
+//       F2 = (SR*(.5*uL*uL + pL/RHO )*n0-SL*(.5*uR*uR + pR/RHO )*n0  + SL*SR*(uR-uL))/(SR-SL);
+//     }
+
+    //-------------
+
+      _value(i,0) = -F1;
+      _value(i,1) = -F2;
       _value(i,2) = -_value(i,0);
       _value(i,3) = -_value(i,1);
+
     }
+
   }
+
 };
 
 class dgConservationLawShallowWater1d::boundaryWall : public dgBoundaryCondition {

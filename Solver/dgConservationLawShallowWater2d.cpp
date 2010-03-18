@@ -25,6 +25,14 @@ class dgConservationLawShallowWater2d : public dgConservationLaw {
   dgConservationLawShallowWater2d() 
   {
     _nbf = 3; // eta u v
+    fullMatrix<double> zero(1,1);
+    zero(0,0) = 0.0;
+    functionConstant *fzero = new functionConstant(&zero);
+    _bathymetry = fzero;
+    _linearDissipation = fzero;
+    _coriolisFactor = fzero;
+    _quadraticDissipation = fzero;
+    _source = fzero;
   }
   dgBoundaryCondition *newBoundaryWall();
 };
