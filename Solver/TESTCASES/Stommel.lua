@@ -1,6 +1,6 @@
 model = GModel()
 model:load ('stommel_square.msh')
-order=1
+order = 2
 dimension = 2
 
 CFunctions =[[
