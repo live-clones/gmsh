@@ -285,6 +285,11 @@ void dgRungeKuttaMultirate::registerBindings(binding *b) {
 dgRungeKuttaMultirate43::dgRungeKuttaMultirate43(dgGroupCollection *gc,dgConservationLaw* law): dgRungeKuttaMultirate(gc,law){}
 
 
+double dgRungeKuttaMultirate43::splitForMultirate(int maxLevels, dgDofContainer *solution){
+	double dt = _gc->splitGroupsForMultirate(maxLevels, 1, 1, _law, solution);
+	_gc->buildGroupsOfInterfaces();
+	return dt;
+}
 double dgRungeKuttaMultirate43::iterate(double dt, dgDofContainer *solution){
   initialize(10);
   _solution=solution;
@@ -465,6 +470,9 @@ void dgRungeKuttaMultirate43::registerBindings(binding *b) {
   cm = cb->setConstructor<dgRungeKuttaMultirate43,dgGroupCollection *,dgConservationLaw*>();
   cm->setArgNames("groupCollection","law",NULL);
   cm->setDescription("A new multirate explicit runge kutta, pass parameters to the iterate function");
+  cm = cb->addMethod("splitForMultirate",&dgRungeKuttaMultirate43::splitForMultirate);
+  cm->setArgNames("maxLevels","solution",NULL);
+  cm->setDescription("Split Groups for Multirate based on CFL condition, with appropriate buffer sizes,  and build the corresponding Groups of Interfaces");
   cm = cb->addMethod("iterate",&dgRungeKuttaMultirate43::iterate);
   cm->setArgNames("dt","solution",NULL);
   cm->setDescription("update the solution by doing a multirate RK43 (from Schlegel et al. Journal of Computational and Applied Mathematics, 2009) step of base time step dt for the conservation law");
@@ -473,6 +481,11 @@ void dgRungeKuttaMultirate43::registerBindings(binding *b) {
 dgRungeKuttaMultirate22::dgRungeKuttaMultirate22(dgGroupCollection *gc,dgConservationLaw* law): dgRungeKuttaMultirate(gc,law){}
 
 
+double dgRungeKuttaMultirate22::splitForMultirate(int maxLevels, dgDofContainer *solution){
+	double dt = _gc->splitGroupsForMultirate(maxLevels, 1, 2, _law, solution);
+	_gc->buildGroupsOfInterfaces();
+	return dt;
+}
 double dgRungeKuttaMultirate22::iterate(double dt, dgDofContainer *solution){
 	initialize(4);
 	_solution=solution;
@@ -627,6 +640,9 @@ void dgRungeKuttaMultirate22::registerBindings(binding *b) {
 	cm = cb->setConstructor<dgRungeKuttaMultirate22,dgGroupCollection *,dgConservationLaw*>();
 	cm->setArgNames("groupCollection","law",NULL);
 	cm->setDescription("A new multirate explicit runge kutta, pass parameters to the iterate function");
+	cm = cb->addMethod("splitForMultirate",&dgRungeKuttaMultirate22::splitForMultirate);
+	cm->setArgNames("maxLevels","solution",NULL);
+	cm->setDescription("Split Groups for Multirate based on CFL condition, with appropriate buffer sizes,  and build the corresponding Groups of Interfaces");
 	cm = cb->addMethod("iterate",&dgRungeKuttaMultirate22::iterate);
 	cm->setArgNames("dt","solution",NULL);
 	cm->setDescription("update the solution by doing a multirate RK2a (from Constantinescu and Sandu,  'Update on Multirate Timestepping Methods for Hyperbolic Conservation Laws', Computer Sciance Technical Report,  2007) step of base time step dt for the conservation law");
@@ -686,6 +702,13 @@ void dgRungeKuttaMultirateConservative::printButcher(){
 
 
 }
+
+double dgRungeKuttaMultirateConservative::splitForMultirate(int maxLevels, dgDofContainer *solution){
+	double dt = _gc->splitGroupsForMultirate(maxLevels, 1, _b->size2(), _law, solution);
+	_gc->buildGroupsOfInterfaces();
+	return dt;
+}
+
 double dgRungeKuttaMultirateConservative::iterate(double dt, dgDofContainer *solution){
 	initialize(4);
 	_solution=solution;
@@ -937,22 +960,25 @@ void dgRungeKuttaMultirateConservative::registerBindings(binding *b) {
 	cm = cb->setConstructor<dgRungeKuttaMultirateConservative,dgGroupCollection*,dgConservationLaw* , fullMatrix<double>*, fullMatrix<double>*, fullMatrix<double>* >();
 	cm->setArgNames("groupCollection","law","A","b","c",NULL);
 	cm->setDescription("A new multirate explicit runge kutta, pass parameters to the iterate function");
+	cm = cb->addMethod("splitForMultirate",&dgRungeKuttaMultirateConservative::splitForMultirate);
+	cm->setArgNames("maxLevels","solution",NULL);
+	cm->setDescription("Split Groups for Multirate based on CFL condition, with appropriate buffer sizes,  and build the corresponding Groups of Interfaces");
 	cm = cb->addMethod("iterate",&dgRungeKuttaMultirateConservative::iterate);
 	cm->setArgNames("dt","solution",NULL);
 	cm->setDescription("update the solution by doing a multirate RK constructed from the given Butcher tables (from Constantinescu and Sandu, 'Update on Multirate Timestepping Methods for Hyperbolic Conservation Laws', Computer Sciance Technical Report,  2007) step of base time step dt for the conservation law");
-  cm = cb->addMethod("new44", &dgRungeKuttaMultirateConservative::new43);
+	cm = cb->addMethod("new44", &dgRungeKuttaMultirateConservative::new43);
 	cm->setDescription("Creates a new Conservative Runge-Kutta scheme based on the base method RK44");
 	cm->setArgNames("groupCollection", "law", NULL);
-  cm = cb->addMethod("new43", &dgRungeKuttaMultirateConservative::new43);
+	cm = cb->addMethod("new43", &dgRungeKuttaMultirateConservative::new43);
 	cm->setDescription("Creates a new Conservative Runge-Kutta scheme based on the base method RK43");
 	cm->setArgNames("groupCollection", "law", NULL);
-  cm = cb->addMethod("new2a", &dgRungeKuttaMultirateConservative::new2a);
+	cm = cb->addMethod("new2a", &dgRungeKuttaMultirateConservative::new2a);
 	cm->setDescription("Creates a new Conservative Runge-Kutta scheme based on the base method RK2a");
 	cm->setArgNames("groupCollection", "law", NULL);
-  cm = cb->addMethod("new2b", &dgRungeKuttaMultirateConservative::new2b);
+	cm = cb->addMethod("new2b", &dgRungeKuttaMultirateConservative::new2b);
 	cm->setDescription("Creates a new Conservative Runge-Kutta scheme based on the base method RK2b");
 	cm->setArgNames("groupCollection", "law", NULL);
-  cm = cb->addMethod("printButcher", &dgRungeKuttaMultirateConservative::printButcher);
+	cm = cb->addMethod("printButcher", &dgRungeKuttaMultirateConservative::printButcher);
 	cm->setDescription("Print the Butcher Tables for Buffers");
 	cm->setArgNames(NULL);
 }
