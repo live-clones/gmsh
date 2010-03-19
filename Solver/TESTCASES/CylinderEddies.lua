@@ -25,10 +25,6 @@ xyz = functionCoordinates.get()
 FS = functionLua(4, 'free_stream', {xyz})
 
 -- diffusivity
-mu=fullMatrix(1,1);
-mu:set(0,0,0.025)
-kappa=fullMatrix(1,1);
-kappa:set(0,0,0.01)
 
 print'*** Loading the mesh and the model ***'
 myModel   = GModel  ()
@@ -40,7 +36,7 @@ DG = dgSystemOfEquations (myModel)
 DG:setOrder(order)
 law=dgPerfectGasLaw2d()
 
-law:setViscosityAndThermalConductivity(functionConstant(mu):getName(),functionConstant(kappa):getName());
+law:setViscosityAndThermalConductivity(functionConstant({0.025}),functionConstant({0.01}));
 
 DG:setConservationLaw(law)
 law:addBoundaryCondition('Cylinder',law:newNonSlipWallBoundary())
