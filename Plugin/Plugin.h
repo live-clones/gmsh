@@ -56,12 +56,12 @@ class GMSH_Plugin
   virtual void catchErrorMessage(char *errorMessage) const;
 
   // gmsh-style numeric options
-  virtual int getNbOptions() const = 0;
-  virtual StringXNumber *getOption(int iopt) = 0;
+  virtual int getNbOptions() const { return 0; }
+  virtual StringXNumber *getOption(int iopt) { return 0; };
 
   // gmsh-style string options
-  virtual int getNbOptionsStr() const = 0;
-  virtual StringXString *getOptionStr(int iopt) = 0;
+  virtual int getNbOptionsStr() const { return 0; }
+  virtual StringXString *getOptionStr(int iopt) { return NULL; }
 
   // serialize plugin options into a string
   std::string serialize();
@@ -80,10 +80,6 @@ class GMSH_PostPlugin : public GMSH_Plugin
 {
  public:
   inline GMSH_PLUGIN_TYPE getType() const { return GMSH_Plugin::GMSH_POST_PLUGIN; }
-  virtual int getNbOptions() const { return 0; }
-  virtual StringXNumber *getOption(int iopt) { return 0; };
-  virtual int getNbOptionsStr() const { return 0; }
-  virtual StringXString *getOptionStr(int iopt) { return NULL; }
   // run the plugin
   virtual void run(){ execute(0); }
   // if the returned pointer is the same as the argument, then the
@@ -109,12 +105,8 @@ class GMSH_PostPlugin : public GMSH_Plugin
 class GMSH_SolverPlugin : public GMSH_Plugin
 {
  public:
-  virtual int getNbOptions() const { return 0; }
-  virtual StringXNumber *getOption(int iopt) { return 0; };
-  virtual int getNbOptionsStr() const { return 0; }
-  virtual StringXString *getOptionStr(int iopt) { return 0; }
   inline GMSH_PLUGIN_TYPE getType() const { return GMSH_Plugin::GMSH_SOLVER_PLUGIN; }
-  virtual void run() {} // do nothing
+  virtual void run() {}
   // popup dialog box
   virtual void popupPropertiesForPhysicalEntity(int dim) = 0;
   // add the given group to the solver data
