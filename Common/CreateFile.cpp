@@ -439,7 +439,7 @@ void CreateOutputFile(std::string fileName, int format)
     break;
   }
 
-  if(printEndMessage) Msg::StatusBar(2, true, "Wrote '%s'", fileName.c_str());
+  if(printEndMessage) Msg::StatusBar(2, true, "Done writing '%s'", fileName.c_str());
 
   CTX::instance()->print.format = oldFormat;
   CTX::instance()->printing = 0;

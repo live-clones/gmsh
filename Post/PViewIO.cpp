@@ -270,6 +270,6 @@ bool PView::write(std::string fileName, int format, bool append)
   default: ret = false; Msg::Error("Unknown view format %d", format); break;
   }
   
-  if(ret) Msg::StatusBar(2, true, "Wrote '%s'", fileName.c_str());
+  if(ret) Msg::StatusBar(2, true, "Done writing '%s'", fileName.c_str());
   return ret;
 }

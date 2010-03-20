@@ -132,7 +132,7 @@ void messageWindow::save(const char *filename)
     else
       fprintf(fp, "%s\n", c);
   }
-  Msg::StatusBar(2, true, "Wrote '%s'", filename);
+  Msg::StatusBar(2, true, "Done writing '%s'", filename);
   fclose(fp);
 }
 

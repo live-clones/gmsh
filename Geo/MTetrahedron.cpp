@@ -49,6 +49,7 @@ double MTetrahedronN::distoShapeMeasure()
 
 double MTetrahedron::getInnerRadius()
 {
+  // radius of inscribed sphere = 3 * Volume / sum(Area_i)
   double dist[3], face_area = 0.;
   double vol = getVolume();
   for(int i = 0; i < 4; i++){  

@@ -147,6 +147,22 @@ SPoint3 MElement::barycenter()
   return p;
 }
 
+int MElement::getVolumeSign()
+{
+  double v = getVolume();
+  if(v < 0.) return -1;
+  else if(v > 0.) return 1;
+  else return 0;
+}
+
+bool MElement::setVolumePositive()
+{ 
+  int s = getVolumeSign();
+  if(s < 0) revert();
+  if(!s) return false;
+  return true;
+}
+
 std::string MElement::getInfoString()
 {
   char tmp[256];
@@ -655,7 +671,8 @@ void MElement::writeFEA(FILE *fp, int elementTagType, int num, int elementary,
                         int physical)
 {
   int numVert = getNumVertices();
-  setVolumePositive();
+  bool ok = setVolumePositive();
+  if(getDim() == 3 && !ok) Msg::Error("Element %d has zero volume", num);
   fprintf(fp, "%d %d %d", num, (elementTagType == 3) ? _partition :
           (elementTagType == 2) ? physical : elementary, numVert);
   for(int i = 0; i < numVert; i++)

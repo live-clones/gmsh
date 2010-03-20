@@ -589,7 +589,7 @@ int optionsFileDialog(const char *name)
       if (o == dialog->ok) {
         Msg::StatusBar(2, true, "Writing '%s'", name);
         PrintOptions(0, GMSH_FULLRC, dialog->b[0]->value(), dialog->b[1]->value(), name);
-        Msg::StatusBar(2, true, "Wrote '%s'", name);
+        Msg::StatusBar(2, true, "Done writing '%s'", name);
         dialog->window->hide();
         return 1;
       }

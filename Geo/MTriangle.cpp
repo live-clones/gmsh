@@ -37,6 +37,7 @@ double MTriangle::distoShapeMeasure()
 
 double MTriangle::getInnerRadius()
 {
+  // radius of inscribed circle = 2 * Area / sum(Line_i)	
   double dist[3], k = 0.;
   for (int i = 0; i < 3; i++){
     MEdge e = getEdge(i);

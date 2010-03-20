@@ -388,7 +388,7 @@ static void file_options_save_cb(Fl_Widget *w, void *data)
     PrintOptions(0, GMSH_FULLRC, 1, 0, fileName.c_str());
   else
     PrintOptions(0, GMSH_OPTIONSRC, 1, 1, fileName.c_str());
-  Msg::StatusBar(2, true, "Wrote '%s'", fileName.c_str());
+  Msg::StatusBar(2, true, "Done writing '%s'", fileName.c_str());
 }
 
 static void file_rename_cb(Fl_Widget *w, void *data)

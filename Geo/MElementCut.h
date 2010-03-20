@@ -114,7 +114,6 @@ class MPolyhedron : public MElement {
       vol += _parts[i]->getVolume();
     return vol;
   }
-  virtual int getVolumeSign() { return (getVolume() >= 0) ? 1 : -1; }
   virtual const polynomialBasis* getFunctionSpace(int order=-1) const 
   {
     return _orig->getFunctionSpace(order);

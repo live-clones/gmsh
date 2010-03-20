@@ -397,7 +397,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
 #endif
 
   if(!status) Msg::Error("Error loading '%s'", fileName.c_str());
-  Msg::StatusBar(2, true, "Read '%s'", fileName.c_str());
+  Msg::StatusBar(2, true, "Done reading '%s'", fileName.c_str());
 
   // merge the associated option file if there is one
   if(!StatFile(fileName + ".opt"))

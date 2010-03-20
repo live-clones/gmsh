@@ -2127,7 +2127,7 @@ int GModel::writeFEA(const std::string &name, int elementTagType,
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
       if(entities[i]->mesh_vertices[j]->getIndex() >= 0)
-	fprintf(fp,"%d %g %g %g\n", entities[i]->mesh_vertices[j]->getIndex(),
+	fprintf(fp,"%d %.16g %.16g %.16g\n", entities[i]->mesh_vertices[j]->getIndex(),
 		entities[i]->mesh_vertices[j]->x() * scalingFactor,
 		entities[i]->mesh_vertices[j]->y() * scalingFactor,
 		entities[i]->mesh_vertices[j]->z() * scalingFactor);
@@ -2142,6 +2142,7 @@ int GModel::writeFEA(const std::string &name, int elementTagType,
            numPhys ? (*it)->physicals[0] : 0);
   }
 
+  iElement = 1;
   for(riter it = firstRegion(); it != lastRegion(); ++it){
     int numPhys = (*it)->physicals.size();
     if(saveAll || numPhys)

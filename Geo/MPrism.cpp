@@ -18,7 +18,10 @@ int MPrism::getVolumeSign()
   mat[2][0] = _v[1]->z() - _v[0]->z();
   mat[2][1] = _v[2]->z() - _v[0]->z();
   mat[2][2] = _v[3]->z() - _v[0]->z();
-  return sign(det3x3(mat));
+  double d = det3x3(mat);
+  if(d < 0.) return -1;
+  else if(d > 0.) return 1;
+  else return 0;
 }
 
 void MPrism::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)

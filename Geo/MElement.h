@@ -171,9 +171,9 @@ class MElement
   virtual double distoShapeMeasure(){ return 1.0; }
   virtual double angleShapeMeasure() { return 1.0; }
   
-  // get the radius of the inscribed circle/sphere if it exists, 
-	// otherwise get the minimum radius of all the circles/spheres
-	// tangent to the most boundaries of the element.
+  // get the radius of the inscribed circle/sphere if it exists,
+  // otherwise get the minimum radius of all the circles/spheres
+  // tangent to the most boundaries of the element.
   virtual double getInnerRadius(){ return 0.; }
 
   // compute the barycenter
@@ -182,11 +182,16 @@ class MElement
   // revert the orientation of the element
   virtual void revert(){}
 
-  // compute and change the orientation of 3D elements to get
-  // positive volume
+  // get volume of element
   virtual double getVolume(){ return 0.; }
-  virtual int getVolumeSign(){ return 1; }
-  virtual void setVolumePositive(){ if(getVolumeSign() < 0) revert(); }
+
+  // return sign of volume (+1 or -1) for 3D elements (or 0 if element
+  // has zero volume)
+  virtual int getVolumeSign();
+
+  // compute and change the orientation of 3D elements to get positive
+  // volume (return false if element has zero volume)
+  virtual bool setVolumePositive();
 
   // return an information string for the element
   virtual std::string getInfoString();

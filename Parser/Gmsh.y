@@ -2267,7 +2267,7 @@ Command :
 	Msg::StatusBar(2, true, "Reading '%s'", tmp.c_str());
 	ParseFile(tmp, false, true);
 	SetBoundingBox();
-	Msg::StatusBar(2, true, "Read '%s'", tmp.c_str());
+	Msg::StatusBar(2, true, "Done reading '%s'", tmp.c_str());
       }
       else if(!strcmp($1, "Print")){
 	// make sure we have the latest data from GEO_Internals in GModel

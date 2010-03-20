@@ -15,6 +15,7 @@
 #endif
 
 #define SQU(a)      ((a)*(a))
+
 const polynomialBasis* MQuadrangle::getFunctionSpace(int o) const
 {
   int order = (o == -1) ? getPolynomialOrder() : o;
