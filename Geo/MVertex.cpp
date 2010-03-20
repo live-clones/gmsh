@@ -416,8 +416,8 @@ void MVertex::registerBindings(binding *b)
   cm->setDescription("Return the z-coordinate.");
   cm = cb->addMethod("setXYZ", &MVertex::setXYZ);
   cm->setDescription("set the coordinates");
-  cm->setArgNames("x","y","z",NULL);
+  cm->setArgNames("x", "y", "z",NULL);
   cm = cb->setConstructor<MVertex,double,double,double>();
-  cm->setArgNames("x","y","z",NULL);
+  cm->setArgNames("x", "y", "z", NULL);
   cm->setDescription("Create a new mesh vertex at (x,y,z).");
 }

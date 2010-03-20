@@ -13,13 +13,6 @@
 #if defined(HAVE_OCC)
 #include <vector>
 
-class OCC_Options {
- private:
-  int _dummy;
- public:
-  OCC_Options(int dummy) : _dummy(dummy){}
-};
-
 class OCC_Internals {
  protected :
   TopoDS_Shape shape;
