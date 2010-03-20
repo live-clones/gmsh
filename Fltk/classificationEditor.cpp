@@ -16,72 +16,16 @@
 #include "GmshMessage.h"
 #include "MLine.h"
 #include "meshGFaceDelaunayInsertion.h"
-#include "meshGFaceOptimize.h"
 #include "discreteEdge.h"
 #include "discreteFace.h"
 
-edge_angle::edge_angle(MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2)
-  : v1(_v1), v2(_v2)
-{
-  if(!t2) angle = 0;
-  else{
-    double c1[3];
-    double c2[3];
-    double c3[3];
-    {
-      MVertex *p1 = t1->getVertex(0);
-      MVertex *p2 = t1->getVertex(1);
-      MVertex *p3 = t1->getVertex(2);
-      double a[3] = {p1->x() - p2->x(), p1->y() - p2->y(), p1->z() - p2->z()};
-      double b[3] = {p1->x() - p3->x(), p1->y() - p3->y(), p1->z() - p3->z()};
-      c1[2] = a[0] * b[1] - a[1] * b[0];
-      c1[1] = -a[0] * b[2] + a[2] * b[0];
-      c1[0] = a[1] * b[2] - a[2] * b[1];
-    }
-    {
-      MVertex *p1 = t2->getVertex(0);
-      MVertex *p2 = t2->getVertex(1);
-      MVertex *p3 = t2->getVertex(2);
-      double a[3] = {p1->x() - p2->x(), p1->y() - p2->y(), p1->z() - p2->z()};
-      double b[3] = {p1->x() - p3->x(), p1->y() - p3->y(), p1->z() - p3->z()};
-      c2[2] = a[0] * b[1] - a[1] * b[0];
-      c2[1] = -a[0] * b[2] + a[2] * b[0];
-      c2[0] = a[1] * b[2] - a[2] * b[1];
-    }
-    norme(c1);
-    norme(c2);
-    prodve(c1, c2, c3);
-    double cosa; prosca(c1, c2, &cosa);
-    double sina = norme(c3);
-    angle = atan2(sina, cosa);
-  }
-}
-
-struct compareMLinePtr 
-{
+struct compareMLinePtr {
   bool operator () (MLine *l1, MLine *l2) const
   {
     static Less_Edge le;
     return le(l1->getEdge(0), l2->getEdge(0)); 
   }
 };
-
-static void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
-                                 std::vector<edge_angle> &edges_lonly)
-{
-  e2t_cont::iterator it = adj.begin();
-  for(; it != adj.end(); ++it){
-    if(it->second.second)
-      edges_detected.push_back(edge_angle(it->first.getVertex(0), 
-                                          it->first.getVertex(1), 
-                                          it->second.first, it->second.second));
-    else 
-      edges_lonly.push_back(edge_angle(it->first.getVertex(0),
-                                       it->first.getVertex(1), 
-                                       it->second.first, it->second.second));
-  }
-  std::sort(edges_detected.begin(), edges_detected.end());
-}
 
 static void recurClassify(MTri3 *t, GFace *gf,
                           std::map<MLine*, GEdge*, compareMLinePtr> &lines,
@@ -105,7 +49,7 @@ static void recurClassify(MTri3 *t, GFace *gf,
 }
 
 static GEdge *getNewModelEdge(GFace *gf1, GFace *gf2, 
-                              std::map<std::pair<int, int>, GEdge* > &newEdges)
+                              std::map<std::pair<int, int>, GEdge*> &newEdges)
 {
   int t1 = gf1 ? gf1->tag() : -1;
   int t2 = gf2 ? gf2->tag() : -1;

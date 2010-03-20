@@ -44,6 +44,7 @@
 #include "GSHHS.h"
 #include "HomologyComputation.h"
 #include "Distance.h"
+#include "ExtractEdges.h"
 
 // for testing purposes only :-)
 #undef HAVE_DLOPEN
@@ -217,6 +218,8 @@ void PluginManager::registerDefaultPlugins()
 #endif
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Distance", GMSH_RegisterDistancePlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("ExtractEdges", GMSH_RegisterExtractEdgesPlugin()));
   }
 
 #if defined(HAVE_FLTK)

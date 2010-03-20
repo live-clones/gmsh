@@ -13,6 +13,7 @@
 #include <FL/Fl_Value_Input.H>
 #include "GModel.h"
 #include "MElement.h"
+#include "meshGFaceOptimize.h"
 
 #define CLASS_BUTTON_SELECT_ELEMENTS       0
 #define CLASS_BUTTON_SELECT_ALL_ELEMENTS   1
@@ -27,17 +28,6 @@
 #define CLASS_TOGGLE_SHOW_ONLY_EDGES       2
 
 #define CLASS_VALUE_ANGLE                  0
-
-class edge_angle {
- public :
-  MVertex *v1, *v2;
-  double angle;
-  edge_angle(MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2);
-  bool operator < (const edge_angle &other) const
-  {
-    return other.angle < angle;
-  }  
-};
 
 class classificationEditor {
  public:

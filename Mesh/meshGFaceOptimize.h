@@ -16,11 +16,24 @@
 class GFace;
 class MVertex;
 
+class edge_angle {
+ public :
+  MVertex *v1, *v2;
+  double angle;
+  edge_angle(MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2);
+  bool operator < (const edge_angle &other) const
+  {
+    return other.angle < angle;
+  }  
+};
+
 typedef std::map<MVertex*, std::vector<MElement*> > v2t_cont;
 typedef std::map<MEdge, std::pair<MElement*, MElement*>, Less_Edge> e2t_cont;
 
 void buildVertexToTriangle(std::vector<MTriangle*> &, v2t_cont &adj);
 void buildEdgeToTriangle(std::vector<MTriangle*> &, e2t_cont &adj);
+void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
+                          std::vector<edge_angle> &edges_lonly);
 void laplaceSmoothing(GFace *gf);
 void edgeSwappingLawson(GFace *gf);
 

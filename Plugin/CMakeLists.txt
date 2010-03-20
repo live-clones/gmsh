@@ -23,7 +23,7 @@ set(SRC
   Probe.cpp
   HarmonicToTime.cpp ModulusPhase.cpp
   HomologyComputation.cpp
-  Distance.cpp
+  Distance.cpp ExtractEdges.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Plugin *.h) 
