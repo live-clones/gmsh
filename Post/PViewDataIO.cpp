@@ -28,6 +28,7 @@ bool PViewData::writeSTL(std::string fileName)
   for(int ent = 0; ent < getNumEntities(step); ent++){
     for(int ele = 0; ele < getNumElements(step, ent); ele++){
       if(getDimension(step, ent, ele) != 2) continue;
+      if(skipElement(step, ent, ele)) continue;
       int N = getNumNodes(step, ent, ele);
       if(N != 3 && N != 4) continue;
       double x[4], y[4], z[4], n[3];
@@ -78,6 +79,7 @@ bool PViewData::writeTXT(std::string fileName)
   for(int step = 0; step < getNumTimeSteps(); step++){  
     for(int ent = 0; ent < getNumEntities(step); ent++){
       for(int ele = 0; ele < getNumElements(step, ent); ele++){
+        if(skipElement(step, ent, ele)) continue;
         for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
           double x, y, z;
           getNode(step, ent, ele, nod, x, y, z);
