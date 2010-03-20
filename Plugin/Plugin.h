@@ -80,6 +80,8 @@ class GMSH_PostPlugin : public GMSH_Plugin
 {
  public:
   inline GMSH_PLUGIN_TYPE getType() const { return GMSH_Plugin::GMSH_POST_PLUGIN; }
+  virtual int getNbOptions() const { return 0; }
+  virtual StringXNumber *getOption(int iopt) { return 0; };
   virtual int getNbOptionsStr() const { return 0; }
   virtual StringXString *getOptionStr(int iopt) { return NULL; }
   // run the plugin
@@ -107,10 +109,10 @@ class GMSH_PostPlugin : public GMSH_Plugin
 class GMSH_SolverPlugin : public GMSH_Plugin
 {
  public:
-  virtual int getNbOptionsStr() const { return 0; }
-  virtual StringXString *getOptionStr(int iopt) { return 0; }
   virtual int getNbOptions() const { return 0; }
   virtual StringXNumber *getOption(int iopt) { return 0; };
+  virtual int getNbOptionsStr() const { return 0; }
+  virtual StringXString *getOptionStr(int iopt) { return 0; }
   inline GMSH_PLUGIN_TYPE getType() const { return GMSH_Plugin::GMSH_SOLVER_PLUGIN; }
   virtual void run() {} // do nothing
   // popup dialog box

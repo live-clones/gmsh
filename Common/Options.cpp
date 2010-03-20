@@ -5695,12 +5695,6 @@ double opt_mesh_save_parametric(OPT_ARGS_NUM)
     CTX::instance()->mesh.saveParametric = val ? 1 : 0;
   return CTX::instance()->mesh.saveParametric;
 }
-double opt_mesh_save_distance(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->mesh.saveDistance = val ? 1 : 0;
-  return CTX::instance()->mesh.saveDistance;
-}
 
 double opt_mesh_save_groups_of_nodes(OPT_ARGS_NUM)
 {

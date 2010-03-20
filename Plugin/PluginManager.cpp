@@ -43,6 +43,7 @@
 #include "Probe.h"
 #include "GSHHS.h"
 #include "HomologyComputation.h"
+#include "Distance.h"
 
 // for testing purposes only :-)
 #undef HAVE_DLOPEN
@@ -214,6 +215,8 @@ void PluginManager::registerDefaultPlugins()
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Homology", GMSH_RegisterHomologyComputationPlugin()));
 #endif
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("Distance", GMSH_RegisterDistancePlugin()));
   }
 
 #if defined(HAVE_FLTK)

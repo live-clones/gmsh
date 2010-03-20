@@ -1208,8 +1208,6 @@ StringXNumber MeshOptions_Number[] = {
     "physical or partition ids (1=elementary, 2=physical, 3=partition)" },
   { F|O, "SaveParametric" , opt_mesh_save_parametric , 0. , 
     "Save parametric coordinates of nodes" },
-  { F|O, "SaveDistance" , opt_mesh_save_distance , 0. , 
-    "Save distance of nodes to boundaries" },
   { F|O, "SaveGroupsOfNodes" , opt_mesh_save_groups_of_nodes , 0. , 
     "Save groups of nodes for each physical line and surface (UNV mesh "
     "format only)" },
