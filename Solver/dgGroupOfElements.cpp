@@ -458,7 +458,7 @@ static std::vector<dgMiniInterface> *_createMiniInterfaces(dgGroupCollection &gr
           break;
         case 2:
           for (int iEdge = 0; iEdge < element.getNumEdges(); iEdge++) {
-            std::map<MEdge,dgMiniInterface>::iterator it =
+            std::map<MEdge, dgMiniInterface, Less_Edge>::iterator it =
               edgeInterfaces.insert(std::pair<MEdge,dgMiniInterface>(element.getEdge(iEdge),dgMiniInterface())).first;
             int iEdge_, sign;
             element.getEdgeInfo(it->first, iEdge_, sign);
@@ -468,7 +468,7 @@ static std::vector<dgMiniInterface> *_createMiniInterfaces(dgGroupCollection &gr
           break;
         case 3:
           for (int iFace = 0; iFace < element.getNumFaces(); iFace++) {
-            std::map<MFace,dgMiniInterface>::iterator it =
+            std::map<MFace, dgMiniInterface, Less_Face>::iterator it =
              faceInterfaces.insert(std::pair<MFace,dgMiniInterface>(element.getFace(iFace),dgMiniInterface())).first;
             int iFace_, sign, rotation;
             element.getFaceInfo(it->first, iFace_, sign, rotation);
