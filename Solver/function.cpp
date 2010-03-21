@@ -276,7 +276,7 @@ class functionStructuredGridFile : public function {
         int id[3];
         for(int i=0;i<3;i++){
           id[i]=(int)((coord(pt,i)-_fun->o[i])/_fun->d[i]);
-	int a=id[i];
+        int a=id[i];
           id[i]=std::max(0,std::min(_fun->n[i]-1,id[i]));
           xi[i]=(coord(pt,i)-_fun->o[i]-id[i]*_fun->d[i])/_fun->d[i];
           xi[i]=std::min(1.,std::max(0.,xi[i]));
@@ -414,10 +414,10 @@ public:
       solEl.setAsProxy(sol,index*_dofContainer->getNbFields(),_dofContainer->getNbFields());
       int fSize = group->getNbNodes();
       for (int k=0;k<_dofContainer->getNbFields();k++){
-	_value(i,k) = 0.0; 	
-	for (int j=0;j<fSize;j++){
-	  _value(i,k) += solEl(j,k)*fs[j];
-	}
+        _value(i,k) = 0.0;      
+        for (int j=0;j<fSize;j++){
+          _value(i,k) += solEl(j,k)*fs[j];
+        }
       }
     }
   }

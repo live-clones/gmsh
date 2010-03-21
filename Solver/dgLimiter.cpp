@@ -9,7 +9,7 @@ int dgSlopeLimiter::apply ( dgDofContainer *solution)
   dgGroupCollection *groups=solution->getGroups();
   solution->scatter();
   int nbFields =_claw->getNbFields();    
-	
+        
   // first compute max and min of all fields for all stencils    
   //----------------------------------------------------------   
   dgDofContainer MIN(groups, nbFields);
@@ -18,7 +18,7 @@ int dgSlopeLimiter::apply ( dgDofContainer *solution)
   MIN.setAll ( 1.e22);  
   MAX.setAll (-1.e22);  
 
-  int iElementL, iElementR, fSize; 	 
+  int iElementL, iElementR, fSize;       
   fullMatrix<double> TempL, TempR;
   for( int iGFace=0; iGFace<groups->getNbFaceGroups(); iGFace++) {
     dgGroupOfFaces* group = groups->getFaceGroup(iGFace);  
@@ -42,7 +42,7 @@ int dgSlopeLimiter::apply ( dgDofContainer *solution)
       iElementR = right.getElementId(iFace); 
 
       TempL.setAsProxy(solleft, nbFields*iElementL, nbFields );
-      TempR.setAsProxy(solright, nbFields*iElementR, nbFields );    	
+      TempR.setAsProxy(solright, nbFields*iElementR, nbFields );        
 
       fSize = TempL.size1(); 
       for (int k=0; k< nbFields; ++k){    
@@ -74,7 +74,7 @@ int dgSlopeLimiter::apply ( dgDofContainer *solution)
     fullMatrix<double> &MING = MIN.getGroupProxy(iGroup);
     fullMatrix<double> Temp;  
     for (int iElement=0 ; iElement<group.getNbElements() ; ++iElement)  { 
-      Temp.setAsProxy(sol, nbFields*iElement, nbFields );    	
+      Temp.setAsProxy(sol, nbFields*iElement, nbFields );       
       for (int k=0; k<nbFields; ++k) 
       {
         double AVG = 0.;   
@@ -87,7 +87,7 @@ int dgSlopeLimiter::apply ( dgDofContainer *solution)
           AVG += Temp(i,k);   
           locMax = std::max (locMax, Temp (i,k)); 
           locMin = std::min (locMin, Temp (i,k)); 
-        }	
+        }       
         AVG /= (double) fSize;  
 
         //SLOPE LIMITING DG
@@ -100,7 +100,7 @@ int dgSlopeLimiter::apply ( dgDofContainer *solution)
         if (AVG < neighMin) slopeLimiterValue = 0;  
         if (AVG > neighMax) slopeLimiterValue = 0;  
 
-        //      if (slopeLimiterValue != 1.0)	printf("LIMTING %g\n",slopeLimiterValue);
+        //      if (slopeLimiterValue != 1.0)   printf("LIMTING %g\n",slopeLimiterValue);
         //      slopeLimiterValue = 0.0;   
 
         for (int i=0; i<fSize; ++i) Temp(i,k) = AVG + Temp(i,k)*slopeLimiterValue;

@@ -195,7 +195,7 @@ double MQuadrangle::getInnerRadius()
   double x[4] = {_v[0]->x(), _v[1]->x(), _v[2]->x(), _v[3]->x()};
   double y[4] = {_v[0]->y(), _v[1]->y(), _v[2]->y(), _v[3]->y()};
   double z[4] = {_v[0]->z(), _v[1]->z(), _v[2]->z(), _v[3]->z()};
-		
+                
   // get the coefficient (a,b,c,d) of the mean plane - least square!
   // the plane has for equation " a*x+b*y+c*z+d=0 "
 
@@ -203,7 +203,7 @@ double MQuadrangle::getInnerRadius()
   double xm = (x[0] + x[1] + x[2] + x[3]) / 4;
   double ym = (y[0] + y[1] + y[2] + y[3]) / 4;
   double zm = (z[0] + z[1] + z[2] + z[3]) / 4;
-	
+        
   // using svd decomposition
   fullMatrix<double> U(4,3), V(3,3);
   fullVector<double> sigma(3);

@@ -79,10 +79,10 @@ class MTriangle : public MElement {
       const MVertex *v0 = _v[edges_tri(ithEdge, 0)];
       const MVertex *v1 = _v[edges_tri(ithEdge, 1)];
       if (v0 == edge.getVertex(0) && v1 == edge.getVertex(1)){
-	sign = 1; return;
+        sign = 1; return;
       }
       if (v1 == edge.getVertex(0) && v0 == edge.getVertex(1)){
-	sign = -1; return;
+        sign = -1; return;
       }
     }
     Msg::Error("Could not get edge information for triangle %d", getNum());

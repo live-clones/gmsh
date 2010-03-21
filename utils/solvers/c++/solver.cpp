@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
     if(argv[i][0] == '-') {
       if(!strcmp(argv[i] + 1, "socket")) {
         i++; 
-	if(argv[i]) socket = argv[i++];
+        if(argv[i]) socket = argv[i++];
       }
       else if(!strcmp(argv[i] + 1, "options")) {
         i++;
@@ -78,17 +78,17 @@ int main(int argc, char *argv[])
       client.Info("Done computing curve");
       FILE *file = fopen("solver.pos", "w");
       if(!file)
-	client.Error("Unable to open output file");
+        client.Error("Unable to open output file");
       else {
-	fprintf(file, "View.Type = 2;\n");
-	fprintf(file, "View.Axes = 3;\n");
-	fprintf(file, "Delete View[0];\n");
-	fprintf(file, "View \"%s\"{\n", option);
-	for(int j = 0; j < 100; j++)
-	  fprintf(file, "SP(%d,0,0){%g};\n", j,sin(j*i*M_PI/10.));
-	fprintf(file, "};\n");
-	fclose(file);
-	client.MergeFile("solver.pos");
+        fprintf(file, "View.Type = 2;\n");
+        fprintf(file, "View.Axes = 3;\n");
+        fprintf(file, "Delete View[0];\n");
+        fprintf(file, "View \"%s\"{\n", option);
+        for(int j = 0; j < 100; j++)
+          fprintf(file, "SP(%d,0,0){%g};\n", j,sin(j*i*M_PI/10.));
+        fprintf(file, "};\n");
+        fclose(file);
+        client.MergeFile("solver.pos");
       }
     }
     client.Info("Done!");

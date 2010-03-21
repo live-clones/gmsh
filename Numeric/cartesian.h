@@ -40,10 +40,10 @@ class cartesianBox {
   std::vector<SPoint3> & points() { return _points; }
   std::vector<SVector3> & normals() { return _normals; }
   cartesianBox (double X, double Y, double Z, 
-		const SVector3 &DXI, 
-		const SVector3 &DETA, 
-		const SVector3 &DZETA, 
-		int NXI, int NETA, int NZETA)
+                const SVector3 &DXI, 
+                const SVector3 &DETA, 
+                const SVector3 &DZETA, 
+                int NXI, int NETA, int NZETA)
     : _ann(0), _X(X), _Y(Y), _Z(Z), 
       _dxi(norm(DXI)), 
       _deta(norm(DETA)),
@@ -105,7 +105,7 @@ class cartesianBox {
     const double zeta = k*_dzeta/_Nzeta;
 
     // printf("index %d -> %d %d %d xi %g %g %g X %g %g %g N %d %d %d D %g %g %g\n",
-    //	   t,i,j,k,xi,eta,zeta,_X,_Y,_Z,_Nxi,_Neta,_Nzeta,_dxi,_deta,_dzeta);
+    //     t,i,j,k,xi,eta,zeta,_X,_Y,_Z,_Nxi,_Neta,_Nzeta,_dxi,_deta,_dzeta);
     
     SVector3 D = xi * _xiAxis  + eta * _etaAxis + zeta * _zetaAxis;
     
@@ -143,9 +143,9 @@ class cartesianBox {
       int i,j,k;
       element_ijk(t,i,j,k);
       for (int I=0;I<2;I++)
-	for (int J=0;J<2;J++)
-	  for (int K=0;K<2;K++)
-	    _nodalValues[node_index(i+I,j+J,k+K)] = 0.0;
+        for (int J=0;J<2;J++)
+          for (int K=0;K<2;K++)
+            _nodalValues[node_index(i+I,j+J,k+K)] = 0.0;
     }
   }
   void writeMSH (const std::string &filename) const 
@@ -156,8 +156,8 @@ class cartesianBox {
       fprintf(f,"$Nodes\n%d\n",_nodalValues.size());
       typename std::map<int, scalar>::const_iterator it = _nodalValues.begin();
       for ( ; it!=_nodalValues.end();++it){
-	SPoint3 p = coordinates_of_node(it->first);
-	fprintf(f,"%d %g %g %g\n",it->first,p.x(),p.y(),p.z());
+        SPoint3 p = coordinates_of_node(it->first);
+        fprintf(f,"%d %g %g %g\n",it->first,p.x(),p.y(),p.z());
       }    
       fprintf(f,"$EndNodes\n");
     }
@@ -165,18 +165,18 @@ class cartesianBox {
       fprintf(f,"$Elements\n%d\n",_active.size());
       std::set<int>::const_iterator it = _active.begin();
       for ( ; it!=_active.end();++it){
-	fprintf(f,"%d 5 3 1 1 1",*it);
-     	int i,j,k;
-	element_ijk(*it,i,j,k);
-	fprintf(f," %d",node_index(i,j,k));
-	fprintf(f," %d",node_index(i+1,j,k));
-	fprintf(f," %d",node_index(i+1,j+1,k));
-	fprintf(f," %d",node_index(i,j+1,k));
-	fprintf(f," %d",node_index(i,j,k+1));
-	fprintf(f," %d",node_index(i+1,j,k+1));
-	fprintf(f," %d",node_index(i+1,j+1,k+1));
-	fprintf(f," %d",node_index(i,j+1,k+1));
-	fprintf(f,"\n");
+        fprintf(f,"%d 5 3 1 1 1",*it);
+        int i,j,k;
+        element_ijk(*it,i,j,k);
+        fprintf(f," %d",node_index(i,j,k));
+        fprintf(f," %d",node_index(i+1,j,k));
+        fprintf(f," %d",node_index(i+1,j+1,k));
+        fprintf(f," %d",node_index(i,j+1,k));
+        fprintf(f," %d",node_index(i,j,k+1));
+        fprintf(f," %d",node_index(i+1,j,k+1));
+        fprintf(f," %d",node_index(i+1,j+1,k+1));
+        fprintf(f," %d",node_index(i,j+1,k+1));
+        fprintf(f,"\n");
       }    
       fprintf(f,"$EndElements\n");    
     }
@@ -184,9 +184,9 @@ class cartesianBox {
       fprintf(f,"$NodeData\n1\n\"distance\"\n 1\n 0.0\n3\n0\n 1\n %d\n",_nodalValues.size());
       typename std::map<int, scalar>::const_iterator it = _nodalValues.begin();
       for ( ; it!=_nodalValues.end();++it){
-	SPoint3 p = coordinates_of_node(it->first);
-	//	fprintf(f,"%d %g\n",it->first,distance(p.x(),p.y(),p.z()));
-	fprintf(f,"%d %g\n",it->first,it->second);
+        SPoint3 p = coordinates_of_node(it->first);
+        //      fprintf(f,"%d %g\n",it->first,distance(p.x(),p.y(),p.z()));
+        fprintf(f,"%d %g\n",it->first,it->second);
       }    
       fprintf(f,"$EndNodeData\n");
     }

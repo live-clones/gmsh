@@ -50,12 +50,12 @@ class Homology
  public:
   
   Homology(GModel* model, std::vector<int> physicalDomain,
-	   std::vector<int> physicalSubdomain);
+           std::vector<int> physicalSubdomain);
   ~Homology();
   
   
   CellComplex* createCellComplex(std::vector<GEntity*>& domainEntities,
-				 std::vector<GEntity*>& subdomainEntities);
+                                 std::vector<GEntity*>& subdomainEntities);
   CellComplex* createCellComplex() { 
     return createCellComplex(_domainEntities, _subdomainEntities); }
 
@@ -72,7 +72,7 @@ class Homology
    
   // Create a string describing the generator
   std::string getDomainString(const std::vector<int>& domain,
-			      const std::vector<int>& subdomain);
+                              const std::vector<int>& subdomain);
   
   // write the generators to a file
   bool writeGeneratorsMSH(bool binary=false);
@@ -103,15 +103,15 @@ class Chain{
   int _dim;
   
   bool deform(std::map<Cell*, int, Less_Cell> &cellsInChain, 
-	      std::map<Cell*, int, Less_Cell> &cellsNotInChain);
+              std::map<Cell*, int, Less_Cell> &cellsNotInChain);
   bool deformChain(std::pair<Cell*, int> cell, bool bend);
   
   
  public:
   Chain() {}
   Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, 
-	CellComplex* cellComplex, GModel* model,
-	std::string name="Chain", int torsion=0);
+        CellComplex* cellComplex, GModel* model,
+        std::string name="Chain", int torsion=0);
   Chain(std::map<Cell*, int, Less_Cell>& chain,
         CellComplex* cellComplex, GModel* model,
         std::string name="Chain", int torsion=0);

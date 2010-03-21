@@ -117,7 +117,7 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
     _try(MatGetVecs(A, PETSC_NULL, &xr));
     _try(MatGetVecs(A, PETSC_NULL, &xi));
     Msg::Info("         Re[EigenValue]          Im[EigenValue]"
-	      "          Relative error");
+              "          Relative error");
     for (int i = 0; i < nconv; i++){
       PetscScalar kr, ki;
       _try(EPSGetEigenpair(eps, i, &kr, &ki, xr, xi));
@@ -131,7 +131,7 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
       PetscReal im = ki;
 #endif
       Msg::Info("EIG %03d %s%.16e %s%.16e  %3.6e", 
-		i, (re < 0) ? "" : " ", re, (im < 0) ? "" : " ", im, error);
+                i, (re < 0) ? "" : " ", re, (im < 0) ? "" : " ", im, error);
       
       // store eigenvalues and eigenvectors
       _eigenValues.push_back(std::complex<double>(re, im));
@@ -141,9 +141,9 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
       std::vector<std::complex<double> > ev(N);
       for(int i = 0; i < N; i++){
 #if defined(PETSC_USE_COMPLEX)
-	ev[i] = tmpr[i];
+        ev[i] = tmpr[i];
 #else
-	ev[i] = std::complex<double>(tmpr[i], tmpi[i]);
+        ev[i] = std::complex<double>(tmpr[i], tmpi[i]);
 #endif
       }
       _eigenVectors.push_back(ev);

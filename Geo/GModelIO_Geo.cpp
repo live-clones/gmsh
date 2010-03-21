@@ -63,16 +63,16 @@ int GModel::exportDiscreteGEOInternals()
       int nb = 2 ;
       c->Control_Points = List_Create(nb, 1, sizeof(Vertex *));
       for(int i = 0; i < List_Nbr(points); i++) {
-	Vertex *v;
- 	List_Read(points, i, &v);
- 	if (v->Num == gvb->tag()) {
- 	  List_Add(c->Control_Points, &v);
- 	  c->beg = v;
- 	}
- 	if (v->Num == gve->tag()) {
- 	  List_Add(c->Control_Points, &v);
- 	  c->end = v;
- 	}	
+        Vertex *v;
+        List_Read(points, i, &v);
+        if (v->Num == gvb->tag()) {
+          List_Add(c->Control_Points, &v);
+          c->beg = v;
+        }
+        if (v->Num == gve->tag()) {
+          List_Add(c->Control_Points, &v);
+          c->end = v;
+        }       
       }
       End_Curve(c);
       Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
@@ -88,12 +88,12 @@ int GModel::exportDiscreteGEOInternals()
       List_T *curves = Tree2List(_geo_internals->Curves);
       Curve *c;
       for(std::list<GEdge*>::iterator ite = edges.begin(); ite != edges.end(); ite++){
-	for(int i = 0; i < List_Nbr(curves); i++) {
-	  List_Read(curves, i, &c);
-	  if (c->Num == (*ite)->tag()) {
-	    List_Add(s->Generatrices, &c);
-	  }
-	}
+        for(int i = 0; i < List_Nbr(curves); i++) {
+          List_Read(curves, i, &c);
+          if (c->Num == (*ite)->tag()) {
+            List_Add(s->Generatrices, &c);
+          }
+        }
       }
       Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
     }
@@ -155,8 +155,8 @@ int GModel::importGEOInternals()
         if(!c->Visible) e->setVisibility(0);
         if(c->Color.type) e->setColor(c->Color.mesh);
         if(c->degenerated) {
-	  e->setTooSmall(true);
-	}
+          e->setTooSmall(true);
+        }
       }
     }
     List_Delete(curves);
@@ -180,8 +180,8 @@ int GModel::importGEOInternals()
             if(ge) b[j].push_back(ge);
           }
         }
-	int allowPartition = 1;
-	if (abs(s->TypeOfMapping) != 1) allowPartition = 0;
+        int allowPartition = 1;
+        if (abs(s->TypeOfMapping) != 1) allowPartition = 0;
         f = new GFaceCompound(this, s->Num, comp,
                               b[0], b[1], b[2], b[3], 0,
                               s->TypeOfMapping > 0 ? GFaceCompound::HARMONIC :

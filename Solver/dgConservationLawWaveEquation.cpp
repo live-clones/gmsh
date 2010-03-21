@@ -18,7 +18,7 @@ class dgConservationLawWaveEquation::hyperbolicFlux : public dataCacheDouble {
     int nQP = sol().size1();
     _value.scale(0.);
     for(int i=0; i< nQP; i++) {
-      const double p = sol(i,0);	
+      const double p = sol(i,0);        
       for (int j=0;j<_DIM;j++){
         _value(i,0  +j*_nbf) = c*c*rho*sol(i,j+1);
         _value(i,j+1+j*_nbf) = p/rho;
@@ -56,7 +56,7 @@ class dgConservationLawWaveEquation::riemann : public dataCacheDouble {
     for(int i=0; i< nQP; i++) {
       const double n[3] = {normals(0,i),normals(1,i),normals(2,i)};
       double unL=0,unR=0;
-      for (int j=0;j<_DIM;j++){	  
+      for (int j=0;j<_DIM;j++){   
         unL += n[j]*solL(i,j+1);
         unR += n[j]*solR(i,j+1);
       }
@@ -73,7 +73,7 @@ class dgConservationLawWaveEquation::riemann : public dataCacheDouble {
       for (int j=0;j<_DIM;j++)
         _value(i,j+1) = Fun*n[j];
       for (int j=0;j<_nbf;j++)
-        _value(i,j+_nbf) = -_value(i,j);	
+        _value(i,j+_nbf) = -_value(i,j);        
     }
   }
 };
@@ -112,7 +112,7 @@ class dgBoundaryConditionWaveEquationWall : public dgBoundaryCondition {
       int nQP = sol().size1();
       for(int i=0; i< nQP; i++) {
         const double n[3] = {normals(0,i),normals(1,i),normals(2,i)};
-        double p = sol(i,0);	
+        double p = sol(i,0);    
         _value(i,0) = 0;
         for (int j=0;j<_DIM;j++)
           _value(i,j+1) = -p/rho*n[j];

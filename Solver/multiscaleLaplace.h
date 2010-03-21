@@ -26,21 +26,21 @@ struct multiscaleLaplaceLevel {
 class multiscaleLaplace{
 public:
   multiscaleLaplace (std::vector<MElement *> &elements, 
-		     std::map<MVertex*, SPoint3> &allCoordinates); 
+                     std::map<MVertex*, SPoint3> &allCoordinates); 
   void cut (std::vector<MElement *> &elements);  
   typedef enum {HARMONIC=1,CONFORMAL=2, CONVEXCOMBINATION=3} typeOfMapping;
 
   linearSystem<double> *_lsys;
   multiscaleLaplaceLevel* root;
   void fillCoordinates (multiscaleLaplaceLevel & level,
-			std::map<MVertex*, SPoint3> &allCoordinates,
-			std::vector<double> &iScale, 
-			std::vector<SPoint2> &iCenter);
+                        std::map<MVertex*, SPoint3> &allCoordinates,
+                        std::vector<double> &iScale, 
+                        std::vector<SPoint2> &iCenter);
   void parametrize (multiscaleLaplaceLevel &); 
   void parametrize_method (multiscaleLaplaceLevel & level, 
-			   std::set<MVertex*> &allNodes,
-			   std::map<MVertex*,SPoint2> &solution, 
-			   typeOfMapping tom);
+                           std::set<MVertex*> &allNodes,
+                           std::map<MVertex*,SPoint2> &solution, 
+                           typeOfMapping tom);
 
   
 };

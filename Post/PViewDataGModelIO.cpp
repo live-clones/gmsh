@@ -19,7 +19,7 @@ bool PViewDataGModel::addData(GModel *model, std::map<int, std::vector<double> >
   int numComp = 9;
   if (numC < 0){
     for(std::map<int, std::vector<double> >::iterator it = data.begin(); 
-	it != data.end(); it++)
+        it != data.end(); it++)
       numComp = std::min(numComp, (int)it->second.size());
   }
   else numComp = numC;

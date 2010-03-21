@@ -4,7 +4,7 @@
 /*
   \partial_t L(u) =   \nabla \cdot (\vec{f}(u,forcings))  -> convective flux f
                     + \nabla \cdot (\vec{g}(u,\nabla u,forcings)  -> diffusive flux g
-		    + r(u,forcings)                       -> source term r
+                    + r(u,forcings)                       -> source term r
 */
 #include "fullMatrix.h"
 class dataCacheDouble;

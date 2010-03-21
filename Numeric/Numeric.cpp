@@ -351,76 +351,76 @@ void circumCenterXYZ(double *p1, double *p2, double *p3, double *res, double *uv
 
 void planarQuad_xyz2xy(double *x, double *y, double *z, double *xn, double *yn)
 {
-	double v1[3] = {x[1] - x[0], y[1] - y[0], z[1] - z[0]};
-	double v2[3] = {x[2] - x[0], y[2] - y[0], z[2] - z[0]};
-	double v3[3] = {x[3] - x[0], y[3] - y[0], z[3] - z[0]};
-	
-	double vx[3] = {x[1] - x[0], y[1] - y[0], z[1] - z[0]};
-	double vy[3] = {x[2] - x[0], y[2] - y[0], z[2] - z[0]};
-	double vz[3]; prodve(vx, vy, vz); prodve(vz, vx, vy);
-	
-	norme(vx); norme(vy); norme(vz);
-	
-	double p1P[2] = {0.0, 0.0};
-	double p2P[2]; prosca(v1, vx, &p2P[0]); prosca(v1, vy, &p2P[1]);
-	double p3P[2]; prosca(v2, vx, &p3P[0]); prosca(v2, vy, &p3P[1]);
-	double p4P[2]; prosca(v3, vx, &p4P[0]); prosca(v3, vy, &p4P[1]);
-	
-	xn[0] = p1P[0];
-	xn[1] = p2P[0];
-	xn[2] = p3P[0];
-	xn[3] = p4P[0];
-	yn[0] = p1P[1];
-	yn[1] = p2P[1];
-	yn[2] = p3P[1];
-	yn[3] = p4P[1];
+        double v1[3] = {x[1] - x[0], y[1] - y[0], z[1] - z[0]};
+        double v2[3] = {x[2] - x[0], y[2] - y[0], z[2] - z[0]};
+        double v3[3] = {x[3] - x[0], y[3] - y[0], z[3] - z[0]};
+        
+        double vx[3] = {x[1] - x[0], y[1] - y[0], z[1] - z[0]};
+        double vy[3] = {x[2] - x[0], y[2] - y[0], z[2] - z[0]};
+        double vz[3]; prodve(vx, vy, vz); prodve(vz, vx, vy);
+        
+        norme(vx); norme(vy); norme(vz);
+        
+        double p1P[2] = {0.0, 0.0};
+        double p2P[2]; prosca(v1, vx, &p2P[0]); prosca(v1, vy, &p2P[1]);
+        double p3P[2]; prosca(v2, vx, &p3P[0]); prosca(v2, vy, &p3P[1]);
+        double p4P[2]; prosca(v3, vx, &p4P[0]); prosca(v3, vy, &p4P[1]);
+        
+        xn[0] = p1P[0];
+        xn[1] = p2P[0];
+        xn[2] = p3P[0];
+        xn[3] = p4P[0];
+        yn[0] = p1P[1];
+        yn[1] = p2P[1];
+        yn[2] = p3P[1];
+        yn[3] = p4P[1];
 }
 
 double computeInnerRadiusForQuad(double *x, double *y, int i){
-	
-	// parameters of the equations of the 3 edges	
-	double a1 = y[(4+i)%4]-y[(5+i)%4];
-	double a2 = y[(5+i)%4]-y[(6+i)%4];
-	double a3 = y[(6+i)%4]-y[(7+i)%4];
+        
+        // parameters of the equations of the 3 edges   
+        double a1 = y[(4+i)%4]-y[(5+i)%4];
+        double a2 = y[(5+i)%4]-y[(6+i)%4];
+        double a3 = y[(6+i)%4]-y[(7+i)%4];
 
-	double b1 = x[(5+i)%4]-x[(4+i)%4];
-	double b2 = x[(6+i)%4]-x[(5+i)%4];
-	double b3 = x[(7+i)%4]-x[(6+i)%4];
+        double b1 = x[(5+i)%4]-x[(4+i)%4];
+        double b2 = x[(6+i)%4]-x[(5+i)%4];
+        double b3 = x[(7+i)%4]-x[(6+i)%4];
 
-	double c1 = y[(5+i)%4]*x[(4+i)%4]-y[(4+i)%4]*x[(5+i)%4];
-	double c2 = y[(6+i)%4]*x[(5+i)%4]-y[(5+i)%4]*x[(6+i)%4];
-	double c3 = y[(7+i)%4]*x[(6+i)%4]-y[(6+i)%4]*x[(7+i)%4];
+        double c1 = y[(5+i)%4]*x[(4+i)%4]-y[(4+i)%4]*x[(5+i)%4];
+        double c2 = y[(6+i)%4]*x[(5+i)%4]-y[(5+i)%4]*x[(6+i)%4];
+        double c3 = y[(7+i)%4]*x[(6+i)%4]-y[(6+i)%4]*x[(7+i)%4];
 
-	// length of the 3 edges
-	double l1 = sqrt(a1*a1+b1*b1);
-	double l2 = sqrt(a2*a2+b2*b2);
-	double l3 = sqrt(a3*a3+b3*b3);
-	
-	// parameters of the 2 bisectors
-	double a12 = a1/l1-a2/l2;
-	double a23 = a2/l2-a3/l3;
-	
-	double b12 = b1/l1-b2/l2;
-	double b23 = b2/l2-b3/l3;
-	
-	double c12 = c1/l1-c2/l2;
-	double c23 = c2/l2-c3/l3;
-	
-	// compute the coordinates of the center of the incircle, 
-	// that is the point where the 2 bisectors meet
-	double x_s = (c12*b23-c23*b12)/(a23*b12-a12*b23);
-	double y_s = 0.;
-	if (b12 != 0) {
-		y_s = -a12/b12*x_s-c12/b12;
-	}
-	else {
-		y_s = -a23/b23*x_s-c23/b23;
-	}
+        // length of the 3 edges
+        double l1 = sqrt(a1*a1+b1*b1);
+        double l2 = sqrt(a2*a2+b2*b2);
+        double l3 = sqrt(a3*a3+b3*b3);
+        
+        // parameters of the 2 bisectors
+        double a12 = a1/l1-a2/l2;
+        double a23 = a2/l2-a3/l3;
+        
+        double b12 = b1/l1-b2/l2;
+        double b23 = b2/l2-b3/l3;
+        
+        double c12 = c1/l1-c2/l2;
+        double c23 = c2/l2-c3/l3;
+        
+        // compute the coordinates of the center of the incircle, 
+        // that is the point where the 2 bisectors meet
+        double x_s = (c12*b23-c23*b12)/(a23*b12-a12*b23);
+        double y_s = 0.;
+        if (b12 != 0) {
+                y_s = -a12/b12*x_s-c12/b12;
+        }
+        else {
+                y_s = -a23/b23*x_s-c23/b23;
+        }
  
-	// finally get the radius of the circle 
-	double r = (a1*x_s+b1*y_s+c1)/l1;
+        // finally get the radius of the circle 
+        double r = (a1*x_s+b1*y_s+c1)/l1;
 
-	return r;
+        return r;
 }
 
 
@@ -814,7 +814,7 @@ distance to segment
 */
 
 void signedDistancesPointsTriangle(std::vector<double>&distances,
-				   std::vector<SPoint3>&closePts,
+                                   std::vector<SPoint3>&closePts,
                                    const std::vector<SPoint3> &pts,
                                    const SPoint3 &p1,
                                    const SPoint3 &p2,
@@ -827,8 +827,8 @@ void signedDistancesPointsTriangle(std::vector<double>&distances,
   n.normalize();
 
   double mat[3][3] = {{t1.x(), t2.x(), -n.x()},
-		      {t1.y(), t2.y(), -n.y()},
-		      {t1.z(), t2.z(), -n.z()}};
+                      {t1.y(), t2.y(), -n.y()},
+                      {t1.z(), t2.z(), -n.z()}};
   double inv[3][3];
   double det = inv3x3(mat, inv);
   
@@ -868,44 +868,44 @@ void signedDistancesPointsTriangle(std::vector<double>&distances,
       bool found = false;
       SPoint3 closePt;
       if (t12 >= 0 && t12 <= 1.){
-	d = sign * std::min(fabs(d), p.distance(p1 + (p2 - p1) * t12));  
+        d = sign * std::min(fabs(d), p.distance(p1 + (p2 - p1) * t12));  
         closePt = p1 + (p2 - p1) * t12;
-	found = true;
+        found = true;
       }
       if (t13 >= 0 && t13 <= 1.){
-	if (p.distance(p1 + (p3 - p1) * t13) < fabs(d))	  closePt = p1 + (p3 - p1) * t13;
-	d = sign * std::min(fabs(d), p.distance(p1 + (p3 - p1) * t13));      
-	found = true;
+        if (p.distance(p1 + (p3 - p1) * t13) < fabs(d))   closePt = p1 + (p3 - p1) * t13;
+        d = sign * std::min(fabs(d), p.distance(p1 + (p3 - p1) * t13));      
+        found = true;
       }      
       if (t23 >= 0 && t23 <= 1.){
-	if (p.distance(p2 + (p3 - p2) * t23) < fabs(d))	  closePt = p2 + (p3 - p2) * t23;
-	d = sign * std::min(fabs(d), p.distance(p2 + (p3 - p2) * t23));      
-	found = true;
+        if (p.distance(p2 + (p3 - p2) * t23) < fabs(d))   closePt = p2 + (p3 - p2) * t23;
+        d = sign * std::min(fabs(d), p.distance(p2 + (p3 - p2) * t23));      
+        found = true;
       }
       if (p.distance(p1) < fabs(d)){
-	closePt = p1;
-	d = sign * std::min(fabs(d), p.distance(p1));
+        closePt = p1;
+        d = sign * std::min(fabs(d), p.distance(p1));
        }
       if (p.distance(p2) < fabs(d)){
-	closePt = p2;
-	d = sign * std::min(fabs(d), p.distance(p2));
+        closePt = p2;
+        d = sign * std::min(fabs(d), p.distance(p2));
        }
       if (p.distance(p3) < fabs(d)){
-	closePt = p3;
-	d = sign * std::min(fabs(d), p.distance(p3));
+        closePt = p3;
+        d = sign * std::min(fabs(d), p.distance(p3));
       }
       //d = sign * std::min(fabs(d), std::min(std::min(p.distance(p1), p.distance(p2)),p.distance(p3)));
       distances[i] = d;
       closePts[i] = closePt;
     }
-  }					   
+  }                                        
 }
 
 void signedDistancesPointsLine (std::vector<double>&distances,
-				std::vector<SPoint3>&closePts,
-				const std::vector<SPoint3> &pts,
-				const SPoint3 &p1,
-				const SPoint3 &p2){
+                                std::vector<SPoint3>&closePts,
+                                const std::vector<SPoint3> &pts,
+                                const SPoint3 &p1,
+                                const SPoint3 &p2){
 
   SVector3 t1 = p2 - p1;
   const double n2t1 = dot(t1, t1);

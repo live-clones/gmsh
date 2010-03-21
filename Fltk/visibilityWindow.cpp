@@ -475,7 +475,7 @@ static void _add_region(GRegion *gr, Fl_Tree *tree, std::string path)
 }
 
 static void _add_physical_group(int dim, int num, std::vector<GEntity*> &ge,
-				std::map<int, std::string> &oldLabels, 
+                                std::map<int, std::string> &oldLabels, 
                                 Fl_Tree *tree, std::string path)
 {
   if(ge.empty()) return;

@@ -14,7 +14,7 @@ class simpleFunction {
   virtual ~simpleFunction(){}
   virtual scalar operator () (double x, double y, double z) const { return _val; }
   virtual void gradient (double x, double y, double z,
-			 scalar & dfdx, scalar & dfdy, scalar & dfdz) const 
+                         scalar & dfdx, scalar & dfdy, scalar & dfdz) const 
   { dfdx = dfdy = dfdz = 0.0; }
 };
 

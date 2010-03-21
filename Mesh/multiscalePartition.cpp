@@ -29,13 +29,13 @@ static void recur_connect(MVertex *v,
 // starting form a list of elements, returns
 // lists of lists that are all simply connected
 static void recur_connect_e (const MEdge &e,
-			     std::multimap<MEdge,MElement*,Less_Edge> &e2e,
-			     std::set<MElement*> &group,
-			     std::set<MEdge,Less_Edge> &touched){
+                             std::multimap<MEdge,MElement*,Less_Edge> &e2e,
+                             std::set<MElement*> &group,
+                             std::set<MEdge,Less_Edge> &touched){
   if (touched.find(e) != touched.end())return;
   touched.insert(e);
   for (std::multimap <MEdge,MElement*,Less_Edge>::iterator it = e2e.lower_bound(e);
-	 it != e2e.upper_bound(e) ; ++it){
+         it != e2e.upper_bound(e) ; ++it){
     group.insert(it->second);
     for (int i=0;i<it->second->getNumEdges();++i){
       recur_connect_e (it->second->getEdge(i),e2e,group,touched);
@@ -68,7 +68,7 @@ static int connected_bounds (std::vector<MEdge> &edges,  std::vector<std::vector
 
 //--------------------------------------------------------------
 static void connectedRegions (std::vector<MElement*> &elements,
-			      std::vector<std::vector<MElement*> > &regions)
+                              std::vector<std::vector<MElement*> > &regions)
 {
   std::multimap<MEdge,MElement*,Less_Edge> e2e;
   for (unsigned int i = 0; i < elements.size(); ++i){
@@ -89,7 +89,7 @@ static void connectedRegions (std::vector<MElement*> &elements,
 }
 
 static int getGenus (std::vector<MElement *> &elements,  
-		     std::vector<std::vector<MEdge> > &boundaries)
+                     std::vector<std::vector<MEdge> > &boundaries)
 {
 
   //We suppose MElements are simply connected
@@ -117,9 +117,9 @@ static int getGenus (std::vector<MElement *> &elements,
     for(int j = 0; j < elements[i]->getNumEdges(); j++){
       MEdge me =  elements[i]->getEdge(j);
       if(std::find(bEdges.begin(), bEdges.end(), me) == bEdges.end())
-	 bEdges.push_back(me);
+         bEdges.push_back(me);
       else
-	 bEdges.erase(std::find(bEdges.begin(), bEdges.end(),me));
+         bEdges.erase(std::find(bEdges.begin(), bEdges.end(),me));
     }    
   }    
   nbBounds = connected_bounds(bEdges, boundaries);
@@ -155,8 +155,8 @@ static int getAspectRatio(std::vector<MElement *> &elements,
       MVertex *v0 = iBound[j].getVertex(0);
       MVertex *v1 = iBound[j].getVertex(1);    
       const double length = sqrt((v0->x() - v1->x()) * (v0->x() - v1->x()) + 
-				 (v0->y() - v1->y()) * (v0->y() - v1->y()) +
-				 (v0->z() - v1->z()) * (v0->z() - v1->z()));
+                                 (v0->y() - v1->y()) * (v0->y() - v1->y()) +
+                                 (v0->z() - v1->z()) * (v0->z() - v1->z()));
       iLength += length;
     }
     tot_length += iLength;
@@ -274,7 +274,7 @@ static void printLevel(std::vector<MElement *> &elements, int recur, int region)
   for (; it != vs.end() ; ++it){
     (*it)->setIndex(index++);
     fprintf(fp,"%d %g %g %g\n",(*it)->getIndex(),
-	    (*it)->x(),(*it)->y(),(*it)->z());
+            (*it)->x(),(*it)->y(),(*it)->z());
   }
   fprintf(fp,"$EndNodes\n",elements.size());
   
@@ -357,19 +357,19 @@ void multiscalePartition::partition(partitionLevel & level, int nbParts,
     if (genus != 0 ){
       int nbParts = 2; //std::max(genus+2,2);
       Msg::Info("Mesh partition: level (%d-%d)  is %d-GENUS (AR=%d) ---> MULTILEVEL partition %d parts",
-		nextLevel->recur,nextLevel->region, genus, AR, nbParts);  
+                nextLevel->recur,nextLevel->region, genus, AR, nbParts);  
       partition(*nextLevel, nbParts, MULTILEVEL);
     }
     else if (genus == 0  &&  AR > 5 ){// || genus == 0  &&  NB > 1){
       int nbParts = 2;
       Msg::Info("Mesh partition: level (%d-%d)  is ZERO-GENUS (AR=%d NB=%d) ---> LAPLACIAN partition %d parts",
- 		nextLevel->recur,nextLevel->region, AR, NB, nbParts);  
+                nextLevel->recur,nextLevel->region, AR, NB, nbParts);  
       //partition(*nextLevel, nbParts, MULTILEVEL);
       partition(*nextLevel, nbParts, LAPLACIAN);
     }
     else {
       Msg::Info("*** Mesh partition: level (%d-%d) is ZERO-GENUS (AR=%d, NB=%d)", 
-		nextLevel->recur,nextLevel->region, AR, NB);
+                nextLevel->recur,nextLevel->region, AR, NB);
     }
     
   }
@@ -385,9 +385,9 @@ int multiscalePartition::assembleAllPartitions()
     partitionLevel *iLevel = levels[i];
     if(iLevel->elements.size() > 0){
       for (unsigned j = 0; j < iLevel->elements.size(); j++){
-	MElement *e = iLevel->elements[j];
-	int part = e->getPartition();
-	e->setPartition(iPart);
+        MElement *e = iLevel->elements[j];
+        int part = e->getPartition();
+        e->setPartition(iPart);
       }
       iPart++;
     }

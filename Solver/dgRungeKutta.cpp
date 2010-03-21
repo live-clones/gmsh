@@ -101,9 +101,9 @@ double dgRungeKutta::iterate43SchlegelJCAM2009(const dgConservationLaw *claw, do
 
 
 double dgRungeKutta::diagonalRK (const dgConservationLaw *claw,
-			      double dt,				         // time-step
-			      dgDofContainer *sol,
-			      int nStages, double *A, double *b) { 
+                              double dt,                                         // time-step
+                              dgDofContainer *sol,
+                              int nStages, double *A, double *b) { 
   // U_{n+1}=U_n+h*(SUM_i dt*b_i*K_i)
   // K_i=M^(-1)R(U_n+dt*A_i*K_{i-1})
   fullMatrix<double> residuEl, KEl;
@@ -218,7 +218,7 @@ double dgRungeKutta::nonDiagonalRK(const dgConservationLaw *claw,
 }
 
 double dgRungeKutta::computeInvSpectralRadius(const dgConservationLaw *claw, 
-					      dgDofContainer *solution){   
+                                              dgDofContainer *solution){   
   double sr = 1.e22;
   dgGroupCollection *groups=solution->getGroups();
   for (int i=0;i<groups->getNbElementGroups();i++){

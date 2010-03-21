@@ -20,7 +20,7 @@ class MVertexLessThanLexicographic{
   bool operator()(const MVertex *v1, const MVertex *v2) const
   {
     printf("v1 = %.16g, %.16g, %.16g +++ v2 = %.16g, %.16g, %.16g\n",
-	   v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z());
+           v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z());
     if(v1->x() < v2->x() - tolerance) return true;
     if(v1->x() > v2->x() + tolerance) return false;
     if(v1->y() < v2->y() - tolerance) return true;

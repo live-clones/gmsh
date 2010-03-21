@@ -18,7 +18,7 @@ void groupOfElements::addElementary(GEntity *ge, const elementFilter &filter){
 }
 
 void groupOfElements::addPhysical(int dim, int physical,
-				  const elementFilter &filter){
+                                  const elementFilter &filter){
   std::map<int, std::vector<GEntity*> > groups[4];
   GModel::current()->getPhysicalGroups(groups);
   std::vector<GEntity*> &ent = groups[dim][physical];

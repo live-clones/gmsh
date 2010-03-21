@@ -56,8 +56,8 @@ static fullMatrix<double> dgGetFaceIntegrationRuleOnElement (
 }
 
 dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e, 
-				     int polyOrder,
-				     int ghostPartition)
+                                     int polyOrder,
+                                     int ghostPartition)
   : _elements(e), 
    _fs(*_elements[0]->getFunctionSpace(polyOrder)),
    _integration(dgGetIntegrationRule (_elements[0], polyOrder)),
@@ -125,11 +125,11 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e,
 
   for (int xi=0;xi<nbQP; xi++) {
     _fs.df((*_integration)(xi,0),
-	   (*_integration)(xi,1),
-	   (*_integration)(xi,2), g);
+           (*_integration)(xi,1),
+           (*_integration)(xi,2), g);
     _fs.f((*_integration)(xi,0),
-	   (*_integration)(xi,1),
-	   (*_integration)(xi,2), f);
+           (*_integration)(xi,1),
+           (*_integration)(xi,2), f);
     const double weight = (*_integration)(xi,3);
     for (int k=0;k<nbNodes; k++){ 
       (*_redistributionFluxes[0])(k,xi) = g[k][0] * weight;
@@ -138,9 +138,9 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e,
       (*_redistributionSource)(k,xi) = f[k] * weight;
       (*_collocation)(xi,k) = f[k];
       //      for (int l=0;l<_fs.coefficients.size1();l++){
-      //	(*_redistributionJacobianOfFluxes[0])(l+_fs.coefficients.size1()*k,j) = g[k][0] * f[l] * weight;
-      //	(*_redistributionJacobianOfFluxes[0])(l+_fs.coefficients.size1()*k,j) = g[k][1] * f[l] * weight;
-      //	(*_redistributionJacobianOfFluxes[0])(l+_fs.coefficients.size1()*k,j) = g[k][2] * f[l] * weight;
+      //        (*_redistributionJacobianOfFluxes[0])(l+_fs.coefficients.size1()*k,j) = g[k][0] * f[l] * weight;
+      //        (*_redistributionJacobianOfFluxes[0])(l+_fs.coefficients.size1()*k,j) = g[k][1] * f[l] * weight;
+      //        (*_redistributionJacobianOfFluxes[0])(l+_fs.coefficients.size1()*k,j) = g[k][2] * f[l] * weight;
       //      } 
     }
     for (int alpha=0; alpha<_dimUVW; alpha++) for (int beta=0; beta<_dimUVW; beta++) {
@@ -355,7 +355,7 @@ void dgGroupCollection::buildGroupsOfElements(GModel *model, int dim, int order,
       }
     }
   }
-	
+        
   // do a group of elements for every element type in the mesh
   int id=_elementGroups.size();
   for (std::map<int, std::vector<MElement *> >::iterator it = localElements.begin(); it !=localElements.end() ; ++it){

@@ -89,8 +89,8 @@ static void computeAndSendVertexArrays()
           (p->getNum(), data->getName(), type + 1, min, max, 
            data->getNumTimeSteps(), data->getTime(opt->timeStep),
            data->getBoundingBox(), len);
-	MPI_Send(&len, 1, MPI_INT, 0, MPI_GMSH_VARRAY_LEN, MPI_COMM_WORLD);
-	MPI_Send(str, len, MPI_CHAR, 0, MPI_GMSH_VARRAY, MPI_COMM_WORLD);
+        MPI_Send(&len, 1, MPI_INT, 0, MPI_GMSH_VARRAY_LEN, MPI_COMM_WORLD);
+        MPI_Send(str, len, MPI_CHAR, 0, MPI_GMSH_VARRAY, MPI_COMM_WORLD);
         delete [] str;
       }
     }
@@ -188,71 +188,72 @@ int GmshRemote()
       // stop if we have no communications for 5 minutes
       int ret = client->Select(300, 0);
       if(!ret){
-	client->Info("Timout: stopping remote Gmsh...");
-	break;
+        client->Info("Timout: stopping remote Gmsh...");
+        break;
       }
       else if(ret < 0){
-	client->Error("Error on select: stopping remote Gmsh...");
-	break;
+        client->Error("Error on select: stopping remote Gmsh...");
+        break;
       }
 
       int type, length, swap;
       if(!client->ReceiveHeader(&type, &length, &swap)){
-	client->Error("Did not receive message header: stopping remote Gmsh...");
-	break;
+        client->Error("Did not receive message header: stopping remote Gmsh...");
+        break;
       }
       
       char *msg = new char[length + 1];
       if(!client->ReceiveString(length, msg)){
-	client->Error("Did not receive message body: stopping remote Gmsh...");
-	delete [] msg;
-	break;
+        client->Error("Did not receive message body: stopping remote Gmsh...");
+        delete [] msg;
+        break;
       }
 
       if(type == GmshSocket::GMSH_STOP){
-	client->Info("Stopping remote Gmsh...");
-	break;
+        client->Info("Stopping remote Gmsh...");
+        delete [] msg;
+        break;
       }
       else if(type == GmshSocket::GMSH_VERTEX_ARRAY){
         ParseString(msg);
 #if !defined(HAVE_MPI)
         computeAndSendVertexArrays(client);
 #else
-	int mpi_msg = MPI_GMSH_PARSE_STRING;
-	MPI_Bcast(&mpi_msg, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	MPI_Bcast(&length, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	MPI_Bcast(msg, length, MPI_CHAR, 0, MPI_COMM_WORLD);
-	gatherAndSendVertexArrays(client, swap);
+        int mpi_msg = MPI_GMSH_PARSE_STRING;
+        MPI_Bcast(&mpi_msg, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&length, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(msg, length, MPI_CHAR, 0, MPI_COMM_WORLD);
+        gatherAndSendVertexArrays(client, swap);
 #endif
       }
       else if(type == GmshSocket::GMSH_MERGE_FILE){
-	MergeFile(msg);
+        MergeFile(msg);
 #if !defined(HAVE_MPI)
-	computeAndSendVertexArrays(client);
+        computeAndSendVertexArrays(client);
 #else
-	int mpi_msg = MPI_GMSH_MERGE_FILE;
-	MPI_Bcast(&mpi_msg, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	MPI_Bcast(&length, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	MPI_Bcast(msg, length, MPI_CHAR, 0, MPI_COMM_WORLD);
-	gatherAndSendVertexArrays(client, swap);
+        int mpi_msg = MPI_GMSH_MERGE_FILE;
+        MPI_Bcast(&mpi_msg, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&length, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(msg, length, MPI_CHAR, 0, MPI_COMM_WORLD);
+        gatherAndSendVertexArrays(client, swap);
 #endif
       }
       else if(type == GmshSocket::GMSH_PARSE_STRING){
-	ParseString(msg);
+        ParseString(msg);
 #if defined(HAVE_MPI)
-	int mpi_msg = MPI_GMSH_PARSE_STRING;
-	MPI_Bcast(&mpi_msg, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	MPI_Bcast(&length, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	MPI_Bcast(msg, length, MPI_CHAR, 0, MPI_COMM_WORLD);
+        int mpi_msg = MPI_GMSH_PARSE_STRING;
+        MPI_Bcast(&mpi_msg, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&length, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(msg, length, MPI_CHAR, 0, MPI_COMM_WORLD);
 #endif
       }
       else if(type == GmshSocket::GMSH_SPEED_TEST){
-	client->Info("Sending huge array");
-	std::string huge(500000000, 'a');
-	client->SpeedTest(huge.c_str());
+        client->Info("Sending huge array");
+        std::string huge(500000000, 'a');
+        client->SpeedTest(huge.c_str());
       }
       else{
-	client->Error("Ignoring unknown message");
+        client->Error("Ignoring unknown message");
       }
     
       delete [] msg;
@@ -262,22 +263,22 @@ int GmshRemote()
       int mpi_msg; 
       MPI_Bcast(&mpi_msg, 1, MPI_INT, 0, MPI_COMM_WORLD);
       if (mpi_msg == MPI_GMSH_COMPUTE_VIEW)
-	computeAndSendVertexArrays();
+        computeAndSendVertexArrays();
       else if(mpi_msg == MPI_GMSH_SHUTDOWN)
-	Msg::Exit(0);
+        Msg::Exit(0);
       else if(mpi_msg == MPI_GMSH_PARSE_STRING){
-	int length;
-	MPI_Bcast(&length, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	char msg[length];
-	MPI_Bcast(msg, length, MPI_CHAR, 0, MPI_COMM_WORLD);
-	ParseString(msg);
+        int length;
+        MPI_Bcast(&length, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        char msg[length];
+        MPI_Bcast(msg, length, MPI_CHAR, 0, MPI_COMM_WORLD);
+        ParseString(msg);
       }
       else if (mpi_msg == MPI_GMSH_MERGE_FILE){
-	int length;
-	MPI_Bcast(&length, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	char msg[length];
-	MPI_Bcast(msg, length, MPI_CHAR, 0, MPI_COMM_WORLD);
-	MergeFile(msg);
+        int length;
+        MPI_Bcast(&length, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        char msg[length];
+        MPI_Bcast(msg, length, MPI_CHAR, 0, MPI_COMM_WORLD);
+        MergeFile(msg);
       }
 #endif
     }

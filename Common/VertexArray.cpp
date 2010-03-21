@@ -328,6 +328,6 @@ void VertexArray::merge(VertexArray* va)
     _normals.insert(_normals.end(), va->firstNormal(), va->lastNormal());
     _colors.insert(_colors.end(), va->firstColor(), va->lastColor());
     _elements.insert(_elements.end(), va->firstElementPointer(),
-    		     va->lastElementPointer());
+                     va->lastElementPointer());
   }
 }

@@ -30,9 +30,9 @@ main(int argc, char **argv)
                 return 1;
             }
         } else if(solid.AddModel(argv[i])) {
-	    cerr << "Cannot find model " << argv[i] << '\n';
-	    return 1;
-	}
+            cerr << "Cannot find model " << argv[i] << '\n';
+            return 1;
+        }
     }
     if(connect)
         solid.Connect(); 
@@ -42,11 +42,11 @@ main(int argc, char **argv)
     std::string newname=argv[1];
     int start=newname.find(".g");
     if(start==std::string::npos) {
-	newname+=".brep";
-	std::cerr << "Cannot find the .g extension, writing to: "
-	    << newname << std::endl;
+        newname+=".brep";
+        std::cerr << "Cannot find the .g extension, writing to: "
+            << newname << std::endl;
     } else
-	newname.replace(start,newname.length(),".brep");
+        newname.replace(start,newname.length(),".brep");
     solid.SaveBRep(newname.c_str());
     //solid.Dump(cout);
 }

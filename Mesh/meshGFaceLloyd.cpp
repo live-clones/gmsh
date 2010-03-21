@@ -32,10 +32,10 @@ void lloydAlgorithm::operator () ( GFace * gf) {
   Range<double> dv = gf->parBounds(1) ;
 
   const double LC2D = sqrt ((du.high()-du.low())*(du.high()-du.low()) +
-			    (dv.high()-dv.low())*(dv.high()-dv.low()));  
+                            (dv.high()-dv.low())*(dv.high()-dv.low()));  
 
   printf("Lloyd on face %d %d elements %d nodes LC %g\n", gf->tag(),
-	 gf->getNumMeshElements(), (int)all.size(), LC2D);
+         gf->getNumMeshElements(), (int)all.size(), LC2D);
 
   int i = 0;
 
@@ -73,18 +73,18 @@ void lloydAlgorithm::operator () ( GFace * gf) {
       PointRecord &pt = triangulator.points[i];
       MVertex *v = (MVertex*)pt.data;
       if (v->onWhat() == gf && !triangulator.onHull(i)){
-	// get the voronoi corners
-	std::vector<SPoint2> pts;
-	triangulator.voronoiCell (i,pts); 
-	double E;
-	SPoint2 p(pt.where.h,pt.where.v);
-	if (!infiniteNorm){
-	  centroidOfPolygon (p,pts, cgs(i,0),cgs(i,1),E,backgroundMesh::current());	  
-	}
-	else {
-	  centroidOfOrientedBox (pts, 0.0, cgs(i,0),cgs(i,1),E);	  
-	}
-	ENERGY += E;
+        // get the voronoi corners
+        std::vector<SPoint2> pts;
+        triangulator.voronoiCell (i,pts); 
+        double E;
+        SPoint2 p(pt.where.h,pt.where.v);
+        if (!infiniteNorm){
+          centroidOfPolygon (p,pts, cgs(i,0),cgs(i,1),E,backgroundMesh::current());       
+        }
+        else {
+          centroidOfOrientedBox (pts, 0.0, cgs(i,0),cgs(i,1),E);          
+        }
+        ENERGY += E;
       }// if (v->onWhat() == gf)
       else {
       }
@@ -99,8 +99,8 @@ void lloydAlgorithm::operator () ( GFace * gf) {
     for(PointNumero i = 0; i < triangulator.numPoints; i++) {
       MVertex *v = (MVertex*)triangulator.points[i].data;
       if (v->onWhat() == gf && !triangulator.onHull(i)){
-	triangulator.points[i].where.h = cgs(i,0);
-	triangulator.points[i].where.v = cgs(i,1);
+        triangulator.points[i].where.h = cgs(i,0);
+        triangulator.points[i].where.v = cgs(i,1);
       }
     }
 
@@ -135,8 +135,8 @@ void lloydAlgorithm::operator () ( GFace * gf) {
   mesher(gf);
   // assign thos vertices to the face internal vertices
   gf->mesh_vertices.insert(gf->mesh_vertices.begin(),
-			   gf->_additional_vertices.begin(),  
-			   gf->_additional_vertices.end());  
+                           gf->_additional_vertices.begin(),  
+                           gf->_additional_vertices.end());  
   // clear the list of additional vertices
   gf->_additional_vertices.clear();  
 } 

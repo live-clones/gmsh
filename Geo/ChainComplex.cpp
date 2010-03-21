@@ -30,32 +30,32 @@ ChainComplex::ChainComplex(CellComplex* cellComplex, int domain)
     int index = 1;
     // ignore cells depending on domain
     for(CellComplex::citer cit = cellComplex->firstCell(dim); 
-	cit != cellComplex->lastCell(dim); cit++){
+        cit != cellComplex->lastCell(dim); cit++){
       Cell* cell = *cit;
       cell->setIndex(0);
       cols--;
       if((domain == 0 && !cell->inSubdomain()) 
-	 || (domain == 2 && cell->inSubdomain()) ){
+         || (domain == 2 && cell->inSubdomain()) ){
         cols++;
-	cell->setIndex(index);
-	index++;
-	_cellIndices[dim][cell->getIndex()] = cell;
+        cell->setIndex(index);
+        index++;
+        _cellIndices[dim][cell->getIndex()] = cell;
       }
     }
     index = 1;
     if(dim > 0){
       for(CellComplex::citer cit = cellComplex->firstCell(dim-1); 
-	  cit != cellComplex->lastCell(dim-1); cit++){
+          cit != cellComplex->lastCell(dim-1); cit++){
         Cell* cell = *cit;
-	cell->setIndex(0);
-	rows--;
-	if((domain == 0 && !cell->inSubdomain()) 
-	   || (domain == 2 && cell->inSubdomain()) ){
-	  rows++;
-	  cell->setIndex(index);
-	  index++;
-	  _cellIndices[dim-1][cell->getIndex()] = cell;
-	}  
+        cell->setIndex(0);
+        rows--;
+        if((domain == 0 && !cell->inSubdomain()) 
+           || (domain == 2 && cell->inSubdomain()) ){
+          rows++;
+          cell->setIndex(index);
+          index++;
+          _cellIndices[dim-1][cell->getIndex()] = cell;
+        }  
       }
     }
     
@@ -73,34 +73,34 @@ ChainComplex::ChainComplex(CellComplex* cellComplex, int domain)
       mpz_init(elem);
       _HMatrix[dim] = create_gmp_matrix_zero(rows, cols);
       for( std::set<Cell*, Less_Cell>::iterator cit = 
-	     cellComplex->firstCell(dim);
-	   cit != cellComplex->lastCell(dim); cit++){
+             cellComplex->firstCell(dim);
+           cit != cellComplex->lastCell(dim); cit++){
         Cell* cell = *cit;
         if( (domain == 0 && !cell->inSubdomain()) || domain == 1 
-	    || (domain == 2 && cell->inSubdomain()) ){
+            || (domain == 2 && cell->inSubdomain()) ){
           for(Cell::biter it = cell->firstBoundary();
-	      it != cell->lastBoundary(); it++){
+              it != cell->lastBoundary(); it++){
             Cell* bdCell = (*it).first;
             if((domain == 0 && !bdCell->inSubdomain()) || domain == 1 
-	       || (domain == 2 && cell->inSubdomain()) ){
+               || (domain == 2 && cell->inSubdomain()) ){
               int old_elem = 0;
 
               if(bdCell->getIndex() > (int)gmp_matrix_rows( _HMatrix[dim]) 
-		 || bdCell->getIndex() < 1 
+                 || bdCell->getIndex() < 1 
                  || cell->getIndex() > (int)gmp_matrix_cols( _HMatrix[dim]) 
-		 || cell->getIndex() < 1){
+                 || cell->getIndex() < 1){
                 //printf("Warning: Index out of bound! HMatrix: %d. \n", dim);
               }
               else{
                 gmp_matrix_get_elem(elem, bdCell->getIndex(), 
-				    cell->getIndex(), _HMatrix[dim]);
+                                    cell->getIndex(), _HMatrix[dim]);
                 old_elem = mpz_get_si(elem);
                 mpz_set_si(elem, old_elem + (*it).second);
                 if( abs((old_elem + (*it).second)) > 1){
-		  //printf("Incidence index: %d, in HMatrix: %d. \n", (old_elem + (*it).second), dim);
+                  //printf("Incidence index: %d, in HMatrix: %d. \n", (old_elem + (*it).second), dim);
                 }
                 gmp_matrix_set_elem(elem, bdCell->getIndex(), 
-				    cell->getIndex(), _HMatrix[dim]);
+                                    cell->getIndex(), _HMatrix[dim]);
               }
             }
           }
@@ -125,8 +125,8 @@ void ChainComplex::KerCod(int dim)
   
   gmp_matrix* HMatrix 
     = copy_gmp_matrix(_HMatrix[dim], 1, 1, 
-		      gmp_matrix_rows(_HMatrix[dim]),
-		      gmp_matrix_cols(_HMatrix[dim]));
+                      gmp_matrix_rows(_HMatrix[dim]),
+                      gmp_matrix_cols(_HMatrix[dim]));
   
   gmp_normal_form* normalForm 
     = create_gmp_Hermite_normal_form(HMatrix, NOT_INVERTED, INVERTED);
@@ -135,7 +135,7 @@ void ChainComplex::KerCod(int dim)
   //printMatrix(normalForm->right);
   
   int minRowCol = std::min(gmp_matrix_rows(normalForm->canonical), 
-			   gmp_matrix_cols(normalForm->canonical));
+                           gmp_matrix_cols(normalForm->canonical));
   int rank = 0;
   mpz_t elem;
   mpz_init(elem);
@@ -150,14 +150,14 @@ void ChainComplex::KerCod(int dim)
   if(rank != (int)gmp_matrix_cols(normalForm->canonical)){
     _kerH[dim] 
       = copy_gmp_matrix(normalForm->right, 1, rank+1, 
-			gmp_matrix_rows(normalForm->right),
-			gmp_matrix_cols(normalForm->right));
+                        gmp_matrix_rows(normalForm->right),
+                        gmp_matrix_cols(normalForm->right));
   }
   
   if(rank > 0){
      _codH[dim] = 
        copy_gmp_matrix(normalForm->canonical, 1, 1,
-		       gmp_matrix_rows(normalForm->canonical), rank);
+                       gmp_matrix_rows(normalForm->canonical), rank);
      gmp_matrix_left_mult(normalForm->left, _codH[dim]);
   }
   
@@ -176,12 +176,12 @@ void ChainComplex::Inclusion(int lowDim, int highDim)
   
   gmp_matrix* Zbasis = 
     copy_gmp_matrix(_kerH[lowDim], 1, 1,
-		    gmp_matrix_rows(_kerH[lowDim]), 
-		    gmp_matrix_cols(_kerH[lowDim]));
+                    gmp_matrix_rows(_kerH[lowDim]), 
+                    gmp_matrix_cols(_kerH[lowDim]));
   gmp_matrix* Bbasis 
     = copy_gmp_matrix(_codH[highDim], 1, 1,
-		      gmp_matrix_rows(_codH[highDim]), 
-		      gmp_matrix_cols(_codH[highDim]));
+                      gmp_matrix_rows(_codH[highDim]), 
+                      gmp_matrix_cols(_codH[highDim]));
   
   
   int rows = gmp_matrix_rows(Bbasis);
@@ -211,8 +211,8 @@ void ChainComplex::Inclusion(int lowDim, int highDim)
   gmp_matrix_left_mult(normalForm->left, Bbasis); 
   
   gmp_matrix* LB = copy_gmp_matrix(Bbasis, 1, 1, 
-				   gmp_matrix_cols(Zbasis), 
-				   gmp_matrix_cols(Bbasis));
+                                   gmp_matrix_cols(Zbasis), 
+                                   gmp_matrix_cols(Bbasis));
   destroy_gmp_matrix(Bbasis);
   
   rows = gmp_matrix_rows(LB);
@@ -255,8 +255,8 @@ void ChainComplex::Quotient(int dim)
   
   gmp_matrix* JMatrix = 
     copy_gmp_matrix(_JMatrix[dim], 1, 1,
-		    gmp_matrix_rows(_JMatrix[dim]), 
-		    gmp_matrix_cols(_JMatrix[dim]));
+                    gmp_matrix_rows(_JMatrix[dim]), 
+                    gmp_matrix_cols(_JMatrix[dim]));
   int rows = gmp_matrix_rows(JMatrix);
   int cols = gmp_matrix_cols(JMatrix);
   
@@ -321,13 +321,13 @@ void ChainComplex::computeHomology(bool dual)
        &&  gmp_matrix_cols(getHMatrix(lowDim)) > 0 
        && getHMatrix(highDim) == NULL) {
       setHbasis( setDim, 
-		 create_gmp_matrix_identity(gmp_matrix_cols(getHMatrix(lowDim))) );
+                 create_gmp_matrix_identity(gmp_matrix_cols(getHMatrix(lowDim))) );
     }
     else if(highDim == 0 && dual 
-	    &&  gmp_matrix_rows(getHMatrix(highDim)) > 0 
-	    && getHMatrix(lowDim) == NULL) {
+            &&  gmp_matrix_rows(getHMatrix(highDim)) > 0 
+            && getHMatrix(lowDim) == NULL) {
       setHbasis( setDim, 
-		 create_gmp_matrix_identity(gmp_matrix_rows(getHMatrix(highDim))) );
+                 create_gmp_matrix_identity(gmp_matrix_rows(getHMatrix(highDim))) );
     }
     
     // 2) this dimension is empty
@@ -337,9 +337,9 @@ void ChainComplex::computeHomology(bool dual)
     // 3) No higher dimension cells -> none of the cycles are boundaries
     else if(getHMatrix(highDim) == NULL){
       setHbasis( setDim, 
-		 copy_gmp_matrix(getKerHMatrix(lowDim), 1, 1,
-				 gmp_matrix_rows(getKerHMatrix(lowDim)), 
-				 gmp_matrix_cols(getKerHMatrix(lowDim))) );
+                 copy_gmp_matrix(getKerHMatrix(lowDim), 1, 1,
+                                 gmp_matrix_rows(getKerHMatrix(lowDim)), 
+                                 gmp_matrix_cols(getKerHMatrix(lowDim))) );
     }
     
    
@@ -352,25 +352,25 @@ void ChainComplex::computeHomology(bool dual)
       // 4) No lower dimension cells -> all chains are cycles
       if(getHMatrix(lowDim) == NULL){
         setKerHMatrix(lowDim, 
-		      create_gmp_matrix_identity(gmp_matrix_rows(getHMatrix(highDim))) );
+                      create_gmp_matrix_identity(gmp_matrix_rows(getHMatrix(highDim))) );
       }
       Inclusion(lowDim, highDim);
       Quotient(lowDim);
       
       if(getCodHMatrix(highDim) == NULL){
         setHbasis(setDim, 
-		  copy_gmp_matrix(getKerHMatrix(lowDim), 1, 1,
-				  gmp_matrix_rows(getKerHMatrix(lowDim)), 
-				  gmp_matrix_cols(getKerHMatrix(lowDim))) );
+                  copy_gmp_matrix(getKerHMatrix(lowDim), 1, 1,
+                                  gmp_matrix_rows(getKerHMatrix(lowDim)), 
+                                  gmp_matrix_cols(getKerHMatrix(lowDim))) );
       }  
       else if(getJMatrix(lowDim) == NULL || getQMatrix(lowDim) == NULL){
         setHbasis(setDim, NULL);
       } 
       else{
         setHbasis(setDim, 
-		  copy_gmp_matrix(getKerHMatrix(lowDim), 1, 1, 
-				  gmp_matrix_rows(getKerHMatrix(lowDim)), 
-				  gmp_matrix_cols(getKerHMatrix(lowDim))) );
+                  copy_gmp_matrix(getKerHMatrix(lowDim), 1, 1, 
+                                  gmp_matrix_rows(getKerHMatrix(lowDim)), 
+                                  gmp_matrix_cols(getKerHMatrix(lowDim))) );
         
         gmp_matrix_right_mult(getHbasis(setDim), getQMatrix(lowDim));
       } 
@@ -434,7 +434,7 @@ std::vector<int> ChainComplex::getCoeffVector(int dim, int chainNumber)
 }
 
 void ChainComplex::getChain(std::map<Cell*, int, Less_Cell>& chain, 
-			    int dim, int chainNumber)
+                            int dim, int chainNumber)
 {
   chain.clear();
   if(dim < 0 || dim > 4) return;
@@ -461,7 +461,7 @@ void ChainComplex::getChain(std::map<Cell*, int, Less_Cell>& chain,
     std::list< std::pair<int, Cell*> > subCells;
     cell->getCells(subCells);
     for(std::list< std::pair<int, Cell*> >::iterator it = 
-	  subCells.begin(); it != subCells.end(); it++){
+          subCells.begin(); it != subCells.end(); it++){
       Cell* subCell = (*it).second;
       int coeff = (*it).first;
       chain[subCell] = coeff*elemi;

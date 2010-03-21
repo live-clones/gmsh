@@ -2,7 +2,7 @@
 
 class dgRungeKuttaMultirate: public dgRungeKutta{
   protected:
-  bool _init;	
+  bool _init;   
   int _maxExponent;
   int _minExponent;
   double _dt;

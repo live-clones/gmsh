@@ -53,7 +53,7 @@ class PView{
   // construct a new model-based view from a bunch of data
   PView(std::string name, std::string type, GModel *model,
         std::map<int, std::vector<double> > &data, double time=0., 
-	int numComp = -1);
+        int numComp = -1);
   // add a new time step to a given model-based view
   void addStep(GModel *model, std::map<int, std::vector<double> > &data, 
                double time=0.,int numComp = -1);

@@ -323,19 +323,19 @@ void backgroundMesh::propagate1dMesh(GFace *_gf)
   for( ; it != e.end(); ++it ){
     if (!(*it)->isSeam(_gf)){
       for(unsigned int i = 0; i < (*it)->lines.size(); i++ ){
-	MVertex *v1 = (*it)->lines[i]->getVertex(0);
-	MVertex *v2 = (*it)->lines[i]->getVertex(1);
-	double d = sqrt((v1->x() - v2->x()) * (v1->x() - v2->x()) +
+        MVertex *v1 = (*it)->lines[i]->getVertex(0);
+        MVertex *v2 = (*it)->lines[i]->getVertex(1);
+        double d = sqrt((v1->x() - v2->x()) * (v1->x() - v2->x()) +
                         (v1->y() - v2->y()) * (v1->y() - v2->y()) +
                         (v1->z() - v2->z()) * (v1->z()  -v2->z()));
-	for (int k=0;k<2;k++){
-	  MVertex *v = (*it)->lines[i]->getVertex(k);
-	  std::map<MVertex*, double>::iterator itv = sizes.find(v);
-	  if (itv == sizes.end())
-	    sizes[v] = d;
-	  else 
-	    itv->second = 0.5 * (itv->second + d);
-	}      
+        for (int k=0;k<2;k++){
+          MVertex *v = (*it)->lines[i]->getVertex(k);
+          std::map<MVertex*, double>::iterator itv = sizes.find(v);
+          if (itv == sizes.end())
+            sizes[v] = d;
+          else 
+            itv->second = 0.5 * (itv->second + d);
+        }      
       }
     }
   }
@@ -423,13 +423,13 @@ void backgroundMesh::updateSizes(GFace *_gf)
   for( ; it != e.end(); ++it ){
     if (!(*it)->isSeam(_gf)){
       for(unsigned int i = 0; i < (*it)->lines.size(); i++ ){
-	MVertex *v1 = (*it)->lines[i]->getVertex(0);
-	MVertex *v2 = (*it)->lines[i]->getVertex(1);
-	MVertex *v1_2D = _3Dto2D[ v1 ];	
-	MVertex *v2_2D = _3Dto2D[ v2 ];	
-	
-	myAssembler.fixVertex(v1, 0, 1, _sizes[v1_2D]);
-	myAssembler.fixVertex(v2, 0, 1, _sizes[v2_2D]);
+        MVertex *v1 = (*it)->lines[i]->getVertex(0);
+        MVertex *v2 = (*it)->lines[i]->getVertex(1);
+        MVertex *v1_2D = _3Dto2D[ v1 ]; 
+        MVertex *v2_2D = _3Dto2D[ v2 ]; 
+        
+        myAssembler.fixVertex(v1, 0, 1, _sizes[v1_2D]);
+        myAssembler.fixVertex(v2, 0, 1, _sizes[v2_2D]);
       }
     }
   }
@@ -455,8 +455,8 @@ void backgroundMesh::updateSizes(GFace *_gf)
     for (int i = 0; i < e->getNumVertices();i++){
       double TERM = 0.0;
       for (int j = 0; j < e->getNumVertices();j++){
-	MVertex *v_2D = _3Dto2D[ e->getVertex(j) ];	
-	TERM+=_sizes[v_2D] * mass_matrix(i,j);
+        MVertex *v_2D = _3Dto2D[ e->getVertex(j) ];     
+        TERM+=_sizes[v_2D] * mass_matrix(i,j);
       }
       myAssembler.assemble(e->getVertex(i),0,1,TERM);
     }
@@ -503,18 +503,18 @@ void backgroundMesh::print (const std::string &filename, GFace *gf) const
     std::map<MVertex*,double>::const_iterator itv3 = _sizes.find(v3);
     if (!gf){
       fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
-	      v1->x(),v1->y(),v1->z(),
-	      v2->x(),v2->y(),v2->z(),
-	      v3->x(),v3->y(),v3->z(),itv1->second,itv2->second,itv3->second);
+              v1->x(),v1->y(),v1->z(),
+              v2->x(),v2->y(),v2->z(),
+              v3->x(),v3->y(),v3->z(),itv1->second,itv2->second,itv3->second);
     }
     else {
       GPoint p1 = gf->point(SPoint2(v1->x(),v1->y()));
       GPoint p2 = gf->point(SPoint2(v2->x(),v2->y()));
       GPoint p3 = gf->point(SPoint2(v3->x(),v3->y()));
       fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
-	      p1.x(),p1.y(),p1.z(),
-	      p2.x(),p2.y(),p2.z(),
-	      p3.x(),p3.y(),p3.z(),itv1->second,itv2->second,itv3->second);
+              p1.x(),p1.y(),p1.z(),
+              p2.x(),p2.y(),p2.z(),
+              p3.x(),p3.y(),p3.z(),itv1->second,itv2->second,itv3->second);
     }
 
   }

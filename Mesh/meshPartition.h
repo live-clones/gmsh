@@ -33,6 +33,6 @@ int CreatePartitionBoundaries(GModel *model, bool createGhostCells);
 
 void splitBoundaryEdges(GModel *model,  std::set<partitionEdge*, Less_partitionEdge> &newEdges);
 void createPartitionFaces(GModel *model, GFaceCompound * gf, int num_parts, 
-			  std::vector<discreteFace*> &pFaces);
+                          std::vector<discreteFace*> &pFaces);
 
 #endif

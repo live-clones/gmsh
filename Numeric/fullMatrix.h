@@ -214,7 +214,7 @@ class fullMatrix
 #endif
   ;
   void gemm_naive(const fullMatrix<scalar> &a, const fullMatrix<scalar> &b, 
-		  scalar alpha=1., scalar beta=1.)
+                  scalar alpha=1., scalar beta=1.)
   {
     fullMatrix<scalar> temp(a.size1(), b.size2());
     a.mult_naive(b, temp);

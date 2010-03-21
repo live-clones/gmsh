@@ -471,7 +471,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
                            fullMatrix<double> &verticesLs,
                            GEntity *ge, GModel *GM, int &numEle,
                            std::map<int, MVertex*> &vertexMap,
-			   newVerticesContainer &newVertices,
+                           newVerticesContainer &newVertices,
                            std::map<int, std::vector<MElement*> > elements[10],
                            std::map<int, std::map<int, std::string> > physicals[4],
                            std::map<int, int> newElemTags[4],
@@ -633,13 +633,13 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
           MVertex *mv[4] = {NULL, NULL, NULL, NULL};
           for(int j = 0; j < 4; j++){
             int numV = getElementVertexNum(tetras[i]->pt(j), e);
-	    if (numV == -1){
-	      MVertex *newv = new MVertex(tetras[i]->x(j), tetras[i]->y(j), tetras[i]->z(j));
-	      std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
-	      mv[j] = *(it.first);
-	      if (!it.second) newv->deleteLast();
-	    }
-	    else {
+            if (numV == -1){
+              MVertex *newv = new MVertex(tetras[i]->x(j), tetras[i]->y(j), tetras[i]->z(j));
+              std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
+              mv[j] = *(it.first);
+              if (!it.second) newv->deleteLast();
+            }
+            else {
               std::map<int, MVertex*>::iterator it = vertexMap.find(numV);
               if(it == vertexMap.end()) {
                 mv[j] = new MVertex(tetras[i]->x(j), tetras[i]->y(j),
@@ -691,10 +691,10 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
         for(int j = 0; j < 3; j++){
           int numV = getElementVertexNum(triangles[i]->pt(j), e);
           if(numV == -1) {
-	    MVertex *newv = new MVertex(triangles[i]->x(j), triangles[i]->y(j), triangles[i]->z(j));
-	    std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
-	    mv[j] = *(it.first);
-	    if (!it.second) newv->deleteLast();
+            MVertex *newv = new MVertex(triangles[i]->x(j), triangles[i]->y(j), triangles[i]->z(j));
+            std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
+            mv[j] = *(it.first);
+            if (!it.second) newv->deleteLast();
           }
           else {
             std::map<int, MVertex*>::iterator it = vertexMap.find(numV);
@@ -763,10 +763,10 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
           for(int j = 0; j < 3; j++){
             int numV = getElementVertexNum(triangles[i]->pt(j), e);
             if(numV == -1) {
-	      MVertex *newv = new MVertex(triangles[i]->x(j), triangles[i]->y(j), triangles[i]->z(j));
-	      std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
-	      mv[j] = *(it.first);
-	      if (!it.second) newv->deleteLast();
+              MVertex *newv = new MVertex(triangles[i]->x(j), triangles[i]->y(j), triangles[i]->z(j));
+              std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
+              mv[j] = *(it.first);
+              if (!it.second) newv->deleteLast();
             }
             else {
               std::map<int, MVertex*>::iterator it = vertexMap.find(numV);
@@ -816,10 +816,10 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
         for(int j = 0; j < 2; j++){
           int numV = getElementVertexNum(lines[i]->pt(j), e);
           if(numV == -1) {
-	    MVertex *newv = new MVertex(lines[i]->x(j), lines[i]->y(j), lines[i]->z(j));
-	    std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
-	    mv[j] = *(it.first);
-	    if (!it.second) newv->deleteLast();
+            MVertex *newv = new MVertex(lines[i]->x(j), lines[i]->y(j), lines[i]->z(j));
+            std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
+            mv[j] = *(it.first);
+            if (!it.second) newv->deleteLast();
           }
           else {
             std::map<int, MVertex*>::iterator it = vertexMap.find(numV);
@@ -858,10 +858,10 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
           for(int j = 0; j < 2; j++){
             int numV = getElementVertexNum(lines[i]->pt(j), e);
             if(numV == -1) {
-	      MVertex *newv = new MVertex(lines[i]->x(j), lines[i]->y(j), lines[i]->z(j));
-	      std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
-	      mv[j] = *(it.first);
-	      if (!it.second) newv->deleteLast();
+              MVertex *newv = new MVertex(lines[i]->x(j), lines[i]->y(j), lines[i]->z(j));
+              std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
+              mv[j] = *(it.first);
+              if (!it.second) newv->deleteLast();
             }
             else {
               std::map<int, MVertex*>::iterator it = vertexMap.find(numV);

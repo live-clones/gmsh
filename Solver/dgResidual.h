@@ -33,10 +33,10 @@ class dgResidualInterface {
   public:
   dgResidualInterface (const dgConservationLaw &claw);
   void compute1Group ( //dofManager &dof, // the DOF manager (maybe useless here)
-				     dgGroupOfFaces &group, 
-				     const fullMatrix<double> &solution, // solution !! at faces nodes
+                                     dgGroupOfFaces &group, 
+                                     const fullMatrix<double> &solution, // solution !! at faces nodes
              const std::vector<const fullMatrix<double>*> solutionOnElements,
-				     fullMatrix<double> &residual // residual !! at faces nodes
+                                     fullMatrix<double> &residual // residual !! at faces nodes
             );
   void computeAndMap1Group (dgGroupOfFaces &faces, dgDofContainer &solution, dgDofContainer &residual);
   ~dgResidualInterface();

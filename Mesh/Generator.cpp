@@ -412,9 +412,9 @@ static void Mesh2D(GModel *m)
     std::set<GFace*> compFaces;
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
       if ((*it)->geomType() != GEntity::CompoundSurface)
-	classFaces.insert(*it);
+        classFaces.insert(*it);
       else
-	compFaces.insert(*it);
+        compFaces.insert(*it);
     }
     std::for_each(classFaces.begin(), classFaces.end(), meshGFace());
     std::for_each(compFaces.begin(), compFaces.end(), meshGFace());

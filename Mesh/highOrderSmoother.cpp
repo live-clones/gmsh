@@ -535,10 +535,10 @@ void highOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
 }
 
 double highOrderSmoother::smooth_metric_(std::vector<MElement*>  & v, 
-					 GFace *gf, 
-					 dofManager<double> &myAssembler,
-					 std::set<MVertex*> &verticesToMove,
-					 elasticityTerm &El)
+                                         GFace *gf, 
+                                         dofManager<double> &myAssembler,
+                                         std::set<MVertex*> &verticesToMove,
+                                         elasticityTerm &El)
 {
   std::set<MVertex*>::iterator it;
 
@@ -566,7 +566,7 @@ double highOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
       J23K33.mult(D3, R2);
       J23K33.print("J23K33");
       for (int j = 0; j < n2; j++){
-	Dof RDOF = El.getLocalDofR(&se, j);
+        Dof RDOF = El.getLocalDofR(&se, j);
         myAssembler.assemble(RDOF, -R2(j));
         for (int k = 0; k < n2; k++){
           Dof CDOF = El.getLocalDofC(&se, k);
@@ -709,8 +709,8 @@ void highOrderSmoother::smooth(std::vector<MElement*> &all)
 }
 
 void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
-				      std::vector<MElement*>& old_elems,
-				      GFace* gf) {
+                                      std::vector<MElement*>& old_elems,
+                                      GFace* gf) {
  
   printf("Smoothing a cavity...\n");
   printf("Old elems : %d and %d\n", old_elems[0]->getNum(), old_elems[1]->getNum());
@@ -744,10 +744,10 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
     if (find(old_elems.begin(), old_elems.end(), layer[i]) == old_elems.end()) {
       printf("In the layer, there is element %d\n", layer[i]->getNum());
       for (int j = 0; j < layer[i]->getNumVertices(); j++){
-	MVertex *vert = layer[i]->getVertex(j);
-	myAssembler.fixVertex(vert, 0, getTag(), 0);
-	myAssembler.fixVertex(vert, 1, getTag(), 0);
-	printf("Fixing vertex (internal) %d\n", vert->getNum());
+        MVertex *vert = layer[i]->getVertex(j);
+        myAssembler.fixVertex(vert, 0, getTag(), 0);
+        myAssembler.fixVertex(vert, 1, getTag(), 0);
+        printf("Fixing vertex (internal) %d\n", vert->getNum());
       }
     }
   }
@@ -761,26 +761,26 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
   //std::map<MVertex*,SVector3> verticesToMove;
   std::set<MVertex*> verticesToMove;
 
-  printf(" size = %d\n",_straightSidedLocation.size());
+  printf(" size = %d\n", (int)_straightSidedLocation.size());
 
   for (unsigned int i = 0; i < cavity.size(); i++){
     for (int j = 0; j < cavity[i]->getNumVertices(); j++){
       MVertex *vert = cavity[i]->getVertex(j);
       its = _straightSidedLocation.find(vert);
       if (its == _straightSidedLocation.end()) {
-	printf("SETTING LOCATIONS for %d\n",vert->getNum());
+        printf("SETTING LOCATIONS for %d\n",vert->getNum());
         _straightSidedLocation[vert] = 
           SVector3(vert->x(), vert->y(), vert->z());     
         _targetLocation[vert] = 
           SVector3(vert->x(), vert->y(), vert->z());
       }else {
-	vert->x() = its->second.x();
+        vert->x() = its->second.x();
         vert->y() = its->second.y();
         vert->z() = its->second.z();
         if (vert->onWhat()->dim() < _dim){
           myAssembler.fixVertex(vert, 0, getTag(), 0);
           myAssembler.fixVertex(vert, 1, getTag(), 0);
-	  printf("Fixing vertex (boundary) %d\n", vert->getNum());
+          printf("Fixing vertex (boundary) %d\n", vert->getNum());
         }
       }
     }
@@ -1368,27 +1368,27 @@ static int swapHighOrderTriangles(GFace *gf,
       mesh_vertices2.insert(mesh_vertices2.end(),vf4.begin(),vf4.end());
 
       for(std::vector<MVertex*>::iterator vit = ve1.begin(); vit != ve1.end(); vit++) {
-	if (find(ve2.begin(),ve2.end(),*vit)!=ve2.end())
-	  v_removed.insert(*vit);
+        if (find(ve2.begin(),ve2.end(),*vit)!=ve2.end())
+          v_removed.insert(*vit);
       }
       for(std::vector<MVertex*>::iterator vit = ve3.begin(); vit != ve3.end(); vit++) {
-	//if (find(ve4.begin(),ve4.end(),*vit)!=ve4.end())
-	//  mesh_vertices2.push_back(*vit);
+        //if (find(ve4.begin(),ve4.end(),*vit)!=ve4.end())
+        //  mesh_vertices2.push_back(*vit);
       }
 
       nbSwap++;
     }
     else {
       if (!t1_rem || !t2_rem) {
-	for(std::vector<MVertex*>::iterator vit = ve1.begin(); vit != ve1.end(); vit++) {
-	  //if (find(ve2.begin(),ve2.end(),*vit)!=ve2.end())
-	    //mesh_vertices2.push_back(*vit);
-	}
+        for(std::vector<MVertex*>::iterator vit = ve1.begin(); vit != ve1.end(); vit++) {
+          //if (find(ve2.begin(),ve2.end(),*vit)!=ve2.end())
+            //mesh_vertices2.push_back(*vit);
+        }
       }
       
       for(std::vector<MVertex*>::iterator vit = ve3.begin(); vit != ve3.end(); vit++) {
-	if (find(ve4.begin(),ve4.end(),*vit)!=ve4.end())
-	  v_removed.insert(*vit);
+        if (find(ve4.begin(),ve4.end(),*vit)!=ve4.end())
+          v_removed.insert(*vit);
       }
       delete itp->t3;
       delete itp->t4;

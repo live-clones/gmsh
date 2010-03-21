@@ -99,8 +99,8 @@ void dgSystemOfEquations::L2Projection (const function *f){
 // ok, we can setup the groups and create solution vectors
 void dgSystemOfEquations::setup(){
   if (!_claw) throw;
-	_groups.buildGroupsOfElements(_gm,_dimension,_order, NULL);
-	_groups.buildGroupsOfInterfaces();
+        _groups.buildGroupsOfElements(_gm,_dimension,_order, NULL);
+        _groups.buildGroupsOfInterfaces();
   _solution = new dgDofContainer(&_groups,_claw->getNbFields());
   _rightHandSide = new dgDofContainer(&_groups,_claw->getNbFields());
 }

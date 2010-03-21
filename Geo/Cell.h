@@ -136,17 +136,17 @@ class Cell
    
   // get the cell boundary
   virtual void getBoundary(std::map<Cell*, int, Less_Cell >& boundary, 
-			   bool orig=false){
+                           bool orig=false){
     orig ? boundary = _obd : boundary =  _bd; }
   virtual void getCoboundary(std::map<Cell*, int, Less_Cell >& coboundary,
-			     bool orig=false){
+                             bool orig=false){
     orig ? coboundary = _ocbd : coboundary = _cbd; }
   
   // add (co)boundary cell
   virtual void addBoundaryCell(int orientation, Cell* cell, 
-			       bool orig=false, bool other=true); 
+                               bool orig=false, bool other=true); 
   virtual void addCoboundaryCell(int orientation, Cell* cell, 
-				 bool orig=false, bool other=true);
+                                 bool orig=false, bool other=true);
   
   // remove (co)boundary cell
   virtual void removeBoundaryCell(Cell* cell, bool other=true);
@@ -180,7 +180,7 @@ class Cell
     }
     for(int i=0; i < this->getNumSortedVertices();i++){
       if(this->getSortedVertex(i) != c2.getSortedVertex(i)){
-	return false;
+        return false;
       }
     }
     return true;

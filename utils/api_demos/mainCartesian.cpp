@@ -18,8 +18,8 @@ void insertBoxes ( double x, double y, double z, double EP, cartesianBox<double>
   for (int i=i1;i<=i2;i++){
     for (int j=j1;j<=j2;j++){
       for (int k=k1;k<=k2;k++){
-	int id = box.element_index(i,j,k);
-	box.insert(id);	  
+        int id = box.element_index(i,j,k);
+        box.insert(id);   
       }
     }
   }
@@ -105,14 +105,14 @@ int main (int argc,char *argv[]){
   int NZ =FACT*range.z()/range.x(); 
 
   printf("%g %g %g -- %g %g %g -- %d %d %d\n",bb.min().x(),bb.min().y(),bb.min().z(),
-	 bb.max().x(),bb.max().y(),bb.max().z(),NX,NY,NZ);
+         bb.max().x(),bb.max().y(),bb.max().z(),NX,NY,NZ);
 
 
   cartesianBox<double> box ( bb.min().x(),bb.min().y(),bb.min().z(), 
-			     SVector3(range.x(),0,0),
-			     SVector3(0,range.y(),0),
-			     SVector3(0,0,range.z()),
-			     NX,NY,NZ);
+                             SVector3(range.x(),0,0),
+                             SVector3(0,range.y(),0),
+                             SVector3(0,0,range.z()),
+                             NX,NY,NZ);
   
   box.points() = POINTS;
   box.normals() = NORMALS;
@@ -164,17 +164,17 @@ int main (int argc,char *argv[]){
       SVector3 NN (crossprod(P2-P1,P3-P1));
       
       //      printf("N1 %g %g %g N2 %g %g %g -- %g %g %g -- %g %g %g -- %g %g %g\n",N.x(),N.y(),N.z(),NN.x(),NN.y(),NN.z(),
-      //	     p1.x(),p1.y(),p1.z(),p2.x(),p2.y(),p2.z(),p3.x(),p3.y(),p3.z());
+      //             p1.x(),p1.y(),p1.z(),p2.x(),p2.y(),p2.z(),p3.x(),p3.y(),p3.z());
       if (dot(NN, N) > 0)
-	signedDistancesPointsTriangle (localdist,NODES,P1,P2,P3);
+        signedDistancesPointsTriangle (localdist,NODES,P1,P2,P3);
       else
-	signedDistancesPointsTriangle (localdist,NODES,P2,P1,P3);
+        signedDistancesPointsTriangle (localdist,NODES,P2,P1,P3);
 
       if(1){
-	if (dist.empty())dist=localdist;
-	else 
-	  for (int j=0;j<localdist.size();j++)
-	    dist[j] = (fabs(dist[j]) < fabs(localdist[j])) ? dist[j] : localdist[j];
+        if (dist.empty())dist=localdist;
+        else 
+          for (int j=0;j<localdist.size();j++)
+            dist[j] = (fabs(dist[j]) < fabs(localdist[j])) ? dist[j] : localdist[j];
       }
     }
     III++;

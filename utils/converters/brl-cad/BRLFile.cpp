@@ -55,8 +55,8 @@ BRLTopo::BRLTopo(struct rt_arb_internal *arb)
 {
     TopoDS_Vertex v[8];
     for(int i=0;i<8;i++)
-	v[i]=BRepBuilderAPI_MakeVertex(
-	    gp_Pnt(
+        v[i]=BRepBuilderAPI_MakeVertex(
+            gp_Pnt(
                 scale*arb->pt[i][0],
                 scale*arb->pt[i][1],
                 scale*arb->pt[i][2]
@@ -65,49 +65,49 @@ BRLTopo::BRLTopo(struct rt_arb_internal *arb)
 
     int arbn;
     if(!BRepTools::Compare(v[6],v[7]))
-	arbn=8;
+        arbn=8;
     else if(!BRepTools::Compare(v[4],v[5]))
-	arbn=7;
+        arbn=7;
     else if(!BRepTools::Compare(v[5],v[6]))
-	arbn=6;
+        arbn=6;
     else if(!BRepTools::Compare(v[0],v[3]))
-	arbn=5;
+        arbn=5;
     else
-	arbn=4;
+        arbn=4;
 
     switch(arbn) {
     case 8: {
-	TopoDS_Edge e[12];
-	for(int i=0;i<4;i++) { 
-	    e[i]=BRepBuilderAPI_MakeEdge(v[i],v[(i+1)%4]);
-	    e[i+4]=BRepBuilderAPI_MakeEdge(v[i+4],v[(i+1)%4+4]);
-	    e[i+8]=BRepBuilderAPI_MakeEdge(v[i],v[(i+4)%8]);
-	}
+        TopoDS_Edge e[12];
+        for(int i=0;i<4;i++) { 
+            e[i]=BRepBuilderAPI_MakeEdge(v[i],v[(i+1)%4]);
+            e[i+4]=BRepBuilderAPI_MakeEdge(v[i+4],v[(i+1)%4+4]);
+            e[i+8]=BRepBuilderAPI_MakeEdge(v[i],v[(i+4)%8]);
+        }
 
-	TopoDS_Wire w[6];
-	w[0]=BRepBuilderAPI_MakeWire(e[0],e[1],e[2],e[3]);
-	w[1]=BRepBuilderAPI_MakeWire(e[4],e[5],e[6],e[7]);
-	w[2]=BRepBuilderAPI_MakeWire(e[0],e[9],e[4],e[8]);
-	w[3]=BRepBuilderAPI_MakeWire(e[1],e[10],e[5],e[9]);
-	w[4]=BRepBuilderAPI_MakeWire(e[2],e[11],e[6],e[10]);
-	w[5]=BRepBuilderAPI_MakeWire(e[3],e[8],e[7],e[11]);
+        TopoDS_Wire w[6];
+        w[0]=BRepBuilderAPI_MakeWire(e[0],e[1],e[2],e[3]);
+        w[1]=BRepBuilderAPI_MakeWire(e[4],e[5],e[6],e[7]);
+        w[2]=BRepBuilderAPI_MakeWire(e[0],e[9],e[4],e[8]);
+        w[3]=BRepBuilderAPI_MakeWire(e[1],e[10],e[5],e[9]);
+        w[4]=BRepBuilderAPI_MakeWire(e[2],e[11],e[6],e[10]);
+        w[5]=BRepBuilderAPI_MakeWire(e[3],e[8],e[7],e[11]);
 
-	BRep_Builder BB;
-	TopoDS_Shell shell;
-	BB.MakeShell(shell);
-	for(int i=0;i<6;i++) {
-	    TopoDS_Face f=BRepBuilderAPI_MakeFace(w[i]);
-	    BB.Add(shell,i? f.Reversed():f);
-	}
-	TopoDS_Solid solid;
-	BB.MakeSolid(solid);
-	BB.Add(solid,shell);
-	ShapeFix_Solid sf(solid);
-	sf.Perform();
-	shape=sf.Solid();
-	} break;
+        BRep_Builder BB;
+        TopoDS_Shell shell;
+        BB.MakeShell(shell);
+        for(int i=0;i<6;i++) {
+            TopoDS_Face f=BRepBuilderAPI_MakeFace(w[i]);
+            BB.Add(shell,i? f.Reversed():f);
+        }
+        TopoDS_Solid solid;
+        BB.MakeSolid(solid);
+        BB.Add(solid,shell);
+        ShapeFix_Solid sf(solid);
+        sf.Perform();
+        shape=sf.Solid();
+        } break;
     case 6: {
-	TopoDS_Edge e[9];
+        TopoDS_Edge e[9];
         e[0]=BRepBuilderAPI_MakeEdge(v[0],v[1]);
         e[1]=BRepBuilderAPI_MakeEdge(v[1],v[2]);
         e[2]=BRepBuilderAPI_MakeEdge(v[2],v[3]);
@@ -118,38 +118,38 @@ BRLTopo::BRLTopo(struct rt_arb_internal *arb)
         e[7]=BRepBuilderAPI_MakeEdge(v[3],v[6]);
         e[8]=BRepBuilderAPI_MakeEdge(v[4],v[6]);
 
-	TopoDS_Wire w[5];
-	w[0]=BRepBuilderAPI_MakeWire(e[0],e[1],e[2],e[3]);
-	w[1]=BRepBuilderAPI_MakeWire(e[0],e[4],e[5]);
-	w[2]=BRepBuilderAPI_MakeWire(e[2],e[6],e[7]);
-	w[3]=BRepBuilderAPI_MakeWire(e[3],e[4],e[8],e[7]);
-	w[4]=BRepBuilderAPI_MakeWire(e[1],e[5],e[8],e[6]);
+        TopoDS_Wire w[5];
+        w[0]=BRepBuilderAPI_MakeWire(e[0],e[1],e[2],e[3]);
+        w[1]=BRepBuilderAPI_MakeWire(e[0],e[4],e[5]);
+        w[2]=BRepBuilderAPI_MakeWire(e[2],e[6],e[7]);
+        w[3]=BRepBuilderAPI_MakeWire(e[3],e[4],e[8],e[7]);
+        w[4]=BRepBuilderAPI_MakeWire(e[1],e[5],e[8],e[6]);
 
-	BRep_Builder BB;
+        BRep_Builder BB;
 #if 0
-	TopoDS_Compound result;
-	BB.MakeCompound(result);
-	for(int i=0;i<5;i++) {
+        TopoDS_Compound result;
+        BB.MakeCompound(result);
+        for(int i=0;i<5;i++) {
             BB.Add(result,BRepBuilderAPI_MakeFace(w[i]));
-	}
-	shape=result;
+        }
+        shape=result;
 #else
-	TopoDS_Shell shell;
-	BB.MakeShell(shell);
-	for(int i=0;i<5;i++) {
-	    TopoDS_Face f=BRepBuilderAPI_MakeFace(w[i]);
-	    BB.Add(shell,f); //i? f:f.Reversed());
-	}
-	TopoDS_Solid solid;
-	BB.MakeSolid(solid);
-	BB.Add(solid,shell);
-	ShapeFix_Solid sf(solid);
-	sf.Perform();
-	shape=sf.Solid();
+        TopoDS_Shell shell;
+        BB.MakeShell(shell);
+        for(int i=0;i<5;i++) {
+            TopoDS_Face f=BRepBuilderAPI_MakeFace(w[i]);
+            BB.Add(shell,f); //i? f:f.Reversed());
+        }
+        TopoDS_Solid solid;
+        BB.MakeSolid(solid);
+        BB.Add(solid,shell);
+        ShapeFix_Solid sf(solid);
+        sf.Perform();
+        shape=sf.Solid();
 #endif
-	} break;
+        } break;
     default:
-	cerr << "Unhandled arb8 type n=" << arbn << '\n';
+        cerr << "Unhandled arb8 type n=" << arbn << '\n';
     }
 }
 
@@ -178,9 +178,9 @@ BRLTopo::BRLTopo(struct rt_tgc_internal *tgc)
         scale*(v.Coord(3)-tgc->b[2]));
     Handle(Geom_Ellipse) top;
     if(v.SquareDistance(a)<v.SquareDistance(b))
-	top=GC_MakeEllipse(b, aa, v); 
+        top=GC_MakeEllipse(b, aa, v); 
     else
-	top=GC_MakeEllipse(a, b, v); 
+        top=GC_MakeEllipse(a, b, v); 
     TopoDS_Edge e_t[4];
     e_t[0]=BRepBuilderAPI_MakeEdge(top,a,b);
     e_t[1]=BRepBuilderAPI_MakeEdge(top,b,aa);
@@ -209,9 +209,9 @@ BRLTopo::BRLTopo(struct rt_tgc_internal *tgc)
         scale*(h.Coord(3)-tgc->d[2]));
     Handle(Geom_Ellipse) bottom;
     if(h.SquareDistance(c)<h.SquareDistance(d))
-	bottom=GC_MakeEllipse(d, cc, h); 
+        bottom=GC_MakeEllipse(d, cc, h); 
     else
-	bottom=GC_MakeEllipse(c, d, h); 
+        bottom=GC_MakeEllipse(c, d, h); 
     TopoDS_Edge e_b[4];
     e_b[0]=BRepBuilderAPI_MakeEdge(bottom,c,d);
     e_b[1]=BRepBuilderAPI_MakeEdge(bottom,d,cc);
@@ -229,8 +229,8 @@ BRLTopo::BRLTopo(struct rt_tgc_internal *tgc)
     TopoDS_Compound result;
     BB.MakeCompound(result);
     for(int i=0;i<4;i++) {
-	BB.Add(result,e_t[i]);
-	BB.Add(result,e_b[i]);
+        BB.Add(result,e_t[i]);
+        BB.Add(result,e_b[i]);
     }
     shape=result;
 #endif
@@ -273,7 +273,7 @@ BRLTopo::BRLTopo(struct rt_ell_internal *ell)
     TopoDS_Solid sph=BRepPrimAPI_MakeSphere(v,ell->a[0]);
     TopoDS_Face init;
     for(TopExp_Explorer p(sph,TopAbs_FACE); p.More(); p.Next())
-	init=TopoDS::Face(p.Current());
+        init=TopoDS::Face(p.Current());
     BRepFill_Filling face1;
     //face1.LoadInitSurface(init);
     face1.Add(e_ab[0],GeomAbs_C0);
@@ -340,7 +340,7 @@ BRLFile::BRLFile(char *filename, int v)
 
     /* build a wdbp structure for convenient read/write */
     wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
-    if (db_dirbuild(dbip) < 0) {	/* create directory database contents */
+    if (db_dirbuild(dbip) < 0) {        /* create directory database contents */
         bu_log("Error building directory for %s\n", filename);
         exit(-1);
     }
@@ -358,8 +358,8 @@ int BRLFile::AddModel(char const *name)
     db_functree(dbip, dp, CsgCombine, CsgLeaf, &rt_uniresource, this);
 
     while(construction.size()>0) {
-	Add(construction.front());
-	construction.pop_front();
+        Add(construction.front());
+        construction.pop_front();
     }
     return 0;
 }
@@ -369,23 +369,23 @@ TopoDS_Shape BRLFile::PerformBoolean(union tree *tp)
     TopoDS_Shape left, right, result;
     if(tp->tr_op==OP_UNION || tp->tr_op==OP_INTERSECT || tp->tr_op==OP_SUBTRACT
     ) {
-	left=PerformBoolean(tp->tr_b.tb_left);
-	right=PerformBoolean(tp->tr_b.tb_right);
+        left=PerformBoolean(tp->tr_b.tb_left);
+        right=PerformBoolean(tp->tr_b.tb_right);
     }
 
     if(verbose&BRL) {
-	switch(tp->tr_op) {
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-		cout<< "    Bool " << *tp;
-		break;
-	case OP_DB_LEAF:
-	    if(verbose&BRL)
-		cout << "    Leaf " << tp->tr_l.tl_name;
-	    break;
-	}
-	cout << " remaining " << construction.size() << '\n';
+        switch(tp->tr_op) {
+        case OP_UNION:
+        case OP_INTERSECT:
+        case OP_SUBTRACT:
+                cout<< "    Bool " << *tp;
+                break;
+        case OP_DB_LEAF:
+            if(verbose&BRL)
+                cout << "    Leaf " << tp->tr_l.tl_name;
+            break;
+        }
+        cout << " remaining " << construction.size() << '\n';
     }
 
     switch(tp->tr_op) {
@@ -393,12 +393,12 @@ TopoDS_Shape BRLFile::PerformBoolean(union tree *tp)
     case OP_INTERSECT:return BRepAlgoAPI_Common(left,right);
     case OP_SUBTRACT: return BRepAlgoAPI_Cut(left,right);
     case OP_DB_LEAF:
-	result=construction.back();
-	construction.pop_back();
-	return result;
+        result=construction.back();
+        construction.pop_back();
+        return result;
     default:
-	std::cerr << "Invalid boolean operation in " << __FUNCTION__ << '\n';
-	return result;
+        std::cerr << "Invalid boolean operation in " << __FUNCTION__ << '\n';
+        return result;
     }
 }
 
@@ -410,7 +410,7 @@ void BRLFile::CsgCombine(struct db_i *dbip, struct directory *dp, genptr_t ptr)
     if(rt_db_get_internal(&ip, dp, dbip, NULL, &rt_uniresource)!=ID_COMBINATION
     ) {
         std::cerr << "Combination is not a combination in " 
-	    << __FUNCTION__ << '\n';
+            << __FUNCTION__ << '\n';
         exit(1);
     }
 

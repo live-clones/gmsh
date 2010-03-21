@@ -54,7 +54,7 @@ public:
       _value(k,1) = sol(k,1);
       double H = sol(k,0)+h;
       if (H < _hMin){
-	_value(k,0) = _hMin;
+        _value(k,0) = _hMin;
       }
     }
   }
@@ -131,7 +131,7 @@ class dgConservationLawShallowWater1d::riemann:public dataCacheDouble {
   dataCacheDouble &_pressureL, &_pressureR,  &_celerityL, &_celerityR;
   public:
   riemann(dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight, const function *bathymetry, 
-	  const function *pressure, const function *celerity):
+          const function *pressure, const function *celerity):
     dataCacheDouble(cacheMapLeft,1,4),
     normals(cacheMapLeft.getNormals(this)),
     solL(cacheMapLeft.getSolution(this)),
@@ -193,16 +193,16 @@ class dgConservationLawShallowWater1d::riemann:public dataCacheDouble {
 //       double SL = std::min(uL - _celerityL(i,0), ustar - cstar);
 //       double SR = std::min(uR + _celerityR(i,0),  ustar + cstar);
 //       if (SL >= 0.){
-// 	F1 =  HL*uL*n0;  
-// 	F2 =  (.5*uL*uL + pL/RHO )*n0  ;
+//      F1 =  HL*uL*n0;  
+//      F2 =  (.5*uL*uL + pL/RHO )*n0  ;
 //       }
 //       else if (SR <=0.){
-// 	F1 =  HR*uR*n0;  
-// 	F2 =  (.5*uR*uR + pR/RHO )*n0  ;
+//      F1 =  HR*uR*n0;  
+//      F2 =  (.5*uR*uR + pR/RHO )*n0  ;
 //       }
 //       else{
-// 	F1 = (SR*HL*uL*n0-SL*HR*uR*n0 + SL*SR*(HR-HL))/(SR-SL);
-// 	F2 = (SR*(.5*uL*uL + pL/RHO )*n0-SL*(.5*uR*uR + pR/RHO )*n0  + SL*SR*(uR-uL))/(SR-SL);
+//      F1 = (SR*HL*uL*n0-SL*HR*uR*n0 + SL*SR*(HR-HL))/(SR-SL);
+//      F2 = (SR*(.5*uL*uL + pL/RHO )*n0-SL*(.5*uR*uR + pR/RHO )*n0  + SL*SR*(uR-uL))/(SR-SL);
 //       }
       
     //-------------

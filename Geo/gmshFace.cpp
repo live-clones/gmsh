@@ -358,10 +358,10 @@ bool gmshFace::buildSTLTriangulation(bool force){
     int C[3];
     for (int i=0;i<3;i++){
       std::map<MVertex*,int>::iterator it = 
-	_v.find(triangles_stl[j]->getVertex(j));
+        _v.find(triangles_stl[j]->getVertex(j));
       if (it != _v.end()){
-	stl_triangles.push_back(COUNT);
-	_v[triangles_stl[j]->getVertex(j)] = COUNT++;
+        stl_triangles.push_back(COUNT);
+        _v[triangles_stl[j]->getVertex(j)] = COUNT++;
       }
       else stl_triangles.push_back(it->second);
     }    

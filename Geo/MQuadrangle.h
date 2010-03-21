@@ -74,10 +74,10 @@ class MQuadrangle : public MElement {
       const MVertex *v0 = _v[edges_quad(ithEdge, 0)];
       const MVertex *v1 = _v[edges_quad(ithEdge, 1)];
       if (v0 == edge.getVertex(0) && v1 == edge.getVertex(1)){
-	sign = 1; return;
+        sign = 1; return;
       }
       if (v1 == edge.getVertex(0) && v0 == edge.getVertex(1)){
-	sign = -1; return;
+        sign = -1; return;
       }
     }
     Msg::Error("Could not get edge information for quadranglee %d", getNum());
@@ -134,7 +134,7 @@ class MQuadrangle : public MElement {
 // Computes the minimum inradius of the all the circles tangents to 3 of the 4
 // edges of the quad. If the 4 points of the quad are not planar,  we compute 
 // the mean plane due to the least-square criterion.
-  virtual double getInnerRadius();	
+  virtual double getInnerRadius();      
  private:
   int edges_quad(const int edge, const int vert) const
   {

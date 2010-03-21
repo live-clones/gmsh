@@ -45,8 +45,8 @@ class diagBCTerm : public femTerm<double> {
     const int nbNodes = e->getNumVertices();
     for (int j = 0; j < nbNodes; j++){
       for (int k = 0; k < nbNodes; k++) {
-	m(j,k) = 0.0;
-	m(k,j) = 0.0;
+        m(j,k) = 0.0;
+        m(k,j) = 0.0;
       }
       MVertex *v = e->getVertex(j);
       if( v->onWhat()->dim() < 2 ) m(j,j) = 1.0; 

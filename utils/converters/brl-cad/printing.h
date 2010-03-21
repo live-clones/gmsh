@@ -18,23 +18,23 @@ std::ostream &operator <<(std::ostream &o,rt_comb_internal const &c)
 {
     o << "    unsigned long magic       " << c.magic << '\n';
     o << "    union tree * tree         " << c.tree << '\n';
-    o << "    char	 region_flag    " << (int)c.region_flag << '\n';
-    o << "    char	 is_fastgen     " << (int)c.is_fastgen << '\n';
+    o << "    char       region_flag    " << (int)c.region_flag << '\n';
+    o << "    char       is_fastgen     " << (int)c.is_fastgen << '\n';
 
     /* Begin GIFT compatability */
-    o << "    long	 region_id      " << c.region_id << '\n';
-    o << "    long	 aircode        " << c.aircode << '\n';
-    o << "    long	 GIFTmater      " << c.GIFTmater << '\n';
-    o << "    long	 los            " << c.los << '\n';
+    o << "    long       region_id      " << c.region_id << '\n';
+    o << "    long       aircode        " << c.aircode << '\n';
+    o << "    long       GIFTmater      " << c.GIFTmater << '\n';
+    o << "    long       los            " << c.los << '\n';
     /* End GIFT compatability */
 
-    o << "    char	 rgb_valid      " << (int)c.rgb_valid << '\n';
-    o << "    unsigned char	rgb[3]  " << (int)c.rgb[0] << ',' 
-	<< (int)c.rgb[1] << ',' << (int)c.rgb[2] << '\n';
-    o << "    float	 temperature    " << c.temperature << '\n';
+    o << "    char       rgb_valid      " << (int)c.rgb_valid << '\n';
+    o << "    unsigned char     rgb[3]  " << (int)c.rgb[0] << ',' 
+        << (int)c.rgb[1] << ',' << (int)c.rgb[2] << '\n';
+    o << "    float      temperature    " << c.temperature << '\n';
     //cout << "    struct bu_vls shader " << c.shader << '\n';
     //cout << "    struct bu_vls material " << c.material << '\n';
-    o << "    char	 inherit        " << (int)c.inherit << '\n';
+    o << "    char       inherit        " << (int)c.inherit << '\n';
     return o;
 }
 

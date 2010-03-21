@@ -1798,10 +1798,10 @@ int GModel::writeFEA(const std::string &name, int elementTagType,
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
       if(entities[i]->mesh_vertices[j]->getIndex() >= 0)
-	fprintf(fp,"%d %.16g %.16g %.16g\n", entities[i]->mesh_vertices[j]->getIndex(),
-		entities[i]->mesh_vertices[j]->x() * scalingFactor,
-		entities[i]->mesh_vertices[j]->y() * scalingFactor,
-		entities[i]->mesh_vertices[j]->z() * scalingFactor);
+        fprintf(fp,"%d %.16g %.16g %.16g\n", entities[i]->mesh_vertices[j]->getIndex(),
+                entities[i]->mesh_vertices[j]->x() * scalingFactor,
+                entities[i]->mesh_vertices[j]->y() * scalingFactor,
+                entities[i]->mesh_vertices[j]->z() * scalingFactor);
 
   int iElement = 1;
   for(fiter it = firstFace(); it != lastFace(); ++it){

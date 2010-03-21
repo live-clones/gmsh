@@ -73,11 +73,11 @@ void dgAlgorithm::residualForSomeGroups( const dgConservationLaw &claw,
 */
 
 void dgAlgorithm::computeElementaryTimeSteps ( //dofManager &dof, // the DOF manager (maybe useless here)
-					      const dgConservationLaw &claw,   // the conservation law
-					      const dgGroupOfElements & group, 
-					      fullMatrix<double> &solution,
-					      std::vector<double> & DT
-					       )
+                                              const dgConservationLaw &claw,   // the conservation law
+                                              const dgGroupOfElements & group, 
+                                              fullMatrix<double> &solution,
+                                              std::vector<double> & DT
+                                               )
 { 
   const int nbFields = claw.getNbFields();
   dataCacheMap cacheMap;
@@ -89,7 +89,7 @@ void dgAlgorithm::computeElementaryTimeSteps ( //dofManager &dof, // the DOF man
   // provided dataCache
   dataCacheDouble *maxConvectiveSpeed = claw.newMaxConvectiveSpeed(cacheMap);
   dataCacheDouble *maximumDiffusivity = claw.newMaximumDiffusivity(cacheMap);
-	
+        
   /* This is an estimate on how lengths changes with p 
      It is merely the smallest distance between gauss 
      points at order p + 1 */
@@ -120,9 +120,9 @@ void dgAlgorithm::computeElementaryTimeSteps ( //dofManager &dof, // the DOF man
 }
 
 void dgAlgorithm::multAddInverseMassMatrix ( /*dofManager &dof,*/
-					    const dgGroupOfElements & group,
-					    fullMatrix<double> &residu,
-					    fullMatrix<double> &sol)
+                                            const dgGroupOfElements & group,
+                                            fullMatrix<double> &residu,
+                                            fullMatrix<double> &sol)
 {
   fullMatrix<double> residuEl;
   fullMatrix<double> solEl;

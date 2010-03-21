@@ -751,18 +751,18 @@ static void getFaceClosure(int iFace, int iSign, int iRotate, std::vector<int> &
     int face[4][3] = {{-3, -2, -1}, {1, -6, 4}, {-4, 5, 3}, {6, 2, -5}};
     int order1node[4][3] = {{0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {3, 1, 2}};
     for (int i = 0; i < 3; ++i){
-      int k = (3 + (iSign * i) + iRotate) % 3;	//- iSign * iRotate
+      int k = (3 + (iSign * i) + iRotate) % 3;  //- iSign * iRotate
       closure[i] = order1node[iFace][k];
     }
     for (int i = 0;i < 3; ++i){
       int edgenumber = iSign *
-        face[iFace][(6 + i * iSign + (-1 + iSign) / 2 + iRotate) % 3];	//- iSign * iRotate
+        face[iFace][(6 + i * iSign + (-1 + iSign) / 2 + iRotate) % 3];  //- iSign * iRotate
       for (int k = 0; k < (order - 1); k++){
-	if (edgenumber > 0)
-	  closure[3 + i * (order - 1) + k] =
+        if (edgenumber > 0)
+          closure[3 + i * (order - 1) + k] =
             4 + (edgenumber - 1) * (order - 1) + k;
-	else
-	  closure[3 + i * (order - 1) + k] =
+        else
+          closure[3 + i * (order - 1) + k] =
             4 + (-edgenumber) * (order - 1) - 1 - k;
       }
     }
@@ -773,14 +773,14 @@ static void getFaceClosure(int iFace, int iSign, int iRotate, std::vector<int> &
     for (int k = 0; k < order / 3; k++){
       int orderint = order - 3 - k * 3;
       if (orderint > 0){
-	for (int ci = 0; ci < 3 ; ci++){
-	  int  shift = (3 + iSign * ci + iRotate) % 3;	//- iSign * iRotate
-	  closure[fi + ci] = ti + shift;
-	}
-	fi = fi + 3; ti = ti + 3;
-	for (int l = 0; l < orderint - 1; l++){
-	  for (int ei = 0; ei < 3; ei++){
-            int edgenumber = (6 + ei * iSign + (-1 + iSign) / 2 + iRotate) % 3;	//- iSign * iRotate
+        for (int ci = 0; ci < 3 ; ci++){
+          int  shift = (3 + iSign * ci + iRotate) % 3;  //- iSign * iRotate
+          closure[fi + ci] = ti + shift;
+        }
+        fi = fi + 3; ti = ti + 3;
+        for (int l = 0; l < orderint - 1; l++){
+          for (int ei = 0; ei < 3; ei++){
+            int edgenumber = (6 + ei * iSign + (-1 + iSign) / 2 + iRotate) % 3; //- iSign * iRotate
             if (iSign > 0)
               closure[fi + ei * (orderint - 1) + l] =
                 ti + edgenumber * (orderint - 1) + l;
@@ -788,13 +788,13 @@ static void getFaceClosure(int iFace, int iSign, int iRotate, std::vector<int> &
               closure[fi + ei * (orderint - 1) + l] =
                 ti + (1 + edgenumber) * (orderint - 1) - 1 - l;
           }
-	}
-	fi = fi + 3 * (orderint - 1); ti = ti + 3 * (orderint - 1);
+        }
+        fi = fi + 3 * (orderint - 1); ti = ti + 3 * (orderint - 1);
       }
       else {
-	closure[fi] = ti;
-	ti++;
-	fi++;
+        closure[fi] = ti;
+        ti++;
+        fi++;
       }
     }
     break;
@@ -809,9 +809,9 @@ static void generate3dFaceClosure(polynomialBasis::clCont &closure, int order)
   for (int iRotate = 0; iRotate < 3; iRotate++){
     for (int iSign = 1; iSign >= -1; iSign -= 2){
       for (int iFace = 0; iFace < 4; iFace++){
-	std::vector<int> closure_face;
-	getFaceClosure(iFace, iSign, iRotate, closure_face, order);
-	closure.push_back(closure_face);
+        std::vector<int> closure_face;
+        getFaceClosure(iFace, iSign, iRotate, closure_face, order);
+        closure.push_back(closure_face);
       }
     }
   }

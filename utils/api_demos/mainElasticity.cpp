@@ -26,7 +26,7 @@ int main (int argc, char* argv[]){
   PView *pv = mySolver.buildDisplacementView("displacement");
   pv->getData()->writeMSH("disp.msh", false);
   delete pv;
- 	
+        
   // stop gmsh
   GmshFinalize();
   

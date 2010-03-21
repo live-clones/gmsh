@@ -137,7 +137,7 @@ class ChainComplex{
   
   int printMatrix(gmp_matrix* matrix){ 
     printf("%d rows and %d columns\n", 
-	   (int)gmp_matrix_rows(matrix), (int)gmp_matrix_cols(matrix)); 
+           (int)gmp_matrix_rows(matrix), (int)gmp_matrix_cols(matrix)); 
     return gmp_matrix_printf(matrix); } 
   
   // debugging aid

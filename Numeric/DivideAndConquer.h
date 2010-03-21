@@ -101,16 +101,16 @@ class DocRecord{
 };
 
 void centroidOfOrientedBox(std::vector<SPoint2> &pts,
-			   const double &angle,
-			   double &xc, 
-			   double &yc, 
-			   double &inertia);
+                           const double &angle,
+                           double &xc, 
+                           double &yc, 
+                           double &inertia);
 void centroidOfPolygon(SPoint2 &pc,
-		       std::vector<SPoint2> &pts,
-		       double &xc, 
-		       double &yc,
-		       double &inertia,
-		       simpleFunction<double> *bgm = 0);
+                       std::vector<SPoint2> &pts,
+                       double &xc, 
+                       double &yc,
+                       double &inertia,
+                       simpleFunction<double> *bgm = 0);
 
 
 #endif

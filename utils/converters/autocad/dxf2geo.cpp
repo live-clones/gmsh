@@ -53,7 +53,7 @@ class Point
     xx += THETRANSX;
     yy += THETRANSY;
     fprintf(outfile, "Point (%d) = {%g *u, %g *u, %g *u, lc} ;\n",
-	    num, xx, yy, z);
+            num, xx, yy, z);
   }
 };
 
@@ -82,7 +82,7 @@ class Curve
       break;
     case GEOCIRCLE:
       fprintf(outfile, "Circle (%d) = {%d, %d, %d} ;\n",
-	      num, a, b, c);
+              num, a, b, c);
       break;
     }
   }
@@ -585,6 +585,6 @@ stopit:
   printf("bounding box [%g,%g] [%g,%g] [%g,%g]\n",
          min_x, max_x, min_y, max_y, min_z, max_z);
   printf("tolerance %g: %d points / %d curves / %ld degenerate entities removed\n",
-	 THETOL, Point_T.size(), Curve_T.size(), degenerates);
+         THETOL, Point_T.size(), Curve_T.size(), degenerates);
   exit(0);
 }

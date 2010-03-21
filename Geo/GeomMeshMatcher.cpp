@@ -109,13 +109,13 @@ GeomMeshMatcher::matchVertices(GModel* m1, GModel *m2, bool& ok)
 
         // We match the vertices if their coordinates are the same under the
         // specified tolerance.
-				double score = std::max(fabs(v1->x() - v2->x()),
+                                double score = std::max(fabs(v1->x() - v2->x()),
                              std::max(fabs(v1->y() - v2->y()),
                                   fabs(v1->z() - v2->z())));
         if (score < tol && score < best_score) {
-	  best_candidate = v2;
-	  best_candidate_ge = (*entity2);
-	  best_score = score;
+          best_candidate = v2;
+          best_candidate_ge = (*entity2);
+          best_score = score;
         }
       }
       counter2++;
@@ -123,11 +123,11 @@ GeomMeshMatcher::matchVertices(GModel* m1, GModel *m2, bool& ok)
 
     if (best_score != DBL_MAX) {
       Msg::Info("Vertices %i (geom) and %i (mesh) match.",
-		(*entity1)->tag(),
-		best_candidate_ge->tag());
+                (*entity1)->tag(),
+                best_candidate_ge->tag());
 
       coresp_v->push_back(Pair<GVertex*,GVertex*>((GVertex*) *entity1,
-						  (GVertex*) best_candidate_ge));
+                                                  (GVertex*) best_candidate_ge));
       ((GVertex*) best_candidate_ge)->setTag(((GVertex*) *entity1)->tag());
       m2->remove((GVertex*) best_candidate_ge);
       vertices.push_back((GVertex*) best_candidate_ge);
@@ -213,7 +213,7 @@ GeomMeshMatcher::matchEdges(GModel* m1, GModel* m2,
 
     // This reverses the edge if it's not parametrized in the right direction
     if (choice->getBeginVertex() == findMatching<GVertex*>(*coresp_v,v2) &&
-	choice->getEndVertex() == findMatching<GVertex*>(*coresp_v,v1)) {
+        choice->getEndVertex() == findMatching<GVertex*>(*coresp_v,v1)) {
       Msg::Info("Wrong parametrization direction, reversing.");
       choice->reverse();
     }
@@ -415,18 +415,18 @@ int GeomMeshMatcher:: match(GModel *geom, GModel *mesh)
       // This will match SURFACES
       std::vector<Pair<GFace*, GFace*> > *coresp_f = matchFaces(geom, mesh, coresp_e,ok);
       if (ok) {
-	// This will match REGIONS
-	std::vector<Pair<GRegion*, GRegion*> >* coresp_r = matchRegions(geom, mesh, coresp_f,ok);
-	if (ok) {
-	  mesh->writeMSH("out.msh",2.0,false,true);
-	  return 1;
-	} else {
-	  Msg::Error("Could not match every region !");
-	  return 0;
-	}
+        // This will match REGIONS
+        std::vector<Pair<GRegion*, GRegion*> >* coresp_r = matchRegions(geom, mesh, coresp_f,ok);
+        if (ok) {
+          mesh->writeMSH("out.msh",2.0,false,true);
+          return 1;
+        } else {
+          Msg::Error("Could not match every region !");
+          return 0;
+        }
       } else {
-	Msg::Error("Could not match every surface !");
-	return 0;
+        Msg::Error("Could not match every surface !");
+        return 0;
       }
     } else {
       Msg::Error("Could not match every edge !");

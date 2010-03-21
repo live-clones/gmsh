@@ -52,20 +52,20 @@ const double GAMMA = 1.4;
 #define max3(a,b,c) ( max2( a , max2(b,c) ) )
 
 bool riemannExact( double rho1,                /* inputs */
-		   double  u1,
-		   double  v1,
-		   double  w1,
-		   double  p1,
-		   double rho2,
-		   double  u2,
-		   double  v2,
-		   double  w2,
-		   double  p2,
-		   double *rhoav,               /* outputs */
-		   double  *uav,
-		   double  *utav,
-		   double  *uttav,
-		   double  *pav ) 
+                   double  u1,
+                   double  v1,
+                   double  w1,
+                   double  p1,
+                   double rho2,
+                   double  u2,
+                   double  v2,
+                   double  w2,
+                   double  p2,
+                   double *rhoav,               /* outputs */
+                   double  *uav,
+                   double  *utav,
+                   double  *uttav,
+                   double  *pav ) 
 {
   
   /*
@@ -243,11 +243,11 @@ bool riemannExact( double rho1,                /* inputs */
 }
 
 static inline void _ROE2D (const double &_GAMMA,
-			   const double &nx,  
-			   const double &ny,  
-			   const double *solL,
-			   const double *solR,
-			   double *FLUX){
+                           const double &nx,  
+                           const double &ny,  
+                           const double *solL,
+                           const double *solR,
+                           double *FLUX){
 
   //sol cons var: rho, rhou, rhov, rhoE
   //u prim var  : rho, u, v, p
@@ -262,7 +262,7 @@ static inline void _ROE2D (const double &_GAMMA,
   uL[2] = solL[2]*overRhoL;
   uL[3] = GM1*(solL[3] - 0.5* (solL[1]*solL[1]+solL[2]*solL[2])*overRhoL); 
   
-  const double overRhoR = 1./solR[0];	
+  const double overRhoR = 1./solR[0];   
   uR[0] = solR[0];
   uR[1] = solR[1]*overRhoR; 
   uR[2] = solR[2]*overRhoR;
@@ -287,16 +287,16 @@ static inline void _ROE2D (const double &_GAMMA,
   FLUX[2] += halfrhoun*uR[2] + .5*uR[3]*ny;
   FLUX[3] += halfrhoun*HR; 
 
-  /* --- add rhoe dissipation ---*/       	
+  /* --- add rhoe dissipation ---*/             
   
-  double sqr_rhoL = sqrt(uL[0]);					
-  double sqr_rhoR = sqrt(uR[0]);					 
+  double sqr_rhoL = sqrt(uL[0]);                                        
+  double sqr_rhoR = sqrt(uR[0]);                                         
   double invz1  = 1./ (sqr_rhoL + sqr_rhoR);
   
-  //rhoe average state					  
-  double u    = ( sqr_rhoL* uL[1] + sqr_rhoR * uR[1] ) * invz1;	  
-  double v    = ( sqr_rhoL* uL[2] + sqr_rhoR * uR[2] ) * invz1;	  
-  double H    = ( sqr_rhoL* HL    + sqr_rhoR * HR    ) * invz1;	  
+  //rhoe average state                                    
+  double u    = ( sqr_rhoL* uL[1] + sqr_rhoR * uR[1] ) * invz1;   
+  double v    = ( sqr_rhoL* uL[2] + sqr_rhoR * uR[2] ) * invz1;   
+  double H    = ( sqr_rhoL* HL    + sqr_rhoR * HR    ) * invz1;   
   
   double dU[4];
   for (int k=0;k<4;k++) dU[k] = solR[k] - solL[k];
@@ -304,7 +304,7 @@ static inline void _ROE2D (const double &_GAMMA,
   double un   = u*nx + v*ny ; 
   double tet  = ny*u - nx*v;
   
-  double u2 = u*u + v*v;						  
+  double u2 = u*u + v*v;                                                  
   double c2 = GM1 * ( H - 0.5 * u2);
   double c = sqrt(c2);
   
@@ -345,9 +345,9 @@ static inline void _ROE2D (const double &_GAMMA,
   double eps = 1.e-6;
   double absUn = (fabs(un) + eps*c)*A;
   double lA[4] = {absUn,
-		  absUn,
-		  fabs(un + c)*A,
-		  (fabs(un - c)+eps*c)*A};
+                  absUn,
+                  fabs(un + c)*A,
+                  (fabs(un - c)+eps*c)*A};
   
   // add wave contributions to flux
   int index = 0;
@@ -398,8 +398,8 @@ class dgPerfectGasLaw2d::diffusion : public dataCacheDouble {
   dataCacheDouble &sol,&grad,&mu,&kappa;
   public:
   diffusion(dataCacheMap &cacheMap, 
-	    const function * muFunction,
-	    const function * kappaFunction ):
+            const function * muFunction,
+            const function * kappaFunction ):
     dataCacheDouble(cacheMap,1,12),
     sol(cacheMap.getSolution(this)),
     grad(cacheMap.getSolutionGradient(this)),
@@ -492,15 +492,15 @@ public:
       _value(k,2) = sol(k,2);
       _value(k,3) = sol(k,3);
       if (sol(k,0) < _rhoMin){
-	//printf("CL: clip rho min =%g \n", _rhoMin);
-	_value(k,0) = _rhoMin;
+        //printf("CL: clip rho min =%g \n", _rhoMin);
+        _value(k,0) = _rhoMin;
       }
       double rhoV2 = sol(k,1)*sol(k,1)+sol(k,2)*sol(k,2);
       rhoV2 /= sol(k,0);
       const double p = (GAMMA-1)*(sol(k,3) - 0.5*rhoV2);
       if (p < _presMin) {
-	_value(k,3) = _presMin / (GAMMA-1) +  0.5 *rhoV2 ; 
-	//printf("CL: clip pres min =%g \n ", _value(k,3));
+        _value(k,3) = _presMin / (GAMMA-1) +  0.5 *rhoV2 ; 
+        //printf("CL: clip pres min =%g \n ", _value(k,3));
       }
     }
   }
@@ -565,20 +565,20 @@ class dgPerfectGasLaw2d::riemannGodunov : public dataCacheDouble {
 
       double rhoAv,unAv,utAv,usAv,pAv;
       riemannExact(solL(i,0), unL,utL,0.0,pL,
-		   solR(i,0), unR,utR,0.0,pR,
-		   &rhoAv,&unAv,&utAv,&usAv,&pAv);
+                   solR(i,0), unR,utR,0.0,pR,
+                   &rhoAv,&unAv,&utAv,&usAv,&pAv);
 
-		   
+                   
       const double vxAv = unAv * nx + utAv *ny;
       const double vyAv = unAv * ny - utAv *nx;
       // p = rho E (G-1) - 0.5 (G-1) * rho V^2
       // rho E = p / (G-1) + 0.5 * rho V^2
       const double rhoE = 
-	(1./(GAMMA-1.)) * pAv + 0.5 * rhoAv * (vxAv*vxAv + vyAv*vyAv);
+        (1./(GAMMA-1.)) * pAv + 0.5 * rhoAv * (vxAv*vxAv + vyAv*vyAv);
       
       /*      printf("%g %g %g %g, (%g %g) %g %g %g %g\n",
-	     solL(i,0), solL(i,1), solL(i,2), solL(i,3),pL,pAv, 
-	     rhoAv, rhoAv*vxAv,rhoAv*vyAv,rhoE);
+             solL(i,0), solL(i,1), solL(i,2), solL(i,3),pL,pAv, 
+             rhoAv, rhoAv*vxAv,rhoAv*vyAv,rhoE);
       */
       const double F0 = rhoAv * unAv;
       /*
@@ -691,31 +691,31 @@ class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
     void _eval () { 
       int nQP = sol().size1();
       for(int i=0; i< nQP; i++) {
-	const double nx = normals(0,i);
-	const double ny = normals(1,i);
-	
-	const double solLeft [4] = {sol(i,0),sol(i,1),sol(i,2),sol(i,3)};
-	const double vn = (solLeft [1] * nx +  solLeft [2] * ny);
-	const double solRight[4] = {sol(i,0),
-				    sol(i,1) - 2 * vn  * nx,
-				    sol(i,2) - 2 * vn  * ny,
-				    sol(i,3)};
-	double FLUX[4] ;
-	_ROE2D (GAMMA,nx,ny,solLeft,solRight,FLUX);
-	_value(i,0) = FLUX[0];
-	_value(i,1) = FLUX[1];
-	_value(i,2) = FLUX[2];
-	_value(i,3) = FLUX[3];
-	/*
-	const double q11 = sol(i,1)*sol(i,1)/sol(i,0);
-	const double q22 = sol(i,2)*sol(i,2)/sol(i,0);
-	const double p = (GAMMA-1.)*sol(i,3) - 0.5*(GAMMA-1.)*(q11+q22);
-	_value(i,0) = 0;//FLUX[0];
-	_value(i,1) = -p*nx;//FLUX[1];
-	_value(i,2) = -p*ny;//FLUX[2];
-	_value(i,3) = 0.0;//FLUX[3];
-	*/
-	
+        const double nx = normals(0,i);
+        const double ny = normals(1,i);
+        
+        const double solLeft [4] = {sol(i,0),sol(i,1),sol(i,2),sol(i,3)};
+        const double vn = (solLeft [1] * nx +  solLeft [2] * ny);
+        const double solRight[4] = {sol(i,0),
+                                    sol(i,1) - 2 * vn  * nx,
+                                    sol(i,2) - 2 * vn  * ny,
+                                    sol(i,3)};
+        double FLUX[4] ;
+        _ROE2D (GAMMA,nx,ny,solLeft,solRight,FLUX);
+        _value(i,0) = FLUX[0];
+        _value(i,1) = FLUX[1];
+        _value(i,2) = FLUX[2];
+        _value(i,3) = FLUX[3];
+        /*
+        const double q11 = sol(i,1)*sol(i,1)/sol(i,0);
+        const double q22 = sol(i,2)*sol(i,2)/sol(i,0);
+        const double p = (GAMMA-1.)*sol(i,3) - 0.5*(GAMMA-1.)*(q11+q22);
+        _value(i,0) = 0;//FLUX[0];
+        _value(i,1) = -p*nx;//FLUX[1];
+        _value(i,2) = -p*ny;//FLUX[2];
+        _value(i,3) = 0.0;//FLUX[3];
+        */
+        
       }
     }
   };
@@ -735,10 +735,10 @@ class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
     void _eval () { 
       int nQP = sol().size1();
       for(int i=0; i< nQP; i++) {
-	_value(i,0) = sol(i,0);
-	_value(i,1) = 0.0;
-	_value(i,2) = 0.0;
-	_value(i,3) = sol(i,3) - 0.5 * (sol(i,1) * sol(i,1) + sol(i,2) * sol(i,2))/sol(i,0);
+        _value(i,0) = sol(i,0);
+        _value(i,1) = 0.0;
+        _value(i,2) = 0.0;
+        _value(i,3) = sol(i,3) - 0.5 * (sol(i,1) * sol(i,1) + sol(i,2) * sol(i,2))/sol(i,0);
       }
     }
   };
@@ -767,13 +767,13 @@ class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
       const fullMatrix<double> &dfl = (*diffusiveFlux)();
 
       for(int i=0; i< nQP; i++) {
-	for (int k=0;k<3;k++) { 
+        for (int k=0;k<3;k++) { 
           _value(i,k) = 
-	    dfl(i,k+4*0) *normals(0,i) +
-	    dfl(i,k+4*1) *normals(1,i) +
-	    dfl(i,k+4*2) *normals(2,i);
-	}
-	_value(i,3) = 0.0; 
+            dfl(i,k+4*0) *normals(0,i) +
+            dfl(i,k+4*1) *normals(1,i) +
+            dfl(i,k+4*2) *normals(2,i);
+        }
+        _value(i,3) = 0.0; 
       }
     }
     ~neumannNonSlip (){}; 
@@ -793,9 +793,9 @@ class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
     void _eval () { 
       int nQP = sol().size1();
       for(int i=0; i< nQP; i++) {
-	for(int k=0; k< sol().size2(); k++) {
-	  _value(i,k) = sol(i,k);
-	}
+        for(int k=0; k< sol().size2(); k++) {
+          _value(i,k) = sol(i,k);
+        }
       }
     }
   };

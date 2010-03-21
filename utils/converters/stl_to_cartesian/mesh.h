@@ -21,9 +21,9 @@ typedef struct
 
 typedef struct
 {
-    FILE			*fp;
-    msh_node		*node_start;
-    msh_element		*element_start;	
-    msh_stats		stats;
+    FILE                        *fp;
+    msh_node            *node_start;
+    msh_element         *element_start; 
+    msh_stats           stats;
 }msh_data;
 

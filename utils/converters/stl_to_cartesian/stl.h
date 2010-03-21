@@ -1,10 +1,10 @@
 
-#define LABEL_SIZE                  	80
-#define NUM_FACET_SIZE         	4
-#define HEADER_SIZE               	84
-#define STL_MIN_FILE_SIZE      	134
-#define ASCII_LINES_PER_FACET 	7
-#define SIZEOF_EDGE_SORT       	24
+#define LABEL_SIZE                      80
+#define NUM_FACET_SIZE          4
+#define HEADER_SIZE                     84
+#define STL_MIN_FILE_SIZE       134
+#define ASCII_LINES_PER_FACET   7
+#define SIZEOF_EDGE_SORT        24
 
 typedef struct 
 {
@@ -26,7 +26,7 @@ typedef enum {BINARY, ASCII} stl_type;
 
 typedef struct
 {
-    long	      file_size;
+    long              file_size;
     char          header[81];
     stl_type      type;
     int           number_of_facets;
@@ -46,9 +46,9 @@ typedef struct
 
 typedef struct
 {
-    FILE			*fp;
-    stl_facet		*facet_start;
-    stl_stats		stats;
+    FILE                        *fp;
+    stl_facet           *facet_start;
+    stl_stats           stats;
 }stl_data;
 
 typedef struct

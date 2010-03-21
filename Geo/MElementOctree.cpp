@@ -47,11 +47,11 @@ Octree *buildMElementOctree (GModel *m)
   SBoundingBox3d bb = m->bounds();
   double min[3] = {bb.min().x(), bb.min().y(), bb.min().z()};
   double size[3] = {bb.max().x() - bb.min().x(),
-		    bb.max().y() - bb.min().y(),
-		    bb.max().z() - bb.min().z()};
+                    bb.max().y() - bb.min().y(),
+                    bb.max().z() - bb.min().z()};
   const int maxElePerBucket = 100; // memory vs. speed trade-off
   Octree *_octree = Octree_Create(maxElePerBucket, min, size,
-				  MElementBB, MElementCentroid, MElementInEle);
+                                  MElementBB, MElementCentroid, MElementInEle);
   std::vector<GEntity*> entities;
   m->getEntities(entities);
   for(unsigned int i = 0; i < entities.size(); i++)
@@ -67,17 +67,17 @@ Octree *buildMElementOctree(std::vector<MElement*> &v)
   for (unsigned int i=0;i<v.size();i++){
     for(unsigned int j=0;j<v[i]->getNumVertices();j++){
       bb += SPoint3(v[i]->getVertex(j)->x(),
-		    v[i]->getVertex(j)->y(),
-		    v[i]->getVertex(j)->z());
+                    v[i]->getVertex(j)->y(),
+                    v[i]->getVertex(j)->z());
     }
   }
   double min[3] = {bb.min().x(), bb.min().y(), bb.min().z()};
   double size[3] = {bb.max().x() - bb.min().x(),
-		    bb.max().y() - bb.min().y(),
-		    bb.max().z() - bb.min().z()};
+                    bb.max().y() - bb.min().y(),
+                    bb.max().z() - bb.min().z()};
   const int maxElePerBucket = 100; // memory vs. speed trade-off
   Octree *_octree = Octree_Create(maxElePerBucket, min, size,
-				  MElementBB, MElementCentroid, MElementInEle);
+                                  MElementBB, MElementCentroid, MElementInEle);
   for (unsigned int i = 0; i < v.size(); i++)
     Octree_Insert(v[i], _octree);
   Octree_Arrange(_octree);

@@ -78,25 +78,25 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     if(entities[i]->dim() == (maxDim - 1)) {
       GEntity* g2 = entities[i];
       for(unsigned int k = 0; k < g2->getNumMeshElements(); k++){ 
-	std::vector<double> iDistances;
-	std::vector<SPoint3> iClosePts;
-	MElement *e = g2->getMeshElement(k);
-	MVertex *v1 = e->getVertex(0);
-	MVertex *v2 = e->getVertex(1);
-	SPoint3 p1(v1->x(), v1->y(), v1->z());
-	SPoint3 p2(v2->x(), v2->y(), v2->z());
-	if(e->getNumVertices() == 2){
-	  signedDistancesPointsLine(iDistances, iClosePts, pts, p1,p2);
-	}
-	else if(e->getNumVertices() == 3){
-	  MVertex *v3 = e->getVertex(2);
-	  SPoint3 p3 (v3->x(),v3->y(),v3->z());
-	  signedDistancesPointsTriangle(iDistances, iClosePts, pts, p1, p2, p3);
-	}
-	for (unsigned int kk = 0; kk< pts.size(); kk++) {
-	  if (std::abs(iDistances[kk]) < distances[kk])
-	    distances[kk] = std::abs(iDistances[kk]);
-	}
+        std::vector<double> iDistances;
+        std::vector<SPoint3> iClosePts;
+        MElement *e = g2->getMeshElement(k);
+        MVertex *v1 = e->getVertex(0);
+        MVertex *v2 = e->getVertex(1);
+        SPoint3 p1(v1->x(), v1->y(), v1->z());
+        SPoint3 p2(v2->x(), v2->y(), v2->z());
+        if(e->getNumVertices() == 2){
+          signedDistancesPointsLine(iDistances, iClosePts, pts, p1,p2);
+        }
+        else if(e->getNumVertices() == 3){
+          MVertex *v3 = e->getVertex(2);
+          SPoint3 p3 (v3->x(),v3->y(),v3->z());
+          signedDistancesPointsTriangle(iDistances, iClosePts, pts, p1, p2, p3);
+        }
+        for (unsigned int kk = 0; kk< pts.size(); kk++) {
+          if (std::abs(iDistances[kk]) < distances[kk])
+            distances[kk] = std::abs(iDistances[kk]);
+        }
       }
     }
   }
@@ -118,8 +118,8 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 //       SPoint3 p2 (v2->x(),v2->y(),v2->z());
 //       signedDistancesPointsLine(iDistances, iClosePts, pts, p1,p2);     
 //       for (int k = 0; k< pts.size(); k++) {
-// 	if (std::abs(iDistances[k]) < distances[k] ) 
-// 	  distances[k] = std::abs(iDistances[k]);
+//      if (std::abs(iDistances[k]) < distances[k] ) 
+//        distances[k] = std::abs(iDistances[k]);
 //       }
 //     }
 //   }
@@ -143,9 +143,9 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     if(entities[i]->dim() < maxDim) {
       GEntity *ge = entities[i];
       for(unsigned int j = 0; j < ge->mesh_vertices.size(); j++){
-	MVertex *v = ge->mesh_vertices[j];
-	myAssembler.fixVertex(v, 0, 1, 0.0);
-	bbox += SPoint3(v->x(),v->y(),v->z());
+        MVertex *v = ge->mesh_vertices[j];
+        myAssembler.fixVertex(v, 0, 1, 0.0);
+        bbox += SPoint3(v->x(),v->y(),v->z());
       }
     }
   }
@@ -154,10 +154,10 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     if(entities[ii]->dim() == maxDim) {
       GEntity *ge = entities[ii];
       for(unsigned int i = 0; i < ge->getNumMeshElements(); ++i){
-	MElement *t = ge->getMeshElement(i);
-	for(int k = 0; k < t->getNumVertices(); k++){
+        MElement *t = ge->getMeshElement(i);
+        for(int k = 0; k < t->getNumVertices(); k++){
           myAssembler.numberVertex(t->getVertex(k), 0, 1);
-	}
+        }
       }    
     }  
   }
@@ -173,8 +173,8 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     if(entities[ii]->dim() == maxDim) {
       GEntity *ge = entities[ii];
       for(unsigned int i = 0; i < ge->getNumMeshElements(); ++i){
-	SElement se(ge->getMeshElement(i));
-	distance.addToMatrix(myAssembler, &se);
+        SElement se(ge->getMeshElement(i));
+        distance.addToMatrix(myAssembler, &se);
       }
       groupOfElements g((GFace*)ge);
       distance.addToRightHandSide(myAssembler, g);
@@ -214,23 +214,23 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   for(unsigned int ii = 0; ii < entities.size(); ii++){
     if(entities[ii]->dim() == maxDim) {
       for(unsigned int i = 0; i < entities[ii]->getNumMeshElements(); i++){ 
-	MElement *e = entities[ii]->getMeshElement(i);
-	if (maxDim == 3) fprintf(f3,"SS(");
-	else if (maxDim == 2) fprintf(f3,"ST(");
-	std::vector<double> dist;
-	for(int j = 0; j < e->getNumVertices(); j++) {
-	  MVertex *v =  e->getVertex(j);
-	  if(j) fprintf(f3,",%g,%g,%g",v->x(),v->y(), v->z());
-	  else fprintf(f3,"%g,%g,%g", v->x(),v->y(), v->z());
-	  std::map<MVertex*, double*>::iterator it = distance_map.find(v);
-	  dist.push_back(*(it->second));
-	}
-	fprintf(f3,"){");
-	for (unsigned int i = 0; i < dist.size(); i++){
-	  if (i) fprintf(f3,",%g", dist[i]);
-	  else fprintf(f3,"%g", dist[i]);
-	}   
-	fprintf(f3,"};\n");
+        MElement *e = entities[ii]->getMeshElement(i);
+        if (maxDim == 3) fprintf(f3,"SS(");
+        else if (maxDim == 2) fprintf(f3,"ST(");
+        std::vector<double> dist;
+        for(int j = 0; j < e->getNumVertices(); j++) {
+          MVertex *v =  e->getVertex(j);
+          if(j) fprintf(f3,",%g,%g,%g",v->x(),v->y(), v->z());
+          else fprintf(f3,"%g,%g,%g", v->x(),v->y(), v->z());
+          std::map<MVertex*, double*>::iterator it = distance_map.find(v);
+          dist.push_back(*(it->second));
+        }
+        fprintf(f3,"){");
+        for (unsigned int i = 0; i < dist.size(); i++){
+          if (i) fprintf(f3,",%g", dist[i]);
+          else fprintf(f3,"%g", dist[i]);
+        }   
+        fprintf(f3,"};\n");
       }
     }
   }
@@ -243,23 +243,23 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   for(unsigned int ii = 0; ii < entities.size(); ii++){
     if(entities[ii]->dim() == maxDim) {
       for(unsigned int i = 0; i < entities[ii]->getNumMeshElements(); i++){ 
-	MElement *e = entities[ii]->getMeshElement(i);
-	if (maxDim == 3) fprintf(f4,"SS(");
-	else if (maxDim == 2) fprintf(f4,"ST(");
-	std::vector<double> dist;
-	for(int j = 0; j < e->getNumVertices(); j++) {
-	  MVertex *v =  e->getVertex(j);
-	  if(j) fprintf(f4,",%g,%g,%g",v->x(),v->y(), v->z());
-	  else fprintf(f4,"%g,%g,%g", v->x(),v->y(), v->z());
-	  std::map<MVertex*, double>::iterator it = distance_map2.find(v);
-	  dist.push_back(it->second);
-	}
-	fprintf(f4,"){");
-	for (unsigned int i = 0; i < dist.size(); i++){
-	  if (i) fprintf(f4,",%g", dist[i]);
-	  else fprintf(f4,"%g", dist[i]);
-	}   
-	fprintf(f4,"};\n");
+        MElement *e = entities[ii]->getMeshElement(i);
+        if (maxDim == 3) fprintf(f4,"SS(");
+        else if (maxDim == 2) fprintf(f4,"ST(");
+        std::vector<double> dist;
+        for(int j = 0; j < e->getNumVertices(); j++) {
+          MVertex *v =  e->getVertex(j);
+          if(j) fprintf(f4,",%g,%g,%g",v->x(),v->y(), v->z());
+          else fprintf(f4,"%g,%g,%g", v->x(),v->y(), v->z());
+          std::map<MVertex*, double>::iterator it = distance_map2.find(v);
+          dist.push_back(it->second);
+        }
+        fprintf(f4,"){");
+        for (unsigned int i = 0; i < dist.size(); i++){
+          if (i) fprintf(f4,",%g", dist[i]);
+          else fprintf(f4,"%g", dist[i]);
+        }   
+        fprintf(f4,"};\n");
       }
     }
   }
@@ -306,8 +306,8 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 //   fprintf(f,"View \"distance ANN\"{\n");
 //   for(std::map<MVertex*, double>::iterator it = distance.begin(); it != distance.end(); it++) {
 //     fprintf(f,"SP(%g,%g,%g){%g};\n",
-// 	    it->first->x(), it->first->y(), it->first->z(),
-// 	    it->second);     
+//          it->first->x(), it->first->y(), it->first->z(),
+//          it->second);     
 //   }
 //   fprintf(f,"};\n");
 //   fclose(f);

@@ -59,8 +59,8 @@ bool Cell::findBoundaryCells(std::vector<Cell*>& bdCells)
       if(type == TYPE_TET) newtype = MSH_TRI_3;
       else if(type == TYPE_HEX) newtype = MSH_QUA_4;
       else if(type == TYPE_PRI) {
-	if(vertices.size() == 3) newtype = MSH_TRI_3;
-	else if(vertices.size() == 4) newtype = MSH_QUA_4;
+        if(vertices.size() == 3) newtype = MSH_TRI_3;
+        else if(vertices.size() == 4) newtype = MSH_QUA_4;
       }
     }
     else if(_dim == 2) newtype = MSH_LIN_2;
@@ -70,7 +70,7 @@ bool Cell::findBoundaryCells(std::vector<Cell*>& bdCells)
       return false;
     }
     MElement* element = factory.create(newtype, vertices, 0, 
-				       _image->getPartition());
+                                       _image->getPartition());
     Cell* cell = new Cell(element);
     bdCells.push_back(cell);
   }
@@ -143,7 +143,7 @@ int Cell::getFacetOri(Cell* cell)
 bool Cell::hasVertex(int vertex) const 
 {
   std::vector<int>::const_iterator it = std::find(_vs.begin(), _vs.end(), 
-						  vertex);
+                                                  vertex);
   if (it != _vs.end()) return true;
   else return false;
 }
@@ -168,7 +168,7 @@ void Cell::restoreCell(){
 }
 
 void Cell::addBoundaryCell(int orientation, Cell* cell, 
-			   bool orig, bool other) 
+                           bool orig, bool other) 
 {
   if(orig) _obd.insert( std::make_pair(cell, orientation ) );
   biter it = _bd.find(cell);
@@ -186,7 +186,7 @@ void Cell::addBoundaryCell(int orientation, Cell* cell,
 }
 
 void Cell::addCoboundaryCell(int orientation, Cell* cell, 
-			     bool orig, bool other) 
+                             bool orig, bool other) 
 {
   if(orig) _ocbd.insert( std::make_pair(cell, orientation ) );
   biter it = _cbd.find(cell);
@@ -332,7 +332,7 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell()
     if(co){
       biter it2 = c1Boundary.find(cell);
       if(it2 == c1Boundary.end()){
-	this->addBoundaryCell(ori, cell, false, true);
+        this->addBoundaryCell(ori, cell, false, true);
       }
     }
     else this->addBoundaryCell(ori, cell, false, true);
@@ -358,7 +358,7 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell()
     if(!co){
       biter it2 = c1Coboundary.find(cell);
       if(it2 == c1Coboundary.end()){
-	this->addCoboundaryCell(ori, cell, false, true);
+        this->addCoboundaryCell(ori, cell, false, true);
       }
     }
     else this->addCoboundaryCell(ori, cell, false, true);

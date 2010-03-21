@@ -510,7 +510,7 @@ void DocRecord::ConvertDListToVoronoiData()
   if (_adjacencies){
     for(int i = 0; i < numPoints; i++)
       if (_adjacencies[i].t) 
-	delete [] _adjacencies[i].t;
+        delete [] _adjacencies[i].t;
     delete [] _adjacencies;
   }  
   if (_hull)delete [] _hull;
@@ -522,7 +522,7 @@ void DocRecord::ConvertDListToVoronoiData()
   
   for(PointNumero i = 0; i < numPoints; i++) 
     _adjacencies[i].t = ConvertDlistToArray(&points[i].adjacent,
-					    &_adjacencies[i].t_length);    
+                                            &_adjacencies[i].t_length);    
 }
 
 void DocRecord::voronoiCell(PointNumero pt, std::vector<SPoint2> &pts) const
@@ -573,17 +573,17 @@ void DocRecord::makePosView(std::string fileName)
       std::vector<SPoint2> pts;
       double pc[2] = {(double)points[i].where.h, (double)points[i].where.v};
       if (!onHull(i)){
-	fprintf(f,"SP(%g,%g,%g)  {%g};\n",pc[0],pc[1],0.0,(double)i);
-	voronoiCell (i,pts);
-	for (unsigned int j = 0; j < pts.size(); j++){
-	  fprintf(f,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
-		  pts[j].x(),pts[j].y(),0.0,
-		  pts[(j+1)%pts.size()].x(),pts[(j+1)%pts.size()].y(),0.0,
-		  (double)i,(double)i);
-	}
+        fprintf(f,"SP(%g,%g,%g)  {%g};\n",pc[0],pc[1],0.0,(double)i);
+        voronoiCell (i,pts);
+        for (unsigned int j = 0; j < pts.size(); j++){
+          fprintf(f,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
+                  pts[j].x(),pts[j].y(),0.0,
+                  pts[(j+1)%pts.size()].x(),pts[(j+1)%pts.size()].y(),0.0,
+                  (double)i,(double)i);
+        }
       }
       else {
-	fprintf(f,"SP(%g,%g,%g)  {%g};\n",pc[0],pc[1],0.0,-(double)i);
+        fprintf(f,"SP(%g,%g,%g)  {%g};\n",pc[0],pc[1],0.0,-(double)i);
       }
     }
     fprintf(f,"};\n");    
@@ -592,7 +592,7 @@ void DocRecord::makePosView(std::string fileName)
 }
 
 void centroidOfOrientedBox(std::vector<SPoint2> &pts, const double &angle,
-			   double &xc, double &yc, double &inertia)
+                           double &xc, double &yc, double &inertia)
 {
   const int N = pts.size();
   
@@ -617,8 +617,8 @@ void centroidOfOrientedBox(std::vector<SPoint2> &pts, const double &angle,
 }
 
 void centroidOfPolygon(SPoint2 &pc, std::vector<SPoint2> &pts,
-		       double &xc, double &yc, double &inertia,
-		       simpleFunction<double> *bgm)
+                       double &xc, double &yc, double &inertia,
+                       simpleFunction<double> *bgm)
 {
   double area_tot = 0;
   SPoint2 center(0,0);
@@ -627,8 +627,8 @@ void centroidOfPolygon(SPoint2 &pc, std::vector<SPoint2> &pts,
     SPoint2 &pb = pts[(j+1)%pts.size()];
     const double area  = triangle_area2d(pa,pb,pc);         
     const double lc = bgm ? (*bgm)((pa.x()+pb.x()+pc.x())/3.0,
-				   (pa.y()+pb.y()+pc.y())/3.0,
-				   0.0) : 1.0;
+                                   (pa.y()+pb.y()+pc.y())/3.0,
+                                   0.0) : 1.0;
     const double fact = 1./(lc*lc);
     area_tot += area*fact;
     center += ((pa+pb+pc) * (area*fact/3.0));
@@ -641,10 +641,10 @@ void centroidOfPolygon(SPoint2 &pc, std::vector<SPoint2> &pts,
     const double area  = triangle_area2d(pa,pb,pc);     
     
     const double b = sqrt (  (pa.x()-pb.x())*(pa.x()-pb.x()) + 
-			     (pa.y()-pb.y())*(pa.y()-pb.y()) );
+                             (pa.y()-pb.y())*(pa.y()-pb.y()) );
     const double h = 2.0 * area / b;
     const double a = fabs((pb.x()-pa.x())*(pc.x()-pa.x())*
-			  (pb.y()-pa.y())*(pc.y()-pa.y()))/b;
+                          (pb.y()-pa.y())*(pc.y()-pa.y()))/b;
     
     const double j2 = (h*b*b*b + h*a*b*b + h*a*a*b + b*h*h*h) / 12.0;
     
@@ -668,10 +668,10 @@ double DocRecord::Lloyd(int type)
     
     if (!points[i].data){
       SPoint2 p (pt.where.h,pt.where.v);
-      if (type == 0)	
-	centroidOfPolygon (p,pts, cgs(i,0), cgs(i,1),E);	      
+      if (type == 0)    
+        centroidOfPolygon (p,pts, cgs(i,0), cgs(i,1),E);              
       else 
-	centroidOfOrientedBox (pts, 0.0, cgs(i,0),cgs(i,1),E);	  
+        centroidOfOrientedBox (pts, 0.0, cgs(i,0),cgs(i,1),E);    
     }
     inertia_tot += E;
   } 

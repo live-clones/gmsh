@@ -30,7 +30,7 @@ void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge> &map_e
     for (int iEdge = 0; iEdge < e->getNumEdges(); iEdge++) {
       MEdge tmp_edge =  e->getEdge(iEdge);
       std::set<MEdge, Less_Edge >::iterator itset = bound_edges.find(tmp_edge);
-      if (itset == bound_edges.end()) 	bound_edges.insert(tmp_edge);
+      if (itset == bound_edges.end())   bound_edges.insert(tmp_edge);
       else bound_edges.erase(itset);
     }
   }

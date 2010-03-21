@@ -38,10 +38,10 @@ public:
     if(level == "Fatal" || level == "Error"){
       GEntity *e = _model->getCurrentMeshEntity();
       if(e){
-	printf("error occurred while meshing entity:\n");
-	printf("  tag=%d\n", e->tag());
-	printf("  dimension=%d\n", e->dim());
-	printf("  native pointer=%p\n", e->getNativePtr());
+        printf("error occurred while meshing entity:\n");
+        printf("  tag=%d\n", e->tag());
+        printf("  dimension=%d\n", e->dim());
+        printf("  native pointer=%p\n", e->getNativePtr());
       }
     }
     if(level == "Fatal") throw "Fatal error in Gmsh";
@@ -80,8 +80,8 @@ int main(int argc, char **argv)
       MElement *e = f->getMeshElement(i);
       printf("  element %d:", e->getNum());
       for(unsigned int j = 0; j < e->getNumVertices(); j++){
-	MVertex *v = e->getVertex(j);
-	printf(" %d (%g,%g,%g)", v->getNum(), v->x(), v->y(), v->z());
+        MVertex *v = e->getVertex(j);
+        printf(" %d (%g,%g,%g)", v->getNum(), v->x(), v->y(), v->z());
       }
       printf("\n");
     }

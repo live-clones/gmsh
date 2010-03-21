@@ -1,14 +1,11 @@
 #!/bin/sh
 
-if [ $# -lt 1 ] ; then
-  echo "Usage: untabify files" 1>&2
-  exit 1
-else 
-  for file in $@; do
-    echo Modifying $file
-    mv $file $file~
-    expand $file~ > $file
-  done
-fi
+files=`find ../.. \( -name "*.cpp" -or -name "*.h" \) -and -not -path "*contrib*"`
 
+echo $files
 
+for file in $files; do
+  echo Untabifying $file
+  expand $file > $file~
+  mv -f $file~ $file
+done

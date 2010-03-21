@@ -8,8 +8,8 @@
 
 /* BRL-CAD ************************************************************/
 #include "common.h"
-#include "vmath.h"		/* vector math macros */
-#include "raytrace.h"		/* librt interface definitions */
+#include "vmath.h"              /* vector math macros */
+#include "raytrace.h"           /* librt interface definitions */
 #include "rtgeom.h"
 #include "wdb.h"
 

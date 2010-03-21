@@ -99,8 +99,8 @@ class GFaceCompound : public GFace {
   GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
                 std::list<GEdge*> &U0, std::list<GEdge*> &U1,
                 std::list<GEdge*> &V0, std::list<GEdge*> &V1,
-		linearSystem<double>* lsys =0,
-		typeOfMapping typ = HARMONIC, int allowPartition=1);
+                linearSystem<double>* lsys =0,
+                typeOfMapping typ = HARMONIC, int allowPartition=1);
   virtual ~GFaceCompound();
   Range<double> parBounds(int i) const 
   { return trivial() ? (*(_compound.begin()))->parBounds(i) : Range<double>(-1, 1); }
@@ -136,8 +136,8 @@ class GFaceCompound : public GFace {
   GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
                 std::list<GEdge*> &U0, std::list<GEdge*> &U1,
                 std::list<GEdge*> &V0, std::list<GEdge*> &V1,
-		linearSystem<double>* lsys = 0,
-		typeOfMapping typ = HARMONIC) : GFace(m, tag)
+                linearSystem<double>* lsys = 0,
+                typeOfMapping typ = HARMONIC) : GFace(m, tag)
   {
     Msg::Error("Gmsh has to be compiled with solver support to use GFaceCompounds");
   }

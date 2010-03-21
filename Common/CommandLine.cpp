@@ -174,13 +174,13 @@ void GetOptions(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "renumber")) {
         CTX::instance()->batchAfterMesh = 1;
-	CTX::instance()->partitionOptions.renumber = 1;
+        CTX::instance()->partitionOptions.renumber = 1;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "part")) {
         i++;
         if(argv[i]){
-	  CTX::instance()->batchAfterMesh =1 ;
+          CTX::instance()->batchAfterMesh = 1 ;
           opt_mesh_partition_num(0, GMSH_SET, atoi(argv[i++]));
         }
         else

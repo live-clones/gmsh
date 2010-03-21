@@ -163,7 +163,7 @@ void discreteEdge::setBoundVertices()
       }
       if(!existVertex){
         GVertex *gvB = new discreteVertex(model(), model()->maxVertexNum()+1);      
-	//printf("*** Created discreteVertex %d\n", gvB->tag());
+        //printf("*** Created discreteVertex %d\n", gvB->tag());
         bound_vertices.push_back(gvB);
         vE->setEntity(gvB);
         gvB->mesh_vertices.push_back(vE);
@@ -174,16 +174,16 @@ void discreteEdge::setBoundVertices()
       if (itve != mesh_vertices.end()) mesh_vertices.erase(itve);
 
       for(GModel::eiter edge = model()->firstEdge(); edge != model()->lastEdge(); edge++){
-	std::vector<MVertex*>::iterator itve = std::find((*edge)->mesh_vertices.begin(), (*edge)->mesh_vertices.end(), vE);
-	if (itve != (*edge)->mesh_vertices.end()) (*edge)->mesh_vertices.erase(itve);
+        std::vector<MVertex*>::iterator itve = std::find((*edge)->mesh_vertices.begin(), (*edge)->mesh_vertices.end(), vE);
+        if (itve != (*edge)->mesh_vertices.end()) (*edge)->mesh_vertices.erase(itve);
       }
       for(GModel::fiter face = model()->firstFace(); face != model()->lastFace(); face++){
-	std::vector<MVertex*>::iterator itve = std::find((*face)->mesh_vertices.begin(), (*face)->mesh_vertices.end(), vE);
-	if (itve != (*face)->mesh_vertices.end()) (*face)->mesh_vertices.erase(itve);
+        std::vector<MVertex*>::iterator itve = std::find((*face)->mesh_vertices.begin(), (*face)->mesh_vertices.end(), vE);
+        if (itve != (*face)->mesh_vertices.end()) (*face)->mesh_vertices.erase(itve);
       }
       for(GModel::riter reg = model()->firstRegion(); reg != model()->lastRegion(); reg++){
-	std::vector<MVertex*>::iterator itve = std::find((*reg)->mesh_vertices.begin(), (*reg)->mesh_vertices.end(), vE);
-	if (itve != (*reg)->mesh_vertices.end()) (*reg)->mesh_vertices.erase(itve);
+        std::vector<MVertex*>::iterator itve = std::find((*reg)->mesh_vertices.begin(), (*reg)->mesh_vertices.end(), vE);
+        if (itve != (*reg)->mesh_vertices.end()) (*reg)->mesh_vertices.erase(itve);
       }
 
     }
@@ -200,7 +200,7 @@ void discreteEdge::setBoundVertices()
       if ((*point)->mesh_vertices[0]->getNum() == vE->getNum()){
         bound_vertex = (*point);
         existVertex = true;
-	//printf("vertex exist (%g,%g,%g)\n", vE->x(), vE->y(), vE->z());
+        //printf("vertex exist (%g,%g,%g)\n", vE->x(), vE->y(), vE->z());
         break;
       }
     }
@@ -249,7 +249,7 @@ void discreteEdge::parametrize( std::map<GFace*,  std::map<MVertex*, MVertex*, s
   }
 
   //Replace MVertex by MedgeVertex
-  std::map<MVertex*, MVertex*, std::less<MVertex*> > old2new;	
+  std::map<MVertex*, MVertex*, std::less<MVertex*> > old2new;   
   old2new.clear();
   std::vector<MVertex* > newVertices;
   std::vector<MLine*> newLines;
@@ -290,7 +290,7 @@ void discreteEdge::parametrize( std::map<GFace*,  std::map<MVertex*, MVertex*, s
      else{
        std::map<MVertex*, MVertex*, std::less<MVertex*> > mapVert = itmap->second;
        for (std::map<MVertex*, MVertex*, std::less<MVertex*> >::iterator it = old2new.begin(); it != old2new.end(); it++)
-	 mapVert.insert(*it);
+         mapVert.insert(*it);
        itmap->second = mapVert;
      }
    }
@@ -311,13 +311,13 @@ void discreteEdge::computeNormals () const
       for (int j = 0; j < 3; j++){
         std::map<MVertex*, SVector3, std::less<MVertex*> >::iterator itn = _normals.find(t->getVertex(j));
         if (itn != _normals.end()){
-	  t->getJacobian(0, 0, 0, J);
-	  SVector3 d1(J[0][0], J[0][1], J[0][2]);
-	  SVector3 d2(J[1][0], J[1][1], J[1][2]);
-	  SVector3 n = crossprod(d1, d2);
-	  n.normalize();
-	  _normals[t->getVertex(j)] += n; 
-	}
+          t->getJacobian(0, 0, 0, J);
+          SVector3 d1(J[0][0], J[0][1], J[0][2]);
+          SVector3 d2(J[1][0], J[1][1], J[1][2]);
+          SVector3 n = crossprod(d1, d2);
+          n.normalize();
+          _normals[t->getVertex(j)] += n; 
+        }
       }
     }
   }
