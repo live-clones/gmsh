@@ -643,4 +643,7 @@ void dgDofContainer::registerBindings(binding *b){
   cm = cb->addMethod("Mesh2Mesh_ApplyL2Projection",&dgDofContainer::Mesh2Mesh_ApplyL2Projection);
   cm->setDescription("Apply L2 projection matrix from donor to this dofContainer.");
   cm->setArgNames("projector","donor","transpose","copy",NULL);
+  cm = cb->addMethod("getGroupProxy",&dgDofContainer::getGroupProxyBinding);
+  cm->setDescription("return the proxy to the solution of one group");
+  cm->setArgNames("group",NULL);
 }
