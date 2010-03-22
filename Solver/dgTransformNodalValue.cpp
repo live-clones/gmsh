@@ -13,8 +13,8 @@ int dgSupraTransformNodalValue::apply ( dgDofContainer *solution)
   fullVector<double> sol = (*solution).getVector(); 
   for (int i=0;i< sol.size();i++){
    
-     if ((sol)(i)<0) (sol)(i)=-pow(- (sol)(i), 1/n_supra);
-       else (sol)(i)=pow( (sol)(i), 1/n_supra);
+     if (sol(i)<0) sol(i)=-pow(- sol(i), 1/n_supra);
+       else sol(i)=pow( sol(i), 1/n_supra);
      }
   
   return 1;        
@@ -27,8 +27,8 @@ int dgSupraTransformNodalValue::apply_Inverse ( dgDofContainer *solution)
   fullVector<double> sol = (*solution).getVector(); 
   for (int i=0;i< sol.size();i++){
    
-     if ((sol)(i)<0) (sol)(i)=-pow(- (sol)(i), n_supra);
-       else (sol)(i)=pow( (sol)(i), n_supra);
+     if (sol(i)<0) sol(i)=-pow(- sol(i), n_supra);
+       else sol(i)=pow( sol(i), n_supra);
      }
   
   return 1;
