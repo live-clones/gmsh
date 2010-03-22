@@ -20,7 +20,7 @@ end
      Example of a lua program driving the DG code
 --]]
 
-order = 5
+order = 4
 xyz = functionCoordinates.get()
 FS = functionLua(4, 'free_stream', {xyz})
 
@@ -54,19 +54,20 @@ DG:exportSolution('output/cyl_0')
 
 print'*** solve ***'
 
-CFL = 5.1;
+CFL = 4.2;
 dt = CFL * DG:computeInvSpectralRadius();
 print('DT = ',dt)
 T = 0;
+x = os.clock()
 for i=1,100000 do
     dt = CFL * DG:computeInvSpectralRadius();    
     norm = DG:RK44(dt)
     T = T + dt
     if (i % 10 == 0) then 
-       print('*** ITER ***',i,norm,dt,T)
+       print('*** ITER ***',i,norm,dt,T,os.clock() - x)
     end
     if (i % 100 == 0) then 
-       DG:exportSolution(string.format("output/cyl-%06d", i)) 
+--       DG:exportSolution(string.format("output/cyl-%06d", i)) 
 --       DG:saveSolution(string.format("output/cyl-%06d.bin", i)) 
     end
 end
