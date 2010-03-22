@@ -247,12 +247,14 @@ bool Extend2dMeshIn3dVolumes()
 
 // ---------- backgroundMesh class -----------
 
-void backgroundMesh::set (GFace *gf){
+void backgroundMesh::set(GFace *gf)
+{
   if (_current) delete _current;
   _current = new backgroundMesh(gf);
 }
 
-void backgroundMesh::unset (){
+void backgroundMesh::unset()
+{
   if (_current) delete _current;
   _current = 0;
 }
@@ -395,10 +397,8 @@ void backgroundMesh::updateSizes(GFace *_gf)
     itv->second = std::max(itv->second, CTX::instance()->mesh.lcMin);
     itv->second = std::min(itv->second, CTX::instance()->mesh.lcMax);
   }  
-  //  return;
-  // ---------------------
+  // return;
   // now do some diffusion
-  // ---------------------
 
   std::list<GEdge*> e = _gf->edges();
   std::list<GEdge*>::const_iterator it = e.begin();
