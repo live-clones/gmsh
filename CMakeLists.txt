@@ -61,8 +61,8 @@ set(GMSH_VERSION "${GMSH_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}")
 set(GMSH_SHORT_LICENSE "GNU General Public License")
 
 set(GMSH_API
-  ${CMAKE_BINARY_DIR}/Common/GmshConfig.h 
-  ${CMAKE_BINARY_DIR}/Common/GmshVersion.h
+  ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h 
+  ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h
   Common/Gmsh.h Common/GmshDefines.h Common/GmshMessage.h Common/VertexArray.h
   Numeric/Numeric.h Numeric/Gauss.h Numeric/polynomialBasis.h Numeric/fullMatrix.h
     Numeric/simpleFunction.h Numeric/cartesian.h
@@ -316,6 +316,10 @@ if(ENABLE_FLTK)
       set(HAVE_FL_TREE TRUE)
       list(APPEND CONFIG_OPTIONS "FlTree")
     endif(ENABLE_FL_TREE)
+    if(APPLE AND FLTK_VERSION EQUAL 1.3)
+      # required for system sounds (until cmake updates find_package(FLTK))
+      list(APPEND FLTK_LIBRARIES "-framework AudioToolbox")
+    endif(APPLE AND FLTK_VERSION EQUAL 1.3)
   endif(FLTK_FOUND)
 elseif(ENABLE_QT)
   find_package(Qt4)
@@ -496,7 +500,7 @@ if(ENABLE_NETGEN)
   add_definitions(-DNO_PARALLEL_THREADS)
 endif(ENABLE_NETGEN)
 
-if(ENABLE_TETGEN_NEW AND EXISTS ${CMAKE_SOURCE_DIR}/contrib/TetgenNew/tetgen.h)
+if(ENABLE_TETGEN_NEW AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/TetgenNew/tetgen.h)
   add_subdirectory(contrib/TetgenNew)
   include_directories(contrib/TetgenNew)
   set(HAVE_TETGEN TRUE)
@@ -504,7 +508,7 @@ if(ENABLE_TETGEN_NEW AND EXISTS ${CMAKE_SOURCE_DIR}/contrib/TetgenNew/tetgen.h)
   add_definitions(-DTETLIBRARY)
   message("WARNING: You are including an experimental version of Tetgen "
           "that is KNOWN TO BE BUGGY on 64 bits archs and on WIN32/MSVC.")
-elseif(ENABLE_TETGEN AND EXISTS ${CMAKE_SOURCE_DIR}/contrib/Tetgen/tetgen.h)
+elseif(ENABLE_TETGEN AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/Tetgen/tetgen.h)
   add_subdirectory(contrib/Tetgen)
   include_directories(contrib/Tetgen)
   set(HAVE_TETGEN TRUE)
@@ -512,7 +516,7 @@ elseif(ENABLE_TETGEN AND EXISTS ${CMAKE_SOURCE_DIR}/contrib/Tetgen/tetgen.h)
   add_definitions(-DTETLIBRARY)
   message("WARNING: By including Tetgen you have to comply with Tetgen's "
           "special licensing requirements stated in contrib/Tetgen/LICENSE.")
-endif(ENABLE_TETGEN_NEW AND EXISTS ${CMAKE_SOURCE_DIR}/contrib/TetgenNew/tetgen.h)
+endif(ENABLE_TETGEN_NEW AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/TetgenNew/tetgen.h)
 
 if(ENABLE_FOURIER_MODEL)
   find_library(FFTW3_LIB fftw3)
@@ -757,10 +761,10 @@ foreach(OPT ${CONFIG_OPTIONS})
   set(GMSH_CONFIG_OPTIONS "${GMSH_CONFIG_OPTIONS} ${OPT}")
 endforeach(OPT)
 
-configure_file(${CMAKE_SOURCE_DIR}/Common/GmshConfig.h.in 
-               ${CMAKE_BINARY_DIR}/Common/GmshConfig.h)
-configure_file(${CMAKE_SOURCE_DIR}/Common/GmshVersion.h.in
-               ${CMAKE_BINARY_DIR}/Common/GmshVersion.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshConfig.h.in 
+               ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshVersion.h.in
+               ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h)
 
 # process cmake environment variables so we can append them to the -I
 # include commands. This is not recommended (we should only use the
@@ -801,7 +805,7 @@ endif(HAVE_FLTK)
 
 # we could specify include dirs more selectively, but this is simpler
 include_directories(Common Fltk Geo Graphics Mesh Solver Numeric Parser Plugin
-  Post Qt ${EXTERNAL_INCLUDES} ${CMAKE_BINARY_DIR}/Common)
+  Post Qt ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/Common)
 
 # group sources for easier navigation in IDEs
 foreach(DIR ${GMSH_DIRS})
@@ -848,7 +852,7 @@ target_link_libraries(gmsh ${LINK_LIBRARIES})
 # tet classification for large 3D Delaunay grids
 if(CYGWIN)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS 
-    "-Wl,--stack,16777216 ${CMAKE_SOURCE_DIR}/Fltk/Win32Icon.res -mwindows")
+    "-Wl,--stack,16777216 ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win32Icon.res -mwindows")
 elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS "/STACK:16777216")
 endif(CYGWIN)
@@ -867,7 +871,7 @@ if(BISON AND FLEX)
   add_custom_target(parser 
                     COMMAND ${BISON} -p gmsh_yy --output Gmsh.tab.cpp -d Gmsh.y
                     COMMAND ${FLEX} -P gmsh_yy -o Gmsh.yy.cpp Gmsh.l
-                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/Parser)
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Parser)
 endif(BISON AND FLEX)
 
 if(UNIX)
@@ -875,18 +879,18 @@ if(UNIX)
   # find files existing at configuration time)
   add_custom_target(purge 
                     COMMAND rm -f `find . -name *~ -o -name *~~`
-                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   add_custom_target(etags 
                     COMMAND etags `find . -name *.cpp -o -name *.h -o -name *.y`
-                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif(UNIX)
 
-set(WELCOME_FILE ${CMAKE_SOURCE_DIR}/doc/WELCOME.txt)
-set(LICENSE_FILE ${CMAKE_SOURCE_DIR}/doc/LICENSE.txt)
-set(CREDITS_FILE ${CMAKE_SOURCE_DIR}/doc/CREDITS.txt)
-file(GLOB TUTORIAL_FILES ${CMAKE_SOURCE_DIR}/tutorial/?*.*)
-file(GLOB DEMO_FILES ${CMAKE_SOURCE_DIR}/demos/?*.*)
-set(TEX_DIR ${CMAKE_SOURCE_DIR}/doc/texinfo)
+set(WELCOME_FILE ${CMAKE_CURRENT_SOURCE_DIR}/doc/WELCOME.txt)
+set(LICENSE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/doc/LICENSE.txt)
+set(CREDITS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/doc/CREDITS.txt)
+file(GLOB TUTORIAL_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorial/?*.*)
+file(GLOB DEMO_FILES ${CMAKE_CURRENT_SOURCE_DIR}/demos/?*.*)
+set(TEX_DIR ${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo)
 file(GLOB TEX_SRC ${TEX_DIR}/*.texi)
 set(TEX_OBJ ${TEX_DIR}/gmsh.aux ${TEX_DIR}/gmsh.cp ${TEX_DIR}/gmsh.cps
     ${TEX_DIR}/gmsh.fn ${TEX_DIR}/gmsh.html ${TEX_DIR}/gmsh.info ${TEX_DIR}/gmsh.ky 
@@ -894,18 +898,18 @@ set(TEX_OBJ ${TEX_DIR}/gmsh.aux ${TEX_DIR}/gmsh.cp ${TEX_DIR}/gmsh.cps
     ${TEX_DIR}/gmsh.tp ${TEX_DIR}/gmsh.tps ${TEX_DIR}/gmsh.txt ${TEX_DIR}/gmsh.vr)
 
 macro(unix2dos VARNAME)
-  file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/unix2dos)
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/unix2dos)
   set(UNIX2DOS_FILES)
   foreach(FILE ${${VARNAME}})
     file(READ ${FILE} F0)
     get_filename_component(N ${FILE} NAME)
     if(CYGWIN)
       string(REGEX REPLACE "\n" "\r\n" F1 "${F0}")
-      file(WRITE ${CMAKE_BINARY_DIR}/unix2dos/${N} "${F1}")
+      file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/unix2dos/${N} "${F1}")
     else(CYGWIN) # if not in cygwin, cmake adds '\r's automatically
-      file(WRITE ${CMAKE_BINARY_DIR}/unix2dos/${N} "${F0}")
+      file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/unix2dos/${N} "${F0}")
     endif(CYGWIN)
-    list(APPEND UNIX2DOS_FILES ${CMAKE_BINARY_DIR}/unix2dos/${N})
+    list(APPEND UNIX2DOS_FILES ${CMAKE_CURRENT_BINARY_DIR}/unix2dos/${N})
   endforeach(FILE)
   set(${VARNAME} ${UNIX2DOS_FILES})
 endmacro(unix2dos)
@@ -937,7 +941,7 @@ install(FILES ${CREDITS_FILE} DESTINATION ${GMSH_DOC})
 install(FILES ${TUTORIAL_FILES} DESTINATION ${GMSH_DOC}/tutorial)
 install(FILES ${DEMO_FILES} DESTINATION ${GMSH_DOC}/demos)
 if(UNIX AND NOT CYGWIN)
-  install(FILES ${CMAKE_SOURCE_DIR}/doc/gmsh.1 DESTINATION share/man/man1)
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/doc/gmsh.1 DESTINATION share/man/man1)
 endif(UNIX AND NOT CYGWIN)
 
 find_program(MAKEINFO makeinfo)
@@ -968,14 +972,14 @@ endif(TEXI2PDF)
 
 if(MAKEINFO AND TEXI2PDF)
   add_custom_target(doc COMMAND ${CMAKE_COMMAND} -E tar zcf 
-                    ${CMAKE_BINARY_DIR}/gmsh-${GMSH_VERSION}-doc.tgz
+                    ${CMAKE_CURRENT_BINARY_DIR}/gmsh-${GMSH_VERSION}-doc.tgz
                     doc/CREDITS.txt doc/LICENSE.txt doc/VERSIONS.txt
                     doc/gmsh.1 doc/texinfo/gmsh.html doc/texinfo/gmsh.info 
                     doc/texinfo/gmsh.pdf doc/texinfo/gmsh.txt
                     COMMAND ${CMAKE_COMMAND} -E remove ${TEX_OBJ}
                     DEPENDS ${TEX_DIR}/gmsh.info ${TEX_DIR}/gmsh.txt 
                     ${TEX_DIR}/gmsh.html ${TEX_DIR}/gmsh.pdf
-                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif(MAKEINFO AND TEXI2PDF)
 
 if(MAKEINFO OR TEXI2PDF)
@@ -998,7 +1002,7 @@ set(CPACK_PACKAGE_EXECUTABLE "gmsh;Gmsh")
 set(CPACK_STRIP_FILES TRUE)
 set(CPACK_SOURCE_PACKAGE_FILE_NAME gmsh-${GMSH_VERSION}-source)
 set(CPACK_SOURCE_GENERATOR TGZ)
-set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_BINARY_DIR}" "/CVS/" "/.svn" "~$" 
+set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_CURRENT_BINARY_DIR}" "/CVS/" "/.svn" "~$" 
     "DS_Store$" "GmshConfig.h$" "GmshVersion.h$" "/benchmarks/" "/tmp/" 
     "/bin/" "/lib/" "/nightly/" "GPATH" "GRTAGS" "GSYMS" "GTAGS" "/HTML/" 
     "/TetgenNew/") #"/Tetgen.*/.*(cxx|h)")
@@ -1008,25 +1012,25 @@ if(UNIX)
   # (on Mac for example "make package; make package_source" would lead
   # to huge file lists getting generated due to the 'Applications'
   # symlink in the bundle)
-  set(CPACK_INSTALL_COMMANDS "rm -rf ${CMAKE_BINARY_DIR}/_CPack_Packages")
+  set(CPACK_INSTALL_COMMANDS "rm -rf ${CMAKE_CURRENT_BINARY_DIR}/_CPack_Packages")
 endif(UNIX)
 
 if(APPLE)
   set(CPACK_GENERATOR Bundle)
   set(CPACK_BUNDLE_NAME Gmsh)
-  file(READ ${CMAKE_SOURCE_DIR}/utils/misc/gmsh_app.plist F0)
+  file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/gmsh_app.plist F0)
   string(REPLACE GMSH_VERSION "${GMSH_VERSION}" F1 "${F0}")
-  file(WRITE ${CMAKE_BINARY_DIR}/Info.plist "${F1}")
-  set(CPACK_BUNDLE_PLIST ${CMAKE_BINARY_DIR}/Info.plist)
-  set(CPACK_BUNDLE_ICON ${CMAKE_SOURCE_DIR}/Fltk/MacIcons.icns)
-  set(CPACK_BUNDLE_STARTUP_COMMAND ${CMAKE_SOURCE_DIR}/utils/misc/gmsh_app.sh)
-  install(FILES ${CMAKE_SOURCE_DIR}/Fltk/MacIconsGeo.icns DESTINATION .
+  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/Info.plist "${F1}")
+  set(CPACK_BUNDLE_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
+  set(CPACK_BUNDLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIcons.icns)
+  set(CPACK_BUNDLE_STARTUP_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/gmsh_app.sh)
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsGeo.icns DESTINATION .
           RENAME GmshGeo.icns)
-  install(FILES ${CMAKE_SOURCE_DIR}/Fltk/MacIconsMsh.icns DESTINATION .
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsMsh.icns DESTINATION .
           RENAME GmshMsh.icns)
-  install(FILES ${CMAKE_SOURCE_DIR}/Fltk/MacIconsPos.icns DESTINATION .
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsPos.icns DESTINATION .
           RENAME GmshPos.icns)
-  set(CPACK_PACKAGE_ICON ${CMAKE_SOURCE_DIR}/Fltk/MacIcons.icns)
+  set(CPACK_PACKAGE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIcons.icns)
 elseif(WIN32)
   set(CPACK_GENERATOR ZIP)
 else(APPLE)
@@ -1049,7 +1053,7 @@ else(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 message("Install prefix: " ${CMAKE_INSTALL_PREFIX})
 message("")
-message("Run 'ccmake ${CMAKE_SOURCE_DIR}' to fine-tune the configuration.")
+message("Run 'ccmake ${CMAKE_CURRENT_SOURCE_DIR}' to fine-tune the configuration.")
 message("")
 
 mark_as_advanced(BISON FLEX GMP_LIB GMSH_EXTRA_VERSION HDF5_LIB MAKEINFO 
