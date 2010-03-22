@@ -164,6 +164,17 @@ class fullMatrix
     _own_data = false;
     _data = original._data + c_start * _r;
   }
+  void setAsShapeProxy(fullMatrix<scalar> &original, int nbRow, int nbCol)
+  {
+    if(_data && _own_data)
+      delete [] _data;
+    _c = nbCol;
+    _r = nbRow;
+    if(_c*_r != original._c*original._r)
+      Msg::Error("trying to reshape a fullMatrix without conserving the total number of entries");
+    _own_data = false;
+    _data = original._data;
+  }
   inline int size1() const { return _r; }
   inline int size2() const { return _c; }
   fullMatrix<scalar> & operator = (const fullMatrix<scalar> &other)
@@ -356,9 +367,9 @@ class fullMatrix
   }
 #endif
   ;
-  void print(const char *name="") const 
+  void print(const std::string name = "") const 
   {
-    printf("Printing matrix %s:\n", name);
+    printf("Printing matrix %s:\n", name.c_str());
     int ni = size1();
     int nj = size2();
     for(int I = 0; I < ni; I++){

@@ -311,6 +311,9 @@ void fullMatrix<double>::registerBindings(binding *b)
   cm = cb->addMethod("gemm_naive", &fullMatrix<double>::gemm_naive);
   cm->setArgNames("A","B","alpha","beta",NULL);
   cm->setDescription("this = beta*this + alpha * (A.B)");
+  cm = cb->addMethod("print", &fullMatrix<double>::print);
+  cm->setArgNames("name",NULL);
+  cm->setDescription("print the matrix");
   cm = cb->setConstructor<fullMatrix<double>,int,int>();
   cm->setDescription ("A new matrix of size 'nRows' x 'nColumns'");
   cm->setArgNames("nRows","nColumns",NULL);
