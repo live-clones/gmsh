@@ -30,7 +30,7 @@ int dgSupraTransformNodalValue::apply ( dgDofContainer *solution)
       }
      }
   }
-        
+  return 1;        
 }
 
 int dgSupraTransformNodalValue::apply_Inverse ( dgDofContainer *solution)
@@ -57,6 +57,7 @@ int dgSupraTransformNodalValue::apply_Inverse ( dgDofContainer *solution)
       }
      }
   }     
+  return 1;
 }
 
 
