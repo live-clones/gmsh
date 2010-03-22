@@ -8,55 +8,29 @@ static double n_supra = 20;
 
 int dgSupraTransformNodalValue::apply ( dgDofContainer *solution)
 {    
-  dgGroupCollection *groups=solution->getGroups();
-  int nbFields =_claw->getNbFields();    
-
-
-  for (int iGroup=0 ; iGroup<groups->getNbElementGroups() ; iGroup++) {
-    dgGroupOfElements &group = *groups->getElementGroup(iGroup);
-    fullMatrix<double> &sol = solution->getGroupProxy(iGroup);
-    fullMatrix<double> Temp;  
-     for (int iElement=0 ; iElement<group.getNbElements() ; ++iElement)  { 
-      Temp.setAsProxy(sol, nbFields*iElement, nbFields );  
-      int fSize = Temp.size1();         
-      for (int k=0; k<nbFields; ++k) {
-         
-        for (int i=0; i<fSize; ++i) {
-          if (Temp(i,k)<0) Temp(i,k) = - pow(fabs(Temp(i,k)),1/n_supra);
-            else Temp(i,k) = pow(fabs(Temp(i,k)),1/n_supra);
-          // Temp(i,k) = Temp(i,k)*0.5;
-          }
-      
-      }
+  
+  
+  fullVector<double> sol = (*solution).getVector(); 
+  for (int i=0;i< sol.size();i++){
+   
+     if ((sol)(i)<0) (sol)(i)=-pow(- (sol)(i), 1/n_supra);
+       else (sol)(i)=pow( (sol)(i), 1/n_supra);
      }
-  }
+  
   return 1;        
 }
 
 int dgSupraTransformNodalValue::apply_Inverse ( dgDofContainer *solution)
 {    
-  dgGroupCollection *groups=solution->getGroups();
-  int nbFields =_claw->getNbFields();    
-  for (int iGroup=0 ; iGroup<groups->getNbElementGroups() ; iGroup++) {
-    dgGroupOfElements &group = *groups->getElementGroup(iGroup);
-    fullMatrix<double> &sol = solution->getGroupProxy(iGroup);
-    fullMatrix<double> Temp;  
-     for (int iElement=0 ; iElement<group.getNbElements() ; ++iElement)  { 
-      Temp.setAsProxy(sol, nbFields*iElement, nbFields ); 
-      int fSize = Temp.size1();         
-      for (int k=0; k<nbFields; ++k) {
-         
-        
-        for (int i=0; i<fSize; ++i) {
-           if (Temp(i,k)<0) Temp(i,k) =- pow(fabs(Temp(i,k)),n_supra);
-           else Temp(i,k) = pow(fabs(Temp(i,k)),n_supra);
-          //Temp(i,k) = 2*Temp(i,k);
-          
-       }
+  
 
-      }
+  fullVector<double> sol = (*solution).getVector(); 
+  for (int i=0;i< sol.size();i++){
+   
+     if ((sol)(i)<0) (sol)(i)=-pow(- (sol)(i), n_supra);
+       else (sol)(i)=pow( (sol)(i), n_supra);
      }
-  }     
+  
   return 1;
 }
 

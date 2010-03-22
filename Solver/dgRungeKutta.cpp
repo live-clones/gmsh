@@ -115,11 +115,12 @@ double dgRungeKutta::diagonalRK (const dgConservationLaw *claw,
   dgDofContainer K   (groups, nbFields);
   dgDofContainer Unp (groups, nbFields);
   dgDofContainer resd(groups, nbFields);
-  Unp.scale(0.);
-  Unp.axpy(*sol);
+  
    
-   if (_TransformNodalValue) _TransformNodalValue->apply(&Unp);
- 
+   if (_TransformNodalValue) _TransformNodalValue->apply(sol);
+   
+   Unp.scale(0.);
+   Unp.axpy(*sol);
    K.scale(0.);
    K.axpy(Unp);
 
@@ -130,8 +131,8 @@ double dgRungeKutta::diagonalRK (const dgConservationLaw *claw,
       K.scale(A[j]*dt);
       K.axpy(*sol);
     }
-    if (_TransformNodalValue) _TransformNodalValue->apply_Inverse(&K);
-    if (_limiter) _limiter->apply(&K);
+   if (_limiter) _limiter->apply(&K);
+   if (_TransformNodalValue) _TransformNodalValue->apply_Inverse(&K);
     residual.compute(*groups,K,resd);
     K.scale(0.);
     for(int k=0; k < groups->getNbElementGroups(); k++) {
