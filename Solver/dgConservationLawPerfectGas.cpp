@@ -668,6 +668,7 @@ dataCacheDouble *dgPerfectGasLaw2d::newClipToPhysics( dataCacheMap &cacheMap) co
 }
 
 dgPerfectGasLaw2d::dgPerfectGasLaw2d() 
+ : _kappaFunction(0), _muFunction(0), _sourceFunction(0)
 {
   _nbf = 4; // \rho \rho u \rho v \rho e
 }
