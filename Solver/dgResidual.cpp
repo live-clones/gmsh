@@ -50,7 +50,7 @@ void dgResidualVolume::compute1Group(dgGroupOfElements &group, fullMatrix<double
     fullMatrix<double> (group.getNbIntegrationPoints(), group.getNbElements() * _nbFields)};
   fullMatrix<double> fuvwe;
   fullMatrix<double> source;
-  fullMatrix<double> dPsiDx,dofs; 
+  fullMatrix<double> dPsiDx,dofs, gradSolProxy; 
   // ----- 2.3 --- iterate on elements
   for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {
       // ----- 2.3.1 --- build a small object that contains elementary solution, jacobians, gmsh element
@@ -59,7 +59,8 @@ void dgResidualVolume::compute1Group(dgGroupOfElements &group, fullMatrix<double
     if(_gradientSolutionQPe.somethingDependOnMe()){
       dPsiDx.setAsProxy(group.getDPsiDx(),iElement*group.getNbNodes(),group.getNbNodes());
       dofs.setAsProxy(solution, _nbFields*iElement, _nbFields);
-      dPsiDx.mult(dofs, _gradientSolutionQPe.set());
+      gradSolProxy.setAsShapeProxy(_gradientSolutionQPe.set(),group.getNbIntegrationPoints()*3, _nbFields);
+      dPsiDx.mult(dofs, gradSolProxy);
     }
     _cacheElement.set(group.getElement(iElement));
     if(_convectiveFlux || _diffusiveFlux) {
@@ -133,7 +134,7 @@ void dgResidualVolume::compute1GroupWithJacobian(dgGroupOfElements &group, fullM
     fullMatrix<double> (group.getNbIntegrationPoints(), group.getNbElements() * _nbFields)};
   fullMatrix<double> fuvwe;
   fullMatrix<double> source;
-  fullMatrix<double> dPsiDx,dofs;
+  fullMatrix<double> dPsiDx, dofs, gradSolProxy;
   int nColA = group.getDimUVW()*group.getNbIntegrationPoints();
   int nColB = group.getDimUVW()*group.getDimUVW()*group.getNbIntegrationPoints();
   fullMatrix<double> A (_nbFields*_nbFields, nColA*group.getNbElements());
@@ -154,7 +155,8 @@ void dgResidualVolume::compute1GroupWithJacobian(dgGroupOfElements &group, fullM
     if(_gradientSolutionQPe.somethingDependOnMe()){
       dPsiDx.setAsProxy(group.getDPsiDx(),iElement*group.getNbNodes(),group.getNbNodes());
       dofs.setAsProxy(solution, _nbFields*iElement, _nbFields);
-      dPsiDx.mult(dofs, _gradientSolutionQPe.set());
+      gradSolProxy.setAsShapeProxy(_gradientSolutionQPe.set(),group.getNbIntegrationPoints()*3, _nbFields);
+      dPsiDx.mult(dofs, gradSolProxy);
     }
     _cacheElement.set(group.getElement(iElement));
     if(_convectiveFlux || _diffusiveFlux) {
@@ -194,7 +196,10 @@ void dgResidualVolume::compute1GroupWithJacobian(dgGroupOfElements &group, fullM
     int nQP = group.getNbIntegrationPoints();
     int dim = group.getDimUVW();
     if(_diffusiveFlux) {
+      printf("ok %i\n", __LINE__);
       dDiffusiveFluxdGradU->compute();
+      printf("ok %i\n", __LINE__);
+      exit(0);
       for (int alpha=0; alpha < dim; alpha++) for (int beta=0; beta < dim; beta++) {
         for(int x=0;x <group.getDimXYZ();x++) for(int y=0;y <group.getDimXYZ();x++) {
           for (int xi=0; xi <group.getNbIntegrationPoints(); xi++) {
@@ -313,7 +318,7 @@ void dgResidualInterface::compute1Group ( //dofManager &dof, // the DOF manager 
   group.getCollocationMatrix().mult (solution, solutionQP); 
   // needed tocompute normal fluxes  at integration points
   fullMatrix<double> NormalFluxQP (group.getNbIntegrationPoints(), nbFaces*_nbFields*nbConnections);
-  fullMatrix<double> normalFluxQP, dofs, dPsiDx;
+  fullMatrix<double> normalFluxQP, dofs, dPsiDx,gradSolProxy;
   int p = elementGroups[0]->getOrder();
   int dim = connections[0]->getElement(0)->getDim();
   for (int iFace=0 ; iFace < nbFaces ; ++iFace) {
@@ -327,7 +332,8 @@ void dgResidualInterface::compute1Group ( //dofManager &dof, // the DOF manager 
       if(caches[i].getSolutionGradient(NULL).somethingDependOnMe()) {
         dofs.setAsProxy(*solutionOnElements[i], _nbFields*connections[i]->getElementId(iFace), _nbFields);
         dPsiDx.setAsProxy(connections[i]->getDPsiDx(),iFace*elementGroups[i]->getNbNodes(),elementGroups[i]->getNbNodes());
-        dPsiDx.mult(dofs, caches[i].getSolutionGradient(NULL).set());
+        gradSolProxy.setAsShapeProxy(caches[i].getSolutionGradient(NULL).set(),group.getNbIntegrationPoints()*3, _nbFields);
+        dPsiDx.mult(dofs, gradSolProxy);
       }
     }
     // proxies for the flux
@@ -440,6 +446,9 @@ void dgResidual::registerBindings (binding *b)
   mb = cb->addMethod("compute1Group", &dgResidualVolume::compute1Group);
   mb->setDescription("compute the residual for one group given a fullMatrix proxy to the solution relative to this group"); 
   mb->setArgNames("group", "solution", "residual", NULL);
+  mb = cb->setConstructor<dgResidualVolume, const dgConservationLaw&>();
+  mb->setDescription("a new object used to compute the residual");
+  mb->setArgNames("law",NULL);
 
   mb = cb->addMethod("compute1GroupWithJacobian", &dgResidualVolume::compute1GroupWithJacobian);
   mb->setDescription("compute the residual for one group given a fullMatrix proxy to the solution relative to this group"); 

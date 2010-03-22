@@ -417,10 +417,10 @@ class dgPerfectGasLaw2d::diffusion : public dataCacheDouble {
       const double u = sol(k,1) * overRho;
       const double v = sol(k,2) * overRho;
       // grad v    
-      const double dudx = (grad(k*3+0,1) - grad(k*3+0,0) * u) * overRho;
-      const double dudy = (grad(k*3+1,1) - grad(k*3+1,0) * u) * overRho;
-      const double dvdx = (grad(k*3+0,2) - grad(k*3+0,0) * v) * overRho;
-      const double dvdy = (grad(k*3+1,2) - grad(k*3+1,0) * v) * overRho;    
+      const double dudx = (grad(k,3) - grad(k,0) * u) * overRho;
+      const double dudy = (grad(k,4) - grad(k,1) * u) * overRho;
+      const double dvdx = (grad(k,6) - grad(k,0) * v) * overRho;
+      const double dvdy = (grad(k,7) - grad(k,1) * v) * overRho;    
       // shear stress tensor - Newtonian fluid without bulk viscosity
       
       const double tauxx = muk * (dudx - dvdy);
@@ -440,8 +440,8 @@ class dgPerfectGasLaw2d::diffusion : public dataCacheDouble {
     
       // k grad T
       
-      _value(k,3)      = -kOverRhoCv*(grad(k*3+0,3) - eMinus*grad(k*3+0,0) - (grad(k*3+0,1)*u + grad(k*3+0,2)*v));
-      _value(k,3+4)    = -kOverRhoCv*(grad(k*3+1,3) - eMinus*grad(k*3+1,0) - (grad(k*3+1,1)*u + grad(k*3+1,2)*v));
+      _value(k,3)      = -kOverRhoCv*(grad(k, 9 ) - eMinus*grad(k, 0) - (grad(k, 3)*u + grad(k, 6)*v));
+      _value(k,3+4)    = -kOverRhoCv*(grad(k, 10) - eMinus*grad(k, 1) - (grad(k, 4)*u + grad(k, 7)*v));
       
       // v . tau - momentum dissipation
       

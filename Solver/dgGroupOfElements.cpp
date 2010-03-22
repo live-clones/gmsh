@@ -85,7 +85,7 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e,
     element_to_index[e] = i;
     fullMatrix<double> imass(*_imass,nbNodes*i,nbNodes);
     (*_innerRadii)(i,0)=e->getInnerRadius();
-    for (int j=0;j< _integration->size1() ; j++ ){
+    for (int j=0;j< nbQP ; j++ ){
       _fs.f((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), f);
       _fs.df((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), g);
       double jac[3][3],ijac[3][3],detjac;
@@ -107,10 +107,10 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e,
         for (int l=0;l<nbNodes;l++) { 
           imass(k,l) += f[k]*f[l]*weight*detjac;
         }
-        // (iQP*3+iXYZ , iFace*NPsi+iPsi)
-        (*_dPsiDx)(j*3  ,i*nbNodes+k) = g[k][0]*ijac[0][0]+g[k][1]*ijac[0][1]+g[k][2]*ijac[0][2];
-        (*_dPsiDx)(j*3+1,i*nbNodes+k) = g[k][0]*ijac[1][0]+g[k][1]*ijac[1][1]+g[k][2]*ijac[1][2];
-        (*_dPsiDx)(j*3+2,i*nbNodes+k) = g[k][0]*ijac[2][0]+g[k][1]*ijac[2][1]+g[k][2]*ijac[2][2];
+        // (iQP+iXYZ*nbQP , iElement*NPsi+iPsi)
+        (*_dPsiDx)(j       , i*nbNodes+k) = g[k][0]*ijac[0][0]+g[k][1]*ijac[0][1]+g[k][2]*ijac[0][2];
+        (*_dPsiDx)(j+nbQP  , i*nbNodes+k) = g[k][0]*ijac[1][0]+g[k][1]*ijac[1][1]+g[k][2]*ijac[1][2];
+        (*_dPsiDx)(j+nbQP*2, i*nbNodes+k) = g[k][0]*ijac[2][0]+g[k][1]*ijac[2][1]+g[k][2]*ijac[2][2];
       }
     }
     imass.invertInPlace();
@@ -269,7 +269,7 @@ void dgGroupOfConnections::init() {
   // compute data on quadrature points : normals and dPsidX
   double g[256][3];
   _normals = fullMatrix<double> (3, nQP*size);
-  _dPsiDx = fullMatrix<double> ( nQP*3, nPsi*size);
+  _dPsiDx = fullMatrix<double> (nQP*3, nPsi*size);
   int index = 0;
   for (size_t i=0; i<size;i++){
     const std::vector<int> &closure = getClosure(i);
@@ -280,11 +280,11 @@ void dgGroupOfConnections::init() {
       getElement(i)->getJacobian (integration(j,0), integration(j,1), integration(j,2), jac);
       inv3x3(jac,ijac);
       //compute dPsiDxOnQP
-      // (iQP*3+iXYZ , iFace*NPsi+iPsi)
+      // (iQP+iXYZ*nbQP , iFace*NPsi+iPsi)
       for (int iPsi=0; iPsi< nPsi; iPsi++) {
-        _dPsiDx(j*3  ,i*nPsi+iPsi) = g[iPsi][0]*ijac[0][0]+g[iPsi][1]*ijac[0][1]+g[iPsi][2]*ijac[0][2];
-        _dPsiDx(j*3+1,i*nPsi+iPsi) = g[iPsi][0]*ijac[1][0]+g[iPsi][1]*ijac[1][1]+g[iPsi][2]*ijac[1][2];
-        _dPsiDx(j*3+2,i*nPsi+iPsi) = g[iPsi][0]*ijac[2][0]+g[iPsi][1]*ijac[2][1]+g[iPsi][2]*ijac[2][2];
+        _dPsiDx(j      , i*nPsi+iPsi) = g[iPsi][0]*ijac[0][0]+g[iPsi][1]*ijac[0][1]+g[iPsi][2]*ijac[0][2];
+        _dPsiDx(j+nQP  , i*nPsi+iPsi) = g[iPsi][0]*ijac[1][0]+g[iPsi][1]*ijac[1][1]+g[iPsi][2]*ijac[1][2];
+        _dPsiDx(j+nQP*2, i*nPsi+iPsi) = g[iPsi][0]*ijac[2][0]+g[iPsi][1]*ijac[2][1]+g[iPsi][2]*ijac[2][2];
       }
       //compute face normals
       double &nx=_normals(0,index);

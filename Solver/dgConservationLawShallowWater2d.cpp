@@ -135,10 +135,10 @@ class dgConservationLawShallowWater2d::source: public dataCacheDouble {
       double u = solution(i,1);
       double v = solution(i,2);
       double normu = hypot(u,v);
-      double dudx = solutionGradient(i*3,1);
-      double dvdx = solutionGradient(i*3,2);
-      double dudy = solutionGradient(i*3+1,1);
-      double dvdy = solutionGradient(i*3+1,2);
+      double dudx = solutionGradient(i,3);
+      double dvdx = solutionGradient(i,6);
+      double dudy = solutionGradient(i,4);
+      double dvdy = solutionGradient(i,7);
       _value (i,0) = 0;
       _value (i,1) = _coriolisFactor(i,0)*v  - (_linearDissipation(i,0)+_quadraticDissipation(i,0)*normu)*u + _source(i,0) + u*(dudx+dvdy);
       _value (i,2) = -_coriolisFactor(i,0)*u - (_linearDissipation(i,0)+_quadraticDissipation(i,0)*normu)*v + _source(i,1) + v*(dudx+dvdy);

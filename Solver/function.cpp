@@ -154,7 +154,7 @@ dataCacheDouble &dataCacheMap::provideSolution(int nbFields)
   return *_solution;
 }
 dataCacheDouble &dataCacheMap::provideSolutionGradient(int nbFields){
-  _solutionGradient =  new providedDataDouble(*this,3, nbFields);
+  _solutionGradient =  new providedDataDouble(*this,1, 3*nbFields);
   return *_solutionGradient;
 }
 dataCacheDouble &dataCacheMap::provideParametricCoordinates()

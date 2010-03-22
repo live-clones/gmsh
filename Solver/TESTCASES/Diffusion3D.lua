@@ -20,12 +20,8 @@ function initial_condition( xyz , f )
 end
 
 -- conservation law
--- advection speed
-vFunc = functionConstant({0.1,0.1,0});
--- diffusion function
-nuFunc = functionConstant({0});
 
-law = dgConservationLawAdvectionDiffusion(vFunc:getName(),nuFunc:getName())
+law = dgConservationLawAdvectionDiffusion:diffusionLaw(functionConstant({0.1}))
 dg:setConservationLaw(law)
 
 law:addBoundaryCondition('side1',law:new0FluxBoundary())
@@ -37,7 +33,7 @@ law:addBoundaryCondition('bottom',law:newSymmetryBoundary())
 
 dg:setup()
 
-dg:L2Projection(functionLua(1,'initial_condition',{'XYZ'}):getName())
+--dg:L2Projection(functionLua(1,'initial_condition',{'XYZ'}))
 
 dt = 0.0001
 --CFL = 20 -- good for lc=0.1 mesh

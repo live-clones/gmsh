@@ -71,10 +71,10 @@ class dgConservationLawAdvectionDiffusion::diffusion : public dataCacheDouble {
     nu(cacheMap.get(nuFunction,this))
   {};
   void _eval () { 
-    for(int i=0; i< solgrad().size1()/3; i++) {
-      _value(i,0) = -solgrad(i*3,0)*nu(i,0);
-      _value(i,1) = -solgrad(i*3+1,0)*nu(i,0);
-      _value(i,2) = -solgrad(i*3+2,0)*nu(i,0);
+    for(int i=0; i< solgrad().size1(); i++) {
+      _value(i,0) = -solgrad(i,0)*nu(i,0);
+      _value(i,1) = -solgrad(i,1)*nu(i,0);
+      _value(i,2) = -solgrad(i,2)*nu(i,0);
     }
   }
 };
