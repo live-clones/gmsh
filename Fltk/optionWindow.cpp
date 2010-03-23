@@ -1690,26 +1690,36 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[8]->type(FL_TOGGLE_BUTTON);
       geo.butt[8]->callback(geometry_options_ok_cb);
 
+      Fl_Box* b = new Fl_Box(L + 2 * WB, 2 * WB + 3 * BH, BW, 2);
+      b->box(FL_ENGRAVED_FRAME);
+      b->labeltype(FL_NO_LABEL);
+
+      Fl_Box *b2 = new Fl_Box
+        (FL_NO_BOX, L + 2 * WB, 2 * WB + 3 * BH + 1, IW, BH, "Open CASCADE model healing options:");
+      b2->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
+
       geo.butt[11] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Remove small edges in OpenCascade models");
+        (L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Remove small edges");
       geo.butt[11]->type(FL_TOGGLE_BUTTON);
       geo.butt[11]->callback(geometry_options_ok_cb);
 
       geo.butt[12] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Remove small faces in OpenCascade models");
+        (L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Remove small faces (experimental)");
       geo.butt[12]->type(FL_TOGGLE_BUTTON);
       geo.butt[12]->callback(geometry_options_ok_cb);
 
       geo.butt[13] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Sew faces in OpenCascade models");
+        (L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Sew faces (experimental)");
       geo.butt[13]->type(FL_TOGGLE_BUTTON);
       geo.butt[13]->callback(geometry_options_ok_cb);
+
       geo.butt[15] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Cut and merge faces in OpenCascade models");
+        (L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Cut and merge faces (experimental)");
       geo.butt[15]->type(FL_TOGGLE_BUTTON);
       geo.butt[15]->callback(geometry_options_ok_cb);
 
 #if !defined(HAVE_OCC)
+      b2->deactivate();
       geo.butt[11]->deactivate();
       geo.butt[12]->deactivate();
       geo.butt[13]->deactivate();

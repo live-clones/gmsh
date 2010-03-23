@@ -1,8 +1,8 @@
-// This demonstrates how to import an OpenCascade model WITHOUT using
+// This demonstrates how to import an OpenCASCADE model WITHOUT using
 // Gmsh's own I/O layer (useful if you create OCC objects in your own
 // code, that you want to import dynamically in Gmsh).
 //
-// If you just want to load OpenCascade files (.brep, .step, etc.) you
+// If you just want to load OpenCASCADE files (.brep, .step, etc.) you
 // SHOULD NOT use this interface: simply use the standard I/O API.
 
 // g++ -I/usr/local/opencascade/inc driverOCC.cpp -lGmsh
