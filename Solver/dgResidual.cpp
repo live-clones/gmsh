@@ -135,10 +135,8 @@ void dgResidualVolume::compute1GroupWithJacobian(dgGroupOfElements &group, fullM
   fullMatrix<double> fuvwe;
   fullMatrix<double> source;
   fullMatrix<double> dPsiDx, dofs, gradSolProxy;
-  int nColA = group.getDimUVW()*group.getNbIntegrationPoints();
-  int nColB = group.getDimUVW()*group.getDimUVW()*group.getNbIntegrationPoints();
-  fullMatrix<double> A (_nbFields*_nbFields, nColA*group.getNbElements());
-  fullMatrix<double> B (_nbFields*_nbFields, nColB*group.getNbElements());
+  fullMatrix<double> A (group.getDimUVW()*group.getNbIntegrationPoints(), _nbFields*_nbFields*group.getNbElements());
+  fullMatrix<double> B (group.getDimUVW()*group.getDimUVW()*group.getNbIntegrationPoints(), _nbFields*_nbFields*group.getNbElements());
   fullMatrix<double> a, b;
   functionDerivator *dDiffusiveFluxdGradU,*dConvectiveFluxdU;
   if(_diffusiveFlux)
@@ -149,8 +147,8 @@ void dgResidualVolume::compute1GroupWithJacobian(dgGroupOfElements &group, fullM
   for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {
     // ----- 2.3.1 --- build a small object that contains elementary solution, jacobians, gmsh element
     _solutionQPe.setAsProxy(solutionQP, iElement*_nbFields, _nbFields );
-    a.setAsProxy(A, iElement*nColA, nColA);
-    b.setAsProxy(B, iElement*nColB, nColB);
+    a.setAsProxy(A, iElement*_nbFields*_nbFields, _nbFields*_nbFields);
+    b.setAsProxy(B, iElement*_nbFields*_nbFields, _nbFields*_nbFields);
 
     if(_gradientSolutionQPe.somethingDependOnMe()){
       dPsiDx.setAsProxy(group.getDPsiDx(),iElement*group.getNbNodes(),group.getNbNodes());
@@ -194,27 +192,26 @@ void dgResidualVolume::compute1GroupWithJacobian(dgGroupOfElements &group, fullM
       }
     }
     int nQP = group.getNbIntegrationPoints();
-    int dim = group.getDimUVW();
+    int dimUVW = group.getDimUVW();
+    int dimXYZ = group.getDimXYZ();
+    b.scale(0);
     if(_diffusiveFlux) {
-      printf("ok %i\n", __LINE__);
       dDiffusiveFluxdGradU->compute();
-      printf("ok %i\n", __LINE__);
-      exit(0);
-      for (int alpha=0; alpha < dim; alpha++) for (int beta=0; beta < dim; beta++) {
-        for(int x=0;x <group.getDimXYZ();x++) for(int y=0;y <group.getDimXYZ();x++) {
+      for (int alpha=0; alpha < dimUVW; alpha++) for (int beta=0; beta < dimUVW; beta++) {
+        for(int x=0;x <dimXYZ;x++) for(int y=0;y <dimXYZ;y++) {
           for (int xi=0; xi <group.getNbIntegrationPoints(); xi++) {
             const double invJx = group.getInvJ (iElement, xi, alpha, x);
             const double invJy = group.getInvJ (iElement, xi, beta, y);
             const double detJ = group.getDetJ (iElement, xi);
             const double factor = invJx * invJy * detJ;
             for (int k=0; k< _nbFields; k++) for (int l=0; l<_nbFields; l++) {
-              b(k*_nbFields+l,(alpha*dim+beta)*nQP+xi) = dDiffusiveFluxdGradU->get(k*dim+alpha,l*dim+beta,xi)*factor;
+              b((alpha*dimUVW+beta)*nQP+xi,k*_nbFields+l) += dDiffusiveFluxdGradU->get(xi, k*dimXYZ+x, l*dimXYZ+y)*factor;
             }
           }
         }
       }
     }
-    if(_convectiveFlux) {
+    /*if(_convectiveFlux) {
       dConvectiveFluxdU->compute();
       for (int alpha=0; alpha < dim; alpha++) {
         for(int x=0;x <group.getDimXYZ();x++) {
@@ -228,33 +225,33 @@ void dgResidualVolume::compute1GroupWithJacobian(dgGroupOfElements &group, fullM
           }
         }
       }
-    }
+    }*/
   }
 
   // ----- 3 ---- do the redistribution at nodes using as many BLAS3 operations as there are local coordinates
-  if(_convectiveFlux || _diffusiveFlux){
+  /*if(_convectiveFlux || _diffusiveFlux){
     for (int iUVW=0;iUVW<group.getDimUVW();iUVW++){
       residual.gemm(group.getFluxRedistributionMatrix(iUVW),Fuvw[iUVW]);
     }
   }
   if(_sourceTerm){
     residual.gemm(group.getSourceRedistributionMatrix(),Source);
-  }
+  }*/
   int nbNodes = group.getNbNodes();
-  fullMatrix<double> jacobianK (_nbFields*_nbFields,nbNodes*nbNodes);
-  if (_convectiveFlux) {
-    jacobianK.gemm(group.getPsiDPsiDXi(),B);
-  }
-  if (_convectiveFlux) {
-    jacobianK.gemm(group.getDPsiDXDPsiDXi(),A);
+  fullMatrix<double> jacobianK (nbNodes*nbNodes,_nbFields*_nbFields*group.getNbElements());
+  /*if (_convectiveFlux) {
+    jacobianK.gemm(group.getPsiDPsiDXi(),A);
+  }*/
+  if (_diffusiveFlux) {
+    jacobianK.gemm(group.getDPsiDXDPsiDXi(),B);
   }
   fullMatrix<double> jacobianE, jacobianKE;
   for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {
     jacobianKE.setAsProxy(jacobianK, iElement*_nbFields*_nbFields, _nbFields*_nbFields);
-    jacobianKE.setAsProxy(jacobian, iElement*_nbFields*nbNodes, _nbFields*nbNodes);
+    jacobianE.setAsProxy(jacobian, iElement*_nbFields*nbNodes, _nbFields*nbNodes);
     for (int k=0; k<_nbFields;k++) for (int l=0;l<_nbFields;l++) {
       for(int i=0; i<nbNodes; i++) for(int j=0; j<nbNodes; j++) {
-        jacobianE(l*nbNodes+j, k*nbNodes+i) = jacobianKE(k*_nbFields+l, i*nbNodes+j);
+        jacobianE(l*nbNodes+j, k*nbNodes+i) = jacobianKE(i*nbNodes+j, k*_nbFields+l);
       }
     }
   }

@@ -4,7 +4,6 @@
 void functionDerivator::compute() {
   _xRef = _x();
   _fRef = _f();
-  printf("f.size = %i %i\n_x.size = %i %i\n",_f().size1(), _f().size2(), _x().size1(), _x().size2());
   _dfdx = fullMatrix<double>(_f().size1(),_f().size2()*_x().size2());
   for (int j=0;j<_xRef.size2();j++) {
     _xDx = _xRef;
@@ -16,5 +15,4 @@ void functionDerivator::compute() {
         _dfdx(i, k*_xRef.size2()+j) = (_f(i,k)-_fRef(i,k))/_epsilon;
   }
   _x.set(_xRef);
-  _dfdx.print();
 };

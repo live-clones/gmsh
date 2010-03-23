@@ -121,7 +121,7 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e,
 
   _PsiDPsiDXi = fullMatrix<double> (_dimUVW*nbQP, nbNodes*nbNodes);
   //reditribution of the diffusive jacobian dimUVW*dimUVW*nbIntegrationPoints x nbNodes*nbNodes
-  _dPsiDXDPsiDXi = fullMatrix<double> (_dimUVW*_dimUVW*nbQP, nbNodes*nbNodes);
+  _dPsiDXDPsiDXi = fullMatrix<double> (nbNodes*nbNodes, _dimUVW*_dimUVW*nbQP);
 
   for (int xi=0;xi<nbQP; xi++) {
     _fs.df((*_integration)(xi,0),
@@ -145,7 +145,7 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e,
     }
     for (int alpha=0; alpha<_dimUVW; alpha++) for (int beta=0; beta<_dimUVW; beta++) {
       for (int i=0; i<nbNodes; i++) for (int j=0; j<nbNodes; j++) {
-        _dPsiDXDPsiDXi((alpha*_dimUVW+beta)*nbQP+xi, i*nbNodes+j) = g[i][alpha]*g[j][beta]*weight;
+        _dPsiDXDPsiDXi(i*nbNodes+j, (alpha*_dimUVW+beta)*nbQP+xi) = g[i][alpha]*g[j][beta]*weight;
       }
     }
     for (int alpha=0; alpha<_dimUVW; alpha++){
@@ -1212,6 +1212,8 @@ void dgGroupCollection::registerBindings(binding *b)
   methodBinding *cm;
   cb = b->addClass<dgGroupOfElements>("dgGroupOfElements");
   cb->setDescription("a group of element sharing the same properties");
+  cm = cb->addMethod("getNbElements",&dgGroupOfElements::getNbElements);
+  cm->setDescription("return the number of elements in the group");
   cb = b->addClass<dgGroupOfFaces>("dgGroupOfFaces");
   cb->setDescription("a group of faces. All faces of this group are either interior of the same group of elements or at the boundary between two group of elements");
   cb = b->addClass<dgGroupCollection>("dgGroupCollection");
