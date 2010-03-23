@@ -2035,7 +2035,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[5]->callback(mesh_options_ok_cb);
 
       mesh.butt[1] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Compute element sizes from curvature" );
+        (L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Compute element sizes from curvature (experimental)" );
       mesh.butt[1]->type(FL_TOGGLE_BUTTON);
       mesh.butt[1]->callback(mesh_options_ok_cb);
 
@@ -2058,12 +2058,12 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[24]->callback(mesh_options_ok_cb);
 
       mesh.butt[3] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Optimize high order mesh (2D-plane only)");
+        (L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Optimize high order 2D planar meshes (experimental)");
       mesh.butt[3]->type(FL_TOGGLE_BUTTON);
       mesh.butt[3]->callback(mesh_options_ok_cb);
       
       mesh.butt[25] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Try to remove 4 triangles nodes");
+        (L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Try to remove 4 triangles nodes (experimental)");
       mesh.butt[25]->type(FL_TOGGLE_BUTTON);
       mesh.butt[25]->callback(mesh_options_ok_cb);
 
