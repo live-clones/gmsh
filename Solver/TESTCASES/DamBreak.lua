@@ -31,28 +31,27 @@ function celerityFunction (solution, bathymetry, f)
 end
 
 
---CFunctions =[[
---void pressureFlux ( fullMatrix<double> &f, fullMatrix<double> &sol) {
---  for (size_t i = 0; i< f.size1(); i++) {
---    double p=9.81*sol(i,0);
---    f.set(i,0,p);
---    f.set(i,1,0);
---  }
---}
---void celerityFunction (fullMatrix<double> &f , fullMatrix<double> &sol, fullMatrix<double> &bathymetry) {
---  for (size_t i = 0; i< sol.size1(); i++) {
---    double c =sqrt(9.81*(bathymetry(i,0)+sol(i,0)));
---    sol.set(i,0,c);
---  }
---}]]
---if (Msg.getCommRank() == 0 ) then
---  cfile = io.popen("g++-4.2 -O3 -pipe -m32 -shared -o tmp.dylib -I ../../Numeric -I../../Common -I../../bin/Common -x c++ - ","w");
---  cfile:write("#include\"fullMatrix.h\"\nextern \"C\" {")
---  cfile:write(CFunctions)
---  cfile:write("}")
---  cfile:close()
---end
---Msg.barrier()
+CFunctions =[[
+void pressureFlux ( fullMatrix<double> &f, fullMatrix<double> &sol) {
+  for (size_t i = 0; i< f.size1(); i++) {
+    double p=9.81*sol(i,0);
+    f.set(i,0,p);
+  }
+}
+void celerityFunction (fullMatrix<double> &f , fullMatrix<double> &sol, fullMatrix<double> &bathymetry) {
+  for (size_t i = 0; i< sol.size1(); i++) {
+    double c =sqrt(9.81*(bathymetry(i,0)+sol(i,0)));
+    f.set(i,0,c);
+  }
+}]]
+if (Msg.getCommRank() == 0 ) then
+  cfile = io.popen("g++-4.2 -O3 -pipe -m32 -shared -o tmp.dylib -I ../../Numeric -I../../Common -I../../build/Common -x c++ - ","w");
+  cfile:write("#include\"fullMatrix.h\"\nextern \"C\" {")
+  cfile:write(CFunctions)
+  cfile:write("}")
+  cfile:close()
+end
+Msg.barrier()
 
 
 bathymetry = functionConstant({0})
@@ -74,10 +73,10 @@ law:addBoundaryCondition('Left',law:newBoundaryWall())
 law:addBoundaryCondition('Right',law:newBoundaryWall())
 law:setLinearDissipation(dissipation)
 law:setBathymetry(bathymetry)
-law:setPressureFlux(functionLua(1,'pressureFlux',{functionSolution.get()}))
-law:setCelerity(functionLua(1,'celerityFunction',{functionSolution.get(), bathymetry}))
---law:setPressureFlux(functionC("tmp.dylib","pressureFlux",1,{functionSolution.get()}))
---law:setPressureFlux(functionC("tmp.dylib","celerityFunction",1,{functionSolution.get(), bathymetry}))
+--law:setPressureFlux(functionLua(1,'pressureFlux',{functionSolution.get()}))
+--law:setCelerity(functionLua(1,'celerityFunction',{functionSolution.get(), bathymetry}))
+law:setPressureFlux(functionC("tmp.dylib","pressureFlux",1,{functionSolution.get()}))
+law:setCelerity(functionC("tmp.dylib","celerityFunction",1,{functionSolution.get(), bathymetry}))
 
 groups = dgGroupCollection(model, dimension, order)
 groups:buildGroupsOfInterfaces()
