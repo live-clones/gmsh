@@ -804,8 +804,11 @@ else(HAVE_FLTK)
 endif(HAVE_FLTK)
 
 # we could specify include dirs more selectively, but this is simpler
-include_directories(Common Fltk Geo Graphics Mesh Solver Numeric Parser Plugin
-  Post Qt ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/Common)
+include_directories(Common Fltk Geo Graphics Mesh Solver Numeric Parser
+  Plugin Post Qt ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/Common)
+
+# set this for external codes that might include this CMakeList file
+set(GMSH_EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDES} PARENT_SCOPE)
 
 # group sources for easier navigation in IDEs
 foreach(DIR ${GMSH_DIRS})
@@ -1059,3 +1062,4 @@ message("")
 mark_as_advanced(BISON FLEX GMP_LIB GMSH_EXTRA_VERSION HDF5_LIB MAKEINFO 
                  MED_LIB OCC_INC SZ_LIB TAUCS_LIB LUA_LIB TEXI2PDF
                  READLINE_LIB)
+
