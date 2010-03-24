@@ -397,20 +397,22 @@ class functionC : public function {
         Msg::Error("C callback not implemented for %i argurments", depM.size());
     }
   }
-#if defined(HAVE_DLOPEN)
   functionC (std::string file, std::string symbol, int nbCol, std::vector<const function *> dependencies):
     function(nbCol)
   {
+#if defined(HAVE_DLOPEN)
     for (std::vector<const function *>::iterator it = dependencies.begin(); it!= dependencies.end(); it++) {
       addArgument(*it);
     }
     void *dlHandler;
     dlHandler = dlopen(file.c_str(),RTLD_NOW);
     callback = (void(*)(void))dlsym(dlHandler, symbol.c_str());
-    if(!callback) 
-      Msg::Error("cannot get the callback to the compiled C function");
-  }
+    if(!callback)
+      Msg::Error("Cannot get the callback to the compiled C function");
+#else
+    Msg::Error("Cannot construct functionC without dlopen");
 #endif
+  }
 };
 
 void function::registerBindings(binding *b){
