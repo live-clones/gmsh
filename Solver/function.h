@@ -4,6 +4,7 @@
 #include "fullMatrix.h"
 #include <map>
 #include <set>
+#include <list>
 #include <string>
 #include <vector>
 class dataCacheMap;
@@ -143,10 +144,9 @@ public :
 // more explanation at the head of this file
 class dataCacheMap {
   friend class dataCacheDouble;
- private:
+  dataCacheMap  *_parent;
+  std::list<dataCacheMap*> _children;
   int _nbEvaluationPoints;
-  // keep track of the current element and all the dataCaches that
-  // depend on it
   std::map<const function*, dataCacheDouble*> _cacheDoubleMap;
   std::set<dataCacheDouble*> _toDelete;
   std::set<dataCacheDouble*> _toResize;
@@ -165,14 +165,24 @@ class dataCacheMap {
   }
  public:
   dataCacheDouble &get(const function *f, dataCacheDouble *caller=0);
+  dataCacheDouble &substitute(const function *f);
   inline void setElement(MElement *element) {
     _element=element;
     for(std::set<dataCacheDouble*>::iterator it = _toInvalidateOnElement.begin(); it!= _toInvalidateOnElement.end(); it++) {
       (*it)->_valid=false;
     }
+    for(std::list<dataCacheMap*>::iterator it = _children.begin(); it!= _children.end(); it++) {
+      (*it)->setElement(element);
+    }
   }
   inline MElement *getElement() {return _element;}
-  dataCacheMap(){
+  dataCacheMap() {
+    _nbEvaluationPoints = 0;
+    _parent=NULL;
+  }
+  dataCacheMap(dataCacheMap *parent) {
+    _parent = parent;
+    _parent->_children.push_back(this);
     _nbEvaluationPoints = 0;
   }
   void setNbEvaluationPoints(int nbEvaluationPoints);

@@ -65,11 +65,30 @@ void dataCacheDouble::resize() {
 //dataCacheMap members
 dataCacheDouble &dataCacheMap::get(const function *f, dataCacheDouble *caller) 
 {
-  dataCacheDouble *&r= _cacheDoubleMap[f];
-  if(r==NULL)
+  dataCacheDouble *&r = _cacheDoubleMap[f];
+  if (r==NULL && _parent) {
+    std::map<const function *, dataCacheDouble *>::iterator it = _parent->_cacheDoubleMap.find(f);
+    if (it != _parent->_cacheDoubleMap.end()) {
+      r = it->second;
+      for (std::set<dataCacheDouble*>::iterator dep = r->_iDependOn.begin(); dep != r->_iDependOn.end(); dep++) {
+        if (&(*dep)->_cacheMap == this) {
+          r = NULL;
+          break;
+        }
+      }
+    }
+  }
+  if (r==NULL)
     r = new dataCacheDouble(this, const_cast<function*>(f));
-  if(caller)
+  if (caller)
     r->addMeAsDependencyOf(caller);
+  return *r;
+}
+
+dataCacheDouble &dataCacheMap::substitute(const function *f) 
+{
+  dataCacheDouble *&r= _cacheDoubleMap[f];
+  r = new dataCacheDouble(this, const_cast<function*>(f));
   return *r;
 }
 
@@ -333,6 +352,9 @@ void dataCacheMap::setNbEvaluationPoints(int nbEvaluationPoints) {
     (*it)->resize();
     (*it)->_valid = false;
   }
+    for(std::list<dataCacheMap*>::iterator it = _children.begin(); it!= _children.end(); it++) {
+      (*it)->setNbEvaluationPoints(nbEvaluationPoints);
+    }
 }
 
 //functionC
