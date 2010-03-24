@@ -16,6 +16,7 @@
 #include "CommandLine.h"
 #include "OS.h"
 #include "Context.h"
+#include "ConnectionManager.h"
 #include "robustPredicates.h"
 
 #if defined(HAVE_MESH)
@@ -26,6 +27,12 @@
 
 #if defined(HAVE_POST)
 #include "PluginManager.h"
+#endif
+
+#if defined(HAVE_FLTK)
+#include "FlGui.h"
+#include "menuWindow.h"
+#include "drawContext.h"
 #endif
 
 #if defined(HAVE_LUA)
@@ -189,4 +196,67 @@ int GmshBatch()
   Msg::FinalizeClient();
 
   return 1;
+}
+
+int GmshFLTK(int argc, char **argv)
+{
+#if defined(HAVE_FLTK) && defined(HAVE_POST)
+  // create the GUI
+  FlGui::instance(argc, argv);
+
+  // display GUI immediately for quick launch time
+  FlGui::instance()->check();
+
+  // open project file and merge all other input files
+  OpenProject(GModel::current()->getFileName());
+  for(unsigned int i = 1; i < CTX::instance()->files.size(); i++){
+    if(CTX::instance()->files[i] == "-new"){
+      GModel::current()->setVisibility(0);
+      new GModel();
+    }
+    else
+      MergeFile(CTX::instance()->files[i]);
+  }
+  
+  if(CTX::instance()->post.combineTime){
+    PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
+    FlGui::instance()->updateViews();
+  }
+
+  // init first context
+  switch (CTX::instance()->initialContext) {
+  case 1: FlGui::instance()->menu->setContext(menu_geometry, 0); break;
+  case 2: FlGui::instance()->menu->setContext(menu_mesh, 0); break;
+  case 3: FlGui::instance()->menu->setContext(menu_solver, 0); break;
+  case 4: FlGui::instance()->menu->setContext(menu_post, 0); break;
+  default: // automatic
+    if(PView::list.size())
+      FlGui::instance()->menu->setContext(menu_post, 0);
+    else
+      FlGui::instance()->menu->setContext(menu_geometry, 0);
+    break;
+  }
+
+  // read background mesh if any
+  if(!CTX::instance()->bgmFileName.empty()) {
+    MergeFile(CTX::instance()->bgmFileName);
+    if(PView::list.size())
+      GModel::current()->getFields()->setBackgroundMesh(PView::list.size() - 1);
+    else
+      Msg::Error("Invalid background mesh (no view)");
+  }
+
+  // draw the scene
+  drawContext::global()->draw();
+
+  // listen to external solvers
+  if(CTX::instance()->solver.listen)
+    ConnectionManager::get(-1)->run("");
+
+  // loop
+  return FlGui::instance()->run();
+#else
+  Msg::Error("GmshFLTK unavailable: please recompile with FLTK support");
+  return 0;
+#endif
 }

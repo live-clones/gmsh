@@ -24,5 +24,6 @@ int GmshMergeFile(std::string fileName);
 int GmshWriteFile(std::string fileName);
 int GmshFinalize();
 int GmshBatch();
+int GmshFLTK(int argc, char **argv);
 
 #endif

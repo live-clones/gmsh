@@ -38,6 +38,7 @@
 #include "OpenFile.h"
 #include "Win32Icon.h"
 #include "Options.h"
+#include "CommandLine.h"
 #include "Context.h"
 #include "StringUtils.h"
 #include "gl2ps.h"
@@ -279,7 +280,26 @@ FlGui *FlGui::_instance = 0;
 
 FlGui *FlGui::instance(int argc, char **argv)
 {
-  if(!_instance) _instance = new FlGui(argc, argv);
+  if(!_instance){
+    _instance = new FlGui(argc, argv);
+    // set all options in the new GUI
+    InitOptionsGUI(0);
+    // say welcome!
+    Msg::StatusBar(1, false, "Geometry");
+    Msg::StatusBar(2, false, "Gmsh %s", GetGmshVersion());
+    // log the following for bug reports
+    Msg::Info("-------------------------------------------------------");
+    Msg::Info("Gmsh version   : %s", GetGmshVersion());
+    Msg::Info("Build OS       : %s", GetGmshBuildOS());
+    Msg::Info("Build options  :%s", GetGmshBuildOptions());
+    Msg::Info("Build date     : %s", GetGmshBuildDate());
+    Msg::Info("Build host     : %s", GetGmshBuildHost());
+    Msg::Info("Packager       : %s", GetGmshPackager());
+    Msg::Info("Home directory : %s", CTX::instance()->homeDir.c_str());
+    Msg::Info("Launch date    : %s", Msg::GetLaunchDate().c_str());
+    Msg::Info("Command line   : %s", Msg::GetCommandLineArgs().c_str());
+    Msg::Info("-------------------------------------------------------");
+  }
   return _instance;
 }
 
