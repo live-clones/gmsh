@@ -31,7 +31,7 @@ void test()
   double x,y,z=-1;
   scanf ("%lf",&z);
   printf(" z = %g\n",z);
-  std::vector<SPoint3> v;
+  std::vector<SPoint3> v, pts;
   std::vector<double> d;
 
   for (int i=0;i<100;i++){
@@ -41,7 +41,7 @@ void test()
       v.push_back(SPoint3(4.3,x,y));
     }
   }
-  signedDistancesPointsTriangle (d,v,SPoint3(4,0,0),SPoint3(4,1,0),SPoint3(4,0,1));
+  signedDistancesPointsTriangle (d,v,pts,SPoint3(4,0,0),SPoint3(4,1,0),SPoint3(4,0,1));
   
   FILE *f = fopen ("chitte.pos","w");
   fprintf(f,"View \"\"{\n");
@@ -80,7 +80,7 @@ int main (int argc,char *argv[])
   
   printf("mesh read\n");
   
-  std::vector<SPoint3> POINTS;
+  std::vector<SPoint3> POINTS, dummy;
   std::vector<SVector3> NORMALS;
 
   for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++){
@@ -166,9 +166,9 @@ int main (int argc,char *argv[])
       //      printf("N1 %g %g %g N2 %g %g %g -- %g %g %g -- %g %g %g -- %g %g %g\n",N.x(),N.y(),N.z(),NN.x(),NN.y(),NN.z(),
       //             p1.x(),p1.y(),p1.z(),p2.x(),p2.y(),p2.z(),p3.x(),p3.y(),p3.z());
       if (dot(NN, N) > 0)
-        signedDistancesPointsTriangle (localdist,NODES,P1,P2,P3);
+        signedDistancesPointsTriangle (localdist,NODES,dummy,P1,P2,P3);
       else
-        signedDistancesPointsTriangle (localdist,NODES,P2,P1,P3);
+        signedDistancesPointsTriangle (localdist,NODES,dummy,P2,P1,P3);
 
       if(1){
         if (dist.empty())dist=localdist;
