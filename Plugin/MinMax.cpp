@@ -4,7 +4,6 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "MinMax.h"
-#include "shapeFunctions.h"
 #include "PViewOptions.h"
 
 StringXNumber MinMaxOptions_Number[] = {
@@ -23,7 +22,7 @@ std::string GMSH_MinMaxPlugin::getHelp() const
 {
   return "Plugin(MinMax) computes the min/max of a view.\n\n"
     "If `View' < 0, the plugin is run on the current view.\n\n"
-    "Plugin(MinMax) creates one new view.";
+    "Plugin(MinMax) creates two new views.";
 }
 
 int GMSH_MinMaxPlugin::getNbOptions() const
