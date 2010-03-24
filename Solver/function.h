@@ -44,7 +44,11 @@ class function {
   virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, const fullMatrix<double> &arg4, fullMatrix<double> &res) {throw;};
   virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, const fullMatrix<double> &arg4, const fullMatrix<double> &arg5, fullMatrix<double> &res) {throw;};
   public :
-  std::vector<const function*> dep;
+  std::vector<std::pair<int, const function*> > arguments;
+  void addArgument(const function *f, int iMap = 0) {
+    //iMap is the id of the dataCacheMap, e.g. on interfaces
+    arguments.push_back(std::pair<int, const function*>(iMap, f));
+  }
   virtual ~function(){};
   static void registerBindings(binding *b);
   virtual void call (dataCacheMap *m, fullMatrix<double> &res, std::vector<const fullMatrix<double>*> &depM);

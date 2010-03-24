@@ -13,7 +13,7 @@
 #include "Bindings.h"
 
 void function::call (dataCacheMap *m, fullMatrix<double> &res, std::vector<const fullMatrix<double>*> &depM) {
-  switch (dep.size()) {
+  switch (arguments.size()) {
     case 0 : call(m, res); break;
     case 1 : call(m, *depM[0], res); break;
     case 2 : call(m, *depM[0], *depM[1], res); break;
@@ -21,7 +21,7 @@ void function::call (dataCacheMap *m, fullMatrix<double> &res, std::vector<const
     case 4 : call(m, *depM[0], *depM[1], *depM[2], *depM[3], res); break;
     case 5 : call(m, *depM[0], *depM[1], *depM[2], *depM[3], *depM[4], res); break;
     case 6 : call(m, *depM[0], *depM[1], *depM[2], *depM[3], *depM[4], *depM[5], res); break;
-    default : Msg::Error("function are not implemented for %i arguments\n", dep.size());
+    default : Msg::Error("function are not implemented for %i arguments\n", arguments.size());
   }
 }
 function::function(int nbCol):_nbCol(nbCol){};
@@ -36,6 +36,30 @@ void dataCacheDouble::addMeAsDependencyOf (dataCacheDouble *newDep)
     newDep->_iDependOn.insert(*it);
   }
 }
+
+dataCacheDouble::dataCacheDouble(dataCacheMap &map,int nRowByPoint, int nCol):
+  _cacheMap(map),_value(nRowByPoint==0?1:nRowByPoint*map.getNbEvaluationPoints(),nCol)
+{
+    _nRowByPoint=nRowByPoint;
+    map.addDataCacheDouble(this);
+};
+
+dataCacheDouble::dataCacheDouble(dataCacheMap *m, function *f):
+  _cacheMap(*m),_value(m->getNbEvaluationPoints(),f->getNbCol())
+{
+  _nRowByPoint=1;
+  m->addDataCacheDouble(this);
+  _function = f;
+  _dependencies.resize ( _function->arguments.size());
+  _depM.resize (_function->arguments.size());
+  for (int i=0;i<_function->arguments.size();i++)
+    _dependencies[i] = &m[_function->arguments[i].first].get(_function->arguments[i].second,this);
+}
+
+void dataCacheDouble::resize() {
+  _value = fullMatrix<double>(_nRowByPoint==0?1:_nRowByPoint*_cacheMap.getNbEvaluationPoints(),_value.size2());
+}
+
 
 //dataCacheMap members
 
@@ -213,7 +237,7 @@ class functionStructuredGridFile : public function {
   }
   functionStructuredGridFile(const std::string filename, const function *coordFunction): function(1){
     std::ifstream input(filename.c_str());
-    dep.push_back(coordFunction);
+    addArgument(coordFunction);
     if(!input)
       Msg::Error("cannot open file : %s",filename.c_str());
     if(filename.substr(filename.size()-4,4)!=".bin") {
@@ -252,7 +276,9 @@ class functionLua : public function {
   functionLua (int nbCol, std::string luaFunctionName, std::vector<const function*> dependencies, lua_State *L)
     : function(nbCol), _luaFunctionName(luaFunctionName), _L(L)
   {
-    dep = dependencies;
+    for (std::vector<const function *>::iterator it = dependencies.begin(); it!= dependencies.end(); it++) {
+      addArgument(*it);
+    }
   }
 };
 #endif
@@ -304,28 +330,6 @@ void dataCacheMap::setNbEvaluationPoints(int nbEvaluationPoints) {
   }
 }
 
-dataCacheDouble::dataCacheDouble(dataCacheMap &map,int nRowByPoint, int nCol):
-  _cacheMap(map),_value(nRowByPoint==0?1:nRowByPoint*map.getNbEvaluationPoints(),nCol){
-    _nRowByPoint=nRowByPoint;
-    map.addDataCacheDouble(this);
-};
-
-dataCacheDouble::dataCacheDouble(dataCacheMap *m, function *f):
-  _cacheMap(*m),_value(m->getNbEvaluationPoints(),f->getNbCol())
-{
-  _nRowByPoint=1;
-  m->addDataCacheDouble(this);
-  _function = f;
-  _dependencies.resize ( _function->dep.size());
-  _depM.resize (_function->dep.size());
-  for (int i=0;i<_function->dep.size();i++)
-    _dependencies[i] = &m->get(_function->dep[i],this);
-}
-
-void dataCacheDouble::resize() {
-  _value = fullMatrix<double>(_nRowByPoint==0?1:_nRowByPoint*_cacheMap.getNbEvaluationPoints(),_value.size2());
-}
-
 //functionC
 class functionC : public function {
   void (*callback)(void);
@@ -370,7 +374,9 @@ class functionC : public function {
   functionC (std::string file, std::string symbol, int nbCol, std::vector<const function *> dependencies):
     function(nbCol)
   {
-    dep = (dependencies);
+    for (std::vector<const function *>::iterator it = dependencies.begin(); it!= dependencies.end(); it++) {
+      addArgument(*it);
+    }
     void *dlHandler;
     dlHandler = dlopen(file.c_str(),RTLD_NOW);
     callback = (void(*)(void))dlsym(dlHandler, symbol.c_str());
