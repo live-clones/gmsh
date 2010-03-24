@@ -487,7 +487,6 @@ static int luaCall(lua_State *L,tRet (*_f)(t0)) {
 };
 template < typename tRet>
 static int luaCall(lua_State *L,tRet (*_f)()) {
-  printf("top=%i\n",lua_gettop(L));
   if (lua_gettop(L)==1)
     lua_remove(L,1);
   luaStack<tRet>::push(L,(*(_f))());

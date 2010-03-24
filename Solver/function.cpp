@@ -10,57 +10,49 @@
 #if defined(HAVE_DLOPEN)
   #include "dlfcn.h"
 #endif
+#include "Bindings.h"
 
-class functionNew : public function{
-  protected :
-  std::vector<function*> dep;
-  virtual void call (fullMatrix<double> &res) {throw;}
-  virtual void call (const fullMatrix<double> &arg0, const fullMatrix<double> &res) {throw;};
-  virtual void call (const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &res) {throw;};
-  virtual void call (const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, fullMatrix<double> &res) {throw;};
-  virtual void call (const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, fullMatrix<double> &res) {throw;};
-  virtual void call (const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, const fullMatrix<double> &arg4, fullMatrix<double> &res) {throw;};
-  virtual void call (const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, const fullMatrix<double> &arg4, const fullMatrix<double> &arg5, fullMatrix<double> &res) {throw;};
-  public :
-  virtual void call (fullMatrix<double> &res, std::vector<const fullMatrix<double>*> &depM) {
-    switch (dep.size()) {
-      case 0 : call(res); break;
-      case 1 : call(*depM[0], res); break;
-      case 2 : call(*depM[0], *depM[1], res); break;
-      case 3 : call(*depM[0], *depM[1], *depM[2], res); break;
-      case 4 : call(*depM[0], *depM[1], *depM[2], *depM[3], res); break;
-      case 5 : call(*depM[0], *depM[1], *depM[2], *depM[3], *depM[4], res); break;
-      case 6 : call(*depM[0], *depM[1], *depM[2], *depM[3], *depM[4], *depM[5], res); break;
-      default : Msg::Error("function are not implemented for %i arguments\n", dep.size());
-    }
+void function::call (dataCacheMap *m, fullMatrix<double> &res, std::vector<const fullMatrix<double>*> &depM) {
+  switch (dep.size()) {
+    case 0 : call(m, res); break;
+    case 1 : call(m, *depM[0], res); break;
+    case 2 : call(m, *depM[0], *depM[1], res); break;
+    case 3 : call(m, *depM[0], *depM[1], *depM[2], res); break;
+    case 4 : call(m, *depM[0], *depM[1], *depM[2], *depM[3], res); break;
+    case 5 : call(m, *depM[0], *depM[1], *depM[2], *depM[3], *depM[4], res); break;
+    case 6 : call(m, *depM[0], *depM[1], *depM[2], *depM[3], *depM[4], *depM[5], res); break;
+    default : Msg::Error("function are not implemented for %i arguments\n", dep.size());
   }
-  int _nbCol;
-  class data : public dataCacheDouble {
-    functionNew *_function;
-    std::vector<dataCacheDouble *> _dependencies;
-    std::vector<const fullMatrix<double> *> _depM;
-    public:
-    data(functionNew *f, dataCacheMap *m):
-      dataCacheDouble(*m,1,f->_nbCol)
-    {
-      _function = f;
-      _dependencies.resize ( _function->dep.size());
-      _depM.resize (_function->dep.size());
-      for (int i=0;i<_function->dep.size();i++)
-        _dependencies[i] = &m->get(_function->dep[i],this);
-    }
-    void _eval()
-    {
-      for(int i=0;i<_dependencies.size(); i++)
-        _depM[i] = &(*_dependencies[i])();
-      _function->call(_value, _depM);
-    }
-  };
-  dataCacheDouble *newDataCache(dataCacheMap *m)
+}
+class function::data : public dataCacheDouble {
+  function *_function;
+  dataCacheMap *_m;
+  std::vector<dataCacheDouble *> _dependencies;
+  std::vector<const fullMatrix<double> *> _depM;
+  public:
+  data(function *f, dataCacheMap *m):
+    dataCacheDouble(*m,1,f->_nbCol)
   {
-    return new data(this, m);
+    _function = f;
+    _m = m;
+    _m->getElement(this);
+    _dependencies.resize ( _function->dep.size());
+    _depM.resize (_function->dep.size());
+    for (int i=0;i<_function->dep.size();i++)
+      _dependencies[i] = &m->get(_function->dep[i],this);
+  }
+  void _eval()
+  {
+    for(int i=0;i<_dependencies.size(); i++)
+      _depM[i] = &(*_dependencies[i])();
+    _function->call(_m, _value, _depM);
   }
 };
+function::function(int nbCol):_nbCol(nbCol){};
+dataCacheDouble *function::newDataCache(dataCacheMap *m)
+{
+  return new data(this, m);
+}
 
 // dataCache members
 dataCache::dataCache(dataCacheMap *cacheMap) : _valid(false) {
@@ -78,31 +70,6 @@ void dataCache::addMeAsDependencyOf (dataCache *newDep)
   }
 }
 
-// function static members
-
-std::map<std::string,function*> function::_allFunctions;
-
-bool function::add(const std::string functionName, function *f)
-{
-  if(_allFunctions.find(functionName)!=_allFunctions.end())
-    return false;
-  _allFunctions[functionName]=f;
-  return true;
-}
-
-function *function::get(std::string functionName, bool acceptNull)
-{
-  std::map<std::string, function*>::iterator it=_allFunctions.find(functionName);
-  if (it==_allFunctions.end()) {
-    if (acceptNull)
-      return NULL;
-    else{
-      Msg::Error("unknown function : '%s'\n",functionName.c_str());
-      throw;
-    }
-  }
-  return it->second;
-}
 //dataCacheMap members
 
 dataCacheElement &dataCacheMap::getElement(dataCache *caller) 
@@ -144,10 +111,6 @@ dataCacheDouble &dataCacheMap::getNormals(dataCacheDouble *caller)
   return *_normals;
 }
 
-
-
-
-
 dataCacheDouble &dataCacheMap::provideSolution(int nbFields)
 {
   _solution = new providedDataDouble(*this,1, nbFields);
@@ -178,38 +141,48 @@ dataCacheMap::~dataCacheMap()
 
 // now some example of functions
 
+// constant values copied over each line
+class functionConstant : public function {
+  public:
+  fullMatrix<double> _source;
+  void call(dataCacheMap *m, fullMatrix<double> &val) {
+    for(int i=0;i<val.size1();i++)
+      for(int j=0;j<_source.size1();j++)
+        val(i,j)=_source(j,0);
+  }
+  functionConstant(std::vector<double> source):function(source.size()){
+    _source = fullMatrix<double>(source.size(),1);
+    for(size_t i=0; i<source.size(); i++){
+      _source(i,0) = source[i];
+    }
+  }
+};
+
+function *functionConstantNew(double v) {
+  std::vector<double> vec(1);
+  vec[0]=v;
+  return new functionConstant(vec);
+}
+
+function *functionConstantNew(const std::vector<double> &v) {
+  return new functionConstant(v);
+}
+
 // get XYZ coordinates
 class functionCoordinates : public function {
   static functionCoordinates *_instance;
-  class data : public dataCacheDouble{
-    dataCacheElement &_element;
-    dataCacheDouble &_uvw;
-    int count;
-    public:
-    data(dataCacheMap *m) : 
-      dataCacheDouble(*m, 1,3),
-      _element(m->getElement(this)), _uvw(m->getParametricCoordinates(this))
-    {
+  void call (dataCacheMap *m, fullMatrix<double> &xyz){
+    const fullMatrix<double> &uvw = m->getParametricCoordinates(NULL)();
+    for(int i = 0; i < uvw.size1(); i++){
+      SPoint3 p;
+      m->getElement(NULL)()->pnt(uvw(i, 0), uvw(i, 1), uvw(i, 2), p);
+      xyz(i, 0) = p.x();
+      xyz(i, 1) = p.y();
+      xyz(i, 2) = p.z();
     }
-    void _eval()
-    {
-      for(int i = 0; i < _uvw().size1(); i++){
-        SPoint3 p;
-        _element()->pnt(_uvw(i, 0), _uvw(i, 1), _uvw(i, 2), p);
-        _value(i, 0) = p.x();
-        _value(i, 1) = p.y();
-        _value(i, 2) = p.z();
-      }
-    }
-    ~data(){
-    }
-  };
-  functionCoordinates(){};// constructor is private only 1 instance can exists, call get to access the instance
- public:
-  dataCacheDouble *newDataCache(dataCacheMap *m)
-  {
-    return new data(m);
   }
+  functionCoordinates():function(3){};// constructor is private only 1 instance can exists, call get to access the instance
+ public:
   static function *get() {
     if(!_instance)
       _instance = new functionCoordinates();
@@ -220,11 +193,10 @@ functionCoordinates *functionCoordinates::_instance = NULL;
 
 class functionSolution : public function {
   static functionSolution *_instance;
-  functionSolution(){};// constructor is private only 1 instance can exists, call get to access the instance
+  functionSolution():function(0){};// constructor is private only 1 instance can exists, call get to access the instance
  public:
-  dataCacheDouble *newDataCache(dataCacheMap *m)
-  {
-    return &m->getSolution(NULL);
+  void call(dataCacheMap *m, fullMatrix<double> &sol) {
+    sol.setAsProxy(m->getSolution(NULL)());
   }
   static function *get() {
     if(!_instance)
@@ -236,11 +208,10 @@ functionSolution *functionSolution::_instance = NULL;
 
 class functionSolutionGradient : public function {
   static functionSolutionGradient *_instance;
-  functionSolutionGradient(){};// constructor is private only 1 instance can exists, call get to access the instance
+  functionSolutionGradient():function(0){};// constructor is private only 1 instance can exists, call get to access the instance
  public:
-  dataCacheDouble *newDataCache(dataCacheMap *m)
-  {
-    return &m->getSolutionGradient(NULL);
+  void call(dataCacheMap *m, fullMatrix<double> &sol) {
+    sol.setAsProxy(m->getSolutionGradient(NULL)());
   }
   static function *get() {
     if(!_instance)
@@ -252,53 +223,37 @@ functionSolutionGradient *functionSolutionGradient::_instance = NULL;
 
 class functionStructuredGridFile : public function {
   public:
-  class data;
-  const function *_coordFunction;
   int n[3];
   double d[3],o[3];
   double get(int i,int j, int k){
     return v[(i*n[1]+j)*n[2]+k];
   }
   double *v;
-  class data : public dataCacheDouble{
-    dataCacheDouble &coord;
-    functionStructuredGridFile *_fun;
-    public:
-    data(functionStructuredGridFile *fun, dataCacheMap *m):
-      dataCacheDouble(*m,1,1),
-      coord(m->get(fun->_coordFunction,this))
-    {
-      _fun=fun;
-    }
-    void _eval(){
-      for(int pt=0;pt<_value.size1();pt++){
-        double xi[3];
-        int id[3];
-        for(int i=0;i<3;i++){
-          id[i]=(int)((coord(pt,i)-_fun->o[i])/_fun->d[i]);
+  void call(dataCacheMap *m, const fullMatrix<double> &coord, fullMatrix<double> &val){
+    for(int pt=0;pt<val.size1();pt++){
+      double xi[3];
+      int id[3];
+      for(int i=0;i<3;i++){
+        id[i]=(int)((coord(pt,i)-o[i])/d[i]);
         int a=id[i];
-          id[i]=std::max(0,std::min(_fun->n[i]-1,id[i]));
-          xi[i]=(coord(pt,i)-_fun->o[i]-id[i]*_fun->d[i])/_fun->d[i];
-          xi[i]=std::min(1.,std::max(0.,xi[i]));
-        }
-        _value(pt,0) =
-           _fun->get(id[0]   ,id[1]   ,id[2]   )*(1-xi[0])*(1-xi[1])*(1-xi[2])
-          +_fun->get(id[0]   ,id[1]   ,id[2]+1 )*(1-xi[0])*(1-xi[1])*(  xi[2])
-          +_fun->get(id[0]   ,id[1]+1 ,id[2]   )*(1-xi[0])*(  xi[1])*(1-xi[2])
-          +_fun->get(id[0]   ,id[1]+1 ,id[2]+1 )*(1-xi[0])*(  xi[1])*(  xi[2])
-          +_fun->get(id[0]+1 ,id[1]   ,id[2]   )*(  xi[0])*(1-xi[1])*(1-xi[2])
-          +_fun->get(id[0]+1 ,id[1]   ,id[2]+1 )*(  xi[0])*(1-xi[1])*(  xi[2])
-          +_fun->get(id[0]+1 ,id[1]+1 ,id[2]   )*(  xi[0])*(  xi[1])*(1-xi[2])
-          +_fun->get(id[0]+1 ,id[1]+1 ,id[2]+1 )*(  xi[0])*(  xi[1])*(  xi[2]);
+        id[i]=std::max(0,std::min(n[i]-1,id[i]));
+        xi[i]=(coord(pt,i)-o[i]-id[i]*d[i])/d[i];
+        xi[i]=std::min(1.,std::max(0.,xi[i]));
       }
+      val(pt,0) =
+        get(id[0]   ,id[1]   ,id[2]   )*(1-xi[0])*(1-xi[1])*(1-xi[2])
+        +get(id[0]   ,id[1]   ,id[2]+1 )*(1-xi[0])*(1-xi[1])*(  xi[2])
+        +get(id[0]   ,id[1]+1 ,id[2]   )*(1-xi[0])*(  xi[1])*(1-xi[2])
+        +get(id[0]   ,id[1]+1 ,id[2]+1 )*(1-xi[0])*(  xi[1])*(  xi[2])
+        +get(id[0]+1 ,id[1]   ,id[2]   )*(  xi[0])*(1-xi[1])*(1-xi[2])
+        +get(id[0]+1 ,id[1]   ,id[2]+1 )*(  xi[0])*(1-xi[1])*(  xi[2])
+        +get(id[0]+1 ,id[1]+1 ,id[2]   )*(  xi[0])*(  xi[1])*(1-xi[2])
+        +get(id[0]+1 ,id[1]+1 ,id[2]+1 )*(  xi[0])*(  xi[1])*(  xi[2]);
     }
-  };
-  dataCacheDouble *newDataCache(dataCacheMap* m) {
-    return new data(this,m);
   }
-  functionStructuredGridFile(const std::string filename, const function *coordFunction){
-    _coordFunction=coordFunction;
+  functionStructuredGridFile(const std::string filename, const function *coordFunction): function(1){
     std::ifstream input(filename.c_str());
+    dep.push_back(coordFunction);
     if(!input)
       Msg::Error("cannot open file : %s",filename.c_str());
     if(filename.substr(filename.size()-4,4)!=".bin") {
@@ -316,94 +271,52 @@ class functionStructuredGridFile : public function {
       v = new double[nt];
       input.read((char *)v, nt * sizeof(double));
     }
-    static int c=0;
-    std::ostringstream oss;
-    oss<<"FunctionStructured"<<c++;
-    _name = oss.str();
-    function::add(_name,this);
   }
   ~functionStructuredGridFile(){
     delete []v;
   }
 };
 
-
-// constant values copied over each line
-class functionConstant::data : public dataCacheDouble {
- const functionConstant *_function;
+#ifdef HAVE_LUA
+class functionLua : public function {
+  lua_State *_L;
+  std::string _luaFunctionName;
  public:
- data(const functionConstant * function,dataCacheMap *m):
-   dataCacheDouble(*m,1,function->_source.size1()){
-     _function = function;
-   }
- void _eval() {
-   for(int i=0;i<_value.size1();i++)
-     for(int j=0;j<_function->_source.size1();j++)
-       _value(i,j)=_function->_source(j,0);
- }
-};
-dataCacheDouble *functionConstant::newDataCache(dataCacheMap *m)
-{
- return new data(this,m);
-}
-
-functionConstant::functionConstant(const fullMatrix<double> *source){
- _source = *source;
-  static int c=0;
-  std::ostringstream oss;
-  oss<<"FunctionConstant_"<<c++;
-  _name = oss.str();
-  function::add(_name,this);
-}
-
-functionConstant::functionConstant(std::vector<double> source){
-  _source = fullMatrix<double>(source.size(),1);
-  for(size_t i=0; i<source.size(); i++){
-    _source(i,0) = source[i];
+  void call (dataCacheMap *m, fullMatrix<double> &res, std::vector<const fullMatrix<double>*> &depM) {
+    lua_getfield(_L, LUA_GLOBALSINDEX, _luaFunctionName.c_str());
+    for (int i=0;i< depM.size(); i++)
+      luaStack<const fullMatrix<double>*>::push(_L, depM[i]);
+    luaStack<const fullMatrix<double>*>::push(_L, &res);
+    lua_call(_L, depM.size()+1, 0);
   }
-  static int c=0;
-  std::ostringstream oss;
-  oss<<"FunctionConstant_"<<c++;
-  _name = oss.str();
-  function::add(_name,this);
-}
+  functionLua (int nbCol, std::string luaFunctionName, std::vector<const function*> dependencies, lua_State *L)
+    : function(nbCol), _luaFunctionName(luaFunctionName), _L(L)
+  {
+    dep = dependencies;
+  }
+};
+#endif
 
 
 // function that enables to interpolate a DG solution using
 // geometrical search in a mesh 
 
-functionMesh2Mesh::functionMesh2Mesh(dgDofContainer *dofc) 
-  : _dofContainer(dofc) 
-{
-  static int c=0;
-  std::ostringstream oss;
-  oss<<"FunctionMesh2Mesh_"<<c++;
-  _name = oss.str();
-  function::add(_name,this);
-}
-
-class functionMesh2Mesh::data : public dataCacheDouble {
-  dgDofContainer  *_dofContainer;
-  dataCacheDouble &xyz;
+class functionMesh2Mesh : public function {
+  dgDofContainer *_dofContainer;
 public:
-  data(dataCacheMap &m, dgDofContainer *sys) :
-    _dofContainer(sys), 
-    xyz(m.get(functionCoordinates::get(),this)),
-    dataCacheDouble(m,1, sys->getNbFields())
-  {
-  }
-  void _eval() {
-    int nP =xyz().size1();
-    _value.setAll(0.0);
+  functionMesh2Mesh(dgDofContainer *dofc) : function(dofc->getNbFields()), _dofContainer(dofc){}
+  void call( dataCacheMap *m, const fullMatrix<double> &xyz, fullMatrix<double> &val) {
+    int nP =xyz.size1();
+    val.setAll(0.0);
     double fs[256];
     fullMatrix<double> solEl;
-    GModel *m = _dofContainer->getGroups()->getModel();
-    for (int i=0;i<_value.size1();i++){
+    GModel *model = _dofContainer->getGroups()->getModel();
+    for (int i=0;i<val.size1();i++){
       const double x = xyz(i,0);
       const double y = xyz(i,1);
       const double z = xyz(i,2);
       SPoint3 p(x,y,z);
-      MElement *e = m->getMeshElementByCoord(p);
+      MElement *e = model->getMeshElementByCoord(p);
       int ig,index;
       _dofContainer->getGroups()->find (e,ig,index);
       dgGroupOfElements *group =  _dofContainer->getGroups()->getElementGroup(ig);      
@@ -411,22 +324,17 @@ public:
       e->xyz2uvw (X,U);
       group->getFunctionSpace().f(U[0],U[1],U[2],fs);      
       fullMatrix<double> &sol = _dofContainer->getGroupProxy(ig);
-      solEl.setAsProxy(sol,index*_dofContainer->getNbFields(),_dofContainer->getNbFields());
+      solEl.setAsProxy(sol,index*val.size2(),val.size2());
       int fSize = group->getNbNodes();
-      for (int k=0;k<_dofContainer->getNbFields();k++){
-        _value(i,k) = 0.0;      
+      for (int k=0;k<val.size2();k++){
+        val(i,k) = 0.0; 	
         for (int j=0;j<fSize;j++){
-          _value(i,k) += solEl(j,k)*fs[j];
+          val(i,k) += solEl(j,k)*fs[j];
         }
       }
     }
   }
 };
-
-dataCacheDouble *functionMesh2Mesh::newDataCache(dataCacheMap *m)
-{
-  return new data(*m,_dofContainer);
-}
 
 void dataCacheMap::setNbEvaluationPoints(int nbEvaluationPoints) {
   _nbEvaluationPoints = nbEvaluationPoints;
@@ -448,94 +356,61 @@ void dataCacheDouble::resize() {
 //functionC
 class functionC : public function {
   void (*callback)(void);
-  std::vector<const function*> _dependenciesF;
-  int _nbCol;
-  class data : public dataCacheDouble{
-    const functionC *_function;
-    std::vector<dataCacheDouble *> _dependencies;
-    public:
-    data(const functionC *f, dataCacheMap *m):
-      dataCacheDouble(*m,1,f->_nbCol)
-    {
-      _function = f;
-      _dependencies.resize ( _function->_dependenciesF.size());
-      for (int i=0;i<_function->_dependenciesF.size();i++)
-        _dependencies[i] = &m->get(_function->_dependenciesF[i],this);
-
-    }
-    void _eval()
-    {
-      switch (_dependencies.size()) {
-        case 0 : 
-          ((void (*)(fullMatrix<double> &))(_function->callback))(_value);
-          break;
-        case 1 : 
-          ((void (*)(fullMatrix<double> &, const fullMatrix<double>&))
-            (_function->callback)) (_value,(*_dependencies[0])());
-          break;
-        case 2 : 
-          ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double> &))
-            (_function->callback)) (_value,(*_dependencies[0])(), (*_dependencies[1])());
-          break;
-        case 3 : 
-          ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&))
-            (_function->callback)) (_value,(*_dependencies[0])(),(*_dependencies[1])(),(*_dependencies[2])());
-          break;
-        case 4 : 
-          ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&,
-              const fullMatrix<double>&))
-            (_function->callback)) (_value,(*_dependencies[0])(),(*_dependencies[1])(),(*_dependencies[2])(),(*_dependencies[3])());
-          break;
-        case 5 : 
-          ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&,
-              const fullMatrix<double>&, const fullMatrix<double>&))
-            (_function->callback)) (_value,(*_dependencies[0])(),(*_dependencies[1])(),(*_dependencies[2])(),(*_dependencies[3])(),
-              (*_dependencies[4])());
-          break;
-        case 6 : 
-          ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&,
-              const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&))
-            (_function->callback)) (_value,(*_dependencies[0])(),(*_dependencies[1])(),(*_dependencies[2])(),(*_dependencies[3])(),
-              (*_dependencies[4])(), (*_dependencies[5])());
-          break;
-        default :
-          Msg::Error("C callback not implemented for %i argurments", _dependencies.size());
-      }
-    }
-  };
   public:
+  void call (dataCacheMap *m, fullMatrix<double> &val, std::vector<const fullMatrix<double>*> &depM) {
+    switch (depM.size()) {
+      case 0 : 
+        ((void (*)(fullMatrix<double> &))(callback))(val);
+        break;
+      case 1 : 
+        ((void (*)(fullMatrix<double> &, const fullMatrix<double>&))
+         (callback)) (val, *depM[0]);
+        break;
+      case 2 : 
+        ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double> &))
+         (callback)) (val, *depM[0], *depM[1]);
+        break;
+      case 3 : 
+        ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&))
+         (callback)) (val, *depM[0], *depM[1], *depM[2]);
+        break;
+      case 4 : 
+        ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&,
+                   const fullMatrix<double>&))
+         (callback)) (val, *depM[0], *depM[1], *depM[2], *depM[3]);
+        break;
+      case 5 : 
+        ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&,
+                   const fullMatrix<double>&, const fullMatrix<double>&))
+         (callback)) (val, *depM[0], *depM[1], *depM[2], *depM[3], *depM[4]);
+        break;
+      case 6 : 
+        ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&,
+                   const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&))
+         (callback)) (val, *depM[0], *depM[1], *depM[2], *depM[3], *depM[4], *depM[5]);
+        break;
+      default :
+        Msg::Error("C callback not implemented for %i argurments", depM.size());
+    }
+  }
 #if defined(HAVE_DLOPEN)
   functionC (std::string file, std::string symbol, int nbCol, std::vector<const function *> dependencies):
-      _dependenciesF(dependencies),_nbCol(nbCol)
+    function(nbCol)
   {
+    dep = (dependencies);
     void *dlHandler;
     dlHandler = dlopen(file.c_str(),RTLD_NOW);
     callback = (void(*)(void))dlsym(dlHandler, symbol.c_str());
     if(!callback) 
       Msg::Error("cannot get the callback to the compiled C function");
-
-    static int c=0;
-    std::ostringstream oss;
-    oss<<"cFunction_"<<c++;
-    _name = oss.str();
-    function::add(_name,this);
   }
 #endif
-  dataCacheDouble *newDataCache(dataCacheMap *m)
-  {
-    return new data(this,m);
-  }
 };
-
-
-#include "Bindings.h"
 
 void function::registerBindings(binding *b){
   classBinding *cb = b->addClass<function>("function");
   cb->setDescription("A generic function that can be evaluated on a set of points. Functions can call other functions and their values are cached so that if two different functions call the same function f, f is only evaluated once.");
   methodBinding *mb;
-  mb = cb->addMethod("getName",&function::getName);
-  mb->setDescription("Return the string which identifies this function.");
 
   cb = b->addClass<functionConstant>("functionConstant");
   cb->setDescription("A constant (scalar or vector) function");
@@ -567,7 +442,7 @@ void function::registerBindings(binding *b){
   cb->setDescription("A function to interpolate through data given on a structured grid");
   mb = cb->setConstructor<functionStructuredGridFile,std::string, const function*>();
   mb->setArgNames("fileName","coordinateFunction",NULL);
-  mb->setDescription("Tri-linearly interpolate through data in file 'fileName' at coordinate given by 'coordinateFunction'.\nThe file format is :\nx0 y0 z0\ndx dy dz\nnx ny nz\nv(0,0,0) v(0,0,1) v(0 0 2) ..."); 
+  mb->setDescription("Tri-linearly interpolate through data in file 'fileName' at coordinate given by 'coordinateFunction'.\nThe file format is :\nx0 y0 z0\ndx dy dz\nnx ny nz\nv(0,0,0) v(0,0,1) v(0 0 2) ...");
 
   cb = b->addClass<functionMesh2Mesh>("functionMesh2Mesh");
   cb->setDescription("A function that can be used to interpolate into a given mesh");
@@ -584,5 +459,13 @@ void function::registerBindings(binding *b){
   mb->setDescription("  ");
   cb->setParentClass<function>();
 #endif
-}
 
+#if defined (HAVE_LUA)
+  cb= b->addClass<functionLua>("functionLua");
+  cb->setDescription("A function (see the 'function' documentation entry) defined in LUA.");
+  mb = cb->setConstructor<functionLua,int,std::string,std::vector<const function*>,lua_State*>();
+  mb->setArgNames("d", "f", "dep", NULL);
+  mb->setDescription("A new functionLua which evaluates a vector of dimension 'd' using the lua function 'f'. This function can take other functions as arguments listed by the 'dep' vector.");
+  cb->setParentClass<function>();
+#endif
+}

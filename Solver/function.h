@@ -126,20 +126,23 @@ class dataCacheDouble : public dataCache {
 // An abstract interface to functions 
 // more explanation at the head of this file
 class function {
- private:
-  static std::map<std::string, function*> _allFunctions;
- protected:
-  std::string _name;
- public:
-  static bool add(const std::string functionName, function *f);
-  static function *get(std::string functionName, bool acceptNull=false);
-
-  virtual dataCacheDouble *newDataCache(dataCacheMap *m) =0;
-
-  inline  std::string getName()const {return _name;}
-
+  int _nbCol;
+  protected :
+  std::vector<const function*> dep;
+  virtual void call (dataCacheMap *m, fullMatrix<double> &res) {throw;}
+  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &res) {throw;};
+  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &res) {throw;};
+  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, fullMatrix<double> &res) {throw;};
+  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, fullMatrix<double> &res) {throw;};
+  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, const fullMatrix<double> &arg4, fullMatrix<double> &res) {throw;};
+  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, const fullMatrix<double> &arg4, const fullMatrix<double> &arg5, fullMatrix<double> &res) {throw;};
+  public :
   virtual ~function(){};
   static void registerBindings(binding *b);
+  virtual void call (dataCacheMap *m, fullMatrix<double> &res, std::vector<const fullMatrix<double>*> &depM);
+  class data;
+  function(int nbCol);
+  dataCacheDouble *newDataCache(dataCacheMap *m);
 };
 
 // A special node in the dependency tree for which all the leafs
@@ -209,20 +212,8 @@ class dataCacheMap {
   inline int getNbEvaluationPoints(){return _nbEvaluationPoints;}
   ~dataCacheMap();
 };
-class functionConstant : public function {
-  public:
-  class data ;
-  fullMatrix<double> _source;
-  dataCacheDouble *newDataCache(dataCacheMap *m);
-  functionConstant(const fullMatrix<double> *source);
-  functionConstant(std::vector<double> source);
-};
 
-class functionMesh2Mesh : public function {
-  dgDofContainer *_dofContainer;
-public:
-  class data ;
-  dataCacheDouble *newDataCache(dataCacheMap *m);
-  functionMesh2Mesh(dgDofContainer *dofc) ;
-};
+function *functionConstantNew(const std::vector<double>&);
+function *functionConstantNew(double);
+
 #endif

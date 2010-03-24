@@ -104,6 +104,7 @@ static void reportErrors(lua_State *L, int status)
   if ( status!=0 ) {
     std::cerr << "-- " << lua_tostring(L, -1) << std::endl;
     lua_pop(L, 1); // remove error message
+    printf("exit now\n");
     exit(1); //we need this for automatic test
   }
 }
@@ -368,7 +369,6 @@ binding::binding(){
   dgFunctionIntegrator::registerBindings(this);
   fullMatrix<double>::registerBindings(this);
   function::registerBindings(this);
-  functionLua::registerBindings(this);
   gmshOptions::registerBindings(this);
   Msg::registerBindings(this);
   linearSystemCSRGmm<double>::registerBindings(this);

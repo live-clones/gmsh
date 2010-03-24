@@ -24,9 +24,7 @@ class dgConservationLawShallowWater1d : public dgConservationLaw {
   dgConservationLawShallowWater1d() 
   {
     _nbf = 2; // eta u
-    fullMatrix<double> zero(1,1);
-    zero(0,0) = 0.0;
-    functionConstant *fzero = new functionConstant(&zero);
+    function *fzero = functionConstantNew(0.);
     _pressure = fzero;
     _celerity = fzero;
     _bathymetry = fzero;
