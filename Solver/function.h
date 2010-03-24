@@ -29,6 +29,28 @@ class dgDofContainer;
 // a node in the dependency tree. The usefull field is _dependOnMe which is the set of every other nodes that depend on me. When the value of this node change all nodes depending on this one are marked as "invalid" and will be recomputed the next time their data are accessed. To be able to maintain _dependOnMe up to date when a new node is inserted in the tree, we need _iDependOn list. So we do not really store a tree but instead each node contain a complete list of all it's parents and all it's children (and the parents of the parents of ... of its parents and the children of the children of ... of it's children). This way invalidate all the dependencies of a node is really fast and does not involve a complex walk accross the tree structure.
 
 class function;
+class dataCacheDouble;
+
+// An abstract interface to functions 
+// more explanation at the head of this file
+class function {
+  int _nbCol;
+  protected :
+  virtual void call (dataCacheMap *m, fullMatrix<double> &res) {throw;}
+  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &res) {throw;};
+  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &res) {throw;};
+  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, fullMatrix<double> &res) {throw;};
+  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, fullMatrix<double> &res) {throw;};
+  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, const fullMatrix<double> &arg4, fullMatrix<double> &res) {throw;};
+  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, const fullMatrix<double> &arg4, const fullMatrix<double> &arg5, fullMatrix<double> &res) {throw;};
+  public :
+  std::vector<const function*> dep;
+  virtual ~function(){};
+  static void registerBindings(binding *b);
+  virtual void call (dataCacheMap *m, fullMatrix<double> &res, std::vector<const fullMatrix<double>*> &depM);
+  function(int nbCol);
+  inline int getNbCol()const {return _nbCol;}
+};
 
 // dataCache when the value is a  matrix of double 
 // the user should provide the number of rows by evaluating points and the number of columns
@@ -61,16 +83,21 @@ public :
     return _iDependOn.size();
   }
 
-
-
-
+  std::vector<dataCacheDouble*> _dependencies;
+  std::vector<const fullMatrix<double>*> _depM;
 
   int _nRowByPoint;
   dataCacheMap &_cacheMap;
+  function *_function;
  protected:
   fullMatrix<double> _value;
   // do the actual computation and put the result into _value
-  virtual void _eval()=0;
+  virtual void _eval()
+  {
+    for(int i=0;i<_dependencies.size(); i++)
+      _depM[i] = &(*_dependencies[i])();
+    _function->call(&_cacheMap, _value, _depM);
+  }
  public:
   //set the value (without computing it by _eval) and invalidate the dependencies
   inline void set(const fullMatrix<double> &mat) {
@@ -123,30 +150,10 @@ public :
   }
   void resize();
   dataCacheDouble(dataCacheMap &map,int nRowByPoints, int nCol);
+  dataCacheDouble(dataCacheMap *,function *f);
   virtual ~dataCacheDouble(){};
 };
 
-// An abstract interface to functions 
-// more explanation at the head of this file
-class function {
-  int _nbCol;
-  protected :
-  std::vector<const function*> dep;
-  virtual void call (dataCacheMap *m, fullMatrix<double> &res) {throw;}
-  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &res) {throw;};
-  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &res) {throw;};
-  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, fullMatrix<double> &res) {throw;};
-  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, fullMatrix<double> &res) {throw;};
-  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, const fullMatrix<double> &arg4, fullMatrix<double> &res) {throw;};
-  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, const fullMatrix<double> &arg4, const fullMatrix<double> &arg5, fullMatrix<double> &res) {throw;};
-  public :
-  virtual ~function(){};
-  static void registerBindings(binding *b);
-  virtual void call (dataCacheMap *m, fullMatrix<double> &res, std::vector<const fullMatrix<double>*> &depM);
-  class data;
-  function(int nbCol);
-  dataCacheDouble *newDataCache(dataCacheMap *m);
-};
 
 // more explanation at the head of this file
 class dataCacheMap {

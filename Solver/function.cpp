@@ -24,35 +24,7 @@ void function::call (dataCacheMap *m, fullMatrix<double> &res, std::vector<const
     default : Msg::Error("function are not implemented for %i arguments\n", dep.size());
   }
 }
-class function::data : public dataCacheDouble {
-  function *_function;
-  dataCacheMap *_m;
-  std::vector<dataCacheDouble *> _dependencies;
-  std::vector<const fullMatrix<double> *> _depM;
-  public:
-  data(function *f, dataCacheMap *m):
-    dataCacheDouble(*m,1,f->_nbCol)
-  {
-    _function = f;
-    _m = m;
-    _dependencies.resize ( _function->dep.size());
-    _depM.resize (_function->dep.size());
-    for (int i=0;i<_function->dep.size();i++)
-      _dependencies[i] = &m->get(_function->dep[i],this);
-  }
-  void _eval()
-  {
-    for(int i=0;i<_dependencies.size(); i++)
-      _depM[i] = &(*_dependencies[i])();
-    _function->call(_m, _value, _depM);
-  }
-};
 function::function(int nbCol):_nbCol(nbCol){};
-dataCacheDouble *function::newDataCache(dataCacheMap *m)
-{
-  return new data(this, m);
-}
-
 
 void dataCacheDouble::addMeAsDependencyOf (dataCacheDouble *newDep)
 {
@@ -78,7 +50,7 @@ dataCacheDouble &dataCacheMap::get(const function *f, dataCacheDouble *caller)
 {
   dataCacheDouble *&r= _cacheDoubleMap[f];
   if(r==NULL)
-    r = const_cast<function*>(f)->newDataCache(this);
+    r = new dataCacheDouble(this, const_cast<function*>(f));
   return returnDataCacheDouble(r,caller);
 }
 dataCacheDouble &dataCacheMap::getSolution(dataCacheDouble *caller) 
@@ -337,6 +309,19 @@ dataCacheDouble::dataCacheDouble(dataCacheMap &map,int nRowByPoint, int nCol):
     _nRowByPoint=nRowByPoint;
     map.addDataCacheDouble(this);
 };
+
+dataCacheDouble::dataCacheDouble(dataCacheMap *m, function *f):
+  _cacheMap(*m),_value(m->getNbEvaluationPoints(),f->getNbCol())
+{
+  _nRowByPoint=1;
+  m->addDataCacheDouble(this);
+  _function = f;
+  _dependencies.resize ( _function->dep.size());
+  _depM.resize (_function->dep.size());
+  for (int i=0;i<_function->dep.size();i++)
+    _dependencies[i] = &m->get(_function->dep[i],this);
+}
+
 void dataCacheDouble::resize() {
   _value = fullMatrix<double>(_nRowByPoint==0?1:_nRowByPoint*_cacheMap.getNbEvaluationPoints(),_value.size2());
 }
