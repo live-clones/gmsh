@@ -53,16 +53,12 @@ dataCacheDouble *function::newDataCache(dataCacheMap *m)
   return new data(this, m);
 }
 
-// dataCache members
-dataCache::dataCache(dataCacheMap *cacheMap) : _valid(false) {
-  cacheMap->addDataCache(this); //this dataCache can be deleted when the dataCacheMap is deleted
-}
 
-void dataCache::addMeAsDependencyOf (dataCache *newDep)
+void dataCacheDouble::addMeAsDependencyOf (dataCacheDouble *newDep)
 {
   _dependOnMe.insert(newDep);
   newDep->_iDependOn.insert(this);
-  for(std::set<dataCache*>::iterator it = _iDependOn.begin();
+  for(std::set<dataCacheDouble*>::iterator it = _iDependOn.begin();
       it != _iDependOn.end(); it++) {
     (*it)->_dependOnMe.insert(newDep);
     newDep->_iDependOn.insert(*it);
@@ -71,14 +67,14 @@ void dataCache::addMeAsDependencyOf (dataCache *newDep)
 
 //dataCacheMap members
 
-static dataCacheDouble &returnDataCacheDouble(dataCacheDouble *data, dataCache *caller)
+static dataCacheDouble &returnDataCacheDouble(dataCacheDouble *data, dataCacheDouble *caller)
 {
   if(data==NULL) throw;
   if(caller)
     data->addMeAsDependencyOf(caller);
   return *data;
 }
-dataCacheDouble &dataCacheMap::get(const function *f, dataCache *caller) 
+dataCacheDouble &dataCacheMap::get(const function *f, dataCacheDouble *caller) 
 {
   dataCacheDouble *&r= _cacheDoubleMap[f];
   if(r==NULL)
@@ -125,7 +121,7 @@ dataCacheDouble &dataCacheMap::provideNormals()
 
 dataCacheMap::~dataCacheMap()
 {
-  for (std::set<dataCache*>::iterator it = _toDelete.begin();
+  for (std::set<dataCacheDouble*>::iterator it = _toDelete.begin();
       it!=_toDelete.end(); it++) {
     delete *it;
   }
@@ -337,7 +333,7 @@ void dataCacheMap::setNbEvaluationPoints(int nbEvaluationPoints) {
 }
 
 dataCacheDouble::dataCacheDouble(dataCacheMap &map,int nRowByPoint, int nCol):
-  dataCache(&map),_cacheMap(map),_value(nRowByPoint==0?1:nRowByPoint*map.getNbEvaluationPoints(),nCol){
+  _cacheMap(map),_value(nRowByPoint==0?1:nRowByPoint*map.getNbEvaluationPoints(),nCol){
     _nRowByPoint=nRowByPoint;
     map.addDataCacheDouble(this);
 };

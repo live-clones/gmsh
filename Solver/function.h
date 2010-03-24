@@ -30,26 +30,27 @@ class dgDofContainer;
 
 class function;
 
-class dataCache {
+// dataCache when the value is a  matrix of double 
+// the user should provide the number of rows by evaluating points and the number of columns
+// then the size of the matrix is automatically adjusted
+class dataCacheDouble {
   friend class dataCacheMap;
   // pointers to all of the dataCache depending on me
-  std::set<dataCache*> _dependOnMe;
-  std::set<dataCache*> _iDependOn;
+  std::set<dataCacheDouble*> _dependOnMe;
+  std::set<dataCacheDouble*> _iDependOn;
 protected :
   bool _valid;
   // invalidates all the cached data that depends on me
   inline void _invalidateDependencies()
   {
     // if this is too slow we can keep a C array cache of the _dependOnMe set
-    for(std::set<dataCache*>::iterator it = _dependOnMe.begin();
+    for(std::set<dataCacheDouble*>::iterator it = _dependOnMe.begin();
       it!=_dependOnMe.end(); it++)
         (*it)->_valid=false;
   }
-  dataCache(dataCacheMap *cacheMap);
-  virtual ~dataCache(){};
 public :
   // dataCacheMap is the only one supposed to call this
-  void addMeAsDependencyOf (dataCache *newDep);
+  void addMeAsDependencyOf (dataCacheDouble *newDep);
   inline bool somethingDependOnMe() {
     return !_dependOnMe.empty();
   }
@@ -60,12 +61,10 @@ public :
     return _iDependOn.size();
   }
 
-};
 
-// dataCache when the value is a  matrix of double 
-// the user should provide the number of rows by evaluating points and the number of columns
-// then the size of the matrix is automatically adjusted
-class dataCacheDouble : public dataCache {
+
+
+
   int _nRowByPoint;
   dataCacheMap &_cacheMap;
  protected:
@@ -75,21 +74,24 @@ class dataCacheDouble : public dataCache {
  public:
   //set the value (without computing it by _eval) and invalidate the dependencies
   inline void set(const fullMatrix<double> &mat) {
-    _invalidateDependencies();
+    if(_valid)
+      _invalidateDependencies();
     _value=mat;
     _valid=true;
   }
   // take care if you use this you must ensure that the value pointed to are not modified
   // without further call to setAsProxy because the dependencies won't be invalidate
   inline void setAsProxy(const fullMatrix<double> &mat, int cShift, int c) {
-    _invalidateDependencies();
+    if(_valid)
+      _invalidateDependencies();
     _value.setAsProxy(mat,cShift,c);
     _valid=true;
   }
   // take care if you use this you must ensure that the value pointed to are not modified
   // without further call to setAsProxy because the dependencies won't be invalidate
   inline void setAsProxy(const fullMatrix<double> &mat) {
-    _invalidateDependencies();
+    if(_valid)
+      _invalidateDependencies();
     _value.setAsProxy(mat,0,mat.size2());
     _valid=true;
   }
@@ -97,7 +99,8 @@ class dataCacheDouble : public dataCache {
   // but you cannot keep the reference to the _value, you should always use the set function 
   // to modify the _value
   inline fullMatrix<double> &set() {
-    _invalidateDependencies();
+    if(_valid)
+      _invalidateDependencies();
     _valid=true;
     return _value;
   }
@@ -147,7 +150,6 @@ class function {
 
 // more explanation at the head of this file
 class dataCacheMap {
-  friend class dataCache;
   friend class dataCacheDouble;
  private:
   int _nbEvaluationPoints;
@@ -165,14 +167,14 @@ class dataCacheMap {
       map._toInvalidateOnElement.erase(this);
     }
   };
-  std::set<dataCache*> _toDelete;
+  std::set<dataCacheDouble*> _toDelete;
   std::set<dataCacheDouble*> _toResize;
   std::set<dataCacheDouble*> _toInvalidateOnElement;
 
   MElement *_element;
 
  protected:
-  void addDataCache(dataCache *data){
+  void addDataCache(dataCacheDouble *data){
     _toDelete.insert(data);
   }
   void addDataCacheDouble(dataCacheDouble *data){
@@ -190,7 +192,7 @@ class dataCacheMap {
   dataCacheDouble &provideParametricCoordinates();
   dataCacheDouble &provideNormals();
 
-  dataCacheDouble &get(const function *f, dataCache *caller=0);
+  dataCacheDouble &get(const function *f, dataCacheDouble *caller=0);
   inline void setElement(MElement *element) {
     _element=element;
     for(std::set<dataCacheDouble*>::iterator it = _toInvalidateOnElement.begin(); it!= _toInvalidateOnElement.end(); it++) {
