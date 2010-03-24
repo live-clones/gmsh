@@ -22,7 +22,7 @@ class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
     }
 
     void _eval() {
-      solutionRight.set(outsideValue());
+      solutionRight.set()=outsideValue();
       if(riemannSolver){
         for(int i=0;i<_value.size1(); i++)
           for(int j=0;j<_value.size2(); j++)
@@ -62,7 +62,7 @@ class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
     }
     void _eval() {
       if(maxDif){
-        solutionRight.set(outsideValue());
+        solutionRight.set()=outsideValue();
         for(int i=0;i<_value.size1(); i++)
           for(int j=0;j<_value.size2(); j++)
             _value(i,j) = (*maxDif)(i,j);

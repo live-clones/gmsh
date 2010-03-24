@@ -76,13 +76,6 @@ public :
   inline bool somethingDependOnMe() {
     return !_dependOnMe.empty();
   }
-  inline int howManyDependOnMe() {
-    return _dependOnMe.size();
-  }
-  inline int howManyDoIDependOn() {
-    return _iDependOn.size();
-  }
-
   std::vector<dataCacheDouble*> _dependencies;
   std::vector<const fullMatrix<double>*> _depM;
 
@@ -92,6 +85,7 @@ public :
  protected:
   fullMatrix<double> _value;
   // do the actual computation and put the result into _value
+  // still virtual because it is overrided by conservation law terms, as soon as conservation law terms will be regular functions, we will remove this
   virtual void _eval()
   {
     for(int i=0;i<_dependencies.size(); i++)
@@ -100,42 +94,22 @@ public :
   }
  public:
   //set the value (without computing it by _eval) and invalidate the dependencies
-  inline void set(const fullMatrix<double> &mat) {
-    if(_valid)
-      _invalidateDependencies();
-    _value=mat;
-    _valid=true;
-  }
-  // take care if you use this you must ensure that the value pointed to are not modified
-  // without further call to setAsProxy because the dependencies won't be invalidate
-  inline void setAsProxy(const fullMatrix<double> &mat, int cShift, int c) {
-    if(_valid)
-      _invalidateDependencies();
-    _value.setAsProxy(mat,cShift,c);
-    _valid=true;
-  }
-  // take care if you use this you must ensure that the value pointed to are not modified
-  // without further call to setAsProxy because the dependencies won't be invalidate
-  inline void setAsProxy(const fullMatrix<double> &mat) {
-    if(_valid)
-      _invalidateDependencies();
-    _value.setAsProxy(mat,0,mat.size2());
-    _valid=true;
-  }
   // this function is needed to be able to pass the _value to functions like gemm or mult
   // but you cannot keep the reference to the _value, you should always use the set function 
   // to modify the _value
+  // take care if you use this to set a proxy you must ensure that the value pointed to are not modified
+  // without further call to set because the dependencies won't be invalidate
   inline fullMatrix<double> &set() {
     if(_valid)
       _invalidateDependencies();
-    _valid=true;
+    _valid = true;
     return _value;
   }
   inline const double &operator () (int i, int j)
   {
     if(!_valid) {
       _eval();
-      _valid=true;
+      _valid = true;
     }
     return _value(i,j);
   }

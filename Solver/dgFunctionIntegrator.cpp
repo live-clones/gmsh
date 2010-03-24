@@ -20,13 +20,13 @@ void dgFunctionIntegrator::compute(dgDofContainer *sol,fullMatrix<double> &resul
     dgGroupOfElements &group=*sol->getGroups()->getElementGroup(iGroup);
     fullMatrix<double> &solProxy=sol->getGroupProxy(&group);
     cacheMap.setNbEvaluationPoints(group.getNbIntegrationPoints());
-    UVW.set(group.getIntegrationPointsMatrix());
+    UVW.set()=group.getIntegrationPointsMatrix();
     fullMatrix<double> solutionQP (group.getNbIntegrationPoints(),group.getNbElements() * nbFields);
     group.getCollocationMatrix().mult(solProxy  , solutionQP); 
     fullMatrix<double> IPMatrix = group.getIntegrationPointsMatrix();
     for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {
       cacheMap.setElement(group.getElement(iElement));
-      solutionQPe.setAsProxy(solutionQP, iElement*nbFields, nbFields );
+      solutionQPe.set().setAsProxy(solutionQP, iElement*nbFields, nbFields );
       for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
         const double detJ = group.getDetJ (iElement, iPt);
         for (int k=0;k<nbRowResult;k++){

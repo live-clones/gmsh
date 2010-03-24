@@ -118,8 +118,8 @@ int dgSlopeLimiter::apply ( dgDofContainer *solution)
     dataCacheDouble *solutionEClipped = _claw->newClipToPhysics(cacheMap);
     if (solutionEClipped){
       for (int iElement=0 ; iElement<egroup->getNbElements() ;++iElement) {
-        solutionE.setAsProxy(solGroup, iElement*nbFields, nbFields );
-        solutionE.set((*solutionEClipped)());    
+        solutionE.set().setAsProxy(solGroup, iElement*nbFields, nbFields );
+        solutionE.set()=(*solutionEClipped)();
       }
     }
   }  

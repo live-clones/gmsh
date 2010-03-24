@@ -28,7 +28,7 @@ void dgResidualVolume::compute1Group(dgGroupOfElements &group, fullMatrix<double
 {
   residual.scale(0);
   _cacheMap->setNbEvaluationPoints(group.getNbIntegrationPoints());
-  _UVW.set(group.getIntegrationPointsMatrix());
+  _UVW.set()=group.getIntegrationPointsMatrix();
   // ----- 1 ----  get the solution at quadrature points
   // ----- 1.1 --- allocate a matrix of size (nbFields * nbElements, nbQuadraturePoints) 
   fullMatrix<double> solutionQP (group.getNbIntegrationPoints(),group.getNbElements() * _nbFields);
@@ -53,7 +53,7 @@ void dgResidualVolume::compute1Group(dgGroupOfElements &group, fullMatrix<double
   // ----- 2.3 --- iterate on elements
   for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {
       // ----- 2.3.1 --- build a small object that contains elementary solution, jacobians, gmsh element
-    _solutionQPe.setAsProxy(solutionQP, iElement*_nbFields, _nbFields );
+    _solutionQPe.set().setAsProxy(solutionQP, iElement*_nbFields, _nbFields );
 
     if(_gradientSolutionQPe.somethingDependOnMe()){
       dPsiDx.setAsProxy(group.getDPsiDx(),iElement*group.getNbNodes(),group.getNbNodes());
@@ -112,7 +112,7 @@ void dgResidualVolume::compute1GroupWithJacobian(dgGroupOfElements &group, fullM
 {
   residual.scale(0);
   _cacheMap->setNbEvaluationPoints(group.getNbIntegrationPoints());
-  _UVW.set(group.getIntegrationPointsMatrix());
+  _UVW.set()=group.getIntegrationPointsMatrix();
   // ----- 1 ----  get the solution at quadrature points
   // ----- 1.1 --- allocate a matrix of size (nbFields * nbElements, nbQuadraturePoints) 
   fullMatrix<double> solutionQP (group.getNbIntegrationPoints(),group.getNbElements() * _nbFields);
@@ -145,7 +145,7 @@ void dgResidualVolume::compute1GroupWithJacobian(dgGroupOfElements &group, fullM
   // ----- 2.3 --- iterate on elements
   for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {
     // ----- 2.3.1 --- build a small object that contains elementary solution, jacobians, gmsh element
-    _solutionQPe.setAsProxy(solutionQP, iElement*_nbFields, _nbFields );
+    _solutionQPe.set().setAsProxy(solutionQP, iElement*_nbFields, _nbFields );
     a.setAsProxy(A, iElement*_nbFields*_nbFields, _nbFields*_nbFields);
     b.setAsProxy(B, iElement*_nbFields*_nbFields, _nbFields*_nbFields);
 
@@ -321,9 +321,9 @@ void dgResidualInterface::compute1Group ( //dofManager &dof, // the DOF manager 
     for (int i=0; i<nbConnections; i++) {
       // B1 )  adjust the proxies for this element
       caches[i].setElement(connections[i]->getElement(iFace));
-      caches[i].getParametricCoordinates(NULL).setAsProxy(connections[i]->getIntegrationPointsOnElement(iFace));
-      caches[i].getSolution(NULL).setAsProxy(solutionQP, (iFace*nbConnections+i)*_nbFields, _nbFields);
-      caches[i].getNormals(NULL).setAsProxy(connections[i]->getNormals(), iFace*group.getNbIntegrationPoints(), group.getNbIntegrationPoints());
+      caches[i].getParametricCoordinates(NULL).set() = connections[i]->getIntegrationPointsOnElement(iFace);
+      caches[i].getSolution(NULL).set().setAsProxy(solutionQP, (iFace*nbConnections+i)*_nbFields, _nbFields);
+      caches[i].getNormals(NULL).set().setAsProxy(connections[i]->getNormals(), iFace*group.getNbIntegrationPoints(), group.getNbIntegrationPoints());
       // B2 ) compute the gradient of the solution
       if(caches[i].getSolutionGradient(NULL).somethingDependOnMe()) {
         dofs.setAsProxy(*solutionOnElements[i], _nbFields*connections[i]->getElementId(iFace), _nbFields);
