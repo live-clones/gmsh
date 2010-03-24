@@ -20,7 +20,7 @@ set(SRC
   MakeSimplex.cpp
   Integrate.cpp Gradient.cpp Curl.cpp Divergence.cpp
   Annotate.cpp Remove.cpp
-  Probe.cpp
+  Probe.cpp MinMax.cpp
   HarmonicToTime.cpp ModulusPhase.cpp
   HomologyComputation.cpp
   Distance.cpp ExtractEdges.cpp

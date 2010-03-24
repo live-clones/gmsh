@@ -23,6 +23,7 @@
 #include "HarmonicToTime.h"
 #include "ModulusPhase.h"
 #include "Integrate.h"
+#include "MinMax.h"
 #include "Gradient.h"
 #include "Curl.h"
 #include "Divergence.h"
@@ -186,6 +187,8 @@ void PluginManager::registerDefaultPlugins()
                       ("ModulusPhase", GMSH_RegisterModulusPhasePlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Integrate", GMSH_RegisterIntegratePlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("MinMax", GMSH_RegisterMinMaxPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Gradient", GMSH_RegisterGradientPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
