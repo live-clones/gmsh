@@ -229,12 +229,11 @@ void dgDofContainer::L2Projection(const function *f){
     fullMatrix<double> Source = fullMatrix<double> (group.getNbIntegrationPoints(),group.getNbElements() * _nbFields);
     dataCacheMap cacheMap;
     cacheMap.setNbEvaluationPoints(group.getNbIntegrationPoints());
-    dataCacheElement &cacheElement = cacheMap.getElement();
     cacheMap.provideParametricCoordinates().set(group.getIntegrationPointsMatrix());
     dataCacheDouble &sourceTerm = cacheMap.get(f);
     fullMatrix<double> source;
     for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {
-      cacheElement.set(group.getElement(iElement));
+      cacheMap.setElement(group.getElement(iElement));
       source.setAsProxy(Source, iElement*_nbFields, _nbFields);
       for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
         const double detJ = group.getDetJ (iElement, iPt);

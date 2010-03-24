@@ -35,7 +35,6 @@ class function::data : public dataCacheDouble {
   {
     _function = f;
     _m = m;
-    _m->getElement(this);
     _dependencies.resize ( _function->dep.size());
     _depM.resize (_function->dep.size());
     for (int i=0;i<_function->dep.size();i++)
@@ -71,13 +70,6 @@ void dataCache::addMeAsDependencyOf (dataCache *newDep)
 }
 
 //dataCacheMap members
-
-dataCacheElement &dataCacheMap::getElement(dataCache *caller) 
-{
-  if(caller)
-    _cacheElement.addMeAsDependencyOf(caller);
-  return _cacheElement;
-}
 
 static dataCacheDouble &returnDataCacheDouble(dataCacheDouble *data, dataCache *caller)
 {
@@ -175,7 +167,7 @@ class functionCoordinates : public function {
     const fullMatrix<double> &uvw = m->getParametricCoordinates(NULL)();
     for(int i = 0; i < uvw.size1(); i++){
       SPoint3 p;
-      m->getElement(NULL)()->pnt(uvw(i, 0), uvw(i, 1), uvw(i, 2), p);
+      m->getElement()->pnt(uvw(i, 0), uvw(i, 1), uvw(i, 2), p);
       xyz(i, 0) = p.x();
       xyz(i, 1) = p.y();
       xyz(i, 2) = p.z();

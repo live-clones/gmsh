@@ -85,7 +85,6 @@ void dgAlgorithm::computeElementaryTimeSteps ( //dofManager &dof, // the DOF man
   dataCacheDouble &sol = cacheMap.provideSolution(nbFields);
   dataCacheDouble &UVW = cacheMap.provideParametricCoordinates();
   UVW.set(group.getIntegrationPointsMatrix());
-  dataCacheElement &cacheElement = cacheMap.getElement();
   // provided dataCache
   dataCacheDouble *maxConvectiveSpeed = claw.newMaxConvectiveSpeed(cacheMap);
   dataCacheDouble *maximumDiffusivity = claw.newMaximumDiffusivity(cacheMap);
@@ -100,8 +99,7 @@ void dgAlgorithm::computeElementaryTimeSteps ( //dofManager &dof, // the DOF man
   DT.resize(group.getNbElements());
   for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {
     sol.setAsProxy(solution, iElement*nbFields, nbFields);
-    MElement *e = group.getElement(iElement);
-    cacheElement.set(e);
+    cacheMap.setElement(group.getElement(iElement));
     const double L = group.getInnerRadius(iElement);
     double spectralRadius = 0.0;
     if (maximumDiffusivity){

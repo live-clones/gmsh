@@ -16,7 +16,6 @@ class dgResidualVolume {
   dataCacheMap *_cacheMap;
   const dgConservationLaw &_claw;
   int _nbFields;
-  dataCacheElement &_cacheElement;
   dataCacheDouble &_UVW, &_solutionQPe, &_gradientSolutionQPe;
   dataCacheDouble *_sourceTerm, *_convectiveFlux, *_diffusiveFlux;
   public:

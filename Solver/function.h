@@ -145,20 +145,6 @@ class function {
   dataCacheDouble *newDataCache(dataCacheMap *m);
 };
 
-// A special node in the dependency tree for which all the leafs
-// depend on the given element
-class dataCacheElement : public dataCache {
- private:
-  MElement *_element;
- public:
-  void set(MElement *ele){
-    _invalidateDependencies();
-    _element=ele;
-  };
-  inline MElement *operator () () { return _element; }
-  dataCacheElement(dataCacheMap *map):dataCache(map){}
-};
-
 // more explanation at the head of this file
 class dataCacheMap {
   friend class dataCache;
@@ -176,18 +162,22 @@ class dataCacheMap {
     public:
     providedDataDouble(dataCacheMap &map, int nRowByPoints, int ncol):dataCacheDouble(map,nRowByPoints,ncol) {
       _valid=true;
+      map._toInvalidateOnElement.erase(this);
     }
   };
   std::set<dataCache*> _toDelete;
   std::set<dataCacheDouble*> _toResize;
+  std::set<dataCacheDouble*> _toInvalidateOnElement;
 
-  dataCacheElement _cacheElement;
+  MElement *_element;
+
  protected:
   void addDataCache(dataCache *data){
     _toDelete.insert(data);
   }
   void addDataCacheDouble(dataCacheDouble *data){
     _toResize.insert(data);
+    _toInvalidateOnElement.insert(data);
   }
  public:
   dataCacheDouble *_solution, *_solutionGradient, *_parametricCoordinates, *_normals;
@@ -201,9 +191,14 @@ class dataCacheMap {
   dataCacheDouble &provideNormals();
 
   dataCacheDouble &get(const function *f, dataCache *caller=0);
-  dataCacheElement &getElement(dataCache *caller=0);
-  dataCacheMap():_cacheElement(this){
-    _toDelete.erase(&_cacheElement);
+  inline void setElement(MElement *element) {
+    _element=element;
+    for(std::set<dataCacheDouble*>::iterator it = _toInvalidateOnElement.begin(); it!= _toInvalidateOnElement.end(); it++) {
+      (*it)->_valid=false;
+    }
+  }
+  inline MElement *getElement() {return _element;}
+  dataCacheMap(){
     _normals = _solution = _solutionGradient = _parametricCoordinates = 0;
     _nbEvaluationPoints = 0;
   }

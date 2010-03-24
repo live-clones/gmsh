@@ -10,7 +10,6 @@ dgResidualVolume::dgResidualVolume(const dgConservationLaw &claw):
   _cacheMap(new dataCacheMap),
   _claw(claw),
   _nbFields(_claw.getNbFields()),
-  _cacheElement(_cacheMap->getElement()),
   _UVW(_cacheMap->provideParametricCoordinates()),
   _solutionQPe(_cacheMap->provideSolution(_nbFields)),
   _gradientSolutionQPe(_cacheMap->provideSolutionGradient(_nbFields)),
@@ -62,7 +61,7 @@ void dgResidualVolume::compute1Group(dgGroupOfElements &group, fullMatrix<double
       gradSolProxy.setAsShapeProxy(_gradientSolutionQPe.set(),group.getNbIntegrationPoints()*3, _nbFields);
       dPsiDx.mult(dofs, gradSolProxy);
     }
-    _cacheElement.set(group.getElement(iElement));
+    _cacheMap->setElement(group.getElement(iElement));
     if(_convectiveFlux || _diffusiveFlux) {
       // ----- 2.3.3 --- compute fluxes in UVW coordinates
       for (int iUVW=0;iUVW<group.getDimUVW();iUVW++) {
@@ -156,7 +155,7 @@ void dgResidualVolume::compute1GroupWithJacobian(dgGroupOfElements &group, fullM
       gradSolProxy.setAsShapeProxy(_gradientSolutionQPe.set(),group.getNbIntegrationPoints()*3, _nbFields);
       dPsiDx.mult(dofs, gradSolProxy);
     }
-    _cacheElement.set(group.getElement(iElement));
+    _cacheMap->setElement(group.getElement(iElement));
     if(_convectiveFlux || _diffusiveFlux) {
       // ----- 2.3.3 --- compute fluxes in UVW coordinates
       for (int iUVW=0;iUVW<group.getDimUVW();iUVW++) {
@@ -321,7 +320,7 @@ void dgResidualInterface::compute1Group ( //dofManager &dof, // the DOF manager 
   for (int iFace=0 ; iFace < nbFaces ; ++iFace) {
     for (int i=0; i<nbConnections; i++) {
       // B1 )  adjust the proxies for this element
-      caches[i].getElement().set(connections[i]->getElement(iFace));
+      caches[i].setElement(connections[i]->getElement(iFace));
       caches[i].getParametricCoordinates(NULL).setAsProxy(connections[i]->getIntegrationPointsOnElement(iFace));
       caches[i].getSolution(NULL).setAsProxy(solutionQP, (iFace*nbConnections+i)*_nbFields, _nbFields);
       caches[i].getNormals(NULL).setAsProxy(connections[i]->getNormals(), iFace*group.getNbIntegrationPoints(), group.getNbIntegrationPoints());

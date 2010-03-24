@@ -13,7 +13,6 @@ void dgFunctionIntegrator::compute(dgDofContainer *sol,fullMatrix<double> &resul
   dataCacheMap cacheMap;
   dataCacheDouble &UVW=cacheMap.provideParametricCoordinates();
   dataCacheDouble &solutionQPe=cacheMap.provideSolution(nbFields);
-  dataCacheElement &cacheElement=cacheMap.getElement();
   dataCacheDouble &F=cacheMap.get(_f);
   int nbRowResult=result.size1();
   result.scale(0.0);
@@ -26,7 +25,7 @@ void dgFunctionIntegrator::compute(dgDofContainer *sol,fullMatrix<double> &resul
     group.getCollocationMatrix().mult(solProxy  , solutionQP); 
     fullMatrix<double> IPMatrix = group.getIntegrationPointsMatrix();
     for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {
-      cacheElement.set(group.getElement(iElement));
+      cacheMap.setElement(group.getElement(iElement));
       solutionQPe.setAsProxy(solutionQP, iElement*nbFields, nbFields );
       for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
         const double detJ = group.getDetJ (iElement, iPt);
