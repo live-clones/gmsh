@@ -35,10 +35,11 @@ class dataCacheDouble;
 // more explanation at the head of this file
 class function {
   int _nbCol;
+  bool _invalidatedOnElement;
   protected :
   virtual void call (dataCacheMap *m, fullMatrix<double> &res) {throw;}
-  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &res) {throw;};
-  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &res) {throw;};
+  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, fullMatrix<double> &res) {throw;};
+  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, fullMatrix<double> &res) {throw;};
   virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, fullMatrix<double> &res) {throw;};
   virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, fullMatrix<double> &res) {throw;};
   virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, const fullMatrix<double> &arg4, fullMatrix<double> &res) {throw;};
@@ -52,8 +53,14 @@ class function {
   virtual ~function(){};
   static void registerBindings(binding *b);
   virtual void call (dataCacheMap *m, fullMatrix<double> &res, std::vector<const fullMatrix<double>*> &depM);
-  function(int nbCol);
+  function(int nbCol, bool invalidatedOnElement = true);
   inline int getNbCol()const {return _nbCol;}
+  inline bool isInvalitedOnElement() { return _invalidatedOnElement;}
+  
+  static function *getSolution();
+  static function *getSolutionGradient();
+  static function *getParametricCoordinates();
+  static function *getNormals();
 };
 
 // dataCache when the value is a  matrix of double 
@@ -65,7 +72,6 @@ class dataCacheDouble {
   std::set<dataCacheDouble*> _dependOnMe;
   std::set<dataCacheDouble*> _iDependOn;
 protected :
-  bool _valid;
   // invalidates all the cached data that depends on me
   inline void _invalidateDependencies()
   {
@@ -75,6 +81,7 @@ protected :
         (*it)->_valid=false;
   }
 public :
+  bool _valid;
   // dataCacheMap is the only one supposed to call this
   void addMeAsDependencyOf (dataCacheDouble *newDep);
   inline bool somethingDependOnMe() {
@@ -127,8 +134,8 @@ public :
     return _value;
   }
   void resize();
-  dataCacheDouble(dataCacheMap &map,int nRowByPoints, int nCol);
   dataCacheDouble(dataCacheMap *,function *f);
+  dataCacheDouble(dataCacheMap &m, int nRowByPoint, int nbCol);
   virtual ~dataCacheDouble(){};
 };
 
@@ -141,17 +148,6 @@ class dataCacheMap {
   // keep track of the current element and all the dataCaches that
   // depend on it
   std::map<const function*, dataCacheDouble*> _cacheDoubleMap;
-  class providedDataDouble : public dataCacheDouble
-  // for data provided by the algorithm and that does not have an _eval function
-  // (typically "UVW")
-  {
-    void _eval() {throw;};
-    public:
-    providedDataDouble(dataCacheMap &map, int nRowByPoints, int ncol):dataCacheDouble(map,nRowByPoints,ncol) {
-      _valid=true;
-      map._toInvalidateOnElement.erase(this);
-    }
-  };
   std::set<dataCacheDouble*> _toDelete;
   std::set<dataCacheDouble*> _toResize;
   std::set<dataCacheDouble*> _toInvalidateOnElement;
@@ -162,21 +158,12 @@ class dataCacheMap {
   void addDataCache(dataCacheDouble *data){
     _toDelete.insert(data);
   }
-  void addDataCacheDouble(dataCacheDouble *data){
+  void addDataCacheDouble(dataCacheDouble *data, bool invalidatedOnElement){
     _toResize.insert(data);
-    _toInvalidateOnElement.insert(data);
+    if(invalidatedOnElement)
+      _toInvalidateOnElement.insert(data);
   }
  public:
-  dataCacheDouble *_solution, *_solutionGradient, *_parametricCoordinates, *_normals;
-  dataCacheDouble &getSolution(dataCacheDouble *caller);
-  dataCacheDouble &getSolutionGradient(dataCacheDouble *caller);
-  dataCacheDouble &getParametricCoordinates(dataCacheDouble *caller);
-  dataCacheDouble &getNormals(dataCacheDouble *caller);
-  dataCacheDouble &provideSolution(int nbFields);
-  dataCacheDouble &provideSolutionGradient(int nbFields);
-  dataCacheDouble &provideParametricCoordinates();
-  dataCacheDouble &provideNormals();
-
   dataCacheDouble &get(const function *f, dataCacheDouble *caller=0);
   inline void setElement(MElement *element) {
     _element=element;
@@ -186,7 +173,6 @@ class dataCacheMap {
   }
   inline MElement *getElement() {return _element;}
   dataCacheMap(){
-    _normals = _solution = _solutionGradient = _parametricCoordinates = 0;
     _nbEvaluationPoints = 0;
   }
   void setNbEvaluationPoints(int nbEvaluationPoints);

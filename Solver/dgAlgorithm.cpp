@@ -12,66 +12,6 @@
 #include "dgTransformNodalValue.h"
 #include "meshPartition.h"
 
-// works for any number of groups 
-
-/*
-void dgAlgorithm::residualForSomeGroups( const dgConservationLaw &claw,
-          std::vector<dgGroupOfElements *>groups,
-          dgGroupCollection &groupCollection,
-          dgDofContainer &solution,
-          dgDofContainer &residu)
-{
-  solution.scatter();
-  int nbFields=claw.getNbFields();
-  //volume term
-  std::set<dgGroupOfFaces *>groupOfInternalFacesToUpdate;
-  std::vector<dgGroupOfFaces *>groupOfBoundaryFacesToUpdate;
-  for(size_t i=0;i<groups.size() ; i++) {
-    int groupId=groups[i]->getId();
-    residu.getGroupProxy(groupId).scale(0);
-    residualVolume(claw,*groups[i],solution.getGroupProxy(groupId),residu.getGroupProxy(groupId));
-    groupOfInternalFacesToUpdate.insert(groups[i]->getGroupsOfNeighboringFaces()->begin(),groups[i]->getGroupsOfNeighboringFaces()->end());
-    groupOfBoundaryFacesToUpdate.insert(groupOfBoundaryFacesToUpdate.end(),groups[i]->getGroupsOfBoundaryFaces()->begin(),groups[i]->getGroupsOfBoundaryFaces()->end());
-    groupOfInternalFacesToUpdate.insert(groups[i]->getGroupOfInsideFaces());
-  }
-  for(std::set<dgGroupOfFaces *>::iterator it=groupOfInternalFacesToUpdate.begin();it!=groupOfInternalFacesToUpdate.end();it++) {
-    dgGroupOfFaces *faces = *it;
-    int iGroupLeft = -1, iGroupRight = -1;
-    for(size_t j=0;j<groupCollection.getNbElementGroups(); j++) {
-      dgGroupOfElements *groupj = groupCollection.getElementGroup(j);
-      if (groupj == &faces->getGroupLeft()) iGroupLeft = j;
-      if (groupj == &faces->getGroupRight()) iGroupRight= j;
-    }
-    for(size_t j=0;j<groupCollection.getNbGhostGroups(); j++) {
-      dgGroupOfElements *groupj = groupCollection.getGhostGroup(j);
-      if (groupj == &faces->getGroupLeft()) iGroupLeft = j;
-      if (groupj == &faces->getGroupLeft())iGroupLeft = j + groupCollection.getNbElementGroups();
-      if (groupj == &faces->getGroupRight())iGroupRight= j + groupCollection.getNbElementGroups();
-    }
-    fullMatrix<double> solInterface(faces->getNbNodes(),faces->getNbElements()*2*nbFields);
-    fullMatrix<double> residuInterface(faces->getNbNodes(),faces->getNbElements()*2*nbFields);
-    faces->mapToInterface(nbFields, solution.getGroupProxy(iGroupLeft), solution.getGroupProxy(iGroupRight), solInterface);
-    residualInterface(claw,*faces,solInterface,solution.getGroupProxy(iGroupLeft), solution.getGroupProxy(iGroupRight),residuInterface);
-    faces->mapFromInterface(nbFields, residuInterface,residu.getGroupProxy(iGroupLeft), residu.getGroupProxy(iGroupRight));
-  }
-  //boundaries
-  for(size_t i=0;i<groupOfBoundaryFacesToUpdate.size() ; i++) {
-    dgGroupOfFaces *faces = groupOfBoundaryFacesToUpdate[i];
-    int iGroupLeft = -1, iGroupRight = -1;
-    for(size_t j=0;j<groupCollection.getNbElementGroups(); j++) {
-      dgGroupOfElements *groupj = groupCollection.getElementGroup(j);
-      if (groupj == &faces->getGroupLeft())iGroupLeft = j;
-      if (groupj == &faces->getGroupRight())iGroupRight= j;
-    }
-    fullMatrix<double> solInterface(faces->getNbNodes(),faces->getNbElements()*nbFields);
-    fullMatrix<double> residuInterface(faces->getNbNodes(),faces->getNbElements()*nbFields);
-    faces->mapToInterface(nbFields, solution.getGroupProxy(iGroupLeft), solution.getGroupProxy(iGroupRight), solInterface);
-    residualBoundary(claw,*faces,solInterface,solution.getGroupProxy(iGroupLeft),residuInterface);
-    faces->mapFromInterface(nbFields, residuInterface, residu.getGroupProxy(iGroupLeft), residu.getGroupProxy(iGroupRight));
-  }
-}
-*/
-
 void dgAlgorithm::computeElementaryTimeSteps ( //dofManager &dof, // the DOF manager (maybe useless here)
                                               const dgConservationLaw &claw,   // the conservation law
                                               const dgGroupOfElements & group, 
@@ -82,8 +22,8 @@ void dgAlgorithm::computeElementaryTimeSteps ( //dofManager &dof, // the DOF man
   const int nbFields = claw.getNbFields();
   dataCacheMap cacheMap;
   cacheMap.setNbEvaluationPoints(group.getNbIntegrationPoints());
-  dataCacheDouble &sol = cacheMap.provideSolution(nbFields);
-  dataCacheDouble &UVW = cacheMap.provideParametricCoordinates();
+  dataCacheDouble &sol = cacheMap.get(function::getSolution(), NULL);
+  dataCacheDouble &UVW = cacheMap.get(function::getParametricCoordinates(), NULL);
   UVW.set()=group.getIntegrationPointsMatrix();
   // provided dataCache
   dataCacheDouble *maxConvectiveSpeed = claw.newMaxConvectiveSpeed(cacheMap);
@@ -98,8 +38,8 @@ void dgAlgorithm::computeElementaryTimeSteps ( //dofManager &dof, // the DOF man
   double l_red_sq = l_red*l_red;
   DT.resize(group.getNbElements());
   for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {
-    sol.set().setAsProxy(solution, iElement*nbFields, nbFields);
     cacheMap.setElement(group.getElement(iElement));
+    sol.set().setAsProxy(solution, iElement*nbFields, nbFields);
     const double L = group.getInnerRadius(iElement);
     double spectralRadius = 0.0;
     if (maximumDiffusivity){

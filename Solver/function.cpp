@@ -24,7 +24,7 @@ void function::call (dataCacheMap *m, fullMatrix<double> &res, std::vector<const
     default : Msg::Error("function are not implemented for %i arguments\n", arguments.size());
   }
 }
-function::function(int nbCol):_nbCol(nbCol){};
+function::function(int nbCol, bool invalidatedOnElement):_nbCol(nbCol), _invalidatedOnElement(invalidatedOnElement){};
 
 void dataCacheDouble::addMeAsDependencyOf (dataCacheDouble *newDep)
 {
@@ -37,18 +37,19 @@ void dataCacheDouble::addMeAsDependencyOf (dataCacheDouble *newDep)
   }
 }
 
-dataCacheDouble::dataCacheDouble(dataCacheMap &map,int nRowByPoint, int nCol):
-  _cacheMap(map),_value(nRowByPoint==0?1:nRowByPoint*map.getNbEvaluationPoints(),nCol)
+dataCacheDouble::dataCacheDouble(dataCacheMap &m, int nRowByPoint, int nbCol):
+  _cacheMap(m),_value(m.getNbEvaluationPoints()*nRowByPoint,nbCol)
 {
-    _nRowByPoint=nRowByPoint;
-    map.addDataCacheDouble(this);
-};
+  _nRowByPoint=nRowByPoint;
+  m.addDataCacheDouble(this,true);
+  _function = NULL;
+}
 
 dataCacheDouble::dataCacheDouble(dataCacheMap *m, function *f):
   _cacheMap(*m),_value(m->getNbEvaluationPoints(),f->getNbCol())
 {
   _nRowByPoint=1;
-  m->addDataCacheDouble(this);
+  m->addDataCacheDouble(this, f->isInvalitedOnElement());
   _function = f;
   _dependencies.resize ( _function->arguments.size());
   _depM.resize (_function->arguments.size());
@@ -62,57 +63,14 @@ void dataCacheDouble::resize() {
 
 
 //dataCacheMap members
-
-static dataCacheDouble &returnDataCacheDouble(dataCacheDouble *data, dataCacheDouble *caller)
-{
-  if(data==NULL) throw;
-  if(caller)
-    data->addMeAsDependencyOf(caller);
-  return *data;
-}
 dataCacheDouble &dataCacheMap::get(const function *f, dataCacheDouble *caller) 
 {
   dataCacheDouble *&r= _cacheDoubleMap[f];
   if(r==NULL)
     r = new dataCacheDouble(this, const_cast<function*>(f));
-  return returnDataCacheDouble(r,caller);
-}
-dataCacheDouble &dataCacheMap::getSolution(dataCacheDouble *caller) 
-{
-  return returnDataCacheDouble(_solution,caller);
-}
-dataCacheDouble &dataCacheMap::getSolutionGradient(dataCacheDouble *caller)
-{
-  return returnDataCacheDouble(_solutionGradient,caller);
-}
-dataCacheDouble &dataCacheMap::getParametricCoordinates(dataCacheDouble *caller) 
-{
-  return returnDataCacheDouble(_parametricCoordinates,caller);
-}
-dataCacheDouble &dataCacheMap::getNormals(dataCacheDouble *caller)
-{
-  returnDataCacheDouble(_normals,caller);
-  return *_normals;
-}
-
-dataCacheDouble &dataCacheMap::provideSolution(int nbFields)
-{
-  _solution = new providedDataDouble(*this,1, nbFields);
-  return *_solution;
-}
-dataCacheDouble &dataCacheMap::provideSolutionGradient(int nbFields){
-  _solutionGradient =  new providedDataDouble(*this,1, 3*nbFields);
-  return *_solutionGradient;
-}
-dataCacheDouble &dataCacheMap::provideParametricCoordinates()
-{
-  _parametricCoordinates = new providedDataDouble(*this,1, 3);
-  return *_parametricCoordinates;
-}
-dataCacheDouble &dataCacheMap::provideNormals()
-{
-  _normals = new providedDataDouble(*this,1, 3);
-  return *_normals;
+  if(caller)
+    r->addMeAsDependencyOf(caller);
+  return *r;
 }
 
 dataCacheMap::~dataCacheMap()
@@ -155,8 +113,7 @@ function *functionConstantNew(const std::vector<double> &v) {
 // get XYZ coordinates
 class functionCoordinates : public function {
   static functionCoordinates *_instance;
-  void call (dataCacheMap *m, fullMatrix<double> &xyz){
-    const fullMatrix<double> &uvw = m->getParametricCoordinates(NULL)();
+  void call (dataCacheMap *m, const fullMatrix<double> &uvw, fullMatrix<double> &xyz){
     for(int i = 0; i < uvw.size1(); i++){
       SPoint3 p;
       m->getElement()->pnt(uvw(i, 0), uvw(i, 1), uvw(i, 2), p);
@@ -165,7 +122,9 @@ class functionCoordinates : public function {
       xyz(i, 2) = p.z();
     }
   }
-  functionCoordinates():function(3){};// constructor is private only 1 instance can exists, call get to access the instance
+  functionCoordinates():function(3){
+    addArgument(function::getParametricCoordinates());
+  };// constructor is private only 1 instance can exists, call get to access the instance
  public:
   static function *get() {
     if(!_instance)
@@ -180,7 +139,8 @@ class functionSolution : public function {
   functionSolution():function(0){};// constructor is private only 1 instance can exists, call get to access the instance
  public:
   void call(dataCacheMap *m, fullMatrix<double> &sol) {
-    sol.setAsProxy(m->getSolution(NULL)());
+    Msg::Error("a function requires the solution but this algorithm does not provide the solution");
+    throw;
   }
   static function *get() {
     if(!_instance)
@@ -189,13 +149,17 @@ class functionSolution : public function {
   }
 };
 functionSolution *functionSolution::_instance = NULL;
+function *function::getSolution() {
+  return functionSolution::get();
+}
 
 class functionSolutionGradient : public function {
   static functionSolutionGradient *_instance;
   functionSolutionGradient():function(0){};// constructor is private only 1 instance can exists, call get to access the instance
  public:
   void call(dataCacheMap *m, fullMatrix<double> &sol) {
-    sol.setAsProxy(m->getSolutionGradient(NULL)());
+    Msg::Error("a function requires the gradient of the solution but this algorithm does not provide the gradient of the solution");
+    throw;
   }
   static function *get() {
     if(!_instance)
@@ -204,6 +168,47 @@ class functionSolutionGradient : public function {
   }
 };
 functionSolutionGradient *functionSolutionGradient::_instance = NULL;
+function *function::getSolutionGradient() {
+  return functionSolutionGradient::get();
+}
+
+class functionParametricCoordinates : public function {
+  static functionParametricCoordinates *_instance;
+  functionParametricCoordinates():function(0, false){};// constructor is private only 1 instance can exists, call get to access the instance
+ public:
+  void call(dataCacheMap *m, fullMatrix<double> &sol) {
+    Msg::Error("a function requires the parametric coordinates but this algorithm does not provide the parametric coordinates");
+    throw;
+  }
+  static function *get() {
+    if(!_instance)
+      _instance = new functionParametricCoordinates();
+    return _instance;
+  }
+};
+functionParametricCoordinates *functionParametricCoordinates::_instance = NULL;
+function *function::getParametricCoordinates() {
+  return functionParametricCoordinates::get();
+}
+
+class functionNormals : public function {
+  static functionNormals *_instance;
+  functionNormals():function(0){};// constructor is private only 1 instance can exists, call get to access the instance
+ public:
+  void call(dataCacheMap *m, fullMatrix<double> &sol) {
+    Msg::Error("a function requires the normals coordinates but this algorithm does not provide the normals");
+    throw;
+  }
+  static function *get() {
+    if(!_instance)
+      _instance = new functionNormals();
+    return _instance;
+  }
+};
+functionNormals *functionNormals::_instance = NULL;
+function *function::getNormals() {
+  return functionNormals::get();
+}
 
 class functionStructuredGridFile : public function {
   public:

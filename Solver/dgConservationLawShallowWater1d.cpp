@@ -39,7 +39,7 @@ class dgConservationLawShallowWater1d::clipToPhysics : public dataCacheDouble {
 public:
   clipToPhysics(dataCacheMap &cacheMap, const function *bathymetry, double hMin):
     dataCacheDouble(cacheMap,1,3),
-    sol(cacheMap.getSolution(this)),
+    sol(cacheMap.get(function::getSolution(),this)),
     _bathymetry(cacheMap.get(bathymetry,this))
   {
     _hMin=hMin;
@@ -63,7 +63,7 @@ class dgConservationLawShallowWater1d::maxConvectiveSpeed : public dataCacheDoub
   public:
   maxConvectiveSpeed(dataCacheMap &cacheMap, const function *celerity):
     dataCacheDouble(cacheMap,1,1),
-    sol(cacheMap.getSolution(this)),
+    sol(cacheMap.get(function::getSolution(),this)),
     _celerity(cacheMap.get(celerity,this))
   {};
   void _eval () {
@@ -79,7 +79,7 @@ class dgConservationLawShallowWater1d::advection: public dataCacheDouble {
   public:
   advection(dataCacheMap &cacheMap, const function *bathymetry, const function *pressure):
     dataCacheDouble(cacheMap,1,6),
-    sol(cacheMap.getSolution(this)),
+    sol(cacheMap.get(function::getSolution(),this)),
     _bathymetry(cacheMap.get(bathymetry,this)), 
     _pressure(cacheMap.get(pressure,this))
   {};
@@ -110,7 +110,7 @@ class dgConservationLawShallowWater1d::source: public dataCacheDouble {
   source(dataCacheMap &cacheMap,  const function *linearDissipation, const function *bathymetry) : 
     dataCacheDouble(cacheMap,1,2),
     _linearDissipation(cacheMap.get(linearDissipation,this)),
-    solution(cacheMap.getSolution(this)),
+    solution(cacheMap.get(function::getSolution(),this)),
     _bathymetry(cacheMap.get(bathymetry,this))
   {}
   void _eval () {
@@ -131,9 +131,9 @@ class dgConservationLawShallowWater1d::riemann:public dataCacheDouble {
   riemann(dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight, const function *bathymetry, 
           const function *pressure, const function *celerity):
     dataCacheDouble(cacheMapLeft,1,4),
-    normals(cacheMapLeft.getNormals(this)),
-    solL(cacheMapLeft.getSolution(this)),
-    solR(cacheMapRight.getSolution(this)),
+    normals(cacheMapLeft.get(function::getNormals(), this)),
+    solL(cacheMapLeft.get(function::getSolution(),this)),
+    solR(cacheMapRight.get(function::getSolution(),this)),
     _bathymetryL(cacheMapLeft.get(bathymetry, this)), 
     _bathymetryR(cacheMapRight.get(bathymetry, this)), 
     _pressureL(cacheMapLeft.get(pressure, this)), 
@@ -222,9 +222,9 @@ class dgConservationLawShallowWater1d::boundaryWall : public dgBoundaryCondition
     public:
     term(dataCacheMap &cacheMap, const function *pressure):
     dataCacheDouble(cacheMap,1,2),
-    sol(cacheMap.getSolution(this)),
+    sol(cacheMap.get(function::getSolution(),this)),
     _pressure(cacheMap.get(pressure,this)),
-    normals(cacheMap.getNormals(this))
+    normals(cacheMap.get(function::getNormals(), this))
     {}
     void _eval () { 
       int nQP = sol().size1();

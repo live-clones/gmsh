@@ -11,7 +11,7 @@ class dgConservationLawAdvectionDiffusion::advection : public dataCacheDouble {
   public:
   advection(const function *vFunction, dataCacheMap &cacheMap):
     dataCacheDouble(cacheMap,1,3),
-    sol(cacheMap.getSolution(this)),
+    sol(cacheMap.get(function::getSolution(),this)),
     v(cacheMap.get(vFunction,this))
   {};
   void _eval () { 
@@ -44,9 +44,9 @@ class dgConservationLawAdvectionDiffusion::riemann : public dataCacheDouble {
   public:
   riemann(const function *vFunction, dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight):
     dataCacheDouble(cacheMapLeft,1,2),
-    normals(cacheMapLeft.getNormals(this)),
-    solLeft(cacheMapLeft.getSolution(this)),
-    solRight(cacheMapRight.getSolution(this)),
+    normals(cacheMapLeft.get(function::getNormals(), this)),
+    solLeft(cacheMapLeft.get(function::getSolution(), this)),
+    solRight(cacheMapRight.get(function::getSolution(), this)),
     v(cacheMapLeft.get(vFunction,this))
   {};
   void _eval () { 
@@ -62,12 +62,13 @@ class dgConservationLawAdvectionDiffusion::riemann : public dataCacheDouble {
     }
   }
 };
+
 class dgConservationLawAdvectionDiffusion::diffusion : public dataCacheDouble {
   dataCacheDouble &solgrad, &nu;
   public:
   diffusion(const function * nuFunction, dataCacheMap &cacheMap):
     dataCacheDouble(cacheMap,1,3),
-    solgrad(cacheMap.getSolutionGradient(this)),
+    solgrad(cacheMap.get(function::getSolutionGradient(), this)),
     nu(cacheMap.get(nuFunction,this))
   {};
   void _eval () { 
@@ -78,6 +79,7 @@ class dgConservationLawAdvectionDiffusion::diffusion : public dataCacheDouble {
     }
   }
 };
+
 dataCacheDouble *dgConservationLawAdvectionDiffusion::newConvectiveFlux( dataCacheMap &cacheMap) const {
   return _vFunction ? new advection(_vFunction,cacheMap) : NULL;
 }

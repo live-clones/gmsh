@@ -11,7 +11,7 @@ class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
     public:
     term(dgConservationLaw *claw, dataCacheMap &cacheMapLeft,const function *outsideValueFunction):
       dataCacheDouble(cacheMapLeft, 1, claw->getNbFields()),
-      solutionRight(cacheMapRight.provideSolution(claw->getNbFields())),
+      solutionRight(cacheMapRight.get(function::getSolution(),NULL)),
       outsideValue(cacheMapLeft.get(outsideValueFunction,this)),
       _claw(claw)
     {
@@ -51,7 +51,7 @@ class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
     public:
     maximumDiffusivity(dgConservationLaw *claw, dataCacheMap &cacheMapLeft,const function *outsideValueFunction):
       dataCacheDouble(cacheMapLeft, 1, claw->getNbFields()),
-      solutionRight(cacheMapRight.provideSolution(claw->getNbFields())),
+      solutionRight(cacheMapRight.get(function::getSolution(), NULL)),
       outsideValue(cacheMapLeft.get(outsideValueFunction,this)),
       _claw(claw)
     {
@@ -168,7 +168,7 @@ class dgBoundaryCondition::neumann_ : public dataCacheDouble {
 public:
   neumann_(dataCacheMap &cacheMap, dgConservationLaw *claw):
     dataCacheDouble(cacheMap,1,claw->getNbFields()),
-    normals(cacheMap.getNormals(this))
+    normals(cacheMap.get(function::getNormals(),this))
   {
     diffusiveFlux=claw->newDiffusiveFlux(cacheMap);
     if (diffusiveFlux)diffusiveFlux->addMeAsDependencyOf(this);
@@ -189,7 +189,7 @@ public:
 };
 
 dataCacheDouble *dgBoundaryCondition::newDiffusiveDirichletBC(dataCacheMap &cacheMapLeft) const {
-  return &cacheMapLeft.getSolution(NULL);
+  return &cacheMapLeft.get(function::getSolution(),NULL);
 }
 dataCacheDouble *dgBoundaryCondition::newDiffusiveNeumannBC(dataCacheMap &cacheMapLeft) const {
   return new dgBoundaryCondition::neumann_(cacheMapLeft, _claw);

@@ -11,8 +11,8 @@ dgFunctionIntegrator::dgFunctionIntegrator(const function *f):_f(f){}
 void dgFunctionIntegrator::compute(dgDofContainer *sol,fullMatrix<double> &result){
   int nbFields=sol->getNbFields();
   dataCacheMap cacheMap;
-  dataCacheDouble &UVW=cacheMap.provideParametricCoordinates();
-  dataCacheDouble &solutionQPe=cacheMap.provideSolution(nbFields);
+  dataCacheDouble &UVW=cacheMap.get(function::getParametricCoordinates(),NULL);
+  dataCacheDouble &solutionQPe=cacheMap.get(function::getSolution(),NULL);
   dataCacheDouble &F=cacheMap.get(_f);
   int nbRowResult=result.size1();
   result.scale(0.0);

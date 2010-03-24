@@ -8,7 +8,7 @@ class dgConservationLawMaxwell::advection : public dataCacheDouble {
   public:
   advection(const function *mu_epsFunction,dataCacheMap &cacheMap):
     dataCacheDouble(cacheMap,1,18),
-    sol(cacheMap.getSolution(this)), 
+    sol(cacheMap.get(function::getSolution(), this)), 
     mu_eps(cacheMap.get(mu_epsFunction,this))
   {};
   void _eval () { 
@@ -53,7 +53,7 @@ class dgConservationLawMaxwell::source: public dataCacheDouble {
   public :
   source(dataCacheMap &cacheMap) : 
     dataCacheDouble(cacheMap,1,6),
-    solution(cacheMap.getSolution(this))
+    solution(cacheMap.get(function::getSolution(), this))
   {}
   void _eval () {
     int nQP = _value.size1();
@@ -75,9 +75,9 @@ class dgConservationLawMaxwell::riemann:public dataCacheDouble {
   public:
   riemann(const function *mu_epsFunction,dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight):
     dataCacheDouble(cacheMapLeft,1,12),
-    normals(cacheMapLeft.getNormals( this)),
-    solL(cacheMapLeft.getSolution( this)),
-    solR(cacheMapRight.getSolution( this)),
+    normals(cacheMapLeft.get(function::getNormals(), this)),
+    solL(cacheMapLeft.get(function::getSolution(), this)),
+    solR(cacheMapRight.get(function::getSolution(), this)),
     mu_eps(cacheMapLeft.get(mu_epsFunction,this))
   {};
   void _eval () { 
@@ -179,8 +179,8 @@ class dgBoundaryConditionMaxwellWall : public dgBoundaryCondition {
     public:
     term(dataCacheMap &cacheMap):
       dataCacheDouble(cacheMap,1,6),
-      sol(cacheMap.getSolution(this)),
-      normals(cacheMap.getNormals(this))
+      sol(cacheMap.get(function::getSolution(), this)),
+      normals(cacheMap.get(function::getNormals(), this))
       {}
     void _eval () { 
       int nQP = sol().size1();

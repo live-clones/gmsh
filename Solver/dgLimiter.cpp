@@ -114,7 +114,7 @@ int dgSlopeLimiter::apply ( dgDofContainer *solution)
 
     dataCacheMap cacheMap;
     cacheMap.setNbEvaluationPoints(egroup->getNbNodes());//nbdofs for each element
-    dataCacheDouble &solutionE = cacheMap.provideSolution(nbFields);
+    dataCacheDouble &solutionE = cacheMap.get(function::getSolution(), NULL);
     dataCacheDouble *solutionEClipped = _claw->newClipToPhysics(cacheMap);
     if (solutionEClipped){
       for (int iElement=0 ; iElement<egroup->getNbElements() ;++iElement) {

@@ -365,7 +365,7 @@ class dgPerfectGasLaw2d::advection : public dataCacheDouble {
   public:
   advection(dataCacheMap &cacheMap):
     dataCacheDouble(cacheMap,1,8),
-    sol(cacheMap.getSolution(this))
+    sol(cacheMap.get(function::getSolution(), this))
   {};
   void _eval () { 
     const int nQP = _value.size1();      
@@ -401,8 +401,8 @@ class dgPerfectGasLaw2d::diffusion : public dataCacheDouble {
             const function * muFunction,
             const function * kappaFunction ):
     dataCacheDouble(cacheMap,1,12),
-    sol(cacheMap.getSolution(this)),
-    grad(cacheMap.getSolutionGradient(this)),
+    sol(cacheMap.get(function::getSolution(), this)),
+    grad(cacheMap.get(function::getSolutionGradient(), this)),
     mu(cacheMap.get(muFunction,this)),
     kappa(cacheMap.get(kappaFunction,this))
   {};
@@ -459,7 +459,7 @@ class dgPerfectGasLaw2d::source : public dataCacheDouble {
 public:
   source(dataCacheMap &cacheMap, const function *sourceFunction):
     dataCacheDouble(cacheMap,1,4),
-    sol(cacheMap.getSolution(this)),
+    sol(cacheMap.get(function::getSolution(), this)),
     s(cacheMap.get(sourceFunction,this))
   {};
   void _eval () { 
@@ -479,7 +479,7 @@ class dgPerfectGasLaw2d::clipToPhysics : public dataCacheDouble {
 public:
   clipToPhysics(dataCacheMap &cacheMap, double presMin, double rhoMin):
     dataCacheDouble(cacheMap,1,4),
-    sol(cacheMap.getSolution(this))
+    sol(cacheMap.get(function::getSolution(), this))
   {
     _presMin=presMin;
     _rhoMin=rhoMin;
@@ -512,9 +512,9 @@ class dgPerfectGasLaw2d::riemann : public dataCacheDouble {
   public:
   riemann(dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight):
     dataCacheDouble(cacheMapLeft,1,12),
-    normals(cacheMapLeft.getNormals( this)),
-    solL(cacheMapLeft.getSolution( this)),
-    solR(cacheMapRight.getSolution( this))
+    normals(cacheMapLeft.get(function::getNormals(), this)),
+    solL(cacheMapLeft.get(function::getSolution(), this)),
+    solR(cacheMapRight.get(function::getSolution(), this))
   {};
   void _eval () { 
     int nQP = solL().size1();
@@ -543,9 +543,9 @@ class dgPerfectGasLaw2d::riemannGodunov : public dataCacheDouble {
   public:
   riemannGodunov(dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight):
     dataCacheDouble(cacheMapLeft,1,12),
-    normals(cacheMapLeft.getNormals( this)),
-    solL(cacheMapLeft.getSolution( this)),
-    solR(cacheMapRight.getSolution( this))
+    normals(cacheMapLeft.get(function::getNormals(), this)),
+    solL(cacheMapLeft.get(function::getSolution(), this)),
+    solR(cacheMapRight.get(function::getSolution(), this))
   {};
   void _eval () { 
     int nQP = solL().size1();
@@ -607,7 +607,7 @@ class dgPerfectGasLaw2d::maxConvectiveSpeed : public dataCacheDouble {
   public:
   maxConvectiveSpeed(dataCacheMap &cacheMap):
     dataCacheDouble(cacheMap,1,1),
-    sol(cacheMap.getSolution(this))
+    sol(cacheMap.get(function::getSolution(), this))
   {
   };
   void _eval () {
@@ -627,7 +627,7 @@ class dgPerfectGasLaw2d::maxDiffusivity : public dataCacheDouble {
   public:
   maxDiffusivity(dataCacheMap &cacheMap, const function *muFunction, const function *kappaFunction ):
     dataCacheDouble(cacheMap,1,1),
-    sol(cacheMap.getSolution(this)),
+    sol(cacheMap.get(function::getSolution(), this)),
     mu(cacheMap.get(muFunction,this)),
     kappa(cacheMap.get(kappaFunction,this))
   {
@@ -687,8 +687,8 @@ class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
 //-------------------------------------------------------------------------------
     term(dataCacheMap &cacheMap):
     dataCacheDouble(cacheMap,1,4),
-      sol(cacheMap.getSolution(this)),
-      normals(cacheMap.getNormals(this)){}
+      sol(cacheMap.get(function::getSolution(), this)),
+      normals(cacheMap.get(function::getNormals(), this)){}
     void _eval () { 
       int nQP = sol().size1();
       for(int i=0; i< nQP; i++) {
@@ -732,7 +732,7 @@ class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
     public:
     dirichletNonSlip(dataCacheMap &cacheMap):
     dataCacheDouble(cacheMap,1,4),
-    sol(cacheMap.getSolution(this)){}
+    sol(cacheMap.get(function::getSolution(), this)){}
     void _eval () { 
       int nQP = sol().size1();
       for(int i=0; i< nQP; i++) {
@@ -758,8 +758,8 @@ class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
     neumannNonSlip(dataCacheMap &cacheMap, dgConservationLaw *claw):
       dataCacheDouble(cacheMap,1,4),
       _claw (claw),
-      sol(cacheMap.getSolution(this)),
-      normals(cacheMap.getNormals(this)){
+      sol(cacheMap.get(function::getSolution(), this)),
+      normals(cacheMap.get(function::getNormals(), this)){
       diffusiveFlux=_claw->newDiffusiveFlux(cacheMap);
       if (diffusiveFlux)diffusiveFlux->addMeAsDependencyOf(this);
     }
@@ -789,8 +789,8 @@ class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
     dataCacheDouble &sol;
     public:
     dirichletSlip(dataCacheMap &cacheMap):
-    dataCacheDouble(cacheMap,1,cacheMap.getSolution(NULL)().size2()),
-    sol(cacheMap.getSolution(this)){}
+    dataCacheDouble(cacheMap,1,cacheMap.get(function::getSolution(), NULL)().size2()),
+    sol(cacheMap.get(function::getSolution(), this)){}
     void _eval () { 
       int nQP = sol().size1();
       for(int i=0; i< nQP; i++) {
@@ -812,8 +812,8 @@ class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
     neumannSlip(dataCacheMap &cacheMap, dgConservationLaw *claw):
       _claw (claw),
       dataCacheDouble(cacheMap,1,4),
-      sol(cacheMap.getSolution(this)),
-      normals(cacheMap.getNormals(this)){
+      sol(cacheMap.get(function::getSolution(), this)),
+      normals(cacheMap.get(function::getNormals(), this)){
     }
     void _eval () { 
       int nQP = sol().size1();

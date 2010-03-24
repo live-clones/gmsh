@@ -10,9 +10,9 @@ dgResidualVolume::dgResidualVolume(const dgConservationLaw &claw):
   _cacheMap(new dataCacheMap),
   _claw(claw),
   _nbFields(_claw.getNbFields()),
-  _UVW(_cacheMap->provideParametricCoordinates()),
-  _solutionQPe(_cacheMap->provideSolution(_nbFields)),
-  _gradientSolutionQPe(_cacheMap->provideSolutionGradient(_nbFields)),
+  _UVW(_cacheMap->get(function::getParametricCoordinates(), NULL)),
+  _solutionQPe(_cacheMap->get(function::getSolution(), NULL)),
+  _gradientSolutionQPe(_cacheMap->get(function::getSolutionGradient(),NULL)),
   _sourceTerm(_claw.newSourceTerm(*_cacheMap)),
   _convectiveFlux(_claw.newConvectiveFlux(*_cacheMap)),
   _diffusiveFlux(_claw.newDiffusiveFlux(*_cacheMap))
@@ -50,18 +50,18 @@ void dgResidualVolume::compute1Group(dgGroupOfElements &group, fullMatrix<double
   fullMatrix<double> fuvwe;
   fullMatrix<double> source;
   fullMatrix<double> dPsiDx,dofs, gradSolProxy; 
+  _gradientSolutionQPe.set().resize(group.getNbIntegrationPoints(),3*_nbFields);
   // ----- 2.3 --- iterate on elements
   for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {
       // ----- 2.3.1 --- build a small object that contains elementary solution, jacobians, gmsh element
+    _cacheMap->setElement(group.getElement(iElement));
     _solutionQPe.set().setAsProxy(solutionQP, iElement*_nbFields, _nbFields );
-
     if(_gradientSolutionQPe.somethingDependOnMe()){
       dPsiDx.setAsProxy(group.getDPsiDx(),iElement*group.getNbNodes(),group.getNbNodes());
       dofs.setAsProxy(solution, _nbFields*iElement, _nbFields);
       gradSolProxy.setAsShapeProxy(_gradientSolutionQPe.set(),group.getNbIntegrationPoints()*3, _nbFields);
       dPsiDx.mult(dofs, gradSolProxy);
     }
-    _cacheMap->setElement(group.getElement(iElement));
     if(_convectiveFlux || _diffusiveFlux) {
       // ----- 2.3.3 --- compute fluxes in UVW coordinates
       for (int iUVW=0;iUVW<group.getDimUVW();iUVW++) {
@@ -281,16 +281,18 @@ void dgResidualInterface::compute1Group ( //dofManager &dof, // the DOF manager 
   std::vector<dataCacheMap> caches(nbConnections);
   std::vector<const dgGroupOfConnections*> connections(nbConnections);
   std::vector<const dgGroupOfElements*> elementGroups(nbConnections);
-  std::vector<dataCacheDouble*> diffusiveFluxes(nbConnections), maximumDiffusivities(nbConnections);
+  std::vector<dataCacheDouble*> diffusiveFluxes(nbConnections), maximumDiffusivities(nbConnections), solutionGradients(nbConnections),
+    normals(nbConnections), solutions(nbConnections), parametricCoordinates(nbConnections);
   for (int i=0; i<nbConnections; i++) {
     connections[i] = &group.getGroupOfConnections(i);
     elementGroups[i] = &connections[i]->getGroupOfElements();
-    caches[i].provideParametricCoordinates();
-    caches[i].provideSolution(_nbFields);
-    caches[i].provideSolutionGradient(_nbFields);
-    caches[i].provideNormals();
     diffusiveFluxes[i] =_claw.newDiffusiveFlux(caches[i]);
     maximumDiffusivities[i] = _claw.newMaximumDiffusivity(caches[i]); 
+    parametricCoordinates[i] = &caches[i].get(function::getParametricCoordinates(),NULL);
+    normals[i] = &caches[i].get(function::getNormals(), NULL);
+    solutions[i] = &caches[i].get(function::getSolution(), NULL);
+    solutionGradients[i] = &caches[i].get(function::getSolutionGradient(), NULL);
+    solutionGradients[i]->set().resize(group.getNbIntegrationPoints(), 3*_nbFields);
     caches[i].setNbEvaluationPoints(group.getNbIntegrationPoints());
   }
   dataCacheDouble *riemannSolver = NULL, *neumann = NULL, *dirichlet = NULL, *maximumDiffusivityOut = NULL;
@@ -321,14 +323,14 @@ void dgResidualInterface::compute1Group ( //dofManager &dof, // the DOF manager 
     for (int i=0; i<nbConnections; i++) {
       // B1 )  adjust the proxies for this element
       caches[i].setElement(connections[i]->getElement(iFace));
-      caches[i].getParametricCoordinates(NULL).set() = connections[i]->getIntegrationPointsOnElement(iFace);
-      caches[i].getSolution(NULL).set().setAsProxy(solutionQP, (iFace*nbConnections+i)*_nbFields, _nbFields);
-      caches[i].getNormals(NULL).set().setAsProxy(connections[i]->getNormals(), iFace*group.getNbIntegrationPoints(), group.getNbIntegrationPoints());
+      parametricCoordinates[i]->set() = connections[i]->getIntegrationPointsOnElement(iFace);
+      solutions[i]->set().setAsProxy(solutionQP, (iFace*nbConnections+i)*_nbFields, _nbFields);
+      normals[i]->set().setAsProxy(connections[i]->getNormals(), iFace*group.getNbIntegrationPoints(), group.getNbIntegrationPoints());
       // B2 ) compute the gradient of the solution
-      if(caches[i].getSolutionGradient(NULL).somethingDependOnMe()) {
+      if(solutionGradients[i]->somethingDependOnMe()) {
         dofs.setAsProxy(*solutionOnElements[i], _nbFields*connections[i]->getElementId(iFace), _nbFields);
         dPsiDx.setAsProxy(connections[i]->getDPsiDx(),iFace*elementGroups[i]->getNbNodes(),elementGroups[i]->getNbNodes());
-        gradSolProxy.setAsShapeProxy(caches[i].getSolutionGradient(NULL).set(),group.getNbIntegrationPoints()*3, _nbFields);
+        gradSolProxy.setAsShapeProxy(solutionGradients[i]->set(),group.getNbIntegrationPoints()*3, _nbFields);
         dPsiDx.mult(dofs, gradSolProxy);
       }
     }
@@ -340,7 +342,7 @@ void dgResidualInterface::compute1Group ( //dofManager &dof, // the DOF manager 
         //just for the lisibility :
         const fullMatrix<double> &dfl = (*diffusiveFluxes[0])();
         const fullMatrix<double> &dfr = (*diffusiveFluxes[1])();
-        const fullMatrix<double> &n = (caches[0].getNormals(NULL))();
+        const fullMatrix<double> &n = (*normals[0])();
         for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
           const double detJ = group.getDetJ (iFace, iPt);
           for (int k=0;k<_nbFields;k++) { 
@@ -353,7 +355,7 @@ void dgResidualInterface::compute1Group ( //dofManager &dof, // the DOF manager 
                 )/group.getInterfaceSurface(iFace);
             double nu = std::max((*maximumDiffusivities[1])(iPt,0),(*maximumDiffusivities[0])(iPt,0));
             double mu = (p+1)*(p+dim)/dim*nu/minl;
-            double solutionJumpPenalty = (caches[0].getSolution(NULL)(iPt,k)-caches[1].getSolution(NULL)(iPt,k))/2*mu;
+            double solutionJumpPenalty = ((*solutions[0])(iPt,k)-(*solutions[1])(iPt,k))/2*mu;
             normalFluxQP(iPt,k) -= (meanNormalFlux+solutionJumpPenalty)*detJ;
             normalFluxQP(iPt,k+_nbFields) += (meanNormalFlux+solutionJumpPenalty)*detJ;
           }
@@ -365,7 +367,7 @@ void dgResidualInterface::compute1Group ( //dofManager &dof, // the DOF manager 
             double minl = elementGroups[0]->getElementVolume(connections[0]->getElementId(iFace))/group.getInterfaceSurface(iFace);
             double nu = std::max((*maximumDiffusivities[0])(iPt,0),(*maximumDiffusivityOut)(iPt,0));
             double mu = (p+1)*(p+dim)/dim*nu/minl;
-            double solutionJumpPenalty = (caches[0].getSolution(NULL)(iPt,k)-(*dirichlet)(iPt,k))/2*mu;
+            double solutionJumpPenalty = ((*solutions[0])(iPt,k)-(*dirichlet)(iPt,k))/2*mu;
             normalFluxQP(iPt,k) -= ((*neumann)(iPt,k)+solutionJumpPenalty)*detJ;
           }
         }
