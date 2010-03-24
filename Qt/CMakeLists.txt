@@ -14,7 +14,7 @@ set(MOC_HDR
   graphicWindow.h
 )
 
-file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Qt *.h) 
+file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
 append_gmsh_src(Qt "${SRC};${HDR}")
 
 foreach(FILE ${MOC_HDR})

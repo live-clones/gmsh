@@ -19,5 +19,5 @@ set(SRC
   surface.cxx
 )
 
-file(GLOB_RECURSE HDR RELATIVE ${CMAKE_SOURCE_DIR}/contrib/TetgenNew *.h)
+file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(contrib/TetgenNew "${SRC};${HDR}")

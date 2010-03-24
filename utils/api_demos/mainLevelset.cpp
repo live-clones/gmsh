@@ -1,18 +1,18 @@
 
-#include "../../contrib/DiscreteIntegration/Integration3D.h"
-#include <gmsh/Gmsh.h>
-#include <gmsh/GModel.h>
-#include <gmsh/MElement.h>
-#include <gmsh/MHexahedron.h>
-#include <gmsh/MTetrahedron.h>
-#include <gmsh/MQuadrangle.h>
-#include <gmsh/MTriangle.h>
-#include <gmsh/MLine.h>
-#include "../../contrib/DiscreteIntegration/DILevelset.h"
 #include <time.h>
 #include <iostream>
 #include <queue>
 #include <limits>
+#include "Gmsh.h"
+#include "GModel.h"
+#include "MElement.h"
+#include "MHexahedron.h"
+#include "MTetrahedron.h"
+#include "MQuadrangle.h"
+#include "MTriangle.h"
+#include "MLine.h"
+#include "Integration3D.h"
+#include "DILevelset.h"
 
 #define PI 3.14159265
 

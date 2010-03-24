@@ -27,5 +27,5 @@ set(SRC
     partitionDialog.cpp
 )
 
-file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Fltk *.h) 
+file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
 append_gmsh_src(Fltk "${SRC};${HDR}")

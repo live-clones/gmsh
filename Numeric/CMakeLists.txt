@@ -21,5 +21,5 @@ set(SRC
   cartesian.cpp
 )
 
-file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Numeric *.h) 
+file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
 append_gmsh_src(Numeric "${SRC};${HDR}")

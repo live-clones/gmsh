@@ -8,5 +8,5 @@ set(SRC
   predicates.cxx
 )
 
-file(GLOB_RECURSE HDR RELATIVE ${CMAKE_SOURCE_DIR}/contrib/Tetgen *.h)
+file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(contrib/Tetgen "${SRC};${HDR}")

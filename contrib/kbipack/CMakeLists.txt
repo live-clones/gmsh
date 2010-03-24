@@ -11,5 +11,5 @@ set(SRC
   mpz.cpp
 )
 
-file(GLOB_RECURSE HDR RELATIVE ${CMAKE_SOURCE_DIR}/contrib/kbipack *.h)
+file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(contrib/kbipack "${SRC};${HDR}")

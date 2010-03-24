@@ -13,10 +13,10 @@
 // -lTKMath -lTKernel -lm
 
 #include <stdio.h>
-#include <gmsh/Gmsh.h>
-#include <gmsh/GmshConfig.h>
-#include <gmsh/GModel.h>
-#include <gmsh/MElement.h>
+#include "Gmsh.h"
+#include "GmshConfig.h"
+#include "GModel.h"
+#include "MElement.h"
 
 #if !defined(HAVE_NO_OCC_CONFIG_H)
 #include "config.h"

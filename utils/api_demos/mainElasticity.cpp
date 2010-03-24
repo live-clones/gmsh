@@ -1,7 +1,7 @@
-#include <gmsh/Gmsh.h>
-#include <gmsh/elasticitySolver.h>
-#include <gmsh/PView.h>
-#include <gmsh/PViewData.h>
+#include "Gmsh.h"
+#include "elasticitySolver.h"
+#include "PView.h"
+#include "PViewData.h"
 
 int main (int argc, char* argv[]){
   

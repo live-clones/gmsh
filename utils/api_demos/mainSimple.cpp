@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include <gmsh/Gmsh.h>
-#include <gmsh/GModel.h>
-#include <gmsh/MElement.h>
+#include "Gmsh.h"
+#include "GModel.h"
+#include "MElement.h"
 
 int main(int argc, char **argv)
 {

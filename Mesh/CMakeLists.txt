@@ -33,5 +33,5 @@ set(SRC
     multiscalePartition.cpp
 )
 
-file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Mesh *.h) 
+file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
 append_gmsh_src(Mesh "${SRC};${HDR}")

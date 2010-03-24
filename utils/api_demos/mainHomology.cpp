@@ -8,12 +8,11 @@
 
 #include <stdio.h>
 #include <sstream>
-#include <gmsh/Gmsh.h>
-#include <gmsh/GModel.h>
-#include <gmsh/MElement.h>
-#include <gmsh/CellComplex.h>
-//#include <gmsh/ChainComplex.h>
-#include <gmsh/Homology.h>
+#include "Gmsh.h"
+#include "GModel.h"
+#include "MElement.h"
+#include "CellComplex.h"
+#include "Homology.h"
 
 int main(int argc, char **argv)
 {

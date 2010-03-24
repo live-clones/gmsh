@@ -26,5 +26,5 @@ set(SRC
   Distance.cpp ExtractEdges.cpp
 )
 
-file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Plugin *.h) 
+file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
 append_gmsh_src(Plugin "${SRC};${HDR}")

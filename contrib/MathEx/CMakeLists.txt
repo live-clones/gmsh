@@ -7,5 +7,5 @@ set(SRC
   mathex.cpp
 )
 
-file(GLOB_RECURSE HDR RELATIVE ${CMAKE_SOURCE_DIR}/contrib/MathEx *.h)
+file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(contrib/MathEx "${SRC};${HDR}")

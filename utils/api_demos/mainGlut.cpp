@@ -7,10 +7,10 @@
 #else
 #  include <GL/glut.h>
 #endif
-#include <Gmsh/Gmsh.h>
-#include <gmsh/GModel.h>
-#include <gmsh/MElement.h>
-#include <Gmsh/drawContext.h>
+#include "Gmsh.h"
+#include "GModel.h"
+#include "MElement.h"
+#include "drawContext.h"
 
 drawContext *ctx = 0;
 

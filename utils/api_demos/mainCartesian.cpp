@@ -1,13 +1,13 @@
-#include <gmsh/Gmsh.h>
-#include <gmsh/GModel.h>
-#include <gmsh/MVertex.h>
-#include <gmsh/cartesian.h>
-#include <gmsh/MTriangle.h>
-#include <gmsh/SOrientedBoundingBox.h>
-#include <gmsh/Numeric.h>
+#include "Gmsh.h"
+#include "GModel.h"
+#include "MVertex.h"
+#include "cartesian.h"
+#include "MTriangle.h"
+#include "SOrientedBoundingBox.h"
+#include "Numeric.h"
 
-void insertBoxes ( double x, double y, double z, double EP, cartesianBox<double> &box){
-  
+void insertBoxes ( double x, double y, double z, double EP, cartesianBox<double> &box)
+{
   int id1 = box.index_of_element(x-EP,y-EP,z-EP);      
   int id2 = box.index_of_element(x+EP,y+EP,z+EP);      
   int i1,j1,k1;
@@ -25,7 +25,8 @@ void insertBoxes ( double x, double y, double z, double EP, cartesianBox<double>
   }
 }
 
-void test(){
+void test()
+{
   printf("enter z coordinate : ");
   double x,y,z=-1;
   scanf ("%lf",&z);
@@ -49,11 +50,10 @@ void test(){
   }
   fprintf(f,"};\n");
   fclose(f);
-  
 }
 
-int main (int argc,char *argv[]){
-  
+int main (int argc,char *argv[])
+{
   //  test();
   //  return 1;
 

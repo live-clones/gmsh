@@ -58,5 +58,5 @@ set(SRC
   stat.c
 )
 
-file(GLOB_RECURSE HDR RELATIVE ${CMAKE_SOURCE_DIR}/contrib/Metis *.h)
+file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(contrib/Metis "${SRC};${HDR}")

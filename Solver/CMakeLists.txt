@@ -35,5 +35,5 @@ set(SRC
   dgMesh2MeshProjection.cpp
 )
 
-file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Solver *.h) 
+file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
 append_gmsh_src(Solver "${SRC};${HDR}")

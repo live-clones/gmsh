@@ -35,5 +35,5 @@ set(SRC
   Cell.cpp CellComplex.cpp ChainComplex.cpp Homology.cpp
 )
 
-file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Geo *.h) 
+file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
 append_gmsh_src(Geo "${SRC};${HDR}")

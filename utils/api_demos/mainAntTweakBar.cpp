@@ -9,10 +9,10 @@
 #  include <GL/glut.h>
 #endif
 #include <AntTweakBar.h>
-#include <gmsh/Gmsh.h>
-#include <gmsh/GModel.h>
-#include <gmsh/MElement.h>
-#include <gmsh/drawContext.h>
+#include "Gmsh.h"
+#include "GModel.h"
+#include "MElement.h"
+#include "drawContext.h"
 
 static drawContext *ctx = 0;
 static mousePosition clickPos, prevPos;

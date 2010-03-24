@@ -1,9 +1,9 @@
-#include <gmsh/Gmsh.h>
-#include <gmsh/GModel.h>
-#include <gmsh/MVertex.h>
-#include <gmsh/PView.h>
-#include <gmsh/PViewData.h>
-#include <gmsh/PluginManager.h>
+#include "Gmsh.h"
+#include "GModel.h"
+#include "MVertex.h"
+#include "PView.h"
+#include "PViewData.h"
+#include "PluginManager.h"
 
 int main(int argc, char **argv)
 {
