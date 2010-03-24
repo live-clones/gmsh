@@ -24,17 +24,17 @@ If(newh)
 EndIf
 
 If(all)
-  maxstep = 1;
+  NUM_FRAMES = 1;
   For i In {1:PostProcessing.NbViews}
     View[i-1].TimeStep = 0;
     // compute max num of steps
     If(View[i-1].Visible)
-      If(View[i-1].NbTimeStep > maxstep)
-        maxstep = View[i-1].NbTimeStep;
+      If(View[i-1].NbTimeStep > NUM_FRAMES)
+        NUM_FRAMES = View[i-1].NbTimeStep;
       EndIf
     EndIf
   EndFor
-  For index In {1:maxstep}
+  For index In {1:NUM_FRAMES}
     Draw;
     If(method == WHIRLGIF)
       Print Sprintf("/tmp/tmp%03g.gif", index);
@@ -54,19 +54,19 @@ If(!all)
     View[i-1].Visible = 0;
     View[i-1].TimeStep = 0;
   EndFor
-  index = 0;
+  NUM_FRAMES = 0;
   For i In {1:PostProcessing.NbViews}
     // Display view i-1
     View[i-1].Visible = 1;
     // Loop on all solutions in view i-1
     For j In {1:View[i-1].NbTimeStep}
-      index++;
+      NUM_FRAMES++;
       Draw;
       If(method == WHIRLGIF)
-        Print Sprintf("/tmp/tmp%03g.gif", index);
+        Print Sprintf("/tmp/tmp%03g.gif", NUM_FRAMES);
       EndIf
       If(method == MPEG_ENCODE || method == MENCODER)
-        Print Sprintf("/tmp/tmp%03g.jpg", index);
+        Print Sprintf("/tmp/tmp%03g.jpg", NUM_FRAMES);
       EndIf
       View[i-1].TimeStep++;
     EndFor
@@ -74,7 +74,6 @@ If(!all)
   EndFor
 EndIf
 
-NUM_FRAMES = index;
 ENCODER = method;
 Include "encode.script";
 
