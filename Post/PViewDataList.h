@@ -54,7 +54,6 @@ class PViewDataList : public PViewData {
                 std::vector<double> &list, int nblist);
   void _getString(int dim, int i, int timestep, std::string &str, 
                   double &x, double &y, double &z, double &style);
-  void _splitCurvedElements();
  public:
   PViewDataList();
   ~PViewDataList(){}

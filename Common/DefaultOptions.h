@@ -1215,7 +1215,7 @@ StringXNumber MeshOptions_Number[] = {
     "Global scaling factor applied to the saved mesh" },
   { F|O, "SecondOrderExperimental" , opt_mesh_second_order_experimental , 0. ,
     "Use experimental code to generate second order mesh" },
-  { F|O, "SecondOrderIncomplete" , opt_mesh_second_order_incomplete , 1. ,
+  { F|O, "SecondOrderIncomplete" , opt_mesh_second_order_incomplete , 0. ,
     "Create incomplete second order elements? (8-node quads, 20-node hexas, etc.)" },
   { F|O, "SecondOrderLinear" , opt_mesh_second_order_linear , 0. ,
     "Should second order vertices simply be created by linear interpolation?" },

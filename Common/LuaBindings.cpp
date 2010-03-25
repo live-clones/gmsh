@@ -12,26 +12,10 @@
 #include "luaFunction.h"
 #include "function.h"
 #include "GModel.h"
-#include "dgGroupOfElements.h"
-#include "dgDofContainer.h"
-#include "dgConservationLawShallowWater2d.h"
-#include "dgConservationLawShallowWater1d.h"
-#include "dgConservationLawAdvection.h"
-#include "dgConservationLawPerfectGas.h"
-#include "dgConservationLawWaveEquation.h"
-#include "dgConservationLawMaxwell.h"
-#include "dgRungeKutta.h"
-#include "dgRungeKuttaMultirate.h"
-#include "dgSystemOfEquations.h"
-#include "dgLimiter.h"
-#include "dgTransformNodalValue.h"
-#include "dgFunctionIntegrator.h"
 #include "Bindings.h"
-#include "dgResidual.h"
 #include "drawContext.h"
 #include "GmshMessage.h"
 #include "linearSystemCSR.h"
-#include "dgMesh2MeshProjection.h"
 
 extern "C" {
   #include "lua.h"
@@ -309,7 +293,8 @@ void binding::interactiveSession()
   CTX::instance()->lock = lock;
 }
 
-binding::binding(){
+binding::binding()
+{
   if(_instance){
     Msg::Error("Only one instance of lua bindings is allowed");
   }
@@ -346,33 +331,11 @@ binding::binding(){
   GVertex::registerBindings(this);
   MElement::registerBindings(this);
   MVertex::registerBindings(this);
-  dgBoundaryCondition::registerBindings(this);
-  dgConservationLaw::registerBindings(this);
-  dgConservationLawAdvectionDiffusionRegisterBindings(this);
-  dgConservationLawMaxwellRegisterBindings(this);
-  dgConservationLawShallowWater1dRegisterBindings(this);
-  dgConservationLawShallowWater2dRegisterBindings(this);
-  dgConservationLawWaveEquationRegisterBindings(this);
-  dgDofContainer::registerBindings(this);
-  dgGroupCollection::registerBindings(this);
-  dgLimiter::registerBindings(this);
-  dgTransformNodalValue::registerBindings(this);
-  dgPerfectGasLaw2dRegisterBindings(this);
-  dgResidual::registerBindings(this);
-  dgRungeKutta::registerBindings(this);
-  dgRungeKuttaMultirate43::registerBindings(this);
-  dgRungeKuttaMultirate22::registerBindings(this);
-  dgRungeKuttaMultirateConservative::registerBindings(this);
-  dgSlopeLimiterRegisterBindings(this);
-  dgSupraTransformNodalValueRegisterBindings(this);
-  dgSystemOfEquations::registerBindings(this);
-  dgFunctionIntegrator::registerBindings(this);
   fullMatrix<double>::registerBindings(this);
   function::registerBindings(this);
   gmshOptions::registerBindings(this);
   Msg::registerBindings(this);
   linearSystemCSRGmm<double>::registerBindings(this);
-  dgMesh2MeshProjection::registerBindings(this);
 }
 binding *binding::_instance=NULL;
 #endif

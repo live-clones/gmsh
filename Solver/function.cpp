@@ -4,8 +4,6 @@
 #include "function.h"
 #include "SPoint3.h"
 #include "MElement.h"
-#include "dgDofContainer.h"
-#include "dgGroupOfElements.h"
 #include "GModel.h"
 #if defined(HAVE_DLOPEN)
   #include "dlfcn.h"
@@ -308,43 +306,6 @@ class functionLua : public function {
 #endif
 
 
-// function that enables to interpolate a DG solution using
-// geometrical search in a mesh 
-
-class functionMesh2Mesh : public function {
-  dgDofContainer *_dofContainer;
-public:
-  functionMesh2Mesh(dgDofContainer *dofc) : function(dofc->getNbFields()), _dofContainer(dofc){}
-  void call( dataCacheMap *m, const fullMatrix<double> &xyz, fullMatrix<double> &val) {
-    int nP =xyz.size1();
-    val.setAll(0.0);
-    double fs[256];
-    fullMatrix<double> solEl;
-    GModel *model = _dofContainer->getGroups()->getModel();
-    for (int i=0;i<val.size1();i++){
-      const double x = xyz(i,0);
-      const double y = xyz(i,1);
-      const double z = xyz(i,2);
-      SPoint3 p(x,y,z);
-      MElement *e = model->getMeshElementByCoord(p);
-      int ig,index;
-      _dofContainer->getGroups()->find (e,ig,index);
-      dgGroupOfElements *group =  _dofContainer->getGroups()->getElementGroup(ig);      
-      double U[3],X[3]={x,y,z};
-      e->xyz2uvw (X,U);
-      group->getFunctionSpace().f(U[0],U[1],U[2],fs);      
-      fullMatrix<double> &sol = _dofContainer->getGroupProxy(ig);
-      solEl.setAsProxy(sol,index*val.size2(),val.size2());
-      int fSize = group->getNbNodes();
-      for (int k=0;k<val.size2();k++){
-        val(i,k) = 0.0; 	
-        for (int j=0;j<fSize;j++){
-          val(i,k) += solEl(j,k)*fs[j];
-        }
-      }
-    }
-  }
-};
 
 void dataCacheMap::setNbEvaluationPoints(int nbEvaluationPoints) {
   _nbEvaluationPoints = nbEvaluationPoints;
@@ -451,13 +412,6 @@ void function::registerBindings(binding *b){
   mb = cb->setConstructor<functionStructuredGridFile,std::string, const function*>();
   mb->setArgNames("fileName","coordinateFunction",NULL);
   mb->setDescription("Tri-linearly interpolate through data in file 'fileName' at coordinate given by 'coordinateFunction'.\nThe file format is :\nx0 y0 z0\ndx dy dz\nnx ny nz\nv(0,0,0) v(0,0,1) v(0 0 2) ...");
-
-  cb = b->addClass<functionMesh2Mesh>("functionMesh2Mesh");
-  cb->setDescription("A function that can be used to interpolate into a given mesh");
-  mb = cb->setConstructor<functionMesh2Mesh,dgDofContainer*>();
-  mb->setArgNames("solution",NULL);
-  mb->setDescription("A solution.");
-  cb->setParentClass<function>();
 
 #if defined(HAVE_DLOPEN)
   cb = b->addClass<functionC>("functionC");
