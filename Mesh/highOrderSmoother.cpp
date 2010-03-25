@@ -733,7 +733,7 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
   lsys_->setNoisy(1);
   lsys_->setGmres(1);
   lsys_->setPrec(5.e-8);
-  lsys = _lsys;
+  lsys = lsys_;
 #endif
 
   dofManager<double> myAssembler(lsys);
