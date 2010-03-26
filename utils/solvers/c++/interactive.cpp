@@ -4,6 +4,9 @@
 
 // compile with: g++ interactive.cpp -lreadline -ltermcap
 
+// launch Gmsh with the "-listen" option and you will be able to
+// control it interactively with this program.
+
 class GmshInteractiveClient{
  private:
   GmshClient _client;
