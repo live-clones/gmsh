@@ -132,18 +132,22 @@ class GFaceCompound : public GFace {
 template<class scalar> class linearSystem;
 class GFaceCompound : public GFace {
  public:
-  typedef enum {HARMONIC=1,CONFORMAL=2, CONVEXCOMBINATION=3} typeOfMapping;
+  typedef enum {HARMONIC=1,CONFORMAL=2, CONVEXCOMBINATION=3, MULTISCALE=4} typeOfMapping;
   GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
                 std::list<GEdge*> &U0, std::list<GEdge*> &U1,
                 std::list<GEdge*> &V0, std::list<GEdge*> &V1,
-                linearSystem<double>* lsys = 0,
-                typeOfMapping typ = HARMONIC) : GFace(m, tag)
+                linearSystem<double>* lsys =0,
+                typeOfMapping typ = HARMONIC, int allowPartition=1)
+    : GFace(m, tag)
   {
     Msg::Error("Gmsh has to be compiled with solver support to use GFaceCompounds");
   }
   virtual ~GFaceCompound() {}
-  GPoint point(double par1, double par2) const ; 
-  Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const; 
+  GPoint point(double par1, double par2) const { return GPoint(); }
+  Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const
+  {
+    return Pair<SVector3, SVector3>(SVector3(0, 0, 0), SVector3(0, 0, 0));
+  }
   void secondDer(const SPoint2 &param, 
                          SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const{}
   virtual SPoint2 getCoordinates(MVertex *v) const { return SPoint2(); }

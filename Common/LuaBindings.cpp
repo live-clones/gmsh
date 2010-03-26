@@ -1,5 +1,6 @@
 #include "GmshConfig.h"
-#ifdef HAVE_LUA
+
+#if defined(HAVE_LUA)
 #include <iostream>
 #include <string>
 #include "Gmsh.h"
@@ -15,7 +16,9 @@
 #include "Bindings.h"
 #include "drawContext.h"
 #include "GmshMessage.h"
+#if defined(HAVE_SOLVER)
 #include "linearSystemCSR.h"
+#endif
 
 extern "C" {
   #include "lua.h"
@@ -23,7 +26,7 @@ extern "C" {
   #include "lauxlib.h"
 }
 
-#ifdef HAVE_READLINE
+#if defined(HAVE_READLINE)
 #include "readline.h"
 #include "history.h"
 #endif
@@ -332,10 +335,14 @@ binding::binding()
   MElement::registerBindings(this);
   MVertex::registerBindings(this);
   fullMatrix<double>::registerBindings(this);
-  function::registerBindings(this);
   gmshOptions::registerBindings(this);
   Msg::registerBindings(this);
+#if defined(HAVE_SOLVER)
+  function::registerBindings(this);
   linearSystemCSRGmm<double>::registerBindings(this);
+#endif
 }
+
 binding *binding::_instance=NULL;
+
 #endif

@@ -211,6 +211,8 @@ void PluginManager::registerDefaultPlugins()
                       ("Triangulate", GMSH_RegisterTriangulatePlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("GSHHS", GMSH_RegisterGSHHSPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("ExtractEdges", GMSH_RegisterExtractEdgesPlugin()));
 #if defined(HAVE_TETGEN)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Tetrahedralize", GMSH_RegisterTetrahedralizePlugin()));
@@ -219,10 +221,10 @@ void PluginManager::registerDefaultPlugins()
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Homology", GMSH_RegisterHomologyComputationPlugin()));
 #endif
+#if defined(HAVE_SOLVER)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Distance", GMSH_RegisterDistancePlugin()));
-    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
-                      ("ExtractEdges", GMSH_RegisterExtractEdgesPlugin()));
+#endif
   }
 
 #if defined(HAVE_FLTK)

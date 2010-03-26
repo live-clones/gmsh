@@ -18,12 +18,15 @@
 #include "MTriangle.h"
 #include "MVertex.h"
 #include "Octree.h"
+
+#if defined(HAVE_SOLVER)
 #include "dofManager.h"
 #include "laplaceTerm.h"
 #include "linearSystemGMM.h"
 #include "linearSystemCSR.h"
 #include "linearSystemFull.h"
 #include "linearSystemPETSc.h"
+#endif
 
 // computes the characteristic length of the mesh at a vertex in order
 // to have the geometry captured with accuracy. A parameter called
@@ -303,6 +306,7 @@ backgroundMesh::~backgroundMesh()
 
 void backgroundMesh::propagate1dMesh(GFace *_gf)
 {
+#if defined(HAVE_SOLVER)
   std::list<GEdge*> e = _gf->edges();
   std::list<GEdge*>::const_iterator it = e.begin();
   std::map<MVertex*,double> sizes;
@@ -371,10 +375,12 @@ void backgroundMesh::propagate1dMesh(GFace *_gf)
     _sizes[v_2D] = value;
   }
   delete _lsys;
+#endif
 }
 
 void backgroundMesh::updateSizes(GFace *_gf)
 {
+#if defined(HAVE_SOLVER)
   std::map<MVertex*,double>::iterator itv = _sizes.begin();
   for ( ; itv != _sizes.end(); ++itv){    
     SPoint2 p;
@@ -471,6 +477,7 @@ void backgroundMesh::updateSizes(GFace *_gf)
     _sizes[v_2D] = value;
   }
   delete _lsys;
+#endif
 }
 
 double backgroundMesh::operator() (double u, double v, double w) const

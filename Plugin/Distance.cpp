@@ -40,6 +40,7 @@ std::string GMSH_DistancePlugin::getHelp() const
 
 PView *GMSH_DistancePlugin::execute(PView *v)
 {
+#if defined(HAVE_SOLVER)
   std::vector<GEntity*> entities;
   GModel::current()->getEntities(entities);
 
@@ -338,6 +339,6 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 //   }
 //   fprintf(f2,"};\n");
 //   fclose(f2);
-
+#endif
   return 0;
 }

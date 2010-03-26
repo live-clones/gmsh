@@ -5,6 +5,7 @@
 #include "MEdge.h"
 #include "MElement.h"
 #include "multiscaleLaplace.h"
+#include "Numeric.h"
 #include "Context.h"
 
 static void recur_connect(MVertex *v,
@@ -321,7 +322,7 @@ void multiscalePartition::setNumberOfPartitions(int &nbParts)
 void multiscalePartition::partition(partitionLevel & level, int nbParts,
                                     typeOfPartition method)
 {
-#if defined(HAVE_METIS) || defined(HAVE_CHACO)
+#if defined(HAVE_SOLVER) && (defined(HAVE_METIS) || defined(HAVE_CHACO))
 
   if (method == LAPLACIAN){
     std::map<MVertex*, SPoint3> coordinates;
