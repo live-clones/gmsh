@@ -147,17 +147,14 @@ static MVertex *transfiniteHex(GRegion *gr,
 }
 
 class GOrientedTransfiniteFace {
-private:
+ private:
   GFace *_gf;
   int _LL, _HH;
   int _permutation, _index;
   std::vector<MVertex*> _list;
-
-public:
+ public:
   GOrientedTransfiniteFace()
-    : _gf(0), _LL(0), _HH(0), _permutation(-1), _index(-1)
-  {
-  }
+    : _gf(0), _LL(0), _HH(0), _permutation(-1), _index(-1) {}
   GOrientedTransfiniteFace(GFace *gf, std::vector<MVertex*> &corners)
     : _gf(gf), _LL(0), _HH(0), _permutation(-1), _index(-1)
   { 
@@ -220,18 +217,14 @@ public:
       for(int j = 0; j <= _HH; j++)
         _list.push_back(_gf->transfinite_vertices[i][j]);
   }
-
   // returns the index of the face in the reference hexahedron
   int index() const { return _index; }
-
   // returns true if the face is recombined
   int recombined() const { return _gf->meshAttributes.recombine; }
-
   // returns the number or points in the transfinite mesh in both
   // parameter directions
   int getNumU(){ return (_permutation % 2) ? _HH + 1: _LL + 1; }
   int getNumV(){ return (_permutation % 2) ? _LL + 1: _HH + 1; }
-
   // returns the (i,j) vertex in the face, i and j being defined in
   // the coordinate system of the reference transfinite hexahedron
   MVertex *getVertex(int i, int j)
@@ -422,10 +415,11 @@ int MeshTransfiniteVolume(GRegion *gr)
           f3 = c8;
 
         if(i && j && k && i != N_i - 1 && j != N_j - 1 && k != N_k - 1) {
-          MVertex *newv = transfiniteHex(gr, f0, f1, f2, f3, f4, f5,
-                                         c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11,
-                                         s0, s1, s2, s3, s4, s5, s6, s7,
-                                         u, v, w);
+          MVertex *newv = transfiniteHex
+            (gr, f0, f1, f2, f3, f4, f5,
+             c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11,
+             s0, s1, s2, s3, s4, s5, s6, s7,
+             u, v, w);
           gr->mesh_vertices.push_back(newv);
           tab[i][j][k] = newv;
         }

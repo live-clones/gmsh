@@ -288,7 +288,8 @@ void meshGEdge::operator() (GEdge *ge)
     N = 1;
   }
   else if(ge->meshAttributes.Method == MESH_TRANSFINITE){
-    a = Integration(ge, t_begin, t_end, F_Transfinite, Points, CTX::instance()->mesh.lcIntegrationPrecision);
+    a = Integration(ge, t_begin, t_end, F_Transfinite, Points, 
+                    CTX::instance()->mesh.lcIntegrationPrecision);
     N = ge->meshAttributes.nbPointsTransfinite;
   }
   else{
