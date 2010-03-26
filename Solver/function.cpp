@@ -92,8 +92,8 @@ dataCacheDouble &dataCacheMap::substitute(const function *f)
 
 dataCacheMap::~dataCacheMap()
 {
-  for (std::set<dataCacheDouble*>::iterator it = _toDelete.begin();
-      it!=_toDelete.end(); it++) {
+  for (std::set<dataCacheDouble*>::iterator it = _allDataCaches.begin();
+      it!=_allDataCaches.end(); it++) {
     delete *it;
   }
 }
@@ -309,7 +309,7 @@ class functionLua : public function {
 
 void dataCacheMap::setNbEvaluationPoints(int nbEvaluationPoints) {
   _nbEvaluationPoints = nbEvaluationPoints;
-  for(std::set<dataCacheDouble*>::iterator it = _toResize.begin(); it!= _toResize.end(); it++){
+  for(std::set<dataCacheDouble*>::iterator it = _allDataCaches.begin(); it!= _allDataCaches.end(); it++){
     (*it)->resize();
     (*it)->_valid = false;
   }

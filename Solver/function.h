@@ -147,18 +147,14 @@ class dataCacheMap {
   std::list<dataCacheMap*> _children;
   int _nbEvaluationPoints;
   std::map<const function*, dataCacheDouble*> _cacheDoubleMap;
-  std::set<dataCacheDouble*> _toDelete;
-  std::set<dataCacheDouble*> _toResize;
+  std::set<dataCacheDouble*> _allDataCaches;
   std::set<dataCacheDouble*> _toInvalidateOnElement;
 
   MElement *_element;
 
  protected:
-  void addDataCache(dataCacheDouble *data){
-    _toDelete.insert(data);
-  }
   void addDataCacheDouble(dataCacheDouble *data, bool invalidatedOnElement){
-    _toResize.insert(data);
+    _allDataCaches.insert(data);
     if(invalidatedOnElement)
       _toInvalidateOnElement.insert(data);
   }
