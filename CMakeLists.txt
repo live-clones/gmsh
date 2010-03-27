@@ -474,7 +474,6 @@ if(ENABLE_MPI)
    if(MPI_FOUND)
      message("-- Found MPI")
      set(HAVE_MPI TRUE)
-     set(HAVE_MPI TRUE PARENT_SCOPE) # export it for projects, too
      list(APPEND CONFIG_OPTIONS "MPI")
      list(APPEND EXTERNAL_INCLUDES ${MPI_INCLUDE_DIR})
      list(APPEND EXTERNAL_LIBRARIES ${MPI_LIBRARIES})
@@ -809,7 +808,8 @@ include_directories(Common Fltk Geo Graphics Mesh Solver Numeric Parser
   Plugin Post Qt ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/Common)
 
 # set this for external codes that might include this CMakeList file
-set(GMSH_EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDES} PARENT_SCOPE)
+set(GMSH_EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDES} CACHE 
+    STRING "External include directories")
 
 # group sources for easier navigation in IDEs
 foreach(DIR ${GMSH_DIRS})
