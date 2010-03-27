@@ -131,7 +131,9 @@ int GmshFinalize()
 
 int GmshBatch()
 {
-  Msg::Info("Running '%s'", Msg::GetCommandLineArgs().c_str());
+  Msg::Info("Running '%s' [%d node(s), max. %d thread(s)]", 
+            Msg::GetCommandLineArgs().c_str(),
+            Msg::GetCommSize(), Msg::GetMaxThreads());
   Msg::Info("Started on %s", Msg::GetLaunchDate().c_str());
 
   OpenProject(GModel::current()->getFileName());
