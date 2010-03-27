@@ -458,12 +458,11 @@ void ChainComplex::getChain(std::map<Cell*, int, Less_Cell>& chain,
       continue;
     }
 
-    std::list< std::pair<int, Cell*> > subCells;
+    std::map<Cell*, int, Less_Cell > subCells;
     cell->getCells(subCells);
-    for(std::list< std::pair<int, Cell*> >::iterator it = 
-          subCells.begin(); it != subCells.end(); it++){
-      Cell* subCell = (*it).second;
-      int coeff = (*it).first;
+    for(Cell::citer it = subCells.begin(); it != subCells.end(); it++){
+      Cell* subCell = (*it).first;
+      int coeff = (*it).second;
       chain[subCell] = coeff*elemi;
     }
   }

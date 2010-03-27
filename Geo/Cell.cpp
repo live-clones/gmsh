@@ -12,23 +12,21 @@
 
 bool Less_Cell::operator()(const Cell* c1, const Cell* c2) const 
 {  
-  //cells with fever vertices first
+  if(c1->isCombined() && !c2->isCombined()) return false;
+  if(!c1->isCombined() && c2->isCombined()) return true;
+  if(c1->isCombined() && c2->isCombined()){
+    return (c1->getNum() < c2->getNum());
+  }
   
   if(c1->getNumSortedVertices() != c2->getNumSortedVertices()){
     return (c1->getNumSortedVertices() < c2->getNumSortedVertices());
-  }
-
-  // "natural number" -like ordering 
-  // (the number of a vertice corresponds a digit)
-  
+  }    
   for(int i=0; i < c1->getNumSortedVertices();i++){
     if(c1->getSortedVertex(i) < c2->getSortedVertex(i)) return true;
     else if (c1->getSortedVertex(i) > c2->getSortedVertex(i)) return false;
   }
-  
   return false;
 }
-
 
 Cell::Cell(MElement* image) :  
   _combined(false), _index(0), _immune(false), _image(NULL), 
@@ -273,43 +271,31 @@ void Cell::printCoboundary(bool orig)
   }
 }
 
+int CombinedCell::_globalNum = 0;
 CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell() 
 {  
   // use "smaller" cell as c2
-  if(c1->getNumSortedVertices() < c2->getNumSortedVertices()){
+  if(c1->getNumCells() < c2->getNumCells()){
     Cell* temp = c1;
     c1 = c2;
     c2 = temp;
   }
   
+  _num = ++_globalNum;
+
   _index = c1->getIndex();
   _dim = c1->getDim();
   _subdomain = c1->inSubdomain();
   _combined = true;
   _image = NULL;
 
-  // vertices
-  _vs.reserve(c1->getNumSortedVertices() + c2->getNumSortedVertices());
-  for(int i = 0; i < c1->getNumSortedVertices(); i++){
-    _vs.push_back(c1->getSortedVertex(i));
-  }
-  std::vector<int> v;
-  for(int i = 0; i < c2->getNumSortedVertices(); i++){
-    if(!this->hasVertex(c2->getSortedVertex(i))){
-      v.push_back(c2->getSortedVertex(i)); 
-    }
-  }
-  for(unsigned int i = 0; i < v.size(); i++) _vs.push_back(v.at(i));
-  std::sort(_vs.begin(), _vs.end());
- 
   // cells
   c1->getCells(_cells);
-  std::list< std::pair<int, Cell*> > c2Cells;
+  std::map< Cell*, int, Less_Cell > c2Cells;
   c2->getCells(c2Cells);
-  for(std::list< std::pair<int, Cell*> >::iterator it = c2Cells.begin();
-      it != c2Cells.end(); it++){
-    if(!orMatch) (*it).first = -1*(*it).first;
-    _cells.push_back(*it);
+  for(citer cit  = c2Cells.begin(); cit != c2Cells.end(); cit++){
+    if(!orMatch) (*cit).second = -1*(*cit).second;
+    _cells.insert(*cit);
   }
 
   // boundary cells

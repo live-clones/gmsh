@@ -446,12 +446,11 @@ Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs,
     _dim = cell->getDim();
     if((int)coeffs.size() > i){
       if(coeffs.at(i) != 0){
-        std::list< std::pair<int, Cell*> > subCells;
+        std::map<Cell*, int, Less_Cell > subCells;
         cell->getCells(subCells);
-        for(std::list< std::pair<int, Cell*> >::iterator it = 
-              subCells.begin(); it != subCells.end(); it++){
-          Cell* subCell = (*it).second;
-          int coeff = (*it).first;
+        for(Cell::citer it = subCells.begin(); it != subCells.end(); it++){
+          Cell* subCell = (*it).first;
+          int coeff = (*it).second;
           _cells.insert( std::make_pair(subCell, coeffs.at(i)*coeff));
         }
       }
@@ -474,11 +473,10 @@ void Homology::storeCells(CellComplex* cellComplex, int dim)
       cit != cellComplex->lastCell(dim); cit++){
     Cell* cell = *cit;
     
-    std::list< std::pair<int, Cell*> > cells;
+    std::map<Cell*, int, Less_Cell > cells;
     cell->getCells(cells);
-    for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin();
-        it != cells.end(); it++){
-      Cell* subCell = it->second;
+    for(Cell::citer it = cells.begin(); it != cells.end(); it++){
+      Cell* subCell = it->first;
       
       MElement* e = subCell->getImageMElement();
       subCell->setDeleteImage(false);

@@ -104,18 +104,19 @@ class Cell
   // get boundary cell orientation
   int getFacetOri(Cell* cell);
 
-  virtual int getDim() const { return _dim; };
-  virtual int getIndex() const { return _index; };
-  virtual void setIndex(int index) { _index = index; };
-  virtual void setImmune(bool immune) { _immune = immune; };
-  virtual bool getImmune() const { return _immune; };
-  virtual bool inSubdomain() const { return _subdomain; }
-  virtual void setInSubdomain(bool subdomain)  { _subdomain = subdomain; }
+  int getDim() const { return _dim; };
+  int getIndex() const { return _index; };
+  void setIndex(int index) { _index = index; };
+  void setImmune(bool immune) { _immune = immune; };
+  bool getImmune() const { return _immune; };
+  bool inSubdomain() const { return _subdomain; }
+  void setInSubdomain(bool subdomain)  { _subdomain = subdomain; }
   virtual int getNumSortedVertices() const { return _vs.size(); }
   virtual int getSortedVertex(int vertex) const { return _vs.at(vertex); }
-  
+  virtual int getNum() const { return 0; }
+
   // restores the cell information to its original state before reduction
-  virtual void restoreCell();
+  void restoreCell();
   
   // true if this cell has given vertex
   virtual bool hasVertex(int vertex) const;
@@ -131,33 +132,33 @@ class Cell
   biter lastCoboundary(bool orig=false){ 
     return orig ? _ocbd.end() : _cbd.end(); }
 
-  virtual int getBoundarySize() { return _bd.size(); }
-  virtual int getCoboundarySize() { return _cbd.size(); }
+  int getBoundarySize() { return _bd.size(); }
+  int getCoboundarySize() { return _cbd.size(); }
    
   // get the cell boundary
-  virtual void getBoundary(std::map<Cell*, int, Less_Cell >& boundary, 
-                           bool orig=false){
+  void getBoundary(std::map<Cell*, int, Less_Cell >& boundary, 
+		   bool orig=false){
     orig ? boundary = _obd : boundary =  _bd; }
-  virtual void getCoboundary(std::map<Cell*, int, Less_Cell >& coboundary,
-                             bool orig=false){
+  void getCoboundary(std::map<Cell*, int, Less_Cell >& coboundary,
+		     bool orig=false){
     orig ? coboundary = _ocbd : coboundary = _cbd; }
   
   // add (co)boundary cell
-  virtual void addBoundaryCell(int orientation, Cell* cell, 
-                               bool orig=false, bool other=true); 
-  virtual void addCoboundaryCell(int orientation, Cell* cell, 
-                                 bool orig=false, bool other=true);
+  void addBoundaryCell(int orientation, Cell* cell, 
+		       bool orig=false, bool other=true); 
+  void addCoboundaryCell(int orientation, Cell* cell, 
+			 bool orig=false, bool other=true);
   
   // remove (co)boundary cell
-  virtual void removeBoundaryCell(Cell* cell, bool other=true);
-  virtual void removeCoboundaryCell(Cell* cell, bool other=true);
+  void removeBoundaryCell(Cell* cell, bool other=true);
+  void removeCoboundaryCell(Cell* cell, bool other=true);
   
   // true if has given cell on (original) (co)boundary
-  virtual bool hasBoundary(Cell* cell, bool orig=false);
-  virtual bool hasCoboundary(Cell* cell, bool orig=false);
+  bool hasBoundary(Cell* cell, bool orig=false);
+  bool hasCoboundary(Cell* cell, bool orig=false);
   
-  virtual void clearBoundary() { _bd.clear(); }
-  virtual void clearCoboundary() { _cbd.clear(); }
+  void clearBoundary() { _bd.clear(); }
+  void clearCoboundary() { _cbd.clear(); }
   
   // print cell debug info
   virtual void printCell();
@@ -165,16 +166,19 @@ class Cell
   virtual void printCoboundary(bool orig=false);   
   
   // tools for combined cells
-  virtual bool isCombined() { return _combined; }
-  virtual void getCells( std::list< std::pair<int, Cell*> >& cells) {  
+  bool isCombined() const { return _combined; }
+  virtual void getCells( std::map< Cell*, int, Less_Cell >& cells) {  
     cells.clear();
-    cells.push_back( std::make_pair(1, this)); 
+    cells[this] = 1; 
     return;
   }
-  virtual int getNumCells() {return 1;}
-  
+  virtual int getNumCells() const {return 1;}
+  typedef std::map<Cell*, int, Less_Cell>::iterator citer;
+
   // equivalence
-  bool operator==(const Cell& c2) const {  
+  virtual bool operator==(const Cell& c2) const {  
+    if(this->isCombined() != c2.isCombined()) return false;
+    
     if(this->getNumSortedVertices() != c2.getNumSortedVertices()){
       return false;
     }
@@ -192,18 +196,27 @@ class CombinedCell : public Cell{
   
  private:
   // list of cells this cell is a combination of
-  std::list< std::pair<int, Cell*> > _cells;
-  
+  std::map< Cell*, int, Less_Cell > _cells;
+
+  // combined cell number, used for ordering
+  int _num;
+  static int _globalNum;
+
  public:
   
   CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co=false);
   ~CombinedCell() {}
   
-  void getCells(std::list< std::pair<int, Cell*> >& cells) { cells = _cells; }
-  int getNumCells() {return _cells.size();}
-  
-};
+  void getCells(std::map< Cell*, int, Less_Cell >& cells) { cells = _cells; }
+  int getNumCells() const {return _cells.size();}  
+  int getNum() const { return _num; }
 
+  bool operator==(const Cell& c2) const {
+    if(this->getNum() != c2.getNum()) return false;
+    else return true;
+  }
+};
+  
 #endif
 
 #endif

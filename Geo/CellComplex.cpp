@@ -109,7 +109,12 @@ void CellComplex::insertCell(Cell* cell)
 {
   _newcells.push_back(cell);      
   std::pair<citer, bool> insertInfo = _cells[cell->getDim()].insert(cell);
-  if(!insertInfo.second) printf("Warning: Cell not inserted! \n");
+  if(!insertInfo.second){
+    printf("Warning: Cell not inserted! \n");
+    Cell* oldCell = (*insertInfo.first);
+    cell->printCell();
+    oldCell->printCell();
+  }
 }
 
 void CellComplex::removeCell(Cell* cell, bool other)
