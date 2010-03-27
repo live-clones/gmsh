@@ -46,7 +46,7 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
   PView *v1 = getView(iView, v);
   if(!v1) return v;
 
-  PViewData *data1 = v1->getData();
+  PViewData *data1 = v1->getData(true); // get adaptive data is available
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
   
