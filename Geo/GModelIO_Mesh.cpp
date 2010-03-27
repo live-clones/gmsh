@@ -348,25 +348,15 @@ int GModel::readMSH(const std::string &name)
             if(fscanf(fp, "%d %d %d %d %d", &num, &type, &physical, &elementary, 
                       &numVertices) != 5)
               return 0;
-            if(numVertices != MElement::getInfoMSH(type)) {
-	      //	      printf("coucou1\n");
-	      return 0;
-	    }
+            if(numVertices != MElement::getInfoMSH(type)) return 0;
           }
           else{
             int numTags;
-            if(fscanf(fp, "%d %d %d", &num, &type, &numTags) != 3) {
-	      //	      printf("coucou2\n");
-	      return 0;
-	    }
-	    //	    printf("%d %d %d\n",num,type,numTags);
+            if(fscanf(fp, "%d %d %d", &num, &type, &numTags) != 3) return 0;
             int numPartitions = 0;
             for(int j = 0; j < numTags; j++){
               int tag;
-              if(fscanf(fp, "%d", &tag) != 1) {
-		//		printf("coucou3\n");
-		return 0;
-	      }
+              if(fscanf(fp, "%d", &tag) != 1) return 0;
               if(j == 0) physical = tag;
               else if(j == 1) elementary = tag;
               else if(version < 2.2 && j == 2) partition = tag;
@@ -376,35 +366,19 @@ int GModel::readMSH(const std::string &name)
               else if(j == numTags - 1) parent = tag;
             }
             if(!(numVertices = MElement::getInfoMSH(type))) {
-              if(type != MSH_POLYG_ && type != MSH_POLYH_) {
-		//		printf("coucou4\n");
-		return 0;
-	      }
-              if(fscanf(fp, "%d", &numVertices) != 1){
-		//		printf("coucou5\n");
-		return 0;
-	      }
+              if(type != MSH_POLYG_ && type != MSH_POLYH_) return 0;
+              if(fscanf(fp, "%d", &numVertices) != 1) return 0;
             }
-	    
           }
           int *indices = new int[numVertices];
           for(int j = 0; j < numVertices; j++)
-            if(fscanf(fp, "%d", &indices[j]) != 1) {
-	      //	      printf("coucou6\n");
-	      return 0;
-	    }
+            if(fscanf(fp, "%d", &indices[j]) != 1) return 0;
           std::vector<MVertex*> vertices;
           if(vertexVector.size()){
-            if(!getVertices(numVertices, indices, vertexVector, vertices)) {
-	      //	      printf("coucou7\n");
-	      return 0;
-	    }
+            if(!getVertices(numVertices, indices, vertexVector, vertices)) return 0;
           }
           else{
-            if(!getVertices(numVertices, indices, vertexMap, vertices)) {
-	      //	      printf("coucou8\n");
-	      return 0;
-	    }
+            if(!getVertices(numVertices, indices, vertexMap, vertices)) return 0;
           }
           MElement *e = createElementMSH(this, num, type, physical, elementary,
                                          partition, vertices, elements, physicals);
