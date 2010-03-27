@@ -278,7 +278,7 @@ PView *PView::getViewByName(std::string name, int timeStep, int partition)
   for(unsigned int i = 0; i < list.size(); i++){
     if(list[i]->getData()->getName() == name &&
        ((timeStep < 0 || !list[i]->getData()->hasTimeStep(timeStep)) ||
-        (partition < 0 || !list[i]->getData()->hasPartition(partition))))
+        (partition < 0 || !list[i]->getData()->hasPartition(timeStep, partition))))
       return list[i];
   }
   return 0;
@@ -289,7 +289,7 @@ PView *PView::getViewByNum(int num, int timeStep, int partition)
   for(unsigned int i = 0; i < list.size(); i++){
     if(list[i]->getNum() == num &&
        ((timeStep < 0 || !list[i]->getData()->hasTimeStep(timeStep)) ||
-        (partition < 0 || !list[i]->getData()->hasPartition(partition))))
+        (partition < 0 || !list[i]->getData()->hasPartition(timeStep, partition))))
       return list[i];
   }
   return 0;

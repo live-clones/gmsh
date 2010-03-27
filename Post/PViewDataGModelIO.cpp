@@ -39,7 +39,7 @@ bool PViewDataGModel::addData(GModel *model, std::map<int, std::vector<double> >
     for(int j = 0; j < numComp; j++)
       d[j] = it->second[j];
   }
-  _partitions.insert(partition);
+  _steps[step]->getPartitions().insert(partition);
   finalize();
   return true;
 }
@@ -49,7 +49,7 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
                               int partition, int numComp, int numEnt)
 {
   Msg::Info("Reading step %d (time %g) partition %d: %d records", 
-      step, time, partition, numEnt);
+            step, time, partition, numEnt);
 
   while(step >= (int)_steps.size())
     _steps.push_back(new stepData<double>(GModel::current(), numComp));
@@ -100,7 +100,7 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
       Msg::ProgressMeter(i + 1, numEnt, "Reading data");
   }
 
-  _partitions.insert(partition);
+  _steps[step]->getPartitions().insert(partition);
 
   finalize();
   return true;

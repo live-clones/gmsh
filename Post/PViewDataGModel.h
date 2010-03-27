@@ -38,6 +38,8 @@ class stepData{
   // a vector, indexed by MSH element type, of Gauss point locations
   // in parametric space
   std::vector<std::vector<double> > _gaussPoints;
+  // a set of all "partitions" encountered in the data
+  std::set<int> _partitions;
  public:
   stepData(GModel *model, int numComp, std::string fileName="", int fileIndex=-1, 
            double time=0., double min=VAL_INF, double max=-VAL_INF)
@@ -101,6 +103,7 @@ class stepData{
     if((int)_gaussPoints.size() <= msh) _gaussPoints.resize(msh + 1);
     return _gaussPoints[msh];
   }
+  std::set<int> &getPartitions(){ return _partitions; }
 };
 
 // The data container using elements from one or more GModel(s).
@@ -117,8 +120,6 @@ class PViewDataGModel : public PViewData {
   std::vector<stepData<double>*> _steps;
   // the global min/max of the view
   double _min, _max;
-  // a set of all "partitions" encountered in the input data
-  std::set<int> _partitions;
   // the type of the dataset
   DataType _type;
   // cache last element to speed up loops
@@ -168,7 +169,7 @@ class PViewDataGModel : public PViewData {
   bool skipEntity(int step, int ent);
   bool skipElement(int step, int ent, int ele, bool checkVisibility=false);
   bool hasTimeStep(int step);
-  bool hasPartition(int part);
+  bool hasPartition(int step, int part);
   bool hasMultipleMeshes();
   bool hasModel(GModel *model, int step=-1);
   bool useGaussPoints(){ return _type == GaussPointData; }

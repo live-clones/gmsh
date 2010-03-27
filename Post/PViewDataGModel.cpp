@@ -500,9 +500,11 @@ bool PViewDataGModel::hasTimeStep(int step)
   return false;
 }
 
-bool PViewDataGModel::hasPartition(int part)
+bool PViewDataGModel::hasPartition(int step, int part)
 {
-  return _partitions.find(part) != _partitions.end();
+  if(step < 0 || step >= getNumTimeSteps())
+    return false;
+  return _steps[step]->getPartitions().find(part) != _steps[step]->getPartitions().end();
 }
 
 bool PViewDataGModel::hasMultipleMeshes()
