@@ -178,6 +178,11 @@ class MLineN : public MLine {
     if(_vs.size() == 2) return MSH_LIN_4; 
     if(_vs.size() == 3) return MSH_LIN_5; 
     if(_vs.size() == 4) return MSH_LIN_6; 
+    if(_vs.size() == 5) return MSH_LIN_7; 
+    if(_vs.size() == 6) return MSH_LIN_8; 
+    if(_vs.size() == 7) return MSH_LIN_9; 
+    if(_vs.size() == 8) return MSH_LIN_10; 
+    if(_vs.size() == 9) return MSH_LIN_11; 
     return 0;
   }
 };

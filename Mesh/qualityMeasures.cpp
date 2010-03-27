@@ -375,9 +375,9 @@ double qmTriangleAngles (MTriangle *e) {
     double c;
     prosca(v1,v2,&c);
     double x = acos(c)-M_PI/3;
-    printf("Angle %g ", (x+M_PI/3)/M_PI*180);
+    //    printf("Angle %g ", (x+M_PI/3)/M_PI*180);
     double quality = (atan(a*(x+M_PI/9)) + atan(a*(M_PI/9-x)))/den;
-    printf("Quality %g\n",quality);
+    //    printf("Quality %g\n",quality);
     worst_quality = std::min(worst_quality, quality);
   }
   //printf("\n");

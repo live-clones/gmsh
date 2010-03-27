@@ -29,6 +29,11 @@ const polynomialBasis* MQuadrangle::getFunctionSpace(int o) const
       case 3: return &polynomialBases::find(MSH_QUA_12);
       case 4: return &polynomialBases::find(MSH_QUA_16I);
       case 5: return &polynomialBases::find(MSH_QUA_20);
+      case 6: return &polynomialBases::find(MSH_QUA_24);
+      case 7: return &polynomialBases::find(MSH_QUA_28);
+      case 8: return &polynomialBases::find(MSH_QUA_32);
+      case 9: return &polynomialBases::find(MSH_QUA_36I);
+      case 10: return &polynomialBases::find(MSH_QUA_40);
     }
   }
   switch (order) {
@@ -37,6 +42,11 @@ const polynomialBasis* MQuadrangle::getFunctionSpace(int o) const
     case 3: return &polynomialBases::find(MSH_QUA_16);
     case 4: return &polynomialBases::find(MSH_QUA_25);
     case 5: return &polynomialBases::find(MSH_QUA_36);
+    case 6: return &polynomialBases::find(MSH_QUA_49);
+    case 7: return &polynomialBases::find(MSH_QUA_64);
+    case 8: return &polynomialBases::find(MSH_QUA_81);
+    case 9: return &polynomialBases::find(MSH_QUA_100);
+    case 10: return &polynomialBases::find(MSH_QUA_121);
     default: Msg::Error("Order %d triangle function space not implemented", order);
   }
   return 0;

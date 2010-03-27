@@ -416,7 +416,7 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
     }
     else{
       std::vector<MVertex*> &vtcs = faceVertices[face];
-      SPoint2 pts[20];
+      SPoint2 pts[100];
       bool reparamOK = true;
       if(!linear){
         for(int k = 0; k < incomplete->getNumVertices(); k++)

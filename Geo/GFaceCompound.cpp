@@ -385,6 +385,8 @@ bool GFaceCompound::checkFolding(std::vector<MVertex*> &ordered) const
 bool GFaceCompound::checkOrientation(int iter) const
 {
  
+  return true;
+
   //Only check orientation for stl files (1 patch)
   //  if(_compound.size() > 1.0) return true;
 
@@ -496,7 +498,7 @@ bool GFaceCompound::parametrize() const
   //Multiscale Laplace parametrization
   //-----------------
   else if (_mapping == MULTISCALE){
-    printf("multiscale exit \n");
+    //    printf("multiscale exit \n");
     std::vector<MElement*> _elements;
     for( std::list<GFace*>::const_iterator itt = _compound.begin(); itt != _compound.end(); ++itt)
       for(unsigned int i = 0; i < (*itt)->triangles.size(); ++i)
@@ -523,6 +525,8 @@ bool GFaceCompound::parametrize() const
 
   buildOct();  
 
+  printStuff();
+
   if (!checkOrientation(0)){
     Msg::Info("--- Parametrization switched to convex combination map");
     coordinates.clear(); 
@@ -534,7 +538,6 @@ bool GFaceCompound::parametrize() const
     buildOct();
   }
 
-  printStuff();
 
   double AR = checkAspectRatio();
   if (floor(AR)  > AR_MAX){

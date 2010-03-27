@@ -101,6 +101,7 @@ class dofManager{
   linearSystem<dataMat> *_current;
 
  public:
+ dofManager() : _current(0) { }
  dofManager(linearSystem<dataMat> *l) : _current(l) { _linearSystems["A"] = l; }
  dofManager(linearSystem<dataMat> *l1, linearSystem<dataMat> *l2) : _current(l1) { 
     _linearSystems.insert(std::make_pair("A", l1));

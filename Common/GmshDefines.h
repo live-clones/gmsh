@@ -96,6 +96,31 @@
 #define MSH_QUA_12 39
 #define MSH_QUA_16I 40
 #define MSH_QUA_20 41
+#define MSH_TRI_28 42
+#define MSH_TRI_36 43
+#define MSH_TRI_45 44
+#define MSH_TRI_55 45
+#define MSH_TRI_66 46
+#define MSH_QUA_49 47
+#define MSH_QUA_64 48
+#define MSH_QUA_81 49
+#define MSH_QUA_100 50
+#define MSH_QUA_121 51
+#define MSH_TRI_18 52
+#define MSH_TRI_21I 53
+#define MSH_TRI_24 54
+#define MSH_TRI_27 55
+#define MSH_TRI_30 56
+#define MSH_QUA_24 57
+#define MSH_QUA_28 58
+#define MSH_QUA_32 59
+#define MSH_QUA_36I 60
+#define MSH_QUA_40 61
+#define MSH_LIN_7  62
+#define MSH_LIN_8  63
+#define MSH_LIN_9  64
+#define MSH_LIN_10  65
+#define MSH_LIN_11  66
 
 #define MSH_NUM_TYPE 35
 

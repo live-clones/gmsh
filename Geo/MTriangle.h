@@ -266,7 +266,17 @@ class MTriangleN : public MTriangle {
     if(_order == 4 && _vs.size() == 9) return 0;
     if(_order == 4 && _vs.size() == 12) return 3;
     if(_order == 5 && _vs.size() == 12) return 0;
-    if(_order == 5 && _vs.size() == 18) return 6;
+    if(_order == 5  && _vs.size() == 18) return 6;
+    if(_order == 6  && _vs.size() == 25) return 10;
+    if(_order == 7  && _vs.size() == 33) return 12;
+    if(_order == 8  && _vs.size() == 42) return 15;
+    if(_order == 9  && _vs.size() == 52) return 21;
+    if(_order == 10 && _vs.size() == 63) return 28;
+    if(_order == 6  && _vs.size() == 15) return 0;
+    if(_order == 7  && _vs.size() == 18) return 0;
+    if(_order == 8  && _vs.size() == 21) return 0;
+    if(_order == 9  && _vs.size() == 24) return 0;
+    if(_order == 10  && _vs.size() == 27) return 0;
     return 0;
   }
   virtual int getNumEdgeVertices() const { return 3 * (_order - 1); }
@@ -297,6 +307,11 @@ class MTriangleN : public MTriangle {
     if(_order == 4 && _vs.size() == 12) return MSH_TRI_15; 
     if(_order == 5 && _vs.size() == 12) return MSH_TRI_15I; 
     if(_order == 5 && _vs.size() == 18) return MSH_TRI_21;
+    if(_order == 6 && _vs.size() == 25) return MSH_TRI_28; 
+    if(_order == 7 && _vs.size() == 33) return MSH_TRI_36; 
+    if(_order == 8 && _vs.size() == 42) return MSH_TRI_45; 
+    if(_order == 9 && _vs.size() == 52) return MSH_TRI_55; 
+    if(_order ==10 && _vs.size() == 63) return MSH_TRI_66; 
     return 0;
   }
   virtual void revert() 

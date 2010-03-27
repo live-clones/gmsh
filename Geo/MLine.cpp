@@ -19,6 +19,11 @@ const polynomialBasis* MLine::getFunctionSpace(int o) const
   case 3: return &polynomialBases::find(MSH_LIN_4);
   case 4: return &polynomialBases::find(MSH_LIN_5);
   case 5: return &polynomialBases::find(MSH_LIN_6);
+  case 6: return &polynomialBases::find(MSH_LIN_7);
+  case 7: return &polynomialBases::find(MSH_LIN_8);
+  case 8: return &polynomialBases::find(MSH_LIN_9);
+  case 9: return &polynomialBases::find(MSH_LIN_10);
+  case 10: return &polynomialBases::find(MSH_LIN_11);
   default: Msg::Error("Order %d line function space not implemented", order);
   }
   return 0;

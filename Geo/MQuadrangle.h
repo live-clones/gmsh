@@ -375,6 +375,11 @@ class MQuadrangleN : public MQuadrangle {
     if(_order==4 && _vs.size()+4==25) return MSH_QUA_25;
     if(_order==5 && _vs.size()+4==20) return MSH_QUA_20;
     if(_order==5 && _vs.size()+4==36) return MSH_QUA_36;
+    if(_order==6 && _vs.size()+4==49) return MSH_QUA_49;
+    if(_order==7 && _vs.size()+4==64) return MSH_QUA_64;
+    if(_order==8 && _vs.size()+4==81) return MSH_QUA_81;
+    if(_order==9 && _vs.size()+4==100) return MSH_QUA_100;
+    if(_order==10 && _vs.size()+4==121) return MSH_QUA_121;
     return 0;
   }
   virtual void revert() 

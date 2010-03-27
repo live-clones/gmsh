@@ -270,12 +270,10 @@ void meshGEdge::operator() (GEdge *ge)
   ge->setLength(length);
   Points.clear();
 
-  if(length == 0.){
-    if(CTX::instance()->mesh.toleranceEdgeLength == 0.)
-      Msg::Error("Curve %d has a zero length", ge->tag());
-    else
-      Msg::Debug("Curve %d has a zero length", ge->tag());
-  }
+  if(length == 0. && CTX::instance()->mesh.toleranceEdgeLength == 0.)
+    Msg::Error("Curve %d has a zero length", ge->tag());
+  else if (length == 0.)
+    Msg::Debug("Curve %d has a zero length", ge->tag());
 
   if(length < CTX::instance()->mesh.toleranceEdgeLength)
     ge->setTooSmall(true);
