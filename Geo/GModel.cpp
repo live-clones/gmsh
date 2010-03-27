@@ -203,7 +203,7 @@ void GModel::destroyMeshCaches()
   _vertexMapCache.clear();
   _elementVectorCache.clear();
   _elementMapCache.clear();
-  if(_octree) Octree_Delete(_octree);
+  Octree_Delete(_octree);
   _octree = 0;
 }
 

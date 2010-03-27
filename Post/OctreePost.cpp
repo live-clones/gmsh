@@ -201,17 +201,19 @@ static void addListOfStuff(Octree *o, std::vector<double> &l, int nbelm)
 
 OctreePost::~OctreePost() 
 {
-  if(_ST) Octree_Delete(_ST); if(_VT) Octree_Delete(_VT); if(_TT) Octree_Delete(_TT);
-  if(_SQ) Octree_Delete(_SQ); if(_VQ) Octree_Delete(_VQ); if(_TQ) Octree_Delete(_TQ);
-  if(_SS) Octree_Delete(_SS); if(_VS) Octree_Delete(_VS); if(_TS) Octree_Delete(_TS);
-  if(_SH) Octree_Delete(_SH); if(_VH) Octree_Delete(_VH); if(_TH) Octree_Delete(_TH);
-  if(_SI) Octree_Delete(_SI); if(_VI) Octree_Delete(_VI); if(_TI) Octree_Delete(_TI);
-  if(_SY) Octree_Delete(_SY); if(_VY) Octree_Delete(_VY); if(_TY) Octree_Delete(_TY);
+  Octree_Delete(_SL); Octree_Delete(_VL); Octree_Delete(_TL);
+  Octree_Delete(_ST); Octree_Delete(_VT); Octree_Delete(_TT);
+  Octree_Delete(_SQ); Octree_Delete(_VQ); Octree_Delete(_TQ);
+  Octree_Delete(_SS); Octree_Delete(_VS); Octree_Delete(_TS);
+  Octree_Delete(_SH); Octree_Delete(_VH); Octree_Delete(_TH);
+  Octree_Delete(_SI); Octree_Delete(_VI); Octree_Delete(_TI);
+  Octree_Delete(_SY); Octree_Delete(_VY); Octree_Delete(_TY);
 }
 
 OctreePost::OctreePost(PView *v) 
-  : _ST(0), _VT(0), _TT(0), _SQ(0), _VQ(0), _TQ(0), _SS(0), _VS(0), _TS(0),
-    _SH(0), _VH(0), _TH(0), _SI(0), _VI(0), _TI(0), _SY(0), _VY(0), _TY(0),
+  : _SL(0), _VL(0), _TL(0), _ST(0), _VT(0), _TT(0), _SQ(0), _VQ(0), _TQ(0), 
+    _SS(0), _VS(0), _TS(0), _SH(0), _VH(0), _TH(0), _SI(0), _VI(0), _TI(0),
+    _SY(0), _VY(0), _TY(0),
     _theView(v), _theViewDataList(0), _theViewDataGModel(0)
 {
   _theViewDataGModel = dynamic_cast<PViewDataGModel*>(_theView->getData());
@@ -222,14 +224,21 @@ OctreePost::OctreePost(PView *v)
   _theViewDataList = dynamic_cast<PViewDataList*>(_theView->getData(true));
 
   if(_theViewDataList){
-    SBoundingBox3d bb = _theViewDataList->getBoundingBox();
+    PViewDataList *l = _theViewDataList;
+
+    if(l->haveInterpolationMatrices() && !_theView->getData()->isAdaptive()){
+      Msg::Error("Cannot create octree for non-adapted high-order view: you need");
+      Msg::Error("to select 'Adapt visualization grid' first");
+      return;
+    }
+
+    SBoundingBox3d bb = l->getBoundingBox();
     double min[3] = {bb.min().x(), bb.min().y(), bb.min().z()};
     double size[3] = {bb.max().x() - bb.min().x(),
                       bb.max().y() - bb.min().y(),
                       bb.max().z() - bb.min().z()};                   
     const int maxElePerBucket = 100; // memory vs. speed trade-off
     
-    PViewDataList *l = _theViewDataList;
     _SL = Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
     addListOfStuff(_SL, l->SL, 6 + 2 * l->getNumTimeSteps());
     Octree_Arrange(_SL);

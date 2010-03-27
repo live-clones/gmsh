@@ -46,6 +46,7 @@ void free_buckets(octantBucket * bucket)
 
 void Octree_Delete(Octree *myOctree)
 {
+  if(!myOctree) return;
   delete myOctree->info;
   free_buckets(myOctree->root);
   delete myOctree->root;
@@ -54,6 +55,7 @@ void Octree_Delete(Octree *myOctree)
 
 void Octree_Insert(void * element, Octree *myOctree)
 {
+  if(!myOctree) return;
   double minBB[3], maxBB[3], centroid[3];
   octantBucket *bucket;
   (*(myOctree->function_BB))(element, minBB, maxBB);
@@ -64,7 +66,8 @@ void Octree_Insert(void * element, Octree *myOctree)
 }
 
 void Octree_Arrange(Octree *myOctree)
-{  
+{
+  if(!myOctree) return;
   std::list<void *>::iterator iter;
   double minPt[3], maxPt[3];
   for(iter = myOctree->info->listAllElements.begin(); iter!= 
@@ -75,14 +78,16 @@ void Octree_Arrange(Octree *myOctree)
   myOctree->info->listAllElements.clear();
 }   
 
-void * Octree_Search(double *pt, Octree *myOctree)
+void *Octree_Search(double *pt, Octree *myOctree)
 {
+  if(!myOctree) return 0;
   return searchElement(myOctree->root, pt, myOctree->info, 
                        myOctree->function_BB, myOctree->function_inElement);
 }
 
-void Octree_SearchAll(double * pt, Octree * myOctree, std::list<void *> * output)
+void Octree_SearchAll(double *pt, Octree *myOctree, std::list<void*> *output)
 {
+  if(!myOctree) return;
   searchAllElements(myOctree->root, pt, myOctree->info, myOctree->function_BB,
                     myOctree->function_inElement, output);      
 }
