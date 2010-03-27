@@ -398,11 +398,7 @@ int CellComplex::cocombine(int dim)
         Cell* c2 = (*it).first;
 
         if(!(*c1 == *c2) && abs(or1) == abs(or2)
-           && inSameDomain(s, c1) && inSameDomain(s, c2)
-           && c1->getNumSortedVertices() < getSize(dim) 
-           // heuristics for mammoth cell birth control
-           && c2->getNumSortedVertices() < getSize(dim)){
-
+           && inSameDomain(s, c1) && inSameDomain(s, c2)){
           removeCell(s);
           
           c1->getCoboundary(cbd_c);
@@ -460,11 +456,7 @@ int CellComplex::combine(int dim)
         Cell* c2 = (*it).first;
 
         if(!(*c1 == *c2) && abs(or1) == abs(or2)
-           && inSameDomain(s, c1) && inSameDomain(s, c2)
-           && c1->getNumSortedVertices() < getSize(dim) 
-           // heuristics for mammoth cell birth control
-           && c2->getNumSortedVertices() < getSize(dim)){
-
+           && inSameDomain(s, c1) && inSameDomain(s, c2)){
           removeCell(s);
           
           c1->getBoundary(bd_c);
@@ -506,7 +498,7 @@ bool CellComplex::coherent()
         citer cit = _cells[bdCell->getDim()].find(bdCell);
         if(cit == lastCell(bdCell->getDim())){ 
           printf("Warning! Boundary cell not in cell complex! Boundary removed. \n");
-          cell->removeBoundaryCell(bdCell);
+          cell->removeBoundaryCell(bdCell, false);
           coherent = false;
         }
         if(!bdCell->hasCoboundary(cell)){
@@ -525,7 +517,7 @@ bool CellComplex::coherent()
         citer cit = _cells[cbdCell->getDim()].find(cbdCell);
         if(cit == lastCell(cbdCell->getDim())){ 
           printf("Warning! Coboundary cell not in cell complex! Coboundary removed. \n");
-          cell->removeCoboundaryCell(cbdCell);
+          cell->removeCoboundaryCell(cbdCell, false);
           coherent = false;
         }
         if(!cbdCell->hasBoundary(cell)){

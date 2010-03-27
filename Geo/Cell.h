@@ -145,13 +145,13 @@ class Cell
   
   // add (co)boundary cell
   void addBoundaryCell(int orientation, Cell* cell, 
-		       bool orig=false, bool other=true); 
+		       bool orig, bool other); 
   void addCoboundaryCell(int orientation, Cell* cell, 
-			 bool orig=false, bool other=true);
+			 bool orig, bool other);
   
   // remove (co)boundary cell
-  void removeBoundaryCell(Cell* cell, bool other=true);
-  void removeCoboundaryCell(Cell* cell, bool other=true);
+  void removeBoundaryCell(Cell* cell, bool other);
+  void removeCoboundaryCell(Cell* cell, bool other);
   
   // true if has given cell on (original) (co)boundary
   bool hasBoundary(Cell* cell, bool orig=false);

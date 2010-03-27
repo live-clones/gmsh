@@ -299,56 +299,45 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell()
   }
 
   // boundary cells
-  std::map< Cell*, int, Less_Cell > c1Boundary;
-  c1->getBoundary(c1Boundary);
-  std::map< Cell*, int, Less_Cell > c2Boundary; 
-  c2->getBoundary(c2Boundary);
-  
-  for(biter it = c1Boundary.begin(); it != c1Boundary.end(); it++){
+  for(biter it = c1->firstBoundary(); it != c1->lastBoundary(); it++){
     Cell* cell = (*it).first;
     int ori = (*it).second;
-    cell->removeCoboundaryCell(c1); 
+    cell->removeCoboundaryCell(c1, false); 
     this->addBoundaryCell(ori, cell, false, true);
   }
-  for(biter it = c2Boundary.begin(); it != c2Boundary.end(); it++){
+  for(biter it = c2->firstBoundary(); it != c2->lastBoundary(); it++){
     Cell* cell = (*it).first;
     if(!orMatch) (*it).second = -1*(*it).second;
     int ori = (*it).second;
-    cell->removeCoboundaryCell(c2);    
-    if(co){
-      biter it2 = c1Boundary.find(cell);
-      if(it2 == c1Boundary.end()){
-        this->addBoundaryCell(ori, cell, false, true);
-      }
+    cell->removeCoboundaryCell(c2, false);    
+    if(co && !c1->hasBoundary(cell)){
+      this->addBoundaryCell(ori, cell, false, true);
     }
-    else this->addBoundaryCell(ori, cell, false, true);
+    else if(!co) this->addBoundaryCell(ori, cell, false, true);
   }
+  c1->clearBoundary();
+  c2->clearBoundary();
 
   // coboundary cells
-  std::map<Cell*, int, Less_Cell > c1Coboundary;
-  c1->getCoboundary(c1Coboundary);
-  std::map<Cell*, int, Less_Cell > c2Coboundary;
-  c2->getCoboundary(c2Coboundary);
-  
-  for(biter it = c1Coboundary.begin(); it != c1Coboundary.end(); it++){
+  for(biter it = c1->firstCoboundary(); it != c1->lastCoboundary(); it++){
     Cell* cell = (*it).first;
     int ori = (*it).second;
-    cell->removeBoundaryCell(c1); 
+    cell->removeBoundaryCell(c1, false); 
     this->addCoboundaryCell(ori, cell, false, true);
   }
-  for(biter it = c2Coboundary.begin(); it != c2Coboundary.end(); it++){
+  for(biter it = c2->firstCoboundary(); it != c2->lastCoboundary(); it++){
     Cell* cell = (*it).first;
     if(!orMatch) (*it).second = -1*(*it).second;
     int ori = (*it).second;
-    cell->removeBoundaryCell(c2);    
-    if(!co){
-      biter it2 = c1Coboundary.find(cell);
-      if(it2 == c1Coboundary.end()){
-        this->addCoboundaryCell(ori, cell, false, true);
-      }
+    cell->removeBoundaryCell(c2, false);    
+    if(!co && !c1->hasCoboundary(cell)){
+      this->addCoboundaryCell(ori, cell, false, true);
     }
-    else this->addCoboundaryCell(ori, cell, false, true);
+    else if(co) this->addCoboundaryCell(ori, cell, false, true);
   }
+  c1->clearCoboundary();
+  c2->clearCoboundary();
+  
 
 }
 
