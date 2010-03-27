@@ -11,17 +11,17 @@
 Code contributions to Gmsh have been provided by David Colignon
 (colormaps), Emilie Marchandise (compound geometrical entities),
 Gaetan Bricteux (Gauss integration and levelsets), Jacques Lechelle
-(DIFFPACK mesh format), Jonathan Lambrechts (fields), Jozef Vesely
-(Tetgen), Koen Hillewaert (high order elements), Laurent Stainier
-(eigenvalue solvers, tensor display and MacOS bits), Marc Ume
+(DIFFPACK mesh format), Jonathan Lambrechts (fields, solver), Jozef
+Vesely (Tetgen), Koen Hillewaert (high order elements), Laurent
+Stainier (eigenvalue solvers, tensor display and MacOS bits), Marc Ume
 (original list code), Mark van Doesburg (Open CASCADE face
 connection), Matt Gundry (Plot3d mesh format), Matti Pellikka
 (Homology), Nicolas Tardieu (Netgen), Pascale Noyret (MED mesh
 format), Pierre Badel (root finding and minimization), Ruth Sabariego
 (pyramids), Stephen Guzik (CGNS and partitioners), Bastien Gorissen
-(parallel remote). See comments in the sources for more
-information. If we forgot to list your contributions please send us an
-email!
+(parallel remote), Eric Bechet (solver). See comments in the sources
+for more information. If we forgot to list your contributions please
+send us an email!
 
 The AVL tree code (Common/avl.*) and the YUV image code
 (Graphics/gl2yuv.*) are copyright (C) 1988-1993, 1995 The Regents of
@@ -111,9 +111,9 @@ Thanks to the following folks who have contributed by providing fresh
 ideas on theoretical or programming topics, who have sent patches,
 requests for changes or improvements, or who gave us access to exotic
 machines for testing Gmsh: Juan Abanto, Olivier Adam, Guillaume
-Alleon, Eric Bechet, Laurent Champaney, Pascal Dupuis, Patrick Dular,
-Philippe Geuzaine, Johan Gyselinck, Francois Henrotte, Benoit Meys,
-Nicolas Moes, Osamu Nakamura, Chad Schmutzer, Jean-Luc Fl'ejou, Xavier
+Alleon, Laurent Champaney, Pascal Dupuis, Patrick Dular, Philippe
+Geuzaine, Johan Gyselinck, Francois Henrotte, Benoit Meys, Nicolas
+Moes, Osamu Nakamura, Chad Schmutzer, Jean-Luc Fl'ejou, Xavier
 Dardenne, Christophe Prud'homme, Sebastien Clerc, Jose Miguel Pasini,
 Philippe Lussou, Jacques Kools, Bayram Yenikaya, Peter Hornby, Krishna
 Mohan Gundu, Christopher Stott, Timmy Schumacher, Carl Osterwisch,
