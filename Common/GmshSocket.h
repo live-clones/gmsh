@@ -365,7 +365,7 @@ class GmshServer : public GmshSocket{
     }
 
     if(command && strlen(command)){
-      SystemCall(command); // Start the solver
+      SystemCall(command); // start the solver
     }
     else{
       timeout = 0.; // no command launched: don't set a timeout

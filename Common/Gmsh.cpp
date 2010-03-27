@@ -252,8 +252,10 @@ int GmshFLTK(int argc, char **argv)
   drawContext::global()->draw();
 
   // listen to external solvers
-  if(CTX::instance()->solver.listen)
+  if(CTX::instance()->solver.listen){
+    ConnectionManager::get(-1)->name = "unknown";
     ConnectionManager::get(-1)->run("");
+  }
 
   // loop
   return FlGui::instance()->run();

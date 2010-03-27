@@ -102,7 +102,7 @@ void ConnectionManager::kill()
 {
   if(_pid > 0) {
     if(KillProcess(_pid))
-      Msg::Info("Killed %s pid %d", name.c_str(), _pid);
+      Msg::Info("Killed '%s' (pid %d)", name.c_str(), _pid);
   }
   _pid = -1;
 }
