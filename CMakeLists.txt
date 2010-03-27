@@ -473,6 +473,7 @@ if(ENABLE_MPI)
    find_package(MPI)
    if(MPI_FOUND)
      message("-- Found MPI")
+     set(HAVE_MPI TRUE)
      set(HAVE_MPI TRUE PARENT_SCOPE) # export it for projects, too
      list(APPEND CONFIG_OPTIONS "MPI")
      list(APPEND EXTERNAL_INCLUDES ${MPI_INCLUDE_DIR})
