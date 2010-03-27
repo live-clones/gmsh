@@ -1134,6 +1134,7 @@ adaptiveData::adaptiveData(PViewData *data)
     _tetrahedra(0), _hexahedra(0), _prisms(0)
 {
   _outData = new PViewDataList();
+  _outData->setName(data->getName() + "_adapted");
   std::vector<fullMatrix<double>*> p;
   if(_inData->getNumLines()){
     _inData->getInterpolationMatrices(TYPE_LIN, p);
