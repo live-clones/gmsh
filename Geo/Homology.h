@@ -33,57 +33,60 @@ class Homology
 {
  private:
   
-  // the model of the homology computation
+  // the Gmsh model for homology computation
   GModel* _model;
 
   // domain and the relative subdomain of the homology computation
+  // physical group IDs
   std::vector<int> _domain;
   std::vector<int> _subdomain;
+  // corresponding geometrical entities
   std::vector<GEntity*> _domainEntities;
   std::vector<GEntity*> _subdomainEntities;  
 
-  // physical group numbers of generator chains in model
+  // physical group numbers of resulted generator chains in model
   std::vector<int> _generators;
 
+  // file name to store the results
   std::string _fileName;
  
  public:
   
   Homology(GModel* model, std::vector<int> physicalDomain,
-           std::vector<int> physicalSubdomain);
+	   std::vector<int> physicalSubdomain);
   ~Homology();
   
-  
+  // create a cell complex from a mesh in geometrical entities of Gmsh
   CellComplex* createCellComplex(std::vector<GEntity*>& domainEntities,
-                                 std::vector<GEntity*>& subdomainEntities);
+				 std::vector<GEntity*>& subdomainEntities);
   CellComplex* createCellComplex() { 
     return createCellComplex(_domainEntities, _subdomainEntities); }
 
   void setFileName(std::string fileName) { _fileName = fileName; }
 
-  // Find the generators/duals of homology spaces,
-  // or just compute the ranks of homology spaces
+  // find the generators/dual generarators  of homology spaces,
   void findGenerators(CellComplex* cellComplex=NULL);
   void findDualGenerators(CellComplex* cellComplex=NULL);
 
-  void computeRanks() {}  
-  void findHomSequence();
 
+  // experimental
+  void findHomSequence();
+  void computeRanks() {}  
    
-  // Create a string describing the generator
+  // create a string describing the generator
   std::string getDomainString(const std::vector<int>& domain,
-                              const std::vector<int>& subdomain);
+			      const std::vector<int>& subdomain);
   
   // write the generators to a file
   bool writeGeneratorsMSH(bool binary=false);
-  // store dim-dimensional cells of cellComplex as a pshysical group
+  // store dim-dimensional cells of cellComplex as a physical group
   // in _model, for debugging
   void storeCells(CellComplex* cellComplex, int dim);
 
 };
 
 // A class representing a chain.
-// Used to visualize generators of the homology groups.
+// Used to visualize and post-process generators of the homology spaces in Gmsh.
 class Chain{
   
  private:
@@ -103,20 +106,20 @@ class Chain{
   int _dim;
   
   bool deform(std::map<Cell*, int, Less_Cell> &cellsInChain, 
-              std::map<Cell*, int, Less_Cell> &cellsNotInChain);
+	      std::map<Cell*, int, Less_Cell> &cellsNotInChain);
   bool deformChain(std::pair<Cell*, int> cell, bool bend);
   
   
  public:
   Chain() {}
   Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, 
-        CellComplex* cellComplex, GModel* model,
-        std::string name="Chain", int torsion=0);
+	CellComplex* cellComplex, GModel* model,
+	std::string name="Chain", int torsion=0);
   Chain(std::map<Cell*, int, Less_Cell>& chain,
         CellComplex* cellComplex, GModel* model,
         std::string name="Chain", int torsion=0);
   Chain(Chain* chain){ 
-    _cells = chain->getCells();
+    chain->getCells(_cells);
     _torsion = chain->getTorsion();
     _name = chain->getName();
     _cellComplex = chain->getCellComplex();
@@ -141,25 +144,26 @@ class Chain{
   int getCoeff(Cell* c);
   
   
-  int getTorsion() { return _torsion; }
-  int getDim() { return _dim; }
-  CellComplex* getCellComplex() { return _cellComplex; }
-  GModel* getGModel() { return _model; }
-  std::map<Cell*, int, Less_Cell>  getCells() { return _cells; }
+  int getTorsion() const { return _torsion; }
+  int getDim() const { return _dim; }
+  CellComplex* getCellComplex() const { return _cellComplex; }
+  GModel* getGModel() const { return _model; }
+  void getCells(std::map<Cell*, int, Less_Cell> cells) const{ cells = _cells; }
   
   // erase cells from the chain with zero coefficient
   void eraseNullCells();
-   
+
+  // set all cell in chain not immune
   void deImmuneCells();
   
   // number of cells in this chain 
-  int getSize() { return _cells.size();}
+  int getSize() const { return _cells.size();}
   
   // get/set chain name
-  std::string getName() { return _name; }
+  std::string getName() const { return _name; }
   void setName(std::string name) { _name=name; }
   // get/set physical group number
-  int getNum() { return _num; }
+  int getNum() const { return _num; }
   void setNum(int num) { _num=num; }
   
   // make local deformations to the chain to make it smoother and smaller

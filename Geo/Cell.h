@@ -59,15 +59,17 @@ class Cell
   std::map<Cell*, int, Less_Cell > _obd;
   std::map<Cell*, int, Less_Cell > _ocbd;
   
-  // the mesh element that is the image of this cell
-  MElement* _image;
-  // whether to delete the mesh element when done
-  // (created for homology computation only)
-  bool _delimage;
-  
   // sorted vertices of this cell (used for ordering of the cells)
   std::vector<int> _vs;
 
+  
+  
+  // the mesh element that is the image of this cell
+  MElement* _image;
+  // whether to delete the mesh element when done
+  // (set to true if created for homology computation only)
+  bool _delimage;
+  
   // get vertex 
   MVertex* getVertex(int vertex) const { 
     if(_image == NULL) printf("ERROR: No image mesh element for cell. \n");
@@ -99,10 +101,11 @@ class Cell
   void setDeleteImage(bool delimage) { _delimage = delimage; }
   bool getDeleteImage() const { return _delimage; }
 
-  // find the cells on the boundary of this cell 
+  // find the cells on the boundary of this cell
   bool findBoundaryCells(std::vector<Cell*>& bdCells);
   // get boundary cell orientation
-  int getFacetOri(Cell* cell);
+  int findBoundaryCellOrientation(Cell* cell);
+  
 
   int getDim() const { return _dim; };
   int getIndex() const { return _index; };
@@ -123,6 +126,8 @@ class Cell
   
   // (co)boundary cell iterator
   typedef std::map<Cell*, int, Less_Cell>::iterator biter;
+  // iterators to (first/last (co)boundary cells of this cell
+  // (orig: to original (co)boundary cells of this cell)
   biter firstBoundary(bool orig=false){ 
     return orig ? _obd.begin() : _bd.begin(); }
   biter lastBoundary(bool orig=false){ 
@@ -135,7 +140,7 @@ class Cell
   int getBoundarySize() { return _bd.size(); }
   int getCoboundarySize() { return _cbd.size(); }
    
-  // get the cell boundary
+  // get the (orig: original) cell boundary
   void getBoundary(std::map<Cell*, int, Less_Cell >& boundary, 
 		   bool orig=false){
     orig ? boundary = _obd : boundary =  _bd; }
@@ -143,17 +148,19 @@ class Cell
 		     bool orig=false){
     orig ? coboundary = _ocbd : coboundary = _cbd; }
   
-  // add (co)boundary cell
+  // add (co)boundary cell (orig: as original)
+  // (other: reciprocally also add this cell from the other cell's (co)boundary)
   void addBoundaryCell(int orientation, Cell* cell, 
 		       bool orig, bool other); 
   void addCoboundaryCell(int orientation, Cell* cell, 
 			 bool orig, bool other);
   
-  // remove (co)boundary cell
+  // remove (co)boundary cell 
+  // (other: reciprocally also revove this cell from the other cell's (co)boundary)
   void removeBoundaryCell(Cell* cell, bool other);
   void removeCoboundaryCell(Cell* cell, bool other);
   
-  // true if has given cell on (original) (co)boundary
+  // true if has given cell on (orig: original) (co)boundary
   bool hasBoundary(Cell* cell, bool orig=false);
   bool hasCoboundary(Cell* cell, bool orig=false);
   
@@ -184,7 +191,7 @@ class Cell
     }
     for(int i=0; i < this->getNumSortedVertices();i++){
       if(this->getSortedVertex(i) != c2.getSortedVertex(i)){
-        return false;
+	return false;
       }
     }
     return true;
@@ -212,6 +219,7 @@ class CombinedCell : public Cell{
   int getNum() const { return _num; }
 
   bool operator==(const Cell& c2) const {
+    if(this->isCombined() != c2.isCombined()) return false;
     if(this->getNum() != c2.getNum()) return false;
     else return true;
   }

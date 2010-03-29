@@ -11,7 +11,7 @@
 #if defined(HAVE_KBIPACK)
 
 Homology::Homology(GModel* model, std::vector<int> physicalDomain, 
-                   std::vector<int> physicalSubdomain)
+		   std::vector<int> physicalSubdomain)
 { 
   _model = model; 
   _domain = physicalDomain;
@@ -37,10 +37,10 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain,
     for(int j = 0; j < 4; j++){
       it = groups[j].find(_domain.at(i));
       if(it != groups[j].end()){
-        std::vector<GEntity*> physicalGroup = (*it).second;
-        for(unsigned int k = 0; k < physicalGroup.size(); k++){
-          _domainEntities.push_back(physicalGroup.at(k));
-        }
+	std::vector<GEntity*> physicalGroup = (*it).second;
+	for(unsigned int k = 0; k < physicalGroup.size(); k++){
+	  _domainEntities.push_back(physicalGroup.at(k));
+	}
       }
     }
   }
@@ -48,10 +48,10 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain,
     for(int j = 0; j < 4; j++){
       it = groups[j].find(_subdomain.at(i));
       if(it != groups[j].end()){
-        std::vector<GEntity*> physicalGroup = (*it).second;
-        for(unsigned int k = 0; k < physicalGroup.size(); k++){
-          _subdomainEntities.push_back(physicalGroup.at(k));
-        }         
+	std::vector<GEntity*> physicalGroup = (*it).second;
+	for(unsigned int k = 0; k < physicalGroup.size(); k++){
+	  _subdomainEntities.push_back(physicalGroup.at(k));
+	}	  
       }
     }
   }
@@ -59,7 +59,7 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain,
 }
 
 CellComplex* Homology::createCellComplex(std::vector<GEntity*>& domainEntities,
-                            std::vector<GEntity*>& subdomainEntities){
+			    std::vector<GEntity*>& subdomainEntities){
   Msg::Info("Creating a Cell Complex...");
   Msg::StatusBar(1, false, "Cell Complex...");
   Msg::StatusBar(2, false, "");
@@ -79,14 +79,14 @@ CellComplex* Homology::createCellComplex(std::vector<GEntity*>& domainEntities,
   }
   for(unsigned int j=0; j < subdomainEntities.size(); j++) {
     for(unsigned int i=0; i < subdomainEntities.at(j)->getNumMeshElements();
-        i++){
+	i++){
       MElement* element = subdomainEntities.at(j)->getMeshElement(i);
       subdomainElements.push_back(element);
     }
   }
 
   CellComplex* cellComplex =  new CellComplex(domainElements, 
-                                              subdomainElements);
+					      subdomainElements);
 
   if(cellComplex->getSize(0) == 0){ 
     Msg::Error("Cell Complex is empty!");
@@ -96,10 +96,10 @@ CellComplex* Homology::createCellComplex(std::vector<GEntity*>& domainEntities,
   Msg::Info("Cell Complex complete (%g s).", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges and %d vertices.",
             cellComplex->getSize(3), cellComplex->getSize(2), 
-            cellComplex->getSize(1), cellComplex->getSize(0));
+	    cellComplex->getSize(1), cellComplex->getSize(0));
   Msg::StatusBar(2, false, "%d V, %d F, %d E, %d V.",
-                 cellComplex->getSize(3), cellComplex->getSize(2), 
-                 cellComplex->getSize(1), cellComplex->getSize(0));
+		 cellComplex->getSize(3), cellComplex->getSize(2), 
+		 cellComplex->getSize(1), cellComplex->getSize(0));
   return cellComplex;
 }
 
@@ -113,7 +113,7 @@ void Homology::findGenerators(CellComplex* cellComplex)
   bool ownComplex = false;
   if(cellComplex==NULL){
     cellComplex = createCellComplex(_domainEntities, 
-                                    _subdomainEntities);
+				    _subdomainEntities);
     ownComplex = true;
   }
   std::string domainString = getDomainString(_domain, _subdomain);
@@ -127,10 +127,10 @@ void Homology::findGenerators(CellComplex* cellComplex)
   Msg::Info("Cell Complex reduction complete (%g s).", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges and %d vertices.",
             cellComplex->getSize(3), cellComplex->getSize(2), 
-            cellComplex->getSize(1), cellComplex->getSize(0));
+	    cellComplex->getSize(1), cellComplex->getSize(0));
   Msg::StatusBar(2, false, "%d V, %d F, %d E, %d N.",
-                 cellComplex->getSize(3), cellComplex->getSize(2), 
-                 cellComplex->getSize(1), cellComplex->getSize(0));
+		 cellComplex->getSize(3), cellComplex->getSize(2), 
+		 cellComplex->getSize(1), cellComplex->getSize(0));
   
   Msg::Info("Computing homology spaces...");
   Msg::StatusBar(1, false, "Computing...");
@@ -145,29 +145,33 @@ void Homology::findGenerators(CellComplex* cellComplex)
     HRank[j] = 0;
     std::string dimension = "";
     convert(j, dimension);
-    for(int i = 1; i <= chains->getBasisSize(j); i++){
+    for(int i = 1; i <= chains->getBasisSize(j, 3); i++){
       
       std::string generator = "";
       convert(i, generator);
       
       std::string name = "H" + dimension + domainString + generator;
-      std::set<Cell*, Less_Cell> cells;
+      std::map<Cell*, int, Less_Cell> protoChain;
+      chains->getBasisChain(protoChain, i, j, 3);
+      Chain* chain = new Chain(protoChain, cellComplex, _model, name, 
+			       chains->getTorsion(j,i));      
+      /* std::set<Cell*, Less_Cell> cells;
       cellComplex->getCells(cells, j);
       Chain* chain = new Chain(cells,
                                chains->getCoeffVector(j,i), cellComplex,
-                               _model, name, chains->getTorsion(j,i));
+                               _model, name, chains->getTorsion(j,i));*/
       t1 = Cpu();
       int start = chain->getSize();
       chain->smoothenChain();
       t2 = Cpu();
       Msg::Info("Smoothened H%d %d from %d cells to %d cells (%g s).", 
-                j, i, start, chain->getSize(), t2 - t1);
+		j, i, start, chain->getSize(), t2 - t1);
       if(chain->getSize() != 0) {
         HRank[j] = HRank[j] + 1;
         if(chain->getTorsion() != 1){
-          Msg::Warning("H%d %d has torsion coefficient %d!", 
-                       j, i, chain->getTorsion());
-        }
+	  Msg::Warning("H%d %d has torsion coefficient %d!", 
+		       j, i, chain->getTorsion());
+	}
       }
       _generators.push_back(chain->createPGroup());
       delete chain;
@@ -179,10 +183,10 @@ void Homology::findGenerators(CellComplex* cellComplex)
         std::string name = "H" + dimension + domainString + generator;
         std::vector<int> coeffs (cellComplex->getOmitted(i).size(),1);
         Chain* chain = new Chain(cellComplex->getOmitted(i), coeffs, 
-                                 cellComplex, _model, name, 1);
+				 cellComplex, _model, name, 1);
         if(chain->getSize() != 0) HRank[j] = HRank[j] + 1;
-        _generators.push_back(chain->createPGroup());
-        delete chain;
+	_generators.push_back(chain->createPGroup());
+	delete chain;
       }
     }
   }
@@ -201,7 +205,7 @@ void Homology::findGenerators(CellComplex* cellComplex)
   
   Msg::StatusBar(1, false, "Homology");
   Msg::StatusBar(2, false, "H0: %d, H1: %d, H2: %d, H3: %d.", 
-                 HRank[0], HRank[1], HRank[2], HRank[3]);
+		 HRank[0], HRank[1], HRank[2], HRank[3]);
 }
 
 void Homology::findDualGenerators(CellComplex* cellComplex)
@@ -209,7 +213,7 @@ void Homology::findDualGenerators(CellComplex* cellComplex)
   bool ownComplex = false;
   if(cellComplex==NULL){
     cellComplex = createCellComplex(_domainEntities, 
-                                    _subdomainEntities);
+				    _subdomainEntities);
     ownComplex = true;
   }
 
@@ -223,10 +227,10 @@ void Homology::findDualGenerators(CellComplex* cellComplex)
   Msg::Info("Cell Complex reduction complete (%g s).", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges and %d vertices.",
             cellComplex->getSize(3), cellComplex->getSize(2), 
-            cellComplex->getSize(1), cellComplex->getSize(0));
+	    cellComplex->getSize(1), cellComplex->getSize(0));
   Msg::StatusBar(2, false, "%d V, %d F, %d E, %d N.",
-                 cellComplex->getSize(3), cellComplex->getSize(2), 
-                 cellComplex->getSize(1), cellComplex->getSize(0));
+		 cellComplex->getSize(3), cellComplex->getSize(2), 
+		 cellComplex->getSize(1), cellComplex->getSize(0));
    
   Msg::Info("Computing homology spaces...");
   Msg::StatusBar(1, false, "Computing...");
@@ -238,33 +242,37 @@ void Homology::findDualGenerators(CellComplex* cellComplex)
   Msg::Info("Homology Computation complete (%g s).", t2- t1);
   
   int dim = cellComplex->getDim();
-   
+ 
   int HRank[4];
   for(int i = 0; i < 4; i++) HRank[i] = 0;
   for(int j = 3; j > -1; j--){
     std::string dimension = "";
     convert(dim-j, dimension);
 
-    for(int i = 1; i <= chains->getBasisSize(j); i++){
+    for(int i = 1; i <= chains->getBasisSize(j, 3); i++){
       
       std::string generator = "";
       convert(i, generator);
       
       std::string name = "H" + dimension + "*" + 
-        getDomainString(_domain, _subdomain) + generator;
-      std::set<Cell*, Less_Cell> cells;
+	getDomainString(_domain, _subdomain) + generator;
+      std::map<Cell*, int, Less_Cell> protoChain;
+      chains->getBasisChain(protoChain, i, j, 3);
+      Chain* chain = new Chain(protoChain, cellComplex, _model, name, 
+			       chains->getTorsion(j,i));
+      /*std::set<Cell*, Less_Cell> cells;
       cellComplex->getCells(cells, j);
       Chain* chain = new Chain(cells, 
-                               chains->getCoeffVector(j,i), cellComplex, 
-                               _model, name, chains->getTorsion(j,i));
+      chains->getCoeffVector(j,i), cellComplex, 
+      _model, name, chains->getTorsion(j,i));*/
       _generators.push_back(chain->createPGroup());
       delete chain;
       if(chain->getSize() != 0){
         HRank[dim-j] = HRank[dim-j] + 1;
         if(chain->getTorsion() != 1){ 
-          Msg::Warning("H%d* %d has torsion coefficient %d!", 
-                       dim-j, i, chain->getTorsion());
-        }
+	  Msg::Warning("H%d* %d has torsion coefficient %d!", 
+		       dim-j, i, chain->getTorsion());
+	}
       }     
     }
     
@@ -274,14 +282,14 @@ void Homology::findDualGenerators(CellComplex* cellComplex)
         std::string generator;
         convert(i+1, generator);
         std::string name 
-          = "H" + dimension + "*" + 
-          getDomainString(_domain, _subdomain) + generator;
+	  = "H" + dimension + "*" + 
+	  getDomainString(_domain, _subdomain) + generator;
         std::vector<int> coeffs (cellComplex->getOmitted(i).size(),1);
         Chain* chain = new Chain(cellComplex->getOmitted(i), coeffs, 
-                                 cellComplex, _model, name, 1);
+				 cellComplex, _model, name, 1);
         if(chain->getSize() != 0) HRank[dim-j] = HRank[dim-j] + 1;
-        _generators.push_back(chain->createPGroup());
-        delete chain;
+	_generators.push_back(chain->createPGroup());
+	delete chain;
       }
     }
   }
@@ -300,12 +308,12 @@ void Homology::findDualGenerators(CellComplex* cellComplex)
   
   Msg::StatusBar(1, false, "Homology");
   Msg::StatusBar(2, false, "H0*: %d, H1*: %d, H2*: %d, H3*: %d.", 
-                 HRank[0], HRank[1], HRank[2], HRank[3]);
+		 HRank[0], HRank[1], HRank[2], HRank[3]);
 }
 
 void Homology::findHomSequence(){
   CellComplex* cellComplex = createCellComplex(_domainEntities, 
-                                               _subdomainEntities);
+					       _subdomainEntities);
   Msg::Info("Reducing the Cell Complex...");
   Msg::StatusBar(1, false, "Reducing...");
 
@@ -316,58 +324,79 @@ void Homology::findHomSequence(){
   Msg::Info("Cell Complex reduction complete (%g s).", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges and %d vertices.",
             cellComplex->getSize(3), cellComplex->getSize(2), 
-            cellComplex->getSize(1), cellComplex->getSize(0));
+	    cellComplex->getSize(1), cellComplex->getSize(0));
   Msg::StatusBar(2, false, "%d V, %d F, %d E, %d N.",
-                 cellComplex->getSize(3), cellComplex->getSize(2), 
-                 cellComplex->getSize(1), cellComplex->getSize(0));
+		 cellComplex->getSize(3), cellComplex->getSize(2), 
+		 cellComplex->getSize(1), cellComplex->getSize(0));
   
   Msg::Info("Computing homology spaces...");
   Msg::StatusBar(1, false, "Computing...");
   t1 = Cpu();
   
+  ChainComplex* subcomplex = new ChainComplex(cellComplex, 2);
+  ChainComplex* complex = new ChainComplex(cellComplex, 1);
+  ChainComplex* relcomplex = new ChainComplex(cellComplex, 0);
+
+  subcomplex->computeHomology();
+  complex->computeHomology();
+  relcomplex->computeHomology();  
+
+  t2 = Cpu();
+  Msg::Info("Homology computation complete (%g s).", t2 - t1);
+
+  Msg::Info("Computing homology sequence...");
+  HomologySequence* seq = new HomologySequence(subcomplex, 
+					       complex, relcomplex);
+  t1 = Cpu();
+  Msg::Info("Homology sequence computation complete (%g s).", t1 - t2);
+  
   for(int task = 0; task < 3; task++){
-    ChainComplex* chains = new ChainComplex(cellComplex, task);
+    ChainComplex* chains;
+
     std::string domainString = "";
     std::vector<int> empty;
-    if(task == 0) domainString = getDomainString(_domain, _subdomain);
-    else if(task == 1) domainString = getDomainString(_domain, empty);
-    else if(task == 2) domainString = getDomainString(_subdomain, empty);
-    chains->computeHomology();
-    t2 = Cpu();
-    Msg::Info("Homology Computation complete (%g s).", t2 - t1);
+    if(task == 0) {
+      chains = subcomplex;
+      domainString = getDomainString(_subdomain, empty);
+    }
+    else if(task == 1) {
+      chains = complex;
+      domainString = getDomainString(_domain, empty);
+    }
+    else{
+      chains = relcomplex;
+      domainString = getDomainString(_domain, _subdomain);
+    }
     
     int HRank[4];
     for(int j = 0; j < 4; j++){
       HRank[j] = 0;
       std::string dimension = "";
       convert(j, dimension);
-      for(int i = 1; i <= chains->getBasisSize(j); i++){
-        
-        std::string generator = "";
-        convert(i, generator);
+      for(int i = 1; i <= chains->getBasisSize(j, 3); i++){
+	
+	std::string generator = "";
+	convert(i, generator);
       
-        std::string name = "H" + dimension + domainString + generator;
-        std::set<Cell*, Less_Cell> cells;
-        cellComplex->getCells(cells, j, task);
-        Chain* chain = new Chain(cells, 
-                                 chains->getCoeffVector(j,i), 
-                                 cellComplex, _model, name, 
-                                 chains->getTorsion(j,i));
-        t1 = Cpu();
-        int start = chain->getSize();
-        //chain->smoothenChain();
-        t2 = Cpu();
-        //Msg::Info("Smoothened H%d %d from %d cells to %d cells (%g s).", 
-        //        j, i, start, chain->getSize(), t2 - t1);
-        if(chain->getSize() != 0) {
-          HRank[j] = HRank[j] + 1;
-          if(chain->getTorsion() != 1){
-          Msg::Warning("H%d %d has torsion coefficient %d!", 
-                       j, i, chain->getTorsion());
-          }
-        }
-        _generators.push_back(chain->createPGroup());
-        delete chain;
+	std::string name = "H" + dimension + domainString + generator;
+	std::map<Cell*, int, Less_Cell> protoChain;
+	chains->getBasisChain(protoChain, i, j, 3);
+	Chain* chain = new Chain(protoChain, cellComplex, _model, name, 
+				 chains->getTorsion(j,i));
+	if(chain->getSize() == 0) continue;
+	t1 = Cpu();
+	int start = chain->getSize();
+	//chain->smoothenChain();
+	t2 = Cpu();
+	//Msg::Info("Smoothened H%d %d from %d cells to %d cells (%g s).", 
+	//	  j, i, start, chain->getSize(), t2 - t1);
+	HRank[j] = HRank[j] + 1;
+	if(chain->getTorsion() != 1){
+	  Msg::Warning("H%d %d has torsion coefficient %d!", 
+		       j, i, chain->getTorsion());
+	}
+	_generators.push_back(chain->createPGroup());
+	delete chain;
       }
       
     }
@@ -387,16 +416,19 @@ void Homology::findHomSequence(){
 
     Msg::StatusBar(1, false, "Homology");
     Msg::StatusBar(2, false, "H0: %d, H1: %d, H2: %d, H3: %d.",
-                   HRank[0], HRank[1], HRank[2], HRank[3]);
-    delete chains;
+		   HRank[0], HRank[1], HRank[2], HRank[3]);
   }
+
+  delete subcomplex;
+  delete complex;
+  delete relcomplex;
 
   if(_fileName != "") writeGeneratorsMSH();
   delete cellComplex;
 }
 
 std::string Homology::getDomainString(const std::vector<int>& domain,
-                                      const std::vector<int>& subdomain) 
+				      const std::vector<int>& subdomain) 
 {
   std::string domainString = "({";
   if(domain.empty()) domainString += "0";
@@ -406,7 +438,7 @@ std::string Homology::getDomainString(const std::vector<int>& domain,
       convert(domain.at(i),temp);
       domainString += temp;
       if (domain.size()-1 > i){ 
-        domainString += ", ";
+	domainString += ", ";
       }
     }
   }
@@ -436,8 +468,8 @@ bool Homology::writeGeneratorsMSH(bool binary)
   return true;
 }
 Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, 
-             CellComplex* cellComplex, GModel* model,
-             std::string name, int torsion)
+	     CellComplex* cellComplex, GModel* model,
+	     std::string name, int torsion)
 {  
   int i = 0;
   for(std::set<Cell*, Less_Cell>::iterator cit = cells.begin();
@@ -447,7 +479,7 @@ Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs,
     if((int)coeffs.size() > i){
       if(coeffs.at(i) != 0){
         std::map<Cell*, int, Less_Cell > subCells;
-        cell->getCells(subCells);
+	cell->getCells(subCells);
         for(Cell::citer it = subCells.begin(); it != subCells.end(); it++){
           Cell* subCell = (*it).first;
           int coeff = (*it).second;
@@ -502,8 +534,8 @@ void Homology::storeCells(CellComplex* cellComplex, int dim)
 }
 
 Chain::Chain(std::map<Cell*, int, Less_Cell>& chain, 
-             CellComplex* cellComplex, GModel* model,
-             std::string name, int torsion)
+	     CellComplex* cellComplex, GModel* model,
+	     std::string name, int torsion)
 {  
   _cells = chain;
   if(!_cells.empty()) _dim = firstCell()->first->getDim();
@@ -516,7 +548,7 @@ Chain::Chain(std::map<Cell*, int, Less_Cell>& chain,
 }
 
 bool Chain::deform(std::map<Cell*, int, Less_Cell>& cellsInChain, 
-                   std::map<Cell*, int, Less_Cell>& cellsNotInChain)
+		   std::map<Cell*, int, Less_Cell>& cellsNotInChain)
 {
   std::vector<int> cc;
   std::vector<int> bc;
@@ -565,12 +597,12 @@ bool Chain::deformChain(std::pair<Cell*, int> cell, bool bend)
     Cell* c1CbdCell = (*cit).first;
 
     for(citer cit2 = c1CbdCell->firstBoundary(true);
-        cit2 != c1CbdCell->lastBoundary(true); cit2++){
+	cit2 != c1CbdCell->lastBoundary(true); cit2++){
       Cell* c1CbdBdCell = (*cit2).first;
       int coeff = (*cit2).second;
       if( (hasCell(c1CbdBdCell) && getCoeff(c1CbdBdCell) != 0) 
-          || c1CbdBdCell->inSubdomain()){
-        cellsInChain.insert(std::make_pair(c1CbdBdCell, coeff));
+	  || c1CbdBdCell->inSubdomain()){
+	cellsInChain.insert(std::make_pair(c1CbdBdCell, coeff));
       }
       else cellsNotInChain.insert(std::make_pair(c1CbdBdCell, coeff));
     }
@@ -586,30 +618,30 @@ bool Chain::deformChain(std::pair<Cell*, int> cell, bool bend)
     }
     
     for(citer cit2 = cellsNotInChain.begin(); cit2 != cellsNotInChain.end();
-        cit2++){
+	cit2++){
       Cell* c = (*cit2).first;
       if(c->inSubdomain()) next = true;
     }    
     if(next) continue;
     
     if( (getDim() == 1 && cellsInChain.size() == 2 
-         && cellsNotInChain.size() == 1) || 
-        (getDim() == 2 && cellsInChain.size() == 3 
-         && cellsNotInChain.size() == 1)){
+	 && cellsNotInChain.size() == 1) || 
+	(getDim() == 2 && cellsInChain.size() == 3 
+	 && cellsNotInChain.size() == 1)){
       //printf("straighten \n");
       return deform(cellsInChain, cellsNotInChain);
     }
     else if ( (getDim() == 1 && cellsInChain.size() == 1 
-               && cellsNotInChain.size() == 2 && bend) ||
+	       && cellsNotInChain.size() == 2 && bend) ||
               (getDim() == 2 && cellsInChain.size() == 2 
-               && cellsNotInChain.size() == 2 && bend)){
+	       && cellsNotInChain.size() == 2 && bend)){
       //printf("bend \n");
       return deform(cellsInChain, cellsNotInChain);
     }
     else if ((getDim() == 1 && cellsInChain.size() == 3 
-              && cellsNotInChain.size() == 0) ||
+	      && cellsNotInChain.size() == 0) ||
              (getDim() == 2 && cellsInChain.size() == 4 
-              && cellsNotInChain.size() == 0)){
+	      && cellsNotInChain.size() == 0)){
       //printf("remove boundary \n");
       return deform(cellsInChain, cellsNotInChain);
     }
@@ -648,7 +680,7 @@ void Chain::smoothenChain()
   eraseNullCells();
   double t2 = Cpu();
   Msg::Debug("Smoothened a %d-chain from %d cells to %d cells (%g s).\n",
-             getDim(), start, getSize(), t2-t1);
+	     getDim(), start, getSize(), t2-t1);
   return;
 }
 
@@ -747,7 +779,7 @@ int Chain::createPGroup()
     
     // create PView for visualization
     PView* chain = new PView(getName(), "ElementData", getGModel(), 
-                             data, 0, 1);
+			     data, 0, 1);
   }
    
   return physicalNum;
