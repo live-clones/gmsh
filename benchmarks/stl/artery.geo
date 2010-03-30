@@ -4,6 +4,6 @@ Mesh.CharacteristicLengthFactor=0.05;
 Merge "artery.stl";
 CreateTopology;
 
-Compound Surface(100)={1} Conformal;
+Compound Surface(100)={1} Harmonic;
 
 Physical Surface(101)={100};

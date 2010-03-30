@@ -90,13 +90,7 @@ int arrowEditor(const char *title, double &a, double &b, double &c)
 
 // Perspective editor (aka z-clipping planes factor slider)
 
-static void persp_change_factor(Fl_Widget* w, void* data)
-{
-  opt_general_clip_factor(0, GMSH_SET|GMSH_GUI, ((Fl_Slider*)w)->value());
-  drawContext::global()->draw();
-}
-
-class Release_Slider : public Fl_Slider {
+class Release_Slider : public Fl_Value_Slider {
   int handle(int event)
   {
     switch (event) {
@@ -105,13 +99,19 @@ class Release_Slider : public Fl_Slider {
         window()->hide();
       return 1;
     default:
-      return Fl_Slider::handle(event);
+      return Fl_Value_Slider::handle(event);
     }
   };
 public:
   Release_Slider(int x, int y, int w, int h, const char *l=0)
-    : Fl_Slider(x, y, w, h, l) {}
+    : Fl_Value_Slider(x, y, w, h, l) {}
 };
+
+static void persp_change_factor(Fl_Widget* w, void* data)
+{
+  opt_general_clip_factor(0, GMSH_SET|GMSH_GUI, ((Fl_Value_Slider*)w)->value());
+  drawContext::global()->draw();
+}
 
 int perspectiveEditor()
 {
@@ -123,12 +123,12 @@ int perspectiveEditor()
 
   if(!editor){
     editor = new _editor;
-    editor->window = new Fl_Menu_Window(20, 100);
+    editor->window = new Fl_Menu_Window(150, 20);
     if(CTX::instance()->nonModalWindows) editor->window->set_non_modal();
-    editor->sa = new Release_Slider(0, 0, 20, 100);
-    editor->sa->type(FL_VERT_NICE_SLIDER);
-    editor->sa->minimum(12);
-    editor->sa->maximum(0.75);
+    editor->sa = new Release_Slider(0, 0, 150, 20);
+    editor->sa->type(FL_HOR_NICE_SLIDER);
+    editor->sa->minimum(0.75);
+    editor->sa->maximum(12);
     editor->sa->callback(persp_change_factor);
     editor->window->border(0);
     editor->window->end();
@@ -136,6 +136,44 @@ int perspectiveEditor()
 
   editor->window->hotspot(editor->window);
   editor->sa->value(CTX::instance()->clipFactor);
+
+  if(editor->window->non_modal() && !editor->window->shown())
+    editor->window->show(); // fix ordering
+  editor->window->show();
+  return 0;
+}
+
+// Perspective editor (aka z-clipping planes factor slider)
+
+static void mesh_size_factor(Fl_Widget* w, void* data)
+{
+  opt_mesh_lc_factor(0, GMSH_SET|GMSH_GUI, ((Fl_Value_Slider*)w)->value());
+  drawContext::global()->draw();
+}
+
+int meshSizeEditor()
+{
+  struct _editor{
+    Fl_Menu_Window *window;
+    Release_Slider *sa;
+  };
+  static _editor *editor = 0;
+
+  if(!editor){
+    editor = new _editor;
+    editor->window = new Fl_Menu_Window(150, 20);
+    if(CTX::instance()->nonModalWindows) editor->window->set_non_modal();
+    editor->sa = new Release_Slider(0, 0, 150, 20);
+    editor->sa->type(FL_HOR_NICE_SLIDER);
+    editor->sa->minimum(0.1);
+    editor->sa->maximum(2);
+    editor->sa->callback(mesh_size_factor);
+    editor->window->border(0);
+    editor->window->end();
+  }
+
+  editor->window->hotspot(editor->window);
+  editor->sa->value(CTX::instance()->mesh.lcFactor);
 
   if(editor->window->non_modal() && !editor->window->shown())
     editor->window->show(); // fix ordering

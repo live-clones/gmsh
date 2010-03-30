@@ -79,10 +79,18 @@ static void gmsh_rotate(Fl_Color c)
 static void gmsh_models(Fl_Color c)
 {
   fl_color(c);
-  bl; vv(-0.8,-0.8); vv(-0.3,-0.8); vv(-0.3,-0.3); vv(-0.8,-0.3); el;
-  bl; vv(0.3,-0.8); vv(0.8,-0.8); vv(0.8,-0.3); vv(0.3,-0.3); el;
-  bl; vv(-0.8,0.3); vv(-0.3,0.3); vv(-0.3,0.8); vv(-0.8,0.8); el;
-  bl; vv(0.3,0.3); vv(0.8,0.3); vv(0.8,0.8); vv(0.3,0.8); el;
+  bl; vv(-0.8,-0.8); vv(0.8,-0.8); el;
+  bl; vv(-0.8,-0.4); vv(0.8,-0.4); el;
+  bl; vv(-0.8,-0.); vv(0.8,-0.); el;
+  bl; vv(-0.8,0.4); vv(0.8,0.4); el;
+  bl; vv(-0.8,0.8); vv(0.8,0.8); el;
+}
+
+static void gmsh_clscale(Fl_Color c)
+{
+  fl_color(c);
+  bl; vv(-0.8,0.8); vv(-0.2,0.8); vv(-0.8,0.2); el;
+  bl; vv(-0.3,0.4); vv(0.8,0.4); vv(-0.3,-0.8); el;
 }
 
 #undef vv
@@ -204,6 +212,43 @@ void status_options_cb(Fl_Widget *w, void *data)
       perspectiveEditor();
     }
     drawContext::global()->draw();
+  }
+  else if(!strcmp(str, "M")){ // toggle mesh display
+    static int value = 1;
+    static int old_p = (int)opt_mesh_points(0, GMSH_GET, 0.);
+    static int old_l = (int)opt_mesh_lines(0, GMSH_GET, 0.);
+    static int old_se = (int)opt_mesh_surfaces_edges(0, GMSH_GET, 0.);
+    static int old_sf = (int)opt_mesh_surfaces_faces(0, GMSH_GET, 0.);
+    static int old_ve = (int)opt_mesh_volumes_edges(0, GMSH_GET, 0.);
+    static int old_vf = (int)opt_mesh_volumes_faces(0, GMSH_GET, 0.);
+    if(!value){ // retore visibility
+      value = 1;
+      opt_mesh_points(0, GMSH_SET | GMSH_GUI, old_p);
+      opt_mesh_lines(0, GMSH_SET | GMSH_GUI, old_l);
+      opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI, old_se);
+      opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI, old_sf);
+      opt_mesh_volumes_edges(0, GMSH_SET | GMSH_GUI, old_ve);
+      opt_mesh_volumes_faces(0, GMSH_SET | GMSH_GUI, old_vf);
+    }
+    else{
+      value = 0;
+      old_p = (int)opt_mesh_points(0, GMSH_GET, 0.);
+      old_l = (int)opt_mesh_lines(0, GMSH_GET, 0.);
+      old_se = (int)opt_mesh_surfaces_edges(0, GMSH_GET, 0.);
+      old_sf = (int)opt_mesh_surfaces_faces(0, GMSH_GET, 0.);
+      old_ve = (int)opt_mesh_volumes_edges(0, GMSH_GET, 0.);
+      old_vf = (int)opt_mesh_volumes_faces(0, GMSH_GET, 0.);
+      opt_mesh_points(0, GMSH_SET | GMSH_GUI, 0);
+      opt_mesh_lines(0, GMSH_SET | GMSH_GUI, 0);
+      opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI, 0);
+      opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI, 0);
+      opt_mesh_volumes_edges(0, GMSH_SET | GMSH_GUI, 0);
+      opt_mesh_volumes_faces(0, GMSH_SET | GMSH_GUI, 0);
+    }
+    drawContext::global()->draw();
+  }
+  else if(!strcmp(str, "clscale")){
+    meshSizeEditor();
   }
   else if(!strcmp(str, "S")){ // mouse selection
     if(CTX::instance()->mouseSelection){
@@ -356,6 +401,7 @@ graphicWindow::graphicWindow(bool main, int numTiles)
     fl_add_symbol("gmsh_ortho", gmsh_ortho, 1);
     fl_add_symbol("gmsh_rotate", gmsh_rotate, 1);
     fl_add_symbol("gmsh_models", gmsh_models, 1);
+    fl_add_symbol("gmsh_clscale", gmsh_clscale, 1);
     first = false;
   }
   
@@ -411,6 +457,14 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   butt[8]->callback(status_options_cb, (void *)"p");
   butt[8]->tooltip("Toggle projection mode (Alt+o or Alt+Shift+o)");
   x += sw;  
+  butt[12] = new Fl_Button(x, glheight + 2, sw, sht, "M");
+  butt[12]->callback(status_options_cb, (void *)"M");
+  butt[12]->tooltip("Toggle mesh visibility (Alt+m)");
+  x += sw;  
+  butt[13] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_clscale");
+  butt[13]->callback(status_options_cb, (void *)"clscale");
+  butt[13]->tooltip("Change mesh element size factor");
+  x += sw;  
   butt[9] = new Fl_Button(x, glheight + 2, sw, sht, "S");
   butt[9]->callback(status_options_cb, (void *)"S");
   butt[9]->tooltip("Toggle mouse selection ON/OFF (Escape)");
@@ -436,7 +490,7 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   butt[11]->deactivate();
   x += sw;
   
-  for(int i = 0; i < 12; i++) {
+  for(int i = 0; i < 14; i++) {
     butt[i]->box(FL_FLAT_BOX);
     butt[i]->selection_color(FL_WHITE);
     butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);

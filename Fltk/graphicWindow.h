@@ -22,7 +22,7 @@ class graphicWindow{
   Fl_Tile *tile;
   std::vector<openglWindow*> gl;
   Fl_Box *bottom;
-  Fl_Button *butt[12];
+  Fl_Button *butt[14];
   Fl_Box *label[2];
   int minWidth, minHeight;
  public:

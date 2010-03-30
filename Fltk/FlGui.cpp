@@ -582,16 +582,7 @@ int FlGui::testGlobalShortcuts(int event)
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'm')) {
-    int old = opt_mesh_points(0, GMSH_GET, 0) || 
-      opt_mesh_lines(0, GMSH_GET, 0) ||
-      opt_mesh_surfaces_edges(0, GMSH_GET, 0) ||
-      opt_mesh_surfaces_faces(0, GMSH_GET, 0);
-    opt_mesh_points(0, GMSH_SET | GMSH_GUI, !old);
-    opt_mesh_lines(0, GMSH_SET | GMSH_GUI, !old);
-    opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI, !old);
-    opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI, !old);
-    opt_mesh_volumes_edges(0, GMSH_SET | GMSH_GUI, !old);
-    opt_mesh_volumes_faces(0, GMSH_SET | GMSH_GUI, !old);
+    status_options_cb(0, (void *)"M");
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 't')) {
