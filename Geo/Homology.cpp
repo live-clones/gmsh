@@ -152,26 +152,17 @@ void Homology::findGenerators(CellComplex* cellComplex)
       
       std::string name = "H" + dimension + domainString + generator;
       std::map<Cell*, int, Less_Cell> protoChain;
-      chains->getBasisChain(protoChain, i, j, 3);
+      chains->getBasisChain(protoChain, i, j, 3, true);
       Chain* chain = new Chain(protoChain, cellComplex, _model, name, 
 			       chains->getTorsion(j,i));      
-      /* std::set<Cell*, Less_Cell> cells;
-      cellComplex->getCells(cells, j);
-      Chain* chain = new Chain(cells,
-                               chains->getCoeffVector(j,i), cellComplex,
-                               _model, name, chains->getTorsion(j,i));*/
-      t1 = Cpu();
-      int start = chain->getSize();
-      chain->smoothenChain();
-      t2 = Cpu();
-      Msg::Info("Smoothened H%d %d from %d cells to %d cells (%g s).", 
-		j, i, start, chain->getSize(), t2 - t1);
-      if(chain->getSize() != 0) {
-        HRank[j] = HRank[j] + 1;
-        if(chain->getTorsion() != 1){
-	  Msg::Warning("H%d %d has torsion coefficient %d!", 
-		       j, i, chain->getTorsion());
-	}
+      if(chain->getSize() == 0) {
+	delete chain;
+	continue;
+      }
+      HRank[j] = HRank[j] + 1;
+      if(chain->getTorsion() != 1){
+	Msg::Warning("H%d %d has torsion coefficient %d!", 
+		     j, i, chain->getTorsion());
       }
       _generators.push_back(chain->createPGroup());
       delete chain;
@@ -184,7 +175,11 @@ void Homology::findGenerators(CellComplex* cellComplex)
         std::vector<int> coeffs (cellComplex->getOmitted(i).size(),1);
         Chain* chain = new Chain(cellComplex->getOmitted(i), coeffs, 
 				 cellComplex, _model, name, 1);
-        if(chain->getSize() != 0) HRank[j] = HRank[j] + 1;
+        if(chain->getSize() == 0){
+	  delete chain;
+	  continue;
+	}
+	HRank[j] = HRank[j] + 1;
 	_generators.push_back(chain->createPGroup());
 	delete chain;
       }
@@ -260,22 +255,17 @@ void Homology::findDualGenerators(CellComplex* cellComplex)
       chains->getBasisChain(protoChain, i, j, 3);
       Chain* chain = new Chain(protoChain, cellComplex, _model, name, 
 			       chains->getTorsion(j,i));
-      /*std::set<Cell*, Less_Cell> cells;
-      cellComplex->getCells(cells, j);
-      Chain* chain = new Chain(cells, 
-      chains->getCoeffVector(j,i), cellComplex, 
-      _model, name, chains->getTorsion(j,i));*/
+      if(chain->getSize() == 0) {
+	delete chain;
+	continue;
+      }
       _generators.push_back(chain->createPGroup());
-      delete chain;
-      if(chain->getSize() != 0){
-        HRank[dim-j] = HRank[dim-j] + 1;
-        if(chain->getTorsion() != 1){ 
-	  Msg::Warning("H%d* %d has torsion coefficient %d!", 
-		       dim-j, i, chain->getTorsion());
-	}
+      HRank[dim-j] = HRank[dim-j] + 1;
+      if(chain->getTorsion() != 1){ 
+	Msg::Warning("H%d* %d has torsion coefficient %d!", 
+		     dim-j, i, chain->getTorsion());
       }     
     }
-    
     
     if(j == 0 && cellComplex->getNumOmitted() > 0){
       for(int i = 0; i < cellComplex->getNumOmitted(); i++){
@@ -287,7 +277,11 @@ void Homology::findDualGenerators(CellComplex* cellComplex)
         std::vector<int> coeffs (cellComplex->getOmitted(i).size(),1);
         Chain* chain = new Chain(cellComplex->getOmitted(i), coeffs, 
 				 cellComplex, _model, name, 1);
-        if(chain->getSize() != 0) HRank[dim-j] = HRank[dim-j] + 1;
+	if(chain->getSize() == 0) {
+	  delete chain;
+	  continue;
+	}
+	HRank[dim-j] = HRank[dim-j] + 1;
 	_generators.push_back(chain->createPGroup());
 	delete chain;
       }
@@ -383,13 +377,10 @@ void Homology::findHomSequence(){
 	chains->getBasisChain(protoChain, i, j, 3);
 	Chain* chain = new Chain(protoChain, cellComplex, _model, name, 
 				 chains->getTorsion(j,i));
-	if(chain->getSize() == 0) continue;
-	t1 = Cpu();
-	int start = chain->getSize();
-	//chain->smoothenChain();
-	t2 = Cpu();
-	//Msg::Info("Smoothened H%d %d from %d cells to %d cells (%g s).", 
-	//	  j, i, start, chain->getSize(), t2 - t1);
+	if(chain->getSize() == 0) {
+	  delete chain;
+	  continue;
+	}
 	HRank[j] = HRank[j] + 1;
 	if(chain->getTorsion() != 1){
 	  Msg::Warning("H%d %d has torsion coefficient %d!", 
@@ -547,144 +538,6 @@ Chain::Chain(std::map<Cell*, int, Less_Cell>& chain,
   eraseNullCells();
 }
 
-bool Chain::deform(std::map<Cell*, int, Less_Cell>& cellsInChain, 
-		   std::map<Cell*, int, Less_Cell>& cellsNotInChain)
-{
-  std::vector<int> cc;
-  std::vector<int> bc;
-  
-  for(citer cit = cellsInChain.begin(); cit != cellsInChain.end(); cit++){
-    Cell* c = (*cit).first;
-    c->setImmune(false);
-    if(!c->inSubdomain()) {
-      cc.push_back(getCoeff(c));
-      bc.push_back((*cit).second);
-    }
-  }
-  
-  if(cc.empty() || (getDim() == 2 && cc.size() < 2) ) return false;
-  int inout = cc[0]*bc[0];
-  for(unsigned int i = 0; i < cc.size(); i++){
-    if(cc[i]*bc[i] != inout) return false;  
-  }
-  
-  for(citer cit = cellsInChain.begin(); cit != cellsInChain.end(); cit++){
-    removeCell((*cit).first);
-  }
-  
-  int n = 1;
-  for(citer cit = cellsNotInChain.begin(); cit != cellsNotInChain.end();
-      cit++){
-    Cell* c = (*cit).first;
-    if(n == 2) c->setImmune(true);
-    else c->setImmune(false);
-    int coeff = -1*inout*(*cit).second;
-    addCell(c, coeff);
-    n++;
-  }
-  
-  return true;
-}
-
-bool Chain::deformChain(std::pair<Cell*, int> cell, bool bend)
-{  
-  Cell* c1 = cell.first;
-  for(citer cit = c1->firstCoboundary(true); cit != c1->lastCoboundary(true);
-      cit++){
-    
-    std::map<Cell*, int, Less_Cell> cellsInChain;
-    std::map<Cell*, int, Less_Cell> cellsNotInChain;
-    Cell* c1CbdCell = (*cit).first;
-
-    for(citer cit2 = c1CbdCell->firstBoundary(true);
-	cit2 != c1CbdCell->lastBoundary(true); cit2++){
-      Cell* c1CbdBdCell = (*cit2).first;
-      int coeff = (*cit2).second;
-      if( (hasCell(c1CbdBdCell) && getCoeff(c1CbdBdCell) != 0) 
-	  || c1CbdBdCell->inSubdomain()){
-	cellsInChain.insert(std::make_pair(c1CbdBdCell, coeff));
-      }
-      else cellsNotInChain.insert(std::make_pair(c1CbdBdCell, coeff));
-    }
-    
-    bool next = false;
-    
-    for(citer cit2 = cellsInChain.begin(); cit2 != cellsInChain.end(); cit2++){
-      Cell* c = (*cit2).first;
-      int coeff = getCoeff(c);
-      if(c->getImmune()) next = true;
-      if(c->inSubdomain()) bend = false;
-      if(coeff > 1 || coeff < -1) next = true; 
-    }
-    
-    for(citer cit2 = cellsNotInChain.begin(); cit2 != cellsNotInChain.end();
-	cit2++){
-      Cell* c = (*cit2).first;
-      if(c->inSubdomain()) next = true;
-    }    
-    if(next) continue;
-    
-    if( (getDim() == 1 && cellsInChain.size() == 2 
-	 && cellsNotInChain.size() == 1) || 
-	(getDim() == 2 && cellsInChain.size() == 3 
-	 && cellsNotInChain.size() == 1)){
-      //printf("straighten \n");
-      return deform(cellsInChain, cellsNotInChain);
-    }
-    else if ( (getDim() == 1 && cellsInChain.size() == 1 
-	       && cellsNotInChain.size() == 2 && bend) ||
-              (getDim() == 2 && cellsInChain.size() == 2 
-	       && cellsNotInChain.size() == 2 && bend)){
-      //printf("bend \n");
-      return deform(cellsInChain, cellsNotInChain);
-    }
-    else if ((getDim() == 1 && cellsInChain.size() == 3 
-	      && cellsNotInChain.size() == 0) ||
-             (getDim() == 2 && cellsInChain.size() == 4 
-	      && cellsNotInChain.size() == 0)){
-      //printf("remove boundary \n");
-      return deform(cellsInChain, cellsNotInChain);
-    }
-  }
-  
-  return false;
-}
-
-void Chain::smoothenChain()
-{
-  if(!_cellComplex->simplicial()) return;
-  
-  int start = getSize();
-  double t1 = Cpu();
-  
-  int useless = 0;
-  for(int i = 0; i < 20; i++){
-    int size = getSize();
-    for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
-      //if(!deformChain(*cit, false) && getDim() == 2) deformChain(*cit, true);
-      if(getDim() == 2) deformChain(*cit, true);
-      deformChain(*cit, false);      
-    }
-    deImmuneCells();
-    eraseNullCells();
-    if (size >= getSize()) useless++;
-    else useless = 0;
-    if (useless > 5) break;
-  }
-  
-  deImmuneCells();
-  for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
-    deformChain(*cit, false);
-  }
-  
-  eraseNullCells();
-  double t2 = Cpu();
-  Msg::Debug("Smoothened a %d-chain from %d cells to %d cells (%g s).\n",
-	     getDim(), start, getSize(), t2-t1);
-  return;
-}
-
-
 int Chain::writeChainMSH(const std::string &name)
 {  
   if(getSize() == 0) return 1;
@@ -831,10 +684,8 @@ int Chain::getCoeff(Cell* c)
 void Chain::eraseNullCells()
 {
   std::vector<Cell*> toRemove;
-  for(int i = 0; i < 4; i++){
-    for(citer cit = _cells.begin(); cit != _cells.end(); ++cit){
-      if((*cit).second == 0) toRemove.push_back((*cit).first);
-    }
+  for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
+    if(cit->second == 0) toRemove.push_back(cit->first);
   }
   for(unsigned int i = 0; i < toRemove.size(); i++) _cells.erase(toRemove[i]);
   return;

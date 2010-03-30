@@ -105,11 +105,6 @@ class Chain{
   
   int _dim;
   
-  bool deform(std::map<Cell*, int, Less_Cell> &cellsInChain, 
-	      std::map<Cell*, int, Less_Cell> &cellsNotInChain);
-  bool deformChain(std::pair<Cell*, int> cell, bool bend);
-  
-  
  public:
   Chain() {}
   Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, 
@@ -165,11 +160,6 @@ class Chain{
   // get/set physical group number
   int getNum() const { return _num; }
   void setNum(int num) { _num=num; }
-  
-  // make local deformations to the chain to make it smoother and smaller
-  // (for primary complex chains only, not for dual chains represented 
-  // by primary cells (yet).)
-  void smoothenChain();
   
   // append this chain to a MSH ASCII file as $ElementData
   // for debugging only

@@ -92,7 +92,16 @@ class ChainComplex
   gmp_matrix* getHbasis(int dim) const { 
     if(dim > -1 && dim < 5) return _Hbasis[dim]; else return NULL;}
 
-  
+  // local deformation tools for chains
+  bool deformChain(std::map<Cell*, int, Less_Cell>& cells,
+		   std::pair<Cell*, int> cell, bool bend);
+  bool deform(std::map<Cell*, int, Less_Cell>& cells,
+	      std::map<Cell*, int, Less_Cell>& cellsInChain, 
+	      std::map<Cell*, int, Less_Cell>& cellsNotInChain);
+  void smoothenChain(std::map<Cell*, int, Less_Cell>& cells);
+  void eraseNullCells(std::map<Cell*, int, Less_Cell>& cells);
+  void deImmuneCells(std::map<Cell*, int, Less_Cell>& cells);
+    
  public:  
   // domain = 0 : relative chain space
   // domain = 1 : absolute chain space of all cells in cellComplex
@@ -147,8 +156,11 @@ class ChainComplex
   // get coefficient vector for dim-dimensional Hbasis chain chainNumber
   std::vector<int> getCoeffVector(int dim, int chainNumber);
   // get basis chain from a basis matrix
+  // (deform: with local deformations to make chain smoother and to have
+  // smaller support, deformed chain is homologous to the old one,
+  // only works for chains of the primary chain complex)
   void getBasisChain(std::map<Cell*, int, Less_Cell>& chain, 
-		     int num, int dim, int basis);
+		     int num, int dim, int basis, bool deform=false);
   // get rank of a basis
   int getBasisSize(int dim, int basis);
   // homology torsion coefficient for dim-dimensional chain num 
@@ -160,7 +172,7 @@ class ChainComplex
       gmp_matrix_right_mult(_Hbasis[dim], T);
     }
   }
-  
+
   // debugging aid
   int printMatrix(gmp_matrix* matrix){ 
     printf("%d rows and %d columns\n", 
@@ -213,7 +225,7 @@ class HomologySequence
     printf("%d rows and %d columns\n",
            (int)gmp_matrix_rows(matrix), (int)gmp_matrix_cols(matrix));
     return gmp_matrix_printf(matrix); }  
-
+  
 };
 
 #endif
