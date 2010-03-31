@@ -276,6 +276,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
         all_vertices.insert((*it)->lines[i]->getVertex(1));
       }
     }
+    else
+      printf("edge %d degenerated mesh \n", (*it)->tag());
     ++it;
   }
 
@@ -1359,8 +1361,10 @@ void partitionAndRemesh(GFaceCompound *gf)
   typeOfPartition method;
   if(gf->nbSplit > 0) method = MULTILEVEL;
   else method = LAPLACIAN;
-  
+ 
   multiscalePartition *msp = new multiscalePartition(elements, abs(gf->nbSplit), method);
+
+  //gf->partitionFaceCM(); 
 
   int NF = msp->getNumberOfParts();
   int numv = gf->model()->maxVertexNum() + 1;
@@ -1501,7 +1505,7 @@ void partitionAndRemesh(GFaceCompound *gf)
   Msg::Info("*** Mesh of surface %d done by assembly remeshed faces", gf->tag());
   Msg::Info("-----------------------------------------------------------");
  
-  //gf->coherenceNormals();
+  gf->coherenceNormals();
   gf->meshStatistics.status = GFace::DONE; 
 
   //CreateOutputFile("toto.msh", CTX::instance()->mesh.format);

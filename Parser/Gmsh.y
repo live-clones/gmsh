@@ -1282,7 +1282,9 @@ Shape :
         Curve *c = Create_Curve(num, MSH_SEGM_COMPOUND, 1, NULL, NULL, -1, -1, 0., 1.);
         for(int i = 0; i < List_Nbr($7); i++)
           c->compound.push_back((int)*(double*)List_Pointer($7, i));
+	End_Curve(c);
 	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
+	CreateReversedCurve(c);
       }
       List_Delete($7);
       $$.Type = MSH_SEGM_COMPOUND;

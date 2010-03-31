@@ -118,6 +118,7 @@ class GFaceCompound : public GFace {
   virtual bool checkTopology() const;
   bool parametrize() const ;
   void coherenceNormals();
+  void partitionFaceCM();
   virtual std::list<GFace*> getCompounds() const {return _compound;};
   mutable int nbSplit;
   int allowPartition() const{return _allowPartition;};

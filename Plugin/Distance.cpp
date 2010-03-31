@@ -165,7 +165,6 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 
   double L = norm(SVector3(bbox.max(), bbox.min())); 
   double mu = L/28;
-  printf("L=%g \n", L);
 
   simpleFunction<double> DIFF(mu * mu), MONE(1.0);
   distanceTerm distance(GModel::current(), 1, &DIFF, &MONE);

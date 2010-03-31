@@ -308,7 +308,6 @@ static void recur_compute_centers_ (double R, double a1, double a2,
     printf("!!!!!!!! ARG added = %d != %d (bounds=%d, child=%d)\n",  added, 
            (int)(boundaries.size() - 1 - root->children.size()), (int)boundaries.size(), 
            (int)root->children.size());
-    //exit(1);
   }
 
   //sort centers
@@ -947,8 +946,8 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
     MElement *e = level.elements[i];
     std::vector<SPoint2> localCoord;
     double local_size = localSize(e,solution);
-    if (local_size < 5.e-4*global_size) //1.e-5
-      tooSmall.push_back(e);
+    if (local_size < 1.e-5*global_size) //1.e-5
+        tooSmall.push_back(e);
     else  goodSize.push_back(e);
   }
 
@@ -996,7 +995,7 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
 //       double area = fabs(triangle_area(q0, q1, q2));   
 //       totArea  += area;
       double local_size = localSize(e,solution);
-      if (local_size < 5.e-6 * global_size) //1.e-7
+      if (local_size < 1.e-7 * global_size) //1.e-7
         really_small_elements = true;
     }
     //center *= (1./regions_[i].size());

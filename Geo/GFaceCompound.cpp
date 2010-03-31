@@ -385,8 +385,6 @@ bool GFaceCompound::checkFolding(std::vector<MVertex*> &ordered) const
 bool GFaceCompound::checkOrientation(int iter) const
 {
  
-  return true;
-
   //Only check orientation for stl files (1 patch)
   //  if(_compound.size() > 1.0) return true;
 
@@ -404,8 +402,11 @@ bool GFaceCompound::checkOrientation(int iter) const
       double p1[2] = {v2[0],v2[1]};
       double p2[2] = {v3[0],v3[1]};
       a_new = robustPredicates::orient2d(p0, p1, p2);
-      if(count == 0) a_old=a_new;   
-      if(a_new*a_old < 0.){
+      if(count == 0) a_old=a_new;
+      double nnew = 1.0, nold = 1.0;
+      if (a_new != 0.0) nnew = std::abs(a_new);
+      if (a_old != 0.0) nold = std::abs(a_old);
+      if(a_new/nnew*a_old/nold < 0.0){
         oriented = false;
         break;
       }
@@ -416,14 +417,14 @@ bool GFaceCompound::checkOrientation(int iter) const
     }    
   }  
 
-  int iterMax = 5;
+  int iterMax = 10;
   if(!oriented && iter < iterMax){
     if (iter == 0) Msg::Warning("--- Parametrization is NOT 1 to 1 : applying cavity checks.");
     Msg::Debug("--- Cavity Check - iter %d -",iter);
     one2OneMap();
     return checkOrientation(iter+1);
   }
-  else if (iter < iterMax){
+  else if (oriented && iter < iterMax){
     Msg::Debug("Parametrization is 1 to 1 :-)");
   }
 
@@ -510,8 +511,8 @@ bool GFaceCompound::parametrize() const
   else if (_mapping == CONFORMAL){
     Msg::Debug("Parametrizing surface %d with 'conformal map'", tag());
     fillNeumannBCS();
-    bool withoutFolding = parametrize_conformal_spectral() ;
-    //bool withoutFolding = parametrize_conformal();
+    //bool withoutFolding = parametrize_conformal_spectral() ;
+    bool withoutFolding = parametrize_conformal();
     if ( withoutFolding == false ){
       //printStuff(); exit(1);
       Msg::Warning("$$$ Parametrization switched to harmonic map");
@@ -519,13 +520,10 @@ bool GFaceCompound::parametrize() const
       parametrize(ITERV,HARMONIC);
     }
   }
-  //Distance function
-  //-----------------
-  //compute_distance();
-
-  buildOct();  
 
   printStuff();
+ 
+  buildOct();  
 
   if (!checkOrientation(0)){
     Msg::Info("--- Parametrization switched to convex combination map");
@@ -598,8 +596,8 @@ void GFaceCompound::getBoundingEdges()
          _U0 = *it;
          maxSize = size;
        }
-     }
-      
+   }
+
   }
 
   return;
@@ -962,7 +960,7 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
           Msg::Error("vertex vr %p not MedgeVertex \n", vR);
           Msg::Exit(1);
         }
-        if(tLoc >= tL && tLoc <= tR){
+        if(tLoc > tL && tLoc < tR){
           found = true;
           itR = coordinates.find(vR);
           if(itR == coordinates.end()){
@@ -1342,60 +1340,6 @@ bool GFaceCompound::parametrize_conformal() const
 
 }
 
-void GFaceCompound::compute_distance() const
-{
-  SBoundingBox3d bbox = bounds();
-  double L = norm(SVector3(bbox.max(), bbox.min())); 
-  double mu = L/28;
-  simpleFunction<double> DIFF(mu * mu), MONE(1.0);
-  dofManager<double> myAssembler(_lsys);
-  distanceTerm distance(model(), 1, &DIFF, &MONE);
-
-  std::vector<MVertex*> ordered;
-  boundVertices(_U0, ordered);
-  for(unsigned int i = 0; i < ordered.size(); i++)
-     myAssembler.fixVertex(ordered[i], 0, 1, 0.0);
-
-  std::list<GFace*>::const_iterator it = _compound.begin();
-  for( ; it != _compound.end(); ++it){
-    for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-      MTriangle *t = (*it)->triangles[i];
-      myAssembler.numberVertex(t->getVertex(0), 0, 1);
-      myAssembler.numberVertex(t->getVertex(1), 0, 1);
-      myAssembler.numberVertex(t->getVertex(2), 0, 1); 
-    }    
-  }  
-
-  it = _compound.begin();
-  for( ; it != _compound.end() ; ++it){
-    for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-      SElement se((*it)->triangles[i]);
-      distance.addToMatrix(myAssembler, &se);
-    }
-    groupOfElements g(*it);
-    distance.addToRightHandSide(myAssembler, g);
-  }
-
-  Msg::Info("Distance Computation: Assembly done");
-  _lsys->systemSolve();
-  Msg::Info("Distance Computation: System solved");
- 
-  for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
-    MVertex *v = *itv;
-    double value =  std::min(0.9999, myAssembler.getDofValue(v, 0, 1));
-    double dist = -mu * log(1. - value);
-    coordinates[v] = SPoint3(dist, 0.0, 0.0);
-  }
-
-  _lsys->clear();
-
-  printStuff();
-  printf("End parametrize distance \n");
-  printf("--> Write distance function in file: XYZU-*.pos\n");
-  printf("--> Exit\n");
-  exit(1);
-}
-
 void GFaceCompound::computeNormals(std::map<MVertex*,SVector3> &normals) const
 {
   computeNormals ();
@@ -1737,6 +1681,59 @@ void GFaceCompound::getTriangle(double u, double v,
   _v = X[1];
 }
 
+void GFaceCompound::partitionFaceCM() 
+{
+
+  if(!oct) parametrize();
+	
+  double CMu = 0.0;
+  double sumArea = 0.0;
+	  
+  std::list<GFace*>::const_iterator it = _compound.begin();
+  for( ; it != _compound.end() ; ++it){
+    for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+      MTriangle *t = (*it)->triangles[i];
+      std::map<MVertex*,SPoint3>::const_iterator it0 = coordinates.find(t->getVertex(0));
+      std::map<MVertex*,SPoint3>::const_iterator it1 = coordinates.find(t->getVertex(1));
+      std::map<MVertex*,SPoint3>::const_iterator it2 = coordinates.find(t->getVertex(2));
+      double q0[3] = {it0->second.x(), it0->second.y(), 0.0}; 
+      double q1[3] = {it1->second.x(), it1->second.y(), 0.0};
+      double q2[3] = {it2->second.x(), it2->second.y(), 0.0};
+      double area = 1/fabs(triangle_area(q0, q1, q2));
+      double cg_u = (q0[0]+q1[0]+q2[0])/3.;
+      CMu += cg_u*area;
+      sumArea += area;
+    }
+    CMu /= sumArea;
+  }
+	
+  //printf("min size partition =%d \n", (int)allNodes.size()/2);
+  model()->setMinPartitionSize((int)allNodes.size()/2);
+  model()->setMaxPartitionSize((int)allNodes.size()/2+1);
+	
+  it = _compound.begin();
+  for( ; it != _compound.end() ; ++it){
+    for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+      MTriangle *t = (*it)->triangles[i];
+      std::map<MVertex*,SPoint3>::const_iterator it0 = coordinates.find(t->getVertex(0));
+      std::map<MVertex*,SPoint3>::const_iterator it1 = coordinates.find(t->getVertex(1));
+      std::map<MVertex*,SPoint3>::const_iterator it2 = coordinates.find(t->getVertex(2));
+      double cg_u = (it0->second.x()+it1->second.x()+it2->second.x())/3.;
+       if (cg_u <= CMu)
+	t->setPartition(1);
+      else 
+	t->setPartition(2);
+    }
+  }
+	
+  model()->recomputeMeshPartitions();
+	
+  CreateOutputFile("toto.msh", CTX::instance()->mesh.format);
+  Msg::Exit(1);
+	 
+  return;
+}
+
 void GFaceCompound::buildOct() const
 {
  
@@ -2068,7 +2065,7 @@ void GFaceCompound::printStuff() const
       double q1[3] = {it1->second.x(), it1->second.y(), 0.0};
       double q2[3] = {it2->second.x(), it2->second.y(), 0.0};
       double a_2D = fabs(triangle_area(q0, q1, q2));
-      double area = a_3D/a_2D;
+      double area = a_2D/a_3D;
       fprintf(uva,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
               it0->second.x(), it0->second.y(), 0.0,
               it1->second.x(), it1->second.y(), 0.0,
