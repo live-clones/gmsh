@@ -792,3 +792,50 @@ void PViewDataList::setOrder2(int type)
   setInterpolationMatrices(type, fs->coefficients, fs->monomials,
                            fs->coefficients, fs->monomials);
 }
+
+std::vector<double> *PViewDataList::incrementList(int numComp, int type)
+{
+  switch(type){
+  case TYPE_PNT:
+    if     (numComp == 1){ NbSP++; return &SP; }
+    else if(numComp == 3){ NbVP++; return &VP; }
+    else if(numComp == 9){ NbTP++; return &TP; }
+    break;
+  case TYPE_LIN:
+    if     (numComp == 1){ NbSL++; return &SL; }
+    else if(numComp == 3){ NbVL++; return &VL; }
+    else if(numComp == 9){ NbTL++; return &TL; }
+    break;
+  case TYPE_TRI:
+    if     (numComp == 1){ NbST++; return &ST; }
+    else if(numComp == 3){ NbVT++; return &VT; }
+    else if(numComp == 9){ NbTT++; return &TT; }
+    break;
+  case TYPE_QUA:
+    if     (numComp == 1){ NbSQ++; return &SQ; }
+    else if(numComp == 3){ NbVQ++; return &VQ; }
+    else if(numComp == 9){ NbTQ++; return &TQ; }
+    break;
+  case TYPE_TET:
+    if     (numComp == 1){ NbSS++; return &SS; }
+    else if(numComp == 3){ NbVS++; return &VS; }
+    else if(numComp == 9){ NbTS++; return &TS; }
+    break;
+  case TYPE_HEX:
+    if     (numComp == 1){ NbSH++; return &SH; }
+    else if(numComp == 3){ NbVH++; return &VH; }
+    else if(numComp == 9){ NbTH++; return &TH; }
+    break;
+  case TYPE_PRI:
+    if     (numComp == 1){ NbSI++; return &SI; }
+    else if(numComp == 3){ NbVI++; return &VI; }
+    else if(numComp == 9){ NbTI++; return &TI; }
+    break;
+  case TYPE_PYR:
+    if     (numComp == 1){ NbSY++; return &SY; }
+    else if(numComp == 3){ NbVY++; return &VY; }
+    else if(numComp == 9){ NbTY++; return &TY; }
+    break;
+  }
+  return 0;
+}

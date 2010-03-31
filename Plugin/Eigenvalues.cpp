@@ -37,21 +37,6 @@ StringXNumber *GMSH_EigenvaluesPlugin::getOption(int iopt)
   return &EigenvaluesOptions_Number[iopt];
 }
 
-static std::vector<double> *incrementList(PViewDataList *data2, int type)
-{
-  switch(type){
-  case TYPE_PNT: data2->NbSP++; return &data2->SP;
-  case TYPE_LIN: data2->NbSL++; return &data2->SL;
-  case TYPE_TRI: data2->NbST++; return &data2->ST;
-  case TYPE_QUA: data2->NbSQ++; return &data2->SQ;
-  case TYPE_TET: data2->NbSS++; return &data2->SS;
-  case TYPE_HEX: data2->NbSH++; return &data2->SH;
-  case TYPE_PRI: data2->NbSI++; return &data2->SI;
-  case TYPE_PYR: data2->NbSY++; return &data2->SY;
-  default: return 0;
-  }
-}
-
 PView *GMSH_EigenvaluesPlugin::execute(PView *v)
 {
   int iView = (int)EigenvaluesOptions_Number[0].def;
@@ -79,9 +64,9 @@ PView *GMSH_EigenvaluesPlugin::execute(PView *v)
       int numComp = data1->getNumComponents(0, ent, ele);
       if(numComp != 9) continue;
       int type = data1->getType(0, ent, ele);
-      std::vector<double> *outmin = incrementList(dmin, type);
-      std::vector<double> *outmid = incrementList(dmid, type);
-      std::vector<double> *outmax = incrementList(dmax, type);
+      std::vector<double> *outmin = dmin->incrementList(1, type);
+      std::vector<double> *outmid = dmid->incrementList(1, type);
+      std::vector<double> *outmax = dmax->incrementList(1, type);
       if(!outmin || !outmid || !outmax) continue;
       int numNodes = data1->getNumNodes(0, ent, ele);
       double xyz[3][8];

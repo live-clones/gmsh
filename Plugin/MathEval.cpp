@@ -84,54 +84,6 @@ StringXString *GMSH_MathEvalPlugin::getOptionStr(int iopt)
   return &MathEvalOptions_String[iopt];
 }
 
-static std::vector<double> *incrementList(PViewDataList *data, int numComp, 
-                                          int type)
-{
-  switch(type){
-  case TYPE_PNT:
-    if     (numComp == 1){ data->NbSP++; return &data->SP; }
-    else if(numComp == 3){ data->NbVP++; return &data->VP; }
-    else if(numComp == 9){ data->NbTP++; return &data->TP; }
-    break;
-  case TYPE_LIN:
-    if     (numComp == 1){ data->NbSL++; return &data->SL; }
-    else if(numComp == 3){ data->NbVL++; return &data->VL; }
-    else if(numComp == 9){ data->NbTL++; return &data->TL; }
-    break;
-  case TYPE_TRI:
-    if     (numComp == 1){ data->NbST++; return &data->ST; }
-    else if(numComp == 3){ data->NbVT++; return &data->VT; }
-    else if(numComp == 9){ data->NbTT++; return &data->TT; }
-    break;
-  case TYPE_QUA:
-    if     (numComp == 1){ data->NbSQ++; return &data->SQ; }
-    else if(numComp == 3){ data->NbVQ++; return &data->VQ; }
-    else if(numComp == 9){ data->NbTQ++; return &data->TQ; }
-    break;
-  case TYPE_TET:
-    if     (numComp == 1){ data->NbSS++; return &data->SS; }
-    else if(numComp == 3){ data->NbVS++; return &data->VS; }
-    else if(numComp == 9){ data->NbTS++; return &data->TS; }
-    break;
-  case TYPE_HEX:
-    if     (numComp == 1){ data->NbSH++; return &data->SH; }
-    else if(numComp == 3){ data->NbVH++; return &data->VH; }
-    else if(numComp == 9){ data->NbTH++; return &data->TH; }
-    break;
-  case TYPE_PRI:
-    if     (numComp == 1){ data->NbSI++; return &data->SI; }
-    else if(numComp == 3){ data->NbVI++; return &data->VI; }
-    else if(numComp == 9){ data->NbTI++; return &data->TI; }
-    break;
-  case TYPE_PYR:
-    if     (numComp == 1){ data->NbSY++; return &data->SY; }
-    else if(numComp == 3){ data->NbVY++; return &data->VY; }
-    else if(numComp == 9){ data->NbTY++; return &data->TY; }
-    break;
-  }
-  return 0;
-}
-
 PView *GMSH_MathEvalPlugin::execute(PView *view)
 {
   int timeStep = (int)MathEvalOptions_Number[0].def;
@@ -210,24 +162,24 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
     timeStep = - data1->getNumTimeSteps();
   }
 
-  for(int ent = 0; ent < data1->getNumEntities(0); ent++){
-    for(int ele = 0; ele < data1->getNumElements(0, ent); ele++){
-      if(data1->skipElement(0, ent, ele)) continue;
-      int numNodes = data1->getNumNodes(0, ent, ele);
-      int type = data1->getType(0, ent, ele);
-      int numComp = data1->getNumComponents(0, ent, ele);
+  int timeBeg = (timeStep < 0) ? 0 : timeStep;
+  int timeEnd = (timeStep < 0) ? -timeStep : timeStep + 1;
+  for(int ent = 0; ent < data1->getNumEntities(timeBeg); ent++){
+    for(int ele = 0; ele < data1->getNumElements(timeBeg, ent); ele++){
+      if(data1->skipElement(timeBeg, ent, ele)) continue;
+      int numNodes = data1->getNumNodes(timeBeg, ent, ele);
+      int type = data1->getType(timeBeg, ent, ele);
+      int numComp = data1->getNumComponents(timeBeg, ent, ele);
       int numCompOther = !dataOther ? 9 : octree ? 9 : 
         dataOther->getNumComponents(otherTimeStep, ent, ele);
-      std::vector<double> *out = incrementList(data2, numComp2, type);
+      std::vector<double> *out = data2->incrementList(numComp2, type);
       std::vector<double> w(std::max(9, numCompOther), 0.);
       std::vector<double> x(numNodes), y(numNodes), z(numNodes);
       for(int nod = 0; nod < numNodes; nod++)
-        data1->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
+        data1->getNode(timeBeg, ent, ele, nod, x[nod], y[nod], z[nod]);
       for(int nod = 0; nod < numNodes; nod++) out->push_back(x[nod]); 
       for(int nod = 0; nod < numNodes; nod++) out->push_back(y[nod]); 
       for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]); 
-      int timeBeg = (timeStep < 0) ? 0 : timeStep;
-      int timeEnd = (timeStep < 0) ? -timeStep : timeStep + 1;
       for(int step = timeBeg; step < timeEnd; step++){
         for(int nod = 0; nod < numNodes; nod++){
           std::vector<double> v(std::max(9, numComp), 0.);

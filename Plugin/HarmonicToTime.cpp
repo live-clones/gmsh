@@ -43,54 +43,6 @@ StringXNumber *GMSH_HarmonicToTimePlugin::getOption(int iopt)
   return &HarmonicToTimeOptions_Number[iopt];
 }
 
-static std::vector<double> *incrementList(PViewDataList *data, int numComp, 
-                                          int type)
-{
-  switch(type){
-  case TYPE_PNT:
-    if     (numComp == 1){ data->NbSP++; return &data->SP; }
-    else if(numComp == 3){ data->NbVP++; return &data->VP; }
-    else if(numComp == 9){ data->NbTP++; return &data->TP; }
-    break;
-  case TYPE_LIN:
-    if     (numComp == 1){ data->NbSL++; return &data->SL; }
-    else if(numComp == 3){ data->NbVL++; return &data->VL; }
-    else if(numComp == 9){ data->NbTL++; return &data->TL; }
-    break;
-  case TYPE_TRI:
-    if     (numComp == 1){ data->NbST++; return &data->ST; }
-    else if(numComp == 3){ data->NbVT++; return &data->VT; }
-    else if(numComp == 9){ data->NbTT++; return &data->TT; }
-    break;
-  case TYPE_QUA:
-    if     (numComp == 1){ data->NbSQ++; return &data->SQ; }
-    else if(numComp == 3){ data->NbVQ++; return &data->VQ; }
-    else if(numComp == 9){ data->NbTQ++; return &data->TQ; }
-    break;
-  case TYPE_TET:
-    if     (numComp == 1){ data->NbSS++; return &data->SS; }
-    else if(numComp == 3){ data->NbVS++; return &data->VS; }
-    else if(numComp == 9){ data->NbTS++; return &data->TS; }
-    break;
-  case TYPE_HEX:
-    if     (numComp == 1){ data->NbSH++; return &data->SH; }
-    else if(numComp == 3){ data->NbVH++; return &data->VH; }
-    else if(numComp == 9){ data->NbTH++; return &data->TH; }
-    break;
-  case TYPE_PRI:
-    if     (numComp == 1){ data->NbSI++; return &data->SI; }
-    else if(numComp == 3){ data->NbVI++; return &data->VI; }
-    else if(numComp == 9){ data->NbTI++; return &data->TI; }
-    break;
-  case TYPE_PYR:
-    if     (numComp == 1){ data->NbSY++; return &data->SY; }
-    else if(numComp == 3){ data->NbVY++; return &data->VY; }
-    else if(numComp == 9){ data->NbTY++; return &data->TY; }
-    break;
-  }
-  return 0;
-}
-
 PView *GMSH_HarmonicToTimePlugin::execute(PView * v)
 {
   int rIndex = (int)HarmonicToTimeOptions_Number[0].def;
@@ -127,7 +79,7 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView * v)
       int numNodes = data1->getNumNodes(0, ent, ele);
       int type = data1->getType(0, ent, ele);
       int numComp = data1->getNumComponents(0, ent, ele);
-      std::vector<double> *out = incrementList(data2, numComp, type);
+      std::vector<double> *out = data2->incrementList(numComp, type);
       std::vector<double> x(numNodes), y(numNodes), z(numNodes);
       std::vector<double> vr(numNodes * numComp), vi(numNodes * numComp);
       for(int nod = 0; nod < numNodes; nod++){

@@ -104,6 +104,7 @@ class PViewDataList : public PViewData {
   // specific to list-based data sets
   void getRawData(int type, std::vector<double> **l, int **ne, int *nc, int *nn);
   void setOrder2(int type);
+  std::vector<double> *incrementList(int numComp, int type);
 
   // I/O routines
   bool readPOS(FILE *fp, double version, bool binary);

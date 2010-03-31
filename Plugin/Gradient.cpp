@@ -37,37 +37,6 @@ StringXNumber *GMSH_GradientPlugin::getOption(int iopt)
   return &GradientOptions_Number[iopt];
 }
 
-static std::vector<double> *incrementList(PViewDataList *data2, int numComp, int type)
-{
-  if(numComp == 1){
-    switch(type){
-    case TYPE_PNT: data2->NbVP++; return &data2->VP;
-    case TYPE_LIN: data2->NbVL++; return &data2->VL;
-    case TYPE_TRI: data2->NbVT++; return &data2->VT;
-    case TYPE_QUA: data2->NbVQ++; return &data2->VQ;
-    case TYPE_TET: data2->NbVS++; return &data2->VS;
-    case TYPE_HEX: data2->NbVH++; return &data2->VH;
-    case TYPE_PRI: data2->NbVI++; return &data2->VI;
-    case TYPE_PYR: data2->NbVY++; return &data2->VY;
-    default: return 0;
-    }
-  }
-  else if(numComp == 3){
-    switch(type){
-    case TYPE_PNT: data2->NbTP++; return &data2->TP;
-    case TYPE_LIN: data2->NbTL++; return &data2->TL;
-    case TYPE_TRI: data2->NbTT++; return &data2->TT;
-    case TYPE_QUA: data2->NbTQ++; return &data2->TQ;
-    case TYPE_TET: data2->NbTS++; return &data2->TS;
-    case TYPE_HEX: data2->NbTH++; return &data2->TH;
-    case TYPE_PRI: data2->NbTI++; return &data2->TI;
-    case TYPE_PYR: data2->NbTY++; return &data2->TY;
-    default: return 0;
-    }
-  }
-  return 0;
-}
-
 PView *GMSH_GradientPlugin::execute(PView *v)
 {
   int iView = (int)GradientOptions_Number[0].def;
@@ -90,7 +59,7 @@ PView *GMSH_GradientPlugin::execute(PView *v)
       int numComp = data1->getNumComponents(0, ent, ele);
       if(numComp != 1 && numComp != 3) continue;
       int type = data1->getType(0, ent, ele);
-      std::vector<double> *out = incrementList(data2, numComp, type);
+      std::vector<double> *out = data2->incrementList((numComp == 1) ? 3 : 9, type);
       if(!out) continue;
       int numNodes = data1->getNumNodes(0, ent, ele);
       double x[8], y[8], z[8], val[8 * 3];

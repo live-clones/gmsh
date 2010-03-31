@@ -37,21 +37,6 @@ StringXNumber *GMSH_CurlPlugin::getOption(int iopt)
   return &CurlOptions_Number[iopt];
 }
 
-static std::vector<double> *incrementList(PViewDataList *data2, int type)
-{
-  switch(type){
-  case TYPE_PNT: data2->NbVP++; return &data2->VP;
-  case TYPE_LIN: data2->NbVL++; return &data2->VL;
-  case TYPE_TRI: data2->NbVT++; return &data2->VT;
-  case TYPE_QUA: data2->NbVQ++; return &data2->VQ;
-  case TYPE_TET: data2->NbVS++; return &data2->VS;
-  case TYPE_HEX: data2->NbVH++; return &data2->VH;
-  case TYPE_PRI: data2->NbVI++; return &data2->VI;
-  case TYPE_PYR: data2->NbVY++; return &data2->VY;
-  default: return 0;
-  }
-}
-
 PView *GMSH_CurlPlugin::execute(PView *v)
 {
   int iView = (int)CurlOptions_Number[0].def;
@@ -74,7 +59,7 @@ PView *GMSH_CurlPlugin::execute(PView *v)
       int numComp = data1->getNumComponents(0, ent, ele);
       if(numComp != 3) continue;
       int type = data1->getType(0, ent, ele);
-      std::vector<double> *out = incrementList(data2, type);
+      std::vector<double> *out = data2->incrementList(3, type);
       if(!out) continue;
       int numNodes = data1->getNumNodes(0, ent, ele);
       double x[8], y[8], z[8], val[8 * 3];
