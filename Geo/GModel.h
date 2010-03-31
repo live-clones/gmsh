@@ -388,8 +388,8 @@ class GModel
                        bool saveAll=false, bool saveParametric=false, 
                        double scalingFactor=1.0);
 
-  // Visual FEA file format
-  int writeFEA(const std::string &name, int elementTagType,
+  // Iridium file format
+  int writeIR3(const std::string &name, int elementTagType,
                bool saveAll, double scalingFactor);
 
   // mesh statistics (saved as a Gmsh post-processing view)

@@ -63,7 +63,7 @@ void PrintUsage(const char *name)
   Msg::Direct("  -saveall              Save all elements (discard physical group definitions)");
   Msg::Direct("  -o file               Specify mesh output file name");
   Msg::Direct("  -format string        Set output mesh format (msh, msh1, msh2, unv, vrml, stl, mesh,");
-  Msg::Direct("                          bdf, p3d, cgns, med, fea)");
+  Msg::Direct("                          bdf, p3d, cgns, med, ir3)");
   Msg::Direct("  -bin                  Use binary format when available");  
   Msg::Direct("  -parametric           Save vertices with their parametric coordinates");  
   Msg::Direct("  -numsubedges          Set the number of subdivisions when displaying high order elements");  
@@ -478,8 +478,8 @@ void GetOptions(int argc, char *argv[])
             CTX::instance()->mesh.format = FORMAT_DIFF;
           else if(!strcmp(argv[i], "med"))
             CTX::instance()->mesh.format = FORMAT_MED;
-          else if(!strcmp(argv[i], "fea"))
-            CTX::instance()->mesh.format = FORMAT_FEA;
+          else if(!strcmp(argv[i], "ir3"))
+            CTX::instance()->mesh.format = FORMAT_IR3;
           else
             Msg::Fatal("Unknown mesh format");
           i++;

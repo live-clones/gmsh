@@ -263,7 +263,7 @@ class MElement
   virtual void writeVTK(FILE *fp, bool binary=false, bool bigEndian=false);
   virtual void writeMESH(FILE *fp, int elementTagType=1, int elementary=1,
                          int physical=0);
-  virtual void writeFEA(FILE *fp, int elementTagType, int num, int elementary,
+  virtual void writeIR3(FILE *fp, int elementTagType, int num, int elementary,
                         int physical);
   virtual void writeBDF(FILE *fp, int format=0, int elementTagType=1,
                         int elementary=1, int physical=0);

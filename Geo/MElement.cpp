@@ -667,7 +667,7 @@ void MElement::writeMESH(FILE *fp, int elementTagType, int elementary,
           (elementTagType == 2) ? physical : elementary);
 }
 
-void MElement::writeFEA(FILE *fp, int elementTagType, int num, int elementary,
+void MElement::writeIR3(FILE *fp, int elementTagType, int num, int elementary,
                         int physical)
 {
   int numVert = getNumVertices();

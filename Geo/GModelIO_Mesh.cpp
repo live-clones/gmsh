@@ -1768,7 +1768,7 @@ int GModel::writeMESH(const std::string &name, int elementTagType,
   return 1;
 }
 
-int GModel::writeFEA(const std::string &name, int elementTagType,
+int GModel::writeIR3(const std::string &name, int elementTagType,
                      bool saveAll, double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), "w");
@@ -1809,7 +1809,7 @@ int GModel::writeFEA(const std::string &name, int elementTagType,
     int numPhys = (*it)->physicals.size();
     if(saveAll || numPhys)
       for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++)
-        (*it)->getMeshElement(i)->writeFEA
+        (*it)->getMeshElement(i)->writeIR3
           (fp, elementTagType, iElement++, (*it)->tag(),
            numPhys ? (*it)->physicals[0] : 0);
   }
@@ -1819,7 +1819,7 @@ int GModel::writeFEA(const std::string &name, int elementTagType,
     int numPhys = (*it)->physicals.size();
     if(saveAll || numPhys)
       for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++)
-        (*it)->getMeshElement(i)->writeFEA
+        (*it)->getMeshElement(i)->writeIR3
           (fp, elementTagType, iElement++, (*it)->tag(),
            numPhys ? (*it)->physicals[0] : 0);
   }

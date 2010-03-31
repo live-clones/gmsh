@@ -242,8 +242,8 @@ static int _save_mesh(const char *name){ return genericMeshFileDialog
 static int _save_bdf(const char *name){ return bdfFileDialog(name); }
 static int _save_p3d(const char *name){ return genericMeshFileDialog
     (name, "P3D Options", FORMAT_P3D, false, false); }
-static int _save_fea(const char *name){ return genericMeshFileDialog
-    (name, "VisualFEA Options", FORMAT_FEA, false, true); }
+static int _save_ir3(const char *name){ return genericMeshFileDialog
+    (name, "Iridium Options", FORMAT_IR3, false, true); }
 static int _save_stl(const char *name){ return genericMeshFileDialog
     (name, "STL Options", FORMAT_STL, true, false); }
 static int _save_vrml(const char *name){ return genericMeshFileDialog
@@ -281,7 +281,7 @@ static int _save_auto(const char *name)
   case FORMAT_BDF  : return _save_bdf(name);
   case FORMAT_DIFF : return _save_diff(name);
   case FORMAT_P3D  : return _save_p3d(name);
-  case FORMAT_FEA  : return _save_fea(name);
+  case FORMAT_IR3  : return _save_ir3(name);
   case FORMAT_STL  : return _save_stl(name);
   case FORMAT_VRML : return _save_vrml(name);
   case FORMAT_EPS  : return _save_eps(name);
@@ -325,7 +325,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
     {"Medit mesh" TT "*.mesh", _save_mesh},
     {"Nastran bulk data file" TT "*.bdf", _save_bdf},
     {"Plot3D structured mesh" TT "*.p3d", _save_p3d},
-    {"VisualFEA mesh" TT "*.fea", _save_fea},
+    {"Iridum mesh" TT "*.ir3", _save_ir3},
     {"STL surface mesh" TT "*.stl", _save_stl},
     {"VRML surface mesh" TT "*.wrl", _save_vrml},
     {"Encapsulated PostScript" TT "*.eps", _save_eps},
