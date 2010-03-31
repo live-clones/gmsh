@@ -315,7 +315,7 @@ void MElement::xyz2uvw(double xyz[3], double uvw[3])
   uvw[0] = uvw[1] = uvw[2] = 0.;
   int iter = 1, maxiter = 20;
   double error = 1., tol = 1.e-6;
-
+  
   while (error > tol && iter < maxiter){
     double jac[3][3];
     if(!getJacobian(uvw[0], uvw[1], uvw[2], jac)) break;

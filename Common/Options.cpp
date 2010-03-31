@@ -5811,6 +5811,14 @@ double opt_mesh_partition_partitioner(OPT_ARGS_NUM)
   }
   return CTX::instance()->partitionOptions.partitioner;
 }
+double opt_mesh_partition_by_extrusion(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    const int ival = (int)val;
+    CTX::instance()->partitionOptions.partitionByExtrusion = ival;
+  }
+  return CTX::instance()->partitionOptions.partitionByExtrusion;
+}
 
 double opt_mesh_partition_num(OPT_ARGS_NUM)
 {

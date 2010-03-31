@@ -21,7 +21,7 @@ static void Projette(double p[3], double mat[3][3])
   p[2] = Z;
 }
 
-ExtrudeParams::ExtrudeParams(int ModeEx)
+ExtrudeParams::ExtrudeParams(int ModeEx) : elementMap(this)
 {
   geo.Mode = ModeEx;
   geo.Source = -1;
@@ -120,4 +120,77 @@ double ExtrudeParams::u(int iLayer, int iElemLayer)
   }
   double t = (double)iElemLayer / (double)mesh.NbElmLayer[iLayer];
   return t0 + t * (t1 - t0);
+}
+
+ExtrudeParams::ExtrusionElementMap::ExtrusionElementMap(ExtrudeParams*const parent)
+{
+ _parent = parent;
+}
+
+std::vector< MElement* >* ExtrudeParams::ExtrusionElementMap::getExtrudedElems(MElement* source)
+{
+  std::map<MElement*,std::vector<MElement*> >::iterator it = _extrudedElements.find(source);
+  if(it != _extrudedElements.end())
+    return &(it->second);
+  return NULL;
+}
+void ExtrudeParams::ExtrusionElementMap::clear()
+{
+  _extrudedElements.clear();
+}
+
+bool ExtrudeParams::ExtrusionElementMap::empty()
+{
+  return _extrudedElements.empty();
+}
+
+void ExtrudeParams::ExtrusionElementMap::addExtrudedElem(MElement* source, MElement* extrudedElem)
+{
+  std::map<MElement*,std::vector<MElement*> >::iterator it = _extrudedElements.find(source);
+  if(it != _extrudedElements.end())
+    it->second.push_back(extrudedElem);
+  else {
+   std::vector<MElement*>* vec = new std::vector<MElement*>();
+   int totalNbElems = 0;
+   for (int i = 0;i<_parent->mesh.NbLayer;i++)
+     totalNbElems += _parent->mesh.NbElmLayer[i];
+   vec->reserve(totalNbElems);
+   vec->push_back(extrudedElem);
+   _extrudedElements.insert(std::pair<MElement*,std::vector<MElement*> >(source,*vec));
+  }
+  SPoint3 np = extrudedElem->barycenter(), sp = source->barycenter();
+//   if(extrudedElem->getDim() == 3)
+//   printf("Inst (%.3f,%.3f,%.3f) -> (%.3f,%.3f,%.3f) %p->%p\n",sp.x(),sp.y(),sp.z(),np.x(),np.y(),np.z(),source,extrudedElem);
+}
+
+// Propagates the partition information from the source elements to the extruded elements.
+// Increments the partition sizes if partitionSizes is given as argument.
+// For efficient looping, this routine is within ExtrusionElementMap class.
+void ExtrudeParams::ExtrusionElementMap::propagatePartitionInformation(std::vector< int >* partitionSizes)
+{
+  if (_extrudedElements.empty())
+    Msg::Error("No extrusion information found!");
+  std::map<MElement*,std::vector<MElement*> >::iterator columnit;
+  for(columnit=_extrudedElements.begin(); columnit != _extrudedElements.end(); columnit++) {
+    MElement* sourceElem = (*columnit).first;
+    if(!sourceElem) {
+      Msg::Warning("No source found!");
+      continue;
+    }
+    std::vector<MElement*> extrudedElements = (*columnit).second;
+//     if(!extrudedElements) {
+// //       Msg::Warning("No element vector found!");
+//       continue;
+//     }
+    for(int iE = 0;iE < extrudedElements.size();iE++) {
+      if(extrudedElements[iE]) {
+        extrudedElements[iE]->setPartition(sourceElem->getPartition());
+        if (partitionSizes)
+          ++(*partitionSizes)[sourceElem->getPartition()-1];
+//     SPoint3 np = extrudedElements[iE]->barycenter(), sp = sourceElem->barycenter();
+//     if(extrudedElements[iE]->getDim() == 3)
+//     printf("Read (%.3f,%.3f,%.3f) %d -> (%.3f,%.3f,%.3f) %d %p->%p\n",sp.x(),sp.y(),sp.z(),extrudedElements[iE]->getPartition() ,np.x(),np.y(),np.z(),sourceElem->getPartition(),sourceElem,extrudedElements[iE]);
+      }
+    }
+  }
 }

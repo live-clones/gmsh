@@ -53,6 +53,20 @@ const polynomialBasis* MPrism::getFunctionSpace(int o) const
   return 0;
 }
 
+double MPrism::getInnerRadius()
+{
+  double dist[3], k = 0.;
+  double triEdges[3] = {0,1,3};
+  for (int i = 0; i < 3; i++){
+    MEdge e = getEdge(triEdges[i]);
+    dist[i] = e.getVertex(0)->distance(e.getVertex(1));
+    k += 0.5 * dist[i];
+  }
+  double radTri = sqrt(k * (k - dist[0]) * (k - dist[1]) * (k - dist[2])) / k;
+  double radVert = 0.5*getVertex(0)->distance(getVertex(3));
+  return std::min(radTri,radVert);
+}
+
 void MPrism::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) const
 {
   for (ithFace = 0; ithFace < 5; ithFace++){

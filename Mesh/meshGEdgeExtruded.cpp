@@ -54,13 +54,13 @@ int MeshExtrudedCurve(GEdge *ge)
   if(!ep || !ep->mesh.ExtrudeMesh)
     return 0;
 
+  GEdge *from = ge->model()->getEdgeByTag(std::abs(ep->geo.Source));
   if(ep->geo.Mode == EXTRUDED_ENTITY) {
     // curve is extruded from a point
     extrudeMesh(ge->getBeginVertex(), ge);
   }
   else {
     // curve is a copy of another curve (the "top" of the extrusion)
-    GEdge *from = ge->model()->getEdgeByTag(std::abs(ep->geo.Source));
     if(!from){
       Msg::Error("Unknown source curve %d for extrusion", ep->geo.Source);
       return 0;
@@ -74,8 +74,14 @@ int MeshExtrudedCurve(GEdge *ge)
       ge->getBeginVertex()->mesh_vertices[0] : ge->mesh_vertices[i - 1];
     MVertex *v1 = (i == ge->mesh_vertices.size()) ? 
       ge->getEndVertex()->mesh_vertices[0] : ge->mesh_vertices[i];
-    ge->lines.push_back(new MLine(v0, v1));
+    MLine* newElem = new MLine(v0, v1);
+    ge->lines.push_back(newElem);
+    if(ep->geo.Mode == COPIED_ENTITY) {
+      // Extrusion information is only stored for copied edges
+      // (the source of extruded edge is a vertex, not an element)
+      MElement* sourceElem = from->getMeshElement(i);
+      ep->elementMap.addExtrudedElem(sourceElem,newElem);
+    }
   }
-
   return 1;
 }

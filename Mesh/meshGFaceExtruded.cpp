@@ -12,34 +12,45 @@
 #include "Context.h"
 #include "GmshMessage.h"
 
+static void addTriangle(MVertex* v1, MVertex* v2, MVertex* v3, GFace *to, MElement* source) {
+  MTriangle* newTri = new MTriangle(v1, v2, v3);
+  to->triangles.push_back(newTri);
+  to->meshAttributes.extrude->elementMap.addExtrudedElem((MElement*)source,(MElement*)newTri);
+}
+
+static void addQuadrangle(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4, GFace *to, MElement* source) {
+  MQuadrangle* newQuad = new MQuadrangle(v1, v2, v3, v4);
+  to->quadrangles.push_back(newQuad);
+  to->meshAttributes.extrude->elementMap.addExtrudedElem((MElement*)source,(MElement*)newQuad);
+}
+
 static void createQuaTri(std::vector<MVertex*> &v, GFace *to,
-                         std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
+                         std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges,MLine* source)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
-
   if(v[0] == v[1] || v[1] == v[3])
-    to->triangles.push_back(new MTriangle(v[0], v[3], v[2]));
+    addTriangle(v[0], v[3], v[2],to,source);
   else if(v[0] == v[2] || v[2] == v[3])
-    to->triangles.push_back(new MTriangle(v[0], v[1], v[3]));
+    addTriangle(v[0], v[1], v[3],to,source);
   else if(v[0] == v[3] || v[1] == v[2])
     Msg::Error("Uncoherent extruded quadrangle in surface %d", to->tag());
   else{
     if(ep->mesh.Recombine){
-      to->quadrangles.push_back(new MQuadrangle(v[0], v[1], v[3], v[2]));
+      addQuadrangle(v[0], v[1], v[3], v[2],to,source);
     }
     else if(!constrainedEdges){
-      to->triangles.push_back(new MTriangle(v[0], v[1], v[3]));
-      to->triangles.push_back(new MTriangle(v[0], v[3], v[2]));
+      addTriangle(v[0], v[1], v[3],to,source);
+      addTriangle(v[0], v[3], v[2],to,source);
     }
     else{
       std::pair<MVertex*, MVertex*> p(std::min(v[1], v[2]), std::max(v[1], v[2]));
       if(constrainedEdges->count(p)){
-        to->triangles.push_back(new MTriangle(v[2], v[1], v[0]));
-        to->triangles.push_back(new MTriangle(v[2], v[3], v[1]));
+        addTriangle(v[2], v[1], v[0],to,source);
+        addTriangle(v[2], v[3], v[1],to,source);
       }
       else{
-        to->triangles.push_back(new MTriangle(v[2], v[3], v[0]));
-        to->triangles.push_back(new MTriangle(v[0], v[3], v[1]));
+        addTriangle(v[2], v[3], v[0],to,source);
+        addTriangle(v[0], v[3], v[1],to,source);
       }
     }
   }
@@ -100,7 +111,7 @@ static void extrudeMesh(GEdge *from, GFace *to,
           }
           verts.push_back(*itp);
         }
-        createQuaTri(verts, to, constrainedEdges);
+        createQuaTri(verts, to, constrainedEdges,from->lines[i]);
       }
     }
   }
@@ -143,7 +154,7 @@ static void copyMesh(GFace *from, GFace *to,
       }
       verts.push_back(*itp);
     }
-    to->triangles.push_back(new MTriangle(verts));
+    addTriangle(verts[0],verts[1],verts[2],to,from->triangles[i]);
   }
   for(unsigned int i = 0; i < from->quadrangles.size(); i++){
     std::vector<MVertex*> verts;
@@ -164,7 +175,7 @@ static void copyMesh(GFace *from, GFace *to,
       }
       verts.push_back(*itp);
     }
-    to->quadrangles.push_back(new MQuadrangle(verts));
+    addQuadrangle(verts[0],verts[1],verts[2],verts[3],to,from->quadrangles[i]);
   }
 }
 

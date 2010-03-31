@@ -69,6 +69,8 @@ struct meshPartitionOptions
                                         // 3 - Random boundary refinement (with
                                         //     minimization of connectivity
                                         //     along sub-domains)
+  int partitionByExtrusion;            // if true, all extruded elements belong
+                                       // to the same partition as the source element
 
 //--NODAL WEIGHT
   std::vector<int> nodalWeights;
@@ -109,6 +111,7 @@ struct meshPartitionOptions
     refine_algorithm = 3;
     createPartitionBoundaries = true;
     createGhostCells = true;
+    partitionByExtrusion =false;
   }
 
 };

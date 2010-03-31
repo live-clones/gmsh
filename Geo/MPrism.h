@@ -62,6 +62,7 @@ class MPrism : public MElement {
   ~MPrism(){}
   virtual int getDim() const { return 3; }
   virtual int getNumVertices() const { return 6; }
+  virtual double getInnerRadius();
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual MVertex *getVertexMED(int num)
   {

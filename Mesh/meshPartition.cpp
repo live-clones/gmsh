@@ -28,6 +28,7 @@
 #include "discreteFace.h"
 #include "GFaceCompound.h"
 #include "Context.h"
+#include "ExtrudeParams.h"
 
 
 //--Prototype for Chaco interface
@@ -84,14 +85,14 @@ struct BoElemGr;
 typedef std::vector<BoElemGr> BoElemGrVec;
 
 int MakeGraph(GModel *const model, Graph &graph,
-              BoElemGrVec *const boElemGrVec = 0);
+              meshPartitionOptions &options, BoElemGrVec *const boElemGrVec = 0);
 
 template <unsigned DIM, typename EntIter, typename EntIterBE>
 void MakeGraphDIM(const EntIter begin, const EntIter end,
                   const EntIterBE beginBE, const EntIterBE endBE,
                   Graph &graph, BoElemGrVec *const boElemGrVec);
 
-
+                  
 /*******************************************************************************
  *
  * Routine partitionMesh
@@ -120,7 +121,7 @@ int RenumberMesh(GModel *const model, meshPartitionOptions &options, std::vector
   BoElemGrVec boElemGrVec;
   int ier;
   Msg::StatusBar(1, true, "Building graph...");
-  ier = MakeGraph(model, graph, &boElemGrVec);
+  ier = MakeGraph(model, graph, options, &boElemGrVec);
   Msg::StatusBar(1, true, "Renumbering graph...");
   if(!ier) ier = RenumberGraph(graph, options);
   if(ier) {
@@ -262,20 +263,73 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options)
   BoElemGrVec boElemGrVec;
   int ier;
   Msg::StatusBar(1, true, "Building graph...");
-  ier = MakeGraph(model, graph, &boElemGrVec);
+  ier = MakeGraph(model, graph, options, &boElemGrVec);
   Msg::StatusBar(1, true, "Partitioning graph...");
   if(!ier) ier = PartitionGraph(graph, options);
   if(ier) {
     Msg::StatusBar(1, false, "Mesh");
     return 1;
   }
-
+    
   // Count partition sizes and assign partitions to internal elements
   std::vector<int> ssize(options.num_partitions, 0);
   const int n = graph.getNumVertex();
   for(int i = 0; i != n; ++i) {
-    ++ssize[graph.partition[i] - 1];
+    if (!options.partitionByExtrusion)
+      ++ssize[graph.partition[i] - 1];
     graph.element[i]->setPartition(graph.partition[i]);
+  }
+  // Assign partitions to boundary elements
+  const int nb = boElemGrVec.size();
+  for(int i = 0; i != nb; ++i) {
+    boElemGrVec[i].elem->setPartition(graph.partition[boElemGrVec[i].grVert]);
+  }
+  // propagate partition information to extruded elements
+  if (options.partitionByExtrusion) {
+    unsigned numElem[5];
+    const int meshDim = model->getNumMeshElements(numElem);
+    switch(meshDim) {
+      case 2:
+      // assing partitions for 2D faces and count number of elems in each partition
+      for (GModel:: fiter fit = model->firstFace(); fit != model->lastFace(); fit++) {
+        ExtrudeParams* epFace = (*fit)->meshAttributes.extrude;
+        GEdge *sourceEdge = model->getEdgeByTag(std::abs(epFace->geo.Source));
+        epFace->elementMap.propagatePartitionInformation(&ssize);
+        // loop over extruded edges to set partitions
+        std::list<GEdge*> regionEdges = (*fit)->edges();
+        for (std::list<GEdge*>::iterator eit = regionEdges.begin(); eit != regionEdges.end(); eit++) {
+          ExtrudeParams* epEdge = (*eit)->meshAttributes.extrude;
+          if((*eit)!=sourceEdge && epEdge && !epEdge->elementMap.empty())
+            epEdge->elementMap.propagatePartitionInformation();
+        }
+      }
+        break;
+      case 3:
+      // assing partitions for 3D volumes and count number of elems in each partition
+      for (GModel:: riter rit = model->firstRegion(); rit != model->lastRegion(); rit++) {
+        ExtrudeParams* epRegion = (*rit)->meshAttributes.extrude;
+        GFace *sourceFace = model->getFaceByTag(std::abs(epRegion->geo.Source));
+        epRegion->elementMap.propagatePartitionInformation(&ssize);
+        // loop over extruded faces to set partitions
+        std::list<GFace*> regionFaces = (*rit)->faces();
+        for (std::list<GFace*>::iterator fit = regionFaces.begin(); fit != regionFaces.end(); fit++) {
+          if ((*fit) == sourceFace)
+            continue;
+          ExtrudeParams* epFace = (*fit)->meshAttributes.extrude;
+          epFace->elementMap.propagatePartitionInformation();
+          // loop over bounding edges to set partitions
+          std::list<GEdge*> edges = (*fit)->edges();
+          GEdge *sourceEdge = model->getEdgeByTag(std::abs(epFace->geo.Source));
+          for (std::list<GEdge*>::iterator eit = edges.begin(); eit != edges.end(); eit++) {
+            ExtrudeParams* epEdge = (*eit)->meshAttributes.extrude;
+            if((*eit)!=sourceEdge && epEdge && epEdge->geo.Mode == COPIED_ENTITY)
+              // extruded edges have no source elements (extruded from vertex)
+              epEdge->elementMap.propagatePartitionInformation();
+          }
+        }
+      } // TODO: generalize to 2D too
+      break;
+    }
   }
   int sMin = graph.getNumVertex();
   int sMax = 0;
@@ -285,12 +339,6 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options)
   }
   model->setMinPartitionSize(sMin);
   model->setMaxPartitionSize(sMax);
-
-  // Assign partitions to boundary elements
-  const int nb = boElemGrVec.size();
-  for(int i = 0; i != nb; ++i) {
-    boElemGrVec[i].elem->setPartition(graph.partition[boElemGrVec[i].grVert]);
-  }
 
   model->recomputeMeshPartitions();
 
@@ -500,7 +548,7 @@ int RenumberGraph(Graph &graph, meshPartitionOptions &options)
  *
  ******************************************************************************/
 
-int MakeGraph(GModel *const model, Graph &graph, BoElemGrVec *const boElemGrVec)
+int MakeGraph(GModel *const model, Graph &graph, meshPartitionOptions &options, BoElemGrVec *const boElemGrVec)
 {
 
   enum {
@@ -516,15 +564,15 @@ int MakeGraph(GModel *const model, Graph &graph, BoElemGrVec *const boElemGrVec)
     ElemTypePolyg = 2
   };
 
-  int ier = 0;  
+  int ier = 0;
 //   switch(partitionScope) {
 //   case PartitionEntireDomain:
-
+  if(!options.partitionByExtrusion){
 /*--------------------------------------------------------------------*
  * Make a graph for the entire domain
  *--------------------------------------------------------------------*/
 
-    {
+    
 
 //--Get the dimension of the mesh and count the numbers of elements
 
@@ -582,6 +630,79 @@ int MakeGraph(GModel *const model, Graph &graph, BoElemGrVec *const boElemGrVec)
           }
         }
         break;
+      }
+    }
+    else {
+/*--------------------------------------------------------------------*
+ * Create graph for extrusion source entity (propagate group ids later)
+ *--------------------------------------------------------------------*/
+      unsigned tmp[5];
+      const int meshDim = model->getNumMeshElements(tmp);
+      if(meshDim < 2) {
+        Msg::Error("No mesh elements were found");
+        return 1;
+      }
+      std::vector<const GEntity*> sourceEntities;
+      std::set<const GEntity*> bannedEntities;
+      unsigned numElem[5] = {0,0,0,0,0};
+      switch(meshDim) {
+        case 2:
+          for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it){
+            ExtrudeParams* ep = (*it)->meshAttributes.extrude;
+            const GEdge *edge = model->getEdgeByTag(std::abs(ep->geo.Source));
+            if(!edge){
+              Msg::Error("Unknown source edge %d for extrusion", ep->geo.Source);
+              continue;
+            }
+            // mark face for partitioning if not associated to already processed face
+            if (bannedEntities.find(edge) == bannedEntities.end()) {
+              sourceEntities.push_back(edge);
+              edge->getNumMeshElements(numElem);
+            }
+            // do not allow partitioning of the extruded edges
+            std::list<GEdge*> edges = (*it)->edges();
+            for(std::list<GEdge*>::iterator eit = edges.begin(); eit != edges.end(); eit++) {
+              bannedEntities.insert((*eit));
+            }
+          }
+          break;
+        case 3:
+          for(GModel::riter it = model->firstRegion(); it != model->lastRegion(); ++it){
+            ExtrudeParams* ep = (*it)->meshAttributes.extrude;
+            const GFace *face = model->getFaceByTag(std::abs(ep->geo.Source));
+            if(!face){
+              Msg::Error("Unknown source surface %d for extrusion", ep->geo.Source);
+              continue;
+            }
+            // mark face for partitioning if not associated to already processed region
+            if (bannedEntities.find(face) == bannedEntities.end()) {
+              sourceEntities.push_back(face);
+              face->getNumMeshElements(numElem);
+            }
+            // do not allow partitioning of the extruded faces
+            std::list<GFace*> faces = (*it)->faces();
+            for(std::list<GFace*>::iterator fit = faces.begin(); fit != faces.end(); fit++) {
+              bannedEntities.insert((*fit));
+            }
+          }
+          break;
+      }
+      // build a graph only on the source entities
+      try {
+        // Allocate memory for the graph
+        const int numGrVert = numElem[ElemTypeTri] + numElem[ElemTypeQuad]
+                              + numElem[ElemTypePolyg];
+        const int maxGrEdge = (numElem[ElemTypeTri]*3 + numElem[ElemTypeQuad]*4
+                                + numElem[ElemTypePolyg]*4)/2;
+        graph.allocate(numGrVert, maxGrEdge);
+        // Make the graph
+        MakeGraphDIM<2>(sourceEntities.begin(), sourceEntities.end(),
+                        model->firstEdge(), model->lastEdge(), graph,
+                        boElemGrVec);
+      }
+      catch (...){
+        Msg::Error("Exception thrown during graph generation");
+        ier = 2;
       }
     }
 //     break;

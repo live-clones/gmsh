@@ -10,6 +10,7 @@
 #include <map>
 #include <string>
 #include "SmoothData.h"
+#include "MElement.h"
 
 // geo.Mode
 #define EXTRUDED_ENTITY 1
@@ -23,6 +24,19 @@
 
 class ExtrudeParams{
 public :
+  class ExtrusionElementMap {
+    private:
+      ExtrudeParams* _parent;
+      // maps source element to all extruded elements
+      std::map<MElement*,std::vector<MElement*> > _extrudedElements;
+    public:
+      ExtrusionElementMap(ExtrudeParams* const parent);
+      std::vector<MElement*>* getExtrudedElems(MElement* source);
+      void addExtrudedElem(MElement* source,MElement* extrudedElem);
+      void clear();
+      bool empty();
+      void propagatePartitionInformation(std::vector<int>* partitionSizes = NULL);
+  } elementMap;
   static smooth_data *normals;
   ExtrudeParams(int Mode = EXTRUDED_ENTITY);
   void fill(int type,

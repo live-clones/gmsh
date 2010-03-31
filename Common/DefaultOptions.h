@@ -1135,6 +1135,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "MshFilePartitioned" , opt_mesh_msh_file_partitioned , 0. , 
     "Split MSH file by mesh partition" },
 
+  { F|O, "PartitionByExtrusion" , opt_mesh_partition_by_extrusion, 0. ,
+    "Special partitioner that annotates all all extruded elements to the same node as the source element" },
+    
   { F, "NbHexahedra" , opt_mesh_nb_hexahedra , 0. , 
     "Number of hexahedra in the current mesh (read-only)" },
   { F, "NbNodes" , opt_mesh_nb_nodes , 0. , 
