@@ -315,7 +315,7 @@ void MElement::xyz2uvw(double xyz[3], double uvw[3])
   uvw[0] = uvw[1] = uvw[2] = 0.;
   int iter = 1, maxiter = 20;
   double error = 1., tol = 1.e-6;
-  
+
   while (error > tol && iter < maxiter){
     double jac[3][3];
     if(!getJacobian(uvw[0], uvw[1], uvw[2], jac)) break;
@@ -421,7 +421,7 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
   setVolumePositive();
   int n = getNumVerticesForMSH();
   int par = (parentNum) ? 1 : 0;
-  bool poly = (type == MSH_POLYG_ || type == MSH_POLYH_);
+  bool poly = (type == MSH_POLYG_ || type == MSH_POLYH_ || type == MSH_POLYG_B);
 
   if(!binary){
     fprintf(fp, "%d %d", num ? num : _num, type);
@@ -440,7 +440,7 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
       for(unsigned int i = 0; i < ghosts->size(); i++)
         fprintf(fp, " %d", -(*ghosts)[i]);
     }
-    if(version >= 2.0 && parentNum)
+    if(version >= 2.0 && par)
       fprintf(fp, " %d", parentNum);
     if(version >= 2.0 && poly)
       fprintf(fp, " %d", n);
@@ -753,8 +753,9 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_LIN_7  : if(name) *name = "Line 7";          return 2 + 5;
   case MSH_LIN_8  : if(name) *name = "Line 8";          return 2 + 6;
   case MSH_LIN_9  : if(name) *name = "Line 9";          return 2 + 7;
-  case MSH_LIN_10  : if(name) *name = "Line 10";        return 2 + 8;
-  case MSH_LIN_11  : if(name) *name = "Line 11";        return 2 + 9;
+  case MSH_LIN_10 : if(name) *name = "Line 10";         return 2 + 8;
+  case MSH_LIN_11 : if(name) *name = "Line 11";         return 2 + 9;
+  case MSH_LIN_B  : if(name) *name = "Line Border";     return 2;
   case MSH_TRI_3  : if(name) *name = "Triangle 3";      return 3;
   case MSH_TRI_6  : if(name) *name = "Triangle 6";      return 3 + 3;
   case MSH_TRI_9  : if(name) *name = "Triangle 9";      return 3 + 6;
@@ -769,25 +770,27 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_TRI_55 : if(name) *name = "Triangle 55";     return 3 + 24 + 28;
   case MSH_TRI_66 : if(name) *name = "Triangle 66";     return 3 + 27 + 36;
   case MSH_TRI_18 : if(name) *name = "Triangle 18";     return 3 + 15;
-  case MSH_TRI_21I : if(name) *name = "Triangle 21I";   return 3 + 18;
+  case MSH_TRI_21I: if(name) *name = "Triangle 21I";    return 3 + 18;
   case MSH_TRI_24 : if(name) *name = "Triangle 24";     return 3 + 21;
   case MSH_TRI_27 : if(name) *name = "Triangle 27";     return 3 + 24;
   case MSH_TRI_30 : if(name) *name = "Triangle 30";     return 3 + 27;
+  case MSH_TRI_B  : if(name) *name = "Triangle Border"; return 3;
   case MSH_QUA_4  : if(name) *name = "Quadrilateral 4"; return 4;
   case MSH_QUA_8  : if(name) *name = "Quadrilateral 8"; return 4 + 4;
   case MSH_QUA_9  : if(name) *name = "Quadrilateral 9"; return 9;
-  case MSH_QUA_16  : if(name) *name = "Quadrilateral 16"; return 16;
-  case MSH_QUA_25  : if(name) *name = "Quadrilateral 25"; return 25;
-  case MSH_QUA_36  : if(name) *name = "Quadrilateral 36"; return 36;
-  case MSH_QUA_49  : if(name) *name = "Quadrilateral 49"; return 49;
-  case MSH_QUA_64  : if(name) *name = "Quadrilateral 64"; return 64;
-  case MSH_QUA_81  : if(name) *name = "Quadrilateral 81"; return 81;
-  case MSH_QUA_100 : if(name) *name = "Quadrilateral 100"; return 100;
-  case MSH_QUA_121 : if(name) *name = "Quadrilateral 121"; return 121;
+  case MSH_QUA_16 : if(name) *name = "Quadrilateral 16"; return 16;
+  case MSH_QUA_25 : if(name) *name = "Quadrilateral 25"; return 25;
+  case MSH_QUA_36 : if(name) *name = "Quadrilateral 36"; return 36;
+  case MSH_QUA_49 : if(name) *name = "Quadrilateral 49"; return 49;
+  case MSH_QUA_64 : if(name) *name = "Quadrilateral 64"; return 64;
+  case MSH_QUA_81 : if(name) *name = "Quadrilateral 81"; return 81;
+  case MSH_QUA_100: if(name) *name = "Quadrilateral 100"; return 100;
+  case MSH_QUA_121: if(name) *name = "Quadrilateral 121"; return 121;
   case MSH_QUA_12 : if(name) *name = "Quadrilateral 12"; return 12;
-  case MSH_QUA_16I : if(name) *name = "Quadrilateral 16I"; return 16;
+  case MSH_QUA_16I: if(name) *name = "Quadrilateral 16I"; return 16;
   case MSH_QUA_20 : if(name) *name = "Quadrilateral 20"; return 20;
   case MSH_POLYG_ : if(name) *name = "Polygon";         return 0;
+  case MSH_POLYG_B: if(name) *name = "Polygon Border";  return 0;
   case MSH_TET_4  : if(name) *name = "Tetrahedron 4";   return 4;
   case MSH_TET_10 : if(name) *name = "Tetrahedron 10";  return 4 + 6;
   case MSH_TET_20 : if(name) *name = "Tetrahedron 20";  return 4 + 12 + 4;
@@ -821,6 +824,72 @@ int *MElement::getVerticesIdForMSH()
   return verts;
 }
 
+MElement *MElement::copy(int &num, std::map<int, MVertex*> &vertexMap,
+                         std::map<MElement*, MElement*> &newParents,
+                         std::map<MElement*, MElement*> &newDomains)
+{
+  if(newDomains.count(this))
+    return newDomains.find(this)->second;
+  std::vector<MVertex*> vmv;
+  int eType = getTypeForMSH();
+  MElement *eParent = getParent();
+  if(getNumChildren() == 0) {
+    for(int i = 0; i < getNumVertices(); i++) {
+      MVertex *v = getVertex(i);
+      int numV = v->getNum();
+      if(vertexMap.count(numV))
+        vmv.push_back(vertexMap[numV]);
+      else {
+        MVertex *mv = new MVertex(v->x(), v->y(), v->z(), 0, numV);
+        vmv.push_back(mv);
+        vertexMap[numV] = mv;
+      }
+    }
+  }
+  else {
+    for(int i = 0; i < getNumChildren(); i++) {
+      for(int j = 0; j < getChild(i)->getNumVertices(); j++) {
+        MVertex *v = getChild(i)->getVertex(j);
+        int numV = v->getNum();
+        if(vertexMap.count(numV))
+          vmv.push_back(vertexMap[numV]);
+        else {
+          MVertex *mv = new MVertex(v->x(), v->y(), v->z(), 0, numV);
+          vmv.push_back(mv);
+          vertexMap[numV] = mv;
+        }
+      }
+    }
+  }
+  MElementFactory factory;
+  MElement *newEl = factory.create(eType, vmv, ++num, _partition);
+  if(eParent && !getDomain(0) && !getDomain(1)) {
+    std::map<MElement*, MElement*>::iterator it = newParents.find(eParent);
+    MElement *newParent;
+    if(it == newParents.end()) {
+      newParent = eParent->copy(num, vertexMap, newParents, newDomains);
+      newParents[eParent] = newParent;
+    }
+    else
+      newParent = it->second;
+    newEl->setParent(newParent, ownsParent());
+  }
+  for(int i = 0; i < 2; i++) {
+    MElement *dom = getDomain(i);
+    if(!dom) continue;
+    std::map<MElement*, MElement*>::iterator it = newDomains.find(dom);
+    MElement *newDom;
+    if(it == newDomains.end()) {
+      newDom = dom->copy(num, vertexMap, newParents, newDomains);
+      newDomains[dom] = newDom;
+    }
+    else
+      newDom = newDomains.find(dom)->second;
+    newEl->setDomain(newDom, i);
+  }
+  return newEl;
+}
+
 MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
                                   int num, int part)
 {
@@ -836,6 +905,7 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_LIN_9:  return new MLineN(v, num, part);
   case MSH_LIN_10: return new MLineN(v, num, part);
   case MSH_LIN_11: return new MLineN(v, num, part);
+  case MSH_LIN_B:  return new MLineBorder(v, num, part);
   case MSH_TRI_3:  return new MTriangle(v, num, part);
   case MSH_TRI_6:  return new MTriangle6(v, num, part);
   case MSH_TRI_9:  return new MTriangleN(v, 3, num, part);
@@ -849,18 +919,20 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_TRI_45: return new MTriangleN(v, 8, num, part);
   case MSH_TRI_55: return new MTriangleN(v, 9, num, part);
   case MSH_TRI_66: return new MTriangleN(v,10, num, part);
+  case MSH_TRI_B:  return new MTriangleBorder(v, num, part);
   case MSH_QUA_4:  return new MQuadrangle(v, num, part);
   case MSH_QUA_8:  return new MQuadrangle8(v, num, part);
   case MSH_QUA_9:  return new MQuadrangle9(v, num, part);
-  case MSH_QUA_16:  return new MQuadrangleN(v, 3, num, part);
-  case MSH_QUA_25:  return new MQuadrangleN(v, 4, num, part);
-  case MSH_QUA_36:  return new MQuadrangleN(v, 5, num, part);
-  case MSH_QUA_49:  return new MQuadrangleN(v, 6, num, part);
-  case MSH_QUA_64:  return new MQuadrangleN(v, 7, num, part);
-  case MSH_QUA_81:  return new MQuadrangleN(v, 8, num, part);
-  case MSH_QUA_100:  return new MQuadrangleN(v, 9, num, part);
-  case MSH_QUA_121:  return new MQuadrangleN(v, 10, num, part);
+  case MSH_QUA_16: return new MQuadrangleN(v, 3, num, part);
+  case MSH_QUA_25: return new MQuadrangleN(v, 4, num, part);
+  case MSH_QUA_36: return new MQuadrangleN(v, 5, num, part);
+  case MSH_QUA_49: return new MQuadrangleN(v, 6, num, part);
+  case MSH_QUA_64: return new MQuadrangleN(v, 7, num, part);
+  case MSH_QUA_81: return new MQuadrangleN(v, 8, num, part);
+  case MSH_QUA_100:return new MQuadrangleN(v, 9, num, part);
+  case MSH_QUA_121:return new MQuadrangleN(v, 10, num, part);
   case MSH_POLYG_: return new MPolygon(v, num, part);
+  case MSH_POLYG_B:return new MPolygonBorder(v, num, part);
   case MSH_TET_4:  return new MTetrahedron(v, num, part);
   case MSH_TET_10: return new MTetrahedron10(v, num, part);
   case MSH_HEX_8:  return new MHexahedron(v, num, part);

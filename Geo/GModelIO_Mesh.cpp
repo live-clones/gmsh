@@ -366,7 +366,8 @@ int GModel::readMSH(const std::string &name)
               else if(j == numTags - 1) parent = tag;
             }
             if(!(numVertices = MElement::getInfoMSH(type))) {
-              if(type != MSH_POLYG_ && type != MSH_POLYH_) return 0;
+              if(type != MSH_POLYG_ && type != MSH_POLYH_ && type != MSH_POLYG_B)
+                return 0;
               if(fscanf(fp, "%d", &numVertices) != 1) return 0;
             }
           }
@@ -695,7 +696,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     writeElementsMSH(fp, this, (*it)->lines, saveAll, saveSinglePartition,
                      version, binary, num, (*it)->tag(), (*it)->physicals);
-  
+
   // triangles
   for(std::map<MElement*, GEntity*>::const_iterator it = parents[0].begin(); 
       it != parents[0].end(); it++)

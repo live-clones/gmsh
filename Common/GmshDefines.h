@@ -121,6 +121,9 @@
 #define MSH_LIN_9  64
 #define MSH_LIN_10  65
 #define MSH_LIN_11  66
+#define MSH_LIN_B 67
+#define MSH_TRI_B 68
+#define MSH_POLYG_B 69
 
 #define MSH_NUM_TYPE 35
 

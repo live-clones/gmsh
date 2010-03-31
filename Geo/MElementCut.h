@@ -178,7 +178,7 @@ class MPolygon : public MElement {
     }
     _initVertices();
   }
-  ~MPolygon() 
+  ~MPolygon()
   {
     if(_owner)
       delete _orig;
@@ -270,21 +270,73 @@ class MPolygon : public MElement {
 
 class MTriangleBorder : public MTriangle {
  protected:
-  MPolyhedron* _domains[2];
+  MElement* _domains[2];
  public:
-  MTriangleBorder(MVertex *v0, MVertex *v1, MVertex *v2,
-                  MPolyhedron* d1, MPolyhedron* d2, int num=0, int part=0)
+  MTriangleBorder(MVertex *v0, MVertex *v1, MVertex *v2, int num = 0, int part = 0,
+                  MElement* d1 = NULL, MElement* d2 = NULL)
     : MTriangle(v0, v1, v2, num, part)
   {
     _domains[0] = d1; _domains[1] = d2;
   }
+  MTriangleBorder(std::vector<MVertex*> v, int num = 0, int part = 0,
+                  MElement* d1 = NULL, MElement* d2 = NULL)
+    : MTriangle(v, num, part)
+  {
+    _domains[0] = d1; _domains[1] = d2;
+  }
   ~MTriangleBorder() {}
-  MPolyhedron* getDomain(int i) const { return _domains[i]; }
+  virtual MElement* getDomain(int i) const { return _domains[i]; }
+  virtual void setDomain (MElement *d, int i) { _domains[i] = d; }
   virtual MElement *getParent() const {
     if(_domains[0]) return _domains[0]->getParent();
     if(_domains[1]) return _domains[1]->getParent();
     return NULL;
   }
+  virtual int getTypeForMSH() const { return MSH_TRI_B; }
+  virtual const polynomialBasis* getFunctionSpace(int order=-1) const 
+  {
+    return getParent()->getFunctionSpace(order);
+  }
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
+  {
+    getParent()->getShapeFunctions(u, v, w, s, o);
+  }
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
+  {
+    getParent()->getGradShapeFunctions(u, v, w, s, o);
+  }
+  virtual void xyz2uvw(double xyz[3], double uvw[3])
+  {
+    getParent()->xyz2uvw(xyz,uvw);
+  }
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
+};
+
+class MPolygonBorder : public MPolygon {
+ protected:
+  MElement* _domains[2];
+ public:
+  MPolygonBorder(std::vector<MTriangle*> v, int num = 0, int part = 0,
+                  MElement* d1 = NULL, MElement* d2 = NULL)
+    : MPolygon(v, num, part)
+  {
+    _domains[0] = d1; _domains[1] = d2;
+  }
+  MPolygonBorder(std::vector<MVertex*> v, int num = 0, int part = 0,
+                  MElement* d1 = NULL, MElement* d2 = NULL)
+    : MPolygon(v, num, part)
+  {
+    _domains[0] = d1; _domains[1] = d2;
+  }
+  ~MPolygonBorder() {}
+  virtual MElement* getDomain(int i) const { return _domains[i]; }
+  virtual void setDomain (MElement *d, int i) { _domains[i] = d; }
+  virtual MElement *getParent() const {
+    if(_domains[0]) return _domains[0]->getParent();
+    if(_domains[1]) return _domains[1]->getParent();
+    return NULL;
+  }
+  virtual int getTypeForMSH() const { return MSH_POLYG_B; }
   virtual const polynomialBasis* getFunctionSpace(int order=-1) const 
   {
     return getParent()->getFunctionSpace(order);
@@ -306,21 +358,29 @@ class MTriangleBorder : public MTriangle {
 
 class MLineBorder : public MLine {
  protected:
-  MPolygon* _domains[2];
+  MElement* _domains[2];
  public:
-  MLineBorder(MVertex *v0, MVertex *v1,
-              MPolygon* d1, MPolygon* d2, int num=0, int part=0)
+  MLineBorder(MVertex *v0, MVertex *v1, int num = 0, int part = 0,
+              MElement* d1 = NULL, MElement* d2 = NULL)
     : MLine(v0, v1, num, part)
   {
     _domains[0] = d1; _domains[1] = d2;
   }
+  MLineBorder(std::vector<MVertex*> v, int num = 0, int part = 0,
+              MElement* d1 = NULL, MElement* d2 = NULL)
+    : MLine(v, num, part)
+  {
+    _domains[0] = d1; _domains[1] = d2;
+  }
   ~MLineBorder() {}
-  MPolygon* getDomain(int i) const { return _domains[i]; }
+  virtual MElement* getDomain(int i) const { return _domains[i]; }
+  virtual void setDomain (MElement *d, int i) { _domains[i] = d; }
   virtual MElement *getParent() const {
     if(_domains[0]) return _domains[0]->getParent();
     if(_domains[1]) return _domains[1]->getParent();
     return NULL;
   }
+  virtual int getTypeForMSH() const { return MSH_LIN_B; }
   virtual const polynomialBasis* getFunctionSpace(int order=-1) const 
   {
     return getParent()->getFunctionSpace(order);

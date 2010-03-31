@@ -150,12 +150,15 @@ class MElement
     v.resize(0);
   }
 
-  // get parent and children for hierarchial grids
+  // get and set parent and children for hierarchial grids
   virtual MElement *getParent() const { return NULL; }
   virtual void setParent(MElement *p, bool owner = false) {}
   virtual int getNumChildren() const { return 0; }
   virtual MElement *getChild(int i) const { return NULL; }
   virtual bool ownsParent() const { return false; }
+  // get and set domain for borders
+  virtual MElement *getDomain(int i) const { return NULL; }
+  virtual void setDomain (MElement *e, int i) { }
 
   //get the type of the element
   virtual int getType() const = 0;
@@ -282,6 +285,11 @@ class MElement
   virtual int getNumVerticesForMSH() { return getNumVertices(); }
   virtual int *getVerticesIdForMSH();
   static void registerBindings(binding *b);
+
+  // copy element and parent if any, vertexMap contains the new vertices
+  virtual MElement *copy(int &num, std::map<int, MVertex*> &vertexMap,
+                         std::map<MElement*, MElement*> &newParents,
+                         std::map<MElement*, MElement*> &newDomains);
 };
 
 class MElementLessThanLexicographic{
