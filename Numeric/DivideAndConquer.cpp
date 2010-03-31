@@ -789,12 +789,13 @@ void DocRecord::Voronoi()
   ConvertDListToVoronoiData();
 }
 
-void DocRecord::setPoints(fullMatrix<double> *p){ 
+void DocRecord::setPoints(fullMatrix<double> *p)
+{ 
   if (numPoints != p->size1())throw;
-  for (int i=0;i<p->size1();i++){
-    x(i) = (*p)(i,0);
-    y(i) = (*p)(i,1);
-    data(i) = (*p)(i,2) < 0  ? (void *) 1 : NULL;
+  for (int i = 0; i < p->size1(); i++){
+    x(i) = (*p)(i, 0);
+    y(i) = (*p)(i, 1);
+    data(i) = (*p)(i, 2) < 0  ? (void *) 1 : NULL;
   }
 } 
 
@@ -803,7 +804,8 @@ void DocRecord::setPoints(fullMatrix<double> *p){
 void DocRecord::registerBindings(binding *b)
 {
   classBinding *cb = b->addClass<DocRecord>("Triangulator");
-  cb->setDescription("A class that does 2D delaunay triangulation (JF's SANDBOX for the moment)");
+  cb->setDescription("A class that does 2D delaunay triangulation "
+                     "(JF's SANDBOX for the moment)");
   methodBinding *cm;
 
   cm = cb->addMethod("setPoints", &DocRecord::setPoints);

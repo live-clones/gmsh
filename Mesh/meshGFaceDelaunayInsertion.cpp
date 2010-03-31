@@ -663,12 +663,17 @@ void bowyerWatson(GFace *gf)
   std::vector<SMetric3> vMetricsBGM;
 
   buildMeshGenerationDataStructures
-    (gf, AllTris, vSizes, vSizesBGM, vMetricsBGM,Us, Vs);
+    (gf, AllTris, vSizes, vSizesBGM, vMetricsBGM, Us, Vs);
 
   // _printTris ("before.pos", AllTris, Us,Vs);
   int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, Us, Vs, vSizes, vSizesBGM);
   // _printTris ("after2.pos", AllTris, Us,Vs);
   Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
+
+  if(AllTris.empty()){
+    Msg::Error("No triangles in initial mesh");
+    return;
+  }
 
   int ITER = 0;
   while (1){
