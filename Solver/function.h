@@ -87,6 +87,9 @@ public :
   inline bool somethingDependOnMe() {
     return !_dependOnMe.empty();
   }
+  inline bool doIDependOn(dataCacheDouble &other) {
+    return (_iDependOn.find(&other)!=_iDependOn.end());
+  }
   std::vector<dataCacheDouble*> _dependencies;
   std::vector<const fullMatrix<double>*> _depM;
 
