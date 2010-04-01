@@ -127,7 +127,7 @@ static double getSizeBB(std::vector<MEdge> &me){
   SOrientedBoundingBox obbox ;
 
   std::vector<SPoint3> vertices;
-  for (int i=0; i< me.size(); i++){
+  for (unsigned int i=0; i< me.size(); i++){
     MVertex *v0 = me[i].getVertex(0);
     MVertex *v1 = me[i].getVertex(1);
     SPoint3 pt1(v0->x(),v0->y(), v0->z());
@@ -253,7 +253,7 @@ static void recur_compute_centers_ (double R, double a1, double a2,
  
   std::vector<SPoint2> centersChild;
   centersChild.clear();
-  for (int i=0;i<root->children.size();i++){
+  for (unsigned int i=0;i<root->children.size();i++){
     multiscaleLaplaceLevel* m = root->children[i]; 
     centers.push_back(std::make_pair(m->center,m));   
     m->radius = 0.0;
@@ -277,13 +277,13 @@ static void recur_compute_centers_ (double R, double a1, double a2,
       std::vector<MEdge> me = boundaries[i];
       SPoint2 c(0.0,0.0);
       double rad = 0.0;
-      for(int j= 0; j< me.size(); j++){
+      for(unsigned int j= 0; j< me.size(); j++){
         MVertex *v = me[j].getVertex(0);
         std::map<MVertex *, SPoint2>::iterator it0 = root->coordinates.find(v);
         c += it0->second;
       }
       c *= 1./((double)me.size());
-      for(int j= 0; j< me.size(); j++){
+      for(unsigned int j= 0; j< me.size(); j++){
         SPoint2 p =  root->coordinates[me[j].getVertex(0)];
         rad = std::max(rad,sqrt ((c.x() - p.x())*(c.x() - p.x())+
                                  (c.y() - p.y())*(c.y() - p.y())));
@@ -315,7 +315,7 @@ static void recur_compute_centers_ (double R, double a1, double a2,
   centers.insert(centers.begin(), std::make_pair(PL,zero));  
   centers.push_back(std::make_pair(PR,zero));
 
-  for (int i=1;i<centers.size()-1;i++){
+  for (unsigned int i=1;i<centers.size()-1;i++){
     multiscaleLaplaceLevel* m1 = centers[i-1].second;
     multiscaleLaplaceLevel* m2 = centers[i].second;
     multiscaleLaplaceLevel* m3 = centers[i+1].second;
@@ -341,7 +341,7 @@ static void recur_cut_edges_ (multiscaleLaplaceLevel * root,
   const double EPS = 0.001;
 
   std::vector<std::pair<SPoint2,multiscaleLaplaceLevel*> > &centers = root->cut;
-  for (int i=0;i<centers.size()-1;i++){
+  for (unsigned int i=0;i<centers.size()-1;i++){
     SPoint2 p1 = centers[i].first;
     SPoint2 p2 = centers[i+1].first;
     for (std::set <MEdge,Less_Edge>::iterator it = allEdges.begin();
@@ -541,7 +541,7 @@ static void recur_cut_ (double R, double a1, double a2,
     }
     pp *= 1./(double)root->elements[i]->getNumVertices();
     int nbIntersect = 0;
-    for (int j = 0; j < centers.size() - 1; j++){
+    for (unsigned int j = 0; j < centers.size() - 1; j++){
       double x[2];
       nbIntersect += intersection_segments (centers[j].first,centers[j+1].first,pp,farLeft,x); 
     }
@@ -551,7 +551,7 @@ static void recur_cut_ (double R, double a1, double a2,
       right.push_back(root->elements[i]);
   }
   
-  for (int i = 1; i < centers.size() - 1; i++){
+  for (unsigned int i = 1; i < centers.size() - 1; i++){
     multiscaleLaplaceLevel* m1 = centers[i-1].second;
     multiscaleLaplaceLevel* m2 = centers[i].second;
     multiscaleLaplaceLevel* m3 = centers[i+1].second;
@@ -575,7 +575,7 @@ static void connected_left_right (std::vector<MElement *> &left,
 
   if (subRegionsL.size()  > 0){
     int maxSize= subRegionsL[0].size(); 
-    for (int i=1;i< subRegionsL.size() ; i++){   
+    for (unsigned int i=1;i< subRegionsL.size() ; i++){   
       int size = subRegionsL[i].size();
       if(size > maxSize){
         maxSize = size;
@@ -585,7 +585,7 @@ static void connected_left_right (std::vector<MElement *> &left,
   }
   
   left.clear();
-  for (int i=0;i< subRegionsL.size() ; i++){   
+  for (unsigned int i=0;i< subRegionsL.size() ; i++){   
     if (i == indexL)
       left.insert(left.begin(), subRegionsL[i].begin(),  subRegionsL[i].end());
     else
@@ -599,7 +599,7 @@ static void connected_left_right (std::vector<MElement *> &left,
 
   if (subRegionsR.size()  > 0){
     int maxSize= subRegionsR[0].size(); 
-    for (int i=1;i< subRegionsR.size() ; i++){   
+    for (unsigned int i=1;i< subRegionsR.size() ; i++){   
       int size = subRegionsR[i].size();
       if(size > maxSize){
         maxSize = size;
@@ -609,7 +609,7 @@ static void connected_left_right (std::vector<MElement *> &left,
   }
 
   right.clear();
-  for (int i=0;i< subRegionsR.size() ; i++){   
+  for (unsigned int i=0;i< subRegionsR.size() ; i++){   
     if (i == indexR)
       right.insert(right.begin(), subRegionsR[i].begin(),  subRegionsR[i].end());
     else
@@ -617,9 +617,9 @@ static void connected_left_right (std::vector<MElement *> &left,
   }
 
   //assign partitions
-  for (int i= 0; i< left.size(); i++)
+  for (unsigned int i= 0; i< left.size(); i++)
     left[i]->setPartition(1);
-  for (int i= 0; i< right.size(); i++)
+  for (unsigned int i= 0; i< right.size(); i++)
     right[i]->setPartition(2);
 
 }
@@ -666,7 +666,7 @@ static void printLevel(const char* fn,
 static double localSize(MElement *e,  std::map<MVertex*,SPoint2> &solution){
 
   SBoundingBox3d local;
-  for(unsigned int j = 0; j<e->getNumVertices(); ++j){
+  for(int j = 0; j<e->getNumVertices(); ++j){
     SPoint2 p = solution[e->getVertex(j)];
     local += SPoint3(p.x(),p.y(),0.0);
   }    
@@ -892,7 +892,7 @@ void multiscaleLaplace::fillCoordinates (multiscaleLaplaceLevel & level,
 
   for(unsigned int i = 0; i < level.elements.size(); ++i){
     MElement *e = level.elements[i];
-    for(unsigned int j = 0; j<e->getNumVertices(); ++j){
+    for(int j = 0; j<e->getNumVertices(); ++j){
       MVertex *v = e->getVertex(j);
       SPoint2 coord  = level.coordinates[v];
       for (int k= iScale.size()-1; k > 0; k--){
@@ -903,7 +903,7 @@ void multiscaleLaplace::fillCoordinates (multiscaleLaplaceLevel & level,
   }
 
   
-  for (int i=0;i<level.children.size();i++){
+  for (unsigned int i=0;i<level.children.size();i++){
     multiscaleLaplaceLevel* m = level.children[i]; 
     fillCoordinates(*m, allCoordinates, iScale, iCenter);
  }
@@ -918,7 +918,7 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
   std::set<MVertex*> allNodes;
   for(unsigned int i = 0; i < level.elements.size(); ++i){
     MElement *e = level.elements[i];
-    for(unsigned int j = 0; j<e->getNumVertices(); ++j){
+    for(int j = 0; j<e->getNumVertices(); ++j){
       allNodes.insert(e->getVertex(j));
     }
   }  
@@ -957,7 +957,7 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
   if (regGoodSize.size()  > 0){
     int index=0;
     int maxSize= regGoodSize[0].size(); 
-    for (int i=1;i< regGoodSize.size() ; i++){   
+    for (unsigned int i=1;i< regGoodSize.size() ; i++){   
       int size = regGoodSize[i].size();
       if(size > maxSize){
         index = i;
@@ -965,7 +965,7 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
       }
     }
     goodSize.clear();
-    for (int i=0;i< regGoodSize.size() ; i++){   
+    for (unsigned int i=0;i< regGoodSize.size() ; i++){   
       if (i == index)  goodSize.insert(goodSize.begin(), regGoodSize[i].begin(),  regGoodSize[i].end());
       else  tooSmall.insert(tooSmall.begin(), regGoodSize[i].begin(),  regGoodSize[i].end());
     }
@@ -978,11 +978,11 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
   std::vector<double> rads;
   regions.clear(); regions_.clear();
   connectedRegions (tooSmall,regions_);
-  for (int i=0;i< regions_.size() ; i++){    
+  for (unsigned int i=0;i< regions_.size() ; i++){    
     bool really_small_elements = false;
     //  double totArea = 0.0;
     //  SPoint2 center = (0.,0., 0.);
-    for (int k=0; k<regions_[i].size() ; k++){
+    for (unsigned int k=0; k<regions_[i].size() ; k++){
       MElement *e = regions_[i][k];
 //       SPoint2 p0 = solution[e->getVertex(0)]; 
 //       SPoint2 p1 = solution[e->getVertex(1)];
@@ -1058,7 +1058,7 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
   std::set<MVertex*> goodSizev;
   for(unsigned int i = 0; i < level.elements.size(); ++i){
     MElement *e = level.elements[i];
-    for(unsigned int j = 0; j<e->getNumVertices(); ++j){
+    for(int j = 0; j<e->getNumVertices(); ++j){
       MVertex *v = e->getVertex(j);
       goodSizev.insert(v);
       level.coordinates[v] = solution[v];
@@ -1076,9 +1076,9 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
   for (unsigned int i = 0; i < regions.size(); i++){    
     std::set<MVertex*> tooSmallv;
     tooSmallv.clear();
-    for (int k=0; k<regions[i].size() ; k++){
+    for (unsigned int k=0; k<regions[i].size() ; k++){
       MElement *e = regions[i][k];
-      for(unsigned int j = 0; j<e->getNumVertices(); ++j){
+      for(int j = 0; j<e->getNumVertices(); ++j){
         tooSmallv.insert(e->getVertex(j));
       }    
     }

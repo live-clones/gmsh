@@ -48,7 +48,7 @@ class SolverField : public FunctionSpace<T> // being able to use it instead of a
     dm->getDofValue(D,DMVals);
     fs->f(ele,u,v,w,SFVals);
     val=ValType();
-    for (int i=0;i<D.size();++i)
+    for (unsigned int i=0;i<D.size();++i)
       val+=SFVals[i]*DMVals[i];
   }
 
@@ -68,7 +68,7 @@ class SolverField : public FunctionSpace<T> // being able to use it instead of a
     dm->getDofValue(D,DMVals);
     fs->gradf(ele,u,v,w,SFGrads);
     grad=GradType();
-    for (int i=0;i<D.size();++i)
+    for (unsigned int i=0;i<D.size();++i)
       grad+= SFGrads[i] * DMVals[i];
   }
 

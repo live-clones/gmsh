@@ -182,7 +182,7 @@ void ExtrudeParams::ExtrusionElementMap::propagatePartitionInformation(std::vect
 // //       Msg::Warning("No element vector found!");
 //       continue;
 //     }
-    for(int iE = 0;iE < extrudedElements.size();iE++) {
+    for(unsigned int iE = 0;iE < extrudedElements.size();iE++) {
       if(extrudedElements[iE]) {
         extrudedElements[iE]->setPartition(sourceElem->getPartition());
         if (partitionSizes)

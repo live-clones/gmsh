@@ -40,7 +40,7 @@ class MInterfaceElement : public MLineN{ // or don't derivate but in this case a
         std::vector<MVertex*> vv;
         for(int i = 0; i < nopv; i++){
           _numElem[jj]->getEdgeVertices(i,vv);
-          for(int j = 2; j < vv.size(); j++){
+          for(unsigned int j = 2; j < vv.size(); j++){
             if(vv[j] == v[0]){
               _numEdge[jj] = i;
               if(v0 == vv[0]) _dir[jj] = true; // same orientation
@@ -62,7 +62,7 @@ class MInterfaceElement : public MLineN{ // or don't derivate but in this case a
         std::vector<MVertex*> vv;
         for(int i = 0; i < nopv; i++){
           _numElem[jj]->getEdgeVertices(i,vv);
-          for(int j = 2; j < vv.size(); j++){
+          for(unsigned int j = 2; j < vv.size(); j++){
             if(vv[j] == v[2]){ // v[2] because it is the first interior node
               _numEdge[jj] = i;
               if(v[0] == vv[0]) _dir[jj] = true; // same orientation

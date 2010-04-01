@@ -298,7 +298,7 @@ template<class T1> class LoadTerm : public LinearTerm<T1>
 
   virtual void get(MElement *ele,int npts,IntPt *GP,fullVector<double> &m)
   {
-    double nbFF=LinearTerm<T1>::space1.getNumKeys(ele);
+    int nbFF=LinearTerm<T1>::space1.getNumKeys(ele);
     double jac[3][3];
     m.resize(nbFF);
     m.scale(0.);

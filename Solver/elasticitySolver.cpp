@@ -323,7 +323,6 @@ PView *elasticitySolver::buildVonMisesView(const std::string &postFileName)
     {
       MElement *e=*it;
       double energ;
-      double vol;
       IntPt *GP;
       int npts=Integ_Bulk.getIntPoints(e,&GP);
       Elastic_Energy_Term.get(e,npts,GP,energ);

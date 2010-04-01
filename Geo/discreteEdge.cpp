@@ -299,7 +299,7 @@ void discreteEdge::parametrize( std::map<GFace*,  std::map<MVertex*, MVertex*, s
 void discreteEdge::computeNormals () const
 {
   _normals.clear();
-  for (int i= 0; i < mesh_vertices.size(); i++) _normals[mesh_vertices[i]] = SVector3(0.0,0.0,0.0);
+  for (unsigned int i= 0; i < mesh_vertices.size(); i++) _normals[mesh_vertices[i]] = SVector3(0.0,0.0,0.0);
   _normals[getBeginVertex()->mesh_vertices[0]] = SVector3(0.0,0.0,0.0);
   _normals[getBeginVertex()->mesh_vertices[0]] = SVector3(0.0,0.0,0.0);
   double J[3][3];

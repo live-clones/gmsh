@@ -649,7 +649,7 @@ void ChainComplex::smoothenChain(std::map<Cell*, int, Less_Cell>& cells)
     deImmuneCells(cells);
     eraseNullCells(cells);
 
-    if (size >= cells.size()) useless++;
+    if (size >= (int)cells.size()) useless++;
     else useless = 0;
     if (useless > 5) break;
   }
@@ -942,7 +942,7 @@ gmp_matrix* HomologySequence::removeZeroCols(gmp_matrix* matrix) // FIXME
 
   int k = 0;
   for(int j = 1; j <= cols; j++){
-    if(zcols.size()-1 < k) break;
+    if((int)zcols.size()-1 < k) break;
     if(zcols.at(k) == j) { k++; continue; }
     for(int i = 1; i <= rows; i++){
       gmp_matrix_get_elem(elem, i, j, matrix);
