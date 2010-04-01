@@ -83,7 +83,8 @@ bool PViewData::writeTXT(std::string fileName)
         for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
           double x, y, z;
           getNode(step, ent, ele, nod, x, y, z);
-          fprintf(fp, "%.16g %.16g %.16g ", x, y, z);
+          fprintf(fp, "%d %.16g %d %d %.16g %.16g %.16g ", step, getTime(step), 
+                  ent, ele, x, y, z);
           for(int comp = 0; comp < getNumComponents(step, ent, ele); comp++){   
             double val;
             getValue(step, ent, ele, nod, comp, val);
@@ -92,9 +93,7 @@ bool PViewData::writeTXT(std::string fileName)
         }
         fprintf(fp, "\n");
       }
-      fprintf(fp, "\n");
     }
-    fprintf(fp, "\n");  
   }
 
   fclose(fp);

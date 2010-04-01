@@ -181,7 +181,6 @@ int GModel::readMSH(const std::string &name)
   std::map<int, MVertex*> vertexMap;
   std::vector<MVertex*> vertexVector;
 
-
   while(1) {
 
     while(str[0] != '$'){
