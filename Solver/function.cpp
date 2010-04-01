@@ -51,7 +51,7 @@ dataCacheDouble::dataCacheDouble(dataCacheMap *m, function *f):
   _function = f;
   _dependencies.resize ( _function->arguments.size());
   _depM.resize (_function->arguments.size());
-  for (int i=0;i<_function->arguments.size();i++)
+  for (unsigned int i=0;i<_function->arguments.size();i++)
     _dependencies[i] = &m[_function->arguments[i].first].get(_function->arguments[i].second,this);
 }
 

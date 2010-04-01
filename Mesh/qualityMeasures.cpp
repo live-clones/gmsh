@@ -398,7 +398,7 @@ double qmQuadrangleAngles (MQuadrangle *e) {
   rot[0][0]=-1; rot[0][1]=1; rot[0][2]=0;
   rot[1][0]=-1; rot[1][1]=0; rot[1][2]=0;
   rot[2][0]= 0; rot[2][1]=0; rot[2][2]=1;
-  double tmp[3][3];
+  //double tmp[3][3];
   
   const double u[9] = {-1,-1, 1, 1, 0,0,1,-1,0};
   const double v[9] = {-1, 1, 1,-1, -1,1,0,0,0};

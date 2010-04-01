@@ -70,7 +70,7 @@ Octree *buildMElementOctree(std::vector<MElement*> &v)
 {
   SBoundingBox3d bb;
   for (unsigned int i=0;i<v.size();i++){
-    for(unsigned int j=0;j<v[i]->getNumVertices();j++){
+    for(int j=0;j<v[i]->getNumVertices();j++){
       bb += SPoint3(v[i]->getVertex(j)->x(),
                     v[i]->getVertex(j)->y(),
                     v[i]->getVertex(j)->z());

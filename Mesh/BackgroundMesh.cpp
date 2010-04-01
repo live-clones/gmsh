@@ -300,7 +300,7 @@ backgroundMesh::backgroundMesh(GFace *_gf)
 backgroundMesh::~backgroundMesh()
 {
   for (unsigned int i = 0; i < _vertices.size(); i++) delete _vertices[i];
-  for (int i = 0; i < _triangles.size(); i++) delete _triangles[i];
+  for (unsigned int i = 0; i < _triangles.size(); i++) delete _triangles[i];
   delete _octree;
 }
 
@@ -501,7 +501,7 @@ void backgroundMesh::print (const std::string &filename, GFace *gf) const
 {
   FILE *f = fopen (filename.c_str(),"w");
   fprintf(f,"View \"Background Mesh\"{\n");
-  for(int i=0;i<_triangles.size();i++){
+  for(unsigned int i=0;i<_triangles.size();i++){
     MVertex *v1 = _triangles[i]->getVertex(0);
     MVertex *v2 = _triangles[i]->getVertex(1);
     MVertex *v3 = _triangles[i]->getVertex(2);

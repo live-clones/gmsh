@@ -102,7 +102,7 @@ public :
   // still virtual because it is overrided by conservation law terms, as soon as conservation law terms will be regular functions, we will remove this
   virtual void _eval()
   {
-    for(int i=0;i<_dependencies.size(); i++)
+    for(unsigned int i=0;i<_dependencies.size(); i++)
       _depM[i] = &(*_dependencies[i])();
     _function->call(&_cacheMap, _value, _depM);
   }

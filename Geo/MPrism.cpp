@@ -56,7 +56,7 @@ const polynomialBasis* MPrism::getFunctionSpace(int o) const
 double MPrism::getInnerRadius()
 {
   double dist[3], k = 0.;
-  double triEdges[3] = {0,1,3};
+  int triEdges[3] = {0,1,3};
   for (int i = 0; i < 3; i++){
     MEdge e = getEdge(triEdges[i]);
     dist[i] = e.getVertex(0)->distance(e.getVertex(1));
