@@ -79,18 +79,17 @@ static void gmsh_rotate(Fl_Color c)
 static void gmsh_models(Fl_Color c)
 {
   fl_color(c);
-  bl; vv(-0.8,-0.8); vv(0.8,-0.8); el;
-  bl; vv(-0.8,-0.4); vv(0.8,-0.4); el;
-  bl; vv(-0.8,-0.); vv(0.8,-0.); el;
-  bl; vv(-0.8,0.4); vv(0.8,0.4); el;
+  bl; vv(-0.8,-0.7); vv(0.8,-0.7); el;
+  bl; vv(-0.8,-0.2); vv(0.8,-0.2); el;
+  bl; vv(-0.8,0.3); vv(0.8,0.3); el;
   bl; vv(-0.8,0.8); vv(0.8,0.8); el;
 }
 
 static void gmsh_clscale(Fl_Color c)
 {
   fl_color(c);
-  bl; vv(-0.8,0.8); vv(-0.2,0.8); vv(-0.8,0.2); el;
-  bl; vv(-0.3,0.4); vv(0.8,0.4); vv(-0.3,-0.8); el;
+  bl; vv(-0.8,0.8); vv(-0.1,0.8); vv(-0.8,0.1); el;
+  bl; vv(-0.2,0.2); vv(0.9,0.2); vv(-0.2,-0.9); el;
 }
 
 #undef vv
