@@ -6,8 +6,8 @@
 #include "SOrientedBoundingBox.h"
 #include "Numeric.h"
 
-void insertBoxes ( double x, double y, double z, double EP, cartesianBox<double> &box)
-{
+void insertBoxes ( double x, double y, double z, double EP, cartesianBox<double> &box){
+  
   int id1 = box.index_of_element(x-EP,y-EP,z-EP);      
   int id2 = box.index_of_element(x+EP,y+EP,z+EP);      
   int i1,j1,k1;
@@ -32,7 +32,9 @@ void test()
   scanf ("%lf",&z);
   printf(" z = %g\n",z);
   std::vector<SPoint3> v, pts;
+  std::vector<SPoint3> cv;
   std::vector<double> d;
+  
 
   for (int i=0;i<100;i++){
     for (int j=0;j<100;j++){
@@ -41,7 +43,7 @@ void test()
       v.push_back(SPoint3(4.3,x,y));
     }
   }
-  signedDistancesPointsTriangle (d,v,pts,SPoint3(4,0,0),SPoint3(4,1,0),SPoint3(4,0,1));
+  signedDistancesPointsTriangle (d,cv,v,SPoint3(4,0,0),SPoint3(4,1,0),SPoint3(4,0,1));
   
   FILE *f = fopen ("chitte.pos","w");
   fprintf(f,"View \"\"{\n");
@@ -104,7 +106,7 @@ int main (int argc,char *argv[])
   int NY =FACT*range.y()/range.x(); 
   int NZ =FACT*range.z()/range.x(); 
 
-  printf("%g %g %g -- %g %g %g -- %d %d %d\n",bb.min().x(),bb.min().y(),bb.min().z(),
+  printf("bb Min= %g %g %g -- bb Max= %g %g %g --NX %d NY %d NZ %d\n",bb.min().x(),bb.min().y(),bb.min().z(),
          bb.max().x(),bb.max().y(),bb.max().z(),NX,NY,NZ);
 
 
@@ -138,6 +140,7 @@ int main (int argc,char *argv[])
   std::map<int,double>::const_iterator it = 
     box.begin();
   std::vector<SPoint3> NODES;
+  std::vector<SPoint3> CNODES;
   std::vector<int> indices;;
   std::vector<double> dist,localdist;
   for ( ; it!=box.end();++it){
@@ -166,9 +169,9 @@ int main (int argc,char *argv[])
       //      printf("N1 %g %g %g N2 %g %g %g -- %g %g %g -- %g %g %g -- %g %g %g\n",N.x(),N.y(),N.z(),NN.x(),NN.y(),NN.z(),
       //             p1.x(),p1.y(),p1.z(),p2.x(),p2.y(),p2.z(),p3.x(),p3.y(),p3.z());
       if (dot(NN, N) > 0)
-        signedDistancesPointsTriangle (localdist,NODES,dummy,P1,P2,P3);
+	signedDistancesPointsTriangle (localdist,CNODES,NODES,P1,P2,P3);
       else
-        signedDistancesPointsTriangle (localdist,NODES,dummy,P2,P1,P3);
+	signedDistancesPointsTriangle (localdist,CNODES,NODES,P2,P1,P3);
 
       if(1){
         if (dist.empty())dist=localdist;
@@ -186,7 +189,7 @@ int main (int argc,char *argv[])
   }
   
   printf("nodes created\n");
-  box.writeMSH("yeah.msh");
+  box.writeMSH("yeah.msh",true);
   printf("mesh written\n");
   GmshFinalize();
 }
