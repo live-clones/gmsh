@@ -843,7 +843,7 @@ void signedDistancesPointsTriangle(std::vector<double>&distances,
   if (det = 0.0) return;
 
   const double n2t1 = dot(t1, t1);
-  const double n2t2 = dot(t2, t3);
+  const double n2t2 = dot(t2, t2);
   const double n2t3 = dot(t3, t3);
 
   double u, v, d;

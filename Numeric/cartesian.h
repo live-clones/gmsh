@@ -148,8 +148,11 @@ class cartesianBox {
             _nodalValues[node_index(i+I,j+J,k+K)] = 0.0;
     }
   }
-  void writeMSH (const std::string &filename) const 
+  void writeMSH (const std::string &filename, bool simplex=false) const 
   {
+    
+//     const bool simplex=false;
+    
     FILE *f = fopen (filename.c_str(), "w");
     fprintf(f,"$MeshFormat\n2.1 0 8\n$EndMeshFormat\n");
     {
@@ -162,21 +165,76 @@ class cartesianBox {
       fprintf(f,"$EndNodes\n");
     }
     {
-      fprintf(f,"$Elements\n%d\n",_active.size());
+      int coeff=1;
+      if(simplex) coeff=6;
+      fprintf(f,"$Elements\n%d\n",coeff*_active.size());
       std::set<int>::const_iterator it = _active.begin();
       for ( ; it!=_active.end();++it){
-        fprintf(f,"%d 5 3 1 1 1",*it);
-        int i,j,k;
-        element_ijk(*it,i,j,k);
-        fprintf(f," %d",node_index(i,j,k));
-        fprintf(f," %d",node_index(i+1,j,k));
-        fprintf(f," %d",node_index(i+1,j+1,k));
-        fprintf(f," %d",node_index(i,j+1,k));
-        fprintf(f," %d",node_index(i,j,k+1));
-        fprintf(f," %d",node_index(i+1,j,k+1));
-        fprintf(f," %d",node_index(i+1,j+1,k+1));
-        fprintf(f," %d",node_index(i,j+1,k+1));
-        fprintf(f,"\n");
+        if(!simplex){
+          fprintf(f,"%d 5 3 1 1 1",*it);
+          int i,j,k;
+          element_ijk(*it,i,j,k);
+          fprintf(f," %d",node_index(i,j,k));
+          fprintf(f," %d",node_index(i+1,j,k));
+          fprintf(f," %d",node_index(i+1,j+1,k));
+          fprintf(f," %d",node_index(i,j+1,k));
+          fprintf(f," %d",node_index(i,j,k+1));
+          fprintf(f," %d",node_index(i+1,j,k+1));
+          fprintf(f," %d",node_index(i+1,j+1,k+1));
+          fprintf(f," %d",node_index(i,j+1,k+1));
+          fprintf(f,"\n");
+        }else{
+          int i,j,k;
+          element_ijk(*it,i,j,k);
+
+          //Elt1
+          fprintf(f,"%d 4 3 1 1 1",*it);
+          fprintf(f," %d",node_index(i,j+1,k));
+          fprintf(f," %d",node_index(i,j+1,k+1));
+          fprintf(f," %d",node_index(i+1,j,k+1));
+          fprintf(f," %d",node_index(i+1,j+1,k+1));
+          fprintf(f,"\n");
+          
+          //Elt2
+          fprintf(f,"%d 4 3 1 1 1",*it);
+          fprintf(f," %d",node_index(i,j+1,k));
+          fprintf(f," %d",node_index(i+1,j+1,k+1));
+          fprintf(f," %d",node_index(i+1,j,k+1));
+          fprintf(f," %d",node_index(i+1,j+1,k));
+          fprintf(f,"\n");
+          
+          //Elt3
+          fprintf(f,"%d 4 3 1 1 1",*it);
+          fprintf(f," %d",node_index(i,j+1,k));
+          fprintf(f," %d",node_index(i,j,k+1));
+          fprintf(f," %d",node_index(i+1,j,k+1));
+          fprintf(f," %d",node_index(i,j+1,k+1));
+          fprintf(f,"\n");
+          
+          //Elt4
+          fprintf(f,"%d 4 3 1 1 1",*it);
+          fprintf(f," %d",node_index(i,j+1,k));
+          fprintf(f," %d",node_index(i+1,j+1,k));
+          fprintf(f," %d",node_index(i+1,j,k+1));
+          fprintf(f," %d",node_index(i+1,j,k));
+          fprintf(f,"\n");
+          
+          //Elt5
+          fprintf(f,"%d 4 3 1 1 1",*it);
+          fprintf(f," %d",node_index(i,j+1,k));
+          fprintf(f," %d",node_index(i+1,j,k));
+          fprintf(f," %d",node_index(i+1,j,k+1));
+          fprintf(f," %d",node_index(i,j,k));
+          fprintf(f,"\n");
+          
+          //Elt6
+          fprintf(f,"%d 4 3 1 1 1",*it);
+          fprintf(f," %d",node_index(i,j+1,k));
+          fprintf(f," %d",node_index(i,j,k));
+          fprintf(f," %d",node_index(i+1,j,k+1));
+          fprintf(f," %d",node_index(i,j,k+1));
+          fprintf(f,"\n");
+        }
       }    
       fprintf(f,"$EndElements\n");    
     }
