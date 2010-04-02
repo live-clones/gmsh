@@ -33,5 +33,6 @@ MTriangle* setHighOrder(MTriangle *t,
                         int nPts = 1, 
                         highOrderSmoother *displ2D = 0,
                         highOrderSmoother *displ3D = 0);
-
+void checkHighOrderTriangles(const char* cc, GModel *m, 
+                                    std::vector<MElement*> &bad, double &minJGlob);
 #endif

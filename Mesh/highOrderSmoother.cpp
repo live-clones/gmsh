@@ -352,11 +352,19 @@ void highOrderSmoother::smooth(GRegion *gr)
 // of an element that correspond to the deformation of a straight
 // sided element to a curvilinear one
 
+
+
+
 void highOrderSmoother::optimize(GFace * gf, 
                                      edgeContainer &edgeVertices,
                                      faceContainer &faceVertices)
 {
   //  if (gf->geomType() != GEntity::Plane) return;
+
+    std::vector<MElement*> bad;
+    double worst;
+    int count = 0;
+    
 
   while (1) {
     // relocate the vertices using elliptic smoother
@@ -368,11 +376,14 @@ void highOrderSmoother::optimize(GFace * gf,
     // then try to swap for better configurations  
 
     smooth(gf, true);
+    
+    /*
     for (int i=0;i<100;i++){
       int nbSwap = 
 	swapHighOrderTriangles(gf,edgeVertices,faceVertices,this);
       printf("%d swaps\n",nbSwap);
     }
+    */
     // smooth(gf,true);
     // smooth(gf,true);
     // smooth(gf,true);
@@ -573,7 +584,6 @@ double highOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
       J23K33.gemm(J23, K33, 1, 0);
       K22.gemm(J23K33, J32, 1, 0);
       J23K33.mult(D3, R2);
-      //      J23K33.print("J23K33");
       for (int j = 0; j < n2; j++){
         Dof RDOF = El.getLocalDofR(&se, j);
         myAssembler.assemble(RDOF, -R2(j));
@@ -751,12 +761,11 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
 
   for (unsigned int i = 0; i < layer.size(); i++){
     if (find(old_elems.begin(), old_elems.end(), layer[i]) == old_elems.end()) {
-      //      printf("In the layer, there is element %d\n", layer[i]->getNum());
       for (int j = 0; j < layer[i]->getNumVertices(); j++){
-        MVertex *vert = layer[i]->getVertex(j);
-        myAssembler.fixVertex(vert, 0, getTag(), 0);
-        myAssembler.fixVertex(vert, 1, getTag(), 0);
-	//        printf("Fixing vertex (internal) %d\n", vert->getNum());
+	MVertex *vert = layer[i]->getVertex(j);
+	myAssembler.fixVertex(vert, 0, getTag(), 0);
+	myAssembler.fixVertex(vert, 1, getTag(), 0);
+	//printf("Fixing vertex %d\n", vert->getNum());
       }
     }
   }
@@ -777,7 +786,7 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
       MVertex *vert = cavity[i]->getVertex(j);
       its = _straightSidedLocation.find(vert);
       if (its == _straightSidedLocation.end()) {
-	//        printf("SETTING LOCATIONS for %d\n",vert->getNum());
+	//printf("SETTING LOCATIONS for %d\n",vert->getNum());
         _straightSidedLocation[vert] = 
           SVector3(vert->x(), vert->y(), vert->z());     
         _targetLocation[vert] = 
@@ -789,7 +798,7 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
         if (vert->onWhat()->dim() < _dim){
           myAssembler.fixVertex(vert, 0, getTag(), 0);
           myAssembler.fixVertex(vert, 1, getTag(), 0);
-	  //          printf("Fixing vertex (boundary) %d\n", vert->getNum());
+	  //printf("Fixing vertex %d\n", vert->getNum());
         }
       }
     }
@@ -799,23 +808,23 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
   for (unsigned int i = 0; i < cavity.size(); i++){
     for (int j = 0; j < cavity[i]->getNumVertices(); j++){
       MVertex *vert = cavity[i]->getVertex(j);
-      //      printf("Numbering vertex %d\n",vert->getNum());
+      //printf("Numbering vertex %d\n",vert->getNum());
       myAssembler.numberVertex(vert, 0, getTag());
       myAssembler.numberVertex(vert, 1, getTag());
       verticesToMove.insert(vert);
     } 
   }
 
-  //  Msg::Info("%d vertices FIXED %d NUMBERED\n", myAssembler.sizeOfF()
-  //            , myAssembler.sizeOfR());
-
+  //Msg::Info("%d vertices FIXED %d NUMBERED\n", myAssembler.sizeOfF()
+  //          , myAssembler.sizeOfR());
+  
   double dx0 = smooth_metric_(cavity, gf, myAssembler, verticesToMove, El);
   double dx = dx0;
-  //  printf(" dx0 = %12.5E\n", dx0);
+  //printf(" dx0 = %12.5E\n", dx0);
   int iter = 0;
   while(1){
     double dx2 = smooth_metric_(cavity, gf, myAssembler, verticesToMove, El);
-    //    printf(" dx2  = %12.5E\n", dx2);
+    //printf(" dx2  = %12.5E\n", dx2);
     if (fabs(dx2 - dx) < 1.e-4 * dx0)break;
     if (iter++ > 2)break;
     dx = dx2;
@@ -837,7 +846,7 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
       (*it)->y() = p.y();
       (*it)->z() = p.z();      
     }
-    //    printf("  Moving %d to %g %g %g\n", (*it)->getNum(),_targetLocation[(*it)][0], _targetLocation[(*it)][1],_targetLocation[(*it)][2] );
+    //printf("  Moving %d to %g %g %g\n", (*it)->getNum(),_targetLocation[(*it)][0], _targetLocation[(*it)][1],_targetLocation[(*it)][2] );
   }
 
   /*
@@ -848,7 +857,7 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
     }
     lsys->systemSolve();
   
-}
+   }
   for (it = verticesToMove.begin(); it != verticesToMove.end(); ++it){
     it->first->x() += myAssembler.getDofValue(it->first, 0, getTag());
     it->first->y() += myAssembler.getDofValue(it->first, 1, getTag());
@@ -1136,13 +1145,13 @@ struct swap_triangles_pN
                        !t1->getNumFaceVertices(),
                        t1->getPolynomialOrder()-1,s);
 
-    //optimalLocationPN_ (gf,me, t3, t4,s);
+    optimalLocationPN_ (gf,me, t3, t4,s);
     std::vector<MElement*> cavity, old_elems;
     cavity.push_back(t3);
     cavity.push_back(t4);
     old_elems.push_back(t1);
     old_elems.push_back(t2);
-    s->smooth_cavity(cavity, old_elems, gf);
+    //s->smooth_cavity(cavity, old_elems, gf);
       
     const double qnew1 = shapeMeasure(t3);
     const double qnew2 = shapeMeasure(t4);
@@ -1151,7 +1160,7 @@ struct swap_triangles_pN
     quality_old = std::min(qold1,qold2);
 
     //    if (quality_old < quality_new)
-    //      printf("QUALITY GOING FROM %12.5E TO %12.5E\n",quality_old,quality_new);
+    //printf("QUALITY GOING FROM %12.5E TO %12.5E\n",quality_old,quality_new);
 
   }
   bool operator < (const swap_triangles_pN &other) const
@@ -1295,6 +1304,10 @@ static int swapHighOrderTriangles(GFace *gf,
                                   faceContainer &faceVertices,
                                   highOrderSmoother *s)
 {
+  printf ("Initial Size of the map %d\n", edgeVertices.size());
+  printf ("Initial Size of the face map %d\n", faceVertices.size());
+
+
   e2t_cont adj;
   buildEdgeToTriangle(gf->triangles, adj);
 
@@ -1308,7 +1321,7 @@ static int swapHighOrderTriangles(GFace *gf,
       const double qold1 = shapeMeasure(t1);
       const double qold2 = shapeMeasure(t2);
 
-      if (qold1 < 0.005 || qold2 < 0.005)
+      //if (qold1 < 0.6 || qold2 < 0.06)
         pairs.insert(swap_triangles_pN(it->first,t1,t2,gf,
                                        edgeVertices,faceVertices,s));
     }
@@ -1348,24 +1361,66 @@ static int swapHighOrderTriangles(GFace *gf,
     std::vector<MVertex*> vf3(v3.begin()+3*o3,v3.end());
     std::vector<MVertex*> vf4(v4.begin()+3*o4,v4.end());
 
-    //    printf("========== Diff = %g\n",diff);
-
     bool t1_rem = (t_removed.find(itp->t1) != t_removed.end());
     bool t2_rem = (t_removed.find(itp->t2) != t_removed.end());
 
-    //    if ( t1_rem)
-    //       printf("====== Eww, t1 is going DOWN!\n");
-
-    //    if ( t2_rem)
-    //       printf("====== Eww, t2 is going DOWN!\n");
-
-
     if ( !t1_rem && !t2_rem &&
-         //itp->quality_new > itp->quality_old &&
+         itp->quality_new > 0 && //itp->quality_old &&
          diff < 1.e-9){
 
-      //      printf("Element quality : %f --> %f\n",itp->quality_old,itp->quality_new); 
+      //printf("Element quality : %f --> %f\n",itp->quality_old,itp->quality_new); 
 
+      // determining the common edge between t1 & t2
+      MVertex* common_vertices[2];
+      int this_one = 0;
+      for (std::vector<MVertex*>::iterator t1it = v1.begin(); t1it != v1.begin()+3; t1it++)
+	for (std::vector<MVertex*>::iterator t2it = v2.begin(); t2it != v2.begin()+3; t2it++)
+	  if ((MVertex*)(*t1it) == (MVertex*)(*t2it)) {
+	    common_vertices[this_one] = (MVertex*)(*t1it);
+	    this_one++;
+	    break;
+	  }
+	    
+      
+      for (edgeContainer::iterator ecit = edgeVertices.begin(); ecit != edgeVertices.end(); ecit++) {
+	if (((*ecit).first.first == common_vertices[0] && 
+             (*ecit).first.second == common_vertices[1]) ||
+            ((*ecit).first.first == common_vertices[1] && 
+             (*ecit).first.second == common_vertices[0])) {
+	  //printf ("Hehe, gotcha !\n");
+	  edgeVertices.erase(ecit);
+	}
+      }
+      /*
+      for (faceContainer::iterator fcit = faceVertices.begin(); fcit != faceVertices.end(); fcit++) {
+	bool remove_this = true;
+	for (std::vector<MVertex*>::iterator t1it = v1.begin(); t1it != v1.begin()+3; t1it++) {
+	  if (find((*fcit).second.begin(), (*fcit).second.end(), (*t1it)) == (*fcit).second.end()) {
+	    remove_this = false;
+	    break;
+	  }
+	}
+	if (remove_this) {
+	  faceVertices.erase(fcit);
+	  printf("Yeah, you're dead.\n");
+	  break;
+	}
+	
+	remove_this = true;
+
+	for (std::vector<MVertex*>::iterator t2it = v2.begin(); t2it != v2.begin()+3; t2it++) {
+	  if (find((*fcit).second.begin(), (*fcit).second.end(), (*t2it)) == (*fcit).second.end()) {
+	    remove_this = false;
+	    break;
+	  }
+	}
+	if (remove_this) {
+	  faceVertices.erase(fcit);
+	  printf("Huh-uh, you too are destroyed.\n");
+	  break;
+	}
+     }
+*/
       t_removed.insert(itp->t1);
       t_removed.insert(itp->t2);
       v_removed.insert(vf1.begin(),vf1.end());
@@ -1380,25 +1435,73 @@ static int swapHighOrderTriangles(GFace *gf,
         if (find(ve2.begin(),ve2.end(),*vit)!=ve2.end())
           v_removed.insert(*vit);
       }
-      for(std::vector<MVertex*>::iterator vit = ve3.begin(); vit != ve3.end(); vit++) {
+      //for(std::vector<MVertex*>::iterator vit = ve3.begin(); vit != ve3.end(); vit++) {
         //if (find(ve4.begin(),ve4.end(),*vit)!=ve4.end())
         //  mesh_vertices2.push_back(*vit);
-      }
+      //}
 
       nbSwap++;
     }
     else {
-      if (!t1_rem || !t2_rem) {
-        for(std::vector<MVertex*>::iterator vit = ve1.begin(); vit != ve1.end(); vit++) {
-          //if (find(ve2.begin(),ve2.end(),*vit)!=ve2.end())
-            //mesh_vertices2.push_back(*vit);
-        }
-      }
-      
       for(std::vector<MVertex*>::iterator vit = ve3.begin(); vit != ve3.end(); vit++) {
         if (find(ve4.begin(),ve4.end(),*vit)!=ve4.end())
           v_removed.insert(*vit);
+	  //delete  *vit;
       }
+      
+      // determining the common edge between t3 & t4
+      MVertex* common_vertices[2];
+      int this_one = 0;
+      for (std::vector<MVertex*>::iterator t3it = v3.begin(); t3it != v3.begin()+3; t3it++)
+	for (std::vector<MVertex*>::iterator t4it = v4.begin(); t4it != v4.begin()+3; t4it++)
+	  if ((MVertex*)(*t3it) == (MVertex*)(*t4it)) {
+	    common_vertices[this_one] = (MVertex*)(*t3it);
+	    this_one++;
+	    break;
+	  }
+	    
+      
+      for (edgeContainer::iterator ecit = edgeVertices.begin(); ecit != edgeVertices.end(); ecit++) {
+        if (((*ecit).first.first == common_vertices[0] && 
+             (*ecit).first.second == common_vertices[1]) ||
+            ((*ecit).first.first == common_vertices[1] && 
+             (*ecit).first.second == common_vertices[0])) {	
+	  //printf ("Hehe, gotcha !\n");
+	  edgeVertices.erase(ecit);
+	}
+      }
+
+      /*
+      for (faceContainer::iterator fcit = faceVertices.begin(); fcit != faceVertices.end(); fcit++) {
+	bool remove_this = true;
+	for (std::vector<MVertex*>::iterator t3it = v3.begin(); t3it != v3.begin()+3; t3it++) {
+	  if (find((*fcit).second.begin(), (*fcit).second.end(), (*t3it)) == (*fcit).second.end()) {
+	    remove_this = false;
+	    break;
+	  }
+	}
+	if (remove_this) {
+	  faceVertices.erase(fcit);
+	  printf("Yeah, you're dead.\n");
+	  break;
+	}
+	
+	remove_this = true;
+
+	for (std::vector<MVertex*>::iterator t4it = v4.begin(); t4it != v4.begin()+3; t4it++) {
+	  if (find((*fcit).second.begin(), (*fcit).second.end(), (*t4it)) == (*fcit).second.end()) {
+	    remove_this = false;
+	    break;
+	  }
+	}
+	if (remove_this) {
+	  faceVertices.erase(fcit);
+	  printf("Huh-uh, you too are destroyed.\n");
+	  break;
+	}
+     }
+      */
+
       delete itp->t3;
       delete itp->t4;
     }
@@ -1408,20 +1511,13 @@ static int swapHighOrderTriangles(GFace *gf,
   for (unsigned int i = 0; i < gf->mesh_vertices.size(); i++){
     if (v_removed.find(gf->mesh_vertices[i]) == v_removed.end()){
       mesh_vertices2.push_back(gf->mesh_vertices[i]);
-      c1++;
-    }
-    else {
-      //mesh_vertices2.push_back(gf->mesh_vertices[i]);
+    } //else {
       //delete gf->mesh_vertices[i];
-      c2++;
-    }    
+    //}
   }
 
-  Msg::Info("Deleted %d (%d) vertices from %d", c2,
-            (int)v_removed.size(), (int)gf->mesh_vertices.size());
+  gf->mesh_vertices.clear();
   gf->mesh_vertices = mesh_vertices2;
-  Msg::Info("Deleted %d vertices from %d", c2, (int)gf->mesh_vertices.size());
-  Msg::Info("Added %d vertices",c1);
 
   for (unsigned int i = 0; i < gf->triangles.size(); i++){
     if (t_removed.find(gf->triangles[i]) == t_removed.end()){
@@ -1431,10 +1527,11 @@ static int swapHighOrderTriangles(GFace *gf,
       delete gf->triangles[i];
     }    
   }
-
-  Msg::Info("replacing triangles %d by %d", (int)gf->triangles.size(),
-            (int)triangles2.size());
+  gf->triangles.clear();
   gf->triangles = triangles2;
+  printf("%d swaps performed\n",nbSwap);
+  printf ("Size of the map d%\n", edgeVertices.size());
+  printf ("Size of the face map %d\n", faceVertices.size());
   return nbSwap;
 }
 

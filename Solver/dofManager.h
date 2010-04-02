@@ -85,7 +85,7 @@ class dofManager{
 
   // fixations on full blocks, treated by eliminating equations:
   //   DofVec = dataVec
-  std::map<Dof, dataVec> fixed;
+  std::map<Dof, dataVec> fixed ;
 
   // initial conditions
   std::map<Dof, std::vector<dataVec> > initial;
@@ -118,7 +118,7 @@ class dofManager{
   inline void fixVertex(MVertex*v, int iComp, int iField, const dataVec &value)
   {
     fixDof(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField), value);
-  }
+  }         
   inline void numberDof(Dof key)
   {
     if(fixed.find(key) != fixed.end()) return;
@@ -162,7 +162,7 @@ class dofManager{
   inline dataVec getDofValue(int ent, int type) const
   {
     Dof key(ent, type);
-    {
+    {  
       typename std::map<Dof, dataVec>::const_iterator it = fixed.find(key);
       if (it != fixed.end()) return it->second;
     }

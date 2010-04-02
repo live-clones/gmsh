@@ -925,7 +925,7 @@ void SetOrder1(GModel *m)
     removeHighOrderVertices(*it);
 }
 
-static void checkHighOrderTriangles(const char* cc, GModel *m, 
+void checkHighOrderTriangles(const char* cc, GModel *m, 
                                     std::vector<MElement*> &bad, double &minJGlob)
 {
   bad.clear();
@@ -960,7 +960,7 @@ static void checkHighOrderTriangles(const char* cc, GModel *m,
   if (minJGlob > 0) 
     Msg::Info("%s : Worst Face Smoothness %g Gamma %g NbFair = %d", 
               cc, minJGlob, minGGlob,nbfair );
-  else
+    else
     Msg::Warning("%s : Worst Face Smoothness %g (%d negative jacobians) "
                  "Worst Gamma %g Avg Smoothness %g", cc, minJGlob, bad.size(),
                  minGGlob, avg / (count ? count : 1));
@@ -987,10 +987,10 @@ static void checkHighOrderTetrahedron(const char* cc, GModel *m,
       else if (disto < 0.2) nbfair++;
     }
   }
-  if (minJGlob > 0)
+  if (minJGlob < 0)
     Msg::Info("%s : Worst Tetrahedron Smoothness %g Gamma %g NbFair = %d", 
               cc, minJGlob, minGGlob, nbfair);
-  else 
+    else 
     Msg::Warning("%s : Worst Tetrahedron Smoothness %g (%d negative jacobians) "
                  "Worst Gamma %g Avg Smoothness %g", cc, minJGlob, bad.size(),
                  minGGlob, avg / (count ? count : 1));

@@ -76,7 +76,7 @@ class MVertex{
   inline GEntity* onWhat() const { return _ge; }
   inline void setEntity(GEntity *ge) { _ge = ge; }
 
-  // get the immutable vertex number
+  // get the immutab vertex number
   inline int getNum() const { return _num; }
 
   // force the immutable number (this should normally never be used)

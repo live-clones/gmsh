@@ -59,6 +59,7 @@ public:
   void swap(GFace *, 
             edgeContainer &edgeVertices,
             faceContainer &faceVertices);
+
   void optimize(GFace *, 
                 edgeContainer &edgeVertices,
                 faceContainer &faceVertices);

@@ -81,11 +81,11 @@ class femTerm {
     std::vector<Dof> R,C; // better use default consdtructors and reserve the right amount of space to avoid reallocation
     R.reserve(nbR);
     C.reserve(nbC);
-    bool sym=true;
+    bool sym=true; 
     if (nbR == nbC)
     {
       for (int j = 0; j < nbR; j++)
-      { 
+       {
         Dof r(getLocalDofR(se, j));
         Dof c(getLocalDofC(se, j));
         R.push_back(r);
