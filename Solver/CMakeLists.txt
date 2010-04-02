@@ -4,6 +4,7 @@
 # bugs and problems to <gmsh@geuz.org>.
 
 set(SRC
+  linearSystem.cpp
   linearSystemCSR.cpp
   groupOfElements.cpp
   elasticityTerm.cpp

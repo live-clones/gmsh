@@ -377,13 +377,13 @@ void highOrderSmoother::optimize(GFace * gf,
 
     smooth(gf, true);
     
-    /*
+    
     for (int i=0;i<100;i++){
       int nbSwap = 
 	swapHighOrderTriangles(gf,edgeVertices,faceVertices,this);
       printf("%d swaps\n",nbSwap);
     }
-    */
+    
     // smooth(gf,true);
     // smooth(gf,true);
     // smooth(gf,true);
@@ -1382,15 +1382,11 @@ static int swapHighOrderTriangles(GFace *gf,
 	  }
 	    
       
-      for (edgeContainer::iterator ecit = edgeVertices.begin(); ecit != edgeVertices.end(); ecit++) {
-	if (((*ecit).first.first == common_vertices[0] && 
-             (*ecit).first.second == common_vertices[1]) ||
-            ((*ecit).first.first == common_vertices[1] && 
-             (*ecit).first.second == common_vertices[0])) {
-	  //printf ("Hehe, gotcha !\n");
-	  edgeVertices.erase(ecit);
-	}
-      }
+      std::vector<std::pair<MVertex*,MVertex*> > toDelete;
+      MEdge _temp(common_vertices[0],common_vertices[1]);
+      std::pair<MVertex*, MVertex*> _temp2(_temp.getMinVertex(), _temp.getMaxVertex());
+      edgeVertices.erase(_temp2);
+
       /*
       for (faceContainer::iterator fcit = faceVertices.begin(); fcit != faceVertices.end(); fcit++) {
 	bool remove_this = true;
@@ -1460,16 +1456,11 @@ static int swapHighOrderTriangles(GFace *gf,
 	    break;
 	  }
 	    
-      
-      for (edgeContainer::iterator ecit = edgeVertices.begin(); ecit != edgeVertices.end(); ecit++) {
-        if (((*ecit).first.first == common_vertices[0] && 
-             (*ecit).first.second == common_vertices[1]) ||
-            ((*ecit).first.first == common_vertices[1] && 
-             (*ecit).first.second == common_vertices[0])) {	
-	  //printf ("Hehe, gotcha !\n");
-	  edgeVertices.erase(ecit);
-	}
-      }
+      // delete the edge inside the edgeContainer
+      std::vector<std::pair<MVertex*,MVertex*> > toDelete;
+      MEdge _temp(common_vertices[0],common_vertices[1]);
+      std::pair<MVertex*, MVertex*> _temp2(_temp.getMinVertex(), _temp.getMaxVertex());
+      edgeVertices.erase(_temp2);
 
       /*
       for (faceContainer::iterator fcit = faceVertices.begin(); fcit != faceVertices.end(); fcit++) {

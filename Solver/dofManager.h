@@ -108,7 +108,7 @@ class dofManager{
     _linearSystems.insert(std::make_pair("B", l2));
   }
   inline void fixDof(Dof key, const dataVec &value)
-  {
+  {    
     fixed[key] = value;
   }
   inline void fixDof(long int ent, int type, const dataVec &value)

@@ -8,6 +8,8 @@
 
 // A class that encapsulates a linear system solver interface :
 // building a sparse matrix, solving a linear system
+class binding;
+
 template <class scalar>
 class linearSystem {
  public :
@@ -24,6 +26,7 @@ class linearSystem {
   virtual void zeroMatrix() = 0;
   virtual void zeroRightHandSide() = 0;
   virtual int systemSolve() = 0;
+  static void registerBindings (binding*);
 };
 
 #endif

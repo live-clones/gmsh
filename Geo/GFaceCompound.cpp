@@ -349,6 +349,8 @@ bool GFaceCompound::trivial() const
   if(_compound.size() == 1 && 
      (*(_compound.begin()))->getNativeType() == GEntity::OpenCascadeModel &&
      (*(_compound.begin()))->geomType() != GEntity::DiscreteSurface){
+    if ((*(_compound.begin()))->periodic(0) || 
+	(*(_compound.begin()))->periodic(1) )return false; 
     return true;
   }
   return false;
@@ -798,6 +800,7 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
     _lsys = _lsysb;
 #elif defined(HAVE_TAUCS) 
     _lsys = new linearSystemCSRTaucs<double>;
+    printf("compound with taucs\n");
 #else
     _lsys = new linearSystemFull<double>;
 #endif

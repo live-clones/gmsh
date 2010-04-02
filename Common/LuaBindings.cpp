@@ -25,6 +25,7 @@
 #include "Bindings.h"
 #include "drawContext.h"
 #include "GmshMessage.h"
+#include "linearSystem.h"
 
 #if defined(HAVE_SOLVER)
 #include "linearSystemCSR.h"
@@ -379,6 +380,7 @@ binding::binding()
   fullMatrix<double>::registerBindings(this);
   gmshOptions::registerBindings(this);
   Msg::registerBindings(this);
+  linearSystem<double>::registerBindings(this);
 #if defined(HAVE_SOLVER)
   function::registerBindings(this);
   linearSystemCSRGmm<double>::registerBindings(this);

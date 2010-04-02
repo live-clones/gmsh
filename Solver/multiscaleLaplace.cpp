@@ -627,7 +627,8 @@ static void connected_left_right (std::vector<MElement *> &left,
 static void printLevel(const char* fn,
                        std::vector<MElement *> &elements,
                        std::map<MVertex*,SPoint2> *coordinates,
-                       double version)
+                       double version,
+		       double *dx = 0)
 {
   if(!CTX::instance()->mesh.saveAll) return;  
 
@@ -648,7 +649,10 @@ static void printLevel(const char* fn,
   for (; it != vs.end() ; ++it){
     (*it)->setIndex(index++);
     SPoint2 p = (coordinates) ? (*coordinates)[*it] : SPoint2(0,0);
-    if (coordinates) fprintf(fp, "%d %g %g 0\n", (*it)->getIndex(), p.x(), p.y());
+    if (coordinates) {
+      if (dx)fprintf(fp, "%d %22.15E %22.15E 0\n", (*it)->getIndex(), dx[2]*(p.x()-dx[0]), dx[2]*(p.y()-dx[1]));
+      else   fprintf(fp, "%d %22.15E %22.15E 0\n", (*it)->getIndex(), p.x(), p.y());
+    }
     else fprintf(fp, "%d %g %g %g\n", (*it)->getIndex(),
                  (*it)->x(), (*it)->y(), (*it)->z());
   }
@@ -663,6 +667,10 @@ static void printLevel(const char* fn,
   fclose(fp);
 }
 //--------------------------------------------------------------
+
+
+
+
 static double localSize(MElement *e,  std::map<MVertex*,SPoint2> &solution){
 
   SBoundingBox3d local;
@@ -691,6 +699,35 @@ static double localSize(MElement *e,  std::map<MVertex*,SPoint2> &solution){
  
    
 }
+
+
+//--------------------------------------------------------------
+static void printLevel_onlysmall(const char* fn,
+				 std::vector<MElement *> &elements,
+				 std::map<MVertex*,SPoint2> *coordinates,
+				 double version,
+				 double tolerance){
+  std::vector<MElement *> small;
+  double dx[3] = {0,0,0};
+  int COUNT = 0;
+  for (int i=0;i<elements.size();i++){
+    double local_size = localSize(elements[i],*coordinates);
+    if (local_size < tolerance){
+      small.push_back(elements[i]);
+      for (int j=0;j<3;j++){
+	SPoint2 p = (*coordinates)[elements[i]->getVertex(j)];
+	dx[0] += p.x();
+	dx[1] += p.y();
+	COUNT++;
+      }
+    }
+  }
+  dx[0] /= COUNT;
+  dx[1] /= COUNT;
+  dx[2] = 1./tolerance;
+  printLevel(fn,small,coordinates,version,dx);
+}
+
 //-------------------------------------------------------------
 static void one2OneMap(std::vector<MElement *> &elements, std::map<MVertex*,SPoint2> &solution) {
 
@@ -790,6 +827,7 @@ multiscaleLaplace::multiscaleLaplace (std::vector<MElement *> &elements,
 
 #if defined(HAVE_TAUCS)
   _lsys = new linearSystemCSRTaucs<double>;
+  printf("taucs again\n");
 #elif defined(HAVE_GMM)
   linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
   _lsysb->setGmres(1);
@@ -947,7 +985,7 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
     std::vector<SPoint2> localCoord;
     double local_size = localSize(e,solution);
     if (local_size < 1.e-5*global_size) //1.e-5
-        tooSmall.push_back(e);
+      tooSmall.push_back(e);
     else  goodSize.push_back(e);
   }
 
@@ -1068,8 +1106,10 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
   //Save multiscale meshes
   std::string name1(level._name+"real.msh");
   std::string name2(level._name+"param.msh");
+  std::string name3(level._name+"param_small.msh");
   printLevel (name1.c_str(),level.elements,0,2.2);
   printLevel (name2.c_str(),level.elements,&level.coordinates,2.2);
+  printLevel_onlysmall (name3.c_str(),level.elements,&level.coordinates,2.2,1.e-15);
 
   //For every small region compute a new parametrization
   Msg::Info("Level (%d-%d): %d connected small regions",level.recur, level.region, regions.size());
@@ -1180,6 +1220,19 @@ void multiscaleLaplace::cut (std::vector<MElement *> &elements)
   printLevel ("Rootcut-left.msh",left,0,2.2);  
   printLevel ("Rootcut-right.msh",right,0,2.2);  
   printLevel ("Rootcut-all.msh",elements, 0,2.2);  
+
+  printLevel ("Rootcut-left-param.msh",left,&root->coordinates,2.2);
+  printLevel_onlysmall ("Rootcut-left-param10.msh",left,&root->coordinates,2.2,1.e-10);
+  printLevel_onlysmall ("Rootcut-left-param12.msh",left,&root->coordinates,2.2,1.e-12);
+  printLevel_onlysmall ("Rootcut-left-param15.msh",left,&root->coordinates,2.2,1.e-15);
+
+  printLevel ("Rootcut-right-param.msh",right,&root->coordinates,2.2);
+  printLevel_onlysmall ("Rootcut-right-param10.msh",right,&root->coordinates,2.2,1.e-10);
+  printLevel_onlysmall ("Rootcut-right-param12.msh",right,&root->coordinates,2.2,1.e-12);
+  printLevel_onlysmall ("Rootcut-right-param15.msh",right,&root->coordinates,2.2,1.e-15);
+
+  printLevel_onlysmall ("Rootcut-all-param12.msh",elements,&root->coordinates,2.2,1.e-12);
+  printLevel_onlysmall ("Rootcut-all-param15.msh",elements,&root->coordinates,2.2,1.e-15);
 
   if ( elements.size() != left.size()+right.size()) {
     Msg::Error("Cutting laplace wrong nb elements (%d) != left + right (%d)",  elements.size(), left.size()+right.size());

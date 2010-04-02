@@ -217,6 +217,7 @@ class MElement
                                      int order=-1);
   // return the Jacobian of the element evaluated at point (u,v,w) in
   // parametric coordinates
+  double getJacobian(double gsf[][3], double jac[3][3]);
   double getJacobian(double u, double v, double w, double jac[3][3]);
   double getPrimaryJacobian(double u, double v, double w, double jac[3][3]);
 

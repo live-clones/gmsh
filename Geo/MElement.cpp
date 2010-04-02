@@ -258,6 +258,26 @@ double MElement::getJacobian(double u, double v, double w, double jac[3][3])
   return _computeDeterminantAndRegularize(this, jac);
 }
 
+
+double MElement::getJacobian(double gsf[][3], double jac[3][3])
+{
+  jac[0][0] = jac[0][1] = jac[0][2] = 0.;
+  jac[1][0] = jac[1][1] = jac[1][2] = 0.;
+  jac[2][0] = jac[2][1] = jac[2][2] = 0.;
+
+  for (int i = 0; i < getNumVertices(); i++) {
+    const MVertex* v = getVertex(i);
+    double* gg = gsf[i];
+    for (int j = 0; j < 3; j++) {
+      jac[j][0] += v->x() * gg[j];
+      jac[j][1] += v->y() * gg[j];
+      jac[j][2] += v->z() * gg[j];
+    }
+  }
+
+  return _computeDeterminantAndRegularize(this, jac);
+}
+
 double MElement::getPrimaryJacobian(double u, double v, double w, double jac[3][3])
 {
   jac[0][0] = jac[0][1] = jac[0][2] = 0.;
