@@ -1117,6 +1117,14 @@ struct swap_triangles_pN
   faceContainer &faceVertices;
   highOrderSmoother *s;
 
+  void cleanupDeletedEdge (bool swapWasSuccessfull )
+  {
+    MEdge _temp(swapWasSuccessfull ? n1 : n3 , swapWasSuccessfull ? n2 : n4 );
+    std::pair<MVertex*, MVertex*> _temp2(_temp.getMinVertex(), _temp.getMaxVertex());
+    edgeVertices.erase(_temp2);
+    // do the same for internal vertices !!
+  } 
+
   swap_triangles_pN(const MEdge &me, MTriangle *_t1, MTriangle *_t2, GFace *gf,
                     edgeContainer &_edgeVertices,
                     faceContainer &_faceVertices,
@@ -1368,55 +1376,9 @@ static int swapHighOrderTriangles(GFace *gf,
          itp->quality_new > 0 && //itp->quality_old &&
          diff < 1.e-9){
 
-      //printf("Element quality : %f --> %f\n",itp->quality_old,itp->quality_new); 
+      swap_triangles_pN &sw = (swap_triangles_pN &) *itp;
+      sw.cleanupDeletedEdge (true);
 
-      // determining the common edge between t1 & t2
-      MVertex* common_vertices[2];
-      int this_one = 0;
-      for (std::vector<MVertex*>::iterator t1it = v1.begin(); t1it != v1.begin()+3; t1it++)
-	for (std::vector<MVertex*>::iterator t2it = v2.begin(); t2it != v2.begin()+3; t2it++)
-	  if ((MVertex*)(*t1it) == (MVertex*)(*t2it)) {
-	    common_vertices[this_one] = (MVertex*)(*t1it);
-	    this_one++;
-	    break;
-	  }
-	    
-      
-      std::vector<std::pair<MVertex*,MVertex*> > toDelete;
-      MEdge _temp(common_vertices[0],common_vertices[1]);
-      std::pair<MVertex*, MVertex*> _temp2(_temp.getMinVertex(), _temp.getMaxVertex());
-      edgeVertices.erase(_temp2);
-
-      /*
-      for (faceContainer::iterator fcit = faceVertices.begin(); fcit != faceVertices.end(); fcit++) {
-	bool remove_this = true;
-	for (std::vector<MVertex*>::iterator t1it = v1.begin(); t1it != v1.begin()+3; t1it++) {
-	  if (find((*fcit).second.begin(), (*fcit).second.end(), (*t1it)) == (*fcit).second.end()) {
-	    remove_this = false;
-	    break;
-	  }
-	}
-	if (remove_this) {
-	  faceVertices.erase(fcit);
-	  printf("Yeah, you're dead.\n");
-	  break;
-	}
-	
-	remove_this = true;
-
-	for (std::vector<MVertex*>::iterator t2it = v2.begin(); t2it != v2.begin()+3; t2it++) {
-	  if (find((*fcit).second.begin(), (*fcit).second.end(), (*t2it)) == (*fcit).second.end()) {
-	    remove_this = false;
-	    break;
-	  }
-	}
-	if (remove_this) {
-	  faceVertices.erase(fcit);
-	  printf("Huh-uh, you too are destroyed.\n");
-	  break;
-	}
-     }
-*/
       t_removed.insert(itp->t1);
       t_removed.insert(itp->t2);
       v_removed.insert(vf1.begin(),vf1.end());
@@ -1431,10 +1393,6 @@ static int swapHighOrderTriangles(GFace *gf,
         if (find(ve2.begin(),ve2.end(),*vit)!=ve2.end())
           v_removed.insert(*vit);
       }
-      //for(std::vector<MVertex*>::iterator vit = ve3.begin(); vit != ve3.end(); vit++) {
-        //if (find(ve4.begin(),ve4.end(),*vit)!=ve4.end())
-        //  mesh_vertices2.push_back(*vit);
-      //}
 
       nbSwap++;
     }
@@ -1445,53 +1403,8 @@ static int swapHighOrderTriangles(GFace *gf,
 	  //delete  *vit;
       }
       
-      // determining the common edge between t3 & t4
-      MVertex* common_vertices[2];
-      int this_one = 0;
-      for (std::vector<MVertex*>::iterator t3it = v3.begin(); t3it != v3.begin()+3; t3it++)
-	for (std::vector<MVertex*>::iterator t4it = v4.begin(); t4it != v4.begin()+3; t4it++)
-	  if ((MVertex*)(*t3it) == (MVertex*)(*t4it)) {
-	    common_vertices[this_one] = (MVertex*)(*t3it);
-	    this_one++;
-	    break;
-	  }
-	    
-      // delete the edge inside the edgeContainer
-      std::vector<std::pair<MVertex*,MVertex*> > toDelete;
-      MEdge _temp(common_vertices[0],common_vertices[1]);
-      std::pair<MVertex*, MVertex*> _temp2(_temp.getMinVertex(), _temp.getMaxVertex());
-      edgeVertices.erase(_temp2);
-
-      /*
-      for (faceContainer::iterator fcit = faceVertices.begin(); fcit != faceVertices.end(); fcit++) {
-	bool remove_this = true;
-	for (std::vector<MVertex*>::iterator t3it = v3.begin(); t3it != v3.begin()+3; t3it++) {
-	  if (find((*fcit).second.begin(), (*fcit).second.end(), (*t3it)) == (*fcit).second.end()) {
-	    remove_this = false;
-	    break;
-	  }
-	}
-	if (remove_this) {
-	  faceVertices.erase(fcit);
-	  printf("Yeah, you're dead.\n");
-	  break;
-	}
-	
-	remove_this = true;
-
-	for (std::vector<MVertex*>::iterator t4it = v4.begin(); t4it != v4.begin()+3; t4it++) {
-	  if (find((*fcit).second.begin(), (*fcit).second.end(), (*t4it)) == (*fcit).second.end()) {
-	    remove_this = false;
-	    break;
-	  }
-	}
-	if (remove_this) {
-	  faceVertices.erase(fcit);
-	  printf("Huh-uh, you too are destroyed.\n");
-	  break;
-	}
-     }
-      */
+      swap_triangles_pN &sw = (swap_triangles_pN &) *itp;
+      sw.cleanupDeletedEdge (false);
 
       delete itp->t3;
       delete itp->t4;
@@ -1502,9 +1415,7 @@ static int swapHighOrderTriangles(GFace *gf,
   for (unsigned int i = 0; i < gf->mesh_vertices.size(); i++){
     if (v_removed.find(gf->mesh_vertices[i]) == v_removed.end()){
       mesh_vertices2.push_back(gf->mesh_vertices[i]);
-    } //else {
-      //delete gf->mesh_vertices[i];
-    //}
+    } 
   }
 
   gf->mesh_vertices.clear();
@@ -1521,8 +1432,8 @@ static int swapHighOrderTriangles(GFace *gf,
   gf->triangles.clear();
   gf->triangles = triangles2;
   printf("%d swaps performed\n",nbSwap);
-  printf ("Size of the map d%\n", edgeVertices.size());
-  printf ("Size of the face map %d\n", faceVertices.size());
+  printf ("Final Size of the map %d\n", edgeVertices.size());
+  printf ("Final Size of the face map %d\n", faceVertices.size());
   return nbSwap;
 }
 
