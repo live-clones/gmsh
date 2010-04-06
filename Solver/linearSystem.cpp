@@ -1,7 +1,7 @@
 #include "GmshConfig.h"
 #include "linearSystemFull.h"
 #include "linearSystemCSR.h"
-#include "linearSystemGmm.h"
+#include "linearSystemGMM.h"
 #include "linearSystemPETSc.h"
 
 #include "Bindings.h"
