@@ -400,6 +400,12 @@ void function::registerBindings(binding *b){
   mb->setDescription("return the unique instance of this class");
   cb->setParentClass<function>();
 
+  cb = b->addClass<functionSolution>("functionNormals");
+  cb->setDescription("A function to access the face normals. This is a single-instance class, use the 'get' member to access the instance.");
+  mb = cb->addMethod("get",&functionNormals::get);
+  mb->setDescription("return the unique instance of this class");
+  cb->setParentClass<function>();
+
   cb = b->addClass<functionSolutionGradient>("functionSolutionGradient");
   cb->setDescription("A function to access the gradient of the solution. This is a single-instance class, use the 'get' member to access the instance.");
   mb = cb->addMethod("get",&functionCoordinates::get);

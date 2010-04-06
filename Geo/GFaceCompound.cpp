@@ -513,8 +513,8 @@ bool GFaceCompound::parametrize() const
   else if (_mapping == CONFORMAL){
     Msg::Debug("Parametrizing surface %d with 'conformal map'", tag());
     fillNeumannBCS();
-    //bool withoutFolding = parametrize_conformal_spectral() ;
-    bool withoutFolding = parametrize_conformal();
+    bool withoutFolding = parametrize_conformal_spectral() ;
+    //bool withoutFolding = parametrize_conformal();
     if ( withoutFolding == false ){
       //printStuff(); exit(1);
       Msg::Warning("$$$ Parametrization switched to harmonic map");

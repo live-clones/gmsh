@@ -653,8 +653,7 @@ static void printLevel(const char* fn,
       if (dx)fprintf(fp, "%d %22.15E %22.15E 0\n", (*it)->getIndex(), dx[2]*(p.x()-dx[0]), dx[2]*(p.y()-dx[1]));
       else   fprintf(fp, "%d %22.15E %22.15E 0\n", (*it)->getIndex(), p.x(), p.y());
     }
-    else fprintf(fp, "%d %g %g %g\n", (*it)->getIndex(),
-                 (*it)->x(), (*it)->y(), (*it)->z());
+    else fprintf(fp, "%d %g %g %g\n", (*it)->getIndex(),(*it)->x(), (*it)->y(), (*it)->z());
   }
   fprintf(fp, "$EndNodes\n");
   
@@ -984,7 +983,7 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
     MElement *e = level.elements[i];
     std::vector<SPoint2> localCoord;
     double local_size = localSize(e,solution);
-    if (local_size < 1.e-5*global_size) //1.e-5
+    if (local_size < 1.e-6*global_size) //1.e-5
       tooSmall.push_back(e);
     else  goodSize.push_back(e);
   }
@@ -1033,7 +1032,7 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
 //       double area = fabs(triangle_area(q0, q1, q2));   
 //       totArea  += area;
       double local_size = localSize(e,solution);
-      if (local_size < 1.e-7 * global_size) //1.e-7
+      if (local_size < 1.e-8 * global_size) //1.e-7
         really_small_elements = true;
     }
     //center *= (1./regions_[i].size());
