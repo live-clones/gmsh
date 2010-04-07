@@ -642,15 +642,15 @@ bool newton_fd(void (*func)(fullVector<double> &, fullVector<double> &, void *),
          if (isZero == false) break;
        }
      if (isZero) break;
-    //printf("**** fffffff0=%g %g %g %g %g %g %g %g %g\n", f(0), f(1), f(2),  f(3), f(4),  f(5), f(6),  f(7), f(8));
 
     for (int j = 0; j < N; j++){
       double h = EPS * fabs(x(j));
       if(h == 0.) h = EPS;
       x(j) += h;
       func(x, feps, data);
-      for (int i = 0; i < N; i++)
+      for (int i = 0; i < N; i++){
         J(i, j) = (feps(i) - f(i)) / h;
+      }
       x(j) -= h;
     }
     
