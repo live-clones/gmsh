@@ -344,6 +344,8 @@ void GFaceCompound::fillNeumannBCS() const
 
 }
 
+
+
 bool GFaceCompound::trivial() const
 {
   if(_compound.size() == 1 && 

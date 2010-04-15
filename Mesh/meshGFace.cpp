@@ -674,9 +674,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   // delete the mesh
   delete m;
 
-  printf("to recombine gf->meshAttributes.recombine=%d \n", gf->meshAttributes.recombine);
+  //printf("to recombine gf->meshAttributes.recombine=%d \n", gf->meshAttributes.recombine);
   if(gf->meshAttributes.recombine && CTX::instance()->mesh.optimize == 0){
-    printf("in recombine \n");
     recombineIntoQuads(gf);   
   }
 
@@ -1414,6 +1413,7 @@ void partitionAndRemesh(GFaceCompound *gf)
     Msg::Info("Parametrize Compound Surface (%d) = %d discrete face", num_gfc,  pf->tag() );
     GFaceCompound *gfc = new GFaceCompound(gf->model(),  num_gfc, f_compound, 
                                            b[0], b[1], b[2], b[3], 0, gf->getTypeOfMapping() );
+    gfc->meshAttributes.recombine =  gf->meshAttributes.recombine;
     gf->model()->add(gfc);
 
     gfc->parametrize();

@@ -34,8 +34,8 @@ void lloydAlgorithm::operator () ( GFace * gf) {
   const double LC2D = sqrt ((du.high()-du.low())*(du.high()-du.low()) +
                             (dv.high()-dv.low())*(dv.high()-dv.low()));  
 
-  printf("Lloyd on face %d %d elements %d nodes LC %g\n", gf->tag(),
-         gf->getNumMeshElements(), (int)all.size(), LC2D);
+  //printf("Lloyd on face %d %d elements %d nodes LC %g\n", gf->tag(),
+  //       gf->getNumMeshElements(), (int)all.size(), LC2D);
 
   int i = 0;
 
@@ -104,7 +104,7 @@ void lloydAlgorithm::operator () ( GFace * gf) {
       }
     }
 
-    Msg::Info("GFace %d Lloyd iteration %d energy %g",gf->tag(),ITER++,ENERGY);
+    Msg::Debug("GFace %d Lloyd iteration %d energy %g",gf->tag(),ITER++,ENERGY);
     if (ITER > ITER_MAX)break;
 
     // compute the Voronoi diagram

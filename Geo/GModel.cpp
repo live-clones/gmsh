@@ -1139,7 +1139,6 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
   std::map<MEdge, std::vector<int>, Less_Edge > map_edges;
   for (std::vector<discreteFace*>::iterator it = discFaces.begin(); 
        it != discFaces.end(); it++){
-    printf("face %g recom =%d\n", (*it)->tag(),(*it)->meshAttributes.Recombine );
     (*it)->findEdges(map_edges);
   }
 

@@ -424,7 +424,7 @@ static void Mesh2D(GModel *m)
       for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
 	GFace *gf = *it;
 	int recombine = gf->meshAttributes.recombine;
-	Msg::Info("LLoyd optimisation for face %d", gf->tag());
+	Msg::Info("Lloyd optimization for face %d", gf->tag());
 	gf->lloyd(40,recombine);
 	
 	if(recombine) recombineIntoQuads(gf);   
