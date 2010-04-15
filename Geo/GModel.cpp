@@ -1138,8 +1138,10 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
   // associates the MEdges with the tags of the adjacent faces
   std::map<MEdge, std::vector<int>, Less_Edge > map_edges;
   for (std::vector<discreteFace*>::iterator it = discFaces.begin(); 
-       it != discFaces.end(); it++)
+       it != discFaces.end(); it++){
+    printf("face %g recom =%d\n", (*it)->tag(),(*it)->meshAttributes.Recombine );
     (*it)->findEdges(map_edges);
+  }
 
   //return if no boundary edges (torus, sphere, ...)
   if (map_edges.empty()) return;
