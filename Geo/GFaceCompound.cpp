@@ -368,17 +368,19 @@ bool GFaceCompound::checkFolding(std::vector<MVertex*> &ordered) const
     int maxSize = (i==0) ? ordered.size()-2: ordered.size()-1;
     for(int k = i+2; k < maxSize; ++k){
       SPoint3 q1 = coordinates[ordered[k]];
-      SPoint3 q2 = coordinates[ordered[k]];
+      SPoint3 q2 = coordinates[ordered[k+1]];
       double x[2];
       int inters = intersection_segments (p1,p2,q1,q2,x);
       if (inters > 0) has_no_folding = false;
     }
   }
   
-  if ( !has_no_folding ) 
+  if ( !has_no_folding ) {
     Msg::Warning("$$$ Folding for compound face %d", this->tag());
+  }
 
   return has_no_folding;
+
 }
 
 //check if the discrete harmonic map is correct
@@ -800,7 +802,6 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
     _lsys = _lsysb;
 #elif defined(HAVE_TAUCS) 
     _lsys = new linearSystemCSRTaucs<double>;
-    printf("compound with taucs\n");
 #else
     _lsys = new linearSystemFull<double>;
 #endif
@@ -1115,7 +1116,6 @@ bool GFaceCompound::parametrize_conformal_spectral() const
 {
 
 #if defined(HAVE_PETSC)
-
   std::vector<MVertex*> ordered;
   std::vector<double> coords;  
   bool success = orderVertices(_U0, ordered, coords);
@@ -1159,12 +1159,27 @@ bool GFaceCompound::parametrize_conformal_spectral() const
 
   //-------------------------------
    myAssembler.setCurrentMatrix("B");
-   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
-     MVertex *v = *itv;
-     myAssembler.numberVertex(v, 0, 1);
-     myAssembler.numberVertex(v, 0, 2);
-   }
       
+//     massTerm mass1(model(), 1, &MONE);
+//     massTerm mass2(model(), 2, &MONE);
+//    it = _compound.begin();
+//    for( ; it != _compound.end() ; ++it){
+//      for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+//        SElement se((*it)->triangles[i]);
+//        mass1.addToMatrix(myAssembler, &se);
+//        mass2.addToMatrix(myAssembler, &se);
+//      }
+//    }
+
+//    std::list<GEdge*>::const_iterator it0 = _U0.begin();
+//    for( ; it0 != _U0.end(); ++it0 ){
+//      for(unsigned int i = 0; i < (*it0)->lines.size(); i++ ){
+//        SElement se((*it0)->lines[i]);
+//        mass1.addToMatrix(myAssembler, &se);
+//        mass2.addToMatrix(myAssembler, &se);
+//      }
+//    }
+
    double small = 0.0;
    for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
      MVertex *v = *itv;
@@ -1176,60 +1191,58 @@ bool GFaceCompound::parametrize_conformal_spectral() const
        myAssembler.assemble(v, 0, 1, v, 0, 1,  1.0);
        myAssembler.assemble(v, 0, 2, v, 0, 2,  1.0);
      }
-   }
+   } 
 
-//    int NB = ordered.size();
-//    for (int i = 0; i< NB; i++){
-//      MVertex *v1 = ordered[i];
-//      for (int j = i; j< NB; j++){
-//        MVertex *v2 = ordered[j];
-//        myAssembler.assemble(v1, 0, 1, v2, 0, 1,  -1./NB);
-//        myAssembler.assemble(v1, 0, 2, v2, 0, 2,  -1./NB);
-//        myAssembler.assemble(v2, 0, 1, v1, 0, 1,  -1./NB);
-//        myAssembler.assemble(v2, 0, 2, v1, 0, 2,  -1./NB);
-//      }
-//    }
- 
-//    diagBCTerm diag1(0, 1, &ONE);
-//    diagBCTerm diag2(0, 2, &ONE);
-//    it = _compound.begin(); 
-//    for( ; it != _compound.end() ; ++it){
-//      for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-//        SElement se((*it)->triangles[i]);
-//        diag1.addToMatrix(myAssembler, &se);
-//        diag2.addToMatrix(myAssembler, &se);
-//      }
-//    }
+   int NB = ordered.size();
+   for (int i = 0; i< NB; i++){
+     MVertex *v1 = ordered[i];
+     for (int j = 0; j< NB; j++){
+       MVertex *v2 = ordered[j];
+       myAssembler.assemble(v1, 0, 1, v2, 0, 1,  -1./NB);
+       myAssembler.assemble(v1, 0, 2, v2, 0, 2,  -1./NB);
+     }
+   }
 
    //-------------------------------
    eigenSolver eig(&myAssembler, "B" , "A", true);
-   bool converged = eig.solve(1, "largest");
-     
+   int nb = 1;
+   bool converged = eig.solve(nb, "largest");
+    
    if(converged) {
+     double Linfty = 0.0;
      int k = 0;
      std::vector<std::complex<double> > &ev = eig.getEigenVector(0); 
      for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
-       MVertex *v = *itv;
        double paramu = ev[k].real();
        double paramv = ev[k+1].real();
+       Linfty=std::max(Linfty, sqrt(paramu*paramu+paramv*paramv));
+       k = k+2;
+     }
+     k = 0;
+     double norm2 = 0.0;
+     for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+       MVertex *v = *itv;
+       double paramu = ev[k].real()/Linfty;
+       double paramv = ev[k+1].real()/Linfty;
        coordinates[v] = SPoint3(paramu,paramv,0.0);
        k = k+2;
      }
      
-     //if folding take second sallest eigenvalue
-//      bool noFolding = checkFolding(ordered);
-//      if (!noFolding ){
-//        coordinates.clear();
-//        int k = 0;
-//        std::vector<std::complex<double> > &ev = eig.getEigenVector(1); 
-//        for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
-//       MVertex *v = *itv;
-//       double paramu = ev[k].real();
-//       double paramv = ev[k+1].real();
-//       coordinates[v] = SPoint3(paramu,paramv,0.0);
-//       k = k+2;
-//        }
-//      }
+      
+     //if folding take second smallest eigenvalue
+     bool noFolding = checkFolding(ordered);
+     if (!noFolding && nb > 1){
+       coordinates.clear();
+       int k = 0;
+       std::vector<std::complex<double> > &ev = eig.getEigenVector(nb-1); 
+       for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+	 MVertex *v = *itv;
+	 double paramu = ev[k].real();
+	 double paramv = ev[k+1].real();
+	 coordinates[v] = SPoint3(paramu,paramv,0.0);
+	 k = k+2;
+       }
+     }
 
      lsysA->clear();
      lsysB->clear();
@@ -1238,7 +1251,7 @@ bool GFaceCompound::parametrize_conformal_spectral() const
 
    }
    else return false;
-
+  
 #else
    return false;
 
@@ -2046,7 +2059,7 @@ void GFaceCompound::printStuff() const
               t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
               t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
               it0->second.y(),it1->second.y(),it2->second.y());
-      fprintf(xyzu,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+      fprintf(xyzu,"ST(%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E){%22.15E,%22.15E,%22.15E};\n",
               t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
               t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
               t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
@@ -2074,7 +2087,7 @@ void GFaceCompound::printStuff() const
               it1->second.x(), it1->second.y(), 0.0,
               it2->second.x(), it2->second.y(), 0.0,
               area, area, area);     
-      fprintf(uvx,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+      fprintf(uvx,"ST(%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E){%22.15E,%22.15E,%22.15E};\n",
               it0->second.x(), it0->second.y(), 0.0,
               it1->second.x(), it1->second.y(), 0.0,
               it2->second.x(), it2->second.y(), 0.0,

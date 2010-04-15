@@ -826,7 +826,6 @@ multiscaleLaplace::multiscaleLaplace (std::vector<MElement *> &elements,
 
 #if defined(HAVE_TAUCS)
   _lsys = new linearSystemCSRTaucs<double>;
-  printf("taucs again\n");
 #elif defined(HAVE_GMM)
   linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
   _lsysb->setGmres(1);

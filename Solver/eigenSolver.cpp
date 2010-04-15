@@ -25,6 +25,7 @@ eigenSolver::eigenSolver(dofManager<double> *manager, std::string A,
 
 bool eigenSolver::solve(int numEigenValues, std::string which)
 {
+
   if(!_A) return false;
   Mat A = _A->getMatrix();
   Mat B = _B ? _B->getMatrix() : PETSC_NULL;
@@ -53,7 +54,8 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
   // set some default options
   _try(EPSSetDimensions(eps, numEigenValues, PETSC_DECIDE, PETSC_DECIDE));
   _try(EPSSetTolerances(eps,1.e-7,50));
-  _try(EPSSetType(eps,EPSARNOLDI)); //EPSKRYLOVSCHUR is default
+  //_try(EPSSetType(eps, EPSKRYLOVSCHUR)); //default
+  _try(EPSSetType(eps,EPSARNOLDI)); 
   //_try(EPSSetType(eps,EPSARPACK)); 
   //_try(EPSSetType(eps,EPSPOWER));
 
@@ -146,7 +148,7 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
         ev[i] = std::complex<double>(tmpr[i], tmpi[i]);
 #endif
       }
-      _eigenVectors.push_back(ev);
+       _eigenVectors.push_back(ev);
     }
     _try(VecDestroy(xr));
     _try(VecDestroy(xi));

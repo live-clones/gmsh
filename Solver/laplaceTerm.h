@@ -15,4 +15,12 @@ class laplaceTerm : public helmholtzTerm<double> {
     : helmholtzTerm<double>(gm, iField, iField, k, 0) {}
 };
 
+// a \nabla U 
+class massTerm : public helmholtzTerm<double> {
+ public:
+  massTerm(GModel *gm, int iField, simpleFunction<double> *a)
+    : helmholtzTerm<double>(gm, iField, iField, 0, a) {}
+};
+
+
 #endif
