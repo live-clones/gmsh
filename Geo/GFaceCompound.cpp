@@ -355,6 +355,8 @@ bool GFaceCompound::trivial() const
   }
   return false;
 }
+
+
 //For the conformal map the linear system cannot guarantee there is no folding 
 //of triangles
 bool GFaceCompound::checkFolding(std::vector<MVertex*> &ordered) const
@@ -792,7 +794,7 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   : GFace(m, tag), _compound(compound), _U0(U0), _U1(U1), _V0(V0), _V1(V1), oct(0),
     _lsys(lsys),_mapping(mpg), _allowPartition(allowPartition)
 {
-
+ 
   if (!_lsys) {
 #if defined(HAVE_PETSC) && !defined(HAVE_TAUCS)
     _lsys = new linearSystemPETSc<double>;

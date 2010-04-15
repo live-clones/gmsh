@@ -134,7 +134,7 @@ template<class scalar> class linearSystem;
 class GFaceCompound : public GFace {
  public:
   typedef enum {HARMONIC=1,CONFORMAL=2, CONVEXCOMBINATION=3, MULTISCALE=4} typeOfMapping;
-  GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
+ GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
                 std::list<GEdge*> &U0, std::list<GEdge*> &U1,
                 std::list<GEdge*> &V0, std::list<GEdge*> &V1,
                 linearSystem<double>* lsys =0,
@@ -153,6 +153,7 @@ class GFaceCompound : public GFace {
                          SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const{}
   virtual SPoint2 getCoordinates(MVertex *v) const { return SPoint2(); }
   void parametrize() const {}
+
 };
 
 #endif

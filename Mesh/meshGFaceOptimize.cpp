@@ -1011,6 +1011,7 @@ struct RecombineTriangle
 
 static void _recombineIntoQuads(GFace *gf)
 {
+
   std::set<MVertex*> emb_edgeverts;
   {
     std::list<GEdge*> emb_edges = gf->embeddedEdges();
@@ -1091,6 +1092,7 @@ static void _recombineIntoQuads(GFace *gf)
 
 void recombineIntoQuads(GFace *gf)
 {
+
   _recombineIntoQuads(gf);
   laplaceSmoothing(gf);
   _recombineIntoQuads(gf);

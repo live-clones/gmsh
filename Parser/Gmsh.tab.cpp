@@ -5405,7 +5405,7 @@ yyreduce:
 	yymsg(0, "Surface %d already exists", num);
       }
       else{
-        Surface *s = Create_Surface(num, MSH_SURF_COMPOUND);
+	Surface *s = Create_Surface(num, MSH_SURF_COMPOUND);
         for(int i = 0; i < List_Nbr((yyvsp[(7) - (9)].l)); i++){
           s->compound.push_back((int)*(double*)List_Pointer((yyvsp[(7) - (9)].l), i));
 	  s->TypeOfMapping = (yyvsp[(8) - (9)].i);

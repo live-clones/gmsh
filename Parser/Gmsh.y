@@ -1462,7 +1462,7 @@ Shape :
 	yymsg(0, "Surface %d already exists", num);
       }
       else{
-        Surface *s = Create_Surface(num, MSH_SURF_COMPOUND);
+	Surface *s = Create_Surface(num, MSH_SURF_COMPOUND);
         for(int i = 0; i < List_Nbr($7); i++){
           s->compound.push_back((int)*(double*)List_Pointer($7, i));
 	  s->TypeOfMapping = $8;

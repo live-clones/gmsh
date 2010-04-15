@@ -58,8 +58,8 @@ void lloydAlgorithm::operator () ( GFace * gf) {
 
   // compute the Voronoi diagram
   triangulator.Voronoi();
-  //  printf("hullSize = %d\n",triangulator.hullSize());
-  //  triangulator.makePosView("LloydInit.pos");
+  //printf("hullSize = %d\n",triangulator.hullSize());
+  triangulator.makePosView("LloydInit.pos");
   
   // now do the Lloyd iterations
   int ITER = 0;
@@ -104,8 +104,9 @@ void lloydAlgorithm::operator () ( GFace * gf) {
       }
     }
 
-    Msg::Debug("GFace %d Lloyd iteration %d energy %g",gf->tag(),ITER++,ENERGY);
+    Msg::Info("GFace %d Lloyd iteration %d energy %g",gf->tag(),ITER++,ENERGY);
     if (ITER > ITER_MAX)break;
+
     // compute the Voronoi diagram
     triangulator.Voronoi();
   }
@@ -133,7 +134,7 @@ void lloydAlgorithm::operator () ( GFace * gf) {
   // remesh the face with all those vertices in
   meshGFace mesher;
   mesher(gf);
-  // assign thos vertices to the face internal vertices
+  // assign those vertices to the face internal vertices
   gf->mesh_vertices.insert(gf->mesh_vertices.begin(),
                            gf->_additional_vertices.begin(),  
                            gf->_additional_vertices.end());  

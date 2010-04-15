@@ -407,7 +407,7 @@ static void Mesh2D(GModel *m)
   // and curve meshes) is global as it depends on a smooth normal
   // field generated from the surface mesh of the source surfaces
   if(!Mesh2DWithBoundaryLayers(m)){
-    //std::for_each(m->firstFace(), m->lastFace(), meshGFace());
+   
     std::set<GFace*> classFaces;
     std::set<GFace*> compFaces;
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
@@ -418,6 +418,19 @@ static void Mesh2D(GModel *m)
     }
     std::for_each(classFaces.begin(), classFaces.end(), meshGFace());
     std::for_each(compFaces.begin(), compFaces.end(), meshGFace());
+
+    //lloyd optimization
+    if (CTX::instance()->mesh.optimize > 0 ){
+      for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
+	GFace *gf = *it;
+	int recombine = gf->meshAttributes.recombine;
+	Msg::Info("LLoyd optimisation for face %d", gf->tag());
+	gf->lloyd(40,recombine);
+	
+	if(recombine) recombineIntoQuads(gf);   
+
+      }
+    }
 
     int nIter = 0;
     while(1){

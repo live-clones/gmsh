@@ -182,10 +182,15 @@ int GModel::importGEOInternals()
         }
         int allowPartition = 1;
         if (abs(s->TypeOfMapping) != 1) allowPartition = 0;
+
         f = new GFaceCompound(this, s->Num, comp,
                               b[0], b[1], b[2], b[3], 0,
                               s->TypeOfMapping > 0 ? GFaceCompound::HARMONIC :
                               GFaceCompound::CONFORMAL, allowPartition);
+	f->meshAttributes.recombine = s->Recombine;
+	f->meshAttributes.recombineAngle = s->RecombineAngle;
+	f->meshAttributes.Method = s->Method;
+	f->meshAttributes.extrude = s->Extrude;
         add(f);
       }
       else if(!f){

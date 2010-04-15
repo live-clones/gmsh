@@ -669,18 +669,25 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
     outputScalarField(m->triangles, name,1);
   }
   if(CTX::instance()->mesh.remove4triangles)
-    removeFourTrianglesNodes(gf,false);
+    removeFourTrianglesNodes(gf,false); 
 
   // delete the mesh
   delete m;
 
-  if(gf->meshAttributes.recombine)
-    recombineIntoQuads(gf);
+  printf("to recombine gf->meshAttributes.recombine=%d \n", gf->meshAttributes.recombine);
+  if(gf->meshAttributes.recombine && CTX::instance()->mesh.optimize == 0){
+    printf("in recombine \n");
+    recombineIntoQuads(gf);   
+  }
+
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
                        gf->meshStatistics.average_element_shape,
                        gf->meshStatistics.best_element_shape,
                        gf->meshStatistics.nbTriangle,
                        gf->meshStatistics.nbGoodQuality);
+
+
+
   return true;
 }
 
@@ -1218,9 +1225,9 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   // delete the mesh  
   delete m;
 
-  if(gf->meshAttributes.recombine)
-    recombineIntoQuads(gf);
-
+ if(gf->meshAttributes.recombine && CTX::instance()->mesh.optimize == 0)
+    recombineIntoQuads(gf);   
+ 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
                        gf->meshStatistics.average_element_shape,
                        gf->meshStatistics.best_element_shape,
@@ -1405,7 +1412,7 @@ void partitionAndRemesh(GFaceCompound *gf)
     int num_gfc = numf + NF + i ;
     f_compound.push_back(pf);     
     Msg::Info("Parametrize Compound Surface (%d) = %d discrete face", num_gfc,  pf->tag() );
-    GFaceCompound *gfc = new GFaceCompound(gf->model(), num_gfc, f_compound, 
+    GFaceCompound *gfc = new GFaceCompound(gf->model(),  num_gfc, f_compound, 
                                            b[0], b[1], b[2], b[3], 0, gf->getTypeOfMapping() );
     gf->model()->add(gfc);
 
