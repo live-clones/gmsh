@@ -122,7 +122,8 @@ void Homology::findGenerators(CellComplex* cellComplex)
   Msg::StatusBar(1, false, "Reducing...");
 
   double t1 = Cpu();
-  int omitted = cellComplex->reduceComplex();  
+  int omitted = cellComplex->reduceComplex();
+  
   double t2 = Cpu();
   Msg::Info("Cell Complex reduction complete (%g s).", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges and %d vertices.",
@@ -374,7 +375,7 @@ void Homology::findHomSequence(){
       
 	std::string name = "H" + dimension + domainString + generator;
 	std::map<Cell*, int, Less_Cell> protoChain;
-	chains->getBasisChain(protoChain, i, j, 3);
+	chains->getBasisChain(protoChain, i, j, 3, true);
 	Chain* chain = new Chain(protoChain, cellComplex, _model, name, 
 				 chains->getTorsion(j,i));
 	if(chain->getSize() == 0) {
@@ -612,19 +613,19 @@ int Chain::createPGroup()
   physicalMap[entityNum] = physicalInfo;
   
   // hide mesh
-  opt_mesh_points(0, GMSH_SET, 0);
+  /*opt_mesh_points(0, GMSH_SET, 0);
   opt_mesh_lines(0, GMSH_SET, 0);
   opt_mesh_triangles(0, GMSH_SET, 0);
   opt_mesh_quadrangles(0, GMSH_SET, 0);
   opt_mesh_tetrahedra(0, GMSH_SET, 0);
   opt_mesh_hexahedra(0, GMSH_SET, 0);
   opt_mesh_prisms(0, GMSH_SET, 0);
-  opt_mesh_pyramids(0, GMSH_SET, 0);
+  opt_mesh_pyramids(0, GMSH_SET, 0);*/
 
   // show post-processing normals, tangents and element boundaries
   //opt_view_normals(0, GMSH_SET, 20);
   //opt_view_tangents(0, GMSH_SET, 20);
-  opt_view_show_element(0, GMSH_SET, 1);
+  //opt_view_show_element(0, GMSH_SET, 1);
   
   if(!data.empty()){
     _model->storeChain(getDim(), entityMap, physicalMap);

@@ -127,10 +127,6 @@ gmp_matrix_row_inz (size_t r, size_t c1, size_t c2,
 int
 gmp_matrix_transp(gmp_matrix * M);
 
-/* A <- A+B */
-int
-gmp_matrix_sum(gmp_matrix * A, const gmp_matrix * B);
-
 /* A <- A*B */
 int
 gmp_matrix_right_mult(gmp_matrix * A, const gmp_matrix * B);

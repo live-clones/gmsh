@@ -32,7 +32,6 @@ Cell::Cell(MElement* image) :
   _combined(false), _index(0), _immune(false), _image(NULL), 
   _delimage(false), _subdomain(false) 
 {
-  _dim = image->getDim();
   _image = image;
   for(int i = 0; i < getNumVertices(); i++) 
     _vs.push_back(getVertex(i)->getNum()); 
@@ -46,6 +45,7 @@ Cell::~Cell()
 
 bool Cell::findBoundaryCells(std::vector<Cell*>& bdCells)
 {
+  if(_combined) return false;
   bdCells.clear();
   MElementFactory factory;
   for(int i = 0; i < getNumFacets(); i++){
@@ -53,7 +53,7 @@ bool Cell::findBoundaryCells(std::vector<Cell*>& bdCells)
     getFacetVertices(i, vertices);
     int type = _image->getType();
     int newtype = 0;
-    if(_dim == 3){
+    if(getDim() == 3){
       if(type == TYPE_TET) newtype = MSH_TRI_3;
       else if(type == TYPE_HEX) newtype = MSH_QUA_4;
       else if(type == TYPE_PRI) {
@@ -61,8 +61,8 @@ bool Cell::findBoundaryCells(std::vector<Cell*>& bdCells)
 	else if(vertices.size() == 4) newtype = MSH_QUA_4;
       }
     }
-    else if(_dim == 2) newtype = MSH_LIN_2;
-    else if(_dim == 1) newtype = MSH_PNT;
+    else if(getDim() == 2) newtype = MSH_LIN_2;
+    else if(getDim() == 1) newtype = MSH_PNT;
     if(newtype == 0){
       printf("Error: mesh element %d not implemented yet! \n", type);
       return false;
@@ -77,7 +77,7 @@ bool Cell::findBoundaryCells(std::vector<Cell*>& bdCells)
 
 int Cell::getNumFacets() const 
 {
-  if(_image == NULL){ 
+  if(_image == NULL || _combined){ 
     printf("ERROR: No image mesh element for cell. \n");
     return 0;
   }
@@ -90,7 +90,7 @@ int Cell::getNumFacets() const
 
 void Cell::getFacetVertices(const int num, std::vector<MVertex*> &v) const 
 {
-  if(_image == NULL){ 
+  if(_image == NULL || _combined){ 
     printf("ERROR: No image mesh element for cell. \n");
     return;
   }
@@ -103,7 +103,7 @@ void Cell::getFacetVertices(const int num, std::vector<MVertex*> &v) const
 
 int Cell::findBoundaryCellOrientation(Cell* cell) 
 {
-  if(_image == NULL){ 
+  if(_image == NULL || _combined){ 
     printf("ERROR: No image mesh element for cell. \n");
     return 0;
   }
@@ -144,6 +144,15 @@ bool Cell::hasVertex(int vertex) const
 						  vertex);
   if (it != _vs.end()) return true;
   else return false;
+}
+
+bool CombinedCell::hasVertex(int vertex) const
+{
+  for(std::map<Cell*, int, Less_Cell>::const_iterator cit = _cells.begin();
+      cit != _cells.end(); cit++){
+    if(cit->first->hasVertex(vertex)) return true;
+  }
+  return false;
 }
 
 void Cell::printCell() 
@@ -282,12 +291,9 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell()
   }
   
   _num = ++_globalNum;
-
   _index = c1->getIndex();
-  _dim = c1->getDim();
   _subdomain = c1->inSubdomain();
   _combined = true;
-  _image = NULL;
 
   // cells
   c1->getCells(_cells);

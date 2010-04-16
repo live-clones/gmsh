@@ -282,4 +282,4 @@ Mesh 3;
 
 HomGen("trefoil.msh") = {{179},{}};
 HomGen("trefoil.msh") = {{179},{180}};
-//HomCut("trefoil.msh") = {{179},{}};
+HomCut("trefoil.msh") = {{179},{}};

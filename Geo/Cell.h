@@ -35,9 +35,6 @@ class Cell
 {  
  protected:
   
-  // cell dimension
-  int _dim;
-   
   // whether this cell belongs to a subdomain
   // used in relative homology computation
   bool _subdomain;
@@ -58,11 +55,11 @@ class Cell
   // cell complex
   std::map<Cell*, int, Less_Cell > _obd;
   std::map<Cell*, int, Less_Cell > _ocbd;
+
+ private:
   
   // sorted vertices of this cell (used for ordering of the cells)
   std::vector<int> _vs;
-
-  
   
   // the mesh element that is the image of this cell
   MElement* _image;
@@ -71,13 +68,9 @@ class Cell
   bool _delimage;
   
   // get vertex 
-  MVertex* getVertex(int vertex) const { 
-    if(_image == NULL) printf("ERROR: No image mesh element for cell. \n");
-    return _image->getVertex(vertex); }  
+  MVertex* getVertex(int vertex) const { return _image->getVertex(vertex); }  
    // get the number of vertices this cell has
-  int getNumVertices() const { 
-    if(_image == NULL) printf("ERROR: No image mesh element for cell. \n");
-    return _image->getNumPrimaryVertices(); }
+  int getNumVertices() const { return _image->getNumPrimaryVertices(); }
   // get the number of facets of this cell
   int getNumFacets() const;
   // get the vertices on a facet of this cell
@@ -92,22 +85,25 @@ class Cell
 
   // the mesh element this cell is represented by
   MElement* getImageMElement() const { 
-    if(_image == NULL) printf("ERROR: No image mesh element for cell. \n");
+    if(_image == NULL || _combined){
+      printf("ERROR: No image mesh element for cell. \n"); }
     return _image; }
+  // get the cell dimension
+  virtual int getDim() const { return _image->getDim(); };
   // get/set whether the image mesh element should be deleted when
   // this cell gets deleted 
   // (was the mesh element in the original mesh,
   // is it needed after homology computation for visualization?) 
-  void setDeleteImage(bool delimage) { _delimage = delimage; }
-  bool getDeleteImage() const { return _delimage; }
+  void setDeleteImage(bool delimage) { if(!_combined) _delimage = delimage; }
+  bool getDeleteImage() const { 
+    if(!_combined) return _delimage;
+    else return false; }
 
   // find the cells on the boundary of this cell
   bool findBoundaryCells(std::vector<Cell*>& bdCells);
   // get boundary cell orientation
   int findBoundaryCellOrientation(Cell* cell);
   
-
-  int getDim() const { return _dim; };
   int getIndex() const { return _index; };
   void setIndex(int index) { _index = index; };
   void setImmune(bool immune) { _immune = immune; };
@@ -213,10 +209,14 @@ class CombinedCell : public Cell{
   
   CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co=false);
   ~CombinedCell() {}
-  
+
+  int getDim() const { return _cells.begin()->first->getDim(); }
+  int getNumSortedVertices() const { return 0; }
+  int getSortedVertex(int vertex) const { return 0; }
   void getCells(std::map< Cell*, int, Less_Cell >& cells) { cells = _cells; }
   int getNumCells() const {return _cells.size();}  
   int getNum() const { return _num; }
+  bool hasVertex(int vertex) const;
 
   bool operator==(const Cell& c2) const {
     if(this->isCombined() != c2.isCombined()) return false;

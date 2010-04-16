@@ -204,6 +204,14 @@ class HomologySequence
   gmp_matrix* _Dh[4];
   gmp_matrix* _invDh[4];
 
+  void findIcMaps();
+  void findIhMap(int i);
+  void findInvIhMap(int i);
+  void findJhMap(int i);
+  void findInvJhMap(int i);
+  void findDhMap(int i);
+  void findInvDhMap(int i);
+
  public:
   
   HomologySequence(ChainComplex* subcomplex, ChainComplex* complex, 
