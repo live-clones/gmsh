@@ -2570,25 +2570,24 @@ contextItem menu_geometry[] = {
 contextItem menu_mesh[] = {
   {"1Mesh"} ,
   {"Define",       (Fl_Callback *)mesh_define_cb} ,
-  {"Inspect",      (Fl_Callback *)mesh_inspect_cb} , 
-  {"Delete",       (Fl_Callback *)mesh_delete_cb} , 
   {"1D",           (Fl_Callback *)mesh_1d_cb} ,
   {"2D",           (Fl_Callback *)mesh_2d_cb} , 
   {"3D",           (Fl_Callback *)mesh_3d_cb} , 
-  {"Set order",  (Fl_Callback *)mesh_change_order_cb} , 
-  {"Refine by splitting", (Fl_Callback *)mesh_refine_cb} ,
   {"Optimize",     (Fl_Callback *)mesh_optimize_cb} , 
 #if defined(HAVE_NETGEN)
   {"Optimize (Netgen)", (Fl_Callback *)mesh_optimize_netgen_cb} , 
 #endif
+  {"Set order",    (Fl_Callback *)mesh_change_order_cb} , 
+  {"Inspect",      (Fl_Callback *)mesh_inspect_cb} , 
+  {"Refine by splitting", (Fl_Callback *)mesh_refine_cb} ,
 #if defined(HAVE_METIS) || defined(HAVE_CHACO)
-  {"Partition", (Fl_Callback *)mesh_partition_cb} ,
+  {"Partition",    (Fl_Callback *)mesh_partition_cb} ,
 #endif
-#if defined(HAVE_FOURIER_MODEL)
-  {"Reparameterize",   (Fl_Callback *)mesh_parameterize_cb} , 
-#endif
-  //not polished enough for public release
   {"Reclassify",   (Fl_Callback *)mesh_classify_cb} , 
+#if defined(HAVE_FOURIER_MODEL)
+  {"Reparameterize", (Fl_Callback *)mesh_parameterize_cb} , 
+#endif
+  {"Delete",       (Fl_Callback *)mesh_delete_cb} , 
   {"Save",         (Fl_Callback *)mesh_save_cb} ,
   {""} 
 };  
@@ -2599,7 +2598,7 @@ contextItem menu_mesh[] = {
     {"Embedded points", (Fl_Callback *)mesh_define_embedded_cb, (void*)"point" } ,
     {"Recombine",   (Fl_Callback *)mesh_define_recombine_cb  } ,
     {"Transfinite", (Fl_Callback *)mesh_define_transfinite_cb  } , 
-    {"Compound", (Fl_Callback *)mesh_define_compound_cb  } , 
+    {"Compound",    (Fl_Callback *)mesh_define_compound_cb  } , 
     {""} 
   };  
     contextItem menu_mesh_define_transfinite[] = {

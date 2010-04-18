@@ -1478,7 +1478,7 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[14] = new Fl_Value_Input
         (L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Z-clipping distance factor");
       general.value[14]->minimum(0.1);
-      general.value[14]->maximum(10.);
+      general.value[14]->maximum(20.);
       general.value[14]->step(0.1);
       general.value[14]->align(FL_ALIGN_RIGHT);
       general.value[14]->callback(general_options_ok_cb);

@@ -674,7 +674,6 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   // delete the mesh
   delete m;
 
-  //printf("to recombine gf->meshAttributes.recombine=%d \n", gf->meshAttributes.recombine);
   if(gf->meshAttributes.recombine && CTX::instance()->mesh.optimize == 0){
     recombineIntoQuads(gf);   
   }
@@ -685,13 +684,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
                        gf->meshStatistics.nbTriangle,
                        gf->meshStatistics.nbGoodQuality);
 
-
-
   return true;
 }
-
-
-
 
 // this function buils a list of vertices (BDS) that are consecutive
 // in one given edge loop. We take care of periodic surfaces. In the
@@ -1395,7 +1389,8 @@ void partitionAndRemesh(GFaceCompound *gf)
     GEdge *pe = gf->model()->getEdgeByTag(nume+i);//partition edge
     e_compound.push_back(pe); 
     int num_gec = nume + NE + i ;
-    Msg::Info("Parametrize Compound Line (%d) = %d discrete edge", num_gec,  pe->tag() );
+    Msg::Info("Parametrize Compound Line (%d) = %d discrete edge", 
+              num_gec, pe->tag());
     GEdgeCompound *gec = new GEdgeCompound(gf->model(), num_gec, e_compound);
     gf->model()->add(gec);
 
@@ -1410,9 +1405,11 @@ void partitionAndRemesh(GFaceCompound *gf)
     GFace *pf =  gf->model()->getFaceByTag(numf+i);//partition face 
     int num_gfc = numf + NF + i ;
     f_compound.push_back(pf);     
-    Msg::Info("Parametrize Compound Surface (%d) = %d discrete face", num_gfc,  pf->tag() );
-    GFaceCompound *gfc = new GFaceCompound(gf->model(),  num_gfc, f_compound, 
-                                           b[0], b[1], b[2], b[3], 0, gf->getTypeOfMapping() );
+    Msg::Info("Parametrize Compound Surface (%d) = %d discrete face",
+              num_gfc, pf->tag());
+    GFaceCompound *gfc = new GFaceCompound(gf->model(), num_gfc, f_compound,
+                                           b[0], b[1], b[2], b[3], 0,
+                                           gf->getTypeOfMapping());
     gfc->meshAttributes.recombine =  gf->meshAttributes.recombine;
     gf->model()->add(gfc);
 
@@ -1421,7 +1418,7 @@ void partitionAndRemesh(GFaceCompound *gf)
 
   Msg::Info("*** Mesh Compounds:");
 
-  for (int i=0; i < NE; i++){
+  for (int i = 0; i < NE; i++){
     GEdge *gec = gf->model()->getEdgeByTag(nume + NE + i);
      meshGEdge mge;
      mge(gec);

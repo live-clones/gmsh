@@ -123,12 +123,12 @@ int perspectiveEditor()
 
   if(!editor){
     editor = new _editor;
-    editor->window = new Fl_Menu_Window(150, 20);
+    editor->window = new Fl_Menu_Window(200, 20);
     if(CTX::instance()->nonModalWindows) editor->window->set_non_modal();
-    editor->sa = new Release_Slider(0, 0, 150, 20);
+    editor->sa = new Release_Slider(0, 0, 200, 20);
     editor->sa->type(FL_HOR_NICE_SLIDER);
-    editor->sa->minimum(0.75);
-    editor->sa->maximum(12);
+    editor->sa->minimum(0.1);
+    editor->sa->maximum(20);
     editor->sa->callback(persp_change_factor);
     editor->window->border(0);
     editor->window->end();
@@ -143,7 +143,7 @@ int perspectiveEditor()
   return 0;
 }
 
-// Perspective editor (aka z-clipping planes factor slider)
+// Mesh element size editor
 
 static void mesh_size_factor(Fl_Widget* w, void* data)
 {
@@ -161,12 +161,12 @@ int meshSizeEditor()
 
   if(!editor){
     editor = new _editor;
-    editor->window = new Fl_Menu_Window(150, 20);
+    editor->window = new Fl_Menu_Window(200, 20);
     if(CTX::instance()->nonModalWindows) editor->window->set_non_modal();
-    editor->sa = new Release_Slider(0, 0, 150, 20);
+    editor->sa = new Release_Slider(0, 0, 200, 20);
     editor->sa->type(FL_HOR_NICE_SLIDER);
-    editor->sa->minimum(0.1);
-    editor->sa->maximum(2);
+    editor->sa->minimum(0.05);
+    editor->sa->maximum(5);
     editor->sa->callback(mesh_size_factor);
     editor->window->border(0);
     editor->window->end();
