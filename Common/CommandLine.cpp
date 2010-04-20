@@ -69,9 +69,10 @@ void PrintUsage(const char *name)
   Msg::Direct("  -numsubedges          Set the number of subdivisions when displaying high order elements");  
   Msg::Direct("  -algo string          Select mesh algorithm (meshadapt, del2d, front2d, del3d, front3d)");
   Msg::Direct("  -smooth int           Set number of mesh smoothing steps");
-  Msg::Direct("  -optimize[_netgen]    Optimize quality of tetrahedral elements");
   Msg::Direct("  -order int            Set mesh order (1, ..., 5)");
+  Msg::Direct("  -optimize[_netgen]    Optimize quality of tetrahedral elements");
   Msg::Direct("  -optimize_hom         Optimize higher order meshes (in 2D)");
+  Msg::Direct("  -optimize_lloyd       Optimize 2D meshes using Lloyd algorithm");
   Msg::Direct("  -clscale float        Set characteristic length scaling factor");
   Msg::Direct("  -clmin float          Set minimum characteristic length");
   Msg::Direct("  -clmax float          Set maximum characteristic length");
@@ -226,6 +227,14 @@ void GetOptions(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "optimize_netgen")) {
         CTX::instance()->mesh.optimizeNetgen = 1;
         i++;
+      }
+      else if(!strcmp(argv[i] + 1, "optimize_hom")) {
+        i++;
+        opt_mesh_smooth_internal_edges(0, GMSH_SET, 1);
+      }
+      else if(!strcmp(argv[i] + 1, "optimize_lloyd")) {
+        i++;
+        CTX::instance()->mesh.optimizeLloyd = 1;
       }
       else if(!strcmp(argv[i] + 1, "nopopup")) {
         CTX::instance()->noPopup = 1;
@@ -442,10 +451,6 @@ void GetOptions(int argc, char *argv[])
           CTX::instance()->meshStatReportFileName = argv[i++];
         else
           Msg::Fatal("Missing argument");
-      }
-      else if(!strcmp(argv[i] + 1, "optimize_hom")) {
-        i++;
-        opt_mesh_smooth_internal_edges(0, GMSH_SET, 1);
       }
       else if(!strcmp(argv[i] + 1, "format") || !strcmp(argv[i] + 1, "f")) {
         i++;

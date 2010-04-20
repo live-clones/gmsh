@@ -80,6 +80,7 @@ CTX::CTX()
   numWindows = numTiles = 1;
   deltaFontSize = 0;
   recentFiles.resize(5);
+  mesh.optimizeLloyd = 0;
 }
 
 CTX *CTX::_instance = 0;

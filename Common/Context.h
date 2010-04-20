@@ -17,8 +17,8 @@ struct contextMeshOptions {
   int draw, changed, light, lightTwoSide, lightLines, pointType;
   int points, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms, pyramids;
   int surfacesEdges, surfacesFaces, volumesEdges, volumesFaces, numSubEdges;
-  int pointsNum, linesNum, surfacesNum, volumesNum;
-  int optimize, optimizeNetgen, refineSteps, qualityType, labelType, remove4triangles;
+  int pointsNum, linesNum, surfacesNum, volumesNum, qualityType, labelType;
+  int optimize, optimizeNetgen, optimizeLloyd, refineSteps, remove4triangles;
   double normals, tangents, explode, angleSmoothNormals, allowSwapEdgeAngle;
   double mshFileVersion, mshFilePartitioned, labelFrequency, pointSize, lineWidth;
   double qualityInf, qualitySup, radiusInf, radiusSup;

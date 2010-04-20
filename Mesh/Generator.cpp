@@ -419,16 +419,14 @@ static void Mesh2D(GModel *m)
     std::for_each(classFaces.begin(), classFaces.end(), meshGFace());
     std::for_each(compFaces.begin(), compFaces.end(), meshGFace());
 
-    //lloyd optimization
-    if (CTX::instance()->mesh.optimize > 0 ){
+    // lloyd optimization
+    if (CTX::instance()->mesh.optimizeLloyd){
       for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
 	GFace *gf = *it;
 	int recombine = gf->meshAttributes.recombine;
 	Msg::Info("Lloyd optimization for face %d", gf->tag());
-	gf->lloyd(40,recombine);
-	
-	if(recombine) recombineIntoQuads(gf);   
-
+	gf->lloyd(40, recombine);
+	if(recombine) recombineIntoQuads(gf);
       }
     }
 
