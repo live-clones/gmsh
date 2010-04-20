@@ -51,8 +51,7 @@ dataCacheDouble::dataCacheDouble(dataCacheMap *m, function *f):
   m->addDataCacheDouble(this, f->isInvalitedOnElement());
   _function = f;
   for(int i=0; i<f->_childrenCache.size(); i++) {
-    dataCacheMap *m2 = m->newChild();
-    m->addSecondaryCache(m2);
+    m->addSecondaryCache(m->newChild());
   }
   _substitutions.resize(f->_substitutedFunctions.size());
   for(int i=0; i<f->_substitutedFunctions.size(); i++) {
@@ -522,5 +521,8 @@ functionReplaceCache::functionReplaceCache(dataCacheMap *m, functionReplace *rep
   }
 }
 functionReplaceCache::~functionReplaceCache() {
+  for (int i = 0; i< map->_secondaryCaches.size(); i++) {
+    delete map->_secondaryCaches[i];
+  }
   delete map;
 }

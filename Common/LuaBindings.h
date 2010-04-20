@@ -893,6 +893,17 @@ class constructorBindingT<tObj, t0, t1, t2, t3, void> : public luaMethodBinding 
   }
 };
 
+template <class t>
+class destructorBindingT : public luaMethodBinding {
+ public:
+  int call(lua_State *L)
+  {
+    t *o = luaStack<t*>::get(L,1);
+    delete o;
+    return 0;
+  }
+};
+
 class classBinding {
   std::string _className;
   binding *_b;
@@ -997,10 +1008,7 @@ class classBinding {
   inline const std::string getDescription() const { return _description; }
   inline classBinding *getParent() const { return _parent; }
   std::map<std::string, luaMethodBinding *> methods;
-  template <typename cb>
-  methodBinding *addMethod(std::string n, cb f)
-  {
-    luaMethodBinding *mb = new methodBindingT<cb>(n, f);
+  void addMethodLua (std::string n, luaMethodBinding *mb) {
     methods[n] = mb;
     lua_State *L = _b->L;
     lua_getglobal(L, _className.c_str());
@@ -1013,6 +1021,12 @@ class classBinding {
     lua_pushcclosure(L, callMethod, 1);
     lua_setfield(L,methods, n.c_str()); //className.name = callMethod(mb)
     lua_pop(L, 1);
+  }
+  template <typename cb>
+  methodBinding *addMethod(std::string n, cb f)
+  {
+    luaMethodBinding *mb = new methodBindingT<cb>(n, f);
+    addMethodLua(n,mb);
     return mb; 
   }
   template <typename tObj, typename t0, typename t1, typename t2, typename t3, 
@@ -1073,6 +1087,9 @@ classBinding *binding::addClass(std::string name)
 {
   className<t>::set(name);
   classBinding *cb = new classBinding(this, name);
+  luaMethodBinding *d = new destructorBindingT<t>();
+  d->setDescription("destructor");
+  cb->addMethodLua("delete", d);
   classes[name] = cb;
   return cb;
 }
