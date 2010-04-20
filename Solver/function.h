@@ -52,6 +52,8 @@ class function {
   virtual void call (dataCacheMap *m, fullMatrix<double> &res)=0;
   std::vector<argument*> arguments;
   const fullMatrix<double> &addArgument(const function *f, int iMap = 0) {
+    if(f==NULL)
+      throw;
     arguments.push_back(new argument(iMap, f));
     return arguments.back()->val;
   }
@@ -173,6 +175,9 @@ class dataCacheMap {
   }
   void addSecondaryCache(dataCacheMap *s) {
     _secondaryCaches.push_back(s);
+    if(_secondaryCaches.size()>1){
+      printf("!!!!!!!!!!!!!!!!!!!!!\n");
+    }
   }
   dataCacheDouble &get(const function *f, dataCacheDouble *caller=0);
   dataCacheDouble &substitute(const function *f);

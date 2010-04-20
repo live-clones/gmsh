@@ -78,7 +78,7 @@ dataCacheDouble &dataCacheMap::get(const function *f, dataCacheDouble *caller)
     }
   }
   if (r==NULL)
-    r = new dataCacheDouble(this, const_cast<function*>(f));
+    r = new dataCacheDouble(this, (function*)(f));
   if (caller)
     r->addMeAsDependencyOf(caller);
   return *r;
@@ -87,7 +87,7 @@ dataCacheDouble &dataCacheMap::get(const function *f, dataCacheDouble *caller)
 dataCacheDouble &dataCacheMap::substitute(const function *f) 
 {
   dataCacheDouble *&r= _cacheDoubleMap[f];
-  r = new dataCacheDouble(this, const_cast<function*>(f));
+  r = new dataCacheDouble(this, (function*)(f));
   return *r;
 }
 
