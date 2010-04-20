@@ -388,5 +388,10 @@ binding::binding()
 }
 
 binding *binding::_instance=NULL;
+binding::~binding() {
+  for (std::map<std::string,classBinding *>::iterator it =  classes.begin(); it != classes.end(); it++) {
+    delete it->second;
+  }
+}
 
 #endif

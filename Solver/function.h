@@ -26,13 +26,14 @@ class function {
     public:
     int iMap;
     const function *f;
-    fullMatrix<double> val;
-    argument(int iMap_, const function *f_){
+    fullMatrix<double> *val;
+    argument(fullMatrix<double> &v, int iMap_, const function *f_){
+      val = &v;
       iMap = iMap_;
       f = f_;
     }
   };
-  std::vector<functionReplace> _functionReplaces;
+  std::vector<functionReplace*> _functionReplaces;
   class substitutedFunction {
     public:
     int iMap;
@@ -43,12 +44,11 @@ class function {
   std::vector<int> _childrenCache;
   std::vector<substitutedFunction> _substitutedFunctions;
   virtual void call (dataCacheMap *m, fullMatrix<double> &res)=0;
-  std::vector<argument*> arguments;
-  const fullMatrix<double> &addArgument(const function *f, int iMap = 0) {
+  std::vector<argument> arguments;
+  const void setArgument(fullMatrix<double> &v, const function *f, int iMap = 0) {
     if(f==NULL)
       throw;
-    arguments.push_back(new argument(iMap, f));
-    return arguments.back()->val;
+    arguments.push_back(argument(v, iMap, f));
   }
   void addChildDataCacheMap(int parent) {
     _childrenCache.push_back(parent);
@@ -65,7 +65,7 @@ class function {
   function(int nbCol, bool invalidatedOnElement = true);
   inline int getNbCol()const {return _nbCol;}
   inline bool isInvalitedOnElement() { return _invalidatedOnElement;}
-  functionReplace &addFunctionReplace();
+  void addFunctionReplace(functionReplace &fr);
   
   static function *getSolution();
   static function *getSolutionGradient();
@@ -108,7 +108,6 @@ public :
 
   int _nRowByPoint;
   function *_function;
- protected:
   dataCacheMap &_cacheMap;
   // do the actual computation and put the result into _value
   // still virtual because it is overrided by conservation law terms, as soon as conservation law terms will be regular functions, we will remove this
@@ -149,7 +148,7 @@ public :
   void resize();
   dataCacheDouble(dataCacheMap *,function *f);
   dataCacheDouble(dataCacheMap &m, int nRowByPoint, int nbCol);
-  virtual ~dataCacheDouble(){};
+  virtual ~dataCacheDouble();
 };
 
 
@@ -188,9 +187,6 @@ class dataCacheMap {
   }
   void addSecondaryCache(dataCacheMap *s) {
     _secondaryCaches.push_back(s);
-    if(_secondaryCaches.size()>1){
-      printf("!!!!!!!!!!!!!!!!!!!!!\n");
-    }
   }
   dataCacheDouble &get(const function *f, dataCacheDouble *caller=0);
   dataCacheDouble &substitute(const function *f);
@@ -226,11 +222,11 @@ class functionReplace {
   friend class dataCacheDouble;
   protected:
   functionReplaceCache *currentCache;
-  std::vector <function::argument*> _toReplace;
-  std::vector <function::argument*> _toCompute;
+  std::vector <function::argument> _toReplace;
+  std::vector <function::argument> _toCompute;
   public :
-  const fullMatrix<double> &get(const function *, int iMap = 0);
-  fullMatrix<double> &replace(const function *, int iMap = 0);
+  void get(fullMatrix<double> &v, const function *, int iMap = 0);
+  void replace(fullMatrix<double> &v, const function *, int iMap = 0);
   void compute ();
 };
 
@@ -240,11 +236,13 @@ class functionReplaceCache {
   std::vector <dataCacheDouble*> toReplace;
   std::vector <dataCacheDouble*> toCompute;
   functionReplaceCache(dataCacheMap *m, functionReplace *rep);
+  ~functionReplaceCache();
 };
 
 
 function *functionConstantNew(const std::vector<double>&);
 function *functionConstantNew(double);
+function *functionSumNew (const function *f0, const function *f1);
 
 class functionSolution : public function {
   static functionSolution *_instance;

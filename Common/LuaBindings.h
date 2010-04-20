@@ -67,6 +67,7 @@ class binding {
   int readFile(const char *filename);
   void interactiveSession();
   binding();
+  ~binding();
   std::map<std::string,classBinding *> classes;
   template<class t>
   classBinding *addClass(std::string className);
@@ -1058,6 +1059,13 @@ class classBinding {
     return constructorLua;
   }
   inline const std::string getClassName()const {return _className;}
+  ~classBinding() {
+    if (_constructor)
+      delete _constructor;
+    for (std::map<std::string, luaMethodBinding *>::iterator it = methods.begin(); it!=methods.end(); it++) {
+      delete it->second;
+    }
+  }
 };
 
 template<typename t>
