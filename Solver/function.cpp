@@ -10,16 +10,9 @@
 #endif
 #include "Bindings.h"
 
-void function::call (dataCacheMap *m, fullMatrix<double> &res, std::vector<const fullMatrix<double>*> &depM) {
-  switch (arguments.size()) {
-    case 0 : call(m, res); break;
-    case 1 : call(m, *depM[0], res); break;
-    case 2 : call(m, *depM[0], *depM[1], res); break;
-    case 3 : call(m, *depM[0], *depM[1], *depM[2], res); break;
-    case 4 : call(m, *depM[0], *depM[1], *depM[2], *depM[3], res); break;
-    case 5 : call(m, *depM[0], *depM[1], *depM[2], *depM[3], *depM[4], res); break;
-    case 6 : call(m, *depM[0], *depM[1], *depM[2], *depM[3], *depM[4], *depM[5], res); break;
-    default : Msg::Error("function are not implemented for %i arguments\n", arguments.size());
+function::~function() {
+  for (int i=0; i<arguments.size(); i++) {
+    delete arguments[i];
   }
 }
 function::function(int nbCol, bool invalidatedOnElement):_nbCol(nbCol), _invalidatedOnElement(invalidatedOnElement){};
@@ -50,15 +43,23 @@ dataCacheDouble::dataCacheDouble(dataCacheMap *m, function *f):
   m->addDataCacheDouble(this, f->isInvalitedOnElement());
   _function = f;
   _dependencies.resize ( _function->arguments.size());
-  _depM.resize (_function->arguments.size());
-  for (unsigned int i=0;i<_function->arguments.size();i++)
-    _dependencies[i] = &m[_function->arguments[i].first].get(_function->arguments[i].second,this);
+  for (unsigned int i=0;i<_function->arguments.size();i++) {
+    int iCache = _function->arguments[i]->iMap;
+    const function *f = _function->arguments[i]->f;
+    _dependencies[i] = &m->getSecondaryCache(iCache)->get(f,this);
+  }
 }
 
 void dataCacheDouble::resize() {
   _value = fullMatrix<double>(_nRowByPoint==0?1:_nRowByPoint*_cacheMap.getNbEvaluationPoints(),_value.size2());
 }
 
+void dataCacheDouble::_eval() {
+  for(unsigned int i=0;i<_dependencies.size(); i++){
+    _function->arguments[i]->val.setAsProxy((*_dependencies[i])());
+  }
+  _function->call(&_cacheMap, _value);
+}
 
 //dataCacheMap members
 dataCacheDouble &dataCacheMap::get(const function *f, dataCacheDouble *caller) 
@@ -106,8 +107,9 @@ class functionConstant : public function {
   fullMatrix<double> _source;
   void call(dataCacheMap *m, fullMatrix<double> &val) {
     for(int i=0;i<val.size1();i++)
-      for(int j=0;j<_source.size1();j++)
+      for(int j=0;j<_source.size1();j++){
         val(i,j)=_source(j,0);
+        }
   }
   functionConstant(std::vector<double> source):function(source.size()){
     _source = fullMatrix<double>(source.size(),1);
@@ -130,7 +132,8 @@ function *functionConstantNew(const std::vector<double> &v) {
 // get XYZ coordinates
 class functionCoordinates : public function {
   static functionCoordinates *_instance;
-  void call (dataCacheMap *m, const fullMatrix<double> &uvw, fullMatrix<double> &xyz){
+  const fullMatrix<double> &uvw;
+  void call (dataCacheMap *m, fullMatrix<double> &xyz){
     for(int i = 0; i < uvw.size1(); i++){
       SPoint3 p;
       m->getElement()->pnt(uvw(i, 0), uvw(i, 1), uvw(i, 2), p);
@@ -139,8 +142,8 @@ class functionCoordinates : public function {
       xyz(i, 2) = p.z();
     }
   }
-  functionCoordinates():function(3){
-    addArgument(function::getParametricCoordinates());
+  functionCoordinates():function(3),
+    uvw(addArgument(function::getParametricCoordinates())){
   };// constructor is private only 1 instance can exists, call get to access the instance
  public:
   static function *get() {
@@ -228,6 +231,7 @@ function *function::getNormals() {
 }
 
 class functionStructuredGridFile : public function {
+  const fullMatrix<double> &coord;
   public:
   int n[3];
   double d[3],o[3];
@@ -235,7 +239,7 @@ class functionStructuredGridFile : public function {
     return v[(i*n[1]+j)*n[2]+k];
   }
   double *v;
-  void call(dataCacheMap *m, const fullMatrix<double> &coord, fullMatrix<double> &val){
+  void call(dataCacheMap *m, fullMatrix<double> &val){
     for(int pt=0;pt<val.size1();pt++){
       double xi[3];
       int id[3];
@@ -257,9 +261,8 @@ class functionStructuredGridFile : public function {
         +get(id[0]+1 ,id[1]+1 ,id[2]+1 )*(  xi[0])*(  xi[1])*(  xi[2]);
     }
   }
-  functionStructuredGridFile(const std::string filename, const function *coordFunction): function(1){
+  functionStructuredGridFile(const std::string filename, const function *coordFunction): function(1), coord(addArgument(coordFunction)){
     std::ifstream input(filename.c_str());
-    addArgument(coordFunction);
     if(!input)
       Msg::Error("cannot open file : %s",filename.c_str());
     if(filename.substr(filename.size()-4,4)!=".bin") {
@@ -288,12 +291,12 @@ class functionLua : public function {
   lua_State *_L;
   std::string _luaFunctionName;
  public:
-  void call (dataCacheMap *m, fullMatrix<double> &res, std::vector<const fullMatrix<double>*> &depM) {
+  void call (dataCacheMap *m, fullMatrix<double> &res) {
     lua_getfield(_L, LUA_GLOBALSINDEX, _luaFunctionName.c_str());
-    for (int i=0;i< depM.size(); i++)
-      luaStack<const fullMatrix<double>*>::push(_L, depM[i]);
+    for (int i=0;i< arguments.size(); i++)
+      luaStack<const fullMatrix<double>*>::push(_L, &arguments[i]->val);
     luaStack<const fullMatrix<double>*>::push(_L, &res);
-    lua_call(_L, depM.size()+1, 0);
+    lua_call(_L, arguments.size()+1, 0);
   }
   functionLua (int nbCol, std::string luaFunctionName, std::vector<const function*> dependencies, lua_State *L)
     : function(nbCol), _luaFunctionName(luaFunctionName), _L(L)
@@ -322,40 +325,40 @@ void dataCacheMap::setNbEvaluationPoints(int nbEvaluationPoints) {
 class functionC : public function {
   void (*callback)(void);
   public:
-  void call (dataCacheMap *m, fullMatrix<double> &val, std::vector<const fullMatrix<double>*> &depM) {
-    switch (depM.size()) {
+  void call (dataCacheMap *m, fullMatrix<double> &val) {
+    switch (arguments.size()) {
       case 0 : 
         ((void (*)(fullMatrix<double> &))(callback))(val);
         break;
       case 1 : 
         ((void (*)(fullMatrix<double> &, const fullMatrix<double>&))
-         (callback)) (val, *depM[0]);
+         (callback)) (val, arguments[0]->val);
         break;
       case 2 : 
         ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double> &))
-         (callback)) (val, *depM[0], *depM[1]);
+         (callback)) (val, arguments[0]->val, arguments[1]->val);
         break;
       case 3 : 
         ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&))
-         (callback)) (val, *depM[0], *depM[1], *depM[2]);
+         (callback)) (val, arguments[0]->val, arguments[1]->val, arguments[2]->val);
         break;
       case 4 : 
         ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&,
                    const fullMatrix<double>&))
-         (callback)) (val, *depM[0], *depM[1], *depM[2], *depM[3]);
+         (callback)) (val, arguments[0]->val, arguments[1]->val, arguments[2]->val, arguments[3]->val);
         break;
       case 5 : 
         ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&,
                    const fullMatrix<double>&, const fullMatrix<double>&))
-         (callback)) (val, *depM[0], *depM[1], *depM[2], *depM[3], *depM[4]);
+         (callback)) (val, arguments[0]->val, arguments[1]->val, arguments[2]->val, arguments[3]->val, arguments[4]->val);
         break;
       case 6 : 
         ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&,
                    const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&))
-         (callback)) (val, *depM[0], *depM[1], *depM[2], *depM[3], *depM[4], *depM[5]);
+         (callback)) (val, arguments[0]->val, arguments[1]->val, arguments[2]->val, arguments[3]->val, arguments[4]->val, arguments[5]->val);
         break;
       default :
-        Msg::Error("C callback not implemented for %i argurments", depM.size());
+        Msg::Error("C callback not implemented for %i argurments", arguments.size());
     }
   }
   functionC (std::string file, std::string symbol, int nbCol, std::vector<const function *> dependencies):

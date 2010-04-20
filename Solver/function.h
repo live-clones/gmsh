@@ -34,25 +34,29 @@ class dataCacheDouble;
 // An abstract interface to functions 
 // more explanation at the head of this file
 class function {
+  class argument {
+    //iMap is the id of the dataCacheMap, e.g. on interfaces
+    public:
+    int iMap;
+    const function *f;
+    fullMatrix<double> val;
+    argument(int iMap_, const function *f_) {
+      iMap = iMap_;
+      f = f_;
+    }
+  };
   int _nbCol;
   bool _invalidatedOnElement;
   protected :
-  virtual void call (dataCacheMap *m, fullMatrix<double> &res) {throw;}
-  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, fullMatrix<double> &res) {throw;};
-  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, fullMatrix<double> &res) {throw;};
-  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, fullMatrix<double> &res) {throw;};
-  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, fullMatrix<double> &res) {throw;};
-  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, const fullMatrix<double> &arg4, fullMatrix<double> &res) {throw;};
-  virtual void call (dataCacheMap *m, const fullMatrix<double> &arg0, const fullMatrix<double> &arg1, const fullMatrix<double> &arg2, const fullMatrix<double> &arg3, const fullMatrix<double> &arg4, const fullMatrix<double> &arg5, fullMatrix<double> &res) {throw;};
   public :
-  std::vector<std::pair<int, const function*> > arguments;
-  void addArgument(const function *f, int iMap = 0) {
-    //iMap is the id of the dataCacheMap, e.g. on interfaces
-    arguments.push_back(std::pair<int, const function*>(iMap, f));
+  virtual void call (dataCacheMap *m, fullMatrix<double> &res)=0;
+  std::vector<argument*> arguments;
+  const fullMatrix<double> &addArgument(const function *f, int iMap = 0) {
+    arguments.push_back(new argument(iMap, f));
+    return arguments.back()->val;
   }
-  virtual ~function(){};
+  virtual ~function();
   static void registerBindings(binding *b);
-  virtual void call (dataCacheMap *m, fullMatrix<double> &res, std::vector<const fullMatrix<double>*> &depM);
   function(int nbCol, bool invalidatedOnElement = true);
   inline int getNbCol()const {return _nbCol;}
   inline bool isInvalitedOnElement() { return _invalidatedOnElement;}
@@ -91,21 +95,15 @@ public :
     return (_iDependOn.find(&other)!=_iDependOn.end());
   }
   std::vector<dataCacheDouble*> _dependencies;
-  std::vector<const fullMatrix<double>*> _depM;
 
   int _nRowByPoint;
-  dataCacheMap &_cacheMap;
   function *_function;
  protected:
+  dataCacheMap &_cacheMap;
   fullMatrix<double> _value;
   // do the actual computation and put the result into _value
   // still virtual because it is overrided by conservation law terms, as soon as conservation law terms will be regular functions, we will remove this
-  virtual void _eval()
-  {
-    for(unsigned int i=0;i<_dependencies.size(); i++)
-      _depM[i] = &(*_dependencies[i])();
-    _function->call(&_cacheMap, _value, _depM);
-  }
+  virtual void _eval();
  public:
   //set the value (without computing it by _eval) and invalidate the dependencies
   // this function is needed to be able to pass the _value to functions like gemm or mult
@@ -143,11 +141,13 @@ public :
 };
 
 
+class dgDataCacheMap;
 // more explanation at the head of this file
 class dataCacheMap {
   friend class dataCacheDouble;
   dataCacheMap  *_parent;
   std::list<dataCacheMap*> _children;
+  std::vector<dataCacheMap*> _secondaryCaches;
   int _nbEvaluationPoints;
   std::map<const function*, dataCacheDouble*> _cacheDoubleMap;
   std::set<dataCacheDouble*> _allDataCaches;
@@ -162,9 +162,21 @@ class dataCacheMap {
       _toInvalidateOnElement.insert(data);
   }
  public:
+  virtual dgDataCacheMap *asDgDataCacheMap() {
+    Msg::Error("I'm not a dgDataCacheMap\n");
+    return NULL;
+  }
+  dataCacheMap *getSecondaryCache(int i) {
+    if (i==0)
+      return this;
+    return _secondaryCaches[i-1];
+  }
+  void addSecondaryCache(dataCacheMap *s) {
+    _secondaryCaches.push_back(s);
+  }
   dataCacheDouble &get(const function *f, dataCacheDouble *caller=0);
   dataCacheDouble &substitute(const function *f);
-  inline void setElement(MElement *element) {
+  virtual void setElement(MElement *element) {
     _element=element;
     for(std::set<dataCacheDouble*>::iterator it = _toInvalidateOnElement.begin(); it!= _toInvalidateOnElement.end(); it++) {
       (*it)->_valid=false;
