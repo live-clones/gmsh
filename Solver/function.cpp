@@ -17,6 +17,11 @@ function::~function() {
 }
 function::function(int nbCol, bool invalidatedOnElement):_nbCol(nbCol), _invalidatedOnElement(invalidatedOnElement){};
 
+functionReplace &function::addFunctionReplace() {
+  _functionReplaces.resize(_functionReplaces.size()+1);
+  return _functionReplaces.back();
+}
+
 void dataCacheDouble::addMeAsDependencyOf (dataCacheDouble *newDep)
 {
   _dependOnMe.insert(newDep);
@@ -58,6 +63,9 @@ dataCacheDouble::dataCacheDouble(dataCacheMap *m, function *f):
     const function *f = _function->arguments[i]->f;
     _dependencies[i] = &m->getSecondaryCache(iCache)->get(f,this);
   }
+  for (int i = 0; i < f->_functionReplaces.size(); i++) {
+    functionReplaceCaches.push_back (new functionReplaceCache(m, &f->_functionReplaces[i]));
+  }
 }
 
 void dataCacheDouble::resize() {
@@ -70,6 +78,12 @@ void dataCacheDouble::_eval() {
   }
   for(unsigned int i=0;i<_dependencies.size(); i++){
     _function->arguments[i]->val.setAsProxy((*_dependencies[i])());
+  }
+  for (int i = 0; i < _function->_functionReplaces.size(); i++) {
+    _function->_functionReplaces[i].currentCache = functionReplaceCaches[i];
+    for (int j = 0; j < functionReplaceCaches[i]->toReplace.size() ; j++){
+      _function->_functionReplaces[i]._toReplace[j]->val.setAsProxy((*functionReplaceCaches[i]->toReplace[j])._value);
+    }
   }
   _function->call(&_cacheMap, _value);
 }
@@ -160,7 +174,8 @@ class functionCoordinates : public function {
     }
   }
   functionCoordinates():function(3),
-    uvw(addArgument(function::getParametricCoordinates())){
+  uvw(addArgument(function::getParametricCoordinates()))
+    {
   };// constructor is private only 1 instance can exists, call get to access the instance
  public:
   static function *get() {
@@ -171,20 +186,6 @@ class functionCoordinates : public function {
 };
 functionCoordinates *functionCoordinates::_instance = NULL;
 
-class functionSolution : public function {
-  static functionSolution *_instance;
-  functionSolution():function(0){};// constructor is private only 1 instance can exists, call get to access the instance
- public:
-  void call(dataCacheMap *m, fullMatrix<double> &sol) {
-    Msg::Error("a function requires the solution but this algorithm does not provide the solution");
-    throw;
-  }
-  static function *get() {
-    if(!_instance)
-      _instance = new functionSolution();
-    return _instance;
-  }
-};
 functionSolution *functionSolution::_instance = NULL;
 function *function::getSolution() {
   return functionSolution::get();
@@ -278,7 +279,9 @@ class functionStructuredGridFile : public function {
         +get(id[0]+1 ,id[1]+1 ,id[2]+1 )*(  xi[0])*(  xi[1])*(  xi[2]);
     }
   }
-  functionStructuredGridFile(const std::string filename, const function *coordFunction): function(1), coord(addArgument(coordFunction)){
+  functionStructuredGridFile(const std::string filename, const function *coordFunction): function(1),
+     coord(addArgument(coordFunction))
+     {
     std::ifstream input(filename.c_str());
     if(!input)
       Msg::Error("cannot open file : %s",filename.c_str());
@@ -456,4 +459,37 @@ void function::registerBindings(binding *b){
   mb->setDescription("A new functionLua which evaluates a vector of dimension 'd' using the lua function 'f'. This function can take other functions as arguments listed by the 'dep' vector.");
   cb->setParentClass<function>();
 #endif
+}
+
+fullMatrix<double> &functionReplace::replace(const function *f, int iMap) {
+  function::argument *arg = new function::argument(iMap, f);
+  _toReplace.push_back(arg);
+  return arg->val;
+}
+
+const fullMatrix<double> &functionReplace::get(const function *f, int iMap) {
+  function::argument *arg = new function::argument(iMap, f);
+  _toCompute.push_back(arg);
+  return arg->val;
+}
+
+void functionReplace::compute(){
+  for (int i = 0; i < _toReplace.size(); i++) {
+  //printf("a %p\n",&currentCache->toReplace[i]->_value);
+    currentCache->toReplace[i]->set();//.setAsProxy(_toReplace[i]->val);
+  //printf("b\n");
+  }
+  for (int i = 0; i < _toCompute.size(); i++) {
+    _toCompute[i]->val.setAsProxy((*currentCache->toCompute[i])());
+  }
+};
+
+functionReplaceCache::functionReplaceCache(dataCacheMap *m, functionReplace *rep) {
+  map = m->newChild();
+  for (int i = 0; i < rep->_toReplace.size(); i++) {
+    toReplace.push_back (&map->getSecondaryCache(rep->_toReplace[i]->iMap)->substitute(rep->_toReplace[i]->f));
+  }
+  for (int i = 0; i < rep->_toCompute.size(); i++) {
+    toCompute.push_back (&map->getSecondaryCache(rep->_toCompute[i]->iMap)->get(rep->_toCompute[i]->f));
+  }
 }

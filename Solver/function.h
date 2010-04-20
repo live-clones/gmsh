@@ -11,25 +11,11 @@ class dataCacheMap;
 class MElement;
 class binding;
 
-// those classes manage complex function dependencies and keep their values in cache so that they are not recomputed when it is not necessary. To do this, we use three classes : function, dataCache and dataCacheMap. The workflow is :
-// a) while parsing the input file and during the initialisation of the conservationLaw : all user-defined instance of function are inserted in the function map. (for example an user can create a function named "wind" of the class functionMathex with parameter "0.1*sin(xyz(0)/1e6); 0"  and then give the string "wind" as parameter to it's conservation law to let the law know that this is the function to use as wind forcing)
-//
-// b) before starting to iterate over the element :
-// b1) the algorithm create a new dataCacheMap instance.
-// b2) The algo insert in the dataCacheMap the dataCache it will provide (ie the quadrature points, the solution value,...) 
-// b3) Then the algo give this dataCacheMap to the law and ask the source term of the law. This source term will be given as a dataCache, i.e. a cached value, a function to update it and a node in the dependency tree. In this example, to create this datacache two new dataCache will be required : one for the "wind" and one for "xyz". So, the source dataCache will ask the dataCacheMap for the dataCache called "wind". If this one does not already exist, the dataCacheMap will ask the function called "wind" to create it. In turn, the constructor of the dataCache associated with the "wind" will ask for the for the dataCache "xyz" wich will be created by the function "xyz" if it does not already exist and so on. The dataCacheMap contain also a special dataCache associated with the current element. During it's construction it's dataCache keep references to all the dataCache needed to compute it. When they request for the dataCache they need, the dataCacheMap is informed and the dependency tree is built. 
-//
-// c) When iterating over elements, for each element : the Algo will change the dataCache element so that it points to the current element. This will invalidate everything that depend on the current on the current element (in this case, xyz, wind (because it depends on xyz) and the source dataCache (because it depends on wind). So, in this case everything (exept the current element dataCache) is marked as invalid. Now the algo want to access the value of the 'source' dataCache this one is invalid, so it is recomputed. To recompute it, the value of the wind is accessed and it's value is recomputed, and so on. Now, if some other function access the wind or the position (xyz), they are already marked as valid and are not re-computed.
-//
-// d) after the loop over the elements the dataCacheMap is deleted and it delete all its dataCaches.
-//
-// NB) in the case of integration over faces, there is two dataCacheMap : one for the Right side and one for the left side i.e. two sets of cached values and two dependency trees. Some dataCache (ie the value of the flux) have dependencies in both tree. This is not a problem, the only difference with other dataCaches is that they are not owned by the dataCacheMap and have to be deleted manually.
-// 
-
-// a node in the dependency tree. The usefull field is _dependOnMe which is the set of every other nodes that depend on me. When the value of this node change all nodes depending on this one are marked as "invalid" and will be recomputed the next time their data are accessed. To be able to maintain _dependOnMe up to date when a new node is inserted in the tree, we need _iDependOn list. So we do not really store a tree but instead each node contain a complete list of all it's parents and all it's children (and the parents of the parents of ... of its parents and the children of the children of ... of it's children). This way invalidate all the dependencies of a node is really fast and does not involve a complex walk accross the tree structure.
-
 class function;
 class dataCacheDouble;
+
+class functionReplace;
+class functionReplaceCache;
 
 // An abstract interface to functions 
 // more explanation at the head of this file
@@ -41,11 +27,12 @@ class function {
     int iMap;
     const function *f;
     fullMatrix<double> val;
-    argument(int iMap_, const function *f_) {
+    argument(int iMap_, const function *f_){
       iMap = iMap_;
       f = f_;
     }
   };
+  std::vector<functionReplace> _functionReplaces;
   class substitutedFunction {
     public:
     int iMap;
@@ -78,6 +65,7 @@ class function {
   function(int nbCol, bool invalidatedOnElement = true);
   inline int getNbCol()const {return _nbCol;}
   inline bool isInvalitedOnElement() { return _invalidatedOnElement;}
+  functionReplace &addFunctionReplace();
   
   static function *getSolution();
   static function *getSolutionGradient();
@@ -115,15 +103,18 @@ public :
   std::vector<dataCacheDouble*> _dependencies;
   std::vector<std::pair<dataCacheDouble*, dataCacheDouble*> > _substitutions;
 
+  
+
+
   int _nRowByPoint;
   function *_function;
  protected:
   dataCacheMap &_cacheMap;
-  fullMatrix<double> _value;
   // do the actual computation and put the result into _value
   // still virtual because it is overrided by conservation law terms, as soon as conservation law terms will be regular functions, we will remove this
   virtual void _eval();
  public:
+  fullMatrix<double> _value;
   //set the value (without computing it by _eval) and invalidate the dependencies
   // this function is needed to be able to pass the _value to functions like gemm or mult
   // but you cannot keep the reference to the _value, you should always use the set function 
@@ -136,6 +127,8 @@ public :
     _valid = true;
     return _value;
   }
+  std::vector<functionReplaceCache*> functionReplaceCaches;
+
   inline const double &operator () (int i, int j)
   {
     if(!_valid) {
@@ -228,7 +221,46 @@ class dataCacheMap {
   ~dataCacheMap();
 };
 
+class functionReplace {
+  friend class functionReplaceCache;
+  friend class dataCacheDouble;
+  protected:
+  functionReplaceCache *currentCache;
+  std::vector <function::argument*> _toReplace;
+  std::vector <function::argument*> _toCompute;
+  public :
+  const fullMatrix<double> &get(const function *, int iMap = 0);
+  fullMatrix<double> &replace(const function *, int iMap = 0);
+  void compute ();
+};
+
+class functionReplaceCache {
+  public :
+  dataCacheMap *map;
+  std::vector <dataCacheDouble*> toReplace;
+  std::vector <dataCacheDouble*> toCompute;
+  functionReplaceCache(dataCacheMap *m, functionReplace *rep);
+};
+
+
 function *functionConstantNew(const std::vector<double>&);
 function *functionConstantNew(double);
 
+class functionSolution : public function {
+  static functionSolution *_instance;
+  functionSolution():function(0){};// constructor is private only 1 instance can exists, call get to access the instance
+ public:
+  void call(dataCacheMap *m, fullMatrix<double> &sol) {
+    Msg::Error("a function requires the solution but this algorithm does not provide the solution");
+    throw;
+  }
+  void setNbFields( int nbFields) {
+    _nbCol = nbFields;
+  }
+  static functionSolution *get() {
+    if(!_instance)
+      _instance = new functionSolution();
+    return _instance;
+  }
+};
 #endif
