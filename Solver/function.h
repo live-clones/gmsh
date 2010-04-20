@@ -34,6 +34,7 @@ class dataCacheDouble;
 // An abstract interface to functions 
 // more explanation at the head of this file
 class function {
+  public :
   class argument {
     //iMap is the id of the dataCacheMap, e.g. on interfaces
     public:
@@ -45,10 +46,15 @@ class function {
       f = f_;
     }
   };
+  class substitutedFunction {
+    public:
+    int iMap;
+    const function *f0, *f1; // f1 replaces f0
+  };
   int _nbCol;
   bool _invalidatedOnElement;
-  protected :
-  public :
+  std::vector<int> _childrenCache;
+  std::vector<substitutedFunction> _substitutedFunctions;
   virtual void call (dataCacheMap *m, fullMatrix<double> &res)=0;
   std::vector<argument*> arguments;
   const fullMatrix<double> &addArgument(const function *f, int iMap = 0) {
@@ -56,6 +62,16 @@ class function {
       throw;
     arguments.push_back(new argument(iMap, f));
     return arguments.back()->val;
+  }
+  void addChildDataCacheMap(int parent) {
+    _childrenCache.push_back(parent);
+  }
+  void substituteFunction( int iMap, const function *f0, const function *f1) {
+    substitutedFunction s;
+    s.iMap= iMap;
+    s.f0 = f0;
+    s.f1 = f1;
+    _substitutedFunctions.push_back(s);
   }
   virtual ~function();
   static void registerBindings(binding *b);
@@ -97,6 +113,7 @@ public :
     return (_iDependOn.find(&other)!=_iDependOn.end());
   }
   std::vector<dataCacheDouble*> _dependencies;
+  std::vector<std::pair<dataCacheDouble*, dataCacheDouble*> > _substitutions;
 
   int _nRowByPoint;
   function *_function;
@@ -147,7 +164,7 @@ class dgDataCacheMap;
 // more explanation at the head of this file
 class dataCacheMap {
   friend class dataCacheDouble;
- protected:
+ public:
   dataCacheMap  *_parent;
   std::list<dataCacheMap*> _children;
   std::vector<dataCacheMap*> _secondaryCaches;
@@ -163,7 +180,6 @@ class dataCacheMap {
     if(invalidatedOnElement)
       _toInvalidateOnElement.insert(data);
   }
- public:
   void printList() {
     for(std::set<dataCacheDouble*>::iterator it = _toInvalidateOnElement.begin(); it!= _toInvalidateOnElement.end(); it++)
       printf("%p\n",*it);
@@ -199,10 +215,12 @@ class dataCacheMap {
     _nbEvaluationPoints = 0;
     _parent=NULL;
   }
-  void setParent(dataCacheMap *parent) {
-    _parent = parent;
-    _parent->_children.push_back(this);
-    _nbEvaluationPoints = 0;
+  virtual dataCacheMap *newChild() {
+    dataCacheMap *m = new dataCacheMap();
+    m->_parent = this;
+    _children.push_back(m);
+    m->_nbEvaluationPoints = 0;
+    return m;
   }
   void setNbEvaluationPoints(int nbEvaluationPoints);
 

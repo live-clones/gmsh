@@ -42,6 +42,16 @@ dataCacheDouble::dataCacheDouble(dataCacheMap *m, function *f):
   _nRowByPoint=1;
   m->addDataCacheDouble(this, f->isInvalitedOnElement());
   _function = f;
+  for(int i=0; i<f->_childrenCache.size(); i++) {
+    dataCacheMap *m2 = m->newChild();
+    m->addSecondaryCache(m2);
+  }
+  _substitutions.resize(f->_substitutedFunctions.size());
+  for(int i=0; i<f->_substitutedFunctions.size(); i++) {
+    function::substitutedFunction s = f->_substitutedFunctions[i];
+    _substitutions[i].first = &m->getSecondaryCache(s.iMap)->substitute(s.f0);
+    _substitutions[i].second = &m->get(s.f1,this);
+  }
   _dependencies.resize ( _function->arguments.size());
   for (unsigned int i=0;i<_function->arguments.size();i++) {
     int iCache = _function->arguments[i]->iMap;
@@ -55,6 +65,9 @@ void dataCacheDouble::resize() {
 }
 
 void dataCacheDouble::_eval() {
+  for(unsigned int i=0;i<_substitutions.size(); i++){
+    _substitutions[i].first->set() = (*_substitutions[i].second)();
+  }
   for(unsigned int i=0;i<_dependencies.size(); i++){
     _function->arguments[i]->val.setAsProxy((*_dependencies[i])());
   }
