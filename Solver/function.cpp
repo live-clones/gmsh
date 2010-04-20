@@ -71,14 +71,18 @@ dataCacheDouble &dataCacheMap::get(const function *f, dataCacheDouble *caller)
       r = it->second;
       for (std::set<dataCacheDouble*>::iterator dep = r->_iDependOn.begin(); dep != r->_iDependOn.end(); dep++) {
         if (&(*dep)->_cacheMap == this) {
+          throw;
           r = NULL;
           break;
         }
       }
     }
   }
-  if (r==NULL)
+  if (r==NULL) {
+    if(_parent)
+      throw;
     r = new dataCacheDouble(this, (function*)(f));
+  }
   if (caller)
     r->addMeAsDependencyOf(caller);
   return *r;

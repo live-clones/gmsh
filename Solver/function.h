@@ -147,6 +147,7 @@ class dgDataCacheMap;
 // more explanation at the head of this file
 class dataCacheMap {
   friend class dataCacheDouble;
+ protected:
   dataCacheMap  *_parent;
   std::list<dataCacheMap*> _children;
   std::vector<dataCacheMap*> _secondaryCaches;
@@ -155,15 +156,18 @@ class dataCacheMap {
   std::set<dataCacheDouble*> _allDataCaches;
   std::set<dataCacheDouble*> _toInvalidateOnElement;
 
-  MElement *_element;
 
- protected:
+  MElement *_element;
   void addDataCacheDouble(dataCacheDouble *data, bool invalidatedOnElement){
     _allDataCaches.insert(data);
     if(invalidatedOnElement)
       _toInvalidateOnElement.insert(data);
   }
  public:
+  void printList() {
+    for(std::set<dataCacheDouble*>::iterator it = _toInvalidateOnElement.begin(); it!= _toInvalidateOnElement.end(); it++)
+      printf("%p\n",*it);
+  }
   virtual dgDataCacheMap *asDgDataCacheMap() {
     Msg::Error("I'm not a dgDataCacheMap\n");
     return NULL;
@@ -195,7 +199,7 @@ class dataCacheMap {
     _nbEvaluationPoints = 0;
     _parent=NULL;
   }
-  dataCacheMap(dataCacheMap *parent) {
+  void setParent(dataCacheMap *parent) {
     _parent = parent;
     _parent->_children.push_back(this);
     _nbEvaluationPoints = 0;
