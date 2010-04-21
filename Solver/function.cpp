@@ -98,7 +98,8 @@ dataCacheDouble &dataCacheMap::get(const function *f, dataCacheDouble *caller) {
     if (it != cParent->_cacheDoubleMap.end()) {
       r = it->second;
       for (std::set<dataCacheDouble*>::iterator dep = r->_iDependOn.begin(); dep != r->_iDependOn.end(); dep++) {
-        if (&(*dep)->_cacheMap == this) {
+        //if (_cacheDoubleMap.find((*dep)->_function) != _cacheDoubleMap.end()) {
+        if (&get((*dep)->_function) != *dep) {
           r = NULL;
           break;
         }
@@ -499,9 +500,11 @@ void functionReplace::get(fullMatrix<double> &v, const function *f, int iMap) {
 }
 
 void functionReplace::compute(){
-  for (int i = 0; i < _toReplace.size(); i++)
+  for (int i = 0; i < _toReplace.size(); i++){
     currentCache->toReplace[i]->set();
+  }
   for (int i = 0; i < _toCompute.size(); i++) {
+    currentCache->toCompute[i]->_valid =false;
     _toCompute[i].val->setAsProxy((*currentCache->toCompute[i])());
   }
 };
