@@ -130,7 +130,7 @@ static void printMethod(std::string name, luaMethodBinding *mb, bool isConstruct
   std::vector<std::string> argTypeNames;
   mb->getArgTypeNames(argTypeNames);
   std::cout << "  ";
-  if(!isConstructor)
+  if(!isConstructor && name!="delete")
     std::cout << colorBold<<argTypeNames[0];
   std::cout << colorBlue << " " << name << colorDefault << colorBold << " (";
   int count = 0;
