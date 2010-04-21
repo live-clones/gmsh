@@ -1313,7 +1313,7 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "CombineRemoveOriginal" , opt_post_combine_remove_orig , 1. ,
     "Remove original views after a Combine operation" },
 
-  { F|O, "Format" , opt_post_file_format , 0. ,
+  { F|O, "Format" , opt_post_file_format , 2. ,
     "Default file format for post-processing views (0=ASCII view, 1=binary "
     "view, 2=parsed view, 3=STL triangulation, 4=raw text, 5=Gmsh mesh, 6=MED file)" },
 

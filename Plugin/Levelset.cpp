@@ -190,9 +190,10 @@ GMSH_LevelsetPlugin::GMSH_LevelsetPlugin()
   _orientation = GMSH_LevelsetPlugin::NONE;
 }
 
-void GMSH_LevelsetPlugin::_addElement(int step, int np, int numEdges, int numComp,
+void GMSH_LevelsetPlugin::_addElement(int np, int numEdges, int numComp,
                                       double xp[12], double yp[12], double zp[12],
-                                      double valp[12][9], PViewDataList *out)
+                                      double valp[12][9], PViewDataList *out,
+                                      bool firstStep)
 {
   std::vector<double> *list;
   int *nbPtr;
@@ -244,7 +245,7 @@ void GMSH_LevelsetPlugin::_addElement(int step, int np, int numEdges, int numCom
   }
 
   // copy the elements in the output data
-  if(!step || !_valueIndependent) {
+  if(firstStep || !_valueIndependent) {
     for(int k = 0; k < np; k++) 
       list->push_back(xp[k]);
     for(int k = 0; k < np; k++)
@@ -262,7 +263,7 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
                                              int ent, int ele, int step, int wstep, 
                                              double x[8], double y[8], double z[8],
                                              double levels[8], double scalarValues[8],
-                                             PViewDataList* out)
+                                             PViewDataList* out, bool firstStep)
 {
   int numNodes = vdata->getNumNodes(step, ent, ele);
   int numEdges = vdata->getNumEdges(step, ent, ele);
@@ -313,7 +314,7 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
           for(int comp = 0; comp < numComp; comp++)
             wdata->getValue(wstep, ent, ele, nod, comp, valp[n[nod]][comp]);
         }
-        _addElement(step, nsn, nse, numComp, xp, yp, zp, valp, out);
+        _addElement(nsn, nse, numComp, xp, yp, zp, valp, out, firstStep);
       }
       continue;
     }
@@ -330,7 +331,7 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
 
     // orient the triangles and the quads to get the normals right
     if(!_extractVolume && (np == 3 || np == 4)) {
-      if(!step || !_valueIndependent) {
+      if(firstStep || !_valueIndependent) {
         // test this only once for spatially-fixed views
         double v1[3] = {xp[2] - xp[0], yp[2] - yp[0], zp[2] - zp[0]};
         double v2[3] = {xp[1] - xp[0], yp[1] - yp[0], zp[1] - zp[0]};
@@ -390,7 +391,7 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
         continue;
     }
 
-    _addElement(step, np, numEdges, numComp, xp, yp, zp, valp, out);
+    _addElement(np, numEdges, numComp, xp, yp, zp, valp, out, firstStep);
   }
 }
 
@@ -435,18 +436,28 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
   if(_valueIndependent) {
     // create a single output view containing the (possibly
     // multi-step) levelset
+    int firstNonEmptyStep = 0;
+    for(int step = 0; step < vdata->getNumTimeSteps(); step++){
+      if(vdata->hasTimeStep(step)){
+        firstNonEmptyStep = step;
+        break;
+      }
+    }
     PViewDataList *out = getDataList(new PView());
-    for(int ent = 0; ent < vdata->getNumEntities(0); ent++){
-      for(int ele = 0; ele < vdata->getNumElements(0, ent); ele++){
-        if(vdata->skipElement(0, ent, ele)) continue;
-        for(int nod = 0; nod < vdata->getNumNodes(0, ent, ele); nod++){
+    for(int ent = 0; ent < vdata->getNumEntities(firstNonEmptyStep); ent++){
+      for(int ele = 0; ele < vdata->getNumElements(firstNonEmptyStep, ent); ele++){
+        if(vdata->skipElement(firstNonEmptyStep, ent, ele)) continue;
+        for(int nod = 0; nod < vdata->getNumNodes(firstNonEmptyStep, ent, ele); nod++){
           vdata->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
           levels[nod] = levelset(x[nod], y[nod], z[nod], 0.);
         }
         for(int step = 0; step < vdata->getNumTimeSteps(); step++){
-          int wstep = (_valueTimeStep < 0) ? step : _valueTimeStep;
-          _cutAndAddElements(vdata, wdata, ent, ele, step, wstep, x, y, z,
-                             levels, scalarValues, out);
+          if(vdata->hasTimeStep(step)){
+            int wstep = (_valueTimeStep < 0) ? step : _valueTimeStep;
+            bool firstStep = (step == firstNonEmptyStep);
+            _cutAndAddElements(vdata, wdata, ent, ele, step, wstep, x, y, z,
+                               levels, scalarValues, out, firstStep);
+          }
         }
       }
     }
@@ -468,7 +479,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
           }
           int wstep = (_valueTimeStep < 0) ? step : _valueTimeStep;
           _cutAndAddElements(vdata, wdata, ent, ele, step, wstep, x, y, z,
-                             levels, scalarValues, out);
+                             levels, scalarValues, out, true);
         }
       }
       char tmp[246];
