@@ -1393,6 +1393,10 @@ FieldManager::FieldManager()
   map_type_name["MaxEigenHessian"] = new FieldFactoryT<MaxEigenHessianField>();
   background_field = -1;
 }
+FieldManager::~FieldManager(){
+  for ( std::map<std::string, FieldFactory*>::iterator it = map_type_name.begin(); it!=map_type_name.end(); it++)
+    delete it->second;
+}
 
 #if defined(HAVE_POST)
 void Field::putOnNewView()

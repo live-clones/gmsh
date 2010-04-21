@@ -94,6 +94,7 @@ class FieldManager : public std::map<int, Field*> {
   int newId();
   int maxId();
   FieldManager();
+  ~FieldManager();
   int background_field;
   // compatibility with -bgm
   void setBackgroundMesh(int iView);
