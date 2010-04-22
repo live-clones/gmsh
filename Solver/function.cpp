@@ -132,31 +132,22 @@ dataCacheMap::~dataCacheMap()
 // now some example of functions
 
 // constant values copied over each line
-class functionConstant : public function {
-  public:
-  fullMatrix<double> _source;
-  void call(dataCacheMap *m, fullMatrix<double> &val) {
-    for(int i=0;i<val.size1();i++)
-      for(int j=0;j<_source.size1();j++){
-        val(i,j)=_source(j,0);
-        }
-  }
-  functionConstant(std::vector<double> source):function(source.size()){
-    _source = fullMatrix<double>(source.size(),1);
-    for(size_t i=0; i<source.size(); i++){
-      _source(i,0) = source[i];
-    }
-  }
-};
 
-function *functionConstantNew(double v) {
+functionConstant *functionConstantNew(double v) {
   std::vector<double> vec(1);
   vec[0]=v;
   return new functionConstant(vec);
 }
 
-function *functionConstantNew(const std::vector<double> &v) {
+functionConstant *functionConstantNew(const std::vector<double> &v) {
   return new functionConstant(v);
+}
+
+void functionConstant::set(double val) {
+  if(getNbCol() != 1) {
+    Msg::Error ("set scalar value on a vectorial constant function");
+  }
+  _source(0,0) = val;
 }
 
 
@@ -430,9 +421,12 @@ class functionC : public function {
 };
 
 void function::registerBindings(binding *b){
-  classBinding *cb = b->addClass<function>("function");
+  classBinding *cb = b->addClass<function>("Function");
   cb->setDescription("A generic function that can be evaluated on a set of points. Functions can call other functions and their values are cached so that if two different functions call the same function f, f is only evaluated once.");
   methodBinding *mb;
+
+  mb = cb->addMethod("getTime", &function::getTime);
+  mb->setDescription("Return function constant in space which contains the time value");
 
   cb = b->addClass<functionConstant>("functionConstant");
   cb->setDescription("A constant (scalar or vector) function");
@@ -528,4 +522,10 @@ functionReplaceCache::~functionReplaceCache() {
     delete map->_secondaryCaches[i];
   }
   delete map;
+}
+functionConstant *function::_timeFunction = NULL;
+functionConstant *function::getTime() {
+  if (! _timeFunction)
+    _timeFunction = functionConstantNew(0.);
+  return _timeFunction;
 }

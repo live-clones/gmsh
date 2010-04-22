@@ -14,12 +14,14 @@ class binding;
 class function;
 class dataCacheDouble;
 
+class functionConstant;
 class functionReplace;
 class functionReplaceCache;
 
 // An abstract interface to functions 
 // more explanation at the head of this file
 class function {
+  static functionConstant *_timeFunction; 
   public :
   class argument {
     //iMap is the id of the dataCacheMap, e.g. on interfaces
@@ -71,6 +73,7 @@ class function {
   static function *getSolutionGradient();
   static function *getParametricCoordinates();
   static function *getNormals();
+  static functionConstant *getTime();
 };
 
 // dataCache when the value is a  matrix of double 
@@ -240,8 +243,8 @@ class functionReplaceCache {
 };
 
 
-function *functionConstantNew(const std::vector<double>&);
-function *functionConstantNew(double);
+functionConstant *functionConstantNew(const std::vector<double>&);
+functionConstant *functionConstantNew(double);
 function *functionSumNew (const function *f0, const function *f1);
 
 class functionSolution : public function {
@@ -260,5 +263,23 @@ class functionSolution : public function {
       _instance = new functionSolution();
     return _instance;
   }
+};
+
+class functionConstant : public function {
+  public:
+  fullMatrix<double> _source;
+  void call(dataCacheMap *m, fullMatrix<double> &val) {
+    for(int i=0;i<val.size1();i++)
+      for(int j=0;j<_source.size1();j++){
+        val(i,j)=_source(j,0);
+        }
+  }
+  functionConstant(std::vector<double> source):function(source.size()){
+    _source = fullMatrix<double>(source.size(),1);
+    for(size_t i=0; i<source.size(); i++){
+      _source(i,0) = source[i];
+    }
+  }
+  void set(double val); 
 };
 #endif
