@@ -435,12 +435,27 @@ static void Mesh2D(GModel *m)
 
     // lloyd optimization
     if (CTX::instance()->mesh.optimizeLloyd){
+      Msg::Info("------------------------------");
       for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
 	GFace *gf = *it;
+	if(gf->geomType() == GEntity::DiscreteSurface) continue; 
+	if(gf->geomType() == GEntity::CompoundSurface ) {
+	  GFaceCompound *gfc = (GFaceCompound*) gf;
+	  if  (gfc->getNbSplit() != 0) continue;
+	}
 	int recombine = gf->meshAttributes.recombine;
-	Msg::Info("Lloyd optimization for face %d", gf->tag());
-	gf->lloyd(40, recombine);
-	if(recombine) recombineIntoQuads(gf);
+
+	Msg::StatusBar(2, true, "Lloyd optimization for face %d", gf->tag());
+	gf->lloyd(25,recombine);
+	
+	if(recombine) recombineIntoQuads(gf);   
+	
+	// computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
+// 			     gf->meshStatistics.average_element_shape,
+// 			     gf->meshStatistics.best_element_shape,
+// 			     gf->meshStatistics.nbTriangle,
+// 			     gf->meshStatistics.nbGoodQuality);
+       
       }
     }
 

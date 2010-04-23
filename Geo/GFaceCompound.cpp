@@ -519,8 +519,8 @@ bool GFaceCompound::parametrize() const
   else if (_mapping == CONFORMAL){
     Msg::Debug("Parametrizing surface %d with 'conformal map'", tag());
     fillNeumannBCS();
-    bool withoutFolding = parametrize_conformal_spectral() ;
-    //bool withoutFolding = parametrize_conformal();
+    //bool withoutFolding = parametrize_conformal_spectral() ;
+    bool withoutFolding = parametrize_conformal();
     if ( withoutFolding == false ){
       //printStuff(); exit(1);
       Msg::Warning("$$$ Parametrization switched to harmonic map");
@@ -1822,7 +1822,10 @@ bool GFaceCompound::checkTopology() const
 
   // FIXME!!! I think those things are wrong with cross-patch reparametrization
   //if ((*(_compound.begin()))->geomType() != GEntity::DiscreteSurface)return true;  
+  
 
+  //TODO: smthg to exit here for lloyd remeshing
+  
   bool correctTopo = true;
   if(allNodes.empty()) buildAllNodes();
 
@@ -1913,7 +1916,7 @@ double GFaceCompound::checkAspectRatio() const
   }
   double AR = 2*3.14*area3D/(tot_length*tot_length);
   
-  if (areaMin < limit && nb > 2) {
+  if (areaMin > 0 && areaMin < limit && nb > 2) {
     Msg::Warning("Too small triangles in mapping (a_2D=%g)", areaMin);
   }
   else {

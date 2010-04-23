@@ -68,6 +68,7 @@ void lloydAlgorithm::operator () ( GFace * gf) {
     fullMatrix<double> cgs(triangulator.numPoints,2);
     // now iterate on internal vertices
     double ENERGY = 0.0;
+    double criteria = 0.0;
     for (int i=0; i<triangulator.numPoints;i++){
       // get the ith vertex
       PointRecord &pt = triangulator.points[i];
@@ -76,25 +77,22 @@ void lloydAlgorithm::operator () ( GFace * gf) {
         // get the voronoi corners
         std::vector<SPoint2> pts;
         triangulator.voronoiCell (i,pts); 
-        double E;
+        double E, A;
         SPoint2 p(pt.where.h,pt.where.v);
         if (!infiniteNorm){
-          centroidOfPolygon (p,pts, cgs(i,0),cgs(i,1),E,backgroundMesh::current());       
+          centroidOfPolygon (p,pts, cgs(i,0),cgs(i,1),E, A, NULL); //backgroundMesh::current());       
         }
         else {
-          centroidOfOrientedBox (pts, 0.0, cgs(i,0),cgs(i,1),E);          
+          centroidOfOrientedBox (pts, 0.0, cgs(i,0),cgs(i,1),E, A);          
         }
         ENERGY += E;
+	double d = sqrt((p.x()-cgs(i,0))*(p.x()-cgs(i,0))+
+			(p.y()-cgs(i,1))*(p.y()-cgs(i,1)));
+	criteria = d/A;
       }// if (v->onWhat() == gf)
       else {
       }
     }// for all points
-
-    if (ITER % 10 == 0){
-      char name[234];
-      sprintf(name,"LloydIter%d.pos",ITER);
-      triangulator.makePosView(name);
-    }
 
     for(PointNumero i = 0; i < triangulator.numPoints; i++) {
       MVertex *v = (MVertex*)triangulator.points[i].data;
@@ -104,11 +102,18 @@ void lloydAlgorithm::operator () ( GFace * gf) {
       }
     }
 
-    Msg::Debug("GFace %d Lloyd iteration %d energy %g",gf->tag(),ITER++,ENERGY);
+    Msg::Debug("GFace %d Lloyd-iter %d Inertia=%g Convergence=%g ",gf->tag(),ITER++,ENERGY, criteria);
     if (ITER > ITER_MAX)break;
 
     // compute the Voronoi diagram
     triangulator.Voronoi();
+
+    if (ITER % 10 == 0){
+      char name[234];
+      sprintf(name,"LloydIter%d.pos",ITER);
+      triangulator.makePosView(name);
+    }
+
   }
 
   // now create the vertices
@@ -132,6 +137,7 @@ void lloydAlgorithm::operator () ( GFace * gf) {
   // vertices
   gf->_additional_vertices = mesh_vertices;
   // remesh the face with all those vertices in
+  Msg::Info("Lloyd remeshing of face %d ", gf->tag());
   meshGFace mesher;
   mesher(gf);
   // assign those vertices to the face internal vertices

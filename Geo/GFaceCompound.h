@@ -121,6 +121,7 @@ class GFaceCompound : public GFace {
   void partitionFaceCM();
   virtual std::list<GFace*> getCompounds() const {return _compound;};
   mutable int nbSplit;
+  int getNbSplit() const {return nbSplit;}
   int allowPartition() const{return _allowPartition;};
  private:
   typeOfIsomorphism _type;

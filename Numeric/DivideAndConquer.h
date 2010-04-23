@@ -104,12 +104,14 @@ void centroidOfOrientedBox(std::vector<SPoint2> &pts,
                            const double &angle,
                            double &xc, 
                            double &yc, 
-                           double &inertia);
+                           double &inertia, 
+			   double &area);
 void centroidOfPolygon(SPoint2 &pc,
                        std::vector<SPoint2> &pts,
                        double &xc, 
                        double &yc,
                        double &inertia,
+		       double &areaCell,
                        simpleFunction<double> *bgm = 0);
 
 

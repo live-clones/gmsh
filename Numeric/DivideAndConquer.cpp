@@ -592,7 +592,7 @@ void DocRecord::makePosView(std::string fileName)
 }
 
 void centroidOfOrientedBox(std::vector<SPoint2> &pts, const double &angle,
-                           double &xc, double &yc, double &inertia)
+                           double &xc, double &yc, double &inertia, double &area)
 {
   const int N = pts.size();
   
@@ -614,13 +614,15 @@ void centroidOfOrientedBox(std::vector<SPoint2> &pts, const double &angle,
   xc = XC*cosa - YC *sina;
   yc = XC*sina + YC *cosa;
   inertia = std::max(xmax-xmin,ymax-ymin);
+  area = (xmax-xmin) * (ymax-ymin);
 }
 
 void centroidOfPolygon(SPoint2 &pc, std::vector<SPoint2> &pts,
-                       double &xc, double &yc, double &inertia,
+                       double &xc, double &yc, double &inertia, double &areaCell,
                        simpleFunction<double> *bgm)
 {
   double area_tot = 0;
+  areaCell = 0.0;
   SPoint2 center(0,0);
   for (unsigned int j = 0; j < pts.size(); j++){
     SPoint2 &pa = pts[j];
@@ -629,7 +631,8 @@ void centroidOfPolygon(SPoint2 &pc, std::vector<SPoint2> &pts,
     const double lc = bgm ? (*bgm)((pa.x()+pb.x()+pc.x())/3.0,
                                    (pa.y()+pb.y()+pc.y())/3.0,
                                    0.0) : 1.0;
-    const double fact = 1./(lc*lc);
+    const double fact = 1./(lc*lc*lc*lc);//rho = 1/lc^4 (emi)
+    areaCell += area;
     area_tot += area*fact;
     center += ((pa+pb+pc) * (area*fact/3.0));
   }
@@ -664,14 +667,14 @@ double DocRecord::Lloyd(int type)
     PointRecord &pt = points[i];
     std::vector<SPoint2> pts;
     voronoiCell (i,pts); 
-    double E;
+    double E, A;
     
     if (!points[i].data){
       SPoint2 p (pt.where.h,pt.where.v);
       if (type == 0)    
-        centroidOfPolygon (p,pts, cgs(i,0), cgs(i,1),E);              
+        centroidOfPolygon (p,pts, cgs(i,0), cgs(i,1),E, A);              
       else 
-        centroidOfOrientedBox (pts, 0.0, cgs(i,0),cgs(i,1),E);    
+        centroidOfOrientedBox (pts, 0.0, cgs(i,0),cgs(i,1),E, A);    
     }
     inertia_tot += E;
   } 
