@@ -21,6 +21,7 @@
 #include "MElement.h"
 #include "ChainComplex.h"
 //#include "GModel.h"
+#include <boost/pool/object_pool.hpp>
 
 class Cell;
 
@@ -30,11 +31,8 @@ class CellComplex
  private:
   // sorted containers of unique cells in this cell complex 
   // one for each dimension
-  std::set<Cell*, Less_Cell>  _cells[4];
-  
-  // temporary store for omitted cells (generators of the highest dimension)
-  std::vector< std::set<Cell*, Less_Cell> > _store;
-  
+  std::set<Cell*, Less_Cell> _cells[4];
+    
   // original cells of this cell complex
   std::set<Cell*, Less_Cell>  _ocells[4];
   
@@ -60,8 +58,9 @@ class CellComplex
   void removeCell(Cell* cell, bool other=true);
   void insertCell(Cell* cell);
   
-  // queued coreduction presented in Mrozek's paper
-  int coreduction(Cell* startCell, int omitted=0);
+  // queued coreduction
+  int coreduction(Cell* startCell, bool omit, 
+		  std::vector<Cell*>& omittedCells);
   
  public: 
   
@@ -106,8 +105,8 @@ class CellComplex
 
   // (co)reduction of this cell complex
   // removes (co)reduction pairs of cell of dimension dim and dim-1
-  int reduction(int dim, int omitted=0);
-  int coreduction(int dim, int omitted=0);  
+  int reduction(int dim, bool omit, std::vector<Cell*>& omittedCells);
+  int coreduction(int dim, bool omit, std::vector<Cell*>& omittedCells);  
     
   // Cell combining for reduction and coreduction
   int combine(int dim);
@@ -129,10 +128,6 @@ class CellComplex
   void printEuler(){ 
     printf("Euler characteristic: %d. \n", eulerCharacteristic()); }
   
-  // get cells omitted by (co)reduction
-  int getNumOmitted() { return _store.size(); }
-  std::set<Cell*, Less_Cell> getOmitted(int i) { return _store.at(i); }  
-
   // restore the cell complex to its original state before (co)reduction
   void restoreComplex();
 

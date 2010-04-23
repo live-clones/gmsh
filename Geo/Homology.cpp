@@ -168,23 +168,6 @@ void Homology::findGenerators(CellComplex* cellComplex)
       _generators.push_back(chain->createPGroup());
       delete chain;
     }
-    if(j == cellComplex->getDim() && cellComplex->getNumOmitted() > 0){
-      for(int i = 0; i < cellComplex->getNumOmitted(); i++){
-        std::string generator;
-        convert(i+1, generator);
-        std::string name = "H" + dimension + domainString + generator;
-        std::vector<int> coeffs (cellComplex->getOmitted(i).size(),1);
-        Chain* chain = new Chain(cellComplex->getOmitted(i), coeffs, 
-				 cellComplex, _model, name, 1);
-        if(chain->getSize() == 0){
-	  delete chain;
-	  continue;
-	}
-	HRank[j] = HRank[j] + 1;
-	_generators.push_back(chain->createPGroup());
-	delete chain;
-      }
-    }
   }
   
   if(_fileName != "") writeGeneratorsMSH();
@@ -267,26 +250,6 @@ void Homology::findDualGenerators(CellComplex* cellComplex)
 		     dim-j, i, chain->getTorsion());
       }     
     }
-    
-    if(j == 0 && cellComplex->getNumOmitted() > 0){
-      for(int i = 0; i < cellComplex->getNumOmitted(); i++){
-        std::string generator;
-        convert(i+1, generator);
-        std::string name 
-	  = "H" + dimension + "*" + 
-	  getDomainString(_domain, _subdomain) + generator;
-        std::vector<int> coeffs (cellComplex->getOmitted(i).size(),1);
-        Chain* chain = new Chain(cellComplex->getOmitted(i), coeffs, 
-				 cellComplex, _model, name, 1);
-	if(chain->getSize() == 0) {
-	  delete chain;
-	  continue;
-	}
-	HRank[dim-j] = HRank[dim-j] + 1;
-	_generators.push_back(chain->createPGroup());
-	delete chain;
-      }
-    }
   }
 
   if(_fileName != "") writeGeneratorsMSH();
@@ -313,7 +276,7 @@ void Homology::findHomSequence(){
   Msg::StatusBar(1, false, "Reducing...");
 
   double t1 = Cpu();
-  cellComplex->reduceComplex(false);
+  cellComplex->reduceComplex();
   double t2 = Cpu();
 
   Msg::Info("Cell Complex reduction complete (%g s).", t2 - t1);

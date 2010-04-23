@@ -96,7 +96,6 @@ ChainComplex::ChainComplex(CellComplex* cellComplex, int domain)
       } 
       mpz_clear(elem); 
     }
-
     _kerH[dim] = NULL;
     _codH[dim] = NULL;
     _JMatrix[dim] = NULL;
@@ -482,7 +481,7 @@ void ChainComplex::getBasisChain(std::map<Cell*, int, Less_Cell>& chain,
   }
   mpz_clear(elem);
   
-  if(deform) smoothenChain(chain);
+  if(deform && (dim == 1 || dim == 2) ) smoothenChain(chain);
 }
 
 int ChainComplex::getBasisSize(int dim, int basis)

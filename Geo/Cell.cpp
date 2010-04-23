@@ -43,10 +43,10 @@ Cell::~Cell()
   if(_delimage) delete _image; 
 }
 
-bool Cell::findBoundaryCells(std::vector<Cell*>& bdCells)
+bool Cell::findBoundaryElements(std::vector<MElement*>& bdElements)
 {
   if(_combined) return false;
-  bdCells.clear();
+  bdElements.clear();
   MElementFactory factory;
   for(int i = 0; i < getNumFacets(); i++){
     std::vector<MVertex*> vertices;
@@ -69,8 +69,7 @@ bool Cell::findBoundaryCells(std::vector<Cell*>& bdCells)
     }
     MElement* element = factory.create(newtype, vertices, 0, 
 				       _image->getPartition());
-    Cell* cell = new Cell(element);
-    bdCells.push_back(cell);
+    bdElements.push_back(element);
   }
   return true;
 }
@@ -346,5 +345,20 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell()
   
 
 }
+
+CombinedCell::CombinedCell(std::vector<Cell*>& cells) : Cell() 
+{  
+  _num = ++_globalNum;
+  _index = cells.at(0)->getIndex();
+  _subdomain = cells.at(0)->inSubdomain();
+  _combined = true;
+
+  // cells
+  for(unsigned int i = 0; i < cells.size(); i++){
+    Cell* c = cells.at(i);
+    _cells[c] = 1;
+  }
+}
+
 
 #endif

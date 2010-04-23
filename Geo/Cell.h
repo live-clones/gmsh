@@ -100,7 +100,7 @@ class Cell
     else return false; }
 
   // find the cells on the boundary of this cell
-  bool findBoundaryCells(std::vector<Cell*>& bdCells);
+  bool findBoundaryElements(std::vector<MElement*>& bdElements);
   // get boundary cell orientation
   int findBoundaryCellOrientation(Cell* cell);
   
@@ -208,6 +208,7 @@ class CombinedCell : public Cell{
  public:
   
   CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co=false);
+  CombinedCell(std::vector<Cell*>& cells);
   ~CombinedCell() {}
 
   int getDim() const { return _cells.begin()->first->getDim(); }
