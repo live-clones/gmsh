@@ -259,6 +259,25 @@ bool GRegion::edgeConnected(GRegion *r) const
   return false;
 }
 
+// replace faces (gor gluing)
+void GRegion::replaceFaces (std::list<GFace*> & new_faces) {
+  replaceFacesInternal (new_faces);
+  std::list<GFace*>::iterator it  = l_faces.begin();
+  std::list<GFace*>::iterator it2 = new_faces.begin();
+  std::list<int>::iterator it3 = l_dirs.begin();
+  std::list<int> newdirs;
+  for ( ; it != l_faces.end() ; ++it,++it2,++it3){
+    (*it)->delRegion(this);
+    (*it2)->addRegion(this);        
+    //    if ((*it2)->getBeginVertex() == (*it)->getBeginVertex())
+      newdirs.push_back(*it3);
+      //    else
+      //      newdirs.push_back(-(*it3));
+  }
+  l_faces = new_faces;
+  l_dirs = newdirs;
+}
+
 void GRegion::registerBindings(binding *b)
 {
   classBinding *cb = b->addClass<GRegion>("GRegion");

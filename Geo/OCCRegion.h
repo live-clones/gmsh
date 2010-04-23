@@ -14,12 +14,15 @@
 class OCCRegion : public GRegion {
  protected:
   TopoDS_Solid s;
+  void replaceFacesInternal (std::list<GFace*> &);
+  void setup();
  public:
-  OCCRegion(GModel *m, TopoDS_Solid s, int num, TopTools_IndexedMapOfShape &fmap);
+  OCCRegion(GModel *m, TopoDS_Solid s, int num);
   virtual ~OCCRegion() {}
   virtual GeomType geomType() const;
   ModelType getNativeType() const { return OpenCascadeModel; }
   void * getNativePtr() const { return (void*)&s; }
+  TopoDS_Solid getTopoDS_Shape() {return s;}
 };
 
 #endif

@@ -169,6 +169,7 @@ Nurbs			return tNurbs;
 Order			return tNurbsOrder;
 OCCShape  	        return tOCCShape;
 
+Periodic                return tPeriodic;
 Physical                return tPhysical;
 Pi                      return tPi;
 Plane                   return tPlane;

@@ -50,6 +50,9 @@ class GFace : public GEntity
   std::list<GEdge *> embedded_edges;
   std::list<GVertex *> embedded_vertices;
   GFaceCompound *compound; // this model edge belongs to a compound 
+  // replace edges (gor gluing) for specific modelers, we have to re-create
+  // internal data ...
+  virtual void replaceEdgesInternal (std::list<GEdge*> &){}
 
  public: // this will become protected or private
   std::list<GEdgeLoop> edgeLoops;
@@ -295,6 +298,9 @@ class GFace : public GEntity
   // those vertices are classifed on this GFace, their type is MFaceVertex.
   // After mesh generation, those are moved to the mesh_vertices array 
   std::vector<MVertex*> _additional_vertices;
+
+  // replace edges (gor gluing)
+  void replaceEdges (std::list<GEdge*> &);
   
   static void registerBindings(binding *b);
 };

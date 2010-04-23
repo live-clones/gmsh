@@ -10,10 +10,15 @@
 #include "VertexArray.h"
 #include "Context.h"
 #include "Bindings.h"
+#include "GVertex.h"
+#include "GEdge.h"
+#include "GFace.h"
+#include "GRegion.h"
 
 GEntity::GEntity(GModel *m, int t)
   : _model(m), _tag(t), _visible(1), _selection(0),
-    _allElementsVisible(1), _obb(0), va_lines(0), va_triangles(0)
+    _allElementsVisible(1), _obb(0), va_lines(0), va_triangles(0),
+    _meshMaster(t)
 {
   _color = CTX::instance()->packColor(0, 0, 255, 0);
 }
@@ -61,6 +66,12 @@ std::string GEntity::getInfoString()
   return sstream.str();
 }
 
+GVertex * GEntity::Cast2Vertex () {return dynamic_cast<GVertex*>(this);}
+GEdge   * GEntity::Cast2Edge   () {return dynamic_cast<GEdge*>(this);}
+GFace   * GEntity::Cast2Face   () {return dynamic_cast<GFace*>(this);}
+GRegion * GEntity::Cast2Region () {return dynamic_cast<GRegion*>(this);}
+
+
 void GEntity::registerBindings(binding *b)
 {
   classBinding *cb = b->addClass<GEntity>("GEntity");
@@ -78,4 +89,12 @@ void GEntity::registerBindings(binding *b)
   mb->setArgNames("index",NULL);
   mb = cb->addMethod("model", &GEntity::model);
   mb->setDescription("returns the geometric model the entity belongs to.");
+  mb = cb->addMethod("Cast2Vertex", &GEntity::Cast2Vertex);
+  mb->setDescription("do a dynamic cast of the GEntity to a GVertex (0 if wrong cast).");
+  mb = cb->addMethod("Cast2Edge", &GEntity::Cast2Edge);
+  mb->setDescription("do a dynamic cast of the GEntity to a GEdge (0 if wrong cast).");
+  mb = cb->addMethod("Cast2Face", &GEntity::Cast2Face);
+  mb->setDescription("do a dynamic cast of the GEntity to a GFace (0 if wrong cast).");
+  mb = cb->addMethod("Cast2Region", &GEntity::Cast2Region);
+  mb->setDescription("do a dynamic cast of the GEntity to a GRegion (0 if wrong cast).");
 }

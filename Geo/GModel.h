@@ -29,10 +29,12 @@ class CGNSOptions;
 class gLevelset;
 class discreteFace;
 class binding;
+class OCCFactory;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel
 {
+  friend class OCCFactory;
  protected:
   // the name of the model
   std::string _name;
@@ -167,6 +169,7 @@ class GModel
   int maxVertexNum();
   int maxEdgeNum();
   int maxFaceNum();
+  int maxRegionNum();
 
   // quickly check if the model is empty (i.e., if it contains no
   // entities)
@@ -338,6 +341,14 @@ class GModel
 
   // mesh the model
   int mesh(int dimension);
+
+  // glue entities in the model
+  // assume a tolerance eps and merge vertices that are too close, 
+  // then merge edges, faces and regions.
+  // the gluer changes the geometric model, so that some pointers
+  // could become invalid !! I think that using references to some 
+  // tables of pointers for bindings e.g. could be better. FIXME !!
+  void glue (const double &eps);
 
   // build a new GModel by cutting the elements crossed by the levelset ls
   // if cutElem is set to false, split the model without cutting the elements

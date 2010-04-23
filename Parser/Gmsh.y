@@ -103,7 +103,7 @@ fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 %token tBoundingBox tDraw tToday tSyncModel tCreateTopology tDistanceFunction
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
-%token tPlane tRuled tTransfinite tComplex tPhysical tCompound
+%token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
 %token tUsing tPlugin tDegenerated tOCCShape
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset
 %token tLoop tRecombine tSmoother tSplit tDelete tCoherence tIntersect
@@ -175,6 +175,7 @@ GeoFormatItem :
   | Visibility  { return 1; }
   | Extrude     { List_Delete($1); return 1; }
   | Transfinite { return 1; }
+  | Periodic    { return 1; }
   | Embedding   { return 1; }
   | Coherence   { return 1; }
   | Loop        { return 1; }
@@ -3221,6 +3222,62 @@ Transfinite :
       List_Delete($3);
     }
 ;
+
+
+Periodic : 
+    tPeriodic tLine ListOfDouble tAFFECT ListOfDouble tEND
+    {
+      if (List_Nbr($3) != List_Nbr($5)){
+	yymsg(0, "Periodic Line : the number of masters (%d) is not equal to the number of slaves(%d)", List_Nbr($3),List_Nbr($5));
+      }
+
+      for(int i = 0; i < List_Nbr($3); i++){
+	double d_master,d_slave;
+	List_Read($3, i, &d_master);
+	List_Read($5, i, &d_slave);
+	int j_master = (int)d_master;
+	int j_slave  = (int)d_slave;
+	Curve *c_slave = FindCurve(abs(j_slave));
+	if(c_slave){
+	  //	  printf("c_slave %d c_master = %d\n",j_slave,j_master);
+	  c_slave->meshMaster = j_master;	  
+	}
+	else{
+	  GEdge *ge = GModel::current()->getEdgeByTag(abs(j_slave));
+	  if(ge)ge->setMeshMaster (j_master);
+	  else yymsg(0, "Unknown line %d", j_slave);
+	}
+      }
+      List_Delete($3);
+      List_Delete($5);
+    }
+  | tPeriodic tSurface ListOfDouble tAFFECT ListOfDouble tEND
+    {
+      if (List_Nbr($3) != List_Nbr($5)){
+	yymsg(0, "Periodic Surface : the number of masters (%d) is not equal to the number of slaves(%d)", List_Nbr($3),List_Nbr($5));
+      }
+
+      for(int i = 0; i < List_Nbr($3); i++){
+	double d_master,d_slave;
+	List_Read($3, i, &d_master);
+	List_Read($5, i, &d_slave);
+	int j_master = (int)d_master;
+	int j_slave  = (int)d_slave;
+	Surface *s_slave = FindSurface(abs(j_slave));
+	if(s_slave){
+	  s_slave->meshMaster = j_master;
+	}
+	else{
+	  GFace *gf = GModel::current()->getFaceByTag(abs(j_slave));
+	  if(gf) gf->setMeshMaster (j_master);
+	  else yymsg(0, "Unknown line %d", j_slave);
+	}
+      }
+      List_Delete($3);
+      List_Delete($5);
+    }
+;
+
 
 //  E M B E D D I N G  C U R V E S   A N D  P O I N T S   I N T O   S U R F A C E S  
 //    A N D   V O L U M E S

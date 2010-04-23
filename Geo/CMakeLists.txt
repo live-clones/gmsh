@@ -12,6 +12,7 @@ set(SRC
     discreteEdge.cpp discreteFace.cpp discreteRegion.cpp
     fourierEdge.cpp fourierFace.cpp fourierProjectionFace.cpp
   GModel.cpp
+  GModelFactory.cpp
     GModelIO_Geo.cpp
     GModelIO_Mesh.cpp
     GModelIO_OCC.cpp

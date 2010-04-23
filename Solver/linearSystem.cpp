@@ -20,6 +20,11 @@ void linearSystem<double>::registerBindings(binding *b){
   cm = cb->setConstructor<linearSystemCSRTaucs<double> >();
   cm->setDescription ("A new TAUCS<double> solver");
   cm->setArgNames(NULL);
+  cm = cb->addMethod("getNNZ", &linearSystemCSRTaucs<double>::getNNZ);
+  cm->setDescription("get the number of non zero entries");
+  cm = cb->addMethod("getNbUnk", &linearSystemCSRTaucs<double>::getNbUnk);
+  cm->setDescription("get the number of unknowns");
+
   cb->setParentClass<linearSystem<double> >();
 #endif
 

@@ -148,7 +148,7 @@ class linearSystemCSRTaucs : public linearSystemCSR<scalar> {
     if (il <= ic)
       linearSystemCSR<scalar>::addToMatrix(il, ic, val);
   }
-  virtual int systemSolve() 
+  virtual int systemSolve()     
 #if !defined(HAVE_TAUCS)
   {
     Msg::Error("TAUCS is not available in this version of Gmsh");
@@ -156,6 +156,8 @@ class linearSystemCSRTaucs : public linearSystemCSR<scalar> {
   }
 #endif
   ;
+ int getNNZ() {return CSRList_Nbr(linearSystemCSR<scalar>::_a);}
+ int getNbUnk() {return linearSystemCSR<scalar>::_b->size();}
 };
 
 #endif

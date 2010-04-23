@@ -229,6 +229,29 @@ static double Integration(GEdge *ge, double t1, double t2,
   return Points.back().p;
 }
 
+static void copyMesh(GEdge *from, GEdge *to, int direction)
+{
+  Range<double> u_bounds = from->parBounds(0);
+  double u_min = u_bounds.low();
+  double u_max = u_bounds.high();
+
+  for(unsigned int i = 0; i < from->mesh_vertices.size(); i++){
+    int index = (direction < 0) ? (from->mesh_vertices.size() - 1 - i) : i;
+    MVertex *v = from->mesh_vertices[index];
+    double u; v->getParameter(0, u);
+    double newu = (direction > 0) ? u : (u_max - u + u_min);
+    GPoint gp = to->point(newu);
+    to->mesh_vertices.push_back(new MEdgeVertex(gp.x(), gp.y(), gp.z(), to, newu));
+  }
+  for(unsigned int i = 0; i < to->mesh_vertices.size() + 1; i++){
+    MVertex *v0 = (i == 0) ?
+      to->getBeginVertex()->mesh_vertices[0] : to->mesh_vertices[i - 1];
+    MVertex *v1 = (i == to->mesh_vertices.size()) ?
+      to->getEndVertex()->mesh_vertices[0] : to->mesh_vertices[i];
+    to->lines.push_back(new MLine(v0, v1));
+  }
+}
+
 void deMeshGEdge::operator() (GEdge *ge) 
 {
   if(ge->geomType() == GEntity::DiscreteCurve) return;
@@ -252,6 +275,16 @@ void meshGEdge::operator() (GEdge *ge)
   dem(ge);
 
   if(MeshExtrudedCurve(ge)) return;
+
+  if (ge->meshMaster() != ge->tag()){
+    GEdge *gef = ge->model()->getEdgeByTag(abs(ge->meshMaster()));
+    if (gef->_mStatus == GEdge::PENDING)return;
+    Msg::Info("Meshing curve %d (%s) as a copy of %d",ge->tag(),ge->getTypeString().c_str(),ge->meshMaster());
+    copyMesh(gef,ge,ge->meshMaster());
+    ge->_mStatus = GEdge::DONE;
+    return;
+  }
+
 
   Msg::Info("Meshing curve %d (%s)", ge->tag(), ge->getTypeString().c_str());
 
@@ -368,4 +401,7 @@ void meshGEdge::operator() (GEdge *ge)
     v0->y() = beg_p.y();
     v0->z() = beg_p.z();
   }
+  ge->_mStatus = GEdge::DONE;
 }
+
+

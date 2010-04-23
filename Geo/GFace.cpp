@@ -1054,6 +1054,26 @@ void GFace::lloyd(int nbiter, int infn){
   algo(this);
 }
 
+  // replace edges (gor gluing)
+void GFace::replaceEdges (std::list<GEdge*> & new_edges) {
+  replaceEdgesInternal (new_edges);
+  std::list<GEdge*>::iterator it  = l_edges.begin();
+  std::list<GEdge*>::iterator it2 = new_edges.begin();
+  std::list<int>::iterator it3 = l_dirs.begin();
+  std::list<int> newdirs;
+  for ( ; it != l_edges.end() ; ++it,++it2,++it3){
+    (*it)->delFace(this);
+    (*it2)->addFace(this);        
+    if ((*it2)->getBeginVertex() == (*it)->getBeginVertex())
+      newdirs.push_back(*it3);
+    else
+      newdirs.push_back(-(*it3));
+  }
+  l_edges = new_edges;
+  l_dirs = newdirs;
+}
+
+
 #include "Bindings.h"
 
 void GFace::registerBindings(binding *b)

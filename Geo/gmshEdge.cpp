@@ -26,6 +26,7 @@ void gmshEdge::resetMeshAttributes()
   meshAttributes.typeTransfinite = c->typeTransfinite;
   meshAttributes.coeffTransfinite = c->coeffTransfinite;
   meshAttributes.extrude = c->Extrude;
+  setMeshMaster(c->meshMaster);
 }
 
 Range<double> gmshEdge::parBounds(int i) const

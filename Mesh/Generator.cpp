@@ -339,7 +339,21 @@ static void Mesh1D(GModel *m)
   Msg::StatusBar(1, true, "Meshing 1D...");
   double t1 = Cpu();
 
-  std::for_each(m->firstEdge(), m->lastEdge(), meshGEdge());
+  int nIter = 0;
+  while(1){
+    meshGEdge mesher;
+    int nbPending = 0;
+    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
+      if ((*it)->_mStatus == GEdge::PENDING){
+	mesher(*it);
+	nbPending++;
+      }
+    }
+    if(!nbPending) break;
+    if(nIter++ > 10) break;
+  }
+
+  //  std::for_each(m->firstEdge(), m->lastEdge(), meshGEdge());
 
   double t2 = Cpu();
   CTX::instance()->meshTimer[0] = t2 - t1;

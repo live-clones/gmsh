@@ -33,6 +33,9 @@ class GEdge : public GEntity {
   GEdgeCompound *compound; // this model edge belongs to a compound 
   std::list<GFace *> l_faces;
   std::set<GFace *> bl_faces;
+  // for specific solid modelers that need to re-do the internal curve
+  // if a topological change ending points is done (gluing)
+  virtual void replaceEndingPointsInternals(GVertex *, GVertex *) {}
 
  public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
@@ -173,7 +176,8 @@ class GEdge : public GEntity {
   void setCompound(GEdgeCompound *gec) { compound = gec; }
   GEdgeCompound *getCompound() const { return compound; }
 
-
+  // gluing
+  void replaceEndingPoints(GVertex *, GVertex *);
 
   struct {
     char Method;
@@ -186,6 +190,9 @@ class GEdge : public GEntity {
     ExtrudeParams *extrude;
   } meshAttributes ;
 
+  typedef enum {PENDING, DONE, FAILED} meshGenerationStatus;
+  mutable meshGenerationStatus _mStatus;
+  
   std::vector<MLine*> lines;
 
   static void registerBindings(binding *b);

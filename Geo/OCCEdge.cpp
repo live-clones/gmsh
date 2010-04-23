@@ -22,10 +22,32 @@
 #include "Geom_Circle.hxx"
 #include "Geom_Line.hxx"
 #include "Geom_Conic.hxx"
+#include "BOPTools_Tools.hxx"
+
+GEdge *getOCCEdgeByNativePtr(GModel *model, TopoDS_Edge toFind)
+{
+  GModel::eiter it =model->firstEdge();
+  for (; it !=model->lastEdge(); it++){
+    OCCEdge *ed = dynamic_cast<OCCEdge*>(*it);
+    if (ed){
+      if (toFind.IsSame(ed->getTopoDS_Edge())){
+	//	printf("found %d coucou\n",ed->tag());
+	return *it;
+      }
+      if (toFind.IsSame(ed->getTopoDS_EdgeOld())){
+	//	printf("found %d coucou\n",ed->tag());
+	return *it;
+      }
+    }
+  }
+  return 0;
+}
+
 
 OCCEdge::OCCEdge(GModel *model, TopoDS_Edge edge, int num, GVertex *v1, GVertex *v2)
   : GEdge(model, num, v1, v2), c(edge), trimmed(0)
 {
+  //  printf("NEW OCCEDGE %d\n",num);
   curve = BRep_Tool::Curve(c, s0, s1);
   // build the reverse curve
   c_rev = c;
@@ -88,6 +110,30 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
   }
   return SPoint2(u, v);
 }
+
+GPoint OCCEdge::closestPoint(const SPoint3 &qp, double &param) const{
+  gp_Pnt pnt(qp.x(), qp.y(), qp.z());
+  GeomAPI_ProjectPointOnCurve proj(pnt, curve, s0, s1);
+  
+  if(!proj.NbPoints()){
+    Msg::Error("OCC Project Point on Curve FAIL");
+    return GPoint(0, 0);
+  }
+  
+  param = proj.LowerDistanceParameter();
+
+  //  Msg::Info("projection lower distance parameters %g %g",pp[0],pp[1]);
+
+  if(param < s0 || param > s1){
+    Msg::Error("Point projection is out of edge bounds");
+    return GPoint(0, 0);
+  }
+
+  pnt = proj.NearestPoint();
+  return GPoint(pnt.X(), pnt.Y(), pnt.Z(), this, param);
+
+}
+
 
 // True if the edge is a seam for the given face
 bool OCCEdge::isSeam(const GFace *face) const
@@ -253,5 +299,62 @@ void OCCEdge::writeGEO(FILE *fp)
   else
     GEdge::writeGEO(fp);
 }
+// sometimes, we ask to replace the ending points of the curve
+// in gluing operations for example
+void OCCEdge::replaceEndingPointsInternals(GVertex *g0, GVertex *g1){
+
+  TopoDS_Vertex aV1  = *((TopoDS_Vertex*)v0->getNativePtr());
+  TopoDS_Vertex aV2  = *((TopoDS_Vertex*)v1->getNativePtr());
+  TopoDS_Vertex aVR1 = *((TopoDS_Vertex*)g0->getNativePtr());
+  TopoDS_Vertex aVR2 = *((TopoDS_Vertex*)g1->getNativePtr());
+
+  //  printf("%p %p --- %p %p replacing %d %d by %d %d in occedge %d\n",
+  //	 v0,v1,g0,g1,v0->tag(),v1->tag(),g0->tag(),g1->tag(),tag());
+  
+  Standard_Boolean bIsDE = BRep_Tool::Degenerated(c);
+  //
+  TopoDS_Edge aEx = c;
+  aEx.Orientation(TopAbs_FORWARD);
+
+  Standard_Real t1=s0;
+  Standard_Real t2=s1;
+  //
+  aVR1.Orientation(TopAbs_FORWARD);
+  aVR2.Orientation(TopAbs_REVERSED);
+  //
+  if (bIsDE) {
+    Standard_Real aTol;
+    BRep_Builder aBB;
+    TopoDS_Edge E;
+    TopAbs_Orientation anOrE;
+    //
+    anOrE=c.Orientation();
+    aTol=BRep_Tool::Tolerance(c);
+    //
+    E=aEx;
+    E.EmptyCopy();
+    //
+    aBB.Add  (E, aVR1);
+    aBB.Add  (E, aVR2);
+    aBB.Range(E, t1, t2);
+    aBB.Degenerated(E, Standard_True);
+    aBB.UpdateEdge(E, aTol);
+    //
+    _replacement=E;
+  }
+  //
+  else {
+    BOPTools_Tools::MakeSplitEdge(aEx, aVR1, t1, aVR2, t2, _replacement); 
+  }
+  TopoDS_Edge temp = c;
+  c = _replacement;
+  _replacement = temp;
+  curve = BRep_Tool::Curve(c, s0, s1);
+  //build the reverse curve
+  c_rev = c;
+  c_rev.Reverse();
+  
+}
+
 
 #endif

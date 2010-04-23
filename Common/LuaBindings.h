@@ -279,6 +279,64 @@ class luaStack<const type &>{
 //static
 template <typename cb>
 class argTypeNames;
+
+template <typename tr, typename t0, typename t1, typename t2, typename t3, 
+  typename t4, typename t5, typename t6, typename t7, typename t8>
+  class argTypeNames<tr (*)(t0, t1, t2, t3, t4, t5, t6, t7, t8)>{
+ public:
+  static void get(std::vector<std::string> &names)
+  {
+    names.clear();
+    names.push_back(luaStack<tr>::getName());
+    names.push_back(luaStack<t0>::getName());
+    names.push_back(luaStack<t1>::getName());
+    names.push_back(luaStack<t2>::getName());
+    names.push_back(luaStack<t3>::getName());
+    names.push_back(luaStack<t4>::getName());
+    names.push_back(luaStack<t5>::getName());
+    names.push_back(luaStack<t6>::getName());
+    names.push_back(luaStack<t7>::getName());
+    names.push_back(luaStack<t8>::getName());
+  }
+};
+
+template <typename tr, typename t0, typename t1, typename t2, typename t3, 
+          typename t4, typename t5, typename t6, typename t7>
+  class argTypeNames<tr (*)(t0, t1, t2, t3, t4, t5, t6, t7)>{
+ public:
+  static void get(std::vector<std::string> &names)
+  {
+    names.clear();
+    names.push_back(luaStack<tr>::getName());
+    names.push_back(luaStack<t0>::getName());
+    names.push_back(luaStack<t1>::getName());
+    names.push_back(luaStack<t2>::getName());
+    names.push_back(luaStack<t3>::getName());
+    names.push_back(luaStack<t4>::getName());
+    names.push_back(luaStack<t5>::getName());
+    names.push_back(luaStack<t6>::getName());
+    names.push_back(luaStack<t7>::getName());
+  }
+};
+
+template <typename tr, typename t0, typename t1, typename t2, typename t3, 
+          typename t4, typename t5, typename t6>
+  class argTypeNames<tr (*)(t0, t1, t2, t3, t4, t5, t6)>{
+ public:
+  static void get(std::vector<std::string> &names)
+  {
+    names.clear();
+    names.push_back(luaStack<tr>::getName());
+    names.push_back(luaStack<t0>::getName());
+    names.push_back(luaStack<t1>::getName());
+    names.push_back(luaStack<t2>::getName());
+    names.push_back(luaStack<t3>::getName());
+    names.push_back(luaStack<t4>::getName());
+    names.push_back(luaStack<t5>::getName());
+    names.push_back(luaStack<t6>::getName());
+  }
+};
+
 template <typename tr, typename t0, typename t1, typename t2, typename t3, 
           typename t4, typename t5>
 class argTypeNames<tr (*)(t0, t1, t2, t3, t4, t5)>{
@@ -374,6 +432,37 @@ class argTypeNames<tr (*)()>{
 
 template <typename cb>
 class argTypeNames;
+
+template <typename tr, typename tObj, typename t0, typename t1, typename t2,
+  typename t3, typename t4, typename t5, typename t6, typename t7, typename t8>
+  class argTypeNames<tr (tObj::*)(t0, t1, t2, t3, t4, t5, t6, t7, t8)>{
+ public:
+  static void get(std::vector<std::string> &names)
+  {
+    argTypeNames<tr(*)(t0, t1, t2, t3, t4, t5, t6, t7, t8)>::get(names);
+  }
+};
+
+template <typename tr, typename tObj, typename t0, typename t1, typename t2,
+          typename t3, typename t4, typename t5, typename t6, typename t7>
+  class argTypeNames<tr (tObj::*)(t0, t1, t2, t3, t4, t5, t6, t7)>{
+ public:
+  static void get(std::vector<std::string> &names)
+  {
+    argTypeNames<tr(*)(t0, t1, t2, t3, t4, t5, t6, t7)>::get(names);
+  }
+};
+
+template <typename tr, typename tObj, typename t0, typename t1, typename t2,
+          typename t3, typename t4, typename t5, typename t6>
+  class argTypeNames<tr (tObj::*)(t0, t1, t2, t3, t4, t5, t6)>{
+ public:
+  static void get(std::vector<std::string> &names)
+  {
+    argTypeNames<tr(*)(t0, t1, t2, t3, t4, t5, t6)>::get(names);
+  }
+};
+
 template <typename tr, typename tObj, typename t0, typename t1, typename t2,
           typename t3, typename t4, typename t5>
 class argTypeNames<tr (tObj::*)(t0, t1, t2, t3, t4, t5)>{
@@ -491,6 +580,60 @@ class argTypeNames<tr (tObj::*)()const>{
 
 // template to call c function from the lua stack
 // static, return 
+template < typename tRet, typename t0, typename t1, typename t2, typename t3, typename t4, typename t5, typename t6, typename t7, typename t8>
+  static int luaCall(lua_State *L, tRet (*_f)(t0, t1, t2, t3, t4, t5, t6, t7, t8))
+{
+  if (lua_gettop(L) == 10) lua_remove(L, 1);
+  luaStack<tRet>::push(L, (*_f)(luaStack<t0>::get(L, 1), luaStack<t1>::get(L, 2),
+                                luaStack<t2>::get(L, 3), luaStack<t3>::get(L, 4),
+				luaStack<t4>::get(L, 5), luaStack<t5>::get(L, 6),
+				luaStack<t6>::get(L, 7), luaStack<t7>::get(L, 8),
+				luaStack<t8>::get(L, 9)));
+  return 1;
+};
+
+template < typename tRet, typename t0, typename t1, typename t2, typename t3, typename t4, typename t5, typename t6, typename t7>
+  static int luaCall(lua_State *L, tRet (*_f)(t0, t1, t2, t3, t4, t5, t6, t7))
+{
+  if (lua_gettop(L) == 9) lua_remove(L, 1);
+  luaStack<tRet>::push(L, (*_f)(luaStack<t0>::get(L, 1), luaStack<t1>::get(L, 2),
+                                luaStack<t2>::get(L, 3), luaStack<t3>::get(L, 4),
+				luaStack<t4>::get(L, 5), luaStack<t5>::get(L, 6),
+				luaStack<t6>::get(L, 7), luaStack<t7>::get(L, 8)));
+  return 1;
+};
+
+template < typename tRet, typename t0, typename t1, typename t2, typename t3, typename t4, typename t5, typename t6>
+  static int luaCall(lua_State *L, tRet (*_f)(t0, t1, t2, t3, t4, t5, t6))
+{
+  if (lua_gettop(L) == 8) lua_remove(L, 1);
+  luaStack<tRet>::push(L, (*_f)(luaStack<t0>::get(L, 1), luaStack<t1>::get(L, 2),
+                                luaStack<t2>::get(L, 3), luaStack<t3>::get(L, 4),
+				luaStack<t4>::get(L, 5), luaStack<t5>::get(L, 6),
+				luaStack<t6>::get(L, 7)));
+  return 1;
+};
+
+template < typename tRet, typename t0, typename t1, typename t2, typename t3, typename t4, typename t5>
+  static int luaCall(lua_State *L, tRet (*_f)(t0, t1, t2, t3, t4, t5))
+{
+  if (lua_gettop(L) == 7) lua_remove(L, 1);
+  luaStack<tRet>::push(L, (*_f)(luaStack<t0>::get(L, 1), luaStack<t1>::get(L, 2),
+                                luaStack<t2>::get(L, 3), luaStack<t3>::get(L, 4),
+				luaStack<t4>::get(L, 5), luaStack<t5>::get(L, 6)));
+  return 1;
+};
+
+template < typename tRet, typename t0, typename t1, typename t2, typename t3, typename t4>
+  static int luaCall(lua_State *L, tRet (*_f)(t0, t1, t2, t3,t4))
+{
+  if (lua_gettop(L) == 6) lua_remove(L, 1);
+  luaStack<tRet>::push(L, (*_f)(luaStack<t0>::get(L, 1), luaStack<t1>::get(L, 2),
+                                luaStack<t2>::get(L, 3), luaStack<t3>::get(L, 4),
+				luaStack<t4>::get(L, 5)));
+  return 1;
+};
+
 template < typename tRet, typename t0, typename t1, typename t2, typename t3>
 static int luaCall(lua_State *L, tRet (*_f)(t0, t1, t2, t3))
 {
@@ -534,6 +677,35 @@ static int luaCall(lua_State *L, tRet (*_f)())
 };
 
 //static, no return 
+template < typename t0, typename t1, typename t2, typename t3, typename t4, typename t5, typename t6>
+  static int luaCall(lua_State *L, void (*_f)(t0, t1, t2, t3, t4, t5, t6))
+{
+  if (lua_gettop(L) == 8) lua_remove(L, 1);
+  (*(_f))(luaStack<t0>::get(L, 1), luaStack<t1>::get(L, 2),
+          luaStack<t2>::get(L, 3), luaStack<t3>::get(L, 4), luaStack<t4>::get(L, 5),
+	  luaStack<t5>::get(L, 6), luaStack<t6>::get(L, 7));
+  return 1;
+};
+
+template < typename t0, typename t1, typename t2, typename t3, typename t4, typename t5>
+  static int luaCall(lua_State *L, void (*_f)(t0, t1, t2, t3, t4, t5))
+{
+  if (lua_gettop(L) == 7) lua_remove(L, 1);
+  (*(_f))(luaStack<t0>::get(L, 1), luaStack<t1>::get(L, 2),
+          luaStack<t2>::get(L, 3), luaStack<t3>::get(L, 4), luaStack<t4>::get(L, 5),
+	  luaStack<t5>::get(L, 6));
+  return 1;
+};
+
+template < typename t0, typename t1, typename t2, typename t3, typename t4>
+  static int luaCall(lua_State *L, void (*_f)(t0, t1, t2, t3, t4))
+{
+  if (lua_gettop(L) == 6) lua_remove(L, 1);
+  (*(_f))(luaStack<t0>::get(L, 1), luaStack<t1>::get(L, 2),
+          luaStack<t2>::get(L, 3), luaStack<t3>::get(L, 4), luaStack<t4>::get(L, 5));
+  return 1;
+};
+
 template < typename t0, typename t1, typename t2, typename t3>
 static int luaCall(lua_State *L, void (*_f)(t0, t1, t2, t3))
 {
@@ -580,6 +752,49 @@ int luaCall<void>(lua_State *L,void (*_f)())
 
 //const, return
 template <typename tObj, typename tRet, typename t0, typename t1, typename t2,
+  typename t3, typename t4, typename t5, typename t6, typename t7>
+  static int luaCall(lua_State *L, tRet (tObj::*_f)(t0, t1, t2, t3, t4, t5, t6, t7) const)
+{
+  luaStack<tRet>::push(L, (luaStack<tObj*>::get(L, 1)->*(_f))
+                       (luaStack<t0>::get(L, 2), luaStack<t1>::get(L, 3), 
+                        luaStack<t2>::get(L, 4), luaStack<t3>::get(L, 5), luaStack<t4>::get(L, 6),
+			luaStack<t5>::get(L, 7), luaStack<t6>::get(L, 8), luaStack<t7>::get(L, 9)));
+  return 1;
+};
+
+template <typename tObj, typename tRet, typename t0, typename t1, typename t2,
+  typename t3, typename t4, typename t5, typename t6>
+  static int luaCall(lua_State *L, tRet (tObj::*_f)(t0, t1, t2, t3, t4, t5, t6) const)
+{
+  luaStack<tRet>::push(L, (luaStack<tObj*>::get(L, 1)->*(_f))
+                       (luaStack<t0>::get(L, 2), luaStack<t1>::get(L, 3), 
+                        luaStack<t2>::get(L, 4), luaStack<t3>::get(L, 5), luaStack<t4>::get(L, 6),
+			luaStack<t5>::get(L, 7), luaStack<t6>::get(L, 8)));
+  return 1;
+};
+
+template <typename tObj, typename tRet, typename t0, typename t1, typename t2,
+  typename t3, typename t4, typename t5>
+  static int luaCall(lua_State *L, tRet (tObj::*_f)(t0, t1, t2, t3, t4, t5) const)
+{
+  luaStack<tRet>::push(L, (luaStack<tObj*>::get(L, 1)->*(_f))
+                       (luaStack<t0>::get(L, 2), luaStack<t1>::get(L, 3), 
+                        luaStack<t2>::get(L, 4), luaStack<t3>::get(L, 5), luaStack<t4>::get(L, 6),
+			luaStack<t5>::get(L, 7)));
+  return 1;
+};
+
+template <typename tObj, typename tRet, typename t0, typename t1, typename t2,
+  typename t3, typename t4>
+  static int luaCall(lua_State *L, tRet (tObj::*_f)(t0, t1, t2, t3, t4) const)
+{
+  luaStack<tRet>::push(L, (luaStack<tObj*>::get(L, 1)->*(_f))
+                       (luaStack<t0>::get(L, 2), luaStack<t1>::get(L, 3), 
+                        luaStack<t2>::get(L, 4), luaStack<t3>::get(L, 5), luaStack<t4>::get(L, 6)));
+  return 1;
+};
+
+template <typename tObj, typename tRet, typename t0, typename t1, typename t2,
           typename t3>
 static int luaCall(lua_State *L, tRet (tObj::*_f)(t0, t1, t2, t3) const)
 {
@@ -621,6 +836,30 @@ static int luaCall(lua_State *L, tRet (tObj::*_f)() const) {
 };
 
 //non const, return
+template <typename tObj, typename tRet, typename t0, typename t1, typename t2,
+          typename t3, typename  t4, typename t5, typename t6, typename t7>
+  static int luaCall(lua_State *L,tRet (tObj::*_f)(t0, t1, t2, t3, t4, t5, t6, t7))
+{
+  luaStack<tRet>::push(L,(luaStack<tObj*>::get(L, 1)->*(_f))
+                       (luaStack<t0>::get(L, 2), luaStack<t1>::get(L, 3),
+                        luaStack<t2>::get(L, 4), luaStack<t3>::get(L, 5),
+                        luaStack<t4>::get(L, 6), luaStack<t5>::get(L, 7), 
+			luaStack<t6>::get(L, 8), luaStack<t7>::get(L, 9)));
+  return 1;
+};
+
+template <typename tObj, typename tRet, typename t0, typename t1, typename t2,
+          typename t3, typename  t4, typename t5, typename t6>
+  static int luaCall(lua_State *L,tRet (tObj::*_f)(t0, t1, t2, t3, t4, t5, t6))
+{
+  luaStack<tRet>::push(L,(luaStack<tObj*>::get(L, 1)->*(_f))
+                       (luaStack<t0>::get(L, 2), luaStack<t1>::get(L, 3),
+                        luaStack<t2>::get(L, 4), luaStack<t3>::get(L, 5),
+                        luaStack<t4>::get(L, 6), luaStack<t5>::get(L, 7), 
+			luaStack<t6>::get(L, 8)));
+  return 1;
+};
+
 template <typename tObj, typename tRet, typename t0, typename t1, typename t2,
           typename t3, typename  t4, typename t5>
 static int luaCall(lua_State *L,tRet (tObj::*_f)(t0, t1, t2, t3, t4, t5))

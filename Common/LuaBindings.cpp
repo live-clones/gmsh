@@ -26,6 +26,7 @@
 #include "drawContext.h"
 #include "GmshMessage.h"
 #include "linearSystem.h"
+#include "GModelFactory.h"
 
 #if defined(HAVE_SOLVER)
 #include "linearSystemCSR.h"
@@ -385,6 +386,7 @@ binding::binding()
   function::registerBindings(this);
   linearSystemCSRGmm<double>::registerBindings(this);
 #endif
+  GModelFactory::registerBindings(this);
 }
 
 binding *binding::_instance=NULL;

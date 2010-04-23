@@ -20,15 +20,48 @@
 
 void OCC_Internals::buildLists()
 {
-  TopExp_Explorer exp0, exp1, exp2, exp3, exp4, exp5;
   somap.Clear();
   shmap.Clear();
   fmap.Clear();
   wmap.Clear();
   emap.Clear();
   vmap.Clear();
+  addShapeToLists(shape);
+}
+
+void OCC_Internals::buildShapeFromLists(TopoDS_Shape _shape){
+  BRep_Builder B;
+  TopoDS_Compound C;
+  B.MakeCompound(C);
+  B.Add(C,_shape);
+  for(int i = 1; i <= vmap.Extent(); i++) B.Add(C,vmap(i));
+  for(int i = 1; i <= emap.Extent(); i++) B.Add(C,emap(i));
+  for(int i = 1; i <= fmap.Extent(); i++) B.Add(C,fmap(i));
+  for(int i = 1; i <= somap.Extent(); i++) B.Add(C,somap(i));
+  shape = C;
+}
+
+const TopoDS_Shape *OCC_Internals::lookupInLists (TopoDS_Shape _shape){
+  if (_shape.ShapeType() == TopAbs_VERTEX) {
+    TopoDS_Vertex vertex = TopoDS::Vertex(_shape);
+    int i = vmap.FindIndex(vertex);
+    if( i < 1)return NULL;
+    else return &vmap(i);
+  }
+  else if (_shape.ShapeType() == TopAbs_EDGE) {
+    TopoDS_Edge edge = TopoDS::Edge(_shape);
+    int i = emap.FindIndex(edge);
+    if( i < 1)return 0;
+    else return &emap(i);
+  }
+}
+
+
+void OCC_Internals::addShapeToLists(TopoDS_Shape _shape)
+{
+  TopExp_Explorer exp0, exp1, exp2, exp3, exp4, exp5;
   
-  for(exp0.Init(shape, TopAbs_SOLID); exp0.More(); exp0.Next()){
+  for(exp0.Init(_shape, TopAbs_SOLID); exp0.More(); exp0.Next()){
     TopoDS_Solid solid = TopoDS::Solid(exp0.Current());
     if(somap.FindIndex(TopoDS::Solid(exp0.Current())) < 1){
       somap.Add(TopoDS::Solid(exp0.Current()));
@@ -105,7 +138,7 @@ void OCC_Internals::buildLists()
   }
     
   // Free Faces
-  for(exp2.Init(shape, TopAbs_FACE, TopAbs_SHELL); exp2.More(); exp2.Next()){
+  for(exp2.Init(_shape, TopAbs_FACE, TopAbs_SHELL); exp2.More(); exp2.Next()){
     TopoDS_Face face = TopoDS::Face(exp2.Current());
     if(fmap.FindIndex(face) < 1){
       fmap.Add(face);
@@ -133,7 +166,7 @@ void OCC_Internals::buildLists()
   }
 
   // Free Wires
-  for(exp3.Init(shape, TopAbs_WIRE, TopAbs_FACE); exp3.More(); exp3.Next()){
+  for(exp3.Init(_shape, TopAbs_WIRE, TopAbs_FACE); exp3.More(); exp3.Next()){
     TopoDS_Wire wire = TopoDS::Wire(exp3.Current());
     if(wmap.FindIndex(wire) < 1){
       wmap.Add(wire);
@@ -154,7 +187,7 @@ void OCC_Internals::buildLists()
   }
 
   // Free Edges
-  for(exp4.Init(shape, TopAbs_EDGE, TopAbs_WIRE); exp4.More(); exp4.Next()){
+  for(exp4.Init(_shape, TopAbs_EDGE, TopAbs_WIRE); exp4.More(); exp4.Next()){
     TopoDS_Edge edge = TopoDS::Edge(exp4.Current());
     if(emap.FindIndex(edge) < 1){
       emap.Add(edge);
@@ -168,7 +201,7 @@ void OCC_Internals::buildLists()
   }
 
   // Free Vertices
-  for(exp5.Init(shape, TopAbs_VERTEX, TopAbs_EDGE); exp5.More(); exp5.Next()){
+  for(exp5.Init(_shape, TopAbs_VERTEX, TopAbs_EDGE); exp5.More(); exp5.Next()){
     TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
     if(vmap.FindIndex(vertex) < 1)
       vmap.Add(vertex);
@@ -417,38 +450,123 @@ void OCC_Internals::loadShape(const TopoDS_Shape *s)
   buildLists();
 }
 
+GVertex* OCC_Internals::addVertexToModel(GModel *model, TopoDS_Vertex vertex){  
+  GVertex *gv = getOCCVertexByNativePtr (model,vertex);
+  if (gv)return gv;
+  buildShapeFromLists(vertex);
+  gv = new OCCVertex(model, model->maxVertexNum()+1, vertex);
+  model->add(gv);
+  return gv;
+}
+
+GEdge * OCC_Internals::addEdgeToModel(GModel *model, TopoDS_Edge edge){
+  GEdge *ge = getOCCEdgeByNativePtr(model,edge);
+  if (ge) return ge;
+  buildShapeFromLists(edge);
+  TopoDS_Vertex occv1 = TopExp::FirstVertex(edge);
+  TopoDS_Vertex occv2 = TopExp::LastVertex(edge);
+  GVertex *v1 = addVertexToModel(model,occv1);
+  GVertex *v2 = addVertexToModel(model,occv2);
+  OCCEdge *e = new OCCEdge(model, edge, model->maxEdgeNum()+1, v1, v2);
+  model->add(e);
+  return e;
+}
+
+GEdge * OCC_Internals::addEdgeToModel(GModel *model, TopoDS_Edge edge, GVertex *g1, GVertex *g2){
+  OCCEdge *e = new OCCEdge(model, edge, model->maxEdgeNum()+1, g1, g2);
+  e->replaceEndingPoints (g1,g2);
+  model->add(e);
+  return e;
+}
+
+GFace* OCC_Internals::addFaceToModel(GModel *model, TopoDS_Face face, int i){
+
+  GFace *gf = getOCCFaceByNativePtr(model,face);
+  if (gf) return gf;
+
+  if (i < 0){
+    std::list<GEdge*> _edges;
+    TopExp_Explorer exp2, exp3;
+    for(exp2.Init(face, TopAbs_WIRE); exp2.More(); exp2.Next()){
+      TopoDS_Wire wire = TopoDS::Wire(exp2.Current());
+      for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()){          
+	TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
+	_edges.push_back(addEdgeToModel(model, edge));
+      }
+    }
+    i = model->maxFaceNum()+1;
+    OCCFace *f = new OCCFace(model, face, i);
+    model->add(f);
+    model->glue(Precision::Confusion());
+    return f;
+  }
+  OCCFace *f = new OCCFace(model, face, i);
+  model->add(f);
+  return f;
+}
+
+GEntity* OCC_Internals::addShapeToModel(GModel *model, TopoDS_Shape sh){
+  TopExp_Explorer exp0, exp1, exp2;
+  std::vector<GEntity*> e;
+  for(exp0.Init(sh, TopAbs_SOLID); exp0.More(); exp0.Next()){
+    TopoDS_Solid solid = TopoDS::Solid(exp0.Current());
+    for(exp1.Init(exp0.Current(), TopAbs_SHELL); exp1.More(); exp1.Next()){
+      TopoDS_Shell shell = TopoDS::Shell(exp1.Current());
+      for(exp2.Init(shell, TopAbs_FACE); exp2.More(); exp2.Next()){
+	TopoDS_Face face = TopoDS::Face(exp2.Current());
+	addFaceToModel(model, face, -1);
+      }
+    }
+    OCCRegion *r = new OCCRegion(model, solid, model->maxRegionNum()+1);
+    e.push_back(r);
+  }
+  return e[0];
+}
+
+GRegion* OCC_Internals::addRegionToModel(GModel *model, TopoDS_Solid region, int i){
+  if (i < 0){
+    TopExp_Explorer exp0, exp1, exp2;
+    for(exp0.Init(region, TopAbs_SOLID); exp0.More(); exp0.Next()){
+      TopoDS_Solid solid = TopoDS::Solid(exp0.Current());
+      for(exp1.Init(exp0.Current(), TopAbs_SHELL); exp1.More(); exp1.Next()){
+	TopoDS_Shell shell = TopoDS::Shell(exp1.Current());
+	for(exp2.Init(shell, TopAbs_FACE); exp2.More(); exp2.Next()){
+	  TopoDS_Face face = TopoDS::Face(exp2.Current());
+	  addFaceToModel(model, face, -1);
+	}
+      }
+    }
+    i = model->maxRegionNum()+1;
+  }
+  OCCRegion *r = new OCCRegion(model, region, i);
+  model->add(r);
+  return r;
+}
+
 void OCC_Internals::buildGModel(GModel *model)
 {
   // building geom vertices
   int nvertices = vmap.Extent();
+  printf("%d vertices\n",nvertices);
   for(int i = 1; i <= nvertices; i++){
-    OCCVertex *v = new OCCVertex(model, i, TopoDS::Vertex(vmap(i)));
-    model->add(v);
+    model->add(new OCCVertex(model, i, TopoDS::Vertex(vmap(i))));
   }
   // building geom edges
   int nedges = emap.Extent();
   for(int i = 1; i <= nedges; i++){
-    TopoDS_Edge edge = TopoDS::Edge(emap(i));
-    int i1 = vmap.FindIndex(TopExp::FirstVertex(edge)); 
-    int i2 = vmap.FindIndex(TopExp::LastVertex(edge));
-    GVertex *v1 = model->getVertexByTag(i1);
-    GVertex *v2 = model->getVertexByTag(i2);
-    OCCEdge *e = new OCCEdge(model, edge, i, v1, v2);
-    model->add(e);
+    int i1 = vmap.FindIndex(TopExp::FirstVertex(TopoDS::Edge(emap(i)))); 
+    int i2 = vmap.FindIndex(TopExp::LastVertex(TopoDS::Edge(emap(i))));
+    model->add(new OCCEdge(model, TopoDS::Edge(emap(i)), i, model->getVertexByTag(i1), model->getVertexByTag(i2)));
   }
   // building geom faces
   int nfaces = fmap.Extent();
   for(int i = 1; i <= nfaces; i++){
-    TopoDS_Face face = TopoDS::Face(fmap(i));
-    OCCFace *f = new OCCFace(model, face, i, emap);
-    model->add(f);
+    model->add(new OCCFace(model, TopoDS::Face(fmap(i)), i));
   }
   // building geom regions
   int nvolumes = somap.Extent();
   for(int i = 1; i <= nvolumes; i++){
-    TopoDS_Solid solid = TopoDS::Solid(somap(i));
-    OCCRegion *r = new OCCRegion(model, solid, i, fmap);
-    model->add(r);
+    model->add(new OCCRegion(model, TopoDS::Solid(somap(i)), i));
   }
 }
 
@@ -456,7 +574,7 @@ void OCC_Internals::removeAllDuplicates(const double &tolerance)
 {
 }
 
-static void addSimpleShapes(TopoDS_Shape theShape, TopTools_ListOfShape &theList)
+void addSimpleShapes(TopoDS_Shape theShape, TopTools_ListOfShape &theList)
 {
   if (theShape.ShapeType() != TopAbs_COMPOUND &&
       theShape.ShapeType() != TopAbs_COMPSOLID) {
@@ -615,6 +733,7 @@ TopoDS_Shape GlueFaces(const TopoDS_Shape &theShape,
 
 void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool, const BooleanOperator &op)
 {
+  printf("coucou2\n");
   if (tool.IsNull()) return;
   if (shape.IsNull()) shape = tool;
   else{
@@ -735,6 +854,7 @@ void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool, const BooleanOperato
       break;
     case OCC_Internals::Fuse :
       {
+	printf("coucou\n");
         BRepAlgoAPI_Fuse BO (tool, shape);
         if (!BO.IsDone()) {
           Msg::Error("Fuse operation can not be performed on the given shapes");

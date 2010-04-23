@@ -21,6 +21,7 @@ GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
 {
   if(v0) v0->addEdge(this);
   if(v1 && v1 != v0) v1->addEdge(this);
+  _mStatus = GEdge::PENDING;
   resetMeshAttributes();
 }
 
@@ -346,9 +347,27 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z,
   return false;
 }
 
+void GEdge::replaceEndingPoints (GVertex *replOfv0, GVertex *replOfv1){
+  replaceEndingPointsInternals (replOfv0,replOfv1);
+  if (replOfv0 != v0){
+    v0->delEdge(this);
+    replOfv0->addEdge(this);
+    v0 = replOfv0;
+  }
+  if (replOfv1 != v1){
+    v1->delEdge(this);
+    replOfv1->addEdge(this);
+    v1 = replOfv1;
+  }  
+}
+
 void GEdge::registerBindings(binding *b)
 {
   classBinding *cb = b->addClass<GEdge>("GEdge");
   cb->setDescription("A GEdge is a geometrical 1D entity");
   cb->setParentClass<GEntity>();
+  methodBinding *mb = cb->addMethod("getBeginVertex", &GEdge::getBeginVertex);
+  mb->setDescription("get the begin-vertex of the edge");
+  mb = cb->addMethod("getEndVertex", &GEdge::getEndVertex);
+  mb->setDescription("get the end-vertex of the edge");
 }

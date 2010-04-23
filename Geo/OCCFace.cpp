@@ -24,21 +24,32 @@
 #include "Geom_Plane.hxx"
 #include "gp_Pln.hxx"
 #include "BRepMesh_FastDiscret.hxx"
+#include "IntTools_Context.hxx"
+#include "BOPTools_Tools2D.hxx"
+#include "BOPTools_Tools3D.hxx"
 
-OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape &emap)
+OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
   : GFace(m, num), s(_s)
 {
+  //  printf("NEW OCC FACE %d\n",tag());
+  setup();
+}
+
+void OCCFace::setup()
+{
+  edgeLoops.clear();
+  l_edges.clear();
+  l_dirs.clear();
   TopExp_Explorer exp2, exp3;
   for(exp2.Init(s, TopAbs_WIRE); exp2.More(); exp2.Next()){
     TopoDS_Wire wire = TopoDS::Wire(exp2.Current());
-    Msg::Debug("OCC Face %d - New Wire", num);
+    Msg::Debug("OCC Face %d - New Wire", tag());
     std::list<GEdge*> l_wire;
     for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()){          
       TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
-      int index = emap.FindIndex(edge);
-      GEdge *e = m->getEdgeByTag(index);
+      GEdge *e = getOCCEdgeByNativePtr(model(),edge);
       if(!e){
-        Msg::Error("Unknown edge %d in face %d", index, num);
+	Msg::Error("Unknown edge in face %d", tag());
       }
       else{
         l_wire.push_back(e);
@@ -50,8 +61,9 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
         }
       }
     }
-    
+
     GEdgeLoop el(l_wire);
+    //    printf("l_wire of size %d %d\n",l_wire.size(),el.count());
     for(GEdgeLoop::citer it = el.begin(); it != el.end(); ++it){
       l_edges.push_back(it->ge);
       l_dirs.push_back(it->_sign);
@@ -71,9 +83,9 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
   _periodic[0] = surface.IsUPeriodic();
   _periodic[1] = surface.IsVPeriodic();
 
-  ShapeAnalysis::GetFaceUVBounds(_s, umin, umax, vmin, vmax);
-  Msg::Debug("OCC Face %d with %d edges bounds (%g,%g)(%g,%g)", 
-             num, l_edges.size(), umin, umax, vmin, vmax);
+  ShapeAnalysis::GetFaceUVBounds(s, umin, umax, vmin, vmax);
+  Msg::Debug("OCC Face %d with %d parameter bounds (%g,%g)(%g,%g)", 
+             tag(), l_edges.size(), umin, umax, vmin, vmax);
   // we do that for the projections to converge on the borders of the
   // surface
   const double du = umax - umin;
@@ -83,6 +95,7 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
   umax += fabs(du) / 100.0;
   vmax += fabs(dv) / 100.0;
   occface = BRep_Tool::Surface(s);
+  //  printf("size = %d\n",l_edges.size());
 }
 
 Range<double> OCCFace::parBounds(int i) const
@@ -353,6 +366,115 @@ bool OCCFace::buildSTLTriangulation(bool force)
   }
 
   return true;
+}
+
+GFace *getOCCFaceByNativePtr(GModel *model, TopoDS_Face toFind)
+{
+  GModel::fiter it =model->firstFace();
+  for (; it !=model->lastFace(); ++it){
+    OCCFace *gf = dynamic_cast<OCCFace*>(*it);
+    if (gf){
+      if( toFind.IsSame(gf->getTopoDS_Face()) )return *it;
+      if( toFind.IsSame(gf->getTopoDS_FaceOld()) )return *it;
+    }
+  }
+  return 0;
+}
+void OCCFace::replaceEdgesInternal (std::list<GEdge*> &new_edges){
+
+  IntTools_Context myContext;
+  // we simply replace old edges by new edges in the structure
+  
+  // make a copy of s
+  TopoDS_Face copy_of_s_forward = s;
+  copy_of_s_forward.Orientation(TopAbs_FORWARD);
+  // make a copy of occface
+  TopLoc_Location location;
+  Handle(Geom_Surface) copy_of_occface = BRep_Tool::Surface(copy_of_s_forward, location);
+  // check periodicity
+  bool bIsUPeriodic=_periodic[0];
+  // get tolerance 
+  double tolerance =BRep_Tool::Tolerance(copy_of_s_forward);
+
+  BRep_Builder aBB;
+  TopoDS_Face newFace;
+  aBB.MakeFace (newFace, copy_of_occface, location, tolerance);
+  // expolore the face
+  TopExp_Explorer aExpW, aExpE;
+  aExpW.Init(copy_of_s_forward, TopAbs_WIRE);
+  for (; aExpW.More(); aExpW.Next()) {
+    TopoDS_Wire newWire;
+    aBB.MakeWire(newWire);
+    const TopoDS_Wire& aW=TopoDS::Wire(aExpW.Current());
+    aExpE.Init(aW, TopAbs_EDGE);
+    for (; aExpE.More(); aExpE.Next()) {
+      const TopoDS_Edge& aE=TopoDS::Edge(aExpE.Current());
+      std::list<GEdge*>::iterator it  = l_edges.begin();
+      std::list<GEdge*>::iterator it2 = new_edges.begin();
+      TopoDS_Edge aER;
+      Msg::Debug("trying to replace %d by %d",(*it)->tag(),(*it2)->tag());
+      for ( ; it != l_edges.end() ; ++it,++it2){
+	OCCEdge *occEd = dynamic_cast<OCCEdge*>(*it);
+	TopoDS_Edge olde = occEd->getTopoDS_Edge();
+	if (olde.IsSame(aE)){
+	  aER = *((TopoDS_Edge*)(*it2)->getNativePtr());		  
+	}
+	else {
+	  olde = occEd->getTopoDS_EdgeOld();
+	  if (olde.IsSame(aE)){
+	    aER = *((TopoDS_Edge*)(*it2)->getNativePtr());		  
+	  }
+	}
+      }
+      if (aER.IsNull()){
+	Msg::Error("cannot find an edge for gluing a face");
+      }
+      aER.Orientation(TopAbs_FORWARD);
+      if (!BRep_Tool::Degenerated(aER)) {
+	if (bIsUPeriodic) {
+	  Standard_Real aT1, aT2, aTx, aUx;
+	  BRep_Builder aBB_;
+	  //
+	  double aTwoPI=2*M_PI+PI;
+	  //
+	  Handle(Geom2d_Curve) aC2D=BRep_Tool::CurveOnSurface(aER, copy_of_s_forward, aT1, aT2);
+	  if (!aC2D.IsNull()) {
+	    if (BRep_Tool::IsClosed(aER, copy_of_s_forward)) {
+	      continue;
+	    }
+	    else{
+	      aTx=BOPTools_Tools2D::IntermediatePoint(aT1, aT2);
+	      gp_Pnt2d aP2D;
+	      aC2D->D0(aTx, aP2D);
+	      aUx=aP2D.X();
+	      if (aUx < umin || aUx > umax) {
+		// need to rebuild
+		Handle(Geom2d_Curve) aC2Dx;
+		aBB_.UpdateEdge(aER, aC2Dx, copy_of_s_forward , BRep_Tool::Tolerance(aE)); 
+	      }
+	    }	  
+	  }
+	}
+	BOPTools_Tools2D::BuildPCurveForEdgeOnFace(aER, copy_of_s_forward);
+	
+	// orient image 
+	Standard_Boolean bIsToReverse = BOPTools_Tools3D::IsSplitToReverse1(aER, aE, myContext);
+	if (bIsToReverse) {
+	  aER.Reverse();
+	}
+      }
+      else {
+	aER.Orientation(aE.Orientation());
+      }
+      //
+      aBB.Add(newWire, aER);
+    }
+    aBB.Add(newFace, newWire);
+  }
+  _replaced = s;
+  s=newFace;
+
+  setup();
 }
 
 #endif

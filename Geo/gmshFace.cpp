@@ -21,6 +21,9 @@ gmshFace::gmshFace(GModel *m, Surface *face)
 {
   resetMeshAttributes();
 
+  setMeshMaster(s->meshMaster);
+  //  printf("surface %d master %d\n",tag(),meshMaster());
+
   std::list<GEdge*> l_wire;
   GVertex *first = 0;
   for(int i = 0; i < List_Nbr(s->Generatrices); i++){
@@ -114,7 +117,7 @@ void gmshFace::resetMeshAttributes()
       else
         Msg::Error("Unknown vertex %d in transfinite attributes", corn->Num);
     }
-  }
+  }  
 }
 
 Range<double> gmshFace::parBounds(int i) const

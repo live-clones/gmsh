@@ -17,13 +17,17 @@
 
 class OCCFace : public GFace {
  protected:
+  TopoDS_Face _replaced;
   TopoDS_Face s;
   Handle(Geom_Surface) occface;
   double umin, umax, vmin, vmax;
   bool _periodic[2];
   bool buildSTLTriangulation(bool force=false);
+  void replaceEdgesInternal (std::list<GEdge*> &);
+  void setup();
  public:
-  OCCFace(GModel *m, TopoDS_Face s, int num, TopTools_IndexedMapOfShape &emap);
+  //OCCFace(GModel *m, TopoDS_Face s, int num, TopTools_IndexedMapOfShape &emap);
+  OCCFace(GModel *m, TopoDS_Face s, int num);
   virtual ~OCCFace(){}
   Range<double> parBounds(int i) const; 
   virtual GPoint point(double par1, double par2) const; 
@@ -40,7 +44,10 @@ class OCCFace : public GFace {
   virtual double curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
                             double *curvMax, double *curvMin) const;
   surface_params getSurfaceParams() const;
+  TopoDS_Face getTopoDS_Face () {return s;}
+  TopoDS_Face getTopoDS_FaceOld () {return _replaced;}
 };
+GFace *getOCCFaceByNativePtr(GModel *model, TopoDS_Face toFind);
 
 #endif
 

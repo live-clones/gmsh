@@ -105,4 +105,18 @@ SPoint2 OCCVertex::reparamOnFace(const GFace *gf, int dir) const
   return GVertex::reparamOnFace(gf, dir);
 }
 
+GVertex *getOCCVertexByNativePtr(GModel *model, TopoDS_Vertex toFind)
+{
+  GModel::viter it =model->firstVertex();
+  for (; it !=model->lastVertex(); it++){
+    OCCVertex *occv = dynamic_cast<OCCVertex*>(*it);
+    if (occv){
+      if (toFind.IsSame(occv->getShape())){
+	return *it;
+      }
+    }
+  }
+  return 0;
+}
+
 #endif

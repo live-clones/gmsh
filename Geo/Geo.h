@@ -131,6 +131,7 @@ class Curve{
   CircParam Circle;
   DrawingColor Color;
   gmshSurface *geometry;
+  int meshMaster;
   std::vector<int> compound;
 };
 
@@ -164,6 +165,7 @@ class Surface{
   // should be the only one in gmsh, so parameter "Type" should
   // disappear from the class Surface.
   gmshSurface *geometry;
+  int meshMaster;
   std::vector<int> compound, compoundBoundary[4];
 };
 

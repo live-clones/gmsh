@@ -18,6 +18,7 @@ class OCCFace;
 
 class OCCEdge : public GEdge {
  protected:
+  TopoDS_Edge _replacement;
   TopoDS_Edge c;
   TopoDS_Edge c_rev;
   double s0, s1;
@@ -34,6 +35,7 @@ class OCCEdge : public GEdge {
   virtual SVector3 firstDer(double par) const;
   virtual double curvature (double par) const;
   virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
+  virtual GPoint closestPoint(const SPoint3 &queryPoint, double &param) const;
   ModelType getNativeType() const { return OpenCascadeModel; }
   void * getNativePtr() const { return (void*)&c; }
   virtual int minimumMeshSegments () const;
@@ -42,7 +44,11 @@ class OCCEdge : public GEdge {
   void setTrimmed(OCCFace *);
   bool isSeam(const GFace *) const;
   virtual void writeGEO(FILE *fp);
+  TopoDS_Edge getTopoDS_Edge() const {return c;}
+  TopoDS_Edge getTopoDS_EdgeOld() const {return _replacement;}
+  void replaceEndingPointsInternals(GVertex *, GVertex *);
 };
+GEdge *getOCCEdgeByNativePtr(GModel *model, TopoDS_Edge toFind);
 
 #endif
 
