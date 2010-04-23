@@ -50,9 +50,9 @@ class helmholtzTerm : public femTerm<scalar> {
   {
     MElement *e = se->getMeshElement();
     // compute integration rule
-    //const int integrationOrder = (_a) ? 2 * e->getPolynomialOrder() : 
-    //  2 * (e->getPolynomialOrder() - 1);
-        const int integrationOrder = 2 * e->getPolynomialOrder() + 1; 
+    const int integrationOrder = (_a) ? 2 * e->getPolynomialOrder() : 
+      2 * (e->getPolynomialOrder() - 1);
+   //    const int integrationOrder = 2 * e->getPolynomialOrder() + 1; 
 
     int npts; IntPt *GP;
     e->getIntegrationPoints(integrationOrder, &npts, &GP);
