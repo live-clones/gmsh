@@ -39,66 +39,6 @@
 std::vector<GModel*> GModel::list;
 int GModel::_current = -1;
 
-static void recur_connect(MVertex *v,
-                          std::multimap<MVertex*,MEdge> &v2e,
-                          std::set<MEdge,Less_Edge> &group,
-                          std::set<MVertex*> &touched)
-{
-  if (touched.find(v) != touched.end())return;
-
-  touched.insert(v);
-  for (std::multimap <MVertex*,MEdge>::iterator it = v2e.lower_bound(v); 
-       it != v2e.upper_bound(v) ; ++it){
-    group.insert(it->second);
-    for (int i=0;i<it->second.getNumVertices();++i){
-      recur_connect (it->second.getVertex(i),v2e,group,touched);
-    }
-  }
-
-}
-
-// starting form a list of elements, returns
-// lists of lists that are all simply connected
-static void recur_connect_e (const MEdge &e,
-                             std::multimap<MEdge,MElement*,Less_Edge> &e2e,
-                             std::set<MElement*> &group,
-                             std::set<MEdge,Less_Edge> &touched){
-  if (touched.find(e) != touched.end())return;
-  touched.insert(e);
-  for (std::multimap <MEdge,MElement*,Less_Edge>::iterator it = e2e.lower_bound(e);
-         it != e2e.upper_bound(e) ; ++it){
-    group.insert(it->second);
-    for (int i=0;i<it->second->getNumEdges();++i){
-      recur_connect_e (it->second->getEdge(i),e2e,group,touched);
-    }
-  }
-}
-
-
-static int connected_bounds (std::set<MEdge, Less_Edge> &edges,  std::vector<std::vector<MEdge> > &boundaries)
-{
-
-  std::multimap<MVertex*,MEdge> v2e;
-  for(std::set<MEdge, Less_Edge>::iterator it = edges.begin(); it != edges.end(); it++){
-    for (int j=0;j<it->getNumVertices();j++){
-      v2e.insert(std::make_pair(it->getVertex(j),*it));
-    }
-  }
-
-  while (!v2e.empty()){
-    std::set<MEdge, Less_Edge> group;
-    std::set<MVertex*> touched;
-    recur_connect (v2e.begin()->first,v2e,group,touched);
-    std::vector<MEdge> temp;
-    temp.insert(temp.begin(), group.begin(), group.end());
-    boundaries.push_back(temp);
-    for (std::set<MVertex*>::iterator it = touched.begin() ; it != touched.end();++it)
-      v2e.erase(*it);
-  }
-
-  return boundaries.size();
-}
-
 GModel::GModel(std::string name)
   : _name(name), _visible(1), _octree(0),
     _geo_internals(0), _occ_internals(0), _fm_internals(0),
@@ -1102,7 +1042,6 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
 
 void GModel::createTopologyFromMesh()
 {
-
   Msg::Info("Creating topology from mesh");
   double t1 = Cpu();
 
@@ -1131,11 +1070,68 @@ void GModel::createTopologyFromMesh()
   
   double t2 = Cpu();
   Msg::Info("Creating topology from mesh done (%g s)", t2-t1);
- 
   
   //create old format (necessaray for boundary layers)
   exportDiscreteGEOInternals();
+}
 
+static void recur_connect(MVertex *v,
+                          std::multimap<MVertex*,MEdge> &v2e,
+                          std::set<MEdge,Less_Edge> &group,
+                          std::set<MVertex*> &touched)
+{
+  if (touched.find(v) != touched.end()) return;
+
+  touched.insert(v);
+  for (std::multimap <MVertex*,MEdge>::iterator it = v2e.lower_bound(v); 
+       it != v2e.upper_bound(v) ; ++it){
+    group.insert(it->second);
+    for (int i = 0; i < it->second.getNumVertices(); ++i){
+      recur_connect (it->second.getVertex(i), v2e, group, touched);
+    }
+  }
+}
+
+// starting form a list of elements, returns lists of lists that are
+// all simply connected
+static void recur_connect_e(const MEdge &e,
+                            std::multimap<MEdge,MElement*, Less_Edge> &e2e,
+                            std::set<MElement*> &group,
+                            std::set<MEdge, Less_Edge> &touched)
+{
+  if (touched.find(e) != touched.end())return;
+  touched.insert(e);
+  for (std::multimap <MEdge,MElement*,Less_Edge>::iterator it = e2e.lower_bound(e);
+         it != e2e.upper_bound(e) ; ++it){
+    group.insert(it->second);
+    for (int i = 0; i < it->second->getNumEdges(); ++i){
+      recur_connect_e(it->second->getEdge(i), e2e, group, touched);
+    }
+  }
+}
+
+static int connected_bounds(std::set<MEdge, Less_Edge> &edges, 
+                            std::vector<std::vector<MEdge> > &boundaries)
+{
+  std::multimap<MVertex*,MEdge> v2e;
+  for(std::set<MEdge, Less_Edge>::iterator it = edges.begin(); it != edges.end(); it++){
+    for (int j=0;j<it->getNumVertices();j++){
+      v2e.insert(std::make_pair(it->getVertex(j),*it));
+    }
+  }
+
+  while (!v2e.empty()){
+    std::set<MEdge, Less_Edge> group;
+    std::set<MVertex*> touched;
+    recur_connect(v2e.begin()->first, v2e, group, touched);
+    std::vector<MEdge> temp;
+    temp.insert(temp.begin(), group.begin(), group.end());
+    boundaries.push_back(temp);
+    for (std::set<MVertex*>::iterator it = touched.begin() ; it != touched.end();++it)
+      v2e.erase(*it);
+  }
+
+  return boundaries.size();
 }
 
 void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
@@ -1145,7 +1141,6 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
     if((*it)->geomType() == GEntity::DiscreteCurve)
       discEdges.push_back((discreteEdge*) *it);
   }
-
 
   // find boundary edges of each face and put them in a map_edges that
   // associates the MEdges with the tags of the adjacent faces
@@ -1185,7 +1180,8 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
     // create discreteEdges and create a map face2Edges that associate
     // for each face the boundary discrete Edges
 
-    for (std::vector<discreteEdge*>::iterator itE = discEdges.begin(); itE != discEdges.end(); itE++){
+    for (std::vector<discreteEdge*>::iterator itE = discEdges.begin(); 
+         itE != discEdges.end(); itE++){
 
       bool candidate = true;
       for (unsigned int i = 0; i < (*itE)->getNumMeshElements(); i++){
@@ -1198,7 +1194,6 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
       }
 
       if (candidate){
-
         std::vector<int> tagEdges;
         tagEdges.push_back((*itE)->tag());
         for (unsigned int i = 0; i < (*itE)->getNumMeshElements(); i++){
@@ -1217,9 +1212,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
             it->second = allEdges;
           }
         }
-        
       }
-      
     }
 
     std::vector<std::vector<MEdge> > boundaries;
@@ -1247,7 +1240,8 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
       }
       e->mesh_vertices.insert(e->mesh_vertices.begin(), allV.begin(),allV.end());
 
-      for (std::vector<int>::iterator itFace = tagFaces.begin(); itFace != tagFaces.end(); itFace++) {
+      for (std::vector<int>::iterator itFace = tagFaces.begin(); 
+           itFace != tagFaces.end(); itFace++) {
 
         //delete new mesh vertices of edge from adjacent faces
         GFace *dFace = getFaceByTag(*itFace);
@@ -1277,7 +1271,8 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
   }
 
   // set boundary edges for each face
-  for (std::vector<discreteFace*>::iterator it = discFaces.begin();  it != discFaces.end(); it++){
+  for (std::vector<discreteFace*>::iterator it = discFaces.begin();
+       it != discFaces.end(); it++){
     std::map<int, std::vector<int> >::iterator ite = face2Edges.find((*it)->tag());
     if (ite != face2Edges.end()){
       std::vector<int> bcEdges = ite->second;
@@ -1296,7 +1291,8 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
  //we need to recreate lines, triangles and tets
   //that contain those new MEdgeVertices
   //for (std::list<GFace*>::iterator iFace = lFaces.begin();  iFace != lFaces.end(); iFace++){
-  for (std::map<GFace*, std::map<MVertex*, MVertex*, std::less<MVertex*> > >::iterator iFace= face2Vert.begin(); iFace != face2Vert.end(); iFace++){
+  for (std::map<GFace*, std::map<MVertex*, MVertex*, std::less<MVertex*> > >::iterator
+         iFace= face2Vert.begin(); iFace != face2Vert.end(); iFace++){
     std::map<MVertex*, MVertex*, std::less<MVertex*> > old2new = iFace->second;
     GFace *gf = iFace->first;
     std::vector<MTriangle*> newTriangles;
@@ -1676,7 +1672,7 @@ void GModel::glue(const double &eps)
 void GModel::registerBindings(binding *b)
 {
   classBinding *cb = b->addClass<GModel>("GModel");
-  cb->setDescription("A GModel contains a geometrycal and it's mesh.");
+  cb->setDescription("A GModel contains a geometry and its mesh.");
   methodBinding *cm;
   cm = cb->addMethod("mesh", &GModel::mesh);
   cm->setArgNames("dim", NULL);
