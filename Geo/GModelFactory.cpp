@@ -24,8 +24,8 @@ OCCFactory::OCCFactory() : GModelFactory()
 {
 }
 
-
-GVertex * OCCFactory::createVertex (GModel *_gm, double x, double y, double z, double lc){
+GVertex * OCCFactory::createVertex (GModel *_gm, double x, double y, double z, double lc)
+{
   if (!_gm->_occ_internals)
     _gm->_occ_internals = new OCC_Internals;
 
@@ -37,8 +37,8 @@ GVertex * OCCFactory::createVertex (GModel *_gm, double x, double y, double z, d
   return _gm->_occ_internals->addVertexToModel(_gm,occv);
 }
 
-
-GEdge * OCCFactory::createLine (GModel *_gm, GVertex *start, GVertex *end){
+GEdge * OCCFactory::createLine (GModel *_gm, GVertex *start, GVertex *end)
+{
   if (!_gm->_occ_internals)
     _gm->_occ_internals = new OCC_Internals;
 
@@ -57,11 +57,10 @@ GEdge * OCCFactory::createLine (GModel *_gm, GVertex *start, GVertex *end){
   return _gm->_occ_internals->addEdgeToModel(_gm,occEdge,start,end);
 }
 
-
 GEdge *OCCFactory::createCircleArc (GModel *_gm, const arcCreationMethod &method,
-			       GVertex *start, 
-			       GVertex *end, 
-			       const SPoint3 &aPoint) {
+                                    GVertex *start, GVertex *end, 
+                                    const SPoint3 &aPoint)
+{
   if (!_gm->_occ_internals)
     _gm->_occ_internals = new OCC_Internals;
 
@@ -89,9 +88,9 @@ GEdge *OCCFactory::createCircleArc (GModel *_gm, const arcCreationMethod &method
 }
 
 GEdge *OCCFactory::createSpline (GModel *_gm, const splineType &type,
-				 GVertex *start, 
-				 GVertex *end, 
-				 fullMatrix<double> *points){
+				 GVertex *start, GVertex *end, 
+				 fullMatrix<double> *points)
+{
   if (!_gm->_occ_internals)
     _gm->_occ_internals = new OCC_Internals;
 
@@ -119,7 +118,8 @@ GEdge *OCCFactory::createSpline (GModel *_gm, const splineType &type,
 GEntity *OCCFactory::revolve (GModel *_gm, GEntity* base, 
 			      double x1, double y1, double z1, 
 			      double x2, double y2, double z2,
-			      double angle ){
+			      double angle)
+{
   if (!_gm->_occ_internals)
     _gm->_occ_internals = new OCC_Internals;
 
@@ -128,15 +128,15 @@ GEntity *OCCFactory::revolve (GModel *_gm, GEntity* base,
   BRepPrimAPI_MakeRevol MR (*(TopoDS_Shape*)base->getNativePtr(), 
 			    axisOfRevolution, angle, Standard_False);
   GEntity *ret;
-  if (base->Cast2Vertex()){
+  if (base->cast2Vertex()){
     TopoDS_Edge result =  TopoDS::Edge(MR.Shape());
     ret  = _gm->_occ_internals->addEdgeToModel(_gm,result);
   }
-  if (base->Cast2Edge()){
+  if (base->cast2Edge()){
     TopoDS_Face result =  TopoDS::Face(MR.Shape());
     ret =  _gm->_occ_internals->addFaceToModel(_gm,result);    
   }
-  if (base->Cast2Face()){
+  if (base->cast2Face()){
     TopoDS_Solid result =  TopoDS::Solid(MR.Shape());
     ret =  _gm->_occ_internals->addRegionToModel(_gm,result);    
   }
@@ -144,9 +144,10 @@ GEntity *OCCFactory::revolve (GModel *_gm, GEntity* base,
   return ret;
 }
 
-GEntity *OCCFactory::extrude (GModel *_gm, GEntity* base, 
-			      double x1, double y1, double z1, 
-			      double x2, double y2, double z2){
+GEntity *OCCFactory::extrude(GModel *_gm, GEntity* base, 
+                             double x1, double y1, double z1, 
+                             double x2, double y2, double z2)
+{
   if (!_gm->_occ_internals)
     _gm->_occ_internals = new OCC_Internals;
 
@@ -157,15 +158,15 @@ GEntity *OCCFactory::extrude (GModel *_gm, GEntity* base,
 
   GEntity *ret;
   
-  if (base->Cast2Vertex()){
+  if (base->cast2Vertex()){
     TopoDS_Edge result =  TopoDS::Edge(MP.Shape());
     ret =  _gm->_occ_internals->addEdgeToModel(_gm,result);
   }
-  if (base->Cast2Edge()){
+  if (base->cast2Edge()){
     TopoDS_Face result =  TopoDS::Face(MP.Shape());
     ret = _gm->_occ_internals->addFaceToModel(_gm,result);    
   }
-  if (base->Cast2Face()){
+  if (base->cast2Face()){
     TopoDS_Solid result =  TopoDS::Solid(MP.Shape());
     ret = _gm->_occ_internals->addRegionToModel(_gm,result);    
   }
@@ -173,8 +174,8 @@ GEntity *OCCFactory::extrude (GModel *_gm, GEntity* base,
   return ret;
 }
 
-
-GEntity *OCCFactory::sphere (GModel *_gm,  double xc, double yc, double zc, double radius){
+GEntity *OCCFactory::sphere (GModel *_gm,  double xc, double yc, double zc, double radius)
+{
   if (!_gm->_occ_internals)
     _gm->_occ_internals = new OCC_Internals;
 
@@ -185,7 +186,9 @@ GEntity *OCCFactory::sphere (GModel *_gm,  double xc, double yc, double zc, doub
   _gm->_occ_internals->buildGModel(_gm);  
 }
 
-GEntity *OCCFactory::cylinder (GModel *_gm,  std::vector<double> p1, std::vector<double> p2, double radius){
+GEntity *OCCFactory::cylinder(GModel *_gm,  std::vector<double> p1, std::vector<double> p2,
+                              double radius)
+{
   if (!_gm->_occ_internals)
     _gm->_occ_internals = new OCC_Internals;
 
@@ -213,7 +216,9 @@ GEntity *OCCFactory::cylinder (GModel *_gm,  std::vector<double> p1, std::vector
   return 0;
 }
 
-GEntity *OCCFactory::torus (GModel *_gm,  std::vector<double> p1, std::vector<double> p2, double radius1, double radius2){
+GEntity *OCCFactory::torus(GModel *_gm,  std::vector<double> p1, std::vector<double> p2,
+                           double radius1, double radius2)
+{
   if (!_gm->_occ_internals)
     _gm->_occ_internals = new OCC_Internals;
 
@@ -240,7 +245,9 @@ GEntity *OCCFactory::torus (GModel *_gm,  std::vector<double> p1, std::vector<do
   return 0;
 }
 
-GEntity *OCCFactory::cone (GModel *_gm,  std::vector<double> p1, std::vector<double> p2, double radius1, double radius2){
+GEntity *OCCFactory::cone (GModel *_gm,  std::vector<double> p1, std::vector<double> p2, 
+                           double radius1, double radius2)
+{
   if (!_gm->_occ_internals)
     _gm->_occ_internals = new OCC_Internals;
 
@@ -268,7 +275,8 @@ GEntity *OCCFactory::cone (GModel *_gm,  std::vector<double> p1, std::vector<dou
   return 0;
 }
 
-GEntity *OCCFactory::block  (GModel *_gm, std::vector<double> p1, std::vector<double> p2){
+GEntity *OCCFactory::block  (GModel *_gm, std::vector<double> p1, std::vector<double> p2)
+{
   if (!_gm->_occ_internals)
     _gm->_occ_internals = new OCC_Internals;
 
@@ -286,8 +294,8 @@ GEntity *OCCFactory::block  (GModel *_gm, std::vector<double> p1, std::vector<do
   _gm->_occ_internals->buildGModel(_gm);  
 }
 
-GModel *OCCFactory::booleanUnion (GModel* obj, GModel* tool, int createNewModel){
-
+GModel *OCCFactory::booleanUnion (GModel* obj, GModel* tool, int createNewModel)
+{
   OCC_Internals *occ_obj  = obj->getOCCInternals();
   OCC_Internals *occ_tool = tool->getOCCInternals();
 
@@ -307,8 +315,8 @@ GModel *OCCFactory::booleanUnion (GModel* obj, GModel* tool, int createNewModel)
   return obj;
 }
 
-GModel *OCCFactory::booleanDifference (GModel* obj, GModel* tool, int createNewModel){
-
+GModel *OCCFactory::booleanDifference (GModel* obj, GModel* tool, int createNewModel)
+{
   OCC_Internals *occ_obj  = obj->getOCCInternals();
   OCC_Internals *occ_tool = tool->getOCCInternals();
 
@@ -327,8 +335,8 @@ GModel *OCCFactory::booleanDifference (GModel* obj, GModel* tool, int createNewM
   return obj;
 }
 
-GModel *OCCFactory::booleanIntersection (GModel* obj, GModel* tool, int createNewModel){
-
+GModel *OCCFactory::booleanIntersection (GModel* obj, GModel* tool, int createNewModel)
+{
   OCC_Internals *occ_obj  = obj->getOCCInternals();
   OCC_Internals *occ_tool = tool->getOCCInternals();
 
@@ -341,7 +349,8 @@ GModel *OCCFactory::booleanIntersection (GModel* obj, GModel* tool, int createNe
     temp->_occ_internals->addShapeToLists(occ_obj->getShape());
     obj = temp;
   }
-  obj->getOCCInternals()->applyBooleanOperator(occ_tool->getShape(),OCC_Internals::Intersection);
+  obj->getOCCInternals()->applyBooleanOperator(occ_tool->getShape(),
+                                               OCC_Internals::Intersection);
   obj->destroy();
   obj->_occ_internals->buildLists();
   obj->_occ_internals->buildGModel(obj);
@@ -417,4 +426,3 @@ void GModelFactory::registerBindings (binding *b)
   cb->setParentClass<GModelFactory>();
 #endif
 }
-

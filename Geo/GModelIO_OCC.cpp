@@ -29,19 +29,21 @@ void OCC_Internals::buildLists()
   addShapeToLists(shape);
 }
 
-void OCC_Internals::buildShapeFromLists(TopoDS_Shape _shape){
+void OCC_Internals::buildShapeFromLists(TopoDS_Shape _shape)
+{
   BRep_Builder B;
   TopoDS_Compound C;
   B.MakeCompound(C);
   B.Add(C,_shape);
-  for(int i = 1; i <= vmap.Extent(); i++) B.Add(C,vmap(i));
-  for(int i = 1; i <= emap.Extent(); i++) B.Add(C,emap(i));
-  for(int i = 1; i <= fmap.Extent(); i++) B.Add(C,fmap(i));
-  for(int i = 1; i <= somap.Extent(); i++) B.Add(C,somap(i));
+  for(int i = 1; i <= vmap.Extent(); i++) B.Add(C, vmap(i));
+  for(int i = 1; i <= emap.Extent(); i++) B.Add(C, emap(i));
+  for(int i = 1; i <= fmap.Extent(); i++) B.Add(C, fmap(i));
+  for(int i = 1; i <= somap.Extent(); i++) B.Add(C, somap(i));
   shape = C;
 }
 
-const TopoDS_Shape *OCC_Internals::lookupInLists (TopoDS_Shape _shape){
+const TopoDS_Shape *OCC_Internals::lookupInLists(TopoDS_Shape _shape)
+{
   if (_shape.ShapeType() == TopAbs_VERTEX) {
     TopoDS_Vertex vertex = TopoDS::Vertex(_shape);
     int i = vmap.FindIndex(vertex);
@@ -55,7 +57,6 @@ const TopoDS_Shape *OCC_Internals::lookupInLists (TopoDS_Shape _shape){
     else return &emap(i);
   }
 }
-
 
 void OCC_Internals::addShapeToLists(TopoDS_Shape _shape)
 {
@@ -450,37 +451,41 @@ void OCC_Internals::loadShape(const TopoDS_Shape *s)
   buildLists();
 }
 
-GVertex* OCC_Internals::addVertexToModel(GModel *model, TopoDS_Vertex vertex){  
-  GVertex *gv = getOCCVertexByNativePtr (model,vertex);
-  if (gv)return gv;
+GVertex* OCC_Internals::addVertexToModel(GModel *model, TopoDS_Vertex vertex)
+{
+  GVertex *gv = getOCCVertexByNativePtr(model, vertex);
+  if (gv) return gv;
   buildShapeFromLists(vertex);
-  gv = new OCCVertex(model, model->maxVertexNum()+1, vertex);
+  gv = new OCCVertex(model, model->maxVertexNum() + 1, vertex);
   model->add(gv);
   return gv;
 }
 
-GEdge * OCC_Internals::addEdgeToModel(GModel *model, TopoDS_Edge edge){
-  GEdge *ge = getOCCEdgeByNativePtr(model,edge);
+GEdge * OCC_Internals::addEdgeToModel(GModel *model, TopoDS_Edge edge)
+{
+  GEdge *ge = getOCCEdgeByNativePtr(model, edge);
   if (ge) return ge;
   buildShapeFromLists(edge);
   TopoDS_Vertex occv1 = TopExp::FirstVertex(edge);
   TopoDS_Vertex occv2 = TopExp::LastVertex(edge);
-  GVertex *v1 = addVertexToModel(model,occv1);
-  GVertex *v2 = addVertexToModel(model,occv2);
-  OCCEdge *e = new OCCEdge(model, edge, model->maxEdgeNum()+1, v1, v2);
+  GVertex *v1 = addVertexToModel(model, occv1);
+  GVertex *v2 = addVertexToModel(model, occv2);
+  OCCEdge *e = new OCCEdge(model, edge, model->maxEdgeNum() + 1, v1, v2);
   model->add(e);
   return e;
 }
 
-GEdge * OCC_Internals::addEdgeToModel(GModel *model, TopoDS_Edge edge, GVertex *g1, GVertex *g2){
-  OCCEdge *e = new OCCEdge(model, edge, model->maxEdgeNum()+1, g1, g2);
+GEdge * OCC_Internals::addEdgeToModel(GModel *model, TopoDS_Edge edge, GVertex *g1, 
+                                      GVertex *g2)
+{
+  OCCEdge *e = new OCCEdge(model, edge, model->maxEdgeNum() + 1, g1, g2);
   e->replaceEndingPoints (g1,g2);
   model->add(e);
   return e;
 }
 
-GFace* OCC_Internals::addFaceToModel(GModel *model, TopoDS_Face face, int i){
-
+GFace* OCC_Internals::addFaceToModel(GModel *model, TopoDS_Face face, int i)
+{
   GFace *gf = getOCCFaceByNativePtr(model,face);
   if (gf) return gf;
 
@@ -494,7 +499,7 @@ GFace* OCC_Internals::addFaceToModel(GModel *model, TopoDS_Face face, int i){
 	_edges.push_back(addEdgeToModel(model, edge));
       }
     }
-    i = model->maxFaceNum()+1;
+    i = model->maxFaceNum() + 1;
     OCCFace *f = new OCCFace(model, face, i);
     model->add(f);
     model->glue(Precision::Confusion());
@@ -505,7 +510,8 @@ GFace* OCC_Internals::addFaceToModel(GModel *model, TopoDS_Face face, int i){
   return f;
 }
 
-GEntity* OCC_Internals::addShapeToModel(GModel *model, TopoDS_Shape sh){
+GEntity* OCC_Internals::addShapeToModel(GModel *model, TopoDS_Shape sh)
+{
   TopExp_Explorer exp0, exp1, exp2;
   std::vector<GEntity*> e;
   for(exp0.Init(sh, TopAbs_SOLID); exp0.More(); exp0.Next()){
@@ -517,13 +523,14 @@ GEntity* OCC_Internals::addShapeToModel(GModel *model, TopoDS_Shape sh){
 	addFaceToModel(model, face, -1);
       }
     }
-    OCCRegion *r = new OCCRegion(model, solid, model->maxRegionNum()+1);
+    OCCRegion *r = new OCCRegion(model, solid, model->maxRegionNum() + 1);
     e.push_back(r);
   }
   return e[0];
 }
 
-GRegion* OCC_Internals::addRegionToModel(GModel *model, TopoDS_Solid region, int i){
+GRegion* OCC_Internals::addRegionToModel(GModel *model, TopoDS_Solid region, int i)
+{
   if (i < 0){
     TopExp_Explorer exp0, exp1, exp2;
     for(exp0.Init(region, TopAbs_SOLID); exp0.More(); exp0.Next()){
@@ -536,7 +543,7 @@ GRegion* OCC_Internals::addRegionToModel(GModel *model, TopoDS_Solid region, int
 	}
       }
     }
-    i = model->maxRegionNum()+1;
+    i = model->maxRegionNum() + 1;
   }
   OCCRegion *r = new OCCRegion(model, region, i);
   model->add(r);
@@ -556,7 +563,8 @@ void OCC_Internals::buildGModel(GModel *model)
   for(int i = 1; i <= nedges; i++){
     int i1 = vmap.FindIndex(TopExp::FirstVertex(TopoDS::Edge(emap(i)))); 
     int i2 = vmap.FindIndex(TopExp::LastVertex(TopoDS::Edge(emap(i))));
-    model->add(new OCCEdge(model, TopoDS::Edge(emap(i)), i, model->getVertexByTag(i1), model->getVertexByTag(i2)));
+    model->add(new OCCEdge(model, TopoDS::Edge(emap(i)), i,
+                           model->getVertexByTag(i1), model->getVertexByTag(i2)));
   }
   // building geom faces
   int nfaces = fmap.Extent();

@@ -1406,10 +1406,11 @@ void GModel::save(std::string fileName)
   GModel::setCurrent(temp);
 }
 
-static void ComputeDuplicates  (GModel * model, 
-				std::multimap<GVertex*,GVertex*>  & Unique2Duplicates,
-				std::map<GVertex*,GVertex*> & Duplicates2Unique,
-				const double &eps){
+static void ComputeDuplicates(GModel * model, 
+                              std::multimap<GVertex*,GVertex*>  & Unique2Duplicates,
+                              std::map<GVertex*,GVertex*> & Duplicates2Unique,
+                              const double &eps)
+{
   // in a first time, we use a greedy algorithm in n^2
   // using bounding boxes and the Octree would certainly be better
   // for huge models...
@@ -1422,7 +1423,8 @@ static void ComputeDuplicates  (GModel * model,
     GVertex *pv = *v.begin();
     v.erase(v.begin());
     bool found = false;
-    for ( std::multimap<GVertex*,GVertex*>::iterator it = Unique2Duplicates.begin(); it != Unique2Duplicates.end() ; ++it ){
+    for ( std::multimap<GVertex*,GVertex*>::iterator it = Unique2Duplicates.begin(); 
+          it != Unique2Duplicates.end(); ++it ){
       GVertex *unique = it->first;
       const double d = sqrt ((unique->x()-pv->x())*(unique->x()-pv->x())+
 			     (unique->y()-pv->y())*(unique->y()-pv->y())+
@@ -1458,10 +1460,11 @@ static void glueVerticesInEdges(GModel * model,
   }
 }
 
-static void ComputeDuplicates  (GModel * model, 
-				std::multimap<GEdge*,GEdge*>  & Unique2Duplicates,
-				std::map<GEdge*,GEdge*> & Duplicates2Unique,
-				const double &eps){
+static void ComputeDuplicates(GModel * model, 
+                              std::multimap<GEdge*,GEdge*>  & Unique2Duplicates,
+                              std::map<GEdge*,GEdge*> & Duplicates2Unique,
+                              const double &eps)
+{
   // in a first time, we use a greedy algorithm in n^2
 
   // first check edges that have same endpoints
@@ -1477,7 +1480,8 @@ static void ComputeDuplicates  (GModel * model,
     GPoint gp = pe->point(0.5*(r.low()+r.high()));
     e.erase(e.begin());
     bool found = false;
-    for ( std::multimap<GEdge*,GEdge*>::iterator it = Unique2Duplicates.begin(); it != Unique2Duplicates.end() ; ++it ){
+    for (std::multimap<GEdge*,GEdge*>::iterator it = Unique2Duplicates.begin(); 
+         it != Unique2Duplicates.end(); ++it ){
       GEdge *unique = it->first;
             
       //      printf ("checking %d %d\n",unique->tag(),pe->tag());
@@ -1526,7 +1530,8 @@ static void ComputeDuplicates  (GModel * model,
 
 static void glueEdgesInFaces(GModel * model,
 			     std::multimap<GEdge*,GEdge*>  & Unique2Duplicates,
-			     std::map<GEdge*,GEdge*> & Duplicates2Unique){
+			     std::map<GEdge*,GEdge*> & Duplicates2Unique)
+{
   Msg::Debug("Gluing Model Faces");
   for (GModel::fiter it = model->firstFace(); it != model->lastFace();++it){
     GFace *f = *it;
@@ -1548,10 +1553,11 @@ static void glueEdgesInFaces(GModel * model,
   }
 }
 
-static void ComputeDuplicates  (GModel * model, 
-				std::multimap<GFace*,GFace*>  & Unique2Duplicates,
-				std::map<GFace*,GFace*> & Duplicates2Unique,
-				const double &eps){
+static void ComputeDuplicates(GModel * model, 
+                              std::multimap<GFace*,GFace*>  & Unique2Duplicates,
+                              std::map<GFace*,GFace*> & Duplicates2Unique,
+                              const double &eps)
+{
   std::list<GFace*> f;
   
   f.insert(f.begin(),model->firstFace(),model->lastFace());
@@ -1621,7 +1627,8 @@ static void ComputeDuplicates  (GModel * model,
 
 static void glueFacesInRegions(GModel * model,
 			       std::multimap<GFace*,GFace*>  & Unique2Duplicates,
-			       std::map<GFace*,GFace*> & Duplicates2Unique){
+			       std::map<GFace*,GFace*> & Duplicates2Unique)
+{
   Msg::Debug("Gluing Regions");
   for (GModel::riter it = model->firstRegion(); it != model->lastRegion();++it){
     GRegion *r = *it;
@@ -1642,7 +1649,8 @@ static void glueFacesInRegions(GModel * model,
   }
 }
 
-void GModel::glue(const double &eps) {
+void GModel::glue(const double &eps)
+{
   {
     std::multimap<GVertex*,GVertex*> Unique2Duplicates;
     std::map<GVertex*,GVertex*>      Duplicates2Unique;

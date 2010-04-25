@@ -82,8 +82,8 @@ class GFaceCompound : public GFace {
   double checkAspectRatio() const;
   void computeNormals () const;
   void getBoundingEdges();
-  void getUniqueEdges(std::set<GEdge*> & _unique); 
-  void computeALoop(std::set<GEdge*> & _unique, std::list<GEdge*> &);
+  void getUniqueEdges(std::set<GEdge*> &_unique); 
+  void computeALoop(std::set<GEdge*> &_unique, std::list<GEdge*> &);
   void getTriangle(double u, double v, GFaceCompoundTriangle **lt, 
                    double &_u, double &_v) const;
   virtual double locCurvature(MTriangle *t, double u, double v) const;
@@ -119,10 +119,10 @@ class GFaceCompound : public GFace {
   bool parametrize() const ;
   void coherenceNormals();
   void partitionFaceCM();
-  virtual std::list<GFace*> getCompounds() const {return _compound;};
+  virtual std::list<GFace*> getCompounds() const { return _compound; }
   mutable int nbSplit;
-  int getNbSplit() const {return nbSplit;}
-  int allowPartition() const{return _allowPartition;};
+  int getNbSplit() const { return nbSplit; }
+  int allowPartition() const{ return _allowPartition; }
  private:
   typeOfIsomorphism _type;
   mutable typeOfMapping _mapping;

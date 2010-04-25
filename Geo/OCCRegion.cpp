@@ -54,16 +54,13 @@ bool FaceHaveDifferentOrientations(const TopoDS_Face& aFR,
   return false;
 }
 
-void OCCRegion::replaceFacesInternal (std::list<GFace*> &new_faces){
-
-
+void OCCRegion::replaceFacesInternal(std::list<GFace*> &new_faces)
+{
   // we simply replace old faces by new faces in the structure
-
   Standard_Integer aNbS;
   TopTools_IndexedMapOfShape aMS;
   TopExp_Explorer aExpS, aExpF;
   BRep_Builder aBB;
-  //
   TopoDS_Compound aCmp;
   aBB.MakeCompound(aCmp);
   TopoDS_Solid _s_replacement;
@@ -106,15 +103,15 @@ void OCCRegion::replaceFacesInternal (std::list<GFace*> &new_faces){
 	aBB.Add(_shell_replacement, _face);
       }
       else {
-	if (FaceHaveDifferentOrientations(_face,_face_replacement))_face_replacement.Reverse();
+	if(FaceHaveDifferentOrientations(_face, _face_replacement))
+          _face_replacement.Reverse();
 	aBB.Add(_shell_replacement, _face_replacement);
       }
     }    
     aBB.Add(_s_replacement, _shell_replacement);
   }
-  s=_s_replacement;
+  s = _s_replacement;
   setup();
 }
-
 
 #endif

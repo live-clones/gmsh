@@ -33,7 +33,8 @@ class GEntity {
   // the tag (the number) of this entity
   int _tag;
 
-  // gives the number of the master entity in periodic mesh, gives 0 if non-periodic
+  // gives the number of the master entity in periodic mesh, gives 0
+  // if non-periodic
   int _meshMaster;
 
   // the visibility and the selection flag
@@ -219,8 +220,8 @@ class GEntity {
   void setTag(int tag) { _tag = tag; }
 
   // returns the tag of the entity that its master entity (for mesh) 
-  int meshMaster() const {return _meshMaster; }
-  void setMeshMaster(int m) { _meshMaster=m; }
+  int meshMaster() const { return _meshMaster; }
+  void setMeshMaster(int m) { _meshMaster = m; }
 
   // get the bounding box
   virtual SBoundingBox3d bounds() const { return SBoundingBox3d(); }
@@ -276,10 +277,10 @@ class GEntity {
   MVertex *getMeshVertex(unsigned int index) { return mesh_vertices[index]; }
 
   // clean downcasts
-  GVertex * Cast2Vertex ();
-  GEdge   * Cast2Edge   ();
-  GFace   * Cast2Face   ();
-  GRegion * Cast2Region ();
+  GVertex *cast2Vertex();
+  GEdge   *cast2Edge();
+  GFace   *cast2Face();
+  GRegion *cast2Region();
 
   // bindings
   static void registerBindings(binding *b);

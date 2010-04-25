@@ -1363,7 +1363,7 @@ void meshGFace::operator() (GFace *gf)
     }
     Msg::Info("Meshing face %d (%s) as a copy of %d", gf->tag(), 
               gf->getTypeString().c_str(), gf->meshMaster());
-    copyMesh(gff,gf);
+    copyMesh(gff, gf);
     gf->meshStatistics.status = GFace::DONE;
     return;    
   }

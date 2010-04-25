@@ -52,8 +52,8 @@ class GFace : public GEntity
   GFaceCompound *compound; // this model edge belongs to a compound 
 
   // replace edges (gor gluing) for specific modelers, we have to
-  // re-create internal data ...
-  virtual void replaceEdgesInternal (std::list<GEdge*> &){}
+  // re-create internal data
+  virtual void replaceEdgesInternal(std::list<GEdge*> &){}
 
  public: // this will become protected or private
   std::list<GEdgeLoop> edgeLoops;
@@ -301,7 +301,7 @@ class GFace : public GEntity
   std::vector<MVertex*> _additional_vertices;
 
   // replace edges (gor gluing)
-  void replaceEdges (std::list<GEdge*> &);
+  void replaceEdges(std::list<GEdge*> &);
   
   static void registerBindings(binding *b);
 };

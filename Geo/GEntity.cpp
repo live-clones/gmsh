@@ -66,35 +66,36 @@ std::string GEntity::getInfoString()
   return sstream.str();
 }
 
-GVertex * GEntity::Cast2Vertex () {return dynamic_cast<GVertex*>(this);}
-GEdge   * GEntity::Cast2Edge   () {return dynamic_cast<GEdge*>(this);}
-GFace   * GEntity::Cast2Face   () {return dynamic_cast<GFace*>(this);}
-GRegion * GEntity::Cast2Region () {return dynamic_cast<GRegion*>(this);}
-
+GVertex *GEntity::cast2Vertex() { return dynamic_cast<GVertex*>(this); }
+GEdge *GEntity::cast2Edge() { return dynamic_cast<GEdge*>(this); }
+GFace *GEntity::cast2Face() { return dynamic_cast<GFace*>(this); }
+GRegion *GEntity::cast2Region() { return dynamic_cast<GRegion*>(this); }
 
 void GEntity::registerBindings(binding *b)
 {
   classBinding *cb = b->addClass<GEntity>("GEntity");
   cb->setDescription("A GEntity is a geometrical entity of the model.");
   methodBinding *mb;
-  mb = cb->addMethod("getNumMeshElements",(unsigned int (GEntity::*)())&GEntity::getNumMeshElements);
+  mb = cb->addMethod("getNumMeshElements",
+                     (unsigned int (GEntity::*)())&GEntity::getNumMeshElements);
   mb->setDescription("return the number of mesh elements in this entity");
   mb = cb->addMethod("getMeshElement",&GEntity::getMeshElement);
   mb->setDescription("get the mesh element at the given index");
   mb->setArgNames("index",NULL);
-  mb = cb->addMethod("getNumMeshVertices",(unsigned int (GEntity::*)())&GEntity::getNumMeshVertices);
+  mb = cb->addMethod("getNumMeshVertices",
+                     (unsigned int (GEntity::*)())&GEntity::getNumMeshVertices);
   mb->setDescription("return the number of mesh vertices in this entity");
   mb = cb->addMethod("getMeshVertex",&GEntity::getMeshVertex);
   mb->setDescription("get the mesh vertex at the given index");
   mb->setArgNames("index",NULL);
   mb = cb->addMethod("model", &GEntity::model);
   mb->setDescription("returns the geometric model the entity belongs to.");
-  mb = cb->addMethod("Cast2Vertex", &GEntity::Cast2Vertex);
+  mb = cb->addMethod("cast2Vertex", &GEntity::cast2Vertex);
   mb->setDescription("do a dynamic cast of the GEntity to a GVertex (0 if wrong cast).");
-  mb = cb->addMethod("Cast2Edge", &GEntity::Cast2Edge);
+  mb = cb->addMethod("cast2Edge", &GEntity::cast2Edge);
   mb->setDescription("do a dynamic cast of the GEntity to a GEdge (0 if wrong cast).");
-  mb = cb->addMethod("Cast2Face", &GEntity::Cast2Face);
+  mb = cb->addMethod("cast2Face", &GEntity::cast2Face);
   mb->setDescription("do a dynamic cast of the GEntity to a GFace (0 if wrong cast).");
-  mb = cb->addMethod("Cast2Region", &GEntity::Cast2Region);
+  mb = cb->addMethod("cast2Region", &GEntity::cast2Region);
   mb->setDescription("do a dynamic cast of the GEntity to a GRegion (0 if wrong cast).");
 }

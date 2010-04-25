@@ -31,7 +31,7 @@
 OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
   : GFace(m, num), s(_s)
 {
-  //  printf("NEW OCC FACE %d\n",tag());
+  // printf("NEW OCC FACE %d\n",tag());
   setup();
 }
 
@@ -47,7 +47,7 @@ void OCCFace::setup()
     std::list<GEdge*> l_wire;
     for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()){          
       TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
-      GEdge *e = getOCCEdgeByNativePtr(model(),edge);
+      GEdge *e = getOCCEdgeByNativePtr(model(), edge);
       if(!e){
 	Msg::Error("Unknown edge in face %d", tag());
       }
@@ -374,14 +374,15 @@ GFace *getOCCFaceByNativePtr(GModel *model, TopoDS_Face toFind)
   for (; it !=model->lastFace(); ++it){
     OCCFace *gf = dynamic_cast<OCCFace*>(*it);
     if (gf){
-      if( toFind.IsSame(gf->getTopoDS_Face()) )return *it;
-      if( toFind.IsSame(gf->getTopoDS_FaceOld()) )return *it;
+      if(toFind.IsSame(gf->getTopoDS_Face())) return *it;
+      if(toFind.IsSame(gf->getTopoDS_FaceOld())) return *it;
     }
   }
   return 0;
 }
-void OCCFace::replaceEdgesInternal (std::list<GEdge*> &new_edges){
 
+void OCCFace::replaceEdgesInternal(std::list<GEdge*> &new_edges)
+{
   IntTools_Context myContext;
   // we simply replace old edges by new edges in the structure
   
@@ -392,13 +393,13 @@ void OCCFace::replaceEdgesInternal (std::list<GEdge*> &new_edges){
   TopLoc_Location location;
   Handle(Geom_Surface) copy_of_occface = BRep_Tool::Surface(copy_of_s_forward, location);
   // check periodicity
-  bool bIsUPeriodic=_periodic[0];
+  bool bIsUPeriodic = _periodic[0];
   // get tolerance 
-  double tolerance =BRep_Tool::Tolerance(copy_of_s_forward);
+  double tolerance = BRep_Tool::Tolerance(copy_of_s_forward);
 
   BRep_Builder aBB;
   TopoDS_Face newFace;
-  aBB.MakeFace (newFace, copy_of_occface, location, tolerance);
+  aBB.MakeFace(newFace, copy_of_occface, location, tolerance);
   // expolore the face
   TopExp_Explorer aExpW, aExpE;
   aExpW.Init(copy_of_s_forward, TopAbs_WIRE);
@@ -413,7 +414,7 @@ void OCCFace::replaceEdgesInternal (std::list<GEdge*> &new_edges){
       std::list<GEdge*>::iterator it2 = new_edges.begin();
       TopoDS_Edge aER;
       Msg::Debug("trying to replace %d by %d",(*it)->tag(),(*it2)->tag());
-      for ( ; it != l_edges.end() ; ++it,++it2){
+      for ( ; it != l_edges.end(); ++it, ++it2){
 	OCCEdge *occEd = dynamic_cast<OCCEdge*>(*it);
 	TopoDS_Edge olde = occEd->getTopoDS_Edge();
 	if (olde.IsSame(aE)){
@@ -434,10 +435,9 @@ void OCCFace::replaceEdgesInternal (std::list<GEdge*> &new_edges){
 	if (bIsUPeriodic) {
 	  Standard_Real aT1, aT2, aTx, aUx;
 	  BRep_Builder aBB_;
-	  //
-	  double aTwoPI=2*M_PI+PI;
-	  //
-	  Handle(Geom2d_Curve) aC2D=BRep_Tool::CurveOnSurface(aER, copy_of_s_forward, aT1, aT2);
+	  double aTwoPI = 2 * M_PI + PI;
+	  Handle(Geom2d_Curve) aC2D =
+            BRep_Tool::CurveOnSurface(aER, copy_of_s_forward, aT1, aT2);
 	  if (!aC2D.IsNull()) {
 	    if (BRep_Tool::IsClosed(aER, copy_of_s_forward)) {
 	      continue;
@@ -458,7 +458,8 @@ void OCCFace::replaceEdgesInternal (std::list<GEdge*> &new_edges){
 	BOPTools_Tools2D::BuildPCurveForEdgeOnFace(aER, copy_of_s_forward);
 	
 	// orient image 
-	Standard_Boolean bIsToReverse = BOPTools_Tools3D::IsSplitToReverse1(aER, aE, myContext);
+	Standard_Boolean bIsToReverse = 
+          BOPTools_Tools3D::IsSplitToReverse1(aER, aE, myContext);
 	if (bIsToReverse) {
 	  aER.Reverse();
 	}
@@ -472,7 +473,7 @@ void OCCFace::replaceEdgesInternal (std::list<GEdge*> &new_edges){
     aBB.Add(newFace, newWire);
   }
   _replaced = s;
-  s=newFace;
+  s = newFace;
 
   setup();
 }

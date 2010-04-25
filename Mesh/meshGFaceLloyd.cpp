@@ -9,8 +9,8 @@
 #include "meshGFace.h"
 #include "BackgroundMesh.h"
 
-
-void lloydAlgorithm::operator () ( GFace * gf) {
+void lloydAlgorithm::operator () (GFace *gf)
+{
   std::set<MVertex*> all;
 
   // get all the points of the face ...
@@ -23,16 +23,16 @@ void lloydAlgorithm::operator () ( GFace * gf) {
   }
 
   backgroundMesh::set(gf);
-  backgroundMesh::current()->print("bgm.pos",0);
+  backgroundMesh::current()->print("bgm.pos", 0);
 
   // Create a triangulator
-  DocRecord triangulator (all.size());
+  DocRecord triangulator(all.size());
   
   Range<double> du = gf->parBounds(0) ;
   Range<double> dv = gf->parBounds(1) ;
 
-  const double LC2D = sqrt ((du.high()-du.low())*(du.high()-du.low()) +
-                            (dv.high()-dv.low())*(dv.high()-dv.low()));  
+  const double LC2D = sqrt((du.high()-du.low())*(du.high()-du.low()) +
+                           (dv.high()-dv.low())*(dv.high()-dv.low()));  
 
   //printf("Lloyd on face %d %d elements %d nodes LC %g\n", gf->tag(),
   //       gf->getNumMeshElements(), (int)all.size(), LC2D);
@@ -102,7 +102,8 @@ void lloydAlgorithm::operator () ( GFace * gf) {
       }
     }
 
-    Msg::Debug("GFace %d Lloyd-iter %d Inertia=%g Convergence=%g ",gf->tag(),ITER++,ENERGY, criteria);
+    Msg::Debug("GFace %d Lloyd-iter %d Inertia=%g Convergence=%g ", gf->tag(), 
+               ITER++, ENERGY, criteria);
     if (ITER > ITER_MAX)break;
 
     // compute the Voronoi diagram
@@ -113,7 +114,6 @@ void lloydAlgorithm::operator () ( GFace * gf) {
       sprintf(name,"LloydIter%d.pos",ITER);
       triangulator.makePosView(name);
     }
-
   }
 
   // now create the vertices

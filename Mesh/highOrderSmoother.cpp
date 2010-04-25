@@ -1312,9 +1312,8 @@ static int swapHighOrderTriangles(GFace *gf,
                                   faceContainer &faceVertices,
                                   highOrderSmoother *s)
 {
-  printf ("Initial Size of the map %d\n", edgeVertices.size());
-  printf ("Initial Size of the face map %d\n", faceVertices.size());
-
+  printf ("Initial Size of the map %d\n", (int)edgeVertices.size());
+  printf ("Initial Size of the face map %d\n", (int)faceVertices.size());
 
   e2t_cont adj;
   buildEdgeToTriangle(gf->triangles, adj);
@@ -1431,9 +1430,9 @@ static int swapHighOrderTriangles(GFace *gf,
   }
   gf->triangles.clear();
   gf->triangles = triangles2;
-  printf("%d swaps performed\n",nbSwap);
-  printf ("Final Size of the map %d\n", edgeVertices.size());
-  printf ("Final Size of the face map %d\n", faceVertices.size());
+  printf("%d swaps performed\n", nbSwap);
+  printf("Final Size of the map %d\n", (int)edgeVertices.size());
+  printf("Final Size of the face map %d\n", (int)faceVertices.size());
   return nbSwap;
 }
 
