@@ -50,8 +50,9 @@ class GFace : public GEntity
   std::list<GEdge *> embedded_edges;
   std::list<GVertex *> embedded_vertices;
   GFaceCompound *compound; // this model edge belongs to a compound 
-  // replace edges (gor gluing) for specific modelers, we have to re-create
-  // internal data ...
+
+  // replace edges (gor gluing) for specific modelers, we have to
+  // re-create internal data ...
   virtual void replaceEdgesInternal (std::list<GEdge*> &){}
 
  public: // this will become protected or private
@@ -161,7 +162,8 @@ class GFace : public GEntity
   virtual bool containsParam(const SPoint2 &pt) const;
 
   // return the point on the face closest to the given point
-  virtual GPoint closestPoint(const SPoint3 & queryPoint, const double initialGuess[2]) const;
+  virtual GPoint closestPoint(const SPoint3 & queryPoint, 
+                              const double initialGuess[2]) const;
 
   // return the normal to the face at the given parameter location
   virtual SVector3 normal(const SPoint2 &param) const;
@@ -175,8 +177,7 @@ class GFace : public GEntity
                          SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const = 0;
 
   // return the curvature computed as the divergence of the normal
-  inline double curvature(const SPoint2 &param) const 
-  {return curvatureMax(param);}
+  inline double curvature(const SPoint2 &param) const { return curvatureMax(param); }
   virtual double curvatureDiv(const SPoint2 &param) const;
 
   // return the maximum curvature at a point

@@ -21,7 +21,7 @@ GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
 {
   if(v0) v0->addEdge(this);
   if(v1 && v1 != v0) v1->addEdge(this);
-  _mStatus = GEdge::PENDING;
+  meshStatistics.status = GEdge::PENDING;
   resetMeshAttributes();
 }
 
@@ -45,12 +45,10 @@ void GEdge::deleteMesh()
 
 void GEdge::reverse()
 {
-  GVertex* tmp=v0;
-  v0=v1;
-  v1=tmp;
-  for (std::vector<MLine*>::iterator line = lines.begin();
-       line != lines.end();
-       line++)
+  GVertex* tmp = v0;
+  v0 = v1;
+  v1 = tmp;
+  for(std::vector<MLine*>::iterator line = lines.begin(); line != lines.end(); line++)
     (*line)->revert();
 }
 
@@ -347,8 +345,9 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z,
   return false;
 }
 
-void GEdge::replaceEndingPoints (GVertex *replOfv0, GVertex *replOfv1){
-  replaceEndingPointsInternals (replOfv0,replOfv1);
+void GEdge::replaceEndingPoints (GVertex *replOfv0, GVertex *replOfv1)
+{
+  replaceEndingPointsInternals (replOfv0, replOfv1);
   if (replOfv0 != v0){
     v0->delEdge(this);
     replOfv0->addEdge(this);

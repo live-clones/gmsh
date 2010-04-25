@@ -1049,19 +1049,20 @@ bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
   return true;
 }
 
-void GFace::lloyd(int nbiter, int infn){
+void GFace::lloyd(int nbiter, int infn)
+{
   lloydAlgorithm algo(nbiter, infn);
   algo(this);
 }
 
-  // replace edges (gor gluing)
-void GFace::replaceEdges (std::list<GEdge*> & new_edges) {
+void GFace::replaceEdges (std::list<GEdge*> &new_edges)
+{
   replaceEdgesInternal (new_edges);
   std::list<GEdge*>::iterator it  = l_edges.begin();
   std::list<GEdge*>::iterator it2 = new_edges.begin();
   std::list<int>::iterator it3 = l_dirs.begin();
   std::list<int> newdirs;
-  for ( ; it != l_edges.end() ; ++it,++it2,++it3){
+  for ( ; it != l_edges.end(); ++it, ++it2, ++it3){
     (*it)->delFace(this);
     (*it2)->addFace(this);        
     if ((*it2)->getBeginVertex() == (*it)->getBeginVertex())
@@ -1072,7 +1073,6 @@ void GFace::replaceEdges (std::list<GEdge*> & new_edges) {
   l_edges = new_edges;
   l_dirs = newdirs;
 }
-
 
 #include "Bindings.h"
 

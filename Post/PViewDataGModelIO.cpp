@@ -102,6 +102,10 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
 
   _steps[step]->getPartitions().insert(partition);
 
+  // FIXME: we should do this at a higher-level, since this will be
+  // very slow for large multi-step, multi-partition datasets (we
+  // recompute the min/max for all the previously loaded
+  // steps/partitions -> loop over all elements many many times...)
   finalize();
   return true;
 }

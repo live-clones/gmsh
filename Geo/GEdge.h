@@ -191,7 +191,9 @@ class GEdge : public GEntity {
   } meshAttributes ;
 
   typedef enum {PENDING, DONE, FAILED} meshGenerationStatus;
-  mutable meshGenerationStatus _mStatus;
+  struct {
+    mutable meshGenerationStatus status;
+  } meshStatistics;
   
   std::vector<MLine*> lines;
 

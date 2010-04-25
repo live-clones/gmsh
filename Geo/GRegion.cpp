@@ -96,10 +96,13 @@ MElement *GRegion::getMeshElement(unsigned int index)
     return hexahedra[index - tetrahedra.size()];
   else if(index < tetrahedra.size() + hexahedra.size() + prisms.size())
     return prisms[index - tetrahedra.size() - hexahedra.size()];
-  else if(index < tetrahedra.size() + hexahedra.size() + prisms.size() + pyramids.size())
+  else if(index < tetrahedra.size() + hexahedra.size() + prisms.size() + 
+          pyramids.size())
     return pyramids[index - tetrahedra.size() - hexahedra.size() - prisms.size()];
-  else if(index < tetrahedra.size() + hexahedra.size() + prisms.size() + pyramids.size() + polyhedra.size())
-    return polyhedra[index - tetrahedra.size() - hexahedra.size() - prisms.size() - pyramids.size()];
+  else if(index < tetrahedra.size() + hexahedra.size() + prisms.size() + 
+          pyramids.size() + polyhedra.size())
+    return polyhedra[index - tetrahedra.size() - hexahedra.size() - prisms.size() - 
+                     pyramids.size()];
   return 0;
 }
 
@@ -260,7 +263,8 @@ bool GRegion::edgeConnected(GRegion *r) const
 }
 
 // replace faces (gor gluing)
-void GRegion::replaceFaces (std::list<GFace*> & new_faces) {
+void GRegion::replaceFaces (std::list<GFace*> & new_faces)
+{
   replaceFacesInternal (new_faces);
   std::list<GFace*>::iterator it  = l_faces.begin();
   std::list<GFace*>::iterator it2 = new_faces.begin();
@@ -269,10 +273,10 @@ void GRegion::replaceFaces (std::list<GFace*> & new_faces) {
   for ( ; it != l_faces.end() ; ++it,++it2,++it3){
     (*it)->delRegion(this);
     (*it2)->addRegion(this);        
-    //    if ((*it2)->getBeginVertex() == (*it)->getBeginVertex())
+    // if ((*it2)->getBeginVertex() == (*it)->getBeginVertex())
       newdirs.push_back(*it3);
-      //    else
-      //      newdirs.push_back(-(*it3));
+    // else
+    //   newdirs.push_back(-(*it3));
   }
   l_faces = new_faces;
   l_dirs = newdirs;

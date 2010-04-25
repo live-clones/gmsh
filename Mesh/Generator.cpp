@@ -339,12 +339,15 @@ static void Mesh1D(GModel *m)
   Msg::StatusBar(1, true, "Meshing 1D...");
   double t1 = Cpu();
 
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
+    (*it)->meshStatistics.status = GEdge::PENDING;
+
   int nIter = 0;
   while(1){
     meshGEdge mesher;
     int nbPending = 0;
     for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
-      if ((*it)->_mStatus == GEdge::PENDING){
+      if ((*it)->meshStatistics.status == GEdge::PENDING){
 	mesher(*it);
 	nbPending++;
       }
@@ -352,8 +355,6 @@ static void Mesh1D(GModel *m)
     if(!nbPending) break;
     if(nIter++ > 10) break;
   }
-
-  //  std::for_each(m->firstEdge(), m->lastEdge(), meshGEdge());
 
   double t2 = Cpu();
   CTX::instance()->meshTimer[0] = t2 - t1;
@@ -414,6 +415,9 @@ static void Mesh2D(GModel *m)
   Msg::StatusBar(1, true, "Meshing 2D...");
   double t1 = Cpu();
 
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+    (*it)->meshStatistics.status = GFace::PENDING;
+
   // skip short mesh edges
   //geomTresholdVertexEquivalence inst(m);
 
@@ -421,41 +425,30 @@ static void Mesh2D(GModel *m)
   // and curve meshes) is global as it depends on a smooth normal
   // field generated from the surface mesh of the source surfaces
   if(!Mesh2DWithBoundaryLayers(m)){
-   
-    std::set<GFace*> classFaces;
-    std::set<GFace*> compFaces;
+  
+    std::set<GFace*> faces, compoundFaces;
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
-      if ((*it)->geomType() != GEntity::CompoundSurface)
-        classFaces.insert(*it);
+      if ((*it)->geomType() == GEntity::CompoundSurface)
+        compoundFaces.insert(*it);
       else
-        compFaces.insert(*it);
+        faces.insert(*it);
     }
-    std::for_each(classFaces.begin(), classFaces.end(), meshGFace());
-    std::for_each(compFaces.begin(), compFaces.end(), meshGFace());
+    std::for_each(faces.begin(), faces.end(), meshGFace());
+    std::for_each(compoundFaces.begin(), compoundFaces.end(), meshGFace());
 
     // lloyd optimization
     if (CTX::instance()->mesh.optimizeLloyd){
-      Msg::Info("------------------------------");
       for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
 	GFace *gf = *it;
 	if(gf->geomType() == GEntity::DiscreteSurface) continue; 
-	if(gf->geomType() == GEntity::CompoundSurface ) {
+	if(gf->geomType() == GEntity::CompoundSurface) {
 	  GFaceCompound *gfc = (GFaceCompound*) gf;
-	  if  (gfc->getNbSplit() != 0) continue;
+	  if(gfc->getNbSplit() != 0) continue;
 	}
 	int recombine = gf->meshAttributes.recombine;
-
 	Msg::StatusBar(2, true, "Lloyd optimization for face %d", gf->tag());
-	gf->lloyd(25,recombine);
-	
-	if(recombine) recombineIntoQuads(gf);   
-	
-	// computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
-// 			     gf->meshStatistics.average_element_shape,
-// 			     gf->meshStatistics.best_element_shape,
-// 			     gf->meshStatistics.nbTriangle,
-// 			     gf->meshStatistics.nbGoodQuality);
-       
+	gf->lloyd(25, recombine);
+        if(recombine) recombineIntoQuads(gf);   
       }
     }
 

@@ -256,6 +256,7 @@ void deMeshGEdge::operator() (GEdge *ge)
 {
   if(ge->geomType() == GEntity::DiscreteCurve) return;
   ge->deleteMesh();
+  ge->meshStatistics.status = GEdge::PENDING;
 }
 
 void meshGEdge::operator() (GEdge *ge) 
@@ -278,13 +279,13 @@ void meshGEdge::operator() (GEdge *ge)
 
   if (ge->meshMaster() != ge->tag()){
     GEdge *gef = ge->model()->getEdgeByTag(abs(ge->meshMaster()));
-    if (gef->_mStatus == GEdge::PENDING)return;
-    Msg::Info("Meshing curve %d (%s) as a copy of %d",ge->tag(),ge->getTypeString().c_str(),ge->meshMaster());
-    copyMesh(gef,ge,ge->meshMaster());
-    ge->_mStatus = GEdge::DONE;
+    if (gef->meshStatistics.status == GEdge::PENDING) return;
+    Msg::Info("Meshing curve %d (%s) as a copy of %d", ge->tag(),
+              ge->getTypeString().c_str(), ge->meshMaster());
+    copyMesh(gef, ge, ge->meshMaster());
+    ge->meshStatistics.status = GEdge::DONE;
     return;
   }
-
 
   Msg::Info("Meshing curve %d (%s)", ge->tag(), ge->getTypeString().c_str());
 
@@ -401,7 +402,5 @@ void meshGEdge::operator() (GEdge *ge)
     v0->y() = beg_p.y();
     v0->z() = beg_p.z();
   }
-  ge->_mStatus = GEdge::DONE;
+  ge->meshStatistics.status = GEdge::DONE;
 }
-
-

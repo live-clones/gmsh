@@ -38,8 +38,8 @@
 #include "multiscalePartition.h"
 #include "meshGFaceLloyd.h"
 
-static void copyMesh (GFace *source, GFace *target){
-
+static void copyMesh (GFace *source, GFace *target)
+{
   std::map<MVertex*,MVertex*> vs2vt;
   
   std::list<GEdge*> edges = target->edges();
@@ -47,17 +47,16 @@ static void copyMesh (GFace *source, GFace *target){
     GEdge *te = *it;
     int master = te->meshMaster();
     if (master == te->tag()){
-      Msg::Error ("Periodic face %d does not have periodic edges (master %d -- edge %d)",target->tag(),master,te->tag());      
+      Msg::Error("Periodic face %d does not have periodic edges (master %d -- edge %d)",
+                 target->tag(), master, te->tag());      
     }
     GEdge *se  = source->model()->getEdgeByTag(abs(master));
-    //    printf("%d %d\n",se->tag(),te->tag());
     if (master > 0){
       vs2vt[se->getBeginVertex()->mesh_vertices[0]] = te->getBeginVertex()->mesh_vertices[0];
       vs2vt[se->getEndVertex()->mesh_vertices[0]] = te->getEndVertex()->mesh_vertices[0];
       for (int i=0;i<se->mesh_vertices.size();i++){
 	MVertex *vs = se->mesh_vertices[i];
 	MVertex *vt = te->mesh_vertices[i];
-	//	printf("D %g %g %g vs %g %g %g\n",vs->x(),vs->y(),vs->z(),vt->x(),vt->y(),vt->z());
 	vs2vt[vs] = vt;
       }
     }
@@ -67,7 +66,6 @@ static void copyMesh (GFace *source, GFace *target){
       for (int i=0;i<se->mesh_vertices.size();i++){
 	MVertex *vs = se->mesh_vertices[i];
 	MVertex *vt = te->mesh_vertices[se->mesh_vertices.size()-i-1];
-	//	printf("R %g %g %g vs %g %g %g\n",vs->x(),vs->y(),vs->z(),vt->x(),vt->y(),vt->z());
 	vs2vt[vs] = vt;
       }
     }
@@ -83,12 +81,11 @@ static void copyMesh (GFace *source, GFace *target){
     if (vs->onWhat()->dim() == 1){
       bool success1 = reparamMeshVertexOnFace(vs, source, param_source[count]);
       bool success2 = reparamMeshVertexOnFace(vt, target, param_target[count++]);
-      //      printf("%g %g %g vs %g %g %g\n",vs->x(),vs->y(),vs->z(),vt->x(),vt->y(),vt->z());
-      if (count == 2)break;
+      if (count == 2) break;
     }
   }
 
-  if (count < 2)return;
+  if (count < 2) return;
   
   const double t1u = param_target[0].x();
   const double t1v = param_target[0].y();
@@ -104,20 +101,9 @@ static void copyMesh (GFace *source, GFace *target){
   SVector3 _c = crossprod(_a,_b);
   double sinA = _c.z();
   double cosA = dot(_a,_b);
-  //  printf("%g %g-- %g %g\n",_a.x(),_a.y(),_b.x(),_b.y());
   const double theta = atan2(sinA, cosA);
   const double c = cos(theta);
   const double s = sin(theta);
-
-  //  printf("s1 %g %g s2 %g %g\n",s1u,s1v,s2u,s2v);
-  //  printf("t1 %g %g t2 %g %g\n",t1u,t1v,t2u,t2v);
-  //  printf("theta = %g\n",theta*180/M_PI);
-  //  {
-  //    double u = param_source[1].x();
-  //    double v = param_source[1].y();
-  //    printf("transfo of s2 = %g %g\n",c * (u-s1u) + s * (v-s1v) + t1u, 
-  //                                    -s * (u-s1u) + c * (v-s1v) + t1v);
-  //  }
 
   for(unsigned int i = 0; i < source->mesh_vertices.size(); i++){
     MVertex *vs = source->mesh_vertices[i];
@@ -146,9 +132,7 @@ static void copyMesh (GFace *source, GFace *target){
     MVertex *v4 = vs2vt[source->quadrangles[i]->getVertex(3)];
     target->quadrangles.push_back(new MQuadrangle(v1,v2,v3,v4));
   }
-
 }
-
 
 void fourthPoint(double *p1, double *p2, double *p3, double *p4)
 {
@@ -1372,14 +1356,13 @@ void meshGFace::operator() (GFace *gf)
   if(MeshTransfiniteSurface(gf)) return;
   if(MeshExtrudedSurface(gf)) return;
   if(gf->meshMaster() != gf->tag()){
-    printf("AAAAAAAAARGH %d %d\n",gf->meshMaster(),gf->tag());
     GFace *gff = gf->model()->getFaceByTag(abs(gf->meshMaster()));
     if (gff->meshStatistics.status != GFace::DONE){
-      //      Msg::Info("Meshing face %d (%s) as a copy of %d",gf->tag(),gf->getTypeString().c_str(),gf->meshMaster());
       gf->meshStatistics.status = GFace::PENDING;
       return;
     }
-    Msg::Info("Meshing face %d (%s) as a copy of %d",gf->tag(),gf->getTypeString().c_str(),gf->meshMaster());
+    Msg::Info("Meshing face %d (%s) as a copy of %d", gf->tag(), 
+              gf->getTypeString().c_str(), gf->meshMaster());
     copyMesh(gff,gf);
     gf->meshStatistics.status = GFace::DONE;
     return;    
@@ -1602,14 +1585,17 @@ void partitionAndRemesh(GFaceCompound *gf)
     std::vector<MVertex*> edge_vertices = (*it)->mesh_vertices;
     std::vector<MVertex*>::const_iterator itv = edge_vertices.begin();
     for(; itv != edge_vertices.end(); itv++){
-      std::vector<MVertex*>::iterator itve = std::find(gf->mesh_vertices.begin(), gf->mesh_vertices.end(), *itv);
+      std::vector<MVertex*>::iterator itve = std::find
+        (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), *itv);
       if (itve != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itve);
     }
     MVertex *vB = (*it)->getBeginVertex()->mesh_vertices[0];
-    std::vector<MVertex*>::iterator itvB = std::find(gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vB);
+    std::vector<MVertex*>::iterator itvB = std::find
+      (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vB);
     if (itvB != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvB);
     MVertex *vE = (*it)->getEndVertex()->mesh_vertices[0];
-    std::vector<MVertex*>::iterator itvE = std::find(gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vE);
+    std::vector<MVertex*>::iterator itvE = std::find
+      (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vE);
     if (itvE != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvE);
 
     //if l_edge is a compond
@@ -1618,14 +1604,17 @@ void partitionAndRemesh(GFaceCompound *gf)
       std::vector<MVertex*> edge_vertices = gec->mesh_vertices;
       std::vector<MVertex*>::const_iterator itv = edge_vertices.begin();
       for(; itv != edge_vertices.end(); itv++){
-        std::vector<MVertex*>::iterator itve = std::find(gf->mesh_vertices.begin(), gf->mesh_vertices.end(), *itv);
+        std::vector<MVertex*>::iterator itve = std::find
+          (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), *itv);
         if (itve != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itve);
       }
       MVertex *vB = (*it)->getBeginVertex()->mesh_vertices[0];
-      std::vector<MVertex*>::iterator itvB = std::find(gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vB);
+      std::vector<MVertex*>::iterator itvB = std::find
+        (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vB);
       if (itvB != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvB);
       MVertex *vE = (*it)->getEndVertex()->mesh_vertices[0];
-      std::vector<MVertex*>::iterator itvE = std::find(gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vE);
+      std::vector<MVertex*>::iterator itvE = std::find
+        (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vE);
       if (itvE != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvE);
     }
   }
