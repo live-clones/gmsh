@@ -81,6 +81,7 @@ class function {
 // then the size of the matrix is automatically adjusted
 class dataCacheDouble {
   friend class dataCacheMap;
+  public:
   // pointers to all of the dataCache depending on me
   std::set<dataCacheDouble*> _dependOnMe;
   std::set<dataCacheDouble*> _iDependOn;
@@ -238,7 +239,7 @@ class functionReplaceCache {
   dataCacheMap *map;
   std::vector <dataCacheDouble*> toReplace;
   std::vector <dataCacheDouble*> toCompute;
-  functionReplaceCache(dataCacheMap *m, functionReplace *rep);
+  functionReplaceCache(dataCacheMap *m, functionReplace *rep, dataCacheDouble *from);
   ~functionReplaceCache();
 };
 

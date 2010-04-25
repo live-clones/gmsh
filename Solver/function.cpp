@@ -66,7 +66,7 @@ dataCacheDouble::dataCacheDouble(dataCacheMap *m, function *f):
     _dependencies[i] = &m->getSecondaryCache(iCache)->get(f,this);
   }
   for (int i = 0; i < f->_functionReplaces.size(); i++) {
-    functionReplaceCaches.push_back (new functionReplaceCache(m, f->_functionReplaces[i])); 
+    functionReplaceCaches.push_back (new functionReplaceCache(m, f->_functionReplaces[i], this)); 
   }
 }
 
@@ -504,7 +504,7 @@ void functionReplace::compute(){
 };
 
 
-functionReplaceCache::functionReplaceCache(dataCacheMap *m, functionReplace *rep) {
+functionReplaceCache::functionReplaceCache(dataCacheMap *m, functionReplace *rep, dataCacheDouble *from) {
   map = m->newChild();
   for (int i = 0; i < m->_secondaryCaches.size(); i ++) {
     map->addSecondaryCache (m->getSecondaryCache(i+1)->newChild());
@@ -514,7 +514,7 @@ functionReplaceCache::functionReplaceCache(dataCacheMap *m, functionReplace *rep
   }
   for (int i = 0; i < rep->_toCompute.size(); i++) {
     dataCacheMap *m2 = map->getSecondaryCache(rep->_toCompute[i].iMap);
-    toCompute.push_back (&m2->get(rep->_toCompute[i].f));
+    toCompute.push_back (&m2->get(rep->_toCompute[i].f, from));
   }
 }
 functionReplaceCache::~functionReplaceCache() {
