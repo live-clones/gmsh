@@ -593,6 +593,10 @@ Affectation :
 	  yymsg(0, "Unknown variable '%s'", $1);
       }
       else{
+        if(gmsh_yysymbols[$1].empty()){
+          if($2) yymsg(0, "Uninitialized variable '%s'", $1);
+          gmsh_yysymbols[$1].resize(1, 0.);
+        }
 	switch($2){
 	case 0 : gmsh_yysymbols[$1][0] = $3; break;
 	case 1 : gmsh_yysymbols[$1][0] += $3; break;
@@ -695,8 +699,12 @@ Affectation :
     {
       if(!gmsh_yysymbols.count($1))
 	yymsg(0, "Unknown variable '%s'", $1); 
-      else
-	gmsh_yysymbols[$1][0] += $2;
+      else{
+        if(gmsh_yysymbols[$1].empty())
+          yymsg(0, "Uninitialized variable '%s'", $1);
+        else
+          gmsh_yysymbols[$1][0] += $2;
+      }
       Free($1);
     }
   | tSTRING '[' FExpr ']' NumericIncrement tEND
@@ -3603,8 +3611,14 @@ FExpr_Single :
 	yymsg(0, "Unknown variable '%s'", $1);
 	$$ = 0.;
       }
-      else
-	$$ = gmsh_yysymbols[$1][0];
+      else{
+        if(gmsh_yysymbols[$1].empty()){
+          yymsg(0, "Uninitialized variable '%s'", $1);
+          $$ = 0.;
+        }
+        else
+          $$ = gmsh_yysymbols[$1][0];
+      }
       Free($1);
     }
   // This is for GetDP compatibility (we should generalize it so
@@ -3618,8 +3632,14 @@ FExpr_Single :
 	yymsg(0, "Unknown variable '%s'", tmpstring);
 	$$ = 0.;
       }
-      else
-	$$ = gmsh_yysymbols[tmpstring][0];
+      else{
+        if(gmsh_yysymbols[tmpstring].empty()){
+          yymsg(0, "Uninitialized variable '%s'", tmpstring);
+          $$ = 0.;
+        }
+        else
+          $$ = gmsh_yysymbols[tmpstring][0];
+      }
       Free($1);
     }
   | tSTRING '[' FExpr ']'
@@ -3653,8 +3673,14 @@ FExpr_Single :
 	yymsg(0, "Unknown variable '%s'", $1);
 	$$ = 0.;
       }
-      else
-	$$ = (gmsh_yysymbols[$1][0] += $2);
+      else{
+        if(gmsh_yysymbols[$1].empty()){
+          yymsg(0, "Uninitialized variable '%s'", $1);
+          $$ = 0.;
+        }
+        else
+          $$ = (gmsh_yysymbols[$1][0] += $2);
+      }
       Free($1);
     }
   | tSTRING '[' FExpr ']' NumericIncrement
