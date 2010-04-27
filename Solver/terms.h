@@ -214,10 +214,10 @@ class IsotropicElasticTerm : public BilinearTerm<SVector3,SVector3>
       fullMatrix<double> B(6, nbFF);
       fullMatrix<double> BTH(nbFF, 6);
       fullMatrix<double> BT(nbFF, 6);
-      printf("npts : %d\n",npts);
+      //printf("npts : %d\n",npts);
       m.resize(nbFF, nbFF);
       m.setAll(0.);
-      std::cout << m.size1() << "  " << m.size2() << std::endl;
+      //std::cout << m.size1() << "  " << m.size2() << std::endl;
       for (int i = 0; i < npts; i++)
       {
         const double u = GP[i].pt[0]; const double v = GP[i].pt[1]; const double w = GP[i].pt[2];
@@ -235,6 +235,7 @@ class IsotropicElasticTerm : public BilinearTerm<SVector3,SVector3>
           BT(j, 5) = B(5, j) = Grads[j](0,2)+Grads[j](2,0);
         }
         BTH.setAll(0.);
+
         BTH.gemm(BT, H);
         m.gemm(BTH, B, weight * detJ, 1.);
       }

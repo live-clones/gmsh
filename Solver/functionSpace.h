@@ -370,7 +370,7 @@ class xFemFunctionSpace : public FunctionSpace<T>
   FunctionSpace<T>* _spacebase;
   //Function<double>* _enrichment;
  public:
-  virtual void hessfuvw(MElement *ele, double u, double v, double w,std::vector<HessType> &hess);
+  virtual void hessfuvw(MElement *ele, double u, double v, double w,std::vector<HessType> &hess){};
   xFemFunctionSpace(FunctionSpace<T>* spacebase) : _spacebase(spacebase) {};
   virtual void f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals){};
   virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads){};
@@ -396,12 +396,12 @@ class FilteredFunctionSpace : public FunctionSpace<T>
 
  public:
 
-  virtual void hessfuvw(MElement *ele, double u, double v, double w,std::vector<HessType> &hess);
+  virtual void hessfuvw(MElement *ele, double u, double v, double w,std::vector<HessType> &hess){};
   FilteredFunctionSpace<T,F>(FunctionSpace<T>* spacebase,F * filter) : _spacebase(spacebase),_filter(filter)
   {};
   virtual void f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals){};;
   virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads){};;
-  virtual int getNumKeys(MElement *ele){};;
+  virtual int getNumKeys(MElement *ele){};
   virtual void getKeys(MElement *ele, std::vector<Dof> &keys){};
 };
 

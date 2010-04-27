@@ -180,7 +180,37 @@ template<class Iterator,class Assembler> void NumberDofs(FunctionSpaceBase &spac
     space.getKeys(e,R);
     int nbdofs=R.size();
     for (int i=0;i<nbdofs;++i) assembler.numberDof(R[i]);
+
   }
 }
+
+//// Mean HangingNodes
+//template <class Assembler> void FillHangingNodes(FunctionSpaceBase &space,std::map<int,std::vector <int> > &HangingNodes, Assembler &assembler, int &field, int &dim)
+//{
+//  std::map<int,std::vector <int> >::iterator ith;
+//  ith = HangingNodes.begin();
+//  int compt = 1;
+//  while (ith!=HangingNodes.end())
+//  {
+//    float fac;
+//    fac = 1.0/(ith->second).size();
+//    for (int j=0;j<dim;j++)
+//    {
+//      DofAffineConstraint<double> constraint;
+//      int type = Dof::createTypeWithTwoInts(j, field);
+//      Dof hgnd(ith->first,type);
+//      for (int i=0;i<(ith->second).size();i++)
+//      {
+//          Dof key((ith->second)[i],type);
+//          std::pair<Dof, double >  linDof(key,fac);
+//          constraint.linear.push_back(linDof);
+//      }
+//      constraint.shift = 0;
+//      assembler.setLinearConstraint (hgnd, constraint);
+//    }
+//    ith++;
+//    compt++;
+//  }
+//}
 
 #endif// _SOLVERALGORITHMS_H_
