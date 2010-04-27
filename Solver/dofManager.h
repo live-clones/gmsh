@@ -50,7 +50,7 @@ template<class T> struct dofTraits
 {
   typedef T VecType;
   typedef T MatType;
-  inline static void mult (VecType &r, const MatType &m, const VecType &v) { r = m*v;}
+  inline static void gemm (VecType &r, const MatType &m, const VecType &v) { r += m*v;}
   inline static void neg (VecType &r) { r = -r;}
   inline static void setToZero (VecType &r) { r = 0;}
 };
@@ -59,7 +59,7 @@ template<class T> struct dofTraits<fullMatrix<T> >
 {
   typedef fullMatrix<T> VecType;
   typedef fullMatrix<T> MatType;
-  inline static void mult (VecType &r, const MatType &m, const VecType &v) { m.mult(v, r);}
+  inline static void gemm (VecType &r, const MatType &m, const VecType &v) { r.gemm(m, v);}
   inline static void neg (VecType &r) { r.scale(-1.);}
   inline static void setToZero (VecType &r) { r.scale(0);}
 };
@@ -158,39 +158,47 @@ class dofManager{
   inline void getDofValue(std::vector<Dof> &keys,std::vector<dataVec> &Vals)
   {
     int ndofs=keys.size();
-    Vals.reserve(Vals.size()+ndofs);
-    for (int i=0;i<ndofs;++i) Vals.push_back(getDofValue(keys[i]));
+    size_t originalSize = Vals.size();
+    Vals.resize(originalSize+ndofs);
+    for (int i=0;i<ndofs;++i) getDofValue(keys[i], Vals[originalSize+i]);
   }
 
-  inline dataVec getDofValue(Dof key) const
+  inline void getDofValue(Dof key,  dataVec &val) const
   {
     {
       typename std::map<Dof, dataVec>::const_iterator it = fixed.find(key);
-      if (it != fixed.end()) return it->second;
+      if (it != fixed.end()) {
+        val =  it->second;
+        return ;
+      }
     }
     {
       std::map<Dof, int>::const_iterator it = unknown.find(key);
-      if (it != unknown.end())
-        return _current->getFromSolution(it->second);
+      if (it != unknown.end()) {
+        _current->getFromSolution(it->second,val );
+        return;
+      }
     }
     {
       typename std::map<Dof, DofAffineConstraint< dataVec > >::const_iterator it = constraints.find(key);
       if (it != constraints.end())
       {
-         dataVec somme(0.0);
+         dataVec tmp(val);
+         dofTraits<T>::setToZero(val);
          for (int i=0;i<(it->second).linear.size();i++)
          {
             std::map<Dof, int>::const_iterator itu = unknown.find(((it->second).linear[i]).first);
-            somme = somme + getDofValue(((it->second).linear[i]).first)*((it->second).linear[i]).second;
+            getDofValue(((it->second).linear[i]).first, tmp);
+            dofTraits<T>::gemm(val,((it->second).linear[i]).second, tmp);
          }
-         somme = somme + (it->second).shift;
-         return somme;
+         val += (it->second).shift;
+         return ;
       }
     }
-    return dataVec(0.0);
+    dofTraits<T>::setToZero(val);
   }
 
-  inline void getDofValue(dataVec &v, int ent, int type) const
+  inline void getDofValue(int ent, int type, dataVec &v) const
   {
     Dof key(ent, type);
     {
@@ -203,7 +211,7 @@ class dofManager{
     {
       std::map<Dof, int>::const_iterator it = unknown.find(key);
       if (it != unknown.end()){
-        v = _current->getFromSolution(it->second);
+        _current->getFromSolution(it->second, v);
         return;
       }
     }
@@ -212,22 +220,23 @@ class dofManager{
       if (it != constraints.end())
       {
          dofTraits<T>::setToZero(v);
+         dataVec tmp(v);
          for (int i=0;i<(it->second).linear.size();i++)
          {
             std::map<Dof, int>::const_iterator itu = unknown.find(((it->second).linear[i]).first);
-            v = v + getDofValue(((it->second).linear[i]).first)*((it->second).linear[i]).second;
+            getDofValue(((it->second).linear[i]).first, tmp);
+            dofTraits<T>::gemm(v, ((it->second).linear[i]).second, tmp);
          }
-         v = v + (it->second).shift;
+         v += (it->second).shift;
          return ;
       }
     }
 
     dofTraits<T>::setToZero(v);
   }
-
-  inline dataVec getDofValue(dataVec &value, MVertex *v, int iComp, int iField) const
+  inline void getDofValue(MVertex *v, int iComp, int iField, dataVec &value) const
   {
-    getDofValue(value, v->getNum(), Dof::createTypeWithTwoInts(iComp, iField));
+    getDofValue(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField), value);
   }
 
   inline void assemble(const Dof &R, const Dof &C, const dataMat &value)
@@ -244,7 +253,8 @@ class dofManager{
         if (itFixed != fixed.end()) {
           // tmp = -value * itFixed->second
           dataVec tmp(itFixed->second);
-          dofTraits<T>::mult(tmp , value, itFixed->second);
+          dofTraits<T>::setToZero(tmp);
+          dofTraits<T>::gemm(tmp , value, itFixed->second);
           dofTraits<T>::neg(tmp);
           _current->addToRightHandSide(itR->second, tmp);
         }else assembleLinConst(R, C, value);
@@ -255,9 +265,7 @@ class dofManager{
       assembleLinConst(R, C, value);
     }
   }
-
-
-  inline void assemble(std::vector<Dof> &R, std::vector<Dof> &C, fullMatrix<dataMat> &m)
+  inline void assemble(std::vector<Dof> &R, std::vector<Dof> &C, const fullMatrix<dataMat> &m)
   {
     if (!_current->isAllocated()) _current->allocate(unknown.size());
 
@@ -284,7 +292,8 @@ class dofManager{
             if (itFixed != fixed.end()){
               // tmp = -m(i,j) * itFixed->second
               dataVec tmp(itFixed->second);
-              dofTraits<T>::mult(tmp , m(i,j), itFixed->second);
+              dofTraits<T>::setToZero(tmp);
+              dofTraits<T>::gemm(tmp , m(i,j), itFixed->second);
               dofTraits<T>::neg(tmp);
               _current->addToRightHandSide(NR[i], tmp);
             }else assembleLinConst(R[i], C[j], m(i,j));
@@ -301,7 +310,7 @@ class dofManager{
     }
   }
 
-  inline void assemble(std::vector<Dof> &R, fullVector<dataMat> &m) // for linear forms
+  inline void assemble(std::vector<Dof> &R, const fullVector<dataMat> &m) // for linear forms
   {
     if (!_current->isAllocated()) _current->allocate(unknown.size());
     std::vector<int> NR(R.size());
@@ -334,7 +343,7 @@ class dofManager{
   }
 
 
-  inline void assemble(std::vector<Dof> &R, fullMatrix<dataMat> &m)
+  inline void assemble(std::vector<Dof> &R, const fullMatrix<dataMat> &m)
   {
     if (!_current->isAllocated()) _current->allocate(unknown.size());
     std::vector<int> NR(R.size());
@@ -360,7 +369,8 @@ class dofManager{
             if (itFixed != fixed.end()){
               // tmp = -m(i,j) * itFixed->second
               dataVec tmp(itFixed->second);
-              dofTraits<T>::mult(tmp , m(i,j), itFixed->second);
+              dofTraits<T>::setToZero(tmp);
+              dofTraits<T>::gemm(tmp , m(i,j), itFixed->second);
               dofTraits<T>::neg(tmp);
               _current->addToRightHandSide(NR[i], tmp);
             } else assembleLinConst(R[i],R[j],m(i,j));
@@ -401,7 +411,7 @@ class dofManager{
     assemble(Dof(entR, typeR), value);
   }
   inline void assemble(MVertex *vR, int iCompR, int iFieldR,
-                       const dataMat &value)
+                        const dataMat &value)
   {
     assemble(vR->getNum(), Dof::createTypeWithTwoInts(iCompR, iFieldR), value);
   }
@@ -446,11 +456,18 @@ class dofManager{
       itConstraint = constraints.find(C);
       if (itConstraint != constraints.end())
       {
+        dataMat tmp(value);
         for (int i=0;i<(itConstraint->second).linear.size();i++)
         {
-                assemble(R,(itConstraint->second).linear[i].first,(itConstraint->second).linear[i].second*value);
+          dofTraits<T>::setToZero(tmp);
+          dofTraits<T>::gemm(tmp,(itConstraint->second).linear[i].second,value);
+          assemble(R,(itConstraint->second).linear[i].first,tmp);
         }
-        _current->addToRightHandSide(itR->second, -value * (itConstraint->second).shift);
+        dataMat tmp2(value);
+        dofTraits<T>::setToZero(tmp2);
+        dofTraits<T>::gemm(tmp2, value, itConstraint->second.shift);
+        dofTraits<T>::neg(tmp2);
+        _current->addToRightHandSide(itR->second, tmp2);
       }
     }
     else  // test function ; (no shift ?)
@@ -459,9 +476,12 @@ class dofManager{
       itConstraint = constraints.find(R);
       if (itConstraint != constraints.end())
       {
+        dataMat tmp(value);
         for (int i=0;i<(itConstraint->second).linear.size();i++)
         {
-                assemble((itConstraint->second).linear[i].first,C,(itConstraint->second).linear[i].second*value);
+          dofTraits<T>::setToZero(tmp);
+          dofTraits<T>::gemm(tmp,itConstraint->second.linear[i].second,value);
+          assemble((itConstraint->second).linear[i].first,C,tmp);
         }
       }
     }

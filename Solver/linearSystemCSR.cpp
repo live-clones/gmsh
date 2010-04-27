@@ -74,7 +74,7 @@ static void CSRList_Delete(CSRList_T *liste)
   }
 }
 
-void CSRList_Add(CSRList_T *liste, void *data)
+void CSRList_Add(CSRList_T *liste,const void *data)
 {
   liste->n++;
   CSRList_Realloc(liste, liste->n);

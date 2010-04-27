@@ -18,11 +18,11 @@ class linearSystem {
   virtual bool isAllocated() const = 0;
   virtual void allocate(int nbRows) = 0;
   virtual void clear() = 0;
-  virtual void addToMatrix(int _row, int _col, scalar val) = 0;
-  virtual scalar getFromMatrix(int _row, int _col) const = 0;
-  virtual void addToRightHandSide(int _row, scalar val) = 0;
-  virtual scalar getFromRightHandSide(int _row) const = 0;
-  virtual scalar getFromSolution(int _row) const = 0;
+  virtual void addToMatrix(int _row, int _col, const scalar &val) = 0;
+  virtual void getFromMatrix(int _row, int _col, scalar &val) const = 0;
+  virtual void addToRightHandSide(int _row, const scalar &val) = 0;
+  virtual void getFromRightHandSide(int _row, scalar &val) const = 0;
+  virtual void getFromSolution(int _row, scalar &val) const = 0;
   virtual void zeroMatrix() = 0;
   virtual void zeroRightHandSide() = 0;
   virtual int systemSolve() = 0;

@@ -3,37 +3,44 @@
 #include "linearSystemPETSc.h"
 #include "fullMatrix.h"
 template <>
-void linearSystemPETSc<fullMatrix<double> >::addToMatrix(int row, int col, fullMatrix<double> val)
+void linearSystemPETSc<fullMatrix<double> >::addToMatrix(int row, int col, const fullMatrix<double> &val)
 {
+  fullMatrix<double> &modval = *const_cast<fullMatrix<double> *>(&val);
   for (int ii = 0; ii<val.size1(); ii++)
     for (int jj = 0; jj < ii; jj ++) {
-      double buff = val(ii,jj);
-      val(ii,jj) = val (jj,ii);
-      val(jj,ii) = buff;
+      double buff = modval(ii,jj);
+      modval(ii,jj) = modval (jj,ii);
+      modval(jj,ii) = buff;
     }
   PetscInt i = row, j = col;
-  _try(MatSetValuesBlocked(_a, 1, &i, 1, &j, &val(0,0), ADD_VALUES));
+  _try(MatSetValuesBlocked(_a, 1, &i, 1, &j, &modval(0,0), ADD_VALUES));
+  //transpose back so that the original matrix is not modified
+  for (int ii = 0; ii<val.size1(); ii++)
+    for (int jj = 0; jj < ii; jj ++) {
+      double buff = modval(ii,jj);
+      modval(ii,jj) = modval (jj,ii);
+      modval(jj,ii) = buff;
+    }
 }
 template<>
-void linearSystemPETSc<fullMatrix<double> >::addToRightHandSide(int row, fullMatrix<double> val)
+void linearSystemPETSc<fullMatrix<double> >::addToRightHandSide(int row, const fullMatrix<double> &val)
 {
   for (int ii = 0; ii < _blockSize; ii ++) {
     PetscInt i = row * _blockSize + ii;
-    _try(VecSetValues(_b, 1, &i, &val(ii,0), ADD_VALUES));
+     double v = val(ii,0);
+    _try(VecSetValues(_b, 1, &i, &v, ADD_VALUES));
   }
 }
 
 template<>
-fullMatrix<double> linearSystemPETSc<fullMatrix<double> >::getFromMatrix(int row, int col) const
+void linearSystemPETSc<fullMatrix<double> >::getFromMatrix(int row, int col, fullMatrix<double> &val ) const
 {
   Msg::Error("getFromMatrix not implemented for PETSc");
-  return fullMatrix<double>(0,0);
 }
 
 template<>
-fullMatrix<double> linearSystemPETSc<fullMatrix<double> >::getFromRightHandSide(int row) const
+void linearSystemPETSc<fullMatrix<double> >::getFromRightHandSide(int row, fullMatrix<double> &val) const
 {
-  fullMatrix<double> val(_blockSize,1);
   PetscScalar *tmp;
   _try(VecGetArray(_b, &tmp));
   for (int i=0; i<_blockSize; i++) {
@@ -45,13 +52,11 @@ fullMatrix<double> linearSystemPETSc<fullMatrix<double> >::getFromRightHandSide(
 #endif
   }
   _try(VecRestoreArray(_b, &tmp));
-  return val;
 }
 
 template<>
-fullMatrix<double> linearSystemPETSc<fullMatrix<double> >::getFromSolution(int row) const
+void linearSystemPETSc<fullMatrix<double> >::getFromSolution(int row, fullMatrix<double> &val) const
 {
-  fullMatrix<double> val(_blockSize,1);
   PetscScalar *tmp;
   _try(VecGetArray(_x, &tmp));
   for (int i=0; i<_blockSize; i++) {
@@ -63,7 +68,6 @@ fullMatrix<double> linearSystemPETSc<fullMatrix<double> >::getFromSolution(int r
 #endif
   }
   _try(VecRestoreArray(_x, &tmp));
-  return val;
 }
 
 template<>

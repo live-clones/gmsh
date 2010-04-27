@@ -22,6 +22,9 @@ class fullVector
   scalar *_data;
   friend class fullMatrix<scalar>;
  public:
+  inline const scalar* getDataPtr() const{
+    return _data;
+  }
   fullVector(int r) : _r(r)
   {
     _data = new scalar[_r];
@@ -203,6 +206,12 @@ class fullMatrix
       }
     }
     return *this;
+  }
+  void operator += (const fullMatrix<scalar> &other)
+  {
+    if(_r != other._r || _c!= other._c)
+      Msg::Error("sum matrices of different sizes\n");
+    for(int i = 0; i < _r * _c; ++i) _data[i] += other._data[i];
   }
   inline scalar operator () (int i, int j) const
   {

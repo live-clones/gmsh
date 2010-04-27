@@ -23,7 +23,7 @@ typedef struct {
   char *array;
 } CSRList_T;
   
-void CSRList_Add(CSRList_T *liste, void *data);
+void CSRList_Add(CSRList_T *liste, const void *data);
 int  CSRList_Nbr(CSRList_T *liste);
 
 template <class scalar>
@@ -46,7 +46,7 @@ class linearSystemCSR : public linearSystem<scalar> {
   {
     allocate(0);
   }
-  virtual void addToMatrix(int il, int ic, double val) 
+  virtual void addToMatrix(int il, int ic, const double &val) 
   {
     INDEX_TYPE  *jptr  = (INDEX_TYPE*) _jptr->array;
     INDEX_TYPE  *ptr   = (INDEX_TYPE*) _ptr->array;
@@ -87,22 +87,21 @@ class linearSystemCSR : public linearSystem<scalar> {
   }
   virtual void getMatrix(INDEX_TYPE*& jptr,INDEX_TYPE*& ai,double*& a);
 
-  virtual scalar getFromMatrix (int row, int col) const
+  virtual void getFromMatrix (int row, int col, scalar &val) const
   {
     Msg::Error("getFromMatrix not implemented for CSR");
-    return 0;
   }
-  virtual void addToRightHandSide(int row, scalar val) 
+  virtual void addToRightHandSide(int row, const scalar &val) 
   {
     if(val != 0.0) (*_b)[row] += val;
   }
-  virtual scalar getFromRightHandSide(int row) const 
+  virtual void getFromRightHandSide(int row, scalar &val) const 
   {
-    return (*_b)[row];
+    val = (*_b)[row];
   }
-  virtual scalar getFromSolution(int row) const
+  virtual void getFromSolution(int row, scalar &val) const
   {
-    return (*_x)[row];
+    val = (*_x)[row];
   }
   virtual void zeroMatrix()
   {
@@ -143,7 +142,7 @@ class linearSystemCSRTaucs : public linearSystemCSR<scalar> {
  public:
   linearSystemCSRTaucs(){}
   virtual ~linearSystemCSRTaucs(){}
-  virtual void addToMatrix(int il, int ic, double val)
+  virtual void addToMatrix(int il, int ic, const double &val)
   {
     if (il <= ic)
       linearSystemCSR<scalar>::addToMatrix(il, ic, val);

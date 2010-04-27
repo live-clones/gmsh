@@ -1101,7 +1101,7 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
     MVertex *v = *itv;
     double value;
-   myAssembler.getDofValue(value, v, 0, 1);
+   myAssembler.getDofValue(v, 0, 1, value);
    std::map<MVertex*,SPoint3>::iterator itf = coordinates.find(v);    
     if(itf == coordinates.end()){
       SPoint3 p(0, 0, 0);
@@ -1350,8 +1350,8 @@ bool GFaceCompound::parametrize_conformal() const
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
     MVertex *v = *itv;
     double value1, value2; 
-    myAssembler.getDofValue(value1, v,0,1);
-    myAssembler.getDofValue(value2, v,0,2);
+    myAssembler.getDofValue(v, 0, 1, value1);
+    myAssembler.getDofValue(v, 0, 2, value2);
     coordinates[v] = SPoint3(value1,value2,0.0);
   }
 

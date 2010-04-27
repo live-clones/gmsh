@@ -83,18 +83,17 @@ class linearSystemPETSc : public linearSystem<scalar> {
     }
     _isAllocated = false;
   }
-  virtual scalar getFromMatrix(int row, int col) const
+  virtual void getFromMatrix(int row, int col, scalar &val) const
   {
     Msg::Error("getFromMatrix not implemented for PETSc");
-    return 0;
   }
-  virtual void addToRightHandSide(int row, scalar val)
+  virtual void addToRightHandSide(int row, const scalar &val)
   {
     PetscInt i = row;
     PetscScalar s = val;
     _try(VecSetValues(_b, 1, &i, &s, ADD_VALUES));
   }
-  virtual scalar getFromRightHandSide(int row) const
+  virtual void getFromRightHandSide(int row, scalar &val) const
   {
     PetscScalar *tmp;
     _try(VecGetArray(_b, &tmp));
@@ -102,27 +101,27 @@ class linearSystemPETSc : public linearSystem<scalar> {
     _try(VecRestoreArray(_b, &tmp));
     // FIXME specialize this routine
 #if defined(PETSC_USE_COMPLEX)
-    return s.real();
+    val = s.real();
 #else
-    return s;
+    val = s;
 #endif
   }
-  virtual void addToMatrix(int row, int col, scalar val)
+  virtual void addToMatrix(int row, int col, const scalar &val)
   {
     PetscInt i = row, j = col;
     PetscScalar s = val;
     _try(MatSetValues(_a, 1, &i, 1, &j, &s, ADD_VALUES));
   }
-  virtual scalar getFromSolution(int row) const
+  virtual void getFromSolution(int row, scalar &val) const
   {
     PetscScalar *tmp;
     _try(VecGetArray(_x, &tmp));
     PetscScalar s = tmp[row];
     _try(VecRestoreArray(_x, &tmp));
 #if defined(PETSC_USE_COMPLEX)
-    return s.real();
+    val = s.real();
 #else
-    return s;
+    val = s;
 #endif
   }
   virtual void zeroMatrix()
@@ -152,9 +151,6 @@ class linearSystemPETSc : public linearSystem<scalar> {
     // override the default options with the ones from the option
     // database (if any)
     _try(KSPSetFromOptions(ksp));
-    PetscViewer view;
-    PetscViewerASCIIOpen(PETSC_COMM_WORLD,"mat.out", &view);
-    _try(MatView(_a, view));
     _try(KSPSolve(ksp, _b, _x));
     _try(KSPView(ksp, PETSC_VIEWER_STDOUT_SELF));
     PetscInt its;
@@ -180,11 +176,11 @@ class linearSystemPETSc : public linearSystem<scalar> {
   virtual bool isAllocated() const { return false; }
   virtual void allocate(int nbRows) {}
   virtual void clear(){}
-  virtual void addToMatrix(int row, int col, scalar val) {}
-  virtual scalar getFromMatrix(int row, int col) const { return 0.; }
-  virtual void addToRightHandSide(int row, scalar val) {}
-  virtual scalar getFromRightHandSide(int row) const { return 0.; }
-  virtual scalar getFromSolution(int row) const { return 0.; }
+  virtual void addToMatrix(int row, int col, const scalar &val) {}
+  virtual void getFromMatrix(int row, int col, scalar &val) const { return 0.; }
+  virtual void addToRightHandSide(int row, const scalar &val) {}
+  virtual void getFromRightHandSide(int row, scalar &val) const { return 0.; }
+  virtual void getFromSolution(int row, scalar &val) const { return 0.; }
   virtual void zeroMatrix() {}
   virtual void zeroRightHandSide() {}
   virtual int systemSolve() { return 0; }
