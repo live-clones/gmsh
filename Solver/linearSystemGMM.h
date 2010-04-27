@@ -101,7 +101,7 @@ class linearSystemGmm : public linearSystem<scalar> {
   virtual bool isAllocated() const { return false; }
   virtual void allocate(int nbRows) {}
   virtual void addToMatrix(int row, int col, scalar &val) {}
-  virtual void getFromMatrix(int row, int col, calar &val) const { return 0.; }
+  virtual void getFromMatrix(int row, int col, scalar &val) const { return 0.; }
   virtual void addToRightHandSide(int row, scalar &val) {}
   virtual void getFromRightHandSide(int row, scalar &val) const { return 0.; }
   virtual void getFromSolution(int row, scalar &val) const { return 0.; }
