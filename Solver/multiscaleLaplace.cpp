@@ -1199,7 +1199,8 @@ void multiscaleLaplace::parametrize_method (multiscaleLaplaceLevel & level,
     int count = 0;
     for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
       MVertex *v = *itv;
-      double value = myAssembler.getDofValue(v, 0, 1);      
+      double value;
+      myAssembler.getDofValue(value, v, 0, 1);      
       if (step == 0)solution[v] = SPoint2(value,0);
       else solution[v] = SPoint2(solution[v][0],value);
     }    

@@ -599,8 +599,9 @@ double highOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
       if ((*it)->onWhat()->dim() == 2){
 	SPoint2 param;
 	reparamMeshVertexOnFace((*it), gf, param);  
-	SPoint2 dparam (myAssembler.getDofValue((*it), 0, getTag()),
-			myAssembler.getDofValue((*it), 1, getTag()));
+	SPoint2 dparam;
+  myAssembler.getDofValue(dparam[0], (*it), 0, getTag());
+  myAssembler.getDofValue(dparam[1], (*it), 1, getTag());
 	SPoint2 newp = param+dparam;
 	dx += newp.x() * newp.x() + newp.y() * newp.y();
 	(*it)->setParameter(0, newp.x());
@@ -715,9 +716,13 @@ void highOrderSmoother::smooth(std::vector<MElement*> &all)
   }
   
   for (it = verticesToMove.begin(); it != verticesToMove.end(); ++it){
-    it->first->x() += myAssembler.getDofValue(it->first, 0, getTag());
-    it->first->y() += myAssembler.getDofValue(it->first, 1, getTag());
-    it->first->z() += myAssembler.getDofValue(it->first, 2, getTag());
+    double ax, ay, az;
+    myAssembler.getDofValue(ax, it->first, 0, getTag());
+    myAssembler.getDofValue(ay, it->first, 1, getTag());
+    myAssembler.getDofValue(az, it->first, 2, getTag());
+    it->first->x() += ax;
+    it->first->y() += ay;
+    it->first->z() += az;
   }
 
   // delete matrices and vectors

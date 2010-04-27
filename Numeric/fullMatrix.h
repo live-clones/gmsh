@@ -63,6 +63,8 @@ class fullVector
   {
     if(s == 0.) 
       for(int i = 0; i < _r; ++i) _data[i] = 0.;
+    else if (s == -1.)
+      for(int i = 0; i < _r; ++i) _data[i] = -_data[i];
     else 
       for(int i = 0; i < _r; ++i) _data[i] *= s;
   }

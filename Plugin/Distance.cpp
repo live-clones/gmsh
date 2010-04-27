@@ -188,7 +188,9 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   for(std::map<MVertex*,double >::iterator itv = distance_map2.begin(); 
       itv !=distance_map2.end() ; ++itv){
     MVertex *v = itv->first;
-    double value = std::min(0.9999, myAssembler.getDofValue(v, 0, 1));
+    double value;
+    myAssembler.getDofValue(value, v, 0, 1);
+    value = std::min(0.9999, value);
     double dist = -mu * log(1. - value);
     itv->second = dist;
   }

@@ -225,9 +225,9 @@ static double vonMises(dofManager<double> *a, MElement *e,
   double valy[256];
   double valz[256];
   for (int k = 0; k < e->getNumVertices(); k++){
-    valx[k] = a->getDofValue(e->getVertex(k), 0, _tag);
-    valy[k] = a->getDofValue(e->getVertex(k), 1, _tag);
-    valz[k] = a->getDofValue(e->getVertex(k), 2, _tag);
+    a->getDofValue(valx[k], e->getVertex(k), 0, _tag);
+    a->getDofValue(valy[k], e->getVertex(k), 1, _tag);
+    a->getDofValue(valz[k], e->getVertex(k), 2, _tag);
   }
   double gradux[3];
   double graduy[3];

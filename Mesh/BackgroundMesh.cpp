@@ -371,8 +371,7 @@ void backgroundMesh::propagate1dMesh(GFace *_gf)
   for ( ; itv2 != _2Dto3D.end(); ++itv2){
     MVertex *v_2D = itv2->first;
     MVertex *v_3D = itv2->second;
-    double value = myAssembler.getDofValue(v_3D, 0, 1);
-    _sizes[v_2D] = value;
+    myAssembler.getDofValue(_sizes[v_2D], v_3D, 0, 1);
   }
   delete _lsys;
 #endif
@@ -473,8 +472,7 @@ void backgroundMesh::updateSizes(GFace *_gf)
   for ( ; itv2 != _2Dto3D.end(); ++itv2){
     MVertex *v_2D = itv2->first;
     MVertex *v_3D = itv2->second;
-    double value = myAssembler.getDofValue(v_3D, 0, 1);
-    _sizes[v_2D] = value;
+    myAssembler.getDofValue(_sizes[v_2D], v_3D, 0, 1);
   }
   delete _lsys;
 #endif

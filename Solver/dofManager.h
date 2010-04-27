@@ -48,12 +48,18 @@ template<class T> struct dofTraits
 {
   typedef T VecType;
   typedef T MatType;
+  inline static void mult (VecType &r, const MatType &m, const VecType &v) { r = m*v;}
+  inline static void neg (VecType &r) { r = -r;} 
+  inline static void setToZero (VecType &r) { r = 0;} 
 };
 
-template<class T> struct dofTraits<fullVector<T> >
+template<class T> struct dofTraits<fullMatrix<T> >
 {
-  typedef fullVector<T> VecType;
+  typedef fullMatrix<T> VecType;
   typedef fullMatrix<T> MatType;
+  inline static void mult (VecType &r, const MatType &m, const VecType &v) { m.mult(v, r);}
+  inline static void neg (VecType &r) { r.scale(-1.);} 
+  inline static void setToZero (VecType &r) { r.scale(0);} 
 };
 /*
 template<> struct dofTraits<fullVector<std::complex<double> > >
@@ -159,24 +165,30 @@ class dofManager{
     return dataVec(0.0);
   }
 
-  inline dataVec getDofValue(int ent, int type) const
+  inline void getDofValue(dataVec &v, int ent, int type) const
   {
     Dof key(ent, type);
     {  
       typename std::map<Dof, dataVec>::const_iterator it = fixed.find(key);
-      if (it != fixed.end()) return it->second;
+      if (it != fixed.end()){
+        v = it->second;
+        return;
+      }
     }
     {
       std::map<Dof, int>::const_iterator it = unknown.find(key);
-      if (it != unknown.end())
-        return _current->getFromSolution(it->second);
+      if (it != unknown.end()){
+        v = _current->getFromSolution(it->second);
+        return;
+      }
     }
-    return dataVec(0.0);
+    dofTraits<T>::setToZero(v);
   }
-  inline dataVec getDofValue(MVertex *v, int iComp, int iField) const
+  inline dataVec getDofValue(dataVec &value, MVertex *v, int iComp, int iField) const
   {
-    return getDofValue(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField));
+    getDofValue(value, v->getNum(), Dof::createTypeWithTwoInts(iComp, iField));
   }
+
   inline void assemble(const Dof &R, const Dof &C, const dataMat &value)
   {
     if (!_current->isAllocated()) _current->allocate(unknown.size());
@@ -189,8 +201,12 @@ class dofManager{
       }
       else{
         typename std::map<Dof,  dataVec>::iterator itFixed = fixed.find(C);
-        if (itFixed != fixed.end()){
-          _current->addToRightHandSide(itR->second, -value * itFixed->second);
+        if (itFixed != fixed.end()) {
+          // tmp = -value * itFixed->second
+          dataVec tmp(itFixed->second);
+          dofTraits<T>::mult(tmp , value, itFixed->second);
+          dofTraits<T>::neg(tmp);
+          _current->addToRightHandSide(itR->second, tmp);
         }
       }
     }
@@ -220,7 +236,11 @@ class dofManager{
           else{
             typename std::map<Dof,  dataVec>::iterator itFixed = fixed.find(C[j]);
             if (itFixed != fixed.end()){
-              _current->addToRightHandSide(NR[i], -m(i,j) * itFixed->second);
+              // tmp = -m(i,j) * itFixed->second
+              dataVec tmp(itFixed->second);
+              dofTraits<T>::mult(tmp , m(i,j), itFixed->second);
+              dofTraits<T>::neg(tmp);
+              _current->addToRightHandSide(NR[i], tmp);
             }
           }
         }
@@ -272,7 +292,11 @@ class dofManager{
           {
             typename std::map<Dof,  dataVec>::iterator itFixed = fixed.find(R[j]);
             if (itFixed != fixed.end()){
-              _current->addToRightHandSide(NR[i], -m(i, j) * itFixed->second);
+              // tmp = -m(i,j) * itFixed->second
+              dataVec tmp(itFixed->second);
+              dofTraits<T>::mult(tmp , m(i,j), itFixed->second);
+              dofTraits<T>::neg(tmp);
+              _current->addToRightHandSide(NR[i], tmp);
             }
           }
         }
@@ -336,5 +360,4 @@ class dofManager{
       return 0;
   }
 };
-
 #endif

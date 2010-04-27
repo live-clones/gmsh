@@ -44,13 +44,13 @@
 
 template <class scalar>
 class linearSystemPETSc : public linearSystem<scalar> {
- private:
+  int _blockSize; // for block Matrix
   bool _isAllocated;
   Mat _a;
   Vec _b, _x;
   void _try(int ierr) const { CHKERRABORT(PETSC_COMM_WORLD, ierr); }
  public:
-  linearSystemPETSc() : _isAllocated(false) {}
+  linearSystemPETSc(int blockSize = -1) : _isAllocated(false) {_blockSize = blockSize;}
   virtual ~linearSystemPETSc(){ clear(); }
   virtual bool isAllocated() const { return _isAllocated; }
   virtual void allocate(int nbRows)
@@ -83,12 +83,6 @@ class linearSystemPETSc : public linearSystem<scalar> {
     }
     _isAllocated = false;
   }
-  virtual void addToMatrix(int row, int col, scalar val)
-  {
-    PetscInt i = row, j = col;
-    PetscScalar s = val;
-    _try(MatSetValues(_a, 1, &i, 1, &j, &s, ADD_VALUES));
-  }
   virtual scalar getFromMatrix(int row, int col) const
   {
     Msg::Error("getFromMatrix not implemented for PETSc");
@@ -112,6 +106,12 @@ class linearSystemPETSc : public linearSystem<scalar> {
 #else
     return s;
 #endif
+  }
+  virtual void addToMatrix(int row, int col, scalar val)
+  {
+    PetscInt i = row, j = col;
+    PetscScalar s = val;
+    _try(MatSetValues(_a, 1, &i, 1, &j, &s, ADD_VALUES));
   }
   virtual scalar getFromSolution(int row) const
   {
@@ -152,6 +152,9 @@ class linearSystemPETSc : public linearSystem<scalar> {
     // override the default options with the ones from the option
     // database (if any)
     _try(KSPSetFromOptions(ksp));
+    PetscViewer view;
+    PetscViewerASCIIOpen(PETSC_COMM_WORLD,"mat.out", &view);
+    _try(MatView(_a, view));
     _try(KSPSolve(ksp, _b, _x));
     _try(KSPView(ksp, PETSC_VIEWER_STDOUT_SELF));
     PetscInt its;
@@ -160,6 +163,10 @@ class linearSystemPETSc : public linearSystem<scalar> {
   }
   Mat &getMatrix(){ return _a; }
 };
+
+class binding;
+void linearSystemPETScRegisterBindings(binding *b);
+
 
 #else
 

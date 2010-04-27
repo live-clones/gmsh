@@ -28,19 +28,13 @@ void linearSystem<double>::registerBindings(binding *b){
   cb->setParentClass<linearSystem<double> >();
 #endif
 
-#ifdef HAVE_PETSC
-  cb = b->addClass<linearSystemPETSc<double> >("linearSystemPETSc");
-  cb->setDescription("A linear system solver, based on PETSc");
-  cm = cb->setConstructor<linearSystemPETSc<double> >();
-  cm->setDescription ("A new PETSc<double> solver");
-  cm->setArgNames(NULL);
-  cb->setParentClass<linearSystem<double> >();
-#endif
-
   cb = b->addClass<linearSystemFull<double> >("linearSystemFull");
   cb->setDescription("A linear system solver, based on LAPACK (full matrices)");
   cm = cb->setConstructor<linearSystemFull<double> >();
   cm->setDescription ("A new Lapack based <double> solver");
   cm->setArgNames(NULL);
   cb->setParentClass<linearSystem<double> >();
+#ifdef HAVE_PETSC
+  linearSystemPETScRegisterBindings (b);
+#endif
 }
