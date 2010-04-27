@@ -9,6 +9,7 @@
 #include "Numeric.h"
 #include "MElement.h"
 #include "dofManager.h"
+#include "simpleFunction.h"
 
 //class SVoid{};
 
@@ -367,15 +368,16 @@ class xFemFunctionSpace : public FunctionSpace<T>
   typedef typename TensorialTraits<T>::GradType GradType;
   typedef typename TensorialTraits<T>::HessType HessType;
  protected:
-  FunctionSpace<T>* _spacebase;
-  //Function<double>* _enrichment;
+   FunctionSpace<T>* _spacebase;
+   simpleFunctionOnElement<double> *_funcEnrichment;
+
  public:
   virtual void hessfuvw(MElement *ele, double u, double v, double w,std::vector<HessType> &hess){};
-  xFemFunctionSpace(FunctionSpace<T>* spacebase) : _spacebase(spacebase) {};
-  virtual void f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals){};
-  virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads){};
-  virtual int getNumKeys(MElement *ele){};
-  virtual void getKeys(MElement *ele, std::vector<Dof> &keys){};
+  xFemFunctionSpace(FunctionSpace<T>* spacebase,simpleFunctionOnElement<double> *funcEnrichment) : _spacebase(spacebase),_funcEnrichment(funcEnrichment){};
+  virtual void f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals);
+  virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads);
+  virtual int getNumKeys(MElement *ele);
+  virtual void getKeys(MElement *ele, std::vector<Dof> &keys);
 };
 
 
@@ -399,11 +401,226 @@ class FilteredFunctionSpace : public FunctionSpace<T>
   virtual void hessfuvw(MElement *ele, double u, double v, double w,std::vector<HessType> &hess){};
   FilteredFunctionSpace<T,F>(FunctionSpace<T>* spacebase,F * filter) : _spacebase(spacebase),_filter(filter)
   {};
-  virtual void f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals){};;
-  virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads){};;
-  virtual int getNumKeys(MElement *ele){};
-  virtual void getKeys(MElement *ele, std::vector<Dof> &keys){};
+  virtual void f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals);
+  virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads);
+  virtual int getNumKeys(MElement *ele);
+  virtual void getKeys(MElement *ele, std::vector<Dof> &keys);
 };
+
+
+
+template <class T> void xFemFunctionSpace<T>::f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals)
+{
+   // We need parent parameters
+  MElement * elep;
+  if (ele->getParent()) elep = ele->getParent();
+  else elep = ele;
+
+    // Get the spacebase valsd
+  std::vector<ValType> valsd;
+  xFemFunctionSpace<T>::_spacebase->f(elep,u,v,w,valsd);
+
+  int nbdofs=valsd.size();
+  int curpos=vals.size();  // if in composite function space
+  vals.reserve(curpos+nbdofs);
+
+    // then enriched dofs so the order is ex:(a2x,a2y,a3x,a3y)
+  if (nbdofs>0) // if enriched
+  {
+        // Enrichment function calcul
+    SPoint3 p;
+    elep->pnt(u, v, w, p); // parametric to cartesian coordinates
+    double func;
+    _funcEnrichment->setElement(elep);
+    func = (*_funcEnrichment)(p.x(), p.y(), p.z());
+    for (int i=0 ;i<nbdofs;i++)
+    {
+      vals.push_back(valsd[i]*func);
+    }
+  }
+}
+
+template <class T> void xFemFunctionSpace<T>::gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
+{
+
+    // We need parent parameters
+  MElement * elep;
+  if (ele->getParent()) elep = ele->getParent();
+  else elep = ele;
+
+    // Get the spacebase gradsd
+  std::vector<GradType> gradsd;
+  xFemFunctionSpace<T>::_spacebase->gradf(elep,u,v,w,gradsd);
+
+
+  int nbdofs=gradsd.size();
+
+    // We need spacebase valsd to compute total gradient
+  std::vector<ValType> valsd;
+  xFemFunctionSpace<T>::_spacebase->f(elep,u,v,w,valsd);
+
+  int curpos=grads.size();  // if in composite function space
+  grads.reserve(curpos+nbdofs);
+
+    // then enriched dofs so the order is ex:(a2x,a2y,a3x,a3y)
+  if (nbdofs>0) // if enriched
+  {
+    double df[3];
+    SPoint3 p;
+    elep->pnt(u, v, w, p);
+    _funcEnrichment->setElement(elep);
+    _funcEnrichment->gradient (p.x(), p.y(),p.z(),df[0],df[1],df[2]);
+    ValType gradfuncenrich(df[0],df[1],df[2]);
+
+        // Enrichment function calcul
+
+    double func;
+    _funcEnrichment->setElement(elep);
+    func = (*_funcEnrichment)(p.x(), p.y(), p.z());
+
+    for (int i=0 ;i<nbdofs;i++)
+    {
+      GradType GradFunc;
+      tensprod(valsd[i],gradfuncenrich,GradFunc);
+      grads.push_back(gradsd[i]*func + GradFunc);
+    }
+  }
+}
+
+template <class T> int xFemFunctionSpace<T>::getNumKeys(MElement *ele)
+{
+  MElement * elep;
+  if (ele->getParent()) elep = ele->getParent();
+  else elep = ele;
+  int nbdofs = xFemFunctionSpace<T>::_spacebase->getNumKeys(ele);
+  return nbdofs;
+}
+
+template <class T> void xFemFunctionSpace<T>::getKeys(MElement *ele, std::vector<Dof> &keys)
+{
+  MElement * elep;
+  if (ele->getParent()) elep = ele->getParent();
+  else elep = ele;
+
+  int normalk=xFemFunctionSpace<T>::_spacebase->getNumKeys(elep);
+
+  std::vector<Dof> bufk;
+  bufk.reserve(normalk);
+  xFemFunctionSpace<T>::_spacebase->getKeys(elep,bufk);
+  int normaldofs=bufk.size();
+  int nbdofs = normaldofs;
+
+  int curpos=keys.size();
+  keys.reserve(curpos+nbdofs);
+
+    // get keys so the order is ex:(a2x,a2y,a3x,a3y)
+    // enriched dof tagged with ( i2 -> i2 + 1 )
+  for (int i=0 ;i<nbdofs;i++)
+  {
+    int i1,i2;
+    Dof::getTwoIntsFromType(bufk[i].getType(), i1,i2);
+    keys.push_back(Dof(bufk[i].getEntity(),Dof::createTypeWithTwoInts(i1,i2+1)));
+  }
+}
+
+
+// Filtered function space
+//
+
+template <class T,class F> void FilteredFunctionSpace<T,F>::f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals)
+{
+    // We need parent parameters
+  MElement * elep;
+  if (ele->getParent()) elep = ele->getParent();
+  else elep = ele;
+
+  std::vector<ValType> valsd;
+
+  _spacebase->f(elep,u,v,w,valsd);
+
+  int normalk=_spacebase->getNumKeys(elep);
+  std::vector<Dof> bufk;
+  bufk.reserve(normalk);
+  _spacebase->getKeys(elep,bufk);
+
+  for (int i=0;i<bufk.size();i++)
+  {
+    if ((*_filter)(bufk[i]))
+      vals.push_back(valsd[i]);
+  }
+
+}
+
+
+template <class T,class F> void FilteredFunctionSpace<T,F>::gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
+{
+    // We need parent parameters
+  MElement * elep;
+  if (ele->getParent()) elep = ele->getParent();
+  else elep = ele;
+
+    // Get space base gradsd
+  std::vector<GradType> gradsd;
+  _spacebase->gradf(elep,u,v,w,gradsd);
+
+    // Get numkeys
+  int normalk=_spacebase->getNumKeys(elep);
+  std::vector<Dof> bufk;
+  bufk.reserve(normalk);
+  _spacebase->getKeys(elep,bufk);
+
+  for (int i=0;i<bufk.size();i++)
+  {
+    if ( (*_filter)(bufk[i]))
+      grads.push_back(gradsd[i]);
+  }
+
+}
+
+template <class T,class F> int FilteredFunctionSpace<T,F>::getNumKeys(MElement *ele)
+{
+  MElement *elep;
+  if (ele->getParent()) elep = ele->getParent();
+  else elep = ele;
+
+  int nbdofs = 0;
+
+  int normalk=_spacebase->getNumKeys(elep);
+  std::vector<Dof> bufk;
+  bufk.reserve(normalk);
+  _spacebase->getKeys(elep,bufk);
+
+  for (int i=0;i<bufk.size();i++)
+  {
+    if ( (*_filter)(bufk[i]))
+      nbdofs = nbdofs + 1;
+  }
+  return nbdofs;
+}
+
+template <class T,class F> void FilteredFunctionSpace<T,F>::getKeys(MElement *ele, std::vector<Dof> &keys)
+{
+  MElement * elep;
+  if (ele->getParent()) elep = ele->getParent();
+  else elep = ele;
+
+  int normalk=_spacebase->getNumKeys(elep);
+
+  std::vector<Dof> bufk;
+  bufk.reserve(normalk);
+  _spacebase->getKeys(elep,bufk);
+  int normaldofs=bufk.size();
+  int nbdofs = 0;
+
+  for (int i=0;i<bufk.size();i++)
+  {
+    if ( (*_filter)(bufk[i]))
+      keys.push_back(bufk[i]);
+  }
+}
+
+
+
 
 
 #endif
