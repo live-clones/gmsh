@@ -46,7 +46,7 @@ class linearSystemGmm : public linearSystem<scalar> {
     }
     _a = 0;
   }
-  virtual void  addToMatrix(int row, int col, scalar &val) 
+  virtual void  addToMatrix(int row, int col, const scalar &val) 
   {
     if(val != 0.0) (*_a)(row, col) += val;
   }
@@ -54,7 +54,7 @@ class linearSystemGmm : public linearSystem<scalar> {
   {
     val = (*_a)(row, col);
   }
-  virtual void addToRightHandSide(int row, scalar &val) 
+  virtual void addToRightHandSide(int row, const scalar &val) 
   {
     if(val != 0.0) (*_b)[row] += val;
   }
