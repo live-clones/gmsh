@@ -167,7 +167,6 @@ MPI_Size                return tMPI_Size;
 Nurbs			return tNurbs;
 
 Order			return tNurbsOrder;
-OCCShape  	        return tOCCShape;
 
 Periodic                return tPeriodic;
 Physical                return tPhysical;

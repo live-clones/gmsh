@@ -104,7 +104,7 @@ fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
-%token tUsing tPlugin tDegenerated tOCCShape
+%token tUsing tPlugin tDegenerated
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset
 %token tLoop tRecombine tSmoother tSplit tDelete tCoherence tIntersect
 %token tLayers tHole tAlias tAliasWithOptions
@@ -1572,20 +1572,6 @@ Shape :
       List_Delete($6);
       $$.Type = MSH_VOLUME;
       $$.Num = num;
-    }
-
-  | tOCCShape '(' tBIGSTR ',' ListOfDouble ',' tBIGSTR ')' tEND
-    {
-#if defined(HAVE_OCC)
-      std::vector<double> data;
-      for (int i = 0 ; i < List_Nbr($5); i++){
-        double d; List_Read($5, i, &d);
-        data.push_back(d);
-      }
-      GModel::current()->addShape($3, data, $7);
-      Free($3); Free($7);
-      List_Delete($5);
-#endif
     }
   | tCompound tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
