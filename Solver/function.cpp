@@ -368,34 +368,34 @@ class functionC : public function {
   void call (dataCacheMap *m, fullMatrix<double> &val) {
     switch (args.size()) {
       case 0 : 
-        ((void (*)(fullMatrix<double> &))(callback))(val);
+        ((void (*)(dataCacheMap*, fullMatrix<double> &))(callback))(m, val);
         break;
       case 1 : 
-        ((void (*)(fullMatrix<double> &, const fullMatrix<double>&))
-         (callback)) (val, args[0]);
+        ((void (*)(dataCacheMap*, fullMatrix<double> &, const fullMatrix<double>&))
+         (callback)) (m, val, args[0]);
         break;
       case 2 : 
-        ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double> &))
-         (callback)) (val, args[0], args[1]);
+        ((void (*)(dataCacheMap*, fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double> &))
+         (callback)) (m, val, args[0], args[1]);
         break;
       case 3 : 
-        ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&))
-         (callback)) (val, args[0], args[1], args[2]);
+        ((void (*)(dataCacheMap*, fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&))
+         (callback)) (m, val, args[0], args[1], args[2]);
         break;
       case 4 : 
-        ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&,
+        ((void (*)(dataCacheMap*, fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&,
                    const fullMatrix<double>&))
-         (callback)) (val, args[0], args[1], args[2], args[3]);
+         (callback)) (m, val, args[0], args[1], args[2], args[3]);
         break;
       case 5 : 
-        ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&,
+        ((void (*)(dataCacheMap*, fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&,
                    const fullMatrix<double>&, const fullMatrix<double>&))
-         (callback)) (val, args[0], args[1], args[2], args[3], args[4]);
+         (callback)) (m, val, args[0], args[1], args[2], args[3], args[4]);
         break;
       case 6 : 
-        ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&,
+        ((void (*)(dataCacheMap*, fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&,
                    const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&))
-         (callback)) (val, args[0], args[1], args[2], args[3], args[4], args[5]);
+         (callback)) (m, val, args[0], args[1], args[2], args[3], args[4], args[5]);
         break;
       default :
         Msg::Error("C callback not implemented for %i argurments", args.size());
