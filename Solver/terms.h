@@ -208,7 +208,8 @@ class IsotropicElasticTerm : public BilinearTerm<SVector3,SVector3>
   virtual ~IsotropicElasticTerm() {}
   virtual void get(MElement *ele,int npts,IntPt *GP,fullMatrix<double> &m)
   {
-    if (sym)
+		if (ele->getParent()) ele=ele->getParent();    
+		if (sym)
     {
       int nbFF = BilinearTerm<SVector3,SVector3>::space1.getNumKeys(ele);
       double jac[3][3];
@@ -222,7 +223,7 @@ class IsotropicElasticTerm : public BilinearTerm<SVector3,SVector3>
       for (int i = 0; i < npts; i++)
       {
         const double u = GP[i].pt[0]; const double v = GP[i].pt[1]; const double w = GP[i].pt[2];
-        if (ele->getParent()) ele=ele->getParent();
+        
         const double weight = GP[i].weight; const double detJ = ele->getJacobian(u, v, w, jac);
         std::vector<TensorialTraits<SVector3>::GradType> Grads;
         BilinearTerm<SVector3,SVector3>::space1.gradf(ele,u, v, w, Grads); // a optimiser ??
@@ -300,7 +301,8 @@ template<class T1> class LoadTerm : public LinearTerm<T1>
 
   virtual void get(MElement *ele,int npts,IntPt *GP,fullVector<double> &m)
   {
-    int nbFF=LinearTerm<T1>::space1.getNumKeys(ele);
+		if (ele->getParent()) ele=ele->getParent();    
+		int nbFF=LinearTerm<T1>::space1.getNumKeys(ele);
     double jac[3][3];
     m.resize(nbFF);
     m.scale(0.);

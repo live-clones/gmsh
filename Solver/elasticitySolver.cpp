@@ -198,7 +198,7 @@ void elasticitySolver::solve()
 //    LaplaceTerm<SVector3,SVector3> Eterm(*LagSpace);
     Assemble(Eterm,*LagSpace,elasticFields[i].g->begin(),elasticFields[i].g->end(),Integ_Bulk,*pAssembler);
   }
-
+  printf("nDofs=%d\n",pAssembler->sizeOfR());
   printf("-- done assembling!\n");
   lsys->systemSolve();
   printf("-- done solving!\n");
