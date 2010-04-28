@@ -365,6 +365,10 @@ class functionC : public function {
   void (*callback)(void);
   public:
   static void buildLibrary(std::string code, std::string filename) {
+    //todo use CMAKE_CXX_COMPILER
+    //todo use clean temporary file names
+    //todo work on windows :-)
+    //todo if DG_BUILD_DIR is not defined, use the directory used at compilation time
     FILE *tmpSrc = fopen("_tmpSrc.cpp","w");
     fprintf(tmpSrc, "%s\n",code.c_str());
     fclose(tmpSrc);
