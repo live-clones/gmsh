@@ -340,8 +340,7 @@ class functionLua : public function {
     : function(nbCol), _luaFunctionName(luaFunctionName), _L(L)
   {
     args.resize(dependencies.size());
-    for (int i = 0; i < dependencies.size(); i++) {
-      setArgument(args[i], dependencies[i]);
+    for (int i = 0; i < dependencies.size(); i++) { setArgument(args[i], dependencies[i]);
     }
   }
 };
@@ -365,6 +364,20 @@ class functionC : public function {
   std::vector<fullMatrix<double> > args;
   void (*callback)(void);
   public:
+  static void buildLibrary(std::string code, std::string filename) {
+    FILE *tmpSrc = fopen("_tmpSrc.cpp","w");
+    fprintf(tmpSrc, "%s\n",code.c_str());
+    fclose(tmpSrc);
+    FILE *tmpMake = fopen("_tmpMake","w");
+    fprintf(tmpMake, "include $(DG_BUILD_DIR)/CMakeFiles/dg.dir/flags.make\n"
+        "%s : %s\n"
+        "\tg++ -shared -fPIC -o $@ $(CXX_FLAGS) $(CXX_DEFINES) $<\n",
+        filename.c_str(), "_tmpSrc.cpp");
+    fclose(tmpMake);
+    system("make -f _tmpMake");
+    unlink ("_tmpSrc.cpp");
+    unlink ("_tmpMake.cpp");
+  }
   void call (dataCacheMap *m, fullMatrix<double> &val) {
     switch (args.size()) {
       case 0 : 
@@ -472,6 +485,9 @@ void function::registerBindings(binding *b){
   mb = cb->setConstructor<functionC,std::string, std::string,int,std::vector<const function*> >();
   mb->setArgNames("file", "symbol", "nbCol", "arguments",NULL);
   mb->setDescription("  ");
+  mb = cb->addMethod("buildLibrary", &functionC::buildLibrary);
+  mb->setArgNames("code", "libraryFileName",NULL);
+  mb->setDescription("build a dynamic library from the given code");
   cb->setParentClass<function>();
 #endif
 
