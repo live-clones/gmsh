@@ -310,9 +310,9 @@ class CompositeFunctionSpace : public FunctionSpace<T>
   std::vector<FunctionSpace<T>* > _spaces;
  public:
   template <class T1> CompositeFunctionSpace(const T1& t) { _spaces.push_back(new T1(t));}
-  template <class T1, class T2> CompositeFunctionSpace(T1& t1, T2& t2)
-  { _spaces.push_back(&t1);
-    _spaces.push_back(&t2); }
+  template <class T1, class T2> CompositeFunctionSpace(const T1& t1,const T2& t2)
+  { _spaces.push_back(new T1(t1));
+    _spaces.push_back(new T2(t2)); }
   template <class T1, class T2, class T3> CompositeFunctionSpace(const T1& t1, const T2& t2, const T3& t3)
   { _spaces.push_back(new T1(t1));
     _spaces.push_back(new T2(t2));
