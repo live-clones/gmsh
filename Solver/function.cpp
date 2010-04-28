@@ -13,7 +13,7 @@
 function::~function() {
 }
 
-function::function(int nbCol, bool invalidatedOnElement):_nbCol(nbCol), _invalidatedOnElement(invalidatedOnElement){};
+function::function(int nbCol, bool invalidatedOnElement):_nbCol(nbCol), _invalidatedOnElement(invalidatedOnElement){}
 
 void function::addFunctionReplace(functionReplace &fr) {
   _functionReplaces.push_back(&fr);
@@ -211,7 +211,7 @@ function *function::getSolution() {
 
 class functionSolutionGradient : public function {
   static functionSolutionGradient *_instance;
-  functionSolutionGradient():function(0){};// constructor is private only 1 instance can exists, call get to access the instance
+  functionSolutionGradient():function(0){} // constructor is private only 1 instance can exists, call get to access the instance
  public:
   void call(dataCacheMap *m, fullMatrix<double> &sol) {
     Msg::Error("a function requires the gradient of the solution but this algorithm does not provide the gradient of the solution");
@@ -230,7 +230,7 @@ function *function::getSolutionGradient() {
 
 class functionParametricCoordinates : public function {
   static functionParametricCoordinates *_instance;
-  functionParametricCoordinates():function(0, false){};// constructor is private only 1 instance can exists, call get to access the instance
+  functionParametricCoordinates():function(0, false){} // constructor is private only 1 instance can exists, call get to access the instance
  public:
   void call(dataCacheMap *m, fullMatrix<double> &sol) {
     Msg::Error("a function requires the parametric coordinates but this algorithm does not provide the parametric coordinates");
@@ -249,7 +249,7 @@ function *function::getParametricCoordinates() {
 
 class functionNormals : public function {
   static functionNormals *_instance;
-  functionNormals():function(0){};// constructor is private only 1 instance can exists, call get to access the instance
+  functionNormals():function(0){} // constructor is private only 1 instance can exists, call get to access the instance
  public:
   void call(dataCacheMap *m, fullMatrix<double> &sol) {
     Msg::Error("a function requires the normals coordinates but this algorithm does not provide the normals");

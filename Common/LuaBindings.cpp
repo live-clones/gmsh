@@ -46,7 +46,7 @@ extern "C" {
 //trivial class to bind options
 class gmshOptions {
   public:
-  gmshOptions(){};
+  gmshOptions(){}
   void colorSet(std::string category, int index, std::string name, int value)
   {
     GmshSetOption(category,name,(unsigned int)(value), index);

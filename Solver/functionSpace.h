@@ -43,8 +43,8 @@ template<> struct TensorialTraits<SVector3>
 class FunctionSpaceBase
 {
  public:
-  virtual int getNumKeys(MElement *ele)=0; // if one needs the number of dofs
-  virtual void getKeys(MElement *ele, std::vector<Dof> &keys)=0;
+  virtual int getNumKeys(MElement *ele) = 0; // if one needs the number of dofs
+  virtual void getKeys(MElement *ele, std::vector<Dof> &keys) = 0;
 };
 
 template<class T>
@@ -54,13 +54,15 @@ class FunctionSpace : public FunctionSpaceBase
   typedef typename TensorialTraits<T>::ValType ValType;
   typedef typename TensorialTraits<T>::GradType GradType;
   typedef typename TensorialTraits<T>::HessType HessType;
-  virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)=0;
-  virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads) =0;
-  virtual void gradfuvw(MElement *ele, double u, double v, double w,std::vector<GradType> &grads) {}; // should return to pure virtual once all is done.
-  virtual void hessfuvw(MElement *ele, double u, double v, double
-w,std::vector<HessType> &hess)=0;
-  virtual int getNumKeys(MElement *ele)=0; // if one needs the number of dofs
-  virtual void getKeys(MElement *ele, std::vector<Dof> &keys)=0;
+  virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals) = 0;
+  virtual void gradf(MElement *ele, double u, double v, double w,
+                     std::vector<GradType> &grads) = 0;
+  virtual void gradfuvw(MElement *ele, double u, double v, double w,
+                        std::vector<GradType> &grads) {} // should return to pure virtual once all is done.
+  virtual void hessfuvw(MElement *ele, double u, double v, double w,
+                        std::vector<HessType> &hess) = 0;
+  virtual int getNumKeys(MElement *ele) = 0; // if one needs the number of dofs
+  virtual void getKeys(MElement *ele, std::vector<Dof> &keys) = 0;
 };
 
 class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
@@ -80,77 +82,78 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
   }
 
  public:
-  ScalarLagrangeFunctionSpace(int i=0):_iField(i) {}
-  virtual int getId(void) const {return _iField;};
+  ScalarLagrangeFunctionSpace(int i = 0) : _iField(i) {}
+  virtual int getId(void) const {return _iField;}
   virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)
   {
     if (ele->getParent()) ele = ele->getParent();
-    int ndofs= ele->getNumVertices();
-    int curpos=vals.size();
-    vals.resize(curpos+ndofs);
+    int ndofs = ele->getNumVertices();
+    int curpos = vals.size();
+    vals.resize(curpos + ndofs);
     ele->getShapeFunctions(u, v, w, &(vals[curpos]));
   }
 
-
   // Fonction renvoyant un vecteur contenant le grandient de chaque FF
-  virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
+  virtual void gradf(MElement *ele, double u, double v, double w, std::vector<GradType> &grads)
   {
     if (ele->getParent()) ele = ele->getParent();
-    int ndofs= ele->getNumVertices();
-    grads.reserve(grads.size()+ndofs);
+    int ndofs = ele->getNumVertices();
+    grads.reserve(grads.size() + ndofs);
     double gradsuvw[256][3];
     ele->getGradShapeFunctions(u, v, w, gradsuvw);
     double jac[3][3];
     double invjac[3][3];
     const double detJ = ele->getJacobian(u, v, w, jac); // redondant : on fait cet appel a l'exterieur
     inv3x3(jac, invjac);
-    for (int i=0;i<ndofs;++i)
+    for (int i = 0; i < ndofs; ++i)
       grads.push_back(GradType(
       invjac[0][0] * gradsuvw[i][0] + invjac[0][1] * gradsuvw[i][1] + invjac[0][2] * gradsuvw[i][2],
       invjac[1][0] * gradsuvw[i][0] + invjac[1][1] * gradsuvw[i][1] + invjac[1][2] * gradsuvw[i][2],
-      invjac[2][0] * gradsuvw[i][0] + invjac[2][1] * gradsuvw[i][1] + invjac[2][2] * gradsuvw[i][2]
-                            ));
-  };
+      invjac[2][0] * gradsuvw[i][0] + invjac[2][1] * gradsuvw[i][1] + invjac[2][2] * gradsuvw[i][2]));
+  }
     // Fonction renvoyant un vecteur contenant le hessien [][] de chaque FF dans l'espace ISOPARAMETRIQUE
-  virtual void hessfuvw(MElement *ele, double u, double v, double w,std::vector<HessType> &hess)
+  virtual void hessfuvw(MElement *ele, double u, double v, double w, std::vector<HessType> &hess)
   {
-    int ndofs= ele->getNumVertices();  // ATTENTION RETOURNE LE NBBRE DE NOEUDS ET PAS LE NBRE DE DDL
-    hess.reserve(hess.size()+ndofs);   // permet de mettre les composantes suivantes à la suite du vecteur
+    int ndofs = ele->getNumVertices();  // ATTENTION RETOURNE LE NBBRE DE NOEUDS ET PAS LE NBRE DE DDL
+    hess.reserve(hess.size() + ndofs);   // permet de mettre les composantes suivantes à la suite du vecteur
     double hessuvw[256][3][3];
     ele->getHessShapeFunctions(u, v, w, hessuvw);
     HessType hesst;
-    for (int i=0;i<ndofs;++i){
-      hesst(0,0) = hessuvw[i][0][0] ; hesst(0,1) = hessuvw[i][0][1] ; hesst(0,2) = hessuvw[i][0][2];
-      hesst(1,0) = hessuvw[i][1][0] ; hesst(1,1) = hessuvw[i][1][1] ; hesst(1,2) = hessuvw[i][1][2];
-      hesst(2,0) = hessuvw[i][2][0] ; hesst(2,1) = hessuvw[i][2][1] ; hesst(2,2) = hessuvw[i][2][2];
+    for (int i = 0; i < ndofs; ++i){
+      hesst(0,0) = hessuvw[i][0][0]; hesst(0,1) = hessuvw[i][0][1]; hesst(0,2) = hessuvw[i][0][2];
+      hesst(1,0) = hessuvw[i][1][0]; hesst(1,1) = hessuvw[i][1][1]; hesst(1,2) = hessuvw[i][1][2];
+      hesst(2,0) = hessuvw[i][2][0]; hesst(2,1) = hessuvw[i][2][1]; hesst(2,2) = hessuvw[i][2][2];
       hess.push_back(hesst);
     }
-  };
-
-  virtual void gradfuvw(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
-  {
-    if (ele->getParent()) ele = ele->getParent();
-    int ndofs= ele->getNumVertices();
-    grads.reserve(grads.size()+ndofs);
-    double gradsuvw[256][3];
-    ele->getGradShapeFunctions(u, v, w, gradsuvw);
-    for (int i=0;i<ndofs;++i)
-      grads.push_back(GradType(
-      gradsuvw[i][0] ,
-      gradsuvw[i][1] ,
-      gradsuvw[i][2]
-                      ));
   }
 
-  virtual int getNumKeys(MElement *ele) {if (ele->getParent()) ele = ele->getParent();return ele->getNumVertices();}
+  virtual void gradfuvw(MElement *ele, double u, double v, double w, std::vector<GradType> &grads)
+  {
+    if (ele->getParent()) ele = ele->getParent();
+    int ndofs = ele->getNumVertices();
+    grads.reserve(grads.size() + ndofs);
+    double gradsuvw[256][3];
+    ele->getGradShapeFunctions(u, v, w, gradsuvw);
+    for (int i = 0; i < ndofs; ++i)
+      grads.push_back(GradType(
+      gradsuvw[i][0],
+      gradsuvw[i][1],
+      gradsuvw[i][2]));
+  }
+
+  virtual int getNumKeys(MElement *ele) 
+  {
+    if (ele->getParent()) ele = ele->getParent();
+    return ele->getNumVertices();
+  }
 
   virtual void getKeys(MElement *ele, std::vector<Dof> &keys) // appends ...
   {
-      if (ele->getParent()) ele = ele->getParent();
-      int ndofs= ele->getNumVertices();
-      keys.reserve(keys.size()+ndofs);
-      for (int i=0;i<ndofs;++i)
-        getKeys(ele->getVertex(i),keys);
+    if (ele->getParent()) ele = ele->getParent();
+    int ndofs = ele->getNumVertices();
+    keys.reserve(keys.size() + ndofs);
+    for (int i = 0; i < ndofs; ++i)
+      getKeys(ele->getVertex(i), keys);
   }
 };
 
@@ -168,20 +171,21 @@ protected :
 public :
   template <class T2> ScalarToAnyFunctionSpace(const T2 &SFS, const T& mult, int comp_): ScalarFS(new T2(SFS))
   {
-    multipliers.push_back(mult);comp.push_back(comp_);
+    multipliers.push_back(mult); comp.push_back(comp_);
   }
 
   template <class T2> ScalarToAnyFunctionSpace(const T2 &SFS, const T& mult1, int comp1_,
                           const T& mult2, int comp2_): ScalarFS(new T2(SFS))
   {
-    multipliers.push_back(mult1);multipliers.push_back(mult2);comp.push_back(comp1_);comp.push_back(comp2_);
+    multipliers.push_back(mult1); multipliers.push_back(mult2);
+   comp.push_back(comp1_); comp.push_back(comp2_);
   }
 
   template <class T2> ScalarToAnyFunctionSpace(const T2 &SFS, const T& mult1, int comp1_,
-                          const T& mult2, int comp2_,const T& mult3, int comp3_): ScalarFS(new T2(SFS))
+                          const T& mult2, int comp2_, const T& mult3, int comp3_): ScalarFS(new T2(SFS))
   {
-    multipliers.push_back(mult1);multipliers.push_back(mult2);multipliers.push_back(mult3);
-    comp.push_back(comp1_);comp.push_back(comp2_);comp.push_back(comp3_);
+    multipliers.push_back(mult1); multipliers.push_back(mult2); multipliers.push_back(mult3);
+    comp.push_back(comp1_); comp.push_back(comp2_); comp.push_back(comp3_);
   }
 
   virtual ~ScalarToAnyFunctionSpace() {delete ScalarFS;}
@@ -189,78 +193,78 @@ public :
   virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)
   {
     std::vector<double> valsd;
-    ScalarFS->f(ele,u,v,w,valsd);
-    int nbdofs=valsd.size();
-    int nbcomp=comp.size();
-    int curpos=vals.size();
-    vals.reserve(curpos+nbcomp*nbdofs);
-    for (int j=0;j<nbcomp;++j)
+    ScalarFS->f(ele, u, v, w, valsd);
+    int nbdofs = valsd.size();
+    int nbcomp = comp.size();
+    int curpos = vals.size();
+    vals.reserve(curpos + nbcomp * nbdofs);
+    for (int j = 0; j < nbcomp; ++j)
     {
-      for (int i=0;i<nbdofs;++i) vals.push_back(multipliers[j]*valsd[i]);
+      for (int i = 0; i < nbdofs; ++i)
+        vals.push_back(multipliers[j] * valsd[i]);
     }
   }
 
-  virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
+  virtual void gradf(MElement *ele, double u, double v, double w, std::vector<GradType> &grads)
   {
     std::vector<SVector3> gradsd;
-    ScalarFS->gradf(ele,u,v,w,gradsd);
-    int nbdofs=gradsd.size();
-    int nbcomp=comp.size();
-    int curpos=grads.size();
-    grads.reserve(curpos+nbcomp*nbdofs);
+    ScalarFS->gradf(ele, u, v, w, gradsd);
+    int nbdofs = gradsd.size();
+    int nbcomp = comp.size();
+    int curpos = grads.size();
+    grads.reserve(curpos + nbcomp * nbdofs);
     GradType val;
-    for (int j=0;j<nbcomp;++j)
+    for (int j = 0; j < nbcomp; ++j)
     {
-      for (int i=0;i<nbdofs;++i)
+      for (int i = 0; i < nbdofs; ++i)
       {
-        tensprod(multipliers[j],gradsd[i],val);
+        tensprod(multipliers[j], gradsd[i], val);
         grads.push_back(val);
       }
     }
   }
-  virtual void hessfuvw(MElement *ele, double u, double v, double w,std::vector<HessType> &hess)
+  virtual void hessfuvw(MElement *ele, double u, double v, double w, std::vector<HessType> &hess)
   {
-    ScalarFS->hessfuvw(ele,u,v,w,hess);
+    ScalarFS->hessfuvw(ele, u, v, w, hess);
   }
-  virtual void gradfuvw(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
+  virtual void gradfuvw(MElement *ele, double u, double v, double w, std::vector<GradType> &grads)
   {
     std::vector<SVector3> gradsd;
-    ScalarFS->gradfuvw(ele,u,v,w,gradsd);
-    int nbdofs=gradsd.size();
-    int nbcomp=comp.size();
-    int curpos=grads.size();
-    grads.reserve(curpos+nbcomp*nbdofs);
+    ScalarFS->gradfuvw(ele, u, v, w, gradsd);
+    int nbdofs = gradsd.size();
+    int nbcomp = comp.size();
+    int curpos = grads.size();
+    grads.reserve(curpos + nbcomp * nbdofs);
     GradType val;
-    for (int j=0;j<nbcomp;++j)
+    for (int j = 0; j < nbcomp; ++j)
     {
-      for (int i=0;i<nbdofs;++i)
+      for (int i = 0; i < nbdofs; ++i)
       {
-        tensprod(multipliers[j],gradsd[i],val);
+        tensprod(multipliers[j], gradsd[i], val);
         grads.push_back(val);
       }
     }
   }
 
-  virtual int getNumKeys(MElement *ele) {return ScalarFS->getNumKeys(ele)*comp.size();}
+  virtual int getNumKeys(MElement *ele) {return ScalarFS->getNumKeys(ele) * comp.size();}
 
   virtual void getKeys(MElement *ele, std::vector<Dof> &keys)
   {
-
-    int nk=ScalarFS->getNumKeys(ele);
+    int nk = ScalarFS->getNumKeys(ele);
     std::vector<Dof> bufk;
     bufk.reserve(nk);
-    ScalarFS->getKeys(ele,bufk);
-    int nbdofs=bufk.size();
-    int nbcomp=comp.size();
-    int curpos=keys.size();
-    keys.reserve(curpos+nbcomp*nbdofs);
-    for (int j=0;j<nbcomp;++j)
+    ScalarFS->getKeys(ele, bufk);
+    int nbdofs = bufk.size();
+    int nbcomp = comp.size();
+    int curpos = keys.size();
+    keys.reserve(curpos + nbcomp * nbdofs);
+    for (int j = 0; j < nbcomp; ++j)
     {
-      for (int i=0;i<nk;++i)
+      for (int i = 0; i < nk; ++i)
       {
-        int i1,i2;
-        Dof::getTwoIntsFromType(bufk[i].getType(), i1,i2);
-        keys.push_back(Dof(bufk[i].getEntity(),Dof::createTypeWithTwoInts(comp[j],i1)));
+        int i1, i2;
+        Dof::getTwoIntsFromType(bufk[i].getType(), i1, i2);
+        keys.push_back(Dof(bufk[i].getEntity(), Dof::createTypeWithTwoInts(comp[j], i1)));
       }
     }
   }
@@ -271,24 +275,24 @@ class VectorLagrangeFunctionSpace : public ScalarToAnyFunctionSpace<SVector3>
  protected:
   static const SVector3 BasisVectors[3];
  public:
-  enum Along { VECTOR_X=0, VECTOR_Y=1, VECTOR_Z=2 };
+  enum Along { VECTOR_X = 0, VECTOR_Y = 1, VECTOR_Z = 2 };
   typedef TensorialTraits<SVector3>::ValType ValType;
   typedef TensorialTraits<SVector3>::GradType GradType;
   VectorLagrangeFunctionSpace(int id) :
           ScalarToAnyFunctionSpace<SVector3>::ScalarToAnyFunctionSpace(ScalarLagrangeFunctionSpace(id),
-          SVector3(1.,0.,0.),VECTOR_X, SVector3(0.,1.,0.),VECTOR_Y,SVector3(0.,0.,1.),VECTOR_Z)
+          SVector3(1.,0.,0.), VECTOR_X, SVector3(0.,1.,0.), VECTOR_Y, SVector3(0.,0.,1.), VECTOR_Z)
   {}
   VectorLagrangeFunctionSpace(int id,Along comp1) :
           ScalarToAnyFunctionSpace<SVector3>::ScalarToAnyFunctionSpace(ScalarLagrangeFunctionSpace(id),
-          BasisVectors[comp1],comp1)
+          BasisVectors[comp1], comp1)
   {}
   VectorLagrangeFunctionSpace(int id,Along comp1,Along comp2) :
           ScalarToAnyFunctionSpace<SVector3>::ScalarToAnyFunctionSpace(ScalarLagrangeFunctionSpace(id),
-          BasisVectors[comp1],comp1, BasisVectors[comp2],comp2)
+          BasisVectors[comp1], comp1, BasisVectors[comp2], comp2)
   {}
   VectorLagrangeFunctionSpace(int id,Along comp1,Along comp2, Along comp3) :
           ScalarToAnyFunctionSpace<SVector3>::ScalarToAnyFunctionSpace(ScalarLagrangeFunctionSpace(id),
-          BasisVectors[comp1],comp1, BasisVectors[comp2],comp2, BasisVectors[comp3],comp3)
+          BasisVectors[comp1], comp1, BasisVectors[comp2], comp2, BasisVectors[comp3], comp3)
   {}
 };
 
@@ -324,39 +328,39 @@ class CompositeFunctionSpace : public FunctionSpace<T>
   }
   ~CompositeFunctionSpace(void)
   {
-    for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
+    for (iterFS it = _spaces.begin(); it != _spaces.end(); ++it)
       delete (*it);
   }
-  virtual void f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals)
+  virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)
   {
-    for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
-      (*it)->f(ele,u,v,w,vals);
+    for (iterFS it = _spaces.begin(); it != _spaces.end(); ++it)
+      (*it)->f(ele, u, v, w, vals);
   }
 
-  virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
+  virtual void gradf(MElement *ele, double u, double v, double w, std::vector<GradType> &grads)
   {
-    for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
-      (*it)->gradf(ele,u,v,w,grads);
+    for (iterFS it = _spaces.begin(); it != _spaces.end(); ++it)
+      (*it)->gradf(ele, u, v, w, grads);
   }
 
-  virtual void hessfuvw(MElement *ele, double u, double v, double w,std::vector<HessType> &hess)
+  virtual void hessfuvw(MElement *ele, double u, double v, double w, std::vector<HessType> &hess)
   {
-    for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
-      (*it)->hessfuvw(ele,u,v,w,hess);
+    for (iterFS it = _spaces.begin(); it != _spaces.end(); ++it)
+      (*it)->hessfuvw(ele, u, v, w, hess);
   }
 
   virtual int getNumKeys(MElement *ele)
   {
-    int ndofs=0;
-    for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
-      ndofs+=(*it)->getNumKeys(ele);
+    int ndofs = 0;
+    for (iterFS it = _spaces.begin(); it != _spaces.end(); ++it)
+      ndofs += (*it)->getNumKeys(ele);
     return ndofs;
   }
 
   virtual void getKeys(MElement *ele, std::vector<Dof> &keys)
   {
-    for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
-      (*it)->getKeys(ele,keys);
+    for (iterFS it = _spaces.begin(); it != _spaces.end(); ++it)
+      (*it)->getKeys(ele, keys);
   }
 };
 
@@ -372,8 +376,9 @@ class xFemFunctionSpace : public FunctionSpace<T>
    simpleFunctionOnElement<double> *_funcEnrichment;
 
  public:
-  virtual void hessfuvw(MElement *ele, double u, double v, double w,std::vector<HessType> &hess){};
-  xFemFunctionSpace(FunctionSpace<T>* spacebase,simpleFunctionOnElement<double> *funcEnrichment) : _spacebase(spacebase),_funcEnrichment(funcEnrichment){};
+  virtual void hessfuvw(MElement *ele, double u, double v, double w,std::vector<HessType> &hess){}
+  xFemFunctionSpace(FunctionSpace<T>* spacebase,simpleFunctionOnElement<double> *funcEnrichment) :
+    _spacebase(spacebase),_funcEnrichment(funcEnrichment){}
   virtual void f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals);
   virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads);
   virtual int getNumKeys(MElement *ele);
@@ -381,26 +386,19 @@ class xFemFunctionSpace : public FunctionSpace<T>
 };
 
 
-template<class T,class F>
+template<class T, class F>
 class FilteredFunctionSpace : public FunctionSpace<T>
 {
-
  public :
-
   typedef typename TensorialTraits<T>::ValType ValType;
   typedef typename TensorialTraits<T>::GradType GradType;
   typedef typename TensorialTraits<T>::HessType HessType;
  protected:
-
   FunctionSpace<T>* _spacebase;
-
   F *_filter;
-
  public:
-
-  virtual void hessfuvw(MElement *ele, double u, double v, double w,std::vector<HessType> &hess){};
-  FilteredFunctionSpace<T,F>(FunctionSpace<T>* spacebase,F * filter) : _spacebase(spacebase),_filter(filter)
-  {};
+  virtual void hessfuvw(MElement *ele, double u, double v, double w,std::vector<HessType> &hess){}
+  FilteredFunctionSpace<T,F>(FunctionSpace<T>* spacebase,F * filter) : _spacebase(spacebase),_filter(filter){}
   virtual void f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals);
   virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads);
   virtual int getNumKeys(MElement *ele);

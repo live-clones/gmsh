@@ -30,7 +30,7 @@ struct BoundaryCondition
   location onWhat; // on vertices or elements
   int _tag; // tag for the dofManager
   groupOfElements *g; // support for this BC
-  BoundaryCondition() : g(0),_tag(0),onWhat(UNDEF) {};
+  BoundaryCondition() : g(0),_tag(0),onWhat(UNDEF) {}
 };
 
 struct dirichletBC : public BoundaryCondition

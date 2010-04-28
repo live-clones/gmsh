@@ -706,7 +706,7 @@ public:
 
 class prism : public element{
 public:
-  prism(double *x, double *y, double *z) : element(x, y, z) {};
+  prism(double *x, double *y, double *z) : element(x, y, z) {}
   inline int getDimension(){ return 3; }
   inline int getNumNodes(){ return 6; }
   void getNode(int num, double &u, double &v, double &w)

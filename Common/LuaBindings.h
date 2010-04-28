@@ -1026,7 +1026,7 @@ class luaMethodBinding : public methodBinding{
   virtual int call (lua_State *L) = 0;
   luaMethodBinding(const std::string luaname){ _luaname = luaname; }
   luaMethodBinding(){ _luaname = ""; }
-  virtual void getArgTypeNames(std::vector<std::string> &names){};
+  virtual void getArgTypeNames(std::vector<std::string> &names){}
 };
 
 template <typename cb>

@@ -234,7 +234,7 @@ public:
     coordinate_lonlat cll;
     SPoint3 llradian;
   public:
-    coordinate_lonlat_degrees(double r) : cll(r){};
+    coordinate_lonlat_degrees(double r) : cll(r){}
     void to_cartesian(const SPoint3 ll, SPoint3 &xyz)
     {
       llradian.setPosition(ll.x() * M_PI / 180, ll.y() * M_PI / 180, 0);

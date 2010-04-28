@@ -107,8 +107,6 @@ public :
   std::vector<dataCacheDouble*> _dependencies;
   std::vector<std::pair<dataCacheDouble*, dataCacheDouble*> > _substitutions;
 
-  
-
 
   int _nRowByPoint;
   function *_function;

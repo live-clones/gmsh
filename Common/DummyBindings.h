@@ -8,7 +8,7 @@
 
 class classBinding {
  public:
-  void setDescription(std::string description){};
+  void setDescription(std::string description){}
   template<typename parentType>
   void setParentClass(){}
   template <typename cb>
