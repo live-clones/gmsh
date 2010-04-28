@@ -46,6 +46,7 @@ class function {
   std::vector<int> _childrenCache;
   std::vector<substitutedFunction> _substitutedFunctions;
   virtual void call (dataCacheMap *m, fullMatrix<double> &res)=0;
+  virtual void registerInDataCacheMap(dataCacheMap *m, dataCacheDouble *d) {}
   std::vector<argument> arguments;
   const void setArgument(fullMatrix<double> &v, const function *f, int iMap = 0) {
     if(f==NULL)

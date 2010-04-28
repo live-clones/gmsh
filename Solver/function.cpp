@@ -68,15 +68,13 @@ dataCacheDouble::dataCacheDouble(dataCacheMap *m, function *f):
   for (int i = 0; i < f->_functionReplaces.size(); i++) {
     functionReplaceCaches.push_back (new functionReplaceCache(m, f->_functionReplaces[i], this)); 
   }
+  f->registerInDataCacheMap(m, this);
 }
 
 void dataCacheDouble::resize() {
   _value = fullMatrix<double>(_nRowByPoint==0?1:_nRowByPoint*_cacheMap.getNbEvaluationPoints(),_value.size2());
 }
 void dataCacheDouble::_eval() {
-  /*for(unsigned int i=0;i<_substitutions.size(); i++){
-    _substitutions[i].first->set() = (*_substitutions[i].second)();
-  }*/
   for(unsigned int i=0;i<_dependencies.size(); i++){
     _function->arguments[i].val->setAsProxy((*_dependencies[i])());
   }
@@ -378,7 +376,8 @@ class functionC : public function {
         "\tg++ -shared -fPIC -o $@ $(CXX_FLAGS) $(CXX_DEFINES) $<\n",
         filename.c_str(), "_tmpSrc.cpp");
     fclose(tmpMake);
-    system("make -f _tmpMake");
+    if(system("make -f _tmpMake"))
+      Msg::Error("make command failed\n");
     unlink ("_tmpSrc.cpp");
     unlink ("_tmpMake.cpp");
   }
