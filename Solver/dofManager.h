@@ -34,8 +34,6 @@ class Dof{
     i1 = t % 10000;
     i2 = t / 10000;
   }
-  //inline static int createEntityForFullDg(const int ele_num, const int ver_num){return ele_num*100000+ver_num;} // Problem if the number of Vertex exceed 1e5 OK for a moment
-  //inline static void getTwoIntFromEntityFullDg(int t, int &i1, int &i2){i1 = t % 100000 ; i2 = t / 100000;}
 
   bool operator < (const Dof &other) const
   {
