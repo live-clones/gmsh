@@ -8,4 +8,3 @@ e1 = g:addLine(v1, v2)
 e2 = g:addLine(v2, v3)
 e3 = g:addLine(v3, v4)
 e4 = g:addLine(v4, v1)
-
