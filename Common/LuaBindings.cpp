@@ -26,16 +26,15 @@
 #include "drawContext.h"
 #include "GmshMessage.h"
 #include "linearSystem.h"
-#include "GModelFactory.h"
 
 #if defined(HAVE_SOLVER)
 #include "linearSystemCSR.h"
 #endif
 
 extern "C" {
-  #include "lua.h"
-  #include "lualib.h"
-  #include "lauxlib.h"
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
 }
 
 #if defined(HAVE_READLINE)
@@ -49,7 +48,7 @@ class gmshOptions {
   gmshOptions(){}
   void colorSet(std::string category, int index, std::string name, int value)
   {
-    GmshSetOption(category,name,(unsigned int)(value), index);
+    GmshSetOption(category, name, (unsigned int)(value), index);
   }
   int colorGet(std::string category, int index, std::string name)
   {
@@ -77,7 +76,8 @@ class gmshOptions {
   {
     GmshSetOption(category, name, value, index);
   }
-  static void registerBindings(binding *b) {
+  static void registerBindings(binding *b)
+  {
     classBinding *cb = b->addClass<gmshOptions>("gmshOptions");
     cb->setDescription("access the gmsh option database");
     methodBinding *mb;
@@ -227,7 +227,7 @@ static int luaClear(lua_State *L)
 }
 #endif
 
-static int luaRefresh (lua_State *L)
+static int luaRefresh(lua_State *L)
 {
   drawContext::global()->draw();
   return 0;
@@ -371,11 +371,11 @@ binding::binding()
   // Register Lua bindings
   DocRecord::registerBindings(this);
   GEntity::registerBindings(this);
+  GVertex::registerBindings(this);
   GEdge::registerBindings(this);
   GFace::registerBindings(this);
-  GModel::registerBindings(this);
   GRegion::registerBindings(this);
-  GVertex::registerBindings(this);
+  GModel::registerBindings(this);
   MElement::registerBindings(this);
   MVertex::registerBindings(this);
   fullMatrix<double>::registerBindings(this);
@@ -386,12 +386,14 @@ binding::binding()
   function::registerBindings(this);
   linearSystemCSRGmm<double>::registerBindings(this);
 #endif
-  GModelFactory::registerBindings(this);
 }
 
 binding *binding::_instance=NULL;
-binding::~binding() {
-  for (std::map<std::string,classBinding *>::iterator it =  classes.begin(); it != classes.end(); it++) {
+
+binding::~binding()
+{
+  for (std::map<std::string,classBinding *>::iterator it = classes.begin(); 
+       it != classes.end(); it++) {
     delete it->second;
   }
 }

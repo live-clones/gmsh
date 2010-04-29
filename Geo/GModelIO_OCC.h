@@ -48,7 +48,7 @@ class OCC_Internals {
   GFace *addFaceToModel(GModel *model, TopoDS_Face f, int i=-1);
   GRegion *addRegionToModel(GModel *model, TopoDS_Solid r, int i=-1);
   void buildGModel(GModel *gm);
-  void Fillet(std::vector<TopoDS_Edge> &shapes, double radius);
+  void fillet(std::vector<TopoDS_Edge> &shapes, double radius);
   void applyBooleanOperator(TopoDS_Shape tool, const BooleanOperator &op);
 };
 

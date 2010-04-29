@@ -8,6 +8,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
+#include "GModelFactory.h"
 #include "MPoint.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -41,13 +42,16 @@ int GModel::_current = -1;
 
 GModel::GModel(std::string name)
   : _name(name), _visible(1), _octree(0),
-    _geo_internals(0), _occ_internals(0), _fm_internals(0),
+    _geo_internals(0), _occ_internals(0), _fm_internals(0), _factory(0),
     _fields(0), _currentMeshEntity(0), normals(0)
 {
   partitionSize[0] = 0; partitionSize[1] = 0;
   list.push_back(this);
   // at the moment we always create (at least an empty) GEO model
   _createGEOInternals();
+#if defined(HAVE_OCC)
+  _factory = new OCCFactory();
+#endif
 #if defined(HAVE_MESH)
   _fields = new FieldManager();
 #endif
@@ -84,7 +88,23 @@ int GModel::setCurrent(GModel *m)
       break;
     }
   }
-        return _current;
+  return _current;
+}
+
+void GModel::setFactory(std::string name)
+{
+  if(_factory) delete _factory;
+  _factory = 0;
+  if(name == "Gmsh") {
+    Msg::Error("Gmsh factory not created yet");
+  }
+  else if(name == "OpenCASCADE"){
+#if defined(HAVE_OCC)
+    _factory = new OCCFactory();
+#else
+    Msg::Error("Missing OpenCASCADE support");
+#endif
+  }
 }
 
 GModel *GModel::findByName(std::string name)
@@ -1402,18 +1422,124 @@ void GModel::save(std::string fileName)
   GModel::setCurrent(temp);
 }
 
-static void ComputeDuplicates(GModel * model, 
-                              std::multimap<GVertex*,GVertex*>  & Unique2Duplicates,
-                              std::map<GVertex*,GVertex*> & Duplicates2Unique,
+GVertex *GModel::addVertex(double x, double y, double z, double lc)
+{
+  if(_factory) return _factory->addVertex(this, x, y, z, lc);
+  return 0;
+}
+
+GEdge *GModel::addLine(GVertex *v1, GVertex *v2)
+{
+  if(_factory) return _factory->addLine(this, v1, v2);
+  return 0;
+}
+
+GEdge *GModel::addCircleArcCenter(double x, double y, double z, GVertex *start, 
+                                  GVertex *end)
+{
+  if(_factory)
+    return _factory->addCircleArc(this, GModelFactory::CENTER_START_END,
+                                  start, end, SPoint3(x, y, z));
+  return 0;
+}
+
+GEdge *GModel::addCircleArc3Points(double x, double y, double z, GVertex *start,
+                                   GVertex *end)
+{
+  if(_factory) 
+    return _factory->addCircleArc(this, GModelFactory::THREE_POINTS, 
+                                  start, end, SPoint3(x, y, z));
+  return 0;
+}
+
+GEdge *GModel::addBezier(GVertex *start, GVertex *end, 
+                         fullMatrix<double> *controlPoints)
+{
+  if(_factory) 
+    return _factory->addSpline(this, GModelFactory::BEZIER, start, end, 
+                               controlPoints);
+  return 0;
+}
+
+GEntity *GModel::revolve(GEntity *e, double angle, fullMatrix<double> *axis)
+{
+  if(_factory)
+    return _factory->revolve(this, e, (*axis)(0, 0), (*axis)(0, 1), (*axis)(0, 2),
+                             (*axis)(1, 0), (*axis)(1, 1), (*axis)(1, 2), angle);
+  return 0;
+}
+
+GEntity *GModel::extrude(GEntity *e, fullMatrix<double> *axis)
+{
+  if(_factory) 
+    return _factory->extrude(this, e, (*axis)(0, 0), (*axis)(0, 1), (*axis)(0, 2),
+                             (*axis)(1, 0), (*axis)(1, 1), (*axis)(1, 2));
+  return 0;
+}
+
+GEntity *GModel::addSphere(double cx, double cy, double cz, double radius)
+{
+  if(_factory) return _factory->addSphere(this, cx, cy, cz, radius);
+  return 0;
+}
+
+GEntity *GModel::addCylinder(std::vector<double> p1, std::vector<double> p2, 
+                             double radius)
+{
+  if(_factory) return _factory->addCylinder(this, p1, p2, radius);
+  return 0;
+}
+
+GEntity *GModel::addTorus(std::vector<double> p1, std::vector<double> p2, 
+                          double radius1, double radius2)
+{
+  if(_factory) return _factory->addTorus(this, p1, p2, radius1, radius2);
+  return 0;
+}
+
+GEntity *GModel::addBlock(std::vector<double> p1, std::vector<double> p2)
+{
+  if(_factory) return _factory->addBlock(this, p1, p2);
+  return 0;
+}
+
+GEntity *GModel::addCone(std::vector<double> p1, std::vector<double> p2,
+                         double radius1, double radius2)
+{
+  if(_factory) return _factory->addCone(this, p1, p2,radius1, radius2);
+  return 0;
+}
+
+GModel *GModel::computeBooleanUnion(GModel *tool, int createNewModel)
+{
+  if(_factory)
+    return _factory->computeBooleanUnion(this, tool, createNewModel);
+  return 0;
+}
+
+GModel *GModel::computeBooleanIntersection(GModel *tool, int createNewModel)
+{
+  if(_factory)
+    return _factory->computeBooleanIntersection(this, tool, createNewModel);
+  return 0;
+}
+
+GModel *GModel::computeBooleanDifference(GModel *tool, int createNewModel)
+{
+  if(_factory)
+    return _factory->computeBooleanDifference(this, tool, createNewModel);
+  return 0;
+}
+
+static void computeDuplicates(GModel *model, 
+                              std::multimap<GVertex*, GVertex*> &Unique2Duplicates,
+                              std::map<GVertex*, GVertex*> &Duplicates2Unique,
                               const double &eps)
 {
-  // in a first time, we use a greedy algorithm in n^2
-  // using bounding boxes and the Octree would certainly be better
-  // for huge models...
-
+  // currently we use a greedy algorithm in n^2 (using bounding boxes
+  // and the Octree would certainly be better for huge models...)
   std::list<GVertex*> v;
-  
-  v.insert(v.begin(),model->firstVertex(),model->lastVertex());
+  v.insert(v.begin(), model->firstVertex(), model->lastVertex());
 
   while(!v.empty()){
     GVertex *pv = *v.begin();
@@ -1422,91 +1548,79 @@ static void ComputeDuplicates(GModel * model,
     for ( std::multimap<GVertex*,GVertex*>::iterator it = Unique2Duplicates.begin(); 
           it != Unique2Duplicates.end(); ++it ){
       GVertex *unique = it->first;
-      const double d = sqrt ((unique->x()-pv->x())*(unique->x()-pv->x())+
-			     (unique->y()-pv->y())*(unique->y()-pv->y())+
-			     (unique->z()-pv->z())*(unique->z()-pv->z()));
+      const double d = sqrt((unique->x() - pv->x()) * (unique->x() - pv->x()) +
+                            (unique->y() - pv->y()) * (unique->y() - pv->y()) +
+                            (unique->z() - pv->z()) * (unique->z() - pv->z()));
       if (d <= eps) {
 	found = true;
-	Unique2Duplicates.insert(std::make_pair(unique,pv));
+	Unique2Duplicates.insert(std::make_pair(unique, pv));
 	Duplicates2Unique[pv] = unique;
 	break;
       }
     }
     if (!found) {
-      Unique2Duplicates.insert(std::make_pair(pv,pv));
+      Unique2Duplicates.insert(std::make_pair(pv, pv));
       Duplicates2Unique[pv] = pv;
     }
   }  
 }
 
-static void glueVerticesInEdges(GModel * model,
-				std::multimap<GVertex*,GVertex*>  & Unique2Duplicates,
-				std::map<GVertex*,GVertex*> & Duplicates2Unique){
+static void glueVerticesInEdges(GModel *model, 
+                                std::multimap<GVertex*, GVertex*> &Unique2Duplicates,
+				std::map<GVertex*, GVertex*> &Duplicates2Unique)
+{
   Msg::Debug("Gluing Edges");
-  for (GModel::eiter it = model->firstEdge(); it != model->lastEdge();++it){
+  for (GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
     GEdge *e = *it;
     GVertex *v1 = e->getBeginVertex();
     GVertex *v2 = e->getEndVertex();
     GVertex *replacementOfv1 = Duplicates2Unique[v1];
     GVertex *replacementOfv2 = Duplicates2Unique[v2];
     if ((v1 != replacementOfv1) || (v2 != replacementOfv2)){
-      Msg::Debug("Model Edge %d is re-build",e->tag());
-      e->replaceEndingPoints (replacementOfv1,replacementOfv2);
+      Msg::Debug("Model Edge %d is re-build", e->tag());
+      e->replaceEndingPoints (replacementOfv1, replacementOfv2);
     }
   }
 }
 
-static void ComputeDuplicates(GModel * model, 
-                              std::multimap<GEdge*,GEdge*>  & Unique2Duplicates,
-                              std::map<GEdge*,GEdge*> & Duplicates2Unique,
+static void computeDuplicates(GModel *model,
+                              std::multimap<GEdge*, GEdge*> &Unique2Duplicates,
+                              std::map<GEdge*,GEdge*> &Duplicates2Unique,
                               const double &eps)
 {
-  // in a first time, we use a greedy algorithm in n^2
-
-  // first check edges that have same endpoints
-
   std::list<GEdge*> e;
-  
-  e.insert(e.begin(),model->firstEdge(),model->lastEdge());
+  e.insert(e.begin(), model->firstEdge(), model->lastEdge());
 
   while(!e.empty()){
     GEdge *pe = *e.begin();
     // compute a point
     Range<double> r = pe->parBounds(0);
-    GPoint gp = pe->point(0.5*(r.low()+r.high()));
+    GPoint gp = pe->point(0.5 * (r.low() + r.high()));
     e.erase(e.begin());
     bool found = false;
     for (std::multimap<GEdge*,GEdge*>::iterator it = Unique2Duplicates.begin(); 
          it != Unique2Duplicates.end(); ++it ){
       GEdge *unique = it->first;
-            
-      //      printf ("checking %d %d\n",unique->tag(),pe->tag());
       // first check edges that have same endpoints
       if ((unique->getBeginVertex() == pe->getBeginVertex() && 
 	   unique->getEndVertex() == pe->getEndVertex()) ||
 	  (unique->getEndVertex() == pe->getBeginVertex() && 
 	   unique->getBeginVertex() == pe->getEndVertex())){
-	//	printf ("topology ok\n");
-	if (unique->geomType() == GEntity::Line &&
-	    pe->geomType() == GEntity::Line ){
+	if (unique->geomType() == GEntity::Line && pe->geomType() == GEntity::Line){
 	  found = true;
 	  Unique2Duplicates.insert(std::make_pair(unique,pe));
 	  Duplicates2Unique[pe] = unique;
-	  //	  printf ("D2U[%d] = %d\n",pe->tag(),unique->tag());
 	  break;	  
 	} 
 	double t;
 	GPoint gp2 = pe->closestPoint(SPoint3(gp.x(),gp.y(),gp.z()),t);
-	const double d = sqrt((gp.x()-gp2.x())*(gp.x()-gp2.x())+
-			      (gp.y()-gp2.y())*(gp.y()-gp2.y())+
-			      (gp.z()-gp2.z())*(gp.z()-gp2.z()));
-	//	printf ("closest point @ distance %g\n",d);
+	const double d = sqrt((gp.x() - gp2.x()) * (gp.x() - gp2.x()) +
+			      (gp.y() - gp2.y()) * (gp.y() - gp2.y()) +
+			      (gp.z() - gp2.z()) * (gp.z() - gp2.z()));
 	if (t >= r.low() && t <= r.high() && d <= eps) {
-	  //	  printf ("both are close -> glue\n");
 	  found = true;
 	  Unique2Duplicates.insert(std::make_pair(unique,pe));
 	  Duplicates2Unique[pe] = unique;
-	  //	  printf ("D2U[%d] = %d\n",pe->tag(),unique->tag());
 	  break;
 	}
       }
@@ -1514,48 +1628,39 @@ static void ComputeDuplicates(GModel * model,
     if (!found) {
       Unique2Duplicates.insert(std::make_pair(pe,pe));
       Duplicates2Unique[pe] = pe;
-      //      printf ("D2U[%d] = %d\n",pe->tag(),pe->tag());
     }
   }
-
-  //  for(std::map<GEdge*,GEdge*>::iterator it = Duplicates2Unique.begin(); it != Duplicates2Unique.end(); ++it){
-  //    printf("E(%d) -- E(%d)\n",it->first->tag(),it->second->tag());
-  //  }
-
 }
 
-static void glueEdgesInFaces(GModel * model,
-			     std::multimap<GEdge*,GEdge*>  & Unique2Duplicates,
-			     std::map<GEdge*,GEdge*> & Duplicates2Unique)
+static void glueEdgesInFaces(GModel *model, 
+                             std::multimap<GEdge*, GEdge*> &Unique2Duplicates,
+			     std::map<GEdge*, GEdge*> &Duplicates2Unique)
 {
   Msg::Debug("Gluing Model Faces");
-  for (GModel::fiter it = model->firstFace(); it != model->lastFace();++it){
+  for (GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it){
     GFace *f = *it;
     bool aDifferenceExists = false;
     std::list<GEdge*> old = f->edges(), enew;
-    //    printf("face %d %d edges\n",(*it)->tag(),old.size());
-    for (std::list<GEdge*>::iterator eit = old.begin(); eit !=old.end() ; eit++){
+    for (std::list<GEdge*>::iterator eit = old.begin(); eit !=old.end(); eit++){
       GEdge *temp = Duplicates2Unique[*eit];
       enew.push_back(temp);
-      //      printf("edge %d vs. %d\n",(*eit)->tag(),temp->tag());
       if (temp != *eit){
 	aDifferenceExists = true;
       }
     }
     if (aDifferenceExists){
-      Msg::Debug("Model Face %d is re-build",f->tag());
+      Msg::Debug("Model Face %d is re-build", f->tag());
       f->replaceEdges (enew);
     }
   }
 }
 
-static void ComputeDuplicates(GModel * model, 
-                              std::multimap<GFace*,GFace*>  & Unique2Duplicates,
-                              std::map<GFace*,GFace*> & Duplicates2Unique,
+static void computeDuplicates(GModel *model, 
+                              std::multimap<GFace*, GFace*> &Unique2Duplicates,
+                              std::map<GFace*,GFace*> &Duplicates2Unique, 
                               const double &eps)
 {
   std::list<GFace*> f;
-  
   f.insert(f.begin(),model->firstFace(),model->lastFace());
 
   while(!f.empty()){
@@ -1564,12 +1669,13 @@ static void ComputeDuplicates(GModel * model,
     Range<double> r = pf->parBounds(0);
     Range<double> s = pf->parBounds(1);
     // FIXME : this is WRONG (the point can be in a hole ;-) 
-    GPoint gp = pf->point(SPoint2(0.5*(r.low()+r.high()),0.5*(s.low()+s.high())));
+    GPoint gp = pf->point(SPoint2(0.5 * (r.low() + r.high()), 0.5 * (s.low() + s.high())));
     f.erase(f.begin());
     std::list<GEdge*> pf_edges = pf->edges();
     pf_edges.sort();
     bool found = false;
-    for ( std::multimap<GFace*,GFace*>::iterator it = Unique2Duplicates.begin(); it != Unique2Duplicates.end() ; ++it ){
+    for (std::multimap<GFace*,GFace*>::iterator it = Unique2Duplicates.begin();
+         it != Unique2Duplicates.end(); ++it){
       GFace *unique = it->first;      
       std::list<GEdge*> unique_edges = unique->edges();
       if (unique_edges.size() == pf_edges.size()){
@@ -1582,16 +1688,13 @@ static void ComputeDuplicates(GModel * model,
 	  if (*it_pf != *it_unique) all_similar = false;
 	}
 	if (all_similar){
-	  if (unique->geomType() == GEntity::Plane &&
-	      pf->geomType() == GEntity::Plane ){
+	  if (unique->geomType() == GEntity::Plane && pf->geomType() == GEntity::Plane){
 	    found = true;
 	    Unique2Duplicates.insert(std::make_pair(unique,pf));
 	    Duplicates2Unique[pf] = unique;
-	    //	    printf ("F: D2U[%d] = %d\n",pf->tag(),unique->tag());
 	    break;	  
 	  } 
 	  double t[2]={0,0};
-	  //	  GPoint gp2 = pf->closestPoint(SPoint3(gp.x(),gp.y(),gp.z()),t);
 	  const double d = 1.0;
 	  /*sqrt((gp.x()-gp2.x())*(gp.x()-gp2.x())+
 	    (gp.y()-gp2.y())*(gp.y()-gp2.y())+
@@ -1599,11 +1702,9 @@ static void ComputeDuplicates(GModel * model,
 	  //	printf ("closest point @ distance %g\n",d);
 	  if (t[0] >= r.low() && t[0] <= r.high() && 
 	      t[1] >= s.low() && t[1] <= s.high() && d <= eps) {
-	    //	  printf ("both are close -> glue\n");
 	    found = true;
 	    Unique2Duplicates.insert(std::make_pair(unique,pf));
 	    Duplicates2Unique[pf] = unique;
-	    //	  printf ("F : D2U[%d] = %d\n",pf->tag(),unique->tag());
 	    break;
 	  }
 	}
@@ -1612,34 +1713,28 @@ static void ComputeDuplicates(GModel * model,
     if (!found) {
       Unique2Duplicates.insert(std::make_pair(pf,pf));
       Duplicates2Unique[pf] = pf;
-      //      printf ("F : D2U[%d] = %d\n",pf->tag(),pf->tag());
     }
   }
-  
-  //  for(std::map<GFace*,GFace*>::iterator it = Duplicates2Unique.begin(); it != Duplicates2Unique.end(); ++it){
-  //    printf("F(%d) -- F(%d)\n",it->first->tag(),it->second->tag());
-  //  }  
 }
 
-static void glueFacesInRegions(GModel * model,
-			       std::multimap<GFace*,GFace*>  & Unique2Duplicates,
-			       std::map<GFace*,GFace*> & Duplicates2Unique)
+static void glueFacesInRegions(GModel *model,
+                               std::multimap<GFace*, GFace*> &Unique2Duplicates,
+			       std::map<GFace*, GFace*> &Duplicates2Unique)
 {
   Msg::Debug("Gluing Regions");
   for (GModel::riter it = model->firstRegion(); it != model->lastRegion();++it){
     GRegion *r = *it;
     bool aDifferenceExists = false;
     std::list<GFace*> old = r->faces(), fnew;
-    for (std::list<GFace*>::iterator fit = old.begin(); fit !=old.end() ; fit++){
+    for (std::list<GFace*>::iterator fit = old.begin(); fit != old.end(); fit++){
       GFace *temp = Duplicates2Unique[*fit];
       fnew.push_back(temp);
-      //      printf("edge %d vs. %d\n",(*eit)->tag(),temp->tag());
       if (temp != *fit){
 	aDifferenceExists = true;
       }
     }
     if (aDifferenceExists){
-      Msg::Debug("Model Region %d is re-build",r->tag());
+      Msg::Debug("Model Region %d is re-build", r->tag());
       r->replaceFaces (fnew);
     }
   }
@@ -1649,21 +1744,21 @@ void GModel::glue(const double &eps)
 {
   {
     std::multimap<GVertex*,GVertex*> Unique2Duplicates;
-    std::map<GVertex*,GVertex*>      Duplicates2Unique;
-    ComputeDuplicates  (this, Unique2Duplicates,Duplicates2Unique, eps);
-    glueVerticesInEdges(this, Unique2Duplicates,Duplicates2Unique);
+    std::map<GVertex*,GVertex*> Duplicates2Unique;
+    computeDuplicates(this, Unique2Duplicates, Duplicates2Unique, eps);
+    glueVerticesInEdges(this, Unique2Duplicates, Duplicates2Unique);
   }
   {
     std::multimap<GEdge*,GEdge*> Unique2Duplicates;
-    std::map<GEdge*,GEdge*>      Duplicates2Unique;
-    ComputeDuplicates  (this, Unique2Duplicates,Duplicates2Unique, eps);
-    glueEdgesInFaces(this, Unique2Duplicates,Duplicates2Unique);
+    std::map<GEdge*,GEdge*> Duplicates2Unique;
+    computeDuplicates(this, Unique2Duplicates, Duplicates2Unique, eps);
+    glueEdgesInFaces(this, Unique2Duplicates, Duplicates2Unique);
   }    
   {
     std::multimap<GFace*,GFace*> Unique2Duplicates;
-    std::map<GFace*,GFace*>      Duplicates2Unique;
-    ComputeDuplicates  (this, Unique2Duplicates,Duplicates2Unique, eps);
-    glueFacesInRegions(this, Unique2Duplicates,Duplicates2Unique);
+    std::map<GFace*,GFace*> Duplicates2Unique;
+    computeDuplicates(this, Unique2Duplicates, Duplicates2Unique, eps);
+    glueFacesInRegions(this, Unique2Duplicates, Duplicates2Unique);
   }    
 }
 
@@ -1673,6 +1768,7 @@ void GModel::registerBindings(binding *b)
 {
   classBinding *cb = b->addClass<GModel>("GModel");
   cb->setDescription("A GModel contains a geometry and its mesh.");
+
   methodBinding *cm;
   cm = cb->addMethod("mesh", &GModel::mesh);
   cm->setArgNames("dim", NULL);
@@ -1711,13 +1807,72 @@ void GModel::registerBindings(binding *b)
   cm->setArgNames("tag", NULL);
   cm = cb->addMethod("getVertexByTag", &GModel::getVertexByTag);
   cm->setDescription("access a geometrical vertex by tag");
-  cm->setArgNames("tag",NULL);
+  cm->setArgNames("tag", NULL);
   cm = cb->addMethod("getRegionByTag", &GModel::getRegionByTag);
   cm->setDescription("access a geometrical region by tag");
   cm->setArgNames("tag", NULL);
+
+  cm = cb->addMethod("addVertex", &GModel::addVertex);
+  cm->setDescription("create a new vertex at position (x, y, z), with target "
+                     "mesh size lc");
+  cm->setArgNames("x", "y", "z", "lc", NULL);
+  cm = cb->addMethod("addLine", &GModel::addLine);
+  cm->setDescription("create a straight line going from v1 to v2");
+  cm->setArgNames("v1", "v2", NULL);
+  cm = cb->addMethod("addBezier", &GModel::addBezier);
+  cm->setDescription("create a spline going from v1 to v2 and with some control "
+                     "points listed in a fullMatrix(N,3)");
+  cm->setArgNames("v1", "v2", "controlPoints", NULL);
+  cm = cb->addMethod("addCircleArcCenter", &GModel::addCircleArcCenter);
+  cm->setDescription("create a circle arc going from v1 to v2 with its center "
+                     "at (x,y,z)");
+  cm->setArgNames("x", "y", "z", "v1", "v2", NULL);
+  cm = cb->addMethod("addCircleArc3Points", &GModel::addCircleArc3Points);
+  cm->setDescription("create a circle arc going from v1 to v2 with an "
+                     "intermediary point Xi(x,y,z)");
+  cm->setArgNames("x", "y", "z", "v1", "v2", NULL);
+  cm = cb->addMethod("revolve", &GModel::revolve);
+  cm->setDescription("revolve an entity of a given angle. Axis is defined by 2 "
+                     "points "
+                     "in a full Matrix(2,3)");
+  cm->setArgNames("entity", "angle", "axis", NULL);
+  cm = cb->addMethod("extrude", &GModel::extrude);
+  cm->setDescription("extrudes an entity. Axis is defined by 2 points in a full "
+                     "Matrix(2,3)");
+  cm->setArgNames("entity", "axis", NULL);
+  cm = cb->addMethod("addSphere", &GModel::addSphere);
+  cm->setDescription("add a sphere");
+  cm->setArgNames("xc", "yc", "zc", "radius", NULL);
+  cm = cb->addMethod("addBlock", &GModel::addBlock);
+  cm->setDescription("add a block");
+  cm->setArgNames("{x1,y1,z1}", "{x2,y2,z2}", NULL);
+  cm = cb->addMethod("addCone", &GModel::addCone);
+  cm->setDescription("add a cone");
+  cm->setArgNames("{x1,y1,z1}","{x2,y2,z2}","R1","R2",NULL);
+  cm = cb->addMethod("addCylinder", &GModel::addCylinder);
+  cm->setDescription("add a cylinder");
+  cm->setArgNames("{x1,y1,z1}","{x2,y2,z2}", "R",NULL);
+  cm = cb->addMethod("addTorus", &GModel::addTorus);
+  cm->setDescription("add a torus");
+  cm->setArgNames("{x1,y1,z1}","{x2,y2,z2}","R1","R2",NULL);
+  cm = cb->addMethod("computeUnion", &GModel::computeBooleanUnion);
+  cm->setDescription("compute the boolean union of the model with another one "
+                     "(tool). The third parameter tells if a new model has to "
+                     "be created");
+  cm->setArgNames("tool", "createNewGModel",NULL);
+  cm = cb->addMethod("computeIntersection", &GModel::computeBooleanIntersection);
+  cm->setDescription("compute the boolean intersection of the model with another "
+                     "one. The third parameter tells if a new model has to be created");
+  cm->setArgNames("tool","createNewGModel",NULL);
+  cm = cb->addMethod("computeDifference", &GModel::computeBooleanDifference);
+  cm->setDescription("compute the boolean difference of the model with another "
+                     "one (tool). The third parameter tells if a new model has to "
+                     "be created");
+  cm->setArgNames("tool","createNewGModel",NULL);
   cm = cb->addMethod("glue", &GModel::glue);
   cm->setDescription("glue the geometric model using geometric tolerance eps");
   cm->setArgNames("eps", NULL);
+
   cm = cb->setConstructor<GModel>();
   cm->setDescription("Create an empty GModel");
 }

@@ -17,7 +17,7 @@
 #include "GRegion.h"
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
-#include "discreteFace.h"
+#include "fullMatrix.h"
 
 class Octree;
 class FM_Internals;
@@ -29,7 +29,7 @@ class CGNSOptions;
 class gLevelset;
 class discreteFace;
 class binding;
-class OCCFactory;
+class GModelFactory;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel
@@ -72,6 +72,9 @@ class GModel
   FM_Internals *_fm_internals;
   void _createFMInternals();
   void _deleteFMInternals();
+
+  // CAD creation factory
+  GModelFactory *_factory;
 
   // characteristic length (mesh size) fields
   FieldManager *_fields;
@@ -342,13 +345,38 @@ class GModel
   // mesh the model
   int mesh(int dimension);
 
-  // glue entities in the model
-  // assume a tolerance eps and merge vertices that are too close, 
-  // then merge edges, faces and regions.
-  // the gluer changes the geometric model, so that some pointers
-  // could become invalid !! I think that using references to some 
-  // tables of pointers for bindings e.g. could be better. FIXME !!
-  void glue (const double &eps);
+  // change the entity creation factory
+  void setFactory(std::string name);
+
+  // create brep geometry entities using the factory
+  GVertex *addVertex(double x, double y, double z, double lc);
+  GEdge *addLine(GVertex *v1, GVertex *v2);
+  GEdge *addCircleArcCenter(double x, double y, double z, GVertex *start, GVertex *end);
+  GEdge *addCircleArc3Points(double x, double y, double z, GVertex *start, GVertex *end);
+  GEdge *addBezier(GVertex *start, GVertex *end, fullMatrix<double> *controlPoints);
+  GEntity *revolve(GEntity *e, double angle, fullMatrix<double> *axis);
+  GEntity *extrude(GEntity *e, fullMatrix<double> *axis);
+
+  // create solid geometry primitives using the factory
+  GEntity *addSphere(double cx, double cy, double cz, double radius);
+  GEntity *addCylinder(std::vector<double> p1, std::vector<double> p2, double radius);
+  GEntity *addTorus(std::vector<double> p1, std::vector<double> p2, double radius1,
+                    double radius2);
+  GEntity *addBlock(std::vector<double> p1, std::vector<double> p2);
+  GEntity *addCone(std::vector<double> p1, std::vector<double> p2, double radius1,
+                   double radius2);
+
+  // boolean operators acting on 2 models
+  GModel *computeBooleanUnion(GModel *tool, int createNewModel);
+  GModel *computeBooleanIntersection(GModel *tool, int createNewModel);
+  GModel *computeBooleanDifference(GModel *tool, int createNewModel);
+
+  // glue entities in the model (i.e., assume a tolerance eps and
+  // merge vertices that are too close, then merge edges, faces and
+  // regions). Warning: the gluer changes the geometric model, so that
+  // some pointers could become invalid! I think that using references
+  // to some tables of pointers for bindings e.g. could be better
+  void glue(const double &eps);
 
   // build a new GModel by cutting the elements crossed by the levelset ls
   // if cutElem is set to false, split the model without cutting the elements
@@ -364,6 +392,15 @@ class GModel
                               std::vector<int> &physical,
                               std::vector<int> &elementary,
                               std::vector<int> &partition);
+
+  // Store mesh elements of a chain in a new elementary and physical entity
+  void storeChain(int dim, std::map<int, std::vector<MElement*> > &entityMap,
+                  std::map<int, std::map<int, std::string> > &physicalMap)
+  {
+    _storeElementsInEntities(entityMap);
+    _storePhysicalTagsInEntities(dim, physicalMap);
+    _associateEntityWithMeshVertices();
+  }
 
   // Gmsh native CAD format (readGEO is static, since it can create
   // multiple models)
@@ -460,20 +497,10 @@ class GModel
   int writeDIFF(const std::string &name, bool binary=false,
                bool saveAll=false, double scalingFactor=1.0);
 
-
   void save(std::string fileName);
   void load(std::string fileName);
 
   static void registerBindings(binding *b);
-
-  // Store mesh elements of a chain in a new elementary and physical entity
-  void storeChain(int dim, std::map<int, std::vector<MElement*> > &entityMap,
-                  std::map<int, std::map<int, std::string> > &physicalMap)
-  {
-    _storeElementsInEntities(entityMap);
-    _storePhysicalTagsInEntities(dim, physicalMap);
-    _associateEntityWithMeshVertices();
-  }
 };
 
 #endif

@@ -282,18 +282,26 @@ void OCC_Internals::healGeometry(double tolerance, bool fixsmalledges,
     
     if(sfwf->FixSmallEdges()){
       Msg::Info("- fixing wire frames");
-      if(sfwf->StatusSmallEdges(ShapeExtend_OK)) Msg::Info("no small edges found");
-      if(sfwf->StatusSmallEdges(ShapeExtend_DONE1)) Msg::Info("some small edges fixed");
-      if(sfwf->StatusSmallEdges(ShapeExtend_FAIL1)) Msg::Info("failed to fix some small edges");
+      if(sfwf->StatusSmallEdges(ShapeExtend_OK)) 
+        Msg::Info("no small edges found");
+      if(sfwf->StatusSmallEdges(ShapeExtend_DONE1))
+        Msg::Info("some small edges fixed");
+      if(sfwf->StatusSmallEdges(ShapeExtend_FAIL1)) 
+        Msg::Info("failed to fix some small edges");
     }
   
     if(sfwf->FixWireGaps()){
       Msg::Info("- fixing wire gaps");
-      if(sfwf->StatusWireGaps(ShapeExtend_OK)) Msg::Info("no gaps found");
-      if(sfwf->StatusWireGaps(ShapeExtend_DONE1)) Msg::Info("some 2D gaps fixed");
-      if(sfwf->StatusWireGaps(ShapeExtend_DONE2)) Msg::Info("some 3D gaps fixed");
-      if(sfwf->StatusWireGaps(ShapeExtend_FAIL1)) Msg::Info("failed to fix some 2D gaps");
-      if(sfwf->StatusWireGaps(ShapeExtend_FAIL2)) Msg::Info("failed to fix some 3D gaps");
+      if(sfwf->StatusWireGaps(ShapeExtend_OK))
+        Msg::Info("no gaps found");
+      if(sfwf->StatusWireGaps(ShapeExtend_DONE1))
+        Msg::Info("some 2D gaps fixed");
+      if(sfwf->StatusWireGaps(ShapeExtend_DONE2))
+        Msg::Info("some 3D gaps fixed");
+      if(sfwf->StatusWireGaps(ShapeExtend_FAIL1))
+        Msg::Info("failed to fix some 2D gaps");
+      if(sfwf->StatusWireGaps(ShapeExtend_FAIL2))
+        Msg::Info("failed to fix some 3D gaps");
     }
     
     shape = sfwf->Shape();
@@ -421,9 +429,9 @@ void OCC_Internals::loadSTEP(const char *fn)
 void OCC_Internals::writeSTEP(const char *fn)
 {
   STEPControl_Writer writer;
-  IFSelect_ReturnStatus status = writer.Transfer( shape, STEPControl_ManifoldSolidBrep ) ;
-  if ( status == IFSelect_RetDone ) 
-    status = writer.Write( (char*) fn) ;
+  IFSelect_ReturnStatus status = writer.Transfer(shape, STEPControl_ManifoldSolidBrep);
+  if (status == IFSelect_RetDone) 
+    status = writer.Write((char*)fn);
 }
 
 void OCC_Internals::loadIGES(const char *fn)
@@ -476,7 +484,7 @@ GEdge *OCC_Internals::addEdgeToModel(GModel *model, TopoDS_Edge edge)
 }
 
 GEdge *OCC_Internals::addEdgeToModel(GModel *model, TopoDS_Edge edge, GVertex *g1, 
-                                      GVertex *g2)
+                                     GVertex *g2)
 {
   OCCEdge *e = new OCCEdge(model, edge, model->maxEdgeNum() + 1, g1, g2);
   e->replaceEndingPoints (g1,g2);
@@ -815,7 +823,7 @@ void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool, const BooleanOperato
   }
 }
   
-void OCC_Internals::Fillet(std::vector<TopoDS_Edge> &edgesToFillet,
+void OCC_Internals::fillet(std::vector<TopoDS_Edge> &edgesToFillet,
                            double Radius)
 {
   // create a tool for fillet
