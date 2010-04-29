@@ -10,7 +10,7 @@
 
 #include <slepceps.h>
 
-eigenSolver::eigenSolver(dofManager<double> *manager, std::string A, 
+eigenSolver::eigenSolver(dofManager<double> *manager, std::string A,
                          std::string B, bool hermitian) : _A(0), _B(0),_hermitian(hermitian)
 {
   if(A.size()){
@@ -29,7 +29,7 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
   if(!_A) return false;
   Mat A = _A->getMatrix();
   Mat B = _B ? _B->getMatrix() : PETSC_NULL;
-   
+
   _try(MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY));
   _try(MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY));
   PetscInt N, M;
@@ -40,7 +40,7 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
     _try(MatAssemblyBegin(B, MAT_FINAL_ASSEMBLY));
     _try(MatAssemblyEnd(B, MAT_FINAL_ASSEMBLY));
     _try(MatGetSize(B, &N2, &M2));
-  } 
+  }
 
   // generalized eigenvalue problem A x - \lambda B x = 0
   EPS eps;
@@ -56,7 +56,7 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
   _try(EPSSetTolerances(eps,1.e-6,20));//1.e-7 50
   //_try(EPSSetType(eps, EPSKRYLOVSCHUR)); //default
   _try(EPSSetType(eps,EPSARNOLDI)); 
-  //_try(EPSSetType(eps,EPSARPACK)); 
+  //_try(EPSSetType(eps,EPSARPACK));
   //_try(EPSSetType(eps,EPSPOWER));
 
   // override these options at runtime, petsc-style
@@ -89,7 +89,7 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
   Msg::Info("SLEPc solving...");
   double t1 = Cpu();
   _try(EPSSolve(eps));
- 
+
   // check convergence
   int its;
   _try(EPSGetIterationNumber(eps, &its));
@@ -105,7 +105,7 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
     Msg::Error("SLEPc generic breakdown in method");
   else if(reason == EPS_DIVERGED_NONSYMMETRIC)
     Msg::Error("The operator is nonsymmetric");
-  
+
   // get number of converged approximate eigenpairs
   PetscInt nconv;
   _try(EPSGetConverged(eps, &nconv));
@@ -113,7 +113,7 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
 
   // ignore additional eigenvalues if we get more than what we asked
   if(nconv > nev) nconv = nev;
-  
+
   if (nconv > 0) {
     Vec xr, xi;
     _try(MatGetVecs(A, PETSC_NULL, &xr));
@@ -132,9 +132,9 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
       PetscReal re = kr;
       PetscReal im = ki;
 #endif
-      Msg::Info("EIG %03d %s%.16e %s%.16e  %3.6e", 
+      Msg::Info("EIG %03d %s%.16e %s%.16e  %3.6e",
                 i, (re < 0) ? "" : " ", re, (im < 0) ? "" : " ", im, error);
-      
+
       // store eigenvalues and eigenvectors
       _eigenValues.push_back(std::complex<double>(re, im));
       PetscScalar *tmpr, *tmpi;
@@ -156,7 +156,7 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
 
   _try(EPSDestroy(eps));
   _try(SlepcFinalize());
-  
+
   if(reason == EPS_CONVERGED_TOL){
     Msg::Info("SLEPc done");
     return true;

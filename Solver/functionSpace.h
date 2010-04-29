@@ -12,7 +12,6 @@
 #include "simpleFunction.h"
 
 //class SVoid{};
-
 template<class T> struct TensorialTraits
 {
   typedef T ValType;
@@ -141,7 +140,7 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
       gradsuvw[i][2]));
   }
 
-  virtual int getNumKeys(MElement *ele) 
+  virtual int getNumKeys(MElement *ele)
   {
     if (ele->getParent()) ele = ele->getParent();
     return ele->getNumVertices();

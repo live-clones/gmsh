@@ -13,7 +13,7 @@
 #include "Context.h"
 #include "adaptiveData.h"
 
-static void dVecRead(std::vector<double> &v, int n, FILE *fp, 
+static void dVecRead(std::vector<double> &v, int n, FILE *fp,
                      bool binary, int swap)
 {
   if(!n) return;
@@ -33,7 +33,7 @@ static void dVecRead(std::vector<double> &v, int n, FILE *fp,
   }
 }
 
-static void cVecRead(std::vector<char> &v, int n, FILE *fp, 
+static void cVecRead(std::vector<char> &v, int n, FILE *fp,
                      bool binary, int swap, bool oldStyle)
 {
   if(!n) return;
@@ -115,7 +115,7 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
   else if(version == 1.1) {
     Msg::Debug("Detected post-processing view format 1.1");
     if(!fscanf(fp, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-               name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL, 
+               name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
                &NbST, &NbVT, &NbTT, &NbSS, &NbVS, &NbTS, &NbT2, &t2l, &NbT3,
                &t3l)){
       Msg::Error("Read error");
@@ -127,7 +127,7 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
     if(!fscanf(fp, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
                "%d %d %d %d %d %d %d %d %d %d %d %d %d\n",
                name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
-               &NbST, &NbVT, &NbTT, &NbSQ, &NbVQ, &NbTQ, &NbSS, &NbVS, &NbTS, 
+               &NbST, &NbVT, &NbTT, &NbSQ, &NbVQ, &NbTQ, &NbSS, &NbVS, &NbTS,
                &NbSH, &NbVH, &NbTH, &NbSI, &NbVI, &NbTI, &NbSY, &NbVY, &NbTY,
                &NbT2, &t2l, &NbT3, &t3l)){
       Msg::Error("Read error");
@@ -140,10 +140,10 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
                "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
                "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
                name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
-               &NbST, &NbVT, &NbTT, &NbSQ, &NbVQ, &NbTQ, &NbSS, &NbVS, &NbTS, 
+               &NbST, &NbVT, &NbTT, &NbSQ, &NbVQ, &NbTQ, &NbSS, &NbVS, &NbTS,
                &NbSH, &NbVH, &NbTH, &NbSI, &NbVI, &NbTI, &NbSY, &NbVY, &NbTY,
-               &NbSL2, &NbVL2, &NbTL2, &NbST2, &NbVT2, &NbTT2, &NbSQ2, &NbVQ2, 
-               &NbTQ2, &NbSS2, &NbVS2, &NbTS2, &NbSH2, &NbVH2, &NbTH2, &NbSI2, 
+               &NbSL2, &NbVL2, &NbTL2, &NbST2, &NbVT2, &NbTT2, &NbSQ2, &NbVQ2,
+               &NbTQ2, &NbSS2, &NbVS2, &NbTS2, &NbSH2, &NbVH2, &NbTH2, &NbSI2,
                &NbVI2, &NbTI2, &NbSY2, &NbVY2, &NbTY2, &NbT2, &t2l, &NbT3, &t3l)){
       Msg::Error("Read error");
       return false;
@@ -157,7 +157,7 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
   for(int i = 0; i < (int)strlen(name); i++)
     if(name[i] == '^')
       name[i] = ' ';
-  
+
   int swap = 0;
   if(binary) {
     int testone;
@@ -170,7 +170,7 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
       swap = 1;
     }
   }
-  
+
   dVecRead(Time, NbTimeStep, fp, binary, swap);
   dVecRead(SP, NbSP * (NbTimeStep * 1 + 3), fp, binary, swap);
   dVecRead(VP, NbVP * (NbTimeStep * 3 + 3), fp, binary, swap);
@@ -240,12 +240,12 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
   if(NbSY2){ NbSY = NbSY2; setOrder2(TYPE_PYR); }
   if(NbVY2){ NbVY = NbVY2; setOrder2(TYPE_PYR); }
   if(NbTY2){ NbTY = NbTY2; setOrder2(TYPE_PYR); }
- 
+
   dVecRead(T2D, NbT2 * 4, fp, binary, swap);
   cVecRead(T2C, t2l, fp, binary, swap, (version <= 1.2));
   dVecRead(T3D, NbT3 * 5, fp, binary, swap);
   cVecRead(T3C, t3l, fp, binary, swap, (version <= 1.2));
-  
+
   Msg::Debug("Read View '%s' (%d TimeSteps): "
              "SP(%d/%d) VP(%d/%d) TP(%d/%d) "
              "SL(%d/%d) VL(%d/%d) TL(%d/%d) "
@@ -254,8 +254,8 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
              "SS(%d/%d) VS(%d/%d) TS(%d/%d) "
              "SH(%d/%d) VH(%d/%d) TH(%d/%d) "
              "SI(%d/%d) VI(%d/%d) TI(%d/%d) "
-             "SY(%d/%d) VY(%d/%d) TY(%d/%d) " 
-             "T2(%d/%d/%d) T3(%d/%d/%d) ", 
+             "SY(%d/%d) VY(%d/%d) TY(%d/%d) "
+             "T2(%d/%d/%d) T3(%d/%d/%d) ",
              name, NbTimeStep,
              NbSP, SP.size(), NbVP, VP.size(), NbTP, TP.size(),
              NbSL, SL.size(), NbVL, VL.size(), NbTL, TL.size(),
@@ -265,9 +265,9 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
              NbSH, SH.size(), NbVH, VH.size(), NbTH, TH.size(),
              NbSI, SI.size(), NbVI, VI.size(), NbTI, TI.size(),
              NbSY, SY.size(), NbVY, VY.size(), NbTY, TY.size(),
-             NbT2, T2D.size(), T2C.size(), 
+             NbT2, T2D.size(), T2C.size(),
              NbT3, T3D.size(), T3C.size());
-  
+
   setName(name);
   finalize();
   return true;
@@ -309,7 +309,7 @@ static void writeElementPOS(FILE *fp, const char *str, int nbnod, int nb,
   }
 }
 
-static void writeTextPOS(FILE *fp, int nbc, int nb, std::vector<double> &TD, 
+static void writeTextPOS(FILE *fp, int nbc, int nb, std::vector<double> &TD,
                          std::vector<char> &TC)
 {
   if(!nb || (nbc != 4 && nbc != 5)) return;
@@ -383,7 +383,7 @@ bool PViewDataList::writePOS(std::string fileName, bool binary, bool parsed, boo
       }
     }
     dVecWrite(Time, fp, binary);
-    dVecWrite(SP, fp, binary); dVecWrite(VP, fp, binary); 
+    dVecWrite(SP, fp, binary); dVecWrite(VP, fp, binary);
     dVecWrite(TP, fp, binary); dVecWrite(SL, fp, binary);
     dVecWrite(VL, fp, binary); dVecWrite(TL, fp, binary);
     dVecWrite(ST, fp, binary); dVecWrite(VT, fp, binary);
@@ -446,7 +446,7 @@ class pVertexLessThan{
   }
 };
 
-static void getNodeMSH(int nbelm, std::vector<double> &list, 
+static void getNodeMSH(int nbelm, std::vector<double> &list,
                        int nbnod, int nbcomp, int nbstep,
                        std::set<pVertex, pVertexLessThan> *nodes, int *numelm)
 {
@@ -462,8 +462,8 @@ static void getNodeMSH(int nbelm, std::vector<double> &list,
       std::set<pVertex, pVertexLessThan>::iterator it = nodes->find(n);
       if(it == nodes->end()){
         n.Num = nodes->size() + 1;
-        for(int ts = 0; ts < nbstep; ts++) 
-          for(int k = 0; k < nbcomp; k++) 
+        for(int ts = 0; ts < nbstep; ts++)
+          for(int k = 0; k < nbcomp; k++)
             n.Val.push_back(v[nbcomp * nbnod * ts + nbcomp * j + k]);
         nodes->insert(n);
       }
@@ -472,7 +472,7 @@ static void getNodeMSH(int nbelm, std::vector<double> &list,
   }
 }
 
-static void writeElementMSH(FILE *fp, int num, int nbnod, pVertex nod[8], 
+static void writeElementMSH(FILE *fp, int num, int nbnod, pVertex nod[8],
                             int nbcomp, double *vals, int dim)
 {
   switch(dim){
@@ -486,7 +486,7 @@ static void writeElementMSH(FILE *fp, int num, int nbnod, pVertex nod[8],
     if(nbnod == 3)
       fprintf(fp, "%d 2 0 %d %d %d\n", num, nod[0].Num, nod[1].Num, nod[2].Num);
     else
-      fprintf(fp, "%d 3 0 %d %d %d %d\n", num, nod[0].Num, nod[1].Num, 
+      fprintf(fp, "%d 3 0 %d %d %d %d\n", num, nod[0].Num, nod[1].Num,
               nod[2].Num, nod[3].Num);
     break;
   case 3:
@@ -501,7 +501,7 @@ static void writeElementMSH(FILE *fp, int num, int nbnod, pVertex nod[8],
       fprintf(fp, "%d 6 0 %d %d %d %d %d %d\n", num, nod[0].Num, nod[1].Num,
               nod[2].Num, nod[3].Num, nod[4].Num, nod[5].Num);
     else
-      fprintf(fp, "%d 5 0 %d %d %d %d %d %d %d %d\n", num, nod[0].Num, 
+      fprintf(fp, "%d 5 0 %d %d %d %d %d %d %d %d\n", num, nod[0].Num,
               nod[1].Num, nod[2].Num, nod[3].Num, nod[4].Num, nod[5].Num,
               nod[6].Num, nod[7].Num);
     break;
@@ -509,7 +509,7 @@ static void writeElementMSH(FILE *fp, int num, int nbnod, pVertex nod[8],
 }
 
 static void writeElementsMSH(FILE *fp, int nbelm, std::vector<double> &list,
-                             int nbnod, int nbcomp, int dim, 
+                             int nbnod, int nbcomp, int dim,
                              std::set<pVertex, pVertexLessThan> *nodes,
                              int *numelm)
 {

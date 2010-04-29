@@ -46,6 +46,7 @@ class linearSystemGmm : public linearSystem<scalar> {
     }
     _a = 0;
   }
+
   virtual void  addToMatrix(int row, int col, const scalar &val) 
   {
     if(val != 0.0) (*_a)(row, col) += val;
@@ -54,10 +55,12 @@ class linearSystemGmm : public linearSystem<scalar> {
   {
     val = (*_a)(row, col);
   }
+
   virtual void addToRightHandSide(int row, const scalar &val) 
   {
     if(val != 0.0) (*_b)[row] += val;
   }
+
   virtual void getFromRightHandSide(int row, scalar &val) const 
   {
     val = (*_b)[row];
@@ -70,14 +73,14 @@ class linearSystemGmm : public linearSystem<scalar> {
   {
     gmm::clear(*_a);
   }
-  virtual void zeroRightHandSide() 
+  virtual void zeroRightHandSide()
   {
     for(unsigned int i = 0; i < _b->size(); i++) (*_b)[i] = 0.;
   }
   void setPrec(double p){ _prec = p; }
   void setNoisy(int n){ _noisy = n; }
   void setGmres(int n){ _gmres = n; }
-  virtual int systemSolve() 
+  virtual int systemSolve()
   {
     //gmm::ilutp_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 25, 0.);
     gmm::ildltt_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 30, 1.e-10);
@@ -112,7 +115,7 @@ class linearSystemGmm : public linearSystem<scalar> {
   virtual void clear(){}
   void setNoisy(int n){}
   void setGmres(int n){}
-}; 
+};
 
 #endif
 

@@ -130,7 +130,7 @@ const unsigned int M_sort2 = 7;
 
 static void free_ivector(int *v, long nl, long nh)
 {
-  // free an int vector allocated with ivector() 
+  // free an int vector allocated with ivector()
   free((char*)(v + nl - 1));
 }
 

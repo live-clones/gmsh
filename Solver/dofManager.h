@@ -17,7 +17,7 @@
 #include <iostream>
 
 class Dof{
- private:
+ protected:
   // v(x) = \sum_f \sum_i v_{fi} s^f_i(x)
   long int _entity; // "i": node, edge, group, etc.
   int _type; // "f": basis function type index, etc.
@@ -34,6 +34,9 @@ class Dof{
     i1 = t % 10000;
     i2 = t / 10000;
   }
+  //inline static int createEntityForFullDg(const int ele_num, const int ver_num){return ele_num*100000+ver_num;} // Problem if the number of Vertex exceed 1e5 OK for a moment
+  //inline static void getTwoIntFromEntityFullDg(int t, int &i1, int &i2){i1 = t % 100000 ; i2 = t / 100000;}
+
   bool operator < (const Dof &other) const
   {
     if(_entity < other._entity) return true;

@@ -866,7 +866,7 @@ if(ENABLE_ARC)
   include(contrib/arc/CMakeLists.txt)
 endif(ENABLE_ARC)
 if(ENABLE_CM3)
-  include(contrib/cm3/CMakeLists.txt)
+  include(projects/dgplate/CMakeLists.txt)
 endif(ENABLE_CM3)
 
 find_program(BISON bison)

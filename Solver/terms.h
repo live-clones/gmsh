@@ -27,12 +27,6 @@ class  BilinearTermBase
  public :
   virtual ~BilinearTermBase() {}
   virtual void get(MElement *ele,int npts,IntPt *GP,fullMatrix<double> &m) = 0 ;
-  /* has nothing to do here...
-  virtual void getInter(MInterfaceElement *iele,int npts,IntPt *GP,fullMatrix<double> &m){} ;
-  virtual void getInterForce(MInterfaceElement *iele,int npts,IntPt *GP,const fullMatrix<double> &disp,fullMatrix<double> &m){} ;
-  virtual void getForce(MElement *ele,int npts,IntPt *GP,const fullMatrix<double> &disp, fullMatrix<double> &m){}
-  virtual void getInterOnBoundary(MInterfaceElement *iele,int npts,IntPt *GP,fullMatrix<double> &m){}
-  virtual void getInterForceOnBoundary(MInterfaceElement *iele,int npts,IntPt *GP,const fullMatrix<double> &disp,fullMatrix<double> &m){} ;*/
 };
 
 template<class T1,class T2> class BilinearTerm : public BilinearTermBase
