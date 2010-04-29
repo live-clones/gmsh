@@ -133,6 +133,7 @@ class GModel
 
   // sets a model to current
   static int setCurrent(GModel *m);
+  int setAsCurrent(){ return setCurrent(this); }
 
   // find a model by name
   static GModel *findByName(std::string name);
@@ -354,8 +355,8 @@ class GModel
   GEdge *addCircleArcCenter(double x, double y, double z, GVertex *start, GVertex *end);
   GEdge *addCircleArc3Points(double x, double y, double z, GVertex *start, GVertex *end);
   GEdge *addBezier(GVertex *start, GVertex *end, fullMatrix<double> *controlPoints);
-  GEntity *revolve(GEntity *e, double angle, fullMatrix<double> *axis);
-  GEntity *extrude(GEntity *e, fullMatrix<double> *axis);
+  GEntity *revolve(GEntity *e, std::vector<double> p1, std::vector<double> p2, double angle);
+  GEntity *extrude(GEntity *e, std::vector<double> p1, std::vector<double> p2);
 
   // create solid geometry primitives using the factory
   GEntity *addSphere(double cx, double cy, double cz, double radius);

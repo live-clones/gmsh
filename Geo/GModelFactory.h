@@ -34,10 +34,10 @@ class GModelFactory {
   virtual GEdge *addSpline(GModel *gm, const splineType &type,
                            GVertex *start, GVertex *end, 
                            fullMatrix<double> *controlPoints) = 0;
-  virtual GEntity *revolve(GModel *gm, GEntity*, double x1, double y1, double z1, 
-                           double x2, double y2, double z2, double angle) = 0;
-  virtual GEntity *extrude(GModel *gm, GEntity*, double x1, double y1, double z1, 
-                           double x2, double y2, double z2) = 0;
+  virtual GEntity *revolve(GModel *gm, GEntity*, std::vector<double> p1, 
+                           std::vector<double> p2, double angle) = 0;
+  virtual GEntity *extrude(GModel *gm, GEntity*, std::vector<double> p1, 
+                           std::vector<double> p2) = 0;
 
   // solid primitives
   virtual GEntity *addSphere(GModel *gm, double cx, double cy, double cz, 
@@ -77,10 +77,10 @@ class OCCFactory : public GModelFactory {
   virtual GEdge *addSpline(GModel *gm, const splineType &type,
                            GVertex *start, GVertex *end, 
                            fullMatrix<double> *controlPoints);
-  virtual GEntity *revolve(GModel *gm, GEntity*, double x1, double y1, double z1, 
-                           double x2, double y2, double z2, double angle);
-  virtual GEntity *extrude(GModel *gm, GEntity*, double x1, double y1, double z1, 
-                           double x2, double y2, double z2);
+  virtual GEntity *revolve(GModel *gm, GEntity*, std::vector<double> p1, 
+                           std::vector<double> p2, double angle);
+  virtual GEntity *extrude(GModel *gm, GEntity*, std::vector<double> p1, 
+                           std::vector<double> p2);
   virtual GEntity *addSphere(GModel *gm, double cx, double cy, double cz, 
                              double radius) ; 
   virtual GEntity *addCylinder(GModel *gm, std::vector<double> p1, 

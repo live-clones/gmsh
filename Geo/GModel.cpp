@@ -1461,19 +1461,17 @@ GEdge *GModel::addBezier(GVertex *start, GVertex *end,
   return 0;
 }
 
-GEntity *GModel::revolve(GEntity *e, double angle, fullMatrix<double> *axis)
+GEntity *GModel::revolve(GEntity *e, std::vector<double> p1, std::vector<double> p2, double angle)
 {
   if(_factory)
-    return _factory->revolve(this, e, (*axis)(0, 0), (*axis)(0, 1), (*axis)(0, 2),
-                             (*axis)(1, 0), (*axis)(1, 1), (*axis)(1, 2), angle);
+    return _factory->revolve(this, e, p1, p2, angle);
   return 0;
 }
 
-GEntity *GModel::extrude(GEntity *e, fullMatrix<double> *axis)
+GEntity *GModel::extrude(GEntity *e, std::vector<double> p1, std::vector<double> p2)
 {
   if(_factory) 
-    return _factory->extrude(this, e, (*axis)(0, 0), (*axis)(0, 1), (*axis)(0, 2),
-                             (*axis)(1, 0), (*axis)(1, 1), (*axis)(1, 2));
+    return _factory->extrude(this, e, p1, p2);
   return 0;
 }
 
@@ -1833,13 +1831,11 @@ void GModel::registerBindings(binding *b)
   cm->setArgNames("x", "y", "z", "v1", "v2", NULL);
   cm = cb->addMethod("revolve", &GModel::revolve);
   cm->setDescription("revolve an entity of a given angle. Axis is defined by 2 "
-                     "points "
-                     "in a full Matrix(2,3)");
-  cm->setArgNames("entity", "angle", "axis", NULL);
+                     "points");
+  cm->setArgNames("entity", "{x1,y1,z1}", "{x2,y2,z2}", "angle", NULL);
   cm = cb->addMethod("extrude", &GModel::extrude);
-  cm->setDescription("extrudes an entity. Axis is defined by 2 points in a full "
-                     "Matrix(2,3)");
-  cm->setArgNames("entity", "axis", NULL);
+  cm->setDescription("extrudes an entity. Axis is defined by 2 points");
+  cm->setArgNames("entity", "{x1,y1,z1}", "{x2,y2,z2}", NULL);
   cm = cb->addMethod("addSphere", &GModel::addSphere);
   cm->setDescription("add a sphere");
   cm->setArgNames("xc", "yc", "zc", "radius", NULL);
@@ -1871,8 +1867,9 @@ void GModel::registerBindings(binding *b)
   cm->setArgNames("tool","createNewGModel",NULL);
   cm = cb->addMethod("glue", &GModel::glue);
   cm->setDescription("glue the geometric model using geometric tolerance eps");
-  cm->setArgNames("eps", NULL);
-
+  cm->setArgNames("eps",NULL);
+  cm = cb->addMethod("setAsCurrent", &GModel::setAsCurrent);
+  cm->setDescription("set the model as the current (active) one");
   cm = cb->setConstructor<GModel>();
   cm->setDescription("Create an empty GModel");
 }

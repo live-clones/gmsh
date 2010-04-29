@@ -98,7 +98,7 @@ GEdge *OCCFactory::addSpline(GModel *gm, const splineType &type,
 
   OCCEdge *occEd = 0;
   int nbControlPoints = points->size1();
-  TColgp_Array1OfPnt ctrlPoints (1, nbControlPoints + 2);
+  TColgp_Array1OfPnt ctrlPoints(1, nbControlPoints + 2);
   int index = 1;
   ctrlPoints.SetValue(index++, gp_Pnt(start->x(), start->y(), start->z()));  
   for (int i = 0; i < nbControlPoints; i++) {
@@ -115,13 +115,18 @@ GEdge *OCCFactory::addSpline(GModel *gm, const splineType &type,
   return 0;
 }
 
-GEntity *OCCFactory::revolve(GModel *gm, GEntity* base, 
-                             double x1, double y1, double z1, 
-                             double x2, double y2, double z2,
-                             double angle)
+GEntity *OCCFactory::revolve(GModel *gm, GEntity* base, std::vector<double> p1, 
+                             std::vector<double> p2, double angle)
 {
   if (!gm->_occ_internals)
     gm->_occ_internals = new OCC_Internals;
+
+  const double x1 = p1[0];
+  const double y1 = p1[1];
+  const double z1 = p1[2];
+  const double x2 = p2[0];
+  const double y2 = p2[1];
+  const double z2 = p2[2];
 
   gp_Dir direction(x2 - x1, y2 - y1, z2 - z1);
   gp_Ax1 axisOfRevolution(gp_Pnt(x1, y1, z1), direction);
@@ -144,12 +149,18 @@ GEntity *OCCFactory::revolve(GModel *gm, GEntity* base,
   return ret;
 }
 
-GEntity *OCCFactory::extrude(GModel *gm, GEntity* base, 
-                             double x1, double y1, double z1, 
-                             double x2, double y2, double z2)
+GEntity *OCCFactory::extrude(GModel *gm, GEntity* base, std::vector<double> p1, 
+                             std::vector<double> p2)
 {
   if (!gm->_occ_internals)
     gm->_occ_internals = new OCC_Internals;
+
+  const double x1 = p1[0];
+  const double y1 = p1[1];
+  const double z1 = p1[2];
+  const double x2 = p2[0];
+  const double y2 = p2[1];
+  const double z2 = p2[2];
 
   gp_Vec direction(gp_Pnt(x1, y1, z1), gp_Pnt(x2, y2, z2));
   gp_Ax1 axisOfRevolution(gp_Pnt(x1, y1, z1), direction);
