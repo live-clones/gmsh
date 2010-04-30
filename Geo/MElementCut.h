@@ -47,7 +47,7 @@ class MPolyhedron : public MElement {
       _parts.push_back(vT[i]);
     _init();
   }
-  ~MPolyhedron() 
+  ~MPolyhedron()
   {
     if(_owner)
       delete _orig;
@@ -60,7 +60,7 @@ class MPolyhedron : public MElement {
   virtual int getNumVolumeVertices() const { return _innerVertices.size(); }
   virtual MVertex *getVertex(int num)
   {
-    return (num < (int)_vertices.size()) ? 
+    return (num < (int)_vertices.size()) ?
       _vertices[num] : _innerVertices[num - _vertices.size()];
   }
   virtual int getNumEdges() { return _edges.size(); }
@@ -114,7 +114,7 @@ class MPolyhedron : public MElement {
       vol += _parts[i]->getVolume();
     return vol;
   }
-  virtual const polynomialBasis* getFunctionSpace(int order=-1) const 
+  virtual const polynomialBasis* getFunctionSpace(int order=-1) const
   {
     return _orig->getFunctionSpace(order);
   }
@@ -191,13 +191,13 @@ class MPolygon : public MElement {
   virtual int getNumFaceVertices() const { return _innerVertices.size(); }
   virtual MVertex *getVertex(int num)
   {
-    return (num < (int)_vertices.size()) ? 
+    return (num < (int)_vertices.size()) ?
       _vertices[num] : _innerVertices[num - _vertices.size()];
   }
   virtual int getNumEdges() { return _edges.size(); }
   virtual MEdge getEdge(int num) { return _edges[num]; }
   virtual int getNumEdgesRep() { return getNumEdges(); }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n) 
+  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   {
     MEdge e(getEdge(num));
     _getEdgeRep(e.getVertex(0), e.getVertex(1), x, y, z, n, 0);
@@ -233,7 +233,7 @@ class MPolygon : public MElement {
     _edges.clear();
     _initVertices();
   }
-  virtual const polynomialBasis* getFunctionSpace(int order=-1) const 
+  virtual const polynomialBasis* getFunctionSpace(int order=-1) const
   {
     return _orig->getFunctionSpace(order);
   }
@@ -293,7 +293,7 @@ class MTriangleBorder : public MTriangle {
     return NULL;
   }
   virtual int getTypeForMSH() const { return MSH_TRI_B; }
-  virtual const polynomialBasis* getFunctionSpace(int order=-1) const 
+  virtual const polynomialBasis* getFunctionSpace(int order=-1) const
   {
     return getParent()->getFunctionSpace(order);
   }
@@ -337,7 +337,7 @@ class MPolygonBorder : public MPolygon {
     return NULL;
   }
   virtual int getTypeForMSH() const { return MSH_POLYG_B; }
-  virtual const polynomialBasis* getFunctionSpace(int order=-1) const 
+  virtual const polynomialBasis* getFunctionSpace(int order=-1) const
   {
     return getParent()->getFunctionSpace(order);
   }
@@ -381,9 +381,10 @@ class MLineBorder : public MLine {
     return NULL;
   }
   virtual int getTypeForMSH() const { return MSH_LIN_B; }
-  virtual const polynomialBasis* getFunctionSpace(int order=-1) const 
+  virtual const polynomialBasis* getFunctionSpace(int order=-1) const
   {
-    return getParent()->getFunctionSpace(order);
+    if (this->getParent()) return getParent()->getFunctionSpace(order);
+    else return NULL;
   }
   virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
   {
