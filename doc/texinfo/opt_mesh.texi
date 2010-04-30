@@ -115,32 +115,32 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CharacteristicLengthExtendFromBoundary
-Extend characteristic lengths from the boundaries inside the surface/volume@*
+Extend computation of mesh element sizes from the boundaries into the surfaces/volumes@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CharacteristicLengthFactor
-Factor applied to all characteristic lengths@*
+Factor applied to all mesh element sizes@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CharacteristicLengthMin
-Minimum characteristic length@*
+Minimum mesh element size@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CharacteristicLengthMax
-Maximum characteristic length@*
+Maximum mesh element size@*
 Default value: @code{1e+22}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CharacteristicLengthFromCurvature
-Compute characteristic lengths from curvature@*
+Automatically compute mesh element sizes from curvature (experimental)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CharacteristicLengthFromPoints
-Compute characteristic lengths from values given at geometry points@*
+Compute mesh element sizes from values given at geometry points@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -271,6 +271,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MshFilePartitioned
 Split MSH file by mesh partition@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionByExtrusion
+Special partitioner that annotates all all extruded elements to the same node as the source element@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -434,11 +439,6 @@ Save parametric coordinates of nodes@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.SaveDistance
-Save distance of nodes to boundaries@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.SaveGroupsOfNodes
 Save groups of nodes for each physical line and surface (UNV mesh format only)@*
 Default value: @code{0}@*
@@ -456,7 +456,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SecondOrderIncomplete
 Create incomplete second order elements? (8-node quads, 20-node hexas, etc.)@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SecondOrderLinear
@@ -606,92 +606,92 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.One
 Color 1 in color carousel@*
-Default value: @code{@{255,160,0@}}@*
+Default value: @code{@{0,255,132@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Two
 Color 2 in color carousel@*
-Default value: @code{@{255,200,0@}}@*
+Default value: @code{@{255,160,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Three
 Color 3 in color carousel@*
-Default value: @code{@{255,240,0@}}@*
+Default value: @code{@{0,255,192@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Four
 Color 4 in color carousel@*
-Default value: @code{@{228,255,0@}}@*
+Default value: @code{@{255,200,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Five
 Color 5 in color carousel@*
-Default value: @code{@{188,255,0@}}@*
+Default value: @code{@{0,216,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Six
 Color 6 in color carousel@*
-Default value: @code{@{148,255,0@}}@*
+Default value: @code{@{255,240,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Seven
 Color 7 in color carousel@*
-Default value: @code{@{108,255,0@}}@*
+Default value: @code{@{0,176,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Eight
 Color 8 in color carousel@*
-Default value: @code{@{68,255,0@}}@*
+Default value: @code{@{228,255,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Nine
 Color 9 in color carousel@*
-Default value: @code{@{0,255,52@}}@*
+Default value: @code{@{0,116,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Ten
 Color 10 in color carousel@*
-Default value: @code{@{0,255,132@}}@*
+Default value: @code{@{188,255,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Eleven
 Color 11 in color carousel@*
-Default value: @code{@{0,255,192@}}@*
+Default value: @code{@{0,76,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Twelve
 Color 12 in color carousel@*
-Default value: @code{@{0,216,255@}}@*
+Default value: @code{@{148,255,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Thirteen
 Color 13 in color carousel@*
-Default value: @code{@{0,176,255@}}@*
+Default value: @code{@{24,0,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Fourteen
 Color 14 in color carousel@*
-Default value: @code{@{0,116,255@}}@*
+Default value: @code{@{108,255,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Fifteen
 Color 15 in color carousel@*
-Default value: @code{@{0,76,255@}}@*
+Default value: @code{@{84,0,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Sixteen
 Color 16 in color carousel@*
-Default value: @code{@{24,0,255@}}@*
+Default value: @code{@{68,255,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Seventeen
 Color 17 in color carousel@*
-Default value: @code{@{84,0,255@}}@*
+Default value: @code{@{104,0,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Eighteen
 Color 18 in color carousel@*
-Default value: @code{@{104,0,255@}}@*
+Default value: @code{@{0,255,52@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Nineteen

@@ -73,10 +73,10 @@ void PrintUsage(const char *name)
   Msg::Direct("  -optimize[_netgen]    Optimize quality of tetrahedral elements");
   Msg::Direct("  -optimize_hom         Optimize higher order meshes (in 2D)");
   Msg::Direct("  -optimize_lloyd       Optimize 2D meshes using Lloyd algorithm");
-  Msg::Direct("  -clscale float        Set characteristic length scaling factor");
-  Msg::Direct("  -clmin float          Set minimum characteristic length");
-  Msg::Direct("  -clmax float          Set maximum characteristic length");
-  Msg::Direct("  -clcurv               Compute characteristic lengths from curvatures");
+  Msg::Direct("  -clscale float        Set global mesh element size scaling factor");
+  Msg::Direct("  -clmin float          Set minimum mesh element size");
+  Msg::Direct("  -clmax float          Set maximum mesh element size");
+  Msg::Direct("  -clcurv               Automatically compute element sizes from curvatures");
   Msg::Direct("  -epslc1d              Set the accuracy of the evaluation of the LCFIELD for 1D mesh");
   Msg::Direct("  -swapangle            Set the treshold angle (in degree) between two adjacent faces");
   Msg::Direct("                          below which a swap is allowed");
@@ -355,7 +355,7 @@ void GetOptions(int argc, char *argv[])
         if(argv[i]) {
           CTX::instance()->mesh.lcFactor = atof(argv[i++]);
           if(CTX::instance()->mesh.lcFactor <= 0.0)
-            Msg::Fatal("Characteristic length factor must be > 0");
+            Msg::Fatal("Mesh element size factor must be > 0");
         }
         else
           Msg::Fatal("Missing number");

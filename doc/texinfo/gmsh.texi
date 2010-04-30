@@ -194,7 +194,7 @@ Mesh module
 
 Mesh commands
 
-* Characteristic lengths::      
+* Specifying mesh element sizes::  
 * Structured grids::            
 * Miscellaneous mesh commands::  
 
@@ -420,11 +420,12 @@ discretization of an ``isolated'' (@var{n}-1)-th dimensional entity
 inside an @var{n}-th dimensional entity does @emph{not} constrain the
 @var{n}-th dimensional mesh---unless it is explicitly told to do so
 (@pxref{Miscellaneous mesh commands}).  Every meshing step is
-constrained by the characteristic length field, which can be uniform,
-specified by characteristic lengths associated with points in the
-geometry, or defined by general ``fields'' (a scalar field defined on
-another mesh using post-processing view, threshold fields associated
-with point or line ``attractors'', etc.).
+constrained by a ``size field'' (sometimes called ``characteristic
+length field''), which prescribes the desired size of the elements in
+the mesh. This size field can be uniform, specified by values associated
+with points in the geometry, or defined by general ``fields'' (for
+example related to the distance to some boundary, to a arbitrary scalar
+field defined on another mesh, etc.).
 
 For each meshing step, all structured mesh directives are executed
 first, and serve as additional constraints for the unstructured parts
@@ -867,13 +868,13 @@ Optimize quality of tetrahedral elements
 @item -order int
 Set the order of the generated elements (1, 2)
 @item -clscale float
-Set characteristic length scaling factor
+Set mesh element size scaling factor
 @item -clmin float
-Set minimum characteristic length
+Set minimum mesh element size
 @item -clmax float
-Set maximum characteristic length
+Set maximum mesh element size
 @item -clcurv
-Compute characteristic lengths from curvatures
+Compute mesh element sizes from curvatures
 @item -rand float
 Set random perturbation factor
 @item -bgm file
@@ -2070,10 +2071,10 @@ Creates an elementary point. The @var{expression} inside the parentheses
 is the point's identification number; the three first
 @w{@var{expression}s} inside the braces on the right hand side give the
 three X, Y and Z coordinates of the point in the three-dimensional
-Euclidean space; the optional last @var{expression} sets the
-characteristic mesh length at that point. See @ref{Characteristic
-lengths}, for more information about how this characteristic length
-information is used in the meshing process.
+Euclidean space; the optional last @var{expression} sets the prescribed
+mesh element size at that point. See @ref{Specifying mesh element
+sizes}, for more information about how this value is used in the meshing
+process.
 
 @item Physical Point ( @var{expression} | @var{char-expression} ) = @{ @var{expression-list} @};
 Creates a physical point. The @var{expression} inside the parentheses is
@@ -2620,8 +2621,8 @@ generator based on abstract rules}, Comput. Visual. Sci., 1, pp. 41--52,
 
 The ``Delaunay'' algorithm is the most robust and the fastest, and is
 the only one that supports the @code{Field} mechanism to specify element
-sizes (@pxref{Characteristic lengths}). However, this algorithm will
-sometimes modify the surface mesh, and is thus not suitable for
+sizes (@pxref{Specifying mesh element sizes}). However, this algorithm
+will sometimes modify the surface mesh, and is thus not suitable for
 producing hybrid structured/unstructured grids. In that case the
 ``Frontal'' algorithm should be preferred. The quality of the elements
 produced by both algorithms is comparable. If element quality is
@@ -2688,25 +2689,25 @@ in the output file just load the file back using `File->Open'.
 @cindex Mesh commands
 @cindex Commands, mesh
 
-The mesh module commands mostly permit to modify the characteristic
-lengths and specify structured grid parameters. The actual mesh
-``actions'' (i.e., ``mesh the lines'', ``mesh the surfaces'' and ``mesh
-the volumes'') cannot be specified in the script files. They have to be
+The mesh module commands mostly permit to modify the mesh element sizes
+and specify structured grid parameters. The actual mesh ``actions''
+(i.e., ``mesh the lines'', ``mesh the surfaces'' and ``mesh the
+volumes'') cannot be specified in the script files. They have to be
 given either in the GUI or on the command line (see @ref{Running Gmsh on
 your system}, and @ref{Command-line options}).
 
 @menu
-* Characteristic lengths::      
+* Specifying mesh element sizes::  
 * Structured grids::            
 * Miscellaneous mesh commands::  
 @end menu
 
 @c .........................................................................
-@c Characteristic lengths
+@c Specifying mesh element sizes
 @c .........................................................................
 
-@node Characteristic lengths, Structured grids, Mesh commands, Mesh commands
-@subsection Characteristic lengths
+@node Specifying mesh element sizes, Structured grids, Mesh commands, Mesh commands
+@subsection Specifying mesh element sizes
 
 @cindex Characteristic lengths
 @cindex Mesh, element size
@@ -2720,13 +2721,13 @@ given geometry:
 @enumerate
 @item
 First, if @code{Mesh.CharacteristicLengthFromPoints} is set (it is by
-default), you can simply specify characteristic lengths at the
+default), you can simply specify desired mesh element sizes at the
 geometrical points of the model (with the @code{Point} command: see
 @ref{Points}). The size of the mesh elements will then be computed by
-linearly interpolating these characteristic lengths on the initial mesh
-(see @ref{Mesh}). This might sometimes lead to over-refinement in some
-areas, so that you may have to add ``dummy'' geometrical entities in the
-model in order to get the desired element sizes.
+linearly interpolating these values on the initial mesh (see
+@ref{Mesh}). This might sometimes lead to over-refinement in some areas,
+so that you may have to add ``dummy'' geometrical entities in the model
+in order to get the desired element sizes.
 
 This method works with all the algorithms implemented in the mesh
 module. The final element sizes are of course constrained by the structured
@@ -2735,10 +2736,11 @@ transfinite and extruded grids: see @ref{Structured grids}).
 @item
 Second, if @code{Mesh.CharacteristicLengthFromCurvature} is set (it is
 not by default), the mesh will be adapted with respect to the curvature
-of the geometrical entities.
+of the geometrical entities. Warning: as of Gmsh 2.5 this feature is
+still (very) experimental. @c FIXME
 @item
-Finally, you can specify general characteristic lengths using mesh size
-``fields''. Various fields exist:
+Finally, you can specify general mesh size ``fields''. Various fields
+exist:
 @itemize @bullet
 @item 
 A @code{PostView} field specifies an explicit background mesh in the
@@ -2747,7 +2749,10 @@ commands}, and @ref{File formats}) in which the nodal values are the
 target element sizes.  This method is very general but it requires a
 first (usually rough) mesh and a way to compute the target sizes on this
 mesh (usually through an error estimation procedure, in an iterative
-process of mesh adaptation).
+process of mesh adaptation). Warning: only parsed (@file{.pos}) files
+can currently be used as background meshes (@file{.msh} files cannot be
+used, since the mesh used to define the field will be destroyed during
+the meshing process).
 
 (Note that you can also load a background mesh directly from the command
 line using the @code{-bgm} option (@pxref{Command-line options}), or in
@@ -2783,13 +2788,13 @@ and @code{Mesh.CharacteristicLengthFactor} options (@pxref{Mesh options
 list})
 
 Here are the mesh commands that are related to the specification of
-characteristic lengths:
+mesh element sizes:
 
 @ftable @code
 @item Characteristic Length @{ @var{expression-list} @} = @var{expression};
-Modify the characteristic length of the points whose identification
-numbers are listed in @var{expression-list}. The new value is given by
-@var{expression}.
+Modify the prescribed mesh element size of the points whose
+identification numbers are listed in @var{expression-list}. The new
+value is given by @var{expression}.
 @item Field[@var{expression}] = @var{string};
 Create a new field (with id number @var{expression}), of type
 @var{string}.
@@ -2809,7 +2814,7 @@ Here is the list of all available fields with their associated options:
 @c Structured grids
 @c .........................................................................
 
-@node Structured grids, Miscellaneous mesh commands, Characteristic lengths, Mesh commands
+@node Structured grids, Miscellaneous mesh commands, Specifying mesh element sizes, Mesh commands
 @subsection Structured grids
 
 @cindex Extrusion, mesh
@@ -2869,16 +2874,16 @@ Extrudes a boundary layer along the normals of the specified surfaces.
 
 @item Transfinite Line @{ @var{expression-list} @} | "*" = @var{expression} < Using Progression | Bump @var{expression} >;
 Selects the lines in @var{expression-list} to be meshed with the 1D
-transfinite algorithm. The @var{expression} on the right hand side gives the
-number of nodes that will be created on the line (this overrides any
-characteristic length prescription---see @ref{Characteristic lengths}). The
-optional argument `@code{Using Progression @var{expression}}' instructs the
-transfinite algorithm to distribute the nodes following a geometric
-progression (@code{Progression 2} meaning for example that each line element
-in the series will be twice as long as the preceding one). The optional
-argument `@code{Using Bump @var{expression}}' instructs the transfinite
-algorithm to distribute the nodes with a refinement at both ends of the
-line.
+transfinite algorithm. The @var{expression} on the right hand side gives
+the number of nodes that will be created on the line (this overrides any
+other mesh element size prescription---see @ref{Specifying mesh element
+sizes}). The optional argument `@code{Using Progression
+@var{expression}}' instructs the transfinite algorithm to distribute the
+nodes following a geometric progression (@code{Progression 2} meaning
+for example that each line element in the series will be twice as long
+as the preceding one). The optional argument `@code{Using Bump
+@var{expression}}' instructs the transfinite algorithm to distribute the
+nodes with a refinement at both ends of the line.
 
 @item Transfinite Surface @{ @var{expression-list} @} | "*" < = @{ @var{expression-list} @} > < Left | Right | Alternate > ;
 Selects surfaces to be meshed with the 2D transfinite algorithm. The
@@ -5065,13 +5070,13 @@ or per window).
 
 @item Can I edit STEP/IGES/BRep models?
 
-Not yet. At the moment you can only change characteristic lengths,
-define volumes and physical groups, or delete entities. The easiest way
-to do this is to merge the model in a @file{.geo} file using @code{Merge
+Not yet. At the moment you can only change mesh element sizes, define
+volumes and physical groups, or delete entities. The easiest way to do
+this is to merge the model in a @file{.geo} file using @code{Merge
 "file.step";} and add the relevant scripting command after that. We plan
 to add more advanced editing features in the future (to delete entities,
-to create ``mixed'' surfaces and volumes, to export in @file{.geo} format,
-etc.).
+to create ``mixed'' surfaces and volumes, to export in @file{.geo}
+format, etc.).
 
 @item How can I build modular geometries?
 
@@ -5101,9 +5106,9 @@ system and the full geometry.
 
 Verify that the surfaces in your model do not self-intersect or
 partially overlap. If they don't, try the other 3D algorithms
-(`Tool->Options->Mesh->General->3D algorithm') or try to adapt the
-characteristic lengths in your input file so that the surface mesh
-better matches the geometrical details of the model. 
+(`Tool->Options->Mesh->General->3D algorithm') or try to adapt the mesh
+element sizes in your input file so that the surface mesh better matches
+the geometrical details of the model.
 
 If nothing works, file a bug report with the version of your operating
 system and and the full geometry.

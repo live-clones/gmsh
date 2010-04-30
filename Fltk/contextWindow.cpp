@@ -82,8 +82,8 @@ geometryContextWindow::geometryContextWindow(int deltaFontSize)
       input[3]->value("0");
       input[4] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z coordinate");
       input[4]->value("0");
-      input[5] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Characteristic length");
-      input[5]->value("");
+      input[5] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Prescribed element size at point");
+      input[5]->value("1.0");
       for(int i = 2; i < 6; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
       }
@@ -221,10 +221,10 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
   win->box(GMSH_WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
-    // 0: Characteristic length
+    // 0: Element size at points
     {
       group[0] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Characteristic Length");
+        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Element size at points");
       input[0] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Value");
       input[0]->value("0.1");
       input[0]->align(FL_ALIGN_RIGHT);

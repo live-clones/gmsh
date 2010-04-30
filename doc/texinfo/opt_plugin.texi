@@ -176,6 +176,11 @@ Default value: @code{0}
 Default value: @code{-1}
 @end table
 
+@item Plugin(Distance)
+Plugin(Distance) computes distances to boundaries in a mesh.
+
+Plugin(Distance) creates a bunch of files.
+
 @item Plugin(Divergence)
 Plugin(Divergence) computes the divergence of the field in the view `View'.
 
@@ -216,8 +221,20 @@ Default value: @code{1}
 Default value: @code{-1}
 @end table
 
+@item Plugin(ExtractEdges)
+Plugin(ExtractEdges) extracts sharp edges from a triangular mesh.
+
+Plugin(ExtractEdges) creates one new view.
+Numeric options:
+@table @code
+@item Angle
+Default value: @code{40}
+@item IncludeBoundary
+Default value: @code{1}
+@end table
+
 @item Plugin(ExtractElements)
-Plugin(ExtractElements) extracts the elements from the view `View' whose `TimeStep'-th values (averaged by element) are comprised between `MinVal' and `MaxVal'.
+Plugin(ExtractElements) extracts some elements from the view `View'. If `MinVal' != `MaxVal', it extracts the elements whose `TimeStep'-th values (averaged by element) are comprised between `MinVal' and `MaxVal'. If `Visible' != 0, it extracts visible elements. 
 
 If `View' < 0, the plugin is run on the current view.
 
@@ -227,9 +244,11 @@ Numeric options:
 @item MinVal
 Default value: @code{0}
 @item MaxVal
-Default value: @code{1}
+Default value: @code{0}
 @item TimeStep
 Default value: @code{0}
+@item Visible
+Default value: @code{1}
 @item View
 Default value: @code{-1}
 @end table
@@ -338,9 +357,11 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Homology)
-Plugin(Homology) computes generators for (relative) homology groups and their thick cuts.
+Plugin(Homology) computes ranks and generators of (relative) homology spaces and their thick cuts.
 
-Plugin(Homology) creates new views.
+Define physical groups in order to specify the computation domain and the relative subdomain. Otherwise the whole mesh is the domain and the relative subdomain is empty. 
+
+Plugin(Homology) creates new views, one for each generator found. The resulting generator chains together with the mesh are saved to the file given.
 String options:
 @table @code
 @item Filename
@@ -358,9 +379,7 @@ Default value: @code{0}
 Default value: @code{0}
 @item ComputeGenerators
 Default value: @code{1}
-@item ComputeDualGenerators
-Default value: @code{0}
-@item ComputeBettiNumbers
+@item ComputeCuts
 Default value: @code{0}
 @end table
 
@@ -494,6 +513,18 @@ Default value: @code{-1}
 @item OtherTimeStep
 Default value: @code{-1}
 @item OtherView
+Default value: @code{-1}
+@end table
+
+@item Plugin(MinMax)
+Plugin(MinMax) computes the min/max of a view.
+
+If `View' < 0, the plugin is run on the current view.
+
+Plugin(MinMax) creates two new views.
+Numeric options:
+@table @code
+@item View
 Default value: @code{-1}
 @end table
 

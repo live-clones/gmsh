@@ -13,7 +13,7 @@ Indices of curves in the geometric model@*
 type: list@*
 default value: @code{@{@}}
 @item FacesList
-Indices of surfaces in the geometric model (Warning: might give strange results for complex surfaces)@*
+Indices of surfaces in the geometric model (Warning, this feature is still experimental. It might (read: will probably) give wrong results for complex surfaces)@*
 type: list@*
 default value: @code{@{@}}
 @item NNodesByEdge

@@ -205,7 +205,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.CenterGlyphs
-Center glyphs (arrows, numbers, etc.)@*
+Center glyphs (arrows, numbers, etc.)? (0=left, 1=centered, 2=right)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -595,8 +595,8 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ShowTime
-Time display mode (0=hidden, 1=value if multi-step, 2=value always, 3=step if multi-step, 4=step always)@*
-Default value: @code{1}@*
+Time display mode (0=hidden, 1=time value if multi-step, 2=time value always, 3=time step if multi-step, 4=time step always)@*
+Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.SmoothNormals

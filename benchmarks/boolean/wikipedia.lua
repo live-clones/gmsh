@@ -25,4 +25,3 @@ myModel2:computeUnion(myTool3,0);
 
 myModel:computeDifference(myModel2,0);
 myModel:setAsCurrent();
-

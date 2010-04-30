@@ -309,7 +309,7 @@ static bool TooManyElements(GModel *m, int dim)
   sumAllLc /= (double)m->getNumVertices();
   if(!sumAllLc || pow(CTX::instance()->lc / sumAllLc, dim) > 1.e10) 
     return !Msg::GetAnswer
-      ("Your choice of characteristic lengths will likely produce a very\n"
+      ("Your choice of mesh element sizes will likely produce a very\n"
        "large mesh. Do you really want to continue?\n\n"
        "(To disable this warning in the future, select `Enable expert mode'\n"
        "in the option dialog.)", 1, "Cancel", "Continue");

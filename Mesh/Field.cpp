@@ -1230,8 +1230,9 @@ class AttractorField : public Field
       (n_nodes_by_edge, "Number of nodes used to discretized each curve",
        &update_needed);
     options["FacesList"] = new FieldOptionList
-      (faces_id, "Indices of surfaces in the geometric model (Warning: might "
-       "give strange results for complex surfaces)", &update_needed);
+      (faces_id, "Indices of surfaces in the geometric model (Warning, this feature "
+       "is still experimental. It might (read: will probably) give wrong results "
+       "for complex surfaces)", &update_needed);
   }
   ~AttractorField()
   {

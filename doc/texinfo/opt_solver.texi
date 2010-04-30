@@ -17,13 +17,18 @@ Saved in: @code{General.OptionsFileName}
 @item Solver.Help0
 Help string for solver 0@*
 Default value: @code{"A General environment for the treatment of Discrete Problems.
-Copyright (C) 1997-2009 Patrick Dular and Christophe Geuzaine.
+Copyright (C) 1997-2010 Patrick Dular and Christophe Geuzaine.
 Visit http://www.geuz.org/getdp/ for more info"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Solver.Executable0
 System command to launch solver 0 (should not contain the `&' character)@*
 Default value: @code{"getdp"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.ExtraArguments0
+Extra arguments to pass to solver 0@*
+Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Solver.InputName0
@@ -148,6 +153,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Solver.Executable1
 System command to launch solver 1 (should not contain the `&' character)@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.ExtraArguments1
+Extra arguments to pass to solver 1@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -276,6 +286,11 @@ System command to launch solver 2 (should not contain the `&' character)@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Solver.ExtraArguments2
+Extra arguments to pass to solver 2@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Solver.InputName2
 Default input file name for solver 2@*
 Default value: @code{""}@*
@@ -401,6 +416,11 @@ System command to launch solver 3 (should not contain the `&' character)@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Solver.ExtraArguments3
+Extra arguments to pass to solver 3@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Solver.InputName3
 Default input file name for solver 3@*
 Default value: @code{""}@*
@@ -523,6 +543,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Solver.Executable4
 System command to launch solver 4 (should not contain the `&' character)@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.ExtraArguments4
+Extra arguments to pass to solver 4@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 

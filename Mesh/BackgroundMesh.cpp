@@ -182,7 +182,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V,
   lc = std::min(lc, CTX::instance()->mesh.lcMax);
 
   if(lc <= 0.){
-    Msg::Error("Wrong characteristic length lc = %g (lcmin = %g, lcmax = %g)",
+    Msg::Error("Wrong mesh element size lc = %g (lcmin = %g, lcmax = %g)",
                lc, CTX::instance()->mesh.lcMin, CTX::instance()->mesh.lcMax);
     lc = l1;
   }
@@ -228,7 +228,7 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
   lc = std::min(lc, CTX::instance()->mesh.lcMax);
 
   if(lc <= 0.){
-     Msg::Error("Wrong characteristic length lc = %g (lcmin = %g, lcmax = %g)",
+     Msg::Error("Wrong mesh element size lc = %g (lcmin = %g, lcmax = %g)",
                lc, CTX::instance()->mesh.lcMin, CTX::instance()->mesh.lcMax);
      lc = l1;
   }
