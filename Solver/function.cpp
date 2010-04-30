@@ -373,7 +373,7 @@ class functionC : public function {
     FILE *tmpMake = fopen("_tmpMake","w");
     fprintf(tmpMake, "include $(DG_BUILD_DIR)/CMakeFiles/dg.dir/flags.make\n"
         "%s : %s\n"
-        "\tg++ -shared -fPIC -o $@ $(CXX_FLAGS) $(CXX_DEFINES) $<\n",
+        "\tg++ -fPIC -shared -o $@ $(CXX_FLAGS) $(CXX_DEFINES) $<\n",
         filename.c_str(), "_tmpSrc.cpp");
     fclose(tmpMake);
     if(system("make -f _tmpMake"))
@@ -547,4 +547,10 @@ functionConstant *function::getTime() {
   if (! _timeFunction)
     _timeFunction = functionConstantNew(0.);
   return _timeFunction;
+}
+functionConstant *function::_dtFunction = NULL;
+functionConstant *function::getDT() {
+  if (! _dtFunction)
+    _dtFunction = functionConstantNew(0.);
+  return _dtFunction;
 }

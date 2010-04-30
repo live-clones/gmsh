@@ -397,6 +397,7 @@ void CreateOutputFile(std::string fileName, int format)
 
   case FORMAT_TEX:
     {
+      printf("couc tex format \n");
       if(!FlGui::available()) break;
 
       FILE *fp = fopen(fileName.c_str(), "w");
@@ -428,7 +429,7 @@ void CreateOutputFile(std::string fileName, int format)
 #endif
 
   default:
-    Msg::Error("Unknown output file format");
+    Msg::Error("Unknown output file format %d", format);
     printEndMessage = false;
     break;
   }

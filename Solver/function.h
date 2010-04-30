@@ -21,7 +21,8 @@ class functionReplaceCache;
 // An abstract interface to functions 
 // more explanation at the head of this file
 class function {
-  static functionConstant *_timeFunction; 
+  static functionConstant *_timeFunction;
+  static functionConstant *_dtFunction;  
   public :
   class argument {
     //iMap is the id of the dataCacheMap, e.g. on interfaces
@@ -75,6 +76,7 @@ class function {
   static function *getParametricCoordinates();
   static function *getNormals();
   static functionConstant *getTime();
+  static functionConstant *getDT();
 };
 
 // dataCache when the value is a  matrix of double 
