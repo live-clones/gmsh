@@ -25,6 +25,7 @@ class OCCRegion : public GRegion {
   TopoDS_Solid getTopoDS_Shape() {return s;}
 };
 
+GRegion *getOCCRegionByNativePtr(GModel *model, TopoDS_Solid toFind);
 #endif
 
 #endif

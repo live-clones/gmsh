@@ -11,11 +11,14 @@ set(SRC
     OCCVertex.cpp OCCEdge.cpp OCCFace.cpp OCCRegion.cpp
     discreteEdge.cpp discreteFace.cpp discreteRegion.cpp
     fourierEdge.cpp fourierFace.cpp fourierProjectionFace.cpp
+  ACISVertex.cpp
+  ACISEdge.cpp
   GModel.cpp
   GModelFactory.cpp
     GModelIO_Geo.cpp
     GModelIO_Mesh.cpp
     GModelIO_OCC.cpp
+    GModelIO_ACIS.cpp
       OCC_Connect.cpp
     GModelIO_Fourier.cpp
     GModelIO_CGNS.cpp

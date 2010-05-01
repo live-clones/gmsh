@@ -62,7 +62,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
     // database (if any)
     _try(MatSetFromOptions(_a));
     // preallocation option must be set after other options
-    PetscInt prealloc = 200;
+    PetscInt prealloc = 300;
     PetscTruth set;
     PetscOptionsGetInt(PETSC_NULL, "-petsc_prealloc", &prealloc, &set);
     _try(MatSeqAIJSetPreallocation(_a, prealloc, PETSC_NULL));
@@ -146,7 +146,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
     // set some default options
     _try(PCSetType(pc, PCILU));
     _try(PCFactorSetMatOrderingType(pc, MATORDERING_RCM));
-    _try(PCFactorSetLevels(pc, 6));
+    _try(PCFactorSetLevels(pc, 1));
     _try(KSPSetTolerances(ksp, 1.e-8, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT));
     // override the default options with the ones from the option
     // database (if any)

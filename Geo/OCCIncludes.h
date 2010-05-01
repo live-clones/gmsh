@@ -65,7 +65,6 @@ using std::iostream;
 #include "BRepAdaptor_Curve.hxx"
 #include "Poly_Triangulation.hxx"
 #include "Poly_Array1OfTriangle.hxx"
-#include "TColgp_Array1OfPnt2d.hxx"
 #include "Poly_Triangle.hxx"
 #include "GProp_GProps.hxx"
 #include "BRepGProp.hxx"

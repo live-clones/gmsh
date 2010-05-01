@@ -114,4 +114,17 @@ void OCCRegion::replaceFacesInternal(std::list<GFace*> &new_faces)
   setup();
 }
 
+GRegion *getOCCRegionByNativePtr(GModel *model, TopoDS_Solid toFind)
+{
+  GModel::riter it =model->firstRegion();
+  for (; it !=model->lastRegion(); it++){
+    OCCRegion *occr = dynamic_cast<OCCRegion*>(*it);
+    if (occr){
+      if (toFind.IsSame(occr->getTopoDS_Shape())){
+	return *it;
+      }
+    }
+  }
+  return 0;
+}
 #endif

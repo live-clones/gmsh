@@ -23,6 +23,7 @@ class Octree;
 class FM_Internals;
 class GEO_Internals;
 class OCC_Internals;
+class ACIS_Internals;
 class smooth_normals;
 class FieldManager;
 class CGNSOptions;
@@ -67,6 +68,10 @@ class GModel
   // OpenCascade model internal data
   OCC_Internals *_occ_internals;
   void _deleteOCCInternals();
+
+  // OpenCascade model internal data
+  ACIS_Internals *_acis_internals;
+  void _deleteACISInternals();
 
   // Fourier model internal data
   FM_Internals *_fm_internals;
@@ -149,6 +154,7 @@ class GModel
   GEO_Internals *getGEOInternals(){ return _geo_internals; }
   OCC_Internals *getOCCInternals(){ return _occ_internals; }
   FM_Internals *getFMInternals() { return _fm_internals; }
+  ACIS_Internals *getACISInternals(){ return _acis_internals; }
 
   // access characteristic length (mesh size) fields
   FieldManager *getFields(){ return _fields; }
@@ -346,6 +352,13 @@ class GModel
   // mesh the model
   int mesh(int dimension);
 
+  // glue entities in the model
+  // assume a tolerance eps and merge vertices that are too close, 
+  // then merge edges, faces and regions.
+  // the gluer changes the geometric model, so that some pointers
+  // could become invalid !! I think that using references to some 
+  // tables of pointers for bindings e.g. could be better. FIXME !!
+  void glue (double eps);
   // change the entity creation factory
   void setFactory(std::string name);
 
@@ -354,7 +367,12 @@ class GModel
   GEdge *addLine(GVertex *v1, GVertex *v2);
   GEdge *addCircleArcCenter(double x, double y, double z, GVertex *start, GVertex *end);
   GEdge *addCircleArc3Points(double x, double y, double z, GVertex *start, GVertex *end);
-  GEdge *addBezier(GVertex *start, GVertex *end, fullMatrix<double> *controlPoints);
+  GEdge *addBezier(GVertex *start, GVertex *end, std::vector<std::vector<double> > points);
+  GEdge *addNURBS(GVertex *start, GVertex *end,
+		  std::vector<std::vector<double> > points, 
+		  std::vector<double> knots,
+		  std::vector<double> weights, 
+		  std::vector<int> mult);
   GEntity *revolve(GEntity *e, std::vector<double> p1, std::vector<double> p2, double angle);
   GEntity *extrude(GEntity *e, std::vector<double> p1, std::vector<double> p2);
 
@@ -422,6 +440,9 @@ class GModel
   int writeOCCSTEP(const std::string &name);
   int writeOCCBREP(const std::string &name);
   int importOCCShape(const void *shape);
+  
+  // ACIS Model
+  int readACISSAT(const std::string &name);
 
   // Gmsh mesh file format
   int readMSH(const std::string &name);

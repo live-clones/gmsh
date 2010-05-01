@@ -42,8 +42,7 @@ int GModel::_current = -1;
 
 GModel::GModel(std::string name)
   : _name(name), _visible(1), _octree(0),
-    _geo_internals(0), _occ_internals(0), _fm_internals(0), _factory(0),
-    _fields(0), _currentMeshEntity(0), normals(0)
+    _geo_internals(0), _occ_internals(0), _acis_internals(0), _fm_internals(0),_factory(0), _fields(0), _currentMeshEntity(0), normals(0)
 {
   partitionSize[0] = 0; partitionSize[1] = 0;
   list.push_back(this);
@@ -1453,11 +1452,21 @@ GEdge *GModel::addCircleArc3Points(double x, double y, double z, GVertex *start,
 }
 
 GEdge *GModel::addBezier(GVertex *start, GVertex *end, 
-                         fullMatrix<double> *controlPoints)
+			 std::vector<std::vector<double> > points) 
 {
   if(_factory) 
     return _factory->addSpline(this, GModelFactory::BEZIER, start, end, 
-                               controlPoints);
+                               points);
+  return 0;
+}
+
+GEdge *GModel::addNURBS(GVertex *start, GVertex *end,
+			std::vector<std::vector<double> > points, 
+			std::vector<double> knots,
+			std::vector<double> weights, 
+			std::vector<int> mult){  
+  if(_factory)
+    return _factory->addNURBS(this, start,end,points,knots,weights, mult);
   return 0;
 }
 
@@ -1738,7 +1747,7 @@ static void glueFacesInRegions(GModel *model,
   }
 }
 
-void GModel::glue(const double &eps)
+void GModel::glue(double eps)
 {
   {
     std::multimap<GVertex*,GVertex*> Unique2Duplicates;
@@ -1821,6 +1830,9 @@ void GModel::registerBindings(binding *b)
   cm->setDescription("create a spline going from v1 to v2 and with some control "
                      "points listed in a fullMatrix(N,3)");
   cm->setArgNames("v1", "v2", "controlPoints", NULL);
+  cm = cb->addMethod("addNURBS", &GModel::addNURBS);
+  cm->setDescription("creates a NURBS curve from v1 to v2 with control Points, knots, weights and multiplicities");
+  cm->setArgNames("v1", "v2", "{{poles}}","{knots}","{weights}","{mult}",NULL);
   cm = cb->addMethod("addCircleArcCenter", &GModel::addCircleArcCenter);
   cm->setDescription("create a circle arc going from v1 to v2 with its center "
                      "at (x,y,z)");
@@ -1865,9 +1877,9 @@ void GModel::registerBindings(binding *b)
                      "one (tool). The third parameter tells if a new model has to "
                      "be created");
   cm->setArgNames("tool","createNewGModel",NULL);
-  cm = cb->addMethod("glue", &GModel::glue);
-  cm->setDescription("glue the geometric model using geometric tolerance eps");
-  cm->setArgNames("eps",NULL);
+  //  cm = cb->addMethod("glue", &GModel::glue);
+  //  cm->setDescription("glue the geometric model using geometric tolerance eps");
+  //  cm->setArgNames("eps",NULL);
   cm = cb->addMethod("setAsCurrent", &GModel::setAsCurrent);
   cm->setDescription("set the model as the current (active) one");
   cm = cb->setConstructor<GModel>();

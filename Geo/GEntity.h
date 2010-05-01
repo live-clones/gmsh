@@ -65,7 +65,8 @@ class GEntity {
     UnknownModel,
     GmshModel,
     FourierModel,
-    OpenCascadeModel
+    OpenCascadeModel,
+    AcisModel
   };
 
   // all known entity types

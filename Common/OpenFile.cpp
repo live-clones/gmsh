@@ -284,6 +284,9 @@ int MergeFile(std::string fileName, bool warnIfMissing)
   else if(ext == ".step" || ext == ".STEP" || ext == ".stp" || ext == ".STP"){
     status = GModel::current()->readOCCSTEP(fileName);
   }
+  else if(ext == ".sat" || ext == ".SAT"){
+    status = GModel::current()->readACISSAT(fileName);
+  }
   else if(ext == ".unv" || ext == ".UNV"){
     status = GModel::current()->readUNV(fileName);
   }

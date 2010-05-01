@@ -99,4 +99,11 @@ void GVertex::registerBindings(binding *b)
   classBinding *cb = b->addClass<GVertex>("GVertex");
   cb->setDescription("A GVertex is a geometrical 0D entity");
   cb->setParentClass<GEntity>();
+  methodBinding *cm;
+  cm = cb->addMethod("x", (double (GVertex::*)() const) &GVertex::x);
+  cm->setDescription("Return the x-coordinate.");
+  cm = cb->addMethod("y", (double (GVertex::*)() const) &GVertex::y);
+  cm->setDescription("Return the y-coordinate.");
+  cm = cb->addMethod("z", (double (GVertex::*)() const) &GVertex::z);
+  cm->setDescription("Return the z-coordinate.");
 }

@@ -7,6 +7,7 @@
 #define _GMSH_CONFIG_H_
 
 #cmakedefine HAVE_64BIT_SIZE_T
+#cmakedefine HAVE_ACIS
 #cmakedefine HAVE_ANN
 #cmakedefine HAVE_BLAS
 #cmakedefine HAVE_CHACO
