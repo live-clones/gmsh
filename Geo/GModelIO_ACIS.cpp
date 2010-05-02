@@ -1,3 +1,8 @@
+// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+
 #include "GmshConfig.h"
 #include "GModel.h"
 #include "GmshMessage.h"
@@ -6,9 +11,6 @@
 #include "ACISEdge.h"
 
 #if defined(HAVE_ACIS)
-#define MacX 1
-#define mac 1
-#define ANSI 1
 
 #include <acis.hxx>
 #include <base.hxx>
@@ -21,66 +23,71 @@
 #include <lists.hxx>
 #include <acistype.hxx>
 
-
 class ACIS_Internals {
 public:
   ENTITY_LIST entities;
   ACIS_Internals();
   ~ACIS_Internals();
-  void loadSAT ( std::string fileName, GModel*);  
-  void addVertices (GModel *gm, ENTITY_LIST &l);
-  void addEdges (GModel *gm, ENTITY_LIST &l);
-  //  void addFaces (GModel *gm, ENTITY_LIST &l);
+  void loadSAT(std::string fileName, GModel*);  
+  void addVertices(GModel *gm, ENTITY_LIST &l);
+  void addEdges(GModel *gm, ENTITY_LIST &l);
+  // void addFaces(GModel *gm, ENTITY_LIST &l);
 };
 
-ACIS_Internals::ACIS_Internals() {
-  // put your acis unlock string here ...
+ACIS_Internals::ACIS_Internals()
+{
+  // put your acis unlock string here...
 #include "ACISLICENSE.h"
 
-  spa_unlock_result out = spa_unlock_products( unlock_str );
-
+  spa_unlock_result out = spa_unlock_products(unlock_str);
   outcome prout = api_start_modeller(0);
   if (!prout.ok()){
     Msg::Error("Unable to start ACIS");
   }
 }
-ACIS_Internals::~ACIS_Internals(){
+
+ACIS_Internals::~ACIS_Internals()
+{
   outcome prout = api_stop_modeller();
   if (!prout.ok()){
     Msg::Error("Unable to stop ACIS");
   }  
 }
 
-void ACIS_Internals :: addVertices (GModel *gm, ENTITY_LIST &l){
+void ACIS_Internals::addVertices (GModel *gm, ENTITY_LIST &l)
+{
   l.init();
   ENTITY *e;
   while(e = l.next()){
     VERTEX *av = dynamic_cast<VERTEX*>(e);
     if (av){
-      GVertex *v = getACISVertexByNativePtr(gm,av);
+      GVertex *v = getACISVertexByNativePtr(gm, av);
       if (!v)
-	gm->add(new ACISVertex (gm,gm->maxVertexNum()+1,av));
+	gm->add(new ACISVertex (gm,gm->maxVertexNum() + 1, av));
     }
   }
 }
 
-void ACIS_Internals :: addEdges (GModel *gm, ENTITY_LIST &l){
+void ACIS_Internals::addEdges (GModel *gm, ENTITY_LIST &l)
+{
   l.init();
   ENTITY *e;
   while(e = l.next()){
     EDGE *av = dynamic_cast<EDGE*>(e);
     if (av){
-      GEdge *v = getACISEdgeByNativePtr(gm,av);
+      GEdge *v = getACISEdgeByNativePtr(gm, av);
       if (!v){
-	GVertex *v1 = getACISVertexByNativePtr(gm,av->start());
-	GVertex *v2 = getACISVertexByNativePtr(gm,av->end());      
-	gm->add(new ACISEdge(gm,av,gm->maxEdgeNum()+1,v1,v2));
+	GVertex *v1 = getACISVertexByNativePtr(gm, av->start());
+	GVertex *v2 = getACISVertexByNativePtr(gm, av->end());      
+	gm->add(new ACISEdge(gm,av,gm->maxEdgeNum() + 1, v1, v2));
       }
     }
   }
 }
+
 /*
-void ACIS_Internals :: addFaces (GModel *gm, ENTITY_LIST &l){
+void ACIS_Internals::addFaces (GModel *gm, ENTITY_LIST &l)
+{
   l.init();
   ENTITY *e;
   while(e = l.next()){
@@ -97,7 +104,8 @@ void ACIS_Internals :: addFaces (GModel *gm, ENTITY_LIST &l){
 }
 */
 
-void ACIS_Internals::loadSAT (std::string fileName, GModel *gm) {
+void ACIS_Internals::loadSAT(std::string fileName, GModel *gm)
+{
   FILE *f = fopen (fileName.c_str(), "r");
   if (!f){
     return;
@@ -139,11 +147,14 @@ int GModel::readACISSAT(const std::string &fn)
   _acis_internals->loadSAT(fn,this);
   return 1;
 }
+
 #else
+
 int GModel::readACISSAT(const std::string &fn)
 {
   Msg::Error("Gmsh must be compiled with ACIS support to load '%s'",
              fn.c_str());
   return 0;
 }
+
 #endif

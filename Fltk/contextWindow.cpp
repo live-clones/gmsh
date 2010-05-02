@@ -82,7 +82,7 @@ geometryContextWindow::geometryContextWindow(int deltaFontSize)
       input[3]->value("0");
       input[4] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z coordinate");
       input[4]->value("0");
-      input[5] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Prescribed element size at point");
+      input[5] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Prescribed mesh element size at point");
       input[5]->value("1.0");
       for(int i = 2; i < 6; i++) {
         input[i]->align(FL_ALIGN_RIGHT);

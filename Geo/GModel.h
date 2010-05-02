@@ -352,13 +352,13 @@ class GModel
   // mesh the model
   int mesh(int dimension);
 
-  // glue entities in the model
-  // assume a tolerance eps and merge vertices that are too close, 
-  // then merge edges, faces and regions.
-  // the gluer changes the geometric model, so that some pointers
-  // could become invalid !! I think that using references to some 
-  // tables of pointers for bindings e.g. could be better. FIXME !!
-  void glue (double eps);
+  // glue entities in the model (assume a tolerance eps and merge
+  // vertices that are too close, then merge edges, faces and
+  // regions). Warning: the gluer changes the geometric model, so that
+  // some pointers could become invalid. FIXME: using references to
+  // some tables of pointers for bindings e.g. could be better.
+  void glue(double eps);
+
   // change the entity creation factory
   void setFactory(std::string name);
 
@@ -373,7 +373,8 @@ class GModel
 		  std::vector<double> knots,
 		  std::vector<double> weights, 
 		  std::vector<int> mult);
-  GEntity *revolve(GEntity *e, std::vector<double> p1, std::vector<double> p2, double angle);
+  GEntity *revolve(GEntity *e, std::vector<double> p1, std::vector<double> p2, 
+                   double angle);
   GEntity *extrude(GEntity *e, std::vector<double> p1, std::vector<double> p2);
 
   // create solid geometry primitives using the factory
@@ -389,13 +390,6 @@ class GModel
   GModel *computeBooleanUnion(GModel *tool, int createNewModel);
   GModel *computeBooleanIntersection(GModel *tool, int createNewModel);
   GModel *computeBooleanDifference(GModel *tool, int createNewModel);
-
-  // glue entities in the model (i.e., assume a tolerance eps and
-  // merge vertices that are too close, then merge edges, faces and
-  // regions). Warning: the gluer changes the geometric model, so that
-  // some pointers could become invalid! I think that using references
-  // to some tables of pointers for bindings e.g. could be better
-  void glue(const double &eps);
 
   // build a new GModel by cutting the elements crossed by the levelset ls
   // if cutElem is set to false, split the model without cutting the elements

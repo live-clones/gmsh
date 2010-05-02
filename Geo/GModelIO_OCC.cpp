@@ -743,7 +743,7 @@ void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool, const BooleanOperato
   }
 }
   
-void OCC_Internals::Fillet(std::vector<TopoDS_Edge> &edgesToFillet,
+void OCC_Internals::fillet(std::vector<TopoDS_Edge> &edgesToFillet,
                            double Radius)
 {
   // create a tool for fillet
