@@ -62,6 +62,7 @@ class binding {
   static binding *_instance;
   void checkDocCompleteness();
  public:
+  static void *checkudata_with_inheritance (lua_State *L, int ud, const char *tname);
   inline static binding *instance(){ return _instance ? _instance : new binding(); }
   lua_State *L;
   int readFile(const char *filename);
@@ -200,7 +201,7 @@ class luaStack<type *>{
   public:
   static type* get(lua_State *L, int ia)
   {
-    userdataType *ud = static_cast<userdataType*>(lua_touserdata(L, ia));
+    userdataType *ud=static_cast<userdataType*>(binding::checkudata_with_inheritance (L, ia, getName().c_str()));
     if(!ud) luaL_typerror(L, ia, className<type>::get().c_str());
     return ud->pT;
   }
@@ -225,7 +226,7 @@ class luaStack<const type *>{
   public:
   static type* get(lua_State *L, int ia)
   {
-    userdataType *ud = static_cast<userdataType*>(lua_touserdata(L, ia));
+    userdataType *ud=static_cast<userdataType*>(binding::checkudata_with_inheritance (L, ia, getName().c_str()));
     if(!ud) luaL_typerror(L, ia, className<type>::get().c_str());
     return ud->pT;
   }
@@ -250,7 +251,7 @@ class luaStack<type &>{
  public:
   static type& get(lua_State *L, int ia)
   {
-    userdataType *ud = static_cast<userdataType*>(lua_touserdata(L, ia));
+    userdataType *ud=static_cast<userdataType*>(binding::checkudata_with_inheritance (L, ia, getName().c_str()));
     if(!ud) luaL_typerror(L, ia, className<type>::get().c_str());
     return *ud->pT; 
   }
@@ -266,7 +267,7 @@ class luaStack<const type &>{
  public:
   static type& get(lua_State *L, int ia)
   {
-    userdataType *ud = static_cast<userdataType*>(lua_touserdata(L, ia));
+    userdataType *ud=static_cast<userdataType*>(binding::checkudata_with_inheritance (L, ia, getName().c_str()));
     if(!ud) luaL_typerror(L, ia, className<type>::get().c_str());
     return *ud->pT; 
   }

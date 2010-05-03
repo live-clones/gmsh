@@ -398,4 +398,24 @@ binding::~binding()
   }
 }
 
+void *binding::checkudata_with_inheritance (lua_State *L, int ud, const char *tname) {
+  void *p = lua_touserdata(L, ud);
+  if (!p)
+    return NULL;
+
+  lua_getglobal(L, tname);
+  if (ud<0) ud--;
+  int depth = 1;
+  while (luaL_getmetafield (L, ud, "__index")) {
+    depth ++;
+    if (lua_rawequal(L,-1, -depth) ) {
+      lua_pop(L, depth);
+      return p;
+    }
+    ud = -1;
+  }
+  lua_pop(L, depth);
+  return NULL;
+}
+
 #endif
