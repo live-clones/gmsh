@@ -369,11 +369,11 @@ class GModel
   GEdge *addCircleArc3Points(double x, double y, double z, GVertex *start, GVertex *end);
   GEdge *addBezier(GVertex *start, GVertex *end, std::vector<std::vector<double> > points);
   GEdge *addNURBS(GVertex *start, GVertex *end,
-		  std::vector<std::vector<double> > points, 
+		  std::vector<std::vector<double> > points,
 		  std::vector<double> knots,
-		  std::vector<double> weights, 
+		  std::vector<double> weights,
 		  std::vector<int> mult);
-  GEntity *revolve(GEntity *e, std::vector<double> p1, std::vector<double> p2, 
+  GEntity *revolve(GEntity *e, std::vector<double> p1, std::vector<double> p2,
                    double angle);
   GEntity *extrude(GEntity *e, std::vector<double> p1, std::vector<double> p2);
 
@@ -415,6 +415,15 @@ class GModel
     _associateEntityWithMeshVertices();
   }
 
+  void storeChain(std::vector<MVertex*> &vertices,int dim, std::map<int, std::vector<MElement*> > &entityMap,
+                  std::map<int, std::map<int, std::string> > &physicalMap)
+  {
+    _storeVerticesInEntities(vertices);
+    _storeElementsInEntities(entityMap);
+    _storePhysicalTagsInEntities(dim, physicalMap);
+    _associateEntityWithMeshVertices();
+  }
+
   // Gmsh native CAD format (readGEO is static, since it can create
   // multiple models)
   static int readGEO(const std::string &name);
@@ -434,21 +443,21 @@ class GModel
   int writeOCCSTEP(const std::string &name);
   int writeOCCBREP(const std::string &name);
   int importOCCShape(const void *shape);
-  
+
   // ACIS Model
   int readACISSAT(const std::string &name);
 
   // Gmsh mesh file format
   int readMSH(const std::string &name);
   int writeMSH(const std::string &name, double version=1.0, bool binary=false,
-               bool saveAll=false, bool saveParametric=false, 
-               double scalingFactor=1.0, int elementStartNum=0, 
+               bool saveAll=false, bool saveParametric=false,
+               double scalingFactor=1.0, int elementStartNum=0,
                int saveSinglePartition=0);
   int writePartitionedMSH(const std::string &baseName, bool binary=false,
-                          bool saveAll=false, bool saveParametric=false, 
+                          bool saveAll=false, bool saveParametric=false,
                           double scalingFactor=1.0);
   int writeDistanceMSH(const std::string &name, double version=1.0, bool binary=false,
-                       bool saveAll=false, bool saveParametric=false, 
+                       bool saveAll=false, bool saveParametric=false,
                        double scalingFactor=1.0);
 
   // Iridium file format
