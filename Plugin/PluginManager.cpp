@@ -18,6 +18,7 @@
 #include "CutParametric.h"
 #include "CutSphere.h"
 #include "Skin.h"
+#include "AnalyseCurvedMesh.h"
 #include "MathEval.h"
 #include "ExtractElements.h"
 #include "HarmonicToTime.h"
@@ -163,6 +164,8 @@ void PluginManager::registerDefaultPlugins()
                       ("Skin", GMSH_RegisterSkinPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("MathEval", GMSH_RegisterMathEvalPlugin()));
+	allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("AnalyseCurvedMesh", GMSH_RegisterAnalyseCurvedMeshPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("ModifyComponent", GMSH_RegisterModifyComponentPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>

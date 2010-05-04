@@ -24,6 +24,7 @@ set(SRC
   HarmonicToTime.cpp ModulusPhase.cpp
   HomologyComputation.cpp
   Distance.cpp ExtractEdges.cpp
+  AnalyseCurvedMesh.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 

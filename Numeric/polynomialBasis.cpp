@@ -571,9 +571,9 @@ static fullMatrix<double> gmshGeneratePointsTriangle(int order, bool serendip)
   point(0, 0) = 0;
   point(0, 1) = 0;
 
-  double dd = 1. / order;
-
   if (order > 0) {
+    double dd = 1. / order;
+
     point(1, 0) = 1;
     point(1, 1) = 0;
     point(2, 0) = 0;
