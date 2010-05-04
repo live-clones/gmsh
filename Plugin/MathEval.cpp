@@ -101,26 +101,37 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
     Msg::Error("MathEval plugin cannot be applied to multi-mesh views");
     return view;
   }
-  PView *otherView = NULL;
-  PViewData *dataOther = NULL;
-  OctreePost *octree = 0;
 
+  PView *otherView = v1;
   if(iOtherView >= 0){
     otherView = getView(iOtherView, view);
     if(!otherView){
-      Msg::Error("MathEval plugin cannot found other view %i", iOtherView);
+      Msg::Error("MathEval plugin could not find other view %i", iOtherView);
       return view;
     }
-    dataOther = otherView->getData();
-    if(dataOther->hasMultipleMeshes()){
-      Msg::Error("MathEval plugin cannot be applied to multi-mesh views");
-      return view;
-    }
-    if((data1->getNumEntities() != dataOther->getNumEntities()) ||
-        (data1->getNumElements() != dataOther->getNumElements())){
-      Msg::Info("Other view based on different grid: interpolating...");
-      octree = new OctreePost(otherView);
-    }
+  }
+
+  PViewData *otherData = otherView->getData();
+  if(otherData->hasMultipleMeshes()){
+    Msg::Error("MathEval plugin cannot be applied to multi-mesh views");
+    return view;
+  }
+
+  OctreePost *octree = 0;
+  if((data1->getNumEntities() != otherData->getNumEntities()) ||
+     (data1->getNumElements() != otherData->getNumElements())){
+    Msg::Info("Other view based on different grid: interpolating...");
+    octree = new OctreePost(otherView);
+  }
+
+  if(otherTimeStep < 0 && otherData->getNumTimeSteps() != data1->getNumTimeSteps()){
+    Msg::Error("Number of time steps don't match: using step 0");
+    otherTimeStep = 0;
+  }
+  else if(otherTimeStep > otherData->getNumTimeSteps() - 1){
+    Msg::Error("Invalid time step (%d) in View[%d]: using step 0 instead",
+               otherTimeStep, otherView->getIndex());
+    otherTimeStep = 0;
   }
 
   int numComp2;
@@ -170,10 +181,10 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
       int numNodes = data1->getNumNodes(timeBeg, ent, ele);
       int type = data1->getType(timeBeg, ent, ele);
       int numComp = data1->getNumComponents(timeBeg, ent, ele);
-      int numCompOther = !dataOther ? 9 : octree ? 9 : 
-        dataOther->getNumComponents(otherTimeStep, ent, ele);
+      int otherNumComp = (!otherData || octree) ? 9 :
+        otherData->getNumComponents(timeBeg, ent, ele);
       std::vector<double> *out = data2->incrementList(numComp2, type);
-      std::vector<double> w(std::max(9, numCompOther), 0.);
+      std::vector<double> w(std::max(9, otherNumComp), 0.);
       std::vector<double> x(numNodes), y(numNodes), z(numNodes);
       for(int nod = 0; nod < numNodes; nod++)
         data1->getNode(timeBeg, ent, ele, nod, x[nod], y[nod], z[nod]);
@@ -181,20 +192,21 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
       for(int nod = 0; nod < numNodes; nod++) out->push_back(y[nod]); 
       for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]); 
       for(int step = timeBeg; step < timeEnd; step++){
+        int step2 = (otherTimeStep < 0) ? step : otherTimeStep;
         for(int nod = 0; nod < numNodes; nod++){
           std::vector<double> v(std::max(9, numComp), 0.);
           for(int comp = 0; comp < numComp; comp++)
             data1->getValue(step, ent, ele, nod, comp, v[comp]);
           values[0] = x[nod]; values[1] = y[nod]; values[2] = z[nod];
-          if(dataOther){
+          if(otherData){
             if(octree){
-              if(!octree->searchScalar(x[nod], y[nod], z[nod], &w[0], otherTimeStep))
-                if(!octree->searchVector(x[nod], y[nod], z[nod], &w[0], otherTimeStep))
-                  octree->searchTensor(x[nod], y[nod], z[nod], &w[0], otherTimeStep);
+              if(!octree->searchScalar(x[nod], y[nod], z[nod], &w[0], step2))
+                if(!octree->searchVector(x[nod], y[nod], z[nod], &w[0], step2))
+                  octree->searchTensor(x[nod], y[nod], z[nod], &w[0], step2);
             }
             else
-              for(int comp = 0; comp < numCompOther; comp++)
-                dataOther->getValue(otherTimeStep, ent, ele, nod, comp, w[comp]);
+              for(int comp = 0; comp < otherNumComp; comp++)
+                otherData->getValue(step2, ent, ele, nod, comp, w[comp]);
           }
           for(int i = 0; i < 9; i++) values[3 + i] = v[i];
           for(int i = 0; i < 9; i++) values[12 + i] = w[i];
