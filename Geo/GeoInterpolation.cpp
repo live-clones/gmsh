@@ -467,7 +467,7 @@ bool iSRuledSurfaceASphere(Surface *s, SPoint3 &center, double &radius)
       }
     }
   }
-  if (isSphere){
+  if (isSphere && C[0]){
     Vertex *p = C[0]->beg;
     radius = sqrt ((p->Pos.X - center.x())+
                    (p->Pos.Y - center.y())+
