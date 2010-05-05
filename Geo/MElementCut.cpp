@@ -335,7 +335,6 @@ void MLineChild::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
     _intpt[*npts + ip].pt[1] = p.y();
     _intpt[*npts + ip].pt[2] = p.z();
     _intpt[*npts + ip].weight = detJ * weight;
-    std::cout<<"detJ :" << detJ <<std::endl;
   }
   *npts = nptsi;
   *pts = _intpt;
