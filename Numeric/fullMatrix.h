@@ -152,12 +152,14 @@ class fullMatrix
       if (_own_data && _data) delete[] _data;
       _data = new scalar[_r * _c];
       _own_data = true;
+      scale(0.);
       return true;
     }
     else{
       _r = r;
       _c = c;
     }
+    scale(0.);
     return false; // no reallocation
   }
   void setAsProxy(const fullMatrix<scalar> &original)
