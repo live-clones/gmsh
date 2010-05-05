@@ -276,10 +276,6 @@ void MLineChild::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   int nbP = pOrder / 2 + 1;  // MLine::getIntegrationPoints()
   _intpt = new IntPt[nbP];
 
-  std::cout<<"nbP :" << nbP <<std::endl;
- 
- 	std::cout<<"origtype :" << _orig->getTypeForMSH() <<std::endl;
-
   int nptsi;
   IntPt *ptsi;
   double v_uvw[2][3];
@@ -293,6 +289,7 @@ void MLineChild::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 //  }
 
 //  -----------mich mach---------------------//
+
 
 		MVertex *vo = _orig->getVertex(0);
     MVertex *vf = _orig->getVertex(1);
