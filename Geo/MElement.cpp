@@ -776,6 +776,7 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_LIN_10 : if(name) *name = "Line 10";         return 2 + 8;
   case MSH_LIN_11 : if(name) *name = "Line 11";         return 2 + 9;
   case MSH_LIN_B  : if(name) *name = "Line Border";     return 2;
+  case MSH_LIN_C  : if(name) *name = "Line Child";      return 2;
   case MSH_TRI_3  : if(name) *name = "Triangle 3";      return 3;
   case MSH_TRI_6  : if(name) *name = "Triangle 6";      return 3 + 3;
   case MSH_TRI_9  : if(name) *name = "Triangle 9";      return 3 + 6;
@@ -926,6 +927,7 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_LIN_10: return new MLineN(v, num, part);
   case MSH_LIN_11: return new MLineN(v, num, part);
   case MSH_LIN_B:  return new MLineBorder(v, num, part);
+  case MSH_LIN_C:  return new MLineChild(v, num, part);
   case MSH_TRI_3:  return new MTriangle(v, num, part);
   case MSH_TRI_6:  return new MTriangle6(v, num, part);
   case MSH_TRI_9:  return new MTriangleN(v, 3, num, part);

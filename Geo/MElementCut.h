@@ -126,6 +126,8 @@ class MPolyhedron : public MElement {
   {
     _orig->getGradShapeFunctions(u, v, w, s, o);
   }
+  // the parametric coordinates of the polyhedron are
+  // the coordinates in the local parent element.
   virtual void xyz2uvw(double xyz[3], double uvw[3])
   {
     _orig->xyz2uvw(xyz,uvw);
@@ -245,6 +247,8 @@ class MPolygon : public MElement {
   {
     _orig->getGradShapeFunctions(u, v, w, s, o);
   }
+  // the parametric coordinates of the polygon are
+  // the coordinates in the local parent element.
   virtual void xyz2uvw(double xyz[3], double uvw[3])
   {
     _orig->xyz2uvw(xyz,uvw);
@@ -267,6 +271,51 @@ class MPolygon : public MElement {
     return verts;
   }
 };
+
+class MLineChild : public MLine {
+ protected:
+  bool _owner;
+  MElement* _orig;
+  IntPt *_intpt;
+ public:
+  MLineChild(MVertex *v0, MVertex *v1, int num = 0, int part = 0,
+             bool owner = false, MElement* orig = NULL)
+    : MLine(v0, v1, num, part), _owner(owner), _orig(orig) {}
+  MLineChild(std::vector<MVertex*> v, int num = 0, int part = 0,
+           bool owner = false, MElement* orig = NULL)
+    : MLine(v, num, part), _owner(owner), _orig(orig) {}
+  ~MLineChild()
+  {
+    if(_owner)
+      delete _orig;
+  }
+  virtual int getTypeForMSH() const { return MSH_LIN_C; }
+  virtual const polynomialBasis* getFunctionSpace(int order=-1) const
+  {
+    return _orig->getFunctionSpace(order);
+  }
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
+  {
+    _orig->getShapeFunctions(u, v, w, s, o);
+  }
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
+  {
+    _orig->getGradShapeFunctions(u, v, w, s, o);
+  }
+  // the parametric coordinates of the LineChildren are
+  // the coordinates in the local parent element.
+  virtual void xyz2uvw(double xyz[3], double uvw[3])
+  {
+    _orig->xyz2uvw(xyz,uvw);
+  }
+  virtual bool isInside(double u, double v, double w);
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
+  virtual MElement *getParent() const { return _orig; }
+  virtual void setParent(MElement *p, bool owner = false) { _orig = p; _owner = owner; }
+  virtual bool ownsParent() const { return _owner; }
+};
+
+// -------------------- Border classes
 
 class MTriangleBorder : public MTriangle {
  protected:
@@ -401,6 +450,16 @@ class MLineBorder : public MLine {
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 };
 
+// Build a new GModel with elements on each side of the levelset ls.
+// New physical and elementary entities are created.
+// The physical and elementary numbers of the elements with ls < 0 are  
+// the physical and elementary number of the elements cut.
+// The physical and elementary numbers of the elements with ls > 0 are
+// the maximum physical and elementary numbers existing in their dimension + 1.
+// The physical and elementary numbers of the elements on the border (ls=0) are
+// the levelset tag, unless an entity of the same dimension has already this number,
+// knowing that the elements are cut in ascending dimension order (points, lines,
+// surfaces and then volumes).
 GModel *buildCutMesh(GModel *gm, gLevelset *ls,
                      std::map<int, std::vector<MElement*> > elements[10],
                      std::map<int, MVertex*> &vertexMap,

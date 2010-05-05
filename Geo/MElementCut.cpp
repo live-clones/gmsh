@@ -86,11 +86,22 @@ void MPolyhedron::_init()
 
 bool MPolyhedron::isInside(double u, double v, double w)
 {
-  double ksi[3] = {u, v, w};
+  double uvw[3] = {u, v, w};
   for(unsigned int i = 0; i < _parts.size(); i++) {
-    double uvw[3];
-    _parts[i]->xyz2uvw(ksi,uvw);
-    if(_parts[i]->isInside(uvw[0],uvw[1],uvw[2]))
+    double verts[4][3];
+    for(int j = 0; j < 4; j++) {
+      MVertex *vij = _parts[i]->getVertex(j);
+      double v_xyz[3] = {vij->x(), vij->y(), vij->z()};
+      _orig->xyz2uvw(v_xyz, verts[j]);
+    }
+    MVertex v0(verts[0][0], verts[0][1], verts[0][2]);
+    MVertex v1(verts[1][0], verts[1][1], verts[1][2]);
+    MVertex v2(verts[2][0], verts[2][1], verts[2][2]);
+    MVertex v3(verts[3][0], verts[3][1], verts[3][2]);
+    MTetrahedron t(&v0, &v1, &v2, &v3);
+    double ksi[3];
+    t.xyz2uvw(uvw, ksi);
+    if(t.isInside(ksi[0], ksi[1], ksi[2]))
       return true;
   }
   return false;
@@ -176,11 +187,21 @@ void MPolygon::_initVertices()
 }
 bool MPolygon::isInside(double u, double v, double w)
 {
-   double ksi[3] = {u, v, w};
+  double uvw[3] = {u, v, w};
   for(unsigned int i = 0; i < _parts.size(); i++) {
-    double uvw[3];
-    _parts[i]->xyz2uvw(ksi,uvw);
-    if(_parts[i]->isInside(uvw[0],uvw[1],uvw[2]))
+    double v_uvw[3][3];
+    for(int j = 0; j < 3; j++) {
+      MVertex *vij = _parts[i]->getVertex(j);
+      double v_xyz[3] = {vij->x(), vij->y(), vij->z()};
+      _orig->xyz2uvw(v_xyz, v_uvw[j]);
+    }
+    MVertex v0(v_uvw[0][0], v_uvw[0][1], v_uvw[0][2]);
+    MVertex v1(v_uvw[1][0], v_uvw[1][1], v_uvw[1][2]);
+    MVertex v2(v_uvw[2][0], v_uvw[2][1], v_uvw[2][2]);
+    MTriangle t(&v0, &v1, &v2);
+    double ksi[3];
+    t.xyz2uvw(uvw, ksi);
+    if(t.isInside(ksi[0], ksi[1], ksi[2]))
       return true;
   }
   return false;
@@ -220,6 +241,61 @@ void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
     }
     *npts += nptsi;
   }
+  *pts = _intpt;
+}
+
+//----------------------------------- MLineChild ------------------------------
+
+bool MLineChild::isInside(double u, double v, double w)
+{
+  double uvw[3] = {u, v, w};
+  double v_uvw[2][3];
+  for(int i = 0; i < 2; i++) {
+    MVertex *vi = getVertex(i);
+    double v_xyz[3] = {vi->x(), vi->y(), vi->z()};
+    _orig->xyz2uvw(v_xyz, v_uvw[i]);
+  }
+  MVertex v0(v_uvw[0][0], v_uvw[0][1], v_uvw[0][2]);
+  MVertex v1(v_uvw[1][0], v_uvw[1][1], v_uvw[1][2]);
+  MLine l(&v0, &v1);
+  double ksi[3];
+  l.xyz2uvw(uvw, ksi);
+  if(l.isInside(ksi[0], ksi[1], ksi[2]))
+    return true;
+  return false;
+}
+
+void MLineChild::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
+{
+  *npts = 0;
+  double jac[3][3];
+  if(_intpt) delete [] _intpt;
+  _intpt = new IntPt[getNGQLPts(pOrder)];
+  int nptsi;
+  IntPt *ptsi;
+  double v_uvw[2][3];
+  for(int i = 0; i < 2; i++) {
+    MVertex *vi = getVertex(i);
+    double v_xyz[3] = {vi->x(), vi->y(), vi->z()};
+    _orig->xyz2uvw(v_xyz, v_uvw[i]);
+  }
+  MVertex v0(v_uvw[0][0], v_uvw[0][1], v_uvw[0][2]);
+  MVertex v1(v_uvw[1][0], v_uvw[1][1], v_uvw[1][2]);
+  MLine l(&v0, &v1);
+  l.getIntegrationPoints(pOrder, &nptsi, &ptsi);
+  for(int ip = 0; ip < nptsi; ip++){
+    const double u = ptsi[ip].pt[0];
+    const double v = ptsi[ip].pt[1];
+    const double w = ptsi[ip].pt[2];
+    const double weight = ptsi[ip].weight;
+    const double detJ = l.getJacobian(u, v, w, jac);
+    SPoint3 p; l.pnt(u, v, w, p);
+    _intpt[*npts + ip].pt[0] = p.x();
+    _intpt[*npts + ip].pt[1] = p.y();
+    _intpt[*npts + ip].pt[2] = p.z();
+    _intpt[*npts + ip].weight = detJ * weight;
+  }
+  *npts = nptsi;
   *pts = _intpt;
 }
 
@@ -636,9 +712,10 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
           else
             poly[1].push_back(mt);
         }
+        bool own = (eParent && !e->ownsParent()) ? false : true;
         if(poly[0].size()) {
-          bool own = (eParent && !e->ownsParent()) ? false : true;
           p1 = new MPolyhedron(poly[0], ++numEle, ePart, own, parent);
+          own = false;
           int reg = getElementaryTag(-1, elementary, newElemTags[3]);
           std::vector<int> phys;
           getPhysicalTag(-1, gePhysicals, phys, newPhysTags[3]);
@@ -646,7 +723,6 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
           assignPhysicals(GM, phys, reg, 3, physicals);
         }
         if(poly[1].size()) {
-          bool own = poly[0].size() ? false : (eParent && !e->ownsParent()) ? false : true;
           p2 = new MPolyhedron(poly[1], ++numEle, ePart, own, parent);
           elements[9][elementary].push_back(p2);
           assignPhysicals(GM, gePhysicals, elementary, 3, physicals);
@@ -794,9 +870,10 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
           else
             poly[1].push_back(mt);
         }
+        bool own = (eParent && !e->ownsParent()) ? false : true;
         if(poly[0].size()) {
-          bool own = (eParent && !e->ownsParent()) ? false : true;
           p1 = new MPolygon(poly[0], ++numEle, ePart, own, parent);
+          own = false;
           int reg = getElementaryTag(-1, elementary, newElemTags[2]);
           std::vector<int> phys;
           getPhysicalTag(-1, gePhysicals, phys, newPhysTags[2]);
@@ -807,7 +884,6 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
               borders[1].insert(std::pair<MElement*, MElement*>(p1->getDomain(i), p1));
         }
         if(poly[1].size()) {
-          bool own = poly[0].size() ? false : (eParent && !e->ownsParent()) ? false : true;
           p2 = new MPolygon(poly[1], ++numEle, ePart, own, parent);
           elements[8][elementary].push_back(p2);
           assignPhysicals(GM, gePhysicals, elementary, 2, physicals);
@@ -895,7 +971,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
       isCut = L.cut(RPN, ipV, cp, integOrder, lines, 0, nodeLs);
 
       if(isCut) {
-        if(eType == MSH_LIN_2) numEle--; // delete copy
+        bool own = (eParent && !e->ownsParent()) ? false : true;
         for (unsigned int i = nbL; i < lines.size(); i++){
           MVertex *mv[2] = {NULL, NULL};
           for(int j = 0; j < 2; j++){
@@ -916,9 +992,10 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
             }
           }
           MLine *ml;
-          if(eType != MSH_LIN_B) ml = new MLine(mv[0], mv[1], ++numEle, ePart);
+          if(eType != MSH_LIN_B) ml = new MLineChild(mv[0], mv[1], ++numEle, ePart, own, parent);
           else ml = new MLineBorder(mv[0], mv[1], ++numEle, ePart,
                                     copy->getDomain(0), copy->getDomain(1));
+          own = false;
           int reg = getElementaryTag(lines[i]->lsTag(), elementary, newElemTags[1]);
           std::vector<int> phys;
           getPhysicalTag(lines[i]->lsTag(), gePhysicals, phys, newPhysTags[1]);
@@ -928,7 +1005,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
             if(ml->getDomain(i))
               borders[0].insert(std::pair<MElement*, MElement*>(ml->getDomain(i), ml));
         }
-        delete copy;
+        if(eParent) {copy->setParent(NULL, false); delete copy;}
       }
       else { // no cut
         int reg = getElementaryTag(lines[nbL]->lsTag(), elementary, newElemTags[1]);
