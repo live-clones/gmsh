@@ -184,7 +184,8 @@ GEdge *OCCFactory::addNURBS(GModel *gm, GVertex *start, GVertex *end,
     (ctrlPoints, _weights, _knots, _mult, degree, false);
   TopoDS_Edge occEdge;
   if (occv1 && occv2)
-    occEdge = BRepBuilderAPI_MakeEdge(NURBS,occv1->getShape(),occv2->getShape()).Edge();    
+    occEdge = BRepBuilderAPI_MakeEdge(NURBS, occv1->getShape(),
+                                      occv2->getShape()).Edge();    
   else
     occEdge = BRepBuilderAPI_MakeEdge(NURBS).Edge();
   return gm->_occ_internals->addEdgeToModel(gm, occEdge);
@@ -276,7 +277,7 @@ GEntity *OCCFactory::addSphere(GModel *gm, double xc, double yc, double zc, doub
   gm->destroy();
   gm->_occ_internals->buildLists();
   gm->_occ_internals->buildGModel(gm);  
-  return getOCCRegionByNativePtr(gm,TopoDS::Solid(shape));
+  return getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
 }
 
 GEntity *OCCFactory::addCylinder(GModel *gm, std::vector<double> p1,
@@ -308,7 +309,7 @@ GEntity *OCCFactory::addCylinder(GModel *gm, std::vector<double> p1,
   gm->destroy();
   gm->_occ_internals->buildLists();
   gm->_occ_internals->buildGModel(gm);
-  return getOCCRegionByNativePtr(gm,TopoDS::Solid(shape));
+  return getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
 }
 
 GEntity *OCCFactory::addTorus(GModel *gm, std::vector<double> p1, 
@@ -340,7 +341,7 @@ GEntity *OCCFactory::addTorus(GModel *gm, std::vector<double> p1,
   gm->destroy();
   gm->_occ_internals->buildLists();
   gm->_occ_internals->buildGModel(gm);
-  return getOCCRegionByNativePtr(gm,TopoDS::Solid(shape));
+  return getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
 }
 
 GEntity *OCCFactory::addCone(GModel *gm,  std::vector<double> p1, 
@@ -395,17 +396,17 @@ GEntity *OCCFactory::addBlock(GModel *gm, std::vector<double> p1,
   gm->destroy();
   gm->_occ_internals->buildLists();
   gm->_occ_internals->buildGModel(gm);
-  return getOCCRegionByNativePtr(gm,TopoDS::Solid(shape));
+  return getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
 }
 
 GModel *OCCFactory::computeBooleanUnion(GModel* obj, GModel* tool,
                                         int createNewModel)
 {
   try{ 
-    OCC_Internals *occ_obj  = obj->getOCCInternals();
+    OCC_Internals *occ_obj = obj->getOCCInternals();
     OCC_Internals *occ_tool = tool->getOCCInternals();
     
-    if (!occ_obj || !occ_tool)return NULL;
+    if (!occ_obj || !occ_tool) return NULL;
     
     if (createNewModel){
       GModel *temp = new GModel;
@@ -429,11 +430,11 @@ GModel *OCCFactory::computeBooleanUnion(GModel* obj, GModel* tool,
 GModel *OCCFactory::computeBooleanDifference(GModel* obj, GModel* tool, 
                                              int createNewModel)
 {
-  try{ 
-    OCC_Internals *occ_obj  = obj->getOCCInternals();
+  try{
+    OCC_Internals *occ_obj = obj->getOCCInternals();
     OCC_Internals *occ_tool = tool->getOCCInternals();
     
-    if (!occ_obj || !occ_tool)return NULL;
+    if (!occ_obj || !occ_tool) return NULL;
     
     if (createNewModel){
       GModel *temp = new GModel;
@@ -457,10 +458,10 @@ GModel *OCCFactory::computeBooleanIntersection(GModel* obj, GModel* tool,
                                                int createNewModel)
 {
   try{
-    OCC_Internals *occ_obj  = obj->getOCCInternals();
+    OCC_Internals *occ_obj = obj->getOCCInternals();
     OCC_Internals *occ_tool = tool->getOCCInternals();
     
-    if (!occ_obj || !occ_tool)return NULL;
+    if (!occ_obj || !occ_tool) return NULL;
     
     if (createNewModel){
       GModel *temp = new GModel;
@@ -484,14 +485,14 @@ void OCCFactory::fillet(GModel *gm, std::vector<int> edges, double radius)
 {
   try{
     std::vector<TopoDS_Edge> edgesToFillet;
-    for (int i=0;i<edges.size();i++){
+    for (int i = 0; i < edges.size(); i++){
       GEdge *ed = gm->getEdgeByTag(edges[i]);
       if (ed){
 	OCCEdge *occed = dynamic_cast<OCCEdge*>(ed);
 	if (occed)edgesToFillet.push_back(occed->getTopoDS_Edge());
+      }
     }
-    }
-    gm->_occ_internals->fillet(edgesToFillet,radius);
+    gm->_occ_internals->fillet(edgesToFillet, radius);
     gm->destroy();
     gm->_occ_internals->buildLists();
     gm->_occ_internals->buildGModel(gm);  
@@ -530,13 +531,13 @@ void OCCFactory::rotate(GModel *gm, std::vector<double> p1,std::vector<double> p
 
   gp_Trsf transformation;
 
-  gp_Vec direction (gp_Pnt (x1,y1,z1),gp_Pnt (x2,y2,z2));
-  gp_Ax1 axisOfRevolution (gp_Pnt (x1,y1,z1),direction);
+  gp_Vec direction(gp_Pnt(x1, y1, z1), gp_Pnt(x2, y2, z2));
+  gp_Ax1 axisOfRevolution(gp_Pnt(x1, y1, z1), direction);
   transformation.SetRotation(axisOfRevolution, angle);
   BRepBuilderAPI_Transform aTransformation(gm->_occ_internals->getShape(),
                                            transformation, Standard_False);
   TopoDS_Shape temp = aTransformation.Shape();
-  if (!addToTheModel) gm->_occ_internals->loadShape(& temp);
+  if (!addToTheModel) gm->_occ_internals->loadShape(&temp);
   else gm->_occ_internals->buildShapeFromLists(temp);
   gm->destroy();
   gm->_occ_internals->buildLists();
