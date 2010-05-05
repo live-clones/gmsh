@@ -30,6 +30,9 @@
 #include "PViewOptions.h"
 #include "PViewData.h"
 #include "adaptiveData.h"
+#endif
+
+#if defined(HAVE_PLUGINS)
 #include "PluginManager.h"
 #include "Plugin.h"
 #endif
@@ -758,7 +761,9 @@ void PrintOptionsDoc()
           GetOptionSaveLevel(GMSH_FULLRC|GMSH_OPTIONSRC));
   fprintf(file, "@end ftable\n");
   fclose(file);
+#endif
 
+#if defined(HAVE_PLUGINS)
   file = fopen("opt_plugin.texi", "w");
   if(!file) {
     Msg::Error("Unable to open file 'opt_plugin.texi'");
@@ -801,6 +806,7 @@ void PrintOptionsDoc()
   }
   fprintf(file, "@end ftable\n");
   fclose(file);
+#endif
 
 #if defined(HAVE_MESH)
   file = fopen("opt_fields.texi", "w");
@@ -833,8 +839,6 @@ void PrintOptionsDoc()
   }
   fprintf(file, "@end ftable\n");
   fclose(file);
-#endif
-  
 #endif
 }
 

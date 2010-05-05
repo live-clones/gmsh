@@ -508,7 +508,7 @@ void OCCFactory::translate(GModel *gm, std::vector<double> dx, int addToTheModel
   BRepBuilderAPI_Transform aTransformation(gm->_occ_internals->getShape(),
                                            transformation, Standard_False);
   TopoDS_Shape temp = aTransformation.Shape();
-  if (!addToTheModel)gm->_occ_internals->loadShape(& temp);
+  if (!addToTheModel) gm->_occ_internals->loadShape(& temp);
   else gm->_occ_internals->buildShapeFromLists(temp);
   gm->destroy();
   gm->_occ_internals->buildLists();
@@ -518,12 +518,12 @@ void OCCFactory::translate(GModel *gm, std::vector<double> dx, int addToTheModel
 void OCCFactory::rotate(GModel *gm, std::vector<double> p1,std::vector<double> p2,
                         double angle, int addToTheModel)
 {
-  const double x1 =p1[0]; 
-  const double y1 =p1[1]; 
-  const double z1 =p1[2]; 
-  const double x2 =p2[0]; 
-  const double y2 =p2[1]; 
-  const double z2 =p2[2]; 
+  const double x1 = p1[0]; 
+  const double y1 = p1[1]; 
+  const double z1 = p1[2]; 
+  const double x2 = p2[0]; 
+  const double y2 = p2[1]; 
+  const double z2 = p2[2]; 
 
   if (!gm->_occ_internals)
     gm->_occ_internals = new OCC_Internals;
@@ -536,7 +536,7 @@ void OCCFactory::rotate(GModel *gm, std::vector<double> p1,std::vector<double> p
   BRepBuilderAPI_Transform aTransformation(gm->_occ_internals->getShape(),
                                            transformation, Standard_False);
   TopoDS_Shape temp = aTransformation.Shape();
-  if (!addToTheModel)gm->_occ_internals->loadShape(& temp);
+  if (!addToTheModel) gm->_occ_internals->loadShape(& temp);
   else gm->_occ_internals->buildShapeFromLists(temp);
   gm->destroy();
   gm->_occ_internals->buildLists();

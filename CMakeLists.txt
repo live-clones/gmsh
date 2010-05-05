@@ -44,6 +44,7 @@ option(ENABLE_OSMESA "Use OSMesa for offscreen rendering" OFF)
 option(ENABLE_PARSER "Build the GEO file parser" ON)
 option(ENABLE_PETSC "Enable PETSc linear algebra solvers" ON)
 option(ENABLE_POST "Build the post-processing module" ON)
+option(ENABLE_PLUGINS "Build the post-processing plugins" ON)
 option(ENABLE_QT "Build QT GUI" OFF)
 option(ENABLE_READLINE "Enable Readline in Lua prompt" ON)
 option(ENABLE_SLEPC "Enable SLEPc eigensolvers" ON)
@@ -275,9 +276,13 @@ endif(ENABLE_SOLVER)
 
 if(ENABLE_POST)
   add_subdirectory(Post)
-  add_subdirectory(Plugin)
   set(HAVE_POST TRUE)
   list(APPEND CONFIG_OPTIONS "Post")
+  if(ENABLE_PLUGINS)
+    add_subdirectory(Plugin)
+    set(HAVE_PLUGINS TRUE)
+    list(APPEND CONFIG_OPTIONS "Plugins")
+  endif(ENABLE_PLUGINS)
 endif(ENABLE_POST)
 
 if(ENABLE_PARSER)
@@ -335,9 +340,9 @@ elseif(ENABLE_QT)
 endif(ENABLE_FLTK)
 
 if(HAVE_FLTK OR HAVE_QT OR ENABLE_GRAPHICS)
-  if(HAVE_NO_MESH OR HAVE_NO_POST)
-    message(SEND_ERROR "Cannot compile graphical version without Post or Mesh module")
-  endif(HAVE_NO_MESH OR HAVE_NO_POST)
+  if(NOT HAVE_MESH OR NOT HAVE_POST OR NOT HAVE_PLUGINS)
+    message(SEND_ERROR "Cannot compile GUI without Mesh, Post or Plugin modules")
+  endif(NOT HAVE_MESH OR NOT HAVE_POST OR NOT HAVE_PLUGINS)
   # get jpeg lib (if we have fltk first try to get the local jpeg lib)
   if(HAVE_FLTK)
     find_library(FLTK_JPEG fltk_jpeg)
@@ -1076,6 +1081,6 @@ message("Run 'ccmake ${CMAKE_CURRENT_SOURCE_DIR}' to fine-tune the configuration
 message("")
 
 mark_as_advanced(BISON FLEX GMP_LIB GMSH_EXTRA_VERSION HDF5_LIB MAKEINFO 
-                 MED_LIB OCC_INC SZ_LIB TAUCS_LIB LUA_LIB TEXI2PDF
+                 MED_LIB OCC_INC SZ_LIB TAUCS_LIB LUA_LIB ACIS_LIB TEXI2PDF
                  READLINE_LIB)
 

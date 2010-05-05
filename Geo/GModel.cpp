@@ -1470,7 +1470,8 @@ GEdge *GModel::addNURBS(GVertex *start, GVertex *end,
   return 0;
 }
 
-GEntity *GModel::revolve(GEntity *e, std::vector<double> p1, std::vector<double> p2, double angle)
+GEntity *GModel::revolve(GEntity *e, std::vector<double> p1, std::vector<double> p2,
+                         double angle)
 {
   if(_factory)
     return _factory->revolve(this, e, p1, p2, angle);

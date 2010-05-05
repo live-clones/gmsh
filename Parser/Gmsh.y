@@ -40,6 +40,9 @@
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewDataList.h"
+#endif
+
+#if defined(HAVE_PLUGINS)
 #include "PluginManager.h"
 #endif
 
@@ -948,7 +951,7 @@ Affectation :
 
   | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT FExpr tEND 
     {
-#if defined(HAVE_POST)
+#if defined(HAVE_PLUGINS)
       try {
 	PluginManager::instance()->setPluginOption($3, $6, $8); 
       }
@@ -960,7 +963,7 @@ Affectation :
     }
   | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT StringExpr tEND 
     {
-#if defined(HAVE_POST)
+#if defined(HAVE_PLUGINS)
       try {
 	PluginManager::instance()->setPluginOption($3, $6, $8); 
       }
@@ -2345,7 +2348,7 @@ Command :
     }
    | tPlugin '(' tSTRING ')' '.' tSTRING tEND
      {
-#if defined(HAVE_POST)
+#if defined(HAVE_PLUGINS)
        try {
 	 PluginManager::instance()->action($3, $6, 0);
        }

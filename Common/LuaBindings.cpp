@@ -23,9 +23,12 @@
 #include "function.h"
 #include "GModel.h"
 #include "Bindings.h"
-#include "drawContext.h"
 #include "GmshMessage.h"
 #include "linearSystem.h"
+
+#if defined(HAVE_OPENGL)
+#include "drawContext.h"
+#endif
 
 #if defined(HAVE_SOLVER)
 #include "linearSystemCSR.h"
@@ -212,24 +215,28 @@ static int luaHelp (lua_State *L)
   return 0;
 }
 
-#if defined(HAVE_READLINE)
 static int luaSave (lua_State *L)
 {
+#if defined(HAVE_READLINE)
   const char *filename = luaL_checkstring(L, 1);
   write_history(filename);
+#endif
   return 0;
 }
 
 static int luaClear(lua_State *L)
 {
+#if defined(HAVE_READLINE)
   clear_history();
+#endif
   return 0;
 }
-#endif
 
 static int luaRefresh(lua_State *L)
 {
+#if defined(HAVE_OPENGL)
   drawContext::global()->draw();
+#endif
   return 0;
 }
 
@@ -359,11 +366,9 @@ binding::binding()
   luaL_openlibs(L);
 
   lua_register(L, "help",luaHelp);
-#if defined(HAVE_READLINE)
   lua_register(L, "saveHistory", luaSave);
   lua_register(L, "clearHistory", luaClear);
   lua_register(L, "refreshGraphics", luaRefresh);
-#endif
 
   //  lua_pushcfunction(L, luaopen_io);
   //  lua_call(L, 0, 0);
@@ -402,7 +407,6 @@ void *binding::checkudata_with_inheritance (lua_State *L, int ud, const char *tn
   void *p = lua_touserdata(L, ud);
   if (!p)
     return NULL;
-
   lua_getglobal(L, tname);
   if (ud<0) ud--;
   int depth = 1;

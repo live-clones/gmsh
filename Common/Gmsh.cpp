@@ -25,7 +25,7 @@
 #include "meshPartition.h"
 #endif
 
-#if defined(HAVE_POST)
+#if defined(HAVE_PLUGINS)
 #include "PluginManager.h"
 #endif
 
@@ -57,7 +57,7 @@ int GmshInitialize(int argc, char **argv)
   // Make sure we have enough resources (stack)
   CheckResources();
   
-#if defined(HAVE_POST)
+#if defined(HAVE_PLUGINS)
   // Initialize the default plugins
   PluginManager::instance()->registerDefaultPlugins();
 #endif

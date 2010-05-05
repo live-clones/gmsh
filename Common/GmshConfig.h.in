@@ -39,6 +39,7 @@
 #cmakedefine HAVE_OSMESA
 #cmakedefine HAVE_PARSER
 #cmakedefine HAVE_PETSC
+#cmakedefine HAVE_PLUGINS
 #cmakedefine HAVE_POST
 #cmakedefine HAVE_QT
 #cmakedefine HAVE_READLINE
