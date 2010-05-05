@@ -280,10 +280,10 @@ class MLineChild : public MLine {
  public:
   MLineChild(MVertex *v0, MVertex *v1, int num = 0, int part = 0,
              bool owner = false, MElement* orig = NULL)
-    : MLine(v0, v1, num, part), _owner(owner), _orig(orig) {}
+    : MLine(v0, v1, num, part), _owner(owner), _orig(orig), _intpt(0) {}
   MLineChild(std::vector<MVertex*> v, int num = 0, int part = 0,
            bool owner = false, MElement* orig = NULL)
-    : MLine(v, num, part), _owner(owner), _orig(orig) {}
+    : MLine(v, num, part), _owner(owner), _orig(orig), _intpt(0) {}
   ~MLineChild()
   {
     if(_owner)
@@ -452,7 +452,7 @@ class MLineBorder : public MLine {
 
 // Build a new GModel with elements on each side of the levelset ls.
 // New physical and elementary entities are created.
-// The physical and elementary numbers of the elements with ls < 0 are  
+// The physical and elementary numbers of the elements with ls < 0 are
 // the physical and elementary number of the elements cut.
 // The physical and elementary numbers of the elements with ls > 0 are
 // the maximum physical and elementary numbers existing in their dimension + 1.

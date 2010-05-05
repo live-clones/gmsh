@@ -267,22 +267,66 @@ bool MLineChild::isInside(double u, double v, double w)
 
 void MLineChild::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
+
+
   *npts = 0;
   double jac[3][3];
   if(_intpt) delete [] _intpt;
-  _intpt = new IntPt[getNGQLPts(pOrder)];
+
+  int nbP = pOrder / 2 + 1;  // MLine::getIntegrationPoints()
+  _intpt = new IntPt[nbP];
+
+  std::cout<<"nbP :" << nbP <<std::endl;
+ 
+ 	std::cout<<"origtype :" << _orig->getTypeForMSH() <<std::endl;
+
   int nptsi;
   IntPt *ptsi;
   double v_uvw[2][3];
-  for(int i = 0; i < 2; i++) {
-    MVertex *vi = getVertex(i);
-    double v_xyz[3] = {vi->x(), vi->y(), vi->z()};
-    _orig->xyz2uvw(v_xyz, v_uvw[i]);
-  }
+
+// -------------before--------------------//
+
+//  for(int i = 0; i < 2; i++) {
+//    MVertex *vi = getVertex(i);
+//    double v_xyz[3] = {vi->x(), vi->y(), vi->z()};
+//    _orig->xyz2uvw(v_xyz, v_uvw[i]);
+//  }
+
+//  -----------mich mach---------------------//
+
+		MVertex *vo = _orig->getVertex(0);
+    MVertex *vf = _orig->getVertex(1);
+
+		SPoint3 P(vo->x(), vo->y(), vo->z());
+    SPoint3 Q(vf->x(), vf->y(), vf->z());
+
+		SPoint3 R;
+  
+    R = P + Q;
+    R/=2;
+
+		vo = getVertex(0);
+    vf = getVertex(1);
+
+    SPoint3 A(vo->x(), vo->y(), vo->z());
+    SPoint3 B(vf->x(), vf->y(), vf->z());
+
+    double lengthDemi = R.distance(Q);
+	    
+    if (P.distance(A) < Q.distance(A)) {v_uvw[0][0] = - R.distance(A)/lengthDemi;v_uvw[0][1]=0;v_uvw[0][2]=0;}
+    else {v_uvw[0][0] = R.distance(A)/lengthDemi;v_uvw[0][1]=0;v_uvw[0][2]=0;}
+		
+    if (P.distance(B) < Q.distance(B)) {v_uvw[1][0] = - R.distance(B)/lengthDemi;v_uvw[1][1]=0;v_uvw[1][2]=0;}
+    else {v_uvw[1][0] = R.distance(B)/lengthDemi;v_uvw[1][1]=0;v_uvw[1][2]=0;}
+
+//  ---------------------------------------//
+
   MVertex v0(v_uvw[0][0], v_uvw[0][1], v_uvw[0][2]);
   MVertex v1(v_uvw[1][0], v_uvw[1][1], v_uvw[1][2]);
+
   MLine l(&v0, &v1);
   l.getIntegrationPoints(pOrder, &nptsi, &ptsi);
+
   for(int ip = 0; ip < nptsi; ip++){
     const double u = ptsi[ip].pt[0];
     const double v = ptsi[ip].pt[1];
@@ -294,9 +338,11 @@ void MLineChild::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
     _intpt[*npts + ip].pt[1] = p.y();
     _intpt[*npts + ip].pt[2] = p.z();
     _intpt[*npts + ip].weight = detJ * weight;
+    std::cout<<"detJ :" << detJ <<std::endl;
   }
   *npts = nptsi;
   *pts = _intpt;
+
 }
 
 //----------------------------------- MTriangleBorder ------------------------------
