@@ -31,18 +31,8 @@ const polynomialBasis* MLine::getFunctionSpace(int o) const
 
 void MLine::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
-  static IntPt GQL[100]; 
-  double *t, *w;
-  int nbP = pOrder / 2 + 1;
-  gmshGaussLegendre1D(nbP, &t, &w);
-  for (int i = 0; i < nbP; i++){
-    GQL[i].pt[0] = t[i];
-    GQL[i].pt[1] = 0;
-    GQL[i].pt[2] = 0;
-    GQL[i].weight = w[i];
-  }
-  *npts = nbP;
-  *pts = GQL;
+  *npts = getNGQLPts(pOrder);
+  *pts = getGQLPts(pOrder);
 }
 
 double MLine::getInnerRadius()

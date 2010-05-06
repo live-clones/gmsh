@@ -267,14 +267,10 @@ bool MLineChild::isInside(double u, double v, double w)
 
 void MLineChild::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
-
-
   *npts = 0;
   double jac[3][3];
   if(_intpt) delete [] _intpt;
-
-  int nbP = pOrder / 2 + 1;  // MLine::getIntegrationPoints()
-  _intpt = new IntPt[nbP];
+  _intpt = new IntPt[getNGQLPts(pOrder)];
 
   int nptsi;
   IntPt *ptsi;
@@ -291,30 +287,30 @@ void MLineChild::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 //  -----------mich mach---------------------//
 
 
-		MVertex *vo = _orig->getVertex(0);
-    MVertex *vf = _orig->getVertex(1);
+  MVertex *vo = _orig->getVertex(0);
+  MVertex *vf = _orig->getVertex(1);
 
-		SPoint3 P(vo->x(), vo->y(), vo->z());
-    SPoint3 Q(vf->x(), vf->y(), vf->z());
+  SPoint3 P(vo->x(), vo->y(), vo->z());
+  SPoint3 Q(vf->x(), vf->y(), vf->z());
 
-		SPoint3 R;
-  
-    R = P + Q;
-    R/=2;
+  SPoint3 R;
 
-		vo = getVertex(0);
-    vf = getVertex(1);
+  R = P + Q;
+  R/=2;
 
-    SPoint3 A(vo->x(), vo->y(), vo->z());
-    SPoint3 B(vf->x(), vf->y(), vf->z());
+  vo = getVertex(0);
+  vf = getVertex(1);
 
-    double lengthDemi = R.distance(Q);
-	    
-    if (P.distance(A) < Q.distance(A)) {v_uvw[0][0] = - R.distance(A)/lengthDemi;v_uvw[0][1]=0;v_uvw[0][2]=0;}
-    else {v_uvw[0][0] = R.distance(A)/lengthDemi;v_uvw[0][1]=0;v_uvw[0][2]=0;}
-		
-    if (P.distance(B) < Q.distance(B)) {v_uvw[1][0] = - R.distance(B)/lengthDemi;v_uvw[1][1]=0;v_uvw[1][2]=0;}
-    else {v_uvw[1][0] = R.distance(B)/lengthDemi;v_uvw[1][1]=0;v_uvw[1][2]=0;}
+  SPoint3 A(vo->x(), vo->y(), vo->z());
+  SPoint3 B(vf->x(), vf->y(), vf->z());
+
+  double lengthDemi = R.distance(Q);
+
+  if (P.distance(A) < Q.distance(A)) {v_uvw[0][0] = - R.distance(A)/lengthDemi;v_uvw[0][1]=0;v_uvw[0][2]=0;}
+  else {v_uvw[0][0] = R.distance(A)/lengthDemi;v_uvw[0][1]=0;v_uvw[0][2]=0;}
+
+  if (P.distance(B) < Q.distance(B)) {v_uvw[1][0] = - R.distance(B)/lengthDemi;v_uvw[1][1]=0;v_uvw[1][2]=0;}
+  else {v_uvw[1][0] = R.distance(B)/lengthDemi;v_uvw[1][1]=0;v_uvw[1][2]=0;}
 
 //  ---------------------------------------//
 

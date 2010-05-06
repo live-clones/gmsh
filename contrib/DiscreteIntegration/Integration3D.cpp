@@ -3,7 +3,7 @@
 
 #include "Integration3D.h"
 #include "recurCut.h"
-#include "../../Numeric/Gauss.h"
+#include "Gauss.h"
 
 #define ZERO_LS_TOL  1.e-7
 #define EQUALITY_TOL 1.e-15
