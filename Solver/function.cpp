@@ -174,7 +174,25 @@ function *functionSumNew(const function *f0, const function *f1) {
 }
 
 
+class functionScale : public function {
+  public:
+  fullMatrix<double> _f0;
+  double _s;
+  void call(dataCacheMap *m, fullMatrix<double> &val) {
+    for(int i=0;i<val.size1();i++)
+      for(int j=0;j<val.size2();j++){
+        val(i,j)= _f0(i,j)*_s;
+      }
+  }
+  functionScale(const function *f0, const double s):function(f0->getNbCol()){
+    setArgument (_f0, f0);
+    _s = s;
+  }
+};
 
+function *functionScaleNew(const function *f0, const double s) {
+  return new functionScale (f0, s);
+}
 
 // get XYZ coordinates
 class functionCoordinates : public function {
