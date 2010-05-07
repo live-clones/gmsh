@@ -248,7 +248,9 @@ class functionReplaceCache {
 functionConstant *functionConstantNew(const std::vector<double>&);
 functionConstant *functionConstantNew(double);
 function *functionSumNew (const function *f0, const function *f1);
+function *functionProdNew (const function *f0, const function *f1);
 function *functionScaleNew (const function *f0, const double s);
+function *functionExtractCompNew (const function *f0, const int iComp);
 
 class functionSolution : public function {
   static functionSolution *_instance;

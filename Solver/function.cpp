@@ -173,6 +173,47 @@ function *functionSumNew(const function *f0, const function *f1) {
   return new functionSum (f0, f1);
 }
 
+class functionProd : public function {
+  public:
+  fullMatrix<double> _f0, _f1;
+  void call(dataCacheMap *m, fullMatrix<double> &val) {
+    for(int i=0;i<val.size1();i++)
+      for(int j=0;j<val.size2();j++){
+        val(i,j)= _f0(i,j)*_f1(i,j);
+      }
+  }
+  functionProd(const function *f0, const function *f1):function(f0->getNbCol()){
+    if (f0->getNbCol() != f1->getNbCol()) {
+      Msg::Error("trying to compute product of 2 functions of different sizes\n");
+      throw;
+    }
+    setArgument (_f0, f0);
+    setArgument (_f1, f1);
+  }
+};
+
+function *functionProdNew(const function *f0, const function *f1) {
+  return new functionProd (f0, f1);
+}
+
+class functionExtractComp : public function {
+  public:
+  fullMatrix<double> _f0;
+  double _iComp;
+  void call(dataCacheMap *m, fullMatrix<double> &val) {
+    for(int i=0;i<val.size1();i++)
+        val(i,0)= _f0(i,_iComp);
+  }
+  functionExtractComp(const function *f0, const int iComp):function(1){
+    setArgument (_f0, f0);
+    _iComp = iComp;
+  }
+};
+
+function *functionExtractCompNew(const function *f0, const int iComp) {
+  return new functionExtractComp (f0, iComp);
+}
+
 
 class functionScale : public function {
   public:
