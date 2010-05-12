@@ -46,7 +46,7 @@ class linearSystemCSR : public linearSystem<scalar> {
   {
     allocate(0);
   }
-  virtual void addToMatrix(int il, int ic, const double &val) 
+  virtual void addToMatrix(int il, int ic, const scalar &val) 
   {
     INDEX_TYPE  *jptr  = (INDEX_TYPE*) _jptr->array;
     INDEX_TYPE  *ptr   = (INDEX_TYPE*) _ptr->array;

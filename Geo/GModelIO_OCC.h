@@ -31,7 +31,6 @@ class OCC_Internals {
   TopoDS_Shape getShape () { return shape; }
   void buildLists();
   void buildShapeFromLists(TopoDS_Shape _shape);
-  const TopoDS_Shape *lookupInLists(TopoDS_Shape _shape);
   void addShapeToLists(TopoDS_Shape shape);
   void healGeometry(double tolerance, bool fixsmalledges, 
                     bool fixspotstripfaces, bool sewfaces, 

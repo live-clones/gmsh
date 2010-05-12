@@ -52,22 +52,6 @@ void OCC_Internals::buildShapeFromLists(TopoDS_Shape _shape)
 
 }
 
-const TopoDS_Shape *OCC_Internals::lookupInLists(TopoDS_Shape _shape)
-{
-  if (_shape.ShapeType() == TopAbs_VERTEX) {
-    TopoDS_Vertex vertex = TopoDS::Vertex(_shape);
-    int i = vmap.FindIndex(vertex);
-    if( i < 1)return NULL;
-    else return &vmap(i);
-  }
-  else if (_shape.ShapeType() == TopAbs_EDGE) {
-    TopoDS_Edge edge = TopoDS::Edge(_shape);
-    int i = emap.FindIndex(edge);
-    if( i < 1)return 0;
-    else return &emap(i);
-  }
-}
-
 void OCC_Internals::addShapeToLists(TopoDS_Shape _shape)
 {
   TopExp_Explorer exp0, exp1, exp2, exp3, exp4, exp5;
@@ -483,7 +467,6 @@ GVertex *OCC_Internals::addVertexToModel(GModel *model, TopoDS_Vertex vertex)
   if (gv) return gv;
   addShapeToLists(vertex);
   buildShapeFromLists(vertex);
-  //  buildLists();
   buildGModel(model);
   return getOCCVertexByNativePtr (model,vertex);
 }
@@ -494,7 +477,6 @@ GEdge *OCC_Internals::addEdgeToModel(GModel *model, TopoDS_Edge edge)
   if (ge) return ge;
   addShapeToLists(edge);
   buildShapeFromLists(edge);
-  //  buildLists();
   buildGModel(model);
   return getOCCEdgeByNativePtr(model,edge);
 }
@@ -504,7 +486,6 @@ GFace* OCC_Internals::addFaceToModel(GModel *model, TopoDS_Face face){
   if (gf) return gf;
   addShapeToLists(face);
   buildShapeFromLists(face);
-  //  buildLists();
   buildGModel(model);
   return getOCCFaceByNativePtr(model,face);
 }
@@ -515,9 +496,6 @@ GRegion* OCC_Internals::addRegionToModel(GModel *model, TopoDS_Solid region){
   if (gr) return gr;
   addShapeToLists(region);
   buildShapeFromLists(region);
-  //buildLists();
-  //  buildLists();
-  // TEST
   buildGModel(model);
   return getOCCRegionByNativePtr(model,region);
 }
