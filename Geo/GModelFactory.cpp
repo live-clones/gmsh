@@ -11,11 +11,17 @@
 #include "GModelIO_OCC.h"
 #include "OCCVertex.h"
 #include "OCCEdge.h"
+#include "OCCFace.h"
 #include "OCCRegion.h"
 #include "BRepBuilderAPI_MakeVertex.hxx"
+#include "BRepOffsetAPI_MakePipe.hxx"
 #include "BRepBuilderAPI_MakeEdge.hxx"
 #include "BRepPrimAPI_MakeRevol.hxx"
 #include "BRepPrimAPI_MakePrism.hxx"
+#include "BRepBuilderAPI_MakeWire.hxx"
+#include "BRepOffsetAPI_ThruSections.hxx"
+#include "BRepOffsetAPI_MakeFilling.hxx"
+#include "BRepBuilderAPI_MakeFace.hxx"
 #include <GC_MakeArcOfCircle.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Vec.hxx>
@@ -170,8 +176,8 @@ GEdge *OCCFactory::addNURBS(GModel *gm, GVertex *start, GVertex *end,
   }
 
   const int degree = totKnots - nbControlPoints - 1;
-  printf("creation of a nurbs of degree %d with %d control points\n",
-         degree,nbControlPoints);
+  Msg::Debug("creation of a nurbs of degree %d with %d control points",
+	     degree,nbControlPoints);
   
   int index = 1;
   ctrlPoints.SetValue(index++, gp_Pnt(start->x(), start->y(), start->z()));  
@@ -543,5 +549,144 @@ void OCCFactory::rotate(GModel *gm, std::vector<double> p1,std::vector<double> p
   gm->_occ_internals->buildLists();
   gm->_occ_internals->buildGModel(gm);    
 }
+
+
+std::vector<GFace *> OCCFactory::addRuledFaces (GModel *gm, std::vector< std::vector<GEdge *> > wires){
+
+  std::vector<GFace*> faces;
+  Standard_Boolean anIsSolid = Standard_False;
+  Standard_Boolean anIsRuled = Standard_True;
+  BRepOffsetAPI_ThruSections aGenerator (anIsSolid,anIsRuled);
+
+  for (int i=0;i<wires.size();i++) {
+    BRepBuilderAPI_MakeWire wire_maker;
+    for (int j=0;j<wires[i].size();j++) {
+      GEdge *ge = wires[i][j];
+      printf("edge %d\n",ge->tag());
+      OCCEdge *occe = dynamic_cast<OCCEdge*>(ge);
+      if (occe){
+	wire_maker.Add(occe->getTopoDS_Edge());
+      }
+    }
+    aGenerator.AddWire (wire_maker.Wire());
+  }
+  
+  aGenerator.CheckCompatibility (Standard_False);  
+
+  aGenerator.Build();
+  
+  TopoDS_Shape aResult = aGenerator.Shape();
+
+  TopExp_Explorer exp2;
+  for(exp2.Init(TopoDS::Shell(aResult), TopAbs_FACE); exp2.More(); exp2.Next()){
+    TopoDS_Face face = TopoDS::Face(exp2.Current());
+    GFace *ret = gm->_occ_internals->addFaceToModel(gm, face);
+    faces.push_back(ret);
+  }
+  return faces;
+}
+
+GFace * OCCFactory::addFace (GModel *gm, std::vector<GEdge *> edges, std::vector< std::vector<double > > points){
+
+  BRepOffsetAPI_MakeFilling aGenerator;
+
+  for (int i=0;i<edges.size();i++) {
+    GEdge *ge = edges[i];
+    OCCEdge *occe = dynamic_cast<OCCEdge*>(ge);
+    if (occe){
+      aGenerator.Add(occe->getTopoDS_Edge(),GeomAbs_C0);
+    }
+  }
+  for (int i=0;i<points.size();i++) {
+    gp_Pnt aPnt (points[i][0],points[i][1],points[i][2]);
+    aGenerator.Add(aPnt);
+  }
+
+  aGenerator.Build();
+  
+  TopoDS_Shape aResult = aGenerator.Shape();
+  return gm->_occ_internals->addFaceToModel(gm, TopoDS::Face(aResult));
+}
+
+extern void computeMeanPlane(const std::vector<SPoint3> &points, mean_plane &meanPlane);
+
+GFace * OCCFactory::addPlanarFace (GModel *gm, std::vector< std::vector<GEdge *> > wires){
+  
+  std::set<GVertex*> verts;
+  for (int i=0;i<wires.size();i++) {
+    for (int j=0;j<wires[i].size();j++) {
+      GEdge *ge = wires[i][j];
+      verts.insert(ge->getBeginVertex());
+      verts.insert(ge->getEndVertex());
+    }
+  }
+  std::vector<SPoint3> points;
+  std::set<GVertex*>::iterator it = verts.begin();
+  for ( ; it != verts.end(); ++it){
+    points.push_back(SPoint3((*it)->x(),(*it)->y(),(*it)->z()));
+  }
+  mean_plane meanPlane;
+  computeMeanPlane(points, meanPlane);
+
+  gp_Pln aPlane (meanPlane.a,meanPlane.b,meanPlane.c,meanPlane.d);
+  BRepBuilderAPI_MakeFace aGenerator (aPlane);
+  
+  for (int i=0;i<wires.size();i++) {
+    BRepBuilderAPI_MakeWire wire_maker;
+    for (int j=0;j<wires[i].size();j++) {
+      GEdge *ge = wires[i][j];
+      OCCEdge *occe = dynamic_cast<OCCEdge*>(ge);
+      if (occe){
+	wire_maker.Add(occe->getTopoDS_Edge());
+      }
+    }
+    TopoDS_Wire myWire = wire_maker.Wire();
+    if (i)myWire.Reverse();
+    aGenerator.Add (myWire);
+  }
+  
+  aGenerator.Build();
+  
+  TopoDS_Shape aResult = aGenerator.Shape();
+  return gm->_occ_internals->addFaceToModel(gm, TopoDS::Face(aResult));
+}
+
+GEntity * OCCFactory::addPipe (GModel *gm, GEntity *base, std::vector<GEdge *> wire){
+  
+  BRepBuilderAPI_MakeWire wire_maker;
+  for (int j=0;j<wire.size();j++) {
+    GEdge *ge = wire[j];
+    OCCEdge *occe = dynamic_cast<OCCEdge*>(ge);
+    if (occe){
+      wire_maker.Add(occe->getTopoDS_Edge());
+    }
+  }
+  TopoDS_Wire myWire = wire_maker.Wire();
+  
+
+  GEntity *ret;
+  if (base->cast2Vertex()){
+    OCCVertex *occv = dynamic_cast<OCCVertex*>(base);
+    BRepOffsetAPI_MakePipe myNiceLittlePipe (myWire,occv->getShape());
+    TopoDS_Edge result = TopoDS::Edge(myNiceLittlePipe.Shape());
+    ret = gm->_occ_internals->addEdgeToModel(gm, result);
+  }
+  if (base->cast2Edge()){
+    OCCEdge *occe = dynamic_cast<OCCEdge*>(base);
+    BRepOffsetAPI_MakePipe myNiceLittlePipe (myWire,occe->getTopoDS_Edge());
+    TopoDS_Face result = TopoDS::Face(myNiceLittlePipe.Shape());
+    ret = gm->_occ_internals->addFaceToModel(gm, result);
+  }
+  if (base->cast2Face()){
+    OCCFace *occf = dynamic_cast<OCCFace*>(base);
+    BRepOffsetAPI_MakePipe myNiceLittlePipe (myWire,occf->getTopoDS_Face());
+    TopoDS_Solid result = TopoDS::Solid(myNiceLittlePipe.Shape());
+    ret = gm->_occ_internals->addRegionToModel(gm, result);
+  }
+  return ret;
+}
+
+
+
 
 #endif

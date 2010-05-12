@@ -167,7 +167,7 @@ int GmshBatch()
     GModel::current()->checkMeshCoherence(CTX::instance()->geom.tolerance);
   }
   else if(CTX::instance()->batch == -1){
-    CreateOutputFile(CTX::instance()->outputFileName, FORMAT_GEO);
+    CreateOutputFile(CTX::instance()->outputFileName, FORMAT_AUTO);
   }
   else if(CTX::instance()->batch > 0){
 #if defined(HAVE_MESH)

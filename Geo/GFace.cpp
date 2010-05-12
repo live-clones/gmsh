@@ -484,6 +484,88 @@ end:
   }
 }
 
+void computeMeanPlane(const std::vector<SPoint3> &points, mean_plane &meanPlane)
+{
+  double xm = 0., ym = 0., zm = 0.;
+  int ndata = points.size();
+  int na = 3;
+  for(int i = 0; i < ndata; i++) {
+    xm += points[i].x();
+    ym += points[i].y();
+    zm += points[i].z();
+  }
+  xm /= (double)ndata;
+  ym /= (double)ndata;
+  zm /= (double)ndata;
+
+  fullMatrix<double> U(ndata, na), V(na, na);
+  fullVector<double> sigma(na);
+  for(int i = 0; i < ndata; i++) {
+    U(i, 0) = points[i].x() - xm;
+    U(i, 1) = points[i].y() - ym;
+    U(i, 2) = points[i].z() - zm;
+  }
+  U.svd(V, sigma);
+  double res[4], svd[3];
+  svd[0] = sigma(0);
+  svd[1] = sigma(1);
+  svd[2] = sigma(2);
+  int min;
+  if(fabs(svd[0]) < fabs(svd[1]) && fabs(svd[0]) < fabs(svd[2]))
+    min = 0;
+  else if(fabs(svd[1]) < fabs(svd[0]) && fabs(svd[1]) < fabs(svd[2]))
+    min = 1;
+  else
+    min = 2;
+  res[0] = V(0, min);
+  res[1] = V(1, min);
+  res[2] = V(2, min);
+  norme(res);
+
+  double ex[3], t1[3], t2[3];
+
+  ex[0] = ex[1] = ex[2] = 0.0;
+  if(res[0] == 0.)
+    ex[0] = 1.0;
+  else if(res[1] == 0.)
+    ex[1] = 1.0;
+  else
+    ex[2] = 1.0;
+
+  prodve(res, ex, t1);
+  norme(t1);
+  prodve(t1, res, t2);
+  norme(t2);
+
+  res[3] = (xm * res[0] + ym * res[1] + zm * res[2]);
+
+  for(int i = 0; i < 3; i++)
+    meanPlane.plan[0][i] = t1[i];
+  for(int i = 0; i < 3; i++)
+    meanPlane.plan[1][i] = t2[i];
+  for(int i = 0; i < 3; i++)
+    meanPlane.plan[2][i] = res[i];
+
+  meanPlane.a = res[0];
+  meanPlane.b = res[1];
+  meanPlane.c = res[2];
+  meanPlane.d = res[3];
+
+  meanPlane.x = meanPlane.y = meanPlane.z = 0.;
+  if(fabs(meanPlane.a) >= fabs(meanPlane.b) &&
+     fabs(meanPlane.a) >= fabs(meanPlane.c) ){
+    meanPlane.x = meanPlane.d / meanPlane.a;
+  }
+  else if(fabs(meanPlane.b) >= fabs(meanPlane.a) &&
+          fabs(meanPlane.b) >= fabs(meanPlane.c)){
+    meanPlane.y = meanPlane.d / meanPlane.b;
+  }
+  else{
+    meanPlane.z = meanPlane.d / meanPlane.c;
+  }
+}
+
+
 void GFace::getMeanPlaneData(double VX[3], double VY[3],
                              double &x, double &y, double &z) const
 {

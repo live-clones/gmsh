@@ -265,6 +265,11 @@ bool GRegion::edgeConnected(GRegion *r) const
 void GRegion::replaceFaces (std::list<GFace*> &new_faces)
 {
   replaceFacesInternal (new_faces);
+  if (l_faces.size() != new_faces.size()){
+    Msg::Fatal("impossible to replace faces in region %d (%d vs %d)",tag(),
+	       l_faces.size(),new_faces.size());
+  }
+
   std::list<GFace*>::iterator it  = l_faces.begin();
   std::list<GFace*>::iterator it2 = new_faces.begin();
   std::list<int>::iterator it3 = l_dirs.begin();

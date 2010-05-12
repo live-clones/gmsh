@@ -36,7 +36,6 @@ void OCC_Internals::buildShapeFromLists(TopoDS_Shape _shape)
   BRep_Builder B;
   TopoDS_Compound C;
   B.MakeCompound(C);
-  //  B.Add(C,_shape);
 
   TopTools_ListOfShape theList;
   addSimpleShapes(_shape, theList);
@@ -45,9 +44,12 @@ void OCC_Internals::buildShapeFromLists(TopoDS_Shape _shape)
 
   for(int i = 1; i <= vmap.Extent(); i++) B.Add(C, vmap(i));
   for(int i = 1; i <= emap.Extent(); i++) B.Add(C, emap(i));
+  for(int i = 1; i <= wmap.Extent(); i++) B.Add(C, wmap(i));
   for(int i = 1; i <= fmap.Extent(); i++) B.Add(C, fmap(i));
+  for(int i = 1; i <= shmap.Extent(); i++) B.Add(C, shmap(i));
   for(int i = 1; i <= somap.Extent(); i++) B.Add(C, somap(i));
   shape = C;
+
 }
 
 const TopoDS_Shape *OCC_Internals::lookupInLists(TopoDS_Shape _shape)
@@ -413,7 +415,15 @@ void OCC_Internals::loadBREP(const char *fn)
 
 void OCC_Internals::writeBREP(const char *fn)
 {
-  BRepTools::Write(shape, (char*)fn);
+  std::ofstream myFile;
+  myFile.open (fn);
+  try {
+    BRepTools::Write(shape, myFile);
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("%s", err.GetMessageString());
+  }
+  myFile.close ();
 }
 
 void OCC_Internals::loadSTEP(const char *fn)
@@ -472,6 +482,8 @@ GVertex *OCC_Internals::addVertexToModel(GModel *model, TopoDS_Vertex vertex)
   GVertex *gv = getOCCVertexByNativePtr(model, vertex);
   if (gv) return gv;
   addShapeToLists(vertex);
+  buildShapeFromLists(vertex);
+  //  buildLists();
   buildGModel(model);
   return getOCCVertexByNativePtr (model,vertex);
 }
@@ -481,6 +493,8 @@ GEdge *OCC_Internals::addEdgeToModel(GModel *model, TopoDS_Edge edge)
   GEdge *ge = getOCCEdgeByNativePtr(model, edge);
   if (ge) return ge;
   addShapeToLists(edge);
+  buildShapeFromLists(edge);
+  //  buildLists();
   buildGModel(model);
   return getOCCEdgeByNativePtr(model,edge);
 }
@@ -489,6 +503,8 @@ GFace* OCC_Internals::addFaceToModel(GModel *model, TopoDS_Face face){
   GFace *gf = getOCCFaceByNativePtr(model,face);
   if (gf) return gf;
   addShapeToLists(face);
+  buildShapeFromLists(face);
+  //  buildLists();
   buildGModel(model);
   return getOCCFaceByNativePtr(model,face);
 }
@@ -498,6 +514,8 @@ GRegion* OCC_Internals::addRegionToModel(GModel *model, TopoDS_Solid region){
   GRegion *gr  = getOCCRegionByNativePtr(model,region);
   if (gr) return gr;
   addShapeToLists(region);
+  buildShapeFromLists(region);
+  //buildLists();
   //  buildLists();
   // TEST
   buildGModel(model);

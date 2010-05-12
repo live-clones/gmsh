@@ -25,8 +25,10 @@ class GModelFactory {
   // brep primitives
   enum arcCreationMethod {THREE_POINTS=1, CENTER_START_END=2};
   enum splineType {BEZIER=1, BSPLINE=2};
+  // vertex primitive
   virtual GVertex *addVertex(GModel *gm, double x, double y, double z, 
                              double lc) = 0;
+  // edge primitives
   virtual GEdge *addLine(GModel *, GVertex *v1, GVertex *v2) = 0;
   virtual GEdge *addCircleArc(GModel *gm, const arcCreationMethod &method,
                               GVertex *start, GVertex *end, 
@@ -40,10 +42,19 @@ class GModelFactory {
 			  std::vector<double> knots,
 			  std::vector<double> weights, 
 			  std::vector<int> multiplicity) = 0;
+  // faces primitives
+  // this one tries to build a model face with one single list
+  // of faces. If boundaries are co-planar, then it's a plane, 
+  // otherwise, we tru ruled, sweep or other kind of surfaces
+  virtual std::vector<GFace *> addRuledFaces (GModel *gm, std::vector<std::vector<GEdge *> > edges) = 0; 
+  virtual GFace * addFace (GModel *gm, std::vector<GEdge *> edges, std::vector< std::vector<double > > points) = 0;
+  virtual GFace * addPlanarFace (GModel *gm, std::vector<std::vector<GEdge *> > edges) = 0;
+  // sweep stuff
   virtual GEntity *revolve(GModel *gm, GEntity*, std::vector<double> p1, 
                            std::vector<double> p2, double angle) = 0;
   virtual GEntity *extrude(GModel *gm, GEntity*, std::vector<double> p1, 
                            std::vector<double> p2) = 0;
+  virtual GEntity* addPipe (GModel *gm, GEntity *base, std::vector<GEdge *> wire) = 0;
 
   // solid primitives
   virtual GEntity *addSphere(GModel *gm, double cx, double cy, double cz, 
@@ -99,9 +110,13 @@ class OCCFactory : public GModelFactory {
                    std::vector<double> p2, double angle);
   GEntity *extrude (GModel *gm, GEntity*,std::vector<double> p1,
                     std::vector<double> p2);
+  GEntity* addPipe (GModel *gm, GEntity *base, std::vector<GEdge *> wire);
   GEntity *addSphere(GModel *gm,double cx, double cy, double cz, double radius); 
   GEntity *addCylinder(GModel *gm,std::vector<double> p1, std::vector<double> p2, 
                        double radius); 
+  std::vector<GFace *> addRuledFaces (GModel *gm, std::vector<std::vector<GEdge *> > edges); 
+  GFace * addFace (GModel *gm, std::vector<GEdge *> edges, std::vector< std::vector<double > > points);
+  GFace * addPlanarFace (GModel *gm, std::vector<std::vector<GEdge *> > edges);
   GEntity *addTorus(GModel *gm,std::vector<double> p1, std::vector<double> p2, 
 		     double radius1, double radius2); 
   GEntity *addBlock(GModel *gm,std::vector<double> p1, std::vector<double> p2); 

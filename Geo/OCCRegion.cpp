@@ -23,6 +23,7 @@ OCCRegion::OCCRegion(GModel *m, TopoDS_Solid _s, int num)
 
 void OCCRegion::setup()
 {
+  l_faces.clear();
   TopExp_Explorer exp2, exp3;
   for(exp2.Init(s, TopAbs_SHELL); exp2.More(); exp2.Next()){
     TopoDS_Shape shell = exp2.Current();
@@ -57,8 +58,6 @@ bool FaceHaveDifferentOrientations(const TopoDS_Face& aFR,
 void OCCRegion::replaceFacesInternal(std::list<GFace*> &new_faces)
 {
   // we simply replace old faces by new faces in the structure
-  Standard_Integer aNbS;
-  TopTools_IndexedMapOfShape aMS;
   TopExp_Explorer aExpS, aExpF;
   BRep_Builder aBB;
   TopoDS_Compound aCmp;

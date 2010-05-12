@@ -38,6 +38,32 @@ template<class Iterator,class Assembler> void Assemble(BilinearTermBase &term,Fu
   }
 }
 
+template<class Iterator,class Assembler> void Assemble(BilinearTermBase &term,
+						       FunctionSpaceBase &shapeFcts,
+						       FunctionSpaceBase &testFcts,
+						       Iterator itbegin,
+						       Iterator itend,
+						       QuadratureBase &integrator,
+						       Assembler &assembler) // non symmetric
+{
+  fullMatrix<typename Assembler::dataMat> localMatrix;
+  std::vector<Dof> R;
+  std::vector<Dof> C;
+  for (Iterator it = itbegin;it!=itend; ++it)
+  {
+    MElement *e = *it;
+    R.clear();
+    C.clear();
+    IntPt *GP;
+    int npts=integrator.getIntPoints(e,&GP);
+    term.get(e,npts,GP,localMatrix);
+    shapeFcts.getKeys(e,R);
+    testFcts.getKeys(e,C);
+    assembler.assemble(R, C, localMatrix);
+  }
+}
+
+
 template<class Assembler> void Assemble(BilinearTermBase &term,FunctionSpaceBase &space,MElement *e,QuadratureBase &integrator,Assembler &assembler) // symmetric
 {
   fullMatrix<typename Assembler::dataMat> localMatrix;

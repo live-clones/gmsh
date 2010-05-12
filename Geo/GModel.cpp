@@ -1470,6 +1470,23 @@ GEdge *GModel::addNURBS(GVertex *start, GVertex *end,
   return 0;
 }
 
+void GModel::addRuledFaces (std::vector<std::vector<GEdge *> > edges){
+  if(_factory)
+    _factory->addRuledFaces(this, edges);
+}
+
+GFace* GModel::addFace (std::vector<GEdge *> edges, std::vector< std::vector<double > > points){
+  if(_factory)
+    return _factory->addFace(this, edges, points);
+  return 0;
+}
+
+GFace* GModel::addPlanarFace (std::vector<std::vector<GEdge *> > edges){
+  if(_factory)
+    return _factory->addPlanarFace(this, edges);
+  return 0;
+}
+
 GEntity *GModel::revolve(GEntity *e, std::vector<double> p1, std::vector<double> p2,
                          double angle)
 {
@@ -1484,6 +1501,12 @@ GEntity *GModel::extrude(GEntity *e, std::vector<double> p1, std::vector<double>
     return _factory->extrude(this, e, p1, p2);
   return 0;
 }
+GEntity *GModel::addPipe(GEntity *e, std::vector<GEdge *>  edges){
+  if(_factory) 
+    return _factory->addPipe(this,e,edges);
+  return 0;
+}
+
 
 GEntity *GModel::addSphere(double cx, double cy, double cz, double radius)
 {
@@ -1735,7 +1758,12 @@ static void glueFacesInRegions(GModel *model,
     bool aDifferenceExists = false;
     std::list<GFace*> old = r->faces(), fnew;
     for (std::list<GFace*>::iterator fit = old.begin(); fit != old.end(); fit++){
-      GFace *temp = Duplicates2Unique[*fit];
+      std::map<GFace*, GFace*>::iterator itR = Duplicates2Unique.find(*fit);
+      if (itR == Duplicates2Unique.end())
+	{
+	  Msg::Fatal("error in the gluing process");
+	}
+      GFace *temp = itR->second;;
       fnew.push_back(temp);
       if (temp != *fit){
 	aDifferenceExists = true;
@@ -1834,6 +1862,18 @@ void GModel::registerBindings(binding *b)
   cm = cb->addMethod("addNURBS", &GModel::addNURBS);
   cm->setDescription("creates a NURBS curve from v1 to v2 with control Points, knots, weights and multiplicities");
   cm->setArgNames("v1", "v2", "{{poles}}","{knots}","{weights}","{mult}",NULL);
+  cm = cb->addMethod("addFace", &GModel::addFace);
+  cm->setDescription("creates a face that is constraint by edges and points");
+  cm->setArgNames("{list of edges}","{{x,y,z},{x,y,z},...}",NULL);
+  cm = cb->addMethod("addRuledFaces", &GModel::addRuledFaces);
+  cm->setDescription("creates ruled faces that contains a list of wires");
+  cm->setArgNames("{{list of edges},{list of edges},...}",NULL);
+  cm = cb->addMethod("addPlanarFace", &GModel::addPlanarFace);
+  cm->setDescription("creates a planar face that contains a list of wires");
+  cm->setArgNames("{{list of edges},{list of edges},...}",NULL);
+  cm = cb->addMethod("addPipe", &GModel::addPipe);
+  cm->setDescription("creates a pipe with a base and a wire for the direction");
+  cm->setArgNames("ge","{list of edges}",NULL);
   cm = cb->addMethod("addCircleArcCenter", &GModel::addCircleArcCenter);
   cm->setDescription("create a circle arc going from v1 to v2 with its center "
                      "at (x,y,z)");
@@ -1878,9 +1918,9 @@ void GModel::registerBindings(binding *b)
                      "one (tool). The third parameter tells if a new model has to "
                      "be created");
   cm->setArgNames("tool","createNewGModel",NULL);
-  //  cm = cb->addMethod("glue", &GModel::glue);
-  //  cm->setDescription("glue the geometric model using geometric tolerance eps");
-  //  cm->setArgNames("eps",NULL);
+  cm = cb->addMethod("glue", &GModel::glue);
+  cm->setDescription("glue the geometric model using geometric tolerance eps");
+  cm->setArgNames("eps",NULL);
   cm = cb->addMethod("setAsCurrent", &GModel::setAsCurrent);
   cm->setDescription("set the model as the current (active) one");
   cm = cb->setConstructor<GModel>();
