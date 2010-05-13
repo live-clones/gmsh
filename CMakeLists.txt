@@ -859,6 +859,10 @@ set_target_properties(shared PROPERTIES OUTPUT_NAME Gmsh)
 if(HAVE_LAPACK AND LAPACK_FLAGS)
   set_target_properties(shared PROPERTIES LINK_FLAGS ${LAPACK_FLAGS})
 endif(HAVE_LAPACK AND LAPACK_FLAGS)
+IF(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)
+message("WARNING: By enabling ENABLE_MSVC_STATIC_RUNTIME, shared library wont link."
+"Change in msvc /MT flag to /MD in the shared project properties")
+ENDIF(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)		  
 target_link_libraries(shared ${LINK_LIBRARIES})
 
 # binary targets
