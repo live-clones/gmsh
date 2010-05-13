@@ -709,7 +709,7 @@ static void printLevel_onlysmall(const char* fn,
   std::vector<MElement *> small;
   double dx[3] = {0,0,0};
   int COUNT = 0;
-  for (int i=0;i<elements.size();i++){
+  for (unsigned i=0;i<elements.size();i++){
     double local_size = localSize(elements[i],*coordinates);
     if (local_size < tolerance){
       small.push_back(elements[i]);

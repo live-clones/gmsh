@@ -572,10 +572,10 @@ void functionReplace::get(fullMatrix<double> &v, const function *f, int iMap) {
 }
 
 void functionReplace::compute(){
-  for (int i = 0; i < _toReplace.size(); i++){
+  for (unsigned i = 0; i < _toReplace.size(); i++){
     currentCache->toReplace[i]->set();
   }
-  for (int i = 0; i < _toCompute.size(); i++) {
+  for (unsigned i = 0; i < _toCompute.size(); i++) {
     currentCache->toCompute[i]->_valid =false;
     _toCompute[i].val->setAsProxy((*currentCache->toCompute[i])());
   }
@@ -584,19 +584,19 @@ void functionReplace::compute(){
 
 functionReplaceCache::functionReplaceCache(dataCacheMap *m, functionReplace *rep, dataCacheDouble *from) {
   map = m->newChild();
-  for (int i = 0; i < m->_secondaryCaches.size(); i ++) {
+  for (unsigned i = 0; i < m->_secondaryCaches.size(); i ++) {
     map->addSecondaryCache (m->getSecondaryCache(i+1)->newChild());
   }
-  for (int i = 0; i < rep->_toReplace.size(); i++) {
+  for (unsigned i = 0; i < rep->_toReplace.size(); i++) {
     toReplace.push_back (&map->getSecondaryCache(rep->_toReplace[i].iMap)->substitute(rep->_toReplace[i].f));
   }
-  for (int i = 0; i < rep->_toCompute.size(); i++) {
+  for (unsigned i = 0; i < rep->_toCompute.size(); i++) {
     dataCacheMap *m2 = map->getSecondaryCache(rep->_toCompute[i].iMap);
     toCompute.push_back (&m2->get(rep->_toCompute[i].f, from));
   }
 }
 functionReplaceCache::~functionReplaceCache() {
-  for (int i = 0; i< map->_secondaryCaches.size(); i++) {
+  for (unsigned i = 0; i< map->_secondaryCaches.size(); i++) {
     delete map->_secondaryCaches[i];
   }
   delete map;

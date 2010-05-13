@@ -362,7 +362,6 @@ void highOrderSmoother::optimize(GFace * gf,
   //  if (gf->geomType() != GEntity::Plane) return;
 
     std::vector<MElement*> bad;
-    double worst;
     int count = 0;
     
 

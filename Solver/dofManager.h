@@ -182,7 +182,7 @@ class dofManager{
       {
          dataVec tmp(val);
          val = it->second.shift;
-         for (int i=0;i<(it->second).linear.size();i++)
+         for (unsigned i=0;i<(it->second).linear.size();i++)
          {
             std::map<Dof, int>::const_iterator itu = unknown.find(((it->second).linear[i]).first);
             getDofValue(((it->second).linear[i]).first, tmp);
@@ -216,7 +216,7 @@ class dofManager{
       {
          v = it->second.shift;
          dataVec tmp(v);
-         for (int i=0;i<(it->second).linear.size();i++)
+         for (unsigned i=0;i<(it->second).linear.size();i++)
          {
             std::map<Dof, int>::const_iterator itu = unknown.find(((it->second).linear[i]).first);
             getDofValue(((it->second).linear[i]).first, tmp);
@@ -321,7 +321,7 @@ class dofManager{
         itConstraint = constraints.find(R[i]);
         if (itConstraint != constraints.end())
         {
-          for (int i=0;i<(itConstraint->second).linear.size();i++)
+          for (unsigned i=0;i<(itConstraint->second).linear.size();i++)
           {
                   std::map<Dof, int>::iterator itC = unknown.find((itConstraint->second).linear[i].first); // lin dep in unknown ?!
                   _current->addToRightHandSide(itC->second, m(i)*(itConstraint->second).linear[i].second);
@@ -444,7 +444,7 @@ class dofManager{
       if (itConstraint != constraints.end())
       {
         dataMat tmp(value);
-        for (int i=0;i<(itConstraint->second).linear.size();i++)
+        for (unsigned i=0;i<(itConstraint->second).linear.size();i++)
         {
           dofTraits<T>::gemm(tmp,(itConstraint->second).linear[i].second,value, 1, 0);
           assemble(R,(itConstraint->second).linear[i].first,tmp);
@@ -461,7 +461,7 @@ class dofManager{
       if (itConstraint != constraints.end())
       {
         dataMat tmp(value);
-        for (int i=0;i<(itConstraint->second).linear.size();i++)
+        for (unsigned i=0;i<(itConstraint->second).linear.size();i++)
         {
           dofTraits<T>::gemm(tmp,itConstraint->second.linear[i].second,value, 1, 0);
           assemble((itConstraint->second).linear[i].first,C,tmp);

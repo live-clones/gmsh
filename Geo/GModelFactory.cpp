@@ -163,14 +163,14 @@ GEdge *OCCFactory::addNURBS(GModel *gm, GVertex *start, GVertex *end,
   TColStd_Array1OfReal _weights(1, weights.size());
   TColStd_Array1OfInteger  _mult(1, mult.size());
   
-  for (int i = 0; i < knots.size(); i++) {
+  for (unsigned i = 0; i < knots.size(); i++) {
     _knots.SetValue(i+1, knots[i]);
   }
-  for (int i = 0; i < weights.size(); i++) {
+  for (unsigned i = 0; i < weights.size(); i++) {
     _weights.SetValue(i+1, weights[i]);
   }
   int totKnots = 0;
-  for (int i = 0; i < mult.size(); i++) {
+  for (unsigned i = 0; i < mult.size(); i++) {
     _mult.SetValue(i+1, mult[i]);   
     totKnots += mult[i];
   }
@@ -181,7 +181,7 @@ GEdge *OCCFactory::addNURBS(GModel *gm, GVertex *start, GVertex *end,
   
   int index = 1;
   ctrlPoints.SetValue(index++, gp_Pnt(start->x(), start->y(), start->z()));  
-  for (int i = 0; i < points.size(); i++) {
+  for (unsigned i = 0; i < points.size(); i++) {
     gp_Pnt aP(points[i][0],points[i][1],points[i][2]);
     ctrlPoints.SetValue(index++, aP);
   }
@@ -491,7 +491,7 @@ void OCCFactory::fillet(GModel *gm, std::vector<int> edges, double radius)
 {
   try{
     std::vector<TopoDS_Edge> edgesToFillet;
-    for (int i = 0; i < edges.size(); i++){
+    for (unsigned i = 0; i < edges.size(); i++){
       GEdge *ed = gm->getEdgeByTag(edges[i]);
       if (ed){
 	OCCEdge *occed = dynamic_cast<OCCEdge*>(ed);

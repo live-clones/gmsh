@@ -54,7 +54,7 @@ static void copyMesh (GFace *source, GFace *target)
     if (master > 0){
       vs2vt[se->getBeginVertex()->mesh_vertices[0]] = te->getBeginVertex()->mesh_vertices[0];
       vs2vt[se->getEndVertex()->mesh_vertices[0]] = te->getEndVertex()->mesh_vertices[0];
-      for (int i=0;i<se->mesh_vertices.size();i++){
+      for (unsigned i=0;i<se->mesh_vertices.size();i++){
 	MVertex *vs = se->mesh_vertices[i];
 	MVertex *vt = te->mesh_vertices[i];
 	vs2vt[vs] = vt;
@@ -63,7 +63,7 @@ static void copyMesh (GFace *source, GFace *target)
     else {
       vs2vt[se->getEndVertex()->mesh_vertices[0]] = te->getBeginVertex()->mesh_vertices[0];
       vs2vt[se->getBeginVertex()->mesh_vertices[0]] = te->getEndVertex()->mesh_vertices[0];
-      for (int i=0;i<se->mesh_vertices.size();i++){
+      for (unsigned i=0;i<se->mesh_vertices.size();i++){
 	MVertex *vs = se->mesh_vertices[i];
 	MVertex *vt = te->mesh_vertices[se->mesh_vertices.size()-i-1];
 	vs2vt[vs] = vt;
@@ -119,13 +119,13 @@ static void copyMesh (GFace *source, GFace *target)
     vs2vt[vs] = vt;    
   }
 
-  for (int i=0;i<source->triangles.size();i++){
+  for (unsigned i=0;i<source->triangles.size();i++){
     MVertex *v1 = vs2vt[source->triangles[i]->getVertex(0)];
     MVertex *v2 = vs2vt[source->triangles[i]->getVertex(1)];
     MVertex *v3 = vs2vt[source->triangles[i]->getVertex(2)];
     target->triangles.push_back(new MTriangle(v1,v2,v3));
   }
-  for (int i=0;i<source->quadrangles.size();i++){
+  for (unsigned i=0;i<source->quadrangles.size();i++){
     MVertex *v1 = vs2vt[source->quadrangles[i]->getVertex(0)];
     MVertex *v2 = vs2vt[source->quadrangles[i]->getVertex(1)];
     MVertex *v3 = vs2vt[source->quadrangles[i]->getVertex(2)];

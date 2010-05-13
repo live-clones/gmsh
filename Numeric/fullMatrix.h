@@ -260,7 +260,7 @@ class fullMatrix
             scalar alpha=1., scalar beta=1.)
 #if !defined(HAVE_BLAS)
   {
-    gemm_naive(anb,alpha,beta);
+    gemm_naive(a,b,alpha,beta);
   }
 #endif
   ;
