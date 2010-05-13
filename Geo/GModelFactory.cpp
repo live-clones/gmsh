@@ -558,9 +558,9 @@ std::vector<GFace *> OCCFactory::addRuledFaces (GModel *gm, std::vector< std::ve
   Standard_Boolean anIsRuled = Standard_True;
   BRepOffsetAPI_ThruSections aGenerator (anIsSolid,anIsRuled);
 
-  for (int i=0;i<wires.size();i++) {
+  for (unsigned i=0;i<wires.size();i++) {
     BRepBuilderAPI_MakeWire wire_maker;
-    for (int j=0;j<wires[i].size();j++) {
+    for (unsigned j=0;j<wires[i].size();j++) {
       GEdge *ge = wires[i][j];
       printf("edge %d\n",ge->tag());
       OCCEdge *occe = dynamic_cast<OCCEdge*>(ge);
@@ -590,14 +590,14 @@ GFace * OCCFactory::addFace (GModel *gm, std::vector<GEdge *> edges, std::vector
 
   BRepOffsetAPI_MakeFilling aGenerator;
 
-  for (int i=0;i<edges.size();i++) {
+  for (unsigned i=0;i<edges.size();i++) {
     GEdge *ge = edges[i];
     OCCEdge *occe = dynamic_cast<OCCEdge*>(ge);
     if (occe){
       aGenerator.Add(occe->getTopoDS_Edge(),GeomAbs_C0);
     }
   }
-  for (int i=0;i<points.size();i++) {
+  for (unsigned i=0;i<points.size();i++) {
     gp_Pnt aPnt (points[i][0],points[i][1],points[i][2]);
     aGenerator.Add(aPnt);
   }
@@ -613,8 +613,8 @@ extern void computeMeanPlane(const std::vector<SPoint3> &points, mean_plane &mea
 GFace * OCCFactory::addPlanarFace (GModel *gm, std::vector< std::vector<GEdge *> > wires){
   
   std::set<GVertex*> verts;
-  for (int i=0;i<wires.size();i++) {
-    for (int j=0;j<wires[i].size();j++) {
+  for (unsigned i=0;i<wires.size();i++) {
+    for (unsigned j=0;j<wires[i].size();j++) {
       GEdge *ge = wires[i][j];
       verts.insert(ge->getBeginVertex());
       verts.insert(ge->getEndVertex());
@@ -631,9 +631,9 @@ GFace * OCCFactory::addPlanarFace (GModel *gm, std::vector< std::vector<GEdge *>
   gp_Pln aPlane (meanPlane.a,meanPlane.b,meanPlane.c,meanPlane.d);
   BRepBuilderAPI_MakeFace aGenerator (aPlane);
   
-  for (int i=0;i<wires.size();i++) {
+  for (unsigned i=0;i<wires.size();i++) {
     BRepBuilderAPI_MakeWire wire_maker;
-    for (int j=0;j<wires[i].size();j++) {
+    for (unsigned j=0;j<wires[i].size();j++) {
       GEdge *ge = wires[i][j];
       OCCEdge *occe = dynamic_cast<OCCEdge*>(ge);
       if (occe){
@@ -654,7 +654,7 @@ GFace * OCCFactory::addPlanarFace (GModel *gm, std::vector< std::vector<GEdge *>
 GEntity * OCCFactory::addPipe (GModel *gm, GEntity *base, std::vector<GEdge *> wire){
   
   BRepBuilderAPI_MakeWire wire_maker;
-  for (int j=0;j<wire.size();j++) {
+  for (unsigned j=0;j<wire.size();j++) {
     GEdge *ge = wire[j];
     OCCEdge *occe = dynamic_cast<OCCEdge*>(ge);
     if (occe){

@@ -20,7 +20,7 @@ void function::addFunctionReplace(functionReplace &fr) {
 }
 dataCacheDouble::~dataCacheDouble()
 {
-  for(int i = 0; i< functionReplaceCaches.size(); i++) {
+  for(unsigned i = 0; i< functionReplaceCaches.size(); i++) {
     delete functionReplaceCaches[i];
   }
 };
@@ -50,11 +50,11 @@ dataCacheDouble::dataCacheDouble(dataCacheMap *m, function *f):
   _nRowByPoint=1;
   m->addDataCacheDouble(this, f->isInvalitedOnElement());
   _function = f;
-  for(int i=0; i<f->_childrenCache.size(); i++) {
+  for(unsigned i=0; i<f->_childrenCache.size(); i++) {
     m->addSecondaryCache(m->newChild());
   }
   _substitutions.resize(f->_substitutedFunctions.size());
-  for(int i=0; i<f->_substitutedFunctions.size(); i++) {
+  for(unsigned i=0; i<f->_substitutedFunctions.size(); i++) {
     function::substitutedFunction s = f->_substitutedFunctions[i];
     _substitutions[i].first = &m->getSecondaryCache(s.iMap)->substitute(s.f0);
     _substitutions[i].second = &m->get(s.f1,this);
@@ -65,7 +65,7 @@ dataCacheDouble::dataCacheDouble(dataCacheMap *m, function *f):
     const function *f = _function->arguments[i].f;
     _dependencies[i] = &m->getSecondaryCache(iCache)->get(f,this);
   }
-  for (int i = 0; i < f->_functionReplaces.size(); i++) {
+  for (unsigned i = 0; i < f->_functionReplaces.size(); i++) {
     functionReplaceCaches.push_back (new functionReplaceCache(m, f->_functionReplaces[i], this)); 
   }
   f->registerInDataCacheMap(m, this);
@@ -78,9 +78,9 @@ void dataCacheDouble::_eval() {
   for(unsigned int i=0;i<_dependencies.size(); i++){
     _function->arguments[i].val->setAsProxy((*_dependencies[i])());
   }
-  for (int i = 0; i < _function->_functionReplaces.size(); i++) {
+  for (unsigned i = 0; i < _function->_functionReplaces.size(); i++) {
     _function->_functionReplaces[i]->currentCache = functionReplaceCaches[i];
-    for (int j = 0; j < functionReplaceCaches[i]->toReplace.size() ; j++){
+    for (unsigned j = 0; j < functionReplaceCaches[i]->toReplace.size() ; j++){
       _function->_functionReplaces[i]->_toReplace[j].val->setAsProxy((*functionReplaceCaches[i]->toReplace[j])._value);
     }
   }
