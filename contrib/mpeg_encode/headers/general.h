@@ -115,7 +115,10 @@ int pclose();
  * TYPE DEFINITIONS *
  *==================*/
 
-typedef int boolean;
+// gmsh: cannot use a typedef because windows does, too -> use a #define 
+//typedef int boolean;
+#define boolean int
+
 /* this is for JPEG stuff */
 #define BOOLEAN_DEFINED
 #define HAVE_BOOLEAN

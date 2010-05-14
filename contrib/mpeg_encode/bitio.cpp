@@ -13,8 +13,6 @@
  *									     *
  *===========================================================================*/
 
-#define htonl(x) (x) // gmsh
-
 /*
  * Copyright (c) 1995 The Regents of the University of California.
  * All rights reserved.
@@ -88,7 +86,6 @@
 #include "byteorder.h"
 #include "bitio.h"
 #include "mtypes.h"
-
 
 /*===============================*
  * INTERNAL PROCEDURE prototypes *
