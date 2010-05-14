@@ -98,7 +98,7 @@ void linearSystemPETSc<fullMatrix<PetscScalar> >::allocate(int nbRows)
 void linearSystemPETScRegisterBindings(binding *b) 
 {
  // FIXME on complex arithmetic this crashes
-  //#if !defined(PETSC_USE_COMPLEX)
+  #if !defined(PETSC_USE_COMPLEX)
   classBinding *cb;
   methodBinding *cm;
   cb = b->addClass<linearSystemPETSc<PetscScalar> >("linearSystemPETSc");
@@ -121,7 +121,7 @@ void linearSystemPETScRegisterBindings(binding *b)
   cm->setArgNames("blockSize", NULL);
   cm = cb->addMethod("systemSolve", &linearSystem<fullMatrix<PetscScalar> >::systemSolve);
   cm->setDescription("compute x = A^{-1}b");
-  //#endif // FIXME
+  #endif // FIXME
 
 }
 
