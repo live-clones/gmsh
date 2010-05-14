@@ -115,6 +115,7 @@
  * HEADER FILES *
  *==============*/
 
+#include <string.h>
 #include <assert.h>
 #include "all.h"
 #include "mtypes.h"

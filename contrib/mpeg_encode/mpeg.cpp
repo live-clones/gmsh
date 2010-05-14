@@ -185,7 +185,7 @@ static int	    numI, numP, numB;
 /* important -- don't initialize anything here */
 /* must be re-initted anyway in GenMPEGStream */
 
-extern int  IOtime;
+extern time_t  IOtime;
 extern boolean	resizeFrame;
 extern int outputWidth, outputHeight;
 int	    gopSize = 100;  /* default */
