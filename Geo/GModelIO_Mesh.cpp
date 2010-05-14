@@ -578,8 +578,12 @@ static int getNumElementsMSH(GModel *m, bool saveAll, int saveSinglePartition)
   int n = 0;
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it)
     n += getNumElementsMSH(*it, saveAll, saveSinglePartition);
-  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
     n += getNumElementsMSH(*it, saveAll, saveSinglePartition);
+    for(unsigned int i = 0; i < (*it)->lines.size(); i++)
+      if((*it)->lines[i]->ownsParent())
+        n += (saveAll ? 1 : (*it)->physicals.size());
+  }
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
     n += getNumElementsMSH(*it, saveAll, saveSinglePartition);
     for(unsigned int i = 0; i < (*it)->polygons.size(); i++)
