@@ -34,6 +34,21 @@
 
 #include "GmshMessage.h"
 
+const char *GetEnvironmentVariable(const char *var)
+{
+#if !defined(WIN32)
+  return getenv(var);
+#else
+  const char *tmp = getenv(var);
+  // Don't accept top dir or anything partially expanded like
+  // c:\Documents and Settings\%USERPROFILE%, etc.
+  if(!tmp || !strcmp(tmp, "/") || strstr(tmp, "%") || strstr(tmp, "$"))
+    return 0;
+  else
+    return tmp;
+#endif
+}
+
 double GetTimeInSeconds()
 {
 #if !defined(WIN32) || defined(__CYGWIN__)

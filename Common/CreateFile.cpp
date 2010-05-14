@@ -26,6 +26,8 @@
 #include "gl2yuv.h"
 #endif
 
+extern int mpeg_encode_main(int, char**); 
+
 int GuessFileFormatFromFileName(std::string fileName)
 {
   std::string ext = SplitFileName(fileName)[2];
@@ -49,6 +51,8 @@ int GuessFileFormatFromFileName(std::string fileName)
   else if(ext == ".gif")  return FORMAT_GIF;
   else if(ext == ".jpg")  return FORMAT_JPEG;
   else if(ext == ".jpeg") return FORMAT_JPEG;
+  else if(ext == ".mpg")  return FORMAT_MPEG;
+  else if(ext == ".mpeg") return FORMAT_MPEG;
   else if(ext == ".png")  return FORMAT_PNG;
   else if(ext == ".ps")   return FORMAT_PS;
   else if(ext == ".eps")  return FORMAT_EPS;
@@ -87,6 +91,7 @@ std::string GetDefaultFileName(int format)
   case FORMAT_VRML: name += ".wrl"; break;
   case FORMAT_GIF:  name += ".gif"; break;
   case FORMAT_JPEG: name += ".jpg"; break;
+  case FORMAT_MPEG: name += ".mpg"; break;
   case FORMAT_PNG:  name += ".png"; break;
   case FORMAT_PS:   name += ".ps"; break;
   case FORMAT_EPS:  name += ".eps"; break;
@@ -397,7 +402,6 @@ void CreateOutputFile(std::string fileName, int format)
 
   case FORMAT_TEX:
     {
-      printf("couc tex format \n");
       if(!FlGui::available()) break;
 
       FILE *fp = fopen(fileName.c_str(), "w");
@@ -426,6 +430,51 @@ void CreateOutputFile(std::string fileName, int format)
       fclose(fp);
     }
     break;
+
+#if defined(HAVE_MPEG_ENCODE)
+  case FORMAT_MPEG:
+    {
+      std::string parFileName = CTX::instance()->homeDir + ".gmsh-mpeg_encode.par";
+      FILE *fp = fopen(parFileName.c_str(), "w");
+      if(!fp){
+        Msg::Error("Unable to open file '%s'", parFileName.c_str());
+        break;
+      }
+      int numViews = (int)opt_post_nb_views(0, GMSH_GET, 0), numSteps = 0;
+      for(unsigned int i = 0; i < numViews; i++){
+        if(opt_view_visible(i, GMSH_GET, 0))
+          numSteps = std::max(numSteps, (int)opt_view_nb_timestep(i, GMSH_GET, 0));
+      }
+      int numFrames = CTX::instance()->post.animCycle ? numViews : numSteps;
+      status_play_manual(!CTX::instance()->post.animCycle, 0);
+      for(int i = 0; i < numFrames; i++){
+        char tmp[256];
+        sprintf(tmp, "%s.gmsh-%03d.ppm", CTX::instance()->homeDir.c_str(), i + 1);
+        CreateOutputFile(tmp, FORMAT_PPM);
+        status_play_manual(!CTX::instance()->post.animCycle, 1);
+      }
+      fprintf(fp, "PATTERN          I\n"    "BASE_FILE_FORMAT PPM\n"
+              "GOP_SIZE         30\n"       "SLICES_PER_FRAME 1\n"
+              "PIXEL            HALF\n"     "RANGE            10\n"
+              "PSEARCH_ALG      TWOLEVEL\n" "BSEARCH_ALG      CROSS2\n"
+              "IQSCALE          1\n"        "PQSCALE          10\n"
+              "BQSCALE          25\n"       "REFERENCE_FRAME  DECODED\n"
+              "OUTPUT           %s\n"       "INPUT_CONVERT    *\n"
+              "INPUT_DIR        %s\n"
+              "INPUT\n" ".gmsh-*.ppm [001-%03d]\n" "END_INPUT\n", 
+              fileName.c_str(), CTX::instance()->homeDir.c_str(), numFrames);
+      fclose(fp);
+      char *args[] = {(char*)"gmsh", (char*)parFileName.c_str()};
+      try{
+        mpeg_encode_main(2, args);
+      }
+      catch (const char *error){
+        Msg::Error("mpeg_encode: %s", error);
+      }
+    }
+    break;
+#endif
+
 #endif
 
   default:

@@ -147,26 +147,28 @@
      tShow = 363,
      tHide = 364,
      tGetValue = 365,
-     tGMSH_MAJOR_VERSION = 366,
-     tGMSH_MINOR_VERSION = 367,
-     tGMSH_PATCH_VERSION = 368,
-     tHomRank = 369,
-     tHomGen = 370,
-     tHomCut = 371,
-     tHomSeq = 372,
-     tAFFECTDIVIDE = 373,
-     tAFFECTTIMES = 374,
-     tAFFECTMINUS = 375,
-     tAFFECTPLUS = 376,
-     tOR = 377,
-     tAND = 378,
-     tNOTEQUAL = 379,
-     tEQUAL = 380,
-     tGREATEROREQUAL = 381,
-     tLESSOREQUAL = 382,
-     UNARYPREC = 383,
-     tMINUSMINUS = 384,
-     tPLUSPLUS = 385
+     tGetEnv = 366,
+     tGetString = 367,
+     tGMSH_MAJOR_VERSION = 368,
+     tGMSH_MINOR_VERSION = 369,
+     tGMSH_PATCH_VERSION = 370,
+     tHomRank = 371,
+     tHomGen = 372,
+     tHomCut = 373,
+     tHomSeq = 374,
+     tAFFECTDIVIDE = 375,
+     tAFFECTTIMES = 376,
+     tAFFECTMINUS = 377,
+     tAFFECTPLUS = 378,
+     tOR = 379,
+     tAND = 380,
+     tNOTEQUAL = 381,
+     tEQUAL = 382,
+     tGREATEROREQUAL = 383,
+     tLESSOREQUAL = 384,
+     UNARYPREC = 385,
+     tMINUSMINUS = 386,
+     tPLUSPLUS = 387
    };
 #endif
 /* Tokens.  */
@@ -278,26 +280,28 @@
 #define tShow 363
 #define tHide 364
 #define tGetValue 365
-#define tGMSH_MAJOR_VERSION 366
-#define tGMSH_MINOR_VERSION 367
-#define tGMSH_PATCH_VERSION 368
-#define tHomRank 369
-#define tHomGen 370
-#define tHomCut 371
-#define tHomSeq 372
-#define tAFFECTDIVIDE 373
-#define tAFFECTTIMES 374
-#define tAFFECTMINUS 375
-#define tAFFECTPLUS 376
-#define tOR 377
-#define tAND 378
-#define tNOTEQUAL 379
-#define tEQUAL 380
-#define tGREATEROREQUAL 381
-#define tLESSOREQUAL 382
-#define UNARYPREC 383
-#define tMINUSMINUS 384
-#define tPLUSPLUS 385
+#define tGetEnv 366
+#define tGetString 367
+#define tGMSH_MAJOR_VERSION 368
+#define tGMSH_MINOR_VERSION 369
+#define tGMSH_PATCH_VERSION 370
+#define tHomRank 371
+#define tHomGen 372
+#define tHomCut 373
+#define tHomSeq 374
+#define tAFFECTDIVIDE 375
+#define tAFFECTTIMES 376
+#define tAFFECTMINUS 377
+#define tAFFECTPLUS 378
+#define tOR 379
+#define tAND 380
+#define tNOTEQUAL 381
+#define tEQUAL 382
+#define tGREATEROREQUAL 383
+#define tLESSOREQUAL 384
+#define UNARYPREC 385
+#define tMINUSMINUS 386
+#define tPLUSPLUS 387
 
 
 
@@ -315,7 +319,7 @@ typedef union YYSTYPE
   List_T *l;
 }
 /* Line 1529 of yacc.c.  */
-#line 319 "Gmsh.tab.hpp"
+#line 323 "Gmsh.tab.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

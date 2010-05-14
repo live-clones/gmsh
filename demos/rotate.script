@@ -1,6 +1,8 @@
 // This script creates an mpeg or gif animation by applying
 // incremental rotations around the 3 coordinate axes
 
+PATH = "/tmp";
+
 neww = GetValue("Width of animation? (enter 0 to keep current width)", 640); 
 newh = GetValue("Height of animation? (enter 0 to keep current height)", 640);
 steps = GetValue("Number of steps", 360);
@@ -36,8 +38,11 @@ For (1:steps)
   If(method == WHIRLGIF)
     Print Sprintf("/tmp/tmp%03g.gif", index);
   EndIf
-  If(method == MPEG_ENCODE || method == MENCODER)
+  If(method == MPEG_ENCODE)
     Print Sprintf("/tmp/tmp%03g.jpg", index);
+  EndIf
+  If(method == MENCODER)
+    Print Sprintf("/tmp/tmp%03g.png", index);
   EndIf
 EndFor
 

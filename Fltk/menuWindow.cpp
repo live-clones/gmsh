@@ -333,6 +333,9 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
 #if defined(HAVE_LIBJPEG)
     {"JPEG" TT "*.jpg", _save_jpeg},
 #endif
+#if defined(HAVE_MPEG_ENCODE)
+    {"MPEG" TT "*.mpg", 0},
+#endif
     {"LaTeX" TT "*.tex", _save_tex},
     {"PDF" TT "*.pdf", _save_pdf},
 #if defined(HAVE_LIBPNG)

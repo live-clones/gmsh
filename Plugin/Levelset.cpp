@@ -402,7 +402,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
     v->setChanged(true);
   }
 
-  // get adaptive data is available
+  // get adaptive data if available
   PViewData *vdata = v->getData(true), *wdata;
   if(_valueView < 0) {
     wdata = vdata;

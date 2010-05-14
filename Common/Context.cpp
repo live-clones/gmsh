@@ -7,25 +7,11 @@
 #include <string.h>
 #include "GmshConfig.h"
 #include "Context.h"
+#include "OS.h"
 
 #if defined(HAVE_FLTK)
 #include <FL/Fl.H>
 #endif
-
-static const char *getEnvironmentVariable(const char *var)
-{
-#if !defined(WIN32)
-  return getenv(var);
-#else
-  const char *tmp = getenv(var);
-  // Don't accept top dir or anything partially expanded like
-  // c:\Documents and Settings\%USERPROFILE%, etc.
-  if(!tmp || !strcmp(tmp, "/") || strstr(tmp, "%") || strstr(tmp, "$"))
-    return 0;
-  else
-    return tmp;
-#endif
-}
 
 CTX::CTX()
 {
@@ -37,13 +23,13 @@ CTX::CTX()
   bigEndian = (byte[0] ? 0 : 1);
 
   const char *tmp;
-  if((tmp = getEnvironmentVariable("GMSH_HOME")))
+  if((tmp = GetEnvironmentVariable("GMSH_HOME")))
     homeDir = tmp;
-  else if((tmp = getEnvironmentVariable("HOME")))
+  else if((tmp = GetEnvironmentVariable("HOME")))
     homeDir = tmp;
-  else if((tmp = getEnvironmentVariable("TMP")))
+  else if((tmp = GetEnvironmentVariable("TMP")))
     homeDir = tmp;
-  else if((tmp = getEnvironmentVariable("TEMP")))
+  else if((tmp = GetEnvironmentVariable("TEMP")))
     homeDir = tmp;
   else
     homeDir = "";

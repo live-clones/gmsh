@@ -296,7 +296,12 @@ void status_play_manual(int time, int incr)
     }
   }
   else { // hide all views except view_in_cycle
-    if(incr > 0) {
+    if(incr == 0) {
+      view_in_cycle = 0;
+      for(int i = 0; i < (int)PView::list.size(); i++)
+        opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
+    }
+    else if(incr > 0) {
       if((view_in_cycle += incr) >= (int)PView::list.size())
         view_in_cycle = 0;
       for(int i = 0; i < (int)PView::list.size(); i += incr)

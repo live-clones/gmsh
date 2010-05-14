@@ -23,6 +23,7 @@
 #define FORMAT_SMS           14
 #define FORMAT_OPT           15
 #define FORMAT_VTK           16
+#define FORMAT_MPEG          17
 #define FORMAT_TEX           18
 #define FORMAT_VRML          19
 #define FORMAT_EPS           20

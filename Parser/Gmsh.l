@@ -132,6 +132,8 @@ Fmod                    return tFmod;
 For                     return tFor;
 Function                return tFunction;
 
+GetEnv                  return tGetEnv;
+GetString               return tGetString;
 GetValue                return tGetValue;
 GMSH_MAJOR_VERSION      return tGMSH_MAJOR_VERSION;
 GMSH_MINOR_VERSION      return tGMSH_MINOR_VERSION;

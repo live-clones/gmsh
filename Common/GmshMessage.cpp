@@ -509,6 +509,31 @@ double Msg::GetValue(const char *text, double defaultval)
     return atof(str);
 }
 
+std::string Msg::GetString(const char *text, std::string defaultval)
+{
+  // if a callback is given let's assume we don't want to be bothered
+  // with interactive stuff
+  if(CTX::instance()->noPopup || _callback) return defaultval;
+
+#if defined(HAVE_FLTK)
+  if(FlGui::available()){
+    const char *ret = fl_input(text, defaultval.c_str(), "");
+    if(!ret)
+      return defaultval;
+    else
+      return std::string(ret);
+  }
+#endif
+
+  printf("%s (default=%s): ", text, defaultval.c_str());
+  char str[256];
+  char *ret = fgets(str, sizeof(str), stdin);
+  if(!ret || !strlen(str) || !strcmp(str, "\n"))
+    return defaultval;
+  else
+    return std::string(str);
+}
+
 int Msg::GetAnswer(const char *question, int defaultval, const char *zero,
                    const char *one, const char *two)
 {

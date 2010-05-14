@@ -114,7 +114,7 @@ fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 %token tText2D tText3D tInterpolationScheme  tTime tCombine
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
-%token tField tReturn tCall tFunction tShow tHide tGetValue
+%token tField tReturn tCall tFunction tShow tHide tGetValue tGetEnv tGetString
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 %token tHomRank tHomGen tHomCut tHomSeq
 
@@ -3720,7 +3720,7 @@ FExpr_Single :
       }
       Free($1); Free($6);
     }
-  | tGetValue '(' tBIGSTR ',' FExpr ')'
+  | tGetValue '(' StringExprVar ',' FExpr ')'
     { 
       $$ = Msg::GetValue($3, $5);
       Free($3);
@@ -4075,6 +4075,22 @@ StringExpr :
       time(&now);
       strcpy($$, ctime(&now));
       $$[strlen($$) - 1] = '\0';
+    }
+  | tGetEnv '(' StringExprVar ')'
+    { 
+      const char *env = GetEnvironmentVariable($3);
+      if(!env) env = "";
+      $$ = (char *)Malloc((sizeof(env) + 1) * sizeof(char));
+      strcpy($$, env);
+      Free($3);
+    }
+  | tGetString '(' StringExprVar ',' StringExprVar ')'
+    { 
+      std::string s = Msg::GetString($3, $5);
+      $$ = (char *)Malloc((s.size() + 1) * sizeof(char));
+      strcpy($$, s.c_str());
+      Free($3);
+      Free($5);
     }
   | tStrCat '(' StringExprVar ',' StringExprVar ')'
     {

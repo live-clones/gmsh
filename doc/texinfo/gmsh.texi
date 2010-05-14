@@ -1371,22 +1371,27 @@ Character expressions are defined as:
   StrRelative ( @var{char-expression} ) |
   StrCat ( @var{char-expression} , @var{char-expression} ) |
   Sprintf ( @var{char-expression} , @var{expression-list} ) |
-  Sprintf ( @var{char-expression} )
-  Sprintf ( @var{char-option} )
+  Sprintf ( @var{char-expression} ) |
+  Sprintf ( @var{char-option} ) |
+  GetEnv ( @var{char-expression} ) |
+  GetString ( @var{char-expression} , @var{char-expression} )
 @end example
 
 @noindent The third and fourth cases in this definition permit to take the
-prefix (e.g. to remove the extension) or the relative path of a string. The
-fifth case permits to concatenate two character expressions, and the sixth
-and seventh are equivalent to the @code{sprintf} C function (where
-@var{char-expression} is a format string that can contain floating point
-formatting characters: @code{%e}, @code{%g}, etc.). The last case permits to
-use the value of a @var{char-option} as a @var{char-expression}.  The
-various @w{@var{char-option}s} are listed in @ref{Options}.
+prefix (e.g. to remove the extension) or the relative path of a
+string. The fifth case permits to concatenate two character expressions,
+and the sixth and seventh are equivalent to the @code{sprintf} C
+function (where @var{char-expression} is a format string that can
+contain floating point formatting characters: @code{%e}, @code{%g},
+etc.). The eigth case permits to use the value of a @var{char-option} as
+a @var{char-expression}. The ninth case gets the value of an environment
+variable from the operating system. The last case in the definition
+allows to ask the user for a value interactively. The various
+@w{@var{char-option}s} are listed in @ref{Options}.
 
 Character expressions are mostly used to specify non-numeric options and
 input/output file names. See @ref{t8.geo}, for an interesting usage of
-@w{@var{char-expression}s} in an animation script. 
+@w{@var{char-expression}s} in an animation script.
 
 @c .........................................................................
 @c Color expressions
