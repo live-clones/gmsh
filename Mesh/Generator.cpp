@@ -10,6 +10,7 @@
 #include "Context.h"
 #include "OS.h"
 #include "GModel.h"
+#include "MPoint.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -333,6 +334,17 @@ static bool CancelDelaunayHybrid(GModel *m)
   return false;
 }
 
+static void Mesh0D(GModel *m)
+{
+  for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it){
+    GVertex *gv = *it;
+    if(gv->mesh_vertices.empty())
+      gv->mesh_vertices.push_back(new MVertex(gv->x(), gv->y(), gv->z(), gv));
+    if(gv->points.empty())
+      gv->points.push_back(new MPoint(gv->mesh_vertices.back()));
+  }
+}
+
 static void Mesh1D(GModel *m)
 {
   if(TooManyElements(m, 1)) return;
@@ -593,6 +605,7 @@ void GenerateMesh(GModel *m, int ask)
   if(ask == 1 || (ask > 1 && old < 1)) {
     std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
     std::for_each(m->firstFace(), m->lastFace(), deMeshGFace());
+    Mesh0D(m);
     Mesh1D(m);
   }
 

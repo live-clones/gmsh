@@ -15,8 +15,6 @@
 gmshVertex::gmshVertex(GModel *m, Vertex *_v)
   : GVertex(m, _v->Num, _v->lc), v(_v)
 {
-  mesh_vertices.push_back(new MVertex(x(), y(), z(), this));
-  points.push_back(new MPoint(mesh_vertices.back()));
 }
 
 void gmshVertex::setPosition(GPoint &p)

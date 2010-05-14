@@ -17,9 +17,6 @@ ACISVertex::ACISVertex(GModel *m, int num, VERTEX *v)
   _x = pos.coordinate(0);
   _y = pos.coordinate(1);
   _z = pos.coordinate(2);
-
-  mesh_vertices.push_back(new MVertex(x(), y(), z(), this));
-  points.push_back(new MPoint(mesh_vertices.back()));
 }
 
 void ACISVertex::setPosition(GPoint &p)

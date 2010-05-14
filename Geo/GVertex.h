@@ -13,6 +13,7 @@
 #include "GEntity.h"
 #include "GPoint.h"
 #include "SPoint2.h"
+#include "SPoint3.h"
 
 #define MAX_LC 1.e22
 
@@ -37,6 +38,7 @@ class GVertex : public GEntity
   virtual double x() const = 0;
   virtual double y() const = 0;
   virtual double z() const = 0;
+  virtual SPoint3 xyz() const { return SPoint3(x(), y(), z()); }
   virtual void setPosition(GPoint &p);
 
   // add/delete an edge bounded by this vertex
