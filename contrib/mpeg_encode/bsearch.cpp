@@ -74,7 +74,7 @@
 /*==============*
  * HEADER FILES *
  *==============*/
-
+#include <string.h>
 #include "all.h"
 #include "mtypes.h"
 #include "frames.h"

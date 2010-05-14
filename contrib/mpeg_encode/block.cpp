@@ -620,7 +620,7 @@ LumMotionError(LumBlock currentBlock,
       distortion /= 256;
       distortion *= LocalDCTDistortScale;
       datarate *= LocalDCTRateScale;
-      diff = (int) sqrt(distortion*distortion + datarate*datarate);
+      diff = (int) sqrt((double)(distortion*distortion + datarate*datarate));
       break;
     }
 

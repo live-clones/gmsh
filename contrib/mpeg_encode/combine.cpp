@@ -82,7 +82,7 @@
 #include "mheaders.h"
 #include "fsize.h"
 #include "combine.h"
-#include <unistd.h>
+//#include <unistd.h>
 
 /* note, remove() might not have a prototype in the standard header files,
  * but it really should -- it's not my fault!

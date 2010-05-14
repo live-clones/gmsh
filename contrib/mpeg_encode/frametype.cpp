@@ -41,6 +41,7 @@
  * HEADER FILES *
  *==============*/
 
+#include <string.h>
 #include "all.h"
 #include "prototypes.h"
 #include "frames.h"

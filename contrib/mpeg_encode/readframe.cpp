@@ -163,6 +163,10 @@ struct YuvLine {
   #define popen _popen
 #endif
    
+#if defined(WIN32) && !defined(__CYGWIN__)
+  #define popen _popen
+  #define pclose _pclose
+#endif
 
 /*==================*
  * Global VARIABLES *
@@ -1061,7 +1065,7 @@ DoGamma(MpegFrame *mf,
 
   if (!init_done) {
     for(i=0; i<256; i++) 
-      GammaVal[i]=(unsigned char) (pow(((double) i)/255.0,GammaValue)*255.0+0.5);
+      GammaVal[i]=(unsigned char) (pow(((double) i)/255.0,(double)GammaValue)*255.0+0.5);
     init_done=TRUE;
   }
 

@@ -77,7 +77,9 @@
 #if !defined(WIN32) || defined(__CYGWIN__)
 #include <netinet/in.h>
 #else
+#undef boolean
 #include <winsock.h>
+#define boolean int
 #endif
 
 #endif /* FORCE_LITTLE_ENDIAN */

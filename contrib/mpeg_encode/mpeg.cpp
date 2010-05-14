@@ -130,10 +130,11 @@
  * HEADER FILES *
  *==============*/
 
+#include <string.h>
 #include "all.h"
 #include <time.h>
 #include <errno.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include "mtypes.h"
 #include "frames.h"
 #include "search.h"

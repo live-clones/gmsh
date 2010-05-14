@@ -26,12 +26,7 @@
 
 /* Definitions to make PBMPLUS work with either ANSI C or C Classic. */
 
-#if __STDC__
 #define ARGS(alist) alist
-#else /*__STDC__*/
-#define ARGS(alist) ()
-#define const
-#endif /*__STDC__*/
 
 
 /* Types. */

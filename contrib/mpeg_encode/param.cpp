@@ -938,6 +938,11 @@ ReadMachineNames(FILE *fpointer)
  * SIDE EFFECTS:    info stored for retrieval using GetNthInputFileName
  *
  *===========================================================================*/
+
+#if defined(WIN32) && !defined(__CYGWIN)
+#define popen _popen
+#endif
+
 static void
 ReadInputFileNames(FILE *fpointer,
                    const char *endInput)
