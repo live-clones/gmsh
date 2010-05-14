@@ -8711,7 +8711,7 @@ yyreduce:
   case 382:
 #line 4080 "Gmsh.y"
     { 
-      const char *env = GetEnvironmentVariable((yyvsp[(3) - (4)].c));
+      const char *env = GetEnvironmentVar((yyvsp[(3) - (4)].c));
       if(!env) env = "";
       (yyval.c) = (char *)Malloc((sizeof(env) + 1) * sizeof(char));
       strcpy((yyval.c), env);

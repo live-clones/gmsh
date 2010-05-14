@@ -4078,7 +4078,7 @@ StringExpr :
     }
   | tGetEnv '(' StringExprVar ')'
     { 
-      const char *env = GetEnvironmentVariable($3);
+      const char *env = GetEnvironmentVar($3);
       if(!env) env = "";
       $$ = (char *)Malloc((sizeof(env) + 1) * sizeof(char));
       strcpy($$, env);

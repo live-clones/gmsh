@@ -34,7 +34,7 @@
 
 #include "GmshMessage.h"
 
-const char *GetEnvironmentVariable(const char *var)
+const char *GetEnvironmentVar(const char *var)
 {
 #if !defined(WIN32)
   return getenv(var);

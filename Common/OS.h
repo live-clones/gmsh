@@ -8,7 +8,7 @@
 
 #include <string>
 
-const char *GetEnvironmentVariable(const char *var);
+const char *GetEnvironmentVar(const char *var);
 double GetTimeInSeconds();
 void SleepInSeconds(double s);
 void CheckResources();

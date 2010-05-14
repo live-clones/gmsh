@@ -23,13 +23,13 @@ CTX::CTX()
   bigEndian = (byte[0] ? 0 : 1);
 
   const char *tmp;
-  if((tmp = GetEnvironmentVariable("GMSH_HOME")))
+  if((tmp = GetEnvironmentVar("GMSH_HOME")))
     homeDir = tmp;
-  else if((tmp = GetEnvironmentVariable("HOME")))
+  else if((tmp = GetEnvironmentVar("HOME")))
     homeDir = tmp;
-  else if((tmp = GetEnvironmentVariable("TMP")))
+  else if((tmp = GetEnvironmentVar("TMP")))
     homeDir = tmp;
-  else if((tmp = GetEnvironmentVariable("TEMP")))
+  else if((tmp = GetEnvironmentVar("TEMP")))
     homeDir = tmp;
   else
     homeDir = "";
