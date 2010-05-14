@@ -1577,7 +1577,7 @@ ReadDecodedRefFrame(MpegFrame *frame,
     }
 
     if ((fpointer = fopen(fileName, "rb")) == NULL) {
-      sleep(1);
+      //sleep(1);
       if ((fpointer = fopen(fileName, "rb")) == NULL) {
 	throw "Cannot open file";
       }}

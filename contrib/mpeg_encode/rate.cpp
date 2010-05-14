@@ -48,7 +48,6 @@
  * HEADER FILES *
  *==============*/
 
-#include <sys/times.h>
 #include "all.h"
 #include "mtypes.h"
 #include "bitio.h"

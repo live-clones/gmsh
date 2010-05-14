@@ -72,6 +72,5 @@
 #else
     /* let in.h handle it, if possible */                  
 #include <sys/types.h>
-#include <netinet/in.h>
 #endif /* FORCE_LITTLE_ENDIAN */
 #endif /* FORCE_BIG_ENDIAN */

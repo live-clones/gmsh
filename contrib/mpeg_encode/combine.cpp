@@ -166,7 +166,7 @@ GOPStoMPEG(int numGOPS,
 	      fprintf(stderr, "ERROR:  Couldn't read (GOPStoMPEG):  %s retry %d\n", 
 		      fileName, q);
 	      fflush(stderr);
-	      sleep(1);
+	      //sleep(1);
 	    }
 	    if (q == READ_ATTEMPTS) {
 	      throw "Giving up";
@@ -314,7 +314,7 @@ FramesToMPEG(int numFrames,
 	      if ( (inputFile = fopen(fileName, "rb")) != NULL ) break;
 	      fprintf(stderr, "ERROR:  Couldn't read 2:  %s retry %d\n", fileName, q);
 	      fflush(stderr);
-	      sleep(1);
+	      //sleep(1);
 	    }
 	    if (q == READ_ATTEMPTS) {
 	      throw "Giving up";
@@ -347,7 +347,7 @@ FramesToMPEG(int numFrames,
 		      fprintf(stderr, "ERROR:  Couldn't read (bNum=%d):  %s retry %d\n", 
 			      bNum, fileName, q);
 		      fflush(stderr);
-		      sleep(1);
+		      //sleep(1);
 		    }
 		    if (q == READ_ATTEMPTS) {
 		      throw "Giving up";
@@ -429,7 +429,7 @@ FramesToMPEG(int numFrames,
 		      fprintf(stderr, "ERROR:  Couldn't read (FramestoMPEG):  %s retry %d\n", 
 			      fileName, q);
 		      fflush(stderr);
-		      sleep(1);
+		      //sleep(1);
 		    }
 		    if (q == READ_ATTEMPTS) {
 		      throw "Giving up";

@@ -137,12 +137,7 @@
  *==============*/
 
 
-#ifdef CLOCKS_PER_SEC
-#include <times.h>
-#else
-#include <sys/times.h>
-#endif
-
+#include <time.h>
 #include <sys/param.h>
 #include "all.h"
 #include "mtypes.h"
@@ -1057,16 +1052,8 @@ AllocDctBlocks()
  *======================================================================*/
 int32 time_elapsed()
 {
-#ifdef CLOCKS_PER_SEC
- /* ANSI C */
   TIME_RATE = CLOCKS_PER_SEC;
   return (int32) clock();
-#else
-  struct tms   timeBuffer;
-  TIME_RATE = 60;
-  times(&timeBuffer);
-  return timeBuffer.tms_utime + timeBuffer.tms_stime;
-#endif
 }
 
 
