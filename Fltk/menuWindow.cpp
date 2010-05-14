@@ -252,6 +252,7 @@ static int _save_eps(const char *name){ return gl2psFileDialog
     (name, "EPS Options", FORMAT_EPS); }
 static int _save_gif(const char *name){ return gifFileDialog(name); }
 static int _save_jpeg(const char *name){ return jpegFileDialog(name); }
+static int _save_mpeg(const char *name){ return mpegFileDialog(name); }
 static int _save_tex(const char *name){ return latexFileDialog(name); }
 static int _save_pdf(const char *name){ return gl2psFileDialog
     (name, "PDF Options", FORMAT_PDF); }
@@ -287,6 +288,7 @@ static int _save_auto(const char *name)
   case FORMAT_EPS  : return _save_eps(name);
   case FORMAT_GIF  : return _save_gif(name);
   case FORMAT_JPEG : return _save_jpeg(name);
+  case FORMAT_MPEG : return _save_mpeg(name);
   case FORMAT_TEX  : return _save_tex(name);
   case FORMAT_PDF  : return _save_pdf(name);
   case FORMAT_PNG  : return _save_png(name);
@@ -334,7 +336,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
     {"JPEG" TT "*.jpg", _save_jpeg},
 #endif
 #if defined(HAVE_MPEG_ENCODE)
-    {"MPEG" TT "*.mpg", 0},
+    {"MPEG" TT "*.mpg", _save_mpeg},
 #endif
     {"LaTeX" TT "*.tex", _save_tex},
     {"PDF" TT "*.pdf", _save_pdf},

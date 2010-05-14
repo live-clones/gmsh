@@ -22,6 +22,7 @@ int fileChooserGetFilter();
 void fileChooserGetPosition(int *x, int *y);
 
 int jpegFileDialog(const char *filename);
+int mpegFileDialog(const char *filename);
 int gifFileDialog(const char *filename);
 int geoFileDialog(const char *filename);
 int genericBitmapFileDialog(const char *filename, const char *title, int format);

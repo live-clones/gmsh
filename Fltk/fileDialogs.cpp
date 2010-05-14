@@ -348,6 +348,69 @@ int jpegFileDialog(const char *name)
   return 0;
 }
 
+// Save mpeg dialog
+
+int mpegFileDialog(const char *name)
+{
+  struct _mpegFileDialog{
+    Fl_Window *window;
+    Fl_Round_Button *b[2];
+    Fl_Check_Button *c[1];
+    Fl_Button *ok, *cancel;
+  };
+  static _mpegFileDialog *dialog = NULL;
+
+  if(!dialog){
+    dialog = new _mpegFileDialog;
+    int h = 3 * WB + 4 * BH, w = 2 * BB + 3 * WB, y = WB;
+    dialog->window = new Fl_Double_Window(w, h, "MPEG Options");
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
+    {
+      Fl_Group *o = new Fl_Group(WB, y, 2 * BB + WB, 2 * BH);
+      dialog->b[0] = new Fl_Round_Button
+        (WB, y, 2 * BB + WB, BH, "Cycle through time steps"); y += BH;
+      dialog->b[0]->type(FL_RADIO_BUTTON);
+      dialog->b[1] = new Fl_Round_Button
+        (WB, y, 2 * BB + WB, BH, "Cycle through views"); y += BH;
+      dialog->b[1]->type(FL_RADIO_BUTTON);
+      o->end();
+    }
+    dialog->c[0] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Composite all window tiles"); y += BH;
+    dialog->c[0]->type(FL_TOGGLE_BUTTON);
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+  
+  dialog->b[0]->value(!CTX::instance()->post.animCycle);
+  dialog->b[1]->value(CTX::instance()->post.animCycle);
+  dialog->c[0]->value(CTX::instance()->print.compositeWindows);
+  dialog->window->show();
+
+  while(dialog->window->shown()){
+    Fl::wait();
+    for (;;) {
+      Fl_Widget* o = Fl::readqueue();
+      if (!o) break;
+      if (o == dialog->ok) {
+        opt_post_anim_cycle(0, GMSH_SET | GMSH_GUI, (int)dialog->b[1]->value());
+        opt_print_composite_windows(0, GMSH_SET | GMSH_GUI, (int)dialog->c[0]->value());
+        CreateOutputFile(name, FORMAT_MPEG);
+        dialog->window->hide();
+        return 1;
+      }
+      if (o == dialog->window || o == dialog->cancel){
+        dialog->window->hide();
+        return 0;
+      }
+    }
+  }
+  return 0;
+}
+
 // Save gif dialog
 
 int gifFileDialog(const char *name)
