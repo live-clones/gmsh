@@ -1332,7 +1332,7 @@ void deMeshGFace::operator() (GFace *gf)
   gf->meshStatistics.nbTriangle = gf->meshStatistics.nbEdge = 0;
 }
 
-int debugSurface = -1;
+int debugSurface = -100;
 
 void meshGFace::operator() (GFace *gf)
 {
@@ -1390,7 +1390,7 @@ void meshGFace::operator() (GFace *gf)
     meshGenerator(gf, 0, repairSelfIntersecting1dMesh,
                   debugSurface >= 0 || debugSurface == -100);
   }
-  else{
+  else {
     if(!meshGeneratorPeriodic
        (gf, debugSurface >= 0 || debugSurface == -100))
       Msg::Error("Impossible to mesh face %d", gf->tag());

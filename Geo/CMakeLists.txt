@@ -13,6 +13,7 @@ set(SRC
     fourierEdge.cpp fourierFace.cpp fourierProjectionFace.cpp
   ACISVertex.cpp
   ACISEdge.cpp
+  ACISFace.cpp
   GModel.cpp
   GModelFactory.cpp
     GModelIO_Geo.cpp

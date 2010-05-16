@@ -27,7 +27,7 @@ class ACISEdge : public GEdge {
   virtual ~ACISEdge() {}
   virtual Range<double> parBounds(int i) const;
   virtual GeomType geomType() const;
-  virtual bool degenerate(int) const { return false; }
+  virtual bool degenerate(int) const;
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
   virtual double curvature (double par) const;
