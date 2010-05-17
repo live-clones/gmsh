@@ -17,6 +17,15 @@ class GModel;
 class PView;
 class groupOfElements;
 
+struct LagrangeMultiplierField {
+  int _tag;
+  groupOfElements *g;
+  double _tau;
+  SVector3 _d;
+  simpleFunction<double> _f;
+  LagrangeMultiplierField() : g(0),_tag(0){}
+};
+
 struct elasticField {
   int _tag; // tag for the dofManager
   groupOfElements *g; // support for this field
@@ -54,25 +63,29 @@ class elasticitySolver
   int _dim, _tag;
   dofManager<double> *pAssembler;
   FunctionSpace<SVector3> *LagSpace;
+  FunctionSpace<double> *LagrangeMultiplierSpace;
 
   // young modulus and poisson coefficient per physical
   std::vector<elasticField> elasticFields;
+  std::vector<LagrangeMultiplierField> LagrangeMultiplierFields;
   // neumann BC
   std::vector<neumannBC> allNeumann;
   // dirichlet BC
   std::vector<dirichletBC> allDirichlet;
   
  public:
-  elasticitySolver(int tag) : _tag(tag),LagSpace(0),pAssembler(0) {}
+  elasticitySolver(int tag) : _tag(tag),LagSpace(0),pAssembler(0),LagrangeMultiplierSpace(0) {}
   virtual ~elasticitySolver()
   {
     if (LagSpace) delete LagSpace;
+    if (LagrangeMultiplierSpace) delete LagrangeMultiplierSpace;
     if (pAssembler) delete pAssembler;
   }
   void readInputFile(const std::string &meshFileName);
-  void setMesh(const std::string &meshFileName);
+  virtual void setMesh(const std::string &meshFileName);
   virtual void solve();
   virtual PView *buildDisplacementView(const std::string &postFileName);
+  virtual PView *buildLagrangeMultiplierView(const std::string &posFileName);
   virtual PView *buildElasticEnergyView(const std::string &postFileName);
   virtual PView *buildVonMisesView(const std::string &postFileName);
   // std::pair<PView *, PView*> buildErrorEstimateView

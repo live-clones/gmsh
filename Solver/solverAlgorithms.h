@@ -38,32 +38,6 @@ template<class Iterator,class Assembler> void Assemble(BilinearTermBase &term,Fu
   }
 }
 
-template<class Iterator,class Assembler> void Assemble(BilinearTermBase &term,
-						       FunctionSpaceBase &shapeFcts,
-						       FunctionSpaceBase &testFcts,
-						       Iterator itbegin,
-						       Iterator itend,
-						       QuadratureBase &integrator,
-						       Assembler &assembler) // non symmetric
-{
-  fullMatrix<typename Assembler::dataMat> localMatrix;
-  std::vector<Dof> R;
-  std::vector<Dof> C;
-  for (Iterator it = itbegin;it!=itend; ++it)
-  {
-    MElement *e = *it;
-    R.clear();
-    C.clear();
-    IntPt *GP;
-    int npts=integrator.getIntPoints(e,&GP);
-    term.get(e,npts,GP,localMatrix);
-    shapeFcts.getKeys(e,R);
-    testFcts.getKeys(e,C);
-    assembler.assemble(R, C, localMatrix);
-  }
-}
-
-
 template<class Assembler> void Assemble(BilinearTermBase &term,FunctionSpaceBase &space,MElement *e,QuadratureBase &integrator,Assembler &assembler) // symmetric
 {
   fullMatrix<typename Assembler::dataMat> localMatrix;
@@ -74,6 +48,34 @@ template<class Assembler> void Assemble(BilinearTermBase &term,FunctionSpaceBase
   space.getKeys(e,R);
   assembler.assemble(R, localMatrix);
 }
+
+template<class Iterator,class Assembler> void Assemble(BilinearTermBase &term,
+                                                      FunctionSpaceBase &shapeFcts,
+                                                      FunctionSpaceBase &testFcts,
+                                                      Iterator itbegin,
+                                                      Iterator itend,
+                                                      QuadratureBase &integrator,
+                                                      Assembler &assembler) // non symmetric
+{
+  fullMatrix<typename Assembler::dataMat> localMatrix;
+  std::vector<Dof> R;
+  std::vector<Dof> C;
+  for (Iterator it = itbegin; it != itend; ++it)
+  {
+    MElement *e = *it;
+    R.clear();
+    C.clear();
+    IntPt *GP;
+    int npts = integrator.getIntPoints(e, &GP);
+    term.get(e, npts, GP, localMatrix);
+    shapeFcts.getKeys(e, R);
+    testFcts.getKeys(e, C);
+    assembler.assemble(R, C, localMatrix);
+    assembler.assemble(C, R, localMatrix.transpose());
+  }
+}
+
+
 
 template<class Iterator,class Assembler> void Assemble(LinearTermBase &term,FunctionSpaceBase &space,Iterator itbegin,Iterator itend,QuadratureBase &integrator,Assembler &assembler)
 {
@@ -125,7 +127,6 @@ template<class Iterator,class dataMat> void Assemble(ScalarTermBase &term,MEleme
 }
 
 
-
 template<class Assembler> void FixDofs(Assembler &assembler,std::vector<Dof> &dofs,std::vector<typename Assembler::dataVec> &vals)
 {
   int nbff=dofs.size();
@@ -141,7 +142,7 @@ class FilterDof
   virtual bool operator()(Dof key)=0;
 };
 
-class FilterDofTrivial
+class FilterDofTrivial : public FilterDof
 {
  public:
   virtual bool operator()(Dof key) {return true;}
@@ -195,6 +196,13 @@ template<class Iterator,class Assembler> void FixNodalDofs(FunctionSpaceBase &sp
   {
     FixNodalDofs(space,*it,assembler,fct,filter);
   }
+}
+
+template<class Iterator,class Assembler> void FixVoidNodalDofs(FunctionSpaceBase &space,Iterator itbegin,Iterator itend,Assembler &assembler)
+{
+  FilterDofTrivial filter;
+  simpleFunction<typename Assembler::dataVec> fct(0.);
+  FixNodalDofs(space, itbegin, itend, assembler, fct, filter);
 }
 
 template<class Iterator,class Assembler> void NumberDofs(FunctionSpaceBase &space,Iterator itbegin,Iterator itend,Assembler &assembler)

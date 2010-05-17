@@ -35,7 +35,7 @@ template<class T1,class T2> class BilinearTerm : public BilinearTermBase
   FunctionSpace<T1>& space1;
   FunctionSpace<T2>& space2;
  public :
-  BilinearTerm(FunctionSpace<T1>& space1_,FunctionSpace<T1>& space2_) : space1(space1_),space2(space2_) {}
+  BilinearTerm(FunctionSpace<T1>& space1_,FunctionSpace<T2>& space2_) : space1(space1_),space2(space2_) {}
   virtual ~BilinearTerm() {}
 };
 
@@ -129,8 +129,9 @@ template<class T1,class T2> class LaplaceTerm : public BilinearTerm<T1,T2>
 
 template<class T1> class LaplaceTerm<T1,T1> : public BilinearTerm<T1,T1> // symmetric
 {
+  double diffusivity;
  public :
-  LaplaceTerm(FunctionSpace<T1>& space1_) : BilinearTerm<T1,T1>(space1_,space1_)
+  LaplaceTerm(FunctionSpace<T1>& space1_, double diff=1) : BilinearTerm<T1,T1>(space1_,space1_), diffusivity(diff)
   {}
   virtual ~LaplaceTerm() {}
   virtual void get(MElement *ele,int npts,IntPt *GP,fullMatrix<double> &m)
@@ -149,7 +150,7 @@ template<class T1> class LaplaceTerm<T1,T1> : public BilinearTerm<T1,T1> // symm
       {
         for (int k = j; k < nbFF; k++)
         {
-          double contrib=weight * detJ * dot(Grads[j],Grads[k]);
+          double contrib=weight * detJ * dot(Grads[j],Grads[k]) * diffusivity;
           m(j,k)+=contrib;
           if (j!=k) m(k,j)+=contrib;
         }
@@ -159,8 +160,6 @@ template<class T1> class LaplaceTerm<T1,T1> : public BilinearTerm<T1,T1> // symm
 //    exit(0);
   }
 }; // class
-
-
 
 
 class IsotropicElasticTerm : public BilinearTerm<SVector3,SVector3>
@@ -202,8 +201,8 @@ class IsotropicElasticTerm : public BilinearTerm<SVector3,SVector3>
   virtual ~IsotropicElasticTerm() {}
   virtual void get(MElement *ele,int npts,IntPt *GP,fullMatrix<double> &m)
   {
-		if (ele->getParent()) ele=ele->getParent();    
-		if (sym)
+    if (ele->getParent()) ele=ele->getParent();    
+    if (sym)
     {
       int nbFF = BilinearTerm<SVector3,SVector3>::space1.getNumKeys(ele);
       double jac[3][3];
@@ -217,7 +216,6 @@ class IsotropicElasticTerm : public BilinearTerm<SVector3,SVector3>
       for (int i = 0; i < npts; i++)
       {
         const double u = GP[i].pt[0]; const double v = GP[i].pt[1]; const double w = GP[i].pt[2];
-        
         const double weight = GP[i].weight; const double detJ = ele->getJacobian(u, v, w, jac);
         std::vector<TensorialTraits<SVector3>::GradType> Grads;
         BilinearTerm<SVector3,SVector3>::space1.gradf(ele,u, v, w, Grads); // a optimiser ??
@@ -285,7 +283,6 @@ class IsotropicElasticTerm : public BilinearTerm<SVector3,SVector3>
 inline double dot(const double &a, const double &b)
 { return a*b; }
 
-
 template<class T1> class LoadTerm : public LinearTerm<T1>
 {
   simpleFunction<typename TensorialTraits<T1>::ValType> &Load;
@@ -295,29 +292,56 @@ template<class T1> class LoadTerm : public LinearTerm<T1>
 
   virtual void get(MElement *ele,int npts,IntPt *GP,fullVector<double> &m)
   {
-		if (ele->getParent()) ele=ele->getParent();    
-		int nbFF=LinearTerm<T1>::space1.getNumKeys(ele);
+    if (ele->getParent()) ele=ele->getParent();
+    int nbFF=LinearTerm<T1>::space1.getNumKeys(ele);
     double jac[3][3];
     m.resize(nbFF);
     m.scale(0.);
     for (int i = 0; i < npts; i++)
     {
-      const double u = GP[i].pt[0];const double v = GP[i].pt[1];const double w = GP[i].pt[2];
-      const double weight = GP[i].weight;const double detJ = ele->getJacobian(u, v, w, jac);
+      const double u = GP[i].pt[0]; const double v = GP[i].pt[1]; const double w = GP[i].pt[2];
+      const double weight = GP[i].weight; const double detJ = ele->getJacobian(u, v, w, jac);
       std::vector<typename TensorialTraits<T1>::ValType> Vals;
-      LinearTerm<T1>::space1.f(ele,u, v, w, Vals);
+      LinearTerm<T1>::space1.f(ele, u, v, w, Vals);
       SPoint3 p;
       ele->pnt(u, v, w, p);
       typename TensorialTraits<T1>::ValType load=Load(p.x(),p.y(),p.z());
       for (int j = 0; j < nbFF ; ++j)
       {
-        m(j)+=dot(Vals[j],load)*weight*detJ;
+        m(j) += dot(Vals[j], load) * weight * detJ;
       }
     }
   }
 };
 
-
-
+class LagrangeMultiplierTerm : public BilinearTerm<SVector3,double>
+{
+  SVector3 _d;
+ public :
+  LagrangeMultiplierTerm(FunctionSpace<SVector3>& space1_, FunctionSpace<double>& space2_, const SVector3 &d) :
+    BilinearTerm<SVector3,double>(space1_, space2_) {for(int i=0; i < 3; i++) _d(i) = d(i);}
+  virtual ~LagrangeMultiplierTerm() {}
+  virtual void get(MElement *ele, int npts, IntPt *GP, fullMatrix<double> &m)
+  {
+    int nbFF1 = BilinearTerm<SVector3,double>::space1.getNumKeys(ele); //nbVertices*nbcomp of parent
+    int nbFF2 = BilinearTerm<SVector3,double>::space2.getNumKeys(ele); //nbVertices of boundary
+    double jac[3][3];
+    m.resize(nbFF1, nbFF2);
+    m.setAll(0.);
+    for (int i = 0; i < npts; i++) {
+      double u = GP[i].pt[0]; double v = GP[i].pt[1]; double w = GP[i].pt[2];
+      const double weight = GP[i].weight; const double detJ = ele->getJacobian(u, v, w, jac);
+      std::vector<TensorialTraits<SVector3>::ValType> Vals;
+      std::vector<TensorialTraits<double>::ValType> ValsT;
+      BilinearTerm<SVector3,double>::space1.f(ele, u, v, w, Vals);
+      BilinearTerm<SVector3,double>::space2.f(ele, u, v, w, ValsT);
+      for (int j = 0; j < nbFF1; j++) {
+        for (int k = 0; k < nbFF2; k++) {
+          m(j, k) += dot(Vals[j], _d) * ValsT[k] * weight * detJ;
+        }
+      }
+    }
+  }
+};
 
 #endif// _TERMS_H_

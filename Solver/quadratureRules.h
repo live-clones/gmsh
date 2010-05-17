@@ -56,7 +56,7 @@ class GaussQuadrature : public QuadratureBase
       integrationOrder=2*geoorder;
       break;
     case GradGrad :
-      integrationOrder=3*(geoorder-1);
+      integrationOrder=3*(geoorder-1)+1;
       break;
     default : integrationOrder=1;
     }
