@@ -146,10 +146,12 @@ class PViewDataGModel : public PViewData {
   int getNumLines(int step=-1);
   int getNumTriangles(int step=-1);
   int getNumQuadrangles(int step=-1);
+  int getNumPolygons(int step=-1);
   int getNumTetrahedra(int step=-1);
   int getNumHexahedra(int step=-1);
   int getNumPrisms(int step=-1);
   int getNumPyramids(int step=-1);
+  int getNumPolyhedra(int step=-1);
   int getNumEntities(int step=-1);
   int getNumElements(int step=-1, int ent=-1);
   int getDimension(int step, int ent, int ele);

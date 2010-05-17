@@ -124,11 +124,12 @@ bool PViewOptions::skipElement(int type)
   case TYPE_LIN: return !drawLines;
   case TYPE_TRI: return !drawTriangles;
   case TYPE_QUA: return !drawQuadrangles;
+  case TYPE_POLYG: return false;
   case TYPE_TET: return !drawTetrahedra;
   case TYPE_HEX: return !drawHexahedra;
   case TYPE_PRI: return !drawPrisms;
   case TYPE_PYR: return !drawPyramids;
-  case TYPE_POLYG: case TYPE_POLYH: return false;
+  case TYPE_POLYH: return false;
   default: return true;
   }
 }

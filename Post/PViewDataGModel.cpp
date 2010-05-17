@@ -11,6 +11,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "MElementCut.h"
 #include "Numeric.h"
 #include "GmshMessage.h"
 
@@ -74,6 +75,8 @@ bool PViewDataGModel::finalize()
         _addInterpolationMatricesForElement((*it)->triangles[0]);
       if((*it)->quadrangles.size()) 
         _addInterpolationMatricesForElement((*it)->quadrangles[0]);
+      if((*it)->polygons.size())
+        _addInterpolationMatricesForElement((*it)->polygons[0]);
     }
     for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
       if((*it)->tetrahedra.size()) 
@@ -84,6 +87,8 @@ bool PViewDataGModel::finalize()
         _addInterpolationMatricesForElement((*it)->prisms[0]);
       if((*it)->pyramids.size()) 
         _addInterpolationMatricesForElement((*it)->pyramids[0]);
+      if((*it)->polyhedra.size())
+        _addInterpolationMatricesForElement((*it)->polyhedra[0]);
     }
   }
 
@@ -216,6 +221,16 @@ int PViewDataGModel::getNumQuadrangles(int step)
   return n;
 }
 
+int PViewDataGModel::getNumPolygons(int step)
+{
+  if(_steps.empty()) return 0;
+  GModel *m = _steps[0]->getModel(); // to generalize
+  int n = 0;
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+    n += (*it)->polygons.size();
+  return n;
+}
+
 int PViewDataGModel::getNumTetrahedra(int step)
 {
   if(_steps.empty()) return 0;
@@ -253,6 +268,16 @@ int PViewDataGModel::getNumPyramids(int step)
   int n = 0;
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     n += (*it)->pyramids.size();
+  return n;
+}
+
+int PViewDataGModel::getNumPolyhedra(int step)
+{
+  if(_steps.empty()) return 0;
+  GModel *m = _steps[0]->getModel(); // to generalize
+  int n = 0;
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
+    n += (*it)->polyhedra.size();
   return n;
 }
 

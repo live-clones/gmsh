@@ -48,6 +48,7 @@ GModel::GModel(std::string name)
   list.push_back(this);
   // at the moment we always create (at least an empty) GEO model
   _createGEOInternals();
+  _newElemNumbers = NULL;
 #if defined(HAVE_OCC)
   _factory = new OCCFactory();
 #endif
@@ -63,6 +64,7 @@ GModel::~GModel()
   destroy();
   _deleteGEOInternals();
   _deleteOCCInternals();
+  if(_newElemNumbers) delete _newElemNumbers;
 #if defined(HAVE_MESH)
   delete _fields;
 #endif
@@ -618,8 +620,9 @@ void GModel::getMeshVerticesForPhysicalGroup(int dim, int num, std::vector<MVert
   v.insert(v.begin(), sv.begin(), sv.end());
 }
 
-MElement *GModel::getMeshElementByTag(int n)
+MElement *GModel::getMeshElementByTag(int num)
 {
+  int n = (*_newElemNumbers)(num);
   if(_elementVectorCache.empty() && _elementMapCache.empty()){
     Msg::Debug("Rebuilding mesh element cache");
     _elementVectorCache.clear();
@@ -634,14 +637,14 @@ MElement *GModel::getMeshElementByTag(int n)
       for(unsigned int i = 0; i < entities.size(); i++)
         for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
           MElement *e = entities[i]->getMeshElement(j);
-          _elementVectorCache[e->getNum()] = e;
+          _elementVectorCache[(*_newElemNumbers)(e->getNum())] = e;
         }
     }
     else{
       for(unsigned int i = 0; i < entities.size(); i++)
         for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
           MElement *e = entities[i]->getMeshElement(j);
-          _elementMapCache[e->getNum()] = e;
+          _elementMapCache[(*_newElemNumbers)(e->getNum())] = e;
         }
     }
   }

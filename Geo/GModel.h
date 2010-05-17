@@ -52,6 +52,7 @@ class GModel
   std::map<int, MVertex*> _vertexMapCache;
   std::vector<MElement*> _elementVectorCache;
   std::map<int, MElement*> _elementMapCache;
+  fullVector<double> *_newElemNumbers;
 
   // ghost cell information (stores partitions for each element acting
   // as a ghost cell)
@@ -293,6 +294,7 @@ class GModel
 
   // access a mesh element by tag, using the element cache
   MElement *getMeshElementByTag(int n);
+  int getMeshElementNumByTag(int n) { return (*_newElemNumbers)(n); }
 
   // return the total number of vertices in the mesh
   int getNumMeshVertices();

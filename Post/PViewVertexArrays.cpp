@@ -609,6 +609,22 @@ static void addScalarQuadrangle(PView *p, double xyz[PVIEW_NMAX][3],
     addScalarTriangle(p, xyz, val, pre, it[i][0], it[i][1], it[i][2], unique);
 }
 
+static void addOutlinePolygon(PView *p, double xyz[PVIEW_NMAX][3], 
+                                  unsigned int color, bool pre, int numNodes)
+{
+  if(numNodes == 3) addOutlineTriangle(p, xyz, color, pre);
+  if(numNodes == 4) addOutlineQuadrangle(p, xyz, color, pre);
+
+}
+
+static void addScalarPolygon(PView *p, double xyz[PVIEW_NMAX][3], 
+                             double val[PVIEW_NMAX][9], bool pre, int numNodes)
+{
+  if(numNodes == 3) addScalarTriangle(p, xyz, val, pre);
+  if(numNodes == 4) {addScalarQuadrangle(p, xyz, val, pre, 0, 1, 2, 3); addScalarQuadrangle(p, xyz, val, pre, 1, 2, 3, 0);}
+  
+}
+
 static void addOutlineTetrahedron(PView *p, double xyz[PVIEW_NMAX][3], 
                                   unsigned int color, bool pre)
 {
@@ -770,7 +786,19 @@ static void addScalarPyramid(PView *p, double xyz[PVIEW_NMAX][3],
     addScalarTetrahedron(p, xyz, val, pre, is[i][0], is[i][1], is[i][2], is[i][3]);
 }
 
-static void addOutlineElement(PView *p, int type, double xyz[PVIEW_NMAX][3], bool pre)
+static void addOutlinePolyhedron(PView *p, double xyz[PVIEW_NMAX][3], 
+                                 unsigned int color, bool pre)
+{
+  //TODO
+}
+
+static void addScalarPolyhedron(PView *p, double xyz[PVIEW_NMAX][3], 
+                                double val[PVIEW_NMAX][9], bool pre, int NumNodes)
+{
+  //TODO
+}
+
+static void addOutlineElement(PView *p, int type, double xyz[PVIEW_NMAX][3], bool pre, int numNodes=0)
 {
   PViewOptions *opt = p->getOptions();
   switch(type){
@@ -778,25 +806,29 @@ static void addOutlineElement(PView *p, int type, double xyz[PVIEW_NMAX][3], boo
   case TYPE_LIN: addOutlineLine(p, xyz, opt->color.line, pre); break;
   case TYPE_TRI: addOutlineTriangle(p, xyz, opt->color.triangle, pre); break;
   case TYPE_QUA: addOutlineQuadrangle(p, xyz, opt->color.quadrangle, pre); break;
+  case TYPE_POLYG: addOutlinePolygon(p, xyz, opt->color.quadrangle, pre, numNodes); break;
   case TYPE_TET: addOutlineTetrahedron(p, xyz, opt->color.tetrahedron, pre); break;
   case TYPE_HEX: addOutlineHexahedron(p, xyz, opt->color.hexahedron, pre); break;
   case TYPE_PRI: addOutlinePrism(p, xyz, opt->color.prism, pre); break;
   case TYPE_PYR: addOutlinePyramid(p, xyz, opt->color.pyramid, pre); break;
+  case TYPE_POLYH: addOutlinePolyhedron(p, xyz, opt->color.pyramid, pre); break;
   }
 }
 
 static void addScalarElement(PView *p, int type, double xyz[PVIEW_NMAX][3],
-                             double val[PVIEW_NMAX][9], bool pre)
+                             double val[PVIEW_NMAX][9], bool pre, int numNodes=0)
 {
   switch(type){
   case TYPE_PNT: addScalarPoint(p, xyz, val, pre); break;
   case TYPE_LIN: addScalarLine(p, xyz, val, pre); break;
   case TYPE_TRI: addScalarTriangle(p, xyz, val, pre); break;
   case TYPE_QUA: addScalarQuadrangle(p, xyz, val, pre); break;
+  case TYPE_POLYG: addScalarPolygon(p, xyz, val, pre, numNodes); break;
   case TYPE_TET: addScalarTetrahedron(p, xyz, val, pre); break;
   case TYPE_HEX: addScalarHexahedron(p, xyz, val, pre); break;
   case TYPE_PRI: addScalarPrism(p, xyz, val, pre); break;
   case TYPE_PYR: addScalarPyramid(p, xyz, val, pre); break;
+  case TYPE_POLYH: addScalarPolyhedron(p, xyz, val, pre, numNodes); break;
   }
 }
 
@@ -979,7 +1011,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
 
       for(int j = 0; j < numNodes; j++)
         opt->tmpBBox += SPoint3(xyz[j][0], xyz[j][1], xyz[j][2]);
-      
+
       if(opt->showElement && !data->useGaussPoints()) 
         addOutlineElement(p, type, xyz, preprocessNormalsOnly);
       
@@ -993,7 +1025,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
             for(int k = 0; k < numComp; k++)
               val2[0][k] = val[j][k];
             if(numComp == 1 && opt->drawScalars)
-              addScalarElement(p, TYPE_PNT, xyz2, val2, preprocessNormalsOnly);
+              addScalarElement(p, TYPE_PNT, xyz2, val2, preprocessNormalsOnly, numNodes);
             else if(numComp == 3 && opt->drawVectors)
               addVectorElement(p, ent, i, 1, TYPE_PNT, xyz2, val2, preprocessNormalsOnly);
             else if(numComp == 9 && opt->drawTensors)
@@ -1001,7 +1033,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
           }
         }
         else if(numComp == 1 && opt->drawScalars)
-          addScalarElement(p, type, xyz, val, preprocessNormalsOnly);
+          addScalarElement(p, type, xyz, val, preprocessNormalsOnly, numNodes);
         else if(numComp == 3 && opt->drawVectors)
           addVectorElement(p, ent, i, numNodes, type, xyz, val, preprocessNormalsOnly);
         else if(numComp == 9 && opt->drawTensors)

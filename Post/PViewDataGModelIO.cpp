@@ -184,7 +184,7 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary)
             // Warning: this will not work if the mesh we just saved
             // above changed the renumbering of the elements (which is
             // usually the case)...
-            int num = e->getNum();
+            int num = model->getMeshElementNumByTag(i);
             if(binary){
               fwrite(&num, sizeof(int), 1, fp);
               if(_type == ElementNodeData)

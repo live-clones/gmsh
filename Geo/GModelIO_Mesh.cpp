@@ -517,7 +517,7 @@ int GModel::readMSH(const std::string &name)
 template<class T>
 static void writeElementMSH(FILE *fp, GModel *model, T *ele, bool saveAll, 
                             double version, bool binary, int &num, int elementary, 
-                            std::vector<int> &physicals, int parentNum)
+                            std::vector<int> &physicals, fullVector<double> *newElemNumbers, int parentNum=0)
 {
   std::vector<short> ghosts;
   if(model->getGhostCells().size()){
@@ -535,6 +535,7 @@ static void writeElementMSH(FILE *fp, GModel *model, T *ele, bool saveAll,
     for(unsigned int j = 0; j < physicals.size(); j++)
       ele->writeMSH(fp, version, binary, ++num, elementary, physicals[j],
                     parentNum, &ghosts);
+  (*newElemNumbers)(ele->getNum()) = num;
 }
 
 template<class T>
@@ -543,6 +544,7 @@ static void writeElementsMSH(FILE *fp, GModel *model, std::vector<T*> &ele,
                              bool saveAll, int saveSinglePartition, double version,
                              bool binary, int &num, int elementary,
                              std::vector<int> &physicals,
+                             fullVector<double> *newElemNumbers,
                              std::map<MElement*, int> *parentsNum=0)
 {
   for(unsigned int i = 0; i < ele.size(); i++){
@@ -557,7 +559,7 @@ static void writeElementsMSH(FILE *fp, GModel *model, std::vector<T*> &ele,
       }
     }
     writeElementMSH(fp, model, ele[i], saveAll, version, binary, num,
-                    elementary, physicals, parentNum);
+                    elementary, physicals, newElemNumbers, parentNum);
   }
 }
 
@@ -693,23 +695,25 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   fprintf(fp, "%d\n", numElements);
   int num = elementStartNum;
   std::map<MElement*, int> parentsNum;
+  if(_newElemNumbers) delete _newElemNumbers;
+  _newElemNumbers = new fullVector<double>(numElements + 1);
 
   // points
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     writeElementsMSH(fp, this, (*it)->points, saveAll, saveSinglePartition,
-                     version, binary, num, (*it)->tag(), (*it)->physicals);
+                     version, binary, num, (*it)->tag(), (*it)->physicals, _newElemNumbers);
 
   // lines
   for(std::map<MElement*, GEntity*>::const_iterator it = parents[0].begin(); 
       it != parents[0].end(); it++)
     if(it->first->getType() == TYPE_LIN) {
       writeElementMSH(fp, this, it->first, saveAll, version, binary, num,
-                      it->second->tag(), it->second->physicals, 0);
+                      it->second->tag(), it->second->physicals, _newElemNumbers);
       parentsNum[it->first] = num;
     }
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     writeElementsMSH(fp, this, (*it)->lines, saveAll, saveSinglePartition,
-                     version, binary, num, (*it)->tag(), (*it)->physicals,
+                     version, binary, num, (*it)->tag(), (*it)->physicals, _newElemNumbers,
                      &parentsNum);
 
   // triangles
@@ -717,36 +721,36 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
       it != parents[1].end(); it++)
     if(it->first->getType() == TYPE_TRI) {
       writeElementMSH(fp, this, it->first, saveAll, version, binary, num,
-                      it->second->tag(), it->second->physicals, 0);
+                      it->second->tag(), it->second->physicals, _newElemNumbers);
       parentsNum[it->first] = num;
     }
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, this, (*it)->triangles, saveAll, saveSinglePartition,
-                     version, binary, num, (*it)->tag(), (*it)->physicals);
+                     version, binary, num, (*it)->tag(), (*it)->physicals, _newElemNumbers);
 
   // quads
   for(std::map<MElement*, GEntity*>::const_iterator it = parents[1].begin(); 
       it != parents[1].end(); it++)
     if(it->first->getType() == TYPE_QUA) {
       writeElementMSH(fp, this, it->first, saveAll, version, binary, num,
-                      it->second->tag(), it->second->physicals, 0);
+                      it->second->tag(), it->second->physicals, _newElemNumbers);
       parentsNum[it->first] = num;
     }
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, this, (*it)->quadrangles, saveAll, saveSinglePartition,
-                     version, binary, num, (*it)->tag(), (*it)->physicals);
+                     version, binary, num, (*it)->tag(), (*it)->physicals, _newElemNumbers);
 
   // polygons
   for(std::map<MElement*, GEntity*>::const_iterator it = parents[1].begin();
       it != parents[1].end(); it++)
     if(it->first->getType() == TYPE_POLYG) {
       writeElementMSH(fp, this, it->first, saveAll, version, binary, num,
-                      it->second->tag(), it->second->physicals, 0);
+                      it->second->tag(), it->second->physicals, _newElemNumbers);
       parentsNum[it->first] = num;
     }
   for(fiter it = firstFace(); it != lastFace(); it++)
     writeElementsMSH(fp, this, (*it)->polygons, saveAll, saveSinglePartition,
-                     version, binary, num, (*it)->tag(), (*it)->physicals, 
+                     version, binary, num, (*it)->tag(), (*it)->physicals, _newElemNumbers, 
                      &parentsNum);
 
   // tets
@@ -754,60 +758,60 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
       it != parents[2].end(); it++)
     if(it->first->getType() == TYPE_TET) {
       writeElementMSH(fp, this, it->first, saveAll, version, binary, num,
-                      it->second->tag(), it->second->physicals, 0);
+                      it->second->tag(), it->second->physicals, _newElemNumbers);
       parentsNum[it->first] = num;
     }
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, this, (*it)->tetrahedra, saveAll, saveSinglePartition,
-                     version, binary, num, (*it)->tag(), (*it)->physicals);
+                     version, binary, num, (*it)->tag(), (*it)->physicals, _newElemNumbers);
 
   // hexas
   for(std::map<MElement*, GEntity*>::const_iterator it = parents[2].begin();
       it != parents[2].end(); it++)
     if(it->first->getType() == TYPE_HEX) {
       writeElementMSH(fp, this, it->first, saveAll, version, binary, num,
-                      it->second->tag(), it->second->physicals, 0);
+                      it->second->tag(), it->second->physicals, _newElemNumbers);
       parentsNum[it->first] = num;
     }
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, this, (*it)->hexahedra, saveAll, saveSinglePartition,
-                     version, binary, num, (*it)->tag(), (*it)->physicals);
+                     version, binary, num, (*it)->tag(), (*it)->physicals, _newElemNumbers);
 
   // prisms
   for(std::map<MElement*, GEntity*>::const_iterator it = parents[2].begin();
       it != parents[2].end(); it++)
     if(it->first->getType() == TYPE_PRI) {
       writeElementMSH(fp, this, it->first, saveAll, version, binary, num,
-                      it->second->tag(), it->second->physicals, 0);
+                      it->second->tag(), it->second->physicals, _newElemNumbers);
       parentsNum[it->first] = num;
     }
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, this, (*it)->prisms, saveAll, saveSinglePartition,
-                     version, binary, num, (*it)->tag(), (*it)->physicals);
+                     version, binary, num, (*it)->tag(), (*it)->physicals, _newElemNumbers);
   
   // pyramids
   for(std::map<MElement*, GEntity*>::const_iterator it = parents[2].begin();
       it != parents[2].end(); it++)
     if(it->first->getType() == TYPE_PYR) {
       writeElementMSH(fp, this, it->first, saveAll, version, binary, num,
-                      it->second->tag(), it->second->physicals, 0);
+                      it->second->tag(), it->second->physicals, _newElemNumbers);
       parentsNum[it->first] = num;
     }
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, this, (*it)->pyramids, saveAll, saveSinglePartition,
-                     version, binary, num, (*it)->tag(), (*it)->physicals);
+                     version, binary, num, (*it)->tag(), (*it)->physicals, _newElemNumbers);
 
   // polyhedra
   for(std::map<MElement*, GEntity*>::const_iterator it = parents[2].begin();
       it != parents[2].end(); it++)
     if(it->first->getType() == TYPE_POLYH) {
       writeElementMSH(fp, this, it->first, saveAll, version, binary, num,
-                      it->second->tag(), it->second->physicals, 0);
+                      it->second->tag(), it->second->physicals, _newElemNumbers);
       parentsNum[it->first] = num;
     }
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, this, (*it)->polyhedra, saveAll, saveSinglePartition,
-                     version, binary, num, (*it)->tag(), (*it)->physicals,
+                     version, binary, num, (*it)->tag(), (*it)->physicals, _newElemNumbers,
                      &parentsNum);
 
   if(binary) fprintf(fp, "\n");
