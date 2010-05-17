@@ -622,7 +622,7 @@ void GModel::getMeshVerticesForPhysicalGroup(int dim, int num, std::vector<MVert
 
 MElement *GModel::getMeshElementByTag(int num)
 {
-  int n = (*_newElemNumbers)(num);
+  int n = (_newElemNumbers) ? (*_newElemNumbers)(num) : num;
   if(_elementVectorCache.empty() && _elementMapCache.empty()){
     Msg::Debug("Rebuilding mesh element cache");
     _elementVectorCache.clear();
@@ -637,14 +637,16 @@ MElement *GModel::getMeshElementByTag(int num)
       for(unsigned int i = 0; i < entities.size(); i++)
         for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
           MElement *e = entities[i]->getMeshElement(j);
-          _elementVectorCache[(*_newElemNumbers)(e->getNum())] = e;
+          int ni = (_newElemNumbers) ? (*_newElemNumbers)(e->getNum()) : e->getNum();
+          _elementVectorCache[ni] = e;
         }
     }
     else{
       for(unsigned int i = 0; i < entities.size(); i++)
         for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
           MElement *e = entities[i]->getMeshElement(j);
-          _elementMapCache[(*_newElemNumbers)(e->getNum())] = e;
+          int ni = (_newElemNumbers) ? (*_newElemNumbers)(e->getNum()) : e->getNum();
+          _elementMapCache[ni] = e;
         }
     }
   }

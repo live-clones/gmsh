@@ -364,6 +364,29 @@ void MElement::xyz2uvw(double xyz[3], double uvw[3])
   }
 }
 
+void MElement::movePointFromParentSpaceToElementSpace(double &u, double &v, double &w)
+{
+  if(!getParent()) return;
+  SPoint3 p;
+  getParent()->pnt(u, v, w, p);
+  double xyz[3] = {p.x(), p.y(), p.z()};
+  double uvwE[3];
+  xyz2uvw(xyz, uvwE);
+  u = uvwE[0]; v = uvwE[1]; w = uvwE[2];
+}
+
+void MElement::movePointFromElementSpaceToParentSpace(double &u, double &v, double &w)
+{
+  if(!getParent()) return;
+  SPoint3 p;
+  double uvwE[3] = {u, v, w};
+  pnt(u, v, w, p);
+  double xyz[3] = {p.x(), p.y(), p.z()};
+  double uvwP[3];
+  getParent()->xyz2uvw(xyz, uvwP);
+  u = uvwP[0]; v = uvwP[1]; w = uvwP[2];
+}
+
 double MElement::interpolate(double val[], double u, double v, double w, int stride,
                              int order)
 {
@@ -883,12 +906,12 @@ MElement *MElement::copy(int &num, std::map<int, MVertex*> &vertexMap,
     }
   }
   MElementFactory factory;
-  MElement *newEl = factory.create(eType, vmv, ++num, _partition);
+  MElement *newEl = factory.create(eType, vmv, getNum(), _partition);
   if(eParent && !getDomain(0) && !getDomain(1)) {
     std::map<MElement*, MElement*>::iterator it = newParents.find(eParent);
     MElement *newParent;
     if(it == newParents.end()) {
-      newParent = eParent->copy(num, vertexMap, newParents, newDomains);
+      newParent = eParent->copy(++num, vertexMap, newParents, newDomains);
       newParents[eParent] = newParent;
     }
     else
@@ -901,7 +924,7 @@ MElement *MElement::copy(int &num, std::map<int, MVertex*> &vertexMap,
     std::map<MElement*, MElement*>::iterator it = newDomains.find(dom);
     MElement *newDom;
     if(it == newDomains.end()) {
-      newDom = dom->copy(num, vertexMap, newParents, newDomains);
+      newDom = dom->copy(++num, vertexMap, newParents, newDomains);
       newDomains[dom] = newDom;
     }
     else

@@ -320,16 +320,17 @@ class MLineChild : public MLine {
 class MTriangleBorder : public MTriangle {
  protected:
   MElement* _domains[2];
+  IntPt *_intpt;
  public:
   MTriangleBorder(MVertex *v0, MVertex *v1, MVertex *v2, int num = 0, int part = 0,
                   MElement* d1 = NULL, MElement* d2 = NULL)
-    : MTriangle(v0, v1, v2, num, part)
+    : MTriangle(v0, v1, v2, num, part), _intpt(0)
   {
     _domains[0] = d1; _domains[1] = d2;
   }
   MTriangleBorder(std::vector<MVertex*> v, int num = 0, int part = 0,
                   MElement* d1 = NULL, MElement* d2 = NULL)
-    : MTriangle(v, num, part)
+    : MTriangle(v, num, part), _intpt(0)
   {
     _domains[0] = d1; _domains[1] = d2;
   }
@@ -342,38 +343,24 @@ class MTriangleBorder : public MTriangle {
     return NULL;
   }
   virtual int getTypeForMSH() const { return MSH_TRI_B; }
-  virtual const polynomialBasis* getFunctionSpace(int order=-1) const
-  {
-    return getParent()->getFunctionSpace(order);
-  }
-  virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
-  {
-    getParent()->getShapeFunctions(u, v, w, s, o);
-  }
-  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
-  {
-    getParent()->getGradShapeFunctions(u, v, w, s, o);
-  }
-  virtual void xyz2uvw(double xyz[3], double uvw[3])
-  {
-    getParent()->xyz2uvw(xyz,uvw);
-  }
+  // the integration points of the MTriangleBorder are in the parent element space
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 };
 
 class MPolygonBorder : public MPolygon {
  protected:
   MElement* _domains[2];
+  IntPt *_intpt;
  public:
   MPolygonBorder(std::vector<MTriangle*> v, int num = 0, int part = 0,
                   MElement* d1 = NULL, MElement* d2 = NULL)
-    : MPolygon(v, num, part)
+    : MPolygon(v, num, part), _intpt(0)
   {
     _domains[0] = d1; _domains[1] = d2;
   }
   MPolygonBorder(std::vector<MVertex*> v, int num = 0, int part = 0,
                   MElement* d1 = NULL, MElement* d2 = NULL)
-    : MPolygon(v, num, part)
+    : MPolygon(v, num, part), _intpt(0)
   {
     _domains[0] = d1; _domains[1] = d2;
   }
@@ -386,38 +373,24 @@ class MPolygonBorder : public MPolygon {
     return NULL;
   }
   virtual int getTypeForMSH() const { return MSH_POLYG_B; }
-  virtual const polynomialBasis* getFunctionSpace(int order=-1) const
-  {
-    return getParent()->getFunctionSpace(order);
-  }
-  virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
-  {
-    getParent()->getShapeFunctions(u, v, w, s, o);
-  }
-  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
-  {
-    getParent()->getGradShapeFunctions(u, v, w, s, o);
-  }
-  virtual void xyz2uvw(double xyz[3], double uvw[3])
-  {
-    getParent()->xyz2uvw(xyz,uvw);
-  }
+  // the integration points of the MPolygonBorder are in the parent element space
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 };
 
 class MLineBorder : public MLine {
  protected:
   MElement* _domains[2];
+  IntPt *_intpt;
  public:
   MLineBorder(MVertex *v0, MVertex *v1, int num = 0, int part = 0,
               MElement* d1 = NULL, MElement* d2 = NULL)
-    : MLine(v0, v1, num, part)
+    : MLine(v0, v1, num, part), _intpt(0)
   {
     _domains[0] = d1; _domains[1] = d2;
   }
   MLineBorder(std::vector<MVertex*> v, int num = 0, int part = 0,
               MElement* d1 = NULL, MElement* d2 = NULL)
-    : MLine(v, num, part)
+    : MLine(v, num, part), _intpt(0)
   {
     _domains[0] = d1; _domains[1] = d2;
   }
@@ -430,23 +403,7 @@ class MLineBorder : public MLine {
     return NULL;
   }
   virtual int getTypeForMSH() const { return MSH_LIN_B; }
-  virtual const polynomialBasis* getFunctionSpace(int order=-1) const
-  {
-    if (this->getParent()) return getParent()->getFunctionSpace(order);
-    else return NULL;
-  }
-  virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
-  {
-    getParent()->getShapeFunctions(u, v, w, s, o);
-  }
-  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
-  {
-    getParent()->getGradShapeFunctions(u, v, w, s, o);
-  }
-  virtual void xyz2uvw(double xyz[3], double uvw[3])
-  {
-    getParent()->xyz2uvw(xyz,uvw);
-  }
+  // the integration points of the MLineBorder are in the parent element space
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 };
 

@@ -229,6 +229,10 @@ class MElement
   // invert the parametrisation
   virtual void xyz2uvw(double xyz[3], double uvw[3]);
 
+  // move point between parent and element parametric spaces
+  virtual void movePointFromParentSpaceToElementSpace(double &u, double &v, double &w);
+  virtual void movePointFromElementSpaceToParentSpace(double &u, double &v, double &w);
+
   // test if a point, given in parametric coordinates, belongs to the
   // element
   virtual bool isInside(double u, double v, double w) = 0;

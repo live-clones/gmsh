@@ -341,6 +341,12 @@ void MLineChild::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 
 void MTriangleBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
+  *npts = 0;
+  if(_intpt) delete [] _intpt;
+  _intpt = new IntPt[getNGQTPts(pOrder)];
+  int nptsi;
+  IntPt *ptsi;
+
   double uvw[3][3];
   for(int j = 0; j < 3; j++) {
     double xyz[3] = {_v[j]->x(), _v[j]->y(), _v[j]->z()};
@@ -350,26 +356,34 @@ void MTriangleBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   MVertex v1(uvw[1][0], uvw[1][1], uvw[1][2]);
   MVertex v2(uvw[2][0], uvw[2][1], uvw[2][2]);
   MTriangle tt(&v0, &v1, &v2);
-  tt.getIntegrationPoints(pOrder, npts, pts);
+  tt.getIntegrationPoints(pOrder, &nptsi, &ptsi);
   double jac[3][3];
-  for(int ip = 0; ip < (*npts); ip++){
-    const double u = pts[ip]->pt[0];
-    const double v = pts[ip]->pt[1];
-    const double w = pts[ip]->pt[2];
-    const double weight = pts[ip]->weight;
+  for(int ip = 0; ip < nptsi; ip++){
+    const double u = ptsi[ip].pt[0];
+    const double v = ptsi[ip].pt[1];
+    const double w = ptsi[ip].pt[2];
+    const double weight = ptsi[ip].weight;
     const double detJ = tt.getJacobian(u, v, w, jac);
     SPoint3 p; tt.pnt(u, v, w, p);
-    (*pts[ip]).pt[0] = p.x();
-    (*pts[ip]).pt[1] = p.y();
-    (*pts[ip]).pt[2] = p.z();
-    (*pts[ip]).weight = detJ * weight;
+    _intpt[ip].pt[0] = p.x();
+    _intpt[ip].pt[1] = p.y();
+    _intpt[ip].pt[2] = p.z();
+    _intpt[ip].weight = weight;//detJ * weight;
   }
+  *npts = nptsi;
+  *pts = _intpt;
 }
 
 //----------------------------------- MPolygonBorder ------------------------------
 
 void MPolygonBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
+  *npts = 0;
+  if(_intpt) delete [] _intpt;
+  _intpt = new IntPt[getNGQTPts(pOrder) * _parts.size()];
+  int nptsi;
+  IntPt *ptsi;
+
   std::vector<MVertex*> verts;
   for(unsigned int i = 0; i < _parts.size(); i++) {
     double uvw[3][3];
@@ -383,20 +397,22 @@ void MPolygonBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
     verts.push_back(new MVertex(uvw[2][0], uvw[2][1], uvw[2][2]));
   }
   MPolygon pp(verts);
-  pp.getIntegrationPoints(pOrder, npts, pts);
+  pp.getIntegrationPoints(pOrder, &nptsi, &ptsi);
   double jac[3][3];
-  for(int ip = 0; ip < (*npts); ip++){
-    const double u = pts[ip]->pt[0];
-    const double v = pts[ip]->pt[1];
-    const double w = pts[ip]->pt[2];
-    const double weight = pts[ip]->weight;
+  for(int ip = 0; ip < nptsi; ip++){
+    const double u = ptsi[ip].pt[0];
+    const double v = ptsi[ip].pt[1];
+    const double w = ptsi[ip].pt[2];
+    const double weight = ptsi[ip].weight;
     const double detJ = pp.getJacobian(u, v, w, jac);
     SPoint3 p; pp.pnt(u, v, w, p);
-    (*pts[ip]).pt[0] = p.x();
-    (*pts[ip]).pt[1] = p.y();
-    (*pts[ip]).pt[2] = p.z();
-    (*pts[ip]).weight = detJ * weight;
+    _intpt[ip].pt[0] = p.x();
+    _intpt[ip].pt[1] = p.y();
+    _intpt[ip].pt[2] = p.z();
+    _intpt[ip].weight = weight;//detJ * weight;
   }
+  *npts = nptsi;
+  *pts = _intpt;
   for(unsigned int i = 0; i < verts.size(); i++)
     delete verts[i];
 }
@@ -405,6 +421,12 @@ void MPolygonBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 
 void MLineBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
+  *npts = 0;
+  if(_intpt) delete [] _intpt;
+  _intpt = new IntPt[getNGQLPts(pOrder)];
+  int nptsi;
+  IntPt *ptsi;
+
   double uvw[2][3];
   for(int j = 0; j < 2; j++) {
     double xyz[3] = {_v[j]->x(), _v[j]->y(), _v[j]->z()};
@@ -413,20 +435,22 @@ void MLineBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   MVertex v0(uvw[0][0], uvw[0][1], uvw[0][2]);
   MVertex v1(uvw[1][0], uvw[1][1], uvw[1][2]);
   MLine ll(&v0, &v1);
-  ll.getIntegrationPoints(pOrder, npts, pts);
+  ll.getIntegrationPoints(pOrder, &nptsi, &ptsi);
   double jac[3][3];
-  for(int ip = 0; ip < (*npts); ip++){
-    const double u = pts[ip]->pt[0];
-    const double v = pts[ip]->pt[1];
-    const double w = pts[ip]->pt[2];
-    const double weight = pts[ip]->weight;
+  for(int ip = 0; ip < nptsi; ip++){
+    const double u = ptsi[ip].pt[0];
+    const double v = ptsi[ip].pt[1];
+    const double w = ptsi[ip].pt[2];
+    const double weight = ptsi[ip].weight;
     const double detJ = ll.getJacobian(u, v, w, jac);
     SPoint3 p; ll.pnt(u, v, w, p);
-    (*pts[ip]).pt[0] = p.x();
-    (*pts[ip]).pt[1] = p.y();
-    (*pts[ip]).pt[2] = p.z();
-    (*pts[ip]).weight = detJ * weight;
+    _intpt[ip].pt[0] = p.x();
+    _intpt[ip].pt[1] = p.y();
+    _intpt[ip].pt[2] = p.z();
+    _intpt[ip].weight = weight;//detJ * weight;
   }
+  *npts = nptsi;
+  *pts = _intpt;
 }
 
 //---------------------------------------- CutMesh ----------------------------
@@ -1120,7 +1144,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
     newPhysTags[d][0] = gm->getMaxPhysicalNumber(d); //max value at [dim][0]
   }
 
-  int numEle = 0; //element number increment
+  int numEle = gm->getNumMeshElements(); //element number increment
   std::map<MElement*, MElement*> newParents; //map<oldParent, newParent>
   std::map<MElement*, MElement*> newDomains; //map<oldDomain, newDomain>
 
