@@ -13,6 +13,7 @@
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Value_Slider.H>
+#include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Menu_Window.H>
 #include <FL/Fl_Select_Browser.H>
 #include <FL/Fl_Toggle_Button.H>
@@ -356,13 +357,14 @@ int mpegFileDialog(const char *name)
     Fl_Window *window;
     Fl_Round_Button *b[2];
     Fl_Check_Button *c[1];
+    Fl_Value_Input *v[1];
     Fl_Button *ok, *cancel;
   };
   static _mpegFileDialog *dialog = NULL;
 
   if(!dialog){
     dialog = new _mpegFileDialog;
-    int h = 3 * WB + 4 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 5 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "MPEG Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
@@ -376,9 +378,18 @@ int mpegFileDialog(const char *name)
       dialog->b[1]->type(FL_RADIO_BUTTON);
       o->end();
     }
+    dialog->v[0] = new Fl_Value_Input
+      (WB, y, BB / 2, BH, "Frame duration (in sec.)"); y += BH;
+    dialog->v[0]->minimum(1. / 24.);
+    dialog->v[0]->maximum(2.);
+    dialog->v[0]->step(1. / 24.);
+    dialog->v[0]->precision(3);
+    dialog->v[0]->align(FL_ALIGN_RIGHT);
+    
     dialog->c[0] = new Fl_Check_Button
       (WB, y, 2 * BB + WB, BH, "Composite all window tiles"); y += BH;
     dialog->c[0]->type(FL_TOGGLE_BUTTON);
+
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->end();
@@ -387,6 +398,7 @@ int mpegFileDialog(const char *name)
   
   dialog->b[0]->value(!CTX::instance()->post.animCycle);
   dialog->b[1]->value(CTX::instance()->post.animCycle);
+  dialog->v[0]->value(CTX::instance()->post.animDelay);
   dialog->c[0]->value(CTX::instance()->print.compositeWindows);
   dialog->window->show();
 
@@ -397,6 +409,7 @@ int mpegFileDialog(const char *name)
       if (!o) break;
       if (o == dialog->ok) {
         opt_post_anim_cycle(0, GMSH_SET | GMSH_GUI, (int)dialog->b[1]->value());
+        opt_post_anim_delay(0, GMSH_SET | GMSH_GUI, dialog->v[0]->value());
         opt_print_composite_windows(0, GMSH_SET | GMSH_GUI, (int)dialog->c[0]->value());
         CreateOutputFile(name, FORMAT_MPEG);
         dialog->window->hide();

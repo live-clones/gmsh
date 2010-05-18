@@ -449,20 +449,29 @@ void CreateOutputFile(std::string fileName, int format)
       status_play_manual(!CTX::instance()->post.animCycle, 0);
       for(int i = 0; i < numFrames; i++){
         char tmp[256];
-        sprintf(tmp, "%s.gmsh-%03d.ppm", CTX::instance()->homeDir.c_str(), i + 1);
+        sprintf(tmp, "%s.gmsh-%03d.ppm", CTX::instance()->homeDir.c_str(), i);
         CreateOutputFile(tmp, FORMAT_PPM);
         status_play_manual(!CTX::instance()->post.animCycle, 1);
       }
-      fprintf(fp, "PATTERN          I\n"    "BASE_FILE_FORMAT PPM\n"
-              "GOP_SIZE         30\n"       "SLICES_PER_FRAME 1\n"
-              "PIXEL            HALF\n"     "RANGE            10\n"
-              "PSEARCH_ALG      TWOLEVEL\n" "BSEARCH_ALG      CROSS2\n"
-              "IQSCALE          1\n"        "PQSCALE          10\n"
-              "BQSCALE          25\n"       "REFERENCE_FRAME  DECODED\n"
-              "OUTPUT           %s\n"       "INPUT_CONVERT    *\n"
-              "INPUT_DIR        %s\n"
-              "INPUT\n" ".gmsh-*.ppm [001-%03d]\n" "END_INPUT\n", 
-              fileName.c_str(), CTX::instance()->homeDir.c_str(), numFrames);
+      int repeat = (int)(CTX::instance()->post.animDelay * 24);
+      if(repeat < 1) repeat = 1;
+      std::string pattern("I");
+      // including P frames would lead to smaller files, but the
+      // quality degradation is perceptible...
+      // for(int i = 1; i < repeat; i++) pattern += "P";
+      fprintf(fp, "PATTERN %s\nBASE_FILE_FORMAT PPM\nGOP_SIZE %d\n"
+              "SLICES_PER_FRAME 1\nPIXEL FULL\nRANGE 10\n"
+              "PSEARCH_ALG EXHAUSTIVE\nBSEARCH_ALG CROSS2\n"
+              "IQSCALE 1\nPQSCALE 1\nBQSCALE 25\nREFERENCE_FRAME DECODED\n"
+              "OUTPUT %s\nINPUT_CONVERT *\nINPUT_DIR %s\nINPUT\n",
+              pattern.c_str(), repeat, fileName.c_str(), 
+              CTX::instance()->homeDir.c_str());
+      for(int i = 0; i < numFrames; i++){
+        fprintf(fp, ".gmsh-%03d.ppm", i);
+        if(repeat > 1) fprintf(fp, " [1-%d]", repeat);
+        fprintf(fp, "\n");
+      }
+      fprintf(fp, "END_INPUT\n");
       fclose(fp);
       char *args[] = {(char*)"gmsh", (char*)parFileName.c_str()};
       try{
