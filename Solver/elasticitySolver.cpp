@@ -57,8 +57,8 @@ void elasticitySolver::setMesh(const std::string &meshFileName)
   _dim = pModel->getNumRegions() ? 3 : 2;
 
   if (LagSpace) delete LagSpace;
-  if (_dim==3) LagSpace=new VectorLagrangeFunctionSpaceOfParent(_tag);
-  if (_dim==2) LagSpace=new VectorLagrangeFunctionSpaceOfParent(_tag,VectorLagrangeFunctionSpaceOfParent::VECTOR_X,VectorLagrangeFunctionSpaceOfParent::VECTOR_Y);
+  if (_dim==3) LagSpace=new VectorLagrangeFunctionSpace(_tag);
+  if (_dim==2) LagSpace=new VectorLagrangeFunctionSpace(_tag,VectorLagrangeFunctionSpace::VECTOR_X,VectorLagrangeFunctionSpace::VECTOR_Y);
 
   if (LagrangeMultiplierSpace) delete LagrangeMultiplierSpace;
   LagrangeMultiplierSpace = new ScalarLagrangeFunctionSpace(_tag+1);
