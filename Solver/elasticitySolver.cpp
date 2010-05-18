@@ -283,7 +283,7 @@ void elasticitySolver::solve()
   lsys->systemSolve();
   printf("-- done solving!\n");
 
-  printLinearSystem(lsys);
+//   printLinearSystem(lsys);
 
   double energ=0;
   for (unsigned int i = 0; i < elasticFields.size(); i++)
