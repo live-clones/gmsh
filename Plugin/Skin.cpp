@@ -153,11 +153,19 @@ PView *GMSH_SkinPlugin::execute(PView *v)
   std::set<ElmData, ElmDataLessThan> skin;
   ElmDataLessThan::tolerance = CTX::instance()->lc * 1.e-12;
 
-  for(int ent = 0; ent < data1->getNumEntities(0); ent++){
-    for(int ele = 0; ele < data1->getNumElements(0, ent); ele++){
-      if(data1->skipElement(0, ent, ele)) continue;
-      int numComp = data1->getNumComponents(0, ent, ele);
-      int type = data1->getType(0, ent, ele);
+  int firstNonEmptyStep = 0;
+  for(int step = 0; step < data1->getNumTimeSteps(); step++){
+    if(data1->hasTimeStep(step)){
+      firstNonEmptyStep = step;
+      break;
+    }
+  }
+
+  for(int ent = 0; ent < data1->getNumEntities(firstNonEmptyStep); ent++){
+    for(int ele = 0; ele < data1->getNumElements(firstNonEmptyStep, ent); ele++){
+      if(data1->skipElement(firstNonEmptyStep, ent, ele)) continue;
+      int numComp = data1->getNumComponents(firstNonEmptyStep, ent, ele);
+      int type = data1->getType(firstNonEmptyStep, ent, ele);
       const int (*boundary)[6][4];
       int numBoundary = getBoundary(type, &boundary);
       if(!numBoundary) continue;
@@ -167,7 +175,7 @@ PView *GMSH_SkinPlugin::execute(PView *v)
           int nod = (*boundary)[i][j];
           if(nod < 0) continue;
           double x, y, z;
-          data1->getNode(0, ent, ele, nod, x, y, z);
+          data1->getNode(firstNonEmptyStep, ent, ele, nod, x, y, z);
           e.x.push_back(x);
           e.y.push_back(y);
           e.z.push_back(z);
@@ -175,13 +183,15 @@ PView *GMSH_SkinPlugin::execute(PView *v)
         std::set<ElmData, ElmDataLessThan>::iterator it = skin.find(e);
         if(it == skin.end()){
           for(int step = 0; step < data1->getNumTimeSteps(); step++){
-            for(int j = 0; j < 4; j++){
-              int nod = (*boundary)[i][j];
-              if(nod < 0) continue;
-              double v;
-              for(int comp = 0; comp < numComp; comp++){
-                data1->getValue(step, ent, ele, nod, comp, v);
-                e.v.push_back(v);
+            if(data1->hasTimeStep(step)){
+              for(int j = 0; j < 4; j++){
+                int nod = (*boundary)[i][j];
+                if(nod < 0) continue;
+                double v;
+                for(int comp = 0; comp < numComp; comp++){
+                  data1->getValue(step, ent, ele, nod, comp, v);
+                  e.v.push_back(v);
+                }
               }
             }
           }
@@ -198,7 +208,8 @@ PView *GMSH_SkinPlugin::execute(PView *v)
     it->addInView(data2);
   
   for(int i = 0; i < data1->getNumTimeSteps(); i++)
-    data2->Time.push_back(data1->getTime(i));
+    if(data1->hasTimeStep(i))
+      data2->Time.push_back(data1->getTime(i));
   data2->setName(data1->getName() + "_Skin");
   data2->setFileName(data1->getName() + "_Skin.pos");
   data2->finalize();
