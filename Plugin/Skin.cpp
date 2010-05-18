@@ -9,6 +9,7 @@
 #include "GmshDefines.h"
 
 StringXNumber SkinOptions_Number[] = {
+  {GMSH_FULLRC, "Visible", NULL, 1.},
   {GMSH_FULLRC, "View", NULL, -1.}
 };
 
@@ -23,7 +24,8 @@ extern "C"
 std::string GMSH_SkinPlugin::getHelp() const
 {
   return "Plugin(Skin) extracts the boundary (skin) of "
-    "the view `View'.\n\n"
+    "the view `View'. If `Visible' is set, the plugin only "
+    "extracts the skin of visible entities.\n\n"
     "If `View' < 0, the plugin is run on the current view.\n\n"
     "Plugin(Skin) creates one new view.";
 }
@@ -136,7 +138,8 @@ static int getBoundary(int type, const int (**boundary)[6][4])
 
 PView *GMSH_SkinPlugin::execute(PView *v)
 {
-  int iView = (int)SkinOptions_Number[0].def;
+  int visible = (int)SkinOptions_Number[0].def;
+  int iView = (int)SkinOptions_Number[1].def;
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
@@ -162,8 +165,9 @@ PView *GMSH_SkinPlugin::execute(PView *v)
   }
 
   for(int ent = 0; ent < data1->getNumEntities(firstNonEmptyStep); ent++){
+    if(visible && data1->skipEntity(firstNonEmptyStep, ent)) continue;
     for(int ele = 0; ele < data1->getNumElements(firstNonEmptyStep, ent); ele++){
-      if(data1->skipElement(firstNonEmptyStep, ent, ele)) continue;
+      if(data1->skipElement(firstNonEmptyStep, ent, ele, visible)) continue;
       int numComp = data1->getNumComponents(firstNonEmptyStep, ent, ele);
       int type = data1->getType(firstNonEmptyStep, ent, ele);
       const int (*boundary)[6][4];
