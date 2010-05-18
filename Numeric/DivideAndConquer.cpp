@@ -734,7 +734,7 @@ int DocRecord::ConvertDListToTriangles()
 
   for(int i = 0; i < n; i++)
     delete [] striangle[i].t;
-  delete striangle;
+  delete []striangle;
 
   return 1;
 }
