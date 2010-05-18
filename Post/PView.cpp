@@ -245,15 +245,32 @@ void PView::combine(bool time, int how, bool remove)
 
   std::set<PView*> rm;
   for(unsigned int i = 0; i < nds.size(); i++){
-    if(nds[i].data.size() > 1){
-      // there's potentially something to combine
-      PView *p = new PView();
-      PViewData *data = p->getData();
-      bool res = time ? data->combineTime(nds[i]): data->combineSpace(nds[i]);
+    if(nds[i].data.size() > 1){ // there's potentially something to combine
+      // sanity checks:
+      bool allListBased = true, allModelBased = true;
+      for(unsigned int j = 0; j < nds[i].data.size(); j++){
+        PViewDataList *d1 = dynamic_cast<PViewDataList*>(nds[i].data[j]);
+        if(!d1) allListBased = false;
+        PViewDataGModel *d2 = dynamic_cast<PViewDataGModel*>(nds[i].data[j]);
+        if(!d2) allModelBased = false;
+      }
+      PViewData *data = 0;
+      if(allListBased){
+        data = new PViewDataList();
+      }
+      else if(allModelBased){
+        PViewDataGModel *d2 = dynamic_cast<PViewDataGModel*>(nds[i].data[0]);
+        data = new PViewDataGModel(d2->getType());
+      }
+      else{
+        Msg::Error("Cannot combine hybrid list/model-based datasets");
+        continue;
+      }
+      PView *p = new PView(data);
+      bool res = time ? data->combineTime(nds[i]) : data->combineSpace(nds[i]);
       if(res){
         for(unsigned int j = 0; j < nds[i].indices.size(); j++)
           rm.insert(list[nds[i].indices[j]]);
-
         PViewOptions *opt = p->getOptions();
         if(opt->adaptVisualizationGrid){
           // the (empty) adaptive data created in PView() must be
@@ -262,7 +279,6 @@ void PView::combine(bool time, int how, bool remove)
           data->initAdaptiveData
             (opt->timeStep, opt->maxRecursionLevel, opt->targetError);
         }
-
       }
       else
         delete p;

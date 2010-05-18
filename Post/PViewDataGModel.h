@@ -168,6 +168,7 @@ class PViewDataGModel : public PViewData {
   int getType(int step, int ent, int ele);
   void revertElement(int step, int ent, int ele);
   void smooth();
+  bool combineTime(nameData &nd);
   bool skipEntity(int step, int ent);
   bool skipElement(int step, int ent, int ele, bool checkVisibility=false);
   bool hasTimeStep(int step);

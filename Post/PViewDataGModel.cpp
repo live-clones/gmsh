@@ -495,6 +495,68 @@ void PViewDataGModel::smooth()
   finalize();
 }
 
+bool PViewDataGModel::combineTime(nameData &nd)
+{
+  // sanity checks
+  if(nd.data.size() < 2) return false;
+  std::vector<PViewDataGModel*> data(nd.data.size());
+  for(unsigned int i = 0; i < nd.data.size(); i++){
+    data[i] = dynamic_cast<PViewDataGModel*>(nd.data[i]);
+    if(!data[i]){
+      Msg::Error("Cannot combine hybrid data");
+      return false;
+    }
+  }
+
+  // copy interpolation matrices
+  for(std::map<int, std::vector<fullMatrix<double>*> >::iterator it = 
+        data[0]->_interpolation.begin(); it != data[0]->_interpolation.end(); it++)
+    if(_interpolation[it->first].empty())
+      for(unsigned int i = 0; i < it->second.size(); i++)
+        _interpolation[it->first].push_back(new fullMatrix<double>(*it->second[i]));
+
+  for(unsigned int i = 0; i < data.size(); i++){
+    // FIXME: this is a horrible hack (we copy the data twice, and use
+    // a map!); we need to store the number of values per
+    // node/ele/... in stepData and provide a copy constructor, then
+    // just copy the stepData
+    for(unsigned int j = 0; j < data[i]->_steps.size(); j++){
+      if(data[i]->hasTimeStep(j)){
+        std::map<int, std::vector<double> > datamap;
+        if(getType() == NodeData){
+          stepData<double> *sd = data[i]->_steps[j];
+          for(unsigned int k = 0; k < sd->getNumData(); k++){
+            double *d = sd->getData(k);
+            if(d){
+              for(int l = 0; l < sd->getNumComponents(); l++){
+                datamap[k].push_back(d[l]);
+              }
+            }
+          }
+        }
+        else{
+          Msg::Error("Combine time not ready for non nodal model-based datasets");
+        }
+        addData(data[i]->getModel(j), datamap, i, data[i]->getTime(j), 0, -1);
+      }
+    }
+  }
+
+  std::string tmp;
+  if(nd.name == "__all__")
+    tmp = "all";
+  else if(nd.name == "__vis__")
+    tmp = "visible";
+  else
+    tmp = nd.name;
+  char name[256];
+  sprintf(name, "%s_Combine", tmp.c_str());
+
+  setName(name);
+  setFileName(std::string(name) + ".msh");
+  return finalize();
+}
+
 bool PViewDataGModel::skipEntity(int step, int ent)
 {
   if(step >= getNumTimeSteps()) return true;
