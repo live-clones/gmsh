@@ -116,11 +116,13 @@ class dofManager{
   }
   inline void fixDof(Dof key, const dataVec &value)
   {
+    if(unknown.find(key) != unknown.end())
+      return;
     fixed[key] = value;
   }
   inline void fixDof(long int ent, int type, const dataVec &value)
   {
-    fixed[Dof(ent, type)] = value;
+    fixDof(Dof(ent, type), value);
   }
   inline void fixVertex(MVertex*v, int iComp, int iField, const dataVec &value)
   {

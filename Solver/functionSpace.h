@@ -61,7 +61,7 @@ class FunctionSpace : public FunctionSpaceBase
   virtual void getKeys(MElement *ele, std::vector<Dof> &keys) = 0;
 };
 
-class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
+class ScalarLagrangeFunctionSpaceOfElement : public FunctionSpace<double>
 {
  public:
   typedef TensorialTraits<double>::ValType ValType;
@@ -78,7 +78,7 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
   }
 
  public:
-  ScalarLagrangeFunctionSpace(int i = 0) : _iField(i) {}
+  ScalarLagrangeFunctionSpaceOfElement(int i = 0) : _iField(i) {}
   virtual int getId(void) const {return _iField;}
   virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)
   {
@@ -164,7 +164,7 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
   }
 };
 
-class ScalarLagrangeFunctionSpaceOfParent : public FunctionSpace<double>
+class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
 {
  public:
   typedef TensorialTraits<double>::ValType ValType;
@@ -180,7 +180,7 @@ class ScalarLagrangeFunctionSpaceOfParent : public FunctionSpace<double>
     keys.push_back(Dof(ver->getNum(), _iField));
   }
  public:
-  ScalarLagrangeFunctionSpaceOfParent(int i = 0) : _iField(i) {}
+  ScalarLagrangeFunctionSpace(int i = 0) : _iField(i) {}
   virtual int getId(void) const {return _iField;}
   virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)
   {
@@ -363,6 +363,32 @@ public :
   }
 };
 
+class VectorLagrangeFunctionSpaceOfElement : public ScalarToAnyFunctionSpace<SVector3>
+{
+ protected:
+  static const SVector3 BasisVectors[3];
+ public:
+  enum Along { VECTOR_X = 0, VECTOR_Y = 1, VECTOR_Z = 2 };
+  typedef TensorialTraits<SVector3>::ValType ValType;
+  typedef TensorialTraits<SVector3>::GradType GradType;
+  VectorLagrangeFunctionSpaceOfElement(int id) :
+          ScalarToAnyFunctionSpace<SVector3>::ScalarToAnyFunctionSpace(ScalarLagrangeFunctionSpaceOfElement(id),
+          SVector3(1.,0.,0.), VECTOR_X, SVector3(0.,1.,0.), VECTOR_Y, SVector3(0.,0.,1.), VECTOR_Z)
+  {}
+  VectorLagrangeFunctionSpaceOfElement(int id,Along comp1) :
+          ScalarToAnyFunctionSpace<SVector3>::ScalarToAnyFunctionSpace(ScalarLagrangeFunctionSpaceOfElement(id),
+          BasisVectors[comp1], comp1)
+  {}
+  VectorLagrangeFunctionSpaceOfElement(int id,Along comp1,Along comp2) :
+          ScalarToAnyFunctionSpace<SVector3>::ScalarToAnyFunctionSpace(ScalarLagrangeFunctionSpaceOfElement(id),
+          BasisVectors[comp1], comp1, BasisVectors[comp2], comp2)
+  {}
+  VectorLagrangeFunctionSpaceOfElement(int id,Along comp1,Along comp2, Along comp3) :
+          ScalarToAnyFunctionSpace<SVector3>::ScalarToAnyFunctionSpace(ScalarLagrangeFunctionSpaceOfElement(id),
+          BasisVectors[comp1], comp1, BasisVectors[comp2], comp2, BasisVectors[comp3], comp3)
+  {}
+};
+
 class VectorLagrangeFunctionSpace : public ScalarToAnyFunctionSpace<SVector3>
 {
  protected:
@@ -385,32 +411,6 @@ class VectorLagrangeFunctionSpace : public ScalarToAnyFunctionSpace<SVector3>
   {}
   VectorLagrangeFunctionSpace(int id,Along comp1,Along comp2, Along comp3) :
           ScalarToAnyFunctionSpace<SVector3>::ScalarToAnyFunctionSpace(ScalarLagrangeFunctionSpace(id),
-          BasisVectors[comp1], comp1, BasisVectors[comp2], comp2, BasisVectors[comp3], comp3)
-  {}
-};
-
-class VectorLagrangeFunctionSpaceOfParent : public ScalarToAnyFunctionSpace<SVector3>
-{
- protected:
-  static const SVector3 BasisVectors[3];
- public:
-  enum Along { VECTOR_X = 0, VECTOR_Y = 1, VECTOR_Z = 2 };
-  typedef TensorialTraits<SVector3>::ValType ValType;
-  typedef TensorialTraits<SVector3>::GradType GradType;
-  VectorLagrangeFunctionSpaceOfParent(int id) :
-          ScalarToAnyFunctionSpace<SVector3>::ScalarToAnyFunctionSpace(ScalarLagrangeFunctionSpaceOfParent(id),
-          SVector3(1.,0.,0.), VECTOR_X, SVector3(0.,1.,0.), VECTOR_Y, SVector3(0.,0.,1.), VECTOR_Z)
-  {}
-  VectorLagrangeFunctionSpaceOfParent(int id,Along comp1) :
-          ScalarToAnyFunctionSpace<SVector3>::ScalarToAnyFunctionSpace(ScalarLagrangeFunctionSpaceOfParent(id),
-          BasisVectors[comp1], comp1)
-  {}
-  VectorLagrangeFunctionSpaceOfParent(int id,Along comp1,Along comp2) :
-          ScalarToAnyFunctionSpace<SVector3>::ScalarToAnyFunctionSpace(ScalarLagrangeFunctionSpaceOfParent(id),
-          BasisVectors[comp1], comp1, BasisVectors[comp2], comp2)
-  {}
-  VectorLagrangeFunctionSpaceOfParent(int id,Along comp1,Along comp2, Along comp3) :
-          ScalarToAnyFunctionSpace<SVector3>::ScalarToAnyFunctionSpace(ScalarLagrangeFunctionSpaceOfParent(id),
           BasisVectors[comp1], comp1, BasisVectors[comp2], comp2, BasisVectors[comp3], comp3)
   {}
 };

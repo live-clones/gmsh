@@ -11,5 +11,5 @@
 //
 #include "functionSpace.h"
 
+const SVector3 VectorLagrangeFunctionSpaceOfElement::BasisVectors[3]={SVector3(1,0,0),SVector3(0,1,0),SVector3(0,0,1)};
 const SVector3 VectorLagrangeFunctionSpace::BasisVectors[3]={SVector3(1,0,0),SVector3(0,1,0),SVector3(0,0,1)};
-const SVector3 VectorLagrangeFunctionSpaceOfParent::BasisVectors[3]={SVector3(1,0,0),SVector3(0,1,0),SVector3(0,0,1)};
