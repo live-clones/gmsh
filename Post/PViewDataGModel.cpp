@@ -515,33 +515,12 @@ bool PViewDataGModel::combineTime(nameData &nd)
       for(unsigned int i = 0; i < it->second.size(); i++)
         _interpolation[it->first].push_back(new fullMatrix<double>(*it->second[i]));
 
-  for(unsigned int i = 0; i < data.size(); i++){
-    // FIXME: this is a horrible hack (we copy the data twice, and use
-    // a map!); we need to store the number of values per
-    // node/ele/... in stepData and provide a copy constructor, then
-    // just copy the stepData
-    for(unsigned int j = 0; j < data[i]->_steps.size(); j++){
-      if(data[i]->hasTimeStep(j)){
-        std::map<int, std::vector<double> > datamap;
-        if(getType() == NodeData){
-          stepData<double> *sd = data[i]->_steps[j];
-          for(unsigned int k = 0; k < sd->getNumData(); k++){
-            double *d = sd->getData(k);
-            if(d){
-              for(int l = 0; l < sd->getNumComponents(); l++){
-                datamap[k].push_back(d[l]);
-              }
-            }
-          }
-        }
-        else{
-          Msg::Error("Combine time not ready for non nodal model-based datasets");
-        }
-        addData(data[i]->getModel(j), datamap, i, data[i]->getTime(j), 0, -1);
-      }
-    }
-  }
-
+  // (deep) copy step data
+  for(unsigned int i = 0; i < data.size(); i++)
+    for(unsigned int j = 0; j < data[i]->_steps.size(); j++)
+      if(data[i]->hasTimeStep(j))
+        _steps.push_back(new stepData<double>(*data[i]->_steps[j]));
+  
   std::string tmp;
   if(nd.name == "__all__")
     tmp = "all";

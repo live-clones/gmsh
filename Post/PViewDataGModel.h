@@ -35,6 +35,11 @@ class stepData{
   // the data and 2) not to store any additional info in MVertex or
   // MElement)
   std::vector<real*> *_data;
+  // a vector containing the multiplying factor allowing to compute
+  // the number of values stored in _data for each index (number of
+  // values = getMult() * getNumComponents()). If _mult is empty, a
+  // default value of "1" is assumed
+  std::vector<int> _mult;
   // a vector, indexed by MSH element type, of Gauss point locations
   // in parametric space
   std::vector<std::vector<double> > _gaussPoints;
@@ -49,12 +54,44 @@ class stepData{
     _model->getEntities(_entities);
     _bbox = _model->bounds();
   }
+  stepData(stepData<real> &other) : _data(0)
+  {
+    _model = other._model;
+    _entities = other._entities;
+    _bbox = other._bbox;
+    _fileName = other._fileName;
+    _fileIndex = other._fileIndex;
+    _time = other._time;
+    _min = other._min;
+    _max = other._max;
+    _numComp = other._numComp;
+    if(other._data){
+      int n = other.getNumData();
+      _data = new std::vector<real*>(n, (real*)0);
+      for(int i = 0; i < n; i++){
+        real *d = other.getData(i);
+        if(d){
+          int m = other.getMult(i) * _numComp;
+          (*_data)[i] = new real[m];
+          for(int j = 0; j < m; j++) (*_data)[i][j] = d[j];
+        }
+      }
+    }
+    _mult = other._mult;
+    _gaussPoints = other._gaussPoints;
+    _partitions = other._partitions;
+  }
   ~stepData(){ destroyData(); }
   GModel *getModel(){ return _model; }
   SBoundingBox3d getBoundingBox(){ return _bbox; }
   int getNumEntities(){ return _entities.size(); }
   GEntity *getEntity(int ent){ return _entities[ent]; }
   int getNumComponents(){ return _numComp; }
+  int getMult(int index)
+  {
+    if(index < 0 || index >= _mult.size()) return 1;
+    return _mult[index];
+  }
   std::string getFileName(){ return _fileName; }
   void setFileName(std::string name){ _fileName = name; }
   int getFileIndex(){ return _fileIndex; }
@@ -82,6 +119,10 @@ class stepData{
       if(!(*_data)[index]){
         (*_data)[index] = new real[_numComp * mult];
         for(int i = 0; i < _numComp * mult; i++) (*_data)[index][i] = 0.;
+      }
+      if(mult > 1){
+        if(index >= _mult.size()) _mult.resize(index + 100, 1); // optimize this
+        _mult[index] = mult;
       }
     }
     else{
