@@ -9,7 +9,6 @@
   #include "dlfcn.h"
 #endif
 #include "Bindings.h"
-
 function::~function() {
 }
 
@@ -51,8 +50,7 @@ dataCacheDouble::dataCacheDouble(dataCacheMap *m, function *f):
   m->addDataCacheDouble(this, f->isInvalitedOnElement());
   _function = f;
   for(unsigned i=0; i<f->_childrenCache.size(); i++) {
-    m->addSecondaryCache(m->newChild());
-  }
+    m->addSecondaryCache(m->newChild()); }
   _substitutions.resize(f->_substitutedFunctions.size());
   for(unsigned i=0; i<f->_substitutedFunctions.size(); i++) {
     function::substitutedFunction s = f->_substitutedFunctions[i];
@@ -92,9 +90,10 @@ dataCacheDouble &dataCacheMap::get(const function *f, dataCacheDouble *caller) {
   dataCacheDouble *&r = _cacheDoubleMap[f];
   dataCacheMap *cParent = _parent;
   while (cParent && r==NULL) {
-    std::map<const function *, dataCacheDouble *>::iterator it = cParent->_cacheDoubleMap.find(f);
-    if (it != cParent->_cacheDoubleMap.end()) {
-      r = it->second;
+    /*std::map<const function *, dataCacheDouble *>::iterator it = cParent->_cacheDoubleMap.find(f);
+    if (it != cParent->_cacheDoubleMap.end()) {*/
+     // r = it->second;
+     r = &_parent->get(f,caller);
       for (std::set<dataCacheDouble*>::iterator dep = r->_iDependOn.begin(); dep != r->_iDependOn.end(); dep++) {
         //if (_cacheDoubleMap.find((*dep)->_function) != _cacheDoubleMap.end()) {
         if (&get((*dep)->_function) != *dep) {
@@ -102,7 +101,7 @@ dataCacheDouble &dataCacheMap::get(const function *f, dataCacheDouble *caller) {
           break;
         }
       }
-    }
+    //}
     cParent = cParent->_parent;
   }
   if (r==NULL)
