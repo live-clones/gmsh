@@ -123,11 +123,11 @@ static void reportErrors(lua_State *L, int status)
   }
 }
 
-const char *colorRed = "\033[1;31m";
-const char *colorGreen = "\033[1;32m";
-const char *colorBlue = "\033[1;34m";
-const char *colorDefault = "\033[0m";
-const char *colorBold = "\033[1m";
+static const char *colorRed = "\033[1;31m";
+static const char *colorGreen = "\033[1;32m";
+static const char *colorBlue = "\033[1;34m";
+static const char *colorDefault = "\033[0m";
+static const char *colorBold = "\033[1m";
 
 static void printMethod(std::string name, luaMethodBinding *mb, bool isConstructor=false)
 {

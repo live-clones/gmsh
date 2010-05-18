@@ -8,7 +8,7 @@
 
 template<>
 void linearSystem<double>::registerBindings(binding *b){
-  classBinding *cb = b->addClass<linearSystem<double> >("linearSystem");
+  classBinding *cb = b->addClass<linearSystem<double> >("linearSystemDouble");
   cb->setDescription("An abstraction of a linear system Ax = b.");
   methodBinding *cm;
   cm = cb->addMethod("systemSolve", &linearSystem<double>::systemSolve);
@@ -34,6 +34,11 @@ void linearSystem<double>::registerBindings(binding *b){
   cm->setDescription ("A new Lapack based <double> solver");
   cm->setArgNames(NULL);
   cb->setParentClass<linearSystem<double> >();
+  // block
+  cb = b->addClass<linearSystem<fullMatrix<double> > >("linearSystemFullMatrixDouble");
+  cb->setDescription("An abstraction of a linear system Ax = b.");
+  cm = cb->addMethod("systemSolve", &linearSystem<fullMatrix<double> >::systemSolve);
+  cm->setDescription("compute x = A^{-1}b");
 #ifdef HAVE_PETSC
   linearSystemPETScRegisterBindings (b);
 #endif

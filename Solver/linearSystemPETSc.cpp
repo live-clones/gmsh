@@ -107,21 +107,13 @@ void linearSystemPETScRegisterBindings(binding *b)
   cm->setDescription ("A new PETSc<PetscScalar> solver");
   cb->setParentClass<linearSystem<PetscScalar> >();
   cm->setArgNames(NULL);
-  cm = cb->addMethod("systemSolve", &linearSystem<fullMatrix<PetscScalar> >::systemSolve);
-  cm->setDescription("compute x = A^{-1}b");
-
-  cb = b->addClass<linearSystem<fullMatrix<double> > >("linearSystemBlock");
-  cb->setDescription("A linear system solver with blocks");
-
   cb = b->addClass<linearSystemPETSc<fullMatrix<PetscScalar> > >("linearSystemPETScBlock");
   cb->setDescription("A linear system solver, based on PETSc");
   cm = cb->setConstructor<linearSystemPETSc<fullMatrix<PetscScalar> >, int>();
   cm->setDescription ("A new PETScBlock<PetscScalar> solver (we probably should get rid of the blockSize argument)");
   cb->setParentClass<linearSystem<fullMatrix<PetscScalar> > >();
   cm->setArgNames("blockSize", NULL);
-  cm = cb->addMethod("systemSolve", &linearSystem<fullMatrix<PetscScalar> >::systemSolve);
-  cm->setDescription("compute x = A^{-1}b");
-  #endif // FIXME
+#endif // FIXME
 
 }
 

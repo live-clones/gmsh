@@ -1227,13 +1227,12 @@ class classBinding {
     lua_setmetatable(L, methods); // setmetatable(methods, mt)
     lua_pop(L, 2);  // drop metatable and method table
   } 
-  template<typename parentType>
-  void setParentClass()
-  {
+  void setParentClassName(const std::string parentClassName) {
     if(_parent)
       Msg::Error("Multiple inheritance not implemented in lua bindings "
                  "for class %s", _className.c_str());
-    std::string parentClassName = className<parentType>::get();
+    if(_b->classes.find(parentClassName) == _b->classes.end())
+      Msg::Error("Unknown class %s", parentClassName.c_str());
     _parent = _b->classes[parentClassName];
     _parent->children.insert(this);
     lua_getglobal(_b->L, _className.c_str());
@@ -1243,6 +1242,11 @@ class classBinding {
     lua_setfield(_b->L, mt, "__index"); 
     // mt.__index = global[_parentClassName] // this is the inheritance bit
     lua_pop(_b->L, 2);
+  }
+  template<typename parentType>
+  void setParentClass()
+  {
+    setParentClassName(className<parentType>::get());
   }
   void setDescription(std::string description){ _description = description; }
   inline const std::string getDescription() const { return _description; }
