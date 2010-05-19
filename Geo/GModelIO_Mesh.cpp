@@ -535,7 +535,9 @@ static void writeElementMSH(FILE *fp, GModel *model, T *ele, bool saveAll,
     for(unsigned int j = 0; j < physicals.size(); j++)
       ele->writeMSH(fp, version, binary, ++num, elementary, physicals[j],
                     parentNum, &ghosts);
-  (*newElemNumbers)(ele->getNum()) = num;
+
+  //(*newElemNumbers)(ele->getNum()) = num;
+
 }
 
 template<class T>

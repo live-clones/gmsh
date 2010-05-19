@@ -348,7 +348,7 @@ void multiscalePartition::partition(partitionLevel & level, int nbParts,
     int genus, AR, NB;
     getGenusAndRatio(regions[i], genus, AR, NB);
 
-    printLevel (nextLevel->elements, nextLevel->recur,nextLevel->region);  
+    //printLevel (nextLevel->elements, nextLevel->recur,nextLevel->region);  
 
     if (genus < 0) {
       Msg::Error("Genus partition is negative G=%d!", genus);

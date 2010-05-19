@@ -40,6 +40,90 @@
 std::vector<GModel*> GModel::list;
 int GModel::_current = -1;
 
+static void recur_connect(MVertex *v,
+                          std::multimap<MVertex*,MEdge> &v2e,
+                          std::set<MEdge,Less_Edge> &group,
+                          std::set<MVertex*> &touched)
+{
+  if (touched.find(v) != touched.end()) return;
+
+  touched.insert(v);
+  for (std::multimap <MVertex*,MEdge>::iterator it = v2e.lower_bound(v); 
+       it != v2e.upper_bound(v) ; ++it){
+    group.insert(it->second);
+    for (int i = 0; i < it->second.getNumVertices(); ++i){
+      recur_connect (it->second.getVertex(i), v2e, group, touched);
+    }
+  }
+}
+
+// starting form a list of elements, returns lists of lists that are
+// all simply connected
+static void recur_connect_e(const MEdge &e,
+                            std::multimap<MEdge,MElement*, Less_Edge> &e2e,
+                            std::set<MElement*> &group,
+                            std::set<MEdge, Less_Edge> &touched)
+{
+  if (touched.find(e) != touched.end())return;
+  touched.insert(e);
+  for (std::multimap <MEdge,MElement*,Less_Edge>::iterator it = e2e.lower_bound(e);
+         it != e2e.upper_bound(e) ; ++it){
+    group.insert(it->second);
+    for (int i = 0; i < it->second->getNumEdges(); ++i){
+      recur_connect_e(it->second->getEdge(i), e2e, group, touched);
+    }
+  }
+}
+
+static int connected_bounds(std::set<MEdge, Less_Edge> &edges, 
+                            std::vector<std::vector<MEdge> > &boundaries)
+{
+  std::multimap<MVertex*,MEdge> v2e;
+  for(std::set<MEdge, Less_Edge>::iterator it = edges.begin(); it != edges.end(); it++){
+    for (int j=0;j<it->getNumVertices();j++){
+      v2e.insert(std::make_pair(it->getVertex(j),*it));
+    }
+  }
+
+  while (!v2e.empty()){
+    std::set<MEdge, Less_Edge> group;
+    std::set<MVertex*> touched;
+    recur_connect(v2e.begin()->first, v2e, group, touched);
+    std::vector<MEdge> temp;
+    temp.insert(temp.begin(), group.begin(), group.end());
+    boundaries.push_back(temp);
+    for (std::set<MVertex*>::iterator it = touched.begin() ; it != touched.end();++it)
+      v2e.erase(*it);
+  }
+
+  return boundaries.size();
+}
+
+//--------------------------------------------------------------
+static int connectedRegions (std::vector<MElement*> &elements,
+			     std::vector<std::vector<MElement*> > &regions)
+{
+  std::multimap<MEdge,MElement*,Less_Edge> e2e;
+  for (unsigned int i = 0; i < elements.size(); ++i){
+    for (int j = 0; j < elements[i]->getNumEdges(); j++){
+      e2e.insert(std::make_pair(elements[i]->getEdge(j),elements[i]));
+    }
+  }
+  while (!e2e.empty()){
+    std::set<MElement*> group;
+    std::set<MEdge,Less_Edge> touched;
+    recur_connect_e (e2e.begin()->first,e2e,group,touched);
+    std::vector<MElement*> temp;
+    temp.insert(temp.begin(), group.begin(), group.end());
+    regions.push_back(temp);
+    for ( std::set<MEdge,Less_Edge>::iterator it = touched.begin() ; it != touched.end();++it)
+      e2e.erase(*it);
+  }
+
+  return regions.size();
+}
+//-----------------------------------------------------------------------------
+
 GModel::GModel(std::string name)
   : _name(name), _visible(1), _octree(0),
     _geo_internals(0), _occ_internals(0), _acis_internals(0), _fm_internals(0),_factory(0), _fields(0), _currentMeshEntity(0), normals(0)
@@ -1079,7 +1163,7 @@ void GModel::createTopologyFromMesh()
       discRegions.push_back((discreteRegion*) *it);
 
   //EMI-FIX in case of createTopology for Volumes
-  //all faces are set to aeach volume
+  //all faces are set to each volume
   for (std::vector<discreteRegion*>::iterator it = discRegions.begin();
        it != discRegions.end(); it++)
     (*it)->setBoundFaces();
@@ -1090,8 +1174,48 @@ void GModel::createTopologyFromMesh()
     if((*it)->geomType() == GEntity::DiscreteSurface)
       discFaces.push_back((discreteFace*) *it);
   
+  //--------
   //EMI TODO
   //check for closed faces
+
+  printf("discr faces size=%d \n", discFaces.size());
+  std::vector<discreteFace*> newDiscFaces;
+  for (std::vector<discreteFace*>::iterator itF = discFaces.begin(); 
+         itF != discFaces.end(); itF++){
+
+    std::vector<MElement*> allElements;
+    for (unsigned int i = 0; i < (*itF)->getNumMeshElements(); i++)
+      allElements.push_back((*itF)->getMeshElement(i));
+
+    std::vector<std::vector<MElement*> >  conRegions;
+    int nbFaces = connectedRegions (allElements, conRegions);
+    
+    remove(*itF);
+    for (int ifa  = 0; ifa < nbFaces; ifa++){
+      std::vector<MElement*> myElements = conRegions[ifa];
+
+      int numF = maxFaceNum()+1;
+      discreteFace *f = new discreteFace(this, numF);
+      //printf("*** Created discreteFace %d \n", numF);
+      add(f);
+      newDiscFaces.push_back(f);
+
+      //fill new face with mesh vertices
+      std::set<MVertex*> allV;
+      for(unsigned int i = 0; i < myElements.size(); i++) {
+        MVertex *v0 = myElements[i]->getVertex(0);
+	MVertex *v1 = myElements[i]->getVertex(1);
+	MVertex *v2 = myElements[i]->getVertex(2);
+        f->triangles.push_back(new MTriangle( v0, v1, v2));
+        allV.insert(v0);  allV.insert(v1);  allV.insert(v2);
+        v0->setEntity(f); v1->setEntity(f); v2->setEntity(f);
+      }
+      f->mesh_vertices.insert(f->mesh_vertices.begin(), allV.begin(),allV.end());
+    }
+
+  }
+  discFaces = newDiscFaces;
+  //------
  
   createTopologyFromFaces(discFaces);
   
@@ -1102,64 +1226,7 @@ void GModel::createTopologyFromMesh()
   exportDiscreteGEOInternals();
 }
 
-static void recur_connect(MVertex *v,
-                          std::multimap<MVertex*,MEdge> &v2e,
-                          std::set<MEdge,Less_Edge> &group,
-                          std::set<MVertex*> &touched)
-{
-  if (touched.find(v) != touched.end()) return;
 
-  touched.insert(v);
-  for (std::multimap <MVertex*,MEdge>::iterator it = v2e.lower_bound(v); 
-       it != v2e.upper_bound(v) ; ++it){
-    group.insert(it->second);
-    for (int i = 0; i < it->second.getNumVertices(); ++i){
-      recur_connect (it->second.getVertex(i), v2e, group, touched);
-    }
-  }
-}
-
-// starting form a list of elements, returns lists of lists that are
-// all simply connected
-static void recur_connect_e(const MEdge &e,
-                            std::multimap<MEdge,MElement*, Less_Edge> &e2e,
-                            std::set<MElement*> &group,
-                            std::set<MEdge, Less_Edge> &touched)
-{
-  if (touched.find(e) != touched.end())return;
-  touched.insert(e);
-  for (std::multimap <MEdge,MElement*,Less_Edge>::iterator it = e2e.lower_bound(e);
-         it != e2e.upper_bound(e) ; ++it){
-    group.insert(it->second);
-    for (int i = 0; i < it->second->getNumEdges(); ++i){
-      recur_connect_e(it->second->getEdge(i), e2e, group, touched);
-    }
-  }
-}
-
-static int connected_bounds(std::set<MEdge, Less_Edge> &edges, 
-                            std::vector<std::vector<MEdge> > &boundaries)
-{
-  std::multimap<MVertex*,MEdge> v2e;
-  for(std::set<MEdge, Less_Edge>::iterator it = edges.begin(); it != edges.end(); it++){
-    for (int j=0;j<it->getNumVertices();j++){
-      v2e.insert(std::make_pair(it->getVertex(j),*it));
-    }
-  }
-
-  while (!v2e.empty()){
-    std::set<MEdge, Less_Edge> group;
-    std::set<MVertex*> touched;
-    recur_connect(v2e.begin()->first, v2e, group, touched);
-    std::vector<MEdge> temp;
-    temp.insert(temp.begin(), group.begin(), group.end());
-    boundaries.push_back(temp);
-    for (std::set<MVertex*>::iterator it = touched.begin() ; it != touched.end();++it)
-      v2e.erase(*it);
-  }
-
-  return boundaries.size();
-}
 
 void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
 {
@@ -1243,7 +1310,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
     }
 
     std::vector<std::vector<MEdge> > boundaries;
-    double nbBounds = connected_bounds(myEdges, boundaries);   
+    int nbBounds = connected_bounds(myEdges, boundaries);   
 
     for (int ib  = 0; ib < nbBounds; ib++){
       std::vector<MEdge> myLines = boundaries[ib];

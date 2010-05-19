@@ -363,7 +363,7 @@ bool GFaceCompound::trivial() const
 //of triangles
 bool GFaceCompound::checkFolding(std::vector<MVertex*> &ordered) const
 {
- 
+
   bool has_no_folding = true;
 
   for(unsigned int i = 0; i < ordered.size()-1; ++i){
@@ -519,10 +519,10 @@ bool GFaceCompound::parametrize() const
   else if (_mapping == CONFORMAL){
     Msg::Debug("Parametrizing surface %d with 'conformal map'", tag());
     fillNeumannBCS();
-    //bool withoutFolding = parametrize_conformal_spectral() ;
-    bool withoutFolding = parametrize_conformal();
+    bool withoutFolding = parametrize_conformal_spectral() ;
+    //bool withoutFolding = parametrize_conformal();
     if ( withoutFolding == false ){
-      //printStuff(); exit(1);
+      printStuff(); //exit(1);
       Msg::Warning("$$$ Parametrization switched to harmonic map");
       parametrize(ITERU,HARMONIC); 
       parametrize(ITERV,HARMONIC);
@@ -1129,6 +1129,7 @@ bool GFaceCompound::parametrize_conformal_spectral() const
   linearSystem <double> *lsysB  = new linearSystemPETSc<double>;
   dofManager<double> myAssembler(lsysA, lsysB);
 
+  //printf("nbNodes = %d in spectral param \n", allNodes.size());
   //-------------------------------
   myAssembler.setCurrentMatrix("A");
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
@@ -1164,26 +1165,6 @@ bool GFaceCompound::parametrize_conformal_spectral() const
 
   //-------------------------------
    myAssembler.setCurrentMatrix("B");
-      
-//     massTerm mass1(model(), 1, &MONE);
-//     massTerm mass2(model(), 2, &MONE);
-//    it = _compound.begin();
-//    for( ; it != _compound.end() ; ++it){
-//      for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-//        SElement se((*it)->triangles[i]);
-//        mass1.addToMatrix(myAssembler, &se);
-//        mass2.addToMatrix(myAssembler, &se);
-//      }
-//    }
-
-//    std::list<GEdge*>::const_iterator it0 = _U0.begin();
-//    for( ; it0 != _U0.end(); ++it0 ){
-//      for(unsigned int i = 0; i < (*it0)->lines.size(); i++ ){
-//        SElement se((*it0)->lines[i]);
-//        mass1.addToMatrix(myAssembler, &se);
-//        mass2.addToMatrix(myAssembler, &se);
-//      }
-//    }
 
    double small = 0.0;
    for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
@@ -1198,19 +1179,25 @@ bool GFaceCompound::parametrize_conformal_spectral() const
      }
    } 
 
+   //mettre max NC contraintes par bord
    int NB = ordered.size();
-   for (int i = 0; i< NB; i++){
-     MVertex *v1 = ordered[i];
-     for (int j = 0; j< NB; j++){
-       MVertex *v2 = ordered[j];
+   int NC = std::min(100,NB);
+   int jump = (int) NB/NC;
+   int nbLoop = (int) NB/jump ;
+   //printf("nb bound nodes=%d jump =%d \n", NB, jump);
+   for (int i = 0; i< nbLoop; i++){
+     MVertex *v1 = ordered[i*jump];
+     for (int j = 0; j< nbLoop; j++){
+       MVertex *v2 = ordered[j*jump];
        myAssembler.assemble(v1, 0, 1, v2, 0, 1,  -1./NB);
        myAssembler.assemble(v1, 0, 2, v2, 0, 2,  -1./NB);
      }
    }
 
    //-------------------------------
+   //printf("Solve eigensystem \n");
    eigenSolver eig(&myAssembler, "B" , "A", true);
-   int nb = 1;
+   int nb = 2;
    bool converged = eig.solve(nb, "largest");
     
    if(converged) {

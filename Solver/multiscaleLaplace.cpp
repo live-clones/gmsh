@@ -1006,7 +1006,6 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
       else  tooSmall.insert(tooSmall.begin(), regGoodSize[i].begin(),  regGoodSize[i].end());
     }
   }
- 
 
   //Add the not too small regions to the level.elements 
   std::vector<std::vector<MElement*> >  regions_, regions ;
