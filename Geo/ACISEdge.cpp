@@ -60,40 +60,11 @@ Range<double> ACISEdge::parBounds(int i) const
 
 SPoint2 ACISEdge::reparamOnFace(const GFace *face, double epar, int dir) const
 {
-  COEDGE *ce = 0, *firstce = _e->coedge();
-  COEDGE *foundce = 0, *ffoundce=0;
-  int fedir;
-  ce = firstce;
-  
-  int count =0;
-  do {
-    LOOP *l = ce->loop();
-    FACE *f = l->face();
-    count ++;
-    
-    if(f==(FACE*)face->getNativePtr())
-    {
-      fedir = ce->sense()==FORWARD? 1 : 0;
-      if(fedir==dir)
-	foundce = ce;
-      else
-	ffoundce = ce; // save this for later
-    }
-    ce = ce->partner();
-  } while (ce != firstce && !foundce);
-  if(!foundce && ffoundce){
-    foundce = ffoundce;
-    fedir = !fedir;
-  }
-
-  if(!foundce){
-    Msg::Fatal("reparamOnFace - no coedge");
-  }
-  
   CURVE *c = _e->geometry();
   SPAposition vpos = c->equation().eval_position(epar);
   SPApar_pos fpar = ((FACE*)(face->getNativePtr()))->geometry()->equation().param(vpos);
   SPoint2 pt2(fpar.u, fpar.v);
+  face->moveToValidRange(pt2);
   return pt2;
 }
 
@@ -105,13 +76,12 @@ GPoint ACISEdge::closestPoint(const SPoint3 &qp, double &param) const{
 // True if the edge is a seam for the given face
 bool ACISEdge::isSeam(const GFace *face) const
 {
-  //  return false;
   CURVE *_cur = _e->geometry();
   if (!(((FACE*)face->getNativePtr())->geometry()->equation().periodic_u()) && 
-      !(((FACE*)face->getNativePtr())->geometry()->equation().periodic_u()))
+      !(((FACE*)face->getNativePtr())->geometry()->equation().periodic_v()))
       return 0;
   else if ( (((FACE*)face->getNativePtr())->geometry()->equation().periodic_u()) && 
-           !(((FACE*)face->getNativePtr())->geometry()->equation().periodic_u()))
+           !(((FACE*)face->getNativePtr())->geometry()->equation().periodic_v()))
   {
      SPAinterval cur_rang = _cur->equation().param_range();
      SPAinterval sur_rang_u = ((FACE*)face->getNativePtr())->geometry()->equation().param_range_u();
@@ -129,7 +99,7 @@ bool ACISEdge::isSeam(const GFace *face) const
         return 0;
   }
   else if (!(((FACE*)face->getNativePtr())->geometry()->equation().periodic_u()) && 
-            (((FACE*)face->getNativePtr())->geometry()->equation().periodic_u()))
+            (((FACE*)face->getNativePtr())->geometry()->equation().periodic_v()))
   {
      SPAinterval cur_rang = _cur->equation().param_range();
      SPAinterval sur_rang_v = ((FACE*)face->getNativePtr())->geometry()->equation().param_range_v();
@@ -147,7 +117,7 @@ bool ACISEdge::isSeam(const GFace *face) const
         return 0;
   }
   else if ((((FACE*)face->getNativePtr())->geometry()->equation().periodic_u()) && 
-           (((FACE*)face->getNativePtr())->geometry()->equation().periodic_u()))
+           (((FACE*)face->getNativePtr())->geometry()->equation().periodic_v()))
   {
      SPAinterval cur_rang = _cur->equation().param_range();
      SPAinterval sur_rang_u = ((FACE*)face->getNativePtr())->geometry()->equation().param_range_u();

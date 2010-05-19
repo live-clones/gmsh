@@ -24,6 +24,8 @@ class ACISFace : public GFace {
  public:
   ACISFace(GModel *m, FACE *f, int num);
   virtual ~ACISFace(){}
+  virtual bool periodic(int dir) const { return _periodic[dir]; }
+  virtual double period(int dir) const;
   Range<double> parBounds(int i) const; 
   virtual GPoint point(double par1, double par2) const; 
   virtual GPoint closestPoint(const SPoint3 & queryPoint, const double initialGuess[2]) const; 

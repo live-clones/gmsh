@@ -234,7 +234,7 @@ void ACIS_Internals::loadSAT(std::string fileName, GModel *gm)
       //      printf("VERTEX FOUND\n");
     }
     if (is_BODY(e)){
-      //      api_split_periodic_faces(e);
+      api_split_periodic_faces(e);
       {
 	ENTITY_LIST vertex_list;
 	outcome prout = api_get_vertices (e,vertex_list);

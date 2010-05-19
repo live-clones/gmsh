@@ -835,6 +835,8 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
     std::vector<SPoint2> mesh1d_seam;
     
     bool seam = ges.ge->isSeam(gf);
+
+    if (seam)printf("face %d has seam %d\n",gf->tag(),ges.ge->tag());
     
     Range<double> range = ges.ge->parBounds(0);
     
@@ -1332,7 +1334,7 @@ void deMeshGFace::operator() (GFace *gf)
   gf->meshStatistics.nbTriangle = gf->meshStatistics.nbEdge = 0;
 }
 
-int debugSurface = -1;
+int debugSurface = -100;
 
 void meshGFace::operator() (GFace *gf)
 {
@@ -1385,10 +1387,11 @@ void meshGFace::operator() (GFace *gf)
   Msg::Debug("Computing edge loops");
 
   Msg::Debug("Generating the mesh");
-  if(noSeam(gf) || gf->getNativeType() == GEntity::GmshModel || 
-     gf->edgeLoops.empty()){
+  if ((gf->getNativeType() != GEntity::AcisModel || (!gf->periodic(0) &&!gf->periodic(1)))&&
+      (noSeam(gf) || gf->getNativeType() == GEntity::GmshModel || 
+       gf->edgeLoops.empty())){
     meshGenerator(gf, 0, repairSelfIntersecting1dMesh,
-                  debugSurface >= 0 || debugSurface == -100);
+		  debugSurface >= 0 || debugSurface == -100);
   }
   else {
     if(!meshGeneratorPeriodic

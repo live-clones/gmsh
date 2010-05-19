@@ -189,8 +189,20 @@ double ACISFace::curvatures(const SPoint2 &param,
 
 bool ACISFace::containsPoint(const SPoint3 &pt) const
 { 
-  return false;
+  SPAposition ps(pt.x(),pt.y(),pt.z());
+  if (_f->geometry()->equation().test_point(ps))
+    return 1;
+  else 
+    return 0;
 }
+
+double ACISFace::period(int dir) const { 
+  if (dir == 0)
+    return _f->geometry()->equation().param_period_u();
+  else if (dir == 1)
+    return _f->geometry()->equation().param_period_v();
+}
+
 
 bool ACISFace::buildSTLTriangulation(bool force)
 {

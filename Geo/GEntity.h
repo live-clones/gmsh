@@ -194,6 +194,7 @@ class GEntity {
 
   // true if entity is periodic in the "dim" direction.
   virtual bool periodic(int dim) const { return false; }
+  virtual double period(int dim) const { return 0.0; }
 
   // true if there are parametric degeneracies in the "dim" direction.
   virtual bool degenerate(int dim) const { return false; }

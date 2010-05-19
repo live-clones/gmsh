@@ -1156,6 +1156,28 @@ void GFace::replaceEdges (std::list<GEdge*> &new_edges)
   l_dirs = newdirs;
 }
 
+void GFace::moveToValidRange(SPoint2 &pt) const
+{
+  //  printf("coucou %8d %12.5E %12.5E %d %d\n",
+  //	 tag(),pt.x(),pt.y(),
+  //	 periodic(0),periodic(1));
+  for(int i=0; i < 2; i++){
+    if(periodic(i)){
+      Range<double> range = parBounds(i);
+      double tol = 1e-6*(range.high()-range.low());
+      if(pt[i] < range.low()-tol)
+	pt[i] += period(i);
+      if(pt[i] > range.high()+tol)
+	pt[i] -= period(i);
+      if(pt[i] < range.low())
+	pt[i] = range.low();
+      if(pt[i] > range.high())
+	pt[i] = range.high();
+    }
+  }
+}
+
+
 #include "Bindings.h"
 
 void GFace::registerBindings(binding *b)

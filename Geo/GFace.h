@@ -233,6 +233,10 @@ class GFace : public GEntity
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
 
+  // for periodic faces, move parameters into the range chosen
+  // for that face
+  void moveToValidRange(SPoint2 &pt) const;
+
   // compound
   void setCompound(GFaceCompound *gfc) { compound = gfc; }
   GFaceCompound *getCompound() const { return compound; }
