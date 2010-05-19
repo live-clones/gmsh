@@ -203,8 +203,8 @@ static double _computeDeterminantAndRegularize(MElement *ele, double jac[3][3])
       norme(b);
       prodve(a, b, c);
       norme(c);
-      jac[0][1] = b[0]; jac[1][1] = b[1]; jac[2][1] = b[2];
-      jac[0][2] = c[0]; jac[1][2] = c[1]; jac[2][2] = c[2];
+      jac[1][0] = b[0]; jac[1][1] = b[1]; jac[1][2] = b[2];
+      jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2];
       break;
     }
   case 2:
