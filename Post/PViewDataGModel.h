@@ -170,7 +170,7 @@ class PViewDataGModel : public PViewData {
  public:
   PViewDataGModel(DataType type=NodeData);
   ~PViewDataGModel();
-  bool finalize();
+  bool finalize(bool computeMinMax=true);
   std::string getFileName(int step=-1);
   int getNumTimeSteps();
   double getTime(int step);
@@ -228,10 +228,9 @@ class PViewDataGModel : public PViewData {
   GModel* getModel(int step){ return _steps[step]->getModel(); }
 
   // Add some data "on the fly" (data is stored in a map, indexed by
-  // node or element number depending on the type of dataset; all the
-  // vectors are supposed to have the same length)
+  // node or element number depending on the type of dataset)
   bool addData(GModel *model, std::map<int, std::vector<double> > &data,
-               int step, double time, int partition, int numC);
+               int step, double time, int partition, int numComp);
 
   // I/O routines
   bool readMSH(std::string fileName, int fileIndex, FILE *fp, bool binary, 

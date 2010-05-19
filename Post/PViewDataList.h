@@ -57,7 +57,7 @@ class PViewDataList : public PViewData {
  public:
   PViewDataList();
   ~PViewDataList(){}
-  bool finalize();
+  bool finalize(bool computeMinMax=true);
   int getNumTimeSteps(){ return NbTimeStep; }
   double getTime(int step);
   double getMin(int step=-1);

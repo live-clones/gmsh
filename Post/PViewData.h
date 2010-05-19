@@ -45,7 +45,7 @@ class PViewData {
   virtual void setDirty(bool val){ _dirty = val; }
 
   // finalize the view data (compute min/max, etc.)
-  virtual bool finalize();
+  virtual bool finalize(bool computeMinMax=true);
 
   // get/set name
   virtual std::string getName(){ return _name; }

@@ -12,17 +12,9 @@
 #include "StringUtils.h"
 
 bool PViewDataGModel::addData(GModel *model, std::map<int, std::vector<double> > &data,
-                              int step, double time, int partition, int numC)
+                              int step, double time, int partition, int numComp)
 {
   if(data.empty()) return false;
-
-  int numComp = 9;
-  if (numC < 0){
-    for(std::map<int, std::vector<double> >::iterator it = data.begin();
-        it != data.end(); it++)
-      numComp = std::min(numComp, (int)it->second.size());
-  }
-  else numComp = numC;
 
   while(step >= (int)_steps.size())
     _steps.push_back(new stepData<double>(model, numComp));
@@ -35,8 +27,9 @@ bool PViewDataGModel::addData(GModel *model, std::map<int, std::vector<double> >
 
   for(std::map<int, std::vector<double> >::iterator it = data.begin();
       it != data.end(); it++){
-    double *d  = _steps[step]->getData(it->first, true);
-    for(int j = 0; j < numComp; j++)
+    int mult = it->second.size() / numComp;
+    double *d  = _steps[step]->getData(it->first, true, mult);
+    for(int j = 0; j < numComp * mult; j++)
       d[j] = it->second[j];
   }
   _steps[step]->getPartitions().insert(partition);
@@ -96,17 +89,25 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
       for(int j = 0; j < numComp * mult; j++)
         if(fscanf(fp, "%lf", &d[j]) != 1) return false;
     }
+    // compute min/max here to avoid calling finalize(true) later:
+    // this would be very slow for large multi-step, multi-partition
+    // datasets (since we would recompute the min/max for all the
+    // previously loaded steps/partitions, and thus loop over all the
+    // elements many times)
+    for(int j = 0; j < mult; j++){
+      double val = ComputeScalarRep(numComp, &d[numComp * j]);
+      _steps[step]->setMin(std::min(_steps[step]->getMin(), val));
+      _steps[step]->setMax(std::max(_steps[step]->getMax(), val));
+      _min = std::min(_min, val);
+      _max = std::max(_max, val);
+    }
     if(numEnt > 100000)
       Msg::ProgressMeter(i + 1, numEnt, "Reading data");
   }
 
   _steps[step]->getPartitions().insert(partition);
 
-  // FIXME: we should do this at a higher-level, since this will be
-  // very slow for large multi-step, multi-partition datasets (we
-  // recompute the min/max for all the previously loaded
-  // steps/partitions -> loop over all elements many many times...)
-  finalize();
+  finalize(false);
   return true;
 }
 

@@ -22,7 +22,7 @@ PViewData::~PViewData()
       delete it->second[i];
 }
 
-bool PViewData::finalize()
+bool PViewData::finalize(bool computeMinMax)
 { 
   _dirty = false;
   return true;

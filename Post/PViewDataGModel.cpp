@@ -25,41 +25,43 @@ PViewDataGModel::~PViewDataGModel()
   for(unsigned int i = 0; i < _steps.size(); i++) delete _steps[i];
 }
 
-bool PViewDataGModel::finalize()
+bool PViewDataGModel::finalize(bool computeMinMax)
 {
-  _min = VAL_INF;
-  _max = -VAL_INF;
-  for(int step = 0; step < getNumTimeSteps(); step++){
-    _steps[step]->setMin(VAL_INF);
-    _steps[step]->setMax(-VAL_INF);
-    if(_type == NodeData || _type == ElementData){
-      // treat these 2 special cases separately for maximum efficiency
-      int numComp = _steps[step]->getNumComponents();
-      for(int i = 0; i < _steps[step]->getNumData(); i++){
-        double *d = _steps[step]->getData(i);
-        if(d){
-          double val = ComputeScalarRep(numComp, d);
-          _steps[step]->setMin(std::min(_steps[step]->getMin(), val));
-          _steps[step]->setMax(std::max(_steps[step]->getMax(), val));
-        }
-      }
-    }
-    else{
-      // general case (slower)
-      for(int ent = 0; ent < getNumEntities(step); ent++){
-        for(int ele = 0; ele < getNumElements(step, ent); ele++){
-          if(skipElement(step, ent, ele)) continue;
-          for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
-            double val;
-            getScalarValue(step, ent, ele, nod, val);
+  if(computeMinMax){
+    _min = VAL_INF;
+    _max = -VAL_INF;
+    for(int step = 0; step < getNumTimeSteps(); step++){
+      _steps[step]->setMin(VAL_INF);
+      _steps[step]->setMax(-VAL_INF);
+      if(_type == NodeData || _type == ElementData){
+        // treat these 2 special cases separately for maximum efficiency
+        int numComp = _steps[step]->getNumComponents();
+        for(int i = 0; i < _steps[step]->getNumData(); i++){
+          double *d = _steps[step]->getData(i);
+          if(d){
+            double val = ComputeScalarRep(numComp, d);
             _steps[step]->setMin(std::min(_steps[step]->getMin(), val));
             _steps[step]->setMax(std::max(_steps[step]->getMax(), val));
           }
         }
       }
+      else{
+        // general case (slower)
+        for(int ent = 0; ent < getNumEntities(step); ent++){
+          for(int ele = 0; ele < getNumElements(step, ent); ele++){
+            if(skipElement(step, ent, ele)) continue;
+            for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
+              double val;
+              getScalarValue(step, ent, ele, nod, val);
+              _steps[step]->setMin(std::min(_steps[step]->getMin(), val));
+              _steps[step]->setMax(std::max(_steps[step]->getMax(), val));
+            }
+          }
+        }
+      }
+      _min = std::min(_min, _steps[step]->getMin());
+      _max = std::max(_max, _steps[step]->getMax());
     }
-    _min = std::min(_min, _steps[step]->getMin());
-    _max = std::max(_max, _steps[step]->getMax());
   }
 
   // add interpolation data for known element types (this might be
@@ -381,7 +383,7 @@ int PViewDataGModel::getNumValues(int step, int ent, int ele)
     return getNumComponents(step, ent, ele);
   }
   else{
-    Msg::Error("getNumValue() should not be used on this type of view");
+    Msg::Error("getNumValues() should not be used on this type of view");
     return getNumComponents(step, ent, ele);
   }
 }

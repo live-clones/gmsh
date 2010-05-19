@@ -25,7 +25,7 @@ PViewDataList::PViewDataList()
   for(int i = 0; i < 24; i++) _index[i] = 0;
 }
 
-bool PViewDataList::finalize()
+bool PViewDataList::finalize(bool computeMinMax)
 {
   BBox.reset();
   Min = VAL_INF;
