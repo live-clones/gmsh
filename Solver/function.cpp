@@ -9,112 +9,128 @@
   #include "dlfcn.h"
 #endif
 #include "Bindings.h"
+
+
+struct functionReplaceCache {
+  dataCacheMap *map;
+  std::vector <dataCacheDouble*> toReplace;
+  std::vector <dataCacheDouble*> toCompute;
+};
+
+
 function::~function() {
 }
 
 function::function(int nbCol, bool invalidatedOnElement):_nbCol(nbCol), _invalidatedOnElement(invalidatedOnElement){}
 
 void function::addFunctionReplace(functionReplace &fr) {
+  fr._master = this;
   _functionReplaces.push_back(&fr);
 }
-dataCacheDouble::~dataCacheDouble()
-{
-  for(unsigned i = 0; i< functionReplaceCaches.size(); i++) {
-    delete functionReplaceCaches[i];
+void function::setArgument(fullMatrix<double> &v, const function *f, int iMap) {
+  if(f==NULL)
+    throw;
+  arguments.push_back(argument(v, iMap, f));
+  dependencies.insert(dependency(iMap, f));
+  for(std::set<dependency>::iterator it = f->dependencies.begin(); it != f->dependencies.end(); it++) {
+    if (it->iMap> 0 && iMap >0)
+      Msg::Error("consecutive secondary caches");
+    dependencies.insert(dependency(iMap + it->iMap, it->f));
   }
-};
-
-void dataCacheDouble::addMeAsDependencyOf (dataCacheDouble *newDep)
-{
-  _dependOnMe.insert(newDep);
-  newDep->_iDependOn.insert(this);
-  for(std::set<dataCacheDouble*>::iterator it = _iDependOn.begin();
-      it != _iDependOn.end(); it++) {
-    (*it)->_dependOnMe.insert(newDep);
-    newDep->_iDependOn.insert(*it);
+  for (int i = 0; i < _functionReplaces.size(); i++) {
+    functionReplace &replace = *_functionReplaces[i];
+    for (std::set<dependency>::iterator it = replace._fromParent.begin(); it != replace._fromParent.end(); it++) {
+      if (it->iMap> 0 && iMap >0)
+        Msg::Error("consecutive secondary caches");
+      dependencies.insert(dependency(iMap + it->iMap, it->f));
+    }
   }
-}
-
-dataCacheDouble::dataCacheDouble(dataCacheMap &m, int nRowByPoint, int nbCol):
-  _cacheMap(m),_value(m.getNbEvaluationPoints()*nRowByPoint,nbCol)
-{
-  _nRowByPoint=nRowByPoint;
-  m.addDataCacheDouble(this,true);
-  _function = NULL;
 }
 
 dataCacheDouble::dataCacheDouble(dataCacheMap *m, function *f):
-  _cacheMap(*m),_value(m->getNbEvaluationPoints(),f->getNbCol())
+  _cacheMap(*m),_value(m->getNbEvaluationPoints(),f->getNbCol()), _function(f)
 {
-  _nRowByPoint=1;
   m->addDataCacheDouble(this, f->isInvalitedOnElement());
-  _function = f;
-  for(unsigned i=0; i<f->_childrenCache.size(); i++) {
-    m->addSecondaryCache(m->newChild()); }
-  _substitutions.resize(f->_substitutedFunctions.size());
-  for(unsigned i=0; i<f->_substitutedFunctions.size(); i++) {
-    function::substitutedFunction s = f->_substitutedFunctions[i];
-    _substitutions[i].first = &m->getSecondaryCache(s.iMap)->substitute(s.f0);
-    _substitutions[i].second = &m->get(s.f1,this);
-  }
-  _dependencies.resize ( _function->arguments.size());
-  for (unsigned int i=0;i<_function->arguments.size();i++) {
-    int iCache = _function->arguments[i].iMap;
-    const function *f = _function->arguments[i].f;
-    _dependencies[i] = &m->getSecondaryCache(iCache)->get(f,this);
-  }
-  for (unsigned i = 0; i < f->_functionReplaces.size(); i++) {
-    functionReplaceCaches.push_back (new functionReplaceCache(m, f->_functionReplaces[i], this)); 
-  }
-  f->registerInDataCacheMap(m, this);
 }
 
-void dataCacheDouble::resize() {
-  _value = fullMatrix<double>(_nRowByPoint==0?1:_nRowByPoint*_cacheMap.getNbEvaluationPoints(),_value.size2());
+void dataCacheDouble::resize(int nrow) {
+  _value.resize(nrow, _value.size2());
+  _valid = false;
 }
+
 void dataCacheDouble::_eval() {
-  for(unsigned int i=0;i<_dependencies.size(); i++){
-    _function->arguments[i].val->setAsProxy((*_dependencies[i])());
+  for(unsigned int i=0;i<_directDependencies.size(); i++){
+    _function->arguments[i].val->setAsProxy(_directDependencies[i]->get());
   }
   for (unsigned i = 0; i < _function->_functionReplaces.size(); i++) {
-    _function->_functionReplaces[i]->currentCache = functionReplaceCaches[i];
-    for (unsigned j = 0; j < functionReplaceCaches[i]->toReplace.size() ; j++){
-      _function->_functionReplaces[i]->_toReplace[j].val->setAsProxy((*functionReplaceCaches[i]->toReplace[j])._value);
+    _function->_functionReplaces[i]->currentCache = &functionReplaceCaches[i];
+    for (unsigned j = 0; j < functionReplaceCaches[i].toReplace.size() ; j++){
+      _function->_functionReplaces[i]->_toReplace[j].val->setAsProxy((*functionReplaceCaches[i].toReplace[j])._value);
     }
   }
   _function->call(&_cacheMap, _value);
+  _valid = true;
 }
 
-//dataCacheMap members
+
+
 dataCacheDouble &dataCacheMap::get(const function *f, dataCacheDouble *caller) {
+  // do I have a cache for this function ?
   dataCacheDouble *&r = _cacheDoubleMap[f];
-  dataCacheMap *cParent = _parent;
-  while (cParent && r==NULL) {
-    /*std::map<const function *, dataCacheDouble *>::iterator it = cParent->_cacheDoubleMap.find(f);
-    if (it != cParent->_cacheDoubleMap.end()) {*/
-     // r = it->second;
-     r = &_parent->get(f,caller);
-      for (std::set<dataCacheDouble*>::iterator dep = r->_iDependOn.begin(); dep != r->_iDependOn.end(); dep++) {
-        //if (_cacheDoubleMap.find((*dep)->_function) != _cacheDoubleMap.end()) {
-        if (&get((*dep)->_function) != *dep) {
-          r = NULL;
-          break;
-        }
+  // can I use the cache of my parent ?
+  if(_parent && r==NULL) {
+    bool okFromParent = true;
+    for (std::set<function::dependency>::iterator it = f->dependencies.begin(); it != f->dependencies.end(); it++) {
+      if (it->iMap > _parent->_secondaryCaches.size())
+        okFromParent=false;
+      dataCacheMap *m = getSecondaryCache(it->iMap);
+      if (m->_cacheDoubleMap.find(it->f) != m->_cacheDoubleMap.end()) {
+        okFromParent = false;
+        break;
       }
-    //}
-    cParent = cParent->_parent;
+    }
+    if (okFromParent)
+      r = &_parent->get (f,caller);
   }
-  if (r==NULL)
-    r = new dataCacheDouble(this, (function*)(f));
-  if (caller)
-    r->addMeAsDependencyOf(caller);
-  return *r;
-}
+  // no cache found, create a new one
+  if (r==NULL) {
+    r = new dataCacheDouble (this, (function*)(f));
+    r->_directDependencies.resize (f->arguments.size());
+    for (unsigned int i = 0; i < f->arguments.size(); i++) {
+      r->_directDependencies[i] = &getSecondaryCache(f->arguments[i].iMap)->get (f->arguments[i].f, r);
+    }
+    for (unsigned i = 0; i < f->_functionReplaces.size(); i++) {
+      functionReplaceCache replaceCache;
+      functionReplace *replace = f->_functionReplaces[i];
+      dataCacheMap *rMap = newChild();
+      for (unsigned i = 0; i < _secondaryCaches.size(); i ++)
+        rMap->addSecondaryCache (getSecondaryCache(i+1)->newChild());
+      for (int i = 0; i < replace->_nChildren; i ++)
+        rMap->addSecondaryCache (rMap->newChild());
+      for (std::vector<function::argument>::iterator it = replace->_toReplace.begin(); it!= replace->_toReplace.end(); it++ ) {
+        dataCacheMap *m = rMap->getSecondaryCache(it->iMap);
+        dataCacheDouble *s = new dataCacheDouble(m, (function*)it->f);
+        m->_cacheDoubleMap[it->f] = s;
+        replaceCache.toReplace.push_back(s);
+      }
+      for (std::vector<function::argument>::iterator it = replace->_toCompute.begin(); it!= replace->_toCompute.end(); it++ ) {
+        replaceCache.toCompute.push_back (&rMap->getSecondaryCache(it->iMap)->get(it->f, r));
+      }
+      replaceCache.map = rMap;
+      r->functionReplaceCaches.push_back (replaceCache); 
+    }
+    ((function*)f)->registerInDataCacheMap(this, r);
+  }
 
-dataCacheDouble &dataCacheMap::substitute(const function *f) 
-{
-  dataCacheDouble *&r= _cacheDoubleMap[f];
-  r = new dataCacheDouble(this, (function*)(f));
+  // update the dependency tree
+  if (caller) {
+    r->_dependOnMe.insert(caller);
+    caller->_iDependOn.insert(r);
+    for(std::set<dataCacheDouble*>::iterator it = r->_iDependOn.begin(); it != r->_iDependOn.end(); it++) {
+      (*it)->_dependOnMe.insert(caller);
+      caller->_iDependOn.insert(*it);
+    }
+  }
   return *r;
 }
 
@@ -124,7 +140,49 @@ dataCacheMap::~dataCacheMap()
       it!=_allDataCaches.end(); it++) {
     delete *it;
   }
+  for (std::list<dataCacheMap*>::iterator it = _children.begin(); it != _children.end(); it++) {
+    delete *it;
+  }
 }
+
+void functionReplace::replace(fullMatrix<double> &v, const function *f, int iMap) {
+  _replaced.insert(function::dependency(iMap,f));
+  _toReplace.push_back(function::argument(v, iMap, f));
+}
+
+void functionReplace::get(fullMatrix<double> &v, const function *f, int iMap) {
+  bool allDepFromParent = true;
+  for (std::set<function::dependency>::iterator itDep = f->dependencies.begin(); itDep != f->dependencies.end(); itDep++){
+    bool depFromParent = (_replaced.count(*itDep)==0);
+    for (std::set<function::dependency>::iterator itDep2 = itDep->f->dependencies.begin(); itDep2 != itDep->f->dependencies.end() && depFromParent; itDep2++)
+      depFromParent &= (_replaced.count(*itDep2)==0);
+    if(depFromParent)
+      _master->dependencies.insert(*itDep);
+    else
+      allDepFromParent = false;
+  }
+  function::dependency asDep(iMap, f);
+  if (allDepFromParent && _replaced.count(asDep)==0)
+    _master->dependencies.insert(asDep);
+    
+  _toCompute.push_back(function::argument(v, iMap, f));
+}
+void functionReplace::addChild() {
+  _nChildren++;
+}
+functionReplace::functionReplace(){
+  _nChildren=0;
+}
+
+void functionReplace::compute(){
+  for (unsigned i = 0; i < _toReplace.size(); i++){
+    currentCache->toReplace[i]->set();
+  }
+  for (unsigned i = 0; i < _toCompute.size(); i++) {
+    _toCompute[i].val->setAsProxy(currentCache->toCompute[i]->get());
+  }
+};
+
 
 // now some example of functions
 
@@ -407,8 +465,7 @@ class functionLua : public function {
 void dataCacheMap::setNbEvaluationPoints(int nbEvaluationPoints) {
   _nbEvaluationPoints = nbEvaluationPoints;
   for(std::set<dataCacheDouble*>::iterator it = _allDataCaches.begin(); it!= _allDataCaches.end(); it++){
-    (*it)->resize();
-    (*it)->_valid = false;
+    (*it)->resize(nbEvaluationPoints);
   }
     for(std::list<dataCacheMap*>::iterator it = _children.begin(); it!= _children.end(); it++) {
       (*it)->setNbEvaluationPoints(nbEvaluationPoints);
@@ -562,44 +619,6 @@ void function::registerBindings(binding *b){
 #endif
 }
 
-void functionReplace::replace(fullMatrix<double> &v, const function *f, int iMap) {
-  _toReplace.push_back(function::argument(v, iMap, f));
-}
-
-void functionReplace::get(fullMatrix<double> &v, const function *f, int iMap) {
-  _toCompute.push_back(function::argument(v, iMap, f));
-}
-
-void functionReplace::compute(){
-  for (unsigned i = 0; i < _toReplace.size(); i++){
-    currentCache->toReplace[i]->set();
-  }
-  for (unsigned i = 0; i < _toCompute.size(); i++) {
-    currentCache->toCompute[i]->_valid =false;
-    _toCompute[i].val->setAsProxy((*currentCache->toCompute[i])());
-  }
-};
-
-
-functionReplaceCache::functionReplaceCache(dataCacheMap *m, functionReplace *rep, dataCacheDouble *from) {
-  map = m->newChild();
-  for (unsigned i = 0; i < m->_secondaryCaches.size(); i ++) {
-    map->addSecondaryCache (m->getSecondaryCache(i+1)->newChild());
-  }
-  for (unsigned i = 0; i < rep->_toReplace.size(); i++) {
-    toReplace.push_back (&map->getSecondaryCache(rep->_toReplace[i].iMap)->substitute(rep->_toReplace[i].f));
-  }
-  for (unsigned i = 0; i < rep->_toCompute.size(); i++) {
-    dataCacheMap *m2 = map->getSecondaryCache(rep->_toCompute[i].iMap);
-    toCompute.push_back (&m2->get(rep->_toCompute[i].f, from));
-  }
-}
-functionReplaceCache::~functionReplaceCache() {
-  for (unsigned i = 0; i< map->_secondaryCaches.size(); i++) {
-    delete map->_secondaryCaches[i];
-  }
-  delete map;
-}
 functionConstant *function::_timeFunction = NULL;
 functionConstant *function::getTime() {
   if (! _timeFunction)

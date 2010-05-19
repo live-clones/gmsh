@@ -37,6 +37,7 @@ extern "C" {
                       std::complex<double> *alpha, std::complex<double> *a, int *lda, 
                       std::complex<double> *x, int *incx, std::complex<double> *beta, 
                       std::complex<double> *y, int *incy);
+  void F77NAME(dscal)(int *n, double *alpha,double *x,  int *incx);
 }
 
 template<> 
@@ -44,6 +45,18 @@ void fullVector<double>::axpy(fullVector<double> &x,double alpha)
 {
   int M = _r, INCX = 1, INCY = 1;
   F77NAME(daxpy)(&M, &alpha, x._data,&INCX, _data, &INCY);
+}
+
+template<> 
+void fullMatrix<double>::scale(const double s) {
+  int N = _r*_c;
+  int stride = 1;
+  double ss = s;
+  F77NAME(dscal)(&N, &ss,_data, &stride);
+    /*if(s == 0.)
+      for(int i = 0; i < _r * _c; ++i) _data[i] = 0.;
+    else
+      for(int i = 0; i < _r * _c; ++i) _data[i] *= s;*/
 }
 
 template<> 
