@@ -68,6 +68,7 @@ class GFace : public GEntity
   // add/delete regions that are bounded by the face
   void addRegion(GRegion *r){ r1 ? r2 = r : r1 = r; }
   void delRegion(GRegion *r){ if(r1 == r) r1 = r2; r2 = 0; }
+  GRegion* getRegion(int num) const{ if (num==0) return r1; else return r2;  };
 
   // get number of regions
   int numRegions() const { int num=0; if(r1) num++; if(r2) num++; return num; }

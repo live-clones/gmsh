@@ -242,7 +242,8 @@ void discreteEdge::setBoundVertices()
     +---------------+--------------+----------- ... ----------+
     _pars[0]=0   _pars[1]=1    _pars[2]=2             _pars[N+1]=N+1
 */
-void discreteEdge::parametrize( std::map<GFace*,  std::map<MVertex*, MVertex*, std::less<MVertex*> > > &face2Vert)
+void discreteEdge::parametrize( std::map<GFace*,   std::map<MVertex*, MVertex*, std::less<MVertex*> > > &face2Vert, 
+				std::map<GRegion*, std::map<MVertex*, MVertex*, std::less<MVertex*> > > &region2Vert)
 { 
   for (unsigned int i = 0; i < lines.size() + 1; i++){
     _pars.push_back(i);
@@ -283,6 +284,8 @@ void discreteEdge::parametrize( std::map<GFace*,  std::map<MVertex*, MVertex*, s
   //  that contain those new MEdgeVertices
   
    for(std::list<GFace*>::iterator iFace = l_faces.begin(); iFace != l_faces.end(); ++iFace){
+
+     //for each face find correspondane face2Vertex
      std::map<GFace*,  std::map<MVertex*, MVertex*, std::less<MVertex*> > >::iterator itmap = face2Vert.find(*iFace);
      if (itmap == face2Vert.end()) {
        face2Vert.insert(std::make_pair(*iFace, old2new));
@@ -293,6 +296,22 @@ void discreteEdge::parametrize( std::map<GFace*,  std::map<MVertex*, MVertex*, s
          mapVert.insert(*it);
        itmap->second = mapVert;
      }
+
+     //do the same for regions
+     for ( int j = 0; j < (*iFace)->numRegions(); j++){
+       GRegion *r = (*iFace)->getRegion(j);
+       std::map<GRegion*,  std::map<MVertex*, MVertex*, std::less<MVertex*> > >::iterator itmap = region2Vert.find(r);
+       if (itmap == region2Vert.end()) {
+	 region2Vert.insert(std::make_pair(r, old2new));
+       }
+       else{
+	 std::map<MVertex*, MVertex*, std::less<MVertex*> > mapVert = itmap->second;
+	 for (std::map<MVertex*, MVertex*, std::less<MVertex*> >::iterator it = old2new.begin(); it != old2new.end(); it++)
+	   mapVert.insert(*it);
+	 itmap->second = mapVert;
+       }
+     }
+ 
    }
 }
 
