@@ -1925,6 +1925,10 @@ void GModel::glue(double eps)
     glueFacesInRegions(this, Unique2Duplicates, Duplicates2Unique);
   }    
 }
+void GModel::insertRegion(GRegion *r)
+{
+  regions.insert(r);
+}
 
 #include "Bindings.h"
 
@@ -1976,6 +1980,9 @@ void GModel::registerBindings(binding *b)
   cm->setDescription("access a geometrical region by tag");
   cm->setArgNames("tag", NULL);
 
+  cm = cb->addMethod("insertRegion", &GModel::insertRegion);
+  cm->setDescription("insert an existing region to the model list");
+  cm->setArgNames("region", NULL);
   cm = cb->addMethod("getRegions", &GModel::bindingsGetRegions);
   cm->setDescription("return a vector of the regions");
   cm = cb->addMethod("getFaces", &GModel::bindingsGetFaces);
