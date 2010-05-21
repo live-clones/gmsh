@@ -1177,6 +1177,15 @@ void GFace::moveToValidRange(SPoint2 &pt) const
   }
 }
 
+void GFace::addTriangle(MTriangle *t) {
+  triangles.push_back(t); 
+}
+void GFace::addQuadrangle(MQuadrangle *q) {
+  quadrangles.push_back(q); 
+}
+void GFace::addPolygon(MPolygon *p) {
+  polygons.push_back(p); 
+}
 
 #include "Bindings.h"
 
@@ -1185,8 +1194,19 @@ void GFace::registerBindings(binding *b)
   classBinding *cb = b->addClass<GFace>("GFace");
   cb->setParentClass<GEntity>();
   cb->setDescription("A GFace is a geometrical 2D entity");
-  methodBinding *cm;
-  cm = cb->addMethod("lloyd", &GFace::lloyd);
-  cm->setDescription("do N iteration of Lloyd's algorithm using or not the infinite norm");
-  cm->setArgNames("N","infiniteNorm",NULL);
+  methodBinding *mb;
+  mb = cb->addMethod("lloyd", &GFace::lloyd);
+  mb->setDescription("do N iteration of Lloyd's algorithm using or not the infinite norm");
+  mb->setArgNames("N","infiniteNorm",NULL);
+  mb = cb->addMethod("addTriangle", &GFace::addTriangle);
+  mb->setDescription("insert a triangle mesh element");
+  mb->setArgNames("triangle", NULL);
+  mb = cb->addMethod("addQuadrangle", &GFace::addQuadrangle);
+  mb->setDescription("insert a quadrangle mesh element");
+  mb->setArgNames("quadrangle", NULL);
+  mb = cb->addMethod("edges", &GFace::edges);
+  mb->setDescription("return the list of edges bounding this surface");
+/*  mb = cb->addMethod("addPolygon", &GFace::addPolygon);
+  mb->setDescription("insert a polygon mesh element");
+  mb->setArgNames("polygon", NULL);*/
 }

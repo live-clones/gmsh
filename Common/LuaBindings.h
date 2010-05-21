@@ -12,6 +12,7 @@
 
 #include <map>
 #include <vector>
+#include <list>
 #include <set>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -44,7 +45,6 @@ class className{
 template<typename type>
 std::string  className<type>::_name;
 
-template <>
 template <typename t>
 class className<t*>{
  public:
@@ -137,7 +137,7 @@ class luaStack<std::vector<type > >{
   static void push(lua_State *L, const std::vector<type>& v)
   {
     lua_createtable(L, v.size(), 0);
-    for(size_t i = 0; i < v.size; i++){
+    for(size_t i = 0; i < v.size(); i++){
       luaStack<type>::push(L, v[i]);
       lua_rawseti(L, 2, i + 1);
     }
@@ -146,6 +146,35 @@ class luaStack<std::vector<type > >{
   {
     std::string name = "vector of ";
     return name + luaStack<type>::getName();
+  }
+};
+template<class lType>
+class luaStack<std::list<lType > >{
+ public:
+  static std::list<lType> get(lua_State *L, int ia)
+  {
+    std::list<lType> l;
+    size_t size = lua_objlen(L, ia);
+    for(size_t i = 0; i < size; i++){
+      lua_rawgeti(L, ia, i + 1);
+      l.push_back(luaStack<lType>::get(L, -1));
+      lua_pop(L, 1);
+    }
+    return l;
+  }
+  static void push(lua_State *L, const std::list<lType>& l)
+  {
+    std::vector<lType> v(l.begin(), l.end());
+    lua_createtable(L, v.size(), 0);
+    for(size_t i = 0; i < v.size(); i++){
+      luaStack<lType>::push(L, v[i]);
+      lua_rawseti(L, 2, i + 1);
+    }
+  }
+  static std::string getName()
+  {
+    std::string name = "list of ";
+    return name + luaStack<lType>::getName();
   }
 };
 
@@ -176,6 +205,35 @@ class luaStack<std::vector<type> &>{
   {
     std::string name="vector of ";
     return name + luaStack<type>::getName();
+  }
+};
+template<class lType>
+class luaStack<std::list<lType > &>{
+ public:
+  static std::list<lType> get(lua_State *L, int ia)
+  {
+    std::list<lType> l;
+    size_t size = lua_objlen(L, ia);
+    for(size_t i = 0; i < size; i++){
+      lua_rawgeti(L, ia, i + 1);
+      l.push_back(luaStack<lType>::get(L, -1));
+      lua_pop(L, 1);
+    }
+    return l;
+  }
+  static void push(lua_State *L, const std::list<lType>& l)
+  {
+    std::vector<lType> v(l.begin(), l.end());
+    lua_createtable(L, v.size(), 0);
+    for(size_t i = 0; i < v.size(); i++){
+      luaStack<lType>::push(L, v[i]);
+      lua_rawseti(L, 2, i + 1);
+    }
+  }
+  static std::string getName()
+  {
+    std::string name = "list of ";
+    return name + luaStack<lType>::getName();
   }
 };
 
@@ -1038,9 +1096,8 @@ class methodBindingT :public luaMethodBinding {
   int call(lua_State *L){ return luaCall(L, _f); }
   void getArgTypeNames(std::vector<std::string> &names){ argTypeNames<cb>::get(names); }
 };
-
 template <typename tObj, typename t0=void, typename t1=void, typename t2=void, 
-          typename t3=void, typename t4=void>
+          typename t3=void, typename t4=void, typename t5=void>
 class constructorBindingT: public luaMethodBinding {
  public:
   int call(lua_State *L)
@@ -1048,17 +1105,18 @@ class constructorBindingT: public luaMethodBinding {
     lua_remove(L, 1);
     (luaStack<tObj*>::push(L, new tObj(luaStack<t0>::get(L, 1), luaStack<t1>::get(L, 2),
                                        luaStack<t2>::get(L, 3), luaStack<t3>::get(L, 4),
-                                       luaStack<t4>::get(L, 5))));
+                                       luaStack<t4>::get(L, 5), luaStack<t5>::get(L, 6))));
     return 1;
   }
   void getArgTypeNames(std::vector<std::string> &names)
   {
-    argTypeNames<void (tObj::*)(t0, t1, t2, t3, t4)>::get(names);
+    argTypeNames<void (tObj::*)(t0, t1, t2, t3, t4, t5)>::get(names);
   }
 };
 
+
 template <typename tObj>
-class constructorBindingT<tObj, void, void, void, void> : public luaMethodBinding {
+class constructorBindingT<tObj, void, void, void, void,void> : public luaMethodBinding {
  public:
   int call(lua_State *L)
   {
@@ -1073,7 +1131,7 @@ class constructorBindingT<tObj, void, void, void, void> : public luaMethodBindin
 };
 
 template <typename tObj, typename t0>
-class constructorBindingT<tObj, t0, void, void, void, void> : public luaMethodBinding {
+class constructorBindingT<tObj, t0, void, void, void, void,void> : public luaMethodBinding {
  public:
   int call(lua_State *L)
   {
@@ -1087,7 +1145,7 @@ class constructorBindingT<tObj, t0, void, void, void, void> : public luaMethodBi
 };
 
 template <typename tObj, typename t0, typename t1>
-class constructorBindingT<tObj, t0, t1, void, void, void> : public luaMethodBinding {
+class constructorBindingT<tObj, t0, t1, void, void, void,void> : public luaMethodBinding {
  public:
   int call(lua_State *L)
   {
@@ -1102,7 +1160,7 @@ class constructorBindingT<tObj, t0, t1, void, void, void> : public luaMethodBind
 };
 
 template <typename tObj, typename t0, typename t1, typename t2>
-class constructorBindingT<tObj, t0, t1, t2, void, void> : public luaMethodBinding {
+class constructorBindingT<tObj, t0, t1, t2, void, void,void> : public luaMethodBinding {
  public:
   int call(lua_State *L)
   {
@@ -1118,7 +1176,7 @@ class constructorBindingT<tObj, t0, t1, t2, void, void> : public luaMethodBindin
 };
 
 template <typename tObj, typename t0, typename t1, typename t2,  typename t3>
-class constructorBindingT<tObj, t0, t1, t2, t3, void> : public luaMethodBinding {
+class constructorBindingT<tObj, t0, t1, t2, t3, void, void> : public luaMethodBinding {
  public:
   int call(lua_State *L)
   {
@@ -1130,6 +1188,23 @@ class constructorBindingT<tObj, t0, t1, t2, t3, void> : public luaMethodBinding 
   void getArgTypeNames(std::vector<std::string> &names)
   {
     argTypeNames<void (tObj::*)(t0, t1, t2, t3)>::get(names);
+  }
+};
+
+template <typename tObj, typename t0, typename t1, typename t2,  typename t3, typename t4>
+class constructorBindingT<tObj, t0, t1, t2, t3, t4, void> : public luaMethodBinding {
+ public:
+  int call(lua_State *L)
+  {
+    lua_remove(L, 1);
+    (luaStack<tObj*>::push(L, new tObj(luaStack<t0>::get(L, 1), luaStack<t1>::get(L, 2),
+                                       luaStack<t2>::get(L, 3), luaStack<t3>::get(L, 4),
+                                       luaStack<t4>::get(L, 5))));
+    return 1;
+  }
+  void getArgTypeNames(std::vector<std::string> &names)
+  {
+    argTypeNames<void (tObj::*)(t0, t1, t2, t3,t4)>::get(names);
   }
 };
 
@@ -1272,6 +1347,14 @@ class classBinding {
     luaMethodBinding *mb = new methodBindingT<cb>(n, f);
     addMethodLua(n,mb);
     return mb; 
+  }
+  template <typename tObj, typename t0, typename t1, typename t2, typename t3, 
+            typename t4, typename t5>
+  methodBinding *setConstructor()
+  {
+    luaMethodBinding *constructorLua = new constructorBindingT<tObj,t0,t1,t2,t3,t4,t5>;
+    setConstructorLuaMethod(constructorLua);
+    return constructorLua;
   }
   template <typename tObj, typename t0, typename t1, typename t2, typename t3, 
             typename t4>

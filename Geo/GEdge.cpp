@@ -91,6 +91,10 @@ void GEdge::addFace(GFace *e)
   l_faces.push_back(e);
 }
 
+void GEdge::addLine (MLine *line){
+  lines.push_back(line);
+}
+
 void GEdge::delFace(GFace *e)
 {
   l_faces.erase(std::find(l_faces.begin(), l_faces.end(), e));
@@ -369,4 +373,7 @@ void GEdge::registerBindings(binding *b)
   mb->setDescription("get the begin-vertex of the edge");
   mb = cb->addMethod("getEndVertex", &GEdge::getEndVertex);
   mb->setDescription("get the end-vertex of the edge");
+  mb = cb->addMethod("addLine", &GEdge::addLine);
+  mb->setDescription("insert a line mesh element");
+  mb->setArgNames("line", NULL);
 }

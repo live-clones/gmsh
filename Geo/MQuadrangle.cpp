@@ -272,3 +272,15 @@ double MQuadrangle::getInnerRadius()
   }
   return R;
 }
+#include "Bindings.h"
+
+void MQuadrangle::registerBindings(binding *b)
+{
+  classBinding *cb = b->addClass<MQuadrangle>("MQuadrangle");
+  cb->setDescription("A mesh first-order quadrangle.");
+  methodBinding *cm;
+  cm = cb->setConstructor<MQuadrangle,MVertex*,MVertex*,MVertex*,MVertex*>();
+  cm->setArgNames("v0", "v1", "v2", "v3", NULL);
+  cm->setDescription("Create a new quadrangle with vertices (v0,v1,v2,v3).");
+  cb->setParentClass<MElement>();
+}

@@ -77,6 +77,7 @@ class MLine : public MElement {
     return true;
   }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
+  static void registerBindings(binding *b);
 };
 
 /*
@@ -137,6 +138,7 @@ class MLine3 : public MLine {
  *   0---2---...-(N-1)-1
  *
  */
+class binding;
 class MLineN : public MLine {
  protected:
   std::vector<MVertex *> _vs;

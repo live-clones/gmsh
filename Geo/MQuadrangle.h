@@ -23,6 +23,7 @@
  *   0-----------1 
  *
  */
+class binding;
 class MQuadrangle : public MElement {
  protected:
   MVertex *_v[4];
@@ -146,6 +147,9 @@ class MQuadrangle : public MElement {
     };
     return e[edge][vert];
   }
+
+ public:
+  static void registerBindings(binding *b);
 };
 
 /*

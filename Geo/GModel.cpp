@@ -308,6 +308,26 @@ int GModel::maxRegionNum()
   return MAXX;
 }
 
+std::vector<GRegion*> GModel::bindingsGetRegions()
+{
+  return std::vector<GRegion*> (regions.begin(), regions.end());
+}
+
+std::vector<GFace*> GModel::bindingsGetFaces()
+{
+  return std::vector<GFace*> (faces.begin(), faces.end());
+}
+
+std::vector<GEdge*> GModel::bindingsGetEdges()
+{
+  return std::vector<GEdge*> (edges.begin(), edges.end());
+}
+
+std::vector<GVertex*> GModel::bindingsGetVertices()
+{
+  return std::vector<GVertex*> (vertices.begin(), vertices.end());
+}
+
 GRegion *GModel::getRegionByTag(int n) const
 {
   GEntity tmp((GModel*)this, n);
@@ -1955,6 +1975,15 @@ void GModel::registerBindings(binding *b)
   cm = cb->addMethod("getRegionByTag", &GModel::getRegionByTag);
   cm->setDescription("access a geometrical region by tag");
   cm->setArgNames("tag", NULL);
+
+  cm = cb->addMethod("getRegions", &GModel::bindingsGetRegions);
+  cm->setDescription("return a vector of the regions");
+  cm = cb->addMethod("getFaces", &GModel::bindingsGetFaces);
+  cm->setDescription("return a vector of the faces");
+  cm = cb->addMethod("getEdges", &GModel::bindingsGetEdges);
+  cm->setDescription("return a vector of the edges");
+  cm = cb->addMethod("getVertices", &GModel::bindingsGetVertices);
+  cm->setDescription("return a vector of the vertices");
 
   cm = cb->addMethod("addVertex", &GModel::addVertex);
   cm->setDescription("create a new vertex at position (x, y, z), with target "

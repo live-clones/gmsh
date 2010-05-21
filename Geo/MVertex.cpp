@@ -420,4 +420,6 @@ void MVertex::registerBindings(binding *b)
   cm = cb->setConstructor<MVertex,double,double,double>();
   cm->setArgNames("x", "y", "z", NULL);
   cm->setDescription("Create a new mesh vertex at (x,y,z).");
+  cm = cb->addMethod("getNum", &MVertex::getNum);
+  cm->setDescription("return the invariant vertex id");
 }

@@ -47,7 +47,7 @@ class GRegion : public GEntity {
   // get/set faces that bound the region
   virtual std::list<GFace*> faces() const{ return l_faces; }
   virtual std::list<int> faceOrientations() const{ return l_dirs; }
-  void set(std::list<GFace*> &f) { l_faces = f; }
+  inline void set(const std::list<GFace*> f) { l_faces = f; }
 
   // edges that bound the region
   virtual std::list<GEdge*> edges() const;
@@ -101,6 +101,8 @@ class GRegion : public GEntity {
   std::vector<MPrism*> prisms;
   std::vector<MPyramid*> pyramids;
   std::vector<MPolyhedron*> polyhedra;
+
+  void addPrism(MPrism *p);
 
   // replace edges (gor gluing)
   void replaceFaces (std::list<GFace*> &);

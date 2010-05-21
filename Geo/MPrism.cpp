@@ -125,3 +125,16 @@ void MPrism::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) c
   }
   Msg::Error("Could not get face information for prism %d", getNum());
 }
+#include "Bindings.h"
+
+void MPrism::registerBindings(binding *b)
+{
+  classBinding *cb = b->addClass<MPrism>("MPrism");
+  cb->setDescription("A mesh first-order prism.");
+  methodBinding *cm;
+  cm = cb->setConstructor<MPrism,MVertex*,MVertex*,MVertex*,MVertex*, MVertex*, MVertex*>();
+  cm->setArgNames("v0", "v1", "v2", "v3","v4","v5", NULL);
+  cm->setDescription("Create a new prism with top triangle (v0,v1,v2) and bottom one (v3,v4,v5).");
+  cb->setParentClass<MElement>();
+}
+

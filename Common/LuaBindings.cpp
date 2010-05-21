@@ -16,6 +16,10 @@
 #include "Context.h"
 #include "MVertex.h"
 #include "MElement.h"
+#include "MTriangle.h"
+#include "MQuadrangle.h"
+#include "MPrism.h"
+#include "MLine.h"
 #include "GFace.h"
 #include "DivideAndConquer.h"
 #include "Bindings.h"
@@ -383,6 +387,10 @@ binding::binding()
   GModel::registerBindings(this);
   MElement::registerBindings(this);
   MVertex::registerBindings(this);
+  MTriangle::registerBindings(this);
+  MPrism::registerBindings(this);
+  MQuadrangle::registerBindings(this);
+  MLine::registerBindings(this);
   fullMatrix<double>::registerBindings(this);
   gmshOptions::registerBindings(this);
   Msg::registerBindings(this);

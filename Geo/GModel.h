@@ -208,6 +208,12 @@ class GModel
   GEdge *getEdgeByTag(int n) const;
   GVertex *getVertexByTag(int n) const;
 
+  // for lua bindings, temporary solution while iterator are not binded
+  std::vector<GRegion*> bindingsGetRegions();
+  std::vector<GFace*> bindingsGetFaces();
+  std::vector<GEdge*> bindingsGetEdges();
+  std::vector<GVertex*> bindingsGetVertices();
+
   // add/remove an entity in the model
   void add(GRegion *r) { regions.insert(r); }
   void add(GFace *f) { faces.insert(f); }

@@ -8,6 +8,7 @@
 
 #include "MElement.h"
 
+class binding;
 /*
  * MPrism
  *
@@ -198,6 +199,8 @@ class MPrism : public MElement {
     };
     return f[face][vert];
   }
+  public:
+  static void registerBindings(binding *b);
 };
 
 /*

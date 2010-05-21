@@ -88,6 +88,9 @@ void GEntity::registerBindings(binding *b)
   mb = cb->addMethod("getMeshVertex",&GEntity::getMeshVertex);
   mb->setDescription("get the mesh vertex at the given index");
   mb->setArgNames("index",NULL);
+  mb = cb->addMethod("addMeshVertex",&GEntity::addMeshVertex);
+  mb->setDescription("insert a new mesh vertex");
+  mb->setArgNames("vertex",NULL);
   mb = cb->addMethod("model", &GEntity::model);
   mb->setDescription("returns the geometric model the entity belongs to.");
   mb = cb->addMethod("cast2Vertex", &GEntity::cast2Vertex);
@@ -98,4 +101,7 @@ void GEntity::registerBindings(binding *b)
   mb->setDescription("do a dynamic cast of the GEntity to a GFace (0 if wrong cast).");
   mb = cb->addMethod("cast2Region", &GEntity::cast2Region);
   mb->setDescription("do a dynamic cast of the GEntity to a GRegion (0 if wrong cast).");
+  mb = cb->addMethod("tag", &GEntity::tag);
+  mb->setDescription("return the tag of this entity.");
+
 }

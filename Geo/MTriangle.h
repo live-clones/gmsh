@@ -38,7 +38,7 @@ class MTriangle : public MElement {
     v[2] = _v[2];
   }
  public :
-  MTriangle(MVertex *v0, MVertex *v1, MVertex *v2, int num=0, int part=0) 
+  MTriangle(MVertex *v0, MVertex *v1, MVertex *v2, int num=0, int part=0)
     : MElement(num, part)
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2;
@@ -144,6 +144,8 @@ class MTriangle : public MElement {
     };
     return e[edge][vert];
   }
+  public:
+  static void registerBindings(binding *b);
 };
 
 /*

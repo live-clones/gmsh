@@ -278,6 +278,9 @@ class GEntity {
   // get the mesh vertex at the given index
   MVertex *getMeshVertex(unsigned int index) { return mesh_vertices[index]; }
 
+  //add a MeshVertex
+  void addMeshVertex(MVertex *v) { mesh_vertices.push_back(v);}
+
   // clean downcasts
   GVertex *cast2Vertex();
   GEdge   *cast2Edge();

@@ -286,9 +286,22 @@ void GRegion::replaceFaces (std::list<GFace*> &new_faces)
   l_dirs = newdirs;
 }
 
+void GRegion::addPrism(MPrism *p) {
+  prisms.push_back(p); 
+}
+
 void GRegion::registerBindings(binding *b)
 {
   classBinding *cb = b->addClass<GRegion>("GRegion");
   cb->setDescription("A GRegion is a geometrical 3D entity");
   cb->setParentClass<GEntity>();
+  methodBinding *cm = cb->setConstructor<GRegion,GModel*,int>();
+  cm->setDescription("create a new GRegion");
+  cm->setArgNames("model","tag",NULL);
+  cm = cb->addMethod("set",&GRegion::set);
+  cm->setDescription("set the faces that bound this region");
+  cm->setArgNames("faces",NULL);
+  cm = cb->addMethod("addPrism", &GRegion::addPrism);
+  cm->setDescription("insert a prism mesh element");
+  cm->setArgNames("prism", NULL);
 }

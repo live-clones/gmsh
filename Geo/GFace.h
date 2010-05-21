@@ -298,6 +298,10 @@ class GFace : public GEntity
   std::vector<MQuadrangle*> quadrangles;
   std::vector<MPolygon*> polygons;
 
+  void addTriangle(MTriangle *t);
+  void addQuadrangle(MQuadrangle *q);
+  void addPolygon(MPolygon *p);
+
   // an array with additional vertices that are supposed to exist
   // in the final mesh of the model face. This can be used for 
   // boundary layer meshes or when using Lloyd-like smoothing algorithms

@@ -232,4 +232,16 @@ void MTriangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *npts = getNGQTPts(pOrder);
   *pts = getGQTPts(pOrder);
 }
+#include "Bindings.h"
+
+void MTriangle::registerBindings(binding *b)
+{
+  classBinding *cb = b->addClass<MTriangle>("MTriangle");
+  cb->setDescription("A mesh first-order triangle.");
+  methodBinding *cm;
+  cm = cb->setConstructor<MTriangle,MVertex*,MVertex*,MVertex*>();
+  cm->setArgNames("v0", "v1", "v2", NULL);
+  cm->setDescription("Create a new triangle with vertices (v0,v1,v2).");
+  cb->setParentClass<MElement>();
+}
 

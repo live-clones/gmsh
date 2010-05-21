@@ -39,3 +39,17 @@ double MLine::getInnerRadius()
 {
   return _v[0]->distance(_v[1]);
 }
+
+#include "Bindings.h"
+
+void MLine::registerBindings(binding *b)
+{
+  classBinding *cb = b->addClass<MLine>("MLine");
+  cb->setDescription("A line mesh element.");
+
+  methodBinding *cm;
+  cm = cb->setConstructor<MLine,MVertex*,MVertex*>();
+  cm->setArgNames("v0","v1", NULL);
+  cm->setDescription("Create a new line mesh element between v0 and v1.");
+  cb->setParentClass<MElement>();
+}
