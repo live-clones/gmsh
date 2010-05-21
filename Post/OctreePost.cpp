@@ -227,7 +227,7 @@ OctreePost::OctreePost(PView *v)
     PViewDataList *l = _theViewDataList;
 
     if(l->haveInterpolationMatrices() && !_theView->getData()->isAdaptive()){
-      Msg::Error("Cannot create octree for non-adapted high-order view: you need");
+      Msg::Error("Cannot create octree for non-adapted high-order list-based view: you need");
       Msg::Error("to select 'Adapt visualization grid' first");
       return;
     }
@@ -351,7 +351,7 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
 
   MElement *e = (MElement*)in;
 
-  int dataIndex[8];
+  std::vector<int> dataIndex(e->getNumVertices());
   if(_theViewDataGModel->getType() == PViewDataGModel::NodeData)
     for(int i = 0; i < e->getNumVertices(); i++)
       dataIndex[i] = e->getVertex(i)->getNum();
@@ -362,7 +362,7 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
   double U[3];
   e->xyz2uvw(P, U);
 
-  double nodeval[8 * 9];
+  std::vector<double> nodeval(e->getNumVertices() * 9);
   for(int step = 0; step < _theViewDataGModel->getNumTimeSteps(); step++){
     if(timestep < 0 || step == timestep){
       for(int nod = 0; nod < e->getNumVertices(); nod++){

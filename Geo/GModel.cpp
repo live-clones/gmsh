@@ -99,9 +99,8 @@ static int connected_bounds(std::set<MEdge, Less_Edge> &edges,
   return boundaries.size();
 }
 
-//--------------------------------------------------------------
-static int connectedRegions (std::vector<MElement*> &elements,
-			     std::vector<std::vector<MElement*> > &regions)
+static int connectedRegions(std::vector<MElement*> &elements,
+                            std::vector<std::vector<MElement*> > &regions)
 {
   std::multimap<MEdge,MElement*,Less_Edge> e2e;
   for (unsigned int i = 0; i < elements.size(); ++i){
@@ -122,11 +121,11 @@ static int connectedRegions (std::vector<MElement*> &elements,
 
   return regions.size();
 }
-//-----------------------------------------------------------------------------
 
 GModel::GModel(std::string name)
   : _name(name), _visible(1), _octree(0),
-    _geo_internals(0), _occ_internals(0), _acis_internals(0), _fm_internals(0),_factory(0), _fields(0), _currentMeshEntity(0), normals(0)
+    _geo_internals(0), _occ_internals(0), _acis_internals(0), _fm_internals(0),
+    _factory(0), _fields(0), _currentMeshEntity(0), normals(0)
 {
   partitionSize[0] = 0; partitionSize[1] = 0;
   list.push_back(this);

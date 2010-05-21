@@ -47,7 +47,7 @@ static int MElementInEle(void *a, double *x)
   return e->isInside(uvw[0], uvw[1], uvw[2]) ? 1 : 0;
 }
 
-Octree *buildMElementOctree (GModel *m)
+Octree *buildMElementOctree(GModel *m)
 {
   SBoundingBox3d bb = m->bounds();
   double min[3] = {bb.min().x(), bb.min().y(), bb.min().z()};
@@ -69,8 +69,8 @@ Octree *buildMElementOctree (GModel *m)
 Octree *buildMElementOctree(std::vector<MElement*> &v)
 {
   SBoundingBox3d bb;
-  for (unsigned int i=0;i<v.size();i++){
-    for(int j=0;j<v[i]->getNumVertices();j++){
+  for (unsigned int i = 0; i < v.size(); i++){
+    for(int j = 0; j < v[i]->getNumVertices(); j++){
       bb += SPoint3(v[i]->getVertex(j)->x(),
                     v[i]->getVertex(j)->y(),
                     v[i]->getVertex(j)->z());
@@ -88,4 +88,3 @@ Octree *buildMElementOctree(std::vector<MElement*> &v)
   Octree_Arrange(_octree);
   return _octree;
 }
-

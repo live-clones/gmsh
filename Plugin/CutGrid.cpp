@@ -299,7 +299,7 @@ PView *GMSH_CutGridPlugin::GenerateView(PView *v1, int connect)
   if(getNbU() <= 0 || getNbV() <= 0)
     return v1;
 
-  PViewData *data1 = v1->getData();
+  PViewData *data1 = v1->getData(true); // get adaptive data if available
 
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
