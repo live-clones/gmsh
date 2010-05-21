@@ -379,7 +379,6 @@ void MElement::movePointFromElementSpaceToParentSpace(double &u, double &v, doub
 {
   if(!getParent()) return;
   SPoint3 p;
-  double uvwE[3] = {u, v, w};
   pnt(u, v, w, p);
   double xyz[3] = {p.x(), p.y(), p.z()};
   double uvwP[3];

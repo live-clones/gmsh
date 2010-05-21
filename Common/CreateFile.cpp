@@ -441,7 +441,7 @@ void CreateOutputFile(std::string fileName, int format)
         break;
       }
       int numViews = (int)opt_post_nb_views(0, GMSH_GET, 0), numSteps = 0;
-      for(unsigned int i = 0; i < numViews; i++){
+      for(int i = 0; i < numViews; i++){
         if(opt_view_visible(i, GMSH_GET, 0))
           numSteps = std::max(numSteps, (int)opt_view_nb_timestep(i, GMSH_GET, 0));
       }

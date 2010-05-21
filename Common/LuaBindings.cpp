@@ -142,13 +142,13 @@ static void printMethod(std::string name, luaMethodBinding *mb, bool isConstruct
     std::cout << colorBold<<argTypeNames[0];
   std::cout << colorBlue << " " << name << colorDefault << colorBold << " (";
   int count = 0;
-  for(int i = 1; i < argTypeNames.size(); i++){
+  for(unsigned int i = 1; i < argTypeNames.size(); i++){
     if(argTypeNames[i] == "-1")
       continue;
     if(count != 0)
       std::cout << ", ";
     std::cout << colorBold<<argTypeNames[i] << colorDefault;
-    if(mb->getArgNames().size() > count)
+    if((int)mb->getArgNames().size() > count)
       std::cout << " " << mb->getArgNames()[count];
     count++;
   }
@@ -263,8 +263,8 @@ int binding::readFile(const char *filename)
 static int countInArguments(const std::vector<std::string> &types)
 {
   int c = 0;
-  for(int i = 1; i < types.size(); i++)
-    c+=(types[i] != "-1");
+  for(unsigned int i = 1; i < types.size(); i++)
+    c += (types[i] != "-1");
   return c;
 }
 

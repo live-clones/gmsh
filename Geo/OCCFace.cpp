@@ -435,7 +435,6 @@ void OCCFace::replaceEdgesInternal(std::list<GEdge*> &new_edges)
 	if (bIsUPeriodic) {
 	  Standard_Real aT1, aT2, aTx, aUx;
 	  BRep_Builder aBB_;
-	  double aTwoPI = 2 * M_PI + PI;
 	  Handle(Geom2d_Curve) aC2D =
             BRep_Tool::CurveOnSurface(aER, copy_of_s_forward, aT1, aT2);
 	  if (!aC2D.IsNull()) {

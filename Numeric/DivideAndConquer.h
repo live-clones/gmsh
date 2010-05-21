@@ -21,11 +21,11 @@ typedef struct{
   double h;
 }DPoint;
 
-struct PointRecord{
+struct PointRecord {
   DPoint where;
   DListPeek adjacent;
   void *data;
-  PointRecord () : data (0) , adjacent(0) {}
+  PointRecord() : adjacent(0), data (0) {}
 };
 
 struct _CDLIST{
@@ -56,7 +56,7 @@ class DocRecord{
  private:
   int _hullSize;
   PointNumero *_hull;
-  STriangle * _adjacencies;
+  STriangle *_adjacencies;
   PointNumero Predecessor(PointNumero a, PointNumero b);
   PointNumero Successor(PointNumero a, PointNumero b);
   int FixFirst(PointNumero x, PointNumero f);
@@ -93,7 +93,7 @@ class DocRecord{
   void MakeMeshWithPoints();
   void Voronoi ();
   int hullSize() {return _hullSize;}
-  int onHull(PointNumero i) {return std::binary_search(_hull, _hull+_hullSize, i);}
+  int onHull(PointNumero i) { return std::binary_search(_hull, _hull+_hullSize, i); }
   void makePosView(std::string);
   double Lloyd (int);
   void voronoiCell (PointNumero pt, std::vector<SPoint2> &pts) const;

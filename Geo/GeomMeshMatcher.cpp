@@ -93,7 +93,7 @@ GeomMeshMatcher::matchVertices(GModel* m1, GModel *m2, bool& ok)
     int counter2 = 0;
 
     discreteVertex* best_candidate;
-    GEntity* best_candidate_ge;
+    GEntity* best_candidate_ge = 0;
     double best_score = DBL_MAX;
 
     for (std::vector<GEntity*>::iterator entity2 = m2_entities.begin();
@@ -416,7 +416,8 @@ int GeomMeshMatcher:: match(GModel *geom, GModel *mesh)
       std::vector<Pair<GFace*, GFace*> > *coresp_f = matchFaces(geom, mesh, coresp_e,ok);
       if (ok) {
         // This will match REGIONS
-        std::vector<Pair<GRegion*, GRegion*> >* coresp_r = matchRegions(geom, mesh, coresp_f,ok);
+        //std::vector<Pair<GRegion*, GRegion*> >* coresp_r =
+        matchRegions(geom, mesh, coresp_f,ok);
         if (ok) {
           mesh->writeMSH("out.msh",2.0,false,true);
           return 1;

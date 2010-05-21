@@ -156,6 +156,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
     PetscInt its;
     _try(KSPGetIterationNumber(ksp, &its));
     Msg::Info("%d iterations", its);
+    return 1;
   }
   Mat &getMatrix(){ return _a; }
 };

@@ -277,7 +277,7 @@ static void printLevel(std::vector<MElement *> &elements, int recur, int region)
     fprintf(fp,"%d %g %g %g\n",(*it)->getIndex(),
             (*it)->x(),(*it)->y(),(*it)->z());
   }
-  fprintf(fp,"$EndNodes\n",elements.size());
+  fprintf(fp,"$EndNodes\n");
   
   fprintf(fp,"$Elements\n%d\n", (int)elements.size());
   for (unsigned int i = 0; i < elements.size(); i++){
@@ -387,7 +387,6 @@ int multiscalePartition::assembleAllPartitions()
     if(iLevel->elements.size() > 0){
       for (unsigned j = 0; j < iLevel->elements.size(); j++){
         MElement *e = iLevel->elements[j];
-        int part = e->getPartition();
         e->setPartition(iPart);
       }
       iPart++;

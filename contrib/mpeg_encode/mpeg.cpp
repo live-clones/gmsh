@@ -605,7 +605,7 @@ fflush(stdout);
 		userDataSize = 0;
 		goto write;
 	      }
-	    if (fread(userData,1,userDataSize,fp) != userDataSize) {
+              if ((int)fread(userData,1,userDataSize,fp) != userDataSize) {
             fprintf(stderr,"Could not read %d bytes from userdata file-%s.\n",
                     userDataSize,userDataFileName);
             userData = NULL;
@@ -1586,19 +1586,19 @@ ReadDecodedRefFrame(MpegFrame *frame,
     Frame_AllocDecoded(frame, TRUE);
     
     for ( y = 0; y < height; y++ ) {
-      if (fread(frame->decoded_y[y], 1, width, fpointer) != width) {
+      if ((int)fread(frame->decoded_y[y], 1, width, fpointer) != width) {
 	fprintf(stderr, "Could not read enough bytes from %s\n", fileName);
       }
     }
     
     for (y = 0; y < (height >> 1); y++) {			/* U */
-      if (fread(frame->decoded_cb[y], 1, width >> 1, fpointer) != (width>>1)) {
+      if ((int)fread(frame->decoded_cb[y], 1, width >> 1, fpointer) != (width>>1)) {
 	fprintf(stderr, "Could not read enough bytes from %s\n", fileName);
       }
     }
     
     for (y = 0; y < (height >> 1); y++) {			/* V */
-      if (fread(frame->decoded_cr[y], 1, width >> 1, fpointer) != (width>>1)) {
+      if ((int)fread(frame->decoded_cr[y], 1, width >> 1, fpointer) != (width>>1)) {
 	fprintf(stderr, "Could not read enough bytes from %s\n", fileName);
       }
     }

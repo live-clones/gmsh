@@ -362,7 +362,6 @@ void highOrderSmoother::optimize(GFace * gf,
   //  if (gf->geomType() != GEntity::Plane) return;
 
     std::vector<MElement*> bad;
-    int count = 0;
     
 
   while (1) {
@@ -1414,7 +1413,7 @@ static int swapHighOrderTriangles(GFace *gf,
     }
     ++itp;
   }
-  int c1=0,c2=0;
+
   for (unsigned int i = 0; i < gf->mesh_vertices.size(); i++){
     if (v_removed.find(gf->mesh_vertices[i]) == v_removed.end()){
       mesh_vertices2.push_back(gf->mesh_vertices[i]);

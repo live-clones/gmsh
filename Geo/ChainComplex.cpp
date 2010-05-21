@@ -453,7 +453,7 @@ void ChainComplex::getBasisChain(std::map<Cell*, int, Less_Cell>& chain,
   if(basisMatrix == NULL
      || (int)gmp_matrix_cols(basisMatrix) < num) return;
 
-  int rows = gmp_matrix_rows(basisMatrix);
+  //int rows = gmp_matrix_rows(basisMatrix);
 
   int elemi;
   long int elemli;

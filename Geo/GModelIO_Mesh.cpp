@@ -150,16 +150,16 @@ static MElement *getParent(int parentNum, int dim,
   case 1 :
     return getParent(parentNum, elements[1]);
   case 2 :
-    if(parent = getParent(parentNum, elements[2])) return parent;
-    if(parent = getParent(parentNum, elements[3])) return parent;
-    if(parent = getParent(parentNum, elements[8])) return parent;
+    if((parent = getParent(parentNum, elements[2]))) return parent;
+    if((parent = getParent(parentNum, elements[3]))) return parent;
+    if((parent = getParent(parentNum, elements[8]))) return parent;
     return parent;
   case 3 :
-    if(parent = getParent(parentNum, elements[4])) return parent;
-    if(parent = getParent(parentNum, elements[5])) return parent;
-    if(parent = getParent(parentNum, elements[6])) return parent;
-    if(parent = getParent(parentNum, elements[7])) return parent;
-    if(parent = getParent(parentNum, elements[9])) return parent;
+    if((parent = getParent(parentNum, elements[4]))) return parent;
+    if((parent = getParent(parentNum, elements[5]))) return parent;
+    if((parent = getParent(parentNum, elements[6]))) return parent;
+    if((parent = getParent(parentNum, elements[7]))) return parent;
+    if((parent = getParent(parentNum, elements[9]))) return parent;
     return parent;
   default : return parent;
   }
@@ -3012,7 +3012,7 @@ GModel *GModel::createGModel(std::map<int, MVertex*> &vertexMap,
   int minVertex = std::numeric_limits<int>::max();
   int num;
 
-  for(it; it != end; ++it){
+  for(; it != end; ++it){
     num = it->first;
     minVertex = std::min(minVertex, num);
     maxVertex = std::max(maxVertex, num);

@@ -442,6 +442,7 @@ int bestQuality (DI_Point *p0, DI_Point *p1, DI_Point *p2,
     *t3 = new DI_Tetra(p1, p5, p3, p4);
     return 6;
   }
+  return 0;
 }
 
 // computes the intersection between a level set and a linear edge
@@ -1037,6 +1038,7 @@ bool DI_ElementLessThan::operator()(const DI_Element *e1, const DI_Element *e2) 
     if(e1->z(i) - e2->z(i) >  tolerance) return true;
     return false;
   }
+  return false;
 }
 
 // DI_Line methods --------------------------------------------------------------------------------

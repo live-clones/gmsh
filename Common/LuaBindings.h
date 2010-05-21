@@ -1297,7 +1297,7 @@ class classBinding {
     lua_setfield(L, metatable, "__tostring");
 
     lua_newtable(L);
-    int mt = lua_gettop(L);
+    //int mt = lua_gettop(L);
 
     lua_setmetatable(L, methods); // setmetatable(methods, mt)
     lua_pop(L, 2);  // drop metatable and method table

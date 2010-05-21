@@ -29,8 +29,8 @@ bool Less_Cell::operator()(const Cell* c1, const Cell* c2) const
 }
 
 Cell::Cell(MElement* image) :  
-  _combined(false), _index(0), _immune(false), _image(NULL), 
-  _delimage(false), _subdomain(false) 
+  _subdomain(false), _combined(false), _index(0), _immune(false), _image(NULL), 
+  _delimage(false)
 {
   _image = image;
   for(int i = 0; i < getNumVertices(); i++) 

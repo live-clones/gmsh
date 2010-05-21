@@ -89,7 +89,7 @@ class stepData{
   int getNumComponents(){ return _numComp; }
   int getMult(int index)
   {
-    if(index < 0 || index >= _mult.size()) return 1;
+    if(index < 0 || index >= (int)_mult.size()) return 1;
     return _mult[index];
   }
   std::string getFileName(){ return _fileName; }
@@ -121,7 +121,7 @@ class stepData{
         for(int i = 0; i < _numComp * mult; i++) (*_data)[index][i] = 0.;
       }
       if(mult > 1){
-        if(index >= _mult.size()) _mult.resize(index + 100, 1); // optimize this
+        if(index >= (int)_mult.size()) _mult.resize(index + 100, 1); // optimize this
         _mult[index] = mult;
       }
     }

@@ -675,8 +675,6 @@ static fullMatrix<double> gmshGeneratePointsQuad(int order, bool serendip)
   int nbPoints = serendip ? order*4 : (order+1)*(order+1);
   fullMatrix<double> point(nbPoints, 2);
 
-  double dd = 1. / order;
-
   if (order > 0) {
     point(0, 0) = -1;
     point(0, 1) = -1;

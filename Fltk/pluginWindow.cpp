@@ -115,7 +115,7 @@ static void add_scripting(GMSH_PostPlugin *p, PView *view)
   int oldIndex = -1;
   if(view){
     for(int i = 0; i < p->getNbOptions(); i++){
-      if(p->getOption(i)->str == "View") {
+      if(std::string(p->getOption(i)->str) == "View") {
         oldIndex = (int)(p->getOption(i)->def);
         p->getOption(i)->def = view->getIndex();
       }
@@ -137,7 +137,7 @@ static void add_scripting(GMSH_PostPlugin *p, PView *view)
 
   if(view && oldIndex != -1){
     for(int i = 0; i < p->getNbOptions(); i++){
-      if(p->getOption(i)->str == "View"){
+      if(std::string(p->getOption(i)->str) == "View"){
         p->getOption(i)->def = oldIndex;
       }
     }

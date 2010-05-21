@@ -170,7 +170,6 @@ int CellComplex::coreduction(Cell* startCell, bool omit,
   std::map<Cell*, int, Less_Cell > cbd_c;
 
   Cell* s;
-  int round = 0;
   while( !Q.empty() ){
     s = Q.front();
     Q.pop();
@@ -203,7 +202,6 @@ int CellComplex::reduction(int dim, bool omit,
   int count = 0;
   
   bool reduced = true;
-  bool ignoreCells = true;
   while (reduced){
 
     reduced = false;
@@ -237,7 +235,6 @@ int CellComplex::coreduction(int dim, bool omit,
   int count = 0;
 
   bool reduced = true;
-  bool ignoreCells = true;
   while (reduced){
 
     reduced = false;

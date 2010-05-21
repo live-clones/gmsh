@@ -44,13 +44,6 @@ StringXNumber *GMSH_EigenvectorsPlugin::getOption(int iopt)
   return &EigenvectorsOptions_Number[iopt];
 }
 
-static int nonzero(double v[3])
-{
-  for(int i = 0; i < 3; i++)
-    if(fabs(v[i]) > 1.e-16) return 1;
-  return 0;
-}
-
 PView *GMSH_EigenvectorsPlugin::execute(PView *v)
 {
   int scale = (int)EigenvectorsOptions_Number[0].def;

@@ -541,7 +541,9 @@ GenBFrame(BitBucket *bb,
 	    BlockToData(curr->decoded_cr, dec[5], y>>1, x>>1);
 	  }
 	} else if (dct_data[y][x].useMotion == SKIP) {
-	skip_block:
+#ifdef BUGGY_CODE
+        skip_block:
+#endif
 	  numSkipped++;
 	  mbAddrInc++;
 	      

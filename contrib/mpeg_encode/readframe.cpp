@@ -685,15 +685,15 @@ ReadPPM(MpegFrame *mf,
     Frame_AllocPPM(mf);
 
     for ( y = 0; y < Fsize_y; y++ ) {
-	safe_fread(mf->ppm_data[y], sizeof(char), 3*Fsize_x, fpointer);
+      safe_fread(mf->ppm_data[y], (int)sizeof(char), 3*Fsize_x, fpointer);
 
 	/* read the leftover stuff on the right side */
-	safe_fread(junk, sizeof(char), 3*(width-Fsize_x), fpointer);
+      safe_fread(junk, (int)sizeof(char), 3*(width-Fsize_x), fpointer);
     }
 
     /* read the leftover stuff to prevent broken pipe */
     for ( y=Fsize_y; y<height; ++y ) {
-      safe_fread(junk, sizeof(char), 3*Fsize_x, fpointer);
+      safe_fread(junk, (int)sizeof(char), 3*Fsize_x, fpointer);
     }
     return TRUE;
 }

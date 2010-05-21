@@ -363,7 +363,8 @@ void MTriangleBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
     const double v = ptsi[ip].pt[1];
     const double w = ptsi[ip].pt[2];
     const double weight = ptsi[ip].weight;
-    const double detJ = tt.getJacobian(u, v, w, jac);
+    //const double detJ = 
+    tt.getJacobian(u, v, w, jac);
     SPoint3 p; tt.pnt(u, v, w, p);
     _intpt[ip].pt[0] = p.x();
     _intpt[ip].pt[1] = p.y();
@@ -404,7 +405,8 @@ void MPolygonBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
     const double v = ptsi[ip].pt[1];
     const double w = ptsi[ip].pt[2];
     const double weight = ptsi[ip].weight;
-    const double detJ = pp.getJacobian(u, v, w, jac);
+    //const double detJ = 
+    pp.getJacobian(u, v, w, jac);
     SPoint3 p; pp.pnt(u, v, w, p);
     _intpt[ip].pt[0] = p.x();
     _intpt[ip].pt[1] = p.y();
@@ -442,7 +444,8 @@ void MLineBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
     const double v = ptsi[ip].pt[1];
     const double w = ptsi[ip].pt[2];
     const double weight = ptsi[ip].weight;
-    const double detJ = ll.getJacobian(u, v, w, jac);
+    //const double detJ =
+    ll.getJacobian(u, v, w, jac);
     SPoint3 p; ll.pnt(u, v, w, p);
     _intpt[ip].pt[0] = p.x();
     _intpt[ip].pt[1] = p.y();
@@ -645,9 +648,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
   bool isCut = false;
   unsigned int nbL = lines.size();
   unsigned int nbTr = triangles.size();
-  unsigned int nbQ = quads.size();
   unsigned int nbTe = tetras.size();
-  unsigned int nbH = hexas.size();
 
   MElement *copy = e->copy(numEle, vertexMap, newParents, newDomains);
   MElement *parent = eParent ? copy->getParent() : copy;

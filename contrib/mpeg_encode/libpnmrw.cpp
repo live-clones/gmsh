@@ -121,7 +121,7 @@ pm_freearray(char** its, int rows)
 static void
 pm_perror(const char* reason)
 {
-  extern int errno;
+  //extern int errno;
   const char* e;
 
   e = "";
@@ -506,7 +506,7 @@ pgm_readpgmrow( FILE* file, gray* grayrow, int cols, gray maxval, int format )
       break;
 	
     case RPGM_FORMAT:
-      if ( fread( grayrow, 1, cols, file ) != cols )
+      if ( (int)fread( grayrow, 1, cols, file ) != cols )
 	{
 	  (void) fprintf( stderr, "%s: EOF / read error\n", progname );
 	  return -1;
@@ -548,7 +548,7 @@ pgm_writepgmrowraw(FILE* file,
                    int cols,
                    gray maxval)
 {
-  if ( fwrite( grayrow, 1, cols, file ) != cols )
+  if ( (int)fwrite( grayrow, 1, cols, file ) != cols )
     {
       (void) fprintf( stderr, "%s: write error\n", progname );
       return -1;
@@ -653,7 +653,7 @@ static int
       grayrow = pgm_allocrow( 3 * cols );
       if ( grayrow == (gray*) 0 )
 	return -1;
-      if ( fread( grayrow, 1, 3 * cols, file ) != 3 * cols )
+      if ( (int)fread( grayrow, 1, 3 * cols, file ) != 3 * cols )
 	{
 	  (void) fprintf( stderr, "%s: EOF / read error\n", progname );
 	  return -1;
@@ -708,7 +708,7 @@ ppm_writeppmrowraw(FILE* file,
       *gP++ = PPM_GETG( *pP );
       *gP++ = PPM_GETB( *pP );
     }
-  if ( fwrite( grayrow, 1, 3 * cols, file ) != 3 * cols )
+  if ( (int)fwrite( grayrow, 1, 3 * cols, file ) != 3 * cols )
     {
       (void) fprintf( stderr, "%s: write error\n", progname );
       return -1;

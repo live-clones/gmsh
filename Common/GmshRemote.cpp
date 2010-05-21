@@ -59,10 +59,10 @@ static void computeAndSendVertexArrays(GmshClient *client, bool compute=true)
 #endif
 }
 
+#if defined(HAVE_POST) && defined(HAVE_MPI)
 // This version sends VArrays using MPI
 static void computeAndSendVertexArrays()
 {
-#if defined(HAVE_POST) && defined(HAVE_MPI)
   // compute...
   for(unsigned int i = 0; i < PView::list.size(); i++)
     PView::list[i]->fillVertexArrays();
@@ -95,7 +95,6 @@ static void computeAndSendVertexArrays()
       }
     }
   }
-#endif
 }
 
 // Merge the vertex arrays
@@ -104,12 +103,11 @@ static void addToVertexArrays(int length, const char* bytes, int swap)
   std::string name;
   int num, type, numSteps;
   double min, max, time, xmin, ymin, zmin, xmax, ymax, zmax;
-  int index = VertexArray::decodeHeader(length, bytes, swap, name, num, type, min, max,
-                                        numSteps, time, xmin, ymin, zmin, xmax, ymax, zmax);
+  VertexArray::decodeHeader(length, bytes, swap, name, num, type, min, max,
+                            numSteps, time, xmin, ymin, zmin, xmax, ymax, zmax);
 
   PView *p = PView::list[num - 1];
   PViewData *data = p->getData();
-  PViewOptions *opt = p->getOptions();
   
   VertexArray *varrays[4] = 
     {p->va_points, p->va_lines, p->va_triangles, p->va_vectors};
@@ -131,6 +129,7 @@ static void addToVertexArrays(int length, const char* bytes, int swap)
   va->merge(toAdd);
   delete toAdd;
 }
+#endif
 
 static void gatherAndSendVertexArrays(GmshClient* client, bool swap)
 {

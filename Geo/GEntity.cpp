@@ -16,9 +16,8 @@
 #include "GRegion.h"
 
 GEntity::GEntity(GModel *m, int t)
-  : _model(m), _tag(t), _visible(1), _selection(0),
-    _allElementsVisible(1), _obb(0), va_lines(0), va_triangles(0),
-    _meshMaster(t)
+  : _model(m), _tag(t), _meshMaster(t), _visible(1), _selection(0),
+    _allElementsVisible(1), _obb(0), va_lines(0), va_triangles(0)
 {
   _color = CTX::instance()->packColor(0, 0, 255, 0);
 }

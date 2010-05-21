@@ -367,13 +367,13 @@ public:
     box *b;
     double min_dist;
     loop *l;
-    point(double _x,double _y,double _z,Field *f)
+    point(double _x,double _y,double _z,Field *f) : b(0), min_dist(0.), l(0)
     {
       v[0]=_x; v[1]=_y; v[2]=_z;
       if(f)
         min_dist=(*f)(v[0],v[1],v[2]);
     }
-    point(double _x,double _y,double _z,double _min_dist)
+    point(double _x,double _y,double _z,double _min_dist) : b(0), l(0)
     {
       v[0]=_x; v[1]=_y; v[2]=_z;
       min_dist=_min_dist;

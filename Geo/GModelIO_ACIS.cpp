@@ -42,68 +42,62 @@ class GMSH_MESH_MANAGER : public MESH_MANAGER {
     : _gm(gm)
   {    
   }
-  virtual ~GMSH_MESH_MANAGER() {
+  virtual ~GMSH_MESH_MANAGER()
+  {
   }
-
-  virtual void begin_mesh_output(
-	ENTITY *entity,	 
-	ENTITY *app_ref, 
-	ENTITY *format) {
+  virtual void begin_mesh_output(ENTITY *entity, ENTITY *app_ref, ENTITY *format)
+  {
     FACE *acisFace = dynamic_cast<FACE*>(entity);
     if (!acisFace)return;    
     _current = getACISFaceByNativePtr (_gm,acisFace);
   }
-
-
-  virtual void announce_counts(
-	int npoly,
-	int nnode,
-	int nref){
+  virtual void announce_counts(int npoly, int nnode, int nref)
+  {
     _current->stl_vertices.resize(nnode);
     _current->stl_triangles.resize(nref);
   }
-
-  virtual logical need_indexed_polygons(){
+  virtual logical need_indexed_polygons()
+  {
     return 1;
   }
-  
-  virtual void announce_indexed_polynode (int ipoly, int i, void *pnode);
-
-  virtual void *announce_indexed_node(
-	int inode,	     
-	const SPApar_pos &pos, 
-	const SPAposition &X, 
-	const SPAunit_vector &N){
+  virtual void announce_indexed_polynode(int ipoly, int i, void *pnode);
+  virtual void *announce_indexed_node(int inode, const SPApar_pos &pos, 
+                                      const SPAposition &X, const SPAunit_vector &N)
+  {
     SPoint2 p(pos.u,pos.v); 
     _current->stl_vertices[inode] = p; 
     //    printf("node %d pos %g %g\n",inode,p.x(),p.y());
     return (void*)inode; // bad idea, but...
   }
-
-  virtual void 	announce_indexed_polynode (ENTITY *E, int ipoly, int i, 
-					   void *id, const double &edge_tpar, 
-					   const SPApar_pos &uv, const SPAposition &iX, const SPAunit_vector &N){
+  virtual void 	announce_indexed_polynode(ENTITY *E, int ipoly, int i, 
+                                          void *id, const double &edge_tpar, 
+                                          const SPApar_pos &uv, const SPAposition &iX,
+                                          const SPAunit_vector &N)
+  {
   }
-
-  virtual void * announce_indexed_polyedge (int ipoly, int i, void *mate){
+  virtual void *announce_indexed_polyedge(int ipoly, int i, void *mate)
+  {
+    return 0;
   }
-  virtual void	start_indexed_polygon(int polygonIndex,int _polygonNodeCount, int ishare = -2){
+  virtual void	start_indexed_polygon(int polygonIndex,int _polygonNodeCount, 
+                                      int ishare = -2)
+  {
   }
-
-  virtual void announce_indexed_polynode(ENTITY *,int,int,void*) {
+  virtual void announce_indexed_polynode(ENTITY *,int,int,void*)
+  {
   }
-  
-  virtual void end_mesh_output(	ENTITY *entity,	ENTITY *app_ref,ENTITY *format){
+  virtual void end_mesh_output(ENTITY *entity,	ENTITY *app_ref,ENTITY *format)
+  {
   }
-  virtual void save_mesh_output(ENTITY *entity,ENTITY *app_ref,ENTITY *format){
+  virtual void save_mesh_output(ENTITY *entity,ENTITY *app_ref,ENTITY *format)
+  {
   }
 };
 
-void GMSH_MESH_MANAGER::announce_indexed_polynode (int ipoly, int i, void *pnode){
-  _current->stl_triangles[ipoly*3+i] = (int)pnode;
+void GMSH_MESH_MANAGER::announce_indexed_polynode (int ipoly, int i, void *pnode)
+{
+  _current->stl_triangles[ipoly*3+i] = (int)(long)pnode;
 }
-
-
 
 class ACIS_Internals {
 public:
@@ -169,7 +163,7 @@ void ACIS_Internals::addVertices (GModel *gm, ENTITY_LIST &l)
 {
   l.init();
   ENTITY *e;
-  while(e = l.next()){
+  while((e = l.next())){
     VERTEX *av = dynamic_cast<VERTEX*>(e);
     if (av){
       GVertex *v = getACISVertexByNativePtr(gm, av);
@@ -183,7 +177,7 @@ void ACIS_Internals::addEdges (GModel *gm, ENTITY_LIST &l)
 {
   l.init();
   ENTITY *e;
-  while(e = l.next()){
+  while((e = l.next())){
     EDGE *av = dynamic_cast<EDGE*>(e);
     if (av){
       GEdge *v = getACISEdgeByNativePtr(gm, av);
@@ -201,7 +195,7 @@ void ACIS_Internals::addFaces (GModel *gm, ENTITY_LIST &l)
 {
   l.init();
   ENTITY *e;
-  while(e = l.next()){
+  while((e = l.next())){
     FACE *av = dynamic_cast<FACE*>(e);
     if (av){
       GFace *v = getACISFaceByNativePtr(gm,av);
@@ -228,7 +222,7 @@ void ACIS_Internals::loadSAT(std::string fileName, GModel *gm)
   
   ENTITY *e;
   entities.init();
-  while(e = entities.next()){
+  while((e = entities.next())){
     //    printf("an entity\n");
     if (is_VERTEX(e)){
       //      printf("VERTEX FOUND\n");

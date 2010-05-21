@@ -319,10 +319,12 @@ ReadParamFile(char *fileName,
   char    input[256];
   char    *charPtr;
   boolean yuvUsed = FALSE;
+  /*
   static const char *optionText[LAST_OPTION+1] = { "GOP_SIZE", "PATTERN", "PIXEL", "PQSCALE",
                                              "OUTPUT", "RANGE", "PSEARCH_ALG", "IQSCALE", "INPUT_DIR",
                                              "INPUT_CONVERT", "INPUT", "BQSCALE", "BASE_FILE_FORMAT",
                                              "SLICES_PER_FRAME", "BSEARCH_ALG", "REFERENCE_FRAME"};
+  */
   register int index;
   register int row, col;
 
@@ -552,7 +554,7 @@ ReadParamFile(char *fileName,
         customQtable = qtable;
         optionSeen[OPTION_IQTABLE] = TRUE;
       } else if ( strncmp(input, "INPUT", 5) == 0 ) { /* handle spaces after input */
-        log(10.0);
+        //log(10.0);
         charPtr = SkipSpacesTabs(&input[5]);
         if ( function == ENCODE_FRAMES && *charPtr==0) {
           ReadInputFileNames(fpointer, "END_INPUT");

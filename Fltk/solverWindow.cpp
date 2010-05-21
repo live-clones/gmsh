@@ -30,7 +30,7 @@ class FlGmshServer : public GmshServer{
  private:
   ConnectionManager *_remote;
  public:
-  FlGmshServer(ConnectionManager *remote) : _remote(remote), GmshServer() {}
+  FlGmshServer(ConnectionManager *remote) : GmshServer(), _remote(remote) {}
   ~FlGmshServer() {}
   int SystemCall(const char *str)
   { 

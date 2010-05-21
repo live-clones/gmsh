@@ -122,7 +122,6 @@ GEdge *OCCFactory::addSpline(GModel *gm, const splineType &type,
   OCCVertex *occv1 = dynamic_cast<OCCVertex*>(start);
   OCCVertex *occv2 = dynamic_cast<OCCVertex*>(end);
 
-  OCCEdge *occEd = 0;
   int nbControlPoints = points.size();
   TColgp_Array1OfPnt ctrlPoints(1, nbControlPoints + 2);
   int index = 1;
@@ -139,7 +138,7 @@ GEdge *OCCFactory::addSpline(GModel *gm, const splineType &type,
     else
       occEdge = BRepBuilderAPI_MakeEdge(Bez).Edge();
   } 
-  return gm->_occ_internals->addEdgeToModel(gm,occEdge);
+  return gm->_occ_internals->addEdgeToModel(gm, occEdge);
 }
 
 
@@ -220,7 +219,7 @@ GEntity *OCCFactory::revolve(GModel *gm, GEntity* base,
   gp_Ax1 axisOfRevolution(gp_Pnt(x1, y1, z1), direction);
   BRepPrimAPI_MakeRevol MR(*(TopoDS_Shape*)base->getNativePtr(), 
                            axisOfRevolution, angle, Standard_False);
-  GEntity *ret;
+  GEntity *ret = 0;
   if (base->cast2Vertex()){
     TopoDS_Edge result = TopoDS::Edge(MR.Shape());
     ret = gm->_occ_internals->addEdgeToModel(gm, result);
@@ -254,9 +253,7 @@ GEntity *OCCFactory::extrude(GModel *gm, GEntity* base,
 
   BRepPrimAPI_MakePrism MP(*(TopoDS_Shape*)base->getNativePtr(), direction, 
                            Standard_False);
-
-  GEntity *ret;
-  
+  GEntity *ret = 0;
   if (base->cast2Vertex()){
     TopoDS_Edge result = TopoDS::Edge(MP.Shape());
     ret = gm->_occ_internals->addEdgeToModel(gm, result);
@@ -663,8 +660,7 @@ GEntity * OCCFactory::addPipe (GModel *gm, GEntity *base, std::vector<GEdge *> w
   }
   TopoDS_Wire myWire = wire_maker.Wire();
   
-
-  GEntity *ret;
+  GEntity *ret = 0;
   if (base->cast2Vertex()){
     OCCVertex *occv = dynamic_cast<OCCVertex*>(base);
     BRepOffsetAPI_MakePipe myNiceLittlePipe (myWire,occv->getShape());
@@ -685,8 +681,5 @@ GEntity * OCCFactory::addPipe (GModel *gm, GEntity *base, std::vector<GEdge *> w
   }
   return ret;
 }
-
-
-
 
 #endif

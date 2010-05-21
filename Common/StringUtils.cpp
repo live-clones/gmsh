@@ -93,8 +93,8 @@ std::vector<std::string> SplitFileName(const std::string &fileName)
   // returns [path, baseName, extension]
   int idot = fileName.find_last_of('.');
   int islash = fileName.find_last_of("/\\");
-  if(idot == std::string::npos) idot = -1;
-  if(islash == std::string::npos) islash = -1;
+  if(idot == (int)std::string::npos) idot = -1;
+  if(islash == (int)std::string::npos) islash = -1;
   std::vector<std::string> s(3);
   if(idot > 0)
     s[2] = fileName.substr(idot);
@@ -126,7 +126,7 @@ void ReplaceSubStringInPlace(const std::string &olds, const std::string &news,
 {
   while(1){
     int pos = str.find(olds.c_str());
-    if(pos == std::string::npos) break;
+    if(pos == (int)std::string::npos) break;
     str.replace(pos, olds.size(), news.c_str());
   }
 }

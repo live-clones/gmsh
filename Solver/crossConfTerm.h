@@ -22,8 +22,8 @@ class crossConfTerm : public femTerm<double> {
  public:
   crossConfTerm(GModel *gm, int iFieldR, int iFieldC, 
                 simpleFunction<double> *diffusivity)
-    : femTerm<double>(gm), _iFieldR(iFieldR), _iFieldC(iFieldC), 
-      _diffusivity(diffusivity) {}
+    : femTerm<double>(gm), _diffusivity(diffusivity), _iFieldR(iFieldR), 
+      _iFieldC(iFieldC) {}
   virtual int sizeOfR(SElement *se) const 
   {
     return se->getMeshElement()->getNumVertices(); 

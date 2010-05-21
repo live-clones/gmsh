@@ -53,7 +53,7 @@ class VisModel : public Vis {
   int _tag;
  public:
   VisModel(GModel *model, int tag, std::string &name)
-    : _model(model), _tag(tag), Vis(name) {}
+    : Vis(name), _model(model), _tag(tag) {}
   ~VisModel(){}
   int getTag() const { return _tag; }
   std::string getType() const { return "Model"; }
@@ -65,7 +65,7 @@ class VisElementary : public Vis {
  private:
   GEntity *_e;
  public:
-  VisElementary(GEntity *e, std::string &name) : _e(e), Vis(name) {}
+  VisElementary(GEntity *e, std::string &name) : Vis(name), _e(e) {}
   ~VisElementary(){}
   int getTag() const { return _e->tag(); }
   int getDim() const { return _e->dim(); }
@@ -90,7 +90,7 @@ class VisPhysical : public Vis {
   std::vector<GEntity*> _list;
  public:
   VisPhysical(int tag, int dim, std::vector<GEntity*> list, std::string &name) 
-    : _tag(tag), _dim(dim), _visible(1), _list(list), Vis(name)  {}
+    : Vis(name), _tag(tag), _dim(dim), _visible(1), _list(list)  {}
   ~VisPhysical(){}
   int getTag() const { return _tag; }
   int getDim() const { return _dim; }

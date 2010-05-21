@@ -380,6 +380,7 @@ void Homology::findHomSequence(){
 
   if(_fileName != "") writeGeneratorsMSH();
   delete cellComplex;
+  delete seq;
 }
 
 std::string Homology::getDomainString(const std::vector<int>& domain,
@@ -595,8 +596,7 @@ int Chain::createPGroup()
     _model->setPhysicalName(getName(), getDim(), physicalNum);
     
     // create PView for visualization
-    PView* chain = new PView(getName(), "ElementData", getGModel(), 
-			     data, 0, 1);
+    new PView(getName(), "ElementData", getGModel(), data, 0, 1);
   }
    
   return physicalNum;

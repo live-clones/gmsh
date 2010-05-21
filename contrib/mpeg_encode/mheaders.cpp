@@ -659,7 +659,7 @@ Mhead_GenSliceHeader(BitBucket *bbPtr,
     /* Extra bit slice info. */
 
     if (extra_info != NULL) {
-	for (i = 0; i < extra_info_size; i++) {
+      for (i = 0; i < (int)extra_info_size; i++) {
 	    Bitio_Write(bbPtr, 0x01, 1);
 	    Bitio_Write(bbPtr, extra_info[i], 8);
 	}
@@ -739,7 +739,7 @@ if ( addr_incr != 1 )
     GenMBAddrIncr(bbPtr, addr_incr);
 
     /* Determine mb_quant  (true if change in q scale) */
-    if ((q_scale != lastQSSet) && ((mb_pattern != 0) || (mb_intra == TRUE))) {
+    if (((int)q_scale != lastQSSet) && ((mb_pattern != 0) || (mb_intra == TRUE))) {
       mb_quant = TRUE;
       lastQSSet = q_scale;
     } else {
@@ -1113,7 +1113,7 @@ GenPictHead(BitBucket *bbPtr,
     /* Extra bit picture info. */
 
     if (extra_info != NULL) {
-	for (i = 0; i < extra_info_size; i++) {
+      for (i = 0; i < (int)extra_info_size; i++) {
 	    Bitio_Write(bbPtr, 0x01, 1);
 	    Bitio_Write(bbPtr, extra_info[i], 8);
 	}
@@ -1128,7 +1128,7 @@ GenPictHead(BitBucket *bbPtr,
     if (ext_data != NULL) {
 	Bitio_Write(bbPtr, EXT_START_CODE, 32);
 
-	for (i = 0; i < ext_data_size; i++) {
+	for (i = 0; i < (int)ext_data_size; i++) {
 	    Bitio_Write(bbPtr, ext_data[i], 8);
 	}
 	Bitio_BytePad(bbPtr);
@@ -1137,7 +1137,7 @@ GenPictHead(BitBucket *bbPtr,
     if (user_data != NULL) {
 	Bitio_Write(bbPtr, USER_START_CODE, 32);
 
-	for (i = 0; i < user_data_size; i++) {
+	for (i = 0; i < (int)user_data_size; i++) {
 	    Bitio_Write(bbPtr, user_data[i], 8);
 	}
 	Bitio_BytePad(bbPtr);

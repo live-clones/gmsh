@@ -49,18 +49,20 @@ void fullVector<double>::axpy(fullVector<double> &x,double alpha)
 }
 
 template<> 
-void fullMatrix<double>::scale(const double s) {
-  int N = _r*_c;
+void fullMatrix<double>::scale(const double s)
+{
+  int N = _r * _c;
   int stride = 1;
   double ss = s;
   F77NAME(dscal)(&N, &ss,_data, &stride);
 }
 
 template<> 
-void fullMatrix<std::complex<double> >::scale(const double s) {
-  int N = _r*_c;
+void fullMatrix<std::complex<double> >::scale(const double s)
+{
+  int N = _r * _c;
   int stride = 1;
-  std::complex<double> ss = (s,0);
+  std::complex<double> ss(s, 0.);
   F77NAME(zscal)(&N, &ss,_data, &stride);
 }
 
@@ -311,7 +313,9 @@ template<>
 void fullMatrix<double>::registerBindings(binding *b)
 {
   classBinding *cb = b->addClass<fullMatrix<double> >("fullMatrix");
-  cb->setDescription("A full matrix of double-precision floating point numbers. The memory is allocated in one continuous block and stored in column major order (like in fortran).");
+  cb->setDescription("A full matrix of double-precision floating point numbers. "
+                     "The memory is allocated in one continuous block and stored "
+                     "in column major order (like in fortran).");
   methodBinding *cm;
   cm = cb->addMethod("size1", &fullMatrix<double>::size1);
   cm->setDescription("Returns the number of rows in the matrix");

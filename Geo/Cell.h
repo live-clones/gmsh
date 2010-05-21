@@ -78,8 +78,8 @@ class Cell
   
  public:
 
- Cell() : _combined(false), _index(0), _immune(false), _image(NULL), 
-    _delimage(false), _subdomain(false) {}
+  Cell() : _subdomain(false), _combined(false), _index(0), _immune(false), _image(NULL), 
+    _delimage(false) {}
   Cell(MElement* image);
   ~Cell();
 

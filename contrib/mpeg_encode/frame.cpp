@@ -782,7 +782,7 @@ GetNumOfFrames(int *numOfFrames)
     int idx, bcount;
 
     if (stdinUsed) {
-      for ( idx = 0, bcount = 0; idx < strlen(framePattern); idx++) {
+      for ( idx = 0, bcount = 0; idx < (int)strlen(framePattern); idx++) {
 
 	/* counts the maximum number of B frames between two reference
 	 * frames. 

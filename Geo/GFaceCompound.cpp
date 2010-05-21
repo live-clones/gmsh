@@ -837,22 +837,7 @@ GFaceCompound::~GFaceCompound()
   if (_lsys)delete _lsys;
 }
 
-static void boundVertices(const std::list<GEdge*> &e, std::vector<MVertex*> &l){
-
-  l.clear();
-  std::list<GEdge*>::const_iterator it = e.begin();
-  for( ; it != e.end(); ++it ){
-    for(unsigned int i = 0; i < (*it)->lines.size(); i++ ){
-      MVertex *v0 = (*it)->lines[i]->getVertex(0);
-      MVertex *v1 = (*it)->lines[i]->getVertex(1); 
-      std::list<GEdge*>::const_iterator it = e.begin();
-      if (std::find(l.begin(), l.end(), v0) == l.end())  l.push_back(v0);
-      if (std::find(l.begin(), l.end(), v1) == l.end())  l.push_back(v1);
-    }
-  }
-
-}
-//order Vertices of a closed loop
+// order vertices of a closed loop
 static bool orderVertices(const std::list<GEdge*> &e, std::vector<MVertex*> &l,
                           std::vector<double> &coord)
 {
@@ -1073,12 +1058,10 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
   double t1 = Cpu();  
   
   femTerm<double> *mapping;
-  if (tom == HARMONIC){
+  if (tom == HARMONIC)
     mapping = new laplaceTerm(0, 1, &ONE);
-  }
-  else if (tom == CONVEXCOMBINATION){
+  else // tom == CONVEXCOMBINATION
     mapping = new convexCombinationTerm(0, 1, &ONE);
-  }
   
   it = _compound.begin();
   for( ; it != _compound.end() ; ++it){
@@ -1124,6 +1107,10 @@ bool GFaceCompound::parametrize_conformal_spectral() const
   std::vector<MVertex*> ordered;
   std::vector<double> coords;  
   bool success = orderVertices(_U0, ordered, coords);
+  if(!success){
+    Msg::Error("Could not order vertices on boundary");
+    return false;
+  }
 
   linearSystem <double> *lsysA  = new linearSystemPETSc<double>;
   linearSystem <double> *lsysB  = new linearSystemPETSc<double>;
@@ -1211,7 +1198,6 @@ bool GFaceCompound::parametrize_conformal_spectral() const
        k = k+2;
      }
      k = 0;
-     double norm2 = 0.0;
      for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
        MVertex *v = *itv;
        double paramu = ev[k].real()/Linfty;

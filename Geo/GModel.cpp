@@ -1130,7 +1130,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
         }
         verts.push_back(*it);
       }
-      if(verts.size() == e->getNumVertices()){
+      if((int)verts.size() == e->getNumVertices()){
         MElementFactory factory;
         MElement *e2 = factory.create(e->getTypeForMSH(), verts, e->getNum(),
                                       e->getPartition());

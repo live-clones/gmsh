@@ -345,8 +345,8 @@ class MQuadrangleN : public MQuadrangle {
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual int getNumFaceVertices() const 
   {
-    if( _order>1 && _vs.size()+4==(_order+1)*(_order+1))
-      return (_order-1)*(_order-1);
+    if(_order > 1 && (int)_vs.size() + 4 == (_order + 1) * (_order + 1))
+      return (_order - 1) * (_order - 1);
     else
       return 0;
   }

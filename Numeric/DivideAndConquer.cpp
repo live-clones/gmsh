@@ -758,8 +758,8 @@ void DocRecord::RemoveAllDList()
 }
 
 DocRecord::DocRecord(int n) 
-  : numPoints(n), points(NULL), numTriangles(0), triangles(NULL), 
-    _hullSize(0), _hull(NULL), _adjacencies(NULL)
+  : _hullSize(0), _hull(NULL), _adjacencies(NULL),
+    numPoints(n), points(NULL), numTriangles(0), triangles(NULL)
 {
   if(numPoints)
     points = new PointRecord[numPoints];
