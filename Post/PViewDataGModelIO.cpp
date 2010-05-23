@@ -179,13 +179,8 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary)
               Msg::Error("Unknown element %d in data", i);
               return false;
             }
-            int mult = 1;
-            if(_type == ElementNodeData)
-              mult = e->getNumVertices();
-            // Warning: this will not work if the mesh we just saved
-            // above changed the renumbering of the elements (which is
-            // usually the case)...
-            int num = model->getMeshElementNumByTag(i);
+            int mult = _steps[step]->getMult(i);
+            int num = model->getMeshElementIndex(e);
             if(binary){
               fwrite(&num, sizeof(int), 1, fp);
               if(_type == ElementNodeData)

@@ -17,7 +17,6 @@
 #include "GRegion.h"
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
-#include "fullMatrix.h"
 
 class Octree;
 class FM_Internals;
@@ -52,7 +51,7 @@ class GModel
   std::map<int, MVertex*> _vertexMapCache;
   std::vector<MElement*> _elementVectorCache;
   std::map<int, MElement*> _elementMapCache;
-  fullVector<double> *_newElemNumbers;
+  std::vector<int> _elementIndexCache;
 
   // ghost cell information (stores partitions for each element acting
   // as a ghost cell)
@@ -302,7 +301,10 @@ class GModel
 
   // access a mesh element by tag, using the element cache
   MElement *getMeshElementByTag(int n);
-  int getMeshElementNumByTag(int n) { return (*_newElemNumbers)(n); }
+
+  // access temporary mesh element index
+  int getMeshElementIndex(MElement *e);
+  void setMeshElementIndex(MElement *e, int index);
 
   // return the total number of vertices in the mesh
   int getNumMeshVertices();

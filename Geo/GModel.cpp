@@ -131,7 +131,6 @@ GModel::GModel(std::string name)
   list.push_back(this);
   // at the moment we always create (at least an empty) GEO model
   _createGEOInternals();
-  _newElemNumbers = NULL;
 #if defined(HAVE_OCC)
   _factory = new OCCFactory();
 #endif
@@ -147,7 +146,6 @@ GModel::~GModel()
   destroy();
   _deleteGEOInternals();
   _deleteOCCInternals();
-  if(_newElemNumbers) delete _newElemNumbers;
 #if defined(HAVE_MESH)
   delete _fields;
 #endif
@@ -247,6 +245,7 @@ void GModel::destroyMeshCaches()
   _vertexMapCache.clear();
   _elementVectorCache.clear();
   _elementMapCache.clear();
+  _elementIndexCache.clear();
   Octree_Delete(_octree);
   _octree = 0;
 }
@@ -655,7 +654,6 @@ int GModel::getNumMeshElements(unsigned c[5])
   return 0;
 }
 
-
 MElement *GModel::getMeshElementByCoord(SPoint3 &p)
 {
   if(!_octree){
@@ -723,9 +721,8 @@ void GModel::getMeshVerticesForPhysicalGroup(int dim, int num, std::vector<MVert
   v.insert(v.begin(), sv.begin(), sv.end());
 }
 
-MElement *GModel::getMeshElementByTag(int num)
+MElement *GModel::getMeshElementByTag(int n)
 {
-  int n = (_newElemNumbers) ? (*_newElemNumbers)(num) : num;
   if(_elementVectorCache.empty() && _elementMapCache.empty()){
     Msg::Debug("Rebuilding mesh element cache");
     _elementVectorCache.clear();
@@ -740,16 +737,14 @@ MElement *GModel::getMeshElementByTag(int num)
       for(unsigned int i = 0; i < entities.size(); i++)
         for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
           MElement *e = entities[i]->getMeshElement(j);
-          int ni = (_newElemNumbers) ? (*_newElemNumbers)(e->getNum()) : e->getNum();
-          _elementVectorCache[ni] = e;
+          _elementVectorCache[e->getNum()] = e;
         }
     }
     else{
       for(unsigned int i = 0; i < entities.size(); i++)
         for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
           MElement *e = entities[i]->getMeshElement(j);
-          int ni = (_newElemNumbers) ? (*_newElemNumbers)(e->getNum()) : e->getNum();
-          _elementMapCache[ni] = e;
+          _elementMapCache[e->getNum()] = e;
         }
     }
   }
@@ -758,6 +753,20 @@ MElement *GModel::getMeshElementByTag(int num)
     return _elementVectorCache[n];
   else
     return _elementMapCache[n];
+}
+
+int GModel::getMeshElementIndex(MElement *e)
+{
+  int num = e->getNum();
+  if(num >= _elementIndexCache.size()) return num;
+  return _elementIndexCache[num];
+}
+
+void GModel::setMeshElementIndex(MElement *e, int index)
+{
+  int num = e->getNum();
+  if(num >= _elementIndexCache.size()) _elementIndexCache.resize(num + 1, 0);
+  _elementIndexCache[num] = index; 
 }
 
 template <class T>
