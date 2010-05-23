@@ -29,3 +29,4 @@ e14 = g:addLine (v14,v11);
 
 g:addRuledFaces ({{e7},{e17}})
 g:addFace ({e7,e8},{{0,0,0}})
+g:addFace ({e11,e12,e13,e14})

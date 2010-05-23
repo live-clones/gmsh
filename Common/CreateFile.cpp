@@ -26,8 +26,6 @@
 #include "gl2yuv.h"
 #endif
 
-extern int mpeg_encode_main(int, char**); 
-
 int GuessFileFormatFromFileName(std::string fileName)
 {
   std::string ext = SplitFileName(fileName)[2];
@@ -473,6 +471,7 @@ void CreateOutputFile(std::string fileName, int format)
       }
       fprintf(fp, "END_INPUT\n");
       fclose(fp);
+      extern int mpeg_encode_main(int, char**);
       char *args[] = {(char*)"gmsh", (char*)parFileName.c_str()};
       try{
         mpeg_encode_main(2, args);

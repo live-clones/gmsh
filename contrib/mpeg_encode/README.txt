@@ -1,6 +1,6 @@
 *************************************************************************
 This is a heavily modified version of mpeg_encode, version 1.5b, for
-inclusion in gmsh. The code was made to compile in C++ and modified so
+inclusion in Gmsh. The code was made to compile in C++ and modified so
 that all errors throw exceptions.
 
 FIXME: When used as a subroutine the code clearly leaks memory (see
