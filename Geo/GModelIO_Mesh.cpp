@@ -695,7 +695,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   fprintf(fp, "%d\n", numElements);
   int num = elementStartNum;
   std::map<MElement*, int> parentsNum;
-  _elementIndexCache.resize(numElements + 1);
+  _elementIndexCache.clear();
 
   // points
   for(viter it = firstVertex(); it != lastVertex(); ++it)

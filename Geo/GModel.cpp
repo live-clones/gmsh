@@ -757,16 +757,14 @@ MElement *GModel::getMeshElementByTag(int n)
 
 int GModel::getMeshElementIndex(MElement *e)
 {
-  int num = e->getNum();
-  if(num >= _elementIndexCache.size()) return num;
-  return _elementIndexCache[num];
+  std::map<int, int>::iterator it = _elementIndexCache.find(e->getNum());
+  if(it != _elementIndexCache.end()) return it->second;
+  return e->getNum();
 }
 
 void GModel::setMeshElementIndex(MElement *e, int index)
 {
-  int num = e->getNum();
-  if(num >= _elementIndexCache.size()) _elementIndexCache.resize(num + 1, 0);
-  _elementIndexCache[num] = index; 
+  _elementIndexCache[e->getNum()] = index; 
 }
 
 template <class T>

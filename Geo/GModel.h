@@ -51,7 +51,7 @@ class GModel
   std::map<int, MVertex*> _vertexMapCache;
   std::vector<MElement*> _elementVectorCache;
   std::map<int, MElement*> _elementMapCache;
-  std::vector<int> _elementIndexCache;
+  std::map<int, int> _elementIndexCache;
 
   // ghost cell information (stores partitions for each element acting
   // as a ghost cell)
