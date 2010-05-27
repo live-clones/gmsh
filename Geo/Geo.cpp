@@ -2594,6 +2594,7 @@ void ExtrudeShapes(int type, List_T *list_in,
                                          &pv, e);
         Surface *ps = FindSurface(top.Num);
         top.Type = ps ? ps->Typ : 0;
+
         List_Add(list_out, &top);
         if(pv){
           Shape body;

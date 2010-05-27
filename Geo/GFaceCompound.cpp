@@ -392,7 +392,7 @@ bool GFaceCompound::checkFolding(std::vector<MVertex*> &ordered) const
 //the same normal orientation
 bool GFaceCompound::checkOrientation(int iter) const
 {
- 
+  
   //Only check orientation for stl files (1 patch)
   //  if(_compound.size() > 1.0) return true;
 
@@ -433,7 +433,8 @@ bool GFaceCompound::checkOrientation(int iter) const
     return checkOrientation(iter+1);
   }
   else if (oriented && iter < iterMax){
-    Msg::Debug("Parametrization is 1 to 1 :-)");
+    Msg::Info("Parametrization is 1 to 1 :-)");
+    //printStuff(); 
   }
 
   return oriented;
@@ -507,7 +508,6 @@ bool GFaceCompound::parametrize() const
   //Multiscale Laplace parametrization
   //-----------------
   else if (_mapping == MULTISCALE){
-    //    printf("multiscale exit \n");
     std::vector<MElement*> _elements;
     for( std::list<GFace*>::const_iterator itt = _compound.begin(); itt != _compound.end(); ++itt)
       for(unsigned int i = 0; i < (*itt)->triangles.size(); ++i)
@@ -522,15 +522,13 @@ bool GFaceCompound::parametrize() const
     bool withoutFolding = parametrize_conformal_spectral() ;
     //bool withoutFolding = parametrize_conformal();
     if ( withoutFolding == false ){
-      printStuff(); //exit(1);
+      //buildOct();  exit(1);
       Msg::Warning("$$$ Parametrization switched to harmonic map");
       parametrize(ITERU,HARMONIC); 
       parametrize(ITERV,HARMONIC);
     }
   }
 
-  printStuff();
- 
   buildOct();  
 
   if (!checkOrientation(0)){
@@ -1001,12 +999,28 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
       return;
     }
 
+    //map to a unit circle
     for(unsigned int i = 0; i < ordered.size(); i++){
       MVertex *v = ordered[i];
       const double theta = 2 * M_PI * coords[i];
       if(step == ITERU) myAssembler.fixVertex(v, 0, 1, cos(theta));
       else if(step == ITERV) myAssembler.fixVertex(v, 0, 1, sin(theta));    
     }
+
+    //pin down two vertices
+   // MVertex *v1  = ordered[0];
+   // MVertex *v2  = ordered[(int)ceil((double)ordered.size()/2.)];
+   // if(step == ITERU){
+   //   myAssembler.fixVertex(v1, 0, 1, 0.);
+   //   myAssembler.fixVertex(v2, 0, 1, 1.);
+   // }
+   // else if(step == ITERV){
+   //   myAssembler.fixVertex(v1, 0, 1, 0.);
+   //   myAssembler.fixVertex(v2, 0, 1, 0.);
+   // }
+   // printf("Pinned vertex  %g %g %g / %g %g %g \n", v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z());
+   //exit(1);
+
   }
   else if(_type == SQUARE){
     if(step == ITERU){
@@ -1250,6 +1264,11 @@ bool GFaceCompound::parametrize_conformal() const
 
    MVertex *v1  = ordered[0];
    MVertex *v2  = ordered[(int)ceil((double)ordered.size()/2.)];
+   myAssembler.fixVertex(v1, 0, 1, 0.);
+   myAssembler.fixVertex(v1, 0, 2, 0.);
+   myAssembler.fixVertex(v2, 0, 1, 1.);
+   myAssembler.fixVertex(v2, 0, 2, 0.);
+//printf("Pinned vertex  %g %g %g / %g %g %g \n", v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z());
 
 //   MVertex *v2 ;  
 //   double maxSize = 0.0;
@@ -1261,13 +1280,6 @@ bool GFaceCompound::parametrize_conformal() const
 //       maxSize = dist;
 //     }
 //   }
-
-  myAssembler.fixVertex(v1, 0, 1, 0);//0
-  myAssembler.fixVertex(v1, 0, 2, 0);//0
-  myAssembler.fixVertex(v2, 0, 1, 1);//1
-  myAssembler.fixVertex(v2, 0, 2, 0);//0
-
-  //printf("Pinned vertex  %g %g %g / %g %g %g \n", v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z());
  
   std::list<GFace*>::const_iterator it = _compound.begin();
   for( ; it != _compound.end(); ++it){
@@ -1513,11 +1525,11 @@ GPoint GFaceCompound::point(double par1, double par2) const
 
 Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
 {
+  
   if(!oct) parametrize();
-
-  if(trivial()){
+  
+  if(trivial())
     return (*(_compound.begin()))->firstDer(param);
-  }
 
   double U, V;
   GFaceCompoundTriangle *lt;
@@ -1590,7 +1602,7 @@ void GFaceCompound::secondDer(const SPoint2 &param,
   //printf("der second dvdv = %g %g %g \n", dvdv->x(),  dvdv->y(),  dvdv->z());
   //printf("der second dudv = %g %g %g \n", dudv->x(),  dudv->y(),  dudv->z());
   
-  Msg::Error("Computation of the second derivatives is not implemented for compound faces");
+  Msg::Warning("Computation of the second derivatives is not implemented for compound faces");
   
 }
 
@@ -1790,6 +1802,9 @@ void GFaceCompound::buildOct() const
   }
   nbT = count;
   Octree_Arrange(oct);
+
+  printStuff();
+
 }
 
 bool GFaceCompound::checkTopology() const
@@ -2003,6 +2018,7 @@ void GFaceCompound::printStuff() const
  
   char name0[256], name1[256], name2[256], name3[256];
   char name4[256], name5[256], name6[256];
+  char name7[256], name8[256], name9[256];
   sprintf(name0, "UVAREA-%d.pos", (*it)->tag());
   sprintf(name1, "UVX-%d.pos", (*it)->tag());
   sprintf(name2, "UVY-%d.pos", (*it)->tag());
@@ -2011,6 +2027,10 @@ void GFaceCompound::printStuff() const
   sprintf(name5, "XYZV-%d.pos", (*it)->tag());
   sprintf(name6, "XYZC-%d.pos", (*it)->tag());
 
+  sprintf(name7, "UVME-%d.pos", (*it)->tag());
+  sprintf(name8, "UVMF-%d.pos", (*it)->tag());
+  sprintf(name9, "UVMG-%d.pos", (*it)->tag());
+
   FILE * uva = fopen(name0,"w");
   FILE * uvx = fopen(name1,"w");
   FILE * uvy = fopen(name2,"w");
@@ -2018,6 +2038,10 @@ void GFaceCompound::printStuff() const
   FILE * xyzu = fopen(name4,"w");
   FILE * xyzv = fopen(name5,"w");
   FILE * xyzc = fopen(name6,"w");
+  FILE * uvme = fopen(name7,"w");
+  FILE * uvmf = fopen(name8,"w");
+  FILE * uvmg = fopen(name9,"w");
+
 
   fprintf(uva,"View \"\"{\n");
   fprintf(uvx,"View \"\"{\n");
@@ -2026,6 +2050,10 @@ void GFaceCompound::printStuff() const
   fprintf(xyzu,"View \"\"{\n");
   fprintf(xyzv,"View \"\"{\n");
   fprintf(xyzc,"View \"\"{\n");
+  fprintf(uvme,"View \"\"{\n");
+  fprintf(uvmf,"View \"\"{\n");  
+  fprintf(uvmg,"View \"\"{\n");
+
 
   for( ; it != _compound.end() ; ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
@@ -2063,12 +2091,43 @@ void GFaceCompound::printStuff() const
       double q1[3] = {it1->second.x(), it1->second.y(), 0.0};
       double q2[3] = {it2->second.x(), it2->second.y(), 0.0};
       double a_2D = fabs(triangle_area(q0, q1, q2));
-      double area = a_2D/a_3D;
+      double area = (a_3D/a_2D); //*(a_3D/a_2D);
+     
+      Pair<SVector3, SVector3> der = this->firstDer(SPoint2( it0->second.x(), it0->second.y()));
+      double metric0e = dot(der.first(), der.first());
+      double metric0f = dot(der.second()*(1./norm(der.second())), der.first()*(1./norm(der.first())));
+      double metric0g = dot(der.second(), der.second());
+      Pair<SVector3, SVector3> der1 = this->firstDer(SPoint2( it1->second.x(), it1->second.y()));
+      double metric1e = dot(der1.first(), der1.first());
+      double metric1f = dot(der1.second()*(1/norm(der1.second())), der1.first()*(1./norm(der1.first())));
+      double metric1g = dot(der1.second(), der1.second());
+      Pair<SVector3, SVector3> der2 = this->firstDer(SPoint2( it2->second.x(), it2->second.y()));
+      double metric2e = dot(der2.first(),  der2.first());
+      double metric2f = dot(der2.second()*(1./norm(der2.second())), der2.first()*(1./norm(der2.first())));
+      double metric2g = dot(der2.second(), der2.second());
+      
       fprintf(uva,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
               it0->second.x(), it0->second.y(), 0.0,
               it1->second.x(), it1->second.y(), 0.0,
               it2->second.x(), it2->second.y(), 0.0,
-              area, area, area);     
+              area, area, area);   
+
+      fprintf(uvme,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+              it0->second.x(), it0->second.y(), 0.0,
+              it1->second.x(), it1->second.y(), 0.0,
+              it2->second.x(), it2->second.y(), 0.0, 
+	      0.3*(metric0e+metric1e+metric2e),  0.3*(metric0e+metric1e+metric2e),  0.3*(metric0e+metric1e+metric2e) );    
+      fprintf(uvmf,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+	      it0->second.x(), it0->second.y(), 0.0,
+              it1->second.x(), it1->second.y(), 0.0,
+              it2->second.x(), it2->second.y(), 0.0,
+	      0.3*(metric0f+metric1f+metric2f),  0.3*(metric0f+metric1f+metric2f),  0.3*(metric0f+metric1f+metric2f) ); 
+      fprintf(uvmg,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+              it0->second.x(), it0->second.y(), 0.0,
+              it1->second.x(), it1->second.y(), 0.0,
+              it2->second.x(), it2->second.y(), 0.0,
+	      0.3*(metric0g+metric1g+metric2g),  0.3*(metric0g+metric1g+metric2g),  0.3*(metric0g+metric1g+metric2g) ); 
+      
       fprintf(uvx,"ST(%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E){%22.15E,%22.15E,%22.15E};\n",
               it0->second.x(), it0->second.y(), 0.0,
               it1->second.x(), it1->second.y(), 0.0,
@@ -2100,6 +2159,13 @@ void GFaceCompound::printStuff() const
   fclose(xyzv);
   fprintf(xyzc,"};\n");
   fclose(xyzc);
+  fprintf(uvme,"};\n");
+  fclose(uvme);
+  fprintf(uvmf,"};\n");
+  fclose(uvmf);
+  fprintf(uvmg,"};\n");
+  fclose(uvmg);
+
 }
 
 #endif

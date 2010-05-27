@@ -1218,7 +1218,9 @@ void GModel::createTopologyFromMesh()
     for (int ifa  = 0; ifa < nbFaces; ifa++){
       std::vector<MElement*> myElements = conRegions[ifa];
 
-      int numF = maxFaceNum()+1;
+      int numF;
+      if (nbFaces == 1) numF = (*itF)->tag(); 
+      else numF = maxFaceNum()+1;
       discreteFace *f = new discreteFace(this, numF);
       //printf("*** Created discreteFace %d \n", numF);
       add(f);
@@ -1252,11 +1254,52 @@ void GModel::createTopologyFromMesh()
   discFaces = newDiscFaces;
   //------
 
-  //EMI-FIX in case of createTopology for Volumes
-  //all faces are set to each volume
-  for (std::vector<discreteRegion*>::iterator it = discRegions.begin();  it != discRegions.end(); it++)
-    (*it)->setBoundFaces();
-   
+  //set boundary faces for each volume
+
+  // find boundary faces of each region and put them in a map_faces that
+  // associates the MElements with the tags of the adjacent regions
+  std::map<MFace, std::vector<int>, Less_Face > map_faces;
+  for (std::vector<discreteRegion*>::iterator it = discRegions.begin(); 
+       it != discRegions.end(); it++){
+    (*it)->findFaces(map_faces);
+  }
+
+ // create reverse map, for each region find set of MFaces that are
+  // candidate for new discrete Face
+  std::map<int, std::set<int> > region2Faces;
+
+  for (std::vector<discreteFace*>::iterator itF = discFaces.begin(); 
+       itF != discFaces.end(); itF++){
+    for (unsigned int i = 0; i < (*itF)->getNumMeshElements(); i++){
+      MFace mf = (*itF)->getMeshElement(i)->getFace(0);
+      std::map<MFace, std::vector<int>, Less_Face >::iterator itset = map_faces.find(mf);
+      if (itset !=  map_faces.end()){
+	std::vector<int> tagRegions = itset->second;
+	for (std::vector<int>::iterator itR =tagRegions.begin(); itR != tagRegions.end(); itR++){
+	  std::map<int, std::set<int> >::iterator itmap = region2Faces.find(*itR);
+	  if (itmap == region2Faces.end()){
+	    std::set<int>  oneFace; oneFace.insert((*itF)->tag());
+	    region2Faces.insert(std::make_pair(*itR, oneFace));
+	  } 
+	  else{
+	     std::set<int>  allFaces = itmap->second;
+	     allFaces.insert(allFaces.begin(), (*itF)->tag());
+	     itmap->second = allFaces;
+	  }
+	}
+      }
+    }
+  }
+
+  for (std::vector<discreteRegion*>::iterator it = discRegions.begin();  it != discRegions.end(); it++){
+    std::map<int, std::set<int> >::iterator itr = region2Faces.find((*it)->tag());
+    if (itr != region2Faces.end()){
+      std::set<int> bcFaces = itr->second;
+      (*it)->setBoundFaces(bcFaces);
+    }
+  }
+
+  //create Topo for faces
   createTopologyFromFaces(discFaces);
   
   double t2 = Cpu();

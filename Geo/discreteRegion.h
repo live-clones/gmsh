@@ -8,13 +8,15 @@
 
 #include "GModel.h"
 #include "GRegion.h"
+#include "MFace.h"
 
 class discreteRegion : public GRegion {
  public:
   discreteRegion(GModel *model, int num);
   virtual ~discreteRegion() {}
   virtual GeomType geomType() const { return DiscreteVolume; }
-  void setBoundFaces();
+  void setBoundFaces(std::set<int> tagFaces);
+  void findFaces(std::map<MFace, std::vector<int>, Less_Face> &map_faces);
 };
 
 #endif
