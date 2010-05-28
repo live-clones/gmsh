@@ -72,9 +72,6 @@ class linearSystemFull : public linearSystem<scalar> {
   }
   virtual int systemSolve() 
   {
-    _a->print("A in solve");
-    _b->print("B in solve");
-    _x->print("X in solve");
     if (_b->size())
       _a->luSolve(*_b, *_x);
     return 1;
