@@ -439,7 +439,7 @@ Mpost_UnQuantZigBlockLaplace(FlatBlock in,
       }
       if (level<0) {mid = -mid;}
 /*printf("(%2.1lf-%2.1lf): old: %d vs %d\n",low,high,coeff,(int) mid);*/
-      coeff = mid;
+      coeff = (int)mid;
       if ( (coeff & 1) == 0 ) {
 	if ( coeff < 0 ) {
 	  coeff++;

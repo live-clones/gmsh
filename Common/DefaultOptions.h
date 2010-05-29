@@ -1305,7 +1305,7 @@ StringXNumber SolverOptions_Number[] = {
 } ;
 
 StringXNumber PostProcessingOptions_Number[] = {
-  { F|O, "AnimationDelay" , opt_post_anim_delay , 0.25 ,
+  { F|O, "AnimationDelay" , opt_post_anim_delay , 0.1 ,
     "Delay (in seconds) between frames in automatic animation mode" },
   { F|O, "AnimationCycle" , opt_post_anim_cycle , 0. ,
     "Cycle through time steps (0) or views (1) for animations" },

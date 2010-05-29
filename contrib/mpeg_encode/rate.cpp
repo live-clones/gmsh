@@ -272,8 +272,8 @@ initRateControl()
   /*   init virtual buffers  */
   reactionParameter = (2 * bit_rate / frameRateRounded);
   d0_i = (10 * reactionParameter / 31);
-  d0_p = (Kp * d0_i);
-  d0_b = (Kb * d0_i);
+  d0_p = (int)(Kp * d0_i);
+  d0_b = (int)(Kb * d0_i);
   
   lastFrameVirtBuf = d0_i;	/*  start with I Frame */
   rc_Q = lastFrameVirtBuf  * 31 / reactionParameter;
@@ -282,7 +282,7 @@ initRateControl()
   avg_act = 400;		/* Suggested initial value */
   N_act = 1;
   
-  mquant = rc_Q * N_act;
+  mquant = (int)(rc_Q * N_act);
   
   frameDelayIncrement = (90000 / frameRateRounded); /* num of "delay" units per frame */
   bufferFillRate = bit_rate / frameRateRounded; /* VBV buf fills at constant rate */
@@ -402,7 +402,7 @@ targetRateControl(MpegFrame   *frame)
   
   N_act = 1;
   rc_Q = lastFrameVirtBuf  * 31 / reactionParameter;
-  mquant = rc_Q * N_act;
+  mquant = (int)(rc_Q * N_act);
   Qscale = (mquant > 31 ? 31 : mquant);
   Qscale = (Qscale < 1 ? 1 : Qscale);
   
@@ -460,7 +460,7 @@ updateRateControl(int type)
   
   totalBits = rc_totalFrameBits;
   avgQuant = ((float) rc_totalQuant / (float) rc_numBlocks);
-  frameComplexity = totalBits * avgQuant;
+  frameComplexity = (int)(totalBits * avgQuant);
   pctAllocUsed = (totalBits *100 / current_Tx);
   rc_R -= totalBits;
   pctGOPUsed = (rc_R *100/ rc_G);
@@ -633,7 +633,7 @@ int needQScaleChange(int oldQScale,
   
   checkSpatialActivity(blk0, blk1, blk2, blk3);
   
-  mquant = rc_Q * N_act;
+  mquant = (int)(rc_Q * N_act);
   Qscale = (mquant > 31 ? 31 : mquant);
   Qscale = (Qscale < 1 ? 1 : Qscale);
   rc_totalQuant += Qscale;

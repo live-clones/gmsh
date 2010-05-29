@@ -1269,7 +1269,7 @@ void reference_rev_dct(int16 *block)
       for (k=0; k<8; k++)
         partial_product+= itrans_coef[k][i]*tmp[8*k+j];
 
-      v = floor(partial_product+0.5);
+      v = (int)floor(partial_product+0.5);
       block[8*i+j] = (v<-256) ? -256 : ((v>255) ? 255 : v);
     }
 }

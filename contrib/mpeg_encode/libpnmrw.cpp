@@ -241,7 +241,7 @@ pbm_getbit(FILE* file)
     {
       ich = pbm_getc( file );
       if ( ich == EOF )
-	return -1;
+	return (bit)-1;
     }
   while ( ich == ' ' || ich == '\t' || ich == '\n' || ich == '\r' );
 
@@ -249,7 +249,7 @@ pbm_getbit(FILE* file)
     {
       (void) fprintf(
 		     stderr, "%s: junk in file where bits should be\n", progname );
-      return -1;
+      return (bit)-1;
     }
 
   return ( ich == '1' ) ? 1 : 0;

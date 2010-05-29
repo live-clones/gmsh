@@ -846,7 +846,8 @@ BlockComputeSNR(MpegFrame *current,
     
     needs_init = FALSE;
     for (y=0; y<3; y++) {
-      varDiff[y] = ratio[y] = total[y] = 0.0;
+      varDiff[y] = 0;
+      ratio[y] = total[y] = 0.0;
     }
     ySize[0]=Fsize_y;     xSize[0]=Fsize_x;
     ySize[1]=Fsize_y>>1;  xSize[1]=Fsize_x>>1;
