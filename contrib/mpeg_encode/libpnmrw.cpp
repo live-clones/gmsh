@@ -523,7 +523,7 @@ pgm_readpgmrow( FILE* file, gray* grayrow, int cols, gray maxval, int format )
 static void
   pgm_writepgminit( FILE* file, int cols, int rows, gray maxval, int forceplain )
 {
-  if ( maxval <= 255 && ! forceplain )
+  if ( /*maxval <= 255 && */ ! forceplain ) // gmsh
     fprintf(
 	    file, "%c%c\n%d %d\n%d\n", PGM_MAGIC1, RPGM_MAGIC2,
 	    cols, rows, maxval );
@@ -589,7 +589,7 @@ pgm_writepgmrowplain(FILE* file,
 static int
   pgm_writepgmrow( FILE* file, gray* grayrow, int cols, gray maxval, int forceplain )
 {
-  if ( maxval <= 255 && ! forceplain )
+  if ( /*maxval <= 255 &&*/ ! forceplain ) // gmsh
     return pgm_writepgmrowraw( file, grayrow, cols, maxval );
   else
     return pgm_writepgmrowplain( file, grayrow, cols, maxval );
@@ -678,7 +678,7 @@ static int
 static void
   ppm_writeppminit( FILE* file, int cols, int rows, pixval maxval, int forceplain )
 {
-  if ( maxval <= 255 && ! forceplain )
+  if ( /*maxval <= 255 &&*/ ! forceplain ) // gmsh
     fprintf(
 	    file, "%c%c\n%d %d\n%d\n", PPM_MAGIC1, RPPM_MAGIC2,
 	    cols, rows, maxval );
@@ -759,7 +759,7 @@ ppm_writeppmrowplain(FILE* file,
 static int
   ppm_writeppmrow( FILE* file, pixel* pixelrow, int cols, pixval maxval, int forceplain )
 {
-  if ( maxval <= 255 && ! forceplain )
+  if ( /*maxval <= 255 &&*/ ! forceplain ) // gmsh
     return ppm_writeppmrowraw( file, pixelrow, cols, maxval );
   else
     return ppm_writeppmrowplain( file, pixelrow, cols, maxval );

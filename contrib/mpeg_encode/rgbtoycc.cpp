@@ -139,23 +139,23 @@ PNMtoYUV(MpegFrame *frame)
 	     x += 2, dy0 += 2, dy1 += 2, dcr++,
 	     dcb++, src0 += 2, src1 += 2) {
 
-	    *dy0 = (mult299[PPM_GETR(*src0)] +
+          *dy0 = (uint8)((mult299[PPM_GETR(*src0)] +
 		    mult587[PPM_GETG(*src0)] +
-		    mult114[PPM_GETB(*src0)]) / ydivisor;
+		    mult114[PPM_GETB(*src0)]) / ydivisor);
 
-	    *dy1 = (mult299[PPM_GETR(*src1)] +
+	    *dy1 = (uint8)((mult299[PPM_GETR(*src1)] +
 		    mult587[PPM_GETG(*src1)] +
-		    mult114[PPM_GETB(*src1)]) / ydivisor;
+		    mult114[PPM_GETB(*src1)]) / ydivisor);
 
-	    dy0[1] = (mult299[PPM_GETR(src0[1])] +
+	    dy0[1] = (uint8)((mult299[PPM_GETR(src0[1])] +
 		      mult587[PPM_GETG(src0[1])] +
-		      mult114[PPM_GETB(src0[1])]) / ydivisor;
+		      mult114[PPM_GETB(src0[1])]) / ydivisor);
 
-	    dy1[1] = (mult299[PPM_GETR(src1[1])] +
+	    dy1[1] = (uint8)((mult299[PPM_GETR(src1[1])] +
 		      mult587[PPM_GETG(src1[1])] +
-		      mult114[PPM_GETB(src1[1])]) / ydivisor;
+		      mult114[PPM_GETB(src1[1])]) / ydivisor);
 
-	    *dcb = ((mult16874[PPM_GETR(*src0)] +
+	    *dcb = (uint8)(((mult16874[PPM_GETR(*src0)] +
 		     mult33126[PPM_GETG(*src0)] +
 		     mult5[PPM_GETB(*src0)] +
 		     mult16874[PPM_GETR(*src1)] +
@@ -166,9 +166,9 @@ PNMtoYUV(MpegFrame *frame)
 		     mult5[PPM_GETB(src0[1])] +
 		     mult16874[PPM_GETR(src1[1])] +
 		     mult33126[PPM_GETG(src1[1])] +
-		     mult5[PPM_GETB(src1[1])]) / cdivisor) + 128;
+		     mult5[PPM_GETB(src1[1])]) / cdivisor) + 128);
 
-	    *dcr = ((mult5[PPM_GETR(*src0)] +
+	    *dcr = (uint8)(((mult5[PPM_GETR(*src0)] +
 		     mult41869[PPM_GETG(*src0)] +
 		     mult08131[PPM_GETB(*src0)] +
 		     mult5[PPM_GETR(*src1)] +
@@ -179,7 +179,7 @@ PNMtoYUV(MpegFrame *frame)
 		     mult08131[PPM_GETB(src0[1])] +
 		     mult5[PPM_GETR(src1[1])] +
 		     mult41869[PPM_GETG(src1[1])] +
-		     mult08131[PPM_GETB(src1[1])]) / cdivisor) + 128;
+		     mult08131[PPM_GETB(src1[1])]) / cdivisor) + 128);
 
 	    /* if your floating point is faster than your loads, you
 	     * might consider this:
@@ -299,23 +299,23 @@ PPMtoYUV(MpegFrame *frame)
 
 	for ( x = 0; x < Fsize_x; x += 2, dy0 += 2, dy1 += 2, dcr++,
 				   dcb++, src0 += 6, src1 += 6) {
-	    *dy0 = (mult299[*src0] +
+	    *dy0 = (uint8)(mult299[*src0] +
 		    mult587[src0[1]] +
 		    mult114[src0[2]]);
 
-	    *dy1 = (mult299[*src1] +
+	    *dy1 = (uint8)(mult299[*src1] +
 		    mult587[src1[1]] +
 		    mult114[src1[2]]);
 
-	    dy0[1] = (mult299[src0[3]] +
+	    dy0[1] = (uint8)(mult299[src0[3]] +
 		      mult587[src0[4]] +
 		      mult114[src0[5]]);
 
-	    dy1[1] = (mult299[src1[3]] +
+	    dy1[1] = (uint8)(mult299[src1[3]] +
 		      mult587[src1[4]] +
 		      mult114[src1[5]]);
 
-	    *dcb = ((mult16874[*src0] +
+	    *dcb = (uint8)((mult16874[*src0] +
 		     mult33126[src0[1]] +
 		     mult5[src0[2]] +
 		     mult16874[*src1] +
@@ -328,7 +328,7 @@ PPMtoYUV(MpegFrame *frame)
 		     mult33126[src1[4]] +
 		     mult5[src1[5]]) / cdivisor) + 128;
 
-	    *dcr = ((mult5[*src0] +
+	    *dcr = (uint8)((mult5[*src0] +
 		     mult41869[src0[1]] +
 		     mult08131[src0[2]] +
 		     mult5[*src1] +
