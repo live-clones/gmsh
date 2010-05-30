@@ -10,6 +10,7 @@
 #include "StringUtils.h"
 #include "Context.h"
 #include "Options.h"
+#include "OS.h"
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
@@ -443,12 +444,15 @@ void CreateOutputFile(std::string fileName, int format)
         if(opt_view_visible(i, GMSH_GET, 0))
           numSteps = std::max(numSteps, (int)opt_view_nb_timestep(i, GMSH_GET, 0));
       }
-      int numFrames = CTX::instance()->post.animCycle ? numViews : numSteps;
-      status_play_manual(!CTX::instance()->post.animCycle, 0);
-      for(int i = 0; i < numFrames; i++){
+      std::vector<std::string> frames;
+      for(int i = 0; i < (CTX::instance()->post.animCycle ? numViews : numSteps); i++){
         char tmp[256];
-        sprintf(tmp, "%s.gmsh-%03d.ppm", CTX::instance()->homeDir.c_str(), i);
-        CreateOutputFile(tmp, FORMAT_PPM);
+        sprintf(tmp, ".gmsh-%03d.ppm", i);
+        frames.push_back(tmp);
+      }
+      status_play_manual(!CTX::instance()->post.animCycle, 0);
+      for(unsigned int i = 0; i < frames.size(); i++){
+        CreateOutputFile(CTX::instance()->homeDir + frames[i], FORMAT_PPM);
         status_play_manual(!CTX::instance()->post.animCycle, 1);
       }
       int repeat = (int)(CTX::instance()->post.animDelay * 24);
@@ -464,8 +468,8 @@ void CreateOutputFile(std::string fileName, int format)
               "OUTPUT %s\nINPUT_CONVERT *\nINPUT_DIR %s\nINPUT\n",
               pattern.c_str(), repeat, fileName.c_str(), 
               CTX::instance()->homeDir.c_str());
-      for(int i = 0; i < numFrames; i++){
-        fprintf(fp, ".gmsh-%03d.ppm", i);
+      for(unsigned int i = 0; i < frames.size(); i++){
+        fprintf(fp, "%s", frames[i].c_str());
         if(repeat > 1) fprintf(fp, " [1-%d]", repeat);
         fprintf(fp, "\n");
       }
@@ -475,9 +479,14 @@ void CreateOutputFile(std::string fileName, int format)
       char *args[] = {(char*)"gmsh", (char*)parFileName.c_str()};
       try{
         mpeg_encode_main(2, args);
+        UnlinkFile(parFileName);
+        for(unsigned int i = 0; i < frames.size(); i++)
+          UnlinkFile(CTX::instance()->homeDir + frames[i]);
       }
       catch (const char *error){
         Msg::Error("mpeg_encode: %s", error);
+        Msg::Info("Temporary image were saved in: %s.gmsh-*.ppm", 
+                  CTX::instance()->homeDir.c_str());
       }
     }
     break;
