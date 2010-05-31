@@ -32,12 +32,12 @@ void function::setArgument(fullMatrix<double> &v, const function *f, int iMap) {
     throw;
   arguments.push_back(argument(v, iMap, f));
   dependencies.insert(dependency(iMap, f));
-  for(std::set<dependency>::iterator it = f->dependencies.begin(); it != f->dependencies.end(); it++) {
+  for(std::set<dependency>::const_iterator it = f->dependencies.begin(); it != f->dependencies.end(); it++) {
     if (it->iMap> 0 && iMap >0)
       Msg::Error("consecutive secondary caches");
     dependencies.insert(dependency(iMap + it->iMap, it->f));
   }
-  for (int i = 0; i < _functionReplaces.size(); i++) {
+  for (double i = 0; i < _functionReplaces.size(); i++) {
     functionReplace &replace = *_functionReplaces[i];
     for (std::set<dependency>::iterator it = replace._fromParent.begin(); it != replace._fromParent.end(); it++) {
       if (it->iMap> 0 && iMap >0)
@@ -80,7 +80,7 @@ dataCacheDouble &dataCacheMap::get(const function *f, dataCacheDouble *caller) {
   // can I use the cache of my parent ?
   if(_parent && r==NULL) {
     bool okFromParent = true;
-    for (std::set<function::dependency>::iterator it = f->dependencies.begin(); it != f->dependencies.end(); it++) {
+    for (std::set<function::dependency>::const_iterator it = f->dependencies.begin(); it != f->dependencies.end(); it++) {
       if (it->iMap > _parent->_secondaryCaches.size())
         okFromParent=false;
       dataCacheMap *m = getSecondaryCache(it->iMap);
@@ -152,9 +152,9 @@ void functionReplace::replace(fullMatrix<double> &v, const function *f, int iMap
 
 void functionReplace::get(fullMatrix<double> &v, const function *f, int iMap) {
   bool allDepFromParent = true;
-  for (std::set<function::dependency>::iterator itDep = f->dependencies.begin(); itDep != f->dependencies.end(); itDep++){
+  for (std::set<function::dependency>::const_iterator itDep = f->dependencies.begin(); itDep != f->dependencies.end(); itDep++){
     bool depFromParent = (_replaced.count(*itDep)==0);
-    for (std::set<function::dependency>::iterator itDep2 = itDep->f->dependencies.begin(); itDep2 != itDep->f->dependencies.end() && depFromParent; itDep2++)
+    for (std::set<function::dependency>::const_iterator itDep2 = itDep->f->dependencies.begin(); itDep2 != itDep->f->dependencies.end() && depFromParent; itDep2++)
       depFromParent &= (_replaced.count(*itDep2)==0);
     if(depFromParent)
       _master->dependencies.insert(*itDep);

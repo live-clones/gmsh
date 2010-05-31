@@ -89,9 +89,9 @@ PNMtoYUV(MpegFrame *frame)
     register xel *src0, *src1;
     register int ydivisor, cdivisor;
     static boolean  first = TRUE;
-    static float  mult299[1024], mult587[1024], mult114[1024];
-    static float  mult16874[1024], mult33126[1024], mult5[1024];
-    static float mult41869[1024], mult08131[1024];
+    static double  mult299[1024], mult587[1024], mult114[1024];
+    static double  mult16874[1024], mult33126[1024], mult5[1024];
+    static double mult41869[1024], mult08131[1024];
 
     if ( first ) {
         register int index;
@@ -256,9 +256,9 @@ PPMtoYUV(MpegFrame *frame)
     register uint8 *src0, *src1;
     register int cdivisor;
     static boolean  first = TRUE;
-    static float  mult299[1024], mult587[1024], mult114[1024];
-    static float  mult16874[1024], mult33126[1024], mult5[1024];
-    static float mult41869[1024], mult08131[1024];
+    static double  mult299[1024], mult587[1024], mult114[1024];
+    static double  mult16874[1024], mult33126[1024], mult5[1024];
+    static double mult41869[1024], mult08131[1024];
 
     if ( first ) {
         register int index;

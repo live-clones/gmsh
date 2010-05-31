@@ -16,7 +16,7 @@ class dataCacheDouble;
 
 class functionConstant;
 class functionReplace;
-class functionReplaceCache;
+struct functionReplaceCache;
 
 // An abstract interface to functions 
 // more explanation at the head of this file
@@ -26,7 +26,7 @@ class function {
   bool _invalidatedOnElement;
   std::vector<functionReplace*> _functionReplaces;
   class dependency {
-    public : int iMap; const function *f;
+    public : unsigned iMap; const function *f;
     dependency(int iMap_, const function *f_){iMap = iMap_; f = f_; }
     bool operator < (const dependency &d) const {
       return (d.iMap <iMap || d.f < f);

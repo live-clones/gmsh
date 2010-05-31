@@ -825,19 +825,19 @@ void signedDistancesPointsTriangle(std::vector<double>&distances,
   SVector3 t3 = p3 - p2;
   SVector3 n = crossprod(t1, t2);
   n.normalize();
-
+	
   double mat[3][3] = {{t1.x(), t2.x(), -n.x()},
                       {t1.y(), t2.y(), -n.y()},
                       {t1.z(), t2.z(), -n.z()}};
   double inv[3][3];
   double det = inv3x3(mat, inv);
-  
+  const unsigned pts_size=pts.size();
   distances.clear();
-  distances.resize(pts.size());
+  distances.resize(pts_size);
   closePts.clear();
-  closePts.resize(pts.size());
+  closePts.resize(pts_size);
 
-  for (unsigned int i = 0; i < pts.size(); i++)
+  for (unsigned int i = 0; i < pts_size; ++i)
     distances[i] = 1.e22;
 
   if(det == 0.0) return;
@@ -847,7 +847,7 @@ void signedDistancesPointsTriangle(std::vector<double>&distances,
   const double n2t3 = dot(t3, t3);
 
   double u, v, d;
-  for (unsigned int i = 0; i < pts.size();i++){
+  for (unsigned int i = 0; i < pts_size;++i){
     const SPoint3 &p = pts[i];
     SVector3 pp1 = p - p1;
     u = (inv[0][0] * pp1.x() + inv[0][1] * pp1.y() + inv[0][2] * pp1.z());
@@ -909,14 +909,15 @@ void signedDistancesPointsLine (std::vector<double>&distances,
 
   SVector3 t1 = p2 - p1;
   const double n2t1 = dot(t1, t1);
-  
+
+  const unsigned pts_size=pts.size();
   distances.clear();
-  distances.resize(pts.size());
+  distances.resize(pts_size);
   closePts.clear();
-  closePts.resize(pts.size());
+  closePts.resize(pts_size);
 
   double d;
-  for (unsigned int i = 0; i < pts.size();i++){
+  for (unsigned int i = 0; i <pts_size;++i){
     const SPoint3 &p = pts[i];
     SVector3 pp1 = p - p1;
     const double t12 = dot(pp1, t1) / n2t1;
