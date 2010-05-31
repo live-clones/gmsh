@@ -83,7 +83,7 @@ void linearSystemPETSc<fullMatrix<PetscScalar> >::allocate(int nbRows)
   // override the default options with the ones from the option
   // database (if any)
   _try(MatSetFromOptions(_a));
-  _try(MatSeqBAIJSetPreallocation(_a, _blockSize, 4, NULL)); //todo preAllocate off-diagonal part
+  _try(MatSeqBAIJSetPreallocation(_a, _blockSize, 5, NULL)); //todo preAllocate off-diagonal part
   //_try(MatMPIBAIJSetPreallocation(_a, _blockSize, 4, NULL, 0, NULL)); //todo preAllocate off-diagonal part
   _try(VecCreate(PETSC_COMM_WORLD, &_x));
   _try(VecSetSizes(_x, PETSC_DECIDE, nbRows * _blockSize));

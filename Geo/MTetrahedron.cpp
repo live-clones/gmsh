@@ -126,6 +126,11 @@ const polynomialBasis* MTetrahedron::getFunctionSpace(int o) const
     case 3: return &polynomialBases::find(MSH_TET_20);
     case 4: return &polynomialBases::find(MSH_TET_35);
     case 5: return &polynomialBases::find(MSH_TET_56);
+    case 6: return &polynomialBases::find(MSH_TET_84);
+    case 7: return &polynomialBases::find(MSH_TET_120);
+    case 8: return &polynomialBases::find(MSH_TET_165);
+    case 9: return &polynomialBases::find(MSH_TET_220);
+    case 10: return &polynomialBases::find(MSH_TET_286);
     default: Msg::Error("Order %d tetrahedron function space not implemented", order);
     }
   }

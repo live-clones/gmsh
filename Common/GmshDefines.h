@@ -126,8 +126,13 @@
 #define MSH_TRI_B 68
 #define MSH_POLYG_B 69
 #define MSH_LIN_C 70
+#define MSH_TET_84 71
+#define MSH_TET_120 72
+#define MSH_TET_165 73
+#define MSH_TET_220 74
+#define MSH_TET_286 75
 
-#define MSH_NUM_TYPE 70
+#define MSH_NUM_TYPE 71
 
 // Geometric entities
 #define ENT_NONE     0

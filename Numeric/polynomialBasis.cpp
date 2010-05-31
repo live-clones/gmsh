@@ -1114,6 +1114,36 @@ const polynomialBasis &polynomialBases::find(int tag)
     F.points =    gmshGeneratePointsTetrahedron(5, false);
     generate3dFaceClosure(F.closures, 5);
     break;
+  case MSH_TET_84 :
+    F.numFaces = 4;
+    F.monomials = generatePascalTetrahedron(6);
+    F.points =    gmshGeneratePointsTetrahedron(6, false);
+    generate3dFaceClosure(F.closures, 6);
+    break;
+  case MSH_TET_120 :
+    F.numFaces = 4;
+    F.monomials = generatePascalTetrahedron(7);
+    F.points =    gmshGeneratePointsTetrahedron(7, false);
+    generate3dFaceClosure(F.closures, 7);
+    break;
+  case MSH_TET_165 :
+    F.numFaces = 4;
+    F.monomials = generatePascalTetrahedron(8);
+    F.points =    gmshGeneratePointsTetrahedron(8, false);
+    generate3dFaceClosure(F.closures, 8);
+    break;
+  case MSH_TET_220 :
+    F.numFaces = 4;
+    F.monomials = generatePascalTetrahedron(9);
+    F.points =    gmshGeneratePointsTetrahedron(9, false);
+    generate3dFaceClosure(F.closures, 9);
+    break;
+  case MSH_TET_286 :
+    F.numFaces = 4;
+    F.monomials = generatePascalTetrahedron(10);
+    F.points =    gmshGeneratePointsTetrahedron(10, false);
+    generate3dFaceClosure(F.closures, 10);
+    break;
   case MSH_QUA_4 :
     F.numFaces = 4;
     F.monomials = generatePascalQuad(1);
