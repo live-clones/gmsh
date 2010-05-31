@@ -356,7 +356,7 @@ int mpegFileDialog(const char *name)
   struct _mpegFileDialog{
     Fl_Window *window;
     Fl_Round_Button *b[2];
-    Fl_Check_Button *c[1];
+    Fl_Check_Button *c[2];
     Fl_Value_Input *v[1];
     Fl_Button *ok, *cancel;
   };
@@ -364,7 +364,7 @@ int mpegFileDialog(const char *name)
 
   if(!dialog){
     dialog = new _mpegFileDialog;
-    int h = 3 * WB + 5 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 6 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "MPEG Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
@@ -390,6 +390,10 @@ int mpegFileDialog(const char *name)
       (WB, y, 2 * BB + WB, BH, "Composite all window tiles"); y += BH;
     dialog->c[0]->type(FL_TOGGLE_BUTTON);
 
+    dialog->c[1] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Delete temporary files"); y += BH;
+    dialog->c[1]->type(FL_TOGGLE_BUTTON);
+
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->end();
@@ -400,6 +404,7 @@ int mpegFileDialog(const char *name)
   dialog->b[1]->value(CTX::instance()->post.animCycle);
   dialog->v[0]->value(CTX::instance()->post.animDelay);
   dialog->c[0]->value(CTX::instance()->print.compositeWindows);
+  dialog->c[1]->value(CTX::instance()->print.deleteTmpFiles);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -411,6 +416,7 @@ int mpegFileDialog(const char *name)
         opt_post_anim_cycle(0, GMSH_SET | GMSH_GUI, (int)dialog->b[1]->value());
         opt_post_anim_delay(0, GMSH_SET | GMSH_GUI, dialog->v[0]->value());
         opt_print_composite_windows(0, GMSH_SET | GMSH_GUI, (int)dialog->c[0]->value());
+        opt_print_delete_tmp_files(0, GMSH_SET | GMSH_GUI, (int)dialog->c[1]->value());
         CreateOutputFile(name, FORMAT_MPEG);
         dialog->window->hide();
         return 1;

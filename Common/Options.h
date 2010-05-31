@@ -736,6 +736,7 @@ double opt_print_gif_transparent(OPT_ARGS_NUM);
 double opt_print_text(OPT_ARGS_NUM);
 double opt_print_tex_as_equation(OPT_ARGS_NUM);
 double opt_print_composite_windows(OPT_ARGS_NUM);
+double opt_print_delete_tmp_files(OPT_ARGS_NUM);
 
 // COLORS
 

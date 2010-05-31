@@ -214,7 +214,7 @@ class CTX {
     int jpegQuality, jpegSmoothing, geoLabels, text, texAsEquation;
     int gifDither, gifSort, gifInterlace, gifTransparent;
     int posElementary, posElement, posGamma, posEta, posRho, posDisto;
-    int compositeWindows;
+    int compositeWindows, deleteTmpFiles;
   } print;
   // color options
   struct{

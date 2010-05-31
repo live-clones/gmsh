@@ -479,14 +479,14 @@ void CreateOutputFile(std::string fileName, int format)
       char *args[] = {(char*)"gmsh", (char*)parFileName.c_str()};
       try{
         mpeg_encode_main(2, args);
-        UnlinkFile(parFileName);
-        for(unsigned int i = 0; i < frames.size(); i++)
-          UnlinkFile(CTX::instance()->homeDir + frames[i]);
       }
       catch (const char *error){
         Msg::Error("mpeg_encode: %s", error);
-        Msg::Info("Temporary image were saved in: %s.gmsh-*.ppm", 
-                  CTX::instance()->homeDir.c_str());
+      }
+      if(opt_print_delete_tmp_files(0, GMSH_GET, 0)){
+        UnlinkFile(parFileName);
+        for(unsigned int i = 0; i < frames.size(); i++)
+          UnlinkFile(CTX::instance()->homeDir + frames[i]);
       }
     }
     break;

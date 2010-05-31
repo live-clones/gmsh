@@ -1604,6 +1604,9 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "CompositeWindows" , opt_print_composite_windows , 0. ,
     "Composite all window tiles in the same output image (for bitmap output only)" },
 
+  { F|O, "DeleteTemporaryFiles" , opt_print_delete_tmp_files , 1. ,
+    "Delete temporary files used during printing" },
+
   { F|O, "EpsBackground" , opt_print_eps_background , 1. ,
     "Save image background in PostScript/PDF output" },
   { F|O, "EpsBestRoot" , opt_print_eps_best_root , 1. ,

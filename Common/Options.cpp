@@ -8514,6 +8514,13 @@ double opt_print_composite_windows(OPT_ARGS_NUM)
   return CTX::instance()->print.compositeWindows;
 }
 
+double opt_print_delete_tmp_files(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.deleteTmpFiles = (int)val;
+  return CTX::instance()->print.deleteTmpFiles;
+}
+
 // Color option routines
 
 #if defined(HAVE_FLTK)
