@@ -307,7 +307,8 @@ int MergeFile(std::string fileName, bool warnIfMissing)
     if(status > 1) status = PView::readMED(fileName);
 #endif
   }
-  else if(ext == ".bdf" || ext == ".BDF" || ext == ".nas" || ext == ".NAS"){
+  else if(ext == ".bdf" || ext == ".BDF" || ext == ".nas" || ext == ".NAS" ||
+          ext == ".dat" || ext == ".DAT"){
     status = GModel::current()->readBDF(fileName);
   }
   else if(ext == ".p3d" || ext == ".P3D"){

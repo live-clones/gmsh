@@ -388,10 +388,10 @@ class GModel
   GEntity *revolve(GEntity *e, std::vector<double> p1, std::vector<double> p2,
                    double angle);
   GEntity *extrude(GEntity *e, std::vector<double> p1, std::vector<double> p2);
-  GEntity *addPipe(GEntity *e, std::vector<GEdge *>  edges);
-  void addRuledFaces (std::vector<std::vector<GEdge *> > edges); 
-  GFace* addFace (std::vector<GEdge *> edges, std::vector< std::vector<double > > points); 
-  GFace* addPlanarFace (std::vector<std::vector<GEdge *> > edges); 
+  GEntity *addPipe(GEntity *e, std::vector<GEdge *> edges);
+  void addRuledFaces(std::vector<std::vector<GEdge *> > edges); 
+  GFace *addFace(std::vector<GEdge *> edges, std::vector< std::vector<double > > points); 
+  GFace *addPlanarFace(std::vector<std::vector<GEdge *> > edges); 
 
   // create solid geometry primitives using the factory
   GEntity *addSphere(double cx, double cy, double cz, double radius);
