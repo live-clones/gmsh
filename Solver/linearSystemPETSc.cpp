@@ -56,7 +56,6 @@ void linearSystemPETSc<fullMatrix<PetscScalar> >::getFromRightHandSide(int row, 
   }
   _try(VecRestoreArray(_b, &tmp));
 }
-
 template<>
 void linearSystemPETSc<fullMatrix<PetscScalar> >::getFromSolution(int row, fullMatrix<PetscScalar> &val) const
 {
