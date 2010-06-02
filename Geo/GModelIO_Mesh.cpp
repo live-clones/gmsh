@@ -83,10 +83,11 @@ static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
 static MElement *createElementMSH(GModel *m, int num, int typeMSH, int physical,
                                   int reg, int part, std::vector<MVertex*> &v,
                                   std::map<int, std::vector<MElement*> > elements[10],
-                                  std::map<int, std::map<int, std::string> > physicals[4])
+                                  std::map<int, std::map<int, std::string> > physicals[4],
+                                  bool owner=false, MElement *parent=0)
 {
   MElementFactory factory;
-  MElement *e = factory.create(typeMSH, v, num, part);
+  MElement *e = factory.create(typeMSH, v, num, part, owner, parent);
 
   if(!e){
     Msg::Error("Unknown type of element %d", typeMSH);
@@ -140,21 +141,19 @@ static MElement *getParent(int parentNum, std::map<int, std::vector<MElement*> >
   return NULL;
 }
 
-static MElement *getParent(int parentNum, int dim,
+static MElement *getParent(int parentNum, int type,
                            std::map<int, std::vector<MElement*> > elements[10])
 {
   MElement *parent = NULL;
-  switch(dim){
-  case 0 :
-    return getParent(parentNum, elements[0]);
-  case 1 :
+  switch(type){
+  case MSH_LIN_C :
     return getParent(parentNum, elements[1]);
-  case 2 :
+  case MSH_POLYG_ :
     if((parent = getParent(parentNum, elements[2]))) return parent;
     if((parent = getParent(parentNum, elements[3]))) return parent;
     if((parent = getParent(parentNum, elements[8]))) return parent;
     return parent;
-  case 3 :
+  case MSH_POLYH_ :
     if((parent = getParent(parentNum, elements[4]))) return parent;
     if((parent = getParent(parentNum, elements[5]))) return parent;
     if((parent = getParent(parentNum, elements[6]))) return parent;
@@ -380,25 +379,25 @@ int GModel::readMSH(const std::string &name)
           else{
             if(!getVertices(numVertices, indices, vertexMap, vertices)) return 0;
           }
-          MElement *e = createElementMSH(this, num, type, physical, elementary,
-                                         partition, vertices, elements, physicals);
-          for(unsigned int j = 0; j < ghosts.size(); j++)
-            _ghostCells.insert(std::pair<MElement*, short>(e, ghosts[j]));
+          MElement *p = 0;
+          bool own = false;
           if(parent) {
-            MElement *p = 0;
             if(parents.find(parent) == parents.end()){
-              p = getParent(parent, e->getDim(), elements);
+              p = getParent(parent, type, elements);
               if(p) parents[parent] = p;
               else Msg::Error("Parent element %d not found", parent);
             }
             else p = parents.find(parent)->second;
             if(parentsOwned.find(p) == parentsOwned.end()) {
-              e->setParent(p, true);
+              own = true;
               parentsOwned.insert(p);
             }
-            else 
-              e->setParent(p, false);
           }
+          MElement *e = createElementMSH(this, num, type, physical, elementary,
+                                         partition, vertices, elements, physicals,
+                                         own, p);
+          for(unsigned int j = 0; j < ghosts.size(); j++)
+            _ghostCells.insert(std::pair<MElement*, short>(e, ghosts[j]));
           if(numElements > 100000)
             Msg::ProgressMeter(i + 1, numElements, "Reading elements");
           delete [] indices;
@@ -437,26 +436,26 @@ int GModel::readMSH(const std::string &name)
             else{
               if(!getVertices(numVertices, indices, vertexMap, vertices)) return 0;
             }
-            MElement *e = createElementMSH(this, num, type, physical, elementary,
-                                           partition, vertices, elements, physicals);
-            if(numPartitions > 1)
-              for(int j = 0; j < numPartitions - 1; j++)
-                _ghostCells.insert(std::pair<MElement*, short>(e, -data[5 + j]));
+            MElement *p = 0;
+            bool own = false;
             if(parent) {
-              MElement *p = 0;
               if(parents.find(parent) == parents.end()){
-                p = getParent(parent, e->getDim(), elements);
+                p = getParent(parent, type, elements);
                 if(p) parents[parent] = p;
                 else Msg::Error("Parent element %d not found", parent);
               }
               else p = parents.find(parent)->second;
               if(parentsOwned.find(p) == parentsOwned.end()) {
-                e->setParent(p, true);
+                own = true;
                 parentsOwned.insert(p);
               }
-              else 
-                e->setParent(p, false);
             }
+            MElement *e = createElementMSH(this, num, type, physical, elementary,
+                                           partition, vertices, elements, physicals,
+                                           own, p);
+            if(numPartitions > 1)
+              for(int j = 0; j < numPartitions - 1; j++)
+                _ghostCells.insert(std::pair<MElement*, short>(e, -data[5 + j]));
             if(numElements > 100000)
               Msg::ProgressMeter(numElementsPartial + i + 1, numElements,
                                  "Reading elements");

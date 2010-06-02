@@ -153,28 +153,50 @@ void MPolygon::_initVertices()
 {
   if(_parts.size() == 0) return;
 
+  // reorient the parts 
+  SVector3 n;
+  if(_orig) n = _orig->getFace(0).normal();
+  else n = _parts[0]->getFace(0).normal();
+  for(unsigned int i = 0; i < _parts.size(); i++) {
+    SVector3 ni = _parts[i]->getFace(0).normal();
+    if(dot(n, ni) < 0.) _parts[i]->revert();
+  }
+
+  std::vector<MEdge> edg;
   for(unsigned int i = 0; i < _parts.size(); i++) {
     for(int j = 0; j < 3; j++) {
       int k;
-      for(k = _edges.size() - 1; k >= 0; k--)
-        if(_parts[i]->getEdge(j) == _edges[k])
+      for(k = edg.size() - 1; k >= 0; k--)
+        if(_parts[i]->getEdge(j) == edg[k])
           break;
       if(k < 0)
-        _edges.push_back(_parts[i]->getEdge(j));
+        edg.push_back(_parts[i]->getEdge(j));
       else
-        _edges.erase(_edges.begin() + k);
+        edg.erase(edg.begin() + k);
+    }
+  }
+
+  // organize edges to get vertices in rotating order
+  _edges.push_back(edg[0]);
+  edg.erase(edg.begin());
+  while(edg.size()) {
+    for(unsigned int i = 0; i < edg.size(); i++) {
+      MVertex *v = _edges[_edges.size() - 1].getVertex(1);
+      if(edg[i].getVertex(0) == v) {
+        _edges.push_back(edg[i]);
+        edg.erase(edg.begin() + i);
+        break;
+      }
+      if(edg[i].getVertex(1) == v) {
+        _edges.push_back(MEdge(edg[i].getVertex(1), edg[i].getVertex(0)));
+        edg.erase(edg.begin() + i);
+        break;
+      }
     }
   }
 
   for(unsigned int i = 0; i < _edges.size(); i++) {
-    for(int j = 0; j < 2; j++) {
-      int k;
-      for(k = _vertices.size() - 1; k >= 0; k--)
-        if(_edges[i].getVertex(j) == _vertices[k])
-          break;
-      if(k < 0)
-        _vertices.push_back(_edges[i].getVertex(j));
-    }
+    _vertices.push_back(_edges[i].getVertex(0));
   }
 
   // innerVertices

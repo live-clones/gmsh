@@ -315,7 +315,8 @@ class MElementLessThanLexicographic{
 
 class MElementFactory{
  public:
-  MElement *create(int type, std::vector<MVertex*> &v, int num=0, int part=0);
+  MElement *create(int type, std::vector<MVertex*> &v, int num=0, int part=0,
+                   bool owner=false, MElement *parent=0);
 };
 
 // Traits of various elements based on the dimension.  These generally define

@@ -529,7 +529,7 @@ ReadParamFile(char *fileName,
         optionSeen[OPTION_IO_CONVERT] = TRUE;
       } else if ( strncmp(input, "IQTABLE", 7) == 0 ) {
         for ( row = 0; row < 8; row ++ ) {
-          fgets(input, 256, fpointer);
+          if(!fgets(input, 256, fpointer)) return FALSE;
           charPtr = input;
           if (8!=sscanf(charPtr,"%d %d %d %d %d %d %d %d",
                         &qtable[row*8+0],  &qtable[row*8+1],
@@ -566,7 +566,7 @@ ReadParamFile(char *fileName,
     case 'N':
       if ( strncmp(input, "NIQTABLE", 8) == 0 ) {
         for ( row = 0; row < 8; row ++ ) {
-          fgets(input, 256, fpointer);
+          if(!fgets(input, 256, fpointer)) return FALSE;
           charPtr = input;
           if (8!=sscanf(charPtr,"%d %d %d %d %d %d %d %d",
                         &niqtable[row*8+0],  &niqtable[row*8+1],

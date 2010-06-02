@@ -621,7 +621,7 @@ static void addScalarPolygon(PView *p, double xyz[PVIEW_NMAX][3],
                              double val[PVIEW_NMAX][9], bool pre, int numNodes)
 {
   if(numNodes == 3) addScalarTriangle(p, xyz, val, pre);
-  if(numNodes == 4) {addScalarQuadrangle(p, xyz, val, pre, 0, 1, 2, 3); addScalarQuadrangle(p, xyz, val, pre, 1, 2, 3, 0);}
+  if(numNodes == 4) addScalarQuadrangle(p, xyz, val, pre);
   
 }
 
@@ -853,7 +853,7 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
     double min = opt->tmpMin, max = opt->tmpMax;
     opt->tmpMin = opt->externalMin;
     opt->tmpMax = opt->externalMax;
-    addScalarElement(p, type, xyz, val2, pre);
+    addScalarElement(p, type, xyz, val2, pre, numNodes);
     opt->tmpMin = min;
     opt->tmpMax = max;
 
@@ -948,7 +948,7 @@ static void addTensorElement(PView *p, int numNodes, int type,
   if(opt->tensorType == PViewOptions::VonMises){
     for(int i = 0; i < numNodes; i++)
       val[i][0] = ComputeVonMises(val[i]);
-    addScalarElement(p, type, xyz, val, pre);
+    addScalarElement(p, type, xyz, val, pre, numNodes);
   }
 }
 
@@ -1013,7 +1013,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
         opt->tmpBBox += SPoint3(xyz[j][0], xyz[j][1], xyz[j][2]);
 
       if(opt->showElement && !data->useGaussPoints()) 
-        addOutlineElement(p, type, xyz, preprocessNormalsOnly);
+        addOutlineElement(p, type, xyz, preprocessNormalsOnly, numNodes);
       
       if(opt->intervalsType != PViewOptions::Numeric){
         if(data->useGaussPoints()){

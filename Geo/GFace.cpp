@@ -1133,8 +1133,10 @@ bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
 
 void GFace::lloyd(int nbiter, int infn)
 {
+#if defined(HAVE_MESH)
   lloydAlgorithm algo(nbiter, infn);
   algo(this);
+#endif
 }
 
 void GFace::replaceEdges (std::list<GEdge*> &new_edges)
