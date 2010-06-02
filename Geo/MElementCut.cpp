@@ -153,7 +153,7 @@ void MPolygon::_initVertices()
 {
   if(_parts.size() == 0) return;
 
-  // reorient the parts 
+  // reorient the parts
   SVector3 n;
   if(_orig) n = _orig->getFace(0).normal();
   else n = _parts[0]->getFace(0).normal();
@@ -385,7 +385,7 @@ void MTriangleBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
     const double v = ptsi[ip].pt[1];
     const double w = ptsi[ip].pt[2];
     const double weight = ptsi[ip].weight;
-    //const double detJ = 
+    //const double detJ =
     tt.getJacobian(u, v, w, jac);
     SPoint3 p; tt.pnt(u, v, w, p);
     _intpt[ip].pt[0] = p.x();
@@ -427,7 +427,7 @@ void MPolygonBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
     const double v = ptsi[ip].pt[1];
     const double w = ptsi[ip].pt[2];
     const double weight = ptsi[ip].weight;
-    //const double detJ = 
+    //const double detJ =
     pp.getJacobian(u, v, w, jac);
     SPoint3 p; pp.pnt(u, v, w, p);
     _intpt[ip].pt[0] = p.x();
@@ -891,7 +891,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
   case MSH_POLYG_ :
   case MSH_POLYG_B :
     {
-      if(eType == MSH_TRI_3) {
+      if((eType == MSH_TRI_3) | (eType == MSH_TRI_B)) {
         DI_Triangle T(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
                       e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
                       e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z());
@@ -998,7 +998,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
         int reg = getElementaryTag(triangles[nbTr]->lsTag(), elementary, newElemTags[2]);
         std::vector<int> phys;
         getPhysicalTag(triangles[nbTr]->lsTag(), gePhysicals, phys, newPhysTags[2]);
-        if(eType == MSH_TRI_3)
+        if((eType == MSH_TRI_3) | (eType == MSH_TRI_B))
           elements[2][reg].push_back(copy);
         else if(eType == MSH_QUA_4)
           elements[3][reg].push_back(copy);
