@@ -17,6 +17,7 @@ set(SRC
   functionDerivator.cpp
   luaFunction.cpp
   functionSpace.cpp
+  filters.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 

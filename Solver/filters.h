@@ -1,5 +1,5 @@
 //
-// Description : Filtered and xFem function space definition
+// Description : Filters for function space dof selection
 //
 //
 // Author:  <Eric Bechet>::<Boris Sedji>,  02/2010
@@ -117,6 +117,35 @@ class FilterElementsCutByLevelSet
       else return false;
     }
 
+
+};
+
+
+class FilterLevelSetForLagMultSpace
+{
+
+  private :
+
+		groupOfElements * _g;
+		std::pair<int,int> _LevelSetEntity;
+		std::set<int> _winner_nodes;
+    std::set<int> _all_nodes;
+		
+	private :
+		
+		void SortNodes (void) ;
+
+  public :
+
+    FilterLevelSetForLagMultSpace(std::pair<int,int> LevelSetEntity, groupOfElements * g) : _LevelSetEntity(LevelSetEntity), _g(g)
+    {
+				SortNodes();
+    }
+
+    virtual bool operator () (Dof & key) const
+    {
+				;
+    }
 
 };
 
