@@ -237,15 +237,15 @@ class MPolygon : public MElement {
   }
   virtual const polynomialBasis* getFunctionSpace(int order=-1) const
   {
-    return _orig->getFunctionSpace(order);
+    if (_orig) return _orig->getFunctionSpace(order);
   }
   virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
   {
-    _orig->getShapeFunctions(u, v, w, s, o);
+    if (_orig) _orig->getShapeFunctions(u, v, w, s, o);
   }
   virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
   {
-    _orig->getGradShapeFunctions(u, v, w, s, o);
+    if (_orig) _orig->getGradShapeFunctions(u, v, w, s, o);
   }
   // the parametric coordinates of the polygon are
   // the coordinates in the local parent element.
