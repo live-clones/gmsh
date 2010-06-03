@@ -971,6 +971,7 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_QUA_4:  return new MQuadrangle(v, num, part);
   case MSH_QUA_8:  return new MQuadrangle8(v, num, part);
   case MSH_QUA_9:  return new MQuadrangle9(v, num, part);
+  case MSH_QUA_12: return new MQuadrangleN(v, 3, num, part);
   case MSH_QUA_16: return new MQuadrangleN(v, 3, num, part);
   case MSH_QUA_25: return new MQuadrangleN(v, 4, num, part);
   case MSH_QUA_36: return new MQuadrangleN(v, 5, num, part);

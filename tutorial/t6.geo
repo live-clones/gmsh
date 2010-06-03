@@ -53,3 +53,5 @@ Recombine Surface{1};
 
 // Apply an elliptic smoother to the grid
 Mesh.Smoothing = 100;
+
+Physical Surface(1) = 1;
