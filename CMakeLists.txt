@@ -17,8 +17,6 @@ endif(DEFINED CMAKE_BUILD_TYPE)
 project(gmsh CXX C)
 
 option(ENABLE_ANN "Enable ANN to compute Approximate Nearest Neighbors" ON)
-option(ENABLE_ARC "Enable ARC-related binary targets" OFF)
-option(ENABLE_CM3 "Enable CM3-related binary targets" OFF)
 option(ENABLE_BLAS_LAPACK "Use BLAS/Lapack for basic linear algebra" ON)
 option(ENABLE_CGNS "Enable CGNS mesh export" OFF)
 option(ENABLE_CHACO "Enable Chaco mesh partitioner" ON)
@@ -222,9 +220,9 @@ if(ENABLE_BLAS_LAPACK)
     endif(LAPACK_LIBRARIES)
   elseif(${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
     # on SunOS we know blas and lapack are available in sunperf
+    set(LAPACK_FLAGS -library=sunperf)
     set_config_option(HAVE_BLAS "Blas(SubPerf)")
     set_config_option(HAVE_LAPACK "Lapack(SunPerf)")
-    set(LAPACK_FLAGS -library=sunperf)
   elseif(APPLE)
     # on Mac we also know that blas and lapack are available
     set(LAPACK_LIBRARIES "-framework vecLib")
@@ -681,7 +679,6 @@ if(ENABLE_ACIS)
   endif(ACIS_LIB)
 endif(ENABLE_ACIS)
 
-
 if(ENABLE_OSMESA)
   find_library(OSMESA_LIB OSMesa)
   if(OSMESA_LIB)
@@ -847,14 +844,6 @@ if(CYGWIN)
 elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS "/STACK:16777216")
 endif(CYGWIN)
-
-# contrib binary targets
-if(ENABLE_ARC)
-  include(contrib/arc/CMakeLists.txt)
-endif(ENABLE_ARC)
-if(ENABLE_CM3)
-  include(projects/dgplate/CMakeLists.txt)
-endif(ENABLE_CM3)
 
 find_program(BISON bison)
 find_program(FLEX flex)
