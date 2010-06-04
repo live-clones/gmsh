@@ -105,8 +105,8 @@ class FilterElementsCutByLevelSet
 
     virtual bool operator () (Dof & key) const
     {
-      std::set<int>::iterator it1;
-      std::set<int>::iterator it2;
+      std::set<int>::const_iterator it1;
+      std::set<int>::const_iterator it2;
       int i1,i2;
       Dof::getTwoIntsFromType(key.getType(), i1,i2);
        it2 = _EnrichComp->find(i1);
