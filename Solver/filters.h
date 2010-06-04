@@ -80,13 +80,13 @@ class FilterElementsCutByLevelSet
 
     FilterElementsCutByLevelSet(std::pair<int,int> LevelSetEntity , std::set<int> * EnrichComp)
     {
-			
+
 			_EnrichComp = EnrichComp;
       _LevelSetEntity = LevelSetEntity;
-			
+
 			// groupOfElements to get all the elements associate with the level set -- (work with *current GModel)
 			groupOfElements *LevelSetElements = new groupOfElements (_LevelSetEntity.first, _LevelSetEntity.second);
-		
+
 			// tag enriched vertex determination
 			std::set<MElement*>::const_iterator it = LevelSetElements->begin();
 			for (; it != LevelSetElements->end(); it++)
@@ -100,7 +100,7 @@ class FilterElementsCutByLevelSet
 					}
 				}
 			}
-			
+
     }
 
     virtual bool operator () (Dof & key) const
@@ -120,60 +120,6 @@ class FilterElementsCutByLevelSet
 
 
 };
-
-
-class FilterLevelSetForLagMultSpace
-{
-
-	private :
-		
-		typedef MVertex * NodeType;
-		typedef std::pair <NodeType , NodeType > EdgeType;
-		typedef std::pair <EdgeType , double > EdgeScoreType;
-
-	
-  private :
-
-		groupOfElements * _LevelSetElements;
-		std::pair<int,int> _LevelSetEntity;
-		std::set< NodeType > _winner_nodes;
-		std::set< NodeType > _looser_nodes;
-		gLevelset *_ls;
-		
-	private :
-		
-		// decimation algorithm result in _winner_nodes set
-		void SortNodes (void) ;
-		// initialisation of needed sets
-		void fillNodeToEdgeMap(std::map < NodeType , EdgeType > & NodeToEdgeMap, std::set< EdgeType > & Se , std::set< NodeType > & Sn) ;
-		// find edge in the element associate with node
-		EdgeType findEdge(NodeType v, MElement * e);
-		// verify if node belong to edge  // ...normaly has to be done when cutting model ...
-		bool NodeBelongToEdge(NodeType v, EdgeType edge);
-		// compute score
-		void ComputeScore(std::map < NodeType , EdgeType > & NodeToEdgeMap, std::set< EdgeType > & Se, std::set< NodeType > & Sn, std::map < NodeType , int > & NodesScore);
-		// compute number of incident edges in Se to node v
-		int ComputeIncidentEdges(std::set< EdgeType > & Se, NodeType & v);
-		// get lowest  (no need to sort just get the lowest)
-		NodeType getNodeWithLowestScore(std::map < NodeType , int > & NodesScore);
-		// kill connected edges
-		void killConnectedEdges (std::map < NodeType , EdgeType > & NodeToEdgeMap, std::set< EdgeType > & Se , std::set< NodeType > & Sn, NodeType v);
-
-  public :
-
-    FilterLevelSetForLagMultSpace(std::pair<int,int> LevelSetEntity , gLevelset *ls) : _LevelSetEntity(LevelSetEntity), _ls(ls)
-    {
-			  groupOfElements *_LevelSetElements = new groupOfElements (_LevelSetEntity.first, _LevelSetEntity.second);
-				SortNodes();
-    }
-
-    virtual bool operator () (Dof & key) const
-    {
-				;
-    }
-
-};
-
 
 
 #endif
