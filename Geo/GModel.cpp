@@ -250,6 +250,19 @@ void GModel::destroyMeshCaches()
   _octree = 0;
 }
 
+void GModel::deleteMesh()
+{
+	for(riter it=firstRegion();it!=lastRegion();++it)
+		(*it)->deleteMesh();
+	for(fiter it=firstFace();it!=lastFace();++it)
+		(*it)->deleteMesh();
+	for(eiter it=firstEdge();it!=lastEdge();++it)
+		(*it)->deleteMesh();
+	for(viter it=firstVertex();it!=lastVertex();++it)
+		(*it)->deleteMesh();
+	destroyMeshCaches();
+}
+
 bool GModel::empty() const
 {
   return vertices.empty() && edges.empty() && faces.empty() && regions.empty();
