@@ -240,17 +240,32 @@ static fullMatrix<double> generatePascalPrism(int order)
   int nbMonomials = (order + 1) * (order + 1) * (order + 2) / 2;
 
   fullMatrix<double> monomials(nbMonomials, 3);
-
   int index = 0;
   fullMatrix<double> lineMonoms = generate1DMonomials(order);
   fullMatrix<double> triMonoms = generatePascalTriangle(order);
-  for (int j = 0; j < lineMonoms.size1(); j++) {
-    for (int i = 0; i < triMonoms.size1(); i++) {
-        monomials(index,0) = triMonoms(i,0);
-        monomials(index,1) = triMonoms(i,1);
-        monomials(index,2) = lineMonoms(j,0);
+  // store monomials in right order
+  for (int currentOrder = 0; currentOrder <= order; currentOrder++) {
+    int orderT = currentOrder, orderL = currentOrder;
+    for (orderL = 0; orderL < currentOrder; orderL++) {
+      // do all permutations of monoms for orderL, orderT
+      int iL = orderL;
+      for (int iT = (orderT)*(orderT+1)/2; iT < (orderT+1)*(orderT+2)/2 ;iT++) {
+        monomials(index,0) = triMonoms(iT,0);
+        monomials(index,1) = triMonoms(iT,1);
+        monomials(index,2) = lineMonoms(iL,0);
         index ++;
+      }
     }
+    orderL = currentOrder;
+    for (orderT = 0; orderT <= currentOrder; orderT++) {
+      int iL = orderL;
+      for (int iT = (orderT)*(orderT+1)/2; iT < (orderT+1)*(orderT+2)/2 ;iT++) {
+        monomials(index,0) = triMonoms(iT,0);
+        monomials(index,1) = triMonoms(iT,1);
+        monomials(index,2) = lineMonoms(iL,0);
+        index ++;
+      }
+    }    
   }
 //   monomials.print("Pri monoms");
   return monomials;

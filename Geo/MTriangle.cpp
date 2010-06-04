@@ -233,6 +233,9 @@ void MTriangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *pts = getGQTPts(pOrder);
 }
 #include "Bindings.h"
+static MTriangle6* MTriangle6_binding(std::vector<MVertex*> v) {
+  return new MTriangle6(v);
+}
 
 void MTriangle::registerBindings(binding *b)
 {
@@ -243,5 +246,18 @@ void MTriangle::registerBindings(binding *b)
   cm->setArgNames("v0", "v1", "v2", NULL);
   cm->setDescription("Create a new triangle with vertices (v0,v1,v2).");
   cb->setParentClass<MElement>();
+
+  cb = b->addClass<MTriangle6>("MTriangle6");
+  cb->setDescription("A mesh second-order triangle.");
+  cm = cb->addMethod("MTriangle6",&MTriangle6_binding);
+  cm->setArgNames("vectorOfVertices", NULL);
+  cm->setDescription("Create a new triangle with vertices given in the vector (length = 6).");
+  cb->setParentClass<MTriangle>();
+
+/*  cb->setDescription("A mesh second-order triangle.");
+  cm = cb->setConstructor<MTriangle6_binding,std::vector<MVertex*> >();
+  cm->setArgNames("vectorOfVertices", NULL);
+  cm->setDescription("Create a new triangle with vertices given in the vector (length = 6).");
+  cb->setParentClass<MTriangle>();*/
 }
 

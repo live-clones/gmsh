@@ -2131,4 +2131,14 @@ void GModel::registerBindings(binding *b)
   cm->setDescription("set the model as the current (active) one");
   cm = cb->setConstructor<GModel>();
   cm->setDescription("Create an empty GModel");
+
+  cm = cb->addMethod("getPhysicalName", &GModel::getPhysicalName);
+  cm->setDescription("get the name of an physical group, identified by its dimension and number. "
+                     "Returns empty string if physical name is not assigned");
+  cm->setArgNames("dim","number",NULL);
+  cm = cb->addMethod("setPhysicalName", &GModel::setPhysicalName);
+  cm->setDescription("set the name of an physical group, identified by its dimension and number. "
+                     "If number=0, the first free number is chosen. Returns the number.");
+  cm->setArgNames("physicalName","dim","number",NULL);
+
 }

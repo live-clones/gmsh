@@ -221,6 +221,15 @@ class GEntity {
   int tag() const { return _tag; }
   void setTag(int tag) { _tag = tag; }
 
+  // get/set physical entities
+  virtual void addPhysicalEntity(int physicalTag) {
+    physicals.push_back(physicalTag);
+  }
+  virtual std::vector<int> getPhysicalEntities() {
+    return physicals;
+  }
+
+
   // returns the tag of the entity that its master entity (for mesh) 
   int meshMaster() const { return _meshMaster; }
   void setMeshMaster(int m) { _meshMaster = m; }
@@ -234,7 +243,7 @@ class GEntity {
   // get/set the visibility flag
   virtual char getVisibility();
   virtual void setVisibility(char val, bool recursive=false){ _visible = val; }
-
+  
   // get/set the selection flag
   virtual char getSelection(){ return _selection; }
   virtual void setSelection(char val){ _selection = val; }

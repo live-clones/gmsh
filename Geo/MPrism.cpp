@@ -126,6 +126,9 @@ void MPrism::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) c
   Msg::Error("Could not get face information for prism %d", getNum());
 }
 #include "Bindings.h"
+static MPrism18* MPrism18_binding(std::vector<MVertex*> v) {
+  return new MPrism18(v);
+}
 
 void MPrism::registerBindings(binding *b)
 {
@@ -135,6 +138,19 @@ void MPrism::registerBindings(binding *b)
   cm = cb->setConstructor<MPrism,MVertex*,MVertex*,MVertex*,MVertex*, MVertex*, MVertex*>();
   cm->setArgNames("v0", "v1", "v2", "v3","v4","v5", NULL);
   cm->setDescription("Create a new prism with top triangle (v0,v1,v2) and bottom one (v3,v4,v5).");
+  cm = cb->addMethod("getVolumeSign",&MPrism::getVolumeSign);
+  cm->setDescription("computes the sign of the element volume");
+  cm = cb->addMethod("revert",&MPrism::revert);
+  cm->setDescription("reorganises the element vertices so that volume is positive");
+
   cb->setParentClass<MElement>();
+
+  cb = b->addClass<MPrism18>("MPrism18");
+  cb->setDescription("A mesh second-order prism.");
+  cm = cb->addMethod("MPrism18",&MPrism18_binding);
+//   cm = cb->setConstructor<MPrism18_binding,std::vector<MVertex*> >();
+  cm->setArgNames("vectorOfVertices", NULL);
+  cm->setDescription("Create a new prism with vertices in vectorV (length=18).");
+  cb->setParentClass<MPrism>();
 }
 

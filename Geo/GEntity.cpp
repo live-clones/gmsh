@@ -102,5 +102,12 @@ void GEntity::registerBindings(binding *b)
   mb->setDescription("do a dynamic cast of the GEntity to a GRegion (0 if wrong cast).");
   mb = cb->addMethod("tag", &GEntity::tag);
   mb->setDescription("return the tag of this entity.");
-
+  mb = cb->addMethod("getPhysicalEntities", &GEntity::getPhysicalEntities);
+  mb->setDescription("return a vector of all physical entities that this entity belongs to.");
+  mb = cb->addMethod("addPhysicalEntity", &GEntity::addPhysicalEntity);
+  mb->setArgNames("physicalGroupId",NULL);
+  mb->setDescription("add this element to a physical group.");
 }
+
+
+

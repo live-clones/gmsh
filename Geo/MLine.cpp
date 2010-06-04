@@ -41,6 +41,9 @@ double MLine::getInnerRadius()
 }
 
 #include "Bindings.h"
+static MLine* MLine_binding(std::vector<MVertex*> v) {
+  return new MLine(v);
+}
 
 void MLine::registerBindings(binding *b)
 {
@@ -48,8 +51,12 @@ void MLine::registerBindings(binding *b)
   cb->setDescription("A line mesh element.");
 
   methodBinding *cm;
-  cm = cb->setConstructor<MLine,MVertex*,MVertex*>();
-  cm->setArgNames("v0","v1", NULL);
-  cm->setDescription("Create a new line mesh element between v0 and v1.");
+  cm = cb->addMethod("MLine",&MLine_binding);
+  cm->setArgNames("vectorOfVertices", NULL);
+  cm->setDescription("Create a new line mesh element with the given vertices. "
+                     "First 2 vertices must correspond to the beginning/end of the line.");
+//   cm = cb->setConstructor<MLine,MVertex*,MVertex*>();
+//   cm->setArgNames("v0","v1", NULL);
+//   cm->setDescription("Create a new line mesh element between v0 and v1.");
   cb->setParentClass<MElement>();
 }

@@ -422,4 +422,9 @@ void MVertex::registerBindings(binding *b)
   cm->setDescription("Create a new mesh vertex at (x,y,z).");
   cm = cb->addMethod("getNum", &MVertex::getNum);
   cm->setDescription("return the invariant vertex id");
+  cm = cb->addMethod("getPolynomialOrder", &MVertex::getPolynomialOrder);
+  cm->setDescription("return the polynomial order of vertex");
+  cm = cb->addMethod("setPolynomialOrder", &MVertex::setPolynomialOrder_binding);
+  cm->setDescription("assign the polynomial order of vertex");
+  cm->setArgNames("order",NULL);
 }
