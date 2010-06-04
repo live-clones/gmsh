@@ -15,6 +15,7 @@
 #include "dofManager.h"
 #include "GModel.h"
 #include "groupOfElements.h"
+#include "DILevelset.h"
 
 class FilterNodeEnriched
 {
@@ -124,21 +125,45 @@ class FilterElementsCutByLevelSet
 class FilterLevelSetForLagMultSpace
 {
 
+	private :
+		
+		typedef MVertex * NodeType;
+		typedef std::pair <NodeType , NodeType > EdgeType;
+		typedef std::pair <EdgeType , double > EdgeScoreType;
+
+	
   private :
 
-		groupOfElements * _g;
+		groupOfElements * _LevelSetElements;
 		std::pair<int,int> _LevelSetEntity;
-		std::set<int> _winner_nodes;
-    std::set<int> _all_nodes;
+		std::set< NodeType > _winner_nodes;
+		std::set< NodeType > _looser_nodes;
+		gLevelset *_ls;
 		
 	private :
 		
+		// decimation algorithm result in _winner_nodes set
 		void SortNodes (void) ;
+		// initialisation of needed sets
+		void fillNodeToEdgeMap(std::map < NodeType , EdgeType > & NodeToEdgeMap, std::set< EdgeType > & Se , std::set< NodeType > & Sn) ;
+		// find edge in the element associate with node
+		EdgeType findEdge(NodeType v, MElement * e);
+		// verify if node belong to edge  // ...normaly has to be done when cutting model ...
+		bool NodeBelongToEdge(NodeType v, EdgeType edge);
+		// compute score
+		void ComputeScore(std::map < NodeType , EdgeType > & NodeToEdgeMap, std::set< EdgeType > & Se, std::set< NodeType > & Sn, std::map < NodeType , int > & NodesScore);
+		// compute number of incident edges in Se to node v
+		int ComputeIncidentEdges(std::set< EdgeType > & Se, NodeType & v);
+		// get lowest  (no need to sort just get the lowest)
+		NodeType getNodeWithLowestScore(std::map < NodeType , int > & NodesScore);
+		// kill connected edges
+		void killConnectedEdges (std::map < NodeType , EdgeType > & NodeToEdgeMap, std::set< EdgeType > & Se , std::set< NodeType > & Sn, NodeType v);
 
   public :
 
-    FilterLevelSetForLagMultSpace(std::pair<int,int> LevelSetEntity, groupOfElements * g) : _LevelSetEntity(LevelSetEntity), _g(g)
+    FilterLevelSetForLagMultSpace(std::pair<int,int> LevelSetEntity , gLevelset *ls) : _LevelSetEntity(LevelSetEntity), _ls(ls)
     {
+			  groupOfElements *_LevelSetElements = new groupOfElements (_LevelSetEntity.first, _LevelSetEntity.second);
 				SortNodes();
     }
 
