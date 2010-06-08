@@ -642,21 +642,6 @@ int GModel::getNumMeshVertices()
   return n;
 }
 
-void GModel::getMeshVertices(std::vector<MVertex *> &meshVertices)
-{
-	meshVertices.resize(getNumMeshVertices());
-  std::vector<GEntity*> entities;
-  getEntities(entities);
-  int n = -1;
-  for(unsigned int i = 0; i < entities.size(); i++)
-	{
-		GEntity *entity=entities[i];
-		unsigned msh_size=entity->mesh_vertices.size();
-		for(unsigned j=0;j<msh_size;++j)
-			meshVertices[++n]=entity->mesh_vertices[j];
-	}
-}
-
 int GModel::getNumMeshElements()
 {
   std::vector<GEntity*> entities;
