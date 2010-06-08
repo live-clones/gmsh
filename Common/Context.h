@@ -11,6 +11,8 @@
 #include "CGNSOptions.h"
 #include "meshPartitionOptions.h"
 
+class binding;
+
 // The interface-independent context.
 
 struct contextMeshOptions {
@@ -242,6 +244,7 @@ class CTX {
   int unpackGreen(unsigned int X);
   int unpackBlue(unsigned int X);
   int unpackAlpha(unsigned int X);
+  
 };
 
 #endif

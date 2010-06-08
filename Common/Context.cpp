@@ -116,3 +116,4 @@ int CTX::unpackAlpha(unsigned int X)
   else
     return ( ( (X) >> 24 ) & 0xff );
 }
+

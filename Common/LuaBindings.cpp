@@ -29,6 +29,7 @@
 #include "Bindings.h"
 #include "GmshMessage.h"
 #include "linearSystem.h"
+#include "Options.h"
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
@@ -83,6 +84,11 @@ class gmshOptions {
   {
     GmshSetOption(category, name, value, index);
   }
+  void initOptions(){
+    ReInitOptions(0);
+    InitOptionsGUI(0);
+  }
+
   static void registerBindings(binding *b)
   {
     classBinding *cb = b->addClass<gmshOptions>("gmshOptions");
@@ -112,6 +118,11 @@ class gmshOptions {
     mb->setDescription("return the value of a string option. This is equivalent "
                        "to category[index].name");
     mb->setArgNames("category", "index", "name", NULL);
+
+    mb = cb->addMethod("initOptions", &gmshOptions::initOptions);
+    mb->setDescription("Re-initialize option file");
+    mb->setArgNames(NULL);
+
     mb = cb->setConstructor<gmshOptions>();
     mb->setDescription("an instance of gmshOptions is needed to access the database");
   }
