@@ -310,6 +310,9 @@ class GModel
 
   // return the total number of vertices in the mesh
   int getNumMeshVertices();
+	
+	// return all the mesh vertices
+	void getMeshVertices(std::vector<MVertex *> &meshVertices);
 
   // access a mesh vertex by tag, using the vertex cache
   MVertex *getMeshVertexByTag(int n);
