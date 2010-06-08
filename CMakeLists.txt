@@ -205,8 +205,7 @@ if(ENABLE_BLAS_LAPACK)
       endif(LAPACK_LIBRARIES)
     endif(LAPACK_LIBRARIES)
   elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    # on Linux also try to find the Intel MKL without a Fortran
-    # compiler
+    # on Linux try to find the Intel MKL without a Fortran compiler
     if(HAVE_64BIT_SIZE_T)
       set(MKL_PATH lib/em64t)
     else(HAVE_64BIT_SIZE_T)
@@ -217,6 +216,16 @@ if(ENABLE_BLAS_LAPACK)
     if(LAPACK_LIBRARIES)
       set_config_option(HAVE_BLAS "Blas(IntelMKL)")
       set_config_option(HAVE_LAPACK "Lapack(IntelMKL)")
+    else(LAPACK_LIBRARIES)
+      # on Linux also try to find ATLAS without a Fortran compiler,
+      # because cmake ships with a buggy FindBLAS e.g. on Ubuntu Lucid
+      # Lynx
+      set(ATLAS_LIBS_REQUIRED lapack f77blas atlas)
+      find_all_libraries(LAPACK_LIBRARIES ATLAS_LIBS_REQUIRED "" "")
+      if(LAPACK_LIBRARIES)
+        set_config_option(HAVE_BLAS "Blas(ATLAS)")
+        set_config_option(HAVE_LAPACK "Lapack(ATLAS)")
+      endif(LAPACK_LIBRARIES)
     endif(LAPACK_LIBRARIES)
   elseif(${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
     # on SunOS we know blas and lapack are available in sunperf
@@ -565,7 +574,7 @@ endif(ENABLE_TAUCS)
 if(ENABLE_LUA)
   find_library(LUA_LIB lua PATH_SUFFIXES lib)
   if(LUA_LIB)
-    find_path(LUA_INC "lua.h" PATH_SUFFIXES src include)
+    find_path(LUA_INC "lua.h" PATH_SUFFIXES lua5.1 src include)
     if(LUA_INC)
       set_config_option(HAVE_LUA "Lua")
       list(APPEND EXTERNAL_LIBRARIES ${LUA_LIB})
