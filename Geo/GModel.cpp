@@ -252,15 +252,15 @@ void GModel::destroyMeshCaches()
 
 void GModel::deleteMesh()
 {
-	for(riter it=firstRegion();it!=lastRegion();++it)
-		(*it)->deleteMesh();
-	for(fiter it=firstFace();it!=lastFace();++it)
-		(*it)->deleteMesh();
-	for(eiter it=firstEdge();it!=lastEdge();++it)
-		(*it)->deleteMesh();
-	for(viter it=firstVertex();it!=lastVertex();++it)
-		(*it)->deleteMesh();
-	destroyMeshCaches();
+  for(riter it = firstRegion(); it != lastRegion();++it)
+    (*it)->deleteMesh();
+  for(fiter it = firstFace(); it != lastFace();++it)
+    (*it)->deleteMesh();
+  for(eiter it = firstEdge(); it != lastEdge();++it)
+    (*it)->deleteMesh();
+  for(viter it = firstVertex(); it != lastVertex();++it)
+    (*it)->deleteMesh();
+  destroyMeshCaches();
 }
 
 bool GModel::empty() const
