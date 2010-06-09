@@ -323,10 +323,10 @@ class dofManager{
         itConstraint = constraints.find(R[i]);
         if (itConstraint != constraints.end())
         {
-          for (unsigned i=0;i<(itConstraint->second).linear.size();i++)
+          for (unsigned j=0;j<(itConstraint->second).linear.size();j++)
           {
-                  std::map<Dof, int>::iterator itC = unknown.find((itConstraint->second).linear[i].first); // lin dep in unknown ?!
-                  _current->addToRightHandSide(itC->second, m(i)*(itConstraint->second).linear[i].second);
+                  std::map<Dof, int>::iterator itC = unknown.find((itConstraint->second).linear[j].first); // lin dep in unknown ?!
+                  _current->addToRightHandSide(itC->second, m(i)*(itConstraint->second).linear[j].second);
           }
         }
       }

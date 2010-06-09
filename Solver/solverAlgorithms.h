@@ -70,7 +70,25 @@ template<class Iterator,class Assembler> void Assemble(BilinearTermBase &term,
     term.get(e, npts, GP, localMatrix);
     shapeFcts.getKeys(e, R);
     testFcts.getKeys(e, C);
+//    std::cout << "assembling normal test function ; lagrange trial function : " << std::endl;
+//    for (int i = 0 ; i < R.size() ; i++)
+//    {
+//      std::cout << "tests : " << R[i].getEntity() << ":" << R[i].getType() << std::endl ;
+//    }
+//    for (int i = 0 ; i < R.size() ; i++)
+//    {
+//      std::cout << "trial : " << C[i].getEntity() << ":" << C[i].getType() << std::endl ;
+//    }
     assembler.assemble(R, C, localMatrix);
+//    std::cout << "assembling lagrange test function ; normal trial function : " << std::endl;
+//    for (int i = 0 ; i < R.size() ; i++)
+//    {
+//      std::cout << "tests : " << C[i].getEntity() << ":" << C[i].getType() << std::endl ;
+//    }
+//    for (int i = 0 ; i < R.size() ; i++)
+//    {
+//      std::cout << "trial : " << R[i].getEntity() << ":" << R[i].getType() << std::endl ;
+//    }
     assembler.assemble(C, R, localMatrix.transpose());
   }
 }

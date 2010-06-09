@@ -201,7 +201,7 @@ class IsotropicElasticTerm : public BilinearTerm<SVector3,SVector3>
   virtual ~IsotropicElasticTerm() {}
   virtual void get(MElement *ele,int npts,IntPt *GP,fullMatrix<double> &m)
   {
-    if (ele->getParent()) ele=ele->getParent();    
+    if (ele->getParent()) ele=ele->getParent();
     if (sym)
     {
       int nbFF = BilinearTerm<SVector3,SVector3>::space1.getNumKeys(ele);
@@ -314,6 +314,7 @@ template<class T1> class LoadTerm : public LinearTerm<T1>
   }
 };
 
+
 class LagrangeMultiplierTerm : public BilinearTerm<SVector3,double>
 {
   SVector3 _d;
@@ -343,5 +344,71 @@ class LagrangeMultiplierTerm : public BilinearTerm<SVector3,double>
     }
   }
 };
+
+
+class LagMultTerm : public BilinearTerm<SVector3, SVector3>
+{
+  SVector3 _d;
+ public :
+  LagMultTerm(FunctionSpace<SVector3>& space1_, FunctionSpace<SVector3>& space2_, const SVector3 &d) :
+    BilinearTerm<SVector3,SVector3>(space1_, space2_) {for(int i=0; i < 3; i++) _d(i) = d(i);}
+  virtual ~LagMultTerm() {}
+  virtual void get(MElement *ele, int npts, IntPt *GP, fullMatrix<double> &m)
+  {
+    int nbFF1 = BilinearTerm<SVector3,SVector3>::space1.getNumKeys(ele); //nbVertices*nbcomp of parent
+    int nbFF2 = BilinearTerm<SVector3,SVector3>::space2.getNumKeys(ele); //nbVertices of boundary
+    double jac[3][3];
+    m.resize(nbFF1, nbFF2);
+    m.setAll(0.);
+    for (int i = 0; i < npts; i++) {
+      double u = GP[i].pt[0]; double v = GP[i].pt[1]; double w = GP[i].pt[2];
+      const double weight = GP[i].weight; const double detJ = ele->getJacobian(u, v, w, jac);
+      std::vector<TensorialTraits<SVector3>::ValType> Vals;
+      std::vector<TensorialTraits<SVector3>::ValType> ValsT;
+      BilinearTerm<SVector3,SVector3>::space1.f(ele, u, v, w, Vals);
+      BilinearTerm<SVector3,SVector3>::space2.f(ele, u, v, w, ValsT);
+      for (int j = 0; j < nbFF1; j++) {
+        for (int k = 0; k < nbFF2; k++) {
+          m(j, k) += dot(Vals[j], ValsT[k]) * weight * detJ;
+        }
+      }
+    }
+    m.print();
+  }
+};
+
+
+template<class T1> class LoadTermOnBorder : public LinearTerm<T1>
+{
+  simpleFunction<typename TensorialTraits<T1>::ValType> &Load;
+ public :
+  LoadTerm(FunctionSpace<T1>& space1_,simpleFunction<typename TensorialTraits<T1>::ValType> &Load_) :LinearTerm<T1>(space1_),Load(Load_) {}
+  virtual ~LoadTerm() {}
+
+  virtual void get(MElement *ele,int npts,IntPt *GP,fullVector<double> &m)
+  {
+    MElement * elep;
+    if (ele->getParent()) elep=ele->getParent();
+    int nbFF=LinearTerm<T1>::space1.getNumKeys(ele);
+    double jac[3][3];
+    m.resize(nbFF);
+    m.scale(0.);
+    for (int i = 0; i < npts; i++)
+    {
+      const double u = GP[i].pt[0]; const double v = GP[i].pt[1]; const double w = GP[i].pt[2];
+      const double weight = GP[i].weight; const double detJ = ele->getJacobian(u, v, w, jac);
+      std::vector<typename TensorialTraits<T1>::ValType> Vals;
+      LinearTerm<T1>::space1.f(ele, u, v, w, Vals);
+      SPoint3 p;
+      ele->pnt(u, v, w, p);
+      typename TensorialTraits<T1>::ValType load=Load(p.x(),p.y(),p.z());
+      for (int j = 0; j < nbFF ; ++j)
+      {
+        m(j) += dot(Vals[j], load) * weight * detJ;
+      }
+    }
+  }
+};
+
 
 #endif// _TERMS_H_
