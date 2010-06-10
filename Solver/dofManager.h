@@ -317,19 +317,20 @@ class dofManager{
       {
         _current->addToRightHandSide(NR[i], m(i));
       }
-      else
-      {
-        typename std::map<Dof,DofAffineConstraint<dataVec> >::iterator itConstraint;
-        itConstraint = constraints.find(R[i]);
-        if (itConstraint != constraints.end())
-        {
-          for (unsigned j=0;j<(itConstraint->second).linear.size();j++)
-          {
-                  std::map<Dof, int>::iterator itC = unknown.find((itConstraint->second).linear[j].first); // lin dep in unknown ?!
-                  _current->addToRightHandSide(itC->second, m(i)*(itConstraint->second).linear[j].second);
-          }
-        }
-      }
+			else
+			{
+				typename std::map<Dof,DofAffineConstraint<dataVec> >::iterator itConstraint;
+				itConstraint = constraints.find(R[i]);
+				if (itConstraint != constraints.end())
+				{
+					for (unsigned j=0;j<(itConstraint->second).linear.size();j++)
+					{
+									dataMat tmp;
+									dofTraits<T>::gemm(tmp,(itConstraint->second).linear[j].second,m(i), 1, 0);
+									assemble((itConstraint->second).linear[j].first,tmp);
+					}
+				}
+			}
     }
   }
 
@@ -394,6 +395,20 @@ class dofManager{
     if(itR != unknown.end()){
       _current->addToRightHandSide(itR->second, value);
     }
+		else
+		{
+			typename std::map<Dof,DofAffineConstraint<dataVec> >::iterator itConstraint;
+			itConstraint = constraints.find(R);
+			if (itConstraint != constraints.end())
+			{
+				for (unsigned j=0;j<(itConstraint->second).linear.size();j++)
+				{
+								dataMat tmp;
+								dofTraits<T>::gemm(tmp,(itConstraint->second).linear[j].second,value, 1, 0);
+								assemble((itConstraint->second).linear[j].first,tmp);
+				}
+			}
+		}
   }
   inline void assemble(int entR, int typeR, const dataMat &value)
   {
