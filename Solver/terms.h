@@ -348,10 +348,14 @@ class LagrangeMultiplierTerm : public BilinearTerm<SVector3,double>
 
 class LagMultTerm : public BilinearTerm<SVector3, SVector3>
 {
-  SVector3 _d;
+
+ private :
+
+  int _eqfac;
+
  public :
-  LagMultTerm(FunctionSpace<SVector3>& space1_, FunctionSpace<SVector3>& space2_, const SVector3 &d) :
-    BilinearTerm<SVector3,SVector3>(space1_, space2_) {for(int i=0; i < 3; i++) _d(i) = d(i);}
+  LagMultTerm(FunctionSpace<SVector3>& space1_, FunctionSpace<SVector3>& space2_, int eqfac = 1) :
+    BilinearTerm<SVector3,SVector3>(space1_, space2_), _eqfac(eqfac) {;}
   virtual ~LagMultTerm() {}
   virtual void get(MElement *ele, int npts, IntPt *GP, fullMatrix<double> &m)
   {
@@ -369,7 +373,7 @@ class LagMultTerm : public BilinearTerm<SVector3, SVector3>
       BilinearTerm<SVector3,SVector3>::space2.f(ele, u, v, w, ValsT);
       for (int j = 0; j < nbFF1; j++) {
         for (int k = 0; k < nbFF2; k++) {
-          m(j, k) += dot(Vals[j], ValsT[k]) * weight * detJ;
+          m(j, k) += _eqfac * dot(Vals[j], ValsT[k]) * weight * detJ;
         }
       }
     }
@@ -380,9 +384,14 @@ class LagMultTerm : public BilinearTerm<SVector3, SVector3>
 
 template<class T1> class LoadTermOnBorder : public LinearTerm<T1>
 {
+ private :
+
+  int _eqfac;
   simpleFunction<typename TensorialTraits<T1>::ValType> &Load;
+
  public :
-  LoadTermOnBorder(FunctionSpace<T1>& space1_,simpleFunction<typename TensorialTraits<T1>::ValType> &Load_) :LinearTerm<T1>(space1_),Load(Load_) {}
+
+  LoadTermOnBorder(FunctionSpace<T1>& space1_,simpleFunction<typename TensorialTraits<T1>::ValType> &Load_, int eqfac = 1) :LinearTerm<T1>(space1_),Load(Load_),_eqfac(eqfac) {}
   virtual ~LoadTermOnBorder() {}
 
   virtual void get(MElement *ele,int npts,IntPt *GP,fullVector<double> &m)
@@ -404,7 +413,7 @@ template<class T1> class LoadTermOnBorder : public LinearTerm<T1>
       typename TensorialTraits<T1>::ValType load=Load(p.x(),p.y(),p.z());
       for (int j = 0; j < nbFF ; ++j)
       {
-        m(j) += dot(Vals[j], load) * weight * detJ;
+        m(j) += _eqfac*dot(Vals[j], load) * weight * detJ;
       }
     }
   }
