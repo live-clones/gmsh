@@ -28,6 +28,7 @@
 #include "SmoothData.h"
 #include "Context.h"
 #include "OS.h"
+#include "GEdgeLoop.h"
 
 #include "OpenFile.h"
 #include "CreateFile.h"
@@ -1494,6 +1495,17 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
     (*it)->createTopo();
     (*it)->parametrize(face2Vert, region2Vert);
   }
+
+  //fill edgeLoops of Faces or correct sign of l_edges
+  // for (std::vector<discreteFace*>::iterator itF = discFaces.begin();
+  //      itF != discFaces.end(); itF++){
+  //   //EMI, TODO
+  //   std::list<GEdgeLoop> edgeLoops = (*itF)->edgeLoops; 
+  //   edgeLoops.clear();
+  //   GEdgeLoop el((*itF)->edges());
+  //   edgeLoops.push_back(el);
+  // }
+
 
  //we need to recreate lines, triangles and tets
   //that contain those new MEdgeVertices
