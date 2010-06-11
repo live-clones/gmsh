@@ -13,7 +13,7 @@
 
 class binding;
 
-typedef int INDEX_TYPE ;  
+typedef int INDEX_TYPE ;
 typedef struct {
   int nmax;
   int size;
@@ -22,7 +22,7 @@ typedef struct {
   int isorder;
   char *array;
 } CSRList_T;
-  
+
 void CSRList_Add(CSRList_T *liste, const void *data);
 int  CSRList_Nbr(CSRList_T *liste);
 
@@ -31,7 +31,7 @@ class linearSystemCSR : public linearSystem<scalar> {
  protected:
   bool sorted;
   char *something;
-  CSRList_T *_a, *_ai, *_ptr, *_jptr; 
+  CSRList_T *_a, *_ai, *_ptr, *_jptr;
   std::vector<scalar> *_b, *_x;
  public:
   linearSystemCSR()
@@ -52,9 +52,9 @@ class linearSystemCSR : public linearSystem<scalar> {
     INDEX_TYPE  *ptr   = (INDEX_TYPE*) _ptr->array;
     INDEX_TYPE  *ai    = (INDEX_TYPE*) _ai->array;
     scalar      *a     = ( scalar * ) _a->array;
-    
+
     INDEX_TYPE  position = jptr[il];
-    
+
     if(something[il]) {
       while(1){
         if(ai[position] == ic){
@@ -64,24 +64,24 @@ class linearSystemCSR : public linearSystem<scalar> {
         if (ptr[position] == 0) break;
         position = ptr[position];
       }
-    }  
-    
+    }
+
     INDEX_TYPE zero = 0;
     CSRList_Add(_a, &val);
     CSRList_Add(_ai, &ic);
     CSRList_Add(_ptr, &zero);
     // The pointers may have been modified
-    // if there has been a reallocation in CSRList_Add  
-    
+    // if there has been a reallocation in CSRList_Add
+
     ptr = (INDEX_TYPE*) _ptr->array;
     ai  = (INDEX_TYPE*) _ai->array;
     a   = (scalar*) _a->array;
-    
+
     INDEX_TYPE n = CSRList_Nbr(_a) - 1;
-    
+
     if(!something[il]) {
       jptr[il] = n;
-      something[il] = 1;      
+      something[il] = 1;
     }
     else ptr[position] = n;
   }
@@ -91,11 +91,11 @@ class linearSystemCSR : public linearSystem<scalar> {
   {
     Msg::Error("getFromMatrix not implemented for CSR");
   }
-  virtual void addToRightHandSide(int row, const scalar &val) 
+  virtual void addToRightHandSide(int row, const scalar &val)
   {
     if(val != 0.0) (*_b)[row] += val;
   }
-  virtual void getFromRightHandSide(int row, scalar &val) const 
+  virtual void getFromRightHandSide(int row, scalar &val) const
   {
     val = (*_b)[row];
   }
@@ -109,9 +109,20 @@ class linearSystemCSR : public linearSystem<scalar> {
     scalar *a = (scalar*) _a->array;
     for (int i = 0; i < N; i++) a[i] = 0;
   }
-  virtual void zeroRightHandSide() 
+  virtual void zeroRightHandSide()
   {
     for(unsigned int i = 0; i < _b->size(); i++) (*_b)[i] = 0.;
+  }
+  virtual double normInfRightHandSide() const{
+    double nor = 0.;
+    double temp;
+    for(int i=0;i<_b->size();i++){
+      temp = (*_b)[i];
+      if(temp<0) temp = -temp;
+      if(nor<temp) nor=temp;
+
+    }
+    return nor;
   }
 };
 
@@ -126,7 +137,7 @@ class linearSystemCSRGmm : public linearSystemCSR<scalar> {
   void setPrec(double p){ _prec = p; }
   void setNoisy(int n){ _noisy = n; }
   void setGmres(int n){ _gmres = n; }
-  virtual int systemSolve() 
+  virtual int systemSolve()
 #if !defined(HAVE_GMM)
   {
     Msg::Error("Gmm++ is not available in this version of Gmsh");
@@ -147,7 +158,7 @@ class linearSystemCSRTaucs : public linearSystemCSR<scalar> {
     if (il <= ic)
       linearSystemCSR<scalar>::addToMatrix(il, ic, val);
   }
-  virtual int systemSolve()     
+  virtual int systemSolve()
 #if !defined(HAVE_TAUCS)
   {
     Msg::Error("TAUCS is not available in this version of Gmsh");

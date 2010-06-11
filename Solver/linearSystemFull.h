@@ -54,15 +54,15 @@ class linearSystemFull : public linearSystem<scalar> {
   {
     if(val != 0.0) (*_b)(row) += val;
   }
-  virtual void getFromRightHandSide(int row, scalar &val) const 
+  virtual void getFromRightHandSide(int row, scalar &val) const
   {
     val = (*_b)(row);
   }
-  virtual void getFromSolution(int row, scalar &val) const 
+  virtual void getFromSolution(int row, scalar &val) const
   {
     val = (*_x)(row);
   }
-  virtual void zeroMatrix() 
+  virtual void zeroMatrix()
   {
     _a->setAll(0.);
   }
@@ -70,7 +70,17 @@ class linearSystemFull : public linearSystem<scalar> {
   {
     for(int i = 0; i < _b->size(); i++) (*_b)(i) = 0.;
   }
-  virtual int systemSolve() 
+  virtual double normInfRightHandSide() const{
+    double nor = 0.;
+    double temp;
+    for(int i=0;i<_b->size();i++){
+      temp = (*_b)(i);
+      if(temp<0) temp = -temp;
+      if(nor<temp) nor=temp;
+    }
+    return nor;
+  }
+  virtual int systemSolve()
   {
     if (_b->size())
       _a->luSolve(*_b, *_x);

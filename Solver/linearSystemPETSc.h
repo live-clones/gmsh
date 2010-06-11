@@ -56,7 +56,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
   virtual void allocate(int nbRows)
   {
     clear();
-    _try(MatCreate(PETSC_COMM_WORLD, &_a)); 
+    _try(MatCreate(PETSC_COMM_WORLD, &_a));
     _try(MatSetSizes(_a, PETSC_DECIDE, PETSC_DECIDE, nbRows, nbRows));
     // override the default options with the ones from the option
     // database (if any)
@@ -105,6 +105,12 @@ class linearSystemPETSc : public linearSystem<scalar> {
 #else
     val = s;
 #endif
+  }
+  virtual double normInfRightHandSide() const {
+  PetscScalar nor;
+  _try(VecNorm(_b,NORM_INFINITY,&nor));
+  return nor;
+
   }
   virtual void addToMatrix(int row, int col, const scalar &val)
   {
@@ -185,7 +191,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
   virtual void zeroMatrix() {}
   virtual void zeroRightHandSide() {}
   virtual int systemSolve() { return 0; }
-}; 
+};
 
 #endif
 

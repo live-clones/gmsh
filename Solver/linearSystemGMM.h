@@ -47,7 +47,7 @@ class linearSystemGmm : public linearSystem<scalar> {
     _a = 0;
   }
 
-  virtual void  addToMatrix(int row, int col, const scalar &val) 
+  virtual void  addToMatrix(int row, int col, const scalar &val)
   {
     if(val != 0.0) (*_a)(row, col) += val;
   }
@@ -56,12 +56,12 @@ class linearSystemGmm : public linearSystem<scalar> {
     val = (*_a)(row, col);
   }
 
-  virtual void addToRightHandSide(int row, const scalar &val) 
+  virtual void addToRightHandSide(int row, const scalar &val)
   {
     if(val != 0.0) (*_b)[row] += val;
   }
 
-  virtual void getFromRightHandSide(int row, scalar &val) const 
+  virtual void getFromRightHandSide(int row, scalar &val) const
   {
     val = (*_b)[row];
   }
@@ -77,6 +77,17 @@ class linearSystemGmm : public linearSystem<scalar> {
   {
     for(unsigned int i = 0; i < _b->size(); i++) (*_b)[i] = 0.;
   }
+  virtual double normInfRightHandSide() const {
+    double nor = 0.;
+    double temp;
+    for(int i=0;i<_b->size();i++){
+      temp = (*_b)[i];
+      if(temp<0) temp = -temp;
+      if(nor<temp) nor=temp;
+    }
+    return nor;
+  }
+
   void setPrec(double p){ _prec = p; }
   void setNoisy(int n){ _noisy = n; }
   void setGmres(int n){ _gmres = n; }

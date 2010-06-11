@@ -82,7 +82,7 @@ class dofManager{
  public:
   typedef typename dofTraits<T>::VecType dataVec;
   typedef typename dofTraits<T>::MatType dataMat;
- private:
+ protected:
   // general affine constraint on sub-blocks, treated by adding
   // equations:
 
@@ -301,7 +301,7 @@ class dofManager{
     }
   }
 
-  inline void assemble(std::vector<Dof> &R, const fullVector<dataMat> &m) // for linear forms
+  virtual inline void assemble(std::vector<Dof> &R, const fullVector<dataMat> &m) // for linear forms
   {
     if (!_current->isAllocated()) _current->allocate(unknown.size());
     std::vector<int> NR(R.size());
@@ -335,7 +335,7 @@ class dofManager{
   }
 
 
-  inline void assemble(std::vector<Dof> &R, const fullMatrix<dataMat> &m)
+  virtual inline void assemble(std::vector<Dof> &R, const fullMatrix<dataMat> &m)
   {
     if (!_current->isAllocated()) _current->allocate(unknown.size());
     std::vector<int> NR(R.size());
@@ -487,6 +487,13 @@ class dofManager{
       }
     }
   }
-
+  void getFixedDof(std::vector<Dof> &R){
+    R.reserve(fixed.size());
+    std::map<Dof, double>::iterator it; // template problem ?? //TODO
+    for(it=fixed.begin(); it!=fixed.end();++it){
+      R.push_back((*it).first);
+    }
+  }
 };
+
 #endif

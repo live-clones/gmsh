@@ -156,7 +156,7 @@ int MElement::getVolumeSign()
 }
 
 bool MElement::setVolumePositive()
-{ 
+{
   int s = getVolumeSign();
   if(s < 0) revert();
   if(!s) return false;
@@ -438,7 +438,7 @@ void MElement::interpolateCurl(double val[], double u, double v, double w, doubl
   f[2] = fy[0] - fx[1];
 }
 
-double MElement::interpolateDiv(double val[], double u, double v, double w, 
+double MElement::interpolateDiv(double val[], double u, double v, double w,
                                 int stride, int order)
 {
   double fx[3], fy[3], fz[3], jac[3][3], inv[3][3];
@@ -477,7 +477,7 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
       fprintf(fp, " %d %d %d 1 %d", 4 + par, abs(physical), elementary, _partition);
     else{
       int numGhosts = ghosts->size();
-      fprintf(fp, " %d %d %d %d %d", 4 + numGhosts + par, abs(physical), elementary, 
+      fprintf(fp, " %d %d %d %d %d", 4 + numGhosts + par, abs(physical), elementary,
               1 + numGhosts, _partition);
       for(unsigned int i = 0; i < ghosts->size(); i++)
         fprintf(fp, " %d", -(*ghosts)[i]);
@@ -501,7 +501,7 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
     // tags change from element to element (third-party codes can
     // still write MSH file optimized for reading speed, by grouping
     // elements with the same number of tags in blobs)
-    int blob[60] = {type, 1, numTags, num ? num : _num, abs(physical), elementary, 
+    int blob[60] = {type, 1, numTags, num ? num : _num, abs(physical), elementary,
                     1 + numGhosts, _partition};
     if(ghosts)
       for(int i = 0; i < numGhosts; i++) blob[8 + i] = -(*ghosts)[i];

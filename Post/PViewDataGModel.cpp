@@ -15,7 +15,7 @@
 #include "Numeric.h"
 #include "GmshMessage.h"
 
-PViewDataGModel::PViewDataGModel(DataType type) 
+PViewDataGModel::PViewDataGModel(DataType type)
   : PViewData(), _min(VAL_INF), _max(-VAL_INF), _type(type)
 {
 }
@@ -69,25 +69,25 @@ bool PViewDataGModel::finalize(bool computeMinMax)
   for(int step = 0; step < getNumTimeSteps(); step++){
     GModel *m = _steps[step]->getModel();
     for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
-      if((*it)->lines.size()) 
+      if((*it)->lines.size())
         _addInterpolationMatricesForElement((*it)->lines[0]);
     }
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
-      if((*it)->triangles.size()) 
+      if((*it)->triangles.size())
         _addInterpolationMatricesForElement((*it)->triangles[0]);
-      if((*it)->quadrangles.size()) 
+      if((*it)->quadrangles.size())
         _addInterpolationMatricesForElement((*it)->quadrangles[0]);
       if((*it)->polygons.size())
         _addInterpolationMatricesForElement((*it)->polygons[0]);
     }
     for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
-      if((*it)->tetrahedra.size()) 
+      if((*it)->tetrahedra.size())
         _addInterpolationMatricesForElement((*it)->tetrahedra[0]);
-      if((*it)->hexahedra.size()) 
+      if((*it)->hexahedra.size())
         _addInterpolationMatricesForElement((*it)->hexahedra[0]);
-      if((*it)->prisms.size()) 
+      if((*it)->prisms.size())
         _addInterpolationMatricesForElement((*it)->prisms[0]);
-      if((*it)->pyramids.size()) 
+      if((*it)->pyramids.size())
         _addInterpolationMatricesForElement((*it)->pyramids[0]);
       if((*it)->polyhedra.size())
         _addInterpolationMatricesForElement((*it)->polyhedra[0]);
@@ -107,7 +107,7 @@ void PViewDataGModel::_addInterpolationMatricesForElement(MElement *e)
                                fs->coefficients, fs->monomials);
     else
       setInterpolationMatrices(type, fs->coefficients, fs->monomials);
-  }                               
+  }
 }
 
 MElement *PViewDataGModel::_getElement(int step, int ent, int ele)
@@ -149,7 +149,7 @@ double PViewDataGModel::getMax(int step)
 }
 
 SBoundingBox3d PViewDataGModel::getBoundingBox(int step)
-{ 
+{
   if(step < 0 || _steps.empty()){
     SBoundingBox3d tmp;
     for(unsigned int i = 0; i < _steps.size(); i++)
@@ -297,7 +297,7 @@ int PViewDataGModel::getNumElements(int step, int ent)
   // to generalize
   if(step < 0 && ent < 0) return _steps[0]->getModel()->getNumMeshElements();
   if(step < 0) return _steps[0]->getEntity(ent)->getNumMeshElements();
-  if(ent < 0) return _steps[step]->getModel()->getNumMeshElements(); 
+  if(ent < 0) return _steps[step]->getModel()->getNumMeshElements();
   return _steps[step]->getEntity(ent)->getNumMeshElements();
 }
 
@@ -320,11 +320,11 @@ int PViewDataGModel::getNumNodes(int step, int ent, int ele)
   }
 }
 
-int PViewDataGModel::getNode(int step, int ent, int ele, int nod, 
+int PViewDataGModel::getNode(int step, int ent, int ele, int nod,
                              double &x, double &y, double &z)
 {
   MElement *e = _getElement(step, ent, ele);
-  if(_type == GaussPointData){ 
+  if(_type == GaussPointData){
     std::vector<double> &p(_steps[step]->getGaussPoints(e->getTypeForMSH()));
     if(p[0] == 1.e22){
       // hack: the points are the element vertices
@@ -354,7 +354,7 @@ int PViewDataGModel::getNode(int step, int ent, int ele, int nod,
   }
 }
 
-void PViewDataGModel::setNode(int step, int ent, int ele, int nod, 
+void PViewDataGModel::setNode(int step, int ent, int ele, int nod,
                               double x, double y, double z)
 {
   MVertex *v = _getElement(step, ent, ele)->getVertex(nod);
@@ -409,7 +409,7 @@ void PViewDataGModel::getValue(int step, int ent, int ele, int nod, int comp, do
 {
   MElement *e = _getElement(step, ent, ele);
   switch(_type){
-  case NodeData: 
+  case NodeData:
     val = _steps[step]->getData(e->getVertex(nod)->getNum())[comp];
     break;
   case ElementNodeData:
@@ -417,7 +417,7 @@ void PViewDataGModel::getValue(int step, int ent, int ele, int nod, int comp, do
     val = _steps[step]->getData(e->getNum())[_steps[step]->getNumComponents() * nod + comp];
     break;
   case ElementData:
-  default: 
+  default:
     val = _steps[step]->getData(e->getNum())[comp];
     break;
   }
@@ -427,22 +427,22 @@ void PViewDataGModel::setValue(int step, int ent, int ele, int nod, int comp, do
 {
   MElement *e = _getElement(step, ent, ele);
   switch(_type){
-  case NodeData: 
+  case NodeData:
     _steps[step]->getData(e->getVertex(nod)->getNum())[comp] = val;
     break;
   case ElementNodeData:
-  case GaussPointData: 
+  case GaussPointData:
     _steps[step]->getData(e->getNum())[_steps[step]->getNumComponents() * nod + comp] = val;
     break;
-  case ElementData: 
-  default: 
+  case ElementData:
+  default:
     _steps[step]->getData(e->getNum())[comp] = val;
     break;
   }
 }
 
 int PViewDataGModel::getNumEdges(int step, int ent, int ele)
-{ 
+{
   return _getElement(step, ent, ele)->getNumEdges();
 }
 
@@ -511,7 +511,7 @@ bool PViewDataGModel::combineTime(nameData &nd)
   }
 
   // copy interpolation matrices
-  for(std::map<int, std::vector<fullMatrix<double>*> >::iterator it = 
+  for(std::map<int, std::vector<fullMatrix<double>*> >::iterator it =
         data[0]->_interpolation.begin(); it != data[0]->_interpolation.end(); it++)
     if(_interpolation[it->first].empty())
       for(unsigned int i = 0; i < it->second.size(); i++)
@@ -522,7 +522,7 @@ bool PViewDataGModel::combineTime(nameData &nd)
     for(unsigned int j = 0; j < data[i]->_steps.size(); j++)
       if(data[i]->hasTimeStep(j))
         _steps.push_back(new stepData<double>(*data[i]->_steps[j]));
-  
+
   std::string tmp;
   if(nd.name == "__all__")
     tmp = "all";

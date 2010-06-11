@@ -27,6 +27,7 @@ class linearSystem {
   virtual void zeroRightHandSide() = 0;
   virtual int systemSolve() = 0;
   static void registerBindings (binding*);
+  virtual double normInfRightHandSide() const = 0;
 };
 
 #endif
