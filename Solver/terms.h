@@ -377,7 +377,7 @@ class LagMultTerm : public BilinearTerm<SVector3, SVector3>
         }
       }
     }
-    m.print();
+    //m.print();
   }
 };
 
