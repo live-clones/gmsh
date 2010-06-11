@@ -351,10 +351,10 @@ class LagMultTerm : public BilinearTerm<SVector3, SVector3>
 
  private :
 
-  int _eqfac;
+  double _eqfac;
 
  public :
-  LagMultTerm(FunctionSpace<SVector3>& space1_, FunctionSpace<SVector3>& space2_, int eqfac = 1) :
+  LagMultTerm(FunctionSpace<SVector3>& space1_, FunctionSpace<SVector3>& space2_, double eqfac = 1.0) :
     BilinearTerm<SVector3,SVector3>(space1_, space2_), _eqfac(eqfac) {;}
   virtual ~LagMultTerm() {}
   virtual void get(MElement *ele, int npts, IntPt *GP, fullMatrix<double> &m)
@@ -386,12 +386,12 @@ template<class T1> class LoadTermOnBorder : public LinearTerm<T1>
 {
  private :
 
-  int _eqfac;
+  double _eqfac;
   simpleFunction<typename TensorialTraits<T1>::ValType> &Load;
 
  public :
 
-  LoadTermOnBorder(FunctionSpace<T1>& space1_,simpleFunction<typename TensorialTraits<T1>::ValType> &Load_, int eqfac = 1) :LinearTerm<T1>(space1_),Load(Load_),_eqfac(eqfac) {}
+  LoadTermOnBorder(FunctionSpace<T1>& space1_,simpleFunction<typename TensorialTraits<T1>::ValType> &Load_, double eqfac = 1.0) :LinearTerm<T1>(space1_),Load(Load_),_eqfac(eqfac) {}
   virtual ~LoadTermOnBorder() {}
 
   virtual void get(MElement *ele,int npts,IntPt *GP,fullVector<double> &m)
