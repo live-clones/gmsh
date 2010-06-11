@@ -242,7 +242,7 @@ class dofManager{
       std::map<Dof, int>::iterator itC = unknown.find(C);
       if (itC != unknown.end()){
         _current->addToMatrix(itR->second, itC->second, value);
-      }
+  }
       else{
         typename std::map<Dof,  dataVec>::iterator itFixed = fixed.find(C);
         if (itFixed != fixed.end()) {
@@ -448,7 +448,8 @@ class dofManager{
 
   inline void setLinearConstraint (Dof key, DofAffineConstraint<dataVec> &affineconstraint)
   {
-      constraints.insert(std::make_pair(key,affineconstraint));
+      constraints[key] = affineconstraint;
+      // constraints.insert(std::make_pair(key,affineconstraint));
   }
 
   inline void assembleLinConst(const Dof &R, const Dof &C, const dataMat &value)
