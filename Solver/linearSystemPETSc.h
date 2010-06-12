@@ -106,11 +106,11 @@ class linearSystemPETSc : public linearSystem<scalar> {
     val = s;
 #endif
   }
-  virtual double normInfRightHandSide() const {
-  PetscScalar nor;
-  _try(VecNorm(_b,NORM_INFINITY,&nor));
-  return nor;
-
+  virtual double normInfRightHandSide() const
+  {
+    PetscReal nor;
+    _try(VecNorm(_b, NORM_INFINITY, &nor));
+    return nor;
   }
   virtual void addToMatrix(int row, int col, const scalar &val)
   {

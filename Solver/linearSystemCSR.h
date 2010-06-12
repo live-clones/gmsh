@@ -113,14 +113,14 @@ class linearSystemCSR : public linearSystem<scalar> {
   {
     for(unsigned int i = 0; i < _b->size(); i++) (*_b)[i] = 0.;
   }
-  virtual double normInfRightHandSide() const{
+  virtual double normInfRightHandSide() const
+  {
     double nor = 0.;
     double temp;
-    for(int i=0;i<_b->size();i++){
+    for(unsigned int i = 0; i < _b->size(); i++){
       temp = (*_b)[i];
-      if(temp<0) temp = -temp;
-      if(nor<temp) nor=temp;
-
+      if(temp < 0) temp = -temp;
+      if(nor < temp) nor = temp;
     }
     return nor;
   }

@@ -1461,7 +1461,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
 
     //curved PN triangle
     //-------------------------
-    printf("normals size=%d vertex=%d \n", _normals.size(), lt->tri->getVertex(0)->getNum());
+    printf("normals size=%d vertex=%d \n", (int)_normals.size(), lt->tri->getVertex(0)->getNum());
     const SVector3 n1 = _normals[lt->tri->getVertex(0)];
     const SVector3 n2 = _normals[lt->tri->getVertex(1)];
     const SVector3 n3 = _normals[lt->tri->getVertex(2)];
