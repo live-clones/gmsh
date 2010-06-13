@@ -26,7 +26,6 @@
 #include "GEntity.h"
 #include "dofManager.h"
 #include "laplaceTerm.h"
-#include "distanceTerm.h"
 #include "crossConfTerm.h"
 #include "convexCombinationTerm.h"
 #include "diagBCTerm.h" 

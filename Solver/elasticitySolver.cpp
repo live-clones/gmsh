@@ -9,6 +9,7 @@
 #include "linearSystemCSR.h"
 #include "linearSystemPETSc.h"
 #include "linearSystemGMM.h"
+#include "linearSystemFull.h"
 #include "Numeric.h"
 #include "GModel.h"
 #include "functionSpace.h"
@@ -208,6 +209,8 @@ void elasticitySolver::readInputFile(const std::string &fn)
 
 void elasticitySolver::solve()
 {
+  linearSystemFull<double> *lsys = new linearSystemFull<double>;
+  /*
 #if defined(HAVE_TAUCS)
   linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
 #elif defined(HAVE_PETSC)
@@ -216,6 +219,7 @@ void elasticitySolver::solve()
   linearSystemGmm<double> *lsys = new linearSystemGmm<double>;
   lsys->setNoisy(2);
 #endif
+  */
   if (pAssembler) delete pAssembler;
   pAssembler = new dofManager<double>(lsys);
 
@@ -275,6 +279,15 @@ void elasticitySolver::solve()
   {
     IsotropicElasticTerm Eterm(*LagSpace,elasticFields[i]._E,elasticFields[i]._nu);
     Assemble(Eterm,*LagSpace,elasticFields[i].g->begin(),elasticFields[i].g->end(),Integ_Bulk,*pAssembler);
+  }
+
+  for (int i=0;i<pAssembler->sizeOfR();i++){
+    for (int j=0;j<pAssembler->sizeOfR();j++){
+      double d;lsys->getFromMatrix(i,j,d);
+      printf("%12.5E ",d);
+    }
+    double d;lsys->getFromRightHandSide(i,d);
+    printf(" |  %12.5E\n",d);
   }
 
   printf("nDofs=%d\n",pAssembler->sizeOfR());
@@ -492,4 +505,26 @@ PView* elasticitySolver::buildVonMisesView(const std::string &postFileName)
   return 0;
 }
 #endif
+
+
+#include "Bindings.h"
+void elasticitySolverRegisterBindings(binding *b) 
+{
+  classBinding *cb;
+  cb = b->addClass<elasticitySolver> ("elasticitySolver");
+  cb->setDescription("A class that enables to solve elasticity problems");
+
+  methodBinding *cm;
+  cm = cb->addMethod("read", &elasticitySolver::read);
+  cm->setDescription ("reads an input file");
+  cm->setArgNames("fileName",NULL);
+
+  cm = cb->addMethod("solve", &elasticitySolver::solve);
+  cm->setDescription ("solves the problem");
+
+  cm = cb->setConstructor<elasticitySolver,int>();
+  cm->setDescription ("A new elasticitySolver. The parameter is the unknowns tag");
+  cm->setArgNames("tag",NULL);
+
+}
 

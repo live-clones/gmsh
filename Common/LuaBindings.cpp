@@ -30,6 +30,7 @@
 #include "GmshMessage.h"
 #include "linearSystem.h"
 #include "Options.h"
+#include "elasticitySolver.h"
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
@@ -409,6 +410,7 @@ binding::binding()
 #if defined(HAVE_SOLVER)
   function::registerBindings(this);
   linearSystemCSRGmm<double>::registerBindings(this);
+  elasticitySolverRegisterBindings(this); 
 #endif
 }
 

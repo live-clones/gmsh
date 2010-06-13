@@ -84,6 +84,7 @@ class linearSystemFull : public linearSystem<scalar> {
   {
     if (_b->size())
       _a->luSolve(*_b, *_x);
+    //    _x->print("X in solve");
     return 1;
   }
 };

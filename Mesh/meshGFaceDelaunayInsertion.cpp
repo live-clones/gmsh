@@ -656,6 +656,20 @@ static void insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
   }
 }
 
+
+static void insertManyPoints(GFace *gf,
+			     std::list<SPoint2> &points,
+			     std::vector<double> &Us, 
+			     std::vector<double> &Vs,
+			     std::vector<double> &vSizes, 
+			     std::vector<double> &vSizesBGM,
+			     std::vector<SMetric3> &vMetricsBGM,
+			     std::set<MTri3*,compareTri3Ptr> &AllTris,
+			     std::set<MTri3*,compareTri3Ptr> *ActiveTris = 0){
+  
+}
+
+
 void bowyerWatson(GFace *gf)
 {
   std::set<MTri3*,compareTri3Ptr> AllTris;
@@ -677,6 +691,11 @@ void bowyerWatson(GFace *gf)
 
   int ITER = 0;
   while (1){
+    //    if(ITER % 1== 0){
+    //      char name[245];
+    //      sprintf(name,"del2d%d-ITER%4d.pos",gf->tag(),ITER);
+    //      _printTris (name, AllTris, Us,Vs,false);
+    //    }
     MTri3 *worst = *AllTris.begin();
     if (worst->isDeleted()){
       delete worst->tri();
@@ -688,7 +707,7 @@ void bowyerWatson(GFace *gf)
         Msg::Debug("%7d points created -- Worst tri radius is %8.3f",
                    vSizes.size(), worst->getRadius());
       double center[2],metric[3],r2;
-      if (worst->getRadius() < 0.5 * sqrt(2.0)) break;
+      if (worst->getRadius() < /*1.333333/(sqrt(3.0))*/0.5 * sqrt(2.0)) break;
       circUV(worst->tri(), Us, Vs, center, gf);
       MTriangle *base = worst->tri();
       double pa[2] = {(Us[base->getVertex(0)->getIndex()] + 
@@ -710,11 +729,6 @@ void bowyerWatson(GFace *gf)
       insertAPoint(gf, AllTris.begin(), center, metric, Us, Vs, vSizes, 
                    vSizesBGM, vMetricsBGM, AllTris);
     }
-    //     if(ITER % 10== 0){
-    //       char name[245];
-    //       sprintf(name,"del2d%d-ITER%d.pos",gf->tag(),ITER);
-    //       _printTris (name, AllTris, Us,Vs,false);
-    //     }
   }    
   transferDataStructure(gf, AllTris, Us, Vs); 
 }
@@ -802,6 +816,15 @@ void bowyerWatsonFrontal(GFace *gf)
   
   // insert points
   while (1){
+    /*
+        if(ITER % 1== 0){
+          char name[245];
+          sprintf(name,"delfr2d%d-ITER%4d.pos",gf->tag(),ITER);
+          _printTris (name, AllTris, Us,Vs,false);
+          sprintf(name,"delfr2dA%d-ITER%4d.pos",gf->tag(),ITER);
+          _printTris (name, ActiveTris, Us,Vs,false);
+        }
+    */
     if (!ActiveTris.size())break;
     MTri3 *worst = (*ActiveTris.begin());
     ActiveTris.erase(ActiveTris.begin());
@@ -882,3 +905,12 @@ void bowyerWatsonFrontal(GFace *gf)
 //   _printTris (name, AllTris, Us, Vs,true);
   transferDataStructure(gf, AllTris, Us, Vs); 
 } 
+
+void addBoundaryLayers(GFace *gf) {
+  // first compute the distance function u on the existing mesh
+  // then compute the dual function v that has gradients orthogonal everywhere
+  // build a set of points in the boundary layer
+  // connect everybody with delaunay 
+
+}
+

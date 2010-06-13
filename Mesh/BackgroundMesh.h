@@ -24,6 +24,7 @@ class backgroundMesh : public simpleFunction<double>
   std::map<MVertex*,double> _sizes;  
   std::map<MVertex*,MVertex*> _3Dto2D;
   std::map<MVertex*,MVertex*> _2Dto3D;
+  std::map<MVertex*,double> _distance;  
   static backgroundMesh * _current;
   backgroundMesh(GFace *);
   ~backgroundMesh();

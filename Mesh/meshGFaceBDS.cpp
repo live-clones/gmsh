@@ -668,6 +668,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   const double MINE_ = 0.67, MAXE_ = 1.4;
 
   while (1){
+    
     // we count the number of local mesh modifs.
     int nb_split = 0;
     int nb_smooth = 0;
@@ -697,18 +698,29 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     double minE = MINE_;
     double t1 = Cpu();
     splitEdgePass(gf, m, maxE, nb_split);
+
     double t2 = Cpu();
     swapEdgePass(gf, m, nb_swap);
     swapEdgePass(gf, m, nb_swap);
     swapEdgePass(gf, m, nb_swap);
+
+    //    if (computeNodalSizeField){
+    //      char name[256]; sprintf(name,"iter%d_SPLIT.pos",IT);
+    //      outputScalarField(m.triangles, name, 0);
+    //    }
     double t3 = Cpu();
     collapseEdgePass(gf, m, minE, MAXNP, nb_collaps);
+
     double t4 = Cpu();
     double t5 = Cpu();
     smoothVertexPass(gf, m, nb_smooth, false);
     double t6 = Cpu();
     swapEdgePass ( gf, m, nb_swap);
     double t7 = Cpu();
+    //    if (computeNodalSizeField){
+    //      char name[256]; sprintf(name,"iter%d_COLLAPSE.pos",IT);
+    //      outputScalarField(m.triangles, name, 0);
+    //    }
     // clean up the mesh
     t_spl += t2 - t1;
     t_sw  += t3 - t2;

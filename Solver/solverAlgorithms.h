@@ -68,6 +68,7 @@ template<class Iterator,class Assembler> void Assemble(BilinearTermBase &term,
     IntPt *GP;
     int npts = integrator.getIntPoints(e, &GP);
     term.get(e, npts, GP, localMatrix);
+    printf("local matrix size = %d %d\n",localMatrix.size1(),localMatrix.size2());
     shapeFcts.getKeys(e, R);
     testFcts.getKeys(e, C);
 //    std::cout << "assembling normal test function ; lagrange trial function : " << std::endl;

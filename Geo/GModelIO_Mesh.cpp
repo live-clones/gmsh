@@ -694,6 +694,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   fprintf(fp, "%d\n", numElements);
   int num = elementStartNum;
   std::map<MElement*, int> parentsNum;
+
   _elementIndexCache.clear();
 
   // points
