@@ -290,7 +290,6 @@ void binding::checkDocCompleteness()
       nBad++;
     }
     luaMethodBinding *constructor = cb->second->getConstructor();
-    printf("checking %s\n", cb->first.c_str());
     if(constructor){
       if(constructor->getDescription().empty()){
         Msg::Error("binded constructor of class %s has no description.", 
@@ -314,7 +313,6 @@ void binding::checkDocCompleteness()
                    mb->first.c_str());
         nBad++;
       }
-      printf("checking     %s\n", mb->first.c_str());
       std::vector<std::string> argTypeNames;
       mb->second->getArgTypeNames(argTypeNames);
       int nTypeArg = countInArguments(argTypeNames);
