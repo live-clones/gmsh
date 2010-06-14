@@ -82,7 +82,7 @@ class elasticitySolver
     if (pAssembler) delete pAssembler;
   }
   void readInputFile(const std::string &meshFileName);
-  void read(char *s) {readInputFile(s);}
+  void read(const std::string s) {readInputFile(s.c_str());}
   virtual void setMesh(const std::string &meshFileName);
   void solve();
   virtual PView *buildDisplacementView(const std::string &postFileName);
