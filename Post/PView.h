@@ -19,6 +19,7 @@ class GModel;
 class GMSH_PostPlugin;
 class ConnectionManager;
 
+class binding;
 // A post-processing view.
 class PView{
  private:
@@ -124,6 +125,7 @@ class PView{
 
   // smoothed normals
   smooth_normals *normals;
+  static void registerBindings(binding *b);
 };
 
 // this is the maximum number of nodes of elements we actually *draw*

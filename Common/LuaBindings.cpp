@@ -40,6 +40,10 @@
 #include "linearSystemCSR.h"
 #endif
 
+#if defined(HAVE_POST)
+#include "PView.h"
+#endif
+
 extern "C" {
 #include "lua.h"
 #include "lualib.h"
@@ -411,6 +415,9 @@ binding::binding()
   function::registerBindings(this);
   linearSystemCSRGmm<double>::registerBindings(this);
   elasticitySolverRegisterBindings(this); 
+#endif
+#if defined(HAVE_POST)
+  PView::registerBindings(this);
 #endif
 }
 

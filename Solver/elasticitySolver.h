@@ -45,14 +45,15 @@ struct BoundaryCondition
 struct dirichletBC : public BoundaryCondition
 {
   int _comp; // component
-  simpleFunction<double> _f;
-  dirichletBC () :BoundaryCondition(),_comp(0),_f(0){}
+  simpleFunction<double> *_f;
+  dirichletBC ():BoundaryCondition(),_comp(0),_f(0){}
+  dirichletBC (int dim, int entityId, int component, double value);
 };
 
 struct neumannBC  : public BoundaryCondition
 {
-  simpleFunction<SVector3> _f;
-  neumannBC () : BoundaryCondition(),_f(SVector3(0,0,0)){}
+  simpleFunction<SVector3> *_f;
+  neumannBC () : BoundaryCondition(),_f(NULL){}
 };
 
 // an elastic solver ...
@@ -75,20 +76,29 @@ class elasticitySolver
   
  public:
   elasticitySolver(int tag) : _tag(tag),LagSpace(0),pAssembler(0),LagrangeMultiplierSpace(0) {}
+
+  elasticitySolver(GModel *model, int tag);
+  void addDirichletBC (int dim, int entityId, int component, double value);
+  void addDirichletBCLua (int dim, int entityId, int component, std::string luaFunctionName, lua_State *L);
+  void addNeumannBC (int dim, int entityId, const std::vector<double> value);
+  void addNeumannBCLua (int dim, int entityId, std::string luaFunctionName, lua_State *L);
+  void addElasticDomain (int tag, double e, double nu);
+
   virtual ~elasticitySolver()
   {
     if (LagSpace) delete LagSpace;
     if (LagrangeMultiplierSpace) delete LagrangeMultiplierSpace;
     if (pAssembler) delete pAssembler;
   }
+  void assemble (linearSystem<double> *lsys);
   void readInputFile(const std::string &meshFileName);
   void read(const std::string s) {readInputFile(s.c_str());}
   virtual void setMesh(const std::string &meshFileName);
   void solve();
-  virtual PView *buildDisplacementView(const std::string &postFileName);
-  virtual PView *buildLagrangeMultiplierView(const std::string &posFileName);
-  virtual PView *buildElasticEnergyView(const std::string &postFileName);
-  virtual PView *buildVonMisesView(const std::string &postFileName);
+  virtual PView *buildDisplacementView(const std::string postFileName);
+  virtual PView *buildLagrangeMultiplierView(const std::string posFileName);
+  virtual PView *buildElasticEnergyView(const std::string postFileName);
+  virtual PView *buildVonMisesView(const std::string postFileName);
   // std::pair<PView *, PView*> buildErrorEstimateView
   //   (const std::string &errorFileName, double, int);
   // std::pair<PView *, PView*> buildErrorEstimateView

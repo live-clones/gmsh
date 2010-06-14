@@ -1,0 +1,21 @@
+function neumannCondition (x,y,z)
+  return {-100e6,0,0}
+end
+
+m = GModel()
+m:load("conge.geo")
+m:load("conge.msh")
+e = elasticitySolver(m,1)
+e:addElasticDomain (7, 200e9, 0.3)
+e:addDirichletBC (1,8,0,0)
+e:addDirichletBC (1,8,1,0)
+e:addDirichletBC (1,8,2,0)
+e:addNeumannBCLua (1,9,"neumannCondition")
+sys = linearSystemCSRTaucs()
+e:assemble(sys)
+sys:systemSolve()
+view = e:buildVonMisesView("vonMises")
+view = e:buildDisplacementView("displacement")
+view = e:buildLagrangeMultiplierView("lagrangeMultiplier")
+view = e:buildElasticEnergyView("elasticEnergy")
+--view:write("test.pos",2,false)

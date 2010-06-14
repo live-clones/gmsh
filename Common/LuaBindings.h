@@ -17,6 +17,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "Bindings.h"
+#include "SVector3.h"
 
 #if defined(HAVE_LUA)
 
@@ -109,6 +110,13 @@ class luaStack<int>{
 };
 
 template<>
+class luaStack<bool>{
+ public:
+  static int get(lua_State *L, int ia){ return lua_toboolean(L, ia); }
+  static void push(lua_State *L, bool i){ lua_pushboolean(L, i); }
+  static std::string getName(){ return "bool"; }
+};
+template<>
 class luaStack<unsigned int>{
  public:
   static int get(lua_State *L, unsigned int ia)
@@ -178,6 +186,7 @@ class luaStack<std::list<lType > >{
   }
 };
 
+
 template<class type>
 class luaStack<std::vector<type> &>{
  public:
@@ -243,6 +252,36 @@ class luaStack<double>{
   static double get(lua_State *L, int ia){ return luaL_checknumber(L, ia); }
   static void push(lua_State *L, double v){ lua_pushnumber(L, v); }
   static std::string getName(){ return "double"; }
+};
+
+template <>
+class luaStack<SVector3>{
+ public:
+  static SVector3 get(lua_State *L, int ia)
+  {
+    double v[3];
+    size_t size = lua_objlen(L, ia);
+    if (size!=3)
+      luaL_typerror(L, ia, "SVector3");
+    for(size_t i = 0; i< size; i++){
+      lua_rawgeti(L, ia, i + 1);
+      v[i] = luaStack<double>::get(L, -1);
+      lua_pop(L, 1);
+    }
+    return SVector3(v[0],v[1],v[2]);
+  }
+  static void push(lua_State *L, const SVector3& v)
+  {
+    lua_createtable(L, 3, 0);
+    for(size_t i = 0; i < 3; i++){
+      luaStack<double>::push(L, v[i]);
+      lua_rawseti(L, 2, i + 1);
+    }
+  }
+  static std::string getName()
+  {
+    return "3-uple of double";
+  }
 };
 
 template<>
