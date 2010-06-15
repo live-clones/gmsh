@@ -119,3 +119,13 @@ bool PViewData::combineSpace(nameData &nd)
   Msg::Error("Combine space is not implemented for this type of data");
   return false; 
 }
+
+#include "Bindings.h"
+void PViewData::registerBindings(binding *b) {
+  classBinding *cb = b->addClass<PViewData>("PViewData");
+  cb->setDescription("The data of a post-processing view");
+  methodBinding *cm;
+  cm = cb->addMethod("getNumEntities",&PViewData::getNumEntities);
+  cm->setArgNames("step",NULL);
+  cm->setDescription("return the number of entities for a given time step");
+}

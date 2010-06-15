@@ -17,6 +17,7 @@
 class adaptiveData;
 class GModel;
 class nameData;
+class binding;
 
 // The abstract interface to post-processing view data.
 class PViewData {
@@ -213,6 +214,7 @@ class PViewData {
                         bool append=false);
   virtual bool writeMSH(std::string fileName, bool binary=false);
   virtual bool writeMED(std::string fileName);
+  static void registerBindings(binding *b);
 };
 
 class nameData{

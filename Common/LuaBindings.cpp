@@ -42,6 +42,7 @@
 
 #if defined(HAVE_POST)
 #include "PView.h"
+#include "PViewData.h"
 #endif
 
 extern "C" {
@@ -418,6 +419,7 @@ binding::binding()
 #endif
 #if defined(HAVE_POST)
   PView::registerBindings(this);
+  PViewData::registerBindings(this);
 #endif
 }
 
