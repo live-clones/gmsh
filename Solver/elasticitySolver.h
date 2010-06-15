@@ -55,7 +55,6 @@ struct neumannBC  : public BoundaryCondition
   simpleFunction<SVector3> *_f;
   neumannBC () : BoundaryCondition(),_f(NULL){}
 };
-
 // an elastic solver ...
 class elasticitySolver
 {
@@ -73,16 +72,22 @@ class elasticitySolver
   std::vector<neumannBC> allNeumann;
   // dirichlet BC
   std::vector<dirichletBC> allDirichlet;
-  
+
  public:
   elasticitySolver(int tag) : _tag(tag),LagSpace(0),pAssembler(0),LagrangeMultiplierSpace(0) {}
 
   elasticitySolver(GModel *model, int tag);
+
   void addDirichletBC (int dim, int entityId, int component, double value);
-  void addDirichletBCLua (int dim, int entityId, int component, std::string luaFunctionName, lua_State *L);
   void addNeumannBC (int dim, int entityId, const std::vector<double> value);
-  void addNeumannBCLua (int dim, int entityId, std::string luaFunctionName, lua_State *L);
   void addElasticDomain (int tag, double e, double nu);
+
+  #if defined (HAVE_LUA)
+
+  void addDirichletBCLua (int dim, int entityId, int component, std::string luaFunctionName, lua_State *L);
+  void addNeumannBCLua (int dim, int entityId, std::string luaFunctionName, lua_State *L);
+
+  #endif
 
   virtual ~elasticitySolver()
   {

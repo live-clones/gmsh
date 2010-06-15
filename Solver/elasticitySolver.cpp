@@ -249,20 +249,7 @@ void elasticitySolver::readInputFile(const std::string &fn)
 
 /********************* end deprecated api ****************************************/
 
-void elasticitySolver::addDirichletBC (int dim, int entityId, int component, double value) {
-  dirichletBC diri;
-  diri.g = new groupOfElements (dim, entityId);
-  diri._f= new simpleFunction<double>(value);
-  diri._comp=component;
-  diri._tag=entityId;
-  switch (dim) {
-    case 0 : diri.onWhat=BoundaryCondition::ON_VERTEX; break;
-    case 1 : diri.onWhat=BoundaryCondition::ON_EDGE; break;
-    case 2 : diri.onWhat=BoundaryCondition::ON_FACE; break;
-    default : return;
-  }
-  allDirichlet.push_back(diri);
-}
+#if defined (HAVE_LUA)
 
 void elasticitySolver::addDirichletBCLua (int dim, int entityId, int component, std::string luaFunctionName, lua_State *L) {
   dirichletBC diri;
@@ -279,6 +266,38 @@ void elasticitySolver::addDirichletBCLua (int dim, int entityId, int component, 
   allDirichlet.push_back(diri);
 }
 
+void elasticitySolver::addNeumannBCLua (int dim, int entityId, std::string luaFunctionName, lua_State *L) {
+  neumannBC neu;
+  neu.g = new groupOfElements (dim, entityId);
+  neu._f= new simpleFunctionLua<SVector3>(L, luaFunctionName, SVector3(0,0,0));
+  neu._tag=entityId;
+  switch (dim) {
+    case 0 : neu.onWhat=BoundaryCondition::ON_VERTEX; break;
+    case 1 : neu.onWhat=BoundaryCondition::ON_EDGE; break;
+    case 2 : neu.onWhat=BoundaryCondition::ON_FACE; break;
+    default : return;
+  }
+  allNeumann.push_back(neu);
+}
+
+#endif
+
+void elasticitySolver::addDirichletBC (int dim, int entityId, int component, double value) {
+  dirichletBC diri;
+  diri.g = new groupOfElements (dim, entityId);
+  diri._f= new simpleFunction<double>(value);
+  diri._comp=component;
+  diri._tag=entityId;
+  switch (dim) {
+    case 0 : diri.onWhat=BoundaryCondition::ON_VERTEX; break;
+    case 1 : diri.onWhat=BoundaryCondition::ON_EDGE; break;
+    case 2 : diri.onWhat=BoundaryCondition::ON_FACE; break;
+    default : return;
+  }
+  allDirichlet.push_back(diri);
+}
+
+
 void elasticitySolver::addNeumannBC (int dim, int entityId, const std::vector<double> value) {
   if(value.size()!=3) return;
   neumannBC neu;
@@ -294,19 +313,7 @@ void elasticitySolver::addNeumannBC (int dim, int entityId, const std::vector<do
   allNeumann.push_back(neu);
 }
 
-void elasticitySolver::addNeumannBCLua (int dim, int entityId, std::string luaFunctionName, lua_State *L) {
-  neumannBC neu;
-  neu.g = new groupOfElements (dim, entityId);
-  neu._f= new simpleFunctionLua<SVector3>(L, luaFunctionName, SVector3(0,0,0));
-  neu._tag=entityId;
-  switch (dim) {
-    case 0 : neu.onWhat=BoundaryCondition::ON_VERTEX; break;
-    case 1 : neu.onWhat=BoundaryCondition::ON_EDGE; break;
-    case 2 : neu.onWhat=BoundaryCondition::ON_FACE; break;
-    default : return;
-  }
-  allNeumann.push_back(neu);
-}
+
 
 void elasticitySolver::addElasticDomain (int physical, double e, double nu){
   elasticField field;
@@ -357,7 +364,7 @@ void elasticitySolver::assemble(linearSystem<double> *lsys)
   // Voids
   for (unsigned int i = 0; i < elasticFields.size(); ++i)
   {
-    if(elasticFields[i]._E == 0.) 
+    if(elasticFields[i]._E == 0.)
       FixVoidNodalDofs(*LagSpace, elasticFields[i].g->begin(), elasticFields[i].g->end(), *pAssembler);
   }
   // Neumann conditions
@@ -383,7 +390,7 @@ void elasticitySolver::assemble(linearSystem<double> *lsys)
     LoadTerm<double> Lterm(*LagrangeMultiplierSpace, LagrangeMultiplierFields[i]._f);
     Assemble(Lterm, *LagrangeMultiplierSpace, LagrangeMultiplierFields[i].g->begin(), LagrangeMultiplierFields[i].g->end(), Integ_Boundary, *pAssembler);
   }
-  // Assemble elastic term for 
+  // Assemble elastic term for
   GaussQuadrature Integ_Bulk(GaussQuadrature::GradGrad);
   for (unsigned int i = 0; i < elasticFields.size(); i++)
   {
@@ -464,8 +471,8 @@ PView* elasticitySolver::buildDisplacementView (const std::string postFileName)
             vCut[e->getVertex(j)] = e->getParent();
         }
       }
-      else { 
-        for (int j = 0; j < e->getNumVertices(); ++j) 
+      else {
+        for (int j = 0; j < e->getNumVertices(); ++j)
           v.insert(e->getVertex(j));
       }
     }
@@ -602,8 +609,11 @@ PView* elasticitySolver::buildVonMisesView(const std::string &postFileName)
 }
 #endif
 
+
+#if defined (HAVE_LUA)
+
 #include "Bindings.h"
-void elasticitySolverRegisterBindings(binding *b) 
+void elasticitySolverRegisterBindings(binding *b)
 {
   classBinding *cb;
   cb = b->addClass<elasticitySolver> ("elasticitySolver");
@@ -645,7 +655,7 @@ void elasticitySolverRegisterBindings(binding *b)
   cm->setArgNames ("fileName", NULL);
 
   cm = cb->addMethod ("buildDisplacementView", &elasticitySolver::buildDisplacementView);
-  cm->setDescription ("create a new view."); 
+  cm->setDescription ("create a new view.");
   cm->setArgNames ("fileName", NULL);
 
   cm = cb->addMethod ("buildLagrangeMultiplierView", &elasticitySolver::buildLagrangeMultiplierView);
@@ -663,3 +673,4 @@ void elasticitySolverRegisterBindings(binding *b)
   cm->setArgNames("model","tag",NULL);
 }
 
+#endif
