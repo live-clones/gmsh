@@ -30,13 +30,13 @@
 #include "GmshMessage.h"
 #include "linearSystem.h"
 #include "Options.h"
-#include "elasticitySolver.h"
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
 #endif
 
 #if defined(HAVE_SOLVER)
+#include "elasticitySolver.h"
 #include "linearSystemCSR.h"
 #endif
 

@@ -104,10 +104,12 @@ void elasticitySolver::readInputFile(const std::string &fn)
   while(!feof(f)){
     if(fscanf(f, "%s", what) != 1) return;
     if(what[0]=='#'){
+      /*
       char *line=NULL;
       size_t l = 0;
       int r = getline(&line,&l,f);
       free(line);
+      */
     }
     else if (!strcmp(what, "ElasticDomain")){
       elasticField field;
