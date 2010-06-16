@@ -51,7 +51,7 @@ std::string GMSH_DistancePlugin::getHelp() const
   return "Plugin(Distance) computes distances to elementary entities in "
     "a mesh.\n\n"
     
-    "Define the elementary entities to which the distance is computed \n\n";
+    "Define the elementary entities to which the distance is computed. If Point=0, Line=0, and Surface=0, then the distance is computed to the boundaries of the mesh (edges in 2D and faces in 3D)\n\n";
 
   "Computation=0 computes the geometrical distance (Warning: this is an euclidian distance and not the geodesic distance), and  Computation=1 solves a PDE on the mesh\n\n";
 
