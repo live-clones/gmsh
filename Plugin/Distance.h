@@ -27,6 +27,10 @@ class GMSH_DistancePlugin : public GMSH_PostPlugin
   }
   std::string getHelp() const;
   std::string getAuthor() const { return "E. Marchandise"; }
+  int getNbOptions() const;
+  StringXNumber *getOption(int iopt);  
+  int getNbOptionsStr() const;
+  StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
 };
 

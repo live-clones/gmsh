@@ -51,7 +51,6 @@ bool PView::readPOS(std::string fileName, int fileIndex)
 
     }
     else if(!strncmp(&str[1], "View", 4)){
-
       index++;
       if(fileIndex < 0 || fileIndex == index){
         PViewDataList *d = new PViewDataList();

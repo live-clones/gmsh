@@ -426,13 +426,13 @@ bool GFaceCompound::checkOrientation(int iter) const
 
   int iterMax = 10;
   if(!oriented && iter < iterMax){
-    if (iter == 0) Msg::Warning("--- Parametrization is NOT 1 to 1 : applying cavity checks.");
+    if (iter == 0) Msg::Warning("--- Parametrization is flipping : applying cavity checks.");
     Msg::Debug("--- Cavity Check - iter %d -",iter);
     one2OneMap();
     return checkOrientation(iter+1);
   }
   else if (oriented && iter < iterMax){
-    Msg::Info("Parametrization is 1 to 1 :-)");
+    Msg::Info("Parametrization has no flips :-)");
     //printStuff(); 
   }
 
@@ -521,10 +521,12 @@ bool GFaceCompound::parametrize() const
     bool withoutFolding = parametrize_conformal_spectral() ;
     //bool withoutFolding = parametrize_conformal();
     if ( withoutFolding == false ){
-      //buildOct();  exit(1);
-      Msg::Warning("$$$ Parametrization switched to harmonic map");
-      parametrize(ITERU,HARMONIC); 
-      parametrize(ITERV,HARMONIC);
+  
+      double alpha = 0.0;
+      Msg::Warning("$$$ Parametrization switched to combination map: A*conf+(1-A)*harm with A=%g", alpha);
+      parametrize(ITERU,HARMONIC, alpha); 
+      parametrize(ITERV,HARMONIC, alpha);
+      //buildOct(); exit(1);
     }
   }
 
@@ -982,7 +984,7 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
   return SPoint2(0, 0);
 }
 
-void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
+void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom, double alpha) const
 {  
   
   dofManager<double> myAssembler(_lsys);
@@ -1098,14 +1100,22 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
     MVertex *v = *itv;
     double value;
    myAssembler.getDofValue(v, 0, 1, value);
-   std::map<MVertex*,SPoint3>::iterator itf = coordinates.find(v);    
+   std::map<MVertex*,SPoint3>::iterator itf = coordinates.find(v);
+
+   //combination convex and harmonic
+   double valNEW ;
+   if (alpha != 0.0)
+     valNEW = alpha*itf->second[step] + (1-alpha)*value ;
+   else
+     valNEW = value;
+
     if(itf == coordinates.end()){
       SPoint3 p(0, 0, 0);
-      p[step] = value;
+      p[step] = valNEW;
       coordinates[v] = p;
     }
     else{
-      itf->second[step]= value;
+      itf->second[step]= valNEW; 
     }
   }
 
@@ -1181,7 +1191,7 @@ bool GFaceCompound::parametrize_conformal_spectral() const
 
    //mettre max NC contraintes par bord
    int NB = ordered.size();
-   int NC = std::min(100,NB);
+   int NC = std::min(200,NB);
    int jump = (int) NB/NC;
    int nbLoop = (int) NB/jump ;
    //printf("nb bound nodes=%d jump =%d \n", NB, jump);
@@ -1197,8 +1207,7 @@ bool GFaceCompound::parametrize_conformal_spectral() const
    //-------------------------------
    //printf("Solve eigensystem \n");
    eigenSolver eig(&myAssembler, "B" , "A", true);
-   int nb = 2;
-   bool converged = eig.solve(nb, "largest");
+   bool converged = eig.solve(1, "largest");
     
    if(converged) {
      double Linfty = 0.0;
@@ -1217,22 +1226,6 @@ bool GFaceCompound::parametrize_conformal_spectral() const
        double paramv = ev[k+1].real()/Linfty;
        coordinates[v] = SPoint3(paramu,paramv,0.0);
        k = k+2;
-     }
-     
-      
-     //if folding take second smallest eigenvalue
-     bool noFolding = checkFolding(ordered);
-     if (!noFolding && nb > 1){
-       coordinates.clear();
-       int k = 0;
-       std::vector<std::complex<double> > &ev = eig.getEigenVector(nb-1); 
-       for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
-	 MVertex *v = *itv;
-	 double paramu = ev[k].real();
-	 double paramv = ev[k+1].real();
-	 coordinates[v] = SPoint3(paramu,paramv,0.0);
-	 k = k+2;
-       }
      }
 
      lsysA->clear();
@@ -1263,9 +1256,9 @@ bool GFaceCompound::parametrize_conformal() const
 
    MVertex *v1  = ordered[0];
    MVertex *v2  = ordered[(int)ceil((double)ordered.size()/2.)];
-   myAssembler.fixVertex(v1, 0, 1, 0.);
+   myAssembler.fixVertex(v1, 0, 1, 1.);
    myAssembler.fixVertex(v1, 0, 2, 0.);
-   myAssembler.fixVertex(v2, 0, 1, 1.);
+   myAssembler.fixVertex(v2, 0, 1, -1.);
    myAssembler.fixVertex(v2, 0, 2, 0.);
 //printf("Pinned vertex  %g %g %g / %g %g %g \n", v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z());
 

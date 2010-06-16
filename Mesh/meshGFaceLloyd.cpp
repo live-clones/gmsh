@@ -88,7 +88,7 @@ void lloydAlgorithm::operator () (GFace *gf)
         ENERGY += E;
 	double d = sqrt((p.x()-cgs(i,0))*(p.x()-cgs(i,0))+
 			(p.y()-cgs(i,1))*(p.y()-cgs(i,1)));
-	criteria = d/A;
+	criteria += d/A;
       }// if (v->onWhat() == gf)
       else {
       }

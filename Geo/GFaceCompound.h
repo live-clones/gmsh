@@ -72,7 +72,7 @@ class GFaceCompound : public GFace {
   mutable std::list<MTriangle*> fillTris;
   void buildOct() const ;
   void buildAllNodes() const; 
-  void parametrize(iterationStep, typeOfMapping) const;
+  void parametrize(iterationStep, typeOfMapping, double alpha=0.) const;
   bool parametrize_conformal() const;
   bool parametrize_conformal_spectral() const;
   void compute_distance() const;
