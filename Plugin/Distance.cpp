@@ -27,7 +27,7 @@ StringXNumber DistanceOptions_Number[] = {
   {GMSH_FULLRC, "Point", NULL, 0.},
   {GMSH_FULLRC, "Line", NULL, 0.},
   {GMSH_FULLRC, "Face", NULL, 0.},
-  {GMSH_FULLRC, "Computation", NULL, 0.},
+  {GMSH_FULLRC, "Computation", NULL, -1.0},
   //{GMSH_FULLRC, "Scale", NULL, 0.},
   //{GMSH_FULLRC, "Min Scale", NULL, 1.e-3},
   //{GMSH_FULLRC, "Max Scale", NULL, 1}
@@ -53,9 +53,9 @@ std::string GMSH_DistancePlugin::getHelp() const
     
     "Define the elementary entities to which the distance is computed. If Point=0, Line=0, and Surface=0, then the distance is computed to the boundaries of the mesh (edges in 2D and faces in 3D)\n\n";
 
-  "Computation=0 computes the geometrical distance (Warning: this is an euclidian distance and not the geodesic distance), and  Computation=1 solves a PDE on the mesh\n\n";
+  "Computation<0 computes the geometrical distance (Warning: this is an euclidian distance and not the geodesic distance), and  Computation=a>0 solves a PDE on the mesh with the diffusion constant mu = bbox/a, with bbox being the max size of the bounding box of the mesh (paper Legrand 2006) \n\n";
 
-  "Plugin(Distance) creates a new distance view.";
+  "Plugin(Distance) creates a new distance view and also saves the view in the fileName.pos file.";
 }
 
 int GMSH_DistancePlugin::getNbOptions() const
@@ -85,7 +85,8 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   int id_pt =     (int) DistanceOptions_Number[0].def;
   int id_line =   (int) DistanceOptions_Number[1].def;
   int id_face =   (int) DistanceOptions_Number[2].def;
-  int type =   (int) DistanceOptions_Number[3].def;
+  double type =   (double) DistanceOptions_Number[3].def;
+
 
   PView *view = new PView();
   PViewDataList *data = getDataList(view);
@@ -124,7 +125,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   
   // Compute geometrical distance to mesh boundaries
   //------------------------------------------------------
-  if (type == 0){
+  if (type < 0.0 ){
 
     for(unsigned int i = 0; i < entities.size(); i++){
       GEntity* g2 = entities[i];
@@ -210,7 +211,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   
   // Compute PDE for distance function
   //-----------------------------------
-  else if (type == 1){
+  else if (type > 0.0){
 
 #if defined(HAVE_SOLVER)
   
@@ -257,7 +258,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     }
 
     double L = norm(SVector3(bbox.max(), bbox.min())); 
-    double mu = L/10; //28;
+    double mu = L/type;
 
     simpleFunction<double> DIFF(mu * mu), MONE(1.0);
     distanceTerm distance(GModel::current(), 1, &DIFF, &MONE);
@@ -289,7 +290,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     }
     lsys->clear();
 
-    data->setName("distance GEOM");
+    data->setName("distance PDE");
   
     Msg::Info("Writing %d", fileName.c_str());
     FILE * f4 = fopen(fileName.c_str(),"w");
