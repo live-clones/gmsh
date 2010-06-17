@@ -103,7 +103,6 @@ class groupOfLagMultElements : public groupOfElements
     groupOfElements::elementContainer::iterator itp = pElem.begin();
     for (;itp!=pElem.end(); itp++)
     {
-      MElement *ep;
       if ((*itp)->getParent())
       {
         if (sElem.find(*itp)) insert((*itp)) ;  // warning : find method used to check if parent is in sElem
@@ -123,7 +122,7 @@ class groupOfLagMultElements : public groupOfElements
   groupOfLagMultElements(int dim, int physical, std::vector < groupOfElements *>  sElem) : groupOfElements()
   {
     groupOfElements  pElem(dim , physical);
-    for (int i;i < sElem.size() ; i ++)
+    for (unsigned int i;i < sElem.size() ; i ++)
     {
      fillElementContainer(pElem,(*sElem[i]));
     }

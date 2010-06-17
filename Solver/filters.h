@@ -41,7 +41,7 @@ class FilterNodeEnriched
       Dof::getTwoIntsFromType(key.getType(), i1,i2);
        it2 = _EnrichComp->find(i1);
       it1 = _TagEnrichedVertex->find(key.getEntity());
-      if (it1!=_TagEnrichedVertex->end() & it2 != _EnrichComp->end())
+      if ((it1!=_TagEnrichedVertex->end()) && (it2 != _EnrichComp->end()))
       {
         return true;
       }
@@ -111,7 +111,7 @@ class FilterElementsCutByLevelSet
       Dof::getTwoIntsFromType(key.getType(), i1,i2);
        it2 = _EnrichComp->find(i1);
       it1 = _TagEnrichedVertex.find(key.getEntity());
-      if (it1!=_TagEnrichedVertex.end() & it2 != _EnrichComp->end())
+      if ((it1!=_TagEnrichedVertex.end()) && (it2 != _EnrichComp->end()))
       {
         return true;
       }
