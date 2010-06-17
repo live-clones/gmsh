@@ -26,7 +26,7 @@
 StringXNumber DistanceOptions_Number[] = {
   {GMSH_FULLRC, "Point", NULL, 0.},
   {GMSH_FULLRC, "Line", NULL, 0.},
-  {GMSH_FULLRC, "Face", NULL, 0.},
+  {GMSH_FULLRC, "Surface", NULL, 0.},
   {GMSH_FULLRC, "Computation", NULL, -1.0},
   //{GMSH_FULLRC, "Scale", NULL, 0.},
   //{GMSH_FULLRC, "Min Scale", NULL, 1.e-3},
@@ -51,9 +51,9 @@ std::string GMSH_DistancePlugin::getHelp() const
   return "Plugin(Distance) computes distances to elementary entities in "
     "a mesh.\n\n"
     
-    "Define the elementary entities to which the distance is computed. If Point=0, Line=0, and Surface=0, then the distance is computed to the boundaries of the mesh (edges in 2D and faces in 3D)\n\n";
+    "Define the elementary entities to which the distance is computed. If Point=0, Line=0, and Surface=0, then the distance is computed to all the boundaries of the mesh (edges in 2D and faces in 3D)\n\n"
 
-  "Computation<0 computes the geometrical distance (Warning: this is an euclidian distance and not the geodesic distance), and  Computation=a>0 solves a PDE on the mesh with the diffusion constant mu = bbox/a, with bbox being the max size of the bounding box of the mesh (paper Legrand 2006) \n\n";
+  "Computation<0. computes the geometrical euclidian distance (warning: different than the geodesic distance), and  Computation=a>0.0 solves a PDE on the mesh with the diffusion constant mu = bbox/a, with bbox being the max size of the bounding box of the mesh (see paper Legrand 2006) \n\n"
 
   "Plugin(Distance) creates a new distance view and also saves the view in the fileName.pos file.";
 }
@@ -291,7 +291,6 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     lsys->clear();
 
     data->setName("distance PDE");
-  
     Msg::Info("Writing %d", fileName.c_str());
     FILE * f4 = fopen(fileName.c_str(),"w");
     fprintf(f4,"View \"distance PDE\"{\n");

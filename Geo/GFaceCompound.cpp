@@ -1594,7 +1594,7 @@ void GFaceCompound::secondDer(const SPoint2 &param,
   //printf("der second dvdv = %g %g %g \n", dvdv->x(),  dvdv->y(),  dvdv->z());
   //printf("der second dudv = %g %g %g \n", dudv->x(),  dudv->y(),  dudv->z());
   
-  Msg::Warning("Computation of the second derivatives is not implemented for compound faces");
+  Msg::Debug("Computation of the second derivatives is not implemented for compound faces");
   
 }
 
