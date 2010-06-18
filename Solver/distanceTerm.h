@@ -23,9 +23,7 @@ class distanceTerm : public helmholtzTerm<double> {
     double jac[3][3];
     double ff[256];
     e->getIntegrationPoints(integrationOrder, &npts, &GP);
-  
-    m.scale(0.);
-    
+    m.scale(0.); 
     for (int i = 0; i < npts; i++){
       const double u = GP[i].pt[0];
       const double v = GP[i].pt[1];

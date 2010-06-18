@@ -53,7 +53,7 @@ std::string GMSH_DistancePlugin::getHelp() const
     
     "Define the elementary entities to which the distance is computed. If Point=0, Line=0, and Surface=0, then the distance is computed to all the boundaries of the mesh (edges in 2D and faces in 3D)\n\n"
 
-  "Computation<0. computes the geometrical euclidian distance (warning: different than the geodesic distance), and  Computation=a>0.0 solves a PDE on the mesh with the diffusion constant mu = bbox/a, with bbox being the max size of the bounding box of the mesh (see paper Legrand 2006) \n\n"
+  "Computation<0. computes the geometrical euclidian distance (warning: different than the geodesic distance), and  Computation=a>0.0 solves a PDE on the mesh with the diffusion constant mu = a*bbox, with bbox being the max size of the bounding box of the mesh (see paper Legrand 2006) \n\n"
 
   "Plugin(Distance) creates a new distance view and also saves the view in the fileName.pos file.";
 }
@@ -258,10 +258,10 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     }
 
     double L = norm(SVector3(bbox.max(), bbox.min())); 
-    double mu = L/type;
+    double mu = type*L;
 
-    simpleFunction<double> DIFF(mu * mu), MONE(1.0);
-    distanceTerm distance(GModel::current(), 1, &DIFF, &MONE);
+    simpleFunction<double> DIFF(mu*mu), ONE(1.0);
+    distanceTerm distance(GModel::current(), 1, &DIFF, &ONE);
   
     for(unsigned int ii = 0; ii < entities.size(); ii++){
       if(entities[ii]->dim() == maxDim) {
@@ -331,8 +331,54 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 #endif
   }
 
-  //FILE *fp = fopen(fileName.c_str(), "rb");
-  //data->readPOS(fp, 1.0, false);
+  //compute also orthogonal vector to distance field
+  //------------------------------------------------
+// #if defined(HAVE_SOLVER)
+  
+// #ifdef HAVE_TAUCS
+//     linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
+// #else
+//     linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
+//     lsys->setNoisy(1);
+//     lsys->setGmres(1);
+//     lsys->setPrec(5.e-8);
+// #endif
+
+//     dofManager<double> myAssembler(lsys);
+
+//     for(unsigned int ii = 0; ii < entities.size(); ii++){
+//       if(entities[ii]->dim() == maxDim) {
+// 	GEntity *ge = entities[ii];
+// 	for(unsigned int i = 0; i < ge->getNumMeshElements(); ++i){
+// 	  MElement *t = ge->getMeshElement(i);
+// 	  for(int k = 0; k < t->getNumVertices(); k++){
+// 	    myAssembler.numberVertex(t->getVertex(k), 0, 1);
+// 	  }
+// 	}    
+//       }  
+//     }
+
+//     simpleFunction<double> ONE(1.0);
+//     simpleFunction<double> MONE(-1.0 );
+//     laplaceTerm laplace(model(), 1, &ONE);
+//     crossConfTerm cross12(model(), 1, 1, &ONE);
+
+//     for(unsigned int ii = 0; ii < entities.size(); ii++){
+//       if(entities[ii]->dim() == maxDim) {
+// 	GEntity *ge = entities[ii];
+// 	for(unsigned int i = 0; i < ge->getNumMeshElements(); ++i){
+// 	  SElement se(ge->getMeshElement(i));
+// 	  laplace.addToMatrix(myAssembler, &se);
+// 	}
+// 	//groupOfElements g((GFace*)ge); //WARNING GFACE HE
+// 	//distance.addToRightHandSide(myAssembler, g);
+//       }
+//     }
+
+// #endif
+
+    //-------------------------------------------------
+
 
   data->Time.push_back(0);
   data->setFileName(fileName.c_str());
