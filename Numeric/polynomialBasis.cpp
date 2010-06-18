@@ -906,10 +906,10 @@ static void generate1dVertexClosure(polynomialBasis::clCont &closure)
 }
 std::map<int, polynomialBasis> polynomialBases::fs;
 
-const polynomialBasis &polynomialBases::find(int tag)
+const polynomialBasis *polynomialBases::find(int tag)
 {
   std::map<int, polynomialBasis>::const_iterator it = fs.find(tag);
-  if (it != fs.end())     return it->second;
+  if (it != fs.end())     return &it->second;
   polynomialBasis F;
   F.numFaces = -1;
 
@@ -1305,7 +1305,7 @@ const polynomialBasis &polynomialBases::find(int tag)
 //   }
 
   fs.insert(std::make_pair(tag, F));
-  return fs[tag];
+  return &fs[tag];
 }
 
 
@@ -1317,8 +1317,8 @@ const fullMatrix<double> &polynomialBases::findInjector(int tag1, int tag2)
   std::map<std::pair<int, int>, fullMatrix<double> >::const_iterator it = injector.find(key);
   if (it != injector.end()) return it->second;
 
-  const polynomialBasis& fs1 = find(tag1);
-  const polynomialBasis& fs2 = find(tag2);
+  const polynomialBasis& fs1 = *find(tag1);
+  const polynomialBasis& fs2 = *find(tag2);
 
   fullMatrix<double> inj(fs1.points.size1(), fs2.points.size1());
 
@@ -1331,4 +1331,16 @@ const fullMatrix<double> &polynomialBases::findInjector(int tag1, int tag2)
 
   injector.insert(std::make_pair(key, inj));
   return injector[key];
+}
+
+#include "Bindings.h"
+void polynomialBasis::registerBindings(binding *b) {
+  classBinding *cb = b->addClass<polynomialBasis>("polynomialBasis");
+  cb->setDescription("polynomial shape functions for elements");
+  methodBinding *mb = cb->addMethod("f",(void (polynomialBasis::*)(fullMatrix<double>&, fullMatrix<double>&))&polynomialBasis::f);
+  mb->setDescription("evaluate the shape functions");
+  mb->setArgNames("nodes","values",NULL);
+  mb = cb->addMethod("find",&polynomialBases::find);
+  mb->setDescription("return the polynomial basis corresponding to an element type");
+  mb->setArgNames("elementType",NULL);
 }

@@ -132,6 +132,10 @@ class PViewData {
   virtual void getValue(int step, int ent, int ele, int nod, int comp, double &val){}
   virtual void setValue(int step, int ent, int ele, int nod, int comp, double val);
 
+  double getValueBinding(int step, int ent, int ele, int nod, int comp);
+  void getAllValuesForElementBinding(int step, int ent, int ele, fullMatrix<double> &m);
+  void getAllNodesForElementBinding(int step, int ent, int ele, fullMatrix<double> &m);
+
   // return a scalar value (same as value for scalars, norm for
   // vectors, etc.) associated with the node-th node from the ele-th
   // element in the ent-th entity

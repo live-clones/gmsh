@@ -51,7 +51,7 @@ class MPoint : public MElement {
     s[0][0] = s[0][1] = s[0][2] = 0.;
   }
 
-  virtual const polynomialBasis* getFunctionSpace(int o) const { return &polynomialBases::find(MSH_PNT); }
+  virtual const polynomialBasis* getFunctionSpace(int o) const { return polynomialBases::find(MSH_PNT); }
   virtual bool isInside(double u, double v, double w)
   {
     return true;

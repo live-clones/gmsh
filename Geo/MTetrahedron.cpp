@@ -111,26 +111,26 @@ const polynomialBasis* MTetrahedron::getFunctionSpace(int o) const
   
   if ((nv == 0) && (o == -1)) {
     switch (order) {
-    case 1: return &polynomialBases::find(MSH_TET_4);
-    case 2: return &polynomialBases::find(MSH_TET_10);
-    case 3: return &polynomialBases::find(MSH_TET_20);
-    case 4: return &polynomialBases::find(MSH_TET_34);
-    case 5: return &polynomialBases::find(MSH_TET_52);
+    case 1: return polynomialBases::find(MSH_TET_4);
+    case 2: return polynomialBases::find(MSH_TET_10);
+    case 3: return polynomialBases::find(MSH_TET_20);
+    case 4: return polynomialBases::find(MSH_TET_34);
+    case 5: return polynomialBases::find(MSH_TET_52);
     default: Msg::Error("Order %d tetrahedron function space not implemented", order);
     }
   }
   else { 
     switch (order) {
-    case 1: return &polynomialBases::find(MSH_TET_4);
-    case 2: return &polynomialBases::find(MSH_TET_10);
-    case 3: return &polynomialBases::find(MSH_TET_20);
-    case 4: return &polynomialBases::find(MSH_TET_35);
-    case 5: return &polynomialBases::find(MSH_TET_56);
-    case 6: return &polynomialBases::find(MSH_TET_84);
-    case 7: return &polynomialBases::find(MSH_TET_120);
-    case 8: return &polynomialBases::find(MSH_TET_165);
-    case 9: return &polynomialBases::find(MSH_TET_220);
-    case 10: return &polynomialBases::find(MSH_TET_286);
+    case 1: return polynomialBases::find(MSH_TET_4);
+    case 2: return polynomialBases::find(MSH_TET_10);
+    case 3: return polynomialBases::find(MSH_TET_20);
+    case 4: return polynomialBases::find(MSH_TET_35);
+    case 5: return polynomialBases::find(MSH_TET_56);
+    case 6: return polynomialBases::find(MSH_TET_84);
+    case 7: return polynomialBases::find(MSH_TET_120);
+    case 8: return polynomialBases::find(MSH_TET_165);
+    case 9: return polynomialBases::find(MSH_TET_220);
+    case 10: return polynomialBases::find(MSH_TET_286);
     default: Msg::Error("Order %d tetrahedron function space not implemented", order);
     }
   }

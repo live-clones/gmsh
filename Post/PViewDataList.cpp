@@ -784,7 +784,7 @@ void PViewDataList::setOrder2(int type)
   case TYPE_PRI: typeMSH = MSH_PRI_18; break;
   case TYPE_PYR: typeMSH = MSH_PYR_14; break;
   }
-  const polynomialBasis *fs = &polynomialBases::find(typeMSH);
+  const polynomialBasis *fs = polynomialBases::find(typeMSH);
   if(!fs){
     Msg::Error("Could not find function space for element type %d", typeMSH);
     return;

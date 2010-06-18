@@ -30,6 +30,7 @@
 #include "GmshMessage.h"
 #include "linearSystem.h"
 #include "Options.h"
+#include "polynomialBasis.h"
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
@@ -412,6 +413,7 @@ binding::binding()
   gmshOptions::registerBindings(this);
   Msg::registerBindings(this);
   linearSystem<double>::registerBindings(this);
+  polynomialBasis::registerBindings(this);
 #if defined(HAVE_SOLVER)
   function::registerBindings(this);
   linearSystemCSRGmm<double>::registerBindings(this);

@@ -120,6 +120,27 @@ bool PViewData::combineSpace(nameData &nd)
   return false; 
 }
 
+double PViewData::getValueBinding(int step, int ent, int ele, int nod, int comp)
+{
+  double val;
+  getValue(step,ent,ele,nod,comp,val);
+  return val;
+}
+
+void PViewData::getAllValuesForElementBinding(int step, int ent, int ele, fullMatrix<double> &m) {
+  int nNodes = getNumNodes(step,ent,ele);
+  int nComponents = getNumComponents(step,ent,ele);
+  for (int i=0; i<nNodes; i++)
+    for (int j=0; j<nComponents; j++)
+       getValue(step,ent,ele,i,j,m(i,j));
+}
+
+void PViewData::getAllNodesForElementBinding(int step, int ent, int ele, fullMatrix<double> &m) {
+  int nNodes = getNumNodes(step,ent,ele);
+  for (int i=0; i<nNodes; i++)
+    getNode(step,ent,ele,i,m(i,0),m(i,1),m(i,2));
+}
+
 #include "Bindings.h"
 void PViewData::registerBindings(binding *b) {
   classBinding *cb = b->addClass<PViewData>("PViewData");
@@ -127,5 +148,35 @@ void PViewData::registerBindings(binding *b) {
   methodBinding *cm;
   cm = cb->addMethod("getNumEntities",&PViewData::getNumEntities);
   cm->setArgNames("step",NULL);
-  cm->setDescription("return the number of entities for a given time step");
+  cm->setDescription("return the number of entities for a given time step (-1 for default)");
+  cm = cb->addMethod("getNumElements",&PViewData::getNumElements);
+  cm->setArgNames("step","entity",NULL);
+  cm->setDescription("return the number of entities for a given time step (-1 for default) for a given entity (-1 for all)");
+  cm = cb->addMethod("getNumTriangles",&PViewData::getNumTriangles);
+  cm->setArgNames("step",NULL);
+  cm->setDescription("return the number of triangles for a given time step (-1 for default)");
+
+  cm = cb->addMethod("getNumNodes",&PViewData::getNumNodes);
+  cm->setArgNames("step","entity","element",NULL);
+  cm->setDescription("return the number of nodes of one element of an entity of a time step (-1 for default time step)");
+
+  cm = cb->addMethod("getNumValues",&PViewData::getNumValues);
+  cm->setArgNames("step","entity","element",NULL);
+  cm->setDescription("return the number of values of one element of an entity of a time step (-1 for default time step)");
+
+  cm = cb->addMethod("getNumComponents",&PViewData::getNumComponents);
+  cm->setArgNames("step","entity","element",NULL);
+  cm->setDescription("return the number of components of one element of an entity of a time step (-1 for default time step)");
+
+  cm = cb->addMethod("getValue",&PViewData::getValueBinding);
+  cm->setArgNames("step","entity","element","node","component",NULL);
+  cm->setDescription("return one of the values");
+
+  cm = cb->addMethod("getAllValuesForElement",&PViewData::getAllValuesForElementBinding);
+  cm->setArgNames("step","entity","element","values",NULL);
+  cm->setDescription("fill a fullMatrix with all values from the elements. The fullMatrix should have the size nbNodes x nbComponents.");
+
+  cm = cb->addMethod("getAllNodesForElement",&PViewData::getAllNodesForElementBinding);
+  cm->setArgNames("step","entity","element","coordinates",NULL);
+  cm->setDescription("fill a fullMatrix with all coordinates from the nodes of the elements. The fullMatrix should have the size nbNodes x 3");
 }

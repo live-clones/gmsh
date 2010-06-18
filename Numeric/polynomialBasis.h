@@ -62,6 +62,7 @@ inline double pow_int (const double &a , const int &n) {
   }
 } 
 
+class binding;
 
 // presently those function spaces are only for simplices and quads;
 // should be extended to other elements like hexes
@@ -100,6 +101,17 @@ class polynomialBasis
       for (int j = 0; j < coefficients.size2(); j++) {
         sf[i] += coefficients(i, j) * p[j];
       }
+    }
+  }
+  // I would favour this interface that allows optimizations (not implemented) and is easier to bind
+  inline void f(fullMatrix<double> &coord, fullMatrix<double> &sf) {
+    double p[256];
+    sf.resize (coefficients.size1(), coord.size1());
+    for (int iPoint=0; iPoint< coord.size1(); iPoint++) {
+      evaluateMonomials(coord(iPoint,0), coord(iPoint,1), coord(iPoint,2), p);
+      for (int i = 0; i < coefficients.size1(); i++)
+        for (int j = 0; j < coefficients.size2(); j++)
+          sf(i,iPoint) += coefficients(i, j) * p[j];
     }
   }
   inline void df(double u, double v, double w, double grads[][3]) const
@@ -242,6 +254,7 @@ class polynomialBasis
       break;
     }
   }
+  static void registerBindings(binding *b);
 };
 
 class polynomialBases
@@ -250,7 +263,7 @@ class polynomialBases
   static std::map<int, polynomialBasis> fs;
   static std::map<std::pair<int, int>, fullMatrix<double> > injector;
  public :
-  static const polynomialBasis &find(int);
+  static const polynomialBasis *find(int);
   static const fullMatrix<double> &findInjector(int, int);
 };
 
