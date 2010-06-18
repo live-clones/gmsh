@@ -106,12 +106,12 @@ class polynomialBasis
   // I would favour this interface that allows optimizations (not implemented) and is easier to bind
   inline void f(fullMatrix<double> &coord, fullMatrix<double> &sf) {
     double p[256];
-    sf.resize (coefficients.size1(), coord.size1());
+    sf.resize (coord.size1(), coefficients.size1());
     for (int iPoint=0; iPoint< coord.size1(); iPoint++) {
       evaluateMonomials(coord(iPoint,0), coord(iPoint,1), coord(iPoint,2), p);
       for (int i = 0; i < coefficients.size1(); i++)
         for (int j = 0; j < coefficients.size2(); j++)
-          sf(i,iPoint) += coefficients(i, j) * p[j];
+          sf(iPoint,i) += coefficients(i, j) * p[j];
     }
   }
   inline void df(double u, double v, double w, double grads[][3]) const

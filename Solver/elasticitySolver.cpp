@@ -24,7 +24,6 @@
 #include "PViewData.h"
 #endif
 
-/********************* deprecated api ? ****************************************/
 static void printLinearSystem(linearSystemCSRTaucs<double> *lsys)
 {
   int *startIndex;
@@ -85,6 +84,21 @@ void elasticitySolver::solve()
   GaussQuadrature Integ_Bulk(GaussQuadrature::GradGrad);
 
 //   printLinearSystem(lsys);
+
+  double energ=0;
+  for (unsigned int i = 0; i < elasticFields.size(); i++)
+  {
+    SolverField<SVector3> Field(pAssembler, LagSpace);
+    IsotropicElasticTerm Eterm(Field,elasticFields[i]._E,elasticFields[i]._nu);
+    BilinearTermToScalarTerm<SVector3,SVector3> Elastic_Energy_Term(Eterm);
+    Assemble(Elastic_Energy_Term,elasticFields[i].g->begin(),elasticFields[i].g->end(),Integ_Bulk,energ);
+  }
+  printf("elastic energy=%f\n",energ);
+}
+
+void elasticitySolver::postSolve()
+{
+  GaussQuadrature Integ_Bulk(GaussQuadrature::GradGrad);
 
   double energ=0;
   for (unsigned int i = 0; i < elasticFields.size(); i++)
@@ -247,7 +261,6 @@ void elasticitySolver::readInputFile(const std::string &fn)
   fclose(f);
 }
 
-/********************* end deprecated api ****************************************/
 
 #if defined (HAVE_LUA)
 
@@ -414,6 +427,30 @@ void elasticitySolver::assemble(linearSystem<double> *lsys)
 
 
 #if defined(HAVE_POST)
+static void deformation(dofManager<double> *a, MElement *e,
+                       double u, double v, double w, int _tag, double *eps){
+  double valx[256];
+  double valy[256];
+  double valz[256];
+  for (int k = 0; k < e->getNumVertices(); k++){
+    a->getDofValue(e->getVertex(k), 0, _tag, valx[k]);
+    a->getDofValue(e->getVertex(k), 1, _tag, valy[k]);
+    a->getDofValue(e->getVertex(k), 2, _tag, valz[k]);
+  }
+  double gradux[3];
+  double graduy[3];
+  double graduz[3];
+  e->interpolateGrad(valx, u, v, w, gradux);
+  e->interpolateGrad(valy, u, v, w, graduy);
+  e->interpolateGrad(valz, u, v, w, graduz);
+
+  eps[0] = gradux[0];
+  eps[1] = graduy[1];
+  eps[2] = graduz[2];
+  eps[3] = 0.5 * (gradux[1] + graduy[0]);
+  eps[4] = 0.5 * (gradux[2] + graduz[0]);
+  eps[5] = 0.5 * (graduy[2] + graduz[1]);
+}
 
 static double vonMises(dofManager<double> *a, MElement *e,
                        double u, double v, double w,
@@ -453,6 +490,10 @@ static double vonMises(dofManager<double> *a, MElement *e,
                  sxz, syz, szz};
 
   return ComputeVonMises(s);
+}
+
+void elasticitySolver::getSolutionOnElement (MElement *el, fullMatrix<double> &sol) {
+  
 }
 
 PView* elasticitySolver::buildDisplacementView (const std::string postFileName)
@@ -623,6 +664,9 @@ void elasticitySolverRegisterBindings(binding *b)
   cm = cb->addMethod("read", &elasticitySolver::read);
   cm->setDescription ("reads an input file");
   cm->setArgNames("fileName",NULL);
+
+  cm = cb->addMethod("postSolve", &elasticitySolver::postSolve);
+  cm->setDescription (" ");
 
   cm = cb->addMethod("assemble", &elasticitySolver::assemble);
   cm->setDescription ("assembles the problem");

@@ -258,6 +258,12 @@ double MElement::getJacobian(double u, double v, double w, double jac[3][3])
   return _computeDeterminantAndRegularize(this, jac);
 }
 
+//binded
+double MElement::getJacobianDeterminant(double u, double v, double w) {
+  double jac[3][3];
+  return getJacobian(u,v,w,jac);
+}
+
 
 double MElement::getJacobian(double gsf[][3], double jac[3][3])
 {
@@ -1030,4 +1036,7 @@ void MElement::registerBindings(binding *b)
   cm->setDescription("return the polynomial order the element");
   cm = cb->addMethod("getDim", &MElement::getDim);
   cm->setDescription("return the geometrical dimension of the element");
+  cm = cb->addMethod("getJacobianDeterminant", &MElement::getJacobianDeterminant);
+  cm->setDescription("return the jacobian of the determinant of the transformation");
+  cm->setArgNames("u","v","w",NULL);
 }

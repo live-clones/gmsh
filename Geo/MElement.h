@@ -220,6 +220,8 @@ class MElement
   double getJacobian(double gsf[][3], double jac[3][3]);
   double getJacobian(double u, double v, double w, double jac[3][3]);
   double getPrimaryJacobian(double u, double v, double w, double jac[3][3]);
+  //bindings : double[3][3] is not easy to bind, we could use fullMatrix instead
+  double getJacobianDeterminant(double u, double v, double w);
 
   // get the point in cartesian coordinates corresponding to the point
   // (u,v,w) in parametric coordinates

@@ -2,6 +2,37 @@ function neumannCondition (x,y,z)
   return {-100e6,0,0}
 end
 
+
+function errorOnView (view, dim)
+  basis = polynomialBasis.find(2)
+  gaussPoints = fullMatrix(1,1)
+  gaussWeights = fullMatrix(1,1)
+  gaussIntegration.getTriangle(3,gaussPoints,gaussWeights)
+
+  nnodes = 3 -- only triangles
+  viewData = view:getData()
+  values = fullMatrix(nnodes,dim)
+  nodes = fullMatrix(nnodes,3)
+  gaussXYZ = fullMatrix(gaussPoints:size1(),3)
+  gaussValues = fullMatrix(gaussPoints:size1(),dim)
+  nEntities = viewData:getNumEntities(-1)
+  psi = fullMatrix(gaussPoints:size1(),3)
+  basis:f(gaussPoints,psi)
+  for i=0,nEntities-1 do 
+    nElements = viewData:getNumElements(-1,i)
+    for j=0,nElements-1 do
+      if(viewData:getNumNodes(0,i,j)==nnodes) then
+        viewData:getAllValuesForElement(0,i,j,values)
+        viewData:getAllNodesForElement(0,i,j,nodes)
+      end
+      gaussXYZ:gemm(psi,nodes,1,0)
+      gaussValues:gemm(psi,values,1,0)
+    end
+  end
+end
+
+
+
 m = GModel()
 m:load("conge.geo")
 m:load("conge.msh")
@@ -19,33 +50,4 @@ view = e:buildVonMisesView("vonMises")
 view = e:buildDisplacementView("displacement")
 view:write("displacement.msh",5,false)
 
-viewData = view:getData()
-nEntities = viewData:getNumEntities(-1)
-v = fullMatrix(3,3)
-nodes = fullMatrix(3,3)
-for i=0,nEntities-1 do 
-  nElements = viewData:getNumElements(-1,i)
-  for j=0,nElements-1 do
-    if(viewData:getNumNodes(0,i,j)==3) then
-      viewData:getAllValuesForElement(0,i,j,v)
-      viewData:getAllNodesForElement(0,i,j,nodes)
-    end
-  end
-end
-
-basis = polynomialBasis.find(2)
-points = fullMatrix(3,3)
-points:set(0,0,0);
-points:set(0,1,0);
-points:set(0,2,0);
-
-points:set(1,0,1);
-points:set(1,1,0);
-points:set(1,2,0);
-
-points:set(2,0,0);
-points:set(2,1,1);
-points:set(2,2,0);
-
-basis:f(points,v)
-v:print("f")
+errorOnView(view,3)

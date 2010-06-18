@@ -31,6 +31,8 @@
 #include "linearSystem.h"
 #include "Options.h"
 #include "polynomialBasis.h"
+#include "Gauss.h"
+#include "PViewFactory.h"
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
@@ -414,6 +416,8 @@ binding::binding()
   Msg::registerBindings(this);
   linearSystem<double>::registerBindings(this);
   polynomialBasis::registerBindings(this);
+  gaussIntegration::registerBindings(this);
+  PViewFactory::registerBindings(this);
 #if defined(HAVE_SOLVER)
   function::registerBindings(this);
   linearSystemCSRGmm<double>::registerBindings(this);

@@ -14,6 +14,7 @@ set(SRC
     GaussQuadratureHex.cpp
     GaussQuadraturePri.cpp
     GaussLegendreSimplex.cpp
+    Gauss.cpp
   robustPredicates.cpp
   mathEvaluator.cpp
   Iso.cpp

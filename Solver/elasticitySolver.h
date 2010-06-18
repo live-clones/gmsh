@@ -100,6 +100,8 @@ class elasticitySolver
   void read(const std::string s) {readInputFile(s.c_str());}
   virtual void setMesh(const std::string &meshFileName);
   void solve();
+  void postSolve();
+  void getSolutionOnElement(MElement *el, fullMatrix<double> &sol);
   virtual PView *buildDisplacementView(const std::string postFileName);
   virtual PView *buildLagrangeMultiplierView(const std::string posFileName);
   virtual PView *buildElasticEnergyView(const std::string postFileName);
