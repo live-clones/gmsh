@@ -3,50 +3,25 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _CROSS_CONF_TERM_H_
-#define _CROSS_CONF_TERM_H_
+#ifndef _ORTHOGONAL_TERM_H_
+#define _ORTHOGONAL_TERM_H_
 
-#include "femTerm.h"
-#include "simpleFunction.h"
-#include "Gmsh.h"
-#include "GModel.h"
-#include "SElement.h"
-#include "fullMatrix.h"
-#include "Numeric.h"
+#include "helmholtzTerm.h"
 
-class crossConfTerm : public femTerm<double> {
+class orthogonalTerm : public helmholtzTerm<double> {
  protected:
-  const simpleFunction<double> *_diffusivity;
-  const int _iFieldR;
-  int _iFieldC;
+  fullVector<double> *_value;
  public:
-  crossConfTerm(GModel *gm, int iFieldR, int iFieldC, 
-                simpleFunction<double> *diffusivity)
-    : femTerm<double>(gm), _diffusivity(diffusivity), _iFieldR(iFieldR), 
-      _iFieldC(iFieldC) {}
-  virtual int sizeOfR(SElement *se) const 
+ orthogonalTerm(GModel *gm, int iField, fullVector<double> &value)
+   : helmholtzTerm<double>(gm, iField, iField, 1.0, 0), _value(value) {}
+  void elementVector(SElement *se, fullVector<double> &m) const
   {
-    return se->getMeshElement()->getNumVertices(); 
-  }
-  virtual int sizeOfC(SElement *se) const
-  {
-    return se->getMeshElement()->getNumVertices(); 
-  }
-  Dof getLocalDofR(SElement *se, int iRow) const
-  {
-     return Dof(se->getMeshElement()->getVertex(iRow)->getNum(), 
-               Dof::createTypeWithTwoInts(0, _iFieldR));
-  }
-  Dof getLocalDofC(SElement *se, int iRow) const
-  {
-    return Dof(se->getMeshElement()->getVertex(iRow)->getNum(),
-               Dof::createTypeWithTwoInts(0, _iFieldC));
-  }
-  virtual void elementMatrix(SElement *se, fullMatrix<double> &m) const
-  {
+
     MElement *e = se->getMeshElement();
+
+    //fill elementary matrix mat(i,j)
     int nbNodes = e->getNumVertices();
-    int integrationOrder = 2 * (e->getPolynomialOrder() - 1); 
+    int integrationOrder = 2 * (e->getPolynomialOrder() - 1);
     int npts;
     IntPt *GP;
     double jac[3][3];
@@ -54,8 +29,8 @@ class crossConfTerm : public femTerm<double> {
     SVector3 Grads [256];
     double grads[256][3];
     e->getIntegrationPoints(integrationOrder, &npts, &GP);
-
-    m.setAll(0.);
+    fullMatrix<double> mat;
+    mat.setAll(0.);
     
     for (int i = 0; i < npts; i++){
       const double u = GP[i].pt[0];
@@ -78,13 +53,22 @@ class crossConfTerm : public femTerm<double> {
       SVector3 N (jac[2][0], jac[2][1], jac[2][2]);
       for (int j = 0; j < nbNodes; j++){
         for (int k = 0; k <= j; k++){
-          m(j, k) += dot(crossprod(Grads[j], Grads[k]), N) * weight * detJ * _diff;
+          mat(j, k) += dot(crossprod(Grads[j], Grads[k]), N) * weight * detJ * _diff;
         }
       }
     }
     for (int j = 0; j < nbNodes; j++)
       for (int k = 0; k < j; k++)
-        m(k, j) = -1.* m(j, k);
+        mat(k, j) = -1.* m(j, k);
+ 
+    //2) compute vector m(i) = mat(i,j)*val(j)
+    fullVector<double> val(nbNodes);
+
+    m.scale(0.); 
+    for (int i = 0; i < nbNodes; i++)
+      for (int j = 0; j < nbNodes; j++)
+	m(i)  +=  mat(i,j)*val(j);
+ 
   }
 };
 

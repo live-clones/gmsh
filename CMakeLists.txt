@@ -79,7 +79,7 @@ set(GMSH_API
     Geo/Homology.h
   Mesh/meshGEdge.h Mesh/meshGFace.h Mesh/meshGFaceOptimize.h 
     Mesh/meshGFaceDelaunayInsertion.h
-  Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h Solver/elasticityTerm.h
+  Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h Solver/elasticityTerm.h Solver/crossConfTerm.h Solver/orthogonalTerm.h
     Solver/linearSystem.h Solver/linearSystemGMM.h Solver/linearSystemCSR.h 
     Solver/linearSystemFull.h Solver/elasticitySolver.h
   Post/PView.h Post/PViewData.h Plugin/PluginManager.h
