@@ -27,14 +27,14 @@ class SVector3 {
   inline double x(void) const { return P.x(); }
   inline double y(void) const { return P.y(); }
   inline double z(void) const { return P.z(); }
-  inline double norm() { return sqrt(P[0] * P[0] + P[1] * P[1] + P[2] * P[2]); }
+  inline double norm() const { return sqrt(P[0] * P[0] + P[1] * P[1] + P[2] * P[2]); }
   inline double normSq() { return (P[0] * P[0] + P[1] * P[1] + P[2] * P[2]); }
-  double normalize() 
-  { 
+  double normalize()
+  {
     double n = norm(); if(n){ P[0] /= n; P[1] /= n; P[2] /= n; }
     return n;
   }
-  void negate() { P[0] = -P[0]; P[1] = -P[1]; P[2] = -P[2]; }  
+  void negate() { P[0] = -P[0]; P[1] = -P[1]; P[2] = -P[2]; }
   // why both [] and (), why not
   double &operator[](int i){ return P[i]; }
   double operator[](int i) const { return P[i]; }
@@ -46,7 +46,7 @@ class SVector3 {
     return *this;
   }
   SVector3 & operator -= (const SVector3 &a)
-  { 
+  {
     P[0] -= a[0];  P[1] -= a[1];  P[2] -= a[2];
     return *this;
   }
@@ -80,8 +80,8 @@ inline double normSq(const SVector3 &v)
 { return dot(v, v); }
 
 inline SVector3 crossprod(const SVector3 &a, const SVector3 &b)
-{ return SVector3(a.y() * b.z() - b.y() * a.z(), 
-                  -(a.x() * b.z() - b.x() * a.z()), 
+{ return SVector3(a.y() * b.z() - b.y() * a.z(),
+                  -(a.x() * b.z() - b.x() * a.z()),
                   a.x() * b.y() - b.x() * a.y()); }
 
 inline SVector3 operator*(double m,const SVector3 &v)
