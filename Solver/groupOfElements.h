@@ -124,7 +124,7 @@ class groupOfLagMultElements : public groupOfElements
   groupOfLagMultElements(int dim, int physical, std::vector < groupOfElements *>  sElem) : groupOfElements()
   {
     groupOfElements  pElem(dim , physical);
-    for (unsigned int i;i < sElem.size() ; i ++)
+    for (unsigned int i = 0 ;i < sElem.size() ; i ++)
     {
      fillElementContainer(pElem,(*sElem[i]));
     }
