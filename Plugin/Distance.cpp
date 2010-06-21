@@ -28,6 +28,7 @@ StringXNumber DistanceOptions_Number[] = {
   {GMSH_FULLRC, "Line", NULL, 0.},
   {GMSH_FULLRC, "Surface", NULL, 0.},
   {GMSH_FULLRC, "Computation", NULL, 1.0},
+  {GMSH_FULLRC, "Threshold", NULL, 1.0},
   //{GMSH_FULLRC, "Scale", NULL, 0.},
   //{GMSH_FULLRC, "Min Scale", NULL, 1.e-3},
   //{GMSH_FULLRC, "Max Scale", NULL, 1}
@@ -52,11 +53,11 @@ std::string GMSH_DistancePlugin::getHelp() const
   return "Plugin(Distance) computes distances to elementary entities in "
     "a mesh.\n\n"
     
-    "Define the elementary entities to which the distance is computed. If Point=0, Line=0, and Surface=0, then the distance is computed to all the boundaries of the mesh (edges in 2D and faces in 3D)\n\n"
+    "Define the physical entities to which the distance is computed. If Point=0, Line=0, and Surface=0, then the distance is computed to all the boundaries of the mesh (edges in 2D and faces in 3D)\n\n"
 
     "Computation<0. computes the geometrical euclidian distance (warning: different than the geodesic distance), and  Computation=a>0.0 solves a PDE on the mesh with the diffusion constant mu = a*bbox, with bbox being the max size of the bounding box of the mesh (see paper Legrand 2006) \n\n"
 
-    "Plugin(Distance) creates a new distance view and also saves the view in the fileName.pos file.";
+    "Plugin(Distance) creates a new distance view and also saves the view in the fileName.pos file. It also creates the orthogonal view to the distance field.";
 }
 
 int GMSH_DistancePlugin::getNbOptions() const
@@ -87,6 +88,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   int id_line =   (int) DistanceOptions_Number[1].def;
   int id_face =   (int) DistanceOptions_Number[2].def;
   double type =   (double) DistanceOptions_Number[3].def;
+  double dMax =   (double) DistanceOptions_Number[4].def;
 
   PView *view = new PView();
   PViewDataList *data = getDataList(view);
@@ -142,11 +144,15 @@ PView *GMSH_DistancePlugin::execute(PView *v)
       GEntity* g2 = entities[i];
       int tag = g2->tag();
       int gDim = g2->dim();
+      std::vector<int> phys = g2->getPhysicalEntities();
       bool computeForEntity = false;
-      if (id_pt==0 && id_line==0 && id_face==0 && gDim==maxDim-1 )
-	computeForEntity = true;
-      else if ( (tag==id_pt && gDim==0)|| (tag==id_line && gDim==1) || (tag==id_face && gDim==2) )
-	computeForEntity = true;
+      for(int k = 0; k< phys.size(); k++){
+	int tagp = phys[k];
+	if (id_pt==0 && id_line==0 && id_face==0 && gDim==maxDim-1 )
+	  computeForEntity = true;
+	else if ( (tagp==id_pt && gDim==0)|| (tagp==id_line && gDim==1) || (tagp==id_face && gDim==2) )
+	  computeForEntity = true;
+      }
       if (computeForEntity){
 	for(unsigned int k = 0; k < g2->getNumMeshElements(); k++){ 
 	  std::vector<double> iDistances;
@@ -175,7 +181,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
       }
     }
     //   std::map<int, std::vector<GEntity*> > groups[4];
-    //   getPhysicalGroups(groups);
+    //   GModel::current()->getPhysicalGroups(groups);
     //   std::map<int, std::vector<GEntity*> >::const_iterator it = groups[1].find(100);
     //   if(it == groups[1].end()) return 0;
     //   const std::vector<GEntity *> &physEntities = it->second;
@@ -235,10 +241,14 @@ PView *GMSH_DistancePlugin::execute(PView *v)
       int tag = ge->tag();
       int gDim = ge->dim();
       bool fixForEntity = false;
-      if(id_pt==0 && id_line==0 && id_face==0 && gDim < maxDim) 
-	fixForEntity = true;
-      else if ( (tag==id_pt && gDim==0)|| (tag==id_line && gDim==1) || (tag==id_face && gDim==2) )
-	fixForEntity = true;
+      std::vector<int> phys = ge->getPhysicalEntities();
+      for(int k = 0; k< phys.size(); k++){
+	int tagp = phys[k];
+	if (id_pt==0 && id_line==0 && id_face==0 && gDim==maxDim-1 )
+	  fixForEntity = true;
+	else if ( (tagp==id_pt && gDim==0)|| (tagp==id_line && gDim==1) || (tagp==id_face && gDim==2) )
+	  fixForEntity = true;
+      }
       if (fixForEntity){
 	for(unsigned int i = 0; i < ge->getNumMeshElements(); ++i){
 	  MElement *t = ge->getMeshElement(i);
@@ -347,8 +357,6 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 #endif
   dofManager<double> myAssembler(lsys2);
   simpleFunction<double> ONE(1.0);
-
-  double dMax = 0.03;
 
   std::vector<MElement *> allElems;
   for(unsigned int ii = 0; ii < entities.size(); ii++){
