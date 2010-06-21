@@ -29,6 +29,7 @@
 #include "Curl.h"
 #include "Divergence.h"
 #include "Annotate.h"
+#include "Distance.h"
 #include "Remove.h"
 #include "MakeSimplex.h"
 #include "Smooth.h"
@@ -198,6 +199,8 @@ void PluginManager::registerDefaultPlugins()
                       ("Curl", GMSH_RegisterCurlPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Divergence", GMSH_RegisterDivergencePlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+		    ("Distance", GMSH_RegisterDistancePlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Annotate", GMSH_RegisterAnnotatePlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>

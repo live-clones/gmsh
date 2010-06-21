@@ -47,6 +47,7 @@ class helmholtzTerm : public femTerm<scalar> {
   }
   virtual void elementMatrix(SElement *se, fullMatrix<scalar> &m) const
   {
+
     MElement *e = se->getMeshElement();
     // compute integration rule
     const int integrationOrder = (_a) ? 2 * e->getPolynomialOrder() : 
@@ -98,6 +99,7 @@ class helmholtzTerm : public femTerm<scalar> {
     for (int j = 0; j < nbNodes; j++)
       for (int k = 0; k < j; k++)
         m(k, j) = m(j, k);
+
   }
 };
 

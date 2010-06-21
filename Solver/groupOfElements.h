@@ -37,6 +37,8 @@ class groupOfElements {
     }
 
     groupOfElements (GFace*);
+    groupOfElements (GRegion*);
+    groupOfElements(std::vector<MElement*> &elems);
 
     virtual void addPhysical(int dim, int physical) {
       elementFilterTrivial filter;

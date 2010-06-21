@@ -7,21 +7,29 @@
 #define _ORTHOGONAL_TERM_H_
 
 #include "helmholtzTerm.h"
+#include "dofManager.h"
 
 class orthogonalTerm : public helmholtzTerm<double> {
  protected:
-  fullVector<double> *_value;
+  PView *_pview;
+  dofManager<double> *_dofView;
+  bool withDof;
+  std::map<MVertex*,double > *_distance_map;
  public:
- orthogonalTerm(GModel *gm, int iField, fullVector<double> &value)
-   : helmholtzTerm<double>(gm, iField, iField, 1.0, 0), _value(value) {}
+ orthogonalTerm(GModel *gm, int iField, simpleFunction<double> *k, std::map<MVertex*,double > *distance_map)
+   : helmholtzTerm<double>(gm, iField, iField, k, 0), _distance_map(distance_map), withDof(false) {}
+ orthogonalTerm(GModel *gm, int iField, simpleFunction<double> *k, PView *pview)
+   : helmholtzTerm<double>(gm, iField, iField, k, 0), _pview(pview), withDof(false)   {}
+ orthogonalTerm(GModel *gm, int iField, simpleFunction<double> *k, dofManager<double> *dofView)
+   : helmholtzTerm<double>(gm, iField, iField, k, 0), _dofView(dofView), withDof(true) {}
   void elementVector(SElement *se, fullVector<double> &m) const
   {
 
     MElement *e = se->getMeshElement();
+    int nbNodes = e->getNumVertices();
 
     //fill elementary matrix mat(i,j)
-    int nbNodes = e->getNumVertices();
-    int integrationOrder = 2 * (e->getPolynomialOrder() - 1);
+     int integrationOrder = 2* (e->getPolynomialOrder() - 1);
     int npts;
     IntPt *GP;
     double jac[3][3];
@@ -29,9 +37,9 @@ class orthogonalTerm : public helmholtzTerm<double> {
     SVector3 Grads [256];
     double grads[256][3];
     e->getIntegrationPoints(integrationOrder, &npts, &GP);
-    fullMatrix<double> mat;
+    fullMatrix<double> mat(nbNodes,nbNodes);
     mat.setAll(0.);
-    
+     
     for (int i = 0; i < npts; i++){
       const double u = GP[i].pt[0];
       const double v = GP[i].pt[1];
@@ -39,7 +47,6 @@ class orthogonalTerm : public helmholtzTerm<double> {
       const double weight = GP[i].weight;
       const double detJ = e->getJacobian(u, v, w, jac);   
       SPoint3 p; e->pnt(u, v, w, p);
-      const double _diff = (*_diffusivity)(p.x(), p.y(), p.z());
       inv3x3(jac, invjac); 
       e->getGradShapeFunctions(u, v, w, grads);
       for (int j = 0; j < nbNodes; j++){
@@ -51,25 +58,45 @@ class orthogonalTerm : public helmholtzTerm<double> {
                             invjac[2][2] * grads[j][2]);
       }
       SVector3 N (jac[2][0], jac[2][1], jac[2][2]);
-      for (int j = 0; j < nbNodes; j++){
-        for (int k = 0; k <= j; k++){
-          mat(j, k) += dot(crossprod(Grads[j], Grads[k]), N) * weight * detJ * _diff;
-        }
-      }
+      for (int j = 0; j < nbNodes; j++)
+        for (int k = 0; k <= j; k++)
+          mat(j, k) += dot(crossprod(Grads[j], Grads[k]), N) * weight * detJ;      
     }
     for (int j = 0; j < nbNodes; j++)
       for (int k = 0; k < j; k++)
-        mat(k, j) = -1.* m(j, k);
- 
+        mat(k, j) = -1.* mat(j, k);
+    
     //2) compute vector m(i) = mat(i,j)*val(j)
     fullVector<double> val(nbNodes);
+    val.scale(0.);
+
+    for (int i = 0; i < nbNodes; i++){
+      std::map<MVertex*, double>::iterator it = _distance_map->find(e->getVertex(i));
+      val(i) = it->second;
+    }
+
+    /* if( withDof){ */
+    /*   for (int i = 0; i < nbNodes; i++){ */
+    /* 	_dofView->getDofValue( e->getVertex(i), 0, 1, val(i)); */
+    /* 	 printf("val=%g \n", val(i)); */
+    /*   } */
+    /* } */
+    /* else{ */
+    /*   printf("with no dof \n"); */
+    /*   exit(1); */
+    /*   /\* PViewData *data = view->getData(); *\/ */
+    /*   /\* for (int i = 0; i < nbNodes; i++){ *\/ */
+    /*   /\* 	data->getValue(0, e->, e->getNum(), e->getVertex(i)->getNum(), nod, 0, val(i)); *\/ */
+    /*   /\* } *\/ */
+    /* } */
 
     m.scale(0.); 
     for (int i = 0; i < nbNodes; i++)
       for (int j = 0; j < nbNodes; j++)
-	m(i)  +=  mat(i,j)*val(j);
- 
+	m(i)  +=  -mat(i,j)*val(j);
+
   }
+
 };
 
 #endif

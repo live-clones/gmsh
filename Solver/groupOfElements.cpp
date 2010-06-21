@@ -8,6 +8,24 @@ groupOfElements::groupOfElements(GFace*gf)
   addElementary(gf, filter);
 }
 
+groupOfElements::groupOfElements(GRegion*gr)
+{
+  elementFilterTrivial filter;
+  addElementary(gr, filter);
+}
+
+groupOfElements::groupOfElements(std::vector<MElement*> &elems)
+{
+  elementFilterTrivial filter;
+  for (std::vector<MElement*>::iterator it = elems.begin(); it != elems.end(); it++){
+    MElement *e = *it;
+    if (filter(e)){
+      insert(e);
+    }
+  }
+}
+
+
 void groupOfElements::addElementary(GEntity *ge, const elementFilter &filter){
   for (unsigned int j = 0; j < ge->getNumMeshElements(); j++){
     MElement *e = ge->getMeshElement(j);
