@@ -216,16 +216,12 @@ void ParseString(std::string str)
   }
 }
 
-static void SetProjectName(std::string fileName)
-{
-  GModel::current()->setFileName(fileName);
-  GModel::current()->setName(SplitFileName(fileName)[1]);
-}
-
 int MergeFile(std::string fileName, bool warnIfMissing)
 {
-  if(GModel::current()->getName() == "")
-    SetProjectName(fileName);
+  if(GModel::current()->getName() == ""){
+    GModel::current()->setFileName(fileName);
+    GModel::current()->setName(SplitFileName(fileName)[1]);
+  }
 
 #if defined(HAVE_FLTK)
   if(FlGui::available())
@@ -260,7 +256,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
       if(SystemCall(std::string("gunzip -c ") + fileName + " > " + noExt))
         Msg::Error("Failed to uncompress `%s': check directory permissions", 
                    fileName.c_str());
-      SetProjectName(noExt);
+      GModel::current()->setFileName(noExt);
       return MergeFile(noExt);
     }
   }
@@ -422,7 +418,8 @@ void ClearProject()
   for(int i = GModel::list.size() - 1; i >= 0; i--)
     delete GModel::list[i];
   new GModel();
-  SetProjectName(CTX::instance()->defaultFileName);
+  GModel::current()->setFileName(CTX::instance()->defaultFileName);
+  GModel::current()->setName("");
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
     FlGui::instance()->setGraphicTitle(GModel::current()->getFileName());

@@ -220,7 +220,7 @@ if(ENABLE_BLAS_LAPACK)
       # on Linux also try to find ATLAS without a Fortran compiler,
       # because cmake ships with a buggy FindBLAS e.g. on Ubuntu Lucid
       # Lynx
-      set(ATLAS_LIBS_REQUIRED lapack f77blas atlas)
+      set(ATLAS_LIBS_REQUIRED lapack f77blas cblas atlas)
       find_all_libraries(LAPACK_LIBRARIES ATLAS_LIBS_REQUIRED "" "")
       if(LAPACK_LIBRARIES)
         set_config_option(HAVE_BLAS "Blas(ATLAS)")
