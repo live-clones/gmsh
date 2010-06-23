@@ -10,6 +10,7 @@
 
 #include <string>
 #include "Plugin.h"
+#include "MVertex.h"
 
 extern "C"
 {
@@ -18,8 +19,14 @@ extern "C"
 
 class GMSH_DistancePlugin : public GMSH_PostPlugin
 {
+ private:
+  std::string _fileName;
+  double _minScale;
+  double _maxScale;
+  int _maxDim;
+  PViewDataList *_data;
  public:
-  GMSH_DistancePlugin(){}
+  GMSH_DistancePlugin(); 
   std::string getName() const { return "Distance"; }
   std::string getShortHelp() const
   {
@@ -32,6 +39,8 @@ class GMSH_DistancePlugin : public GMSH_PostPlugin
   int getNbOptionsStr() const;
   StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
+  void printView(std::vector<GEntity*> _entities,  
+		 std::map<MVertex*,double > _distance_map );
 };
 
 #endif
