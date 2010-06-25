@@ -23,23 +23,23 @@ struct LagrangeMultiplierField {
   double _tau;
   SVector3 _d;
   simpleFunction<double> _f;
-  LagrangeMultiplierField() : g(0),_tag(0){}
+  LagrangeMultiplierField() : _tag(0), g(0){}
 };
 
 struct elasticField {
   int _tag; // tag for the dofManager
   groupOfElements *g; // support for this field
   double _E, _nu; // specific elastic datas (should be somewhere else)
-  elasticField () : g(0),_tag(0){}
+  elasticField () : _tag(0), g(0){}
 };
 
 struct BoundaryCondition
 {
+	int _tag; // tag for the dofManager
   enum location{UNDEF,ON_VERTEX,ON_EDGE,ON_FACE,ON_VOLUME};
   location onWhat; // on vertices or elements
-  int _tag; // tag for the dofManager
   groupOfElements *g; // support for this BC
-  BoundaryCondition() : g(0),_tag(0),onWhat(UNDEF) {}
+  BoundaryCondition() : _tag(0),onWhat(UNDEF),g(0) {}
 };
 
 struct dirichletBC : public BoundaryCondition
@@ -74,7 +74,7 @@ class elasticitySolver
   std::vector<dirichletBC> allDirichlet;
 
  public:
-  elasticitySolver(int tag) : _tag(tag),LagSpace(0),pAssembler(0),LagrangeMultiplierSpace(0) {}
+  elasticitySolver(int tag) : _tag(tag),pAssembler(0),LagSpace(0),LagrangeMultiplierSpace(0) {}
 
   elasticitySolver(GModel *model, int tag);
 

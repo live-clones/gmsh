@@ -391,7 +391,7 @@ template<class T1> class LoadTermOnBorder : public LinearTerm<T1>
 
  public :
 
-  LoadTermOnBorder(FunctionSpace<T1>& space1_,simpleFunction<typename TensorialTraits<T1>::ValType> &Load_, double eqfac = 1.0) :LinearTerm<T1>(space1_),Load(Load_),_eqfac(eqfac) {}
+  LoadTermOnBorder(FunctionSpace<T1>& space1_,simpleFunction<typename TensorialTraits<T1>::ValType> &Load_, double eqfac = 1.0) : LinearTerm<T1>(space1_), _eqfac(eqfac), Load(Load_) {}
   virtual ~LoadTermOnBorder() {}
 
   virtual void get(MElement *ele,int npts,IntPt *GP,fullVector<double> &m)

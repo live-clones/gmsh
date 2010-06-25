@@ -80,7 +80,7 @@ class linearSystemGmm : public linearSystem<scalar> {
   virtual double normInfRightHandSide() const {
     double nor = 0.;
     double temp;
-    for(int i=0;i<_b->size();i++){
+    for(unsigned int i=0;i<_b->size();i++){
       temp = (*_b)[i];
       if(temp<0) temp = -temp;
       if(nor<temp) nor=temp;
