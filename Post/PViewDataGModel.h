@@ -239,6 +239,7 @@ class PViewDataGModel : public PViewData {
   bool writeMSH(std::string fileName, bool binary=false);
   bool readMED(std::string fileName, int fileIndex);
   bool writeMED(std::string fileName);
+  MElement *getElement (int step, int entity, int element);
 };
 
 #endif

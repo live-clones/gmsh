@@ -327,6 +327,9 @@ void fullMatrix<double>::registerBindings(binding *b)
   cm = cb->addMethod("set", &fullMatrix<double>::set);
   cm->setArgNames("i","j","v",NULL);
   cm->setDescription("Sets the (i,j) entry of the matrix to v");
+  cm = cb->addMethod("resize", &fullMatrix<double>::resize);
+  cm->setArgNames("nRows","nColumns","reset",NULL);
+  cm->setDescription("Change the size of the fullMatrix (and re-alloc if needed), values are set to zero if reset is true");
   cm = cb->addMethod("gemm", &fullMatrix<double>::gemm);
   cm->setArgNames("A","B","alpha","beta",NULL);
   cm->setDescription("this = beta*this + alpha * (A.B)");

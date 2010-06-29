@@ -17,6 +17,7 @@
 class adaptiveData;
 class GModel;
 class GEntity;
+class MElement;
 class nameData;
 class binding;
 
@@ -220,7 +221,7 @@ class PViewData {
   virtual bool writeMSH(std::string fileName, bool binary=false);
   virtual bool writeMED(std::string fileName);
   //
-  virtual GEntity *getEntity (int step, int entity) {return NULL;}
+  virtual MElement *getElement (int step, int entity, int element);
   static void registerBindings(binding *b);
 };
 

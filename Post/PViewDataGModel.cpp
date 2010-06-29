@@ -301,6 +301,14 @@ int PViewDataGModel::getNumElements(int step, int ent)
   return _steps[step]->getEntity(ent)->getNumMeshElements();
 }
 
+MElement *PViewDataGModel::getElement(int step, int ent, int element)
+{
+  if(_steps.empty()) return 0;
+  // to generalize
+  if(step < 0) return _steps[0]->getEntity(ent)->getMeshElement(element);
+  return _steps[step]->getEntity(ent)->getMeshElement(element);
+}
+
 int PViewDataGModel::getDimension(int step, int ent, int ele)
 {
   return _getElement(step, ent, ele)->getDim();

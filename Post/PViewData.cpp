@@ -72,6 +72,12 @@ void PViewData::setValue(int step, int ent, int ele, int nod, int comp, double v
   Msg::Error("Cannot change field value in this view");
 }
 
+MElement *PViewData::getElement(int step, int ent, int ele)
+{
+  Msg::Error("Cannot get element from this view");
+  return NULL;
+}
+
 void PViewData::setInterpolationMatrices(int type, 
                                          const fullMatrix<double> &coefVal,
                                          const fullMatrix<double> &expVal)
@@ -128,16 +134,13 @@ double PViewData::getValueBinding(int step, int ent, int ele, int nod, int comp)
 }
 
 void PViewData::getAllValuesForElementBinding(int step, int ent, int ele, fullMatrix<double> &m) {
-  int nNodes = getNumNodes(step,ent,ele);
-  int nComponents = getNumComponents(step,ent,ele);
-  for (int i=0; i<nNodes; i++)
-    for (int j=0; j<nComponents; j++)
+  for (int i=0; i<m.size1(); i++)
+    for (int j=0; j<m.size2(); j++)
        getValue(step,ent,ele,i,j,m(i,j));
 }
 
 void PViewData::getAllNodesForElementBinding(int step, int ent, int ele, fullMatrix<double> &m) {
-  int nNodes = getNumNodes(step,ent,ele);
-  for (int i=0; i<nNodes; i++)
+  for (int i=0; i<m.size1(); i++)
     getNode(step,ent,ele,i,m(i,0),m(i,1),m(i,2));
 }
 
@@ -160,6 +163,10 @@ void PViewData::registerBindings(binding *b) {
   cm->setArgNames("step","entity","element",NULL);
   cm->setDescription("return the number of nodes of one element of an entity of a time step (-1 for default time step)");
 
+  cm = cb->addMethod("getElement",&PViewData::getElement);
+  cm->setArgNames("step","entity","i",NULL);
+  cm->setDescription("return the i-th element of the given entity");
+
   cm = cb->addMethod("getNumValues",&PViewData::getNumValues);
   cm->setArgNames("step","entity","element",NULL);
   cm->setDescription("return the number of values of one element of an entity of a time step (-1 for default time step)");
@@ -174,9 +181,13 @@ void PViewData::registerBindings(binding *b) {
 
   cm = cb->addMethod("getAllValuesForElement",&PViewData::getAllValuesForElementBinding);
   cm->setArgNames("step","entity","element","values",NULL);
-  cm->setDescription("fill a fullMatrix with all values from the elements. The fullMatrix should have the size nbNodes x nbComponents.");
+  cm->setDescription("resize and fill a fullMatrix with all values from the element.");
 
   cm = cb->addMethod("getAllNodesForElement",&PViewData::getAllNodesForElementBinding);
   cm->setArgNames("step","entity","element","coordinates",NULL);
-  cm->setDescription("fill a fullMatrix with all coordinates from the nodes of the elements. The fullMatrix should have the size nbNodes x 3");
+  cm->setDescription("resize fill a fullMatrix with all coordinates of the nodes of the element");
+
+  cm = cb->addMethod("getDimension",&PViewData::getDimension);
+  cm->setArgNames("step","entity","element",NULL);
+  cm->setDescription("return the geometrical dimension of the element-th element in the enttity-th entity");
 }
