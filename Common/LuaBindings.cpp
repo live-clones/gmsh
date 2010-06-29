@@ -63,37 +63,37 @@ extern "C" {
 class gmshOptions {
   public:
   gmshOptions(){}
-  void colorSet(std::string category, int index, std::string name, int value)
+  static void colorSet(std::string category, int index, std::string name, int value)
   {
     GmshSetOption(category, name, (unsigned int)(value), index);
   }
-  int colorGet(std::string category, int index, std::string name)
+  static int colorGet(std::string category, int index, std::string name)
   {
     unsigned int value;
     GmshGetOption(category, name, value, index);
     return value;
   }
-  double numberGet(std::string category, int index, std::string name)
+  static double numberGet(std::string category, int index, std::string name)
   {
     double value;
     GmshGetOption(category, name, value, index);
     return value;
   }
-  void numberSet(std::string category, int index, std::string name, double value)
+  static void numberSet(std::string category, int index, std::string name, double value)
   {
     GmshSetOption(category, name, value, index);
   }
-  std::string stringGet(std::string category, int index, std::string name)
+  static std::string stringGet(std::string category, int index, std::string name)
   {
     std::string value;
     GmshGetOption(category, name, value, index);
     return value;
   }
-  void stringSet(std::string category, int index, std::string name, double value)
+  static void stringSet(std::string category, int index, std::string name, double value)
   {
     GmshSetOption(category, name, value, index);
   }
-  void initOptions(){
+  static void initOptions(){
     ReInitOptions(0);
     InitOptionsGUI(0);
   }
