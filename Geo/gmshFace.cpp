@@ -22,6 +22,7 @@ gmshFace::gmshFace(GModel *m, Surface *face)
   resetMeshAttributes();
 
   setMeshMaster(s->meshMaster);
+  edgeCounterparts = s->edgeCounterparts;
   //  printf("surface %d master %d\n",tag(),meshMaster());
 
   std::list<GEdge*> l_wire;

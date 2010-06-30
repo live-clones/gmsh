@@ -315,8 +315,18 @@ void add_compound(std::string type, List_T *list, std::string fileName)
 {
   std::ostringstream sstream;
   if(SplitFileName(fileName)[2] != ".geo") sstream << "CreateTopology;\n";
-  sstream << "Compound " << type << "(" << NEWREG() << ") = {" 
-          << list2string(list) << "};";
+  if (type == "Surface"){
+    sstream << "Compound " << type << "(" << NEWSURFACE()+1000 << ") = {" 
+	    << list2string(list) << "};";
+  }
+  else if (type == "Line"){
+    sstream << "Compound " << type << "(" << NEWLINE()+1000 << ") = {" 
+	    << list2string(list) << "};";
+  }
+  else{
+    sstream << "Compound " << type << "(" << NEWREG() << ") = {" 
+	    << list2string(list) << "};";
+  }
   add_infile(sstream.str(), fileName);
 }
 

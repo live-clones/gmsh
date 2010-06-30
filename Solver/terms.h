@@ -193,6 +193,11 @@ class IsotropicElasticTerm : public BilinearTerm<SVector3,SVector3>
     double C11 = FACT * (1 - nu) / (1 - 2 * nu);
     double C12 = FACT * nu / (1 - 2 * nu);
     double C44 = (C11 - C12) / 2;
+    FACT = E / (1-nu*nu); 
+    C11  = FACT; 
+    C12  = nu * FACT; 
+    C44 = (1.-nu)*.5*FACT;
+    
     H.scale(0.);
     for (int i=0;i<3;++i) {H(i,i)=C11;H(i+3,i+3)=C44;}
     H(1,0)=H(0,1)=H(2,0)=H(0,2)=H(1,2)=H(2,1)=C12;

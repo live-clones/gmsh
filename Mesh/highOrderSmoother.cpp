@@ -376,11 +376,11 @@ void highOrderSmoother::optimize(GFace * gf,
     smooth(gf, true);
     
     
-    for (int i=0;i<100;i++){
-      int nbSwap = 
-	swapHighOrderTriangles(gf,edgeVertices,faceVertices,this);
-      printf("%d swaps\n",nbSwap);
-    }
+    //    for (int i=0;i<100;i++){
+      //      int nbSwap = 
+	//	swapHighOrderTriangles(gf,edgeVertices,faceVertices,this);
+	//      printf("%d swaps\n",nbSwap);
+    //    }
     
     // smooth(gf,true);
     // smooth(gf,true);

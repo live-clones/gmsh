@@ -41,32 +41,42 @@
 static void copyMesh (GFace *source, GFace *target)
 {
   std::map<MVertex*,MVertex*> vs2vt;
-  
-  std::list<GEdge*> edges = target->edges();
-  for (std::list<GEdge*>::iterator it = edges.begin(); it!=edges.end(); ++it){
-    GEdge *te = *it;
-    int master = te->meshMaster();
-    if (master == te->tag()){
-      Msg::Error("Periodic face %d does not have periodic edges (master %d -- edge %d)",
-                 target->tag(), master, te->tag());      
-    }
-    GEdge *se  = source->model()->getEdgeByTag(abs(master));
-    if (master > 0){
-      vs2vt[se->getBeginVertex()->mesh_vertices[0]] = te->getBeginVertex()->mesh_vertices[0];
-      vs2vt[se->getEndVertex()->mesh_vertices[0]] = te->getEndVertex()->mesh_vertices[0];
-      for (unsigned i=0;i<se->mesh_vertices.size();i++){
-	MVertex *vs = se->mesh_vertices[i];
-	MVertex *vt = te->mesh_vertices[i];
-	vs2vt[vs] = vt;
+  std::list<GEdge*> edges   = target->edges();
+  {
+    std::list<GEdge*>::iterator it = edges.begin();
+    for (; it!=edges.end(); ++it){
+      int sign = 1;
+      std::map<int,int>::iterator adnksd = target->edgeCounterparts.find((*it)->tag());
+      int source_e;
+      if ( adnksd != target->edgeCounterparts.end())
+	 source_e= adnksd->second;
+      else{
+	sign = -1;
+	source_e = target->edgeCounterparts[-(*it)->tag()];
       }
-    }
-    else {
-      vs2vt[se->getEndVertex()->mesh_vertices[0]] = te->getBeginVertex()->mesh_vertices[0];
-      vs2vt[se->getBeginVertex()->mesh_vertices[0]] = te->getEndVertex()->mesh_vertices[0];
-      for (unsigned i=0;i<se->mesh_vertices.size();i++){
-	MVertex *vs = se->mesh_vertices[i];
-	MVertex *vt = te->mesh_vertices[se->mesh_vertices.size()-i-1];
-	vs2vt[vs] = vt;
+
+      //      printf("face %d = %d vs %d (%d counterparts)\n",source->tag(),(*it)->tag(),source_e,target->edgeCounterparts.size());
+
+
+      GEdge *se = source->model()->getEdgeByTag(abs(source_e));
+      GEdge *te = *it;
+      if (source_e * sign > 0){
+	vs2vt[se->getBeginVertex()->mesh_vertices[0]] = te->getBeginVertex()->mesh_vertices[0];
+	vs2vt[se->getEndVertex()->mesh_vertices[0]] = te->getEndVertex()->mesh_vertices[0];
+	for (unsigned i=0;i<se->mesh_vertices.size();i++){
+	  MVertex *vs = se->mesh_vertices[i];
+	  MVertex *vt = te->mesh_vertices[i];
+	  vs2vt[vs] = vt;
+	}
+      }
+      else {
+	vs2vt[se->getBeginVertex()->mesh_vertices[0]] = te->getEndVertex()->mesh_vertices[0];
+	vs2vt[se->getEndVertex()->mesh_vertices[0]] = te->getBeginVertex()->mesh_vertices[0];
+	for (unsigned i=0;i<se->mesh_vertices.size();i++){
+	  MVertex *vs = se->mesh_vertices[i];
+	  MVertex *vt = te->mesh_vertices[se->mesh_vertices.size() - i - 1];
+	  vs2vt[vs] = vt;
+	}
       }
     }
   }
@@ -120,11 +130,39 @@ static void copyMesh (GFace *source, GFace *target)
   }
 
   for (unsigned i=0;i<source->triangles.size();i++){
-    MVertex *v1 = vs2vt[source->triangles[i]->getVertex(0)];
-    MVertex *v2 = vs2vt[source->triangles[i]->getVertex(1)];
-    MVertex *v3 = vs2vt[source->triangles[i]->getVertex(2)];
-    target->triangles.push_back(new MTriangle(v1,v2,v3));
+    MVertex *vt[3];
+    for (int j=0;j<3;j++){
+      MVertex *vs = source->triangles[i]->getVertex(j); 
+      
+      vt[j] = vs2vt[vs];
+      if (!vt[j]){
+	SPoint2 p;
+	bool success = reparamMeshVertexOnFace(vs, source, p);
+	const double U =   c * (p.x()-s1u) + s * (p.y()-s1v) + t1u;
+	const double V =  -s * (p.x()-s1u) + c * (p.y()-s1v) + t1v;
+	for (std::list<GEdge*>::iterator it = edges.begin(); it!=edges.end(); ++it){
+	  GEdge *te = *it;
+	  for (unsigned k=0;k<te->lines.size();k++){
+	    MVertex *gotcha = te->lines[k]->getVertex(0);
+	    bool success2 = reparamMeshVertexOnFace(gotcha, target, p);
+	    const double D = sqrt((U-p.x())*(U-p.x())+(V-p.y())*(V-p.y()));
+	    if (D < 1.e-9){
+	      vt[j] = gotcha;
+	      break;
+	    }
+	  }
+	}
+      }
+    }
+    if (!vt[0] || !vt[1] ||!vt[2]){
+      Msg::Fatal("yet another error in the copymesh procedure %p %p %p %d %d %d",
+		 vt[0],vt[1],vt[2],source->triangles[i]->getVertex(0)->onWhat()->dim(),
+		 source->triangles[i]->getVertex(1)->onWhat()->dim(),
+		 source->triangles[i]->getVertex(2)->onWhat()->dim());
+    }
+    target->triangles.push_back(new MTriangle(vt[0],vt[1],vt[2]));
   }
+
   for (unsigned i=0;i<source->quadrangles.size();i++){
     MVertex *v1 = vs2vt[source->quadrangles[i]->getVertex(0)];
     MVertex *v2 = vs2vt[source->quadrangles[i]->getVertex(1)];

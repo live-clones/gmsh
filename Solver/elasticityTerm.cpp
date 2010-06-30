@@ -28,6 +28,12 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
   double C11 = FACT * (1 - _nu) / (1 - 2 * _nu);
   double C12 = FACT * _nu / (1 - 2 * _nu);
   double C44 = (C11 - C12) / 2;
+  // FIXME : PLANE STRESS !!! 
+  FACT = _E / (1-_nu*_nu); 
+  C11  = FACT; 
+  C12  = _nu * FACT; 
+  C44 = (1.-_nu)*.5*FACT;
+  
   const double C[6][6] =
     { {C11, C12, C12,    0,   0,   0},
       {C12, C11, C12,    0,   0,   0},
@@ -57,10 +63,8 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
     BT.setAll(0.);
 
     if (se->getShapeEnrichement() == se->getTestEnrichement()){
+      //      printf("coucou\n");
       for (int j = 0; j < nbNodes; j++){
-
-//        printf(" GR(j) = %12.5E,%12.5E,%12.5E\n", Grads[j][0],Grads[j][1],Grads[j][2]);
-
         BT(j, 0) = B(0, j) = Grads[j][0];
         BT(j, 3) = B(3, j) = Grads[j][1];
         BT(j, 5) = B(5, j) = Grads[j][2];
@@ -72,7 +76,6 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
         BT(j + 2 * nbNodes, 2) = B(2, j + 2 * nbNodes) = Grads[j][2];
         BT(j + 2 * nbNodes, 4) = B(4, j + 2 * nbNodes) = Grads[j][1];
         BT(j + 2 * nbNodes, 5) = B(5, j + 2 * nbNodes) = Grads[j][0];
-       // JF mon cochon si tu savais le nombre de bugs qu'il y avait ici... 
       }
     }
     else{

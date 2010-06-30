@@ -9,6 +9,7 @@
 #include <list>
 #include <string>
 #include <vector>
+#include <map>
 #include "GEntity.h"
 #include "GPoint.h"
 #include "GEdgeLoop.h"
@@ -313,6 +314,9 @@ class GFace : public GEntity
   void replaceEdges(std::list<GEdge*> &);
   
   static void registerBindings(binding *b);
+
+  // periodic counterparts of edges
+  std::map<int,int> edgeCounterparts;
 };
 
 #endif

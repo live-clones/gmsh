@@ -165,7 +165,9 @@ class Surface{
   // should be the only one in gmsh, so parameter "Type" should
   // disappear from the class Surface.
   gmshSurface *geometry;
+  // the mesh master surface
   int meshMaster;
+  std::map<int,int> edgeCounterparts;
   std::vector<int> compound, compoundBoundary[4];
 };
 

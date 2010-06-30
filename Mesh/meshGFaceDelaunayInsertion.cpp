@@ -667,6 +667,20 @@ static void insertManyPoints(GFace *gf,
 			     std::set<MTri3*,compareTri3Ptr> &AllTris,
 			     std::set<MTri3*,compareTri3Ptr> *ActiveTris = 0){
   
+  // a first implementation : greeeeedy algorithm
+  for (std::list<SPoint2>::iterator itp = points.begin(); itp != points.end() ; ++itp){
+    std::set<MTri3*,compareTri3Ptr> :: iterator it =  AllTris.begin();  
+    double metric[3];
+    double pa[2] = {itp->x(),itp->y()};
+    buildMetric(gf, pa, metric);
+    for (; it != AllTris.end() ; ++it){
+      int found =  inCircumCircleAniso(gf, (*it)->tri(), pa, metric, Us, Vs);
+      if (found){
+	insertAPoint(gf, it, pa, metric, Us, Vs, vSizes, vSizesBGM, vMetricsBGM, AllTris, ActiveTris);
+	break;
+      }
+    }    
+  }
 }
 
 
@@ -773,30 +787,12 @@ static double lengthMetric(const double p[2], const double q[2],
      
 */
 
-void testTensor()
-{
-  SMetric3 t(1.0);  
-  t(0,0) = 1;
-  t(1,0) = .2;
-  t(1,1) = 2;
-  t(2,2) = 3;
-  fullMatrix<double> m(3,3);
-  fullVector<double> v(3);
-  t.eig(m,v);
-  printf("%12.5E %12.5E %12.5E \n",v(0),v(1),v(2));
-  printf("%12.5E %12.5E %12.5E \n",m(0,0),m(1,0),m(2,0));
-  printf("%12.5E %12.5E %12.5E \n",m(0,1),m(1,1),m(2,1));
-  printf("%12.5E %12.5E %12.5E \n",m(0,2),m(1,2),m(2,2));
-}
-
 void bowyerWatsonFrontal(GFace *gf)
 {
   std::set<MTri3*,compareTri3Ptr> AllTris;
   std::set<MTri3*,compareTri3Ptr> ActiveTris;
   std::vector<double> vSizes, vSizesBGM, Us, Vs;
   std::vector<SMetric3> vMetricsBGM;
-
-  //testTensor();
 
   buildMeshGenerationDataStructures
     (gf, AllTris, vSizes, vSizesBGM, vMetricsBGM,Us, Vs);
@@ -891,11 +887,13 @@ void bowyerWatsonFrontal(GFace *gf)
       insertAPoint(gf, AllTris.end(), newPoint, metric, Us, Vs, vSizes,
                    vSizesBGM, vMetricsBGM, AllTris, &ActiveTris, worst);
     } 
-//     if(ITER % 1000== 0){
-//       char name[245];
-//       sprintf(name,"frontal%d-ITER%d.pos",gf->tag(),ITER);
-//       _printTris (name, AllTris, Us,Vs,false);
-//     }
+    /*
+   if(ITER % 100== 0){
+       char name[245];
+       sprintf(name,"frontal%d-ITER%d.pos",gf->tag(),ITER);
+       _printTris (name, AllTris, Us,Vs,false);
+     }
+    */
   }
 
 //   char name[245];

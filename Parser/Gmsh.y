@@ -3248,30 +3248,41 @@ Periodic :
       List_Delete($3);
       List_Delete($5);
     }
-  | tPeriodic tSurface ListOfDouble tAFFECT ListOfDouble tEND
+  | tPeriodic tSurface FExpr ListOfDouble tAFFECT FExpr ListOfDouble tEND
     {
-      if (List_Nbr($3) != List_Nbr($5)){
-	yymsg(0, "Periodic Surface : the number of masters (%d) is not equal to the number of slaves(%d)", List_Nbr($3),List_Nbr($5));
+      if (List_Nbr($4) != List_Nbr($7)){
+	yymsg(0, "Periodic Surface : the number of masters (%d) is not equal to the number of slaves(%d)", List_Nbr($4),List_Nbr($7));
       }
 
-      for(int i = 0; i < List_Nbr($3); i++){
-	double d_master,d_slave;
-	List_Read($3, i, &d_master);
-	List_Read($5, i, &d_slave);
-	int j_master = (int)d_master;
-	int j_slave  = (int)d_slave;
-	Surface *s_slave = FindSurface(abs(j_slave));
-	if(s_slave){
-	  s_slave->meshMaster = j_master;
-	}
-	else{
-	  GFace *gf = GModel::current()->getFaceByTag(abs(j_slave));
-	  if(gf) gf->setMeshMaster (j_master);
-	  else yymsg(0, "Unknown line %d", j_slave);
+      double d_master = $3 ,d_slave = $6;
+      int j_master = (int)d_master;
+      int j_slave  = (int)d_slave;
+      Surface *s_slave = FindSurface(abs(j_slave));
+      if(s_slave){
+	s_slave->meshMaster = j_master;
+	for (int i=0;i<List_Nbr($4);i++){
+	  double dm,ds;
+	  List_Read($4,i,&dm);
+	  List_Read($7,i,&ds);	  
+	  s_slave->edgeCounterparts[(int)ds] = (int)dm;
 	}
       }
-      List_Delete($3);
-      List_Delete($5);
+      else{
+	GFace *gf = GModel::current()->getFaceByTag(abs(j_slave));
+	if(gf) gf->setMeshMaster (j_master);
+	else yymsg(0, "Unknown surface %d", j_slave);
+
+	for (int i=0;i<List_Nbr($4);i++){
+	  double dm,ds;
+	  List_Read($4,i,&dm);
+	  List_Read($7,i,&ds);
+	  gf->edgeCounterparts[(int)ds] = (int)dm;
+	}
+
+      }
+
+      List_Delete($4);
+      List_Delete($7);
     }
 ;
 
