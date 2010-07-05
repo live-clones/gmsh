@@ -196,7 +196,7 @@ class cartesianBox {
           fprintf(f,"\n");
           
           //Elt2
-          fprintf(f,"%d 4 3 1 1 1",*it);
+          fprintf(f,"%d 4 3 1 1 1",*it+1);
           fprintf(f," %d",node_index(i,j+1,k));
           fprintf(f," %d",node_index(i+1,j+1,k+1));
           fprintf(f," %d",node_index(i+1,j,k+1));
@@ -204,7 +204,7 @@ class cartesianBox {
           fprintf(f,"\n");
           
           //Elt3
-          fprintf(f,"%d 4 3 1 1 1",*it);
+          fprintf(f,"%d 4 3 1 1 1",*it+2);
           fprintf(f," %d",node_index(i,j+1,k));
           fprintf(f," %d",node_index(i,j,k+1));
           fprintf(f," %d",node_index(i+1,j,k+1));
@@ -212,7 +212,7 @@ class cartesianBox {
           fprintf(f,"\n");
           
           //Elt4
-          fprintf(f,"%d 4 3 1 1 1",*it);
+          fprintf(f,"%d 4 3 1 1 1",*it+3);
           fprintf(f," %d",node_index(i,j+1,k));
           fprintf(f," %d",node_index(i+1,j+1,k));
           fprintf(f," %d",node_index(i+1,j,k+1));
@@ -220,7 +220,7 @@ class cartesianBox {
           fprintf(f,"\n");
           
           //Elt5
-          fprintf(f,"%d 4 3 1 1 1",*it);
+          fprintf(f,"%d 4 3 1 1 1",*it+4);
           fprintf(f," %d",node_index(i,j+1,k));
           fprintf(f," %d",node_index(i+1,j,k));
           fprintf(f," %d",node_index(i+1,j,k+1));
@@ -228,7 +228,7 @@ class cartesianBox {
           fprintf(f,"\n");
           
           //Elt6
-          fprintf(f,"%d 4 3 1 1 1",*it);
+          fprintf(f,"%d 4 3 1 1 1",*it+5);
           fprintf(f," %d",node_index(i,j+1,k));
           fprintf(f," %d",node_index(i,j,k));
           fprintf(f," %d",node_index(i+1,j,k+1));
