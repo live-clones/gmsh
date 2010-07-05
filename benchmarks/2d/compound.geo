@@ -23,4 +23,4 @@ Line(15) = {8, 7};
 Line Loop(100) = {13, -14, 15};
 Plane Surface(11) = {10,100};
 
-Compound Surface(-12)={9,11} Boundary {{}};
+Compound Surface(12)={9,11}; 
