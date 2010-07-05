@@ -30,6 +30,7 @@
 #include "Divergence.h"
 #include "Annotate.h"
 #include "Distance.h"
+#include "NearestNeighbor.h"
 #include "Remove.h"
 #include "MakeSimplex.h"
 #include "Smooth.h"
@@ -46,7 +47,6 @@
 #include "Probe.h"
 #include "GSHHS.h"
 #include "HomologyComputation.h"
-#include "Distance.h"
 #include "ExtractEdges.h"
 
 // for testing purposes only :-)
@@ -165,7 +165,7 @@ void PluginManager::registerDefaultPlugins()
                       ("Skin", GMSH_RegisterSkinPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("MathEval", GMSH_RegisterMathEvalPlugin()));
-	allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("AnalyseCurvedMesh", GMSH_RegisterAnalyseCurvedMeshPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("ModifyComponent", GMSH_RegisterModifyComponentPlugin()));
@@ -200,8 +200,6 @@ void PluginManager::registerDefaultPlugins()
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Divergence", GMSH_RegisterDivergencePlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
-		    ("Distance", GMSH_RegisterDistancePlugin()));
-    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Annotate", GMSH_RegisterAnnotatePlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Remove", GMSH_RegisterRemovePlugin()));
@@ -230,6 +228,10 @@ void PluginManager::registerDefaultPlugins()
 #if defined(HAVE_SOLVER)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Distance", GMSH_RegisterDistancePlugin()));
+#endif
+#if defined(HAVE_ANN)
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("NearestNeighbor", GMSH_RegisterNearestNeighborPlugin()));
 #endif
   }
 

@@ -23,7 +23,7 @@ set(SRC
   Probe.cpp MinMax.cpp
   HarmonicToTime.cpp ModulusPhase.cpp
   HomologyComputation.cpp
-  Distance.cpp ExtractEdges.cpp
+  Distance.cpp ExtractEdges.cpp NearestNeighbor.cpp
   AnalyseCurvedMesh.cpp
 )
 
