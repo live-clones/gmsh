@@ -272,8 +272,10 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
     std::vector<MVertex*> numberedV;
     char opts[128];
     buildTetgenStructure(gr, in, numberedV);
-    sprintf(opts, "pe%c", 
-            (Msg::GetVerbosity() < 3) ? 'Q': (Msg::GetVerbosity() > 6)? 'V': '\0');
+    if (Msg::GetVerbosity() == 10)
+      sprintf(opts, "peVv");
+    else
+      sprintf(opts, "pe%c",  (Msg::GetVerbosity() < 3) ? 'Q': (Msg::GetVerbosity() > 6)? 'V': '\0');
     try{
       tetrahedralize(opts, &in, &out);
     }
@@ -325,6 +327,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 
   // now do insertion of points
   insertVerticesInRegion(gr);
+
 #endif
 }
 

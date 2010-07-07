@@ -14,11 +14,13 @@ void lloydAlgorithm::operator () (GFace *gf)
   std::set<MVertex*> all;
 
   // get all the points of the face ...
-
   for (unsigned int i = 0; i < gf->getNumMeshElements(); i++){
     MElement *e = gf->getMeshElement(i);
     for (int j = 0;j<e->getNumVertices(); j++){
-      all.insert(e->getVertex(j));
+      MVertex *v = e->getVertex(j);
+      //if (v->onWhat()->dim() < 2){
+	all.insert(v);
+	//}
     }
   }
 
@@ -38,7 +40,6 @@ void lloydAlgorithm::operator () (GFace *gf)
   //       gf->getNumMeshElements(), (int)all.size(), LC2D);
 
   int i = 0;
-
   for (std::set<MVertex*>::iterator it = all.begin(); it != all.end(); ++it){
     SPoint2 p;
     bool success = reparamMeshVertexOnFace(*it, gf, p);
@@ -55,11 +56,12 @@ void lloydAlgorithm::operator () (GFace *gf)
     triangulator.y(i) = p.y() + YY;
     triangulator.data(i++) = (*it);
   }
-
+ 
   // compute the Voronoi diagram
   triangulator.Voronoi();
   //printf("hullSize = %d\n",triangulator.hullSize());
   triangulator.makePosView("LloydInit.pos");
+  //triangulator.printMedialAxis("medialAxis.pos");
   
   // now do the Lloyd iterations
   int ITER = 0;

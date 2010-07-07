@@ -359,9 +359,12 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   //compute also orthogonal vector to distance field
   // A Uortho = -C DIST 
   //------------------------------------------------
-  if (ortho > 0){
+  if (ortho > 0 && _maxDim != 2){
+     Msg::Error("The orthogonal field is only implemented for a 2D distance field !");
+  }
+  else if (ortho > 0 && _maxDim == 2){
 #if defined(HAVE_SOLVER)
-  
+
 #ifdef HAVE_TAUCS
   linearSystemCSRTaucs<double> *lsys2 = new linearSystemCSRTaucs<double>;
 #else

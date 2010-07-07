@@ -678,7 +678,6 @@ void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool, const BooleanOperato
       break;
     case OCC_Internals::Fuse :
       {
-	printf("coucou\n");
         BRepAlgoAPI_Fuse BO (tool, shape);
         if (!BO.IsDone()) {
           Msg::Error("Fuse operation can not be performed on the given shapes");

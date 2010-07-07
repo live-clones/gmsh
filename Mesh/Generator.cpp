@@ -509,7 +509,7 @@ static void Mesh3D(GModel *m)
   // global operation, which can require changing the surface mesh!)
   SubdivideExtrudedMesh(m);
 
-  // then mesh all the non-delaunay regions
+  // then mesh all the non-delaunay regions (front3D with netgen)
   std::vector<GRegion*> delaunay;
   std::for_each(m->firstRegion(), m->lastRegion(), meshGRegion(delaunay));
 
