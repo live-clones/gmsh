@@ -631,3 +631,6 @@ functionConstant *function::getDT() {
     _dtFunction = functionConstantNew(0.);
   return _dtFunction;
 }
+function *getFunctionCoordinates(){
+  return functionCoordinates::get();
+}

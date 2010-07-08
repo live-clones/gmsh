@@ -45,13 +45,32 @@
 template <class scalar>
 class linearSystemPETSc : public linearSystem<scalar> {
   int _blockSize; // for block Matrix
-  bool _isAllocated;
+  bool _isAllocated, _kspAllocated;
   Mat _a;
   Vec _b, _x;
+  KSP _ksp;
   void _try(int ierr) const { CHKERRABORT(PETSC_COMM_WORLD, ierr); }
+  void _kspCreate() {
+    _try(KSPCreate(PETSC_COMM_WORLD, &_ksp));
+    PC pc;
+    _try(KSPGetPC(_ksp, &pc));
+    // set some default options
+    _try(PCSetType(pc, PCILU));
+    _try(PCFactorSetMatOrderingType(pc, MATORDERING_RCM));
+    _try(PCFactorSetLevels(pc, 1));
+    _try(KSPSetTolerances(_ksp, 1.e-8, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT));
+    // override the default options with the ones from the option
+    // database (if any)
+    _try(KSPSetFromOptions(_ksp));
+    _kspAllocated = true;
+  }
  public:
-  linearSystemPETSc(int blockSize = -1) : _isAllocated(false) {_blockSize = blockSize;}
-  virtual ~linearSystemPETSc(){ clear(); }
+  linearSystemPETSc() : _isAllocated(false) {_blockSize = 0; _kspAllocated = false;}
+  virtual ~linearSystemPETSc(){ 
+    clear(); 
+    if (_kspAllocated)
+      _try (KSPDestroy (_ksp));
+  }
   virtual bool isAllocated() const { return _isAllocated; }
   virtual void allocate(int nbRows)
   {
@@ -132,36 +151,39 @@ class linearSystemPETSc : public linearSystem<scalar> {
   }
   virtual void zeroMatrix()
   {
-    _try(MatZeroEntries(_a));
+    if (_isAllocated) {
+      _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
+      _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
+      _try(MatZeroEntries(_a));
+    }
   }
   virtual void zeroRightHandSide()
   {
-    _try(VecZeroEntries(_b));
+    if (_isAllocated) {
+      _try(VecAssemblyBegin(_b));
+      _try(VecAssemblyEnd(_b));
+      _try(VecZeroEntries(_b));
+    }
   }
-  virtual int systemSolve()
+  int systemSolve()
   {
+    if (!_kspAllocated)
+      _kspCreate();
+    if (linearSystem<scalar>::_parameters["matrix_reuse"] == "same_sparsity")
+      _try(KSPSetOperators(_ksp, _a, _a, SAME_NONZERO_PATTERN));
+    else if (linearSystem<scalar>::_parameters["matrix_reuse"] == "same_matrix")
+      _try(KSPSetOperators(_ksp, _a, _a, SAME_PRECONDITIONER));
+    else 
+      _try(KSPSetOperators(_ksp, _a, _a, DIFFERENT_NONZERO_PATTERN));
     _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
     _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
     _try(VecAssemblyBegin(_b));
     _try(VecAssemblyEnd(_b));
-    KSP ksp;
-    _try(KSPCreate(PETSC_COMM_WORLD, &ksp));
-    _try(KSPSetOperators(ksp, _a, _a, DIFFERENT_NONZERO_PATTERN));
-    PC pc;
-    _try(KSPGetPC(ksp, &pc));
-    // set some default options
-    _try(PCSetType(pc, PCILU));
-    _try(PCFactorSetMatOrderingType(pc, MATORDERING_RCM));
-    _try(PCFactorSetLevels(pc, 1));
-    _try(KSPSetTolerances(ksp, 1.e-8, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT));
-    // override the default options with the ones from the option
-    // database (if any)
-    _try(KSPSetFromOptions(ksp));
-    _try(KSPSolve(ksp, _b, _x));
-    _try(KSPView(ksp, PETSC_VIEWER_STDOUT_SELF));
-    PetscInt its;
-    _try(KSPGetIterationNumber(ksp, &its));
-    Msg::Info("%d iterations", its);
+    _try(KSPSolve(_ksp, _b, _x));
+    //_try(KSPView(ksp, PETSC_VIEWER_STDOUT_SELF));
+    //PetscInt its;
+    //_try(KSPGetIterationNumber(ksp, &its));
+    //Msg::Info("%d iterations", its);
     return 1;
   }
   Mat &getMatrix(){ return _a; }

@@ -3,6 +3,8 @@
 #if defined(HAVE_PETSC)
 #include "linearSystemPETSc.h"
 #include "fullMatrix.h"
+#include <stdlib.h>
+#include "GmshMessage.h"
 
 template <>
 void linearSystemPETSc<fullMatrix<PetscScalar> >::addToMatrix(int row, int col, const fullMatrix<PetscScalar> &val)
@@ -56,6 +58,7 @@ void linearSystemPETSc<fullMatrix<PetscScalar> >::getFromRightHandSide(int row, 
   }
   _try(VecRestoreArray(_b, &tmp));
 }
+
 template<>
 void linearSystemPETSc<fullMatrix<PetscScalar> >::getFromSolution(int row, fullMatrix<PetscScalar> &val) const
 {
@@ -75,6 +78,9 @@ void linearSystemPETSc<fullMatrix<PetscScalar> >::getFromSolution(int row, fullM
 template<>
 void linearSystemPETSc<fullMatrix<PetscScalar> >::allocate(int nbRows) 
 {
+  _blockSize = strtol (_parameters["blockSize"].c_str(), NULL, 10);
+  if (_blockSize == 0)
+    Msg::Error ("'blockSize' parameters must be set for linearSystemPETScBlock");
   clear();
   _try(MatCreate(PETSC_COMM_WORLD, &_a)); 
   _try(MatSetSizes(_a, PETSC_DECIDE, PETSC_DECIDE, nbRows * _blockSize, nbRows * _blockSize));
@@ -108,10 +114,9 @@ void linearSystemPETScRegisterBindings(binding *b)
   cm->setArgNames(NULL);
   cb = b->addClass<linearSystemPETSc<fullMatrix<PetscScalar> > >("linearSystemPETScBlock");
   cb->setDescription("A linear system solver, based on PETSc");
-  cm = cb->setConstructor<linearSystemPETSc<fullMatrix<PetscScalar> >, int>();
-  cm->setDescription ("A new PETScBlock<PetscScalar> solver (we probably should get rid of the blockSize argument)");
+  cm = cb->setConstructor<linearSystemPETSc<fullMatrix<PetscScalar> > >();
+  cm->setDescription ("A new PETScBlock<PetscScalar> solver");
   cb->setParentClass<linearSystem<fullMatrix<PetscScalar> > >();
-  cm->setArgNames("blockSize", NULL);
 #endif // FIXME
 
 }

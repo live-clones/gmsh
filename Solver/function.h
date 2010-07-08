@@ -242,4 +242,5 @@ class functionConstant : public function {
   }
   void set(double val); 
 };
+function *getFunctionCoordinates();
 #endif
