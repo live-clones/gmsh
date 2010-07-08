@@ -88,6 +88,8 @@ PView *GMSH_NearestNeighborPlugin::execute(PView *v)
   annDeallocPts(zeronodes);
   delete [] index;
   delete [] dist;
+#else
+  Msg::Error("Nearest neighbor computation requires ANN");
 #endif
 
   data1->setName(v1->getData()->getName() + "_NearestNeighbor");

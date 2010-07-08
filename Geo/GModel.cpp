@@ -1619,7 +1619,7 @@ void GModel::save(std::string fileName)
   GModel *temp = GModel::current();
   GModel::setCurrent(this);
   int guess = GuessFileFormatFromFileName(fileName);
-  CreateOutputFile (fileName, guess);
+  CreateOutputFile(fileName, guess);
   GModel::setCurrent(temp);
 }
 
