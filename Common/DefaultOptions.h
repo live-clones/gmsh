@@ -360,7 +360,7 @@ StringXString SolverOptions_String[] = {
     "Command used to specify the mesh file for solver 4" },
   { F|O, "SocketCommand4", opt_solver_socket_command4, "-socket %s",
     "Command to specify the socket to solver 4" },
-  { F|O, "NameCommand4", opt_solver_name_command1, "%s",
+  { F|O, "NameCommand4", opt_solver_name_command4, "%s",
     "Command to specify the problem name to solver 4" },
   { F|O, "OptionCommand4" , opt_solver_option_command4 , "" ,
     "Command to get options from solver 4" },
