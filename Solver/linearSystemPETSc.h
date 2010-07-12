@@ -185,7 +185,6 @@ class linearSystemPETSc : public linearSystem<scalar> {
     //_try(KSPGetIterationNumber(ksp, &its));
     //Msg::Info("%d iterations", its);
     // add line to destroy unused data
-    _try(KSPDestroy(_ksp));
     return 1;
   }
   Mat &getMatrix(){ return _a; }
