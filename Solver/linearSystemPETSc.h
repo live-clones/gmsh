@@ -66,8 +66,8 @@ class linearSystemPETSc : public linearSystem<scalar> {
   }
  public:
   linearSystemPETSc() : _isAllocated(false) {_blockSize = 0; _kspAllocated = false;}
-  virtual ~linearSystemPETSc(){ 
-    clear(); 
+  virtual ~linearSystemPETSc(){
+    clear();
     if (_kspAllocated)
       _try (KSPDestroy (_ksp));
   }
@@ -173,7 +173,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
       _try(KSPSetOperators(_ksp, _a, _a, SAME_NONZERO_PATTERN));
     else if (linearSystem<scalar>::_parameters["matrix_reuse"] == "same_matrix")
       _try(KSPSetOperators(_ksp, _a, _a, SAME_PRECONDITIONER));
-    else 
+    else
       _try(KSPSetOperators(_ksp, _a, _a, DIFFERENT_NONZERO_PATTERN));
     _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
     _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
@@ -184,6 +184,8 @@ class linearSystemPETSc : public linearSystem<scalar> {
     //PetscInt its;
     //_try(KSPGetIterationNumber(ksp, &its));
     //Msg::Info("%d iterations", its);
+    // add line to destroy unused data
+    _try(KSPDestroy(_ksp));
     return 1;
   }
   Mat &getMatrix(){ return _a; }
