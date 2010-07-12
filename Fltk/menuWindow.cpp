@@ -87,37 +87,49 @@ static void file_new_cb(Fl_Widget *w, void *data)
 #endif
 
 static const char *input_formats =
-  "All files" TT "*" NN
-  "Gmsh geometry" TT "*.geo" NN
-  "Gmsh mesh" TT "*.msh" NN
-  "Gmsh post-processing view" TT "*.pos" NN
+  "All Files" TT "*" NN
+  " " TT "*" NN
+  "Gmsh Geometry" TT "*.geo" NN
+#if defined(HAVE_LUA)
+  "Gmsh LUA Script" TT "*.lua" NN
+#endif
+  "Gmsh Mesh" TT "*.msh" NN
+  "Gmsh Post-processing View" TT "*.pos" NN
+#if defined(HAVE_ACIS) || defined(HAVE_OCC)
+  " " TT "*" NN
+#endif
+#if defined(HAVE_ACIS)
+  "ACIS Model" TT "*.sat" NN
+#endif
 #if defined(HAVE_OCC)
-  "STEP model" TT "*.{stp,step}" NN
-  "IGES model" TT "*.{igs,iges}" NN
-  "BRep model" TT "*.brep" NN
+  "BRep Model" TT "*.brep" NN
+  "IGES Model" TT "*.{igs,iges}" NN
+  "STEP Model" TT "*.{stp,step}" NN
 #endif
-  "I-deas universal mesh" TT "*.unv" NN
-  "Diffpack 3D mesh" TT "*.diff" NN
-  "VTK mesh" TT "*.vtk" NN
+  " " TT "*" NN
+  "Diffpack 3D Mesh" TT "*.diff" NN
+  "I-deas Universal Mesh" TT "*.unv" NN
 #if defined(HAVE_MED)
-  "MED file" TT "*.{med,mmed,rmed}" NN
+  "MED File" TT "*.{med,mmed,rmed}" NN
 #endif
-  "Medit mesh" TT "*.mesh" NN
-  "Nastran bulk data file" TT "*.{bdf,nas}" NN
-  "Plot3D structured mesh" TT "*.p3d" NN
-  "STL surface mesh" TT "*.stl" NN
-  "VRML surface mesh" TT "*.{wrl,vrml}" NN
+  "Medit INRIA Mesh" TT "*.mesh" NN
+  "Nastran Bulk Data File" TT "*.{bdf,nas}" NN
+  "Plot3D Structured Mesh" TT "*.p3d" NN
+  "STL Surface Mesh" TT "*.stl" NN
+  "VTK Mesh" TT "*.vtk" NN
+  "VRML Surface Mesh" TT "*.{wrl,vrml}" NN
+  " " TT "*" NN
+  "BMP" TT "*.bmp" NN
 #if defined(HAVE_LIBJPEG)
   "JPEG" TT "*.{jpg,jpeg}" NN
 #endif
+  "PBM" TT "*.pbm" NN
+  "PGM" TT "*.pgm" NN
 #if defined(HAVE_LIBPNG)
   "PNG" TT "*.png" NN
 #endif
-  "BMP" TT "*.bmp" NN
-  "PPM" TT "*.ppm" NN
-  "PGM" TT "*.pgm" NN
-  "PBM" TT "*.pbm" NN
-  "PNM" TT "*.pnm" NN;
+  "PNM" TT "*.pnm" NN
+  "PPM" TT "*.ppm" NN;
 
 static void file_open_cb(Fl_Widget *w, void *data)
 {
@@ -310,35 +322,38 @@ typedef struct{
 static void file_save_as_cb(Fl_Widget *w, void *data)
 {
   static patXfunc formats[] = {
-    {"Guess from extension" TT "*.*", _save_auto},
-    {"Gmsh mesh" TT "*.msh", _save_msh},
-    {"Gmsh mesh statistics" TT "*.pos", _save_pos},
-    {"Gmsh options" TT "*.opt", _save_options},
-    {"Gmsh unrolled geometry" TT "*.geo", _save_geo},
+    {"Guess From Extension" TT "*.*", _save_auto},
+    {" " TT "*.*", _save_auto},
+    {"Gmsh Mesh" TT "*.msh", _save_msh},
+    {"Gmsh Mesh Statistics" TT "*.pos", _save_pos},
+    {"Gmsh Options" TT "*.opt", _save_options},
+    {"Gmsh Unrolled Geometry" TT "*.geo", _save_geo},
+    {" " TT "*.*", _save_auto},
 #if defined(HAVE_LIBCGNS)
-    {"CGNS" TT "*.cgns", _save_cgns},
+    {"CGNS (Experimental)" TT "*.cgns", _save_cgns},
 #endif
-    {"I-deas universal mesh" TT "*.unv", _save_unv},
-    {"Diffpack 3D mesh" TT "*.diff", _save_diff},
-    {"VTK mesh" TT "*.vtk", _save_vtk},
+    {"Diffpack 3D Mesh" TT "*.diff", _save_diff},
+    {"I-deas Universal Mesh" TT "*.unv", _save_unv},
+    {"Iridum Mesh" TT "*.ir3", _save_ir3},
 #if defined(HAVE_MED)
-    {"MED file" TT "*.med", _save_med},
+    {"MED File" TT "*.med", _save_med},
 #endif
-    {"Medit mesh" TT "*.mesh", _save_mesh},
-    {"Nastran bulk data file" TT "*.bdf", _save_bdf},
-    {"Plot3D structured mesh" TT "*.p3d", _save_p3d},
-    {"Iridum mesh" TT "*.ir3", _save_ir3},
-    {"STL surface mesh" TT "*.stl", _save_stl},
-    {"VRML surface mesh" TT "*.wrl", _save_vrml},
+    {"Medit INRIA Mesh" TT "*.mesh", _save_mesh},
+    {"Nastran Bulk Data File" TT "*.bdf", _save_bdf},
+    {"Plot3D Structured Mesh" TT "*.p3d", _save_p3d},
+    {"STL Surface Mesh" TT "*.stl", _save_stl},
+    {"VRML Surface Mesh" TT "*.wrl", _save_vrml},
+    {"VTK Mesh" TT "*.vtk", _save_vtk},
+    {" " TT "*.*", _save_auto},
     {"Encapsulated PostScript" TT "*.eps", _save_eps},
     {"GIF" TT "*.gif", _save_gif},
 #if defined(HAVE_LIBJPEG)
     {"JPEG" TT "*.jpg", _save_jpeg},
 #endif
-#if defined(HAVE_MPEG_ENCODE)
-    {"MPEG" TT "*.mpg", _save_mpeg},
-#endif
     {"LaTeX" TT "*.tex", _save_tex},
+#if defined(HAVE_MPEG_ENCODE)
+    {"MPEG Movie" TT "*.mpg", _save_mpeg},
+#endif
     {"PDF" TT "*.pdf", _save_pdf},
 #if defined(HAVE_LIBPNG)
     {"PNG" TT "*.png", _save_png},

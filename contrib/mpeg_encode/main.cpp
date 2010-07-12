@@ -515,6 +515,8 @@ mpeg_encode_main(int argc, char **argv)
 
     Frame_Exit();
     FrameType_Exit(); // for gmsh
+    extern void FreeDctBlocks();
+    FreeDctBlocks(); // for gmsh
 
     return 0;	/* all is well */
 }

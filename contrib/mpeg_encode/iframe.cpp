@@ -1041,6 +1041,31 @@ AllocDctBlocks()
     }
 }
 
+void
+FreeDctBlocks() // for gmsh
+{
+  int dcty;
+  int i;
+  dcty = Fsize_y / DCTSIZE;
+
+  for (i = 0; i < dcty; i++) free(dct[i]);
+  free(dct);
+  dct = NULL;
+
+  for (i = 0; i < dcty; i++) free(dct_data[i]);
+  free(dct_data);
+  dct_data = NULL;
+
+  for (i = 0; i < (dcty >> 1); i++) {
+    free(dctr[i]);
+    free(dctb[i]);
+  }
+  free(dctr);
+  free(dctb);
+  dctr = NULL;
+  dctb = NULL;
+}
+
 
 /*======================================================================*
  *
