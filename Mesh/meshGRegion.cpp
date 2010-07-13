@@ -273,7 +273,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
     char opts[128];
     buildTetgenStructure(gr, in, numberedV);
     if (Msg::GetVerbosity() == 10)
-      sprintf(opts, "peVv");
+      sprintf(opts, "peVvS0s");
     else
       sprintf(opts, "pe%c",  (Msg::GetVerbosity() < 3) ? 'Q': (Msg::GetVerbosity() > 6)? 'V': '\0');
     try{
@@ -326,7 +326,8 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
   gr->set(faces);
 
   // now do insertion of points
-  insertVerticesInRegion(gr);
+  //insertVerticesInRegion(gr);
+
 
 #endif
 }

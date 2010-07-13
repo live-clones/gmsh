@@ -30,6 +30,8 @@
 #include "qualityMeasures.h"
 #include "Field.h"
 #include "OS.h"
+#include "Octree.h"
+#include "MElementOctree.h"
 #include "HighOrder.h"
 #include "meshGEdge.h"
 #include "meshPartitionOptions.h"
@@ -400,42 +402,9 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
     if (isMeshed) return true;
   }
 
-  // build face normal
-   std::list<GEdge*>::iterator ite = edges.begin();
-   std::list<int>::iterator itd = dir.begin();
-  // SVector3 tan1, tan2;
-  // for (int i=0; i<2; i++){
-  //   MVertex *v1 = (*ite)->lines[0]->getVertex(0);
-  //   MVertex *v2 = (*ite)->lines[0]->getVertex(1);
-  //   SPoint2 p1, p2;
-  //   if (*itd > 0.0){
-  //     //printf("v1=%g %g v2=%g %g \n", v1->x(), v1->y(), v2->x(), v2->y());
-  //     reparamMeshVertexOnFace(v1, gf, p1);
-  //     reparamMeshVertexOnFace(v2, gf, p2);
-  //     //printf("orient OK p1=%g %g p2=%g %g \n", p1.x(), p1.y(), p2.x(), p2.y());
-  //   }
-  //   else{
-  //     //printf("v1=%g %g v2=%g %g \n", v1->x(), v1->y(), v2->x(), v2->y());
-  //     reparamMeshVertexOnFace(v2, gf, p1);
-  //     reparamMeshVertexOnFace(v1, gf, p2);
-  //     //printf("orient -1 p1=%g %g p2=%g %g \n", p1.x(), p1.y(), p2.x(), p2.y());
-  //   }
-  //   //printf("edge=%d tan=%g %g \n", (*ite)->tag(), p2.x()-p1.x(),p2.y()-p1.y()); 
-  //   if (i==0) tan1 = SVector3(p2.x()-p1.x(),p2.y()-p1.y(),0.0);
-  //   else tan2 = SVector3(p2.x()-p1.x(),p2.y()-p1.y(),0.0);
-  //   ite++; itd++;
-  // }
-  // tan1.normalize(); tan2.normalize();
-  // SVector3 next = crossprod(tan1,tan2);
-  // next.normalize();
-  // printf("next =%g %g %g \n", next.x(), next.y(), next.z());
-  SVector3 next(0., 0., 1.0); 
-
   // build a set with all points of the boundaries
   std::set<MVertex*> all_vertices;
-  std::map<SPoint2, SVector3> pt2Normal;
-  ite = edges.begin();
-  itd = dir.begin();
+  std::list<GEdge*>::iterator ite = edges.begin();
   while(ite != edges.end()){
     if((*ite)->isSeam(gf)) return false;
     if(!(*ite)->isMeshDegenerated()){
@@ -444,40 +413,11 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
 	MVertex *v2 = (*ite)->lines[i]->getVertex(1);
         all_vertices.insert(v1);
         all_vertices.insert(v2);
-	
-	SPoint2 p1, p2;
-	if (*itd > 0.0){
-	  reparamMeshVertexOnFace(v1, gf, p1);
-	  reparamMeshVertexOnFace(v2, gf, p2);
-	}
-	else{
-	  reparamMeshVertexOnFace(v2, gf, p1);
-	  reparamMeshVertexOnFace(v1, gf, p2);
-	}
-	SVector3 tan(p2.x()-p1.x(),p2.y()-p1.y(),0.0);
-	tan.normalize();
-	SVector3 ne = crossprod(tan, next); 
-	ne.normalize();
-	std::map<SPoint2, SVector3>::iterator it = pt2Normal.find(p1);
-	if (it == pt2Normal.end())
-	  pt2Normal.insert(std::make_pair(p1,ne));
-	else{
-	  SVector3 n1 =  it->second;
-	  it->second = n1+ne;
-	}
-	std::map<SPoint2, SVector3>::iterator it2 = pt2Normal.find(p2);
-	if (it2 == pt2Normal.end())
-	  pt2Normal.insert(std::make_pair(p2,ne));
-	else{
-	  SVector3 n1 =  it2->second;
-	  it2->second = n1+ne;
-	}
-
       }
     }
     else
       printf("edge %d degenerated mesh \n", (*ite)->tag());
-    ++ite;   ++itd;
+    ++ite;   
   }
 
   std::list<GEdge*> emb_edges = gf->embeddedEdges();
@@ -550,9 +490,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   // use a divide & conquer type algorithm to create a triangulation.
   // We add to the triangulation a box with 4 points that encloses the
   // domain.
-  std::map<SPoint2, SVector3> pt2NormalNEW;
+  DocRecord doc(points.size() + 4);
   {
-    DocRecord doc(points.size() + 4);
     for(unsigned int i = 0; i < points.size(); i++){
       double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() / 
         (double)RAND_MAX;
@@ -563,14 +502,6 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
       doc.points[i].data = points[i];
       doc.points[i].adjacent = NULL;
 
-      SPoint2 p(points[i]->u, points[i]->v);
-      SPoint2 pNEW(points[i]->u+XX, points[i]->v+YY);
-      std::map<SPoint2, SVector3>::iterator it = pt2Normal.find(p);
-      if (it != pt2Normal.end() ){
-	pt2NormalNEW.insert(std::make_pair(pNEW,it->second));
-      }
-      else
-	Msg::Error("no point found \n");
     }
     
     // increase the size of the bounding box
@@ -626,32 +557,23 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
     ite = edges.begin();
     while(ite != edges.end()){
       if(!(*ite)->isMeshDegenerated())
-        recoverEdge
-          (m, *ite, recoverMapInv, &edgesToRecover, &edgesNotRecovered, 1);
+        recoverEdge(m, *ite, recoverMapInv, &edgesToRecover, &edgesNotRecovered, 1);
       ++ite;
     }
     ite = emb_edges.begin();
     while(ite != emb_edges.end()){
       if(!(*ite)->isMeshDegenerated())
-        recoverEdge
-          (m, *ite, recoverMapInv, &edgesToRecover, &edgesNotRecovered, 1);
+        recoverEdge(m, *ite, recoverMapInv, &edgesToRecover, &edgesNotRecovered, 1);
       ++ite;
     }
     
     Msg::Debug("Recovering %d mesh Edges", edgesToRecover.size());
-
-    if (Msg::GetVerbosity() == 10){
-      doc.Voronoi();
-      doc.makePosView("voronoi.pos", gf);
-      doc.printMedialAxis(pt2NormalNEW, "skeleton.pos", gf);
-    }
-    
+   
     // effectively recover the medge
     ite = edges.begin();
     while(ite != edges.end()){
       if(!(*ite)->isMeshDegenerated()){
-        recoverEdge
-          (m, *ite, recoverMapInv, &edgesToRecover, &edgesNotRecovered, 2);
+        recoverEdge(m, *ite, recoverMapInv, &edgesToRecover, &edgesNotRecovered, 2);
       }
       ++ite;
     }
@@ -733,8 +655,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
     ite = emb_edges.begin();
     while(ite != emb_edges.end()){
       if(!(*ite)->isMeshDegenerated())
-        recoverEdge
-          (m, *ite, recoverMapInv, &edgesToRecover, &edgesNotRecovered, 2);
+        recoverEdge(m, *ite, recoverMapInv, &edgesToRecover, &edgesNotRecovered, 2);
       ++ite;
     }
 
@@ -801,6 +722,38 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
     sprintf(name, "surface%d-recovered-param.pos", gf->tag());
     outputScalarField(m->triangles, name, 1);
   }
+
+  {
+    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    while (itt != m->triangles.end()){
+      BDS_Face *t = *itt;
+      if(!t->deleted){
+        BDS_Point *n[4];
+        t->getNodes(n);
+        MVertex *v1 = recoverMap[n[0]];
+        MVertex *v2 = recoverMap[n[1]];
+        MVertex *v3 = recoverMap[n[2]];
+        if(!n[3]){
+          if(v1 != v2 && v1 != v3 && v2 != v3)
+            gf->triangles.push_back(new MTriangle(v1, v2, v3));
+        }
+        else{
+          MVertex *v4 = recoverMap[n[3]];
+          gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
+        }
+      }
+      ++itt;
+    }
+  }
+  Octree * _octree = buildMElementOctree(gf->model());
+  if (Msg::GetVerbosity() == 10){
+    doc.Voronoi();
+    doc.makePosView("voronoi.pos", gf);
+    doc.printMedialAxis(_octree, "skeleton.pos", gf);
+  }
+  Octree_Delete(_octree);
+  gf->triangles.clear();
+  gf->quadrangles.clear();
 
   int nb_swap;
   //outputScalarField(m->triangles, "beforeswop.pos",1);

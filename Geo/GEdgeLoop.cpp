@@ -111,7 +111,7 @@ GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire)
     if(ges.getSign() == 0){ // oops
       Msg::Error("Something wrong in edge loop of size=%d, no sign !", wire.size());
       for (std::list<GEdge* >::iterator it = wire.begin(); it != wire.end(); it++){
-	printf("GEdge=%d begin=%g end =%d \n", (*it)->tag(), (*it)->getBeginVertex()->tag(), (*it)->getEndVertex()->tag()  );
+	printf("GEdge=%d begin=%d end =%d \n", (*it)->tag(), (*it)->getBeginVertex()->tag(), (*it)->getEndVertex()->tag()  );
       }
       break;
     }

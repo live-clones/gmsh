@@ -90,9 +90,21 @@ void signedDistancesPointsTriangle(std::vector<double> &distances,
                                    const SPoint3 &p1,
                                    const SPoint3 &p2,
                                    const SPoint3 &p3);
-void signedDistancesPointsLine(std::vector<double> &distances,
-                               std::vector<SPoint3> &closePts,
-                               const std::vector<SPoint3> &pts,
-                               const SPoint3 &p1,
-                               const SPoint3 &p2);
+void signedDistancePointLine(const SPoint3 &p1,const SPoint3 &p2,const SPoint3 &p, double &distance, SPoint3 &closePt);
+void signedDistancesPointsLine (std::vector<double>&distances,
+                                std::vector<SPoint3>&closePts,
+                                const std::vector<SPoint3> &pts,
+                                const SPoint3 &p1,
+                                const SPoint3 &p2);
+
+void changeReferential(const int direction,const SPoint3 &p,const SPoint3 &closePt,const SPoint3 &p1,const SPoint3 &p2,double* xp,double* yp,double* otherp,double* x,double* y,double* other);
+int computeDistanceRatio(const double &y, const double &yp,const double &x,const double &xp, double *distance, const double &r1, const double &r2);
+
+void signedDistancesPointsEllipseLine (std::vector<double>&distances,
+                                std::vector<double>&distancesE,
+                                std::vector<int>&isInYarn,
+                                std::vector<SPoint3>&closePts,
+                                const std::vector<SPoint3> &pts,
+                                const SPoint3 &p1,
+                                const SPoint3 &p2);
 #endif

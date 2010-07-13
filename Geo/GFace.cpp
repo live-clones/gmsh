@@ -854,8 +854,11 @@ GPoint GFace::closestPoint(const SPoint3 & queryPoint, const double initialGuess
 
 bool GFace::containsParam(const SPoint2 &pt) const
 {
+  
   Range<double> uu = parBounds(0);
   Range<double> vv = parBounds(1);
+  //printf("p =%g %g uu.low=%g uu.high=%g vv.low=%g vv.high=%g\n", pt.x(), pt.y(), uu.low(), uu.high(), vv.low(), vv.high());
+
   if((pt.x() >= uu.low() && pt.x() <= uu.high()) &&
      (pt.y() >= vv.low() && pt.y() <= vv.high()))
     return true;

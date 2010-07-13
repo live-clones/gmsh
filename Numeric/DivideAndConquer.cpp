@@ -576,7 +576,7 @@ void DocRecord::makePosView(std::string fileName, GFace *gf)
       double pc[2] = {(double)points[i].where.h, (double)points[i].where.v};
       if (!onHull(i)){
 	GPoint p0(pc[0], pc[1], 0.0);
-	if (gf) p0 = gf->point(pc[0], pc[1]);
+	//if (gf) p0 = gf->point(pc[0], pc[1]);
         fprintf(f,"SP(%g,%g,%g)  {%g};\n",p0.x(),p0.y(),p0.z(),(double)i);
         voronoiCell (i,pts);
         for (unsigned int j = 0; j < pts.size(); j++){
@@ -584,10 +584,10 @@ void DocRecord::makePosView(std::string fileName, GFace *gf)
 	  SPoint2 pp2 = pts[(j+1)%pts.size()];
 	  GPoint p1(pp1.x(), pp1.y(), 0.0);
 	  GPoint p2(pp2.x(), pp2.y(), 0.0);
-	  if (gf) {
-	     p1 = gf->point(p1.x(), p1.y());
-	     p2 = gf->point(p2.x(), p2.y());
-	  }
+	  // if (gf) {
+	  //    p1 = gf->point(p1.x(), p1.y());
+	  //    p2 = gf->point(p2.x(), p2.y());
+	  // }
           fprintf(f,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
                   p1.x(),p1.y(),p1.z(),p2.x(),p2.y(),p2.z(),
                   (double)i,(double)i);
@@ -602,8 +602,7 @@ void DocRecord::makePosView(std::string fileName, GFace *gf)
   fclose(f);
 }
 
-void DocRecord::printMedialAxis(std::map<SPoint2, SVector3> &pt2Normal, 
-				std::string fileName, GFace *gf)
+void DocRecord::printMedialAxis(Octree *_octree, std::string fileName, GFace *gf)
 {
   
   FILE *f = fopen(fileName.c_str(),"w");
@@ -613,10 +612,6 @@ void DocRecord::printMedialAxis(std::map<SPoint2, SVector3> &pt2Normal,
       std::vector<SPoint2> pts;
       SPoint2 pc((double)points[i].where.h, (double)points[i].where.v);
       if (!onHull(i)){
-       	std::map<SPoint2, SVector3>::const_iterator it = pt2Normal.find(pc);
-	if (it == pt2Normal.end()) printf("pt not found \n");
-	SVector3 n = it->second;
-	//fprintf(f,"VP(%g,%g,%g)  {%g,%g,%g};\n",pc.x(),pc.y(), 0.0, n.x(), n.y(), n.z());
 	GPoint p0(pc[0], pc[1], 0.0);
 	if (gf) p0 = gf->point(pc[0], pc[1]);
         fprintf(f,"SP(%g,%g,%g)  {%g};\n",p0.x(),p0.y(),p0.z(),(double)i);
@@ -632,12 +627,16 @@ void DocRecord::printMedialAxis(std::map<SPoint2, SVector3> &pt2Normal,
 	     p1 = gf->point(p1.x(), p1.y());
 	     p2 = gf->point(p2.x(), p2.y());
 	  }
-	  if (dot(v1,n) > 0.0  && dot(v2,n) > 0.0){
+	  double P1[3] = {p1.x(), p1.y(), p1.z()};
+	  double P2[3] = {p2.x(), p2.y(), p2.z()};
+	  MElement *m1 = (MElement*)Octree_Search(P1, _octree);
+	  MElement *m2 = (MElement*)Octree_Search(P2, _octree);
+	  if (m1 && m2){
 	    fprintf(f,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
 		    p1.x(),p1.y(),p1.z(),
 		    p2.x(),p2.y(),p2.z(),
 		    (double)i,(double)i);
-	  }
+	 }
         }
        }
     }
