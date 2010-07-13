@@ -102,7 +102,7 @@ class groupOfLagMultElements : public groupOfElements
 
   void fillElementContainer(groupOfElements &pElem, groupOfElements &sElem)
   {
-    groupOfElements::elementContainer::iterator itp = pElem.begin();
+    groupOfElements::elementContainer::const_iterator itp = pElem.begin();
     for (;itp!=pElem.end(); itp++)
     {
       if ((*itp)->getParent())

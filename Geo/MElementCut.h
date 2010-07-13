@@ -238,6 +238,7 @@ class MPolygon : public MElement {
   virtual const polynomialBasis* getFunctionSpace(int order=-1) const
   {
     if (_orig) return _orig->getFunctionSpace(order);
+	return 0;
   }
   virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
   {

@@ -395,7 +395,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
       }
     }
   }  
-  int mid = (int)floor(allElems.size()/2);
+  int mid = (int)floor(allElems.size() / 2.);
   MElement *e = allElems[mid];
   MVertex *vFIX = e->getVertex(0);
   myAssembler.fixVertex(vFIX, 0, 1, 0.0);
