@@ -2975,6 +2975,52 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   return 1;
 }
 
+#if 0 // TODO check and test this
+int GModel::writeAbaqus(const std::string &name, bool saveAll,
+                        double scalingFactor)
+{
+  FILE *fp = fopen(name.c_str(), "w");
+  if(!fp){
+    Msg::Error("Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+
+  if(noPhysicalGroups()) saveAll = true;
+
+  int numVertices = indexMeshVertices(saveAll);
+
+  fprintf(fp, "*Heading\n");
+  fprintf(fp, " %s\n", name.c_str());
+
+  fprintf(fp, "*Node\n");
+  for(unsigned int i = 0; i < entities.size(); i++)
+    if(entities[i]->physicals.size() || saveAll)
+      for(unsigned int j = 0; j < entities[i]->getNumMeshVertices(); j++){
+        MVertex *v = entities[i]->getNumMeshVertex(j);
+        fprintf(fp, "%d, %g, %g, %g\n", v->getIndex(), v->x(), v->y(), v->z());
+      }
+
+  int ne = 1;
+  for(unsigned int i = 0; i < entities.size(); i++)
+    if(entities[i]->physicals.size() || saveAll){
+      if(entities[i]->getNumMeshElements()){
+        MElement *e = entities[i]->getMeshElement(0);
+        fprintf(fp, "*Element, type=C3D4, ELSET=PART%d\n", entities[i]->tag());
+        for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+          MElement *e = entities[i]->getNumMeshElement(j);
+          fprintf(fp, "%d", ne++);
+          for(int k = 0; k < e->getNumVertices(); k++)
+            fpritnf(fp, ", %d", e->getVertex(k)->getIndex());
+          fprintf(fp, "\n");
+        }
+      }
+    }
+
+  fclose(fp);
+  return 1;
+}
+#endif
+
 GModel *GModel::createGModel(std::map<int, MVertex*> &vertexMap,
                              std::vector<int> &elementNum,
                              std::vector<std::vector<int> > &vertexIndices,

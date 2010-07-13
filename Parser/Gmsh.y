@@ -1126,7 +1126,6 @@ Shape :
 	}
       }
     }
-
   | tSpline '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
@@ -1145,7 +1144,7 @@ Shape :
       $$.Type = MSH_SEGM_SPLN;
       $$.Num = num;
     }
-  | tCircle '(' FExpr ')'  tAFFECT ListOfDouble CircleOptions tEND
+  | tCircle '(' FExpr ')' tAFFECT ListOfDouble CircleOptions tEND
     {
       int num = (int)$3;
       if(FindCurve(num)){
@@ -1175,7 +1174,7 @@ Shape :
       $$.Type = MSH_SEGM_CIRC;
       $$.Num = num;
     }
-  | tEllipse '(' FExpr ')'  tAFFECT ListOfDouble CircleOptions tEND
+  | tEllipse '(' FExpr ')' tAFFECT ListOfDouble CircleOptions tEND
     {
       int num = (int)$3;
       if(FindCurve(num)){
@@ -3248,41 +3247,39 @@ Periodic :
       List_Delete($3);
       List_Delete($5);
     }
-  | tPeriodic tSurface FExpr ListOfDouble tAFFECT FExpr ListOfDouble tEND
+  | tPeriodic tSurface FExpr '{' RecursiveListOfDouble '}' tAFFECT FExpr '{' RecursiveListOfDouble '}'  tEND
     {
-      if (List_Nbr($4) != List_Nbr($7)){
-	yymsg(0, "Periodic Surface : the number of masters (%d) is not equal to the number of slaves(%d)", List_Nbr($4),List_Nbr($7));
+      if (List_Nbr($5) != List_Nbr($10)){
+	yymsg(0, "Periodic Surface: the number of masters (%d) is not equal to the number of slaves(%d)",
+              List_Nbr($5), List_Nbr($10));
       }
 
-      double d_master = $3 ,d_slave = $6;
+      double d_master = $3, d_slave = $8;
       int j_master = (int)d_master;
-      int j_slave  = (int)d_slave;
+      int j_slave = (int)d_slave;
       Surface *s_slave = FindSurface(abs(j_slave));
       if(s_slave){
 	s_slave->meshMaster = j_master;
-	for (int i=0;i<List_Nbr($4);i++){
-	  double dm,ds;
-	  List_Read($4,i,&dm);
-	  List_Read($7,i,&ds);	  
+	for (int i = 0; i < List_Nbr($5); i++){
+	  double dm, ds;
+	  List_Read($5, i, &dm);
+	  List_Read($10, i, &ds);	  
 	  s_slave->edgeCounterparts[(int)ds] = (int)dm;
 	}
       }
       else{
 	GFace *gf = GModel::current()->getFaceByTag(abs(j_slave));
-	if(gf) gf->setMeshMaster (j_master);
+	if(gf) gf->setMeshMaster(j_master);
 	else yymsg(0, "Unknown surface %d", j_slave);
-
-	for (int i=0;i<List_Nbr($4);i++){
-	  double dm,ds;
-	  List_Read($4,i,&dm);
-	  List_Read($7,i,&ds);
+	for (int i = 0; i < List_Nbr($5); i++){
+	  double dm, ds;
+	  List_Read($5, i, &dm);
+	  List_Read($10, i, &ds);
 	  gf->edgeCounterparts[(int)ds] = (int)dm;
 	}
-
       }
-
-      List_Delete($4);
-      List_Delete($7);
+      List_Delete($5);
+      List_Delete($10);
     }
 ;
 
