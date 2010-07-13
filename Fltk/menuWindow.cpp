@@ -81,14 +81,18 @@ static void file_new_cb(Fl_Widget *w, void *data)
 #if defined(HAVE_NATIVE_FILE_CHOOSER)
 #  define TT "\t"
 #  define NN "\n"
+#  define SEPARATOR_IN    " " TT "*" NN
+#  define SEPARATOR_OUT  {" " TT "*.*", _save_auto},
 #else
 #  define TT " ("
 #  define NN ")\t"
+#  define SEPARATOR_IN
+#  define SEPARATOR_OUT
 #endif
 
 static const char *input_formats =
   "All Files" TT "*" NN
-  " " TT "*" NN
+  SEPARATOR_IN
   "Gmsh Geometry" TT "*.geo" NN
 #if defined(HAVE_LUA)
   "Gmsh LUA Script" TT "*.lua" NN
@@ -96,7 +100,7 @@ static const char *input_formats =
   "Gmsh Mesh" TT "*.msh" NN
   "Gmsh Post-processing View" TT "*.pos" NN
 #if defined(HAVE_ACIS) || defined(HAVE_OCC)
-  " " TT "*" NN
+  SEPARATOR_IN
 #endif
 #if defined(HAVE_ACIS)
   "ACIS Model" TT "*.sat" NN
@@ -106,7 +110,7 @@ static const char *input_formats =
   "IGES Model" TT "*.{igs,iges}" NN
   "STEP Model" TT "*.{stp,step}" NN
 #endif
-  " " TT "*" NN
+  SEPARATOR_IN
   "Diffpack 3D Mesh" TT "*.diff" NN
   "I-deas Universal Mesh" TT "*.unv" NN
 #if defined(HAVE_MED)
@@ -118,7 +122,7 @@ static const char *input_formats =
   "STL Surface Mesh" TT "*.stl" NN
   "VTK Mesh" TT "*.vtk" NN
   "VRML Surface Mesh" TT "*.{wrl,vrml}" NN
-  " " TT "*" NN
+  SEPARATOR_IN
   "BMP" TT "*.bmp" NN
 #if defined(HAVE_LIBJPEG)
   "JPEG" TT "*.{jpg,jpeg}" NN
@@ -323,12 +327,12 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
 {
   static patXfunc formats[] = {
     {"Guess From Extension" TT "*.*", _save_auto},
-    {" " TT "*.*", _save_auto},
+    SEPARATOR_OUT
     {"Gmsh Mesh" TT "*.msh", _save_msh},
     {"Gmsh Mesh Statistics" TT "*.pos", _save_pos},
     {"Gmsh Options" TT "*.opt", _save_options},
     {"Gmsh Unrolled Geometry" TT "*.geo", _save_geo},
-    {" " TT "*.*", _save_auto},
+    SEPARATOR_OUT
 #if defined(HAVE_LIBCGNS)
     {"CGNS (Experimental)" TT "*.cgns", _save_cgns},
 #endif
@@ -344,7 +348,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
     {"STL Surface Mesh" TT "*.stl", _save_stl},
     {"VRML Surface Mesh" TT "*.wrl", _save_vrml},
     {"VTK Mesh" TT "*.vtk", _save_vtk},
-    {" " TT "*.*", _save_auto},
+    SEPARATOR_OUT
     {"Encapsulated PostScript" TT "*.eps", _save_eps},
     {"GIF" TT "*.gif", _save_gif},
 #if defined(HAVE_LIBJPEG)
@@ -395,6 +399,8 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
 
 #undef TT
 #undef NN
+#undef SEPARATOR_IN
+#undef SEPARATOR_OUT
 
 static void file_options_save_cb(Fl_Widget *w, void *data)
 {
