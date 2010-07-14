@@ -2838,7 +2838,7 @@ optionWindow::optionWindow(int deltaFontSize)
         int w = W / 9;
         view.value[70 + i] = new Fl_Value_Input
           (L + 3 * WB + IW + i * w, 2 * WB + 10 * BH, w, BH);
-        view.value[70 + i]->minimum(0);
+        view.value[70 + i]->minimum(-1);
         view.value[70 + i]->maximum(9);
         view.value[70 + i]->step(1);
         view.value[70 + i]->callback(view_options_ok_cb);

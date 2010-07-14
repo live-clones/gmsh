@@ -860,11 +860,15 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
     // add point trajectories
     if(!pre && numNodes == 1 && opt->timeStep > 0 && opt->lineWidth){
       for(int ts = 0; ts < opt->timeStep; ts++){
-        double xyz0[3], dxyz[3][2];
+        int numComp = data->getNumComponents(ts, ient, iele);
+        double xyz0[3], dxyz[3][2] = {{0., 0.}, {0., 0.}, {0., 0.}};
+        data->getNode(ts, ient, iele, 0, xyz0[0], xyz0[1], xyz0[2]);
         for(int j = 0; j < 3; j++){
-          data->getNode(ts, ient, iele, 0, xyz0[0], xyz0[1], xyz0[2]);
-          data->getValue(ts, ient, iele, 0, j, dxyz[j][0]);
-          data->getValue(ts + 1, ient, iele, 0, j, dxyz[j][1]);
+          int comp = opt->forceNumComponents ? opt->componentMap[j] : j;
+          if(comp >= 0 && comp < numComp){
+            data->getValue(ts, ient, iele, 0, comp, dxyz[j][0]);
+            data->getValue(ts + 1, ient, iele, 0, comp, dxyz[j][1]);
+          }
         }
         unsigned int col[2];
         double norm[2];
