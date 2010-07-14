@@ -342,4 +342,6 @@ void fullMatrix<double>::registerBindings(binding *b)
   cm = cb->setConstructor<fullMatrix<double>,int,int>();
   cm->setDescription ("A new matrix of size 'nRows' x 'nColumns'");
   cm->setArgNames("nRows","nColumns",NULL);
+  cm = cb->addMethod("invertInPlace", &fullMatrix<double>::invertInPlace);
+  cm->setDescription("invert the matrix and return the determinant");
 }
