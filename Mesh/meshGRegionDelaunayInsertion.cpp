@@ -710,6 +710,7 @@ void insertVerticesInRegion (GRegion *gr)
   //printf("sizeof MTet4 = %d sizeof MTetrahedron %d sizeof(MVertex) %d\n",
   //       sizeof(MTet4), sizeof(MTetrahedron), sizeof(MVertex));
 
+
   std::vector<double> vSizes;
   std::vector<double> vSizesBGM;
   MTet4Factory myFactory(1600000);
@@ -783,7 +784,7 @@ void insertVerticesInRegion (GRegion *gr)
     }
       
     MTet4 *worst = *allTets.begin();
-      
+
     if(worst->isDeleted()){
       myFactory.Free(worst);
       allTets.erase(allTets.begin());

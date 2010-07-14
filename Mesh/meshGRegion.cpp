@@ -326,7 +326,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
   gr->set(faces);
 
   // now do insertion of points
-  //insertVerticesInRegion(gr);
+  insertVerticesInRegion(gr);
 
 
 #endif

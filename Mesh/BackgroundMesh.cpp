@@ -299,8 +299,8 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
 
   // lc from points            
   double l2 = MAX_LC;
-  // if(CTX::instance()->mesh.lcFromPoints && ge->dim() < 2) 
-  //    l2 = LC_MVertex_PNTS(ge, U, V);
+  if(CTX::instance()->mesh.lcFromPoints && ge->dim() < 2) 
+    l2 = LC_MVertex_PNTS(ge, U, V);
   
   // lc from curvature
   SMetric3 l3(1./(MAX_LC*MAX_LC));
