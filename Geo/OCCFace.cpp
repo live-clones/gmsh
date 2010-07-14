@@ -238,12 +238,13 @@ double OCCFace::curvatures(const SPoint2 &param,
     return -1.;
   }
 
-  *curvMax = std::max(fabs(prop.MinCurvature()), fabs(prop.MaxCurvature()));
-  *curvMin = std::min(fabs(prop.MinCurvature()), fabs(prop.MaxCurvature()));
+  *curvMax = prop.MaxCurvature();
+  *curvMin = prop.MinCurvature();
 
   gp_Dir dMax = gp_Dir();
   gp_Dir dMin = gp_Dir();
   prop.CurvatureDirections(dMax,dMin);
+
   (*dirMax)[0] = dMax.X();
   (*dirMax)[1] = dMax.Y();
   (*dirMax)[2] = dMax.Z();

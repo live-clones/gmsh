@@ -9,6 +9,7 @@
 #include "meshGFace.h"
 #include "meshGFaceBDS.h"
 #include "meshGFaceDelaunayInsertion.h"
+#include "meshGFaceBamg.h"
 #include "meshGFaceQuadrilateralize.h"
 #include "meshGFaceOptimize.h"
 #include "DivideAndConquer.h"
@@ -299,7 +300,8 @@ static void remeshUnrecoveredEdges(std::map<MVertex*, BDS_Point*> &recoverMapInv
 
 static bool algoDelaunay2D(GFace *gf)
 {
-  if(noSeam(gf) && (CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY || 
+  if(noSeam(gf) && (CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY ||
+		    CTX::instance()->mesh.algo2d == ALGO_2D_BAMG || 
                     CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL))
     return true;
   return false;
@@ -824,8 +826,12 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   if(algoDelaunay2D(gf)){
     if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
       bowyerWatsonFrontal(gf);
-    else
+    else if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY)
       bowyerWatson(gf);
+    else {
+      bowyerWatson(gf);
+      meshGFaceBamg(gf);
+    }
     for(int i = 0; i < CTX::instance()->mesh.nbSmoothing; i++) 
       laplaceSmoothing(gf);
   }
@@ -1378,8 +1384,10 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   if(algoDelaunay2D(gf)){
     if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
       bowyerWatsonFrontal(gf);
-    else
+    else if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY)
       bowyerWatson(gf);
+    else 
+      meshGFaceBamg(gf);
     for(int i = 0; i < CTX::instance()->mesh.nbSmoothing; i++) 
       laplaceSmoothing(gf);
   }
@@ -1444,11 +1452,14 @@ void meshGFace::operator() (GFace *gf)
   }
 
   const char *algo = "Unknown";
-  if(algoDelaunay2D(gf))
-    algo = (CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL) ? 
-      "Frontal" : "Delaunay";
+  if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
+    algo = "Frontal";
+  else if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY)
+    algo = "Delaunay";
   else if(CTX::instance()->mesh.algo2d == ALGO_2D_MESHADAPT_OLD)
     algo = "MeshAdapt (old)";
+  else if(CTX::instance()->mesh.algo2d == ALGO_2D_BAMG)
+    algo = "Bamg";
   else 
     algo = "MeshAdapt";
 
@@ -1471,7 +1482,7 @@ void meshGFace::operator() (GFace *gf)
        (gf, debugSurface >= 0 || debugSurface == -100))
       Msg::Error("Impossible to mesh face %d", gf->tag());
   }
-
+  
   Msg::Debug("Type %d %d triangles generated, %d internal vertices",
              gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
 

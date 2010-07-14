@@ -11,6 +11,7 @@
 #include "Numeric.h"
 #include "GmshMessage.h"
 #include "Context.h"
+#include "STensor3.h"
 
 #define SQU(a)      ((a)*(a))
 
@@ -98,8 +99,38 @@ static double F_Lc(GEdge *ge, double t)
   SVector3 der = ge->firstDer(t);
   const double d = norm(der);
 
-  return d / lc_here;
+  SMetric3 metric (1./(lc_here*lc_here));
+  
+  //  metric(0,0) = metric(0,0)*10000;
+
+  double lSquared = dot (der,metric,der);
+
+  return sqrt(lSquared);
 }
+
+static double F_Lc_aniso(GEdge *ge, double t)
+{
+  GPoint p = ge->point(t);
+  SMetric3 lc_here;
+
+  Range<double> bounds = ge->parBounds(0);
+  double t_begin = bounds.low();
+  double t_end = bounds.high();
+
+  if(t == t_begin)
+    lc_here = BGM_MeshMetric(ge->getBeginVertex(), t, 0, p.x(), p.y(), p.z());
+  else if(t == t_end)
+    lc_here = BGM_MeshMetric(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
+  else
+    lc_here = BGM_MeshMetric(ge, t, 0, p.x(), p.y(), p.z());
+
+  SVector3 der = ge->firstDer(t);
+
+  double lSquared = dot (der,lc_here,der);
+
+  return sqrt(lSquared);
+}
+
 
 static double F_Transfinite(GEdge *ge, double t_)
 {
@@ -325,7 +356,7 @@ void meshGEdge::operator() (GEdge *ge)
     N = ge->meshAttributes.nbPointsTransfinite;
   }
   else{
-    if(CTX::instance()->mesh.lcIntegrationPrecision > 1.e-8){
+    if(CTX::instance()->mesh.lcIntegrationPrecision > 1.e-2){
       std::vector<IntPoint> lcPoints;
       Integration(ge, t_begin, t_end, F_Lc_usingInterpLcBis, lcPoints, 
                   CTX::instance()->mesh.lcIntegrationPrecision);
@@ -333,8 +364,12 @@ void meshGEdge::operator() (GEdge *ge)
       a = Integration(ge, t_begin, t_end, F_Lc_usingInterpLc, Points, 1.e-8);
     }
     else{
-      a = Integration(ge, t_begin, t_end, F_Lc, Points,
-                      CTX::instance()->mesh.lcIntegrationPrecision);
+      if (CTX::instance()->mesh.algo2d == ALGO_2D_BAMG) 
+	a = Integration(ge, t_begin, t_end, F_Lc_aniso, Points,
+			CTX::instance()->mesh.lcIntegrationPrecision);
+      else
+	a = Integration(ge, t_begin, t_end, F_Lc, Points,
+			CTX::instance()->mesh.lcIntegrationPrecision);
     }
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }

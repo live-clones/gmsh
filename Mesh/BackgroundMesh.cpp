@@ -81,6 +81,74 @@ static double max_surf_curvature(const GVertex *gv)
   return val;
 }
 
+static SMetric3 metric_based_on_surface_curvature(const GFace *gf, double u, double v)
+{
+  if (gf->geomType() == GEntity::Plane)return SMetric3(1.e-6);
+  double cmax, cmin;
+  SVector3 dirMax,dirMin;
+  cmax = gf->curvatures(SPoint2(u, v),&dirMax, &dirMin, &cmax,&cmin);
+  if (cmin == 0)cmin =1.e-5;
+  if (cmax == 0)cmax =1.e-5;
+  double lambda2 =  ((2 * M_PI) /( fabs(cmax) *  CTX::instance()->mesh.minCircPoints ) );
+  double lambda1 =  ((2 * M_PI) /( fabs(cmin) *  CTX::instance()->mesh.minCircPoints ) );
+  SVector3 Z = crossprod(dirMax,dirMin);
+
+  lambda1 = std::max(lambda1, CTX::instance()->mesh.lcMin);
+  lambda2 = std::max(lambda2, CTX::instance()->mesh.lcMin);
+  lambda1 = std::min(lambda1, CTX::instance()->mesh.lcMax);
+  lambda2 = std::min(lambda2, CTX::instance()->mesh.lcMax);
+  if (gf->tag() == 36  || gf->tag() == 62)
+    printf("%g %g -- %g %g -- %g %g %g --  %g %g %g -- %g %g %g -- %g %g\n",u,v,cmax,cmin,
+	   dirMax.x(),dirMax.y(),dirMax.z(),
+	   dirMin.x(),dirMin.y(),dirMin.z(),
+	   Z.x(),Z.y(),Z.z(),
+	   lambda1,lambda2);
+  
+  SMetric3 curvMetric (1./(lambda1*lambda1),1./(lambda2*lambda2),1.e-5, 
+		       dirMin, dirMax, Z );
+  return curvMetric;
+}
+
+static SMetric3 metric_based_on_surface_curvature(const GEdge *ge, double u)
+{
+  SMetric3 mesh_size(1.e-05);
+  std::list<GFace *> faces = ge->faces();
+  std::list<GFace *>::iterator it = faces.begin();
+  int count = 0;
+  while(it != faces.end()){
+    if ((*it)->geomType() != GEntity::CompoundSurface){
+      SPoint2 par = ge->reparamOnFace((*it), u, 1);
+      SMetric3 m = metric_based_on_surface_curvature (*it, par.x(), par.y());
+      if (!count) mesh_size = m;
+      else mesh_size = intersection ( mesh_size, m);    
+      if ( ge->tag() == 197)
+	printf("edge %d face %d g %g %g -> %g %g %g\n",ge->tag(),(*it)->tag(),
+	       m(0,0),m(1,1),m(2,2),mesh_size(0,0),mesh_size(1,1),mesh_size(2,2));
+      count++;
+    }
+    ++it;
+  }  
+  return mesh_size;
+}
+
+static SMetric3 metric_based_on_surface_curvature(const GVertex *gv)
+{
+  SMetric3 mesh_size(1.e-5);
+  std::list<GEdge*> l_edges = gv->edges();
+  for (std::list<GEdge*>::const_iterator ite = l_edges.begin(); 
+       ite != l_edges.end(); ++ite){
+    GEdge *_myGEdge = *ite;
+    Range<double> bounds = _myGEdge->parBounds(0);
+    if (gv == _myGEdge->getBeginVertex())
+      mesh_size = intersection ( mesh_size, 
+				 metric_based_on_surface_curvature (_myGEdge, bounds.low()));    
+    else
+      mesh_size = intersection ( mesh_size, 
+				 metric_based_on_surface_curvature (_myGEdge, bounds.high()));  }
+  return mesh_size;
+}
+
+
 // the mesh vertex is classified on a model vertex.  we compute the
 // maximum of the curvature of model faces surrounding this point if
 // it is classified on a model edge, we do the same for all model
@@ -114,6 +182,33 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
  
   double lc = Crv > 0 ? 2 * M_PI / Crv / CTX::instance()->mesh.minCircPoints : MAX_LC;
   return lc;
+}
+
+
+static SMetric3 LC_MVertex_CURV_ANISO(GEntity *ge, double U, double V)
+{
+  switch(ge->dim()){
+  case 0:        
+    {
+      SMetric3 m = metric_based_on_surface_curvature((const GVertex *)ge);
+      //      printf("0d\n");
+      return m;
+    }
+    break;
+  case 1:
+    {
+      SMetric3 m = metric_based_on_surface_curvature((const GEdge *)ge,U);
+      //      printf("1d %g %g %g\n",m(0,0),m(1,1),m(2,2));
+      return m;
+    }
+    break;
+  case 2:
+    {
+      return metric_based_on_surface_curvature((const GFace *)ge,U,V);
+    }
+    break;
+  }
+  Msg::Fatal("curvature control impossible to compute for a volume !");
 }
 
 // compute the mesh size at a given vertex due to prescribed sizes at
@@ -192,6 +287,9 @@ double BGM_MeshSize(GEntity *ge, double U, double V,
 
 
 // anisotropic version of the background field
+// for now, only works with bamg in 2D, work
+// in progress
+
 SMetric3 BGM_MeshMetric(GEntity *ge, 
                         double U, double V, 
                         double X, double Y, double Z)
@@ -201,40 +299,44 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
 
   // lc from points            
   double l2 = MAX_LC;
-  if(CTX::instance()->mesh.lcFromPoints && ge->dim() < 2) 
-    l2 = LC_MVertex_PNTS(ge, U, V);
+  // if(CTX::instance()->mesh.lcFromPoints && ge->dim() < 2) 
+  //    l2 = LC_MVertex_PNTS(ge, U, V);
   
   // lc from curvature
-  double l3 = MAX_LC;
+  SMetric3 l3(1./(MAX_LC*MAX_LC));
   if(CTX::instance()->mesh.lcFromCurvature && ge->dim() < 3)
-    l3 = LC_MVertex_CURV(ge, U, V);
+    l3 = LC_MVertex_CURV_ANISO(ge, U, V);
 
   // lc from fields
-  SMetric3 l4(MAX_LC);
+  SMetric3 l4(1./(MAX_LC*MAX_LC));
   FieldManager *fields = GModel::current()->getFields();
   if(fields->background_field > 0){
     Field *f = fields->get(fields->background_field);
     if(f){
       if (!f->isotropic())
         (*f)(X, Y, Z, l4,ge);
-      else
-        l4 = SMetric3((*f)(X, Y, Z, ge));
+      else{
+	double L = (*f)(X, Y, Z, ge);
+        l4 = SMetric3(1/(L*L));
+      }
     }
   }
   
   // take the minimum, then constrain by lcMin and lcMax
-  double lc = std::min(std::min(l1, l2), l3);
+  double lc = std::min(l1, l2);
   lc = std::max(lc, CTX::instance()->mesh.lcMin);
   lc = std::min(lc, CTX::instance()->mesh.lcMax);
 
   if(lc <= 0.){
-     Msg::Error("Wrong mesh element size lc = %g (lcmin = %g, lcmax = %g)",
+    Msg::Error("Wrong mesh element size lc = %g (lcmin = %g, lcmax = %g)",
                lc, CTX::instance()->mesh.lcMin, CTX::instance()->mesh.lcMax);
-     lc = l1;
+    lc = l1;
   }
-
-  SMetric3 LC(lc);
-  return intersection (l4, LC);
+  
+  SMetric3 LC(1./(lc*lc));
+  SMetric3 m = intersection(intersection (l4, LC),l3);
+  //  printf("%g %g %g %g %g %g\n",m(0,0),m(1,1),m(2,2),m(0,1),m(0,2),m(1,2));
+  return m;
   //  return lc * CTX::instance()->mesh.lcFactor;
 }
 

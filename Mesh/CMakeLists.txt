@@ -11,6 +11,7 @@ set(SRC
     meshGFace.cpp 
     meshGFaceTransfinite.cpp 
     meshGFaceExtruded.cpp 
+    meshGFaceBamg.cpp 
     meshGFaceBDS.cpp 
     meshGFaceDelaunayInsertion.cpp 
     meshGFaceLloyd.cpp 

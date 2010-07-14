@@ -61,7 +61,8 @@ class SMetric3 {
       e(0,0) = t1(0); e(0,1) = t1(1); e(0,2) = t1(2);
       e(1,0) = t2(0); e(1,1) = t2(1); e(1,2) = t2(2);
       e(2,0) = t3(0); e(2,1) = t3(1); e(2,2) = t3(2);
-      e.invertInPlace();
+      e.transposeInPlace();
+      //      e.invertInPlace();
     
       fullMatrix<double> tmp(3,3);
       tmp(0,0) = l1 * e(0,0);

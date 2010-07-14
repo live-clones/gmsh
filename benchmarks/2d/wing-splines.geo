@@ -1,6 +1,7 @@
-scale = 1 ;
 
-lc_wing = 0.1 * scale ;
+scale = .01 ;
+
+lc_wing = 0.0001 * scale ;
 lc_box = 10 * scale ;
 
 Point(3895) = {1.177410e-02*scale,-2.768003e-03*scale,0,lc_wing};
@@ -513,29 +514,9 @@ Point(4268) = {1.114765e+00*scale,-1.246442e-01*scale,0,lc_wing};
 Point(4291) = {1.120249e+00*scale,-1.301373e-01*scale,0,lc_wing};
 Point(4336) = {1.122990e+00*scale,-1.328839e-01*scale,0,lc_wing};
 
-Point(11) = {4.552264e+01*scale,-2.254225e+01*scale,0,lc_box};
-Point(2233) = {4.552264e+01*scale,-1.129225e+01*scale,0,lc_box};
-Point(5) = {4.552264e+01*scale,-4.224671e-02*scale,0,lc_box};
-Point(2236) = {4.552264e+01*scale,1.120775e+01*scale,0,lc_box};
-Point(14) = {4.552264e+01*scale,2.245775e+01*scale,0,lc_box};
 Point(2) = {4.552264e+01*scale,4.495775e+01*scale,0,lc_box};
-Point(15) = {2.302264e+01*scale,4.495775e+01*scale,0,lc_box};
-Point(2301) = {1.177264e+01*scale,4.495775e+01*scale,0,lc_box};
-Point(6) = {5.226384e-01*scale,4.495775e+01*scale,0,lc_box};
-Point(2304) = {-1.072736e+01*scale,4.495775e+01*scale,0,lc_box};
-Point(18) = {-2.197736e+01*scale,4.495775e+01*scale,0,lc_box};
 Point(3) = {-4.447736e+01*scale,4.495775e+01*scale,0,lc_box};
-Point(19) = {-4.447736e+01*scale,2.245775e+01*scale,0,lc_box};
-Point(2240) = {-4.447736e+01*scale,1.120775e+01*scale,0,lc_box};
-Point(7) = {-4.447736e+01*scale,-4.224671e-02*scale,0,lc_box};
-Point(2243) = {-4.447736e+01*scale,-1.129225e+01*scale,0,lc_box};
-Point(22) = {-4.447736e+01*scale,-2.254225e+01*scale,0,lc_box};
 Point(4) = {-4.447736e+01*scale,-4.504225e+01*scale,0,lc_box};
-Point(23) = {-2.197736e+01*scale,-4.504225e+01*scale,0,lc_box};
-Point(2317) = {-1.072736e+01*scale,-4.504225e+01*scale,0,lc_box};
-Point(8) = {5.226384e-01*scale,-4.504225e+01*scale,0,lc_box};
-Point(2297) = {1.177264e+01*scale,-4.504225e+01*scale,0,lc_box};
-Point(10) = {2.302264e+01*scale,-4.504225e+01*scale,0,lc_box};
 Point(1) = {4.552264e+01*scale,-4.504225e+01*scale,0,lc_box};
 
 //one
@@ -612,7 +593,7 @@ Line Loop(405) = {10,11,12};
 Plane Surface(406) = {403,404,401,405};
 
 lc4 = lc_wing * 4;
-
+/*
 Point(4351) = {0.4,-0,0,lc4};
 Point(4352) = {1.4,0,0,lc4};
 Point(4353) = {0.4,-1,0,lc4};
@@ -622,4 +603,4 @@ Circle(407) = {4352,4351,4355};
 Circle(408) = {4355,4351,4354};
 Circle(409) = {4354,4351,4353};
 Circle(410) = {4353,4351,4352};
-
+*/

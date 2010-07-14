@@ -147,6 +147,7 @@
 #define ALGO_2D_MESHADAPT_OLD  4
 #define ALGO_2D_DELAUNAY       5
 #define ALGO_2D_FRONTAL        6
+#define ALGO_2D_BAMG           7
 
 // 3D meshing algorithms (numbers should not be changed)
 #define ALGO_3D_DELAUNAY       1
