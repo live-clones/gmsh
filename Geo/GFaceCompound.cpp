@@ -2158,6 +2158,42 @@ void GFaceCompound::printStuff() const
   fprintf(uvmg,"};\n");
   fclose(uvmg);
 
+
+  //debug cecile rbf
+  it = _compound.begin();
+  char nameM[256], nameF[256];
+  sprintf(nameM, "mappedMesh-%d.msh", (*it)->tag());
+  sprintf(nameF, "XYZfunction-%d.txt", (*it)->tag());
+  FILE * myF = fopen(nameM,"w");
+  FILE * myF2 = fopen(nameF,"w");
+  fprintf(myF,"$MeshFormat\n");
+  fprintf(myF,"2.2 0 8\n");
+  fprintf(myF,"$EndMeshFormat\n");
+  fprintf(myF,"$Nodes\n");
+  fprintf(myF,"%d\n", (int)allNodes.size());
+  for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+      std::map<MVertex*,SPoint3>::const_iterator it0 =  coordinates.find(*itv);
+      fprintf(myF,"%d %g %g %g \n", (*itv)->getNum(), it0->second.x(), it0->second.y(), 0.0);
+      fprintf(myF2,"%d %g %g %g \n", (*itv)->getNum(), (*itv)->x(), (*itv)->y(), (*itv)->z());
+  }
+  fprintf(myF,"$EndNodes\n");
+  fprintf(myF,"$Elements\n");
+  int nbTris = 0;
+  for( ; it != _compound.end() ; ++it) nbTris += (*it)->triangles.size();
+  fprintf(myF, "%d \n", nbTris);
+  int k = 1;
+  for(it = _compound.begin(); it != _compound.end() ; ++it){
+    for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+      MTriangle *t = (*it)->triangles[i];
+      fprintf(myF,"%d 2 2 0 1 %d %d %d \n", k, t->getVertex(0)->getNum(), t->getVertex(1)->getNum(), t->getVertex(2)->getNum());
+      k++;
+    }
+  }
+  fprintf(myF,"$EndElements\n");
+  fclose(myF);
+  fclose(myF2);
+
+
 }
 
 #endif
