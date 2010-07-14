@@ -109,8 +109,20 @@ class fullMatrix
   int _r, _c;
   scalar *_data;
  public:
-  inline scalar get(int r, int c) const { return (*this)(r, c); }
-  inline void set(int r, int c, scalar v){ (*this)(r, c) = v; }
+  inline scalar get(int r, int c) const {
+    #ifdef _DEBUG
+    if (r >= _r || r < 0 || c >= _c || c < 0)
+      Msg::Fatal("invalid index to access fullMatrix : %i %i (size = %i %i)", r, c, _r, _c);
+    #endif
+    return (*this)(r, c); 
+  }
+  inline void set(int r, int c, scalar v){
+    #ifdef _DEBUG
+    if (r >= _r || r < 0 || c >= _c || c < 0)
+      Msg::Fatal("invalid index to access fullMatrix : %i %i (size = %i %i)", r, c, _r, _c);
+    #endif
+    (*this)(r, c) = v; 
+  }
   fullMatrix(scalar *original, int r, int c)
   {
     _r = r;
@@ -219,10 +231,18 @@ class fullMatrix
   }
   inline scalar operator () (int i, int j) const
   {
+    #ifdef _DEBUG
+    if (i >= _r || i < 0 || j >= _c || j < 0)
+      Msg::Fatal("invalid index to access fullMatrix : %i %i (size = %i %i)", i, j, _r, _c);
+    #endif
     return _data[i + _r * j];
   }
   inline scalar & operator () (int i, int j)
   {
+    #ifdef _DEBUG
+    if (i >= _r || i < 0 || j >= _c || j < 0)
+      Msg::Fatal("invalid index to access fullMatrix : %i %i (size = %i %i)", i, j, _r, _c);
+    #endif
     return _data[i + _r * j];
   }
   void copy(const fullMatrix<scalar> &a, int i0, int ni, int j0, int nj, 
