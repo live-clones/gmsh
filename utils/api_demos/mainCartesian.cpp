@@ -1,4 +1,3 @@
-#if 1
 #include "Gmsh.h"
 #include "GModel.h"
 #include "MVertex.h"
@@ -6,228 +5,145 @@
 #include "MTriangle.h"
 #include "SOrientedBoundingBox.h"
 #include "Numeric.h"
-#else
-#include <gmsh/Gmsh.h>
-#include <gmsh/GModel.h>
-#include <gmsh/MVertex.h>
-#include <gmsh/cartesian.h>
-#include <gmsh/MTriangle.h>
-#include <gmsh/SOrientedBoundingBox.h>
-#include <gmsh/Numeric.h>
-#endif
 
-void insertBoxes ( double x, double y, double z, double EP, cartesianBox<double> &box){
-  
-  int id1 = box.index_of_element(x-EP,y-EP,z-EP);      
-  int id2 = box.index_of_element(x+EP,y+EP,z+EP);      
-  int i1,j1,k1;
-  box.element_ijk(id1,i1,j1,k1);
-  int i2,j2,k2;
-  box.element_ijk(id2,i2,j2,k2);
-  //  if (y > 0.9)printf("%g %g %g %3d %3d %3d %3d %3d %3d\n",x,y,z,i1,j1,k1,i2,j2,k2);
-  for (int i=i1;i<=i2;i++){
-    for (int j=j1;j<=j2;j++){
-      for (int k=k1;k<=k2;k++){
-        int id = box.element_index(i,j,k);
-        box.insert(id);   
+void insertBoxes(double x, double y, double z, double thickness, cartesianBox<double> &box)
+{
+  int id1 = box.index_of_element(x - thickness, y - thickness, z - thickness);
+  int id2 = box.index_of_element(x + thickness, y + thickness, z + thickness);
+  int i1, j1 ,k1;
+  box.element_ijk(id1, i1, j1, k1);
+  int i2, j2, k2;
+  box.element_ijk(id2, i2, j2, k2);
+  for (int i = i1; i <= i2; i++){
+    for (int j = j1; j <= j2; j++){
+      for (int k = k1; k <= k2; k++){
+        int id = box.element_index(i, j, k);
+        box.insert(id);
       }
     }
   }
-}
-
-void test()
-{
-  printf("enter z coordinate : ");
-  double x,y,z=-1;
-  scanf ("%lf",&z);
-  printf(" z = %g\n",z);
-  std::vector<SPoint3> v, pts;
-  std::vector<SPoint3> cv;
-  std::vector<double> d;
-  
-
-  for (int i=0;i<100;i++){
-    for (int j=0;j<100;j++){
-      x = -.5+(double) i/50.;
-      y = -.5+(double) j/50.;
-      v.push_back(SPoint3(4.3,x,y));
-    }
-  }
-  signedDistancesPointsTriangle (d,cv,v,SPoint3(4,0,0),SPoint3(4,1,0),SPoint3(4,0,1));
-  
-  FILE *f = fopen ("chitte.pos","w");
-  fprintf(f,"View \"\"{\n");
-  for( int i=0;i<v.size();i++){
-    fprintf(f,"SP(%g,%g,%g){%g};\n",v[i].x(),v[i].y(),v[i].z(),d[i]);
-  }
-  fprintf(f,"};\n");
-  fclose(f);
 }
 
 int main (int argc,char *argv[])
 {
-  //  test();
-  //  return 1;
-
-  // ne pas oublier les conditions limites 
-
-  GmshInitialize();
-
-  if (argc != 6){
-    printf("usage : mainCartesian meshFile thickness NPointsX SAMPLING(smaller than thickness) filterCells\n");
+  if(argc < 4){
+    printf("Usage: %s file thickness npointsx [sampling] [filter]\n", argv[0]);
+    printf("where\n");
+    printf("  'file' contains a CAD model or a mesh\n");
+    printf("  'thickness' sets the thickness of the layer of elements created around the surfaces\n");
+    printf("  'npointsx' sets the number of mesh points along the x-axis\n");
+    printf("  'sampling' sets the maximum distance between 2 sampling points on the surfaces\n");
+    printf("  'filter' selects if only cells inside the body are saved in the mesh\n");
     return -1;
   }
 
-  const int FACT=atoi(argv[3]);
-  const int FILTER=atoi(argv[5]);
-
-  double EP = atof(argv[2]);   
-
-  double SAMPLING;
-  if (argc == 5)SAMPLING = atof(argv[4]);
-  else SAMPLING = EP/3.0;
-  
+  GmshInitialize();
   GmshMergeFile(argv[1]);
-    
+  double thickness = atof(argv[2]);
+  int npointsx = atoi(argv[3]);
+  double sampling = (argc > 4) ? atof(argv[4]) : thickness / 3.;
+  int filter = (argc > 5) ? atoi(argv[5]) : 0;
+
   GModel *gm = GModel::current();
   
-  printf("mesh read\n");
-  
-  std::vector<SPoint3> POINTS, dummy;
-  std::vector<SVector3> NORMALS;
+  std::vector<SPoint3> points;
+  std::vector<SVector3> normals;
 
-  for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++){
-    (*fit)->fillPointCloud(SAMPLING,&POINTS,&NORMALS); 
-  }
+  for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++)
+    (*fit)->fillPointCloud(sampling, &points, &normals); 
+  printf("%d points in the cloud\n", (int)points.size());
 
-  // printf("OBB with %d points\n",POINTS.size()); 
-  //  SOrientedBoundingBox *obb = SOrientedBoundingBox::buildOBB (POINTS);
-  //  printf("OBB done\n"); 
+  // printf("OBB with %d points\n", points.size()); 
+  // SOrientedBoundingBox *obb = SOrientedBoundingBox::buildOBB(points);
+  // printf("OBB done\n"); 
 
   SBoundingBox3d bb;
-  for(int i=0;i<POINTS.size();i++){
-    bb += POINTS[i]; 
-  }
-
-  bb.scale(1.2,1.2,1.2);
-
-
+  for(unsigned int i = 0; i < points.size(); i++) bb += points[i]; 
+  bb.scale(1.2, 1.2, 1.2);
   SVector3 range = bb.max() - bb.min();   
-  int NX =FACT; 
-  int NY =FACT*range.y()/range.x(); 
-  int NZ =FACT*range.z()/range.x(); 
+  int NX = npointsx; 
+  int NY = NX * range.y() / range.x(); 
+  int NZ = NX * range.z() / range.x(); 
 
-  printf("bb Min= %g %g %g -- bb Max= %g %g %g --NX %d NY %d NZ %d\n",bb.min().x(),bb.min().y(),bb.min().z(),
-         bb.max().x(),bb.max().y(),bb.max().z(),NX,NY,NZ);
+  printf("bb Min= %g %g %g -- bb Max= %g %g %g --NX %d NY %d NZ %d\n",
+         bb.min().x(), bb.min().y(), bb.min().z(),
+         bb.max().x(), bb.max().y(), bb.max().z(), NX, NY, NZ);
 
+  cartesianBox<double> box(bb.min().x(), bb.min().y(), bb.min().z(), 
+                           SVector3(range.x(), 0, 0),
+                           SVector3(0, range.y(), 0),
+                           SVector3(0, 0, range.z()),
+                           NX, NY, NZ);
 
-  cartesianBox<double> box ( bb.min().x(),bb.min().y(),bb.min().z(), 
-                             SVector3(range.x(),0,0),
-                             SVector3(0,range.y(),0),
-                             SVector3(0,0,range.z()),
-                             NX,NY,NZ);
-  
-  box.points() = POINTS;
-  box.normals() = NORMALS;
-  
-  printf("%d points in the cloud \n", box.points().size());
-
-  
-  //  FILE *f = fopen ("chitte.pos","w");
-  //  fprintf(f,"View \"\"{\n");
-
-  for (int i=0; i< POINTS.size();i++){    
-    insertBoxes ( POINTS [i].x(), POINTS [i].y(), POINTS [i].z(), EP, box);
-    //    fprintf(f,"SP(%g,%g,%g){%g};\n",POINTS[i].x(),POINTS[i].y(),POINTS[i].z(),0.0);
-  }  
-  //  fprintf(f,"};\n");
-  //  fclose(f);
-
+  for (unsigned int i = 0; i < points.size();i++)
+    insertBoxes(points[i].x(), points[i].y(), points[i].z(), thickness, box);
 
   printf("insertion done\n");
   box.create_nodes();
 
-
-  std::map<int,double>::const_iterator it = 
-    box.begin();
+  std::map<int,double>::const_iterator it = box.begin();
   std::vector<SPoint3> NODES;
   std::vector<SPoint3> CNODES;
-  std::vector<int> indices;;
-  std::vector<double> dist,localdist;
-  for ( ; it!=box.end();++it){
-    NODES.push_back(box.coordinates_of_node(it->first));    
+  std::vector<int> indices;
+  std::vector<double> dist, localdist;
+  for ( ; it != box.end(); ++it){
+    NODES.push_back(box.coordinates_of_node(it->first));
     indices.push_back(it->first);
   }  
-  printf("%d nodes in the cartesian mesh\n",NODES.size());
-  int III = 0;
+  printf("%d nodes in the cartesian mesh\n", (int)NODES.size());
+
   for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++){
-    //    printf("model face %d : %d triangles\n",(*fit)->tag(),(*fit)->stl_triangles.size()/3);
-    for (int i=0;i<(*fit)->stl_triangles.size(); i+=3){
+    for (int i = 0; i < (*fit)->stl_triangles.size(); i += 3){
       int i1 = (*fit)->stl_triangles[i];
-      int i2 = (*fit)->stl_triangles[i+1];
-      int i3 = (*fit)->stl_triangles[i+2];
+      int i2 = (*fit)->stl_triangles[i + 1];
+      int i3 = (*fit)->stl_triangles[i + 2];
       GPoint p1 = (*fit)->point((*fit)->stl_vertices[i1]);
       GPoint p2 = (*fit)->point((*fit)->stl_vertices[i2]);
       GPoint p3 = (*fit)->point((*fit)->stl_vertices[i3]);
-
-      SPoint2 ppp = ((*fit)->stl_vertices[i1]+(*fit)->stl_vertices[i2]+(*fit)->stl_vertices[i3])*.3333333333;
+      SPoint2 ppp = ((*fit)->stl_vertices[i1] + (*fit)->stl_vertices[i2] + (*fit)->stl_vertices[i3]) * 0.33333333;
       SVector3 N = (*fit)->normal(ppp);
-      SPoint3 P1 (p1.x(),p1.y(),p1.z());
-      SPoint3 P2 (p2.x(),p2.y(),p2.z());
-      SPoint3 P3 (p3.x(),p3.y(),p3.z());
-      SVector3 NN (crossprod(P2-P1,P3-P1));
-      
-      //      printf("N1 %g %g %g N2 %g %g %g -- %g %g %g -- %g %g %g -- %g %g %g\n",N.x(),N.y(),N.z(),NN.x(),NN.y(),NN.z(),
-      //             p1.x(),p1.y(),p1.z(),p2.x(),p2.y(),p2.z(),p3.x(),p3.y(),p3.z());
+      SPoint3 P1(p1.x(), p1.y(), p1.z());
+      SPoint3 P2(p2.x(), p2.y(), p2.z());
+      SPoint3 P3(p3.x(), p3.y(), p3.z());
+      SVector3 NN(crossprod(P2 - P1, P3 - P1));
       if (dot(NN, N) > 0)
-	signedDistancesPointsTriangle (localdist,CNODES,NODES,P1,P2,P3);
+	signedDistancesPointsTriangle(localdist, CNODES, NODES, P1, P2, P3);
       else
-	signedDistancesPointsTriangle (localdist,CNODES,NODES,P2,P1,P3);
-
-      if(1){
-        if (dist.empty()) dist=localdist;
-        else 
-          for (int j=0;j<localdist.size();j++)
-            dist[j] = (fabs(dist[j]) < fabs(localdist[j])) ? dist[j] : localdist[j];
-      }
+	signedDistancesPointsTriangle(localdist, CNODES, NODES, P2, P1, P3);
+      if(dist.empty()) 
+        dist = localdist;
+      else 
+        for (unsigned int j = 0; j < localdist.size(); j++)
+          dist[j] = (fabs(dist[j]) < fabs(localdist[j])) ? dist[j] : localdist[j];
     }
-    III++;
   }
-  
-  for (int j=0;j<dist.size();j++){
-    //    printf("d(%d)=%g\n",indices[j],dist[j]);
-    box.setValue(indices[j],dist[j]);
-  }
+  for (unsigned int j = 0; j < dist.size(); j++)
+    box.setValue(indices[j], dist[j]);
 
-
-#if 1
-  if(FILTER){
-    int nbErased=0;
+  if(filter){
+    int nbErased = 0;
     //Coup de menage avant d'exporter le maillage
-    for( cartesianBox<double>::boxIter it=box.activeBoxBegin(); it!=box.activeBoxEnd();){
-
+    for(cartesianBox<double>::boxIter it = box.activeBoxBegin(); it != box.activeBoxEnd();){
       std::vector<double> ls_vals;
       box.getNodalValues(*it, ls_vals);
-
-      double lsmax= *std::max_element(ls_vals.begin(), ls_vals.end());
+      double lsmax = *std::max_element(ls_vals.begin(), ls_vals.end());
       double lsmin = *std::min_element(ls_vals.begin(), ls_vals.end());
-      double change_sign =  lsmax*lsmin ;
-
-      //    std::cout<<"active cell is "<<*it<<" and change sign is "<<change_sign<<" lsmax is "<<lsmax<<std::endl;
+      double change_sign = lsmax * lsmin ;
       double epsilon = 1.e-10;
-      if(change_sign>0 && lsmax < -epsilon) {box.erase(*(it++)); nbErased++;}
+      if(change_sign > 0 && lsmax < -epsilon) { 
+        box.erase(*(it++));
+        nbErased++;
+      }
       else ++it;
     }
-
-    std::cout<<"Number of erased cells after filtering : "<<nbErased<<std::endl;
+    std::cout << "Number of erased cells after filtering : " << nbErased << std::endl;
   }
-#endif
   
   printf("nodes created\n");
-  box.writeMSH("yeah.msh",true);
+  box.writeMSH("yeah.msh", true);
 
-  box.writeMSH("youhou.msh",true,false);
-  box.writeLSOnly("youhou.pos");
+  box.writeMSH("youhou.msh", true, false);
+  box.writeNodalValues("youhou.pos");
   printf("mesh written\n");
   GmshFinalize();
 }

@@ -19,7 +19,6 @@ set(SRC
   mathEvaluator.cpp
   Iso.cpp
   DivideAndConquer.cpp
-  cartesian.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
