@@ -61,6 +61,67 @@ class cartesianBox {
   typename std::map<int, scalar>::const_iterator begin() const { return _nodalValues.begin(); }
   typename std::map<int, scalar>::const_iterator end() const { return _nodalValues.end(); }
 
+  typedef std::set<int>::iterator boxIter;
+  boxIter activeBoxBegin() {return _active.begin(); }
+  boxIter activeBoxEnd() {return _active.end(); }
+
+  //Perhaps not optimal (lot of searches...)
+  void getNodalValues(const int &t, std::vector<scalar> &ls_values) {
+    int i,j,k;
+    element_ijk(t,i,j,k);
+
+    typename std::map<int, scalar>::iterator itNode = _nodalValues.find(node_index(i,j,k));
+    ls_values.push_back(itNode->second);
+
+    itNode = _nodalValues.find(node_index(i+1,j,k));
+    ls_values.push_back(itNode->second);
+
+    itNode = _nodalValues.find(node_index(i+1,j+1,k));
+    ls_values.push_back(itNode->second);
+
+    itNode = _nodalValues.find(node_index(i,j+1,k));
+    ls_values.push_back(itNode->second);
+
+    itNode = _nodalValues.find(node_index(i,j,k+1));
+    ls_values.push_back(itNode->second);
+
+    itNode = _nodalValues.find(node_index(i+1,j,k+1));
+    ls_values.push_back(itNode->second);
+
+    itNode = _nodalValues.find(node_index(i+1,j+1,k+1));
+    ls_values.push_back(itNode->second);
+
+    itNode = _nodalValues.find(node_index(i,j+1,k+1));
+    ls_values.push_back(itNode->second);
+
+    return;
+  }
+
+//  // Test : does not work for the moment
+//  bool connectedToActiveCell(int i, int j, int k){
+//
+//    int connectedCells[8]={-1,-1,-1,-1,-1,-1,-1,-1};
+//
+//    connectedCells[0]=element_index(i,j,k);
+//    connectedCells[1]=element_index(i-1,j,k);
+//    connectedCells[2]=element_index(i,j-1,k);
+//    connectedCells[3]=element_index(i-1,j-1,k);
+//    connectedCells[4]=element_index(i,j,k-1);
+//    connectedCells[5]=element_index(i-1,j,k-1);
+//    connectedCells[6]=element_index(i,j-1,k-1);
+//    connectedCells[7]=element_index(i-1,j-1,k-1);
+//
+//    bool activeCell=false;
+//
+//    for(int I=0;I<8;++I){
+//      activeCell += (_active.find() == _active.end());
+//    }
+//
+//    return activeCell;
+//
+//  }
+
+
   // add that in the ann search tool
   void insert_point (double x, double y, double z)
   {
@@ -115,6 +176,16 @@ class cartesianBox {
   {
     _active.insert(t);
   }
+  void erase (const int &t)
+  {
+    _active.erase(t);
+  }
+
+  void erase (std::set<int>::iterator t)
+  {
+    _active.erase(t);
+  }
+
   inline int element_index (int i, int j, int k) const 
   {
     return i + _Nxi * j + _Nxi *_Neta * k;
@@ -148,7 +219,7 @@ class cartesianBox {
             _nodalValues[node_index(i+I,j+J,k+K)] = 0.0;
     }
   }
-  void writeMSH (const std::string &filename, bool simplex=false) const 
+  void writeMSH (const std::string &filename, bool simplex=false, bool writeLS=true) const
   {
     
 //     const bool simplex=false;
@@ -238,7 +309,7 @@ class cartesianBox {
       }    
       fprintf(f,"$EndElements\n");    
     }
-    {
+    if(writeLS){
       fprintf(f,"$NodeData\n1\n\"distance\"\n 1\n 0.0\n3\n0\n 1\n %d\n",_nodalValues.size());
       typename std::map<int, scalar>::const_iterator it = _nodalValues.begin();
       for ( ; it!=_nodalValues.end();++it){
@@ -250,6 +321,24 @@ class cartesianBox {
     }
     fclose (f);
   }
+
+  void writeLSOnly (const std::string &filename) const
+  {
+    FILE *f = fopen (filename.c_str(), "w");
+
+    fprintf(f,"%d\n",_nodalValues.size());
+    typename std::map<int, scalar>::const_iterator it = _nodalValues.begin();
+    for ( ; it!=_nodalValues.end();++it){
+      SPoint3 p = coordinates_of_node(it->first);
+      fprintf(f,"%d %g\n",it->first,it->second);
+    }
+
+    fclose (f);
+
+  }
+
 };
+
+
 
 #endif
