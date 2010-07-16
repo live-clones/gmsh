@@ -97,14 +97,10 @@ static double F_Lc(GEdge *ge, double t)
     lc_here = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
 
   SVector3 der = ge->firstDer(t);
-  const double d = norm(der);
-
-  SMetric3 metric (1./(lc_here*lc_here));
-  
-  //  metric(0,0) = metric(0,0)*10000;
-
-  double lSquared = dot (der,metric,der);
-
+  //const double d = norm(der);
+  //return d / lc_here; 
+  SMetric3 metric(1. / (lc_here * lc_here));
+  double lSquared = dot(der, metric, der);
   return sqrt(lSquared);
 }
 
