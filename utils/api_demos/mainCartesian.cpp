@@ -1,3 +1,4 @@
+#if 1
 #include "Gmsh.h"
 #include "GModel.h"
 #include "MVertex.h"
@@ -5,6 +6,15 @@
 #include "MTriangle.h"
 #include "SOrientedBoundingBox.h"
 #include "Numeric.h"
+#else
+#include <gmsh/Gmsh.h>
+#include <gmsh/GModel.h>
+#include <gmsh/MVertex.h>
+#include <gmsh/cartesian.h>
+#include <gmsh/MTriangle.h>
+#include <gmsh/SOrientedBoundingBox.h>
+#include <gmsh/Numeric.h>
+#endif
 
 void insertBoxes ( double x, double y, double z, double EP, cartesianBox<double> &box){
   
@@ -63,12 +73,13 @@ int main (int argc,char *argv[])
 
   GmshInitialize();
 
-  if (argc != 5){
-    printf("usage : mainCartesian meshFile thickness NPointsX SAMPLING(smaller than thickness)\n");
+  if (argc != 6){
+    printf("usage : mainCartesian meshFile thickness NPointsX SAMPLING(smaller than thickness) filterCells\n");
     return -1;
   }
 
   const int FACT=atoi(argv[3]);
+  const int FILTER=atoi(argv[5]);
 
   double EP = atof(argv[2]);   
 
@@ -98,7 +109,7 @@ int main (int argc,char *argv[])
     bb += POINTS[i]; 
   }
 
-  bb.scale(1.2,1.2,1.2); 
+  bb.scale(1.2,1.2,1.2);
 
 
   SVector3 range = bb.max() - bb.min();   
@@ -174,7 +185,7 @@ int main (int argc,char *argv[])
 	signedDistancesPointsTriangle (localdist,CNODES,NODES,P2,P1,P3);
 
       if(1){
-        if (dist.empty())dist=localdist;
+        if (dist.empty()) dist=localdist;
         else 
           for (int j=0;j<localdist.size();j++)
             dist[j] = (fabs(dist[j]) < fabs(localdist[j])) ? dist[j] : localdist[j];
@@ -187,9 +198,36 @@ int main (int argc,char *argv[])
     //    printf("d(%d)=%g\n",indices[j],dist[j]);
     box.setValue(indices[j],dist[j]);
   }
+
+
+#if 1
+  if(FILTER){
+    int nbErased=0;
+    //Coup de menage avant d'exporter le maillage
+    for( cartesianBox<double>::boxIter it=box.activeBoxBegin(); it!=box.activeBoxEnd();){
+
+      std::vector<double> ls_vals;
+      box.getNodalValues(*it, ls_vals);
+
+      double lsmax= *std::max_element(ls_vals.begin(), ls_vals.end());
+      double lsmin = *std::min_element(ls_vals.begin(), ls_vals.end());
+      double change_sign =  lsmax*lsmin ;
+
+      //    std::cout<<"active cell is "<<*it<<" and change sign is "<<change_sign<<" lsmax is "<<lsmax<<std::endl;
+      double epsilon = 1.e-10;
+      if(change_sign>0 && lsmax < -epsilon) {box.erase(*(it++)); nbErased++;}
+      else ++it;
+    }
+
+    std::cout<<"Number of erased cells after filtering : "<<nbErased<<std::endl;
+  }
+#endif
   
   printf("nodes created\n");
   box.writeMSH("yeah.msh",true);
+
+  box.writeMSH("youhou.msh",true,false);
+  box.writeLSOnly("youhou.pos");
   printf("mesh written\n");
   GmshFinalize();
 }
