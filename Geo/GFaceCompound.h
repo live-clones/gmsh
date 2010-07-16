@@ -154,7 +154,7 @@ class GFaceCompound : public GFace {
                          SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const{}
   virtual SPoint2 getCoordinates(MVertex *v) const { return SPoint2(); }
   void parametrize() const {}
-
+  int getNbSplit() const { return 0; }
 };
 
 #endif
