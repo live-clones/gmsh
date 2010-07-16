@@ -20,6 +20,7 @@
 #include "MPyramid.h"
 #include "meshGEdge.h"
 #include "meshGFace.h"
+#include "meshGFaceOptimize.h"
 #include "meshGFaceBDS.h"
 #include "meshGRegion.h"
 #include "BackgroundMesh.h"
