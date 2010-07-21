@@ -77,8 +77,7 @@ void fillPointCloud(GEdge *ge, double sampling, std::vector<SPoint3> &points)
   for(int i = 0; i < N; i++) {
     double t = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
     GPoint p = ge->point(t);
-    double x = p.x(), y = p.y(), z = p.z();
-    points.push_back(SPoint3(x, y, z));
+    points.push_back(SPoint3(p.x(), p.y(), p.z()));
   }
 }
 
@@ -143,10 +142,32 @@ void removeParentCellsWithChildren(cartesianBox<double> *box)
   removeParentCellsWithChildren(box->getChildBox());
 }
 
+void removeOutsideCells(cartesianBox<double> *box)
+{
+  if(!box) return;
+  int nbErased = 0;
+  for(cartesianBox<double>::cellIter it = box->activeCellsBegin(); 
+      it != box->activeCellsEnd();){
+    std::vector<double> vals;
+    box->getCellValues(*it, vals);
+    double lsmax = *std::max_element(vals.begin(), vals.end());
+    double lsmin = *std::min_element(vals.begin(), vals.end());
+    double change_sign = lsmax * lsmin;
+    double epsilon = 1.e-10;
+    if(change_sign > 0 && lsmax < -epsilon) { 
+      box->eraseActiveCell(*(it++));
+      nbErased++;
+    }
+    else ++it;
+  }
+  Msg::Info("  number of cells erased after filtering: %d", nbErased);
+  removeOutsideCells(box->getChildBox());
+}
+
 int main(int argc,char *argv[])
 {
   if(argc < 6){
-    printf("Usage: %s file lx ly lz rmax [levels=1] [filter]\n", argv[0]);
+    printf("Usage: %s file lx ly lz rmax [levels=1]\n", argv[0]);
     printf("where\n");
     printf("  'file' contains a CAD model\n");
     printf("  'lx', 'ly' and 'lz' are the sizes of the elements along the"
@@ -154,8 +175,6 @@ int main(int argc,char *argv[])
     printf("  'rmax' is the radius of the largest sphere that can be inscribed"
            " in the structure\n");
     printf("  'levels' sets the number of levels in the grid\n");
-    printf("  'filter' selects if only cells inside the body are saved in the"
-           " mesh\n");
     return -1;
   }
 
@@ -165,10 +184,9 @@ int main(int argc,char *argv[])
   double lx = atof(argv[2]), ly = atof(argv[3]), lz = atof(argv[4]);
   double rmax = atof(argv[5]);
   int levels = (argc > 6) ? atof(argv[6]) : 1;
-  int filter = (argc > 7) ? atoi(argv[7]) : 0;
 
   // minimum distance between points in the cloud at the coarsest level
-  double sampling = std::min(lx, std::min(ly, lz)) / 2.;
+  double sampling = std::min(rmax, std::min(lx, std::min(ly, lz))) / 2.;
 
   // radius of the "tube" created around edges at the coarsest level
   double rtube = std::max(lx, std::max(ly, lz)) * 2.;
@@ -176,17 +194,17 @@ int main(int argc,char *argv[])
   GModel *gm = GModel::current();
   
   std::vector<SPoint3> points;
-  Msg::Info("Filling point clould on surfaces");
+  Msg::Info("Filling point cloud on surfaces");
   for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++)
     (*fit)->fillPointCloud(sampling, &points);
   Msg::Info("  %d points in the surface cloud", (int)points.size());
 
   std::vector<SPoint3> edgePoints;
   if(levels > 1){
-    Msg::Info("Filling point clould on curves");
+    Msg::Info("Filling point cloud on curves");
     for (GModel::eiter eit = gm->firstEdge(); eit != gm->lastEdge(); eit++)
       fillPointCloud(*eit, sampling / pow(2., levels - 1), edgePoints);
-    Msg::Info("  %d points in the curvee cloud", (int)edgePoints.size());
+    Msg::Info("  %d points in the curve cloud", (int)edgePoints.size());
   }
 
   SBoundingBox3d bb;
@@ -201,10 +219,11 @@ int main(int argc,char *argv[])
   if(NY < 2) NY = 2;
   if(NZ < 2) NZ = 2;
 
-  Msg::Info("  bb Min= %g %g %g -- bb Max= %g %g %g -- NX %d NY %d NZ %d",
+  Msg::Info("  bounding box min: %g %g %g -- max: %g %g %g",
             bb.min().x(), bb.min().y(), bb.min().z(),
-            bb.max().x(), bb.max().y(), bb.max().z(), NX, NY, NZ);
-
+            bb.max().x(), bb.max().y(), bb.max().z());
+  Msg::Info("  Nx=%d Ny=%d Nz=%d", NX, NY, NZ);
+  
   cartesianBox<double> box(bb.min().x(), bb.min().y(), bb.min().z(), 
                            SVector3(range.x(), 0, 0),
                            SVector3(0, range.y(), 0),
@@ -222,43 +241,27 @@ int main(int argc,char *argv[])
     parent = child;
   }
 
-  Msg::Info("Removing cells to match X-FEM mesh topology constraints");
   // remove child cells that do not entirely fill parent cell or for
-  // which there is no parent neighbor
+  // which there is no parent neighbor; then remove parent cells that
+  // have children
+  Msg::Info("Removing cells to match X-FEM mesh topology constraints");
   removeOrphanChildCells(&box);
-  // remove parent cells that have children
   removeParentCellsWithChildren(&box);
 
-  // TODO: 
-  //  * remove child nodes which exist in parent grid
-  //  * offset of node numbers depending on box level to write a single mesh
-
+  // we generate duplicate nodes at this point so we can easily access
+  // cell values at each level; we will clean up by renumbering after
+  // filtering
   Msg::Info("Initializing nodal values in the cartesian grid");
   box.createNodalValues();
 
   Msg::Info("Computing levelset on the cartesian grid");  
   computeLevelset(gm, box);
 
-  if(filter){
-    Msg::Info("Filtering result -- *** TODO THIS NEEDS TO BE ADAPTED FOR MULTILEVEL");
-    int nbErased = 0;
-    //Coup de menage avant d'exporter le maillage
-    for(cartesianBox<double>::cellIter it = box.activeCellsBegin(); 
-        it != box.activeCellsEnd();){
-      std::vector<double> ls_vals;
-      box.getNodalValues(*it, ls_vals);
-      double lsmax = *std::max_element(ls_vals.begin(), ls_vals.end());
-      double lsmin = *std::min_element(ls_vals.begin(), ls_vals.end());
-      double change_sign = lsmax * lsmin ;
-      double epsilon = 1.e-10;
-      if(change_sign > 0 && lsmax < -epsilon) { 
-        box.eraseActiveCell(*(it++));
-        nbErased++;
-      }
-      else ++it;
-    }
-    Msg::Info("  number of erased cells after filtering: %d", nbErased);
-  }
+  Msg::Info("Removing cells outside the structure");
+  removeOutsideCells(&box);
+
+  Msg::Info("Renumbering mesh vertices across levels");
+  
   
   Msg::Info("Writing results to disk");
   box.writeMSH("yeah.msh");

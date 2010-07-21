@@ -8,50 +8,57 @@
 #include "SVector3.h"
 #include "SPoint3.h"
 
-// This is a cartesian mesh that encompasses an oriented box with NXI
-// * NETA * NZETA hexaderal cells, with values stored at vertices
-
-/*
-  2-D example:
-
-               j
-   +---+---+---+---+---+---+
-   |   |   |   |ij |   |   |
- i +---+---+---+---+---+---+
-   |   |   |   |   |   |   |
-   +---+---+---+---+---+---+
-
-   Nodal values/active cells are stored and referenced by node/cell
-   index, i.e., i+N*j
-
-   The ij cell has nodes i;j , i+1;j , i+1;j+1, i;j+1
-*/
-
+// A cartesian grid that encompasses an oriented 3-D box, with values
+// stored at vertices:
+//
+//               j
+//   +---+---+---+---+---+---+
+//   |   |   |   |   |   |   |
+// i +---+---+-(i,j)-+---+---+
+//   |   |   |   |   |   |   |
+//   +---+---+---+---+---+---+
+//
+//   Nodal values and active hexahedral cells are stored and
+//   referenced by a linear index (i + N * j)
+//   
+//   The (i,j) cell has nodes (i,j), (i+1,j), (i+1,j+1) and (i,j+1)
 template <class scalar>
 class cartesianBox {
  private:  
+  // number of subdivisions along the xi-, eta- and zeta-axis
   int _Nxi, _Neta, _Nzeta;  
+  // origin of the grid and spacing along xi, eta and zeta
   double _X, _Y, _Z, _dxi, _deta, _dzeta;
+  // xi-, eta- and zeta-axis directions
   SVector3 _xiAxis, _etaAxis, _zetaAxis;
+  // set of active cells; the value stored for cell (i,j,k) is the
+  // linear index (i + _Nxi * j + _Nxi *_Neta * k)
   std::set<int> _activeCells;
+  // map of stored nodal values, index by the linear index
+  // (i + (_Nxi+1) * j + (_Nxi+1) * (_Neta+1) * k)
   typename std::map<int, scalar> _nodalValues;
+  // mapping from linear node index to unique node tags
+  std::map<int, int> _nodeTags;
+  // level of the box (coarset box has highest level; finest box has
+  // level==1)
   int _level;
+  // pointer to a finer (refined by 2) level box (if any)
   cartesianBox<scalar> *_childBox;
  public:
   cartesianBox(double X, double Y, double Z, 
-               const SVector3 &DXI, const SVector3 &DETA, const SVector3 &DZETA, 
-               int NXI, int NETA, int NZETA, int level=1)
+               const SVector3 &dxi, const SVector3 &deta, const SVector3 &dzeta, 
+               int Nxi, int Neta, int Nzeta, int level=1)
     : _X(X), _Y(Y), _Z(Z), 
-      _dxi(norm(DXI)), _deta(norm(DETA)), _dzeta(norm(DZETA)), 
-      _xiAxis(DXI), _etaAxis(DETA), _zetaAxis(DZETA),
-      _Nxi(NXI), _Neta(NETA), _Nzeta(NZETA), _level(level), _childBox(0)
+      _dxi(norm(dxi)), _deta(norm(deta)), _dzeta(norm(dzeta)), 
+      _xiAxis(dxi), _etaAxis(deta), _zetaAxis(dzeta),
+      _Nxi(Nxi), _Neta(Neta), _Nzeta(Nzeta), _level(level), _childBox(0)
   {
     _xiAxis.normalize();
     _etaAxis.normalize();
     _zetaAxis.normalize();
     if(level > 1)
-      _childBox = new cartesianBox<scalar>(X, Y, Z, DXI, DETA, DZETA,
-                                           2 * NXI, 2 * NETA, 2 * NZETA,
+      _childBox = new cartesianBox<scalar>(X, Y, Z, dxi, deta, dzeta,
+                                           2 * Nxi, 2 * Neta, 2 * Nzeta,
                                            level - 1);
   }  
   int getNxi(){ return _Nxi; }
@@ -66,38 +73,25 @@ class cartesianBox {
   valIter nodalValuesBegin(){ return _nodalValues.begin(); }
   valIter nodalValuesEnd(){ return _nodalValues.end(); }
   void setNodalValue(int i, scalar s){ _nodalValues[i] = s; }
-  void getNodalValues(const int &t, std::vector<scalar> &ls_values)
+  void getCellValues(int t, std::vector<scalar> &values)
   {
-    // perhaps not optimal (lot of searches...)
     int i, j, k;
     getCellIJK(t, i, j, k);
-    typename std::map<int, scalar>::iterator itNode;
-
-    itNode = _nodalValues.find(getNodeIndex(i, j, k));
-    ls_values.push_back(itNode->second);
-
-    itNode = _nodalValues.find(getNodeIndex(i+1,j,k));
-    ls_values.push_back(itNode->second);
-
-    itNode = _nodalValues.find(getNodeIndex(i+1,j+1,k));
-    ls_values.push_back(itNode->second);
-
-    itNode = _nodalValues.find(getNodeIndex(i,j+1,k));
-    ls_values.push_back(itNode->second);
-
-    itNode = _nodalValues.find(getNodeIndex(i,j,k+1));
-    ls_values.push_back(itNode->second);
-
-    itNode = _nodalValues.find(getNodeIndex(i+1,j,k+1));
-    ls_values.push_back(itNode->second);
-
-    itNode = _nodalValues.find(getNodeIndex(i+1,j+1,k+1));
-    ls_values.push_back(itNode->second);
-
-    itNode = _nodalValues.find(getNodeIndex(i,j+1,k+1));
-    ls_values.push_back(itNode->second);
+    for(int I = 0; I < 2; I++)
+      for(int J = 0; J < 2; J++)
+        for(int K = 0; K < 2; K++){
+          typename std::map<int, scalar>::iterator it = 
+            _nodalValues.find(getNodeIndex(i + I, j + J, k + K));
+          if(it != _nodalValues.end())
+            values.push_back(it->second);
+          else{
+            Msg::Error("Could not find value i,j,k=%d,%d,%d for cell %d\n", 
+                       i + I, j + J, k + K, t);
+            values.push_back(0.);
+          }
+        }
   }
-  inline int getCellContainingPoint(double x, double y, double z) const
+  int getCellContainingPoint(double x, double y, double z) const
   {
     // P = P_0 + xi * _vdx + eta * _vdy + zeta *vdz
     // DP = P-P_0 * _vdx = xi
@@ -113,7 +107,7 @@ class cartesianBox {
     if (k < 0) k = 0; if (k >= _Nzeta) k = _Nzeta - 1;
     return getCellIndex(i, j, k);
   }
-  inline SPoint3 getNodeCoordinates(const int &t) const
+  SPoint3 getNodeCoordinates(const int &t) const
   {
     int i, j, k;
     getNodeIJK(t, i, j, k);
@@ -130,27 +124,27 @@ class cartesianBox {
   {
     return (_activeCells.find(t) != _activeCells.end()); 
   }
-  inline int getCellIndex(int i, int j, int k) const 
+  int getCellIndex(int i, int j, int k) const 
   {
     return i + _Nxi * j + _Nxi *_Neta * k;
   }
-  inline int getNodeIndex(int i, int j, int k) const 
+  int getNodeIndex(int i, int j, int k) const 
   {
     return i + (_Nxi+1) * j + (_Nxi+1) * (_Neta+1) * k;
   }
-  inline void getCellIJK(int index, int &i, int &j, int &k) const 
+  void getCellIJK(int index, int &i, int &j, int &k) const 
   {
     k = index / (_Nxi * _Neta);
     j = (index - k * (_Nxi * _Neta)) / _Nxi;
     i = (index - k * (_Nxi * _Neta) - j * _Nxi);
   }
-  inline void getNodeIJK(int index, int &i, int &j, int &k) const
+  void getNodeIJK(int index, int &i, int &j, int &k) const
   {
     k = index / ((_Nxi + 1) * (_Neta + 1));
     j = (index - k * ((_Nxi + 1) * (_Neta + 1))) / (_Nxi + 1);
     i = (index - k * ((_Nxi + 1) * (_Neta + 1)) - j * (_Nxi + 1));
   }
-  inline void createNodalValues()
+  void createNodalValues()
   {
     std::set<int>::const_iterator it = _activeCells.begin();
     for( ; it != _activeCells.end() ; ++it){
@@ -168,6 +162,10 @@ class cartesianBox {
                 bool writeNodalValues=true) const
   {
     FILE *f = fopen(filename.c_str(), "w");
+    if(!f){
+      Msg::Error("Could not open file '%s'", filename.c_str());
+      return;
+    }
     fprintf(f, "$MeshFormat\n2.1 0 8\n$EndMeshFormat\n");
     {
       fprintf(f, "$Nodes\n%d\n", (int)_nodalValues.size());
