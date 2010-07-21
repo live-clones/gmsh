@@ -5,8 +5,8 @@
 
 #ifndef _GAUSS_H_
 #define _GAUSS_H_
-#include "fullMatrix.h"
 
+#include "fullMatrix.h"
 
 struct IntPt{
   double pt[3];
@@ -36,7 +36,9 @@ IntPt *getGQPriPts(int order);
 int getNGQHPts(int order);
 IntPt *getGQHPts(int order);
 
-//For now this class is only for bindings but maybe the interface is cleaner (it does not add new types) and it can replace the other interface
+//For now this class is only for bindings but maybe the interface is
+//cleaner (it does not add new types) and it can replace the other
+//interface
 class gaussIntegration {
   public:
   static void getTriangle(int order, fullMatrix<double> &pts, fullMatrix<double> &weights);

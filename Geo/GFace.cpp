@@ -1182,16 +1182,6 @@ void GFace::moveToValidRange(SPoint2 &pt) const
   }
 }
 
-void GFace::addTriangle(MTriangle *t) {
-  triangles.push_back(t); 
-}
-void GFace::addQuadrangle(MQuadrangle *q) {
-  quadrangles.push_back(q); 
-}
-void GFace::addPolygon(MPolygon *p) {
-  polygons.push_back(p); 
-}
-
 #include "Bindings.h"
 
 void GFace::registerBindings(binding *b)

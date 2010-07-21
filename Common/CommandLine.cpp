@@ -85,11 +85,12 @@ void PrintUsage(const char *name)
   Msg::Direct("  -check                Perform various consistency checks on mesh");
 #if defined(HAVE_FLTK)
   Msg::Direct("Post-processing options:");
-  Msg::Direct("  -noview               Hide all views on startup");
   Msg::Direct("  -link int             Select link mode between views (0, 1, 2, 3, 4)");
   Msg::Direct("  -combine              Combine views having identical names into multi-time-step views");
   Msg::Direct("Display options:");    
   Msg::Direct("  -nodb                 Disable double buffering");
+  Msg::Direct("  -noview               Hide all views on startup");
+  Msg::Direct("  -nomesh               Hide all meshes on startup");
   Msg::Direct("  -fontsize int         Specify the font size for the GUI");
   Msg::Direct("  -theme string         Specify FLTK GUI theme");
   Msg::Direct("  -display string       Specify display");
@@ -578,6 +579,15 @@ void GetOptions(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "noview")) {
         opt_view_visible(0, GMSH_SET, 0);
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "nomesh")) {
+        opt_mesh_points(0, GMSH_SET, 0.);
+        opt_mesh_lines(0, GMSH_SET, 0.);
+        opt_mesh_surfaces_edges(0, GMSH_SET, 0.);
+        opt_mesh_surfaces_faces(0, GMSH_SET, 0.);
+        opt_mesh_volumes_edges(0, GMSH_SET, 0.);
+        opt_mesh_volumes_faces(0, GMSH_SET, 0.);
         i++;
       }
       else if(!strcmp(argv[i] + 1, "link")) {

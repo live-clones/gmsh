@@ -6,7 +6,6 @@
 #include "SOrientedBoundingBox.h"
 #include "Numeric.h"
 #include "GmshMessage.h"
-#include "OS.h"
 
 void insertActiveCells(double x, double y, double z, double rmax,
                        cartesianBox<double> &box)
@@ -32,7 +31,7 @@ void computeLevelset(GModel *gm, cartesianBox<double> &box)
     nodes.push_back(box.getNodeCoordinates(it->first));
     indices.push_back(it->first);
   }
-  Msg::Info("  %d nodes in the grid", (int)nodes.size());
+  Msg::Info("  %d nodes in the grid at level %d", (int)nodes.size(), box.getLevel());
   std::vector<double> dist, localdist;
   std::vector<SPoint3> dummy;
   for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++){
@@ -81,7 +80,7 @@ void fillPointCloud(GEdge *ge, double sampling, std::vector<SPoint3> &points)
   }
 }
 
-int removeOrphanChildCells(cartesianBox<double> *parent)
+int removeBadChildCells(cartesianBox<double> *parent)
 {
   cartesianBox<double> *child = parent->getChildBox();
   if(!child) return 0;
@@ -117,7 +116,7 @@ int removeOrphanChildCells(cartesianBox<double> *parent)
             (k != K - 1 && !parent->activeCellExists(parent->getCellIndex(i, j, k + 1)))))
             for(int ii = 0; ii < 8; ii++) child->eraseActiveCell(idx[ii]);
       }
-  return removeOrphanChildCells(child);
+  return removeBadChildCells(child);
 }
 
 void removeParentCellsWithChildren(cartesianBox<double> *box)
@@ -149,7 +148,7 @@ void removeOutsideCells(cartesianBox<double> *box)
   for(cartesianBox<double>::cellIter it = box->activeCellsBegin(); 
       it != box->activeCellsEnd();){
     std::vector<double> vals;
-    box->getCellValues(*it, vals);
+    box->getNodalValuesForCell(*it, vals);
     double lsmax = *std::max_element(vals.begin(), vals.end());
     double lsmin = *std::min_element(vals.begin(), vals.end());
     double change_sign = lsmax * lsmin;
@@ -186,7 +185,7 @@ int main(int argc,char *argv[])
   int levels = (argc > 6) ? atof(argv[6]) : 1;
 
   // minimum distance between points in the cloud at the coarsest level
-  double sampling = std::min(rmax, std::min(lx, std::min(ly, lz))) / 2.;
+  double sampling = std::min(rmax, std::min(lx, std::min(ly, lz)));
 
   // radius of the "tube" created around edges at the coarsest level
   double rtube = std::max(lx, std::max(ly, lz)) * 2.;
@@ -194,23 +193,28 @@ int main(int argc,char *argv[])
   GModel *gm = GModel::current();
   
   std::vector<SPoint3> points;
-  Msg::Info("Filling point cloud on surfaces");
+  Msg::Info("Filling coarse point cloud on surfaces");
   for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++)
     (*fit)->fillPointCloud(sampling, &points);
   Msg::Info("  %d points in the surface cloud", (int)points.size());
 
-  std::vector<SPoint3> edgePoints;
+  std::vector<SPoint3> refinePoints;
   if(levels > 1){
-    Msg::Info("Filling point cloud on curves");
+    double s = sampling / pow(2., levels - 1);
+    Msg::Info("Filling refined point cloud on curves and curved surfaces");
     for (GModel::eiter eit = gm->firstEdge(); eit != gm->lastEdge(); eit++)
-      fillPointCloud(*eit, sampling / pow(2., levels - 1), edgePoints);
-    Msg::Info("  %d points in the curve cloud", (int)edgePoints.size());
+      fillPointCloud(*eit, s, refinePoints);
+    // FIXME: refine this by computing e.g. "mean" curvature
+    for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++)
+      if((*fit)->geomType() != GEntity::Plane)
+        (*fit)->fillPointCloud(2 * s, &refinePoints);
+    Msg::Info("  %d points in the refined cloud", (int)refinePoints.size());
   }
 
   SBoundingBox3d bb;
   for(unsigned int i = 0; i < points.size(); i++) bb += points[i]; 
-  for(unsigned int i = 0; i < edgePoints.size(); i++) bb += edgePoints[i]; 
-  bb.scale(1.2, 1.2, 1.2);
+  for(unsigned int i = 0; i < refinePoints.size(); i++) bb += refinePoints[i]; 
+  bb.scale(1.21, 1.21, 1.21);
   SVector3 range = bb.max() - bb.min();   
   int NX = range.x() / lx; 
   int NY = range.y() / ly; 
@@ -231,13 +235,16 @@ int main(int argc,char *argv[])
                            NX, NY, NZ, levels);
 
   Msg::Info("Inserting active cells in the cartesian grid");
-  for (unsigned int i = 0; i < points.size();i++)
+  Msg::Info("  level %d", box.getLevel());
+  for (unsigned int i = 0; i < points.size(); i++)
     insertActiveCells(points[i].x(), points[i].y(), points[i].z(), rmax, box);
+
   cartesianBox<double> *parent = &box, *child;
   while((child = parent->getChildBox())){
-    for(unsigned int i = 0; i < edgePoints.size(); i++)
-      insertActiveCells(edgePoints[i].x(), edgePoints[i].y(), edgePoints[i].z(), 
-                        rtube / pow(2., levels - child->getLevel()), *child);
+    Msg::Info("  level %d", child->getLevel());
+    for(unsigned int i = 0; i < refinePoints.size(); i++)
+      insertActiveCells(refinePoints[i].x(), refinePoints[i].y(), refinePoints[i].z(), 
+                        rtube / pow(2., (levels - child->getLevel())), *child);
     parent = child;
   }
 
@@ -245,7 +252,7 @@ int main(int argc,char *argv[])
   // which there is no parent neighbor; then remove parent cells that
   // have children
   Msg::Info("Removing cells to match X-FEM mesh topology constraints");
-  removeOrphanChildCells(&box);
+  removeBadChildCells(&box);
   removeParentCellsWithChildren(&box);
 
   // we generate duplicate nodes at this point so we can easily access
@@ -261,12 +268,10 @@ int main(int argc,char *argv[])
   removeOutsideCells(&box);
 
   Msg::Info("Renumbering mesh vertices across levels");
+  box.renumberNodes();
   
-  
-  Msg::Info("Writing results to disk");
-  box.writeMSH("yeah.msh");
-  box.writeMSH("youhou.msh", true, false);
-  box.writeNodalValues("youhou.pos");
+  box.writeMSH("yeah.msh", true);
+
   Msg::Info("Done!");
   GmshFinalize();
 }

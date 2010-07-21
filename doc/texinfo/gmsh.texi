@@ -888,8 +888,6 @@ Perform various consistency checks on mesh
 @noindent Post-processing options:
 
 @ftable @code
-@item -noview
-Hide all views on startup
 @item -link int
 Select link mode between views (0, 1, 2, 3, 4)
 @item -combine
@@ -903,6 +901,10 @@ Combine views having identical names into multi-time-step views
 @ftable @code
 @item -nodb
 Disable double buffering
+@item -noview
+Hide all views on startup
+@item -nomesh
+Hide all meshes on startup
 @item -fontsize int
 Specify the font size for the GUI
 @item -theme string
