@@ -754,39 +754,38 @@ double minimize_grad_fd(double (*func)(fullVector<double> &, void *),
   
   fullVector<double> grad(N);
   fullVector<double> dir(N);
-  double f,feps,finit;
+  double f, feps, finit;
 
   for (int iter = 0; iter < MAXIT; iter++){
     // compute gradient of func
-    f = func(x,data);
-    if (iter == 0)finit = f;
-    //    printf("Opti iter %d x = (%g %g) f = %g\n",iter,x(0),x(1),f);
-    //    printf("grad = (");
+    f = func(x, data);
+    if (iter == 0) finit = f;
+    // printf("Opti iter %d x = (%g %g) f = %g\n",iter,x(0),x(1),f);
+    // printf("grad = (");
     for (int j = 0; j < N; j++){
       double h = EPS * fabs(x(j));
       if(h == 0.) h = EPS;
       x(j) += h;
       feps = func(x, data);
       grad(j) = (feps - f) / h;
-      //      printf("%g ",grad(j));
+      // printf("%g ",grad(j));
       dir(j) = -grad(j);
       x(j) -= h;
     }
-    //    printf(")\n ");
+    // printf(")\n ");
     // do a 1D line search to fine the minimum
     // of f(x - \alpha \nabla f)
     double f, stpmax=100000;
     int check;
-    gmshLineSearch (func, data, x,dir,grad,f,stpmax,check);
-    //    printf("Line search done x = (%g %g) f = %g\n",x(0),x(1),f);
-    if (check == 1)break;
+    gmshLineSearch(func, data, x, dir, grad, f, stpmax, check);
+    // printf("Line search done x = (%g %g) f = %g\n",x(0),x(1),f);
+    if (check == 1) break;
   }
   
   return f;
 }
 
 /*
-
 P(p) = p1 + t1 xi + t2 eta
 
 t1 = (p2-p1) ; t2 = (p3-p1) ; 
@@ -809,12 +808,10 @@ distance to segment
    - t ||p2-p1||^2 + (p-p1)(p2-p1) = 0
    
    t = (p-p1)*(p2-p1)/||p2-p1||^2
-  
-
 */
 
-void signedDistancesPointsTriangle(std::vector<double>&distances,
-                                   std::vector<SPoint3>&closePts,
+void signedDistancesPointsTriangle(std::vector<double> &distances,
+                                   std::vector<SPoint3> &closePts,
                                    const std::vector<SPoint3> &pts,
                                    const SPoint3 &p1,
                                    const SPoint3 &p2,
@@ -831,7 +828,7 @@ void signedDistancesPointsTriangle(std::vector<double>&distances,
                       {t1.z(), t2.z(), -n.z()}};
   double inv[3][3];
   double det = inv3x3(mat, inv);
-  const unsigned pts_size=pts.size();
+  const unsigned pts_size = pts.size();
   distances.clear();
   distances.resize(pts_size);
   closePts.clear();
@@ -847,7 +844,7 @@ void signedDistancesPointsTriangle(std::vector<double>&distances,
   const double n2t3 = dot(t3, t3);
 
   double u, v, d;
-  for (unsigned int i = 0; i < pts_size;++i){
+  for (unsigned int i = 0; i < pts_size; ++i){
     const SPoint3 &p = pts[i];
     SVector3 pp1 = p - p1;
     u = (inv[0][0] * pp1.x() + inv[0][1] * pp1.y() + inv[0][2] * pp1.z());
@@ -873,12 +870,12 @@ void signedDistancesPointsTriangle(std::vector<double>&distances,
         found = true;
       }
       if (t13 >= 0 && t13 <= 1.){
-        if (p.distance(p1 + (p3 - p1) * t13) < fabs(d))   closePt = p1 + (p3 - p1) * t13;
+        if (p.distance(p1 + (p3 - p1) * t13) < fabs(d)) closePt = p1 + (p3 - p1) * t13;
         d = sign * std::min(fabs(d), p.distance(p1 + (p3 - p1) * t13));      
         found = true;
       }      
       if (t23 >= 0 && t23 <= 1.){
-        if (p.distance(p2 + (p3 - p2) * t23) < fabs(d))   closePt = p2 + (p3 - p2) * t23;
+        if (p.distance(p2 + (p3 - p2) * t23) < fabs(d)) closePt = p2 + (p3 - p2) * t23;
         d = sign * std::min(fabs(d), p.distance(p2 + (p3 - p2) * t23));      
         found = true;
       }
@@ -901,7 +898,9 @@ void signedDistancesPointsTriangle(std::vector<double>&distances,
   }                                        
 }
 
-void signedDistancePointLine(const SPoint3 &p1,const SPoint3 &p2,const SPoint3 &p, double &d, SPoint3 &closePt){
+void signedDistancePointLine(const SPoint3 &p1, const SPoint3 &p2, const SPoint3 &p, 
+                             double &d, SPoint3 &closePt)
+{
   SVector3 t1 = p2 - p1;
   const double n2t1 = dot(t1, t1);
   SVector3 pp1 = p - p1;
@@ -923,12 +922,12 @@ void signedDistancePointLine(const SPoint3 &p1,const SPoint3 &p2,const SPoint3 &
   }
 }
 
-void signedDistancesPointsLine (std::vector<double>&distances,
-				std::vector<SPoint3>&closePts,
-				const std::vector<SPoint3> &pts,
-				const SPoint3 &p1,
-				const SPoint3 &p2){
-
+void signedDistancesPointsLine(std::vector<double>&distances,
+                               std::vector<SPoint3>&closePts,
+                               const std::vector<SPoint3> &pts,
+                               const SPoint3 &p1,
+                               const SPoint3 &p2)
+{
   distances.clear();
   distances.resize(pts.size());
   closePts.clear();
@@ -944,8 +943,11 @@ void signedDistancesPointsLine (std::vector<double>&distances,
   }
 }
 
-void changeReferential(const int direction,const SPoint3 &p,const SPoint3 &closePt,const SPoint3 &p1,const SPoint3 &p2,double* xp,double* yp,double* otherp,double* x,double* y,double* other){
-  if (direction==1){
+void changeReferential(const int direction,const SPoint3 &p,const SPoint3 &closePt,
+                       const SPoint3 &p1, const SPoint3 &p2, double* xp, double* yp,
+                       double* otherp, double* x, double* y, double* other)
+{
+  if (direction == 1){
     const SPoint3 &d1=SPoint3(1.0,0.0,0.0);
     const SPoint3 &d=SPoint3(p2.x()-p1.x(),p2.y()-p1.y(),p2.z()-p1.z());
     double norm=sqrt( d.x()*d.x()+d.y()*d.y()+d.z()*d.z() );
@@ -962,7 +964,8 @@ void changeReferential(const int direction,const SPoint3 &p,const SPoint3 &close
     *x=closePt.x()*d1.x()+closePt.y()*d1.y()+closePt.z()*d1.z();
     *y=closePt.x()*d3n.x()+closePt.y()*d3n.y()+closePt.z()*d3n.z();
     *other=closePt.x()*d2n.x()+closePt.y()*d2n.y()+closePt.z()*d2n.z();
-  }else{
+  }
+  else{
     const SPoint3 &d2=SPoint3(0.0,1.0,0.0);
     const SPoint3 &d=SPoint3(p2.x()-p1.x(),p2.y()-p1.y(),p2.z()-p1.z());
     double norm=sqrt( d.x()*d.x()+d.y()*d.y()+d.z()*d.z() );
@@ -982,7 +985,9 @@ void changeReferential(const int direction,const SPoint3 &p,const SPoint3 &close
   }
 }
 
-int computeDistanceRatio(const double &y, const double &yp,const double &x,const double &xp, double *distance, const double &r1, const double &r2){
+int computeDistanceRatio(const double &y, const double &yp, const double &x,
+                         const double &xp, double *distance, const double &r1, const double &r2)
+{
   double b;
   double a;
   if (y==yp){
@@ -1083,14 +1088,14 @@ int computeDistanceRatio(const double &y, const double &yp,const double &x,const
   }
 }
 
-void signedDistancesPointsEllipseLine (std::vector<double>&distances,
-				std::vector<double> &distancesE,
-				std::vector<int>&isInYarn,
-				std::vector<SPoint3>&closePts,
-				const std::vector<SPoint3> &pts,
-				const SPoint3 &p1,
-				const SPoint3 &p2){
-  
+void signedDistancesPointsEllipseLine(std::vector<double>&distances,
+                                      std::vector<double> &distancesE,
+                                      std::vector<int>&isInYarn,
+                                      std::vector<SPoint3>&closePts,
+                                      const std::vector<SPoint3> &pts,
+                                      const SPoint3 &p1,
+                                      const SPoint3 &p2)
+{
   distances.clear();
   distances.resize(pts.size());
   distancesE.clear();
