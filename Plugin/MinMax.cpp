@@ -54,18 +54,22 @@ PView *GMSH_MinMaxPlugin::execute(PView * v)
   dataMin->SP.push_back(x); dataMin->SP.push_back(y); dataMin->SP.push_back(z);
   dataMax->SP.push_back(x); dataMax->SP.push_back(y); dataMax->SP.push_back(z);
   for(int step = 0; step < data1->getNumTimeSteps(); step++){
-    dataMin->SP.push_back(data1->getMin(step));
-    dataMax->SP.push_back(data1->getMax(step));
+    if(data1->hasTimeStep(step)){
+      dataMin->SP.push_back(data1->getMin(step));
+      dataMax->SP.push_back(data1->getMax(step));
+    }
   }
   dataMin->NbSP = 1;
   dataMax->NbSP = 1;
   vMin->getOptions()->intervalsType = PViewOptions::Numeric;
   vMax->getOptions()->intervalsType = PViewOptions::Numeric;
   
-  for(int i = 0; i < data1->getNumTimeSteps(); i++){
-    double time = data1->getTime(i);
-    dataMin->Time.push_back(time);
-    dataMax->Time.push_back(time);
+  for(int step = 0; step < data1->getNumTimeSteps(); step++){
+    if(data1->hasTimeStep(step)){
+      double time = data1->getTime(step);
+      dataMin->Time.push_back(time);
+      dataMax->Time.push_back(time);
+    }
   }
   dataMin->setName(data1->getName() + "_Min");
   dataMin->setFileName(data1->getName() + "_Min.pos");
