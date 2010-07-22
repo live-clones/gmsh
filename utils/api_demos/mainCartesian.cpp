@@ -1,19 +1,16 @@
-//                          lx   ly   lz    rmax  levels
+//                          lx   ly   lz    rmax  levels  refcs
 //
 // plaqueEp.stp             0.2  0.2  0.2   0.3   3
 // plaqueEpRotated.stp      0.3  0.3  0.3   0.3   3
 // jonction_collee2.stp     6    6    6     10    3
-// panneau_raidi_simple.stp 3    3    50    10    1
+// panneau_raidi_simple.stp 3    3    50    10    2       0
 // plaque_trouee.stp        1    1    1     2     3
 
 #include "Gmsh.h"
 #include "GModel.h"
-#include "MVertex.h"
-#include "cartesian.h"
-#include "MTriangle.h"
-#include "SOrientedBoundingBox.h"
 #include "Numeric.h"
 #include "GmshMessage.h"
+#include "cartesian.h"
 
 void insertActiveCells(double x, double y, double z, double rmax,
                        cartesianBox<double> &box)
@@ -174,7 +171,7 @@ void removeOutsideCells(cartesianBox<double> *box)
 int main(int argc,char *argv[])
 {
   if(argc < 6){
-    printf("Usage: %s file lx ly lz rmax [levels=1]\n", argv[0]);
+    printf("Usage: %s file lx ly lz rmax [levels=1] [refcs=1]\n", argv[0]);
     printf("where\n");
     printf("  'file' contains a CAD model\n");
     printf("  'lx', 'ly' and 'lz' are the sizes of the elements along the"
@@ -182,6 +179,7 @@ int main(int argc,char *argv[])
     printf("  'rmax' is the radius of the largest sphere that can be inscribed"
            " in the structure\n");
     printf("  'levels' sets the number of levels in the grid\n");
+    printf("  'refcs' selects if curved surfaces should be refined\n");
     return -1;
   }
 
@@ -191,6 +189,7 @@ int main(int argc,char *argv[])
   double lx = atof(argv[2]), ly = atof(argv[3]), lz = atof(argv[4]);
   double rmax = atof(argv[5]);
   int levels = (argc > 6) ? atof(argv[6]) : 1;
+  int refineCurvedSurfaces = (argc > 7) ? atof(argv[7]) : 1;
 
   // minimum distance between points in the cloud at the coarsest
   // level
@@ -214,10 +213,13 @@ int main(int argc,char *argv[])
     Msg::Info("Filling refined point cloud on curves and curved surfaces");
     for (GModel::eiter eit = gm->firstEdge(); eit != gm->lastEdge(); eit++)
       fillPointCloud(*eit, s, refinePoints);
+
     // FIXME: refine this by computing e.g. "mean" curvature
-    for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++)
-      if((*fit)->geomType() != GEntity::Plane)
-        (*fit)->fillPointCloud(2 * s, &refinePoints);
+    if(refineCurvedSurfaces){
+      for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++)
+        if((*fit)->geomType() != GEntity::Plane)
+          (*fit)->fillPointCloud(2 * s, &refinePoints);
+    }
     Msg::Info("  %d points in the refined cloud", (int)refinePoints.size());
   }
 
