@@ -3,7 +3,7 @@
 // plaqueEp.stp             0.2  0.2  0.2   0.3   3
 // plaqueEpRotated.stp      0.3  0.3  0.3   0.3   3
 // jonction_collee2.stp     6    6    6     10    3
-// panneau_raidi_simple.stp 3    3    50    10    2       0
+// panneau_raidi_simple.stp 3    3    50    5     2       0
 // plaque_trouee.stp        1    1    1     2     3
 
 #include "Gmsh.h"

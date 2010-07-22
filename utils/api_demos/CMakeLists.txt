@@ -1,5 +1,14 @@
 cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
 
+# if CMAKE_BUILD_TYPE is specified use it; otherwise set the default
+# build type to "RelWithDebInfo" ("-O2 -g" with gcc) prior to calling
+# project()
+if(DEFINED CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "Choose build type")
+else(DEFINED CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose build type")
+endif(DEFINED CMAKE_BUILD_TYPE)
+
 project(api_demos CXX)
 
 add_subdirectory(../.. "${CMAKE_CURRENT_BINARY_DIR}/gmsh")
