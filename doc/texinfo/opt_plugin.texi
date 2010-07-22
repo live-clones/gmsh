@@ -4,6 +4,11 @@
 @c
 
 @ftable @code
+@item Plugin(AnalyseCurvedMesh)
+Plugin(AnalyseCurvedMesh) computes AnalyseCurvedMeshs to boundaries in a mesh.
+
+Plugin(AnalyseCurvedMesh) creates a bunch of files.
+
 @item Plugin(Annotate)
 Plugin(Annotate) adds the text string `Text', in font `Font' and size `FontSize', in the view `View'. The string is aligned according to `Align'.
 
@@ -177,9 +182,37 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Distance)
-Plugin(Distance) computes distances to boundaries in a mesh.
+Plugin(Distance) computes distances to physical entities in a mesh.
 
-Plugin(Distance) creates a bunch of files.
+Define the physical entities to which the distance is computed. If Point=0, Line=0, and Surface=0, then the distance is computed to all the boundaries of the mesh (edges in 2D and faces in 3D).
+
+Computation<0. computes the geometrical euclidian distance (warning: different than the geodesic distance), and  Computation=a>0.0 solves a PDE on the mesh with the diffusion constant mu = a*bbox, with bbox being the max size of the bounding box of the mesh (see paper Legrand 2006).
+
+Min Scale and max Scale, scale the distance function. If min Scale<0 and max Scale<0, then no scaling is applied to the distance function.
+
+Plugin(Distance) creates a new distance view and also saves the view in the fileName.pos file.
+String options:
+@table @code
+@item Filename
+Default value: @code{"distance.pos"}
+@end table
+Numeric options:
+@table @code
+@item PhysPoint
+Default value: @code{0}
+@item PhysLine
+Default value: @code{0}
+@item PhysSurface
+Default value: @code{0}
+@item Computation
+Default value: @code{-1}
+@item MinScale
+Default value: @code{-1}
+@item MaxScale
+Default value: @code{-1}
+@item Orthogonal
+Default value: @code{-1}
+@end table
 
 @item Plugin(Divergence)
 Plugin(Divergence) computes the divergence of the field in the view `View'.
@@ -594,6 +627,18 @@ Default value: @code{1}
 Default value: @code{-1}
 @end table
 
+@item Plugin(NearestNeighbor)
+Plugin(NearestNeighbor) computes the distance from each point in `View' to its nearest neighbor.
+
+If `View' < 0, the plugin is run on the current view.
+
+Plugin(NearestNeighbor) is executed in-place.
+Numeric options:
+@table @code
+@item View
+Default value: @code{-1}
+@end table
+
 @item Plugin(Particles)
 Plugin(Particles) computes the trajectory of particules in the force field given by the `TimeStep'-th time step of a vector view `View'.
 
@@ -707,13 +752,15 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Skin)
-Plugin(Skin) extracts the boundary (skin) of the view `View'.
+Plugin(Skin) extracts the boundary (skin) of the view `View'. If `Visible' is set, the plugin only extracts the skin of visible entities.
 
 If `View' < 0, the plugin is run on the current view.
 
 Plugin(Skin) creates one new view.
 Numeric options:
 @table @code
+@item Visible
+Default value: @code{1}
 @item View
 Default value: @code{-1}
 @end table

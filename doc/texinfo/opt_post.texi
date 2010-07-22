@@ -6,11 +6,11 @@
 @ftable @code
 @item PostProcessing.AnimationDelay
 Delay (in seconds) between frames in automatic animation mode@*
-Default value: @code{0.25}@*
+Default value: @code{0.1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item PostProcessing.AnimationCycle
-Cycle through views instead of time steps in automatic animation mode@*
+Cycle through time steps (0) or views (1) for animations@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -20,8 +20,8 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item PostProcessing.Format
-Default file format for post-processing views (0=ASCII view, 1=binary view, 2=parsed view, 3=STL triangulation, 4=raw text, 5=Gmsh mesh, 6=MED file)@*
-Default value: @code{2}@*
+Default file format for post-processing views (0=ASCII view, 1=binary view, 2=parsed view, 3=STL triangulation, 4=raw text, 5=Gmsh mesh, 6=MED file, 10=automatic)@*
+Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
 @item PostProcessing.HorizontalScales

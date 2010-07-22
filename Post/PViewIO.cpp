@@ -266,6 +266,21 @@ bool PView::write(std::string fileName, int format, bool append)
   case 4: ret = _data->writeTXT(fileName); break;
   case 5: ret = _data->writeMSH(fileName); break;
   case 6: ret = _data->writeMED(fileName); break;
+  case 10: 
+    {
+      std::string ext = SplitFileName(fileName)[2];
+      if(ext == ".pos")
+        ret = _data->writePOS(fileName, false, true, append);
+      else if(ext == ".stl")
+        ret = _data->writeSTL(fileName);
+      else if(ext == ".msh")
+        ret = _data->writeMSH(fileName);
+      else if(ext == ".med") 
+        ret = _data->writeMED(fileName);
+      else
+        ret = _data->writeTXT(fileName);
+      break;
+    }
   default: ret = false; Msg::Error("Unknown view format %d", format); break;
   }
   

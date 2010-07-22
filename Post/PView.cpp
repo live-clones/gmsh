@@ -318,8 +318,10 @@ void PView::registerBindings(binding *b) {
   methodBinding *cm;
   cm = cb->addMethod("write",&PView::write);
   cm->setArgNames("fileName","format","append",NULL);
-  cm->setDescription("write data to a file. Format can be : 0 for ascii pos file, 1 for binary pos file, 2 for parsed pos file, 3 for STL, 4 for TXT, 5 for MSH and 6 for MED files. 'append' option is only supported for pos format.");
-
+  cm->setDescription("write data to a file. Format can be: 0 for ascii pos file, "
+                     "1 for binary pos file, 2 for parsed pos file, 3 for STL, "
+                     "4 for TXT, 5 for MSH, 6 for MED files, or 10 for automatic. "
+                     "'append' option is only supported for pos format.");
   cm = cb->addMethod("getData",&PView::getData);
   cm->setArgNames("useAdaptiveIfAvailable",NULL);
   cm->setDescription("return the structure containing the data of this view.");
