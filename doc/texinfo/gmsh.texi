@@ -899,12 +899,10 @@ Combine views having identical names into multi-time-step views
 @noindent Display options:
 
 @ftable @code
+@item -n
+Hide all meshes and post-processing views on startup
 @item -nodb
 Disable double buffering
-@item -noview
-Hide all views on startup
-@item -nomesh
-Hide all meshes on startup
 @item -fontsize int
 Specify the font size for the GUI
 @item -theme string
