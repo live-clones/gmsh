@@ -40,7 +40,7 @@ class cartesianBox {
   // set of active cells; the value stored for cell (i,j,k) is the
   // linear index (i + _Nxi * j + _Nxi *_Neta * k)
   std::set<int> _activeCells;
-  // map of stored nodal values, index by the linear index (i +
+  // map of stored nodal values, indexed by the linear index (i +
   // (_Nxi+1) * j + (_Nxi+1) * (_Neta+1) * k). Along with the value is
   // stored a node tag (used for global numbering of the nodes across
   // the grid levels)
@@ -48,7 +48,7 @@ class cartesianBox {
   // level of the box (coarset box has highest level; finest box has
   // level==1)
   int _level;
-  // pointer to a finer (refined by 2) level box (if any)
+  // pointer to a finer (refined by 2) level box, if any
   cartesianBox<scalar> *_childBox;
   int _getNumNodes()
   {
@@ -82,16 +82,15 @@ class cartesianBox {
       int i, j, k;
       getCellIJK(*it, i, j, k);
       if(!simplex){
-        fprintf(f, "%d 5 3 1 1 1", num++);
-        fprintf(f, " %d", std::abs(getNodeTag(getNodeIndex(i, j, k))));
-        fprintf(f, " %d", std::abs(getNodeTag(getNodeIndex(i + 1, j, k))));
-        fprintf(f, " %d", std::abs(getNodeTag(getNodeIndex(i + 1, j + 1, k))));
-        fprintf(f, " %d", std::abs(getNodeTag(getNodeIndex(i, j + 1, k))));
-        fprintf(f, " %d", std::abs(getNodeTag(getNodeIndex(i, j, k + 1))));
-        fprintf(f, " %d", std::abs(getNodeTag(getNodeIndex(i + 1, j, k + 1))));
-        fprintf(f, " %d", std::abs(getNodeTag(getNodeIndex(i + 1, j + 1, k + 1))));
-        fprintf(f, " %d", std::abs(getNodeTag(getNodeIndex(i, j + 1, k + 1))));
-        fprintf(f, "\n");
+        fprintf(f, "%d 5 3 1 1 1 %d %d %d %d %d %d %d %d\n", num++,
+                std::abs(getNodeTag(getNodeIndex(i, j, k))),
+                std::abs(getNodeTag(getNodeIndex(i + 1, j, k))),
+                std::abs(getNodeTag(getNodeIndex(i + 1, j + 1, k))),
+                std::abs(getNodeTag(getNodeIndex(i, j + 1, k))),
+                std::abs(getNodeTag(getNodeIndex(i, j, k + 1))),
+                std::abs(getNodeTag(getNodeIndex(i + 1, j, k + 1))),
+                std::abs(getNodeTag(getNodeIndex(i + 1, j + 1, k + 1))),
+                std::abs(getNodeTag(getNodeIndex(i, j + 1, k + 1))));
       }
       else{
         int idx[6][4] = { 
@@ -165,7 +164,7 @@ class cartesianBox {
           if(it != _nodalValues.end())
             values.push_back(it->second.first);
           else{
-            Msg::Error("Could not find value i,j,k=%d,%d,%d for cell %d\n", 
+            Msg::Error("Could not find value i,j,k=%d,%d,%d for cell %d", 
                        i + I, j + J, k + K, t);
             values.push_back(0.);
           }

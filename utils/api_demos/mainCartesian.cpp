@@ -1,3 +1,11 @@
+//                          lx   ly   lz    rmax  levels
+//
+// plaqueEp.stp             0.2  0.2  0.2   0.3   3
+// plaqueEpRotated.stp      0.3  0.3  0.3   0.3   3
+// jonction_collee2.stp     6    6    6     10    3
+// panneau_raidi_simple.stp 3    3    50    10    1
+// plaque_trouee.stp        1    1    1     2     3
+
 #include "Gmsh.h"
 #include "GModel.h"
 #include "MVertex.h"
@@ -184,10 +192,12 @@ int main(int argc,char *argv[])
   double rmax = atof(argv[5]);
   int levels = (argc > 6) ? atof(argv[6]) : 1;
 
-  // minimum distance between points in the cloud at the coarsest level
+  // minimum distance between points in the cloud at the coarsest
+  // level
   double sampling = std::min(rmax, std::min(lx, std::min(ly, lz)));
 
-  // radius of the "tube" created around edges at the coarsest level
+  // radius of the "tube" created around parts to refine at the
+  // coarsest level
   double rtube = std::max(lx, std::max(ly, lz)) * 2.;
 
   GModel *gm = GModel::current();
@@ -270,7 +280,8 @@ int main(int argc,char *argv[])
   Msg::Info("Renumbering mesh vertices across levels");
   box.renumberNodes();
   
-  box.writeMSH("yeah.msh", true);
+  bool decomposeInSimplex = false;
+  box.writeMSH("yeah.msh", decomposeInSimplex);
 
   Msg::Info("Done!");
   GmshFinalize();
