@@ -54,6 +54,7 @@ class PViewDataList : public PViewData {
                 std::vector<double> &list, int nblist);
   void _getString(int dim, int i, int timestep, std::string &str, 
                   double &x, double &y, double &z, double &style);
+  void _getRawData(int idxtype, std::vector<double> **l, int **ne, int *nc, int *nn);
  public:
   PViewDataList();
   ~PViewDataList(){}
@@ -102,7 +103,6 @@ class PViewDataList : public PViewData {
   bool combineSpace(nameData &nd);
 
   // specific to list-based data sets
-  void getRawData(int type, std::vector<double> **l, int **ne, int *nc, int *nn);
   void setOrder2(int type);
   std::vector<double> *incrementList(int numComp, int type);
 
