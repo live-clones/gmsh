@@ -51,7 +51,7 @@ void drawContext::drawText2d()
 static bool getGraphData(PView *p, std::vector<double> &x, double &xmin, 
                          double &xmax, std::vector<std::vector<double> > &y) 
 {
-  PViewData *data = p->getData();
+  PViewData *data = p->getData(true); // use adaptive data if available
   PViewOptions *opt = p->getOptions();
 
   if(data->hasMultipleMeshes()) return false; // cannot handle multi-mesh
@@ -80,13 +80,25 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
       int dim = data->getDimension(0, ent, i);
       if(dim < 2){
         int numNodes = data->getNumNodes(0, ent, i);
+        // reorder the nodes for high order line elements
+        std::vector<int> reorder(numNodes);
+        if(numNodes < 3){
+          for(int j = 0; j < numNodes; j++)
+            reorder[j] = j;
+        }
+        else{
+          reorder[0] = 0;
+          reorder[numNodes - 1] = 1;
+          for(int j = 1; j < numNodes - 1; j++)
+            reorder[j] = 1 + j;
+        }
         for(int ts = space ? opt->timeStep : 0; ts < opt->timeStep + 1; ts++){
           int numComp = data->getNumComponents(ts, ent, i);
           for(int j = 0; j < numNodes; j++){
             double val[9], xyz[3];
-            data->getNode(ts, ent, i, j, xyz[0], xyz[1], xyz[2]);
+            data->getNode(ts, ent, i, reorder[j], xyz[0], xyz[1], xyz[2]);
             for(int k = 0; k < numComp; k++)
-              data->getValue(ts, ent, i, j, k, val[k]);
+              data->getValue(ts, ent, i, reorder[j], k, val[k]);
             double vy = ComputeScalarRep(numComp, val);
             if(space){
               // store offset to origin + distance to first point
