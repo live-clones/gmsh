@@ -341,8 +341,15 @@ static void writeTextPOS(FILE *fp, int nbc, int nb, std::vector<double> &TD,
 
 bool PViewDataList::writePOS(std::string fileName, bool binary, bool parsed, bool append)
 {
-  if(_adaptive)
+  if(_adaptive){
+    Msg::Warning("Writing adapted dataset (will only export current time step)");
     return _adaptive->getData()->writePOS(fileName, binary, parsed, append);
+  }
+  else if(haveInterpolationMatrices()){
+    Msg::Error("Cannot (yet) export datasets with interpolation matrices: use");
+    Msg::Error("'Adapt visualization grid' before exporting!");
+    return false;
+  }
 
   FILE *fp = fopen(fileName.c_str(),
                    append ? (binary ? "ab" : "a") : (binary ? "wb" : "w"));
@@ -539,6 +546,16 @@ static void writeElementsMSH(FILE *fp, int nbelm, std::vector<double> &list,
 
 bool PViewDataList::writeMSH(std::string fileName, bool binary)
 {
+  if(_adaptive){
+    Msg::Warning("Writing adapted dataset (will only export current time step)");
+    return _adaptive->getData()->writeMSH(fileName, binary);
+  }
+  else if(haveInterpolationMatrices()){
+    Msg::Error("Cannot (yet) export datasets with interpolation matrices: use");
+    Msg::Error("'Adapt visualization grid' before exporting!");
+    return false;
+  }
+
   FILE *fp = fopen(fileName.c_str(), "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", fileName.c_str());
