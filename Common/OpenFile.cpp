@@ -142,7 +142,7 @@ void AddToTemporaryBoundingBox(double x, double y, double z)
                              SQU(temp_bb.max().y() - temp_bb.min().y()) + 
                              SQU(temp_bb.max().z() - temp_bb.min().z()));
   if(CTX::instance()->lc == 0) CTX::instance()->lc = 1.;
-  // to get correct cg during interctive point creation
+  // to get correct cg during interactive point creation
   for(int i = 0; i < 3; i++) CTX::instance()->cg[i] = temp_bb.center()[i];
 }
 

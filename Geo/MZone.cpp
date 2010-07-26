@@ -218,7 +218,7 @@ int MZone<DIM>::zoneData()
       ++eVecIt) {
     if(eVecIt->index == 0) {
       // The element index
-      eVecIt->index == cElem++;
+      eVecIt->index = cElem++;
       // The type of element
       const int iElemType = eVecIt->element->getTypeForMSH() - 1;
       // Load connectivity for this element type

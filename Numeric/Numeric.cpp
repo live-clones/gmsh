@@ -996,7 +996,7 @@ int computeDistanceRatio(const double &y, const double &yp, const double &x,
   }else{
     if (x==xp){
       b=-x;
-      a==0.0;
+      a=0.0;
     }else{
       b=(xp*y-x*yp)/(yp-y);
       if (yp==0.0){
