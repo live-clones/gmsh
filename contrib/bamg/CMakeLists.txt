@@ -13,7 +13,6 @@ set(SRC
   bamglib/R2.cpp
   bamglib/MeshDraw.cpp
   bamglib/MeshQuad.cpp	
-  bamglib/Mesh2.cpp
   bamglib/MeshWrite.cpp	
   bamglib/Meshio.cpp	
   bamglib/QuadTree.cpp	
