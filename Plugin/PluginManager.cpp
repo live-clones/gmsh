@@ -165,8 +165,10 @@ void PluginManager::registerDefaultPlugins()
                       ("Skin", GMSH_RegisterSkinPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("MathEval", GMSH_RegisterMathEvalPlugin()));
+# if 0 // experimental (Amaury)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("AnalyseCurvedMesh", GMSH_RegisterAnalyseCurvedMeshPlugin()));
+#endif
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("ModifyComponent", GMSH_RegisterModifyComponentPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
