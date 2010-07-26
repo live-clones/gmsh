@@ -5,8 +5,11 @@
 //
 // Contributed by Matti Pellikka <matti.pellikka@tut.fi>.
  
-
 #include "Homology.h"
+
+#if defined(HAVE_POST)
+#include "PView.h"
+#endif
 
 #if defined(HAVE_KBIPACK)
 
@@ -594,9 +597,10 @@ int Chain::createPGroup()
   if(!data.empty()){
     _model->storeChain(getDim(), entityMap, physicalMap);
     _model->setPhysicalName(getName(), getDim(), physicalNum);
-    
+#if defined(HAVE_POST)    
     // create PView for visualization
     new PView(getName(), "ElementData", getGModel(), data, 0, 1);
+#endif
   }
    
   return physicalNum;
