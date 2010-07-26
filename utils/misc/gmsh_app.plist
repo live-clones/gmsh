@@ -3,7 +3,7 @@
 <plist version="1.0">
   <dict>
     <key>CFBundleName</key><string>Gmsh</string>
-    <key>CFBundleExecutable</key><string>Gmsh</string>
+    <key>CFBundleExecutable</key><string>gmsh</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleVersion</key><string>GMSH_VERSION</string>
     <key>CFBundleShortVersionString</key><string>GMSH_VERSION</string>
