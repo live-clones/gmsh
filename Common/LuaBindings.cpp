@@ -32,7 +32,6 @@
 #include "Options.h"
 #include "polynomialBasis.h"
 #include "Gauss.h"
-#include "PViewFactory.h"
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
@@ -46,6 +45,7 @@
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
+#include "PViewFactory.h"
 #endif
 
 extern "C" {
@@ -417,7 +417,6 @@ binding::binding()
   linearSystem<double>::registerBindings(this);
   polynomialBasis::registerBindings(this);
   gaussIntegration::registerBindings(this);
-  PViewFactory::registerBindings(this);
 #if defined(HAVE_SOLVER)
   function::registerBindings(this);
   linearSystemCSRGmm<double>::registerBindings(this);
@@ -426,6 +425,7 @@ binding::binding()
 #if defined(HAVE_POST)
   PView::registerBindings(this);
   PViewData::registerBindings(this);
+  PViewFactory::registerBindings(this);
 #endif
 }
 
