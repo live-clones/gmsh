@@ -625,25 +625,25 @@ PView *elasticitySolver::buildVonMisesView(const std::string postFileName)
 
 
 #else
-PView* elasticitySolver::buildDisplacementView(const std::string &postFileName)
+PView* elasticitySolver::buildDisplacementView(const std::string postFileName)
 {
   Msg::Error("Post-pro module not available");
   return 0;
 }
 
-PView* elasticitySolver::buildLagrangeMultiplierView (const std::string &postFileName)
+PView* elasticitySolver::buildLagrangeMultiplierView (const std::string postFileName)
 {
   Msg::Error("Post-pro module not available");
   return 0;
 }
 
-PView* elasticitySolver::buildElasticEnergyView(const std::string &postFileName)
+PView* elasticitySolver::buildElasticEnergyView(const std::string postFileName)
 {
   Msg::Error("Post-pro module not available");
   return 0;
 }
 
-PView* elasticitySolver::buildVonMisesView(const std::string &postFileName)
+PView* elasticitySolver::buildVonMisesView(const std::string postFileName)
 {
   Msg::Error("Post-pro module not available");
   return 0;
