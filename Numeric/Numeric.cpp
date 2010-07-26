@@ -1112,8 +1112,7 @@ void signedDistancesPointsEllipseLine(std::vector<double>&distances,
     
     distances[i] = d;
     closePts[i] = closePt;
-    int direction;
-    double distancesMin;
+    int direction=0;
     if (!(p.x()==closePt.x() && p.y()==closePt.y() && p.z()==closePt.z())){
       double xp,yp,x,y,otherp,other,propdist;
       if (p1.x()==p2.x()){
