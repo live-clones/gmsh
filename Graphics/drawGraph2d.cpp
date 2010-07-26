@@ -310,7 +310,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
 static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop, 
                           double width, double height, double x, double y, 
                           double xmin, double xmax, double ymin, double ymax, 
-                          bool numeric)
+                          bool numeric, bool sphere)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -337,6 +337,8 @@ static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
       sprintf(label, opt->format.c_str(), y);
       ctx->drawString(label);
     }
+    else if(sphere)
+      ctx->drawSphere(opt->pointSize, px, py, 0, 10, 10, opt->light);
     else
       glVertex2d(px, py);
   }
@@ -355,24 +357,6 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft, double yto
   glLineWidth((float)opt->lineWidth);
   gl2psLineWidth((float)(opt->lineWidth * CTX::instance()->print.epsLineWidthFactor));
 
-  if(opt->intervalsType == PViewOptions::Numeric){
-    for(unsigned int i = 0; i < y.size(); i++)
-      for(unsigned int j = 0; j < x.size(); j++)
-        addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j], 
-                      xmin, xmax, opt->tmpMin, opt->tmpMax, true);
-  }
-
-  if(opt->intervalsType == PViewOptions::Iso ||
-     opt->intervalsType == PViewOptions::Discrete ||
-     opt->intervalsType == PViewOptions::Numeric){
-    glBegin(GL_POINTS);
-    for(unsigned int i = 0; i < y.size(); i++)
-      for(unsigned int j = 0; j < x.size(); j++)
-        addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j], 
-                      xmin, xmax, opt->tmpMin, opt->tmpMax, false);
-    glEnd();    
-  }
-
   if(opt->intervalsType == PViewOptions::Discrete ||
      opt->intervalsType == PViewOptions::Continuous){
     for(unsigned int i = 0; i < y.size(); i++){
@@ -384,13 +368,32 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft, double yto
       glBegin(GL_LINE_STRIP);
       for(unsigned int j = 0; j < x.size(); j++)
         addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j], 
-                      xmin, xmax, opt->tmpMin, opt->tmpMax, false);
+                      xmin, xmax, opt->tmpMin, opt->tmpMax, false, false);
       glEnd();
       if(opt->useStipple){
         glDisable(GL_LINE_STIPPLE);
         gl2psDisable(GL2PS_LINE_STIPPLE);
       }
     }
+  }
+
+  if(opt->intervalsType == PViewOptions::Iso ||
+     opt->intervalsType == PViewOptions::Discrete ||
+     opt->intervalsType == PViewOptions::Numeric){
+    bool sphere =  (opt->pointType == 1 || opt->pointType == 3);
+    if(!sphere) glBegin(GL_POINTS);
+    for(unsigned int i = 0; i < y.size(); i++)
+      for(unsigned int j = 0; j < x.size(); j++)
+        addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j], 
+                      xmin, xmax, opt->tmpMin, opt->tmpMax, false, sphere);
+    if(!sphere) glEnd();    
+  }
+
+  if(opt->intervalsType == PViewOptions::Numeric){
+    for(unsigned int i = 0; i < y.size(); i++)
+      for(unsigned int j = 0; j < x.size(); j++)
+        addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j], 
+                      xmin, xmax, opt->tmpMin, opt->tmpMax, true, false);
   }
 }
 

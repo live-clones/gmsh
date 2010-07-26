@@ -265,7 +265,8 @@ void drawContext::draw2d()
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glOrtho((double)viewport[0], (double)viewport[2],
-          (double)viewport[1], (double)viewport[3], -1., 1.);
+          (double)viewport[1], (double)viewport[3], 
+          -100., 100.); // in pixels, so we can draw some 3D glyphs
 
   // hack to make the 2D primitives appear "in front" in GL2PS
   glTranslated(0., 0., CTX::instance()->clipFactor > 1. ? 
