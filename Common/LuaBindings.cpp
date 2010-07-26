@@ -28,7 +28,6 @@
 #include "GModel.h"
 #include "Bindings.h"
 #include "GmshMessage.h"
-#include "linearSystem.h"
 #include "Options.h"
 #include "polynomialBasis.h"
 #include "Gauss.h"
@@ -39,6 +38,7 @@
 
 #if defined(HAVE_SOLVER)
 #include "elasticitySolver.h"
+#include "linearSystem.h"
 #include "linearSystemCSR.h"
 #endif
 
@@ -414,11 +414,11 @@ binding::binding()
   fullMatrix<double>::registerBindings(this);
   gmshOptions::registerBindings(this);
   Msg::registerBindings(this);
-  linearSystem<double>::registerBindings(this);
   polynomialBasis::registerBindings(this);
   gaussIntegration::registerBindings(this);
 #if defined(HAVE_SOLVER)
   function::registerBindings(this);
+  linearSystem<double>::registerBindings(this);
   linearSystemCSRGmm<double>::registerBindings(this);
   elasticitySolverRegisterBindings(this); 
 #endif
