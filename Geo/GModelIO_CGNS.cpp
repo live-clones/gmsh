@@ -415,15 +415,17 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
   switch(meshDim) {
   case 2:
     MZone<2>::preInit();
-    write_CGNS_zones<2>(*this, zoneDefinition, numZone, options, scalingFactor,
-                        vectorDim, groups[face], cgIndexFile, cgIndexBase);
+    MZoneBoundary<2>::preInit(); // Add?:
+    write_CGNS_zones<2>(*this, zoneDefinition, ...);
     MZone<2>::postDestroy();
+    MZoneBoundary<2>::postDestroy(); // Add?:
     break;
   case 3:
     MZone<3>::preInit();
-    write_CGNS_zones<3>(*this, zoneDefinition, numZone, options, scalingFactor,
-                        vectorDim, groups[region], cgIndexFile, cgIndexBase);
+    MZoneBoundary<3>::preInit(); // Add?:
+    write_CGNS_zones<3>(*this, zoneDefinition, ...);
     MZone<3>::postDestroy();
+    MZoneBoundary<3>::postDestroy(); // Add?:
     break;
   }
 
