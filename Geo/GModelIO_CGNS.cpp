@@ -1068,7 +1068,7 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
           const int numBoVert = zoneBoVec.size();
           std::vector<int> iZBV(numBoVert);
           for(int i = 0; i != numBoVert; ++i) iZBV[i] = i;
-          std::sort<int*, ZoneBoVecSort>(&iZBV[0], &iZBV[numBoVert],
+          std::sort<int*, ZoneBoVecSort>(&iZBV[0], &iZBV[numBoVert-1],
                                          ZoneBoVecSort(zoneBoVec));
 
           dBuffer.reserve(1024);
