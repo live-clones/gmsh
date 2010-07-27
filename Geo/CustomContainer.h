@@ -308,7 +308,7 @@ class FaceAllocator
     offset2 = f2.get_offset();
     Face6 f6;
     offset6 = f6.get_offset();
-    Face2 f8;
+    Face8 f8;
     offset8 = f8.get_offset();
     Face16 f16;
     offset16 = f16.get_offset();
