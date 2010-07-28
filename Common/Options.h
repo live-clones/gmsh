@@ -339,6 +339,7 @@ double opt_general_small_axes_size(OPT_ARGS_NUM);
 double opt_general_quadric_subdivisions(OPT_ARGS_NUM);
 double opt_general_double_buffer(OPT_ARGS_NUM);
 double opt_general_antialiasing(OPT_ARGS_NUM);
+double opt_general_stereo(OPT_ARGS_NUM);
 double opt_general_alpha_blending(OPT_ARGS_NUM);
 double opt_general_vector_type(OPT_ARGS_NUM);
 double opt_general_arrow_head_radius(OPT_ARGS_NUM);

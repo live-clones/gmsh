@@ -125,8 +125,8 @@ class CTX {
   // characteristic length for the whole problem (never used in mesh
   // generation ->only for geo/post)
   double lc;
-  // double buffer/antialias graphics?
-  int db, antialiasing;
+  // double buffer/antialias/stereo graphics?
+  int db, antialiasing, stereo;
   // orthogonal projection? 
   int ortho;
   // draw the bounding boxes and the rot center?

@@ -832,6 +832,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "StatisticsPositionY" , opt_general_statistics_position1 , 150. , 
     "Vertical position (in pixels) of the upper left corner of the statistic"
     " window" }, 
+  { F|O, "Stereo" , opt_general_stereo , 0. ,
+    "Use stereo rendering" },
   { F|S, "SystemMenuBar" , opt_general_system_menu_bar , 1. , 
     "Use the system menu bar on Mac OS X?" }, 
 

@@ -3505,6 +3505,14 @@ double opt_general_antialiasing(OPT_ARGS_NUM)
   return CTX::instance()->antialiasing;
 }
 
+double opt_general_stereo(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->stereo = (int)val;
+  }
+  return CTX::instance()->stereo;
+}
+
 double opt_general_alpha_blending(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
