@@ -432,8 +432,8 @@ class GModel
     _storePhysicalTagsInEntities(dim, physicalMap);
     _associateEntityWithMeshVertices();
   }
-
-  void storeChain(std::vector<MVertex*> &vertices,int dim, std::map<int, std::vector<MElement*> > &entityMap,
+  void storeChain(std::vector<MVertex*> &vertices, int dim, 
+                  std::map<int, std::vector<MElement*> > &entityMap,
                   std::map<int, std::map<int, std::string> > &physicalMap)
   {
     _storeVerticesInEntities(vertices);

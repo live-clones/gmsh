@@ -2078,7 +2078,8 @@ void GModel::registerBindings(binding *b)
                      "points listed in a fullMatrix(N,3)");
   cm->setArgNames("v1", "v2", "controlPoints", NULL);
   cm = cb->addMethod("addNURBS", &GModel::addNURBS);
-  cm->setDescription("creates a NURBS curve from v1 to v2 with control Points, knots, weights and multiplicities");
+  cm->setDescription("creates a NURBS curve from v1 to v2 with control Points, "
+                     "knots, weights and multiplicities");
   cm->setArgNames("v1", "v2", "{{poles}}","{knots}","{weights}","{mult}",NULL);
   cm = cb->addMethod("addFace", &GModel::addFace);
   cm->setDescription("creates a face that is constraint by edges and points");
@@ -2145,12 +2146,13 @@ void GModel::registerBindings(binding *b)
   cm->setDescription("Create an empty GModel");
 
   cm = cb->addMethod("getPhysicalName", &GModel::getPhysicalName);
-  cm->setDescription("get the name of an physical group, identified by its dimension and number. "
-                     "Returns empty string if physical name is not assigned");
+  cm->setDescription("get the name of an physical group, identified by its "
+                     "dimension and number. Returns empty string if physical "
+                     "name is not assigned");
   cm->setArgNames("dim","number",NULL);
   cm = cb->addMethod("setPhysicalName", &GModel::setPhysicalName);
-  cm->setDescription("set the name of an physical group, identified by its dimension and number. "
-                     "If number=0, the first free number is chosen. Returns the number.");
+  cm->setDescription("set the name of an physical group, identified by its "
+                     "dimension and number. If number=0, the first free number "
+                     "is chosen. Returns the number.");
   cm->setArgNames("physicalName","dim","number",NULL);
-
 }
