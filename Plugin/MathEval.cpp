@@ -173,7 +173,15 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
     timeStep = - data1->getNumTimeSteps();
   }
 
-  int timeBeg = (timeStep < 0) ? 0 : timeStep;
+  int firstNonEmptyStep = 0;
+  for(int step = 0; step < data1->getNumTimeSteps(); step++){
+    if(data1->hasTimeStep(step)){
+      firstNonEmptyStep = step;
+      break;
+    }
+  }
+
+  int timeBeg = (timeStep < 0) ? firstNonEmptyStep : timeStep;
   int timeEnd = (timeStep < 0) ? -timeStep : timeStep + 1;
   for(int ent = 0; ent < data1->getNumEntities(timeBeg); ent++){
     for(int ele = 0; ele < data1->getNumElements(timeBeg, ent); ele++){
@@ -219,7 +227,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   }
   
   if(timeStep < 0){
-    for(int i = 0; i < data1->getNumTimeSteps(); i++)
+    for(int i = firstNonEmptyStep; i < data1->getNumTimeSteps(); i++)
       data2->Time.push_back(data1->getTime(i));
   }
   else
