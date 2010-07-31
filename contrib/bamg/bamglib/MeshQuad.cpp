@@ -534,7 +534,7 @@ int  Triangles::SplitElement(int choice)
 
   newnbv=k;
   newNbVerticesOnGeomEdge=kvg;
-  if (newnbv> nbvx) goto Error;// bug 
+  if (newnbv> nbvx) goto error;// bug 
     
   nbv = k;
 
@@ -824,7 +824,7 @@ int  Triangles::SplitElement(int choice)
 
 		  }
 		else
-		  goto Error; 
+		  goto error; 
 	     }
 		    
 	 } 
@@ -876,8 +876,8 @@ int  Triangles::SplitElement(int choice)
   
   
   ret = 2;
-  if (nbt>= nbtx) goto Error; // bug 
-  if (nbv>= nbvx) goto Error; // bug 
+  if (nbt>= nbtx) goto error; // bug 
+  if (nbv>= nbvx) goto error; // bug 
   // generation of the new triangles 
 
   SetIntCoor("In SplitElement"); 
@@ -923,7 +923,7 @@ int  Triangles::SplitElement(int choice)
  CurrentTh=OCurrentTh;
  return 0; //ok
 
- Error:
+ error:
   nbv = nbvold;
   nbt = nbtold;
   NbOutT = NbOutTold;

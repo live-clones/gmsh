@@ -323,7 +323,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 	  MVertex *v2 = e->getVertex(1);
 	  SPoint3 p1(v1->x(), v1->y(), v1->z());
 	  SPoint3 p2(v2->x(), v2->y(), v2->z());
-	  if((e->getNumVertices() == 2 and order==1) or (e->getNumVertices() == 3 and order==2)){
+	  if((e->getNumVertices() == 2 && order==1) || (e->getNumVertices() == 3 && order==2)){
             if (type==-100){
 //              if ( !((p1.x()==p2.x()) & (p1.y()==p2.y()) & (p1.z()==p2.z())) ){
                 signedDistancesPointsEllipseLine(iDistances, iDistancesE, iIsInYarn, iClosePts, pts, p1,p2);
@@ -332,7 +332,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 	      signedDistancesPointsLine(iDistances, iClosePts, pts, p1,p2);
             }
 	  }
-	  else if(e->getNumVertices() == 3 and order==1){
+	  else if(e->getNumVertices() == 3 && order==1){
 	    MVertex *v3 = e->getVertex(2);
 	    SPoint3 p3 (v3->x(),v3->y(),v3->z());
 	    signedDistancesPointsTriangle(iDistances, iClosePts, pts, p1, p2, p3);
