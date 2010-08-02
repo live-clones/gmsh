@@ -747,13 +747,15 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
       ++itt;
     }
   }
-  Octree * _octree = buildMElementOctree(gf->model());
+
   if (Msg::GetVerbosity() == 10){
+    Octree *_octree = buildMElementOctree(gf->model());
     doc.Voronoi();
     doc.makePosView("voronoi.pos", gf);
     doc.printMedialAxis(_octree, "skeleton.pos", gf);
+    Octree_Delete(_octree);
   }
-  Octree_Delete(_octree);
+
   gf->triangles.clear();
   gf->quadrangles.clear();
 
