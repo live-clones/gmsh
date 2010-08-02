@@ -2725,39 +2725,34 @@ static void MaxNumSurface(void *a, void *b)
 
 static void ReplaceDuplicatePoints()
 {
-  List_T *All;
-  Tree_T *allNonDuplicatedPoints;
   Vertex *v, **pv, **pv2;
   Curve *c;
   Surface *s;
   Volume *vol;
-  int i, j, start, end;
-
-  List_T *points2delete = List_Create(100, 100, sizeof(Vertex *));
+  std::vector<Vertex*> points2delete;
 
   // Create unique points
 
-  start = Tree_Nbr(GModel::current()->getGEOInternals()->Points);
+  int start = Tree_Nbr(GModel::current()->getGEOInternals()->Points);
 
-  All = Tree2List(GModel::current()->getGEOInternals()->Points);
-  allNonDuplicatedPoints = Tree_Create(sizeof(Vertex *), compareTwoPoints);
-  for(i = 0; i < List_Nbr(All); i++) {
+  List_T *All = Tree2List(GModel::current()->getGEOInternals()->Points);
+  Tree_T *allNonDuplicatedPoints = Tree_Create(sizeof(Vertex *), compareTwoPoints);
+  for(int i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &v);
     if(!Tree_Search(allNonDuplicatedPoints, &v)) {
       Tree_Insert(allNonDuplicatedPoints, &v);
     }
     else {
       Tree_Suppress(GModel::current()->getGEOInternals()->Points, &v);
-      //List_Add(points2delete,&v);      
+      points2delete.push_back(v);
     }
   }
   List_Delete(All);
 
-  end = Tree_Nbr(GModel::current()->getGEOInternals()->Points);
+  int end = Tree_Nbr(GModel::current()->getGEOInternals()->Points);
 
   if(start == end) {
     Tree_Delete(allNonDuplicatedPoints);
-    List_Delete(points2delete);
     return;
   }
 
@@ -2771,13 +2766,13 @@ static void ReplaceDuplicatePoints()
   // Replace old points in curves
 
   All = Tree2List(GModel::current()->getGEOInternals()->Curves);
-  for(i = 0; i < List_Nbr(All); i++) {
+  for(int i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &c);
     if(!Tree_Query(allNonDuplicatedPoints, &c->beg))
       Msg::Error("Weird point %d in Coherence", c->beg->Num);
     if(!Tree_Query(allNonDuplicatedPoints, &c->end))
       Msg::Error("Weird point %d in Coherence", c->end->Num);
-    for(j = 0; j < List_Nbr(c->Control_Points); j++) {
+    for(int j = 0; j < List_Nbr(c->Control_Points); j++) {
       pv = (Vertex **)List_Pointer(c->Control_Points, j);
       if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv)))
         Msg::Error("Weird point %d in Coherence", (*pv)->Num);
@@ -2790,9 +2785,9 @@ static void ReplaceDuplicatePoints()
   // Replace old points in surfaces
 
   All = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
-  for(i = 0; i < List_Nbr(All); i++) {
+  for(int i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &s);
-    for(j = 0; j < List_Nbr(s->TrsfPoints); j++){
+    for(int j = 0; j < List_Nbr(s->TrsfPoints); j++){
       pv = (Vertex **)List_Pointer(s->TrsfPoints, j);
       if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv)))
         Msg::Error("Weird point %d in Coherence", (*pv)->Num);
@@ -2805,9 +2800,9 @@ static void ReplaceDuplicatePoints()
   // Replace old points in volumes
 
   All = Tree2List(GModel::current()->getGEOInternals()->Volumes);
-  for(i = 0; i < List_Nbr(All); i++) {
+  for(int i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &vol);
-    for(j = 0; j < List_Nbr(vol->TrsfPoints); j++){
+    for(int j = 0; j < List_Nbr(vol->TrsfPoints); j++){
       pv = (Vertex **)List_Pointer(vol->TrsfPoints, j);
       if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv)))
         Msg::Error("Weird point %d in Coherence", (*pv)->Num);
@@ -2817,30 +2812,25 @@ static void ReplaceDuplicatePoints()
   }
   List_Delete(All);
 
-  for(int k = 0; k < List_Nbr(points2delete); k++) {
-    List_Read(points2delete, i, &v);
-    Free_Vertex(&v, 0);
-  }
+  for(unsigned int k = 0; k < points2delete.size(); k++)
+    Free_Vertex(&points2delete[k], 0);
 
   Tree_Delete(allNonDuplicatedPoints);
-  List_Delete(points2delete);
 }
 
 static void ReplaceDuplicateCurves()
 {
-  List_T *All;
-  Tree_T *allNonDuplicatedCurves;
   Curve *c, *c2, **pc, **pc2;
   Surface *s;
-  int i, j, start, end;
-
+  std::vector<Curve*> curves2delete;
+        
   // Create unique curves
 
-  start = Tree_Nbr(GModel::current()->getGEOInternals()->Curves);
+  int start = Tree_Nbr(GModel::current()->getGEOInternals()->Curves);
 
-  All = Tree2List(GModel::current()->getGEOInternals()->Curves);
-  allNonDuplicatedCurves = Tree_Create(sizeof(Curve *), compareTwoCurves);
-  for(i = 0; i < List_Nbr(All); i++) {
+  List_T *All = Tree2List(GModel::current()->getGEOInternals()->Curves);
+  Tree_T *allNonDuplicatedCurves = Tree_Create(sizeof(Curve *), compareTwoCurves);
+  for(int i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &c);
     if(c->Num > 0) {
       if(!Tree_Search(allNonDuplicatedCurves, &c)) {
@@ -2860,12 +2850,14 @@ static void ReplaceDuplicateCurves()
           return;
         }
         Tree_Suppress(GModel::current()->getGEOInternals()->Curves, &c2);
+        curves2delete.push_back(c);
+        curves2delete.push_back(c2);
       }
     }
   }
   List_Delete(All);
 
-  end = Tree_Nbr(GModel::current()->getGEOInternals()->Curves);
+  int end = Tree_Nbr(GModel::current()->getGEOInternals()->Curves);
 
   if(start == end) {
     Tree_Delete(allNonDuplicatedCurves);
@@ -2882,9 +2874,9 @@ static void ReplaceDuplicateCurves()
   // Replace old curves in surfaces
 
   All = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
-  for(i = 0; i < List_Nbr(All); i++) {
+  for(int i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &s);
-    for(j = 0; j < List_Nbr(s->Generatrices); j++) {
+    for(int j = 0; j < List_Nbr(s->Generatrices); j++) {
       pc = (Curve **)List_Pointer(s->Generatrices, j);
       if(!(pc2 = (Curve **)Tree_PQuery(allNonDuplicatedCurves, pc)))
         Msg::Error("Weird curve %d in Coherence", (*pc)->Num);
@@ -2897,24 +2889,25 @@ static void ReplaceDuplicateCurves()
   }
   List_Delete(All);
 
+  for(unsigned int k = 0; k < curves2delete.size(); k++)
+    Free_Curve(&curves2delete[k], 0);
+
   Tree_Delete(allNonDuplicatedCurves);
 }
 
 static void ReplaceDuplicateSurfaces()
 {
-  List_T *All;
-  Tree_T *allNonDuplicatedSurfaces;
   Surface *s, **ps, **ps2;
   Volume *vol;
-  int i, j, start, end;
+  std::vector<Surface*> surfaces2delete;
 
   // Create unique surfaces
 
-  start = Tree_Nbr(GModel::current()->getGEOInternals()->Surfaces);
+  int start = Tree_Nbr(GModel::current()->getGEOInternals()->Surfaces);
 
-  All = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
-  allNonDuplicatedSurfaces = Tree_Create(sizeof(Surface *), compareTwoSurfaces);
-  for(i = 0; i < List_Nbr(All); i++) {
+  List_T *All = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
+  Tree_T *allNonDuplicatedSurfaces = Tree_Create(sizeof(Surface *), compareTwoSurfaces);
+  for(int i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &s);
     if(s->Num > 0) {
       if(!Tree_Search(allNonDuplicatedSurfaces, &s)) {
@@ -2922,12 +2915,13 @@ static void ReplaceDuplicateSurfaces()
       }
       else {
         Tree_Suppress(GModel::current()->getGEOInternals()->Surfaces, &s);
+        surfaces2delete.push_back(s);
       }
     }
   }
   List_Delete(All);
 
-  end = Tree_Nbr(GModel::current()->getGEOInternals()->Surfaces);
+  int end = Tree_Nbr(GModel::current()->getGEOInternals()->Surfaces);
 
   if(start == end) {
     Tree_Delete(allNonDuplicatedSurfaces);
@@ -2944,9 +2938,9 @@ static void ReplaceDuplicateSurfaces()
   // Replace old surfaces in volumes
 
   All = Tree2List(GModel::current()->getGEOInternals()->Volumes);
-  for(i = 0; i < List_Nbr(All); i++) {
+  for(int i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &vol);
-    for(j = 0; j < List_Nbr(vol->Surfaces); j++) {
+    for(int j = 0; j < List_Nbr(vol->Surfaces); j++) {
       ps = (Surface **)List_Pointer(vol->Surfaces, j);
       if(!(ps2 = (Surface **)Tree_PQuery(allNonDuplicatedSurfaces, ps)))
         Msg::Error("Weird surface %d in Coherence", (*ps)->Num);
@@ -2955,6 +2949,9 @@ static void ReplaceDuplicateSurfaces()
     }
   }
   List_Delete(All);
+
+  for(unsigned int k = 0; k < surfaces2delete.size(); k++)
+    Free_Surface(&surfaces2delete[k], 0);
 
   Tree_Delete(allNonDuplicatedSurfaces);
 }
