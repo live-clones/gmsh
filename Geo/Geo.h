@@ -105,7 +105,6 @@ class DrawingColor{
 class CircParam{
  public:
   double t1, t2, f1, f2, incl;
-  Vertex *v[4];
   double invmat[3][3];
   double n[3];
 };

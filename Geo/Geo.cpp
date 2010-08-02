@@ -421,9 +421,6 @@ void End_Curve(Curve *c)
     c->Circle.f1 = f1;
     c->Circle.f2 = f2;
 
-    for(int i = 0; i < 4; i++)
-      c->Circle.v[i] = v[i];
-
     if(!CTX::instance()->expertMode && c->Num > 0 && A3 - A1 > 1.01 * M_PI){
       Msg::Error("Circle or ellipse arc %d greater than Pi (angle=%g)", c->Num, A3-A1);
       Msg::Error("(If you understand what this implies, you can disable this error");
