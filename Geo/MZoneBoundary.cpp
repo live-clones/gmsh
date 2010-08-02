@@ -9,6 +9,8 @@
 
 #if defined(HAVE_LIBCGNS)
 
+#define DEBUG_FaceT 0       // NBN: toggle reporting of face insertions
+
 #include <iostream> // DBG
 #include <limits> // ?
 
@@ -217,7 +219,7 @@ int edge_normal
  &faces, SVector3 &boNormal, const int onlyFace = -1)
 {
 
-  double par;
+  double par=0.0;
   // Note: const_cast used to match MVertex.cpp interface
   if(!reparamMeshVertexOnEdge(vertex, gEdge, par)) return 1;
 
@@ -580,7 +582,7 @@ void updateBoVec<3, MFace>
             //   GEdge, and then the MElement is still on the GFace.  There is
             //   also the unlikely case where the two other MVertex are both on
             //   edges ... and the MElement is still on the GFace.
-            if(!matchedFace && nVOnF == 3) {
+            if(!matchedFace && (3 == nVOnF)) {
               const MVertex *vertex2;
               const MVertex *vertex3;
               switch(vertexOnF) {
@@ -811,25 +813,54 @@ int MZoneBoundary<DIM>::interiorBoundaryVertices
 
 //--A new vertex was inserted
 
-//       if(debug) {
-//         std::cout << "This vertex is new and has bo faces:\n";
-//       }
       // Copy faces
       const int nFace = zoneVertData.faces.size();
+      int iCount=0;
       for(int iFace = 0; iFace != nFace; ++iFace) {
-//         if(debug) {
-//           std::cout << "  ("
-//                     << zoneVertData.faces[iFace]->first.getVertex(0)->x() << ","
-//                     << zoneVertData.faces[iFace]->first.getVertex(0)->y()
-//                     << "), ("
-//                     << zoneVertData.faces[iFace]->first.getVertex(1)->x() << ","
-//                     << zoneVertData.faces[iFace]->first.getVertex(1)->y()
-//                     << ")\n";
-//         }
+
+#if (0)
+        // NBN: changing the member object for a pointer means 
+        // we need to do the following in two steps (see below)
+
         globalVertData.faces.push_back
           (typename GlobalVertexData<FaceT>::FaceDataB
            (newZoneIndex, zoneVertData.faces[iFace]));
+
+#else
+        // Using FaceAllocator<T> with face2Pool, the std constructors 
+        // are not called, so FaceDataB std members are incomplete.
+
+        // By replacing the FaceT member with FaceT* we fix the issue of 
+        // auto-deleting "un-constructed" containers.  Here, the simple 
+        // data type (pointer) member is allocated in the ctor, then we
+        // create and store its FaceT object once the FaceDataB object 
+        // is safely in the container.
+        //
+        // Note: we must now make sure to delete these pointers.
+        // See adjusted version of MZoneBoundary::clear();
+
+        // Step 1: append new FaceDataB<> object
+        typename GlobalVertexData<FaceT>::FaceDataB& tFDB = 
+          globalVertData.faces.push_back
+              (typename GlobalVertexData<FaceT>::FaceDataB
+              (newZoneIndex, zoneVertData.faces[iFace]) );
+        
+        // Step 2: construct its internal face object
+        tFDB.face = new FaceT(zoneVertData.faces[iFace]->first);
+
+      #if (DEBUG_FaceT)
+        if (! tFDB.face) {
+          Msg::Info("MZoneBoundary<DIM>::interiorBoundaryVertices, failed to alloc face object");
+        } else {
+          int nv = tFDB.face->getNumVertices();
+          Msg::Info("interiorBoundaryVertices: allocated FaceT object %5d with %d verts", ++iCount, nv);
+        }
+      #endif
+
+
+#endif
       }
+
       // Copy information about the vertex in the zone
       globalVertData.zoneData.push_back
         (typename GlobalVertexData<FaceT>::ZoneData
@@ -871,8 +902,11 @@ int MZoneBoundary<DIM>::interiorBoundaryVertices
         &zoneVertData.faces[0];
       for(int nZFace = zoneVertData.faces.size(); nZFace--;) {
         bool foundMatch = false;
-        for(int iGFace = 0; iGFace != nGFace; ++iGFace) {
-          if((*zFace)->first == globalVertData.faces[iGFace].face) {
+        for(int iGFace = 0; iGFace != nGFace; ++iGFace) 
+        {
+          // NBN: face is now a pointer, so need to de-reference
+        //if((*zFace)->first ==  globalVertData.faces[iGFace].face ) 
+          if((*zFace)->first == *(globalVertData.faces[iGFace].face)) {
             foundMatch = true;
             // Faces match - delete from 'globalVertData'.
             globalVertData.faces.erase(iGFace);
@@ -892,8 +926,9 @@ int MZoneBoundary<DIM>::interiorBoundaryVertices
 
       // If there are no more faces, connectivity for this vertex is complete
       // and it may be deleted.
-      if(globalVertData.faces.size() == 0)
+      if(globalVertData.faces.size() == 0) {
         globalBoVertMap.erase(insGblBoVertMap.first);
+      }
       else {
         // Update the list of zones attached to this vertex
         globalVertData.zoneData.push_back
@@ -1012,13 +1047,25 @@ int MZoneBoundary<DIM>::exteriorBoundaryVertices
 template<>
 template<>
 MZoneBoundary<2>::GlobalVertexData<MEdge>::FaceDataB::FaceDataB()
-  : face(0, 0) 
+  : 
+  //face(0, 0),         // NBN: replaced this MEdge object
+    face(NULL),         // NBN: with a pointer to MEdge
+    parentElement(0),   // NBN: also, init members
+    parentFace(0),
+    faceIndex(0),
+    zoneIndex(0)
 { }
 
 template<>
 template<>
 MZoneBoundary<3>::GlobalVertexData<MFace>::FaceDataB::FaceDataB()
-   : face(0, 0, 0) 
+   : 
+  //face(0, 0, 0),      // NBN: replaced this MFace object
+    face(NULL),         // NBN: with a pointer to MFace
+    parentElement(0),   // NBN: also, init members
+    parentFace(0),
+    faceIndex(0),
+    zoneIndex(0)
 { }
 
 

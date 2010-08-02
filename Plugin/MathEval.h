@@ -7,7 +7,7 @@
 #define _MATH_EVAL_H_
 
 #include "Plugin.h"
-;
+
 extern "C"
 {
   GMSH_Plugin *GMSH_RegisterMathEvalPlugin();

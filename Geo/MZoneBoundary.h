@@ -75,7 +75,7 @@ struct ZoneConnectivity
     int vertexIndex1;
     int vertexIndex2;
     // Constructors
-    VertexPair()
+    VertexPair() 
       : vertex(0), vertexIndex1(0), vertexIndex2(0)
     { }
     VertexPair(MVertex *const _vertex,
@@ -242,14 +242,28 @@ class MZoneBoundary
   {
     struct FaceDataB
     {
-      FaceT face;
+      // NBN: cannot use a FaceT object in FaceVector. 
+      // class FaceT has embedded std::vector objects;
+      // custom allocator for FaceVector<T> does not call ctors,
+      // but std:: dtors will try to delete _v, _si
+      // 
+      // Simple fix: use a pointer to FaceT, then build the 
+      // FaceT object once the FaceDataB structure has been 
+      // safely added to the container (push_back)
+
+    //FaceT  face;      // NBN: FaceT contains std:: containers 
+      FaceT* face;      // NBN: use FaceT* (then init in two steps)
+
       MElement *parentElement;
       int parentFace;
       int faceIndex;
       int zoneIndex;
       FaceDataB(const int _zoneIndex,
                 const typename MZone<DIM>::BoFaceMap::const_iterator bFMapIt)
-        : face(bFMapIt->first), parentElement(bFMapIt->second.parentElement),
+        : 
+      //face(bFMapIt->first), 
+        face(NULL),   // NBN: need to load this after insertion into container
+        parentElement(bFMapIt->second.parentElement),
         parentFace(bFMapIt->second.parentFace),
         faceIndex(bFMapIt->second.faceIndex), zoneIndex(_zoneIndex)
       { }
@@ -271,7 +285,9 @@ class MZoneBoundary
                  // fails on some compilers (earlier versions of g++?)
       // The default constructor is required by 'set_offsets()' in
       // class 'FaceAllocator'.  This is invoked by preInit() below.
-      ZoneData() { };
+      ZoneData() 
+        : vertexIndex(0), zoneIndex(0)    // NBN: init members
+      { }
       friend class CCon::FaceAllocator<ZoneData>;
     };
     CCon::FaceVector<FaceDataB> faces;
@@ -299,6 +315,27 @@ class MZoneBoundary
 
   void clear()
   {
+    // NBN: using FaceT* so need to dealloc:
+    int icount = 0;
+    GlobalBoVertexMap::iterator itEnd = globalBoVertMap.end();
+    for (GlobalBoVertexMap::iterator itBoV = globalBoVertMap.begin(); 
+          itBoV != itEnd; ++itBoV)
+    {
+      // ... clear the faces
+      typename GlobalVertexData<FaceT>& ref = itBoV->second;
+      size_t nf = ref.faces.size();
+      for (int i=0; i<nf; ++i) {
+        ++ icount;
+        FaceT* p = ref.faces[i].face;
+        if (p) {
+          delete (p);
+          p = NULL;
+        }
+      }
+    }
+    Msg::Info("cleared %d faces.", icount);
+
+    // finally, clear the container
     globalBoVertMap.clear();
   }
 

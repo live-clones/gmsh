@@ -399,13 +399,13 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
   if(meshDim == 2) vectorDim = options.vectorDim;
 
   // open the file
-  int cgIndexFile;
+  int cgIndexFile=0;
   if(cg_open(name.c_str(), MODE_WRITE, &cgIndexFile)) return cgnsErr();
 
   // write the base node
-  int cgIndexBase;
-  if(cg_base_write(cgIndexFile, options.baseName.c_str(), meshDim, meshDim,
-                   &cgIndexBase))
+  int cgIndexBase=0;
+  if(cg_base_write(cgIndexFile, options.baseName.c_str(), meshDim, meshDim, 
+                   &cgIndexBase)) 
     return cgnsErr();
 
   // write information about who generated the mesh
@@ -415,17 +415,21 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
   switch(meshDim) {
   case 2:
     MZone<2>::preInit();
-    MZoneBoundary<2>::preInit(); // Add?:
-    write_CGNS_zones<2>(*this, zoneDefinition, ...);
+    MZoneBoundary<2>::preInit();
+    write_CGNS_zones<2>(*this, zoneDefinition, numZone, options, 
+                        scalingFactor, vectorDim, groups[face], 
+                        cgIndexFile, cgIndexBase);
     MZone<2>::postDestroy();
-    MZoneBoundary<2>::postDestroy(); // Add?:
+    MZoneBoundary<2>::postDestroy();
     break;
   case 3:
     MZone<3>::preInit();
-    MZoneBoundary<3>::preInit(); // Add?:
-    write_CGNS_zones<3>(*this, zoneDefinition, ...);
+    MZoneBoundary<3>::preInit();
+    write_CGNS_zones<3>(*this, zoneDefinition, numZone, options, 
+                        scalingFactor, vectorDim, groups[region], 
+                        cgIndexFile, cgIndexBase);
     MZone<3>::postDestroy();
-    MZoneBoundary<3>::postDestroy(); // Add?:
+    MZoneBoundary<3>::postDestroy();
     break;
   }
 
@@ -645,6 +649,8 @@ int get_zone_definition(GModel &model, const int zoneDefinition,
 
   int status = 0;
   const char *_zoneName = "Partition";
+  // NBN: pass name to expand_name(): Zone_&N& ==> Zone_Fluid
+  std::string zn;
 
 //--Get indices for the zonex
 
@@ -665,8 +671,9 @@ int get_zone_definition(GModel &model, const int zoneDefinition,
         break;
       case 2:  // Zone defined by physical
         partition = -1;
-        _zoneName = model.getPhysicalName(meshDim, globalPhysicalIt->first)
-           .c_str();
+      //_zoneName = model.getPhysicalName(meshDim, globalPhysicalIt->first).c_str();
+        zn = model.getPhysicalName(meshDim, globalPhysicalIt->first);   // NBN:
+        _zoneName = zn.c_str();   // NBN:
         physicalItBegin = globalPhysicalIt++;
         physicalItEnd = globalPhysicalIt;
         break;
@@ -809,8 +816,8 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
 //--Write the zone
 
           // Write the zone node
-          int cgIndexZone;
-          int cgZoneSize[3];
+          int cgIndexZone=0;
+          int cgZoneSize[3]={0};
           cgZoneSize[0] = writeZone->zoneVertVec.size();  // Number of vertices
 #ifdef CGNS_TEST1
           // Count all the sub-elements in a Triangle 10
@@ -832,40 +839,49 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
           if(cg_zone_write(cgIndexFile, cgIndexBase,
                            writeTask->zoneName.c_str(), cgZoneSize,
                            Unstructured, &cgIndexZone))
+          {
             return cgnsErr();
+          }
           // Manually maintain the size of the 'zoneInfo vector'.  'push_back'
           // is not used because the elements are in order of 'zoneIndex'
-          if(writeTask->zoneIndex >= zoneInfo.size())
-            zoneInfo.resize(std::max(2*static_cast<int>(zoneInfo.size()),
-                                     writeTask->zoneIndex));
+          if(writeTask->zoneIndex >= zoneInfo.size()) {
+            zoneInfo.resize(std::max(2*static_cast<int>(zoneInfo.size()), 
+                            writeTask->zoneIndex));
+          }
           zoneInfo[writeTask->zoneIndex].name = writeTask->zoneName;
           zoneInfo[writeTask->zoneIndex].cgIndex = cgIndexZone;
 
           // Write the grid node
-          int cgIndexGrid;
+          int cgIndexGrid=0;
           if(cg_grid_write(cgIndexFile, cgIndexBase, cgIndexZone,
                            "GridCoordinates", &cgIndexGrid))
             return cgnsErr();
 
           // Write the grid coordinates
-          int cgIndexCoord;
+          int cgIndexCoord=0;
           dBuffer.resize(cgZoneSize[0]);
-          // x
-          for(int i = 0; i != cgZoneSize[0]; ++i) 
-              dBuffer[i] = writeZone->zoneVertVec[i]->x()*scalingFactor;
+
+          // x-coordinates for this zone
+          for (int i = 0; i != cgZoneSize[0]; ++i) {
+            dBuffer[i] = writeZone->zoneVertVec[i]->x()*scalingFactor;
+          }
           if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
                             "CoordinateX", &dBuffer[0], &cgIndexCoord))
             return cgnsErr();
-          // y
-          for(int i = 0; i != cgZoneSize[0]; ++i)
+
+          // y-coordinates for this zone
+          for(int i = 0; i != cgZoneSize[0]; ++i) {
             dBuffer[i] = writeZone->zoneVertVec[i]->y()*scalingFactor;
+          }
           if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
                             "CoordinateY", &dBuffer[0], &cgIndexCoord))
             return cgnsErr();
-          // z
+
+          // z-coordinates for this zone
           if(vectorDim == 3) {
-            for(int i = 0; i != cgZoneSize[0]; ++i)
+            for(int i = 0; i != cgZoneSize[0]; ++i) {
               dBuffer[i] = writeZone->zoneVertVec[i]->z()*scalingFactor;
+            }
             if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
                               "CoordinateZ", &dBuffer[0], &cgIndexCoord))
               return cgnsErr();
@@ -951,7 +967,9 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
                   writeZone->zoneElemConn[typeMSHm1].numBoElem + iElemSection,
                   &writeZone->zoneElemConn[typeMSHm1].connectivity[0],
                   &cgIndexSection))
+              {
                 return cgnsErr();
+              }
               ++iElemSection;
             }
           }
@@ -963,7 +981,8 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
           // Write the connectivity for each zone pair
           const ZoneConnMap::const_iterator gCEnd = zoneConnMap.end();
           for(ZoneConnMap::const_iterator gCIt = zoneConnMap.begin();
-              gCIt != gCEnd; ++gCIt) {
+              gCIt != gCEnd; ++gCIt) 
+          {
             const int nVert = gCIt->second.vertexPairVec.size();
             iBuffer1.resize(nVert);
             iBuffer2.resize(nVert);
@@ -987,7 +1006,9 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
                 &iBuffer1[0], zoneInfo[gCIt->first.zone2].name.c_str(),
                 Unstructured, PointListDonor, Integer, nVert, &iBuffer2[0],
                 &cgIndexInterface))
+            {
               return cgnsErr();
+            }
             // In the second zone
             if(cg_conn_write
                (cgIndexFile, cgIndexBase, zoneInfo[gCIt->first.zone2].cgIndex,
@@ -995,7 +1016,9 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
                 &iBuffer2[0], zoneInfo[gCIt->first.zone1].name.c_str(),
                 Unstructured, PointListDonor, Integer, nVert, &iBuffer1[0],
                 &cgIndexInterface))
+            {
               return cgnsErr();
+            }
           }
 
 //--Pop from the queue
@@ -1021,7 +1044,8 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
           if(get_zone_definition
              (model, zoneDefinition, numZone, options, DIM, group,
               globalZoneIndex, globalPhysicalIt, zoneTask.zoneIndex, partition,
-              physicalItBegin, physicalItEnd, zoneTask.zoneName)) {
+              physicalItBegin, physicalItEnd, zoneTask.zoneName)) 
+          {
             omp_set_lock(&threadWLock);
             --threadsWorking;
             omp_unset_lock(&threadWLock);
@@ -1030,7 +1054,8 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
             zoneTask.zone.clear();
             // Loop through all physical in the zone definition
             for(PhysGroupMap::const_iterator physicalIt = physicalItBegin;
-                physicalIt != physicalItEnd; ++physicalIt) {
+                physicalIt != physicalItEnd; ++physicalIt) 
+            {
               // Add elements from all entities in the physical with defined
               // partition number
               if(partition == -1) {
@@ -1061,67 +1086,80 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
  * Write the remaining unconnected vertices as boundary conditions
  *--------------------------------------------------------------------*/
 
-      if(options.writeBC) {
+      if(options.writeBC) 
+      {
         ZoneBoVec zoneBoVec;            // from 'MZoneBoundary.h'
         if(mZoneBoundary.exteriorBoundaryVertices
-           (options.normalSource, zoneBoVec) == 0) {
-
+           (options.normalSource, zoneBoVec) == 0) 
+        {
           // Sort by zone index and then entity index
           const int numBoVert = zoneBoVec.size();
-          std::vector<int> iZBV(numBoVert);
-          for(int i = 0; i != numBoVert; ++i) iZBV[i] = i;
-          std::sort<int*, ZoneBoVecSort>(&iZBV[0], &iZBV[numBoVert-1],
-                                         ZoneBoVecSort(zoneBoVec));
+          if (numBoVert>=1) 
+          {
+            Msg::Info("writing BoVerts...");
 
-          dBuffer.reserve(1024);
-          iBuffer1.reserve(1024);
+            std::vector<int> iZBV(numBoVert);
+            for(int i = 0; i != numBoVert; ++i) iZBV[i] = i;
+            std::sort<int*, ZoneBoVecSort>(&iZBV[0], &iZBV[numBoVert-1],
+                                           ZoneBoVecSort(zoneBoVec));
+            dBuffer.reserve(1024);
+            iBuffer1.reserve(1024);
 
-          int iVert = 0;
-          while(iVert != numBoVert) {
-            dBuffer.clear();
-            iBuffer1.clear();
-            const int zoneIndex = zoneBoVec[iZBV[iVert]].zoneIndex;
-            const int patchIndex = zoneBoVec[iZBV[iVert]].bcPatchIndex;
-            const int iVertStart = iVert;
-            while(iVert != numBoVert &&
-                  zoneBoVec[iZBV[iVert]].zoneIndex == zoneIndex &&
-                  zoneBoVec[iZBV[iVert]].bcPatchIndex == patchIndex) {
-              VertexBoundary &vertBo = zoneBoVec[iZBV[iVert]];
-              dBuffer.push_back(vertBo.normal[0]);
-              dBuffer.push_back(vertBo.normal[1]);
-              if(vectorDim == 3) dBuffer.push_back(vertBo.normal[2]);
-              iBuffer1.push_back(vertBo.vertexIndex);
-              ++iVert;
-            }
-            const int numBCVert = iVert - iVertStart;
+            int iVert = 0;
+            while(iVert != numBoVert) {
+              dBuffer.clear();
+              iBuffer1.clear();
+              const int zoneIndex = zoneBoVec[iZBV[iVert]].zoneIndex;
+              const int patchIndex = zoneBoVec[iZBV[iVert]].bcPatchIndex;
+              const int iVertStart = iVert;
+              while(iVert != numBoVert &&
+                    zoneBoVec[iZBV[iVert]].zoneIndex == zoneIndex &&
+                    zoneBoVec[iZBV[iVert]].bcPatchIndex == patchIndex) 
+              {
+                VertexBoundary &vertBo = zoneBoVec[iZBV[iVert]];
+                dBuffer.push_back(vertBo.normal[0]);
+                dBuffer.push_back(vertBo.normal[1]);
+                if(vectorDim == 3) dBuffer.push_back(vertBo.normal[2]);
+                iBuffer1.push_back(vertBo.vertexIndex);
+                ++iVert;
+              }
+              const int numBCVert = iVert - iVertStart;
 
-            int cgIndexBoco;
-            std::string patchName = options.patchName;
-            expand_name(patchName, patchIndex, "Patch");
-            if(patchName.length() == 0) {
-              patchName = "Patch_";
-              patchName += CGNSNameStr(patchIndex+1).c_str();
-            }
-            if(cg_boco_write(cgIndexFile, cgIndexBase,
-                             zoneInfo[zoneIndex].cgIndex, patchName.c_str(),
-                             BCTypeNull, PointList, numBCVert, &iBuffer1[0],
-                             &cgIndexBoco))
-              return cgnsErr();
-
-            if(options.normalSource) {
-              int normalIndex;
-              if(cg_boco_normal_write(cgIndexFile, cgIndexBase,
-                                      zoneInfo[zoneIndex].cgIndex, cgIndexBoco,
-                                      &normalIndex, 1, RealDouble, &dBuffer[0]))
+              int cgIndexBoco;
+              std::string patchName = options.patchName;
+              expand_name(patchName, patchIndex, "Patch");
+              if(patchName.length() == 0) {
+                patchName = "Patch_";
+                patchName += CGNSNameStr(patchIndex+1).c_str();
+              }
+              if(cg_boco_write(cgIndexFile, cgIndexBase,
+                               zoneInfo[zoneIndex].cgIndex, patchName.c_str(),
+                               BCTypeNull, PointList, numBCVert, &iBuffer1[0],
+                               &cgIndexBoco))
+              {
                 return cgnsErr();
+              }
+
+              if(options.normalSource) {
+                int normalIndex;
+                if(cg_boco_normal_write(cgIndexFile, cgIndexBase,
+                                        zoneInfo[zoneIndex].cgIndex, cgIndexBoco,
+                                        &normalIndex, 1, RealDouble, &dBuffer[0]))
+                {
+                  return cgnsErr();
+                }
+              }
             }
           }
         }
       }
 
-//       std::cout << "Leaving master thread\n";  // DBG
-    }  // End master thread instructions
+      // NBN: MZoneBoundary defines no destructor, so force 
+      // the deallocation of the new pointers with clear()
+      mZoneBoundary.clear();
+      Msg::Info("Leaving master thread");  // DBG
 
+    }  // End master thread instructions
   }  // End omp parallel section
 
 //--Destroy omp locks
@@ -1129,6 +1167,7 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
   omp_destroy_lock(&threadWLock);
   omp_destroy_lock(&queueLock);
 
+  return 0;
 }
 
 #else
