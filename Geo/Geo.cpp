@@ -133,8 +133,8 @@ Vertex *Create_Vertex(int Num, double u, double v, gmshSurface *surf, double lc)
     std::max(GModel::current()->getGEOInternals()->MaxPointNum, Num);
   pV->u = u;
   pV->geometry = surf;
-  pV->pntOnGeometry = SPoint2(u,v);
-  surf->vertex_defined_on_surface=true;
+  pV->pntOnGeometry = SPoint2(u, v);
+  surf->vertex_defined_on_surface = true;
   return pV;
 }
 
@@ -889,7 +889,6 @@ static int compareAbsCurve(const void *a, const void *b)
 
 static void CopyCurve(Curve *c, Curve *cc, bool copyMeshingMethod)
 {
-  int i, j;
   cc->Typ = c->Typ;
   if(copyMeshingMethod){
     cc->Method = c->Method;
@@ -898,8 +897,8 @@ static void CopyCurve(Curve *c, Curve *cc, bool copyMeshingMethod)
     cc->coeffTransfinite = c->coeffTransfinite;
   }
   cc->l = c->l;
-  for(i = 0; i < 4; i++)
-    for(j = 0; j < 4; j++)
+  for(int i = 0; i < 4; i++)
+    for(int j = 0; j < 4; j++)
       cc->mat[i][j] = c->mat[i][j];
   cc->beg = c->beg;
   cc->end = c->end;
@@ -908,24 +907,22 @@ static void CopyCurve(Curve *c, Curve *cc, bool copyMeshingMethod)
   cc->Control_Points = List_Create(List_Nbr(c->Control_Points), 1, sizeof(Vertex *));
   List_Copy(c->Control_Points, cc->Control_Points);
   End_Curve(cc);
-  Tree_Insert(GModel::current()->getGEOInternals()->Curves, &cc);
 }
 
 static Curve *DuplicateCurve(Curve *c, bool copyMeshingMethod)
 {
-  Curve *pc;
-  Vertex *v, *newv;
-  pc = Create_Curve(NEWLINE(), 0, 1, NULL, NULL, -1, -1, 0., 1.);
+  Curve *pc = Create_Curve(NEWLINE(), 0, 1, NULL, NULL, -1, -1, 0., 1.);
   CopyCurve(c, pc, copyMeshingMethod);
-  for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
-    List_Read(pc->Control_Points, i, &v);
-    newv = DuplicateVertex(v);
-    List_Write(pc->Control_Points, i, &newv);
-  }
+  Tree_Insert(GModel::current()->getGEOInternals()->Curves, &pc);
   pc->beg = DuplicateVertex(c->beg);
   pc->end = DuplicateVertex(c->end);
+  for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
+    Vertex *v;
+    List_Read(pc->Control_Points, i, &v);
+    Vertex *newv = DuplicateVertex(v);
+    List_Write(pc->Control_Points, i, &newv);
+  }
   CreateReversedCurve(pc);
-
   return pc;
 }
 
@@ -942,19 +939,17 @@ static void CopySurface(Surface *s, Surface *ss, bool copyMeshingMethod)
   ss->Generatrices = List_Create(List_Nbr(s->Generatrices), 1, sizeof(Curve *));
   List_Copy(s->Generatrices, ss->Generatrices);
   End_Surface(ss);
-  Tree_Insert(GModel::current()->getGEOInternals()->Surfaces, &ss);
 }
 
 static Surface *DuplicateSurface(Surface *s, bool copyMeshingMethod)
 {
-  Surface *ps;
-  Curve *c, *newc;
-
-  ps = Create_Surface(NEWSURFACE(), 0);
+  Surface *ps = Create_Surface(NEWSURFACE(), 0);
   CopySurface(s, ps, copyMeshingMethod);
+  Tree_Insert(GModel::current()->getGEOInternals()->Surfaces, &ps);
   for(int i = 0; i < List_Nbr(ps->Generatrices); i++) {
+    Curve *c;
     List_Read(ps->Generatrices, i, &c);
-    newc = DuplicateCurve(c, copyMeshingMethod);
+    Curve *newc = DuplicateCurve(c, copyMeshingMethod);
     List_Write(ps->Generatrices, i, &newc);
   }
   return ps;
@@ -971,19 +966,17 @@ static void CopyVolume(Volume *v, Volume *vv, bool copyMeshingMethod)
   List_Copy(v->Surfaces, vv->Surfaces);
   List_Copy(v->SurfacesOrientations, vv->SurfacesOrientations);
   List_Copy(v->SurfacesByTag, vv->SurfacesByTag);
-  Tree_Insert(GModel::current()->getGEOInternals()->Volumes, &vv);
 }
 
 static Volume *DuplicateVolume(Volume *v, bool copyMeshingMethod)
 {
-  Volume *pv;
-  Surface *s, *news;
-
-  pv = Create_Volume(NEWVOLUME(), 0);
+  Volume *pv = Create_Volume(NEWVOLUME(), 0);
   CopyVolume(v, pv, copyMeshingMethod);
+  Tree_Insert(GModel::current()->getGEOInternals()->Volumes, &pv);
   for(int i = 0; i < List_Nbr(pv->Surfaces); i++) {
+    Surface *s;
     List_Read(pv->Surfaces, i, &s);
-    news = DuplicateSurface(s, copyMeshingMethod);
+    Surface *news = DuplicateSurface(s, copyMeshingMethod);
     List_Write(pv->Surfaces, i, &news);
   }
   return pv;
@@ -1366,15 +1359,13 @@ void VisibilityShape(char *str, int Type, int Mode)
 
 Curve *CreateReversedCurve(Curve *c)
 {
-  Curve *newc;
-  Vertex *e1, *e2, *e3, *e4;
-  int i;
-  newc = Create_Curve(-c->Num, c->Typ, 1, NULL, NULL, -1, -1, 0., 1.);
+  Curve *newc = Create_Curve(-c->Num, c->Typ, 1, NULL, NULL, -1, -1, 0., 1.);
 
   if(List_Nbr(c->Control_Points)){
     newc->Control_Points =
       List_Create(List_Nbr(c->Control_Points), 1, sizeof(Vertex *));
     if(c->Typ == MSH_SEGM_ELLI || c->Typ == MSH_SEGM_ELLI_INV) {
+      Vertex *e1, *e2, *e3, *e4;
       List_Read(c->Control_Points, 0, &e1);
       List_Read(c->Control_Points, 1, &e2);
       List_Read(c->Control_Points, 2, &e3);
@@ -1390,7 +1381,7 @@ Curve *CreateReversedCurve(Curve *c)
 
   if(c->Typ == MSH_SEGM_NURBS && c->k) {
     newc->k = new float[c->degre + List_Nbr(c->Control_Points) + 1];
-    for(i = 0; i < c->degre + List_Nbr(c->Control_Points) + 1; i++)
+    for(int i = 0; i < c->degre + List_Nbr(c->Control_Points) + 1; i++)
       newc->k[c->degre + List_Nbr(c->Control_Points) - i] = c->k[i];
   }
   
@@ -1427,13 +1418,12 @@ Curve *CreateReversedCurve(Curve *c)
 
 int recognize_seg(int typ, List_T *liste, int *seg)
 {
-  int i, beg, end;
-  Curve *pc;
-
   List_T *temp = Tree2List(GModel::current()->getGEOInternals()->Curves);
+  int beg, end;
   List_Read(liste, 0, &beg);
   List_Read(liste, List_Nbr(liste) - 1, &end);
-  for(i = 0; i < List_Nbr(temp); i++) {
+  for(int i = 0; i < List_Nbr(temp); i++) {
+    Curve *pc;
     List_Read(temp, i, &pc);
     if(pc->Typ == typ && pc->beg->Num == beg && pc->end->Num == end) {
       List_Delete(temp);
@@ -1447,13 +1437,11 @@ int recognize_seg(int typ, List_T *liste, int *seg)
 
 int recognize_loop(List_T *liste, int *loop)
 {
-  int i, res;
-  EdgeLoop *pe;
-
-  res = 0;
+  int res = 0;
   *loop = 0;
   List_T *temp = Tree2List(GModel::current()->getGEOInternals()->EdgeLoops);
-  for(i = 0; i < List_Nbr(temp); i++) {
+  for(int i = 0; i < List_Nbr(temp); i++) {
+    EdgeLoop *pe;
     List_Read(temp, i, &pe);
     if(!compare2Lists(pe->Curves, liste, fcmp_absint)) {
       res = 1;
@@ -1467,13 +1455,11 @@ int recognize_loop(List_T *liste, int *loop)
 
 int recognize_surfloop(List_T *liste, int *loop)
 {
-  int i, res;
-  EdgeLoop *pe;
-
-  res = 0;
+  int res = 0;
   *loop = 0;
   List_T *temp = Tree2List(GModel::current()->getGEOInternals()->SurfaceLoops);
-  for(i = 0; i < List_Nbr(temp); i++) {
+  for(int i = 0; i < List_Nbr(temp); i++) {
+    EdgeLoop *pe;
     List_Read(temp, i, &pe);
     if(!compare2Lists(pe->Curves, liste, fcmp_absint)) {
       res = 1;
@@ -1489,14 +1475,12 @@ int recognize_surfloop(List_T *liste, int *loop)
 
 static void SetTranslationMatrix(double matrix[4][4], double T[3])
 {
-  int i, j;
-
-  for(i = 0; i < 4; i++) {
-    for(j = 0; j < 4; j++) {
+  for(int i = 0; i < 4; i++) {
+    for(int j = 0; j < 4; j++) {
       matrix[i][j] = (i == j) ? 1.0 : 0.0;
     }
   }
-  for(i = 0; i < 3; i++)
+  for(int i = 0; i < 3; i++)
     matrix[i][3] = T[i];
 }
 
@@ -1626,10 +1610,9 @@ static void SetRotationMatrix(double matrix[4][4], double Axe[3], double alpha)
 
 static void vecmat4x4(double mat[4][4], double vec[4], double res[4])
 {
-  int i, j;
-  for(i = 0; i < 4; i++) {
+  for(int i = 0; i < 4; i++) {
     res[i] = 0.0;
-    for(j = 0; j < 4; j++) {
+    for(int j = 0; j < 4; j++) {
       res[i] += mat[i][j] * vec[j];
     }
   }
