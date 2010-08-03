@@ -63,4 +63,4 @@ Extrude Surface { 21, {0,1,0} , {0,0,0} , Pi/2 } {
 };
 
 
-Symmetry { 0,1,0,0 } { Duplicata{ Surface{158}; } }
+//Symmetry { 0,1,0,0 } { Duplicata{ Surface{158}; } }

@@ -17,27 +17,37 @@
 #include "Context.h"
 #include "GmshMessage.h"
 
-static void addTetrahedron(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4, GRegion *to, MElement* source) {
+static void addTetrahedron(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4, 
+                           GRegion *to, MElement* source)
+{
   MTetrahedron* newElem = new MTetrahedron(v1, v2, v3, v4);
   to->tetrahedra.push_back(newElem);
-  to->meshAttributes.extrude->elementMap.addExtrudedElem((MElement*)source,(MElement*)newElem);
+  to->meshAttributes.extrude->elementMap.addExtrudedElem(source, (MElement*)newElem);
 }
 
-static void addPyramid(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4, MVertex* v5, GRegion *to, MElement* source) {
+static void addPyramid(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4,
+                       MVertex* v5, GRegion *to, MElement* source)
+{
   MPyramid* newElem = new MPyramid(v1, v2, v3, v4, v5);
   to->pyramids.push_back(newElem);
-  to->meshAttributes.extrude->elementMap.addExtrudedElem((MElement*)source,(MElement*)newElem);
+  to->meshAttributes.extrude->elementMap.addExtrudedElem(source, (MElement*)newElem);
 }
 
-static void addPrism(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4, MVertex* v5, MVertex* v6, GRegion *to, MElement* source) {
+static void addPrism(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4,
+                     MVertex* v5, MVertex* v6, GRegion *to, MElement* source)
+{
   MPrism* newElem = new MPrism(v1, v2, v3, v4, v5, v6);
   to->prisms.push_back(newElem);
-  to->meshAttributes.extrude->elementMap.addExtrudedElem((MElement*)source,(MElement*)newElem);
+  to->meshAttributes.extrude->elementMap.addExtrudedElem(source, (MElement*)newElem);
 }
-static void addHexahedron(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4, MVertex* v5, MVertex* v6, MVertex* v7, MVertex* v8, GRegion *to, MElement* source) {
+
+static void addHexahedron(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4,
+                          MVertex* v5, MVertex* v6, MVertex* v7, MVertex* v8,
+                          GRegion *to, MElement* source)
+{
   MHexahedron* newElem = new MHexahedron(v1, v2, v3, v4, v5, v6, v7, v8);
   to->hexahedra.push_back(newElem);
-  to->meshAttributes.extrude->elementMap.addExtrudedElem((MElement*)source,(MElement*)newElem);
+  to->meshAttributes.extrude->elementMap.addExtrudedElem(source, (MElement*)newElem);
 }
 
 static void createPriPyrTet(std::vector<MVertex*> &v, GRegion *to, MElement* source)
@@ -50,22 +60,22 @@ static void createPriPyrTet(std::vector<MVertex*> &v, GRegion *to, MElement* sou
 
   if(j == 2) {
     if(dup[0] == 0 && dup[1] == 1)
-      addTetrahedron(v[0], v[1], v[2], v[5],to,source);
+      addTetrahedron(v[0], v[1], v[2], v[5], to, source);
     else if(dup[0] == 1 && dup[1] == 2)
-      addTetrahedron(v[0], v[1], v[2], v[3],to,source);
+      addTetrahedron(v[0], v[1], v[2], v[3], to, source);
     else
-      addTetrahedron(v[0], v[1], v[2], v[4],to,source);
+      addTetrahedron(v[0], v[1], v[2], v[4], to, source);
   }
   else if(j == 1) {
     if(dup[0] == 0)
-      addPyramid(v[1], v[4], v[5], v[2], v[0],to,source);
+      addPyramid(v[1], v[4], v[5], v[2], v[0], to, source);
     else if(dup[0] == 1)
-      addPyramid(v[0], v[2], v[5], v[3], v[1],to,source);
+      addPyramid(v[0], v[2], v[5], v[3], v[1], to, source);
     else
-      addPyramid(v[0], v[1], v[4], v[3], v[2],to,source);
+      addPyramid(v[0], v[1], v[4], v[3], v[2], to, source);
   }
   else {
-    addPrism(v[0], v[1], v[2], v[3], v[4], v[5],to,source);
+    addPrism(v[0], v[1], v[2], v[3], v[4], v[5], to, source);
     if(j) Msg::Error("Degenerated prism in extrusion of volume %d", to->tag());
   }
 }
@@ -80,26 +90,27 @@ static void createHexPri(std::vector<MVertex*> &v, GRegion *to, MElement* source
   
   if(j == 2) {
     if(dup[0] == 0 && dup[1] == 1)
-      addPrism(v[0], v[3], v[7], v[1], v[2], v[6],to,source);
+      addPrism(v[0], v[3], v[7], v[1], v[2], v[6], to, source);
     else if(dup[0] == 1 && dup[1] == 2)
-      addPrism(v[0], v[1], v[4], v[3], v[2], v[7],to,source);
+      addPrism(v[0], v[1], v[4], v[3], v[2], v[7], to, source);
     else if(dup[0] == 2 && dup[1] == 3)
-      addPrism(v[0], v[3], v[4], v[1], v[2], v[5],to,source);
+      addPrism(v[0], v[3], v[4], v[1], v[2], v[5], to, source);
     else if(dup[0] == 0 && dup[1] == 3)
-      addPrism(v[0], v[1], v[5], v[3], v[2], v[6],to,source);
+      addPrism(v[0], v[1], v[5], v[3], v[2], v[6], to, source);
     else
       Msg::Error("Uncoherent hexahedron in extrusion of volume %d", to->tag());
   }
   else {
-    addHexahedron(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7],to,source);
+    addHexahedron(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], to, source);
     if(j) Msg::Error("Degenerated hexahedron in extrusion of volume %d", to->tag());
   }
 }
 
-static void createTet(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, GRegion *to, MElement* source)
+static void createTet(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, GRegion *to,
+                      MElement* source)
 {
   if(v1 != v2 && v1 != v3 && v1 != v4 && v2 != v3 && v2 != v4 && v3 != v4)
-    addTetrahedron(v1, v2, v3, v4,to,source);
+    addTetrahedron(v1, v2, v3, v4, to, source);
 }
 
 static int getExtrudedVertices(MElement *ele, ExtrudeParams *ep, int j, int k, 

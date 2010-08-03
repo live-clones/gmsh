@@ -12,45 +12,50 @@
 #include "Context.h"
 #include "GmshMessage.h"
 
-static void addTriangle(MVertex* v1, MVertex* v2, MVertex* v3, GFace *to, MElement* source) {
+static void addTriangle(MVertex* v1, MVertex* v2, MVertex* v3,
+                        GFace *to, MElement* source) 
+{
   MTriangle* newTri = new MTriangle(v1, v2, v3);
   to->triangles.push_back(newTri);
-  to->meshAttributes.extrude->elementMap.addExtrudedElem((MElement*)source,(MElement*)newTri);
+  to->meshAttributes.extrude->elementMap.addExtrudedElem(source, (MElement*)newTri);
 }
 
-static void addQuadrangle(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4, GFace *to, MElement* source) {
+static void addQuadrangle(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4,
+                          GFace *to, MElement* source) 
+{
   MQuadrangle* newQuad = new MQuadrangle(v1, v2, v3, v4);
   to->quadrangles.push_back(newQuad);
-  to->meshAttributes.extrude->elementMap.addExtrudedElem((MElement*)source,(MElement*)newQuad);
+  to->meshAttributes.extrude->elementMap.addExtrudedElem(source, (MElement*)newQuad);
 }
 
 static void createQuaTri(std::vector<MVertex*> &v, GFace *to,
-                         std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges,MLine* source)
+                         std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges,
+                         MLine* source)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
   if(v[0] == v[1] || v[1] == v[3])
-    addTriangle(v[0], v[3], v[2],to,source);
+    addTriangle(v[0], v[3], v[2], to, source);
   else if(v[0] == v[2] || v[2] == v[3])
-    addTriangle(v[0], v[1], v[3],to,source);
+    addTriangle(v[0], v[1], v[3], to, source);
   else if(v[0] == v[3] || v[1] == v[2])
     Msg::Error("Uncoherent extruded quadrangle in surface %d", to->tag());
   else{
     if(ep->mesh.Recombine){
-      addQuadrangle(v[0], v[1], v[3], v[2],to,source);
+      addQuadrangle(v[0], v[1], v[3], v[2], to, source);
     }
     else if(!constrainedEdges){
-      addTriangle(v[0], v[1], v[3],to,source);
-      addTriangle(v[0], v[3], v[2],to,source);
+      addTriangle(v[0], v[1], v[3], to, source);
+      addTriangle(v[0], v[3], v[2], to, source);
     }
     else{
       std::pair<MVertex*, MVertex*> p(std::min(v[1], v[2]), std::max(v[1], v[2]));
       if(constrainedEdges->count(p)){
-        addTriangle(v[2], v[1], v[0],to,source);
-        addTriangle(v[2], v[3], v[1],to,source);
+        addTriangle(v[2], v[1], v[0], to, source);
+        addTriangle(v[2], v[3], v[1], to, source);
       }
       else{
-        addTriangle(v[2], v[3], v[0],to,source);
-        addTriangle(v[0], v[3], v[1],to,source);
+        addTriangle(v[2], v[3], v[0], to, source);
+        addTriangle(v[0], v[3], v[1], to, source);
       }
     }
   }

@@ -222,11 +222,20 @@ std::set<MVertex*, MVertexLessThanLexicographic>::iterator
 MVertex::linearSearch(std::set<MVertex*, MVertexLessThanLexicographic> &pos)
 {
   double tol = MVertexLessThanLexicographic::tolerance;
+  double dmin = 1e22;
+  std::set<MVertex*, MVertexLessThanLexicographic>::iterator itmin = pos.end();
   for(std::set<MVertex*, MVertexLessThanLexicographic>::iterator it = pos.begin();
       it != pos.end(); ++it){
+    double d = distance(*it);
+    if(d < dmin){
+      dmin = d;
+      itmin = it;
+    }
     if(distance(*it) < tol) return it;
   }
-  return pos.end();
+  Msg::Warning("Could not find point: returning closest (dist = %g)", dmin);
+  //return pos.end();
+  return itmin;
 }
 
 static void getAllParameters(MVertex *v, GFace *gf, std::vector<SPoint2> &params)
