@@ -62,7 +62,7 @@ static GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
     newEdges.find(std::make_pair<int, int>(i1, i2));
   if(it == newEdges.end()){
     discreteEdge *ge = new discreteEdge
-      (GModel::current(), GModel::current()->maxEdgeNum() + 1, 0, 0);
+      (GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
     GModel::current()->add(ge);
     newEdges[std::make_pair<int, int>(i1, i2)] = ge;
     return ge;
@@ -168,7 +168,7 @@ static void select_elements_cb(Fl_Widget *w, void *data)
   // allocate discrete edge to hold the selected mesh segments
   if(!e->selected){
     e->selected = new discreteEdge
-      (GModel::current(), GModel::current()->maxEdgeNum() + 1, 0, 0);
+      (GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
     GModel::current()->add(e->selected);
   }
 
@@ -400,7 +400,7 @@ static void classify_cb(Fl_Widget *w, void *data)
   while(it != tris.end()){
     if(!(*it)->isDeleted()){
       discreteFace *gf = new discreteFace
-        (GModel::current(), GModel::current()->maxFaceNum() + 1);
+        (GModel::current(), GModel::current()->getMaxElementaryNumber(2) + 1);
       recurClassify(*it, gf, lines, reverse);
       GModel::current()->add(gf);
     }
@@ -467,7 +467,7 @@ static void classify_cb(Fl_Widget *w, void *data)
         vE = temp;
       }
       GEdge *newGe = new discreteEdge
-        (GModel::current(), GModel::current()->maxEdgeNum() + 1, 0, 0);
+        (GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
       newGe->lines.insert(newGe->lines.end(), myLines.begin(), myLines.end());
       GModel::current()->add(newGe);
     }

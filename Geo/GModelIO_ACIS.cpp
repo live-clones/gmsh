@@ -168,7 +168,7 @@ void ACIS_Internals::addVertices (GModel *gm, ENTITY_LIST &l)
     if (av){
       GVertex *v = getACISVertexByNativePtr(gm, av);
       if (!v)
-	gm->add(new ACISVertex (gm,gm->maxVertexNum() + 1, av));
+	gm->add(new ACISVertex (gm, gm->getMaxElementaryNumber(0) + 1, av));
     }
   }
 }
@@ -184,12 +184,11 @@ void ACIS_Internals::addEdges (GModel *gm, ENTITY_LIST &l)
       if (!v){
 	GVertex *v1 = getACISVertexByNativePtr(gm, av->start());
 	GVertex *v2 = getACISVertexByNativePtr(gm, av->end());      
-	gm->add(new ACISEdge(gm,av,gm->maxEdgeNum() + 1, v1, v2));
+	gm->add(new ACISEdge(gm, av, gm->getMaxElementaryNumber(1) + 1, v1, v2));
       }
     }
   }
 }
-
 
 void ACIS_Internals::addFaces (GModel *gm, ENTITY_LIST &l)
 {
@@ -200,12 +199,11 @@ void ACIS_Internals::addFaces (GModel *gm, ENTITY_LIST &l)
     if (av){
       GFace *v = getACISFaceByNativePtr(gm,av);
       if (!v){
-	gm->add(new ACISFace(gm,av,gm->maxFaceNum()+1));
+	gm->add(new ACISFace(gm, av, gm->getMaxElementaryNumber(2) + 1));
       }
     }
   }
 }
-
 
 void ACIS_Internals::loadSAT(std::string fileName, GModel *gm)
 {

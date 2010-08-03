@@ -1035,7 +1035,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
     }
     Msg::Info("%d facets in solid %d", points[i].size() / 3, i);
     // create face
-    GFace *face = new discreteFace(this, getNumFaces() + 1);
+    GFace *face = new discreteFace(this, getMaxElementaryNumber(2) + 1);
     faces.push_back(face);
     add(face);
   }
@@ -1228,7 +1228,7 @@ int GModel::readVRML(const std::string &name)
   // need)
   std::vector<MVertex*> vertexVector, allVertexVector;
   std::map<int, std::vector<MElement*> > elements[3];
-  int region = 0;
+  int region = getMaxElementaryNumber(-1);
   char buffer[256], str[256];
   while(!feof(fp)) {
     if(!fgets(buffer, sizeof(buffer), fp)) break;
@@ -1240,6 +1240,7 @@ int GModel::readVRML(const std::string &name)
         if(!readVerticesVRML(fp, vertexVector, allVertexVector)) break;
       }
       else if(!strcmp(str, "coord")){
+        region++;
         vertexVector.clear();
         if(!skipUntil(fp, "point")) break;
         if(!readVerticesVRML(fp, vertexVector, allVertexVector)) break;
@@ -1384,7 +1385,7 @@ int GModel::readUNV(const std::string &name)
           int num, type, elementary, physical, color, numNodes;
           if(sscanf(buffer, "%d %d %d %d %d %d", &num, &type, &elementary, &physical,
                     &color, &numNodes) != 6) break;
-          if(elementary < 0) elementary = 1;
+          if(elementary < 0) elementary = getMaxElementaryNumber(-1) + 1;
           if(physical < 0) physical = 0;
           switch(type){
           case 11: case 21: case 22: case 31:
@@ -2178,7 +2179,7 @@ int GModel::readP3D(const std::string &name)
 
   for(int n = 0; n < numBlocks; n++){
     if(Nk[n] == 1){
-      GFace *gf = new discreteFace(this, getNumFaces() + 1);
+      GFace *gf = new discreteFace(this, getMaxElementaryNumber(2) + 1);
       add(gf);
       gf->transfinite_vertices.resize(Ni[n]);
       for(int i = 0; i < Ni[n]; i++)
@@ -2211,7 +2212,7 @@ int GModel::readP3D(const std::string &name)
                              gf->transfinite_vertices[i    ][j + 1]));
     }
     else{
-      GRegion *gr = new discreteRegion(this, getNumRegions() + 1);
+      GRegion *gr = new discreteRegion(this,  getMaxElementaryNumber(3) + 1);
       add(gr);
       gr->transfinite_vertices.resize(Ni[n]);
       for(int i = 0; i < Ni[n]; i++){

@@ -31,7 +31,6 @@ discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
 
 void discreteEdge::createTopo()
 {
-
   if(!createdTopo){ 
     orderMLines();
     setBoundVertices();
@@ -50,7 +49,8 @@ void discreteEdge::orderMLines()
   }
 
   // find a lonly MLine
-  for (std::list<MLine*>::iterator it = segments.begin(); it != segments.end(); ++it){
+  for (std::list<MLine*>::iterator it = segments.begin(); 
+       it != segments.end(); ++it){
     MVertex *vL = (*it)->getVertex(0);
     MVertex *vR = (*it)->getVertex(1);
     std::map<MVertex*,MLine*>::iterator it1 = boundv.find(vL);
@@ -65,7 +65,8 @@ void discreteEdge::orderMLines()
   MLine *firstLine;
   if (boundv.size() == 2){   // non periodic
     firstLine = (boundv.begin())->second;
-    for (std::list<MLine*>::iterator it = segments.begin(); it != segments.end(); ++it){
+    for (std::list<MLine*>::iterator it = segments.begin(); 
+         it != segments.end(); ++it){
       if (*it == firstLine){
         segments.erase(it);
         break;
@@ -77,7 +78,8 @@ void discreteEdge::orderMLines()
     segments.erase(segments.begin());
   }
   else{
-    Msg::Error("EdgeCompound %d is wrong (it has %d end points)",tag(),boundv.size());
+    Msg::Error("EdgeCompound %d is wrong (it has %d end points)", 
+               tag(), boundv.size());
   }
 
   //loop over all segments to order segments and store it in the list _m
@@ -88,7 +90,8 @@ void discreteEdge::orderMLines()
   while (first != last){
     if (segments.empty())break;
     bool found = false;
-    for (std::list<MLine*>::iterator it = segments.begin(); it != segments.end(); ++it){
+    for (std::list<MLine*>::iterator it = segments.begin(); 
+         it != segments.end(); ++it){
       MLine *e = *it;
       if (e->getVertex(0) == last){
         _m.push_back(e);
@@ -129,8 +132,10 @@ void discreteEdge::orderMLines()
   for (unsigned int i = 0; i < lines.size(); ++i){
     MVertex *v1 = lines[i]->getVertex(0);
     MVertex *v2 = lines[i]->getVertex(1);
-    if (std::find(mesh_vertices.begin(), mesh_vertices.end(), v1) ==  mesh_vertices.end()) mesh_vertices.push_back(v1);
-    if (std::find(mesh_vertices.begin(), mesh_vertices.end(), v2) ==  mesh_vertices.end()) mesh_vertices.push_back(v2);
+    if (std::find(mesh_vertices.begin(), mesh_vertices.end(), v1) ==  
+        mesh_vertices.end()) mesh_vertices.push_back(v1);
+    if (std::find(mesh_vertices.begin(), mesh_vertices.end(), v2) ==  
+        mesh_vertices.end()) mesh_vertices.push_back(v2);
     v1->setEntity(this);
     v2->setEntity(this);
   }
@@ -139,15 +144,14 @@ void discreteEdge::orderMLines()
   if (lines.size() < 2) return;
   if (_orientation[0] && lines[0]->getVertex(1) != lines[1]->getVertex(1)
       && lines[0]->getVertex(1) != lines[1]->getVertex(0)){
-    for (unsigned int i = 0; i < lines.size(); i++) _orientation[i] = !_orientation[i];
+    for (unsigned int i = 0; i < lines.size(); i++) 
+      _orientation[i] = !_orientation[i];
   }
-
 }
 
 void discreteEdge::setBoundVertices()
 {
-
-  if (boundv.size()==2){
+  if (boundv.size() == 2){
     std::vector<GVertex*> bound_vertices;
     for (std::map<MVertex*,MLine*>::const_iterator iter = boundv.begin(); 
          iter != boundv.end(); iter++){
@@ -162,7 +166,8 @@ void discreteEdge::setBoundVertices()
         }
       }
       if(!existVertex){
-        GVertex *gvB = new discreteVertex(model(), model()->maxVertexNum()+1);      
+        GVertex *gvB = new discreteVertex
+          (model(), model()->getMaxElementaryNumber(0) + 1);      
         //printf("*** Created discreteVertex %d\n", gvB->tag());
         bound_vertices.push_back(gvB);
         vE->setEntity(gvB);
@@ -170,19 +175,23 @@ void discreteEdge::setBoundVertices()
         gvB->points.push_back(new MPoint(gvB->mesh_vertices.back()));
         model()->add(gvB);
       }
-      std::vector<MVertex*>::iterator itve = std::find(mesh_vertices.begin(), mesh_vertices.end(), vE);
+      std::vector<MVertex*>::iterator itve = 
+        std::find(mesh_vertices.begin(), mesh_vertices.end(), vE);
       if (itve != mesh_vertices.end()) mesh_vertices.erase(itve);
 
       for(GModel::eiter edge = model()->firstEdge(); edge != model()->lastEdge(); edge++){
-        std::vector<MVertex*>::iterator itve = std::find((*edge)->mesh_vertices.begin(), (*edge)->mesh_vertices.end(), vE);
+        std::vector<MVertex*>::iterator itve = 
+          std::find((*edge)->mesh_vertices.begin(), (*edge)->mesh_vertices.end(), vE);
         if (itve != (*edge)->mesh_vertices.end()) (*edge)->mesh_vertices.erase(itve);
       }
       for(GModel::fiter face = model()->firstFace(); face != model()->lastFace(); face++){
-        std::vector<MVertex*>::iterator itve = std::find((*face)->mesh_vertices.begin(), (*face)->mesh_vertices.end(), vE);
+        std::vector<MVertex*>::iterator itve = 
+          std::find((*face)->mesh_vertices.begin(), (*face)->mesh_vertices.end(), vE);
         if (itve != (*face)->mesh_vertices.end()) (*face)->mesh_vertices.erase(itve);
       }
       for(GModel::riter reg = model()->firstRegion(); reg != model()->lastRegion(); reg++){
-        std::vector<MVertex*>::iterator itve = std::find((*reg)->mesh_vertices.begin(), (*reg)->mesh_vertices.end(), vE);
+        std::vector<MVertex*>::iterator itve = 
+          std::find((*reg)->mesh_vertices.begin(), (*reg)->mesh_vertices.end(), vE);
         if (itve != (*reg)->mesh_vertices.end()) (*reg)->mesh_vertices.erase(itve);
       }
 
@@ -196,7 +205,8 @@ void discreteEdge::setBoundVertices()
     std::vector<MLine*>::const_iterator it = lines.begin();
     MVertex* vE = (*it)->getVertex(0);
     bool existVertex  = false;
-    for(GModel::viter point = model()->firstVertex(); point != model()->lastVertex(); point++){
+    for(GModel::viter point = model()->firstVertex(); 
+        point != model()->lastVertex(); point++){
       if ((*point)->mesh_vertices[0]->getNum() == vE->getNum()){
         bound_vertex = (*point);
         existVertex = true;
@@ -205,7 +215,8 @@ void discreteEdge::setBoundVertices()
       }
     }
     if(!existVertex){
-      GVertex *gvB = new discreteVertex(model(), model()->maxVertexNum()+1);
+      GVertex *gvB = new discreteVertex
+        (model(), model()->getMaxElementaryNumber(0) + 1);
       //printf("*** Created discreteVertex %d\n", gvB->tag());
       bound_vertex = gvB;
       vE->setEntity(gvB);
@@ -213,19 +224,26 @@ void discreteEdge::setBoundVertices()
       gvB->points.push_back(new MPoint(gvB->mesh_vertices.back()));
       model()->add(gvB);
     }
-    std::vector<MVertex*>::iterator itve = std::find(mesh_vertices.begin(),mesh_vertices.end(), vE);
-    if (itve != mesh_vertices.end())  mesh_vertices.erase(itve);
+    std::vector<MVertex*>::iterator itve = 
+      std::find(mesh_vertices.begin(),mesh_vertices.end(), vE);
+    if (itve != mesh_vertices.end()) mesh_vertices.erase(itve);
    
-    for(GModel::eiter edge = model()->firstEdge(); edge != model()->lastEdge(); edge++){
-      std::vector<MVertex*>::iterator itve = std::find((*edge)->mesh_vertices.begin(), (*edge)->mesh_vertices.end(), vE);
+    for(GModel::eiter edge = model()->firstEdge(); 
+        edge != model()->lastEdge(); edge++){
+      std::vector<MVertex*>::iterator itve = 
+        std::find((*edge)->mesh_vertices.begin(), (*edge)->mesh_vertices.end(), vE);
       if (itve != (*edge)->mesh_vertices.end()) (*edge)->mesh_vertices.erase(itve);
     }
-    for(GModel::fiter face = model()->firstFace(); face != model()->lastFace(); face++){
-      std::vector<MVertex*>::iterator itve = std::find((*face)->mesh_vertices.begin(), (*face)->mesh_vertices.end(), vE);
+    for(GModel::fiter face = model()->firstFace(); 
+        face != model()->lastFace(); face++){
+      std::vector<MVertex*>::iterator itve = 
+        std::find((*face)->mesh_vertices.begin(), (*face)->mesh_vertices.end(), vE);
       if (itve != (*face)->mesh_vertices.end()) (*face)->mesh_vertices.erase(itve);
     }
-    for(GModel::riter reg = model()->firstRegion(); reg != model()->lastRegion(); reg++){
-      std::vector<MVertex*>::iterator itve = std::find((*reg)->mesh_vertices.begin(), (*reg)->mesh_vertices.end(), vE);
+    for(GModel::riter reg = model()->firstRegion(); 
+        reg != model()->lastRegion(); reg++){
+      std::vector<MVertex*>::iterator itve = 
+        std::find((*reg)->mesh_vertices.begin(), (*reg)->mesh_vertices.end(), vE);
       if (itve != (*reg)->mesh_vertices.end()) (*reg)->mesh_vertices.erase(itve);
     }
 
@@ -242,8 +260,10 @@ void discreteEdge::setBoundVertices()
     +---------------+--------------+----------- ... ----------+
     _pars[0]=0   _pars[1]=1    _pars[2]=2             _pars[N+1]=N+1
 */
-void discreteEdge::parametrize( std::map<GFace*,   std::map<MVertex*, MVertex*, std::less<MVertex*> > > &face2Vert, 
-				std::map<GRegion*, std::map<MVertex*, MVertex*, std::less<MVertex*> > > &region2Vert)
+void discreteEdge::parametrize(std::map<GFace*, std::map<MVertex*, MVertex*,
+                               std::less<MVertex*> > > &face2Vert, 
+                               std::map<GRegion*, std::map<MVertex*, MVertex*,
+                               std::less<MVertex*> > > &region2Vert)
 { 
   for (unsigned int i = 0; i < lines.size() + 1; i++){
     _pars.push_back(i);
@@ -262,7 +282,8 @@ void discreteEdge::parametrize( std::map<GFace*,   std::map<MVertex*, MVertex*, 
     if (_orientation[i] == 1 ) vR = lines[i]->getVertex(1);
     else vR = lines[i]->getVertex(0);
     int param = i+1;
-    MVertex *vNEW = new MEdgeVertex(vR->x(),vR->y(),vR->z(), this, param, -1., vR->getNum());
+    MVertex *vNEW = new MEdgeVertex(vR->x(),vR->y(),vR->z(), this, 
+                                    param, -1., vR->getNum());
     old2new.insert(std::make_pair(vR,vNEW));
     newVertices.push_back(vNEW);
     newLines.push_back(new MLine(vL, vNEW));
@@ -283,16 +304,19 @@ void discreteEdge::parametrize( std::map<GFace*,   std::map<MVertex*, MVertex*, 
   //  we need to recreate lines, triangles and tets
   //  that contain those new MEdgeVertices
   
-   for(std::list<GFace*>::iterator iFace = l_faces.begin(); iFace != l_faces.end(); ++iFace){
+   for(std::list<GFace*>::iterator iFace = l_faces.begin(); 
+       iFace != l_faces.end(); ++iFace){
 
      //for each face find correspondane face2Vertex
-     std::map<GFace*,  std::map<MVertex*, MVertex*, std::less<MVertex*> > >::iterator itmap = face2Vert.find(*iFace);
+     std::map<GFace*, std::map<MVertex*, MVertex*, 
+       std::less<MVertex*> > >::iterator itmap = face2Vert.find(*iFace);
      if (itmap == face2Vert.end()) {
        face2Vert.insert(std::make_pair(*iFace, old2new));
      }
      else{
        std::map<MVertex*, MVertex*, std::less<MVertex*> > mapVert = itmap->second;
-       for (std::map<MVertex*, MVertex*, std::less<MVertex*> >::iterator it = old2new.begin(); it != old2new.end(); it++)
+       for (std::map<MVertex*, MVertex*, std::less<MVertex*> >::iterator it =
+              old2new.begin(); it != old2new.end(); it++)
          mapVert.insert(*it);
        itmap->second = mapVert;
      }
@@ -300,13 +324,15 @@ void discreteEdge::parametrize( std::map<GFace*,   std::map<MVertex*, MVertex*, 
      //do the same for regions
      for ( int j = 0; j < (*iFace)->numRegions(); j++){
        GRegion *r = (*iFace)->getRegion(j);
-       std::map<GRegion*,  std::map<MVertex*, MVertex*, std::less<MVertex*> > >::iterator itmap = region2Vert.find(r);
+       std::map<GRegion*,  std::map<MVertex*, MVertex*, 
+         std::less<MVertex*> > >::iterator itmap = region2Vert.find(r);
        if (itmap == region2Vert.end()) {
 	 region2Vert.insert(std::make_pair(r, old2new));
        }
        else{
 	 std::map<MVertex*, MVertex*, std::less<MVertex*> > mapVert = itmap->second;
-	 for (std::map<MVertex*, MVertex*, std::less<MVertex*> >::iterator it = old2new.begin(); it != old2new.end(); it++)
+	 for (std::map<MVertex*, MVertex*, std::less<MVertex*> >::iterator it = 
+                old2new.begin(); it != old2new.end(); it++)
 	   mapVert.insert(*it);
 	 itmap->second = mapVert;
        }
@@ -318,7 +344,8 @@ void discreteEdge::parametrize( std::map<GFace*,   std::map<MVertex*, MVertex*, 
 void discreteEdge::computeNormals () const
 {
   _normals.clear();
-  for (unsigned int i= 0; i < mesh_vertices.size(); i++) _normals[mesh_vertices[i]] = SVector3(0.0,0.0,0.0);
+  for (unsigned int i= 0; i < mesh_vertices.size(); i++) 
+    _normals[mesh_vertices[i]] = SVector3(0.0,0.0,0.0);
   _normals[getBeginVertex()->mesh_vertices[0]] = SVector3(0.0,0.0,0.0);
   _normals[getBeginVertex()->mesh_vertices[0]] = SVector3(0.0,0.0,0.0);
   double J[3][3];
@@ -328,7 +355,8 @@ void discreteEdge::computeNormals () const
     for (unsigned int i = 0; i < (*iFace)->triangles.size(); ++i){
       MTriangle *t = (*iFace)->triangles[i];
       for (int j = 0; j < 3; j++){
-        std::map<MVertex*, SVector3, std::less<MVertex*> >::iterator itn = _normals.find(t->getVertex(j));
+        std::map<MVertex*, SVector3, std::less<MVertex*> >::iterator 
+          itn = _normals.find(t->getVertex(j));
         if (itn != _normals.end()){
           t->getJacobian(0, 0, 0, J);
           SVector3 d1(J[0][0], J[0][1], J[0][2]);
@@ -371,7 +399,8 @@ void discreteEdge::getLocalParameter(const double &t, int &iLine,
     double tmin = _pars[iLine];
     double tmax = _pars[iLine+1];
     if (t >= tmin && t <= tmax){
-      tLoc = _orientation[iLine] ? (t-tmin)/(tmax-tmin) : 1 - (t-tmin)/(tmax-tmin);
+      tLoc = _orientation[iLine] ? (t-tmin)/(tmax-tmin) :
+        1 - (t-tmin)/(tmax-tmin);
       return;
     }
   }

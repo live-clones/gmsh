@@ -268,57 +268,6 @@ bool GModel::empty() const
   return vertices.empty() && edges.empty() && faces.empty() && regions.empty();
 }
 
-int GModel::maxVertexNum()
-{
-  viter it = firstVertex();
-  viter itv = lastVertex();
-  int MAXX = 0;
-  while(it != itv){
-    MAXX = std::max(MAXX, (*it)->tag());
-    ++it;
-  }
-  return MAXX;
-
-}
-int GModel::maxEdgeNum()
-{
-  eiter it = firstEdge();
-  eiter ite = lastEdge();
-  int MAXX = 0;
-  while(it != ite){
-    MAXX = std::max(MAXX, (*it)->tag());
-    ++it;
-  }
-  return MAXX;
-
-}
-
-int GModel::maxFaceNum()
-{
-
-  fiter it =  firstFace();
-  fiter ite = lastFace();
-  int MAXX = 0;
-  while(it != ite){
-    MAXX = std::max(MAXX, (*it)->tag());
-    ++it;
-  }
-  return MAXX;
-}
-
-int GModel::maxRegionNum()
-{
-
-  riter it =  firstRegion();
-  riter ite = lastRegion();
-  int MAXX = 0;
-  while(it != ite){
-    MAXX = std::max(MAXX, (*it)->tag());
-    ++it;
-  }
-  return MAXX;
-}
-
 std::vector<GRegion*> GModel::bindingsGetRegions()
 {
   return std::vector<GRegion*> (regions.begin(), regions.end());
@@ -453,7 +402,7 @@ int GModel::getMaxElementaryNumber(int dim)
   getEntities(entities);
   int num = 0;
   for(unsigned int i = 0; i < entities.size(); i++)
-    if(entities[i]->dim() == dim)
+    if(dim < 0 || entities[i]->dim() == dim)
       num = std::max(num, std::abs(entities[i]->tag()));
   return num;
 }
@@ -1232,7 +1181,7 @@ void GModel::createTopologyFromMesh()
 
       int numF;
       if (nbFaces == 1) numF = (*itF)->tag(); 
-      else numF = maxFaceNum()+1;
+      else numF = getMaxElementaryNumber(2) + 1;
       discreteFace *f = new discreteFace(this, numF);
       //printf("*** Created discreteFace %d \n", numF);
       add(f);
@@ -1425,7 +1374,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
     for (int ib  = 0; ib < nbBounds; ib++){
       std::vector<MEdge> myLines = boundaries[ib];
 
-      int numE = maxEdgeNum()+1;
+      int numE = getMaxElementaryNumber(1) + 1;
       discreteEdge *e = new discreteEdge(this, numE, 0, 0);
       //printf("*** Created discreteEdge %d \n", numE);
       add(e);

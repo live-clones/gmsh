@@ -1147,7 +1147,7 @@ void  splitBoundaryEdges(GModel *model,  std::set<partitionEdge*, Less_partition
         vE = temp;
       }
       if (nbSplit == 0 && segments.empty()) break; 
-      int numEdge = model->maxEdgeNum() + 1;
+      int numEdge = model->getMaxElementaryNumber(1) + 1;
       discreteEdge *newGe = new discreteEdge(model, numEdge, 0, 0);
       newGe->lines.insert(newGe->lines.end(), myLines.begin(), myLines.end());
       model->add(newGe);
@@ -1378,7 +1378,7 @@ void createPartitionFaces(GModel *model, GFaceCompound *gf, int N,
   // Compound is partitioned in N discrete faces
   //--------------------------------------------
   std::vector<std::set<MVertex*> > allNodes;
-  int numMax = model->maxFaceNum() + 1;
+  int numMax = model->getMaxElementaryNumber(2) + 1;
   for(int i = 0; i < N; i++){
     //printf("*** Created discreteFace %d \n", numMax+i);
     discreteFace *face = new discreteFace(model, numMax+i);

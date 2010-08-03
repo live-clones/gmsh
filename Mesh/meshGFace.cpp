@@ -1561,9 +1561,9 @@ void partitionAndRemesh(GFaceCompound *gf)
   //gf->partitionFaceCM(); 
 
   int NF = msp->getNumberOfParts();
-  int numv = gf->model()->maxVertexNum() + 1;
-  int nume = gf->model()->maxEdgeNum() + 1;
-  int numf = gf->model()->maxFaceNum() + 1;
+  int numv = gf->model()->getMaxElementaryNumber(0) + 1;
+  int nume = gf->model()->getMaxElementaryNumber(1) + 1;
+  int numf = gf->model()->getMaxElementaryNumber(2) + 1;
   std::vector<discreteFace*> pFaces;
   createPartitionFaces(gf->model(), gf, NF, pFaces); 
   
@@ -1577,7 +1577,7 @@ void partitionAndRemesh(GFaceCompound *gf)
   Msg::Info("--- Parametrize Compounds:");
  
   //Parametrize Compound Lines
-  int NE = gf->model()->maxEdgeNum() - nume + 1;
+  int NE = gf->model()->getMaxElementaryNumber(1) - nume + 1;
   for (int i=0; i < NE; i++){
     std::vector<GEdge*>e_compound;
     GEdge *pe = gf->model()->getEdgeByTag(nume+i);//partition edge
@@ -1640,7 +1640,7 @@ void partitionAndRemesh(GFaceCompound *gf)
   }
 
   //Removing discrete Vertices - Edges - Faces
-  int NV = gf->model()->maxVertexNum() - numv + 1;
+  int NV = gf->model()->getMaxElementaryNumber(0) - numv + 1;
   for (int i=0; i < NV; i++){
     GVertex *pv = gf->model()->getVertexByTag(numv+i);
     gf->model()->remove(pv);

@@ -180,10 +180,6 @@ class GModel
   int getNumFaces() const { return faces.size(); }
   int getNumEdges() const { return edges.size(); }
   int getNumVertices() const { return vertices.size(); }
-  int maxVertexNum();
-  int maxEdgeNum();
-  int maxFaceNum();
-  int maxRegionNum();
 
   // quickly check if the model is empty (i.e., if it contains no
   // entities)
@@ -234,7 +230,7 @@ class GModel
   void getEntities(std::vector<GEntity*> &entities);
 
   // return the highest number associated with an elementary entity of
-  // a given dimension
+  // a given dimension (or the highest overall if dim < 0)
   int getMaxElementaryNumber(int dim);
 
   // check if there are no physical entities in the model
