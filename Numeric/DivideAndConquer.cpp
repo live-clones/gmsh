@@ -530,8 +530,7 @@ void DocRecord::ConvertDListToVoronoiData()
 void DocRecord::voronoiCell(PointNumero pt, std::vector<SPoint2> &pts) const
 {
   if (!_adjacencies){
-    printf("no adjacencies were created\n");
-    throw;
+    Msg::Error("No adjacencies were created");
   }
   const int n = _adjacencies[pt].t_length;
   for(int j = 0; j < n; j++) {

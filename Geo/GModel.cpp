@@ -24,7 +24,6 @@
 #include "discreteEdge.h"
 #include "discreteVertex.h"
 #include "gmshSurface.h"
-#include "Octree.h"
 #include "SmoothData.h"
 #include "Context.h"
 #include "OS.h"
@@ -247,7 +246,7 @@ void GModel::destroyMeshCaches()
   _elementVectorCache.clear();
   _elementMapCache.clear();
   _elementIndexCache.clear();
-  Octree_Delete(_octree);
+  delete _octree;
   _octree = 0;
 }
 
@@ -672,10 +671,9 @@ MElement *GModel::getMeshElementByCoord(SPoint3 &p)
 {
   if(!_octree){
     Msg::Debug("Rebuilding mesh element octree");
-    _octree = buildMElementOctree(this);
+    _octree = new MElementOctree(this);
   }
-  double P[3] = {p.x(), p.y(), p.z()};
-  return (MElement*)Octree_Search(P, _octree);
+  return _octree->find(p.x(), p.y(), p.z());
 }
 
 MVertex *GModel::getMeshVertexByTag(int n)

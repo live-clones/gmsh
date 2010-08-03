@@ -12,7 +12,15 @@ class Octree;
 class GModel;
 class MElement;
 
-Octree *buildMElementOctree(GModel *);
-Octree *buildMElementOctree(std::vector<MElement*> &);
+class MElementOctree{
+ private:
+  Octree *_octree;
+ public:
+  MElementOctree(GModel *);
+  MElementOctree(std::vector<MElement*> &);
+  ~MElementOctree();
+  MElement *find(double x, double y, double z);
+  Octree *getInternalOctree(){ return _octree; }
+};
 
 #endif

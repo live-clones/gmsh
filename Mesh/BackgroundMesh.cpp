@@ -12,12 +12,11 @@
 #include "GFace.h"
 #include "GModel.h"
 #include "Field.h"
-#include "MElementOctree.h"
 #include "MElement.h"
+#include "MElementOctree.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MVertex.h"
-#include "Octree.h"
 
 #if defined(HAVE_SOLVER)
 #include "dofManager.h"
@@ -120,10 +119,7 @@ static SMetric3 metric_based_on_surface_curvature(const GEdge *ge, double u)
       SPoint2 par = ge->reparamOnFace((*it), u, 1);
       SMetric3 m = metric_based_on_surface_curvature (*it, par.x(), par.y());
       if (!count) mesh_size = m;
-      else mesh_size = intersection ( mesh_size, m);    
-      if ( ge->tag() == 197)
-	printf("edge %d face %d g %g %g -> %g %g %g\n",ge->tag(),(*it)->tag(),
-	       m(0,0),m(1,1),m(2,2),mesh_size(0,0),mesh_size(1,1),mesh_size(2,2));
+      else mesh_size = intersection(mesh_size, m);
       count++;
     }
     ++it;
@@ -140,14 +136,16 @@ static SMetric3 metric_based_on_surface_curvature(const GVertex *gv)
     GEdge *_myGEdge = *ite;
     Range<double> bounds = _myGEdge->parBounds(0);
     if (gv == _myGEdge->getBeginVertex())
-      mesh_size = intersection ( mesh_size, 
-				 metric_based_on_surface_curvature (_myGEdge, bounds.low()));    
+      mesh_size = intersection
+        (mesh_size,
+         metric_based_on_surface_curvature(_myGEdge, bounds.low()));
     else
-      mesh_size = intersection ( mesh_size, 
-				 metric_based_on_surface_curvature (_myGEdge, bounds.high()));  }
+      mesh_size = intersection
+        (mesh_size, 
+         metric_based_on_surface_curvature(_myGEdge, bounds.high()));
+  }
   return mesh_size;
 }
-
 
 // the mesh vertex is classified on a model vertex.  we compute the
 // maximum of the curvature of model faces surrounding this point if
@@ -184,31 +182,15 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
   return lc;
 }
 
-
 static SMetric3 LC_MVertex_CURV_ANISO(GEntity *ge, double U, double V)
 {
   switch(ge->dim()){
-  case 0:        
-    {
-      SMetric3 m = metric_based_on_surface_curvature((const GVertex *)ge);
-      //      printf("0d\n");
-      return m;
-    }
-    break;
-  case 1:
-    {
-      SMetric3 m = metric_based_on_surface_curvature((const GEdge *)ge,U);
-      //      printf("1d %g %g %g\n",m(0,0),m(1,1),m(2,2));
-      return m;
-    }
-    break;
-  case 2:
-    {
-      return metric_based_on_surface_curvature((const GFace *)ge,U,V);
-    }
-    break;
+  case 0: return metric_based_on_surface_curvature((const GVertex *)ge);
+  case 1: return metric_based_on_surface_curvature((const GEdge *)ge, U);
+  case 2: return metric_based_on_surface_curvature((const GFace *)ge, U, V);
   }
-  Msg::Fatal("curvature control impossible to compute for a volume !");
+  Msg::Error("Curvature control impossible to compute for a volume!");
+  return SMetric3();
 }
 
 // compute the mesh size at a given vertex due to prescribed sizes at
@@ -385,7 +367,7 @@ backgroundMesh::backgroundMesh(GFace *_gf)
     }
     _triangles.push_back(new MTriangle(news[0],news[1],news[2]));
   }
-  _octree = buildMElementOctree(_triangles); 
+  _octree = new MElementOctree(_triangles); 
   if (CTX::instance()->mesh.lcFromPoints)
     propagate1dMesh(_gf);
   else {
@@ -585,12 +567,12 @@ double backgroundMesh::operator() (double u, double v, double w) const
   double uv[3] = {u, v, w};
   double uv2[3];
   //  return 1.0;
-  MElement *e = (MElement*)Octree_Search(uv, _octree);
+  MElement *e = _octree->find(u, v, w);
   if (!e) {
-    Msg::Error("cannot find %g %g",u,v);
+    Msg::Error("cannot find %g %g", u, v);
     return 1.0;
   }
-  e->xyz2uvw (uv,uv2);
+  e->xyz2uvw(uv, uv2);
   std::map<MVertex*,double>::const_iterator itv1 = _sizes.find(e->getVertex(0));
   std::map<MVertex*,double>::const_iterator itv2 = _sizes.find(e->getVertex(1));
   std::map<MVertex*,double>::const_iterator itv3 = _sizes.find(e->getVertex(2));

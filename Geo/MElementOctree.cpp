@@ -3,10 +3,10 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include "MElement.h"
 #include "GModel.h"
+#include "MElement.h"
+#include "MElementOctree.h"
 #include "Octree.h"
-#include "MVertex.h"
 
 static void MElementBB(void *a, double *min, double *max)
 {
@@ -47,7 +47,7 @@ static int MElementInEle(void *a, double *x)
   return e->isInside(uvw[0], uvw[1], uvw[2]) ? 1 : 0;
 }
 
-Octree *buildMElementOctree(GModel *m)
+MElementOctree::MElementOctree(GModel *m)
 {
   SBoundingBox3d bb = m->bounds();
   double min[3] = {bb.min().x(), bb.min().y(), bb.min().z()};
@@ -55,18 +55,17 @@ Octree *buildMElementOctree(GModel *m)
                     bb.max().y() - bb.min().y(),
                     bb.max().z() - bb.min().z()};
   const int maxElePerBucket = 100; // memory vs. speed trade-off
-  Octree *_octree = Octree_Create(maxElePerBucket, min, size,
-                                  MElementBB, MElementCentroid, MElementInEle);
+  _octree = Octree_Create(maxElePerBucket, min, size,
+                          MElementBB, MElementCentroid, MElementInEle);
   std::vector<GEntity*> entities;
   m->getEntities(entities);
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
       Octree_Insert(entities[i]->getMeshElement(j), _octree);
   Octree_Arrange(_octree);
-  return _octree;
 }
 
-Octree *buildMElementOctree(std::vector<MElement*> &v)
+MElementOctree::MElementOctree(std::vector<MElement*> &v)
 {
   SBoundingBox3d bb;
   for (unsigned int i = 0; i < v.size(); i++){
@@ -81,10 +80,21 @@ Octree *buildMElementOctree(std::vector<MElement*> &v)
                     bb.max().y() - bb.min().y(),
                     bb.max().z() - bb.min().z()};
   const int maxElePerBucket = 100; // memory vs. speed trade-off
-  Octree *_octree = Octree_Create(maxElePerBucket, min, size,
-                                  MElementBB, MElementCentroid, MElementInEle);
+  _octree = Octree_Create(maxElePerBucket, min, size,
+                          MElementBB, MElementCentroid, MElementInEle);
   for (unsigned int i = 0; i < v.size(); i++)
     Octree_Insert(v[i], _octree);
   Octree_Arrange(_octree);
-  return _octree;
 }
+
+MElementOctree::~MElementOctree()
+{
+  Octree_Delete(_octree);
+}
+
+MElement *MElementOctree::find(double x, double y, double z)
+{
+  double P[3] = {x, y, z};
+  return (MElement*)Octree_Search(P, _octree);
+}
+

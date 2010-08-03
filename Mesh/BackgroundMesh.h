@@ -10,7 +10,7 @@
 #include "simpleFunction.h"
 #include <vector>
 
-class Octree;
+class MElementOctree;
 class GFace;
 class MElement;
 class MVertex;
@@ -18,7 +18,7 @@ class GEntity;
 
 class backgroundMesh : public simpleFunction<double>
 {
-  Octree *_octree;
+  MElementOctree *_octree;
   std::vector<MVertex*> _vertices;
   std::vector<MElement*> _triangles;
   std::map<MVertex*,double> _sizes;  

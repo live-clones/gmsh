@@ -18,7 +18,6 @@
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
 
-class Octree;
 class FM_Internals;
 class GEO_Internals;
 class OCC_Internals;
@@ -29,6 +28,7 @@ class CGNSOptions;
 class gLevelset;
 class discreteFace;
 class binding;
+class MElementOctree;
 class GModelFactory;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
@@ -58,7 +58,7 @@ class GModel
   std::multimap<MElement*, short> _ghostCells;
 
   // an octree for fast mesh element lookup
-  Octree *_octree;
+  MElementOctree *_octree;
 
   // Geo (Gmsh native) model internal data
   GEO_Internals *_geo_internals;

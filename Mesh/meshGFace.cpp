@@ -31,7 +31,6 @@
 #include "qualityMeasures.h"
 #include "Field.h"
 #include "OS.h"
-#include "Octree.h"
 #include "MElementOctree.h"
 #include "HighOrder.h"
 #include "meshGEdge.h"
@@ -749,11 +748,10 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   }
 
   if (Msg::GetVerbosity() == 10){
-    Octree *_octree = buildMElementOctree(gf->model());
+    MElementOctree octree(gf->model());
     doc.Voronoi();
     doc.makePosView("voronoi.pos", gf);
-    doc.printMedialAxis(_octree, "skeleton.pos", gf);
-    Octree_Delete(_octree);
+    doc.printMedialAxis(octree.getInternalOctree(), "skeleton.pos", gf);
   }
 
   gf->triangles.clear();
