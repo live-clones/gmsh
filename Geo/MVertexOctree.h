@@ -9,7 +9,9 @@ class MVertexOctree{
  private:
   Octree *_octree;
  public:
-  MVertexOctree(GModel *);
+  static double tolerance;
+ public:
+  MVertexOctree(GModel *, double);
   ~MVertexOctree();
   void insert(MVertex *);
   void finalize();

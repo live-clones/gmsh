@@ -16,6 +16,7 @@
 #include "fullMatrix.h"
 #include "Numeric.h"
 #include "GaussLegendre1D.h"
+#include "ExtrudeParams.h"
 #include "Context.h"
 #include "meshGFaceLloyd.h"
 #include "Bindings.h"
@@ -135,6 +136,13 @@ void GFace::resetMeshAttributes()
   meshAttributes.transfiniteArrangement = 0;
   meshAttributes.transfiniteSmoothing = -1;
   meshAttributes.extrude = 0;
+}
+
+bool GFace::isMeshExtruded()
+{
+  ExtrudeParams *ep = meshAttributes.extrude;
+  if(ep && ep->mesh.ExtrudeMesh) return true;
+  return false;
 }
 
 SBoundingBox3d GFace::bounds() const

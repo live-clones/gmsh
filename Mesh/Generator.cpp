@@ -439,14 +439,18 @@ static void Mesh2D(GModel *m)
   // field generated from the surface mesh of the source surfaces
   if(!Mesh2DWithBoundaryLayers(m)){
   
-    std::set<GFace*> faces, compoundFaces;
+    std::set<GFace*> compoundFaces, extrudedFaces, otherFaces;
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
-      if ((*it)->geomType() == GEntity::CompoundSurface)
+      GFace *gf = *it;
+      if (gf->geomType() == GEntity::CompoundSurface)
         compoundFaces.insert(*it);
+      else if(gf->isMeshExtruded())
+        extrudedFaces.insert(gf);
       else
-        faces.insert(*it);
+        otherFaces.insert(gf);
     }
-    std::for_each(faces.begin(), faces.end(), meshGFace());
+    std::for_each(otherFaces.begin(), otherFaces.end(), meshGFace());
+    std::for_each(extrudedFaces.begin(), extrudedFaces.end(), meshGFace());
     std::for_each(compoundFaces.begin(), compoundFaces.end(), meshGFace());
 
     // lloyd optimization

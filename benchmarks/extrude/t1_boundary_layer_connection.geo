@@ -16,9 +16,10 @@ Extrude { Surface{6}; Layers{5, 0.01}; Recombine; }
 
 Point(100) = {0,  0, 0.15, lc} ;
 Point(101) = {.1, 0, 0.15, lc} ;
-
+/*
 Line(100) = {8, 100};
 Line(101) = {12, 101};
 Line(102) = {100, 101};
 Line Loop(100) = {9,101,-102,-100};
 Plane Surface(100) = 100;
+*/

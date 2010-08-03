@@ -9,10 +9,12 @@
 #include "MVertexOctree.h"
 #include "SBoundingBox3d.h"
 
+double MVertexOctree::tolerance = 1.e-6;
+
 static void MVertexBB(void *a, double *min, double *max)
 {
   MVertex *v = (MVertex*)a;
-  double tol = MVertexLessThanLexicographic::tolerance;
+  double tol = MVertexOctree::tolerance;
   min[0] = v->x() - tol;
   max[0] = v->x() + tol;
   min[1] = v->y() - tol;
@@ -35,12 +37,14 @@ static int MVertexInEle(void *a, double *x)
   double d = sqrt((x[0] - v->x()) * (x[0] - v->x()) +
                   (x[1] - v->y()) * (x[1] - v->y()) +
                   (x[2] - v->z()) * (x[2] - v->z()));
-  return (d < MVertexLessThanLexicographic::tolerance);
+  return (d < MVertexOctree::tolerance);
 }
 
-MVertexOctree::MVertexOctree(GModel *m)
+MVertexOctree::MVertexOctree(GModel *m, double tol)
 {
+  tolerance = tol;
   SBoundingBox3d bb = m->bounds();
+  bb *= 1.2;
   double min[3] = {bb.min().x(), bb.min().y(), bb.min().z()};
   double size[3] = {bb.max().x() - bb.min().x(),
                     bb.max().y() - bb.min().y(),

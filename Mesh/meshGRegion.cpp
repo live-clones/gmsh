@@ -583,7 +583,6 @@ void meshGRegion::operator() (GRegion *gr)
   if(CTX::instance()->mesh.meshOnlyVisible && !gr->getVisibility()) return;
 
   ExtrudeParams *ep = gr->meshAttributes.extrude;
-
   if(ep && ep->mesh.ExtrudeMesh) return;
 
   // destroy the mesh if it exists
