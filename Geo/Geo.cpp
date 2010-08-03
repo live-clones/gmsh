@@ -914,14 +914,14 @@ static Curve *DuplicateCurve(Curve *c, bool copyMeshingMethod)
   Curve *pc = Create_Curve(NEWLINE(), 0, 1, NULL, NULL, -1, -1, 0., 1.);
   CopyCurve(c, pc, copyMeshingMethod);
   Tree_Insert(GModel::current()->getGEOInternals()->Curves, &pc);
-  pc->beg = DuplicateVertex(c->beg);
-  pc->end = DuplicateVertex(c->end);
   for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
     Vertex *v;
     List_Read(pc->Control_Points, i, &v);
     Vertex *newv = DuplicateVertex(v);
     List_Write(pc->Control_Points, i, &newv);
   }
+  pc->beg = DuplicateVertex(c->beg);
+  pc->end = DuplicateVertex(c->end);
   CreateReversedCurve(pc);
   return pc;
 }
