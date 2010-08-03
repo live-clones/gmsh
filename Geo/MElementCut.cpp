@@ -86,6 +86,7 @@ void MPolyhedron::_init()
 
 bool MPolyhedron::isInside(double u, double v, double w)
 {
+  if(!_orig) return false;
   double uvw[3] = {u, v, w};
   for(unsigned int i = 0; i < _parts.size(); i++) {
     double verts[4][3];
@@ -110,8 +111,9 @@ bool MPolyhedron::isInside(double u, double v, double w)
 void MPolyhedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   *npts = 0;
-  double jac[3][3];
   if(_intpt) delete [] _intpt;
+  if(!_orig) return;
+  double jac[3][3];
   _intpt = new IntPt[getNGQTetPts(pOrder) * _parts.size()];
   for(unsigned int i = 0; i < _parts.size(); i++) {
     int nptsi;
@@ -209,6 +211,7 @@ void MPolygon::_initVertices()
 }
 bool MPolygon::isInside(double u, double v, double w)
 {
+  if(!_orig) return false;
   double uvw[3] = {u, v, w};
   for(unsigned int i = 0; i < _parts.size(); i++) {
     double v_uvw[3][3];
@@ -232,8 +235,9 @@ bool MPolygon::isInside(double u, double v, double w)
 void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   *npts = 0;
-  double jac[3][3];
   if(_intpt) delete [] _intpt;
+  if(!_orig) return;
+  double jac[3][3];
   _intpt = new IntPt[getNGQTPts(pOrder) * _parts.size()];
   for(unsigned int i = 0; i < _parts.size(); i++) {
     int nptsi;
@@ -270,6 +274,7 @@ void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 
 bool MLineChild::isInside(double u, double v, double w)
 {
+  if(!_orig) return false;
   double uvw[3] = {u, v, w};
   double v_uvw[2][3];
   for(int i = 0; i < 2; i++) {
@@ -290,8 +295,9 @@ bool MLineChild::isInside(double u, double v, double w)
 void MLineChild::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   *npts = 0;
-  double jac[3][3];
   if(_intpt) delete [] _intpt;
+  if(!_orig) return;
+  double jac[3][3];
   _intpt = new IntPt[getNGQLPts(pOrder)];
 
   int nptsi;
@@ -365,6 +371,7 @@ void MTriangleBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   *npts = 0;
   if(_intpt) delete [] _intpt;
+  if(!getParent()) return;
   _intpt = new IntPt[getNGQTPts(pOrder)];
   int nptsi;
   IntPt *ptsi;
@@ -403,6 +410,7 @@ void MPolygonBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   *npts = 0;
   if(_intpt) delete [] _intpt;
+  if(!getParent()) return;
   _intpt = new IntPt[getNGQTPts(pOrder) * _parts.size()];
   int nptsi;
   IntPt *ptsi;
@@ -447,6 +455,7 @@ void MLineBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   *npts = 0;
   if(_intpt) delete [] _intpt;
+  if(!getParent()) return;
   _intpt = new IntPt[getNGQLPts(pOrder)];
   int nptsi;
   IntPt *ptsi;
@@ -550,7 +559,7 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
 
   double lsMean = 0.;
   for(int k = 0; k < e->getNumVertices(); k++)
-    lsMean += verticesLs(e->getVertex(k)->getIndex(), 0);
+    lsMean += verticesLs(0, e->getVertex(k)->getIndex());
   int lsTag = (lsMean < 0) ? 1 : -1;
 
   switch (eType) {
@@ -689,7 +698,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
                    e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
                    e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
                    e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z());
-        for(int i = 0; i < 4; i++) nodeLs[i] = &verticesLs(e->getVertex(i)->getIndex(),0);
+        for(int i = 0; i < 4; i++) nodeLs[i] = &verticesLs(0, e->getVertex(i)->getIndex());
         isCut = T.cut(RPN, ipV, ipS, cp, integOrder, integOrder, integOrder,
                       tetras, quads, triangles, 0, nodeLs);
       }
@@ -702,7 +711,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
                   e->getVertex(5)->x(), e->getVertex(5)->y(), e->getVertex(5)->z(),
                   e->getVertex(6)->x(), e->getVertex(6)->y(), e->getVertex(6)->z(),
                   e->getVertex(7)->x(), e->getVertex(7)->y(), e->getVertex(7)->z());
-        for(int i = 0; i < 8; i++) nodeLs[i] = &verticesLs(e->getVertex(i)->getIndex(),0);
+        for(int i = 0; i < 8; i++) nodeLs[i] = &verticesLs(0, e->getVertex(i)->getIndex());
         isCut = H.cut(RPN, ipV, ipS, cp, integOrder, integOrder, integOrder, integOrder,
                       hexas, tetras, quads, triangles, lines, 0, nodeLs);
       }
@@ -711,25 +720,25 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
                     e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
                     e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
                     e->getVertex(5)->x(), e->getVertex(5)->y(), e->getVertex(5)->z());
-        for(int i = 0; i < 3; i++) nodeLs[i] = &verticesLs(e->getVertex(i)->getIndex(),0);
-        nodeLs[3] = &verticesLs(e->getVertex(5)->getIndex(),0);
+        for(int i = 0; i < 3; i++) nodeLs[i] = &verticesLs(0, e->getVertex(i)->getIndex());
+        nodeLs[3] = &verticesLs(0, e->getVertex(5)->getIndex());
         bool iC1 = T1.cut(RPN, ipV, ipS, cp, integOrder, integOrder, integOrder,
                           tetras, quads, triangles, 0, nodeLs);
         DI_Tetra T2(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
                     e->getVertex(4)->x(), e->getVertex(4)->y(), e->getVertex(4)->z(),
                     e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
                     e->getVertex(5)->x(), e->getVertex(5)->y(), e->getVertex(5)->z());
-        nodeLs[0] = &verticesLs(e->getVertex(0)->getIndex(),0);
-        nodeLs[1] = &verticesLs(e->getVertex(4)->getIndex(),0);
-        nodeLs[2] = &verticesLs(e->getVertex(1)->getIndex(),0);
-        nodeLs[3] = &verticesLs(e->getVertex(5)->getIndex(),0);
+        nodeLs[0] = &verticesLs(0, e->getVertex(0)->getIndex());
+        nodeLs[1] = &verticesLs(0, e->getVertex(4)->getIndex());
+        nodeLs[2] = &verticesLs(0, e->getVertex(1)->getIndex());
+        nodeLs[3] = &verticesLs(0, e->getVertex(5)->getIndex());
         bool iC2 = T2.cut(RPN, ipV, ipS, cp, integOrder, integOrder, integOrder,
                           tetras, quads, triangles, 0, nodeLs);
         DI_Tetra T3(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
                     e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z(),
                     e->getVertex(4)->x(), e->getVertex(4)->y(), e->getVertex(4)->z(),
                     e->getVertex(5)->x(), e->getVertex(5)->y(), e->getVertex(5)->z());
-        for(int i = 1; i < 4; i++) nodeLs[i] = &verticesLs(e->getVertex(i+2)->getIndex(),0);
+        for(int i = 1; i < 4; i++) nodeLs[i] = &verticesLs(0, e->getVertex(i+2)->getIndex());
         bool iC3 = T3.cut(RPN, ipV, ipS, cp, integOrder, integOrder, integOrder,
                           tetras, quads, triangles, 0, nodeLs);
         isCut = iC1 || iC2 || iC3;
@@ -739,16 +748,16 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
                     e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
                     e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
                     e->getVertex(4)->x(), e->getVertex(4)->y(), e->getVertex(4)->z());
-        for(int i = 0; i < 3; i++) nodeLs[i] = &verticesLs(e->getVertex(i)->getIndex(),0);
-        nodeLs[3] = &verticesLs(e->getVertex(4)->getIndex(),0);
+        for(int i = 0; i < 3; i++) nodeLs[i] = &verticesLs(0, e->getVertex(i)->getIndex());
+        nodeLs[3] = &verticesLs(0, e->getVertex(4)->getIndex());
         bool iC1 = T1.cut(RPN, ipV, ipS, cp, integOrder, integOrder, integOrder,
                           tetras, quads, triangles, 0, nodeLs);
         DI_Tetra T2(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
                     e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
                     e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z(),
                     e->getVertex(4)->x(), e->getVertex(4)->y(), e->getVertex(4)->z());
-        nodeLs[0] = &verticesLs(e->getVertex(0)->getIndex(),0);
-        for(int i = 1; i < 4; i++) nodeLs[i] = &verticesLs(e->getVertex(i+1)->getIndex(),0);
+        nodeLs[0] = &verticesLs(0, e->getVertex(0)->getIndex());
+        for(int i = 1; i < 4; i++) nodeLs[i] = &verticesLs(0, e->getVertex(i+1)->getIndex());
         bool iC2 = T2.cut(RPN, ipV, ipS, cp, integOrder, integOrder, integOrder,
                           tetras, quads, triangles, 0, nodeLs);
         isCut = iC1 || iC2;
@@ -760,7 +769,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
                        t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
                        t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
                        t->getVertex(3)->x(), t->getVertex(3)->y(), t->getVertex(3)->z());
-          for(int i = 0; i < 4; i++) nodeLs[i] = &verticesLs(t->getVertex(i)->getIndex(),0);
+          for(int i = 0; i < 4; i++) nodeLs[i] = &verticesLs(0, t->getVertex(i)->getIndex());
           bool iC = Tet.cut(RPN, ipV, ipS, cp, integOrder, integOrder, integOrder,
                             tetras, quads, triangles, 0, nodeLs);
           isCut = (isCut || iC);
@@ -812,6 +821,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
           elements[9][elementary].push_back(p2);
           assignPhysicals(GM, gePhysicals, elementary, 3, physicals);
         }
+        // check for border surfaces cut earlier along the polyhedra
         std::pair<std::multimap<MElement*, MElement*>::iterator,
                   std::multimap<MElement*, MElement*>::iterator> itr = borders[1].equal_range(copy);
         for(std::multimap<MElement*, MElement*>::iterator it = itr.first;
@@ -895,7 +905,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
         DI_Triangle T(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
                       e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
                       e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z());
-        for(int i = 0; i < 3; i++) nodeLs[i] = &verticesLs(e->getVertex(i)->getIndex(),0);
+        for(int i = 0; i < 3; i++) nodeLs[i] = &verticesLs(0, e->getVertex(i)->getIndex());
         isCut = T.cut(RPN, ipV, ipS, cp, integOrder, integOrder, integOrder,
                       quads, triangles, lines, 0, nodeLs);
       }
@@ -904,7 +914,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
                   e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
                   e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
                   e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z());
-        for(int i = 0; i < 4; i++) nodeLs[i] = &verticesLs(e->getVertex(i)->getIndex(),0);
+        for(int i = 0; i < 4; i++) nodeLs[i] = &verticesLs(0, e->getVertex(i)->getIndex());
         isCut = Q.cut(RPN, ipV, ipS, cp, integOrder,integOrder,integOrder,
                       quads, triangles, lines, 0, nodeLs);
       }
@@ -914,7 +924,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
           DI_Triangle Tri(t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
                           t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
                           t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z());
-          for(int i = 0; i < 3; i++) nodeLs[i] = &verticesLs(t->getVertex(i)->getIndex(),0);
+          for(int i = 0; i < 3; i++) nodeLs[i] = &verticesLs(0, t->getVertex(i)->getIndex());
           bool iC = Tri.cut(RPN, ipV, ipS, cp, integOrder, integOrder, integOrder,
                             quads, triangles, lines, 0, nodeLs);
           isCut = (isCut || iC);
@@ -945,11 +955,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
               else mv[j] = it->second;
             }
           }
-          MTriangle *mt;
-          if(eType == MSH_TRI_B || eType == MSH_POLYG_B)
-            mt = new MTriangleBorder(mv[0], mv[1], mv[2], 0, 0,
-                                        copy->getDomain(0), copy->getDomain(1));
-          else mt = new MTriangle(mv[0], mv[1], mv[2], 0, 0);
+          MTriangle *mt = new MTriangle(mv[0], mv[1], mv[2], 0, 0);
           if(triangles[i]->lsTag() < 0)
             poly[0].push_back(mt);
           else
@@ -957,7 +963,10 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
         }
         bool own = (eParent && !e->ownsParent()) ? false : true;
         if(poly[0].size()) {
-          p1 = new MPolygon(poly[0], ++numEle, ePart, own, parent);
+          if(eType == MSH_TRI_B || eType == MSH_POLYG_B)
+            p1 = new MPolygonBorder(poly[0], ++numEle, ePart,
+                                    copy->getDomain(0), copy->getDomain(1));
+          else p1 = new MPolygon(poly[0], ++numEle, ePart, own, parent);
           own = false;
           int reg = getElementaryTag(-1, elementary, newElemTags[2]);
           std::vector<int> phys;
@@ -969,13 +978,17 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
               borders[1].insert(std::pair<MElement*, MElement*>(p1->getDomain(i), p1));
         }
         if(poly[1].size()) {
-          p2 = new MPolygon(poly[1], ++numEle, ePart, own, parent);
+          if(eType == MSH_TRI_B || eType == MSH_POLYG_B)
+            p2 = new MPolygonBorder(poly[1], ++numEle, ePart,
+                                    copy->getDomain(0), copy->getDomain(1));
+          else p2 = new MPolygon(poly[1], ++numEle, ePart, own, parent);
           elements[8][elementary].push_back(p2);
           assignPhysicals(GM, gePhysicals, elementary, 2, physicals);
           for(int i = 0; i < 2; i++)
             if(p2->getDomain(i))
               borders[1].insert(std::pair<MElement*, MElement*>(p2->getDomain(i), p2));
         }
+        // check for border lines cut earlier along the polygons
         std::pair<std::multimap<MElement*, MElement*>::iterator,
                   std::multimap<MElement*, MElement*>::iterator> itr = borders[0].equal_range(copy);
         for(std::multimap<MElement*, MElement*>::iterator it = itr.first;
@@ -1049,10 +1062,11 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
     break;
   case MSH_LIN_2 :
   case MSH_LIN_B :
+  case MSH_LIN_C :
     {
       DI_Line L(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
                 e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z());
-      for(int i = 0; i < 2; i++) nodeLs[i] = &verticesLs(e->getVertex(i)->getIndex(),0);
+      for(int i = 0; i < 2; i++) nodeLs[i] = &verticesLs(0, e->getVertex(i)->getIndex());
       isCut = L.cut(RPN, ipV, cp, integOrder, lines, 0, nodeLs);
 
       if(isCut) {
@@ -1116,7 +1130,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
     }
     break;
   default :
-    Msg::Error("This type of element cannot be cut.");
+    Msg::Error("This type of element cannot be cut %d.",eType);
     return;
   }
 
@@ -1147,16 +1161,16 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   ls->getPrimitives(primitives);
   int numVert = gm->indexMeshVertices(true);
   int nbLs = (cutElem) ? primitives.size() : 1;
-  fullMatrix<double> verticesLs(numVert + 1, nbLs);
+  fullMatrix<double> verticesLs(nbLs, numVert + 1);
   //compute and store levelset values
   for(unsigned int i = 0; i < gmEntities.size(); i++) {
     for(unsigned int j = 0; j < gmEntities[i]->getNumMeshVertices(); j++) {
       MVertex *vi = gmEntities[i]->getMeshVertex(j);
       if(cutElem)
         for(unsigned int k = 0; k < primitives.size(); k++)
-          verticesLs(vi->getIndex(), k) = (*primitives[k])(vi->x(), vi->y(), vi->z());
+          verticesLs(k, vi->getIndex()) = (*primitives[k])(vi->x(), vi->y(), vi->z());
       else
-        verticesLs(vi->getIndex(), 0) = (*ls)(vi->x(), vi->y(), vi->z());
+        verticesLs(0, vi->getIndex()) = (*ls)(vi->x(), vi->y(), vi->z());
     }
   }
 

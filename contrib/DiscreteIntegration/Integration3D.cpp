@@ -935,15 +935,16 @@ void DI_Element::computeLsTagDom(const DI_Element *e, const std::vector<const gL
     {setLsTag(1); delete bar; return;}
   for(int i = 0; i < nbVert(); i++) {
     DI_Point* mid = middle (pt(i), bar, e, RPN);
-    delete bar;
     if(mid->isOutsideDomain())
-      {delete mid; return;}
+      {delete mid; delete bar; return;}
     if(mid->isInsideDomain())
-      {setLsTag(1); delete mid; return;}
+      {setLsTag(1); delete mid; delete bar; return;}
+    delete mid;
   }
+  delete bar;
   printf("Error : Unable to determine the sign of the element : \n");
-  printf("Parent element : "); e->printls();
-  printf("Element : "); printls();
+  printf(" - Parent element : "); e->printls();
+  printf(" - Element : "); printls();
 }
 // set the lsTag to -1 if the element is not on the border of the domain
 void DI_Element::computeLsTagBound(std::vector<DI_Hexa *> &hexas, std::vector<DI_Tetra *> &tetras){
@@ -1036,7 +1037,6 @@ bool DI_ElementLessThan::operator()(const DI_Element *e1, const DI_Element *e2) 
     if(e1->y(i) - e2->y(i) >  tolerance) return true;
     if(e1->y(i) - e2->y(i) < -tolerance) return false;
     if(e1->z(i) - e2->z(i) >  tolerance) return true;
-    return false;
   }
   return false;
 }
@@ -1450,7 +1450,7 @@ void DI_Triangle::selfSplit (const DI_Element *e, const std::vector<const gLevel
   bool quadT = (e->getPolynomialOrder() == 2) ? true : false; // if true, use quadratic sub triangles
   int LStag = RPNi.back()->getTag();
 
-  int nbZe = 0, ze[2];
+  int nbZe = 0, ze[3];
   for(int i = 0; i < 3; i++)
     if(pt(i)->isOnBorder())
       ze[nbZe++] = i;
@@ -1568,7 +1568,7 @@ void DI_Tetra::selfSplit (const DI_Element *e, const std::vector<const gLevelset
   bool quadT = (e->getPolynomialOrder() == 2) ? true : false; // use of quadratic surf triangles and quadratic sub tetrahedra
   int tag = RPNi.back()->getTag();
 
-  int nbZe = 0, ze[3];
+  int nbZe = 0, ze[4];
   for(int i = 0; i < 4; i++)
     if(pt(i)->isOnBorder())
       ze[nbZe++] = i;
@@ -2252,6 +2252,8 @@ bool DI_Triangle::cut (const DI_Element *e, const std::vector<const gLevelset *>
       surfLines.push_back(new DI_Line(pt(ze[0]), pt(ze[1]), RPNi.back()->getTag()));
       // add the line twice if the edge belongs to 2 triangles => remove it later!
     }
+    if(on == 3)
+      printf("Warning : triangle with zero levelset on every vertex.\n");
     for(int i = 0; i < on; i++)
       cp.push_back(new DI_CuttingPoint(pt(ze[i])));
     subTriangles.push_back(this);
@@ -2295,7 +2297,7 @@ bool DI_Quad::cut (std::vector<const gLevelset *> &RPN, std::vector<DI_Integrati
         for(int i = 0; i < nbSubTr; i++) qq_subTriangles[i]->addLs(qq);
         for(int i = 0; i < nbSurfLn; i++) qq_surfLines[i]->addLs(qq);
         for(int i = 0; i < nbCP; i++) qq_cp[i]->addLs(qq);
-        int pos = 0, neg = 0, ze[2], cz = 0;
+        int pos = 0, neg = 0, ze[4], cz = 0;
         for (int i = 0; i < 4; i++){
           if(qq->pt(i)->isOnBorder()) ze[cz++] = i;
           else if (qq->ls(i) > 0.) pos++;
@@ -2443,6 +2445,8 @@ bool DI_Quad::cut (const DI_Element *e, const std::vector<const gLevelset *> &RP
       surfLines.push_back(new DI_Line(pt(ze[0]), pt(ze[1]), RPNi.back()->getTag()));
       // we add the line twice if the edge belongs to 2 quads => remove it later!
     }
+    if(on == 4)
+      printf("Warning : quadrangle with zero levelset on every vertex.\n");
     for(int i = 0; i < on; i++)
       cp.push_back(new DI_CuttingPoint(pt(ze[i])));
     subQuads.push_back(this);
@@ -2489,7 +2493,7 @@ bool DI_Tetra::cut (std::vector<const gLevelset *> &RPN, std::vector<DI_Integrat
         for(int i = 0; i < nbSurfQ; i++) tt_surfQuads[i]->addLs(tt);
         for(int i = 0; i < nbSurfTr; i++) tt_surfTriangles[i]->addLs(tt);
         for(int i = 0; i < nbCP; i++) tt_cp[i]->addLs(tt);
-        int ze[3], cz = 0;
+        int ze[4], cz = 0;
         for (int i = 0; i < 4; i++) if(tt->pt(i)->isOnBorder()) ze[cz++] = i;
 
         for(int t = 0; t < nbSubT; t++) {
@@ -2611,6 +2615,8 @@ bool DI_Tetra::cut (const DI_Element *e, const std::vector<const gLevelset *> &R
       surfTriangles.push_back(new DI_Triangle(pt(ze[0]), pt(ze[1]), pt(ze[2]), RPNi.back()->getTag()));
       // add the triangle twice if the face belongs to 2 tetras => remove it later!
     }
+    if(on == 4)
+      printf("Warning : tetrahedron with zero levelset on every vertex.\n");
     for(int i = 0; i < on; i++)
       cp.push_back(new DI_CuttingPoint(pt(ze[i])));
     subTetras.push_back(this); // add the tetra to subTetras if it is not cut
@@ -2664,7 +2670,7 @@ bool DI_Hexa::cut (std::vector<const gLevelset *> &RPN, std::vector<DI_Integrati
         for(int i = 0; i < nbSurfTr; i++) hh_surfTriangles[i]->addLs(hh);
         for(int i = 0; i < nbFrontLn; i++) hh_frontLines[i]->addLs(hh);
         for(int i = 0; i < nbCP; i++) hh_cp[i]->addLs(hh);
-        int pos = 0, neg = 0, ze[4], cz = 0;
+        int pos = 0, neg = 0, ze[8], cz = 0;
         for (int i = 0; i < 8; i++){
           if(hh->pt(i)->isOnBorder()) ze[cz++] = i;
           else if (hh->ls(i) > 0.) pos++;
