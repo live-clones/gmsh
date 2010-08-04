@@ -251,6 +251,8 @@ static int _save_vtk(const char *name){ return genericMeshFileDialog
     (name, "VTK Options", FORMAT_VTK, true, false); }
 static int _save_diff(const char *name){ return genericMeshFileDialog
     (name, "Diffpack Options", FORMAT_DIFF, true, false); }
+static int _save_inp(const char *name){ return genericMeshFileDialog
+    (name, "Abaqus INP Options", FORMAT_INP, false, false); }
 static int _save_med(const char *name){ return genericMeshFileDialog
     (name, "MED Options", FORMAT_MED, false, false); }
 static int _save_mesh(const char *name){ return genericMeshFileDialog
@@ -297,6 +299,7 @@ static int _save_auto(const char *name)
   case FORMAT_MESH : return _save_mesh(name);
   case FORMAT_BDF  : return _save_bdf(name);
   case FORMAT_DIFF : return _save_diff(name);
+  case FORMAT_INP  : return _save_inp(name);
   case FORMAT_P3D  : return _save_p3d(name);
   case FORMAT_IR3  : return _save_ir3(name);
   case FORMAT_STL  : return _save_stl(name);
@@ -334,6 +337,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
     {"Gmsh Unrolled Geometry" TT "*.geo", _save_geo},
     SEPARATOR_OUT
 #if defined(HAVE_LIBCGNS)
+    {"Abaqus INP Mesh" TT "*.inp", _save_inp},
     {"CGNS (Experimental)" TT "*.cgns", _save_cgns},
 #endif
     {"Diffpack 3D Mesh" TT "*.diff", _save_diff},
@@ -1590,7 +1594,7 @@ static void mesh_save_cb(Fl_Widget *w, void *data)
                     "Cancel", "Replace", 0, name.c_str()))
         return;
   }
-  CreateOutputFile(name, CTX::instance()->mesh.format);
+  CreateOutputFile(name, name.empty() ? FORMAT_MSH : CTX::instance()->mesh.format);
 }
 
 static void mesh_define_cb(Fl_Widget *w, void *data)

@@ -61,9 +61,7 @@ void PrintUsage(const char *name)
   Msg::Direct("  -part int             Partition after batch mesh generation");
   Msg::Direct("  -renumber             Renumber the mesh elements after batch mesh generation");
   Msg::Direct("  -saveall              Save all elements (discard physical group definitions)");
-  Msg::Direct("  -o file               Specify mesh output file name");
-  Msg::Direct("  -format string        Set output mesh format (msh, msh1, msh2, unv, vrml, stl, mesh,");
-  Msg::Direct("                          bdf, p3d, cgns, med, ir3)");
+  Msg::Direct("  -o file               Specify output file name");
   Msg::Direct("  -bin                  Use binary format when available");  
   Msg::Direct("  -parametric           Save vertices with their parametric coordinates");  
   Msg::Direct("  -numsubedges          Set the number of subdivisions when displaying high order elements");  
@@ -451,46 +449,6 @@ void GetOptions(int argc, char *argv[])
           CTX::instance()->meshStatReportFileName = argv[i++];
         else
           Msg::Fatal("Missing argument");
-      }
-      else if(!strcmp(argv[i] + 1, "format") || !strcmp(argv[i] + 1, "f")) {
-        i++;
-        if(argv[i]) {
-          if(!strcmp(argv[i], "msh1")){
-            CTX::instance()->mesh.format = FORMAT_MSH;
-            CTX::instance()->mesh.mshFileVersion = 1.0;
-          }
-          else if(!strcmp(argv[i], "msh2")){
-            CTX::instance()->mesh.format = FORMAT_MSH;
-            CTX::instance()->mesh.mshFileVersion = 2.0;
-          }
-          else if(!strcmp(argv[i], "msh"))
-            CTX::instance()->mesh.format = FORMAT_MSH;
-          else if(!strcmp(argv[i], "unv"))
-            CTX::instance()->mesh.format = FORMAT_UNV;
-          else if(!strcmp(argv[i], "vrml"))
-            CTX::instance()->mesh.format = FORMAT_VRML;
-          else if(!strcmp(argv[i], "stl"))
-            CTX::instance()->mesh.format = FORMAT_STL;
-          else if(!strcmp(argv[i], "mesh"))
-            CTX::instance()->mesh.format = FORMAT_MESH;
-          else if(!strcmp(argv[i], "bdf"))
-            CTX::instance()->mesh.format = FORMAT_BDF;
-          else if(!strcmp(argv[i], "p3d"))
-            CTX::instance()->mesh.format = FORMAT_P3D;
-          else if(!strcmp(argv[i], "cgns"))
-            CTX::instance()->mesh.format = FORMAT_CGNS;
-          else if(!strcmp(argv[i], "diff"))
-            CTX::instance()->mesh.format = FORMAT_DIFF;
-          else if(!strcmp(argv[i], "med"))
-            CTX::instance()->mesh.format = FORMAT_MED;
-          else if(!strcmp(argv[i], "ir3"))
-            CTX::instance()->mesh.format = FORMAT_IR3;
-          else
-            Msg::Fatal("Unknown mesh format");
-          i++;
-        }
-        else
-          Msg::Fatal("Missing format");
       }
       else if(!strcmp(argv[i] + 1, "bin")) {
         i++;

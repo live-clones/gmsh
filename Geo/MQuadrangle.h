@@ -117,6 +117,7 @@ class MQuadrangle : public MElement {
   virtual const char *getStringForPOS() const { return "SQ"; }
   virtual const char *getStringForBDF() const { return "CQUAD4"; }
   virtual const char *getStringForDIFF() const { return "ElmB4n2D"; }
+  virtual const char *getStringForINP() const { return "C2D4"; }
   virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
   virtual void revert() 
   {
@@ -225,6 +226,7 @@ class MQuadrangle8 : public MQuadrangle {
   //virtual int getTypeForVTK() const { return 23; }
   virtual const char *getStringForBDF() const { return "CQUAD8"; }
   virtual const char *getStringForDIFF() const { return "ElmB8n2D"; }
+  virtual const char *getStringForINP() const { return "C2D8"; }
   virtual void revert() 
   {
     MVertex *tmp;

@@ -96,6 +96,9 @@ class MElement
   // get the vertex using DIFF ordering
   virtual MVertex *getVertexDIFF(int num){ return getVertex(num); }
 
+  // get the vertex using INP ordering
+  virtual MVertex *getVertexINP(int num){ return getVertex(num); }
+
   // get the number of vertices associated with edges, faces and
   // volumes (nonzero only for higher order elements, polygons or
   // polyhedra)
@@ -285,6 +288,7 @@ class MElement
   virtual const char *getStringForPOS() const { return 0; }
   virtual const char *getStringForBDF() const { return 0; }
   virtual const char *getStringForDIFF() const { return 0; }
+  virtual const char *getStringForINP() const { return 0; }
 
   // return the number of vertices, as well as the element name if
   // 'name' != 0

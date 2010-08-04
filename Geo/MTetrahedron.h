@@ -108,6 +108,7 @@ class MTetrahedron : public MElement {
   virtual const char *getStringForPOS() const { return "SS"; }
   virtual const char *getStringForBDF() const { return "CTETRA"; }
   virtual const char *getStringForDIFF() const { return "ElmT4n3D"; }
+  virtual const char *getStringForINP() const { return "C3D4"; }
   virtual void revert()
   {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;

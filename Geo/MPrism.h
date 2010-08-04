@@ -125,6 +125,7 @@ class MPrism : public MElement {
   virtual int getTypeForVTK() const { return 13; }
   virtual const char *getStringForPOS() const { return "SI"; }
   virtual const char *getStringForBDF() const { return "CPENTA"; }
+  virtual const char *getStringForINP() const { return "C3D6"; }
   virtual void revert()
   {
     MVertex *tmp;

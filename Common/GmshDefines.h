@@ -42,6 +42,7 @@
 #define FORMAT_STEP  36
 #define FORMAT_IGES  37
 #define FORMAT_IR3   38
+#define FORMAT_INP   39
 
 // Element types
 #define TYPE_PNT     1

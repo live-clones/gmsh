@@ -64,6 +64,7 @@ class MLine : public MElement {
   virtual int getTypeForVTK() const { return 3; }
   virtual const char *getStringForPOS() const { return "SL"; }
   virtual const char *getStringForBDF() const { return "CBAR"; }
+  virtual const char *getStringForINP() const { return "C1D2"; }
   virtual void revert() 
   {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
@@ -111,6 +112,7 @@ class MLine3 : public MLine {
     static const int map[3] = {0, 2, 1};
     return getVertex(map[num]); 
   }
+  virtual MVertex *getVertexINP(int num){ return getVertexUNV(num); }
   virtual int getNumEdgeVertices() const { return 1; }
   virtual int getNumEdgesRep(){ return 2; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
@@ -130,6 +132,7 @@ class MLine3 : public MLine {
   virtual int getTypeForUNV() const { return 24; } // parabolic beam
   //virtual int getTypeForVTK() const { return 21; }
   virtual const char *getStringForPOS() const { return "SL2"; }
+  virtual const char *getStringForINP() const { return "C1D3"; }
 };
 
 /*

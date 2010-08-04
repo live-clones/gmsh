@@ -167,7 +167,9 @@ int GmshBatch()
     GModel::current()->checkMeshCoherence(CTX::instance()->geom.tolerance);
   }
   else if(CTX::instance()->batch == -1){
-    CreateOutputFile(CTX::instance()->outputFileName, FORMAT_AUTO);
+    CreateOutputFile(CTX::instance()->outputFileName, 
+                     CTX::instance()->outputFileName.empty() ? FORMAT_GEO :
+                     FORMAT_AUTO);
   }
   else if(CTX::instance()->batch > 0){
 #if defined(HAVE_MESH)
@@ -186,7 +188,9 @@ int GmshBatch()
     }
 #endif
 #endif
-    CreateOutputFile(CTX::instance()->outputFileName, CTX::instance()->mesh.format);
+    CreateOutputFile(CTX::instance()->outputFileName, 
+                     CTX::instance()->outputFileName.empty() ? FORMAT_MSH :
+                     FORMAT_AUTO);
   }
 
   time_t now;

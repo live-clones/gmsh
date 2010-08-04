@@ -1091,8 +1091,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Explode" , opt_mesh_explode , 1.0 ,
     "Element shrinking factor (between 0 and 1)" },
 
-  { F|O, "Format" , opt_mesh_format , FORMAT_MSH , 
-    "Mesh output format (1=msh, 2=unv, 19=vrml, 27=stl, 30=mesh, 31=bdf, "
+  { F|O, "Format" , opt_mesh_format , FORMAT_AUTO , 
+    "Mesh output format (1=msh, 2=unv, 10=automatic, 19=vrml, 27=stl, 30=mesh, 31=bdf, "
     "32=cgns, 33=med)" },
 
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. , 

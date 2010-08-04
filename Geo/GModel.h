@@ -536,6 +536,10 @@ class GModel
   int writeDIFF(const std::string &name, bool binary=false,
                bool saveAll=false, double scalingFactor=1.0);
 
+  // Abaqus
+  int writeINP(const std::string &name, bool saveAll=false, 
+               double scalingFactor=1.0);
+
   void save(std::string fileName);
   void load(std::string fileName);
 
