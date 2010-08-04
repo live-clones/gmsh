@@ -6341,12 +6341,12 @@ yyreduce:
 	// the print command is in the same file as the geometry)
 	GModel::current()->importGEOInternals();
         std::string tmp = FixRelativePath(gmsh_yyname, (yyvsp[(2) - (3)].c));
-	CreateOutputFile(tmp, CTX::instance()->print.format);
+	CreateOutputFile(tmp, CTX::instance()->print.fileFormat);
       }
       else if(!strcmp((yyvsp[(1) - (3)].c), "Save")){
 	GModel::current()->importGEOInternals();
         std::string tmp = FixRelativePath(gmsh_yyname, (yyvsp[(2) - (3)].c));
-	CreateOutputFile(tmp, CTX::instance()->mesh.format);
+	CreateOutputFile(tmp, CTX::instance()->mesh.fileFormat);
       }
       else if(!strcmp((yyvsp[(1) - (3)].c), "Merge") || !strcmp((yyvsp[(1) - (3)].c), "MergeWithBoundingBox")){
 	// MergeWithBoundingBox is deprecated

@@ -482,6 +482,49 @@ void GetOptions(int argc, char *argv[])
         else
           Msg::Fatal("Missing algorithm");
       }
+      else if(!strcmp(argv[i] + 1, "format") || !strcmp(argv[i] + 1, "f")) {
+        i++;
+        if(argv[i]) {
+          if(!strcmp(argv[i], "auto")){
+            CTX::instance()->mesh.fileFormat = FORMAT_AUTO;
+          }
+          else if(!strcmp(argv[i], "msh1")){
+            CTX::instance()->mesh.fileFormat = FORMAT_MSH;
+            CTX::instance()->mesh.mshFileVersion = 1.0;
+          }
+          else if(!strcmp(argv[i], "msh2")){
+            CTX::instance()->mesh.fileFormat = FORMAT_MSH;
+            CTX::instance()->mesh.mshFileVersion = 2.0;
+          }
+          else if(!strcmp(argv[i], "msh"))
+            CTX::instance()->mesh.fileFormat = FORMAT_MSH;
+          else if(!strcmp(argv[i], "unv"))
+            CTX::instance()->mesh.fileFormat = FORMAT_UNV;
+          else if(!strcmp(argv[i], "vrml"))
+            CTX::instance()->mesh.fileFormat = FORMAT_VRML;
+          else if(!strcmp(argv[i], "stl"))
+            CTX::instance()->mesh.fileFormat = FORMAT_STL;
+          else if(!strcmp(argv[i], "mesh"))
+            CTX::instance()->mesh.fileFormat = FORMAT_MESH;
+          else if(!strcmp(argv[i], "bdf"))
+            CTX::instance()->mesh.fileFormat = FORMAT_BDF;
+          else if(!strcmp(argv[i], "p3d"))
+            CTX::instance()->mesh.fileFormat = FORMAT_P3D;
+          else if(!strcmp(argv[i], "cgns"))
+            CTX::instance()->mesh.fileFormat = FORMAT_CGNS;
+          else if(!strcmp(argv[i], "diff"))
+            CTX::instance()->mesh.fileFormat = FORMAT_DIFF;
+          else if(!strcmp(argv[i], "med"))
+            CTX::instance()->mesh.fileFormat = FORMAT_MED;
+          else if(!strcmp(argv[i], "ir3"))
+            CTX::instance()->mesh.fileFormat = FORMAT_IR3;
+          else
+            Msg::Fatal("Unknown mesh format");
+          i++;
+        }
+        else
+          Msg::Fatal("Missing format");
+      }
       else if(!strcmp(argv[i] + 1, "listen")) {
         CTX::instance()->solver.listen = 1;
         i++;

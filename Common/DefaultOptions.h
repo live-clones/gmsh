@@ -1091,7 +1091,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Explode" , opt_mesh_explode , 1.0 ,
     "Element shrinking factor (between 0 and 1)" },
 
-  { F|O, "Format" , opt_mesh_format , FORMAT_AUTO , 
+  { F|O, "Format" , opt_mesh_file_format , FORMAT_AUTO , 
     "Mesh output format (1=msh, 2=unv, 10=automatic, 19=vrml, 27=stl, 30=mesh, 31=bdf, "
     "32=cgns, 33=med)" },
 
@@ -1628,7 +1628,7 @@ StringXNumber PrintOptions_Number[] = {
     "PostScript/PDF quality (0=bitmap, 1=vector (simple sort), 2=vector "
     "(accurate sort), 3=vector (unsorted)" },
 
-  { F|O, "Format" , opt_print_format , FORMAT_AUTO , 
+  { F|O, "Format" , opt_print_file_format , FORMAT_AUTO , 
     "File format (10=automatic)" }, 
 
   { F|O, "GeoLabels" , opt_print_geo_labels , 1. ,

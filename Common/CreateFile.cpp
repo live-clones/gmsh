@@ -156,8 +156,8 @@ void CreateOutputFile(std::string fileName, int format)
   if(fileName.empty())
     fileName = GetDefaultFileName(format);
 
-  int oldFormat = CTX::instance()->print.format;
-  CTX::instance()->print.format = format;
+  int oldFormat = CTX::instance()->print.fileFormat;
+  CTX::instance()->print.fileFormat = format;
   CTX::instance()->printing = 1;
 
   if(format != FORMAT_AUTO) 
@@ -509,7 +509,7 @@ void CreateOutputFile(std::string fileName, int format)
 
   if(printEndMessage) Msg::StatusBar(2, true, "Done writing '%s'", fileName.c_str());
 
-  CTX::instance()->print.format = oldFormat;
+  CTX::instance()->print.fileFormat = oldFormat;
   CTX::instance()->printing = 0;
 
 #if defined(HAVE_OPENGL)

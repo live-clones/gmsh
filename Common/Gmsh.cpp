@@ -188,9 +188,14 @@ int GmshBatch()
     }
 #endif
 #endif
-    CreateOutputFile(CTX::instance()->outputFileName, 
-                     CTX::instance()->outputFileName.empty() ? FORMAT_MSH :
-                     FORMAT_AUTO);
+    std::string name = CTX::instance()->outputFileName;
+    if(name.empty()){
+      if(CTX::instance()->mesh.fileFormat == FORMAT_AUTO)
+        name = GetDefaultFileName(FORMAT_MSH);
+      else
+        name = GetDefaultFileName(CTX::instance()->mesh.fileFormat);
+    }
+    CreateOutputFile(name, CTX::instance()->mesh.fileFormat);
   }
 
   time_t now;

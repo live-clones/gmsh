@@ -336,8 +336,8 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
     {"Gmsh Options" TT "*.opt", _save_options},
     {"Gmsh Unrolled Geometry" TT "*.geo", _save_geo},
     SEPARATOR_OUT
-#if defined(HAVE_LIBCGNS)
     {"Abaqus INP Mesh" TT "*.inp", _save_inp},
+#if defined(HAVE_LIBCGNS)
     {"CGNS (Experimental)" TT "*.cgns", _save_cgns},
 #endif
     {"Diffpack 3D Mesh" TT "*.diff", _save_diff},
@@ -1587,14 +1587,19 @@ static void geometry_physical_add_cb(Fl_Widget *w, void *data)
 static void mesh_save_cb(Fl_Widget *w, void *data)
 {
   std::string name = CTX::instance()->outputFileName;
-  if(name.empty()) name = GetDefaultFileName(CTX::instance()->mesh.format);
+  if(name.empty()){
+    if(CTX::instance()->mesh.fileFormat == FORMAT_AUTO)
+      name = GetDefaultFileName(FORMAT_MSH);
+    else
+      name = GetDefaultFileName(CTX::instance()->mesh.fileFormat);
+  }
   if(CTX::instance()->confirmOverwrite) {
     if(!StatFile(name))
       if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
                     "Cancel", "Replace", 0, name.c_str()))
         return;
   }
-  CreateOutputFile(name, name.empty() ? FORMAT_MSH : CTX::instance()->mesh.format);
+  CreateOutputFile(name, CTX::instance()->mesh.fileFormat);
 }
 
 static void mesh_define_cb(Fl_Widget *w, void *data)

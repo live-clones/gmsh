@@ -1712,7 +1712,7 @@ void partitionAndRemesh(GFaceCompound *gf)
   gf->coherenceNormals();
   gf->meshStatistics.status = GFace::DONE; 
 
-  //CreateOutputFile("toto.msh", CTX::instance()->mesh.format);
+  //CreateOutputFile("toto.msh", CTX::instance()->mesh.fileFormat);
   //Msg::Exit(1);
 #endif
 }

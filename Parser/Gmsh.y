@@ -2274,12 +2274,12 @@ Command :
 	// the print command is in the same file as the geometry)
 	GModel::current()->importGEOInternals();
         std::string tmp = FixRelativePath(gmsh_yyname, $2);
-	CreateOutputFile(tmp, CTX::instance()->print.format);
+	CreateOutputFile(tmp, CTX::instance()->print.fileFormat);
       }
       else if(!strcmp($1, "Save")){
 	GModel::current()->importGEOInternals();
         std::string tmp = FixRelativePath(gmsh_yyname, $2);
-	CreateOutputFile(tmp, CTX::instance()->mesh.format);
+	CreateOutputFile(tmp, CTX::instance()->mesh.fileFormat);
       }
       else if(!strcmp($1, "Merge") || !strcmp($1, "MergeWithBoundingBox")){
 	// MergeWithBoundingBox is deprecated

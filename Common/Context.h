@@ -28,7 +28,7 @@ struct contextMeshOptions {
   double lcMin, lcMax, toleranceEdgeLength;
   int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
   int dual, voronoi, drawSkinOnly, colorCarousel;
-  int format, nbSmoothing, algo2d, algo3d, algoSubdivide;
+  int fileFormat, nbSmoothing, algo2d, algo3d, algoSubdivide;
   int order, secondOrderLinear, secondOrderIncomplete;
   int secondOrderExperimental, meshOnlyVisible;
   int smoothInternalEdges, minCircPoints, minCurvPoints;
@@ -210,7 +210,7 @@ class CTX {
   }solver;
   // print options 
   struct{
-    int format, epsQuality, epsBackground, epsCompress, epsPS3Shading;
+    int fileFormat, epsQuality, epsBackground, epsCompress, epsPS3Shading;
     int epsOcclusionCulling, epsBestRoot;
     double epsLineWidthFactor, epsPointSizeFactor;
     int jpegQuality, jpegSmoothing, geoLabels, text, texAsEquation;

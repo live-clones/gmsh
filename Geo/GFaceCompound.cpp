@@ -1727,7 +1727,7 @@ void GFaceCompound::partitionFaceCM()
 	
   model()->recomputeMeshPartitions();
 	
-  CreateOutputFile("toto.msh", CTX::instance()->mesh.format);
+  CreateOutputFile("toto.msh", CTX::instance()->mesh.fileFormat);
   Msg::Exit(1);
 	 
   return;

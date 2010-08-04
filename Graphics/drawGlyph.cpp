@@ -19,7 +19,7 @@ void drawContext::drawString(const std::string &s, const std::string &font_name,
 
   // change the raster position only if not creating TeX files
   if(align > 0 && (!CTX::instance()->printing || 
-                   CTX::instance()->print.format != FORMAT_TEX)){
+                   CTX::instance()->print.fileFormat != FORMAT_TEX)){
     GLboolean valid;
     glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
     if(valid == GL_TRUE){
@@ -50,7 +50,7 @@ void drawContext::drawString(const std::string &s, const std::string &font_name,
     drawContext::global()->drawString(s.c_str());
   }
   else{
-    if(CTX::instance()->print.format == FORMAT_TEX){
+    if(CTX::instance()->print.fileFormat == FORMAT_TEX){
       std::string tmp = SanitizeTeXString
         (s.c_str(), CTX::instance()->print.texAsEquation);
       int opt;
@@ -68,10 +68,10 @@ void drawContext::drawString(const std::string &s, const std::string &font_name,
       gl2psTextOpt(tmp.c_str(), font_name.c_str(), font_size, opt, 0.);
     }
     else if(CTX::instance()->print.epsQuality && 
-            (CTX::instance()->print.format == FORMAT_PS ||
-             CTX::instance()->print.format == FORMAT_EPS ||
-             CTX::instance()->print.format == FORMAT_PDF ||
-             CTX::instance()->print.format == FORMAT_SVG)){
+            (CTX::instance()->print.fileFormat == FORMAT_PS ||
+             CTX::instance()->print.fileFormat == FORMAT_EPS ||
+             CTX::instance()->print.fileFormat == FORMAT_PDF ||
+             CTX::instance()->print.fileFormat == FORMAT_SVG)){
       gl2psText(s.c_str(), font_name.c_str(), font_size);
     }
     else{

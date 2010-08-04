@@ -5470,11 +5470,11 @@ double opt_mesh_light_two_side(OPT_ARGS_NUM)
   return CTX::instance()->mesh.lightTwoSide;
 }
 
-double opt_mesh_format(OPT_ARGS_NUM)
+double opt_mesh_file_format(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.format = (int)val;
-  return CTX::instance()->mesh.format;
+    CTX::instance()->mesh.fileFormat = (int)val;
+  return CTX::instance()->mesh.fileFormat;
 }
 
 double opt_mesh_msh_file_version(OPT_ARGS_NUM)
@@ -8347,11 +8347,11 @@ double opt_view_component_map6(OPT_ARGS_NUM){ return ovcm(num, action, val, 6); 
 double opt_view_component_map7(OPT_ARGS_NUM){ return ovcm(num, action, val, 7); }
 double opt_view_component_map8(OPT_ARGS_NUM){ return ovcm(num, action, val, 8); }
 
-double opt_print_format(OPT_ARGS_NUM)
+double opt_print_file_format(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->print.format = (int)val;
-  return CTX::instance()->print.format;
+    CTX::instance()->print.fileFormat = (int)val;
+  return CTX::instance()->print.fileFormat;
 }
 
 double opt_print_eps_compress(OPT_ARGS_NUM)
