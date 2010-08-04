@@ -789,6 +789,15 @@ void MElement::writeDIFF(FILE *fp, int num, bool binary, int physical_property)
   }
 }
 
+void MElement::writeINP(FILE *fp, int num)
+{
+  setVolumePositive();
+  fprintf(fp, "%d", num);
+  for(int i = 0; i < getNumVertices(); i++)
+    fprintf(fp, ", %d", getVertexINP(i)->getIndex());
+  fprintf(fp, "\n");
+}
+
 int MElement::getInfoMSH(const int typeMSH, const char **const name)
 {
   switch(typeMSH){

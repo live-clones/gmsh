@@ -2986,12 +2986,8 @@ static void writeElementsINP(FILE *fp, GEntity *ge, std::vector<T*> &elements,
       for(int p = 0; p < np; p++){
         int part = (saveAll ? ge->tag() : ge->physicals[p]);
         fprintf(fp, "*Element, type=%s, ELSET=PART%d\n", typ, part);
-        for(unsigned int i = 0; i < elements.size(); i++){
-          fprintf(fp, "%d", ne++);
-          for(int j = 0; j < elements[i]->getNumVertices(); j++)
-            fprintf(fp, ", %d", elements[i]->getVertexINP(j)->getIndex());
-          fprintf(fp, "\n");
-        }
+        for(unsigned int i = 0; i < elements.size(); i++)
+          elements[i]->writeINP(fp, ne);
       }
     }
   }
