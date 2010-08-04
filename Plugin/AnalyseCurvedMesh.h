@@ -3,13 +3,19 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 //
-// Contributed by Matti Pellikka <matti.pellikka@tut.fi>.
+// Contributed by Amaury J.
+
+// Added code : 
+// Numeric/polynomialBasis.cpp -> jacobianPolynomialBases::find(int tag), #include
+// Geo/MElement.h -> getJacobianFunctionSpace(int), #include
+// Geo/MTriangle .h/.cpp -> getJacobianFunctionSpace(int)
 
 #ifndef _ANALYSECURVEDMESH_H_
 #define _ANALYSECURVEDMESH_H_
 
 #include <string>
 #include "Plugin.h"
+#include "MElement.h"
 
 extern "C"
 {
@@ -28,6 +34,9 @@ class GMSH_AnalyseCurvedMeshPlugin : public GMSH_PostPlugin
   std::string getHelp() const;
   std::string getAuthor() const { return "Amaury Johnen"; }
   PView *execute(PView *);
+  bool isJacPositive(MElement *);
+  int method1(MElement *, int depth);
+	int checkJacobian(MElement *, int depth);
 };
 
 #endif

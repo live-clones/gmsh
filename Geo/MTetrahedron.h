@@ -133,6 +133,7 @@ class MTetrahedron : public MElement {
   virtual double etaShapeMeasure();
   void xyz2uvw(double xyz[3], double uvw[3]);
   virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
+  virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
   virtual bool isInside(double u, double v, double w)
   {
     double tol = _isInsideTolerance;

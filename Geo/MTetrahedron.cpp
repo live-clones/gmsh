@@ -137,6 +137,40 @@ const polynomialBasis* MTetrahedron::getFunctionSpace(int o) const
   return 0;
 }
 
+const JacobianBasis* MTetrahedron::getJacobianFuncSpace(int o) const
+{
+  int order = (o == -1) ? getPolynomialOrder() : o;
+
+  int nv = getNumVolumeVertices();
+  
+  if ((nv == 0) && (o == -1)) {
+    switch (order) {
+    case 1: return JacobianBases::find(MSH_TET_4);
+    case 2: return JacobianBases::find(MSH_TET_10);
+    case 3: return JacobianBases::find(MSH_TET_20);
+    case 4: return JacobianBases::find(MSH_TET_34);
+    case 5: return JacobianBases::find(MSH_TET_52);
+    default: Msg::Error("Order %d tetrahedron function space not implemented", order);
+    }
+  }
+  else { 
+    switch (order) {
+    case 1: return JacobianBases::find(MSH_TET_4);
+    case 2: return JacobianBases::find(MSH_TET_10);
+    case 3: return JacobianBases::find(MSH_TET_20);
+    case 4: return JacobianBases::find(MSH_TET_35);
+    case 5: return JacobianBases::find(MSH_TET_56);
+    case 6: return JacobianBases::find(MSH_TET_84);
+    case 7: return JacobianBases::find(MSH_TET_120);
+    case 8: return JacobianBases::find(MSH_TET_165);
+    case 9: return JacobianBases::find(MSH_TET_220);
+    case 10: return JacobianBases::find(MSH_TET_286);
+    default: Msg::Error("Order %d tetrahedron function space not implemented", order);
+    }
+  }
+  return 0;
+}
+
 int MTetrahedron10::getNumEdgesRep(){ return 6 * CTX::instance()->mesh.numSubEdges; }
 int MTetrahedronN::getNumEdgesRep(){ return 6 * CTX::instance()->mesh.numSubEdges; }
 

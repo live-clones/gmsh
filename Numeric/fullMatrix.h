@@ -321,7 +321,7 @@ class fullMatrix
       for(int j = 0; j < size2(); j++)
         (*this)(i, j) += a*m(i, j);
   }
-  void mult(const fullVector<scalar> &x, fullVector<scalar> &y)
+  void mult(const fullVector<scalar> &x, fullVector<scalar> &y) const
 #if !defined(HAVE_BLAS)
   {
     y.scale(0.);

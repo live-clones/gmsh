@@ -7,6 +7,7 @@ set(SRC
   Numeric.cpp
     fullMatrix.cpp
     polynomialBasis.cpp
+    JacobianBasis.cpp
   GaussQuadratureLin.cpp
     GaussQuadratureTri.cpp
     GaussQuadratureQuad.cpp

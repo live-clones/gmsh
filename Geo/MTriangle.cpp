@@ -104,6 +104,45 @@ const polynomialBasis* MTriangle::getFunctionSpace(int o) const
   return 0;
 }
 
+const JacobianBasis* MTriangle::getJacobianFuncSpace(int o) const
+{
+  int order = (o == -1) ? getPolynomialOrder() : o;
+
+  int nf = getNumFaceVertices();  
+
+  if ((nf == 0) && (o == -1)) {
+    switch (order) {
+    case 1: return JacobianBases::find(MSH_TRI_3);
+    case 2: return JacobianBases::find(MSH_TRI_6);
+    case 3: return JacobianBases::find(MSH_TRI_9);
+    case 4: return JacobianBases::find(MSH_TRI_12);
+    case 5: return JacobianBases::find(MSH_TRI_15I);
+    case 6: return JacobianBases::find(MSH_TRI_18);
+    case 7: return JacobianBases::find(MSH_TRI_21I);
+    case 8: return JacobianBases::find(MSH_TRI_24);
+    case 9: return JacobianBases::find(MSH_TRI_27);
+    case 10: return JacobianBases::find(MSH_TRI_30);
+    default: Msg::Error("Order %d triangle incomplete function space not implemented", order);
+    }
+  }
+  else { 
+    switch (order) {
+    case 1: return JacobianBases::find(MSH_TRI_3);
+    case 2: return JacobianBases::find(MSH_TRI_6);
+    case 3: return JacobianBases::find(MSH_TRI_10);
+    case 4: return JacobianBases::find(MSH_TRI_15);
+    case 5: return JacobianBases::find(MSH_TRI_21);
+    case 6: return JacobianBases::find(MSH_TRI_28);
+    case 7: return JacobianBases::find(MSH_TRI_36);
+    case 8: return JacobianBases::find(MSH_TRI_45);
+    case 9: return JacobianBases::find(MSH_TRI_55);
+    case 10: return JacobianBases::find(MSH_TRI_66);
+    default: Msg::Error("Order %d triangle function space not implemented", order);
+    }
+  }
+  return 0;
+}
+
 int MTriangleN::getNumEdgesRep(){ return 3 * CTX::instance()->mesh.numSubEdges; }
 int MTriangle6::getNumEdgesRep(){ return 3 * CTX::instance()->mesh.numSubEdges; }
 

@@ -15,6 +15,7 @@
 #include "MEdge.h"
 #include "MFace.h"
 #include "polynomialBasis.h"
+#include "JacobianBasis.h"
 #include "Gauss.h"
 
 class GFace;
@@ -204,6 +205,9 @@ class MElement
 
   // get the function space for the element
   virtual const polynomialBasis* getFunctionSpace(int order=-1) const { return 0; }
+
+  // get the function space for the jacobian of the element
+  virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const { return 0; }
 
   // return the interpolating nodal shape functions evaluated at point
   // (u,v,w) in parametric coordinates (if order == -1, use the
