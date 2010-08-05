@@ -299,6 +299,14 @@ void GFace::writeGEO(FILE *fp)
       Msg::Error("Skipping surface %d in export", tag());
     }
   }
+
+  for(std::list<GEdge*>::iterator it = embedded_edges.begin(); 
+      it != embedded_edges.end(); it++)
+    fprintf(fp, "Line {%d} In Surface {%d};\n", (*it)->tag(), tag());
+
+  for(std::list<GVertex*>::iterator it = embedded_vertices.begin(); 
+      it != embedded_vertices.end(); it++)
+    fprintf(fp, "Point {%d} In Surface {%d};\n", (*it)->tag(), tag());
 }
 
 void GFace::computeMeanPlane()
