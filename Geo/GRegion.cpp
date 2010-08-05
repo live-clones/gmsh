@@ -228,6 +228,19 @@ void GRegion::writeGEO(FILE *fp)
     fprintf(fp, "};\n");
     fprintf(fp, "Volume(%d) = {%d};\n", tag(), tag());
   }
+
+  if(meshAttributes.Method == MESH_TRANSFINITE){
+    fprintf(fp, "Transfinite Volume {%d}", tag());
+    if(meshAttributes.corners.size()){
+      fprintf(fp, " = {");
+      for(unsigned int i = 0; i < meshAttributes.corners.size(); i++){
+        if(i) fprintf(fp, ",");
+        fprintf(fp, "%d", meshAttributes.corners[i]->tag());
+      }
+      fprintf(fp, "}");
+    }
+    fprintf(fp, ";\n");
+  }
 }
 
 std::list<GEdge*> GRegion::edges() const

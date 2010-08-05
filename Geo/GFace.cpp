@@ -307,6 +307,22 @@ void GFace::writeGEO(FILE *fp)
   for(std::list<GVertex*>::iterator it = embedded_vertices.begin(); 
       it != embedded_vertices.end(); it++)
     fprintf(fp, "Point {%d} In Surface {%d};\n", (*it)->tag(), tag());
+
+  if(meshAttributes.Method == MESH_TRANSFINITE){
+    fprintf(fp, "Transfinite Surface {%d}", tag());
+    if(meshAttributes.corners.size()){
+      fprintf(fp, " = {");
+      for(unsigned int i = 0; i < meshAttributes.corners.size(); i++){
+        if(i) fprintf(fp, ",");
+        fprintf(fp, "%d", meshAttributes.corners[i]->tag());
+      }
+      fprintf(fp, "}");
+    }
+    fprintf(fp, ";\n");
+  }
+
+  if(meshAttributes.recombine)
+    fprintf(fp, "Recombine Surface {%d};\n", tag());
 }
 
 void GFace::computeMeanPlane()

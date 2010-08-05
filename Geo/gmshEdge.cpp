@@ -342,4 +342,18 @@ void gmshEdge::writeGEO(FILE *fp)
       fprintf(fp, "\n");
   }
   fprintf(fp, "};\n");
+
+  if(meshAttributes.Method == MESH_TRANSFINITE){
+    fprintf(fp, "Transfinite Line {%d} = %d", 
+            tag() * (meshAttributes.typeTransfinite > 0 ? 1 : -1),
+            meshAttributes.nbPointsTransfinite);
+    if(meshAttributes.typeTransfinite){
+      if(std::abs(meshAttributes.typeTransfinite) == 1)
+        fprintf(fp, "Using Progression ");
+      else if(std::abs(meshAttributes.typeTransfinite) == 2)
+        fprintf(fp, "Using Bump ");
+      fprintf(fp, "%g", meshAttributes.coeffTransfinite);
+    }
+    fprintf(fp, ";\n");
+  }
 }
