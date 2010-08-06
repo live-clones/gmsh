@@ -13,3 +13,12 @@ Line Loop(5) = {1, 2, 3, 4};
 Plane Surface(10) = {5};
 
 
+Field[1] = Attractor;
+Field[1].EdgesList = {1};
+Field[2] = BoundaryLayer;
+Field[2].DistMax = 0.1;
+Field[2].DistMin = 0.002;
+Background Field = 2;
+Background Field = -1;
+Background Field = 1;
+Background Field = 2;

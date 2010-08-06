@@ -2005,7 +2005,7 @@ void GFaceCompound::printStuff() const
 {
 
   if( !CTX::instance()->mesh.saveAll) return;  
-
+ 
   std::list<GFace*>::const_iterator it = _compound.begin();
  
   char name0[256], name1[256], name2[256], name3[256];

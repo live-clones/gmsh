@@ -1545,7 +1545,7 @@ void partitionAndRemesh(GFaceCompound *gf)
 
   //Partition the mesh and createTopology for new faces
   //-----------------------------------------------------
-  
+  double tbegin = Cpu();
   std::list<GFace*> cFaces = gf->getCompounds();
   std::vector<MElement *> elements;
   for (std::list<GFace*>::iterator it = cFaces.begin(); it != cFaces.end(); it++)
@@ -1555,7 +1555,7 @@ void partitionAndRemesh(GFaceCompound *gf)
   typeOfPartition method;
   if(gf->nbSplit > 0) method = MULTILEVEL;
   else method = LAPLACIAN;
- 
+    
   multiscalePartition *msp = new multiscalePartition(elements, abs(gf->nbSplit), method);
 
   //gf->partitionFaceCM(); 
@@ -1569,13 +1569,15 @@ void partitionAndRemesh(GFaceCompound *gf)
   
   gf->model()->createTopologyFromFaces(pFaces);
    
-  Msg::Info("Multiscale Partition SUCCESSFULLY PERFORMED : %d parts", NF );
+  double tmult = Cpu();
+  Msg::Info("Multiscale Partition SUCCESSFULLY PERFORMED : %d parts (%g s)", NF , tmult -tbegin);
   gf->model()->writeMSH("multiscalePARTS.msh", 2.2, false, true);
  
   //Remesh new faces (Compound Lines and Compound Surfaces)
   //-----------------------------------------------------
-  Msg::Info("--- Parametrize Compounds:");
- 
+  Msg::Info("*** Starting parametrize compounds:");
+  double t0 = Cpu();
+
   //Parametrize Compound Lines
   int NE = gf->model()->getMaxElementaryNumber(1) - nume + 1;
   for (int i=0; i < NE; i++){
@@ -1610,13 +1612,17 @@ void partitionAndRemesh(GFaceCompound *gf)
     gfc->parametrize();
   }
 
-  Msg::Info("*** Mesh Compounds:");
-
+  double t1 = Cpu();
+  Msg::Info("*** Parametrize compounds done (%g s)", t1-t0);
+ 
+  Msg::Info("*** Starting meshing 1D edges ...:");
   for (int i = 0; i < NE; i++){
     GEdge *gec = gf->model()->getEdgeByTag(nume + NE + i);
      meshGEdge mge;
      mge(gec);
   }
+  double t2 = Cpu();
+  Msg::Info("*** Meshing 1D edges done (%gs)", t2-t1);
 
   Msg::Info("*** Starting Mesh of surface %d ...", gf->tag());
 
@@ -1706,7 +1712,8 @@ void partitionAndRemesh(GFaceCompound *gf)
     }
   }
 
-  Msg::Info("*** Mesh of surface %d done by assembly remeshed faces", gf->tag());
+  double t3 = Cpu();
+  Msg::Info("*** Mesh of surface %d done by assembly remeshed faces (%g s)", gf->tag(), t3-t2);
   Msg::Info("-----------------------------------------------------------");
  
   gf->coherenceNormals();

@@ -180,6 +180,27 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
 
 void statisticsWindow::compute(bool elementQuality)
 {
+  //emi hack
+  // double minAngle = 120.0;
+  // double meanAngle = 0.0;
+  // int count = 0;
+  // std::vector<GEntity*> entities;
+  // GModel::current()->getEntities(entities);
+  // std::map<int, std::vector<double> > d;
+  // for(unsigned int i = 0; i < entities.size(); i++){
+  //   if(entities[i]->dim() < 2) continue;
+  //   for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+  //     MElement *e = entities[i]->getMeshElement(j);
+  //     double angle = e->angleShapeMeasure();
+  //     minAngle = std::min(minAngle, angle);
+  //     meanAngle += angle;
+  //     count++;
+  //   }
+  // }
+  // meanAngle  = meanAngle / count;
+  // printf("Angles = min=%g av=%g \n", minAngle, meanAngle);
+  //hack emi
+
   int num = 0;
   static double s[50];
   static char label[50][256];
