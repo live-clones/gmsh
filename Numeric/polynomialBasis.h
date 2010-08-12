@@ -18,55 +18,55 @@ inline double pow_int (const double &a , const int &n) {
   case 1 : return a;
   case 2 : return a*a;
   case 3 : return a*a*a;
-  case 4 : 
+  case 4 :
     {
       const double a2 = a*a;
       return a2*a2;
     }
-  case 5 : 
+  case 5 :
     {
       const double a2 = a*a;
       const double a3 = a*a*a;
       return a2*a3;
     }
-  case 6 : 
+  case 6 :
     {
       const double a3 = a*a*a;
       return a3*a3;
     }
-  case 7 : 
+  case 7 :
     {
       const double a3 = a*a*a;
-      return a3*a3*a;      
+      return a3*a3*a;
     }
-  case 8 : 
+  case 8 :
     {
       const double a2 = a*a;
       const double a4 = a2*a2;
-      return a4*a4;      
+      return a4*a4;
     }
-  case 9 : 
+  case 9 :
     {
       const double a2 = a*a;
       const double a4 = a2*a2;
-      return a4*a4*a;      
+      return a4*a4*a;
     }
-  case 10 : 
+  case 10 :
     {
       const double a2 = a*a;
       const double a4 = a2*a2;
-      return a4*a4*a2;      
+      return a4*a4*a2;
     }
   default :
     return pow_int(a,n-1)*a;
   }
-} 
+}
 
 class binding;
 
 // presently those function spaces are only for simplices and quads;
 // should be extended to other elements like hexes
-class polynomialBasis 
+class polynomialBasis
 {
  public:
   typedef std::vector<std::vector<int> > clCont;
@@ -78,7 +78,7 @@ class polynomialBasis
   // for a given face/edge, with both a sign and a rotation,
   // give an ordered list of nodes on this face/edge
   inline const std::vector<int> &getClosure(int id) const // return the closure of dimension dim
-  { 
+  {
     return closures[id];
   }
   inline int getClosureId(int iEl, int iSign=1, int iRot=0) const {
