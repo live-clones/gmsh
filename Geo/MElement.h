@@ -266,7 +266,8 @@ class MElement
   // IO routines
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false,
                         int num=0, int elementary=1, int physical=1,
-                        int parentNum=0, std::vector<short> *ghosts=0);
+                        int parentNum=0, int dom1Num = 0, int dom2Num = 0,
+                        std::vector<short> *ghosts=0);
 
   virtual void writePOS(FILE *fp, bool printElementary, bool printElementNumber,
                         bool printGamma, bool printEta, bool printRho,
@@ -327,7 +328,7 @@ class MElementLessThanLexicographic{
 class MElementFactory{
  public:
   MElement *create(int type, std::vector<MVertex*> &v, int num=0, int part=0,
-                   bool owner=false, MElement *parent=0);
+                   bool owner=false, MElement *parent=0, MElement *d1=0, MElement *d2=0);
 };
 
 // Traits of various elements based on the dimension.  These generally define

@@ -824,6 +824,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
         // check for border surfaces cut earlier along the polyhedra
         std::pair<std::multimap<MElement*, MElement*>::iterator,
                   std::multimap<MElement*, MElement*>::iterator> itr = borders[1].equal_range(copy);
+        std::vector<std::pair<MElement*, MElement*> > bords;
         for(std::multimap<MElement*, MElement*>::iterator it = itr.first;
             it != itr.second; it++) {
           MElement *tb = it->second;
@@ -836,9 +837,11 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
           }
           MElement *dom = (match == 3) ? p1 : p2;
           tb->setDomain(dom, (tb->getDomain(0) == copy) ? 0 : 1);
-          borders[1].insert(std::pair<MElement*, MElement*>(dom, tb));
+          bords.push_back(std::pair<MElement*, MElement*>(dom, tb));
         }
         borders[1].erase(itr.first, itr.second);
+        for(int i = 0; i < bords.size(); i++)
+          borders[1].insert(bords[i]);
         if(eParent) {copy->setParent(NULL, false); delete copy;}
       }
       else { // no cut
@@ -991,6 +994,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
         // check for border lines cut earlier along the polygons
         std::pair<std::multimap<MElement*, MElement*>::iterator,
                   std::multimap<MElement*, MElement*>::iterator> itr = borders[0].equal_range(copy);
+        std::vector<std::pair<MElement*, MElement*> > bords;
         for(std::multimap<MElement*, MElement*>::iterator it = itr.first;
             it != itr.second; ++it) {
           MElement *lb = it->second;
@@ -1002,9 +1006,11 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
           }
           MElement *dom = (match == 2) ? p1 : p2;
           lb->setDomain(dom, (lb->getDomain(0) == copy) ? 0 : 1);
-          borders[0].insert(std::pair<MElement*, MElement*>(dom, lb));
+          bords.push_back(std::pair<MElement*, MElement*>(dom, lb));
         }
         borders[0].erase(itr.first, itr.second);
+        for(int i = 0; i < bords.size(); i++)
+          borders[0].insert(bords[i]);
         if(eParent) {copy->setParent(NULL, false); delete copy;}
       }
       else { // no cut
@@ -1202,7 +1208,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   newVerticesContainer newVertices;
   std::map<int, int> borderElemTags[2]; //map<lsTag,elementary>[line=0,surface=1]
   std::map<int, int> borderPhysTags[2]; //map<lstag,physical>[line=0,surface=1]
-  std::multimap<MElement*, MElement*> borders[2]; //multimap<domain,border>[polg=0,polyh=1]
+  std::multimap<MElement*, MElement*> borders[2]; //multimap<domain,border>[polyg=0,polyh=1]
   DI_Point::Container cp;
   std::vector<DI_Line *> lines;
   std::vector<DI_Triangle *> triangles;
@@ -1228,6 +1234,22 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
     for(unsigned int k = 0; k < hexas.size(); k++) delete hexas[k];
     cp.clear(); lines.clear(); triangles.clear(); quads.clear(); tetras.clear(); hexas.clear();
   }
+
+  /*for(int i = 0; i < 10; i++) {
+    printf(" - element type : %d\n", i);
+    for(std::map<int, std::vector<MElement*> >::iterator it = elements[i].begin();
+        it != elements[i].end(); it++){
+      printf(" elementary : %d\n",it->first);
+      for(int j = 0; j < it->second.size(); j++){
+        MElement *e = it->second[j];
+        printf("element %d",e->getNum());
+        if(e->getParent()) printf(" par=%d",e->getParent()->getNum());
+        if(e->getDomain(0)) printf(" d0=%d",e->getDomain(0)->getNum());
+        if(e->getDomain(1)) printf(" d1=%d",e->getDomain(1)->getNum());
+        printf("\n");
+      }
+    }
+  }printf("\n");*/
 
   for(newVerticesContainer::iterator it = newVertices.begin() ; it != newVertices.end(); ++it) {
     vertexMap[(*it)->getNum()] = *it;
