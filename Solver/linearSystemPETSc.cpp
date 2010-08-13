@@ -82,6 +82,8 @@ void linearSystemPETSc<fullMatrix<PetscScalar> >::allocate(int nbRows)
   if (_blockSize == 0)
     Msg::Error ("'blockSize' parameters must be set for linearSystemPETScBlock");
   clear();
+  //printf("allocate linear system petsc \n");
+  //_try(PetscOptionsInsertString("-ksp_monitor_true_residual -ksp_rtol 1e-10"));
   _try(MatCreate(PETSC_COMM_WORLD, &_a)); 
   _try(MatSetSizes(_a, PETSC_DECIDE, PETSC_DECIDE, nbRows * _blockSize, nbRows * _blockSize));
   _try(MatSetType(_a, MATSEQBAIJ));

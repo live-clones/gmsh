@@ -123,6 +123,14 @@ class fullMatrix
     #endif
     (*this)(r, c) = v; 
   }
+  inline scalar norm()
+  {
+    scalar n = 0.;
+    for(int i = 0; i < _r; ++i) 
+      for(int j = 0; j < _c; ++j) 
+	n += (*this)(i, j) * (*this)(i, j);
+    return sqrt(n);
+  }
   fullMatrix(scalar *original, int r, int c)
   {
     _r = r;

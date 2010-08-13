@@ -55,7 +55,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
     PC pc;
     _try(KSPGetPC(_ksp, &pc));
     // set some default options
-    _try(PCSetType(pc, PCILU));
+    _try(PCSetType(pc, PCLU));//LU for direct solver and PCILU for indirect solver
     _try(PCFactorSetMatOrderingType(pc, MATORDERING_RCM));
     _try(PCFactorSetLevels(pc, 1));
     _try(KSPSetTolerances(_ksp, 1.e-8, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT));
