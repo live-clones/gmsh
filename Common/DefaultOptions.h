@@ -1010,6 +1010,8 @@ StringXNumber MeshOptions_Number[] = {
     "3D mesh algorithm (1=Delaunay, 4=Frontal)" }, 
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" }, 
+  { F|O, "AnisoMax" , opt_mesh_aniso_max, 1.e33,
+    "Maximum anisotropy of the mesh" },
   { F|O, "AllowSwapAngle" , opt_mesh_allow_swap_edge_angle , 10.0 ,
     "Treshold angle (in degrees) between faces normals under which we allow "
     "an edge swap" }, 
@@ -1230,6 +1232,8 @@ StringXNumber MeshOptions_Number[] = {
     "Number of smoothing steps of internal edges for high order meshes" },
   { F|O, "SmoothNormals" , opt_mesh_smooth_normals , 0. , 
     "Smooth the mesh normals?" },
+  { F|O, "SmoothRatio" , opt_mesh_smooth_ratio , 1.8 ,
+    "Ratio between mesh sizes at vertices of a same edeg (used in BAMG)" },
   { F|O, "SubdivisionAlgorithm" , opt_mesh_algo_subdivide , 0 ,
     "Mesh subdivision algorithm (0=none, 1=all quadrangles, 2=all hexahedra)" }, 
   { F|O, "SurfaceEdges" , opt_mesh_surfaces_edges , 1. , 

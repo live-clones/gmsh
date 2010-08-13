@@ -25,7 +25,7 @@ struct contextMeshOptions {
   double mshFileVersion, mshFilePartitioned, labelFrequency, pointSize, lineWidth;
   double qualityInf, qualitySup, radiusInf, radiusSup;
   double scalingFactor, lcFactor, randFactor, lcIntegrationPrecision;
-  double lcMin, lcMax, toleranceEdgeLength;
+  double lcMin, lcMax, toleranceEdgeLength, anisoMax, smoothRatio;
   int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
   int dual, voronoi, drawSkinOnly, colorCarousel;
   int fileFormat, nbSmoothing, algo2d, algo3d, algoSubdivide;

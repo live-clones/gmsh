@@ -5417,6 +5417,22 @@ double opt_mesh_smooth_normals(OPT_ARGS_NUM)
   return CTX::instance()->mesh.smoothNormals;
 }
 
+double opt_mesh_smooth_ratio(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) 
+    CTX::instance()->mesh.smoothRatio = val;
+  return CTX::instance()->mesh.smoothRatio;
+}
+
+double opt_mesh_aniso_max(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) 
+    CTX::instance()->mesh.anisoMax = val;
+  return CTX::instance()->mesh.anisoMax;
+}
+
+
+
 double opt_mesh_angle_smooth_normals(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

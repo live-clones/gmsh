@@ -124,6 +124,9 @@ static double F_Lc_aniso(GEdge *ge, double t)
 
   double lSquared = dot (der,lc_here,der);
 
+  //  der.normalize();
+  //  printf("in the function %g n %g %g\n", sqrt(lSquared),der.x(),der.y());
+
   return sqrt(lSquared);
 }
 
@@ -286,6 +289,19 @@ void deMeshGEdge::operator() (GEdge *ge)
   ge->meshStatistics.status = GEdge::PENDING;
 }
 
+void  printFandPrimitive(int tag, std::vector<IntPoint> &Points ){
+  char name[256];
+  sprintf(name,"line%d.dat",tag);
+  FILE *f = fopen (name,"w");
+  for (int i=0;i<Points.size();i++){
+    const IntPoint &P = Points[i];
+    fprintf(f,"%g %g %g\n",P.t,1./P.lc,P.p);
+  }
+  fclose(f);
+    
+}
+
+
 void meshGEdge::operator() (GEdge *ge) 
 {  
   ge->model()->setCurrentMeshEntity(ge);
@@ -369,6 +385,8 @@ void meshGEdge::operator() (GEdge *ge)
     }
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }
+
+  //  printFandPrimitive(ge->tag(),Points);
 
   // if the curve is periodic and if the begin vertex is identical to
   // the end vertex and if this vertex has only one model curve

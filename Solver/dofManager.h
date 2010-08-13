@@ -128,6 +128,24 @@ class dofManager{
   {
     fixDof(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField), value);
   }
+
+  inline bool isFixed(Dof key) const {
+    if(fixed.find(key) != fixed.end())
+    {
+      return true;
+    }
+    return false;
+  }
+  inline bool isFixed(long int ent, int type) const
+  {
+    return isFixed(Dof(ent, type));
+  }
+  inline bool isFixed(MVertex*v, int iComp, int iField) const
+  {
+    return isFixed(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField));
+  }
+
+
   inline void numberDof(Dof key)
   {
     if(fixed.find(key) != fixed.end())

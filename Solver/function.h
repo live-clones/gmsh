@@ -143,7 +143,7 @@ class dataCacheMap {
       _toInvalidateOnElement.insert(data);
   }
   virtual dgDataCacheMap *asDgDataCacheMap() {
-    Msg::Error("I'm not a dgDataCacheMap\n");
+    Msg::Error("I'm not a dgDataCacheMap");
     return NULL;
   }
   dataCacheMap *getSecondaryCache(int i) {

@@ -96,13 +96,13 @@ static SMetric3 metric_based_on_surface_curvature(const GFace *gf, double u, dou
   lambda2 = std::max(lambda2, CTX::instance()->mesh.lcMin);
   lambda1 = std::min(lambda1, CTX::instance()->mesh.lcMax);
   lambda2 = std::min(lambda2, CTX::instance()->mesh.lcMax);
-  if (gf->tag() == 36  || gf->tag() == 62)
+  /*  if (gf->tag() == 36  || gf->tag() == 62)
     printf("%g %g -- %g %g -- %g %g %g --  %g %g %g -- %g %g %g -- %g %g\n",u,v,cmax,cmin,
 	   dirMax.x(),dirMax.y(),dirMax.z(),
 	   dirMin.x(),dirMin.y(),dirMin.z(),
 	   Z.x(),Z.y(),Z.z(),
 	   lambda1,lambda2);
-  
+  */
   SMetric3 curvMetric (1./(lambda1*lambda1),1./(lambda2*lambda2),1.e-5, 
 		       dirMin, dirMax, Z );
   return curvMetric;
@@ -124,7 +124,10 @@ static SMetric3 metric_based_on_surface_curvature(const GEdge *ge, double u)
     }
     ++it;
   }  
-  return mesh_size;
+  double Crv = ge->curvature(u);
+  double lambda =  ((2 * M_PI) /( fabs(Crv) *  CTX::instance()->mesh.minCircPoints ) );
+  SMetric3 curvMetric (1./(lambda*lambda));
+  return intersection(mesh_size,curvMetric);
 }
 
 static SMetric3 metric_based_on_surface_curvature(const GVertex *gv)

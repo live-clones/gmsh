@@ -140,8 +140,11 @@ static void meshGFaceBamg_(GFace *gf, int iter, bool initialMesh)
   double *mm12 = new double[all.size()];
   double *mm22 = new double[all.size()];
   double args[256];
-  computeMeshMetricsForBamg(gf, all.size(), bamgVertices, mm11, mm12, mm22, iter);
-  for (int i = 0; i < 256; i++) args[i] = -1.1e100;
+  for (int i=0;i<256;i++)args[i] = -1.1e100;
+  args[16] = CTX::instance()->mesh.anisoMax;
+  args[ 7] = CTX::instance()->mesh.smoothRatio;
+  computeMeshMetricsForBamg (gf,all.size(),bamgVertices,mm11,mm12,mm22,iter);
+
   Mesh2 *refinedBamgMesh = 0;
   try{
     refinedBamgMesh = Bamg(&bamgMesh, args, mm11, mm12, mm22, initialMesh);

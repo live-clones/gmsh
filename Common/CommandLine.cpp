@@ -74,6 +74,8 @@ void PrintUsage(const char *name)
   Msg::Direct("  -clscale float        Set global mesh element size scaling factor");
   Msg::Direct("  -clmin float          Set minimum mesh element size");
   Msg::Direct("  -clmax float          Set maximum mesh element size");
+  Msg::Direct("  -anisoMax float       Set maximum anisotropy (only used in bamg for now)");
+  Msg::Direct("  -smoothRatio float    Set smoothing ration between mesh sizes at nodes of a same edge (only used in bamg)");
   Msg::Direct("  -clcurv               Automatically compute element sizes from curvatures");
   Msg::Direct("  -epslc1d              Set the accuracy of the evaluation of the LCFIELD for 1D mesh");
   Msg::Direct("  -swapangle            Set the treshold angle (in degree) between two adjacent faces");
@@ -270,6 +272,20 @@ void GetOptions(int argc, char *argv[])
           CTX::instance()->outputFileName = argv[i++];
         else
           Msg::Fatal("Missing file name");
+      }
+      else if(!strcmp(argv[i] + 1, "anisoMax")) {
+        i++;
+        if(argv[i])
+          CTX::instance()->mesh.anisoMax = atof(argv[i++]);
+        else
+          Msg::Fatal("Missing anisotropy ratio");
+      }
+      else if(!strcmp(argv[i] + 1, "smoothRatio")) {
+        i++;
+        if(argv[i])
+          CTX::instance()->mesh.smoothRatio = atof(argv[i++]);
+        else
+          Msg::Fatal("Missing smooth ratio");
       }
       else if(!strcmp(argv[i] + 1, "bgm")) {
         i++;

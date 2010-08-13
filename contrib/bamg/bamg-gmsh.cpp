@@ -365,7 +365,7 @@ Mesh2 *Bamg(Mesh2 *Thh, double * args,double *mm11,double *mm12,double *mm22, bo
   long nbsx         = Max(100L,arg(4,args,900000L));
   long nbsmooth     =  arg(5,args,3L);
   long nbjacobi     =  arg(6,args,0L) ;              // if increased will be more smooth
-  const Real8 raison = arg(7,args,1.5); // 1.8
+  const Real8 raison = arg(7,args,1.8); // 1.8
   const Real8 omega =  arg(8,args,1.0) ; 
   bool iso          =   arg(9,args,false);
   bool AbsError     =   arg(10,args,true);
@@ -382,6 +382,9 @@ Mesh2 *Bamg(Mesh2 *Thh, double * args,double *mm11,double *mm12,double *mm22, bo
   double cutoffradian          = arg(21,args,-1.0)* bamg::Pi/180. ;
   bool split                    = arg(22,args,false) ;
   bool nomeshgeneration         = arg(23,args,false) ;
+
+  //  printf("raison = %g %g\n",raison,args[7]);
+
   //   the 24th param is metrix  and is store at compilation time
   //  const E_Array * expmetrix = dynamic_cast<const E_Array *>(nargs[24]);
   //   the 25th param is periodic and it store at compilation time
