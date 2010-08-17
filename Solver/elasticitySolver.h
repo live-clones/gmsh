@@ -12,6 +12,7 @@
 #include "dofManager.h"
 #include "simpleFunction.h"
 #include "functionSpace.h"
+#include "function.h"
 
 class GModel;
 class PView;
@@ -86,6 +87,7 @@ class elasticitySolver
 
   void addDirichletBCLua (int dim, int entityId, int component, std::string luaFunctionName, lua_State *L);
   void addNeumannBCLua (int dim, int entityId, std::string luaFunctionName, lua_State *L);
+  void addNeumannBCFct (int dim, int entityId, const function* luaFunction, lua_State *L);
 
   #endif
 
@@ -103,6 +105,7 @@ class elasticitySolver
   void postSolve();
   void getSolutionOnElement(MElement *el, fullMatrix<double> &sol);
   virtual PView *buildDisplacementView(const std::string postFileName);
+  virtual PView *buildStressesView(const std::string postFileName);
   virtual PView *buildLagrangeMultiplierView(const std::string posFileName);
   virtual PView *buildElasticEnergyView(const std::string postFileName);
   virtual PView *buildVonMisesView(const std::string postFileName);

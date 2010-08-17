@@ -521,11 +521,9 @@ bool GFaceCompound::parametrize() const
     bool withoutFolding = parametrize_conformal_spectral() ;
     //bool withoutFolding = parametrize_conformal();
     if ( withoutFolding == false ){
-  
-      double alpha = 0.0;
-      Msg::Warning("$$$ Parametrization switched to combination map: A*conf+(1-A)*harm with A=%g", alpha);
-      parametrize(ITERU,HARMONIC, alpha); 
-      parametrize(ITERV,HARMONIC, alpha);
+      Msg::Warning("$$$ Parametrization switched to harmonic map");
+      parametrize(ITERU,HARMONIC); 
+      parametrize(ITERV,HARMONIC);
       //buildOct(); exit(1);
     }
   }
@@ -1125,8 +1123,21 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom, double al
 
 bool GFaceCompound::parametrize_conformal_spectral() const
 {
+ 
+#if !defined(HAVE_PETSC) && !defined(HAVE_SLEPC)
+{
 
-#if defined(HAVE_PETSC)
+ Msg::Error("-----------------------------------------------------------------------------!");
+ Msg::Error("Gmsh should be compiled with petsc and slepc for using the conformal map     !");
+ Msg::Error("Switch to harmonic map or see doc on the wiki for installing petsc and slepc !");
+ Msg::Error("https://geuz.org/trac/gmsh/wiki/STLRemeshing (username:gmsh,passwd:gmsh)     !");
+ Msg::Error("-----------------------------------------------------------------------------!");
+ Msg::Exit(1);
+
+}
+#else
+{
+
   std::vector<MVertex*> ordered;
   std::vector<double> coords;  
   bool success = orderVertices(_U0, ordered, coords);
@@ -1236,9 +1247,7 @@ bool GFaceCompound::parametrize_conformal_spectral() const
    }
    else return false;
   
-#else
-   return false;
-
+}
 #endif
 }
 bool GFaceCompound::parametrize_conformal() const

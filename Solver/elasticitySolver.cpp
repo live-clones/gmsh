@@ -22,6 +22,7 @@
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
+#include "function.h"
 #endif
 
 static void printLinearSystem(linearSystemCSRTaucs<double> *lsys)
@@ -67,8 +68,9 @@ void elasticitySolver::setMesh(const std::string &meshFileName)
 
 void elasticitySolver::solve()
 {
-  linearSystemFull<double> *lsys = new linearSystemFull<double>;
-  /*
+  
+  //linearSystemFull<double> *lsys = new linearSystemFull<double>;
+  
 #if defined(HAVE_TAUCS)
   linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
 #elif defined(HAVE_PETSC)
@@ -77,7 +79,7 @@ void elasticitySolver::solve()
   linearSystemGmm<double> *lsys = new linearSystemGmm<double>;
   lsys->setNoisy(2);
 #endif
-  */
+
   assemble(lsys);
   lsys->systemSolve();
   printf("-- done solving!\n");
@@ -422,13 +424,13 @@ void elasticitySolver::assemble(linearSystem<double> *lsys)
 
   printf("nDofs=%d\n",pAssembler->sizeOfR());
   printf("nFixed=%d\n",pAssembler->sizeOfF());
-  printf("-- done assembling!\n");
+
 }
 
 
 #if defined(HAVE_POST)
 static void deformation(dofManager<double> *a, MElement *e,
-                       double u, double v, double w, int _tag, double *eps){
+			double u, double v, double w, int _tag, double *eps){
   double valx[256];
   double valy[256];
   double valz[256];
@@ -454,8 +456,8 @@ static void deformation(dofManager<double> *a, MElement *e,
 
 static double vonMises(dofManager<double> *a, MElement *e,
                        double u, double v, double w,
-                       double E, double nu, int _tag)
-{
+                       double E, double nu, int _tag){
+  
   double valx[256];
   double valy[256];
   double valz[256];
@@ -485,9 +487,7 @@ static double vonMises(dofManager<double> *a, MElement *e,
   double sxz = A * eps[4];
   double syz = A * eps[5];
 
-  double s[9] = {sxx, sxy, sxz,
-                 sxy, syy, syz,
-                 sxz, syz, szz};
+  double s[9] = {sxx, sxy, sxz, sxy, syy, syz,sxz, syz, szz};
 
   return ComputeVonMises(s);
 }
@@ -540,6 +540,71 @@ PView* elasticitySolver::buildDisplacementView (const std::string postFileName)
   return pv;
 }
 
+PView* elasticitySolver::buildStressesView (const std::string postFileName)
+{
+  std::cout <<  "build stresses view"<< std::endl;
+  std::map<int, std::vector<double> > data;
+  GaussQuadrature Integ_Bulk(GaussQuadrature::GradGrad);
+  for (unsigned int i = 0; i < elasticFields.size(); ++i)
+  {
+    double E = elasticFields[i]._E;
+    double nu = elasticFields[i]._nu;
+    SolverField<SVector3> Field(pAssembler, LagSpace);
+    IsotropicElasticTerm Eterm(Field,elasticFields[i]._E,elasticFields[i]._nu);
+    BilinearTermToScalarTerm<SVector3,SVector3> Elastic_Energy_Term(Eterm);
+    for (groupOfElements::elementContainer::const_iterator it = elasticFields[i].g->begin(); it != elasticFields[i].g->end(); ++it)
+    {
+      MElement *e=*it;
+      int nbVertex = e->getNumVertices();
+      std::vector<SVector3> val(nbVertex);
+   
+      double valx[256];
+      double valy[256];
+      double valz[256];
+      for (int k = 0; k < nbVertex; k++){
+	MVertex *v = e->getVertex(k);
+	MPoint p(v);
+	Field.f(&p,0,0,0,val[k]);
+	valx[k] =val[k](0);
+	valy[k] =val[k](1);
+	valz[k] =val[k](2);
+      }
+    
+      double gradux[3];
+      double graduy[3];
+      double graduz[3];
+      double u=0.33, v=0.33, w=0.0;
+      e->interpolateGrad(valx, u, v, w, gradux);
+      e->interpolateGrad(valy, u, v, w, graduy);
+      e->interpolateGrad(valz, u, v, w, graduz);
+
+      double eps[6] = {gradux[0], graduy[1], graduz[2],
+		       0.5 * (gradux[1] + graduy[0]),
+		       0.5 * (gradux[2] + graduz[0]),
+		       0.5 * (graduy[2] + graduz[1])};
+      
+
+      double A = E / (1. + nu);
+      double B = A * (nu / (1. - 2 * nu));
+      double trace = eps[0] + eps[1] + eps[2] ;
+      double sxx = A * eps[0] + B * trace;
+      double syy = A * eps[1] + B * trace;
+      double szz = A * eps[2] + B * trace;
+      double sxy = A * eps[3];
+      double sxz = A * eps[4];
+      double syz = A * eps[5];
+
+      std::vector<double> vec(9);
+      vec[0]=sxx; vec[1]=sxy; vec[2]=sxz; vec[3]=sxy; vec[4]=syy; vec[5]=syz; vec[6]=sxz; vec[7]=syz; vec[8]=szz;
+     
+      data[e->getNum()]=vec;
+    }
+  }
+  PView *pv = new PView (postFileName, "ElementData", pModel, data, 0.0);
+  return pv;
+
+}
+
 PView* elasticitySolver::buildLagrangeMultiplierView (const std::string postFileName)
 {
   std::cout <<  "build Lagrange Multiplier View"<< std::endl;
@@ -567,6 +632,7 @@ PView* elasticitySolver::buildLagrangeMultiplierView (const std::string postFile
   PView *pv = new PView (postFileName, "NodeData", pModel, data, 0.0);
   return pv;
 }
+
 
 PView *elasticitySolver::buildElasticEnergyView(const std::string postFileName)
 {
@@ -599,7 +665,8 @@ PView *elasticitySolver::buildElasticEnergyView(const std::string postFileName)
 }
 
 PView *elasticitySolver::buildVonMisesView(const std::string postFileName)
-{std::cout <<  "build elastic view"<< std::endl;
+{
+  std::cout <<  "build elastic view"<< std::endl;
   std::map<int, std::vector<double> > data;
   GaussQuadrature Integ_Bulk(GaussQuadrature::GradGrad);
   for (unsigned int i = 0; i < elasticFields.size(); ++i)
@@ -672,6 +739,10 @@ void elasticitySolverRegisterBindings(binding *b)
   cm->setDescription ("assembles the problem");
   cm->setArgNames ("linearSystem",NULL);
 
+  cm = cb->addMethod("solve", &elasticitySolver::solve);
+  cm->setDescription ("solve the problem");
+  cm->setArgNames (NULL);
+
   cm = cb->addMethod("addDirichletBC", &elasticitySolver::addDirichletBC);
   cm->setDescription ("add a Dirichlet (displacement) boundary condition on a given entity");
   cm->setArgNames ("dim", "entityId", "component", "value", NULL);
@@ -699,6 +770,10 @@ void elasticitySolverRegisterBindings(binding *b)
   cm->setArgNames ("fileName", NULL);
 
   cm = cb->addMethod ("buildDisplacementView", &elasticitySolver::buildDisplacementView);
+  cm->setDescription ("create a new view.");
+  cm->setArgNames ("fileName", NULL);
+
+  cm = cb->addMethod ("buildStressesView", &elasticitySolver::buildStressesView);
   cm->setDescription ("create a new view.");
   cm->setArgNames ("fileName", NULL);
 
