@@ -81,8 +81,13 @@ static void file_new_cb(Fl_Widget *w, void *data)
 #if defined(HAVE_NATIVE_FILE_CHOOSER)
 #  define TT "\t"
 #  define NN "\n"
-#  define SEPARATOR_IN    " " TT "*" NN
-#  define SEPARATOR_OUT  {" " TT "*.*", _save_auto},
+#  if defined(__APPLE__)
+#    define SEPARATOR_IN    " " TT "*" NN
+#    define SEPARATOR_OUT  {" " TT "*.*", _save_auto},
+#  else
+#    define SEPARATOR_IN
+#    define SEPARATOR_OUT
+#  endif
 #else
 #  define TT " ("
 #  define NN ")\t"
