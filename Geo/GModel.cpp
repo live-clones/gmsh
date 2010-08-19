@@ -1275,6 +1275,7 @@ void GModel::createTopologyFromMesh()
 
 void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
 {
+
   std::vector<discreteEdge*> discEdges;
   for(eiter it = firstEdge(); it != lastEdge(); it++){
     if((*it)->geomType() == GEntity::DiscreteCurve)

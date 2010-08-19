@@ -1,6 +1,6 @@
 
 options = gmshOptions()
-options:numberSet('Mesh', 0, 'CharacteristicLengthFactor', 0.6)
+options:numberSet('Mesh', 0, 'CharacteristicLengthFactor', 1.5)
 
 myTool = GModel();
 myTool:addSphere(0.0,0.0,0.0,1);
