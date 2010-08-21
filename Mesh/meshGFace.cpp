@@ -349,12 +349,12 @@ static bool recoverEdge(BDS_Mesh *m, GEdge *ge,
       else{
         BDS_Edge *e = m->recover_edge(pstart->iD, pend->iD, e2r, notRecovered);
         if(e) e->g = g;
-        // else {
-        //   Msg::Error("Unable to recover an edge %g %g && %g %g (%d/%d)",
-        //              vstart->x(), vstart->y(), vend->x(), vend->y(), i, 
-        //              ge->mesh_vertices.size());
-        //   return false;
-        // }
+         else {
+           Msg::Error("Unable to recover an edge %g %g && %g %g (%d/%d)",
+                      vstart->x(), vstart->y(), vend->x(), vend->y(), i, 
+                      ge->mesh_vertices.size());
+           return false;
+         }
       }
     }
   }
@@ -390,6 +390,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
                           bool debug = true)
 {
   BDS_GeomEntity CLASS_F(1, 2);
+  BDS_GeomEntity CLASS_EXTERIOR(1, 3);
   std::map<BDS_Point*, MVertex*> recoverMap;
   std::map<MVertex*, BDS_Point*> recoverMapInv;
   std::list<GEdge*> edges = gf->edges();
@@ -568,7 +569,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
       ++ite;
     }
     
-    Msg::Debug("Recovering %d mesh Edges", edgesToRecover.size());
+    Msg::Debug("Recovering %d mesh Edges %d not recovered", edgesToRecover.size(),edgesNotRecovered.size() );
    
     // effectively recover the medge
     ite = edges.begin();
@@ -627,12 +628,53 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
                    RECUR_ITER);    
     
     Msg::Debug("Boundary Edges recovered for surface %d", gf->tag());
-     
-    // Look for an edge that is on the boundary for which one of the
-    // two neighbors has a negative number node. The other triangle is
-    // inside the domain and, because all edges were recovered,
-    // triangles inside the domain can be recovered using a simple
-    // recursive algorithm
+    
+    // LOOK FOR A TRIANGLE THAT HAS A NEGATIVE NODE
+    {
+      std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+      while (itt != m->triangles.end()){
+	(*itt)->g = 0;
+	++itt;
+      }
+      itt = m->triangles.begin();
+      while (itt != m->triangles.end()){
+        BDS_Face *t = *itt;
+	BDS_Point *n[4];
+	t->getNodes(n);
+	if (n[0]->iD < 0 || n[1]->iD < 0 || 
+	    n[2]->iD < 0 ) {
+	  recur_tag(t, &CLASS_EXTERIOR);
+	  break;
+	}
+	++itt;
+      }
+    }
+    
+    // Now find an edge that has one of the tag triangles CLASS_EXTERIOR
+    {
+      std::list<BDS_Edge*>::iterator ite = m->edges.begin();
+      while (ite != m->edges.end()){
+        BDS_Edge *e = *ite;
+        if(e->g  && e->numfaces() == 2){
+          if(e->faces(0)->g == &CLASS_EXTERIOR){
+            recur_tag(e->faces(1), &CLASS_F);
+            break;
+          }
+          else if(e->faces(1)->g == &CLASS_EXTERIOR){
+            recur_tag(e->faces(0), &CLASS_F);
+            break;
+          }
+        }
+        ++ite;
+      }
+      std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+      while (itt != m->triangles.end()){
+	if ((*itt)->g == &CLASS_EXTERIOR) (*itt)->g = 0;
+	++itt;
+      }
+    }
+
+
     {
       std::list<BDS_Edge*>::iterator ite = m->edges.begin();
       while (ite != m->edges.end()){
@@ -1222,6 +1264,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   // using mesh edge spacing
   BDS_GeomEntity CLASS_F(1, 2);
   BDS_GeomEntity CLASS_E(1, 1);
+  BDS_GeomEntity CLASS_EXTERIOR(3, 2);
 
   if(debug){
     char name[245];
@@ -1246,32 +1289,51 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     }
   }
 
-  // Msg::Info("Boundary Edges recovered for surface %d",gf->tag());
-  // Look for an edge that is on the boundary for which one of the two
-  // neighbors has a negative number node. The other triangle is
-  // inside the domain and, because all edges were recovered,
-  // triangles inside the domain can be recovered using a simple
-  // recursive algorithm
-  {
-    std::list<BDS_Edge*>::iterator ite = m->edges.begin();
-    while (ite != m->edges.end()){
-      BDS_Edge *e = *ite;
-      if(e->g  && e->numfaces () == 2){
-        BDS_Point *oface[2];
-        e->oppositeof(oface);
-        if(oface[0]->iD < 0){
-          recur_tag(e->faces(1), &CLASS_F);
-          break;
-        }
-        else if(oface[1]->iD < 0){
-          recur_tag(e->faces(0), &CLASS_F);
-          break;
-        }
+    // LOOK FOR A TRIANGLE THAT HAS A NEGATIVE NODE
+    {
+      std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+      while (itt != m->triangles.end()){
+	(*itt)->g = 0;
+	++itt;
       }
-      ++ite;
+      itt = m->triangles.begin();
+      while (itt != m->triangles.end()){
+        BDS_Face *t = *itt;
+	BDS_Point *n[4];
+	t->getNodes(n);
+	if (n[0]->iD < 0 || n[1]->iD < 0 || 
+	    n[2]->iD < 0 ) {
+	  recur_tag(t, &CLASS_EXTERIOR);
+	  break;
+	}
+	++itt;
+      }
     }
-  }
-  
+    
+    // Now find an edge that has one of the tag triangles CLASS_E
+    {
+      std::list<BDS_Edge*>::iterator ite = m->edges.begin();
+      while (ite != m->edges.end()){
+        BDS_Edge *e = *ite;
+        if(e->g  && e->numfaces() == 2){
+          if(e->faces(0)->g == &CLASS_EXTERIOR){
+            recur_tag(e->faces(1), &CLASS_F);
+            break;
+          }
+          else if(e->faces(1)->g == &CLASS_EXTERIOR){
+            recur_tag(e->faces(0), &CLASS_F);
+            break;
+          }
+        }
+        ++ite;
+      }
+      std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+      while (itt != m->triangles.end()){
+	if ((*itt)->g == &CLASS_EXTERIOR) (*itt)->g = 0;
+	++itt;
+      }
+    }
+
   // delete useless stuff
   {
     std::list<BDS_Face*>::iterator itt = m->triangles.begin();
