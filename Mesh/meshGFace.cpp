@@ -58,9 +58,6 @@ static void copyMesh (GFace *source, GFace *target)
 	source_e = target->edgeCounterparts[-(*it)->tag()];
       }
 
-      //      printf("face %d = %d vs %d (%d counterparts)\n",source->tag(),(*it)->tag(),source_e,target->edgeCounterparts.size());
-
-
       GEdge *se = source->model()->getEdgeByTag(abs(source_e));
       GEdge *te = *it;
       if (source_e * sign > 0){
@@ -134,7 +131,7 @@ static void copyMesh (GFace *source, GFace *target)
 
   for (unsigned i=0;i<source->triangles.size();i++){
     MVertex *vt[3];
-    for (int j=0;j<3;j++){
+    for (int j = 0; j < 3; j++){
       MVertex *vs = source->triangles[i]->getVertex(j); 
       
       vt[j] = vs2vt[vs];
@@ -569,7 +566,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
       ++ite;
     }
     
-    Msg::Debug("Recovering %d mesh Edges %d not recovered", edgesToRecover.size(),edgesNotRecovered.size() );
+    Msg::Debug("Recovering %d mesh Edges (%d not recovered)", edgesToRecover.size(),
+               edgesNotRecovered.size());
    
     // effectively recover the medge
     ite = edges.begin();
@@ -629,7 +627,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
     
     Msg::Debug("Boundary Edges recovered for surface %d", gf->tag());
     
-    // LOOK FOR A TRIANGLE THAT HAS A NEGATIVE NODE
+    // look for a triangle that has a negative node and recursively
+    // tag all exterior triangles
     {
       std::list<BDS_Face*>::iterator itt = m->triangles.begin();
       while (itt != m->triangles.end()){
@@ -650,7 +649,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
       }
     }
     
-    // Now find an edge that has one of the tag triangles CLASS_EXTERIOR
+    // now find an edge that has belongs to one of the exterior
+    // triangles
     {
       std::list<BDS_Edge*>::iterator ite = m->edges.begin();
       while (ite != m->edges.end()){
@@ -673,7 +673,6 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
 	++itt;
       }
     }
-
 
     {
       std::list<BDS_Edge*>::iterator ite = m->edges.begin();
@@ -1289,50 +1288,52 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     }
   }
 
-    // LOOK FOR A TRIANGLE THAT HAS A NEGATIVE NODE
-    {
-      std::list<BDS_Face*>::iterator itt = m->triangles.begin();
-      while (itt != m->triangles.end()){
-	(*itt)->g = 0;
-	++itt;
-      }
-      itt = m->triangles.begin();
-      while (itt != m->triangles.end()){
-        BDS_Face *t = *itt;
-	BDS_Point *n[4];
-	t->getNodes(n);
-	if (n[0]->iD < 0 || n[1]->iD < 0 || 
-	    n[2]->iD < 0 ) {
-	  recur_tag(t, &CLASS_EXTERIOR);
-	  break;
-	}
-	++itt;
-      }
+  // look for a triangle that has a negative node and recursively
+  // tag all exterior triangles
+  {
+    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    while (itt != m->triangles.end()){
+      (*itt)->g = 0;
+      ++itt;
     }
-    
-    // Now find an edge that has one of the tag triangles CLASS_E
-    {
-      std::list<BDS_Edge*>::iterator ite = m->edges.begin();
-      while (ite != m->edges.end()){
-        BDS_Edge *e = *ite;
-        if(e->g  && e->numfaces() == 2){
-          if(e->faces(0)->g == &CLASS_EXTERIOR){
-            recur_tag(e->faces(1), &CLASS_F);
-            break;
-          }
-          else if(e->faces(1)->g == &CLASS_EXTERIOR){
-            recur_tag(e->faces(0), &CLASS_F);
-            break;
-          }
+    itt = m->triangles.begin();
+    while (itt != m->triangles.end()){
+      BDS_Face *t = *itt;
+      BDS_Point *n[4];
+      t->getNodes(n);
+      if (n[0]->iD < 0 || n[1]->iD < 0 || 
+          n[2]->iD < 0 ) {
+        recur_tag(t, &CLASS_EXTERIOR);
+        break;
+      }
+      ++itt;
+    }
+  }
+  
+  // now find an edge that has belongs to one of the exterior
+  // triangles
+  {
+    std::list<BDS_Edge*>::iterator ite = m->edges.begin();
+    while (ite != m->edges.end()){
+      BDS_Edge *e = *ite;
+      if(e->g  && e->numfaces() == 2){
+        if(e->faces(0)->g == &CLASS_EXTERIOR){
+          recur_tag(e->faces(1), &CLASS_F);
+          break;
         }
-        ++ite;
+        else if(e->faces(1)->g == &CLASS_EXTERIOR){
+          recur_tag(e->faces(0), &CLASS_F);
+          break;
+        }
       }
-      std::list<BDS_Face*>::iterator itt = m->triangles.begin();
-      while (itt != m->triangles.end()){
-	if ((*itt)->g == &CLASS_EXTERIOR) (*itt)->g = 0;
-	++itt;
-      }
+      ++ite;
     }
+    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    while (itt != m->triangles.end()){
+      if ((*itt)->g == &CLASS_EXTERIOR) (*itt)->g = 0;
+      ++itt;
+    }
+  }
 
   // delete useless stuff
   {
@@ -1476,7 +1477,7 @@ void deMeshGFace::operator() (GFace *gf)
   gf->meshStatistics.nbTriangle = gf->meshStatistics.nbEdge = 0;
 }
 
-//For Debugging, change value from -1 to -100;
+// for debugging, change value from -1 to -100;
 int debugSurface = -1; 
 
 void meshGFace::operator() (GFace *gf)
@@ -1533,7 +1534,8 @@ void meshGFace::operator() (GFace *gf)
   Msg::Debug("Computing edge loops");
 
   Msg::Debug("Generating the mesh");
-  if ((gf->getNativeType() != GEntity::AcisModel || (!gf->periodic(0) &&!gf->periodic(1)))&&
+  if ((gf->getNativeType() != GEntity::AcisModel ||
+       (!gf->periodic(0) && !gf->periodic(1))) &&
       (noSeam(gf) || gf->getNativeType() == GEntity::GmshModel || 
        gf->edgeLoops.empty())){
     meshGenerator(gf, 0, repairSelfIntersecting1dMesh,
@@ -1632,7 +1634,8 @@ void partitionAndRemesh(GFaceCompound *gf)
   gf->model()->createTopologyFromFaces(pFaces);
    
   double tmult = Cpu();
-  Msg::Info("Multiscale Partition SUCCESSFULLY PERFORMED : %d parts (%g s)", NF , tmult -tbegin);
+  Msg::Info("Multiscale Partition SUCCESSFULLY PERFORMED : %d parts (%g s)", 
+            NF, tmult - tbegin);
   gf->model()->writeMSH("multiscalePARTS.msh", 2.2, false, true);
  
   //Remesh new faces (Compound Lines and Compound Surfaces)
@@ -1735,8 +1738,7 @@ void partitionAndRemesh(GFaceCompound *gf)
   //Remove mesh_vertices that belong to l_edges
   //-----------------------------------------------------
   std::list<GEdge*> l_edges = gf->edges();
-  for( std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); it++){
-    //printf("boundary edge of face %d =%d size=%d\n", gf->tag(),(*it)->tag(), l_edges.size());
+  for(std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); it++){
     std::vector<MVertex*> edge_vertices = (*it)->mesh_vertices;
     std::vector<MVertex*>::const_iterator itv = edge_vertices.begin();
     for(; itv != edge_vertices.end(); itv++){
@@ -1775,7 +1777,8 @@ void partitionAndRemesh(GFaceCompound *gf)
   }
 
   double t3 = Cpu();
-  Msg::Info("*** Mesh of surface %d done by assembly remeshed faces (%g s)", gf->tag(), t3-t2);
+  Msg::Info("*** Mesh of surface %d done by assembly remeshed faces (%g s)",
+            gf->tag(), t3-t2);
   Msg::Info("-----------------------------------------------------------");
  
   gf->coherenceNormals();
