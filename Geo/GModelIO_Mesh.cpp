@@ -1589,7 +1589,7 @@ int GModel::readMESH(const std::string &name)
   }
 
   std::vector<MVertex*> vertexVector;
-  std::map<int, std::vector<MElement*> > elements[4];
+  std::map<int, std::vector<MElement*> > elements[5];
 
   while(!feof(fp)) {
     if(!fgets(buffer, 256, fp)) break;
@@ -1625,7 +1625,7 @@ int GModel::readMESH(const std::string &name)
           for(int j = 0; j < 2; j++) n[j]--;
           std::vector<MVertex*> vertices;
           if(!getVertices(2, n, vertexVector, vertices)) return 0;
-          elements[3][cl].push_back(new MLine(vertices));
+          elements[0][cl].push_back(new MLine(vertices));
         }
       }
       else if(!strcmp(str, "Triangles")){
@@ -1640,7 +1640,7 @@ int GModel::readMESH(const std::string &name)
           for(int j = 0; j < 3; j++) n[j]--;
           std::vector<MVertex*> vertices;
           if(!getVertices(3, n, vertexVector, vertices)) return 0;
-          elements[0][cl].push_back(new MTriangle(vertices));
+          elements[1][cl].push_back(new MTriangle(vertices));
         }
       }
       else if(!strcmp(str, "Quadrilaterals")) {
@@ -1655,7 +1655,7 @@ int GModel::readMESH(const std::string &name)
           for(int j = 0; j < 4; j++) n[j]--;
           std::vector<MVertex*> vertices;
           if(!getVertices(4, n, vertexVector, vertices)) return 0;
-          elements[1][cl].push_back(new MQuadrangle(vertices));
+          elements[2][cl].push_back(new MQuadrangle(vertices));
         }
       }
       else if(!strcmp(str, "Tetrahedra")) {
@@ -1670,7 +1670,23 @@ int GModel::readMESH(const std::string &name)
           for(int j = 0; j < 4; j++) n[j]--;
           std::vector<MVertex*> vertices;
           if(!getVertices(4, n, vertexVector, vertices)) return 0;
-          elements[2][cl].push_back(new MTetrahedron(vertices));
+          elements[3][cl].push_back(new MTetrahedron(vertices));
+        }
+      }
+      else if(!strcmp(str, "Hexahedra")) {
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        int nbe;
+        sscanf(buffer, "%d", &nbe);
+        Msg::Info("%d hexahedra", nbe);
+        for(int i = 0; i < nbe; i++) {
+          if(!fgets(buffer, sizeof(buffer), fp)) break;
+          int n[8], cl;
+          sscanf(buffer, "%d %d %d %d %d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], 
+                 &n[4], &n[5], &n[6], &n[7], &cl);
+          for(int j = 0; j < 8; j++) n[j]--;
+          std::vector<MVertex*> vertices;
+          if(!getVertices(8, n, vertexVector, vertices)) return 0;
+          elements[4][cl].push_back(new MHexahedron(vertices));
         }
       }
     }
@@ -1710,7 +1726,8 @@ int GModel::writeMESH(const std::string &name, int elementTagType,
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->writeMESH(fp, scalingFactor);
 
-  int numEdges = 0, numTriangles = 0, numQuadrangles = 0, numTetrahedra = 0;
+  int numEdges = 0, numTriangles = 0, numQuadrangles = 0;
+  int numTetrahedra = 0, numHexahedra = 0;
   for(eiter it = firstEdge(); it != lastEdge(); ++it){
     if(saveAll || (*it)->physicals.size()){
       numEdges += (*it)->lines.size();
@@ -1725,6 +1742,7 @@ int GModel::writeMESH(const std::string &name, int elementTagType,
   for(riter it = firstRegion(); it != lastRegion(); ++it){
     if(saveAll || (*it)->physicals.size()){
       numTetrahedra += (*it)->tetrahedra.size();
+      numHexahedra += (*it)->hexahedra.size();
     }
   }
 
@@ -1773,6 +1791,18 @@ int GModel::writeMESH(const std::string &name, int elementTagType,
         for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
           (*it)->tetrahedra[i]->writeMESH(fp, elementTagType, (*it)->tag(),
                                           numPhys ? (*it)->physicals[0] : 0);
+      }
+    }
+  }
+  if(numHexahedra){
+    fprintf(fp, " Hexahedra\n");
+    fprintf(fp, " %d\n", numHexahedra);
+    for(riter it = firstRegion(); it != lastRegion(); ++it){
+      int numPhys = (*it)->physicals.size();
+      if(saveAll || numPhys){
+        for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
+          (*it)->hexahedra[i]->writeMESH(fp, elementTagType, (*it)->tag(),
+                                         numPhys ? (*it)->physicals[0] : 0);
       }
     }
   }
