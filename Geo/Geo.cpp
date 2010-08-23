@@ -2707,10 +2707,11 @@ static void ReplaceDuplicatePoints()
 {
   // FIXME: This routine is in fact logically wrong (the
   // compareTwoPoints function used in the avl tree is not a
-  // appropriate comparison function). The fix is simple (use a
-  // multi-d tree, e.g., MVertexOctree), but fixing the routine would
-  // break backward compatibility with old .geo files. This will be
-  // fixed in the new abstract GModel CAD creation routines.
+  // appropriate comparison function). The fix is simple (use a multi
+  // dimensional tree, e.g., MVertexPositionSet), but fixing the
+  // routine would break backward compatibility with old .geo
+  // files. This will be fixed in the new abstract GModel CAD creation
+  // routines.
   Vertex *v, **pv, **pv2;
   Curve *c;
   Surface *s;

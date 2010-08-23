@@ -221,21 +221,10 @@ void MVertex::writeDIFF(FILE *fp, bool binary, double scalingFactor)
 std::set<MVertex*, MVertexLessThanLexicographic>::iterator 
 MVertex::linearSearch(std::set<MVertex*, MVertexLessThanLexicographic> &pos)
 {
-  double tol = MVertexLessThanLexicographic::tolerance;
-  double dmin = 1e22;
-  std::set<MVertex*, MVertexLessThanLexicographic>::iterator itmin = pos.end();
   for(std::set<MVertex*, MVertexLessThanLexicographic>::iterator it = pos.begin();
-      it != pos.end(); ++it){
-    double d = distance(*it);
-    if(d < dmin){
-      dmin = d;
-      itmin = it;
-    }
-    if(distance(*it) < tol) return it;
-  }
-  Msg::Warning("Could not find point: returning closest (dist = %g)", dmin);
-  //return pos.end();
-  return itmin;
+      it != pos.end(); ++it)
+    if(distance(*it) < MVertexLessThanLexicographic::tolerance) return it;
+  return pos.end();
 }
 
 static void getAllParameters(MVertex *v, GFace *gf, std::vector<SPoint2> &params)

@@ -665,7 +665,6 @@ class GradientField : public Field
   }
 };
 
-
 class CurvatureField : public Field
 {
   int iField;
@@ -937,7 +936,8 @@ class MathEvalExpressionAniso
     variables[1] = "y"; 
     variables[2] = "z";
     i = 3;
-    for(std::set<int>::iterator it = _fields[iFunction].begin(); it != _fields[iFunction].end(); it++){
+    for(std::set<int>::iterator it = _fields[iFunction].begin(); 
+        it != _fields[iFunction].end(); it++){
       std::ostringstream sstream;
       sstream << "F" << *it;
       variables[i++] = sstream.str();
@@ -962,7 +962,8 @@ class MathEvalExpressionAniso
 	values[1] = y;
 	values[2] = z;
 	int i = 3;
-	for(std::set<int>::iterator it = _fields[iFunction].begin(); it != _fields[iFunction].end(); it++){
+	for(std::set<int>::iterator it = _fields[iFunction].begin(); 
+            it != _fields[iFunction].end(); it++){
 	  Field *field = GModel::current()->getFields()->get(*it);
 	  values[i++] = field ? (*field)(x, y, z) : MAX_LC;
 	}
@@ -1007,7 +1008,6 @@ class MathEvalField : public Field
       "and mathematical functions.";
   }
 };
-
 
 class MathEvalFieldAniso : public Field
 {
@@ -1209,7 +1209,6 @@ class MinAnisoField : public Field
     }
     metr = v;
   }
-
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     double v = MAX_LC;
@@ -1224,7 +1223,6 @@ class MinAnisoField : public Field
     return "MinAniso";
   }
 };
-
 
 class MinField : public Field
 {
@@ -1375,10 +1373,12 @@ class AttractorField : public Field
       "is replaced by NNodesByEdge equidistant nodes and the distance from those "
       "nodes is computed.";
   }
-  std::pair<AttractorInfo,SPoint3> getAttractorInfo() const {
-    return std::make_pair(_infos[index[0]], SPoint3 (zeronodes[index[0]][0],zeronodes[index[0]][1],zeronodes[index[0]][2] ) );
+  std::pair<AttractorInfo,SPoint3> getAttractorInfo() const 
+  {
+    return std::make_pair(_infos[index[0]], SPoint3(zeronodes[index[0]][0],
+                                                    zeronodes[index[0]][1],
+                                                    zeronodes[index[0]][2]));
   }
-
   virtual double operator() (double X, double Y, double Z, GEntity *ge=0)
   {
     if(update_needed) {
@@ -1389,7 +1389,7 @@ class AttractorField : public Field
       int totpoints = nodes_id.size() + n_nodes_by_edge * edges_id.size() + 
         n_nodes_by_edge * n_nodes_by_edge * faces_id.size();
       if(totpoints){
-        zeronodes = annAllocPts(totpoints, 4);
+        zeronodes = annAllocPts(totpoints, 3);
         _infos.resize(totpoints);
       }
       int k = 0;
@@ -1519,8 +1519,8 @@ public:
     options["hfar"] = new FieldOptionDouble
       (hfar, "Element size far from the wall");
   }
-
-  virtual double operator() (double x, double y, double z, GEntity *ge=0){
+  virtual double operator() (double x, double y, double z, GEntity *ge=0)
+  {
     Field *field = GModel::current()->getFields()->get(iField);
     if(!field || iField == id) {
       return MAX_LC;
@@ -1530,7 +1530,6 @@ public:
     //    double lc = hwall * pow (ratio, dist / hwall);
     return std::min (hfar,lc);
   }
-
   virtual void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0)
   {
     Field *field = GModel::current()->getFields()->get(iField);
@@ -1636,8 +1635,6 @@ public:
   }
 };
 #endif
-
-
 
 template<class F> class FieldFactoryT : public FieldFactory {
  public:

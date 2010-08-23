@@ -84,7 +84,7 @@ void carveHole(GRegion *gr, int num, double distance, std::vector<int> &surfaces
     numnodes += gf->mesh_vertices.size();
   }
 
-  ANNpointArray kdnodes = annAllocPts(numnodes, 4);
+  ANNpointArray kdnodes = annAllocPts(numnodes, 3);
   int k = 0;
   for(unsigned int i = 0; i < surfaces.size(); i++){
     GFace *gf = m->getFaceByTag(surfaces[i]);

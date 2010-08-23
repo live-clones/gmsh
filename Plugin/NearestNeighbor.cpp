@@ -55,7 +55,7 @@ PView *GMSH_NearestNeighborPlugin::execute(PView *v)
   }
 
 #if defined(HAVE_ANN)
-  ANNpointArray zeronodes = annAllocPts(totpoints, 4);
+  ANNpointArray zeronodes = annAllocPts(totpoints, 3);
   int k = 0, step = 0;
   for(int ent = 0; ent < data1->getNumEntities(step); ent++){
     for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){

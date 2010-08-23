@@ -28,6 +28,7 @@
 #include "discreteEdge.h"
 #include "discreteFace.h"
 #include "discreteRegion.h"
+#include "MVertexPositionSet.h"
 
 void GModel::_storePhysicalTagsInEntities(int dim,
                                           std::map<int, std::map<int, std::string> > &map)
@@ -1036,11 +1037,15 @@ int GModel::readSTL(const std::string &name, double tolerance)
     add(face);
   }
 
-  // create (unique) vertices and triangles
-  double lc = norm(SVector3(bbox.max(), bbox.min()));
-  double old_tol = MVertexLessThanLexicographic::tolerance;
-  MVertexLessThanLexicographic::tolerance = lc * tolerance;
-  std::set<MVertex*, MVertexLessThanLexicographic> vertices;
+  // create triangles using unique vertices
+  double eps = norm(SVector3(bbox.max(), bbox.min())) * tolerance;
+  std::vector<MVertex*> vertices;
+  for(unsigned int i = 0; i < points.size(); i++)
+    for(unsigned int j = 0; j < points[i].size(); j++)
+      vertices.push_back(new MVertex(points[i][j].x(), points[i][j].y(),
+                                     points[i][j].z(), faces[i]));
+  MVertexPositionSet pos(vertices);
+  
   for(unsigned int i = 0; i < points.size(); i ++){
     for(unsigned int j = 0; j < points[i].size(); j += 3){
       MVertex *v[3];
@@ -1048,22 +1053,15 @@ int GModel::readSTL(const std::string &name, double tolerance)
         double x = points[i][j + k].x();
         double y = points[i][j + k].y();
         double z = points[i][j + k].z();
-        MVertex w(x, y, z);
-        std::set<MVertex*, MVertexLessThanLexicographic>::iterator it = vertices.find(&w);
-        if(it != vertices.end()) {
-          v[k] = *it;
-        }
-        else {
-          v[k] = new MVertex(x, y, z, faces[i]);
-          vertices.insert(v[k]);
-          faces[i]->mesh_vertices.push_back(v[k]);
-        }
+        v[k] = pos.find(x, y, z, eps);
+        faces[i]->mesh_vertices.push_back(v[k]);
       }
       faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
     }
   }
-
-  MVertexLessThanLexicographic::tolerance = old_tol;
+  
+  for(unsigned int i = 0; i < vertices.size(); i++)
+    if(!vertices[i]->getIndex()) delete vertices[i];
 
   fclose(fp);
   return 1;

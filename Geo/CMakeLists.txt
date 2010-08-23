@@ -30,7 +30,7 @@ set(SRC
   findLinks.cpp
   SOrientedBoundingBox.cpp
   GeomMeshMatcher.cpp
-  MVertex.cpp MVertexOctree.cpp
+  MVertex.cpp
   MFace.cpp
   MElement.cpp MElementOctree.cpp
     MLine.cpp MTriangle.cpp MQuadrangle.cpp MTetrahedron.cpp
