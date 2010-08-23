@@ -119,6 +119,11 @@ class MPolyhedron : public MElement {
     if(_orig) return _orig->getFunctionSpace(order);
     return 0;
   }
+  virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const
+  {
+    if(_orig) return _orig->getJacobianFuncSpace(order);
+    return 0;
+  }
   virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
   {
     if(_orig) _orig->getShapeFunctions(u, v, w, s, o);
@@ -241,6 +246,11 @@ class MPolygon : public MElement {
     if(_orig) return _orig->getFunctionSpace(order);
     return 0;
   }
+  virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const
+  {
+    if(_orig) return _orig->getJacobianFuncSpace(order);
+    return 0;
+  }
   virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
   {
     if(_orig) _orig->getShapeFunctions(u, v, w, s, o);
@@ -295,6 +305,11 @@ class MLineChild : public MLine {
   virtual const polynomialBasis* getFunctionSpace(int order=-1) const
   {
     if(_orig) return _orig->getFunctionSpace(order);
+    return 0;
+  }
+  virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const
+  {
+    if(_orig) return _orig->getJacobianFuncSpace(order);
     return 0;
   }
   virtual void getShapeFunctions(double u, double v, double w, double s[], int o)

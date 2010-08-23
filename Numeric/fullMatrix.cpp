@@ -42,7 +42,7 @@ extern "C" {
 }
 
 template<> 
-void fullVector<double>::axpy(fullVector<double> &x,double alpha)
+void fullVector<double>::axpy(const fullVector<double> &x,double alpha)
 {
   int M = _r, INCX = 1, INCY = 1;
   F77NAME(daxpy)(&M, &alpha, x._data,&INCX, _data, &INCY);
@@ -220,7 +220,7 @@ bool fullMatrix<double>::luSolve(const fullVector<double> &rhs, fullVector<doubl
 }
 
 template<>
-bool fullMatrix<double>::invert(fullMatrix<double> &result)
+bool fullMatrix<double>::invert(fullMatrix<double> &result) const
 {
   int M = size1(), N = size2(), lda = size1(), info;
   int *ipiv = new int[std::min(M, N)];

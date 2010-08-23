@@ -119,6 +119,7 @@ class MQuadrangle : public MElement {
   virtual const char *getStringForDIFF() const { return "ElmB4n2D"; }
   virtual const char *getStringForINP() const { return "C2D4"; }
   virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
+  virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
   virtual void revert() 
   {
     MVertex *tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;

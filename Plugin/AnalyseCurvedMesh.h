@@ -2,20 +2,13 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
-//
-// Contributed by Amaury J.
-
-// Added code : 
-// Numeric/polynomialBasis.cpp -> jacobianPolynomialBases::find(int tag), #include
-// Geo/MElement.h -> getJacobianFunctionSpace(int), #include
-// Geo/MTriangle .h/.cpp -> getJacobianFunctionSpace(int)
 
 #ifndef _ANALYSECURVEDMESH_H_
 #define _ANALYSECURVEDMESH_H_
 
-#include <string>
 #include "Plugin.h"
 #include "MElement.h"
+#include <vector>
 
 extern "C"
 {
@@ -33,10 +26,19 @@ class GMSH_AnalyseCurvedMeshPlugin : public GMSH_PostPlugin
   }
   std::string getHelp() const;
   std::string getAuthor() const { return "Amaury Johnen"; }
+  int getNbOptions() const;
+  StringXNumber *getOption(int);  
   PView *execute(PView *);
   bool isJacPositive(MElement *);
-  int method1(MElement *, int depth);
-	int checkJacobian(MElement *, int depth);
+  int method_1_1(MElement *, int depth);
+  int method_1_2(MElement *, int depth);
+  int method_1_3(MElement *, int depth);
+  void method_2_2(MElement *const *, std::vector<int> &tags, int depth);
+  void method_2_3(MElement *const *, std::vector<int> &tags, int depth);
+  //int checkJacobian(MElement *, int depth);
+  //int *checkJacobian2(MElement *const *, int numEl, int depth);
+  int *checkJacobian(MElement *const *, int numEl, int depth, int method);
+  int division(const JacobianBasis *, const fullVector<double> &, int depth);
 };
 
 #endif

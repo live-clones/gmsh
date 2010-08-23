@@ -53,6 +53,29 @@ const polynomialBasis* MPrism::getFunctionSpace(int o) const
   return 0;
 }
 
+const JacobianBasis* MPrism::getJacobianFuncSpace(int o) const
+{
+  int order = (o == -1) ? getPolynomialOrder() : o;
+
+  int nv = getNumVolumeVertices();
+  
+  if ((nv == 0) && (o == -1)) {
+    switch (order) {
+    case 1: return JacobianBases::find(MSH_PRI_6);
+    case 2: return JacobianBases::find(MSH_PRI_18);
+    default: Msg::Error("Order %d prism function space not implemented", order);
+    }
+  }
+  else { 
+    switch (order) {
+    case 1: return JacobianBases::find(MSH_PRI_6);
+    case 2: return JacobianBases::find(MSH_PRI_18);
+    default: Msg::Error("Order %d prism function space not implemented", order);
+    }
+  }
+  return 0;
+}
+
 double MPrism::getInnerRadius()
 {
   double dist[3], k = 0.;

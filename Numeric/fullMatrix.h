@@ -47,6 +47,13 @@ class fullVector
     }
     return false;
   }
+  void setAsProxy(const fullVector<scalar> &original, int r_start, int r)
+  {
+    if(_data)
+      delete [] _data;
+    _r = r;
+    _data = original._data + r_start;
+  }
   inline scalar operator () (int i) const
   {
     return _data[i];
@@ -77,13 +84,17 @@ class fullVector
     for(int i = 0; i < _r; ++i) s += _data[i] * other._data[i];
     return s;
   }
-  void axpy(fullVector<scalar> &x, scalar alpha=1.)
+  void axpy(const fullVector<scalar> &x, scalar alpha=1.)
 #if !defined(HAVE_BLAS)
   {
     for (int i = 0; i < _r; i++) _data[i] += alpha * x._data[i];
   }
 #endif
   ;
+  void multTByT(const fullVector<scalar> &x)
+  {
+    for (int i = 0; i < _r; i++) _data[i] *= x._data[i];
+  }
   void print(const char *name="") const 
   {
     printf("Printing vector %s:\n", name);
@@ -260,6 +271,16 @@ class fullMatrix
       for(int j = j0, destj = destj0; j < j0 + nj; j++, destj++)
         (*this)(desti, destj) = a(i, j);
   }
+  void copy(const fullMatrix<scalar> &a)
+  {
+    if(_data && _own_data)
+      delete [] _data;
+    _r = a._r;
+    _c = a._c;
+    _data = new scalar[_r * _c];
+    _own_data = true;
+    setAll(a);
+  }
   void mult_naive(const fullMatrix<scalar> &b, fullMatrix<scalar> &c)const
   {
     c.scale(0.);
@@ -276,6 +297,10 @@ class fullMatrix
   }
 #endif
   ;
+  void multTByT(const fullMatrix<scalar> &a)
+  {
+    for (int i = 0; i < _r * _c; i++) _data[i] *= a._data[i];
+  }
   void gemm_naive(const fullMatrix<scalar> &a, const fullMatrix<scalar> &b, 
                   scalar alpha=1., scalar beta=1.)
   {
@@ -386,7 +411,7 @@ class fullMatrix
   }
 #endif
   ;
-  bool invert(fullMatrix<scalar> &result)
+  bool invert(fullMatrix<scalar> &result) const
 #if !defined(HAVE_LAPACK)
   {
     Msg::Error("LU factorization requires LAPACK");

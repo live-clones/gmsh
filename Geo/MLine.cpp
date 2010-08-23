@@ -29,6 +29,26 @@ const polynomialBasis* MLine::getFunctionSpace(int o) const
   return 0;
 }
 
+const JacobianBasis* MLine::getJacobianFuncSpace(int o) const
+{
+  int order = (o == -1) ? getPolynomialOrder() : o;
+  
+  switch (order) {
+  case 1: return JacobianBases::find(MSH_LIN_2);
+  case 2: return JacobianBases::find(MSH_LIN_3);
+  case 3: return JacobianBases::find(MSH_LIN_4);
+  case 4: return JacobianBases::find(MSH_LIN_5);
+  case 5: return JacobianBases::find(MSH_LIN_6);
+  case 6: return JacobianBases::find(MSH_LIN_7);
+  case 7: return JacobianBases::find(MSH_LIN_8);
+  case 8: return JacobianBases::find(MSH_LIN_9);
+  case 9: return JacobianBases::find(MSH_LIN_10);
+  case 10: return JacobianBases::find(MSH_LIN_11);
+  default: Msg::Error("Order %d line function space not implemented", order);
+  }
+  return 0;
+}
+
 void MLine::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   *npts = getNGQLPts(pOrder);
