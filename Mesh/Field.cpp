@@ -1653,7 +1653,9 @@ FieldManager::FieldManager()
 {
   map_type_name["Structured"] = new FieldFactoryT<StructuredField>();
   map_type_name["Threshold"] = new FieldFactoryT<ThresholdField>();
+#if defined(HAVE_ANN)
   map_type_name["BoundaryLayer"] = new FieldFactoryT<BoundaryLayerField>();
+#endif
   map_type_name["Box"] = new FieldFactoryT<BoxField>();
   map_type_name["Cylinder"] = new FieldFactoryT<CylinderField>();
   map_type_name["LonLat"] = new FieldFactoryT<LonLatField>();

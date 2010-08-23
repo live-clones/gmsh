@@ -1127,12 +1127,13 @@ bool GFaceCompound::parametrize_conformal_spectral() const
 #if !defined(HAVE_PETSC) && !defined(HAVE_SLEPC)
 {
 
- Msg::Error("-----------------------------------------------------------------------------!");
- Msg::Error("Gmsh should be compiled with petsc and slepc for using the conformal map     !");
- Msg::Error("Switch to harmonic map or see doc on the wiki for installing petsc and slepc !");
- Msg::Error("https://geuz.org/trac/gmsh/wiki/STLRemeshing (username:gmsh,passwd:gmsh)     !");
- Msg::Error("-----------------------------------------------------------------------------!");
- Msg::Exit(1);
+  Msg::Error("-----------------------------------------------------------------------------!");
+  Msg::Error("Gmsh should be compiled with petsc and slepc for using the conformal map     !");
+  Msg::Error("Switch to harmonic map or see doc on the wiki for installing petsc and slepc !");
+  Msg::Error("https://geuz.org/trac/gmsh/wiki/STLRemeshing (username:gmsh,passwd:gmsh)     !");
+  Msg::Error("-----------------------------------------------------------------------------!");
+  Msg::Exit(1);
+  return false;
 
 }
 #else
