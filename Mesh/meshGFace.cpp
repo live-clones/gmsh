@@ -346,12 +346,12 @@ static bool recoverEdge(BDS_Mesh *m, GEdge *ge,
       else{
         BDS_Edge *e = m->recover_edge(pstart->iD, pend->iD, e2r, notRecovered);
         if(e) e->g = g;
-         else {
-           Msg::Error("Unable to recover an edge %g %g && %g %g (%d/%d)",
-                      vstart->x(), vstart->y(), vend->x(), vend->y(), i, 
-                      ge->mesh_vertices.size());
-           return false;
-         }
+        //else {
+        //   Msg::Error("Unable to recover an edge %g %g && %g %g (%d/%d)",
+        //              vstart->x(), vstart->y(), vend->x(), vend->y(), i, 
+        //              ge->mesh_vertices.size());
+        //   return false;
+        // }
       }
     }
   }
