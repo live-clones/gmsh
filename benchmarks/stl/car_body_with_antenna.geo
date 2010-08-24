@@ -10,6 +10,8 @@ Point(p2) = { -0.000210105 , 0.000769998 , 1.30307 + ll , lc1 };
 l1 = newl;
 Line(l1) = { p1 , p2 }; 
 
+
 Mesh 2;
 Coherence Mesh;
 Save "car_body_with_antenna.msh";
+

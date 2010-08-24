@@ -309,22 +309,6 @@ class MElement
                          std::map<MElement*, MElement*> &newDomains);
 };
 
-class MElementLessThanLexicographic{
- public:
-  static double tolerance;
-  bool operator()(MElement *e1, MElement *e2) const
-  {
-    SPoint3 b1 = e1->barycenter();
-    SPoint3 b2 = e2->barycenter();
-    if(b1.x() - b2.x() >  tolerance) return true;
-    if(b1.x() - b2.x() < -tolerance) return false;
-    if(b1.y() - b2.y() >  tolerance) return true;
-    if(b1.y() - b2.y() < -tolerance) return false;
-    if(b1.z() - b2.z() >  tolerance) return true;
-    return false;
-  }
-};
-
 class MElementFactory{
  public:
   MElement *create(int type, std::vector<MVertex*> &v, int num=0, int part=0,

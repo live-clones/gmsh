@@ -1043,7 +1043,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
   for(unsigned int i = 0; i < points.size(); i++)
     for(unsigned int j = 0; j < points[i].size(); j++)
       vertices.push_back(new MVertex(points[i][j].x(), points[i][j].y(),
-                                     points[i][j].z(), faces[i]));
+                                     points[i][j].z()));
   MVertexPositionSet pos(vertices);
   
   for(unsigned int i = 0; i < points.size(); i ++){
@@ -1054,14 +1054,13 @@ int GModel::readSTL(const std::string &name, double tolerance)
         double y = points[i][j + k].y();
         double z = points[i][j + k].z();
         v[k] = pos.find(x, y, z, eps);
-        faces[i]->mesh_vertices.push_back(v[k]);
       }
       faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
     }
   }
   
-  for(unsigned int i = 0; i < vertices.size(); i++)
-    if(!vertices[i]->getIndex()) delete vertices[i];
+  _associateEntityWithMeshVertices();
+  _storeVerticesInEntities(vertices); // will delete unused vertices
 
   fclose(fp);
   return 1;

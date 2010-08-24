@@ -14,10 +14,10 @@
 #include "ANN/ANN.h"
 
 // Stores MVertices in a kd-tree so we can query unique vertices (up
-// to a tolerance d). The constructor tags all the vertices with 0;
-// find() tags the returned vertex with -1; if no negatively-tagged
-// vertex exists, find() returns the closest vertex up to the
-// prescribed tolerance.
+// to a prescribed tolerance). The constructor tags all the vertices
+// with 0; find() tags the returned vertex with -1; if no
+// negatively-tagged vertex exists, find() returns the closest vertex
+// up to the prescribed tolerance.
 class MVertexPositionSet{
  private:
   ANNkd_tree *_kdtree;
@@ -54,14 +54,16 @@ class MVertexPositionSet{
     double xyz[3] = {x, y, z};
     _kdtree->annkSearch(xyz, _maxDuplicates, _index, _dist);
     for(int i = 0; i < _maxDuplicates; i++){
-      if(_index[i] >= 0 && _vertices[_index[i]]->getIndex() < 0 && sqrt(_dist[i]) < tolerance) 
+      if(_index[i] >= 0 && sqrt(_dist[i]) < tolerance &&
+         _vertices[_index[i]]->getIndex() < 0)
         return _vertices[_index[i]];
     }
     if(_index[0] >= 0 && sqrt(_dist[0]) < tolerance){
       _vertices[_index[0]]->setIndex(-1);
       return _vertices[_index[0]];
     }
-    Msg::Error("Could not find point (%g,%g,%g)", x, y, z);
+    Msg::Error("Could not find vertex (%g,%g,%g) (tol %g)",
+               x, y, z, tolerance);
     return 0;
   }
 };

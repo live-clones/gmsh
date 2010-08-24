@@ -1,7 +1,7 @@
 
 scale = .01 ;
 
-lc_wing = 0.0001 * scale ;
+lc_wing = 0.001 * scale ;
 lc_box = 10 * scale ;
 
 Point(3895) = {1.177410e-02*scale,-2.768003e-03*scale,0,lc_wing};

@@ -27,7 +27,6 @@
 
 int MElement::_globalNum = 0;
 double MElement::_isInsideTolerance = 1.e-6;
-double MElementLessThanLexicographic::tolerance = 1.e-6;
 
 MElement::MElement(int num, int part) : _visible(1)
 {
