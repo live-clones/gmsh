@@ -564,23 +564,8 @@ void AdaptMesh(GModel *m)
   Msg::StatusBar(1, true, "Adapting 3D Mesh...");
   double t1 = Cpu();
 
-  if(CTX::instance()->lock) {
-    Msg::Info("I'm busy! Ask me that later...");
-    return;
-  }
-
-  CTX::instance()->lock = 1;
-
-  std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
-  std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
-  std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
-  std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
-  std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
-  std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
-  std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
-  std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
-  std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
-  std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
+  for(int i = 0; i < 10; i++)
+    std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
 
   double t2 = Cpu();
   Msg::Info("Mesh Adaptation complete (%g s)", t2 - t1);
