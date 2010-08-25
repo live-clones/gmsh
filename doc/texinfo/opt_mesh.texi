@@ -19,6 +19,11 @@ Threshold angle below which normals are not smoothed@*
 Default value: @code{30}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.AnisoMax
+Maximum anisotropy of the mesh@*
+Default value: @code{1e+33}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.AllowSwapAngle
 Treshold angle (in degrees) between faces normals under which we allow an edge swap@*
 Default value: @code{10}@*
@@ -180,8 +185,8 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Format
-Mesh output format (1=msh, 2=unv, 19=vrml, 27=stl, 30=mesh, 31=bdf, 32=cgns, 33=med)@*
-Default value: @code{1}@*
+Mesh output format (1=msh, 2=unv, 10=automatic, 19=vrml, 27=stl, 30=mesh, 31=bdf, 32=cgns, 33=med)@*
+Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Hexahedra
@@ -477,6 +482,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.SmoothNormals
 Smooth the mesh normals?@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.SmoothRatio
+Ratio between mesh sizes at vertices of a same edeg (used in BAMG)@*
+Default value: @code{1.8}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SubdivisionAlgorithm

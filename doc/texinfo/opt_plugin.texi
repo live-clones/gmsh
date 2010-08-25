@@ -4,11 +4,6 @@
 @c
 
 @ftable @code
-@item Plugin(AnalyseCurvedMesh)
-Plugin(AnalyseCurvedMesh) computes AnalyseCurvedMeshs to boundaries in a mesh.
-
-Plugin(AnalyseCurvedMesh) creates a bunch of files.
-
 @item Plugin(Annotate)
 Plugin(Annotate) adds the text string `Text', in font `Font' and size `FontSize', in the view `View'. The string is aligned according to `Align'.
 

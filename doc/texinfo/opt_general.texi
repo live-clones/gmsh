@@ -909,6 +909,11 @@ Vertical position (in pixels) of the upper left corner of the statistic window@*
 Default value: @code{150}@*
 Saved in: @code{General.SessionFileName}
 
+@item General.Stereo
+Use stereo rendering@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.SystemMenuBar
 Use the system menu bar on Mac OS X?@*
 Default value: @code{1}@*
