@@ -249,7 +249,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 #else
 
   for(unsigned int i = 0; i < regions.size(); i++)
-    Msg::StatusBar(2, true, "Meshing volume %d (Delaunay)", regions[i]->tag());
+    Msg::Info("Meshing volume %d (Delaunay)", regions[i]->tag());
 
   // put all the faces in the same model
   GRegion *gr = regions[0];
@@ -626,7 +626,7 @@ void meshGRegion::operator() (GRegion *gr)
 #if !defined(HAVE_NETGEN)
     Msg::Error("Netgen is not compiled in this version of Gmsh");
 #else
-    Msg::StatusBar(2, true, "Meshing volume %d (Frontal)", gr->tag());
+    Msg::Info("Meshing volume %d (Frontal)", gr->tag());
     // orient the triangles of with respect to this region
     meshNormalsPointOutOfTheRegion(gr);
     std::vector<MVertex*> numberedV;
@@ -653,7 +653,7 @@ void optimizeMeshGRegionNetgen::operator() (GRegion *gr)
 #if !defined(HAVE_NETGEN)
   Msg::Error("Netgen is not compiled in this version of Gmsh");
 #else
-  Msg::StatusBar(2, true, "Optimizing volume %d", gr->tag());
+  Msg::Info("Optimizing volume %d", gr->tag());
   // import mesh into netgen, including volume tets
   std::vector<MVertex*> numberedV;
   Ng_Mesh *ngmesh = buildNetgenStructure(gr, true, numberedV);
@@ -679,7 +679,7 @@ void optimizeMeshGRegionGmsh::operator() (GRegion *gr)
   ExtrudeParams *ep = gr->meshAttributes.extrude;
   if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) return;
   
-  Msg::StatusBar(2, true, "Optimizing volume %d", gr->tag());
+  Msg::Info("Optimizing volume %d", gr->tag());
   optimizeMesh(gr, QMTET_2);  
 }
 

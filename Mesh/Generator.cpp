@@ -477,7 +477,7 @@ static void Mesh2D(GModel *m)
         if(gfc->getNbSplit() != 0) continue;
       }
       int recombine = gf->meshAttributes.recombine;
-      Msg::StatusBar(2, true, "Lloyd optimization for face %d", gf->tag());
+      Msg::Info("Lloyd optimization for face %d", gf->tag());
       gf->lloyd(25, recombine);
       if(recombine) recombineIntoQuads(gf);
     }

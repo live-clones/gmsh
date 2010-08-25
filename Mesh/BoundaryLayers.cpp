@@ -132,8 +132,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
     GFace *gf = *it;
     if(gf->geomType() == GEntity::BoundaryLayerSurface){
-      Msg::StatusBar(2, true, "Meshing surface %d (%s)", gf->tag(), 
-                     gf->getTypeString().c_str());
+      Msg::Info("Meshing surface %d (%s)", gf->tag(), gf->getTypeString().c_str());
       deMeshGFace dem;
       dem(gf);
       MeshExtrudedSurface(gf);

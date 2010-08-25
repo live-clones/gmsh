@@ -1526,8 +1526,8 @@ void meshGFace::operator() (GFace *gf)
   else 
     algo = "MeshAdapt";
 
-  Msg::StatusBar(2, true, "Meshing surface %d (%s, %s)", 
-                 gf->tag(), gf->getTypeString().c_str(), algo);
+  Msg::Info("Meshing surface %d (%s, %s)", gf->tag(), 
+            gf->getTypeString().c_str(), algo);
 
   // compute loops on the fly (indices indicate start and end points
   // of a loop; loops are not yet oriented)

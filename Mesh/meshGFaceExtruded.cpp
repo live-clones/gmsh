@@ -192,7 +192,7 @@ int MeshExtrudedSurface(GFace *gf,
   if(!ep || !ep->mesh.ExtrudeMesh)
     return 0;
 
-  Msg::StatusBar(2, true, "Meshing surface %d (extruded)", gf->tag());
+  Msg::Info("Meshing surface %d (extruded)", gf->tag());
 
   // build a set with all the vertices on the boundary of the face gf
   double old_tol = MVertexLessThanLexicographic::tolerance; 

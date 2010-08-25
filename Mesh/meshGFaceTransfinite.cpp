@@ -136,7 +136,7 @@ int MeshTransfiniteSurface(GFace *gf)
 {
   if(gf->meshAttributes.Method != MESH_TRANSFINITE) return 0;
 
-  Msg::StatusBar(2, true, "Meshing surface %d (transfinite)", gf->tag());
+  Msg::Info("Meshing surface %d (transfinite)", gf->tag());
 
   std::vector<MVertex*> corners;
   findTransfiniteCorners(gf, corners);

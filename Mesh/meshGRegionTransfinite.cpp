@@ -302,7 +302,7 @@ int MeshTransfiniteVolume(GRegion *gr)
 {
   if(gr->meshAttributes.Method != MESH_TRANSFINITE) return 0;
 
-  Msg::StatusBar(2, true, "Meshing volume %d (transfinite)", gr->tag());
+  Msg::Info("Meshing volume %d (transfinite)", gr->tag());
 
   std::list<GFace*> faces = gr->faces();
   if(faces.size() != 5 && faces.size() != 6){

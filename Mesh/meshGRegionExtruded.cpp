@@ -229,7 +229,7 @@ void meshGRegionExtruded::operator() (GRegion *gr)
 
   if(!ep || !ep->mesh.ExtrudeMesh || ep->geo.Mode != EXTRUDED_ENTITY) return;
 
-  Msg::StatusBar(2, true, "Meshing volume %d (extruded)", gr->tag());
+  Msg::Info("Meshing volume %d (extruded)", gr->tag());
 
   // destroy the mesh if it exists
   deMeshGRegion dem;
