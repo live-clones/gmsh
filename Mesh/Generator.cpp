@@ -371,7 +371,7 @@ static void Mesh1D(GModel *m)
 
   double t2 = Cpu();
   CTX::instance()->meshTimer[0] = t2 - t1;
-  Msg::StatusBar(2, false, "Done meshing 1D (%g s)", CTX::instance()->meshTimer[0]);
+  Msg::StatusBar(2, true, "Done meshing 1D (%g s)", CTX::instance()->meshTimer[0]);
 }
 
 static void PrintMesh2dStatistics(GModel *m)
