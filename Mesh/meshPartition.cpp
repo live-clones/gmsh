@@ -26,6 +26,7 @@
 #include "partitionFace.h"
 #include "discreteEdge.h"
 #include "discreteFace.h"
+#include "discreteRegion.h"
 #include "GFaceCompound.h"
 #include "Context.h"
 #include "ExtrudeParams.h"
@@ -112,8 +113,6 @@ void MakeGraphDIM(const EntIter begin, const EntIter end,
  *
  ******************************************************************************/
 
-
-
 int RenumberMesh(GModel *const model, meshPartitionOptions &options, 
                  std::vector<MElement*> &numbered)
 {
@@ -179,13 +178,16 @@ int PartitionMeshFace(std::list<GFace*> &cFaces, meshPartitionOptions &options)
   delete tmp_model;
   return 1;
 }
-int RenumberMeshElements( std::vector<MElement*> &elements, meshPartitionOptions &options ){
-  if (elements.size() < 3)return 1;
+
+int RenumberMeshElements(std::vector<MElement*> &elements, meshPartitionOptions &options)
+{
+  if (elements.size() < 3) return 1;
   GModel *tmp_model = new GModel();
   std::set<MVertex *> setv;
-  for (unsigned i=0;i<elements.size();++i)
-    for (int j=0;j<elements[i]->getNumVertices();j++)
+  for (unsigned i = 0; i < elements.size(); ++i)
+    for(int j = 0; j < elements[i]->getNumVertices(); j++)
       setv.insert(elements[i]->getVertex(j));
+
   if (elements[0]->getDim() == 2){
     GFace *gf = new discreteFace(tmp_model, 1);
     for (std::set<MVertex* >::iterator it = setv.begin(); it != setv.end(); it++)
@@ -197,20 +199,24 @@ int RenumberMeshElements( std::vector<MElement*> &elements, meshPartitionOptions
         gf->quadrangles.push_back((MQuadrangle*)(*it));
     }
     tmp_model->add(gf);
-    RenumberMesh(tmp_model,options,elements);    
+    RenumberMesh(tmp_model, options, elements);    
     tmp_model->remove(gf);
   }
   else if (elements[0]->getDim() == 3){
-    GFace *gf = new discreteFace(tmp_model, 1);
+    GRegion *gr = new discreteRegion(tmp_model, 1);
     for (std::set<MVertex* >::iterator it = setv.begin(); it != setv.end(); it++)
-      gf->mesh_vertices.push_back(*it);
+      gr->mesh_vertices.push_back(*it);
     for (std::vector<MElement* >::iterator it = elements.begin(); it != elements.end(); it++){
-      if ((*it)->getType() == TYPE_TRI) 
-        gf->triangles.push_back((MTriangle*)(*it));
-      else if  ((*it)->getType() == TYPE_QUA) 
-        gf->quadrangles.push_back((MQuadrangle*)(*it));
+      if ((*it)->getType() == TYPE_TET) 
+        gr->tetrahedra.push_back((MTetrahedron*)(*it));
+      else if  ((*it)->getType() == TYPE_HEX) 
+        gr->hexahedra.push_back((MHexahedron*)(*it));
+      else if  ((*it)->getType() == TYPE_PRI) 
+        gr->prisms.push_back((MPrism*)(*it));
+      else if  ((*it)->getType() == TYPE_PYR) 
+        gr->pyramids.push_back((MPyramid*)(*it));
     }
-    tmp_model->add(gf);
+    tmp_model->add(gr);
   }
   delete tmp_model;
   return 1;
@@ -229,7 +235,7 @@ int RenumberMesh(GModel *const model, meshPartitionOptions &options)
     temp.clear();
 
     temp.insert(temp.begin(),(*it)->quadrangles.begin(),(*it)->quadrangles.end());
-    RenumberMeshElements (temp,options);
+    RenumberMeshElements (temp, options);
     (*it)->quadrangles.clear();
     for(unsigned int i = 0; i < temp.size(); i++)
       (*it)->quadrangles.push_back((MQuadrangle*)temp[i]);
@@ -245,7 +251,7 @@ int RenumberMesh(GModel *const model, meshPartitionOptions &options)
     temp.clear();
 
     temp.insert(temp.begin(),(*it)->hexahedra.begin(),(*it)->hexahedra.end());
-    RenumberMeshElements (temp,options);
+    RenumberMeshElements(temp, options);
     (*it)->hexahedra.clear();
     for (unsigned int i = 0; i < temp.size(); i++) 
       (*it)->hexahedra.push_back((MHexahedron*)temp[i]);
