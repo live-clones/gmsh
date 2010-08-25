@@ -1671,7 +1671,7 @@ void partitionAndRemesh(GFaceCompound *gf)
     GFaceCompound *gfc = new GFaceCompound(gf->model(), num_gfc, f_compound,
                                            b[0], b[1], b[2], b[3], 0,
                                            gf->getTypeOfMapping());
-    gfc->meshAttributes.recombine =  gf->meshAttributes.recombine;
+    gfc->meshAttributes.recombine = gf->meshAttributes.recombine;
     gf->model()->add(gfc);
 
     gfc->parametrize();

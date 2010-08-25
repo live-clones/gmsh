@@ -54,6 +54,8 @@ int MeshExtrudedCurve(GEdge *ge)
   if(!ep || !ep->mesh.ExtrudeMesh)
     return 0;
 
+  Msg::StatusBar(2, true, "Meshing curve %d (extruded)", ge->tag());
+
   GEdge *from = ge->model()->getEdgeByTag(std::abs(ep->geo.Source));
   if(ep->geo.Mode == EXTRUDED_ENTITY) {
     // curve is extruded from a point
@@ -64,6 +66,10 @@ int MeshExtrudedCurve(GEdge *ge)
     if(!from){
       Msg::Error("Unknown source curve %d for extrusion", ep->geo.Source);
       return 0;
+    }
+    else if(from->meshStatistics.status != GEdge::DONE){
+      // cannot mesh this edge yet: will do it later
+      return 1;
     }
     copyMesh(from, ge);
   }
@@ -80,8 +86,10 @@ int MeshExtrudedCurve(GEdge *ge)
       // Extrusion information is only stored for copied edges
       // (the source of extruded edge is a vertex, not an element)
       MElement* sourceElem = from->getMeshElement(i);
-      ep->elementMap.addExtrudedElem(sourceElem,newElem);
+      ep->elementMap.addExtrudedElem(sourceElem, newElem);
     }
   }
+
+  ge->meshStatistics.status = GEdge::DONE;
   return 1;
 }

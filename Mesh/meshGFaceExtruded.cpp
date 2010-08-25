@@ -231,6 +231,10 @@ int MeshExtrudedSurface(GFace *gf,
       Msg::Error("Unknown source surface %d for extrusion", ep->geo.Source);
       return 0;
     }
+    else if(from->meshStatistics.status != GFace::DONE){
+      // cannot mesh this face yet: will do it later
+      return 1;
+    }
     copyMesh(from, gf, pos);
   }
 

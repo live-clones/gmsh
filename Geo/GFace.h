@@ -235,9 +235,6 @@ class GFace : public GEntity
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
 
-  // tells if the mesh is obtained by extrusion
-  bool isMeshExtruded();
-
   // for periodic faces, move parameters into the range chosen
   // for that face
   void moveToValidRange(SPoint2 &pt) const;

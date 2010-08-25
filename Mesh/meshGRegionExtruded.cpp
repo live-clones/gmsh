@@ -523,29 +523,6 @@ int SubdivideExtrudedMesh(GModel *m)
     }
   }
   
-//   std::set<GFace*> faces;
-//   for(unsigned int i = 0; i < regions.size(); i++){
-//     std::list<GFace*> f = regions[i]->faces();
-//     faces.insert(f.begin(), f.end());
-//   }
-//   for(std::set<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
-//     ExtrudeParams *ep = (*it)->meshAttributes.extrude;
-//     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY && 
-//        !ep->mesh.Recombine){
-//       GFace *gf = *it;
-//       Msg::Info("Remeshing surface %d", gf->tag());
-//       for(unsigned int i = 0; i < gf->triangles.size(); i++) 
-//         delete gf->triangles[i];
-//       gf->triangles.clear();
-//       for(unsigned int i = 0; i < gf->quadrangles.size(); i++) 
-//         delete gf->quadrangles[i];
-//       gf->quadrangles.clear();
-//       ep->elementMap.clear(); // reconstruct extrusion info
-//       MeshExtrudedSurface(gf, &edges);
-//     }
-//   }
-
-
   // carve holes if any
   // TODO: update extrusion information
   for(unsigned int i = 0; i < regions.size(); i++){

@@ -451,5 +451,6 @@ void meshGEdge::operator() (GEdge *ge)
     v0->y() = beg_p.y();
     v0->z() = beg_p.z();
   }
+
   ge->meshStatistics.status = GEdge::DONE;
 }
