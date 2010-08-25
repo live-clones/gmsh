@@ -1616,21 +1616,18 @@ void mesh_1d_cb(Fl_Widget *w, void *data)
 {
   GModel::current()->mesh(1);
   drawContext::global()->draw();
-  Msg::StatusBar(2, false, " ");
 }
 
 void mesh_2d_cb(Fl_Widget *w, void *data)
 {
   GModel::current()->mesh(2);
   drawContext::global()->draw();
-  Msg::StatusBar(2, false, " ");
 }
 
 void mesh_3d_cb(Fl_Widget *w, void *data)
 {
   GModel::current()->mesh(3);
   drawContext::global()->draw();
-  Msg::StatusBar(2, false, " ");
 }
 
 static void mesh_delete_cb(Fl_Widget *w, void *data)
@@ -1831,7 +1828,6 @@ static void mesh_degree_cb(Fl_Widget *w, void *data)
               CTX::instance()->mesh.secondOrderIncomplete);
   CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();
-  Msg::StatusBar(2, false, " ");
 }
 
 static void mesh_optimize_cb(Fl_Widget *w, void *data)
@@ -1845,7 +1841,6 @@ static void mesh_optimize_cb(Fl_Widget *w, void *data)
   CTX::instance()->lock = 0;
   CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();
-  Msg::StatusBar(2, false, " ");
 }
 
 static void mesh_refine_cb(Fl_Widget *w, void *data)
@@ -1853,7 +1848,6 @@ static void mesh_refine_cb(Fl_Widget *w, void *data)
   RefineMesh(GModel::current(), CTX::instance()->mesh.secondOrderLinear);
   CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();
-  Msg::StatusBar(2, false, " ");
 }
 
 static void mesh_optimize_netgen_cb(Fl_Widget *w, void *data)
@@ -1867,7 +1861,6 @@ static void mesh_optimize_netgen_cb(Fl_Widget *w, void *data)
   CTX::instance()->lock = 0;
   CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();
-  Msg::StatusBar(2, false, " ");
 }
 
 static void mesh_partition_cb(Fl_Widget *w, void *data)

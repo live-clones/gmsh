@@ -1067,7 +1067,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
 
   int nPts = order - 1;
 
-  Msg::StatusBar(1, true, "Meshing order %d...", order);
+  Msg::StatusBar(2, true, "Meshing order %d...", order);
   double t1 = Cpu();
 
   // first, make sure to remove any existsing second order vertices/elements
@@ -1084,17 +1084,15 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   edgeContainer edgeVertices;
   faceContainer faceVertices;
   
-  Msg::StatusBar(1, true, "Meshing edges order %d...", order);
+  Msg::StatusBar(2, true, "Meshing curves order %d...", order);
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
     setHighOrder(*it, edgeVertices, linear, nPts, displ2D, displ3D);
 
-  Msg::StatusBar(1, true, "Meshing faces %d...", order);
+  Msg::StatusBar(2, true, "Meshing surfaces order %d...", order);
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
     setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts,
                  displ2D, displ3D);
 
-  Msg::StatusBar(1, true, "Done meshing order %d", order);
-  
   // now we smooth mesh the internal vertices of the faces
   // we do that model face by model face
   std::vector<MElement*> bad;
@@ -1106,6 +1104,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
     checkHighOrderTriangles("After optimization", m, bad, worst);
   }
 
+  Msg::StatusBar(2, true, "Meshing volumes order %d...", order);
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts,
                  displ2D, displ3D);
@@ -1124,6 +1123,5 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   //  printJacobians(m, "smoothness.pos");
   
   double t2 = Cpu();
-  Msg::Info("Meshing order %d complete (%g s)", order, t2 - t1);
-  Msg::StatusBar(1, false, "Mesh");
+  Msg::StatusBar(2, true, "Done meshing order %d (%g s)", order, t2 - t1);
 }

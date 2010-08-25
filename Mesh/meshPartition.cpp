@@ -114,20 +114,17 @@ void MakeGraphDIM(const EntIter begin, const EntIter end,
 
 
 
-int RenumberMesh(GModel *const model, meshPartitionOptions &options, std::vector<MElement*> &numbered)
+int RenumberMesh(GModel *const model, meshPartitionOptions &options, 
+                 std::vector<MElement*> &numbered)
 {
-
   Graph graph;
   BoElemGrVec boElemGrVec;
   int ier;
-  Msg::StatusBar(1, true, "Building graph...");
+  Msg::StatusBar(2, true, "Building graph...");
   ier = MakeGraph(model, graph, options, &boElemGrVec);
-  Msg::StatusBar(1, true, "Renumbering graph...");
+  Msg::StatusBar(2, true, "Renumbering graph...");
   if(!ier) ier = RenumberGraph(graph, options);
-  if(ier) {
-    Msg::StatusBar(1, false, "Mesh");
-    return 1;
-  }
+  if(ier) return 1;
 
   // create the numbering
   numbered.clear();
@@ -137,8 +134,7 @@ int RenumberMesh(GModel *const model, meshPartitionOptions &options, std::vector
     numbered[graph.partition[i]-1] = graph.element[i];
   }
 
-  Msg::Info("Renumbering complete");
-  Msg::StatusBar(1, false, "Mesh");
+  Msg::StatusBar(2, true, "Done renumbering graph");
   return 0;
 }
 
@@ -262,14 +258,11 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options)
   Graph graph;
   BoElemGrVec boElemGrVec;
   int ier;
-  Msg::StatusBar(1, true, "Building graph...");
+  Msg::StatusBar(2, true, "Building graph...");
   ier = MakeGraph(model, graph, options, &boElemGrVec);
-  Msg::StatusBar(1, true, "Partitioning graph...");
+  Msg::StatusBar(2, true, "Partitioning graph...");
   if(!ier) ier = PartitionGraph(graph, options);
-  if(ier) {
-    Msg::StatusBar(1, false, "Mesh");
-    return 1;
-  }
+  if(ier) return 1;
     
   // Count partition sizes and assign partitions to internal elements
   std::vector<int> ssize(options.num_partitions, 0);
@@ -345,8 +338,7 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options)
   if (options.createPartitionBoundaries || options.createGhostCells)
     CreatePartitionBoundaries (model, options.createGhostCells);
 
-  Msg::Info("Partitioning complete");
-  Msg::StatusBar(1, false, "Mesh");
+  Msg::StatusBar(2, true, "Done partitioning graph");
   return 0;
 }
 

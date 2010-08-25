@@ -361,7 +361,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas, faceContainer &faceVerti
 
 void RefineMesh(GModel *m, bool linear, bool splitIntoQuads, bool splitIntoHexas)
 {
-  Msg::StatusBar(1, true, "Refining mesh...");
+  Msg::StatusBar(2, true, "Refining mesh...");
   double t1 = Cpu();
         
   // Create 2nd order mesh (using "2nd order complete" elements) to
@@ -381,6 +381,5 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads, bool splitIntoHexas
     Subdivide(*it, splitIntoHexas, faceVertices);
 
   double t2 = Cpu();
-  Msg::Info("Mesh refinement complete (%g s)", t2 - t1);
-  Msg::StatusBar(1, false, "Mesh");
+  Msg::StatusBar(2, true, "Done refining mesh (%g s)", t2 - t1);
 }
