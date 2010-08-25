@@ -566,11 +566,13 @@ static Vertex InterpolateExtrudedSurface(Surface *s, double u, double v)
     }
   }
 
-  if(num < 0)
-    Msg::Error("Unknown curve in extruded surface");
-  
   Vertex T;
 
+  if(num < 0){
+    Msg::Error("Unknown curve in extruded surface");
+    return T;
+  }
+  
   switch(num){
   case 0: 
     T = InterpolateCurve(c, c->ubeg + (c->uend - c->ubeg) * u, 0);
