@@ -1116,6 +1116,8 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
 
 void GModel::createTopologyFromMesh()
 {
+  removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
+
   Msg::Info("Creating topology from mesh");
   double t1 = Cpu();
 
@@ -1265,7 +1267,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
        it != discFaces.end(); it++){
     (*it)->findEdges(map_edges);
   }
-
+  
   //return if no boundary edges (torus, sphere, ...)
   if (map_edges.empty()) return;
 

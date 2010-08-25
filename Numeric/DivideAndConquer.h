@@ -97,7 +97,7 @@ class DocRecord{
   int hullSize() {return _hullSize;}
   int onHull(PointNumero i) { return std::binary_search(_hull, _hull+_hullSize, i); }
   void makePosView(std::string, GFace *gf=NULL);
-  void printMedialAxis(Octree *_octree, std::string, GFace *gf=NULL);
+  void printMedialAxis(Octree *_octree, std::string, GFace *gf=NULL, GEdge *ge=NULL);
   double Lloyd (int);
   void voronoiCell (PointNumero pt, std::vector<SPoint2> &pts) const;
   static void registerBindings(binding *b);

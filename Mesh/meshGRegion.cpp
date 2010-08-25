@@ -261,8 +261,9 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
     allFacesSet.insert(f.begin(), f.end());
   }
   std::list<GFace*> allFaces;
-  for(std::set<GFace*>::iterator it = allFacesSet.begin(); it != allFacesSet.end(); it++)
+  for(std::set<GFace*>::iterator it = allFacesSet.begin(); it != allFacesSet.end(); it++){
     allFaces.push_back(*it);
+  }
   gr->set(allFaces);
 
   // mesh with tetgen, possibly changing the mesh on boundaries (leave
@@ -314,7 +315,8 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
     TransferTetgenMesh(gr, in, out, numberedV);
   }
 
-  // sort triangles in all model faces in order to be able to search in vectors
+
+   // sort triangles in all model faces in order to be able to search in vectors
   std::list<GFace*>::iterator itf =  allFaces.begin();
   while(itf != allFaces.end()){
     compareMTriangleLexicographic cmp;

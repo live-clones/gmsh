@@ -32406,21 +32406,25 @@ void tetgenmesh::outvoronoi(tetgenio* out)
   vpointcount = 0;
   index = 0;
   REAL *vlist;
+  REAL *vlist2;
   vlist = new REAL[(int)tetrahedrons->items * 3];
+  vlist2 = new REAL[(int)tetrahedrons->items ];
   while (tetloop.tet != (tetrahedron *) NULL) {
     // Calculate the circumcenter.
     for (i = 0; i < 4; i++) {
       pt[i] = (point) tetloop.tet[4 + i];
       setpoint2tet(pt[i], encode(tetloop));
     }
-    circumsphere(pt[0], pt[1], pt[2], pt[3], ccent, NULL);
+    REAL radius;
+    circumsphere(pt[0], pt[1], pt[2], pt[3], ccent, &radius);
     if (out == (tetgenio *) NULL) {
       //fprintf(outfile, "%4d  %16.8e %16.8e %16.8e\n", vpointcount + shift,
       //         ccent[0], ccent[1], ccent[2]);
-      fprintf(outfile,"SP(%g,%g,%g)  {%g};\n", ccent[0], ccent[1], ccent[2], (double)vpointcount + shift);//EMI
+      fprintf(outfile,"SP(%g,%g,%g)  {%g};\n", ccent[0], ccent[1], ccent[2], (double)radius);//EMI
       vlist[(vpointcount+shift)*3+0]  = ccent[0];//EMI
       vlist[(vpointcount+shift)*3+1]  = ccent[1];//EMI
       vlist[(vpointcount+shift)*3+2]  = ccent[2];//EMI
+      vlist2[(vpointcount+shift)]  = radius;//EMI
     } else {
       out->vpointlist[index++] = ccent[0];
       out->vpointlist[index++] = ccent[1];
@@ -32525,7 +32529,7 @@ void tetgenmesh::outvoronoi(tetgenio* out)
 	    fprintf(outfile,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
 		    vlist[(end1+shift)*3+0], vlist[(end1+shift)*3+1], vlist[(end1+shift)*3+2],
 		    vlist[(end2+shift)*3+0], vlist[(end2+shift)*3+1], vlist[(end2+shift)*3+2],
-		    1.0,1.0);
+		    vlist2[(end1+shift)], vlist2[(end2+shift)]);
           } else {
             vedge->v2 = end2 + shift;
             vedge->vnormal[0] = 0.0;
@@ -34567,7 +34571,7 @@ void tetrahedralize(tetgenbehavior *b, tetgenio *in, tetgenio *out,
   clock_t tv[14];
 
   tv[0] = clock();
- 
+
   m.b = b;
   m.in = in;
   m.macheps = exactinit();

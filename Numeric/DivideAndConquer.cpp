@@ -21,6 +21,7 @@
 #include "robustPredicates.h"
 #include "GPoint.h"
 #include "GFace.h"
+#include "MLine.h"
 
 #define Pred(x) ((x)->prev)
 #define Succ(x) ((x)->next)
@@ -601,7 +602,7 @@ void DocRecord::makePosView(std::string fileName, GFace *gf)
   fclose(f);
 }
 
-void DocRecord::printMedialAxis(Octree *_octree, std::string fileName, GFace *gf)
+void DocRecord::printMedialAxis(Octree *_octree, std::string fileName, GFace *gf, GEdge *ge)
 {
   
   FILE *f = fopen(fileName.c_str(),"w");
@@ -631,6 +632,9 @@ void DocRecord::printMedialAxis(Octree *_octree, std::string fileName, GFace *gf
 	  MElement *m1 = (MElement*)Octree_Search(P1, _octree);
 	  MElement *m2 = (MElement*)Octree_Search(P2, _octree);
 	  if (m1 && m2){
+	    MVertex *v0 = new MVertex(p1.x(), p1.y(), p1.z());
+	    MVertex *v1 = new MVertex(p2.x(), p2.y(), p2.z());
+	    ge->lines.push_back(new MLine(v0, v1));
 	    fprintf(f,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
 		    p1.x(),p1.y(),p1.z(),
 		    p2.x(),p2.y(),p2.z(),

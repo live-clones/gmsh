@@ -788,11 +788,16 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
     }
   }
 
+ 
   if (Msg::GetVerbosity() == 10){
+    GEdge *ge = new discreteEdge(gf->model(), 1000,0,0);
     MElementOctree octree(gf->model());
     doc.Voronoi();
     doc.makePosView("voronoi.pos", gf);
-    doc.printMedialAxis(octree.getInternalOctree(), "skeleton.pos", gf);
+    doc.printMedialAxis(octree.getInternalOctree(), "skeleton.pos", gf, ge);
+    //todo add corners with lines with closest point
+    ge->addPhysicalEntity(1000);
+    gf->model()->add(ge);
   }
 
   gf->triangles.clear();
