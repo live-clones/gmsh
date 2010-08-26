@@ -2606,9 +2606,9 @@ contextItem menu_mesh[] = {
   {"1D",           (Fl_Callback *)mesh_1d_cb} ,
   {"2D",           (Fl_Callback *)mesh_2d_cb} , 
   {"3D",           (Fl_Callback *)mesh_3d_cb} , 
-  {"Optimize",     (Fl_Callback *)mesh_optimize_cb} , 
+  {"Optimize 3D",  (Fl_Callback *)mesh_optimize_cb} , 
 #if defined(HAVE_NETGEN)
-  {"Optimize (Netgen)", (Fl_Callback *)mesh_optimize_netgen_cb} , 
+  {"Optimize 3D (Netgen)", (Fl_Callback *)mesh_optimize_netgen_cb} , 
 #endif
   {"Set order",    (Fl_Callback *)mesh_change_order_cb} , 
   {"Inspect",      (Fl_Callback *)mesh_inspect_cb} , 
