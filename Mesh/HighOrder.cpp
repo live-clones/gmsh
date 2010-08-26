@@ -899,6 +899,8 @@ static void removeHighOrderVertices(GEntity *e)
 
 void SetOrder1(GModel *m)
 {
+  Msg::StatusBar(2, true, "Meshing order 1...");
+
   m->destroyMeshCaches();
 
   // replace all elements with first order elements
@@ -923,6 +925,8 @@ void SetOrder1(GModel *m)
     removeHighOrderVertices(*it);
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     removeHighOrderVertices(*it);
+
+  Msg::StatusBar(2, true, "Done meshing order 1");
 }
 
 void checkHighOrderTriangles(const char* cc, GModel *m, 

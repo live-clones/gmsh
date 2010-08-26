@@ -67,7 +67,8 @@ int MeshExtrudedCurve(GEdge *ge)
       Msg::Error("Unknown source curve %d for extrusion", ep->geo.Source);
       return 0;
     }
-    else if(from->meshStatistics.status != GEdge::DONE){
+    else if(from->geomType() != GEntity::DiscreteCurve &&
+            from->meshStatistics.status != GEdge::DONE){
       // cannot mesh this edge yet: will do it later
       return 1;
     }

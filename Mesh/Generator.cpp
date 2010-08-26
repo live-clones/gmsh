@@ -437,7 +437,6 @@ static void Mesh2D(GModel *m)
   // and curve meshes) is global as it depends on a smooth normal
   // field generated from the surface mesh of the source surfaces
   if(!Mesh2DWithBoundaryLayers(m)){
-
     std::set<GFace*> cf, f;
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
       if ((*it)->geomType() == GEntity::CompoundSurface)
