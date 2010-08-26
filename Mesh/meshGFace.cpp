@@ -1788,29 +1788,7 @@ void partitionAndRemesh(GFaceCompound *gf)
  
   gf->coherenceNormals();
   gf->meshStatistics.status = GFace::DONE; 
-
-  //CreateOutputFile("toto.msh", CTX::instance()->mesh.fileFormat);
-  //Msg::Exit(1);
 #endif
-}
-
-template<class T>
-static bool shouldRevert(MEdge &reference, std::vector<T*> &elements)
-{
-  for(unsigned int i = 0; i < elements.size(); i++){
-    for(int j = 0; j < elements[i]->getNumEdges(); j++){
-      MEdge e = elements[i]->getEdge(j);
-      if(e.getVertex(0) == reference.getVertex(0) &&
-         e.getVertex(1) == reference.getVertex(1)){
-        return false;
-      }
-      else if(e.getVertex(1) == reference.getVertex(0) &&
-              e.getVertex(0) == reference.getVertex(1)){
-        return true;
-      }
-    }
-  }
-  return false;
 }
 
 void orientMeshGFace::operator()(GFace *gf)
@@ -1819,54 +1797,37 @@ void orientMeshGFace::operator()(GFace *gf)
 
   if(gf->geomType() == GEntity::ProjectionFace) return;
   if(gf->geomType() == GEntity::CompoundSurface)return;
-  // in old versions we did not reorient transfinite surface meshes;
+
+  // In old versions we did not reorient transfinite surface meshes;
   // we could add the following to provide backward compatibility:
   // if(gf->meshAttributes.Method == MESH_TRANSFINITE) return;
 
-  if(gf->getNativeType() == GEntity::OpenCascadeModel){
-    // surface orientions in OCC do not seem to be consistent with the
-    // orientation of the bounding edges, so we compare the normals
-    // pointwise in an element
-    for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
-      MElement *e = gf->getMeshElement(i);
-      for(int j = 0; j < e->getNumVertices(); j++){
-        MVertex *v = e->getVertex(j);
-        SPoint2 param;
-        if(reparamMeshVertexOnFace(v, gf, param)){
-          SVector3 ne = e->getFace(0).normal();
-          SVector3 nf = gf->normal(param); 
-          if(dot(ne, nf) < 0){
-            Msg::Debug("Reverting orientation of mesh in face %d", gf->tag());
-            for(unsigned int k = 0; k < gf->getNumMeshElements(); k++)
-              gf->getMeshElement(k)->revert();
-          }
-          return;
+  // In old versions we checked the orientation by comparing the
+  // orientation of a line element on the boundary w.r.t. its
+  // connected surface element. This is probably better than what
+  // follows, but 
+  // * it failed when the 3D Delaunay changes the 1D mesh (since we
+  //    don't recover it yet)
+  // * it failed with OpenCASCADE geometries, where surface orientions
+  //   do not seem to be consistent with the orientation of the
+  //   bounding edges
+
+  for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
+    MElement *e = gf->getMeshElement(i);
+    for(int j = 0; j < e->getNumVertices(); j++){
+      MVertex *v = e->getVertex(j);
+      SPoint2 param;
+      if(reparamMeshVertexOnFace(v, gf, param)){
+        SVector3 ne = e->getFace(0).normal();
+        SVector3 nf = gf->normal(param); 
+        if(dot(ne, nf) < 0){
+          Msg::Debug("Reverting orientation of mesh in face %d", gf->tag());
+          for(unsigned int k = 0; k < gf->getNumMeshElements(); k++)
+            gf->getMeshElement(k)->revert();
         }
+        return;
       }
     }
-    Msg::Warning("Could not orient mesh in face %d", gf->tag());
   }
-  else{
-    // orient the mesh to match the orientation of the first edge
-    std::list<GEdge*> edges = gf->edges();
-    std::list<int> ori = gf->orientations();
-    if(edges.empty() || ori.empty()) return;
-    GEdge *ge = *edges.begin();
-    GVertex *beg = ge->getBeginVertex();
-    GVertex *end = ge->getEndVertex();
-    if(!beg || beg->mesh_vertices.empty() || !end || end->mesh_vertices.empty())
-      return;
-    MVertex *v1 = beg->mesh_vertices[0];
-    MVertex *v2 = ge->mesh_vertices.empty() ? end->mesh_vertices[0] : 
-      ge->mesh_vertices[0];
-    int sign = *ori.begin();
-    MEdge ref(sign > 0 ? v1 : v2, sign > 0 ? v2 : v1);
-    if(shouldRevert(ref, gf->triangles) || shouldRevert(ref, gf->quadrangles)){
-      Msg::Debug("Reverting orientation of mesh in face %d", gf->tag());
-      for(unsigned int i = 0; i < gf->triangles.size(); i++)
-        gf->triangles[i]->revert();
-      for(unsigned int i = 0; i < gf->quadrangles.size(); i++)
-        gf->quadrangles[i]->revert();
-    }
-  }
+  Msg::Warning("Could not orient mesh in face %d", gf->tag());
 }
