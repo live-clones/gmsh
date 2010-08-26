@@ -161,7 +161,7 @@ void CreateOutputFile(std::string fileName, int format)
   CTX::instance()->printing = 1;
 
   if(format != FORMAT_AUTO) 
-    Msg::StatusBar(2, true, "Writing '%s'", fileName.c_str());
+    Msg::StatusBar(2, true, "Writing '%s'...", fileName.c_str());
 
   bool printEndMessage = true;
 

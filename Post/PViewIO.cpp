@@ -255,7 +255,7 @@ bool PView::readMED(std::string fileName, int fileIndex)
 
 bool PView::write(std::string fileName, int format, bool append)
 {
-  Msg::StatusBar(2, true, "Writing '%s'", fileName.c_str());
+  Msg::StatusBar(2, true, "Writing '%s'...", fileName.c_str());
   
   bool ret;
   switch(format){

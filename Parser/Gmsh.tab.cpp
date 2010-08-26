@@ -6330,7 +6330,7 @@ yyreduce:
 	// open simultaneously. The right solution would be of course
 	// to modify FunctionManager to reopen the files instead of
 	// using the FILE pointer, but hey, I'm lazy...
-	Msg::StatusBar(2, true, "Reading '%s'", tmp.c_str());
+	Msg::StatusBar(2, true, "Reading '%s'...", tmp.c_str());
 	ParseFile(tmp, false, true);
 	SetBoundingBox();
 	Msg::StatusBar(2, true, "Done reading '%s'", tmp.c_str());

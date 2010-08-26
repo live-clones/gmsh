@@ -63,14 +63,12 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain,
 
 CellComplex* Homology::createCellComplex(std::vector<GEntity*>& domainEntities,
 			    std::vector<GEntity*>& subdomainEntities){
-  Msg::Info("Creating a Cell Complex...");
-  Msg::StatusBar(1, false, "Cell Complex...");
-  Msg::StatusBar(2, false, "");
+  Msg::StatusBar(2, true, "Creating cell complex...");
   double t1 = Cpu();
 
   
-  if(domainEntities.empty()) Msg::Error("Domain is empty.");
-  if(subdomainEntities.empty()) Msg::Info("Subdomain is empty.");
+  if(domainEntities.empty()) Msg::Error("Domain is empty");
+  if(subdomainEntities.empty()) Msg::Info("Subdomain is empty");
   
   std::vector<MElement*> domainElements;
   std::vector<MElement*> subdomainElements;
@@ -93,16 +91,13 @@ CellComplex* Homology::createCellComplex(std::vector<GEntity*>& domainEntities,
 
   if(cellComplex->getSize(0) == 0){ 
     Msg::Error("Cell Complex is empty!");
-    Msg::Error("Check the domain & the mesh.");
+    Msg::Error("Check the domain & the mesh");
   }
   double t2 = Cpu();
-  Msg::Info("Cell Complex complete (%g s).", t2 - t1);
-  Msg::Info("%d volumes, %d faces, %d edges and %d vertices.",
+  Msg::StatusBar(2, true, "Done creating cell complex (%g s)", t2 - t1);
+  Msg::Info("%d volumes, %d faces, %d edges and %d vertices",
             cellComplex->getSize(3), cellComplex->getSize(2), 
 	    cellComplex->getSize(1), cellComplex->getSize(0));
-  Msg::StatusBar(2, false, "%d V, %d F, %d E, %d V.",
-		 cellComplex->getSize(3), cellComplex->getSize(2), 
-		 cellComplex->getSize(1), cellComplex->getSize(0));
   return cellComplex;
 }
 
@@ -121,28 +116,23 @@ void Homology::findGenerators(CellComplex* cellComplex)
   }
   std::string domainString = getDomainString(_domain, _subdomain);
 
-  Msg::Info("Reducing the Cell Complex...");
-  Msg::StatusBar(1, false, "Reducing...");
+  Msg::StatusBar(2, true, "Reducing cell complex...");
 
   double t1 = Cpu();
   int omitted = cellComplex->reduceComplex();
   
   double t2 = Cpu();
-  Msg::Info("Cell Complex reduction complete (%g s).", t2 - t1);
-  Msg::Info("%d volumes, %d faces, %d edges and %d vertices.",
+  Msg::StatusBar(2, true, "Done reducing cell complex (%g s)", t2 - t1);
+  Msg::Info("%d volumes, %d faces, %d edges and %d vertices",
             cellComplex->getSize(3), cellComplex->getSize(2), 
 	    cellComplex->getSize(1), cellComplex->getSize(0));
-  Msg::StatusBar(2, false, "%d V, %d F, %d E, %d N.",
-		 cellComplex->getSize(3), cellComplex->getSize(2), 
-		 cellComplex->getSize(1), cellComplex->getSize(0));
   
-  Msg::Info("Computing homology spaces...");
-  Msg::StatusBar(1, false, "Computing...");
+  Msg::StatusBar(2, true, "Computing homology spaces...");
   t1 = Cpu();
   ChainComplex* chains = new ChainComplex(cellComplex);
   chains->computeHomology();
   t2 = Cpu();
-  Msg::Info("Homology Computation complete (%g s).", t2 - t1);
+  Msg::StatusBar(2, true, "Done computing homology spaces (%g s)", t2 - t1);
   
   int HRank[4];
   for(int j = 0; j < 4; j++){
@@ -183,10 +173,9 @@ void Homology::findGenerators(CellComplex* cellComplex)
   Msg::Info("H1 = %d", HRank[1]);
   Msg::Info("H2 = %d", HRank[2]);
   Msg::Info("H3 = %d", HRank[3]);
-  if(omitted != 0) Msg::Info("The computation of generators in the highest dimension was omitted.");
+  if(omitted != 0) Msg::Info("The computation of generators in the highest dimension was omitted");
   
-  Msg::StatusBar(1, false, "Homology");
-  Msg::StatusBar(2, false, "H0: %d, H1: %d, H2: %d, H3: %d.", 
+  Msg::StatusBar(2, false, "H0: %d, H1: %d, H2: %d, H3: %d", 
 		 HRank[0], HRank[1], HRank[2], HRank[3]);
 }
 
@@ -199,29 +188,24 @@ void Homology::findDualGenerators(CellComplex* cellComplex)
     ownComplex = true;
   }
 
-  Msg::Info("Reducing Cell Complex...");
-  Msg::StatusBar(1, false, "Reducing...");
+  Msg::StatusBar(2, true, "Reducing cell complex...");
   
   double t1 = Cpu();
   int omitted = cellComplex->coreduceComplex();
   double t2 = Cpu();
   
-  Msg::Info("Cell Complex reduction complete (%g s).", t2 - t1);
-  Msg::Info("%d volumes, %d faces, %d edges and %d vertices.",
+  Msg::StatusBar(2, true, "Done reducing cell complex (%g s)", t2 - t1);
+  Msg::Info("%d volumes, %d faces, %d edges and %d vertices",
             cellComplex->getSize(3), cellComplex->getSize(2), 
 	    cellComplex->getSize(1), cellComplex->getSize(0));
-  Msg::StatusBar(2, false, "%d V, %d F, %d E, %d N.",
-		 cellComplex->getSize(3), cellComplex->getSize(2), 
-		 cellComplex->getSize(1), cellComplex->getSize(0));
    
-  Msg::Info("Computing homology spaces...");
-  Msg::StatusBar(1, false, "Computing...");
+  Msg::StatusBar(2, true, "Computing homology spaces...");
   t1 = Cpu();
   ChainComplex* chains = new ChainComplex(cellComplex);
   chains->transposeHMatrices();
   chains->computeHomology(true);
   t2 = Cpu();
-  Msg::Info("Homology Computation complete (%g s).", t2- t1);
+  Msg::StatusBar(2, true, "Done computing homology spaces (%g s)", t2- t1);
   
   int dim = cellComplex->getDim();
  
@@ -265,33 +249,27 @@ void Homology::findDualGenerators(CellComplex* cellComplex)
   Msg::Info("H1* = %d", HRank[1]);
   Msg::Info("H2* = %d", HRank[2]);
   Msg::Info("H3* = %d", HRank[3]);
-  if(omitted != 0) Msg::Info("The computation of %d highest dimension dual generators was omitted.", omitted);
+  if(omitted != 0) Msg::Info("The computation of %d highest dimension dual generators was omitted", omitted);
   
-  Msg::StatusBar(1, false, "Homology");
-  Msg::StatusBar(2, false, "H0*: %d, H1*: %d, H2*: %d, H3*: %d.", 
+  Msg::StatusBar(2, false, "H0*: %d, H1*: %d, H2*: %d, H3*: %d", 
 		 HRank[0], HRank[1], HRank[2], HRank[3]);
 }
 
 void Homology::findHomSequence(){
   CellComplex* cellComplex = createCellComplex(_domainEntities, 
 					       _subdomainEntities);
-  Msg::Info("Reducing the Cell Complex...");
-  Msg::StatusBar(1, false, "Reducing...");
+  Msg::StatusBar(2, true, "Reducing cell complex...");
 
   double t1 = Cpu();
   cellComplex->reduceComplex();
   double t2 = Cpu();
 
-  Msg::Info("Cell Complex reduction complete (%g s).", t2 - t1);
-  Msg::Info("%d volumes, %d faces, %d edges and %d vertices.",
+  Msg::StatusBar(2, true, "Done reducing cell complex (%g s)", t2 - t1);
+  Msg::Info("%d volumes, %d faces, %d edges and %d vertices",
             cellComplex->getSize(3), cellComplex->getSize(2), 
 	    cellComplex->getSize(1), cellComplex->getSize(0));
-  Msg::StatusBar(2, false, "%d V, %d F, %d E, %d N.",
-		 cellComplex->getSize(3), cellComplex->getSize(2), 
-		 cellComplex->getSize(1), cellComplex->getSize(0));
   
-  Msg::Info("Computing homology spaces...");
-  Msg::StatusBar(1, false, "Computing...");
+  Msg::StatusBar(2, true, "Computing homology spaces...");
   t1 = Cpu();
   
   ChainComplex* subcomplex = new ChainComplex(cellComplex, 2);
@@ -303,13 +281,13 @@ void Homology::findHomSequence(){
   relcomplex->computeHomology();  
 
   t2 = Cpu();
-  Msg::Info("Homology computation complete (%g s).", t2 - t1);
+  Msg::StatusBar(2, true, "Done compuring homology spaces (%g s)", t2 - t1);
 
-  Msg::Info("Computing homology sequence...");
+  Msg::StatusBar(2, true, "Computing homology sequence...");
   HomologySequence* seq = new HomologySequence(subcomplex, 
 					       complex, relcomplex);
   t1 = Cpu();
-  Msg::Info("Homology sequence computation complete (%g s).", t1 - t2);
+  Msg::StatusBar(2, true, "Done computing homology sequence (%g s)", t1 - t2);
   
   for(int task = 0; task < 3; task++){
     ChainComplex* chains;
@@ -372,8 +350,7 @@ void Homology::findHomSequence(){
     Msg::Info("H2 = %d", HRank[2]);
     Msg::Info("H3 = %d", HRank[3]);
 
-    Msg::StatusBar(1, false, "Homology");
-    Msg::StatusBar(2, false, "H0: %d, H1: %d, H2: %d, H3: %d.",
+    Msg::StatusBar(2, false, "H0: %d, H1: %d, H2: %d, H3: %d",
 		   HRank[0], HRank[1], HRank[2], HRank[3]);
   }
 
@@ -423,7 +400,7 @@ bool Homology::writeGeneratorsMSH(bool binary)
 {
   if(_fileName.empty()) return false;
   if(!_model->writeMSH(_fileName, 2.0, binary)) return false;
-  Msg::Info("Wrote homology computation results to %s.", _fileName.c_str());
+  Msg::Info("Wrote homology computation results to %s", _fileName.c_str());
   return true;
 }
 Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, 
@@ -513,8 +490,7 @@ int Chain::writeChainMSH(const std::string &name)
   FILE *fp = fopen(name.c_str(), "a");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
-    Msg::Debug("Unable to open file.");
-      return 0;
+    return 0;
   }
  
   fprintf(fp, "\n$ElementData\n");
@@ -623,7 +599,7 @@ void Chain::addCell(Cell* cell, int coeff)
     (*insert.first).second = coeff; 
   }
   else if (!insert.second && (*insert.first).second != 0){
-    Msg::Debug("Error: invalid chain smoothening add! \n");
+    Msg::Debug("Error: invalid chain smoothening add!");
   }
   return;
 }

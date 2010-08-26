@@ -71,7 +71,6 @@ void add_infile(std::string text, std::string fileName, bool forceDestroy)
     return;
   }
   fprintf(gmsh_yyin, "%s\n", text.c_str());
-  Msg::StatusBar(2, true, "%s", text.c_str());
   fclose(gmsh_yyin);
   gmsh_yyin = fopen(tmpFileName.c_str(), "r");
   while(!feof(gmsh_yyin)) {

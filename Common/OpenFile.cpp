@@ -241,7 +241,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
   if(!fgets(header, sizeof(header), fp)) return 0;
   fclose(fp);
 
-  Msg::StatusBar(2, true, "Reading '%s'", fileName.c_str());
+  Msg::StatusBar(2, true, "Reading '%s'...", fileName.c_str());
 
   std::vector<std::string> split = SplitFileName(fileName);
   std::string noExt = split[0] + split[1], ext = split[2];

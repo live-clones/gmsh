@@ -221,6 +221,7 @@ void status_options_cb(Fl_Widget *w, void *data)
     static int old_ve = (int)opt_mesh_volumes_edges(0, GMSH_GET, 0.);
     static int old_vf = (int)opt_mesh_volumes_faces(0, GMSH_GET, 0.);
     if(!value){ // retore visibility
+      Msg::StatusBar(2, false, "Mesh display restored");
       value = 1;
       opt_mesh_points(0, GMSH_SET | GMSH_GUI, old_p);
       opt_mesh_lines(0, GMSH_SET | GMSH_GUI, old_l);
@@ -230,6 +231,7 @@ void status_options_cb(Fl_Widget *w, void *data)
       opt_mesh_volumes_faces(0, GMSH_SET | GMSH_GUI, old_vf);
     }
     else{
+      Msg::StatusBar(2, false, "Mesh display OFF");
       value = 0;
       old_p = (int)opt_mesh_points(0, GMSH_GET, 0.);
       old_l = (int)opt_mesh_lines(0, GMSH_GET, 0.);

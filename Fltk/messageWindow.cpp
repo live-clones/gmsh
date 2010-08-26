@@ -124,7 +124,7 @@ void messageWindow::save(const char *filename)
     return;
   }
 
-  Msg::StatusBar(2, true, "Writing '%s'", filename);
+  Msg::StatusBar(2, true, "Writing '%s'...", filename);
   for(int i = 1; i <= browser->size(); i++) {
     const char *c = browser->text(i);
     if(c[0] == '@')

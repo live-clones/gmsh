@@ -418,7 +418,7 @@ static void file_options_save_cb(Fl_Widget *w, void *data)
     fileName = GModel::current()->getFileName() + ".opt";
   else
     fileName = CTX::instance()->homeDir + CTX::instance()->optionsFileName;
-  Msg::StatusBar(2, true, "Writing '%s'", fileName.c_str());
+  Msg::StatusBar(2, true, "Writing '%s'...", fileName.c_str());
   if(str == "file")
     PrintOptions(0, GMSH_FULLRC, 1, 0, fileName.c_str());
   else
