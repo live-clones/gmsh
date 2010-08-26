@@ -88,6 +88,12 @@ bool PView::readMSH(std::string fileName, int fileIndex)
     return false;
   }
 
+  GModel *model = GModel::current();
+  if(model->empty()){
+    Msg::Error("Model is empty: please load a mesh before loading the dataset");
+    return false;
+  }
+
   char str[256] = "XXX";
   int index = -1;
   bool binary = false, swap = false;
