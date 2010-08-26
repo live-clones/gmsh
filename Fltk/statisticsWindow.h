@@ -17,6 +17,7 @@ class statisticsWindow{
   Fl_Output *value[50];
   Fl_Button *butt[8];
   Fl_Group *group[3];
+  Fl_Box *memUsage;
   double quality[4][100];
  public:
   statisticsWindow(int deltaFontSize);

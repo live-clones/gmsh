@@ -15,6 +15,7 @@
 #include "PView.h"
 #include "Generator.h"
 #include "Context.h"
+#include "OS.h"
 
 void statistics_cb(Fl_Widget *w, void *data)
 {
@@ -167,6 +168,9 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
   }
 
   {
+    memUsage = new Fl_Box(WB, height - BH - WB, width / 2, BH, "");
+    memUsage->align(FL_ALIGN_INSIDE);
+
     Fl_Return_Button *o = new Fl_Return_Button
       (width - BB - WB, height - BH - WB, BB, BH, "Update");
     o->callback(statistics_update_cb);
@@ -274,6 +278,13 @@ void statisticsWindow::compute(bool elementQuality)
   sprintf(label[num], "%g", s[33]); value[num]->value(label[num]); num++;
   sprintf(label[num], "%g", s[34]); value[num]->value(label[num]); num++;
   sprintf(label[num], "%g", s[35]); value[num]->value(label[num]); num++;
+
+  static char mem[256];
+  long m = GetMemoryUsage();
+  if(m){
+    sprintf(mem, "Memory usage: %gMb", GetMemoryUsage()/1024./1024.);
+    memUsage->label(mem);
+  }
 }
 
 void statisticsWindow::show()

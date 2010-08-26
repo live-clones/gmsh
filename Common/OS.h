@@ -13,6 +13,7 @@ double GetTimeInSeconds();
 void SleepInSeconds(double s);
 void CheckResources();
 double Cpu();
+long GetMemoryUsage();
 int GetProcessId();
 std::string GetHostName();
 int UnlinkFile(std::string fileName);

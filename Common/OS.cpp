@@ -117,6 +117,14 @@ double Cpu()
   return s;
 }
 
+long GetMemoryUsage()
+{
+  long mem = 0;
+  double s = 0.;
+  GetResources(&s, &mem);
+  return mem;
+}
+
 int GetProcessId()
 {
 #if !defined(WIN32) || defined(__CYGWIN__)
