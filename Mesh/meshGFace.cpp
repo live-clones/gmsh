@@ -1796,7 +1796,7 @@ void orientMeshGFace::operator()(GFace *gf)
   gf->model()->setCurrentMeshEntity(gf);
 
   if(gf->geomType() == GEntity::ProjectionFace) return;
-  if(gf->geomType() == GEntity::CompoundSurface)return;
+  if(gf->geomType() == GEntity::CompoundSurface) return;
 
   // In old versions we did not reorient transfinite surface meshes;
   // we could add the following to provide backward compatibility:
