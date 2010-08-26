@@ -111,7 +111,7 @@ messageWindow::messageWindow(int deltaFontSize)
 void messageWindow::add(const char *msg)
 {
   browser->add(msg, 0);
-  if(CTX::instance()->msgAutoScroll)
+  if(win->shown() && CTX::instance()->msgAutoScroll)
     browser->bottomline(browser->size());
 }
 
@@ -138,6 +138,9 @@ void messageWindow::save(const char *filename)
 
 void messageWindow::show(bool redrawOnly)
 {
+  if(CTX::instance()->msgAutoScroll)
+    browser->bottomline(browser->size());
+
   if(win->shown() && redrawOnly)
     win->redraw();
   else
