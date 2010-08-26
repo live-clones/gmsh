@@ -988,7 +988,7 @@ void GModel::checkMeshCoherence(double tolerance)
   int numEle = getNumMeshElements();
   if(!numEle) return;
 
-  Msg::Info("Checking mesh coherence (%d elements)", numEle);
+  Msg::StatusBar(2, true, "Checking mesh coherence (%d elements)...", numEle);
 
   SBoundingBox3d bbox = bounds();
   double lc = bbox.empty() ? 1. : norm(SVector3(bbox.max(), bbox.min()));
@@ -999,6 +999,7 @@ void GModel::checkMeshCoherence(double tolerance)
 
   // check for duplicate mesh vertices
   {
+    Msg::Info("Checking for duplicate vertices...");
     std::vector<MVertex*> vertices;
     for(unsigned int i = 0; i < entities.size(); i++)
       vertices.insert(vertices.end(), entities[i]->mesh_vertices.begin(), 
@@ -1013,11 +1014,12 @@ void GModel::checkMeshCoherence(double tolerance)
                   vertices[i]->x(), vertices[i]->y(), vertices[i]->z());
         num++;
       }
-    if(num) Msg::Warning("%d duplicate vert%s", num, num > 1 ? "ices" : "ex");
+    if(num) Msg::Error("%d duplicate vert%s", num, num > 1 ? "ices" : "ex");
   }
 
   // check for duplicate elements
   {
+    Msg::Info("Checking for duplicate elements...");
     std::vector<MVertex*> vertices;
     for(unsigned int i = 0; i < entities.size(); i++)
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
@@ -1036,12 +1038,16 @@ void GModel::checkMeshCoherence(double tolerance)
       }
       delete vertices[i];
     }
-    if(num) Msg::Warning("%d duplicate element%s", num, num > 1 ? "s" : "");
+    if(num) Msg::Error("%d duplicate element%s", num, num > 1 ? "s" : "");
   }
+
+  Msg::StatusBar(2, true, "Done checking mesh coherence");
 }
 
 int GModel::removeDuplicateMeshVertices(double tolerance)
 {
+  Msg::StatusBar(2, true, "Removing duplicate mesh vertices...");
+
   SBoundingBox3d bbox = bounds();
   double lc = bbox.empty() ? 1. : norm(SVector3(bbox.max(), bbox.min()));
   double eps = lc * tolerance;
@@ -1109,8 +1115,10 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertices);
 
-  Msg::Info("Removed %d duplicate mesh %s", num, num > 1 ? "vertices" : "vertex");
+  if(num)
+    Msg::Info("Removed %d duplicate mesh %s", num, num > 1 ? "vertices" : "vertex");
 
+  Msg::StatusBar(2, true, "Done removing duplicate mesh vertices");
   return num;
 }
 
@@ -1118,7 +1126,7 @@ void GModel::createTopologyFromMesh()
 {
   removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
 
-  Msg::Info("Creating topology from mesh");
+  Msg::StatusBar(2, true, "Creating topology from mesh...");
   double t1 = Cpu();
 
   // for each discreteRegion, create topology
@@ -1243,17 +1251,14 @@ void GModel::createTopologyFromMesh()
   createTopologyFromFaces(discFaces);
   
   double t2 = Cpu();
-  Msg::Info("Creating topology from mesh done (%g s)", t2-t1);
+  Msg::StatusBar(2, true, "Done creating topology from mesh (%g s)", t2-t1);
   
   //create old format (necessary for boundary layers)
   exportDiscreteGEOInternals();
 }
 
-
-
 void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
 {
-
   std::vector<discreteEdge*> discEdges;
   for(eiter it = firstEdge(); it != lastEdge(); it++){
     if((*it)->geomType() == GEntity::DiscreteCurve)
