@@ -28,7 +28,7 @@ class fullVector
   fullVector(int r) : _r(r)
   {
     _data = new scalar[_r];
-    scale(0.);
+    setAll(0.);
   }
   fullVector(void) : _r(0),_data(0) {}
   fullVector(const fullVector<scalar> &other) : _r(other._r)
@@ -77,6 +77,14 @@ class fullVector
       for(int i = 0; i < _r; ++i) _data[i] = -_data[i];
     else 
       for(int i = 0; i < _r; ++i) _data[i] *= s;
+  }
+  inline void setAll(const scalar &m)
+  {
+    for(int i = 0; i < _r; i++) _data[i] = m;
+  }
+  inline void setAll(const fullVector<scalar> &m)
+  {
+    for(int i = 0; i < _r; i++) _data[i] = m._data[i];
   }
   inline scalar operator *(const fullVector<scalar> &other)
   {
@@ -160,12 +168,12 @@ class fullMatrix
   {
     _data = new scalar[_r * _c];
     _own_data = true;
-    scale(0.);
+    setAll(0.);
   }
   fullMatrix(int r, int c, double *data)
     : _r(r), _c(c), _data(data), _own_data(false)
   {
-    scale(0.);
+    setAll(0.);
   }
   fullMatrix(const fullMatrix<scalar> &other) : _r(other._r), _c(other._c)
   {
@@ -329,9 +337,8 @@ class fullMatrix
   }
   void scale(const double s)
 #if !defined(HAVE_BLAS)
-  {
-    
-    if(s == 0.)
+  {    
+    if(s == 0.) // this is not really correct nan*0 (or inf*0) is expected to give nan
       for(int i = 0; i < _r * _c; ++i) _data[i] = 0.;
     else
       for(int i = 0; i < _r * _c; ++i) _data[i] *= s;
