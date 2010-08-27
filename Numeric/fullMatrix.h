@@ -63,7 +63,7 @@ class fullVector
   {
     return _data[i];
   }
-  inline scalar norm()
+  inline scalar norm() const
   {
     scalar n = 0.;
     for(int i = 0; i < _r; ++i) n += _data[i] * _data[i];
@@ -142,7 +142,7 @@ class fullMatrix
     #endif
     (*this)(r, c) = v; 
   }
-  inline scalar norm()
+  inline scalar norm() const
   {
     scalar n = 0.;
     for(int i = 0; i < _r; ++i) 
@@ -192,7 +192,7 @@ class fullMatrix
       _data = new scalar[_r * _c];
       _own_data = true;
       if(resetValue)
-        scale(0.);
+        setAll(0.);
       return true;
     }
     else{
@@ -200,7 +200,7 @@ class fullMatrix
       _c = c;
     }
     if(resetValue)
-      scale(0.);
+      setAll(0.);
     return false; // no reallocation
   }
   void setAsProxy(const fullMatrix<scalar> &original)
