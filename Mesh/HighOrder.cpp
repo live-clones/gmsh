@@ -652,7 +652,7 @@ static void setHighOrder(GEdge *ge, edgeContainer &edgeVertices, bool linear,
   ge->deleteVertexArrays();
 }
 
-MTriangle* setHighOrder(MTriangle *t, GFace *gf, 
+MTriangle *setHighOrder(MTriangle *t, GFace *gf, 
                         edgeContainer &edgeVertices, 
                         faceContainer &faceVertices, 
                         bool linear, bool incomplete, int nPts, 
@@ -688,34 +688,44 @@ MTriangle* setHighOrder(MTriangle *t, GFace *gf,
     }
   }  
 }
-MQuadrangle *setHighOrder(MQuadrangle *q, GFace *gf,
-                        edgeContainer &edgeVertices, 
-                        faceContainer &faceVertices, 
-                        bool linear, bool incomplete, int nPts, 
-                        highOrderSmoother *displ2D,
-                        highOrderSmoother *displ3D)
+
+static MQuadrangle *setHighOrder(MQuadrangle *q, GFace *gf,
+                                 edgeContainer &edgeVertices, 
+                                 faceContainer &faceVertices, 
+                                 bool linear, bool incomplete, int nPts, 
+                                 highOrderSmoother *displ2D,
+                                 highOrderSmoother *displ3D)
 {
   std::vector<MVertex*> ve, vf;
   getEdgeVertices(gf, q, ve, edgeVertices, linear, nPts, displ2D, displ3D);
   if(incomplete){
-    if(nPts==1){
-      return new MQuadrangle8(q->getVertex(0), q->getVertex(1), q->getVertex(2),q->getVertex(3), ve[0],ve[1],ve[2],ve[3]);
-    }else{
-      return new MQuadrangleN(q->getVertex(0), q->getVertex(1), q->getVertex(2), q->getVertex(3), ve, nPts + 1);
+    if(nPts == 1){
+      return new MQuadrangle8(q->getVertex(0), q->getVertex(1), q->getVertex(2), 
+                              q->getVertex(3), ve[0], ve[1], ve[2], ve[3]);
     }
-  } else {
+    else{
+      return new MQuadrangleN(q->getVertex(0), q->getVertex(1), q->getVertex(2),
+                              q->getVertex(3), ve, nPts + 1);
+    }
+  } 
+  else {
     if (displ2D && gf->geomType() == GEntity::Plane){
-      MQuadrangle incpl(q->getVertex(0), q->getVertex(1), q->getVertex(2), q->getVertex(3));
+      MQuadrangle incpl(q->getVertex(0), q->getVertex(1), q->getVertex(2), 
+                        q->getVertex(3));
       getFaceVertices(gf, &incpl, q, vf, faceVertices, linear, nPts, displ2D, displ3D);
     }else{
-      MQuadrangleN incpl(q->getVertex(0), q->getVertex(1), q->getVertex(2), q->getVertex(3), ve, nPts + 1);
+      MQuadrangleN incpl(q->getVertex(0), q->getVertex(1), q->getVertex(2), 
+                         q->getVertex(3), ve, nPts + 1);
       getFaceVertices(gf, &incpl, q, vf, faceVertices, linear, nPts, displ2D, displ3D);
     }
     ve.insert(ve.end(), vf.begin(), vf.end());
-    if(nPts==1){
-      return new MQuadrangle9(q->getVertex(0), q->getVertex(1), q->getVertex(2),q->getVertex(3), ve[0], ve[1], ve[2], ve[3], vf[0]);
-    }else{
-      return new MQuadrangleN(q->getVertex(0), q->getVertex(1), q->getVertex(2), q->getVertex(3), ve, nPts + 1);
+    if(nPts == 1){
+      return new MQuadrangle9(q->getVertex(0), q->getVertex(1), q->getVertex(2),
+                              q->getVertex(3), ve[0], ve[1], ve[2], ve[3], vf[0]);
+    }
+    else{
+      return new MQuadrangleN(q->getVertex(0), q->getVertex(1), q->getVertex(2),
+                              q->getVertex(3), ve, nPts + 1);
     }
   }
 }  
@@ -728,8 +738,8 @@ static void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
   std::vector<MTriangle*> triangles2;
   for(unsigned int i = 0; i < gf->triangles.size(); i++){
     MTriangle *t = gf->triangles[i];
-    MTriangle *tNew = setHighOrder(t,gf,edgeVertices,faceVertices, linear, incomplete,
-                                   nPts,displ2D,displ3D);
+    MTriangle *tNew = setHighOrder(t, gf,edgeVertices, faceVertices, linear, incomplete,
+                                   nPts, displ2D, displ3D);
     triangles2.push_back(tNew);
     delete t;
   }
@@ -1120,7 +1130,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   if(displ2D) delete displ2D;
   if(displ3D) delete displ3D;
 
-  //  printJacobians(m, "smoothness.pos");
+  // printJacobians(m, "smoothness.pos");
   
   double t2 = Cpu();
   Msg::StatusBar(2, true, "Done meshing order %d (%g s)", order, t2 - t1);

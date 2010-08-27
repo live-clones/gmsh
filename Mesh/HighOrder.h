@@ -23,16 +23,13 @@ class highOrderSmoother;
 
 void SetOrder1(GModel *m);
 void SetOrderN(GModel *m, int order, bool linear=true, bool incomplete=false);
-
-MTriangle* setHighOrder(MTriangle *t,
-                        GFace *gf, 
+MTriangle* setHighOrder(MTriangle *t, GFace *gf, 
                         edgeContainer &edgeVertices, 
                         faceContainer &faceVertices, 
-                        bool linear, 
-                        bool incomplete,
-                        int nPts = 1, 
+                        bool linear, bool incomplete, int nPts = 1, 
                         highOrderSmoother *displ2D = 0,
                         highOrderSmoother *displ3D = 0);
 void checkHighOrderTriangles(const char* cc, GModel *m, 
-                                    std::vector<MElement*> &bad, double &minJGlob);
+                             std::vector<MElement*> &bad, double &minJGlob);
+
 #endif
