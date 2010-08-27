@@ -439,7 +439,8 @@ binding::~binding()
   }
 }
 
-void *binding::checkudata_with_inheritance (lua_State *L, int ud, const char *tname) {
+void *binding::checkudata_with_inheritance (lua_State *L, int ud, const char *tname)
+{
   void *p = lua_touserdata(L, ud);
   if (!p)
     return NULL;

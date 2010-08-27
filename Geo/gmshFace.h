@@ -22,7 +22,8 @@ class gmshFace : public GFace {
   Range<double> parBounds(int i) const; 
   void setModelEdges(std::list<GEdge*> &);
   virtual GPoint point(double par1, double par2) const; 
-  virtual GPoint closestPoint(const SPoint3 &queryPoint, const double initialGuess[2]) const; 
+  virtual GPoint closestPoint(const SPoint3 &queryPoint, 
+                              const double initialGuess[2]) const; 
   virtual bool containsPoint(const SPoint3 &pt) const;  
   virtual double getMetricEigenvalue(const SPoint2 &);  
   virtual SVector3 normal(const SPoint2 &param) const; 

@@ -26,12 +26,12 @@ class OCCFace : public GFace {
   void replaceEdgesInternal (std::list<GEdge*> &);
   void setup();
  public:
-  //OCCFace(GModel *m, TopoDS_Face s, int num, TopTools_IndexedMapOfShape &emap);
   OCCFace(GModel *m, TopoDS_Face s, int num);
   virtual ~OCCFace(){}
   Range<double> parBounds(int i) const; 
   virtual GPoint point(double par1, double par2) const; 
-  virtual GPoint closestPoint(const SPoint3 & queryPoint, const double initialGuess[2]) const; 
+  virtual GPoint closestPoint(const SPoint3 & queryPoint, 
+                              const double initialGuess[2]) const; 
   virtual bool containsPoint(const SPoint3 &pt) const;  
   virtual SVector3 normal(const SPoint2 &param) const; 
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const;

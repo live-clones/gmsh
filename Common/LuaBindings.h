@@ -298,7 +298,8 @@ class luaStack<type *>{
   public:
   static type* get(lua_State *L, int ia)
   {
-    userdataType *ud=static_cast<userdataType*>(binding::checkudata_with_inheritance (L, ia, getName().c_str()));
+    userdataType *ud = static_cast<userdataType*>
+      (binding::checkudata_with_inheritance (L, ia, getName().c_str()));
     if(!ud) luaL_typerror(L, ia, className<type>::get().c_str());
     return ud->pT;
   }
@@ -323,7 +324,8 @@ class luaStack<const type *>{
   public:
   static type* get(lua_State *L, int ia)
   {
-    userdataType *ud=static_cast<userdataType*>(binding::checkudata_with_inheritance (L, ia, getName().c_str()));
+    userdataType *ud = static_cast<userdataType*>
+      (binding::checkudata_with_inheritance (L, ia, getName().c_str()));
     if(!ud) luaL_typerror(L, ia, className<type>::get().c_str());
     return ud->pT;
   }
@@ -348,7 +350,8 @@ class luaStack<type &>{
  public:
   static type& get(lua_State *L, int ia)
   {
-    userdataType *ud=static_cast<userdataType*>(binding::checkudata_with_inheritance (L, ia, getName().c_str()));
+    userdataType *ud = static_cast<userdataType*>
+      (binding::checkudata_with_inheritance (L, ia, getName().c_str()));
     if(!ud) luaL_typerror(L, ia, className<type>::get().c_str());
     return *ud->pT; 
   }
@@ -364,7 +367,8 @@ class luaStack<const type &>{
  public:
   static type& get(lua_State *L, int ia)
   {
-    userdataType *ud=static_cast<userdataType*>(binding::checkudata_with_inheritance (L, ia, getName().c_str()));
+    userdataType *ud = static_cast<userdataType*>
+      (binding::checkudata_with_inheritance (L, ia, getName().c_str()));
     if(!ud) luaL_typerror(L, ia, className<type>::get().c_str());
     return *ud->pT; 
   }

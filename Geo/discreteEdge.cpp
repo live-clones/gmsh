@@ -389,7 +389,6 @@ void discreteEdge::computeNormals () const
 //     itn->second = SVector3(nx,ny,nz);
 //   }
 //   delete normals;
-
 }
 
 void discreteEdge::getLocalParameter(const double &t, int &iLine,
@@ -448,7 +447,7 @@ GPoint discreteEdge::point(double par) const
     b210 = (2*v1 + v2 -w12*n1)*0.333; 
     b120 = (2*v2 + v1 -w21*n2)*0.333;
     
-//     //tagged PN trinagles (sigma=1)
+    // tagged PN trinagles (sigma=1)
     double theta = 0.0;
     SVector3 d1 = v1+.33*(1-theta)*(v2-v1);
     SVector3 d2 = v2+.33*(1-theta)*(v1-v2);

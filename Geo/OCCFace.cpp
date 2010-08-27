@@ -31,7 +31,6 @@
 OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
   : GFace(m, num), s(_s)
 {
-  // printf("NEW OCC FACE %d\n",tag());
   setup();
 }
 
@@ -95,7 +94,6 @@ void OCCFace::setup()
   umax += fabs(du) / 100.0;
   vmax += fabs(dv) / 100.0;
   occface = BRep_Tool::Surface(s);
-  //  printf("size = %d\n",l_edges.size());
 }
 
 Range<double> OCCFace::parBounds(int i) const
