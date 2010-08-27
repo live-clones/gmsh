@@ -10,8 +10,8 @@
 
 discreteRegion::discreteRegion(GModel *model, int num) : GRegion(model, num)
 {
-  //::Volume *v = Create_Volume(num, MSH_VOLUME_DISCRETE);
-  //Tree_Add(model->getGEOInternals()->Volumes, &v);
+  ::Volume *v = Create_Volume(num, MSH_VOLUME_DISCRETE);
+  Tree_Add(model->getGEOInternals()->Volumes, &v);
 }
 
 void discreteRegion::setBoundFaces(std::set<int> tagFaces)
@@ -23,15 +23,14 @@ void discreteRegion::setBoundFaces(std::set<int> tagFaces)
     face->addRegion(this);
   }
 
-  //in case discrete region already exist
-  //to modify to take into account appropriate faces
+  // in case discrete region already exist
+  // to modify to take into account appropriate faces
   // for(GModel::fiter face = model()->firstFace(); face != model()->lastFace(); face++){
   //   l_faces.push_back(*face);
   //   (*face)->addRegion(this);
   // }
-
-  
 }
+
 void discreteRegion::findFaces(std::map<MFace, std::vector<int>, Less_Face> &map_faces)
 {
 
