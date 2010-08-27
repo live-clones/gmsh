@@ -12,7 +12,8 @@ class lloydAlgorithm {
   int ITER_MAX;
   bool infiniteNorm ;
  public :
-  lloydAlgorithm (int itermax, bool infnorm = false): ITER_MAX(itermax), infiniteNorm(infnorm) {}
+  lloydAlgorithm (int itermax, bool infnorm = false)
+  : ITER_MAX(itermax), infiniteNorm(infnorm) {}
   void operator () (GFace *);
 };
 

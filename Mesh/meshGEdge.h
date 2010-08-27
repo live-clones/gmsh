@@ -11,16 +11,15 @@ class GEdge;
 // Create the mesh of the edge
 class meshGEdge {
  public :
-  meshGEdge ()  {}
-  void operator () ( GEdge * );
+  meshGEdge() {}
+  void operator () (GEdge *);
 };
 
 // destroy the mesh of the edge
 class deMeshGEdge {
-  bool _STL;
  public :
-  deMeshGEdge () {}
-  void operator () ( GEdge * );
+  deMeshGEdge() {}
+  void operator () (GEdge *);
 };
 
 int MeshExtrudedCurve(GEdge *ge);

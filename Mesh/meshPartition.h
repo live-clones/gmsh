@@ -27,12 +27,14 @@ int RenumberGraph(Graph &graph, meshPartitionOptions &options);
 int PartitionMesh(GModel *const model, meshPartitionOptions &options);
 int RenumberMesh(GModel *const model, meshPartitionOptions &options);
 int PartitionMeshFace(std::list<GFace*> &cFaces, meshPartitionOptions &options);
-int PartitionMeshElements(std::vector<MElement*> &elements, meshPartitionOptions &options);
+int PartitionMeshElements(std::vector<MElement*> &elements, 
+                          meshPartitionOptions &options);
 bool PartitionZeroGenus(std::list<GFace*> &cFaces, int &nbParts);
 int CreatePartitionBoundaries(GModel *model, bool createGhostCells);
 
-void splitBoundaryEdges(GModel *model,  std::set<partitionEdge*, Less_partitionEdge> &newEdges);
-void createPartitionFaces(GModel *model, GFaceCompound * gf, int num_parts, 
+void splitBoundaryEdges(GModel *model,
+                        std::set<partitionEdge*, Less_partitionEdge> &newEdges);
+void createPartitionFaces(GModel *model, GFaceCompound *gf, int num_parts,
                           std::vector<discreteFace*> &pFaces);
 
 #endif

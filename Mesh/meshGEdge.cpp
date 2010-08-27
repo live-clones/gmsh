@@ -130,7 +130,6 @@ static double F_Lc_aniso(GEdge *ge, double t)
   return sqrt(lSquared);
 }
 
-
 static double F_Transfinite(GEdge *ge, double t_)
 {
   double length = ge->length();
@@ -289,18 +288,17 @@ void deMeshGEdge::operator() (GEdge *ge)
   ge->meshStatistics.status = GEdge::PENDING;
 }
 
-void  printFandPrimitive(int tag, std::vector<IntPoint> &Points ){
+static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
+{
   char name[256];
-  sprintf(name,"line%d.dat",tag);
-  FILE *f = fopen (name,"w");
-  for (int i=0;i<Points.size();i++){
+  sprintf(name, "line%d.dat", tag);
+  FILE *f = fopen(name, "w");
+  for (unsigned int i = 0; i < Points.size(); i++){
     const IntPoint &P = Points[i];
-    fprintf(f,"%g %g %g\n",P.t,1./P.lc,P.p);
+    fprintf(f, "%g %g %g\n", P.t, 1./P.lc, P.p);
   }
   fclose(f);
-    
 }
-
 
 void meshGEdge::operator() (GEdge *ge) 
 {  
