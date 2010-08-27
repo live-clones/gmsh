@@ -28,6 +28,20 @@ SPoint3 MTetrahedron::circumcenter()
 #endif
 }
 
+double MTetrahedron::getCircumRadius()
+{
+#if defined(HAVE_MESH)
+  SPoint3 center = circumcenter();
+  const double dx = getVertex(0)->x() - center.x();
+  const double dy = getVertex(0)->y() - center.y();
+  const double dz = getVertex(0)->z() - center.z();
+  double circum_radius = sqrt(dx * dx + dy * dy + dz * dz);
+  return circum_radius;
+#else
+  return 0.0;
+#endif
+}
+
 double MTetrahedron::distoShapeMeasure()
 {
 #if defined(HAVE_MESH)

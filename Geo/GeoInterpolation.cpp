@@ -355,11 +355,11 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
     break;
 
   case MSH_SEGM_BND_LAYER:
-    Msg::Error("Cannot interpolate boundary layer curve");
+    Msg::Debug("Cannot interpolate boundary layer curve");
     break;
 
   case MSH_SEGM_DISCRETE:
-    Msg::Error("Cannot interpolate discrete curve");
+    Msg::Debug("Cannot interpolate discrete curve");
     break;
 
   default:

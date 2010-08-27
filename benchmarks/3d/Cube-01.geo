@@ -1,4 +1,7 @@
-lc = 0.1;
+//Mesh.Dual = 1;
+Mesh.Voronoi=1;
+
+lc = 0.5;
 Point(1) = {0.0,0.0,0.0,lc};         
 Point(2) = {1,0.0,0.0,lc};         
 Point(3) = {1,1,0.0,lc};         

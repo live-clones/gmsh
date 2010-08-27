@@ -945,6 +945,10 @@ class drawMeshGRegion {
       drawBarycentricDual(r->polyhedra);
     }
 
+    if(CTX::instance()->mesh.voronoi) {
+      if(CTX::instance()->mesh.tetrahedra) drawVoronoiDual(r->tetrahedra);
+    }
+
     if(select) {
       glPopName();
       glPopName();

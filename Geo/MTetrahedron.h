@@ -130,6 +130,7 @@ class MTetrahedron : public MElement {
   virtual double gammaShapeMeasure();
   virtual double distoShapeMeasure();
   virtual double getInnerRadius();
+  virtual double getCircumRadius();
   virtual double etaShapeMeasure();
   void xyz2uvw(double xyz[3], double uvw[3]);
   virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
