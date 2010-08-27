@@ -1795,6 +1795,7 @@ void orientMeshGFace::operator()(GFace *gf)
 {
   gf->model()->setCurrentMeshEntity(gf);
 
+  if(gf->geomType() == GEntity::DiscreteSurface) return;
   if(gf->geomType() == GEntity::ProjectionFace) return;
   if(gf->geomType() == GEntity::CompoundSurface) return;
 

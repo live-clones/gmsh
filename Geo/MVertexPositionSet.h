@@ -28,9 +28,10 @@ class MVertexPositionSet{
   std::vector<MVertex*> &_vertices;
  public:
   MVertexPositionSet(std::vector<MVertex*> &vertices, int maxDuplicates=10)
-    : _vertices(vertices), _maxDuplicates(maxDuplicates)
+    : _kdtree(0), _maxDuplicates(maxDuplicates), _vertices(vertices)
   {
     int totpoints = vertices.size();
+    if(!totpoints) return;
     _zeronodes = annAllocPts(totpoints, 3);
     for(int i = 0; i < totpoints; i++){
       vertices[i]->setIndex(0);
@@ -44,6 +45,7 @@ class MVertexPositionSet{
   }
   ~MVertexPositionSet()
   {
+    if(!_kdtree) return;
     delete _kdtree;
     annDeallocPts(_zeronodes);
     delete [] _index;
@@ -51,6 +53,7 @@ class MVertexPositionSet{
   }
   MVertex *find(double x, double y, double z, double tolerance)
   {
+    if(!_kdtree) return 0;
     double xyz[3] = {x, y, z};
     _kdtree->annkSearch(xyz, _maxDuplicates, _index, _dist);
     for(int i = 0; i < _maxDuplicates; i++){
