@@ -9,6 +9,8 @@
 #include <vector>
 #include <algorithm>
 #include "fullMatrix.h"
+
+// FIXME: should not introduce dependencies to Geo/ code in Numeric
 #include "SPoint2.h"
 #include "simpleFunction.h"
 #include "Octree.h"

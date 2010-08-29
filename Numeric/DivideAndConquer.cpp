@@ -19,6 +19,8 @@
 #include "DivideAndConquer.h"
 #include "Numeric.h"
 #include "robustPredicates.h"
+
+// FIXME: should not introduce dependencies to Geo/ code in Numeric
 #include "GPoint.h"
 #include "GFace.h"
 #include "MLine.h"

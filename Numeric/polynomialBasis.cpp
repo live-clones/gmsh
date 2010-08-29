@@ -93,6 +93,7 @@ static fullMatrix<double> generatePascalQuad(int order)
   }
   return monomials;
 }
+
 /*
 00 10 20 30 40 ⋯
 01 11 21 31 41 ⋯
@@ -795,7 +796,8 @@ static void getFaceClosure(int iFace, int iSign, int iRotate, std::vector<int> &
         fi = fi + 3; ti = ti + 3;
         for (int l = 0; l < orderint - 1; l++){
           for (int ei = 0; ei < 3; ei++){
-            int edgenumber = (6 + ei * iSign + (-1 + iSign) / 2 + iRotate) % 3; //- iSign * iRotate
+            int edgenumber = (6 + ei * iSign + (-1 + iSign) / 2 + iRotate) % 3;
+                     //- iSign * iRotate
             if (iSign > 0)
               closure[fi + ei * (orderint - 1) + l] =
                 ti + edgenumber * (orderint - 1) + l;
@@ -832,8 +834,8 @@ static void generate3dFaceClosure(polynomialBasis::clCont &closure, int order)
   }
 }
 
-static void getFaceClosurePrism(int iFace, int iSign, int iRotate, std::vector<int> &closure,
-                           int order)
+static void getFaceClosurePrism(int iFace, int iSign, int iRotate,
+                                std::vector<int> &closure, int order)
 {
   if (order > 2)
     Msg::Error("FaceClosure not implemented for prisms of order %d",order);
@@ -845,9 +847,12 @@ static void getFaceClosurePrism(int iFace, int iSign, int iRotate, std::vector<i
     closure[0] = 0;
     return;
   }
-  int order1node[5][4] = {{0, 2, 1, -1}, {3, 4, 5, -1}, {0, 1, 4, 3}, {0, 3, 5, 2}, {1, 2, 5, 4}};
-  int order2node[5][5] = {{7, 9, 6, -1, -1}, {12, 14, 13, -1, -1}, {6, 10, 12, 8, 15}, {8, 13, 11, 7, 16}, {9, 11, 14, 10, 17}};
-//   int order2node[5][4] = {{7, 9, 6, -1}, {12, 14, 13, -1}, {6, 10, 12, 8}, {8, 13, 11, 7}, {9, 11, 14, 10}};
+  int order1node[5][4] = {{0, 2, 1, -1}, {3, 4, 5, -1}, {0, 1, 4, 3}, {0, 3, 5, 2},
+                          {1, 2, 5, 4}};
+  int order2node[5][5] = {{7, 9, 6, -1, -1}, {12, 14, 13, -1, -1}, {6, 10, 12, 8, 15},
+                          {8, 13, 11, 7, 16}, {9, 11, 14, 10, 17}};
+  // int order2node[5][4] = {{7, 9, 6, -1}, {12, 14, 13, -1}, {6, 10, 12, 8},
+  //                         {8, 13, 11, 7}, {9, 11, 14, 10}};
   int nVertex = isTriangle ? 3 : 4;
   for (int i = 0; i < nVertex; ++i){
     int k = (nVertex + (iSign * i) + iRotate) % nVertex;  //- iSign * iRotate
@@ -855,7 +860,8 @@ static void getFaceClosurePrism(int iFace, int iSign, int iRotate, std::vector<i
   }
   if (order==2) {
     for (int i = 0; i < nVertex; ++i){
-      int k = (nVertex + (iSign==-1?-1:0) + (iSign * i) + iRotate) % nVertex;  //- iSign * iRotate
+      int k = (nVertex + (iSign==-1?-1:0) + (iSign * i) + iRotate) % nVertex;
+                //- iSign * iRotate
       closure[nVertex+i] = order2node[iFace][k];
     }
     if (!isTriangle)
@@ -878,8 +884,8 @@ static void generate3dFaceClosurePrism(polynomialBasis::clCont &closure, int ord
   }
 }
 
-
-static void generate2dEdgeClosure(polynomialBasis::clCont &closure, int order, int nNod = 3)
+static void generate2dEdgeClosure(polynomialBasis::clCont &closure, int order,
+                                  int nNod = 3)
 {
   closure.clear();
   closure.resize(2*nNod);
@@ -897,13 +903,12 @@ static void generate2dEdgeClosure(polynomialBasis::clCont &closure, int order, i
 
 static void generate1dVertexClosure(polynomialBasis::clCont &closure)
 {
-
   closure.clear();
   closure.resize(2);
   closure[0].push_back(0);
   closure[1].push_back(1);
-
 }
+
 std::map<int, polynomialBasis> polynomialBases::fs;
 
 const polynomialBasis *polynomialBases::find(int tag)
@@ -1314,7 +1319,8 @@ std::map<std::pair<int, int>, fullMatrix<double> > polynomialBases::injector;
 const fullMatrix<double> &polynomialBases::findInjector(int tag1, int tag2)
 {
   std::pair<int,int> key(tag1,tag2);
-  std::map<std::pair<int, int>, fullMatrix<double> >::const_iterator it = injector.find(key);
+  std::map<std::pair<int, int>, fullMatrix<double> >::const_iterator it =
+    injector.find(key);
   if (it != injector.end()) return it->second;
 
   const polynomialBasis& fs1 = *find(tag1);
@@ -1337,7 +1343,9 @@ const fullMatrix<double> &polynomialBases::findInjector(int tag1, int tag2)
 void polynomialBasis::registerBindings(binding *b) {
   classBinding *cb = b->addClass<polynomialBasis>("polynomialBasis");
   cb->setDescription("polynomial shape functions for elements");
-  methodBinding *mb = cb->addMethod("f",(void (polynomialBasis::*)(fullMatrix<double>&, fullMatrix<double>&))&polynomialBasis::f);
+  methodBinding *mb = cb->addMethod
+    ("f", (void (polynomialBasis::*)(fullMatrix<double>&, fullMatrix<double>&))
+     &polynomialBasis::f);
   mb->setDescription("evaluate the shape functions");
   mb->setArgNames("nodes","values",NULL);
   mb = cb->addMethod("find",&polynomialBases::find);

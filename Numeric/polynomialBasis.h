@@ -12,7 +12,8 @@
 #include "fullMatrix.h"
 #include <iostream>
 
-inline double pow_int (const double &a , const int &n) {
+inline double pow_int(const double &a, const int &n)
+{
   switch (n) {
   case 0 : return 1.0;
   case 1 : return a;
@@ -77,11 +78,12 @@ class polynomialBasis
   int numFaces;
   // for a given face/edge, with both a sign and a rotation,
   // give an ordered list of nodes on this face/edge
-  inline const std::vector<int> &getClosure(int id) const // return the closure of dimension dim
+  inline const std::vector<int> &getClosure(int id) const
   {
     return closures[id];
   }
-  inline int getClosureId(int iEl, int iSign=1, int iRot=0) const {
+  inline int getClosureId(int iEl, int iSign=1, int iRot=0) const
+  {
     return iEl + numFaces*(iSign == 1 ? 0 : 1) + 2*numFaces*iRot;
   }
   inline void evaluateMonomials(double u, double v, double w, double p[]) const
@@ -103,8 +105,10 @@ class polynomialBasis
       }
     }
   }
-  // I would favour this interface that allows optimizations (not implemented) and is easier to bind
-  inline void f(fullMatrix<double> &coord, fullMatrix<double> &sf) {
+  // I would favour this interface that allows optimizations (not
+  // implemented) and is easier to bind
+  inline void f(fullMatrix<double> &coord, fullMatrix<double> &sf)
+  {
     double p[256];
     sf.resize (coord.size1(), coefficients.size1());
     for (int iPoint=0; iPoint< coord.size1(); iPoint++) {

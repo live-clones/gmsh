@@ -16,7 +16,6 @@ double myatan2(double a, double b)
   return atan2(a, b);
 }
 
-
 double myasin(double a)
 {
   if(a <= -1.)
@@ -80,7 +79,7 @@ int sys2x2(double mat[2][2], double b[2], double res[2])
   if(norm == 0.0 || fabs(det) / norm < 1.e-12) {
     if(norm)
       Msg::Debug("Assuming 2x2 matrix is singular (det/norm == %.16g)",
-          fabs(det) / norm);
+                 fabs(det) / norm);
     res[0] = res[1] = 0.0;
     return 0;
   }
@@ -162,7 +161,7 @@ int sys3x3_with_tol(double mat[3][3], double b[3], double res[3], double *det)
   if(norm == 0.0 || fabs(*det) / norm < 1.e-12) {
     if(norm)
       Msg::Debug("Assuming 3x3 matrix is singular (det/norm == %.16g)",
-          fabs(*det) / norm);
+                 fabs(*det) / norm);
     res[0] = res[1] = res[2] = 0.0;
     return 0;
   }
@@ -290,12 +289,6 @@ double triangle_area2d(double p0[2], double p1[2], double p2[2])
   return 0.5 * sqrt(c*c);
 }
 
-double triangle_polar_inertia(double p0[2], double p1[2], double p2[2])
-{
-  throw;
-}
-
-
 void circumCenterXY(double *p1, double *p2, double *p3, double *res)
 {
   double d, a1, a2, a3;
@@ -309,7 +302,7 @@ void circumCenterXY(double *p1, double *p2, double *p3, double *res)
 
   d = 2. * (double)(y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2));
   if(d == 0.0) {
-    //    Msg::Warning("Colinear points in circum circle computation");
+    // Msg::Warning("Colinear points in circum circle computation");
     res[0] = res[1] = -99999.;
     return ;
   }
@@ -320,7 +313,6 @@ void circumCenterXY(double *p1, double *p2, double *p3, double *res)
   res[0] = (double)((a1 * (y3 - y2) + a2 * (y1 - y3) + a3 * (y2 - y1)) / d);
   res[1] = (double)((a1 * (x2 - x3) + a2 * (x3 - x1) + a3 * (x1 - x2)) / d);
 }
-
 
 void circumCenterXYZ(double *p1, double *p2, double *p3, double *res, double *uv)
 {

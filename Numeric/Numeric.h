@@ -63,7 +63,6 @@ double angle_02pi(double A3);
 double angle_plan(double V[3], double P1[3], double P2[3], double n[3]);
 double triangle_area(double p0[3], double p1[3], double p2[3]);
 double triangle_area2d(double p0[2], double p1[2], double p2[2]);
-double triangle_polar_inertia(double p0[2], double p1[2], double p2[2]);
 void circumCenterXY(double *p1, double *p2, double *p3, double *res);
 void circumCenterXYZ(double *p1, double *p2, double *p3, double *res, double *uv=0);
 // operate a transformation on the 4 points of a Quad in 3D, to have an equivalent Quad in 2D
@@ -90,21 +89,24 @@ void signedDistancesPointsTriangle(std::vector<double> &distances,
                                    const SPoint3 &p1,
                                    const SPoint3 &p2,
                                    const SPoint3 &p3);
-void signedDistancePointLine(const SPoint3 &p1,const SPoint3 &p2,const SPoint3 &p, double &distance, SPoint3 &closePt);
+void signedDistancePointLine(const SPoint3 &p1, const SPoint3 &p2, const SPoint3 &p,
+                             double &distance, SPoint3 &closePt);
 void signedDistancesPointsLine (std::vector<double>&distances,
                                 std::vector<SPoint3>&closePts,
                                 const std::vector<SPoint3> &pts,
-                                const SPoint3 &p1,
-                                const SPoint3 &p2);
+                                const SPoint3 &p1, const SPoint3 &p2);
 
-void changeReferential(const int direction,const SPoint3 &p,const SPoint3 &closePt,const SPoint3 &p1,const SPoint3 &p2,double* xp,double* yp,double* otherp,double* x,double* y,double* other);
-int computeDistanceRatio(const double &y, const double &yp,const double &x,const double &xp, double *distance, const double &r1, const double &r2);
+void changeReferential(const int direction, const SPoint3 &p, const SPoint3 &closePt,
+                       const SPoint3 &p1, const SPoint3 &p2, double *xp, double*yp,
+                       double *otherp, double *x, double *y, double *other);
+int computeDistanceRatio(const double &y, const double &yp, const double &x,
+                         const double &xp, double *distance, const double &r1,
+                         const double &r2);
 
 void signedDistancesPointsEllipseLine (std::vector<double>&distances,
-                                std::vector<double>&distancesE,
-                                std::vector<int>&isInYarn,
-                                std::vector<SPoint3>&closePts,
-                                const std::vector<SPoint3> &pts,
-                                const SPoint3 &p1,
-                                const SPoint3 &p2);
+                                       std::vector<double>&distancesE,
+                                       std::vector<int>&isInYarn,
+                                       std::vector<SPoint3>&closePts,
+                                       const std::vector<SPoint3> &pts,
+                                       const SPoint3 &p1, const SPoint3 &p2);
 #endif

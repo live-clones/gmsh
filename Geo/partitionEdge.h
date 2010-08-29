@@ -16,14 +16,13 @@ class partitionEdge : public discreteEdge {
  public:
   partitionEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1, 
                 std::vector<int> &partitions) 
-    : discreteEdge(model,num,_v0,_v1),_partitions(partitions)
+    : discreteEdge(model, num, _v0, _v1), _partitions(partitions)
   {
-    std::sort(_partitions.begin(),_partitions.end());
+    std::sort(_partitions.begin(), _partitions.end());
   }
   virtual ~partitionEdge() {}
   virtual GeomType geomType() const { return PartitionCurve; }
 };
-
 
 struct Less_partitionEdge : 
   public std::binary_function<partitionEdge*, partitionEdge*, bool> {
