@@ -798,7 +798,8 @@ static void addScalarPolyhedron(PView *p, double xyz[PVIEW_NMAX][3],
   //TODO
 }
 
-static void addOutlineElement(PView *p, int type, double xyz[PVIEW_NMAX][3], bool pre, int numNodes=0)
+static void addOutlineElement(PView *p, int type, double xyz[PVIEW_NMAX][3], 
+                              bool pre, int numNodes=0)
 {
   PViewOptions *opt = p->getOptions();
   switch(type){

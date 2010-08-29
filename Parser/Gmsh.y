@@ -3247,11 +3247,12 @@ Periodic :
       List_Delete($3);
       List_Delete($5);
     }
-  | tPeriodic tSurface FExpr '{' RecursiveListOfDouble '}' tAFFECT FExpr '{' RecursiveListOfDouble '}'  tEND
+  | tPeriodic tSurface FExpr '{' RecursiveListOfDouble '}' tAFFECT FExpr 
+    '{' RecursiveListOfDouble '}'  tEND
     {
       if (List_Nbr($5) != List_Nbr($10)){
-	yymsg(0, "Periodic Surface: the number of masters (%d) is not equal to the number of slaves(%d)",
-              List_Nbr($5), List_Nbr($10));
+	yymsg(0, "Periodic Surface: the number of masters (%d) is not equal "
+              "to the number of slaves(%d)", List_Nbr($5), List_Nbr($10));
       }
 
       double d_master = $3, d_slave = $8;
@@ -3400,7 +3401,7 @@ Homology :
     homology->computeRanks();
     delete homology;
     #else
-    yymsg(0, "Gmsh needs to be configured with option Kbipack to use homology computation.");    
+    yymsg(0, "Gmsh needs to be configured with option Kbipack to use homology computation");
     #endif
     }      
     
@@ -3436,7 +3437,7 @@ Homology :
     homology->findGenerators();  
     delete homology;
     #else
-    yymsg(0, "Gmsh needs to be configured with option Kbipack to use homology computation.");
+    yymsg(0, "Gmsh needs to be configured with option Kbipack to use homology computation");
     #endif
     }
     
@@ -3472,7 +3473,7 @@ Homology :
     homology->findDualGenerators();
     delete homology;
     #else
-    yymsg(0, "Gmsh needs to be configured with option Kbipack to use homology computation.");
+    yymsg(0, "Gmsh needs to be configured with option Kbipack to use homology computation");
     #endif
     }
     | tHomSeq '(' StringExprVar ')' tAFFECT '{' ListOfDouble ',' ListOfDouble '}' tEND
@@ -3507,7 +3508,7 @@ Homology :
     homology->findHomSequence();
     delete homology;
     #else
-    yymsg(0, "Gmsh needs to be configured with option Kbipack to use homology computation.");
+    yymsg(0, "Gmsh needs to be configured with option Kbipack to use homology computation");
     #endif
     }
 ;
