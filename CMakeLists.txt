@@ -1011,7 +1011,7 @@ set(CPACK_SOURCE_GENERATOR TGZ)
 set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_CURRENT_BINARY_DIR}" "/CVS/" "/.svn" "~$" 
     "DS_Store$" "GmshConfig.h$" "GmshVersion.h$" "/benchmarks/" "/tmp/" 
     "/bin/" "/lib/" "/nightly/" "GPATH" "GRTAGS" "GSYMS" "GTAGS" "/HTML/" 
-    "/TetgenNew/") #"/Tetgen.*/.*(cxx|h)")
+    "/projects/" "/TetgenNew/") #"/Tetgen.*/.*(cxx|h)")
 
 if(UNIX)
   # make sure we remove previous installs before doing the next one
