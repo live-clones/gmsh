@@ -787,7 +787,6 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
       ++itt;
     }
   }
-
  
   if (Msg::GetVerbosity() == 10){
     GEdge *ge = new discreteEdge(gf->model(), 1000,0,0);
@@ -1799,6 +1798,8 @@ void orientMeshGFace::operator()(GFace *gf)
   if(gf->geomType() == GEntity::ProjectionFace) return;
   if(gf->geomType() == GEntity::CompoundSurface) return;
 
+  if(!gf->getNumMeshElements()) return;
+
   // In old versions we did not reorient transfinite surface meshes;
   // we could add the following to provide backward compatibility:
   // if(gf->meshAttributes.Method == MESH_TRANSFINITE) return;
@@ -1815,19 +1816,24 @@ void orientMeshGFace::operator()(GFace *gf)
 
   for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
     MElement *e = gf->getMeshElement(i);
+    SPoint2 param(0., 0.);
+    bool ok = true;
     for(int j = 0; j < e->getNumVertices(); j++){
-      MVertex *v = e->getVertex(j);
-      SPoint2 param;
-      if(reparamMeshVertexOnFace(v, gf, param)){
-        SVector3 ne = e->getFace(0).normal();
-        SVector3 nf = gf->normal(param); 
-        if(dot(ne, nf) < 0){
-          Msg::Debug("Reverting orientation of mesh in face %d", gf->tag());
-          for(unsigned int k = 0; k < gf->getNumMeshElements(); k++)
-            gf->getMeshElement(k)->revert();
-        }
-        return;
+      SPoint2 p;
+      bool ok = reparamMeshVertexOnFace(e->getVertex(j), gf, p);
+      if(!ok) break;
+      param += p;
+    }
+    if(ok){
+      param *= 1. / e->getNumVertices();
+      SVector3 nf = gf->normal(param); 
+      SVector3 ne = e->getFace(0).normal();
+      if(dot(ne, nf) < 0){
+        Msg::Debug("Reverting orientation of mesh in face %d", gf->tag());
+        for(unsigned int k = 0; k < gf->getNumMeshElements(); k++)
+          gf->getMeshElement(k)->revert();
       }
+      return;
     }
   }
   Msg::Warning("Could not orient mesh in face %d", gf->tag());
