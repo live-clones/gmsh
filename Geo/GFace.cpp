@@ -502,7 +502,7 @@ end:
                    tag(), meanPlane.a, meanPlane.b, meanPlane.c, meanPlane.d);
         Msg::Error("Control point %d = (%g,%g,%g), val=%g",
                    v->tag(), v->x(), v->y(), v->z(), d);
-        return;
+        break;
       }
     }
   }
@@ -878,11 +878,8 @@ GPoint GFace::closestPoint(const SPoint3 & queryPoint, const double initialGuess
 
 bool GFace::containsParam(const SPoint2 &pt) const
 {
-  
   Range<double> uu = parBounds(0);
   Range<double> vv = parBounds(1);
-  //printf("p =%g %g uu.low=%g uu.high=%g vv.low=%g vv.high=%g\n", pt.x(), pt.y(), uu.low(), uu.high(), vv.low(), vv.high());
-
   if((pt.x() >= uu.low() && pt.x() <= uu.high()) &&
      (pt.y() >= vv.low() && pt.y() <= vv.high()))
     return true;
@@ -1053,7 +1050,7 @@ bool GFace::fillVertexArray(bool force)
 }
 
 // by default we assume that straight lines are geodesics
-SPoint2 GFace::geodesic(const SPoint2 &pt1 , const SPoint2 &pt2 , double t)
+SPoint2 GFace::geodesic(const SPoint2 &pt1, const SPoint2 &pt2, double t)
 {
   if(CTX::instance()->mesh.secondOrderExperimental && geomType() != GEntity::Plane ){
     // FIXME: this is buggy -- remove the CTX option once we do it in

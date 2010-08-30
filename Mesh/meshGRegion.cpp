@@ -345,7 +345,8 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
     //implement here the 1D mesh ...
   }
 
-  bool needParam = (CTX::instance()->mesh.order > 1 && CTX::instance()->mesh.secondOrderExperimental);
+  bool needParam = (CTX::instance()->mesh.order > 1 && 
+                    CTX::instance()->mesh.secondOrderExperimental);
   // re-create the triangular meshes FIXME: this can lead to hanging
   // nodes for non manifold geometries (single surface connected to
   // volume)
@@ -427,7 +428,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
         v[j] = v1b;
       }
     }
-    MTriangle *t = new  MTriangle(v[0], v[1], v[2]);
+    MTriangle *t = new MTriangle(v[0], v[1], v[2]);
     gf->triangles.push_back(t);   
   }
 
@@ -439,8 +440,6 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
     MTetrahedron *t = new  MTetrahedron(v1, v2, v3, v4);
     gr->tetrahedra.push_back(t);
   }
-
-
 }
 
 #endif
@@ -479,7 +478,8 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
     char opts[128];
     buildTetgenStructure(gr, in, numberedV);
     //if (Msg::GetVerbosity() == 20) sprintf(opts, "peVvS0");
-    sprintf(opts, "pe%c",  (Msg::GetVerbosity() < 3) ? 'Q': (Msg::GetVerbosity() > 6)? 'V': '\0');
+    sprintf(opts, "pe%c",  (Msg::GetVerbosity() < 3) ? 'Q': 
+            (Msg::GetVerbosity() > 6) ? 'V': '\0');
     try{
       tetrahedralize(opts, &in, &out);
     }
@@ -535,8 +535,6 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 
   // now do insertion of points
   insertVerticesInRegion(gr);
-
-
 #endif
 }
 

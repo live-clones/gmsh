@@ -23,7 +23,6 @@ gmshFace::gmshFace(GModel *m, Surface *face)
 
   setMeshMaster(s->meshMaster);
   edgeCounterparts = s->edgeCounterparts;
-  //  printf("surface %d master %d\n",tag(),meshMaster());
 
   std::list<GEdge*> l_wire;
   GVertex *first = 0;
@@ -34,9 +33,9 @@ gmshFace::gmshFace(GModel *m, Surface *face)
     if(e){
       GVertex *start = (c->Num > 0) ? e->getBeginVertex() : e->getEndVertex();
       GVertex *next  = (c->Num > 0) ? e->getEndVertex() : e->getBeginVertex();
-      if ( ! first ) first = start;
+      if (!first) first = start;
       l_wire.push_back(e);
-      if ( next == first ){
+      if (next == first){
         edgeLoops.push_back(GEdgeLoop(l_wire));
         l_wire.clear();
         first = 0;
@@ -81,7 +80,6 @@ gmshFace::gmshFace(GModel *m, Surface *face)
     }
   }
   isSphere = iSRuledSurfaceASphere(s, center, radius);
-
 }
 
 double gmshFace::getMetricEigenvalue(const SPoint2 &pt)
@@ -128,7 +126,7 @@ Range<double> gmshFace::parBounds(int i) const
 
 SVector3 gmshFace::normal(const SPoint2 &param) const
 {
-  if(geomType() != Plane){
+  if(s->Typ != MSH_SURF_PLAN){
     Vertex vu = InterpolateSurface(s, param[0], param[1], 1, 1);
     Vertex vv = InterpolateSurface(s, param[0], param[1], 1, 2);
     Vertex n = vu % vv;
@@ -169,7 +167,7 @@ SVector3 gmshFace::normal(const SPoint2 &param) const
   }
 }
 
-Pair<SVector3,SVector3> gmshFace::firstDer(const SPoint2 &param) const
+Pair<SVector3, SVector3> gmshFace::firstDer(const SPoint2 &param) const
 {
   if(s->Typ == MSH_SURF_PLAN && !s->geometry){
     double x, y, z, VX[3], VY[3];
@@ -189,9 +187,9 @@ void gmshFace::secondDer(const SPoint2 &param,
                          SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
 {
   if(s->Typ == MSH_SURF_PLAN && !s->geometry){
-    *dudu = SVector3(0.,0.,0.);
-    *dvdv = SVector3(0.,0.,0.);
-    *dudv = SVector3(0.,0.,0.);
+    *dudu = SVector3(0., 0., 0.);
+    *dvdv = SVector3(0., 0., 0.);
+    *dudv = SVector3(0., 0., 0.);
   }
   else{
     Vertex vuu = InterpolateSurface(s, param[0], param[1], 2, 1);
@@ -297,7 +295,7 @@ GEntity::GeomType gmshFace::geomType() const
 
 bool gmshFace::containsPoint(const SPoint3 &pt) const
 { 
-  if(geomType() == Plane){
+  if(s->Typ == MSH_SURF_PLAN){
     // OK to use the normal from the mean plane here: we compensate
     // for the (possibly wrong) orientation at the end
     double n[3] = {meanPlane.a, meanPlane.b, meanPlane.c};
@@ -327,8 +325,8 @@ bool gmshFace::containsPoint(const SPoint3 &pt) const
   return false;
 }
 
-bool gmshFace::buildSTLTriangulation(bool force){
-
+bool gmshFace::buildSTLTriangulation(bool force)
+{
   return false;
   /*
   if(va_geom_triangles){

@@ -707,6 +707,8 @@ void visibility_cb(Fl_Widget *w, void *data)
 
 static void visibility_save_cb(Fl_Widget *w, void *data)
 {
+  Msg::StatusBar(2, true, "Appending visibility info to '%s'...", 
+                 GModel::current()->getFileName());
   // get the whole visibility information in geo format
   std::vector<int> state[4][2];
   GModel *m = GModel::current();
@@ -757,6 +759,7 @@ static void visibility_save_cb(Fl_Widget *w, void *data)
   }
   str += "}\n";
   add_infile(str, GModel::current()->getFileName());
+  Msg::StatusBar(2, true, "Done appending visibility info");
 }
 
 static void _set_visibility_by_number(int what, int num, char val, bool recursive)

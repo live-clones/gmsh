@@ -2616,9 +2616,9 @@ contextItem menu_mesh[] = {
 #if defined(HAVE_METIS) || defined(HAVE_CHACO)
   {"Partition",    (Fl_Callback *)mesh_partition_cb} ,
 #endif
-  {"Reclassify",   (Fl_Callback *)mesh_classify_cb} , 
+  {"Reclassify 2D", (Fl_Callback *)mesh_classify_cb} , 
 #if defined(HAVE_FOURIER_MODEL)
-  {"Reparameterize", (Fl_Callback *)mesh_parameterize_cb} , 
+  {"Reparameterize 2D", (Fl_Callback *)mesh_parameterize_cb} , 
 #endif
   {"Delete",       (Fl_Callback *)mesh_delete_cb} , 
   {"Save",         (Fl_Callback *)mesh_save_cb} ,

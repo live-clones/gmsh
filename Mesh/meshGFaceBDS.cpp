@@ -524,10 +524,10 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
         mid->v = V;
         if (backgroundMesh::current()){
           mid->lc() = mid->lcBGM() = 
-            backgroundMesh::current()->operator() (
-                                                   (coord * e->p1->u + (1 - coord) * e->p2->u)*m.scalingU,
-                                                   (coord * e->p1->v + (1 - coord) * e->p2->v)*m.scalingV,
-                                                   0.0);
+            backgroundMesh::current()->operator()
+            ((coord * e->p1->u + (1 - coord) * e->p2->u)*m.scalingU,
+             (coord * e->p1->v + (1 - coord) * e->p2->v)*m.scalingV,
+             0.0);
         }
         else {
           mid->lcBGM() = BGM_MeshSize

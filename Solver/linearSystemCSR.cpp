@@ -74,7 +74,7 @@ static void CSRList_Delete(CSRList_T *liste)
   }
 }
 
-void CSRList_Add(CSRList_T *liste,const void *data)
+void CSRList_Add(CSRList_T *liste, const void *data)
 {
   liste->n++;
   CSRList_Realloc(liste, liste->n);
@@ -245,12 +245,8 @@ static void _sort2_xkws(unsigned long n, double arr[], INDEX_TYPE ai[], INDEX_TY
 }
 
 template <class scalar>
-void sortColumns_(int NbLines,
-                  int nnz,
-                  INDEX_TYPE *ptr,
-                  INDEX_TYPE *jptr,
-                  INDEX_TYPE *ai,
-                  scalar *a)
+void sortColumns_(int NbLines, int nnz, INDEX_TYPE *ptr, INDEX_TYPE *jptr,
+                  INDEX_TYPE *ai, scalar *a)
 {
   // replace pointers by lines
   int *count = new int[NbLines];
@@ -283,20 +279,16 @@ void sortColumns_(int NbLines,
 }
 
 template<>
-  void linearSystemCSR<double>::getMatrix(INDEX_TYPE*& jptr,INDEX_TYPE*& ai,double*& a)
-  {
-    jptr = (INDEX_TYPE*) _jptr->array;
-    ai = (INDEX_TYPE*) _ai->array;
-    a = ( double * ) _a->array;
-    if (!sorted)
-      sortColumns_(_b->size(),
-                CSRList_Nbr(_a),
-                (INDEX_TYPE *) _ptr->array,
-                jptr,
-                ai,
-                a);
-    sorted = true;
-  }
+void linearSystemCSR<double>::getMatrix(INDEX_TYPE*& jptr,INDEX_TYPE*& ai,double*& a)
+{
+  jptr = (INDEX_TYPE*) _jptr->array;
+  ai = (INDEX_TYPE*) _ai->array;
+  a = ( double * ) _a->array;
+  if (!sorted)
+    sortColumns_(_b->size(), CSRList_Nbr(_a), (INDEX_TYPE *) _ptr->array, jptr,
+                 ai, a);
+  sorted = true;
+}
 
 #include "Bindings.h"
 

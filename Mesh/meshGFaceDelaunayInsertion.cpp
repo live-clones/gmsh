@@ -676,7 +676,8 @@ static void insertManyPoints(GFace *gf,
     for (; it != AllTris.end() ; ++it){
       int found =  inCircumCircleAniso(gf, (*it)->tri(), pa, metric, Us, Vs);
       if (found){
-	insertAPoint(gf, it, pa, metric, Us, Vs, vSizes, vSizesBGM, vMetricsBGM, AllTris, ActiveTris);
+	insertAPoint(gf, it, pa, metric, Us, Vs, vSizes, vSizesBGM, vMetricsBGM, 
+                     AllTris, ActiveTris);
 	break;
       }
     }    
@@ -911,4 +912,3 @@ void addBoundaryLayers(GFace *gf) {
   // connect everybody with delaunay 
 
 }
-
