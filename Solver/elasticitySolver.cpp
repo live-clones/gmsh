@@ -493,7 +493,7 @@ static double vonMises(dofManager<double> *a, MElement *e,
 }
 
 void elasticitySolver::getSolutionOnElement (MElement *el, fullMatrix<double> &sol) {
-  
+
 }
 
 PView* elasticitySolver::buildDisplacementView (const std::string postFileName)
