@@ -415,7 +415,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
       }
     }
     else
-      printf("edge %d degenerated mesh \n", (*ite)->tag());
+      Msg::Info("Degenerated mesh on edge %d", (*ite)->tag());
     ++ite;   
   }
 
@@ -959,7 +959,7 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
     
     bool seam = ges.ge->isSeam(gf);
 
-    if (seam)printf("face %d has seam %d\n",gf->tag(),ges.ge->tag());
+    if (seam) printf("face %d has seam %d\n", gf->tag(), ges.ge->tag());
     
     Range<double> range = ges.ge->parBounds(0);
     

@@ -62,9 +62,15 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
   }
   else if(opt->type == PViewOptions::Plot2DTime){
     numy = 0;
-    for(int ent = 0; ent < data->getNumEntities(0); ent++)
-      for(int i = 0; i < data->getNumElements(0, ent); i++)
-        if(data->getDimension(0, ent, i) < 2) numy++;
+    for(int ent = 0; ent < data->getNumEntities(0); ent++){
+      if(data->skipEntity(0, ent)) continue;
+      for(int ele = 0; ele < data->getNumElements(0, ent); ele++){
+        if(data->skipElement(0, ent, ele, true)) continue;
+        if(opt->skipElement(data->getType(0, ent, ele))) continue;
+        if(data->getDimension(0, ent, ele) >= 2) continue;
+        numy++;
+      }
+    }
   }
   
   if(!numy) return false;
@@ -76,49 +82,51 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
 
   numy = 0;
   for(int ent = 0; ent < data->getNumEntities(0); ent++){
-    for(int i = 0; i < data->getNumElements(0, ent); i++){
-      int dim = data->getDimension(0, ent, i);
-      if(dim < 2){
-        int numNodes = data->getNumNodes(0, ent, i);
-        // reorder the nodes for high order line elements
-        std::vector<int> reorder(numNodes);
-        if(numNodes < 3){
-          for(int j = 0; j < numNodes; j++)
-            reorder[j] = j;
-        }
-        else{
-          reorder[0] = 0;
-          reorder[numNodes - 1] = 1;
-          for(int j = 1; j < numNodes - 1; j++)
-            reorder[j] = 1 + j;
-        }
-        for(int ts = space ? opt->timeStep : 0; ts < opt->timeStep + 1; ts++){
-          int numComp = data->getNumComponents(ts, ent, i);
-          for(int j = 0; j < numNodes; j++){
-            double val[9], xyz[3];
-            data->getNode(ts, ent, i, reorder[j], xyz[0], xyz[1], xyz[2]);
-            for(int k = 0; k < numComp; k++)
-              data->getValue(ts, ent, i, reorder[j], k, val[k]);
-            double vy = ComputeScalarRep(numComp, val);
-            if(space){
-              // store offset to origin + distance to first point
-              if(x.empty()){
-                p0 = SPoint3(xyz[0], xyz[1], xyz[2]);
-                x.push_back(ComputeScalarRep(3, xyz));
-              }
-              else{
-                x.push_back(x[0] + p0.distance(SPoint3(xyz[0], xyz[1], xyz[2])));
-              }
-              y[0].push_back(vy);
+    if(data->skipEntity(0, ent)) continue;
+    for(int ele = 0; ele < data->getNumElements(0, ent); ele++){
+      if(data->skipElement(0, ent, ele, true)) continue;
+      if(opt->skipElement(data->getType(0, ent, ele))) continue;
+      if(data->getDimension(0, ent, ele) >= 2) continue;
+      int numNodes = data->getNumNodes(0, ent, ele);
+      // reorder the nodes for high order line elements
+      std::vector<int> reorder(numNodes);
+      if(numNodes < 3){
+        for(int j = 0; j < numNodes; j++)
+          reorder[j] = j;
+      }
+      else{
+        reorder[0] = 0;
+        reorder[numNodes - 1] = 1;
+        for(int j = 1; j < numNodes - 1; j++)
+          reorder[j] = 1 + j;
+      }
+      for(int ts = space ? opt->timeStep : 0; ts < opt->timeStep + 1; ts++){
+        if(!data->hasTimeStep(ts)) continue;
+        int numComp = data->getNumComponents(ts, ent, ele);
+        for(int j = 0; j < numNodes; j++){
+          double val[9], xyz[3];
+          data->getNode(ts, ent, ele, reorder[j], xyz[0], xyz[1], xyz[2]);
+          for(int k = 0; k < numComp; k++)
+            data->getValue(ts, ent, ele, reorder[j], k, val[k]);
+          double vy = ComputeScalarRep(numComp, val);
+          if(space){
+            // store offset to origin + distance to first point
+            if(x.empty()){
+              p0 = SPoint3(xyz[0], xyz[1], xyz[2]);
+              x.push_back(ComputeScalarRep(3, xyz));
             }
             else{
-              if(!numy) x.push_back(data->getTime(ts));
-              y[numy].push_back(vy);
+              x.push_back(x[0] + p0.distance(SPoint3(xyz[0], xyz[1], xyz[2])));
             }
+            y[0].push_back(vy);
+          }
+          else{
+            if(!numy) x.push_back(data->getTime(ts));
+            y[numy].push_back(vy);
           }
         }
-        numy++;
       }
+      numy++;
     }
   }
 

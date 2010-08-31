@@ -70,8 +70,8 @@ class linearSystemCSR : public linearSystem<scalar> {
     CSRList_Add(_a, &val);
     CSRList_Add(_ai, &ic);
     CSRList_Add(_ptr, &zero);
-    // The pointers may have been modified
-    // if there has been a reallocation in CSRList_Add
+    // The pointers may have been modified if there has been a
+    // reallocation in CSRList_Add
 
     ptr = (INDEX_TYPE*) _ptr->array;
     ai  = (INDEX_TYPE*) _ai->array;

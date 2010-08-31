@@ -317,8 +317,6 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z,
   double uMin = uu.low();
   double uMax = uu.high();
 
-  // printf("dans GEdge uMin=%g, uMax=%g \n", uMin, uMax);
-
   SVector3 Q(X, Y, Z), P;
   
   double init[NumInitGuess];

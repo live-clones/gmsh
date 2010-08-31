@@ -11,6 +11,7 @@
 #include <vector>
 #include <set>
 #include <stdio.h>
+#include "GmshMessage.h"
 #include "GEntity.h"
 #include "GVertex.h"
 #include "SVector3.h"
@@ -125,9 +126,11 @@ class GEdge : public GEntity {
   void setTooSmall(bool b) { _tooSmall = b; }
   bool isMeshDegenerated() const 
   { 
-    if (_tooSmall) printf("too small \n");
+    if (_tooSmall)
+      Msg::Debug("degenerated mesh on edge %d: too small", tag());
     if (v0 == v1 && mesh_vertices.size() < 2)
-      printf("mesh_vertices.size() = %d \n", (int)mesh_vertices.size());
+      Msg::Debug("degenerated mesh on edge %d: %d mesh vertices", tag(), 
+                 (int)mesh_vertices.size());
     return _tooSmall || (v0 == v1 && mesh_vertices.size() < 2);
   }
 
