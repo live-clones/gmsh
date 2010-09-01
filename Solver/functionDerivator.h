@@ -6,7 +6,7 @@
 
 class functionDerivator {
   dataCacheDouble &_f,&_x;
-  fullMatrix<double> _fRef, _xRef,_xDx, _dfdx;
+  fullMatrix<double> _fRef, _xRef, _dfdx;
   double _epsilon;
   public:
   functionDerivator (dataCacheDouble &f, dataCacheDouble &x, double epsilon):
@@ -14,7 +14,7 @@ class functionDerivator {
     _x(x),
     _epsilon(epsilon)
     {}
-  void compute();
+  const fullMatrix<double> &compute();
   inline double get(int iQP, int iF, int iX) 
   {
     return _dfdx(iQP, iF*_xRef.size2()+iX);
