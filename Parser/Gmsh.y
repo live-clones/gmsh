@@ -1649,7 +1649,10 @@ Transform :
         }
       }
       else if(!strcmp($1, "Boundary")){
-        BoundaryShapes($3, $$);
+        BoundaryShapes($3, $$, false);
+      }
+      else if(!strcmp($1, "CombinedBoundary")){
+        BoundaryShapes($3, $$, true);
       }
       else{
         yymsg(0, "Unknown command on multiple shapes: '%s'", $1);

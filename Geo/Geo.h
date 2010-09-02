@@ -278,7 +278,7 @@ void DilatShapes(double X,double Y,double Z, double A, List_T *shapes);
 void RotateShapes(double Ax,double Ay,double Az,
                   double Px,double Py, double Pz, double alpha, List_T *shapes);
 void SymmetryShapes(double A,double B,double C, double D, List_T *shapes);
-void BoundaryShapes(List_T *shapes, List_T *shapesBoundary);
+void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined);
 void CopyShape(int Type, int Num, int *New);
 void DeleteShape(int Type, int Num);
 void ColorShape(int Type, int Num, unsigned int Color);

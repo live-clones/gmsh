@@ -1814,6 +1814,30 @@ void orientMeshGFace::operator()(GFace *gf)
   //   do not seem to be consistent with the orientation of the
   //   bounding edges
 
+  // first, try to find an element with one vertex categorized on the
+  // surface and for which we have valid surface parametric
+  // coordinates
+  for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
+    MElement *e = gf->getMeshElement(i);
+    for(int j = 0; j < e->getNumVertices(); j++){
+      MVertex *v = e->getVertex(j);
+      SPoint2 param;
+      if(v->onWhat() == gf && v->getParameter(0, param[0]) &&
+         v->getParameter(1, param[1])){
+        SVector3 nf = gf->normal(param); 
+        SVector3 ne = e->getFace(0).normal();
+        if(dot(ne, nf) < 0){
+          Msg::Debug("Reverting orientation of mesh in face %d", gf->tag());
+          for(unsigned int k = 0; k < gf->getNumMeshElements(); k++)
+            gf->getMeshElement(k)->revert();
+        }
+        return;
+      }
+    }
+  }
+  
+  // if we could not find such an element, just try to evaluate the
+  // normal at the barycenter of an element on the surface
   for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
     MElement *e = gf->getMeshElement(i);
     SPoint2 param(0., 0.);

@@ -66,7 +66,8 @@ set(GMSH_API
   ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h 
   ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h
   Common/Gmsh.h Common/GmshDefines.h Common/GmshMessage.h Common/VertexArray.h
-  Numeric/Numeric.h Numeric/Gauss.h Numeric/polynomialBasis.h Numeric/fullMatrix.h
+  Numeric/Numeric.h Numeric/Gauss.h Numeric/polynomialBasis.h
+    Numeric/JacobianBasis.h Numeric/fullMatrix.h
     Numeric/simpleFunction.h Numeric/cartesian.h
   Geo/GModel.h Geo/GEntity.h Geo/GPoint.h Geo/GVertex.h Geo/GEdge.h 
     Geo/GFace.h Geo/GRegion.h Geo/GEdgeLoop.h Geo/GEdgeCompound.h 

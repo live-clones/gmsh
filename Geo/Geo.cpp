@@ -1872,7 +1872,16 @@ void SymmetryShapes(double A, double B, double C, double D, List_T *shapes)
     ReplaceAllDuplicates();
 }
 
-void BoundaryShapes(List_T *shapes, List_T *shapesBoundary)
+class ShapeLessThan{
+ public:
+  bool operator()(Shape *v1, Shape *v2) const
+  {
+    if(std::abs(v1->Num) < std::abs(v2->Num)) return true;
+    return false;
+  }
+};
+
+void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined)
 {
   for(int i = 0; i < List_Nbr(shapes); i++) {
     Shape O;
@@ -1954,6 +1963,26 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary)
                  O.Type);
       break;
     }
+  }
+
+  if(combined){
+    // compute boundary of the combined shapes
+    std::set<Shape*, ShapeLessThan> combined;
+    for(int i = 0; i < List_Nbr(shapesBoundary); i++){
+      Shape *s = (Shape*)List_Pointer(shapesBoundary, i);
+      std::set<Shape*, ShapeLessThan>::iterator it = combined.find(s);
+      if(it == combined.end())
+        combined.insert(s);
+      else
+        combined.erase(it);
+    }
+    List_T *tmp = List_Create(combined.size(), 10, sizeof(Shape));
+    for(std::set<Shape*, ShapeLessThan>::iterator it = combined.begin(); 
+        it != combined.end(); it++)
+      List_Add(tmp, *it);
+    List_Reset(shapesBoundary);
+    List_Copy(tmp, shapesBoundary);
+    List_Delete(tmp);
   }
 }
 
@@ -2829,6 +2858,8 @@ static void ReplaceDuplicatePoints()
   }
   List_Delete(All);
 
+  // TODO: replace old points in physical groups
+
   Tree_Action(points2delete, Free_Vertex);
   Tree_Delete(points2delete);
   Tree_Delete(allNonDuplicatedPoints);
@@ -2934,6 +2965,8 @@ static void ReplaceDuplicateCurves()
   }
   List_Delete(All);
 
+  // TODO: replace old curves in physical groups
+
   Tree_Action(curves2delete, Free_Curve);
   Tree_Delete(curves2delete);
   Tree_Delete(allNonDuplicatedCurves);
@@ -3023,6 +3056,8 @@ static void ReplaceDuplicateSurfaces()
     }
   }
   List_Delete(All);
+
+  // TODO: replace old surfaces in physical groups
 
   Tree_Action(surfaces2delete, Free_Surface);
   Tree_Delete(surfaces2delete);
