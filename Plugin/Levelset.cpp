@@ -9,6 +9,7 @@
 #include "Iso.h"
 #include "adaptiveData.h"
 #include "GmshDefines.h"
+#include "PViewOptions.h"
 
 static const int exn[13][12][2] = {
   {{0,0}}, // point
@@ -397,8 +398,11 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
 
 PView *GMSH_LevelsetPlugin::execute(PView *v)
 {
+  // FIXME: we can only run the plugin on one step at a time
   if(v->getData()->isAdaptive()){
-    v->getData()->getAdaptiveData()->changeResolution(0, _recurLevel, _targetError, this);
+    PViewOptions *opt = v->getOptions();
+    v->getData()->getAdaptiveData()->changeResolution
+      (opt->timeStep, _recurLevel, _targetError, this);
     v->setChanged(true);
   }
 
