@@ -148,7 +148,7 @@ GPoint ACISFace::closestPoint(const SPoint3 &qp, const double initialGuess[2]) c
   return GPoint(fpt.x(),fpt.y(),fpt.z(),this,pt2);
 }
 
-SPoint2 ACISFace::parFromPoint(const SPoint3 &qp) const
+SPoint2 ACISFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
 {
   SURFACE *Surf = _f->geometry();
   SPAposition pt(qp.x(),qp.y(),qp.z());

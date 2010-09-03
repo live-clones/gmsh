@@ -1418,7 +1418,7 @@ double GFaceCompound::locCurvature(MTriangle *t, double u, double v) const
 
 }
 
-SPoint2 GFaceCompound::parFromPoint(const SPoint3 &p) const
+SPoint2 GFaceCompound::parFromPoint(const SPoint3 &p, bool onSurface) const
 {
   if(!oct) parametrize();
 

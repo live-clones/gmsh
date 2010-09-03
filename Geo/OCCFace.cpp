@@ -174,7 +174,7 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp, const double initialGuess[2]) co
   return GPoint(pnt.X(), pnt.Y(), pnt.Z(), this, pp);
 }
 
-SPoint2 OCCFace::parFromPoint(const SPoint3 &qp) const
+SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
 {
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
   GeomAPI_ProjectPointOnSurf proj(pnt, occface, umin, umax, vmin, vmax);

@@ -32,7 +32,7 @@ class gmshFace : public GFace {
   virtual GEntity::GeomType geomType() const; 
   ModelType getNativeType() const { return GmshModel; }
   void *getNativePtr() const { return s; }
-  virtual SPoint2 parFromPoint(const SPoint3 &) const;
+  virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface=true) const;
   virtual void resetMeshAttributes();
 };
 

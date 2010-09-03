@@ -127,8 +127,7 @@ class MEdgeVertex : public MVertex{
   {
   }
   virtual ~MEdgeVertex(){}
-  virtual bool getParameter(int i, double &par) const { 
-    par = _u; return true; }
+  virtual bool getParameter(int i, double &par) const { par = _u; return true; }
   virtual bool setParameter(int i, double par){ _u = par; return true; }
   double getLc() const { return _lc; }
 };
@@ -155,7 +154,8 @@ class MFaceVertex : public MVertex{
 
 bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, 
                            SPoint2 &param1, SPoint2 &param2);
-bool reparamMeshVertexOnFace(const MVertex *v, const GFace *gf, SPoint2 &param);
+bool reparamMeshVertexOnFace(const MVertex *v, const GFace *gf, SPoint2 &param,
+                             bool onSurface=true);
 bool reparamMeshVertexOnEdge(const MVertex *v, const GEdge *ge, double &param);
 
 #endif

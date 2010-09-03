@@ -326,7 +326,8 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
   }
 }
 
-bool reparamMeshVertexOnFace(const MVertex *v, const GFace *gf, SPoint2 &param)
+bool reparamMeshVertexOnFace(const MVertex *v, const GFace *gf, SPoint2 &param,
+                             bool onSurface)
 {
   if (gf->geomType() == GEntity::CompoundSurface &&
       v->onWhat()->dim() < 2){
@@ -337,7 +338,7 @@ bool reparamMeshVertexOnFace(const MVertex *v, const GFace *gf, SPoint2 &param)
 
   if(v->onWhat()->geomType() == GEntity::DiscreteCurve ||        
      v->onWhat()->geomType() == GEntity::BoundaryLayerCurve){    
-    param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
+    param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()), onSurface);
     return true;
   }
 
@@ -345,7 +346,7 @@ bool reparamMeshVertexOnFace(const MVertex *v, const GFace *gf, SPoint2 &param)
     GVertex *gv = (GVertex*)v->onWhat();
     // hack for bug in periodic curves
     if (gv->getNativeType() == GEntity::GmshModel && gf->geomType() == GEntity::Plane)
-      param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
+      param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()), onSurface);
     else
       param = gv->reparamOnFace(gf, 1);
     // shout, we could be on a seam
@@ -370,7 +371,7 @@ bool reparamMeshVertexOnFace(const MVertex *v, const GFace *gf, SPoint2 &param)
     }
     else {
       // brute force!
-      param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
+      param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()), onSurface);
     }
   }
   return true;

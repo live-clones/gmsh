@@ -1814,6 +1814,7 @@ void orientMeshGFace::operator()(GFace *gf)
   //   do not seem to be consistent with the orientation of the
   //   bounding edges
 
+
   // first, try to find an element with one vertex categorized on the
   // surface and for which we have valid surface parametric
   // coordinates
@@ -1844,7 +1845,7 @@ void orientMeshGFace::operator()(GFace *gf)
     bool ok = true;
     for(int j = 0; j < e->getNumVertices(); j++){
       SPoint2 p;
-      bool ok = reparamMeshVertexOnFace(e->getVertex(j), gf, p);
+      bool ok = reparamMeshVertexOnFace(e->getVertex(j), gf, p, false);
       if(!ok) break;
       param += p;
     }
@@ -1860,5 +1861,6 @@ void orientMeshGFace::operator()(GFace *gf)
       return;
     }
   }
+
   Msg::Warning("Could not orient mesh in face %d", gf->tag());
 }

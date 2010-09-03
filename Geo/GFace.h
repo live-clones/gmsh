@@ -105,9 +105,8 @@ class GFace : public GEntity
   virtual void setVisibility(char val, bool recursive=false);
 
   // compute the parameters UV from a point XYZ
-  void XYZtoUV(const double X, const double Y, const double Z,
-               double &U, double &V, const double relax,
-               const bool onSurface=true) const;
+  void XYZtoUV(double X, double Y, double Z, double &U, double &V,
+               double relax, bool onSurface=true) const;
 
   // get the bounding box
   virtual SBoundingBox3d bounds() const;
@@ -158,7 +157,7 @@ class GFace : public GEntity
 
   // return the parmater location on the face given a point in space
   // that is on the face
-  virtual SPoint2 parFromPoint(const SPoint3 &) const;
+  virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface=true) const;
 
   // true if the parameter value is interior to the face
   virtual bool containsParam(const SPoint2 &pt) const;

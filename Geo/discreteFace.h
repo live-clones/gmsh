@@ -16,7 +16,7 @@ class discreteFace : public GFace {
   discreteFace(GModel *model, int num);
   virtual ~discreteFace() {}
   GPoint point(double par1, double par2) const;
-  SPoint2 parFromPoint(const SPoint3 &p) const;
+  SPoint2 parFromPoint(const SPoint3 &p, bool onSurface=true) const;
   SVector3 normal(const SPoint2 &param) const;
   double curvatureMax(const SPoint2 &param) const;
   GEntity::GeomType geomType() const { return DiscreteSurface; }

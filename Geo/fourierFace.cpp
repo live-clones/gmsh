@@ -36,7 +36,7 @@ GPoint fourierFace::point(double par1, double par2) const
   return GPoint(x, y, z, this, pp);
 }
 
-SPoint2 fourierFace::parFromPoint(const SPoint3 &p) const
+SPoint2 fourierFace::parFromPoint(const SPoint3 &p, bool onSurface) const
 {
   double u, v, x, y, z;
   x = p.x(); y = p.y(); z = p.z();

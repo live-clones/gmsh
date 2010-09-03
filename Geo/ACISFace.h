@@ -37,7 +37,7 @@ class ACISFace : public GFace {
   virtual GEntity::GeomType geomType() const; 
   ModelType getNativeType() const { return AcisModel; }
   void *getNativePtr() const { return (void*)_f; }
-  virtual SPoint2 parFromPoint(const SPoint3 &) const;
+  virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface=true) const;
   virtual double curvatureMax(const SPoint2 &param) const;
   virtual double curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
                             double *curvMax, double *curvMin) const;

@@ -39,7 +39,7 @@ class OCCFace : public GFace {
   virtual GEntity::GeomType geomType() const; 
   ModelType getNativeType() const { return OpenCascadeModel; }
   void *getNativePtr() const { return (void*)&s; }
-  virtual SPoint2 parFromPoint(const SPoint3 &) const;
+  virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface=true) const;
   virtual double curvatureMax(const SPoint2 &param) const;
   virtual double curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
                             double *curvMax, double *curvMin) const;

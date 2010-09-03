@@ -23,7 +23,6 @@ discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
 
 void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge> &map_edges)
 {
-
   std::set<MEdge, Less_Edge> bound_edges;
   for (unsigned int iFace = 0; iFace  < getNumMeshElements() ; iFace++) {
     MElement *e = getMeshElement(iFace);
@@ -50,7 +49,6 @@ void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge> &map_e
       itmap->second = tagFaces;
     }
   }
-
 }
 
 void discreteFace::setBoundEdges(std::vector<int> tagEdges)
@@ -69,9 +67,8 @@ GPoint discreteFace::point(double par1, double par2) const
   return GPoint();
 }
 
-SPoint2 discreteFace::parFromPoint(const SPoint3 &p) const
+SPoint2 discreteFace::parFromPoint(const SPoint3 &p, bool onSurface) const
 {
-
   if (getCompound()){
     return getCompound()->parFromPoint(p);
   }
@@ -83,7 +80,6 @@ SPoint2 discreteFace::parFromPoint(const SPoint3 &p) const
 
 SVector3 discreteFace::normal(const SPoint2 &param) const
 {
-
   if (getCompound()){
     return getCompound()->normal(param);
   }
@@ -91,12 +87,10 @@ SVector3 discreteFace::normal(const SPoint2 &param) const
     Msg::Error("Cannot evaluate normal on discrete face");
     return SVector3();
   }
-
 }
 
 double discreteFace::curvatureMax(const SPoint2 &param) const
 {
-
   if (getCompound()){
     return getCompound()->curvatureMax(param);
   }
@@ -104,12 +98,10 @@ double discreteFace::curvatureMax(const SPoint2 &param) const
     Msg::Error("Cannot evaluate curvature on discrete face");
     return false;
   }
-
 }
 
 Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 {
-
   if (getCompound()){
     return getCompound()->firstDer(param);
   }
@@ -117,13 +109,11 @@ Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
     Msg::Error("Cannot evaluate derivative on discrete face");
     return Pair<SVector3, SVector3>();
   }
-
 }
 
 void discreteFace::secondDer(const SPoint2 &param,
                              SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
 {
-
   if (getCompound()){
     return getCompound()->secondDer(param, dudu, dvdv, dudv);
   }
@@ -131,5 +121,4 @@ void discreteFace::secondDer(const SPoint2 &param,
     Msg::Error("Cannot evaluate second derivative on discrete face");
     return;
   }
-
 }

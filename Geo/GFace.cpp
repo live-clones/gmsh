@@ -779,12 +779,11 @@ void GFace::getMetricEigenVectors(const SPoint2 &param,
   }
 }
 
-void GFace::XYZtoUV(const double X, const double Y, const double Z,
-                    double &U, double &V, const double relax,
-                    const bool onSurface) const
+void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
+                    double relax, bool onSurface) const
 {
-  const double Precision = 1.e-8;
-  const int MaxIter = 25;
+  const double Precision = onSurface ? 1.e-8 : 1.e-3;
+  const int MaxIter = onSurface ? 25 : 10;
   const int NumInitGuess = 11;
 
   double Unew = 0., Vnew = 0., err, err2;
@@ -855,6 +854,8 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
     }
   }
 
+  if(!onSurface) return;
+
   if(relax < 1.e-6)
     Msg::Error("Could not converge: surface mesh will be wrong");
   else {
@@ -863,14 +864,14 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
   }
 }
 
-SPoint2 GFace::parFromPoint(const SPoint3 &p) const
+SPoint2 GFace::parFromPoint(const SPoint3 &p, bool onSurface) const
 {
   double U = 0., V = 0.;
-  XYZtoUV(p.x(), p.y(), p.z(), U, V, 1.0);
+  XYZtoUV(p.x(), p.y(), p.z(), U, V, 1.0, onSurface);
   return SPoint2(U, V);
 }
 
-GPoint GFace::closestPoint(const SPoint3 & queryPoint, const double initialGuess[2]) const
+GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[2]) const
 {
   Msg::Error("Closest point not implemented for this type of surface");
   return GPoint(0, 0, 0);

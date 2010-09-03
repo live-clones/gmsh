@@ -326,14 +326,12 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
   // everything
   gr->model()->destroyMeshCaches();
   std::list<GFace*> faces = gr->faces();
-  std::list<GFace*>::iterator it = faces.begin();
-  while(it != faces.end()){
+  for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
     GFace *gf = (*it); 
     for(unsigned int i = 0; i < gf->triangles.size(); i++)
       delete gf->triangles[i];
     gf->triangles.clear();
     gf->deleteVertexArrays();
-    ++it;
   }
 
   // TODO: re-create 1D mesh
@@ -341,7 +339,6 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
     MVertex *v[2];
     v[0] = numberedV[out.edgelist[i * 2 + 0] - 1];
     v[1] = numberedV[out.edgelist[i * 2 + 1] - 1];
-
     //implement here the 1D mesh ...
   }
 
@@ -515,7 +512,6 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
       gr->set(faces);
       return;
     }
-    printf("transfer tetgen \n");
     TransferTetgenMesh(gr, in, out, numberedV);
   }
 

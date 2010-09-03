@@ -106,7 +106,7 @@ class GFaceCompound : public GFace {
   { return trivial() ? (*(_compound.begin()))->parBounds(i) : Range<double>(-1, 1); }
   virtual GPoint point(double par1, double par2) const; 
   typeOfMapping getTypeOfMapping() { return _mapping;}
-  SPoint2 parFromPoint(const SPoint3 &p) const;
+  SPoint2 parFromPoint(const SPoint3 &p, bool onSurface=true) const;
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &, SVector3 *, SVector3 *, SVector3 *) const; 
   virtual GEntity::GeomType geomType() const { return CompoundSurface; }
