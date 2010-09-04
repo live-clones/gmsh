@@ -16,8 +16,6 @@
 #include "Field.h"
 #endif
 
-#define SQU(a)      ((a)*(a))
-
 static List_T *ListOfTransformedPoints = NULL;
 
 // Comparison routines

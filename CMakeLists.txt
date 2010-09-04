@@ -928,6 +928,9 @@ if(WIN32)
     unix2dos(DEMO_FILES)
   endif(CYGWIN)
 elseif(APPLE)
+  # set these so that the files get installed nicely in the MacOSX
+  # .app bundle (FIXME: this screws up a standard "make install" on
+  # MacOS)
   set(GMSH_BIN ../MacOS)
   set(GMSH_DOC ../../..)
   set(GMSH_MAN ../../..)
