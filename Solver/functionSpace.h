@@ -54,6 +54,7 @@ class FunctionSpace : public FunctionSpaceBase
   typedef typename TensorialTraits<T>::GradType GradType;
   typedef typename TensorialTraits<T>::HessType HessType;
   virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals) = 0;
+  virtual void fuvw(MElement *ele, double u, double v, double w, std::vector<ValType> &vals) {}; // should return to pure virtual once all is done.
   virtual void gradf(MElement *ele, double u, double v, double w, std::vector<GradType> &grads) = 0;
   virtual void gradfuvw(MElement *ele, double u, double v, double w, std::vector<GradType> &grads) {} // should return to pure virtual once all is done.
   virtual void hessfuvw(MElement *ele, double u, double v, double w, std::vector<HessType> &hess) = 0;
@@ -235,6 +236,17 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
     for (int i = 0; i < ndofs; ++i)
       grads.push_back(GradType(gradsuvw[i][0], gradsuvw[i][1], gradsuvw[i][2]));
   }
+
+  virtual void fuvw(MElement *ele, double u, double v, double w,std::vector<ValType> &vals)
+  {
+    if (ele->getParent()) ele = ele->getParent();
+    int ndofs= ele->getNumVertices();
+    vals.reserve(vals.size()+ndofs);
+    double valsuvw[256];
+    ele->getShapeFunctions(u, v, w, valsuvw);
+    for (int i=0;i<ndofs;++i) {vals.push_back(valsuvw[i]);}
+  }
+
   virtual int getNumKeys(MElement *ele)
   {
     if(ele->getParent()) ele = ele->getParent();
