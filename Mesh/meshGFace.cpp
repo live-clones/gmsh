@@ -1624,9 +1624,9 @@ void partitionAndRemesh(GFaceCompound *gf)
   if(gf->nbSplit > 0) method = MULTILEVEL;
   else method = LAPLACIAN;
     
-  multiscalePartition *msp = new multiscalePartition(elements, abs(gf->nbSplit), method);
-
-  //gf->partitionFaceCM(); 
+  int allowType = gf->allowPartition();
+  multiscalePartition *msp = new multiscalePartition(elements, abs(gf->nbSplit), 
+						     method, allowType);
 
   int NF = msp->getNumberOfParts();
   int numv = gf->model()->getMaxElementaryNumber(0) + 1;
@@ -1781,8 +1781,8 @@ void partitionAndRemesh(GFaceCompound *gf)
   }
 
   double t3 = Cpu();
-  Msg::Info("*** Mesh of surface %d done by assembly remeshed faces (%g s)",
-            gf->tag(), t3-t2);
+  Msg::Info("*** Mesh of surface %d done by assembly %d remeshed faces (%g s)",
+            gf->tag(), NF, t3-t2);
   Msg::Info("-----------------------------------------------------------");
  
   gf->coherenceNormals();

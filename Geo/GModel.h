@@ -488,6 +488,10 @@ class GModel
   int writeSTL(const std::string &name, bool binary=false,
                bool saveAll=false, double scalingFactor=1.0);
 
+  // PLY2 format (asciii text format)
+  int readPLY2(const std::string &name);
+  int writePLY2(const std::string &name);
+
   // Inventor/VRML format
   int readVRML(const std::string &name);
   int writeVRML(const std::string &name,

@@ -43,6 +43,7 @@
 #define FORMAT_IGES  37
 #define FORMAT_IR3   38
 #define FORMAT_INP   39
+#define FORMAT_PLY2  40
 
 // Element types
 #define TYPE_PNT     1

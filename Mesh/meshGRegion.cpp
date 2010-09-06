@@ -26,7 +26,99 @@
 #include "ANN/ANN.h"
 #endif
 
-void voronoiDual(GRegion *gr)
+void printVoronoi(GRegion *gr)
+{
+  std::vector<MTetrahedron*> elements = gr->tetrahedra;
+  std::list<GFace*> allFaces = gr->faces();
+
+  std::set<SPoint3> candidates;
+
+  //building maps
+  std::map<MVertex*, std::set<MTetrahedron*> > node2Tet;
+  std::map<MFace, std::vector<MTetrahedron*> , Less_Face> face2Tet;
+  for(unsigned int i = 0; i < elements.size(); i++){
+    MTetrahedron *ele = elements[i];
+    for (int j=0; j<4; j++){
+      MVertex *v = ele->getVertex(j);
+      std::map<MVertex*, std::set<MTetrahedron*> >::iterator itmap = node2Tet.find(v);
+      if (itmap == node2Tet.end()){
+  	std::set<MTetrahedron*>  oneTet;
+  	oneTet.insert(ele);
+  	node2Tet.insert(std::make_pair(v, oneTet));
+      } 
+      else{
+  	std::set<MTetrahedron*>  allTets = itmap->second;
+  	allTets.insert(allTets.begin(), ele);
+  	itmap->second = allTets;
+      }
+    }
+    for (int j=0; j<4; j++){
+      MFace f = ele->getFace(j);
+      std::map<MFace, std::vector<MTetrahedron*>, Less_Face >::iterator itmap = face2Tet.find(f);
+      if (itmap == face2Tet.end()){
+  	std::vector<MTetrahedron*>  oneTet;
+  	oneTet.push_back(ele);
+  	face2Tet.insert(std::make_pair(f, oneTet));
+      } 
+      else{
+  	std::vector<MTetrahedron*>  allTets = itmap->second;
+  	allTets.insert(allTets.begin(), ele);
+  	itmap->second = allTets;
+      }
+    }
+  }
+
+  //print voronoi nodes
+  FILE *outfile;
+  outfile = fopen("nodes.pos", "w");
+  fprintf(outfile, "View \"voronoi nodes\" {\n");
+  std::map<MVertex*, std::set<MTetrahedron*> >::iterator itmap = node2Tet.begin();
+  for(; itmap != node2Tet.end(); itmap++){
+    MVertex *v = itmap->first;
+    std::set<MTetrahedron*>  allTets = itmap->second;
+    std::set<MTetrahedron*>::const_iterator it = allTets.begin();
+    MTetrahedron *poleTet = *it;
+    double maxRadius = poleTet->getCircumRadius();
+    for(; it != allTets.end(); it++){
+      double radius =  (*it)->getCircumRadius();
+      if (radius > maxRadius){
+    	maxRadius = radius;
+    	poleTet = *it;
+      }
+    }
+    SPoint3 pc = poleTet->circumcenter();
+    fprintf(outfile,"SP(%g,%g,%g)  {%g};\n",
+    	    pc.x(), pc.y(), pc.z(), maxRadius);
+    candidates.insert(pc);
+    //}//uncomment this
+   
+  }
+  fprintf(outfile,"};\n");  
+  fclose(outfile);
+
+  //print scalar lines
+  FILE *outfile2;
+  outfile2 = fopen("edges.pos", "w");
+  fprintf(outfile2, "View \"voronoi edges\" {\n");
+  std::map<MFace, std::vector<MTetrahedron*> , Less_Face >::iterator itmap2 = face2Tet.begin();
+  for(; itmap2 != face2Tet.end(); itmap2++){
+    std::vector<MTetrahedron*>  allTets = itmap2->second;
+    if (allTets.size() !=2 ) continue;
+    SPoint3 pc1 = allTets[0]->circumcenter();
+    SPoint3 pc2 = allTets[1]->circumcenter();
+    std::set<SPoint3>::const_iterator it1 = candidates.find(pc1);
+    std::set<SPoint3>::const_iterator it2 = candidates.find(pc2);
+    if( it1 != candidates.end() || it2 != candidates.end())
+      fprintf(outfile2,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
+  	      pc1.x(), pc1.y(), pc1.z(), pc2.x(), pc2.y(), pc2.z(),
+  	      allTets[0]->getCircumRadius(),allTets[1]->getCircumRadius());
+  }
+  fprintf(outfile2,"};\n");  
+  fclose(outfile2);
+
+}
+
+void skeletonFromVoronoi(GRegion *gr)
 {
 
   std::vector<MTetrahedron*> elements = gr->tetrahedra;
@@ -50,10 +142,10 @@ void voronoiDual(GRegion *gr)
   }
   printf("Dmax =%g \n", Dmax);
 
-  printf("printing nodes \n");
+  printf("printing skeleton nodes \n");
   FILE *outfile;
-  outfile = fopen("nodes.pos", "w");
-  fprintf(outfile, "View \"voronoi nodes\" {\n");
+  outfile = fopen("skeletonNodes.pos", "w");
+  fprintf(outfile, "View \"skeleton nodes\" {\n");
   for(unsigned int i = 0; i < elements.size(); i++){
     MTetrahedron *ele = elements[i];
     SPoint3 pc = ele->circumcenter();
@@ -62,7 +154,7 @@ void voronoiDual(GRegion *gr)
     ele->xyz2uvw(x, uvw);
     if(ele->isInside(uvw[0], uvw[1], uvw[2])){
       double radius =  ele->getCircumRadius();
-      if(radius > Dmax/5.) {
+      if(radius > Dmax/10.) {
       	candidates.insert(pc);
 	fprintf(outfile,"SP(%g,%g,%g)  {%g};\n",
 		pc.x(), pc.y(), pc.z(),  radius);
@@ -72,151 +164,76 @@ void voronoiDual(GRegion *gr)
   fprintf(outfile,"};\n");  
   fclose(outfile);
 
-  // printf("building maps \n");
-  // std::map<MVertex*, std::set<MTetrahedron*> > node2Tet;
-  // std::map<MFace, std::vector<MTetrahedron*> , Less_Face> face2Tet;
-  // for(unsigned int i = 0; i < elements.size(); i++){
-  //   MTetrahedron *ele = elements[i];
-  //   for (int j=0; j<4; j++){
-  //     MVertex *v = ele->getVertex(j);
-  //     std::map<MVertex*, std::set<MTetrahedron*> >::iterator itmap = node2Tet.find(v);
-  //     if (itmap == node2Tet.end()){
-  // 	std::set<MTetrahedron*>  oneTet;
-  // 	oneTet.insert(ele);
-  // 	node2Tet.insert(std::make_pair(v, oneTet));
-  //     } 
-  //     else{
-  // 	std::set<MTetrahedron*>  allTets = itmap->second;
-  // 	allTets.insert(allTets.begin(), ele);
-  // 	itmap->second = allTets;
-  //     }
-  //   }
-  //   for (int j=0; j<4; j++){
-  //     MFace f = ele->getFace(j);
-  //     std::map<MFace, std::vector<MTetrahedron*>, Less_Face >::iterator itmap = face2Tet.find(f);
-  //     if (itmap == face2Tet.end()){
-  // 	std::vector<MTetrahedron*>  oneTet;
-  // 	oneTet.push_back(ele);
-  // 	face2Tet.insert(std::make_pair(f, oneTet));
-  //     } 
-  //     else{
-  // 	std::vector<MTetrahedron*>  allTets = itmap->second;
-  // 	allTets.insert(allTets.begin(), ele);
-  // 	itmap->second = allTets;
-  //     }
-  //   }
-  // }
-
-  //print only poles
-  // FILE *outfile;
-  // outfile = fopen("nodes.pos", "w");
-  // fprintf(outfile, "View \"voronoi nodes\" {\n");
-  // std::map<MVertex*, std::set<MTetrahedron*> >::iterator itmap = node2Tet.begin();
-  // for(; itmap != node2Tet.end(); itmap++){
-  //   MVertex *v = itmap->first;
-  //   std::set<MTetrahedron*>  allTets = itmap->second;
-  //   std::set<MTetrahedron*>::const_iterator it = allTets.begin();
-  //   MTetrahedron *poleTet = *it;
-  //   double maxRadius = poleTet->getCircumRadius();
-  //   for(; it != allTets.end(); it++){
-  //     double radius =  (*it)->getCircumRadius();
-  //     if (radius > maxRadius){
-  // 	maxRadius = radius;
-  // 	poleTet = *it;
-  //     }
-  //   }
-  //   SPoint3 pc = poleTet->circumcenter();
-  //   fprintf(outfile,"SP(%g,%g,%g)  {%g};\n",
-  //   	    pc.x(), pc.y(), pc.z(), maxRadius);
-  //   candidates.insert(pc);
-  // }
-  // fprintf(outfile,"};\n");  
-  // fclose(outfile);
-  
   printf("Ann computation of neighbours and writing edges\n");
  #if defined(HAVE_ANN)
-//   FILE *outfile2;
-//   outfile2 = fopen("edges.pos", "w");
-//   fprintf(outfile2, "View \"voronoi edges\" {\n");
+  FILE *outfile2;
+  outfile2 = fopen("skeletonEdges.pos", "w");
+  fprintf(outfile2, "View \"skeleton edges\" {\n");
 
-//   ANNkd_tree *_kdtree;
-//   ANNpointArray _zeronodes;
-//   ANNidxArray _index;
-//   ANNdistArray _dist;
+  ANNkd_tree *_kdtree;
+  ANNpointArray _zeronodes;
+  ANNidxArray _index;
+  ANNdistArray _dist;
 
-//   std::set<SPoint3>::iterator itseed = seeds.begin();
-//   SPoint3 beginPt=*itseed;
-//   seeds.erase(itseed);
-//   itseed = seeds.begin();
-//   for(; itseed != seeds.end(); itseed++){
-//     printf("seed =%g %g %g \n", (*itseed).x(), (*itseed).y(), (*itseed).z());
-//     candidates.insert(*itseed);
-//   }
-//   printf("begin seed =%g %g %g \n", beginPt.x(), beginPt.y(), beginPt.z());
+  std::set<SPoint3>::iterator itseed = seeds.begin();
+  SPoint3 beginPt=*itseed;
+  seeds.erase(itseed);
+  itseed = seeds.begin();
+  for(; itseed != seeds.end(); itseed++){
+    printf("seed =%g %g %g \n", (*itseed).x(), (*itseed).y(), (*itseed).z());
+    candidates.insert(*itseed);
+  }
+  printf("begin seed =%g %g %g \n", beginPt.x(), beginPt.y(), beginPt.z());
 
-//   double color = 1.;
-//   while(candidates.size()>0){
+  double color = 1.;
+  while(candidates.size()>0){
 
-//   _zeronodes = annAllocPts(candidates.size(), 3);
-//   std::set<SPoint3>::iterator itset = candidates.begin();
-//   int i=0;
-//   for(; itset != candidates.end(); itset++){
-//     _zeronodes[i][0] = (*itset).x();
-//     _zeronodes[i][1] = (*itset).y();
-//     _zeronodes[i][2] = (*itset).z();
-//     i++;
-//   }
-//   _kdtree = new ANNkd_tree(_zeronodes, candidates.size(), 3);
-//   _index = new ANNidx[1];
-//   _dist = new ANNdist[1];
+  _zeronodes = annAllocPts(candidates.size(), 3);
+  std::set<SPoint3>::iterator itset = candidates.begin();
+  int i=0;
+  for(; itset != candidates.end(); itset++){
+    _zeronodes[i][0] = (*itset).x();
+    _zeronodes[i][1] = (*itset).y();
+    _zeronodes[i][2] = (*itset).z();
+    i++;
+  }
+  _kdtree = new ANNkd_tree(_zeronodes, candidates.size(), 3);
+  _index = new ANNidx[1];
+  _dist = new ANNdist[1];
 
-//   double xyz[3] = {beginPt.x(), beginPt.y(), beginPt.z()};
-//   _kdtree->annkSearch(xyz, 1, _index, _dist);
-//   SPoint3 endPt( _zeronodes[_index[0]][0], _zeronodes[_index[0]][1], _zeronodes[_index[0]][2]);
-//   fprintf(outfile2,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
-// 	  beginPt.x(), beginPt.y(), beginPt.z(),
-// 	  endPt.x(), endPt.y(), endPt.z(),
-// 	  color, color);
+  double xyz[3] = {beginPt.x(), beginPt.y(), beginPt.z()};
+  _kdtree->annkSearch(xyz, 1, _index, _dist);
+  SPoint3 endPt( _zeronodes[_index[0]][0], _zeronodes[_index[0]][1], _zeronodes[_index[0]][2]);
+  fprintf(outfile2,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
+	  beginPt.x(), beginPt.y(), beginPt.z(),
+	  endPt.x(), endPt.y(), endPt.z(),
+	  color, color);
  
-//    std::set<SPoint3>::iterator itse=seeds.find(endPt);
-//    std::set<SPoint3>::iterator its=candidates.find (endPt);
-//    if(itse != seeds.end()){
-//      seeds.erase(itse);
-//      beginPt = *(seeds.begin());
-//      std::set<SPoint3>::iterator itsee=candidates.find(beginPt);
-//      candidates.erase(itsee);
-//      color=color*2.;
-//    }
-//    else   beginPt=endPt;
+   std::set<SPoint3>::iterator itse=seeds.find(endPt);
+   std::set<SPoint3>::iterator its=candidates.find(endPt);
+   if(itse != seeds.end()){
+     printf("found seed =%g %g %g \n", endPt.x(), endPt.y(), endPt.z());
+     seeds.erase(itse);
+     beginPt = *(seeds.begin());
+     std::set<SPoint3>::iterator itsee=candidates.find(beginPt);
+     if (itsee != candidates.end()) candidates.erase(itsee);
+     color=color*2.;
+   }
+   else   beginPt=endPt;
  
-//    if(its != candidates.end()) {
-//      candidates.erase(its);
-//    }
+   if(its != candidates.end()) candidates.erase(its);
 
-//   delete _kdtree;
-//   annDeallocPts(_zeronodes);
-//   delete [] _index;
-//   delete [] _dist;
-//   }
+  delete _kdtree;
+  annDeallocPts(_zeronodes);
+  delete [] _index;
+  delete [] _dist;
+  }
 
-//   fprintf(outfile2,"};\n");  
-//   fclose(outfile2);
+  fprintf(outfile2,"};\n");  
+  fclose(outfile2);
 #endif
 
-  //print scalar lines
-  // std::map<MFace, std::vector<MTetrahedron*> , Less_Face >::iterator itmap2 = face2Tet.begin();
-  // for(; itmap2 != face2Tet.end(); itmap2++){
-  //   std::vector<MTetrahedron*>  allTets = itmap2->second;
-  //   if (allTets.size() !=2 ) continue;
-  //   SPoint3 pc1 = allTets[0]->circumcenter();
-  //   SPoint3 pc2 = allTets[1]->circumcenter();
-  //   std::set<SPoint3>::const_iterator it1 = candidates.find(pc1);
-  //   std::set<SPoint3>::const_iterator it2 = candidates.find(pc2);
-  //   if( it1 != candidates.end() || it2 != candidates.end())
-  //     fprintf(outfile2,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
-  // 	      pc1.x(), pc1.y(), pc1.z(), pc2.x(), pc2.y(), pc2.z(),
-  // 	      allTets[0]->getCircumRadius(),allTets[1]->getCircumRadius());
-  // }
+
 
 
 }
@@ -527,7 +544,10 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
   gr->set(faces);
 
   //EMI VORONOI FOR CENRTERLINE
-  if (Msg::GetVerbosity() == 20)  voronoiDual(gr);
+  if (Msg::GetVerbosity() == 20) {
+    printVoronoi(gr);
+    skeletonFromVoronoi(gr);
+  }
 
   // now do insertion of points
   insertVerticesInRegion(gr);

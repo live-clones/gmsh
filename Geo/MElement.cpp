@@ -646,6 +646,14 @@ void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
     }
   }
 }
+void MElement::writePLY2(FILE *fp)
+{
+  setVolumePositive();
+  fprintf(fp, "3 ");
+  for(int i = 0; i < getNumVertices(); i++)
+    fprintf(fp, " %d", getVertex(i)->getIndex() - 1);
+  fprintf(fp, "\n");
+}
 
 void MElement::writeVRML(FILE *fp)
 {

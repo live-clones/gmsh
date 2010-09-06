@@ -189,7 +189,7 @@ static int getAspectRatio(std::vector<MElement *> &elements,
   //double H = obbox.getMaxSize(); 
   
   double D = H;
-  if (boundaries.size()  > 0 ) D = 0.0;
+  if (boundaries.size()  > 0 ) D = 10e4;
   for (unsigned int i = 0; i < boundaries.size(); i++){
     std::set<MVertex*> vb;
     std::vector<MEdge> iBound = boundaries[i];
@@ -206,7 +206,7 @@ static int getAspectRatio(std::vector<MElement *> &elements,
       bb +=pt;
     }
     double iD = norm(SVector3(bb.max(), bb.min()));
-    D = std::max(D, iD);
+    D = std::min(D, iD);
     
     //SOrientedBoundingBox obboxD = SOrientedBoundingBox::buildOBB(vBounds); 
     //D = std::max(D, obboxD.getMaxSize());
@@ -289,7 +289,8 @@ static void printLevel(std::vector<MElement *> &elements, int recur, int region)
 }
 
 multiscalePartition::multiscalePartition(std::vector<MElement *> &elements,
-                                         int nbParts, typeOfPartition method)
+                                         int nbParts, typeOfPartition method, 
+					 int allowPartition)
 {
   options = CTX::instance()->partitionOptions;
   options.num_partitions = nbParts;
@@ -305,6 +306,8 @@ multiscalePartition::multiscalePartition(std::vector<MElement *> &elements,
   level->region = 0;
 
   levels.push_back(level);
+  onlyMultilevel = false;
+  if (allowPartition == 2)  onlyMultilevel = true;
 
   partition(*level, nbParts, method);
 
@@ -361,12 +364,18 @@ void multiscalePartition::partition(partitionLevel & level, int nbParts,
                 nextLevel->recur,nextLevel->region, genus, AR, nbParts);  
       partition(*nextLevel, nbParts, MULTILEVEL);
     }
-    else if (genus == 0  &&  AR > 5  || genus == 0  &&  NB > 1){
+    else if (genus == 0  &&  AR > 5 ){//|| genus == 0  &&  NB > 1){
       int nbParts = 2;
-      Msg::Info("Mesh partition: level (%d-%d)  is ZERO-GENUS (AR=%d NB=%d) ---> LAPLACIAN partition %d parts",
-                nextLevel->recur,nextLevel->region, AR, NB, nbParts);  
-      //partition(*nextLevel, nbParts, MULTILEVEL);
-      partition(*nextLevel, nbParts, LAPLACIAN);
+      if(!onlyMultilevel){
+	Msg::Info("Mesh partition: level (%d-%d)  is ZERO-GENUS (AR=%d NB=%d) ---> LAPLACIAN partition %d parts",
+		  nextLevel->recur,nextLevel->region, AR, NB, nbParts); 
+	partition(*nextLevel, nbParts, LAPLACIAN);
+      } 
+      else {
+      Msg::Info("Mesh partition: level (%d-%d)  is ZERO-GENUS (AR=%d NB=%d) ---> MULTILEVEL partition %d parts",
+                nextLevel->recur,nextLevel->region, AR, NB, nbParts); 
+        partition(*nextLevel, nbParts, MULTILEVEL);
+      }
     }
     else {
       Msg::Info("*** Mesh partition: level (%d-%d) is ZERO-GENUS (AR=%d, NB=%d)", 

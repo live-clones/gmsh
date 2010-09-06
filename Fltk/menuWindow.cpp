@@ -127,6 +127,7 @@ static const char *input_formats =
   "STL Surface Mesh" TT "*.stl" NN
   "VTK Mesh" TT "*.vtk" NN
   "VRML Surface Mesh" TT "*.{wrl,vrml}" NN
+  "PLY2 Surface Mesh" TT "*.{ply2}" NN
   SEPARATOR_IN
   "BMP" TT "*.bmp" NN
 #if defined(HAVE_LIBJPEG)
@@ -271,6 +272,8 @@ static int _save_stl(const char *name){ return genericMeshFileDialog
     (name, "STL Options", FORMAT_STL, true, false); }
 static int _save_vrml(const char *name){ return genericMeshFileDialog
     (name, "VRML Options", FORMAT_VRML, false, false); }
+static int _save_ply2(const char *name){ return genericMeshFileDialog
+    (name, "PLY2 Options", FORMAT_PLY2, false, false); }
 static int _save_eps(const char *name){ return gl2psFileDialog
     (name, "EPS Options", FORMAT_EPS); }
 static int _save_gif(const char *name){ return gifFileDialog(name); }
@@ -309,6 +312,7 @@ static int _save_auto(const char *name)
   case FORMAT_IR3  : return _save_ir3(name);
   case FORMAT_STL  : return _save_stl(name);
   case FORMAT_VRML : return _save_vrml(name);
+  case FORMAT_PLY2 : return _save_ply2(name);
   case FORMAT_EPS  : return _save_eps(name);
   case FORMAT_GIF  : return _save_gif(name);
   case FORMAT_JPEG : return _save_jpeg(name);
@@ -357,6 +361,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
     {"STL Surface Mesh" TT "*.stl", _save_stl},
     {"VRML Surface Mesh" TT "*.wrl", _save_vrml},
     {"VTK Mesh" TT "*.vtk", _save_vtk},
+    {"PLY2 Mesh" TT "*.ply2", _save_ply2},
     SEPARATOR_OUT
     {"Encapsulated PostScript" TT "*.eps", _save_eps},
     {"GIF" TT "*.gif", _save_gif},

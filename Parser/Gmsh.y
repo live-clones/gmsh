@@ -2899,6 +2899,10 @@ CompoundMap :
         $$ = 2;
       else if(!strcmp($1, "Conformal_NoSplit"))
         $$ = -2;
+     else if(!strcmp($1, "Harmonic_SplitMetis"))
+        $$ = 3;
+      else if(!strcmp($1, "Conformal_SplitMetis"))
+        $$ = -3;
       Free($1);
     }
 ;

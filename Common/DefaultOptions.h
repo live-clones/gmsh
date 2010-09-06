@@ -1095,7 +1095,7 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "Format" , opt_mesh_file_format , FORMAT_AUTO , 
     "Mesh output format (1=msh, 2=unv, 10=automatic, 19=vrml, 27=stl, 30=mesh, 31=bdf, "
-    "32=cgns, 33=med)" },
+    "32=cgns, 33=med, 40=ply2)" },
 
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. , 
     "Display mesh hexahedra?" },

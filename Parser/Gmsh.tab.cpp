@@ -7145,6 +7145,10 @@ yyreduce:
         (yyval.i) = 2;
       else if(!strcmp((yyvsp[(1) - (1)].c), "Conformal_NoSplit"))
         (yyval.i) = -2;
+      else if(!strcmp((yyvsp[(1) - (1)].c), "Harmonic_SplitMetis"))
+        (yyval.i) = 3;
+      else if(!strcmp((yyvsp[(1) - (1)].c), "Conformal_SplitMetis"))
+        (yyval.i) = -3;
       Free((yyvsp[(1) - (1)].c));
     ;}
     break;

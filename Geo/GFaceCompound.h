@@ -70,6 +70,7 @@ class GFaceCompound : public GFace {
   mutable std::map<SPoint3,SPoint3 > _coordPoints;
   mutable std::map<MVertex*, SVector3> _normals;
   mutable std::list<MTriangle*> fillTris;
+  mutable std::set<MVertex*> fillNodes;
   void buildOct() const ;
   void buildAllNodes() const; 
   void parametrize(iterationStep, typeOfMapping, double alpha=0.) const;
@@ -77,7 +78,7 @@ class GFaceCompound : public GFace {
   bool parametrize_conformal_spectral() const;
   void compute_distance() const;
   bool checkOrientation(int iter) const;
-  bool checkFolding(std::vector<MVertex*> &ordered) const;
+  bool checkOverlap(std::vector<MVertex*> &ordered) const;
   void one2OneMap() const;
   double checkAspectRatio() const;
   void computeNormals () const;

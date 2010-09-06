@@ -180,8 +180,9 @@ int GModel::importGEOInternals()
             if(ge) b[j].push_back(ge);
           }
         }
-        int allowPartition = 1;
-        if (abs(s->TypeOfMapping) != 1) allowPartition = 0;
+        int allowPartition = 1; //allow 
+        if (abs(s->TypeOfMapping) == 2) allowPartition = 0;//not allow
+	if (abs(s->TypeOfMapping) == 3) allowPartition = 2;//only metis
 
         f = new GFaceCompound(this, s->Num, comp,
                               b[0], b[1], b[2], b[3], 0,
