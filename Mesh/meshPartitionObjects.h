@@ -10,6 +10,7 @@
 #include <vector>
 #include "MElement.h"
 #include "GmshMessage.h"
+#include "Context.h"
 
 
 /*******************************************************************************
@@ -153,6 +154,40 @@ class Graph
     for(std::vector<int>::iterator it = wgts.begin(); it != wgts.end(); it++){
       vwgts[num]= 1; //*it;
        num++;
+    }
+  }
+
+  // Add weights per element, as defined in options 
+  void fillDefaultWeights() 
+  {
+    std::vector<MElement*>::iterator eIt = element.begin();
+    vwgts.resize(element.size());
+    std::vector<int>::iterator wIt = vwgts.begin();
+    for ( ; eIt != element.end() ; eIt++ , wIt++) {
+      
+      switch ((*eIt)->getType()) {
+      case TYPE_TRI:
+        *wIt = CTX::instance()->partitionOptions.triWeight;
+        break;
+      case TYPE_QUA:
+        *wIt = CTX::instance()->partitionOptions.quaWeight;
+        break;
+      case TYPE_TET:
+        *wIt = CTX::instance()->partitionOptions.tetWeight;
+        break;
+      case TYPE_PYR:
+        *wIt = CTX::instance()->partitionOptions.pyrWeight;
+        break;
+      case TYPE_PRI:
+        *wIt = CTX::instance()->partitionOptions.priWeight;
+        break;
+      case TYPE_HEX:
+        *wIt = CTX::instance()->partitionOptions.hexWeight;
+        break;
+      default:
+        *wIt = 1;
+        break;
+      }
     }
   }
 

@@ -72,6 +72,15 @@ struct meshPartitionOptions
   int partitionByExtrusion;            // if true, all extruded elements belong
                                        // to the same partition as the source element
 
+  // element weights for load-balancing (currently used in METIS algorithm 3) 
+  
+  int triWeight;  
+  int quaWeight;
+  int tetWeight;
+  int priWeight;
+  int pyrWeight;
+  int hexWeight;
+
 //--NODAL WEIGHT
   std::vector<int> nodalWeights;
 
@@ -112,6 +121,13 @@ struct meshPartitionOptions
     createPartitionBoundaries = true;
     createGhostCells = true;
     partitionByExtrusion =false;
+    triWeight = 1;
+    quaWeight = 1;
+    tetWeight = 1;
+    priWeight = 1;
+    pyrWeight = 1;
+    hexWeight = 1;
+    
   }
 
 };

@@ -5507,6 +5507,48 @@ double opt_mesh_msh_file_partitioned(OPT_ARGS_NUM)
   return CTX::instance()->mesh.mshFilePartitioned;
 }
 
+double opt_mesh_partition_hex_weight(OPT_ARGS_NUM) 
+{
+  if (action & GMSH_SET) 
+    CTX::instance()->partitionOptions.hexWeight = (int) val;
+  return CTX::instance()->partitionOptions.hexWeight;
+}
+
+double opt_mesh_partition_pri_weight(OPT_ARGS_NUM) 
+{
+  if (action & GMSH_SET) 
+    CTX::instance()->partitionOptions.priWeight = (int) val;
+  return CTX::instance()->partitionOptions.priWeight;
+}
+
+double opt_mesh_partition_pyr_weight(OPT_ARGS_NUM) 
+{
+  if (action & GMSH_SET) 
+    CTX::instance()->partitionOptions.pyrWeight = (int) val;
+  return CTX::instance()->partitionOptions.pyrWeight;
+}
+
+double opt_mesh_partition_qua_weight(OPT_ARGS_NUM) 
+{
+  if (action & GMSH_SET) 
+    CTX::instance()->partitionOptions.quaWeight = (int) val;
+  return CTX::instance()->partitionOptions.quaWeight;
+}
+
+double opt_mesh_partition_tet_weight(OPT_ARGS_NUM) 
+{
+  if (action & GMSH_SET) 
+    CTX::instance()->partitionOptions.tetWeight = (int) val;
+  return CTX::instance()->partitionOptions.tetWeight;
+}
+
+double opt_mesh_partition_tri_weight(OPT_ARGS_NUM) 
+{
+  if (action & GMSH_SET) 
+    CTX::instance()->partitionOptions.triWeight = (int) val;
+  return CTX::instance()->partitionOptions.triWeight;
+}
+
 double opt_mesh_binary(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
