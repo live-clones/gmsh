@@ -53,6 +53,13 @@ class MEdge {
     t.normalize();
     return t;
   }
+  double length() const
+  {
+    SVector3 t(_v[1]->x() - _v[0]->x(), 
+               _v[1]->y() - _v[0]->y(),
+               _v[1]->z() - _v[0]->z());
+    return t.norm();
+  }
   SVector3 normal() const 
   {
     // this computes one of the normals to the edge

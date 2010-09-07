@@ -21,17 +21,17 @@
 #include "BDS.h"
 #include "Context.h"
 #include "GFaceCompound.h"
+#include "SmoothData.h"
 
 #if defined(HAVE_ANN)
 #include "ANN/ANN.h"
 #endif
 
-void printVoronoi(GRegion *gr)
+void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
 {
   std::vector<MTetrahedron*> elements = gr->tetrahedra;
   std::list<GFace*> allFaces = gr->faces();
 
-  std::set<SPoint3> candidates;
 
   //building maps
   std::map<MVertex*, std::set<MTetrahedron*> > node2Tet;
@@ -68,10 +68,11 @@ void printVoronoi(GRegion *gr)
     }
   }
 
-  //print voronoi nodes
+  //print voronoi poles
   FILE *outfile;
+  smooth_normals *snorm = gr->model()->normals;
   outfile = fopen("nodes.pos", "w");
-  fprintf(outfile, "View \"voronoi nodes\" {\n");
+  fprintf(outfile, "View \"Voronoi poles\" {\n");
   std::map<MVertex*, std::set<MTetrahedron*> >::iterator itmap = node2Tet.begin();
   for(; itmap != node2Tet.end(); itmap++){
     MVertex *v = itmap->first;
@@ -79,6 +80,7 @@ void printVoronoi(GRegion *gr)
     std::set<MTetrahedron*>::const_iterator it = allTets.begin();
     MTetrahedron *poleTet = *it;
     double maxRadius = poleTet->getCircumRadius();
+    double maxEdgeLength = poleTet->getMaxEdgeLength();
     for(; it != allTets.end(); it++){
       double radius =  (*it)->getCircumRadius();
       if (radius > maxRadius){
@@ -86,12 +88,23 @@ void printVoronoi(GRegion *gr)
     	poleTet = *it;
       }
     }
-    SPoint3 pc = poleTet->circumcenter();
-    fprintf(outfile,"SP(%g,%g,%g)  {%g};\n",
-    	    pc.x(), pc.y(), pc.z(), maxRadius);
-    candidates.insert(pc);
-    //}//uncomment this
-   
+    if (v->onWhat()->dim() == 2 && maxRadius < maxEdgeLength){
+      SPoint3 pc = poleTet->circumcenter();
+      // double nx,ny,nz;
+      // SVector3 vN = snorm->get(v->x(), v->y(), v->z(), nx,ny,nz);
+      // SVector3 pcv(pc.x()-nx, pc.y()-ny,pc.z()-nz); 
+      // printf("nx=%g ny=%g nz=%g dot=%g \n",  nx,ny,nz, dot(vN, pcv));
+      // if ( dot(vN, pcv) > 0.0 )
+      double x[3] = {pc.x(), pc.y(), pc.z()};
+      double uvw[3];
+      poleTet->xyz2uvw(x, uvw);
+      bool inside = poleTet->isInside(uvw[0], uvw[1], uvw[2]);
+      if (inside){
+	fprintf(outfile,"SP(%g,%g,%g)  {%g};\n",
+		pc.x(), pc.y(), pc.z(), maxRadius);
+	candidates.insert(pc);
+      }
+    }
   }
   fprintf(outfile,"};\n");  
   fclose(outfile);
@@ -99,26 +112,26 @@ void printVoronoi(GRegion *gr)
   //print scalar lines
   FILE *outfile2;
   outfile2 = fopen("edges.pos", "w");
-  fprintf(outfile2, "View \"voronoi edges\" {\n");
+  fprintf(outfile2, "View \"Voronoi edges\" {\n");
   std::map<MFace, std::vector<MTetrahedron*> , Less_Face >::iterator itmap2 = face2Tet.begin();
   for(; itmap2 != face2Tet.end(); itmap2++){
     std::vector<MTetrahedron*>  allTets = itmap2->second;
-    if (allTets.size() !=2 ) continue;
+    if (allTets.size() != 2 ) continue;
     SPoint3 pc1 = allTets[0]->circumcenter();
     SPoint3 pc2 = allTets[1]->circumcenter();
     std::set<SPoint3>::const_iterator it1 = candidates.find(pc1);
     std::set<SPoint3>::const_iterator it2 = candidates.find(pc2);
-    if( it1 != candidates.end() || it2 != candidates.end())
-      fprintf(outfile2,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
-  	      pc1.x(), pc1.y(), pc1.z(), pc2.x(), pc2.y(), pc2.z(),
-  	      allTets[0]->getCircumRadius(),allTets[1]->getCircumRadius());
-  }
+    //if( it1 != candidates.end() || it2 != candidates.end())
+    fprintf(outfile2,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
+	    pc1.x(), pc1.y(), pc1.z(), pc2.x(), pc2.y(), pc2.z(),
+	    allTets[0]->getCircumRadius(),allTets[1]->getCircumRadius());
+    }
   fprintf(outfile2,"};\n");  
   fclose(outfile2);
 
 }
-
-void skeletonFromVoronoi(GRegion *gr)
+//------------------------------------------------------------------------
+void skeletonFromVoronoi(GRegion *gr, std::set<SPoint3> &voronoiPoles)
 {
 
   std::vector<MTetrahedron*> elements = gr->tetrahedra;
@@ -152,7 +165,11 @@ void skeletonFromVoronoi(GRegion *gr)
     double x[3] = {pc.x(), pc.y(), pc.z()};
     double uvw[3];
     ele->xyz2uvw(x, uvw);
-    if(ele->isInside(uvw[0], uvw[1], uvw[2])){
+
+    std::set<SPoint3>::const_iterator it2 = voronoiPoles.find(pc);
+  
+    if(ele->isInside(uvw[0], uvw[1], uvw[2]) &&
+       it2 != voronoiPoles.end()){
       double radius =  ele->getCircumRadius();
       if(radius > Dmax/10.) {
       	candidates.insert(pc);
@@ -233,11 +250,8 @@ void skeletonFromVoronoi(GRegion *gr)
   fclose(outfile2);
 #endif
 
-
-
-
 }
-
+//------------------------------------------------------------------------
 
 void getAllBoundingVertices(GRegion *gr, std::set<MVertex*> &allBoundingVertices)
 {
@@ -255,11 +269,9 @@ void getAllBoundingVertices(GRegion *gr, std::set<MVertex*> &allBoundingVertices
     ++it;
   }
 }
-
+//------------------------------------------------------------------------
 #if defined(HAVE_TETGEN)
-
 #include "tetgen.h"
-
 void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numberedV)
 {
   std::set<MVertex*> allBoundingVertices;
@@ -455,9 +467,9 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
     gr->tetrahedra.push_back(t);
   }
 }
-
 #endif
 
+//------------------------------------------------------------------------
 void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 {
   if(regions.empty()) return;
@@ -491,7 +503,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
     std::vector<MVertex*> numberedV;
     char opts[128];
     buildTetgenStructure(gr, in, numberedV);
-    //if (Msg::GetVerbosity() == 20) sprintf(opts, "peVvS0");
+    //if (Msg::GetVerbosity() == 20) sprintf(opts, "peVvS0"); 
     sprintf(opts, "pe%c",  (Msg::GetVerbosity() < 3) ? 'Q': 
             (Msg::GetVerbosity() > 6) ? 'V': '\0');
     try{
@@ -545,8 +557,9 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 
   //EMI VORONOI FOR CENRTERLINE
   if (Msg::GetVerbosity() == 20) {
-    printVoronoi(gr);
-    skeletonFromVoronoi(gr);
+    std::set<SPoint3> candidates;
+    printVoronoi(gr, candidates);
+    skeletonFromVoronoi(gr, candidates);
   }
 
   // now do insertion of points

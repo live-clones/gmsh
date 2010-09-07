@@ -2556,8 +2556,13 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   if(!strcmp(buffer, "BINARY")) binary = true;
 
   if(fscanf(fp, "%s %s", buffer, buffer2) != 2) return 0;
-  if(strcmp(buffer, "DATASET") || strcmp(buffer2, "UNSTRUCTURED_GRID")){
-    Msg::Error("VTK reader can only read unstructured datasets");
+  
+  bool unstructured = false;
+  if( !strcmp(buffer, "DATASET") &&  !strcmp(buffer2, "UNSTRUCTURED_GRID") ) unstructured = true;
+
+  if( (strcmp(buffer, "DATASET") &&  strcmp(buffer2, "UNSTRUCTURED_GRID")) ||
+      (strcmp(buffer, "DATASET") &&  strcmp(buffer2, "POLYDATA")) ){
+    Msg::Error("VTK reader can only read unstructured or polydata datasets");
     return 0;
   }
 
@@ -2603,11 +2608,14 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   // read mesh elements
   int numElements, totalNumInt;
   if(fscanf(fp, "%s %d %d\n", buffer, &numElements, &totalNumInt) != 3) return 0;
-  if(strcmp(buffer, "CELLS") || !numElements){
-    Msg::Warning("No cells in dataset");
+ 
+  if( !strcmp(buffer, "CELLS") && numElements>0 )  Msg::Info("Reading %d cells", numElements);
+  else if (!strcmp(buffer, "POLYGONS") && numElements>0 ) Msg::Info("Reading %d polygons", numElements);
+  else{
+    Msg::Warning("No cells or polygons in dataset");
     return 0;
   }
-  Msg::Info("Reading %d cells", numElements);
+
   std::vector<std::vector<MVertex*> > cells(numElements);
   for(unsigned int i = 0; i < cells.size(); i++){
     int numVerts, n[100];
@@ -2630,33 +2638,50 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
         Msg::Error("Bad vertex index");
     }
   }
-  if(fscanf(fp, "%s %d\n", buffer, &numElements) != 2) return 0;
-  if(strcmp(buffer, "CELL_TYPES") || numElements != (int)cells.size()){
-    Msg::Error("No or invalid number of cells types");
-    return 0;
-  }
+
   std::map<int, std::vector<MElement*> > elements[8];
-  for(unsigned int i = 0; i < cells.size(); i++){
-    int type;
-    if(binary){
-      if(fread(&type, sizeof(int), 1, fp) != 1) return 0;
-      if(!bigEndian) SwapBytes((char*)&type, sizeof(int), 1);
+  if (unstructured){
+    if(fscanf(fp, "%s %d\n", buffer, &numElements) != 2 ) return 0;
+    if(strcmp(buffer, "CELL_TYPES") || numElements != (int)cells.size()){
+      Msg::Error("No or invalid number of cells types");
+      return 0;
     }
-    else{
-      if(fscanf(fp, "%d", &type) != 1) return 0;
+    for(unsigned int i = 0; i < cells.size(); i++){
+      int type;
+      if(binary){
+	if(fread(&type, sizeof(int), 1, fp) != 1) return 0;
+	if(!bigEndian) SwapBytes((char*)&type, sizeof(int), 1);
+      }
+      else{
+	if(fscanf(fp, "%d", &type) != 1) return 0;
+      }
+      switch(type){
+      case 1: elements[0][1].push_back(new MPoint(cells[i])); break;
+      case 3: elements[1][1].push_back(new MLine(cells[i])); break;
+      case 5: elements[2][1].push_back(new MTriangle(cells[i])); break;
+      case 9: elements[3][1].push_back(new MQuadrangle(cells[i])); break;
+      case 10: elements[4][1].push_back(new MTetrahedron(cells[i])); break;
+      case 12: elements[5][1].push_back(new MHexahedron(cells[i])); break;
+      case 13: elements[6][1].push_back(new MPrism(cells[i])); break;
+      case 14: elements[7][1].push_back(new MPyramid(cells[i])); break;
+      default:
+	Msg::Error("Unknown type of cell %d", type);
+	break;
+      }
     }
-    switch(type){
-    case 1: elements[0][1].push_back(new MPoint(cells[i])); break;
-    case 3: elements[1][1].push_back(new MLine(cells[i])); break;
-    case 5: elements[2][1].push_back(new MTriangle(cells[i])); break;
-    case 9: elements[3][1].push_back(new MQuadrangle(cells[i])); break;
-    case 10: elements[4][1].push_back(new MTetrahedron(cells[i])); break;
-    case 12: elements[5][1].push_back(new MHexahedron(cells[i])); break;
-    case 13: elements[6][1].push_back(new MPrism(cells[i])); break;
-    case 14: elements[7][1].push_back(new MPyramid(cells[i])); break;
-    default:
-      Msg::Error("Unknown type of cell %d", type);
-      break;
+  }
+  else{
+    for(unsigned int i = 0; i < cells.size(); i++){
+      int nbNodes = (int)cells[i].size();
+      switch(nbNodes){
+       case 1: elements[0][1].push_back(new MPoint(cells[i])); break;
+       case 2: elements[1][1].push_back(new MLine(cells[i])); break;
+       case 3: elements[2][1].push_back(new MTriangle(cells[i])); break;
+       case 4: elements[3][1].push_back(new MQuadrangle(cells[i])); break;
+       default:
+       	Msg::Error("Unknown type of mesh element with %d nodes", nbNodes);
+       	break;
+       }
     }
   }
 

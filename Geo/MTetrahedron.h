@@ -70,6 +70,14 @@ class MTetrahedron : public MElement {
   {
     return MEdge(_v[edges_tetra(num, 0)], _v[edges_tetra(num, 1)]);
   }
+  virtual double getMaxEdgeLength(){
+    double maxe = 0.0;
+    for(int i = 0; i < 6; i++){
+      double loce = getEdge(i).length();
+      maxe = std::max(maxe,loce);
+    }
+    return maxe;
+  }
   virtual int getNumEdgesRep(){ return 6; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   {
