@@ -35,7 +35,7 @@ class linearSystemCSR : public linearSystem<scalar> {
   std::vector<scalar> *_b, *_x;
  public:
   linearSystemCSR()
-    : sorted(false), _a(0) {}
+    : sorted(false), _a(0), _b(0), _x(0) {}
   virtual bool isAllocated() const { return _a != 0; }
   virtual void allocate(int) ;
   virtual void clear()
@@ -105,12 +105,14 @@ class linearSystemCSR : public linearSystem<scalar> {
   }
   virtual void zeroMatrix()
   {
+    if (!_a) return;
     int N = CSRList_Nbr(_a);
     scalar *a = (scalar*) _a->array;
     for (int i = 0; i < N; i++) a[i] = 0;
   }
   virtual void zeroRightHandSide()
   {
+    if (!_b) return;
     for(unsigned int i = 0; i < _b->size(); i++) (*_b)[i] = 0.;
   }
   virtual double normInfRightHandSide() const
