@@ -637,6 +637,8 @@ void DocRecord::printMedialAxis(Octree *_octree, std::string fileName, GFace *gf
 	    MVertex *v0 = new MVertex(p1.x(), p1.y(), p1.z());
 	    MVertex *v1 = new MVertex(p2.x(), p2.y(), p2.z());
 	    ge->lines.push_back(new MLine(v0, v1));
+	    ge->mesh_vertices.push_back(v0);
+	    ge->mesh_vertices.push_back(v1);
 	    fprintf(f,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
 		    p1.x(),p1.y(),p1.z(),
 		    p2.x(),p2.y(),p2.z(),

@@ -2609,80 +2609,115 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   int numElements, totalNumInt;
   if(fscanf(fp, "%s %d %d\n", buffer, &numElements, &totalNumInt) != 3) return 0;
  
+  bool haveCells = true;
+  bool haveLines = false;
   if( !strcmp(buffer, "CELLS") && numElements>0 )  Msg::Info("Reading %d cells", numElements);
   else if (!strcmp(buffer, "POLYGONS") && numElements>0 ) Msg::Info("Reading %d polygons", numElements);
+  else if (!strcmp(buffer, "LINES") && numElements>0 ) { 
+    haveCells = false; 
+    haveLines = true;
+    Msg::Info("Reading %d lines", numElements); 
+  } 
   else{
     Msg::Warning("No cells or polygons in dataset");
     return 0;
   }
 
-  std::vector<std::vector<MVertex*> > cells(numElements);
-  for(unsigned int i = 0; i < cells.size(); i++){
-    int numVerts, n[100];
-    if(binary){
-      if(fread(&numVerts, sizeof(int), 1, fp) != 1) return 0;
-      if(!bigEndian) SwapBytes((char*)&numVerts, sizeof(int), 1);
-      if((int)fread(n, sizeof(int), numVerts, fp) != numVerts) return 0;
-      if(!bigEndian) SwapBytes((char*)n, sizeof(int), numVerts);
-    }
-    else{
-      if(fscanf(fp, "%d", &numVerts) != 1) return 0;
-      for(int j = 0; j < numVerts; j++){
-        if(fscanf(fp, "%d", &n[j]) != 1) return 0;
-      }
-    }
-    for(int j = 0; j < numVerts; j++){
-      if(n[j] >= 0 && n[j] < (int)vertices.size())
-        cells[i].push_back(vertices[n[j]]);
-      else
-        Msg::Error("Bad vertex index");
-    }
-  }
-
   std::map<int, std::vector<MElement*> > elements[8];
-  if (unstructured){
-    if(fscanf(fp, "%s %d\n", buffer, &numElements) != 2 ) return 0;
-    if(strcmp(buffer, "CELL_TYPES") || numElements != (int)cells.size()){
-      Msg::Error("No or invalid number of cells types");
-      return 0;
-    }
+
+  if (haveCells){
+    std::vector<std::vector<MVertex*> > cells(numElements);
     for(unsigned int i = 0; i < cells.size(); i++){
-      int type;
+      int numVerts, n[100];
       if(binary){
-	if(fread(&type, sizeof(int), 1, fp) != 1) return 0;
-	if(!bigEndian) SwapBytes((char*)&type, sizeof(int), 1);
+	if(fread(&numVerts, sizeof(int), 1, fp) != 1) return 0;
+	if(!bigEndian) SwapBytes((char*)&numVerts, sizeof(int), 1);
+	if((int)fread(n, sizeof(int), numVerts, fp) != numVerts) return 0;
+	if(!bigEndian) SwapBytes((char*)n, sizeof(int), numVerts);
       }
       else{
-	if(fscanf(fp, "%d", &type) != 1) return 0;
+	if(fscanf(fp, "%d", &numVerts) != 1) return 0;
+	for(int j = 0; j < numVerts; j++){
+	  if(fscanf(fp, "%d", &n[j]) != 1) return 0;
+	}
       }
-      switch(type){
-      case 1: elements[0][1].push_back(new MPoint(cells[i])); break;
-      case 3: elements[1][1].push_back(new MLine(cells[i])); break;
-      case 5: elements[2][1].push_back(new MTriangle(cells[i])); break;
-      case 9: elements[3][1].push_back(new MQuadrangle(cells[i])); break;
-      case 10: elements[4][1].push_back(new MTetrahedron(cells[i])); break;
-      case 12: elements[5][1].push_back(new MHexahedron(cells[i])); break;
-      case 13: elements[6][1].push_back(new MPrism(cells[i])); break;
-      case 14: elements[7][1].push_back(new MPyramid(cells[i])); break;
-      default:
-	Msg::Error("Unknown type of cell %d", type);
-	break;
+      for(int j = 0; j < numVerts; j++){
+	if(n[j] >= 0 && n[j] < (int)vertices.size())
+	  cells[i].push_back(vertices[n[j]]);
+	else
+	  Msg::Error("Bad vertex index");
+      }
+    }
+   
+    if (unstructured){
+      if(fscanf(fp, "%s %d\n", buffer, &numElements) != 2 ) return 0;
+      if(strcmp(buffer, "CELL_TYPES") || numElements != (int)cells.size()){
+	Msg::Error("No or invalid number of cells types");
+	return 0;
+      }
+      for(unsigned int i = 0; i < cells.size(); i++){
+	int type;
+	if(binary){
+	  if(fread(&type, sizeof(int), 1, fp) != 1) return 0;
+	  if(!bigEndian) SwapBytes((char*)&type, sizeof(int), 1);
+	}
+	else{
+	  if(fscanf(fp, "%d", &type) != 1) return 0;
+	}
+	switch(type){
+	case 1: elements[0][1].push_back(new MPoint(cells[i])); break;
+	case 3: elements[1][1].push_back(new MLine(cells[i])); break;
+	case 5: elements[2][1].push_back(new MTriangle(cells[i])); break;
+	case 9: elements[3][1].push_back(new MQuadrangle(cells[i])); break;
+	case 10: elements[4][1].push_back(new MTetrahedron(cells[i])); break;
+	case 12: elements[5][1].push_back(new MHexahedron(cells[i])); break;
+	case 13: elements[6][1].push_back(new MPrism(cells[i])); break;
+	case 14: elements[7][1].push_back(new MPyramid(cells[i])); break;
+	default:
+	  Msg::Error("Unknown type of cell %d", type);
+	  break;
+	}
+      }
+    }
+    else{
+      for(unsigned int i = 0; i < cells.size(); i++){
+	int nbNodes = (int)cells[i].size();
+	switch(nbNodes){
+	case 1: elements[0][1].push_back(new MPoint(cells[i])); break;
+	case 2: elements[1][1].push_back(new MLine(cells[i])); break;
+	case 3: elements[2][1].push_back(new MTriangle(cells[i])); break;
+	case 4: elements[3][1].push_back(new MQuadrangle(cells[i])); break;
+	default:
+	  Msg::Error("Unknown type of mesh element with %d nodes", nbNodes);
+	  break;
+	}
       }
     }
   }
-  else{
-    for(unsigned int i = 0; i < cells.size(); i++){
-      int nbNodes = (int)cells[i].size();
-      switch(nbNodes){
-       case 1: elements[0][1].push_back(new MPoint(cells[i])); break;
-       case 2: elements[1][1].push_back(new MLine(cells[i])); break;
-       case 3: elements[2][1].push_back(new MTriangle(cells[i])); break;
-       case 4: elements[3][1].push_back(new MQuadrangle(cells[i])); break;
-       default:
-       	Msg::Error("Unknown type of mesh element with %d nodes", nbNodes);
-       	break;
-       }
+  else if (haveLines){
+    printf("have lines \n");
+    int v0, v1;
+    fscanf(fp, "%d", &v0);
+    printf("v0=%d \n", v0);
+    while(fscanf(fp, "%d", &v1) == 1){
+	elements[1][1].push_back(new MLine(vertices[v0],vertices[v1])); 
+    	printf("line =%d %d \n", v0, v1);
+    	v0 = v1;
     }
+
+    // char str[256] = "XXX";
+    // for (int j = 0; j< numElements; j++){
+    //   printf("line j=%d\n", j);
+    //   if(!fgets(str, sizeof(str), fp)) return 0;
+    //   int v0, v1;
+    //   sscanf(str, "%d", &v0);
+    //   printf("v0=%d \n", v0);
+    //   while(sscanf(str, "%d", &v1) == 1){
+    // 	elements[1][1].push_back(new MLine(vertices[v0],vertices[v1])); 
+    // 	printf("line =%d %d \n", v0, v1);
+    // 	v0 = v1;
+    //   }
+    // }
   }
 
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
