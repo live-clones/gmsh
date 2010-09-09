@@ -2546,6 +2546,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   }
 
   char buffer[256], buffer2[256];
+  std::map<int, std::map<int, std::string> > physicals[4];
 
   if(!fgets(buffer, sizeof(buffer), fp)) return 0; // version line
   if(!fgets(buffer, sizeof(buffer), fp)) return 0; // title
@@ -2695,35 +2696,40 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
     }
   }
   else if (haveLines){
-    printf("have lines \n");
-    int v0, v1;
-    fscanf(fp, "%d", &v0);
-    printf("v0=%d \n", v0);
-    while(fscanf(fp, "%d", &v1) == 1){
-	elements[1][1].push_back(new MLine(vertices[v0],vertices[v1])); 
-    	printf("line =%d %d \n", v0, v1);
-    	v0 = v1;
+    if(!binary){
+      int v0, v1;
+      char line[1024], *p, *pEnd, *pEnd2;
+      int iLine = 1;
+      int num = 0;
+      for (int k= 0; k < numElements; k++){
+	physicals[1][iLine][100] = "centerline";
+	fgets(line, sizeof(line), fp);
+	v0=(int)strtol(line, &pEnd, 10);//ignore firt line
+	v0=(int)strtol(pEnd, &pEnd2, 10);
+	p=pEnd2;
+	while(1){
+	  v1 = strtol(p, &pEnd, 10);
+	  if (p == pEnd )  break;
+	  elements[1][iLine].push_back(new MLine(vertices[v0],vertices[v1])); 
+	  p=pEnd;
+	  v0=v1;
+	}
+	iLine++;
+      }
     }
-
-    // char str[256] = "XXX";
-    // for (int j = 0; j< numElements; j++){
-    //   printf("line j=%d\n", j);
-    //   if(!fgets(str, sizeof(str), fp)) return 0;
-    //   int v0, v1;
-    //   sscanf(str, "%d", &v0);
-    //   printf("v0=%d \n", v0);
-    //   while(sscanf(str, "%d", &v1) == 1){
-    // 	elements[1][1].push_back(new MLine(vertices[v0],vertices[v1])); 
-    // 	printf("line =%d %d \n", v0, v1);
-    // 	v0 = v1;
-    //   }
-    // }
+    else{
+      Msg::Error("TODO: implement reading lines for binary files \n");
+    }
   }
 
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
     _storeElementsInEntities(elements[i]);
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertices);
+
+  // store the physical tags
+  for(int i = 0; i < 4; i++)
+    _storePhysicalTagsInEntities(i, physicals[i]);
 
   fclose(fp);
   return 1;

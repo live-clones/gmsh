@@ -21,7 +21,6 @@
 #include "BDS.h"
 #include "Context.h"
 #include "GFaceCompound.h"
-#include "SmoothData.h"
 
 #if defined(HAVE_ANN)
 #include "ANN/ANN.h"
@@ -80,7 +79,6 @@ void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
     std::set<MTetrahedron*>::const_iterator it = allTets.begin();
     MTetrahedron *poleTet = *it;
     double maxRadius = poleTet->getCircumRadius();
-    double maxEdgeLength = poleTet->getMaxEdgeLength();
     for(; it != allTets.end(); it++){
       double radius =  (*it)->getCircumRadius();
       if (radius > maxRadius){
@@ -88,7 +86,7 @@ void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
     	poleTet = *it;
       }
     }
-    if (v->onWhat()->dim() == 2 && maxRadius < maxEdgeLength){
+    if (v->onWhat()->dim() == 2 ){
       SPoint3 pc = poleTet->circumcenter();
       // double nx,ny,nz;
       // SVector3 vN = snorm->get(v->x(), v->y(), v->z(), nx,ny,nz);
