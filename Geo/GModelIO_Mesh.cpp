@@ -2702,7 +2702,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
       int iLine = 1;
       int num = 0;
       for (int k= 0; k < numElements; k++){
-	physicals[1][iLine][100] = "centerline";
+	physicals[1][iLine][1] = "centerline";
 	fgets(line, sizeof(line), fp);
 	v0=(int)strtol(line, &pEnd, 10);//ignore firt line
 	v0=(int)strtol(pEnd, &pEnd2, 10);
