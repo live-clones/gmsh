@@ -789,7 +789,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   }
  
   if (Msg::GetVerbosity() == 10){
-    GEdge *ge = new discreteEdge(gf->model(), 1000,0,0);
+    GEdge *ge = new discreteEdge(gf->model(), 1000, 0, 0);
     MElementOctree octree(gf->model());
     printf("Writing voronoi and skeleton.pos \n");
     doc.Voronoi();
@@ -1483,7 +1483,7 @@ void deMeshGFace::operator() (GFace *gf)
 }
 
 // for debugging, change value from -1 to -100;
-int debugSurface = -1; 
+int debugSurface = -100; 
 
 void meshGFace::operator() (GFace *gf)
 {
