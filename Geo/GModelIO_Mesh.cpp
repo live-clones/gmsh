@@ -970,7 +970,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
       // "endfacet"
       if(!fgets(buffer, sizeof(buffer), fp)) break;
     }
-  }
+   }
 
   // check if we could parse something
   bool empty = true;
@@ -981,6 +981,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
     }
   }
   if(empty) points.clear();
+ 
 
   // binary STL (we also try to read in binary mode if the header told
   // us the format was ASCII but we could not read any vertices)
@@ -1044,7 +1045,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
     for(unsigned int j = 0; j < points[i].size(); j++)
       vertices.push_back(new MVertex(points[i][j].x(), points[i][j].y(),
                                      points[i][j].z()));
-  MVertexPositionSet pos(vertices);
+  MVertexPositionSet pos(vertices, std::min((int)vertices.size(),10));
   
   for(unsigned int i = 0; i < points.size(); i ++){
     for(unsigned int j = 0; j < points[i].size(); j += 3){

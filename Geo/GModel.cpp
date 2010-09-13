@@ -1004,7 +1004,7 @@ void GModel::checkMeshCoherence(double tolerance)
     for(unsigned int i = 0; i < entities.size(); i++)
       vertices.insert(vertices.end(), entities[i]->mesh_vertices.begin(), 
                       entities[i]->mesh_vertices.end());
-    MVertexPositionSet pos(vertices);
+    MVertexPositionSet pos(vertices, std::min((int)vertices.size(), 10));
     for(unsigned int i = 0; i < vertices.size(); i++)
       pos.find(vertices[i]->x(), vertices[i]->y(), vertices[i]->z(), eps);
     int num = 0;
@@ -1026,7 +1026,7 @@ void GModel::checkMeshCoherence(double tolerance)
         SPoint3 p = entities[i]->getMeshElement(j)->barycenter();
         vertices.push_back(new MVertex(p.x(), p.y(), p.z()));
       }
-    MVertexPositionSet pos(vertices);
+    MVertexPositionSet pos(vertices, std::min((int)vertices.size(), 10));
     for(unsigned int i = 0; i < vertices.size(); i++)
       pos.find(vertices[i]->x(), vertices[i]->y(), vertices[i]->z(), eps);
     int num = 0;
@@ -1061,7 +1061,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
       MVertex *v = entities[i]->mesh_vertices[j];
       vertices.push_back(new MVertex(v->x(), v->y(), v->z()));
     }
-  MVertexPositionSet pos(vertices);
+  MVertexPositionSet pos(vertices, std::min((int)vertices.size(), 10));
   for(unsigned int i = 0; i < vertices.size(); i++)
     pos.find(vertices[i]->x(), vertices[i]->y(), vertices[i]->z(), eps);
   int num = 0;
@@ -1124,10 +1124,11 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
 
 void GModel::createTopologyFromMesh()
 {
-  removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
-
+  
   Msg::StatusBar(2, true, "Creating topology from mesh...");
   double t1 = Cpu();
+
+  removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
 
   // for each discreteRegion, create topology
   std::vector<discreteRegion*> discRegions;
