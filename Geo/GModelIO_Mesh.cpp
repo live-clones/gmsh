@@ -861,14 +861,31 @@ int GModel::writePartitionedMSH(const std::string &baseName, bool binary,
 
 int GModel::writePOS(const std::string &name, bool printElementary, 
                      bool printElementNumber, bool printGamma, bool printEta, 
-                     bool printRho, bool printDisto, bool saveAll,
-                     double scalingFactor)
+                     bool printRho, bool printDisto, 
+                     bool saveAll, double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
+
+  /*
+  bool printVertices = true;
+  if(printVertices){
+    fprintf(fp, "View \"Vertices\" {\n");
+    std::vector<GEntity*> entities;
+    getEntities(entities);
+    for(unsigned int i = 0; i < entities.size(); i++)
+      for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+        MVertex *v = entities[i]->mesh_vertices[j];
+        fprintf(fp, "SP(%g,%g,%g){1};\n", v->x(), v->y(), v->z());
+      }
+    fprintf(fp, "};\n");
+    fclose(fp);
+    return 1;
+  }
+  */
 
   bool f[6] = {printElementary, printElementNumber, printGamma, printEta, printRho,
                printDisto};
@@ -1045,7 +1062,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
     for(unsigned int j = 0; j < points[i].size(); j++)
       vertices.push_back(new MVertex(points[i][j].x(), points[i][j].y(),
                                      points[i][j].z()));
-  MVertexPositionSet pos(vertices, std::min((int)vertices.size(),10));
+  MVertexPositionSet pos(vertices);
   
   for(unsigned int i = 0; i < points.size(); i ++){
     for(unsigned int j = 0; j < points[i].size(); j += 3){

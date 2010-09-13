@@ -23,6 +23,9 @@
 #include "discreteFace.h"
 #include "discreteEdge.h"
 #include "discreteVertex.h"
+#include "boundaryLayerFace.h"
+#include "boundaryLayerEdge.h"
+#include "boundaryLayerVertex.h"
 #include "gmshSurface.h"
 #include "SmoothData.h"
 #include "Context.h"
@@ -1004,7 +1007,7 @@ void GModel::checkMeshCoherence(double tolerance)
     for(unsigned int i = 0; i < entities.size(); i++)
       vertices.insert(vertices.end(), entities[i]->mesh_vertices.begin(), 
                       entities[i]->mesh_vertices.end());
-    MVertexPositionSet pos(vertices, std::min((int)vertices.size(), 10));
+    MVertexPositionSet pos(vertices);
     for(unsigned int i = 0; i < vertices.size(); i++)
       pos.find(vertices[i]->x(), vertices[i]->y(), vertices[i]->z(), eps);
     int num = 0;
@@ -1026,7 +1029,7 @@ void GModel::checkMeshCoherence(double tolerance)
         SPoint3 p = entities[i]->getMeshElement(j)->barycenter();
         vertices.push_back(new MVertex(p.x(), p.y(), p.z()));
       }
-    MVertexPositionSet pos(vertices, std::min((int)vertices.size(), 10));
+    MVertexPositionSet pos(vertices);
     for(unsigned int i = 0; i < vertices.size(); i++)
       pos.find(vertices[i]->x(), vertices[i]->y(), vertices[i]->z(), eps);
     int num = 0;
@@ -1061,7 +1064,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
       MVertex *v = entities[i]->mesh_vertices[j];
       vertices.push_back(new MVertex(v->x(), v->y(), v->z()));
     }
-  MVertexPositionSet pos(vertices, std::min((int)vertices.size(), 10));
+  MVertexPositionSet pos(vertices);
   for(unsigned int i = 0; i < vertices.size(); i++)
     pos.find(vertices[i]->x(), vertices[i]->y(), vertices[i]->z(), eps);
   int num = 0;
@@ -1638,6 +1641,49 @@ GEntity *GModel::extrude(GEntity *e, std::vector<double> p1, std::vector<double>
   return 0;
 }
 
+void GModel::createBoundaryLayer(std::vector<GEntity *> e, double h)
+{
+#if defined(HAVE_MESH)
+  // FIXME remove this!
+  Field *f = _fields->newField(0, "MathEval");
+  char s[128];
+  sprintf(s, "%g", h);
+  f->options["F"]->string() = s;
+
+  GModel *gm = this;
+  for(unsigned int i = 0; i < e.size(); i++){
+    if(e[i]->dim() == 1){
+      GEdge *ge = static_cast<GEdge*>(e[i]);
+      GVertex *beg = ge->getBeginVertex();
+      GVertex *end = ge->getEndVertex();
+      GVertex *v0 = new boundaryLayerVertex(gm, gm->getMaxElementaryNumber(0) + 1, beg);
+      gm->add(v0);
+      GVertex *v1 = new boundaryLayerVertex(gm, gm->getMaxElementaryNumber(0) + 1, end);
+      gm->add(v1);
+      GEdge *e0 = new boundaryLayerEdge(gm, gm->getMaxElementaryNumber(1) + 1, v0, v1, ge);
+      gm->add(e0);
+      GEdge *e1 = new boundaryLayerEdge(gm, gm->getMaxElementaryNumber(1) + 1, beg, v0, beg);
+      gm->add(e1);
+      GEdge *e2 = new boundaryLayerEdge(gm, gm->getMaxElementaryNumber(1) + 1, end, v1, end);
+      gm->add(e2);
+      boundaryLayerFace *f0 = new boundaryLayerFace(gm, gm->getMaxElementaryNumber(2) + 1, e, f, ge);
+      std::vector<int> boundEdges;
+      boundEdges.push_back(ge->tag());
+      boundEdges.push_back(e0->tag());
+      boundEdges.push_back(e1->tag());
+      boundEdges.push_back(e2->tag());
+      f0->setBoundEdges(boundEdges);
+      gm->add(f0);
+    }
+    else{
+      Msg::Error("FIXME: GModel boundary layer creation only for edges for now");
+    }
+  }
+
+  glue(CTX::instance()->geom.tolerance);
+#endif
+}
+
 GEntity *GModel::addPipe(GEntity *e, std::vector<GEdge *>  edges){
   if(_factory) 
     return _factory->addPipe(this,e,edges);
@@ -1703,8 +1749,9 @@ static void computeDuplicates(GModel *model,
                               std::map<GVertex*, GVertex*> &Duplicates2Unique,
                               const double &eps)
 {
-  // currently we use a greedy algorithm in n^2 (using bounding boxes
-  // and the Octree would certainly be better for huge models...)
+  // FIXME: currently we use a greedy algorithm in n^2 (using a
+  // kd-tree: cf. MVertexPositionSet)
+  // FIXME: add option to remove orphaned entities after duplicate check
   std::list<GVertex*> v;
   v.insert(v.begin(), model->firstVertex(), model->lastVertex());
 
@@ -1712,13 +1759,13 @@ static void computeDuplicates(GModel *model,
     GVertex *pv = *v.begin();
     v.erase(v.begin());
     bool found = false;
-    for ( std::multimap<GVertex*,GVertex*>::iterator it = Unique2Duplicates.begin(); 
-          it != Unique2Duplicates.end(); ++it ){
+    for (std::multimap<GVertex*,GVertex*>::iterator it = Unique2Duplicates.begin(); 
+         it != Unique2Duplicates.end(); ++it){
       GVertex *unique = it->first;
       const double d = sqrt((unique->x() - pv->x()) * (unique->x() - pv->x()) +
                             (unique->y() - pv->y()) * (unique->y() - pv->y()) +
                             (unique->z() - pv->z()) * (unique->z() - pv->z()));
-      if (d <= eps) {
+      if (d <= eps && pv->geomType() == unique->geomType()) {
 	found = true;
 	Unique2Duplicates.insert(std::make_pair(unique, pv));
 	Duplicates2Unique[pv] = unique;
@@ -1760,25 +1807,30 @@ static void computeDuplicates(GModel *model,
 
   while(!e.empty()){
     GEdge *pe = *e.begin();
-    // compute a point
-    Range<double> r = pe->parBounds(0);
-    GPoint gp = pe->point(0.5 * (r.low() + r.high()));
     e.erase(e.begin());
     bool found = false;
     for (std::multimap<GEdge*,GEdge*>::iterator it = Unique2Duplicates.begin(); 
          it != Unique2Duplicates.end(); ++it ){
       GEdge *unique = it->first;
       // first check edges that have same endpoints
-      if ((unique->getBeginVertex() == pe->getBeginVertex() && 
-	   unique->getEndVertex() == pe->getEndVertex()) ||
-	  (unique->getEndVertex() == pe->getBeginVertex() && 
-	   unique->getBeginVertex() == pe->getEndVertex())){
-	if (unique->geomType() == GEntity::Line && pe->geomType() == GEntity::Line){
+      if (((unique->getBeginVertex() == pe->getBeginVertex() && 
+            unique->getEndVertex() == pe->getEndVertex()) ||
+           (unique->getEndVertex() == pe->getBeginVertex() && 
+            unique->getBeginVertex() == pe->getEndVertex())) &&
+          unique->geomType() == pe->geomType()){
+	if ((unique->geomType() == GEntity::Line && pe->geomType() == GEntity::Line) ||
+            unique->geomType() == GEntity::DiscreteCurve || 
+            pe->geomType() == GEntity::DiscreteCurve ||
+            unique->geomType() == GEntity::BoundaryLayerCurve || 
+            pe->geomType() == GEntity::BoundaryLayerCurve){
 	  found = true;
 	  Unique2Duplicates.insert(std::make_pair(unique,pe));
 	  Duplicates2Unique[pe] = unique;
 	  break;	  
 	} 
+        // compute a point
+        Range<double> r = pe->parBounds(0);
+        GPoint gp = pe->point(0.5 * (r.low() + r.high()));
 	double t;
 	GPoint gp2 = pe->closestPoint(SPoint3(gp.x(),gp.y(),gp.z()),t);
 	const double d = sqrt((gp.x() - gp2.x()) * (gp.x() - gp2.x()) +
@@ -1832,11 +1884,8 @@ static void computeDuplicates(GModel *model,
 
   while(!f.empty()){
     GFace *pf = *f.begin();
-    // compute a point
     Range<double> r = pf->parBounds(0);
     Range<double> s = pf->parBounds(1);
-    // FIXME : this is WRONG (the point can be in a hole ;-) 
-    GPoint gp = pf->point(SPoint2(0.5 * (r.low() + r.high()), 0.5 * (s.low() + s.high())));
     f.erase(f.begin());
     std::list<GEdge*> pf_edges = pf->edges();
     pf_edges.sort();
@@ -1845,7 +1894,8 @@ static void computeDuplicates(GModel *model,
          it != Unique2Duplicates.end(); ++it){
       GFace *unique = it->first;      
       std::list<GEdge*> unique_edges = unique->edges();
-      if (unique_edges.size() == pf_edges.size()){
+      if (pf->geomType() == unique->geomType() && 
+          unique_edges.size() == pf_edges.size()){
 	unique_edges.sort();
 	std::list<GEdge*>::iterator it_pf = pf_edges.begin();
 	std::list<GEdge*>::iterator it_unique = unique_edges.begin();
@@ -1862,11 +1912,8 @@ static void computeDuplicates(GModel *model,
 	    break;	  
 	  } 
 	  double t[2]={0,0};
-	  const double d = 1.0;
-	  /*sqrt((gp.x()-gp2.x())*(gp.x()-gp2.x())+
-	    (gp.y()-gp2.y())*(gp.y()-gp2.y())+
-	    (gp.z()-gp2.z())*(gp.z()-gp2.z()));*/
-	  //	printf ("closest point @ distance %g\n",d);
+          // FIXME: evaluate a point on the surface (use e.g. buildRepresentationCross)
+	  const double d = 1.0; 
 	  if (t[0] >= r.low() && t[0] <= r.high() && 
 	      t[1] >= s.low() && t[1] <= s.high() && d <= eps) {
 	    found = true;
@@ -2089,4 +2136,9 @@ void GModel::registerBindings(binding *b)
                      "dimension and number. If number=0, the first free number "
                      "is chosen. Returns the number.");
   cm->setArgNames("physicalName","dim","number",NULL);
+
+  cm = cb->addMethod("createBoundaryLayer", &GModel::createBoundaryLayer);
+  cm->setDescription("create a boundary layer using a given field for the "
+                     "extrusion height.");
+  cm->setArgNames("{list of entities}","height",NULL);
 }
