@@ -31,9 +31,11 @@ class GEdge : public GEntity {
 
  protected:
   GVertex *v0, *v1;
+  // FIXME: normals need to be mutable at the moment, because thay can
+  // be created in const member functions
+  mutable std::map<MVertex*, SVector3, std::less<MVertex*> > _normals;
   GEdgeCompound *compound; // this model edge belongs to a compound 
   std::list<GFace *> l_faces;
-  std::set<GFace *> bl_faces;
   // for specific solid modelers that need to re-do the internal curve
   // if a topological change ending points is done (gluing)
   virtual void replaceEndingPointsInternals(GVertex *, GVertex *) {}
@@ -153,13 +155,7 @@ class GEdge : public GEntity {
   // true if entity is periodic in the "dim" direction.
   virtual bool periodic(int dim) const { return v0 == v1; }
 
-  // true if edge is used in hyperbolic layer on face gf
-  virtual bool inHyperbolicLayer(GFace *gf)
-  {
-    return bl_faces.find(gf) != bl_faces.end();
-  }
-
-  virtual void flagInHyperbolicLayer(GFace *gf) { bl_faces.insert(gf); }
+  std::map<MVertex*, SVector3, std::less<MVertex*> > &getNormals() { return _normals; }
 
   // get bounds of parametric coordinate 
   virtual Range<double> parBounds(int i) const = 0;

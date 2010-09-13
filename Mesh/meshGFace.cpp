@@ -1495,7 +1495,6 @@ void meshGFace::operator() (GFace *gf)
   }
 
   if(gf->geomType() == GEntity::DiscreteSurface) return;
-  if(gf->geomType() == GEntity::BoundaryLayerSurface) return;
   if(gf->geomType() == GEntity::ProjectionFace) return;
   if(gf->meshAttributes.Method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) return;
@@ -1504,6 +1503,7 @@ void meshGFace::operator() (GFace *gf)
   deMeshGFace dem;
   dem(gf);
 
+  if(MeshBoundaryLayerSurface(gf)) return;
   if(MeshTransfiniteSurface(gf)) return;
   if(MeshExtrudedSurface(gf)) return;
   if(gf->meshMaster() != gf->tag()){

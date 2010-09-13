@@ -391,7 +391,7 @@ void discreteEdge::computeNormals () const
 //   delete normals;
 }
 
-void discreteEdge::getLocalParameter(const double &t, int &iLine,
+bool discreteEdge::getLocalParameter(const double &t, int &iLine,
                                      double &tLoc) const
 {
   for (iLine = 0; iLine < (int)lines.size(); iLine++){
@@ -400,16 +400,17 @@ void discreteEdge::getLocalParameter(const double &t, int &iLine,
     if (t >= tmin && t <= tmax){
       tLoc = _orientation[iLine] ? (t-tmin)/(tmax-tmin) :
         1 - (t-tmin)/(tmax-tmin);
-      return;
+      return true;
     }
   }
+  return false;
 }
 
 GPoint discreteEdge::point(double par) const
 {
   double tLoc;
   int iEdge;
-  getLocalParameter(par,iEdge,tLoc);
+  if(!getLocalParameter(par,iEdge,tLoc)) return GPoint();
 
   double x, y, z;
   MVertex *vB = lines[iEdge]->getVertex(0);

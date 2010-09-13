@@ -7,22 +7,16 @@ set(SRC
   Generator.cpp
   Field.cpp
     meshGEdge.cpp 
-    meshGEdgeExtruded.cpp 
+      meshGEdgeExtruded.cpp
     meshGFace.cpp 
-    meshGFaceTransfinite.cpp 
-    meshGFaceExtruded.cpp 
-    meshGFaceBamg.cpp 
-    meshGFaceBDS.cpp 
-    meshGFaceDelaunayInsertion.cpp 
-    meshGFaceLloyd.cpp 
-    meshGFaceOptimize.cpp 
-    meshGFaceQuadrilateralize.cpp 
+      meshGFaceTransfinite.cpp meshGFaceExtruded.cpp 
+      meshGFaceBamg.cpp meshGFaceBDS.cpp meshGFaceDelaunayInsertion.cpp 
+      meshGFaceLloyd.cpp meshGFaceOptimize.cpp 
+      meshGFaceQuadrilateralize.cpp meshGFaceBoundaryLayer.cpp 
     meshGRegion.cpp 
-    meshGRegionDelaunayInsertion.cpp 
-    meshGRegionTransfinite.cpp 
-    meshGRegionExtruded.cpp 
-    meshGRegionCarveHole.cpp 
-    meshGRegionLocalMeshMod.cpp
+      meshGRegionDelaunayInsertion.cpp meshGRegionTransfinite.cpp 
+      meshGRegionExtruded.cpp  meshGRegionCarveHole.cpp 
+      meshGRegionLocalMeshMod.cpp
     BackgroundMesh.cpp 
     qualityMeasures.cpp 
     BoundaryLayers.cpp 

@@ -387,6 +387,8 @@ class GModel
                    double angle);
   GEntity *extrude(GEntity *e, std::vector<double> p1, std::vector<double> p2);
   GEntity *addPipe(GEntity *e, std::vector<GEdge *>  edges);
+  void createBoundaryLayer(std::vector<GEntity *> e, double h);
+
   void addRuledFaces (std::vector<std::vector<GEdge *> > edges);
   GFace* addFace (std::vector<GEdge *> edges, std::vector< std::vector<double > > points);
   GFace* addPlanarFace (std::vector<std::vector<GEdge *> > edges);

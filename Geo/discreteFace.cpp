@@ -53,12 +53,12 @@ void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge> &map_e
 
 void discreteFace::setBoundEdges(std::vector<int> tagEdges)
 {
- for (std::vector<int>::iterator it = tagEdges.begin();it != tagEdges.end(); it++){
-   GEdge *ge = GModel::current()->getEdgeByTag(*it);
-   l_edges.push_back(ge);
-   l_dirs.push_back(1);
-   ge->addFace(this);
- }
+  for (std::vector<int>::iterator it = tagEdges.begin(); it != tagEdges.end(); it++){
+    GEdge *ge = GModel::current()->getEdgeByTag(*it);
+    l_edges.push_back(ge);
+    l_dirs.push_back(1);
+    ge->addFace(this);
+  }
 }
 
 GPoint discreteFace::point(double par1, double par2) const

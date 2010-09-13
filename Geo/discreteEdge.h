@@ -15,12 +15,11 @@ class discreteEdge : public GEdge {
   std::vector<double> _pars;
   std::vector<int> _orientation;
   std::map<MVertex*, MLine*> boundv;
-  mutable std::map<MVertex*, SVector3, std::less<MVertex*> > _normals;
   bool createdTopo;
  public:
   discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1);
   virtual ~discreteEdge() {}
-  void getLocalParameter(const double &t, int &iEdge, double &tLoc) const;
+  bool getLocalParameter(const double &t, int &iEdge, double &tLoc) const;
   virtual GeomType geomType() const { return DiscreteCurve; }
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;

@@ -15,6 +15,7 @@
 class GVertex;
 class GEdge;
 class GModel;
+class Field;
 
 // Abstract CAD creation factory.
 class GModelFactory {

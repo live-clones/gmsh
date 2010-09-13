@@ -39,6 +39,7 @@ void GEdge::deleteMesh()
   mesh_vertices.clear();
   for(unsigned int i = 0; i < lines.size(); i++) delete lines[i];
   lines.clear();
+  _normals.clear();
   deleteVertexArrays();
   model()->destroyMeshCaches();
 }
