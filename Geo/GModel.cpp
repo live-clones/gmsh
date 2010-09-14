@@ -27,10 +27,14 @@
 #include "boundaryLayerEdge.h"
 #include "boundaryLayerVertex.h"
 #include "gmshSurface.h"
+#include "ListUtils.h"
+#include "Geo.h"
 #include "SmoothData.h"
 #include "Context.h"
 #include "OS.h"
 #include "GEdgeLoop.h"
+#include "gmshFace.h"
+#include "gmshRegion.h"
 #include "MVertexPositionSet.h"
 #include "OpenFile.h"
 #include "CreateFile.h"
@@ -1620,6 +1624,98 @@ GFace* GModel::addFace (std::vector<GEdge *> edges, std::vector< std::vector<dou
   return 0;
 }
 
+GFace* GModel::addGeoPlanarFace (std::vector<std::vector<GEdge *> > edges){
+  
+  //create line loops
+   std::vector<EdgeLoop *> vecLoops;
+   int nLoops = edges.size();
+   for (int i=0; i< nLoops; i++){
+     int numl = getMaxElementaryNumber(1) + i;
+     while (FindEdgeLoop(numl)){
+       numl++;
+       if (!FindEdgeLoop(numl)) break;
+     }
+     int nl=(int)edges[i].size();
+     List_T *iListl = List_Create(nl, nl, sizeof(int));
+     for(int j = 0; j < nl; j++){
+       int numEdge = edges[i][j]->tag();
+       List_Add(iListl, &numEdge);
+     }
+     sortEdgesInLoop(numl, iListl);
+     EdgeLoop *l = Create_EdgeLoop(numl, iListl);
+     vecLoops.push_back(l);
+     Tree_Add(GModel::current()->getGEOInternals()->EdgeLoops, &l);
+     l->Num = numl;
+     List_Delete(iListl);
+   }
+ 
+  //create plane surfaces
+  int numf = getMaxElementaryNumber(2) + 1;
+  Surface *s = Create_Surface(numf, MSH_SURF_PLAN);
+  List_T *iList = List_Create(nLoops, nLoops, sizeof(int));
+  for (int i=0; i< vecLoops.size(); i++){
+    int numl = vecLoops[i]->Num;
+    List_Add(iList, &numl);
+  }
+  setSurfaceGeneratrices(s, iList);
+  End_Surface(s);
+  Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
+  s->Typ= MSH_SURF_PLAN;
+  s->Num = numf;
+  List_Delete(iList);
+ 
+  //gmsh surface
+  GFace *gf = new gmshFace(this,s);
+  add(gf);
+
+  return gf;
+
+}
+
+GRegion* GModel::addGeoVolume (std::vector<std::vector<GFace *> > faces){
+  
+  //surface loop
+   std::vector<SurfaceLoop *> vecLoops;
+   int nLoops = faces.size();
+   for (int i=0; i< nLoops; i++){
+     int numfl = getMaxElementaryNumber(2) + 1;
+     while (FindSurfaceLoop(numfl)){
+       numfl++;
+       if (!FindSurfaceLoop(numfl)) break;
+     }
+     int nl=(int)faces[i].size();
+     List_T *iListl = List_Create(nl, nl, sizeof(int));
+     for(int j = 0; j < nl; j++){
+       int numFace = faces[i][j]->tag();
+       List_Add(iListl, &numFace);
+     }
+     SurfaceLoop *l = Create_SurfaceLoop(numfl, iListl);
+     vecLoops.push_back(l);
+     Tree_Add(GModel::current()->getGEOInternals()->SurfaceLoops, &l);
+     List_Delete(iListl);
+   }
+
+   //volume
+   int numv = getMaxElementaryNumber(3) + 1;
+   Volume *v = Create_Volume(numv, MSH_VOLUME);
+   List_T *iList = List_Create(nLoops, nLoops, sizeof(int));
+   for (int i=0; i< vecLoops.size(); i++){
+     int numl = vecLoops[i]->Num;
+     List_Add(iList, &numl);
+   }
+   setVolumeSurfaces(v, iList);
+   List_Delete(iList);
+   Tree_Add(GModel::current()->getGEOInternals()->Volumes, &v);
+   v->Typ = MSH_VOLUME;
+   v->Num = numv;
+   
+   //gmsh volume
+  GRegion *gr = new gmshRegion(this,v);
+  add(gr);
+
+  return gr;
+}
+
 GFace* GModel::addPlanarFace (std::vector<std::vector<GEdge *> > edges){
   if(_factory)
     return _factory->addPlanarFace(this, edges);
@@ -2066,11 +2162,17 @@ void GModel::registerBindings(binding *b)
   cm->setDescription("creates a face that is constraint by edges and points");
   cm->setArgNames("{list of edges}","{{x,y,z},{x,y,z},...}",NULL);
   cm = cb->addMethod("addRuledFaces", &GModel::addRuledFaces);
-  cm->setDescription("creates ruled faces that contains a list of wires");
+  cm->setDescription("create ruled faces that contains a list of wires");
   cm->setArgNames("{{list of edges},{list of edges},...}",NULL);
   cm = cb->addMethod("addPlanarFace", &GModel::addPlanarFace);
   cm->setDescription("creates a planar face that contains a list of wires");
   cm->setArgNames("{{list of edges},{list of edges},...}",NULL);
+  cm = cb->addMethod("addGeoPlanarFace", &GModel::addGeoPlanarFace);
+  cm->setDescription("creates a planar face that contains a list with the edges");
+  cm->setArgNames("{{list of edges},{list of edges},...}",NULL);
+  cm = cb->addMethod("addGeoVolume", &GModel::addGeoVolume);
+  cm->setDescription("creates a Volume bounded by a list of faces");
+  cm->setArgNames("{{list of faces},{list of faces},...}",NULL);
   cm = cb->addMethod("addPipe", &GModel::addPipe);
   cm->setDescription("creates a pipe with a base and a wire for the direction");
   cm->setArgNames("ge","{list of edges}",NULL);
@@ -2136,6 +2238,10 @@ void GModel::registerBindings(binding *b)
                      "dimension and number. If number=0, the first free number "
                      "is chosen. Returns the number.");
   cm->setArgNames("physicalName","dim","number",NULL);
+
+  cm = cb->addMethod("createTopology", &GModel::createTopologyFromMesh);
+  cm->setDescription("build the topology for a given mesh.");
+  cm->setArgNames(NULL);
 
   cm = cb->addMethod("createBoundaryLayer", &GModel::createBoundaryLayer);
   cm->setDescription("create a boundary layer using a given field for the "

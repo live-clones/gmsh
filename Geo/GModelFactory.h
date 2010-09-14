@@ -48,7 +48,7 @@ class GModelFactory {
   // of faces. If boundaries are co-planar, then it's a plane, 
   // otherwise, we tru ruled, sweep or other kind of surfaces
   virtual std::vector<GFace *> addRuledFaces(GModel *gm, 
-                                             std::vector<std::vector<GEdge *> > edges) = 0; 
+					     std::vector<std::vector<GEdge *> > edges) = 0; 
   virtual GFace *addFace(GModel *gm, std::vector<GEdge *> edges, 
                          std::vector< std::vector<double > > points) = 0;
   virtual GFace *addPlanarFace(GModel *gm, std::vector<std::vector<GEdge *> > edges) = 0;

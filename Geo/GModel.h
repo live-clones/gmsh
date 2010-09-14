@@ -392,6 +392,8 @@ class GModel
   void addRuledFaces (std::vector<std::vector<GEdge *> > edges);
   GFace* addFace (std::vector<GEdge *> edges, std::vector< std::vector<double > > points);
   GFace* addPlanarFace (std::vector<std::vector<GEdge *> > edges);
+  GFace* addGeoPlanarFace (std::vector<std::vector<GEdge*> > edges);
+  GRegion* addGeoVolume (std::vector<std::vector<GFace*> > faces);
 
   // create solid geometry primitives using the factory
   GEntity *addSphere(double cx, double cy, double cz, double radius);

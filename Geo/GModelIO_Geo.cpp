@@ -44,6 +44,7 @@ int GModel::readGEO(const std::string &name)
 
 int GModel::exportDiscreteGEOInternals()
 {
+
   if(_geo_internals) delete _geo_internals;
   _geo_internals = new GEO_Internals;
 

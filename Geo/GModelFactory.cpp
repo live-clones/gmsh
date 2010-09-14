@@ -36,6 +36,7 @@
 #include <TColgp_HArray1OfPnt.hxx>
 #include <TColStd_HArray1OfReal.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
+#include "MLine.h"
 
 GVertex *OCCFactory::addVertex(GModel *gm, double x, double y, double z, double lc)
 {
@@ -548,7 +549,7 @@ void OCCFactory::rotate(GModel *gm, std::vector<double> p1, std::vector<double> 
 }
 
 std::vector<GFace *> OCCFactory::addRuledFaces(GModel *gm, 
-                                               std::vector< std::vector<GEdge *> > wires)
+					      std::vector< std::vector<GEdge *> > wires)
 {
   std::vector<GFace*> faces;
   Standard_Boolean anIsSolid = Standard_False;
@@ -559,7 +560,6 @@ std::vector<GFace *> OCCFactory::addRuledFaces(GModel *gm,
     BRepBuilderAPI_MakeWire wire_maker;
     for (unsigned j=0;j<wires[i].size();j++) {
       GEdge *ge = wires[i][j];
-      printf("edge %d\n",ge->tag());
       OCCEdge *occe = dynamic_cast<OCCEdge*>(ge);
       if (occe){
 	wire_maker.Add(occe->getTopoDS_Edge());
@@ -610,6 +610,7 @@ extern void computeMeanPlane(const std::vector<SPoint3> &points, mean_plane &mea
 
 GFace *OCCFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> > wires)
 {
+
   std::set<GVertex*> verts;
   for (unsigned i = 0; i < wires.size(); i++) {
     for (unsigned j = 0; j < wires[i].size(); j++) {
@@ -623,12 +624,13 @@ GFace *OCCFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
   for ( ; it != verts.end(); ++it){
     points.push_back(SPoint3((*it)->x(), (*it)->y(), (*it)->z()));
   }
+ 
   mean_plane meanPlane;
   computeMeanPlane(points, meanPlane);
 
   gp_Pln aPlane (meanPlane.a,meanPlane.b,meanPlane.c,meanPlane.d);
   BRepBuilderAPI_MakeFace aGenerator (aPlane);
-  
+
   for (unsigned i = 0; i < wires.size() ;i++) {
     BRepBuilderAPI_MakeWire wire_maker;
     for (unsigned j = 0; j < wires[i].size(); j++) {
@@ -642,11 +644,12 @@ GFace *OCCFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
     if (i)myWire.Reverse();
     aGenerator.Add (myWire);
   }
-  
+
   aGenerator.Build();
-  
   TopoDS_Shape aResult = aGenerator.Shape();
+
   return gm->_occ_internals->addFaceToModel(gm, TopoDS::Face(aResult));
+
 }
 
 GEntity *OCCFactory::addPipe(GModel *gm, GEntity *base, std::vector<GEdge *> wire)
