@@ -5,14 +5,6 @@
 
 #include "GModelFactory.h"
 
-#if defined(HAVE_OCC)
-
-#include "OCCIncludes.h"
-#include "GModelIO_OCC.h"
-#include "OCCVertex.h"
-#include "OCCEdge.h"
-#include "OCCFace.h"
-#include "OCCRegion.h"
 #include "ListUtils.h"
 #include "Context.h"
 #include "GVertex.h"
@@ -20,30 +12,8 @@
 #include "gmshEdge.h"
 #include "gmshFace.h"
 #include "gmshRegion.h"
-#include "BRepBuilderAPI_MakeVertex.hxx"
-#include "BRepOffsetAPI_MakePipe.hxx"
-#include "BRepBuilderAPI_MakeEdge.hxx"
-#include "BRepPrimAPI_MakeRevol.hxx"
-#include "BRepPrimAPI_MakePrism.hxx"
-#include "BRepBuilderAPI_MakeWire.hxx"
-#include "BRepOffsetAPI_ThruSections.hxx"
-#include "BRepOffsetAPI_MakeFilling.hxx"
-#include "BRepBuilderAPI_MakeFace.hxx"
-#include <GC_MakeArcOfCircle.hxx>
-#include <gp_Pnt.hxx>
-#include <gp_Vec.hxx>
-#include <gce_MakeCirc.hxx>
-#include <gce_MakePln.hxx>
-#include <ElCLib.hxx>
-#include <Geom_Circle.hxx>
-#include <Geom_TrimmedCurve.hxx>
-#include <Geom_BezierCurve.hxx>
-#include <Geom_BSplineCurve.hxx>
-#include <BRepBuilderAPI_Transform.hxx>
-#include <TColgp_HArray1OfPnt.hxx>
-#include <TColStd_HArray1OfReal.hxx>
-#include <TColStd_HArray1OfInteger.hxx>
 #include "MLine.h"
+#include "GModel.h"
 
 
 GVertex *GeoFactory::addVertex(GModel *gm, double x, double y, double z, double lc)
@@ -189,6 +159,38 @@ GRegion* GeoFactory::addVolume (GModel *gm, std::vector<std::vector<GFace *> > f
 
 
 //---------------------------------------------------------------------------------
+#if defined(HAVE_OCC)
+#include "OCCIncludes.h"
+#include "GModelIO_OCC.h"
+#include "OCCVertex.h"
+#include "OCCEdge.h"
+#include "OCCFace.h"
+#include "OCCRegion.h"
+#include "BRepBuilderAPI_MakeVertex.hxx"
+#include "BRepOffsetAPI_MakePipe.hxx"
+#include "BRepBuilderAPI_MakeEdge.hxx"
+#include "BRepPrimAPI_MakeRevol.hxx"
+#include "BRepPrimAPI_MakePrism.hxx"
+#include "BRepBuilderAPI_MakeWire.hxx"
+#include "BRepOffsetAPI_ThruSections.hxx"
+#include "BRepOffsetAPI_MakeFilling.hxx"
+#include "BRepBuilderAPI_MakeFace.hxx"
+#include <GC_MakeArcOfCircle.hxx>
+#include <gp_Pnt.hxx>
+#include <gp_Vec.hxx>
+#include <gce_MakeCirc.hxx>
+#include <gce_MakePln.hxx>
+#include <ElCLib.hxx>
+#include <Geom_Circle.hxx>
+#include <Geom_TrimmedCurve.hxx>
+#include <Geom_BezierCurve.hxx>
+#include <Geom_BSplineCurve.hxx>
+#include <BRepBuilderAPI_Transform.hxx>
+#include <TColgp_HArray1OfPnt.hxx>
+#include <TColStd_HArray1OfReal.hxx>
+#include <TColStd_HArray1OfInteger.hxx>
+
+
 GVertex *OCCFactory::addVertex(GModel *gm, double x, double y, double z, double lc)
 {
   if (!gm->_occ_internals)

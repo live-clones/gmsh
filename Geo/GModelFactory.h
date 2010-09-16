@@ -8,14 +8,14 @@
 
 #include <vector>
 #include "GmshConfig.h"
-#include "fullMatrix.h"
-#include "SPoint3.h"
-#include "GEntity.h"
 
+class GEntity;
 class GVertex;
 class GEdge;
+class GFace;
+class GRegion;
 class GModel;
-class Field;
+class SPoint3;
 
 // Abstract CAD creation factory.
 class GModelFactory {
@@ -145,7 +145,7 @@ class OCCFactory : public GModelFactory {
  public:
   OCCFactory(){}
   GVertex *addVertex(GModel *gm,double x, double y, double z, double lc);
-  virtual GEdge *addLine(GModel *gm,GVertex *v1, GVertex *v2);
+  GEdge *addLine(GModel *gm,GVertex *v1, GVertex *v2);
   GEdge *addCircleArc(GModel *gm,const arcCreationMethod &method,
                       GVertex *start, GVertex *end, 
                       const SPoint3 &aPoint);
