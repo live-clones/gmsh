@@ -44,7 +44,7 @@ class femTerm {
   virtual void elementMatrix(SElement *se, fullMatrix<dataMat> &m) const = 0;
   virtual void elementVector(SElement *se, fullVector<dataVec> &m) const
   {
-    m.scale(0.0);
+     m.scale(0.0);
   }
 
   // add the contribution from all the elements in the intersection
@@ -157,7 +157,7 @@ class femTerm {
 
   void addToRightHandSide(dofManager<dataVec> &dm, groupOfElements &C) const
   {
-     groupOfElements::elementContainer::const_iterator it = C.begin();
+    groupOfElements::elementContainer::const_iterator it = C.begin();
     for ( ; it != C.end(); ++it){
       MElement *eL = *it;
       SElement se(eL);

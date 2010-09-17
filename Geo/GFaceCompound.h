@@ -11,6 +11,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GFace.h"
+#include "simpleFunction.h"
 
 #if defined(HAVE_SOLVER)
 
@@ -57,6 +58,8 @@ class GFaceCompound : public GFace {
   typedef enum {UNITCIRCLE, SQUARE} typeOfIsomorphism;
   void computeNormals(std::map<MVertex*, SVector3> &normals) const;
  protected:
+  simpleFunction<double> *ONE;
+  simpleFunction<double> *MONE;
   std::list<GFace*> _compound;
   std::list<GEdge*> _U0, _U1, _V0, _V1;
   std::list<std::list<GEdge*> > _interior_loops;
@@ -76,6 +79,7 @@ class GFaceCompound : public GFace {
   void parametrize(iterationStep, typeOfMapping, double alpha=0.) const;
   bool parametrize_conformal() const;
   bool parametrize_conformal_spectral() const;
+  bool parametrize_conformal_nonLinear() const;
   void compute_distance() const;
   bool checkOrientation(int iter) const;
   bool checkOverlap(std::vector<MVertex*> &ordered) const;

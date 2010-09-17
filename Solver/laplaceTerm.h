@@ -11,8 +11,13 @@
 // \nabla \cdot k \nabla U 
 class laplaceTerm : public helmholtzTerm<double> {
  public:
-  laplaceTerm(GModel *gm, int iField, simpleFunction<double> *k)
+ laplaceTerm(GModel *gm, int iField, simpleFunction<double> *k, dofManager<double> *dofView=NULL)
     : helmholtzTerm<double>(gm, iField, iField, k, 0) {}
+ void elementVector(SElement *se, fullVector<double> &m) const
+  {
+    //adding here rhs
+    printf("implment  rhs laplace term here\n");
+  }
 };
 
 // a \nabla U 

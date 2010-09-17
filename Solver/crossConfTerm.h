@@ -21,9 +21,10 @@ class crossConfTerm : public femTerm<double> {
   int _iFieldC;
  public:
   crossConfTerm(GModel *gm, int iFieldR, int iFieldC, 
-                simpleFunction<double> *diffusivity)
+                simpleFunction<double> *diffusivity, dofManager<double> *dofView=NULL)
     : femTerm<double>(gm), _diffusivity(diffusivity), _iFieldR(iFieldR), 
       _iFieldC(iFieldC) {}
+
   virtual int sizeOfR(SElement *se) const 
   {
     return se->getMeshElement()->getNumVertices(); 
@@ -85,6 +86,11 @@ class crossConfTerm : public femTerm<double> {
     for (int j = 0; j < nbNodes; j++)
       for (int k = 0; k < j; k++)
         m(k, j) = -1.* m(j, k);
+  }
+ void elementVector(SElement *se, fullVector<double> &m) const
+  {
+    //adding here rhs
+    printf("implment  rhs cross term here\n");
   }
 };
 

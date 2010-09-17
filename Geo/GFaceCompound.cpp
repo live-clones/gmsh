@@ -8,6 +8,7 @@
 //
 
 #include "GmshConfig.h"
+#define SQU(a)  ((a)*(a))
 
 #if defined(HAVE_SOLVER)
 
@@ -68,16 +69,16 @@ static int intersection_segments (SPoint3 &p1, SPoint3 &p2,
     return 0;
   }
   else{
-  double A[2][2];
-  A[0][0] = p2.x()-p1.x();
-  A[0][1] = q1.x()-q2.x();
-  A[1][0] = p2.y()-p1.y();
-  A[1][1] = q1.y()-q2.y();
-  double b[2] = {q1.x()-p1.x(),q1.y()-p1.y()};
-  sys2x2(A,b,x);
+    double A[2][2];
+    A[0][0] = p2.x()-p1.x();
+    A[0][1] = q1.x()-q2.x();
+    A[1][0] = p2.y()-p1.y();
+    A[1][1] = q1.y()-q2.y();
+    double b[2] = {q1.x()-p1.x(),q1.y()-p1.y()};
+    sys2x2(A,b,x);
 
-  return (x[0] >= 0.0 && x[0] <= 1. &&
-          x[1] >= 0.0 && x[1] <= 1.);
+    return (x[0] >= 0.0 && x[0] <= 1. &&
+	    x[1] >= 0.0 && x[1] <= 1.);
   } 
   
 }
@@ -254,12 +255,12 @@ static void myPolygon(std::vector<MElement*> &vTri, std::vector<MVertex*> &vPoly
     }
   }
 
-//   printf("epoly.size=%d  vTri=%d\n", ePoly.size(), vTri.size());
-//   for(std::vector<MEdge>::iterator ite = ePoly.begin(); ite != ePoly.end(); ite++){
-//      MVertex *vB = ite->getVertex(0);
-//      MVertex *vE = ite->getVertex(1);
-//      printf("VB=%d vE=%d \n", vB->getNum(), vE->getNum());
-//   }
+  //   printf("epoly.size=%d  vTri=%d\n", ePoly.size(), vTri.size());
+  //   for(std::vector<MEdge>::iterator ite = ePoly.begin(); ite != ePoly.end(); ite++){
+  //      MVertex *vB = ite->getVertex(0);
+  //      MVertex *vE = ite->getVertex(1);
+  //      printf("VB=%d vE=%d \n", vB->getNum(), vE->getNum());
+  //   }
 
   std::vector<MEdge>::iterator ite= ePoly.begin() ;
   MVertex *vINIT = ite->getVertex(0);
@@ -267,27 +268,27 @@ static void myPolygon(std::vector<MElement*> &vTri, std::vector<MVertex*> &vPoly
   vPoly.push_back(ite->getVertex(1));
   ePoly.erase(ite);
 
-   while(!ePoly.empty()){
-     ite = ePoly.begin() ;
-     while(ite != ePoly.end()){
-       MVertex *vB = ite->getVertex(0);
-       MVertex *vE = ite->getVertex(1);
-       if(vB == vPoly.back()){
-         if(vE != vINIT) vPoly.push_back(vE);
-         ePoly.erase(ite);
-       }
-       else if(vE == vPoly.back()){
-         if(vB != vINIT) vPoly.push_back(vB);
-         ePoly.erase(ite);
-       }
-       else ite++;
-     }
+  while(!ePoly.empty()){
+    ite = ePoly.begin() ;
+    while(ite != ePoly.end()){
+      MVertex *vB = ite->getVertex(0);
+      MVertex *vE = ite->getVertex(1);
+      if(vB == vPoly.back()){
+	if(vE != vINIT) vPoly.push_back(vE);
+	ePoly.erase(ite);
+      }
+      else if(vE == vPoly.back()){
+	if(vB != vINIT) vPoly.push_back(vB);
+	ePoly.erase(ite);
+      }
+      else ite++;
+    }
   }
 
-//   printf("epoly.size=%d  vTri=%d, cavV.size =%d\n", ePoly.size(), vTri.size(), vPoly.size());
-//   for(std::vector<MVertex*>::iterator itv = vPoly.begin(); itv != vPoly.end(); itv++){
-//     printf("VV=%d \n", (*itv)->getNum());
-//   }
+  //   printf("epoly.size=%d  vTri=%d, cavV.size =%d\n", ePoly.size(), vTri.size(), vPoly.size());
+  //   for(std::vector<MVertex*>::iterator itv = vPoly.begin(); itv != vPoly.end(); itv++){
+  //     printf("VV=%d \n", (*itv)->getNum());
+  //   }
 
 }
 bool checkCavity(std::vector<MElement*> &vTri, std::map<MVertex*, SPoint2> &vCoord) {
@@ -599,9 +600,9 @@ void GFaceCompound::one2OneMap() const
      
     if(badCavity){
       Msg::Debug("Wrong cavity around vertex %d (onwhat=%d).",
-                v->getNum(),  v->onWhat()->dim());
+		 v->getNum(),  v->onWhat()->dim());
       Msg::Debug("--> Place vertex at center of gravity of %d-Polygon kernel." ,
-                vTri.size());
+		 vTri.size());
       
       double u_cg, v_cg;
       std::vector<MVertex*> cavV;
@@ -650,13 +651,16 @@ bool GFaceCompound::parametrize() const
   else if (_mapping == CONFORMAL){
     Msg::Debug("Parametrizing surface %d with 'conformal map'", tag());
     fillNeumannBCS();
-    bool withoutOverlap = parametrize_conformal_spectral() ;
-    //bool withoutOverlap = parametrize_conformal();
-    if ( withoutOverlap == false || !checkOrientation(0) ){
+    bool noOverlap = parametrize_conformal_spectral() ;
+    if (!noOverlap) noOverlap = parametrize_conformal();
+    // if (!noOverlap) {
+    //    noOverlap = parametrize_conformal_nonLinear() ;
+    //    exit(1);
+    // }
+    if ( !noOverlap || !checkOrientation(0) ){
       Msg::Warning("$$$ Parametrization switched to harmonic map");
-       parametrize(ITERU,HARMONIC); 
+      parametrize(ITERU,HARMONIC); 
       parametrize(ITERV,HARMONIC);
-      //buildOct(); exit(1);
     }
   }
 
@@ -724,15 +728,15 @@ void GFaceCompound::getBoundingEdges()
     while(!_unique.empty())  computeALoop(_unique, loop); 
 
     //assign Derichlet BC (_U0) to bound with largest size
-     double maxSize = 0.0;
-     for(std::list<std::list<GEdge*> >::iterator it = _interior_loops.begin();
+    double maxSize = 0.0;
+    for(std::list<std::list<GEdge*> >::iterator it = _interior_loops.begin();
         it != _interior_loops.end(); it++){
-       double size = getSizeBB(*it);
-       if (size > maxSize) {
-         _U0 = *it;
-         maxSize = size;
-       }
-   }
+      double size = getSizeBB(*it);
+      if (size > maxSize) {
+	_U0 = *it;
+	maxSize = size;
+      }
+    }
 
   }
 
@@ -783,47 +787,47 @@ SBoundingBox3d GFaceCompound::boundEdges(const std::list<GEdge* > &elist) const
 SOrientedBoundingBox GFaceCompound::obb_boundEdges(const std::list<GEdge* > &elist) const
 {
 
- SOrientedBoundingBox res;
- std::vector<SPoint3> vertices;
+  SOrientedBoundingBox res;
+  std::vector<SPoint3> vertices;
 
- std::list<GEdge*>::const_iterator it = elist.begin();
- for(; it != elist.end(); it++) {
+  std::list<GEdge*>::const_iterator it = elist.begin();
+  for(; it != elist.end(); it++) {
    
-   if((*it)->getNumMeshVertices() > 0) {
-     int N = (*it)->getNumMeshVertices();
-     for (int i = 0; i < N; i++) {
-       MVertex* mv = (*it)->getMeshVertex(i);
-       vertices.push_back(mv->point());
-     }
-     // Don't forget to add the first and last vertices...
-     SPoint3 pt1((*it)->getBeginVertex()->x(),
-(*it)->getBeginVertex()->y(), (*it)->getBeginVertex()->z());
-     SPoint3 pt2((*it)->getEndVertex()->x(), (*it)->getEndVertex()->y(),
-(*it)->getEndVertex()->z());
-     vertices.push_back(pt1);
-     vertices.push_back(pt2);
-   } 
-   else if((*it)->geomType() != DiscreteCurve && (*it)->geomType() !=
-BoundaryLayerCurve){
-     Range<double> tr = (*it)->parBounds(0);
-     // N can be choosen arbitrarily, but 10 points seems reasonable
-     int N = 10;
-     for (int i = 0; i < N; i++) {
-       double t = tr.low() + (double)i / (double)(N - 1) * (tr.high() -
-tr.low());
-       GPoint p = (*it)->point(t);
-       SPoint3 pt(p.x(), p.y(), p.z());
-       vertices.push_back(pt);
-     }
-   } 
-   else {
-     SPoint3 dummy(0, 0, 0);
-     vertices.push_back(dummy);
-   }
+    if((*it)->getNumMeshVertices() > 0) {
+      int N = (*it)->getNumMeshVertices();
+      for (int i = 0; i < N; i++) {
+	MVertex* mv = (*it)->getMeshVertex(i);
+	vertices.push_back(mv->point());
+      }
+      // Don't forget to add the first and last vertices...
+      SPoint3 pt1((*it)->getBeginVertex()->x(),
+		  (*it)->getBeginVertex()->y(), (*it)->getBeginVertex()->z());
+      SPoint3 pt2((*it)->getEndVertex()->x(), (*it)->getEndVertex()->y(),
+		  (*it)->getEndVertex()->z());
+      vertices.push_back(pt1);
+      vertices.push_back(pt2);
+    } 
+    else if((*it)->geomType() != DiscreteCurve && (*it)->geomType() !=
+	    BoundaryLayerCurve){
+      Range<double> tr = (*it)->parBounds(0);
+      // N can be choosen arbitrarily, but 10 points seems reasonable
+      int N = 10;
+      for (int i = 0; i < N; i++) {
+	double t = tr.low() + (double)i / (double)(N - 1) * (tr.high() -
+							     tr.low());
+	GPoint p = (*it)->point(t);
+	SPoint3 pt(p.x(), p.y(), p.z());
+	vertices.push_back(pt);
+      }
+    } 
+    else {
+      SPoint3 dummy(0, 0, 0);
+      vertices.push_back(dummy);
+    }
 
- }
- res = SOrientedBoundingBox::buildOBB(vertices);
- return res;
+  }
+  res = SOrientedBoundingBox::buildOBB(vertices);
+  return res;
 }
 
 
@@ -925,6 +929,8 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
     _lsys(lsys),_mapping(mpg), _allowPartition(allowPartition)
 {
  
+  ONE = new simpleFunction<double>(1.0);
+  MONE = new simpleFunction<double>(-1.0);
   if (!_lsys) {
 #if defined(HAVE_PETSC) && !defined(HAVE_TAUCS)
     _lsys = new linearSystemPETSc<double>;
@@ -963,6 +969,8 @@ GFaceCompound::~GFaceCompound()
     delete [] _gfct;
   }
   if (_lsys)delete _lsys;
+  delete ONE;
+  delete MONE;
 }
 
 
@@ -1055,7 +1063,6 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom, double al
 {  
   
   dofManager<double> myAssembler(_lsys);
-  simpleFunction<double> ONE(1.0);
 
   if(_type == UNITCIRCLE){
     // maps the boundary onto a circle
@@ -1076,18 +1083,18 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom, double al
     }
 
     //pin down two vertices
-   // MVertex *v1  = ordered[0];
-   // MVertex *v2  = ordered[(int)ceil((double)ordered.size()/2.)];
-   // if(step == ITERU){
-   //   myAssembler.fixVertex(v1, 0, 1, 0.);
-   //   myAssembler.fixVertex(v2, 0, 1, 1.);
-   // }
-   // else if(step == ITERV){
-   //   myAssembler.fixVertex(v1, 0, 1, 0.);
-   //   myAssembler.fixVertex(v2, 0, 1, 0.);
-   // }
-   // printf("Pinned vertex  %g %g %g / %g %g %g \n", v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z());
-   //exit(1);
+    // MVertex *v1  = ordered[0];
+    // MVertex *v2  = ordered[(int)ceil((double)ordered.size()/2.)];
+    // if(step == ITERU){
+    //   myAssembler.fixVertex(v1, 0, 1, 0.);
+    //   myAssembler.fixVertex(v2, 0, 1, 1.);
+    // }
+    // else if(step == ITERV){
+    //   myAssembler.fixVertex(v1, 0, 1, 0.);
+    //   myAssembler.fixVertex(v2, 0, 1, 0.);
+    // }
+    // printf("Pinned vertex  %g %g %g / %g %g %g \n", v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z());
+    //exit(1);
 
   }
   else if(_type == SQUARE){
@@ -1127,7 +1134,7 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom, double al
     }    
   }
 
-   for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 !=fillTris.end(); it2++ ){
+  for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 !=fillTris.end(); it2++ ){
     MTriangle *t = (*it2);
     myAssembler.numberVertex(t->getVertex(0), 0, 1);
     myAssembler.numberVertex(t->getVertex(1), 0, 1);
@@ -1141,9 +1148,9 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom, double al
   
   femTerm<double> *mapping;
   if (tom == HARMONIC)
-    mapping = new laplaceTerm(0, 1, &ONE);
+    mapping = new laplaceTerm(0, 1, ONE);
   else // tom == CONVEXCOMBINATION
-    mapping = new convexCombinationTerm(0, 1, &ONE);
+    mapping = new convexCombinationTerm(0, 1, ONE);
   
   it = _compound.begin();
   for( ; it != _compound.end() ; ++it){
@@ -1166,15 +1173,15 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom, double al
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
     MVertex *v = *itv;
     double value;
-   myAssembler.getDofValue(v, 0, 1, value);
-   std::map<MVertex*,SPoint3>::iterator itf = coordinates.find(v);
+    myAssembler.getDofValue(v, 0, 1, value);
+    std::map<MVertex*,SPoint3>::iterator itf = coordinates.find(v);
 
-   //combination convex and harmonic
-   double valNEW ;
-   if (alpha != 0.0)
-     valNEW = alpha*itf->second[step] + (1-alpha)*value ;
-   else
-     valNEW = value;
+    //combination convex and harmonic
+    double valNEW ;
+    if (alpha != 0.0)
+      valNEW = alpha*itf->second[step] + (1-alpha)*value ;
+    else
+      valNEW = value;
 
     if(itf == coordinates.end()){
       SPoint3 p(0, 0, 0);
@@ -1189,58 +1196,59 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom, double al
   _lsys->clear();
 
 }
-
-bool GFaceCompound::parametrize_conformal_spectral() const
-{
- 
-#if !defined(HAVE_PETSC) && !defined(HAVE_SLEPC)
+bool GFaceCompound::parametrize_conformal_nonLinear() const
 {
 
-  Msg::Error("-----------------------------------------------------------------------------!");
-  Msg::Error("Gmsh should be compiled with petsc and slepc for using the conformal map     !");
-  Msg::Error("Switch to harmonic map or see doc on the wiki for installing petsc and slepc !");
-  Msg::Error("https://geuz.org/trac/gmsh/wiki/STLRemeshing (username:gmsh,passwd:gmsh)     !");
-  Msg::Error("-----------------------------------------------------------------------------!");
-  Msg::Exit(1);
-  return false;
+  Msg::Info("Conformal parametrization of type: nonLinear");
+  buildOct(); //use this to print conformal map that is overlapping
 
-}
-#else
-{
+  dofManager<double> myAssembler(_lsys);
+  _lsys->clear();
 
+  //--- first compute mapping harmonic
+  parametrize(ITERU,HARMONIC); 
+  parametrize(ITERV,HARMONIC);
+
+  //---order boundary vertices
   std::vector<MVertex*> ordered;
   std::vector<double> coords;  
   bool success = orderVertices(_U0, ordered, coords);
-  if(!success){
-    Msg::Error("Could not order vertices on boundary");
-    return false;
-  }
+  // std::vector<SPoint2> ordered;
+  // ordered.push_back(SPoint2(0.,0.));
+  // ordered.push_back(SPoint2(0.5,sqrt(3)/2));
+  // ordered.push_back(SPoint2(1.,0.));
+  // ordered.push_back(SPoint2(1.0, 1.0));
+  // ordered.push_back(SPoint2(0.0, 1.0));
+  int nb = ordered.size();
 
-  linearSystem <double> *lsysA  = new linearSystemPETSc<double>;
-  linearSystem <double> *lsysB  = new linearSystemPETSc<double>;
-  dofManager<double> myAssembler(lsysA, lsysB);
+  //--fix vertex
+  MVertex *v1  = ordered[0];
+  MVertex *v2  = ordered[(int)ceil((double)ordered.size()/2.)];
+  myAssembler.fixVertex(v1, 0, 1, 1.);
+  myAssembler.fixVertex(v1, 0, 2, 0.);
+  myAssembler.fixVertex(v2, 0, 1, -1.);
+  myAssembler.fixVertex(v2, 0, 2, 0.);
 
-  //printf("nbNodes = %d in spectral param \n", allNodes.size());
-  //-------------------------------
-  myAssembler.setCurrentMatrix("A");
+  //--Assemble linear system 
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
     MVertex *v = *itv;
     myAssembler.numberVertex(v, 0, 1);
     myAssembler.numberVertex(v, 0, 2);
   }
-
   for(std::set<MVertex *>::iterator itv = fillNodes.begin(); itv !=fillNodes.end() ; ++itv){
     MVertex *v = *itv;
     myAssembler.numberVertex(v, 0, 1);
     myAssembler.numberVertex(v, 0, 2);
   }
-
-  simpleFunction<double> ONE(1.0);
-  simpleFunction<double> MONE(-1.0 );
-  laplaceTerm laplace1(model(), 1, &ONE);
-  laplaceTerm laplace2(model(), 2, &ONE);
-  crossConfTerm cross12(model(), 1, 2, &ONE);
-  crossConfTerm cross21(model(), 2, 1, &MONE);
+  //ghost vertex for lagrange multiplier
+  MVertex *lag = new MVertex(0.,0.,0.);
+  myAssembler.numberVertex(lag, 0, 3);
+  
+  std::vector<MElement *> allElems;
+  laplaceTerm laplace1(model(), 1, ONE, &myAssembler);
+  laplaceTerm laplace2(model(), 2, ONE, &myAssembler);
+  crossConfTerm cross12(model(), 1, 2, ONE, &myAssembler);
+  crossConfTerm cross21(model(), 2, 1, MONE, &myAssembler);
   std::list<GFace*>::const_iterator it = _compound.begin(); 
   for( ; it != _compound.end() ; ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
@@ -1249,106 +1257,283 @@ bool GFaceCompound::parametrize_conformal_spectral() const
       laplace2.addToMatrix(myAssembler, &se);
       cross12.addToMatrix(myAssembler, &se);
       cross21.addToMatrix(myAssembler, &se);
+      allElems.push_back((MElement*)((*it)->triangles[i]));
     }
   }
-
   for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 !=fillTris.end(); it2++ ){
     SElement se((*it2));
     laplace1.addToMatrix(myAssembler, &se);
     laplace2.addToMatrix(myAssembler, &se);
     cross12.addToMatrix(myAssembler, &se);
     cross21.addToMatrix(myAssembler, &se);
+    allElems.push_back((MElement*)(*it2));
   }
-
-  double epsilon = 1.e-7;
-  for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
-      MVertex *v = *itv;
-      if (std::find(ordered.begin(), ordered.end(), v) == ordered.end() ){
-        myAssembler.assemble(v, 0, 1, v, 0, 1,  epsilon);
-        myAssembler.assemble(v, 0, 2, v, 0, 2,  epsilon);
-      }
-  }
-  for(std::set<MVertex *>::iterator itv = fillNodes.begin(); itv !=fillNodes.end() ; ++itv){
-      MVertex *v = *itv;
-      if (std::find(ordered.begin(), ordered.end(), v) == ordered.end() ){
-        myAssembler.assemble(v, 0, 1, v, 0, 1,  epsilon);
-        myAssembler.assemble(v, 0, 2, v, 0, 2,  epsilon);
-      }
-  }
-
-  //-------------------------------
-   myAssembler.setCurrentMatrix("B");
-
-   double small = 0.0;
-   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
-     MVertex *v = *itv;
-     if (std::find(ordered.begin(), ordered.end(), v) == ordered.end() ){
-       myAssembler.assemble(v, 0, 1, v, 0, 1,  small);
-       myAssembler.assemble(v, 0, 2, v, 0, 2,  small);
-     }
-     else{
-       myAssembler.assemble(v, 0, 1, v, 0, 1,  1.0);
-       myAssembler.assemble(v, 0, 2, v, 0, 2,  1.0);
-     }
-   } 
-   for(std::set<MVertex *>::iterator itv = fillNodes.begin(); itv !=fillNodes.end() ; ++itv){
-     MVertex *v = *itv;
-     myAssembler.assemble(v, 0, 1, v, 0, 1,  small);
-     myAssembler.assemble(v, 0, 2, v, 0, 2,  small);
-   }
-
-   //mettre max NC contraintes par bord
-   int NB = ordered.size();
-   int NC = std::min(200,NB);
-   int jump = (int) NB/NC;
-   int nbLoop = (int) NB/jump ;
-   //printf("nb bound nodes=%d jump =%d \n", NB, jump);
-   for (int i = 0; i< nbLoop; i++){
-     MVertex *v1 = ordered[i*jump];
-     for (int j = 0; j< nbLoop; j++){
-       MVertex *v2 = ordered[j*jump];
-       myAssembler.assemble(v1, 0, 1, v2, 0, 1,  -1./NB);
-       myAssembler.assemble(v1, 0, 2, v2, 0, 2,  -1./NB);
-     }
-   }
-
-   //-------------------------------
-   //printf("Solve eigensystem \n");
-   eigenSolver eig(&myAssembler, "B" , "A", true);
-   bool converged = eig.solve(1, "largest");
-    
-   if(converged) {
-     double Linfty = 0.0;
-     int k = 0;
-     std::vector<std::complex<double> > &ev = eig.getEigenVector(0); 
-     for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
-       double paramu = ev[k].real();
-       double paramv = ev[k+1].real();
-       Linfty=std::max(Linfty, sqrt(paramu*paramu+paramv*paramv));
-       k = k+2;
-     }
-     k = 0;
-     for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
-       MVertex *v = *itv;
-       double paramu = ev[k].real()/Linfty;
-       double paramv = ev[k+1].real()/Linfty;
-       coordinates[v] = SPoint3(paramu,paramv,0.0);
-       k = k+2;
-     }
-
-     lsysA->clear();
-     lsysB->clear();
-
-     return checkOverlap(ordered);
-
-   }
-   else return false;
   
+  groupOfElements gr(allElems);
+  laplace1.addToRightHandSide(myAssembler, gr);
+  laplace2.addToRightHandSide(myAssembler, gr);
+  cross12.addToRightHandSide(myAssembler, gr);
+  cross21.addToRightHandSide(myAssembler, gr);
+
+  //--- newton Loop
+  int nbNewton = 1;
+  double lam  = 0.1;
+  for (int iNewton = 0; iNewton < nbNewton; iNewton++){
+
+    double sumTheta = 0.0;
+    for (int i=0; i< nb; i++){
+      MVertex *prev = (i!=0) ? ordered[i-1] : ordered[nb-1];
+      MVertex *curr = ordered[i];
+      MVertex *next = (i+1!=nb) ? ordered[i+1] : ordered[0];
+      SPoint2 p1 = getCoordinates(prev);
+      SPoint2 p2 = getCoordinates(curr);
+      SPoint2 p3 = getCoordinates(next);
+      // SPoint2 p1 = (i!=0) ? ordered[i-1]: ordered[nb-1];
+      // SPoint2 p2 = ordered[i];
+      // SPoint2 p3 = (i+1!=nb) ? ordered[i+1]: ordered[0];
+      SVector3 va(p2.x()-p1.x(), p2.y()-p1.y(),0.);
+      SVector3 vb(p3.x()-p2.x(), p3.y()-p2.y(), 0.);
+      SVector3 vc(p1.x()-p3.x(), p1.y()-p3.y(), 0.);
+      double a = norm(va), b=norm(vb), c=norm(vc);
+      SVector3 n = crossprod(va, vb);
+
+      //--- compute theta
+      double theta = acos((a*a+b*b-c*c)/(2*a*b)); //in rad
+      double sign = 1.;
+      if (n.z() < 0.0) {sign = -1.; theta = 2*M_PI-theta;}
+      //printf("theta in deg =%g \n", theta*180./M_PI);
+      sumTheta +=theta;
+
+      //--- compute grad_uv theta
+      //dTheta/du1 sign*acos((a^2+b^2 -c^2)/(2*a*b)) 
+      //a=sqrt((u2-u1)^2+(v2-v1)^2))
+      //b=sqrt((u3-u2)^2+(v3-v2)^2))
+      //c=sqrt((u1-u3)^2+(v1-v3)^2))
+      double u1 = p1.x();double v1 = p1.y();
+      double u2 = p2.x();double v2 = p1.y();
+      double u3 = p3.x();double v3 = p1.y();
+      double dTdu1=sign*((u2 - 2*u1 + u3)/(sqrt(SQU(u1 - u2) + SQU(v1 - v2))*sqrt(SQU(u2 - u3) + SQU(v2 - v3))) + ((2*u1 - 2*u2)*(SQU(u1 - u2) + SQU(u1 - u3) + SQU(u2 - u3) + SQU(v1 - v2) + SQU(v1 - v3) + SQU(v2 - v3)))/(4*pow((SQU(u1 - u2) + SQU(v1 - v2)),3/2)*sqrt(SQU(u2 - u3) + SQU(v2 - v3))))/sqrt(1 - SQU(SQU(u1 - u2) + SQU(u1 - u3) + SQU(u2 - u3) + SQU(v1 - v2) + SQU(v1 - v3) + SQU(v2 - v3))/(4*(SQU(u1 - u2) + SQU(v1 - v2))*(SQU(u2 - u3) + SQU(v2 - v3))));
+      double dTdv1=sign*((v2 - 2*v1 + v3)/(sqrt(SQU(u1 - u2) + SQU(v1 - v2))*sqrt(SQU(u2 - u3) + SQU(v2 - v3))) + ((2*v1 - 2*v2)*(SQU(u1 - u2) + SQU(u1 - u3) + SQU(u2 - u3) + SQU(v1 - v2) + SQU(v1 - v3) + SQU(v2 - v3)))/(4*pow((SQU(u1 - u2) + SQU(v1 - v2)),3/2)*sqrt(SQU(u2 - u3) + SQU(v2 - v3))))/sqrt(1 - SQU(SQU(u1 - u2) + SQU(u1 - u3) + SQU(u2 - u3) + SQU(v1 - v2) + SQU(v1 - v3) + SQU(v2 - v3))/(4*(SQU(u1 - u2) + SQU(v1 - v2))*(SQU(u2 - u3) + SQU(v2 - v3))));
+      double dTdu2=sign*((u1 - 2*u2 + u3)/(sqrt(SQU(u1 - u2) + SQU(v1 - v2))*sqrt(SQU(u2 - u3) + SQU(v2 - v3))) - ((2*u1 - 2*u2)*(SQU(u1 - u2) + SQU(u1 - u3) + SQU(u2 - u3) + SQU(v1 - v2) + SQU(v1 - v3) + SQU(v2 - v3)))/(4*pow((SQU(u1 - u2) + SQU(v1 - v2)),3/2)*sqrt(SQU(u2 - u3) + SQU(v2 - v3))) + ((2*u2 - 2*u3)*(SQU(u1 - u2) + SQU(u1 - u3) + SQU(u2 - u3) + SQU(v1 - v2) + SQU(v1 - v3) + SQU(v2 - v3)))/(4*sqrt(SQU(u1 - u2) + SQU(v1 - v2))*pow((SQU(u2 - u3) + SQU(v2 - v3)),3/2)))/sqrt(1 - SQU(SQU(u1 - u2) + SQU(u1 - u3) + SQU(u2 - u3) + SQU(v1 - v2) + SQU(v1 - v3) + SQU(v2 - v3))/(4*(SQU(u1 - u2) + SQU(v1 - v2))*(SQU(u2 - u3) + SQU(v2 - v3))));
+      double dTdv2=sign*((v1 - 2*v2 + v3)/(sqrt(SQU(u1 - u2) + SQU(v1 - v2))*sqrt(SQU(u2 - u3) + SQU(v2 - v3))) - ((2*v1 - 2*v2)*(SQU(u1 - u2) + SQU(u1 - u3) + SQU(u2 - u3) + SQU(v1 - v2) + SQU(v1 - v3) + SQU(v2 - v3)))/(4*pow((SQU(u1 - u2) + SQU(v1 - v2)),3/2)*sqrt(SQU(u2 - u3) + SQU(v2 - v3))) + ((2*v2 - 2*v3)*(SQU(u1 - u2) + SQU(u1 - u3) + SQU(u2 - u3) + SQU(v1 - v2) + SQU(v1 - v3) + SQU(v2 - v3)))/(4*sqrt(SQU(u1 - u2) + SQU(v1 - v2))*pow((SQU(u2 - u3) + SQU(v2 - v3)),3/2)))/sqrt(1 - SQU(SQU(u1 - u2) + SQU(u1 - u3) + SQU(u2 - u3) + SQU(v1 - v2) + SQU(v1 - v3) + SQU(v2 - v3))/(4*(SQU(u1 - u2) + SQU(v1 - v2))*(SQU(u2 - u3) + SQU(v2 - v3))));
+      double dTdu3=sign*((u1 + u2 - 2*u3)/(sqrt(SQU(u1 - u2) + SQU(v1 - v2))*sqrt(SQU(u2 - u3) + SQU(v2 - v3))) - ((2*u2 - 2*u3)*(SQU(u1 - u2) + SQU(u1 - u3) + SQU(u2 - u3) + SQU(v1 - v2) + SQU(v1 - v3) + SQU(v2 - v3)))/(4*sqrt(SQU(u1 - u2) + SQU(v1 - v2))*pow((SQU(u2 - u3) + SQU(v2 - v3)),3/2)))/sqrt(1 - SQU(SQU(u1 - u2) + SQU(u1 - u3) + SQU(u2 - u3) + SQU(v1 - v2) + SQU(v1 - v3) + SQU(v2 - v3))/(4*(SQU(u1 - u2) + SQU(v1 - v2))*(SQU(u2 - u3) + SQU(v2 - v3))));
+      double dTdv3=((v1 + v2 - 2*v3)/(sqrt(SQU(u1 - u2) + SQU(v1 - v2))*sqrt(SQU(u2 - u3) + SQU(v2 - v3))) - ((2*v2 - 2*v3)*(SQU(u1 - u2) + SQU(u1 - u3) + SQU(u2 - u3) + SQU(v1 - v2) + SQU(v1 - v3) + SQU(v2 - v3)))/(4*sqrt(SQU(u1 - u2) + SQU(v1 - v2))*pow((SQU(u2 - u3) + SQU(v2 - v3)),3/2)))/sqrt(1 - SQU(SQU(u1 - u2) + SQU(u1 - u3) + SQU(u2 - u3) + SQU(v1 - v2) + SQU(v1 - v3) + SQU(v2 - v3))/(4*(SQU(u1 - u2) + SQU(v1 - v2))*(SQU(u2 - u3) + SQU(v2 - v3))));
+      
+      //---assemble constraint terms
+      // myAssembler.assemble(lag, 0, 3, prev, 0, 1,  dTdu1);
+      // myAssembler.assemble(lag, 0, 3, prev, 0, 2,  dTdv1);
+      // myAssembler.assemble(lag, 0, 3, curr, 0, 1,  dTdu2);
+      // myAssembler.assemble(lag, 0, 3, curr, 0, 2,  dTdv2);
+      // myAssembler.assemble(lag, 0, 3, next, 0, 1,  dTdu3);
+      // myAssembler.assemble(lag, 0, 3, next, 0, 2,  dTdv3);
+
+      // myAssembler.assemble(prev, 0, 1, lag, 0, 3,  dTdu1);
+      // myAssembler.assemble(prev, 0, 2, lag, 0, 3,  dTdv1);
+      // myAssembler.assemble(curr, 0, 1, lag, 0, 3,  dTdu2);
+      // myAssembler.assemble(curr, 0, 2, lag, 0, 3,  dTdv2);
+      // myAssembler.assemble(next, 0, 1, lag, 0, 3,  dTdu3);
+      // myAssembler.assemble(next, 0, 2, lag, 0, 3,  dTdv3);
+
+      // myAssembler.assemble(prev, 0, 1,  -dTdu1);
+      // myAssembler.assemble(prev, 0, 2,  -dTdv1);
+      // myAssembler.assemble(curr, 0, 1,  -dTdu2);
+      // myAssembler.assemble(curr, 0, 2,  -dTdv2);
+      // myAssembler.assemble(next, 0, 1,  -dTdu3);
+      // myAssembler.assemble(next, 0, 2,  -dTdv3);
+
+    }
+
+    //--- compute constraint
+    double G = fabs(sumTheta - (nb-2)*M_PI);
+    printf("constraint G = %g \n", G);
+    myAssembler.assemble(lag, 0, 3, lag, 0, 3,  1.0);//change this
+
+    //--- assemble rhs of linear system
+    myAssembler.assemble(lag, 0, 3, G);
+
+    //--- solve linear system
+    Msg::Debug("Assembly done");
+    _lsys->systemSolve();
+    Msg::Debug("System solved");
+    
+    //--- update coordinates
+    for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+      MVertex *v = *itv;
+      double value1, value2; 
+      myAssembler.getDofValue(v, 0, 1, value1);
+      myAssembler.getDofValue(v, 0, 2, value2);
+      coordinates[v] = SPoint3(value1,value2,0.0);
+    }
+    double lambda;
+    myAssembler.getDofValue(lag, 0, 3, lambda);
+    printf("lambda=%g \n", lambda);
+
+    //update newton
+
+  }//end Newton
+
+  //exit(1);
+
 }
+
+bool GFaceCompound::parametrize_conformal_spectral() const
+{
+  Msg::Info("Conformal parametrization of type: spectral");
+#if !defined(HAVE_PETSC) && !defined(HAVE_SLEPC)
+  {
+
+    Msg::Error("-----------------------------------------------------------------------------!");
+    Msg::Error("Gmsh should be compiled with petsc and slepc for using the conformal map     !");
+    Msg::Error("Switch to harmonic map or see doc on the wiki for installing petsc and slepc !");
+    Msg::Error("https://geuz.org/trac/gmsh/wiki/STLRemeshing (username:gmsh,passwd:gmsh)     !");
+    Msg::Error("-----------------------------------------------------------------------------!");
+    Msg::Exit(1);
+    return false;
+
+  }
+#else
+  {
+
+    std::vector<MVertex*> ordered;
+    std::vector<double> coords;  
+    bool success = orderVertices(_U0, ordered, coords);
+    if(!success){
+      Msg::Error("Could not order vertices on boundary");
+      return false;
+    }
+
+    linearSystem <double> *lsysA  = new linearSystemPETSc<double>;
+    linearSystem <double> *lsysB  = new linearSystemPETSc<double>;
+    dofManager<double> myAssembler(lsysA, lsysB);
+
+    //printf("nbNodes = %d in spectral param \n", allNodes.size());
+    //-------------------------------
+    myAssembler.setCurrentMatrix("A");
+    for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+      MVertex *v = *itv;
+      myAssembler.numberVertex(v, 0, 1);
+      myAssembler.numberVertex(v, 0, 2);
+    }
+
+    for(std::set<MVertex *>::iterator itv = fillNodes.begin(); itv !=fillNodes.end() ; ++itv){
+      MVertex *v = *itv;
+      myAssembler.numberVertex(v, 0, 1);
+      myAssembler.numberVertex(v, 0, 2);
+    }
+
+    laplaceTerm laplace1(model(), 1, ONE);
+    laplaceTerm laplace2(model(), 2, ONE);
+    crossConfTerm cross12(model(), 1, 2, ONE);
+    crossConfTerm cross21(model(), 2, 1, MONE);
+    std::list<GFace*>::const_iterator it = _compound.begin(); 
+    for( ; it != _compound.end() ; ++it){
+      for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+	SElement se((*it)->triangles[i]);
+	laplace1.addToMatrix(myAssembler, &se);
+	laplace2.addToMatrix(myAssembler, &se);
+	cross12.addToMatrix(myAssembler, &se);
+	cross21.addToMatrix(myAssembler, &se);
+      }
+    }
+
+    for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 !=fillTris.end(); it2++ ){
+      SElement se((*it2));
+      laplace1.addToMatrix(myAssembler, &se);
+      laplace2.addToMatrix(myAssembler, &se);
+      cross12.addToMatrix(myAssembler, &se);
+      cross21.addToMatrix(myAssembler, &se);
+    }
+
+    double epsilon = 1.e-7;
+    for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+      MVertex *v = *itv;
+      if (std::find(ordered.begin(), ordered.end(), v) == ordered.end() ){
+        myAssembler.assemble(v, 0, 1, v, 0, 1,  epsilon);
+        myAssembler.assemble(v, 0, 2, v, 0, 2,  epsilon);
+      }
+    }
+    for(std::set<MVertex *>::iterator itv = fillNodes.begin(); itv !=fillNodes.end() ; ++itv){
+      MVertex *v = *itv;
+      if (std::find(ordered.begin(), ordered.end(), v) == ordered.end() ){
+        myAssembler.assemble(v, 0, 1, v, 0, 1,  epsilon);
+        myAssembler.assemble(v, 0, 2, v, 0, 2,  epsilon);
+      }
+    }
+
+    //-------------------------------
+    myAssembler.setCurrentMatrix("B");
+
+    double small = 0.0;
+    for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+      MVertex *v = *itv;
+      if (std::find(ordered.begin(), ordered.end(), v) == ordered.end() ){
+	myAssembler.assemble(v, 0, 1, v, 0, 1,  small);
+	myAssembler.assemble(v, 0, 2, v, 0, 2,  small);
+      }
+      else{
+	myAssembler.assemble(v, 0, 1, v, 0, 1,  1.0);
+	myAssembler.assemble(v, 0, 2, v, 0, 2,  1.0);
+      }
+    } 
+    for(std::set<MVertex *>::iterator itv = fillNodes.begin(); itv !=fillNodes.end() ; ++itv){
+      MVertex *v = *itv;
+      myAssembler.assemble(v, 0, 1, v, 0, 1,  small);
+      myAssembler.assemble(v, 0, 2, v, 0, 2,  small);
+    }
+
+    //mettre max NC contraintes par bord
+    int NB = ordered.size();
+    int NC = std::min(200,NB);
+    int jump = (int) NB/NC;
+    int nbLoop = (int) NB/jump ;
+    //printf("nb bound nodes=%d jump =%d \n", NB, jump);
+    for (int i = 0; i< nbLoop; i++){
+      MVertex *v1 = ordered[i*jump];
+      for (int j = 0; j< nbLoop; j++){
+	MVertex *v2 = ordered[j*jump];
+	myAssembler.assemble(v1, 0, 1, v2, 0, 1,  -1./NB);
+	myAssembler.assemble(v1, 0, 2, v2, 0, 2,  -1./NB);
+      }
+    }
+
+    //-------------------------------
+    //printf("Solve eigensystem \n");
+    eigenSolver eig(&myAssembler, "B" , "A", true);
+    bool converged = eig.solve(1, "largest");
+    
+    if(converged) {
+      double Linfty = 0.0;
+      int k = 0;
+      std::vector<std::complex<double> > &ev = eig.getEigenVector(0); 
+      for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+	double paramu = ev[k].real();
+	double paramv = ev[k+1].real();
+	Linfty=std::max(Linfty, sqrt(paramu*paramu+paramv*paramv));
+	k = k+2;
+      }
+      k = 0;
+      for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+	MVertex *v = *itv;
+	double paramu = ev[k].real()/Linfty;
+	double paramv = ev[k+1].real()/Linfty;
+	coordinates[v] = SPoint3(paramu,paramv,0.0);
+	k = k+2;
+      }
+
+      lsysA->clear();
+      lsysB->clear();
+
+      return checkOverlap(ordered);
+
+    }
+    else return false;
+  
+  }
 #endif
 }
 bool GFaceCompound::parametrize_conformal() const
 {
+  Msg::Info("Conformal parametrization of type: finite element");
 
   dofManager<double> myAssembler(_lsys);
 
@@ -1360,24 +1545,24 @@ bool GFaceCompound::parametrize_conformal() const
     return false;
   }
 
-   MVertex *v1  = ordered[0];
-   MVertex *v2  = ordered[(int)ceil((double)ordered.size()/2.)];
-   myAssembler.fixVertex(v1, 0, 1, 1.);
-   myAssembler.fixVertex(v1, 0, 2, 0.);
-   myAssembler.fixVertex(v2, 0, 1, -1.);
-   myAssembler.fixVertex(v2, 0, 2, 0.);
-//printf("Pinned vertex  %g %g %g / %g %g %g \n", v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z());
+  MVertex *v1  = ordered[0];
+  MVertex *v2  = ordered[(int)ceil((double)ordered.size()/2.)];
+  myAssembler.fixVertex(v1, 0, 1, 1.);
+  myAssembler.fixVertex(v1, 0, 2, 0.);
+  myAssembler.fixVertex(v2, 0, 1, -1.);
+  myAssembler.fixVertex(v2, 0, 2, 0.);
+  //printf("Pinned vertex  %g %g %g / %g %g %g \n", v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z());
 
-//   MVertex *v2 ;  
-//   double maxSize = 0.0;
-//   for (int i=1; i< ordered.size(); i++){
-//     MVertex *vi= ordered[i];
-//     double dist = vi->distance(v1);
-//     if (dist > maxSize){
-//       v2 = vi;
-//       maxSize = dist;
-//     }
-//   }
+  //   MVertex *v2 ;  
+  //   double maxSize = 0.0;
+  //   for (int i=1; i< ordered.size(); i++){
+  //     MVertex *vi= ordered[i];
+  //     double dist = vi->distance(v1);
+  //     if (dist > maxSize){
+  //       v2 = vi;
+  //       maxSize = dist;
+  //     }
+  //   }
  
   std::list<GFace*>::const_iterator it = _compound.begin();
   for( ; it != _compound.end(); ++it){
@@ -1401,13 +1586,10 @@ bool GFaceCompound::parametrize_conformal() const
     myAssembler.numberVertex(t->getVertex(2), 0, 2); 
   }
   
-
-  simpleFunction<double> ONE(1.0);
-  simpleFunction<double> MONE(-1.0 );
-  laplaceTerm laplace1(model(), 1, &ONE);
-  laplaceTerm laplace2(model(), 2, &ONE);
-  crossConfTerm cross12(model(), 1, 2, &ONE);
-  crossConfTerm cross21(model(), 2, 1, &MONE);
+  laplaceTerm laplace1(model(), 1, ONE);
+  laplaceTerm laplace2(model(), 2, ONE);
+  crossConfTerm cross12(model(), 1, 2, ONE);
+  crossConfTerm cross21(model(), 2, 1, MONE);
   it = _compound.begin();
   for( ; it != _compound.end() ; ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
@@ -1572,18 +1754,18 @@ GPoint GFaceCompound::point(double par1, double par2) const
     b030 = lt->v2;
     b003 = lt->v3;
 
-//     w12 = dot(lt->v2 - lt->v1, n1);
-//     w21 = dot(lt->v1 - lt->v2, n2);
-//     w23 = dot(lt->v3 - lt->v2, n2);
-//     w32 = dot(lt->v2 - lt->v3, n3);
-//     w31 = dot(lt->v1 - lt->v3, n3);
-//     w13 = dot(lt->v3 - lt->v1, n1);
-//     b210 = (2*lt->v1 + lt->v2-w12*n1)*0.333; 
-//     b120 = (2*lt->v2 + lt->v1-w21*n2)*0.333;
-//     b021 = (2*lt->v2 + lt->v3-w23*n2)*0.333;
-//     b012 = (2*lt->v3 + lt->v2-w32*n3)*0.333;
-//     b102 = (2*lt->v3 + lt->v1-w31*n3)*0.333;
-//     b201 = (2*lt->v1 + lt->v3-w13*n1)*0.333;
+    //     w12 = dot(lt->v2 - lt->v1, n1);
+    //     w21 = dot(lt->v1 - lt->v2, n2);
+    //     w23 = dot(lt->v3 - lt->v2, n2);
+    //     w32 = dot(lt->v2 - lt->v3, n3);
+    //     w31 = dot(lt->v1 - lt->v3, n3);
+    //     w13 = dot(lt->v3 - lt->v1, n1);
+    //     b210 = (2*lt->v1 + lt->v2-w12*n1)*0.333; 
+    //     b120 = (2*lt->v2 + lt->v1-w21*n2)*0.333;
+    //     b021 = (2*lt->v2 + lt->v3-w23*n2)*0.333;
+    //     b012 = (2*lt->v3 + lt->v2-w32*n3)*0.333;
+    //     b102 = (2*lt->v3 + lt->v1-w31*n3)*0.333;
+    //     b201 = (2*lt->v1 + lt->v3-w13*n1)*0.333;
 
     //tagged PN trinagles (sigma=1)
     double theta = 0.0;
@@ -1658,43 +1840,43 @@ void GFaceCompound::secondDer(const SPoint2 &param,
   //use central differences
 
   //EMI: TODO should take size of two or three triangles
-//   double eps = 1e+2;
+  //   double eps = 1e+2;
   
-//   double u  = param.x();
-//   double v = param.y();
-//   Pair<SVector3,SVector3> Der_u, Der_ueps, Der_v, Der_veps;
+  //   double u  = param.x();
+  //   double v = param.y();
+  //   Pair<SVector3,SVector3> Der_u, Der_ueps, Der_v, Der_veps;
   
-//   if(u - eps < 0.0) {
-//     Der_u = firstDer(SPoint2(u,v));
-//     Der_ueps = firstDer(SPoint2(u+eps,v));
-//   }
-//   else {
-//     Der_u = firstDer(SPoint2(u-eps,v));
-//     Der_ueps = firstDer(SPoint2(u,v));
-//   }
+  //   if(u - eps < 0.0) {
+  //     Der_u = firstDer(SPoint2(u,v));
+  //     Der_ueps = firstDer(SPoint2(u+eps,v));
+  //   }
+  //   else {
+  //     Der_u = firstDer(SPoint2(u-eps,v));
+  //     Der_ueps = firstDer(SPoint2(u,v));
+  //   }
   
-//   if(v - eps < 0.0) {
-//     Der_v = firstDer(SPoint2(u,v));
-//     Der_veps = firstDer(SPoint2(u,v+eps));
-//   }
-//   else {
-//     Der_v = firstDer(SPoint2(u,v-eps));
-//     Der_veps = firstDer(SPoint2(u,v));
-//   }
+  //   if(v - eps < 0.0) {
+  //     Der_v = firstDer(SPoint2(u,v));
+  //     Der_veps = firstDer(SPoint2(u,v+eps));
+  //   }
+  //   else {
+  //     Der_v = firstDer(SPoint2(u,v-eps));
+  //     Der_veps = firstDer(SPoint2(u,v));
+  //   }
   
-//   SVector3 dXdu_u =  Der_u.first();
-//   SVector3 dXdv_u =  Der_u.second();
-//   SVector3 dXdu_ueps =  Der_ueps.first();
-//   SVector3 dXdv_ueps =  Der_ueps.second();
-//   SVector3 dXdu_v =  Der_v.first();
-//   SVector3 dXdv_v =  Der_v.second();
-//   SVector3 dXdu_veps =  Der_veps.first();
-//   SVector3 dXdv_veps =  Der_veps.second();
+  //   SVector3 dXdu_u =  Der_u.first();
+  //   SVector3 dXdv_u =  Der_u.second();
+  //   SVector3 dXdu_ueps =  Der_ueps.first();
+  //   SVector3 dXdv_ueps =  Der_ueps.second();
+  //   SVector3 dXdu_v =  Der_v.first();
+  //   SVector3 dXdv_v =  Der_v.second();
+  //   SVector3 dXdu_veps =  Der_veps.first();
+  //   SVector3 dXdv_veps =  Der_veps.second();
   
-//   double inveps = 1./eps;
-//   *dudu = inveps * (dXdu_u - dXdu_ueps) ;
-//   *dvdv = inveps * (dXdv_v - dXdv_veps) ;
-//   *dudv = inveps * (dXdu_v - dXdu_veps) ;
+  //   double inveps = 1./eps;
+  //   *dudu = inveps * (dXdu_u - dXdu_ueps) ;
+  //   *dvdv = inveps * (dXdv_v - dXdv_veps) ;
+  //   *dudv = inveps * (dXdu_v - dXdu_veps) ;
 
   //printf("der second dudu = %g %g %g \n", dudu->x(),  dudu->y(),  dudu->z());
   //printf("der second dvdv = %g %g %g \n", dvdv->x(),  dvdv->y(),  dvdv->z());
@@ -1759,14 +1941,14 @@ void GFaceCompound::getTriangle(double u, double v,
   
   double uv[3] = {u, v, 0};
   *lt = (GFaceCompoundTriangle*)Octree_Search(uv, oct);
- //  if(!(*lt)) {
-//     for(int i=0;i<nbT;i++){
-//       if(GFaceCompoundInEle (&_gfct[i],uv)){
-//      *lt = &_gfct[i];
-//      break;
-//       }
-//     } 
-//   }
+  //  if(!(*lt)) {
+  //     for(int i=0;i<nbT;i++){
+  //       if(GFaceCompoundInEle (&_gfct[i],uv)){
+  //      *lt = &_gfct[i];
+  //      break;
+  //       }
+  //     } 
+  //   }
   if(!(*lt)){
     return;
   }
@@ -1824,7 +2006,7 @@ void GFaceCompound::partitionFaceCM()
       std::map<MVertex*,SPoint3>::const_iterator it1 = coordinates.find(t->getVertex(1));
       std::map<MVertex*,SPoint3>::const_iterator it2 = coordinates.find(t->getVertex(2));
       double cg_u = (it0->second.x()+it1->second.x()+it2->second.x())/3.;
-       if (cg_u <= CMu)
+      if (cg_u <= CMu)
 	t->setPartition(1);
       else 
 	t->setPartition(2);
@@ -2022,42 +2204,42 @@ double GFaceCompound::checkAspectRatio() const
 
 void GFaceCompound::coherenceNormals()
 {
-  return;
-  Msg::Info("Re-orient all triangles (face normals) coherently");
 
-  std::map<MEdge, std::set<MTriangle*>, Less_Edge > edge2tris;
-  for(unsigned int i = 0; i < triangles.size(); i++){
-    MTriangle *t = triangles[i];
-    for (int j = 0; j < 3; j++){
+  Msg::Info("Re-orient all %d face normals coherently", getNumMeshElements());
+
+  std::map<MEdge, std::set<MElement*>, Less_Edge > edge2elems;
+  for(unsigned int i = 0; i <  getNumMeshElements(); i++){
+    MElement *t =  getMeshElement(i);
+    for (int j = 0; j <  t->getNumEdges(); j++){
       MEdge me = t->getEdge(j);
-      std::map<MEdge, std::set<MTriangle*, std::less<MTriangle*> >, Less_Edge >::iterator it = edge2tris.find(me);
-      if (it == edge2tris.end()) {
-        std::set<MTriangle*, std::less<MTriangle*> > mySet;
+      std::map<MEdge, std::set<MElement*, std::less<MElement*> >, Less_Edge >::iterator it = edge2elems.find(me);
+      if (it == edge2elems.end()) {
+        std::set<MElement*, std::less<MElement*> > mySet;
         mySet.insert(t);
-        edge2tris.insert(std::make_pair(me, mySet));
+        edge2elems.insert(std::make_pair(me, mySet));
       }
       else{
-        std::set<MTriangle*, std::less<MTriangle*> > mySet = it->second;
+        std::set<MElement*, std::less<MElement*> > mySet = it->second;
         mySet.insert(t);
         it->second = mySet;
       }
     }
   }
   
-  std::set<MTriangle* , std::less<MTriangle*> > touched;
+  std::set<MElement* , std::less<MElement*> > touched;
   int iE, si, iE2, si2;
-  touched.insert(triangles[0]);
-  while(touched.size() != triangles.size()){
-    for(unsigned int i = 0; i < triangles.size(); i++){
-      MTriangle *t = triangles[i];
-      std::set<MTriangle*, std::less<MTriangle*> >::iterator it2 = touched.find(t);
+  touched.insert(getMeshElement(0));
+  while(touched.size() != getNumMeshElements()){
+    for(unsigned int i = 0; i < getNumMeshElements(); i++){
+      MElement *t = getMeshElement(i);
+      std::set<MElement*, std::less<MElement*> >::iterator it2 = touched.find(t);
       if(it2 != touched.end()){
-        for (int j = 0; j < 3; j++){
+        for (int j = 0; j <  t->getNumEdges(); j++){
           MEdge me = t->getEdge(j);
           t->getEdgeInfo(me, iE,si);
-          std::map<MEdge, std::set<MTriangle*>, Less_Edge >::iterator it = edge2tris.find(me);
-          std::set<MTriangle*, std::less<MTriangle*> > mySet = it->second;
-          for(std::set<MTriangle*, std::less<MTriangle*> >::iterator itt = mySet.begin(); itt != mySet.end(); itt++){
+          std::map<MEdge, std::set<MElement*>, Less_Edge >::iterator it = edge2elems.find(me);
+          std::set<MElement*, std::less<MElement*> > mySet = it->second;
+          for(std::set<MElement*, std::less<MElement*> >::iterator itt = mySet.begin(); itt != mySet.end(); itt++){
             if (*itt != t){
               (*itt)->getEdgeInfo(me,iE2,si2);
               if(si == si2)  (*itt)->revert();
@@ -2076,7 +2258,7 @@ void GFaceCompound::coherenceNormals()
 void GFaceCompound::buildAllNodes() const
 {
 
- std::list<GFace*>::const_iterator it = _compound.begin();
+  std::list<GFace*>::const_iterator it = _compound.begin();
   for( ; it != _compound.end() ; ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *t = (*it)->triangles[i];
@@ -2090,25 +2272,25 @@ void GFaceCompound::buildAllNodes() const
 
 int GFaceCompound::genusGeom() const
 {
- std::list<GFace*>::const_iterator it = _compound.begin();
- std::set<MEdge, Less_Edge> es;
- std::set<MVertex*> vs;
- int N = 0;
- for( ; it != _compound.end() ; ++it){
+  std::list<GFace*>::const_iterator it = _compound.begin();
+  std::set<MEdge, Less_Edge> es;
+  std::set<MVertex*> vs;
+  int N = 0;
+  for( ; it != _compound.end() ; ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       N++;
       MTriangle *e = (*it)->triangles[i];
       for(int j = 0; j < e->getNumVertices(); j++){
-          vs.insert(e->getVertex(j));
+	vs.insert(e->getVertex(j));
       }
       for(int j = 0; j < e->getNumEdges(); j++){
-          es.insert(e->getEdge(j));
+	es.insert(e->getEdge(j));
       }
     }
- }
- int poincare = vs.size() - es.size() + N; 
+  }
+  int poincare = vs.size() - es.size() + N; 
 
- return (int)(-poincare + 2 - _interior_loops.size())/2;
+  return (int)(-poincare + 2 - _interior_loops.size())/2;
 
 }
 
