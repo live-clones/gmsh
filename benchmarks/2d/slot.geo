@@ -1,3 +1,4 @@
+Mesh.SubdivisionAlgorithm = 3;
 Point(1) = {0, 0, 0, 9.999999999999999e-05};
 Point(2) = {0.00125, 0.045983013167908, 0, 0.0002};
 Point(3) = {-0.00125, 0.045983013167908, 0, 0.0002};
@@ -1265,3 +1266,4 @@ Physical Surface(4098) = {607};
 Physical Surface(4099) = {613};
 Physical Surface(4100) = {619};
 Physical Surface(4101) = {625};
+Recombine Surface {1 ... 635};

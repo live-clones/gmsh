@@ -72,9 +72,10 @@ class MElement
   virtual char getVisibility() const;
   virtual void setVisibility(char val){ _visible = val; }
 
-  // get the vertices
+  // get & set the vertices
   virtual int getNumVertices() const = 0;
   virtual MVertex *getVertex(int num) = 0;
+  virtual void setVertex(int num, MVertex *v) {throw;}
 
   // give an MVertex as input and get its local number
   virtual void getVertexInfo(const MVertex * vertex, int &ithVertex) const 

@@ -94,6 +94,8 @@ void OCCFace::setup()
   umax += fabs(du) / 100.0;
   vmax += fabs(dv) / 100.0;
   occface = BRep_Tool::Surface(s);
+  // specific parametrization for a sphere.
+  _isSphere = isSphere(_radius,_center);
 }
 
 Range<double> OCCFace::parBounds(int i) const
@@ -475,5 +477,23 @@ void OCCFace::replaceEdgesInternal(std::list<GEdge*> &new_edges)
 
   setup();
 }
+
+bool OCCFace::isSphere (double &radius, SPoint3 &center) const{
+  switch(geomType()){
+  case GEntity::Sphere:
+    {
+      radius = Handle(Geom_SphericalSurface)::DownCast(occface)->Radius();
+      gp_Ax3 pos  = Handle(Geom_SphericalSurface)::DownCast(occface)->Position();
+      gp_Ax1 axis = pos.Axis();
+      gp_Pnt loc = axis.Location();
+      center = SPoint3(loc.X(),loc.Y(),loc.Z());
+    }
+    return true;
+  default:
+    return false;
+  }
+  
+}
+
 
 #endif

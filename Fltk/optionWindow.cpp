@@ -1971,6 +1971,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"None", 0, 0, 0},
         {"All Quads", 0, 0, 0},
         {"All Hexas", 0, 0, 0},
+        {"All Quads (Blossom)", 0, 0, 0},
         {0}
       };
 

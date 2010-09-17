@@ -102,6 +102,31 @@ static fullMatrix<double> generatePascalQuad(int order)
 04 14
 ⋮  ⋮
 */
+
+// generate all monomials xi^m * eta^n with n and m <= order
+static fullMatrix<double> generatePascalHex(int order)
+{
+
+  fullMatrix<double> monomials( (order+1)*(order+1)*(order+1), 3);
+  int index = 0;
+  for (int p = 0; p <= order; p++) {
+    for(int i = 0; i < p; i++) {
+      for(int j = 0; j < i; j++, index++) {
+	monomials(index, 0) = p;
+	monomials(index, 1) = i;
+	monomials(index, 2) = j;
+      }
+    }
+    for(int i = 0; i <= p; i++, index++) {
+      for(int j = 0; j <= p; i++, index++) {
+	monomials(index, 0) = p-i;
+	monomials(index, 1) = p;
+      }
+    }
+  }
+  return monomials;
+}
+
 static fullMatrix<double> generatePascalQuadSerendip(int order)
 {
   fullMatrix<double> monomials( (order)*4, 2);

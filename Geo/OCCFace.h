@@ -25,6 +25,9 @@ class OCCFace : public GFace {
   bool buildSTLTriangulation(bool force=false);
   void replaceEdgesInternal (std::list<GEdge*> &);
   void setup();
+  bool _isSphere;
+  double _radius;
+  SPoint3 _center;
  public:
   OCCFace(GModel *m, TopoDS_Face s, int num);
   virtual ~OCCFace(){}
@@ -46,6 +49,8 @@ class OCCFace : public GFace {
   surface_params getSurfaceParams() const;
   TopoDS_Face getTopoDS_Face () {return s;}
   TopoDS_Face getTopoDS_FaceOld () {return _replaced;}
+  // tells if it's a sphere, and if it is, returns parameters
+  virtual bool isSphere (double &radius, SPoint3 &center) const;
 };
 GFace *getOCCFaceByNativePtr(GModel *model, TopoDS_Face toFind);
 

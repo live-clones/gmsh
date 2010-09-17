@@ -296,6 +296,9 @@ static void remeshUnrecoveredEdges(std::map<MVertex*, BDS_Point*> &recoverMapInv
 
 static bool algoDelaunay2D(GFace *gf)
 {
+  // HACK REMOVE ME
+  if (gf->geomType() == GEntity::CompoundSurface)return true;
+
   if(noSeam(gf) && (CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY ||
 		    CTX::instance()->mesh.algo2d == ALGO_2D_BAMG || 
                     CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL))
@@ -870,7 +873,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   // BDS mesh is passed in order not to recompute local coordinates of
   // vertices
   if(algoDelaunay2D(gf)){
-    if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
+    if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL   ||  
+       gf->geomType() == GEntity::CompoundSurface)
       bowyerWatsonFrontal(gf);
     else if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY)
       bowyerWatson(gf);
@@ -1450,7 +1454,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   }
   
   if(algoDelaunay2D(gf)){
-    if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
+    if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL   ||  
+       gf->geomType() == GEntity::CompoundSurface)
       bowyerWatsonFrontal(gf);
     else if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY)
       bowyerWatson(gf);
@@ -1711,6 +1716,15 @@ void partitionAndRemesh(GFaceCompound *gf)
         allNod.insert(v[k]);
       }
       gf->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+    }  
+    for(unsigned int j = 0; j < gfc->quadrangles.size(); ++j){
+      MQuadrangle *q = gfc->quadrangles[j];
+      std::vector<MVertex *> v(4);
+      for(int k = 0; k < 4; k++){
+        v[k] = q->getVertex(k); 
+        allNod.insert(v[k]);
+      }
+      gf->quadrangles.push_back(new MQuadrangle(v[0], v[1], v[2], v[3]));
     }  
  
   }

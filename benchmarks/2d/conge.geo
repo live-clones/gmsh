@@ -78,3 +78,4 @@ Physical Line(25) = {12,13,14,15,16,17,18,19,20,10};
 Physical Surface(26) = {22,24};
 Physical Line(27) = {10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 14, 13, 12, 11};
 Physical Line(28) = {17, 16, 20, 19, 18, 15};
+Recombine Surface {24, 22};

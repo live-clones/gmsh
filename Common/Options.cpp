@@ -5609,7 +5609,7 @@ double opt_mesh_algo_subdivide(OPT_ARGS_NUM)
   if(action & GMSH_SET){
     CTX::instance()->mesh.algoSubdivide = (int)val;
     if(CTX::instance()->mesh.algoSubdivide < 0 && 
-       CTX::instance()->mesh.algoSubdivide > 2)
+       CTX::instance()->mesh.algoSubdivide > 3)
       CTX::instance()->mesh.algoSubdivide = 0;
   }
 #if defined(HAVE_FLTK)

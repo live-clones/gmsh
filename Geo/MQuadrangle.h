@@ -51,9 +51,11 @@ class MQuadrangle : public MElement {
     for(int i = 0; i < 4; i++) _v[i] = v[i];
   }
   ~MQuadrangle(){}
+  virtual double etaShapeMeasure();
   virtual int getDim() const { return 2; }
   virtual int getNumVertices() const { return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
+  virtual void setVertex(int num, MVertex *v){_v[num]=v;}
   virtual MVertex *getVertexMED(int num)
   {
     static const int map[4] = {0, 3, 2, 1};

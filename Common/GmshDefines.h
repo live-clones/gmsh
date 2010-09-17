@@ -133,6 +133,9 @@
 #define MSH_TET_165  73
 #define MSH_TET_220  74
 #define MSH_TET_286  75
+#define MSH_HEX_64   76
+#define MSH_HEX_125  77
+#define MSH_HEX_196  78
 
 #define MSH_NUM_TYPE 75
 

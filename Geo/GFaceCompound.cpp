@@ -2022,7 +2022,7 @@ double GFaceCompound::checkAspectRatio() const
 
 void GFaceCompound::coherenceNormals()
 {
-
+  return;
   Msg::Info("Re-orient all triangles (face normals) coherently");
 
   std::map<MEdge, std::set<MTriangle*>, Less_Edge > edge2tris;
