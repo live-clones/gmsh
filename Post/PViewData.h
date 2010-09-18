@@ -168,8 +168,8 @@ class PViewData {
 
   // check if we should skip the given entity/element
   virtual bool skipEntity(int step, int ent){ return false; }
-  virtual bool skipElement(int step, int ent, int ele,
-                           bool checkVisibility=false){ return false; }
+  virtual bool skipElement(int step, int ent, int ele, bool checkVisibility=false,
+                           int samplingRate=1);
 
   // check if the data has the given step/partition/etc.
   virtual bool hasTimeStep(int step){ return step >= 0 && step < getNumTimeSteps(); }

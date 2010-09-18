@@ -552,7 +552,8 @@ bool PViewDataGModel::skipEntity(int step, int ent)
   return !_steps[step]->getEntity(ent)->getVisibility();
 }
 
-bool PViewDataGModel::skipElement(int step, int ent, int ele, bool checkVisibility)
+bool PViewDataGModel::skipElement(int step, int ent, int ele, bool checkVisibility,
+                                  int samplingRate)
 {
   if(step >= getNumTimeSteps()) return true;
   stepData<double> *sd = _steps[step];
@@ -566,7 +567,7 @@ bool PViewDataGModel::skipElement(int step, int ent, int ele, bool checkVisibili
   else{
     if(!sd->getData(e->getNum())) return true;
   }
-  return false;
+  return PViewData::skipElement(step, ent, ele, checkVisibility, samplingRate);
 }
 
 bool PViewDataGModel::hasTimeStep(int step)

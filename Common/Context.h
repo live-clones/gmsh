@@ -22,12 +22,12 @@ struct contextMeshOptions {
   int pointsNum, linesNum, surfacesNum, volumesNum, qualityType, labelType;
   int optimize, optimizeNetgen, optimizeLloyd, refineSteps, remove4triangles;
   double normals, tangents, explode, angleSmoothNormals, allowSwapEdgeAngle;
-  double mshFileVersion, mshFilePartitioned, labelFrequency, pointSize, lineWidth;
+  double mshFileVersion, mshFilePartitioned, pointSize, lineWidth;
   double qualityInf, qualitySup, radiusInf, radiusSup;
   double scalingFactor, lcFactor, randFactor, lcIntegrationPrecision;
   double lcMin, lcMax, toleranceEdgeLength, anisoMax, smoothRatio;
   int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
-  int dual, voronoi, drawSkinOnly, colorCarousel;
+  int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
   int fileFormat, nbSmoothing, algo2d, algo3d, algoSubdivide;
   int order, secondOrderLinear, secondOrderIncomplete;
   int secondOrderExperimental, meshOnlyVisible;

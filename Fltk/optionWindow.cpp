@@ -440,7 +440,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_tangents(0, GMSH_SET, o->mesh.value[13]->value());
   opt_mesh_point_size(0, GMSH_SET, o->mesh.value[10]->value());
   opt_mesh_line_width(0, GMSH_SET, o->mesh.value[11]->value());
-  opt_mesh_label_frequency(0, GMSH_SET, o->mesh.value[12]->value());
+  opt_mesh_label_sampling(0, GMSH_SET, o->mesh.value[12]->value());
   opt_mesh_angle_smooth_normals(0, GMSH_SET, o->mesh.value[18]->value());
 
   opt_mesh_point_type(0, GMSH_SET, o->mesh.choice[0]->value());
@@ -656,6 +656,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double component_map6 = opt_view_component_map6(current, GMSH_GET, 0);
   double component_map7 = opt_view_component_map7(current, GMSH_GET, 0);
   double component_map8 = opt_view_component_map8(current, GMSH_GET, 0);
+  double sampling = opt_view_sampling(current, GMSH_GET, 0);
 
   std::string name = opt_view_name(current, GMSH_GET, "");
   std::string format = opt_view_format(current, GMSH_GET, "");
@@ -1084,6 +1085,10 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       val = o->view.value[78]->value();
       if(force || (val != component_map8))
         opt_view_component_map8(i, GMSH_SET, val);
+
+      val = o->view.value[6]->value();
+      if(force || (val != sampling))
+        opt_view_sampling(i, GMSH_SET, val);
 
       // view_inputs
 
@@ -2156,8 +2161,8 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.choice[7]->callback(mesh_options_ok_cb);
 
       mesh.value[12] = new Fl_Value_Input
-        (L + width / 2, 2 * WB + 6 * BH, width / 4 - 2 * WB, BH, "Frequency");
-      mesh.value[12]->minimum(0);
+        (L + width / 2, 2 * WB + 6 * BH, width / 4 - 2 * WB, BH, "Sampling");
+      mesh.value[12]->minimum(1);
       mesh.value[12]->maximum(100);
       mesh.value[12]->step(1);
       mesh.value[12]->align(FL_ALIGN_RIGHT);
@@ -2777,6 +2782,15 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Elements");
       view.menu[1]->menu(menu_view_element_types);
       view.menu[1]->callback(view_options_ok_cb);
+
+      view.value[6] = new Fl_Value_Input
+        (L + width / 2, 2 * WB + 5 * BH, width / 4 - 2 * WB, BH, "Sampling");
+      view.value[6]->minimum(1);
+      view.value[6]->maximum(100);
+      view.value[6]->step(1);
+      view.value[6]->align(FL_ALIGN_RIGHT);
+      view.value[6]->when(FL_WHEN_RELEASE);
+      view.value[6]->callback(view_options_ok_cb);
       
       static Fl_Menu_Item menu_boundary[] = {
         {"None", 0, 0, 0},
@@ -3309,6 +3323,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_draw_tensors(index, GMSH_GUI, 0);
   opt_view_normals(index, GMSH_GUI, 0);
   opt_view_tangents(index, GMSH_GUI, 0);
+  opt_view_sampling(index, GMSH_GUI, 0);
 
   opt_view_nb_iso(index, GMSH_GUI, 0);
   opt_view_intervals_type(index, GMSH_GUI, 0);

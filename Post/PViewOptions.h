@@ -89,6 +89,7 @@ class PViewOptions {
   double targetError;
   int clip; // status of clip planes (bit array)
   int forceNumComponents, componentMap[9];
+  int sampling;
   struct{
     unsigned int point, line, triangle, quadrangle;
     unsigned int tetrahedron, hexahedron, prism, pyramid;

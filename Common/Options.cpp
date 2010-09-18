@@ -5374,17 +5374,17 @@ double opt_mesh_line_width(OPT_ARGS_NUM)
   return CTX::instance()->mesh.lineWidth;
 }
 
-double opt_mesh_label_frequency(OPT_ARGS_NUM)
+double opt_mesh_label_sampling(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    CTX::instance()->mesh.labelFrequency = val;
+    CTX::instance()->mesh.labelSampling = val;
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.value[12]->value
-      (CTX::instance()->mesh.labelFrequency);
+      (CTX::instance()->mesh.labelSampling);
 #endif
-  return CTX::instance()->mesh.labelFrequency;
+  return CTX::instance()->mesh.labelSampling;
 }
 
 double opt_mesh_reverse_all_normals(OPT_ARGS_NUM)
@@ -7127,6 +7127,24 @@ double opt_view_position1(OPT_ARGS_NUM)
   return opt->position[1];
 #else
   return 0.;
+#endif
+}
+
+double opt_view_sampling(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    opt->sampling = (int)val;
+    if(view) view->setChanged(true);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    FlGui::instance()->options->view.value[6]->value(opt->sampling);
+#endif
+  return opt->sampling;
+#else
+  return 1.;
 #endif
 }
 

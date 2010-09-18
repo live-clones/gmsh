@@ -1100,8 +1100,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. , 
     "Display mesh hexahedra?" },
 
-  { F|O, "LabelsFrequency" , opt_mesh_label_frequency , 100. , 
-    "Labels display frequency?" },
+  { F|O, "LabelSampling" , opt_mesh_label_sampling , 1. , 
+    "Label sampling rate (display one label every `LabelSampling' elements)" },
   { F|O, "LabelType" , opt_mesh_label_type , 0. , 
     "Type of element label (0=element number, 1=elementary entity number, "
     "2=physical entity number, 3=partition number, 4=coordinates)" },
@@ -1153,7 +1153,8 @@ StringXNumber MeshOptions_Number[] = {
     "Weight of triangle for METIS load balancing" ,},
 
   { F|O, "PartitionByExtrusion" , opt_mesh_partition_by_extrusion, 0. ,
-    "Special partitioner that annotates all all extruded elements to the same node as the source element" },
+    "Special partitioner that annotates all all extruded elements to the same "
+    "node as the source element" },
     
   { F, "NbHexahedra" , opt_mesh_nb_hexahedra , 0. , 
     "Number of hexahedra in the current mesh (read-only)" },
@@ -1560,6 +1561,8 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "RangeType" , opt_view_range_type , 1 ,
     "Value scale range type (1=default, 2=custom, 3=per time step)" },
 
+  { F|O, "Sampling" , opt_view_sampling , 1. , 
+    "Element sampling rate (draw one out every `Sampling' elements)" },
   { F|O, "SaturateValues" , opt_view_saturate_values , 0. ,
     "Saturate the view values to custom min and max (1=true, 0=false)" },
   { F|O, "ScaleType" , opt_view_scale_type , 1 ,

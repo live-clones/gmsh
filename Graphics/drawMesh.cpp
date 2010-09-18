@@ -163,16 +163,6 @@ static bool areSomeElementsCurved(std::vector<T*> &elements)
   return false;
 }
 
-static int getLabelStep(int total)
-{
-  int step;
-  if(CTX::instance()->mesh.labelFrequency == 0.0) 
-    step = total;
-  else 
-    step = (int)(100.0 / CTX::instance()->mesh.labelFrequency);
-  return (step > total) ? total : step;
-}
-
 template<class T>
 static void drawElementLabels(drawContext *ctx, GEntity *e,
                               std::vector<T*> &elements, int forceColor=0,
@@ -181,7 +171,8 @@ static void drawElementLabels(drawContext *ctx, GEntity *e,
   unsigned col = forceColor ? color : getColorByEntity(e);
   glColor4ubv((GLubyte *) & col);
 
-  int labelStep = getLabelStep(elements.size());
+  int labelStep = CTX::instance()->mesh.labelSampling;
+  if(labelStep <= 0) labelStep = 1;
 
   for(unsigned int i = 0; i < elements.size(); i++){
     MElement *ele = elements[i];
@@ -301,7 +292,8 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
     }
   }
   if(CTX::instance()->mesh.pointsNum) {
-    int labelStep = getLabelStep(e->mesh_vertices.size());
+    int labelStep = CTX::instance()->mesh.labelSampling;
+    if(labelStep <= 0) labelStep = 1;
     for(unsigned int i = 0; i < e->mesh_vertices.size(); i++)
       if(i % labelStep == 0) drawVertexLabel(ctx, e, e->mesh_vertices[i]);
   }
