@@ -591,6 +591,7 @@ Surface *Create_Surface(int Num, int Typ)
   pS->Typ = Typ;
   pS->Method = MESH_UNSTRUCTURED;
   pS->Recombine = 0;
+  pS->RecombineAngle = 45;
   pS->Recombine_Dir = -1;
   pS->TypeOfMapping = 1;
   pS->TransfiniteSmoothing = -1;

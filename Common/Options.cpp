@@ -5604,12 +5604,42 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
   return CTX::instance()->mesh.algo2d;
 }
 
+double opt_mesh_algo_recombine(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.algoRecombine = (int)val;
+    if(CTX::instance()->mesh.algoRecombine < 0 && 
+       CTX::instance()->mesh.algoRecombine > 1)
+      CTX::instance()->mesh.algoRecombine = 0;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->options->mesh.choice[1]->value
+      (CTX::instance()->mesh.algoRecombine);
+  }
+#endif
+  return CTX::instance()->mesh.algoRecombine;
+}
+
+double opt_mesh_recombine_all(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.recombineAll = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->mesh.butt[21]->value
+      (CTX::instance()->mesh.recombineAll);
+#endif
+  return CTX::instance()->mesh.recombineAll;
+}
+
 double opt_mesh_algo_subdivide(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     CTX::instance()->mesh.algoSubdivide = (int)val;
     if(CTX::instance()->mesh.algoSubdivide < 0 && 
-       CTX::instance()->mesh.algoSubdivide > 3)
+       CTX::instance()->mesh.algoSubdivide > 2)
       CTX::instance()->mesh.algoSubdivide = 0;
   }
 #if defined(HAVE_FLTK)

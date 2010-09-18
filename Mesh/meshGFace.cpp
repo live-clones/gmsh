@@ -898,7 +898,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   // delete the mesh
   delete m;
 
-  if(gf->meshAttributes.recombine && !CTX::instance()->mesh.optimizeLloyd)
+  if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) && 
+     !CTX::instance()->mesh.optimizeLloyd)
     recombineIntoQuads(gf);
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
@@ -1468,7 +1469,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   // delete the mesh  
   delete m;
 
- if(gf->meshAttributes.recombine && !CTX::instance()->mesh.optimizeLloyd)
+ if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) && 
+    !CTX::instance()->mesh.optimizeLloyd)
     recombineIntoQuads(gf);
  
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,

@@ -474,10 +474,10 @@ static void Mesh2D(GModel *m)
         GFaceCompound *gfc = (GFaceCompound*) gf;
         if(gfc->getNbSplit() != 0) continue;
       }
-      int recombine = gf->meshAttributes.recombine;
+      int rec = (CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine);
       Msg::Info("Lloyd optimization for face %d", gf->tag());
-      gf->lloyd(25, recombine);
-      if(recombine) recombineIntoQuads(gf);
+      gf->lloyd(25, rec);
+      if(rec) recombineIntoQuads(gf);
     }
   }
 

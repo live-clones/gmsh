@@ -451,6 +451,8 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_algo3d(0, GMSH_SET,
                   (o->mesh.choice[3]->value() == 0) ? ALGO_3D_DELAUNAY : 
                   ALGO_3D_FRONTAL);
+  opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
+  opt_mesh_recombine_all(0, GMSH_SET, o->mesh.butt[21]->value());
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
   opt_mesh_color_carousel(0, GMSH_SET, o->mesh.choice[4]->value());
   opt_mesh_quality_type(0, GMSH_SET, o->mesh.choice[6]->value());
@@ -1972,11 +1974,15 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Frontal", 0, 0, 0},
         {0}
       };
+      static Fl_Menu_Item menu_recombination_algo[] = {
+        {"Standard", 0, 0, 0},
+        {"Blossom", 0, 0, 0},
+        {0}
+      };
       static Fl_Menu_Item menu_subdivision_algo[] = {
         {"None", 0, 0, 0},
         {"All Quads", 0, 0, 0},
         {"All Hexas", 0, 0, 0},
-        {"All Quads (Blossom)", 0, 0, 0},
         {0}
       };
 
@@ -1992,14 +1998,25 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.choice[3]->align(FL_ALIGN_RIGHT);
       mesh.choice[3]->callback(mesh_options_ok_cb);
 
+      mesh.choice[1] = new Fl_Choice
+        (L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Recombination algorithm");
+      mesh.choice[1]->menu(menu_recombination_algo);
+      mesh.choice[1]->align(FL_ALIGN_RIGHT);
+      mesh.choice[1]->callback(mesh_options_ok_cb);
+
+      mesh.butt[21] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Recombine all triangular meshes");
+      mesh.butt[21]->type(FL_TOGGLE_BUTTON);
+      mesh.butt[21]->callback(mesh_options_ok_cb);
+
       mesh.choice[5] = new Fl_Choice
-        (L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Subdivision algorithm");
+        (L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Subdivision algorithm");
       mesh.choice[5]->menu(menu_subdivision_algo);
       mesh.choice[5]->align(FL_ALIGN_RIGHT);
       mesh.choice[5]->callback(mesh_options_ok_cb);
 
       mesh.value[0] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Smoothing steps");
+        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Smoothing steps");
       mesh.value[0]->minimum(0);
       mesh.value[0]->maximum(100);
       mesh.value[0]->step(1);
@@ -2007,7 +2024,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[0]->callback(mesh_options_ok_cb);
 
       mesh.value[2] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Element size factor");
+        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Element size factor");
       mesh.value[2]->minimum(0.001);
       mesh.value[2]->maximum(1000);
       mesh.value[2]->step(0.01);
@@ -2015,17 +2032,17 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[2]->callback(mesh_options_ok_cb);
 
       mesh.value[25] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Minimum element size");
+        (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Minimum element size");
       mesh.value[25]->align(FL_ALIGN_RIGHT);
       mesh.value[25]->callback(mesh_options_ok_cb);
 
       mesh.value[26] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Maximum element size");
+        (L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Maximum element size");
       mesh.value[26]->align(FL_ALIGN_RIGHT);
       mesh.value[26]->callback(mesh_options_ok_cb);
 
       mesh.value[3] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Element order");
+        (L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Element order");
       mesh.value[3]->minimum(1);
       mesh.value[3]->maximum(2);
       mesh.value[3]->step(1);
@@ -2033,7 +2050,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[3]->callback(mesh_options_ok_cb);
 
       mesh.butt[4] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Use incomplete high order elements");
+        (L + 2 * WB, 2 * WB + 11 * BH, BW, BH, "Use incomplete high order elements");
       mesh.butt[4]->type(FL_TOGGLE_BUTTON);
       mesh.butt[4]->callback(mesh_options_ok_cb);
 

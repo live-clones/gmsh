@@ -1337,10 +1337,9 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
   std::set<MElement*> touched;
 
   
-  if(CTX::instance()->mesh.algoSubdivide == 3){
+  if(CTX::instance()->mesh.algoRecombine == 1){
 #ifdef HAVE_MATCH
     int ncount = gf->triangles.size();
-    //    printf("%d %d ----------------\n",CTX::instance()->mesh.algoSubdivide, ncount);
     if (ncount % 2 == 0) {
       int ecount =  cubicGraph ? pairs.size() + makeGraphPeriodic.size() : pairs.size();
       printf("%d internal %d closed\n",pairs.size(), makeGraphPeriodic.size());
@@ -1552,7 +1551,7 @@ void recombineIntoQuads(GFace *gf)
   gf->model()->writeMSH("raw.msh");
   for(int i = 0; i < CTX::instance()->mesh.nbSmoothing; i++) 
     laplaceSmoothing(gf);
-  if(success && CTX::instance()->mesh.algoSubdivide == 3){    
+  if(success && CTX::instance()->mesh.algoRecombine == 1){    
     gf->model()->writeMSH("smoothed.msh");
     int COUNT = 0;
     char NAME[256];

@@ -384,7 +384,7 @@ void meshGEdge::operator() (GEdge *ge)
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }
   
-  if(CTX::instance()->mesh.algoSubdivide == 3 && N%2 == 0)N++;
+  if(CTX::instance()->mesh.algoRecombine == 1 && N%2 == 0) N++;
 
   //  printFandPrimitive(ge->tag(),Points);
 

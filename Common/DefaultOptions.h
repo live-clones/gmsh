@@ -1215,6 +1215,10 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "RandomFactor" , opt_mesh_rand_factor , 1.e-9 ,
     "Random factor used in the 2D meshing algorithm (should be increased if "
     "RandomFactor * size(triangle)/size(model) approaches machine accuracy)" },
+  { F|O, "RecombinationAlgorithm" , opt_mesh_algo_recombine , 0 ,
+    "Mesh recombination algorithm (0=standard, 1=blossom)" }, 
+  { F|O, "RecombineAll" , opt_mesh_recombine_all , 0 ,
+    "Apply recombination algorithm to all surfaces, ignoring per-surface spec" }, 
   { F|O, "RefineSteps" , opt_mesh_refine_steps , 10 ,
     "Number of refinement steps in the MeshAdapt-based 2D algorithms" }, 
   { F|O, "Remove4Triangles" , opt_mesh_remove_4_triangles , 0 ,
