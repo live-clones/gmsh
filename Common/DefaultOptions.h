@@ -1253,7 +1253,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "SmoothRatio" , opt_mesh_smooth_ratio , 1.8 ,
     "Ratio between mesh sizes at vertices of a same edeg (used in BAMG)" },
   { F|O, "SubdivisionAlgorithm" , opt_mesh_algo_subdivide , 0 ,
-    "Mesh subdivision algorithm (0=none, 1=all quadrangles, 2=all hexahedra, 3=all quadrangles (Blossom))" }, 
+    "Mesh subdivision algorithm (0=none, 1=all quadrangles, 2=all hexahedra)" }, 
   { F|O, "SurfaceEdges" , opt_mesh_surfaces_edges , 1. , 
     "Display edges of surface mesh?" },
   { F|O, "SurfaceFaces" , opt_mesh_surfaces_faces , 0. , 
