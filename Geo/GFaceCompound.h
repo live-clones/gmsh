@@ -76,7 +76,7 @@ class GFaceCompound : public GFace {
   mutable std::set<MVertex*> fillNodes;
   void buildOct() const ;
   void buildAllNodes() const; 
-  void parametrize(iterationStep, typeOfMapping, double alpha=0.) const;
+  void parametrize(iterationStep, typeOfMapping) const;
   bool parametrize_conformal() const;
   bool parametrize_conformal_spectral() const;
   bool parametrize_conformal_nonLinear() const;

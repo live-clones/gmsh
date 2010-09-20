@@ -512,7 +512,7 @@ bool GFaceCompound::checkOverlap(std::vector<MVertex*> &ordered) const
   }
   
   if ( !has_no_overlap ) {
-    Msg::Warning("$$$ Overlap for compound face %d", this->tag());
+    Msg::Debug("Overlap for compound face %d", this->tag());
   }
 
   return has_no_overlap;
@@ -559,7 +559,7 @@ bool GFaceCompound::checkOrientation(int iter) const
 
   int iterMax = 15;
   if(!oriented && iter < iterMax){
-    if (iter == 0) Msg::Info("--- Parametrization is flipping : applying cavity checks.");
+    if (iter == 0) Msg::Warning("--- Parametrization is flipping : applying cavity checks.");
     Msg::Debug("--- Cavity Check - iter %d -",iter);
     one2OneMap();
     return checkOrientation(iter+1);
@@ -652,13 +652,17 @@ bool GFaceCompound::parametrize() const
     Msg::Debug("Parametrizing surface %d with 'conformal map'", tag());
     fillNeumannBCS();
     bool noOverlap = parametrize_conformal_spectral() ;
-    if (!noOverlap) noOverlap = parametrize_conformal();
+    if (!noOverlap){
+      Msg::Warning("!!! Overlap: parametrization switched to 'FE conformal' map");
+      noOverlap = parametrize_conformal();
+    }
     // if (!noOverlap) {
-    //    noOverlap = parametrize_conformal_nonLinear() ;
-    //    exit(1);
+    //   Msg::Warning("!!! Overlap: parametrization switched to 'nonLIN conformal' map");
+    //   noOverlap = parametrize_conformal_nonLinear() ;
+    //   exit(1);
     // }
     if ( !noOverlap || !checkOrientation(0) ){
-      Msg::Warning("$$$ Parametrization switched to harmonic map");
+      Msg::Warning("$$$ Overlap: parametrization switched to 'harmonic' map");
       parametrize(ITERU,HARMONIC); 
       parametrize(ITERV,HARMONIC);
     }
@@ -667,7 +671,7 @@ bool GFaceCompound::parametrize() const
   buildOct();  
 
   if (!checkOrientation(0)){
-    Msg::Info("### Parametrization switched to convex combination map");
+    Msg::Info("### Flipping: parametrization switched to convex combination map");
     coordinates.clear(); 
     Octree_Delete(oct);
     fillNeumannBCS();
@@ -1059,10 +1063,11 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
   return SPoint2(0, 0);
 }
 
-void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom, double alpha) const
+void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
 {  
   
   dofManager<double> myAssembler(_lsys);
+
 
   if(_type == UNITCIRCLE){
     // maps the boundary onto a circle
@@ -1175,21 +1180,13 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom, double al
     double value;
     myAssembler.getDofValue(v, 0, 1, value);
     std::map<MVertex*,SPoint3>::iterator itf = coordinates.find(v);
-
-    //combination convex and harmonic
-    double valNEW ;
-    if (alpha != 0.0)
-      valNEW = alpha*itf->second[step] + (1-alpha)*value ;
-    else
-      valNEW = value;
-
     if(itf == coordinates.end()){
       SPoint3 p(0, 0, 0);
-      p[step] = valNEW;
+      p[step] = value;
       coordinates[v] = p;
     }
     else{
-      itf->second[step]= valNEW; 
+      itf->second[step]= value; 
     }
   }
 
@@ -1199,11 +1196,11 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom, double al
 bool GFaceCompound::parametrize_conformal_nonLinear() const
 {
 
-  Msg::Info("Conformal parametrization of type: nonLinear");
   buildOct(); //use this to print conformal map that is overlapping
+  //exit(1);
 
+  //--create dofManager
   dofManager<double> myAssembler(_lsys);
-  _lsys->clear();
 
   //--- first compute mapping harmonic
   parametrize(ITERU,HARMONIC); 
@@ -1222,12 +1219,12 @@ bool GFaceCompound::parametrize_conformal_nonLinear() const
   int nb = ordered.size();
 
   //--fix vertex
-  MVertex *v1  = ordered[0];
-  MVertex *v2  = ordered[(int)ceil((double)ordered.size()/2.)];
-  myAssembler.fixVertex(v1, 0, 1, 1.);
-  myAssembler.fixVertex(v1, 0, 2, 0.);
-  myAssembler.fixVertex(v2, 0, 1, -1.);
-  myAssembler.fixVertex(v2, 0, 2, 0.);
+  // MVertex *v1  = ordered[0];
+  // MVertex *v2  = ordered[(int)ceil((double)ordered.size()/2.)];
+  // myAssembler.fixVertex(v1, 0, 1, 1.);
+  // myAssembler.fixVertex(v1, 0, 2, 0.);
+  // myAssembler.fixVertex(v2, 0, 1, -1.);
+  // myAssembler.fixVertex(v2, 0, 2, 0.);
 
   //--Assemble linear system 
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
@@ -1240,46 +1237,48 @@ bool GFaceCompound::parametrize_conformal_nonLinear() const
     myAssembler.numberVertex(v, 0, 1);
     myAssembler.numberVertex(v, 0, 2);
   }
-  //ghost vertex for lagrange multiplier
   MVertex *lag = new MVertex(0.,0.,0.);
-  myAssembler.numberVertex(lag, 0, 3);
+  myAssembler.numberVertex(lag, 0, 3);//ghost vertex for lagrange multiplier
   
-  std::vector<MElement *> allElems;
-  laplaceTerm laplace1(model(), 1, ONE, &myAssembler);
-  laplaceTerm laplace2(model(), 2, ONE, &myAssembler);
-  crossConfTerm cross12(model(), 1, 2, ONE, &myAssembler);
-  crossConfTerm cross21(model(), 2, 1, MONE, &myAssembler);
-  std::list<GFace*>::const_iterator it = _compound.begin(); 
-  for( ; it != _compound.end() ; ++it){
-    for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-      SElement se((*it)->triangles[i]);
+
+  //--- newton Loop
+  int nbNewton = 1;
+  double lambda  = 1.e-3;
+  for (int iNewton = 0; iNewton < nbNewton; iNewton++){
+
+    //-- assemble conformal matrix
+    std::vector<MElement *> allElems;
+    laplaceTerm laplace1(model(), 1, ONE, &coordinates);
+    laplaceTerm laplace2(model(), 2, ONE, &coordinates);
+    crossConfTerm cross12(model(), 1, 2, ONE, &coordinates);
+    crossConfTerm cross21(model(), 2, 1, MONE, &coordinates);
+    std::list<GFace*>::const_iterator it = _compound.begin(); 
+    for( ; it != _compound.end() ; ++it){
+      for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+	SElement se((*it)->triangles[i]);
+	laplace1.addToMatrix(myAssembler, &se);
+	laplace2.addToMatrix(myAssembler, &se);
+	cross12.addToMatrix(myAssembler, &se);
+	cross21.addToMatrix(myAssembler, &se);
+	allElems.push_back((MElement*)((*it)->triangles[i]));
+      }
+    }
+    for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 !=fillTris.end(); it2++ ){
+      SElement se((*it2));
       laplace1.addToMatrix(myAssembler, &se);
       laplace2.addToMatrix(myAssembler, &se);
       cross12.addToMatrix(myAssembler, &se);
       cross21.addToMatrix(myAssembler, &se);
-      allElems.push_back((MElement*)((*it)->triangles[i]));
+      allElems.push_back((MElement*)(*it2));
     }
-  }
-  for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 !=fillTris.end(); it2++ ){
-    SElement se((*it2));
-    laplace1.addToMatrix(myAssembler, &se);
-    laplace2.addToMatrix(myAssembler, &se);
-    cross12.addToMatrix(myAssembler, &se);
-    cross21.addToMatrix(myAssembler, &se);
-    allElems.push_back((MElement*)(*it2));
-  }
-  
-  groupOfElements gr(allElems);
-  laplace1.addToRightHandSide(myAssembler, gr);
-  laplace2.addToRightHandSide(myAssembler, gr);
-  cross12.addToRightHandSide(myAssembler, gr);
-  cross21.addToRightHandSide(myAssembler, gr);
-
-  //--- newton Loop
-  int nbNewton = 1;
-  double lam  = 0.1;
-  for (int iNewton = 0; iNewton < nbNewton; iNewton++){
-
+    
+    groupOfElements gr(allElems);
+    laplace1.addToRightHandSide(myAssembler, gr);
+    laplace2.addToRightHandSide(myAssembler, gr);
+    cross12.addToRightHandSide(myAssembler, gr);
+    cross21.addToRightHandSide(myAssembler, gr);
+    
+    //-- compute all boundary angles
     double sumTheta = 0.0;
     for (int i=0; i< nb; i++){
       MVertex *prev = (i!=0) ? ordered[i-1] : ordered[nb-1];
@@ -1297,14 +1296,14 @@ bool GFaceCompound::parametrize_conformal_nonLinear() const
       double a = norm(va), b=norm(vb), c=norm(vc);
       SVector3 n = crossprod(va, vb);
 
-      //--- compute theta
+      //- compute theta
       double theta = acos((a*a+b*b-c*c)/(2*a*b)); //in rad
       double sign = 1.;
       if (n.z() < 0.0) {sign = -1.; theta = 2*M_PI-theta;}
       //printf("theta in deg =%g \n", theta*180./M_PI);
       sumTheta +=theta;
 
-      //--- compute grad_uv theta
+      //- compute grad_uv theta
       //dTheta/du1 sign*acos((a^2+b^2 -c^2)/(2*a*b)) 
       //a=sqrt((u2-u1)^2+(v2-v1)^2))
       //b=sqrt((u3-u2)^2+(v3-v2)^2))
@@ -1319,34 +1318,34 @@ bool GFaceCompound::parametrize_conformal_nonLinear() const
       double dTdu3=sign*((u1 + u2 - 2*u3)/(sqrt(SQU(u1 - u2) + SQU(v1 - v2))*sqrt(SQU(u2 - u3) + SQU(v2 - v3))) - ((2*u2 - 2*u3)*(SQU(u1 - u2) + SQU(u1 - u3) + SQU(u2 - u3) + SQU(v1 - v2) + SQU(v1 - v3) + SQU(v2 - v3)))/(4*sqrt(SQU(u1 - u2) + SQU(v1 - v2))*pow((SQU(u2 - u3) + SQU(v2 - v3)),3/2)))/sqrt(1 - SQU(SQU(u1 - u2) + SQU(u1 - u3) + SQU(u2 - u3) + SQU(v1 - v2) + SQU(v1 - v3) + SQU(v2 - v3))/(4*(SQU(u1 - u2) + SQU(v1 - v2))*(SQU(u2 - u3) + SQU(v2 - v3))));
       double dTdv3=((v1 + v2 - 2*v3)/(sqrt(SQU(u1 - u2) + SQU(v1 - v2))*sqrt(SQU(u2 - u3) + SQU(v2 - v3))) - ((2*v2 - 2*v3)*(SQU(u1 - u2) + SQU(u1 - u3) + SQU(u2 - u3) + SQU(v1 - v2) + SQU(v1 - v3) + SQU(v2 - v3)))/(4*sqrt(SQU(u1 - u2) + SQU(v1 - v2))*pow((SQU(u2 - u3) + SQU(v2 - v3)),3/2)))/sqrt(1 - SQU(SQU(u1 - u2) + SQU(u1 - u3) + SQU(u2 - u3) + SQU(v1 - v2) + SQU(v1 - v3) + SQU(v2 - v3))/(4*(SQU(u1 - u2) + SQU(v1 - v2))*(SQU(u2 - u3) + SQU(v2 - v3))));
       
-      //---assemble constraint terms
-      // myAssembler.assemble(lag, 0, 3, prev, 0, 1,  dTdu1);
-      // myAssembler.assemble(lag, 0, 3, prev, 0, 2,  dTdv1);
-      // myAssembler.assemble(lag, 0, 3, curr, 0, 1,  dTdu2);
-      // myAssembler.assemble(lag, 0, 3, curr, 0, 2,  dTdv2);
-      // myAssembler.assemble(lag, 0, 3, next, 0, 1,  dTdu3);
-      // myAssembler.assemble(lag, 0, 3, next, 0, 2,  dTdv3);
+      //- assemble constraint terms
+      myAssembler.assemble(lag, 0, 3, prev, 0, 1,  lambda*dTdu1);
+      myAssembler.assemble(lag, 0, 3, prev, 0, 2,  lambda*dTdv1);
+      myAssembler.assemble(lag, 0, 3, curr, 0, 1,  lambda*dTdu2);
+      myAssembler.assemble(lag, 0, 3, curr, 0, 2,  lambda*dTdv2);
+      myAssembler.assemble(lag, 0, 3, next, 0, 1,  lambda*dTdu3);
+      myAssembler.assemble(lag, 0, 3, next, 0, 2,  lambda*dTdv3);
 
-      // myAssembler.assemble(prev, 0, 1, lag, 0, 3,  dTdu1);
-      // myAssembler.assemble(prev, 0, 2, lag, 0, 3,  dTdv1);
-      // myAssembler.assemble(curr, 0, 1, lag, 0, 3,  dTdu2);
-      // myAssembler.assemble(curr, 0, 2, lag, 0, 3,  dTdv2);
-      // myAssembler.assemble(next, 0, 1, lag, 0, 3,  dTdu3);
-      // myAssembler.assemble(next, 0, 2, lag, 0, 3,  dTdv3);
+      myAssembler.assemble(prev, 0, 1, lag, 0, 3,  lambda*dTdu1);
+      myAssembler.assemble(prev, 0, 2, lag, 0, 3,  lambda*dTdv1);
+      myAssembler.assemble(curr, 0, 1, lag, 0, 3,  lambda*dTdu2);
+      myAssembler.assemble(curr, 0, 2, lag, 0, 3,  lambda*dTdv2);
+      myAssembler.assemble(next, 0, 1, lag, 0, 3,  lambda*dTdu3);
+      myAssembler.assemble(next, 0, 2, lag, 0, 3,  lambda*dTdv3);
 
-      // myAssembler.assemble(prev, 0, 1,  -dTdu1);
-      // myAssembler.assemble(prev, 0, 2,  -dTdv1);
-      // myAssembler.assemble(curr, 0, 1,  -dTdu2);
-      // myAssembler.assemble(curr, 0, 2,  -dTdv2);
-      // myAssembler.assemble(next, 0, 1,  -dTdu3);
-      // myAssembler.assemble(next, 0, 2,  -dTdv3);
+      myAssembler.assemble(prev, 0, 1,  lambda*dTdu1);
+      myAssembler.assemble(prev, 0, 2,  lambda*dTdv1);
+      myAssembler.assemble(curr, 0, 1,  lambda*dTdu2);
+      myAssembler.assemble(curr, 0, 2,  lambda*dTdv2);
+      myAssembler.assemble(next, 0, 1,  lambda*dTdu3);
+      myAssembler.assemble(next, 0, 2,  lambda*dTdv3);
 
     }
 
     //--- compute constraint
     double G = fabs(sumTheta - (nb-2)*M_PI);
-    printf("constraint G = %g \n", G);
-    myAssembler.assemble(lag, 0, 3, lag, 0, 3,  1.0);//change this
+    printf("Sum of angles G = %g \n", G);
+    myAssembler.assemble(lag, 0, 3, lag, 0, 3,  0.0);//change this
 
     //--- assemble rhs of linear system
     myAssembler.assemble(lag, 0, 3, G);
@@ -1364,11 +1363,24 @@ bool GFaceCompound::parametrize_conformal_nonLinear() const
       myAssembler.getDofValue(v, 0, 2, value2);
       coordinates[v] = SPoint3(value1,value2,0.0);
     }
-    double lambda;
-    myAssembler.getDofValue(lag, 0, 3, lambda);
-    printf("lambda=%g \n", lambda);
+    //-- update newton
+    //U=U+DU
+    //lambda = lambda +dLambda
+    for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+      MVertex *v = *itv;
+      double du,dv; 
+      myAssembler.getDofValue(v, 0, 1, du);
+      myAssembler.getDofValue(v, 0, 2, dv);
+      SPoint3 old = coordinates[v];
+      coordinates[v] = SPoint3(old.x()+du,old.y()+dv,0.0);
+    }
+    double dLambda;
+    myAssembler.getDofValue(lag, 0, 3, dLambda);
+    lambda = lambda+dLambda;
+    printf("dLambda=%g \n", dLambda);
 
-    //update newton
+    _lsys->zeroMatrix();
+    _lsys->zeroRightHandSide();
 
   }//end Newton
 
@@ -1378,7 +1390,7 @@ bool GFaceCompound::parametrize_conformal_nonLinear() const
 
 bool GFaceCompound::parametrize_conformal_spectral() const
 {
-  Msg::Info("Conformal parametrization of type: spectral");
+
 #if !defined(HAVE_PETSC) && !defined(HAVE_SLEPC)
   {
 
@@ -1463,36 +1475,20 @@ bool GFaceCompound::parametrize_conformal_spectral() const
     //-------------------------------
     myAssembler.setCurrentMatrix("B");
 
-    double small = 0.0;
-    for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
-      MVertex *v = *itv;
-      if (std::find(ordered.begin(), ordered.end(), v) == ordered.end() ){
-	myAssembler.assemble(v, 0, 1, v, 0, 1,  small);
-	myAssembler.assemble(v, 0, 2, v, 0, 2,  small);
-      }
-      else{
-	myAssembler.assemble(v, 0, 1, v, 0, 1,  1.0);
-	myAssembler.assemble(v, 0, 2, v, 0, 2,  1.0);
-      }
-    } 
-    for(std::set<MVertex *>::iterator itv = fillNodes.begin(); itv !=fillNodes.end() ; ++itv){
-      MVertex *v = *itv;
-      myAssembler.assemble(v, 0, 1, v, 0, 1,  small);
-      myAssembler.assemble(v, 0, 2, v, 0, 2,  small);
-    }
-
     //mettre max NC contraintes par bord
     int NB = ordered.size();
-    int NC = std::min(200,NB);
+    int NC = std::min(50,NB);
     int jump = (int) NB/NC;
     int nbLoop = (int) NB/jump ;
     //printf("nb bound nodes=%d jump =%d \n", NB, jump);
     for (int i = 0; i< nbLoop; i++){
       MVertex *v1 = ordered[i*jump];
+      myAssembler.assemble(v1, 0, 1, v1, 0, 1,  1.0);
+      myAssembler.assemble(v1, 0, 2, v1, 0, 2,  1.0);
       for (int j = 0; j< nbLoop; j++){
 	MVertex *v2 = ordered[j*jump];
-	myAssembler.assemble(v1, 0, 1, v2, 0, 1,  -1./NB);
-	myAssembler.assemble(v1, 0, 2, v2, 0, 2,  -1./NB);
+	myAssembler.assemble(v1, 0, 1, v2, 0, 1,  -1./NC);
+	myAssembler.assemble(v1, 0, 2, v2, 0, 2,  -1./NC);
       }
     }
 
@@ -1533,8 +1529,7 @@ bool GFaceCompound::parametrize_conformal_spectral() const
 }
 bool GFaceCompound::parametrize_conformal() const
 {
-  Msg::Info("Conformal parametrization of type: finite element");
-
+ 
   dofManager<double> myAssembler(_lsys);
 
   std::vector<MVertex*> ordered;

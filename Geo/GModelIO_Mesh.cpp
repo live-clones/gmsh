@@ -2601,7 +2601,6 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
     Msg::Warning("VTK reader only accepts float or double datasets");
     return 0;
   }
-  printf("POINTS=%d \n", numVertices);
   Msg::Info("Reading %d points", numVertices);
   std::vector<MVertex*> vertices(numVertices);
   for(int i = 0 ; i < numVertices; i++){
@@ -2621,7 +2620,6 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
     else{
       if(fscanf(fp, "%lf %lf %lf", &xyz[0], &xyz[1], &xyz[2]) != 3) return 0;
     }
-    printf("Point(%d)={%g, %g, %g}; \n", i+1, xyz[0], xyz[1], xyz[2]);
     vertices[i] = new MVertex(xyz[0], xyz[1], xyz[2]);
   }
 
@@ -2721,7 +2719,6 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
       int iLine = 1;
       int num = 0;
       for (int k= 0; k < numElements; k++){
-	printf("*** new line =%d \n", iLine);
 	physicals[1][iLine][1] = "centerline";
 	fgets(line, sizeof(line), fp);
 	v0=(int)strtol(line, &pEnd, 10);//ignore firt line
@@ -2730,7 +2727,6 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
 	while(1){
 	  v1 = strtol(p, &pEnd, 10);
 	  if (p == pEnd )  break;
-	  printf("Line()={%d,%d};\n", vertices[v0]->getNum(),vertices[v1]->getNum());
 	  elements[1][iLine].push_back(new MLine(vertices[v0],vertices[v1])); 
 	  p=pEnd;
 	  v0=v1;

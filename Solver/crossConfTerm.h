@@ -19,11 +19,13 @@ class crossConfTerm : public femTerm<double> {
   const simpleFunction<double> *_diffusivity;
   const int _iFieldR;
   int _iFieldC;
+  std::map<MVertex*, SPoint3> *_coordView;
  public:
   crossConfTerm(GModel *gm, int iFieldR, int iFieldC, 
-                simpleFunction<double> *diffusivity, dofManager<double> *dofView=NULL)
+                simpleFunction<double> *diffusivity, 
+		std::map<MVertex*, SPoint3> *coord=NULL)
     : femTerm<double>(gm), _diffusivity(diffusivity), _iFieldR(iFieldR), 
-      _iFieldC(iFieldC) {}
+    _iFieldC(iFieldC), _coordView(coord) {}
 
   virtual int sizeOfR(SElement *se) const 
   {
@@ -89,8 +91,30 @@ class crossConfTerm : public femTerm<double> {
   }
  void elementVector(SElement *se, fullVector<double> &m) const
   {
-    //adding here rhs
-    printf("implment  rhs cross term here\n");
+   
+    MElement *e = se->getMeshElement();
+    int nbNodes = e->getNumVertices(); 
+
+    fullMatrix<double> *mat;
+    mat = new fullMatrix<double>(nbNodes,nbNodes);
+    elementMatrix(se, *mat);
+
+    fullVector<double> val(nbNodes);
+    val.scale(0.);
+    for (int i = 0; i < nbNodes; i++){
+      std::map<MVertex*, SPoint3>::iterator it = _coordView->find(e->getVertex(i));
+      SPoint3 UV = it->second;
+      if (_iFieldC == 1)  val(i) = UV.x();
+      else if (_iFieldC == 2)  val(i) = UV.y();
+    }
+
+    m.scale(0.);
+    for (int i = 0; i < nbNodes; i++)
+      for (int j = 0; j < nbNodes; j++)
+    	m(i)  +=  -(*mat)(i,j)*val(j);
+
+
+
   }
 };
 

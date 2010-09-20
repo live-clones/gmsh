@@ -185,7 +185,6 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   for(unsigned int i = 0; i < _entities.size()-1; i++)
     numnodes += _entities[i]->mesh_vertices.size();
   int totNodes=numnodes + _entities[_entities.size()-1]->mesh_vertices.size();
-  printf("%d\n",totNodes);
   int order=ge->getMeshElement(0)->getPolynomialOrder();
   int totNumNodes = totNodes+ge->getNumMeshElements()*integrationPointTetra[order-1];
 
