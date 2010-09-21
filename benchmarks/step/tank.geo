@@ -40,3 +40,4 @@ Transfinite Surface {14} = {21,25,26,18};
 Mesh.Smoothing = 10;
 
 Recombine Surface{1:52};
+Mesh.SubdivisionAlgorithm=3;

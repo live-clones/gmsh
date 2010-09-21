@@ -96,6 +96,15 @@ void OCCFace::setup()
   occface = BRep_Tool::Surface(s);
   // specific parametrization for a sphere.
   _isSphere = isSphere(_radius,_center);
+  if (_isSphere){
+    for (std::list<GEdge*>::iterator it = l_edges.begin();
+	 it != l_edges.end(); ++it){
+      GEdge *ge = *it;
+      if (ge->isSeam(this)){
+	
+      }
+    }    
+  }
 }
 
 Range<double> OCCFace::parBounds(int i) const

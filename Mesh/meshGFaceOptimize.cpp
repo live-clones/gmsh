@@ -787,6 +787,9 @@ void laplaceSmoothing(GFace *gf)
   buildVertexToElement(gf->triangles, adj);
   buildVertexToElement(gf->quadrangles, adj);
 
+  /*    TEST    */
+  double R; SPoint3 c; bool isSphere = gf->isSphere(R,c);
+
   for(int i = 0; i < 5; i++){
     v2t_cont :: iterator it = adj.begin();
     while (it != adj.end()){
@@ -799,27 +802,37 @@ void laplaceSmoothing(GFace *gf)
         ver->getParameter(1, initv);
         const std::vector<MElement*> &lt = it->second;
         double cu = 0, cv = 0;
+	double XX=0,YY=0,ZZ=0;
         double pu[4], pv[4];
         double fact  = 0.0;
         for(unsigned int i = 0; i < lt.size(); i++){
           parametricCoordinates(lt[i], gf, pu, pv, ver);
           cu += (pu[0] + pu[1] + pu[2]);
           cv += (pv[0] + pv[1] + pv[2]);
+	  XX += lt[i]->getVertex(0)->x()+lt[i]->getVertex(1)->x()+lt[i]->getVertex(2)->x();
+	  YY += lt[i]->getVertex(0)->y()+lt[i]->getVertex(1)->y()+lt[i]->getVertex(2)->y();
+	  ZZ += lt[i]->getVertex(0)->z()+lt[i]->getVertex(1)->z()+lt[i]->getVertex(2)->z();
           if(lt[i]->getNumVertices() == 4){
             cu += pu[3];
             cv += pv[3];
+	    XX += lt[i]->getVertex(3)->x();
+	    YY += lt[i]->getVertex(3)->y();
+	    ZZ += lt[i]->getVertex(3)->z();
           }         
           fact += lt[i]->getNumVertices();
-
         }
         if(fact != 0.0){
 	  SPoint2 before(initu,initv);
 	  SPoint2 after(cu / fact,cv / fact);
+	  if (isSphere){
+	    GPoint gp = gf->closestPoint(SPoint3(XX/fact, YY/fact, ZZ/fact), after);
+	    after = SPoint2(gp.u(),gp.v());
+	  }
 	  bool success = _isItAGoodIdeaToMoveThatVertex (gf,  it->second, ver,before,after);
 	  if (success){
-	    ver->setParameter(0, cu / fact);
-	    ver->setParameter(1, cv / fact);
-	    GPoint pt = gf->point(SPoint2(cu / fact, cv / fact));
+	    ver->setParameter(0, after.x());
+	    ver->setParameter(1, after.y());
+	    GPoint pt = gf->point(after);
 	    if(pt.succeeded()){
 	      ver->x() = pt.x();
 	      ver->y() = pt.y();
