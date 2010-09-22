@@ -31,8 +31,8 @@ class PViewDataRemote : public PViewData {
   ~PViewDataRemote(){}
   bool finalize(){ return true; }
   int getNumTimeSteps(){ return _numTimeSteps; }
-  double getMin(int step=-1){ return _min; }
-  double getMax(int step=-1){ return _max; }
+  double getMin(int step=-1, bool onlyVisible=false){ return _min; }
+  double getMax(int step=-1, bool onlyVisible=false){ return _max; }
   SBoundingBox3d getBoundingBox(int step=-1){ return _bbox; }
   double getTime(int step){ return _time; }
   // need to return != 0 for "empty" tests

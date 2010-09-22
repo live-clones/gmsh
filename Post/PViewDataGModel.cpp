@@ -136,14 +136,46 @@ double PViewDataGModel::getTime(int step)
   return _steps[step]->getTime();
 }
 
-double PViewDataGModel::getMin(int step)
+double PViewDataGModel::getMin(int step, bool onlyVisible)
 {
+  if(onlyVisible){
+    double vmin = VAL_INF;
+    for(int ent = 0; ent < getNumEntities(step); ent++){
+      if(skipEntity(step, ent)) continue;
+      for(int ele = 0; ele < getNumElements(step, ent); ele++){
+        if(skipElement(step, ent, ele, true)) continue;
+        for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
+          double val;
+          getScalarValue(step, ent, ele, nod, val);
+          vmin = std::min(vmin, val);
+        }
+      }
+    }
+    return vmin;
+  }
+
   if(step < 0 || _steps.empty()) return _min;
   return _steps[step]->getMin();
 }
 
-double PViewDataGModel::getMax(int step)
+double PViewDataGModel::getMax(int step, bool onlyVisible)
 {
+  if(onlyVisible){
+    double vmax = -VAL_INF;
+    for(int ent = 0; ent < getNumEntities(step); ent++){
+      if(skipEntity(step, ent)) continue;
+      for(int ele = 0; ele < getNumElements(step, ent); ele++){
+        if(skipElement(step, ent, ele, true)) continue;
+        for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
+          double val;
+          getScalarValue(step, ent, ele, nod, val);
+          vmax = std::max(vmax, val);
+        }
+      }
+    }
+    return vmax;
+  }
+
   if(step < 0 || _steps.empty()) return _max;
   return _steps[step]->getMax();
 }

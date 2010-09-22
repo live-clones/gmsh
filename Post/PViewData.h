@@ -69,8 +69,8 @@ class PViewData {
   virtual double getTime(int step){ return 0.; }
 
   // get/set min/max for given step (global over all steps if step=-1)
-  virtual double getMin(int step=-1) = 0;
-  virtual double getMax(int step=-1) = 0;
+  virtual double getMin(int step=-1, bool onlyVisible=false) = 0;
+  virtual double getMax(int step=-1, bool onlyVisible=false) = 0;
   virtual void setMin(double min) = 0;
   virtual void setMax(double max) = 0;
 

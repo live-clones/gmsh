@@ -174,9 +174,9 @@ class PViewDataGModel : public PViewData {
   std::string getFileName(int step=-1);
   int getNumTimeSteps();
   double getTime(int step);
-  double getMin(int step=-1);
+  double getMin(int step=-1, bool onlyVisible=false);
+  double getMax(int step=-1, bool onlyVisible=false);
   void setMin(double min){ _min = min; }
-  double getMax(int step=-1);
   void setMax(double max){ _max = max; }
   SBoundingBox3d getBoundingBox(int step=-1);
   void setBoundingBox(SBoundingBox3d& box){}
