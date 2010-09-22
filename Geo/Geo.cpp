@@ -593,7 +593,6 @@ Surface *Create_Surface(int Num, int Typ)
   pS->Recombine = 0;
   pS->RecombineAngle = 45;
   pS->Recombine_Dir = -1;
-  pS->TypeOfMapping = 1;
   pS->TransfiniteSmoothing = -1;
   pS->TrsfPoints = List_Create(4, 4, sizeof(Vertex *));
   pS->Generatrices = NULL;

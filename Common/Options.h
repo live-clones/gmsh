@@ -526,6 +526,8 @@ double opt_mesh_algo2d(OPT_ARGS_NUM);
 double opt_mesh_algo3d(OPT_ARGS_NUM);
 double opt_mesh_algo_recombine(OPT_ARGS_NUM);
 double opt_mesh_recombine_all(OPT_ARGS_NUM);
+double opt_mesh_remesh_algo(OPT_ARGS_NUM);
+double opt_mesh_remesh_param(OPT_ARGS_NUM);
 double opt_mesh_algo_subdivide(OPT_ARGS_NUM);
 double opt_mesh_mesh_only_visible(OPT_ARGS_NUM);
 double opt_mesh_min_circ_points(OPT_ARGS_NUM);

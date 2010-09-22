@@ -30,6 +30,7 @@ struct contextMeshOptions {
   int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
   int fileFormat, nbSmoothing, algo2d, algo3d, algoSubdivide;
   int algoRecombine, recombineAll;
+  int remeshParam, remeshAlgo;
   int order, secondOrderLinear, secondOrderIncomplete;
   int secondOrderExperimental, meshOnlyVisible;
   int smoothInternalEdges, minCircPoints, minCurvPoints;

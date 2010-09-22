@@ -121,7 +121,6 @@ fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 
 %type <d> FExpr FExpr_Single 
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
-%type <i> CompoundMap 
 %type <i> NumericAffectation NumericIncrement PhysicalId
 %type <i> TransfiniteArrangement RecombineAngle
 %type <u> ColorExpr
@@ -1466,7 +1465,7 @@ Shape :
       $$.Type = MSH_SURF_LOOP;
       $$.Num = num;
     }
-  | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble CompoundMap tEND
+  | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
       if(FindSurface(num)){
@@ -1476,7 +1475,6 @@ Shape :
 	Surface *s = Create_Surface(num, MSH_SURF_COMPOUND);
         for(int i = 0; i < List_Nbr($7); i++){
           s->compound.push_back((int)*(double*)List_Pointer($7, i));
-	  s->TypeOfMapping = $8;
 	}
 	Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
       }
@@ -1485,7 +1483,7 @@ Shape :
       $$.Num = num;
     }
   | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tSTRING 
-      '{' RecursiveListOfListOfDouble '}' CompoundMap tEND
+      '{' RecursiveListOfListOfDouble '}' tEND
     {
       int num = (int)$4;
       if(FindSurface(num)){
@@ -1503,7 +1501,6 @@ Shape :
 	  List_T *l = *(List_T**)List_Pointer($10, i);
           for (int j = 0; j < List_Nbr(l); j++){
             s->compoundBoundary[i].push_back((int)*(double*)List_Pointer(l, j));
-	    s->TypeOfMapping = $12;
 	  }
 	}
 	Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
@@ -2883,29 +2880,6 @@ ExtrudeParameter :
     }
 ;
 
-
-//  COMPOUND
-CompoundMap : 
-    {
-      $$ = 1; // harmonic
-    }
-  | tSTRING
-    {
-      if(!strcmp($1, "Harmonic"))
-        $$ = 1;
-      else if(!strcmp($1, "Conformal"))
-        $$ = -1;
-      else if(!strcmp($1, "Harmonic_NoSplit"))
-        $$ = 2;
-      else if(!strcmp($1, "Conformal_NoSplit"))
-        $$ = -2;
-     else if(!strcmp($1, "Harmonic_SplitMetis"))
-        $$ = 3;
-      else if(!strcmp($1, "Conformal_SplitMetis"))
-        $$ = -3;
-      Free($1);
-    }
-;
 //  T R A N S F I N I T E ,   R E C O M B I N E   &   S M O O T H I N G
 
 TransfiniteType : 

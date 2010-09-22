@@ -92,7 +92,7 @@ class GFaceCompound : public GFace {
   void getTriangle(double u, double v, GFaceCompoundTriangle **lt, 
                    double &_u, double &_v) const;
   virtual double locCurvature(MTriangle *t, double u, double v) const;
-  void printStuff() const;
+  void printStuff(int iNewton=0) const;
   bool trivial() const ;
   linearSystem <double> *_lsys;
   double getSizeH() const;

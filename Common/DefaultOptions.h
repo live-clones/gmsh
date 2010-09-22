@@ -1219,6 +1219,12 @@ StringXNumber MeshOptions_Number[] = {
     "Mesh recombination algorithm (0=standard, 1=blossom)" }, 
   { F|O, "RecombineAll" , opt_mesh_recombine_all , 0 ,
     "Apply recombination algorithm to all surfaces, ignoring per-surface spec" }, 
+
+  { F|O, "RemeshAlgorithm" , opt_mesh_remesh_algo , 0 ,
+    "Remeshing algorithm (0=no split, 1=automatic, 2=automatic only with metis)" }, 
+  { F|O, "RemeshParametrization" , opt_mesh_remesh_param , 0 ,
+    "Remsh Parametrization (0=harmonic, 1=conformal)" }, 
+
   { F|O, "RefineSteps" , opt_mesh_refine_steps , 10 ,
     "Number of refinement steps in the MeshAdapt-based 2D algorithms" }, 
   { F|O, "Remove4Triangles" , opt_mesh_remove_4_triangles , 0 ,

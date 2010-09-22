@@ -965,7 +965,7 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
     
     bool seam = ges.ge->isSeam(gf);
 
-    if (seam) printf("face %d has seam %d\n", gf->tag(), ges.ge->tag());
+    //if (seam) printf("face %d has seam %d\n", gf->tag(), ges.ge->tag());
     
     Range<double> range = ges.ge->parBounds(0);
     
@@ -1680,9 +1680,11 @@ void partitionAndRemesh(GFaceCompound *gf)
     f_compound.push_back(pf);     
     Msg::Info("Parametrize Compound Surface (%d) = %d discrete face",
               num_gfc, pf->tag());
+
     GFaceCompound *gfc = new GFaceCompound(gf->model(), num_gfc, f_compound,
-                                           b[0], b[1], b[2], b[3], 0,
-                                           gf->getTypeOfMapping());
+                                            b[0], b[1], b[2], b[3], 0,
+                                            gf->getTypeOfMapping());
+
     gfc->meshAttributes.recombine = gf->meshAttributes.recombine;
     gf->model()->add(gfc);
 

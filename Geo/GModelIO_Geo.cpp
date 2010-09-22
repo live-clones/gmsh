@@ -20,6 +20,7 @@
 #include "gmshEdge.h"
 #include "gmshRegion.h"
 #include "Field.h"
+#include "Context.h"
 
 #if defined(HAVE_PARSER)
 #include "Parser.h"
@@ -181,14 +182,12 @@ int GModel::importGEOInternals()
             if(ge) b[j].push_back(ge);
           }
         }
-        int allowPartition = 1; //allow 
-        if (abs(s->TypeOfMapping) == 2) allowPartition = 0;//not allow
-	if (abs(s->TypeOfMapping) == 3) allowPartition = 2;//only metis
-
+ 	int param = CTX::instance()->mesh.remeshParam;
+	int algo = CTX::instance()->mesh.remeshAlgo;
         f = new GFaceCompound(this, s->Num, comp,
                               b[0], b[1], b[2], b[3], 0,
-                              s->TypeOfMapping > 0 ? GFaceCompound::HARMONIC :
-                              GFaceCompound::CONFORMAL, allowPartition);
+                              (param == 0) ? GFaceCompound::HARMONIC :
+                              GFaceCompound::CONFORMAL, algo);
 	f->meshAttributes.recombine = s->Recombine;
 	f->meshAttributes.recombineAngle = s->RecombineAngle;
 	f->meshAttributes.Method = s->Method;
