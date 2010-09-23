@@ -2446,7 +2446,7 @@ int GModel::writeP3D(const std::string &name, bool saveAll, double scalingFactor
         for(unsigned int k = 0; k < gf->transfinite_vertices[j].size(); k++){
           MVertex *v = gf->transfinite_vertices[j][k];
           double d = (coord == 0) ? v->x() : (coord == 1) ? v->y() : v->z();
-          fprintf(fp, "%g ", d * scalingFactor);
+          fprintf(fp, "%.16g ", d * scalingFactor);
         }
         fprintf(fp, "\n");
       }
@@ -2461,7 +2461,7 @@ int GModel::writeP3D(const std::string &name, bool saveAll, double scalingFactor
           for(unsigned int l = 0; l < gr->transfinite_vertices[j][k].size(); l++){
             MVertex *v = gr->transfinite_vertices[j][k][l];
             double d = (coord == 0) ? v->x() : (coord == 1) ? v->y() : v->z();
-            fprintf(fp, "%g ", d * scalingFactor);
+            fprintf(fp, "%.16g ", d * scalingFactor);
           }
           fprintf(fp, "\n");
         }
@@ -3222,7 +3222,7 @@ int GModel::writeINP(const std::string &name, bool saveAll,
       for(unsigned int j = 0; j < entities[i]->getNumMeshVertices(); j++){
         MVertex *v = entities[i]->getMeshVertex(j);
         if(v->getIndex() >= 0)
-          fprintf(fp, "%d, %g, %g, %g\n", v->getIndex(), v->x() * scalingFactor,
+          fprintf(fp, "%d, %.16g, %.16g, %.16g\n", v->getIndex(), v->x() * scalingFactor,
                   v->y() * scalingFactor, v->z() * scalingFactor);
       }
   
