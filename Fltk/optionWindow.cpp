@@ -1700,7 +1700,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.value[2]->callback(geometry_options_ok_cb);
 
       geo.butt[8] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Remove duplicate entities in GEO models");
+        (L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Remove duplicate entities in GEO model transforms");
       geo.butt[8]->type(FL_TOGGLE_BUTTON);
       geo.butt[8]->callback(geometry_options_ok_cb);
 
