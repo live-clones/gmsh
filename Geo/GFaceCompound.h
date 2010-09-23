@@ -100,6 +100,11 @@ class GFaceCompound : public GFace {
   SBoundingBox3d boundEdges(const std::list<GEdge* > &elist) const;
   SOrientedBoundingBox obb_boundEdges(const std::list<GEdge* > &elist) const;
   void fillNeumannBCS() const;
+  /* double sumAngles(std::vector<MVertex*> ordered) const; */
+  void computeThetaDerivatives (MVertex *prev, MVertex *curr, MVertex *next,
+  				double &dTdu1, double &dTdv1,
+  				double &dTdu2, double &dTdv2,
+  				double &dTdu3, double &dTdv3) const;
  public: 
   GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
                 std::list<GEdge*> &U0, std::list<GEdge*> &U1,

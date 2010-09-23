@@ -660,7 +660,6 @@ bool GFaceCompound::parametrize() const
     // if (!noOverlap) {
     //   Msg::Warning("!!! Overlap: parametrization switched to 'nonLIN conformal' map");
     //   noOverlap = parametrize_conformal_nonLinear() ;
-    //   exit(1);
     // }
     if ( !noOverlap || !checkOrientation(0) ){
       Msg::Warning("$$$ Overlap: parametrization switched to 'harmonic' map");
@@ -1195,18 +1194,64 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
   _lsys->clear();
 
 }
+void GFaceCompound::computeThetaDerivatives (MVertex *prev, MVertex *curr, MVertex *next, 
+					     double &dTdu1, double &dTdv1,
+					     double &dTdu2, double &dTdv2,
+					     double &dTdu3, double &dTdv3) const
+{
+ 			       
+  SPoint2 p1 = getCoordinates(prev);
+  SPoint2 p2 = getCoordinates(curr);
+  SPoint2 p3 = getCoordinates(next);
+  SVector3 va(p2.x()-p1.x(), p2.y()-p1.y(),0.);
+  SVector3 vb(p3.x()-p2.x(), p3.y()-p2.y(), 0.);
+  SVector3 vc(p1.x()-p3.x(), p1.y()-p3.y(), 0.);
+  double a = norm(va), b=norm(vb), c=norm(vc);
+  SVector3 n = crossprod(va, vb);
+  
+  double sign = 1.;
+  if (n.z() < 0.0) sign = -1.;
+ 
+  //- compute grad_uv theta
+  //dTheta/du1 sign*acos((a^2+b^2 -c^2)/(2*a*b)) 
+  //a=sqrt((u2-u1)^2+(v2-v1)^2))
+  //b=sqrt((u3-u2)^2+(v3-v2)^2))
+  //c=sqrt((u1-u3)^2+(v1-v3)^2))
+  double u1 = p1.x();double v1 = p1.y();
+  double u2 = p2.x();double v2 = p2.y();
+  double u3 = p3.x();double v3 = p3.y();
+  
+  dTdu1 = sign*(v1*v3*u1-v1*v3*u2-v3*v2*u1+v3*v2*u2-v2*v1*u1+2*u3*v2*v1+u2*SQU(v1)-u3*SQU(v2)-u3*SQU(v1)+SQU(v2)*u1-v2*v1*u2)/pow(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1), 3./2.)/sqrt(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2))/sqrt(SQU(u2*v3-u1*v3+u1*v2-u2*v1-v2*u3+v1*u3)/(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1))/(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2)));
+
+  dTdv1 = sign*(v1*u1*u3-SQU(u1)*v3+v1*SQU(u2)-u2*u3*v1-v1*u1*u2-u2*u1*v2+u3*u2*v2-u1*u3*v2+2*v3*u2*u1-v3*SQU(u2)+v2*SQU(u1))/pow(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1),3./2.)/sqrt(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2))/sqrt(SQU(u2*v3-u1*v3+u1*v2-u2*v1-v2*u3+v1*u3)/(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1))/(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2)));
+
+  dTdu2= sign*(u1*SQU(v1)*SQU(v2)+u1*SQU(v1)*SQU(v3)+v2*CUB(v1)*u3-u2*v2*CUB(v1)-v3*CUB(v2)*u3+CUB(u1)*SQU(v3)+CUB(u1)*SQU(v2)+5*u2*v2*v1*SQU(u3)-3*SQU(u2)*v2*v1*u3+u2*v2*v1*SQU(v3)-2*u2*SQU(v2)*v1*v3+u1*v2*v1*SQU(u3)+3*u1*v2*v1*SQU(u2)+u1*v2*v1*SQU(v3)+u1*SQU(v2)*v1*v3+4*u3*u2*u1*SQU(v2)-u2*v3*v2*SQU(u3)+3*SQU(u2)*v3*v2*u3+u1*v3*v2*SQU(u3)-3*u1*v3*v2*SQU(u2)-u1*v1*v3*SQU(u3)+v2*v1*u3*SQU(u1)-u2*v2*v1*SQU(u1)+v3*SQU(v2)*u3*v1+v3*v2*u3*SQU(v1)-3*u3*v1*v3*SQU(u2)-u3*v1*v3*SQU(u1)+u2*v1*v3*SQU(u1)-4*u1*v2*v1*u3*u2-u1*CUB(v2)*v1-u2*CUB(v3)*v2+u2*SQU(v3)*SQU(v2)+u1*CUB(v3)*v2-2*u1*SQU(v3)*SQU(v2)+u1*v3*CUB(v2)-u1*v1*CUB(v3)-SQU(v2)*u3*SQU(u1)+CUB(v2)*u3*v1-2*SQU(v2)*u3*SQU(v1)+3*u3*SQU(u2)*SQU(v1)+4*u1*v1*v3*u3*u2-3*u1*v1*v3*SQU(u2)+SQU(u1)*u3*v3*v2+u2*SQU(v1)*v3*v2+5*u2*SQU(u1)*v3*v2-2*u1*SQU(v1)*v3*v2-4*u3*u2*u1*v3*v2-2*u2*SQU(v2)*SQU(u1)+u2*SQU(v2)*SQU(v1)-2*SQU(u3)*u2*SQU(v2)-3*SQU(u3)*u2*SQU(v1)-u1*SQU(u3)*SQU(v2)+3*SQU(u2)*u1*SQU(v3)+SQU(v1)*CUB(u3)-2*u2*SQU(v1)*SQU(v3)-3*u2*SQU(u1)*SQU(v3)+u2*v1*v3*SQU(u3)-2*u3*v2*v1*SQU(v3)-2*CUB(u1)*v3*v2-CUB(u2)*SQU(v3)-SQU(v1)*CUB(u2)-u3*CUB(v1)*v3+2*CUB(u2)*v1*v3+u2*CUB(v1)*v3+u2*v1*CUB(v3)-2*v2*v1*CUB(u3)+u3*SQU(v1)*SQU(v3)+u3*SQU(v2)*SQU(v3)+SQU(v2)*CUB(u3))/pow(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1), 3./2.)/pow(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2),3./2.)/sqrt(SQU(u2*v3-u1*v3+u1*v2-u2*v1-v2*u3+v1*u3)/(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1))/(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2)));
+
+  dTdv2= -sign*(CUB(u3)*u2*v2-u1*CUB(u3)*v2-2*u1*u3*CUB(v2)+3*u1*u3*SQU(v2)*v1-u1*u3*v2*SQU(v1)+v3*u1*u3*SQU(v1)-4*v3*u1*u3*v2*v1+v1*u1*u3*SQU(v3)+u3*u2*v2*SQU(v3)-u2*u3*v1*SQU(v3)+v3*CUB(u1)*u3-u2*CUB(u3)*v1+u2*CUB(u1)*v2+v1*u1*CUB(u3)+v1*SQU(u2)*SQU(v3)+v1*CUB(u2)*u1-v1*CUB(u2)*u3+2*v1*SQU(u2)*SQU(u3)-CUB(u2)*u1*v3-v2*SQU(u1)*u3*u2+2*v2*SQU(u2)*u1*u3-v2*u2*u1*SQU(u3)-u1*u3*v2*SQU(v3)+3*u1*u3*SQU(v2)*v3+2*SQU(u2)*SQU(u1)*v3-u2*CUB(u1)*v3+4*u2*u1*v3*v2*v1-CUB(v1)*SQU(u3)-CUB(v1)*SQU(u2)+2*CUB(v1)*u3*u2+2*v2*SQU(v1)*SQU(u2)+3*v2*SQU(v1)*SQU(u3)-3*v1*SQU(v2)*SQU(u3)-v1*SQU(u1)*SQU(u2)-v1*SQU(u1)*SQU(u3)+3*SQU(u1)*SQU(v3)*v2+2*u2*u1*CUB(v3)+2*SQU(u2)*SQU(v3)*v2+v3*SQU(v1)*SQU(u2)-3*v3*SQU(u1)*SQU(v2)-5*u2*u1*SQU(v3)*v2+u2*u1*v2*SQU(v1)-SQU(u1)*CUB(v3)-SQU(u2)*CUB(v3)+4*v3*v2*v1*u3*u2-v3*SQU(u1)*SQU(u3)+v3*CUB(u2)*u3-v3*SQU(u2)*SQU(u3)-SQU(u2)*v2*SQU(u3)+3*u2*u1*v3*SQU(v2)-u2*u1*v3*SQU(v1)-4*v3*v2*v1*SQU(u2)-5*v2*SQU(v1)*u3*u2+3*v1*SQU(v2)*u3*u2-CUB(u1)*u3*v2-v2*SQU(u1)*SQU(u2)+2*v2*SQU(u1)*SQU(u3)+SQU(u1)*CUB(v2)+CUB(v2)*SQU(u3)+2*v1*SQU(u1)*u3*u2-3*v1*u2*u1*SQU(v2)-v1*u2*u1*SQU(v3)-v1*SQU(u2)*u1*u3-v1*u2*u1*SQU(u3)-v3*SQU(v1)*u3*u2-3*v3*SQU(v2)*u3*u2-v3*SQU(u1)*u3*u2-v3*SQU(u2)*u1*u3+2*v3*u2*u1*SQU(u3))/pow(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1),3./2.)/pow(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2), 3./2.)/sqrt(SQU(u2*v3-u1*v3+u1*v2-u2*v1-v2*u3+v1*u3)/(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1))/(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2)));
+
+  dTdu3= -sign*(-SQU(v2)*u3-2*u1*v3*v2-u2*SQU(v3)+u2*v3*v2+v2*v1*u3+u2*v1*v3+u1*SQU(v3)-u2*v2*v1+u1*SQU(v2)+v3*v2*u3-u3*v1*v3)/sqrt(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1))/pow(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2), 3./2.)/sqrt(SQU(u2*v3-u1*v3+u1*v2-u2*v1-v2*u3+v1*u3)/(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1))/(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2)));
+
+  dTdv3= sign*(v3*u1*u3-v1*SQU(u3)+2*u2*u3*v1-v1*SQU(u2)+u2*u1*v2-u2*u1*v3-u3*u2*v2-u3*u2*v3-u1*u3*v2+SQU(u2)*v3+v2*SQU(u3))/sqrt(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1))/pow(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2), 3./2.)/sqrt(SQU(u2*v3-u1*v3+u1*v2-u2*v1-v2*u3+v1*u3)/(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1))/(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2)));
+
+}
+
 bool GFaceCompound::parametrize_conformal_nonLinear() const
 {
 
-  printStuff(100);
-  //exit(1);
+  bool converged = false; 
 
   //--create dofManager
-  dofManager<double> myAssembler(_lsys);
+  linearSystem<double>* lsysNL;
+  lsysNL = new linearSystemFull<double>;
+  //lsysNL = new linearSystemPETSc<double>;
+  //lsysNL = new linearSystemCSRTaucs<double>;
+
+  dofManager<double> myAssembler(lsysNL);
 
   //--- first compute mapping harmonic
   parametrize(ITERU,HARMONIC); 
   parametrize(ITERV,HARMONIC);
+  printStuff(100);
 
   //---order boundary vertices
   std::vector<MVertex*> ordered;
@@ -1228,19 +1273,15 @@ bool GFaceCompound::parametrize_conformal_nonLinear() const
     myAssembler.numberVertex(v, 0, 1);
     myAssembler.numberVertex(v, 0, 2);
   }
-  for(std::set<MVertex *>::iterator itv = fillNodes.begin(); itv !=fillNodes.end() ; ++itv){
-    MVertex *v = *itv;
-    myAssembler.numberVertex(v, 0, 1);
-    myAssembler.numberVertex(v, 0, 2);
-  }
   MVertex *lag = new MVertex(0.,0.,0.);
   myAssembler.numberVertex(lag, 0, 3);//ghost vertex for lagrange multiplier
   
   //--- newton Loop
-  int nbNewton = 3;
-  double lambda  = 1.e10;
+  int nbNewton = 5;
+  double lambda  = 1.e5;
+  double fac = 1.e7;
   for (int iNewton = 0; iNewton < nbNewton; iNewton++){
-
+  
     //-- assemble conformal matrix
     std::vector<MElement *> allElems;
     laplaceTerm laplace1(model(), 1, ONE, &coordinates);
@@ -1257,14 +1298,6 @@ bool GFaceCompound::parametrize_conformal_nonLinear() const
 	cross21.addToMatrix(myAssembler, &se);
 	allElems.push_back((MElement*)((*it)->triangles[i]));
       }
-    }
-    for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 !=fillTris.end(); it2++ ){
-      SElement se((*it2));
-      laplace1.addToMatrix(myAssembler, &se);
-      laplace2.addToMatrix(myAssembler, &se);
-      cross12.addToMatrix(myAssembler, &se);
-      cross21.addToMatrix(myAssembler, &se);
-      allElems.push_back((MElement*)(*it2));
     }
     
     groupOfElements gr(allElems);
@@ -1288,11 +1321,9 @@ bool GFaceCompound::parametrize_conformal_nonLinear() const
       double a = norm(va), b=norm(vb), c=norm(vc);
       SVector3 n = crossprod(va, vb);
 
-      //- compute theta
       double theta = acos((a*a+b*b-c*c)/(2*a*b)); //in rad
       double sign = 1.;
       if (n.z() < 0.0) {sign = -1.; theta = 2*M_PI-theta;}
-      //printf("theta in deg =%g \n", theta*180./M_PI);
       sumTheta +=theta;
 
       //- compute grad_uv theta
@@ -1300,58 +1331,43 @@ bool GFaceCompound::parametrize_conformal_nonLinear() const
       //a=sqrt((u2-u1)^2+(v2-v1)^2))
       //b=sqrt((u3-u2)^2+(v3-v2)^2))
       //c=sqrt((u1-u3)^2+(v1-v3)^2))
-      double u1 = p1.x();double v1 = p1.y();
-      double u2 = p2.x();double v2 = p2.y();
-      double u3 = p3.x();double v3 = p3.y();
- 
-      double dTdu1 = (v1*v3*u1-v1*v3*u2-v3*v2*u1+v3*v2*u2-v2*v1*u1+2*u3*v2*v1+u2*SQU(v1)-u3*SQU(v2)-u3*SQU(v1)+SQU(v2)*u1-v2*v1*u2)/pow(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1), 3./2.)/sqrt(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2))/sqrt(SQU(u2*v3-u1*v3+u1*v2-u2*v1-v2*u3+v1*u3)/(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1))/(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2)));
-
-      double dTdv1 = (v1*u1*u3-SQU(u1)*v3+v1*SQU(u2)-u2*u3*v1-v1*u1*u2-u2*u1*v2+u3*u2*v2-u1*u3*v2+2*v3*u2*u1-v3*SQU(u2)+v2*SQU(u1))/pow(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1),3./2.)/sqrt(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2))/sqrt(SQU(u2*v3-u1*v3+u1*v2-u2*v1-v2*u3+v1*u3)/(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1))/(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2)));
-
-      double dTdu2= (u1*SQU(v1)*SQU(v2)+u1*SQU(v1)*SQU(v3)+v2*CUB(v1)*u3-u2*v2*CUB(v1)-v3*CUB(v2)*u3+CUB(u1)*SQU(v3)+CUB(u1)*SQU(v2)+5*u2*v2*v1*SQU(u3)-3*SQU(u2)*v2*v1*u3+u2*v2*v1*SQU(v3)-2*u2*SQU(v2)*v1*v3+u1*v2*v1*SQU(u3)+3*u1*v2*v1*SQU(u2)+u1*v2*v1*SQU(v3)+u1*SQU(v2)*v1*v3+4*u3*u2*u1*SQU(v2)-u2*v3*v2*SQU(u3)+3*SQU(u2)*v3*v2*u3+u1*v3*v2*SQU(u3)-3*u1*v3*v2*SQU(u2)-u1*v1*v3*SQU(u3)+v2*v1*u3*SQU(u1)-u2*v2*v1*SQU(u1)+v3*SQU(v2)*u3*v1+v3*v2*u3*SQU(v1)-3*u3*v1*v3*SQU(u2)-u3*v1*v3*SQU(u1)+u2*v1*v3*SQU(u1)-4*u1*v2*v1*u3*u2-u1*CUB(v2)*v1-u2*CUB(v3)*v2+u2*SQU(v3)*SQU(v2)+u1*CUB(v3)*v2-2*u1*SQU(v3)*SQU(v2)+u1*v3*CUB(v2)-u1*v1*CUB(v3)-SQU(v2)*u3*SQU(u1)+CUB(v2)*u3*v1-2*SQU(v2)*u3*SQU(v1)+3*u3*SQU(u2)*SQU(v1)+4*u1*v1*v3*u3*u2-3*u1*v1*v3*SQU(u2)+SQU(u1)*u3*v3*v2+u2*SQU(v1)*v3*v2+5*u2*SQU(u1)*v3*v2-2*u1*SQU(v1)*v3*v2-4*u3*u2*u1*v3*v2-2*u2*SQU(v2)*SQU(u1)+u2*SQU(v2)*SQU(v1)-2*SQU(u3)*u2*SQU(v2)-3*SQU(u3)*u2*SQU(v1)-u1*SQU(u3)*SQU(v2)+3*SQU(u2)*u1*SQU(v3)+SQU(v1)*CUB(u3)-2*u2*SQU(v1)*SQU(v3)-3*u2*SQU(u1)*SQU(v3)+u2*v1*v3*SQU(u3)-2*u3*v2*v1*SQU(v3)-2*CUB(u1)*v3*v2-CUB(u2)*SQU(v3)-SQU(v1)*CUB(u2)-u3*CUB(v1)*v3+2*CUB(u2)*v1*v3+u2*CUB(v1)*v3+u2*v1*CUB(v3)-2*v2*v1*CUB(u3)+u3*SQU(v1)*SQU(v3)+u3*SQU(v2)*SQU(v3)+SQU(v2)*CUB(u3))/pow(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1), 3./2.)/pow(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2),3./2.)/sqrt(SQU(u2*v3-u1*v3+u1*v2-u2*v1-v2*u3+v1*u3)/(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1))/(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2)));
-
-      double dTdv2= -(CUB(u3)*u2*v2-u1*CUB(u3)*v2-2*u1*u3*CUB(v2)+3*u1*u3*SQU(v2)*v1-u1*u3*v2*SQU(v1)+v3*u1*u3*SQU(v1)-4*v3*u1*u3*v2*v1+v1*u1*u3*SQU(v3)+u3*u2*v2*SQU(v3)-u2*u3*v1*SQU(v3)+v3*CUB(u1)*u3-u2*CUB(u3)*v1+u2*CUB(u1)*v2+v1*u1*CUB(u3)+v1*SQU(u2)*SQU(v3)+v1*CUB(u2)*u1-v1*CUB(u2)*u3+2*v1*SQU(u2)*SQU(u3)-CUB(u2)*u1*v3-v2*SQU(u1)*u3*u2+2*v2*SQU(u2)*u1*u3-v2*u2*u1*SQU(u3)-u1*u3*v2*SQU(v3)+3*u1*u3*SQU(v2)*v3+2*SQU(u2)*SQU(u1)*v3-u2*CUB(u1)*v3+4*u2*u1*v3*v2*v1-CUB(v1)*SQU(u3)-CUB(v1)*SQU(u2)+2*CUB(v1)*u3*u2+2*v2*SQU(v1)*SQU(u2)+3*v2*SQU(v1)*SQU(u3)-3*v1*SQU(v2)*SQU(u3)-v1*SQU(u1)*SQU(u2)-v1*SQU(u1)*SQU(u3)+3*SQU(u1)*SQU(v3)*v2+2*u2*u1*CUB(v3)+2*SQU(u2)*SQU(v3)*v2+v3*SQU(v1)*SQU(u2)-3*v3*SQU(u1)*SQU(v2)-5*u2*u1*SQU(v3)*v2+u2*u1*v2*SQU(v1)-SQU(u1)*CUB(v3)-SQU(u2)*CUB(v3)+4*v3*v2*v1*u3*u2-v3*SQU(u1)*SQU(u3)+v3*CUB(u2)*u3-v3*SQU(u2)*SQU(u3)-SQU(u2)*v2*SQU(u3)+3*u2*u1*v3*SQU(v2)-u2*u1*v3*SQU(v1)-4*v3*v2*v1*SQU(u2)-5*v2*SQU(v1)*u3*u2+3*v1*SQU(v2)*u3*u2-CUB(u1)*u3*v2-v2*SQU(u1)*SQU(u2)+2*v2*SQU(u1)*SQU(u3)+SQU(u1)*CUB(v2)+CUB(v2)*SQU(u3)+2*v1*SQU(u1)*u3*u2-3*v1*u2*u1*SQU(v2)-v1*u2*u1*SQU(v3)-v1*SQU(u2)*u1*u3-v1*u2*u1*SQU(u3)-v3*SQU(v1)*u3*u2-3*v3*SQU(v2)*u3*u2-v3*SQU(u1)*u3*u2-v3*SQU(u2)*u1*u3+2*v3*u2*u1*SQU(u3))/pow(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1),3./2.)/pow(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2), 3./2.)/sqrt(SQU(u2*v3-u1*v3+u1*v2-u2*v1-v2*u3+v1*u3)/(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1))/(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2)));
-
-      double dTdu3= -(-SQU(v2)*u3-2*u1*v3*v2-u2*SQU(v3)+u2*v3*v2+v2*v1*u3+u2*v1*v3+u1*SQU(v3)-u2*v2*v1+u1*SQU(v2)+v3*v2*u3-u3*v1*v3)/sqrt(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1))/pow(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2), 3./2.)/sqrt(SQU(u2*v3-u1*v3+u1*v2-u2*v1-v2*u3+v1*u3)/(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1))/(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2)));
-
-      double dTdv3= (v3*u1*u3-v1*SQU(u3)+2*u2*u3*v1-v1*SQU(u2)+u2*u1*v2-u2*u1*v3-u3*u2*v2-u3*u2*v3-u1*u3*v2+SQU(u2)*v3+v2*SQU(u3))/sqrt(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1))/pow(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2), 3./2.)/sqrt(SQU(u2*v3-u1*v3+u1*v2-u2*v1-v2*u3+v1*u3)/(SQU(u2)-2*u2*u1+SQU(u1)+SQU(v2)-2*v2*v1+SQU(v1))/(SQU(u3)-2*u3*u2+SQU(u2)+SQU(v3)-2*v3*v2+SQU(v2)));
+      double dTdu1, dTdv1, dTdu2, dTdv2, dTdu3, dTdv3;
+      computeThetaDerivatives(prev, curr, next, 
+			      dTdu1, dTdv1, dTdu2, dTdv2, dTdu3, dTdv3);
 
       //- assemble constraint terms
-      myAssembler.assemble(lag, 0, 3, prev, 0, 1,  -dTdu1);
-      myAssembler.assemble(lag, 0, 3, prev, 0, 2,  -dTdv1);
-      myAssembler.assemble(lag, 0, 3, curr, 0, 1,  -dTdu2);
-      myAssembler.assemble(lag, 0, 3, curr, 0, 2,  -dTdv2);
-      myAssembler.assemble(lag, 0, 3, next, 0, 1,  -dTdu3);
-      myAssembler.assemble(lag, 0, 3, next, 0, 2,  -dTdv3);
+      myAssembler.assemble(lag, 0, 3, prev, 0, 1,  -fac*dTdu1);
+      myAssembler.assemble(lag, 0, 3, prev, 0, 2,  -fac*dTdv1);
+      myAssembler.assemble(lag, 0, 3, curr, 0, 1,  -fac*dTdu2);
+      myAssembler.assemble(lag, 0, 3, curr, 0, 2,  -fac*dTdv2);
+      myAssembler.assemble(lag, 0, 3, next, 0, 1,  -fac*dTdu3);
+      myAssembler.assemble(lag, 0, 3, next, 0, 2,  -fac*dTdv3);
 
-      myAssembler.assemble(prev, 0, 1, lag, 0, 3,  -dTdu1);
-      myAssembler.assemble(prev, 0, 2, lag, 0, 3,  -dTdv1);
-      myAssembler.assemble(curr, 0, 1, lag, 0, 3,  -dTdu2);
-      myAssembler.assemble(curr, 0, 2, lag, 0, 3,  -dTdv2);
-      myAssembler.assemble(next, 0, 1, lag, 0, 3,  -dTdu3);
-      myAssembler.assemble(next, 0, 2, lag, 0, 3,  -dTdv3);
+      myAssembler.assemble(prev, 0, 1, lag, 0, 3,  -fac*dTdu1);
+      myAssembler.assemble(prev, 0, 2, lag, 0, 3,  -fac*dTdv1);
+      myAssembler.assemble(curr, 0, 1, lag, 0, 3,  -fac*dTdu2);
+      myAssembler.assemble(curr, 0, 2, lag, 0, 3,  -fac*dTdv2);
+      myAssembler.assemble(next, 0, 1, lag, 0, 3,  -fac*dTdu3);
+      myAssembler.assemble(next, 0, 2, lag, 0, 3,  -fac*dTdv3);
 
-      myAssembler.assemble(prev, 0, 1,  lambda*dTdu1);
-      myAssembler.assemble(prev, 0, 2,  lambda*dTdv1);
-      myAssembler.assemble(curr, 0, 1,  lambda*dTdu2);
-      myAssembler.assemble(curr, 0, 2,  lambda*dTdv2);
-      myAssembler.assemble(next, 0, 1,  lambda*dTdu3);
-      myAssembler.assemble(next, 0, 2,  lambda*dTdv3);
+      myAssembler.assemble(prev, 0, 1,  lambda*fac*dTdu1);
+      myAssembler.assemble(prev, 0, 2,  lambda*fac*dTdv1);
+      myAssembler.assemble(curr, 0, 1,  lambda*fac*dTdu2);
+      myAssembler.assemble(curr, 0, 2,  lambda*fac*dTdv2);
+      myAssembler.assemble(next, 0, 1,  lambda*fac*dTdu3);
+      myAssembler.assemble(next, 0, 2,  lambda*fac*dTdv3);
 
     }
 
     //--- compute constraint
-    double G = fabs(sumTheta - (nb-2)*M_PI);
-    printf("Sum of angles G = %g \n", G);
-    double small = 0.0;
-    myAssembler.assemble(lag, 0, 3, lag, 0, 3,  small);//change this
-
-    //--- assemble rhs of linear system
-    myAssembler.assemble(lag, 0, 3, G);
+    double G = sumTheta - (nb-2)*M_PI;
+    printf("**NL** Sum of angles G = %g \n", G );
+    myAssembler.assemble(lag, 0, 3, lag, 0, 3,  0.0);
+    myAssembler.assemble(lag, 0, 3, fac*G);
 
     //--- solve linear system
     Msg::Debug("Assembly done");
-    _lsys->systemSolve();
+    lsysNL->systemSolve();
     Msg::Debug("System solved");
 
     //-- update newton
@@ -1365,26 +1381,42 @@ bool GFaceCompound::parametrize_conformal_nonLinear() const
       myAssembler.getDofValue(v, 0, 1, du);
       myAssembler.getDofValue(v, 0, 2, dv);
       meandu +=du; meandv +=dv;
-      SPoint3 old = coordinates[v];
-      coordinates[v] = SPoint3(old.x()+du,old.y()+dv,0.0);
+      std::map<MVertex*,SPoint3>::iterator itf = coordinates.find(v);
+      double oldu = itf->second.x(), oldv = itf->second.y();
+      if(itf != coordinates.end()){
+	itf->second[0]= oldu+du; 
+	itf->second[1]= oldv+dv; 
+      }
     }
     meandu /=allNodes.size();
     meandv /=allNodes.size();
     double dLambda;
     myAssembler.getDofValue(lag, 0, 3, dLambda);
     lambda = lambda+dLambda;
-    printf("System solved: meandu=%g, meandv=%g dLambda=%g lambda=%g\n", meandu, meandv, dLambda, lambda);
-
-    //_lsys->clear();
-    _lsys->zeroMatrix();
-    _lsys->zeroRightHandSide();
+ 
+    lsysNL->zeroMatrix();
+    lsysNL->zeroRightHandSide();
 
     //--priting
     printStuff(iNewton);
    
+    //-- exit newton criteria
+    bool noOverlap = checkOverlap(ordered);
+    printf("**NL** ---- iNewton %d --- \n", iNewton);
+    printf("**NL** System solved: du=%g, dv=%g dL=%g \n", meandu, meandv, dLambda);  
+    if (noOverlap) {
+      if (checkOrientation(0)){
+	converged = true;
+	break;
+      }
+    }
+   
   }//end Newton
 
-  exit(1);
+  lsysNL->clear();
+  //exit(1);
+
+  return converged;
 
 }
 
@@ -1477,7 +1509,7 @@ bool GFaceCompound::parametrize_conformal_spectral() const
 
     //mettre max NC contraintes par bord
     int NB = ordered.size();
-    int NC = std::min(50,NB);
+    int NC = std::min(70,NB);
     int jump = (int) NB/NC;
     int nbLoop = (int) NB/jump ;
     //printf("nb bound nodes=%d jump =%d \n", NB, jump);
@@ -1546,7 +1578,6 @@ bool GFaceCompound::parametrize_conformal() const
   myAssembler.fixVertex(v1, 0, 2, 0.);
   myAssembler.fixVertex(v2, 0, 1, -1.);
   myAssembler.fixVertex(v2, 0, 2, 0.);
-  //printf("Pinned vertex  %g %g %g / %g %g %g \n", v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z());
 
   //   MVertex *v2 ;  
   //   double maxSize = 0.0;
