@@ -479,29 +479,29 @@ static void reorientTrianglePoints(std::vector<MVertex*> &vtcs, int orientation,
                                    bool swap)
 {
   int nbPts = vtcs.size();
-
-  if(nbPts <= 1) return;
-
-  if(nbPts > 3){
-    Msg::Error("Interior face nodes reorientation not supported for order > 4");
-    return;
-  }
-  
+  if (nbPts <= 1) return;
   std::vector<MVertex*> tmp(nbPts);
-
-  // rotation
-  // --- interior "principal vertices"
-  for (int i = 0; i < 3; i++) tmp[(i + orientation) % 3] = vtcs[i];
- 
-  // normal swap
-  if (swap) {
-    // --- interior "principal vertices"
-    vtcs[orientation]           = tmp[orientation];
-    vtcs[(orientation + 1) % 3] = tmp[(orientation + 2) % 3];
-    vtcs[(orientation + 2) % 3] = tmp[(orientation + 1) % 3];
+  int interiorOrder = (int)((sqrt(1+8*nbPts)-3)/2);
+  int pos = 0;
+  for (int o = interiorOrder; o>0; o-=3) {
+    if (swap) {
+      tmp[pos] = vtcs[pos];
+      tmp[pos+1] = vtcs[pos+2];
+      tmp[pos+2] = vtcs[pos+1];
+      for (int i = 0; i < 3*(o-1); i++)
+        tmp[pos+3+i] = vtcs[pos+3*o-i-1];
+    } else {
+      for (int i=0; i< 3*o; i++)
+        tmp[pos+i] = vtcs[pos+i];
+    }
+    for (int i = 0; i < 3; i++) {
+      int ri = (i+orientation)%3;
+      vtcs[pos+ri] = tmp[pos+i];
+      for (int j = 0; j < o-1; j++)
+        vtcs[pos+3+(o-1)*ri+j] = tmp[pos+3+(o-1)*i+j];
+    }
+    pos += 3*o;
   }
-  // no swap
-  else vtcs = tmp;
 } 
 
 // KH: check face orientation wrt element ... 
@@ -512,8 +512,11 @@ static void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &v
 {
   fullMatrix<double> points;
   int start = 0;
-  
   switch (nPts){
+  case 0 :
+  case 1 :
+    // do nothing (e.g. for 2nd order tri faces or for quad faces)
+    break;
   case 2 :
     points = polynomialBases::find(MSH_TRI_10)->points;
     start = 9;
@@ -526,8 +529,28 @@ static void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &v
     points = polynomialBases::find(MSH_TRI_21)->points;
     start = 15;
     break;
+  case 5 :
+    points = polynomialBases::find(MSH_TRI_28)->points;
+    start = 18;
+    break;
+  case 6 :
+    points = polynomialBases::find(MSH_TRI_36)->points;
+    start = 21;
+    break;
+  case 7 :
+    points = polynomialBases::find(MSH_TRI_45)->points;
+    start = 24;
+    break;
+  case 8 :
+    points = polynomialBases::find(MSH_TRI_55)->points;
+    start = 27;
+    break;
+  case 9 :
+    points = polynomialBases::find(MSH_TRI_66)->points;
+    start = 30;
+    break;
   default :  
-    // do nothing (e.g. for 2nd order tri faces or for quad faces)
+    Msg::Error("getFaceVertices not implemented for order %i\n",nPts +1);
     break;
   }
   
@@ -607,18 +630,36 @@ static void getRegionVertices(GRegion *gr, MElement *incomplete, MElement *ele,
   int start = 0;
 
   switch (nPts){
+    case 0:
+    case 1:
+    case 2:
+    // done: return!
+    return;
   case 3 :
     points = polynomialBases::find(MSH_TET_35)->points;
-    start = 34;
     break;
   case 4 :
     points = polynomialBases::find(MSH_TET_56)->points;
-    start = 52;
+    break;
+  case 5 :
+    points = polynomialBases::find(MSH_TET_84)->points;
+    break;
+  case 6 :
+    points = polynomialBases::find(MSH_TET_120)->points;
+    break;
+  case 7 :
+    points = polynomialBases::find(MSH_TET_165)->points;
+    break;
+  case 8 :
+    points = polynomialBases::find(MSH_TET_220)->points;
+    break;
+  case 9 :
+    points = polynomialBases::find(MSH_TET_286)->points;
     break;
   default :  
-    // done: return!
-    return;
+    Msg::Error("getRegionVertices not implemented for order %i\n", nPts+1);
   }
+  start = ((nPts+2)*(nPts+3)*(nPts+4)-(nPts-2)*(nPts-1)*(nPts))/6;
 
   for(int k = start; k < points.size1(); k++){
     MVertex *v;
@@ -782,8 +823,9 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
       ve.insert(ve.end(), vr.begin(), vr.end());
       MTetrahedron* n = new MTetrahedronN(t->getVertex(0), t->getVertex(1), 
                                           t->getVertex(2), t->getVertex(3), ve, nPts + 1);
-      if (!mappingIsInvertible(n))
+      if (!mappingIsInvertible(n)){
         Msg::Warning("Found invalid curved volume element (# %d in list)", i);
+      }
       tetrahedra2.push_back(n);
     }
     delete t;

@@ -347,6 +347,7 @@ static int reverseTet34[34] = {0,2,1,3,  // principal vertices
                                31,33,32};// F3 is uvw plane, reverts normal
 
 class MTetrahedronN : public MTetrahedron {
+  const static std::vector<int> &_getReverseIndices(int order);
  protected:
   std::vector<MVertex *> _vs;
   const char _order;
@@ -396,6 +397,11 @@ class MTetrahedronN : public MTetrahedron {
     switch(getTypeForMSH()){
     case MSH_TET_35 : return 1;
     case MSH_TET_56 : return 4;
+    case MSH_TET_84 : return 10;
+    case MSH_TET_120 : return 20;
+    case MSH_TET_165 : return 35;
+    case MSH_TET_220 : return 56;
+    case MSH_TET_286 : return 84;
     default : return 0;
     }    
   }
@@ -407,41 +413,22 @@ class MTetrahedronN : public MTetrahedron {
     if(_order == 4 && _vs.size() + 4 == 35) return MSH_TET_35; 
     if(_order == 5 && _vs.size() + 4 == 56) return MSH_TET_56; 
     if(_order == 5 && _vs.size() + 4 == 52) return MSH_TET_52; 
+    if(_order == 6 && _vs.size() + 4 == 84) return MSH_TET_84; 
+    if(_order == 7 && _vs.size() + 4 == 120) return MSH_TET_120; 
+    if(_order == 8 && _vs.size() + 4 == 165) return MSH_TET_165; 
+    if(_order == 9 && _vs.size() + 4 == 220) return MSH_TET_220; 
+    if(_order == 10 && _vs.size() + 4 == 286) return MSH_TET_286; 
     return 0;
   }
   virtual void revert() 
   {    
     MVertex *tmp;
     tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;    
-    switch (getTypeForMSH()) {
-    case MSH_TET_20:
-      {
-        std::vector<MVertex*> inv(16);
-        for (int i=0;i<16;i++) inv[i] = _vs[reverseTet20[i+4]-4];
-        _vs = inv;
-        break;
-      }
-    case MSH_TET_35:
-      {
-        std::vector<MVertex*> inv(31);
-        for (int i=0;i<31;i++) inv[i] = _vs[reverseTet35[i+4]-4];
-        _vs = inv;
-        break;
-      }
-    case MSH_TET_34:
-      {
-        std::vector<MVertex*> inv(30);
-        for (int i=0;i<30;i++) inv[i] = _vs[reverseTet34[i+4]-4];
-        _vs = inv;
-        break;
-      }
-    default:
-      {
-        Msg::Error("Reversion of %d order tetrahedron (type %d) not implemented\n",
-                   _order, getTypeForMSH());
-        break;
-      }
-    }
+    std::vector<MVertex*> inv(_vs.size());
+    std::vector<int> reverseIndices = _getReverseIndices(_order);
+    for (int i = 0; i<_vs.size(); i++)
+      inv[i] = _vs[reverseIndices[i+4]-4];
+    _vs = inv;
   }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual int getNumEdgesRep();

@@ -136,8 +136,12 @@
 #define MSH_HEX_64   76
 #define MSH_HEX_125  77
 #define MSH_HEX_196  78
-
-#define MSH_NUM_TYPE 75
+#define MSH_TET_74   79
+#define MSH_TET_100  80
+#define MSH_TET_130  81 
+#define MSH_TET_164  82 
+#define MSH_TET_202  83
+#define MSH_NUM_TYPE 84
 
 // Geometric entities
 #define ENT_NONE     0

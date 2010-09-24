@@ -1159,11 +1159,23 @@ const polynomialBasis *polynomialBases::find(int tag)
     F.points =    gmshGeneratePointsTetrahedron(5, false);
     generate3dFaceClosure(F.closures, 5);
     break;
+  case MSH_TET_74 :
+    F.numFaces = 4;
+    F.monomials = generatePascalSerendipityTetrahedron(6);
+    F.points =    gmshGeneratePointsTetrahedron(6, true);
+    generate3dFaceClosure(F.closures, 6);
+    break;
   case MSH_TET_84 :
     F.numFaces = 4;
     F.monomials = generatePascalTetrahedron(6);
     F.points =    gmshGeneratePointsTetrahedron(6, false);
     generate3dFaceClosure(F.closures, 6);
+    break;
+  case MSH_TET_100 :
+    F.numFaces = 4;
+    F.monomials = generatePascalSerendipityTetrahedron(7);
+    F.points =    gmshGeneratePointsTetrahedron(7, true);
+    generate3dFaceClosure(F.closures, 7);
     break;
   case MSH_TET_120 :
     F.numFaces = 4;
@@ -1171,11 +1183,29 @@ const polynomialBasis *polynomialBases::find(int tag)
     F.points =    gmshGeneratePointsTetrahedron(7, false);
     generate3dFaceClosure(F.closures, 7);
     break;
+  case MSH_TET_130 :
+    F.numFaces = 4;
+    F.monomials = generatePascalSerendipityTetrahedron(8);
+    F.points =    gmshGeneratePointsTetrahedron(8, true);
+    generate3dFaceClosure(F.closures, 8);
+    break;
+  case MSH_TET_164 :
+    F.numFaces = 4;
+    F.monomials = generatePascalSerendipityTetrahedron(9);
+    F.points =    gmshGeneratePointsTetrahedron(9, true);
+    generate3dFaceClosure(F.closures, 9);
+    break;
   case MSH_TET_165 :
     F.numFaces = 4;
     F.monomials = generatePascalTetrahedron(8);
     F.points =    gmshGeneratePointsTetrahedron(8, false);
     generate3dFaceClosure(F.closures, 8);
+    break;
+  case MSH_TET_202 :
+    F.numFaces = 4;
+    F.monomials = generatePascalSerendipityTetrahedron(10);
+    F.points =    gmshGeneratePointsTetrahedron(10, true);
+    generate3dFaceClosure(F.closures, 10);
     break;
   case MSH_TET_220 :
     F.numFaces = 4;

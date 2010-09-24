@@ -130,6 +130,11 @@ const polynomialBasis* MTetrahedron::getFunctionSpace(int o) const
     case 3: return polynomialBases::find(MSH_TET_20);
     case 4: return polynomialBases::find(MSH_TET_34);
     case 5: return polynomialBases::find(MSH_TET_52);
+    case 6: return polynomialBases::find(MSH_TET_74);
+    case 7: return polynomialBases::find(MSH_TET_100);
+    case 8: return polynomialBases::find(MSH_TET_130);
+    case 9: return polynomialBases::find(MSH_TET_164);
+    case 10: return polynomialBases::find(MSH_TET_202);
     default: Msg::Error("Order %d tetrahedron function space not implemented", order);
     }
   }
@@ -355,4 +360,105 @@ void MTetrahedron::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &
     }
   }
   Msg::Error("Could not get face information for tetrahedron %d", getNum());
+}
+
+static std::vector<std::vector<int> > tetReverseIndices(20);
+
+const std::vector<int> &MTetrahedronN::_getReverseIndices (int order) {
+  if(order>=tetReverseIndices.size())
+    tetReverseIndices.resize(order+1);
+  std::vector<int> &r = tetReverseIndices[order];
+  if (r.size() != 0) return r;
+  //
+  // not the funniest code ever ... (guaranteed correct only up to order 5)
+  //
+  int nb = (order+1)*(order+2)*(order+3)/6;
+  r.resize(nb);
+  int p=0;
+  for (int layerOrder = order; layerOrder>=0; layerOrder-=4) {
+    //principal vertices
+    r[p+0] = p+0; 
+    if (layerOrder ==0) break;
+    r[p+1] = p+2; 
+    r[p+2] = p+1; 
+    r[p+3] = p+3;
+    p+=4;
+    for (int i = 0; i<layerOrder-1; i++) {
+      //E2 reversed switches with E0
+      r[p+i] = p+3*(layerOrder-1)-(i+1);
+      r[p+3*(layerOrder-1)-(i+1)] = p+i;
+      //E1 is reversed
+      r[p+(layerOrder-1)+i] = p+2*(layerOrder-1)-(i+1);
+      //E3 is preserved
+      r[p+3*(layerOrder-1)+i] = p+3*(layerOrder-1)+i;
+      //E4 switches with E5
+      r[p+4*(layerOrder-1)+i] = p+5*(layerOrder-1)+i;
+      r[p+5*(layerOrder-1)+i] = p+4*(layerOrder-1)+i;
+    }
+    p+=6*(layerOrder-1);
+    //F0(=012) switches its nodes 1 and 2
+    for (int of = layerOrder-3; of >= 0; of -= 3) {
+      r[p] = p;
+      if (of == 0) {
+        p+=1;
+        break;
+      }
+      r[p+1] = p+2;
+      r[p+2] = p+1;
+      for (int i = 0; i < of-1; i++) {
+        //switch edges 0 and 2
+        r[p+3+i] = p+3+3*(of-1)-(i+1);
+        r[p+3+3*(of-1)-(i+1)] = p+3+i;
+        //reverse edge 1
+        r[p+3+(of-1)+i] = p+3+2*(of-1)-(i+1);
+      }
+      p += 3*of;
+    }
+    //F1 (=013) reversed switches with F2 (=032)
+    int nf = (layerOrder-2)*(layerOrder-1)/2;
+    for (int of = layerOrder-3; of >= 0; of -= 3) {
+      r[p] = p+nf;
+      r[p+nf] = p;
+      if (of == 0) {
+        p += 1;
+        break;
+      }
+      r[p+1] = p+nf+2;
+      r[p+nf+2] = p+1;
+      r[p+2] = p+nf+1;
+      r[p+nf+1] = p+2;
+      for (int i = 0; i < of-1; i++) {
+        //switch edges 0 and 2
+        r[p+3+i] = p+3+3*(of-1)-(i+1)+nf;
+        r[p+3+3*(of-1)-(i+1)] = p+3+i+nf;
+        r[p+3+i+nf] = p+3+3*(of-1)-(i+1);
+        r[p+3+3*(of-1)-(i+1)+nf] = p+3+i;
+        //reverse edge 1
+        r[p+3+(of-1)+i] = p+3+2*(of-1)-(i+1)+nf;
+        r[p+3+(of-1)+i+nf] = p+3+2*(of-1)-(i+1);
+      }
+      p += 3*of;
+    }
+    p+=nf;
+
+    //F3(=312) switches its nodes 1 and 2
+    for (int of = layerOrder-3; of >= 0; of -= 3) {
+      r[p] = p;
+      if (of == 0) {
+        p += 1;
+        break;
+      }
+      r[p+1] = p+2;
+      r[p+2] = p+1;
+      for (int i = 0; i < of-1; i++) {
+        //switch edges 0 and 2
+        r[p+3+i] = p+3+3*(of-1)-(i+1);
+        r[p+3+3*(of-1)-(i+1)] = p+3+i;
+        //reverse edge 1
+        r[p+3+(of-1)+i] = p+3+2*(of-1)-(i+1);
+      }
+      p += 3*of;
+    }
+  }
+  return r;
 }

@@ -866,6 +866,11 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_TET_35 : if(name) *name = "Tetrahedron 35";  return 4 + 18 + 12 + 1;
   case MSH_TET_52 : if(name) *name = "Tetrahedron 52";  return 4 + 24 + 24 + 0;
   case MSH_TET_56 : if(name) *name = "Tetrahedron 56";  return 4 + 24 + 24 + 4;
+  case MSH_TET_84 : if(name) *name = "Tetrahedron 84";  return (7*8*9)/6;
+  case MSH_TET_120 : if(name) *name = "Tetrahedron 120";  return (8*9*10)/6;
+  case MSH_TET_165 : if(name) *name = "Tetrahedron 165";  return (9*10*11)/6;
+  case MSH_TET_220 : if(name) *name = "Tetrahedron 220";  return (10*11*12)/6;
+  case MSH_TET_286 : if(name) *name = "Tetrahedron 286";  return (11*12*13)/6;
   case MSH_HEX_8  : if(name) *name = "Hexahedron 8";    return 8;
   case MSH_HEX_20 : if(name) *name = "Hexahedron 20";   return 8 + 12;
   case MSH_HEX_27 : if(name) *name = "Hexahedron 27";   return 8 + 12 + 6 + 1;
@@ -1024,6 +1029,11 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_TET_35: return new MTetrahedronN(v, 4, num, part);
   case MSH_TET_52: return new MTetrahedronN(v, 5, num, part);
   case MSH_TET_56: return new MTetrahedronN(v, 5, num, part);
+  case MSH_TET_84: return new MTetrahedronN(v, 6, num, part);
+  case MSH_TET_120: return new MTetrahedronN(v, 7, num, part);
+  case MSH_TET_165: return new MTetrahedronN(v, 8, num, part);
+  case MSH_TET_220: return new MTetrahedronN(v, 9, num, part);
+  case MSH_TET_286: return new MTetrahedronN(v, 10, num, part);
   case MSH_POLYH_: return new MPolyhedron(v, num, part, owner, parent);
   default:         return 0;
   }
