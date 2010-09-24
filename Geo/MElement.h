@@ -88,8 +88,7 @@ class MElement
 
   // get the vertex using the VTK ordering
   virtual MVertex *getVertexVTK(int num){ return getVertex(num); }
-
-  // get the vertex using the Nastran BDF ordering
+// get the vertex using the Nastran BDF ordering
   virtual MVertex *getVertexBDF(int num){ return getVertex(num); }
 
   // get the vertex using MED ordering
@@ -223,9 +222,12 @@ class MElement
                                      int order=-1);
   virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3],
                                      int order=-1);
+  //const fullMatrix<double> &getShapeFunctionsAtIntegrationPoints (int integrationOrder, int functionSpaceOrder=-1);
+  const fullMatrix<double> &getGradShapeFunctionsAtIntegrationPoints (int integrationOrder, int functionSpaceOrder=-1);
+  const fullMatrix<double> &getGradShapeFunctionsAtNodes (int functionSpaceOrder=-1);
   // return the Jacobian of the element evaluated at point (u,v,w) in
   // parametric coordinates
-  double getJacobian(double gsf[][3], double jac[3][3]);
+  double getJacobian(const fullMatrix<double> &gsf, double jac[3][3]);
   double getJacobian(double u, double v, double w, double jac[3][3]);
   double getPrimaryJacobian(double u, double v, double w, double jac[3][3]);
   //bindings : double[3][3] is not easy to bind, we could use fullMatrix instead

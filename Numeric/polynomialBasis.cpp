@@ -1354,6 +1354,7 @@ const polynomialBasis *polynomialBases::find(int tag)
     generate3dFaceClosure(F.closures, 1);
     break;
   }
+  F.type = tag;
 
   F.coefficients = generateLagrangeMonomialCoefficients(F.monomials, F.points);
 //   printf("Case: %d coeffs:\n",tag);

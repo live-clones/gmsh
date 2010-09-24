@@ -308,44 +308,6 @@ class MTetrahedron10 : public MTetrahedron {
  *
  */
 
-static int reverseTet20[20] = {0,2,1,3,  // principal vertices
-                               9,8,      // E0 switches with E2
-                               7,6,      // E1 inverts direction
-                               5,4,      // E2 switches with E0
-                               10,11,    // E3 pure w edge > remains the same
-                               14,15,    // E4 uw edge swithes with v/w edge E5
-                               12,13,    // E5 switches with E4
-                               16,       // F0 is uv plane, reverts normal
-                               18,       // F1 is uw plane, switches with F2
-                               17,       // F2 is vw plane, switches with F1
-                               19};      // F3 is uvw plane, reverts normal
-
-static int reverseTet35[35] = {0,2,1,3,  // principal vertices
-                               
-                               12,11,10, // E0 switches with E2
-                               9,8,7,    // E1 inverts direction
-                               6,5,4,    // E2 switches with E0
-                               13,14,15, // E3 pure w edge > remains the same
-                               19,20,21, // E4 uw edge swithes with v/w edge E5
-                               16,17,18, // E5 switches with E4
-                               22,24,23, // F0 is uv plane, reverts normal
-                               28,30,29, // F1 is uw plane, switches with F2, orientation is different
-                               25,27,26, // F2 is vw plane, switches with F1
-                               31,33,32, // F3 is uvw plane, reverts normal
-                               34};      // central node remains 
-  
-static int reverseTet34[34] = {0,2,1,3,  // principal vertices
-                               12,11,10, // E0 switches with E2
-                               9,8,7,    // E1 inverts direction
-                               6,5,4,    // E2 switches with E0
-                               13,14,15, // E3 pure w edge > remains the same
-                               19,20,21, // E4 uw edge swithes with v/w edge E5
-                               16,17,18, // E5 switches with E4
-                               22,24,23, // F0 is uv plane, reverts normal
-                               28,29,30, // F1 is uw plane, switches with F2
-                               25,26,27, // F2 is vw plane, switches with F1
-                               31,33,32};// F3 is uvw plane, reverts normal
-
 class MTetrahedronN : public MTetrahedron {
   const static std::vector<int> &_getReverseIndices(int order);
  protected:

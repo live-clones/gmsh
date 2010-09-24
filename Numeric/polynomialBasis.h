@@ -70,6 +70,8 @@ class binding;
 class polynomialBasis
 {
  public:
+  //for now the only implemented polynomial basis are nodal poly basis, we use the type of the corresponding gmsh element as type
+  int type;
   typedef std::vector<std::vector<int> > clCont;
   clCont closures;
   fullMatrix<double> points;

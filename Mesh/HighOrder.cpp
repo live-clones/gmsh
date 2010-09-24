@@ -27,36 +27,31 @@
 
 static bool mappingIsInvertible(MTetrahedron *e)
 {
-  if (e->getPolynomialOrder() == 1) return 1.0;
+  if (e->getPolynomialOrder() == 1) return true;
   
   double mat[3][3];
   e->getPrimaryJacobian(0., 0., 0., mat);  
   double det0 = det3x3(mat);
-
-  IntPt *pts;
-  int npts;
-  e->getIntegrationPoints(e->getPolynomialOrder(), &npts, &pts);
   
-  for (int i = 0; i < npts; i++){
-    const double u = pts[i].pt[0];
-    const double v = pts[i].pt[1];
-    const double w = pts[i].pt[2];
-    e->getJacobian(u, v, w, mat);
-    double detN = det3x3(mat);
-    if (det0 * detN <= 0.) return false;
+  fullMatrix<double> df;
+  {
+    const fullMatrix<double> &alldf = e->getGradShapeFunctionsAtIntegrationPoints(e->getPolynomialOrder());
+    for (int i = 0; i < alldf.size2()/3; i++){
+      df.setAsProxy(alldf, 3*i, 3);
+      e->getJacobian(df, mat);
+      if (det0 * det3x3(mat) <= 0.) return false;
+    }
   }
-
-  const fullMatrix<double> &points = e->getFunctionSpace()->points;
-
-  for (int i = 0; i < e->getNumPrimaryVertices(); i++) {
-    const double u = points(i,0);
-    const double v = points(i,1);
-    const double w = points(i,2);
-    e->getJacobian(u, v, w, mat);
-    double detN = det3x3(mat);
-    if (det0 * detN <= 0.) return false;
+  {
+    const fullMatrix<double> &points = e->getFunctionSpace()->points;
+    const fullMatrix<double> &alldf = e->getGradShapeFunctionsAtNodes(e->getPolynomialOrder());
+    double gradShapeFunctions[300][3];
+    for (int i = 0; i < alldf.size2()/3; i++){
+      df.setAsProxy(alldf, 3*i, 3);
+      e->getJacobian(df, mat);
+      if (det0 * det3x3(mat) <= 0.) return false;
+    }
   }
-  
   return true;
 }
 
