@@ -454,6 +454,8 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
   opt_mesh_recombine_all(0, GMSH_SET, o->mesh.butt[21]->value());
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
+  opt_mesh_remesh_algo(0, GMSH_SET, o->mesh.choice[8]->value());
+  opt_mesh_remesh_param(0, GMSH_SET, o->mesh.choice[9]->value());
   opt_mesh_color_carousel(0, GMSH_SET, o->mesh.choice[4]->value());
   opt_mesh_quality_type(0, GMSH_SET, o->mesh.choice[6]->value());
   opt_mesh_label_type(0, GMSH_SET, o->mesh.choice[7]->value());
@@ -1992,6 +1994,17 @@ optionWindow::optionWindow(int deltaFontSize)
         {"All Hexas", 0, 0, 0},
         {0}
       };
+      static Fl_Menu_Item menu_remeshing_algo[] = {
+        {"No split", 0, 0, 0},
+        {"Automatic", 0, 0, 0},
+        {"Automatic only with Metis", 0, 0, 0},
+        {0}
+      };
+      static Fl_Menu_Item menu_remeshing_param[] = {
+        {"Harmonic", 0, 0, 0},
+        {"Conformal", 0, 0, 0},
+        {0}
+      };
 
       mesh.choice[2] = new Fl_Choice
         (L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "2D algorithm");
@@ -2022,8 +2035,20 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.choice[5]->align(FL_ALIGN_RIGHT);
       mesh.choice[5]->callback(mesh_options_ok_cb);
 
+      mesh.choice[8] = new Fl_Choice
+        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Remeshing algorithm");
+      mesh.choice[8]->menu(menu_remeshing_algo);
+      mesh.choice[8]->align(FL_ALIGN_RIGHT);
+      mesh.choice[8]->callback(mesh_options_ok_cb);
+
+      mesh.choice[9] = new Fl_Choice
+        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Remeshing parametrization");
+      mesh.choice[9]->menu(menu_remeshing_param);
+      mesh.choice[9]->align(FL_ALIGN_RIGHT);
+      mesh.choice[9]->callback(mesh_options_ok_cb);
+
       mesh.value[0] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Smoothing steps");
+        (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Smoothing steps");
       mesh.value[0]->minimum(0);
       mesh.value[0]->maximum(100);
       mesh.value[0]->step(1);
@@ -2031,7 +2056,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[0]->callback(mesh_options_ok_cb);
 
       mesh.value[2] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Element size factor");
+        (L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Element size factor");
       mesh.value[2]->minimum(0.001);
       mesh.value[2]->maximum(1000);
       mesh.value[2]->step(0.01);
@@ -2039,17 +2064,17 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[2]->callback(mesh_options_ok_cb);
 
       mesh.value[25] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Minimum element size");
+        (L + 2 * WB, 2 * WB + 10 * BH, IW/2, BH);
       mesh.value[25]->align(FL_ALIGN_RIGHT);
       mesh.value[25]->callback(mesh_options_ok_cb);
 
       mesh.value[26] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Maximum element size");
+        (L + 2 * WB + IW/2, 2 * WB + 10 * BH, IW/2, BH, "Min/Max element size");
       mesh.value[26]->align(FL_ALIGN_RIGHT);
       mesh.value[26]->callback(mesh_options_ok_cb);
 
       mesh.value[3] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Element order");
+        (L + 2 * WB, 2 * WB + 11 * BH, IW / 3, BH, "Element order");
       mesh.value[3]->minimum(1);
       mesh.value[3]->maximum(2);
       mesh.value[3]->step(1);
@@ -2057,7 +2082,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[3]->callback(mesh_options_ok_cb);
 
       mesh.butt[4] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 11 * BH, BW, BH, "Use incomplete high order elements");
+        (L + 2 * WB + IW + WB / 2, 2 * WB + 11 * BH, BW, BH, "Use incomplete elements");
       mesh.butt[4]->type(FL_TOGGLE_BUTTON);
       mesh.butt[4]->callback(mesh_options_ok_cb);
 

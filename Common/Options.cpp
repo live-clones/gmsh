@@ -5643,11 +5643,10 @@ double opt_mesh_remesh_algo(OPT_ARGS_NUM)
       CTX::instance()->mesh.remeshAlgo = 1;
   }
 #if defined(HAVE_FLTK)
-  //TODO change fltk/optionWindow.cpp
-  // if(FlGui::available() && (action & GMSH_GUI)) {
-  //   FlGui::instance()->options->mesh.choice[1]->value
-  //     (CTX::instance()->mesh.remeshAlgo);
-  // }
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->options->mesh.choice[8]->value
+      (CTX::instance()->mesh.remeshAlgo);
+  }
 #endif
   return CTX::instance()->mesh.remeshAlgo;
 }
@@ -5661,15 +5660,13 @@ double opt_mesh_remesh_param(OPT_ARGS_NUM)
       CTX::instance()->mesh.remeshParam = 0;
   }
 #if defined(HAVE_FLTK)
-  //TODO change fltk/optionWindow.cpp
-  // if(FlGui::available() && (action & GMSH_GUI)) {
-  //   FlGui::instance()->options->mesh.choice[1]->value
-  //     (CTX::instance()->mesh.remeshParam);
-  // }
+   if(FlGui::available() && (action & GMSH_GUI)) {
+     FlGui::instance()->options->mesh.choice[9]->value
+       (CTX::instance()->mesh.remeshParam);
+   }
 #endif
   return CTX::instance()->mesh.remeshParam;
 }
-
 
 double opt_mesh_algo_subdivide(OPT_ARGS_NUM)
 {
