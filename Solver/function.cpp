@@ -11,6 +11,7 @@
 #include "Bindings.h"
 
 
+
 struct functionReplaceCache {
   dataCacheMap *map;
   std::vector <dataCacheDouble*> toReplace;
@@ -18,21 +19,32 @@ struct functionReplaceCache {
 };
 
 
+
+/*==============================================================================
+ * class Function (with additionnal class)
+ *============================================================================*/
+
+// Constructor and destructor
+
+function::function(int nbCol, bool invalidatedOnElement) : _nbCol(nbCol), _invalidatedOnElement(invalidatedOnElement) {
+}
+
 function::~function() {
 }
 
-function::function(int nbCol, bool invalidatedOnElement):_nbCol(nbCol), _invalidatedOnElement(invalidatedOnElement){}
+// Set
 
 void function::addFunctionReplace(functionReplace &fr) {
   fr._master = this;
   _functionReplaces.push_back(&fr);
 }
+
 void function::setArgument(fullMatrix<double> &v, const function *f, int iMap) {
-  if(f==NULL)
+  if (f==NULL)
     throw;
   arguments.push_back(argument(v, iMap, f));
   dependencies.insert(dependency(iMap, f));
-  for(std::set<dependency>::const_iterator it = f->dependencies.begin(); it != f->dependencies.end(); it++) {
+  for (std::set<dependency>::const_iterator it = f->dependencies.begin(); it != f->dependencies.end(); it++) {
     if (it->iMap> 0 && iMap >0)
       Msg::Error("consecutive secondary caches");
     dependencies.insert(dependency(iMap + it->iMap, it->f));
@@ -46,6 +58,158 @@ void function::setArgument(fullMatrix<double> &v, const function *f, int iMap) {
     }
   }
 }
+
+// Time and DT
+
+functionConstant *function::_timeFunction = NULL;
+functionConstant *function::_dtFunction = NULL;
+
+functionConstant *function::getTime() {
+  if (! _timeFunction)
+    _timeFunction = functionConstantNew(0.);
+  return _timeFunction;
+}
+
+functionConstant *function::getDT() {
+  if (! _dtFunction)
+    _dtFunction = functionConstantNew(0.);
+  return _dtFunction;
+}
+
+
+// Get informations
+
+functionSolution *functionSolution::_instance = NULL;
+
+function *function::getSolution() {
+  return functionSolution::get();
+}
+
+
+//------------------------------------
+// Get Solution Gradient + Additionnal class
+//------------------------------------
+
+class functionSolutionGradient : public function {
+  static functionSolutionGradient *_instance;
+  functionSolutionGradient():function(0){} // constructor is private only 1 instance can exists, call get to access the instance
+ public:
+  void call(dataCacheMap *m, fullMatrix<double> &sol) {
+    Msg::Error("a function requires the gradient of the solution but this algorithm does not provide the gradient of the solution");
+    throw;
+  }
+  static function *get() {
+    if(!_instance)
+      _instance = new functionSolutionGradient();
+    return _instance;
+  }
+};
+
+functionSolutionGradient *functionSolutionGradient::_instance = NULL;
+
+function *function::getSolutionGradient() {
+  return functionSolutionGradient::get();
+}
+
+
+//------------------------------------
+// Get Parametric Coordinates + Additionnal class
+//------------------------------------
+
+class functionParametricCoordinates : public function {
+  static functionParametricCoordinates *_instance;
+  functionParametricCoordinates():function(0, false){} // constructor is private only 1 instance can exists, call get to access the instance
+ public:
+  void call(dataCacheMap *m, fullMatrix<double> &sol) {
+    Msg::Error("a function requires the parametric coordinates but this algorithm does not provide the parametric coordinates");
+    throw;
+  }
+  static function *get() {
+    if(!_instance)
+      _instance = new functionParametricCoordinates();
+    return _instance;
+  }
+};
+
+functionParametricCoordinates *functionParametricCoordinates::_instance = NULL;
+
+function *function::getParametricCoordinates() {
+  return functionParametricCoordinates::get();
+}
+
+
+//------------------------------------
+// Get Normals + Additionnal class
+//------------------------------------
+
+class functionNormals : public function {
+  static functionNormals *_instance;
+  functionNormals():function(0){} // constructor is private only 1 instance can exists, call get to access the instance
+ public:
+  void call(dataCacheMap *m, fullMatrix<double> &sol) {
+    Msg::Error("a function requires the normals coordinates but this algorithm does not provide the normals");
+    throw;
+  }
+  static function *get() {
+    if(!_instance)
+      _instance = new functionNormals();
+    return _instance;
+  }
+};
+
+functionNormals *functionNormals::_instance = NULL;
+
+function *function::getNormals() {
+  return functionNormals::get();
+}
+
+
+
+/*==============================================================================
+ * class functionReplace
+ *============================================================================*/
+
+functionReplace::functionReplace() {
+  _nChildren=0;
+}
+
+void functionReplace::get(fullMatrix<double> &v, const function *f, int iMap) {
+  bool allDepFromParent = true;
+  for (std::set<function::dependency>::const_iterator itDep = f->dependencies.begin(); itDep != f->dependencies.end(); itDep++){
+    bool depFromParent = (_replaced.count(*itDep)==0);
+    for (std::set<function::dependency>::const_iterator itDep2 = itDep->f->dependencies.begin(); itDep2 != itDep->f->dependencies.end() && depFromParent; itDep2++)
+      depFromParent &= (_replaced.count(*itDep2)==0);
+    if(depFromParent)
+      _master->dependencies.insert(*itDep);
+    else
+      allDepFromParent = false;
+  }
+  function::dependency asDep(iMap, f);
+  if (allDepFromParent && _replaced.count(asDep)==0)
+    _master->dependencies.insert(asDep);
+  _toCompute.push_back(function::argument(v, iMap, f));
+}
+
+void functionReplace::replace(fullMatrix<double> &v, const function *f, int iMap) {
+  _replaced.insert(function::dependency(iMap,f));
+  _toReplace.push_back(function::argument(v, iMap, f));
+}
+
+void functionReplace::addChild() {
+  _nChildren++;
+}
+
+void functionReplace::compute() {
+  for (unsigned i = 0; i < _toReplace.size(); i++)
+    currentCache->toReplace[i]->set();
+  for (unsigned i = 0; i < _toCompute.size(); i++)
+    _toCompute[i].val->setAsProxy(currentCache->toCompute[i]->get());
+};
+
+
+/*==============================================================================
+ * class dataCacheDouble 
+ *============================================================================*/
 
 dataCacheDouble::dataCacheDouble(dataCacheMap *m, function *f):
   _cacheMap(*m),_value(m->getNbEvaluationPoints(),f->getNbCol()), _function(f)
@@ -71,8 +235,6 @@ void dataCacheDouble::_eval() {
   _function->call(&_cacheMap, _value);
   _valid = true;
 }
-
-
 
 dataCacheDouble &dataCacheMap::get(const function *f, dataCacheDouble *caller) {
   // do I have a cache for this function ?
@@ -134,6 +296,12 @@ dataCacheDouble &dataCacheMap::get(const function *f, dataCacheDouble *caller) {
   return *r;
 }
 
+
+
+/*==============================================================================
+ * class dataCacheMap
+ *============================================================================*/
+
 dataCacheMap::~dataCacheMap()
 {
   for (std::set<dataCacheDouble*>::iterator it = _allDataCaches.begin();
@@ -145,48 +313,32 @@ dataCacheMap::~dataCacheMap()
   }
 }
 
-void functionReplace::replace(fullMatrix<double> &v, const function *f, int iMap) {
-  _replaced.insert(function::dependency(iMap,f));
-  _toReplace.push_back(function::argument(v, iMap, f));
-}
 
-void functionReplace::get(fullMatrix<double> &v, const function *f, int iMap) {
-  bool allDepFromParent = true;
-  for (std::set<function::dependency>::const_iterator itDep = f->dependencies.begin(); itDep != f->dependencies.end(); itDep++){
-    bool depFromParent = (_replaced.count(*itDep)==0);
-    for (std::set<function::dependency>::const_iterator itDep2 = itDep->f->dependencies.begin(); itDep2 != itDep->f->dependencies.end() && depFromParent; itDep2++)
-      depFromParent &= (_replaced.count(*itDep2)==0);
-    if(depFromParent)
-      _master->dependencies.insert(*itDep);
-    else
-      allDepFromParent = false;
+void dataCacheMap::setNbEvaluationPoints(int nbEvaluationPoints) {
+  _nbEvaluationPoints = nbEvaluationPoints;
+  for(std::set<dataCacheDouble*>::iterator it = _allDataCaches.begin(); it!= _allDataCaches.end(); it++){
+    (*it)->resize(nbEvaluationPoints);
   }
-  function::dependency asDep(iMap, f);
-  if (allDepFromParent && _replaced.count(asDep)==0)
-    _master->dependencies.insert(asDep);
-    
-  _toCompute.push_back(function::argument(v, iMap, f));
-}
-void functionReplace::addChild() {
-  _nChildren++;
-}
-functionReplace::functionReplace(){
-  _nChildren=0;
+    for(std::list<dataCacheMap*>::iterator it = _children.begin(); it!= _children.end(); it++) {
+      (*it)->setNbEvaluationPoints(nbEvaluationPoints);
+    }
 }
 
-void functionReplace::compute(){
-  for (unsigned i = 0; i < _toReplace.size(); i++){
-    currentCache->toReplace[i]->set();
-  }
-  for (unsigned i = 0; i < _toCompute.size(); i++) {
-    _toCompute[i].val->setAsProxy(currentCache->toCompute[i]->get());
-  }
-};
 
 
-// now some example of functions
 
-// constant values copied over each line
+/*==============================================================================
+ * Some examples of functions
+ *============================================================================*/
+
+
+// functionConstant (constant values copied over each line)
+
+void functionConstant::set(double val) {
+  if(getNbCol() != 1)
+    Msg::Error ("set scalar value on a vectorial constant function");
+  _source(0,0) = val;
+}
 
 functionConstant *functionConstantNew(double v) {
   std::vector<double> vec(1);
@@ -198,25 +350,18 @@ functionConstant *functionConstantNew(const std::vector<double> &v) {
   return new functionConstant(v);
 }
 
-void functionConstant::set(double val) {
-  if(getNbCol() != 1) {
-    Msg::Error ("set scalar value on a vectorial constant function");
-  }
-  _source(0,0) = val;
-}
 
-
+// functionSum
 
 class functionSum : public function {
-  public:
+ public:
   fullMatrix<double> _f0, _f1;
   void call(dataCacheMap *m, fullMatrix<double> &val) {
-    for(int i=0;i<val.size1();i++)
-      for(int j=0;j<val.size2();j++){
+    for (int i=0; i<val.size1(); i++)
+      for (int j=0; j<val.size2(); j++)
         val(i,j)= _f0(i,j) + _f1(i,j);
-      }
   }
-  functionSum(const function *f0, const function *f1):function(f0->getNbCol()){
+  functionSum(const function *f0, const function *f1) : function(f0->getNbCol()) {
     if (f0->getNbCol() != f1->getNbCol()) {
       Msg::Error("trying to sum 2 functions of different sizes\n");
       throw;
@@ -230,16 +375,18 @@ function *functionSumNew(const function *f0, const function *f1) {
   return new functionSum (f0, f1);
 }
 
+
+// functionProd
+
 class functionProd : public function {
-  public:
+ public:
   fullMatrix<double> _f0, _f1;
   void call(dataCacheMap *m, fullMatrix<double> &val) {
-    for(int i=0;i<val.size1();i++)
-      for(int j=0;j<val.size2();j++){
+    for (int i=0; i<val.size1(); i++)
+      for (int j=0; j<val.size2(); j++)
         val(i,j)= _f0(i,j)*_f1(i,j);
-      }
   }
-  functionProd(const function *f0, const function *f1):function(f0->getNbCol()){
+  functionProd(const function *f0, const function *f1) : function(f0->getNbCol()) {
     if (f0->getNbCol() != f1->getNbCol()) {
       Msg::Error("trying to compute product of 2 functions of different sizes\n");
       throw;
@@ -253,15 +400,18 @@ function *functionProdNew(const function *f0, const function *f1) {
   return new functionProd (f0, f1);
 }
 
+
+// functionExtractComp
+
 class functionExtractComp : public function {
   public:
   fullMatrix<double> _f0;
   double _iComp;
   void call(dataCacheMap *m, fullMatrix<double> &val) {
-    for(int i=0;i<val.size1();i++)
+    for (int i=0; i<val.size1(); i++)
         val(i,0)= _f0(i,_iComp);
   }
-  functionExtractComp(const function *f0, const int iComp):function(1){
+  functionExtractComp(const function *f0, const int iComp) : function(1) {
     setArgument (_f0, f0);
     _iComp = iComp;
   }
@@ -272,17 +422,18 @@ function *functionExtractCompNew(const function *f0, const int iComp) {
 }
 
 
+// functionScale
+
 class functionScale : public function {
-  public:
+ public:
   fullMatrix<double> _f0;
   double _s;
   void call(dataCacheMap *m, fullMatrix<double> &val) {
-    for(int i=0;i<val.size1();i++)
-      for(int j=0;j<val.size2();j++){
+    for(int i=0; i<val.size1(); i++)
+      for(int j=0; j<val.size2(); j++)
         val(i,j)= _f0(i,j)*_s;
-      }
   }
-  functionScale(const function *f0, const double s):function(f0->getNbCol()){
+  functionScale(const function *f0, const double s) : function(f0->getNbCol()) {
     setArgument (_f0, f0);
     _s = s;
   }
@@ -292,12 +443,14 @@ function *functionScaleNew(const function *f0, const double s) {
   return new functionScale (f0, s);
 }
 
-// get XYZ coordinates
+
+// functionCoordinates (get XYZ coordinates)
+
 class functionCoordinates : public function {
   static functionCoordinates *_instance;
   fullMatrix<double> uvw;
-  void call (dataCacheMap *m, fullMatrix<double> &xyz){
-    for(int i = 0; i < uvw.size1(); i++){
+  void call (dataCacheMap *m, fullMatrix<double> &xyz) {
+    for (int i=0; i<uvw.size1(); i++) {
       SPoint3 p;
       m->getElement()->pnt(uvw(i, 0), uvw(i, 1), uvw(i, 2), p);
       xyz(i, 0) = p.x();
@@ -305,10 +458,9 @@ class functionCoordinates : public function {
       xyz(i, 2) = p.z();
     }
   }
-  functionCoordinates():function(3)
-  {
+  functionCoordinates():function(3) { // constructor is private only 1 instance can exists, call get to access the instance
     setArgument(uvw, function::getParametricCoordinates());
-  };// constructor is private only 1 instance can exists, call get to access the instance
+  };
  public:
   static function *get() {
     if(!_instance)
@@ -316,81 +468,27 @@ class functionCoordinates : public function {
     return _instance;
   }
 };
+
 functionCoordinates *functionCoordinates::_instance = NULL;
 
-functionSolution *functionSolution::_instance = NULL;
-function *function::getSolution() {
-  return functionSolution::get();
+function *getFunctionCoordinates() {
+  return functionCoordinates::get();
 }
 
-class functionSolutionGradient : public function {
-  static functionSolutionGradient *_instance;
-  functionSolutionGradient():function(0){} // constructor is private only 1 instance can exists, call get to access the instance
- public:
-  void call(dataCacheMap *m, fullMatrix<double> &sol) {
-    Msg::Error("a function requires the gradient of the solution but this algorithm does not provide the gradient of the solution");
-    throw;
-  }
-  static function *get() {
-    if(!_instance)
-      _instance = new functionSolutionGradient();
-    return _instance;
-  }
-};
-functionSolutionGradient *functionSolutionGradient::_instance = NULL;
-function *function::getSolutionGradient() {
-  return functionSolutionGradient::get();
-}
 
-class functionParametricCoordinates : public function {
-  static functionParametricCoordinates *_instance;
-  functionParametricCoordinates():function(0, false){} // constructor is private only 1 instance can exists, call get to access the instance
- public:
-  void call(dataCacheMap *m, fullMatrix<double> &sol) {
-    Msg::Error("a function requires the parametric coordinates but this algorithm does not provide the parametric coordinates");
-    throw;
-  }
-  static function *get() {
-    if(!_instance)
-      _instance = new functionParametricCoordinates();
-    return _instance;
-  }
-};
-functionParametricCoordinates *functionParametricCoordinates::_instance = NULL;
-function *function::getParametricCoordinates() {
-  return functionParametricCoordinates::get();
-}
-
-class functionNormals : public function {
-  static functionNormals *_instance;
-  functionNormals():function(0){} // constructor is private only 1 instance can exists, call get to access the instance
- public:
-  void call(dataCacheMap *m, fullMatrix<double> &sol) {
-    Msg::Error("a function requires the normals coordinates but this algorithm does not provide the normals");
-    throw;
-  }
-  static function *get() {
-    if(!_instance)
-      _instance = new functionNormals();
-    return _instance;
-  }
-};
-functionNormals *functionNormals::_instance = NULL;
-function *function::getNormals() {
-  return functionNormals::get();
-}
+// functionStructuredGridFile
 
 class functionStructuredGridFile : public function {
   fullMatrix<double> coord;
-  public:
+ public:
   int n[3];
   double d[3],o[3];
-  double get(int i,int j, int k){
+  double get(int i,int j, int k) {
     return v[(i*n[1]+j)*n[2]+k];
   }
   double *v;
-  void call(dataCacheMap *m, fullMatrix<double> &val){
-    for(int pt=0;pt<val.size1();pt++){
+  void call(dataCacheMap *m, fullMatrix<double> &val) {
+    for (int pt=0; pt<val.size1(); pt++) {
       double xi[3];
       int id[3];
       for(int i=0;i<3;i++){
@@ -401,7 +499,7 @@ class functionStructuredGridFile : public function {
         xi[i]=std::min(1.,std::max(0.,xi[i]));
       }
       val(pt,0) =
-        get(id[0]   ,id[1]   ,id[2]   )*(1-xi[0])*(1-xi[1])*(1-xi[2])
+         get(id[0]   ,id[1]   ,id[2]   )*(1-xi[0])*(1-xi[1])*(1-xi[2])
         +get(id[0]   ,id[1]   ,id[2]+1 )*(1-xi[0])*(1-xi[1])*(  xi[2])
         +get(id[0]   ,id[1]+1 ,id[2]   )*(1-xi[0])*(  xi[1])*(1-xi[2])
         +get(id[0]   ,id[1]+1 ,id[2]+1 )*(1-xi[0])*(  xi[1])*(  xi[2])
@@ -420,9 +518,8 @@ class functionStructuredGridFile : public function {
       input>>o[0]>>o[1]>>o[2]>>d[0]>>d[1]>>d[2]>>n[0]>>n[1]>>n[2];
       int nt = n[0]*n[1]*n[2];
       v = new double [nt];
-      for (int i=0; i<nt; i++){
+      for (int i=0; i<nt; i++)
         input>>v[i];
-      }
     } else {
       input.read((char *)o, 3 * sizeof(double));
       input.read((char *)d, 3 * sizeof(double));
@@ -432,10 +529,13 @@ class functionStructuredGridFile : public function {
       input.read((char *)v, nt * sizeof(double));
     }
   }
-  ~functionStructuredGridFile(){
+  ~functionStructuredGridFile() {
     delete []v;
   }
 };
+
+
+// functionLua
 
 #ifdef HAVE_LUA
 class functionLua : public function {
@@ -454,25 +554,15 @@ class functionLua : public function {
     : function(nbCol), _luaFunctionName(luaFunctionName), _L(L)
   {
     args.resize(dependencies.size());
-    for (int i = 0; i < dependencies.size(); i++) { setArgument(args[i], dependencies[i]);
-    }
+    for (int i = 0; i < dependencies.size(); i++)
+      setArgument(args[i], dependencies[i]);
   }
 };
 #endif
 
 
+// functionC
 
-void dataCacheMap::setNbEvaluationPoints(int nbEvaluationPoints) {
-  _nbEvaluationPoints = nbEvaluationPoints;
-  for(std::set<dataCacheDouble*>::iterator it = _allDataCaches.begin(); it!= _allDataCaches.end(); it++){
-    (*it)->resize(nbEvaluationPoints);
-  }
-    for(std::list<dataCacheMap*>::iterator it = _children.begin(); it!= _children.end(); it++) {
-      (*it)->setNbEvaluationPoints(nbEvaluationPoints);
-    }
-}
-
-//functionC
 class functionC : public function {
   std::vector<fullMatrix<double> > args;
   void (*callback)(void);
@@ -551,6 +641,12 @@ class functionC : public function {
   }
 };
 
+
+
+/*==============================================================================
+ * Bindings
+ *============================================================================*/
+
 void function::registerBindings(binding *b){
   classBinding *cb = b->addClass<function>("Function");
   cb->setDescription("A generic function that can be evaluated on a set of points. Functions can call other functions and their values are cached so that if two different functions call the same function f, f is only evaluated once.");
@@ -619,18 +715,3 @@ void function::registerBindings(binding *b){
 #endif
 }
 
-functionConstant *function::_timeFunction = NULL;
-functionConstant *function::getTime() {
-  if (! _timeFunction)
-    _timeFunction = functionConstantNew(0.);
-  return _timeFunction;
-}
-functionConstant *function::_dtFunction = NULL;
-functionConstant *function::getDT() {
-  if (! _dtFunction)
-    _dtFunction = functionConstantNew(0.);
-  return _dtFunction;
-}
-function *getFunctionCoordinates(){
-  return functionCoordinates::get();
-}
