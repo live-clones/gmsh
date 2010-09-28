@@ -1355,7 +1355,7 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
     int ncount = gf->triangles.size();
     if (ncount % 2 == 0) {
       int ecount =  cubicGraph ? pairs.size() + makeGraphPeriodic.size() : pairs.size();
-      printf("%d internal %d closed\n",(int)pairs.size(), (int)makeGraphPeriodic.size());
+      Msg::Info("Blossom: %d internal %d closed",(int)pairs.size(), (int)makeGraphPeriodic.size());
       //      Msg::Info("Cubic Graph should have ne (%d) = 3 x nv (%d) ",ecount,ncount);
       Msg::Debug("Perfect Match Starts %d edges %d nodes",ecount,ncount);
       std::map<MElement*,int> t2n;

@@ -9,3 +9,4 @@ Compound Line(1001) = {44,46};
 
 Compound Surface(100) = {1, 8, 15, 17, 16, 18, 9, 2, 3, 10, 7, 14, 11, 4, 12, 5, 6, 13} ;
 
+Physical Surface(100)={100};

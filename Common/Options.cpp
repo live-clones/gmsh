@@ -5640,7 +5640,7 @@ double opt_mesh_remesh_algo(OPT_ARGS_NUM)
     CTX::instance()->mesh.remeshAlgo = (int)val;
     if(CTX::instance()->mesh.remeshAlgo < 0 && 
        CTX::instance()->mesh.remeshAlgo > 2)
-      CTX::instance()->mesh.remeshAlgo = 1;
+      CTX::instance()->mesh.remeshAlgo = 0;
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {

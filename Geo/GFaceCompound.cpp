@@ -343,9 +343,10 @@ void GFaceCompound::fillNeumannBCS() const
     std::list<MTriangle*> loopfillTris;
     std::list<GEdge*> loop = *iloop;
     if (loop != _U0 ){
-      std::vector<MVertex*> ordered;
-      std::vector<double> coords;  
-      bool success = orderVertices(*iloop, ordered, coords);
+      std::vector<MVertex*> orderedLoop;
+      std::vector<double> coordsLoop;  
+      bool success = orderVertices(*iloop, orderedLoop, coordsLoop);
+      int nbLoop = orderedLoop.size();
 
       //--- center of Neumann interior loop
       int nb = 0;
@@ -354,9 +355,9 @@ void GFaceCompound::fillNeumannBCS() const
       double z=0.;
       //EMI- TODO FIND KERNEL OF POLYGON AND PLACE AT CG KERNEL !
       //IF NO KERNEL -> DO NOT FILL TRIS
-      for(unsigned int i = 0; i < ordered.size(); ++i){
-	MVertex *v0 = ordered[i];
-	MVertex *v1 = (i==ordered.size()-1) ? ordered[0]: ordered[i+1];
+      for(unsigned int i = 0; i < nbLoop; ++i){
+	MVertex *v0 = orderedLoop[i];
+	MVertex *v1 = (i==nbLoop-1) ? orderedLoop[0]: orderedLoop[i+1];
 	x += .5*(v0->x() + v1->x()); 
 	y += .5*(v0->y() + v1->y()); 
 	z += .5*(v0->z() + v1->z()); 
@@ -366,9 +367,9 @@ void GFaceCompound::fillNeumannBCS() const
       MVertex *c = new MVertex(x, y, z);
          
       //--- create new triangles
-      for(unsigned int i = 0; i < ordered.size(); ++i){
-	MVertex *v0 = ordered[i];
-	MVertex *v1 = (i==ordered.size()-1) ? ordered[0]: ordered[i+1];
+      for(unsigned int i = 0; i < nbLoop; ++i){
+	MVertex *v0 = orderedLoop[i];
+	MVertex *v1 = (i==nbLoop-1) ? orderedLoop[0]: orderedLoop[i+1];
   
 	//loopfillTris.push_back(new MTriangle(v0,v1, c));
 
@@ -483,24 +484,29 @@ bool GFaceCompound::trivial() const
 
 //For the conformal map the linear system cannot guarantee there is no overlapping
 //of triangles
-bool GFaceCompound::checkOverlap(std::vector<MVertex*> &ordered) const
+bool GFaceCompound::checkOverlap() const
 {
 
   bool has_no_overlap = true;
 
   for(std::list<std::list<GEdge*> >::const_iterator iloop = _interior_loops.begin(); 
       iloop != _interior_loops.end(); iloop++){
-    std::vector<MVertex*> ordered;
-    std::vector<double> coords;  
-    bool success = orderVertices(*iloop, ordered, coords);
+    std::list<GEdge*> loop = *iloop;
+    std::vector<MVertex*> orderedLoop;
+    if (loop != _U0 ){ 
+      std::vector<double> coordsLoop;  
+      bool success = orderVertices(*iloop, orderedLoop, coordsLoop);
+    }
+    else orderedLoop = _ordered;
+    int nbLoop = orderedLoop.size();
     
-    for(unsigned int i = 0; i < ordered.size()-1; ++i){
-      SPoint3 p1 = coordinates[ordered[i]];
-      SPoint3 p2 = coordinates[ordered[i+1]];
-      int maxSize = (i==0) ? ordered.size()-2: ordered.size()-1;
+    for(unsigned int i = 0; i < nbLoop-1; ++i){
+      SPoint3 p1 = coordinates[orderedLoop[i]];
+      SPoint3 p2 = coordinates[orderedLoop[i+1]];
+      int maxSize = (i==0) ? nbLoop-2: nbLoop-1;
       for(int k = i+2; k < maxSize; ++k){
-	SPoint3 q1 = coordinates[ordered[k]];
-	SPoint3 q2 = coordinates[ordered[k+1]];
+	SPoint3 q1 = coordinates[orderedLoop[k]];
+	SPoint3 q2 = coordinates[orderedLoop[k+1]];
 	double x[2];
 	int inters = intersection_segments (p1,p2,q1,q2,x);
 	if (inters > 0){
@@ -527,7 +533,7 @@ bool GFaceCompound::checkOrientation(int iter) const
 {
   
   //Only check orientation for stl files (1 patch)
-  //  if(_compound.size() > 1.0) return true;
+  //if(_compound.size() > 1.0) return true;
 
   std::list<GFace*>::const_iterator it = _compound.begin();
   double a_old = 0.0, a_new=0.0;
@@ -560,7 +566,7 @@ bool GFaceCompound::checkOrientation(int iter) const
 
   int iterMax = 15;
   if(!oriented && iter < iterMax){
-    if (iter == 0) Msg::Warning("--- Flipping : applying cavity checks.");
+    //if (iter == 0) Msg::Warning("--- Flipping : applying cavity checks.");
     Msg::Debug("--- Cavity Check - iter %d -",iter);
     one2OneMap();
     return checkOrientation(iter+1);
@@ -619,7 +625,9 @@ void GFaceCompound::one2OneMap() const
 
 bool GFaceCompound::parametrize() const
 {
-
+ 
+ if (_compound.size() > 1) coherencePatches();
+ 
   bool paramOK = true;
   if(oct) return paramOK; 
   if(trivial()) return paramOK;
@@ -629,7 +637,9 @@ bool GFaceCompound::parametrize() const
 
   if(allNodes.empty()) buildAllNodes();
   
-
+  bool success = orderVertices(_U0, _ordered, _coords);
+  if(!success) Msg::Error("Could not order vertices on boundary");
+    
   //Laplace parametrization
   //-----------------
   if (_mapping == HARMONIC){
@@ -654,6 +664,7 @@ bool GFaceCompound::parametrize() const
     fillNeumannBCS();
     bool noOverlap = parametrize_conformal_spectral() ;
     if (!noOverlap){
+      //buildOct(); exit(1);
       Msg::Warning("!!! Overlap: parametrization switched to 'FE conformal' map");
       noOverlap = parametrize_conformal();
     }
@@ -1069,39 +1080,14 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
   
   dofManager<double> myAssembler(_lsys);
 
-
   if(_type == UNITCIRCLE){
-    // maps the boundary onto a circle
-    std::vector<MVertex*> ordered;
-    std::vector<double> coords;  
-    bool success = orderVertices(_U0, ordered, coords);
-    if(!success){
-      Msg::Error("Could not order vertices on boundary");
-      return;
-    }
-
     //map to a unit circle
-    for(unsigned int i = 0; i < ordered.size(); i++){
-      MVertex *v = ordered[i];
-      const double theta = 2 * M_PI * coords[i];
+    for(unsigned int i = 0; i < _ordered.size(); i++){
+      MVertex *v = _ordered[i];
+      const double theta = 2 * M_PI * _coords[i];
       if(step == ITERU) myAssembler.fixVertex(v, 0, 1, cos(theta));
       else if(step == ITERV) myAssembler.fixVertex(v, 0, 1, sin(theta));    
     }
-
-    //pin down two vertices
-    // MVertex *v1  = ordered[0];
-    // MVertex *v2  = ordered[(int)ceil((double)ordered.size()/2.)];
-    // if(step == ITERU){
-    //   myAssembler.fixVertex(v1, 0, 1, 0.);
-    //   myAssembler.fixVertex(v2, 0, 1, 1.);
-    // }
-    // else if(step == ITERV){
-    //   myAssembler.fixVertex(v1, 0, 1, 0.);
-    //   myAssembler.fixVertex(v2, 0, 1, 0.);
-    // }
-    // printf("Pinned vertex  %g %g %g / %g %g %g \n", v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z());
-    //exit(1);
-
   }
   else if(_type == SQUARE){
     if(step == ITERU){
@@ -1155,7 +1141,7 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
   femTerm<double> *mapping;
   if (tom == HARMONIC)
     mapping = new laplaceTerm(0, 1, ONE);
-  else // tom == CONVEXCOMBINATION
+  else 
     mapping = new convexCombinationTerm(0, 1, ONE);
   
   it = _compound.begin();
@@ -1242,31 +1228,31 @@ bool GFaceCompound::parametrize_conformal_nonLinear() const
 
   //--create dofManager
   linearSystem<double>* lsysNL;
-  lsysNL = new linearSystemFull<double>;
+  //lsysNL = new linearSystemFull<double>;
   //lsysNL = new linearSystemPETSc<double>;
-  //lsysNL = new linearSystemCSRTaucs<double>;
+  lsysNL = new linearSystemCSRTaucs<double>;
 
   dofManager<double> myAssembler(lsysNL);
 
   //--- first compute mapping harmonic
-  parametrize(ITERU,HARMONIC); 
-  parametrize(ITERV,HARMONIC);
+  //parametrize(ITERU,HARMONIC); 
+  //parametrize(ITERV,HARMONIC);
   printStuff(100);
 
   //---order boundary vertices
-  std::vector<MVertex*> ordered;
-  std::vector<double> coords;  
-  bool success = orderVertices(_U0, ordered, coords);
-  int nb = ordered.size();
+  // std::vector<MVertex*> ordered;
+  // std::vector<double> coords;  
+  // bool success = orderVertices(_U0, ordered, coords);
+  // int nb = ordered.size();
 
   //--fix vertex for du=0 and dv=0
-  MVertex *v1  = ordered[0];
-  MVertex *v2  = ordered[1]; //(int)ceil((double)ordered.size()/2.)];
+  MVertex *v1  = _ordered[0];
+  MVertex *v2  = _ordered[1]; //(int)ceil((double)_ordered.size()/2.)];
   myAssembler.fixVertex(v1, 0, 1, 0.);
   myAssembler.fixVertex(v1, 0, 2, 0.);
   myAssembler.fixVertex(v2, 0, 1, 0.);
   myAssembler.fixVertex(v2, 0, 2, 0.);
-
+  
   //--Assemble linear system 
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
     MVertex *v = *itv;
@@ -1275,13 +1261,13 @@ bool GFaceCompound::parametrize_conformal_nonLinear() const
   }
   MVertex *lag = new MVertex(0.,0.,0.);
   myAssembler.numberVertex(lag, 0, 3);//ghost vertex for lagrange multiplier
-  
+
   //--- newton Loop
   int nbNewton = 5;
-  double lambda  = 1.e5;
-  double fac = 1.e7;
+  double lambda  = 1.e6;
+  double fac = 1.0; //1.e7;
   for (int iNewton = 0; iNewton < nbNewton; iNewton++){
-  
+
     //-- assemble conformal matrix
     std::vector<MElement *> allElems;
     laplaceTerm laplace1(model(), 1, ONE, &coordinates);
@@ -1308,10 +1294,11 @@ bool GFaceCompound::parametrize_conformal_nonLinear() const
     
     //-- compute all boundary angles
     double sumTheta = 0.0;
+    int nb = _ordered.size();
     for (int i=0; i< nb; i++){
-      MVertex *prev = (i!=0) ? ordered[i-1] : ordered[nb-1];
-      MVertex *curr = ordered[i];
-      MVertex *next = (i+1!=nb) ? ordered[i+1] : ordered[0];
+      MVertex *prev = (i!=0) ? _ordered[i-1] : _ordered[nb-1];
+      MVertex *curr = _ordered[i];
+      MVertex *next = (i+1!=nb) ? _ordered[i+1] : _ordered[0];
       SPoint2 p1 = getCoordinates(prev);
       SPoint2 p2 = getCoordinates(curr);
       SPoint2 p3 = getCoordinates(next);
@@ -1362,7 +1349,7 @@ bool GFaceCompound::parametrize_conformal_nonLinear() const
     //--- compute constraint
     double G = sumTheta - (nb-2)*M_PI;
     printf("**NL** Sum of angles G = %g \n", G );
-    myAssembler.assemble(lag, 0, 3, lag, 0, 3,  0.0);
+    myAssembler.assemble(lag, 0, 3, lag, 0, 3,  1.e-7);
     myAssembler.assemble(lag, 0, 3, fac*G);
 
     //--- solve linear system
@@ -1401,7 +1388,7 @@ bool GFaceCompound::parametrize_conformal_nonLinear() const
     printStuff(iNewton);
    
     //-- exit newton criteria
-    bool noOverlap = checkOverlap(ordered);
+    bool noOverlap = checkOverlap();
     printf("**NL** ---- iNewton %d --- \n", iNewton);
     printf("**NL** System solved: du=%g, dv=%g dL=%g \n", meandu, meandv, dLambda);  
     if (noOverlap) {
@@ -1437,14 +1424,6 @@ bool GFaceCompound::parametrize_conformal_spectral() const
   }
 #else
   {
-
-    std::vector<MVertex*> ordered;
-    std::vector<double> coords;  
-    bool success = orderVertices(_U0, ordered, coords);
-    if(!success){
-      Msg::Error("Could not order vertices on boundary");
-      return false;
-    }
 
     linearSystem <double> *lsysA  = new linearSystemPETSc<double>;
     linearSystem <double> *lsysB  = new linearSystemPETSc<double>;
@@ -1491,14 +1470,14 @@ bool GFaceCompound::parametrize_conformal_spectral() const
     double epsilon = 1.e-7;
     for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
       MVertex *v = *itv;
-      if (std::find(ordered.begin(), ordered.end(), v) == ordered.end() ){
+      if (std::find(_ordered.begin(), _ordered.end(), v) == _ordered.end() ){
         myAssembler.assemble(v, 0, 1, v, 0, 1,  epsilon);
         myAssembler.assemble(v, 0, 2, v, 0, 2,  epsilon);
       }
     }
     for(std::set<MVertex *>::iterator itv = fillNodes.begin(); itv !=fillNodes.end() ; ++itv){
       MVertex *v = *itv;
-      if (std::find(ordered.begin(), ordered.end(), v) == ordered.end() ){
+      if (std::find(_ordered.begin(), _ordered.end(), v) == _ordered.end() ){
         myAssembler.assemble(v, 0, 1, v, 0, 1,  epsilon);
         myAssembler.assemble(v, 0, 2, v, 0, 2,  epsilon);
       }
@@ -1508,17 +1487,17 @@ bool GFaceCompound::parametrize_conformal_spectral() const
     myAssembler.setCurrentMatrix("B");
 
     //mettre max NC contraintes par bord
-    int NB = ordered.size();
+    int NB = _ordered.size();
     int NC = std::min(70,NB);
     int jump = (int) NB/NC;
     int nbLoop = (int) NB/jump ;
     //printf("nb bound nodes=%d jump =%d \n", NB, jump);
     for (int i = 0; i< nbLoop; i++){
-      MVertex *v1 = ordered[i*jump];
+      MVertex *v1 = _ordered[i*jump];
       myAssembler.assemble(v1, 0, 1, v1, 0, 1,  1.0);
       myAssembler.assemble(v1, 0, 2, v1, 0, 2,  1.0);
       for (int j = 0; j< nbLoop; j++){
-	MVertex *v2 = ordered[j*jump];
+	MVertex *v2 = _ordered[j*jump];
 	myAssembler.assemble(v1, 0, 1, v2, 0, 1,  -1./NC);
 	myAssembler.assemble(v1, 0, 2, v2, 0, 2,  -1./NC);
       }
@@ -1551,7 +1530,7 @@ bool GFaceCompound::parametrize_conformal_spectral() const
       lsysA->clear();
       lsysB->clear();
 
-      return checkOverlap(ordered);
+      return checkOverlap();
 
     }
     else return false;
@@ -1564,31 +1543,12 @@ bool GFaceCompound::parametrize_conformal() const
  
   dofManager<double> myAssembler(_lsys);
 
-  std::vector<MVertex*> ordered;
-  std::vector<double> coords;  
-  bool success = orderVertices(_U0, ordered, coords);
-  if(!success){
-    Msg::Error("Could not order vertices on boundary");
-    return false;
-  }
-
-  MVertex *v1  = ordered[0];
-  MVertex *v2  = ordered[(int)ceil((double)ordered.size()/2.)];
+  MVertex *v1  = _ordered[0];
+  MVertex *v2  = _ordered[(int)ceil((double)_ordered.size()/2.)];
   myAssembler.fixVertex(v1, 0, 1, 1.);
   myAssembler.fixVertex(v1, 0, 2, 0.);
   myAssembler.fixVertex(v2, 0, 1, -1.);
   myAssembler.fixVertex(v2, 0, 2, 0.);
-
-  //   MVertex *v2 ;  
-  //   double maxSize = 0.0;
-  //   for (int i=1; i< ordered.size(); i++){
-  //     MVertex *vi= ordered[i];
-  //     double dist = vi->distance(v1);
-  //     if (dist > maxSize){
-  //       v2 = vi;
-  //       maxSize = dist;
-  //     }
-  //   }
  
   std::list<GFace*>::const_iterator it = _compound.begin();
   for( ; it != _compound.end(); ++it){
@@ -1649,7 +1609,7 @@ bool GFaceCompound::parametrize_conformal() const
   _lsys->clear();
 
   //check for overlapping triangles
-  return checkOverlap(ordered);
+  return checkOverlap();
 
 }
 
@@ -2143,6 +2103,11 @@ bool GFaceCompound::checkTopology() const
       Msg::Info("-----------------------------------------------------------");
       Msg::Info("--- Split surface %d in %d parts with Multilevel Mesh partitioner", tag(), nbSplit);
     }
+    else{
+      Msg::Error("For remeshing your geometry, you should enable the automatic remeshing algorithm.");
+      Msg::Error("Add 'Mesh.RemeshAlgorithm=1;' in your geo file or through the Fltk window (Options > Mesh > General)");
+      Msg::Exit(0);
+    }
   }
   else if (G == 0 && AR > AR_MAX){
     correctTopo = false;
@@ -2156,6 +2121,11 @@ bool GFaceCompound::checkTopology() const
       nbSplit = 2;
       Msg::Info("-----------------------------------------------------------");
       Msg::Info("--- Split surface %d in %d parts with Multilevel Mesh partitioner", tag(), nbSplit);
+    }
+    else if (_allowPartition == 0){
+      Msg::Warning("The geometrical aspect ratio of your geometry is quite high.");
+      Msg::Warning("You should enable partitioning of the mesh by activating the automatic remeshin algorithm.");
+      Msg::Warning("Add 'Mesh.RemeshAlgorithm=1;' in your geo file or through the Fltk window (Options > Mesh > General)");
     }
   }
   else{
@@ -2225,6 +2195,64 @@ double GFaceCompound::checkAspectRatio() const
   }
   
   return AR;
+
+}
+
+void GFaceCompound::coherencePatches() const
+{
+
+  Msg::Info("Re-orient all %d compound patches normals coherently", _compound.size());
+
+  std::map<MEdge, std::set<MElement*>, Less_Edge > edge2elems;
+  std::vector<MElement*> allElems;
+  std::list<GFace*>::const_iterator it = _compound.begin();
+  for( ; it != _compound.end() ; ++it){
+    for(unsigned int i = 0; i < (*it)->getNumMeshElements(); ++i){
+      MElement *t =  (*it)->getMeshElement(i);
+      allElems.push_back(t);
+      for (int j = 0; j <  t->getNumEdges(); j++){
+	MEdge me = t->getEdge(j);
+	std::map<MEdge, std::set<MElement*, std::less<MElement*> >, Less_Edge >::iterator it = edge2elems.find(me);
+	if (it == edge2elems.end()) {
+	  std::set<MElement*, std::less<MElement*> > mySet;
+	  mySet.insert(t);
+	  edge2elems.insert(std::make_pair(me, mySet));
+	}
+	else{
+	  std::set<MElement*, std::less<MElement*> > mySet = it->second;
+	  mySet.insert(t);
+	  it->second = mySet;
+	}
+      }
+    }
+  }
+  
+  std::set<MElement* , std::less<MElement*> > touched;
+  int iE, si, iE2, si2;
+  touched.insert(allElems[0]);
+  while(touched.size() != allElems.size()){
+    for(unsigned int i = 0; i < allElems.size(); i++){
+      MElement *t = allElems[i];
+      std::set<MElement*, std::less<MElement*> >::iterator it2 = touched.find(t);
+      if(it2 != touched.end()){
+        for (int j = 0; j <  t->getNumEdges(); j++){
+          MEdge me = t->getEdge(j);
+          t->getEdgeInfo(me, iE,si);
+          std::map<MEdge, std::set<MElement*>, Less_Edge >::iterator it = edge2elems.find(me);
+          std::set<MElement*, std::less<MElement*> > mySet = it->second;
+          for(std::set<MElement*, std::less<MElement*> >::iterator itt = mySet.begin(); itt != mySet.end(); itt++){
+            if (*itt != t){
+              (*itt)->getEdgeInfo(me,iE2,si2);
+              if(si == si2)  (*itt)->revert();
+              touched.insert(*itt);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return;
 
 }
 

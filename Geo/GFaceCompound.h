@@ -74,6 +74,8 @@ class GFaceCompound : public GFace {
   mutable std::map<MVertex*, SVector3> _normals;
   mutable std::list<MTriangle*> fillTris;
   mutable std::set<MVertex*> fillNodes;
+  mutable std::vector<MVertex*> _ordered;
+  mutable std::vector<double> _coords;
   void buildOct() const ;
   void buildAllNodes() const; 
   void parametrize(iterationStep, typeOfMapping) const;
@@ -82,7 +84,7 @@ class GFaceCompound : public GFace {
   bool parametrize_conformal_nonLinear() const;
   void compute_distance() const;
   bool checkOrientation(int iter) const;
-  bool checkOverlap(std::vector<MVertex*> &ordered) const;
+  bool checkOverlap() const;
   void one2OneMap() const;
   double checkAspectRatio() const;
   void computeNormals () const;
@@ -128,6 +130,7 @@ class GFaceCompound : public GFace {
   virtual bool checkTopology() const;
   bool parametrize() const ;
   void coherenceNormals();
+  void coherencePatches() const;
   void partitionFaceCM();
   virtual std::list<GFace*> getCompounds() const { return _compound; }
   mutable int nbSplit;
