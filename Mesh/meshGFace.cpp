@@ -794,7 +794,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   if (Msg::GetVerbosity() == 10){
     GEdge *ge = new discreteEdge(gf->model(), 1000, 0, 0);
     MElementOctree octree(gf->model());
-    printf("Writing voronoi and skeleton.pos \n");
+    Msg::Info("Writing voronoi and skeleton.pos");
     doc.Voronoi();
     doc.makePosView("voronoi.pos", gf);
     doc.printMedialAxis(octree.getInternalOctree(), "skeleton.pos", gf, ge);

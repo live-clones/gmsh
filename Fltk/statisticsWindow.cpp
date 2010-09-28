@@ -184,7 +184,7 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
 
 void statisticsWindow::compute(bool elementQuality)
 {
-  //emi hack
+  //emi hack - MINIMUM ANGLES
   // double minAngle = 120.0;
   // double meanAngle = 0.0;
   // int count = 0;
@@ -204,6 +204,43 @@ void statisticsWindow::compute(bool elementQuality)
   // meanAngle  = meanAngle / count;
   // printf("Angles = min=%g av=%g \n", minAngle, meanAngle);
   //hack emi
+
+  //Emi hack - MESH DEGREE VERTICES
+  std::vector<GEntity*> entities;
+  GModel::current()->getEntities(entities);
+  std::map<MVertex*, int > vert2Deg;
+  for(unsigned int i = 0; i < entities.size(); i++){
+    if(entities[i]->dim() < 2) continue;
+     for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+      MElement *e =  entities[i]->getMeshElement(j);
+      for(unsigned int k = 0; k < e->getNumVertices(); k++){
+  	MVertex *v = e->getVertex(k);
+  	if (v->onWhat()->dim() < 2) continue; 
+  	std::map<MVertex*, int >::iterator it = vert2Deg.find(v);
+  	if (it == vert2Deg.end()) {
+  	  vert2Deg.insert(std::make_pair(v,1));
+  	}
+  	else{
+  	  int nbE = it->second+1;
+  	  it->second = nbE;
+  	}
+      }
+    }
+  }
+  int dMin = 10;
+  int dMax = 0;
+  int d4 = 0;
+  int nbElems = vert2Deg.size();
+  std::map<MVertex*, int >::const_iterator itmap = vert2Deg.begin();
+  for(; itmap !=vert2Deg.end(); itmap++){
+    MVertex *v = itmap->first;
+    int nbE =  itmap->second;
+    dMin = std::min(nbE, dMin);
+    dMax = std::max(nbE, dMax);
+    if (nbE == 4) d4 += 1;
+  }
+  printf("Stats degree vertices: dMin=%d , dMax=%d, d4=%g \n", dMin, dMax, (double)d4/nbElems);
+  //end emi hack
 
   int num = 0;
   static double s[50];

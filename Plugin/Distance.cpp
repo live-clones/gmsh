@@ -133,8 +133,10 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity*> _entities,
 	}
 	fprintf(fName,"){");
 	for (unsigned int i = 0; i < dist.size(); i++){
-	  if (_minScale > 0) 
+	  if (_minScale > 0 && _maxScale > 0) 
 	    dist[i]=_minScale+((dist[i]-minDist)/(maxDist-minDist))*(_maxScale-_minScale);
+	  else if  (_minScale > 0 && _maxScale < 0)
+	    dist[i]=_minScale+dist[i];
 	  out->push_back(dist[i]);
 	  if (i) fprintf(fName,",%g", dist[i]);
 	  else fprintf(fName,"%g", dist[i]);
