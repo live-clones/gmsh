@@ -10,11 +10,16 @@
 #include <string>
 #include <complex>
 #include <map>
+#include <list>
+#include "GmshConfig.h"
 #include "MVertex.h"
 #include "linearSystem.h"
 #include "fullMatrix.h"
 
 #include <iostream>
+#ifdef HAVE_MPI
+  #include "mpi.h"
+#endif
 
 class Dof{
  protected:
@@ -93,22 +98,33 @@ class dofManager{
   //   DofVec = dataVec
   std::map<Dof, dataVec> fixed;
 
-  // initial conditions
+  // initial conditions (not used ?)
   std::map<Dof, std::vector<dataVec> > initial;
 
   // numbering of unknown dof blocks
   std::map<Dof, int> unknown;
 
-  // associatations
+  // associatations (not used ?)
   std::map<Dof, Dof> associatedWith;
 
   // linearSystems
   std::map<const std::string, linearSystem<dataMat>*> _linearSystems;
   linearSystem<dataMat> *_current;
 
+  // ********** parallel section
+  private :
+  // those dof are images of ghost located on another proc (id givent by the map).
+  // this is a first try, maybe not the final implementation
+  std::map<Dof, int > ghosted;  // dof => procId
+  int _localSize;
+  bool _parallelFinalized;
+  bool _isParallel;
+  public:
+  void _parallelFinalize();
+  // **********
  public:
- dofManager(linearSystem<dataMat> *l) : _current(l) { _linearSystems["A"] = l; }
- dofManager(linearSystem<dataMat> *l1, linearSystem<dataMat> *l2) : _current(l1) {
+ dofManager(linearSystem<dataMat> *l, bool isParallel=false) : _current(l),_isParallel(isParallel), _parallelFinalized(false) { _linearSystems["A"] = l; }
+ dofManager(linearSystem<dataMat> *l1, linearSystem<dataMat> *l2) : _current(l1),_isParallel(false), _parallelFinalized(false) {
     _linearSystems.insert(std::make_pair("A", l1));
     _linearSystems.insert(std::make_pair("B", l2));
     //_linearSystems.["A"] = l1;
@@ -144,21 +160,22 @@ class dofManager{
   {
     return isFixed(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField));
   }
-
+  
+  inline void numberGhostDof (Dof key, int procId) {
+    if (fixed.find(key) != fixed.end()) return;
+    if (constraints.find(key) != constraints.end()) return;
+    if (ghosted.find(key) != ghosted.end()) return;
+    ghosted[key] = procId;
+  }
 
   inline void numberDof(Dof key)
   {
-    if(fixed.find(key) != fixed.end())
-    {
-      return;
-    }
-    // constraints
-    if (constraints.find(key) != constraints.end()){
-       return;
-    }
-    //
+    if (fixed.find(key) != fixed.end()) return;
+    if (constraints.find(key) != constraints.end()) return;
+    if (ghosted.find(key) != ghosted.end()) return;
+
     std::map<Dof, int> :: iterator it = unknown.find(key);
-    if (it == unknown.end()){
+    if (it == unknown.end()) {
       unsigned int size = unknown.size();
       unknown[key] = size;
     }
@@ -192,7 +209,7 @@ class dofManager{
     {
       std::map<Dof, int>::const_iterator it = unknown.find(key);
       if (it != unknown.end()) {
-        _current->getFromSolution(it->second,val );
+        _current->getFromSolution(it->second, val);
         return;
       }
     }
@@ -254,7 +271,8 @@ class dofManager{
 
   inline void assemble(const Dof &R, const Dof &C, const dataMat &value)
   {
-    if (!_current->isAllocated()) _current->allocate(unknown.size());
+    if (_isParallel && !_parallelFinalized) _parallelFinalize();
+    if (!_current->isAllocated()) _current->allocate (sizeOfR());
     std::map<Dof, int>::iterator itR = unknown.find(R);
     if (itR != unknown.end()){
       std::map<Dof, int>::iterator itC = unknown.find(C);
@@ -278,7 +296,8 @@ class dofManager{
   }
   inline void assemble(std::vector<Dof> &R, std::vector<Dof> &C, const fullMatrix<dataMat> &m)
   {
-    if (!_current->isAllocated()) _current->allocate(unknown.size());
+    if (_isParallel && !_parallelFinalized) _parallelFinalize();
+    if (!_current->isAllocated()) _current->allocate(sizeOfR());
 
     std::vector<int> NR(R.size()), NC(C.size());
 
@@ -321,7 +340,8 @@ class dofManager{
 
   virtual inline void assemble(std::vector<Dof> &R, const fullVector<dataMat> &m) // for linear forms
   {
-    if (!_current->isAllocated()) _current->allocate(unknown.size());
+    if (_isParallel && !_parallelFinalized) _parallelFinalize();
+    if (!_current->isAllocated()) _current->allocate(sizeOfR());
     std::vector<int> NR(R.size());
     for (unsigned int i = 0; i < R.size(); i++)
     {
@@ -355,7 +375,8 @@ class dofManager{
 
   virtual inline void assemble(std::vector<Dof> &R, const fullMatrix<dataMat> &m)
   {
-    if (!_current->isAllocated()) _current->allocate(unknown.size());
+    if (_isParallel && !_parallelFinalized) _parallelFinalize();
+    if (!_current->isAllocated()) _current->allocate(sizeOfR());
     std::vector<int> NR(R.size());
     for (unsigned int i = 0; i < R.size(); i++)
     {
@@ -408,7 +429,8 @@ class dofManager{
   }
   inline void assemble(const Dof &R, const dataMat &value)
   {
-    if(!_current->isAllocated()) _current->allocate(unknown.size());
+    if (_isParallel && !_parallelFinalized) _parallelFinalize();
+    if(!_current->isAllocated()) _current->allocate(sizeOfR());
     std::map<Dof, int>::iterator itR = unknown.find(R);
     if(itR != unknown.end()){
       _current->addToRightHandSide(itR->second, value);
@@ -437,7 +459,7 @@ class dofManager{
   {
     assemble(vR->getNum(), Dof::createTypeWithTwoInts(iCompR, iFieldR), value);
   }
-  int sizeOfR() const { return unknown.size(); }
+  int sizeOfR() const { return _isParallel ? _localSize : unknown.size(); }
   int sizeOfF() const { return fixed.size(); }
   void systemSolve(){ _current->systemSolve(); }
   void systemClear()
@@ -506,12 +528,107 @@ class dofManager{
     }
   }
   void getFixedDof(std::vector<Dof> &R){
+    R.clear();
     R.reserve(fixed.size());
-    std::map<Dof, double>::iterator it; // template problem ?? //TODO
+    typename std::map<Dof, dataVec>::iterator it;
     for(it=fixed.begin(); it!=fixed.end();++it){
-      R.push_back((*it).first);
+      R.push_back (it->first);
     }
   }
 };
+
+template<class T>
+void dofManager<T>::_parallelFinalize() {
+#ifdef HAVE_MPI
+  int _numStart;
+  int _numTotal;
+  MPI_Status status;
+  _localSize = unknown.size();
+  if (Msg::GetCommRank() == 0){
+    _numStart = 0;
+  }else
+    MPI_Recv (&_numStart, 1, MPI_INT, Msg::GetCommRank()-1, 0, MPI_COMM_WORLD, &status);
+  _numTotal = _numStart + _localSize;
+  if (Msg::GetCommRank() != Msg::GetCommSize()-1)
+    MPI_Send (&_numTotal, 1, MPI_INT, Msg::GetCommRank()+1, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&_numTotal, 1, MPI_INT, Msg::GetCommSize()-1, MPI_COMM_WORLD);
+  for (std::map <Dof, int> ::iterator it = unknown.begin(); it!= unknown.end(); it++)
+    it->second += _numStart;
+  _parallelFinalized = true;
+  std::vector<std::list<Dof> >  ghostedByProc;
+  int *nRequest = new int[Msg::GetCommSize()];
+  int *nRequested = new int[Msg::GetCommSize()];
+  for (int i = 0; i<Msg::GetCommSize(); i++)
+    nRequest[i] = 0;
+  for (std::map <Dof, int >::iterator it = ghosted.begin(); it != ghosted.end(); it++)
+    nRequest[it->second] ++;
+  MPI_Alltoall(nRequest,1,MPI_INT,nRequested,1,MPI_INT,MPI_COMM_WORLD); 
+  long int **recv0 = new long int*[Msg::GetCommSize()];
+  int **recv1 = new int*[Msg::GetCommSize()];
+  long int **send0 = new long int*[Msg::GetCommSize()];
+  int **send1 = new int*[Msg::GetCommSize()];
+  MPI_Request *reqRecv0 = new MPI_Request[2*Msg::GetCommSize()];
+  MPI_Request *reqRecv1 = reqRecv0 + Msg::GetCommSize();
+  MPI_Request *reqSend0 = new MPI_Request[Msg::GetCommSize()];
+  MPI_Request *reqSend1 = new MPI_Request[Msg::GetCommSize()];
+  for (int i = 0; i < Msg::GetCommSize(); i++) {
+    send0[i] = new long int[nRequest[i]*2];
+    recv0[i] = new long int[nRequested[i]*2];
+    send1[i] = new int[nRequested[i]];
+    recv1[i] = new int[nRequest[i]];
+    reqSend0[i] = reqSend1[i] = reqRecv0[i] = reqRecv1[i] = MPI_REQUEST_NULL;
+  }
+  for (int i = 0; i<Msg::GetCommSize(); i++)
+    nRequest [i] = 0;
+  for (std::map <Dof, int >::iterator it = ghosted.begin(); it != ghosted.end(); it++) {
+    int proc = it->second;
+    send0 [proc] [nRequest[proc]*2] = it->first.getEntity();
+    send0 [proc] [nRequest[proc]*2+1] = it->first.getType();
+    nRequest [proc] ++;
+  }
+  for (int i = 0; i<Msg::GetCommSize(); i++) {
+    if (nRequested[i] > 0) {
+      MPI_Irecv (recv0[i], 2*nRequested[i], MPI_LONG, i, 0, MPI_COMM_WORLD, &reqRecv0[i]);
+    }
+    if (nRequest[i] > 0) {
+      MPI_Irecv (recv1[i], 2*nRequest[i], MPI_INT, i, 1, MPI_COMM_WORLD, &reqRecv1[i]);
+      MPI_Isend (send0[i], 2*nRequest[i], MPI_LONG, i, 0, MPI_COMM_WORLD, &reqSend0[i]);
+    }
+  }
+  int index;
+  while (MPI_Waitany (2*Msg::GetCommSize(), reqRecv0, &index, &status) == 0 && index != MPI_UNDEFINED) {
+    if (status.MPI_TAG == 0) {
+      for (int j = 0; j < nRequested[index]; j++) {
+        std::map<Dof,int>::iterator it = unknown.find (Dof(recv0[index][j*2], recv0[index][j*2+1]));
+        if (it == unknown.end ())
+          Msg::Error ("ghost Dof does not exist on parent process");
+        send1[index][j] = it->second;
+      }
+      MPI_Isend (send1[index], nRequested[index], MPI_INT, index, 1, MPI_COMM_WORLD, &reqSend1[index]);
+    }
+  }
+  for (int i = 0; i<Msg::GetCommSize(); i++)
+    nRequest[i] = 0;
+  for (std::map <Dof, int>::iterator it = ghosted.begin(); it != ghosted.end(); it++) {
+    int proc = it->second;
+    unknown[it->first] = recv1 [proc][nRequest[proc] ++];
+  }
+  MPI_Waitall (Msg::GetCommSize(), reqSend0, MPI_STATUS_IGNORE);
+  MPI_Waitall (Msg::GetCommSize(), reqSend1, MPI_STATUS_IGNORE);
+  for (int i = 0; i < Msg::GetCommSize(); i++) {
+    delete [] send0[i];
+    delete [] send1[i];
+    delete [] recv0[i];
+    delete [] recv1[i];
+  }
+  delete [] send0;
+  delete [] send1;
+  delete [] recv0;
+  delete [] recv1;
+  delete [] reqSend0;
+  delete [] reqSend1;
+  delete [] reqRecv0;
+#endif
+}
 
 #endif
