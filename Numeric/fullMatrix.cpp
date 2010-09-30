@@ -20,7 +20,7 @@
 
 
 /*==============================================================================
- * This file improve the methods of fullVector and fullMatrix using
+ * This file improves methods for fullVector and fullMatrix using
  *  - BLAS : Basic Linear Algebra Subprograms
  *  - LAPACK : Linear Algebra PACKage
  *============================================================================*/
