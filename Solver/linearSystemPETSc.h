@@ -44,12 +44,13 @@
 
 template <class scalar>
 class linearSystemPETSc : public linearSystem<scalar> {
+  protected:
   int _blockSize; // for block Matrix
   bool _isAllocated, _kspAllocated;
   Mat _a;
   Vec _b, _x;
   KSP _ksp;
-  void _try(int ierr) const { CHKERRABORT(PETSC_COMM_WORLD, ierr); }
+  static void _try(int ierr) { CHKERRABORT(PETSC_COMM_WORLD, ierr); }
   void _kspCreate() {
     _try(KSPCreate(PETSC_COMM_WORLD, &_ksp));
     PC pc;
