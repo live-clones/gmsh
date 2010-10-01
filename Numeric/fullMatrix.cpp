@@ -17,15 +17,7 @@
 #define F77NAME(x) (x##_)
 #endif
 
-
-
-/*==============================================================================
- * This file improves methods for fullVector and fullMatrix using
- *  - BLAS : Basic Linear Algebra Subprograms
- *  - LAPACK : Linear Algebra PACKage
- *============================================================================*/
-
-
+// Specialisation of fullVector/Matrix operations using BLAS and LAPACK
 
 #if defined(HAVE_BLAS)
 
@@ -318,12 +310,6 @@ bool fullMatrix<double>::svd(fullMatrix<double> &V, fullVector<double> &S)
 }
 
 #endif
-
-
-
-/*==============================================================================
- * BINDINGS
- *============================================================================*/
 
 #include "Bindings.h"
 
