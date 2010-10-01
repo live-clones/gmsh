@@ -2929,6 +2929,15 @@ Embed the point(s) or line(s) in the given surface. The surface mesh
 will conform to the mesh of the point(s) or lines(s). Note that embedded
 lines only work with the MeshAdapt 2-D algorithm.
 
+@item Periodic Line @{ @var{expression-list} @} = @{ @var{expression-list} @};
+Force mesh of lines on the left-hand side (slaves) to match the mesh of
+the lines on the right-hand side (masters).
+
+@item Periodic Surface @var{expression} @{ @var{expression-list} @} = @var{expression} @{ @var{expression-list} @};
+Force mesh of the surface on the left-hand side (slave, with boundary
+edges specified between braces) to match the mesh of the surface on the
+right-hand side (master, with boundary edges specified between braces).
+
 @item Coherence Mesh;
 Removes all duplicate mesh vertices.
 

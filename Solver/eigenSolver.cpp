@@ -11,7 +11,8 @@
 #include <slepceps.h>
 
 eigenSolver::eigenSolver(dofManager<double> *manager, std::string A,
-                         std::string B, bool hermitian) : _A(0), _B(0),_hermitian(hermitian)
+                         std::string B, bool hermitian) 
+  : _A(0), _B(0), _hermitian(hermitian)
 {
   if(A.size()){
     _A = dynamic_cast<linearSystemPETSc<double>*>(manager->getLinearSystem(A));
@@ -25,14 +26,13 @@ eigenSolver::eigenSolver(dofManager<double> *manager, std::string A,
 
 bool eigenSolver::solve(int numEigenValues, std::string which)
 {
-
   if(!_A) return false;
   Mat A = _A->getMatrix();
   Mat B = _B ? _B->getMatrix() : PETSC_NULL;
 
+  PetscInt N, M;
   _try(MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY));
   _try(MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY));
-  PetscInt N, M;
   _try(MatGetSize(A, &N, &M));
 
   PetscInt N2, M2;
@@ -53,11 +53,11 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
 
   // set some default options
   _try(EPSSetDimensions(eps, numEigenValues, PETSC_DECIDE, PETSC_DECIDE));
-  _try(EPSSetTolerances(eps,1.e-7,20));//1.e-6 50
+  _try(EPSSetTolerances(eps, 1.e-7, 20));//1.e-6 50
   //_try(EPSSetType(eps, EPSKRYLOVSCHUR)); //default
-  _try(EPSSetType(eps,EPSARNOLDI)); 
-  //_try(EPSSetType(eps,EPSARPACK));
-  //_try(EPSSetType(eps,EPSPOWER));
+  _try(EPSSetType(eps, EPSARNOLDI)); 
+  //_try(EPSSetType(eps, EPSARPACK));
+  //_try(EPSSetType(eps, EPSPOWER));
 
   // override these options at runtime, petsc-style
   _try(EPSSetFromOptions(eps));
@@ -155,7 +155,6 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
   }
 
   _try(EPSDestroy(eps));
-  _try(SlepcFinalize());
 
   if(reason == EPS_CONVERGED_TOL){
     Msg::Debug("SLEPc done");

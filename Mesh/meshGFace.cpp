@@ -41,21 +41,27 @@
 #include "multiscalePartition.h"
 #include "meshGFaceLloyd.h"
 
-static void copyMesh (GFace *source, GFace *target)
+static void copyMesh(GFace *source, GFace *target)
 {
-  std::map<MVertex*,MVertex*> vs2vt;
-  std::list<GEdge*> edges   = target->edges();
+  std::map<MVertex*, MVertex*> vs2vt;
+  std::list<GEdge*> edges = target->edges();
   {
-    std::list<GEdge*>::iterator it = edges.begin();
-    for (; it!=edges.end(); ++it){
+    for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); ++it){
       int sign = 1;
-      std::map<int,int>::iterator adnksd = target->edgeCounterparts.find((*it)->tag());
+      std::map<int, int>::iterator adnksd = target->edgeCounterparts.find((*it)->tag());
       int source_e;
-      if ( adnksd != target->edgeCounterparts.end())
-	 source_e= adnksd->second;
+      if(adnksd != target->edgeCounterparts.end())
+	 source_e = adnksd->second;
       else{
 	sign = -1;
-	source_e = target->edgeCounterparts[-(*it)->tag()];
+        adnksd = target->edgeCounterparts.find(-(*it)->tag());
+        if(adnksd != target->edgeCounterparts.end())
+          source_e = adnksd->second;
+        else{
+          Msg::Error("Could not find edge counterpart %d in slave surface %d",
+                     (*it)->tag(), target->tag());
+          return;
+        }
       }
 
       GEdge *se = source->model()->getEdgeByTag(abs(source_e));
@@ -63,7 +69,7 @@ static void copyMesh (GFace *source, GFace *target)
       if (source_e * sign > 0){
 	vs2vt[se->getBeginVertex()->mesh_vertices[0]] = te->getBeginVertex()->mesh_vertices[0];
 	vs2vt[se->getEndVertex()->mesh_vertices[0]] = te->getEndVertex()->mesh_vertices[0];
-	for (unsigned i=0;i<se->mesh_vertices.size();i++){
+	for (unsigned i = 0; i < se->mesh_vertices.size(); i++){
 	  MVertex *vs = se->mesh_vertices[i];
 	  MVertex *vt = te->mesh_vertices[i];
 	  vs2vt[vs] = vt;
@@ -72,7 +78,7 @@ static void copyMesh (GFace *source, GFace *target)
       else {
 	vs2vt[se->getBeginVertex()->mesh_vertices[0]] = te->getEndVertex()->mesh_vertices[0];
 	vs2vt[se->getEndVertex()->mesh_vertices[0]] = te->getBeginVertex()->mesh_vertices[0];
-	for (unsigned i=0;i<se->mesh_vertices.size();i++){
+	for (unsigned i = 0; i < se->mesh_vertices.size(); i++){
 	  MVertex *vs = se->mesh_vertices[i];
 	  MVertex *vt = te->mesh_vertices[se->mesh_vertices.size() - i - 1];
 	  vs2vt[vs] = vt;
@@ -81,11 +87,9 @@ static void copyMesh (GFace *source, GFace *target)
     }
   }
 
-  std::map<MVertex*,MVertex*>::iterator it = vs2vt.begin();
-  
-  SPoint2 param_source[2],param_target[2];
+  SPoint2 param_source[2], param_target[2];
   int count = 0;
-  for (; it != vs2vt.end() ; ++it){
+  for (std::map<MVertex*, MVertex*>::iterator it = vs2vt.begin(); it != vs2vt.end() ; ++it){
     MVertex *vs = it->first;
     MVertex *vt = it->second;
     if (vs->onWhat()->dim() == 1){
@@ -97,55 +101,50 @@ static void copyMesh (GFace *source, GFace *target)
 
   if (count < 2) return;
   
-  const double t1u = param_target[0].x();
-  const double t1v = param_target[0].y();
-  const double t2u = param_target[1].x();
-  const double t2v = param_target[1].y();
-  const double s1u = param_source[0].x();
-  const double s1v = param_source[0].y();
-  const double s2u = param_source[1].x();
-  const double s2v = param_source[1].y();
+  const double t1u = param_target[0].x(), t1v = param_target[0].y();
+  const double t2u = param_target[1].x(), t2v = param_target[1].y();
+  const double s1u = param_source[0].x(), s1v = param_source[0].y();
+  const double s2u = param_source[1].x(), s2v = param_source[1].y();
 
-  SVector3 _a(s2u-s1u,s2v-s1v,0);
-  SVector3 _b(t2u-t1u,t2v-t1v,0);
-  SVector3 _c = crossprod(_a,_b);
+  SVector3 _a(s2u - s1u, s2v - s1v, 0);
+  SVector3 _b(t2u - t1u, t2v - t1v, 0);
+  SVector3 _c = crossprod(_a, _b);
   double sinA = _c.z();
-  double cosA = dot(_a,_b);
+  double cosA = dot(_a, _b);
   const double theta = atan2(sinA, cosA);
   const double c = cos(theta);
   const double s = sin(theta);
 
   for(unsigned int i = 0; i < source->mesh_vertices.size(); i++){
     MVertex *vs = source->mesh_vertices[i];
-    double u,v;
-    vs->getParameter(0,u);
-    vs->getParameter(1,v);
+    double u, v;
+    vs->getParameter(0, u);
+    vs->getParameter(1, v);
     // apply transformation
-    const double U =   c * (u-s1u) + s * (v-s1v) + t1u;
-    const double V =  -s * (u-s1u) + c * (v-s1v) + t1v;
-    GPoint gp = target->point(SPoint2(U,V));
-    MVertex *vt = new MFaceVertex(gp.x(), gp.y(), gp.z(), target,U,V);
+    const double U =   c * (u - s1u) + s * (v - s1v) + t1u;
+    const double V =  -s * (u - s1u) + c * (v - s1v) + t1v;
+    GPoint gp = target->point(SPoint2(U, V));
+    MVertex *vt = new MFaceVertex(gp.x(), gp.y(), gp.z(), target, U, V);
     target->mesh_vertices.push_back(vt);
-    vs2vt[vs] = vt;    
+    vs2vt[vs] = vt;
   }
 
-  for (unsigned i=0;i<source->triangles.size();i++){
+  for (unsigned i = 0; i < source->triangles.size(); i++){
     MVertex *vt[3];
     for (int j = 0; j < 3; j++){
       MVertex *vs = source->triangles[i]->getVertex(j); 
-      
       vt[j] = vs2vt[vs];
       if (!vt[j]){
 	SPoint2 p;
 	bool success = reparamMeshVertexOnFace(vs, source, p);
 	const double U =   c * (p.x()-s1u) + s * (p.y()-s1v) + t1u;
 	const double V =  -s * (p.x()-s1u) + c * (p.y()-s1v) + t1v;
-	for (std::list<GEdge*>::iterator it = edges.begin(); it!=edges.end(); ++it){
+	for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); ++it){
 	  GEdge *te = *it;
-	  for (unsigned k=0;k<te->lines.size();k++){
+	  for (unsigned k = 0; k < te->lines.size(); k++){
 	    MVertex *gotcha = te->lines[k]->getVertex(0);
 	    bool success2 = reparamMeshVertexOnFace(gotcha, target, p);
-	    const double D = sqrt((U-p.x())*(U-p.x())+(V-p.y())*(V-p.y()));
+	    const double D = sqrt((U - p.x()) * (U - p.x()) + (V - p.y()) * (V - p.y()));
 	    if (D < 1.e-9){
 	      vt[j] = gotcha;
 	      break;
@@ -156,19 +155,19 @@ static void copyMesh (GFace *source, GFace *target)
     }
     if (!vt[0] || !vt[1] ||!vt[2]){
       Msg::Fatal("yet another error in the copymesh procedure %p %p %p %d %d %d",
-		 vt[0],vt[1],vt[2],source->triangles[i]->getVertex(0)->onWhat()->dim(),
+		 vt[0], vt[1], vt[2], source->triangles[i]->getVertex(0)->onWhat()->dim(),
 		 source->triangles[i]->getVertex(1)->onWhat()->dim(),
 		 source->triangles[i]->getVertex(2)->onWhat()->dim());
     }
-    target->triangles.push_back(new MTriangle(vt[0],vt[1],vt[2]));
+    target->triangles.push_back(new MTriangle(vt[0], vt[1], vt[2]));
   }
 
-  for (unsigned i=0;i<source->quadrangles.size();i++){
+  for (unsigned i = 0; i < source->quadrangles.size(); i++){
     MVertex *v1 = vs2vt[source->quadrangles[i]->getVertex(0)];
     MVertex *v2 = vs2vt[source->quadrangles[i]->getVertex(1)];
     MVertex *v3 = vs2vt[source->quadrangles[i]->getVertex(2)];
     MVertex *v4 = vs2vt[source->quadrangles[i]->getVertex(3)];
-    target->quadrangles.push_back(new MQuadrangle(v1,v2,v3,v4));
+    target->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
   }
 }
 

@@ -115,7 +115,7 @@ bool PView::readMSH(std::string fileName, int fileIndex)
       if(sscanf(str, "%lf %d %d", &version, &format, &size) != 3) return false;
       if(format){
         binary = true;
-        Msg::Info("Mesh is in binary format");
+        Msg::Info("View data is in binary format");
         int one;
         if(fread(&one, sizeof(int), 1, fp) != 1) return 0;
         if(one != 1){

@@ -14,26 +14,17 @@
 class binding;
 template <class scalar> class fullMatrix;
 
-
-
-/*==============================================================================
- * class fullVector : An abstract interface for vectors of scalar
- *============================================================================*/
-
+// An abstract interface for vectors of scalar
 template <class scalar>
 class fullVector
 {
-
  private:
-
-  int _r;          // Size of the vector
-  scalar *_data;   // Pointer on the first element
+  int _r;          // size of the vector
+  scalar *_data;   // pointer on the first element
   friend class fullMatrix<scalar>;
 
  public:
-
-  // Constructor and destructor
-
+  // constructor and destructor
   fullVector(void) : _r(0),_data(0) {}
   fullVector(int r) : _r(r)
   {
@@ -50,15 +41,13 @@ class fullVector
     if(_data) delete [] _data;
   }
 
-  // Get information (size, value)
-
+  // get information (size, value)
   inline int size()                  const { return _r; }
   inline const scalar * getDataPtr() const { return _data; }
   inline scalar operator () (int i)  const { return _data[i]; }
   inline scalar & operator () (int i)      { return _data[i]; }
 
-  // Operations
-
+  // operations
   inline scalar norm() const
   {
     scalar n = 0.;
@@ -116,8 +105,7 @@ class fullVector
     for (int i = 0; i < _r; i++) _data[i] *= x._data[i];
   }
 
-  // Printing and file treatment
-
+  // printing and file treatment
   void print(const char *name="") const 
   {
     printf("Printing vector %s:\n", name);
@@ -137,26 +125,17 @@ class fullVector
   }
 };
 
-
-
-/*==============================================================================
- * class fullMatrix : An abstract interface for matrix of scalar
- *============================================================================*/
-
+// An abstract interface for dense matrix of scalar
 template <class scalar>
 class fullMatrix
 {
-
  private:
-
-  bool _own_data;       // should data be freed on delete ?
-  int _r, _c;      // Size of the matrix
-  scalar *_data;   // Pointer on the first element
+  bool _own_data; // should data be freed on delete ?
+  int _r, _c; // size of the matrix
+  scalar *_data; // pointer on the first element
 
  public:
-
-  // Constructor and destructor
-
+  // constructor and destructor
   fullMatrix(scalar *original, int r, int c)
   {
     _r = r;
@@ -194,11 +173,11 @@ class fullMatrix
     if(_data && _own_data) delete [] _data;
   }
 
-  // Get information (size, value)
-
+  // get information (size, value)
   inline int size1() const { return _r; }
   inline int size2() const { return _c; }
-  inline scalar get(int r, int c) const {
+  inline scalar get(int r, int c) const
+  {
     #ifdef _DEBUG
     if (r >= _r || r < 0 || c >= _c || c < 0)
       Msg::Fatal("invalid index to access fullMatrix : %i %i (size = %i %i)", 
@@ -207,8 +186,7 @@ class fullMatrix
     return (*this)(r, c); 
   }
 
-  // Operations
-
+  // operations
   inline void set(int r, int c, scalar v){
     #ifdef _DEBUG
     if (r >= _r || r < 0 || c >= _c || c < 0)
@@ -270,7 +248,8 @@ class fullMatrix
     _c = nbCol;
     _r = nbRow;
     if(_c*_r != original._c*original._r)
-      Msg::Error("trying to reshape a fullMatrix without conserving the total number of entries");
+      Msg::Error("Trying to reshape a fullMatrix without conserving the "
+                 "total number of entries");
     _own_data = false;
     _data = original._data;
   }
@@ -314,7 +293,8 @@ class fullMatrix
     #endif
     return _data[i + _r * j];
   }
-  void copy(const fullMatrix<scalar> &a, int i0, int ni, int j0, int nj, int desti0, int destj0)
+  void copy(const fullMatrix<scalar> &a, int i0, int ni, int j0, int nj, 
+            int desti0, int destj0)
   {
     for(int i = i0, desti = desti0; i < i0 + ni; i++, desti++)
       for(int j = j0, destj = destj0; j < j0 + nj; j++, destj++)
@@ -349,7 +329,8 @@ class fullMatrix
   {
     for (int i = 0; i < _r * _c; i++) _data[i] *= a._data[i];
   }
-  void gemm_naive(const fullMatrix<scalar> &a, const fullMatrix<scalar> &b, scalar alpha=1., scalar beta=1.)
+  void gemm_naive(const fullMatrix<scalar> &a, const fullMatrix<scalar> &b, 
+                  scalar alpha=1., scalar beta=1.)
   {
     fullMatrix<scalar> temp(a.size1(), b.size2());
     a.mult_naive(b, temp);
@@ -357,7 +338,8 @@ class fullMatrix
     scale(beta);
     add(temp);
   }
-  void gemm(const fullMatrix<scalar> &a, const fullMatrix<scalar> &b,  scalar alpha=1., scalar beta=1.)
+  void gemm(const fullMatrix<scalar> &a, const fullMatrix<scalar> &b, 
+            scalar alpha=1., scalar beta=1.)
 #if !defined(HAVE_BLAS)
   {
     gemm_naive(a,b,alpha,beta);
@@ -491,8 +473,6 @@ class fullMatrix
 #endif
   ;
 
-  // Printing
-
   void print(const std::string name = "") const 
   {
     printf("Printing matrix %s:\n", name.c_str());
@@ -506,8 +486,6 @@ class fullMatrix
       printf("\n");
     }
   }
-
-  // Bindings
 
   static void registerBindings(binding *b);
 };
