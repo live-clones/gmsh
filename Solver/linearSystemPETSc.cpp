@@ -91,13 +91,17 @@ void linearSystemPETSc<fullMatrix<PetscScalar> >::allocate(int nbRows)
   //_try(PetscOptionsInsertString("-ksp_monitor_true_residual -ksp_rtol 1e-10"));
   _try(MatCreate(PETSC_COMM_WORLD, &_a)); 
   _try(MatSetSizes(_a,nbRows * _blockSize, nbRows * _blockSize, PETSC_DETERMINE, PETSC_DETERMINE));
-  //_try(MatSetType(_a, MATSEQBAIJ));
-  _try(MatSetType(_a, MATMPIBAIJ));
+  if (Msg::GetCommSize() > 1) {
+    _try(MatSetType(_a, MATMPIBAIJ));
+    _try(MatSetFromOptions(_a));
+    _try(MatMPIBAIJSetPreallocation(_a, _blockSize, 5, NULL, 0, NULL));
+  } else {
+    _try(MatSetType(_a, MATSEQBAIJ));
+    _try(MatSetFromOptions(_a));
+    _try(MatSeqBAIJSetPreallocation(_a, _blockSize, 5, NULL)); //todo preAllocate off-diagonal part
+  }
   // override the default options with the ones from the option
   // database (if any)
-  _try(MatSetFromOptions(_a));
-  _try(MatMPIBAIJSetPreallocation(_a, _blockSize, 5, NULL, 0, NULL));
-  //_try(MatMPIBAIJSetPreallocation(_a, _blockSize, 4, NULL, 0, NULL)); //todo preAllocate off-diagonal part
   _try(VecCreate(PETSC_COMM_WORLD, &_x));
   _try(VecSetSizes(_x, nbRows * _blockSize, PETSC_DETERMINE));
   // override the default options with the ones from the option
