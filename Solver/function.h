@@ -19,17 +19,10 @@ class MElement;
 class binding;
 
 
-
-/*==============================================================================
- * class function : An abstract interface to functions 
- *============================================================================*/
-
+// An abstract interface to functions
 class function {
-
  public:
-
-  // Additionnal types
-
+  // additionnal types
   class dependency {
    public:
     unsigned iMap;
@@ -42,7 +35,6 @@ class function {
       return (d.iMap <iMap || d.f < f);
     }
   };
-
   class argument {
    public:
     int iMap; // id of the dataCacheMap, e.g. on interfaces
@@ -55,8 +47,7 @@ class function {
     }
   };
 
-  // Data
-
+  // data
   int _nbCol;
   bool _invalidatedOnElement;
   std::vector<functionReplace*> _functionReplaces;
@@ -64,80 +55,67 @@ class function {
   std::set<dependency> dependencies;
 
  private:
-
   static functionConstant *_timeFunction;
   static functionConstant *_dtFunction;  
 
  public:
-
-  function(int nbCol, bool invalidatedOnElement = true);
-  virtual ~function();
+  function(int nbCol, bool invalidatedOnElement = true)
+    : _nbCol(nbCol), _invalidatedOnElement(invalidatedOnElement) {}
+  virtual ~function(){}
 
   void addFunctionReplace(functionReplace &fr);
   void setArgument(fullMatrix<double> &v, const function *f, int iMap = 0);
   virtual void call(dataCacheMap *m, fullMatrix<double> &res) = 0;
   virtual void registerInDataCacheMap(dataCacheMap *m, dataCacheDouble *d) {}
 
-  // Get or print information
-
-  inline bool isInvalitedOnElement() {return _invalidatedOnElement;}
-  inline int getNbCol() const        {return _nbCol;}
-
+  // get or print information
+  inline bool isInvalitedOnElement() { return _invalidatedOnElement; }
+  inline int getNbCol() const        { return _nbCol; }
   static functionConstant *getTime();
   static functionConstant *getDT();
-
   static function *getSolution();
   static function *getSolutionGradient();
   static function *getParametricCoordinates();
   static function *getNormals();
-
-  void printDep() {
-    for (std::set<dependency>::iterator it = dependencies.begin(); it != dependencies.end(); it++)
+  void printDep()
+  {
+    for (std::set<dependency>::iterator it = dependencies.begin();
+         it != dependencies.end(); it++)
       printf("%i %p\n", it->iMap, it->f);
   }
 
-  // Bindings
-
+  // bindings
   static void registerBindings(binding *b);
-
 };
 
 
-//------------------------------------
 // Additionnal class to get solution
-//------------------------------------
-
 class functionSolution : public function {
   static functionSolution *_instance;
-  functionSolution() : function(0) {}; // constructor is private only 1 instance can exists, call get to access the instance
+  // constructor is private only 1 instance can exists, call get to
+  // access the instance
+  functionSolution() : function(0) {}; 
  public:
-  void call(dataCacheMap *m, fullMatrix<double> &sol) {
-    Msg::Error("a function requires the solution but this algorithm does not provide the solution");
+  void call(dataCacheMap *m, fullMatrix<double> &sol)
+  {
+    Msg::Error("A function requires the solution but this algorithm does "
+               "not provide the solution");
     throw;
   }
-  void setNbFields( int nbFields) {
-    _nbCol = nbFields;
-  }
-  static functionSolution *get() {
+  void setNbFields(int nbFields){ _nbCol = nbFields; }
+  static functionSolution *get()
+  {
     if(!_instance)
       _instance = new functionSolution();
     return _instance;
   }
 };
 
-
-
-/*==============================================================================
- * class functionReplace
- *============================================================================*/
-
 class functionReplace {
-
   friend class dataCacheMap;
   friend class dataCacheDouble;
 
  public:
-
   int _nChildren;
   function *_master;
   functionReplaceCache *currentCache;
@@ -145,24 +123,16 @@ class functionReplace {
   std::set <function::dependency> _fromParent;
   std::vector <function::argument> _toReplace;
   std::vector <function::argument> _toCompute;
-
   functionReplace();
-
   void get(fullMatrix<double> &v, const function *, int iMap = 0);
   void replace(fullMatrix<double> &v, const function *, int iMap = 0);
   void compute();
   void addChild();
 };
 
-
-
-/*==============================================================================
- * class dataCacheDouble :
- *    dataCache when the value is a matrix of double
- *    the user should provide the number of rows by evaluating points and the number of columns
- *    then the size of the matrix is automatically adjusted
- *============================================================================*/
-
+// A dataCache when the value is a matrix of double. The user should
+// provide the number of rows by evaluating points and the number of
+// columns; then the size of the matrix is automatically adjusted
 class dataCacheDouble {
   friend class dataCacheMap;
   friend class dgDataCacheMap;
@@ -182,13 +152,15 @@ class dataCacheDouble {
   void _eval();
   void resize(int nrow);
  public:
-  //set the value (without computing it by _eval) and invalidate the dependencies
-  // this function is needed to be able to pass the _value to functions like gemm or mult
-  // but you cannot keep the reference to the _value, you should always use the set function 
-  // to modify the _value
-  // take care if you use this to set a proxy you must ensure that the value pointed to are not modified
-  // without further call to set because the dependencies won't be invalidate
-  inline fullMatrix<double> &set() {
+  //set the value (without computing it by _eval) and invalidate the
+  // dependencies this function is needed to be able to pass the
+  // _value to functions like gemm or mult but you cannot keep the
+  // reference to the _value, you should always use the set function
+  // to modify the _value take care if you use this to set a proxy you
+  // must ensure that the value pointed to are not modified without
+  // further call to set because the dependencies won't be invalidate
+  inline fullMatrix<double> &set()
+  {
     if(_valid) {
       for(std::set<dataCacheDouble*>::iterator it = _dependOnMe.begin();
           it!=_dependOnMe.end(); it++)
@@ -197,26 +169,20 @@ class dataCacheDouble {
     _valid = true;
     return _value;
   }
-  //access _value and compute it if necessary
-  inline const fullMatrix<double> &get() {
+  // access _value and compute it if necessary
+  inline const fullMatrix<double> &get()
+  {
     if(!_valid)
       _eval();
     return _value;
   }
   // dataCacheMap is the only one supposed to call this
-  inline bool somethingDependOnMe() {
-    return !_dependOnMe.empty();
-  }
-  inline bool doIDependOn(dataCacheDouble &other) {
+  inline bool somethingDependOnMe() { return !_dependOnMe.empty(); }
+  inline bool doIDependOn(dataCacheDouble &other)
+  {
     return (_iDependOn.find(&other)!=_iDependOn.end());
   }
 };
-
-
-
-/*==============================================================================
- * class dataCacheMap
- *============================================================================*/
 
 class dataCacheMap {
  public:
@@ -233,35 +199,42 @@ class dataCacheMap {
     _parent=NULL;
   }
   ~dataCacheMap();
-  void addDataCacheDouble(dataCacheDouble *data, bool invalidatedOnElement) {
+  void addDataCacheDouble(dataCacheDouble *data, bool invalidatedOnElement)
+  {
     _allDataCaches.insert(data);
     if(invalidatedOnElement)
       _toInvalidateOnElement.insert(data);
   }
-  virtual dgDataCacheMap *asDgDataCacheMap() {
+  virtual dgDataCacheMap *asDgDataCacheMap() 
+  {
     Msg::Error("I'm not a dgDataCacheMap");
     return NULL;
   }
-  dataCacheMap *getSecondaryCache(int i) {
+  dataCacheMap *getSecondaryCache(int i)
+  {
     if (i==0)
       return this;
     return _secondaryCaches[i-1];
   }
-  void addSecondaryCache(dataCacheMap *s) {
+  void addSecondaryCache(dataCacheMap *s)
+  {
     _secondaryCaches.push_back(s);
   }
   dataCacheDouble &get(const function *f, dataCacheDouble *caller=0);
-  virtual void setElement(MElement *element) {
+  virtual void setElement(MElement *element)
+  {
     _element=element;
-    for(std::set<dataCacheDouble*>::iterator it=_toInvalidateOnElement.begin(); it!= _toInvalidateOnElement.end(); it++) {
+    for(std::set<dataCacheDouble*>::iterator it=_toInvalidateOnElement.begin(); 
+        it!= _toInvalidateOnElement.end(); it++) {
       (*it)->_valid=false;
     }
     for(std::list<dataCacheMap*>::iterator it=_children.begin(); it!=_children.end(); it++) {
       (*it)->setElement(element);
     }
   }
-  inline MElement *getElement() {return _element;}
-  virtual dataCacheMap *newChild() {
+  inline MElement *getElement() { return _element; }
+  virtual dataCacheMap *newChild()
+  {
     dataCacheMap *m = new dataCacheMap();
     m->_parent = this;
     _children.push_back(m);
@@ -269,26 +242,21 @@ class dataCacheMap {
     return m;
   }
   void setNbEvaluationPoints(int nbEvaluationPoints);
-  inline int getNbEvaluationPoints() {return _nbEvaluationPoints;}
+  inline int getNbEvaluationPoints() { return _nbEvaluationPoints; }
 };
 
-
-
-/*==============================================================================
- * Some example of functions
- *============================================================================*/
-
 // functionConstant (constant values copied over each line)
-
 class functionConstant : public function {
  public:
   fullMatrix<double> _source;
-  void call(dataCacheMap *m, fullMatrix<double> &val) {
+  void call(dataCacheMap *m, fullMatrix<double> &val)
+  {
     for (int i=0; i<val.size1(); i++)
       for (int j=0; j<_source.size1(); j++)
         val(i,j)=_source(j,0);
   }
-  functionConstant(std::vector<double> source) : function(source.size()) {
+  functionConstant(std::vector<double> source) : function(source.size())
+  {
     _source = fullMatrix<double>(source.size(),1);
     for (size_t i=0; i<source.size(); i++)
       _source(i,0) = source[i];
@@ -305,7 +273,5 @@ function *functionScaleNew (const function *f0, const double s);
 function *functionExtractCompNew (const function *f0, const int iComp);
 
 function *getFunctionCoordinates();
-
-
 
 #endif
