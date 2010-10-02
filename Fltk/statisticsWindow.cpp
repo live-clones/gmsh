@@ -239,7 +239,8 @@ void statisticsWindow::compute(bool elementQuality)
     dMax = std::max(nbE, dMax);
     if (nbE == 4) d4 += 1;
   }
-  printf("Stats degree vertices: dMin=%d , dMax=%d, d4=%g \n", dMin, dMax, (double)d4/nbElems);
+  if (nbElems > 0)
+    printf("Stats degree vertices: dMin=%d , dMax=%d, d4=%g \n", dMin, dMax, (double)d4/nbElems);
   //end emi hack
 
   int num = 0;

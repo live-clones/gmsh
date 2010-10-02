@@ -29,6 +29,9 @@
 #include "discreteFace.h"
 #include "discreteRegion.h"
 #include "MVertexPositionSet.h"
+#include "PView.h"
+#include "PViewData.h"
+#include "PViewDataList.h"
 
 void GModel::_storePhysicalTagsInEntities(int dim,
                                           std::map<int, std::map<int, std::string> > &map)
@@ -52,6 +55,14 @@ void GModel::_storePhysicalTagsInEntities(int dim,
     }
   }
 }
+
+ static void replaceCommaByDot(const std::string name){
+   char myCommand[1000], myCommand2[1000];
+   sprintf(myCommand, "sed 's/,/./g' %s > temp.txt", name.c_str());
+   system(myCommand);
+   sprintf(myCommand2, "mv temp.txt %s ", name.c_str());
+   system(myCommand2);
+ }
 
 static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
                         std::vector<MVertex*> &vertices)
@@ -77,6 +88,19 @@ static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
     }
     else
       vertices.push_back(vec[indices[i]]);
+  }
+  return true;
+}
+static bool getProperties(int num, int *indices, std::vector<double> &vec,
+                        std::vector<double> &properties)
+{
+  for(int i = 0; i < num; i++){
+    if(indices[i] < 0 || indices[i] > (int)(vec.size() - 1)){
+      Msg::Error("Wrong vertex index %d", indices[i]);
+      return false;
+    }
+    else
+      properties.push_back(vec[indices[i]]);
   }
   return true;
 }
@@ -1223,6 +1247,131 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int r
   }
   Msg::Info("%d elements", elements[0][region].size() +
             elements[1][region].size() + elements[2][region].size());
+  return 1;
+}
+
+int GModel::readPLY(const std::string &name)
+{
+
+  replaceCommaByDot(name);
+
+  FILE *fp = fopen(name.c_str(), "r");
+  if(!fp){
+    Msg::Error("Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+ 
+
+  std::vector<MVertex*> vertexVector;
+  std::map<int, std::vector<MElement*> > elements[5];
+  std::map<int, std::vector<double> > properties;
+
+  char buffer[256], str[256], str2[256], str3[256];
+  std::string s1;
+  int elementary = getMaxElementaryNumber(-1) + 1;
+  int nbv, nbf;
+  int nbprop = 0;
+  int nbView = 0;
+  std::vector<std::string> propName;
+  while(!feof(fp)) {
+    if(!fgets(buffer, sizeof(buffer), fp)) break;
+    if(buffer[0] != '#'){ // skip comments
+      sscanf(buffer, "%s %s", str, str2);
+      if(!strcmp(str, "element") && !strcmp(str2, "vertex")){
+	sscanf(buffer, "%s %s %d", str, str2, &nbv);
+      } 
+      if(!strcmp(str, "format") && strcmp(str2, "ascii")){
+	Msg::Error("Only reading of ascii PLY files implemented");
+	return 0;
+      }
+      if(!strcmp(str, "property") && strcmp(str2, "list")){
+	nbprop++;
+	sscanf(buffer, "%s %s %s", str, str2, str3);
+	if (nbprop > 3) propName.push_back(s1+str3);
+      } 
+      if(!strcmp(str, "element") && !strcmp(str2, "face")){
+	sscanf(buffer, "%s %s %d", str, str2, &nbf);
+      } 
+      if(!strcmp(str, "end_header")){
+	nbView = nbprop -3;
+	Msg::Info("%d elements", nbv);
+	Msg::Info("%d triangles", nbf);
+	Msg::Info("%d properties", nbView);
+
+	//printf("*********READING VERTEX \n");
+	vertexVector.resize(nbv);
+	for(int i = 0; i < nbv; i++) {
+	  double x,y,z;
+	  char line[10000], *pEnd, *pEnd2, *pEnd3;
+	  fgets(line, sizeof(line), fp);
+	  x = strtod(line, &pEnd);
+	  y = strtod(pEnd, &pEnd2);
+	  z = strtod(pEnd2, &pEnd3);
+	  //printf("xyz=%g %g %g \n", x,y,z);
+	  vertexVector[i] = new MVertex(x, y, z);
+
+	  pEnd = pEnd3;
+	  double prop[nbView];
+	  for (int k=0; k< nbView; k++){
+	    prop[k]=strtod(pEnd, &pEnd2);
+	    pEnd = pEnd2;
+	    properties[k].push_back(prop[k]);
+	  }
+	}
+
+	//printf("*********READING ELEMS \n");
+	for(int i = 0; i < nbf; i++) {
+	  if(!fgets(buffer, sizeof(buffer), fp)) break;
+	  int n[3], nbe;
+	  int nb = sscanf(buffer, "%d %d %d %d", &nbe, &n[0], &n[1], &n[2]);
+	  std::vector<MVertex*> vertices;
+	  if(!getVertices(3, n, vertexVector, vertices)) return 0;
+	  elements[0][elementary].push_back(new MTriangle(vertices));
+	}
+	
+      }
+ 
+    }
+  }
+
+  for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
+    _storeElementsInEntities(elements[i]);
+  _associateEntityWithMeshVertices();
+  _storeVerticesInEntities(vertexVector);
+
+
+  //Create PViews here 
+  std::vector<GEntity*> _entities;
+  getEntities(_entities);
+  for (int iV=0; iV< nbView; iV++){
+    PView *view = new PView();
+    PViewDataList *data = dynamic_cast<PViewDataList*>(view->getData());
+    for(unsigned int ii = 0; ii < _entities.size(); ii++){
+	for(unsigned int i = 0; i < _entities[ii]->getNumMeshElements(); i++){ 
+	  MElement *e = _entities[ii]->getMeshElement(i);	  
+	  int numNodes = e->getNumVertices();
+	  std::vector<double> x(numNodes), y(numNodes), z(numNodes);
+	  std::vector<double> *out = data->incrementList(1, e->getType());
+	  for(int nod = 0; nod < numNodes; nod++) out->push_back((e->getVertex(nod))->x()); 
+	  for(int nod = 0; nod < numNodes; nod++) out->push_back((e->getVertex(nod))->y()); 
+	  for(int nod = 0; nod < numNodes; nod++) out->push_back((e->getVertex(nod))->z());
+	  std::vector<double> props;
+	  int n[3];
+	  n[0] = e->getVertex(0)->getNum()-1;
+	  n[1] = e->getVertex(1)->getNum()-1;
+	  n[2] = e->getVertex(2)->getNum()-1;
+	  if(!getProperties(3, n, properties[iV], props)) return 0;
+	  for(int nod = 0; nod < numNodes; nod++) out->push_back(props[nod]);
+	}
+    }
+    data->setName(propName[iV]);
+    data->Time.push_back(0);
+    data->setFileName("property.pos");
+    data->finalize();
+  }
+
+  fclose(fp);
+
   return 1;
 }
 

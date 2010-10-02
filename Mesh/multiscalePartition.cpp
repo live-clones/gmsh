@@ -5,6 +5,7 @@
 #include "MEdge.h"
 #include "MElement.h"
 #include "multiscaleLaplace.h"
+#include "GFaceCompound.h"
 #include "Numeric.h"
 #include "Context.h"
 
@@ -299,6 +300,11 @@ multiscalePartition::multiscalePartition(std::vector<MElement *> &elements,
     options.global_method = 1;// 1 Multilevel-KL, 2 Spectral
     options.mesh_dims[0] = nbParts;
   }
+  else if (options.partitioner == 2){
+    options.algorithm = 2;//1 recursive, 2=kway, 3=nodal weights
+    options.refine_algorithm=2;
+    options.edge_matching = 3;
+  }
   
   partitionLevel *level = new partitionLevel;
   level->elements.insert(level->elements.begin(),elements.begin(),elements.end());
@@ -364,7 +370,7 @@ void multiscalePartition::partition(partitionLevel & level, int nbParts,
                 nextLevel->recur,nextLevel->region, genus, AR, nbParts);  
       partition(*nextLevel, nbParts, MULTILEVEL);
     }
-    else if (genus == 0  &&  AR > 5 ){//|| genus == 0  &&  NB > 1){
+    else if (genus == 0  &&  AR > AR_MAX || genus == 0  &&  NB > 1){
       int nbParts = 2;
       if(!onlyMultilevel){
 	Msg::Info("Mesh partition: level (%d-%d)  is ZERO-GENUS (AR=%d NB=%d) ---> LAPLACIAN partition %d parts",

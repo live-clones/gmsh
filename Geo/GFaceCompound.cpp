@@ -664,19 +664,18 @@ bool GFaceCompound::parametrize() const
     fillNeumannBCS();
     bool noOverlap = parametrize_conformal_spectral() ;
     if (!noOverlap){
-      //buildOct(); exit(1);
       Msg::Warning("!!! Overlap: parametrization switched to 'FE conformal' map");
       noOverlap = parametrize_conformal();
     }
     // if (!noOverlap) {
-    //   Msg::Warning("!!! Overlap: parametrization switched to 'nonLIN conformal' map");
-    //   noOverlap = parametrize_conformal_nonLinear() ;
-    // }
-    if ( !noOverlap || !checkOrientation(0) ){
-      Msg::Warning("$$$ Overlap: parametrization switched to 'harmonic' map");
-      parametrize(ITERU,HARMONIC); 
-      parametrize(ITERV,HARMONIC);
-    }
+       //   Msg::Warning("!!! Overlap: parametrization switched to 'nonLIN conformal' map");
+       //   noOverlap = parametrize_conformal_nonLinear() ;
+    //}
+     if ( !noOverlap || !checkOrientation(0) ){
+       Msg::Warning("$$$ Overlap: parametrization switched to 'harmonic' map");
+       parametrize(ITERU,HARMONIC); 
+       parametrize(ITERV,HARMONIC);
+     }
   }
 
   buildOct();  
@@ -1079,9 +1078,22 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
 {  
   
   dofManager<double> myAssembler(_lsys);
+  
+  // EMI-test for paper Dong: fix only 2 vertices
+  // MVertex *v1;
+  // MVertex *v2;
+  // double zmin = 1.e6;
+  // double zmax = 0.0;
+  // for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+  //   MVertex  *v = *itv;
+  //   double z = v->z();
+  //   if (z > zmax){ zmax = z; v2 = v;}
+  //   if (z < zmin){ zmin = z; v1 = v;}
+  // }
+  // myAssembler.fixVertex(v1, 0, 1, 0.0);
+  // myAssembler.fixVertex(v2, 0, 1, 1.0);
 
   if(_type == UNITCIRCLE){
-    //map to a unit circle
     for(unsigned int i = 0; i < _ordered.size(); i++){
       MVertex *v = _ordered[i];
       const double theta = 2 * M_PI * _coords[i];
@@ -1954,58 +1966,6 @@ void GFaceCompound::getTriangle(double u, double v,
   _v = X[1];
 }
 
-void GFaceCompound::partitionFaceCM() 
-{
-
-  if(!oct) parametrize();
-	
-  double CMu = 0.0;
-  double sumArea = 0.0;
-	  
-  std::list<GFace*>::const_iterator it = _compound.begin();
-  for( ; it != _compound.end() ; ++it){
-    for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-      MTriangle *t = (*it)->triangles[i];
-      std::map<MVertex*,SPoint3>::const_iterator it0 = coordinates.find(t->getVertex(0));
-      std::map<MVertex*,SPoint3>::const_iterator it1 = coordinates.find(t->getVertex(1));
-      std::map<MVertex*,SPoint3>::const_iterator it2 = coordinates.find(t->getVertex(2));
-      double q0[3] = {it0->second.x(), it0->second.y(), 0.0}; 
-      double q1[3] = {it1->second.x(), it1->second.y(), 0.0};
-      double q2[3] = {it2->second.x(), it2->second.y(), 0.0};
-      double area = 1/fabs(triangle_area(q0, q1, q2));
-      double cg_u = (q0[0]+q1[0]+q2[0])/3.;
-      CMu += cg_u*area;
-      sumArea += area;
-    }
-    CMu /= sumArea;
-  }
-	
-  //printf("min size partition =%d \n", (int)allNodes.size()/2);
-  model()->setMinPartitionSize((int)allNodes.size()/2);
-  model()->setMaxPartitionSize((int)allNodes.size()/2+1);
-	
-  it = _compound.begin();
-  for( ; it != _compound.end() ; ++it){
-    for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-      MTriangle *t = (*it)->triangles[i];
-      std::map<MVertex*,SPoint3>::const_iterator it0 = coordinates.find(t->getVertex(0));
-      std::map<MVertex*,SPoint3>::const_iterator it1 = coordinates.find(t->getVertex(1));
-      std::map<MVertex*,SPoint3>::const_iterator it2 = coordinates.find(t->getVertex(2));
-      double cg_u = (it0->second.x()+it1->second.x()+it2->second.x())/3.;
-      if (cg_u <= CMu)
-	t->setPartition(1);
-      else 
-	t->setPartition(2);
-    }
-  }
-	
-  model()->recomputeMeshPartitions();
-	
-  CreateOutputFile("toto.msh", CTX::instance()->mesh.fileFormat);
-  Msg::Exit(1);
-	 
-  return;
-}
 
 void GFaceCompound::buildOct() const
 {
@@ -2079,7 +2039,6 @@ bool GFaceCompound::checkTopology() const
   // FIXME!!! I think those things are wrong with cross-patch reparametrization
   //if ((*(_compound.begin()))->geomType() != GEntity::DiscreteSurface)return true;  
   
-
   //TODO: smthg to exit here for lloyd remeshing
   
   bool correctTopo = true;

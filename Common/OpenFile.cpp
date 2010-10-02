@@ -340,6 +340,9 @@ int MergeFile(std::string fileName, bool warnIfMissing)
   else if(ext == ".ply2"){
     status = GModel::current()->readPLY2(fileName);
   }
+  else if(ext == ".ply"){
+    status = GModel::current()->readPLY(fileName);
+  }
   else {
     CTX::instance()->geom.draw = 1;
     if(!strncmp(header, "$PTS", 4) || !strncmp(header, "$NO", 3) || 

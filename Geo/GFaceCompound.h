@@ -131,7 +131,6 @@ class GFaceCompound : public GFace {
   bool parametrize() const ;
   void coherenceNormals();
   void coherencePatches() const;
-  void partitionFaceCM();
   virtual std::list<GFace*> getCompounds() const { return _compound; }
   mutable int nbSplit;
   int getNbSplit() const { return nbSplit; }

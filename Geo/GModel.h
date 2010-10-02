@@ -491,7 +491,8 @@ class GModel
   int writeSTL(const std::string &name, bool binary=false,
                bool saveAll=false, double scalingFactor=1.0);
 
-  // PLY2 format (asciii text format)
+  // PLY(2) format (ascii text format)
+  int readPLY(const std::string &name);
   int readPLY2(const std::string &name);
   int writePLY2(const std::string &name);
 

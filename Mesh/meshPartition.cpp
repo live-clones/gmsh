@@ -460,7 +460,7 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
           }
           break;
         case 3:  // Nodal weight
-          printf("METIS with weights\n");
+          //printf("METIS with weights\n");
           metisOptions[0] = 1;
           metisOptions[1] = options.edge_matching;
           metisOptions[2] = 1;
