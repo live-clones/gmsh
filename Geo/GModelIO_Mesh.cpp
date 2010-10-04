@@ -29,9 +29,12 @@
 #include "discreteFace.h"
 #include "discreteRegion.h"
 #include "MVertexPositionSet.h"
+
+#if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
 #include "PViewDataList.h"
+#endif
 
 void GModel::_storePhysicalTagsInEntities(int dim,
                                           std::map<int, std::map<int, std::string> > &map)
@@ -1339,8 +1342,8 @@ int GModel::readPLY(const std::string &name)
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertexVector);
 
-
-  //Create PViews here 
+#if defined(HAVE_POST)
+  // create PViews here 
   std::vector<GEntity*> _entities;
   getEntities(_entities);
   for (int iV=0; iV< nbView; iV++){
@@ -1369,6 +1372,7 @@ int GModel::readPLY(const std::string &name)
     data->setFileName("property.pos");
     data->finalize();
   }
+#endif
 
   fclose(fp);
 
