@@ -366,13 +366,45 @@ bool OCCFace::buildSTLTriangulation(bool force)
     stl_vertices.push_back(SPoint2(p.X(), p.Y()));
   }
 
+  bool revert = false;
   for(int i = 1; i <= triangulation->NbTriangles(); i++){
     Poly_Triangle triangle = (triangulation->Triangles())(i);
     int p1, p2, p3;
     triangle.Get(p1, p2, p3);
-    stl_triangles.push_back(p1 - 1);
-    stl_triangles.push_back(p2 - 1);
-    stl_triangles.push_back(p3 - 1);
+    
+    // orient STL mesh to get normal right
+    if(i == 1){
+      gp_Pnt2d gp1 = (triangulation->UVNodes())(p1);
+      gp_Pnt2d gp2 = (triangulation->UVNodes())(p2);
+      gp_Pnt2d gp3 = (triangulation->UVNodes())(p3);
+      SPoint2 b = SPoint2(gp1.X(), gp1.Y()) + SPoint2(gp2.X(), gp2.Y()) +
+        SPoint2(gp3.X(), gp3.Y());
+      b *= 1. / 3.;
+      SVector3 nf = normal(b); 
+      GPoint sp1 = point(gp1.X(), gp1.Y());
+      GPoint sp2 = point(gp2.X(), gp2.Y());
+      GPoint sp3 = point(gp3.X(), gp3.Y());
+      double n[3];
+      normal3points(sp1.x(), sp1.y(), sp1.z(),
+                    sp2.x(), sp2.y(), sp2.z(),
+                    sp3.x(), sp3.y(), sp3.z(), n);
+      SVector3 ne(n[0], n[1], n[2]);
+      if(dot(ne, nf) < 0){
+        Msg::Debug("Reverting orientation of STL mesh in face %d", tag());
+        revert = true;
+      }
+    }
+
+    if(!revert){
+      stl_triangles.push_back(p1 - 1);
+      stl_triangles.push_back(p2 - 1);
+      stl_triangles.push_back(p3 - 1);
+    }
+    else{
+      stl_triangles.push_back(p1 - 1);
+      stl_triangles.push_back(p3 - 1);
+      stl_triangles.push_back(p2 - 1);
+    }
   }
 
   return true;
