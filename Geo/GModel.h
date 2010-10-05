@@ -353,9 +353,6 @@ class GModel
   void createTopologyFromMesh();
   void createTopologyFromFaces(std::vector<discreteFace*> &pFaces);
 
-  // compute distance function
-  void computeDistanceFunction();
-
   // a container for smooth normals
   smooth_normals *normals;
 

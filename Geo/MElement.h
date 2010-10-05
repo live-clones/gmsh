@@ -88,7 +88,8 @@ class MElement
 
   // get the vertex using the VTK ordering
   virtual MVertex *getVertexVTK(int num){ return getVertex(num); }
-// get the vertex using the Nastran BDF ordering
+
+  // get the vertex using the Nastran BDF ordering
   virtual MVertex *getVertexBDF(int num){ return getVertex(num); }
 
   // get the vertex using MED ordering
@@ -164,7 +165,7 @@ class MElement
   virtual MElement *getDomain(int i) const { return NULL; }
   virtual void setDomain (MElement *e, int i) { }
 
-  //get the type of the element
+  // get the type of the element
   virtual int getType() const = 0;
 
   // get the max/min edge length
