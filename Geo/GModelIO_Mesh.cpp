@@ -59,13 +59,15 @@ void GModel::_storePhysicalTagsInEntities(int dim,
   }
 }
 
- static void replaceCommaByDot(const std::string name){
-   char myCommand[1000], myCommand2[1000];
-   sprintf(myCommand, "sed 's/,/./g' %s > temp.txt", name.c_str());
-   system(myCommand);
-   sprintf(myCommand2, "mv temp.txt %s ", name.c_str());
-   system(myCommand2);
- }
+static void replaceCommaByDot(const std::string name){
+  char myCommand[1000], myCommand2[1000];
+  sprintf(myCommand, "sed 's/,/./g' %s > temp.txt", name.c_str());
+  if(system(myCommand))
+    Msg::Error("sed command failed\n");
+  sprintf(myCommand2, "mv temp.txt %s ", name.c_str());
+  if(system(myCommand2))
+    Msg::Error("mv command failed\n");
+}
 
 static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
                         std::vector<MVertex*> &vertices)
@@ -1214,7 +1216,7 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int r
   const char *format;
   fpos_t position;
   fgetpos(fp, &position);
-  if(!fgets(tmp, sizeof(tmp), fp)) return 0;;
+  if(!fgets(tmp, sizeof(tmp), fp)) return 0;
   fsetpos(fp, &position);
   if(strstr(tmp, ","))
     format = " , %d";
@@ -1321,7 +1323,7 @@ int GModel::readPLY(const std::string &name)
 	for(int i = 0; i < nbv; i++) {
 	  double x,y,z;
 	  char line[10000], *pEnd, *pEnd2, *pEnd3;
-	  fgets(line, sizeof(line), fp);
+	  if(!fgets(line, sizeof(line), fp)) return 0;
 	  x = strtod(line, &pEnd);
 	  y = strtod(pEnd, &pEnd2);
 	  z = strtod(pEnd2, &pEnd3);
@@ -2888,8 +2890,8 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
       int num = 0;
       for (int k= 0; k < numElements; k++){
 	physicals[1][iLine][1] = "centerline";
-	fgets(line, sizeof(line), fp);
-	v0=(int)strtol(line, &pEnd, 10);//ignore firt line
+	if(!fgets(line, sizeof(line), fp)) return 0;
+	v0=(int)strtol(line, &pEnd, 10);//ignore first line
 	v0=(int)strtol(pEnd, &pEnd2, 10);
 	p=pEnd2;
 	while(1){
