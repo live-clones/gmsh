@@ -32,6 +32,7 @@ class discreteEdge : public GEdge {
   void setBoundVertices();
   void createTopo();
   void computeNormals () const;
+  void writeGEO(FILE *fp);
 };
 
 #endif

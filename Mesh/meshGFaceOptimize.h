@@ -30,6 +30,9 @@ class edge_angle {
 typedef std::map<MVertex*, std::vector<MElement*> > v2t_cont;
 typedef std::map<MEdge, std::pair<MElement*, MElement*>, Less_Edge> e2t_cont;
 
+template <class T> void buildVertexToElement(std::vector<T*> &eles, v2t_cont &adj);
+template <class T> void buildEdgeToElement(std::vector<T*> &eles, e2t_cont &adj);
+
 void buildVertexToTriangle(std::vector<MTriangle*> &, v2t_cont &adj);
 void buildEdgeToTriangle(std::vector<MTriangle*> &, e2t_cont &adj);
 void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,

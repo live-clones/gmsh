@@ -25,6 +25,7 @@ class discreteFace : public GFace {
                          SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const;
   void setBoundEdges(std::vector<int> tagEdges);
   void findEdges(std::map<MEdge, std::vector<int>, Less_Edge > &map_edges);
+  void discreteFace::writeGEO(FILE *fp);
 };
 
 #endif

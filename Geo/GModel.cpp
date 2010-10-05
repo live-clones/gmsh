@@ -35,6 +35,7 @@
 #include "MVertexPositionSet.h"
 #include "OpenFile.h"
 #include "CreateFile.h"
+#include "meshGFaceOptimize.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"
@@ -1993,6 +1994,339 @@ void GModel::insertRegion(GRegion *r)
   regions.insert(r);
 }
 
+// given a set of mesh edges, build GFaces that separate those 
+// edges.
+
+struct compareMLinePtr {
+  bool operator () (MLine *l1, MLine *l2) const
+  {
+    static Less_Edge le;
+    return le(l1->getEdge(0), l2->getEdge(0)); 
+  }
+};
+
+
+static GEdge *getNewModelEdge(GFace *gf1, GFace *gf2, 
+                              std::map<std::pair<int, int>, GEdge*> &newEdges)
+{
+  int t1 = gf1 ? gf1->tag() : -1;
+  int t2 = gf2 ? gf2->tag() : -1;
+  int i1 = std::min(t1, t2);
+  int i2 = std::max(t1, t2);
+
+  if(i1 == i2) return 0;
+
+  std::map<std::pair<int, int>, GEdge*>::iterator it = 
+    newEdges.find(std::make_pair<int, int>(i1, i2));
+  if(it == newEdges.end()){
+    discreteEdge *ge = new discreteEdge
+      (GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
+    GModel::current()->add(ge);
+    newEdges[std::make_pair<int, int>(i1, i2)] = ge;
+    return ge;
+  }
+  else
+    return it->second;  
+}
+
+static void recurClassifyEdges(MTri3 *t, 
+                               std::map<MTriangle*, GFace*> &reverse,
+                               std::map<MLine*, GEdge*, compareMLinePtr> &lines,
+                               std::set<MLine*> &touched,
+                               std::set<MTri3*> &trisTouched,
+                               std::map<std::pair<int, int>, GEdge*> &newEdges)
+{
+  if(!t->isDeleted()){
+    trisTouched.erase(t);
+    t->setDeleted(true);
+    GFace *gf1 = reverse[t->tri()];
+    for(int i = 0; i < 3; i++){
+      GFace *gf2 = 0;
+      MTri3 *tn = t->getNeigh(i);
+      if(tn)
+        gf2 = reverse[tn->tri()];
+      edgeXface exf(t, i);
+      MLine ml(exf.v[0], exf.v[1]);
+      std::map<MLine*, GEdge*, compareMLinePtr>::iterator it = lines.find(&ml);
+      if(it != lines.end()){
+        if(touched.find(it->first) == touched.end()){
+          GEdge *ge =  getNewModelEdge(gf1, gf2, newEdges);
+          if(ge) ge->lines.push_back(it->first);
+          touched.insert(it->first);
+        }
+      }
+      if(tn)
+        recurClassifyEdges(tn, reverse, lines, touched, trisTouched,newEdges);
+    }
+  }
+}
+
+static void recurClassify(MTri3 *t, GFace *gf,
+                          std::map<MLine*, GEdge*, compareMLinePtr> &lines,
+                          std::map<MTriangle*, GFace*> &reverse)
+{
+  if(!t->isDeleted()){
+    gf->triangles.push_back(t->tri());
+    reverse[t->tri()] = gf;
+    t->setDeleted(true);
+    for(int i = 0; i < 3; i++){
+      MTri3 *tn = t->getNeigh(i);
+      if(tn){
+        edgeXface exf(t, i);
+        MLine ml(exf.v[0], exf.v[1]);       
+        std::map<MLine*, GEdge*, compareMLinePtr>::iterator it = lines.find(&ml);
+        if(it == lines.end())
+          recurClassify(tn, gf, lines, reverse);
+      }
+    }  
+  }
+}
+
+void GModel::detectEdges(double _tresholdAngle) {
+  e2t_cont adj;
+  std::vector<MTriangle*> elements;
+  std::vector<edge_angle> edges_detected, edges_lonly;
+  for(GModel::fiter it = GModel::current()->firstFace(); 
+      it != GModel::current()->lastFace(); ++it)
+    elements.insert(elements.end(), (*it)->triangles.begin(), 
+		    (*it)->triangles.end());  
+  buildEdgeToTriangle(elements, adj);
+  buildListOfEdgeAngle(adj, edges_detected, edges_lonly);
+  GEdge *selected = new discreteEdge
+    (this, getMaxElementaryNumber(1) + 1, 0, 0);
+  add(selected);
+
+  for(unsigned int i = 0; i < edges_detected.size(); i++){
+    edge_angle ea = edges_detected[i];
+    if(ea.angle <= _tresholdAngle) break;
+    selected->lines.push_back(new MLine(ea.v1, ea.v2));
+  } 
+	
+  for(unsigned int i = 0 ; i < edges_lonly.size(); i++){
+    edge_angle ea = edges_lonly[i];
+    selected->lines.push_back(new MLine(ea.v1, ea.v2));
+  } 
+  std::set<GFace*> _temp;
+  _temp.insert(faces.begin(),faces.end());
+  classifyFaces(_temp);
+  remove(selected);
+  //  delete selected;
+}
+
+void GModel::classifyFaces(std::set<GFace*> &_faces) {
+
+  std::map<MLine*, GEdge*, compareMLinePtr> lines;
+
+  for(GModel::eiter it = GModel::current()->firstEdge(); 
+      it != GModel::current()->lastEdge(); ++it){
+    for(unsigned int i = 0; i < (*it)->lines.size();i++) 
+      lines[(*it)->lines[i]] = *it;
+  }
+
+  std::map<MTriangle*, GFace*> reverse_old;
+  std::list<MTri3*> tris;
+  {
+    std::set<GFace*>::iterator it = _faces.begin();
+    while(it != _faces.end()){
+      GFace *gf = *it;
+      for(unsigned int i = 0; i < gf->triangles.size(); i++){
+        tris.push_back(new MTri3(gf->triangles[i], 0));
+	reverse_old[gf->triangles[i]] = gf;
+      }
+      gf->triangles.clear();
+      gf->mesh_vertices.clear();
+      ++it;
+    }
+  }
+  if(tris.empty()) return;
+
+  connectTriangles(tris);
+
+  std::map<MTriangle*, GFace*> reverse;
+  std::multimap<GFace*, GFace*> replacedBy;
+  // color all triangles
+  std::list<MTri3*> ::iterator it = tris.begin();
+  std::list<GFace*> newf;
+  while(it != tris.end()){
+    if(!(*it)->isDeleted()){
+      discreteFace *gf = new discreteFace
+        (GModel::current(), GModel::current()->getMaxElementaryNumber(2) + 1);
+      recurClassify(*it, gf, lines, reverse);
+      GModel::current()->add(gf);
+      newf.push_back(gf);
+      
+      for (int i=0;i<gf->triangles.size();i++){
+	replacedBy.insert(std::make_pair(reverse_old[gf->triangles[i]],gf));
+      }
+    }
+    ++it;
+  }
+
+  // now we have all faces coloured. If some regions were existing, replace
+  // their faces by the new ones
+
+  for (riter rit = firstRegion(); rit != lastRegion(); ++rit){
+    std::list<GFace *> _xfaces = (*rit)->faces();
+    std::set<GFace *> _newFaces;
+    for (std::list<GFace *>::iterator itf = _xfaces.begin(); itf != _xfaces.end(); ++itf){
+      std::multimap<GFace*, GFace*>::iterator itLow = replacedBy.lower_bound(*itf);
+      std::multimap<GFace*, GFace*>::iterator itUp = replacedBy.upper_bound(*itf);
+      for (; itLow != itUp; ++itLow)
+	_newFaces.insert(itLow->second);
+    }
+    std::list<GFace *> _temp;
+    _temp.insert(_temp.begin(),_newFaces.begin(),_newFaces.end());
+    (*rit)->set(_temp);
+  }
+
+  // color some lines
+  it = tris.begin();
+  while(it != tris.end()){
+    (*it)->setDeleted(false);
+    ++it;
+  }
+  
+  // classify edges that are bound by different GFaces
+  std::map<std::pair<int, int>, GEdge*> newEdges;
+  std::set<MLine*> touched;
+  std::set<MTri3*> trisTouched;
+  // bug fix : multiply connected domains
+  
+  trisTouched.insert(tris.begin(),tris.end());
+  while(!trisTouched.empty())
+    recurClassifyEdges(*trisTouched.begin(), reverse, lines, touched, trisTouched,newEdges);
+
+  //  printf("%d new edges\n",newEdges.size());
+
+  std::map<discreteFace*,std::vector<int> > newFaceTopology;
+  
+  // check if new edges should not be splitted 
+  // splitted if composed of several open or closed edges
+
+  std::map<MVertex*,GVertex*> modelVertices;
+
+  for (std::map<std::pair<int, int>, GEdge*>::iterator ite = newEdges.begin();
+       ite != newEdges.end() ; ++ite){
+    std::list<MLine*> allSegments;
+    for(unsigned int i = 0; i < ite->second->lines.size(); i++)
+      allSegments.push_back(ite->second->lines[i]);
+
+    while (!allSegments.empty()) {
+      std::list<MLine*> segmentsForThisDiscreteEdge;
+      MVertex *vB = (*allSegments.begin())->getVertex(0);
+      MVertex *vE = (*allSegments.begin())->getVertex(1);
+      segmentsForThisDiscreteEdge.push_back(*allSegments.begin());
+      allSegments.erase(allSegments.begin());
+      while(1){
+	bool found = false;
+	for (std::list<MLine*>::iterator it = allSegments.begin();it != allSegments.end(); ++it){ 
+	  MVertex *v1 = (*it)->getVertex(0);
+	  MVertex *v2 = (*it)->getVertex(1);
+	  if (v1 == vE || v2 == vE){
+	    segmentsForThisDiscreteEdge.push_back(*it);
+	    if (v2 == vE)(*it)->revert();
+	    vE = (v1 == vE) ? v2 : v1;
+	    found = true;
+	    allSegments.erase(it);
+	    break;	  
+	  }
+	  if (v1 == vB || v2 == vB){
+	    segmentsForThisDiscreteEdge.push_front(*it);
+	    if (v1 == vB)(*it)->revert();
+	    vB = (v1 == vB) ? v2 : v1;
+	    found = true;
+	    allSegments.erase(it);
+	    break;	  
+	  }
+	}
+	if (vE == vB)break;
+	if (!found)break;
+      }
+
+      std::map<MVertex*,GVertex*>::iterator itMV = modelVertices.find(vB);
+      if (itMV == modelVertices.end()){
+	GVertex *newGv = new discreteVertex(GModel::current(),
+					    GModel::current()->getMaxElementaryNumber(0) + 1);
+	newGv->mesh_vertices.push_back(vB);
+	vB->setEntity(newGv);	
+	newGv->points.push_back(new MPoint(vB));
+	GModel::current()->add(newGv);
+	modelVertices[vB] = newGv;
+      }
+      itMV = modelVertices.find(vE);
+      if (itMV == modelVertices.end()){
+	GVertex *newGv = new discreteVertex(GModel::current(),
+					    GModel::current()->getMaxElementaryNumber(0) + 1);
+	newGv->mesh_vertices.push_back(vE);
+	newGv->points.push_back(new MPoint(vE));
+	vE->setEntity(newGv);	
+	GModel::current()->add(newGv);
+	modelVertices[vE] = newGv;
+      }
+
+      GEdge *newGe = new discreteEdge
+        (GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, modelVertices[vB], modelVertices[vE]);
+      newGe->lines.insert(newGe->lines.end(), segmentsForThisDiscreteEdge.begin(), segmentsForThisDiscreteEdge.end());
+
+      //      printf("discrete edge %d\n",newGe->tag());
+      for (std::list<MLine*>::iterator itL =  segmentsForThisDiscreteEdge.begin();
+	   itL !=  segmentsForThisDiscreteEdge.end(); ++itL){
+	if((*itL)->getVertex(0)->onWhat()->dim() != 0){
+	  newGe->mesh_vertices.push_back((*itL)->getVertex(0));
+	  (*itL)->getVertex(0)->setEntity(newGe);
+	}
+	//	printf("%d %d \n",(*itL)->getVertex(0)->getNum(),(*itL)->getVertex(1)->getNum());
+      }
+
+      GModel::current()->add(newGe);
+      discreteFace *gf1 = dynamic_cast<discreteFace*> (GModel::current()->getFaceByTag(ite->first.first));
+      discreteFace *gf2 = dynamic_cast<discreteFace*> (GModel::current()->getFaceByTag(ite->first.second));
+      if (gf1)newFaceTopology[gf1].push_back(newGe->tag());
+      if (gf2)newFaceTopology[gf2].push_back(newGe->tag());
+    }
+  }
+
+  std::map<discreteFace*,std::vector<int> >::iterator itFT =  newFaceTopology.begin();
+  for (;itFT != newFaceTopology.end();++itFT){
+    itFT->first->setBoundEdges(itFT->second);
+  }
+
+
+  for (std::map<std::pair<int, int>, GEdge*>::iterator it = newEdges.begin();
+       it != newEdges.end(); ++it){
+    GEdge *ge = it->second;
+    GModel::current()->remove(ge);
+    //    delete ge;
+  }
+  
+  it = tris.begin();
+  while(it != tris.end()){
+    delete *it;
+    ++it;
+  }
+
+  // delete empty mesh faces and reclasssify
+  std::set<GFace*, GEntityLessThan> fac = faces;
+  for (fiter fit = fac.begin() ; fit !=fac.end() ; ++fit){
+    std::set<MVertex *> _verts;
+    (*fit)->mesh_vertices.clear();
+    for (int i=0;i<(*fit)->triangles.size();i++){
+      for (int j=0;j<3;j++){
+	if ((*fit)->triangles[i]->getVertex(j)->onWhat()->dim() > 1){
+	  (*fit)->triangles[i]->getVertex(j)->setEntity(*fit);
+	  _verts.insert((*fit)->triangles[i]->getVertex(j));
+	}
+      }      
+    }
+    if ((*fit)->triangles.size())
+      (*fit)->mesh_vertices.insert((*fit)->mesh_vertices.begin(),_verts.begin(),_verts.end());
+    else
+      remove(*fit);
+  }
+}
+
+
+
 #include "Bindings.h"
 
 void GModel::registerBindings(binding *b)
@@ -2154,6 +2488,10 @@ void GModel::registerBindings(binding *b)
   cm = cb->addMethod("createTopology", &GModel::createTopologyFromMesh);
   cm->setDescription("build the topology for a given mesh.");
   cm->setArgNames(NULL);
+
+  cm = cb->addMethod("detectEdges", &GModel::detectEdges);
+  cm->setDescription(" use an angle threshold to tag edges.");
+  cm->setArgNames("angle",NULL);
 
   cm = cb->addMethod("createBoundaryLayer", &GModel::createBoundaryLayer);
   cm->setDescription("create a boundary layer using a given field for the "

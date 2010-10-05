@@ -490,3 +490,9 @@ Range<double> discreteEdge::parBounds(int i) const
 {
   return Range<double>(0, lines.size());
 }
+
+void discreteEdge::writeGEO(FILE *fp)
+{
+  if (getBeginVertex() && getEndVertex())
+    fprintf(fp, "Discrete Line(%d) = {%d,%d};\n",tag(), getBeginVertex()->tag(), getEndVertex()->tag());  
+}

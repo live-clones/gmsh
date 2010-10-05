@@ -16,6 +16,7 @@
 #include "Generator.h"
 #include "Context.h"
 #include "OS.h"
+#include "Field.h"
 
 void statistics_cb(Fl_Widget *w, void *data)
 {
@@ -204,15 +205,19 @@ void statisticsWindow::compute(bool elementQuality)
   // meanAngle  = meanAngle / count;
   // printf("Angles = min=%g av=%g \n", minAngle, meanAngle);
   //hack emi
-
+  /*
   //Emi hack - MESH DEGREE VERTICES
   std::vector<GEntity*> entities;
+  std::set<MEdge, Less_Edge> edges;
   GModel::current()->getEntities(entities);
   std::map<MVertex*, int > vert2Deg;
   for(unsigned int i = 0; i < entities.size(); i++){
     if(entities[i]->dim() < 2) continue;
      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
       MElement *e =  entities[i]->getMeshElement(j);
+      for(unsigned int k = 0; k < e->getNumEdges(); k++){
+	edges.insert(e->getEdge(k));
+      }
       for(unsigned int k = 0; k < e->getNumVertices(); k++){
   	MVertex *v = e->getVertex(k);
   	if (v->onWhat()->dim() < 2) continue; 
@@ -242,6 +247,27 @@ void statisticsWindow::compute(bool elementQuality)
   if (nbElems > 0)
     printf("Stats degree vertices: dMin=%d , dMax=%d, d4=%g \n", dMin, dMax, (double)d4/nbElems);
   //end emi hack
+
+  FieldManager *fields = GModel::current()->getFields();
+  Field *f = fields->get(fields->background_field);
+  if(fields->background_field > 0){
+    std::set<MEdge, Less_Edge>::iterator it = edges.begin();
+    double sum = 0;
+    for (; it !=edges.end();++it){
+      MVertex *v0 = it->getVertex(0);
+      MVertex *v1 = it->getVertex(1);
+      double l = sqrt((v0->x()-v1->x())*(v0->x()-v1->x())+
+		      (v0->y()-v1->y())*(v0->y()-v1->y())+
+		      (v0->z()-v1->z())*(v0->z()-v1->z()));
+      double lf =  (*f)(0.5*(v0->x()+v1->x()), 0.5*(v0->y()+v1->y()),0.5*(v0->z()+v1->z()),v0->onWhat());
+      double e = (l>lf) ? lf/l : l/lf;
+      sum += e - 1.0;
+    }
+    double tau = exp ((1./edges.size()) * sum);
+    printf("nedegs = %d tau = %g\n",edges.size(),tau);
+  }
+  */
+
 
   int num = 0;
   static double s[50];

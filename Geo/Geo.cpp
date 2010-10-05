@@ -1178,7 +1178,6 @@ void DeleteShape(int Type, int Num)
       if(gf) GModel::current()->remove(gf);
     }
     break;
-
   case MSH_VOLUME_FROM_GMODEL:
     {
       GRegion *gr = GModel::current()->getRegionByTag(Num);

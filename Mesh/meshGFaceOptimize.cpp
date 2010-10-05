@@ -849,6 +849,10 @@ void laplaceSmoothing(GFace *gf)
 
 int  _edgeSwapQuadsForBetterQuality ( GFace *gf ) {
   return 0;
+
+  v2t_cont adj_v;
+  buildVertexToElement(gf->quadrangles,adj_v);
+
   e2t_cont adj;
   //  buildEdgeToElement(gf->triangles, adj);
   buildEdgeToElement(gf->quadrangles, adj);
@@ -882,30 +886,41 @@ int  _edgeSwapQuadsForBetterQuality ( GFace *gf ) {
 	  if (ed.getVertex(0) == v2 && ed.getVertex(1) != v1)v22 = ed.getVertex(1);
 	  if (ed.getVertex(1) == v2 && ed.getVertex(0) != v1)v22 = ed.getVertex(0);
 	}	
-	MQuadrangle *q1 = new MQuadrangle (v11,v22,v2,v12);
-	MQuadrangle *q2 = new MQuadrangle (v22,v11,v1,v21);
-	
-	double sold = surfaceFaceUV(e1,gf) + surfaceFaceUV(e2,gf);
-	double snew = surfaceFaceUV(q1,gf) + surfaceFaceUV(q2,gf);
-
-	double min_quality_old = std::min(e1->etaShapeMeasure(),e2->etaShapeMeasure());
-	double min_quality_new = std::min(q1->etaShapeMeasure(),q2->etaShapeMeasure());
-	
-	//	if (min_quality_old < min_quality_new){
-	if (sold > 1.00001*snew){
-	  printf("%g %g\n",sold, snew);
+	MQuadrangle *q1=0,*q2=0;
+	v2t_cont :: iterator it2 = adj_v.find(v2);
+	v2t_cont :: iterator it1 = adj_v.find(v1);
+	v2t_cont :: iterator it22 = adj_v.find(v22);
+	v2t_cont :: iterator it12 = adj_v.find(v12);
+	v2t_cont :: iterator it21 = adj_v.find(v21);
+	v2t_cont :: iterator it11 = adj_v.find(v11);
+	/*
+	int connectivity_default_config_1 = 
+	  abs(it1->size() - 4) + 
+	  abs(it2->size() - 4) + 
+	  abs(it2->size() - 4) + 
+	  abs(it2->size() - 4) ; 
+	*/
+	if (it2->second.size() >= 5 && it1->second.size() >= 5){	  
+	  if (it22->second.size() <= 3 && it11->second.size() <= 3) {
+	    q1 = new MQuadrangle (v11,v22,v2,v12);
+	    q2 = new MQuadrangle (v22,v11,v1,v21);
+	  }
+	  else if (it21->second.size() <= 3 && it12->second.size() <= 3) {
+	    q1 = new MQuadrangle (v11,v12,v21,v1);
+	    q2 = new MQuadrangle (v21,v12,v2,v22);
+	  }
+	}
+	if (q1 && q2){
 	  deleted.insert(e1);
 	  deleted.insert(e2);
 	  created.push_back(q1);
 	  created.push_back(q2);
+	  printf("edge swap performed\n");
 	  COUNT++;
-	}
-	else{
-	  delete q1;
-	  delete q2;
 	}
       }
     }
+    if (COUNT)break;
   }
 
   for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
@@ -1371,6 +1386,19 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 	elist[2*i]   = t2n[pairs[i].t1];
 	elist[2*i+1] = t2n[pairs[i].t2];
 	elen [i] =  (int) pairs[i].angle;
+	double angle = atan2(pairs[i].n1->y()-pairs[i].n2->y(),
+			     pairs[i].n1->x()-pairs[i].n2->x());
+
+	double x = .5*(pairs[i].n1->x()+pairs[i].n2->x());
+	double y = .5*(pairs[i].n1->y()+pairs[i].n2->y());
+	double opti = atan2(y,x);
+	angle -= opti;
+	while (angle < 0 || angle > M_PI/2){
+	  if (angle < 0) angle += M_PI/2;
+	  if (angle > M_PI/2) angle -= M_PI/2;
+	}
+	//elen [i] =  (int) 180. * fabs(angle-M_PI/4)/M_PI;
+	
 	int NB = 0;
 	if (pairs[i].n1->onWhat()->dim() < 2)NB++;
 	if (pairs[i].n2->onWhat()->dim() < 2)NB++;
@@ -1558,7 +1586,7 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 
 void recombineIntoQuads(GFace *gf)
 {
-  //  gf->model()->writeMSH("before.msh");
+  gf->model()->writeMSH("before.msh");
   removeFourTrianglesNodes(gf, false);
   int success = _recombineIntoQuads(gf,0);
   gf->model()->writeMSH("raw.msh");

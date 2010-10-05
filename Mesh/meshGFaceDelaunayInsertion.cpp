@@ -16,7 +16,7 @@
 #include "Numeric.h"
 #include "STensor3.h"
 
-const double LIMIT_ = 0.5 * sqrt(2.0);
+const double LIMIT_ = 0.5 * sqrt(2.0) * 1;
 
 static const bool _experimental_anisotropic_blues_band_ = false;
 

@@ -299,6 +299,90 @@ void GRegion::replaceFaces (std::list<GFace*> &new_faces)
   l_dirs = newdirs;
 }
 
+double GRegion::computeSolidProperties (std::vector<double> cg,
+					std::vector<double> inertia){
+  std::list<GFace*>::iterator it = l_faces.begin();
+  std::list<int>::iterator itdir =  l_dirs.begin();
+  double volumex = 0;
+  double volumey = 0;
+  double volumez = 0;
+  double surface = 0;
+  cg[0] = cg[1] = cg[2] = 0.0;
+  for ( ; it != l_faces.end(); ++it,++itdir){    
+    printf("face %d dir %d %d elements\n",(*it)->tag(),*itdir,(*it)->triangles.size());
+    for (int i=0;i<(*it)->triangles.size();++i){
+      MTriangle *e = (*it)->triangles[i];
+      //      MElement *e = (*it)->getMeshElement(i);
+      int npt;
+      IntPt *pts;
+      e->getIntegrationPoints (2*(e->getPolynomialOrder()-1)+3, &npt, &pts);      
+      for (int j=0;j<npt;j++){
+	SPoint3 pt;
+	// compute x,y,z of the integration point
+	e->pnt(pts[j].pt[0],pts[j].pt[1],pts[j].pt[2],pt);
+	double jac[3][3];
+	// compute normal
+	double detJ = e->getJacobian(pts[j].pt[0],pts[j].pt[1],pts[j].pt[2],jac);
+	SVector3 n (jac[2][0],jac[2][1],jac[2][2]);
+	n.normalize();
+	n *= (double)*itdir;
+	surface += detJ*pts[j].weight;
+	volumex += detJ*n.x()*pt.x()*pts[j].weight;
+	volumey += detJ*n.y()*pt.y()*pts[j].weight;
+	volumez += detJ*n.z()*pt.z()*pts[j].weight;
+	cg[0]  += detJ*n.x()*(pt.x()*pt.x())*pts[j].weight*0.5;
+	cg[1]  += detJ*n.y()*(pt.y()*pt.y())*pts[j].weight*0.5;
+	cg[2]  += detJ*n.z()*(pt.z()*pt.z())*pts[j].weight*0.5;
+      }
+    }
+  }
+
+  printf("%g -- %g %g %g\n",surface,volumex,volumey,volumez);
+
+  double volume = volumex;
+
+  cg[0]/=volume;
+  cg[1]/=volume;
+  cg[2]/=volume;
+
+  it = l_faces.begin();
+  itdir =  l_dirs.begin();
+  inertia[0] =   
+    inertia[1] = 
+    inertia[2] = 
+    inertia[3] = 
+    inertia[4] = 
+    inertia[5] = 0.0;
+
+  for ( ; it != l_faces.end(); ++it,++itdir){    
+    for (int i=0;i<(*it)->getNumMeshElements();++i){
+      MElement *e = (*it)->getMeshElement(i);
+      int npt;
+      IntPt *pts;
+      e->getIntegrationPoints (2*(e->getPolynomialOrder()-1)+3, &npt, &pts);      
+      for (int j=0;j<npt;j++){
+	SPoint3 pt;
+	// compute x,y,z of the integration point
+	e->pnt(pts[j].pt[0],pts[j].pt[1],pts[j].pt[2],pt);
+	double jac[3][3];
+	// compute normal
+	double detJ = e->getJacobian(pts[j].pt[0],pts[j].pt[1],pts[j].pt[2],jac);
+	SVector3 n (jac[2][0],jac[2][1],jac[2][2]);
+	n *= (double)*itdir;
+	inertia[0]  += pts[j].weight*detJ*n.x()*(pt.x()-cg[0])*(pt.x()-cg[0])*(pt.x()-cg[0])/3.0;
+	inertia[1]  += pts[j].weight*detJ*n.y()*(pt.y()-cg[1])*(pt.y()-cg[1])*(pt.y()-cg[1])/3.0;
+	inertia[2]  += pts[j].weight*detJ*n.z()*(pt.z()-cg[2])*(pt.z()-cg[2])*(pt.z()-cg[2])/3.0;
+	inertia[3]  += pts[j].weight*detJ*n.x()*(pt.y()-cg[1])*(pt.x()-cg[0])*(pt.x()-cg[0])/3.0;
+	inertia[4]  += pts[j].weight*detJ*n.x()*(pt.z()-cg[2])*(pt.x()-cg[0])*(pt.x()-cg[0])/3.0;
+	inertia[5]  += pts[j].weight*detJ*n.y()*(pt.z()-cg[2])*(pt.y()-cg[1])*(pt.y()-cg[1])/3.0;
+      }
+    }
+  }
+  return volume;
+}
+
+
+
 void GRegion::addPrism(MPrism *p) {
   prisms.push_back(p); 
 }
@@ -317,4 +401,7 @@ void GRegion::registerBindings(binding *b)
   cm = cb->addMethod("addPrism", &GRegion::addPrism);
   cm->setDescription("insert a prism mesh element");
   cm->setArgNames("prism", NULL);
+  cm = cb->addMethod("computeSolidProperties", &GRegion::computeSolidProperties);
+  cm->setDescription("returns the volume and computes the center of gravity and tensor of inertia of the volume (requires a surface mesh)");
+  cm->setArgNames("cg","inertia", NULL);
 }

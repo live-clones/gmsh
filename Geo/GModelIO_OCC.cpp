@@ -501,6 +501,7 @@ GRegion* OCC_Internals::addRegionToModel(GModel *model, TopoDS_Solid region){
 
 void OCC_Internals::buildGModel(GModel *model)
 {
+
   // building geom vertices
   int nvertices = vmap.Extent();
   for(int i = 1; i <= nvertices; i++){
@@ -508,6 +509,7 @@ void OCC_Internals::buildGModel(GModel *model)
     if (!getOCCVertexByNativePtr(model,TopoDS::Vertex(vmap(i))))
       model->add(new OCCVertex(model,num , TopoDS::Vertex(vmap(i))));
   }
+
   // building geom edges
   int nedges = emap.Extent();
   for(int i = 1; i <= nedges; i++){
@@ -517,6 +519,7 @@ void OCC_Internals::buildGModel(GModel *model)
     if (!getOCCEdgeByNativePtr(model,TopoDS::Edge(emap(i))))
       model->add(new OCCEdge(model, TopoDS::Edge(emap(i)), num, model->getVertexByTag(i1), model->getVertexByTag(i2)));
   }
+
   // building geom faces
   int nfaces = fmap.Extent();
   for(int i = 1; i <= nfaces; i++){

@@ -122,3 +122,17 @@ void discreteFace::secondDer(const SPoint2 &param,
     return;
   }
 }
+
+void discreteFace::writeGEO(FILE *fp)
+{
+  fprintf(fp, "Discrete Face(%d) = {",tag());
+  int count = 0;
+  for (std::list<GEdge*>::iterator it = l_edges.begin();
+       it != l_edges.end() ;++it){
+    if (count == 0)fprintf(fp, "%d",(*it)->tag());    
+    else fprintf(fp, ",%d",(*it)->tag());    
+    count ++;
+  }
+  fprintf(fp, "};\n");    
+  
+}

@@ -107,6 +107,10 @@ class GRegion : public GEntity {
   // replace edges (gor gluing)
   void replaceFaces (std::list<GFace*> &);
 
+  // compute volume, moment of intertia and center of gravity
+  double computeSolidProperties (std::vector<double> cg,
+				 std::vector<double> inertia);
+
   static void registerBindings(binding *b);
 };
 

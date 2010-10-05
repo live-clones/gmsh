@@ -616,7 +616,7 @@ void GenerateMesh(GModel *m, int ask)
   }
 
   // Subdivide into quads or hexas
-  if(m->getMeshStatus() == 2 && CTX::instance()->mesh.algoSubdivide == 1) 
+  if(m->getMeshStatus() == 2 && CTX::instance()->mesh.recombineAll &&  CTX::instance()->mesh.algoRecombine != 1) 
     RefineMesh(m, CTX::instance()->mesh.secondOrderLinear, true);
   else if(m->getMeshStatus() == 3 && CTX::instance()->mesh.algoSubdivide == 2) 
     RefineMesh(m, CTX::instance()->mesh.secondOrderLinear, false, true);

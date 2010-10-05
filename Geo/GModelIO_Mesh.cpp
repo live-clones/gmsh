@@ -1077,9 +1077,14 @@ int GModel::readSTL(const std::string &name, double tolerance)
     }
     Msg::Info("%d facets in solid %d", points[i].size() / 3, i);
     // create face
-    GFace *face = new discreteFace(this, getMaxElementaryNumber(2) + 1);
+    GFace   *face = new discreteFace(this, getMaxElementaryNumber(2) + 1);
+    GRegion *region = new GRegion(this, getMaxElementaryNumber(3) + 1);
     faces.push_back(face);
     add(face);
+    add(region);
+    std::list<GFace*> _temp;
+    _temp.push_back(face);
+    region->set(_temp);
   }
 
   // create triangles using unique vertices
@@ -1091,6 +1096,8 @@ int GModel::readSTL(const std::string &name, double tolerance)
                                      points[i][j].z()));
   MVertexPositionSet pos(vertices);
   
+  std::set<MFace,Less_Face> unique;
+  int nbDuplic = 0;
   for(unsigned int i = 0; i < points.size(); i ++){
     for(unsigned int j = 0; j < points[i].size(); j += 3){
       MVertex *v[3];
@@ -1100,9 +1107,17 @@ int GModel::readSTL(const std::string &name, double tolerance)
         double z = points[i][j + k].z();
         v[k] = pos.find(x, y, z, eps);
       }
-      faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+      MFace mf (v[0],v[1],v[2]);
+      if (unique.find(mf) == unique.end()){
+	faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+	unique.insert(mf);
+      }
+      else{
+	nbDuplic++;
+      }
     }
   }
+  if (nbDuplic) Msg::Warning("%d Duplicate triangle in STL file read",nbDuplic);
   
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertices); // will delete unused vertices
