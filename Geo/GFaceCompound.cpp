@@ -671,8 +671,8 @@ bool GFaceCompound::parametrize() const
        //   Msg::Warning("!!! Overlap: parametrization switched to 'nonLIN conformal' map");
        //   noOverlap = parametrize_conformal_nonLinear() ;
     //}
-     if ( !noOverlap || !checkOrientation(0) ){
-       Msg::Warning("$$$ Overlap: parametrization switched to 'harmonic' map");
+     if (!noOverlap || !checkOrientation(0) ){
+       Msg::Warning("$$$ Flipping: parametrization switched to 'harmonic' map");
        parametrize(ITERU,HARMONIC); 
        parametrize(ITERV,HARMONIC);
      }

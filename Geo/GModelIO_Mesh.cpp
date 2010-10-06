@@ -29,6 +29,7 @@
 #include "discreteFace.h"
 #include "discreteRegion.h"
 #include "MVertexPositionSet.h"
+#include "Os.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -59,15 +60,13 @@ void GModel::_storePhysicalTagsInEntities(int dim,
   }
 }
 
-static void replaceCommaByDot(const std::string name){
-  char myCommand[1000], myCommand2[1000];
-  sprintf(myCommand, "sed 's/,/./g' %s > temp.txt", name.c_str());
-  if(system(myCommand))
-    Msg::Error("sed command failed\n");
-  sprintf(myCommand2, "mv temp.txt %s ", name.c_str());
-  if(system(myCommand2))
-    Msg::Error("mv command failed\n");
-}
+ static void replaceCommaByDot(const std::string name){
+   char myCommand[1000], myCommand2[1000];
+   sprintf(myCommand, "sed 's/,/./g' %s > temp.txt", name.c_str());
+   SystemCall(myCommand);
+   sprintf(myCommand2, "mv temp.txt %s ", name.c_str());
+   SystemCall(myCommand2);
+ }
 
 static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
                         std::vector<MVertex*> &vertices)

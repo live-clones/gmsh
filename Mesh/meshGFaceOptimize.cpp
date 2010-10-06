@@ -17,6 +17,7 @@
 #include "GmshMessage.h"
 #include "Generator.h"
 #include "Context.h"
+#include "Os.h"
 
 #ifdef HAVE_MATCH
 extern "C" int FAILED_NODE;
@@ -1586,33 +1587,42 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 
 void recombineIntoQuads(GFace *gf)
 {
-  gf->model()->writeMSH("before.msh");
+
+  double t1 = Cpu();
+
+  //gf->model()->writeMSH("before.msh");
   removeFourTrianglesNodes(gf, false);
   int success = _recombineIntoQuads(gf,0);
-  gf->model()->writeMSH("raw.msh");
+  //gf->model()->writeMSH("raw.msh");
   for(int i = 0; i < CTX::instance()->mesh.nbSmoothing; i++) 
     laplaceSmoothing(gf);
+
+  //blossom-quad algo
   if(success && CTX::instance()->mesh.algoRecombine == 1){    
-    gf->model()->writeMSH("smoothed.msh");
+    //gf->model()->writeMSH("smoothed.msh");
     int COUNT = 0;
     char NAME[256];
     while(1){
       int x = removeTwoQuadsNodes(gf);
-      if (x)sprintf(NAME,"iter%dTQ.msh",COUNT++);
+      //if (x)sprintf(NAME,"iter%dTQ.msh",COUNT++);
       if (x)gf->model()->writeMSH(NAME);
       int y= removeDiamonds(gf);
-      if (y)sprintf(NAME,"iter%dD.msh",COUNT++);
+      //if (y)sprintf(NAME,"iter%dD.msh",COUNT++);
       if (y)gf->model()->writeMSH(NAME);
       int  z = _edgeSwapQuadsForBetterQuality ( gf );
-      if (z)sprintf(NAME,"iter%dS.msh",COUNT++);
+      //if (z)sprintf(NAME,"iter%dS.msh",COUNT++);
       if (z)gf->model()->writeMSH(NAME);      
       if (!(x+y+z))break;
     }
     for(int i = 0; i < CTX::instance()->mesh.nbSmoothing; i++){ 
       laplaceSmoothing(gf);
     }
+    double t2 = Cpu();
+    Msg::Info("Blossom recombination algorithm completed (%g s)", t2 - t1);
     return;
   }
+
+  //simple recombination algo
   _recombineIntoQuads(gf,0);
   for(int i = 0; i < CTX::instance()->mesh.nbSmoothing; i++) 
     laplaceSmoothing(gf);
@@ -1620,4 +1630,8 @@ void recombineIntoQuads(GFace *gf)
   for(int i = 0; i < CTX::instance()->mesh.nbSmoothing; i++) 
     laplaceSmoothing(gf);
   //  gf->model()->writeMSH("after.msh");
+
+  double t2 = Cpu();
+  Msg::Info("Simple recombination algorithm completed (%g s)", t2 - t1);
+
 }

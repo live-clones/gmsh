@@ -95,7 +95,7 @@ static double F_Lc(GEdge *ge, double t)
     lc_here = BGM_MeshSize(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
   else
     lc_here = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
-
+ 
   SVector3 der = ge->firstDer(t);
   //const double d = norm(der);
   //return d / lc_here; 
@@ -250,11 +250,12 @@ static double Integration(GEdge *ge, double t1, double t2,
   from.lc = f(ge, from.t);
   from.p = 0.0;
   Points.push_back(from);
-
+  
   to.t = t2;
   to.lc = f(ge, to.t);
+  
   RecursiveIntegration(ge, &from, &to, f, Points, Prec, &depth);
-
+  
   return Points.back().p;
 }
 
@@ -435,7 +436,7 @@ void meshGEdge::operator() (GEdge *ge)
     }
     mesh_vertices.resize(NUMP - 1);
   }
-  
+
   for(unsigned int i = 0; i < mesh_vertices.size() + 1; i++){
     MVertex *v0 = (i == 0) ?
       ge->getBeginVertex()->mesh_vertices[0] : mesh_vertices[i - 1];
