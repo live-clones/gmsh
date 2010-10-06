@@ -1146,7 +1146,9 @@ class PostViewField : public Field
       update_needed = false;
     }
     double l = 0.;
-    if(!octree->searchScalarWithTol(x, y, z, &l, 0, 0, 10.))
+    // use large tolerance (in element reference coordinates) to
+    // maximize chance of finding an element
+    if(!octree->searchScalarWithTol(x, y, z, &l, 0, 0, 1.))
       Msg::Info("No element found containing point (%g,%g,%g)", x, y, z);
     if(l <= 0 && crop_negative_values) return MAX_LC;
     return l;

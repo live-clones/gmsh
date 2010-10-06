@@ -227,6 +227,8 @@ class PViewDataGModel : public PViewData {
   bool getValueByIndex(int step, int dataIndex, int node, int comp, double &val);
   // get underlying model
   GModel* getModel(int step){ return _steps[step]->getModel(); }
+  // get MElement
+  MElement *getElement(int step, int entity, int element);
 
   // Add some data "on the fly" (data is stored in a map, indexed by
   // node or element number depending on the type of dataset)
@@ -240,7 +242,6 @@ class PViewDataGModel : public PViewData {
   bool writeMSH(std::string fileName, bool binary=false);
   bool readMED(std::string fileName, int fileIndex);
   bool writeMED(std::string fileName);
-  MElement *getElement (int step, int entity, int element);
 };
 
 #endif

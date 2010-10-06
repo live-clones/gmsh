@@ -213,6 +213,9 @@ class PViewData {
   virtual bool isRemote(){ return false; }
   virtual int fillRemoteVertexArrays(std::string &options){ return 0; }
 
+  // get MElement (if view supports it)
+  virtual MElement *getElement(int step, int entity, int element);
+
   // I/O routines
   virtual bool writeSTL(std::string fileName);
   virtual bool writeTXT(std::string fileName);
@@ -220,8 +223,7 @@ class PViewData {
                         bool append=false);
   virtual bool writeMSH(std::string fileName, bool binary=false);
   virtual bool writeMED(std::string fileName);
-  //
-  virtual MElement *getElement (int step, int entity, int element);
+
   static void registerBindings(binding *b);
 };
 

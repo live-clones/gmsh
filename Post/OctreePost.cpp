@@ -13,6 +13,7 @@
 #include "shapeFunctions.h"
 #include "GModel.h"
 #include "MElement.h"
+#include "Context.h"
 
 // helper routines for list-based views
 
@@ -32,6 +33,13 @@ static void minmax(int n, double *X, double *Y, double *Z,
     max[0] = (X[i] > max[0]) ? X[i] : max[0];
     max[1] = (Y[i] > max[1]) ? Y[i] : max[1];
     max[2] = (Z[i] > max[2]) ? Z[i] : max[2];
+  }
+
+  // make bounding boxes larger up to (absolute) geometrical tolerance
+  double eps = CTX::instance()->geom.tolerance;
+  for(int i = 0; i < 3; i++){
+    min[i] -= eps;
+    max[i] += eps;
   }
 }
 
@@ -233,10 +241,15 @@ OctreePost::OctreePost(PView *v)
     }
 
     SBoundingBox3d bb = l->getBoundingBox();
-    double min[3] = {bb.min().x(), bb.min().y(), bb.min().z()};
-    double size[3] = {bb.max().x() - bb.min().x(),
-                      bb.max().y() - bb.min().y(),
-                      bb.max().z() - bb.min().z()};                   
+    // make bounding box larger up to (absolute) geometrical tolerance
+    double eps = CTX::instance()->geom.tolerance;
+    SPoint3 bbmin = bb.min(), bbmax = bb.max(), bbeps(eps, eps, eps);
+    bbmin -= bbeps;
+    bbmax += bbeps;
+    double min[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
+    double size[3] = {bbmax.x() - bbmin.x(),
+                      bbmax.y() - bbmin.y(),
+                      bbmax.z() - bbmin.z()};
     const int maxElePerBucket = 100; // memory vs. speed trade-off
     
     _SL = Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
