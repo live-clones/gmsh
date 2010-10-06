@@ -17,7 +17,7 @@
 #include "GmshMessage.h"
 #include "Generator.h"
 #include "Context.h"
-#include "Os.h"
+#include "OS.h"
 
 #ifdef HAVE_MATCH
 extern "C" int FAILED_NODE;

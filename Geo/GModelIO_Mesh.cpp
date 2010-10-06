@@ -29,7 +29,7 @@
 #include "discreteFace.h"
 #include "discreteRegion.h"
 #include "MVertexPositionSet.h"
-#include "Os.h"
+#include "OS.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
