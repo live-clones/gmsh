@@ -1604,14 +1604,11 @@ void recombineIntoQuads(GFace *gf)
     char NAME[256];
     while(1){
       int x = removeTwoQuadsNodes(gf);
-      //if (x)sprintf(NAME,"iter%dTQ.msh",COUNT++);
-      if (x)gf->model()->writeMSH(NAME);
+      //if(x){ sprintf(NAME,"iter%dTQ.msh",COUNT++); gf->model()->writeMSH(NAME);}
       int y= removeDiamonds(gf);
-      //if (y)sprintf(NAME,"iter%dD.msh",COUNT++);
-      if (y)gf->model()->writeMSH(NAME);
+      //if(y){ sprintf(NAME,"iter%dD.msh",COUNT++); gf->model()->writeMSH(NAME); }
       int  z = _edgeSwapQuadsForBetterQuality ( gf );
-      //if (z)sprintf(NAME,"iter%dS.msh",COUNT++);
-      if (z)gf->model()->writeMSH(NAME);      
+      //if(z){ sprintf(NAME,"iter%dS.msh",COUNT++); gf->model()->writeMSH(NAME); }
       if (!(x+y+z))break;
     }
     for(int i = 0; i < CTX::instance()->mesh.nbSmoothing; i++){ 
