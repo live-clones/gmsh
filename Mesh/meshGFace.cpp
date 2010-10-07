@@ -884,7 +884,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
     for(int i = 0; i < CTX::instance()->mesh.nbSmoothing; i++) 
       laplaceSmoothing(gf);
   }
-  else if(debug){
+
+  if(debug){
     char name[256];
     sprintf(name, "real%d.pos", gf->tag());
     outputScalarField(m->triangles, name, 0, gf);
