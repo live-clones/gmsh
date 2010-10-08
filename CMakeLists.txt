@@ -623,7 +623,7 @@ if(ENABLE_PETSC)
                        ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib "")
     # petsc 3.1 create only one library : libpetsc
     if (NOT PETSC_LIBS)
-      find_library (PETSC_LIBS petsc PATHS ${ENV_SLEPC_DIR}/${ENV_PETSC_ARCH}/lib)
+      find_library (PETSC_LIBS petsc PATHS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib)
     endif(NOT PETSC_LIBS)
     string(REGEX MATCH "PACKAGES_LIBS = [^\n\r]*" PETSC_PACKAGES_LIBS
            ${PETSC_VARIABLES})
