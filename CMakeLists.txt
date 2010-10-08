@@ -610,15 +610,21 @@ if(ENABLE_PETSC)
            ${PETSC_VARIABLES})
     string(REPLACE "PACKAGES_INCLUDES = " "" PETSC_PACKAGES_INCLUDES
            ${PETSC_PACKAGES_INCLUDES})
-    string(REPLACE "-I" "" PETSC_PACKAGES_INCLUDES ${PETSC_PACKAGES_INCLUDES})
-    string(REPLACE " " ";" PETSC_PACKAGES_INCLUDES ${PETSC_PACKAGES_INCLUDES})
-    foreach(VAR ${PETSC_PACKAGES_INCLUDES})
+    if (PETSC_PACKAGES_INCLUDES)
+      string(REPLACE "-I" "" PETSC_PACKAGES_INCLUDES ${PETSC_PACKAGES_INCLUDES})
+      string(REPLACE " " ";" PETSC_PACKAGES_INCLUDES ${PETSC_PACKAGES_INCLUDES})
+        foreach(VAR ${PETSC_PACKAGES_INCLUDES})
       list(APPEND EXTERNAL_INCLUDES ${VAR})
-    endforeach(VAR)
+      endforeach(VAR)
+    endif (PETSC_PACKAGES_INCLUDES)
     # find libraries
     set(PETSC_LIBS_REQUIRED petscksp petscdm petscmat petscvec petsc)
     find_all_libraries(PETSC_LIBS PETSC_LIBS_REQUIRED 
                        ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib "")
+    # petsc 3.1 create only one library : libpetsc
+    if (NOT PETSC_LIBS)
+      find_library (PETSC_LIBS petsc PATHS ${ENV_SLEPC_DIR}/${ENV_PETSC_ARCH}/lib)
+    endif(NOT PETSC_LIBS)
     string(REGEX MATCH "PACKAGES_LIBS = [^\n\r]*" PETSC_PACKAGES_LIBS
            ${PETSC_VARIABLES})
     string(REPLACE "PACKAGES_LIBS = " "" PETSC_PACKAGES_LIBS
