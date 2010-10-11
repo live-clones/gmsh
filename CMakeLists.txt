@@ -730,7 +730,8 @@ if(ENABLE_OSMESA)
 endif(ENABLE_OSMESA)
 
 if(HAVE_LUA AND ENABLE_READLINE)
-  find_library(READLINE_LIB readline PATH_SUFFIXES lib)
+  set(READLINE_REQUIRED readline curses)
+  find_all_libraries(READLINE_LIB READLINE_REQUIRED PATH lib)
   if(READLINE_LIB)
     find_path(READLINE_INC "readline.h" PATH_SUFFIXES src readline include)
     if(READLINE_INC)
@@ -832,6 +833,8 @@ include_directories(Common Fltk Geo Graphics Mesh Solver Numeric Parser
 # set this for external codes that might include this CMakeList file
 set(GMSH_EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDES} CACHE 
     STRING "External include directories")
+set(GMSH_EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} CACHE 
+    STRING "External libraries")
 
 # group sources for easier navigation in IDEs
 foreach(DIR ${GMSH_DIRS})
