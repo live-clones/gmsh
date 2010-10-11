@@ -205,7 +205,7 @@ void GetStatistics(double stat[50], double quality[4][100])
   stat[1] = m->getNumEdges();
   stat[2] = m->getNumFaces();
   stat[3] = m->getNumRegions();
-  
+
   std::map<int, std::vector<GEntity*> > physicals[4];
   m->getPhysicalGroups(physicals);
   stat[45] = physicals[0].size() + physicals[1].size() + 
@@ -240,6 +240,7 @@ void GetStatistics(double stat[50], double quality[4][100])
     double eta=0., etaMin=1., etaMax=0.;
     double rho=0., rhoMin=1., rhoMax=0.;
     double disto=0., distoMin=1., distoMax=0.;
+    double N = 0.0;
     if (m->firstRegion() == m->lastRegion()){
       for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
         GetQualityMeasure((*it)->quadrangles, gamma, gammaMin, gammaMax,
@@ -249,6 +250,7 @@ void GetStatistics(double stat[50], double quality[4][100])
                           eta, etaMin, etaMax, rho, rhoMin, rhoMax,
                           disto, distoMin, distoMax, quality);
       }
+      N = stat[7] + stat[8];
     }
     else{
       for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
@@ -265,18 +267,18 @@ void GetStatistics(double stat[50], double quality[4][100])
                           eta, etaMin, etaMax, rho, rhoMin, rhoMax,
                           disto, distoMin, distoMax, quality);
       }
+      N = stat[9] + stat[10] + stat[11] + stat[12];
     }
-    double N = stat[9] + stat[10] + stat[11] + stat[12];
-    stat[17] = N ? gamma / N : 0.;
+    stat[17] = gamma / N ;
     stat[18] = gammaMin;
     stat[19] = gammaMax;
-    stat[20] = N ? eta / N : 0.;
+    stat[20] = eta / N ;
     stat[21] = etaMin;
     stat[22] = etaMax;
-    stat[23] = N ? rho / N : 0;
+    stat[23] = rho / N ;
     stat[24] = rhoMin;
     stat[25] = rhoMax;
-    stat[46] = N ? disto / N : 0;
+    stat[46] = disto / N ;
     stat[47] = distoMin;
     stat[48] = distoMax;
   }

@@ -1079,13 +1079,13 @@ int GModel::readSTL(const std::string &name, double tolerance)
     Msg::Info("%d facets in solid %d", points[i].size() / 3, i);
     // create face
     GFace   *face = new discreteFace(this, getMaxElementaryNumber(2) + 1);
-    GRegion *region = new GRegion(this, getMaxElementaryNumber(3) + 1);
     faces.push_back(face);
     add(face);
-    add(region);
-    std::list<GFace*> _temp;
-    _temp.push_back(face);
-    region->set(_temp);
+    //GRegion *region = new GRegion(this, getMaxElementaryNumber(3) + 1);
+    //add(region);
+    //std::list<GFace*> _temp;
+    //_temp.push_back(face);
+    //region->set(_temp);
   }
 
   // create triangles using unique vertices
