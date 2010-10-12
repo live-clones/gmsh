@@ -363,7 +363,6 @@ class GModel
   void detectEdges(double _tresholdAngle);
   void classifyFaces(std::set<GFace*> &_faces);
 
-
   // glue entities in the model (assume a tolerance eps and merge
   // vertices that are too close, then merge edges, faces and
   // regions). Warning: the gluer changes the geometric model, so that
@@ -391,10 +390,10 @@ class GModel
   GEntity *addPipe(GEntity *e, std::vector<GEdge *>  edges);
   void createBoundaryLayer(std::vector<GEntity *> e, double h);
 
-  void addRuledFaces (std::vector<std::vector<GEdge *> > edges);
-  GFace* addFace (std::vector<GEdge *> edges, std::vector< std::vector<double > > points);
-  GFace* addPlanarFace (std::vector<std::vector<GEdge *> > edges);
-  GRegion* addVolume (std::vector<std::vector<GFace*> > faces);
+  void addRuledFaces(std::vector<std::vector<GEdge *> > edges);
+  GFace *addFace(std::vector<GEdge *> edges, std::vector< std::vector<double > > points);
+  GFace *addPlanarFace(std::vector<std::vector<GEdge *> > edges);
+  GRegion *addVolume(std::vector<std::vector<GFace*> > faces);
 
   // create solid geometry primitives using the factory
   GEntity *addSphere(double cx, double cy, double cz, double radius);
