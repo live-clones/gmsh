@@ -283,10 +283,9 @@ class MQuadrangle9 : public MQuadrangle {
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
-//    v.resize(3);
-    MQuadrangle::getEdgeVertices(num, v);
-    v.push_back(_vs[num]);
-//    v[2] = _vs[num];
+    v.resize(3);
+    MQuadrangle::_getEdgeVertices(num, v);
+    v[2] = _vs[num];
   }
   virtual int getNumFacesRep();
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);

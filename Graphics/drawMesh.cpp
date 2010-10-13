@@ -258,7 +258,12 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
     glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
   else
     glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);   
-  glRasterPos3d(v->x(), v->y(), v->z());
+
+  double offset = (0.5 * CTX::instance()->mesh.pointSize + 
+                   0.3 * CTX::instance()->glFontSize) * ctx->pixel_equiv_x;
+  glRasterPos3d(v->x() + offset / ctx->s[0],
+                v->y() + offset / ctx->s[1],
+                v->z() + offset / ctx->s[2]);
   ctx->drawString(str);
 }
 
