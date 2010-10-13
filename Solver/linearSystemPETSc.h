@@ -229,6 +229,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
   virtual void zeroMatrix() {}
   virtual void zeroRightHandSide() {}
   virtual int systemSolve() { return 0; }
+  virtual double normInfRightHandSide() const{return 0;}
 };
 
 #endif

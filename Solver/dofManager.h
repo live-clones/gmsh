@@ -130,7 +130,7 @@ class dofManager{
     //_linearSystems.["A"] = l1;
     //_linearSystems["B"] = l2;
   }
-  inline void fixDof(Dof key, const dataVec &value)
+  virtual inline void fixDof(Dof key, const dataVec &value)
   {
     if(unknown.find(key) != unknown.end())
       return;
@@ -160,7 +160,7 @@ class dofManager{
   {
     return isFixed(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField));
   }
-  
+
   inline void numberGhostDof (Dof key, int procId) {
     if (fixed.find(key) != fixed.end()) return;
     if (constraints.find(key) != constraints.end()) return;
@@ -189,7 +189,7 @@ class dofManager{
     numberDof(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField));
   }
 
-  inline void getDofValue(std::vector<Dof> &keys,std::vector<dataVec> &Vals)
+  virtual inline void getDofValue(std::vector<Dof> &keys,std::vector<dataVec> &Vals)
   {
     int ndofs=keys.size();
     size_t originalSize = Vals.size();
@@ -197,7 +197,7 @@ class dofManager{
     for (int i=0;i<ndofs;++i) getDofValue(keys[i], Vals[originalSize+i]);
   }
 
-  inline void getDofValue(Dof key,  dataVec &val) const
+  virtual inline void getDofValue(Dof key,  dataVec &val) const
   {
     {
       typename std::map<Dof, dataVec>::const_iterator it = fixed.find(key);
@@ -562,7 +562,7 @@ void dofManager<T>::_parallelFinalize() {
     nRequest[i] = 0;
   for (std::map <Dof, int >::iterator it = ghosted.begin(); it != ghosted.end(); it++)
     nRequest[it->second] ++;
-  MPI_Alltoall(nRequest,1,MPI_INT,nRequested,1,MPI_INT,MPI_COMM_WORLD); 
+  MPI_Alltoall(nRequest,1,MPI_INT,nRequested,1,MPI_INT,MPI_COMM_WORLD);
   long int **recv0 = new long int*[Msg::GetCommSize()];
   int **recv1 = new int*[Msg::GetCommSize()];
   long int **send0 = new long int*[Msg::GetCommSize()];
