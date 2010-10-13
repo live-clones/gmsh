@@ -72,7 +72,7 @@ class drawGVertex {
       char Num[100];
       sprintf(Num, "%d", v->tag());
       double offset = (0.5 * CTX::instance()->geom.pointSize + 
-                       0.3 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
+                       0.1 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
       glRasterPos3d(x + offset / _ctx->s[0],
                     y + offset / _ctx->s[1],
                     z + offset / _ctx->s[2]);
@@ -166,7 +166,7 @@ class drawGEdge {
       char Num[100];
       sprintf(Num, "%d", e->tag());
       double offset = (0.5 * CTX::instance()->geom.lineWidth + 
-                       0.3 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
+                       0.1 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
       double x = p.x(), y = p.y(), z = p.z();
       _ctx->transform(x, y, z);
       glRasterPos3d(x + offset / _ctx->s[0],
@@ -287,7 +287,7 @@ class drawGFace {
       GPoint p = f->point(uav, vav);
       char Num[100];
       sprintf(Num, "%d", f->tag());
-      double offset = 0.3 * CTX::instance()->glFontSize * _ctx->pixel_equiv_x;
+      double offset = 0.1 * CTX::instance()->glFontSize * _ctx->pixel_equiv_x;
       double x = p.x(), y = p.y(), z = p.z();
       _ctx->transform(x, y, z);
       glRasterPos3d(x + offset / _ctx->s[0],
@@ -344,7 +344,7 @@ class drawGFace {
     if(CTX::instance()->geom.surfacesNum) {
       char Num[100];
       sprintf(Num, "%d", f->tag());
-      double offset = 0.3 * CTX::instance()->glFontSize * _ctx->pixel_equiv_x;
+      double offset = 0.1 * CTX::instance()->glFontSize * _ctx->pixel_equiv_x;
       double x = 0.5 * (f->cross[0].x() + f->cross[1].x());
       double y = 0.5 * (f->cross[0].y() + f->cross[1].y());
       double z = 0.5 * (f->cross[0].z() + f->cross[1].z());
@@ -447,7 +447,7 @@ class drawGRegion {
     if(CTX::instance()->geom.volumesNum){
       char Num[100];
       sprintf(Num, "%d", r->tag());
-      double offset = (0.5 * size + 0.3 * CTX::instance()->glFontSize) *
+      double offset = (0.5 * size + 0.1 * CTX::instance()->glFontSize) *
         _ctx->pixel_equiv_x;
       glRasterPos3d(x + offset / _ctx->s[0],
                     y + offset / _ctx->s[1],
