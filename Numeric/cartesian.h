@@ -140,7 +140,8 @@ class cartesianBox {
       _childBox = new cartesianBox<scalar>(X, Y, Z, dxi, deta, dzeta,
                                            2 * Nxi, 2 * Neta, 2 * Nzeta,
                                            level - 1);
-  }  
+  }
+  double getLC(){ return sqrt(_dxi * _dxi + _deta * _deta + _dzeta * _dzeta); }
   int getNxi(){ return _Nxi; }
   int getNeta(){ return _Neta; }
   int getNzeta(){ return _Nzeta; }
