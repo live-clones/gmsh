@@ -129,13 +129,31 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary)
 
   GModel *model = _steps[0]->getModel();
 
-  if(!model->writeMSH(fileName, 2.0, binary)) return false;
-
-  // append data
-  FILE *fp = fopen(fileName.c_str(), binary ? "ab" : "a");
-  if(!fp){
-    Msg::Error("Unable to open file '%s'", fileName.c_str());
-    return false;
+  bool writeNodesAndElements = false;
+  FILE *fp;
+  if(writeNodesAndElements){
+    if(!model->writeMSH(fileName, 2.0, binary)) return false;
+    // append data
+    fp = fopen(fileName.c_str(), binary ? "ab" : "a");
+    if(!fp){
+      Msg::Error("Unable to open file '%s'", fileName.c_str());
+      return false;
+    }
+  }
+  else{
+    fp = fopen(fileName.c_str(), binary ? "wb" : "w");
+    if(!fp){
+      Msg::Error("Unable to open file '%s'", fileName.c_str());
+      return false;
+    }
+    fprintf(fp, "$MeshFormat\n");
+    fprintf(fp, "%g %d %d\n", 2.2, binary ? 1 : 0, (int)sizeof(double));
+    if(binary){
+      int one = 1;
+      fwrite(&one, sizeof(int), 1, fp);
+      fprintf(fp, "\n");
+    }
+    fprintf(fp, "$EndMeshFormat\n");
   }
 
   for(unsigned int step = 0; step < _steps.size(); step++){

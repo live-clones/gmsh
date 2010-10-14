@@ -5,8 +5,161 @@
 
 #include "GModelFactory.h"
 
-#if defined(HAVE_OCC)
+#include "ListUtils.h"
+#include "Context.h"
+#include "GVertex.h"
+#include "gmshVertex.h"
+#include "gmshEdge.h"
+#include "gmshFace.h"
+#include "gmshRegion.h"
+#include "MLine.h"
+#include "GModel.h"
 
+
+GVertex *GeoFactory::addVertex(GModel *gm, double x, double y, double z, double lc)
+{
+
+  int num =  gm->getMaxElementaryNumber(0) + 1;
+  
+  x *= CTX::instance()->geom.scalingFactor;
+  y *= CTX::instance()->geom.scalingFactor;
+  z *= CTX::instance()->geom.scalingFactor;
+  lc *= CTX::instance()->geom.scalingFactor;
+  if(lc == 0.) lc = MAX_LC; // no mesh size given at the point
+  Vertex *p;
+  p = Create_Vertex(num, x, y, z, lc, 1.0);
+  Tree_Add(GModel::current()->getGEOInternals()->Points, &p);
+  p->Typ = MSH_POINT;
+  p->Num = num;
+  
+  GVertex *v = new gmshVertex(gm, p);
+  gm->add(v);
+
+  return v;
+
+}
+
+GEdge *GeoFactory::addLine(GModel *gm, GVertex *start, GVertex *end)
+{
+
+  int num =  gm->getMaxElementaryNumber(1) + 1;
+  List_T *iList = List_Create(2, 2, sizeof(int));
+  int tagBeg = start->tag();
+  int tagEnd = end->tag();
+  List_Add(iList, &tagBeg);
+  List_Add(iList, &tagEnd);
+ 
+  Curve *c = Create_Curve(num, MSH_SEGM_LINE, 1, iList, NULL,
+			  -1, -1, 0., 1.);
+  Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
+  CreateReversedCurve(c);
+  List_Delete(iList);
+  c->Typ = MSH_SEGM_LINE;
+  c->Num = num;
+
+  GEdge *e = new gmshEdge(gm, c, start, end);
+  gm->add(e);
+
+  return e;
+
+}
+
+GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> > edges)
+{ 
+  //create line loops
+   std::vector<EdgeLoop *> vecLoops;
+   int nLoops = edges.size();
+   for (int i=0; i< nLoops; i++){
+     int numl = gm->getMaxElementaryNumber(1) + i;
+     while (FindEdgeLoop(numl)){
+       numl++;
+       if (!FindEdgeLoop(numl)) break;
+     }
+     int nl=(int)edges[i].size();
+     List_T *iListl = List_Create(nl, nl, sizeof(int));
+     for(int j = 0; j < nl; j++){
+       int numEdge = edges[i][j]->tag();
+       List_Add(iListl, &numEdge);
+     }
+     sortEdgesInLoop(numl, iListl);
+     EdgeLoop *l = Create_EdgeLoop(numl, iListl);
+     vecLoops.push_back(l);
+     Tree_Add(GModel::current()->getGEOInternals()->EdgeLoops, &l);
+     l->Num = numl;
+     List_Delete(iListl);
+   }
+ 
+  //create plane surfaces
+  int numf = gm->getMaxElementaryNumber(2) + 1;
+  Surface *s = Create_Surface(numf, MSH_SURF_PLAN);
+  List_T *iList = List_Create(nLoops, nLoops, sizeof(int));
+  for (int i=0; i< vecLoops.size(); i++){
+    int numl = vecLoops[i]->Num;
+    List_Add(iList, &numl);
+  }
+  setSurfaceGeneratrices(s, iList);
+  End_Surface(s);
+  Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
+  s->Typ= MSH_SURF_PLAN;
+  s->Num = numf;
+  List_Delete(iList);
+ 
+  //gmsh surface
+  GFace *gf = new gmshFace(gm,s);
+  gm->add(gf);
+
+  return gf;
+
+}
+
+GRegion* GeoFactory::addVolume (GModel *gm, std::vector<std::vector<GFace *> > faces)
+{
+  
+  //surface loop
+   std::vector<SurfaceLoop *> vecLoops;
+   int nLoops = faces.size();
+   for (int i=0; i< nLoops; i++){
+     int numfl = gm->getMaxElementaryNumber(2) + 1;
+     while (FindSurfaceLoop(numfl)){
+       numfl++;
+       if (!FindSurfaceLoop(numfl)) break;
+     }
+     int nl=(int)faces[i].size();
+     List_T *iListl = List_Create(nl, nl, sizeof(int));
+     for(int j = 0; j < nl; j++){
+       int numFace = faces[i][j]->tag();
+       List_Add(iListl, &numFace);
+     }
+     SurfaceLoop *l = Create_SurfaceLoop(numfl, iListl);
+     vecLoops.push_back(l);
+     Tree_Add(GModel::current()->getGEOInternals()->SurfaceLoops, &l);
+     List_Delete(iListl);
+   }
+
+   //volume
+   int numv = gm->getMaxElementaryNumber(3) + 1;
+   Volume *v = Create_Volume(numv, MSH_VOLUME);
+   List_T *iList = List_Create(nLoops, nLoops, sizeof(int));
+   for (int i=0; i< vecLoops.size(); i++){
+     int numl = vecLoops[i]->Num;
+     List_Add(iList, &numl);
+   }
+   setVolumeSurfaces(v, iList);
+   List_Delete(iList);
+   Tree_Add(GModel::current()->getGEOInternals()->Volumes, &v);
+   v->Typ = MSH_VOLUME;
+   v->Num = numv;
+   
+   //gmsh volume
+  GRegion *gr = new gmshRegion(gm,v);
+  gm->add(gr);
+
+  return gr;
+}
+
+
+//---------------------------------------------------------------------------------
+#if defined(HAVE_OCC)
 #include "OCCIncludes.h"
 #include "GModelIO_OCC.h"
 #include "OCCVertex.h"
@@ -36,6 +189,7 @@
 #include <TColgp_HArray1OfPnt.hxx>
 #include <TColStd_HArray1OfReal.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
+
 
 GVertex *OCCFactory::addVertex(GModel *gm, double x, double y, double z, double lc)
 {
@@ -281,6 +435,12 @@ GEntity *OCCFactory::addSphere(GModel *gm, double xc, double yc, double zc, doub
   gm->_occ_internals->buildLists();
   gm->_occ_internals->buildGModel(gm);  
   return getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
+}
+
+GRegion* OCCFactory::addVolume (GModel *gm, std::vector<std::vector<GFace *> > faces)
+{
+  Msg::Error("add Volume not implemented yet for OCCFactory");
+  return 0;
 }
 
 GEntity *OCCFactory::addCylinder(GModel *gm, std::vector<double> p1,
@@ -548,7 +708,7 @@ void OCCFactory::rotate(GModel *gm, std::vector<double> p1, std::vector<double> 
 }
 
 std::vector<GFace *> OCCFactory::addRuledFaces(GModel *gm, 
-                                               std::vector< std::vector<GEdge *> > wires)
+					      std::vector< std::vector<GEdge *> > wires)
 {
   std::vector<GFace*> faces;
   Standard_Boolean anIsSolid = Standard_False;
@@ -559,7 +719,6 @@ std::vector<GFace *> OCCFactory::addRuledFaces(GModel *gm,
     BRepBuilderAPI_MakeWire wire_maker;
     for (unsigned j=0;j<wires[i].size();j++) {
       GEdge *ge = wires[i][j];
-      printf("edge %d\n",ge->tag());
       OCCEdge *occe = dynamic_cast<OCCEdge*>(ge);
       if (occe){
 	wire_maker.Add(occe->getTopoDS_Edge());
@@ -610,6 +769,7 @@ extern void computeMeanPlane(const std::vector<SPoint3> &points, mean_plane &mea
 
 GFace *OCCFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> > wires)
 {
+
   std::set<GVertex*> verts;
   for (unsigned i = 0; i < wires.size(); i++) {
     for (unsigned j = 0; j < wires[i].size(); j++) {
@@ -623,12 +783,13 @@ GFace *OCCFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
   for ( ; it != verts.end(); ++it){
     points.push_back(SPoint3((*it)->x(), (*it)->y(), (*it)->z()));
   }
+ 
   mean_plane meanPlane;
   computeMeanPlane(points, meanPlane);
 
   gp_Pln aPlane (meanPlane.a,meanPlane.b,meanPlane.c,meanPlane.d);
   BRepBuilderAPI_MakeFace aGenerator (aPlane);
-  
+
   for (unsigned i = 0; i < wires.size() ;i++) {
     BRepBuilderAPI_MakeWire wire_maker;
     for (unsigned j = 0; j < wires[i].size(); j++) {
@@ -642,11 +803,12 @@ GFace *OCCFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
     if (i)myWire.Reverse();
     aGenerator.Add (myWire);
   }
-  
+
   aGenerator.Build();
-  
   TopoDS_Shape aResult = aGenerator.Shape();
+
   return gm->_occ_internals->addFaceToModel(gm, TopoDS::Face(aResult));
+
 }
 
 GEntity *OCCFactory::addPipe(GModel *gm, GEntity *base, std::vector<GEdge *> wire)

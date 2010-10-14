@@ -220,7 +220,10 @@ class GOrientedTransfiniteFace {
   // returns the index of the face in the reference hexahedron
   int index() const { return _index; }
   // returns true if the face is recombined
-  int recombined() const { return _gf->meshAttributes.recombine; }
+  int recombined() const 
+  { 
+    return CTX::instance()->mesh.recombineAll || _gf->meshAttributes.recombine; 
+  }
   // returns the number or points in the transfinite mesh in both
   // parameter directions
   int getNumU(){ return (_permutation % 2) ? _HH + 1: _LL + 1; }

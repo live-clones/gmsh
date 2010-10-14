@@ -8,13 +8,14 @@
 
 #include <vector>
 #include "GmshConfig.h"
-#include "fullMatrix.h"
-#include "SPoint3.h"
-#include "GEntity.h"
 
+class GEntity;
 class GVertex;
 class GEdge;
+class GFace;
+class GRegion;
 class GModel;
+class SPoint3;
 
 // Abstract CAD creation factory.
 class GModelFactory {
@@ -47,7 +48,7 @@ class GModelFactory {
   // of faces. If boundaries are co-planar, then it's a plane, 
   // otherwise, we tru ruled, sweep or other kind of surfaces
   virtual std::vector<GFace *> addRuledFaces(GModel *gm, 
-                                             std::vector<std::vector<GEdge *> > edges) = 0; 
+					     std::vector<std::vector<GEdge *> > edges) = 0; 
   virtual GFace *addFace(GModel *gm, std::vector<GEdge *> edges, 
                          std::vector< std::vector<double > > points) = 0;
   virtual GFace *addPlanarFace(GModel *gm, std::vector<std::vector<GEdge *> > edges) = 0;
@@ -87,7 +88,56 @@ class GModelFactory {
                                              int createNewModel) = 0;
   virtual GModel *computeBooleanDifference(GModel *obj, GModel*tool, 
                                            int createNewModel) = 0;
+  virtual GRegion* addVolume (GModel *gm, std::vector<std::vector<GFace *> > faces) = 0; 
 };
+
+class GeoFactory : public GModelFactory {
+ public:
+  GeoFactory(){}
+  GVertex *addVertex(GModel *gm,double x, double y, double z, double lc);
+  virtual GEdge *addLine(GModel *gm,GVertex *v1, GVertex *v2);
+  GFace *addPlanarFace(GModel *gm, std::vector<std::vector<GEdge *> > edges);
+  GRegion* addVolume (GModel *gm, std::vector<std::vector<GFace *> > faces); 
+
+  //not implemented yet
+  GEdge *addCircleArc(GModel *gm,const arcCreationMethod &method,
+                      GVertex *start, GVertex *end, 
+                      const SPoint3 &aPoint){};
+  GEdge *addSpline(GModel *gm,const splineType &type,
+                   GVertex *start, GVertex *end, 
+                   std::vector<std::vector<double> > controlPoints){};
+  GEdge *addNURBS(GModel *gm,
+		  GVertex *start, GVertex *end,
+		  std::vector<std::vector<double> > controlPoints, 
+		  std::vector<double> knots,
+		  std::vector<double> weights, 
+		  std::vector<int> multiplicity){};
+  GEntity *revolve(GModel *gm, GEntity*,std::vector<double> p1, 
+                   std::vector<double> p2, double angle){};
+  GEntity *extrude(GModel *gm, GEntity*,std::vector<double> p1,
+                   std::vector<double> p2){};
+  GEntity *addPipe(GModel *gm, GEntity *base, std::vector<GEdge *> wire){};
+  GEntity *addSphere(GModel *gm,double cx, double cy, double cz, double radius){}; 
+  GEntity *addCylinder(GModel *gm,std::vector<double> p1, std::vector<double> p2, 
+                       double radius){}; 
+  std::vector<GFace *> addRuledFaces(GModel *gm, std::vector<std::vector<GEdge *> > edges){}; 
+  GFace *addFace(GModel *gm, std::vector<GEdge *> edges,
+                 std::vector< std::vector<double > > points){};
+  GEntity *addTorus(GModel *gm,std::vector<double> p1, std::vector<double> p2, 
+		    double radius1, double radius2){}; 
+  GEntity *addBlock(GModel *gm,std::vector<double> p1, std::vector<double> p2){}; 
+  GEntity *addCone(GModel *gm,std::vector<double> p1, std::vector<double> p2,
+                   double radius1, double radius2){}; 
+  void translate(GModel *gm, std::vector<double> dx, int addToTheModel){};
+  void rotate(GModel *gm, std::vector<double> p1,std::vector<double> p2,
+              double angle, int addToTheModel){};
+  GModel *computeBooleanUnion(GModel *obj, GModel *tool, int createNewModel){};
+  GModel *computeBooleanIntersection(GModel *obj, GModel *tool, int createNewModel){};
+  GModel *computeBooleanDifference(GModel *obj, GModel *tool, int createNewModel){};
+  void fillet(GModel *gm, std::vector<int> edges, double radius){};
+
+};
+
 
 #if defined(HAVE_OCC)
 
@@ -95,7 +145,7 @@ class OCCFactory : public GModelFactory {
  public:
   OCCFactory(){}
   GVertex *addVertex(GModel *gm,double x, double y, double z, double lc);
-  virtual GEdge *addLine(GModel *gm,GVertex *v1, GVertex *v2);
+  GEdge *addLine(GModel *gm,GVertex *v1, GVertex *v2);
   GEdge *addCircleArc(GModel *gm,const arcCreationMethod &method,
                       GVertex *start, GVertex *end, 
                       const SPoint3 &aPoint);
@@ -132,6 +182,7 @@ class OCCFactory : public GModelFactory {
   GModel *computeBooleanIntersection(GModel *obj, GModel *tool, int createNewModel);
   GModel *computeBooleanDifference(GModel *obj, GModel *tool, int createNewModel);
   void fillet(GModel *gm, std::vector<int> edges, double radius);
+  GRegion* addVolume (GModel *gm, std::vector<std::vector<GFace *> > faces); 
 };
 
 #endif

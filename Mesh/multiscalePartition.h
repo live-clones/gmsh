@@ -29,10 +29,12 @@ class multiscalePartition{
   std::vector<partitionLevel*> levels;
   void partition(partitionLevel &level, int nbParts,  typeOfPartition method);
   int totalParts;
+  bool onlyMultilevel;
   meshPartitionOptions options;
 
  public:
-  multiscalePartition(std::vector<MElement *> &elements, int nbParts, typeOfPartition method);
+  multiscalePartition(std::vector<MElement *> &elements, int nbParts, 
+		      typeOfPartition method, int allowPartition);
   int assembleAllPartitions();
   void setNumberOfPartitions(int &nbParts);
   int getNumberOfParts(){return totalParts;}

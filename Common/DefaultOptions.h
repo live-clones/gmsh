@@ -1095,13 +1095,13 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "Format" , opt_mesh_file_format , FORMAT_AUTO , 
     "Mesh output format (1=msh, 2=unv, 10=automatic, 19=vrml, 27=stl, 30=mesh, 31=bdf, "
-    "32=cgns, 33=med)" },
+    "32=cgns, 33=med, 40=ply2)" },
 
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. , 
     "Display mesh hexahedra?" },
 
-  { F|O, "LabelsFrequency" , opt_mesh_label_frequency , 100. , 
-    "Labels display frequency?" },
+  { F|O, "LabelSampling" , opt_mesh_label_sampling , 1. , 
+    "Label sampling rate (display one label every `LabelSampling' elements)" },
   { F|O, "LabelType" , opt_mesh_label_type , 0. , 
     "Type of element label (0=element number, 1=elementary entity number, "
     "2=physical entity number, 3=partition number, 4=coordinates)" },
@@ -1138,9 +1138,23 @@ StringXNumber MeshOptions_Number[] = {
     "Version of the MSH file format to use" },
   { F|O, "MshFilePartitioned" , opt_mesh_msh_file_partitioned , 0. , 
     "Split MSH file by mesh partition" },
+  
+  { F|O, "PartitionHexWeight"     , opt_mesh_partition_hex_weight , 1 , 
+    "Weight of hexahedral element for METIS load balancing" },
+  { F|O, "PartitionPrismWeight"   , opt_mesh_partition_pri_weight , 1 , 
+    "Weight of prismatic element (wedge) for METIS load balancing" },
+  { F|O, "PartitionPyramidWeight" , opt_mesh_partition_pyr_weight , 1 , 
+    "Weight of pyramidal element for METIS load balancing" },
+  { F|O, "PartitionQuadWeight"    , opt_mesh_partition_qua_weight , 1 , 
+    "Weight of quadrangle for METIS load balancing" },
+  { F|O, "PartitionTetWeight"     , opt_mesh_partition_tet_weight , 1 , 
+    "Weight of tetrahedral element for METIS load balancing" },
+  { F|O, "PartitionTriWeight"     , opt_mesh_partition_tri_weight , 1 , 
+    "Weight of triangle for METIS load balancing" ,},
 
   { F|O, "PartitionByExtrusion" , opt_mesh_partition_by_extrusion, 0. ,
-    "Special partitioner that annotates all all extruded elements to the same node as the source element" },
+    "Special partitioner that annotates all all extruded elements to the same "
+    "node as the source element" },
     
   { F, "NbHexahedra" , opt_mesh_nb_hexahedra , 0. , 
     "Number of hexahedra in the current mesh (read-only)" },
@@ -1201,6 +1215,16 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "RandomFactor" , opt_mesh_rand_factor , 1.e-9 ,
     "Random factor used in the 2D meshing algorithm (should be increased if "
     "RandomFactor * size(triangle)/size(model) approaches machine accuracy)" },
+  { F|O, "RecombinationAlgorithm" , opt_mesh_algo_recombine , 0 ,
+    "Mesh recombination algorithm (0=standard, 1=blossom)" }, 
+  { F|O, "RecombineAll" , opt_mesh_recombine_all , 0 ,
+    "Apply recombination algorithm to all surfaces, ignoring per-surface spec" }, 
+
+  { F|O, "RemeshAlgorithm" , opt_mesh_remesh_algo , 0 ,
+    "Remeshing algorithm (0=no split, 1=automatic, 2=automatic only with metis)" }, 
+  { F|O, "RemeshParametrization" , opt_mesh_remesh_param , 0 ,
+    "Remsh Parametrization (0=harmonic, 1=conformal)" }, 
+
   { F|O, "RefineSteps" , opt_mesh_refine_steps , 10 ,
     "Number of refinement steps in the MeshAdapt-based 2D algorithms" }, 
   { F|O, "Remove4Triangles" , opt_mesh_remove_4_triangles , 0 ,
@@ -1547,6 +1571,8 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "RangeType" , opt_view_range_type , 1 ,
     "Value scale range type (1=default, 2=custom, 3=per time step)" },
 
+  { F|O, "Sampling" , opt_view_sampling , 1. , 
+    "Element sampling rate (draw one out every `Sampling' elements)" },
   { F|O, "SaturateValues" , opt_view_saturate_values , 0. ,
     "Saturate the view values to custom min and max (1=true, 0=false)" },
   { F|O, "ScaleType" , opt_view_scale_type , 1 ,

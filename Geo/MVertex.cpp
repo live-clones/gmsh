@@ -108,6 +108,13 @@ void MVertex::writeMSH(FILE *fp, bool binary, bool saveParametric, double scalin
         fprintf(fp, "\n");          
   }
 }
+void MVertex::writePLY2(FILE *fp)
+{
+  if(_index < 0) return; // negative index vertices are never saved
+
+  fprintf(fp, "%.16g %.16g %.16g\n",
+          x(), y(), z());
+}
 
 void MVertex::writeVRML(FILE *fp, double scalingFactor)
 {
@@ -422,7 +429,7 @@ void MVertex::registerBindings(binding *b)
   cm->setDescription("return the invariant vertex id");
   cm = cb->addMethod("getPolynomialOrder", &MVertex::getPolynomialOrder);
   cm->setDescription("return the polynomial order of vertex");
-  cm = cb->addMethod("setPolynomialOrder", &MVertex::setPolynomialOrder_binding);
+  cm = cb->addMethod("setPolynomialOrder", &MVertex::setPolynomialOrder);
   cm->setDescription("assign the polynomial order of vertex");
   cm->setArgNames("order",NULL);
 }

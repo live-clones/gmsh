@@ -518,6 +518,8 @@ void GetOptions(int argc, char *argv[])
             CTX::instance()->mesh.fileFormat = FORMAT_UNV;
           else if(!strcmp(argv[i], "vrml"))
             CTX::instance()->mesh.fileFormat = FORMAT_VRML;
+	  else if(!strcmp(argv[i], "ply2"))
+	    CTX::instance()->mesh.fileFormat = FORMAT_PLY2;
           else if(!strcmp(argv[i], "stl"))
             CTX::instance()->mesh.fileFormat = FORMAT_STL;
           else if(!strcmp(argv[i], "mesh"))

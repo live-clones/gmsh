@@ -263,8 +263,7 @@ double MElement::getJacobianDeterminant(double u, double v, double w) {
   return getJacobian(u,v,w,jac);
 }
 
-
-double MElement::getJacobian(double gsf[][3], double jac[3][3])
+double MElement::getJacobian(const fullMatrix<double> &gsf, double jac[3][3])
 {
   jac[0][0] = jac[0][1] = jac[0][2] = 0.;
   jac[1][0] = jac[1][1] = jac[1][2] = 0.;
@@ -272,11 +271,10 @@ double MElement::getJacobian(double gsf[][3], double jac[3][3])
 
   for (int i = 0; i < getNumVertices(); i++) {
     const MVertex* v = getVertex(i);
-    double* gg = gsf[i];
     for (int j = 0; j < 3; j++) {
-      jac[j][0] += v->x() * gg[j];
-      jac[j][1] += v->y() * gg[j];
-      jac[j][2] += v->z() * gg[j];
+      jac[j][0] += v->x() * gsf(i, j);
+      jac[j][1] += v->y() * gsf(i, j);
+      jac[j][2] += v->z() * gsf(i, j);
     }
   }
 
@@ -646,6 +644,14 @@ void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
     }
   }
 }
+void MElement::writePLY2(FILE *fp)
+{
+  setVolumePositive();
+  fprintf(fp, "3 ");
+  for(int i = 0; i < getNumVertices(); i++)
+    fprintf(fp, " %d", getVertex(i)->getIndex() - 1);
+  fprintf(fp, "\n");
+}
 
 void MElement::writeVRML(FILE *fp)
 {
@@ -858,6 +864,11 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_TET_35 : if(name) *name = "Tetrahedron 35";  return 4 + 18 + 12 + 1;
   case MSH_TET_52 : if(name) *name = "Tetrahedron 52";  return 4 + 24 + 24 + 0;
   case MSH_TET_56 : if(name) *name = "Tetrahedron 56";  return 4 + 24 + 24 + 4;
+  case MSH_TET_84 : if(name) *name = "Tetrahedron 84";  return (7*8*9)/6;
+  case MSH_TET_120 : if(name) *name = "Tetrahedron 120";  return (8*9*10)/6;
+  case MSH_TET_165 : if(name) *name = "Tetrahedron 165";  return (9*10*11)/6;
+  case MSH_TET_220 : if(name) *name = "Tetrahedron 220";  return (10*11*12)/6;
+  case MSH_TET_286 : if(name) *name = "Tetrahedron 286";  return (11*12*13)/6;
   case MSH_HEX_8  : if(name) *name = "Hexahedron 8";    return 8;
   case MSH_HEX_20 : if(name) *name = "Hexahedron 20";   return 8 + 12;
   case MSH_HEX_27 : if(name) *name = "Hexahedron 27";   return 8 + 12 + 6 + 1;
@@ -1016,9 +1027,72 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_TET_35: return new MTetrahedronN(v, 4, num, part);
   case MSH_TET_52: return new MTetrahedronN(v, 5, num, part);
   case MSH_TET_56: return new MTetrahedronN(v, 5, num, part);
+  case MSH_TET_84: return new MTetrahedronN(v, 6, num, part);
+  case MSH_TET_120: return new MTetrahedronN(v, 7, num, part);
+  case MSH_TET_165: return new MTetrahedronN(v, 8, num, part);
+  case MSH_TET_220: return new MTetrahedronN(v, 9, num, part);
+  case MSH_TET_286: return new MTetrahedronN(v, 10, num, part);
   case MSH_POLYH_: return new MPolyhedron(v, num, part, owner, parent);
   default:         return 0;
   }
+}
+
+/*const fullMatrix<double> &MElement::getShapeFunctionsAtIntegrationPoints (int integrationOrder, int functionSpaceOrder) {
+  static std::map <std::pair<int,int>, fullMatrix<double> > F;
+  const polynomialBasis *fs = getFunctionSpace (functionSpaceOrder);
+  fullMatrix<double> &mat = F [std::make_pair(fs->type, integrationOrder)];
+  if (mat.size1()!=0) return mat;
+  int npts;
+  IntPt *pts;
+  getIntegrationPoints (integrationOrder, &npts, &pts);
+  mat.resize (fs->points.size1(), npts);
+  double f[512];
+  for (int i = 0; i < npts; i++) {
+    fs->f (pts[i].pt[0], pts[i].pt[1], pts[i].pt[2], f);
+    for (int j = 0; j < fs->points.size1(); j++) {
+      mat (i, j) = f[j];
+    }
+  }
+  return mat;
+}*/
+
+const fullMatrix<double> &MElement::getGradShapeFunctionsAtIntegrationPoints (int integrationOrder, int functionSpaceOrder) {
+  static std::map <std::pair<int,int>, fullMatrix<double> > DF;
+  const polynomialBasis *fs = getFunctionSpace (functionSpaceOrder);
+  fullMatrix<double> &mat = DF [std::make_pair(fs->type, integrationOrder)];
+  if (mat.size1()!=0) return mat;
+  int npts;
+  IntPt *pts;
+  getIntegrationPoints (integrationOrder, &npts, &pts);
+  mat.resize (fs->points.size1(), npts*3);
+  double df[512][3];
+  for (int i = 0; i < npts; i++) {
+    fs->df (pts[i].pt[0], pts[i].pt[1], pts[i].pt[2], df);
+    for (int j = 0; j < fs->points.size1(); j++) {
+      mat (j, i*3+0) = df[j][0];
+      mat (j, i*3+1) = df[j][1];
+      mat (j, i*3+2) = df[j][2];
+    }
+  }
+  return mat;
+}
+const fullMatrix<double> &MElement::getGradShapeFunctionsAtNodes (int functionSpaceOrder) {
+  static std::map <int, fullMatrix<double> > DF;
+  const polynomialBasis *fs = getFunctionSpace (functionSpaceOrder);
+  fullMatrix<double> &mat = DF [fs->type];
+  if (mat.size1()!=0) return mat;
+  const fullMatrix<double> &points = fs->points;
+  mat.resize (points.size1(), points.size1()*3);
+  double df[512][3];
+  for (int i = 0; i < points.size1(); i++) {
+    fs->df (points(i,0), points(i,1), points(i,2), df);
+    for (int j = 0; j < points.size1(); j++) {
+      mat (j, i*3+0) = df[j][0];
+      mat (j, i*3+1) = df[j][1];
+      mat (j, i*3+2) = df[j][2];
+    }
+  }
+  return mat;
 }
 
 #include "Bindings.h"

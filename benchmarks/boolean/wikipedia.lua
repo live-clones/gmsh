@@ -1,8 +1,8 @@
 
 -- from http://en.wikipedia.org/wiki/Constructive_solid_geometry
 
-R = 1.0;
-s = .8;
+R = 1.4;
+s = .4;
 t = 1.35;
 myModel = GModel();
 myModel:addBlock({-R,-R,-R},{R,R,R});

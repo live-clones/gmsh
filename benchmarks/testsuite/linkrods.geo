@@ -9,4 +9,4 @@ Volume(2) = {1};
 Field[1] = MathEval;
 Field[1].F = "Cos(2*3.14*(x+y-z))*.05 + .06";
 Background Field = 1;
-Mesh.CharacteristicLengthFactor=1;
+//Mesh.CharacteristicLengthFactor=1;

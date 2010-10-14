@@ -17,6 +17,8 @@
 #define F77NAME(x) (x##_)
 #endif
 
+// Specialisation of fullVector/Matrix operations using BLAS and LAPACK
+
 #if defined(HAVE_BLAS)
 
 extern "C" {
@@ -129,6 +131,8 @@ void fullMatrix<std::complex<double> >::mult(const fullVector<std::complex<doubl
 }
 
 #endif
+
+
 
 #if defined(HAVE_LAPACK)
 
@@ -317,6 +321,9 @@ void fullMatrix<double>::registerBindings(binding *b)
                      "The memory is allocated in one continuous block and stored "
                      "in column major order (like in fortran).");
   methodBinding *cm;
+  cm = cb->setConstructor<fullMatrix<double>,int,int>();
+  cm->setDescription ("A new matrix of size 'nRows' x 'nColumns'");
+  cm->setArgNames("nRows","nColumns",NULL);
   cm = cb->addMethod("size1", &fullMatrix<double>::size1);
   cm->setDescription("Returns the number of rows in the matrix");
   cm = cb->addMethod("size2", &fullMatrix<double>::size2);
@@ -340,9 +347,6 @@ void fullMatrix<double>::registerBindings(binding *b)
   cm = cb->addMethod("print", &fullMatrix<double>::print);
   cm->setArgNames("name",NULL);
   cm->setDescription("print the matrix");
-  cm = cb->setConstructor<fullMatrix<double>,int,int>();
-  cm->setDescription ("A new matrix of size 'nRows' x 'nColumns'");
-  cm->setArgNames("nRows","nColumns",NULL);
   cm = cb->addMethod("invertInPlace", &fullMatrix<double>::invertInPlace);
   cm->setDescription("invert the matrix and return the determinant");
 }

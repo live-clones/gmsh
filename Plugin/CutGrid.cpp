@@ -41,6 +41,21 @@ void GMSH_CutGridPlugin::draw(void *context)
 #if defined(HAVE_OPENGL)
   glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
   double p[3];
+  drawContext *ctx = (drawContext*)context;
+
+  getPoint(0, 0, p);
+  glRasterPos3d(p[0], p[1], p[2]);
+  ctx->drawString("(X0, Y0, Z0)");
+  if(getNbU() > 1){
+    getPoint(getNbU() - 1, 0, p);
+    glRasterPos3d(p[0], p[1], p[2]);
+    ctx->drawString("(X1, Y1, Z1)");
+  }
+  if(getNbV() > 1){
+    getPoint(0, getNbV() - 1, p);
+    glRasterPos3d(p[0], p[1], p[2]);
+    ctx->drawString("(X2, Y2, Z2)");
+  }
 
   if(CutGridOptions_Number[11].def){
     glBegin(GL_LINES);
@@ -59,7 +74,6 @@ void GMSH_CutGridPlugin::draw(void *context)
     glEnd();
   }
   else{
-    drawContext *ctx = (drawContext*)context;
     for(int i = 0; i < getNbU(); ++i){
       for(int j = 0; j < getNbV(); ++j){
         getPoint(i, j, p);
@@ -87,76 +101,76 @@ double GMSH_CutGridPlugin::callback(int num, int action, double value, double *o
 double GMSH_CutGridPlugin::callbackX0(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[0].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
+                  CTX::instance()->lc / 100., CTX::instance()->min[0],
+                  CTX::instance()->max[0]);
 }
 
 double GMSH_CutGridPlugin::callbackY0(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[1].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
+                  CTX::instance()->lc / 100., CTX::instance()->min[1],
+                  CTX::instance()->max[1]);
 }
 
 double GMSH_CutGridPlugin::callbackZ0(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[2].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
+                  CTX::instance()->lc / 100., CTX::instance()->min[2],
+                  CTX::instance()->max[2]);
 }
 
 double GMSH_CutGridPlugin::callbackX1(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[3].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
+                  CTX::instance()->lc / 100., CTX::instance()->min[0],
+                  CTX::instance()->max[0]);
 }
 
 double GMSH_CutGridPlugin::callbackY1(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[4].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc, 
-                  2 * CTX::instance()->lc);
+                  CTX::instance()->lc / 100., CTX::instance()->min[1],
+                  CTX::instance()->max[1]);
 }
 
 double GMSH_CutGridPlugin::callbackZ1(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[5].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc, 
-                  2 * CTX::instance()->lc);
+                  CTX::instance()->lc / 100., CTX::instance()->min[2],
+                  CTX::instance()->max[2]);
 }
 
 double GMSH_CutGridPlugin::callbackX2(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[6].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
+                  CTX::instance()->lc / 100., CTX::instance()->min[0],
+                  CTX::instance()->max[0]);
 }
 
 double GMSH_CutGridPlugin::callbackY2(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[7].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
+                  CTX::instance()->lc / 100., CTX::instance()->min[1],
+                  CTX::instance()->max[1]);
 }
 
 double GMSH_CutGridPlugin::callbackZ2(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[8].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
-                  2 * CTX::instance()->lc);
+                  CTX::instance()->lc / 100., CTX::instance()->min[2],
+                  CTX::instance()->max[2]);
 }
 
 double GMSH_CutGridPlugin::callbackU(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[9].def,
-                  1, 1, 100);
+                  1, 1, 200);
 }
 
 double GMSH_CutGridPlugin::callbackV(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[10].def,
-                  1, 1, 100);
+                  1, 1, 200);
 }
 
 double GMSH_CutGridPlugin::callbackConnect(int num, int action, double value)

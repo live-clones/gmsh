@@ -56,6 +56,19 @@ double MTriangle::angleShapeMeasure()
 #endif
 }
 
+double angle3Points(MVertex *p1, MVertex *p2, MVertex *p3);
+
+double MTriangle::etaShapeMeasure()
+{
+  double a1 = 180 * angle3Points(_v[0], _v[1], _v[2]) / M_PI;
+  double a2 = 180 * angle3Points(_v[1], _v[2], _v[0]) / M_PI;
+  double a3 = 180 * angle3Points(_v[2], _v[0], _v[1]) / M_PI;
+  double angle = fabs(60. - a1);
+  angle = std::max(fabs(60. - a2),angle);
+  angle = std::max(fabs(60. - a3),angle);
+  return 1.-angle/60;
+}
+
 double MTriangle::gammaShapeMeasure()
 {
 #if defined(HAVE_MESH)

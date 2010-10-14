@@ -16,8 +16,6 @@
 #include "Field.h"
 #endif
 
-#define SQU(a)      ((a)*(a))
-
 static List_T *ListOfTransformedPoints = NULL;
 
 // Comparison routines
@@ -593,8 +591,8 @@ Surface *Create_Surface(int Num, int Typ)
   pS->Typ = Typ;
   pS->Method = MESH_UNSTRUCTURED;
   pS->Recombine = 0;
+  pS->RecombineAngle = 45;
   pS->Recombine_Dir = -1;
-  pS->TypeOfMapping = 1;
   pS->TransfiniteSmoothing = -1;
   pS->TrsfPoints = List_Create(4, 4, sizeof(Vertex *));
   pS->Generatrices = NULL;
@@ -1180,7 +1178,6 @@ void DeleteShape(int Type, int Num)
       if(gf) GModel::current()->remove(gf);
     }
     break;
-
   case MSH_VOLUME_FROM_GMODEL:
     {
       GRegion *gr = GModel::current()->getRegionByTag(Num);

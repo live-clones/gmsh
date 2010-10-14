@@ -29,6 +29,13 @@
 #include "discreteFace.h"
 #include "discreteRegion.h"
 #include "MVertexPositionSet.h"
+#include "OS.h"
+
+#if defined(HAVE_POST)
+#include "PView.h"
+#include "PViewData.h"
+#include "PViewDataList.h"
+#endif
 
 void GModel::_storePhysicalTagsInEntities(int dim,
                                           std::map<int, std::map<int, std::string> > &map)
@@ -52,6 +59,14 @@ void GModel::_storePhysicalTagsInEntities(int dim,
     }
   }
 }
+
+ static void replaceCommaByDot(const std::string name){
+   char myCommand[1000], myCommand2[1000];
+   sprintf(myCommand, "sed 's/,/./g' %s > temp.txt", name.c_str());
+   SystemCall(myCommand);
+   sprintf(myCommand2, "mv temp.txt %s ", name.c_str());
+   SystemCall(myCommand2);
+ }
 
 static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
                         std::vector<MVertex*> &vertices)
@@ -77,6 +92,19 @@ static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
     }
     else
       vertices.push_back(vec[indices[i]]);
+  }
+  return true;
+}
+static bool getProperties(int num, int *indices, std::vector<double> &vec,
+                        std::vector<double> &properties)
+{
+  for(int i = 0; i < num; i++){
+    if(indices[i] < 0 || indices[i] > (int)(vec.size() - 1)){
+      Msg::Error("Wrong vertex index %d", indices[i]);
+      return false;
+    }
+    else
+      properties.push_back(vec[indices[i]]);
   }
   return true;
 }
@@ -861,14 +889,31 @@ int GModel::writePartitionedMSH(const std::string &baseName, bool binary,
 
 int GModel::writePOS(const std::string &name, bool printElementary, 
                      bool printElementNumber, bool printGamma, bool printEta, 
-                     bool printRho, bool printDisto, bool saveAll,
-                     double scalingFactor)
+                     bool printRho, bool printDisto, 
+                     bool saveAll, double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
+
+  /*
+  bool printVertices = true;
+  if(printVertices){
+    fprintf(fp, "View \"Vertices\" {\n");
+    std::vector<GEntity*> entities;
+    getEntities(entities);
+    for(unsigned int i = 0; i < entities.size(); i++)
+      for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+        MVertex *v = entities[i]->mesh_vertices[j];
+        fprintf(fp, "SP(%g,%g,%g){1};\n", v->x(), v->y(), v->z());
+      }
+    fprintf(fp, "};\n");
+    fclose(fp);
+    return 1;
+  }
+  */
 
   bool f[6] = {printElementary, printElementNumber, printGamma, printEta, printRho,
                printDisto};
@@ -970,7 +1015,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
       // "endfacet"
       if(!fgets(buffer, sizeof(buffer), fp)) break;
     }
-  }
+   }
 
   // check if we could parse something
   bool empty = true;
@@ -981,6 +1026,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
     }
   }
   if(empty) points.clear();
+ 
 
   // binary STL (we also try to read in binary mode if the header told
   // us the format was ASCII but we could not read any vertices)
@@ -1046,6 +1092,8 @@ int GModel::readSTL(const std::string &name, double tolerance)
                                      points[i][j].z()));
   MVertexPositionSet pos(vertices);
   
+  std::set<MFace,Less_Face> unique;
+  int nbDuplic = 0;
   for(unsigned int i = 0; i < points.size(); i ++){
     for(unsigned int j = 0; j < points[i].size(); j += 3){
       MVertex *v[3];
@@ -1055,9 +1103,17 @@ int GModel::readSTL(const std::string &name, double tolerance)
         double z = points[i][j + k].z();
         v[k] = pos.find(x, y, z, eps);
       }
-      faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+      MFace mf (v[0],v[1],v[2]);
+      if (unique.find(mf) == unique.end()){
+	faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+	unique.insert(mf);
+      }
+      else{
+	nbDuplic++;
+      }
     }
   }
+  if (nbDuplic) Msg::Warning("%d Duplicate triangle in STL file read",nbDuplic);
   
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertices); // will delete unused vertices
@@ -1154,7 +1210,7 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int r
   const char *format;
   fpos_t position;
   fgetpos(fp, &position);
-  if(!fgets(tmp, sizeof(tmp), fp)) return 0;;
+  if(!fgets(tmp, sizeof(tmp), fp)) return 0;
   fsetpos(fp, &position);
   if(strstr(tmp, ","))
     format = " , %d";
@@ -1205,6 +1261,195 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int r
   }
   Msg::Info("%d elements", elements[0][region].size() +
             elements[1][region].size() + elements[2][region].size());
+  return 1;
+}
+
+int GModel::readPLY(const std::string &name)
+{
+
+  replaceCommaByDot(name);
+
+  FILE *fp = fopen(name.c_str(), "r");
+  if(!fp){
+    Msg::Error("Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+ 
+
+  std::vector<MVertex*> vertexVector;
+  std::map<int, std::vector<MElement*> > elements[5];
+  std::map<int, std::vector<double> > properties;
+
+  char buffer[256], str[256], str2[256], str3[256];
+  std::string s1;
+  int elementary = getMaxElementaryNumber(-1) + 1;
+  int nbv, nbf;
+  int nbprop = 0;
+  int nbView = 0;
+  std::vector<std::string> propName;
+  while(!feof(fp)) {
+    if(!fgets(buffer, sizeof(buffer), fp)) break;
+    if(buffer[0] != '#'){ // skip comments
+      sscanf(buffer, "%s %s", str, str2);
+      if(!strcmp(str, "element") && !strcmp(str2, "vertex")){
+	sscanf(buffer, "%s %s %d", str, str2, &nbv);
+      } 
+      if(!strcmp(str, "format") && strcmp(str2, "ascii")){
+	Msg::Error("Only reading of ascii PLY files implemented");
+	return 0;
+      }
+      if(!strcmp(str, "property") && strcmp(str2, "list")){
+	nbprop++;
+	sscanf(buffer, "%s %s %s", str, str2, str3);
+	if (nbprop > 3) propName.push_back(s1+str3);
+      } 
+      if(!strcmp(str, "element") && !strcmp(str2, "face")){
+	sscanf(buffer, "%s %s %d", str, str2, &nbf);
+      } 
+      if(!strcmp(str, "end_header")){
+	nbView = nbprop -3;
+	Msg::Info("%d elements", nbv);
+	Msg::Info("%d triangles", nbf);
+	Msg::Info("%d properties", nbView);
+
+	//printf("*********READING VERTEX \n");
+	vertexVector.resize(nbv);
+	for(int i = 0; i < nbv; i++) {
+	  double x,y,z;
+	  char line[10000], *pEnd, *pEnd2, *pEnd3;
+	  if(!fgets(line, sizeof(line), fp)) return 0;
+	  x = strtod(line, &pEnd);
+	  y = strtod(pEnd, &pEnd2);
+	  z = strtod(pEnd2, &pEnd3);
+	  //printf("xyz=%g %g %g \n", x,y,z);
+	  vertexVector[i] = new MVertex(x, y, z);
+
+	  pEnd = pEnd3;
+	  double prop[nbView];
+	  for (int k=0; k< nbView; k++){
+	    prop[k]=strtod(pEnd, &pEnd2);
+	    pEnd = pEnd2;
+	    properties[k].push_back(prop[k]);
+	  }
+	}
+
+	//printf("*********READING ELEMS \n");
+	for(int i = 0; i < nbf; i++) {
+	  if(!fgets(buffer, sizeof(buffer), fp)) break;
+	  int n[3], nbe;
+	  int nb = sscanf(buffer, "%d %d %d %d", &nbe, &n[0], &n[1], &n[2]);
+	  std::vector<MVertex*> vertices;
+	  if(!getVertices(3, n, vertexVector, vertices)) return 0;
+	  elements[0][elementary].push_back(new MTriangle(vertices));
+	}
+	
+      }
+ 
+    }
+  }
+
+  for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
+    _storeElementsInEntities(elements[i]);
+  _associateEntityWithMeshVertices();
+  _storeVerticesInEntities(vertexVector);
+
+#if defined(HAVE_POST)
+  // create PViews here 
+  std::vector<GEntity*> _entities;
+  getEntities(_entities);
+  for (int iV=0; iV< nbView; iV++){
+    PView *view = new PView();
+    PViewDataList *data = dynamic_cast<PViewDataList*>(view->getData());
+    for(unsigned int ii = 0; ii < _entities.size(); ii++){
+	for(unsigned int i = 0; i < _entities[ii]->getNumMeshElements(); i++){ 
+	  MElement *e = _entities[ii]->getMeshElement(i);	  
+	  int numNodes = e->getNumVertices();
+	  std::vector<double> x(numNodes), y(numNodes), z(numNodes);
+	  std::vector<double> *out = data->incrementList(1, e->getType());
+	  for(int nod = 0; nod < numNodes; nod++) out->push_back((e->getVertex(nod))->x()); 
+	  for(int nod = 0; nod < numNodes; nod++) out->push_back((e->getVertex(nod))->y()); 
+	  for(int nod = 0; nod < numNodes; nod++) out->push_back((e->getVertex(nod))->z());
+	  std::vector<double> props;
+	  int n[3];
+	  n[0] = e->getVertex(0)->getNum()-1;
+	  n[1] = e->getVertex(1)->getNum()-1;
+	  n[2] = e->getVertex(2)->getNum()-1;
+	  if(!getProperties(3, n, properties[iV], props)) return 0;
+	  for(int nod = 0; nod < numNodes; nod++) out->push_back(props[nod]);
+	}
+    }
+    data->setName(propName[iV]);
+    data->Time.push_back(0);
+    data->setFileName("property.pos");
+    data->finalize();
+  }
+#endif
+
+  fclose(fp);
+
+  return 1;
+}
+
+int GModel::readPLY2(const std::string &name)
+{
+  FILE *fp = fopen(name.c_str(), "r");
+  if(!fp){
+    Msg::Error("Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+
+  std::vector<MVertex*> vertexVector;
+  std::map<int, std::vector<MElement*> > elements[5];
+
+  char buffer[256], str[256];
+  int elementary = getMaxElementaryNumber(-1) + 1;
+  int nbv, nbf;
+  while(!feof(fp)) {
+    if(!fgets(buffer, sizeof(buffer), fp)) break;
+    if(buffer[0] != '#'){ // skip comments
+      sscanf(buffer, "%d", &nbv);
+      if(!fgets(buffer, sizeof(buffer), fp)) break;
+      sscanf(buffer, "%d", &nbf);
+      Msg::Info("%d vertices", nbv);
+      Msg::Info("%d triangles", nbf);
+      vertexVector.resize(nbv);
+      for(int i = 0; i < nbv; i++) {
+	if(!fgets(buffer, sizeof(buffer), fp)) break;
+	double x, y, z;
+	int nb = sscanf(buffer, "%lf %lf %lf", &x, &y, &z);
+	if (nb !=3){
+	  if(!fgets(buffer, sizeof(buffer), fp)) break;
+	  sscanf(buffer, "%lf",  &y);
+	  if(!fgets(buffer, sizeof(buffer), fp)) break;
+	  sscanf(buffer, "%lf",  &z);
+	}
+	vertexVector[i] = new MVertex(x, y, z);
+      }
+      for(int i = 0; i < nbf; i++) {
+	if(!fgets(buffer, sizeof(buffer), fp)) break;
+	int n[3], nbe;
+	int nb = sscanf(buffer, "%d %d %d %d", &nbe, &n[0], &n[1], &n[2]);
+	if (nb !=4){
+	  if(!fgets(buffer, sizeof(buffer), fp)) break;
+	  sscanf(buffer, "%d",  &n[0]);
+	  if(!fgets(buffer, sizeof(buffer), fp)) break;
+	  sscanf(buffer, "%d",  &n[1]);
+	  if(!fgets(buffer, sizeof(buffer), fp)) break;
+	  sscanf(buffer, "%d",  &n[2]);
+	}
+	std::vector<MVertex*> vertices;
+	if(!getVertices(3, n, vertexVector, vertices)) return 0;
+	elements[0][elementary].push_back(new MTriangle(vertices));
+      }     
+    }
+  }
+
+  for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
+    _storeElementsInEntities(elements[i]);
+  _associateEntityWithMeshVertices();
+  _storeVerticesInEntities(vertexVector);
+
+  fclose(fp);
   return 1;
 }
 
@@ -1274,6 +1519,38 @@ int GModel::readVRML(const std::string &name)
     _storeElementsInEntities(elements[i]);
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(allVertexVector);
+
+  fclose(fp);
+  return 1;
+}
+
+int GModel::writePLY2(const std::string &name)
+{
+  FILE *fp = fopen(name.c_str(), "w");
+  if(!fp){
+    Msg::Error("Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+
+  int numVertices = indexMeshVertices(true);
+  int numTriangles = 0.0;
+  for(fiter it = firstFace(); it != lastFace(); ++it){
+      numTriangles += (*it)->triangles.size();
+  }
+
+  fprintf(fp, "%d\n", numVertices);
+  fprintf(fp, "%d\n", numTriangles);
+
+  std::vector<GEntity*> entities;
+  getEntities(entities);
+  for(unsigned int i = 0; i < entities.size(); i++)
+    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
+      entities[i]->mesh_vertices[j]->writePLY2(fp);
+
+  for(fiter it = firstFace(); it != lastFace(); ++it){
+      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+        (*it)->triangles[i]->writePLY2(fp);
+  }
 
   fclose(fp);
   return 1;
@@ -2333,7 +2610,7 @@ int GModel::writeP3D(const std::string &name, bool saveAll, double scalingFactor
         for(unsigned int k = 0; k < gf->transfinite_vertices[j].size(); k++){
           MVertex *v = gf->transfinite_vertices[j][k];
           double d = (coord == 0) ? v->x() : (coord == 1) ? v->y() : v->z();
-          fprintf(fp, "%g ", d * scalingFactor);
+          fprintf(fp, "%.16g ", d * scalingFactor);
         }
         fprintf(fp, "\n");
       }
@@ -2348,7 +2625,7 @@ int GModel::writeP3D(const std::string &name, bool saveAll, double scalingFactor
           for(unsigned int l = 0; l < gr->transfinite_vertices[j][k].size(); l++){
             MVertex *v = gr->transfinite_vertices[j][k][l];
             double d = (coord == 0) ? v->x() : (coord == 1) ? v->y() : v->z();
-            fprintf(fp, "%g ", d * scalingFactor);
+            fprintf(fp, "%.16g ", d * scalingFactor);
           }
           fprintf(fp, "\n");
         }
@@ -2451,6 +2728,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   }
 
   char buffer[256], buffer2[256];
+  std::map<int, std::map<int, std::string> > physicals[4];
 
   if(!fgets(buffer, sizeof(buffer), fp)) return 0; // version line
   if(!fgets(buffer, sizeof(buffer), fp)) return 0; // title
@@ -2461,8 +2739,13 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   if(!strcmp(buffer, "BINARY")) binary = true;
 
   if(fscanf(fp, "%s %s", buffer, buffer2) != 2) return 0;
-  if(strcmp(buffer, "DATASET") || strcmp(buffer2, "UNSTRUCTURED_GRID")){
-    Msg::Error("VTK reader can only read unstructured datasets");
+  
+  bool unstructured = false;
+  if( !strcmp(buffer, "DATASET") &&  !strcmp(buffer2, "UNSTRUCTURED_GRID") ) unstructured = true;
+
+  if( (strcmp(buffer, "DATASET") &&  strcmp(buffer2, "UNSTRUCTURED_GRID")) ||
+      (strcmp(buffer, "DATASET") &&  strcmp(buffer2, "POLYDATA")) ){
+    Msg::Error("VTK reader can only read unstructured or polydata datasets");
     return 0;
   }
 
@@ -2482,7 +2765,6 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
     Msg::Warning("VTK reader only accepts float or double datasets");
     return 0;
   }
-
   Msg::Info("Reading %d points", numVertices);
   std::vector<MVertex*> vertices(numVertices);
   for(int i = 0 ; i < numVertices; i++){
@@ -2508,60 +2790,116 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   // read mesh elements
   int numElements, totalNumInt;
   if(fscanf(fp, "%s %d %d\n", buffer, &numElements, &totalNumInt) != 3) return 0;
-  if(strcmp(buffer, "CELLS") || !numElements){
-    Msg::Warning("No cells in dataset");
+ 
+  bool haveCells = true;
+  bool haveLines = false;
+  if( !strcmp(buffer, "CELLS") && numElements>0 )  Msg::Info("Reading %d cells", numElements);
+  else if (!strcmp(buffer, "POLYGONS") && numElements>0 ) Msg::Info("Reading %d polygons", numElements);
+  else if (!strcmp(buffer, "LINES") && numElements>0 ) { 
+    haveCells = false; 
+    haveLines = true;
+    Msg::Info("Reading %d lines", numElements); 
+  } 
+  else{
+    Msg::Warning("No cells or polygons in dataset");
     return 0;
   }
-  Msg::Info("Reading %d cells", numElements);
-  std::vector<std::vector<MVertex*> > cells(numElements);
-  for(unsigned int i = 0; i < cells.size(); i++){
-    int numVerts, n[100];
-    if(binary){
-      if(fread(&numVerts, sizeof(int), 1, fp) != 1) return 0;
-      if(!bigEndian) SwapBytes((char*)&numVerts, sizeof(int), 1);
-      if((int)fread(n, sizeof(int), numVerts, fp) != numVerts) return 0;
-      if(!bigEndian) SwapBytes((char*)n, sizeof(int), numVerts);
-    }
-    else{
-      if(fscanf(fp, "%d", &numVerts) != 1) return 0;
+
+  std::map<int, std::vector<MElement*> > elements[8];
+
+  if (haveCells){
+    std::vector<std::vector<MVertex*> > cells(numElements);
+    for(unsigned int i = 0; i < cells.size(); i++){
+      int numVerts, n[100];
+      if(binary){
+	if(fread(&numVerts, sizeof(int), 1, fp) != 1) return 0;
+	if(!bigEndian) SwapBytes((char*)&numVerts, sizeof(int), 1);
+	if((int)fread(n, sizeof(int), numVerts, fp) != numVerts) return 0;
+	if(!bigEndian) SwapBytes((char*)n, sizeof(int), numVerts);
+      }
+      else{
+	if(fscanf(fp, "%d", &numVerts) != 1) return 0;
+	for(int j = 0; j < numVerts; j++){
+	  if(fscanf(fp, "%d", &n[j]) != 1) return 0;
+	}
+      }
       for(int j = 0; j < numVerts; j++){
-        if(fscanf(fp, "%d", &n[j]) != 1) return 0;
+	if(n[j] >= 0 && n[j] < (int)vertices.size())
+	  cells[i].push_back(vertices[n[j]]);
+	else
+	  Msg::Error("Bad vertex index");
       }
     }
-    for(int j = 0; j < numVerts; j++){
-      if(n[j] >= 0 && n[j] < (int)vertices.size())
-        cells[i].push_back(vertices[n[j]]);
-      else
-        Msg::Error("Bad vertex index");
-    }
-  }
-  if(fscanf(fp, "%s %d\n", buffer, &numElements) != 2) return 0;
-  if(strcmp(buffer, "CELL_TYPES") || numElements != (int)cells.size()){
-    Msg::Error("No or invalid number of cells types");
-    return 0;
-  }
-  std::map<int, std::vector<MElement*> > elements[8];
-  for(unsigned int i = 0; i < cells.size(); i++){
-    int type;
-    if(binary){
-      if(fread(&type, sizeof(int), 1, fp) != 1) return 0;
-      if(!bigEndian) SwapBytes((char*)&type, sizeof(int), 1);
+   
+    if (unstructured){
+      if(fscanf(fp, "%s %d\n", buffer, &numElements) != 2 ) return 0;
+      if(strcmp(buffer, "CELL_TYPES") || numElements != (int)cells.size()){
+	Msg::Error("No or invalid number of cells types");
+	return 0;
+      }
+      for(unsigned int i = 0; i < cells.size(); i++){
+	int type;
+	if(binary){
+	  if(fread(&type, sizeof(int), 1, fp) != 1) return 0;
+	  if(!bigEndian) SwapBytes((char*)&type, sizeof(int), 1);
+	}
+	else{
+	  if(fscanf(fp, "%d", &type) != 1) return 0;
+	}
+	switch(type){
+	case 1: elements[0][1].push_back(new MPoint(cells[i])); break;
+	case 3: elements[1][1].push_back(new MLine(cells[i])); break;
+	case 5: elements[2][1].push_back(new MTriangle(cells[i])); break;
+	case 9: elements[3][1].push_back(new MQuadrangle(cells[i])); break;
+	case 10: elements[4][1].push_back(new MTetrahedron(cells[i])); break;
+	case 12: elements[5][1].push_back(new MHexahedron(cells[i])); break;
+	case 13: elements[6][1].push_back(new MPrism(cells[i])); break;
+	case 14: elements[7][1].push_back(new MPyramid(cells[i])); break;
+	default:
+	  Msg::Error("Unknown type of cell %d", type);
+	  break;
+	}
+      }
     }
     else{
-      if(fscanf(fp, "%d", &type) != 1) return 0;
+      for(unsigned int i = 0; i < cells.size(); i++){
+	int nbNodes = (int)cells[i].size();
+	switch(nbNodes){
+	case 1: elements[0][1].push_back(new MPoint(cells[i])); break;
+	case 2: elements[1][1].push_back(new MLine(cells[i])); break;
+	case 3: elements[2][1].push_back(new MTriangle(cells[i])); break;
+	case 4: elements[3][1].push_back(new MQuadrangle(cells[i])); break;
+	default:
+	  Msg::Error("Unknown type of mesh element with %d nodes", nbNodes);
+	  break;
+	}
+      }
     }
-    switch(type){
-    case 1: elements[0][1].push_back(new MPoint(cells[i])); break;
-    case 3: elements[1][1].push_back(new MLine(cells[i])); break;
-    case 5: elements[2][1].push_back(new MTriangle(cells[i])); break;
-    case 9: elements[3][1].push_back(new MQuadrangle(cells[i])); break;
-    case 10: elements[4][1].push_back(new MTetrahedron(cells[i])); break;
-    case 12: elements[5][1].push_back(new MHexahedron(cells[i])); break;
-    case 13: elements[6][1].push_back(new MPrism(cells[i])); break;
-    case 14: elements[7][1].push_back(new MPyramid(cells[i])); break;
-    default:
-      Msg::Error("Unknown type of cell %d", type);
-      break;
+  }
+  else if (haveLines){
+    if(!binary){
+      int v0, v1;
+      char line[100000], *p, *pEnd, *pEnd2;
+      int iLine = 1;
+      int num = 0;
+      for (int k= 0; k < numElements; k++){
+	physicals[1][iLine][1] = "centerline";
+	if(!fgets(line, sizeof(line), fp)) return 0;
+	v0=(int)strtol(line, &pEnd, 10);//ignore first line
+	v0=(int)strtol(pEnd, &pEnd2, 10);
+	p=pEnd2;
+	while(1){
+	  v1 = strtol(p, &pEnd, 10);
+	  if (p == pEnd )  break;
+	  elements[1][iLine].push_back(new MLine(vertices[v0],vertices[v1])); 
+	  p=pEnd;
+	  v0=v1;
+	}
+	iLine++;
+      }
+    }
+    else{
+      Msg::Error("TODO: implement reading lines for binary files \n");
     }
   }
 
@@ -2569,6 +2907,10 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
     _storeElementsInEntities(elements[i]);
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertices);
+
+  // store the physical tags
+  for(int i = 0; i < 4; i++)
+    _storePhysicalTagsInEntities(i, physicals[i]);
 
   fclose(fp);
   return 1;
@@ -3044,7 +3386,7 @@ int GModel::writeINP(const std::string &name, bool saveAll,
       for(unsigned int j = 0; j < entities[i]->getNumMeshVertices(); j++){
         MVertex *v = entities[i]->getMeshVertex(j);
         if(v->getIndex() >= 0)
-          fprintf(fp, "%d, %g, %g, %g\n", v->getIndex(), v->x() * scalingFactor,
+          fprintf(fp, "%d, %.16g, %.16g, %.16g\n", v->getIndex(), v->x() * scalingFactor,
                   v->y() * scalingFactor, v->z() * scalingFactor);
       }
   

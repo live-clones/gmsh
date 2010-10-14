@@ -44,12 +44,13 @@
 
 template <class scalar>
 class linearSystemPETSc : public linearSystem<scalar> {
+  protected:
   int _blockSize; // for block Matrix
   bool _isAllocated, _kspAllocated;
   Mat _a;
   Vec _b, _x;
   KSP _ksp;
-  void _try(int ierr) const { CHKERRABORT(PETSC_COMM_WORLD, ierr); }
+  static void _try(int ierr) { CHKERRABORT(PETSC_COMM_WORLD, ierr); }
   void _kspCreate() {
     _try(KSPCreate(PETSC_COMM_WORLD, &_ksp));
     PC pc;
@@ -76,7 +77,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
   {
     clear();
     _try(MatCreate(PETSC_COMM_WORLD, &_a));
-    _try(MatSetSizes(_a, PETSC_DECIDE, PETSC_DECIDE, nbRows, nbRows));
+    _try(MatSetSizes(_a, nbRows, nbRows, PETSC_DETERMINE, PETSC_DETERMINE));
     // override the default options with the ones from the option
     // database (if any)
     _try(MatSetFromOptions(_a));
@@ -86,12 +87,27 @@ class linearSystemPETSc : public linearSystem<scalar> {
     PetscOptionsGetInt(PETSC_NULL, "-petsc_prealloc", &prealloc, &set);
     _try(MatSeqAIJSetPreallocation(_a, prealloc, PETSC_NULL));
     _try(VecCreate(PETSC_COMM_WORLD, &_x));
-    _try(VecSetSizes(_x, PETSC_DECIDE, nbRows));
+    _try(VecSetSizes(_x, nbRows, PETSC_DETERMINE));
     // override the default options with the ones from the option
     // database (if any)
     _try(VecSetFromOptions(_x));
     _try(VecDuplicate(_x, &_b));
     _isAllocated = true;
+  }
+  void print() {
+      _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
+      _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
+      _try(VecAssemblyBegin(_b));
+      _try(VecAssemblyEnd(_b));
+    if(Msg::GetCommRank()==0)
+    printf("a :\n");
+    MatView(_a, PETSC_VIEWER_STDOUT_WORLD);
+    if(Msg::GetCommRank()==0)
+    printf("b :\n");
+    VecView(_b, PETSC_VIEWER_STDOUT_WORLD);
+    if(Msg::GetCommRank()==0)
+    printf("x :\n");
+    VecView(_x, PETSC_VIEWER_STDOUT_WORLD);
   }
   virtual void clear()
   {
@@ -114,15 +130,15 @@ class linearSystemPETSc : public linearSystem<scalar> {
   }
   virtual void getFromRightHandSide(int row, scalar &val) const
   {
+#if defined(PETSC_USE_COMPLEX)
     PetscScalar *tmp;
     _try(VecGetArray(_b, &tmp));
     PetscScalar s = tmp[row];
     _try(VecRestoreArray(_b, &tmp));
     // FIXME specialize this routine
-#if defined(PETSC_USE_COMPLEX)
     val = s.real();
 #else
-    val = s;
+    VecGetValues(_b, 1, &row, &val);
 #endif
   }
   virtual double normInfRightHandSide() const
@@ -139,14 +155,14 @@ class linearSystemPETSc : public linearSystem<scalar> {
   }
   virtual void getFromSolution(int row, scalar &val) const
   {
+#if defined(PETSC_USE_COMPLEX)
     PetscScalar *tmp;
     _try(VecGetArray(_x, &tmp));
     PetscScalar s = tmp[row];
     _try(VecRestoreArray(_x, &tmp));
-#if defined(PETSC_USE_COMPLEX)
     val = s.real();
 #else
-    val = s;
+    VecGetValues(_x, 1, &row, &val);
 #endif
   }
   virtual void zeroMatrix()
@@ -213,6 +229,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
   virtual void zeroMatrix() {}
   virtual void zeroRightHandSide() {}
   virtual int systemSolve() { return 0; }
+  virtual double normInfRightHandSide() const{return 0;}
 };
 
 #endif

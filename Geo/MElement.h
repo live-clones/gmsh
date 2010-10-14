@@ -72,9 +72,10 @@ class MElement
   virtual char getVisibility() const;
   virtual void setVisibility(char val){ _visible = val; }
 
-  // get the vertices
+  // get & set the vertices
   virtual int getNumVertices() const = 0;
   virtual MVertex *getVertex(int num) = 0;
+  virtual void setVertex(int num, MVertex *v) {throw;}
 
   // give an MVertex as input and get its local number
   virtual void getVertexInfo(const MVertex * vertex, int &ithVertex) const 
@@ -164,7 +165,7 @@ class MElement
   virtual MElement *getDomain(int i) const { return NULL; }
   virtual void setDomain (MElement *e, int i) { }
 
-  //get the type of the element
+  // get the type of the element
   virtual int getType() const = 0;
 
   // get the max/min edge length
@@ -222,9 +223,12 @@ class MElement
                                      int order=-1);
   virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3],
                                      int order=-1);
+  //const fullMatrix<double> &getShapeFunctionsAtIntegrationPoints (int integrationOrder, int functionSpaceOrder=-1);
+  const fullMatrix<double> &getGradShapeFunctionsAtIntegrationPoints (int integrationOrder, int functionSpaceOrder=-1);
+  const fullMatrix<double> &getGradShapeFunctionsAtNodes (int functionSpaceOrder=-1);
   // return the Jacobian of the element evaluated at point (u,v,w) in
   // parametric coordinates
-  double getJacobian(double gsf[][3], double jac[3][3]);
+  double getJacobian(const fullMatrix<double> &gsf, double jac[3][3]);
   double getJacobian(double u, double v, double w, double jac[3][3]);
   double getPrimaryJacobian(double u, double v, double w, double jac[3][3]);
   //bindings : double[3][3] is not easy to bind, we could use fullMatrix instead
@@ -260,7 +264,8 @@ class MElement
   // integration routines
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   {
-    Msg::Error("No integration points defined for this type of element: %d",this->getType());
+    Msg::Error("No integration points defined for this type of element: %d",
+               this->getType());
   }
 
   // IO routines
@@ -274,6 +279,7 @@ class MElement
                         bool printDisto,double scalingFactor=1.0, int elementary=1);
   virtual void writeSTL(FILE *fp, bool binary=false, double scalingFactor=1.0);
   virtual void writeVRML(FILE *fp);
+  virtual void writePLY2(FILE *fp);
   virtual void writeUNV(FILE *fp, int num=0, int elementary=1, int physical=1);
   virtual void writeVTK(FILE *fp, bool binary=false, bool bigEndian=false);
   virtual void writeMESH(FILE *fp, int elementTagType=1, int elementary=1,

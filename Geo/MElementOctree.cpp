@@ -7,6 +7,7 @@
 #include "MElement.h"
 #include "MElementOctree.h"
 #include "Octree.h"
+#include "Context.h"
 
 static void MElementBB(void *a, double *min, double *max)
 {
@@ -20,6 +21,13 @@ static void MElementBB(void *a, double *min, double *max)
     min[0] = std::min(min[0], v->x()); max[0] = std::max(max[0], v->x());
     min[1] = std::min(min[1], v->y()); max[1] = std::max(max[1], v->y());
     min[2] = std::min(min[2], v->z()); max[2] = std::max(max[2], v->z());
+  }
+
+  // make bounding boxes larger up to (absolute) geometrical tolerance
+  double eps = CTX::instance()->geom.tolerance;
+  for(int i = 0; i < 3; i++){
+    min[i] -= eps;
+    max[i] += eps;
   }
 }
 
@@ -50,10 +58,15 @@ static int MElementInEle(void *a, double *x)
 MElementOctree::MElementOctree(GModel *m)
 {
   SBoundingBox3d bb = m->bounds();
-  double min[3] = {bb.min().x(), bb.min().y(), bb.min().z()};
-  double size[3] = {bb.max().x() - bb.min().x(),
-                    bb.max().y() - bb.min().y(),
-                    bb.max().z() - bb.min().z()};
+  // make bounding box larger up to (absolute) geometrical tolerance
+  double eps = CTX::instance()->geom.tolerance;
+  SPoint3 bbmin = bb.min(), bbmax = bb.max(), bbeps(eps, eps, eps);
+  bbmin -= bbeps;
+  bbmax += bbeps;
+  double min[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
+  double size[3] = {bbmax.x() - bbmin.x(),
+                    bbmax.y() - bbmin.y(),
+                    bbmax.z() - bbmin.z()};
   const int maxElePerBucket = 100; // memory vs. speed trade-off
   _octree = Octree_Create(maxElePerBucket, min, size,
                           MElementBB, MElementCentroid, MElementInEle);
@@ -75,10 +88,15 @@ MElementOctree::MElementOctree(std::vector<MElement*> &v)
                     v[i]->getVertex(j)->z());
     }
   }
-  double min[3] = {bb.min().x(), bb.min().y(), bb.min().z()};
-  double size[3] = {bb.max().x() - bb.min().x(),
-                    bb.max().y() - bb.min().y(),
-                    bb.max().z() - bb.min().z()};
+  // make bounding box larger up to (absolute) geometrical tolerance
+  double eps = CTX::instance()->geom.tolerance;
+  SPoint3 bbmin = bb.min(), bbmax = bb.max(), bbeps(eps, eps, eps);
+  bbmin -= bbeps;
+  bbmax += bbeps;
+  double min[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
+  double size[3] = {bbmax.x() - bbmin.x(),
+                    bbmax.y() - bbmin.y(),
+                    bbmax.z() - bbmin.z()};
   const int maxElePerBucket = 100; // memory vs. speed trade-off
   _octree = Octree_Create(maxElePerBucket, min, size,
                           MElementBB, MElementCentroid, MElementInEle);

@@ -353,14 +353,15 @@ class GModel
   void createTopologyFromMesh();
   void createTopologyFromFaces(std::vector<discreteFace*> &pFaces);
 
-  // compute distance function
-  void computeDistanceFunction();
-
   // a container for smooth normals
   smooth_normals *normals;
 
   // mesh the model
   int mesh(int dimension);
+
+  // reclassify a mesh i.e. use an angle threshold to tag edges faces and regions
+  void detectEdges(double _tresholdAngle);
+  void classifyFaces(std::set<GFace*> &_faces);
 
   // glue entities in the model (assume a tolerance eps and merge
   // vertices that are too close, then merge edges, faces and
@@ -387,9 +388,12 @@ class GModel
                    double angle);
   GEntity *extrude(GEntity *e, std::vector<double> p1, std::vector<double> p2);
   GEntity *addPipe(GEntity *e, std::vector<GEdge *>  edges);
-  void addRuledFaces (std::vector<std::vector<GEdge *> > edges);
-  GFace* addFace (std::vector<GEdge *> edges, std::vector< std::vector<double > > points);
-  GFace* addPlanarFace (std::vector<std::vector<GEdge *> > edges);
+  void createBoundaryLayer(std::vector<GEntity *> e, double h);
+
+  void addRuledFaces(std::vector<std::vector<GEdge *> > edges);
+  GFace *addFace(std::vector<GEdge *> edges, std::vector< std::vector<double > > points);
+  GFace *addPlanarFace(std::vector<std::vector<GEdge *> > edges);
+  GRegion *addVolume(std::vector<std::vector<GFace*> > faces);
 
   // create solid geometry primitives using the factory
   GEntity *addSphere(double cx, double cy, double cz, double radius);
@@ -463,14 +467,14 @@ class GModel
 
   // Gmsh mesh file format
   int readMSH(const std::string &name);
-  int writeMSH(const std::string &name, double version=1.0, bool binary=false,
+  int writeMSH(const std::string &name, double version=2.2, bool binary=false,
                bool saveAll=false, bool saveParametric=false,
                double scalingFactor=1.0, int elementStartNum=0,
                int saveSinglePartition=0);
   int writePartitionedMSH(const std::string &baseName, bool binary=false,
                           bool saveAll=false, bool saveParametric=false,
                           double scalingFactor=1.0);
-  int writeDistanceMSH(const std::string &name, double version=1.0, bool binary=false,
+  int writeDistanceMSH(const std::string &name, double version=2.2, bool binary=false,
                        bool saveAll=false, bool saveParametric=false,
                        double scalingFactor=1.0);
 
@@ -487,6 +491,11 @@ class GModel
   int readSTL(const std::string &name, double tolerance=1.e-3);
   int writeSTL(const std::string &name, bool binary=false,
                bool saveAll=false, double scalingFactor=1.0);
+
+  // PLY(2) format (ascii text format)
+  int readPLY(const std::string &name);
+  int readPLY2(const std::string &name);
+  int writePLY2(const std::string &name);
 
   // Inventor/VRML format
   int readVRML(const std::string &name);

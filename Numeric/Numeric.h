@@ -72,6 +72,7 @@ void planarQuad_xyz2xy(double *x, double *y, double *z, double *xn, double *yn);
 double computeInnerRadiusForQuad(double *x, double *y, int i);
 char float2char(float f);
 float char2float(char c);
+void eigenvalue2x2(double mat[2][2], double v[2]);
 void eigenvalue(double mat[3][3], double re[3]);
 void FindCubicRoots(const double coeff[4], double re[3], double im[3]);
 void eigsort(double d[3]);

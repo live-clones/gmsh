@@ -11,6 +11,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GFace.h"
+#include "simpleFunction.h"
 
 #if defined(HAVE_SOLVER)
 
@@ -57,6 +58,8 @@ class GFaceCompound : public GFace {
   typedef enum {UNITCIRCLE, SQUARE} typeOfIsomorphism;
   void computeNormals(std::map<MVertex*, SVector3> &normals) const;
  protected:
+  simpleFunction<double> *ONE;
+  simpleFunction<double> *MONE;
   std::list<GFace*> _compound;
   std::list<GEdge*> _U0, _U1, _V0, _V1;
   std::list<std::list<GEdge*> > _interior_loops;
@@ -70,14 +73,18 @@ class GFaceCompound : public GFace {
   mutable std::map<SPoint3,SPoint3 > _coordPoints;
   mutable std::map<MVertex*, SVector3> _normals;
   mutable std::list<MTriangle*> fillTris;
+  mutable std::set<MVertex*> fillNodes;
+  mutable std::vector<MVertex*> _ordered;
+  mutable std::vector<double> _coords;
   void buildOct() const ;
   void buildAllNodes() const; 
-  void parametrize(iterationStep, typeOfMapping, double alpha=0.) const;
+  void parametrize(iterationStep, typeOfMapping) const;
   bool parametrize_conformal() const;
   bool parametrize_conformal_spectral() const;
+  bool parametrize_conformal_nonLinear() const;
   void compute_distance() const;
   bool checkOrientation(int iter) const;
-  bool checkFolding(std::vector<MVertex*> &ordered) const;
+  bool checkOverlap() const;
   void one2OneMap() const;
   double checkAspectRatio() const;
   void computeNormals () const;
@@ -87,7 +94,7 @@ class GFaceCompound : public GFace {
   void getTriangle(double u, double v, GFaceCompoundTriangle **lt, 
                    double &_u, double &_v) const;
   virtual double locCurvature(MTriangle *t, double u, double v) const;
-  void printStuff() const;
+  void printStuff(int iNewton=0) const;
   bool trivial() const ;
   linearSystem <double> *_lsys;
   double getSizeH() const;
@@ -95,6 +102,11 @@ class GFaceCompound : public GFace {
   SBoundingBox3d boundEdges(const std::list<GEdge* > &elist) const;
   SOrientedBoundingBox obb_boundEdges(const std::list<GEdge* > &elist) const;
   void fillNeumannBCS() const;
+  /* double sumAngles(std::vector<MVertex*> ordered) const; */
+  void computeThetaDerivatives (MVertex *prev, MVertex *curr, MVertex *next,
+  				double &dTdu1, double &dTdv1,
+  				double &dTdu2, double &dTdv2,
+  				double &dTdu3, double &dTdv3) const;
  public: 
   GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
                 std::list<GEdge*> &U0, std::list<GEdge*> &U1,
@@ -118,7 +130,7 @@ class GFaceCompound : public GFace {
   virtual bool checkTopology() const;
   bool parametrize() const ;
   void coherenceNormals();
-  void partitionFaceCM();
+  void coherencePatches() const;
   virtual std::list<GFace*> getCompounds() const { return _compound; }
   mutable int nbSplit;
   int getNbSplit() const { return nbSplit; }

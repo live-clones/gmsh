@@ -45,6 +45,7 @@ void findTransfiniteCorners(GFace *gf, std::vector<MVertex*> &corners);
 int MeshTransfiniteSurface(GFace *gf);
 int MeshExtrudedSurface(GFace *gf, std::set<std::pair<MVertex*, MVertex*> > 
                         *constrainedEdges=0);
+int MeshBoundaryLayerSurface(GFace *gf);
 void partitionAndRemesh(GFaceCompound *gf);
 bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge*> &edges);
 

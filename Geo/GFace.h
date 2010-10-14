@@ -316,6 +316,9 @@ class GFace : public GEntity
 
   // periodic counterparts of edges
   std::map<int,int> edgeCounterparts;
+
+  // tells if it's a sphere, and if it is, returns parameters
+  virtual bool isSphere (double &radius, SPoint3 &center) const {return false;}
 };
 
 #endif

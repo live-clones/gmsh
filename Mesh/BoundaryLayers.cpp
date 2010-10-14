@@ -40,7 +40,8 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   std::map<int, bool> sourceFaceInvert;
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
     GFace *gf = *it;
-    if(gf->geomType() == GEntity::BoundaryLayerSurface){
+    if(gf->getNativeType() == GEntity::GmshModel && 
+       gf->geomType() == GEntity::BoundaryLayerSurface){
       ExtrudeParams *ep = gf->meshAttributes.extrude;
       if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == COPIED_ENTITY){
         GFace *from = m->getFaceByTag(std::abs(ep->geo.Source));

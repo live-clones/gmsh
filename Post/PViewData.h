@@ -69,8 +69,8 @@ class PViewData {
   virtual double getTime(int step){ return 0.; }
 
   // get/set min/max for given step (global over all steps if step=-1)
-  virtual double getMin(int step=-1) = 0;
-  virtual double getMax(int step=-1) = 0;
+  virtual double getMin(int step=-1, bool onlyVisible=false) = 0;
+  virtual double getMax(int step=-1, bool onlyVisible=false) = 0;
   virtual void setMin(double min) = 0;
   virtual void setMax(double max) = 0;
 
@@ -168,8 +168,8 @@ class PViewData {
 
   // check if we should skip the given entity/element
   virtual bool skipEntity(int step, int ent){ return false; }
-  virtual bool skipElement(int step, int ent, int ele,
-                           bool checkVisibility=false){ return false; }
+  virtual bool skipElement(int step, int ent, int ele, bool checkVisibility=false,
+                           int samplingRate=1);
 
   // check if the data has the given step/partition/etc.
   virtual bool hasTimeStep(int step){ return step >= 0 && step < getNumTimeSteps(); }
@@ -213,6 +213,9 @@ class PViewData {
   virtual bool isRemote(){ return false; }
   virtual int fillRemoteVertexArrays(std::string &options){ return 0; }
 
+  // get MElement (if view supports it)
+  virtual MElement *getElement(int step, int entity, int element);
+
   // I/O routines
   virtual bool writeSTL(std::string fileName);
   virtual bool writeTXT(std::string fileName);
@@ -220,8 +223,7 @@ class PViewData {
                         bool append=false);
   virtual bool writeMSH(std::string fileName, bool binary=false);
   virtual bool writeMED(std::string fileName);
-  //
-  virtual MElement *getElement (int step, int entity, int element);
+
   static void registerBindings(binding *b);
 };
 

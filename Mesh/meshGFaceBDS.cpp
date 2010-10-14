@@ -451,35 +451,52 @@ void delaunayizeBDS(GFace *gf, BDS_Mesh &m, int &nb_swap)
 }
 
 // A test for spheres
-static void midpointsphere(GFace *gf, double u1, double v1, double u2, 
-                           double v2, double &u12, double &v12, double r)
+static void midpointsphere(GFace *gf, 
+			   double u1, 
+			   double v1, 
+			   double u2, 
+                           double v2, 
+			   double &u12, 
+			   double &v12, 
+			   SPoint3 &center,
+			   double r)
 {
   GPoint p1 = gf->point(u1, v1);
   GPoint p2 = gf->point(u2, v2);
+  
+  SVector3 DIR ((p1.x()+p2.x())/2.0 - center.x(),
+		(p1.y()+p2.y())/2.0 - center.y(),
+		(p1.z()+p2.z())/2.0 - center.z());
+  DIR.normalize();
+  
+  double X,Y,Z;
+
   double guess [2] = {0.5 * (u1 + u2), 0.5 * (v1 + v2)};
   u12 = guess[0];
   v12 = guess[1];
-
-  double d = sqrt((p1.x() - p2.x()) * (p1.x() - p2.x()) +
-                  (p1.y() - p2.y()) * (p1.y() - p2.y()) +
-                  (p1.z() - p2.z()) * (p1.z() - p2.z()));
-  
-  if (d > r/3){
-    return;
+  if ( (v1 > 0.7*M_PI/2 && v2  > 0.7*M_PI/2) ||
+       (v1 < -0.7*M_PI/2 && v2 < -0.7*M_PI/2) ){
+    //    printf("coucou\n");
+    X = center.x() + DIR.x() * r;
+    Y = center.y() + DIR.y() * r;
+    Z = center.z() + DIR.z() * r;
   }
-  const double X = 0.5 * (p1.x() + p2.x());
-  const double Y = 0.5 * (p1.y() + p2.y());
-  const double Z = 0.5 * (p1.z() + p2.z());
-  
+  else{
+    return;
+    X = center.x() - DIR.x() * r;
+    Y = center.y() - DIR.y() * r;
+    Z = center.z() - DIR.z() * r;
+  }
+
   GPoint proj = gf->closestPoint(SPoint3(X, Y, Z), guess);
   if (proj.succeeded()){
     u12 = proj.u();
     v12 = proj.v();
   }
-
+  //  printf("%g %g %g -- %g\n",center.x(),center.y(),center.z(),r);
+  //  printf("%g %g -- %g %g -- %g %g -- %g %g\n",
+  //         u1, v1, u2, v2, u12, v12, 0.5 * (u1 + u2), 0.5 * (v1 + v2));
   return;
-  printf("%g %g -- %g %g -- %g %g -- %g %g\n",
-         u1, v1, u2, v2, u12, v12, 0.5 * (u1 + u2), 0.5 * (v1 + v2));
 }
 
 void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
@@ -499,6 +516,10 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
 
   std::sort(edges.begin(), edges.end());
 
+  double RADIUS;
+  SPoint3 CENTER;
+  bool isSphere = gf->isSphere(RADIUS,CENTER);
+
   for (unsigned int i = 0; i < edges.size(); ++i){
     BDS_Edge *e = edges[i].second;
     if (!e->deleted){
@@ -508,9 +529,9 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
       BDS_Point *mid ;
 
       double U, V;
-      if (0 && gf->geomType() == GEntity::Sphere){
+      if (0 && isSphere){	
         midpointsphere(gf,e->p1->u,e->p1->v,e->p2->u,e->p2->v,U,V,
-                       gf-> getSurfaceParams().radius);
+                       CENTER,RADIUS);
       }
       else{
         U = coord * e->p1->u + (1 - coord) * e->p2->u;
@@ -603,6 +624,7 @@ void collapseEdgePassUnSorted(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
 
 void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q)
 {
+  //  return;
   std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
   while(itp != m.points.end()){      
     if(m.smooth_point_centroid(*itp, gf,q))

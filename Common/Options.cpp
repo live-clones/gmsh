@@ -5374,17 +5374,17 @@ double opt_mesh_line_width(OPT_ARGS_NUM)
   return CTX::instance()->mesh.lineWidth;
 }
 
-double opt_mesh_label_frequency(OPT_ARGS_NUM)
+double opt_mesh_label_sampling(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    CTX::instance()->mesh.labelFrequency = val;
+    CTX::instance()->mesh.labelSampling = val;
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.value[12]->value
-      (CTX::instance()->mesh.labelFrequency);
+      (CTX::instance()->mesh.labelSampling);
 #endif
-  return CTX::instance()->mesh.labelFrequency;
+  return CTX::instance()->mesh.labelSampling;
 }
 
 double opt_mesh_reverse_all_normals(OPT_ARGS_NUM)
@@ -5507,6 +5507,48 @@ double opt_mesh_msh_file_partitioned(OPT_ARGS_NUM)
   return CTX::instance()->mesh.mshFilePartitioned;
 }
 
+double opt_mesh_partition_hex_weight(OPT_ARGS_NUM) 
+{
+  if (action & GMSH_SET) 
+    CTX::instance()->partitionOptions.hexWeight = (int) val;
+  return CTX::instance()->partitionOptions.hexWeight;
+}
+
+double opt_mesh_partition_pri_weight(OPT_ARGS_NUM) 
+{
+  if (action & GMSH_SET) 
+    CTX::instance()->partitionOptions.priWeight = (int) val;
+  return CTX::instance()->partitionOptions.priWeight;
+}
+
+double opt_mesh_partition_pyr_weight(OPT_ARGS_NUM) 
+{
+  if (action & GMSH_SET) 
+    CTX::instance()->partitionOptions.pyrWeight = (int) val;
+  return CTX::instance()->partitionOptions.pyrWeight;
+}
+
+double opt_mesh_partition_qua_weight(OPT_ARGS_NUM) 
+{
+  if (action & GMSH_SET) 
+    CTX::instance()->partitionOptions.quaWeight = (int) val;
+  return CTX::instance()->partitionOptions.quaWeight;
+}
+
+double opt_mesh_partition_tet_weight(OPT_ARGS_NUM) 
+{
+  if (action & GMSH_SET) 
+    CTX::instance()->partitionOptions.tetWeight = (int) val;
+  return CTX::instance()->partitionOptions.tetWeight;
+}
+
+double opt_mesh_partition_tri_weight(OPT_ARGS_NUM) 
+{
+  if (action & GMSH_SET) 
+    CTX::instance()->partitionOptions.triWeight = (int) val;
+  return CTX::instance()->partitionOptions.triWeight;
+}
+
 double opt_mesh_binary(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -5560,6 +5602,70 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
   }
 #endif
   return CTX::instance()->mesh.algo2d;
+}
+
+double opt_mesh_algo_recombine(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.algoRecombine = (int)val;
+    if(CTX::instance()->mesh.algoRecombine < 0 && 
+       CTX::instance()->mesh.algoRecombine > 1)
+      CTX::instance()->mesh.algoRecombine = 0;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->options->mesh.choice[1]->value
+      (CTX::instance()->mesh.algoRecombine);
+  }
+#endif
+  return CTX::instance()->mesh.algoRecombine;
+}
+
+double opt_mesh_recombine_all(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.recombineAll = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->mesh.butt[21]->value
+      (CTX::instance()->mesh.recombineAll);
+#endif
+  return CTX::instance()->mesh.recombineAll;
+}
+
+double opt_mesh_remesh_algo(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.remeshAlgo = (int)val;
+    if(CTX::instance()->mesh.remeshAlgo < 0 && 
+       CTX::instance()->mesh.remeshAlgo > 2)
+      CTX::instance()->mesh.remeshAlgo = 0;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->options->mesh.choice[8]->value
+      (CTX::instance()->mesh.remeshAlgo);
+  }
+#endif
+  return CTX::instance()->mesh.remeshAlgo;
+}
+
+double opt_mesh_remesh_param(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.remeshParam = (int)val;
+    if(CTX::instance()->mesh.remeshParam < 0 && 
+       CTX::instance()->mesh.remeshParam > 1)
+      CTX::instance()->mesh.remeshParam = 0;
+  }
+#if defined(HAVE_FLTK)
+   if(FlGui::available() && (action & GMSH_GUI)) {
+     FlGui::instance()->options->mesh.choice[9]->value
+       (CTX::instance()->mesh.remeshParam);
+   }
+#endif
+  return CTX::instance()->mesh.remeshParam;
 }
 
 double opt_mesh_algo_subdivide(OPT_ARGS_NUM)
@@ -7085,6 +7191,24 @@ double opt_view_position1(OPT_ARGS_NUM)
   return opt->position[1];
 #else
   return 0.;
+#endif
+}
+
+double opt_view_sampling(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    opt->sampling = (int)val;
+    if(view) view->setChanged(true);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    FlGui::instance()->options->view.value[6]->value(opt->sampling);
+#endif
+  return opt->sampling;
+#else
+  return 1.;
 #endif
 }
 

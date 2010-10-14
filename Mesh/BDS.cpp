@@ -1156,6 +1156,7 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p)
 
 bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
 {
+
   if(!p->config_modified) return false;
   if(p->g && p->g->classif_degree <= 1) return false;
   if(p->g && p->g->classif_tag < 0) {
@@ -1167,6 +1168,10 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
     if((*eit)->numfaces() == 1) return false;
     eit++;
   }
+
+  /*    TEST    */
+  double R; SPoint3 c; bool isSphere = gf->isSphere(R,c);
+  double XX=0,YY=0,ZZ=0;
 
   double U = 0;
   double V = 0;
@@ -1187,14 +1192,27 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
     sTot += fact;
     U  += n->u * fact;
     V  += n->v * fact;
+    XX += n->X;
+    YY += n->Y;
+    ZZ += n->Z;
     LC += n->lc() * fact;
     ++ited;
   }
   U /= (sTot); 
   V /= (sTot);
   LC /= (sTot);
+  XX/= (sTot);
+  YY/= (sTot);
+  ZZ/= (sTot);
 
-  GPoint gp = gf->point(U * scalingU, V * scalingV);
+  GPoint gp;double uv[2];
+  if (isSphere){      
+    gp = gf->closestPoint(SPoint3(XX, YY, ZZ), uv);
+    U = gp.u();
+    V = gp.v();
+  }
+  else
+    gp = gf->point(U * scalingU, V * scalingV);
   
   if (!gp.succeeded()){
     return false;

@@ -69,6 +69,14 @@ struct PartitionDialog
   // Group 4
   Fl_Choice *choiceEdgeMatch;
   Fl_Choice *choiceRefineAlg;
+  // weights
+  Fl_Value_Input *inputTriWeight;
+  Fl_Value_Input *inputQuaWeight;
+  Fl_Value_Input *inputTetWeight;
+  Fl_Value_Input *inputPriWeight;
+  Fl_Value_Input *inputPyrWeight;
+  Fl_Value_Input *inputHexWeight;
+  
   void write_all_options()
   {
     // Group 0
@@ -115,6 +123,14 @@ struct PartitionDialog
     // Group 4
     CTX::instance()->partitionOptions.edge_matching = choiceEdgeMatch->value() + 1;
     CTX::instance()->partitionOptions.refine_algorithm = choiceRefineAlg->value() + 1;
+
+    CTX::instance()->partitionOptions.triWeight = inputTriWeight->value();
+    CTX::instance()->partitionOptions.quaWeight = inputQuaWeight->value();
+    CTX::instance()->partitionOptions.tetWeight = inputTetWeight->value();
+    CTX::instance()->partitionOptions.priWeight = inputPriWeight->value();
+    CTX::instance()->partitionOptions.pyrWeight = inputPyrWeight->value();
+    CTX::instance()->partitionOptions.hexWeight = inputHexWeight->value();
+
   }
   void read_all_options()
   {
@@ -154,7 +170,14 @@ struct PartitionDialog
     // Group 4
     choiceEdgeMatch->value(CTX::instance()->partitionOptions.edge_matching - 1);
     choiceRefineAlg->value(CTX::instance()->partitionOptions.refine_algorithm - 1);
-
+    
+    inputTriWeight->value(CTX::instance()->partitionOptions.triWeight);
+    inputQuaWeight->value(CTX::instance()->partitionOptions.quaWeight);
+    inputTetWeight->value(CTX::instance()->partitionOptions.tetWeight);
+    inputPriWeight->value(CTX::instance()->partitionOptions.priWeight);
+    inputPyrWeight->value(CTX::instance()->partitionOptions.pyrWeight);
+    inputHexWeight->value(CTX::instance()->partitionOptions.hexWeight);
+    
     // Call all callbacks to ensure consistent options
     partition_opt_chaco_globalalg_cb(choiceChacoAlg, this);
     partition_opt_architecture_cb(choiceArchitecture, this);
@@ -707,7 +730,7 @@ void partition_dialog()
 
   // Metis advanced option group [4]
   {
-    const int GH = 2 + WB + (BH + WB) + 2;
+    const int GH = 2 + WB + 3*(BH + WB) + 2;
     Fl_Group *g = new Fl_Group(0, y, w, GH);
     // Box (line)
     {
@@ -729,6 +752,64 @@ void partition_dialog()
         (2*WB + 2*BB, y, BB, BH, "Refinement\nalgorithm");
       dlg.choiceRefineAlg = o;
       o->menu(metisRefineAlgMenu);
+      o->align(FL_ALIGN_RIGHT);
+    }
+    y += BH + WB + 1;  // +1 for multiline label
+    // element weights - line 1 
+    { 
+      Fl_Value_Input *const o = new Fl_Value_Input
+        (WB, y, 2*BB/3, BH, "Triangle");
+      dlg.inputTriWeight = o;
+      o->minimum(1);
+      o->maximum(std::numeric_limits<int>::max());
+      o->step(1);
+      o->align(FL_ALIGN_RIGHT);
+    }
+    { 
+      Fl_Value_Input *const o = new Fl_Value_Input
+        (2*WB + (w/3-WB), y,2*BB/3, BH, "Tetrahedron");
+      dlg.inputTetWeight = o;
+      o->minimum(1);
+      o->maximum(std::numeric_limits<int>::max());
+      o->step(1);
+      o->align(FL_ALIGN_RIGHT);
+    }
+    { 
+      Fl_Value_Input *const o = new Fl_Value_Input
+        (3*WB + 2*(w/3-WB), y,2*BB/3, BH, "Prism");
+      dlg.inputPriWeight = o;
+      o->minimum(1);
+      o->maximum(std::numeric_limits<int>::max());
+      o->step(1);
+      o->align(FL_ALIGN_RIGHT);
+    }
+    y += 2 + WB + BH + 1; 
+    // element weights - line 2 
+    { 
+      Fl_Value_Input *const o = new Fl_Value_Input
+        (WB, y, 2*BB/3, BH, "Quadrangle");
+      dlg.inputQuaWeight = o;
+      o->minimum(1);
+      o->maximum(std::numeric_limits<int>::max());
+      o->step(1);
+      o->align(FL_ALIGN_RIGHT);
+    }
+    { 
+      Fl_Value_Input *const o = new Fl_Value_Input
+        (2*WB + (w/3-WB), y,2*BB/3, BH, "Hexahedron");
+      dlg.inputHexWeight = o;
+      o->minimum(1);
+      o->maximum(std::numeric_limits<int>::max());
+      o->step(1);
+      o->align(FL_ALIGN_RIGHT);
+    }
+    { 
+      Fl_Value_Input *const o = new Fl_Value_Input
+        (3*WB + 2*(w/3-WB), y,2*BB/3, BH, "Pyramid");
+      dlg.inputPyrWeight = o;
+      o->minimum(1);
+      o->maximum(std::numeric_limits<int>::max());
+      o->step(1);
       o->align(FL_ALIGN_RIGHT);
     }
     y += BH + WB + 1;  // +1 for multiline label

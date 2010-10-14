@@ -451,26 +451,31 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
           metisOptions[2] = 1;
           metisOptions[3] = options.refine_algorithm;
           metisOptions[4] = 0;
-          METIS_PartGraphKway
-            (&n, &graph.xadj[graph.section[iSec]],
-             &graph.adjncy[graph.section[iSec]], NULL, NULL, &wgtflag, &numflag,
-             &options.num_partitions, metisOptions, &edgeCut,
-             &graph.partition[graph.section[iSec]]);
+          if (options.num_partitions > 1) { // partgraphkway aborts with floating point error if np = 1
+            METIS_PartGraphKway
+              (&n, &graph.xadj[graph.section[iSec]],
+               &graph.adjncy[graph.section[iSec]], NULL, NULL, &wgtflag, &numflag,
+               &options.num_partitions, metisOptions, &edgeCut,
+               &graph.partition[graph.section[iSec]]);
+          }
           break;
         case 3:  // Nodal weight
-          printf("METIS with weights\n");
+          //printf("METIS with weights\n");
           metisOptions[0] = 1;
           metisOptions[1] = options.edge_matching;
           metisOptions[2] = 1;
           metisOptions[3] = 1;
           metisOptions[4] = 0;
           wgtflag = 2;
-          graph.fillWeights(options.nodalWeights);
-          METIS_PartGraphKway
-            (&n, &graph.xadj[graph.section[iSec]],
-             &graph.adjncy[graph.section[iSec]], &graph.vwgts[graph.section[iSec]], NULL, &wgtflag, &numflag,
-             &options.num_partitions, metisOptions, &edgeCut,
-             &graph.partition[graph.section[iSec]]);
+          graph.fillDefaultWeights();
+          // graph.fillWeights(options.nodalWeights);
+          if (options.num_partitions > 1) { // partgraphkway aborts with floating point error if np = 1
+            METIS_PartGraphKway
+              (&n, &graph.xadj[graph.section[iSec]],
+               &graph.adjncy[graph.section[iSec]], &graph.vwgts[graph.section[iSec]], NULL, &wgtflag, &numflag,
+               &options.num_partitions, metisOptions, &edgeCut,
+               &graph.partition[graph.section[iSec]]);
+          }
           break;
         }
       }

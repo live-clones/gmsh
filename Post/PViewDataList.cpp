@@ -104,13 +104,13 @@ double PViewDataList::getTime(int step)
   return Time[step];
 }
 
-double PViewDataList::getMin(int step)
+double PViewDataList::getMin(int step, bool onlyVisible)
 {
   if(step < 0 || step >= (int)TimeStepMin.size()) return Min;
   return TimeStepMin[step];
 }
 
-double PViewDataList::getMax(int step)
+double PViewDataList::getMax(int step, bool onlyVisible)
 {
   if(step < 0 || step >= (int)TimeStepMax.size()) return Max;
   return TimeStepMax[step];

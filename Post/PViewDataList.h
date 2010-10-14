@@ -61,9 +61,9 @@ class PViewDataList : public PViewData {
   bool finalize(bool computeMinMax=true);
   int getNumTimeSteps(){ return NbTimeStep; }
   double getTime(int step);
-  double getMin(int step=-1);
+  double getMin(int step=-1, bool onlyVisible=false);
+  double getMax(int step=-1, bool onlyVisible=false);
   void setMin(double min) {Min = min;}
-  double getMax(int step=-1);
   void setMax(double max) {Max = max;}
   SBoundingBox3d getBoundingBox(int step=-1){ return BBox; }
   void setBoundingBox(SBoundingBox3d& box) {BBox = box;}

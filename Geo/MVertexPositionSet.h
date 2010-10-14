@@ -32,6 +32,7 @@ class MVertexPositionSet{
   {
     int totpoints = vertices.size();
     if(!totpoints) return;
+    if(_maxDuplicates > totpoints) _maxDuplicates = totpoints;
     _zeronodes = annAllocPts(totpoints, 3);
     for(int i = 0; i < totpoints; i++){
       vertices[i]->setIndex(0);

@@ -41,21 +41,27 @@
 #include "multiscalePartition.h"
 #include "meshGFaceLloyd.h"
 
-static void copyMesh (GFace *source, GFace *target)
+static void copyMesh(GFace *source, GFace *target)
 {
-  std::map<MVertex*,MVertex*> vs2vt;
-  std::list<GEdge*> edges   = target->edges();
+  std::map<MVertex*, MVertex*> vs2vt;
+  std::list<GEdge*> edges = target->edges();
   {
-    std::list<GEdge*>::iterator it = edges.begin();
-    for (; it!=edges.end(); ++it){
+    for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); ++it){
       int sign = 1;
-      std::map<int,int>::iterator adnksd = target->edgeCounterparts.find((*it)->tag());
+      std::map<int, int>::iterator adnksd = target->edgeCounterparts.find((*it)->tag());
       int source_e;
-      if ( adnksd != target->edgeCounterparts.end())
-	 source_e= adnksd->second;
+      if(adnksd != target->edgeCounterparts.end())
+	 source_e = adnksd->second;
       else{
 	sign = -1;
-	source_e = target->edgeCounterparts[-(*it)->tag()];
+        adnksd = target->edgeCounterparts.find(-(*it)->tag());
+        if(adnksd != target->edgeCounterparts.end())
+          source_e = adnksd->second;
+        else{
+          Msg::Error("Could not find edge counterpart %d in slave surface %d",
+                     (*it)->tag(), target->tag());
+          return;
+        }
       }
 
       GEdge *se = source->model()->getEdgeByTag(abs(source_e));
@@ -63,7 +69,7 @@ static void copyMesh (GFace *source, GFace *target)
       if (source_e * sign > 0){
 	vs2vt[se->getBeginVertex()->mesh_vertices[0]] = te->getBeginVertex()->mesh_vertices[0];
 	vs2vt[se->getEndVertex()->mesh_vertices[0]] = te->getEndVertex()->mesh_vertices[0];
-	for (unsigned i=0;i<se->mesh_vertices.size();i++){
+	for (unsigned i = 0; i < se->mesh_vertices.size(); i++){
 	  MVertex *vs = se->mesh_vertices[i];
 	  MVertex *vt = te->mesh_vertices[i];
 	  vs2vt[vs] = vt;
@@ -72,7 +78,7 @@ static void copyMesh (GFace *source, GFace *target)
       else {
 	vs2vt[se->getBeginVertex()->mesh_vertices[0]] = te->getEndVertex()->mesh_vertices[0];
 	vs2vt[se->getEndVertex()->mesh_vertices[0]] = te->getBeginVertex()->mesh_vertices[0];
-	for (unsigned i=0;i<se->mesh_vertices.size();i++){
+	for (unsigned i = 0; i < se->mesh_vertices.size(); i++){
 	  MVertex *vs = se->mesh_vertices[i];
 	  MVertex *vt = te->mesh_vertices[se->mesh_vertices.size() - i - 1];
 	  vs2vt[vs] = vt;
@@ -81,11 +87,9 @@ static void copyMesh (GFace *source, GFace *target)
     }
   }
 
-  std::map<MVertex*,MVertex*>::iterator it = vs2vt.begin();
-  
-  SPoint2 param_source[2],param_target[2];
+  SPoint2 param_source[2], param_target[2];
   int count = 0;
-  for (; it != vs2vt.end() ; ++it){
+  for (std::map<MVertex*, MVertex*>::iterator it = vs2vt.begin(); it != vs2vt.end() ; ++it){
     MVertex *vs = it->first;
     MVertex *vt = it->second;
     if (vs->onWhat()->dim() == 1){
@@ -97,55 +101,50 @@ static void copyMesh (GFace *source, GFace *target)
 
   if (count < 2) return;
   
-  const double t1u = param_target[0].x();
-  const double t1v = param_target[0].y();
-  const double t2u = param_target[1].x();
-  const double t2v = param_target[1].y();
-  const double s1u = param_source[0].x();
-  const double s1v = param_source[0].y();
-  const double s2u = param_source[1].x();
-  const double s2v = param_source[1].y();
+  const double t1u = param_target[0].x(), t1v = param_target[0].y();
+  const double t2u = param_target[1].x(), t2v = param_target[1].y();
+  const double s1u = param_source[0].x(), s1v = param_source[0].y();
+  const double s2u = param_source[1].x(), s2v = param_source[1].y();
 
-  SVector3 _a(s2u-s1u,s2v-s1v,0);
-  SVector3 _b(t2u-t1u,t2v-t1v,0);
-  SVector3 _c = crossprod(_a,_b);
+  SVector3 _a(s2u - s1u, s2v - s1v, 0);
+  SVector3 _b(t2u - t1u, t2v - t1v, 0);
+  SVector3 _c = crossprod(_a, _b);
   double sinA = _c.z();
-  double cosA = dot(_a,_b);
+  double cosA = dot(_a, _b);
   const double theta = atan2(sinA, cosA);
   const double c = cos(theta);
   const double s = sin(theta);
 
   for(unsigned int i = 0; i < source->mesh_vertices.size(); i++){
     MVertex *vs = source->mesh_vertices[i];
-    double u,v;
-    vs->getParameter(0,u);
-    vs->getParameter(1,v);
+    double u, v;
+    vs->getParameter(0, u);
+    vs->getParameter(1, v);
     // apply transformation
-    const double U =   c * (u-s1u) + s * (v-s1v) + t1u;
-    const double V =  -s * (u-s1u) + c * (v-s1v) + t1v;
-    GPoint gp = target->point(SPoint2(U,V));
-    MVertex *vt = new MFaceVertex(gp.x(), gp.y(), gp.z(), target,U,V);
+    const double U =   c * (u - s1u) + s * (v - s1v) + t1u;
+    const double V =  -s * (u - s1u) + c * (v - s1v) + t1v;
+    GPoint gp = target->point(SPoint2(U, V));
+    MVertex *vt = new MFaceVertex(gp.x(), gp.y(), gp.z(), target, U, V);
     target->mesh_vertices.push_back(vt);
-    vs2vt[vs] = vt;    
+    vs2vt[vs] = vt;
   }
 
-  for (unsigned i=0;i<source->triangles.size();i++){
+  for (unsigned i = 0; i < source->triangles.size(); i++){
     MVertex *vt[3];
     for (int j = 0; j < 3; j++){
       MVertex *vs = source->triangles[i]->getVertex(j); 
-      
       vt[j] = vs2vt[vs];
       if (!vt[j]){
 	SPoint2 p;
 	bool success = reparamMeshVertexOnFace(vs, source, p);
 	const double U =   c * (p.x()-s1u) + s * (p.y()-s1v) + t1u;
 	const double V =  -s * (p.x()-s1u) + c * (p.y()-s1v) + t1v;
-	for (std::list<GEdge*>::iterator it = edges.begin(); it!=edges.end(); ++it){
+	for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); ++it){
 	  GEdge *te = *it;
-	  for (unsigned k=0;k<te->lines.size();k++){
+	  for (unsigned k = 0; k < te->lines.size(); k++){
 	    MVertex *gotcha = te->lines[k]->getVertex(0);
 	    bool success2 = reparamMeshVertexOnFace(gotcha, target, p);
-	    const double D = sqrt((U-p.x())*(U-p.x())+(V-p.y())*(V-p.y()));
+	    const double D = sqrt((U - p.x()) * (U - p.x()) + (V - p.y()) * (V - p.y()));
 	    if (D < 1.e-9){
 	      vt[j] = gotcha;
 	      break;
@@ -156,19 +155,19 @@ static void copyMesh (GFace *source, GFace *target)
     }
     if (!vt[0] || !vt[1] ||!vt[2]){
       Msg::Fatal("yet another error in the copymesh procedure %p %p %p %d %d %d",
-		 vt[0],vt[1],vt[2],source->triangles[i]->getVertex(0)->onWhat()->dim(),
+		 vt[0], vt[1], vt[2], source->triangles[i]->getVertex(0)->onWhat()->dim(),
 		 source->triangles[i]->getVertex(1)->onWhat()->dim(),
 		 source->triangles[i]->getVertex(2)->onWhat()->dim());
     }
-    target->triangles.push_back(new MTriangle(vt[0],vt[1],vt[2]));
+    target->triangles.push_back(new MTriangle(vt[0], vt[1], vt[2]));
   }
 
-  for (unsigned i=0;i<source->quadrangles.size();i++){
+  for (unsigned i = 0; i < source->quadrangles.size(); i++){
     MVertex *v1 = vs2vt[source->quadrangles[i]->getVertex(0)];
     MVertex *v2 = vs2vt[source->quadrangles[i]->getVertex(1)];
     MVertex *v3 = vs2vt[source->quadrangles[i]->getVertex(2)];
     MVertex *v4 = vs2vt[source->quadrangles[i]->getVertex(3)];
-    target->quadrangles.push_back(new MQuadrangle(v1,v2,v3,v4));
+    target->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
   }
 }
 
@@ -296,6 +295,9 @@ static void remeshUnrecoveredEdges(std::map<MVertex*, BDS_Point*> &recoverMapInv
 
 static bool algoDelaunay2D(GFace *gf)
 {
+  // HACK REMOVE ME
+  //  if (gf->geomType() == GEntity::CompoundSurface)return true;
+
   if(noSeam(gf) && (CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY ||
 		    CTX::instance()->mesh.algo2d == ALGO_2D_BAMG || 
                     CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL))
@@ -789,8 +791,9 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   }
  
   if (Msg::GetVerbosity() == 10){
-    GEdge *ge = new discreteEdge(gf->model(), 1000,0,0);
+    GEdge *ge = new discreteEdge(gf->model(), 1000, 0, 0);
     MElementOctree octree(gf->model());
+    Msg::Info("Writing voronoi and skeleton.pos");
     doc.Voronoi();
     doc.makePosView("voronoi.pos", gf);
     doc.printMedialAxis(octree.getInternalOctree(), "skeleton.pos", gf, ge);
@@ -869,7 +872,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   // BDS mesh is passed in order not to recompute local coordinates of
   // vertices
   if(algoDelaunay2D(gf)){
-    if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
+    if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)//   ||  
+       //       gf->geomType() == GEntity::CompoundSurface)
       bowyerWatsonFrontal(gf);
     else if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY)
       bowyerWatson(gf);
@@ -880,7 +884,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
     for(int i = 0; i < CTX::instance()->mesh.nbSmoothing; i++) 
       laplaceSmoothing(gf);
   }
-  else if(debug){
+
+  if(debug){
     char name[256];
     sprintf(name, "real%d.pos", gf->tag());
     outputScalarField(m->triangles, name, 0, gf);
@@ -893,7 +898,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   // delete the mesh
   delete m;
 
-  if(gf->meshAttributes.recombine && !CTX::instance()->mesh.optimizeLloyd)
+  if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) && 
+     !CTX::instance()->mesh.optimizeLloyd)
     recombineIntoQuads(gf);
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
@@ -959,7 +965,7 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
     
     bool seam = ges.ge->isSeam(gf);
 
-    if (seam) printf("face %d has seam %d\n", gf->tag(), ges.ge->tag());
+    //if (seam) printf("face %d has seam %d\n", gf->tag(), ges.ge->tag());
     
     Range<double> range = ges.ge->parBounds(0);
     
@@ -1449,7 +1455,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   }
   
   if(algoDelaunay2D(gf)){
-    if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
+    if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)//   ||  
+       //       gf->geomType() == GEntity::CompoundSurface)
       bowyerWatsonFrontal(gf);
     else if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY)
       bowyerWatson(gf);
@@ -1462,7 +1469,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   // delete the mesh  
   delete m;
 
- if(gf->meshAttributes.recombine && !CTX::instance()->mesh.optimizeLloyd)
+ if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) && 
+    !CTX::instance()->mesh.optimizeLloyd)
     recombineIntoQuads(gf);
  
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
@@ -1494,7 +1502,6 @@ void meshGFace::operator() (GFace *gf)
   }
 
   if(gf->geomType() == GEntity::DiscreteSurface) return;
-  if(gf->geomType() == GEntity::BoundaryLayerSurface) return;
   if(gf->geomType() == GEntity::ProjectionFace) return;
   if(gf->meshAttributes.Method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) return;
@@ -1503,6 +1510,7 @@ void meshGFace::operator() (GFace *gf)
   deMeshGFace dem;
   dem(gf);
 
+  if(MeshBoundaryLayerSurface(gf)) return;
   if(MeshTransfiniteSurface(gf)) return;
   if(MeshExtrudedSurface(gf)) return;
   if(gf->meshMaster() != gf->tag()){
@@ -1624,9 +1632,9 @@ void partitionAndRemesh(GFaceCompound *gf)
   if(gf->nbSplit > 0) method = MULTILEVEL;
   else method = LAPLACIAN;
     
-  multiscalePartition *msp = new multiscalePartition(elements, abs(gf->nbSplit), method);
-
-  //gf->partitionFaceCM(); 
+  int allowType = gf->allowPartition();
+  multiscalePartition *msp = new multiscalePartition(elements, abs(gf->nbSplit), 
+						     method, allowType);
 
   int NF = msp->getNumberOfParts();
   int numv = gf->model()->getMaxElementaryNumber(0) + 1;
@@ -1672,9 +1680,11 @@ void partitionAndRemesh(GFaceCompound *gf)
     f_compound.push_back(pf);     
     Msg::Info("Parametrize Compound Surface (%d) = %d discrete face",
               num_gfc, pf->tag());
+
     GFaceCompound *gfc = new GFaceCompound(gf->model(), num_gfc, f_compound,
-                                           b[0], b[1], b[2], b[3], 0,
-                                           gf->getTypeOfMapping());
+                                            b[0], b[1], b[2], b[3], 0,
+                                            gf->getTypeOfMapping());
+
     gfc->meshAttributes.recombine = gf->meshAttributes.recombine;
     gf->model()->add(gfc);
 
@@ -1710,6 +1720,15 @@ void partitionAndRemesh(GFaceCompound *gf)
         allNod.insert(v[k]);
       }
       gf->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+    }  
+    for(unsigned int j = 0; j < gfc->quadrangles.size(); ++j){
+      MQuadrangle *q = gfc->quadrangles[j];
+      std::vector<MVertex *> v(4);
+      for(int k = 0; k < 4; k++){
+        v[k] = q->getVertex(k); 
+        allNod.insert(v[k]);
+      }
+      gf->quadrangles.push_back(new MQuadrangle(v[0], v[1], v[2], v[3]));
     }  
  
   }
@@ -1781,8 +1800,8 @@ void partitionAndRemesh(GFaceCompound *gf)
   }
 
   double t3 = Cpu();
-  Msg::Info("*** Mesh of surface %d done by assembly remeshed faces (%g s)",
-            gf->tag(), t3-t2);
+  Msg::Info("*** Mesh of surface %d done by assembly %d remeshed faces (%g s)",
+            gf->tag(), NF, t3-t2);
   Msg::Info("-----------------------------------------------------------");
  
   gf->coherenceNormals();

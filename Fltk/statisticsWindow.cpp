@@ -16,6 +16,7 @@
 #include "Generator.h"
 #include "Context.h"
 #include "OS.h"
+#include "Field.h"
 
 void statistics_cb(Fl_Widget *w, void *data)
 {
@@ -184,7 +185,7 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
 
 void statisticsWindow::compute(bool elementQuality)
 {
-  //emi hack
+  //emi hack - MINIMUM ANGLES
   // double minAngle = 120.0;
   // double meanAngle = 0.0;
   // int count = 0;
@@ -204,6 +205,90 @@ void statisticsWindow::compute(bool elementQuality)
   // meanAngle  = meanAngle / count;
   // printf("Angles = min=%g av=%g \n", minAngle, meanAngle);
   //hack emi
+
+  
+  //Emi hack - MESH DEGREE VERTICES
+  // std::vector<GEntity*> entities;
+  // std::set<MEdge, Less_Edge> edges;
+  // GModel::current()->getEntities(entities);
+  // std::map<MVertex*, int > vert2Deg;
+  // for(unsigned int i = 0; i < entities.size(); i++){
+  //   printf("entity dim =%d tag=%d \n", entities[i]->dim() , entities[i]->tag());
+  //   if(entities[i]->dim() < 2 ) continue;
+  //   if(entities[i]->tag() != 100) continue;
+  //   printf("continuing \n");
+  //   for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+  //     MElement *e =  entities[i]->getMeshElement(j);
+  //     for(unsigned int k = 0; k < e->getNumEdges(); k++){
+  // 	edges.insert(e->getEdge(k));
+  //     }
+  //     for(unsigned int k = 0; k < e->getNumVertices(); k++){
+  // 	MVertex *v = e->getVertex(k);
+  // 	if (v->onWhat()->dim() < 2) continue; 
+  // 	std::map<MVertex*, int >::iterator it = vert2Deg.find(v);
+  // 	if (it == vert2Deg.end()) {
+  // 	  vert2Deg.insert(std::make_pair(v,1));
+  // 	}
+  // 	else{
+  // 	  int nbE = it->second+1;
+  // 	  it->second = nbE;
+  // 	}
+  //     }
+  //   }
+  // }
+  // int dMin = 10;
+  // int dMax = 0;
+  // int d4 = 0;
+  // int nbElems = vert2Deg.size();
+  // std::map<MVertex*, int >::const_iterator itmap = vert2Deg.begin();
+  // for(; itmap !=vert2Deg.end(); itmap++){
+  //   MVertex *v = itmap->first;
+  //   int nbE =  itmap->second;
+  //   dMin = std::min(nbE, dMin);
+  //   dMax = std::max(nbE, dMax);
+  //   if (nbE == 4) d4 += 1;
+  // }
+  // if (nbElems > 0)
+  //   printf("Stats degree vertices: dMin=%d , dMax=%d, d4=%g \n", dMin, dMax, (double)d4/nbElems);
+
+  // FieldManager *fields = GModel::current()->getFields();
+  // Field *f = fields->get(fields->background_field);
+  // int nbEdges = edges.size();
+  // printf("nb edges =%d \n", nbEdges);
+  // system("rm qualEdges.txt");
+  // FILE *fp = fopen("qualEdges.txt", "w");
+  // std::vector<int> qualE;
+  // int nbS = 50;
+  // qualE.resize(nbS);
+  // if(fields->background_field > 0){
+  //   printf("found field \n");
+  //   std::set<MEdge, Less_Edge>::iterator it = edges.begin();
+  //   double sum = 0;
+  //   for (; it !=edges.end();++it){
+  //     MVertex *v0 = it->getVertex(0);
+  //     MVertex *v1 = it->getVertex(1);
+  //     double l = sqrt((v0->x()-v1->x())*(v0->x()-v1->x())+
+  // 		      (v0->y()-v1->y())*(v0->y()-v1->y())+
+  // 		      (v0->z()-v1->z())*(v0->z()-v1->z()));
+  //     double lf =  (*f)(0.5*(v0->x()+v1->x()), 0.5*(v0->y()+v1->y()),0.5*(v0->z()+v1->z()),v0->onWhat());
+  //     double el = l/lf;
+  //     int index = (int) ceil(el*nbS*0.5);
+  //     qualE[index]+= 1;
+  //     double e = (l>lf) ? lf/l : l/lf;
+  //     sum += e - 1.0;
+  //   }
+  //   double tau = exp ((1./edges.size()) * sum);
+  //   printf("N edges = %d tau = %g\n",(int)edges.size(),tau);
+
+  //   double ibegin = 2./(2*nbS);
+  //   double inext = 2./nbS;
+  //   for (int i= 0; i< qualE.size(); i++){
+  //     fprintf(fp, "0 0 0 0 %g 0 0 %g \n", ibegin+i*inext , (double)qualE[i]/nbEdges);
+  //   }
+
+  // }
+  // fclose(fp);
+  //emi end hack
 
   int num = 0;
   static double s[50];

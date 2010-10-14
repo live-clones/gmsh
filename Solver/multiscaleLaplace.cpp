@@ -706,6 +706,7 @@ static void printLevel_onlysmall(const char* fn,
 				 std::map<MVertex*,SPoint2> *coordinates,
 				 double version,
 				 double tolerance){
+
   std::vector<MElement *> small;
   double dx[3] = {0,0,0};
   int COUNT = 0;
@@ -1101,12 +1102,12 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
   }
 
   //Save multiscale meshes
-  std::string name1(level._name+"real.msh");
-  std::string name2(level._name+"param.msh");
-  std::string name3(level._name+"param_small.msh");
-  printLevel (name1.c_str(),level.elements,0,2.2);
-  printLevel (name2.c_str(),level.elements,&level.coordinates,2.2);
-  printLevel_onlysmall (name3.c_str(),level.elements,&level.coordinates,2.2,1.e-15);
+  // std::string name1(level._name+"real.msh");
+  // std::string name2(level._name+"param.msh");
+  // std::string name3(level._name+"param_small.msh");
+  // printLevel (name1.c_str(),level.elements,0,2.2);
+  // printLevel (name2.c_str(),level.elements,&level.coordinates,2.2);
+  // printLevel_onlysmall (name3.c_str(),level.elements,&level.coordinates,2.2,1.e-15);
 
   //For every small region compute a new parametrization
   Msg::Info("Level (%d-%d): %d connected small regions",level.recur, level.region, regions.size());
@@ -1215,22 +1216,22 @@ void multiscaleLaplace::cut (std::vector<MElement *> &elements)
   recur_cut_ (1.0, M_PI, 0.0, root,left,right);
   connected_left_right(left, right);
 
-  printLevel ("Rootcut-left.msh",left,0,2.2);  
-  printLevel ("Rootcut-right.msh",right,0,2.2);  
-  printLevel ("Rootcut-all.msh",elements, 0,2.2);  
+  // printLevel ("Rootcut-left.msh",left,0,2.2);  
+  // printLevel ("Rootcut-right.msh",right,0,2.2);  
+  // printLevel ("Rootcut-all.msh",elements, 0,2.2);  
 
-  printLevel ("Rootcut-left-param.msh",left,&root->coordinates,2.2);
-  printLevel_onlysmall ("Rootcut-left-param10.msh",left,&root->coordinates,2.2,1.e-10);
-  printLevel_onlysmall ("Rootcut-left-param12.msh",left,&root->coordinates,2.2,1.e-12);
-  printLevel_onlysmall ("Rootcut-left-param15.msh",left,&root->coordinates,2.2,1.e-15);
+  // printLevel ("Rootcut-left-param.msh",left,&root->coordinates,2.2);
+  // printLevel_onlysmall ("Rootcut-left-param10.msh",left,&root->coordinates,2.2,1.e-10);
+  // printLevel_onlysmall ("Rootcut-left-param12.msh",left,&root->coordinates,2.2,1.e-12);
+  // printLevel_onlysmall ("Rootcut-left-param15.msh",left,&root->coordinates,2.2,1.e-15);
 
-  printLevel ("Rootcut-right-param.msh",right,&root->coordinates,2.2);
-  printLevel_onlysmall ("Rootcut-right-param10.msh",right,&root->coordinates,2.2,1.e-10);
-  printLevel_onlysmall ("Rootcut-right-param12.msh",right,&root->coordinates,2.2,1.e-12);
-  printLevel_onlysmall ("Rootcut-right-param15.msh",right,&root->coordinates,2.2,1.e-15);
+  // printLevel ("Rootcut-right-param.msh",right,&root->coordinates,2.2);
+  // printLevel_onlysmall ("Rootcut-right-param10.msh",right,&root->coordinates,2.2,1.e-10);
+  // printLevel_onlysmall ("Rootcut-right-param12.msh",right,&root->coordinates,2.2,1.e-12);
+  // printLevel_onlysmall ("Rootcut-right-param15.msh",right,&root->coordinates,2.2,1.e-15);
 
-  printLevel_onlysmall ("Rootcut-all-param12.msh",elements,&root->coordinates,2.2,1.e-12);
-  printLevel_onlysmall ("Rootcut-all-param15.msh",elements,&root->coordinates,2.2,1.e-15);
+  // printLevel_onlysmall ("Rootcut-all-param12.msh",elements,&root->coordinates,2.2,1.e-12);
+  // printLevel_onlysmall ("Rootcut-all-param15.msh",elements,&root->coordinates,2.2,1.e-15);
 
   if ( elements.size() != left.size()+right.size()) {
     Msg::Error("Cutting laplace wrong nb elements (%d) != left + right (%d)",  elements.size(), left.size()+right.size());

@@ -102,6 +102,31 @@ static fullMatrix<double> generatePascalQuad(int order)
 04 14
 ⋮  ⋮
 */
+
+// generate all monomials xi^m * eta^n with n and m <= order
+static fullMatrix<double> generatePascalHex(int order)
+{
+
+  fullMatrix<double> monomials( (order+1)*(order+1)*(order+1), 3);
+  int index = 0;
+  for (int p = 0; p <= order; p++) {
+    for(int i = 0; i < p; i++) {
+      for(int j = 0; j < i; j++, index++) {
+	monomials(index, 0) = p;
+	monomials(index, 1) = i;
+	monomials(index, 2) = j;
+      }
+    }
+    for(int i = 0; i <= p; i++, index++) {
+      for(int j = 0; j <= p; i++, index++) {
+	monomials(index, 0) = p-i;
+	monomials(index, 1) = p;
+      }
+    }
+  }
+  return monomials;
+}
+
 static fullMatrix<double> generatePascalQuadSerendip(int order)
 {
   fullMatrix<double> monomials( (order)*4, 2);
@@ -1134,11 +1159,23 @@ const polynomialBasis *polynomialBases::find(int tag)
     F.points =    gmshGeneratePointsTetrahedron(5, false);
     generate3dFaceClosure(F.closures, 5);
     break;
+  case MSH_TET_74 :
+    F.numFaces = 4;
+    F.monomials = generatePascalSerendipityTetrahedron(6);
+    F.points =    gmshGeneratePointsTetrahedron(6, true);
+    generate3dFaceClosure(F.closures, 6);
+    break;
   case MSH_TET_84 :
     F.numFaces = 4;
     F.monomials = generatePascalTetrahedron(6);
     F.points =    gmshGeneratePointsTetrahedron(6, false);
     generate3dFaceClosure(F.closures, 6);
+    break;
+  case MSH_TET_100 :
+    F.numFaces = 4;
+    F.monomials = generatePascalSerendipityTetrahedron(7);
+    F.points =    gmshGeneratePointsTetrahedron(7, true);
+    generate3dFaceClosure(F.closures, 7);
     break;
   case MSH_TET_120 :
     F.numFaces = 4;
@@ -1146,11 +1183,29 @@ const polynomialBasis *polynomialBases::find(int tag)
     F.points =    gmshGeneratePointsTetrahedron(7, false);
     generate3dFaceClosure(F.closures, 7);
     break;
+  case MSH_TET_130 :
+    F.numFaces = 4;
+    F.monomials = generatePascalSerendipityTetrahedron(8);
+    F.points =    gmshGeneratePointsTetrahedron(8, true);
+    generate3dFaceClosure(F.closures, 8);
+    break;
+  case MSH_TET_164 :
+    F.numFaces = 4;
+    F.monomials = generatePascalSerendipityTetrahedron(9);
+    F.points =    gmshGeneratePointsTetrahedron(9, true);
+    generate3dFaceClosure(F.closures, 9);
+    break;
   case MSH_TET_165 :
     F.numFaces = 4;
     F.monomials = generatePascalTetrahedron(8);
     F.points =    gmshGeneratePointsTetrahedron(8, false);
     generate3dFaceClosure(F.closures, 8);
+    break;
+  case MSH_TET_202 :
+    F.numFaces = 4;
+    F.monomials = generatePascalSerendipityTetrahedron(10);
+    F.points =    gmshGeneratePointsTetrahedron(10, true);
+    generate3dFaceClosure(F.closures, 10);
     break;
   case MSH_TET_220 :
     F.numFaces = 4;
@@ -1299,6 +1354,7 @@ const polynomialBasis *polynomialBases::find(int tag)
     generate3dFaceClosure(F.closures, 1);
     break;
   }
+  F.type = tag;
 
   F.coefficients = generateLagrangeMonomialCoefficients(F.monomials, F.points);
 //   printf("Case: %d coeffs:\n",tag);

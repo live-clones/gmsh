@@ -14,32 +14,49 @@
 class binding;
 template <class scalar> class fullMatrix;
 
+// An abstract interface for vectors of scalar
 template <class scalar>
 class fullVector
 {
  private:
-  int _r;
-  scalar *_data;
+  int _r;          // size of the vector
+  scalar *_data;   // pointer on the first element
   friend class fullMatrix<scalar>;
+
  public:
-  inline const scalar* getDataPtr() const{
-    return _data;
-  }
+  // constructor and destructor
+  fullVector(void) : _r(0),_data(0) {}
   fullVector(int r) : _r(r)
   {
     _data = new scalar[_r];
     setAll(0.);
   }
-  fullVector(void) : _r(0),_data(0) {}
   fullVector(const fullVector<scalar> &other) : _r(other._r)
   {
     _data = new scalar[_r];
     for(int i = 0; i < _r; ++i) _data[i] = other._data[i];
   }
-  ~fullVector() { if(_data) delete [] _data; }
-  bool resize(int r)
+  ~fullVector()
+  {
+    if(_data) delete [] _data;
+  }
+
+  // get information (size, value)
+  inline int size()                  const { return _r; }
+  inline const scalar * getDataPtr() const { return _data; }
+  inline scalar operator () (int i)  const { return _data[i]; }
+  inline scalar & operator () (int i)      { return _data[i]; }
+
+  // operations
+  inline scalar norm() const
+  {
+    scalar n = 0.;
+    for(int i = 0; i < _r; ++i) n += _data[i] * _data[i];
+    return sqrt(n);
+  }
+  bool resize(int r)  
   { 
-    if (_r < r){
+    if (_r < r) {
       if (_data) delete[] _data;
       _r = r;
       _data = new scalar[_r];
@@ -49,25 +66,9 @@ class fullVector
   }
   void setAsProxy(const fullVector<scalar> &original, int r_start, int r)
   {
-    if(_data)
-      delete [] _data;
+    if(_data) delete [] _data;
     _r = r;
     _data = original._data + r_start;
-  }
-  inline scalar operator () (int i) const
-  {
-    return _data[i];
-  }
-  inline int size() const { return _r; }
-  inline scalar & operator () (int i)
-  {
-    return _data[i];
-  }
-  inline scalar norm() const
-  {
-    scalar n = 0.;
-    for(int i = 0; i < _r; ++i) n += _data[i] * _data[i];
-    return sqrt(n);
   }
   inline void scale(const scalar s)
   {
@@ -103,6 +104,8 @@ class fullVector
   {
     for (int i = 0; i < _r; i++) _data[i] *= x._data[i];
   }
+
+  // printing and file treatment
   void print(const char *name="") const 
   {
     printf("Printing vector %s:\n", name);
@@ -112,46 +115,27 @@ class fullVector
     }
     printf("\n");
   }
-  void binarySave (FILE *f) const{
+  void binarySave (FILE *f) const
+  {
     fwrite (_data, sizeof(scalar), _r, f); 
   }
-  void binaryLoad (FILE *f){
+  void binaryLoad (FILE *f)
+  {
     if(fread (_data, sizeof(scalar), _r, f) != _r) return; 
   }
 };
 
+// An abstract interface for dense matrix of scalar
 template <class scalar>
 class fullMatrix
 {
  private:
   bool _own_data; // should data be freed on delete ?
-  int _r, _c;
-  scalar *_data;
+  int _r, _c; // size of the matrix
+  scalar *_data; // pointer on the first element
+
  public:
-  inline scalar get(int r, int c) const {
-    #ifdef _DEBUG
-    if (r >= _r || r < 0 || c >= _c || c < 0)
-      Msg::Fatal("invalid index to access fullMatrix : %i %i (size = %i %i)", 
-                 r, c, _r, _c);
-    #endif
-    return (*this)(r, c); 
-  }
-  inline void set(int r, int c, scalar v){
-    #ifdef _DEBUG
-    if (r >= _r || r < 0 || c >= _c || c < 0)
-      Msg::Fatal("invalid index to access fullMatrix : %i %i (size = %i %i)",
-                 r, c, _r, _c);
-    #endif
-    (*this)(r, c) = v; 
-  }
-  inline scalar norm() const
-  {
-    scalar n = 0.;
-    for(int i = 0; i < _r; ++i) 
-      for(int j = 0; j < _c; ++j) 
-	n += (*this)(i, j) * (*this)(i, j);
-    return sqrt(n);
-  }
+  // constructor and destructor
   fullMatrix(scalar *original, int r, int c)
   {
     _r = r;
@@ -184,10 +168,44 @@ class fullMatrix
     for(int i = 0; i < _r * _c; ++i) _data[i] = other._data[i];
   }
   fullMatrix() : _own_data(false),_r(0), _c(0), _data(0) {}
-  ~fullMatrix() { if(_data && _own_data) delete [] _data; }
+  ~fullMatrix()
+  {
+    if(_data && _own_data) delete [] _data;
+  }
+
+  // get information (size, value)
+  inline int size1() const { return _r; }
+  inline int size2() const { return _c; }
+  inline scalar get(int r, int c) const
+  {
+    #ifdef _DEBUG
+    if (r >= _r || r < 0 || c >= _c || c < 0)
+      Msg::Fatal("invalid index to access fullMatrix : %i %i (size = %i %i)", 
+                 r, c, _r, _c);
+    #endif
+    return (*this)(r, c); 
+  }
+
+  // operations
+  inline void set(int r, int c, scalar v){
+    #ifdef _DEBUG
+    if (r >= _r || r < 0 || c >= _c || c < 0)
+      Msg::Fatal("invalid index to access fullMatrix : %i %i (size = %i %i)",
+                 r, c, _r, _c);
+    #endif
+    (*this)(r, c) = v; 
+  }
+  inline scalar norm() const
+  {
+    scalar n = 0.;
+    for(int i = 0; i < _r; ++i) 
+      for(int j = 0; j < _c; ++j) 
+	n += (*this)(i, j) * (*this)(i, j);
+    return sqrt(n);
+  }
   bool resize(int r, int c, bool resetValue = true) // data will be owned (same as constructor)
   {
-    if ((r * c > _r * _c) || !_own_data){
+    if ((r * c > _r * _c) || !_own_data) {
       _r = r;
       _c = c;
       if (_own_data && _data) delete[] _data;
@@ -197,7 +215,7 @@ class fullMatrix
         setAll(0.);
       return true;
     }
-    else{
+    else {
       _r = r;
       _c = c;
     }
@@ -230,12 +248,11 @@ class fullMatrix
     _c = nbCol;
     _r = nbRow;
     if(_c*_r != original._c*original._r)
-      Msg::Error("trying to reshape a fullMatrix without conserving the total number of entries");
+      Msg::Error("Trying to reshape a fullMatrix without conserving the "
+                 "total number of entries");
     _own_data = false;
     _data = original._data;
   }
-  inline int size1() const { return _r; }
-  inline int size2() const { return _c; }
   fullMatrix<scalar> & operator = (const fullMatrix<scalar> &other)
   {
     if(this != &other){
@@ -293,7 +310,7 @@ class fullMatrix
     _own_data = true;
     setAll(a);
   }
-  void mult_naive(const fullMatrix<scalar> &b, fullMatrix<scalar> &c)const
+  void mult_naive(const fullMatrix<scalar> &b, fullMatrix<scalar> &c) const
   {
     c.scale(0.);
     for(int i = 0; i < _r; i++)
@@ -301,8 +318,7 @@ class fullMatrix
         for(int k = 0; k < _c; k++)
           c._data[i + _r * j] += (*this)(i, k) * b(k, j);
   }
-  ;
-  void mult(const fullMatrix<scalar> &b, fullMatrix<scalar> &c)const
+  void mult(const fullMatrix<scalar> &b, fullMatrix<scalar> &c) const
 #if !defined(HAVE_BLAS)
   {
     mult_naive(b,c);
@@ -322,7 +338,6 @@ class fullMatrix
     scale(beta);
     add(temp);
   }
-  ;
   void gemm(const fullMatrix<scalar> &a, const fullMatrix<scalar> &b, 
             scalar alpha=1., scalar beta=1.)
 #if !defined(HAVE_BLAS)
@@ -341,7 +356,7 @@ class fullMatrix
   }
   void scale(const double s)
 #if !defined(HAVE_BLAS)
-  {    
+  {
     if(s == 0.) // this is not really correct nan*0 (or inf*0) is expected to give nan
       for(int i = 0; i < _r * _c; ++i) _data[i] = 0.;
     else
@@ -435,12 +450,10 @@ class fullMatrix
     int ni = size1();
     int nj = size2();
     fullMatrix<scalar> cof(ni - 1, nj - 1);
-    for(int I = 0; I < ni; I++){
-      for(int J = 0; J < nj; J++){
+    for(int I = 0; I < ni; I++)
+      for(int J = 0; J < nj; J++)
         if(J != j && I != i)
           cof(I < i ? I : I - 1, J < j ? J : J - 1) = (*this)(I, J);
-      }
-    }
     return cof;
   }
   scalar determinant() const
@@ -459,6 +472,7 @@ class fullMatrix
   }
 #endif
   ;
+
   void print(const std::string name = "") const 
   {
     printf("Printing matrix %s:\n", name.c_str());
@@ -472,6 +486,7 @@ class fullMatrix
       printf("\n");
     }
   }
+
   static void registerBindings(binding *b);
 };
 

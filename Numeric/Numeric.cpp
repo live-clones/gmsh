@@ -476,6 +476,20 @@ double ComputeScalarRep(int numComp, double *val)
   return 0.;
 }
 
+void eigenvalue2x2(double mat[2][2], double v[2])
+{ 
+
+  double a=1;
+  double b=-(mat[0][0]+mat[1][1]);
+  double c= (mat[0][0]*mat[1][1])-(mat[0][1]*mat[1][0]);
+  
+  double det = b*b-4.*a*c;
+
+  v[0] = (-b+sqrt(det))/(2*a);
+  v[1] = (-b-sqrt(det))/(2*a);
+
+}
+
 void eigenvalue(double mat[3][3], double v[3])
 {            
   // characteristic polynomial of T : find v root of

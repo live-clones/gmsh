@@ -1,10 +1,11 @@
-
 options = gmshOptions()
-options:numberSet('Mesh', 0, 'CharacteristicLengthFactor', 1.5)
+options:initOptions()
+options:numberSet('Mesh', 0, 'CharacteristicLengthFactor', 0.9grep -IIr)
 
-myTool = GModel();
-myTool:addSphere(0.0,0.0,0.0,1);
+R = 1.0;
+myModel = GModel();
+myModel:addSphere(0,0,0,R);
 
-myTool:mesh(1)
-myTool:mesh(2)
-myTool:save('sphere.msh')
+myModel:setAsCurrent();
+
+myModel:mesh(2);

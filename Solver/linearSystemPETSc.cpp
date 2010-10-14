@@ -46,33 +46,38 @@ void linearSystemPETSc<fullMatrix<PetscScalar> >::getFromMatrix(int row, int col
 template<>
 void linearSystemPETSc<fullMatrix<PetscScalar> >::getFromRightHandSide(int row, fullMatrix<PetscScalar> &val) const
 {
+#if defined(PETSC_USE_COMPLEX)
   PetscScalar *tmp;
   _try(VecGetArray(_b, &tmp));
   for (int i = 0; i < _blockSize; i++) {
     PetscScalar s = tmp[row * _blockSize + i];
-#if defined(PETSC_USE_COMPLEX)
     val(i,0) = s.real();
-#else
-    val(i,0) = s;
-#endif
   }
   _try(VecRestoreArray(_b, &tmp));
+#else
+  for (int i = 0; i < _blockSize; i++) {
+    int ii = row*_blockSize +i;
+    VecGetValues ( _b, 1, &ii, &val(i,0));
+  }
+#endif
 }
 
 template<>
-void linearSystemPETSc<fullMatrix<PetscScalar> >::getFromSolution(int row, fullMatrix<PetscScalar> &val) const
-{
+void linearSystemPETSc<fullMatrix<PetscScalar> >::getFromSolution(int row, fullMatrix<PetscScalar> &val) const {
+#if defined(PETSC_USE_COMPLEX)
   PetscScalar *tmp;
   _try(VecGetArray(_x, &tmp));
   for (int i = 0; i < _blockSize; i++) {
     PetscScalar s = tmp[row * _blockSize + i];
-#if defined(PETSC_USE_COMPLEX)
     val(i,0) = s.real();
-#else
-    val(i,0) = s;
-#endif
   }
   _try(VecRestoreArray(_x, &tmp));
+#else
+  for (int i = 0; i < _blockSize; i++) {
+    int ii = row*_blockSize +i;
+    VecGetValues ( _x, 1, &ii, &val(i,0));
+  }
+#endif
 }
 
 template<>
@@ -85,15 +90,20 @@ void linearSystemPETSc<fullMatrix<PetscScalar> >::allocate(int nbRows)
   //printf("allocate linear system petsc \n");
   //_try(PetscOptionsInsertString("-ksp_monitor_true_residual -ksp_rtol 1e-10"));
   _try(MatCreate(PETSC_COMM_WORLD, &_a)); 
-  _try(MatSetSizes(_a, PETSC_DECIDE, PETSC_DECIDE, nbRows * _blockSize, nbRows * _blockSize));
-  _try(MatSetType(_a, MATSEQBAIJ));
+  _try(MatSetSizes(_a,nbRows * _blockSize, nbRows * _blockSize, PETSC_DETERMINE, PETSC_DETERMINE));
+  if (Msg::GetCommSize() > 1) {
+    _try(MatSetType(_a, MATMPIBAIJ));
+    _try(MatSetFromOptions(_a));
+    _try(MatMPIBAIJSetPreallocation(_a, _blockSize, 5, NULL, 0, NULL));
+  } else {
+    _try(MatSetType(_a, MATSEQBAIJ));
+    _try(MatSetFromOptions(_a));
+    _try(MatSeqBAIJSetPreallocation(_a, _blockSize, 5, NULL)); //todo preAllocate off-diagonal part
+  }
   // override the default options with the ones from the option
   // database (if any)
-  _try(MatSetFromOptions(_a));
-  _try(MatSeqBAIJSetPreallocation(_a, _blockSize, 5, NULL)); //todo preAllocate off-diagonal part
-  //_try(MatMPIBAIJSetPreallocation(_a, _blockSize, 4, NULL, 0, NULL)); //todo preAllocate off-diagonal part
   _try(VecCreate(PETSC_COMM_WORLD, &_x));
-  _try(VecSetSizes(_x, PETSC_DECIDE, nbRows * _blockSize));
+  _try(VecSetSizes(_x, nbRows * _blockSize, PETSC_DETERMINE));
   // override the default options with the ones from the option
   // database (if any)
   _try(VecSetFromOptions(_x));

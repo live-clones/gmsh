@@ -440,7 +440,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_tangents(0, GMSH_SET, o->mesh.value[13]->value());
   opt_mesh_point_size(0, GMSH_SET, o->mesh.value[10]->value());
   opt_mesh_line_width(0, GMSH_SET, o->mesh.value[11]->value());
-  opt_mesh_label_frequency(0, GMSH_SET, o->mesh.value[12]->value());
+  opt_mesh_label_sampling(0, GMSH_SET, o->mesh.value[12]->value());
   opt_mesh_angle_smooth_normals(0, GMSH_SET, o->mesh.value[18]->value());
 
   opt_mesh_point_type(0, GMSH_SET, o->mesh.choice[0]->value());
@@ -451,7 +451,11 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_algo3d(0, GMSH_SET,
                   (o->mesh.choice[3]->value() == 0) ? ALGO_3D_DELAUNAY : 
                   ALGO_3D_FRONTAL);
+  opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
+  opt_mesh_recombine_all(0, GMSH_SET, o->mesh.butt[21]->value());
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
+  opt_mesh_remesh_algo(0, GMSH_SET, o->mesh.choice[8]->value());
+  opt_mesh_remesh_param(0, GMSH_SET, o->mesh.choice[9]->value());
   opt_mesh_color_carousel(0, GMSH_SET, o->mesh.choice[4]->value());
   opt_mesh_quality_type(0, GMSH_SET, o->mesh.choice[6]->value());
   opt_mesh_label_type(0, GMSH_SET, o->mesh.choice[7]->value());
@@ -546,11 +550,18 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
 
   if(data){
     const char *str = (const char*)data;
-    if(!strcmp(str, "range_min")){
-      o->view.value[31]->value(opt_view_min(o->view.index, GMSH_GET, 0));
-    }
-    else if(!strcmp(str, "range_max")){
-      o->view.value[32]->value(opt_view_max(o->view.index, GMSH_GET, 0));
+    if(!strcmp(str, "range_min") || !strcmp(str, "range_max")){
+      int vindex = o->view.index;
+      if(vindex >= 0 && vindex < (int)PView::list.size()){
+        // compute min/max taking current visibility status into account
+        int step = opt_view_timestep(vindex, GMSH_GET, 0);
+        if(!strcmp(str, "range_min"))
+          o->view.value[31]->value
+            (PView::list[vindex]->getData(true)->getMin(step, true));
+        else if(!strcmp(str, "range_max"))
+          o->view.value[32]->value
+            (PView::list[vindex]->getData(true)->getMax(step, true));
+      }
     }
   }
   
@@ -656,6 +667,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double component_map6 = opt_view_component_map6(current, GMSH_GET, 0);
   double component_map7 = opt_view_component_map7(current, GMSH_GET, 0);
   double component_map8 = opt_view_component_map8(current, GMSH_GET, 0);
+  double sampling = opt_view_sampling(current, GMSH_GET, 0);
 
   std::string name = opt_view_name(current, GMSH_GET, "");
   std::string format = opt_view_format(current, GMSH_GET, "");
@@ -1084,6 +1096,10 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       val = o->view.value[78]->value();
       if(force || (val != component_map8))
         opt_view_component_map8(i, GMSH_SET, val);
+
+      val = o->view.value[6]->value();
+      if(force || (val != sampling))
+        opt_view_sampling(i, GMSH_SET, val);
 
       // view_inputs
 
@@ -1686,7 +1702,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.value[2]->callback(geometry_options_ok_cb);
 
       geo.butt[8] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Remove duplicate entities in GEO models");
+        (L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Remove duplicate entities in GEO model transforms");
       geo.butt[8]->type(FL_TOGGLE_BUTTON);
       geo.butt[8]->callback(geometry_options_ok_cb);
 
@@ -1967,10 +1983,26 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Frontal", 0, 0, 0},
         {0}
       };
+      static Fl_Menu_Item menu_recombination_algo[] = {
+        {"Standard", 0, 0, 0},
+        {"Blossom", 0, 0, 0},
+        {0}
+      };
       static Fl_Menu_Item menu_subdivision_algo[] = {
         {"None", 0, 0, 0},
         {"All Quads", 0, 0, 0},
         {"All Hexas", 0, 0, 0},
+        {0}
+      };
+      static Fl_Menu_Item menu_remeshing_algo[] = {
+        {"No split", 0, 0, 0},
+        {"Automatic", 0, 0, 0},
+        {"Automatic only with Metis", 0, 0, 0},
+        {0}
+      };
+      static Fl_Menu_Item menu_remeshing_param[] = {
+        {"Harmonic", 0, 0, 0},
+        {"Conformal", 0, 0, 0},
         {0}
       };
 
@@ -1986,14 +2018,37 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.choice[3]->align(FL_ALIGN_RIGHT);
       mesh.choice[3]->callback(mesh_options_ok_cb);
 
+      mesh.choice[1] = new Fl_Choice
+        (L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Recombination algorithm");
+      mesh.choice[1]->menu(menu_recombination_algo);
+      mesh.choice[1]->align(FL_ALIGN_RIGHT);
+      mesh.choice[1]->callback(mesh_options_ok_cb);
+
+      mesh.butt[21] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Recombine all triangular meshes");
+      mesh.butt[21]->type(FL_TOGGLE_BUTTON);
+      mesh.butt[21]->callback(mesh_options_ok_cb);
+
       mesh.choice[5] = new Fl_Choice
-        (L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Subdivision algorithm");
+        (L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Subdivision algorithm");
       mesh.choice[5]->menu(menu_subdivision_algo);
       mesh.choice[5]->align(FL_ALIGN_RIGHT);
       mesh.choice[5]->callback(mesh_options_ok_cb);
 
+      mesh.choice[8] = new Fl_Choice
+        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Remeshing algorithm");
+      mesh.choice[8]->menu(menu_remeshing_algo);
+      mesh.choice[8]->align(FL_ALIGN_RIGHT);
+      mesh.choice[8]->callback(mesh_options_ok_cb);
+
+      mesh.choice[9] = new Fl_Choice
+        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Remeshing parametrization");
+      mesh.choice[9]->menu(menu_remeshing_param);
+      mesh.choice[9]->align(FL_ALIGN_RIGHT);
+      mesh.choice[9]->callback(mesh_options_ok_cb);
+
       mesh.value[0] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Smoothing steps");
+        (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Smoothing steps");
       mesh.value[0]->minimum(0);
       mesh.value[0]->maximum(100);
       mesh.value[0]->step(1);
@@ -2001,7 +2056,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[0]->callback(mesh_options_ok_cb);
 
       mesh.value[2] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Element size factor");
+        (L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Element size factor");
       mesh.value[2]->minimum(0.001);
       mesh.value[2]->maximum(1000);
       mesh.value[2]->step(0.01);
@@ -2009,17 +2064,17 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[2]->callback(mesh_options_ok_cb);
 
       mesh.value[25] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Minimum element size");
+        (L + 2 * WB, 2 * WB + 10 * BH, IW/2, BH);
       mesh.value[25]->align(FL_ALIGN_RIGHT);
       mesh.value[25]->callback(mesh_options_ok_cb);
 
       mesh.value[26] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Maximum element size");
+        (L + 2 * WB + IW/2, 2 * WB + 10 * BH, IW/2, BH, "Min/Max element size");
       mesh.value[26]->align(FL_ALIGN_RIGHT);
       mesh.value[26]->callback(mesh_options_ok_cb);
 
       mesh.value[3] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Element order");
+        (L + 2 * WB, 2 * WB + 11 * BH, IW / 3, BH, "Element order");
       mesh.value[3]->minimum(1);
       mesh.value[3]->maximum(2);
       mesh.value[3]->step(1);
@@ -2027,7 +2082,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[3]->callback(mesh_options_ok_cb);
 
       mesh.butt[4] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Use incomplete high order elements");
+        (L + 2 * WB + IW + WB / 2, 2 * WB + 11 * BH, BW, BH, "Use incomplete elements");
       mesh.butt[4]->type(FL_TOGGLE_BUTTON);
       mesh.butt[4]->callback(mesh_options_ok_cb);
 
@@ -2155,8 +2210,8 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.choice[7]->callback(mesh_options_ok_cb);
 
       mesh.value[12] = new Fl_Value_Input
-        (L + width / 2, 2 * WB + 6 * BH, width / 4 - 2 * WB, BH, "Frequency");
-      mesh.value[12]->minimum(0);
+        (L + width / 2, 2 * WB + 6 * BH, width / 4 - 2 * WB, BH, "Sampling");
+      mesh.value[12]->minimum(1);
       mesh.value[12]->maximum(100);
       mesh.value[12]->step(1);
       mesh.value[12]->align(FL_ALIGN_RIGHT);
@@ -2776,6 +2831,15 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Elements");
       view.menu[1]->menu(menu_view_element_types);
       view.menu[1]->callback(view_options_ok_cb);
+
+      view.value[6] = new Fl_Value_Input
+        (L + width / 2, 2 * WB + 5 * BH, width / 4 - 2 * WB, BH, "Sampling");
+      view.value[6]->minimum(1);
+      view.value[6]->maximum(100);
+      view.value[6]->step(1);
+      view.value[6]->align(FL_ALIGN_RIGHT);
+      view.value[6]->when(FL_WHEN_RELEASE);
+      view.value[6]->callback(view_options_ok_cb);
       
       static Fl_Menu_Item menu_boundary[] = {
         {"None", 0, 0, 0},
@@ -3308,6 +3372,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_draw_tensors(index, GMSH_GUI, 0);
   opt_view_normals(index, GMSH_GUI, 0);
   opt_view_tangents(index, GMSH_GUI, 0);
+  opt_view_sampling(index, GMSH_GUI, 0);
 
   opt_view_nb_iso(index, GMSH_GUI, 0);
   opt_view_intervals_type(index, GMSH_GUI, 0);

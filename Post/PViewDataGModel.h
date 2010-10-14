@@ -174,9 +174,9 @@ class PViewDataGModel : public PViewData {
   std::string getFileName(int step=-1);
   int getNumTimeSteps();
   double getTime(int step);
-  double getMin(int step=-1);
+  double getMin(int step=-1, bool onlyVisible=false);
+  double getMax(int step=-1, bool onlyVisible=false);
   void setMin(double min){ _min = min; }
-  double getMax(int step=-1);
   void setMax(double max){ _max = max; }
   SBoundingBox3d getBoundingBox(int step=-1);
   void setBoundingBox(SBoundingBox3d& box){}
@@ -211,7 +211,8 @@ class PViewDataGModel : public PViewData {
   void smooth();
   bool combineTime(nameData &nd);
   bool skipEntity(int step, int ent);
-  bool skipElement(int step, int ent, int ele, bool checkVisibility=false);
+  bool skipElement(int step, int ent, int ele, bool checkVisibility=false,
+                   int samplingRate=1);
   bool hasTimeStep(int step);
   bool hasPartition(int step, int part);
   bool hasMultipleMeshes();
@@ -226,6 +227,8 @@ class PViewDataGModel : public PViewData {
   bool getValueByIndex(int step, int dataIndex, int node, int comp, double &val);
   // get underlying model
   GModel* getModel(int step){ return _steps[step]->getModel(); }
+  // get MElement
+  MElement *getElement(int step, int entity, int element);
 
   // Add some data "on the fly" (data is stored in a map, indexed by
   // node or element number depending on the type of dataset)
@@ -239,7 +242,6 @@ class PViewDataGModel : public PViewData {
   bool writeMSH(std::string fileName, bool binary=false);
   bool readMED(std::string fileName, int fileIndex);
   bool writeMED(std::string fileName);
-  MElement *getElement (int step, int entity, int element);
 };
 
 #endif

@@ -971,7 +971,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
   for(int ent = 0; ent < data->getNumEntities(opt->timeStep); ent++){
     if(data->skipEntity(opt->timeStep, ent)) continue;
     for(int i = 0; i < data->getNumElements(opt->timeStep, ent); i++){
-      if(data->skipElement(opt->timeStep, ent, i, true)) continue;
+      if(data->skipElement(opt->timeStep, ent, i, true, opt->sampling)) continue;
       int type = data->getType(opt->timeStep, ent, i);
       if(opt->skipElement(type)) continue;
       int numComp = data->getNumComponents(opt->timeStep, ent, i);

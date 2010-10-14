@@ -48,6 +48,7 @@ int GuessFileFormatFromFileName(std::string fileName)
   else if(ext == ".p3d")  return FORMAT_P3D;
   else if(ext == ".wrl")  return FORMAT_VRML;
   else if(ext == ".vrml") return FORMAT_VRML;
+  else if(ext == ".ply2") return FORMAT_PLY2;
   else if(ext == ".gif")  return FORMAT_GIF;
   else if(ext == ".jpg")  return FORMAT_JPEG;
   else if(ext == ".jpeg") return FORMAT_JPEG;
@@ -90,6 +91,7 @@ std::string GetDefaultFileName(int format)
   case FORMAT_INP:  name += ".inp"; break;
   case FORMAT_P3D:  name += ".p3d"; break;
   case FORMAT_VRML: name += ".wrl"; break;
+  case FORMAT_PLY2: name += ".ply2"; break;
   case FORMAT_GIF:  name += ".gif"; break;
   case FORMAT_JPEG: name += ".jpg"; break;
   case FORMAT_MPEG: name += ".mpg"; break;
@@ -200,6 +202,10 @@ void CreateOutputFile(std::string fileName, int format)
   case FORMAT_VRML:
     GModel::current()->writeVRML
       (fileName, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
+    break;
+
+  case FORMAT_PLY2:
+    GModel::current()->writePLY2(fileName);
     break;
 
   case FORMAT_UNV:

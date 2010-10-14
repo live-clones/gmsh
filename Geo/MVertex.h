@@ -58,8 +58,7 @@ class MVertex{
   
   // get the "polynomial order" of the vertex
   inline int getPolynomialOrder(){ return _order; }
-  inline void setPolynomialOrder(char order){ _order = order; }
-  inline void setPolynomialOrder_binding(int order){ _order = order; }
+  inline void setPolynomialOrder(int order){ _order = (char)order; }
 
   // get/set the coordinates
   inline double x() const { return _x; }
@@ -69,7 +68,7 @@ class MVertex{
   inline double & y() { return _y; }
   inline double & z() { return _z; }
   // cannot use the reference to set the value in the bindings
-  inline void setXYZ(double x,double y, double z) {_x=x; _y=y; _z=z; }
+  inline void setXYZ(double x, double y, double z) { _x = x; _y = y; _z = z; }
 
   inline SPoint3 point() const { return SPoint3(_x, _y, _z); }
 
@@ -107,6 +106,7 @@ class MVertex{
   // IO routines
   void writeMSH(FILE *fp, bool binary=false, bool saveParametric=false,
                 double scalingFactor=1.0);
+  void writePLY2(FILE *fp);
   void writeVRML(FILE *fp, double scalingFactor=1.0);
   void writeUNV(FILE *fp, double scalingFactor=1.0);
   void writeVTK(FILE *fp, bool binary=false, double scalingFactor=1.0,

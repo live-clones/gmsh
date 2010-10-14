@@ -121,7 +121,6 @@ fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 
 %type <d> FExpr FExpr_Single 
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
-%type <i> CompoundMap 
 %type <i> NumericAffectation NumericIncrement PhysicalId
 %type <i> TransfiniteArrangement RecombineAngle
 %type <u> ColorExpr
@@ -1466,7 +1465,7 @@ Shape :
       $$.Type = MSH_SURF_LOOP;
       $$.Num = num;
     }
-  | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble CompoundMap tEND
+  | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
       if(FindSurface(num)){
@@ -1476,7 +1475,6 @@ Shape :
 	Surface *s = Create_Surface(num, MSH_SURF_COMPOUND);
         for(int i = 0; i < List_Nbr($7); i++){
           s->compound.push_back((int)*(double*)List_Pointer($7, i));
-	  s->TypeOfMapping = $8;
 	}
 	Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
       }
@@ -1485,7 +1483,7 @@ Shape :
       $$.Num = num;
     }
   | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tSTRING 
-      '{' RecursiveListOfListOfDouble '}' CompoundMap tEND
+      '{' RecursiveListOfListOfDouble '}' tEND
     {
       int num = (int)$4;
       if(FindSurface(num)){
@@ -1503,7 +1501,6 @@ Shape :
 	  List_T *l = *(List_T**)List_Pointer($10, i);
           for (int j = 0; j < List_Nbr(l); j++){
             s->compoundBoundary[i].push_back((int)*(double*)List_Pointer(l, j));
-	    s->TypeOfMapping = $12;
 	  }
 	}
 	Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
@@ -2883,25 +2880,6 @@ ExtrudeParameter :
     }
 ;
 
-
-//  COMPOUND
-CompoundMap : 
-    {
-      $$ = 1; // harmonic
-    }
-  | tSTRING
-    {
-      if(!strcmp($1, "Harmonic"))
-        $$ = 1;
-      else if(!strcmp($1, "Conformal"))
-        $$ = -1;
-      else if(!strcmp($1, "Harmonic_NoSplit"))
-        $$ = 2;
-      else if(!strcmp($1, "Conformal_NoSplit"))
-        $$ = -2;
-      Free($1);
-    }
-;
 //  T R A N S F I N I T E ,   R E C O M B I N E   &   S M O O T H I N G
 
 TransfiniteType : 
@@ -3222,30 +3200,32 @@ Transfinite :
     }
 ;
 
+//  P E R I O D I C   M E S H I N G   C O N S T R A I N T S
 
 Periodic : 
     tPeriodic tLine ListOfDouble tAFFECT ListOfDouble tEND
     {
-      if (List_Nbr($3) != List_Nbr($5)){
-	yymsg(0, "Periodic Line : the number of masters (%d) is not equal to the number of slaves(%d)", List_Nbr($3),List_Nbr($5));
+      if(List_Nbr($5) != List_Nbr($3)){
+	yymsg(0, "Number of master (%d) different from number of slave (%d) lines",
+              List_Nbr($5), List_Nbr($3));
       }
-
-      for(int i = 0; i < List_Nbr($3); i++){
-	double d_master,d_slave;
-	List_Read($3, i, &d_master);
-	List_Read($5, i, &d_slave);
-	int j_master = (int)d_master;
-	int j_slave  = (int)d_slave;
-	Curve *c_slave = FindCurve(abs(j_slave));
-	if(c_slave){
-	  //	  printf("c_slave %d c_master = %d\n",j_slave,j_master);
-	  c_slave->meshMaster = j_master;	  
-	}
-	else{
-	  GEdge *ge = GModel::current()->getEdgeByTag(abs(j_slave));
-	  if(ge)ge->setMeshMaster (j_master);
-	  else yymsg(0, "Unknown line %d", j_slave);
-	}
+      else{
+        for(int i = 0; i < List_Nbr($3); i++){
+          double d_master, d_slave;
+          List_Read($5, i, &d_master);
+          List_Read($3, i, &d_slave);
+          int j_master = (int)d_master;
+          int j_slave  = (int)d_slave;
+          Curve *c_slave = FindCurve(abs(j_slave));
+          if(c_slave){
+            c_slave->meshMaster = j_master;	  
+          }
+          else{
+            GEdge *ge = GModel::current()->getEdgeByTag(abs(j_slave));
+            if(ge) ge->setMeshMaster(j_master);
+            else yymsg(0, "Unknown line %d", j_slave);
+          }
+        }
       }
       List_Delete($3);
       List_Delete($5);
@@ -3254,33 +3234,35 @@ Periodic :
     '{' RecursiveListOfDouble '}'  tEND
     {
       if (List_Nbr($5) != List_Nbr($10)){
-	yymsg(0, "Periodic Surface: the number of masters (%d) is not equal "
-              "to the number of slaves(%d)", List_Nbr($5), List_Nbr($10));
-      }
-
-      double d_master = $3, d_slave = $8;
-      int j_master = (int)d_master;
-      int j_slave = (int)d_slave;
-      Surface *s_slave = FindSurface(abs(j_slave));
-      if(s_slave){
-	s_slave->meshMaster = j_master;
-	for (int i = 0; i < List_Nbr($5); i++){
-	  double dm, ds;
-	  List_Read($5, i, &dm);
-	  List_Read($10, i, &ds);	  
-	  s_slave->edgeCounterparts[(int)ds] = (int)dm;
-	}
+	yymsg(0, "Number of master surface edges (%d) different from number of "
+              "slave (%d) edges", List_Nbr($10), List_Nbr($5));
       }
       else{
-	GFace *gf = GModel::current()->getFaceByTag(abs(j_slave));
-	if(gf) gf->setMeshMaster(j_master);
-	else yymsg(0, "Unknown surface %d", j_slave);
-	for (int i = 0; i < List_Nbr($5); i++){
-	  double dm, ds;
-	  List_Read($5, i, &dm);
-	  List_Read($10, i, &ds);
-	  gf->edgeCounterparts[(int)ds] = (int)dm;
-	}
+        int j_master = (int)$8;
+        int j_slave = (int)$3;
+        Surface *s_slave = FindSurface(abs(j_slave));
+        if(s_slave){
+          s_slave->meshMaster = j_master;
+          for (int i = 0; i < List_Nbr($5); i++){
+            double dm, ds;
+            List_Read($5, i, &ds);
+            List_Read($10, i, &dm);	  
+            s_slave->edgeCounterparts[(int)ds] = (int)dm;
+          }
+        }
+        else{
+          GFace *gf = GModel::current()->getFaceByTag(abs(j_slave));
+          if(gf){
+            gf->setMeshMaster(j_master);
+            for (int i = 0; i < List_Nbr($5); i++){
+              double dm, ds;
+              List_Read($5, i, &ds);
+              List_Read($10, i, &dm);
+              gf->edgeCounterparts[(int)ds] = (int)dm;
+            }
+          }
+          else yymsg(0, "Unknown surface %d", j_slave);
+        }
       }
       List_Delete($5);
       List_Delete($10);
