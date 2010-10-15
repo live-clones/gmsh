@@ -450,13 +450,13 @@ static void Mesh2D(GModel *m)
     while(1){
       meshGFace mesher;
       int nbPending = 0;
-      for(GModel::fiter it = f.begin(); it != f.end(); ++it){
+      for(std::set<GFace*>::iterator it = f.begin(); it != f.end(); ++it){
         if ((*it)->meshStatistics.status == GFace::PENDING){
           mesher(*it);
           nbPending++;
         }
       }
-      for(GModel::fiter it = cf.begin(); it != cf.end(); ++it){
+      for(std::set<GFace*>::iterator it = cf.begin(); it != cf.end(); ++it){
         if ((*it)->meshStatistics.status == GFace::PENDING){
           mesher(*it);
           nbPending++;

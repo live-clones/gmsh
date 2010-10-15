@@ -222,13 +222,14 @@ class GEntity {
   void setTag(int tag) { _tag = tag; }
 
   // get/set physical entities
-  virtual void addPhysicalEntity(int physicalTag) {
+  virtual void addPhysicalEntity(int physicalTag)
+  {
     physicals.push_back(physicalTag);
   }
-  virtual std::vector<int> getPhysicalEntities() {
+  virtual std::vector<int> getPhysicalEntities()
+  {
     return physicals;
   }
-
 
   // returns the tag of the entity that its master entity (for mesh) 
   int meshMaster() const { return _meshMaster; }

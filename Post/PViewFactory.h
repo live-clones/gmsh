@@ -1,11 +1,18 @@
+// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+
 #ifndef _PVIEW_FACTORY_H_
 #define _PVIEW_FACTORY_H_
-//quick hack to have something that we can bind for the summer school...
-//this class has probably to be removed or rewritten
+
+// quick hack to have something that we can bind for the summer
+// school...  this class has probably to be removed or rewritten
 
 #include<map>
 #include<vector>
 #include<string>
+
 class GModel;
 class PView;
 template <class t>
@@ -23,4 +30,5 @@ class PViewFactory {
   PView *createView();
   static void registerBindings(binding *);
 };
+
 #endif

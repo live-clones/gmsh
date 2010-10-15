@@ -308,34 +308,32 @@ double surfaceTriangleUV(MVertex *v1, MVertex *v2, MVertex *v3,
 
 int _removeFourTrianglesNodes(GFace *gf,bool replace_by_quads)
 {
-
   v2t_cont adj;
   buildVertexToElement(gf->triangles,adj);
   v2t_cont :: iterator it = adj.begin();
   int n=0;
   std::set<MElement*> touched;
   while (it != adj.end()) {
-    bool skip=false;
-    double surfaceRef=0;
-    if(it->second.size()==4) {
+    bool skip = false;
+    double surfaceRef = 0;
+    if(it->second.size() == 4) {
       const std::vector<MElement*> &lt = it->second;
       MVertex* edges[4][2];
-      for(int i=0;i<4;i++) {
+      for(int i = 0; i < 4; i++) {
         if(touched.find(lt[i])!=touched.end() || lt[i]->getNumVertices()!=3){
           skip=true;
           break;
         }
         int j;
-
-        surfaceRef+=surfaceFaceUV(lt[i],gf);
-        for(j=0;j<3;j++) {
-          if(lt[i]->getVertex(j)==it->first) {
+        surfaceRef += surfaceFaceUV(lt[i], gf);
+        for(j = 0; j < 3; j++) {
+          if(lt[i]->getVertex(j) == it->first) {
             edges[i][0] = lt[i]->getVertex((j+1)%3);
             edges[i][1] = lt[i]->getVertex((j+2)%3);
             break;
           }
         }
-        if(j==3)
+        if(j == 3)
           throw;
       }
       if(skip){
@@ -343,9 +341,9 @@ int _removeFourTrianglesNodes(GFace *gf,bool replace_by_quads)
         continue;
       }
 
-      for(int i=1;i<3;i++) {
-        for(int j=i+1;j<4;j++) {
-          if(edges[j][0]==edges[i-1][1]){
+      for(int i = 1; i < 3; i++) {
+        for(int j = i + 1; j < 4; j++) {
+          if(edges[j][0] == edges[i-1][1]){
             MVertex *buf[2]={edges[i][0],edges[i][1]};
             edges[i][0]=edges[j][0];
             edges[i][1]=edges[j][1];
@@ -355,30 +353,37 @@ int _removeFourTrianglesNodes(GFace *gf,bool replace_by_quads)
           }
         }
       }
-      if(edges[0][1]==edges[1][0] && edges[1][1]==edges[2][0] && edges[2][1] == edges[3][0] && edges[3][1]==edges[0][0]) {
+      if(edges[0][1] == edges[1][0] && edges[1][1] == edges[2][0] && 
+         edges[2][1] == edges[3][0] && edges[3][1] == edges[0][0]) {
         if(replace_by_quads){
-          gf->quadrangles.push_back(new MQuadrangle(edges[0][0],edges[1][0],edges[2][0],edges[3][0]));
-        }else{
+          gf->quadrangles.push_back(new MQuadrangle(edges[0][0], edges[1][0],
+                                                    edges[2][0], edges[3][0]));
+        }
+        else{
           MTriangle *newt[4];
           double surf[4],qual[4];
           for(int i=0;i<4;i++){
             newt[i] = new MTriangle(edges[i][0],edges[(i+1)%4][0],edges[(i+2)%4][0]);
-            surf[i]=surfaceFaceUV(newt[i],gf);
-            qual[i]=qmTriangle(newt[i],QMTRI_RHO);
+            surf[i] = surfaceFaceUV(newt[i],gf);
+            qual[i] = qmTriangle(newt[i],QMTRI_RHO);
           }
-          double q02=(fabs((surf[0]+surf[2]-surfaceRef)/surfaceRef)<1e-8) ? std::min(qual[0],qual[2]) : -1;
-          double q13=(fabs((surf[1]+surf[3]-surfaceRef)/surfaceRef)<1e-8) ? std::min(qual[1],qual[3]) : -1;
+          double q02=(fabs((surf[0]+surf[2]-surfaceRef)/surfaceRef)<1e-8) ? 
+            std::min(qual[0],qual[2]) : -1;
+          double q13=(fabs((surf[1]+surf[3]-surfaceRef)/surfaceRef)<1e-8) ? 
+            std::min(qual[1],qual[3]) : -1;
           if(q02>q13 && q02 >0) {
             delete newt[1];
             delete newt[3];
             gf->triangles.push_back(newt[0]);
             gf->triangles.push_back(newt[2]);
-          } else if (q13 >0) {
+          } 
+          else if (q13 >0) {
             delete newt[0];
             delete newt[2];
             gf->triangles.push_back(newt[1]);
             gf->triangles.push_back(newt[3]);
-          } else {
+          }
+          else {
             it++;
             continue;
           }
@@ -531,7 +536,7 @@ static bool _isItAGoodIdeaToCollapseThatVertex (GFace *gf,
   //  v->setParameter(0,p.x());
   //  v->setParameter(1,p.y());
 
-  for (int j=0;j<e1.size();++j){
+  for (unsigned int j=0;j<e1.size();++j){
     surface_old += surfaceFaceUV(e1[j],gf);
     //    worst_quality_old = std::min(worst_quality_old,e1[j]-> etaShapeMeasure());
     for (int k=0;k<e1[j]->getNumVertices();k++){
@@ -546,7 +551,7 @@ static bool _isItAGoodIdeaToCollapseThatVertex (GFace *gf,
     }
   }
 
-  for (int j=0;j<e2.size();++j){
+  for (unsigned int j=0;j<e2.size();++j){
     surface_old += surfaceFaceUV(e2[j],gf);
     //    worst_quality_old = std::min(worst_quality_old,e2[j]-> etaShapeMeasure());
     for (int k=0;k<e2[j]->getNumVertices();k++){
@@ -583,13 +588,13 @@ static bool _isItAGoodIdeaToMoveThatVertex (GFace *gf,
   double surface_old = 0;
   double surface_new = 0;
 
-  for (int j=0;j<e1.size();++j)
+  for (unsigned int j=0;j<e1.size();++j)
     surface_old += surfaceFaceUV(e1[j],gf);
 
   v1->setParameter(0,after.x());
   v1->setParameter(1,after.y());
 
-  for (int j=0;j<e1.size();++j)
+  for (unsigned int j=0;j<e1.size();++j)
     surface_new += surfaceFaceUV(e1[j],gf);
 
   v1->setParameter(0,before.x());
@@ -648,7 +653,7 @@ static int _quadWithOneVertexOnBoundary (GFace *gf,
     */
     //    if (line.size() == 2)printf("caca\n");
     //    else printf("hohcozbucof\n");
-    for (int j=0;j<e2.size();++j){
+    for (unsigned int j=0;j<e2.size();++j){
       for (int k=0;k<e2[j]->getNumVertices();k++){
 	if (e2[j]->getVertex(k) == v2 && e2[j] != q)
 	  e2[j]->setVertex(k,v4);
@@ -663,8 +668,8 @@ static int _quadWithOneVertexOnBoundary (GFace *gf,
 
 static int  _countCommon(std::vector<MElement*> &a, std::vector<MElement*> &b) {
   int count = 0;
-  for (int i=0;i<a.size();i++){
-    for (int j=0;j<b.size();j++){
+  for (unsigned int i=0;i<a.size();i++){
+    for (unsigned int j=0;j<b.size();j++){
       if (a[i]==b[j])count++;
     }
   }
@@ -718,7 +723,7 @@ static int _removeDiamonds(GFace *gf)
 	touched.insert(v2);
 	touched.insert(v3);
 	touched.insert(v4);
-	for (int j=0;j<it1->second.size();++j){
+	for (unsigned int j=0;j<it1->second.size();++j){
 	  for (int k=0;k<it1->second[j]->getNumVertices();k++){
 	    if (it1->second[j]->getVertex(k) == v1 && it1->second[j] != q)
 	      it1->second[j]->setVertex(k,v3);
@@ -738,7 +743,7 @@ static int _removeDiamonds(GFace *gf)
 	touched.insert(v2);
 	touched.insert(v3);
 	touched.insert(v4);
-	for (int j=0;j<it2->second.size();++j){
+	for (unsigned int j=0;j<it2->second.size();++j){
 	  for (int k=0;k<it2->second[j]->getNumVertices();k++){
 	    if (it2->second[j]->getVertex(k) == v2 && it2->second[j] != q)
 	      it2->second[j]->setVertex(k,v4);
@@ -1376,7 +1381,7 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
       Msg::Debug("Perfect Match Starts %d edges %d nodes",ecount,ncount);
       std::map<MElement*,int> t2n;
       std::map<int,MElement*> n2t;
-      for (int i=0;i<gf->triangles.size();++i){
+      for (unsigned int i=0;i<gf->triangles.size();++i){
 	t2n[gf->triangles[i]] = i;
 	n2t[i] = gf->triangles[i];
       }      
@@ -1437,7 +1442,7 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 	  Msg::Warning("Perfect Match Failed in Quadrangulation, Applying Graph Splits");
 	  std::set<MElement*> removed;
 	  std::vector<MTriangle*> triangles2;
-	  for (int i=0;i<pairs.size();++i){
+	  for (unsigned int i=0;i<pairs.size();++i){
 	    RecombineTriangle &rt = pairs[i];
 	    if ((rt.n1->onWhat()->dim() < 2 && 
 		 rt.n2->onWhat()->dim() < 2) ||
@@ -1601,7 +1606,7 @@ void recombineIntoQuads(GFace *gf)
   if(success && CTX::instance()->mesh.algoRecombine == 1){    
     //gf->model()->writeMSH("smoothed.msh");
     int COUNT = 0;
-    char NAME[256];
+    //char NAME[256];
     while(1){
       int x = removeTwoQuadsNodes(gf);
       //if(x){ sprintf(NAME,"iter%dTQ.msh",COUNT++); gf->model()->writeMSH(NAME);}

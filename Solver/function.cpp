@@ -5,10 +5,12 @@
 #include "SPoint3.h"
 #include "MElement.h"
 #include "GModel.h"
-#if defined(HAVE_DLOPEN)
-  #include "dlfcn.h"
-#endif
+#include "OS.h"
 #include "Bindings.h"
+
+#if defined(HAVE_DLOPEN)
+#include <dlfcn.h>
+#endif
 
 struct functionReplaceCache {
   dataCacheMap *map;
@@ -36,7 +38,7 @@ void function::setArgument(fullMatrix<double> &v, const function *f, int iMap)
       Msg::Error("Consecutive secondary caches");
     dependencies.insert(dependency(iMap + it->iMap, it->f));
   }
-  for (double i = 0; i < _functionReplaces.size(); i++) {
+  for (unsigned int i = 0; i < _functionReplaces.size(); i++) {
     functionReplace &replace = *_functionReplaces[i];
     for (std::set<dependency>::iterator it = replace._fromParent.begin(); 
          it != replace._fromParent.end(); it++) {
@@ -412,11 +414,11 @@ function *functionProdNew(const function *f0, const function *f1)
 class functionExtractComp : public function {
   public:
   fullMatrix<double> _f0;
-  double _iComp;
+  int _iComp;
   void call(dataCacheMap *m, fullMatrix<double> &val) 
   {
-    for (int i=0; i<val.size1(); i++)
-        val(i,0)= _f0(i,_iComp);
+    for (int i = 0; i < val.size1(); i++)
+        val(i, 0) = _f0(i, _iComp);
   }
   functionExtractComp(const function *f0, const int iComp) : function(1) 
   {
@@ -603,8 +605,8 @@ class functionC : public function {
     fclose(tmpMake);
     if(system("make -f _tmpMake"))
       Msg::Error("make command failed\n");
-    unlink ("_tmpSrc.cpp");
-    unlink ("_tmpMake.cpp");
+    UnlinkFile("_tmpSrc.cpp");
+    UnlinkFile("_tmpMake.cpp");
   }
   void call (dataCacheMap *m, fullMatrix<double> &val) 
   {

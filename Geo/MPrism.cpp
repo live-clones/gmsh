@@ -119,28 +119,36 @@ void MPrism::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) c
     }
     else {
       MVertex *v3 = _v[faces_prism(ithFace, 3)];
-      if (v0 == face.getVertex(0) && v1 == face.getVertex(1) && v2 == face.getVertex(2) && v3 == face.getVertex(3)){
+      if (v0 == face.getVertex(0) && v1 == face.getVertex(1) && 
+          v2 == face.getVertex(2) && v3 == face.getVertex(3)){
         sign = 1; rot = 0; return;
       }
-      if (v0 == face.getVertex(1) && v1 == face.getVertex(2) && v2 == face.getVertex(3) && v3 == face.getVertex(0)){
+      if (v0 == face.getVertex(1) && v1 == face.getVertex(2) &&
+          v2 == face.getVertex(3) && v3 == face.getVertex(0)){
         sign = 1; rot = 1; return;
       }
-      if (v0 == face.getVertex(2) && v1 == face.getVertex(3) && v2 == face.getVertex(0) && v3 == face.getVertex(1)){
+      if (v0 == face.getVertex(2) && v1 == face.getVertex(3) &&
+          v2 == face.getVertex(0) && v3 == face.getVertex(1)){
         sign = 1; rot = 2; return;
       }
-      if (v0 == face.getVertex(3) && v1 == face.getVertex(0) && v2 == face.getVertex(1) && v3 == face.getVertex(2)){
+      if (v0 == face.getVertex(3) && v1 == face.getVertex(0) && 
+          v2 == face.getVertex(1) && v3 == face.getVertex(2)){
         sign = 1; rot = 3; return;
       }
-      if (v0 == face.getVertex(0) && v1 == face.getVertex(3) && v2 == face.getVertex(2) && v3 == face.getVertex(1)){
+      if (v0 == face.getVertex(0) && v1 == face.getVertex(3) &&
+          v2 == face.getVertex(2) && v3 == face.getVertex(1)){
         sign = -1; rot = 0; return;
       }
-      if (v0 == face.getVertex(1) && v1 == face.getVertex(0) && v2 == face.getVertex(3) && v3 == face.getVertex(2)){
+      if (v0 == face.getVertex(1) && v1 == face.getVertex(0) &&
+          v2 == face.getVertex(3) && v3 == face.getVertex(2)){
         sign = -1; rot = 1; return;
       }
-      if (v0 == face.getVertex(2) && v1 == face.getVertex(1) && v2 == face.getVertex(0) && v3 == face.getVertex(3)){
+      if (v0 == face.getVertex(2) && v1 == face.getVertex(1) && 
+          v2 == face.getVertex(0) && v3 == face.getVertex(3)){
         sign = -1; rot = 2; return;
       }
-      if (v0 == face.getVertex(3) && v1 == face.getVertex(2) && v2 == face.getVertex(1) && v3 == face.getVertex(0)){
+      if (v0 == face.getVertex(3) && v1 == face.getVertex(2) &&
+          v2 == face.getVertex(1) && v3 == face.getVertex(0)){
         sign = -1; rot = 3; return;
       }
     }
@@ -149,7 +157,8 @@ void MPrism::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) c
   Msg::Error("Could not get face information for prism %d", getNum());
 }
 #include "Bindings.h"
-static MPrism18* MPrism18_binding(std::vector<MVertex*> v) {
+static MPrism18* MPrism18_binding(std::vector<MVertex*> v)
+{
   return new MPrism18(v);
 }
 
@@ -160,7 +169,8 @@ void MPrism::registerBindings(binding *b)
   methodBinding *cm;
   cm = cb->setConstructor<MPrism,MVertex*,MVertex*,MVertex*,MVertex*, MVertex*, MVertex*>();
   cm->setArgNames("v0", "v1", "v2", "v3","v4","v5", NULL);
-  cm->setDescription("Create a new prism with top triangle (v0,v1,v2) and bottom one (v3,v4,v5).");
+  cm->setDescription("Create a new prism with top triangle (v0,v1,v2) and "
+                     "bottom one (v3,v4,v5).");
   cm = cb->addMethod("getVolumeSign",&MPrism::getVolumeSign);
   cm->setDescription("computes the sign of the element volume");
   cm = cb->addMethod("revert",&MPrism::revert);
@@ -171,7 +181,7 @@ void MPrism::registerBindings(binding *b)
   cb = b->addClass<MPrism18>("MPrism18");
   cb->setDescription("A mesh second-order prism.");
   cm = cb->addMethod("MPrism18",&MPrism18_binding);
-//   cm = cb->setConstructor<MPrism18_binding,std::vector<MVertex*> >();
+  // cm = cb->setConstructor<MPrism18_binding,std::vector<MVertex*> >();
   cm->setArgNames("vectorOfVertices", NULL);
   cm->setDescription("Create a new prism with vertices in vectorV (length=18).");
   cb->setParentClass<MPrism>();

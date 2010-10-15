@@ -300,7 +300,8 @@ void GRegion::replaceFaces (std::list<GFace*> &new_faces)
 }
 
 double GRegion::computeSolidProperties (std::vector<double> cg,
-					std::vector<double> inertia){
+					std::vector<double> inertia)
+{
   std::list<GFace*>::iterator it = l_faces.begin();
   std::list<int>::iterator itdir =  l_dirs.begin();
   double volumex = 0;
@@ -309,10 +310,9 @@ double GRegion::computeSolidProperties (std::vector<double> cg,
   double surface = 0;
   cg[0] = cg[1] = cg[2] = 0.0;
   for ( ; it != l_faces.end(); ++it,++itdir){    
-    printf("face %d dir %d %d elements\n",(*it)->tag(),*itdir,(*it)->triangles.size());
-    for (int i=0;i<(*it)->triangles.size();++i){
+    printf("face %d dir %d %d elements\n",(*it)->tag(),*itdir,(int)(*it)->triangles.size());
+    for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *e = (*it)->triangles[i];
-      //      MElement *e = (*it)->getMeshElement(i);
       int npt;
       IntPt *pts;
       e->getIntegrationPoints (2*(e->getPolynomialOrder()-1)+3, &npt, &pts);      
@@ -355,12 +355,12 @@ double GRegion::computeSolidProperties (std::vector<double> cg,
     inertia[5] = 0.0;
 
   for ( ; it != l_faces.end(); ++it,++itdir){    
-    for (int i=0;i<(*it)->getNumMeshElements();++i){
+    for (unsigned int i = 0; i < (*it)->getNumMeshElements(); ++i){
       MElement *e = (*it)->getMeshElement(i);
       int npt;
       IntPt *pts;
       e->getIntegrationPoints (2*(e->getPolynomialOrder()-1)+3, &npt, &pts);      
-      for (int j=0;j<npt;j++){
+      for (int j = 0; j < npt; j++){
 	SPoint3 pt;
 	// compute x,y,z of the integration point
 	e->pnt(pts[j].pt[0],pts[j].pt[1],pts[j].pt[2],pt);
@@ -381,9 +381,8 @@ double GRegion::computeSolidProperties (std::vector<double> cg,
   return volume;
 }
 
-
-
-void GRegion::addPrism(MPrism *p) {
+void GRegion::addPrism(MPrism *p) 
+{
   prisms.push_back(p); 
 }
 

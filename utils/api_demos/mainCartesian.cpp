@@ -29,6 +29,8 @@ void insertActiveCells(double x, double y, double z, double rmax,
 
 void computeLevelset(GModel *gm, cartesianBox<double> &box)
 {
+  // tolerance for desambiguation
+  const double tol = box.getLC() * 1.e-12;
   std::vector<SPoint3> nodes;
   std::vector<int> indices;
   for (cartesianBox<double>::valIter it = box.nodalValuesBegin(); 
@@ -60,9 +62,21 @@ void computeLevelset(GModel *gm, cartesianBox<double> &box)
 	signedDistancesPointsTriangle(localdist, dummy, nodes, P2, P1, P3);
       if(dist.empty()) 
         dist = localdist;
-      else 
-        for (unsigned int j = 0; j < localdist.size(); j++)
-          dist[j] = (fabs(dist[j]) < fabs(localdist[j])) ? dist[j] : localdist[j];
+      else{ 
+        for (unsigned int j = 0; j < localdist.size(); j++){
+          // FIXME: if there is an ambiguity assume we are inside (to
+          // avoid holes in the structure). This is definitely just a
+          // hack, as it could create pockets of matter outside the
+          // structure...
+          if(dist[j] * localdist[j] < 0 && 
+             fabs(fabs(dist[j]) - fabs(localdist[j])) < tol){
+            dist[j] = std::max(dist[j], localdist[j]);
+          }
+          else{
+            dist[j] = (fabs(dist[j]) < fabs(localdist[j])) ? dist[j] : localdist[j];
+          }
+        }
+      }
     }
   }
   for (unsigned int j = 0; j < dist.size(); j++)

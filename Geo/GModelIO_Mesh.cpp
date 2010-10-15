@@ -1266,7 +1266,6 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int r
 
 int GModel::readPLY(const std::string &name)
 {
-
   replaceCommaByDot(name);
 
   FILE *fp = fopen(name.c_str(), "r");
@@ -1275,7 +1274,6 @@ int GModel::readPLY(const std::string &name)
     return 0;
   }
  
-
   std::vector<MVertex*> vertexVector;
   std::map<int, std::vector<MElement*> > elements[5];
   std::map<int, std::vector<double> > properties;
@@ -1312,7 +1310,6 @@ int GModel::readPLY(const std::string &name)
 	Msg::Info("%d triangles", nbf);
 	Msg::Info("%d properties", nbView);
 
-	//printf("*********READING VERTEX \n");
 	vertexVector.resize(nbv);
 	for(int i = 0; i < nbv; i++) {
 	  double x,y,z;
@@ -1321,11 +1318,10 @@ int GModel::readPLY(const std::string &name)
 	  x = strtod(line, &pEnd);
 	  y = strtod(pEnd, &pEnd2);
 	  z = strtod(pEnd2, &pEnd3);
-	  //printf("xyz=%g %g %g \n", x,y,z);
 	  vertexVector[i] = new MVertex(x, y, z);
 
 	  pEnd = pEnd3;
-	  double prop[nbView];
+          std::vector<double> prop(nbView);
 	  for (int k=0; k< nbView; k++){
 	    prop[k]=strtod(pEnd, &pEnd2);
 	    pEnd = pEnd2;
@@ -1333,7 +1329,6 @@ int GModel::readPLY(const std::string &name)
 	  }
 	}
 
-	//printf("*********READING ELEMS \n");
 	for(int i = 0; i < nbf; i++) {
 	  if(!fgets(buffer, sizeof(buffer), fp)) break;
 	  int n[3], nbe;
@@ -1401,7 +1396,7 @@ int GModel::readPLY2(const std::string &name)
   std::vector<MVertex*> vertexVector;
   std::map<int, std::vector<MElement*> > elements[5];
 
-  char buffer[256], str[256];
+  char buffer[256];
   int elementary = getMaxElementaryNumber(-1) + 1;
   int nbv, nbf;
   while(!feof(fp)) {
@@ -1448,6 +1443,38 @@ int GModel::readPLY2(const std::string &name)
     _storeElementsInEntities(elements[i]);
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertexVector);
+
+  fclose(fp);
+  return 1;
+}
+
+int GModel::writePLY2(const std::string &name)
+{
+  FILE *fp = fopen(name.c_str(), "w");
+  if(!fp){
+    Msg::Error("Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+
+  int numVertices = indexMeshVertices(true);
+  int numTriangles = 0;
+  for(fiter it = firstFace(); it != lastFace(); ++it){
+    numTriangles += (*it)->triangles.size();
+  }
+
+  fprintf(fp, "%d\n", numVertices);
+  fprintf(fp, "%d\n", numTriangles);
+
+  std::vector<GEntity*> entities;
+  getEntities(entities);
+  for(unsigned int i = 0; i < entities.size(); i++)
+    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
+      entities[i]->mesh_vertices[j]->writePLY2(fp);
+
+  for(fiter it = firstFace(); it != lastFace(); ++it){
+      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+        (*it)->triangles[i]->writePLY2(fp);
+  }
 
   fclose(fp);
   return 1;
@@ -1519,38 +1546,6 @@ int GModel::readVRML(const std::string &name)
     _storeElementsInEntities(elements[i]);
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(allVertexVector);
-
-  fclose(fp);
-  return 1;
-}
-
-int GModel::writePLY2(const std::string &name)
-{
-  FILE *fp = fopen(name.c_str(), "w");
-  if(!fp){
-    Msg::Error("Unable to open file '%s'", name.c_str());
-    return 0;
-  }
-
-  int numVertices = indexMeshVertices(true);
-  int numTriangles = 0.0;
-  for(fiter it = firstFace(); it != lastFace(); ++it){
-      numTriangles += (*it)->triangles.size();
-  }
-
-  fprintf(fp, "%d\n", numVertices);
-  fprintf(fp, "%d\n", numTriangles);
-
-  std::vector<GEntity*> entities;
-  getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
-      entities[i]->mesh_vertices[j]->writePLY2(fp);
-
-  for(fiter it = firstFace(); it != lastFace(); ++it){
-      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-        (*it)->triangles[i]->writePLY2(fp);
-  }
 
   fclose(fp);
   return 1;

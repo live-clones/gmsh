@@ -35,7 +35,8 @@ static bool mappingIsInvertible(MTetrahedron *e)
   
   fullMatrix<double> df;
   {
-    const fullMatrix<double> &alldf = e->getGradShapeFunctionsAtIntegrationPoints(e->getPolynomialOrder());
+    const fullMatrix<double> &alldf = 
+      e->getGradShapeFunctionsAtIntegrationPoints(e->getPolynomialOrder());
     for (int i = 0; i < alldf.size2()/3; i++){
       df.setAsProxy(alldf, 3*i, 3);
       e->getJacobian(df, mat);
@@ -44,9 +45,9 @@ static bool mappingIsInvertible(MTetrahedron *e)
   }
   {
     const fullMatrix<double> &points = e->getFunctionSpace()->points;
-    const fullMatrix<double> &alldf = e->getGradShapeFunctionsAtNodes(e->getPolynomialOrder());
-    double gradShapeFunctions[300][3];
-    for (int i = 0; i < alldf.size2()/3; i++){
+    const fullMatrix<double> &alldf = 
+      e->getGradShapeFunctionsAtNodes(e->getPolynomialOrder());
+    for (int i = 0; i < alldf.size2() / 3; i++){
       df.setAsProxy(alldf, 3*i, 3);
       e->getJacobian(df, mat);
       if (det0 * det3x3(mat) <= 0.) return false;
@@ -476,7 +477,7 @@ static void reorientTrianglePoints(std::vector<MVertex*> &vtcs, int orientation,
   int nbPts = vtcs.size();
   if (nbPts <= 1) return;
   std::vector<MVertex*> tmp(nbPts);
-  int interiorOrder = (int)((sqrt(1+8*nbPts)-3)/2);
+  int interiorOrder = (int)((sqrt(1. + 8. * nbPts) - 3) / 2);
   int pos = 0;
   for (int o = interiorOrder; o>0; o-=3) {
     if (swap) {
