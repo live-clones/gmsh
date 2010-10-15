@@ -310,7 +310,7 @@ double GRegion::computeSolidProperties (std::vector<double> cg,
   double surface = 0;
   cg[0] = cg[1] = cg[2] = 0.0;
   for ( ; it != l_faces.end(); ++it,++itdir){    
-    printf("face %d dir %d %d elements\n",(*it)->tag(),*itdir,(*it)->triangles.size());
+    printf("face %d dir %d %d elements\n",(*it)->tag(),*itdir,(int)(*it)->triangles.size());
     for (int i=0;i<(*it)->triangles.size();++i){
       MTriangle *e = (*it)->triangles[i];
       //      MElement *e = (*it)->getMeshElement(i);
