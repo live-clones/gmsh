@@ -456,7 +456,7 @@ static void Mesh2D(GModel *m)
           nbPending++;
         }
       }
-      for(std::set<GFace*>::iterator = cf.begin(); it != cf.end(); ++it){
+      for(std::set<GFace*>::iterator it = cf.begin(); it != cf.end(); ++it){
         if ((*it)->meshStatistics.status == GFace::PENDING){
           mesher(*it);
           nbPending++;
