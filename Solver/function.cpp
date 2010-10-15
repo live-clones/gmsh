@@ -412,11 +412,11 @@ function *functionProdNew(const function *f0, const function *f1)
 class functionExtractComp : public function {
   public:
   fullMatrix<double> _f0;
-  double _iComp;
+  int _iComp;
   void call(dataCacheMap *m, fullMatrix<double> &val) 
   {
-    for (int i=0; i<val.size1(); i++)
-        val(i,0)= _f0(i,_iComp);
+    for (int i = 0; i < val.size1(); i++)
+        val(i, 0) = _f0(i, _iComp);
   }
   functionExtractComp(const function *f0, const int iComp) : function(1) 
   {
