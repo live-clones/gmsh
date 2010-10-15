@@ -9,11 +9,14 @@
 #include "Gmsh.h"
 #include "GmshConfig.h"
 #include "GModel.h"
+#include "MElement.h"
 #include "Distance.h"
-#include "simpleFunction.h"
-#include "distanceTerm.h"
 #include "Context.h"
 #include "Numeric.h"
+
+#if defined(HAVE_SOLVER)
+#include "simpleFunction.h"
+#include "distanceTerm.h"
 #include "dofManager.h"
 #include "linearSystemGMM.h"
 #include "linearSystemCSR.h"
@@ -21,6 +24,7 @@
 #include "orthogonalTerm.h"
 #include "laplaceTerm.h"
 #include "crossConfTerm.h"
+#endif
 
 StringXNumber DistanceOptions_Number[] = {
   {GMSH_FULLRC, "PhysPoint", NULL, 0.},
@@ -166,7 +170,9 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   
   PView *view = new PView();
   _data = getDataList(view);
-#ifdef HAVE_TAUCS
+
+#if defined(HAVE_SOLVER)
+#if defined(HAVE_TAUCS)
   linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
 #else
   linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
@@ -175,6 +181,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   lsys->setPrec(5.e-8);
 #endif
   dofManager<double> * dofView = new dofManager<double>(lsys);
+#endif
     
   std::vector<GEntity*> _entities;
   GModel::current()->getEntities(_entities);
@@ -403,8 +410,8 @@ PView *GMSH_DistancePlugin::execute(PView *v)
             }
             }
             else{
-	      if (std::abs(iDistances[kk]) < distances[kk]){
-	        distances[kk] = std::abs(iDistances[kk]);
+	      if (fabs(iDistances[kk]) < distances[kk]){
+	        distances[kk] = fabs(iDistances[kk]);
 	        MVertex *v = pt2Vertex[kk];
 	        _distance_map[v] = distances[kk];
               }
