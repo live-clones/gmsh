@@ -476,7 +476,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
           inYarn.push_back(it->second);
         }
         fprintf(f4,"){");
-        for (int i=0; i<inYarn.size(); i++){
+        for (unsigned int i=0; i<inYarn.size(); i++){
           if (i) fprintf(f4,",%d", inYarn[i]);
           else fprintf(f4,"%d", inYarn[i]);
         }
@@ -502,7 +502,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
       int gDim = ge->dim();
       bool fixForEntity = false;
       std::vector<int> phys = ge->getPhysicalEntities();
-      for(int k = 0; k< phys.size(); k++){
+      for(unsigned int k = 0; k< phys.size(); k++){
 	int tagp = phys[k];
 	if (id_pt==0 && id_line==0 && id_face==0 && gDim==_maxDim-1 )
 	  fixForEntity = true;
