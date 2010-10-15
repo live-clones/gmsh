@@ -355,12 +355,12 @@ double GRegion::computeSolidProperties (std::vector<double> cg,
     inertia[5] = 0.0;
 
   for ( ; it != l_faces.end(); ++it,++itdir){    
-    for (int i=0;i<(*it)->getNumMeshElements();++i){
+    for (unsigned int i = 0; i < (*it)->getNumMeshElements(); ++i){
       MElement *e = (*it)->getMeshElement(i);
       int npt;
       IntPt *pts;
       e->getIntegrationPoints (2*(e->getPolynomialOrder()-1)+3, &npt, &pts);      
-      for (int j=0;j<npt;j++){
+      for (int j = 0; j < npt; j++){
 	SPoint3 pt;
 	// compute x,y,z of the integration point
 	e->pnt(pts[j].pt[0],pts[j].pt[1],pts[j].pt[2],pt);
@@ -381,9 +381,8 @@ double GRegion::computeSolidProperties (std::vector<double> cg,
   return volume;
 }
 
-
-
-void GRegion::addPrism(MPrism *p) {
+void GRegion::addPrism(MPrism *p) 
+{
   prisms.push_back(p); 
 }
 
