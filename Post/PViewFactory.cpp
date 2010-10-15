@@ -1,3 +1,8 @@
+// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+
 #include "PViewFactory.h"
 #include "GModel.h"
 #include "fullMatrix.h"
@@ -5,7 +10,9 @@
 #include <vector>
 #include "Bindings.h"
 
-PViewFactory::PViewFactory (std::string name, std::string type, GModel *model, int timeStep, int dim):_model(model),_name(name),_type(type),_timeStep(timeStep), _dim(dim)
+PViewFactory::PViewFactory (std::string name, std::string type, GModel *model,
+                            int timeStep, int dim)
+ : _model(model), _name(name), _type(type), _timeStep(timeStep), _dim(dim)
 {
 }
 
