@@ -840,7 +840,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
           bords.push_back(std::pair<MElement*, MElement*>(dom, tb));
         }
         borders[1].erase(itr.first, itr.second);
-        for(int i = 0; i < bords.size(); i++)
+        for(unsigned int i = 0; i < bords.size(); i++)
           borders[1].insert(bords[i]);
         if(eParent) {copy->setParent(NULL, false); delete copy;}
       }
@@ -1009,7 +1009,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
           bords.push_back(std::pair<MElement*, MElement*>(dom, lb));
         }
         borders[0].erase(itr.first, itr.second);
-        for(int i = 0; i < bords.size(); i++)
+        for(unsigned int i = 0; i < bords.size(); i++)
           borders[0].insert(bords[i]);
         if(eParent) {copy->setParent(NULL, false); delete copy;}
       }

@@ -1396,7 +1396,7 @@ int GModel::readPLY2(const std::string &name)
   std::vector<MVertex*> vertexVector;
   std::map<int, std::vector<MElement*> > elements[5];
 
-  char buffer[256], str[256];
+  char buffer[256];
   int elementary = getMaxElementaryNumber(-1) + 1;
   int nbv, nbf;
   while(!feof(fp)) {

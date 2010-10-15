@@ -88,7 +88,7 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
   int numf = gm->getMaxElementaryNumber(2) + 1;
   Surface *s = Create_Surface(numf, MSH_SURF_PLAN);
   List_T *iList = List_Create(nLoops, nLoops, sizeof(int));
-  for (int i=0; i< vecLoops.size(); i++){
+  for (unsigned int i=0; i< vecLoops.size(); i++){
     int numl = vecLoops[i]->Num;
     List_Add(iList, &numl);
   }
@@ -133,7 +133,7 @@ GRegion* GeoFactory::addVolume (GModel *gm, std::vector<std::vector<GFace *> > f
   int numv = gm->getMaxElementaryNumber(3) + 1;
   Volume *v = Create_Volume(numv, MSH_VOLUME);
   List_T *iList = List_Create(nLoops, nLoops, sizeof(int));
-  for (int i=0; i< vecLoops.size(); i++){
+  for (unsigned int i = 0; i < vecLoops.size(); i++){
     int numl = vecLoops[i]->Num;
     List_Add(iList, &numl);
   }

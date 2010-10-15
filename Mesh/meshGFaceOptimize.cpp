@@ -1606,7 +1606,7 @@ void recombineIntoQuads(GFace *gf)
   if(success && CTX::instance()->mesh.algoRecombine == 1){    
     //gf->model()->writeMSH("smoothed.msh");
     int COUNT = 0;
-    char NAME[256];
+    //char NAME[256];
     while(1){
       int x = removeTwoQuadsNodes(gf);
       //if(x){ sprintf(NAME,"iter%dTQ.msh",COUNT++); gf->model()->writeMSH(NAME);}

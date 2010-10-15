@@ -349,7 +349,7 @@ void GFaceCompound::fillNeumannBCS() const
       double z=0.;
       //EMI- TODO FIND KERNEL OF POLYGON AND PLACE AT CG KERNEL !
       //IF NO KERNEL -> DO NOT FILL TRIS
-      for(unsigned int i = 0; i < nbLoop; ++i){
+      for(int i = 0; i < nbLoop; ++i){
 	MVertex *v0 = orderedLoop[i];
 	MVertex *v1 = (i==nbLoop-1) ? orderedLoop[0]: orderedLoop[i+1];
 	x += .5*(v0->x() + v1->x()); 
@@ -361,7 +361,7 @@ void GFaceCompound::fillNeumannBCS() const
       MVertex *c = new MVertex(x, y, z);
          
       //--- create new triangles
-      for(unsigned int i = 0; i < nbLoop; ++i){
+      for(int i = 0; i < nbLoop; ++i){
 	MVertex *v0 = orderedLoop[i];
 	MVertex *v1 = (i==nbLoop-1) ? orderedLoop[0]: orderedLoop[i+1];
   
@@ -489,7 +489,7 @@ bool GFaceCompound::checkOverlap() const
     else orderedLoop = _ordered;
     int nbLoop = orderedLoop.size();
     
-    for(unsigned int i = 0; i < nbLoop-1; ++i){
+    for(int i = 0; i < nbLoop-1; ++i){
       SPoint3 p1 = coordinates[orderedLoop[i]];
       SPoint3 p2 = coordinates[orderedLoop[i+1]];
       int maxSize = (i==0) ? nbLoop-2: nbLoop-1;
@@ -2254,7 +2254,7 @@ void GFaceCompound::printStuff(int iNewton) const
  
   char name0[256], name1[256], name2[256], name3[256];
   char name4[256], name5[256], name6[256];
-  char name7[256], name8[256], name9[256];
+  char name7[256];
   sprintf(name0, "UVAREA-%d.pos", (*it)->tag());
   sprintf(name1, "UVX-%d_%d.pos", (*it)->tag(), iNewton);
   sprintf(name2, "UVY-%d_%d.pos", (*it)->tag(), iNewton);

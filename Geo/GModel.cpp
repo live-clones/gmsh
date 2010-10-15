@@ -2005,7 +2005,6 @@ struct compareMLinePtr {
   }
 };
 
-
 static GEdge *getNewModelEdge(GFace *gf1, GFace *gf2, 
                               std::map<std::pair<int, int>, GEdge*> &newEdges)
 {
@@ -2082,7 +2081,8 @@ static void recurClassify(MTri3 *t, GFace *gf,
   }
 }
 
-void GModel::detectEdges(double _tresholdAngle) {
+void GModel::detectEdges(double _tresholdAngle)
+{
   e2t_cont adj;
   std::vector<MTriangle*> elements;
   std::vector<edge_angle> edges_detected, edges_lonly;
@@ -2113,8 +2113,8 @@ void GModel::detectEdges(double _tresholdAngle) {
   //  delete selected;
 }
 
-void GModel::classifyFaces(std::set<GFace*> &_faces) {
-
+void GModel::classifyFaces(std::set<GFace*> &_faces) 
+{
   std::map<MLine*, GEdge*, compareMLinePtr> lines;
 
   for(GModel::eiter it = GModel::current()->firstEdge(); 
@@ -2155,7 +2155,7 @@ void GModel::classifyFaces(std::set<GFace*> &_faces) {
       GModel::current()->add(gf);
       newf.push_back(gf);
       
-      for (int i=0;i<gf->triangles.size();i++){
+      for (unsigned int i = 0; i < gf->triangles.size(); i++){
 	replacedBy.insert(std::make_pair(reverse_old[gf->triangles[i]],gf));
       }
     }
@@ -2219,7 +2219,8 @@ void GModel::classifyFaces(std::set<GFace*> &_faces) {
       allSegments.erase(allSegments.begin());
       while(1){
 	bool found = false;
-	for (std::list<MLine*>::iterator it = allSegments.begin();it != allSegments.end(); ++it){ 
+	for (std::list<MLine*>::iterator it = allSegments.begin();
+             it != allSegments.end(); ++it){ 
 	  MVertex *v1 = (*it)->getVertex(0);
 	  MVertex *v2 = (*it)->getVertex(1);
 	  if (v1 == vE || v2 == vE){
@@ -2245,8 +2246,8 @@ void GModel::classifyFaces(std::set<GFace*> &_faces) {
 
       std::map<MVertex*,GVertex*>::iterator itMV = modelVertices.find(vB);
       if (itMV == modelVertices.end()){
-	GVertex *newGv = new discreteVertex(GModel::current(),
-					    GModel::current()->getMaxElementaryNumber(0) + 1);
+	GVertex *newGv = new discreteVertex
+          (GModel::current(), GModel::current()->getMaxElementaryNumber(0) + 1);
 	newGv->mesh_vertices.push_back(vB);
 	vB->setEntity(newGv);	
 	newGv->points.push_back(new MPoint(vB));
@@ -2255,8 +2256,8 @@ void GModel::classifyFaces(std::set<GFace*> &_faces) {
       }
       itMV = modelVertices.find(vE);
       if (itMV == modelVertices.end()){
-	GVertex *newGv = new discreteVertex(GModel::current(),
-					    GModel::current()->getMaxElementaryNumber(0) + 1);
+	GVertex *newGv = new discreteVertex
+          (GModel::current(), GModel::current()->getMaxElementaryNumber(0) + 1);
 	newGv->mesh_vertices.push_back(vE);
 	newGv->points.push_back(new MPoint(vE));
 	vE->setEntity(newGv);	
@@ -2265,22 +2266,24 @@ void GModel::classifyFaces(std::set<GFace*> &_faces) {
       }
 
       GEdge *newGe = new discreteEdge
-        (GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, modelVertices[vB], modelVertices[vE]);
-      newGe->lines.insert(newGe->lines.end(), segmentsForThisDiscreteEdge.begin(), segmentsForThisDiscreteEdge.end());
+        (GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1,
+         modelVertices[vB], modelVertices[vE]);
+      newGe->lines.insert(newGe->lines.end(), segmentsForThisDiscreteEdge.begin(),
+                          segmentsForThisDiscreteEdge.end());
 
-      //      printf("discrete edge %d\n",newGe->tag());
       for (std::list<MLine*>::iterator itL =  segmentsForThisDiscreteEdge.begin();
 	   itL !=  segmentsForThisDiscreteEdge.end(); ++itL){
 	if((*itL)->getVertex(0)->onWhat()->dim() != 0){
 	  newGe->mesh_vertices.push_back((*itL)->getVertex(0));
 	  (*itL)->getVertex(0)->setEntity(newGe);
 	}
-	//	printf("%d %d \n",(*itL)->getVertex(0)->getNum(),(*itL)->getVertex(1)->getNum());
       }
 
       GModel::current()->add(newGe);
-      discreteFace *gf1 = dynamic_cast<discreteFace*> (GModel::current()->getFaceByTag(ite->first.first));
-      discreteFace *gf2 = dynamic_cast<discreteFace*> (GModel::current()->getFaceByTag(ite->first.second));
+      discreteFace *gf1 = dynamic_cast<discreteFace*>
+        (GModel::current()->getFaceByTag(ite->first.first));
+      discreteFace *gf2 = dynamic_cast<discreteFace*> 
+        (GModel::current()->getFaceByTag(ite->first.second));
       if (gf1)newFaceTopology[gf1].push_back(newGe->tag());
       if (gf2)newFaceTopology[gf2].push_back(newGe->tag());
     }
@@ -2290,7 +2293,6 @@ void GModel::classifyFaces(std::set<GFace*> &_faces) {
   for (;itFT != newFaceTopology.end();++itFT){
     itFT->first->setBoundEdges(itFT->second);
   }
-
 
   for (std::map<std::pair<int, int>, GEdge*>::iterator it = newEdges.begin();
        it != newEdges.end(); ++it){
@@ -2319,12 +2321,12 @@ void GModel::classifyFaces(std::set<GFace*> &_faces) {
       }      
     }
     if ((*fit)->triangles.size())
-      (*fit)->mesh_vertices.insert((*fit)->mesh_vertices.begin(),_verts.begin(),_verts.end());
+      (*fit)->mesh_vertices.insert((*fit)->mesh_vertices.begin(),
+                                   _verts.begin(), _verts.end());
     else
       remove(*fit);
   }
 }
-
 
 
 #include "Bindings.h"

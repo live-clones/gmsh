@@ -47,8 +47,7 @@ static bool mappingIsInvertible(MTetrahedron *e)
     const fullMatrix<double> &points = e->getFunctionSpace()->points;
     const fullMatrix<double> &alldf = 
       e->getGradShapeFunctionsAtNodes(e->getPolynomialOrder());
-    double gradShapeFunctions[300][3];
-    for (int i = 0; i < alldf.size2()/3; i++){
+    for (int i = 0; i < alldf.size2() / 3; i++){
       df.setAsProxy(alldf, 3*i, 3);
       e->getJacobian(df, mat);
       if (det0 * det3x3(mat) <= 0.) return false;
