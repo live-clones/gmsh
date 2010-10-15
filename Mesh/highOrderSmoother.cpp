@@ -40,8 +40,6 @@ static int swapHighOrderTriangles(GFace *gf, edgeContainer&, faceContainer&,
 static int findOptimalLocationsP2(GFace *gf, highOrderSmoother *s);
 static int findOptimalLocationsPN(GFace *gf, highOrderSmoother *s);
 
-extern double angle3Points(MVertex *p1, MVertex *p2, MVertex *p3);
-
 static double shapeMeasure(MElement *e)
 {
   //const double d1 = e->distoShapeMeasure();

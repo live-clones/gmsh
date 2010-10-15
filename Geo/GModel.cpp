@@ -35,11 +35,11 @@
 #include "MVertexPositionSet.h"
 #include "OpenFile.h"
 #include "CreateFile.h"
-#include "meshGFaceOptimize.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"
 #include "Generator.h"
+#include "meshGFaceOptimize.h"
 #endif
 
 std::vector<GModel*> GModel::list;
@@ -1994,9 +1994,6 @@ void GModel::insertRegion(GRegion *r)
   regions.insert(r);
 }
 
-// given a set of mesh edges, build GFaces that separate those 
-// edges.
-
 GEdge *getNewModelEdge(GFace *gf1, GFace *gf2, 
                        std::map<std::pair<int, int>, GEdge*> &newEdges)
 {
@@ -2019,6 +2016,8 @@ GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
   else
     return it->second;  
 }
+
+#if defined(HAVE_MESH)
 
 void recurClassifyEdges(MTri3 *t, std::map<MTriangle*, GFace*> &reverse,
                         std::map<MLine*, GEdge*, compareMLinePtr> &lines,
@@ -2071,8 +2070,11 @@ void recurClassify(MTri3 *t, GFace *gf,
   }
 }
 
+#endif
+
 void GModel::detectEdges(double _tresholdAngle)
 {
+#if defined(HAVE_MESH)
   e2t_cont adj;
   std::vector<MTriangle*> elements;
   std::vector<edge_angle> edges_detected, edges_lonly;
@@ -2101,10 +2103,12 @@ void GModel::detectEdges(double _tresholdAngle)
   classifyFaces(_temp);
   remove(selected);
   //  delete selected;
+#endif
 }
 
 void GModel::classifyFaces(std::set<GFace*> &_faces) 
 {
+#if defined(HAVE_MESH)
   std::map<MLine*, GEdge*, compareMLinePtr> lines;
 
   for(GModel::eiter it = GModel::current()->firstEdge(); 
@@ -2314,6 +2318,7 @@ void GModel::classifyFaces(std::set<GFace*> &_faces)
     else
       remove(*fit);
   }
+#endif
 }
 
 

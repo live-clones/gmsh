@@ -225,7 +225,7 @@ void edgeFront::initiate()
   }
 }
 
-double angle3Points(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3)
+static double angle3Points(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3)
 {
   SVector3 a(p1->X - p2->X, p1->Y - p2->Y, p1->Z - p2->Z);
   SVector3 b(p3->X - p2->X, p3->Y - p2->Y, p3->Z - p2->Z);
