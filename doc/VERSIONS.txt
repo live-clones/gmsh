@@ -1,12 +1,12 @@
-2.5.0 (?): new client/server visualization mode; new compound
-geometrical entities (useful for remeshing); improved mesh
-reclassification tool; new ability to watch a pattern of files to
-merge; new integrated MPEG export; new option to force the type of
-views dynamically; bumped mesh version format to 2.2 (change in the
-meaning of the partition tags; this only affects partitioned
-(parallel) meshes); renamed several post-processing plugins (as well
-as plugin options) to make them easier to understand; many bug fixes
-and usability improvements all over the place.
+2.5.0 (?): new compound geometrical entities (for remeshing and/or
+trans-patch meshing); improved mesh reclassification tool; new
+client/server visualization mode; new ability to watch a pattern of
+files to merge; new integrated MPEG export; new option to force the
+type of views dynamically; bumped mesh version format to 2.2 (small
+change in the meaning of the partition tags; this only affects
+partitioned (i.e. parallel) meshes); renamed several post-processing
+plugins (as well as plugin options) to make them easier to understand;
+many bug fixes and usability improvements all over the place.
 
 2.4.2 (Sep 21, 2009): solver code refactoring + better IDE
 integration.

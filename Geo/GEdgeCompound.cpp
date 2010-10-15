@@ -33,7 +33,6 @@ GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound,
   }
 
  parametrize();
-
 }
 
 GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound)
