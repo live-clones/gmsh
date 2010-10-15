@@ -193,4 +193,12 @@ class MLineN : public MLine {
   }
 };
 
+struct compareMLinePtr {
+  bool operator () (MLine *l1, MLine *l2) const
+  {
+    static Less_Edge le;
+    return le(l1->getEdge(0), l2->getEdge(0)); 
+  }
+};
+
 #endif

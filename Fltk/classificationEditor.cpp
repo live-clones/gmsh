@@ -19,6 +19,18 @@
 #include "discreteEdge.h"
 #include "discreteFace.h"
 
+extern GEdge *getNewModelEdge(GFace *gf1, GFace *gf2, 
+                              std::map<std::pair<int, int>, GEdge*> &newEdges);
+
+extern void recurClassifyEdges(MTri3 *t, std::map<MTriangle*, GFace*> &reverse,
+                               std::map<MLine*, GEdge*, compareMLinePtr> &lines,
+                               std::set<MLine*> &touched, std::set<MTri3*> &trisTouched,
+                               std::map<std::pair<int, int>, GEdge*> &newEdges);
+
+extern void recurClassify(MTri3 *t, GFace *gf,
+                          std::map<MLine*, GEdge*, compareMLinePtr> &lines,
+                          std::map<MTriangle*, GFace*> &reverse);
+
 static void NoElementsSelectedMode(classificationEditor *e)
 {
   e->buttons[CLASS_BUTTON_SELECT_ELEMENTS]->activate(); 
@@ -207,7 +219,7 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
 
   std::sort(ele.begin(), ele.end());
 
-  //  look in all selected edges if a deleted one is present and delete it
+  // look in all selected edges if a deleted one is present and delete it
   std::vector<MLine*> temp = e->selected->lines;
   e->selected->lines.clear();
   for(unsigned int i = 0; i < temp.size(); i++){      
@@ -290,8 +302,119 @@ static void select_surfaces_cb(Fl_Widget *w, void *data)
 static void classify_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor*)data;
-  // classify faces with respect to coloured edges
-  GModel::current()->classifyFaces(e->faces);
+  std::map<MLine*, GEdge*, compareMLinePtr> lines;
+  for(GModel::eiter it = GModel::current()->firstEdge(); 
+      it != GModel::current()->lastEdge(); ++it){
+    for(unsigned int i = 0; i < (*it)->lines.size();i++) 
+      lines[(*it)->lines[i]] = *it;
+  }
+
+  std::list<MTri3*> tris;
+  {
+    std::set<GFace*>::iterator it = e->faces.begin();
+    while(it != e->faces.end()){
+      GFace *gf = *it;
+      for(unsigned int i = 0; i < gf->triangles.size(); i++)
+        tris.push_back(new MTri3(gf->triangles[i], 0));
+      gf->triangles.clear();
+      ++it;
+    }
+  }
+  if(tris.empty()) return;
+
+  connectTriangles(tris);
+
+  std::map<MTriangle*, GFace*> reverse;
+  // color all triangles
+  std::list<MTri3*> ::iterator it = tris.begin();
+  while(it != tris.end()){
+    if(!(*it)->isDeleted()){
+      discreteFace *gf = new discreteFace
+        (GModel::current(), GModel::current()->getMaxElementaryNumber(2) + 1);
+      recurClassify(*it, gf, lines, reverse);
+      GModel::current()->add(gf);
+    }
+    ++it;
+  }
+  
+  // color some lines
+  it = tris.begin();
+  while(it != tris.end()){
+    (*it)->setDeleted(false);
+    ++it;
+  }
+  
+  it = tris.begin();
+  
+  // classify edges that are bound by different GFaces
+  std::map<std::pair<int, int>, GEdge*> newEdges;
+  std::set<MLine*> touched;
+  std::set<MTri3*> tritouched;
+  recurClassifyEdges(*it, reverse, lines, touched, tritouched, newEdges);
+  
+  // check if new edges should not be splitted 
+  // splitted if composed of several open or closed edges
+  for (std::map<std::pair<int, int>, GEdge*>::iterator it = newEdges.begin();
+       it != newEdges.end() ; ++it){
+    std::list<MLine*> segments;
+    for(unsigned int i = 0; i < it->second->lines.size(); i++)
+      segments.push_back(it->second->lines[i]);
+    while (!segments.empty()) {
+      std::vector<MLine*> myLines;
+      std::list<MLine*>::iterator it = segments.begin();
+      MVertex *vB = (*it)->getVertex(0);
+      MVertex *vE = (*it)->getVertex(1);
+      myLines.push_back(*it);
+      segments.erase(it);
+      it++;
+      for (int i = 0; i < 2; i++) {
+        for (std::list<MLine*>::iterator it = segments.begin();
+             it != segments.end(); ++it){ 
+          MVertex *v1 = (*it)->getVertex(0);
+          MVertex *v2 = (*it)->getVertex(1);
+          std::list<MLine*>::iterator itp;
+          if (v1 == vE){
+            myLines.push_back(*it);
+            itp = it;
+            it++;
+            segments.erase(itp);
+            vE = v2;
+            i = -1;
+          }
+          else if ( v2 == vE){
+            myLines.push_back(*it);
+            itp = it;
+            it++;
+            segments.erase(itp);
+            vE = v1;
+            i = -1;
+          }
+          if (it == segments.end()) break;
+        }
+        if (vB == vE) break;
+        if (segments.empty()) break;
+        MVertex *temp = vB;
+        vB = vE;
+        vE = temp;
+      }
+      GEdge *newGe = new discreteEdge
+        (GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
+      newGe->lines.insert(newGe->lines.end(), myLines.begin(), myLines.end());
+      GModel::current()->add(newGe);
+    }
+  }
+
+  for (std::map<std::pair<int, int>, GEdge*>::iterator it = newEdges.begin();
+       it != newEdges.end(); ++it){
+    GEdge *ge = it->second;
+    GModel::current()->remove(ge);
+  }
+  
+  while(it != tris.end()){
+    delete *it;
+    ++it;
+  }
+
   // remove selected, but do not delete its elements
   if(e->selected){
     GModel::current()->remove(e->selected);

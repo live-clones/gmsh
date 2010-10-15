@@ -1997,16 +1997,8 @@ void GModel::insertRegion(GRegion *r)
 // given a set of mesh edges, build GFaces that separate those 
 // edges.
 
-struct compareMLinePtr {
-  bool operator () (MLine *l1, MLine *l2) const
-  {
-    static Less_Edge le;
-    return le(l1->getEdge(0), l2->getEdge(0)); 
-  }
-};
-
-static GEdge *getNewModelEdge(GFace *gf1, GFace *gf2, 
-                              std::map<std::pair<int, int>, GEdge*> &newEdges)
+GEdge *getNewModelEdge(GFace *gf1, GFace *gf2, 
+                       std::map<std::pair<int, int>, GEdge*> &newEdges)
 {
   int t1 = gf1 ? gf1->tag() : -1;
   int t2 = gf2 ? gf2->tag() : -1;
@@ -2028,12 +2020,10 @@ static GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
     return it->second;  
 }
 
-static void recurClassifyEdges(MTri3 *t, 
-                               std::map<MTriangle*, GFace*> &reverse,
-                               std::map<MLine*, GEdge*, compareMLinePtr> &lines,
-                               std::set<MLine*> &touched,
-                               std::set<MTri3*> &trisTouched,
-                               std::map<std::pair<int, int>, GEdge*> &newEdges)
+void recurClassifyEdges(MTri3 *t, std::map<MTriangle*, GFace*> &reverse,
+                        std::map<MLine*, GEdge*, compareMLinePtr> &lines,
+                        std::set<MLine*> &touched, std::set<MTri3*> &trisTouched,
+                        std::map<std::pair<int, int>, GEdge*> &newEdges)
 {
   if(!t->isDeleted()){
     trisTouched.erase(t);
@@ -2060,9 +2050,9 @@ static void recurClassifyEdges(MTri3 *t,
   }
 }
 
-static void recurClassify(MTri3 *t, GFace *gf,
-                          std::map<MLine*, GEdge*, compareMLinePtr> &lines,
-                          std::map<MTriangle*, GFace*> &reverse)
+void recurClassify(MTri3 *t, GFace *gf,
+                   std::map<MLine*, GEdge*, compareMLinePtr> &lines,
+                   std::map<MTriangle*, GFace*> &reverse)
 {
   if(!t->isDeleted()){
     gf->triangles.push_back(t->tri());
@@ -2195,8 +2185,6 @@ void GModel::classifyFaces(std::set<GFace*> &_faces)
   trisTouched.insert(tris.begin(),tris.end());
   while(!trisTouched.empty())
     recurClassifyEdges(*trisTouched.begin(), reverse, lines, touched, trisTouched,newEdges);
-
-  //  printf("%d new edges\n",newEdges.size());
 
   std::map<discreteFace*,std::vector<int> > newFaceTopology;
   
