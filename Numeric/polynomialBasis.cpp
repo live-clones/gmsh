@@ -297,7 +297,6 @@ static fullMatrix<double> generatePascalPrism(int order)
   return monomials;
 }
 
-
 static int nbdoftriangle(int order) { return (order + 1) * (order + 2) / 2; }
 //static int nbdoftriangleserendip(int order) { return 3 * order; }
 
@@ -705,8 +704,6 @@ static fullMatrix<double> gmshGeneratePointsPrism(int order, bool serendip)
         index ++;
       }
     }
-
-//   point.print("Pri ipts");
 
   return point;
 }
@@ -1333,19 +1330,18 @@ const polynomialBasis *polynomialBases::find(int tag)
     F.points =    gmshGeneratePointsQuad(10,true);
     generate2dEdgeClosure(F.closures, 10, 4);
     break;
-  case MSH_PRI_6 : // first order
+  case MSH_PRI_6 :
     F.numFaces = 5;
     F.monomials = generatePascalPrism(1);
     F.points =    gmshGeneratePointsPrism(1, false);
     generate3dFaceClosurePrism(F.closures, 1);
     break;
-  case MSH_PRI_18 : // second order
+  case MSH_PRI_18 :
     F.numFaces = 5;
     F.monomials = generatePascalPrism(2);
     F.points =    gmshGeneratePointsPrism(2, false);
     generate3dFaceClosurePrism(F.closures, 2);
     break;
-
   default :
     Msg::Error("Unknown function space %d: reverting to TET_4", tag);
     F.numFaces = 4;
@@ -1357,13 +1353,14 @@ const polynomialBasis *polynomialBases::find(int tag)
   F.type = tag;
 
   F.coefficients = generateLagrangeMonomialCoefficients(F.monomials, F.points);
-//   printf("Case: %d coeffs:\n",tag);
-//   for (int i = 0; i<F.coefficients.size1(); i++) {
-//     for (int j = 0; j<F.coefficients.size2(); j++) {
-//       printf("%4.1f ",F.coefficients(i,j));
-//     }
-//     printf("\n");
-//   }
+
+  // printf("Case: %d coeffs:\n",tag);
+  // for (int i = 0; i<F.coefficients.size1(); i++) {
+  //   for (int j = 0; j<F.coefficients.size2(); j++) {
+  //     printf("%4.1f ",F.coefficients(i,j));
+  //   }
+  //   printf("\n");
+  // }
 
   fs.insert(std::make_pair(tag, F));
   return &fs[tag];
@@ -1396,7 +1393,8 @@ const fullMatrix<double> &polynomialBases::findInjector(int tag1, int tag2)
 }
 
 #include "Bindings.h"
-void polynomialBasis::registerBindings(binding *b) {
+void polynomialBasis::registerBindings(binding *b) 
+{
   classBinding *cb = b->addClass<polynomialBasis>("polynomialBasis");
   cb->setDescription("polynomial shape functions for elements");
   methodBinding *mb = cb->addMethod

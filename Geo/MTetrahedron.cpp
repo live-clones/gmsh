@@ -364,9 +364,10 @@ void MTetrahedron::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &
 
 static std::vector<std::vector<int> > tetReverseIndices(20);
 
-const std::vector<int> &MTetrahedronN::_getReverseIndices (int order) {
-  if(order>=tetReverseIndices.size())
-    tetReverseIndices.resize(order+1);
+const std::vector<int> &MTetrahedronN::_getReverseIndices (int order) 
+{
+  if(order >= tetReverseIndices.size())
+    tetReverseIndices.resize(order + 1);
   std::vector<int> &r = tetReverseIndices[order];
   if (r.size() != 0) return r;
   //

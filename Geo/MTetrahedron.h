@@ -289,8 +289,6 @@ class MTetrahedron10 : public MTetrahedron {
  *
  */
 
-
-
 /* tet order 3
    
  *              2

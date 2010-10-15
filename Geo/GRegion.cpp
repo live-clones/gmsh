@@ -300,7 +300,8 @@ void GRegion::replaceFaces (std::list<GFace*> &new_faces)
 }
 
 double GRegion::computeSolidProperties (std::vector<double> cg,
-					std::vector<double> inertia){
+					std::vector<double> inertia)
+{
   std::list<GFace*>::iterator it = l_faces.begin();
   std::list<int>::iterator itdir =  l_dirs.begin();
   double volumex = 0;

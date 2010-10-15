@@ -136,9 +136,10 @@ class MQuadrangle : public MElement {
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual double angleShapeMeasure();
   virtual double distoShapeMeasure();
-// Computes the minimum inradius of the all the circles tangents to 3 of the 4
-// edges of the quad. If the 4 points of the quad are not planar,  we compute
-// the mean plane due to the least-square criterion.
+  // Computes the minimum inradius of the all the circles tangents to
+  // 3 of the 4 edges of the quad. If the 4 points of the quad are not
+  // planar, we compute the mean plane due to the least-square
+  // criterion.
   virtual double getInnerRadius();
  private:
   int edges_quad(const int edge, const int vert) const
@@ -377,18 +378,18 @@ class MQuadrangleN : public MQuadrangle {
   }
   virtual int getTypeForMSH() const
   {
-    if(_order==2 && _vs.size()+4==8) return MSH_QUA_8;
-    if(_order==3 && _vs.size()+4==12) return MSH_QUA_12;
-    if(_order==3 && _vs.size()+4==16) return MSH_QUA_16;
-    if(_order==4 && _vs.size()+4==16) return MSH_QUA_16I;
-    if(_order==4 && _vs.size()+4==25) return MSH_QUA_25;
-    if(_order==5 && _vs.size()+4==20) return MSH_QUA_20;
-    if(_order==5 && _vs.size()+4==36) return MSH_QUA_36;
-    if(_order==6 && _vs.size()+4==49) return MSH_QUA_49;
-    if(_order==7 && _vs.size()+4==64) return MSH_QUA_64;
-    if(_order==8 && _vs.size()+4==81) return MSH_QUA_81;
-    if(_order==9 && _vs.size()+4==100) return MSH_QUA_100;
-    if(_order==10 && _vs.size()+4==121) return MSH_QUA_121;
+    if(_order==2 && _vs.size() + 4 == 8) return MSH_QUA_8;
+    if(_order==3 && _vs.size() + 4 == 12) return MSH_QUA_12;
+    if(_order==3 && _vs.size() + 4 == 16) return MSH_QUA_16;
+    if(_order==4 && _vs.size() + 4 == 16) return MSH_QUA_16I;
+    if(_order==4 && _vs.size() + 4 == 25) return MSH_QUA_25;
+    if(_order==5 && _vs.size() + 4 == 20) return MSH_QUA_20;
+    if(_order==5 && _vs.size() + 4 == 36) return MSH_QUA_36;
+    if(_order==6 && _vs.size() + 4 == 49) return MSH_QUA_49;
+    if(_order==7 && _vs.size() + 4 == 64) return MSH_QUA_64;
+    if(_order==8 && _vs.size() + 4 == 81) return MSH_QUA_81;
+    if(_order==9 && _vs.size() + 4 == 100) return MSH_QUA_100;
+    if(_order==10 && _vs.size() + 4 == 121) return MSH_QUA_121;
     return 0;
   }
   virtual void revert()
@@ -402,30 +403,33 @@ class MQuadrangleN : public MQuadrangle {
 };
 
 template <class T>
-void inline sort2(T &a, T &b){
-  if(b<a){
-    T t=b;
-    b=a;
-    a=t;
+void inline sort2(T &a, T &b)
+{
+  if(b < a){
+    T t = b;
+    b = a;
+    a = t;
   }
 }
 
 template <class T>
 void sort4(T *t[3])
 {
-  sort2<T*>(t[0],t[1]);
-  sort2<T*>(t[2],t[3]);
-  sort2<T*>(t[0],t[2]);
-  sort2<T*>(t[1],t[3]);
-  sort2<T*>(t[1],t[2]);
+  sort2<T*>(t[0], t[1]);
+  sort2<T*>(t[2], t[3]);
+  sort2<T*>(t[0], t[2]);
+  sort2<T*>(t[1], t[3]);
+  sort2<T*>(t[1], t[2]);
 }
 
 struct compareMQuadrangleLexicographic
 {
   bool operator () (MQuadrangle *t1, MQuadrangle *t2) const
   {
-    MVertex *_v1[] = {t1->getVertex(0), t1->getVertex(1), t1->getVertex(2), t1->getVertex(3)};
-    MVertex *_v2[] = {t2->getVertex(0), t2->getVertex(1), t2->getVertex(2), t2->getVertex(3)};
+    MVertex *_v1[] = {t1->getVertex(0), t1->getVertex(1), 
+                      t1->getVertex(2), t1->getVertex(3)};
+    MVertex *_v2[] = {t2->getVertex(0), t2->getVertex(1),
+                      t2->getVertex(2), t2->getVertex(3)};
     sort4(_v1);
     sort4(_v2);
     if(_v1[0] < _v2[0]) return true;

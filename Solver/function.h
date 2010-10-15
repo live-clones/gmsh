@@ -18,7 +18,6 @@ struct functionReplaceCache;
 class MElement;
 class binding;
 
-
 // An abstract interface to functions
 class function {
  public:
