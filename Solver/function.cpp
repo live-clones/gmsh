@@ -5,10 +5,12 @@
 #include "SPoint3.h"
 #include "MElement.h"
 #include "GModel.h"
-#if defined(HAVE_DLOPEN)
-  #include "dlfcn.h"
-#endif
+#include "OS.h"
 #include "Bindings.h"
+
+#if defined(HAVE_DLOPEN)
+#include <dlfcn.h>
+#endif
 
 struct functionReplaceCache {
   dataCacheMap *map;
@@ -603,8 +605,8 @@ class functionC : public function {
     fclose(tmpMake);
     if(system("make -f _tmpMake"))
       Msg::Error("make command failed\n");
-    unlink ("_tmpSrc.cpp");
-    unlink ("_tmpMake.cpp");
+    UnlinkFile("_tmpSrc.cpp");
+    UnlinkFile("_tmpMake.cpp");
   }
   void call (dataCacheMap *m, fullMatrix<double> &val) 
   {
