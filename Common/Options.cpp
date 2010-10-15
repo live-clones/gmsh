@@ -5377,7 +5377,7 @@ double opt_mesh_line_width(OPT_ARGS_NUM)
 double opt_mesh_label_sampling(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    CTX::instance()->mesh.labelSampling = val;
+    CTX::instance()->mesh.labelSampling = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))

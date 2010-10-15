@@ -36,7 +36,7 @@ void function::setArgument(fullMatrix<double> &v, const function *f, int iMap)
       Msg::Error("Consecutive secondary caches");
     dependencies.insert(dependency(iMap + it->iMap, it->f));
   }
-  for (double i = 0; i < _functionReplaces.size(); i++) {
+  for (int i = 0; i < _functionReplaces.size(); i++) {
     functionReplace &replace = *_functionReplaces[i];
     for (std::set<dependency>::iterator it = replace._fromParent.begin(); 
          it != replace._fromParent.end(); it++) {

@@ -1266,7 +1266,6 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int r
 
 int GModel::readPLY(const std::string &name)
 {
-
   replaceCommaByDot(name);
 
   FILE *fp = fopen(name.c_str(), "r");
@@ -1275,7 +1274,6 @@ int GModel::readPLY(const std::string &name)
     return 0;
   }
  
-
   std::vector<MVertex*> vertexVector;
   std::map<int, std::vector<MElement*> > elements[5];
   std::map<int, std::vector<double> > properties;
@@ -1453,6 +1451,38 @@ int GModel::readPLY2(const std::string &name)
   return 1;
 }
 
+int GModel::writePLY2(const std::string &name)
+{
+  FILE *fp = fopen(name.c_str(), "w");
+  if(!fp){
+    Msg::Error("Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+
+  int numVertices = indexMeshVertices(true);
+  int numTriangles = 0;
+  for(fiter it = firstFace(); it != lastFace(); ++it){
+    numTriangles += (*it)->triangles.size();
+  }
+
+  fprintf(fp, "%d\n", numVertices);
+  fprintf(fp, "%d\n", numTriangles);
+
+  std::vector<GEntity*> entities;
+  getEntities(entities);
+  for(unsigned int i = 0; i < entities.size(); i++)
+    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
+      entities[i]->mesh_vertices[j]->writePLY2(fp);
+
+  for(fiter it = firstFace(); it != lastFace(); ++it){
+      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+        (*it)->triangles[i]->writePLY2(fp);
+  }
+
+  fclose(fp);
+  return 1;
+}
+
 int GModel::readVRML(const std::string &name)
 {
   FILE *fp = fopen(name.c_str(), "r");
@@ -1519,38 +1549,6 @@ int GModel::readVRML(const std::string &name)
     _storeElementsInEntities(elements[i]);
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(allVertexVector);
-
-  fclose(fp);
-  return 1;
-}
-
-int GModel::writePLY2(const std::string &name)
-{
-  FILE *fp = fopen(name.c_str(), "w");
-  if(!fp){
-    Msg::Error("Unable to open file '%s'", name.c_str());
-    return 0;
-  }
-
-  int numVertices = indexMeshVertices(true);
-  int numTriangles = 0.0;
-  for(fiter it = firstFace(); it != lastFace(); ++it){
-      numTriangles += (*it)->triangles.size();
-  }
-
-  fprintf(fp, "%d\n", numVertices);
-  fprintf(fp, "%d\n", numTriangles);
-
-  std::vector<GEntity*> entities;
-  getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
-      entities[i]->mesh_vertices[j]->writePLY2(fp);
-
-  for(fiter it = firstFace(); it != lastFace(); ++it){
-      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-        (*it)->triangles[i]->writePLY2(fp);
-  }
 
   fclose(fp);
   return 1;
