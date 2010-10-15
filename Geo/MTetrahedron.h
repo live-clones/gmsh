@@ -386,8 +386,8 @@ class MTetrahedronN : public MTetrahedron {
     tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;    
     std::vector<MVertex*> inv(_vs.size());
     std::vector<int> reverseIndices = _getReverseIndices(_order);
-    for (int i = 0; i<_vs.size(); i++)
-      inv[i] = _vs[reverseIndices[i+4]-4];
+    for (unsigned int i = 0; i< _vs.size(); i++)
+      inv[i] = _vs[reverseIndices[i + 4] - 4];
     _vs = inv;
   }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);

@@ -22,7 +22,6 @@
 #include "laplaceTerm.h"
 #include "crossConfTerm.h"
 
-
 StringXNumber DistanceOptions_Number[] = {
   {GMSH_FULLRC, "PhysPoint", NULL, 0.},
   {GMSH_FULLRC, "PhysLine", NULL, 0.},
@@ -36,7 +35,6 @@ StringXNumber DistanceOptions_Number[] = {
 StringXString DistanceOptions_String[] = {
   {GMSH_FULLRC, "Filename", NULL, "distance.pos"}
 };
-
 
 extern "C"
 {
@@ -59,13 +57,21 @@ std::string GMSH_DistancePlugin::getHelp() const
   return "Plugin(Distance) computes distances to physical entities in "
     "a mesh.\n\n"
     
-    "Define the physical entities to which the distance is computed. If Point=0, Line=0, and Surface=0, then the distance is computed to all the boundaries of the mesh (edges in 2D and faces in 3D).\n\n"
+    "Define the physical entities to which the distance is computed. "
+    "If Point=0, Line=0, and Surface=0, then the distance is computed "
+    "to all the boundaries of the mesh (edges in 2D and faces in 3D).\n\n"
 
-    "Computation<0. computes the geometrical euclidian distance (warning: different than the geodesic distance), and  Computation=a>0.0 solves a PDE on the mesh with the diffusion constant mu = a*bbox, with bbox being the max size of the bounding box of the mesh (see paper Legrand 2006).\n\n"
+    "Computation<0. computes the geometrical euclidian distance "
+    "(warning: different than the geodesic distance), and  Computation=a>0.0 "
+    "solves a PDE on the mesh with the diffusion constant mu = a*bbox, with "
+    "bbox being the max size of the bounding box of the mesh (see paper "
+    "Legrand 2006).\n\n"
 
-    "Min Scale and max Scale, scale the distance function. If min Scale<0 and max Scale<0, then no scaling is applied to the distance function.\n\n"
+    "Min Scale and max Scale, scale the distance function. If min Scale<0 "
+    "and max Scale<0, then no scaling is applied to the distance function.\n\n"
 
-    "Plugin(Distance) creates a new distance view and also saves the view in the fileName.pos file.";
+    "Plugin(Distance) creates a new distance view and also saves the view "
+    "in the fileName.pos file.";
 }
 
 int GMSH_DistancePlugin::getNbOptions() const
@@ -152,7 +158,6 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity*> _entities,
 
 PView *GMSH_DistancePlugin::execute(PView *v)
 {
-
   int id_pt =     (int) DistanceOptions_Number[0].def;
   int id_line =   (int) DistanceOptions_Number[1].def;
   int id_face =   (int) DistanceOptions_Number[2].def;
@@ -178,7 +183,8 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   if (type==-100){
     integrationPointTetra[0]=1;
     integrationPointTetra[1]=4;
-  }else{
+  }
+  else{
     integrationPointTetra[0]=0;
     integrationPointTetra[1]=0;
   }
@@ -206,16 +212,16 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   distances.reserve(totNumNodes);
   pt2Vertex.reserve(totNumNodes);
 
-    std::map<MVertex*,double> _distanceE_map;
-    std::map<MVertex*,int> _isInYarn_map;
-    std::vector<int> index;
-    std::vector<double> distancesE;
-    std::vector<int> isInYarn;
-    std::vector<SPoint3> closePts;
-    std::vector<double> distances2;
-    std::vector<double> distancesE2;
-    std::vector<int> isInYarn2;
-    std::vector<SPoint3> closePts2;
+  std::map<MVertex*,double> _distanceE_map;
+  std::map<MVertex*,int> _isInYarn_map;
+  std::vector<int> index;
+  std::vector<double> distancesE;
+  std::vector<int> isInYarn;
+  std::vector<SPoint3> closePts;
+  std::vector<double> distances2;
+  std::vector<double> distancesE2;
+  std::vector<int> isInYarn2;
+  std::vector<SPoint3> closePts2;
 
   if (type==-100){
     index.clear();
@@ -294,6 +300,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     }
   }
   }
+
   // Compute geometrical distance to mesh boundaries
   //------------------------------------------------------
   if (type < 0.0 ){
@@ -305,11 +312,12 @@ PView *GMSH_DistancePlugin::execute(PView *v)
       int gDim = g2->dim();
       std::vector<int> phys = g2->getPhysicalEntities();
       bool computeForEntity = false;
-      for(int k = 0; k< phys.size(); k++){
+      for(unsigned int k = 0; k< phys.size(); k++){
 	int tagp = phys[k];
 	if (id_pt==0 && id_line==0 && id_face==0 && gDim==_maxDim-1 )
 	  computeForEntity = true;
-	else if ( (tagp==id_pt && gDim==0)|| (tagp==id_line && gDim==1) || (tagp==id_face && gDim==2) )
+	else if ( (tagp==id_pt && gDim==0)|| (tagp==id_line && gDim==1) ||
+                  (tagp==id_face && gDim==2) )
 	  computeForEntity = true;
       }
       if (computeForEntity){
@@ -324,12 +332,15 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 	  MVertex *v2 = e->getVertex(1);
 	  SPoint3 p1(v1->x(), v1->y(), v1->z());
 	  SPoint3 p2(v2->x(), v2->y(), v2->z());
-	  if((e->getNumVertices() == 2 && order==1) || (e->getNumVertices() == 3 && order==2)){
+	  if((e->getNumVertices() == 2 && order==1) || 
+             (e->getNumVertices() == 3 && order==2)){
             if (type==-100){
 //              if ( !((p1.x()==p2.x()) & (p1.y()==p2.y()) & (p1.z()==p2.z())) ){
-                signedDistancesPointsEllipseLine(iDistances, iDistancesE, iIsInYarn, iClosePts, pts, p1,p2);
+              signedDistancesPointsEllipseLine(iDistances, iDistancesE,
+                                               iIsInYarn, iClosePts, pts, p1,p2);
 //              }
-            }else{
+            }
+            else{
 	      signedDistancesPointsLine(iDistances, iClosePts, pts, p1,p2);
             }
 	  }
@@ -341,48 +352,57 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 	  for (unsigned int kk = 0; kk< pts.size(); kk++) {
             if (type==-100){
             if( !((p1.x()==p2.x()) & (p1.y()==p2.y()) & (p1.z()==p2.z()))){
-//              printf("%d %d %d %lf %lf %lf %lf\n",kk,isInYarn[kk],iIsInYarn[kk],distances[kk],iDistances[kk],distancesE[kk],iDistancesE[kk]);
               if (iIsInYarn[kk]>0){
 	        if (isInYarn[kk]==0){
                   distances[kk] = iDistances[kk];
 	          distancesE[kk]= iDistancesE[kk];
                   isInYarn[kk] = iIsInYarn[kk];
-                  closePts[kk]= SPoint3(iClosePts[kk].x(),iClosePts[kk].y(),iClosePts[kk].z());
-	        }else{
+                  closePts[kk]= SPoint3(iClosePts[kk].x(),iClosePts[kk].y(),
+                                        iClosePts[kk].z());
+	        }
+                else{
 	          if (isInYarn[kk]!=iIsInYarn[kk]){
 	            if (isInYarn2[kk]==0){
 		      distances2[kk] = iDistances[kk];
 	              distancesE2[kk]= iDistancesE[kk];
                       isInYarn2[kk] = iIsInYarn[kk];
-                      closePts2[kk]= SPoint3(iClosePts[kk].x(),iClosePts[kk].y(),iClosePts[kk].z());
-	            }else{
+                      closePts2[kk]= SPoint3(iClosePts[kk].x(),iClosePts[kk].y(),
+                                             iClosePts[kk].z());
+	            }
+                    else{
 		      if (isInYarn2[kk]==iIsInYarn[kk]){
 		        if (iDistancesE[kk] < distancesE2[kk]){
 		          distances2[kk] = iDistances[kk];
 		          distancesE2[kk]= iDistancesE[kk];
-                          closePts2[kk]= SPoint3(iClosePts[kk].x(),iClosePts[kk].y(),iClosePts[kk].z());
+                          closePts2[kk]= SPoint3(iClosePts[kk].x(),iClosePts[kk].y(),
+                                                 iClosePts[kk].z());
 		        }
 		      }
 	            }
-	          }else{
+	          }
+                  else{
 	            if (iDistancesE[kk] < distancesE[kk]){ 
 	 	      distances[kk] = iDistances[kk];
 		      distancesE[kk]= iDistancesE[kk];
-		      closePts[kk]= SPoint3(iClosePts[kk].x(),iClosePts[kk].y(),iClosePts[kk].z());
+		      closePts[kk]= SPoint3(iClosePts[kk].x(),iClosePts[kk].y(),
+                                            iClosePts[kk].z());
                     }
 	          }
 	        }
-	      }else{
+	      }
+              else{
 	        if (isInYarn[kk]==0){
 	           if (iDistancesE[kk] < distancesE[kk]){
                       distances[kk] = iDistances[kk];
                       distancesE[kk]= iDistancesE[kk];
-                      closePts[kk]= SPoint3(iClosePts[kk].x(),iClosePts[kk].y(),iClosePts[kk].z());
+                      closePts[kk]= SPoint3(iClosePts[kk].x(),iClosePts[kk].y(),
+                                            iClosePts[kk].z());
                    }
 	        }
 	      }
             }
-            }else{
+            }
+            else{
 	      if (std::abs(iDistances[kk]) < distances[kk]){
 	        distances[kk] = std::abs(iDistances[kk]);
 	        MVertex *v = pt2Vertex[kk];
@@ -417,55 +437,54 @@ PView *GMSH_DistancePlugin::execute(PView *v)
       if (id_face != 0) Msg::Error("The Physical Surface does not exist !");
       return view;
     }
-  printView(_entities, _distance_map);
-  if (type==-100){
-
-  Msg::Info("Writing integrationPointInYarn.pos");
-  FILE* f5 = fopen("integrationPointInYarn.pos","w");
-  FILE* f6 = fopen("integrationPointInYarn.bin","wb");
-  FILE* f7 = fopen("integrationPointInYarn.txt","w");
-  int j=0;
-  fprintf(f5,"View \"integrationPointInYarn\"{\n");
-  for (std::vector<int>::iterator it = isInYarn.begin(); it !=isInYarn.end(); it++) {
-     if (j>=totNodes){
-      int iPIY=*it;
-      fwrite(&iPIY,sizeof(int),1,f6);
-      fprintf(f7,"%d %lf %lf %lf\n",iPIY,pts[j].x(),  pts[j].y(),  pts[j].z());
-      fprintf(f5,"SP(%g,%g,%g){%d};\n",
-            pts[j].x(),  pts[j].y(),  pts[j].z(),
-            *it);
+    printView(_entities, _distance_map);
+    if (type==-100){
+      Msg::Info("Writing integrationPointInYarn.pos");
+      FILE* f5 = fopen("integrationPointInYarn.pos","w");
+      FILE* f6 = fopen("integrationPointInYarn.bin","wb");
+      FILE* f7 = fopen("integrationPointInYarn.txt","w");
+      int j=0;
+      fprintf(f5,"View \"integrationPointInYarn\"{\n");
+      for (std::vector<int>::iterator it = isInYarn.begin(); it !=isInYarn.end(); it++) {
+        if (j>=totNodes){
+          int iPIY=*it;
+          fwrite(&iPIY,sizeof(int),1,f6);
+          fprintf(f7,"%d %lf %lf %lf\n",iPIY,pts[j].x(),  pts[j].y(),  pts[j].z());
+          fprintf(f5,"SP(%g,%g,%g){%d};\n",
+                  pts[j].x(),  pts[j].y(),  pts[j].z(),
+                  *it);
+        }
+        j++;
+      }
+      fclose(f6);
+      fclose(f7);
+      fprintf(f5,"};\n");
+      fclose(f5);
+      
+      Msg::Info("Writing isInYarn.pos");
+      FILE * f4 = fopen("isInYarn.pos","w");
+      fprintf(f4,"View \"isInYarn\"{\n");
+      for(unsigned int i = 0; i < ge->getNumMeshElements(); i++){ 
+        MElement *e = ge->getMeshElement(i);
+        fprintf(f4,"SS(");
+        std::vector<int> inYarn;
+        for(int j = 0; j < e->getNumVertices(); j++) {
+          MVertex *v =  e->getVertex(j);
+          if(j) fprintf(f4,",%g,%g,%g",v->x(),v->y(), v->z());
+          else fprintf(f4,"%g,%g,%g", v->x(),v->y(), v->z());
+          std::map<MVertex*, int>::iterator it = _isInYarn_map.find(v);
+          inYarn.push_back(it->second);
+        }
+        fprintf(f4,"){");
+        for (int i=0; i<inYarn.size(); i++){
+          if (i) fprintf(f4,",%d", inYarn[i]);
+          else fprintf(f4,"%d", inYarn[i]);
+        }
+        fprintf(f4,"};\n");
+      }
+      fprintf(f4,"};\n");
+      fclose(f4);
     }
-    j++;
-  }
-  fclose(f6);
-  fclose(f7);
-  fprintf(f5,"};\n");
-  fclose(f5);
-
-  Msg::Info("Writing isInYarn.pos");
-  FILE * f4 = fopen("isInYarn.pos","w");
-  fprintf(f4,"View \"isInYarn\"{\n");
-  for(unsigned int i = 0; i < ge->getNumMeshElements(); i++){ 
-    MElement *e = ge->getMeshElement(i);
-    fprintf(f4,"SS(");
-    std::vector<int> inYarn;
-    for(int j = 0; j < e->getNumVertices(); j++) {
-      MVertex *v =  e->getVertex(j);
-      if(j) fprintf(f4,",%g,%g,%g",v->x(),v->y(), v->z());
-      else fprintf(f4,"%g,%g,%g", v->x(),v->y(), v->z());
-      std::map<MVertex*, int>::iterator it = _isInYarn_map.find(v);
-      inYarn.push_back(it->second);
-    }
-    fprintf(f4,"){");
-    for (int i=0; i<inYarn.size(); i++){
-      if (i) fprintf(f4,",%d", inYarn[i]);
-      else fprintf(f4,"%d", inYarn[i]);
-    }
-    fprintf(f4,"};\n");
-  }
-  fprintf(f4,"};\n");
-  fclose(f4);
-  }
     
   }
   
@@ -487,7 +506,8 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 	int tagp = phys[k];
 	if (id_pt==0 && id_line==0 && id_face==0 && gDim==_maxDim-1 )
 	  fixForEntity = true;
-	else if ( (tagp==id_pt && gDim==0)|| (tagp==id_line && gDim==1) || (tagp==id_face && gDim==2) )
+	else if ( (tagp==id_pt && gDim==0)|| (tagp==id_line && gDim==1) || 
+                  (tagp==id_face && gDim==2) )
 	  fixForEntity = true;
       }
       if (fixForEntity){
