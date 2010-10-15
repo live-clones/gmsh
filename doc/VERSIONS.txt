@@ -1,5 +1,5 @@
-2.5.0 (?): new compound geometrical entities (for remeshing and/or
-trans-patch meshing); improved mesh reclassification tool; new
+2.5.0 (Oct 15, 2010): new compound geometrical entities (for remeshing
+and/or trans-patch meshing); improved mesh reclassification tool; new
 client/server visualization mode; new ability to watch a pattern of
 files to merge; new integrated MPEG export; new option to force the
 type of views dynamically; bumped mesh version format to 2.2 (small
