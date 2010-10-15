@@ -1310,7 +1310,6 @@ int GModel::readPLY(const std::string &name)
 	Msg::Info("%d triangles", nbf);
 	Msg::Info("%d properties", nbView);
 
-	//printf("*********READING VERTEX \n");
 	vertexVector.resize(nbv);
 	for(int i = 0; i < nbv; i++) {
 	  double x,y,z;
@@ -1319,11 +1318,10 @@ int GModel::readPLY(const std::string &name)
 	  x = strtod(line, &pEnd);
 	  y = strtod(pEnd, &pEnd2);
 	  z = strtod(pEnd2, &pEnd3);
-	  //printf("xyz=%g %g %g \n", x,y,z);
 	  vertexVector[i] = new MVertex(x, y, z);
 
 	  pEnd = pEnd3;
-	  double prop[nbView];
+          std::vector<double> prop(nbView);
 	  for (int k=0; k< nbView; k++){
 	    prop[k]=strtod(pEnd, &pEnd2);
 	    pEnd = pEnd2;
@@ -1331,7 +1329,6 @@ int GModel::readPLY(const std::string &name)
 	  }
 	}
 
-	//printf("*********READING ELEMS \n");
 	for(int i = 0; i < nbf; i++) {
 	  if(!fgets(buffer, sizeof(buffer), fp)) break;
 	  int n[3], nbe;
