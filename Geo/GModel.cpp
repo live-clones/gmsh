@@ -2312,8 +2312,8 @@ void GModel::classifyFaces(std::set<GFace*> &_faces)
   for (fiter fit = fac.begin() ; fit !=fac.end() ; ++fit){
     std::set<MVertex *> _verts;
     (*fit)->mesh_vertices.clear();
-    for (int i=0;i<(*fit)->triangles.size();i++){
-      for (int j=0;j<3;j++){
+    for (unsigned int i = 0; i < (*fit)->triangles.size(); i++){
+      for (int j = 0; j < 3; j++){
 	if ((*fit)->triangles[i]->getVertex(j)->onWhat()->dim() > 1){
 	  (*fit)->triangles[i]->getVertex(j)->setEntity(*fit);
 	  _verts.insert((*fit)->triangles[i]->getVertex(j));
