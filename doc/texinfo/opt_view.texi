@@ -574,6 +574,11 @@ Value scale range type (1=default, 2=custom, 3=per time step)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.Sampling
+Element sampling rate (draw one out every `Sampling' elements)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.SaturateValues
 Saturate the view values to custom min and max (1=true, 0=false)@*
 Default value: @code{0}@*
