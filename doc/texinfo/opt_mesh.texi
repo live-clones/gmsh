@@ -185,7 +185,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Format
-Mesh output format (1=msh, 2=unv, 10=automatic, 19=vrml, 27=stl, 30=mesh, 31=bdf, 32=cgns, 33=med)@*
+Mesh output format (1=msh, 2=unv, 10=automatic, 19=vrml, 27=stl, 30=mesh, 31=bdf, 32=cgns, 33=med, 40=ply2)@*
 Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -194,9 +194,9 @@ Display mesh hexahedra?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.LabelsFrequency
-Labels display frequency?@*
-Default value: @code{100}@*
+@item Mesh.LabelSampling
+Label sampling rate (display one label every `LabelSampling' elements)@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LabelType
@@ -277,6 +277,36 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.MshFilePartitioned
 Split MSH file by mesh partition@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionHexWeight
+Weight of hexahedral element for METIS load balancing@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionPrismWeight
+Weight of prismatic element (wedge) for METIS load balancing@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionPyramidWeight
+Weight of pyramidal element for METIS load balancing@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionQuadWeight
+Weight of quadrangle for METIS load balancing@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionTetWeight
+Weight of tetrahedral element for METIS load balancing@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionTriWeight
+Weight of triangle for METIS load balancing@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionByExtrusion
@@ -412,6 +442,26 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.RandomFactor
 Random factor used in the 2D meshing algorithm (should be increased if RandomFactor * size(triangle)/size(model) approaches machine accuracy)@*
 Default value: @code{1e-09}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.RecombinationAlgorithm
+Mesh recombination algorithm (0=standard, 1=blossom)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.RecombineAll
+Apply recombination algorithm to all surfaces, ignoring per-surface spec@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.RemeshAlgorithm
+Remeshing algorithm (0=no split, 1=automatic, 2=automatic only with metis)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.RemeshParametrization
+Remsh Parametrization (0=harmonic, 1=conformal)@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RefineSteps
