@@ -215,17 +215,12 @@ void MQuadrangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *pts = getGQQPts(pOrder);
 }
 
-double angle3Points(MVertex *p1, MVertex *p2, MVertex *p3);
-
-double  MQuadrangle::etaShapeMeasure(){
-  double a1 = 180 * angle3Points(_v[0], _v[1], _v[2]) / M_PI;
-  double a2 = 180 * angle3Points(_v[1], _v[2], _v[3]) / M_PI;
-  double a3 = 180 * angle3Points(_v[2], _v[3], _v[0]) / M_PI;
-  double a4 = 180 * angle3Points(_v[3], _v[0], _v[1]) / M_PI;
-
-//   if (fabs(a1+a2+a3+a4 - 360) > 1) {
-//     return -1.0;
-//   }
+double  MQuadrangle::etaShapeMeasure()
+{
+  double a1 = 180 * angle3Vertices(_v[0], _v[1], _v[2]) / M_PI;
+  double a2 = 180 * angle3Vertices(_v[1], _v[2], _v[3]) / M_PI;
+  double a3 = 180 * angle3Vertices(_v[2], _v[3], _v[0]) / M_PI;
+  double a4 = 180 * angle3Vertices(_v[3], _v[0], _v[1]) / M_PI;
 
   a1 = std::min(180.,a1);
   a2 = std::min(180.,a2);
@@ -237,9 +232,7 @@ double  MQuadrangle::etaShapeMeasure(){
   angle = std::max(fabs(90. - a4),angle);    
   
   return 1.-angle/90;
-  
 }
-
 
 double MQuadrangle::distoShapeMeasure()
 {

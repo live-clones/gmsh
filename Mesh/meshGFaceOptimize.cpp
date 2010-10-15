@@ -30,17 +30,6 @@ extern "C" int perfect_match
  double *totalzeit) ; 
 #endif
 
-double angle3Points(MVertex *p1, MVertex *p2, MVertex *p3)
-{
-  SVector3 a(p1->x() - p2->x(), p1->y() - p2->y(), p1->z() - p2->z());
-  SVector3 b(p3->x() - p2->x(), p3->y() - p2->y(), p3->z() - p2->z());
-  SVector3 c = crossprod(a, b);
-  double sinA = c.norm();
-  double cosA = dot(a, b);
-  //  printf("%d %d %d -> %g %g\n",p1->iD,p2->iD,p3->iD,cosA,sinA);
-  return atan2 (sinA, cosA);  
-}
-
 edge_angle::edge_angle(MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2)
   : v1(_v1), v2(_v2)
 {
@@ -645,8 +634,8 @@ static int _quadWithOneVertexOnBoundary (GFace *gf,
     }
     // do not collapse if it's a corner
     if (line.size() == 2){
-      if (fabs(angle3Points(line[0],v1,line[1]) - M_PI) > 3*M_PI/8.){
-	//	printf("coucou %g\n",angle3Points(line[0],v1,line[1])*180./M_PI);
+      if (fabs(angle3Vertices(line[0],v1,line[1]) - M_PI) > 3*M_PI/8.){
+	//	printf("coucou %g\n",angle3Vertices(line[0],v1,line[1])*180./M_PI);
 	return 0;
       }
     } 
@@ -1277,10 +1266,10 @@ struct RecombineTriangle
     else if(t2->getVertex(1) != n1 && t2->getVertex(1) != n2) n4 = t2->getVertex(1);
     else if(t2->getVertex(2) != n1 && t2->getVertex(2) != n2) n4 = t2->getVertex(2);
 
-    double a1 = 180 * angle3Points(n1, n4, n2) / M_PI;
-    double a2 = 180 * angle3Points(n4, n2, n3) / M_PI;
-    double a3 = 180 * angle3Points(n2, n3, n1) / M_PI;
-    double a4 = 180 * angle3Points(n3, n1, n4) / M_PI;
+    double a1 = 180 * angle3Vertices(n1, n4, n2) / M_PI;
+    double a2 = 180 * angle3Vertices(n4, n2, n3) / M_PI;
+    double a3 = 180 * angle3Vertices(n2, n3, n1) / M_PI;
+    double a4 = 180 * angle3Vertices(n3, n1, n4) / M_PI;
     angle = fabs(90. - a1);
     angle = std::max(fabs(90. - a2),angle);
     angle = std::max(fabs(90. - a3),angle);

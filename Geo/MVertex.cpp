@@ -26,6 +26,16 @@ bool MVertexLessThanLexicographic::operator()(const MVertex *v1, const MVertex *
   return false;
 }
 
+double angle3Vertices(MVertex *p1, MVertex *p2, MVertex *p3)
+{
+  SVector3 a(p1->x() - p2->x(), p1->y() - p2->y(), p1->z() - p2->z());
+  SVector3 b(p3->x() - p2->x(), p3->y() - p2->y(), p3->z() - p2->z());
+  SVector3 c = crossprod(a, b);
+  double sinA = c.norm();
+  double cosA = dot(a, b);
+  return atan2 (sinA, cosA);  
+}
+
 MVertex::MVertex(double x, double y, double z, GEntity *ge, int num)
   : _visible(1), _order(1), _x(x), _y(y), _z(z), _ge(ge)
 {
