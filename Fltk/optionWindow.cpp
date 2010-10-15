@@ -554,7 +554,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       int vindex = o->view.index;
       if(vindex >= 0 && vindex < (int)PView::list.size()){
         // compute min/max taking current visibility status into account
-        int step = opt_view_timestep(vindex, GMSH_GET, 0);
+        int step = (int)opt_view_timestep(vindex, GMSH_GET, 0);
         if(!strcmp(str, "range_min"))
           o->view.value[31]->value
             (PView::list[vindex]->getData(true)->getMin(step, true));

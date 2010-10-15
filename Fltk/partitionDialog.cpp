@@ -124,12 +124,12 @@ struct PartitionDialog
     CTX::instance()->partitionOptions.edge_matching = choiceEdgeMatch->value() + 1;
     CTX::instance()->partitionOptions.refine_algorithm = choiceRefineAlg->value() + 1;
 
-    CTX::instance()->partitionOptions.triWeight = inputTriWeight->value();
-    CTX::instance()->partitionOptions.quaWeight = inputQuaWeight->value();
-    CTX::instance()->partitionOptions.tetWeight = inputTetWeight->value();
-    CTX::instance()->partitionOptions.priWeight = inputPriWeight->value();
-    CTX::instance()->partitionOptions.pyrWeight = inputPyrWeight->value();
-    CTX::instance()->partitionOptions.hexWeight = inputHexWeight->value();
+    CTX::instance()->partitionOptions.triWeight = (int)inputTriWeight->value();
+    CTX::instance()->partitionOptions.quaWeight = (int)inputQuaWeight->value();
+    CTX::instance()->partitionOptions.tetWeight = (int)inputTetWeight->value();
+    CTX::instance()->partitionOptions.priWeight = (int)inputPriWeight->value();
+    CTX::instance()->partitionOptions.pyrWeight = (int)inputPyrWeight->value();
+    CTX::instance()->partitionOptions.hexWeight = (int)inputHexWeight->value();
 
   }
   void read_all_options()
