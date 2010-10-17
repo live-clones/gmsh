@@ -56,7 +56,7 @@ option(ENABLE_TETGEN_NEW "Enable experimental version of Tetgen" OFF)
 
 set(GMSH_MAJOR_VERSION 2)
 set(GMSH_MINOR_VERSION 5)
-set(GMSH_PATCH_VERSION 0)
+set(GMSH_PATCH_VERSION 1)
 set(GMSH_EXTRA_VERSION "" CACHE STRING "Gmsh extra version string")
 
 set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
@@ -1019,6 +1019,32 @@ endif(MAKEINFO AND TEXI2PDF)
 if(MAKEINFO OR TEXI2PDF)
   add_custom_target(clean_doc COMMAND ${CMAKE_COMMAND} -E remove ${TEX_OBJ})
 endif(MAKEINFO OR TEXI2PDF)
+
+if(APPLE)
+  file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/gmsh_framework.plist F0)
+  string(REPLACE GMSH_VERSION "${GMSH_VERSION}" F1 "${F0}")
+  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/Info_framework.plist "${F1}")
+  add_custom_target(framework DEPENDS lib
+    COMMAND ${CMAKE_COMMAND} -E remove_directory Gmsh.framework
+    COMMAND ${CMAKE_COMMAND} -E make_directory Gmsh.framework/Versions/A/Headers
+    COMMAND ${CMAKE_COMMAND} -E make_directory Gmsh.framework/Versions/A/Resources
+    COMMAND ${CMAKE_COMMAND} -E copy libGmsh.a Gmsh.framework/Versions/A/Gmsh
+    COMMAND ${CMAKE_COMMAND} -E copy Info_framework.plist 
+                                     Gmsh.framework/Versions/A/Resources/Info.plist
+    COMMAND ${CMAKE_COMMAND} -E create_symlink A Gmsh.framework/Versions/Current
+    COMMAND ${CMAKE_COMMAND} -E create_symlink Versions/Current/Gmsh 
+                                               Gmsh.framework/Gmsh
+    COMMAND ${CMAKE_COMMAND} -E create_symlink Versions/Current/Headers
+                                               Gmsh.framework/Headers
+    COMMAND ${CMAKE_COMMAND} -E create_symlink Versions/Current/Resources
+                                               Gmsh.framework/Resources 
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  foreach(FILE ${GMSH_API})
+    add_custom_command(TARGET framework POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
+        ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Gmsh.framework/Versions/A/Headers/
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  endforeach(FILE)
+endif(APPLE)
 
 set(CPACK_PACKAGE_VENDOR "Christophe Geuzaine and Jean-Francois Remacle")
 set(CPACK_PACKAGE_VERSION_MAJOR ${GMSH_MAJOR_VERSION})
