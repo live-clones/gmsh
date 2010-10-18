@@ -215,6 +215,7 @@ dataCacheDouble::dataCacheDouble(dataCacheMap *m, function *f):
   _cacheMap(*m),_value(m->getNbEvaluationPoints(),f->getNbCol()), _function(f)
 {
   m->addDataCacheDouble(this, f->isInvalitedOnElement());
+  _valid = false;
 }
 
 void dataCacheDouble::resize(int nrow) 
