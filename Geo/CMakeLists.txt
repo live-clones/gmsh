@@ -15,7 +15,8 @@ set(SRC
   ACISEdge.cpp
   ACISFace.cpp
   GModel.cpp
-  GModelFactory.cpp
+    GModelVertexArrays.cpp
+    GModelFactory.cpp
     GModelIO_Geo.cpp
     GModelIO_Mesh.cpp
     GModelIO_OCC.cpp

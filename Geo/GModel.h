@@ -359,6 +359,9 @@ class GModel
   // mesh the model
   int mesh(int dimension);
 
+  // fill the vertex arrays, given the current option and data
+  void fillVertexArrays();
+
   // reclassify a mesh i.e. use an angle threshold to tag edges faces and regions
   void detectEdges(double _tresholdAngle);
   void classifyFaces(std::set<GFace*> &_faces);
