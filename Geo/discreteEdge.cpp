@@ -394,6 +394,7 @@ void discreteEdge::computeNormals () const
 bool discreteEdge::getLocalParameter(const double &t, int &iLine,
                                      double &tLoc) const
 {
+  if(_pars.empty()) return false;
   for (iLine = 0; iLine < (int)lines.size(); iLine++){
     double tmin = _pars[iLine];
     double tmax = _pars[iLine+1];

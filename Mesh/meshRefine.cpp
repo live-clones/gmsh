@@ -377,11 +377,8 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads, bool splitIntoHexas
   // mesh
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
     Subdivide(*it);
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
     Subdivide(*it, splitIntoQuads, splitIntoHexas, faceVertices);
-    for(int i = 0; i < CTX::instance()->mesh.nbSmoothing; i++) 
-      laplaceSmoothing(*it);    
-  }
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     Subdivide(*it, splitIntoHexas, faceVertices);
 
