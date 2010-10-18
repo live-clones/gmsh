@@ -370,7 +370,7 @@ class functionSum : public function {
   functionSum(const function *f0, const function *f1) : function(f0->getNbCol()) 
   {
     if (f0->getNbCol() != f1->getNbCol()) {
-      Msg::Error("trying to sum 2 functions of different sizes\n");
+      Msg::Error("trying to sum 2 functions of different sizes: %d %d\n",f0->getNbCol(),f1->getNbCol());
       throw;
     }
     setArgument (_f0, f0);
@@ -397,7 +397,7 @@ class functionProd : public function {
   functionProd(const function *f0, const function *f1) : function(f0->getNbCol()) 
   {
     if (f0->getNbCol() != f1->getNbCol()) {
-      Msg::Error("trying to compute product of 2 functions of different sizes\n");
+      Msg::Error("trying to compute product of 2 functions of different sizes: %d %d\n",f0->getNbCol(),f1->getNbCol());
       throw;
     }
     setArgument (_f0, f0);
@@ -431,6 +431,32 @@ class functionExtractComp : public function {
 function *functionExtractCompNew(const function *f0, const int iComp) 
 {
   return new functionExtractComp (f0, iComp);
+}
+
+// functionCatComp
+
+class functionCatComp : public function {
+  public:
+  int _nComp;
+  std::vector<fullMatrix<double> > _fMatrix;
+  void call(dataCacheMap *m, fullMatrix<double> &val)
+  {
+    for (int i=0; i<val.size1(); i++)
+      for (int comp=0; comp < _nComp; comp++)
+        val(i,comp)= _fMatrix[comp](i,0);
+  }
+  functionCatComp(std::vector<const function *> fArray) : function(fArray.size())
+  {
+    _nComp =fArray.size();
+    _fMatrix.resize(_nComp);
+    for (int i=0; i<_nComp; i++)
+      setArgument (_fMatrix[i], fArray[i]);
+  }
+};
+
+function *functionCatCompNew(std::vector<const function *> fArray)
+{
+  return new functionCatComp (fArray);
 }
 
 // functionScale
@@ -690,6 +716,41 @@ void function::registerBindings(binding *b)
   mb = cb->setConstructor<functionConstant,std::vector <double> >();
   mb->setArgNames("v",NULL);
   mb->setDescription("A new constant function wich values 'v' everywhere. v can be a row-vector.");
+  cb->setParentClass<function>();
+
+  cb = b->addClass<functionSum>("functionSum");
+  cb->setDescription("A sum of two functions 'a + b'. The arguments a, b must have same dimension.");
+  mb = cb->setConstructor<functionSum,const function*, const function*>();
+  mb->setArgNames("a","b",NULL);
+  mb->setDescription("Creates a new functionSum instance with given arguments");
+  cb->setParentClass<function>();
+
+  cb = b->addClass<functionProd>("functionProd");
+  cb->setDescription("A pointwise product of two functions 'a(i,j)*b(i,j)'. The arguments a, b must have same dimension.");
+  mb = cb->setConstructor<functionProd,const function*, const function*>();
+  mb->setArgNames("a","b",NULL);
+  mb->setDescription("Creates a new functionProd instance with given arguments");
+  cb->setParentClass<function>();
+
+  cb = b->addClass<functionExtractComp>("functionExtractComp");
+  cb->setDescription("Extracts a given component of the vector valued function.");
+  mb = cb->setConstructor<functionExtractComp,const function*, int>();
+  mb->setArgNames("function","component",NULL);
+  mb->setDescription("Creates a new functionExtractComp instance with given arguments");
+  cb->setParentClass<function>();
+
+  cb = b->addClass<functionCatComp>("functionCatComp");
+  cb->setDescription("Creates a vector valued function by concatenating the given scalar functions. Uses only the first component of each function.");
+  mb = cb->setConstructor<functionCatComp,std::vector <const function*> >();
+  mb->setArgNames("functionArray",NULL);
+  mb->setDescription("Creates a new functionCatComp instance with given arguments");
+  cb->setParentClass<function>();
+
+  cb = b->addClass<functionScale>("functionScale");
+  cb->setDescription("Scales a function by a given scalar.");
+  mb = cb->setConstructor<functionScale,const function*, double>();
+  mb->setArgNames("function","scalar",NULL);
+  mb->setDescription("Creates a new functionScale instance with given arguments");
   cb->setParentClass<function>();
 
   cb = b->addClass<functionCoordinates>("functionCoordinates");
