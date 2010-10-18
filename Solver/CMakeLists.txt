@@ -18,6 +18,7 @@ set(SRC
   luaFunction.cpp
   functionSpace.cpp
   filters.cpp
+  sparsityPattern.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
