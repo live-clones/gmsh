@@ -594,10 +594,14 @@ static void writeElementMSH(FILE *fp, GModel *model, T *ele, bool saveAll,
   if(saveAll)
     ele->writeMSH(fp, version, binary, ++num, elementary, 0,
                   parentNum, dom1Num, dom2Num, &ghosts);
-  else
-    for(unsigned int j = 0; j < physicals.size(); j++)
+  else{
+    if(parentNum) parentNum = parentNum - physicals.size() + 1;
+    for(unsigned int j = 0; j < physicals.size(); j++){
       ele->writeMSH(fp, version, binary, ++num, elementary, physicals[j],
                     parentNum, dom1Num, dom2Num, &ghosts);
+      if(parentNum) parentNum++;
+    }
+  }
 
   model->setMeshElementIndex(ele, num); // should really be a multimap...
 }
