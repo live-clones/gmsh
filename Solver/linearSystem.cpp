@@ -8,11 +8,18 @@
 
 template<>
 void linearSystem<double>::registerBindings(binding *b){
-  classBinding *cb = b->addClass<linearSystem<double> >("linearSystemDouble");
-  cb->setDescription("An abstraction of a linear system Ax = b.");
   methodBinding *cm;
+  classBinding *cb = b->addClass<linearSystemBase>("linearSystemBase");
+  cb->setDescription("Base class for linear systems");
+  cm = cb->addMethod("setParameter", &linearSystemBase::setParameter);
+  cm->setDescription("set linearSystem parameters");
+  cm->setArgNames("key","value",NULL);
+  
+  cb = b->addClass<linearSystem<double> >("linearSystemDouble");
+  cb->setDescription("An abstraction of a linear system Ax = b.");
   cm = cb->addMethod("systemSolve", &linearSystem<double>::systemSolve);
   cm->setDescription("compute x = A^{-1}b");
+  cb->setParentClass<linearSystemBase>();
   
 #ifdef HAVE_TAUCS
   cb = b->addClass<linearSystemCSRTaucs<double> >("linearSystemCSRTaucs");
@@ -39,6 +46,7 @@ void linearSystem<double>::registerBindings(binding *b){
   cb->setDescription("An abstraction of a linear system Ax = b.");
   cm = cb->addMethod("systemSolve", &linearSystem<fullMatrix<double> >::systemSolve);
   cm->setDescription("compute x = A^{-1}b");
+  cb->setParentClass<linearSystemBase>();
 #ifdef HAVE_PETSC
   linearSystemPETScRegisterBindings (b);
 #endif
