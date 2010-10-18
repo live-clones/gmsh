@@ -1024,11 +1024,12 @@ if(APPLE)
   file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/gmsh_framework.plist F0)
   string(REPLACE GMSH_VERSION "${GMSH_VERSION}" F1 "${F0}")
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/Info_framework.plist "${F1}")
+  get_target_property(LIBNAME lib LOCATION)
   add_custom_target(framework DEPENDS lib
     COMMAND ${CMAKE_COMMAND} -E remove_directory Gmsh.framework
     COMMAND ${CMAKE_COMMAND} -E make_directory Gmsh.framework/Versions/A/Headers
     COMMAND ${CMAKE_COMMAND} -E make_directory Gmsh.framework/Versions/A/Resources
-    COMMAND ${CMAKE_COMMAND} -E copy libGmsh.a Gmsh.framework/Versions/A/Gmsh
+    COMMAND ${CMAKE_COMMAND} -E copy ${LIBNAME} Gmsh.framework/Versions/A/Gmsh
     COMMAND ${CMAKE_COMMAND} -E copy Info_framework.plist 
                                      Gmsh.framework/Versions/A/Resources/Info.plist
     COMMAND ${CMAKE_COMMAND} -E create_symlink A Gmsh.framework/Versions/Current
