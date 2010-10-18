@@ -329,6 +329,14 @@ class fullMatrix
   {
     for (int i = 0; i < _r * _c; i++) _data[i] *= a._data[i];
   }
+  void axpy(const fullMatrix<scalar> &x, scalar alpha=1.)
+#if !defined(HAVE_BLAS)
+  {
+    int n = _r * _c;
+    for (int i = 0; i < n; i++) _data[i] += alpha * x._data[i];
+  }
+#endif
+  ;
   void gemm_naive(const fullMatrix<scalar> &a, const fullMatrix<scalar> &b, 
                   scalar alpha=1., scalar beta=1.)
   {

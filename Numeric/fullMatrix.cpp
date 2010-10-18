@@ -112,6 +112,13 @@ void fullMatrix<std::complex<double> >::gemm(const fullMatrix<std::complex<doubl
 }
 
 template<> 
+void fullMatrix<double>::axpy(const fullMatrix<double> &x,double alpha)
+{
+  int M = _r * _c, INCX = 1, INCY = 1;
+  F77NAME(daxpy)(&M, &alpha, x._data,&INCX, _data, &INCY);
+}
+
+template<> 
 void fullMatrix<double>::mult(const fullVector<double> &x, fullVector<double> &y) const
 {
   int M = _r, N = _c, LDA = _r, INCX = 1, INCY = 1;
