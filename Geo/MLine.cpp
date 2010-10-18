@@ -62,7 +62,11 @@ double MLine::getInnerRadius()
 
 #include "Bindings.h"
 static MLine* MLine_binding(std::vector<MVertex*> v) {
-  return new MLine(v);
+  if (v.size() == 2)
+    return new MLine(v);
+  if (v.size() == 3)
+    return new MLine3(v);
+  return new MLineN(v);
 }
 
 void MLine::registerBindings(binding *b)

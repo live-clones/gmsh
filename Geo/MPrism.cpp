@@ -181,7 +181,6 @@ void MPrism::registerBindings(binding *b)
   cb = b->addClass<MPrism18>("MPrism18");
   cb->setDescription("A mesh second-order prism.");
   cm = cb->addMethod("MPrism18",&MPrism18_binding);
-  // cm = cb->setConstructor<MPrism18_binding,std::vector<MVertex*> >();
   cm->setArgNames("vectorOfVertices", NULL);
   cm->setDescription("Create a new prism with vertices in vectorV (length=18).");
   cb->setParentClass<MPrism>();
