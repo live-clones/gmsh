@@ -9,6 +9,8 @@
 template <>
 void linearSystemPETSc<fullMatrix<PetscScalar> >::addToMatrix(int row, int col, const fullMatrix<PetscScalar> &val)
 {
+  if (!_entriesPreAllocated)
+    preAllocateEntries();
   fullMatrix<PetscScalar> &modval = *const_cast<fullMatrix<PetscScalar> *>(&val);
   for (int ii = 0; ii < val.size1(); ii++)
     for (int jj = 0; jj < ii; jj++) {
@@ -93,13 +95,16 @@ void linearSystemPETSc<fullMatrix<PetscScalar> >::allocate(int nbRows)
   _try(MatSetSizes(_a,nbRows * _blockSize, nbRows * _blockSize, PETSC_DETERMINE, PETSC_DETERMINE));
   if (Msg::GetCommSize() > 1) {
     _try(MatSetType(_a, MATMPIBAIJ));
-    _try(MatSetFromOptions(_a));
-    _try(MatMPIBAIJSetPreallocation(_a, _blockSize, 5, NULL, 0, NULL));
   } else {
     _try(MatSetType(_a, MATSEQBAIJ));
-    _try(MatSetFromOptions(_a));
-    _try(MatSeqBAIJSetPreallocation(_a, _blockSize, 5, NULL)); //todo preAllocate off-diagonal part
   }
+  _try(MatSetFromOptions(_a));
+  _try(MatGetOwnershipRange(_a, &_localRowStart, &_localRowEnd));
+  _try(MatGetSize(_a, &_globalSize, &_localSize));
+  _globalSize /= _blockSize;
+  _localSize /= _blockSize;
+  _localRowStart /= _blockSize;
+  _localRowEnd /= _blockSize;
   // override the default options with the ones from the option
   // database (if any)
   _try(VecCreate(PETSC_COMM_WORLD, &_x));

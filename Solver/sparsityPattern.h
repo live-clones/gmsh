@@ -11,15 +11,17 @@
 // - the impact on the memory for this operation
 
 class sparsityPattern {
-  int *_nByRow, *_nAllocByRows;
+  int *_nByRow, *_nAllocByRow;
   int **_rowsj;
-  int _nRows;
+  int _nRows, _nRowsAlloc;
 
  public :
-  void addEntry (int i, int j);
+  void insertEntry (int i, int j);
   const int* getRow (int line, int &size) const;
-  sparsityPattern (int nRows);
+  void clear();
+  sparsityPattern ();
   ~sparsityPattern();
+  inline int getNbRows() {return _nRows;}
 };
 
 #endif

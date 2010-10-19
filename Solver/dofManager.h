@@ -274,6 +274,53 @@ class dofManager{
   {
     getDofValue(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField), value);
   }
+
+  inline void insertInSparsityPatternLinConst(const Dof &R, const Dof &C) 
+  {
+    std::map<Dof, int>::iterator itR = unknown.find(R);
+    if (itR != unknown.end())
+    {
+      typename std::map<Dof,DofAffineConstraint<dataVec> >::iterator itConstraint;
+      itConstraint = constraints.find(C);
+      if (itConstraint != constraints.end()){
+        for (unsigned i = 0; i < (itConstraint->second).linear.size(); i++){
+          insertInSparsityPattern(R,(itConstraint->second).linear[i].first);
+        }
+      }
+    }
+    else{  // test function ; (no shift ?)
+      typename std::map<Dof,DofAffineConstraint<dataVec> >::iterator itConstraint;
+      itConstraint = constraints.find(R);
+      if (itConstraint != constraints.end()){
+        for (unsigned i = 0; i < (itConstraint->second).linear.size(); i++){
+          insertInSparsityPattern((itConstraint->second).linear[i].first, C);
+        }
+      }
+    }
+  }
+
+  inline void insertInSparsityPattern(const Dof &R, const Dof &C)
+  {
+    if (_isParallel && !_parallelFinalized) _parallelFinalize();
+    if (!_current->isAllocated()) _current->allocate(sizeOfR());
+    std::map<Dof, int>::iterator itR = unknown.find(R);
+    if (itR != unknown.end()){
+      std::map<Dof, int>::iterator itC = unknown.find(C);
+      if (itC != unknown.end()){
+        _current->insertInSparsityPattern(itR->second, itC->second);
+      }
+      else{
+        typename std::map<Dof,  dataVec>::iterator itFixed = fixed.find(C);
+        if (itFixed != fixed.end()) {
+        }else insertInSparsityPatternLinConst(R, C);
+      }
+    }
+    if (itR == unknown.end())
+    {
+      insertInSparsityPatternLinConst(R, C);
+    }
+  }
+
   inline void assemble(const Dof &R, const Dof &C, const dataMat &value)
   {
     if (_isParallel && !_parallelFinalized) _parallelFinalize();

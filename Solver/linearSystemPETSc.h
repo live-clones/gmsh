@@ -37,6 +37,8 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "linearSystem.h"
+#include "sparsityPattern.h"
+#include <vector>
 
 #if defined(HAVE_PETSC)
 #include <petsc.h>
@@ -46,17 +48,19 @@ template <class scalar>
 class linearSystemPETSc : public linearSystem<scalar> {
   protected:
   int _blockSize; // for block Matrix
-  bool _isAllocated, _kspAllocated;
+  bool _isAllocated, _kspAllocated, _entriesPreAllocated;
   Mat _a;
   Vec _b, _x;
   KSP _ksp;
+  int _localRowStart, _localRowEnd, _localSize, _globalSize;
+  sparsityPattern _sparsity;
   static void _try(int ierr) { CHKERRABORT(PETSC_COMM_WORLD, ierr); }
   void _kspCreate() {
     _try(KSPCreate(PETSC_COMM_WORLD, &_ksp));
     PC pc;
     _try(KSPGetPC(_ksp, &pc));
     // set some default options
-    _try(PCSetType(pc, PCLU));//LU for direct solver and PCILU for indirect solver
+    //_try(PCSetType(pc, PCLU));//LU for direct solver and PCILU for indirect solver
     _try(PCFactorSetMatOrderingType(pc, MATORDERING_RCM));
     _try(PCFactorSetLevels(pc, 1));
     _try(KSPSetTolerances(_ksp, 1.e-8, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT));
@@ -72,7 +76,47 @@ class linearSystemPETSc : public linearSystem<scalar> {
     if (_kspAllocated)
       _try (KSPDestroy (_ksp));
   }
+  void insertInSparsityPattern (int i, int j) {
+    i -= _localRowStart;
+    if (i<0 || i>= _localSize) return;
+    _sparsity.insertEntry (i,j);
+  }
   virtual bool isAllocated() const { return _isAllocated; }
+  virtual void preAllocateEntries() {
+    if (_entriesPreAllocated) return;
+    if (!_isAllocated) Msg::Fatal("system must be allocated first");
+    if (_sparsity.getNbRows() == 0) {
+      PetscInt prealloc = 300;
+      PetscTruth set;
+      PetscOptionsGetInt(PETSC_NULL, "-petsc_prealloc", &prealloc, &set);
+      if (_blockSize == 0) {
+        _try(MatSeqAIJSetPreallocation(_a, prealloc, PETSC_NULL));
+      } else {
+        _try(MatSeqBAIJSetPreallocation(_a, _blockSize, 5, PETSC_NULL));
+      }
+    } else {
+      std::vector<int> nByRowDiag (_localSize), nByRowOffDiag (_localSize);
+      for (int i = 0; i < _localSize; i++) {
+        int n;
+        const int *r = _sparsity.getRow(i, n);
+        for (int j = 0; j < n; j++) {
+          if (r[j] >= _localRowStart && r[j] < _localRowEnd)
+            nByRowDiag[i] ++;
+          else
+            nByRowOffDiag[i] ++;
+        }
+      }
+      if (_blockSize == 0) {
+        _try(MatSeqAIJSetPreallocation(_a, 0, &nByRowDiag[0]));
+        _try(MatMPIAIJSetPreallocation(_a, 0, &nByRowDiag[0], 0, &nByRowOffDiag[0]));
+      } else {
+        _try(MatSeqBAIJSetPreallocation(_a, _blockSize, 0, &nByRowDiag[0]));
+        _try(MatMPIBAIJSetPreallocation(_a, _blockSize, 0, &nByRowDiag[0], 0, &nByRowOffDiag[0]));
+      }
+      _sparsity.clear();
+    }
+    _entriesPreAllocated = true;
+  }
   virtual void allocate(int nbRows)
   {
     clear();
@@ -81,11 +125,9 @@ class linearSystemPETSc : public linearSystem<scalar> {
     // override the default options with the ones from the option
     // database (if any)
     _try(MatSetFromOptions(_a));
+    _try(MatGetOwnershipRange(_a, &_localRowStart, &_localRowEnd));
+    _try(MatGetSize(_a, &_globalSize, &_localSize));
     // preallocation option must be set after other options
-    PetscInt prealloc = 300;
-    PetscTruth set;
-    PetscOptionsGetInt(PETSC_NULL, "-petsc_prealloc", &prealloc, &set);
-    _try(MatSeqAIJSetPreallocation(_a, prealloc, PETSC_NULL));
     _try(VecCreate(PETSC_COMM_WORLD, &_x));
     _try(VecSetSizes(_x, nbRows, PETSC_DETERMINE));
     // override the default options with the ones from the option
@@ -93,6 +135,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
     _try(VecSetFromOptions(_x));
     _try(VecDuplicate(_x, &_b));
     _isAllocated = true;
+    _entriesPreAllocated = false;
   }
   void print() {
       _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
@@ -149,6 +192,8 @@ class linearSystemPETSc : public linearSystem<scalar> {
   }
   virtual void addToMatrix(int row, int col, const scalar &val)
   {
+    if (!_entriesPreAllocated)
+      preAllocateEntries();
     PetscInt i = row, j = col;
     PetscScalar s = val;
     _try(MatSetValues(_a, 1, &i, 1, &j, &s, ADD_VALUES));
@@ -167,7 +212,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
   }
   virtual void zeroMatrix()
   {
-    if (_isAllocated) {
+    if (_isAllocated && _entriesPreAllocated) {
       _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
       _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
       _try(MatZeroEntries(_a));
@@ -193,6 +238,9 @@ class linearSystemPETSc : public linearSystem<scalar> {
       _try(KSPSetOperators(_ksp, _a, _a, DIFFERENT_NONZERO_PATTERN));
     _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
     _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
+    /*MatInfo info;
+    MatGetInfo(_a, MAT_LOCAL, &info);
+    printf("mallocs %.0f    nz_allocated %.0f    nz_used %.0f    nz_unneeded %.0f\n", info.mallocs, info.nz_allocated, info.nz_used, info.nz_unneeded);*/
     _try(VecAssemblyBegin(_b));
     _try(VecAssemblyEnd(_b));
     _try(KSPSolve(_ksp, _b, _x));
