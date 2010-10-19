@@ -10,6 +10,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "linearSystem.h"
+#include "sparsityPattern.h"
 
 class binding;
 
@@ -29,10 +30,12 @@ int  CSRList_Nbr(CSRList_T *liste);
 template <class scalar>
 class linearSystemCSR : public linearSystem<scalar> {
  protected:
+  bool _entriesPreAllocated;
   bool sorted;
   char *something;
   CSRList_T *_a, *_ai, *_ptr, *_jptr;
   std::vector<scalar> *_b, *_x;
+  sparsityPattern _sparsity; // only used for pre-allocation, does not store the sparsity once allocated
  public:
   linearSystemCSR()
     : sorted(false), _a(0), _b(0), _x(0) {}
@@ -46,8 +49,14 @@ class linearSystemCSR : public linearSystem<scalar> {
   {
     allocate(0);
   }
+  virtual void insertInSparsityPattern (int i, int j) {
+    _sparsity.insertEntry (i,j);
+  }
+  virtual void preAllocateEntries ();
   virtual void addToMatrix(int il, int ic, const scalar &val) 
   {
+    if (!_entriesPreAllocated)
+      preAllocateEntries();
     INDEX_TYPE  *jptr  = (INDEX_TYPE*) _jptr->array;
     INDEX_TYPE  *ptr   = (INDEX_TYPE*) _ptr->array;
     INDEX_TYPE  *ai    = (INDEX_TYPE*) _ai->array;
@@ -180,8 +189,13 @@ class linearSystemCSRTaucs : public linearSystemCSR<scalar> {
   virtual ~linearSystemCSRTaucs(){}
   virtual void addToMatrix(int il, int ic, const double &val)
   {
-    if (il <= ic)
+    if (il <= ic) {
       linearSystemCSR<scalar>::addToMatrix(il, ic, val);
+    }
+  }
+  virtual void insertInSparsityPattern(int il, int ic) {
+    if (il <= ic)
+      linearSystemCSR<scalar>::insertInSparsityPattern(il,ic);
   }
   virtual int systemSolve()
 #if !defined(HAVE_TAUCS)

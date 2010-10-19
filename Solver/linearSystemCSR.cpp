@@ -46,6 +46,12 @@ static void CSRList_Realloc(CSRList_T *liste, int n)
   }
 }
 
+static void CSRList_Resize(CSRList_T *liste, int n)
+{
+  CSRList_Realloc(liste, n);
+  liste->n = n;
+}
+
 static CSRList_T *CSRList_Create(int n, int incr, int size)
 {
   CSRList_T *liste;
@@ -85,6 +91,46 @@ void CSRList_Add(CSRList_T *liste, const void *data)
 int CSRList_Nbr(CSRList_T *liste)
 {
   return(liste->n);
+}
+
+template<>
+void linearSystemCSR<double>::preAllocateEntries ()
+{
+  if (_entriesPreAllocated) return;
+  if (_sparsity.getNbRows() == 0) return;
+  INDEX_TYPE nnz = 0;
+  int nbRows = _b->size();
+  for (int i = 0; i < nbRows; i++){
+    int nInRow;
+    _sparsity.getRow (i, nInRow);
+    nnz += nInRow;
+  }
+  CSRList_Resize (_a, nnz);
+  CSRList_Resize (_ai, nnz);
+  CSRList_Resize (_ptr, nnz);
+  INDEX_TYPE *jptr = (INDEX_TYPE*) _jptr->array;
+  INDEX_TYPE *ai = (INDEX_TYPE*) _ai->array;
+  INDEX_TYPE *ptr = (INDEX_TYPE*) _ptr->array;
+  double *a = ( double * ) _a->array;
+  jptr[0] = 0;
+  nnz = 0;
+  for (int i = 0; i < nbRows; i++){
+    int nInRow;
+    const int *row = _sparsity.getRow (i, nInRow);
+    for (int j = 0; j < nInRow; j++) {
+      ai[nnz] = row[j];
+      a[nnz] = 0.;
+      ptr[nnz] = nnz+1;
+      nnz ++;
+    }
+    if (nInRow != 0)
+      ptr[nnz-1] = 0;
+    jptr[i+1] = nnz;
+    something[i] = (nInRow == 0 ? 0 : 1);
+  }
+  _entriesPreAllocated = true;
+  sorted = true;
+  _sparsity.clear();
 }
 
 template<>
@@ -297,6 +343,7 @@ template<>
   void linearSystemCSRGmm<double>::registerBindings(binding *b)
   {
     classBinding *cb = b->addClass< linearSystemCSRGmm<double> >("linearSystemCSRGmmdouble");
+    cb->setParentClass<linearSystem<double> >();
     cb->setDescription("Sparse matrix representation.");
     methodBinding *cm;
     cm = cb->setConstructor<linearSystemCSRGmm<double> >();
