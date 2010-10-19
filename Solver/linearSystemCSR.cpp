@@ -272,7 +272,8 @@ void sortColumns_(int NbLines, int nnz, INDEX_TYPE *ptr, INDEX_TYPE *jptr,
     for (int j = jptr[i]; j < jptr[i + 1] - 1; j++){
       ptr[j] = j + 1;
     }
-    //    ptr[jptr[i + 1]] = 0;
+    if (jptr[i + 1] != jptr[i])
+      ptr[jptr[i + 1] - 1] = 0;
   }
 
   delete[] count;
