@@ -55,7 +55,30 @@ class linearSystemCSR : public linearSystem<scalar> {
 
     INDEX_TYPE  position = jptr[il];
 
-    if(something[il]) {
+    if (sorted) { // use bisection and direct adressing if sorted
+      int p0 = jptr[il];
+      int p1 = jptr[il+1];
+      while (p1-p0 > 20) {
+        position = ((p0+p1)/2);
+        if (ai[position] > ic)
+          p1 = position;
+        else  if (ai[position] < ic)
+          p0 = position + 1;
+        else {
+          a[position] += val;
+          return;
+        }
+      }
+      for (position = p0; position < p1; position++) {
+        if (ai[position] >= ic) {
+          if (ai[position] == ic){
+            a[position] += val;
+            return;
+          }
+          break;
+        }
+      }
+    } else if(something[il]) {
       while(1){
         if(ai[position] == ic){
           a[position] += val;
