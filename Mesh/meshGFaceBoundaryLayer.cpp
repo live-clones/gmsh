@@ -8,6 +8,29 @@
 #include "boundaryLayerEdge.h"
 #include "boundaryLayerFace.h"
 
+// utiliser bl.lua comme cas test
+//
+// creer une fonction meshAllBoundaryLayerFaces(GModel *)
+//   et l'appeler dans Mesh/Generator.cpp/Mesh2D()
+//
+// cette fonction 
+//
+//   - utiliserait le maillage 1D de toutes les lignes source des
+//     boundaryLayerFaces (cf boundaryLayerFace.h) pour
+//     creer les points de la couche limite
+//     (categoriser les points sur chaque boundaryLayerFace?)
+//
+//   - "simplifierait" le nuage de point cree en enlevant les points
+//     trop proches? (cf. Geo/MVertexPositionSet)
+//
+//   - utiliser DocRecord pour trianguler les points (cf. Plugin/Triangulate.cpp)
+//
+//   - modifier la triangul sur le bord de la couche limite pour
+//     verifier les contraintes de Blossom
+// 
+//   - appliquer Blossom (cf. meshGFaceOptimize.cpp)
+
+// ceci c'est nul: a changer :-)
 int MeshBoundaryLayerSurface(GFace *gf)
 {
   // old boundary layers
