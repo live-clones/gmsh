@@ -71,10 +71,15 @@ class binding;
 // should be extended to other elements like hexes
 class polynomialBasis
 {
+  mutable std::map<int,std::vector<fullMatrix<double> > > _dfAtFace; //integrationOrder, closureId => df/dXi
  public:
   //for now the only implemented polynomial basis are nodal poly basis, we use the type of the corresponding gmsh element as type
-  int type;
-  typedef std::vector<std::vector<int> > clCont;
+  int type, parentType;
+  class closure : public std::vector<int> {
+    public: 
+    int type;
+  };
+  typedef std::vector<closure> clCont;
   clCont closures;
   fullMatrix<double> points;
   fullMatrix<double> monomials;
@@ -262,6 +267,7 @@ class polynomialBasis
       break;
     }
   }
+  const fullMatrix<double> &getGradientAtFaceIntegrationPoints(int integrationOrder, int closureId) const;
   static void registerBindings(binding *b);
 };
 
