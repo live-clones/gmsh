@@ -24,9 +24,7 @@ static void *CSRMalloc(size_t size)
 
 static void *CSRRealloc(void *ptr, size_t size)
 {
-  if (!size) return(NULL);
-  ptr = realloc(ptr, size);
-  return(ptr);
+  return realloc(ptr, size);
 }
 
 static void CSRList_Realloc(CSRList_T *liste, int n)
@@ -46,10 +44,11 @@ static void CSRList_Realloc(CSRList_T *liste, int n)
   }
 }
 
-static void CSRList_Resize(CSRList_T *liste, int n)
+static void CSRList_Resize_strict(CSRList_T *liste, int n)
 {
-  CSRList_Realloc(liste, n);
+  liste->array = (char *)CSRRealloc(liste->array, n * liste->size);
   liste->n = n;
+  liste->nmax = n;
 }
 
 static CSRList_T *CSRList_Create(int n, int incr, int size)
@@ -105,13 +104,11 @@ void linearSystemCSR<double>::preAllocateEntries ()
     _sparsity.getRow (i, nInRow);
     nnz += nInRow;
   }
-  CSRList_Resize (_a, nnz);
-  CSRList_Resize (_ai, nnz);
-  CSRList_Resize (_ptr, nnz);
+  CSRList_Resize_strict (_ai, nnz);
+  CSRList_Resize_strict (_ptr, nnz);
   INDEX_TYPE *jptr = (INDEX_TYPE*) _jptr->array;
   INDEX_TYPE *ai = (INDEX_TYPE*) _ai->array;
   INDEX_TYPE *ptr = (INDEX_TYPE*) _ptr->array;
-  double *a = ( double * ) _a->array;
   jptr[0] = 0;
   nnz = 0;
   for (int i = 0; i < nbRows; i++){
@@ -119,18 +116,23 @@ void linearSystemCSR<double>::preAllocateEntries ()
     const int *row = _sparsity.getRow (i, nInRow);
     for (int j = 0; j < nInRow; j++) {
       ai[nnz] = row[j];
-      a[nnz] = 0.;
       ptr[nnz] = nnz+1;
       nnz ++;
     }
     if (nInRow != 0)
-      ptr[nnz-1] = 0;
-    jptr[i+1] = nnz;
+      ptr[nnz - 1] = 0;
+    jptr[i + 1] = nnz;
     something[i] = (nInRow == 0 ? 0 : 1);
   }
   _entriesPreAllocated = true;
   sorted = true;
   _sparsity.clear();
+  // we do this after _sparsity.clear so that the peak memory usage is reduced
+  CSRList_Resize_strict (_a, nnz);
+  double *a = ( double * ) _a->array;
+  for (int i = 0; i < nnz; i++) {
+    a[i] = 0.;
+  }
 }
 
 template<>
