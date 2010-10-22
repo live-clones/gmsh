@@ -1032,7 +1032,7 @@ const polynomialBasis *polynomialBases::find(int tag)
     F.numFaces = 1;
     F.monomials = generate1DMonomials(0);
     F.points    = generate1DPoints(0);
-    F.parentType = MSH_PNT;
+    F.parentType = TYPE_PNT;
     break;
   case MSH_LIN_2 :
     F.numFaces = 2;

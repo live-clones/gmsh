@@ -61,6 +61,11 @@ void gaussIntegration::get(int elementType, int order, fullMatrix<double> &pts, 
     case TYPE_TET : pts2fullMatrix(getNGQTetPts(order), getGQTetPts(order), pts, weights); break;
     case TYPE_HEX : pts2fullMatrix(getNGQHPts(order), getGQHPts(order), pts, weights); break;
     case TYPE_PRI : pts2fullMatrix(getNGQPriPts(order), getGQPriPts(order), pts, weights); break;
+    case TYPE_PNT :
+      weights.resize(1,1);
+      weights(0,0) = 1.;
+      pts.resize(1,3);
+    break;
     default : Msg::Error("No integration rules defined for type %i", elementType);
   }
 }
