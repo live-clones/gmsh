@@ -253,9 +253,13 @@ void drawContext::draw3d()
   initProjection();
   initRenderModel();
 
-  double _camera;
-  GmshGetOption("General", "Camera", _camera);
-  if (!_camera)     initPosition();
+  //  double _camera;
+  //  GmshGetOption("General", "Camera", _camera);
+  //  if (_camera)  {}
+  //  else{
+  //    initPosition();
+  //  }
+  initPosition();
   drawAxes();
   drawGeom();
   drawMesh();
