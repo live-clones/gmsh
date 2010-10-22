@@ -348,20 +348,26 @@ int openglWindow::handle(int event)
           _trySelectionXYWH[2] = 5;
           _trySelectionXYWH[3] = 5;
         }
+	// (m1) and (!shift) and (!alt)  => rotation
         else if(Fl::event_button() == 1 && 
                 !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
+	  // trackball
           if(CTX::instance()->useTrackball)
             _ctx->addQuaternion((2. * _prev.win[0] - w()) / w(),
                                 (h() - 2. * _prev.win[1]) / h(),
                                 (2. * _curr.win[0] - w()) / w(),
                                 (h() - 2. * _curr.win[1]) / h());
+	  // !trackball
           else {
             _ctx->r[1] += ((fabs(dx) > fabs(dy)) ? 180. * dx / (double)w() : 0.);
             _ctx->r[0] += ((fabs(dx) > fabs(dy)) ? 0. : 180. * dy / (double)h());
           }
         }
+	// m2 or  (m1 and shift) => zoom (only move in y is used)
+	// but start point is the center of the homothety
         else if(Fl::event_button() == 2 ||
                 (Fl::event_button() == 1 && Fl::event_state(FL_SHIFT))) {
+	  // move in y greater than move in x
           if(fabs(dy) > fabs(dx)) {
             double fact = (CTX::instance()->zoomFactor * fabs(dy) + h()) / (double)h();
             _ctx->s[0] *= ((dy > 0) ? fact : 1./fact);
@@ -369,10 +375,12 @@ int openglWindow::handle(int event)
             _ctx->s[2] = _ctx->s[0];
             _click.recenter(_ctx);
           }
+	  // trackball
           else if(!CTX::instance()->useTrackball)
             _ctx->r[2] += -180. * dx / (double)w();
         }
-        else {
+        // other case => translation
+	else {
           _ctx->t[0] += (_curr.wnr[0] - _click.wnr[0]);
           _ctx->t[1] += (_curr.wnr[1] - _click.wnr[1]);
           _ctx->t[2] = 0.;
