@@ -289,7 +289,7 @@ void drawContext::draw2d()
 
 
   //++++
-  glPushMatrix();
+  //glPushMatrix();
   //++++
   glLoadIdentity();
 
