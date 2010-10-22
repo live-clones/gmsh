@@ -128,7 +128,7 @@ class CTX {
   // generation ->only for geo/post)
   double lc;
   // double buffer/antialias/stereo graphics?
-  int db, antialiasing, stereo , camera;
+  int db, antialiasing, stereo, camera;
   // orthogonal projection? 
   int ortho;
   // draw the bounding boxes and the rot center?

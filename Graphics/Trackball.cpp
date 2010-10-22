@@ -50,11 +50,12 @@
  * Gavin Bell
  */
 /*
- * Modified for inclusion in Gmsh (rotmatrix as a vector + float->double
+ * Modified for inclusion in Gmsh (rotmatrix as a vector +
+ * float->double + camera + new trackballsize function)
  */
 #include <math.h>
 #include "Trackball.h"
-#include "Gmsh.h"
+#include "Context.h"
 #include <iostream>
 /*
  * This size should really be based on the distance from the center of
@@ -232,9 +233,7 @@ tb_project_to_sphere(double r, double x, double y)
 
   d = sqrt(x*x + y*y);
 
-  double _camera;
-  GmshGetOption("General", "Camera",_camera );
-  if (_camera ) {
+  if (CTX::instance()->camera) {
     if (d < r ) {    
       z = sqrt(r*r - d*d);
     } else {           
@@ -252,12 +251,7 @@ tb_project_to_sphere(double r, double x, double y)
     }
   }
 
-
-  
-
-return z;
-
-
+  return z;
 }
 
 /*
@@ -352,7 +346,7 @@ build_rotmatrix(double m[16], double q[4])
     m[15] = 1.0;
 }
 
-
-double trackballsize(){
+double trackballsize()
+{
   return TRACKBALLSIZE;
 }

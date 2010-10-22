@@ -25,7 +25,6 @@
 #include <GL/glu.h>
 #endif
 
-
 class PView;
 class GModel;
 class GVertex;

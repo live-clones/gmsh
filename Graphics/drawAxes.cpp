@@ -340,17 +340,14 @@ void drawContext::drawSmallAxes()
   double cx = CTX::instance()->smallAxesPos[0];
   double cy = CTX::instance()->smallAxesPos[1];
   fix2dCoordinates(&cx, &cy);
-  double _camera ;
-  GmshGetOption("General", "Camera", _camera);
+
   double xx, xy, yx, yy , zx, zy;
 
-  if (_camera) {
-  
+  if (CTX::instance()->camera) {
     glPopMatrix();
-    float fvViewMatrix[ 16 ];
-    glGetFloatv( GL_MODELVIEW_MATRIX, fvViewMatrix ); 
+    float fvViewMatrix[16];
+    glGetFloatv(GL_MODELVIEW_MATRIX, fvViewMatrix);
     glLoadIdentity();
-
     xx = l * fvViewMatrix[0];
     xy = l * fvViewMatrix[1];
     yx = l * fvViewMatrix[4];
@@ -358,14 +355,13 @@ void drawContext::drawSmallAxes()
     zx = l * fvViewMatrix[8];
     zy = l * fvViewMatrix[9];
   }
-  else    {   /* if NOT STEREO */
+  else{
     xx = l * rot[0];
     xy = l * rot[1];
     yx = l * rot[4];
     yy = l * rot[5];
     zx = l * rot[8];
     zy = l * rot[9];
-
   }
   glLineWidth((float)CTX::instance()->lineWidth);
   gl2psLineWidth((float)(CTX::instance()->lineWidth * 
@@ -386,8 +382,4 @@ void drawContext::drawSmallAxes()
   drawString("Y");
   glRasterPos2d(cx + zx + o, cy + zy + o);
   drawString("Z");
-
-
-
-    
 }

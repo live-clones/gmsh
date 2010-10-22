@@ -3505,22 +3505,6 @@ double opt_general_antialiasing(OPT_ARGS_NUM)
   return CTX::instance()->antialiasing;
 }
 
-double opt_general_stereo(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    CTX::instance()->stereo = (int)val;
-  }
-  return CTX::instance()->stereo;
-}
-
-double opt_general_camera(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    CTX::instance()->camera = (int)val;
-  }
-  return CTX::instance()->camera;
-}
-
 double opt_general_alpha_blending(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -3692,7 +3676,6 @@ double opt_general_expert_mode(OPT_ARGS_NUM)
   return CTX::instance()->expertMode;
 }
 
-
 double opt_general_stereo_mode(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -3708,7 +3691,6 @@ double opt_general_camera_mode(OPT_ARGS_NUM)
 
   return CTX::instance()->camera ;
 }
-
 
 double opt_general_clip0a(OPT_ARGS_NUM)
 {

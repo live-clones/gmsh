@@ -506,6 +506,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Y position (in pixels) of background image (< 0: measure from bottom edge; "
     ">= 1e5: centered)" },
 
+  { F|O, "Camera" , opt_general_camera_mode, 0. ,
+    "Enable camera view mode" },
   { F,   "Clip0A" , opt_general_clip0a , 1.0 ,
     "First coefficient in equation for clipping plane 0 (`A' in `AX+BY+CZ+D=0')" },
   { F,   "Clip0B" , opt_general_clip0b , 0.0 , 
@@ -570,7 +572,6 @@ StringXNumber GeneralOptions_Number[] = {
     "planes window" }, 
   { F|O, "ClipWholeElements" , opt_general_clip_whole_elements , 0. , 
     "Clip whole elements" },
-
   { F|O, "ColorScheme", opt_general_color_scheme , 1. ,
     "Default color scheme (0=dark, 1=light or 2=grayscale)" },
   { F|O, "ConfirmOverwrite" , opt_general_confirm_overwrite, 1. , 
@@ -591,12 +592,6 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "ExpertMode" , opt_general_expert_mode, 0. ,
     "Enable expert mode (to disable all the messages meant for inexperienced "
     "users)" },
-
-   { F|O, "Stereo" , opt_general_stereo_mode, 0. ,
-    "Enable stereo mode" },
-
-   { F|O, "Camera" , opt_general_camera_mode, 0. ,
-    "Enable camera view mode" },
 
  { F|O, "FastRedraw" , opt_general_fast_redraw, 0. ,
     "Draw simplified model while rotating, panning and zooming" },
@@ -838,10 +833,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "StatisticsPositionY" , opt_general_statistics_position1 , 150. , 
     "Vertical position (in pixels) of the upper left corner of the statistic"
     " window" }, 
-  { F|O, "Stereo" , opt_general_stereo , 0. ,
+  { F|O, "Stereo" , opt_general_stereo_mode , 0. ,
     "Use stereo rendering" },
-  { F|O, "Camera" , opt_general_camera , 0. ,
-    "Use a camera" },
   { F|S, "SystemMenuBar" , opt_general_system_menu_bar , 1. , 
     "Use the system menu bar on Mac OS X?" }, 
 

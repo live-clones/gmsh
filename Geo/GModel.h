@@ -117,7 +117,8 @@ class GModel
   std::set<GEdge*, GEntityLessThan> edges;
   std::set<GVertex*, GEntityLessThan> vertices;
 
-  void insertRegion (GRegion*);
+  // for bindings
+  void insertRegion(GRegion*);
 
   // map between the pair <dimension, elementary or physical number>
   // and an optional associated name

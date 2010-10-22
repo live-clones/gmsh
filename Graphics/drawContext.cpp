@@ -247,26 +247,17 @@ void drawContext::draw3d()
   else
     CTX::instance()->polygonOffset = 0;
 
-
   glDepthFunc(GL_LESS);
   glEnable(GL_DEPTH_TEST);
   initProjection();
   initRenderModel();
 
-  //  double _camera;
-  //  GmshGetOption("General", "Camera", _camera);
-  //  if (_camera)  {}
-  //  else{
-  //    initPosition();
-  //  }
-  initPosition();
+  if(!CTX::instance()->camera)
+    initPosition();
   drawAxes();
   drawGeom();
   drawMesh();
   drawPost();
- 
-
-
 }
 
 void drawContext::draw2d()
@@ -287,21 +278,16 @@ void drawContext::draw2d()
                1. / CTX::instance()->clipFactor : CTX::instance()->clipFactor);
   glMatrixMode(GL_MODELVIEW);
 
-
-  //++++
-  //glPushMatrix();
-  //++++
   glLoadIdentity();
 
   drawGraph2d();
   drawText2d();
-  double _stereo;
-  GmshGetOption("General", "Stereo", _stereo);
-  if (!_stereo) {   
-    if(CTX::instance()->post.draw)    drawScales();
-  }
-  if(CTX::instance()->smallAxes)    drawSmallAxes();
 
+  if(CTX::instance()->post.draw && !CTX::instance()->stereo)
+    drawScales();
+
+  if(CTX::instance()->smallAxes)
+    drawSmallAxes();
 }
 
 void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
@@ -351,30 +337,20 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
 			 fabs(CTX::instance()->max[2]));
   if(zmax < CTX::instance()->lc) zmax = CTX::instance()->lc;
  
-  double _camera;
-  GmshGetOption("General", "Camera", _camera);
-
-
-
-  if (_camera) { /* if  Camera */
+  if (CTX::instance()->camera) { // if we use the new camera mode
 
     double clip_near, clip_far;
     clip_near = 0.75 * CTX::instance()->clipFactor * zmax;
     clip_far = 75. * CTX::instance()->clipFactor * zmax;
-    // draw background if not in selection mode
+
     glDisable(GL_DEPTH_TEST);
     glPushMatrix();
     glLoadIdentity();
-    // the z values and the translation are only needed for GL2PS,
-    // which does not understand "no depth test" (hence we must make
-    // sure that we draw the background behind the rest of the scene)
         
     glOrtho((double)viewport[0], (double)viewport[2],
 	    (double)viewport[1], (double)viewport[3], 
 	    clip_near, clip_far);
     
-    //  glTranslated(0., 0., clip_near);
-    //  glScaled(1.2,1.2,1.);
     // background gradient
     if(CTX::instance()->bgGradient == 1){ // vertical
       glBegin(GL_QUADS);
@@ -416,15 +392,11 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
     // hack for GL2PS (to make sure that the image is in front of the
     // gradient)
     glTranslated(0., 0., 0.01 * clip_far);
-
-    // background image
-    if(CTX::instance()->bgImageFileName.size()){
-    }
     glPopMatrix();
     glEnable(GL_DEPTH_TEST);   
-  } 
 
-  else    {   /* if NOT Camera */
+  } 
+  else{  // if NOT in Camera mode
 
     double clip_near, clip_far;
     if(CTX::instance()->ortho) {
@@ -572,177 +544,86 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
       glTranslated(-coef * t_init[0], -coef * t_init[1], -coef * clip_near);
       glScaled(coef, coef, coef);
     }
-  } /*end  if NOT Camera */ 
+  } // end if NOT camera
 }
 
 void drawContext::initRenderModel()
 {
-  double _camera;
-  GmshGetOption("General", "Camera", _camera);
-  if (_camera) {
-    glPushMatrix();
-    glLoadIdentity();
-    glScaled(s[0], s[1], s[2]);
-    glTranslated(t[0], t[1], t[2]);
+  glPushMatrix();
+  glLoadIdentity();
+  glScaled(s[0], s[1], s[2]);
+  glTranslated(t[0], t[1], t[2]);
   
-    for(int i = 0; i < 6; i++) {
-      if(CTX::instance()->light[i]) {
-	GLfloat position[4] = {(GLfloat)CTX::instance()->lightPosition[i][0],
-			       (GLfloat)CTX::instance()->lightPosition[i][1],
-			       (GLfloat)CTX::instance()->lightPosition[i][2],
-			       (GLfloat)CTX::instance()->lightPosition[i][3]};
-	glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, position);
-
-	GLfloat r = (GLfloat)(CTX::instance()->unpackRed
-			      (CTX::instance()->color.ambientLight[i]) / 255.);
-	GLfloat g = (GLfloat)(CTX::instance()->unpackGreen
-			      (CTX::instance()->color.ambientLight[i]) / 255.);
-	GLfloat b = (GLfloat)(CTX::instance()->unpackBlue
-			      (CTX::instance()->color.ambientLight[i]) / 255.);
-	GLfloat ambient[4] = {r, g, b, 1.0F};
-	glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, ambient);
-
-	r = (GLfloat)(CTX::instance()->unpackRed
-		      (CTX::instance()->color.diffuseLight[i]) / 255.);
-	g = (GLfloat)(CTX::instance()->unpackGreen
-		      (CTX::instance()->color.diffuseLight[i]) / 255.);
-	b = (GLfloat)(CTX::instance()->unpackBlue
-		      (CTX::instance()->color.diffuseLight[i]) / 255.);
-	GLfloat diffuse[4] = {r, g, b, 1.0F};
-	glLightfv((GLenum)(GL_LIGHT0 + i), GL_DIFFUSE, diffuse);
-
-	r = (GLfloat)(CTX::instance()->unpackRed
-		      (CTX::instance()->color.specularLight[i]) / 255.);
-	g = (GLfloat)(CTX::instance()->unpackGreen
-		      (CTX::instance()->color.specularLight[i]) / 255.);
-	b = (GLfloat)(CTX::instance()->unpackBlue
-		      (CTX::instance()->color.specularLight[i]) / 255.);
-	GLfloat specular[4] = {r, g, b, 1.0F};
-	glLightfv((GLenum)(GL_LIGHT0 + i), GL_SPECULAR, specular);
-
-	glEnable((GLenum)(GL_LIGHT0 + i));
-      }
-      else{
-	glDisable((GLenum)(GL_LIGHT0 + i));
-      }
+  for(int i = 0; i < 6; i++) {
+    if(CTX::instance()->light[i]) {
+      GLfloat position[4] = {(GLfloat)CTX::instance()->lightPosition[i][0],
+                             (GLfloat)CTX::instance()->lightPosition[i][1],
+                             (GLfloat)CTX::instance()->lightPosition[i][2],
+                             (GLfloat)CTX::instance()->lightPosition[i][3]};
+      glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, position);
+      
+      GLfloat r = (GLfloat)(CTX::instance()->unpackRed
+                            (CTX::instance()->color.ambientLight[i]) / 255.);
+      GLfloat g = (GLfloat)(CTX::instance()->unpackGreen
+                            (CTX::instance()->color.ambientLight[i]) / 255.);
+      GLfloat b = (GLfloat)(CTX::instance()->unpackBlue
+                            (CTX::instance()->color.ambientLight[i]) / 255.);
+      GLfloat ambient[4] = {r, g, b, 1.0F};
+      glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, ambient);
+      
+      r = (GLfloat)(CTX::instance()->unpackRed
+                    (CTX::instance()->color.diffuseLight[i]) / 255.);
+      g = (GLfloat)(CTX::instance()->unpackGreen
+                    (CTX::instance()->color.diffuseLight[i]) / 255.);
+      b = (GLfloat)(CTX::instance()->unpackBlue
+                    (CTX::instance()->color.diffuseLight[i]) / 255.);
+      GLfloat diffuse[4] = {r, g, b, 1.0F};
+      glLightfv((GLenum)(GL_LIGHT0 + i), GL_DIFFUSE, diffuse);
+      
+      r = (GLfloat)(CTX::instance()->unpackRed
+                    (CTX::instance()->color.specularLight[i]) / 255.);
+      g = (GLfloat)(CTX::instance()->unpackGreen
+                    (CTX::instance()->color.specularLight[i]) / 255.);
+      b = (GLfloat)(CTX::instance()->unpackBlue
+                    (CTX::instance()->color.specularLight[i]) / 255.);
+      GLfloat specular[4] = {r, g, b, 1.0F};
+      glLightfv((GLenum)(GL_LIGHT0 + i), GL_SPECULAR, specular);
+      
+      glEnable((GLenum)(GL_LIGHT0 + i));
     }
-
-    glPopMatrix();
-
-    // ambient and diffuse material colors track glColor automatically
-    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-    glEnable(GL_COLOR_MATERIAL);
-    // "white"-only specular material reflection color
-    GLfloat spec[4] = {(GLfloat)CTX::instance()->shine, 
-		       (GLfloat)CTX::instance()->shine, 
-		       (GLfloat)CTX::instance()->shine, 1.0F};
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, spec);
-    // specular exponent in [0,128] (larger means more "focused"
-    // reflection)
-    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 
-		(GLfloat)CTX::instance()->shineExponent);
-
-    glShadeModel(GL_SMOOTH);
-
-    // Normalize the normals automatically. We could use the more
-    // efficient glEnable(GL_RESCALE_NORMAL) instead (since we initially
-    // specify unit normals), but GL_RESCALE_NORMAL does only work with
-    // isotropic scalings (and we allow anistotropic scalings in
-    // myZoom). Note that GL_RESCALE_NORMAL is only available in
-    // GL_VERSION_1_2.
-    glEnable(GL_NORMALIZE);
-
-    // lighting is enabled/disabled for each particular primitive later
-    glDisable(GL_LIGHTING);
+    else{
+      glDisable((GLenum)(GL_LIGHT0 + i));
+    }
   }
-  else    {   
-    glPushMatrix();
-    glLoadIdentity();
-    glScaled(s[0], s[1], s[2]);
-    glTranslated(t[0], t[1], t[2]);
   
-    for(int i = 0; i < 6; i++) {
-      if(CTX::instance()->light[i]) {
-	GLfloat position[4] = {(GLfloat)CTX::instance()->lightPosition[i][0],
-			       (GLfloat)CTX::instance()->lightPosition[i][1],
-			       (GLfloat)CTX::instance()->lightPosition[i][2],
-			       (GLfloat)CTX::instance()->lightPosition[i][3]};
-	glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, position);
-
-	GLfloat r = (GLfloat)(CTX::instance()->unpackRed
-			      (CTX::instance()->color.ambientLight[i]) / 255.);
-	GLfloat g = (GLfloat)(CTX::instance()->unpackGreen
-			      (CTX::instance()->color.ambientLight[i]) / 255.);
-	GLfloat b = (GLfloat)(CTX::instance()->unpackBlue
-			      (CTX::instance()->color.ambientLight[i]) / 255.);
-	GLfloat ambient[4] = {r, g, b, 1.0F};
-	glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, ambient);
-
-	r = (GLfloat)(CTX::instance()->unpackRed
-		      (CTX::instance()->color.diffuseLight[i]) / 255.);
-	g = (GLfloat)(CTX::instance()->unpackGreen
-		      (CTX::instance()->color.diffuseLight[i]) / 255.);
-	b = (GLfloat)(CTX::instance()->unpackBlue
-		      (CTX::instance()->color.diffuseLight[i]) / 255.);
-	GLfloat diffuse[4] = {r, g, b, 1.0F};
-	glLightfv((GLenum)(GL_LIGHT0 + i), GL_DIFFUSE, diffuse);
-
-	r = (GLfloat)(CTX::instance()->unpackRed
-		      (CTX::instance()->color.specularLight[i]) / 255.);
-	g = (GLfloat)(CTX::instance()->unpackGreen
-		      (CTX::instance()->color.specularLight[i]) / 255.);
-	b = (GLfloat)(CTX::instance()->unpackBlue
-		      (CTX::instance()->color.specularLight[i]) / 255.);
-	GLfloat specular[4] = {r, g, b, 1.0F};
-	glLightfv((GLenum)(GL_LIGHT0 + i), GL_SPECULAR, specular);
-
-	glEnable((GLenum)(GL_LIGHT0 + i));
-      }
-      else{
-	glDisable((GLenum)(GL_LIGHT0 + i));
-      }
-    }
-
-    glPopMatrix();
-
-    // ambient and diffuse material colors track glColor automatically
-    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-    glEnable(GL_COLOR_MATERIAL);
-    // "white"-only specular material reflection color
-    GLfloat spec[4] = {(GLfloat)CTX::instance()->shine, 
-		       (GLfloat)CTX::instance()->shine, 
-		       (GLfloat)CTX::instance()->shine, 1.0F};
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, spec);
-    // specular exponent in [0,128] (larger means more "focused"
-    // reflection)
-    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 
-		(GLfloat)CTX::instance()->shineExponent);
-
-    glShadeModel(GL_SMOOTH);
-
-    // Normalize the normals automatically. We could use the more
-    // efficient glEnable(GL_RESCALE_NORMAL) instead (since we initially
-    // specify unit normals), but GL_RESCALE_NORMAL does only work with
-    // isotropic scalings (and we allow anistotropic scalings in
-    // myZoom). Note that GL_RESCALE_NORMAL is only available in
-    // GL_VERSION_1_2.
-    glEnable(GL_NORMALIZE);
-
-    // lighting is enabled/disabled for each particular primitive later
-    glDisable(GL_LIGHTING);
-  }
-
+  glPopMatrix();
+  
+  // ambient and diffuse material colors track glColor automatically
+  glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+  glEnable(GL_COLOR_MATERIAL);
+  // "white"-only specular material reflection color
+  GLfloat spec[4] = {(GLfloat)CTX::instance()->shine, 
+                     (GLfloat)CTX::instance()->shine, 
+                     (GLfloat)CTX::instance()->shine, 1.0F};
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, spec);
+  // specular exponent in [0,128] (larger means more "focused"
+  // reflection)
+  glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 
+              (GLfloat)CTX::instance()->shineExponent);
+  
+  glShadeModel(GL_SMOOTH);
+  
+  // Normalize the normals automatically. We could use the more
+  // efficient glEnable(GL_RESCALE_NORMAL) instead (since we initially
+  // specify unit normals), but GL_RESCALE_NORMAL does only work with
+  // isotropic scalings (and we allow anistotropic scalings in
+  // myZoom). Note that GL_RESCALE_NORMAL is only available in
+  // GL_VERSION_1_2.
+  glEnable(GL_NORMALIZE);
+  
+  // lighting is enabled/disabled for each particular primitive later
+  glDisable(GL_LIGHTING);
 }
-
-
-
-
-
-
-
-
-
-
 
 void drawContext::initPosition()
 {
