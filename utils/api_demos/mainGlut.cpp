@@ -427,6 +427,9 @@ int main(int argc, char **argv)
   } 
 
   for(int i = 1; i < argc; i++) GmshMergeFile(argv[i]);
+
+  camera.lookAtCg();
+
   ctx = new drawContext();
   drawContext::setGlobal(new drawContextGlut);
   
@@ -438,21 +441,17 @@ int main(int argc, char **argv)
   else  {   
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH );
   }
-  glutDisplayFunc(display);
   glutInitWindowSize(ctx->viewport[2], ctx->viewport[3]);
   glutInitWindowPosition(400,10);
   glutInitWindowSize(800,800); 
   glutCreateWindow("GLUT Gmsh Viewer"); 
-  
-  camera.lookAtCg();
-  
+  glutDisplayFunc(display);  
   glutReshapeFunc(reshape);
   glutKeyboardFunc(keyboard);
   glutMotionFunc(motion);
   glutMouseFunc(mouse);
   glutKeyboardFunc(processNormalKeys);
   glutSpecialFunc(processSpecialKeys);	
-
 
   cout<<"-------------------------------------"<<endl;
   cout<<"          SHORTCUTS "<<endl;
@@ -480,6 +479,3 @@ int main(int argc, char **argv)
   GmshFinalize();
   return 0;
 }
-
-
- 
