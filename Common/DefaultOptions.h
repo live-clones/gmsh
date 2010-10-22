@@ -592,7 +592,13 @@ StringXNumber GeneralOptions_Number[] = {
     "Enable expert mode (to disable all the messages meant for inexperienced "
     "users)" },
 
-  { F|O, "FastRedraw" , opt_general_fast_redraw, 0. ,
+   { F|O, "Stereo" , opt_general_stereo_mode, 0. ,
+    "Enable stereo mode" },
+
+   { F|O, "Camera" , opt_general_camera_mode, 0. ,
+    "Enable camera view mode" },
+
+ { F|O, "FastRedraw" , opt_general_fast_redraw, 0. ,
     "Draw simplified model while rotating, panning and zooming" },
   { F|S, "FieldPositionX" , opt_general_field_position0 , 650. , 
     "Horizontal position (in pixels) of the upper left corner of the field window" }, 
@@ -834,6 +840,8 @@ StringXNumber GeneralOptions_Number[] = {
     " window" }, 
   { F|O, "Stereo" , opt_general_stereo , 0. ,
     "Use stereo rendering" },
+  { F|O, "Camera" , opt_general_camera , 0. ,
+    "Use a camera" },
   { F|S, "SystemMenuBar" , opt_general_system_menu_bar , 1. , 
     "Use the system menu bar on Mac OS X?" }, 
 
