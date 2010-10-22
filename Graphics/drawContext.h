@@ -25,6 +25,7 @@
 #include <GL/glu.h>
 #endif
 
+
 class PView;
 class GModel;
 class GVertex;
@@ -47,6 +48,7 @@ class drawTransformScaled : public drawTransform {
  private:
   double _mat[3][3];
   double _tra[3];
+
  public:
   drawTransformScaled(double mat[3][3], double tra[3]=0)
     : drawTransform()
@@ -76,7 +78,7 @@ class drawTransformScaled : public drawTransform {
     z += _tra[2];
   }
 };
-
+ 
 // global drawing functions, which need to be redefined for each
 // widget toolkit (FLTK, Qt, etc.)
 class drawContextGlobal {
@@ -121,7 +123,6 @@ class drawContext {
                               // at the time of the last InitPosition() call
   enum RenderMode {GMSH_RENDER=1, GMSH_SELECT=2, GMSH_FEEDBACK=3};
   int render_mode; // current rendering mode
-
  public:
   drawContext(drawTransform *transform=0);
   ~drawContext();
@@ -190,6 +191,7 @@ class drawContext {
                 std::string label[3], SBoundingBox3d &bb, int mikado);
   void drawAxes();
   void drawSmallAxes();
+  void drawTrackball();
   void drawScales();
   void drawString(const std::string &s, const std::string &font_name, int font_enum, 
                   int font_size, int align);

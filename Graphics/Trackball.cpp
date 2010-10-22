@@ -54,7 +54,8 @@
  */
 #include <math.h>
 #include "Trackball.h"
-
+#include "Gmsh.h"
+#include <iostream>
 /*
  * This size should really be based on the distance from the center of
  * rotation to the point on the object underneath the mouse.  That
@@ -62,13 +63,14 @@
  * simple example, though, so that is left as an Exercise for the
  * Programmer.
  */
-#define TRACKBALLSIZE  (0.8)
+#define TRACKBALLSIZE  (.8)
 
 /*
  * Local function prototypes (not defined in trackball.h)
  */
 static double tb_project_to_sphere(double, double, double);
 static void normalize_quat(double [4]);
+using namespace std ;
 
 void
 vzero(double *v)
@@ -162,40 +164,45 @@ vadd(const double *src1, const double *src2, double *dst)
 void
 trackball(double q[4], double p1x, double p1y, double p2x, double p2y)
 {
-    double a[3]; /* Axis of rotation */
-    double phi;  /* how much to rotate about axis */
-    double p1[3], p2[3], d[3];
-    double t;
+  double a[3]; /* Axis of rotation */
+  double phi;  /* how much to rotate about axis */
+  double p1[3], p2[3], d[3];
+  double t;
 
-    if (p1x == p2x && p1y == p2y) {
-        /* Zero rotation */
-        vzero(q);
-        q[3] = 1.0;
-        return;
-    }
+  if (p1x == p2x && p1y == p2y) {
+    /* Zero rotation */
+    vzero(q);
+    q[3] = 1.0;
+    return;
+  }
 
-    /*
-     * First, figure out z-coordinates for projection of P1 and P2 to
-     * deformed sphere
-     */
-    vset(p1,p1x,p1y,tb_project_to_sphere(TRACKBALLSIZE,p1x,p1y));
-    vset(p2,p2x,p2y,tb_project_to_sphere(TRACKBALLSIZE,p2x,p2y));
-
-    /*
-     *  Now, we want the cross product of P1 and P2
-     */
-    vcross(p2,p1,a);
-
-    /*
-     *  Figure out how much to rotate around that axis.
-     */
-    vsub(p1,p2,d);
-    t = vlength(d) / (2.0*TRACKBALLSIZE);
-
-    /*
-     * Avoid problems with out-of-control values...
-     */
-    if (t > 1.0) t = 1.0;
+  /*
+   * First, figure out z-coordinates for projection of P1 and P2 to
+   * deformed sphere
+   */
+  vset(p1,p1x,p1y,tb_project_to_sphere(TRACKBALLSIZE,p1x,p1y));
+  vset(p2,p2x,p2y,tb_project_to_sphere(TRACKBALLSIZE,p2x,p2y));
+  /*
+   *  Now, we want the cross product of P1 and P2
+   */
+  vcross(p2,p1,a);
+   
+  /*
+   *  Figure out how much to rotate around that axis.
+   */
+  vsub(p1,p2,d);
+  //t = vlength(d);
+  t = vlength(d) / (2.0*TRACKBALLSIZE);
+  /*
+   * Avoid problems with out-of-control values...
+   */
+  if (t > 1.0) t = 1.0;
+  if (t < -1.0) t = -1.0;
+  phi = 2.0 * asin(t);
+  /*
+   * Avoid problems with out-of-control values...
+   */
+  if (t > 1.0) t = 1.0;
     if (t < -1.0) t = -1.0;
     phi = 2.0 * asin(t);
 
@@ -221,16 +228,36 @@ axis_to_quat(double a[3], double phi, double q[4])
 static double
 tb_project_to_sphere(double r, double x, double y)
 {
-    double d, t, z;
+  double d, t, z;
 
-    d = sqrt(x*x + y*y);
-    if (d < r * 0.70710678118654752440) {    /* Inside sphere */
-        z = sqrt(r*r - d*d);
-    } else {           /* On hyperbola */
-        t = r / 1.41421356237309504880;
-        z = t*t / d;
+  d = sqrt(x*x + y*y);
+
+  double _camera;
+  GmshGetOption("General", "Camera",_camera );
+  if (_camera ) {
+    if (d < r ) {    
+      z = sqrt(r*r - d*d);
+    } else {           
+      z = 0.;
     }
-    return z;
+  }
+  else{
+    if (d < r * 0.70710678118654752440) {    
+      // Inside sphere 
+      z = sqrt(r*r - d*d);
+    } else {           
+      // On hyperbola 
+      t = r / 1.41421356237309504880;
+      z = t*t / d;
+    }
+  }
+
+
+  
+
+return z;
+
+
 }
 
 /*
@@ -325,3 +352,7 @@ build_rotmatrix(double m[16], double q[4])
     m[15] = 1.0;
 }
 
+
+double trackballsize(){
+  return TRACKBALLSIZE;
+}

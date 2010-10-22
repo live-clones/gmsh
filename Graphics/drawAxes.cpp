@@ -4,8 +4,11 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string>
+#include <iostream>
+#include "Gmsh.h"
 #include <string.h>
 #include "drawContext.h"
+#include "Trackball.h"
 #include "GModel.h"
 #include "Context.h"
 #include "Numeric.h"
@@ -275,7 +278,7 @@ void drawContext::drawAxes()
       break;
     }
   }
-    
+   
   if(geometryExists && (CTX::instance()->drawBBox || !CTX::instance()->mesh.draw)) {
     glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
     glLineWidth((float)CTX::instance()->lineWidth);
@@ -325,6 +328,8 @@ void drawContext::drawAxes()
                  CTX::instance()->geom.light);
   }
 
+
+
 }
 
 void drawContext::drawSmallAxes()
@@ -335,17 +340,36 @@ void drawContext::drawSmallAxes()
   double cx = CTX::instance()->smallAxesPos[0];
   double cy = CTX::instance()->smallAxesPos[1];
   fix2dCoordinates(&cx, &cy);
+  double _camera ;
+  GmshGetOption("General", "Camera", _camera);
+  double xx, xy, yx, yy , zx, zy;
 
-  double xx = l * rot[0];
-  double xy = l * rot[1];
-  double yx = l * rot[4];
-  double yy = l * rot[5];
-  double zx = l * rot[8];
-  double zy = l * rot[9];
+  if (_camera) {
+  
+    glPopMatrix();
+    float fvViewMatrix[ 16 ];
+    glGetFloatv( GL_MODELVIEW_MATRIX, fvViewMatrix ); 
+    glLoadIdentity();
 
+    xx = l * fvViewMatrix[0];
+    xy = l * fvViewMatrix[1];
+    yx = l * fvViewMatrix[4];
+    yy = l * fvViewMatrix[5];
+    zx = l * fvViewMatrix[8];
+    zy = l * fvViewMatrix[9];
+  }
+  else    {   /* if NOT STEREO */
+    xx = l * rot[0];
+    xy = l * rot[1];
+    yx = l * rot[4];
+    yy = l * rot[5];
+    zx = l * rot[8];
+    zy = l * rot[9];
+
+  }
   glLineWidth((float)CTX::instance()->lineWidth);
   gl2psLineWidth((float)(CTX::instance()->lineWidth * 
-                         CTX::instance()->print.epsLineWidthFactor));
+			 CTX::instance()->print.epsLineWidthFactor));
   glColor4ubv((GLubyte *) & CTX::instance()->color.smallAxes);
 
   glBegin(GL_LINES);
@@ -362,4 +386,8 @@ void drawContext::drawSmallAxes()
   drawString("Y");
   glRasterPos2d(cx + zx + o, cy + zy + o);
   drawString("Z");
+
+
+
+    
 }

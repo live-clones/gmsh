@@ -4,6 +4,7 @@
 # bugs and problems to <gmsh@geuz.org>.
 
 set(SRC
+  Camera.cpp 
   Trackball.cpp 
   ReadImg.cpp 
   drawContext.cpp 
