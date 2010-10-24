@@ -154,7 +154,6 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary)
       fprintf(fp, "\n");
     }
     fprintf(fp, "$EndMeshFormat\n");
-    model->indexMeshVertices(true);
   }
 
   for(unsigned int step = 0; step < _steps.size(); step++){
