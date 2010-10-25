@@ -2321,6 +2321,10 @@ void GModel::classifyFaces(std::set<GFace*> &_faces)
 #endif
 }
 
+#include "meshPartition.h"
+static void createPartitionBoundaries_binding(GModel *model, int createGhostCells) {
+  CreatePartitionBoundaries(model, createGhostCells);
+}
 
 #include "Bindings.h"
 
@@ -2492,4 +2496,9 @@ void GModel::registerBindings(binding *b)
   cm->setDescription("create a boundary layer using a given field for the "
                      "extrusion height.");
   cm->setArgNames("{list of entities}","height",NULL);
+
+  cm = cb->addMethod("createPartitionBoundaries", &createPartitionBoundaries_binding);
+  cm->setDescription("Assigns partition tags to boundary elements. Should be called only after the partitions have been assigned");
+  cm->setArgNames("gmodel","createGhostCells",NULL);
+
 }
