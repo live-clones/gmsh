@@ -51,7 +51,7 @@
  */
 /*
  * Modified for inclusion in Gmsh (rotmatrix as a vector +
- * float->double + camera + new trackballsize function)
+ * float->double + optional use of hyperbolic sheet for z-rotation)
  */
 #include <math.h>
 #include "Trackball.h"
@@ -233,14 +233,7 @@ tb_project_to_sphere(double r, double x, double y)
 
   d = sqrt(x*x + y*y);
 
-  if (CTX::instance()->camera) {
-    if (d < r ) {    
-      z = sqrt(r*r - d*d);
-    } else {           
-      z = 0.;
-    }
-  }
-  else{
+  if (CTX::instance()->trackballHyperbolicSheet) {
     if (d < r * 0.70710678118654752440) {    
       // Inside sphere 
       z = sqrt(r*r - d*d);
@@ -248,6 +241,13 @@ tb_project_to_sphere(double r, double x, double y)
       // On hyperbola 
       t = r / 1.41421356237309504880;
       z = t*t / d;
+    }
+  }
+  else{
+    if (d < r ) {    
+      z = sqrt(r*r - d*d);
+    } else {           
+      z = 0.;
     }
   }
 
@@ -344,9 +344,4 @@ build_rotmatrix(double m[16], double q[4])
     m[13] = 0.0;
     m[14] = 0.0;
     m[15] = 1.0;
-}
-
-double trackballsize()
-{
-  return TRACKBALLSIZE;
 }

@@ -345,6 +345,7 @@ double opt_general_arrow_head_radius(OPT_ARGS_NUM);
 double opt_general_arrow_stem_length(OPT_ARGS_NUM);
 double opt_general_arrow_stem_radius(OPT_ARGS_NUM);
 double opt_general_trackball(OPT_ARGS_NUM);
+double opt_general_trackball_hyperbolic_sheet(OPT_ARGS_NUM);
 double opt_general_rotation_center_cg(OPT_ARGS_NUM);
 double opt_general_zoom_factor(OPT_ARGS_NUM);
 double opt_general_expert_mode(OPT_ARGS_NUM);

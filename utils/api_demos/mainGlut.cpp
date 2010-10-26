@@ -419,7 +419,8 @@ int main(int argc, char **argv)
   GmshSetOption("General", "Stereo", 0.);
   GmshSetOption("General", "Camera", 1.);
   GmshSetOption("General", "Orthographic", 0.);
- 
+  GmshSetOption("General", "TrackballHyperbolicSheet", 0.);
+
   if (strstr(argv[1],"-s") != NULL){
    camera.stereoEnable = true;
    cout<<"mode STEREO"<<endl;

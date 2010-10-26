@@ -115,7 +115,7 @@ class CTX {
   // clipping plane distance factor
   double clipFactor;
   // do or do not use the trackball for rotations
-  int useTrackball;
+  int useTrackball, trackballHyperbolicSheet;
   // point around which to rotate the scene
   double rotationCenter[3];
   // rotate around the center of mass instead of rotationCenter[]

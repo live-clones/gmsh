@@ -844,6 +844,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Show tooltips in the user interface" },
   { F|O, "Trackball" , opt_general_trackball , 1. ,
     "Use trackball rotation mode" },
+  { F|O, "TrackballHyperbolicSheet" , opt_general_trackball_hyperbolic_sheet , 1. ,
+    "Use hyperbolic sheet away from trackball center for z-rotations" },
   { F,   "TrackballQuaternion0" , opt_general_quaternion0 , 0.0 , 
     "First trackball quaternion component (used if General.Trackball=1)" }, 
   { F,   "TrackballQuaternion1" , opt_general_quaternion1 , 0.0 , 

@@ -3643,6 +3643,13 @@ double opt_general_trackball(OPT_ARGS_NUM)
   return CTX::instance()->useTrackball;
 }
 
+double opt_general_trackball_hyperbolic_sheet(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->trackballHyperbolicSheet = (int)val;
+  return CTX::instance()->trackballHyperbolicSheet;
+}
+
 double opt_general_rotation_center_cg(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
