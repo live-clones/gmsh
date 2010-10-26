@@ -63,7 +63,10 @@ class drawContextFltk : public drawContextGlobal{
     if(make_current) gl->make_current();
     gl->redraw();
     glFlush();
-    FlGui::instance()->check();
+    // drawCurrentOpenglWindow is currently only used when filling the pixel 
+    // buffer for bitmap image creation. To avoid spurious asynchronous gui 
+    // events fired while creating the picture, don't call check():
+    // FlGui::instance()->check();
   }
   int getFontIndex(const char *fontname)
   { 
