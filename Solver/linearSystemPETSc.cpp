@@ -98,6 +98,8 @@ void linearSystemPETSc<fullMatrix<PetscScalar> >::allocate(int nbRows)
   } else {
     _try(MatSetType(_a, MATSEQBAIJ));
   }
+  if (_parameters.count("petscPrefix"))
+    _try(MatAppendOptionsPrefix(_a, _parameters["petscPrefix"].c_str()));
   _try(MatSetFromOptions(_a));
   _try(MatGetOwnershipRange(_a, &_localRowStart, &_localRowEnd));
   _try(MatGetSize(_a, &_globalSize, &_localSize));
@@ -111,6 +113,8 @@ void linearSystemPETSc<fullMatrix<PetscScalar> >::allocate(int nbRows)
   _try(VecSetSizes(_x, nbRows * _blockSize, PETSC_DETERMINE));
   // override the default options with the ones from the option
   // database (if any)
+  if (_parameters.count("petscPrefix"))
+    _try(VecAppendOptionsPrefix(_x, _parameters["petscPrefix"].c_str()));
   _try(VecSetFromOptions(_x));
   _try(VecDuplicate(_x, &_b));
   _isAllocated = true;
