@@ -181,7 +181,7 @@ int GModel::setCurrent(GModel *m)
 void GModel::setFactory(std::string name)
 {
   if(_factory) delete _factory;
-  _factory = 0;
+  _factory = new GeoFactory(); //creates by default a GeoFactory
   if(name == "Gmsh") {
     _factory = new GeoFactory();
   }
