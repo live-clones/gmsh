@@ -110,9 +110,19 @@ MElementOctree::~MElementOctree()
   Octree_Delete(_octree);
 }
 
-MElement *MElementOctree::find(double x, double y, double z)
+MElement *MElementOctree::find(double x, double y, double z, int dim)
 {
   double P[3] = {x, y, z};
-  return (MElement*)Octree_Search(P, _octree);
+  MElement *e = (MElement*)Octree_Search(P, _octree);
+  if (dim == -1 || !e || e->getDim() == dim)
+    return e;
+  std::list<void*> l;
+  Octree_SearchAll (P, _octree, &l);
+  for (std::list<void*>::iterator it = l.begin(); it != l.end(); it++) {
+    MElement *el = (MElement*) *it;
+    if (el->getDim() == dim)
+      return el;
+  }
+  return NULL;
 }
 

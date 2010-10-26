@@ -296,7 +296,7 @@ class GModel
   int getNumMeshElements(unsigned c[5]);
 
   // access a mesh element by coordinates (using an octree search)
-  MElement *getMeshElementByCoord(SPoint3 &p);
+  MElement *getMeshElementByCoord(SPoint3 &p, int dim = -1);
 
   // access a mesh element by tag, using the element cache
   MElement *getMeshElementByTag(int n);

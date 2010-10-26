@@ -19,7 +19,7 @@ class MElementOctree{
   MElementOctree(GModel *);
   MElementOctree(std::vector<MElement*> &);
   ~MElementOctree();
-  MElement *find(double x, double y, double z);
+  MElement *find(double x, double y, double z, int dim = -1);
   Octree *getInternalOctree(){ return _octree; }
 };
 
