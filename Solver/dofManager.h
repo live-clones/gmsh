@@ -302,6 +302,7 @@ class dofManager{
   inline void insertInSparsityPattern(const Dof &R, const Dof &C)
   {
     if (_isParallel && !_parallelFinalized) _parallelFinalize();
+    if (!_current->isAllocated()) _current->allocate (sizeOfR());
     std::map<Dof, int>::iterator itR = unknown.find(R);
     if (itR != unknown.end()){
       std::map<Dof, int>::iterator itC = unknown.find(C);
