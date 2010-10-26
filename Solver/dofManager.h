@@ -302,7 +302,6 @@ class dofManager{
   inline void insertInSparsityPattern(const Dof &R, const Dof &C)
   {
     if (_isParallel && !_parallelFinalized) _parallelFinalize();
-    if (!_current->isAllocated()) _current->allocate(sizeOfR());
     std::map<Dof, int>::iterator itR = unknown.find(R);
     if (itR != unknown.end()){
       std::map<Dof, int>::iterator itC = unknown.find(C);
@@ -568,11 +567,11 @@ class dofManager{
 template<class T>
 void dofManager<T>::_parallelFinalize()
 {
+  _localSize = unknown.size();
 #ifdef HAVE_MPI
   int _numStart;
   int _numTotal;
   MPI_Status status;
-  _localSize = unknown.size();
   if (Msg::GetCommRank() == 0){
     _numStart = 0;
   }
@@ -584,7 +583,6 @@ void dofManager<T>::_parallelFinalize()
   MPI_Bcast(&_numTotal, 1, MPI_INT, Msg::GetCommSize()-1, MPI_COMM_WORLD);
   for (std::map <Dof, int> ::iterator it = unknown.begin(); it!= unknown.end(); it++)
     it->second += _numStart;
-  _parallelFinalized = true;
   std::vector<std::list<Dof> >  ghostedByProc;
   int *nRequest = new int[Msg::GetCommSize()];
   int *nRequested = new int[Msg::GetCommSize()];
@@ -662,6 +660,7 @@ void dofManager<T>::_parallelFinalize()
   delete [] reqSend1;
   delete [] reqRecv0;
 #endif
+  _parallelFinalized = true;
 }
 
 #endif

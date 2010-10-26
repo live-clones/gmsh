@@ -135,7 +135,6 @@ void linearSystemPETScRegisterBindings(binding *b)
   cm->setDescription ("A new PETScBlock<PetscScalar> solver");
   cb->setParentClass<linearSystem<fullMatrix<PetscScalar> > >();
 #endif // FIXME
-
 }
 
 #endif // HAVE_PETSC
