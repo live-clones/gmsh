@@ -136,9 +136,13 @@ GModel::GModel(std::string name)
   list.push_back(this);
   // at the moment we always create (at least an empty) GEO model
   _createGEOInternals();
+
 #if defined(HAVE_OCC)
-  _factory = new OCCFactory();
+  setFactory("OpenCASCADE");
+#else
+  setFactory("Gmsh");
 #endif
+
 #if defined(HAVE_MESH)
   _fields = new FieldManager();
 #endif
@@ -181,16 +185,16 @@ int GModel::setCurrent(GModel *m)
 void GModel::setFactory(std::string name)
 {
   if(_factory) delete _factory;
-  _factory = new GeoFactory(); //creates by default a GeoFactory
-  if(name == "Gmsh") {
-    _factory = new GeoFactory();
-  }
-  else if(name == "OpenCASCADE"){
+  if(name == "OpenCASCADE"){
 #if defined(HAVE_OCC)
     _factory = new OCCFactory();
 #else
-    Msg::Error("Missing OpenCASCADE support");
+    Msg::Error("Missing OpenCASCADE support: using Gmsh GEO factory instead");
+    _factory = new GeoFactory();
 #endif
+  }
+  else{
+    _factory = new GeoFactory();
   }
 }
 
