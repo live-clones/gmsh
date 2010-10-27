@@ -25,8 +25,8 @@ void SElement::gradNodalFunctions (double u, double v, double w, double invjac[3
   double grads[256][3];
   _e->getGradShapeFunctions(u, v, w, grads);
 
-  int nbNodes = getNumNodalShapeFunctions();
-  for (int j = 0; j < nbNodes; j++){
+  int nbSF = getNumNodalShapeFunctions();
+  for (int j = 0; j < nbSF; j++){
     Grads[j][0] = invjac[0][0] * grads[j][0] + invjac[0][1] * grads[j][1] +
       invjac[0][2] * grads[j][2];
     Grads[j][1] = invjac[1][0] * grads[j][0] + invjac[1][1] * grads[j][1] +

@@ -116,13 +116,11 @@ class MPolyhedron : public MElement {
   }
   virtual const polynomialBasis* getFunctionSpace(int order=-1) const
   {
-    if(_orig) return _orig->getFunctionSpace(order);
-    return 0;
+    return (_orig ? _orig->getFunctionSpace(order) : 0);
   }
   virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const
   {
-    if(_orig) return _orig->getJacobianFuncSpace(order);
-    return 0;
+    return (_orig ? _orig->getJacobianFuncSpace(order) : 0);
   }
   virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
   {
@@ -132,12 +130,24 @@ class MPolyhedron : public MElement {
   {
     if(_orig) _orig->getGradShapeFunctions(u, v, w, s, o);
   }
+  virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3], int o)
+  {
+    if(_orig) _orig->getHessShapeFunctions(u, v, w, s, o);
+  }
+  virtual int getNumShapeFunctions()
+  {
+    return (_orig ? _orig->getNumShapeFunctions() : 0);
+  }
+  virtual int getNumPrimaryShapeFunctions()
+  {
+    return (_orig ? _orig->getNumPrimaryShapeFunctions() : 0);
+  }
+  virtual MVertex *getShapeFunctionNode(int i)
+  {
+    return (_orig ? _orig->getShapeFunctionNode(i) : 0);
+  }
   // the parametric coordinates of the polyhedron are
   // the coordinates in the local parent element.
-  virtual void xyz2uvw(double xyz[3], double uvw[3])
-  {
-    if(_orig) _orig->xyz2uvw(xyz,uvw);
-  }
   virtual bool isInside(double u, double v, double w);
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual MElement *getParent() const { return _orig; }
@@ -241,15 +251,18 @@ class MPolygon : public MElement {
     _edges.clear();
     _initVertices();
   }
+  virtual MElement *getParent() const { return _orig; }
+  virtual void setParent(MElement *p, bool owner = false) { _orig = p; _owner = owner; }
+  virtual int getNumChildren() const { return _parts.size(); }
+  virtual MElement *getChild(int i) const { return _parts[i]; }
+  virtual bool ownsParent() const { return _owner; }
   virtual const polynomialBasis* getFunctionSpace(int order=-1) const
   {
-    if(_orig) return _orig->getFunctionSpace(order);
-    return 0;
+    return (_orig ? _orig->getFunctionSpace(order) : 0);
   }
   virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const
   {
-    if(_orig) return _orig->getJacobianFuncSpace(order);
-    return 0;
+    return (_orig ? _orig->getJacobianFuncSpace(order) : 0);
   }
   virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
   {
@@ -259,19 +272,26 @@ class MPolygon : public MElement {
   {
     if(_orig) _orig->getGradShapeFunctions(u, v, w, s, o);
   }
+  virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3], int o)
+  {
+    if(_orig) _orig->getHessShapeFunctions(u, v, w, s, o);
+  }
+  virtual int getNumShapeFunctions()
+  {
+    return (_orig ? _orig->getNumShapeFunctions() : 0);
+  }
+  virtual int getNumPrimaryShapeFunctions()
+  {
+    return (_orig ? _orig->getNumPrimaryShapeFunctions() : 0);
+  }
+  virtual MVertex *getShapeFunctionNode(int i)
+  {
+    return (_orig ? _orig->getShapeFunctionNode(i) : 0);
+  }
   // the parametric coordinates of the polygon are
   // the coordinates in the local parent element.
-  virtual void xyz2uvw(double xyz[3], double uvw[3])
-  {
-    if(_orig) _orig->xyz2uvw(xyz,uvw);
-  }
   virtual bool isInside(double u, double v, double w);
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
-  virtual MElement *getParent() const { return _orig; }
-  virtual void setParent(MElement *p, bool owner = false) { _orig = p; _owner = owner; }
-  virtual int getNumChildren() const { return _parts.size(); }
-  virtual MElement *getChild(int i) const { return _parts[i]; }
-  virtual bool ownsParent() const { return _owner; }
   virtual int getNumVerticesForMSH() {return _parts.size() * 3;}
   virtual int *getVerticesIdForMSH()
   {
@@ -320,12 +340,12 @@ class MLineChild : public MLine {
   {
     if(_orig) _orig->getGradShapeFunctions(u, v, w, s, o);
   }
+  virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3], int o)
+  {
+    if(_orig) _orig->getHessShapeFunctions(u, v, w, s, o);
+  }
   // the parametric coordinates of the LineChildren are
   // the coordinates in the local parent element.
-  virtual void xyz2uvw(double xyz[3], double uvw[3])
-  {
-    if(_orig) _orig->xyz2uvw(xyz,uvw);
-  }
   virtual bool isInside(double u, double v, double w);
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual MElement *getParent() const { return _orig; }
@@ -361,6 +381,7 @@ class MTriangleBorder : public MTriangle {
     return NULL;
   }
   virtual int getTypeForMSH() const { return MSH_TRI_B; }
+  virtual bool isInside(double u, double v, double w);
   // the integration points of the MTriangleBorder are in the parent element space
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 };
@@ -391,8 +412,6 @@ class MPolygonBorder : public MPolygon {
     return NULL;
   }
   virtual int getTypeForMSH() const { return MSH_POLYG_B; }
-  // the integration points of the MPolygonBorder are in the parent element space
-  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 };
 
 class MLineBorder : public MLine {
@@ -421,6 +440,7 @@ class MLineBorder : public MLine {
     return NULL;
   }
   virtual int getTypeForMSH() const { return MSH_LIN_B; }
+  virtual bool isInside(double u, double v, double w);
   // the integration points of the MLineBorder are in the parent element space
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 };

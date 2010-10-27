@@ -36,24 +36,24 @@ class FuncGradDisc :  public  simpleFunctionOnElement<double> {
 
 
         // --- F2 --- //
-        MElement *e=getElement();
+        MElement *e = getElement();
         SPoint3 p(x,y,z);
 
         if (e->getParent()) e = e->getParent();
-        int numV = e->getNumVertices();
         double xyz[3] = {x,y,z};
         double uvw[3];
         e->xyz2uvw(xyz,uvw);
         double val[30];
         e->getShapeFunctions(uvw[0], uvw[1], uvw[2], val);
         double f = 0;
-        for (int i = 0;i<numV;i++)
+        for (int i = 0; i < e->getNumShapeFunctions(); i++)
         {
+           MVertex *v = e->getShapeFunctionNode(i);
            //std::cout<<"val[i] :" << val[i] << "\n";
-           //std::cout<<"ls(i) :" << (*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z()) << "\n";
-           f = f + std::abs((*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z()))*val[i];
+           //std::cout<<"ls(i) :" << (*_ls)(v->x(),v->y(),v->z()) << "\n";
+           f = f + std::abs((*_ls)(v->x(), v->y(), v->z())) * val[i];
         }
-           f = f - std::abs((*_ls)(x,y,z));
+        f = f - std::abs((*_ls)(x, y, z));
 
         //std::cout<<"val f :" << f << "\n";
         return f;
@@ -64,16 +64,16 @@ class FuncGradDisc :  public  simpleFunctionOnElement<double> {
 
 //        SPoint3 p(x,y,z);
 //        if (e->getParent()) e = e->getParent();
-//        int numV = e->getNumVertices();
 //        double xyz[3] = {x,y,z};
 //        double uvw[3];
 //        e->xyz2uvw(xyz,uvw);
 //        double val[30];
 //        e->getShapeFunctions(uvw[0], uvw[1], uvw[2], val);
 //        double f = 0;
-//        for (int i = 0;i<numV;i++)
+//        for (int i = 0; i < e->getNumShapeFunctions(); i++)
 //        {
-//           f = f + (*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z())*val[i];
+//           MVertex *v = e-<getShapeFunctionNode(i);
+//           f = f + (*_ls)(v->x(), v->y(), v->z()) * val[i];
 //        }
 //        f = std::abs(f);
 //        return f;
@@ -91,7 +91,6 @@ class FuncGradDisc :  public  simpleFunctionOnElement<double> {
         MElement *e=getElement();
         SPoint3 p(x,y,z);
         if (e->getParent()) e = e->getParent();
-        int numV = e->getNumVertices();
         double xyz[3] = {x,y,z};
         double uvw[3];
         e->xyz2uvw(xyz,uvw);
@@ -112,33 +111,35 @@ class FuncGradDisc :  public  simpleFunctionOnElement<double> {
 
         if ((*_ls)(x,y,z)>0)
         {
-          for (int i = 0;i<numV;i++)
+          for (int i = 0; i < e->getNumShapeFunctions(); i++)
           {
             dNdx = invjac[0][0] * gradsuvw[i][0] + invjac[0][1] * gradsuvw[i][1] + invjac[0][2] * gradsuvw[i][2];
             dNdy = invjac[1][0] * gradsuvw[i][0] + invjac[1][1] * gradsuvw[i][1] + invjac[1][2] * gradsuvw[i][2];
             dNdz = invjac[2][0] * gradsuvw[i][0] + invjac[2][1] * gradsuvw[i][1] + invjac[2][2] * gradsuvw[i][2];
 
-            dfdx = dfdx + std::abs((*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z()))*dNdx ;
-            dfdx = dfdx - (*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z())*dNdx;
-            dfdy = dfdy + std::abs((*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z()))*dNdy ;
-            dfdy = dfdy - (*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z())*dNdy;
-            dfdz = dfdz + std::abs((*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z()))*dNdz ;
-            dfdz = dfdz - (*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z())*dNdz;
+            MVertex *v = e->getShapeFunctionNode(i);
+            dfdx = dfdx + std::abs((*_ls)(v->x(), v->y(), v->z())) * dNdx ;
+            dfdx = dfdx - (*_ls)(v->x(), v->y(), v->z()) * dNdx;
+            dfdy = dfdy + std::abs((*_ls)(v->x(), v->y(), v->z())) * dNdy ;
+            dfdy = dfdy - (*_ls)(v->x(), v->y(), v->z()) * dNdy;
+            dfdz = dfdz + std::abs((*_ls)(v->x(), v->y(), v->z())) * dNdz ;
+            dfdz = dfdz - (*_ls)(v->x(), v->y(), v->z()) * dNdz;
           }
         }else
         {
-          for (int i = 0;i<numV;i++)
+          for (int i = 0; i < e->getNumShapeFunctions(); i++)
           {
             dNdx = invjac[0][0] * gradsuvw[i][0] + invjac[0][1] * gradsuvw[i][1] + invjac[0][2] * gradsuvw[i][2];
             dNdy = invjac[1][0] * gradsuvw[i][0] + invjac[1][1] * gradsuvw[i][1] + invjac[1][2] * gradsuvw[i][2];
             dNdz = invjac[2][0] * gradsuvw[i][0] + invjac[2][1] * gradsuvw[i][1] + invjac[2][2] * gradsuvw[i][2];
 
-            dfdx = dfdx + std::abs((*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z()))*dNdx ;
-            dfdx = dfdx + (*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z())*dNdx;
-            dfdy = dfdy + std::abs((*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z()))*dNdy ;
-            dfdy = dfdy + (*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z())*dNdy;
-            dfdz = dfdz + std::abs((*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z()))*dNdz ;
-            dfdz = dfdz + (*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z())*dNdz;
+            MVertex *v = e->getShapeFunctionNode(i);
+            dfdx = dfdx + std::abs((*_ls)(v->x(), v->y(), v->z())) * dNdx ;
+            dfdx = dfdx + (*_ls)(v->x(), v->y(), v->z()) * dNdx;
+            dfdy = dfdy + std::abs((*_ls)(v->x(), v->y(), v->z())) * dNdy ;
+            dfdy = dfdy + (*_ls)(v->x(), v->y(), v->z()) * dNdy;
+            dfdz = dfdz + std::abs((*_ls)(v->x(), v->y(), v->z())) * dNdz ;
+            dfdz = dfdz + (*_ls)(v->x(), v->y(), v->z()) * dNdz;
           }
         }
    }
@@ -149,7 +150,6 @@ class FuncGradDisc :  public  simpleFunctionOnElement<double> {
 //
 //        SPoint3 p(x,y,z);
 //        if (e->getParent()) e = e->getParent();
-//        int numV = e->getNumVertices();
 //        double xyz[3] = {x,y,z};
 //        double uvw[3];
 //        e->xyz2uvw(xyz,uvw);
@@ -170,27 +170,29 @@ class FuncGradDisc :  public  simpleFunctionOnElement<double> {
 //
 //        if ((*_ls)(x,y,z)>0)
 //        {
-//          for (int i = 0;i<numV;i++)
+//          for (int i = 0; i < e->getNumShapeFunctions(); i++)
 //          {
 //            dNdx = invjac[0][0] * gradsuvw[i][0] + invjac[0][1] * gradsuvw[i][1] + invjac[0][2] * gradsuvw[i][2];
 //            dNdy = invjac[1][0] * gradsuvw[i][0] + invjac[1][1] * gradsuvw[i][1] + invjac[1][2] * gradsuvw[i][2];
 //            dNdz = invjac[2][0] * gradsuvw[i][0] + invjac[2][1] * gradsuvw[i][1] + invjac[2][2] * gradsuvw[i][2];
 //
-//            dfdx = dfdx + (*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z())*dNdx;
-//            dfdy = dfdy + (*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z())*dNdy;
-//            dfdz = dfdz + (*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z())*dNdz;
+//            MVertex *v = e->getShapeFunctionNode(i);
+//            dfdx = dfdx + (*_ls)(v->x(), v->y(), v->z()) * dNdx;
+//            dfdy = dfdy + (*_ls)(v->x(), v->y(), v->z()) * dNdy;
+//            dfdz = dfdz + (*_ls)(v->x(), v->y(), v->z()) * dNdz;
 //          }
 //        }else
 //        {
-//          for (int i = 0;i<numV;i++)
+//          for (int i = 0; i < e->getNumShapeFunctions(); i++)
 //          {
 //            dNdx = invjac[0][0] * gradsuvw[i][0] + invjac[0][1] * gradsuvw[i][1] + invjac[0][2] * gradsuvw[i][2];
 //            dNdy = invjac[1][0] * gradsuvw[i][0] + invjac[1][1] * gradsuvw[i][1] + invjac[1][2] * gradsuvw[i][2];
 //            dNdz = invjac[2][0] * gradsuvw[i][0] + invjac[2][1] * gradsuvw[i][1] + invjac[2][2] * gradsuvw[i][2];
 //
-//            dfdx = dfdx - (*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z())*dNdx;
-//            dfdy = dfdy - (*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z())*dNdy;
-//            dfdz = dfdz - (*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z())*dNdz;
+//            MVertex *v = e->getShapeFunctionNode(i);
+//            dfdx = dfdx - (*_ls)(v->x(), v->y(), v->z()) * dNdx;
+//            dfdy = dfdy - (*_ls)(v->x(), v->y(), v->z()) * dNdy;
+//            dfdz = dfdz - (*_ls)(v->x(), v->y(), v->z()) * dNdz;
 //          }
 //        }
 //   }

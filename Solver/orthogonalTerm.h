@@ -24,12 +24,11 @@ class orthogonalTerm : public helmholtzTerm<double> {
    : helmholtzTerm<double>(gm, iField, iField, k, 0), _dofView(dofView), withDof(true) {}
   void elementVector(SElement *se, fullVector<double> &m) const
   {
-
     MElement *e = se->getMeshElement();
-    int nbNodes = e->getNumVertices();
+    int nbSF = e->getNumShapeFunctions();
 
     //fill elementary matrix mat(i,j)
-     int integrationOrder = 2* (e->getPolynomialOrder() - 1);
+    int integrationOrder = 2 * (e->getPolynomialOrder() - 1);
     int npts;
     IntPt *GP;
     double jac[3][3];
@@ -37,10 +36,10 @@ class orthogonalTerm : public helmholtzTerm<double> {
     SVector3 Grads [256];
     double grads[256][3];
     e->getIntegrationPoints(integrationOrder, &npts, &GP);
-    fullMatrix<double> mat(nbNodes,nbNodes);
+    fullMatrix<double> mat(nbSF, nbSF);
     mat.setAll(0.);
      
-    for (int i = 0; i < npts; i++){
+    for(int i = 0; i < npts; i++){
       const double u = GP[i].pt[0];
       const double v = GP[i].pt[1];
       const double w = GP[i].pt[2];
@@ -49,7 +48,7 @@ class orthogonalTerm : public helmholtzTerm<double> {
       SPoint3 p; e->pnt(u, v, w, p);
       inv3x3(jac, invjac); 
       e->getGradShapeFunctions(u, v, w, grads);
-      for (int j = 0; j < nbNodes; j++){
+      for(int j = 0; j < nbSF; j++){
         Grads[j] = SVector3(invjac[0][0] * grads[j][0] + invjac[0][1] * grads[j][1] + 
                             invjac[0][2] * grads[j][2],
                             invjac[1][0] * grads[j][0] + invjac[1][1] * grads[j][1] + 
@@ -58,26 +57,26 @@ class orthogonalTerm : public helmholtzTerm<double> {
                             invjac[2][2] * grads[j][2]);
       }
       SVector3 N (jac[2][0], jac[2][1], jac[2][2]);
-      for (int j = 0; j < nbNodes; j++)
-        for (int k = 0; k <= j; k++)
+      for(int j = 0; j < nbSF; j++)
+        for(int k = 0; k <= j; k++)
           mat(j, k) += dot(crossprod(Grads[j], Grads[k]), N) * weight * detJ;      
     }
-    for (int j = 0; j < nbNodes; j++)
-      for (int k = 0; k < j; k++)
+    for(int j = 0; j < nbSF; j++)
+      for(int k = 0; k < j; k++)
         mat(k, j) = -1.* mat(j, k);
     
     //2) compute vector m(i) = mat(i,j)*val(j)
-    fullVector<double> val(nbNodes);
+    fullVector<double> val(nbSF);
     val.scale(0.);
 
-    for (int i = 0; i < nbNodes; i++){
-      std::map<MVertex*, double>::iterator it = _distance_map->find(e->getVertex(i));
+    for(int i = 0; i < nbSF; i++){
+      std::map<MVertex*, double>::iterator it = _distance_map->find(e->getShapeFunctionNode(i));
       val(i) = it->second;
     }
 
     /* if( withDof){ */
-    /*   for (int i = 0; i < nbNodes; i++){ */
-    /* 	_dofView->getDofValue( e->getVertex(i), 0, 1, val(i)); */
+    /*   for (int i = 0; i < nbSF; i++){ */
+    /* 	_dofView->getDofValue( e->getShapeFunctionNode(i), 0, 1, val(i)); */
     /* 	 printf("val=%g \n", val(i)); */
     /*   } */
     /* } */
@@ -85,18 +84,16 @@ class orthogonalTerm : public helmholtzTerm<double> {
     /*   printf("with no dof \n"); */
     /*   exit(1); */
     /*   /\* PViewData *data = view->getData(); *\/ */
-    /*   /\* for (int i = 0; i < nbNodes; i++){ *\/ */
-    /*   /\* 	data->getValue(0, e->, e->getNum(), e->getVertex(i)->getNum(), nod, 0, val(i)); *\/ */
+    /*   /\* for (int i = 0; i < nbSF; i++){ *\/ */
+    /*   /\* 	data->getValue(0, e->, e->getNum(), e->getShapeFunctionNode(i)->getNum(), nod, 0, val(i)); *\/ */
     /*   /\* } *\/ */
     /* } */
 
     m.scale(0.); 
-    for (int i = 0; i < nbNodes; i++)
-      for (int j = 0; j < nbNodes; j++)
-	m(i)  +=  -mat(i,j)*val(j);
-
+    for(int i = 0; i < nbSF; i++)
+      for(int j = 0; j < nbSF; j++)
+	m(i) += -mat(i,j) * val(j);
   }
-
 };
 
 #endif

@@ -244,8 +244,8 @@ double MElement::getJacobian(double u, double v, double w, double jac[3][3])
 
   double gsf[256][3];
   getGradShapeFunctions(u, v, w, gsf);
-  for (int i = 0; i < getNumVertices(); i++) {
-    const MVertex* v = getVertex(i);
+  for (int i = 0; i < getNumShapeFunctions(); i++) {
+    const MVertex *v = getShapeFunctionNode(i);
     double* gg = gsf[i];
     for (int j = 0; j < 3; j++) {
       jac[j][0] += v->x() * gg[j];
@@ -269,8 +269,8 @@ double MElement::getJacobian(const fullMatrix<double> &gsf, double jac[3][3])
   jac[1][0] = jac[1][1] = jac[1][2] = 0.;
   jac[2][0] = jac[2][1] = jac[2][2] = 0.;
 
-  for (int i = 0; i < getNumVertices(); i++) {
-    const MVertex* v = getVertex(i);
+  for (int i = 0; i < getNumShapeFunctions(); i++) {
+    const MVertex *v = getShapeFunctionNode(i);
     for (int j = 0; j < 3; j++) {
       jac[j][0] += v->x() * gsf(i, j);
       jac[j][1] += v->y() * gsf(i, j);
@@ -289,8 +289,8 @@ double MElement::getPrimaryJacobian(double u, double v, double w, double jac[3][
 
   double gsf[256][3];
   getGradShapeFunctions(u, v, w, gsf, 1);
-  for(int i = 0; i < getNumPrimaryVertices(); i++) {
-    const MVertex* v = getVertex(i);
+  for(int i = 0; i < getNumPrimaryShapeFunctions(); i++) {
+    const MVertex *v = getShapeFunctionNode(i);
     double* gg = gsf[i];
     for (int j = 0; j < 3; j++) {
       jac[j][0] += v->x() * gg[j];
@@ -307,8 +307,8 @@ void MElement::pnt(double u, double v, double w, SPoint3 &p)
   double x = 0., y = 0., z = 0.;
   double sf[256];
   getShapeFunctions(u, v, w, sf);
-  for (int j = 0; j < getNumVertices(); j++) {
-    const MVertex* v = getVertex(j);
+  for (int j = 0; j < getNumShapeFunctions(); j++) {
+    const MVertex *v = getShapeFunctionNode(j);
     x += sf[j] * v->x();
     y += sf[j] * v->y();
     z += sf[j] * v->z();
@@ -321,8 +321,8 @@ void MElement::primaryPnt(double u, double v, double w, SPoint3 &p)
   double x = 0., y = 0., z = 0.;
   double sf[256];
   getShapeFunctions(u, v, w, sf, 1);
-  for (int j = 0; j < getNumPrimaryVertices(); j++) {
-    const MVertex* v = getVertex(j);
+  for (int j = 0; j < getNumPrimaryShapeFunctions(); j++) {
+    const MVertex *v = getShapeFunctionNode(j);
     x += sf[j] * v->x();
     y += sf[j] * v->y();
     z += sf[j] * v->z();
@@ -345,8 +345,8 @@ void MElement::xyz2uvw(double xyz[3], double uvw[3])
     double xn = 0., yn = 0., zn = 0.;
     double sf[256];
     getShapeFunctions(uvw[0], uvw[1], uvw[2], sf);
-    for (int i = 0; i < getNumVertices(); i++) {
-      MVertex *v = getVertex(i);
+    for (int i = 0; i < getNumShapeFunctions(); i++) {
+      MVertex *v = getShapeFunctionNode(i);
       xn += v->x() * sf[i];
       yn += v->y() * sf[i];
       zn += v->z() * sf[i];
@@ -396,7 +396,7 @@ double MElement::interpolate(double val[], double u, double v, double w, int str
   int j = 0;
   double sf[256];
   getShapeFunctions(u, v, w, sf, order);
-  for(int i = 0; i < getNumVertices(); i++){
+  for(int i = 0; i < getNumShapeFunctions(); i++){
     sum += val[j] * sf[i];
     j += stride;
   }
@@ -410,7 +410,7 @@ void MElement::interpolateGrad(double val[], double u, double v, double w, doubl
   int j = 0;
   double gsf[256][3];
   getGradShapeFunctions(u, v, w, gsf, order);
-  for(int i = 0; i < getNumVertices(); i++){
+  for(int i = 0; i < getNumShapeFunctions(); i++){
     dfdu[0] += val[j] * gsf[i][0];
     dfdu[1] += val[j] * gsf[i][1];
     dfdu[2] += val[j] * gsf[i][2];

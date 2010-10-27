@@ -29,26 +29,26 @@ class crossConfTerm : public femTerm<double> {
 
   virtual int sizeOfR(SElement *se) const 
   {
-    return se->getMeshElement()->getNumVertices(); 
+    return se->getMeshElement()->getNumShapeFunctions(); 
   }
   virtual int sizeOfC(SElement *se) const
   {
-    return se->getMeshElement()->getNumVertices(); 
+    return se->getMeshElement()->getNumShapeFunctions(); 
   }
   Dof getLocalDofR(SElement *se, int iRow) const
   {
-     return Dof(se->getMeshElement()->getVertex(iRow)->getNum(), 
+     return Dof(se->getMeshElement()->getShapeFunctionNode(iRow)->getNum(),
                Dof::createTypeWithTwoInts(0, _iFieldR));
   }
   Dof getLocalDofC(SElement *se, int iRow) const
   {
-    return Dof(se->getMeshElement()->getVertex(iRow)->getNum(),
+    return Dof(se->getMeshElement()->getShapeFunctionNode(iRow)->getNum(),
                Dof::createTypeWithTwoInts(0, _iFieldC));
   }
   virtual void elementMatrix(SElement *se, fullMatrix<double> &m) const
   {
     MElement *e = se->getMeshElement();
-    int nbNodes = e->getNumVertices();
+    int nbSF = e->getNumShapeFunctions();
     int integrationOrder = 2 * (e->getPolynomialOrder() - 1); 
     int npts;
     IntPt *GP;
@@ -70,7 +70,7 @@ class crossConfTerm : public femTerm<double> {
       const double _diff = (*_diffusivity)(p.x(), p.y(), p.z());
       inv3x3(jac, invjac); 
       e->getGradShapeFunctions(u, v, w, grads);
-      for (int j = 0; j < nbNodes; j++){
+      for (int j = 0; j < nbSF; j++){
         Grads[j] = SVector3(invjac[0][0] * grads[j][0] + invjac[0][1] * grads[j][1] + 
                             invjac[0][2] * grads[j][2],
                             invjac[1][0] * grads[j][0] + invjac[1][1] * grads[j][1] + 
@@ -79,41 +79,38 @@ class crossConfTerm : public femTerm<double> {
                             invjac[2][2] * grads[j][2]);
       }
       SVector3 N (jac[2][0], jac[2][1], jac[2][2]);
-      for (int j = 0; j < nbNodes; j++){
+      for (int j = 0; j < nbSF; j++){
         for (int k = 0; k <= j; k++){
           m(j, k) += dot(crossprod(Grads[j], Grads[k]), N) * weight * detJ * _diff;
         }
       }
     }
-    for (int j = 0; j < nbNodes; j++)
+    for (int j = 0; j < nbSF; j++)
       for (int k = 0; k < j; k++)
         m(k, j) = -1.* m(j, k);
   }
  void elementVector(SElement *se, fullVector<double> &m) const
   {
-   
     MElement *e = se->getMeshElement();
-    int nbNodes = e->getNumVertices(); 
+    int nbSF = e->getNumShapeFunctions();
 
     fullMatrix<double> *mat;
-    mat = new fullMatrix<double>(nbNodes,nbNodes);
+    mat = new fullMatrix<double>(nbSF,nbSF);
     elementMatrix(se, *mat);
 
-    fullVector<double> val(nbNodes);
+    fullVector<double> val(nbSF);
     val.scale(0.);
-    for (int i = 0; i < nbNodes; i++){
-      std::map<MVertex*, SPoint3>::iterator it = _coordView->find(e->getVertex(i));
+    for (int i = 0; i < nbSF; i++){
+      std::map<MVertex*, SPoint3>::iterator it = _coordView->find(e->getShapeFunctionNode(i));
       SPoint3 UV = it->second;
       if (_iFieldC == 1)  val(i) = UV.x();
       else if (_iFieldC == 2)  val(i) = UV.y();
     }
 
     m.scale(0.);
-    for (int i = 0; i < nbNodes; i++)
-      for (int j = 0; j < nbNodes; j++)
+    for (int i = 0; i < nbSF; i++)
+      for (int j = 0; j < nbSF; j++)
     	m(i)  +=  -(*mat)(i,j)*val(j);
-
-
 
   }
 };

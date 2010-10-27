@@ -430,12 +430,10 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
         }
         else{
           double X(0), Y(0), Z(0), GUESS[2] = {0, 0};
-          double sf[256]; 
-          incomplete->getShapeFunctions(-1., -1., 0, sf);
-          for (int j = 0; j < incomplete->getNumVertices(); j++)
+          double sf[256];
           incomplete->getShapeFunctions(t1, t2, 0, sf);
-          for (int j = 0; j < incomplete->getNumVertices(); j++){
-            MVertex *vt = incomplete->getVertex(j);
+          for (int j = 0; j < incomplete->getNumShapeFunctions(); j++){
+            MVertex *vt = incomplete->getShapeFunctionNode(j);
             X += sf[j] * vt->x();
             Y += sf[j] * vt->y();
             Z += sf[j] * vt->z();

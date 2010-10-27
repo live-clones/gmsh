@@ -23,28 +23,28 @@ class elasticityTerm : public femTerm<double> {
   // element matrix size : 3 dofs per vertex
   virtual int sizeOfR(SElement *se) const
   {
-    return 3 * se->getMeshElement()->getNumVertices();
+    return 3 * se->getMeshElement()->getNumShapeFunctions();
   }
   virtual int sizeOfC(SElement *se) const
   {
-    return 3 * se->getMeshElement()->getNumVertices();
+    return 3 * se->getMeshElement()->getNumShapeFunctions();
   }
   // order dofs in the local matrix :
   // dx1, dx2 ... dxn, dy1, ..., dyn, dz1, ... dzn 
   Dof getLocalDofR(SElement *se, int iRow) const
   {
     MElement *e = se->getMeshElement();
-    int iCompR = iRow / e->getNumVertices();
-    int ithLocalVertex = iRow % e->getNumVertices();
-    return Dof(e->getVertex(ithLocalVertex)->getNum(),
+    int iCompR = iRow / e->getNumShapeFunctions();
+    int ithLocalVertex = iRow % e->getNumShapeFunctions();
+    return Dof(e->getShapeFunctionNode(ithLocalVertex)->getNum(),
                Dof::createTypeWithTwoInts(iCompR, _iFieldR));
   }
   Dof getLocalDofC(SElement *se, int iCol) const
   {
     MElement *e = se->getMeshElement();
-    int iCompC = iCol / e->getNumVertices();
-    int ithLocalVertex = iCol % e->getNumVertices();
-    return Dof(e->getVertex(ithLocalVertex)->getNum(),
+    int iCompC = iCol / e->getNumShapeFunctions();
+    int ithLocalVertex = iCol % e->getNumShapeFunctions();
+    return Dof(e->getShapeFunctionNode(ithLocalVertex)->getNum(),
                Dof::createTypeWithTwoInts(iCompC, _iFieldC));
   }
  public:

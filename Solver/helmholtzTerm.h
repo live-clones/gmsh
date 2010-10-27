@@ -29,20 +29,20 @@ class helmholtzTerm : public femTerm<scalar> {
   // one dof per vertex (nodal fem)
   virtual int sizeOfR(SElement *se) const 
   { 
-    return se->getMeshElement()->getNumVertices(); 
+    return se->getMeshElement()->getNumShapeFunctions(); 
   }
   virtual int sizeOfC(SElement *se) const 
   { 
-    return se->getMeshElement()->getNumVertices(); 
+    return se->getMeshElement()->getNumShapeFunctions(); 
   }
   Dof getLocalDofR(SElement *se, int iRow) const
   {
-    return Dof(se->getMeshElement()->getVertex(iRow)->getNum(), 
+    return Dof(se->getMeshElement()->getShapeFunctionNode(iRow)->getNum(),
                Dof::createTypeWithTwoInts(0, _iFieldR));
   }
   Dof getLocalDofC(SElement *se, int iRow) const
   {
-    return Dof(se->getMeshElement()->getVertex(iRow)->getNum(),
+    return Dof(se->getMeshElement()->getShapeFunctionNode(iRow)->getNum(),
                Dof::createTypeWithTwoInts(0, _iFieldC));
   }
   virtual void elementMatrix(SElement *se, fullMatrix<scalar> &m) const
@@ -57,9 +57,9 @@ class helmholtzTerm : public femTerm<scalar> {
     int npts; IntPt *GP;
     e->getIntegrationPoints(integrationOrder, &npts, &GP);
     // get the number of nodes
-    const int nbNodes = e->getNumVertices();
+    const int nbSF = e->getNumShapeFunctions();
     // assume a maximum of 100 nodes
-    assert(nbNodes < 100);
+    assert(nbSF < 100);
     double jac[3][3];
     double invjac[3][3];
     double Grads[100][3], grads[100][3];  
@@ -79,7 +79,7 @@ class helmholtzTerm : public femTerm<scalar> {
       inv3x3(jac, invjac) ;
       e->getGradShapeFunctions(u, v, w, grads);
       if (_a) e->getShapeFunctions(u, v, w, sf);
-      for (int j = 0; j < nbNodes; j++){
+      for (int j = 0; j < nbSF; j++){
         Grads[j][0] = invjac[0][0] * grads[j][0] + invjac[0][1] * grads[j][1] + 
           invjac[0][2] * grads[j][2];
         Grads[j][1] = invjac[1][0] * grads[j][0] + invjac[1][1] * grads[j][1] + 
@@ -88,7 +88,7 @@ class helmholtzTerm : public femTerm<scalar> {
           invjac[2][2] * grads[j][2];
         if (!_a) sf[j] = 0;
       }
-      for (int j = 0; j < nbNodes; j++){
+      for (int j = 0; j < nbSF; j++){
         for (int k = 0; k <= j; k++){
           m(j, k) += (K * (Grads[j][0] * Grads[k][0] +
                            Grads[j][1] * Grads[k][1] +
@@ -96,7 +96,7 @@ class helmholtzTerm : public femTerm<scalar> {
         }
       }
     }
-    for (int j = 0; j < nbNodes; j++)
+    for (int j = 0; j < nbSF; j++)
       for (int k = 0; k < j; k++)
         m(k, j) = m(j, k);
 

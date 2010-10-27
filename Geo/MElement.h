@@ -233,6 +233,9 @@ class MElement
   double getJacobian(double u, double v, double w, double jac[3][3]);
   double getPrimaryJacobian(double u, double v, double w, double jac[3][3]);
   double getJacobianDeterminant(double u, double v, double w);
+  virtual int getNumShapeFunctions(){ return getNumVertices(); }
+  virtual int getNumPrimaryShapeFunctions(){ return getNumPrimaryVertices(); }
+  virtual MVertex *getShapeFunctionNode(int i){ return getVertex(i); }
 
   // get the point in cartesian coordinates corresponding to the point
   // (u,v,w) in parametric coordinates
