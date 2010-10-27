@@ -262,7 +262,6 @@ void drawContext::draw3d()
 
 void drawContext::draw2d()
 {
-
   glDisable(GL_DEPTH_TEST);
   for(int i = 0; i < 6; i++)
     glDisable((GLenum)(GL_CLIP_PLANE0 + i));
@@ -292,13 +291,11 @@ void drawContext::draw2d()
 
 void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
 {
-
   double Va = 
     (double) (viewport[3] - viewport[1]) /
     (double) (viewport[2] - viewport[0]);
   double Wa = (CTX::instance()->max[1] - CTX::instance()->min[1]) / 
     (CTX::instance()->max[0] - CTX::instance()->min[0]);
-
 
   // compute the viewport in World coordinates (with margins)
   if(Va > Wa) {
@@ -317,10 +314,12 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
     vymin = CTX::instance()->min[1];
     vymax = CTX::instance()->max[1];
   }
-  vxmin -= (vxmax - vxmin) / 3.;
-  vxmax += 0.25 * (vxmax - vxmin);
-  vymin -= (vymax - vymin) / 3.;
-  vymax += 0.25 * (vymax - vymin);
+  double fact = CTX::instance()->displayBorderFactor;
+  double xborder = fact * (vxmax - vxmin), yborder = fact * (vymax - vymin);
+  vxmin -= xborder;
+  vxmax += xborder;
+  vymin -= yborder;
+  vymax += yborder;
 
   // store what one pixel represents in world coordinates
   pixel_equiv_x = (vxmax - vxmin) / (viewport[2] - viewport[0]);

@@ -114,6 +114,8 @@ class CTX {
   int nonModalWindows;
   // clipping plane distance factor
   double clipFactor;
+  // display border factor (0 = model fits window size exactly)
+  double displayBorderFactor;
   // do or do not use the trackball for rotations
   int useTrackball, trackballHyperbolicSheet;
   // point around which to rotate the scene

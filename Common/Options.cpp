@@ -3024,6 +3024,13 @@ double opt_general_clip_factor(OPT_ARGS_NUM)
   return CTX::instance()->clipFactor;
 }
 
+double opt_general_display_border_factor(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->displayBorderFactor = val;    
+  return CTX::instance()->displayBorderFactor;
+}
+
 double opt_general_point_size(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

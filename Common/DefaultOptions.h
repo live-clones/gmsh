@@ -583,6 +583,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Vertical position (in pixels) of the upper left corner of the contextual "
     "windows" }, 
 
+  { F|O, "DisplayBorderFactor" , opt_general_display_border_factor , 1./3. ,
+    "Border factor for model display (0: model fits window size exactly)" },
   { F|O, "DoubleBuffer" , opt_general_double_buffer , 1. ,
     "Use a double buffered graphic window (on Unix, should be set to 0 when "
     "working on a remote host without GLX)" },
