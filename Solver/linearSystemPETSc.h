@@ -66,8 +66,8 @@ class linearSystemPETSc : public linearSystem<scalar> {
     _try(KSPSetTolerances(_ksp, 1.e-8, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT));
     // override the default options with the ones from the option
     // database (if any)
-    if (linearSystemBase::_parameters.count("petscPrefix"))
-      _try(KSPAppendOptionsPrefix(_ksp, linearSystemBase::_parameters["petscPrefix"].c_str()));
+    if (this->_parameters.count("petscPrefix"))
+      _try(KSPAppendOptionsPrefix(_ksp, this->_parameters["petscPrefix"].c_str()));
     _try(KSPSetFromOptions(_ksp));
     _kspAllocated = true;
   }
@@ -126,10 +126,10 @@ class linearSystemPETSc : public linearSystem<scalar> {
     _try(MatSetSizes(_a, nbRows, nbRows, PETSC_DETERMINE, PETSC_DETERMINE));
     // override the default options with the ones from the option
     // database (if any)
-    if (linearSystemBase::_parameters.count("petscOptions"))
-      _try(PetscOptionsInsertString(linearSystemBase::_parameters["petscOptions"].c_str()));
-    if (linearSystemBase::_parameters.count("petscPrefix"))
-      _try(MatAppendOptionsPrefix(_a, linearSystemBase::_parameters["petscPrefix"].c_str()));
+    if (this->_parameters.count("petscOptions"))
+      _try(PetscOptionsInsertString(this->_parameters["petscOptions"].c_str()));
+    if (this->_parameters.count("petscPrefix"))
+      _try(MatAppendOptionsPrefix(_a, this->_parameters["petscPrefix"].c_str()));
     _try(MatSetFromOptions(_a));
     _try(MatGetOwnershipRange(_a, &_localRowStart, &_localRowEnd));
     _try(MatGetSize(_a, &_globalSize, &_localSize));
@@ -138,8 +138,8 @@ class linearSystemPETSc : public linearSystem<scalar> {
     _try(VecSetSizes(_x, nbRows, PETSC_DETERMINE));
     // override the default options with the ones from the option
     // database (if any)
-    if (linearSystemBase::_parameters.count("petscPrefix"))
-      _try(VecAppendOptionsPrefix(_x, linearSystemBase::_parameters["petscPrefix"].c_str()));
+    if (this->_parameters.count("petscPrefix"))
+      _try(VecAppendOptionsPrefix(_x, this->_parameters["petscPrefix"].c_str()));
     _try(VecSetFromOptions(_x));
     _try(VecDuplicate(_x, &_b));
     _isAllocated = true;
