@@ -617,11 +617,11 @@ if(ENABLE_PETSC)
       list(APPEND EXTERNAL_INCLUDES ${VAR})
       endforeach(VAR)
     endif (PETSC_PACKAGES_INCLUDES)
-    # find libraries
-    set(PETSC_LIBS_REQUIRED petsc)
+    # find libraries (<= 3.0)
+    set(PETSC_LIBS_REQUIRED petscksp petscdm petscmat petscvec petsc)
     find_all_libraries(PETSC_LIBS PETSC_LIBS_REQUIRED 
                        ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib "")
-    # petsc 3.1 create only one library : libpetsc
+    # petsc 3.1 create only one library (libpetsc)
     if (NOT PETSC_LIBS)
       find_library (PETSC_LIBS petsc PATHS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib)
     endif(NOT PETSC_LIBS)
