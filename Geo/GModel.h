@@ -360,6 +360,9 @@ class GModel
   // mesh the model
   int mesh(int dimension);
 
+  // create partition boundaries
+  void createPartitionBoundaries(int createGhostCells);
+
   // fill the vertex arrays, given the current option and data
   void fillVertexArrays();
 

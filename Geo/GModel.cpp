@@ -40,6 +40,7 @@
 #include "Field.h"
 #include "Generator.h"
 #include "meshGFaceOptimize.h"
+#include "meshPartition.h"
 #endif
 
 std::vector<GModel*> GModel::list;
@@ -2325,9 +2326,11 @@ void GModel::classifyFaces(std::set<GFace*> &_faces)
 #endif
 }
 
-#include "meshPartition.h"
-static void createPartitionBoundaries_binding(GModel *model, int createGhostCells) {
-  CreatePartitionBoundaries(model, createGhostCells);
+void GModel::createPartitionBoundaries(int createGhostCells)
+{
+#if defined(HAVE_CHACO) || defined(HAVE_METIS)
+  CreatePartitionBoundaries(this, createGhostCells);
+#endif
 }
 
 #include "Bindings.h"
@@ -2501,8 +2504,9 @@ void GModel::registerBindings(binding *b)
                      "extrusion height.");
   cm->setArgNames("{list of entities}","height",NULL);
 
-  cm = cb->addMethod("createPartitionBoundaries", &createPartitionBoundaries_binding);
-  cm->setDescription("Assigns partition tags to boundary elements. Should be called only after the partitions have been assigned");
-  cm->setArgNames("gmodel","createGhostCells",NULL);
+  cm = cb->addMethod("createPartitionBoundaries", &GModel::createPartitionBoundaries);
+  cm->setDescription("Assigns partition tags to boundary elements. Should be called "
+                     "only after the partitions have been assigned");
+  cm->setArgNames("createGhostCells",NULL);
 
 }
