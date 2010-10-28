@@ -22,7 +22,6 @@
 #include <FL/Fl_JPEG_Image.H>
 #include <FL/Fl_PNG_Image.H>
 #endif
-using namespace std;
   
 drawContextGlobal *drawContext::_global = 0;
 
@@ -229,6 +228,7 @@ void drawContext::draw3d()
   // much simpler to deal with option changes, e.g. arrow shape
   // changes)
   createQuadricsAndDisplayLists();
+
   // We should only enable the polygon offset when there is a mix of
   // lines and polygons to be drawn; enabling it all the time can lead
   // to very small but annoying artifacts in the picture. Since there
@@ -270,7 +270,7 @@ void drawContext::draw2d()
   glLoadIdentity();
   glOrtho((double)viewport[0], (double)viewport[2],
           (double)viewport[1], (double)viewport[3], 
-          -1000., 1000.); // in pixels, so we can draw some 3D glyphs
+          -100., 100.); // in pixels, so we can draw some 3D glyphs
 
   // hack to make the 2D primitives appear "in front" in GL2PS
   glTranslated(0., 0., CTX::instance()->clipFactor > 1. ? 
@@ -287,6 +287,101 @@ void drawContext::draw2d()
 
   if(CTX::instance()->smallAxes)
     drawSmallAxes();
+}
+
+void drawContext::drawBackgroundGradient()
+{
+  if(CTX::instance()->bgGradient == 1){ // vertical
+    glBegin(GL_QUADS);
+    glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
+    glVertex2i(viewport[0], viewport[1]);
+    glVertex2i(viewport[2], viewport[1]);
+    glColor4ubv((GLubyte *) & CTX::instance()->color.bgGrad);
+    glVertex2i(viewport[2], viewport[3]);
+    glVertex2i(viewport[0], viewport[3]);
+    glEnd();
+  }
+  else if(CTX::instance()->bgGradient == 2){ // horizontal
+    glBegin(GL_QUADS);
+    glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
+    glVertex2i(viewport[2], viewport[1]);
+    glVertex2i(viewport[2], viewport[3]);
+    glColor4ubv((GLubyte *) & CTX::instance()->color.bgGrad);
+    glVertex2i(viewport[0], viewport[3]);
+    glVertex2i(viewport[0], viewport[1]);
+    glEnd();
+  }
+  else if(CTX::instance()->bgGradient == 3){ // radial
+    double cx = 0.5 * (viewport[0] + viewport[2]);
+    double cy = 0.5 * (viewport[1] + viewport[3]);
+    double r = 0.5 * std::max(viewport[2] - viewport[0],
+                              viewport[3] - viewport[1]);
+    glBegin(GL_TRIANGLE_FAN);
+    glColor4ubv((GLubyte *) & CTX::instance()->color.bgGrad);
+    glVertex2d(cx, cy);
+    glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
+    glVertex2d(cx + r, cy);
+    int ntheta = 36;
+    for(int i = 1; i < ntheta + 1; i ++){
+      double theta = i * 2 * M_PI / (double)ntheta;
+      glVertex2d(cx + r * cos(theta), cy + r * sin(theta));       
+    }
+    glEnd();
+  }
+}
+
+void drawContext::drawBackgroundImage()
+{
+#if defined(HAVE_FLTK)
+  if(CTX::instance()->bgImageFileName.empty()) return;
+
+  if(_bgImage.empty()){
+    int idot = CTX::instance()->bgImageFileName.find_last_of('.');
+    std::string ext;
+    if(idot > 0 && idot < (int)CTX::instance()->bgImageFileName.size())
+      ext = CTX::instance()->bgImageFileName.substr(idot + 1);
+    Fl_RGB_Image *img = 0;
+    if(ext == "jpg" || ext == "JPG" || ext == "jpeg" || ext == "JPEG")
+      img = new Fl_JPEG_Image(CTX::instance()->bgImageFileName.c_str());
+    else if(ext == "png" || ext == "PNG")
+      img = new Fl_PNG_Image(CTX::instance()->bgImageFileName.c_str());
+    if(img && img->d() >= 3){
+      const unsigned char *data = img->array;
+      for(int j = img->h() - 1; j >= 0; j--) {
+        for(int i = 0; i < img->w(); i++) {
+          int idx = j * img->w() * img->d() + i * img->d();
+          _bgImage.push_back((GLfloat)data[idx] / 255.F);
+          _bgImage.push_back((GLfloat)data[idx + 1] / 255.F);
+          _bgImage.push_back((GLfloat)data[idx + 2] / 255.F);
+        }
+      }
+      _bgImageSize[0] = img->w();
+      _bgImageSize[1] = img->h();
+    }
+    if(!_bgImageSize[0] || !_bgImageSize[1]){
+      Msg::Error("Could not load valid background image");
+      // make sure we don't try to load it again
+      for(int i = 0; i < 3; i++) _bgImage.push_back(0);
+      _bgImageSize[0] = _bgImageSize[1] = 1;
+    }
+    if(img) delete img;
+  }
+
+  double x = CTX::instance()->bgImagePosition[0];
+  double y = CTX::instance()->bgImagePosition[1];
+  int c = fix2dCoordinates(&x, &y);
+  if(c & 1) x -= _bgImageSize[0] / 2.;
+  if(c & 2) y -= _bgImageSize[1] / 2.;
+  if(x < viewport[0]) x = viewport[0];
+  if(y < viewport[1]) y = viewport[1];
+  glRasterPos2d(x, y);
+  glPixelStorei(GL_PACK_ALIGNMENT, 1);
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  glDrawPixels(_bgImageSize[0], _bgImageSize[1], GL_RGB, GL_FLOAT,
+               (void*)&_bgImage[0]);
+  gl2psDrawPixels(_bgImageSize[0], _bgImageSize[1], 0, 0, GL_RGB, GL_FLOAT,
+                  (void*)&_bgImage[0]);
+#endif
 }
 
 void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
@@ -345,57 +440,15 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
     glDisable(GL_DEPTH_TEST);
     glPushMatrix();
     glLoadIdentity();
-        
     glOrtho((double)viewport[0], (double)viewport[2],
 	    (double)viewport[1], (double)viewport[3], 
 	    clip_near, clip_far);
-    
-    // background gradient
-    if(CTX::instance()->bgGradient == 1){ // vertical
-      glBegin(GL_QUADS);
-      glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
-      glVertex2i(viewport[0], viewport[1]);
-      glVertex2i(viewport[2], viewport[1]);
-      glColor4ubv((GLubyte *) & CTX::instance()->color.bgGrad);
-      glVertex2i(viewport[2], viewport[3]);
-      glVertex2i(viewport[0], viewport[3]);
-      glEnd();
-    }
-    else if(CTX::instance()->bgGradient == 2){ // horizontal
-      glBegin(GL_QUADS);
-      glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
-      glVertex2i(viewport[2], viewport[1]);
-      glVertex2i(viewport[2], viewport[3]);
-      glColor4ubv((GLubyte *) & CTX::instance()->color.bgGrad);
-      glVertex2i(viewport[0], viewport[3]);
-      glVertex2i(viewport[0], viewport[1]);
-      glEnd();
-    }
-    else if(CTX::instance()->bgGradient == 3){ // radial
-      double cx = 0.5 * (viewport[0] + viewport[2]);
-      double cy = 0.5 * (viewport[1] + viewport[3]);
-      double r = 0.5 * std::max(viewport[2] - viewport[0],
-				viewport[3] - viewport[1]);
-      glBegin(GL_TRIANGLE_FAN);
-      glColor4ubv((GLubyte *) & CTX::instance()->color.bgGrad);
-      glVertex2d(cx, cy);
-      glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
-      glVertex2d(cx + r, cy);
-      int ntheta = 36;
-      for(int i = 1; i < ntheta + 1; i ++){
-	double theta = i * 2 * M_PI / (double)ntheta;
-	glVertex2d(cx + r * cos(theta), cy + r * sin(theta));       
-      }
-      glEnd();
-    }
-    // hack for GL2PS (to make sure that the image is in front of the
-    // gradient)
-    glTranslated(0., 0., 0.01 * clip_far);
+    drawBackgroundGradient();
     glPopMatrix();
     glEnable(GL_DEPTH_TEST);   
 
   } 
-  else{  // if NOT in Camera mode
+  else{ // if not in camera mode
 
     double clip_near, clip_far;
     if(CTX::instance()->ortho) {
@@ -414,6 +467,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
     if(render_mode == GMSH_SELECT)
       gluPickMatrix((GLdouble)xpick, (GLdouble)(viewport[3] - ypick),
 		    (GLdouble)wpick, (GLdouble)hpick, (GLint *)viewport);
+
     // draw background if not in selection mode
     if(render_mode != GMSH_SELECT && (CTX::instance()->bgGradient || 
 				      CTX::instance()->bgImageFileName.size())){
@@ -422,105 +476,21 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
       glLoadIdentity();
       // the z values and the translation are only needed for GL2PS,
       // which does not understand "no depth test" (hence we must make
-      // sure that we draw the background behind the rest of the scene)
+      // sure that we draw the background behind the rest of the
+      // scene)
       glOrtho((double)viewport[0], (double)viewport[2],
 	      (double)viewport[1], (double)viewport[3], 
 	      clip_near, clip_far);
       glTranslated(0., 0., -0.99 * clip_far);
-      // background gradient
-      if(CTX::instance()->bgGradient == 1){ // vertical
-	glBegin(GL_QUADS);
-	glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
-	glVertex2i(viewport[0], viewport[1]);
-	glVertex2i(viewport[2], viewport[1]);
-	glColor4ubv((GLubyte *) & CTX::instance()->color.bgGrad);
-	glVertex2i(viewport[2], viewport[3]);
-	glVertex2i(viewport[0], viewport[3]);
-	glEnd();
-      }
-      else if(CTX::instance()->bgGradient == 2){ // horizontal
-	glBegin(GL_QUADS);
-	glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
-	glVertex2i(viewport[2], viewport[1]);
-	glVertex2i(viewport[2], viewport[3]);
-	glColor4ubv((GLubyte *) & CTX::instance()->color.bgGrad);
-	glVertex2i(viewport[0], viewport[3]);
-	glVertex2i(viewport[0], viewport[1]);
-	glEnd();
-      }
-      else if(CTX::instance()->bgGradient == 3){ // radial
-	double cx = 0.5 * (viewport[0] + viewport[2]);
-	double cy = 0.5 * (viewport[1] + viewport[3]);
-	double r = 0.5 * std::max(viewport[2] - viewport[0],
-				  viewport[3] - viewport[1]);
-	glBegin(GL_TRIANGLE_FAN);
-	glColor4ubv((GLubyte *) & CTX::instance()->color.bgGrad);
-	glVertex2d(cx, cy);
-	glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
-	glVertex2d(cx + r, cy);
-	int ntheta = 36;
-	for(int i = 1; i < ntheta + 1; i ++){
-	  double theta = i * 2 * M_PI / (double)ntheta;
-	  glVertex2d(cx + r * cos(theta), cy + r * sin(theta));       
-	}
-	glEnd();
-      }
+      drawBackgroundGradient();
       // hack for GL2PS (to make sure that the image is in front of the
       // gradient)
       glTranslated(0., 0., 0.01 * clip_far);
-      // background image
-      if(CTX::instance()->bgImageFileName.size()){
-#if defined(HAVE_FLTK)
-	if(_bgImage.empty()){
-	  int idot = CTX::instance()->bgImageFileName.find_last_of('.');
-	  std::string ext;
-	  if(idot > 0 && idot < (int)CTX::instance()->bgImageFileName.size())
-	    ext = CTX::instance()->bgImageFileName.substr(idot + 1);
-	  Fl_RGB_Image *img = 0;
-	  if(ext == "jpg" || ext == "JPG" || ext == "jpeg" || ext == "JPEG")
-	    img = new Fl_JPEG_Image(CTX::instance()->bgImageFileName.c_str());
-	  else if(ext == "png" || ext == "PNG")
-	    img = new Fl_PNG_Image(CTX::instance()->bgImageFileName.c_str());
-	  if(img && img->d() >= 3){
-	    const unsigned char *data = img->array;
-	    for(int j = img->h() - 1; j >= 0; j--) {
-	      for(int i = 0; i < img->w(); i++) {
-		int idx = j * img->w() * img->d() + i * img->d();
-		_bgImage.push_back((GLfloat)data[idx] / 255.F);
-		_bgImage.push_back((GLfloat)data[idx + 1] / 255.F);
-		_bgImage.push_back((GLfloat)data[idx + 2] / 255.F);
-	      }
-	    }
-	    _bgImageSize[0] = img->w();
-	    _bgImageSize[1] = img->h();
-	  }
-	  if(!_bgImageSize[0] || !_bgImageSize[1]){
-	    Msg::Error("Could not load valid background image");
-	    // make sure we don't try to load it again
-	    for(int i = 0; i < 3; i++) _bgImage.push_back(0);
-	    _bgImageSize[0] = _bgImageSize[1] = 1;
-	  }
-	  if(img) delete img;
-	}
-	double x = CTX::instance()->bgImagePosition[0];
-	double y = CTX::instance()->bgImagePosition[1];
-	int c = fix2dCoordinates(&x, &y);
-	if(c & 1) x -= _bgImageSize[0] / 2.;
-	if(c & 2) y -= _bgImageSize[1] / 2.;
-	if(x < viewport[0]) x = viewport[0];
-	if(y < viewport[1]) y = viewport[1];
-	glRasterPos2d(x, y);
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glDrawPixels(_bgImageSize[0], _bgImageSize[1], GL_RGB, GL_FLOAT,
-		     (void*)&_bgImage[0]);
-	gl2psDrawPixels(_bgImageSize[0], _bgImageSize[1], 0, 0, GL_RGB, GL_FLOAT,
-			(void*)&_bgImage[0]);
-#endif
-      }
+      drawBackgroundImage();
       glPopMatrix();
       glEnable(GL_DEPTH_TEST);
     }
+
     if(CTX::instance()->ortho) {
       glOrtho(vxmin, vxmax, vymin, vymax, clip_near, clip_far);
       glMatrixMode(GL_MODELVIEW);
@@ -543,7 +513,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
       glTranslated(-coef * t_init[0], -coef * t_init[1], -coef * clip_near);
       glScaled(coef, coef, coef);
     }
-  } // end if NOT camera
+  }
 }
 
 void drawContext::initRenderModel()

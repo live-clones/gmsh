@@ -179,6 +179,8 @@ class drawContext {
   void drawGeom();
   void drawMesh();
   void drawPost();
+  void drawBackgroundGradient();
+  void drawBackgroundImage();
   void drawText2d();
   void drawGraph2d();
   void drawAxis(double xmin, double ymin, double zmin,
