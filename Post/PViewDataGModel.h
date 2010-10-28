@@ -239,7 +239,7 @@ class PViewDataGModel : public PViewData {
   bool readMSH(std::string fileName, int fileIndex, FILE *fp, bool binary, 
                bool swap, int step, double time, int partition, 
                int numComp, int numNodes);
-  bool writeMSH(std::string fileName, bool binary=false);
+  bool writeMSH(std::string fileName, bool binary=false, bool savemesh=true);
   bool readMED(std::string fileName, int fileIndex);
   bool writeMED(std::string fileName);
 };

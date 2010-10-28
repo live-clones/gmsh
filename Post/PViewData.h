@@ -221,7 +221,7 @@ class PViewData {
   virtual bool writeTXT(std::string fileName);
   virtual bool writePOS(std::string fileName, bool binary=false, bool parsed=true,
                         bool append=false);
-  virtual bool writeMSH(std::string fileName, bool binary=false);
+  virtual bool writeMSH(std::string fileName, bool binary=false, bool savemesh=true);
   virtual bool writeMED(std::string fileName);
 
   static void registerBindings(binding *b);

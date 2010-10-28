@@ -110,7 +110,7 @@ class PViewDataList : public PViewData {
   bool readPOS(FILE *fp, double version, bool binary);
   bool writePOS(std::string fileName, bool binary=false, bool parsed=true,
                 bool append=false);
-  bool writeMSH(std::string fileName, bool binary=false);
+  virtual bool writeMSH(std::string fileName, bool binary=false, bool savemesh=true);
 };
 
 #endif

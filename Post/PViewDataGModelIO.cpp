@@ -118,7 +118,7 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
   return true;
 }
 
-bool PViewDataGModel::writeMSH(std::string fileName, bool binary)
+bool PViewDataGModel::writeMSH(std::string fileName, bool binary, bool savemesh)
 {
   if(_steps.empty()) return true;
 
@@ -129,7 +129,7 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary)
 
   GModel *model = _steps[0]->getModel();
 
-  bool writeNodesAndElements = false;
+  bool writeNodesAndElements = savemesh;
   FILE *fp;
   if(writeNodesAndElements){
     if(!model->writeMSH(fileName, 2.0, binary)) return false;

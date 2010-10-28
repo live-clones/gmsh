@@ -106,7 +106,7 @@ bool PViewData::writePOS(std::string fileName, bool binary, bool parsed, bool ap
   return false; 
 }
 
-bool PViewData::writeMSH(std::string fileName, bool binary)
+bool PViewData::writeMSH(std::string fileName, bool binary, bool savemesh)
 { 
   Msg::Error("MSH export not implemented for this view type");
   return false; 

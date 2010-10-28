@@ -544,7 +544,7 @@ static void writeElementsMSH(FILE *fp, int nbelm, std::vector<double> &list,
   }
 }
 
-bool PViewDataList::writeMSH(std::string fileName, bool binary)
+bool PViewDataList::writeMSH(std::string fileName, bool binary, bool savemesh)
 {
   if(_adaptive){
     Msg::Warning("Writing adapted dataset (will only export current time step)");
@@ -590,7 +590,6 @@ bool PViewDataList::writeMSH(std::string fileName, bool binary)
   getNodeMSH(NbSY, SY, 5, 1, NbTimeStep, &nodes, &numelm);
   getNodeMSH(NbVY, VY, 5, 3, NbTimeStep, &nodes, &numelm);
   getNodeMSH(NbTY, TY, 5, 9, NbTimeStep, &nodes, &numelm);
-
   fprintf(fp, "$MeshFormat\n2 0 8\n$EndMeshFormat\n");
   fprintf(fp, "$Nodes\n");
   fprintf(fp, "%d\n", (int)nodes.size());
