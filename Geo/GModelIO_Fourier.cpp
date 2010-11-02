@@ -142,6 +142,12 @@ void GModel::_deleteFMInternals()
 {
 }
 
+int GModel::readFourier()
+{
+  Msg::Error("Gmsh must be compiled with Fourier Model support toad fourier Model");
+  return 0;
+}
+
 int GModel::readFourier(const std::string &fn)
 {
   Msg::Error("Gmsh must be compiled with Fourier Model support to load '%s'",
