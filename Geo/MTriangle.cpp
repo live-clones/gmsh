@@ -84,6 +84,7 @@ const polynomialBasis* MTriangle::getFunctionSpace(int o) const
 
   if ((nf == 0) && (o == -1)) {
     switch (order) {
+    case 0: return polynomialBases::find(MSH_TRI_1);
     case 1: return polynomialBases::find(MSH_TRI_3);
     case 2: return polynomialBases::find(MSH_TRI_6);
     case 3: return polynomialBases::find(MSH_TRI_9);
@@ -99,6 +100,7 @@ const polynomialBasis* MTriangle::getFunctionSpace(int o) const
   }
   else { 
     switch (order) {
+    case 0: return polynomialBases::find(MSH_TRI_1);
     case 1: return polynomialBases::find(MSH_TRI_3);
     case 2: return polynomialBases::find(MSH_TRI_6);
     case 3: return polynomialBases::find(MSH_TRI_10);
@@ -117,12 +119,14 @@ const polynomialBasis* MTriangle::getFunctionSpace(int o) const
 
 const JacobianBasis* MTriangle::getJacobianFuncSpace(int o) const
 {
+
   int order = (o == -1) ? getPolynomialOrder() : o;
 
   int nf = getNumFaceVertices();  
 
   if ((nf == 0) && (o == -1)) {
     switch (order) {
+    case 0: return JacobianBases::find(MSH_TRI_1);
     case 1: return JacobianBases::find(MSH_TRI_3);
     case 2: return JacobianBases::find(MSH_TRI_6);
     case 3: return JacobianBases::find(MSH_TRI_9);

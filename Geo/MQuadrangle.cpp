@@ -24,6 +24,7 @@ const polynomialBasis* MQuadrangle::getFunctionSpace(int o) const
 
   if ((nf == 0) && (o == -1)) {
     switch (order) {
+      case 0: return polynomialBases::find(MSH_QUA_1);
       case 1: return polynomialBases::find(MSH_QUA_4);
       case 2: return polynomialBases::find(MSH_QUA_8);
       case 3: return polynomialBases::find(MSH_QUA_12);
@@ -37,6 +38,7 @@ const polynomialBasis* MQuadrangle::getFunctionSpace(int o) const
     }
   }
   switch (order) {
+    case 0: return polynomialBases::find(MSH_QUA_1);
     case 1: return polynomialBases::find(MSH_QUA_4);
     case 2: return polynomialBases::find(MSH_QUA_9);
     case 3: return polynomialBases::find(MSH_QUA_16);

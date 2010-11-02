@@ -142,6 +142,12 @@
 #define MSH_TET_164  82 
 #define MSH_TET_202  83
 #define MSH_NUM_TYPE 84
+#define MSH_LIN_1    85
+#define MSH_TRI_1    86
+#define MSH_QUA_1    87
+#define MSH_TET_1    88
+#define MSH_HEX_1    89
+#define MSH_PRI_1    90
 
 // Geometric entities
 #define ENT_NONE     0

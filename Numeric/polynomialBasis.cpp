@@ -14,6 +14,7 @@
 
 static int getTriangleType (int order) {
   switch(order) {
+    case 0 : return MSH_TRI_1;
     case 1 : return MSH_TRI_3;
     case 2 : return MSH_TRI_6;
     case 3 : return MSH_TRI_10;
@@ -29,6 +30,7 @@ static int getTriangleType (int order) {
 }
 static int getQuadType (int order) {
   switch(order) {
+    case 0 : return MSH_QUA_1;
     case 1 : return MSH_QUA_4;
     case 2 : return MSH_QUA_9;
     case 3 : return MSH_QUA_16;
@@ -44,6 +46,7 @@ static int getQuadType (int order) {
 }
 static int getLineType (int order) {
   switch(order) {
+    case 0 : return MSH_LIN_1;
     case 1 : return MSH_LIN_2;
     case 2 : return MSH_LIN_3;
     case 3 : return MSH_LIN_4;
@@ -1018,6 +1021,16 @@ static void generate1dVertexClosure(polynomialBasis::clCont &closure)
   closure[1].type = MSH_PNT;
 }
 
+static void generateClosureOrder0(polynomialBasis::clCont &closure, int nb)
+{
+  closure.clear();
+  closure.resize(nb);
+  for (int i=0; i < nb; i++) { 
+    closure[i].push_back(0);
+    closure[i].type = MSH_PNT;
+  }
+}
+
 std::map<int, polynomialBasis> polynomialBases::fs;
 
 const polynomialBasis *polynomialBases::find(int tag)
@@ -1033,6 +1046,13 @@ const polynomialBasis *polynomialBases::find(int tag)
     F.monomials = generate1DMonomials(0);
     F.points    = generate1DPoints(0);
     F.parentType = TYPE_PNT;
+    break;
+  case MSH_LIN_1 :
+    F.numFaces = 2;
+    F.monomials = generate1DMonomials(0);
+    F.points    = generate1DPoints(0);
+    generateClosureOrder0(F.closures,2);
+    F.parentType = TYPE_LIN;
     break;
   case MSH_LIN_2 :
     F.numFaces = 2;
@@ -1103,6 +1123,13 @@ const polynomialBasis *polynomialBases::find(int tag)
     F.points    = generate1DPoints(10);
     F.parentType = TYPE_LIN;
     generate1dVertexClosure(F.closures);
+    break;
+  case MSH_TRI_1 :
+    F.numFaces = 3;
+    F.monomials = generatePascalTriangle(0);
+    F.points =    gmshGeneratePointsTriangle(0, false);
+    F.parentType = TYPE_TRI;
+    generateClosureOrder0(F.closures,6);
     break;
   case MSH_TRI_3 :
     F.numFaces = 3;
@@ -1230,6 +1257,13 @@ const polynomialBasis *polynomialBases::find(int tag)
     F.parentType = TYPE_TRI;
     generate2dEdgeClosure(F.closures, 10);
     break;
+  case MSH_TET_1 :
+    F.numFaces = 4;
+    F.monomials = generatePascalTetrahedron(0);
+    F.points =    gmshGeneratePointsTetrahedron(0, false);
+    F.parentType = TYPE_TET;
+    generateClosureOrder0(F.closures,24);
+    break;
   case MSH_TET_4 :
     F.numFaces = 4;
     F.monomials = generatePascalTetrahedron(1);
@@ -1348,6 +1382,13 @@ const polynomialBasis *polynomialBases::find(int tag)
     F.points =    gmshGeneratePointsTetrahedron(10, false);
     F.parentType = TYPE_TET;
     generateFaceClosureTet(F.closures, 10);
+    break;
+  case MSH_QUA_1 :
+    F.numFaces = 4;
+    F.monomials = generatePascalQuad(0);
+    F.points =    gmshGeneratePointsQuad(0,false);
+    F.parentType = TYPE_QUA;
+    generateClosureOrder0(F.closures,8);
     break;
   case MSH_QUA_4 :
     F.numFaces = 4;
@@ -1481,6 +1522,13 @@ const polynomialBasis *polynomialBases::find(int tag)
     F.points =    gmshGeneratePointsQuad(10,true);
     F.parentType = TYPE_QUA;
     generate2dEdgeClosure(F.closures, 10, 4);
+    break;
+  case MSH_PRI_1 :
+    F.numFaces = 5;
+    F.monomials = generatePascalPrism(0);
+    F.points =    gmshGeneratePointsPrism(1, false);
+    F.parentType = TYPE_PRI;
+    generateClosureOrder0(F.closures,48);
     break;
   case MSH_PRI_6 :
     F.numFaces = 5;

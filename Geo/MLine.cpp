@@ -14,6 +14,7 @@ const polynomialBasis* MLine::getFunctionSpace(int o) const
   int order = (o == -1) ? getPolynomialOrder() : o;
   
   switch (order) {
+  case 0: return polynomialBases::find(MSH_LIN_1);
   case 1: return polynomialBases::find(MSH_LIN_2);
   case 2: return polynomialBases::find(MSH_LIN_3);
   case 3: return polynomialBases::find(MSH_LIN_4);

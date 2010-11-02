@@ -125,6 +125,7 @@ const polynomialBasis* MTetrahedron::getFunctionSpace(int o) const
   
   if ((nv == 0) && (o == -1)) {
     switch (order) {
+    case 0: return polynomialBases::find(MSH_TET_1);
     case 1: return polynomialBases::find(MSH_TET_4);
     case 2: return polynomialBases::find(MSH_TET_10);
     case 3: return polynomialBases::find(MSH_TET_20);
@@ -140,6 +141,7 @@ const polynomialBasis* MTetrahedron::getFunctionSpace(int o) const
   }
   else { 
     switch (order) {
+    case 0: return polynomialBases::find(MSH_TET_1);
     case 1: return polynomialBases::find(MSH_TET_4);
     case 2: return polynomialBases::find(MSH_TET_10);
     case 3: return polynomialBases::find(MSH_TET_20);
