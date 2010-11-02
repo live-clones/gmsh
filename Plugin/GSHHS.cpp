@@ -541,7 +541,7 @@ public:
       }
       return i1;
     }
-    int orientation(iterator i0, iterator i1,bool reverse_stereo)
+    int orientation(iterator i0, iterator i1,bool reverse_stereo=false)
     {
       if(next(i0)==i1)
         return 0;
@@ -559,7 +559,7 @@ public:
       }while(p!=i1);
       i0->to_stereo(x[2],y[2],reverse_stereo);
       alpha+=get_angle(x[0],y[0],x[1],y[1],x[2],y[2]);
-      return (int)(alpha/(M_PI*2));
+      return (int)round(alpha/(M_PI*2));
     }
     int length(iterator i0,iterator i1)
     {
@@ -681,7 +681,7 @@ public:
   bool loop_check_close_points_self(loop *l,box &b)
   {
     bool result=false;
-    bool reverse_stereo=(l->orientation(l->begin(),--l->end(),false)<0);
+    int orientation = l->orientation(l->begin(), --l->end());
     for(loop::iterator i=l->begin();i!=l->end();){
       double d[2]={i->min_dist*1.001,i->min_dist*1.001};
       point *cp[2];
@@ -694,11 +694,11 @@ public:
           for(ii=i;ii!=l->end() && ii!=id1;ii++);
           not_a_loop= ii==l->end()?0:1;
         }
-        if(not_a_loop!=0 && (l->orientation(i,id1,reverse_stereo)==-1 || l->length(i,id1)<3)){
+        if(not_a_loop!=0 && (l->orientation(i,id1)!=orientation || l->length(i,id1)<3)){
           i=l->remove_range(i,id1);
           result=true;
         }
-        if(not_a_loop!=1 && (l->orientation(id1,i,reverse_stereo)==-1 || l->length(id1,i)<3)){
+        if(not_a_loop!=1 && (l->orientation(id1,i)!=orientation || l->length(id1,i)<3)){
           i=l->remove_range(id1,i);
           result=true;
         }else
