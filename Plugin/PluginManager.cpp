@@ -48,6 +48,7 @@
 #include "GSHHS.h"
 #include "HomologyComputation.h"
 #include "ExtractEdges.h"
+#include "FieldFromAmplitudePhase.h"
 
 // for testing purposes only :-)
 #undef HAVE_DLOPEN
@@ -219,6 +220,8 @@ void PluginManager::registerDefaultPlugins()
                       ("GSHHS", GMSH_RegisterGSHHSPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("ExtractEdges", GMSH_RegisterExtractEdgesPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("FieldFromAmplitudePhase", GMSH_RegisterFieldFromAmplitudePhasePlugin()));
 #if defined(HAVE_TETGEN)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Tetrahedralize", GMSH_RegisterTetrahedralizePlugin()));
