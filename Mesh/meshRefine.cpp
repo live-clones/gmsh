@@ -377,10 +377,8 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads, bool splitIntoHexas
   // mesh
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
     Subdivide(*it);
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
-    bool splitIntoQuadsForThisFace = true;
-    Subdivide(*it, splitIntoQuadsForThisFace, splitIntoHexas, faceVertices);
-  }
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+    Subdivide(*it, splitIntoQuads, splitIntoHexas, faceVertices);
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     Subdivide(*it, splitIntoHexas, faceVertices);
 
