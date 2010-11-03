@@ -312,7 +312,8 @@ PView *PView::getViewByNum(int num, int timeStep, int partition)
 }
 
 #include "Bindings.h"
-void PView::registerBindings(binding *b) {
+void PView::registerBindings(binding *b)
+{
   classBinding *cb = b->addClass<PView>("PView");
   cb->setDescription("A post-processing view");
   methodBinding *cm;
