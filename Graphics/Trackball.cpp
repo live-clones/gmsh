@@ -54,6 +54,7 @@
  * float->double + optional use of hyperbolic sheet for z-rotation)
  */
 #include <math.h>
+#include "Gmsh.h"
 #include "Trackball.h"
 #include "Context.h"
 #include <iostream>
@@ -192,8 +193,13 @@ trackball(double q[4], double p1x, double p1y, double p2x, double p2y)
    *  Figure out how much to rotate around that axis.
    */
   vsub(p1,p2,d);
-  //t = vlength(d);
-  t = vlength(d) / (2.0*TRACKBALLSIZE);
+  t = vlength(d);
+ 
+  double _camera;
+  GmshGetOption("General", "Camera",_camera );
+  if (_camera )     t = vlength(d) / (2.0*TRACKBALLSIZE);
+    t = vlength(d) / (2.0*TRACKBALLSIZE);
+  
   /*
    * Avoid problems with out-of-control values...
    */
