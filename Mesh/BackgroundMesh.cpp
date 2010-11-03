@@ -250,9 +250,10 @@ double BGM_MeshSize(GEntity *ge, double U, double V,
 
   // lc from fields
   double l4 = MAX_LC;
-  FieldManager *fields = GModel::current()->getFields();
+  FieldManager *fields = ge->model()->getFields();
   if(fields->background_field > 0){
     Field *f = fields->get(fields->background_field);
+    //    printf("field %p %s %d %p\n",f,f->getName(),fields->size(), ge->model());
     if(f) l4 = (*f)(X, Y, Z, ge);
   }
 
@@ -294,7 +295,7 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
 
   // lc from fields
   SMetric3 l4(1./(MAX_LC*MAX_LC));
-  FieldManager *fields = GModel::current()->getFields();
+  FieldManager *fields = ge->model()->getFields();
   if(fields->background_field > 0){
     Field *f = fields->get(fields->background_field);
     if(f){

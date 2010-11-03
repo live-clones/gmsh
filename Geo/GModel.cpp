@@ -2508,5 +2508,4 @@ void GModel::registerBindings(binding *b)
   cm->setDescription("Assigns partition tags to boundary elements. Should be called "
                      "only after the partitions have been assigned");
   cm->setArgNames("createGhostCells",NULL);
-
 }

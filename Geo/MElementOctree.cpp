@@ -55,7 +55,7 @@ static int MElementInEle(void *a, double *x)
   return e->isInside(uvw[0], uvw[1], uvw[2]) ? 1 : 0;
 }
 
-MElementOctree::MElementOctree(GModel *m)
+MElementOctree::MElementOctree(GModel *m) : _gm(m)
 {
   SBoundingBox3d bb = m->bounds();
   // make bounding box larger up to (absolute) geometrical tolerance
@@ -80,9 +80,11 @@ MElementOctree::MElementOctree(GModel *m)
 
 MElementOctree::MElementOctree(std::vector<MElement*> &v)
 {
+  _gm = 0;
   SBoundingBox3d bb;
   for (unsigned int i = 0; i < v.size(); i++){
     for(int j = 0; j < v[i]->getNumVertices(); j++){
+      if (!_gm)_gm = v[i]->getVertex(j)->onWhat()->model();
       bb += SPoint3(v[i]->getVertex(j)->x(),
                     v[i]->getVertex(j)->y(),
                     v[i]->getVertex(j)->z());
@@ -114,6 +116,30 @@ MElement *MElementOctree::find(double x, double y, double z, int dim)
 {
   double P[3] = {x, y, z};
   MElement *e = (MElement*)Octree_Search(P, _octree);
+  
+  if (!e){
+    double initialTol = 1.e-6;
+    double tol = initialTol;
+    while ( tol < .1){
+      tol *= 10;
+      MElement::setTolerance(tol);
+      std::vector<GEntity*> entities;
+      _gm->getEntities(entities);
+      for(unsigned int i = 0; i < entities.size(); i++){
+	for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+	  e = entities[i]->getMeshElement(j);
+	  if (dim == -1 ||  e->getDim() == dim){
+	    if (MElementInEle(e, P)){
+	      MElement::setTolerance(initialTol);
+	      return e;
+	    }	    
+	  }
+	}
+      }
+    }
+  }
+  
+
   if (dim == -1 || !e || e->getDim() == dim)
     return e;
   std::list<void*> l;

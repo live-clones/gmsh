@@ -15,6 +15,7 @@ class MElement;
 class MElementOctree{
  private:
   Octree *_octree;
+  GModel *_gm;
  public:
   MElementOctree(GModel *);
   MElementOctree(std::vector<MElement*> &);

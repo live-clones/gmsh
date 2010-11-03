@@ -244,6 +244,7 @@ class MElement
 
   // invert the parametrisation
   virtual void xyz2uvw(double xyz[3], double uvw[3]);
+  void xyzTouvw(fullMatrix<double> *xu);
 
   // move point between parent and element parametric spaces
   virtual void movePointFromParentSpaceToElementSpace(double &u, double &v, double &w);

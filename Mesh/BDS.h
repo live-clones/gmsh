@@ -440,7 +440,7 @@ class BDS_Mesh
   void add_geom(int degree, int tag);
   BDS_GeomEntity *get_geom(int p1, int p2);
   // 2D operators
-  BDS_Edge *recover_edge(int p1, int p2, std::set<EdgeToRecover> *e2r=0,
+  BDS_Edge *recover_edge(int p1, int p2, bool &_fatal, std::set<EdgeToRecover> *e2r=0,
                          std::set<EdgeToRecover> *not_recovered=0);
   BDS_Edge *recover_edge_fast(BDS_Point *p1, BDS_Point *p2);
   bool swap_edge(BDS_Edge*, const BDS_SwapEdgeTest &theTest);

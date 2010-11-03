@@ -292,7 +292,8 @@ bool edgeFront::formQuad(BDS_Edge *e, BDS_Edge *left, BDS_Edge *right)
     //    printf("recover\n");
     //    top = m->recover_edge_fast(pleft,pright);
     //    if(!top)
-    top = m->recover_edge(pleft->iD, pright->iD);
+    bool _fatallyFailed;
+    top = m->recover_edge(pleft->iD, pright->iD,_fatallyFailed);
     //    printf("recover done %p\n",top);
     if(!top) return false;
   }

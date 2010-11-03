@@ -97,7 +97,7 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
   const double dx = p1.x()-p2.x();
   const double dy = p1.y()-p2.y();
   const double dz = p1.z()-p2.z();
-  if(sqrt(dx * dx + dy * dy + dz * dz) > 1.e-4 * CTX::instance()->lc){
+  if(sqrt(dx * dx + dy * dy + dz * dz) > 1.e-2 * CTX::instance()->lc && 0){
     // return reparamOnFace(face, epar,-1);      
     Msg::Warning("Reparam on face partially failed for curve %d surface %d at point %g",
                  tag(), face->tag(), epar);

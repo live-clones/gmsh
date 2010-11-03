@@ -1095,6 +1095,15 @@ const fullMatrix<double> &MElement::getGradShapeFunctionsAtNodes (int functionSp
   return mat;
 }
 
+void MElement::xyzTouvw(fullMatrix<double> *xu){
+  double _xyz[3] = {(*xu)(0,0),(*xu)(0,1),(*xu)(0,2)},_uvw[3] ;
+  xyz2uvw(_xyz,_uvw);
+  (*xu)(1,0) = _uvw[0];
+  (*xu)(1,1) = _uvw[1];
+  (*xu)(1,2) = _uvw[2];
+}
+
+
 #include "Bindings.h"
 
 void MElement::registerBindings(binding *b)
@@ -1125,4 +1134,7 @@ void MElement::registerBindings(binding *b)
   cm = cb->addMethod("getJacobianDeterminant", &MElement::getJacobianDeterminant);
   cm->setDescription("return the jacobian of the determinant of the transformation");
   cm->setArgNames("u","v","w",NULL);
+  cm = cb->addMethod("xyzTouvw", &MElement::xyzTouvw);
+  cm->setDescription("get uvw from xyz");
+  cm->setArgNames("xyzuvw",NULL);
 }

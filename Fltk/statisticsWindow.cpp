@@ -205,8 +205,6 @@ void statisticsWindow::compute(bool elementQuality)
   // meanAngle  = meanAngle / count;
   // printf("Angles = min=%g av=%g \n", minAngle, meanAngle);
   //hack emi
-
-  
   //Emi hack - MESH DEGREE VERTICES
   // std::vector<GEntity*> entities;
   // std::set<MEdge, Less_Edge> edges;

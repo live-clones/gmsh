@@ -335,6 +335,8 @@ static bool recoverEdge(BDS_Mesh *m, GEdge *ge,
     g = m->get_geom(ge->tag(), 1);
   }
   
+  bool _fatallyFailed;
+
   for(unsigned int i = 0; i < ge->lines.size(); i++){
     MVertex *vstart = ge->lines[i]->getVertex(0);
     MVertex *vend = ge->lines[i]->getVertex(1);
@@ -346,14 +348,14 @@ static bool recoverEdge(BDS_Mesh *m, GEdge *ge,
       if(pass == 1) 
         e2r->insert(EdgeToRecover(pstart->iD, pend->iD, ge));
       else{
-        BDS_Edge *e = m->recover_edge(pstart->iD, pend->iD, e2r, notRecovered);
+        BDS_Edge *e = m->recover_edge(pstart->iD, pend->iD, _fatallyFailed, e2r, notRecovered);
         if(e) e->g = g;
-        //else {
-        //   Msg::Error("Unable to recover an edge %g %g && %g %g (%d/%d)",
-        //              vstart->x(), vstart->y(), vend->x(), vend->y(), i, 
-        //              ge->mesh_vertices.size());
-        //   return false;
-        // }
+        else {
+	  if (_fatallyFailed) Msg::Error("Unable to recover an edge %g %g && %g %g (%d/%d)",
+					 vstart->x(), vstart->y(), vend->x(), vend->y(), i, 
+					 ge->mesh_vertices.size());
+	  return !_fatallyFailed;
+	}
       }
     }
   }
@@ -575,7 +577,11 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
     ite = edges.begin();
     while(ite != edges.end()){
       if(!(*ite)->isMeshDegenerated()){
-        recoverEdge(m, *ite, recoverMapInv, &edgesToRecover, &edgesNotRecovered, 2);
+        if (!recoverEdge(m, *ite, recoverMapInv, &edgesToRecover, &edgesNotRecovered, 2)){
+	  delete m;
+	  gf->meshStatistics.status = GFace::FAILED;
+	  return false;
+	}
       }
       ++ite;
     }
@@ -900,7 +906,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) && 
      !CTX::instance()->mesh.optimizeLloyd)
-    recombineIntoQuads(gf);
+    recombineIntoQuadsIterative(gf);
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
                        gf->meshStatistics.average_element_shape,
@@ -1283,11 +1289,13 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     outputScalarField(m->triangles, name, 1);
   }
 
+  bool _fatallyFailed;
+
   for(unsigned int i = 0; i < edgeLoops_BDS.size(); i++){
     std::vector<BDS_Point*> &edgeLoop_BDS = edgeLoops_BDS[i];
     for(unsigned int j = 0; j < edgeLoop_BDS.size(); j++){
       BDS_Edge * e = m->recover_edge
-        (edgeLoop_BDS[j]->iD, edgeLoop_BDS[(j + 1) % edgeLoop_BDS.size()]->iD);
+        (edgeLoop_BDS[j]->iD, edgeLoop_BDS[(j + 1) % edgeLoop_BDS.size()]->iD, _fatallyFailed);
       if(!e){
         Msg::Error("Impossible to recover the edge %d %d", edgeLoop_BDS[j]->iD,
                    edgeLoop_BDS[(j + 1) % edgeLoop_BDS.size()]->iD);

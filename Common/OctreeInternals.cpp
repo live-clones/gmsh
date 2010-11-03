@@ -417,6 +417,6 @@ void *searchAllElements(octantBucket *_buckets_head, double *_pt, globalInfo *_g
   if (flag1)
     return (void *)(_elements);
   
-  Msg::Warning("This point is not found in any element! It is not in the domain");
+  //  Msg::Warning("This point is not found in any element! It is not in the domain");
   return NULL;
 }

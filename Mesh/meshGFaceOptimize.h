@@ -30,7 +30,23 @@ class edge_angle {
 typedef std::map<MVertex*, std::vector<MElement*> > v2t_cont;
 typedef std::map<MEdge, std::pair<MElement*, MElement*>, Less_Edge> e2t_cont;
 
-template <class T> void buildVertexToElement(std::vector<T*> &eles, v2t_cont &adj);
+template <class T> void buildVertexToElement(std::vector<T*> &eles, v2t_cont &adj){
+  for(unsigned int i = 0; i < eles.size(); i++){
+    T *t = eles[i];
+    for(int j = 0; j < t->getNumVertices(); j++){
+      MVertex *v = t->getVertex(j);
+      v2t_cont :: iterator it = adj.find(v);
+      if(it == adj.end()){
+        std::vector<MElement*> one;
+        one.push_back(t);
+        adj[v] = one;
+      }
+      else{
+        it->second.push_back(t);
+      }
+    }
+  }
+}
 template <class T> void buildEdgeToElement(std::vector<T*> &eles, e2t_cont &adj);
 
 void buildVertexToTriangle(std::vector<MTriangle*> &, v2t_cont &adj);
@@ -73,7 +89,10 @@ void buildMeshGenerationDataStructures(GFace *gf,
                                        std::vector<double> &Vs);
 void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
                            std::vector<double> &Us, std::vector<double> &Vs);
-void recombineIntoQuads(GFace *gf);
+void recombineIntoQuads(GFace *gf, 
+			bool topologicalOpti   = true, 
+			bool nodeRepositioning = true);
+void recombineIntoQuadsIterative(GFace *gf);
 
 struct swapquad{
   int v[4];

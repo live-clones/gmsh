@@ -219,6 +219,18 @@ void MQuadrangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 
 double  MQuadrangle::etaShapeMeasure()
 {
+  SVector3 v01 (_v[1]->x()-_v[0]->x(),_v[1]->y()-_v[0]->y(),_v[1]->z()-_v[0]->z());
+  SVector3 v12 (_v[2]->x()-_v[1]->x(),_v[2]->y()-_v[1]->y(),_v[2]->z()-_v[1]->z());
+  SVector3 v23 (_v[3]->x()-_v[2]->x(),_v[3]->y()-_v[2]->y(),_v[3]->z()-_v[2]->z());
+  SVector3 v30 (_v[0]->x()-_v[3]->x(),_v[0]->y()-_v[3]->y(),_v[0]->z()-_v[3]->z());
+
+  SVector3 a = crossprod(v01,v12);
+  SVector3 b = crossprod(v12,v23);
+  SVector3 c = crossprod(v23,v30);
+  SVector3 d = crossprod(v30,v01);
+
+  if (dot(a,b) < 0 || dot(a,c) < 0 || dot(a,d) < 0 )return 0.0;
+
   double a1 = 180 * angle3Vertices(_v[0], _v[1], _v[2]) / M_PI;
   double a2 = 180 * angle3Vertices(_v[1], _v[2], _v[3]) / M_PI;
   double a3 = 180 * angle3Vertices(_v[2], _v[3], _v[0]) / M_PI;

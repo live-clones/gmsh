@@ -263,10 +263,11 @@ BDS_Edge *BDS_Mesh::recover_edge_fast(BDS_Point *p1, BDS_Point *p2){
   return 0;
 }
 
-BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2r, 
+BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal, std::set<EdgeToRecover> *e2r, 
                                  std::set<EdgeToRecover> *not_recovered)
 {
   BDS_Edge *e = find_edge(num1, num2);
+  _fatal = false;
 
   if(e) return e;
 
@@ -331,6 +332,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2
         outputScalarField(triangles, "debugr.pos", 0);
         Msg::Debug("edge %d %d cannot be recovered at all, look at debugp.pos "
                    "and debugr.pos", num1, num2);
+	_fatal = true;
         return 0;
       }
       return eee;
@@ -1170,7 +1172,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
   }
 
   /*    TEST    */
-  double R; SPoint3 c; bool isSphere = gf->isSphere(R,c);
+  bool isSphere = gf->geomType() == GEntity::Sphere;
   double XX=0,YY=0,ZZ=0;
 
   double U = 0;
