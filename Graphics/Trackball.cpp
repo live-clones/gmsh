@@ -192,8 +192,11 @@ trackball(double q[4], double p1x, double p1y, double p2x, double p2y)
    *  Figure out how much to rotate around that axis.
    */
   vsub(p1,p2,d);
-  t = vlength(d);
- 
+  if (CTX::instance()->trackballHyperbolicSheet)
+    t = vlength(d) / (2.0*TRACKBALLSIZE);
+  else
+    t = vlength(d);
+    
   /*
    * Avoid problems with out-of-control values...
    */
