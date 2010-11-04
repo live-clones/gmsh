@@ -54,7 +54,6 @@
  * float->double + optional use of hyperbolic sheet for z-rotation)
  */
 #include <math.h>
-#include "Gmsh.h"
 #include "Trackball.h"
 #include "Context.h"
 #include <iostream>
@@ -195,32 +194,20 @@ trackball(double q[4], double p1x, double p1y, double p2x, double p2y)
   vsub(p1,p2,d);
   t = vlength(d);
  
-  double _camera;
-  GmshGetOption("General", "Camera",_camera );
-  if (_camera )     t = vlength(d) / (2.0*TRACKBALLSIZE);
-    t = vlength(d) / (2.0*TRACKBALLSIZE);
-  
   /*
    * Avoid problems with out-of-control values...
    */
   if (t > 1.0) t = 1.0;
   if (t < -1.0) t = -1.0;
   phi = 2.0 * asin(t);
-  /*
-   * Avoid problems with out-of-control values...
-   */
-  if (t > 1.0) t = 1.0;
-    if (t < -1.0) t = -1.0;
-    phi = 2.0 * asin(t);
 
-    axis_to_quat(a,phi,q);
+  axis_to_quat(a,phi,q);
 }
 
 /*
  *  Given an axis and angle, compute quaternion.
  */
-void
-axis_to_quat(double a[3], double phi, double q[4])
+void axis_to_quat(double a[3], double phi, double q[4])
 {
     vnormal(a);
     vcopy(a,q);
@@ -243,7 +230,8 @@ tb_project_to_sphere(double r, double x, double y)
     if (d < r * 0.70710678118654752440) {    
       // Inside sphere 
       z = sqrt(r*r - d*d);
-    } else {           
+    }
+    else {     
       // On hyperbola 
       t = r / 1.41421356237309504880;
       z = t*t / d;
