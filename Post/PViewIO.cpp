@@ -159,7 +159,7 @@ bool PView::readMSH(std::string fileName, int fileIndex)
           }
         }
         // integer tags
-        int timeStep = 0, numComp = 0, numEnt = 0, partition = 0;
+        int timeStep = 0, numComp = 0, numEnt = 0, partition = -1;
         if(!fgets(str, sizeof(str), fp)) return false;
         if(sscanf(str, "%d", &numTags) != 1) return false;
         for(int i = 0; i < numTags; i++){
