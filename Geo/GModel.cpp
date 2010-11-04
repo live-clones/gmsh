@@ -134,6 +134,9 @@ GModel::GModel(std::string name)
     _factory(0), _fields(0), _currentMeshEntity(0), normals(0)
 {
   partitionSize[0] = 0; partitionSize[1] = 0;
+
+  for(unsigned int i = 0; i < list.size(); i++) list[i]->setVisibility(0);
+
   list.push_back(this);
   // at the moment we always create (at least an empty) GEO model
   _createGEOInternals();
