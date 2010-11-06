@@ -101,6 +101,7 @@ PView *GMSH_FieldFromAmplitudePhasePlugin::execute(PView *v)
   oA = new OctreePost(va); 
   oPhi = new OctreePost(vphi); 
 
+  GModel::current()->setVisibility(0);
   GModel *umodel = new GModel ;  
   umodel->readMSH(fileName) ; 
   std::vector<GEntity*> _entities ;

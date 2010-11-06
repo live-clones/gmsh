@@ -135,8 +135,6 @@ GModel::GModel(std::string name)
 {
   partitionSize[0] = 0; partitionSize[1] = 0;
 
-  for(unsigned int i = 0; i < list.size(); i++) list[i]->setVisibility(0);
-
   list.push_back(this);
   // at the moment we always create (at least an empty) GEO model
   _createGEOInternals();
