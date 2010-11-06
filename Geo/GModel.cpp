@@ -46,88 +46,6 @@
 std::vector<GModel*> GModel::list;
 int GModel::_current = -1;
 
-static void recur_connect(MVertex *v,
-                          std::multimap<MVertex*,MEdge> &v2e,
-                          std::set<MEdge,Less_Edge> &group,
-                          std::set<MVertex*> &touched)
-{
-  if (touched.find(v) != touched.end()) return;
-
-  touched.insert(v);
-  for (std::multimap <MVertex*,MEdge>::iterator it = v2e.lower_bound(v); 
-       it != v2e.upper_bound(v) ; ++it){
-    group.insert(it->second);
-    for (int i = 0; i < it->second.getNumVertices(); ++i){
-      recur_connect (it->second.getVertex(i), v2e, group, touched);
-    }
-  }
-}
-
-// starting form a list of elements, returns lists of lists that are
-// all simply connected
-static void recur_connect_e(const MEdge &e,
-                            std::multimap<MEdge,MElement*, Less_Edge> &e2e,
-                            std::set<MElement*> &group,
-                            std::set<MEdge, Less_Edge> &touched)
-{
-  if (touched.find(e) != touched.end())return;
-  touched.insert(e);
-  for (std::multimap <MEdge,MElement*,Less_Edge>::iterator it = e2e.lower_bound(e);
-         it != e2e.upper_bound(e) ; ++it){
-    group.insert(it->second);
-    for (int i = 0; i < it->second->getNumEdges(); ++i){
-      recur_connect_e(it->second->getEdge(i), e2e, group, touched);
-    }
-  }
-}
-
-static int connected_bounds(std::set<MEdge, Less_Edge> &edges, 
-                            std::vector<std::vector<MEdge> > &boundaries)
-{
-  std::multimap<MVertex*,MEdge> v2e;
-  for(std::set<MEdge, Less_Edge>::iterator it = edges.begin(); it != edges.end(); it++){
-    for (int j=0;j<it->getNumVertices();j++){
-      v2e.insert(std::make_pair(it->getVertex(j),*it));
-    }
-  }
-
-  while (!v2e.empty()){
-    std::set<MEdge, Less_Edge> group;
-    std::set<MVertex*> touched;
-    recur_connect(v2e.begin()->first, v2e, group, touched);
-    std::vector<MEdge> temp;
-    temp.insert(temp.begin(), group.begin(), group.end());
-    boundaries.push_back(temp);
-    for (std::set<MVertex*>::iterator it = touched.begin() ; it != touched.end();++it)
-      v2e.erase(*it);
-  }
-
-  return boundaries.size();
-}
-
-static int connectedRegions(std::vector<MElement*> &elements,
-                            std::vector<std::vector<MElement*> > &regions)
-{
-  std::multimap<MEdge,MElement*,Less_Edge> e2e;
-  for (unsigned int i = 0; i < elements.size(); ++i){
-    for (int j = 0; j < elements[i]->getNumEdges(); j++){
-      e2e.insert(std::make_pair(elements[i]->getEdge(j),elements[i]));
-    }
-  }
-  while (!e2e.empty()){
-    std::set<MElement*> group;
-    std::set<MEdge,Less_Edge> touched;
-    recur_connect_e (e2e.begin()->first,e2e,group,touched);
-    std::vector<MElement*> temp;
-    temp.insert(temp.begin(), group.begin(), group.end());
-    regions.push_back(temp);
-    for ( std::set<MEdge,Less_Edge>::iterator it = touched.begin() ; it != touched.end();++it)
-      e2e.erase(*it);
-  }
-
-  return regions.size();
-}
-
 GModel::GModel(std::string name)
   : _name(name), _visible(1), _octree(0),
     _geo_internals(0), _occ_internals(0), _acis_internals(0), _fm_internals(0),
@@ -1133,98 +1051,181 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
   return num;
 }
 
-void GModel::createTopologyFromMesh()
+static void recurConnectByEdge(const MEdge &e,
+                               std::multimap<MEdge,MElement*, Less_Edge> &e2e,
+                               std::set<MElement*> &group,
+                               std::set<MEdge, Less_Edge> &touched)
 {
-  
-  Msg::StatusBar(2, true, "Creating topology from mesh...");
-  double t1 = Cpu();
-
-  removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
-
-  // for each discreteRegion, create topology
-  std::vector<discreteRegion*> discRegions;
-  for(riter it = firstRegion(); it != lastRegion(); it++)
-    if((*it)->geomType() == GEntity::DiscreteVolume)
-      discRegions.push_back((discreteRegion*) *it);
-
-  //add mesh vertices
-  for (std::vector<discreteRegion*>::iterator it = discRegions.begin();
-       it != discRegions.end(); it++){
-    for( std::vector<MVertex*>::const_iterator itv = (*it)->mesh_vertices.begin();  
-	 itv != (*it)->mesh_vertices.end(); itv++)
-      (*itv)->setEntity(*it);  
+  if (touched.find(e) != touched.end())return;
+  touched.insert(e);
+  for (std::multimap <MEdge,MElement*,Less_Edge>::iterator it = e2e.lower_bound(e);
+         it != e2e.upper_bound(e) ; ++it){
+    group.insert(it->second);
+    for (int i = 0; i < it->second->getNumEdges(); ++i){
+      recurConnectByEdge(it->second->getEdge(i), e2e, group, touched);
+    }
   }
-  
-  //for each discreteFace, createTopology
+}
+
+static int connectedSurfaces(std::vector<MElement*> &elements,
+                             std::vector<std::vector<MElement*> > &regions)
+{
+  std::multimap<MEdge, MElement*, Less_Edge> e2e;
+  for(unsigned int i = 0; i < elements.size(); ++i){
+    for(int j = 0; j < elements[i]->getNumEdges(); j++){
+      e2e.insert(std::make_pair(elements[i]->getEdge(j), elements[i]));
+    }
+  }
+  while(!e2e.empty()){
+    std::set<MElement*> group;
+    std::set<MEdge, Less_Edge> touched;
+    recurConnectByEdge(e2e.begin()->first, e2e, group, touched);
+    std::vector<MElement*> temp;
+    temp.insert(temp.begin(), group.begin(), group.end());
+    regions.push_back(temp);
+    for(std::set<MEdge, Less_Edge>::iterator it = touched.begin() ; it != touched.end(); ++it)
+      e2e.erase(*it);
+  }
+  return regions.size();
+}
+
+static void recurConnectByVertex(MVertex *v,
+                                 std::multimap<MVertex*,MEdge> &v2e,
+                                 std::set<MEdge,Less_Edge> &group,
+                                 std::set<MVertex*> &touched)
+{
+  if (touched.find(v) != touched.end()) return;
+
+  touched.insert(v);
+  for (std::multimap <MVertex*,MEdge>::iterator it = v2e.lower_bound(v); 
+       it != v2e.upper_bound(v) ; ++it){
+    group.insert(it->second);
+    for (int i = 0; i < it->second.getNumVertices(); ++i){
+      recurConnectByVertex(it->second.getVertex(i), v2e, group, touched);
+    }
+  }
+}
+
+static int connectedSurfaceBoundaries(std::set<MEdge, Less_Edge> &edges, 
+                                      std::vector<std::vector<MEdge> > &boundaries)
+{
+  std::multimap<MVertex*,MEdge> v2e;
+  for(std::set<MEdge, Less_Edge>::iterator it = edges.begin(); it != edges.end(); it++){
+    for (int j = 0; j < it->getNumVertices(); j++){
+      v2e.insert(std::make_pair(it->getVertex(j), *it));
+    }
+  }
+
+  while (!v2e.empty()){
+    std::set<MEdge, Less_Edge> group;
+    std::set<MVertex*> touched;
+    recurConnectByVertex(v2e.begin()->first, v2e, group, touched);
+    std::vector<MEdge> temp;
+    temp.insert(temp.begin(), group.begin(), group.end());
+    boundaries.push_back(temp);
+    for (std::set<MVertex*>::iterator it = touched.begin() ; it != touched.end();++it)
+      v2e.erase(*it);
+  }
+
+  return boundaries.size();
+}
+
+void GModel::makeDiscreteFacesSimplyConnected()
+{
   std::vector<discreteFace*> discFaces;
   for(fiter it = firstFace(); it != lastFace(); it++)
     if((*it)->geomType() == GEntity::DiscreteSurface)
       discFaces.push_back((discreteFace*) *it);
-  
-  //--------
-  //for each discrete face, compute if it is made of connected faces
-  std::vector<discreteFace*> newDiscFaces;
+
   for (std::vector<discreteFace*>::iterator itF = discFaces.begin(); 
-         itF != discFaces.end(); itF++){
+       itF != discFaces.end(); itF++){
 
     std::vector<MElement*> allElements;
-    for (unsigned int i = 0; i < (*itF)->getNumMeshElements(); i++)
+    for(unsigned int i = 0; i < (*itF)->getNumMeshElements(); i++)
       allElements.push_back((*itF)->getMeshElement(i));
-
-    std::vector<std::vector<MElement*> >  conRegions;
-    int nbFaces = connectedRegions (allElements, conRegions);
     
+    std::vector<std::vector<MElement*> > conFaces;
+    int nbFaces = connectedSurfaces(allElements, conFaces);
     remove(*itF);
+
     for (int ifa  = 0; ifa < nbFaces; ifa++){
-      std::vector<MElement*> myElements = conRegions[ifa];
+      std::vector<MElement*> myElements = conFaces[ifa];
 
       int numF;
       if (nbFaces == 1) numF = (*itF)->tag(); 
       else numF = getMaxElementaryNumber(2) + 1;
       discreteFace *f = new discreteFace(this, numF);
-      //printf("*** Created discreteFace %d \n", numF);
       add(f);
-      newDiscFaces.push_back(f);
 
-      //fill new face with mesh vertices
       std::set<MVertex*> allV;
       for(unsigned int i = 0; i < myElements.size(); i++) {
-	MVertex *v0 = myElements[i]->getVertex(0);
-	MVertex *v1 = myElements[i]->getVertex(1);
-	MVertex *v2 = myElements[i]->getVertex(2);
-	f->triangles.push_back(new MTriangle( v0, v1, v2));
-	allV.insert(v0);  allV.insert(v1);  allV.insert(v2);
-	v0->setEntity(f); v1->setEntity(f); v2->setEntity(f);
+        MElement *e = myElements[i];
+        std::vector<MVertex*> verts;
+        e->getVertices(verts);
+        for(unsigned int k = 0; k < verts.size(); k++){
+          allV.insert(verts[k]);
+          verts[k]->setEntity(f);
+        }
+        MElementFactory factory;
+        MElement *e2 = factory.create(e->getTypeForMSH(), verts, e->getNum(),
+                                      e->getPartition());
+        if(e2->getType() == TYPE_TRI) 
+          f->triangles.push_back((MTriangle*)e2);
+        else
+          f->quadrangles.push_back((MQuadrangle*)e2);
       }
-      f->mesh_vertices.insert(f->mesh_vertices.begin(), allV.begin(),allV.end());
-      
-      //delete new mesh vertices of face from adjacent regions
-      for (std::vector<discreteRegion*>::iterator itR = discRegions.begin();
-	   itR != discRegions.end(); itR++){
-	for (std::set<MVertex*>::iterator itv = allV.begin();itv != allV.end(); itv++) {
-	  std::vector<MVertex*>::iterator itve = 
-	    std::find((*itR)->mesh_vertices.begin(), (*itR)->mesh_vertices.end(), *itv);
-	  if (itve != (*itR)->mesh_vertices.end()) (*itR)->mesh_vertices.erase(itve);
-	}
-      }
-      
+      f->mesh_vertices.insert(f->mesh_vertices.begin(), allV.begin(), allV.end());
     }
-
   }
-  discFaces = newDiscFaces;
-  //------
+}
 
-  //set boundary faces for each volume
+void GModel::createTopologyFromMesh()
+{
+  Msg::StatusBar(2, true, "Creating topology from mesh...");
+  double t1 = Cpu();
 
+  removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
+
+  makeDiscreteFacesSimplyConnected();
+
+  // create topology for all discrete regions
+  std::vector<discreteRegion*> discRegions;
+  for(riter it = firstRegion(); it != lastRegion(); it++)
+    if((*it)->geomType() == GEntity::DiscreteVolume)
+      discRegions.push_back((discreteRegion*) *it);
+  createTopologyFromRegions(discRegions);
+
+  // create topology for all discrete faces
+  std::vector<discreteFace*> discFaces;
+  for(fiter it = firstFace(); it != lastFace(); it++)
+    if((*it)->geomType() == GEntity::DiscreteSurface)
+      discFaces.push_back((discreteFace*) *it);
+  createTopologyFromFaces(discFaces);
+
+  // create old format (necessary for boundary layers)
+  exportDiscreteGEOInternals();
+  
+  double t2 = Cpu();
+  Msg::StatusBar(2, true, "Done creating topology from mesh (%g s)", t2 - t1);
+}
+
+void GModel::createTopologyFromRegions(std::vector<discreteRegion*> &discRegions)
+{
   // find boundary faces of each region and put them in a map_faces that
-  // associates the MElements with the tags of the adjacent regions
+  // associates the faces with the tags of the adjacent regions
   std::map<MFace, std::vector<int>, Less_Face > map_faces;
   for (std::vector<discreteRegion*>::iterator it = discRegions.begin(); 
        it != discRegions.end(); it++){
     (*it)->findFaces(map_faces);
   }
 
- // create reverse map, for each region find set of MFaces that are
+  // get all discrete faces
+  std::vector<discreteFace*> discFaces;
+  for(fiter it = firstFace(); it != lastFace(); it++)
+    if((*it)->geomType() == GEntity::DiscreteSurface)
+      discFaces.push_back((discreteFace*) *it);
+
+  // create reverse map, for each region find set of MFaces that are
   // candidate for new discrete Face
   std::map<int, std::set<int> > region2Faces;
 
@@ -1233,40 +1234,34 @@ void GModel::createTopologyFromMesh()
     for (unsigned int i = 0; i < (*itF)->getNumMeshElements(); i++){
       MFace mf = (*itF)->getMeshElement(i)->getFace(0);
       std::map<MFace, std::vector<int>, Less_Face >::iterator itset = map_faces.find(mf);
-      if (itset !=  map_faces.end()){
+      if (itset != map_faces.end()){
 	std::vector<int> tagRegions = itset->second;
-	for (std::vector<int>::iterator itR =tagRegions.begin(); itR != tagRegions.end(); itR++){
+	for (std::vector<int>::iterator itR = tagRegions.begin(); itR != tagRegions.end();
+             itR++){
 	  std::map<int, std::set<int> >::iterator itmap = region2Faces.find(*itR);
 	  if (itmap == region2Faces.end()){
-	    std::set<int>  oneFace; oneFace.insert((*itF)->tag());
+	    std::set<int> oneFace; 
+            oneFace.insert((*itF)->tag());
 	    region2Faces.insert(std::make_pair(*itR, oneFace));
 	  } 
 	  else{
-	     std::set<int>  allFaces = itmap->second;
-	     allFaces.insert(allFaces.begin(), (*itF)->tag());
-	     itmap->second = allFaces;
+            std::set<int> allFaces = itmap->second;
+            allFaces.insert(allFaces.begin(), (*itF)->tag());
+            itmap->second = allFaces;
 	  }
 	}
       }
     }
   }
 
-  for (std::vector<discreteRegion*>::iterator it = discRegions.begin();  it != discRegions.end(); it++){
+  for (std::vector<discreteRegion*>::iterator it = discRegions.begin(); 
+       it != discRegions.end(); it++){
     std::map<int, std::set<int> >::iterator itr = region2Faces.find((*it)->tag());
     if (itr != region2Faces.end()){
       std::set<int> bcFaces = itr->second;
       (*it)->setBoundFaces(bcFaces);
     }
   }
-
-  //create Topo for faces
-  createTopologyFromFaces(discFaces);
-  
-  double t2 = Cpu();
-  Msg::StatusBar(2, true, "Done creating topology from mesh (%g s)", t2-t1);
-  
-  //create old format (necessary for boundary layers)
-  exportDiscreteGEOInternals();
 }
 
 void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
@@ -1294,7 +1289,6 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
 
   while (!map_edges.empty()){
     std::set<MEdge, Less_Edge> myEdges;
-    myEdges.clear();
     std::vector<int> tagFaces = map_edges.begin()->second;
     myEdges.insert(map_edges.begin()->first);
     map_edges.erase(map_edges.begin());
@@ -1310,10 +1304,10 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
         itmap++;
     }
 
-    // if the loaded mesh already contains discrete Edges, check if
-    // the candidate discrete Edge does contain any of those; if not,
+    // if the loaded mesh already contains discrete edges, check if
+    // the candidate discrete edge does contain any of those; if not,
     // create discreteEdges and create a map face2Edges that associate
-    // for each face the boundary discrete Edges
+    // for each face the boundary discrete edges
 
     for (std::vector<discreteEdge*>::iterator itE = discEdges.begin(); 
          itE != discEdges.end(); itE++){
@@ -1322,7 +1316,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
       for (unsigned int i = 0; i < (*itE)->getNumMeshElements(); i++){
         MEdge me = (*itE)->getMeshElement(i)->getEdge(0);
         std::set<MEdge, Less_Edge >::iterator itset = myEdges.find(me);
-        if (itset ==  myEdges.end()){
+        if (itset == myEdges.end()){
           candidate = false;
           break;
         }
@@ -1336,65 +1330,62 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
           std::set<MEdge, Less_Edge >::iterator itset = myEdges.find(me);
           myEdges.erase(itset);
         }
-
         for (std::vector<int>::iterator itFace = tagFaces.begin(); 
              itFace != tagFaces.end(); itFace++) {
           std::map<int, std::vector<int> >::iterator it = face2Edges.find(*itFace);
-          if (it == face2Edges.end()) face2Edges.insert(std::make_pair(*itFace, tagEdges));
+          if (it == face2Edges.end())
+            face2Edges.insert(std::make_pair(*itFace, tagEdges));
           else{
             std::vector<int> allEdges = it->second;
             allEdges.insert(allEdges.begin(), tagEdges.begin(), tagEdges.end());
             it->second = allEdges;
           }
-	  
-	  //delete new mesh vertices of edge from adjacent faces
+	  // delete new mesh vertices of edge from adjacent faces
 	  GFace *gf = getFaceByTag(*itFace);
 	  for (std::vector<int>::iterator itEdge = tagEdges.begin(); 
 	       itEdge != tagEdges.end(); itEdge++) {
-	    int count  = 0;
 	    GEdge *ge = getEdgeByTag(*itEdge);
-	    for( std::vector<MVertex*>::const_iterator itv = ge->mesh_vertices.begin(); 
-		 itv != ge->mesh_vertices.end(); itv++){
+	    for(std::vector<MVertex*>::const_iterator itv = ge->mesh_vertices.begin(); 
+                itv != ge->mesh_vertices.end(); itv++){
 	      std::vector<MVertex*>::iterator itve = std::find
 		(gf->mesh_vertices.begin(), gf->mesh_vertices.end(), *itv);
-	      if (itve != gf->mesh_vertices.end()){ count++; gf->mesh_vertices.erase(itve);}
+	      if (itve != gf->mesh_vertices.end()){ 
+                gf->mesh_vertices.erase(itve);
+              }
 	    }
 	  }  
         }
-
       }
     }
-
+  
     std::vector<std::vector<MEdge> > boundaries;
-    int nbBounds = connected_bounds(myEdges, boundaries);   
+    int nbBounds = connectedSurfaceBoundaries(myEdges, boundaries);   
 
-    for (int ib  = 0; ib < nbBounds; ib++){
+    for (int ib = 0; ib < nbBounds; ib++){
       std::vector<MEdge> myLines = boundaries[ib];
 
       int numE = getMaxElementaryNumber(1) + 1;
       discreteEdge *e = new discreteEdge(this, numE, 0, 0);
-      //printf("*** Created discreteEdge %d \n", numE);
-
       add(e);
       discEdges.push_back(e);
 
-      //fill new edge with mesh vertices
+      // fill new edge with mesh vertices
       std::set<MVertex*> allV;
       for(unsigned int i = 0; i < myLines.size(); i++) {
         MVertex *v0 = myLines[i].getVertex(0);
         MVertex *v1 = myLines[i].getVertex(1);
-        e->lines.push_back(new MLine( v0, v1));
-	allV.insert(v0);//before it was std::vector with find ??
+        e->lines.push_back(new MLine(v0, v1));
+	allV.insert(v0);
 	allV.insert(v1);
         v0->setEntity(e);
         v1->setEntity(e);
       }
-      e->mesh_vertices.insert(e->mesh_vertices.begin(), allV.begin(),allV.end());
+      e->mesh_vertices.insert(e->mesh_vertices.begin(), allV.begin(), allV.end());
 
       for (std::vector<int>::iterator itFace = tagFaces.begin(); 
            itFace != tagFaces.end(); itFace++) {
 
-        //delete new mesh vertices of edge from adjacent faces
+        // delete mesh vertices of new edge from adjacent faces
         GFace *dFace = getFaceByTag(*itFace);
         for (std::set<MVertex*>::iterator itv = allV.begin();itv != allV.end(); itv++) {
           std::vector<MVertex*>::iterator itve = 
@@ -1402,7 +1393,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
           if (itve != dFace->mesh_vertices.end()) dFace->mesh_vertices.erase(itve);
         }
     
-        //fill face2Edges with the new edge
+        // fill face2Edges with the new edge
         std::map<int, std::vector<int> >::iterator f2e = face2Edges.find(*itFace);
         if (f2e == face2Edges.end()){
           std::vector<int> tagEdges;
@@ -1416,9 +1407,8 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
         }
 
       }
-     
+    
     }
-    if (map_edges.empty()) break;
   }
 
   // set boundary edges for each face
@@ -1431,17 +1421,18 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
     }
   }
 
-  // for each discreteEdge, create Topology
+  // for each discreteEdge, create topology
   std::map<GFace*, std::map<MVertex*, MVertex*, std::less<MVertex*> > > face2Vert;
   std::map<GRegion*, std::map<MVertex*, MVertex*, std::less<MVertex*> > > region2Vert;
   face2Vert.clear();
   region2Vert.clear();
-  for (std::vector<discreteEdge*>::iterator it = discEdges.begin(); it != discEdges.end(); it++){
+  for (std::vector<discreteEdge*>::iterator it = discEdges.begin();
+       it != discEdges.end(); it++){
     (*it)->createTopo();
     (*it)->parametrize(face2Vert, region2Vert);
   }
 
-  //fill edgeLoops of Faces or correct sign of l_edges
+  // fill edgeLoops of Faces or correct sign of l_edges
   // for (std::vector<discreteFace*>::iterator itF = discFaces.begin();
   //      itF != discFaces.end(); itF++){
   //   //EMI, TODO
@@ -1451,77 +1442,77 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
   //   edgeLoops.push_back(el);
   // }
 
-
- //we need to recreate lines, triangles and tets
-  //that contain those new MEdgeVertices
+  // we need to recreate lines, triangles and tets that contain those
+  // new MEdgeVertices
   for (std::map<GFace*, std::map<MVertex*, MVertex*, std::less<MVertex*> > >::iterator
-         iFace= face2Vert.begin(); iFace != face2Vert.end(); iFace++){
+         iFace = face2Vert.begin(); iFace != face2Vert.end(); iFace++){
     std::map<MVertex*, MVertex*, std::less<MVertex*> > old2new = iFace->second;
     GFace *gf = iFace->first;
     std::vector<MTriangle*> newTriangles;
     std::vector<MQuadrangle*> newQuadrangles;
     for (unsigned int i = 0; i < gf->getNumMeshElements(); ++i){
       MElement *e = gf->getMeshElement(i);
-      int N = e->getNumVertices();
-      std::vector<MVertex *> v(N);
-      for(int j = 0; j < N; j++) v[j] = e->getVertex(j);
-      for (int j = 0; j < N; j++){
-        std::map<MVertex*, MVertex*, std::less<MVertex*> >::iterator itmap = old2new.find(v[j]);
-        MVertex *vNEW;
-        if (itmap != old2new.end())  {
-          vNEW = itmap->second;
-          v[j]=vNEW;
-        }
+      std::vector<MVertex *> v;
+      e->getVertices(v);
+      for (unsigned int j = 0; j < v.size(); j++){
+        std::map<MVertex*, MVertex*, std::less<MVertex*> >::iterator 
+          itmap = old2new.find(v[j]);
+        if (itmap != old2new.end()) 
+          v[j] = itmap->second;
       }
-      if (N == 3) newTriangles.push_back(new  MTriangle(v[0], v[1], v[2]));
-      else if ( N == 4)  newQuadrangles.push_back(new  MQuadrangle(v[0], v[1], v[2], v[3]));
-      
+      MElementFactory factory;
+      MElement *e2 = factory.create(e->getTypeForMSH(), v, e->getNum(),
+                                    e->getPartition());
+      switch(e2->getType()){
+      case TYPE_TRI: newTriangles.push_back((MTriangle*)e2); break;
+      case TYPE_QUA: newQuadrangles.push_back((MQuadrangle*)e2); break;
+      }
     }
     gf->deleteVertexArrays();
-    gf->triangles.clear();
+    for(unsigned int i = 0; i < gf->triangles.size(); i++) delete gf->triangles[i];
+    for(unsigned int i = 0; i < gf->quadrangles.size(); i++) delete gf->quadrangles[i];
     gf->triangles = newTriangles;
-    gf->quadrangles.clear();
     gf->quadrangles = newQuadrangles;
   }
 
   for (std::map<GRegion*, std::map<MVertex*, MVertex*, std::less<MVertex*> > >::iterator
-         iRegion= region2Vert.begin(); iRegion != region2Vert.end(); iRegion++){
+         iRegion = region2Vert.begin(); iRegion != region2Vert.end(); iRegion++){
     std::map<MVertex*, MVertex*, std::less<MVertex*> > old2new = iRegion->second;
     GRegion *gr = iRegion->first;
-     std::vector<MTetrahedron*> newTetrahedra;
-     std::vector<MHexahedron*> newHexahedra;
-     std::vector<MPrism*> newPrisms;
-     std::vector<MPyramid*> newPyramids;
-     for (unsigned int i = 0; i < gr->getNumMeshElements(); ++i){
-       MElement *e = gr->getMeshElement(i);
-       int N = e->getNumVertices();
-       std::vector<MVertex *> v(N);
-       for(int j = 0; j < N; j++) v[j] = e->getVertex(j);
-       for (int j = 0; j < N; j++){
-         std::map<MVertex*, MVertex*, std::less<MVertex*> >::iterator itmap = old2new.find(v[j]);
-         MVertex *vNEW;
-         if (itmap != old2new.end())  {
-           vNEW = itmap->second;
-           v[j]=vNEW;
-         }
-       }
-       if (N == 4) newTetrahedra.push_back(new MTetrahedron(v[0], v[1], v[2], v[3]));
-       else if (N == 5) newPyramids.push_back(new MPyramid(v[0], v[1], v[2], v[3], v[4]));
-       else if (N == 6) newPrisms.push_back(new MPrism(v[0], v[1], v[2], v[3], v[4], v[5]));
-       else if (N == 8) newHexahedra.push_back(new MHexahedron(v[0], v[1], v[2], v[3],
-                                                               v[4], v[5], v[6], v[7]));
-     }
-     gr->deleteVertexArrays();
-     gr->tetrahedra.clear();
-     gr->tetrahedra = newTetrahedra;
-     gr->pyramids.clear();
-     gr->pyramids = newPyramids;
-     gr->prisms.clear();
-     gr->prisms = newPrisms;
-     gr->hexahedra.clear();
-     gr->hexahedra = newHexahedra;
-   }
-
+    std::vector<MTetrahedron*> newTetrahedra;
+    std::vector<MHexahedron*> newHexahedra;
+    std::vector<MPrism*> newPrisms;
+    std::vector<MPyramid*> newPyramids;
+    for (unsigned int i = 0; i < gr->getNumMeshElements(); ++i){
+      MElement *e = gr->getMeshElement(i);
+      std::vector<MVertex *> v;
+      e->getVertices(v);
+      for (unsigned int j = 0; j < v.size(); j++){
+        std::map<MVertex*, MVertex*, std::less<MVertex*> >::iterator 
+          itmap = old2new.find(v[j]);
+        if (itmap != old2new.end()) 
+          v[j] = itmap->second;
+      }
+      MElementFactory factory;
+      MElement *e2 = factory.create(e->getTypeForMSH(), v, e->getNum(),
+                                    e->getPartition());
+      switch(e2->getType()){
+      case TYPE_TET: newTetrahedra.push_back((MTetrahedron*)e2); break;
+      case TYPE_HEX: newHexahedra.push_back((MHexahedron*)e2); break;
+      case TYPE_PRI: newPrisms.push_back((MPrism*)e2); break;
+      case TYPE_PYR: newPyramids.push_back((MPyramid*)e2); break;
+      }
+    }
+    gr->deleteVertexArrays();
+    for(unsigned int i = 0; i < gr->tetrahedra.size(); i++) delete gr->tetrahedra[i];
+    for(unsigned int i = 0; i < gr->hexahedra.size(); i++) delete gr->hexahedra[i];
+    for(unsigned int i = 0; i < gr->prisms.size(); i++) delete gr->prisms[i];
+    for(unsigned int i = 0; i < gr->pyramids.size(); i++) delete gr->pyramids[i];
+    gr->tetrahedra = newTetrahedra;
+    gr->hexahedra = newHexahedra;
+    gr->prisms = newPrisms;
+    gr->pyramids = newPyramids;
+  }
 }
 
 GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem)

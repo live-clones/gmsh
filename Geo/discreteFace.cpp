@@ -21,20 +21,32 @@ discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
   meshStatistics.status = GFace::DONE;
 }
 
+void discreteFace::setBoundEdges(std::vector<int> tagEdges)
+{
+  for (std::vector<int>::iterator it = tagEdges.begin(); it != tagEdges.end(); it++){
+    GEdge *ge = GModel::current()->getEdgeByTag(*it);
+    l_edges.push_back(ge);
+    l_dirs.push_back(1);
+    ge->addFace(this);
+  }
+}
+
 void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge> &map_edges)
 {
   std::set<MEdge, Less_Edge> bound_edges;
-  for (unsigned int iFace = 0; iFace  < getNumMeshElements() ; iFace++) {
+  for (unsigned int iFace = 0; iFace  < getNumMeshElements(); iFace++) {
     MElement *e = getMeshElement(iFace);
     for (int iEdge = 0; iEdge < e->getNumEdges(); iEdge++) {
-      MEdge tmp_edge =  e->getEdge(iEdge);
+      MEdge tmp_edge = e->getEdge(iEdge);
       std::set<MEdge, Less_Edge >::iterator itset = bound_edges.find(tmp_edge);
-      if (itset == bound_edges.end())   bound_edges.insert(tmp_edge);
-      else bound_edges.erase(itset);
+      if(itset == bound_edges.end())
+        bound_edges.insert(tmp_edge);
+      else
+        bound_edges.erase(itset);
     }
   }
 
-  // for the boundary edges, associate the tag of the current discrete face
+  // for the boundary edges, associate the tag of the discrete face
   for (std::set<MEdge, Less_Edge>::iterator itv = bound_edges.begin();
        itv != bound_edges.end(); ++itv){
     std::map<MEdge, std::vector<int>, Less_Edge >::iterator itmap = map_edges.find(*itv);
@@ -48,16 +60,6 @@ void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge> &map_e
       tagFaces.push_back(tag());
       itmap->second = tagFaces;
     }
-  }
-}
-
-void discreteFace::setBoundEdges(std::vector<int> tagEdges)
-{
-  for (std::vector<int>::iterator it = tagEdges.begin(); it != tagEdges.end(); it++){
-    GEdge *ge = GModel::current()->getEdgeByTag(*it);
-    l_edges.push_back(ge);
-    l_dirs.push_back(1);
-    ge->addFace(this);
   }
 }
 
@@ -134,5 +136,4 @@ void discreteFace::writeGEO(FILE *fp)
     count ++;
   }
   fprintf(fp, "};\n");    
-  
 }

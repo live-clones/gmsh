@@ -27,6 +27,7 @@ class FieldManager;
 class CGNSOptions;
 class gLevelset;
 class discreteFace;
+class discreteRegion;
 class binding;
 class MElementOctree;
 class GModelFactory;
@@ -352,7 +353,9 @@ class GModel
 
   // create topology from mesh
   void createTopologyFromMesh();
+  void createTopologyFromRegions(std::vector<discreteRegion*> &discRegions);
   void createTopologyFromFaces(std::vector<discreteFace*> &pFaces);
+  void makeDiscreteFacesSimplyConnected();
 
   // a container for smooth normals
   smooth_normals *normals;

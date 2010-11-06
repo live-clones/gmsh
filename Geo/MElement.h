@@ -75,10 +75,19 @@ class MElement
   // get & set the vertices
   virtual int getNumVertices() const = 0;
   virtual MVertex *getVertex(int num) = 0;
-  virtual void setVertex(int num, MVertex *v) {throw;}
+  void getVertices(std::vector<MVertex*> &verts)
+  {
+    int N = getNumVertices();
+    verts.resize(N);
+    for(int i = 0; i < N; i++) verts[i] = getVertex(i);
+  }
+  virtual void setVertex(int num, MVertex *v) 
+  {
+    Msg::Error("Vertex set not supported for this element");
+  }
 
   // give an MVertex as input and get its local number
-  virtual void getVertexInfo(const MVertex * vertex, int &ithVertex) const 
+  virtual void getVertexInfo(const MVertex *vertex, int &ithVertex) const 
   {
     Msg::Error("Vertex information not available for this element");
   }
