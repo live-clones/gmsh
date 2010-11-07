@@ -3,7 +3,7 @@ Mesh.RemeshAlgorithm=1; //(0) nosplit (1) automatic (2) split metis
 
 Mesh.CharacteristicLengthFactor=0.2;
 
-Merge "implant2.stl";
+Merge "implant.stl";
 CreateTopology;
 
 Compound Surface(100)={1};
