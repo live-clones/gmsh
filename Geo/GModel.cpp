@@ -1132,6 +1132,8 @@ static int connectedSurfaceBoundaries(std::set<MEdge, Less_Edge> &edges,
 
 void GModel::makeDiscreteFacesSimplyConnected()
 {
+  Msg::Debug("Making discrete faces simply connected...");
+
   std::vector<discreteFace*> discFaces;
   for(fiter it = firstFace(); it != lastFace(); it++)
     if((*it)->geomType() == GEntity::DiscreteSurface)
@@ -1176,6 +1178,8 @@ void GModel::makeDiscreteFacesSimplyConnected()
         (f->mesh_vertices.begin(), myVertices.begin(), myVertices.end());
     }
   }
+
+  Msg::Debug("Done making discrete faces simply connected");
 }
 
 void GModel::createTopologyFromMesh()
@@ -1210,6 +1214,8 @@ void GModel::createTopologyFromMesh()
 
 void GModel::createTopologyFromRegions(std::vector<discreteRegion*> &discRegions)
 {
+  Msg::Debug("Creating topology from regions...");
+
   // find boundary mesh faces of each discrete region and put them in
   // map_faces, which associates each MFace with the tags of the
   // adjacent regions
@@ -1230,6 +1236,8 @@ void GModel::createTopologyFromRegions(std::vector<discreteRegion*> &discRegions
 
   while (!map_faces.empty()){
 
+    Msg::Debug("... %d mesh faces left to process", map_faces.size());
+  
     std::set<MFace, Less_Face> myFaces;
     std::vector<int> tagRegions = map_faces.begin()->second;
     myFaces.insert(map_faces.begin()->first);
@@ -1356,10 +1364,14 @@ void GModel::createTopologyFromRegions(std::vector<discreteRegion*> &discRegions
       (*it)->setBoundFaces(bcFaces);
     }
   }
+
+  Msg::Debug("Done creating topology from regions");
 }
 
 void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
 {
+  Msg::Debug("Creating topology from faces...");
+
   // find boundary mesh edges of each discrete face and put them in
   // map_edges, which associates each MEdge with the tags of the
   // adjacent faces
@@ -1383,6 +1395,9 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
   std::map<int, std::vector<int> > face2Edges;
 
   while (!map_edges.empty()){
+
+    Msg::Debug("... %d mesh edges left to process", map_edges.size());
+    
     std::set<MEdge, Less_Edge> myEdges;
     std::vector<int> tagFaces = map_edges.begin()->second;
     myEdges.insert(map_edges.begin()->first);
@@ -1495,6 +1510,9 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
     }
   }
 
+  Msg::Debug("Done creating topology from faces");
+  Msg::Debug("Creating topology for edges...");
+
   // for each discreteEdge, create topology
   std::map<GFace*, std::map<MVertex*, MVertex*, std::less<MVertex*> > > face2Vert;
   std::map<GRegion*, std::map<MVertex*, MVertex*, std::less<MVertex*> > > region2Vert;
@@ -1548,7 +1566,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
     gf->triangles = newTriangles;
     gf->quadrangles = newQuadrangles;
   }
-
+  
   for (std::map<GRegion*, std::map<MVertex*, MVertex*, std::less<MVertex*> > >::iterator
          iRegion = region2Vert.begin(); iRegion != region2Vert.end(); iRegion++){
     std::map<MVertex*, MVertex*, std::less<MVertex*> > old2new = iRegion->second;
@@ -1587,6 +1605,8 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
     gr->prisms = newPrisms;
     gr->pyramids = newPyramids;
   }
+
+  Msg::Debug("Done creating topology from edges");
 }
 
 GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem)
