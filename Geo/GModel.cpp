@@ -1139,6 +1139,8 @@ void GModel::makeDiscreteFacesSimplyConnected()
     if((*it)->geomType() == GEntity::DiscreteSurface)
       discFaces.push_back((discreteFace*) *it);
 
+  std::set<MVertex*> touched;
+
   for(std::vector<discreteFace*>::iterator itF = discFaces.begin(); 
       itF != discFaces.end(); itF++){
 
@@ -1162,8 +1164,11 @@ void GModel::makeDiscreteFacesSimplyConnected()
         e->getVertices(verts);
         for(unsigned int k = 0; k < verts.size(); k++){
           if(verts[k]->onWhat() && verts[k]->onWhat()->dim() == 2){
-            verts[k]->setEntity(f);
-            myVertices.insert(verts[k]);
+            if(touched.find(verts[k]) == touched.end()){
+              verts[k]->setEntity(f);
+              myVertices.insert(verts[k]);
+              touched.insert(verts[k]);
+            }
           }
         }
         MElementFactory factory;
@@ -1189,14 +1194,14 @@ void GModel::createTopologyFromMesh()
 
   removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
 
-  makeDiscreteFacesSimplyConnected();
-
   // create topology for all discrete regions
   std::vector<discreteRegion*> discRegions;
   for(riter it = firstRegion(); it != lastRegion(); it++)
     if((*it)->geomType() == GEntity::DiscreteVolume)
       discRegions.push_back((discreteRegion*) *it);
   createTopologyFromRegions(discRegions);
+
+  makeDiscreteFacesSimplyConnected();
 
   // create topology for all discrete faces
   std::vector<discreteFace*> discFaces;
@@ -1233,6 +1238,7 @@ void GModel::createTopologyFromRegions(std::vector<discreteRegion*> &discRegions
   // create reverse map storing for each discrete region the list of
   // discrete faces on its boundary
   std::map<int, std::set<int> > region2Faces;
+  std::set<MVertex*> touched;
 
   while (!map_faces.empty()){
 
@@ -1302,15 +1308,18 @@ void GModel::createTopologyFromRegions(std::vector<discreteRegion*> &discRegions
       discreteFace *f = new discreteFace(this, numF);
       add(f);
       discFaces.push_back(f);
-      std::set<MVertex*> allV;
+      std::set<MVertex*> myVertices;
       for(std::set<MFace, Less_Face>::iterator it = myFaces.begin(); 
           it != myFaces.end(); it++){
         std::vector<MVertex*> verts(it->getNumVertices());
         for(int i = 0; i < it->getNumVertices(); i++){
           verts[i] = it->getVertex(i);
           if(verts[i]->onWhat() && verts[i]->onWhat()->dim() == 3){
-            allV.insert(verts[i]);
-            verts[i]->setEntity(f);
+            if(touched.find(verts[i]) != touched.end()){
+              myVertices.insert(verts[i]);
+              verts[i]->setEntity(f);
+              touched.insert(verts[i]);
+            }
           }
         }
         if(verts.size() == 4)
@@ -1318,14 +1327,16 @@ void GModel::createTopologyFromRegions(std::vector<discreteRegion*> &discRegions
         else
           f->triangles.push_back(new MTriangle(verts));
       }
-      f->mesh_vertices.insert(f->mesh_vertices.begin(), allV.begin(), allV.end());
+      f->mesh_vertices.insert(f->mesh_vertices.begin(), 
+                              myVertices.begin(), myVertices.end());
 
       for (std::vector<int>::iterator itReg = tagRegions.begin(); 
            itReg != tagRegions.end(); itReg++) {
 
         // delete mesh vertices of new edge from adjacent regions
         GRegion *dReg = getRegionByTag(*itReg);
-        for (std::set<MVertex*>::iterator itv = allV.begin(); itv != allV.end(); itv++) {
+        for (std::set<MVertex*>::iterator itv = myVertices.begin(); 
+             itv != myVertices.end(); itv++) {
           std::vector<MVertex*>::iterator itve =
             std::find(dReg->mesh_vertices.begin(), dReg->mesh_vertices.end(), *itv);
           if (itve != dReg->mesh_vertices.end()) dReg->mesh_vertices.erase(itve);
