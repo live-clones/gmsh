@@ -541,6 +541,7 @@ double opt_mesh_smooth_internal_edges(OPT_ARGS_NUM);
 double opt_mesh_second_order_experimental(OPT_ARGS_NUM);
 double opt_mesh_second_order_linear(OPT_ARGS_NUM);
 double opt_mesh_second_order_incomplete(OPT_ARGS_NUM);
+double opt_mesh_hom_no_metric(OPT_ARGS_NUM);
 double opt_mesh_dual(OPT_ARGS_NUM);
 double opt_mesh_voronoi(OPT_ARGS_NUM);
 double opt_mesh_draw_skin_only(OPT_ARGS_NUM);

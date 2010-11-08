@@ -371,7 +371,7 @@ void highOrderSmoother::optimize(GFace * gf,
     //    }
     // then try to swap for better configurations  
 
-    smooth(gf, true);
+    smooth(gf, !CTX::instance()->mesh.highOrderNoMetric);
     
     
     //    for (int i=0;i<100;i++){
@@ -596,8 +596,8 @@ double highOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
 	SPoint2 param;
 	reparamMeshVertexOnFace((*it), gf, param);  
 	SPoint2 dparam;
-  myAssembler.getDofValue((*it), 0, getTag(), dparam[0]);
-  myAssembler.getDofValue((*it), 1, getTag(), dparam[1]);
+	myAssembler.getDofValue((*it), 0, getTag(), dparam[0]);
+	myAssembler.getDofValue((*it), 1, getTag(), dparam[1]);
 	SPoint2 newp = param+dparam;
 	dx += newp.x() * newp.x() + newp.y() * newp.y();
 	(*it)->setParameter(0, newp.x());
@@ -633,7 +633,7 @@ void highOrderSmoother::smooth(std::vector<MElement*> &all)
 
   if (!v.size()) return;
 
-  const int nbLayers = 1;
+  const int nbLayers = 6;
   for (int i = 0; i < nbLayers; i++){
     addOneLayer(all, v, layer);
     v.insert(v.end(), layer.begin(), layer.end());
@@ -850,21 +850,6 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
     //printf("  Moving %d to %g %g %g\n", (*it)->getNum(),_targetLocation[(*it)][0], _targetLocation[(*it)][1],_targetLocation[(*it)][2] );
   }
 
-  /*
-  if (myAssembler.sizeOfR()) {
-    for (unsigned int i = 0; i < cavity.size(); i++) {
-      SElement se(cavity[i]);
-      El.addToMatrix(myAssembler, &se);
-    }
-    lsys->systemSolve();
-  
-   }
-  for (it = verticesToMove.begin(); it != verticesToMove.end(); ++it){
-    it->first->x() += myAssembler.getDofValue(it->first, 0, getTag());
-    it->first->y() += myAssembler.getDofValue(it->first, 1, getTag());
-    it->first->z() += myAssembler.getDofValue(it->first, 2, getTag());
-  }
-  */
   delete lsys;
 }
 

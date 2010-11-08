@@ -38,6 +38,7 @@ struct contextMeshOptions {
   int smoothNormals, reverseAllNormals, zoneDefinition, clip;
   int saveElementTagType;
   int switchElementTags;
+  int highOrderNoMetric;
 };
 
 struct contextGeometryOptions {

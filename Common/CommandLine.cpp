@@ -70,6 +70,7 @@ void PrintUsage(const char *name)
   Msg::Direct("  -order int            Set mesh order (1, ..., 5)");
   Msg::Direct("  -optimize[_netgen]    Optimize quality of tetrahedral elements");
   Msg::Direct("  -optimize_hom         Optimize higher order meshes (in 2D)");
+  Msg::Direct("  -hom_nometric         Don't use the metric-based high-order mesh generation.");
   Msg::Direct("  -optimize_lloyd       Optimize 2D meshes using Lloyd algorithm");
   Msg::Direct("  -clscale float        Set global mesh element size scaling factor");
   Msg::Direct("  -clmin float          Set minimum mesh element size");
@@ -235,6 +236,10 @@ void GetOptions(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "optimize_hom")) {
         i++;
         opt_mesh_smooth_internal_edges(0, GMSH_SET, 1);
+      }
+      else if(!strcmp(argv[i] + 1, "hom_nometric")) {
+        i++;
+        opt_mesh_hom_no_metric(0, GMSH_SET, 1);
       }
       else if(!strcmp(argv[i] + 1, "optimize_lloyd")) {
         i++;

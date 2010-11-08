@@ -1104,6 +1104,9 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. , 
     "Display mesh hexahedra?" },
+  { F|O, "HighOrderNoMetric" , opt_mesh_hom_no_metric , 0. , 
+    "Don't use metric computation to create high-order meshes." },
+
 
   { F|O, "LabelSampling" , opt_mesh_label_sampling , 1. , 
     "Label sampling rate (display one label every `LabelSampling' elements)" },

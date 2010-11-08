@@ -5807,6 +5807,13 @@ double opt_mesh_second_order_incomplete(OPT_ARGS_NUM)
   return CTX::instance()->mesh.secondOrderIncomplete;
 }
 
+double opt_mesh_hom_no_metric(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.highOrderNoMetric = (int)val;
+  return CTX::instance()->mesh.highOrderNoMetric;
+}
+
 double opt_mesh_dual(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
