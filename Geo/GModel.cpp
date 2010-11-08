@@ -1194,6 +1194,8 @@ void GModel::createTopologyFromMesh()
 
   removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
 
+  makeDiscreteFacesSimplyConnected();
+
   // create topology for all discrete regions
   std::vector<discreteRegion*> discRegions;
   for(riter it = firstRegion(); it != lastRegion(); it++)
@@ -1201,7 +1203,9 @@ void GModel::createTopologyFromMesh()
       discRegions.push_back((discreteRegion*) *it);
   createTopologyFromRegions(discRegions);
 
-  makeDiscreteFacesSimplyConnected();
+  // FIXME: need to split new discrete faces created in
+  // createTopoFromRegions, before creating regs
+  // makeDiscreteFacesSimplyConnected();
 
   // create topology for all discrete faces
   std::vector<discreteFace*> discFaces;
