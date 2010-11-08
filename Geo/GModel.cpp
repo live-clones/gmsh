@@ -1302,39 +1302,31 @@ void GModel::createTopologyFromRegions(std::vector<discreteRegion*> &discRegions
       discreteFace *f = new discreteFace(this, numF);
       add(f);
       discFaces.push_back(f);
-
-      // fill new face with mesh vertices
       std::set<MVertex*> allV;
       for(std::set<MFace, Less_Face>::iterator it = myFaces.begin(); 
           it != myFaces.end(); it++){
-        MVertex *v0 = it->getVertex(0);
-        MVertex *v1 = it->getVertex(1);
-        MVertex *v2 = it->getVertex(2);
-	allV.insert(v0);
-	allV.insert(v1);
-	allV.insert(v2);
-        v0->setEntity(f);
-        v1->setEntity(f);
-        v2->setEntity(f);
-        if(it->getNumVertices() == 4){
-          MVertex *v3 = it->getVertex(3);
-          allV.insert(v3);
-          v3->setEntity(f);
-          f->quadrangles.push_back(new MQuadrangle(v0, v1, v2, v3));
+        std::vector<MVertex*> verts(it->getNumVertices());
+        for(int i = 0; i < it->getNumVertices(); i++){
+          verts[i] = it->getVertex(i);
+          if(verts[i]->onWhat() && verts[i]->onWhat()->dim() == 3){
+            allV.insert(verts[i]);
+            verts[i]->setEntity(f);
+          }
         }
-        else{
-          f->triangles.push_back(new MTriangle(v0, v1, v2));
-        }
+        if(verts.size() == 4)
+          f->quadrangles.push_back(new MQuadrangle(verts));
+        else
+          f->triangles.push_back(new MTriangle(verts));
       }
       f->mesh_vertices.insert(f->mesh_vertices.begin(), allV.begin(), allV.end());
 
       for (std::vector<int>::iterator itReg = tagRegions.begin(); 
            itReg != tagRegions.end(); itReg++) {
 
-        // delete mesh vertices of new face from adjacent regions
+        // delete mesh vertices of new edge from adjacent regions
         GRegion *dReg = getRegionByTag(*itReg);
-        for (std::set<MVertex*>::iterator itv = allV.begin();itv != allV.end(); itv++) {
-          std::vector<MVertex*>::iterator itve = 
+        for (std::set<MVertex*>::iterator itv = allV.begin(); itv != allV.end(); itv++) {
+          std::vector<MVertex*>::iterator itve =
             std::find(dReg->mesh_vertices.begin(), dReg->mesh_vertices.end(), *itv);
           if (itve != dReg->mesh_vertices.end()) dReg->mesh_vertices.erase(itve);
         }
