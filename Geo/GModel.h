@@ -355,6 +355,7 @@ class GModel
   void createTopologyFromMesh();
   void createTopologyFromRegions(std::vector<discreteRegion*> &discRegions);
   void createTopologyFromFaces(std::vector<discreteFace*> &pFaces);
+  void makeDiscreteRegionsSimplyConnected();
   void makeDiscreteFacesSimplyConnected();
 
   // a container for smooth normals

@@ -1051,6 +1051,45 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
   return num;
 }
 
+static void recurConnectMElementsByMFace(const MFace &f,
+                                         std::multimap<MFace, MElement*, Less_Face> &e2f,
+                                         std::set<MElement*> &group,
+                                         std::set<MFace, Less_Face> &touched)
+{
+  if (touched.find(f) != touched.end()) return;
+  touched.insert(f);
+  for (std::multimap<MFace, MElement*, Less_Face>::iterator it = e2f.lower_bound(f);
+       it != e2f.upper_bound(f); ++it){
+    group.insert(it->second);
+    for (int i = 0; i < it->second->getNumFaces(); ++i){
+      recurConnectMElementsByMFace(it->second->getFace(i), e2f, group, touched);
+    }
+  }
+}
+
+static int connectedVolumes(std::vector<MElement*> &elements,
+                            std::vector<std::vector<MElement*> > &regs)
+{
+  std::multimap<MFace, MElement*, Less_Face> e2f;
+  for(unsigned int i = 0; i < elements.size(); ++i){
+    for(int j = 0; j < elements[i]->getNumFaces(); j++){
+      e2f.insert(std::make_pair(elements[i]->getFace(j), elements[i]));
+    }
+  }
+  while(!e2f.empty()){
+    std::set<MElement*> group;
+    std::set<MFace, Less_Face> touched;
+    recurConnectMElementsByMFace(e2f.begin()->first, e2f, group, touched);
+    std::vector<MElement*> temp;
+    temp.insert(temp.begin(), group.begin(), group.end());
+    regs.push_back(temp);
+    for(std::set<MFace, Less_Face>::iterator it = touched.begin();
+        it != touched.end(); ++it)
+      e2f.erase(*it);
+  }
+  return regs.size();
+}
+
 static void recurConnectMElementsByMEdge(const MEdge &e,
                                          std::multimap<MEdge, MElement*, Less_Edge> &e2e,
                                          std::set<MElement*> &group,
@@ -1130,6 +1169,65 @@ static int connectedSurfaceBoundaries(std::set<MEdge, Less_Edge> &edges,
   return boundaries.size();
 }
 
+void GModel::makeDiscreteRegionsSimplyConnected()
+{
+  Msg::Debug("Making discrete regions simply connected...");
+
+  std::vector<discreteRegion*> discRegions;
+  for(riter it = firstRegion(); it != lastRegion(); it++)
+    if((*it)->geomType() == GEntity::DiscreteVolume)
+      discRegions.push_back((discreteRegion*) *it);
+
+  std::set<MVertex*> touched;
+
+  for(std::vector<discreteRegion*>::iterator itR = discRegions.begin(); 
+      itR != discRegions.end(); itR++){
+
+    std::vector<MElement*> allElements((*itR)->getNumMeshElements());
+    for(unsigned int i = 0; i < (*itR)->getNumMeshElements(); i++)
+      allElements[i] = (*itR)->getMeshElement(i);
+    
+    std::vector<std::vector<MElement*> > conRegions;
+    int nbRegions = connectedVolumes(allElements, conRegions);
+    remove(*itR);
+
+    for(int ire  = 0; ire < nbRegions; ire++){
+      int numR = (nbRegions == 1) ? (*itR)->tag() : getMaxElementaryNumber(3) + 1;
+      discreteRegion *r = new discreteRegion(this, numR);
+      add(r);
+      std::vector<MElement*> myElements = conRegions[ire];
+      std::set<MVertex*> myVertices;
+      for(unsigned int i = 0; i < myElements.size(); i++) {
+        MElement *e = myElements[i];
+        std::vector<MVertex*> verts;
+        e->getVertices(verts);
+        for(unsigned int k = 0; k < verts.size(); k++){
+          if(verts[k]->onWhat() && verts[k]->onWhat()->dim() == 3){
+            if(touched.find(verts[k]) == touched.end()){
+              verts[k]->setEntity(r);
+              myVertices.insert(verts[k]);
+              touched.insert(verts[k]);
+            }
+          }
+        }
+        MElementFactory factory;
+        MElement *e2 = factory.create(e->getTypeForMSH(), verts, e->getNum(),
+                                      e->getPartition());
+        switch(e2->getType()){
+        case TYPE_TET: r->tetrahedra.push_back((MTetrahedron*)e2); break;
+        case TYPE_HEX: r->hexahedra.push_back((MHexahedron*)e2); break;
+        case TYPE_PRI: r->prisms.push_back((MPrism*)e2); break;
+        case TYPE_PYR: r->pyramids.push_back((MPyramid*)e2); break;
+        }
+      }
+      r->mesh_vertices.insert
+        (r->mesh_vertices.begin(), myVertices.begin(), myVertices.end());
+    }
+  }
+
+  Msg::Debug("Done making discrete regions simply connected");
+}
+
 void GModel::makeDiscreteFacesSimplyConnected()
 {
   Msg::Debug("Making discrete faces simply connected...");
@@ -1144,9 +1242,9 @@ void GModel::makeDiscreteFacesSimplyConnected()
   for(std::vector<discreteFace*>::iterator itF = discFaces.begin(); 
       itF != discFaces.end(); itF++){
 
-    std::vector<MElement*> allElements;
+    std::vector<MElement*> allElements((*itF)->getNumMeshElements());
     for(unsigned int i = 0; i < (*itF)->getNumMeshElements(); i++)
-      allElements.push_back((*itF)->getMeshElement(i));
+      allElements[i] = (*itF)->getMeshElement(i);
     
     std::vector<std::vector<MElement*> > conFaces;
     int nbFaces = connectedSurfaces(allElements, conFaces);
@@ -1194,6 +1292,7 @@ void GModel::createTopologyFromMesh()
 
   removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
 
+  makeDiscreteRegionsSimplyConnected();
   makeDiscreteFacesSimplyConnected();
 
   // create topology for all discrete regions
@@ -1202,10 +1301,6 @@ void GModel::createTopologyFromMesh()
     if((*it)->geomType() == GEntity::DiscreteVolume)
       discRegions.push_back((discreteRegion*) *it);
   createTopologyFromRegions(discRegions);
-
-  // FIXME: need to split new discrete faces created in
-  // createTopoFromRegions, before creating regs
-  // makeDiscreteFacesSimplyConnected();
 
   // create topology for all discrete faces
   std::vector<discreteFace*> discFaces;
