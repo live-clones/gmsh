@@ -1271,6 +1271,8 @@ StringXNumber MeshOptions_Number[] = {
     "Display faces of surface mesh?" },
   { F|O, "SurfaceNumbers" , opt_mesh_surfaces_num , 0. , 
     "Display surface mesh element numbers?" },
+  { F|O, "SwitchElementTags", opt_mesh_switch_elem_tags, 0. ,
+    "Invert elementary and physical tags when reading the mesh"},
 
   { F|O, "Tangents" , opt_mesh_tangents , 0.0 , 
     "Display size of tangent vectors (in pixels)" }, 

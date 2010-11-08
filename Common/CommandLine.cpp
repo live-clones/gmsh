@@ -220,6 +220,10 @@ void GetOptions(int argc, char *argv[])
         CTX::instance()->mesh.saveAll = 1;
         i++;
       }
+      else if(!strcmp(argv[i] + 1, "switch_tags")) {
+        CTX::instance()->mesh.switchElementTags = 1;
+        i++;
+      }
       else if(!strcmp(argv[i] + 1, "optimize")) {
         CTX::instance()->mesh.optimize = 1;
         i++;

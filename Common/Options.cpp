@@ -5881,6 +5881,13 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
   return CTX::instance()->mesh.colorCarousel;
 }
 
+double opt_mesh_switch_elem_tags(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.switchElementTags = val ? 1 : 0;
+  return CTX::instance()->mesh.switchElementTags;
+}
+
 double opt_mesh_zone_definition(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){

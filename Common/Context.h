@@ -36,7 +36,8 @@ struct contextMeshOptions {
   int smoothInternalEdges, minCircPoints, minCurvPoints;
   int saveAll, saveGroupsOfNodes, binary, bdfFieldFormat, saveParametric;
   int smoothNormals, reverseAllNormals, zoneDefinition, clip;
-  int saveElementTagType;  
+  int saveElementTagType;
+  int switchElementTags;
 };
 
 struct contextGeometryOptions {

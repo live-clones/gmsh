@@ -29,6 +29,7 @@
 #include "discreteFace.h"
 #include "discreteRegion.h"
 #include "MVertexPositionSet.h"
+#include "Context.h"
 #include "OS.h"
 
 #if defined(HAVE_POST)
@@ -394,9 +395,15 @@ int GModel::readMSH(const std::string &name)
           int dom1 = 0, dom2 = 0, numVertices;
           std::vector<short> ghosts;
           if(version <= 1.0){
-            if(fscanf(fp, "%d %d %d %d %d", &num, &type, &physical, &elementary, 
-                      &numVertices) != 5)
-              return 0;
+	    if(CTX::instance()->mesh.switchElementTags) {
+	      if(fscanf(fp, "%d %d %d %d %d", &num, &type, &elementary, &physical, 
+			&numVertices) != 5)
+		return 0;
+	    } else {
+	      if(fscanf(fp, "%d %d %d %d %d", &num, &type, &physical, &elementary, 
+			&numVertices) != 5)
+		return 0;
+	    }
             if(numVertices != MElement::getInfoMSH(type)) return 0;
           }
           else{
