@@ -28,18 +28,20 @@ template <class T> void getIntersection(std::vector<T>& res,
 {
   res.clear();
   std::list<T> first_list = lists[0];
-
+  bool allsame = true;
   for (typename std::list<T>::iterator item = first_list.begin();
        item != first_list.end(); item++) {
     bool found = true;
     for (typename std::vector<std::list<T> >::iterator list_iter = lists.begin();
          list_iter != lists.end(); list_iter++) {
-      if (find((*list_iter).begin(), (*list_iter).end(), (*item)) == (*list_iter).end()) {
-        found = false;
-        break;
+      if (*(list_iter)!=first_list) {
+	allsame = false;
+	if (find((*list_iter).begin(), (*list_iter).end(), (*item)) == (*list_iter).end()) {
+	  found = false;
+	} else { found = true; break;}
       }
     }
-    if (found) {
+    if (found || allsame ) {
       res.push_back(*item);
     }
   }
@@ -74,11 +76,12 @@ GeomMeshMatcher::matchVertices(GModel* m1, GModel *m2, bool& ok)
 
   int num_matched_vertices = 0;
   int num_total_vertices = 0;
+  int num_mesh_vertices = 0;
 
   int counter1 = 0;
 
   std::vector<GVertex*> vertices;
-
+  
   for (std::vector<GEntity*>::iterator entity1 = m1_entities.begin();
        entity1 != m1_entities.end();
        entity1++)
@@ -101,6 +104,7 @@ GeomMeshMatcher::matchVertices(GModel* m1, GModel *m2, bool& ok)
          entity2++)
     {
       if ((*entity2)->dim() != 0) continue;
+      num_mesh_vertices++;
       for (unsigned int ed = 0;
            ed < ((discreteVertex*) *entity2)->getNumMeshElements();
            ed++)
@@ -122,26 +126,29 @@ GeomMeshMatcher::matchVertices(GModel* m1, GModel *m2, bool& ok)
     }
 
     if (best_score != DBL_MAX) {
-      Msg::Info("Vertices %i (geom) and %i (mesh) match.",
+      Msg::Info("Vertices %i (geom) and %i (mesh) match.\n",
                 (*entity1)->tag(),
                 best_candidate_ge->tag());
 
       coresp_v->push_back(Pair<GVertex*,GVertex*>((GVertex*) *entity1,
                                                   (GVertex*) best_candidate_ge));
       ((GVertex*) best_candidate_ge)->setTag(((GVertex*) *entity1)->tag());
-      m2->remove((GVertex*) best_candidate_ge);
-      vertices.push_back((GVertex*) best_candidate_ge);
+      //m2->remove((GVertex*) best_candidate_ge);
+      //vertices.push_back((GVertex*) best_candidate_ge);
+      for (int v = 0; v < ((GVertex*) best_candidate_ge)->getNumMeshVertices(); v++) {
+	((GVertex*) best_candidate_ge)->getMeshVertex(v)->setEntity((GVertex*) *entity1);
+      }
       num_matched_vertices++;
     }
     counter1++;
   }
 
-  for (std::vector<GVertex*>::iterator vert = vertices.begin();
-       vert != vertices.end();
-       vert++)
-    m2->add(*vert); 
+  //for (std::vector<GVertex*>::iterator vert = vertices.begin();
+  //vert != vertices.end();
+  //vert++)
+    //m2->add(*vert); 
 
-  Msg::Info("Vertices matched : %i / %i", num_matched_vertices, num_total_vertices);
+  Msg::Info("Vertices matched : %i / %i (%i)\n", num_matched_vertices, num_total_vertices, num_mesh_vertices);
   if(num_matched_vertices != num_total_vertices) ok = false;
   return (coresp_v);
 }
@@ -181,7 +188,7 @@ GeomMeshMatcher::matchEdges(GModel* m1, GModel* m2,
     getIntersection<GEdge*>(common_edges, lists);
 
     GEdge* choice = 0;
-
+    if (common_edges.size() == 0) continue;
     if (common_edges.size() == 1) {
       choice = common_edges[0];
     } else {
@@ -218,6 +225,10 @@ GeomMeshMatcher::matchEdges(GModel* m1, GModel* m2,
       choice->reverse();
     }
 
+    for (int v = 0; v < ((GEdge*) choice)->getNumMeshVertices(); v++) {
+      if (((GEdge*) choice)->getMeshVertex(v)->onWhat()->dim() > 0)
+	((GEdge*) choice)->getMeshVertex(v)->setEntity((GEdge*) *entity1);
+    }
     num_matched_edges++;
   }
 
@@ -284,6 +295,11 @@ GeomMeshMatcher:: matchFaces(GModel* m1, GModel* m2,
     coresp_f->push_back(Pair<GFace*,GFace*>((GFace*) *entity1 ,
                                              choice));
     choice->setTag(((GFace*) *entity1)->tag());
+    for (int v = 0; v < ((GFace*) choice)->getNumMeshVertices(); v++) {
+      if(((GFace*) choice)->getMeshVertex(v)->onWhat()->dim() > 1)
+	((GFace*) choice)->getMeshVertex(v)->setEntity((GFace*) *entity1);
+    }
+
     num_matched_faces++;
   }
 
@@ -377,6 +393,11 @@ GeomMeshMatcher::matchRegions(GModel* m1, GModel* m2,
        coresp_r->push_back(Pair<GRegion*,GRegion*>((GRegion*) *entity1 ,
                                              choice));
        choice->setTag(((GRegion*) *entity1)->tag());
+
+    for (int v = 0; v < ((GRegion*) choice)->getNumMeshVertices(); v++) {
+      if ( ((GRegion*) choice)->getMeshVertex(v)->onWhat()->dim() > 2)
+	((GRegion*) choice)->getMeshVertex(v)->setEntity((GRegion*) *entity1);
+    }
        num_matched_regions++;
     }
   }
@@ -402,7 +423,7 @@ void GeomMeshMatcher::destroy()
     delete GeomMeshMatcher::_gmm_instance;
 }
 
-int GeomMeshMatcher:: match(GModel *geom, GModel *mesh)
+int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
 {
   mesh->createTopologyFromMesh();
   bool ok = true;
