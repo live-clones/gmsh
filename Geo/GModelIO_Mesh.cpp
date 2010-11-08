@@ -117,6 +117,12 @@ static MElement *createElementMSH(GModel *m, int num, int typeMSH, int physical,
                                   bool owner=false, MElement *parent=0,
                                   MElement *d1=0, MElement *d2=0)
 {
+  if(CTX::instance()->mesh.switchElementTags) {
+    int tmp = reg;
+    reg = physical;
+    physical = reg;
+  }
+
   MElementFactory factory;
   MElement *e = factory.create(typeMSH, v, num, part, owner, parent, d1, d2);
 
@@ -395,15 +401,9 @@ int GModel::readMSH(const std::string &name)
           int dom1 = 0, dom2 = 0, numVertices;
           std::vector<short> ghosts;
           if(version <= 1.0){
-	    if(CTX::instance()->mesh.switchElementTags) {
-	      if(fscanf(fp, "%d %d %d %d %d", &num, &type, &elementary, &physical, 
-			&numVertices) != 5)
-		return 0;
-	    } else {
-	      if(fscanf(fp, "%d %d %d %d %d", &num, &type, &physical, &elementary, 
-			&numVertices) != 5)
-		return 0;
-	    }
+            if(fscanf(fp, "%d %d %d %d %d", &num, &type, &physical, &elementary, 
+                      &numVertices) != 5)
+              return 0;
             if(numVertices != MElement::getInfoMSH(type)) return 0;
           }
           else{
@@ -3479,7 +3479,7 @@ GModel *GModel::createGModel(std::map<int, MVertex*> &vertexMap,
   int *indices;
   int nbVertices;
   for(int i = 0; i < numElement; ++i){
-    num=elementNum[i];
+    num = elementNum[i];
     std::vector<MVertex*> vertices;
     nbVertices = (int)vertexIndices[i].size();
     indices = &vertexIndices[i][0];
