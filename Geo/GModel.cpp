@@ -1230,19 +1230,21 @@ void GModel::createTopologyFromRegions(std::vector<discreteRegion*> &discRegions
     if((*it)->geomType() == GEntity::DiscreteSurface)
       discFaces.push_back((discreteFace*) *it);
 
-  // create reverse map storing for each discrete region the list
+  // create reverse map storing for each discrete region the list of
   // discrete faces on its boundary
   std::map<int, std::set<int> > region2Faces;
 
   while (!map_faces.empty()){
 
     Msg::Debug("... %d mesh faces left to process", map_faces.size());
-  
+    
+    // get mesh faces with identical region connections (i.e., a part
+    // of region boundaries that can be later defined as a discrete
+    // face)
     std::set<MFace, Less_Face> myFaces;
     std::vector<int> tagRegions = map_faces.begin()->second;
     myFaces.insert(map_faces.begin()->first);
     map_faces.erase(map_faces.begin());
-
     std::map<MFace, std::vector<int>, Less_Face>::iterator itmap = map_faces.begin();
     while (itmap != map_faces.end()){
       std::vector<int> tagRegions2 = itmap->second;
@@ -1254,11 +1256,11 @@ void GModel::createTopologyFromRegions(std::vector<discreteRegion*> &discRegions
         itmap++;
     }
     
-    // if the loaded mesh already contains discrete faces, check if
-    // the candidate discrete face does contain any of those; if not,
-    // create discreteFaces and create a map region2Faces that associate
-    // for each region the boundary discrete faces
-
+    // if the mesh already contains discrete faces, check if the
+    // candidate discrete face does contain any of those; if not,
+    // create a new discreteFace. Then create populate the
+    // region2Faces map that associates for each region the (old or
+    // new) boundary discrete faces
     for (std::vector<discreteFace*>::iterator itF = discFaces.begin(); 
          itF != discFaces.end(); itF++){
 
@@ -1280,8 +1282,8 @@ void GModel::createTopologyFromRegions(std::vector<discreteRegion*> &discRegions
           std::set<MFace, Less_Face>::iterator itset = myFaces.find(mf);
           myFaces.erase(itset);
         }
-        for (std::vector<int>::iterator itReg = tagRegions.begin(); 
-             itReg != tagRegions.end(); itReg++) {
+        for(std::vector<int>::iterator itReg = tagRegions.begin(); 
+            itReg != tagRegions.end(); itReg++) {
           std::map<int, std::set<int> >::iterator it = region2Faces.find(*itReg);
           if (it == region2Faces.end())
             region2Faces.insert(std::make_pair(*itReg, tagFaces));
@@ -1397,12 +1399,13 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
   while (!map_edges.empty()){
 
     Msg::Debug("... %d mesh edges left to process", map_edges.size());
-    
+
+    // get mesh edges with identical face connections (i.e., a part of
+    // face boundaries that can be later defined as a discrete edge)
     std::set<MEdge, Less_Edge> myEdges;
     std::vector<int> tagFaces = map_edges.begin()->second;
     myEdges.insert(map_edges.begin()->first);
     map_edges.erase(map_edges.begin());
-
     std::map<MEdge, std::vector<int>, Less_Edge>::iterator itmap = map_edges.begin();
     while (itmap != map_edges.end()){
       std::vector<int> tagFaces2 = itmap->second;
@@ -1416,9 +1419,8 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
 
     // if the mesh already contains discrete edges, check if the
     // candidate discrete edge does contain any of those; if not,
-    // create discreteEdges and create a map face2Edges that associate
-    // for each face the boundary discrete edges
-
+    // create a discreteEdge. Then populate the face2Edges map that
+    // associates for each face its boundary discrete edges
     for (std::vector<discreteEdge*>::iterator itE = discEdges.begin(); 
          itE != discEdges.end(); itE++){
 
@@ -1511,6 +1513,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
   }
 
   Msg::Debug("Done creating topology from faces");
+
   Msg::Debug("Creating topology for edges...");
 
   // for each discreteEdge, create topology
@@ -1534,8 +1537,9 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
   //   edgeLoops.push_back(el);
   // }
 
-  // we need to recreate lines, triangles and tets that contain those
-  // new MEdgeVertices
+  // we need to recreate all mesh elements because some mesh vertices
+  // might have been changed during the parametrization process
+  // (MVertices became MEdgeVertices)
   for (std::map<GFace*, std::map<MVertex*, MVertex*, std::less<MVertex*> > >::iterator
          iFace = face2Vert.begin(); iFace != face2Vert.end(); iFace++){
     std::map<MVertex*, MVertex*, std::less<MVertex*> > old2new = iFace->second;
