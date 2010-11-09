@@ -1,7 +1,7 @@
 //
 // C++ Interface: quadratureRules
 //
-// Description: 
+// Description:
 //
 //
 // Author:  <Eric Bechet>, (C) 2009
@@ -19,7 +19,7 @@
 
 class QuadratureBase
 {
-  public : 
+  public :
   virtual ~QuadratureBase(){}
   virtual int getIntPoints(MElement *e,IntPt **GP) =0;
 };
@@ -27,12 +27,12 @@ class QuadratureBase
 
 class GaussQuadrature : public QuadratureBase
 {
- public : 
+ public :
   enum IntegCases {Other,Val,Grad,ValVal,GradGrad};
  private :
   int order;
   IntegCases info;
- public : 
+ public :
   GaussQuadrature(int order_=0):order(order_),info(Other) {}
   GaussQuadrature(IntegCases info_):order(0),info(info_) {}
   virtual ~GaussQuadrature(){}
@@ -40,7 +40,7 @@ class GaussQuadrature : public QuadratureBase
   {
     int integrationOrder;
     int npts;
-    int geoorder=e->getPolynomialOrder();    
+    int geoorder=e->getPolynomialOrder();
     switch(info)
     {
     case Other :

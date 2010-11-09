@@ -37,7 +37,7 @@ double MTriangle::distoShapeMeasure()
 
 double MTriangle::getInnerRadius()
 {
-  // radius of inscribed circle = 2 * Area / sum(Line_i)        
+  // radius of inscribed circle = 2 * Area / sum(Line_i)
   double dist[3], k = 0.;
   for (int i = 0; i < 3; i++){
     MEdge e = getEdge(i);
@@ -80,7 +80,7 @@ const polynomialBasis* MTriangle::getFunctionSpace(int o) const
 {
   int order = (o == -1) ? getPolynomialOrder() : o;
 
-  int nf = getNumFaceVertices();  
+  int nf = getNumFaceVertices();
 
   if ((nf == 0) && (o == -1)) {
     switch (order) {
@@ -98,7 +98,7 @@ const polynomialBasis* MTriangle::getFunctionSpace(int o) const
     default: Msg::Error("Order %d triangle incomplete function space not implemented", order);
     }
   }
-  else { 
+  else {
     switch (order) {
     case 0: return polynomialBases::find(MSH_TRI_1);
     case 1: return polynomialBases::find(MSH_TRI_3);
@@ -122,7 +122,7 @@ const JacobianBasis* MTriangle::getJacobianFuncSpace(int o) const
 
   int order = (o == -1) ? getPolynomialOrder() : o;
 
-  int nf = getNumFaceVertices();  
+  int nf = getNumFaceVertices();
 
   if ((nf == 0) && (o == -1)) {
     switch (order) {
@@ -140,7 +140,7 @@ const JacobianBasis* MTriangle::getJacobianFuncSpace(int o) const
     default: Msg::Error("Order %d triangle incomplete function space not implemented", order);
     }
   }
-  else { 
+  else {
     switch (order) {
     case 1: return JacobianBases::find(MSH_TRI_3);
     case 2: return JacobianBases::find(MSH_TRI_6);
@@ -174,7 +174,7 @@ static void _myGetEdgeRep(MTriangle *t, int num, double *x, double *y, double *z
     y[0] = pnt1.y(); y[1] = pnt2.y();
     z[0] = pnt1.z(); z[1] = pnt2.z();
     return;
-  }  
+  }
   if (num < 2 * numSubEdges){
     SPoint3 pnt1, pnt2;
     num -= numSubEdges;
@@ -184,7 +184,7 @@ static void _myGetEdgeRep(MTriangle *t, int num, double *x, double *y, double *z
     y[0] = pnt1.y(); y[1] = pnt2.y();
     z[0] = pnt1.z(); z[1] = pnt2.z();
     return ;
-  }  
+  }
   {
     SPoint3 pnt1, pnt2;
     num -= 2 * numSubEdges;

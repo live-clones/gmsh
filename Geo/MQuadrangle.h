@@ -426,7 +426,7 @@ struct compareMQuadrangleLexicographic
 {
   bool operator () (MQuadrangle *t1, MQuadrangle *t2) const
   {
-    MVertex *_v1[] = {t1->getVertex(0), t1->getVertex(1), 
+    MVertex *_v1[] = {t1->getVertex(0), t1->getVertex(1),
                       t1->getVertex(2), t1->getVertex(3)};
     MVertex *_v2[] = {t2->getVertex(0), t2->getVertex(1),
                       t2->getVertex(2), t2->getVertex(3)};

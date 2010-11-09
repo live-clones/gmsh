@@ -20,7 +20,7 @@ const polynomialBasis* MQuadrangle::getFunctionSpace(int o) const
 {
   int order = (o == -1) ? getPolynomialOrder() : o;
 
-  int nf = getNumFaceVertices();  
+  int nf = getNumFaceVertices();
 
   if ((nf == 0) && (o == -1)) {
     switch (order) {
@@ -58,7 +58,7 @@ const JacobianBasis* MQuadrangle::getJacobianFuncSpace(int o) const
 {
   int order = (o == -1) ? getPolynomialOrder() : o;
 
-  int nf = getNumFaceVertices();  
+  int nf = getNumFaceVertices();
 
   if ((nf == 0) && (o == -1)) {
     switch (order) {
@@ -106,7 +106,7 @@ static void _myGetEdgeRep(MQuadrangle *q, int num, double *x, double *y, double 
   double xi2 = -1. + (2.*(isub+1))/numSubEdges;
   SPoint3 pnt1, pnt2;
   switch(ie){
-    case 0: 
+    case 0:
       q->pnt( xi1, -1., 0., pnt1);
       q->pnt( xi2, -1., 0., pnt2);
       break;
@@ -243,8 +243,8 @@ double  MQuadrangle::etaShapeMeasure()
   double angle = fabs(90. - a1);
   angle = std::max(fabs(90. - a2),angle);
   angle = std::max(fabs(90. - a3),angle);
-  angle = std::max(fabs(90. - a4),angle);    
-  
+  angle = std::max(fabs(90. - a4),angle);
+
   return 1.-angle/90;
 }
 
@@ -274,7 +274,7 @@ double MQuadrangle::getInnerRadius()
   double x[4] = {_v[0]->x(), _v[1]->x(), _v[2]->x(), _v[3]->x()};
   double y[4] = {_v[0]->y(), _v[1]->y(), _v[2]->y(), _v[3]->y()};
   double z[4] = {_v[0]->z(), _v[1]->z(), _v[2]->z(), _v[3]->z()};
-                
+
   // get the coefficient (a,b,c,d) of the mean plane - least square!
   // the plane has for equation " a*x+b*y+c*z+d=0 "
 
@@ -282,7 +282,7 @@ double MQuadrangle::getInnerRadius()
   double xm = (x[0] + x[1] + x[2] + x[3]) / 4;
   double ym = (y[0] + y[1] + y[2] + y[3]) / 4;
   double zm = (z[0] + z[1] + z[2] + z[3]) / 4;
-        
+
   // using svd decomposition
   fullMatrix<double> U(4,3), V(3,3);
   fullVector<double> sigma(3);
@@ -291,7 +291,7 @@ double MQuadrangle::getInnerRadius()
     U(i, 1) = y[i] - ym;
     U(i, 2) = z[i] - zm;
   }
-  
+
   U.svd(V, sigma);
   double svd[3];
   svd[0] = sigma(0);
@@ -307,29 +307,29 @@ double MQuadrangle::getInnerRadius()
   double a = V(0, min);
   double b = V(1, min);
   double c = V(2, min);
-  
+
   double d = -(xm * a + ym * b + zm * c);
-  
+
   double norm = sqrt(a*a+b*b+c*c);
-  
+
   // projection of the 4 original points on the mean_plane
-  
+
   double xp[4], yp[4], zp[4];
-  
+
   for (int i = 0; i < 4; i++) {
     xp[i] = ((b*b+c*c)*x[i]-a*b*y[i]-a*c*z[i]-d*a)/norm;
     yp[i] = (-a*b*x[i]+(a*a+c*c)*y[i]-b*c*z[i]-d*b)/norm;
     zp[i] = (-a*c*x[i]-b*c*y[i]+(a*a+b*b)*z[i]-d*c)/norm;
   }
-  
+
   // go from XYZ-plane to XY-plane
-  
+
   // 4 points, 4 edges => 4 inner radii of circles tangent to (at
   // least) 3 of the four edges!
   double xn[4], yn[4], r[4];
-  
+
   planarQuad_xyz2xy(xp, yp, zp, xn, yn);
-  
+
   // compute for each of the 4 possibilities the incircle radius,
   // keeping the minimum
   double R = 1.e22;

@@ -8,7 +8,7 @@
 
 #include "MElement.h"
 
-/* 
+/*
  * MTriangle
  *
  *   v
@@ -43,7 +43,7 @@ class MTriangle : public MElement {
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2;
   }
-  MTriangle(std::vector<MVertex*> &v, int num=0, int part=0) 
+  MTriangle(std::vector<MVertex*> &v, int num=0, int part=0)
     : MElement(num, part)
   {
     for(int i = 0; i < 3; i++) _v[i] = v[i];
@@ -60,10 +60,10 @@ class MTriangle : public MElement {
   virtual MVertex *getVertexMED(int num)
   {
     static const int map[3] = {0, 2, 1};
-    return getVertex(map[num]); 
+    return getVertex(map[num]);
   }
   virtual MVertex *getOtherVertex(MVertex *v1, MVertex *v2)
-  { 
+  {
     if(_v[0] != v1 && _v[0] != v2) return _v[0];
     if(_v[1] != v1 && _v[1] != v2) return _v[1];
     if(_v[2] != v1 && _v[2] != v2) return _v[2];
@@ -90,7 +90,7 @@ class MTriangle : public MElement {
   }
   virtual int getNumEdgesRep(){ return 3; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
-  { 
+  {
     MEdge e(getEdge(num));
     _getEdgeRep(e.getVertex(0), e.getVertex(1), x, y, z, n, 0);
   }
@@ -101,12 +101,12 @@ class MTriangle : public MElement {
   }
   virtual int getNumFaces(){ return 1; }
   virtual MFace getFace(int num)
-  { 
-    return MFace(_v[0], _v[1], _v[2]); 
+  {
+    return MFace(_v[0], _v[1], _v[2]);
   }
   virtual int getNumFacesRep(){ return 1; }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
-  { 
+  {
     _getFaceRep(_v[0], _v[1], _v[2], x, y, z, n);
   }
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
@@ -122,7 +122,7 @@ class MTriangle : public MElement {
   virtual const char *getStringForBDF() const { return "CTRIA3"; }
   virtual const char *getStringForDIFF() const { return "ElmT3n2D"; }
   virtual const char *getStringForINP() const { return "C2D3"; }
-  virtual void revert() 
+  virtual void revert()
   {
     MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
   }
@@ -132,7 +132,7 @@ class MTriangle : public MElement {
   {
     double tol = _isInsideTolerance;
     if(u < (-tol) || v < (-tol) || u > ((1. + tol) - v))
-      return false; 
+      return false;
     return true;
   }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
@@ -168,13 +168,13 @@ class MTriangle6 : public MTriangle {
   MVertex *_vs[3];
  public :
   MTriangle6(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
-             MVertex *v5, int num=0, int part=0) 
+             MVertex *v5, int num=0, int part=0)
     : MTriangle(v0, v1, v2, num, part)
   {
     _vs[0] = v3; _vs[1] = v4; _vs[2] = v5;
     for(int i = 0; i < 3; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MTriangle6(std::vector<MVertex*> &v, int num=0, int part=0) 
+  MTriangle6(std::vector<MVertex*> &v, int num=0, int part=0)
     : MTriangle(v, num, part)
   {
     for(int i = 0; i < 3; i++) _vs[i] = v[3 + i];
@@ -187,12 +187,12 @@ class MTriangle6 : public MTriangle {
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[6] = {0, 3, 1, 4, 2, 5};
-    return getVertex(map[num]); 
+    return getVertex(map[num]);
   }
   virtual MVertex *getVertexMED(int num)
   {
     static const int map[6] = {0, 2, 1, 5, 4, 3};
-    return getVertex(map[num]); 
+    return getVertex(map[num]);
   }
   virtual int getNumEdgeVertices() const { return 3; }
   virtual int getNumEdgesRep();
@@ -220,7 +220,7 @@ class MTriangle6 : public MTriangle {
   virtual const char *getStringForBDF() const { return "CTRIA6"; }
   virtual const char *getStringForDIFF() const { return "ElmT6n2D"; }
   virtual const char *getStringForINP() const { return "C2D6"; }
-  virtual void revert() 
+  virtual void revert()
   {
     MVertex *tmp;
     tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
@@ -249,13 +249,13 @@ class MTriangleN : public MTriangle {
   std::vector<MVertex *> _vs;
   const char _order;
  public:
-  MTriangleN(MVertex *v0, MVertex *v1, MVertex *v2, 
-             std::vector<MVertex*> &v, char order, int num=0, int part=0) 
+  MTriangleN(MVertex *v0, MVertex *v1, MVertex *v2,
+             std::vector<MVertex*> &v, char order, int num=0, int part=0)
     : MTriangle(v0, v1, v2, num, part), _vs(v), _order(order)
   {
     for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
   }
-  MTriangleN(std::vector<MVertex*> &v, char order, int num=0, int part=0) 
+  MTriangleN(std::vector<MVertex*> &v, char order, int num=0, int part=0)
     : MTriangle(v[0], v[1], v[2], num, part), _order(order)
   {
     for(unsigned int i = 3; i < v.size(); i++) _vs.push_back(v[i]);
@@ -265,7 +265,7 @@ class MTriangleN : public MTriangle {
   virtual int getPolynomialOrder() const { return _order; }
   virtual int getNumVertices() const { return 3 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 3 ? _v[num] : _vs[num - 3]; }
-  virtual int getNumFaceVertices() const 
+  virtual int getNumFaceVertices() const
   {
     if(_order == 3 && _vs.size() == 6) return 0;
     if(_order == 3 && _vs.size() == 7) return 1;
@@ -306,21 +306,21 @@ class MTriangleN : public MTriangle {
   }
   virtual int getTypeForMSH() const
   {
-    if(_order == 2 && _vs.size() == 3) return MSH_TRI_6; 
-    if(_order == 3 && _vs.size() == 6) return MSH_TRI_9; 
-    if(_order == 3 && _vs.size() == 7) return MSH_TRI_10; 
-    if(_order == 4 && _vs.size() == 9) return MSH_TRI_12; 
-    if(_order == 4 && _vs.size() == 12) return MSH_TRI_15; 
-    if(_order == 5 && _vs.size() == 12) return MSH_TRI_15I; 
+    if(_order == 2 && _vs.size() == 3) return MSH_TRI_6;
+    if(_order == 3 && _vs.size() == 6) return MSH_TRI_9;
+    if(_order == 3 && _vs.size() == 7) return MSH_TRI_10;
+    if(_order == 4 && _vs.size() == 9) return MSH_TRI_12;
+    if(_order == 4 && _vs.size() == 12) return MSH_TRI_15;
+    if(_order == 5 && _vs.size() == 12) return MSH_TRI_15I;
     if(_order == 5 && _vs.size() == 18) return MSH_TRI_21;
-    if(_order == 6 && _vs.size() == 25) return MSH_TRI_28; 
-    if(_order == 7 && _vs.size() == 33) return MSH_TRI_36; 
-    if(_order == 8 && _vs.size() == 42) return MSH_TRI_45; 
-    if(_order == 9 && _vs.size() == 52) return MSH_TRI_55; 
-    if(_order ==10 && _vs.size() == 63) return MSH_TRI_66; 
+    if(_order == 6 && _vs.size() == 25) return MSH_TRI_28;
+    if(_order == 7 && _vs.size() == 33) return MSH_TRI_36;
+    if(_order == 8 && _vs.size() == 42) return MSH_TRI_45;
+    if(_order == 9 && _vs.size() == 52) return MSH_TRI_55;
+    if(_order ==10 && _vs.size() == 63) return MSH_TRI_66;
     return 0;
   }
-  virtual void revert() 
+  virtual void revert()
   {
     MVertex *tmp;
     tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
@@ -330,7 +330,7 @@ class MTriangleN : public MTriangle {
   }
 };
 
-template <class T> 
+template <class T>
 void sort3(T *t[3])
 {
   T *temp;

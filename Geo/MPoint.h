@@ -16,12 +16,12 @@ class MPoint : public MElement {
  protected:
   MVertex *_v[1];
  public :
-  MPoint(MVertex *v0, int num=0, int part=0) 
+  MPoint(MVertex *v0, int num=0, int part=0)
     : MElement(num, part)
   {
     _v[0] = v0;
   }
-  MPoint(std::vector<MVertex*> &v, int num=0, int part=0) 
+  MPoint(std::vector<MVertex*> &v, int num=0, int part=0)
     : MElement(num, part)
   {
     _v[0] = v[0];
@@ -42,21 +42,21 @@ class MPoint : public MElement {
   virtual int getTypeForMSH() const { return MSH_PNT; }
   virtual int getTypeForVTK() const { return 1; }
   virtual const char *getStringForPOS() const { return "SP"; }
-  virtual void getShapeFunctions(double u, double v, double w, double s[], int o) 
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
   {
     s[0] = 1.;
   }
-  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o) 
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
   {
     s[0][0] = s[0][1] = s[0][2] = 0.;
   }
   virtual const polynomialBasis* getFunctionSpace(int o) const
-  { 
-    return polynomialBases::find(MSH_PNT); 
+  {
+    return polynomialBases::find(MSH_PNT);
   }
-  virtual const JacobianBasis* getJacobianFuncSpace(int o) const 
-  { 
-    return JacobianBases::find(MSH_PNT); 
+  virtual const JacobianBasis* getJacobianFuncSpace(int o) const
+  {
+    return JacobianBases::find(MSH_PNT);
   }
   virtual bool isInside(double u, double v, double w)
   {
@@ -64,7 +64,7 @@ class MPoint : public MElement {
   }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   {
-    static IntPt GQL[1]; 
+    static IntPt GQL[1];
     GQL[0].pt[0] = 0;
     GQL[0].pt[1] = 0;
     GQL[0].pt[2] = 0;

@@ -129,7 +129,7 @@ class MElement
   virtual MEdge getEdge(int num) = 0;
 
   // give an MEdge as input and get its local number and sign
-  virtual void getEdgeInfo(const MEdge & edge, int &ithEdge, int &sign) const 
+  virtual void getEdgeInfo(const MEdge & edge, int &ithEdge, int &sign) const
   {
     Msg::Error("Edge information not available for this element");
   }
@@ -187,7 +187,7 @@ class MElement
   virtual double etaShapeMeasure(){ return 0.; }
   virtual double distoShapeMeasure(){ return 1.0; }
   virtual double angleShapeMeasure() { return 1.0; }
-  
+
   // get the radius of the inscribed circle/sphere if it exists,
   // otherwise get the minimum radius of all the circles/spheres
   // tangent to the most boundaries of the element.

@@ -66,15 +66,15 @@ double MTetrahedron::getInnerRadius()
   // radius of inscribed sphere = 3 * Volume / sum(Area_i)
   double dist[3], face_area = 0.;
   double vol = getVolume();
-  for(int i = 0; i < 4; i++){  
+  for(int i = 0; i < 4; i++){
     MFace f = getFace(i);
     for (int j = 0; j < 3; j++){
       MEdge e = f.getEdge(j);
       dist[j] = e.getVertex(0)->distance(e.getVertex(1));
     }
-    face_area += 0.25 * sqrt((dist[0] + dist[1] + dist[2]) * 
-                             (-dist[0] + dist[1] + dist[2]) * 
-                             (dist[0] - dist[1] + dist[2]) * 
+    face_area += 0.25 * sqrt((dist[0] + dist[1] + dist[2]) *
+                             (-dist[0] + dist[1] + dist[2]) *
+                             (dist[0] - dist[1] + dist[2]) *
                              (dist[0] + dist[1] - dist[2]));
   }
   return 3 * vol / face_area;
@@ -122,7 +122,7 @@ const polynomialBasis* MTetrahedron::getFunctionSpace(int o) const
   int order = (o == -1) ? getPolynomialOrder() : o;
 
   int nv = getNumVolumeVertices();
-  
+
   if ((nv == 0) && (o == -1)) {
     switch (order) {
     case 0: return polynomialBases::find(MSH_TET_1);
@@ -139,7 +139,7 @@ const polynomialBasis* MTetrahedron::getFunctionSpace(int o) const
     default: Msg::Error("Order %d tetrahedron function space not implemented", order);
     }
   }
-  else { 
+  else {
     switch (order) {
     case 0: return polynomialBases::find(MSH_TET_1);
     case 1: return polynomialBases::find(MSH_TET_4);
@@ -163,7 +163,7 @@ const JacobianBasis* MTetrahedron::getJacobianFuncSpace(int o) const
   int order = (o == -1) ? getPolynomialOrder() : o;
 
   int nv = getNumVolumeVertices();
-  
+
   if ((nv == 0) && (o == -1)) {
     switch (order) {
     case 1: return JacobianBases::find(MSH_TET_4);
@@ -174,7 +174,7 @@ const JacobianBasis* MTetrahedron::getJacobianFuncSpace(int o) const
     default: Msg::Error("Order %d tetrahedron function space not implemented", order);
     }
   }
-  else { 
+  else {
     switch (order) {
     case 1: return JacobianBases::find(MSH_TET_4);
     case 2: return JacobianBases::find(MSH_TET_10);
@@ -201,7 +201,7 @@ static void _myGetEdgeRep(MTetrahedron *tet, int num, double *x, double *y, doub
   static double pp[4][3] = {{0,0,0},{1,0,0},{0,1,0},{0,0,1}};
   static int ed [6][2] = {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
   int iEdge = num / numSubEdges;
-  int iSubEdge = num % numSubEdges;  
+  int iSubEdge = num % numSubEdges;
 
   int iVertex1 = ed [iEdge][0];
   int iVertex2 = ed [iEdge][1];
@@ -218,7 +218,7 @@ static void _myGetEdgeRep(MTetrahedron *tet, int num, double *x, double *y, doub
   SPoint3 pnt1, pnt2;
   tet->pnt(u1,v1,w1,pnt1);
   tet->pnt(u2,v2,w2,pnt2);
-  x[0] = pnt1.x(); x[1] = pnt2.x(); 
+  x[0] = pnt1.x(); x[1] = pnt2.x();
   y[0] = pnt1.y(); y[1] = pnt2.y();
   z[0] = pnt1.z(); z[1] = pnt2.z();
 
@@ -240,14 +240,14 @@ void MTetrahedronN::getEdgeRep(int num, double *x, double *y, double *z, SVector
 int MTetrahedronN::getNumFacesRep(){ return 4 * SQU(CTX::instance()->mesh.numSubEdges); }
 int MTetrahedron10::getNumFacesRep(){ return 4 * SQU(CTX::instance()->mesh.numSubEdges); }
 
-static void _myGetFaceRep(MTetrahedron *tet, int num, double *x, double *y, double *z, 
+static void _myGetFaceRep(MTetrahedron *tet, int num, double *x, double *y, double *z,
                           SVector3 *n, int numSubEdges)
 {
   static double pp[4][3] = {{0,0,0},{1,0,0},{0,1,0},{0,0,1}};
   static int fak [4][3] = {{0,1,2},{0,1,3},{0,2,3},{1,2,3}};
   int iFace    = num / (numSubEdges * numSubEdges);
-  int iSubFace = num % (numSubEdges * numSubEdges);  
-  
+  int iSubFace = num % (numSubEdges * numSubEdges);
+
   int iVertex1 = fak[iFace][0];
   int iVertex2 = fak[iFace][1];
   int iVertex3 = fak[iFace][2];
@@ -366,7 +366,7 @@ void MTetrahedron::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &
 
 static std::vector<std::vector<int> > tetReverseIndices(20);
 
-const std::vector<int> &MTetrahedronN::_getReverseIndices (int order) 
+const std::vector<int> &MTetrahedronN::_getReverseIndices (int order)
 {
   if(order >= (int)tetReverseIndices.size())
     tetReverseIndices.resize(order + 1);
@@ -380,10 +380,10 @@ const std::vector<int> &MTetrahedronN::_getReverseIndices (int order)
   int p=0;
   for (int layerOrder = order; layerOrder>=0; layerOrder-=4) {
     //principal vertices
-    r[p+0] = p+0; 
+    r[p+0] = p+0;
     if (layerOrder ==0) break;
-    r[p+1] = p+2; 
-    r[p+2] = p+1; 
+    r[p+1] = p+2;
+    r[p+2] = p+1;
     r[p+3] = p+3;
     p+=4;
     for (int i = 0; i<layerOrder-1; i++) {

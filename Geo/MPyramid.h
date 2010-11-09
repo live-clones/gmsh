@@ -19,7 +19,7 @@
  *       ,/      |  '.  \
  *     ,/       .' w |   \
  *   ,/         |  ^ |    \
- *  0----------.'--|-3    `. 
+ *  0----------.'--|-3    `.
  *   `\        |   |  `\    \
  *     `\     .'   +----`\ - \ -> v
  *       `\   |    `\     `\  \
@@ -52,13 +52,13 @@ class MPyramid : public MElement {
     }
   }
  public :
-  MPyramid(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
-           int num=0, int part=0) 
+  MPyramid(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
+           int num=0, int part=0)
     : MElement(num, part)
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3; _v[4] = v4;
   }
-  MPyramid(std::vector<MVertex*> &v, int num=0, int part=0) 
+  MPyramid(std::vector<MVertex*> &v, int num=0, int part=0)
     : MElement(num, part)
   {
     for(int i = 0; i < 5; i++) _v[i] = v[i];
@@ -70,7 +70,7 @@ class MPyramid : public MElement {
   virtual MVertex *getVertexMED(int num)
   {
     static const int map[5] = {0, 3, 2, 1, 4};
-    return getVertex(map[num]); 
+    return getVertex(map[num]);
   }
   virtual int getNumEdges(){ return 8; }
   virtual MEdge getEdge(int num)
@@ -101,7 +101,7 @@ class MPyramid : public MElement {
   }
   virtual int getNumFacesRep(){ return 6; }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
-  { 
+  {
     static const int f[6][3] = {
       {0, 1, 4},
       {3, 0, 4},
@@ -127,7 +127,7 @@ class MPyramid : public MElement {
     MVertex *tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
   }
   virtual int getVolumeSign();
-  virtual void getShapeFunctions(double u, double v, double w, double s[], int o) 
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
   {
     double r = (w != 1.) ? (u * v * w / (1. - w)) : 0.;
     s[0] = 0.25 * ((1. - u) * (1. - v) - w + r);
@@ -136,37 +136,37 @@ class MPyramid : public MElement {
     s[3] = 0.25 * ((1. - u) * (1. + v) - w - r);
     s[4] = w;
   }
-  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o) 
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
   {
     if(w == 1.) {
-      s[0][0] = -0.25 ; 
+      s[0][0] = -0.25 ;
       s[0][1] = -0.25 ;
-      s[0][2] = -0.25 ; 
-      s[1][0] =  0.25 ; 
+      s[0][2] = -0.25 ;
+      s[1][0] =  0.25 ;
       s[1][1] = -0.25 ;
-      s[1][2] = -0.25 ; 
-      s[2][0] =  0.25 ; 
+      s[1][2] = -0.25 ;
+      s[2][0] =  0.25 ;
       s[2][1] =  0.25 ;
-      s[2][2] = -0.25 ; 
-      s[3][0] = -0.25 ; 
+      s[2][2] = -0.25 ;
+      s[3][0] = -0.25 ;
       s[3][1] =  0.25 ;
-      s[3][2] = -0.25 ; 
+      s[3][2] = -0.25 ;
     }
     else{
       s[0][0] = 0.25 * ( -(1. - v) + v * w / (1. - w)) ;
       s[0][1] = 0.25 * ( -(1. - u) + u * w / (1. - w)) ;
-      s[0][2] = 0.25 * ( -1.     + u * v / (1. - w) + u * v * w / (1. - w) / (1. - w)) ; 
+      s[0][2] = 0.25 * ( -1.     + u * v / (1. - w) + u * v * w / (1. - w) / (1. - w)) ;
       s[1][0] = 0.25 * (  (1. - v) - v * w / (1. - w)) ;
       s[1][1] = 0.25 * ( -(1. + u) - u * w / (1. - w)) ;
-      s[1][2] = 0.25 * ( -1.     - u * v / (1. - w) - u * v * w / (1. - w) / (1. - w)) ; 
+      s[1][2] = 0.25 * ( -1.     - u * v / (1. - w) - u * v * w / (1. - w) / (1. - w)) ;
       s[2][0] = 0.25 * (  (1. + v) + v * w / (1. - w)) ;
       s[2][1] = 0.25 * (  (1. + u) + u * w / (1. - w)) ;
-      s[2][2] = 0.25 * ( -1.     + u * v / (1. - w) + u * v * w / (1. - w) / (1. - w)) ; 
+      s[2][2] = 0.25 * ( -1.     + u * v / (1. - w) + u * v * w / (1. - w) / (1. - w)) ;
       s[3][0] = 0.25 * ( -(1. + v) - v * w / (1. - w)) ;
       s[3][1] = 0.25 * (  (1. - u) - u * w / (1. - w)) ;
-      s[3][2] = 0.25 * ( -1.     - u * v / (1. - w) - u * v * w / (1. - w) / (1. - w)) ; 
+      s[3][2] = 0.25 * ( -1.     - u * v / (1. - w) - u * v * w / (1. - w) / (1. - w)) ;
     }
-    s[4][0] = 0.; 
+    s[4][0] = 0.;
     s[4][1] = 0.;
     s[4][2] = 1.;
   }
@@ -217,28 +217,28 @@ class MPyramid : public MElement {
  *       ,7      |  12  \
  *     ,/       .'   |   \
  *   ,/         9    |    11
- *  0--------6-.'----3    `. 
+ *  0--------6-.'----3    `.
  *   `\        |      `\    \
- *     `5     .'        10   \ 
+ *     `5     .'        10   \
  *       `\   |           `\  \
  *         `\.'             `\`
  *            1--------8-------2
- *                        
+ *
  */
 class MPyramid13 : public MPyramid {
  protected:
   MVertex *_vs[8];
  public :
-  MPyramid13(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
+  MPyramid13(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
              MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
-             MVertex *v10, MVertex *v11, MVertex *v12, int num=0, int part=0) 
+             MVertex *v10, MVertex *v11, MVertex *v12, int num=0, int part=0)
     : MPyramid(v0, v1, v2, v3, v4, num, part)
   {
-    _vs[0] = v5; _vs[1] = v6; _vs[2] = v7; _vs[3] = v8; _vs[4] = v9; 
+    _vs[0] = v5; _vs[1] = v6; _vs[2] = v7; _vs[3] = v8; _vs[4] = v9;
     _vs[5] = v10; _vs[6] = v11; _vs[7] = v12;
     for(int i = 0; i < 8; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MPyramid13(std::vector<MVertex*> &v, int num=0, int part=0) 
+  MPyramid13(std::vector<MVertex*> &v, int num=0, int part=0)
     : MPyramid(v, num, part)
   {
     for(int i = 0; i < 8; i++) _vs[i] = v[5 + i];
@@ -251,12 +251,12 @@ class MPyramid13 : public MPyramid {
   virtual MVertex *getVertexMED(int num)
   {
     static const int map[13] = {0, 3, 2, 1, 4, 6, 10, 8, 5, 7, 12, 11, 9};
-    return getVertex(map[num]); 
+    return getVertex(map[num]);
   }
   virtual int getNumEdgeVertices() const { return 8; }
   virtual int getNumEdgesRep(){ return 16; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
-  { 
+  {
     static const int e[16][2] = {
       {0, 5}, {5, 1},
       {0, 6}, {6, 3},
@@ -278,7 +278,7 @@ class MPyramid13 : public MPyramid {
   }
   virtual int getNumFacesRep(){ return 22; }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
-  { 
+  {
     static const int f[22][3] = {
       {0, 5, 7}, {1, 9, 5}, {4, 7, 9}, {5, 9, 7},
       {3, 6, 12}, {0, 7, 6}, {4, 12, 7}, {6, 7, 12},
@@ -333,9 +333,9 @@ class MPyramid13 : public MPyramid {
  *       ,7      |  12  \
  *     ,/       .'   |   \
  *   ,/         9    |    11
- *  0--------6-.'----3    `. 
+ *  0--------6-.'----3    `.
  *   `\        |      `\    \
- *     `5     .' 13     10   \ 
+ *     `5     .' 13     10   \
  *       `\   |           `\  \
  *         `\.'             `\`
  *            1--------8-------2
@@ -345,21 +345,21 @@ class MPyramid14 : public MPyramid {
  protected:
   MVertex *_vs[9];
  public :
-  MPyramid14(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
+  MPyramid14(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
              MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
-             MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, 
-             int num=0, int part=0) 
+             MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13,
+             int num=0, int part=0)
     : MPyramid(v0, v1, v2, v3, v4, num, part)
   {
-    _vs[0] = v5; _vs[1] = v6; _vs[2] = v7; _vs[3] = v8; _vs[4] = v9; 
-    _vs[5] = v10; _vs[6] = v11; _vs[7] = v12; _vs[8] = v13; 
-    for(int i = 0; i < 9; i++) _vs[i]->setPolynomialOrder(2);   
+    _vs[0] = v5; _vs[1] = v6; _vs[2] = v7; _vs[3] = v8; _vs[4] = v9;
+    _vs[5] = v10; _vs[6] = v11; _vs[7] = v12; _vs[8] = v13;
+    for(int i = 0; i < 9; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MPyramid14(std::vector<MVertex*> &v, int num=0, int part=0) 
+  MPyramid14(std::vector<MVertex*> &v, int num=0, int part=0)
     : MPyramid(v, num, part)
   {
     for(int i = 0; i < 9; i++) _vs[i] = v[5 + i];
-    for(int i = 0; i < 9; i++) _vs[i]->setPolynomialOrder(2);   
+    for(int i = 0; i < 9; i++) _vs[i]->setPolynomialOrder(2);
   }
   ~MPyramid14(){}
   virtual int getPolynomialOrder() const { return 2; }
@@ -369,7 +369,7 @@ class MPyramid14 : public MPyramid {
   virtual int getNumFaceVertices() const { return 1; }
   virtual int getNumEdgesRep(){ return 16; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
-  { 
+  {
     static const int e[16][2] = {
       {0, 5}, {5, 1},
       {0, 6}, {6, 3},
@@ -391,13 +391,13 @@ class MPyramid14 : public MPyramid {
   }
   virtual int getNumFacesRep(){ return 24; }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
-  { 
+  {
     static const int f[24][3] = {
       {0, 5, 7}, {1, 9, 5}, {4, 7, 9}, {5, 9, 7},
       {3, 6, 12}, {0, 7, 6}, {4, 12, 7}, {6, 7, 12},
       {1, 8, 9}, {2, 11, 8}, {4, 9, 11}, {8, 11, 9},
       {2, 10, 11}, {3, 12, 10}, {4, 11, 12}, {10, 12, 11},
-      {0, 6, 13}, {0, 13, 5}, {3, 10, 13}, {3, 13, 6}, 
+      {0, 6, 13}, {0, 13, 5}, {3, 10, 13}, {3, 13, 6},
       {2, 8, 13}, {2, 13, 10}, {1, 5, 13}, {1, 13, 8}
     };
     _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),

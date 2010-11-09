@@ -46,12 +46,12 @@ class MTetrahedron : public MElement {
     v[2] = _v[faces_tetra(num, 2)];
   }
  public :
-  MTetrahedron(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, int num=0, int part=0) 
+  MTetrahedron(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, int num=0, int part=0)
     : MElement(num, part)
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3;
   }
-  MTetrahedron(std::vector<MVertex*> &v, int num=0, int part=0) 
+  MTetrahedron(std::vector<MVertex*> &v, int num=0, int part=0)
     : MElement(num, part)
   {
     for(int i = 0; i < 4; i++) _v[i] = v[i];
@@ -89,10 +89,10 @@ class MTetrahedron : public MElement {
                  _v[faces_tetra(num, 1)],
                  _v[faces_tetra(num, 2)]);
   }
-  virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const; 
+  virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
   virtual int getNumFacesRep(){ return 4; }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
-  { 
+  {
     MFace f(getFace(num));
     _getFaceRep(f.getVertex(0), f.getVertex(1), f.getVertex(2), x, y, z, n);
   }
@@ -172,7 +172,7 @@ class MTetrahedron : public MElement {
 /*
  * MTetrahedron10
  *
- *              2 
+ *              2
  *            ,/|`\
  *          ,/  |  `\
  *        ,6    '.   `5
@@ -190,15 +190,15 @@ class MTetrahedron10 : public MTetrahedron {
  protected:
   MVertex *_vs[6];
  public :
-  MTetrahedron10(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
+  MTetrahedron10(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
                  MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
-                 int num=0, int part=0) 
+                 int num=0, int part=0)
     : MTetrahedron(v0, v1, v2, v3, num, part)
   {
     _vs[0] = v4; _vs[1] = v5; _vs[2] = v6; _vs[3] = v7; _vs[4] = v8; _vs[5] = v9;
     for(int i = 0; i < 6; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MTetrahedron10(std::vector<MVertex*> &v, int num=0, int part=0) 
+  MTetrahedron10(std::vector<MVertex*> &v, int num=0, int part=0)
     : MTetrahedron(v, num, part)
   {
     for(int i = 0; i < 6; i++) _vs[i] = v[4 + i];
@@ -211,22 +211,22 @@ class MTetrahedron10 : public MTetrahedron {
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[10] = {0, 4, 1, 5, 2, 6, 7, 9, 8, 3};
-    return getVertex(map[num]); 
+    return getVertex(map[num]);
   }
   virtual MVertex *getVertexBDF(int num)
   {
     static const int map[10] = {0, 1, 2, 3, 4, 5, 6, 7, 9, 8};
-    return getVertex(map[num]); 
+    return getVertex(map[num]);
   }
   virtual MVertex *getVertexMED(int num)
   {
     static const int map[10] = {0, 2, 1, 3, 6, 5, 4, 7, 8, 9};
-    return getVertex(map[num]); 
+    return getVertex(map[num]);
   }
   virtual MVertex *getVertexDIFF(int num)
   {
     static const int map[10] = {0, 1, 2, 3, 4, 5, 6, 7, 9, 8};
-    return getVertex(map[num]); 
+    return getVertex(map[num]);
   }
   virtual int getNumEdgeVertices() const { return 6; }
 
@@ -275,13 +275,13 @@ class MTetrahedron10 : public MTetrahedron {
  * MTetrahedronN  FIXME: check the plot
  *
  *              2
- *            ,/|`\ 
+ *            ,/|`\
  *          ,/  |  `\              E = order - 1
- *        ,/    '.   `\            C = 4 + 6*E 
+ *        ,/    '.   `\            C = 4 + 6*E
  *      ,/       |     `\          F = ((order - 1)*(order - 2))/2
  *    ,/         |       `\        N = total number of vertices
  *   0-----------'.--------1
- *    `\.         |      ,/        Interior vertex numbers  
+ *    `\.         |      ,/        Interior vertex numbers
  *       `\.      |    ,/            for edge 0 <= i <= 5: 4+i*E to 3+(i+1)*E
  *          `\.   '. ,/              for face 0 <= j <= 3: C+j*F to C-1+(j+1)*F
  *             `\. |/                in volume           : C+4*F to N-1
@@ -290,11 +290,11 @@ class MTetrahedron10 : public MTetrahedron {
  */
 
 /* tet order 3
-   
+
  *              2
- *            ,/|`\ 
+ *            ,/|`\
  *          ,5  |  `6              E = order - 1
- *        ,/    12   `\            C = 4 + 6*E 
+ *        ,/    12   `\            C = 4 + 6*E
  *      ,4       |     `7          F = ((order - 1)*(order - 2))/2
  *    ,/         |       `\        N = total number of vertices
  *   0-----9-----'.--8-----1
@@ -313,13 +313,13 @@ class MTetrahedronN : public MTetrahedron {
   const char _order;
   double _disto;
  public:
-  MTetrahedronN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, 
-                std::vector<MVertex*> &v, char order, int num=0, int part=0) 
+  MTetrahedronN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
+                std::vector<MVertex*> &v, char order, int num=0, int part=0)
     : MTetrahedron(v0, v1, v2, v3, num, part) , _vs (v), _order(order),_disto(-1.e22)
   {
     for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
   }
-  MTetrahedronN(std::vector<MVertex*> &v, char order, int num=0, int part=0) 
+  MTetrahedronN(std::vector<MVertex*> &v, char order, int num=0, int part=0)
     : MTetrahedron(v[0], v[1], v[2], v[3], num, part) , _order(order),_disto(-1.e22)
   {
     for(unsigned int i = 4; i < v.size(); i++) _vs.push_back(v[i]);
@@ -352,7 +352,7 @@ class MTetrahedronN : public MTetrahedron {
     const int ie = (num+1)*nbV;
     for(int i = num*nbV; i != ie; ++i) v[j++] = _vs[i];
   }
-  virtual int getNumVolumeVertices() const 
+  virtual int getNumVolumeVertices() const
   {
     switch(getTypeForMSH()){
     case MSH_TET_35 : return 1;
@@ -363,27 +363,27 @@ class MTetrahedronN : public MTetrahedron {
     case MSH_TET_220 : return 56;
     case MSH_TET_286 : return 84;
     default : return 0;
-    }    
+    }
   }
-  virtual int getTypeForMSH() const 
+  virtual int getTypeForMSH() const
   {
     // (p+1)*(p+2)*(p+3)/6
-    if(_order == 3 && _vs.size() + 4 == 20) return MSH_TET_20; 
-    if(_order == 4 && _vs.size() + 4 == 34) return MSH_TET_34; 
-    if(_order == 4 && _vs.size() + 4 == 35) return MSH_TET_35; 
-    if(_order == 5 && _vs.size() + 4 == 56) return MSH_TET_56; 
-    if(_order == 5 && _vs.size() + 4 == 52) return MSH_TET_52; 
-    if(_order == 6 && _vs.size() + 4 == 84) return MSH_TET_84; 
-    if(_order == 7 && _vs.size() + 4 == 120) return MSH_TET_120; 
-    if(_order == 8 && _vs.size() + 4 == 165) return MSH_TET_165; 
-    if(_order == 9 && _vs.size() + 4 == 220) return MSH_TET_220; 
-    if(_order == 10 && _vs.size() + 4 == 286) return MSH_TET_286; 
+    if(_order == 3 && _vs.size() + 4 == 20) return MSH_TET_20;
+    if(_order == 4 && _vs.size() + 4 == 34) return MSH_TET_34;
+    if(_order == 4 && _vs.size() + 4 == 35) return MSH_TET_35;
+    if(_order == 5 && _vs.size() + 4 == 56) return MSH_TET_56;
+    if(_order == 5 && _vs.size() + 4 == 52) return MSH_TET_52;
+    if(_order == 6 && _vs.size() + 4 == 84) return MSH_TET_84;
+    if(_order == 7 && _vs.size() + 4 == 120) return MSH_TET_120;
+    if(_order == 8 && _vs.size() + 4 == 165) return MSH_TET_165;
+    if(_order == 9 && _vs.size() + 4 == 220) return MSH_TET_220;
+    if(_order == 10 && _vs.size() + 4 == 286) return MSH_TET_286;
     return 0;
   }
-  virtual void revert() 
-  {    
+  virtual void revert()
+  {
     MVertex *tmp;
-    tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;    
+    tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
     std::vector<MVertex*> inv(_vs.size());
     std::vector<int> reverseIndices = _getReverseIndices(_order);
     for (unsigned int i = 0; i< _vs.size(); i++)
