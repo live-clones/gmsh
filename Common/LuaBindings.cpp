@@ -26,6 +26,7 @@
 #include "luaFunction.h"
 #include "function.h"
 #include "GModel.h"
+#include "GPoint.h"
 #include "Bindings.h"
 #include "GmshMessage.h"
 #include "Options.h"
@@ -405,6 +406,7 @@ binding::binding()
   GFace::registerBindings(this);
   GRegion::registerBindings(this);
   GModel::registerBindings(this);
+  GPoint::registerBindings(this);
   MElement::registerBindings(this);
   MVertex::registerBindings(this);
   MTriangle::registerBindings(this);

@@ -5,7 +5,7 @@
 
 set(SRC
   GEntity.cpp STensor3.cpp
-    GVertex.cpp GEdge.cpp GFace.cpp GRegion.cpp
+    GVertex.cpp GEdge.cpp GFace.cpp GRegion.cpp GPoint.cpp
     GEdgeLoop.cpp GEdgeCompound.cpp GFaceCompound.cpp GRegionCompound.cpp
     gmshVertex.cpp gmshEdge.cpp gmshFace.cpp gmshRegion.cpp gmshSurface.cpp
     OCCVertex.cpp OCCEdge.cpp OCCFace.cpp OCCRegion.cpp

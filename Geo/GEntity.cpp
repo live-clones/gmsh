@@ -107,6 +107,7 @@ void GEntity::registerBindings(binding *b)
   mb = cb->addMethod("addPhysicalEntity", &GEntity::addPhysicalEntity);
   mb->setArgNames("physicalGroupId",NULL);
   mb->setDescription("add this element to a physical group.");
+
 }
 
 

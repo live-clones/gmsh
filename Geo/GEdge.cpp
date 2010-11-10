@@ -389,4 +389,13 @@ void GEdge::registerBindings(binding *b)
   mb = cb->addMethod("addLine", &GEdge::addLine);
   mb->setDescription("insert a line mesh element");
   mb->setArgNames("line", NULL);
+
+  mb = cb->addMethod("getLowBound", &GEdge::getLowBound);
+  mb->setDescription("get the lower bound of the parametrization of the Edge");
+  mb = cb->addMethod("getHighBound", &GEdge::getHighBound);
+  mb->setDescription("get the lower bound of the parametrization of the Edge");
+
+  //mb = cb->addMethod("point", &GEdge::point);
+  //mb->setDescription("returns the GPoint for a given double parameter");
+  //mb->setArgNames("double", NULL);
 }
