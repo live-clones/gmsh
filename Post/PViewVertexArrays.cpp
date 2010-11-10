@@ -944,16 +944,60 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
   }
 }
 
-static void addTensorElement(PView *p, int numNodes, int type,
+static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int type,
                              double xyz[PVIEW_NMAX][3], double val[PVIEW_NMAX][9], 
                              bool pre)
 {
   PViewOptions *opt = p->getOptions();
+  fullMatrix <double> tensor(3,3);
+  fullVector<double> S(3), imS (3);
+  fullMatrix<double> V(3,3);
+  fullMatrix <double> rightV(3,3);
 
   if(opt->tensorType == PViewOptions::VonMises){
     for(int i = 0; i < numNodes; i++)
       val[i][0] = ComputeVonMises(val[i]);
     addScalarElement(p, type, xyz, val, pre, numNodes);
+  } else if (opt->tensorType == PViewOptions::MinEigenValue) {
+    for(int i = 0; i < numNodes; i++) {
+      for (int j = 0; j < 3; j++) {
+        tensor(j,0) = val [i][0+j*3];
+        tensor(j,1) = val [i][1+j*3];
+        tensor(j,2) = val [i][2+j*3];
+      }
+      tensor.eig(S, imS, V, rightV, true);
+      val[i][0] = S(0);
+    }
+    addScalarElement(p, type, xyz, val, pre, numNodes);
+  } else if (opt->tensorType == PViewOptions::MaxEigenValue) {
+    for(int i = 0; i < numNodes; i++) {
+      for (int j = 0; j < 3; j++) {
+        tensor(j,0) = val [i][0+j*3];
+        tensor(j,1) = val [i][1+j*3];
+        tensor(j,2) = val [i][2+j*3];
+      }
+      tensor.eig(S, imS, V, rightV, true);
+      val[i][0] = S(2);
+    }
+    addScalarElement(p, type, xyz, val, pre, numNodes);
+  } else if (opt->tensorType == PViewOptions::EigenVectors) {
+    double vval[3][PVIEW_NMAX][9];
+    for(int i = 0; i < numNodes; i++) {
+      for (int j = 0; j < 3; j++) {
+        tensor(j,0) = val [i][0+j*3];
+        tensor(j,1) = val [i][1+j*3];
+        tensor(j,2) = val [i][2+j*3];
+      }
+      tensor.eig(S, imS, V, rightV, false);
+      for (int j = 0; j < 3; j++) {
+        vval[j][i][0] = V(j,0)*S(j);
+        vval[j][i][1] = V(j,1)*S(j);
+        vval[j][i][2] = V(j,2)*S(j);
+      }
+    }
+    addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[0], pre);
+    addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[1], pre);
+    addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[2], pre);
   }
 }
 
@@ -1034,7 +1078,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
             else if(numComp == 3 && opt->drawVectors)
               addVectorElement(p, ent, i, 1, TYPE_PNT, xyz2, val2, preprocessNormalsOnly);
             else if(numComp == 9 && opt->drawTensors)
-              addTensorElement(p, 1, TYPE_PNT, xyz2, val2, preprocessNormalsOnly);
+              addTensorElement(p, ent, i, 1, TYPE_PNT, xyz2, val2, preprocessNormalsOnly);
           }
         }
         else if(numComp == 1 && opt->drawScalars)
@@ -1042,7 +1086,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
         else if(numComp == 3 && opt->drawVectors)
           addVectorElement(p, ent, i, numNodes, type, xyz, val, preprocessNormalsOnly);
         else if(numComp == 9 && opt->drawTensors)
-          addTensorElement(p, numNodes, type, xyz, val, preprocessNormalsOnly);
+          addTensorElement(p, ent, i, numNodes, type, xyz, val, preprocessNormalsOnly);
       }
     }
   }

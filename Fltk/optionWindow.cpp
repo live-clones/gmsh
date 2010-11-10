@@ -3128,6 +3128,9 @@ optionWindow::optionWindow(int deltaFontSize)
       
       static Fl_Menu_Item menu_tensor[] = {
         {"Von-Mises", 0, 0, 0},
+        {"Maximum eigen value", 0, 0, 0},
+        {"Minimum eigen value", 0, 0, 0},
+        {"Eigen vectors", 0, 0, 0},
         {0}
       };
       view.choice[4] = new Fl_Choice

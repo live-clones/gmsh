@@ -34,7 +34,10 @@ class PViewOptions {
     Displacement = 5
   };
   enum TensorType {
-    VonMises = 1
+    VonMises = 1,
+    MaxEigenValue = 2,
+    MinEigenValue = 3,
+    EigenVectors = 4
   };
   enum GlyphLocation {
     COG = 1,
