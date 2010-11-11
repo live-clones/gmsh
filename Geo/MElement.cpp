@@ -1137,4 +1137,7 @@ void MElement::registerBindings(binding *b)
   cm = cb->addMethod("xyzTouvw", &MElement::xyzTouvw);
   cm->setDescription("get uvw from xyz");
   cm->setArgNames("xyzuvw",NULL);
+  cm = cb->addMethod("getVertex", &MElement::getVertex);
+  cm->setDescription("get the vertex with the given index");
+  cm->setArgNames("index",NULL);
 }

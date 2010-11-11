@@ -395,6 +395,10 @@ void GEdge::registerBindings(binding *b)
   mb = cb->addMethod("getHighBound", &GEdge::getHighBound);
   mb->setDescription("get the lower bound of the parametrization of the Edge");
 
+  mb = cb->addMethod("getMeshElement", &GEdge::getMeshElement);
+  mb->setDescription("get the mesh element with the given index");
+  mb->setArgNames("index", NULL);
+
   //mb = cb->addMethod("point", &GEdge::point);
   //mb->setDescription("returns the GPoint for a given double parameter");
   //mb->setArgNames("double", NULL);
