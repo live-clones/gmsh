@@ -246,6 +246,19 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
     opt_general_double_buffer(0, GMSH_SET, o->general.butt[3]->value());
   if(opt_general_antialiasing(0, GMSH_GET, 0) != o->general.butt[12]->value())
     opt_general_antialiasing(0, GMSH_SET, o->general.butt[12]->value());
+  if(opt_general_stereo_mode(0, GMSH_GET, 0) != o->general.butt[17]->value()) {  
+    opt_general_stereo_mode(0, GMSH_SET, o->general.butt[17]->value());
+    // when stereo mode is active camera mode is obligatory so camera button is desactivated
+    if (CTX::instance()->stereo){
+      o->general.butt[18]->value(1); 
+      o->general.butt[18]->deactivate(); 
+    }
+    else    o->general.butt[18]->activate(); 
+  }
+  if(opt_general_camera_mode(0, GMSH_GET, 0) != o->general.butt[18]->value())
+    opt_general_camera_mode(0, GMSH_SET, o->general.butt[18]->value()); 
+
+
   opt_general_trackball(0, GMSH_SET, o->general.butt[5]->value());
   opt_general_terminal(0, GMSH_SET, o->general.butt[7]->value());
   double sessionrc = opt_general_session_save(0, GMSH_GET, 0);
@@ -1212,7 +1225,7 @@ optionWindow::optionWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 34 * FL_NORMAL_SIZE + WB;
-  int height = 12 * BH + 4 * WB;
+  int height = 13 * BH + 4 * WB;
   int L = 7 * FL_NORMAL_SIZE;
 
   win = new paletteWindow
@@ -1308,6 +1321,18 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + 2 * WB + 2 * IW / 3, 2 * WB + 10 * BH, IW / 3, BH, "Rotation center");
       general.value[10]->align(FL_ALIGN_RIGHT);
       general.value[10]->callback(general_options_ok_cb, (void*)"rotation_center_coord");
+
+      general.butt[17] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 12 * BH, BW, BH, "Enable stereo");
+      general.butt[17]->type(FL_TOGGLE_BUTTON);
+      general.butt[17]->callback(general_options_ok_cb);
+
+      general.butt[18] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 11 * BH, BW, BH, "Enable camera");
+      general.butt[18]->type(FL_TOGGLE_BUTTON);
+      general.butt[18]->callback(general_options_ok_cb);
+
+
 
       o->end();
     }

@@ -5,6 +5,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
@@ -51,6 +52,7 @@
 #endif
 
 // General routines for string options
+using namespace std; 
 
 bool StringOption(int action, const char *category, int num, 
                   const char *name, std::string &val)
@@ -3694,7 +3696,22 @@ double opt_general_stereo_mode(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX::instance()->stereo = (int)val;
-
+  if (CTX::instance()->stereo)         CTX::instance()->camera = 1 ;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))  {
+    FlGui::instance()->options->general.butt[17]->value
+      (CTX::instance()->stereo);    
+    if (CTX::instance()->stereo)      {
+    // when stereo mode is active camera mode is obligatory
+      FlGui::instance()->options->general.butt[18]->value
+      	(CTX::instance()->camera);
+      FlGui::instance()->options->general.butt[18]->deactivate();
+    }
+    else{ 
+      FlGui::instance()->options->general.butt[18]->activate();
+    }
+  }
+#endif
   return CTX::instance()->stereo ;
 }
 
@@ -3702,7 +3719,11 @@ double opt_general_camera_mode(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX::instance()->camera = (int)val;
-
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.butt[18]->value
+      (CTX::instance()->camera);
+#endif
   return CTX::instance()->camera ;
 }
 
