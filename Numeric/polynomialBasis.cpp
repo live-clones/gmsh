@@ -1526,7 +1526,7 @@ const polynomialBasis *polynomialBases::find(int tag)
   case MSH_PRI_1 :
     F.numFaces = 5;
     F.monomials = generatePascalPrism(0);
-    F.points =    gmshGeneratePointsPrism(1, false);
+    F.points =    gmshGeneratePointsPrism(0, false);
     F.parentType = TYPE_PRI;
     generateClosureOrder0(F.closures,48);
     break;
