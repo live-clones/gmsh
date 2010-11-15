@@ -970,7 +970,7 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int typ
     }
     addScalarElement(p, type, xyz, val, pre, numNodes);
   } else if (opt->tensorType == PViewOptions::MaxEigenValue) {
-    for(int i = 0; i < numNodes; i++) {
+    for (int i = 0; i < numNodes; i++) {
       for (int j = 0; j < 3; j++) {
         tensor(j,0) = val [i][0+j*3];
         tensor(j,1) = val [i][1+j*3];
@@ -998,6 +998,29 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int typ
     addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[0], pre);
     addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[1], pre);
     addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[2], pre);
+  } else if (opt->tensorType == PViewOptions::Ellipse) {
+    double vval[3][4]= {0,0,0, 0,0,0, 0,0,0, 0,0,0};
+    for(int i = 0; i < numNodes; i++) {
+      for (int j = 0; j < 3; j++) {
+        tensor(j,0) = val [i][0+j*3];
+        tensor(j,1) = val [i][1+j*3];
+        tensor(j,2) = val [i][2+j*3];
+      }
+      tensor.eig(S, imS, V, rightV, false);
+      for (int j = 0; j < 3; j++) {
+        vval[0][j+1] += V(j,0)*S(j)/numNodes;
+        vval[1][j+1] += V(j,1)*S(j)/numNodes;
+        vval[2][j+1] += V(j,2)*S(j)/numNodes;
+      }
+      vval[0][0] += xyz[i][0]/numNodes;
+      vval[1][0] += xyz[i][1]/numNodes;
+      vval[2][0] += xyz[i][2]/numNodes;
+    }
+    double lmax = std::max(S(0), std::max(S(1), S(2)));
+    //unsigned int color = opt->getColor(lmax, opt->externalMin, opt->externalMax, false, (opt->intervalsType == PViewOptions::Discrete) ?  opt->nbIso : -1);
+    unsigned int color = opt->getColor(lmax, opt->tmpMin, opt->tmpMax, false, (opt->intervalsType == PViewOptions::Discrete) ?  opt->nbIso : -1);
+    unsigned int col[4] = {color, color, color, color};
+    p->va_ellipses->add( vval[0], vval[1], vval[2], 0, col, 0, false);
   }
 }
 
@@ -1153,6 +1176,14 @@ class initPView {
     heuristic = _estimateIfClipped(p, heuristic);
     return heuristic + 1000;
   }
+  int _estimateNumEllipses(PView *p)
+  {
+    PViewData *data = p->getData(true);
+    PViewOptions *opt = p->getOptions();
+    int heuristic = data->getNumTensors(opt->timeStep);
+    heuristic = _estimateIfClipped(p, heuristic);
+    return heuristic + 1000;
+  }
  public:
   void operator () (PView *p)
   {
@@ -1195,6 +1226,7 @@ class initPView {
     p->va_lines = new VertexArray(2, _estimateNumLines(p));
     p->va_triangles = new VertexArray(3, _estimateNumTriangles(p));
     p->va_vectors = new VertexArray(2, _estimateNumVectors(p));
+    p->va_ellipses = new VertexArray(4, _estimateNumEllipses(p));
 
     if(p->normals) delete p->normals;
     p->normals = new smooth_normals(opt->angleSmoothNormals);
@@ -1206,12 +1238,13 @@ class initPView {
     p->va_lines->finalize();
     p->va_triangles->finalize();
     p->va_vectors->finalize();
+    p->va_ellipses->finalize();
 
     Msg::Info("%d vertices in vertex arrays (%g Mb)", p->va_points->getNumVertices() + 
               p->va_lines->getNumVertices() + p->va_triangles->getNumVertices() + 
-              p->va_vectors->getNumVertices(), p->va_points->getMemoryInMb() +
+              p->va_vectors->getNumVertices() + p->va_ellipses->getNumVertices(), p->va_points->getMemoryInMb() +
               p->va_lines->getMemoryInMb() + p->va_triangles->getMemoryInMb() + 
-              p->va_vectors->getMemoryInMb());
+              p->va_vectors->getMemoryInMb() + p->va_ellipses->getMemoryInMb());
 
     p->setChanged(false);
   }
@@ -1277,6 +1310,11 @@ void PView::fillVertexArray(ConnectionManager *remote, int length,
     if(p->va_vectors) delete p->va_vectors;
     p->va_vectors = new VertexArray(2, 100);
     p->va_vectors->fromChar(length, bytes, swap);
+    break;
+  case 5:
+    if(p->va_ellipses) delete p->va_ellipses;
+    p->va_ellipses = new VertexArray(4, 100);
+    p->va_ellipses->fromChar(length, bytes, swap);
     break;
   default: 
     Msg::Error("Cannot fill vertex array of type %d", type);

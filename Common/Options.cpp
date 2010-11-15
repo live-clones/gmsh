@@ -8032,7 +8032,7 @@ double opt_view_tensor_type(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->tensorType = (int)val;
-    if(opt->tensorType > 4)
+    if(opt->tensorType > 5 || opt->tensorType < 1)
       opt->tensorType = 1;
     if(view) view->setChanged(true);
   }

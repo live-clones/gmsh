@@ -87,6 +87,31 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
   glDisable(GL_LIGHTING);
 }
 
+static void drawEllipseArray(drawContext *ctx, PView *p, VertexArray *va)
+{
+  if(!va || va->getNumVerticesPerElement() != 4) return;
+
+  PViewOptions *opt = p->getOptions();
+  
+  for(int i = 0; i < va->getNumVertices(); i += 4) {
+    float *s = va->getVertexArray(3 * i);
+    float vv[3][3];
+    double lmax = opt->tmpMax;
+    double scale = (opt->arrowSizeMax - opt->arrowSizeMin) *ctx->pixel_equiv_x / ctx->s[0]/2;
+    double lmin = opt->arrowSizeMin * ctx->pixel_equiv_x / ctx->s[0]/2;
+    for (int j = 0; j < 3; j++) {
+      float *v = va->getVertexArray(3 * (i + j + 1));
+      double l = sqrt (v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+      double l2 = std::min(1., l/lmax);
+      for (int k = 0; k < 3; k++) {
+        vv[j][k] = v[k]/l*(scale*l2 + lmin);
+      }
+    }
+    glColor4ubv((GLubyte *)va->getColorArray(4 * i));
+    ctx->drawEllipse(s[0], s[1], s[2], vv[0], vv[1], vv[2], opt->light);
+  }
+}
+
 static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
 {
   if(!va || va->getNumVerticesPerElement() != 2) return;
@@ -374,6 +399,7 @@ class drawPView {
 
     // draw the "pseudo" vertex arrays for vectors
     drawVectorArray(_ctx, p, p->va_vectors);
+    drawEllipseArray(_ctx, p, p->va_ellipses);
 
     // to avoid looping over elements (and to enable drawing glyphs
     // for remote views) we should also store these glyphs in "pseudo"

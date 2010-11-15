@@ -29,7 +29,7 @@ void PView::_init(int num)
   _changed = true;
   _aliasOf = 0;
   _eye = SPoint3(0., 0., 0.);
-  va_points = va_lines = va_triangles = va_vectors = 0;
+  va_points = va_lines = va_triangles = va_vectors = va_ellipses = 0;
   normals = 0;
   list.push_back(this);
   for(unsigned int i = 0; i < list.size(); i++) list[i]->setIndex(i);
@@ -179,6 +179,7 @@ void PView::deleteVertexArrays()
   if(va_lines) delete va_lines; va_lines = 0;
   if(va_triangles) delete va_triangles; va_triangles = 0;
   if(va_vectors) delete va_vectors; va_vectors = 0;
+  if(va_ellipses) delete va_ellipses; va_ellipses = 0;
 }
 
 void PView::setOptions(PViewOptions *val)

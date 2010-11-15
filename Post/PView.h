@@ -114,7 +114,7 @@ class PView{
   bool write(std::string fileName, int format, bool append=false);
 
   // vertex arrays to draw the elements efficiently
-  VertexArray *va_points, *va_lines, *va_triangles, *va_vectors;
+  VertexArray *va_points, *va_lines, *va_triangles, *va_vectors, *va_ellipses;
 
   // fill the vertex arrays, given the current option and data
   void fillVertexArrays();

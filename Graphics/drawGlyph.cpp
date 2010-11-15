@@ -128,6 +128,22 @@ void drawContext::drawSphere(double R, double x, double y, double z,
   glDisable(GL_LIGHTING);
 }
 
+void drawContext::drawEllipse(double x, double y, double z, float v0[3], float v1[3], float v2[3], int light)
+{
+  if(light) glEnable(GL_LIGHTING);
+  glPushMatrix();
+  GLfloat m[16] = {
+    v0[0], v0[1], v0[2], .0d,
+    v1[0], v1[1], v1[2], .0d,
+    v2[0], v2[1], v2[2], .0d,
+    x, y, z, 1.d
+  };
+  glMultMatrixf(m);
+  glCallList(_displayLists + 0);
+  glPopMatrix();
+  glDisable(GL_LIGHTING);
+}
+
 void drawContext::drawSphere(double size, double x, double y, double z, int light)
 {
   double ss = size * pixel_equiv_x / s[0]; // size is in pixels
