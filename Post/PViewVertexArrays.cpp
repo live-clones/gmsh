@@ -954,73 +954,82 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int typ
   fullMatrix<double> V(3,3);
   fullMatrix <double> rightV(3,3);
 
+  double vval[3][PVIEW_NMAX][9];
   if(opt->tensorType == PViewOptions::VonMises){
     for(int i = 0; i < numNodes; i++)
       val[i][0] = ComputeVonMises(val[i]);
     addScalarElement(p, type, xyz, val, pre, numNodes);
-  } else if (opt->tensorType == PViewOptions::MinEigenValue) {
+  } else if (opt->tensorType == PViewOptions::MinEigenValue || opt->tensorType == PViewOptions::MaxEigenValue || opt->tensorType == PViewOptions::EigenVectors) {
     for(int i = 0; i < numNodes; i++) {
       for (int j = 0; j < 3; j++) {
         tensor(j,0) = val [i][0+j*3];
         tensor(j,1) = val [i][1+j*3];
         tensor(j,2) = val [i][2+j*3];
       }
-      tensor.eig(S, imS, V, rightV, true);
-      val[i][0] = S(0);
-    }
-    addScalarElement(p, type, xyz, val, pre, numNodes);
-  } else if (opt->tensorType == PViewOptions::MaxEigenValue) {
-    for (int i = 0; i < numNodes; i++) {
-      for (int j = 0; j < 3; j++) {
-        tensor(j,0) = val [i][0+j*3];
-        tensor(j,1) = val [i][1+j*3];
-        tensor(j,2) = val [i][2+j*3];
-      }
-      tensor.eig(S, imS, V, rightV, true);
-      val[i][0] = S(2);
-    }
-    addScalarElement(p, type, xyz, val, pre, numNodes);
-  } else if (opt->tensorType == PViewOptions::EigenVectors) {
-    double vval[3][PVIEW_NMAX][9];
-    for(int i = 0; i < numNodes; i++) {
-      for (int j = 0; j < 3; j++) {
-        tensor(j,0) = val [i][0+j*3];
-        tensor(j,1) = val [i][1+j*3];
-        tensor(j,2) = val [i][2+j*3];
-      }
-      tensor.eig(S, imS, V, rightV, false);
-      for (int j = 0; j < 3; j++) {
-        vval[j][i][0] = V(j,0)*S(j);
-        vval[j][i][1] = V(j,1)*S(j);
-        vval[j][i][2] = V(j,2)*S(j);
+      tensor.eig(S, imS, V, rightV, opt->tensorType != PViewOptions::EigenVectors);
+      if (PViewOptions::MinEigenValue == opt->tensorType)
+        val[i][0] = S(0);
+      else if (PViewOptions::MaxEigenValue == opt->tensorType)
+        val[i][0] = S(2);
+      else if (PViewOptions::EigenVectors == opt->tensorType) {
+        for (int j = 0; j < 3; j++) {
+          vval[j][i][0] = V(j,0)*S(j);
+          vval[j][i][1] = V(j,1)*S(j);
+          vval[j][i][2] = V(j,2)*S(j);
+        }
       }
     }
-    addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[0], pre);
-    addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[1], pre);
-    addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[2], pre);
-  } else if (opt->tensorType == PViewOptions::Ellipse) {
-    double vval[3][4]= {0,0,0, 0,0,0, 0,0,0, 0,0,0};
-    for(int i = 0; i < numNodes; i++) {
-      for (int j = 0; j < 3; j++) {
-        tensor(j,0) = val [i][0+j*3];
-        tensor(j,1) = val [i][1+j*3];
-        tensor(j,2) = val [i][2+j*3];
+    if (PViewOptions::EigenVectors == opt->tensorType) {
+      addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[0], pre);
+      addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[1], pre);
+      addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[2], pre);
+    } else
+      addScalarElement(p, type, xyz, val, pre, numNodes);
+  } 
+  else if (opt->tensorType == PViewOptions::Ellipse) {
+    if(opt->glyphLocation == PViewOptions::Vertex){
+      double vval[3][4]= {0,0,0, 0,0,0, 0,0,0, 0,0,0};
+      for(int i = 0; i < numNodes; i++){
+        for (int j = 0; j < 3; j++) {
+          tensor(j,0) = val [i][0+j*3];
+          tensor(j,1) = val [i][1+j*3];
+          tensor(j,2) = val [i][2+j*3];
+        }
+        tensor.eig(S, imS, V, rightV, false);
+        for (int k = 0; k < 3; k++) {
+          vval[k][0] = xyz[i][k];
+          for (int j = 0; j < 3; j++) {
+            vval[k][j+1] = V(j,k)*S(j);
+          }
+        }
+        double lmax = std::max(S(0), std::max(S(1), S(2)));
+        unsigned int color = opt->getColor(lmax, opt->tmpMin, opt->tmpMax, false, (opt->intervalsType == PViewOptions::Discrete) ?  opt->nbIso : -1);
+        unsigned int col[4] = {color, color, color, color};
+        p->va_ellipses->add(vval[0], vval[1], vval[2], 0, col, 0, false);
       }
-      tensor.eig(S, imS, V, rightV, false);
-      for (int j = 0; j < 3; j++) {
-        vval[0][j+1] += V(j,0)*S(j)/numNodes;
-        vval[1][j+1] += V(j,1)*S(j)/numNodes;
-        vval[2][j+1] += V(j,2)*S(j)/numNodes;
+    } else if(opt->glyphLocation == PViewOptions::COG){
+      double vval[3][4]= {0,0,0, 0,0,0, 0,0,0, 0,0,0};
+      for(int i = 0; i < numNodes; i++) {
+        for (int j = 0; j < 3; j++) {
+          tensor(j,0) = val [i][0+j*3];
+          tensor(j,1) = val [i][1+j*3];
+          tensor(j,2) = val [i][2+j*3];
+        }
+        tensor.eig(S, imS, V, rightV, false);
+        for (int j = 0; j < 3; j++) {
+          vval[0][j+1] += V(j,0)*S(j)/numNodes;
+          vval[1][j+1] += V(j,1)*S(j)/numNodes;
+          vval[2][j+1] += V(j,2)*S(j)/numNodes;
+        }
+        vval[0][0] += xyz[i][0]/numNodes;
+        vval[1][0] += xyz[i][1]/numNodes;
+        vval[2][0] += xyz[i][2]/numNodes;
       }
-      vval[0][0] += xyz[i][0]/numNodes;
-      vval[1][0] += xyz[i][1]/numNodes;
-      vval[2][0] += xyz[i][2]/numNodes;
+      double lmax = std::max(S(0), std::max(S(1), S(2)));
+      unsigned int color = opt->getColor(lmax, opt->tmpMin, opt->tmpMax, false, (opt->intervalsType == PViewOptions::Discrete) ?  opt->nbIso : -1);
+      unsigned int col[4] = {color, color, color, color};
+      p->va_ellipses->add(vval[0], vval[1], vval[2], 0, col, 0, false);
     }
-    double lmax = std::max(S(0), std::max(S(1), S(2)));
-    //unsigned int color = opt->getColor(lmax, opt->externalMin, opt->externalMax, false, (opt->intervalsType == PViewOptions::Discrete) ?  opt->nbIso : -1);
-    unsigned int color = opt->getColor(lmax, opt->tmpMin, opt->tmpMax, false, (opt->intervalsType == PViewOptions::Discrete) ?  opt->nbIso : -1);
-    unsigned int col[4] = {color, color, color, color};
-    p->va_ellipses->add( vval[0], vval[1], vval[2], 0, col, 0, false);
   }
 }
 
