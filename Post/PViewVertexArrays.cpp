@@ -959,34 +959,7 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int typ
     for(int i = 0; i < numNodes; i++)
       val[i][0] = ComputeVonMises(val[i]);
     addScalarElement(p, type, xyz, val, pre, numNodes);
-  } else if (opt->tensorType == PViewOptions::MinEigenValue || opt->tensorType == PViewOptions::MaxEigenValue || opt->tensorType == PViewOptions::EigenVectors) {
-    for(int i = 0; i < numNodes; i++) {
-      for (int j = 0; j < 3; j++) {
-        tensor(j,0) = val [i][0+j*3];
-        tensor(j,1) = val [i][1+j*3];
-        tensor(j,2) = val [i][2+j*3];
-      }
-      tensor.eig(S, imS, V, rightV, opt->tensorType != PViewOptions::EigenVectors);
-      if (PViewOptions::MinEigenValue == opt->tensorType)
-        val[i][0] = S(0);
-      else if (PViewOptions::MaxEigenValue == opt->tensorType)
-        val[i][0] = S(2);
-      else if (PViewOptions::EigenVectors == opt->tensorType) {
-        for (int j = 0; j < 3; j++) {
-          vval[j][i][0] = V(j,0)*S(j);
-          vval[j][i][1] = V(j,1)*S(j);
-          vval[j][i][2] = V(j,2)*S(j);
-        }
-      }
-    }
-    if (PViewOptions::EigenVectors == opt->tensorType) {
-      addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[0], pre);
-      addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[1], pre);
-      addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[2], pre);
-    } else
-      addScalarElement(p, type, xyz, val, pre, numNodes);
-  } 
-  else if (opt->tensorType == PViewOptions::Ellipse) {
+  } else if (opt->tensorType == PViewOptions::Ellipse || opt->tensorType == PViewOptions::Ellipsoid) {
     if(opt->glyphLocation == PViewOptions::Vertex){
       double vval[3][4]= {0,0,0, 0,0,0, 0,0,0, 0,0,0};
       for(int i = 0; i < numNodes; i++){
@@ -1031,6 +1004,33 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int typ
       p->va_ellipses->add(vval[0], vval[1], vval[2], 0, col, 0, false);
     }
   }
+  else {
+    for(int i = 0; i < numNodes; i++) {
+      for (int j = 0; j < 3; j++) {
+        tensor(j,0) = val [i][0+j*3];
+        tensor(j,1) = val [i][1+j*3];
+        tensor(j,2) = val [i][2+j*3];
+      }
+      tensor.eig(S, imS, V, rightV, opt->tensorType != PViewOptions::EigenVectors);
+      if (PViewOptions::MinEigenValue == opt->tensorType)
+        val[i][0] = S(0);
+      else if (PViewOptions::MaxEigenValue == opt->tensorType)
+        val[i][0] = S(2);
+      else if (PViewOptions::EigenVectors == opt->tensorType) {
+        for (int j = 0; j < 3; j++) {
+          vval[j][i][0] = V(j,0)*S(j);
+          vval[j][i][1] = V(j,1)*S(j);
+          vval[j][i][2] = V(j,2)*S(j);
+        }
+      }
+    }
+    if (PViewOptions::EigenVectors == opt->tensorType) {
+      addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[0], pre);
+      addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[1], pre);
+      addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[2], pre);
+    } else
+      addScalarElement(p, type, xyz, val, pre, numNodes);
+  } 
 }
 
 static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
@@ -1062,7 +1062,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
         continue;
       }
       if((numComp > 9 && !opt->forceNumComponents) || opt->forceNumComponents > 9){
-        if(numCompError != numComp){
+        if(numCompError != numComp) {
           numCompError = numComp;
           Msg::Error("You should never draw views with > 9 values per node: use");
           Msg::Error("'Adapt visualization grid' to view high-order datasets!");

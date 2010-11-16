@@ -201,7 +201,8 @@ class drawContext {
   void drawStringRight(const std::string &s);
   void drawString(const std::string &s, double style);
   void drawSphere(double R, double x, double y, double z, int n1, int n2, int light);
-  void drawEllipse(double x, double y, double z, float v0[3], float v1[3], float v2[3], int light);
+  void drawEllipsoid(double x, double y, double z, float v0[3], float v1[3], float v2[3], int light);
+  void drawEllipse(double x, double y, double z, float v0[3], float v1[3], int light);
   void drawSphere(double size, double x, double y, double z, int light);
   void drawCylinder(double width, double *x, double *y, double *z, int light);
   void drawTaperedCylinder(double width, double val1, double val2, 

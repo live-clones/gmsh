@@ -128,7 +128,23 @@ void drawContext::drawSphere(double R, double x, double y, double z,
   glDisable(GL_LIGHTING);
 }
 
-void drawContext::drawEllipse(double x, double y, double z, float v0[3], float v1[3], float v2[3], int light)
+void drawContext::drawEllipse(double x, double y, double z, float v0[3], float v1[3], int light)
+{
+  if(light) glEnable(GL_LIGHTING);
+  glPushMatrix();
+  GLfloat m[16] = {
+    v0[0], v0[1], v0[2], .0d,
+    v1[0], v1[1], v1[2], .0d,
+    v0[1]*v1[2]-v0[2]*v1[1], v0[2]*v1[0]-v0[0]*v1[2], v0[0]*v1[1]-v0[1]*v1[0], .0d,
+    x, y, z, 1.d
+  };
+  glMultMatrixf(m);
+  glCallList(_displayLists + 2);
+  glPopMatrix();
+  glDisable(GL_LIGHTING);
+}
+
+void drawContext::drawEllipsoid(double x, double y, double z, float v0[3], float v1[3], float v2[3], int light)
 {
   if(light) glEnable(GL_LIGHTING);
   glPushMatrix();

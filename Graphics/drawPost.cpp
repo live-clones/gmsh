@@ -108,7 +108,10 @@ static void drawEllipseArray(drawContext *ctx, PView *p, VertexArray *va)
       }
     }
     glColor4ubv((GLubyte *)va->getColorArray(4 * i));
-    ctx->drawEllipse(s[0], s[1], s[2], vv[0], vv[1], vv[2], opt->light);
+    if (opt->tensorType == PViewOptions::Ellipsoid)
+      ctx->drawEllipsoid(s[0], s[1], s[2], vv[0], vv[1], vv[2], opt->light);
+    else
+      ctx->drawEllipse(s[0], s[1], s[2], vv[0], vv[1], opt->light);
   }
 }
 

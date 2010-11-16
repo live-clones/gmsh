@@ -3156,7 +3156,8 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Maximum eigen value", 0, 0, 0},
         {"Minimum eigen value", 0, 0, 0},
         {"Eigen vectors", 0, 0, 0},
-        {"Ellipse", 0, 0, 0},
+        {"Ellipse (2d)", 0, 0, 0},
+        {"Ellipsoid", 0, 0, 0},
         {0}
       };
       view.choice[4] = new Fl_Choice

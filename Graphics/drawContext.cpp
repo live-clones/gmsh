@@ -55,7 +55,7 @@ drawContext::drawContext(drawTransform *transform)
 drawContext::~drawContext()
 {
   if(_quadric) gluDeleteQuadric(_quadric);
-  if(_displayLists) glDeleteLists(_displayLists, 2);
+  if(_displayLists) glDeleteLists(_displayLists, 3);
 }
 
 drawContextGlobal *drawContext::global()
@@ -72,7 +72,7 @@ void drawContext::createQuadricsAndDisplayLists()
     return;
   }
 
-  if(!_displayLists) _displayLists = glGenLists(2);
+  if(!_displayLists) _displayLists = glGenLists(3);
   if(!_displayLists){
     Msg::Error("Could not generate display lists");
     return;
@@ -111,6 +111,11 @@ void drawContext::createQuadricsAndDisplayLists()
     gluDisk(_quadric, 0, CTX::instance()->arrowRelStemRadius,
             CTX::instance()->quadricSubdivisions, 1);
   }
+  glEndList();
+
+  // display list 2 (disk)
+  glNewList(_displayLists + 2, GL_COMPILE);
+  gluDisk(_quadric, 0, 1, CTX::instance()->quadricSubdivisions, 1);
   glEndList();
 }
 
