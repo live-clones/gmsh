@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <typeinfo>
+#include "GmshConfig.h"
 
 class methodBinding{
   std::string _description;
