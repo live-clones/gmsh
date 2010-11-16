@@ -55,6 +55,8 @@ struct contextGeometryOptions {
   int matchGeomAndMesh;
 };
 
+
+
 class CTX {
  private:
   static CTX *_instance;
@@ -212,6 +214,7 @@ class CTX {
   // solver options 
   struct{
     int plugins, listen;
+    double timeout;
     std::string socketName;
   }solver;
   // print options 

@@ -495,6 +495,7 @@ static void solver_options_ok_cb(Fl_Widget *w, void *data)
     ConnectionManager::get(-1)->run("");
 
   opt_solver_socket_name(0, GMSH_SET, o->solver.input[0]->value());
+  opt_solver_timeout(0, GMSH_SET, o->solver.value[0]->value());
 
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
@@ -2445,8 +2446,13 @@ optionWindow::optionWindow(int deltaFontSize)
         solver.input[0]->align(FL_ALIGN_RIGHT);
         solver.input[0]->callback(solver_options_ok_cb);
 
+        solver.value[0] = new Fl_Value_Input
+          (L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Timeout (s)");
+        solver.value[0]->align(FL_ALIGN_RIGHT);
+        solver.value[0]->callback(solver_options_ok_cb);
+
         solver.butt[0] = new Fl_Check_Button
-          (L + 2 * WB, 2 * WB + 2 * BH, BW, BH, 
+          (L + 2 * WB, 2 * WB + 3 * BH, BW, BH, 
            "Always listen to incoming connection requests");
         solver.butt[0]->type(FL_TOGGLE_BUTTON);
         solver.butt[0]->callback(solver_options_ok_cb);

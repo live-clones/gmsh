@@ -1341,6 +1341,9 @@ StringXNumber SolverOptions_Number[] = {
   { F|O, "PopupMessages4" , opt_solver_popup_messages4 , 1. ,
     "Automatically display messages produced by solver 4" },
 
+  { F|O, "Timeout" , opt_solver_timeout , 5. ,
+    "Time (in seconds) before closing the socket if no connection is happening." },
+
   { 0, 0 , 0 , 0. , 0 }
 } ;
 

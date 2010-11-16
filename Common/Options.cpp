@@ -6241,6 +6241,18 @@ double opt_solver_listen(OPT_ARGS_NUM)
   return CTX::instance()->solver.listen;
 }
 
+double opt_solver_timeout(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->solver.timeout = val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->solver.value[0]->value(CTX::instance()->solver.timeout);
+#endif
+  return CTX::instance()->solver.timeout;
+}
+
+
 double opt_solver_plugins(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

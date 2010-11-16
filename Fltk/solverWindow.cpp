@@ -125,7 +125,7 @@ void ConnectionManager::run(std::string args)
   
   int sock;
   try{
-    sock = server->Start(command.c_str(), sockname.c_str(), 5.);
+    sock = server->Start(command.c_str(), sockname.c_str(), CTX::instance()->solver.timeout);
   }
   catch(const char *err){
     Msg::Error("%s (on socket '%s')", err, sockname.c_str());
