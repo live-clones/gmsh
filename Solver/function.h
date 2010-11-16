@@ -14,7 +14,7 @@ class dgDataCacheMap;
 class function;
 class functionConstant;
 class functionReplace;
-struct functionReplaceCache;
+class functionReplaceCache;
 class MElement;
 class binding;
 
@@ -108,6 +108,13 @@ class functionSolution : public function {
       _instance = new functionSolution();
     return _instance;
   }
+};
+
+class functionReplaceCache {
+  public:
+  dataCacheMap *map;
+  std::vector <dataCacheDouble*> toReplace;
+  std::vector <dataCacheDouble*> toCompute;
 };
 
 class functionReplace {

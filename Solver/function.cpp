@@ -12,11 +12,6 @@
 #include <dlfcn.h>
 #endif
 
-struct functionReplaceCache {
-  dataCacheMap *map;
-  std::vector <dataCacheDouble*> toReplace;
-  std::vector <dataCacheDouble*> toCompute;
-};
 
 // function
 
