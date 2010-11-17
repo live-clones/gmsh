@@ -55,6 +55,12 @@ extern "C" void METIS_PartGraphKway
 (int *, idxtype *, idxtype *, idxtype *, idxtype *, int *, int *, int *, int *,
  int *, idxtype *);
 extern "C" void METIS_NodeND(int *n,int *xadj,int *adjncy,int *numflag,int *options,int *perm,int *iperm);
+extern "C" void METIS_mCPartGraphRecursive
+(int *, int *, idxtype *, idxtype *, idxtype *, idxtype *, int *, int *, int *, int *,
+ int *, idxtype *);
+extern "C" void METIS_mCPartGraphKway
+(int *, int *, idxtype *, idxtype *, idxtype *, idxtype *, int *, int *, int *, int *,
+ int *, idxtype *);
 
 
 /*==============================================================================
@@ -429,6 +435,7 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
         int n = graph.getNumVertex();
         int wgtflag = 0;
         int numflag = 0;
+        // if metisOptions[0]=0 then default options
         int metisOptions[5];
         int edgeCut;
         const int iSec = 0;
@@ -460,7 +467,7 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
           }
           break;
         case 3:  // Nodal weight
-          //printf("METIS with weights\n");
+          printf("METIS with weights\n");
           metisOptions[0] = 1;
           metisOptions[1] = options.edge_matching;
           metisOptions[2] = 1;
@@ -477,7 +484,39 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
                &graph.partition[graph.section[iSec]]);
           }
           break;
+        case 4:  // Vertices Multi-Contrained Recursive
+          Msg::Info("Vertices Multi-Constrained Recursive Algorithm Used");
+          wgtflag = 2;
+          metisOptions[0] = 1;
+          metisOptions[1] = options.edge_matching;
+          metisOptions[2] = 1;
+          metisOptions[3] = 1;
+          metisOptions[4] = 0;
+          graph.fillWithMultipleWeights(options.ncon,options.getWeightMap());
+          METIS_mCPartGraphRecursive
+            (&n,&options.ncon,&graph.xadj[graph.section[iSec]],
+             &graph.adjncy[graph.section[iSec]], &graph.vwgts[graph.section[iSec]], NULL, &wgtflag, &numflag,
+             &options.num_partitions, metisOptions, &edgeCut,
+             &graph.partition[graph.section[iSec]]);
+          break;
+        case 5:  // Vertices Multi-Constrained K-way
+          Msg::Info("Vertices Multi-Constrained K-way Algorithm Used");
+          wgtflag = 2;
+          metisOptions[0] = 1;
+          metisOptions[1] = options.edge_matching;
+          metisOptions[2] = 1;
+          metisOptions[3] = options.refine_algorithm;
+          metisOptions[4] = 0;
+          if (options.num_partitions > 1) {
+            METIS_mCPartGraphKway
+              (&n,&options.ncon,&graph.xadj[graph.section[iSec]],
+               &graph.adjncy[graph.section[iSec]], &graph.vwgts[graph.section[iSec]], NULL, &wgtflag, &numflag,
+               &options.num_partitions, metisOptions, &edgeCut,
+               &graph.partition[graph.section[iSec]]);
+          }
+          break;
         }
+        Msg::Info("Number of Edges Cut : %d", edgeCut);
       }
       catch(...) {
         Msg::Error("METIS threw an exception");
@@ -574,9 +613,7 @@ int MakeGraph(GModel *const model, Graph &graph, meshPartitionOptions &options, 
 /*--------------------------------------------------------------------*
  * Make a graph for the entire domain
  *--------------------------------------------------------------------*/
-
     
-
 //--Get the dimension of the mesh and count the numbers of elements
 
       unsigned numElem[5];
@@ -595,8 +632,10 @@ int MakeGraph(GModel *const model, Graph &graph, meshPartitionOptions &options, 
             // Allocate memory for the graph
             const int numGrVert = numElem[ElemTypeTri] + numElem[ElemTypeQuad]
                                   + numElem[ElemTypePolyg];
+            // maximum possible number of corresponding edges for the mesh
             const int maxGrEdge = (numElem[ElemTypeTri]*3 + numElem[ElemTypeQuad]*4
                                    + numElem[ElemTypePolyg]*4)/2;
+  
             graph.allocate(numGrVert, maxGrEdge);
             // Make the graph
             MakeGraphDIM<2>(model->firstFace(), model->lastFace(),
@@ -839,9 +878,9 @@ void MakeGraphDIM(const EntIter begin, const EntIter end,
 
   typedef typename DimTr<DIM>::FaceT FaceT;
   typedef typename LFaceTr<FaceT>::FaceMap FaceMap;
-
+  
   graph.markSection();
-
+  
   FaceMap faceMap;
   GrVertexMap grVertMap;
 
@@ -1425,6 +1464,7 @@ void createPartitionFaces(GModel *model, GFaceCompound *gf, int N,
 //--Explicit instantiations of the routine for adding elements from a
 //--container of entities
 
+// fiter= iterator on faces,  eiter= iterator on edges
 template void MakeGraphDIM<2, GModel::fiter, GModel::eiter>
 (const GModel::fiter begin, const GModel::fiter end,
  const GModel::eiter beginBE, const GModel::eiter endBE,

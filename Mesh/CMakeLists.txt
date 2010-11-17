@@ -23,7 +23,8 @@ set(SRC
     BDS.cpp 
     HighOrder.cpp 
       highOrderSmoother.cpp 
-    meshPartition.cpp 
+    meshPartition.cpp
+    meshPartitionOptions.cpp
     meshRefine.cpp
     multiscalePartition.cpp
 )

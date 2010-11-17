@@ -14,7 +14,7 @@
 class GModel;
 class GFace;
 class Graph;
-struct meshPartitionOptions;
+class meshPartitionOptions;
 
 /*******************************************************************************
  *
