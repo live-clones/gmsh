@@ -48,7 +48,6 @@ struct dirichletBC : public BoundaryCondition
   int _comp; // component
   simpleFunction<double> *_f;
   dirichletBC ():BoundaryCondition(),_comp(0),_f(0){}
-  dirichletBC (int dim, int entityId, int component, double value);
 };
 
 struct neumannBC  : public BoundaryCondition
