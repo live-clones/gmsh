@@ -52,7 +52,6 @@
 #endif
 
 // General routines for string options
-using namespace std; 
 
 bool StringOption(int action, const char *category, int num, 
                   const char *name, std::string &val)
