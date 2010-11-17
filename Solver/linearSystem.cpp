@@ -6,8 +6,7 @@
 
 #include "Bindings.h"
 
-template<>
-void linearSystem<double>::registerBindings(binding *b){
+void linearSystemBase::registerBindings(binding *b){
   methodBinding *cm;
   classBinding *cb = b->addClass<linearSystemBase>("linearSystemBase");
   cb->setDescription("Base class for linear systems");
