@@ -120,6 +120,7 @@ void linearSystemPETSc<fullMatrix<PetscScalar> >::allocate(int nbRows)
   _isAllocated = true;
 }
 
+
 #include "Bindings.h"
 void linearSystemPETScRegisterBindings(binding *b) 
 {
