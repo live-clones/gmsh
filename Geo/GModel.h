@@ -565,6 +565,8 @@ class GModel
   // Abaqus
   int writeINP(const std::string &name, bool saveAll=false, 
                double scalingFactor=1.0);
+  
+  int readLUA(const std::string &name);
 
   void save(std::string fileName);
   void load(std::string fileName);

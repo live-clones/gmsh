@@ -31,6 +31,7 @@
 #include "MVertexPositionSet.h"
 #include "Context.h"
 #include "OS.h"
+#include "bindings.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -3212,7 +3213,11 @@ int GModel::readDIFF(const std::string &name)
   fclose(fp);
   return 1;
 }
-
+int GModel::readLUA(const std::string &name)
+{
+	int status = binding::instance()->readFile(name.c_str());
+	return status;
+}
 int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
                       double scalingFactor)
 {
