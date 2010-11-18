@@ -31,7 +31,7 @@
 #include "MVertexPositionSet.h"
 #include "Context.h"
 #include "OS.h"
-#include "bindings.h"
+#include "Bindings.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -402,7 +402,7 @@ int GModel::readMSH(const std::string &name)
           int dom1 = 0, dom2 = 0, numVertices;
           std::vector<short> ghosts;
           if(version <= 1.0){
-            if(fscanf(fp, "%d %d %d %d %d", &num, &type, &physical, &elementary, 
+            if(fscanf(fp, "%d %d %d %d %d", &num, &type, &physical, &elementary,
                       &numVertices) != 5)
               return 0;
             if(numVertices != MElement::getInfoMSH(type)) return 0;
@@ -492,9 +492,9 @@ int GModel::readMSH(const std::string &name)
             int physical = (numTags > 0) ? data[1] : 0;
             int elementary = (numTags > 1) ? data[2] : 0;
             int numPartitions = (version >= 2.2 && numTags > 3) ? data[3] : 0;
-            int partition = (version < 2.2 && numTags > 2) ? data[3] : 
+            int partition = (version < 2.2 && numTags > 2) ? data[3] :
               (version >= 2.2 && numTags > 3) ? data[4] : 0;
-            int parent = (version < 2.2 && numTags > 3) || 
+            int parent = (version < 2.2 && numTags > 3) ||
               (version >= 2.2 && numPartitions && numTags > 3 + numPartitions) ||
               (version >= 2.2 && !numPartitions && numTags > 2) ?
               data[numTags] : 0;
@@ -584,8 +584,8 @@ int GModel::readMSH(const std::string &name)
 }
 
 template<class T>
-static void writeElementMSH(FILE *fp, GModel *model, T *ele, bool saveAll, 
-                            double version, bool binary, int &num, int elementary, 
+static void writeElementMSH(FILE *fp, GModel *model, T *ele, bool saveAll,
+                            double version, bool binary, int &num, int elementary,
                             std::vector<int> &physicals, int parentNum = 0,
                             int dom1Num = 0, int dom2Num = 0)
 {
@@ -615,7 +615,7 @@ static void writeElementMSH(FILE *fp, GModel *model, T *ele, bool saveAll,
 }
 
 template<class T>
-static void writeElementsMSH(FILE *fp, GModel *model, std::vector<T*> &ele, 
+static void writeElementsMSH(FILE *fp, GModel *model, std::vector<T*> &ele,
                              bool saveAll, int saveSinglePartition, double version,
                              bool binary, int &num, int elementary,
                              std::vector<int> &physicals)
@@ -684,7 +684,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   }
 
   // binary format exists only in version 2
-  if(version > 1 || binary) 
+  if(version > 1 || binary)
     version = 2.2;
   else
     version = 1.0;
@@ -734,9 +734,9 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->writeMSH(fp, binary, saveParametric,
                                               scalingFactor);
-  
+
   if(binary) fprintf(fp, "\n");
-  
+
   if(version >= 2.0){
     if(saveParametric)
       fprintf(fp, "$EndParametricNodes\n");
@@ -770,7 +770,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
       if((*it)->polyhedra[i]->ownsParent())
         writeElementMSH(fp, this, (*it)->polyhedra[i]->getParent(),
                         saveAll, version, binary, num, (*it)->tag(), (*it)->physicals);
-  
+
   // points
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     writeElementsMSH(fp, this, (*it)->points, saveAll, saveSinglePartition,
@@ -810,7 +810,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, this, (*it)->prisms, saveAll, saveSinglePartition,
                      version, binary, num, (*it)->tag(), (*it)->physicals);
-  
+
   // pyramids
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, this, (*it)->pyramids, saveAll, saveSinglePartition,
@@ -869,16 +869,16 @@ int GModel::writePartitionedMSH(const std::string &baseName, bool binary,
                                 double scalingFactor)
 {
   int index = 0;
-  for(std::set<int>::iterator it = meshPartitions.begin(); 
+  for(std::set<int>::iterator it = meshPartitions.begin();
       it != meshPartitions.end(); it++){
     int partition = *it;
-    
+
     std::ostringstream sstream;
     sstream << baseName << "_" << std::setw(3) << std::setfill('0') << partition;
 
     int startNum = index ? getNumElementsMSH(this, saveAll, partition) : 0;
     Msg::Info("Writing partition %d in file '%s'", partition, sstream.str().c_str());
-    writeMSH(sstream.str(), 2.2, binary, saveAll, saveParametric, 
+    writeMSH(sstream.str(), 2.2, binary, saveAll, saveParametric,
              scalingFactor, startNum, partition);
     index++;
   }
@@ -899,9 +899,9 @@ int GModel::writePartitionedMSH(const std::string &baseName, bool binary,
   return 1;
 }
 
-int GModel::writePOS(const std::string &name, bool printElementary, 
-                     bool printElementNumber, bool printGamma, bool printEta, 
-                     bool printRho, bool printDisto, 
+int GModel::writePOS(const std::string &name, bool printElementary,
+                     bool printElementNumber, bool printGamma, bool printEta,
+                     bool printRho, bool printDisto,
                      bool saveAll, double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), "w");
@@ -930,7 +930,7 @@ int GModel::writePOS(const std::string &name, bool printElementary,
   bool f[6] = {printElementary, printElementNumber, printGamma, printEta, printRho,
                printDisto};
 
-  bool first = true; 
+  bool first = true;
   std::string names;
   if(f[0]){
     if(first) first = false; else names += ",";
@@ -1038,7 +1038,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
     }
   }
   if(empty) points.clear();
- 
+
 
   // binary STL (we also try to read in binary mode if the header told
   // us the format was ASCII but we could not read any vertices)
@@ -1103,7 +1103,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
       vertices.push_back(new MVertex(points[i][j].x(), points[i][j].y(),
                                      points[i][j].z()));
   MVertexPositionSet pos(vertices);
-  
+
   std::set<MFace,Less_Face> unique;
   int nbDuplic = 0;
   for(unsigned int i = 0; i < points.size(); i ++){
@@ -1126,7 +1126,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
     }
   }
   if (nbDuplic) Msg::Warning("%d Duplicate triangle in STL file read",nbDuplic);
-  
+
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertices); // will delete unused vertices
 
@@ -1285,7 +1285,7 @@ int GModel::readPLY(const std::string &name)
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
- 
+
   std::vector<MVertex*> vertexVector;
   std::map<int, std::vector<MElement*> > elements[5];
   std::map<int, std::vector<double> > properties;
@@ -1303,7 +1303,7 @@ int GModel::readPLY(const std::string &name)
       sscanf(buffer, "%s %s", str, str2);
       if(!strcmp(str, "element") && !strcmp(str2, "vertex")){
 	sscanf(buffer, "%s %s %d", str, str2, &nbv);
-      } 
+      }
       if(!strcmp(str, "format") && strcmp(str2, "ascii")){
 	Msg::Error("Only reading of ascii PLY files implemented");
 	return 0;
@@ -1312,10 +1312,10 @@ int GModel::readPLY(const std::string &name)
 	nbprop++;
 	sscanf(buffer, "%s %s %s", str, str2, str3);
 	if (nbprop > 3) propName.push_back(s1+str3);
-      } 
+      }
       if(!strcmp(str, "element") && !strcmp(str2, "face")){
 	sscanf(buffer, "%s %s %d", str, str2, &nbf);
-      } 
+      }
       if(!strcmp(str, "end_header")){
 	nbView = nbprop -3;
 	Msg::Info("%d elements", nbv);
@@ -1349,9 +1349,9 @@ int GModel::readPLY(const std::string &name)
 	  if(!getVertices(3, n, vertexVector, vertices)) return 0;
 	  elements[0][elementary].push_back(new MTriangle(vertices));
 	}
-	
+
       }
- 
+
     }
   }
 
@@ -1361,20 +1361,20 @@ int GModel::readPLY(const std::string &name)
   _storeVerticesInEntities(vertexVector);
 
 #if defined(HAVE_POST)
-  // create PViews here 
+  // create PViews here
   std::vector<GEntity*> _entities;
   getEntities(_entities);
   for (int iV=0; iV< nbView; iV++){
     PView *view = new PView();
     PViewDataList *data = dynamic_cast<PViewDataList*>(view->getData());
     for(unsigned int ii = 0; ii < _entities.size(); ii++){
-	for(unsigned int i = 0; i < _entities[ii]->getNumMeshElements(); i++){ 
-	  MElement *e = _entities[ii]->getMeshElement(i);	  
+	for(unsigned int i = 0; i < _entities[ii]->getNumMeshElements(); i++){
+	  MElement *e = _entities[ii]->getMeshElement(i);
 	  int numNodes = e->getNumVertices();
 	  std::vector<double> x(numNodes), y(numNodes), z(numNodes);
 	  std::vector<double> *out = data->incrementList(1, e->getType());
-	  for(int nod = 0; nod < numNodes; nod++) out->push_back((e->getVertex(nod))->x()); 
-	  for(int nod = 0; nod < numNodes; nod++) out->push_back((e->getVertex(nod))->y()); 
+	  for(int nod = 0; nod < numNodes; nod++) out->push_back((e->getVertex(nod))->x());
+	  for(int nod = 0; nod < numNodes; nod++) out->push_back((e->getVertex(nod))->y());
 	  for(int nod = 0; nod < numNodes; nod++) out->push_back((e->getVertex(nod))->z());
 	  std::vector<double> props;
 	  int n[3];
@@ -1447,7 +1447,7 @@ int GModel::readPLY2(const std::string &name)
 	std::vector<MVertex*> vertices;
 	if(!getVertices(3, n, vertexVector, vertices)) return 0;
 	elements[0][elementary].push_back(new MTriangle(vertices));
-      }     
+      }
     }
   }
 
@@ -1637,7 +1637,7 @@ int GModel::readUNV(const std::string &name)
   while(!feof(fp)) {
     if(!fgets(buffer, sizeof(buffer), fp)) break;
     if(!strncmp(buffer, "    -1", 6)){
-      if(!fgets(buffer, sizeof(buffer), fp)) break;     
+      if(!fgets(buffer, sizeof(buffer), fp)) break;
       if(!strncmp(buffer, "    -1", 6))
         if(!fgets(buffer, sizeof(buffer), fp)) break;
       int record = 0;
@@ -1796,7 +1796,7 @@ int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNod
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->writeUNV(fp, scalingFactor);
-  fprintf(fp, "%6d\n", -1); 
+  fprintf(fp, "%6d\n", -1);
 
   // elements
   fprintf(fp, "%6d\n", -1);
@@ -1967,7 +1967,7 @@ int GModel::readMESH(const std::string &name)
         for(int i = 0; i < nbe; i++) {
           if(!fgets(buffer, sizeof(buffer), fp)) break;
           int n[8], cl;
-          sscanf(buffer, "%d %d %d %d %d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], 
+          sscanf(buffer, "%d %d %d %d %d %d %d %d %d", &n[0], &n[1], &n[2], &n[3],
                  &n[4], &n[5], &n[6], &n[7], &cl);
           for(int j = 0; j < 8; j++) n[j]--;
           std::vector<MVertex*> vertices;
@@ -2751,7 +2751,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   if(!strcmp(buffer, "BINARY")) binary = true;
 
   if(fscanf(fp, "%s %s", buffer, buffer2) != 2) return 0;
-  
+
   bool unstructured = false;
   if( !strcmp(buffer, "DATASET") &&  !strcmp(buffer2, "UNSTRUCTURED_GRID") ) unstructured = true;
 
@@ -2802,16 +2802,16 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   // read mesh elements
   int numElements, totalNumInt;
   if(fscanf(fp, "%s %d %d\n", buffer, &numElements, &totalNumInt) != 3) return 0;
- 
+
   bool haveCells = true;
   bool haveLines = false;
   if( !strcmp(buffer, "CELLS") && numElements>0 )  Msg::Info("Reading %d cells", numElements);
   else if (!strcmp(buffer, "POLYGONS") && numElements>0 ) Msg::Info("Reading %d polygons", numElements);
-  else if (!strcmp(buffer, "LINES") && numElements>0 ) { 
-    haveCells = false; 
+  else if (!strcmp(buffer, "LINES") && numElements>0 ) {
+    haveCells = false;
     haveLines = true;
-    Msg::Info("Reading %d lines", numElements); 
-  } 
+    Msg::Info("Reading %d lines", numElements);
+  }
   else{
     Msg::Warning("No cells or polygons in dataset");
     return 0;
@@ -2842,7 +2842,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
 	  Msg::Error("Bad vertex index");
       }
     }
-   
+
     if (unstructured){
       if(fscanf(fp, "%s %d\n", buffer, &numElements) != 2 ) return 0;
       if(strcmp(buffer, "CELL_TYPES") || numElements != (int)cells.size()){
@@ -2903,7 +2903,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
 	while(1){
 	  v1 = strtol(p, &pEnd, 10);
 	  if (p == pEnd )  break;
-	  elements[1][iLine].push_back(new MLine(vertices[v0],vertices[v1])); 
+	  elements[1][iLine].push_back(new MLine(vertices[v0],vertices[v1]));
 	  p=pEnd;
 	  v0=v1;
 	}
@@ -3405,7 +3405,7 @@ int GModel::writeINP(const std::string &name, bool saveAll,
           fprintf(fp, "%d, %.16g, %.16g, %.16g\n", v->getIndex(), v->x() * scalingFactor,
                   v->y() * scalingFactor, v->z() * scalingFactor);
       }
-  
+
   int ne = 1;
   for(viter it = firstVertex(); it != lastVertex(); ++it){
     writeElementsINP(fp, *it, (*it)->points, saveAll, ne);
