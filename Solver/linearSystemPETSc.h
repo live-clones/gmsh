@@ -279,10 +279,10 @@ class linearSystemPETSc : public linearSystem<scalar> {
   virtual void allocate(int nbRows) {}
   virtual void clear(){}
   virtual void addToMatrix(int row, int col, const scalar &val) {}
-  virtual void getFromMatrix(int row, int col, scalar &val) const { return 0.; }
+  virtual void getFromMatrix(int row, int col, scalar &val) const {}
   virtual void addToRightHandSide(int row, const scalar &val) {}
-  virtual void getFromRightHandSide(int row, scalar &val) const { return 0.; }
-  virtual void getFromSolution(int row, scalar &val) const { return 0.; }
+  virtual void getFromRightHandSide(int row, scalar &val) const {}
+  virtual void getFromSolution(int row, scalar &val) const {}
   virtual void zeroMatrix() {}
   virtual void zeroRightHandSide() {}
   virtual int systemSolve() { return 0; }
