@@ -3215,8 +3215,12 @@ int GModel::readDIFF(const std::string &name)
 }
 int GModel::readLUA(const std::string &name)
 {
+#if defined(HAVE_LUA)
 	int status = binding::instance()->readFile(name.c_str());
 	return status;
+#else
+	return 0;
+#endif
 }
 int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
                       double scalingFactor)
