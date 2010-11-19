@@ -40,6 +40,9 @@ void discreteEdge::createTopo()
 
 void discreteEdge::orderMLines()
 {
+  //printf("ordering line %d\n", tag());
+  //if(lines.size() <= 1) return;
+
   std::vector<MLine*> _m;
   std::list<MLine*> segments;
 

@@ -62,13 +62,14 @@ void GModel::_storePhysicalTagsInEntities(int dim,
   }
 }
 
- static void replaceCommaByDot(const std::string name){
-   char myCommand[1000], myCommand2[1000];
-   sprintf(myCommand, "sed 's/,/./g' %s > temp.txt", name.c_str());
-   SystemCall(myCommand);
-   sprintf(myCommand2, "mv temp.txt %s ", name.c_str());
-   SystemCall(myCommand2);
- }
+static void replaceCommaByDot(const std::string name)
+{
+  char myCommand[1000], myCommand2[1000];
+  sprintf(myCommand, "sed 's/,/./g' %s > temp.txt", name.c_str());
+  SystemCall(myCommand);
+  sprintf(myCommand2, "mv temp.txt %s ", name.c_str());
+  SystemCall(myCommand2);
+}
 
 static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
                         std::vector<MVertex*> &vertices)
@@ -1663,7 +1664,8 @@ int GModel::readUNV(const std::string &name)
 	  if(!CTX::instance()->mesh.switchElementTags) {
             if(sscanf(buffer, "%d %d %d %d %d %d", &num, &type, &elementary, &physical,
                       &color, &numNodes) != 6) break;
-	  } else {
+	  } 
+          else {
             if(sscanf(buffer, "%d %d %d %d %d %d", &num, &type, &physical, &elementary,
                       &color, &numNodes) != 6) break;
 	  }

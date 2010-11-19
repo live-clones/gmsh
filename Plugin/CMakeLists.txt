@@ -25,6 +25,7 @@ set(SRC
   HomologyComputation.cpp
   Distance.cpp ExtractEdges.cpp NearestNeighbor.cpp
   AnalyseCurvedMesh.cpp FieldFromAmplitudePhase.cpp
+  Bubbles.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 

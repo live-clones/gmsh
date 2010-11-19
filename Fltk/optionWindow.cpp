@@ -1226,7 +1226,7 @@ optionWindow::optionWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 34 * FL_NORMAL_SIZE + WB;
-  int height = 13 * BH + 4 * WB;
+  int height = 12 * BH + 4 * WB;
   int L = 7 * FL_NORMAL_SIZE;
 
   win = new paletteWindow
@@ -1323,17 +1323,15 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[10]->align(FL_ALIGN_RIGHT);
       general.value[10]->callback(general_options_ok_cb, (void*)"rotation_center_coord");
 
-      general.butt[17] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 12 * BH, BW, BH, "Enable stereo");
-      general.butt[17]->type(FL_TOGGLE_BUTTON);
-      general.butt[17]->callback(general_options_ok_cb);
-
       general.butt[18] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 11 * BH, BW, BH, "Enable camera");
+        (L + 2 * WB, 2 * WB + 11 * BH, width/2-WB, BH, "Enable camera");
       general.butt[18]->type(FL_TOGGLE_BUTTON);
       general.butt[18]->callback(general_options_ok_cb);
 
-
+      general.butt[17] = new Fl_Check_Button
+        (L + width / 2, 2 * WB + 11 * BH, width/2-WB, BH, "Enable stereo");
+      general.butt[17]->type(FL_TOGGLE_BUTTON);
+      general.butt[17]->callback(general_options_ok_cb);
 
       o->end();
     }
