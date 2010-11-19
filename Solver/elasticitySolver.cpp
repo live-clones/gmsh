@@ -715,6 +715,11 @@ PView* elasticitySolver::buildVonMisesView(const std::string postFileName)
   Msg::Error("Post-pro module not available");
   return 0;
 }
+PView* elasticitySolver::buildStressesView (const std::string postFileName)
+{
+  Msg::Error("Post-pro module not available");
+  return 0;
+}
 #endif
 
 
