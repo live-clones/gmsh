@@ -5,6 +5,7 @@
 
 #include <math.h>
 #include <algorithm>
+#include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "drawContext.h"
 #include "PView.h"
@@ -15,6 +16,11 @@
 #include "VertexArray.h"
 #include "Context.h"
 #include "gl2ps.h"
+
+#if defined(HAVE_FLTK)
+#include <FL/Fl.H>
+#include <FL/gl.H>
+#endif
 
 static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type, 
                        bool useNormalArray)
@@ -273,8 +279,8 @@ static void drawGlyphs(drawContext *ctx, PView *p)
 
   Msg::Debug("drawing extra glyphs (this is slow...)");
 
-  // speed-up string drawing with cocoa fltk
-#if defined(__APPLE__) && defined(HAVE_64BIT_SIZE_T)
+  // speedup drawing of textured fonts on cocoa mac version
+#if defined(HAVE_FLTK) && defined(__APPLE__) && defined(HAVE_64BIT_SIZE_T)
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
   if(opt->intervalsType == PViewOptions::Numeric){
     int numStrings = 0;

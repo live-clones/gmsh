@@ -21,6 +21,7 @@
 #if defined(HAVE_FLTK)
 #include <FL/Fl_JPEG_Image.H>
 #include <FL/Fl_PNG_Image.H>
+#include <FL/gl.h>
 #endif
   
 drawContextGlobal *drawContext::_global = 0;
@@ -251,6 +252,15 @@ void drawContext::draw3d()
       needPolygonOffset();
   else
     CTX::instance()->polygonOffset = 0;
+
+  // speedup drawing of textured fonts on cocoa mac version
+#if defined(HAVE_FLTK) && defined(__APPLE__) && defined(HAVE_64BIT_SIZE_T)
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
+  int numStrings = GModel::current()->getNumVertices();
+  if(gl_texture_pile_height() < numStrings)
+    gl_texture_pile_height(numStrings);
+#endif
+#endif
 
   glDepthFunc(GL_LESS);
   glEnable(GL_DEPTH_TEST);

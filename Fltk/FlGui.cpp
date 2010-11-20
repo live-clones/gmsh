@@ -185,14 +185,6 @@ FlGui::FlGui(int argc, char **argv)
   // set default font size
   FL_NORMAL_SIZE = drawContext::global()->getFontSize();
 
-#if defined(__APPLE__) && defined(HAVE_64BIT_SIZE_T)
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
-  int numStrings = 1000;
-  if(gl_texture_pile_height() < numStrings)
-    gl_texture_pile_height(numStrings);
-#endif
-#endif
-
   // handle themes and tooltip font size
   if(CTX::instance()->guiTheme.size())
     Fl::scheme(CTX::instance()->guiTheme.c_str());
