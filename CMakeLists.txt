@@ -888,12 +888,12 @@ target_link_libraries(gmsh ${LINK_LIBRARIES})
 
 # increase stack to 16Mb on Windows to avoid overflows in recursive
 # tet classification for large 3D Delaunay grids
-if(CYGWIN)
+if(WIN32 AND NOT MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS 
     "-Wl,--stack,16777216 ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win32Icon.res -mwindows")
 elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS "/STACK:16777216")
-endif(CYGWIN)
+endif(WIN32 AND NOT MSVC)
 
 find_program(BISON bison)
 find_program(FLEX flex)
