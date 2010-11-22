@@ -19,7 +19,7 @@
 
 #if defined(HAVE_FLTK)
 #include <FL/Fl.H>
-#include <FL/gl.H>
+#include <FL/gl.h>
 #endif
 
 static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type, 
