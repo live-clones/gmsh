@@ -101,8 +101,12 @@ PView *GMSH_BubblesPlugin::execute(PView *v)
   int s = m->getMaxElementaryNumber(2) + 1;
   int ll = s, ps = 1;
 
+  SBoundingBox3d bbox = m->bounds();
+  double lc = norm(SVector3(bbox.max(), bbox.min())) / 100;
+  fprintf(fp, "lc = %g;\n", lc);
+
   for(GModel::viter vit = m->firstVertex(); vit != m->lastVertex(); vit++)
-    (*vit)->writeGEO(fp);
+    (*vit)->writeGEO(fp, "lc");
 
   for(GModel::eiter eit = m->firstEdge(); eit != m->lastEdge(); eit++)
     (*eit)->writeGEO(fp);
@@ -151,9 +155,9 @@ PView *GMSH_BubblesPlugin::execute(PView *v)
         }
         // create b-spline bounded surface for each cell
         int nump = it->second.size();
-        for(unsigned int i = 0; i < nump; i++){
+        for(int i = 0; i < nump; i++){
           SPoint3 &b(it->second[i]);
-          fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g};\n", p++, b.x(), b.y(), b.z());
+          fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g, lc};\n", p++, b.x(), b.y(), b.z());
         }
         fprintf(fp, "BSpline(%d) = {", l++);
         for(int i = nump - 1; i >= 0; i--)
