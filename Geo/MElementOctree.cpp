@@ -115,13 +115,13 @@ MElement *MElementOctree::find(double x, double y, double z, int dim)
 {
   double P[3] = {x, y, z};
   MElement *e = (MElement*)Octree_Search(P, _octree);
-  
-  if (!e){
+
+  if (!e || (dim != -1 && e->getDim() != dim)){
     double initialTol = MElement::getTolerance();
     double tol = initialTol;
-    while (tol < .1){
+    while (tol < 1){
       tol *= 10;
-      MElement::setTolerance(tol);
+      MElement::setTolerance(tol);      
       std::vector<GEntity*> entities;
       _gm->getEntities(entities);
       for(unsigned int i = 0; i < entities.size(); i++){
@@ -129,6 +129,7 @@ MElement *MElementOctree::find(double x, double y, double z, int dim)
 	  e = entities[i]->getMeshElement(j);
 	  if (dim == -1 ||  e->getDim() == dim){
 	    if (MElementInEle(e, P)){
+	      //	      printf("coucou FOUND\n");
 	      MElement::setTolerance(initialTol);
 	      return e;
 	    }	    
@@ -136,6 +137,8 @@ MElement *MElementOctree::find(double x, double y, double z, int dim)
 	}
       }
     }
+    MElement::setTolerance(initialTol);
+    Msg::Warning("Point %g %g %g not found",x,y,z);
   }
   
 

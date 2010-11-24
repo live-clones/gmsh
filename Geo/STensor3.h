@@ -33,7 +33,7 @@ class SMetric3 {
   void setMat(const fullMatrix<double> & mat)
   {
     for (int i = 0; i < 3; i++)
-      for (int j = i; j < 3; j++)
+      for (int j = 0; j < 3; j++)
         _val[getIndex(i, j)] = mat(i, j);
   }
   SMetric3(const SMetric3& m)

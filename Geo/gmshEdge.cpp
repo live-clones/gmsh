@@ -46,6 +46,13 @@ SVector3 gmshEdge::firstDer(double par) const
   return SVector3(a.Pos.X, a.Pos.Y, a.Pos.Z);
 }
 
+SVector3 gmshEdge::secondDer(double par) const
+{
+  //  printf("coucou mon chou\n");
+  Vertex a = InterpolateCurve(c, par, 2);
+  return SVector3(a.Pos.X, a.Pos.Y, a.Pos.Z);
+}
+
 GEntity::GeomType gmshEdge::geomType() const
 {
   switch (c->Typ){
@@ -144,7 +151,7 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar,int dir) const
             k = periodic ? k - NbControlPoints + 1: NbControlPoints - 1;
           List_Read(c->Control_Points, k, &v[j]);
         }
-        return InterpolateCubicSpline(v, t, c->mat, t1, t2, c->geometry);
+        return InterpolateCubicSpline(v, t, c->mat, t1, t2, c->geometry,0);
       }
     case MSH_SEGM_SPLN :
       {
@@ -185,7 +192,7 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar,int dir) const
         else{
           List_Read(c->Control_Points, i + 2, &v[3]);
         }
-        return InterpolateCubicSpline(v, t, c->mat, t1, t2, c->geometry);
+        return InterpolateCubicSpline(v, t, c->mat, t1, t2, c->geometry,0);
       }
     default:
       Msg::Error("Unknown edge type in reparamOnFace");

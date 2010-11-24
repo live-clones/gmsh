@@ -186,14 +186,15 @@ void GEdge::writeGEO(FILE *fp)
     double umin = bounds.low();
     double umax = bounds.high();
     fprintf(fp, "p%d = newp;\n", tag());
-    for(int i = 1; i < minimumDrawSegments(); i++){
-      double u = umin + (double)i / minimumDrawSegments() * (umax - umin);
+    int N = minimumDrawSegments();
+    for(int i = 1; i < N; i++){
+      double u = umin + (double)i / N * (umax - umin);
       GPoint p = point(u);
       fprintf(fp, "Point(p%d + %d) = {%.16g, %.16g, %.16g};\n", 
               tag(), i, p.x(), p.y(), p.z());
     }
     fprintf(fp, "Spline(%d) = {%d", tag(), getBeginVertex()->tag());
-    for(int i = 1; i < minimumDrawSegments(); i++)
+    for(int i = 1; i < N; i++)
       fprintf(fp, ", p%d + %d", tag(), i);
     fprintf(fp, ", %d};\n", getEndVertex()->tag());
   }

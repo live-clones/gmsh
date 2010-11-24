@@ -14,6 +14,7 @@
 #include "STensor3.h"
 
 class GFace;
+class GVertex;
 class MVertex;
 
 class edge_angle {
@@ -53,8 +54,9 @@ void buildVertexToTriangle(std::vector<MTriangle*> &, v2t_cont &adj);
 void buildEdgeToTriangle(std::vector<MTriangle*> &, e2t_cont &adj);
 void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
                           std::vector<edge_angle> &edges_lonly);
-void laplaceSmoothing(GFace *gf);
+void laplaceSmoothing(GFace *gf, int niter=1);
 void edgeSwappingLawson(GFace *gf);
+void addOneLayerOnContour(GFace *gf, GVertex *gv);
 
 enum swapCriterion {SWCR_DEL, SWCR_QUAL, SWCR_NORM, SWCR_CLOSE};
 enum splitCriterion {SPCR_CLOSE, SPCR_QUAL, SPCR_ALLWAYS};

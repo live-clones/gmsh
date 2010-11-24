@@ -19,6 +19,7 @@
 #include "Context.h"
 #include "meshGFaceLloyd.h"
 #include "Bindings.h"
+#include "meshGFaceOptimize.h"
 
 #define SQU(a)      ((a)*(a))
 
@@ -1204,6 +1205,30 @@ void GFace::moveToValidRange(SPoint2 &pt) const
   }
 }
 
+void GFace::addLayersOfQuads(int nLayers, GVertex *gv, double hmin, double ratio){
+
+  std::list<GEdgeLoop>::iterator it = edgeLoops.begin();
+  for (; it != edgeLoops.end(); ++it){
+    bool found = false;
+    // look if this edge loop has the GVertex as an endpoint
+    for (GEdgeLoop::iter it2 = it->begin(); it2 != it->end(); ++it2){
+      if (it2->ge->getBeginVertex() == gv || it2->ge->getEndVertex() == gv) 
+	found = true;	
+    }
+    // we found an edge loop with the GVertex that was specified
+    if (found){
+      for (GEdgeLoop::iter it2 = it->begin(); it2 != it->end(); ++it2){
+	GEdge *ge = it2->ge;
+	for (int i=0;i<ge->lines.size();i++){
+	  SPoint2 p[2];
+	  reparamMeshEdgeOnFace ( ge->lines[i]->getVertex(0), ge->lines[i]->getVertex(1),gf,p[0],p[1]);
+	}
+      }      
+    }
+  }
+}
+
+
 #include "Bindings.h"
 
 void GFace::registerBindings(binding *b)
@@ -1223,6 +1248,9 @@ void GFace::registerBindings(binding *b)
   mb->setArgNames("quadrangle", NULL);
   mb = cb->addMethod("edges", &GFace::edges);
   mb->setDescription("return the list of edges bounding this surface");
+  mb = cb->addMethod("addLayersOfQuads", &GFace::addLayersOfQuads);
+  mb->setDescription("insert layers of quads");
+  mb->setArgNames("nLayers","startingVertex", NULL);
 /*  mb = cb->addMethod("addPolygon", &GFace::addPolygon);
   mb->setDescription("insert a polygon mesh element");
   mb->setArgNames("polygon", NULL);*/

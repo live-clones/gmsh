@@ -12,6 +12,7 @@
 #include "MVertex.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
+#include "MLine.h"
 #include "BackgroundMesh.h"
 #include "Numeric.h"
 #include "GmshMessage.h"
@@ -497,10 +498,10 @@ static bool _isItAGoodIdeaToCollapseThatVertex (GFace *gf,
   double uu,vv;
   v->getParameter(0,uu);
   v->getParameter(1,vv);
-  SPoint2 p1,p2;
-  reparamMeshEdgeOnFace(v1,v2,gf,p1,p2);
-  SPoint2 p =(p1+p2)*0.5;
-  GPoint gp = gf->point(p);
+  //  SPoint2 p1,p2;
+  //  reparamMeshEdgeOnFace(v1,v2,gf,p1,p2);
+  //  SPoint2 p =(p1+p2)*0.5;
+  //  GPoint gp = gf->point(p);
   //  v->setXYZ(gp.x(),gp.y(),gp.z());
   //  v->setParameter(0,p.x());
   //  v->setParameter(1,p.y());
@@ -537,6 +538,7 @@ static bool _isItAGoodIdeaToCollapseThatVertex (GFace *gf,
   
   if ( fabs (surface_old - surface_new ) > 1.e-10 * surface_old) {
     //    ||       FACT*worst_quality_new <  worst_quality_old ) {
+
     v->setXYZ(x,y,z);
     v->setParameter(0,uu);
     v->setParameter(1,vv);
@@ -557,22 +559,53 @@ static bool _isItAGoodIdeaToMoveThatVertex (GFace *gf,
   double surface_old = 0;
   double surface_new = 0;
 
-  for (unsigned int j=0;j<e1.size();++j)
+  double qualityOld[256],qualityNew[256];
+
+  GPoint gp = gf->point(after);
+  SPoint3 pafter  (gp.x(),gp.y(),gp.z());
+  SPoint3 pbefore (v1->x(),v1->y(),v1->z());
+
+  for (unsigned int j=0;j<e1.size();++j){
     surface_old += surfaceFaceUV(e1[j],gf);
+    qualityOld[j] = (e1[j]->getNumVertices() == 4) ? e1[j]->etaShapeMeasure() : e1[j]->gammaShapeMeasure();
+  }
 
   v1->setParameter(0,after.x());
   v1->setParameter(1,after.y());
+  v1->x() = pafter.x();
+  v1->y() = pafter.y();
+  v1->z() = pafter.z();
 
-  for (unsigned int j=0;j<e1.size();++j)
+  for (unsigned int j=0;j<e1.size();++j){
     surface_new += surfaceFaceUV(e1[j],gf);
+    qualityNew[j] = (e1[j]->getNumVertices() == 4) ? e1[j]->etaShapeMeasure() : e1[j]->gammaShapeMeasure();
+  }
 
   v1->setParameter(0,before.x());
   v1->setParameter(1,before.y());
+  v1->x() = pbefore.x();
+  v1->y() = pbefore.y();
+  v1->z() = pbefore.z();
 
   if ( surface_new - surface_old  > 1.e-10 * surface_old) {
     return false;
   }
   return true;
+  int nBetter=0,nWorse=0;
+  int nReallyBadOld=0,nReallyBadNew=0;
+  for (unsigned int j=0;j<e1.size();++j){
+    if (qualityNew[j] >= qualityOld[j])nBetter++; 
+    else {
+      nWorse++;
+    }
+    if (qualityNew[j] < 0.2) nReallyBadNew ++;
+    if (qualityOld[j] < 0.2) nReallyBadOld ++;
+  }
+
+  if (nReallyBadNew < nReallyBadOld)return true;
+  if (nReallyBadOld < nReallyBadNew)return false;
+
+  return (nBetter >= nWorse);
   
 }
 
@@ -589,15 +622,15 @@ static int _quadWithOneVertexOnBoundary (GFace *gf,
 					 MVertex *v2,
 					 MVertex *v3,
 					 MVertex *v4){
-  //  return 0;
+  return 0;
   if (v1->onWhat()->dim() < 2 &&
       v2->onWhat()->dim() == 2 &&
       v3->onWhat()->dim() == 2 &&
       v4->onWhat()->dim() == 2 &&
       e2.size() < 5 && 
       e4.size() < 5 && 
-      ( _isItAGoodIdeaToCollapseThatVertex (gf, e2, e4, q, v2, v4, v4,12.0) ||
-       _isItAGoodIdeaToCollapseThatVertex (gf, e2, e4, q, v2, v4, v2,12.0))){
+       _isItAGoodIdeaToCollapseThatVertex (gf, e2, e4, q, v2, v4, v4,12.0) 
+	/* || _isItAGoodIdeaToCollapseThatVertex (gf, e2, e4, q, v2, v4, v2,12.0))*/){
     touched.insert(v1);
     touched.insert(v2);
     touched.insert(v3);
@@ -686,8 +719,7 @@ static int _removeDiamonds(GFace *gf)
 	       v1->onWhat()->dim() == 2 && 
 	       v3->onWhat()->dim() == 2 && 
 	       it1->second.size() ==3 &&  it3->second.size() == 3 && 
-	       (_isItAGoodIdeaToCollapseThatVertex (gf, it1->second, it3->second, q, v1, v3, v3,10.) ||
-		_isItAGoodIdeaToCollapseThatVertex (gf, it1->second, it3->second, q, v1, v3, v1,10.) ) ){
+	       _isItAGoodIdeaToCollapseThatVertex (gf, it1->second, it3->second, q, v1, v3, v3,10.)){
 	touched.insert(v1);
 	touched.insert(v2);
 	touched.insert(v3);
@@ -701,13 +733,31 @@ static int _removeDiamonds(GFace *gf)
 	deleted.insert(v1);
 	diamonds.insert(q);
       } 
+      else if (v2->onWhat()->dim() == 2 && 
+	       v4->onWhat()->dim() == 2 && 
+	       v1->onWhat()->dim() == 2 && 
+	       v3->onWhat()->dim() == 2 && 
+	       it1->second.size() ==3 &&  it3->second.size() == 3 && 
+	       _isItAGoodIdeaToCollapseThatVertex (gf, it1->second, it3->second, q, v1, v3, v1,10.)){
+	touched.insert(v1);
+	touched.insert(v2);
+	touched.insert(v3);
+	touched.insert(v4);
+	for (unsigned int j=0;j<it3->second.size();++j){
+	  for (int k=0;k<it3->second[j]->getNumVertices();k++){
+	    if (it3->second[j]->getVertex(k) == v3 && it3->second[j] != q)
+	      it3->second[j]->setVertex(k,v1);
+	  }
+	}	
+	deleted.insert(v3);
+	diamonds.insert(q);
+      } 
       else if (v1->onWhat()->dim() == 2 && 
 	       v3->onWhat()->dim() == 2 && 
 	       v2->onWhat()->dim() == 2 && 
 	       v4->onWhat()->dim() == 2 && 
 	       it2->second.size() == 3 && it4->second.size() == 3 &&
-	       (_isItAGoodIdeaToCollapseThatVertex (gf, it2->second, it4->second, q, v2, v4, v4,10.) ||
-		_isItAGoodIdeaToCollapseThatVertex (gf, it2->second, it4->second, q, v2, v4, v2,10.) ) ){
+	       _isItAGoodIdeaToCollapseThatVertex (gf, it2->second, it4->second, q, v2, v4, v4,10.)){
 	touched.insert(v1);
 	touched.insert(v2);
 	touched.insert(v3);
@@ -719,6 +769,25 @@ static int _removeDiamonds(GFace *gf)
 	  }
 	}
 	deleted.insert(v2);
+	diamonds.insert(q);
+      }
+      else if (v1->onWhat()->dim() == 2 && 
+	       v3->onWhat()->dim() == 2 && 
+	       v2->onWhat()->dim() == 2 && 
+	       v4->onWhat()->dim() == 2 && 
+	       it2->second.size() == 3 && it4->second.size() == 3 &&
+	       _isItAGoodIdeaToCollapseThatVertex (gf, it2->second, it4->second, q, v2, v4, v2,10.)){
+	touched.insert(v1);
+	touched.insert(v2);
+	touched.insert(v3);
+	touched.insert(v4);
+	for (unsigned int j=0;j<it4->second.size();++j){
+	  for (int k=0;k<it4->second[j]->getNumVertices();k++){
+	    if (it4->second[j]->getVertex(k) == v4 && it4->second[j] != q)
+	      it4->second[j]->setVertex(k,v2);
+	  }
+	}
+	deleted.insert(v4);
 	diamonds.insert(q);
       }
       else {
@@ -753,6 +822,88 @@ int removeDiamonds(GFace *gf){
   }
   Msg::Debug("%i diamond quads removed",nbRemove);
   return nbRemove;
+}
+
+struct p1p2p3 {
+  MVertex *p1,*p2;
+};
+static void _relocateVertexConstrained (GFace *gf, 
+					MVertex *ver, 
+					const std::vector<MElement*> &lt){
+  if( ver->onWhat()->dim() == 2){
+
+
+    std::map<MVertex*,p1p2p3> ring;
+    double initu,initv;
+    ver->getParameter(0, initu);
+    ver->getParameter(1, initv);
+    double XX=0,YY=0,ZZ=0;
+    for(unsigned int i = 0; i < lt.size(); i++){
+      for (int j=0;j<lt[i]->getNumEdges();j++){
+	MEdge ed = lt[i]->getEdge(j);
+	if (ed.getVertex(0) != ver && ed.getVertex(1) != ver){
+	  std::map<MVertex*,p1p2p3>::iterator it = ring.find(ed.getVertex(0));
+	  if (it == ring.end()){
+	    p1p2p3 a;
+	    a.p1 = ed.getVertex(1);
+	    ring[ed.getVertex(0)] = a;
+	  }
+	  else{
+	    it->second.p2 = ed.getVertex(1);
+	  }
+	  it = ring.find(ed.getVertex(1));
+	  if (it == ring.end()){
+	    p1p2p3 a;
+	    a.p1 = ed.getVertex(0);
+	    ring[ed.getVertex(1)] = a;
+	  }
+	  else{
+	    it->second.p2 = ed.getVertex(0);
+	  }
+	}
+      }
+    }
+
+    double cu=0,cv=0;
+    std::map<MVertex*,p1p2p3>::iterator it = ring.begin();
+    for (; it!=ring.end();++it){
+      MVertex *center  = it->first;
+      MVertex *left    = it->second.p1;
+      MVertex *right   = it->second.p2;
+      SPoint2 pcenter,pleft,pright;
+      reparamMeshVertexOnFace(center, gf, pcenter);
+      reparamMeshVertexOnFace(left, gf, pleft);
+      reparamMeshVertexOnFace(right, gf, pright);
+      SVector3 vj   (pcenter.x()-initu,pcenter.y()-initv,0);
+      SVector3 vjp1 (pleft.x()-initu,pleft.y()-initv,0);
+      SVector3 vjm1 (pright.x()-initu,pright.y()-initv,0);
+      vjp1.normalize();
+      vjm1.normalize();
+      SVector3 bissector = (vjp1+vjm1)*0.5;
+      double dist = vj.norm();
+      cu += (pcenter.x() + dist * bissector.x());
+      cv += (pcenter.y() + dist * bissector.y());
+    }
+    cu/= ring.size();
+    cv/= ring.size();
+    SPoint2 before(initu,initv);
+    SPoint2 after(cu,cv);
+    //    if (isSphere){
+    //      GPoint gp = gf->closestPoint(SPoint3(XX/fact, YY/fact, ZZ/fact), after);
+    //      after = SPoint2(gp.u(),gp.v());
+    //    }
+    bool success = _isItAGoodIdeaToMoveThatVertex (gf,  lt, ver,before,after);
+    if (success){
+      ver->setParameter(0, after.x());
+      ver->setParameter(1, after.y());
+      GPoint pt = gf->point(after);
+      if(pt.succeeded()){
+	ver->x() = pt.x();
+	ver->y() = pt.y();
+	ver->z() = pt.z();
+      }
+    }    
+  }
 }
 
 static void _relocateVertex (GFace *gf, 
@@ -790,7 +941,15 @@ static void _relocateVertex (GFace *gf,
 	GPoint gp = gf->closestPoint(SPoint3(XX/fact, YY/fact, ZZ/fact), after);
 	after = SPoint2(gp.u(),gp.v());
       }
-      bool success = _isItAGoodIdeaToMoveThatVertex (gf,  lt, ver,before,after);
+      bool success = false;
+      double factor = 1.0;
+      for (int i=0;i<10;i++){
+	SPoint2 newp = after + before*(1.-factor);
+	success = _isItAGoodIdeaToMoveThatVertex (gf,  lt, ver,before,newp);
+	if (success)break;
+	factor *= 0.5;
+      }
+
       if (success){
 	ver->setParameter(0, after.x());
 	ver->setParameter(1, after.y());
@@ -805,12 +964,12 @@ static void _relocateVertex (GFace *gf,
   }
 }
   
-void laplaceSmoothing(GFace *gf)
+void laplaceSmoothing(GFace *gf, int niter)
 {
   v2t_cont adj;
   buildVertexToElement(gf->triangles, adj);
   buildVertexToElement(gf->quadrangles, adj);
-  for(int i = 0; i < 5; i++){
+  for(int i = 0; i < niter; i++){
     v2t_cont :: iterator it = adj.begin();
     while (it != adj.end()){
       _relocateVertex(gf,it->first,it->second);
@@ -819,9 +978,23 @@ void laplaceSmoothing(GFace *gf)
   }
 }
 
+void laplaceSmoothingConstrained(GFace *gf)
+{
+  v2t_cont adj;
+  buildVertexToElement(gf->triangles, adj);
+  buildVertexToElement(gf->quadrangles, adj);
+  for(int i = 0; i < 5; i++){
+    v2t_cont :: iterator it = adj.begin();
+    while (it != adj.end()){
+      _relocateVertexConstrained(gf,it->first,it->second);
+      ++it;
+    }  
+  }
+}
+
+
 
 int  _edgeSwapQuadsForBetterQuality ( GFace *gf ) {
-
   e2t_cont adj;
   //  buildEdgeToElement(gf->triangles, adj);
   buildEdgeToElement(gf->quadrangles, adj);
@@ -1566,16 +1739,13 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
       }
       else{
 	// TEST
-	//	FILE *f = fopen (MATCHFILE,"r");
-	//	int nn,ne;
-	//	fscanf(f,"%d %d",&nn,&ne);
 	std::vector<std::pair<MElement*,MElement*> > toProcess;
 	for (int k=0;k<elist[0];k++){
 	  int i1 = elist[1+3*k],i2 = elist[1+3*k+1],an=elist[1+3*k+2];	  
 	  // FIXME !!
 	  if (an == 100000){// || an == 1000){
 	    toProcess.push_back(std::make_pair(n2t[i1],n2t[i2]));
-	    Msg::Debug("Forbidden quad found in blossom quadrangulation, optimization will be required");
+	    Msg::Debug("Extra edge found in blossom algorithm, optimization will be required");
 	  }
 	  else{
 	    MElement *t1 = n2t[i1];
@@ -1675,35 +1845,33 @@ void recombineIntoQuads(GFace *gf,
 
   double t1 = Cpu();
 
-  //gf->model()->writeMSH("before.msh");
+  gf->model()->writeMSH("before.msh");
   if (topologicalOpti)removeFourTrianglesNodes(gf, false);
   int success = _recombineIntoQuads(gf,0);
-  //gf->model()->writeMSH("raw.msh");
+  //  gf->addLayersOfQuads(1, 0);
+  gf->model()->writeMSH("raw.msh");
   if (nodeRepositioning)  
-    for(int i = 0; i < CTX::instance()->mesh.nbSmoothing; i++) 
-      laplaceSmoothing(gf);
+    laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
 
     //blossom-quad algo
   if(success && CTX::instance()->mesh.algoRecombine == 1){    
     if (topologicalOpti){
-      //gf->model()->writeMSH("smoothed.msh");
+      gf->model()->writeMSH("smoothed.msh");
       int COUNT = 0;
-      //char NAME[256];
+      char NAME[256];
       while(1){
 	int x = removeTwoQuadsNodes(gf);
-	//if(x){ sprintf(NAME,"iter%dTQ.msh",COUNT++); gf->model()->writeMSH(NAME);}
+	if(x){ sprintf(NAME,"iter%dTQ.msh",COUNT++); gf->model()->writeMSH(NAME);}
 	int y= removeDiamonds(gf);
-	//if(y){ sprintf(NAME,"iter%dD.msh",COUNT++); gf->model()->writeMSH(NAME); }
+	if(y){ sprintf(NAME,"iter%dD.msh",COUNT++); gf->model()->writeMSH(NAME); }
 	laplaceSmoothing(gf);
 	int  z = 0 ;//edgeSwapQuadsForBetterQuality ( gf );
-	//if(z){ sprintf(NAME,"iter%dS.msh",COUNT++); gf->model()->writeMSH(NAME); }
+	if(z){ sprintf(NAME,"iter%dS.msh",COUNT++); gf->model()->writeMSH(NAME); }
 	if (!(x+y+z))break;
       }
       edgeSwapQuadsForBetterQuality ( gf );
       //if(z){ sprintf(NAME,"iter%dS.msh",COUNT++); gf->model()->writeMSH(NAME); }
-      for(int i = 0; i < CTX::instance()->mesh.nbSmoothing; i++){ 
-	laplaceSmoothing(gf);
-      }
+      laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
     }
     double t2 = Cpu();
     Msg::Info("Blossom recombination algorithm completed (%g s)", t2 - t1);
@@ -1712,11 +1880,9 @@ void recombineIntoQuads(GFace *gf,
 
     //simple recombination algo
   _recombineIntoQuads(gf,0);
-  for(int i = 0; i < CTX::instance()->mesh.nbSmoothing; i++) 
-    laplaceSmoothing(gf);
+  laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
   _recombineIntoQuads(gf,0);
-  for(int i = 0; i < CTX::instance()->mesh.nbSmoothing; i++) 
-    laplaceSmoothing(gf);
+  laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
   //  gf->model()->writeMSH("after.msh");
 
   double t2 = Cpu();
@@ -1724,22 +1890,144 @@ void recombineIntoQuads(GFace *gf,
 
 }
 
-void quadsToTriangles(GFace *gf){
+
+// give it a try : add one quad layer on the 
+void addOneLayerOnContour(GFace *gf, GVertex *gv){
+  /*
+, int nbLayers, double hplus, double factor){
+  // for each vertex
+  std::map<MVertex*,std::vector<MVertex*> >layers;
+  std::vector<MQuadrangle*> newQuads;
+  std::vector<MTriangle*> newTris;
+
+  std::list<GEdgeLoop>::iterator it = gf->edgeLoops.begin();
+  for (; it != gf->edgeLoops.end(); ++it){
+    bool found = false;
+    std::list<GEdge*> ed;
+    for (GEdgeLoop::iter it2 = it->begin(); it2 != it->end(); ++it2){
+      if (it2->ge->getBeginVertex() == gv || it2->ge->getEndVertex() == gv) {
+	found = true;	
+      }
+      ed.push_back(it2->ge);
+    }
+    // we found an edge loop with the GVertex that was specified
+    if (found){
+      // compute model vertices that will produce fans
+      for (GEdgeLoop::iter it2 = it->begin(); it2 != it->end(); ++it2){	
+	GEdgeLoop::iter it3 = it2; ++it3;
+	GVertex *gv = it2->getEndVertex();
+	GEdgeSigned *before,*after = *it2;
+	if (it3 == it->end()){
+	  before = *(it->begin());
+	}
+	else{
+	  before = *it2;
+	}	
+      }      
+
+      for (std::list<GEdge*>::iterator it = ed.begin(); it != ed.end(); ++it){
+	GEdge *ge = *it;
+	for (int i=0;i<ge->lines.size();i++){
+	  SPoint2 p[2];
+	  reparamMeshEdgeOnFace ( ge->lines[i]->getVertex(0), ge->lines[i]->getVertex(1),gf,p[0],p[1]);
+	  MVertex *vd[2];
+	  for (int j=0;j<2;j++){
+	    MVertex *v = ge->lines[i]->getVertex(j);
+	    std::map<MVertex*,MVertex*>::iterator itv = duplicates.find(v);
+	    if (itv == duplicates.end()){
+	      vd[j] = new MFaceVertex(v->x(),v->y(),v->z(),gf,p[j].x(),p[j].y());
+	      duplicates[v] = vd[j];
+	      gf->mesh_vertices.push_back(vd[j]);
+	    }
+	    else 
+	      vd[j] = itv->second;
+	  }
+	  newQuads.push_back(new MQuadrangle(ge->lines[i]->getVertex(0), ge->lines[i]->getVertex(1),vd[1],vd[0]));
+	}
+      }
+      for (int i=0;i<gf->quadrangles.size();i++){
+	MQuadrangle *q = gf->quadrangles[i];
+	MVertex *vs[4];
+	for (int j=0;j<4;j++){
+	  MVertex *v = q->getVertex(j);
+	  std::map<MVertex*,MVertex*>::iterator itv = duplicates.find(v);
+	  if (itv == duplicates.end()){
+	    vs[j] = v;
+	  }
+	  else{
+	    vs[j] = itv->second;
+	  }
+	}
+	newQuads.push_back(new MQuadrangle(vs[0],vs[1],vs[2],vs[3]));
+	delete q;
+      }
+      for (int i=0;i<gf->triangles.size();i++){
+	MTriangle *t = gf->triangles[i];
+	MVertex *vs[3];
+	for (int j=0;j<3;j++){
+	  MVertex *v = t->getVertex(j);
+	  std::map<MVertex*,MVertex*>::iterator itv = duplicates.find(v);
+	  if (itv == duplicates.end()){
+	    vs[j] = v;
+	  }
+	  else{
+	    vs[j] = itv->second;
+	  }
+	}
+	newTris.push_back(new MTriangle(vs[0],vs[1],vs[2]));
+	delete t;
+      }
+  
+      gf->triangles = newTris;
+      gf->quadrangles = newQuads;
+    }
+  }
+  */
+}
+
+void quadsToTriangles(GFace *gf, double minqual = -10000.){
+  std::vector<MQuadrangle*> qds;
   for (int i=0;i<gf->quadrangles.size();i++){
     MQuadrangle *q = gf->quadrangles[i];
-    MTriangle *t1 = new MTriangle (q->getVertex(0),q->getVertex(1),q->getVertex(2));
-    MTriangle *t2 = new MTriangle (q->getVertex(2),q->getVertex(3),q->getVertex(0));
-    gf->triangles.push_back(t1);
-    gf->triangles.push_back(t2);
-    delete q;
+    if (q->etaShapeMeasure() < minqual){
+      MTriangle *t11 = new MTriangle (q->getVertex(0),q->getVertex(1),q->getVertex(2));
+      MTriangle *t12 = new MTriangle (q->getVertex(2),q->getVertex(3),q->getVertex(0));
+      MTriangle *t21 = new MTriangle (q->getVertex(1),q->getVertex(2),q->getVertex(3));
+      MTriangle *t22 = new MTriangle (q->getVertex(3),q->getVertex(0),q->getVertex(1));
+      double qual1 = std::min(t11->gammaShapeMeasure(),t12->gammaShapeMeasure()); 
+      double qual2 = std::min(t21->gammaShapeMeasure(),t22->gammaShapeMeasure()); 
+
+      double surf1 = surfaceFaceUV(t11,gf) + surfaceFaceUV(t12,gf);
+      double surf2 = surfaceFaceUV(t21,gf) + surfaceFaceUV(t22,gf);
+
+      int option = 0;
+      if (surf1 > surf2 * (1.+1.e-8))option = 2;
+      else if (surf2 > surf1 * (1.+1.e-8))option = 1;
+
+      if (option == 1 || (option == 0 && qual1 > qual2)){
+	gf->triangles.push_back(t11);
+	gf->triangles.push_back(t12);
+	delete t21; delete t22;
+      }
+      else {
+	gf->triangles.push_back(t21);
+	gf->triangles.push_back(t22);
+	delete t11; delete t12;
+      }
+      delete q;
+    }
+    else {
+      qds.push_back(q);
+    }
   }
-  gf->quadrangles.clear();
+  gf->quadrangles = qds;
 }    
 
 void recombineIntoQuadsIterative(GFace *gf){
   
   recombineIntoQuads(gf);
-  //  return;
+  quadsToTriangles(gf,0.03);    
+  return;
   int COUNT = 0;
   while (1){
     quadsToTriangles(gf);    

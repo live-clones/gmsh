@@ -20,6 +20,7 @@ class gmshEdge : public GEdge {
   virtual GeomType geomType() const;
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
+  virtual SVector3 secondDer(double par) const;
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return c; }
   virtual std::string getAdditionalInfoString();

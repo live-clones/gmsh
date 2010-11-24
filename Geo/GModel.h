@@ -370,6 +370,11 @@ class GModel
   // mesh the model
   int mesh(int dimension);
 
+  // make the mesh a high order mesh at order N
+  // linear is 1 if the high order points are not placed on the geometry of the model 
+  // incomplete is 1 if incomplete basis are used
+  int setOrderN(int order, int linear, int incomplete);
+
   // create partition boundaries
   void createPartitionBoundaries(int createGhostCells);
 

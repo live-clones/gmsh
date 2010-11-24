@@ -1166,7 +1166,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   if(displ2D) delete displ2D;
   if(displ3D) delete displ3D;
 
-  // printJacobians(m, "smoothness.pos");
+  //  printJacobians(m, "smoothness.pos");
   
   double t2 = Cpu();
   Msg::StatusBar(2, true, "Done meshing order %d (%g s)", order, t2 - t1);

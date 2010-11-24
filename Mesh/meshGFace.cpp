@@ -883,8 +883,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
       bowyerWatson(gf);
       meshGFaceBamg(gf);
     }
-    for(int i = 0; i < CTX::instance()->mesh.nbSmoothing; i++) 
-      laplaceSmoothing(gf);
+    laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
   }
 
   if(debug){
@@ -1465,8 +1464,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
       bowyerWatson(gf);
     else 
       meshGFaceBamg(gf);
-    for(int i = 0; i < CTX::instance()->mesh.nbSmoothing; i++) 
-      laplaceSmoothing(gf);
+    laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
   }
   
   // delete the mesh  

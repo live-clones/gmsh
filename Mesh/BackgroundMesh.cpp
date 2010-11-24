@@ -32,6 +32,64 @@
 // CTX::instance()->mesh.minCircPoints tells the minimum number of points per
 // radius of curvature
 
+SMetric3 buildMetricTangentToCurve (SVector3 &t, double curvature, double &lambda){
+  lambda = 1.e22;
+  if (curvature == 0.0)return SMetric3(1.e-22);
+  SVector3 a;
+  if (t(0) <= t(1) && t(0) <= t(2)){
+    a = SVector3(1,0,0);
+  } 
+  else if (t(1) <= t(0) && t(1) <= t(2)){
+    a = SVector3(0,1,0);
+  } 
+  else{
+    a = SVector3(0,0,1);
+  }
+  SVector3 b = crossprod (t,a);
+  SVector3 c = crossprod (b,t);
+  b.normalize();
+  c.normalize();
+  t.normalize();
+  lambda =  ((2 * M_PI) /( fabs(curvature) *  CTX::instance()->mesh.minCircPoints ) );
+
+  SMetric3 curvMetric (1./(lambda*lambda),1.e-10,1.e-10,t,b,c);
+    //SMetric3 curvMetric (1./(lambda*lambda));
+  return curvMetric;
+}
+
+SMetric3 max_edge_curvature_metric(const GVertex *gv, double &length)
+{
+  SMetric3 val (1.e-12);
+  length = 1.e22;
+  std::list<GEdge*> l_edges = gv->edges();
+  for (std::list<GEdge*>::const_iterator ite = l_edges.begin(); 
+       ite != l_edges.end(); ++ite){
+    GEdge *_myGEdge = *ite;
+    Range<double> range = _myGEdge->parBounds(0);      
+    SMetric3 cc;
+    double l;
+    if (gv == _myGEdge->getBeginVertex()) {
+      SVector3 t = _myGEdge->firstDer(range.low());
+      t.normalize();
+      cc = buildMetricTangentToCurve(t,_myGEdge->curvature(range.low()),l);
+    }
+    else {
+      SVector3 t = _myGEdge->firstDer(range.high());
+      t.normalize();
+      cc = buildMetricTangentToCurve(t,_myGEdge->curvature(range.high()),l);
+    }
+    val = intersection(val,cc);
+    length = std::min(length,l);
+  }
+  return val;
+}
+
+SMetric3 max_edge_curvature_metric(const GEdge *ge, double u, double &l){
+  SVector3 t =  ge->firstDer(u);
+  t.normalize();
+  return buildMetricTangentToCurve(t,ge->curvature(u),l);  
+}
+
 static double max_edge_curvature(const GVertex *gv)
 {
   double val = 0;
@@ -161,16 +219,16 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
   double Crv = 0;
   switch(ge->dim()){
   case 0:        
-    //    Crv = max_edge_curvature((const GVertex *)ge);
-    //    Crv = std::max(max_surf_curvature((const GVertex *)ge), Crv);
-    Crv = max_surf_curvature((const GVertex *)ge);
+    Crv = max_edge_curvature((const GVertex *)ge);
+    Crv = std::max(max_surf_curvature((const GVertex *)ge), Crv);
+    //Crv = max_surf_curvature((const GVertex *)ge);
     break;
   case 1:
     {
       GEdge *ged = (GEdge *)ge;
-      //      Crv = ged->curvature(U)*2;
-      //      Crv = std::max(Crv, max_surf_curvature(ged, U));
-      Crv = max_surf_curvature(ged, U);      
+      Crv = ged->curvature(U)*2;
+      Crv = std::max(Crv, max_surf_curvature(ged, U));
+      //Crv = max_surf_curvature(ged, U);      
     }
     break;
   case 2:

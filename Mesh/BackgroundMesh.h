@@ -12,6 +12,8 @@
 
 class MElementOctree;
 class GFace;
+class GVertex;
+class GEdge;
 class MElement;
 class MVertex;
 class GEntity;
@@ -42,5 +44,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
 SMetric3 BGM_MeshMetric(GEntity *ge, double U, double V, double X, double Y, double Z);
 bool Extend1dMeshIn2dSurfaces();
 bool Extend2dMeshIn3dVolumes();
+SMetric3 max_edge_curvature_metric(const GVertex *gv, double &l);
+SMetric3 max_edge_curvature_metric(const GEdge *ge, double u, double &l);
 
 #endif

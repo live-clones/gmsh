@@ -26,6 +26,7 @@ class GRegion;
 class highOrderSmoother 
 {
   const int _tag;
+  std::map<MElement*,std::vector<double> > _materialLaw;
   std::map<MVertex*,SVector3> _straightSidedLocation;
   std::map<MVertex*,SVector3> _targetLocation;
   int _dim;
@@ -38,6 +39,7 @@ class highOrderSmoother
   void moveTo(MVertex *v, const std::map<MVertex*,SVector3> &) const;
 public:  
   highOrderSmoother(int dim) : _tag(111), _dim(dim) {_clean();}
+  highOrderSmoother(GModel *gm);
   void add(MVertex * v, const SVector3 &d ) {
     _straightSidedLocation[v] = d;
     _targetLocation[v]        = SPoint3(v->x(),v->y(),v->z());

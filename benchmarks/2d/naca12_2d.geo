@@ -224,17 +224,6 @@ Line Loop(9) = {6,7,8,5};
 Line Loop(10) = {2,3,4,1};
 Plane Surface(11) = {9,10};
 
-Physical Surface(11)={11};
+//Physical Surface(11)={11};
 //Point(9999) = {0.6,0,0,1};
 
-Field[1] = Attractor;
-Field[1].EdgesList = {1, 2, 3, 4};
-Field[1].NNodesByEdge = 2000;
-Field[2] = Laplacian;
-Field[2].Delta = 0.001;
-Field[2].IField = 1;
-Field[3] = MathEval;
-Field[3].F = "20/(F2*3.14)";
-//Background Field = 3;
-Field[4] = Gradient;
-Field[4].Delta = 0.001;

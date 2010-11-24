@@ -61,11 +61,12 @@ double MTriangle::etaShapeMeasure()
   double a1 = 180 * angle3Vertices(_v[0], _v[1], _v[2]) / M_PI;
   double a2 = 180 * angle3Vertices(_v[1], _v[2], _v[0]) / M_PI;
   double a3 = 180 * angle3Vertices(_v[2], _v[0], _v[1]) / M_PI;
-  double angle = fabs(60. - a1);
-  angle = std::max(fabs(60. - a2),angle);
-  angle = std::max(fabs(60. - a3),angle);
+
+  double amin = std::min(std::min(a1,a2),a3);
+  double angle = fabs(60. - amin);
   return 1.-angle/60;
 }
+
 
 double MTriangle::gammaShapeMeasure()
 {

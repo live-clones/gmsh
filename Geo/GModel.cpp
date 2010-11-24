@@ -41,6 +41,7 @@
 #include "Generator.h"
 #include "meshGFaceOptimize.h"
 #include "meshPartition.h"
+#include "HighOrder.h"
 #endif
 
 std::vector<GModel*> GModel::list;
@@ -504,6 +505,19 @@ int GModel::mesh(int dimension)
   return false;
 #endif
 }
+
+
+int GModel::setOrderN(int order, int linear, int incomplete)
+{
+#if defined(HAVE_MESH)
+  SetOrderN(this, order, linear, incomplete);
+  return true;
+#else
+  Msg::Error("Mesh module not compiled");
+  return false;
+#endif
+}
+
 
 int GModel::getMeshStatus(bool countDiscrete)
 {
@@ -2553,6 +2567,9 @@ void GModel::registerBindings(binding *b)
   cm = cb->addMethod("mesh", &GModel::mesh);
   cm->setArgNames("dim", NULL);
   cm->setDescription("Generate a mesh of this model in dimension 'dim'.");
+  cm = cb->addMethod("setOrderN", &GModel::setOrderN);
+  cm->setArgNames("order", "linear", "incomplete", NULL);
+  cm->setDescription(" make the mesh a high order mesh at order N\n linear is 1 if the high order points are not placed on the geometry of the model\n incomplete is 1 if incomplete basis are used.");
   cm = cb->addMethod("load", &GModel::load);
   cm->setDescription("Merge the file 'filename' in this model, the file can be "
                      "in any format (guessed from the extension) known by gmsh.");

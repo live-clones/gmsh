@@ -354,8 +354,8 @@ void highOrderSmoother::smooth(GRegion *gr)
 
 
 void highOrderSmoother::optimize(GFace * gf, 
-                                     edgeContainer &edgeVertices,
-                                     faceContainer &faceVertices)
+				 edgeContainer &edgeVertices,
+				 faceContainer &faceVertices)
 {
   //  if (gf->geomType() != GEntity::Plane) return;
 
@@ -447,7 +447,7 @@ void highOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
   lsys->setPrec(5.e-8);
 #endif
   dofManager<double> myAssembler(lsys);
-  elasticityTerm El(0, 1.0, .48, getTag());
+  elasticityTerm El(0, 1.0, .33, getTag());
   
   std::vector<MElement*> layer, v;
   double minD;
@@ -517,11 +517,11 @@ void highOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
   
   double dx0 = smooth_metric_(v, gf, myAssembler, verticesToMove, El);
   double dx = dx0;
-  printf(" dx0 = %12.5E\n", dx0);
+  Msg::Debug(" dx0 = %12.5E", dx0);
   int iter = 0;
   while(1){
     double dx2 = smooth_metric_(v, gf, myAssembler, verticesToMove, El);
-    printf(" dx2  = %12.5E\n", dx2);
+    Msg::Debug(" dx2  = %12.5E", dx2);
     if (fabs(dx2 - dx) < 1.e-4 * dx0)break;
     if (iter++ > 2)break;
     dx = dx2;
@@ -560,6 +560,12 @@ double highOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
 
   if (myAssembler.sizeOfR()){
 
+    // initialize _materialLaw to 1 everywhere
+    for (unsigned int i = 0; i < v.size(); i++){
+      MElement *e = v[i];
+      //      _materialLaw[e] = 1.0;
+    }
+    // while convergence -------------------------------------------------------
     for (unsigned int i = 0; i < v.size(); i++){
       MElement *e = v[i];
       int nbNodes = e->getNumVertices();
@@ -575,6 +581,8 @@ double highOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
       fullMatrix<double> J23K33(n2, n3);
       K33.setAll(0.0);
       SElement se(e);
+      // set kappa to the actual kappa of the material law
+      //      El.setCompressibility( compressibilityFunction ( _materialLaw[e] ) );
       El.elementMatrix(&se, K33);
       computeMetricVector(gf, e, J32, J23, D3);
       J23K33.gemm(J23, K33, 1, 0);
@@ -590,6 +598,8 @@ double highOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
       }
     }
     myAssembler.systemSolve();
+    // for all element, compute detJ at integration points --> material law
+    // end while convergence -------------------------------------------------------
   
     for (it = verticesToMove.begin(); it != verticesToMove.end(); ++it){
       if ((*it)->onWhat()->dim() == 2){

@@ -319,6 +319,10 @@ class GFace : public GEntity
 
   // tells if it's a sphere, and if it is, returns parameters
   virtual bool isSphere (double &radius, SPoint3 &center) const {return false;}
+
+  // add layers of quads
+  void addLayersOfQuads (int nLayers, GVertex *start, double hmin, double factor);
+  
 };
 
 #endif

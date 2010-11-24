@@ -1555,7 +1555,7 @@ public:
     const double ll1   = dist*(ratio-1) + hwall_n;
     const double lc_n  = std::min(ll1,hfar);
     const double ll2   = dist*(ratio-1) + hwall_t;
-    const double lc_t  = std::min(lc_n*CTX::instance()->mesh.anisoMax, std::min(ll2,hfar));
+    double lc_t  = std::min(lc_n*CTX::instance()->mesh.anisoMax, std::min(ll2,hfar));
 
     SVector3 t1,t2,t3;
     double L1,L2,L3;
@@ -1565,8 +1565,22 @@ public:
       std::pair<AttractorInfo,SPoint3> pp = cc->getAttractorInfo();
       if (pp.first.dim ==1){
 	GEdge *e = GModel::current()->getEdgeByTag(pp.first.ent);
+
+
+	// the tangent size at this point is the size of the
+	// 1D mesh at this point !
+	// hack : use curvature
+	if(CTX::instance()->mesh.lcFromCurvature){
+	  double Crv = e->curvature(pp.first.u);
+	  double lc = Crv > 0 ? 2 * M_PI / Crv / CTX::instance()->mesh.minCircPoints : 1.e-22;
+	  const double ll2b   = dist*(ratio-1) + lc;
+	  double lc_tb  = std::min(lc_n*CTX::instance()->mesh.anisoMax, std::min(ll2b,hfar));
+	  lc_t = std::min(lc_t,lc_tb);
+	}
+
+
 	if (dist < hwall_n){
-	  L1 = lc_t; 
+	  L1 = lc_t;
 	  L2 = lc_n;
 	  L3 = lc_n;
 	  t1 = e->firstDer(pp.first.u);
@@ -1583,7 +1597,7 @@ public:
 	  //	  printf("hfar = %g lc = %g dir %g %g \n",hfar,lc,t1.x(),t1.y());
 	}
 	else {
-	  L1 = lc_t; 
+	  L1 = lc_t;
 	  L2 = lc_n;
 	  L3 = lc_t;
 	  GPoint p = e->point(pp.first.u);
