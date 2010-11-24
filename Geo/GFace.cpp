@@ -1206,7 +1206,7 @@ void GFace::moveToValidRange(SPoint2 &pt) const
 }
 
 void GFace::addLayersOfQuads(int nLayers, GVertex *gv, double hmin, double ratio){
-
+  /*
   std::list<GEdgeLoop>::iterator it = edgeLoops.begin();
   for (; it != edgeLoops.end(); ++it){
     bool found = false;
@@ -1226,6 +1226,7 @@ void GFace::addLayersOfQuads(int nLayers, GVertex *gv, double hmin, double ratio
       }      
     }
   }
+  */
 }
 
 
