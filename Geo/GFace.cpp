@@ -1251,7 +1251,7 @@ void GFace::registerBindings(binding *b)
   mb->setDescription("return the list of edges bounding this surface");
   mb = cb->addMethod("addLayersOfQuads", &GFace::addLayersOfQuads);
   mb->setDescription("insert layers of quads");
-  mb->setArgNames("nLayers","startingVertex", NULL);
+  mb->setArgNames("nLayers","startingVertex","hmin", "ratio",  NULL);
 /*  mb = cb->addMethod("addPolygon", &GFace::addPolygon);
   mb->setDescription("insert a polygon mesh element");
   mb->setArgNames("polygon", NULL);*/
