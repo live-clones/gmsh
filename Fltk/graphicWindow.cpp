@@ -2,7 +2,7 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
-
+ 
 #include <string.h>
 #include <FL/fl_draw.H>
 #include <FL/fl_ask.H>
@@ -128,64 +128,90 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
                              ctx0->quaternion[2], ctx0->quaternion[3]);
         }
       }
-      else if(!Fl::event_state(FL_SHIFT))
+      else if(!Fl::event_state(FL_SHIFT)){
         ctx->addQuaternionFromAxisAndAngle(axis, -90.);
-      else
+	if (CTX::instance()->camera) ctx->camera.tiltHeadRight();
+      }
+      else{
         ctx->addQuaternionFromAxisAndAngle(axis, 90.);
+	if (CTX::instance()->camera) ctx->camera.tiltHeadLeft();
+      }
     }
     else if(!strcmp(str, "x")){
       // set X-axis pointing out or into (shift) the screen
-      if(!Fl::event_state(FL_SHIFT)){
-        ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = -90.;
-      }
+      if (CTX::instance()->camera) {
+	ctx->camera.alongX();}
       else{
-        ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = 90.;
+	if(!Fl::event_state(FL_SHIFT)){
+	  ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = -90.;
+	}
+	else{
+	  ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = 90.;
+	}
+	ctx->setQuaternionFromEulerAngles();
       }
-      ctx->setQuaternionFromEulerAngles();
     }
     else if(!strcmp(str, "y")){
       // set Y-axis pointing out or into (shift) the screen
-      if(!Fl::event_state(FL_SHIFT)){
-        ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = 180.;
-      }
+      if (CTX::instance()->camera) {
+	ctx->camera.alongY();}
       else{
-        ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = 0.;
+	if(!Fl::event_state(FL_SHIFT)){
+	  ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = 180.;
+	}
+	else{
+	  ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = 0.;
+	}
+	ctx->setQuaternionFromEulerAngles();
       }
-      ctx->setQuaternionFromEulerAngles();
     }
     else if(!strcmp(str, "z")){ 
       // set Z-axis pointing out or into (shift) the screen
-      if(!Fl::event_state(FL_SHIFT)){
-        ctx->r[0] = 0.; ctx->r[1] = 0.; ctx->r[2] = 0.;
-      }
+      if (CTX::instance()->camera) {
+	ctx->camera.alongZ();}
       else{
-        ctx->r[0] = 0.; ctx->r[1] = 180.; ctx->r[2] = 0.;
+	if(!Fl::event_state(FL_SHIFT)){
+	  ctx->r[0] = 0.; ctx->r[1] = 0.; ctx->r[2] = 0.;
+	}
+	else{
+	  ctx->r[0] = 0.; ctx->r[1] = 180.; ctx->r[2] = 0.;
+	}
+	ctx->setQuaternionFromEulerAngles();
       }
-      ctx->setQuaternionFromEulerAngles();
     }
     else if(!strcmp(str, "1:1")){
       // reset translation and scaling, or sync translation and
       // scaling with the first window (alt)
-      if(Fl::event_state(FL_ALT)){
-        if(i != 0){
-          drawContext *ctx0 = gls[0]->getDrawContext();
-          for(int j = 0; j < 3; j++){
-            ctx->t[j] = ctx0->t[j];
-            ctx->s[j] = ctx0->s[j];
-          }
-        }
-      }
+      if (CTX::instance()->camera) {
+	ctx->camera.lookAtCg();}
       else{
-        ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
-        ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
+
+	if(Fl::event_state(FL_ALT)){
+	  if(i != 0){
+	    drawContext *ctx0 = gls[0]->getDrawContext();
+	    for(int j = 0; j < 3; j++){
+	      ctx->t[j] = ctx0->t[j];
+	      ctx->s[j] = ctx0->s[j];
+	    }
+	  }
+	}
+	else{
+	  ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
+	  ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
+	}
       }
     }
-    else if(!strcmp(str, "reset")){ 
-      // reset everything
-      ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
-      ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
-      ctx->r[0] = ctx->r[1] = ctx->r[2] = 0.;
-      ctx->setQuaternionFromEulerAngles();
+    else if(!strcmp(str, "reset")){
+ 
+      if (CTX::instance()->camera) {
+	ctx->camera.init();}
+      else{
+	// reset everything
+	ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
+	ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
+	ctx->r[0] = ctx->r[1] = ctx->r[2] = 0.;
+	ctx->setQuaternionFromEulerAngles();
+      }
     }
   }
   drawContext::global()->draw();

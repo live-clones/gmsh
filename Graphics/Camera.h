@@ -2,51 +2,95 @@
 #ifndef _CAMERA_H_
 #define _CAMERA_H_
 
-#include <stdio.h>
-#include <math.h>
-#
 
-
-typedef struct {
-  double x,y,z;
-} XYZ;
+/*
 typedef struct {
   double x,y,z,w;
-} quaternion;
+} Quaternion;
+*/ 
+class Quaternion;
 
-XYZ origin = {0.0,0.0,0.0};
+class XYZ {
+public: 
+  XYZ(){};
+  ~XYZ(){};
+  XYZ(double _x,double _y,double _z);
+  double x,y,z;
+  //  double length(XYZ &p);
+  //  void normalize(XYZ &p);
+  //  void rotate(Quaternion omega,XYZ axe) ; 
+  void set(const  double & _x, const double & _y ,const  double & _z);
+  XYZ (const Quaternion &R);
+};
+double length(XYZ &p);
+void normalize(XYZ &p);
+void rotate(Quaternion omega,XYZ axe) ; 
+XYZ operator* (const double &a,const XYZ &T);
+XYZ operator+ (const XYZ &L,const XYZ &R);
+XYZ operator- (const XYZ &L,const XYZ &R);
+
+
+class Quaternion{
+public:
+  double x,y,z,w;
+  Quaternion(){}; 
+  ~Quaternion(){};
+  Quaternion (const XYZ &R);
+};
+
+double length(Quaternion &quat);
+void normalize(Quaternion &quat);
+Quaternion conjugate(Quaternion quat);
+Quaternion mult(const Quaternion& A,const Quaternion& B);
+Quaternion operator *(const Quaternion &A, const Quaternion &B);
+
+
+
+
+
+
+
+
+
+
+
+
+
+using namespace std; 
 
 class Camera {
 public:
-  XYZ position;          /* camera position           */
-  XYZ view;              /* View direction vector   */
-  XYZ up;                /* View up direction       */
-  XYZ right;              /* View right direction       */
-  XYZ target;   /* center of rotation and screen   */
-  double focallength;  /* Focal Length along vd   */
-  double aperture;     /* Camera aperture         */
-  double eyesep;       /* Eye separation          */
+  bool on;
+  XYZ position;           /* camera position         */
+  XYZ view;               /* View direction vector   */
+  XYZ up;                 /* View up direction       */
+  XYZ right;              /* View right direction    */
+  XYZ target;             /* center of rotation and screen   */
+  double focallength;     /* Focal Length along vd   */
+  double aperture;        /* Camera aperture         */
+  double eyesep;          /* Eye separation          */
   int screenwidth,screenheight;
-  double distance;
-  double ref_distance;
-  bool button_left_down;
-  bool button_middle_down;
-  bool button_right_down;
+  double screenratio, distance, ref_distance;
+  bool button_left_down, button_middle_down, button_right_down;
   bool stereoEnable;
-  double Lc;
-  double ratio;
-  double closeness;
-  Camera();
+  double Lc, eye_sep_ratio, closeness, near , ndfl, far, radians,wd2 ;
+  double glFleft,glFright,glFtop,glFbottom;
+  Camera():stereoEnable(false),on(false){};
   ~Camera();
+  void giveViewportDimension(const int& W,const int& H);
   void lookAtCg();
   void init();
   void rotate(double* q);
   void moveRight(double theta);
   void moveUp(double theta);
   void update();
-private:
+  void affiche();
+  void alongX();
+  void alongY();
+  void alongZ();
+  void tiltHeadLeft();
+  void tiltHeadRight();
 };  
-
 
 
 class mouseAndKeyboard {
@@ -61,78 +105,8 @@ public:
 };
 
 
-
-
-// Quaternion and XYZ functions
-double length(quaternion quat)
-{
-  return sqrt(quat.x * quat.x + quat.y * quat.y +
-              quat.z * quat.z + quat.w * quat.w);
-}
-double length(XYZ p)
-{
-  return sqrt(p.x * p.x + p.y * p.y + p.z * p.z);
-}
-quaternion normalize(quaternion &quat)
-{
-  double L = length(quat);
-
-  quat.x /= L;
-  quat.y /= L;
-  quat.z /= L;
-  quat.w /= L;
-
-  return quat;
-}
-
-XYZ normalize(XYZ &p)
-{
-  double L = length(p);
-
-  p.x /= L;
-  p.y /= L;
-  p.z /= L;
-
-  return p;
-}
-quaternion conjugate(quaternion quat)
-{
-  quat.x = -quat.x;
-  quat.y = -quat.y;
-  quat.z = -quat.z;
-  return quat;
-}
-quaternion mult(quaternion A, quaternion B)
-{
-  quaternion C;
-
-  C.x = A.w*B.x + A.x*B.w + A.y*B.z - A.z*B.y;
-  C.y = A.w*B.y - A.x*B.z + A.y*B.w + A.z*B.x;
-  C.z = A.w*B.z + A.x*B.y - A.y*B.x + A.z*B.w;
-  C.w = A.w*B.w - A.x*B.x - A.y*B.y - A.z*B.z;
-  return C;
-}
-
-XYZ rotate(quaternion omega,XYZ axe) {
-  XYZ new_axe;
-  quaternion qaxe,new_qaxe;
-  qaxe.x=axe.x;
-  qaxe.y=axe.y;
-  qaxe.z=axe.z;
-  qaxe.w=0.;
-  new_qaxe=mult(mult(omega,qaxe),conjugate(omega));
-  axe.x=new_qaxe.x ;
-  axe.y=new_qaxe.y;
-  axe.z=new_qaxe.z;
-
-}
-
-
-
-
-
-
-
+ 
+ 
 
 
 #endif

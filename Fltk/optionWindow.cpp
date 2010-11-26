@@ -255,9 +255,9 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
     }
     else    o->general.butt[18]->activate(); 
   }
-  if(opt_general_camera_mode(0, GMSH_GET, 0) != o->general.butt[18]->value())
+  if(opt_general_camera_mode(0, GMSH_GET, 0) != o->general.butt[18]->value()) {
     opt_general_camera_mode(0, GMSH_SET, o->general.butt[18]->value()); 
-
+  }
 
   opt_general_trackball(0, GMSH_SET, o->general.butt[5]->value());
   opt_general_terminal(0, GMSH_SET, o->general.butt[7]->value());
@@ -1327,6 +1327,7 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + 2 * WB, 2 * WB + 11 * BH, width/2-WB, BH, "Enable camera");
       general.butt[18]->type(FL_TOGGLE_BUTTON);
       general.butt[18]->callback(general_options_ok_cb);
+
 
       general.butt[17] = new Fl_Check_Button
         (L + width / 2, 2 * WB + 11 * BH, width/2-WB, BH, "Enable stereo");

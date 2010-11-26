@@ -4,6 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string>
+#include <stdio.h>
 #include "Gmsh.h"
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -151,6 +152,8 @@ void drawContext::addQuaternion(double p1x, double p1y, double p2x, double p2y)
   double quat[4];
   trackball(quat, p1x, p1y, p2x, p2y);
   add_quats(quat, quaternion, quaternion);
+  if (CTX::instance()->camera)   camera.rotate(quat); 
+
 }
 
 void drawContext::addQuaternionFromAxisAndAngle(double axis[3], double angle)
@@ -267,12 +270,17 @@ void drawContext::draw3d()
   initProjection();
   initRenderModel();
 
-  if(!CTX::instance()->camera)
+  if(CTX::instance()->camera)  {
+
+  }
+  else{
     initPosition();
-  drawAxes();
-  drawGeom();
-  drawMesh();
-  drawPost();
+  }
+    drawAxes();
+    drawGeom();
+    drawMesh();
+    drawPost();
+
 }
 
 void drawContext::draw2d()
@@ -445,26 +453,37 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
   double zmax = std::max(fabs(CTX::instance()->min[2]),
 			 fabs(CTX::instance()->max[2]));
   if(zmax < CTX::instance()->lc) zmax = CTX::instance()->lc;
- 
+  
   if (CTX::instance()->camera) { // if we use the new camera mode
-
+      
     double clip_near, clip_far;
     clip_near = 0.75 * CTX::instance()->clipFactor * zmax;
-    clip_far = 75. * CTX::instance()->clipFactor * zmax;
-
+    clip_far = 75. * CTX::instance()->clipFactor * zmax;   
     glDisable(GL_DEPTH_TEST);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho((double)viewport[0], (double)viewport[2],
-	    (double)viewport[1], (double)viewport[3], 
-	    clip_near, clip_far);
-    drawBackgroundGradient();
+    double w=(double)viewport[2];
+    double h=(double)viewport[3];
+    double ratio=w/h; 
+    double dx=.5*w*ratio;
+    double dy=.5*w;
+    double dz=-w*1.25;
+    glBegin(GL_QUADS);
+    //glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
+    glColor3d(.8,.8,.95);
+    glVertex3i(-dx,-dy,dz);
+    glVertex3i( dx,-dy,dz);
+    //    glColor4ubv((GLubyte *) & CTX::instance()->color.bgGrad);
+    glColor3d(.1,.1,.3);
+    glVertex3i( dx, dy,dz);
+    glVertex3i(-dx, dy,dz);
+    glEnd();
     glPopMatrix();
     glEnable(GL_DEPTH_TEST);   
-
   } 
+  
   else{ // if not in camera mode
-
+  
     double clip_near, clip_far;
     if(CTX::instance()->ortho) {
       clip_near = -zmax * s[2] * CTX::instance()->clipFactor;

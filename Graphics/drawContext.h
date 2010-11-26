@@ -10,6 +10,7 @@
 #include <vector>
 #include <set>
 #include "SBoundingBox3d.h"
+#include "Camera.h"
 
 #if defined(WIN32)
 #include <windows.h>
@@ -110,6 +111,7 @@ class drawContext {
   int _bgImageSize[2];
 
  public:
+  Camera camera;
   double r[3]; // current Euler angles (in degrees!) 
   double t[3], s[3]; // current translation and scale 
   double quaternion[4]; // current quaternion used for "trackball" rotation

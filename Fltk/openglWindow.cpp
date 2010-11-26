@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include "stdio.h"
 #include "openglWindow.h"
 #include "graphicWindow.h"
 #include "manipWindow.h"
@@ -14,8 +15,9 @@
 #include "MElement.h"
 #include "Numeric.h"
 #include "FlGui.h"
+#include <GL/glu.h>
 #include "Context.h"
-
+ 
 static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &click2)
 {
   if(click1.win[0] == click2.win[0] || click1.win[1] == click2.win[1])
@@ -165,13 +167,16 @@ void openglWindow::draw()
       CTX::instance()->mesh.draw = 0;
       CTX::instance()->post.draw = 0;
     }
+    
     glClearColor
       ((GLclampf)(CTX::instance()->unpackRed(CTX::instance()->color.bg) / 255.),
        (GLclampf)(CTX::instance()->unpackGreen(CTX::instance()->color.bg) / 255.),
        (GLclampf)(CTX::instance()->unpackBlue(CTX::instance()->color.bg) / 255.), 
        0.0F);
+    
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-    _ctx->draw3d();
+
+     _ctx->draw3d();
     glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
     glPointSize((float)CTX::instance()->geom.pointSize);
     glBegin(GL_POINTS);
@@ -185,18 +190,36 @@ void openglWindow::draw()
   }
   else{
     // draw the whole scene
+    /*
     glClearColor
       ((GLclampf)(CTX::instance()->unpackRed(CTX::instance()->color.bg) / 255.),
        (GLclampf)(CTX::instance()->unpackGreen(CTX::instance()->color.bg) / 255.),
        (GLclampf)(CTX::instance()->unpackBlue(CTX::instance()->color.bg) / 255.), 
        0.0F);
+    */
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+    if(CTX::instance()->camera){
+      Camera *  cam= &(_ctx->camera);      
+      if (!cam->on) cam->init();
+      cam->giveViewportDimension(_ctx->viewport[2],_ctx->viewport[3]);  
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      glFrustum(cam->glFleft,cam->glFright,cam->glFbottom,cam->glFtop,cam->near,cam->far); 
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+      glDrawBuffer(GL_BACK);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glLoadIdentity();
+      gluLookAt(cam->position.x,cam->position.y,cam->position.z,
+		cam->target.x,cam->target.y,cam->target.z,
+		cam->up.x,cam->up.y,cam->up.z);      
+    }
     _ctx->draw3d();
     _ctx->draw2d();
     _drawScreenMessage();
     _drawBorder();
   }
-
   _lock = false;
 }
 
@@ -407,7 +430,7 @@ int openglWindow::handle(int event)
       // find line in real space corresponding to current cursor position
       double p[3], d[3];
       _ctx->unproject(_curr.win[0], _curr.win[1], p, d);
-      // fin closest point to the center of gravity
+      // fin closest point to the center of graity
       double r[3] = {CTX::instance()->cg[0] - p[0], CTX::instance()->cg[1] - p[1], 
                      CTX::instance()->cg[2] - p[2]}, t;
       prosca(r, d, &t);
