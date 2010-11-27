@@ -15,7 +15,11 @@
 #include "MElement.h"
 #include "Numeric.h"
 #include "FlGui.h"
+#if defined(__APPLE__)
+#include <OpenGL/glu.h>
+#else
 #include <GL/glu.h>
+#endif
 #include "Context.h"
  
 static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &click2)
