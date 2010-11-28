@@ -16,7 +16,6 @@
 #include "Numeric.h"
 #include "FlGui.h"
 #include "drawContext.h"
-#endif
 #include "Context.h"
  
 static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &click2)
