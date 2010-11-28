@@ -260,6 +260,12 @@ void drawContext::draw3d()
 #if defined(HAVE_FLTK) && defined(__APPLE__) && defined(HAVE_64BIT_SIZE_T)
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
   int numStrings = GModel::current()->getNumVertices();
+  if(CTX::instance()->mesh.pointsNum)
+    numStrings = std::max(numStrings, GModel::current()->getNumMeshVertices());
+  if(CTX::instance()->mesh.linesNum || CTX::instance()->mesh.surfacesNum ||
+     CTX::instance()->mesh.volumesNum)
+    numStrings = std::max(numStrings, GModel::current()->getNumMeshElements());
+  numStrings *= 2;
   if(gl_texture_pile_height() < numStrings)
     gl_texture_pile_height(numStrings);
 #endif

@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include "stdio.h"
+#include <stdio.h>
 #include "openglWindow.h"
 #include "graphicWindow.h"
 #include "manipWindow.h"
@@ -15,10 +15,7 @@
 #include "MElement.h"
 #include "Numeric.h"
 #include "FlGui.h"
-#if defined(__APPLE__)
-#include <OpenGL/glu.h>
-#else
-#include <GL/glu.h>
+#include "drawContext.h"
 #endif
 #include "Context.h"
  
@@ -180,7 +177,7 @@ void openglWindow::draw()
     
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-     _ctx->draw3d();
+    _ctx->draw3d();
     glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
     glPointSize((float)CTX::instance()->geom.pointSize);
     glBegin(GL_POINTS);
@@ -434,7 +431,7 @@ int openglWindow::handle(int event)
       // find line in real space corresponding to current cursor position
       double p[3], d[3];
       _ctx->unproject(_curr.win[0], _curr.win[1], p, d);
-      // fin closest point to the center of graity
+      // find closest point to the center of gravity
       double r[3] = {CTX::instance()->cg[0] - p[0], CTX::instance()->cg[1] - p[1], 
                      CTX::instance()->cg[2] - p[2]}, t;
       prosca(r, d, &t);

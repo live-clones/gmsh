@@ -165,8 +165,8 @@ int meshSizeEditor()
     if(CTX::instance()->nonModalWindows) editor->window->set_non_modal();
     editor->sa = new Release_Slider(0, 0, 200, 20);
     editor->sa->type(FL_HOR_NICE_SLIDER);
-    editor->sa->minimum(0.05);
-    editor->sa->maximum(5);
+    editor->sa->minimum(0.01);
+    editor->sa->maximum(2.5);
     editor->sa->callback(mesh_size_factor);
     editor->window->border(0);
     editor->window->end();
