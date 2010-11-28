@@ -3375,7 +3375,7 @@ static void writeElementsINP(FILE *fp, GEntity *ge, std::vector<T*> &elements,
         int part = (saveAll ? ge->tag() : ge->physicals[p]);
         fprintf(fp, "*Element, type=%s, ELSET=PART%d\n", typ, part);
         for(unsigned int i = 0; i < elements.size(); i++)
-          elements[i]->writeINP(fp, ne);
+          elements[i]->writeINP(fp, ne++);
       }
     }
   }
