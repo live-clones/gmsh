@@ -71,25 +71,19 @@ function *function::getSolution()
 
 // Get Solution Gradient + Additionnal class
 
-class functionSolutionGradient : public function {
-  static functionSolutionGradient *_instance;
-  // constructor is private only 1 instance can exists, call get to
-  // access the instance
-  functionSolutionGradient():function(0){} 
- public:
-  void call(dataCacheMap *m, fullMatrix<double> &sol)
-  {
-    Msg::Error("a function requires the gradient of the solution but "
-               "this algorithm does not provide the gradient of the solution");
-    throw;
-  }
-  static function *get()
-  {
-    if(!_instance)
-      _instance = new functionSolutionGradient();
-    return _instance;
-  }
-};
+functionSolutionGradient::functionSolutionGradient():function(0){} 
+void functionSolutionGradient::call(dataCacheMap *m, fullMatrix<double> &sol)
+{
+  Msg::Error("a function requires the gradient of the solution but "
+      "this algorithm does not provide the gradient of the solution");
+  throw;
+}
+function *functionSolutionGradient::get()
+{
+  if(!_instance)
+    _instance = new functionSolutionGradient();
+  return _instance;
+}
 
 functionSolutionGradient *functionSolutionGradient::_instance = NULL;
 
@@ -606,92 +600,87 @@ class functionLua : public function {
 
 // functionC
 
-class functionC : public function {
-  std::vector<fullMatrix<double> > args;
-  void (*callback)(void);
-  public:
-  static void buildLibrary(std::string code, std::string filename) 
-  {
-    //todo use CMAKE_CXX_COMPILER
-    //todo use clean temporary file names
-    //todo work on windows :-)
-    //todo if DG_BUILD_DIR is not defined, use the directory used at compilation time
-    FILE *tmpSrc = fopen("_tmpSrc.cpp","w");
-    fprintf(tmpSrc, "%s\n",code.c_str());
-    fclose(tmpSrc);
-    FILE *tmpMake = fopen("_tmpMake","w");
-    fprintf(tmpMake, "include $(DG_BUILD_DIR)/CMakeFiles/dg.dir/flags.make\n"
-        "%s : %s\n"
-        "\tg++ -fPIC -shared -o $@ $(CXX_FLAGS) $(CXX_DEFINES) $<\n",
-        filename.c_str(), "_tmpSrc.cpp");
-    fclose(tmpMake);
-    if(system("make -f _tmpMake"))
-      Msg::Error("make command failed\n");
-    UnlinkFile("_tmpSrc.cpp");
-    UnlinkFile("_tmpMake.cpp");
+void functionC::buildLibrary(std::string code, std::string filename) 
+{
+  //todo use CMAKE_CXX_COMPILER
+  //todo use clean temporary file names
+  //todo work on windows :-)
+  //todo if DG_BUILD_DIR is not defined, use the directory used at compilation time
+  FILE *tmpSrc = fopen("_tmpSrc.cpp","w");
+  fprintf(tmpSrc, "%s\n",code.c_str());
+  fclose(tmpSrc);
+  FILE *tmpMake = fopen("_tmpMake","w");
+  fprintf(tmpMake, "include $(DG_BUILD_DIR)/CMakeFiles/dg.dir/flags.make\n"
+      "%s : %s\n"
+      "\tg++ -fPIC -shared -o $@ $(CXX_FLAGS) $(CXX_DEFINES) $<\n",
+      filename.c_str(), "_tmpSrc.cpp");
+  fclose(tmpMake);
+  if(system("make -f _tmpMake"))
+    Msg::Error("make command failed\n");
+  UnlinkFile("_tmpSrc.cpp");
+  UnlinkFile("_tmpMake.cpp");
+}
+void functionC::call (dataCacheMap *m, fullMatrix<double> &val) 
+{
+  switch (args.size()) {
+    case 0 : 
+      ((void (*)(dataCacheMap*, fullMatrix<double> &))(callback))(m, val);
+      break;
+    case 1 : 
+      ((void (*)(dataCacheMap*, fullMatrix<double> &, const fullMatrix<double>&))
+       (callback)) (m, val, args[0]);
+      break;
+    case 2 : 
+      ((void (*)(dataCacheMap*, fullMatrix<double> &, const fullMatrix<double>&, 
+                 const fullMatrix<double> &))
+       (callback)) (m, val, args[0], args[1]);
+      break;
+    case 3 : 
+      ((void (*)(dataCacheMap*, fullMatrix<double> &, const fullMatrix<double>&, 
+                 const fullMatrix<double>&, const fullMatrix<double>&))
+       (callback)) (m, val, args[0], args[1], args[2]);
+      break;
+    case 4 : 
+      ((void (*)(dataCacheMap*, fullMatrix<double> &, const fullMatrix<double>&,
+                 const fullMatrix<double>&, const fullMatrix<double>&,
+                 const fullMatrix<double>&))
+       (callback)) (m, val, args[0], args[1], args[2], args[3]);
+      break;
+    case 5 : 
+      ((void (*)(dataCacheMap*, fullMatrix<double> &, const fullMatrix<double>&, 
+                 const fullMatrix<double>&, const fullMatrix<double>&,
+                 const fullMatrix<double>&, const fullMatrix<double>&))
+       (callback)) (m, val, args[0], args[1], args[2], args[3], args[4]);
+      break;
+    case 6 : 
+      ((void (*)(dataCacheMap*, fullMatrix<double> &, const fullMatrix<double>&,
+                 const fullMatrix<double>&, const fullMatrix<double>&,
+                 const fullMatrix<double>&, const fullMatrix<double>&, 
+                 const fullMatrix<double>&))
+       (callback)) (m, val, args[0], args[1], args[2], args[3], args[4], args[5]);
+      break;
+    default :
+      Msg::Error("C callback not implemented for %i argurments", args.size());
   }
-  void call (dataCacheMap *m, fullMatrix<double> &val) 
-  {
-    switch (args.size()) {
-      case 0 : 
-        ((void (*)(dataCacheMap*, fullMatrix<double> &))(callback))(m, val);
-        break;
-      case 1 : 
-        ((void (*)(dataCacheMap*, fullMatrix<double> &, const fullMatrix<double>&))
-         (callback)) (m, val, args[0]);
-        break;
-      case 2 : 
-        ((void (*)(dataCacheMap*, fullMatrix<double> &, const fullMatrix<double>&, 
-                   const fullMatrix<double> &))
-         (callback)) (m, val, args[0], args[1]);
-        break;
-      case 3 : 
-        ((void (*)(dataCacheMap*, fullMatrix<double> &, const fullMatrix<double>&, 
-                   const fullMatrix<double>&, const fullMatrix<double>&))
-         (callback)) (m, val, args[0], args[1], args[2]);
-        break;
-      case 4 : 
-        ((void (*)(dataCacheMap*, fullMatrix<double> &, const fullMatrix<double>&,
-                   const fullMatrix<double>&, const fullMatrix<double>&,
-                   const fullMatrix<double>&))
-         (callback)) (m, val, args[0], args[1], args[2], args[3]);
-        break;
-      case 5 : 
-        ((void (*)(dataCacheMap*, fullMatrix<double> &, const fullMatrix<double>&, 
-                   const fullMatrix<double>&, const fullMatrix<double>&,
-                   const fullMatrix<double>&, const fullMatrix<double>&))
-         (callback)) (m, val, args[0], args[1], args[2], args[3], args[4]);
-        break;
-      case 6 : 
-        ((void (*)(dataCacheMap*, fullMatrix<double> &, const fullMatrix<double>&,
-                   const fullMatrix<double>&, const fullMatrix<double>&,
-                   const fullMatrix<double>&, const fullMatrix<double>&, 
-                   const fullMatrix<double>&))
-         (callback)) (m, val, args[0], args[1], args[2], args[3], args[4], args[5]);
-        break;
-      default :
-        Msg::Error("C callback not implemented for %i argurments", args.size());
-    }
-  }
-  functionC (std::string file, std::string symbol, int nbCol, 
-             std::vector<const function *> dependencies):
-    function(nbCol)
-  {
+}
+functionC::functionC (std::string file, std::string symbol, int nbCol, 
+    std::vector<const function *> dependencies):
+  function(nbCol)
+{
 #if defined(HAVE_DLOPEN)
-    args.resize(dependencies.size());
-    for(int i=0; i < dependencies.size(); i++) {
-      setArgument(args[i], dependencies[i]);
-    }
-    void *dlHandler;
-    dlHandler = dlopen(file.c_str(),RTLD_NOW);
-    callback = (void(*)(void))dlsym(dlHandler, symbol.c_str());
-    if(!callback)
-      Msg::Error("Cannot get the callback to the compiled C function");
-#else
-    Msg::Error("Cannot construct functionC without dlopen");
-#endif
+  args.resize(dependencies.size());
+  for(int i=0; i < dependencies.size(); i++) {
+    setArgument(args[i], dependencies[i]);
   }
-};
+  void *dlHandler;
+  dlHandler = dlopen(file.c_str(),RTLD_NOW);
+  callback = (void(*)(void))dlsym(dlHandler, symbol.c_str());
+  if(!callback)
+    Msg::Error("Cannot get the callback to the compiled C function");
+#else
+  Msg::Error("Cannot construct functionC without dlopen");
+#endif
+}
 
 
 void function::registerBindings(binding *b)

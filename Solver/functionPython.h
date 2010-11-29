@@ -26,14 +26,15 @@ class functionPython : public function {
     }
     switch(args.size()) {
       case 0 : _pyargs = Py_BuildValue("(O)", _swigR); break;
-      case 1 : _pyargs = Py_BuildValue("(OO)", _swigR, _swigA[0], _swigA[1], _swigA[2], _swigA[3], _swigA[4], _swigA[5], _swigA[6]); break;
-      case 2 : _pyargs = Py_BuildValue("(OOO)", _swigR, _swigA[0], _swigA[1], _swigA[2], _swigA[3], _swigA[4], _swigA[5], _swigA[6]); break;
-      case 3 : _pyargs = Py_BuildValue("(OOOO)", _swigR, _swigA[0], _swigA[1], _swigA[2], _swigA[3], _swigA[4], _swigA[5], _swigA[6]); break;
-      case 4 : _pyargs = Py_BuildValue("(OOOOO)", _swigR, _swigA[0], _swigA[1], _swigA[2], _swigA[3], _swigA[4], _swigA[5], _swigA[6]); break;
-      case 5 : _pyargs = Py_BuildValue("(OOOOOO)", _swigR, _swigA[0], _swigA[1], _swigA[2], _swigA[3], _swigA[4], _swigA[5], _swigA[6]); break;
-      case 6 : _pyargs = Py_BuildValue("(OOOOOOO)", _swigR, _swigA[0], _swigA[1], _swigA[2], _swigA[3], _swigA[4], _swigA[5], _swigA[6]); break;
+      case 1 : _pyargs = Py_BuildValue("(OO)", _swigR, _swigA[0]); break;
+      case 2 : _pyargs = Py_BuildValue("(OOO)", _swigR, _swigA[0], _swigA[1]); break;
+      case 3 : _pyargs = Py_BuildValue("(OOOO)", _swigR, _swigA[0], _swigA[1], _swigA[2]); break;
+      case 4 : _pyargs = Py_BuildValue("(OOOOO)", _swigR, _swigA[0], _swigA[1], _swigA[2], _swigA[3]); break;
+      case 5 : _pyargs = Py_BuildValue("(OOOOOO)", _swigR, _swigA[0], _swigA[1], _swigA[2], _swigA[3], _swigA[4]); break;
+      case 6 : _pyargs = Py_BuildValue("(OOOOOOO)", _swigR, _swigA[0], _swigA[1], _swigA[2], _swigA[3], _swigA[4], _swigA[5]); break;
       case 7 : _pyargs = Py_BuildValue("(OOOOOOOO)", _swigR, _swigA[0], _swigA[1], _swigA[2], _swigA[3], _swigA[4], _swigA[5], _swigA[6]); break;
-      default:Msg::Error("python function not implemented for more than 7 arguments");
+      case 8 : _pyargs = Py_BuildValue("(OOOOOOOOO)", _swigR, _swigA[0], _swigA[1], _swigA[2], _swigA[3], _swigA[4], _swigA[5], _swigA[6], _swigA[7]); break;
+      default:Msg::Error("python function not implemented for more than 8 arguments");
     }
   }
 };

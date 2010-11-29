@@ -110,6 +110,16 @@ class functionSolution : public function {
   }
 };
 
+class functionSolutionGradient : public function {
+  static functionSolutionGradient *_instance;
+  // constructor is private only 1 instance can exists, call get to
+  // access the instance
+  functionSolutionGradient();
+ public:
+  void call(dataCacheMap *m, fullMatrix<double> &sol);
+  static function *get();
+};
+
 class functionReplaceCache {
   public:
   dataCacheMap *map;
@@ -268,6 +278,16 @@ class functionConstant : public function {
       _source(i,0) = source[i];
   }
   void set(double val); 
+};
+
+class functionC : public function {
+  std::vector<fullMatrix<double> > args;
+  void (*callback)(void);
+  public:
+  static void buildLibrary(std::string code, std::string filename) ;
+  void call (dataCacheMap *m, fullMatrix<double> &val) ;
+  functionC (std::string file, std::string symbol, int nbCol, 
+             std::vector<const function *> dependencies);
 };
 
 functionConstant *functionConstantNew(const std::vector<double>&);

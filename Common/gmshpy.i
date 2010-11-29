@@ -34,6 +34,24 @@
   #include "DivideAndConquer.h"
   #include "Gmsh.h"
   #include "functionPython.h"
+  class errorHandler: public GmshMessage {
+    void operator()(std::string level, std::string message){
+      //const char *color = colorDefault;
+      std::cout<<level<<" : "<<message<<std::endl;
+      if (level=="Error" || level == "Fatal") {
+        //color = colorRed;
+        //color confuses ctest/cdash
+        //std::cout<<color<<level<<" : "<<message<<colorDefault<<"\n";
+        throw;
+      }
+    }
+  };
+%}
+
+%init %{
+  errorHandler *eH = new errorHandler;
+  Msg::SetCallback(eH);
+  GmshInitialize();
 %}
 
 namespace std {
