@@ -295,10 +295,17 @@ static void remeshUnrecoveredEdges(std::map<MVertex*, BDS_Point*> &recoverMapInv
 
 static bool algoDelaunay2D(GFace *gf)
 {
-  if(noSeam(gf) && (CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY ||
-		    CTX::instance()->mesh.algo2d == ALGO_2D_BAMG || 
-                    CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL))
+  if(!noSeam(gf))
+    return false;
+
+  if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY ||
+     CTX::instance()->mesh.algo2d == ALGO_2D_BAMG || 
+     CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL) 
     return true;
+
+  if(CTX::instance()->mesh.algo2d == ALGO_2D_AUTO && gf->geomType() == GEntity::Plane)
+    return true;
+
   return false;
 }
 
@@ -877,7 +884,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   if(algoDelaunay2D(gf)){
     if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
       bowyerWatsonFrontal(gf);
-    else if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY)
+    else if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY ||
+            CTX::instance()->mesh.algo2d == ALGO_2D_AUTO)
       bowyerWatson(gf);
     else {
       bowyerWatson(gf);
@@ -1460,7 +1468,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   if(algoDelaunay2D(gf)){
     if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
       bowyerWatsonFrontal(gf);
-    else if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY)
+    else if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY ||
+            CTX::instance()->mesh.algo2d == ALGO_2D_AUTO)
       bowyerWatson(gf);
     else 
       meshGFaceBamg(gf);
@@ -1528,16 +1537,16 @@ void meshGFace::operator() (GFace *gf)
   }
 
   const char *algo = "Unknown";
-  if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
-    algo = "Frontal";
-  else if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY)
-    algo = "Delaunay";
-  else if(CTX::instance()->mesh.algo2d == ALGO_2D_MESHADAPT_OLD)
-    algo = "MeshAdapt (old)";
-  else if(CTX::instance()->mesh.algo2d == ALGO_2D_BAMG)
-    algo = "Bamg";
-  else 
-    algo = "MeshAdapt";
+  switch(CTX::instance()->mesh.algo2d){
+  case ALGO_2D_MESHADAPT : algo = "MeshAdapt"; break;
+  case ALGO_2D_FRONTAL : algo = "Frontal"; break;
+  case ALGO_2D_DELAUNAY : algo = "Delaunay"; break;
+  case ALGO_2D_MESHADAPT_OLD : algo = "MeshAdapt (old)"; break;
+  case ALGO_2D_BAMG : algo = "Bamg"; break;
+  case ALGO_2D_AUTO :
+    algo = (gf->geomType() == GEntity::Plane) ? "Delaunay" : "MeshAdapt";
+    break;
+  }
 
   Msg::Info("Meshing surface %d (%s, %s)", gf->tag(), 
             gf->getTypeString().c_str(), algo);

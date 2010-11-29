@@ -458,9 +458,10 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
 
   opt_mesh_point_type(0, GMSH_SET, o->mesh.choice[0]->value());
   opt_mesh_algo2d(0, GMSH_SET,
-                  (o->mesh.choice[2]->value() == 0) ? ALGO_2D_MESHADAPT : 
-                  (o->mesh.choice[2]->value() == 1) ? ALGO_2D_DELAUNAY :
-                  ALGO_2D_FRONTAL);
+                  (o->mesh.choice[2]->value() == 1) ? ALGO_2D_MESHADAPT : 
+                  (o->mesh.choice[2]->value() == 2) ? ALGO_2D_DELAUNAY :
+                  (o->mesh.choice[2]->value() == 3) ? ALGO_2D_FRONTAL : 
+                  ALGO_2D_AUTO);
   opt_mesh_algo3d(0, GMSH_SET,
                   (o->mesh.choice[3]->value() == 0) ? ALGO_3D_DELAUNAY : 
                   ALGO_3D_FRONTAL);
@@ -1998,6 +1999,7 @@ optionWindow::optionWindow(int deltaFontSize)
       o->hide();
 
       static Fl_Menu_Item menu_2d_algo[] = {
+        {"Automatic", 0, 0, 0},
         {"MeshAdapt", 0, 0, 0},
         {"Delaunay", 0, 0, 0},
         {"Frontal", 0, 0, 0},
@@ -2044,7 +2046,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.choice[3]->callback(mesh_options_ok_cb);
 
       mesh.choice[1] = new Fl_Choice
-        (L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Recombination algorithm");
+        (L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "2D Recombination algorithm");
       mesh.choice[1]->menu(menu_recombination_algo);
       mesh.choice[1]->align(FL_ALIGN_RIGHT);
       mesh.choice[1]->callback(mesh_options_ok_cb);

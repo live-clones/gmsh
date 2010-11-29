@@ -163,6 +163,7 @@
 
 // 2D meshing algorithms (numbers should not be changed)
 #define ALGO_2D_MESHADAPT      1
+#define ALGO_2D_AUTO           2
 #define ALGO_2D_MESHADAPT_OLD  4
 #define ALGO_2D_DELAUNAY       5
 #define ALGO_2D_FRONTAL        6

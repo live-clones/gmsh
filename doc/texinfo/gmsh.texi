@@ -2612,6 +2612,11 @@ choice. When high element quality is important, the ``Frontal''
 algorithm should be tried. For very large meshes of plane surfaces the
 ``Delaunay'' algorithm is the fastest.
 
+The ``Automatic'' algorithm tries to select the best algorithm
+automatically for each surface in the model. As of Gmsh 2.5, the
+``Automatic'' algorithm selects ``Delaunay'' for plane surfaces and
+``MeshAdapt'' for all other surfaces.
+
 In 3D two unstructured algorithms are available:
 
 @enumerate

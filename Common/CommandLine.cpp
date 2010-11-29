@@ -486,7 +486,9 @@ void GetOptions(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "algo")) {
         i++;
         if(argv[i]) {
-          if(!strncmp(argv[i], "meshadapt", 9) || !strncmp(argv[i], "iso", 3))
+          if(!strncmp(argv[i], "auto", 4))
+            CTX::instance()->mesh.algo2d = ALGO_2D_AUTO;
+          else if(!strncmp(argv[i], "meshadapt", 9) || !strncmp(argv[i], "iso", 3))
             CTX::instance()->mesh.algo2d = ALGO_2D_MESHADAPT;
           else if(!strncmp(argv[i], "bds", 3))
             CTX::instance()->mesh.algo2d = ALGO_2D_MESHADAPT_OLD;
@@ -497,7 +499,7 @@ void GetOptions(int argc, char *argv[])
           else if(!strncmp(argv[i], "bamg",4))
             CTX::instance()->mesh.algo2d = ALGO_2D_BAMG;
           else if(!strncmp(argv[i], "del3d", 5) || !strncmp(argv[i], "tetgen", 6))
-            CTX::instance()->mesh.algo2d = ALGO_3D_DELAUNAY;
+            CTX::instance()->mesh.algo3d = ALGO_3D_DELAUNAY;
           else if(!strncmp(argv[i], "front3d", 7) || !strncmp(argv[i], "netgen", 6))
             CTX::instance()->mesh.algo3d = ALGO_3D_FRONTAL;
           else

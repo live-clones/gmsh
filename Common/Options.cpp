@@ -5630,13 +5630,16 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
     switch (CTX::instance()->mesh.algo2d) {
-    case ALGO_2D_DELAUNAY:
+    case ALGO_2D_MESHADAPT:
       FlGui::instance()->options->mesh.choice[2]->value(1);
       break;
-    case ALGO_2D_FRONTAL:
+    case ALGO_2D_DELAUNAY:
       FlGui::instance()->options->mesh.choice[2]->value(2);
       break;
-    case ALGO_2D_MESHADAPT:
+    case ALGO_2D_FRONTAL:
+      FlGui::instance()->options->mesh.choice[2]->value(3);
+      break;
+    case ALGO_2D_AUTO:
     default:
       FlGui::instance()->options->mesh.choice[2]->value(0);
       break;
