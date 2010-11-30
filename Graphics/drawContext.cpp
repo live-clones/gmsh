@@ -276,16 +276,11 @@ void drawContext::draw3d()
   initProjection();
   initRenderModel();
 
-  if(CTX::instance()->camera)  {
-
-  }
-  else{
-    initPosition();
-  }
-    drawAxes();
-    drawGeom();
-    drawMesh();
-    drawPost();
+  if(!CTX::instance()->camera) initPosition();
+  drawAxes();
+  drawGeom();
+  drawMesh();
+  drawPost();
 
 }
 
@@ -460,7 +455,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
 			 fabs(CTX::instance()->max[2]));
   if(zmax < CTX::instance()->lc) zmax = CTX::instance()->lc;
   
-  if (CTX::instance()->camera) { // if we use the new camera mode
+  if (CTX::instance()->camera  ) { // if we use the new camera mode
       
     double clip_near, clip_far;
     clip_near = 0.75 * CTX::instance()->clipFactor * zmax;
@@ -488,7 +483,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
     glEnable(GL_DEPTH_TEST);   
   } 
   
-  else{ // if not in camera mode
+  else if(!CTX::instance()->camera){ // if not in camera mode
   
     double clip_near, clip_far;
     if(CTX::instance()->ortho) {

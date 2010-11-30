@@ -178,7 +178,9 @@ int meshSizeEditor()
   if(editor->window->non_modal() && !editor->window->shown())
     editor->window->show(); // fix ordering
   editor->window->show();
-  return 0;
+    return 0;
+
+  return CTX::instance()->mesh.lcFactor;
 }
 
 // Model chooser

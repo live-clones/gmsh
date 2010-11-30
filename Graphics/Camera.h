@@ -81,8 +81,9 @@ public:
   void lookAtCg();
   void init();
   void rotate(double* q);
-  void moveRight(double theta);
-  void moveUp(double theta);
+  void moveRight(double& theta);
+  void moveUp(double& theta);
+  void zoom(double& factor);
   void update();
   void affiche();
   void alongX();

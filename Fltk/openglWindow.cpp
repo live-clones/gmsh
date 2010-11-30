@@ -20,8 +20,7 @@
  
 static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &click2)
 {
-  if(click1.win[0] == click2.win[0] || click1.win[1] == click2.win[1])
-    return;
+  if(click1.win[0] == click2.win[0] || click1.win[1] == click2.win[1])     return;
 
   ctx->s[0] *= (double)ctx->viewport[2] / (click2.win[0] - click1.win[0]);
   ctx->s[1] *= (double)ctx->viewport[3] / (click2.win[1] - click1.win[1]);
@@ -36,6 +35,7 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &cl
   ctx->initPosition();
   drawContext::global()->draw();
   FlGui::instance()->manip->update();
+    
 }
 
 openglWindow::openglWindow(int x, int y, int w, int h, const char *l)
@@ -198,9 +198,9 @@ void openglWindow::draw()
        0.0F);
     */
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-
-    if(CTX::instance()->camera){
-      Camera *  cam= &(_ctx->camera);      
+    Camera *  cam= &(_ctx->camera);      
+   
+    if(CTX::instance()->camera && !CTX::instance()->stereo ){
       if (!cam->on) cam->init();
       cam->giveViewportDimension(_ctx->viewport[2],_ctx->viewport[3]);  
       glMatrixMode(GL_PROJECTION);
@@ -214,11 +214,112 @@ void openglWindow::draw()
       gluLookAt(cam->position.x,cam->position.y,cam->position.z,
 		cam->target.x,cam->target.y,cam->target.z,
 		cam->up.x,cam->up.y,cam->up.z);      
+      _ctx->draw3d();
+      _ctx->draw2d();
+      _drawScreenMessage();
+      _drawBorder();
+      //    glPushMatrix();
     }
+
+
+
+
+    else if(CTX::instance()->stereo ){
+      if (!cam->on) cam->init();
+      cam->giveViewportDimension(_ctx->viewport[2],_ctx->viewport[3]);  
+
+      // for RED/CYAN stereo pairs but not convincing
+      /*
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glClear(GL_ACCUM_BUFFER_BIT);  
+      glColorMask(GL_FALSE,GL_TRUE,GL_TRUE,GL_TRUE);
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      XYZ eye =cam->eyesep / 2.0* cam->right;
+      double left  = - cam->screenratio * cam->wd2 - 0.5 * cam->eyesep * cam->ndfl;
+      double right =   cam->screenratio * cam->wd2 - 0.5 * cam->eyesep * cam->ndfl;
+      double top    =   cam->wd2;
+      double  bottom = - cam->wd2;
+      glFrustum(left,right,bottom,top,cam->near,cam->far);
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+      gluLookAt(cam->position.x+eye.x, cam->position.y+eye.y,  cam->position.z+eye.z,
+		cam->target.x+eye.x,  cam->target.y+eye.y,  cam->target.z+eye.z,
+		cam->up.x,  cam->up.y,  cam->up.z); 
+      _ctx->draw3d();
+      glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE); 
+      glAccum(GL_LOAD,1.0);  
+      //left eye
+      glDrawBuffer(GL_BACK);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      left  = - cam->screenratio * cam->wd2 + 0.5 * cam->eyesep * cam->ndfl;
+      right =   cam->screenratio * cam->wd2 + 0.5 * cam->eyesep * cam->ndfl;
+      top    =   cam->wd2;
+      bottom = - cam->wd2;
+      glFrustum(left,right,bottom,top,cam->near,cam->far);
+      glColorMask(GL_TRUE,GL_FALSE,GL_FALSE,GL_TRUE);
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+      gluLookAt(cam->position.x-eye.x, cam->position.y-eye.y, cam->position.z-eye.z,
+		cam->target.x-eye.x, cam->target.y-eye.y, cam->target.z-eye.z,
+		cam->up.x, cam->up.y, cam->up.z); 
+      _ctx->draw3d();
+      glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE); 
+      glAccum(GL_ACCUM,1.0);
+      glAccum(GL_RETURN,1.0);
+      */   
+
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+     
+     //right eye
+    XYZ eye =cam->eyesep / 2.0* cam->right;
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    double left  = - cam->screenratio * cam->wd2 - 0.5 * cam->eyesep * cam->ndfl;
+    double right =   cam->screenratio * cam->wd2 - 0.5 * cam->eyesep * cam->ndfl;
+    double top    =   cam->wd2;
+    double  bottom = - cam->wd2;
+    glFrustum(left,right,bottom,top,cam->near,cam->far);
+    glMatrixMode(GL_MODELVIEW);
+    glDrawBuffer(GL_BACK_RIGHT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+    gluLookAt(cam->position.x+eye.x, cam->position.y+eye.y,  cam->position.z+eye.z,
+	      cam->target.x+eye.x,  cam->target.y+eye.y,  cam->target.z+eye.z,
+	      cam->up.x,  cam->up.y,  cam->up.z); 
+    _ctx->draw3d();
+    _ctx->draw2d();
+    
+    //left eye
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    left  = - cam->screenratio * cam->wd2 + 0.5 * cam->eyesep * cam->ndfl;
+    right =   cam->screenratio * cam->wd2 + 0.5 * cam->eyesep * cam->ndfl;
+    top    =   cam->wd2;
+    bottom = - cam->wd2;
+    glFrustum(left,right,bottom,top,cam->near,cam->far);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glDrawBuffer(GL_BACK_LEFT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+    gluLookAt(cam->position.x-eye.x, cam->position.y-eye.y, cam->position.z-eye.z,
+	      cam->target.x-eye.x, cam->target.y-eye.y, cam->target.z-eye.z,
+	      cam->up.x, cam->up.y, cam->up.z); 
+    _ctx->draw3d();
+    _ctx->draw2d();
+
+    glPushMatrix();
+
+    }
+    else{
     _ctx->draw3d();
     _ctx->draw2d();
     _drawScreenMessage();
     _drawBorder();
+    }
   }
   _lock = false;
 }
@@ -268,7 +369,29 @@ int openglWindow::handle(int event)
           _trySelectionXYWH[3] = (int)fabs(_click.win[1] - _curr.win[1]);
         }
         else{
-          lassoZoom(_ctx, _click, _curr);
+
+	  if (CTX::instance()->camera){
+	    Camera * cam= &(_ctx->camera);      
+	    double dy=fabs( -_click.win[1] + _curr.win[1] );
+	    double dx=fabs( -_click.win[0] + _curr.win[0] ) ;
+	    double factx = w()/ fabs(dx);
+	    double facty = h()/ fabs(dy);
+	    double fact=.8* std::min(factx, facty);
+	    double x_med=( _click.win[0] + _curr.win[0])/2.;
+	    double y_med=( _click.win[1] + _curr.win[1])/2.;
+	    double theta_x =.96* cam->radians*(  w()/2 -  x_med )*2. /h() ;
+	    double theta_y =.96* cam->radians*(  h()/2 -  y_med )*2. /h() ;
+	    
+	    cam->moveRight(theta_x); 
+	    cam->moveUp(theta_y); 
+	    _ctx->camera.zoom(fact);
+	    _ctx->camera.update();
+	    redraw();
+
+	  }
+	  else{
+	    lassoZoom(_ctx, _click, _curr);
+	  }
         }
       }
       else if(CTX::instance()->mouseSelection){
@@ -284,9 +407,10 @@ int openglWindow::handle(int event)
             (Fl::event_button() == 1 && Fl::event_state(FL_SHIFT))) {
       if(!lassoMode && Fl::event_state(FL_CTRL)) {
         // make zoom isotropic
-        _ctx->s[1] = _ctx->s[0];
-        _ctx->s[2] = _ctx->s[0];
-        redraw();
+	_ctx->s[1] = _ctx->s[0];
+	_ctx->s[2] = _ctx->s[0];
+	redraw();
+	
       }
       else if(lassoMode) {
         lassoMode = false;
@@ -309,6 +433,7 @@ int openglWindow::handle(int event)
         _trySelectionXYWH[1] = (int)_curr.win[1];
         _trySelectionXYWH[2] = 5;
         _trySelectionXYWH[3] = 5;
+
       }
     }
     else {
@@ -327,7 +452,7 @@ int openglWindow::handle(int event)
     }
     _click.set(_ctx, Fl::event_x(), Fl::event_y());
     _prev.set(_ctx, Fl::event_x(), Fl::event_y());
-    FlGui::instance()->manip->update();
+   FlGui::instance()->manip->update();
     return 1;
 
   case FL_RELEASE:
@@ -345,12 +470,19 @@ int openglWindow::handle(int event)
     {
       double dy = Fl::event_dy();
       double fact = (5. * CTX::instance()->zoomFactor * fabs(dy) + h()) / (double)h();
-      _ctx->s[0] *= ((dy > 0) ? fact : 1./fact);
-      _ctx->s[1] = _ctx->s[0];
-      _ctx->s[2] = _ctx->s[0];
-      _prev.recenter(_ctx);
-      redraw();
-    }
+      if (CTX::instance()->camera){
+	fact= ((dy > 0) ? fact : 1./fact);
+	_ctx->camera.zoom(fact);
+       	_ctx->camera.update();
+	redraw();	
+      }else{
+	_ctx->s[0] *= ((dy > 0) ? fact : 1./fact);
+	_ctx->s[1] = _ctx->s[0];
+	_ctx->s[2] = _ctx->s[0];
+	_prev.recenter(_ctx);
+	redraw();	
+      }
+     }
     FlGui::instance()->manip->update();
     return 1;
 
@@ -390,23 +522,44 @@ int openglWindow::handle(int event)
 	// but start point is the center of the homothety
         else if(Fl::event_button() == 2 ||
                 (Fl::event_button() == 1 && Fl::event_state(FL_SHIFT))) {
+	  // zoom isotrop in camera mode
+	  if (CTX::instance()->camera){
+	    double dy= (int)_curr.win[1] - (int)_prev.win[1] ;
+	    double fact =( CTX::instance()->zoomFactor * fabs(dy) +(double) h()) / (double)h();
+	    fact= ((dy > 0) ? fact : 1./fact);
+	    _ctx->camera.zoom(fact);
+	    _ctx->camera.update();
+	    redraw();
+	  }	
+	  else{          
 	  // move in y greater than move in x
-          if(fabs(dy) > fabs(dx)) {
-            double fact = (CTX::instance()->zoomFactor * fabs(dy) + h()) / (double)h();
-            _ctx->s[0] *= ((dy > 0) ? fact : 1./fact);
-            _ctx->s[1] = _ctx->s[0];
-            _ctx->s[2] = _ctx->s[0];
-            _click.recenter(_ctx);
-          }
-	  // trackball
-          else if(!CTX::instance()->useTrackball)
-            _ctx->r[2] += -180. * dx / (double)w();
+	    if(fabs(dy) > fabs(dx)) {
+	      double fact = (CTX::instance()->zoomFactor * fabs(dy) + h()) / (double)h();
+	      _ctx->s[0] *= ((dy > 0) ? fact : 1./fact);
+	      _ctx->s[1] = _ctx->s[0];
+	      _ctx->s[2] = _ctx->s[0];
+	      _click.recenter(_ctx);
+	    }
+	    // trackball
+	    else if(!CTX::instance()->useTrackball)
+	      _ctx->r[2] += -180. * dx / (double)w();
+	  }
+
         }
         // other case => translation
 	else {
-          _ctx->t[0] += (_curr.wnr[0] - _click.wnr[0]);
-          _ctx->t[1] += (_curr.wnr[1] - _click.wnr[1]);
-          _ctx->t[2] = 0.;
+	  if (CTX::instance()->camera){
+	    Camera * cam= &(_ctx->camera);      
+	    double theta_x=cam->radians*( -(double)_prev.win[0]+  (double)_curr.win[0]    )*2. /h() ;
+	    double theta_y=cam->radians*( -(double)_prev.win[1]+  (double)_curr.win[1]    )*2. /h() ;
+	    cam->moveRight(theta_x); 
+	    cam->moveUp(theta_y); 
+	  }	
+	  else{          
+	    _ctx->t[0] += (_curr.wnr[0] - _click.wnr[0]);
+	    _ctx->t[1] += (_curr.wnr[1] - _click.wnr[1]);
+	    _ctx->t[2] = 0.;
+	  }
         }
         CTX::instance()->drawRotationCenter = 1;
         if(CTX::instance()->fastRedraw) {

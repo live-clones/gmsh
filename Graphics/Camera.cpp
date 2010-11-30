@@ -26,7 +26,8 @@ void Camera::init(){
   near=0.1 ; 
   far=10000;
   eye_sep_ratio=.015;
-  aperture = 40;
+  // apparent angle of the screen height
+  aperture = 25;
   focallength = 100.;
   alongZ();
   this->lookAtCg();
@@ -73,8 +74,8 @@ void Camera::lookAtCg(){
   double H=CTX::instance()->max[1]-CTX::instance()->min[1];
   double P=CTX::instance()->max[2]-CTX::instance()->min[2];
   Lc=sqrt(1.*W*W+1.*H*H+1.*P*P);
-  //distance=fabs(.5*Lc*4./3./tan(aperture*.01745329/2.));
-  distance=Lc*1.45;
+  distance=.8*fabs(.5*Lc*4./3./tan(aperture*.01745329/2.));
+  //distance=Lc*1.45;
    position=target-distance*view;
   this->update();
   focallength=distance;
@@ -100,7 +101,7 @@ void Camera::update() {
   normalize(up);
   normalize(right);
   normalize(view);
-  radians =  0.0174532925 * aperture / 2;
+  radians =  0.0174532925 * aperture / 2.;
   wd2 = near * tan(radians);
   ndfl    = near / focallength;
 }
@@ -135,7 +136,7 @@ void Camera::affiche() {
 
 
 
-void Camera::moveRight(double theta) {
+void Camera::moveRight(double& theta) {
   this->update();
   position=position-distance*tan(theta)*right;
   target=position+distance*view;
@@ -143,11 +144,17 @@ void Camera::moveRight(double theta) {
 }
 
 
-void Camera::moveUp(double theta) {
+void Camera::moveUp(double& theta) {
   this->update();
    position=position+distance*tan(theta)*up;
   target=position+distance*view;
   this->update();
+}
+
+
+void Camera::zoom(double& factor) {
+  distance=fabs(1./factor*ref_distance);
+  position=target-distance*view;
 }
 
 

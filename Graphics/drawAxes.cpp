@@ -344,6 +344,12 @@ void drawContext::drawSmallAxes()
   double xx, xy, yx, yy , zx, zy;
 
   if (CTX::instance()->camera) {
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    gluLookAt(camera.position.x,camera.position.y,camera.position.z,
+	      camera.target.x,camera.target.y,camera.target.z,
+	      camera.up.x,camera.up.y,camera.up.z);      
+    glPushMatrix();
     glPopMatrix();
     float fvViewMatrix[16];
     glGetFloatv(GL_MODELVIEW_MATRIX, fvViewMatrix);

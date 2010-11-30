@@ -11,6 +11,7 @@
 int arrowEditor(const char *title, double &a, double &b, double &c);
 int perspectiveEditor();
 int meshSizeEditor();
+
 int modelChooser();
 std::string connectionChooser();
 std::string patternChooser();
