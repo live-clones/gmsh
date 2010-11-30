@@ -34,7 +34,7 @@ add_executable(mainElasticity mainElasticity.cpp)
 target_link_libraries(mainElasticity shared)
 
 add_executable(mainGlut mainGlut.cpp)
-target_link_libraries(mainGlut shared ${glut})
+target_link_libraries(mainGlut lib ${GMSH_EXTERNAL_LIBRARIES} ${glut})
 
 add_executable(mainHomology mainHomology.cpp)
 target_link_libraries(mainHomology shared)

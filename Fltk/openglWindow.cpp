@@ -205,7 +205,7 @@ void openglWindow::draw()
       cam->giveViewportDimension(_ctx->viewport[2],_ctx->viewport[3]);  
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
-      glFrustum(cam->glFleft,cam->glFright,cam->glFbottom,cam->glFtop,cam->near,cam->far); 
+      glFrustum(cam->glFleft,cam->glFright,cam->glFbottom,cam->glFtop,cam->glFnear,cam->glFfar); 
       glMatrixMode(GL_MODELVIEW);
       glLoadIdentity();
       glDrawBuffer(GL_BACK);
@@ -240,7 +240,7 @@ void openglWindow::draw()
       double right =   cam->screenratio * cam->wd2 - 0.5 * cam->eyesep * cam->ndfl;
       double top    =   cam->wd2;
       double  bottom = - cam->wd2;
-      glFrustum(left,right,bottom,top,cam->near,cam->far);
+      glFrustum(left,right,bottom,top,cam->glFnear,cam->glFfar);
       glMatrixMode(GL_MODELVIEW);
       glLoadIdentity();
       gluLookAt(cam->position.x+eye.x, cam->position.y+eye.y,  cam->position.z+eye.z,
@@ -258,7 +258,7 @@ void openglWindow::draw()
       right =   cam->screenratio * cam->wd2 + 0.5 * cam->eyesep * cam->ndfl;
       top    =   cam->wd2;
       bottom = - cam->wd2;
-      glFrustum(left,right,bottom,top,cam->near,cam->far);
+      glFrustum(left,right,bottom,top,cam->glFnear,cam->glFfar);
       glColorMask(GL_TRUE,GL_FALSE,GL_FALSE,GL_TRUE);
       glMatrixMode(GL_MODELVIEW);
       glLoadIdentity();
@@ -281,7 +281,7 @@ void openglWindow::draw()
     double right =   cam->screenratio * cam->wd2 - 0.5 * cam->eyesep * cam->ndfl;
     double top    =   cam->wd2;
     double  bottom = - cam->wd2;
-    glFrustum(left,right,bottom,top,cam->near,cam->far);
+    glFrustum(left,right,bottom,top,cam->glFnear,cam->glFfar);
     glMatrixMode(GL_MODELVIEW);
     glDrawBuffer(GL_BACK_RIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -299,7 +299,7 @@ void openglWindow::draw()
     right =   cam->screenratio * cam->wd2 + 0.5 * cam->eyesep * cam->ndfl;
     top    =   cam->wd2;
     bottom = - cam->wd2;
-    glFrustum(left,right,bottom,top,cam->near,cam->far);
+    glFrustum(left,right,bottom,top,cam->glFnear,cam->glFfar);
     
     glMatrixMode(GL_MODELVIEW);
     glDrawBuffer(GL_BACK_LEFT);

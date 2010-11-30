@@ -45,17 +45,6 @@ Quaternion mult(const Quaternion& A,const Quaternion& B);
 Quaternion operator *(const Quaternion &A, const Quaternion &B);
 
 
-
-
-
-
-
-
-
-
-
-
-
 using namespace std; 
 
 class Camera {
@@ -73,7 +62,7 @@ public:
   double screenratio, distance, ref_distance;
   bool button_left_down, button_middle_down, button_right_down;
   bool stereoEnable;
-  double Lc, eye_sep_ratio, closeness, near , ndfl, far, radians,wd2 ;
+  double Lc, eye_sep_ratio, closeness, ndfl, glFnear, glFfar, radians, wd2;
   double glFleft,glFright,glFtop,glFbottom;
   Camera():stereoEnable(false),on(false){};
   ~Camera();

@@ -23,8 +23,8 @@ Camera::~Camera(){};
 
 void Camera::init(){
   on=true;  
-  near=0.1 ; 
-  far=10000;
+  glFnear=0.1 ; 
+  glFfar=10000;
   eye_sep_ratio=.015;
   // apparent angle of the screen height
   aperture = 25;
@@ -102,8 +102,8 @@ void Camera::update() {
   normalize(right);
   normalize(view);
   radians =  0.0174532925 * aperture / 2.;
-  wd2 = near * tan(radians);
-  ndfl    = near / focallength;
+  wd2 = glFnear * tan(radians);
+  ndfl    = glFnear / focallength;
 }
 
 
@@ -128,8 +128,8 @@ void Camera::affiche() {
   cout<<"  Lc "<< Lc<<endl;
   cout<<"  eye_sep_ratio "<<eye_sep_ratio <<endl;
   cout<<"  closeness "<< closeness<<endl;
-  cout<<"  near "<< near <<endl; 
-  cout<<"  far "<<far <<endl;
+  cout<<"  glFnear "<< glFnear <<endl; 
+  cout<<"  glFfar "<< glFfar <<endl;
   cout<<"  radians "<<radians <<endl;
   cout<<"  wd2 "<<wd2 <<endl;
 }
