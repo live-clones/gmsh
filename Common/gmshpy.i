@@ -2,6 +2,7 @@
 %module gmshpy
 %include std_string.i
 %include std_vector.i
+%include std_list.i
 %{
   #include "GModel.h"
   #include "fullMatrix.h"
@@ -57,7 +58,13 @@
 namespace std {
    %template(IntVector) vector<int>;
    %template(DoubleVector) vector<double, std::allocator<double> >;
+   %template(StringVector) vector<std::string, std::allocator<std::string> >;
+   %template(GVertexVector) vector<GVertex*, std::allocator<GVertex*> >;
+   %template(GEdgeVector) vector<GEdge*, std::allocator<GEdge*> >;
+   %template(GFaceVector) vector<GFace*, std::allocator<GFace*> >;
+   %template(GRegionVector) vector<GRegion*, std::allocator<GRegion*> >;
    %template(VectorFunctionConst) vector<const function*, std::allocator<const function*> >;
+   %template(GEdgeVectorVector) vector< std::vector< GEdge *,std::allocator< GEdge * > >,std::allocator< std::vector< GEdge *,std::allocator< GEdge * > > > >;
 }
 
 %include "fullMatrix.h"
