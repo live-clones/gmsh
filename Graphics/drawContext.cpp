@@ -455,7 +455,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
 			 fabs(CTX::instance()->max[2]));
   if(zmax < CTX::instance()->lc) zmax = CTX::instance()->lc;
   
-  if (CTX::instance()->camera  ) { // if we use the new camera mode
+  if ( (CTX::instance()->camera) && (!CTX::instance()->stereo)  ) { // if we use the new camera mode
       
     double clip_near, clip_far;
     clip_near = 0.75 * CTX::instance()->clipFactor * zmax;
@@ -472,12 +472,12 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
     glBegin(GL_QUADS);
     //glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
     glColor3d(.8,.8,.95);
-    glVertex3i(-dx,-dy,dz);
-    glVertex3i( dx,-dy,dz);
+    glVertex3i((int)-dx,(int)-dy,(int)dz);
+    glVertex3i((int) dx,(int)-dy,(int)dz);
     //    glColor4ubv((GLubyte *) & CTX::instance()->color.bgGrad);
     glColor3d(.1,.1,.3);
-    glVertex3i( dx, dy,dz);
-    glVertex3i(-dx, dy,dz);
+    glVertex3i((int) dx,(int) dy,(int)dz);
+    glVertex3i((int)-dx,(int) dy,(int)dz);
     glEnd();
     glPopMatrix();
     glEnable(GL_DEPTH_TEST);   

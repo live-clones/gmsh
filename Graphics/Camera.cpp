@@ -25,7 +25,8 @@ void Camera::init(){
   on=true;  
   glFnear=0.1 ; 
   glFfar=10000;
-  eye_sep_ratio=.015;
+  //  eye_sep_ratio=.015;
+  eye_sep_ratio=.05;
   // apparent angle of the screen height
   aperture = 25;
   focallength = 100.;

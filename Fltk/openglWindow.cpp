@@ -271,8 +271,7 @@ void openglWindow::draw()
       glAccum(GL_RETURN,1.0);
       */   
 
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-     
+      
      //right eye
     XYZ eye =cam->eyesep / 2.0* cam->right;
     glMatrixMode(GL_PROJECTION);
@@ -291,6 +290,8 @@ void openglWindow::draw()
 	      cam->up.x,  cam->up.y,  cam->up.z); 
     _ctx->draw3d();
     _ctx->draw2d();
+     _drawScreenMessage();
+      _drawBorder();
     
     //left eye
     glMatrixMode(GL_PROJECTION);
@@ -310,12 +311,12 @@ void openglWindow::draw()
 	      cam->up.x, cam->up.y, cam->up.z); 
     _ctx->draw3d();
     _ctx->draw2d();
-
-    glPushMatrix();
-
+    _drawScreenMessage();
+    _drawBorder();
+    
     }
     else{
-    _ctx->draw3d();
+      _ctx->draw3d();
     _ctx->draw2d();
     _drawScreenMessage();
     _drawBorder();

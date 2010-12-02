@@ -584,6 +584,10 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
   if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
   //mode |= FL_STEREO;
+  if(CTX::instance()->stereo) { 
+    mode |= FL_DOUBLE;
+    mode |= FL_STEREO;
+  }
   for(unsigned int i = 0; i < gl.size(); i++) gl[i]->mode(mode);
 
   tile->end();
