@@ -28,7 +28,7 @@ class MLine : public MElement {
   {
     _v[0] = v0; _v[1] = v1;
   }
-  MLine(std::vector<MVertex*> &v, int num=0, int part=0)
+  MLine(const std::vector<MVertex*> &v, int num=0, int part=0)
     : MElement(num, part)
   {
     for(int i = 0; i < 2; i++) _v[i] = v[i];
@@ -98,7 +98,7 @@ class MLine3 : public MLine {
     _vs[0] = v2;
     _vs[0]->setPolynomialOrder(2);
   }
-  MLine3(std::vector<MVertex*> &v, int num=0, int part=0)
+  MLine3(const std::vector<MVertex*> &v, int num=0, int part=0)
     : MLine(v, num, part)
   {
     _vs[0] = v[2];

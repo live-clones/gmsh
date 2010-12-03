@@ -45,7 +45,7 @@ class MQuadrangle : public MElement {
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3;
   }
-  MQuadrangle(std::vector<MVertex*> &v, int num=0, int part=0)
+  MQuadrangle(const std::vector<MVertex*> &v, int num=0, int part=0)
     : MElement(num, part)
   {
     for(int i = 0; i < 4; i++) _v[i] = v[i];
@@ -180,7 +180,7 @@ class MQuadrangle8 : public MQuadrangle {
     _vs[0] = v4; _vs[1] = v5; _vs[2] = v6; _vs[3] = v7;
     for(int i = 0; i < 4; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MQuadrangle8(std::vector<MVertex*> &v, int num=0, int part=0)
+  MQuadrangle8(const std::vector<MVertex*> &v, int num=0, int part=0)
     : MQuadrangle(v, num, part)
   {
     for(int i = 0; i < 4; i++) _vs[i] = v[4 + i];
@@ -263,7 +263,7 @@ class MQuadrangle9 : public MQuadrangle {
     _vs[0] = v4; _vs[1] = v5; _vs[2] = v6; _vs[3] = v7; _vs[4] = v8;
     for(int i = 0; i < 5; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MQuadrangle9(std::vector<MVertex*> &v, int num=0, int part=0)
+  MQuadrangle9(const std::vector<MVertex*> &v, int num=0, int part=0)
     : MQuadrangle(v, num, part)
   {
     for(int i = 0; i < 5; i++) _vs[i] = v[4 + i];
@@ -334,12 +334,12 @@ class MQuadrangleN : public MQuadrangle {
   const char _order;
  public:
   MQuadrangleN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
-             std::vector<MVertex*> &v, char order, int num=0, int part=0)
+             const std::vector<MVertex*> &v, char order, int num=0, int part=0)
     : MQuadrangle(v0, v1, v2, v3, num, part), _vs(v), _order(order)
   {
     for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
   }
-  MQuadrangleN(std::vector<MVertex*> &v, char order, int num=0, int part=0)
+  MQuadrangleN(const std::vector<MVertex*> &v, char order, int num=0, int part=0)
     : MQuadrangle(v[0], v[1], v[2], v[3], num, part), _order(order)
   {
     for(unsigned int i = 4; i < v.size(); i++) _vs.push_back(v[i]);

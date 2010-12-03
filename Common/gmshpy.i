@@ -59,12 +59,16 @@ namespace std {
    %template(IntVector) vector<int>;
    %template(DoubleVector) vector<double, std::allocator<double> >;
    %template(StringVector) vector<std::string, std::allocator<std::string> >;
+   %template(GEntityVector) vector<GEntity*, std::allocator<GEntity*> >;
    %template(GVertexVector) vector<GVertex*, std::allocator<GVertex*> >;
    %template(GEdgeVector) vector<GEdge*, std::allocator<GEdge*> >;
    %template(GFaceVector) vector<GFace*, std::allocator<GFace*> >;
    %template(GRegionVector) vector<GRegion*, std::allocator<GRegion*> >;
+   %template(MVertexVector) vector< MVertex *,std::allocator< MVertex * > >;
+   %template(MElementVector) vector< MElement *,std::allocator< MElement * > >;
    %template(VectorFunctionConst) vector<const function*, std::allocator<const function*> >;
    %template(GEdgeVectorVector) vector< std::vector< GEdge *,std::allocator< GEdge * > >,std::allocator< std::vector< GEdge *,std::allocator< GEdge * > > > >;
+   %template(GFaceList) list<GFace*, std::allocator<GFace*> >;
 }
 
 %include "fullMatrix.h"

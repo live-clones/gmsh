@@ -21,7 +21,7 @@ class MPoint : public MElement {
   {
     _v[0] = v0;
   }
-  MPoint(std::vector<MVertex*> &v, int num=0, int part=0)
+  MPoint(const std::vector<MVertex*> &v, int num=0, int part=0)
     : MElement(num, part)
   {
     _v[0] = v[0];

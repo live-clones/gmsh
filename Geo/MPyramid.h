@@ -58,7 +58,7 @@ class MPyramid : public MElement {
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3; _v[4] = v4;
   }
-  MPyramid(std::vector<MVertex*> &v, int num=0, int part=0)
+  MPyramid(const std::vector<MVertex*> &v, int num=0, int part=0)
     : MElement(num, part)
   {
     for(int i = 0; i < 5; i++) _v[i] = v[i];
@@ -238,7 +238,7 @@ class MPyramid13 : public MPyramid {
     _vs[5] = v10; _vs[6] = v11; _vs[7] = v12;
     for(int i = 0; i < 8; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MPyramid13(std::vector<MVertex*> &v, int num=0, int part=0)
+  MPyramid13(const std::vector<MVertex*> &v, int num=0, int part=0)
     : MPyramid(v, num, part)
   {
     for(int i = 0; i < 8; i++) _vs[i] = v[5 + i];
@@ -355,7 +355,7 @@ class MPyramid14 : public MPyramid {
     _vs[5] = v10; _vs[6] = v11; _vs[7] = v12; _vs[8] = v13;
     for(int i = 0; i < 9; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MPyramid14(std::vector<MVertex*> &v, int num=0, int part=0)
+  MPyramid14(const std::vector<MVertex*> &v, int num=0, int part=0)
     : MPyramid(v, num, part)
   {
     for(int i = 0; i < 9; i++) _vs[i] = v[5 + i];

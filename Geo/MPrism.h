@@ -55,7 +55,7 @@ class MPrism : public MElement {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3;
     _v[4] = v4; _v[5] = v5;
   }
-  MPrism(std::vector<MVertex*> &v, int num=0, int part=0)
+  MPrism(const std::vector<MVertex*> &v, int num=0, int part=0)
     : MElement(num, part)
   {
     for(int i = 0; i < 6; i++) _v[i] = v[i];
@@ -239,7 +239,7 @@ class MPrism15 : public MPrism {
     _vs[5] = v11; _vs[6] = v12; _vs[7] = v13; _vs[8] = v14;
     for(int i = 0; i < 9; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MPrism15(std::vector<MVertex*> &v, int num=0, int part=0)
+  MPrism15(const std::vector<MVertex*> &v, int num=0, int part=0)
     : MPrism(v, num, part)
   {
     for(int i = 0; i < 9; i++) _vs[i] = v[6 + i];
@@ -367,7 +367,7 @@ class MPrism18 : public MPrism {
     _vs[10] = v16; _vs[11] = v17;
     for(int i = 0; i < 12; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MPrism18(std::vector<MVertex*> &v, int num=0, int part=0)
+  MPrism18(const std::vector<MVertex*> &v, int num=0, int part=0)
     : MPrism(v, num, part)
   {
     for(int i = 0; i < 12; i++) _vs[i] = v[6 + i];

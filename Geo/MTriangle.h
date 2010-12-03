@@ -43,7 +43,7 @@ class MTriangle : public MElement {
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2;
   }
-  MTriangle(std::vector<MVertex*> &v, int num=0, int part=0)
+  MTriangle(const std::vector<MVertex*> &v, int num=0, int part=0)
     : MElement(num, part)
   {
     for(int i = 0; i < 3; i++) _v[i] = v[i];
@@ -174,7 +174,7 @@ class MTriangle6 : public MTriangle {
     _vs[0] = v3; _vs[1] = v4; _vs[2] = v5;
     for(int i = 0; i < 3; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MTriangle6(std::vector<MVertex*> &v, int num=0, int part=0)
+  MTriangle6(const std::vector<MVertex*> &v, int num=0, int part=0)
     : MTriangle(v, num, part)
   {
     for(int i = 0; i < 3; i++) _vs[i] = v[3 + i];
@@ -250,12 +250,12 @@ class MTriangleN : public MTriangle {
   const char _order;
  public:
   MTriangleN(MVertex *v0, MVertex *v1, MVertex *v2,
-             std::vector<MVertex*> &v, char order, int num=0, int part=0)
+             const std::vector<MVertex*> &v, char order, int num=0, int part=0)
     : MTriangle(v0, v1, v2, num, part), _vs(v), _order(order)
   {
     for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
   }
-  MTriangleN(std::vector<MVertex*> &v, char order, int num=0, int part=0)
+  MTriangleN(const std::vector<MVertex*> &v, char order, int num=0, int part=0)
     : MTriangle(v[0], v[1], v[2], num, part), _order(order)
   {
     for(unsigned int i = 3; i < v.size(); i++) _vs.push_back(v[i]);

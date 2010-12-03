@@ -22,7 +22,7 @@ class MFace {
  public:
   MFace() {}
   MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3=0);
-  MFace(std::vector<MVertex*> v);
+  MFace(const std::vector<MVertex*> v);
   inline int getNumVertices() const { return _v.size(); }
   inline MVertex *getVertex(const int i) const { return _v[i]; }
   inline MVertex *getSortedVertex(const int i) const { return _v[int(_si[i])]; }

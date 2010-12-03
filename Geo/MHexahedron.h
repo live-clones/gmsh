@@ -48,7 +48,7 @@ class MHexahedron : public MElement {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3;
     _v[4] = v4; _v[5] = v5; _v[6] = v6; _v[7] = v7;
   }
-  MHexahedron(std::vector<MVertex*> &v, int num=0, int part=0)
+  MHexahedron(const std::vector<MVertex*> &v, int num=0, int part=0)
     : MElement(num, part)
   {
     for(int i = 0; i < 8; i++) _v[i] = v[i];
@@ -239,7 +239,7 @@ class MHexahedron20 : public MHexahedron {
     _vs[10] = v18; _vs[11] = v19;
     for(int i = 0; i < 12; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MHexahedron20(std::vector<MVertex*> &v, int num=0, int part=0)
+  MHexahedron20(const std::vector<MVertex*> &v, int num=0, int part=0)
     : MHexahedron(v, num, part)
   {
     for(int i = 0; i < 12; i++) _vs[i] = v[8 + i];
@@ -385,7 +385,7 @@ class MHexahedron27 : public MHexahedron {
     _vs[15] = v23; _vs[16] = v24; _vs[17] = v25; _vs[18] = v26;
     for(int i = 0; i < 19; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MHexahedron27(std::vector<MVertex*> &v, int num=0, int part=0)
+  MHexahedron27(const std::vector<MVertex*> &v, int num=0, int part=0)
     : MHexahedron(v, num, part)
   {
     for(int i = 0; i < 19; i++) _vs[i] = v[8 + i];
