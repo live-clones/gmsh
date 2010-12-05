@@ -567,6 +567,22 @@ void AdaptMesh(GModel *m)
   Msg::StatusBar(2, true, "Done adaptating 3D mesh (%g s)", t2 - t1);
 }
 
+void RecombineMesh(GModel *m)
+{
+  Msg::StatusBar(2, true, "Recombining 2D mesh...");
+  double t1 = Cpu();
+  
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
+    GFace *gf = *it;
+    recombineIntoQuads(gf);
+  }
+
+  CTX::instance()->mesh.changed = ENT_ALL;
+
+  double t2 = Cpu();
+  Msg::StatusBar(2, true, "Done recombining 2D mesh (%g s)", t2 - t1);
+}
+
 void GenerateMesh(GModel *m, int ask)
 {
   if(CTX::instance()->lock) {

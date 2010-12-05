@@ -15,5 +15,6 @@ void OptimizeMesh(GModel *m);
 void OptimizeMeshNetgen(GModel *m);
 void RefineMesh(GModel *m, bool linear, bool splitIntoQuads=false,
                 bool splitIntoHexas=false);
+void RecombineMesh(GModel *m);
 
 #endif

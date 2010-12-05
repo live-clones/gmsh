@@ -1842,57 +1842,66 @@ void recombineIntoQuads(GFace *gf,
 			bool topologicalOpti,
 			bool nodeRepositioning)
 {
-
   double t1 = Cpu();
 
-  gf->model()->writeMSH("before.msh");
-  if (topologicalOpti)removeFourTrianglesNodes(gf, false);
-  int success = _recombineIntoQuads(gf,0);
-  //  gf->addLayersOfQuads(1, 0);
-  gf->model()->writeMSH("raw.msh");
-  if (nodeRepositioning)  
-    laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
+  bool haveParam = true;
+  if(gf->geomType() == GEntity::DiscreteSurface && !gf->getCompound())
+    haveParam = false;
 
-    //blossom-quad algo
+  gf->model()->writeMSH("before.msh");
+  if(haveParam && topologicalOpti)
+    removeFourTrianglesNodes(gf, false);
+
+  int success = _recombineIntoQuads(gf, 0);
+
+  // gf->addLayersOfQuads(1, 0);
+
+  gf->model()->writeMSH("raw.msh");
+  if(haveParam && nodeRepositioning)  
+    laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing);
+
+  // blossom-quad algo
   if(success && CTX::instance()->mesh.algoRecombine == 1){    
-    if (topologicalOpti){
-      gf->model()->writeMSH("smoothed.msh");
-      int COUNT = 0;
-      char NAME[256];
-      while(1){
-	int x = removeTwoQuadsNodes(gf);
-	if(x){ sprintf(NAME,"iter%dTQ.msh",COUNT++); gf->model()->writeMSH(NAME);}
-	int y= removeDiamonds(gf);
-	if(y){ sprintf(NAME,"iter%dD.msh",COUNT++); gf->model()->writeMSH(NAME); }
-	laplaceSmoothing(gf);
-	int  z = 0 ;//edgeSwapQuadsForBetterQuality ( gf );
-	if(z){ sprintf(NAME,"iter%dS.msh",COUNT++); gf->model()->writeMSH(NAME); }
-	if (!(x+y+z))break;
+    if(topologicalOpti){
+      if(haveParam){
+        gf->model()->writeMSH("smoothed.msh");
+        int COUNT = 0;
+        char NAME[256];
+        while(1){
+          int x = removeTwoQuadsNodes(gf);
+          if(x){ sprintf(NAME,"iter%dTQ.msh",COUNT++); gf->model()->writeMSH(NAME);}
+          int y = removeDiamonds(gf);
+          if(y){ sprintf(NAME,"iter%dD.msh",COUNT++); gf->model()->writeMSH(NAME); }
+          laplaceSmoothing(gf);
+          int z = 0; //edgeSwapQuadsForBetterQuality(gf);
+          if(z){ sprintf(NAME,"iter%dS.msh",COUNT++); gf->model()->writeMSH(NAME); }
+          if (!(x+y+z)) break;
+        }
       }
-      edgeSwapQuadsForBetterQuality ( gf );
+      edgeSwapQuadsForBetterQuality(gf);
       //if(z){ sprintf(NAME,"iter%dS.msh",COUNT++); gf->model()->writeMSH(NAME); }
-      laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
+      if(haveParam) laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
     }
     double t2 = Cpu();
     Msg::Info("Blossom recombination algorithm completed (%g s)", t2 - t1);
     return;
   }
 
-    //simple recombination algo
-  _recombineIntoQuads(gf,0);
-  laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
-  _recombineIntoQuads(gf,0);
-  laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
+  // simple recombination algo
+  _recombineIntoQuads(gf, 0);
+  if(haveParam) laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing);
+  _recombineIntoQuads(gf, 0);
+  if(haveParam)  laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing);
+
   //  gf->model()->writeMSH("after.msh");
 
   double t2 = Cpu();
   Msg::Info("Simple recombination algorithm completed (%g s)", t2 - t1);
-
 }
 
-
 // give it a try : add one quad layer on the 
-void addOneLayerOnContour(GFace *gf, GVertex *gv){
+void addOneLayerOnContour(GFace *gf, GVertex *gv)
+{
   /*
 , int nbLayers, double hplus, double factor){
   // for each vertex
@@ -1985,7 +1994,8 @@ void addOneLayerOnContour(GFace *gf, GVertex *gv){
   */
 }
 
-void quadsToTriangles(GFace *gf, double minqual = -10000.){
+void quadsToTriangles(GFace *gf, double minqual = -10000.)
+{
   std::vector<MQuadrangle*> qds;
   for (int i=0;i<gf->quadrangles.size();i++){
     MQuadrangle *q = gf->quadrangles[i];
@@ -2023,8 +2033,8 @@ void quadsToTriangles(GFace *gf, double minqual = -10000.){
   gf->quadrangles = qds;
 }    
 
-void recombineIntoQuadsIterative(GFace *gf){
-  
+void recombineIntoQuadsIterative(GFace *gf)
+{
   recombineIntoQuads(gf);
   quadsToTriangles(gf,0.03);    
   return;
