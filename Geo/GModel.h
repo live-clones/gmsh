@@ -496,9 +496,6 @@ class GModel
   int writePartitionedMSH(const std::string &baseName, bool binary=false,
                           bool saveAll=false, bool saveParametric=false,
                           double scalingFactor=1.0);
-  /*int writeDistanceMSH(const std::string &name, double version=2.2, bool binary=false,
-                       bool saveAll=false, bool saveParametric=false,
-                       double scalingFactor=1.0);*/
 
   // Iridium file format
   int writeIR3(const std::string &name, int elementTagType,
@@ -570,6 +567,12 @@ class GModel
   // Abaqus
   int writeINP(const std::string &name, bool saveAll=false, 
                double scalingFactor=1.0);
+
+  // Geomview mesh
+  int readGEOM(const std::string &name);
+  
+  // CEA triangulation
+  int writeMAIL(const std::string &name, bool saveAll, double scalingFactor);
   
   int readLUA(const std::string &name);
 

@@ -2101,6 +2101,101 @@ int GModel::writeMESH(const std::string &name, int elementTagType,
   return 1;
 }
 
+int GModel::writeMAIL(const std::string &name, bool saveAll, double scalingFactor)
+{
+  // CEA triangulation for Eric Darrigrand (.mail)
+  /*
+  FILE *fp = fopen(name.c_str(), "w");
+  if(!fp){
+    Msg::Error("Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+
+  if(noPhysicalGroups()) saveAll = true;
+
+  int numVertices = indexMeshVertices(saveAll);
+
+  fprintf(fp, " %d %d\n", );
+
+  fprintf(fp, " %d\n", numVertices);
+  std::vector<GEntity*> entities;
+  getEntities(entities);
+  for(unsigned int i = 0; i < entities.size(); i++)
+    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
+      entities[i]->mesh_vertices[j]->writeMAIL(fp, scalingFactor);
+
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    numTriangles += (*it)->triangles.size();
+
+  fprintf(fp, " %d\n", numTriangles);
+  for(fiter it = firstFace(); it != lastFace(); ++it){
+    for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+      (*it)->triangles[i]->writeMESH(fp);
+
+  fclose(fp);
+  */
+  return 1;
+}
+
+int GModel::readGEOM(const std::string &name)
+{
+  // this is a format (from geomview?) that Bruno Levy's Graphite code
+  // can write
+  FILE *fp = fopen(name.c_str(), "r");
+  if(!fp){
+    Msg::Error("Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+
+  int numNodes, numElements, dummy;
+  if(fscanf(fp, "%d %d %d", &numNodes, &numElements, &dummy) != 3) 
+    return 0;
+
+  if(!numNodes || !numElements){
+    Msg::Warning("No vertices or elements found");
+    return 0;
+  }
+
+  Msg::Info("%d vertices, %d elements", numNodes, numElements);
+
+  std::vector<MVertex*> vertexVector;
+  std::map<int, std::vector<MElement*> > elements[1];
+
+  vertexVector.resize(numNodes);
+  for(int i = 0; i < numNodes; i++) {
+    double x, y, z;
+    if(fscanf(fp, "%lf %lf %lf", &x, &y, &z) != 3) break;
+    vertexVector[i] = new MVertex(x, y, z);
+  }
+
+  for(int i = 0; i < numElements; i++) {
+    int N, n[3];
+    if(fscanf(fp, "%d", &N) != 1) break;
+    switch(N){
+    case 3:
+      {
+        if(fscanf(fp, "%d %d %d", &n[0], &n[1], &n[2]) != 3) break;
+        for(int i = 0; i < 3; i++) n[i]--;
+        std::vector<MVertex*> vertices;
+        if(!getVertices(3, n, vertexVector, vertices)) break;
+        elements[0][1].push_back(new MTriangle(vertices));
+      }
+      break;
+    default:
+      Msg::Error("Unknown element type in .geom reader");
+      break;
+    }
+  }
+
+  for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
+    _storeElementsInEntities(elements[i]);
+  _associateEntityWithMeshVertices();
+  _storeVerticesInEntities(vertexVector);
+
+  fclose(fp);
+  return 1;
+}
+
 int GModel::writeIR3(const std::string &name, int elementTagType,
                      bool saveAll, double scalingFactor)
 {
@@ -2755,10 +2850,11 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   if(fscanf(fp, "%s %s", buffer, buffer2) != 2) return 0;
 
   bool unstructured = false;
-  if( !strcmp(buffer, "DATASET") &&  !strcmp(buffer2, "UNSTRUCTURED_GRID") ) unstructured = true;
+  if(!strcmp(buffer, "DATASET") && !strcmp(buffer2, "UNSTRUCTURED_GRID")) 
+    unstructured = true;
 
-  if( (strcmp(buffer, "DATASET") &&  strcmp(buffer2, "UNSTRUCTURED_GRID")) ||
-      (strcmp(buffer, "DATASET") &&  strcmp(buffer2, "POLYDATA")) ){
+  if((strcmp(buffer, "DATASET") &&  strcmp(buffer2, "UNSTRUCTURED_GRID")) ||
+     (strcmp(buffer, "DATASET") &&  strcmp(buffer2, "POLYDATA"))){
     Msg::Error("VTK reader can only read unstructured or polydata datasets");
     return 0;
   }
@@ -2807,9 +2903,11 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
 
   bool haveCells = true;
   bool haveLines = false;
-  if( !strcmp(buffer, "CELLS") && numElements>0 )  Msg::Info("Reading %d cells", numElements);
-  else if (!strcmp(buffer, "POLYGONS") && numElements>0 ) Msg::Info("Reading %d polygons", numElements);
-  else if (!strcmp(buffer, "LINES") && numElements>0 ) {
+  if( !strcmp(buffer, "CELLS") && numElements > 0)
+    Msg::Info("Reading %d cells", numElements);
+  else if (!strcmp(buffer, "POLYGONS") && numElements > 0)
+    Msg::Info("Reading %d polygons", numElements);
+  else if (!strcmp(buffer, "LINES") && numElements > 0){
     haveCells = false;
     haveLines = true;
     Msg::Info("Reading %d lines", numElements);
@@ -2899,15 +2997,15 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
       for (int k= 0; k < numElements; k++){
 	physicals[1][iLine][1] = "centerline";
 	if(!fgets(line, sizeof(line), fp)) return 0;
-	v0=(int)strtol(line, &pEnd, 10);//ignore first line
-	v0=(int)strtol(pEnd, &pEnd2, 10);
+	v0 = (int)strtol(line, &pEnd, 10); //ignore first line
+	v0 = (int)strtol(pEnd, &pEnd2, 10);
 	p=pEnd2;
 	while(1){
 	  v1 = strtol(p, &pEnd, 10);
 	  if (p == pEnd )  break;
 	  elements[1][iLine].push_back(new MLine(vertices[v0],vertices[v1]));
-	  p=pEnd;
-	  v0=v1;
+	  p = pEnd;
+	  v0 = v1;
 	}
 	iLine++;
       }

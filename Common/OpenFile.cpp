@@ -337,11 +337,14 @@ int MergeFile(std::string fileName, bool warnIfMissing)
     status = binding::instance()->readFile(fileName.c_str());
   }
 #endif
-  else if(ext == ".ply2"){
+  else if(ext == ".ply2" || ext == ".PLY2"){
     status = GModel::current()->readPLY2(fileName);
   }
-  else if(ext == ".ply"){
+  else if(ext == ".ply" || ext == ".PLY"){
     status = GModel::current()->readPLY(fileName);
+  }
+  else if(ext == ".geom" || ext == ".GEOM"){
+    status = GModel::current()->readGEOM(fileName);
   }
   else {
     CTX::instance()->geom.draw = 1;
