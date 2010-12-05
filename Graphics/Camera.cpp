@@ -10,15 +10,6 @@
 #include "Context.h"
 #include "drawContext.h"
 
-#if defined(HAVE_FLTK)
-#include <FL/Fl_JPEG_Image.H>
-#include <FL/Fl_PNG_Image.H>
-#endif
-
-using namespace std;
-  
-
-   
 Camera::~Camera(){};
 
 void Camera::init(){

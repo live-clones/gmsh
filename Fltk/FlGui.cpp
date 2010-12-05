@@ -41,6 +41,7 @@
 #include "CommandLine.h"
 #include "Context.h"
 #include "StringUtils.h"
+#include "Generator.h"
 #include "gl2ps.h"
 
 class drawContextFltk : public drawContextGlobal{
@@ -329,6 +330,11 @@ int FlGui::testGlobalShortcuts(int event)
     mesh_3d_cb(0, 0);
     mod_mesh_cb(0, 0);
     status = 1;
+  }
+  // FIXME TEST
+  else if(Fl::test_shortcut('4') || Fl::test_shortcut(FL_F + 4)) {
+    RecombineMesh(GModel::current());
+    status = 2;
   }
   else if(Fl::test_shortcut(FL_CTRL + 'q') || Fl::test_shortcut(FL_META + 'q')){
     // only necessary when using the system menu bar, but hey, it
