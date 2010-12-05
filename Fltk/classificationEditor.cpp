@@ -127,8 +127,12 @@ static void select_elements_cb(Fl_Widget *w, void *data)
         }
       }
       if(ib == 'r') {
-        for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++)
-          FlGui::instance()->selectedElements[i]->setVisibility(1);
+        for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++){
+          MElement *me = FlGui::instance()->selectedElements[i];
+          if(me->getVisibility() == 2)
+            e->elements.erase(std::find(e->elements.begin(), e->elements.end(), me));
+          me->setVisibility(1);
+        }
       }
       if(ib == 'e') { // ok, compute the edges
         GModel::current()->setSelection(0);
@@ -198,13 +202,18 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
       for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++){
         MElement *me = FlGui::instance()->selectedElements[i];
         if(me->getType() == TYPE_LIN && me->getVisibility() != 2){
-          me->setVisibility(2); ele.push_back((MLine*)me);
+          me->setVisibility(2); 
+          ele.push_back((MLine*)me);
         }
       }
     }
     if(ib == 'r') {
-      for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++)
-        FlGui::instance()->selectedElements[i]->setVisibility(1);
+      for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++){
+        MElement *me = FlGui::instance()->selectedElements[i];
+        if(me->getVisibility() == 2)
+          ele.erase(std::find(ele.begin(), ele.end(), me));
+        me->setVisibility(1);
+      }
     }
     if(ib == 'e') {
       GModel::current()->setSelection(0);
