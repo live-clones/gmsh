@@ -24,7 +24,7 @@
 #define SQU(a)      ((a)*(a))
 
 GFace::GFace(GModel *model, int tag)
-  : GEntity(model, tag), r1(0), r2(0), va_geom_triangles(0)
+  : GEntity(model, tag), r1(0), r2(0), compound(0), va_geom_triangles(0)
 {
   meshStatistics.status = GFace::PENDING;
   resetMeshAttributes();
