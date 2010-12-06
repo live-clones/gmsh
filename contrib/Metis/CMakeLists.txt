@@ -54,7 +54,7 @@ set(SRC
   mbalance.c 
   mincover.c  
   mmd.c  
-  parmetis.c 
+#  parmetis.c 
   stat.c
 )
 
