@@ -652,14 +652,14 @@ if(ENABLE_OCC)
   endif(WIN32)
   set(OCC_LIBS_REQUIRED
       # subset of DataExchange
-      TKSTEP.0 TKSTEP209.0 TKSTEPAttr.0 TKSTEPBase.0 TKIGES.0 TKXSBase.0
+      TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKXSBase
       # ModelingAlgorithms
-      TKOffset.0 TKFeat.0 TKFillet.0 TKBool.0 TKShHealing.0 TKMesh.0 TKHLR.0 TKBO.0 TKPrim.0 
-      TKTopAlgo.0 TKGeomAlgo.0
+      TKOffset TKFeat TKFillet TKBool TKShHealing TKMesh TKHLR TKBO TKPrim
+      TKTopAlgo TKGeomAlgo
       # ModelingData
-      TKBRep.0 TKGeomBase.0 TKG3d.0 TKG2d.0
+      TKBRep TKGeomBase TKG3d TKG2d
       # FoundationClasses
-      TKAdvTools.0 TKMath.0 TKernel.0)
+      TKAdvTools TKMath TKernel)
   list(LENGTH OCC_LIBS_REQUIRED NUM_OCC_LIBS_REQUIRED)
   set(OCC_LIBS)
   foreach(OCC ${OCC_LIBS_REQUIRED})

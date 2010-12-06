@@ -66,18 +66,15 @@ static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
 void Msg::Init(int argc, char **argv)
 {
 #if defined(HAVE_MPI)
-  printf("initializing mpi\n");
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &_commRank);
   MPI_Comm_size(MPI_COMM_WORLD, &_commSize);
   MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
 #endif
 #if defined(HAVE_PETSC)
-  printf("initializing petsc\n");
   PetscInitialize(&argc, &argv, PETSC_NULL, PETSC_NULL);
 #endif
 #if defined(HAVE_SLEPC)
-  printf("initializing slepc\n");
   SlepcInitialize(&argc, &argv, PETSC_NULL, PETSC_NULL);
 #endif
   time_t now;
