@@ -146,6 +146,19 @@ SPoint3 MElement::barycenter()
   return p;
 }
 
+double MElement::getVolume(){
+  int npts;
+  IntPt *pts;
+  getIntegrationPoints(getDim()*(getPolynomialOrder()-1), &npts, &pts);
+  double vol;
+  for (int i=0;i<npts;i++){
+    vol += getJacobianDeterminant(pts[i].pt[0],pts[i].pt[1],pts[i].pt[2])
+      * pts[i].weight;    
+  }
+  return vol;
+}
+
+
 int MElement::getVolumeSign()
 {
   double v = getVolume();
@@ -403,7 +416,7 @@ double MElement::interpolate(double val[], double u, double v, double w, int str
   return sum;
 }
 
-void MElement::interpolateGrad(double val[], double u, double v, double w, double f[3],
+void MElement::interpolateGrad(double val[], double u, double v, double w, double f[],
                                int stride, double invjac[3][3], int order)
 {
   double dfdu[3] = {0., 0., 0.};
@@ -427,7 +440,7 @@ void MElement::interpolateGrad(double val[], double u, double v, double w, doubl
   }
 }
 
-void MElement::interpolateCurl(double val[], double u, double v, double w, double f[3],
+void MElement::interpolateCurl(double val[], double u, double v, double w, double f[],
                                int stride, int order)
 {
   double fx[3], fy[3], fz[3], jac[3][3], inv[3][3];

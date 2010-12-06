@@ -9,8 +9,10 @@
   #include "function.h"
   #include "dofManager.h"
   #include "linearSystem.h"
+  #include "linearSystemFull.h"
   #include "linearSystemPETSc.h"
   #include "linearSystemPETSc.cpp" // needed for the specialization
+  #include "linearSystemCSR.h"
   #include "GEntity.h"
   #include "GVertex.h"
   #include "GEdge.h"
@@ -35,6 +37,11 @@
   #include "DivideAndConquer.h"
   #include "Gmsh.h"
   #include "functionPython.h"
+  #include "Context.h"
+  #include "SVector3.h"
+  #include "SPoint3.h"
+  #include "SPoint2.h"
+  #include "GPoint.h"  
   class errorHandler: public GmshMessage {
     void operator()(std::string level, std::string message){
       //const char *color = colorDefault;
@@ -58,6 +65,7 @@
 namespace std {
    %template(IntVector) vector<int>;
    %template(DoubleVector) vector<double, std::allocator<double> >;
+   %template(VectorOfDoubleVector) vector<vector<double, std::allocator<double> > >;
    %template(StringVector) vector<std::string, std::allocator<std::string> >;
    %template(GEntityVector) vector<GEntity*, std::allocator<GEntity*> >;
    %template(GVertexVector) vector<GVertex*, std::allocator<GVertex*> >;
@@ -71,12 +79,15 @@ namespace std {
    %template(GFaceList) list<GFace*, std::allocator<GFace*> >;
 }
 
+%include "Context.h"
 %include "fullMatrix.h"
 %include "dofManager.h"
 %include "GModel.h"
 %include "function.h"
 %include "linearSystem.h"
+%include "linearSystemFull.h"
 %include "linearSystemPETSc.h"
+%include "linearSystemCSR.h"
 %include "GEntity.h"
 %include "GVertex.h"
 %include "GEdge.h"
@@ -100,12 +111,19 @@ namespace std {
 %include "PViewFactory.h"
 %include "DivideAndConquer.h"
 %include "Gmsh.h"
+%include "SVector3.h"
+%include "SPoint3.h"
+%include "SPoint2.h"
+%include "GPoint.h"  
 
 %template(dofManagerDouble) dofManager<double>;
 %template(linearSystemDouble) linearSystem<double>;
 %template(linearSystemFullMatrixDouble) linearSystem<fullMatrix<double> >;
+%template(linearSystemFullDouble) linearSystemFull<double> ;
 %template(linearSystemPETScDouble) linearSystemPETSc<double>;
+%template(linearSystemTAUCSDouble) linearSystemCSRTaucs<double>;
 %template(fullMatrixDouble) fullMatrix<double>;
+%template(fullVectorDouble) fullVector<double>;
 %template(linearSystemPETScBlockDouble) linearSystemPETSc<fullMatrix<double> >;
 %include "functionPython.h"
 

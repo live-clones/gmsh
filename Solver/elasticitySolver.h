@@ -116,5 +116,4 @@ class elasticitySolver
 
 class binding;
 void elasticitySolverRegisterBindings(binding *b);
-
 #endif

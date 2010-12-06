@@ -424,7 +424,9 @@ binding::binding()
   function::registerBindings(this);
   linearSystem<double>::registerBindings(this);
   linearSystemCSRGmm<double>::registerBindings(this);
+#if defined(HAVE_LUA)
   elasticitySolverRegisterBindings(this); 
+#endif
 #endif
 #if defined(HAVE_POST)
   PView::registerBindings(this);

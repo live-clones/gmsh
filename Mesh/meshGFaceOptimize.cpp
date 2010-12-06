@@ -1900,9 +1900,8 @@ void recombineIntoQuads(GFace *gf,
 }
 
 // give it a try : add one quad layer on the 
-void addOneLayerOnContour(GFace *gf, GVertex *gv)
-{
   /*
+void addOneLayerOnContour(GFace *gf, GVertex *gv){
 , int nbLayers, double hplus, double factor){
   // for each vertex
   std::map<MVertex*,std::vector<MVertex*> >layers;
@@ -1991,8 +1990,8 @@ void addOneLayerOnContour(GFace *gf, GVertex *gv)
       gf->quadrangles = newQuads;
     }
   }
-  */
 }
+*/
 
 void quadsToTriangles(GFace *gf, double minqual = -10000.)
 {

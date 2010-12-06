@@ -652,14 +652,14 @@ if(ENABLE_OCC)
   endif(WIN32)
   set(OCC_LIBS_REQUIRED
       # subset of DataExchange
-      TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKXSBase
+      TKSTEP.0 TKSTEP209.0 TKSTEPAttr.0 TKSTEPBase.0 TKIGES.0 TKXSBase.0
       # ModelingAlgorithms
-      TKOffset TKFeat TKFillet TKBool TKShHealing TKMesh TKHLR TKBO TKPrim 
-      TKTopAlgo TKGeomAlgo
+      TKOffset.0 TKFeat.0 TKFillet.0 TKBool.0 TKShHealing.0 TKMesh.0 TKHLR.0 TKBO.0 TKPrim.0 
+      TKTopAlgo.0 TKGeomAlgo.0
       # ModelingData
-      TKBRep TKGeomBase TKG3d TKG2d
+      TKBRep.0 TKGeomBase.0 TKG3d.0 TKG2d.0
       # FoundationClasses
-      TKAdvTools TKMath TKernel)
+      TKAdvTools.0 TKMath.0 TKernel.0)
   list(LENGTH OCC_LIBS_REQUIRED NUM_OCC_LIBS_REQUIRED)
   set(OCC_LIBS)
   foreach(OCC ${OCC_LIBS_REQUIRED})
@@ -673,6 +673,7 @@ if(ENABLE_OCC)
   endforeach(OCC)
   list(LENGTH OCC_LIBS NUM_OCC_LIBS)
   if(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
+
     find_path(OCC_INC "BRep_Tool.hxx" PATHS ENV CASROOT PATH_SUFFIXES inc 
               include opencascade)
     if(OCC_INC)

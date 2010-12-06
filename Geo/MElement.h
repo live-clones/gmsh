@@ -200,7 +200,7 @@ class MElement
   virtual void revert(){}
 
   // get volume of element
-  virtual double getVolume(){ return 0.; }
+  virtual double getVolume();
 
   // return sign of volume (+1 or -1) for 3D elements (or 0 if element
   // has zero volume)
@@ -267,9 +267,9 @@ class MElement
   // divergence) at point (u,v,w) in parametric coordinates
   double interpolate(double val[], double u, double v, double w, int stride=1,
                      int order=-1);
-  void interpolateGrad(double val[], double u, double v, double w, double f[3],
+  void interpolateGrad(double val[], double u, double v, double w, double f[],
                        int stride=1, double invjac[3][3]=0, int order=-1);
-  void interpolateCurl(double val[], double u, double v, double w, double f[3],
+  void interpolateCurl(double val[], double u, double v, double w, double f[],
                        int stride=3, int order=-1);
   double interpolateDiv(double val[], double u, double v, double w, int stride=3,
                         int order=-1);

@@ -56,7 +56,6 @@ void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
                           std::vector<edge_angle> &edges_lonly);
 void laplaceSmoothing(GFace *gf, int niter=1);
 void edgeSwappingLawson(GFace *gf);
-void addOneLayerOnContour(GFace *gf, GVertex *gv);
 
 enum swapCriterion {SWCR_DEL, SWCR_QUAL, SWCR_NORM, SWCR_CLOSE};
 enum splitCriterion {SPCR_CLOSE, SPCR_QUAL, SPCR_ALLWAYS};

@@ -347,6 +347,37 @@ GEdge *OCCFactory::addNURBS(GModel *gm, GVertex *start, GVertex *end,
   return 0;
 }
 
+/*
+GEdge *OCCFactory::addBezierSurface(GModel *gm, 
+				    std::vector<GEdge *> & wires, // four edges indeed
+				    std::vector<std::vector<double> > points)
+{
+
+  TColgp_Array2OfPnt ctrlPoints(1, nbControlPoints + 2);
+  int index = 1;
+  ctrlPoints.SetValue(index++, gp_Pnt(start->x(), start->y(), start->z()));  
+  for (int i = 0; i < nbControlPoints; i++) {
+    gp_Pnt aP(points[i][0],points[i][1],points[i][2]);
+    ctrlPoints.SetValue(index++, aP);
+  }
+ 
+  
+  BRepBuilderAPI_MakeFace aGenerator (aBezierSurface);
+  BRepBuilderAPI_MakeWire wire_maker;
+  for (unsigned j = 0; j < wires.size(); j++) {
+    GEdge *ge = wires[j];
+    OCCEdge *occe = dynamic_cast<OCCEdge*>(ge);
+    if (occe){
+      wire_maker.Add(occe->getTopoDS_Edge());
+    }
+  }
+  TopoDS_Wire myWire = wire_maker.Wire();
+  aGenerator.Add (myWire);
+  aGenerator.Build();
+  TopoDS_Shape aResult = aGenerator.Shape();
+  return gm->_occ_internals->addFaceToModel(gm, TopoDS::Face(aResult));
+}
+*/
 GEntity *OCCFactory::revolve(GModel *gm, GEntity* base,
                              std::vector<double> p1, 
                              std::vector<double> p2, double angle)

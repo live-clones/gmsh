@@ -1205,9 +1205,13 @@ void GFace::moveToValidRange(SPoint2 &pt) const
   }
 }
 
+
 void GFace::addLayersOfQuads(int nLayers, GVertex *gv, double hmin, double ratio){
-  /*
+  
+  SVector3 ez (0,0,1);
   std::list<GEdgeLoop>::iterator it = edgeLoops.begin();
+  FILE *f = fopen ("coucou.pos","w");
+  fprintf(f,"View \"\"{\n");
   for (; it != edgeLoops.end(); ++it){
     bool found = false;
     // look if this edge loop has the GVertex as an endpoint
@@ -1217,16 +1221,49 @@ void GFace::addLayersOfQuads(int nLayers, GVertex *gv, double hmin, double ratio
     }
     // we found an edge loop with the GVertex that was specified
     if (found){
+      // first build a list of edges in the parametric space
+      std::vector<std::pair<MVertex*,SPoint2> > contour;
       for (GEdgeLoop::iter it2 = it->begin(); it2 != it->end(); ++it2){
 	GEdge *ge = it2->ge;
-	for (int i=0;i<ge->lines.size();i++){
-	  SPoint2 p[2];
-	  reparamMeshEdgeOnFace ( ge->lines[i]->getVertex(0), ge->lines[i]->getVertex(1),gf,p[0],p[1]);
+	SPoint2 p[2];
+	if (it2->_sign == 1){
+	  for (int i=0;i<ge->lines.size();i++){
+	    reparamMeshEdgeOnFace ( ge->lines[i]->getVertex(0), ge->lines[i]->getVertex(1),this,p[0],p[1]);	  	  
+	    contour.push_back(std::make_pair(ge->lines[i]->getVertex(0),p[0]));
+	  }
+	}
+	else {
+	  for (int i=ge->lines.size()-1;i>=0;i--){
+	    reparamMeshEdgeOnFace ( ge->lines[i]->getVertex(0), ge->lines[i]->getVertex(1),this,p[0],p[1]);	  	  
+	    contour.push_back(std::make_pair(ge->lines[i]->getVertex(1),p[1]));
+	  }
 	}
       }      
+      double hlayer = hmin;
+      for (int j=0;j<nLayers;j++){
+	for (int i=0;i<contour.size();i++){
+	  SPoint2 p0 = contour[(i+0) % contour.size()].second;
+	  SPoint2 p1 = contour[(i+1) % contour.size()].second;
+	  SPoint2 p2 = contour[(i+2) % contour.size()].second;
+	  SVector3 p0p1 (p1.x()-p0.x(),p1.y()-p0.y(),0.0);
+	  SVector3 p1p2 (p2.x()-p1.x(),p2.y()-p1.y(),0.0);
+	  SVector3 n01 = crossprod(ez,p0p1);
+	  SVector3 n12 = crossprod(ez,p1p2);
+	  SVector3 n = (n01+n12)*-0.5;
+	  n.normalize();
+	  double u = p1.x() + n.x() * hmin;
+	  double v = p1.y() + n.y() * hmin;
+	  GPoint gp = point(SPoint2(u,v));
+	  _additional_vertices.push_back(new MFaceVertex(gp.x(),gp.y(),gp.z(),this,u,v));
+	  fprintf(f,"SP(%g, %g, 0){1};\n",gp.x(),gp.y());
+	}
+	hlayer *= ratio;
+	hmin += hlayer;
+      }
+      fprintf(f,"};\n");
+      fclose(f);
     }
-  }
-  */
+  }  
 }
 
 
@@ -1251,7 +1288,7 @@ void GFace::registerBindings(binding *b)
   mb->setDescription("return the list of edges bounding this surface");
   mb = cb->addMethod("addLayersOfQuads", &GFace::addLayersOfQuads);
   mb->setDescription("insert layers of quads");
-  mb->setArgNames("nLayers","startingVertex","hmin", "ratio",  NULL);
+  mb->setArgNames("nLayers","startingVertex", "hmin", "ratio", NULL);
 /*  mb = cb->addMethod("addPolygon", &GFace::addPolygon);
   mb->setDescription("insert a polygon mesh element");
   mb->setArgNames("polygon", NULL);*/

@@ -723,11 +723,11 @@ PView* elasticitySolver::buildStressesView (const std::string postFileName)
 #endif
 
 
-#if defined (HAVE_LUA)
 
 #include "Bindings.h"
 void elasticitySolverRegisterBindings(binding *b)
 {
+#if defined (HAVE_LUA)
   classBinding *cb;
   cb = b->addClass<elasticitySolver> ("elasticitySolver");
   cb->setDescription("A class that enables to solve elasticity problems");
@@ -795,6 +795,6 @@ void elasticitySolverRegisterBindings(binding *b)
   cm = cb->setConstructor<elasticitySolver,GModel*,int>();
   cm->setDescription ("A new elasticitySolver. The parameter is the unknowns tag");
   cm->setArgNames("model","tag",NULL);
+#endif
 }
 
-#endif

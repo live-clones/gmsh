@@ -917,6 +917,11 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
                        gf->meshStatistics.nbTriangle,
                        gf->meshStatistics.nbGoodQuality);
 
+  gf->mesh_vertices.insert(gf->mesh_vertices.end(),
+			      gf->_additional_vertices.begin(),
+			      gf->_additional_vertices.end());
+  gf->_additional_vertices.clear();
+
   return true;
 }
 
@@ -1500,7 +1505,7 @@ void deMeshGFace::operator() (GFace *gf)
 }
 
 // for debugging, change value from -1 to -100;
-int debugSurface = -1; 
+int debugSurface = -100; 
 
 void meshGFace::operator() (GFace *gf)
 {

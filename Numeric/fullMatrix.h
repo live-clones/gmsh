@@ -46,6 +46,15 @@ class fullVector
   inline const scalar * getDataPtr() const { return _data; }
   inline scalar operator () (int i)  const { return _data[i]; }
   inline scalar & operator () (int i)      { return _data[i]; }
+  // set
+  inline void set(int r, scalar v){
+    #ifdef _DEBUG
+    if (r >= _r || r < 0)
+      Msg::Fatal("invalid index to access fullVector : %i (size = %i)",
+                 r, _r);
+    #endif
+    (*this)(r) = v; 
+  }
 
   // operations
   inline scalar norm() const
@@ -81,7 +90,7 @@ class fullVector
   }
   inline void setAll(const scalar &m)
   {
-    for(int i = 0; i < _r; i++) _data[i] = m;
+    for(int i = 0; i < _r; i++) set(i,m);
   }
   inline void setAll(const fullVector<scalar> &m)
   {
