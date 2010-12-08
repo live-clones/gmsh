@@ -34,8 +34,7 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &cl
 
   ctx->initPosition();
   drawContext::global()->draw();
-  FlGui::instance()->manip->update();
-    
+  FlGui::instance()->manip->update();  
 }
 
 openglWindow::openglWindow(int x, int y, int w, int h, const char *l)
@@ -175,7 +174,7 @@ void openglWindow::draw()
        0.0F);
     
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-
+    
     _ctx->draw3d();
     glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
     glPointSize((float)CTX::instance()->geom.pointSize);
@@ -190,17 +189,15 @@ void openglWindow::draw()
   }
   else{
     // draw the whole scene
-    /*
     glClearColor
       ((GLclampf)(CTX::instance()->unpackRed(CTX::instance()->color.bg) / 255.),
        (GLclampf)(CTX::instance()->unpackGreen(CTX::instance()->color.bg) / 255.),
        (GLclampf)(CTX::instance()->unpackBlue(CTX::instance()->color.bg) / 255.), 
        0.0F);
-    */
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-    Camera *  cam= &(_ctx->camera);      
    
-    if(CTX::instance()->camera && !CTX::instance()->stereo ){
+    if(CTX::instance()->camera && !CTX::instance()->stereo){
+      Camera *cam = &(_ctx->camera);
       if (!cam->on) cam->init();
       cam->giveViewportDimension(_ctx->viewport[2],_ctx->viewport[3]);  
       glMatrixMode(GL_PROJECTION);
@@ -220,11 +217,8 @@ void openglWindow::draw()
       _drawBorder();
       //    glPushMatrix();
     }
-
-
-
-
-    else if(CTX::instance()->stereo ){
+    else if(CTX::instance()->stereo){
+      Camera *cam = &(_ctx->camera);
       if (!cam->on) cam->init();
       cam->giveViewportDimension(_ctx->viewport[2],_ctx->viewport[3]);  
 
@@ -270,56 +264,54 @@ void openglWindow::draw()
       glAccum(GL_ACCUM,1.0);
       glAccum(GL_RETURN,1.0);
       */   
-
       
-     //right eye
-    XYZ eye =cam->eyesep / 2.0* cam->right;
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    double left  = - cam->screenratio * cam->wd2 - 0.5 * cam->eyesep * cam->ndfl;
-    double right =   cam->screenratio * cam->wd2 - 0.5 * cam->eyesep * cam->ndfl;
-    double top    =   cam->wd2;
-    double  bottom = - cam->wd2;
-    glFrustum(left,right,bottom,top,cam->glFnear,cam->glFfar);
-    glMatrixMode(GL_MODELVIEW);
-    glDrawBuffer(GL_BACK_RIGHT);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glLoadIdentity();
-    gluLookAt(cam->position.x+eye.x, cam->position.y+eye.y,  cam->position.z+eye.z,
-	      cam->target.x+eye.x,  cam->target.y+eye.y,  cam->target.z+eye.z,
-	      cam->up.x,  cam->up.y,  cam->up.z); 
-    _ctx->draw3d();
-    _ctx->draw2d();
-     _drawScreenMessage();
+      //right eye
+      XYZ eye = cam->eyesep / 2.0* cam->right;
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      double left   = - cam->screenratio * cam->wd2 - 0.5 * cam->eyesep * cam->ndfl;
+      double right  =   cam->screenratio * cam->wd2 - 0.5 * cam->eyesep * cam->ndfl;
+      double top    =   cam->wd2;
+      double bottom = - cam->wd2;
+      glFrustum(left,right,bottom,top,cam->glFnear,cam->glFfar);
+      glMatrixMode(GL_MODELVIEW);
+      glDrawBuffer(GL_BACK_RIGHT);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glLoadIdentity();
+      gluLookAt(cam->position.x+eye.x, cam->position.y+eye.y,  cam->position.z+eye.z,
+                cam->target.x+eye.x,  cam->target.y+eye.y,  cam->target.z+eye.z,
+                cam->up.x,  cam->up.y,  cam->up.z); 
+      _ctx->draw3d();
+      _ctx->draw2d();
+      _drawScreenMessage();
       _drawBorder();
     
-    //left eye
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    left  = - cam->screenratio * cam->wd2 + 0.5 * cam->eyesep * cam->ndfl;
-    right =   cam->screenratio * cam->wd2 + 0.5 * cam->eyesep * cam->ndfl;
-    top    =   cam->wd2;
-    bottom = - cam->wd2;
-    glFrustum(left,right,bottom,top,cam->glFnear,cam->glFfar);
-    
-    glMatrixMode(GL_MODELVIEW);
-    glDrawBuffer(GL_BACK_LEFT);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glLoadIdentity();
-    gluLookAt(cam->position.x-eye.x, cam->position.y-eye.y, cam->position.z-eye.z,
-	      cam->target.x-eye.x, cam->target.y-eye.y, cam->target.z-eye.z,
-	      cam->up.x, cam->up.y, cam->up.z); 
-    _ctx->draw3d();
-    _ctx->draw2d();
-    _drawScreenMessage();
-    _drawBorder();
-    
+      //left eye
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      left   = - cam->screenratio * cam->wd2 + 0.5 * cam->eyesep * cam->ndfl;
+      right  =   cam->screenratio * cam->wd2 + 0.5 * cam->eyesep * cam->ndfl;
+      top    =   cam->wd2;
+      bottom = - cam->wd2;
+      glFrustum(left,right,bottom,top,cam->glFnear,cam->glFfar);
+      
+      glMatrixMode(GL_MODELVIEW);
+      glDrawBuffer(GL_BACK_LEFT);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glLoadIdentity();
+      gluLookAt(cam->position.x-eye.x, cam->position.y-eye.y, cam->position.z-eye.z,
+                cam->target.x-eye.x, cam->target.y-eye.y, cam->target.z-eye.z,
+                cam->up.x, cam->up.y, cam->up.z); 
+      _ctx->draw3d();
+      _ctx->draw2d();
+      _drawScreenMessage();
+      _drawBorder();
     }
     else{
       _ctx->draw3d();
-    _ctx->draw2d();
-    _drawScreenMessage();
-    _drawBorder();
+      _ctx->draw2d();
+      _drawScreenMessage();
+      _drawBorder();
     }
   }
   _lock = false;
@@ -372,12 +364,12 @@ int openglWindow::handle(int event)
         else{
 
 	  if (CTX::instance()->camera){
-	    Camera * cam= &(_ctx->camera);      
+	    Camera * cam = &(_ctx->camera);      
 	    double dy=fabs( -_click.win[1] + _curr.win[1] );
 	    double dx=fabs( -_click.win[0] + _curr.win[0] ) ;
 	    double factx = w()/ fabs(dx);
 	    double facty = h()/ fabs(dy);
-	    double fact=.8* std::min(factx, facty);
+	    double fact = .8* std::min(factx, facty);
 	    double x_med=( _click.win[0] + _curr.win[0])/2.;
 	    double y_med=( _click.win[1] + _curr.win[1])/2.;
 	    double theta_x =.96* cam->radians*(  w()/2 -  x_med )*2. /h() ;
