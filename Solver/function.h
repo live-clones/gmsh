@@ -201,6 +201,7 @@ class dataCacheDouble {
 };
 
 class dataCacheMap {
+  const function *_functionSolution, *_functionSolutionGradient;
  public:
   dataCacheMap  *_parent;
   std::list<dataCacheMap*> _children;
@@ -211,6 +212,7 @@ class dataCacheMap {
   std::set<dataCacheDouble*> _toInvalidateOnElement;
   MElement *_element;
   dataCacheMap() {
+    _functionSolution = _functionSolutionGradient = NULL;
     _nbEvaluationPoints = 0;
     _parent=NULL;
   }
@@ -236,7 +238,7 @@ class dataCacheMap {
   {
     _secondaryCaches.push_back(s);
   }
-  dataCacheDouble &get(const function *f, dataCacheDouble *caller=0);
+  dataCacheDouble *get(const function *f, dataCacheDouble *caller=0, bool createIfNotPresent = true);
   virtual void setElement(MElement *element)
   {
     _element=element;
@@ -256,6 +258,10 @@ class dataCacheMap {
     _children.push_back(m);
     m->_nbEvaluationPoints = 0;
     return m;
+  }
+  inline void setSolutionFunction(const function *functionSolution, const function *functionSolutionGradient) {
+    _functionSolution = functionSolution;
+    _functionSolutionGradient = functionSolutionGradient;
   }
   void setNbEvaluationPoints(int nbEvaluationPoints);
   inline int getNbEvaluationPoints() { return _nbEvaluationPoints; }

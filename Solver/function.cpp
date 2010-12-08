@@ -229,8 +229,19 @@ void dataCacheDouble::_eval()
   _valid = true;
 }
 
-dataCacheDouble &dataCacheMap::get(const function *f, dataCacheDouble *caller)
+dataCacheDouble *dataCacheMap::get(const function *f, dataCacheDouble *caller, bool createIfNotPresent)
 {
+  //special case
+  if (f == function::getSolution()) {
+    f = _functionSolution;
+    if (f == NULL)
+      Msg::Error ("solution function has not been set");
+  } else if (f == function::getSolutionGradient()) {
+    f = _functionSolutionGradient;
+    if (f == NULL)
+      Msg::Error ("solution function gradient has not been set");
+  }
+
   // do I have a cache for this function ?
   dataCacheDouble *&r = _cacheDoubleMap[f];
   // can I use the cache of my parent ?
@@ -247,15 +258,17 @@ dataCacheDouble &dataCacheMap::get(const function *f, dataCacheDouble *caller)
       }
     }
     if (okFromParent)
-      r = &_parent->get (f,caller);
+      r = _parent->get (f,caller);
   }
   // no cache found, create a new one
   if (r==NULL) {
+    if (!createIfNotPresent) 
+      return NULL;
     r = new dataCacheDouble (this, (function*)(f));
     r->_directDependencies.resize (f->arguments.size());
     for (unsigned int i = 0; i < f->arguments.size(); i++) {
       r->_directDependencies[i] = 
-        &getSecondaryCache(f->arguments[i].iMap)->get(f->arguments[i].f, r);
+        getSecondaryCache(f->arguments[i].iMap)->get(f->arguments[i].f, r);
     }
     for (unsigned i = 0; i < f->_functionReplaces.size(); i++) {
       functionReplaceCache replaceCache;
@@ -274,7 +287,7 @@ dataCacheDouble &dataCacheMap::get(const function *f, dataCacheDouble *caller)
       }
       for (std::vector<function::argument>::iterator it = replace->_toCompute.begin();
            it!= replace->_toCompute.end(); it++ ) {
-        replaceCache.toCompute.push_back(&rMap->getSecondaryCache(it->iMap)->get(it->f, r));
+        replaceCache.toCompute.push_back(rMap->getSecondaryCache(it->iMap)->get(it->f, r));
       }
       replaceCache.map = rMap;
       r->functionReplaceCaches.push_back (replaceCache); 
@@ -292,7 +305,7 @@ dataCacheDouble &dataCacheMap::get(const function *f, dataCacheDouble *caller)
       caller->_iDependOn.insert(*it);
     }
   }
-  return *r;
+  return r;
 }
 
 // dataCacheMap
