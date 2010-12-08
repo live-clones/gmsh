@@ -234,12 +234,28 @@ dataCacheDouble *dataCacheMap::get(const function *f, dataCacheDouble *caller, b
   //special case
   if (f == function::getSolution()) {
     f = _functionSolution;
-    if (f == NULL)
-      Msg::Error ("solution function has not been set");
+    if (f == NULL) {
+      dataCacheMap *parent = _parent;
+      while (parent) {
+        f = _parent->_functionSolution;
+        if (f) break;
+        parent = _parent->_parent;
+      }
+      if (f == NULL) 
+        Msg::Error ("solution function has not been set");
+    }
   } else if (f == function::getSolutionGradient()) {
     f = _functionSolutionGradient;
-    if (f == NULL)
+    if (f == NULL) {
+      dataCacheMap *parent = _parent;
+      while (parent) {
+        f = _parent->_functionSolutionGradient;
+        if (f) break;
+        parent = _parent->_parent;
+      }
+      if (f == NULL) 
       Msg::Error ("solution function gradient has not been set");
+    }
   }
 
   // do I have a cache for this function ?
