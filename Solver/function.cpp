@@ -599,26 +599,25 @@ class functionLua : public function {
 #endif
 
 // functionC
-
-void functionC::buildLibrary(std::string code, std::string filename) 
-{
-  //todo use CMAKE_CXX_COMPILER
-  //todo use clean temporary file names
-  //todo work on windows :-)
-  //todo if DG_BUILD_DIR is not defined, use the directory used at compilation time
-  FILE *tmpSrc = fopen("_tmpSrc.cpp","w");
-  fprintf(tmpSrc, "%s\n",code.c_str());
-  fclose(tmpSrc);
+void functionC::buildLibraryFromFile(const std::string cfilename, const std::string libfilename) {
   FILE *tmpMake = fopen("_tmpMake","w");
   fprintf(tmpMake, "include $(DG_BUILD_DIR)/CMakeFiles/dg.dir/flags.make\n"
       "%s : %s\n"
       "\tg++ -fPIC -shared -o $@ $(CXX_FLAGS) $(CXX_DEFINES) $<\n",
-      filename.c_str(), "_tmpSrc.cpp");
+      libfilename.c_str(), cfilename.c_str());
   fclose(tmpMake);
   if(system("make -f _tmpMake"))
     Msg::Error("make command failed\n");
-  UnlinkFile("_tmpSrc.cpp");
   UnlinkFile("_tmpMake.cpp");
+}
+
+void functionC::buildLibrary(std::string code, std::string filename) 
+{
+  FILE *tmpSrc = fopen("_tmpSrc.cpp","w");
+  fprintf(tmpSrc, "%s\n",code.c_str());
+  fclose(tmpSrc);
+	buildLibraryFromFile("_tmpSrc.cpp", filename);
+  UnlinkFile("_tmpSrc.cpp");
 }
 void functionC::call (dataCacheMap *m, fullMatrix<double> &val) 
 {

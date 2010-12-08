@@ -285,6 +285,7 @@ class functionC : public function {
   void (*callback)(void);
   public:
   static void buildLibrary(std::string code, std::string filename) ;
+	static void buildLibraryFromFile(const std::string cfilename, const std::string libfilename);
   void call (dataCacheMap *m, fullMatrix<double> &val) ;
   functionC (std::string file, std::string symbol, int nbCol, 
              std::vector<const function *> dependencies);
