@@ -202,6 +202,9 @@ class dataCacheDouble {
 
 class dataCacheMap {
   const function *_functionSolution, *_functionSolutionGradient;
+  //handle function solution and funciton solution gradient
+  //we should get rid of them
+  const function * _translate (const function *) const;
  public:
   dataCacheMap  *_parent;
   std::list<dataCacheMap*> _children;

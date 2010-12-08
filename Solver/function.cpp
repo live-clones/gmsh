@@ -229,7 +229,7 @@ void dataCacheDouble::_eval()
   _valid = true;
 }
 
-dataCacheDouble *dataCacheMap::get(const function *f, dataCacheDouble *caller, bool createIfNotPresent)
+const function * dataCacheMap::_translate(const function *f) const 
 {
   //special case
   if (f == function::getSolution()) {
@@ -257,7 +257,12 @@ dataCacheDouble *dataCacheMap::get(const function *f, dataCacheDouble *caller, b
       Msg::Error ("solution function gradient has not been set");
     }
   }
+  return f;
+}
 
+dataCacheDouble *dataCacheMap::get(const function *f, dataCacheDouble *caller, bool createIfNotPresent)
+{
+  f = _translate(f);
   // do I have a cache for this function ?
   dataCacheDouble *&r = _cacheDoubleMap[f];
   // can I use the cache of my parent ?
@@ -297,8 +302,8 @@ dataCacheDouble *dataCacheMap::get(const function *f, dataCacheDouble *caller, b
       for (std::vector<function::argument>::iterator it = replace->_toReplace.begin();
            it!= replace->_toReplace.end(); it++ ) {
         dataCacheMap *m = rMap->getSecondaryCache(it->iMap);
-        dataCacheDouble *s = new dataCacheDouble(m, (function*)it->f);
-        m->_cacheDoubleMap[it->f] = s;
+        dataCacheDouble *s = new dataCacheDouble(m, (function*)_translate(it->f));
+        m->_cacheDoubleMap[_translate(it->f)] = s;
         replaceCache.toReplace.push_back(s);
       }
       for (std::vector<function::argument>::iterator it = replace->_toCompute.begin();
