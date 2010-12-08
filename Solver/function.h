@@ -274,18 +274,9 @@ class dataCacheMap {
 class functionConstant : public function {
  public:
   fullMatrix<double> _source;
-  void call(dataCacheMap *m, fullMatrix<double> &val)
-  {
-    for (int i=0; i<val.size1(); i++)
-      for (int j=0; j<_source.size1(); j++)
-        val(i,j)=_source(j,0);
-  }
-  functionConstant(std::vector<double> source) : function(source.size())
-  {
-    _source = fullMatrix<double>(source.size(),1);
-    for (size_t i=0; i<source.size(); i++)
-      _source(i,0) = source[i];
-  }
+  void call(dataCacheMap *m, fullMatrix<double> &val);
+  functionConstant(std::vector<double> source);
+  functionConstant(double source);
   void set(double val); 
 };
 
@@ -299,9 +290,6 @@ class functionC : public function {
   functionC (std::string file, std::string symbol, int nbCol, 
              std::vector<const function *> dependencies);
 };
-
-functionConstant *functionConstantNew(const std::vector<double>&);
-functionConstant *functionConstantNew(double);
 
 function *functionSumNew (const function *f0, const function *f1);
 function *functionProdNew (const function *f0, const function *f1);

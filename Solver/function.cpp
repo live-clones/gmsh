@@ -50,14 +50,14 @@ functionConstant *function::_dtFunction = NULL;
 functionConstant *function::getTime()
 {
   if (! _timeFunction)
-    _timeFunction = functionConstantNew(0.);
+    _timeFunction = new functionConstant(0.);
   return _timeFunction;
 }
 
 functionConstant *function::getDT()
 {
   if (! _dtFunction)
-    _dtFunction = functionConstantNew(0.);
+    _dtFunction = new functionConstant(0.);
   return _dtFunction;
 }
 
@@ -367,16 +367,24 @@ void functionConstant::set(double val)
   _source(0,0) = val;
 }
 
-functionConstant *functionConstantNew(double v) 
+void functionConstant::call(dataCacheMap *m, fullMatrix<double> &val)
 {
-  std::vector<double> vec(1);
-  vec[0]=v;
-  return new functionConstant(vec);
+  for (int i=0; i<val.size1(); i++)
+    for (int j=0; j<_source.size1(); j++)
+      val(i,j)=_source(j,0);
 }
 
-functionConstant *functionConstantNew(const std::vector<double> &v) 
+functionConstant::functionConstant(std::vector<double> source) : function(source.size())
 {
-  return new functionConstant(v);
+  _source = fullMatrix<double>(source.size(),1);
+  for (size_t i=0; i<source.size(); i++)
+    _source(i,0) = source[i];
+}
+
+functionConstant::functionConstant(double source) : function(1)
+{
+  _source.resize(1,1);
+  _source(0,0) = source;
 }
 
 // functionSum
