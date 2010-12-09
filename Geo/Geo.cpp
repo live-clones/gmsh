@@ -1886,6 +1886,7 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined)
     switch (O.Type) {
     case MSH_POINT:
     case MSH_POINT_BND_LAYER:
+    case MSH_POINT_FROM_GMODEL:
       return;
       break;
     case MSH_SEGM_LINE:
@@ -1918,6 +1919,27 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined)
           Msg::Error("Unknown curve %d", O.Num);
       }
       break;
+    case MSH_SEGM_FROM_GMODEL:
+      {
+        GEdge *ge = GModel::current()->getEdgeByTag(O.Num);
+        if(ge){
+          if(ge->getBeginVertex()){
+            Shape sh;
+            sh.Type = MSH_POINT_FROM_GMODEL;
+            sh.Num = ge->getBeginVertex()->tag();
+            List_Add(shapesBoundary, &sh);
+          }
+          if(ge->getEndVertex()){
+            Shape sh;
+            sh.Type = MSH_POINT_FROM_GMODEL;
+            sh.Num = ge->getEndVertex()->tag();
+            List_Add(shapesBoundary, &sh);
+          }
+        }
+        else
+          Msg::Error("Unknown curve %d", O.Num);
+      }
+      break;
     case MSH_SURF_PLAN:
     case MSH_SURF_REGL:
     case MSH_SURF_TRIC:
@@ -1938,6 +1960,22 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined)
           Msg::Error("Unknown surface %d", O.Num);
       }
       break;
+    case MSH_SURF_FROM_GMODEL:
+      {
+        GFace *gf = GModel::current()->getFaceByTag(O.Num);
+        if(gf){
+          std::list<GEdge*> edges(gf->edges());
+          for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
+            Shape sh;
+            sh.Type = MSH_SEGM_FROM_GMODEL;
+            sh.Num = (*it)->tag();
+            List_Add(shapesBoundary, &sh);
+          }
+        }
+        else
+          Msg::Error("Unknown surface %d", O.Num);
+      }
+      break;
     case MSH_VOLUME:
       {
         Volume *v = FindVolume(O.Num);
@@ -1948,6 +1986,22 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined)
             Shape sh;
             sh.Type = s->Typ;
             sh.Num = s->Num;
+            List_Add(shapesBoundary, &sh);
+          }
+        }
+        else
+          Msg::Error("Unknown volume %d", O.Num);
+      }
+      break;
+    case MSH_VOLUME_FROM_GMODEL:
+      {
+        GRegion *gr = GModel::current()->getRegionByTag(O.Num);
+        if(gr){
+          std::list<GFace*> faces(gr->faces());
+          for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
+            Shape sh;
+            sh.Type = MSH_SURF_FROM_GMODEL;
+            sh.Num = (*it)->tag();
             List_Add(shapesBoundary, &sh);
           }
         }
