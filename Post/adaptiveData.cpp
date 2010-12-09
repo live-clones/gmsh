@@ -654,30 +654,66 @@ void adaptiveHexahedron::recurError(adaptiveHexahedron *h, double AVG, double to
   if(!h->e[0])
     h->visible = true;
   else {
-    double vr;
-    double v1 = h->e[0]->V();
-    double v2 = h->e[1]->V();
-    double v3 = h->e[2]->V();
-    double v4 = h->e[3]->V();
-    double v5 = h->e[4]->V();
-    double v6 = h->e[5]->V();
-    double v7 = h->e[6]->V();
-    double v8 = h->e[7]->V();
-    vr = (v1 + v2 + v3 + v4 + v5 + v6 + v7 + v8) * .125;
-    double v = h->V();
-    if(fabs(v - vr) > AVG * tol) {
-      h->visible = false;
-      recurError(h->e[0], AVG, tol);
-      recurError(h->e[1], AVG, tol);
-      recurError(h->e[2], AVG, tol);
-      recurError(h->e[3], AVG, tol);
-      recurError(h->e[4], AVG, tol);
-      recurError(h->e[5], AVG, tol);
-      recurError(h->e[6], AVG, tol);
-      recurError(h->e[7], AVG, tol);
+    const double v1 = h->e[0]->V();
+    const double v2 = h->e[1]->V();
+    const double v3 = h->e[2]->V();
+    const double v4 = h->e[3]->V();
+    const double v5 = h->e[4]->V();
+    const double v6 = h->e[5]->V();
+    const double v7 = h->e[6]->V();
+    const double v8 = h->e[7]->V();
+    const double vr = (v1 + v2 + v3 + v4 + v5 + v6 + v7 + v8) * .125;
+    const double v = h->V();
+    if(!h->e[0]->e[0]) {
+      if(fabs(v - vr) > AVG * tol) {
+        h->visible = false;
+        recurError(h->e[0], AVG, tol);
+        recurError(h->e[1], AVG, tol);
+        recurError(h->e[2], AVG, tol);
+        recurError(h->e[3], AVG, tol);
+        recurError(h->e[4], AVG, tol);
+        recurError(h->e[5], AVG, tol);
+        recurError(h->e[6], AVG, tol);
+        recurError(h->e[7], AVG, tol);
+      }
+      else
+        h->visible = true;
     }
-    else
-      h->visible = true;
+    else {
+      double vii[8][8];
+      for(int i = 0; i < 8; i++)
+        for(int j = 0; j < 8; j++)
+          vii[i][j] = h->e[i]->e[j]->V();
+      double vri[8];
+      for(int k = 0; k < 8; k++) {
+        vri[k] = 0.0;
+        for(int l = 0; l < 8; l++) {
+          vri[k] += vii[k][l];
+        }
+        vri[k] /= 8.0;
+      }
+      if(fabs(h->e[0]->V() - vri[0]) > AVG * tol ||
+         fabs(h->e[1]->V() - vri[1]) > AVG * tol ||
+         fabs(h->e[2]->V() - vri[2]) > AVG * tol ||
+         fabs(h->e[3]->V() - vri[3]) > AVG * tol ||
+         fabs(h->e[4]->V() - vri[4]) > AVG * tol ||
+         fabs(h->e[5]->V() - vri[5]) > AVG * tol ||
+         fabs(h->e[6]->V() - vri[6]) > AVG * tol ||
+         fabs(h->e[7]->V() - vri[7]) > AVG * tol ||
+         fabs(v - vr) > AVG * tol) {
+        h->visible = false;
+        recurError(h->e[0], AVG, tol);
+        recurError(h->e[1], AVG, tol);
+        recurError(h->e[2], AVG, tol);
+        recurError(h->e[3], AVG, tol);
+        recurError(h->e[4], AVG, tol);
+        recurError(h->e[5], AVG, tol);
+        recurError(h->e[6], AVG, tol);
+        recurError(h->e[7], AVG, tol);
+      }
+      else
+        h->visible = true;
+    }
   }
 }
 
@@ -773,18 +809,12 @@ void adaptivePrism::recurError(adaptivePrism *p, double AVG, double tol)
   if(!p->e[0])
     p->visible = true;
   else {
-    double vr;
+    double vi[8];
+    for(int i = 0; i < 8; i++)
+      vi[i] = p->e[i]->V();
+    const double vr = (vi[0] + vi[1] + vi[2] + vi[3]/2 + vi[4] + vi[5] + vi[6] + vi[7]/2) / 7;
+    const double v = p->V();
     if(!p->e[0]->e[0]) {
-      double v1 = p->e[0]->V();
-      double v2 = p->e[1]->V();
-      double v3 = p->e[2]->V();
-      double v4 = p->e[3]->V();
-      double v5 = p->e[4]->V();
-      double v6 = p->e[5]->V();
-      double v7 = p->e[6]->V();
-      double v8 = p->e[7]->V();
-      vr = (v1 + v2 + v3 + v4/2 +v5 +v6 +v7 +v8/2) / 7;
-      double v = p->V();
       if(fabs(v - vr) > AVG * tol){
         p->visible = false;
         recurError(p->e[0], AVG, tol);
@@ -801,23 +831,19 @@ void adaptivePrism::recurError(adaptivePrism *p, double AVG, double tol)
     }
     else {
       bool err = false;
-      double ve[8];
       for(int i = 0; i < 8; i++){
-        double v1 = p->e[i]->e[0]->V();
-        double v2 = p->e[i]->e[1]->V();
-        double v3 = p->e[i]->e[2]->V();
-        double v4 = p->e[i]->e[3]->V();
-        double v5 = p->e[i]->e[4]->V();
-        double v6 = p->e[i]->e[5]->V();
-        double v7 = p->e[i]->e[6]->V();
-        double v8 = p->e[i]->e[7]->V();
-        double vr = (v1 + v2 + v3 + v4/2 +v5 +v6 +v7 +v8/2) / 7;
-        ve[i] = p->e[i]->V();
-        err |= (fabs((ve[i] - vr)) > AVG*tol);
+        double vi1 = p->e[i]->e[0]->V();
+        double vi2 = p->e[i]->e[1]->V();
+        double vi3 = p->e[i]->e[2]->V();
+        double vi4 = p->e[i]->e[3]->V();
+        double vi5 = p->e[i]->e[4]->V();
+        double vi6 = p->e[i]->e[5]->V();
+        double vi7 = p->e[i]->e[6]->V();
+        double vi8 = p->e[i]->e[7]->V();
+        double vri = (vi1 + vi2 + vi3 + vi4/2 + vi5 + vi6 + vi7 + vi8/2) / 7;
+        err |= (fabs((vi[i] - vri)) > AVG * tol);
       }
-      double vr = (ve[0] + ve[1] + ve[2] + ve[3] / 2 + 
-                   ve[4] + ve[5] + ve[6] + ve[7] / 2) / 7;
-      err |= (fabs((p->V() - vr))>AVG*tol);
+      err |= (fabs((v - vr)) > AVG * tol);
       if(err) {
         p->visible = false;
         for(int i = 0; i < 8; i++)
