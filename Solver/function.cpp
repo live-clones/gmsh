@@ -237,9 +237,9 @@ const function * dataCacheMap::_translate(const function *f) const
     if (f == NULL) {
       dataCacheMap *parent = _parent;
       while (parent) {
-        f = _parent->_functionSolution;
+        f = parent->_functionSolution;
         if (f) break;
-        parent = _parent->_parent;
+        parent = parent->_parent;
       }
       if (f == NULL) 
         Msg::Error ("solution function has not been set");
@@ -249,9 +249,9 @@ const function * dataCacheMap::_translate(const function *f) const
     if (f == NULL) {
       dataCacheMap *parent = _parent;
       while (parent) {
-        f = _parent->_functionSolutionGradient;
+        f = parent->_functionSolutionGradient;
         if (f) break;
-        parent = _parent->_parent;
+        parent = parent->_parent;
       }
       if (f == NULL) 
       Msg::Error ("solution function gradient has not been set");
