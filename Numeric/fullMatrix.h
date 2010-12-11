@@ -490,7 +490,7 @@ class fullMatrix
 #endif
   ;
 
-  void print(const std::string name = "") const 
+  void print(const std::string name = "", const char *format = "%12.5E ") const 
   {
     printf("Printing matrix %s:\n", name.c_str());
     int ni = size1();
@@ -498,7 +498,7 @@ class fullMatrix
     for(int I = 0; I < ni; I++){
       printf("  ");
       for(int J = 0; J < nj; J++){
-        printf("%12.5E ", (*this)(I, J));
+        printf(format, (*this)(I, J));
       }
       printf("\n");
     }
