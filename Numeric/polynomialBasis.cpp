@@ -980,7 +980,7 @@ static void generate2dEdgeClosureFull(polynomialBasis::clCont &closure, std::vec
   closure.resize(2*nNod);
   closureRef.resize(2*nNod);
   int shift = 0;
-  for (int corder = order; corder>=0; corder -=3) {
+  for (int corder = order; corder>=0; corder -= (nNod == 3 ? 3 : 2)) {
     if (corder == 0) {
       for (int r = 0; r < nNod ; r++){ 
         closure[r].push_back(shift);
