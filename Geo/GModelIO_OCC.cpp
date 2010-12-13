@@ -501,39 +501,39 @@ GRegion* OCC_Internals::addRegionToModel(GModel *model, TopoDS_Solid region){
 
 void OCC_Internals::buildGModel(GModel *model)
 {
-  int voffset = model->getMaxElementaryNumber(0);
-
   // building geom vertices
   int nvertices = vmap.Extent();
   for(int i = 1; i <= nvertices; i++){
     int num = model->getMaxElementaryNumber(0) + 1;
-    if (!getOCCVertexByNativePtr(model,TopoDS::Vertex(vmap(i))))
-      model->add(new OCCVertex(model,num , TopoDS::Vertex(vmap(i))));
+    if (!getOCCVertexByNativePtr(model, TopoDS::Vertex(vmap(i))))
+      model->add(new OCCVertex(model, num, TopoDS::Vertex(vmap(i))));
   }
 
   // building geom edges
   int nedges = emap.Extent();
   for(int i = 1; i <= nedges; i++){
-    int i1 = voffset + vmap.FindIndex(TopExp::FirstVertex(TopoDS::Edge(emap(i)))); 
-    int i2 = voffset + vmap.FindIndex(TopExp::LastVertex(TopoDS::Edge(emap(i))));
+    int i1 = vmap.FindIndex(TopExp::FirstVertex(TopoDS::Edge(emap(i)))); 
+    int i2 = vmap.FindIndex(TopExp::LastVertex(TopoDS::Edge(emap(i))));
     int num = model->getMaxElementaryNumber(1) + 1;
-    if (!getOCCEdgeByNativePtr(model,TopoDS::Edge(emap(i))))
-      model->add(new OCCEdge(model, TopoDS::Edge(emap(i)), num,
-                             model->getVertexByTag(i1), model->getVertexByTag(i2)));
+    if (!getOCCEdgeByNativePtr(model, TopoDS::Edge(emap(i)))){
+      GVertex *v1 = getOCCVertexByNativePtr(model, TopoDS::Vertex(vmap(i1)));
+      GVertex *v2 = getOCCVertexByNativePtr(model, TopoDS::Vertex(vmap(i2)));
+      model->add(new OCCEdge(model, TopoDS::Edge(emap(i)), num, v1, v2));
+    }
   }
 
   // building geom faces
   int nfaces = fmap.Extent();
   for(int i = 1; i <= nfaces; i++){
     int num = model->getMaxElementaryNumber(2) + 1;
-    if (!getOCCFaceByNativePtr(model,TopoDS::Face(fmap(i))))
+    if (!getOCCFaceByNativePtr(model, TopoDS::Face(fmap(i))))
       model->add(new OCCFace(model, TopoDS::Face(fmap(i)), num));
   }
   // building geom regions
   int nvolumes = somap.Extent();
   for(int i = 1; i <= nvolumes; i++){
     int num = model->getMaxElementaryNumber(3) + 1;
-    if (!getOCCRegionByNativePtr(model,TopoDS::Solid(somap(i))))
+    if (!getOCCRegionByNativePtr(model, TopoDS::Solid(somap(i))))
       model->add(new OCCRegion(model, TopoDS::Solid(somap(i)), num));
   }
 }
