@@ -352,7 +352,7 @@ void fullMatrix<double>::registerBindings(binding *b)
   cm->setArgNames("A","B","alpha","beta",NULL);
   cm->setDescription("this = beta*this + alpha * (A.B)");
   cm = cb->addMethod("print", &fullMatrix<double>::print);
-  cm->setArgNames("name",NULL);
+  cm->setArgNames("name","format",NULL);
   cm->setDescription("print the matrix");
   cm = cb->addMethod("invertInPlace", &fullMatrix<double>::invertInPlace);
   cm->setDescription("invert the matrix and return the determinant");

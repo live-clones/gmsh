@@ -68,7 +68,7 @@ class linearSystemFull : public linearSystem<scalar> {
   }
   virtual void zeroRightHandSide()
   {
-    for(int i = 0; i < _b->size(); i++) (*_b)(i) = 0.;
+    _b->setAll(0.);
   }
   virtual double normInfRightHandSide() const{
     double nor = 0.;
