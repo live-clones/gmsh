@@ -85,6 +85,8 @@ void linearSystemPETSc<fullMatrix<PetscScalar> >::getFromSolution(int row, fullM
 template<>
 void linearSystemPETSc<fullMatrix<PetscScalar> >::allocate(int nbRows) 
 {
+  if (this->_parameters.count("petscOptions"))
+    _try(PetscOptionsInsertString(this->_parameters["petscOptions"].c_str()));
   _blockSize = strtol (_parameters["blockSize"].c_str(), NULL, 10);
   if (_blockSize == 0)
     Msg::Error ("'blockSize' parameters must be set for linearSystemPETScBlock");
