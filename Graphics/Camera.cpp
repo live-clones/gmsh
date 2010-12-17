@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "Camera.h"
+#include "Options.h"
 #include "Gmsh.h"
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -10,23 +11,30 @@
 #include "Context.h"
 #include "drawContext.h"
 
-Camera::~Camera(){};
+
+#if defined(HAVE_FLTK)
+#include <FL/Fl_JPEG_Image.H>
+#include <FL/Fl_PNG_Image.H>
+#endif
+
+using namespace std;
+  
 
 void Camera::init(){
   on=true;  
   glFnear=0.1 ; 
   glFfar=10000;
-  //  eye_sep_ratio=.015;
-  eye_sep_ratio=.05;
-  // apparent angle of the screen height
-  aperture = 25;
-  focallength = 100.;
+  if ( CTX::instance()->eye_sep_ratio==0 )  opt_general_eye_sep_ratio(0, GMSH_SET, 1.5);
+  if ( CTX::instance()->camera_aperture==0) opt_general_camera_aperture(0, GMSH_SET, 40.);
+  if ( CTX::instance()->focallength_ratio==0)  opt_general_focallength_ratio(0, GMSH_SET, 1.);
+  eye_sep_ratio=CTX::instance()->eye_sep_ratio;
+  aperture = CTX::instance()->camera_aperture;
+  focallength =CTX::instance()->focallength_ratio* 100.;
   alongZ();
   this->lookAtCg();
-  eyesep=distance*eye_sep_ratio;
+  eyesep=distance*eye_sep_ratio/100.;
   ref_distance=distance;
   this->update();
-   
 }
 
 void Camera::alongX(){ 
@@ -70,9 +78,9 @@ void Camera::lookAtCg(){
   //distance=Lc*1.45;
    position=target-distance*view;
   this->update();
-  focallength=distance;
+  focallength=focallength_ratio*distance;
   ref_distance=distance;
-  eyesep=focallength*eye_sep_ratio;
+  eyesep=focallength*eye_sep_ratio/100.;
 }
 
 void Camera::giveViewportDimension(const int& W,const int& H){
@@ -93,6 +101,11 @@ void Camera::update() {
   normalize(up);
   normalize(right);
   normalize(view);
+  aperture = CTX::instance()->camera_aperture;
+  focallength_ratio=CTX::instance()->focallength_ratio;
+  focallength=focallength_ratio*distance;
+  eye_sep_ratio=CTX::instance()->eye_sep_ratio;
+  eyesep=focallength*eye_sep_ratio/100.;
   radians =  0.0174532925 * aperture / 2.;
   wd2 = glFnear * tan(radians);
   ndfl    = glFnear / focallength;
@@ -100,14 +113,20 @@ void Camera::update() {
 
 
 void Camera::affiche() {
+  cout<<"  ------------ GENERAL PARAMETERS ------------"   <<endl ;       
+  cout<<"  CTX aperture "<< CTX::instance()->camera_aperture <<endl ;    
+  cout<<"  CTX eyesep ratio "<< CTX::instance()->eye_sep_ratio <<endl ;    
+  cout<<"  CTX focallength ratio "<< CTX::instance()->focallength_ratio <<endl ;    
   cout<<"  ------------ CAMERA PARAMETERS ------------"   <<endl ;         
   cout<<"  position "<<  position.x<<","<<position.y<<","<<position.z <<endl ;    
   cout<<"  view "<<  view.x<<","<<view.y<<","<<view.z <<endl;              
   cout<<"  up "<< up.x<<","<<up.y<<","<<up.z <<endl;                 
   cout<<"  right "<< right.x<<","<<right.y<<","<<right.z  <<endl;              
   cout<<"  target "<<  target.x<<","<<target.y<<","<<target.z <<endl;   
+  cout<<"  focallength_ratio "<<focallength_ratio <<endl;  
   cout<<"  focallength "<<focallength <<endl;  
   cout<<"  aperture "<<aperture <<endl;     
+  cout<<"  eyesep_ratio "<<eye_sep_ratio <<endl;       
   cout<<"  eyesep "<<eyesep <<endl;       
   cout<<"  screenwidth "<<screenwidth <<endl;
   cout<<"  screenheight "<<screenheight <<endl;

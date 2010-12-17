@@ -3698,12 +3698,10 @@ double opt_general_stereo_mode(OPT_ARGS_NUM)
   if (CTX::instance()->stereo)         CTX::instance()->camera = 1 ;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))  {
-    FlGui::instance()->options->general.butt[17]->value
-      (CTX::instance()->stereo);    
-    if (CTX::instance()->stereo)      {
-    // when stereo mode is active camera mode is obligatory
-      FlGui::instance()->options->general.butt[18]->value
-      	(CTX::instance()->camera);
+    FlGui::instance()->options->general.butt[17]->value      (CTX::instance()->stereo);    
+    if (CTX::instance()->stereo) {
+      // when stereo mode is active camera mode is obligatory
+      FlGui::instance()->options->general.butt[18]->value      	(CTX::instance()->camera);
       FlGui::instance()->options->general.butt[18]->deactivate();
     }
     else{ 
@@ -3712,6 +3710,36 @@ double opt_general_stereo_mode(OPT_ARGS_NUM)
   }
 #endif
   return CTX::instance()->stereo ;
+}
+double opt_general_eye_sep_ratio(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)   
+    CTX::instance()->eye_sep_ratio =  (double)val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))   
+ FlGui::instance()->options->general.slider[0]->value  (CTX::instance()->eye_sep_ratio ) ;
+#endif
+  return CTX::instance()->eye_sep_ratio ;
+}
+double opt_general_focallength_ratio(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->focallength_ratio = (double) val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.slider[1]->value (CTX::instance()->focallength_ratio ) ;
+#endif
+  return CTX::instance()->focallength_ratio ;
+}
+double opt_general_camera_aperture(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->camera_aperture= (double)val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.slider[2]->value  (CTX::instance()->camera_aperture  )  ;
+#endif
+  return CTX::instance()->camera_aperture ;
 }
 
 double opt_general_camera_mode(OPT_ARGS_NUM)

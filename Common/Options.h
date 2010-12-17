@@ -22,7 +22,7 @@
 #define OPT_ARGS_STR   int num, int action, std::string val
 #define OPT_ARGS_NUM   int num, int action, double val
 #define OPT_ARGS_COL   int num, int action, unsigned int val
-
+ 
 // STRINGS
 
 std::string opt_general_axes_label0(OPT_ARGS_STR);
@@ -352,6 +352,9 @@ double opt_general_zoom_factor(OPT_ARGS_NUM);
 double opt_general_expert_mode(OPT_ARGS_NUM);
 double opt_general_stereo_mode(OPT_ARGS_NUM);
 double opt_general_camera_mode(OPT_ARGS_NUM);
+double opt_general_eye_sep_ratio(OPT_ARGS_NUM);
+double opt_general_focallength_ratio(OPT_ARGS_NUM);
+double opt_general_camera_aperture(OPT_ARGS_NUM);
 double opt_general_clip0a(OPT_ARGS_NUM);
 double opt_general_clip0b(OPT_ARGS_NUM);
 double opt_general_clip0c(OPT_ARGS_NUM);

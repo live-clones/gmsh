@@ -25,6 +25,9 @@
 #include "PViewOptions.h"
 #include "OS.h"
 #include "Context.h"
+//
+#include "graphicWindow.h"
+#include "openglWindow.h"
 
 extern StringXColor GeneralOptions_Color[] ;
 extern StringXColor GeometryOptions_Color[] ;
@@ -159,6 +162,18 @@ void general_options_cb(Fl_Widget *w, void *data)
   FlGui::instance()->options->showGroup(1);
 }
 
+static void general_camera_cb(Fl_Widget *w, void *data)
+{
+  optionWindow *o = FlGui::instance()->options;
+  o->activate((const char*)data);
+  opt_general_eye_sep_ratio(0, GMSH_SET, o->general.slider[0]->value());
+  opt_general_focallength_ratio(0, GMSH_SET, o->general.slider[1]->value());
+  opt_general_camera_aperture(0, GMSH_SET, o->general.slider[2]->value());
+  drawContext::global()->draw();
+ 
+}
+
+
 static void general_options_color_scheme_cb(Fl_Widget *w, void *data)
 {
   opt_general_color_scheme
@@ -237,7 +252,7 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
       o->general.value[4]->value(z);
     }
   }
-
+  //
   opt_general_axes_auto_position(0, GMSH_SET, o->general.butt[0]->value());
   opt_general_small_axes(0, GMSH_SET, o->general.butt[1]->value());
   opt_general_fast_redraw(0, GMSH_SET, o->general.butt[2]->value());
@@ -246,17 +261,54 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
     opt_general_double_buffer(0, GMSH_SET, o->general.butt[3]->value());
   if(opt_general_antialiasing(0, GMSH_GET, 0) != o->general.butt[12]->value())
     opt_general_antialiasing(0, GMSH_SET, o->general.butt[12]->value());
+
+
+
+  if (!CTX::instance()->stereo){
+    o->general.slider[0]->deactivate();
+    o->general.slider[1]->deactivate();
+  }
+  if (!CTX::instance()->camera){      o->general.slider[2]->deactivate();  }
+  else{      o->general.slider[2]->activate();  }
+
   if(opt_general_stereo_mode(0, GMSH_GET, 0) != o->general.butt[17]->value()) {  
     opt_general_stereo_mode(0, GMSH_SET, o->general.butt[17]->value());
     // when stereo mode is active camera mode is obligatory so camera button is desactivated
     if (CTX::instance()->stereo){
       o->general.butt[18]->value(1); 
       o->general.butt[18]->deactivate(); 
+      o->general.slider[0]->activate();
+      o->general.slider[1]->activate();
+      o->general.slider[2]->activate();
+      
+      //beginning of test to re-allocate gl for stereo : inspired from "split" method 
+      openglWindow::setLastHandled(0);
+      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++){
+	graphicWindow * graph = FlGui::instance()->graph[i];
+	graph->tile->clear();
+	graph->gl.clear();
+	openglWindow* stereo_gl=new openglWindow(0, 0, graph->tile->w() ,  graph->tile->h() );
+	stereo_gl->mode( FL_RGB | FL_DEPTH | FL_DOUBLE | FL_STEREO)    ;
+	stereo_gl->end();
+	graph->gl.push_back(stereo_gl );
+	graph->tile->add(stereo_gl);
+	stereo_gl->show();
+	cout<<" new gl windows for stereovision"<<stereo_gl<<endl;
+      }
+      //end of test to re-allocate gl for stereo : inspired from "split" method 
+      
+
     }
-    else    o->general.butt[18]->activate(); 
+    else  { 
+      o->general.butt[18]->activate();   
+      o->general.slider[0]->deactivate();
+      o->general.slider[1]->deactivate();
+    }
   }
   if(opt_general_camera_mode(0, GMSH_GET, 0) != o->general.butt[18]->value()) {
     opt_general_camera_mode(0, GMSH_SET, o->general.butt[18]->value()); 
+    if (!CTX::instance()->camera){    o->general.slider[2]->deactivate();    }
+    else{        o->general.slider[2]->activate();    }
   }
 
   opt_general_trackball(0, GMSH_SET, o->general.butt[5]->value());
@@ -341,6 +393,8 @@ static void general_arrow_param_cb(Fl_Widget *w, void *data)
     drawContext::global()->draw();
   }
 }
+
+
 
 void geometry_options_cb(Fl_Widget *w, void *data)
 {
@@ -1329,7 +1383,6 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[18]->type(FL_TOGGLE_BUTTON);
       general.butt[18]->callback(general_options_ok_cb);
 
-
       general.butt[17] = new Fl_Check_Button
         (L + width / 2, 2 * WB + 11 * BH, width/2-WB, BH, "Enable stereo");
       general.butt[17]->type(FL_TOGGLE_BUTTON);
@@ -1708,8 +1761,54 @@ optionWindow::optionWindow(int deltaFontSize)
 
       o->end();
     }
+
+    // new menu for stereo
+    {
+      Fl_Group *o = new Fl_Group
+        (L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Camera");
+      o->hide();
+
+      general.slider[0] = new Fl_Value_Slider(L + WB+ 2.*IW /10,2* WB + BH,2* BB, BH, "Eye sep ratio (%) [default 1.5]");
+      general.slider[0]->type(FL_HOR_NICE_SLIDER);
+      general.slider[0]->minimum(0.1);
+      if ( CTX::instance()->eye_sep_ratio==0.) opt_general_eye_sep_ratio(0, GMSH_SET, 1.5);
+      general.slider[0]->value( CTX::instance()->eye_sep_ratio);
+      general.slider[0]->step(.1);
+      general.slider[0]->callback(general_camera_cb);
+      general.slider[0]->maximum(10.);
+
+      general.slider[1] = new Fl_Value_Slider(L + WB+ 2.*IW /10,4* WB +2.5* BH,2*  BB, BH, "Focallength ratio [default 1.]");
+      general.slider[1]->type(FL_HOR_NICE_SLIDER);
+      general.slider[1]->minimum(0.1);
+      if ( CTX::instance()->focallength_ratio==0) opt_general_focallength_ratio(0, GMSH_SET, 1.);
+      general.slider[1]->value( CTX::instance()->focallength_ratio);
+      general.slider[1]->step(.1);
+      general.slider[1]->callback(general_camera_cb);
+      general.slider[1]->maximum(10.);
+  
+      general.slider[2] = new Fl_Value_Slider(L + WB+ 2.*IW /10,4* WB +6* BH,2*  BB, BH, "Camera Aperture (°) [default 40.]");
+      general.slider[2]->type(FL_HOR_NICE_SLIDER);
+      general.slider[2]->minimum(10.);
+      if ( CTX::instance()->camera_aperture==0) opt_general_camera_aperture(0, GMSH_SET, 40.);
+      general.slider[2]->value( CTX::instance()->camera_aperture);
+      general.slider[2]->step(1);
+      general.slider[2]->callback(general_camera_cb);
+      general.slider[2]->maximum(120.);
+   
+      if (!CTX::instance()->stereo){
+	general.slider[0]->deactivate();
+	general.slider[1]->deactivate();
+      }
+      if (!CTX::instance()->camera){ general.slider[2]->deactivate();      }
+      else{general.slider[2]->activate();      }
+
+      o->end();
+
+    }
+    //end of new menu for stereo
     o->end();
   }
+
   general.group->end();
 
   // Geometry options

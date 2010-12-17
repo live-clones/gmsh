@@ -135,6 +135,7 @@ class CTX {
   double lc;
   // double buffer/antialias/stereo graphics?
   int db, antialiasing, stereo, camera;
+  double eye_sep_ratio,focallength_ratio,camera_aperture;
   // orthogonal projection? 
   int ortho;
   // draw the bounding boxes and the rot center?

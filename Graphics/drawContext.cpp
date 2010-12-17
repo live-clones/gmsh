@@ -454,9 +454,8 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
   double zmax = std::max(fabs(CTX::instance()->min[2]),
 			 fabs(CTX::instance()->max[2]));
   if(zmax < CTX::instance()->lc) zmax = CTX::instance()->lc;
-  
-  if ( (CTX::instance()->camera) && (!CTX::instance()->stereo)  ) { // if we use the new camera mode
-      
+
+  if ( CTX::instance()->camera   ) { // if we use the camera mode
     double clip_near, clip_far;
     clip_near = 0.75 * CTX::instance()->clipFactor * zmax;
     clip_far = 75. * CTX::instance()->clipFactor * zmax;   
@@ -466,8 +465,11 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
     double w=(double)viewport[2];
     double h=(double)viewport[3];
     double ratio=w/h; 
-    double dx=.5*w*ratio;
-    double dy=.5*w;
+    //    double dx=.5*w*ratio;
+    //    double dy=.5*w;
+
+    double dx=1.5*tan(camera.radians)*w*ratio;
+    double dy=1.5*tan(camera.radians)*w;
     double dz=-w*1.25;
     glBegin(GL_QUADS);
     //glColor4ubv((GLubyte *) & CTX::instance()->color.bg);

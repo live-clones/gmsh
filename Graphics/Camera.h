@@ -56,6 +56,7 @@ public:
   XYZ right;              /* View right direction    */
   XYZ target;             /* center of rotation and screen   */
   double focallength;     /* Focal Length along vd   */
+  double focallength_ratio;      
   double aperture;        /* Camera aperture         */
   double eyesep;          /* Eye separation          */
   int screenwidth,screenheight;
@@ -65,7 +66,7 @@ public:
   double Lc, eye_sep_ratio, closeness, ndfl, glFnear, glFfar, radians, wd2;
   double glFleft,glFright,glFtop,glFbottom;
   Camera():stereoEnable(false),on(false){};
-  ~Camera();
+  ~Camera(){};
   void giveViewportDimension(const int& W,const int& H);
   void lookAtCg();
   void init();

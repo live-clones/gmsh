@@ -53,6 +53,10 @@ class drawContextFltk : public drawContextGlobal{
       for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++){
         FlGui::instance()->graph[i]->gl[j]->make_current();
         FlGui::instance()->graph[i]->gl[j]->redraw();
+	// to initialize the camera distance from model
+	drawContext * ctx = FlGui::instance()->graph[i]->gl[j]->getDrawContext();
+	//ctx->camera.init();
+	ctx->camera.update();
       }
     }
     FlGui::instance()->check();
@@ -803,6 +807,7 @@ void FlGui::callForSolverPlugin(int dim)
 void redraw_cb(Fl_Widget *w, void *data)
 {
   drawContext::global()->draw();
+     
 }
 
 void window_cb(Fl_Widget *w, void *data)
