@@ -26,7 +26,7 @@ static void clip_num_cb(Fl_Widget *w, void *data)
 
 static void clip_update_cb(Fl_Widget *w, void *data)
 {
-  if(FlGui::FlGui::instance()->clipping->group[0]->visible()){ // plane tab
+  if(FlGui::instance()->clipping->group[0]->visible()){ // plane tab
     int idx = FlGui::instance()->clipping->choice->value();
     CTX::instance()->geom.clip &= ~(1 << idx);
     CTX::instance()->mesh.clip &= ~(1 << idx);
@@ -173,6 +173,14 @@ static void clip_reset_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+static void clip_redraw_cb(Fl_Widget *w, void *data)
+{
+  // force update to make sure to set all planes active/inactive
+  // correctly when switching between the plane et box tabs
+  clip_update_cb(NULL, NULL);
+  drawContext::global()->draw();
+}
+
 clippingWindow::clippingWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
@@ -268,7 +276,7 @@ clippingWindow::clippingWindow(int deltaFontSize)
   {
     Fl_Return_Button *o = new Fl_Return_Button
       (width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Redraw");
-    o->callback(redraw_cb);
+    o->callback(clip_redraw_cb);
   }
   {
     Fl_Button *o = new Fl_Button

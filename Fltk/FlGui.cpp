@@ -807,7 +807,6 @@ void FlGui::callForSolverPlugin(int dim)
 void redraw_cb(Fl_Widget *w, void *data)
 {
   drawContext::global()->draw();
-     
 }
 
 void window_cb(Fl_Widget *w, void *data)
