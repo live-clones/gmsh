@@ -18,9 +18,11 @@ class clippingWindow{
   Fl_Window *win;
   Fl_Choice *choice;
   Fl_Multi_Browser *browser;
-  Fl_Value_Input *value[10];
+  Fl_Value_Input *plane[4];
+  Fl_Value_Input *box[6];
   Fl_Check_Button *butt[3];
   Fl_Group *group[2];
+  void fillBoxValuesFromPlaneValues();
  public:
   clippingWindow(int deltaFontSize=0);
   void resetBrowser();
