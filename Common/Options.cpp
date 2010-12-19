@@ -6221,7 +6221,7 @@ double opt_mesh_partition_metis_algorithm(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     int ival = (int)val;
-    if(ival < 1 || ival > 2)
+    if(ival < 1 || ival > 3)
       ival = (CTX::instance()->partitionOptions.num_partitions <= 8) ? 1 : 2;
     CTX::instance()->partitionOptions.algorithm = ival;
   }

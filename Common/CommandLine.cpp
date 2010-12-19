@@ -59,6 +59,7 @@ void PrintUsage(const char *name)
   Msg::Direct("  -1, -2, -3            Perform 1D, 2D or 3D mesh generation, then exit");
   Msg::Direct("  -refine               Perform uniform mesh refinement, then exit");
   Msg::Direct("  -part int             Partition after batch mesh generation");
+  Msg::Direct("  -partWeight <tri|quad|tet|prism|hex> = int    Weight of a triangle/... during partitioning");
   Msg::Direct("  -renumber             Renumber the mesh elements after batch mesh generation");
   Msg::Direct("  -saveall              Save all elements (discard physical group definitions)");
   Msg::Direct("  -o file               Specify output file name");
@@ -187,6 +188,43 @@ void GetOptions(int argc, char *argv[])
         }
         else
           Msg::Fatal("Missing number");
+      }
+      else if (!strcmp(argv[i] + 1,"partWeight")) {
+        i++;
+        bool check = true;
+        opt_mesh_partition_partitioner(0,GMSH_SET,2);     // set Metis partitioner 
+        opt_mesh_partition_metis_algorithm(0,GMSH_SET,3); // set partGraphKWay w/ weights
+        while (check) {
+          if (argv[i]) {
+            if (!strcmp(argv[i],"triangle")) {
+              i++;
+              opt_mesh_partition_tri_weight(0,GMSH_SET,atoi(argv[i]));
+            }
+            else if (!strcmp(argv[i],"quad")) {
+              i++;
+              opt_mesh_partition_qua_weight(0,GMSH_SET,atoi(argv[i]));
+            }
+            else if (!strcmp(argv[i],"tet")) {
+              i++;
+              opt_mesh_partition_tet_weight(0,GMSH_SET,atoi(argv[i]));
+            }
+            else if (!strcmp(argv[i],"prism")) {
+              i++;
+              opt_mesh_partition_pri_weight(0,GMSH_SET,atoi(argv[i]));
+            }
+            else if (!strcmp(argv[i],"pyramid")) {
+              i++;
+              opt_mesh_partition_pyr_weight(0,GMSH_SET,atoi(argv[i]));
+            }
+            else if (!strcmp(argv[i],"hex")) {
+              i++;
+              opt_mesh_partition_hex_weight(0,GMSH_SET,atoi(argv[i]));
+            }
+            else check = false;
+            i++;
+          }
+          else check = false;
+        }
       }
       else if(!strcmp(argv[i] + 1, "new")) {
         CTX::instance()->files.push_back("-new");
