@@ -192,6 +192,11 @@ class MElement
   // otherwise get the minimum radius of all the circles/spheres
   // tangent to the most boundaries of the element.
   virtual double getInnerRadius(){ return 0.; }
+  
+  // get the radius of the circumscribed circle/sphere if it exists,
+  // otherwise get the maximum radius of all the circles/spheres
+  // tangent to the most boundaries of the element.
+  virtual double getOuterRadius(){ return 0.; }
 
   // compute the barycenter
   virtual SPoint3 barycenter();

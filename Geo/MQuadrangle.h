@@ -39,6 +39,7 @@ class MQuadrangle : public MElement {
     v[2] = _v[2];
     v[3] = _v[3];
   }
+void projectInMeanPlane(double *xn, double *yn);
  public :
   MQuadrangle(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, int num=0, int part=0)
     : MElement(num, part)
@@ -141,6 +142,7 @@ class MQuadrangle : public MElement {
   // planar, we compute the mean plane due to the least-square
   // criterion.
   virtual double getInnerRadius();
+  virtual double getOuterRadius();
  private:
   int edges_quad(const int edge, const int vert) const
   {

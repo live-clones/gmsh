@@ -267,7 +267,11 @@ double MQuadrangle::angleShapeMeasure()
   return 1.;
 #endif
 }
-
+double MQuadrangle::getOuterRadius()
+{
+  // TO DO!!!!!!!!!!!!! (BRUNO SENY)
+  return 1.0;
+}
 double MQuadrangle::getInnerRadius()
 {
   // get the coordinates (x, y, z) of the 4 points defining the Quad

@@ -96,6 +96,8 @@ class meshPartitionOptions
     std::vector<int> nodalWeights;
 
     std::map<int, std::vector<int> > weightMap;
+
+    std::vector<int> tolerance;
   
   
   public:

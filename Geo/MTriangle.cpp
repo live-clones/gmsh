@@ -44,7 +44,21 @@ double MTriangle::getInnerRadius()
     dist[i] = e.getVertex(0)->distance(e.getVertex(1));
     k += 0.5 * dist[i];
   }
-  return sqrt(k * (k - dist[0]) * (k - dist[1]) * (k - dist[2])) / k;
+  double area = sqrt(k*(k-dist[0])*(k-dist[1])*(k-dist[2]));
+  return area/k;
+}
+
+double MTriangle::getOuterRadius()
+{
+  // radius of circle circumscribing a triangle
+  double dist[3], k = 0.;
+  for (int i = 0; i < 3; i++){
+    MEdge e = getEdge(i);
+    dist[i] = e.getVertex(0)->distance(e.getVertex(1));
+    k += 0.5 * dist[i];
+  }
+  double area = sqrt(k*(k-dist[0])*(k-dist[1])*(k-dist[2]));
+  return dist[0]*dist[1]*dist[2]/(4*area);
 }
 
 double MTriangle::angleShapeMeasure()
