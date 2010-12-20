@@ -236,7 +236,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
       _try(VecZeroEntries(_b));
     }
   }
-  int systemSolve()
+  virtual int systemSolve()
   {
     if (!_kspAllocated)
       _kspCreate();
@@ -266,10 +266,34 @@ class linearSystemPETSc : public linearSystem<scalar> {
 class binding;
 void linearSystemPETScRegisterBindings(binding *b);
 
+class linearSystemPETScBlockDouble : public linearSystem<fullMatrix<double> > {
+  bool _entriesPreAllocated, _isAllocated, _kspAllocated;
+  sparsityPattern _sparsity;
+  Mat _a;
+  Vec _b, _x;
+  KSP _ksp;
+  int _blockSize, _localRowStart, _localRowEnd, _globalSize, _localSize;
+  public:
+  void _kspCreate();
+  virtual void addToMatrix(int row, int col, const fullMatrix<double> &val);
+  virtual void addToRightHandSide(int row, const fullMatrix<double> &val);
+  virtual void getFromMatrix(int row, int col, fullMatrix<double> &val ) const;
+  virtual void getFromRightHandSide(int row, fullMatrix<double> &val) const;
+  virtual void getFromSolution(int row, fullMatrix<double> &val) const;
+  void allocate(int nbRows);
+  bool isAllocated() const;
+  int systemSolve();
+  void preAllocateEntries();
+  void clear();
+  void zeroMatrix();
+  void zeroRightHandSide();
+  double normInfRightHandSide() const;
+  linearSystemPETScBlockDouble();
+};
 
 #else
 
-template <class scalar>
+/*template <class scalar>
 class linearSystemPETSc : public linearSystem<scalar> {
  public :
   linearSystemPETSc()
@@ -288,8 +312,10 @@ class linearSystemPETSc : public linearSystem<scalar> {
   virtual void zeroRightHandSide() {}
   virtual int systemSolve() { return 0; }
   virtual double normInfRightHandSide() const{return 0;}
-};
+};*/
+
 
 #endif
+
 
 #endif

@@ -11,7 +11,6 @@
   #include "linearSystem.h"
   #include "linearSystemFull.h"
   #include "linearSystemPETSc.h"
-  #include "linearSystemPETSc.cpp" // needed for the specialization
   #include "linearSystemCSR.h"
   #include "GEntity.h"
   #include "GVertex.h"
@@ -79,15 +78,25 @@ namespace std {
    %template(GFaceList) list<GFace*, std::allocator<GFace*> >;
 }
 
+
+%include "GmshConfig.h"
 %include "Context.h"
 %include "fullMatrix.h"
+%template(fullMatrixDouble) fullMatrix<double>;
+%template(fullVectorDouble) fullVector<double>;
 %include "dofManager.h"
+%template(dofManagerDouble) dofManager<double>;
 %include "GModel.h"
 %include "function.h"
 %include "linearSystem.h"
+%template(linearSystemDouble) linearSystem<double>;
+%template(linearSystemFullMatrixDouble) linearSystem<fullMatrix<double> >;
 %include "linearSystemFull.h"
+%template(linearSystemFullDouble) linearSystemFull<double> ;
 %include "linearSystemPETSc.h"
+%template(linearSystemPETScDouble) linearSystemPETSc<double>;
 %include "linearSystemCSR.h"
+%template(linearSystemTAUCSDouble) linearSystemCSRTaucs<double>;
 %include "GEntity.h"
 %include "GVertex.h"
 %include "GEdge.h"
@@ -104,7 +113,6 @@ namespace std {
 %include "polynomialBasis.h"
 %include "Gauss.h"
 %include "meshPartitionOptions.h"
-%include "linearSystemCSR.h"
 %include "elasticitySolver.h"
 %include "PView.h"
 %include "PViewData.h"
@@ -115,15 +123,5 @@ namespace std {
 %include "SPoint3.h"
 %include "SPoint2.h"
 %include "GPoint.h"  
-
-%template(dofManagerDouble) dofManager<double>;
-%template(linearSystemDouble) linearSystem<double>;
-%template(linearSystemFullMatrixDouble) linearSystem<fullMatrix<double> >;
-%template(linearSystemFullDouble) linearSystemFull<double> ;
-%template(linearSystemPETScDouble) linearSystemPETSc<double>;
-%template(linearSystemTAUCSDouble) linearSystemCSRTaucs<double>;
-%template(fullMatrixDouble) fullMatrix<double>;
-%template(fullVectorDouble) fullVector<double>;
-%template(linearSystemPETScBlockDouble) linearSystemPETSc<fullMatrix<double> >;
 %include "functionPython.h"
 

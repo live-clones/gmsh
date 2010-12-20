@@ -86,7 +86,6 @@ class elasticitySolver
 
   void addDirichletBCLua (int dim, int entityId, int component, std::string luaFunctionName, lua_State *L);
   void addNeumannBCLua (int dim, int entityId, std::string luaFunctionName, lua_State *L);
-  void addNeumannBCFct (int dim, int entityId, const function* luaFunction, lua_State *L);
 
   #endif
 
