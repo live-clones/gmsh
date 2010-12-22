@@ -5,7 +5,7 @@
 #include "fullMatrix.h"
 #include <stdlib.h>
 #include "GmshMessage.h"
-
+#if not defined(PETSC_USE_COMPLEX)
 void linearSystemPETScBlockDouble::_kspCreate() {
   KSPCreate(PETSC_COMM_WORLD, &_ksp);
   if (this->_parameters.count("petscPrefix"))
@@ -205,6 +205,7 @@ double linearSystemPETScBlockDouble::normInfRightHandSide() const
   VecNorm(_b, NORM_INFINITY, &nor);
   return nor;
 }
+#endif
 
 #include "Bindings.h"
 void linearSystemPETScRegisterBindings(binding *b) 
