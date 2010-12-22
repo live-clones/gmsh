@@ -5,7 +5,6 @@
 #include "fullMatrix.h"
 #include <stdlib.h>
 #include "GmshMessage.h"
-#if not defined(PETSC_USE_COMPLEX)
 void linearSystemPETScBlockDouble::_kspCreate() {
   KSPCreate(PETSC_COMM_WORLD, &_ksp);
   if (this->_parameters.count("petscPrefix"))
@@ -14,29 +13,42 @@ void linearSystemPETScBlockDouble::_kspCreate() {
   _kspAllocated = true;
 }
 
-void linearSystemPETScBlockDouble::addToMatrix(int row, int col, const fullMatrix<PetscScalar> &val)
+void linearSystemPETScBlockDouble::addToMatrix(int row, int col, const fullMatrix<double> &val)
 {
   if (!_entriesPreAllocated)
     preAllocateEntries();
-  fullMatrix<PetscScalar> &modval = *const_cast<fullMatrix<PetscScalar> *>(&val);
-  for (int ii = 0; ii < val.size1(); ii++)
+  #ifdef PETSC_USE_COMPLEX
+  fullMatrix<std::complex<double> > modval(val.size1(), val.size2());
+  for (int ii = 0; ii < val.size1(); ii++) {
+    for (int jj = 0; jj < val.size1(); jj++) {
+      modval(ii, jj) = val (jj, ii);
+      modval(jj, ii) = val (ii, jj);
+    }
+  }
+  #else
+  fullMatrix<double> &modval = *const_cast<fullMatrix<double> *>(&val);
+  for (int ii = 0; ii < val.size1(); ii++) {
     for (int jj = 0; jj < ii; jj++) {
       PetscScalar buff = modval(ii, jj);
       modval(ii, jj) = modval (jj, ii);
       modval(jj, ii) = buff;
     }
+  }
+  #endif
   PetscInt i = row, j = col;
   MatSetValuesBlocked(_a, 1, &i, 1, &j, &modval(0,0), ADD_VALUES);
   //transpose back so that the original matrix is not modified
+  #ifndef PETSC_USE_COMPLEX
   for (int ii = 0; ii < val.size1(); ii++)
     for (int jj = 0; jj < ii; jj++) {
       PetscScalar buff = modval(ii,jj);
       modval(ii, jj) = modval (jj,ii);
       modval(jj, ii) = buff;
     }
+  #endif
 }
 
-void linearSystemPETScBlockDouble::addToRightHandSide(int row, const fullMatrix<PetscScalar> &val)
+void linearSystemPETScBlockDouble::addToRightHandSide(int row, const fullMatrix<double> &val)
 {
   for (int ii = 0; ii < _blockSize; ii++) {
     PetscInt i = row * _blockSize + ii;
@@ -45,24 +57,36 @@ void linearSystemPETScBlockDouble::addToRightHandSide(int row, const fullMatrix<
   }
 }
 
-void linearSystemPETScBlockDouble::getFromMatrix(int row, int col, fullMatrix<PetscScalar> &val ) const
+void linearSystemPETScBlockDouble::getFromMatrix(int row, int col, fullMatrix<double> &val ) const
 {
   Msg::Error("getFromMatrix not implemented for PETSc");
 }
 
-void linearSystemPETScBlockDouble::getFromRightHandSide(int row, fullMatrix<PetscScalar> &val) const
+void linearSystemPETScBlockDouble::getFromRightHandSide(int row, fullMatrix<double> &val) const
 {
   for (int i = 0; i < _blockSize; i++) {
     int ii = row*_blockSize +i;
+    #ifdef PETSC_USE_COMPLEX
+    PetscScalar s;
+    VecGetValues ( _b, 1, &ii, &s);
+    val(i,0) = s.real();
+    #else
     VecGetValues ( _b, 1, &ii, &val(i,0));
+    #endif
   }
 }
 
-void linearSystemPETScBlockDouble::getFromSolution(int row, fullMatrix<PetscScalar> &val) const 
+void linearSystemPETScBlockDouble::getFromSolution(int row, fullMatrix<double> &val) const 
 {
   for (int i = 0; i < _blockSize; i++) {
     int ii = row*_blockSize +i;
+    #ifdef PETSC_USE_COMPLEX
+    PetscScalar s;
+    VecGetValues ( _x, 1, &ii, &s);
+    val(i,0) = s.real();
+    #else
     VecGetValues ( _x, 1, &ii, &val(i,0));
+    #endif
   }
 }
 
@@ -205,7 +229,6 @@ double linearSystemPETScBlockDouble::normInfRightHandSide() const
   VecNorm(_b, NORM_INFINITY, &nor);
   return nor;
 }
-#endif
 
 #include "Bindings.h"
 void linearSystemPETScRegisterBindings(binding *b) 

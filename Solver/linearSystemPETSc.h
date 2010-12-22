@@ -266,7 +266,6 @@ class linearSystemPETSc : public linearSystem<scalar> {
 class binding;
 void linearSystemPETScRegisterBindings(binding *b);
 
-#if not defined(PETSC_USE_COMPLEX)
 class linearSystemPETScBlockDouble : public linearSystem<fullMatrix<double> > {
   bool _entriesPreAllocated, _isAllocated, _kspAllocated;
   sparsityPattern _sparsity;
@@ -291,7 +290,6 @@ class linearSystemPETScBlockDouble : public linearSystem<fullMatrix<double> > {
   double normInfRightHandSide() const;
   linearSystemPETScBlockDouble();
 };
-#endif
 
 #else
 
