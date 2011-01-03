@@ -265,16 +265,18 @@ class fullMatrix
   fullMatrix<scalar> & operator = (const fullMatrix<scalar> &other)
   {
     if(this != &other){
-      _r = other._r; 
-      _c = other._c;
-      if (_data && _own_data) delete[] _data;
-      if ((_r == 0) || (_c == 0))
-        _data=0;
-      else{
-        _data = new scalar[_r * _c];
-        _own_data=true;
-        for(int i = 0; i < _r * _c; ++i) _data[i] = other._data[i];
+      if (_r != other._r || _c != other._c) {
+        _r = other._r; 
+        _c = other._c;
+        if (_data && _own_data) delete[] _data;
+        if ((_r == 0) || (_c == 0))
+          _data=0;
+        else{
+          _data = new scalar[_r * _c];
+          _own_data=true;
+        }
       }
+      for(int i = 0; i < _r * _c; ++i) _data[i] = other._data[i];
     }
     return *this;
   }
@@ -311,12 +313,14 @@ class fullMatrix
   }
   void copy(const fullMatrix<scalar> &a)
   {
-    if(_data && _own_data)
-      delete [] _data;
-    _r = a._r;
-    _c = a._c;
-    _data = new scalar[_r * _c];
-    _own_data = true;
+    if (_r != a._r || _c != a._c) {
+      if(_data && _own_data)
+        delete [] _data;
+      _r = a._r;
+      _c = a._c;
+      _data = new scalar[_r * _c];
+      _own_data = true;
+    }
     setAll(a);
   }
   void mult_naive(const fullMatrix<scalar> &b, fullMatrix<scalar> &c) const
