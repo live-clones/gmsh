@@ -2592,7 +2592,7 @@ void GModel::registerBindings(binding *b)
   cm->setDescription("access a mesh vertex by tag, using the vertex cache");
   cm->setArgNames("tag", NULL);
   cm = cb->addMethod("getNumRegions", &GModel::getNumRegions);
-  cm->setDescription("return the number of rgions (3D geometrical entities)");
+  cm->setDescription("return the number of regions (3D geometrical entities)");
   cm = cb->addMethod("getNumFaces", &GModel::getNumFaces);
   cm->setDescription("return the number of faces (2D geometrical entities)");
   cm = cb->addMethod("getNumEdges", &GModel::getNumEdges);
@@ -2738,4 +2738,8 @@ void GModel::registerBindings(binding *b)
   cm = cb->addMethod("getFirstEdgeByStringTag", &GModel::getFirstEdgeByStringTag);
   cm->setDescription("return the first edge of the physical line with given tag.");
   cm->setArgNames("string tag",NULL);
+
+  cm = cb->addMethod("scaleMesh", &GModel::scaleMesh);
+  cm->setDescription("scale the mesh by a factor");
+  cm->setArgNames("factor",NULL);
 }
