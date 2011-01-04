@@ -22,11 +22,14 @@ static void printClosure(polynomialBasis::clCont &fullClosure, std::vector<int> 
       continue;
     }
     for (int j = 0; j < fullClosure[i].size(); j++) {
-      printf("%i ", fullClosure[i][j]);
+      printf("%2i ", fullClosure[i][j]);
     }
     printf ("  --  ");
     for (int j = 0; j < closures[closureRef[i]].size(); j++) {
-      printf("%i-%i ", fullClosure[i][closures[closureRef[i]][j]], closures[i][j]);
+      std::string equalSign = "-";
+      if (fullClosure[i][closures[closureRef[i]][j]] != closures[i][j])
+        equalSign = "#";
+      printf("%2i%s%2i ", fullClosure[i][closures[closureRef[i]][j]],equalSign.c_str(), closures[i][j]);
     }
     printf("\n");
   }
@@ -1206,6 +1209,41 @@ static void generateFaceClosurePrismFull(polynomialBasis::clCont &closureFull, s
   }
   static const int edges[] = {0, 1,  0, 2,  0, 3,  1, 2,  1, 4,  2, 5,  3, 4,  3, 5,  4, 5,  -1};
   addEdgeNodes(closureFull, edges, order);
+  if ( order < 2 )
+    return;
+  // face center nodes for p2 prism
+  static const int faces[5][4] = {{0, 2, 1, -1}, {3, 4, 5, -1}, {0, 1, 4,  3}, {0, 3, 5,  2}, {1, 2, 5,  4}};
+
+  if ( order == 2 ) {
+    int nextFaceNode = 15;
+    int numFaces = 5;
+    int numFaceNodes = 4;
+    std::map<int,int> nodeSum2Face;
+    for (int iFace = 0; iFace < numFaces ; iFace ++) {
+      int nodeSum = 0;
+      for (int iNode = 0; iNode < numFaceNodes; iNode++ ) {
+        nodeSum += faces[iFace][iNode];
+      }
+      nodeSum2Face[nodeSum] = iFace;
+    }
+    for (int i = 0; i < closureFull.size(); i++ ) {
+      for (int iFace = 0; iFace < numFaces; iFace++ ) {
+        int nodeSum = 0;
+        for (int iNode = 0; iNode < numFaceNodes; iNode++)
+          nodeSum += faces[iFace][iNode] < 0 ? faces[iFace][iNode] : closureFull[i][ faces[iFace][iNode] ];
+        std::map<int,int>::iterator it = nodeSum2Face.find(nodeSum);
+        if (it == nodeSum2Face.end() )
+          Msg::Error("Prism face not found");
+        int mappedFaceId = it->second;
+        if ( mappedFaceId > 1) {
+          closureFull[i].push_back(nextFaceNode + mappedFaceId - 2);
+        }
+      }
+    }
+  } else {
+    Msg::Error("Prisms of order %d not implemented",order);
+  }
+  
 }
 
 static void generate2dEdgeClosure(polynomialBasis::clCont &closure, int order, int nNod = 3)
