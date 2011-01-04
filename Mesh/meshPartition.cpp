@@ -437,7 +437,8 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
         int numflag = 0;
         // if metisOptions[0]=0 then default options
         int metisOptions[5];
-        float ubvec[options.ncon];
+		std::vector<float> ubvec(options.ncon);
+//        float ubvec[options.ncon];
         int edgeCut;
         const int iSec = 0;
         switch(options.algorithm) {
@@ -522,7 +523,7 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
             METIS_mCPartGraphKway
               (&n,&options.ncon,&graph.xadj[graph.section[iSec]],
                &graph.adjncy[graph.section[iSec]], &graph.vwgts[graph.section[iSec]], NULL, &wgtflag, &numflag,
-               &options.num_partitions,ubvec, metisOptions, &edgeCut,
+               &options.num_partitions,&ubvec[0], metisOptions, &edgeCut,
                &graph.partition[graph.section[iSec]]);
           }
           break;

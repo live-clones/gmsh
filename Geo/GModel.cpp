@@ -267,7 +267,7 @@ std::vector<GEntity*> GModel::getEdgesByStringTag(const std::string tag)
  std::map<int, std::vector<GEntity*> > physicalGroups[4];
  this->getPhysicalGroups(physicalGroups);
  allEdges = physicalGroups[1][this->getPhysicalNumber(1,tag)];
- 
+ return allEdges; 
 }
 GEdge *GModel::getFirstEdgeByStringTag(const std::string tag) 
 {

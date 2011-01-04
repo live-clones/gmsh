@@ -16,7 +16,9 @@ class Field {
   virtual double operator() (double x, double y, double z){ return 0.; }
 };
 #endif
-
+#if defined(_MSC_VER)
+inline double round(double x) { return floor(x + 0.5); }
+#endif
 class GMSH_GSHHSPlugin : public GMSH_PostPlugin
 {
 public:
@@ -559,7 +561,7 @@ public:
       }while(p!=i1);
       i0->to_stereo(x[2],y[2],reverse_stereo);
       alpha+=get_angle(x[0],y[0],x[1],y[1],x[2],y[2]);
-      return (int)round(alpha/(M_PI*2));
+	  return (int)round(alpha/(M_PI*2));
     }
     int length(iterator i0,iterator i1)
     {
