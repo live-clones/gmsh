@@ -122,27 +122,25 @@ static bool getExternalValues(PView *p, int index, int ient, int iele,
   PView *p2 = PView::list[index];
   PViewData *data2 = p2->getData();
 
-  if(opt->timeStep < data2->getNumTimeSteps() && 
-     iele < data2->getNumElements(opt->timeStep, ient)){
-    if(data2->getNumNodes(opt->timeStep, ient, iele) == numNodes){
-      numComp2 = data2->getNumComponents(opt->timeStep, ient, iele);
-      for(int i = 0; i < numNodes; i++)
-        for(int j = 0; j < numComp2; j++)
-          data2->getValue(opt->timeStep, ient, iele, i, j, val2[i][j]);
-      if(opt->rangeType == PViewOptions::Custom){
-        opt->externalMin = opt->customMin;
-        opt->externalMax = opt->customMax;
-      }
-      else if(opt->rangeType == PViewOptions::PerTimeStep){
-        opt->externalMin = data2->getMin(opt->timeStep);
-        opt->externalMax = data2->getMax(opt->timeStep);
-      }
-      else{
-        opt->externalMin = data2->getMin();
-        opt->externalMax = data2->getMax();
-      }
-      return true;
+  if(!data2->skipElement(opt->timeStep, ient, iele) &&
+     data2->getNumNodes(opt->timeStep, ient, iele) == numNodes){
+    numComp2 = data2->getNumComponents(opt->timeStep, ient, iele);
+    for(int i = 0; i < numNodes; i++)
+      for(int j = 0; j < numComp2; j++)
+        data2->getValue(opt->timeStep, ient, iele, i, j, val2[i][j]);
+    if(opt->rangeType == PViewOptions::Custom){
+      opt->externalMin = opt->customMin;
+      opt->externalMax = opt->customMax;
     }
+    else if(opt->rangeType == PViewOptions::PerTimeStep){
+      opt->externalMin = data2->getMin(opt->timeStep);
+      opt->externalMax = data2->getMax(opt->timeStep);
+    }
+    else{
+      opt->externalMin = data2->getMin();
+      opt->externalMax = data2->getMax();
+    }
+    return true;
   }
   return false;
 }
@@ -959,7 +957,9 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int typ
     for(int i = 0; i < numNodes; i++)
       val[i][0] = ComputeVonMises(val[i]);
     addScalarElement(p, type, xyz, val, pre, numNodes);
-  } else if (opt->tensorType == PViewOptions::Ellipse || opt->tensorType == PViewOptions::Ellipsoid) {
+  } 
+  else if (opt->tensorType == PViewOptions::Ellipse ||
+           opt->tensorType == PViewOptions::Ellipsoid) {
     if(opt->glyphLocation == PViewOptions::Vertex){
       double vval[3][4]= {0,0,0, 0,0,0, 0,0,0, 0,0,0};
       for(int i = 0; i < numNodes; i++){
@@ -976,11 +976,14 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int typ
           }
         }
         double lmax = std::max(S(0), std::max(S(1), S(2)));
-        unsigned int color = opt->getColor(lmax, opt->tmpMin, opt->tmpMax, false, (opt->intervalsType == PViewOptions::Discrete) ?  opt->nbIso : -1);
+        unsigned int color = opt->getColor
+          (lmax, opt->tmpMin, opt->tmpMax, false, 
+           (opt->intervalsType == PViewOptions::Discrete) ?  opt->nbIso : -1);
         unsigned int col[4] = {color, color, color, color};
         p->va_ellipses->add(vval[0], vval[1], vval[2], 0, col, 0, false);
       }
-    } else if(opt->glyphLocation == PViewOptions::COG){
+    }
+    else if(opt->glyphLocation == PViewOptions::COG){
       double vval[3][4]= {0,0,0, 0,0,0, 0,0,0, 0,0,0};
       for(int i = 0; i < numNodes; i++) {
         for (int j = 0; j < 3; j++) {
@@ -999,7 +1002,9 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int typ
         vval[2][0] += xyz[i][2]/numNodes;
       }
       double lmax = std::max(S(0), std::max(S(1), S(2)));
-      unsigned int color = opt->getColor(lmax, opt->tmpMin, opt->tmpMax, false, (opt->intervalsType == PViewOptions::Discrete) ?  opt->nbIso : -1);
+      unsigned int color = opt->getColor
+        (lmax, opt->tmpMin, opt->tmpMax, false, 
+         (opt->intervalsType == PViewOptions::Discrete) ?  opt->nbIso : -1);
       unsigned int col[4] = {color, color, color, color};
       p->va_ellipses->add(vval[0], vval[1], vval[2], 0, col, 0, false);
     }
@@ -1028,7 +1033,8 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int typ
       addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[0], pre);
       addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[1], pre);
       addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[2], pre);
-    } else
+    }
+    else
       addScalarElement(p, type, xyz, val, pre, numNodes);
   } 
 }
@@ -1251,7 +1257,8 @@ class initPView {
 
     Msg::Info("%d vertices in vertex arrays (%g Mb)", p->va_points->getNumVertices() + 
               p->va_lines->getNumVertices() + p->va_triangles->getNumVertices() + 
-              p->va_vectors->getNumVertices() + p->va_ellipses->getNumVertices(), p->va_points->getMemoryInMb() +
+              p->va_vectors->getNumVertices() + p->va_ellipses->getNumVertices(),
+              p->va_points->getMemoryInMb() +
               p->va_lines->getMemoryInMb() + p->va_triangles->getMemoryInMb() + 
               p->va_vectors->getMemoryInMb() + p->va_ellipses->getMemoryInMb());
 
