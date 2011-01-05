@@ -97,6 +97,10 @@ class polynomialBasis
   {
     return closures[id];
   }
+  inline const std::vector<int> &getFullClosure(int id) const
+  {
+    return fullClosures[id];
+  }
   inline int getClosureId(int iEl, int iSign=1, int iRot=0) const
   {
     return iEl + numFaces*(iSign == 1 ? 0 : 1) + 2*numFaces*iRot;
