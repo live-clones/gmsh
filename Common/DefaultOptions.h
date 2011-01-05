@@ -508,6 +508,12 @@ StringXNumber GeneralOptions_Number[] = {
 
   { F|O, "Camera" , opt_general_camera_mode, 0. ,
     "Enable camera view mode" },
+  { F|O, "CameraAperture" , opt_general_camera_aperture, 40. ,
+    "Camera aperture in degrees" },
+  { F|O, "CameraEyeSeparationRatio" , opt_general_eye_sep_ratio, 1.5 ,
+    "Eye separation ratio in % for stereo rendering" },
+  { F|O, "CameraFocalLengthRatio" , opt_general_focallength_ratio, 1.0 ,
+    "Camera Focal length ratio" },
   { F,   "Clip0A" , opt_general_clip0a , 1.0 ,
     "First coefficient in equation for clipping plane 0 (`A' in `AX+BY+CZ+D=0')" },
   { F,   "Clip0B" , opt_general_clip0b , 0.0 , 

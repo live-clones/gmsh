@@ -40,7 +40,6 @@ class optionWindow{
     Fl_Button *color[50];
     Fl_Input *input[20];
     Fl_Choice *choice[20];
-    Fl_Value_Slider *slider[20];
     spherePositionWidget *sphere;
   } general;
   struct{

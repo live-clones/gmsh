@@ -1,13 +1,13 @@
+// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+//
+// Contributed by Gilles Marckmann <gilles.marckmann@ec-nantes.fr>
 
 #ifndef _CAMERA_H_
 #define _CAMERA_H_
 
-
-/*
-typedef struct {
-  double x,y,z,w;
-} Quaternion;
-*/ 
 class Quaternion;
 
 class XYZ {
@@ -15,13 +15,11 @@ public:
   XYZ(){};
   ~XYZ(){};
   XYZ(double _x,double _y,double _z);
-  double x,y,z;
-  //  double length(XYZ &p);
-  //  void normalize(XYZ &p);
-  //  void rotate(Quaternion omega,XYZ axe) ; 
+  double x, y, z;
   void set(const  double & _x, const double & _y ,const  double & _z);
   XYZ (const Quaternion &R);
 };
+
 double length(XYZ &p);
 void normalize(XYZ &p);
 void rotate(Quaternion omega,XYZ axe) ; 
@@ -29,13 +27,12 @@ XYZ operator* (const double &a,const XYZ &T);
 XYZ operator+ (const XYZ &L,const XYZ &R);
 XYZ operator- (const XYZ &L,const XYZ &R);
 
-
 class Quaternion{
 public:
   double x,y,z,w;
   Quaternion(){}; 
   ~Quaternion(){};
-  Quaternion (const XYZ &R);
+  Quaternion(const XYZ &R);
 };
 
 double length(Quaternion &quat);
@@ -44,11 +41,8 @@ Quaternion conjugate(Quaternion quat);
 Quaternion mult(const Quaternion& A,const Quaternion& B);
 Quaternion operator *(const Quaternion &A, const Quaternion &B);
 
-
-using namespace std; 
-
 class Camera {
-public:
+ public:
   bool on;
   XYZ position;           /* camera position         */
   XYZ view;               /* View direction vector   */
@@ -65,8 +59,8 @@ public:
   bool stereoEnable;
   double Lc, eye_sep_ratio, closeness, ndfl, glFnear, glFfar, radians, wd2;
   double glFleft,glFright,glFtop,glFbottom;
-  Camera():stereoEnable(false),on(false){};
-  ~Camera(){};
+  Camera() : stereoEnable(false), on(false) {}
+  ~Camera(){}
   void giveViewportDimension(const int& W,const int& H);
   void lookAtCg();
   void init();
@@ -83,9 +77,8 @@ public:
   void tiltHeadRight();
 };  
 
-
 class mouseAndKeyboard {
-public:
+ public:
   bool button_left_down;
   bool button_middle_down;
   bool button_right_down;
@@ -94,10 +87,5 @@ public:
   mouseAndKeyboard() {};
   ~mouseAndKeyboard() {};
 };
-
-
- 
- 
-
 
 #endif

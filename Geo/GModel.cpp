@@ -1833,18 +1833,22 @@ GEdge *GModel::addNURBS(GVertex *start, GVertex *end,
 			std::vector<std::vector<double> > points, 
 			std::vector<double> knots,
 			std::vector<double> weights, 
-			std::vector<int> mult){  
+			std::vector<int> mult)
+{ 
   if(_factory)
     return _factory->addNURBS(this, start,end,points,knots,weights, mult);
   return 0;
 }
 
-void GModel::addRuledFaces (std::vector<std::vector<GEdge *> > edges){
+void GModel::addRuledFaces (std::vector<std::vector<GEdge *> > edges)
+{
   if(_factory)
     _factory->addRuledFaces(this, edges);
 }
 
-GFace* GModel::addFace (std::vector<GEdge *> edges, std::vector< std::vector<double > > points){
+GFace* GModel::addFace (std::vector<GEdge *> edges,
+                        std::vector< std::vector<double > > points)
+{
   if(_factory)
     return _factory->addFace(this, edges, points);
   return 0;
@@ -1921,7 +1925,8 @@ void GModel::createBoundaryLayer(std::vector<GEntity *> e, double h)
 #endif
 }
 
-GEntity *GModel::addPipe(GEntity *e, std::vector<GEdge *>  edges){
+GEntity *GModel::addPipe(GEntity *e, std::vector<GEdge *>  edges)
+{
   if(_factory) 
     return _factory->addPipe(this,e,edges);
   return 0;
