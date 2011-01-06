@@ -68,6 +68,9 @@ class SVector3 {
   operator double *() { return P; }
   void print(std::string name="") const
   { printf("Vector \'%s\':  %f  %f  %f\n",name.c_str(),P[0],P[1],P[2]); }
+
+  // Needed to allow the initialization of a SPoint3 from a SPoint3, a distance and a direction
+  SPoint3 point() const{return P;}
 };
 
 inline double dot(const SVector3 &a, const SVector3 &b)
