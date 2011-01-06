@@ -1330,6 +1330,140 @@ struct AttractorInfo{
   double u,v;
 };
 
+class AttractorAnisoCurveField : public Field {
+  ANNkd_tree *kdtree;
+  ANNpointArray zeronodes;
+  ANNidxArray index;
+  ANNdistArray dist;
+  std::list<int> edges_id;
+  double dMin, dMax, lMinTangent, lMaxTangent, lMinNormal, lMaxNormal;
+  int n_nodes_by_edge;  
+  std::vector<SVector3> tg;
+  public:
+  AttractorAnisoCurveField() : kdtree(0), zeronodes(0)
+  {
+    index = new ANNidx[1];
+    dist = new ANNdist[1];
+    n_nodes_by_edge = 20;
+    update_needed = true;
+    dMin = 0.1;
+    dMax = 0.5;
+    lMinNormal = 0.05;
+    lMinTangent = 0.5;
+    lMaxNormal = 0.5;
+    lMaxTangent = 0.5;
+    options["EdgesList"] = new FieldOptionList
+      (edges_id, "Indices of curves in the geometric model", &update_needed);
+    options["NNodesByEdge"] = new FieldOptionInt
+      (n_nodes_by_edge, "Number of nodes used to discretized each curve",
+       &update_needed);
+    options["dMin"] = new FieldOptionDouble
+      (dMin, "Minimum distance, bellow this distance from the curves, prescribe the minimum mesh sizes.");
+    options["dMax"] = new FieldOptionDouble
+      (dMax, "Maxmium distance, above this distance from the curves, prescribe the maximum mesh sizes.");
+    options["lMinTangent"] = new FieldOptionDouble
+      (lMinTangent, "Minimum mesh size in the direction tangeant to the closest curve.");
+    options["lMaxTangent"] = new FieldOptionDouble
+      (lMaxTangent, "Maximum mesh size in the direction tangeant to the closest curve.");
+    options["lMinNormal"] = new FieldOptionDouble
+      (lMinNormal, "Minimum mesh size in the direction normal to the closest curve.");
+    options["lMaxNormal"] = new FieldOptionDouble
+      (lMaxNormal, "Maximum mesh size in the direction normal to the closest curve.");
+  }
+  virtual bool isotropic () const {return false;}
+  ~AttractorAnisoCurveField()
+  {
+    if(kdtree) delete kdtree;
+    if(zeronodes) annDeallocPts(zeronodes);
+    delete[]index;
+    delete[]dist;
+  }
+  const char *getName()
+  {
+    return "AttractorAnisoCurve";
+  }
+  std::string getDescription()
+  {
+    return "Compute the distance from the nearest curve in a list. Then the mesh "
+           "size can be specified independently in the direction normal to the curve "
+           "and in the direction parallel to the curve (Each curve "
+           "is replaced by NNodesByEdge equidistant nodes and the distance from those "
+           "nodes is computed.)";
+  }
+  void update() {
+    if(zeronodes) {
+      annDeallocPts(zeronodes);
+      delete kdtree;
+    }
+    int totpoints = n_nodes_by_edge * edges_id.size();
+    if(totpoints){
+      zeronodes = annAllocPts(totpoints, 3);
+    }
+    tg.resize(totpoints);
+    int k = 0;
+    for(std::list<int>::iterator it = edges_id.begin();
+        it != edges_id.end(); ++it) {
+      Curve *c = FindCurve(*it);
+      if(c) {
+        for(int i = 0; i < n_nodes_by_edge; i++) {
+          double u = (double)i / (n_nodes_by_edge - 1);
+          Vertex V = InterpolateCurve(c, u, 0);
+          zeronodes[k][0] = V.Pos.X;
+          zeronodes[k][1] = V.Pos.Y;
+          zeronodes[k][2] = V.Pos.Z;
+          Vertex V2 = InterpolateCurve(c, u, 1);
+          tg[k] = SVector3(V2.Pos.X, V2.Pos.Y, V2.Pos.Z);
+          tg[k].normalize();
+          k++;
+        }
+      }
+      else {
+        GEdge *e = GModel::current()->getEdgeByTag(*it);
+        if(e) {
+          for(int i = 0; i < n_nodes_by_edge; i++) {
+            double u = (double)i / (n_nodes_by_edge - 1);
+            Range<double> b = e->parBounds(0);
+            double t = b.low() + u * (b.high() - b.low());
+            GPoint gp = e->point(t);
+            SVector3 d = e->firstDer(t);
+            zeronodes[k][0] = gp.x();
+            zeronodes[k][1] = gp.y();
+            zeronodes[k][2] = gp.z();
+            tg[k] = d;
+            tg[k].normalize();
+            k++;
+          }
+        }
+      }
+    }
+    kdtree = new ANNkd_tree(zeronodes, totpoints, 3);
+    update_needed = false;
+  }
+  void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0)
+  {
+    if(update_needed)
+      update();
+    double xyz[3] = { x, y, z };
+    kdtree->annkSearch(xyz, 1, index, dist);
+    double d = sqrt(dist[0]);
+    double lTg = d < dMin ? lMinTangent : d > dMax ? lMaxTangent : lMinTangent + (lMaxTangent - lMinTangent) * (d - dMin) / (dMax - dMin);
+    double lN = d < dMin ? lMinNormal : d > dMax ? lMaxNormal : lMinNormal + (lMaxNormal - lMinNormal) * (d - dMin) / (dMax - dMin);
+    SVector3 t = tg[index[0]];
+    SVector3 n0 = crossprod(t, fabs(t(0)) > fabs(t(1)) ? SVector3(0,1,0) : SVector3(1,0,0));
+    SVector3 n1 = crossprod(t, n0);
+    metr = SMetric3(1/lTg/lTg, 1/lN/lN, 1/lN/lN, t, n0, n1);
+  }
+  virtual double operator() (double X, double Y, double Z, GEntity *ge=0)
+  {
+    if(update_needed)
+      update();
+    double xyz[3] = { X, Y, Z };
+    kdtree->annkSearch(xyz, 1, index, dist);
+    double d = sqrt(dist[0]);
+    return std::max(d, 0.05);
+  }
+};
+
 class AttractorField : public Field
 {
   ANNkd_tree *kdtree;
@@ -1689,6 +1823,7 @@ FieldManager::FieldManager()
   map_type_name["MathEvalAniso"] = new FieldFactoryT<MathEvalFieldAniso>();
 #if defined(HAVE_ANN)
   map_type_name["Attractor"] = new FieldFactoryT<AttractorField>();
+  map_type_name["AttractorAnisoCurve"] = new FieldFactoryT<AttractorAnisoCurveField>();
 #endif
   map_type_name["MaxEigenHessian"] = new FieldFactoryT<MaxEigenHessianField>();
   background_field = -1;
