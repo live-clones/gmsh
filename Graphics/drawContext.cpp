@@ -455,36 +455,27 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
 			 fabs(CTX::instance()->max[2]));
   if(zmax < CTX::instance()->lc) zmax = CTX::instance()->lc;
 
-  if ( CTX::instance()->camera   ) { // if we use the camera mode
-    double clip_near, clip_far;
-    clip_near = 0.75 * CTX::instance()->clipFactor * zmax;
-    clip_far = 75. * CTX::instance()->clipFactor * zmax;   
+  if (CTX::instance()->camera) { // if we use the camera mode
     glDisable(GL_DEPTH_TEST);
     glPushMatrix();
     glLoadIdentity();
-    double w=(double)viewport[2];
-    double h=(double)viewport[3];
-    double ratio=w/h; 
-    //    double dx=.5*w*ratio;
-    //    double dy=.5*w;
-
-    double dx=1.5*tan(camera.radians)*w*ratio;
-    double dy=1.5*tan(camera.radians)*w;
-    double dz=-w*1.25;
+    double w = (double)viewport[2];
+    double h = (double)viewport[3];
+    double ratio = w / h; 
+    double dx = 1.5 * tan(camera.radians) * w * ratio;
+    double dy = 1.5 * tan(camera.radians) * w;
+    double dz = -w * 1.25;
     glBegin(GL_QUADS);
-    //glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
-    glColor3d(.8,.8,.95);
-    glVertex3i((int)-dx,(int)-dy,(int)dz);
-    glVertex3i((int) dx,(int)-dy,(int)dz);
-    //    glColor4ubv((GLubyte *) & CTX::instance()->color.bgGrad);
-    glColor3d(.1,.1,.3);
-    glVertex3i((int) dx,(int) dy,(int)dz);
-    glVertex3i((int)-dx,(int) dy,(int)dz);
+    glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
+    glVertex3i((int)-dx, (int)-dy, (int)dz);
+    glVertex3i((int) dx, (int)-dy, (int)dz);
+    glColor4ubv((GLubyte *) & CTX::instance()->color.bgGrad);
+    glVertex3i((int) dx, (int)dy, (int)dz);
+    glVertex3i((int)-dx, (int)dy, (int)dz);
     glEnd();
     glPopMatrix();
-    glEnable(GL_DEPTH_TEST);   
+    glEnable(GL_DEPTH_TEST);
   } 
-  
   else if(!CTX::instance()->camera){ // if not in camera mode
   
     double clip_near, clip_far;
