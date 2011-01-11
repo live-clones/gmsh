@@ -23,7 +23,7 @@ class laplaceTerm : public helmholtzTerm<double> {
     int nbSF = e->getNumShapeFunctions(); 
 
     fullMatrix<double> *mat;
-    mat = new fullMatrix<double>(nbSF,nbSF);
+    mat = new fullMatrix<double>(nbSF, nbSF);
     elementMatrix(se, *mat);
 
     fullVector<double> val(nbSF);
@@ -38,7 +38,7 @@ class laplaceTerm : public helmholtzTerm<double> {
     m.scale(0.);
     for (int i = 0; i < nbSF; i++)
       for (int j = 0; j < nbSF; j++)
-    	m(i) += -(*mat)(i,j) * val(j);
+    	m(i) += -(*mat)(i, j) * val(j);
   }
 };
 

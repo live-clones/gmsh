@@ -21,44 +21,44 @@ class QuadratureBase
 {
   public :
   virtual ~QuadratureBase(){}
-  virtual int getIntPoints(MElement *e,IntPt **GP) =0;
+  virtual int getIntPoints(MElement *e, IntPt **GP) =0;
 };
 
 
 class GaussQuadrature : public QuadratureBase
 {
  public :
-  enum IntegCases {Other,Val,Grad,ValVal,GradGrad};
+  enum IntegCases {Other, Val, Grad, ValVal, GradGrad};
  private :
   int order;
   IntegCases info;
  public :
-  GaussQuadrature(int order_=0):order(order_),info(Other) {}
-  GaussQuadrature(IntegCases info_):order(0),info(info_) {}
+  GaussQuadrature(int order_ = 0) : order(order_), info(Other) {}
+  GaussQuadrature(IntegCases info_) : order(0), info(info_) {}
   virtual ~GaussQuadrature(){}
-  int getIntPoints(MElement *e,IntPt **GP)
+  int getIntPoints(MElement *e, IntPt **GP)
   {
     int integrationOrder;
     int npts;
-    int geoorder=e->getPolynomialOrder();
+    int geoorder = e->getPolynomialOrder();
     switch(info)
     {
     case Other :
       integrationOrder = order;
       break;
     case Val :
-      integrationOrder=geoorder+1;
+      integrationOrder = geoorder + 1;
       break;
     case Grad :
-      integrationOrder=geoorder;
+      integrationOrder = geoorder;
       break;
     case ValVal :
-      integrationOrder=2*geoorder;
+      integrationOrder = 2 * geoorder;
       break;
     case GradGrad :
-      integrationOrder=3*(geoorder-1)+1;
+      integrationOrder = 3 * (geoorder - 1) + 1;
       break;
-    default : integrationOrder=1;
+    default : integrationOrder = 1;
     }
     e->getIntegrationPoints(integrationOrder, &npts, GP);
     return npts;

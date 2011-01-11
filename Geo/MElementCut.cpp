@@ -921,7 +921,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
         bool own = (eParent && !e->ownsParent()) ? false : true;
         if(poly[0].size()) {
           if(eType == MSH_TRI_B || eType == MSH_POLYG_B)
-            p1 = new MPolygonBorder(poly[0], ++numEle, ePart,
+            p1 = new MPolygonBorder(poly[0], ++numEle, ePart, own, parent,
                                     copy->getDomain(0), copy->getDomain(1));
           else p1 = new MPolygon(poly[0], ++numEle, ePart, own, parent);
           own = false;
@@ -936,7 +936,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
         }
         if(poly[1].size()) {
           if(eType == MSH_TRI_B || eType == MSH_POLYG_B)
-            p2 = new MPolygonBorder(poly[1], ++numEle, ePart,
+            p2 = new MPolygonBorder(poly[1], ++numEle, ePart, own, parent,
                                     copy->getDomain(0), copy->getDomain(1));
           else p2 = new MPolygon(poly[1], ++numEle, ePart, own, parent);
           elements[8][elementary].push_back(p2);

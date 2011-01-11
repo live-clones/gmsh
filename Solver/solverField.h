@@ -31,7 +31,7 @@ class SolverField : public FunctionSpace<T> // being able to use it instead of a
   dofManager<double> *dm;
   FunctionSpace<T> *fs;
  public:
-  SolverField(dofManager<double> *dm_,  FunctionSpace<T> *fs_) : dm(dm_),fs(fs_) {}
+  SolverField(dofManager<double> *dm_, FunctionSpace<T> *fs_) : dm(dm_), fs(fs_) {}
   virtual int getNumKeys(MVertex *ver) { return 1;}
   virtual int getNumKeys(MElement *ele) { return 1;}
  private:
@@ -44,60 +44,60 @@ class SolverField : public FunctionSpace<T> // being able to use it instead of a
     std::vector<Dof> D;
     std::vector<ValType> SFVals;
     std::vector<double> DMVals;
-    fs->getKeys(ele,D);
-    dm->getDofValue(D,DMVals);
-    fs->f(ele,u,v,w,SFVals);
-    val=ValType();
-    for (unsigned int i=0;i<D.size();++i)
-      val+=SFVals[i]*DMVals[i];
+    fs->getKeys(ele, D);
+    dm->getDofValue(D, DMVals);
+    fs->f(ele, u, v, w, SFVals);
+    val = ValType();
+    for (unsigned int i = 0; i < D.size(); ++i)
+      val += SFVals[i] * DMVals[i];
   }
 
   virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)
   {
     ValType val;
-    f(ele,u,v,w,val);
+    f(ele, u, v, w, val);
     vals.push_back(val);
   }
 
-  virtual void gradf(MElement *ele, double u, double v, double w,GradType &grad)
+  virtual void gradf(MElement *ele, double u, double v, double w, GradType &grad)
   {
     std::vector<Dof> D;
     std::vector<GradType> SFGrads;
     std::vector<double> DMVals;
-    fs->getKeys(ele,D);
-    dm->getDofValue(D,DMVals);
-    fs->gradf(ele,u,v,w,SFGrads);
-    grad=GradType();
-    for (unsigned int i=0;i<D.size();++i)
-      grad+= SFGrads[i] * DMVals[i];
+    fs->getKeys(ele, D);
+    dm->getDofValue(D, DMVals);
+    fs->gradf(ele, u, v, w, SFGrads);
+    grad = GradType();
+    for (unsigned int i = 0; i < D.size(); ++i)
+      grad += SFGrads[i] * DMVals[i];
   }
 
   // A quoi sert cette fonction ?? (Evalue le hessien au noeuds
-/*  virtual void hessf(MElement *ele, double u, double v, double w,HessType &hess)
+/*  virtual void hessf(MElement *ele, double u, double v, double w, HessType &hess)
   {
     // Pas besoin des dof etc
 //    std::vector<Dof> D;
     std::vector<HessType> SFHess;
 //    std::vector<double> DMVals;
-//    fs->getKeys(ele,D);
-//    dm->getDofValue(D,DMVals);
-    fs->hessf(ele,u,v,w,SFHess);
+//    fs->getKeys(ele, D);
+//    dm->getDofValue(D, DMVals);
+    fs->hessf(ele, u, v, w, SFHess);
 
-//    hess=HessType;
-//    for (int i=0;i<D.size();++i)
-//      hess+= SFHess[i] * DMVals[i];
+//    hess = HessType;
+//    for (int i = 0; i < D.size(); ++i)
+//      hess += SFHess[i] * DMVals[i];
   }*/
 
-  virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
+  virtual void gradf(MElement *ele, double u, double v, double w, std::vector<GradType> &grads)
   {
     GradType grad;
-    gradf(ele,u,v,w,grad);
+    gradf(ele, u, v, w, grad);
     grads.push_back(grad);
   }
-    virtual void hessfuvw(MElement *ele, double u, double v, double w,std::vector<HessType> &hess)
+    virtual void hessfuvw(MElement *ele, double u, double v, double w, std::vector<HessType> &hess)
   {
     //HessType hes;
-    fs->hessfuvw(ele,u,v,w,hess);
+    fs->hessfuvw(ele, u, v, w, hess);
   }
 };
 
@@ -108,7 +108,7 @@ class Formulation
   std::vector<FunctionSpace<double>* > scalarfs;
   std::vector<FunctionSpace<SVector3>* > vectorfs;
   std::vector<groupOfElements* > groups;
-  std::vector<std::pair<MElement*,std::vector<groupOfElements&> > > links;
+  std::vector<std::pair<MElement*, std::vector<groupOfElements&> > > links;
   dofManager<double> *dm; //
 
 };

@@ -14,9 +14,9 @@ class orthogonalTerm : public helmholtzTerm<double> {
   PView *_pview;
   dofManager<double> *_dofView;
   bool withDof;
-  std::map<MVertex*,double > *_distance_map;
+  std::map<MVertex*, double > *_distance_map;
  public:
- orthogonalTerm(GModel *gm, int iField, simpleFunction<double> *k, std::map<MVertex*,double > *distance_map)
+ orthogonalTerm(GModel *gm, int iField, simpleFunction<double> *k, std::map<MVertex*, double > *distance_map)
    : helmholtzTerm<double>(gm, iField, iField, k, 0), _distance_map(distance_map), withDof(false) {}
  orthogonalTerm(GModel *gm, int iField, simpleFunction<double> *k, PView *pview)
    : helmholtzTerm<double>(gm, iField, iField, k, 0), _pview(pview), withDof(false)   {}
@@ -92,7 +92,7 @@ class orthogonalTerm : public helmholtzTerm<double> {
     m.scale(0.); 
     for(int i = 0; i < nbSF; i++)
       for(int j = 0; j < nbSF; j++)
-	m(i) += -mat(i,j) * val(j);
+	m(i) += -mat(i, j) * val(j);
   }
 };
 

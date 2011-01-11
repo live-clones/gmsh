@@ -36,24 +36,24 @@ struct elasticField {
 
 struct BoundaryCondition
 {
-	int _tag; // tag for the dofManager
-  enum location{UNDEF,ON_VERTEX,ON_EDGE,ON_FACE,ON_VOLUME};
+  int _tag; // tag for the dofManager
+  enum location{UNDEF, ON_VERTEX, ON_EDGE, ON_FACE, ON_VOLUME};
   location onWhat; // on vertices or elements
   groupOfElements *g; // support for this BC
-  BoundaryCondition() : _tag(0),onWhat(UNDEF),g(0) {}
+  BoundaryCondition() : _tag(0), onWhat(UNDEF), g(0) {}
 };
 
 struct dirichletBC : public BoundaryCondition
 {
   int _comp; // component
   simpleFunction<double> *_f;
-  dirichletBC ():BoundaryCondition(),_comp(0),_f(0){}
+  dirichletBC ():BoundaryCondition(), _comp(0), _f(0){}
 };
 
 struct neumannBC  : public BoundaryCondition
 {
   simpleFunction<SVector3> *_f;
-  neumannBC () : BoundaryCondition(),_f(NULL){}
+  neumannBC () : BoundaryCondition(), _f(NULL){}
 };
 // an elastic solver ...
 class elasticitySolver
@@ -74,7 +74,7 @@ class elasticitySolver
   std::vector<dirichletBC> allDirichlet;
 
  public:
-  elasticitySolver(int tag) : _tag(tag),pAssembler(0),LagSpace(0),LagrangeMultiplierSpace(0) {}
+  elasticitySolver(int tag) : _tag(tag), pAssembler(0), LagSpace(0), LagrangeMultiplierSpace(0) {}
 
   elasticitySolver(GModel *model, int tag);
 
@@ -82,12 +82,12 @@ class elasticitySolver
   void addNeumannBC (int dim, int entityId, const std::vector<double> value);
   void addElasticDomain (int tag, double e, double nu);
 
-  #if defined (HAVE_LUA)
+#if defined (HAVE_LUA)
 
   void addDirichletBCLua (int dim, int entityId, int component, std::string luaFunctionName, lua_State *L);
   void addNeumannBCLua (int dim, int entityId, std::string luaFunctionName, lua_State *L);
 
-  #endif
+#endif
 
   virtual ~elasticitySolver()
   {

@@ -266,7 +266,6 @@ double MElement::getJacobian(double u, double v, double w, double jac[3][3])
       jac[j][2] += v->z() * gg[j];
     }
   }
-
   return _computeDeterminantAndRegularize(this, jac);
 }
 
@@ -290,7 +289,6 @@ double MElement::getJacobian(const fullMatrix<double> &gsf, double jac[3][3])
       jac[j][2] += v->z() * gsf(i, j);
     }
   }
-
   return _computeDeterminantAndRegularize(this, jac);
 }
 

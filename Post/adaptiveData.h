@@ -137,14 +137,13 @@ class adaptivePrism {
  public:
   bool visible;
   adaptivePoint *p[6];
-  adaptivePrism *e[12];
+  adaptivePrism *e[8];
   static std::list<adaptivePrism*> all;
   static std::set<adaptivePoint> allPoints;
   static int numNodes, numEdges;
  public:
-  adaptivePrism(adaptivePoint *p1, adaptivePoint *p2, 
-                      adaptivePoint *p3, adaptivePoint *p4, 
-          adaptivePoint *p5, adaptivePoint *p6)
+  adaptivePrism(adaptivePoint *p1, adaptivePoint *p2, adaptivePoint *p3, 
+                adaptivePoint *p4, adaptivePoint *p5, adaptivePoint *p6)
     : visible(false)
   {
     p[0] = p1;

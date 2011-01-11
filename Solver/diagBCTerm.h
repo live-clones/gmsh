@@ -43,12 +43,12 @@ class diagBCTerm : public femTerm<double> {
     const int nbSF = e->getNumShapeFunctions();
     for (int j = 0; j < nbSF; j++){
       for (int k = 0; k < nbSF; k++) {
-        m(j,k) = 0.0;
-        m(k,j) = 0.0;
+        m(j, k) = 0.0;
+        m(k, j) = 0.0;
       }
       MVertex *v = e->getShapeFunctionNode(j);
-      if( v->onWhat()->dim() < 2 ) m(j,j) = 1.0; 
-      else m(j,j) = 0.0;
+      if( v->onWhat()->dim() < 2 ) m(j, j) = 1.0; 
+      else m(j, j) = 0.0;
     }
   }
 };

@@ -391,15 +391,15 @@ class MPolygonBorder : public MPolygon {
   MElement* _domains[2];
   IntPt *_intpt;
  public:
-  MPolygonBorder(std::vector<MTriangle*> v, int num = 0, int part = 0,
-                  MElement* d1 = NULL, MElement* d2 = NULL)
-    : MPolygon(v, num, part), _intpt(0)
+  MPolygonBorder(std::vector<MTriangle*> v, int num = 0, int part = 0, bool own = false,
+                 MElement *p = NULL, MElement *d1 = NULL, MElement *d2 = NULL)
+    : MPolygon(v, num, part, own, p), _intpt(0)
   {
     _domains[0] = d1; _domains[1] = d2;
   }
-  MPolygonBorder(std::vector<MVertex*> v, int num = 0, int part = 0,
-                  MElement* d1 = NULL, MElement* d2 = NULL)
-    : MPolygon(v, num, part), _intpt(0)
+  MPolygonBorder(std::vector<MVertex*> v, int num = 0, int part = 0, bool own = false,
+                 MElement *p = NULL, MElement* d1 = NULL, MElement* d2 = NULL)
+    : MPolygon(v, num, part, own, p), _intpt(0)
   {
     _domains[0] = d1; _domains[1] = d2;
   }

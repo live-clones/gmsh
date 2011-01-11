@@ -45,9 +45,9 @@ class convexCombinationTerm : public femTerm<double> {
     const double _diff = 1.0;
     for (int j = 0; j < nbSF; j++){
       for (int k = 0; k < nbSF; k++){
-        m(j,k) = -1.*_diff;
+        m(j, k) = -1. * _diff;
       }
-      m(j,j) = (nbSF - 1) * _diff;
+      m(j, j) = (nbSF - 1) * _diff;
     }
   }
 
