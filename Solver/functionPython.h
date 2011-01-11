@@ -1,17 +1,25 @@
 #ifndef _FUNCTION_PYTHON_H_
 #define _FUNCTION_PYTHON_H_
 #include "Python.h"
+class functionPythonReturnMatrix : public fullMatrix<double> {
+  dataCacheMap *_cacheMap;
+  public:
+  void setDataCacheMap(dataCacheMap *cacheMap) {_cacheMap = cacheMap;}
+  dataCacheMap *getDataCacheMap() const {return _cacheMap;}
+};
+
 class functionPython : public function {
   PyObject *_pycallback, *_pyargs;
   PyObject *_swigR, *_swigCacheMap;
   std::vector<PyObject*> _swigA;
   std::string _luaFunctionName;
   std::vector<fullMatrix<double> > args;
-  fullMatrix<double> R;
+  functionPythonReturnMatrix R;
  public:
   void call (dataCacheMap *m, fullMatrix<double> &res) 
   {
     R.setAsProxy(res); 
+    R.setDataCacheMap(m);
     PyEval_CallObject(_pycallback, _pyargs);
   }
   functionPython (int nbCol, PyObject *callback, std::vector<const function*> dependencies)
@@ -19,7 +27,7 @@ class functionPython : public function {
   {
     args.resize(dependencies.size());
     _swigA.resize(args.size());
-    _swigR = SWIG_NewPointerObj((void*)&R,SWIGTYPE_p_fullMatrixT_double_t, 0);
+    _swigR = SWIG_NewPointerObj((void*)&R,SWIGTYPE_p_functionPythonReturnMatrix, 0);
     for (int i = 0; i < dependencies.size(); i++) {
       setArgument(args[i], dependencies[i]);
       _swigA[i] = SWIG_NewPointerObj((void*)&args[i],SWIGTYPE_p_fullMatrixT_double_t, 0);
