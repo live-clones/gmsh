@@ -27,6 +27,7 @@
 #define FORMAT_TEX   18
 #define FORMAT_VRML  19
 #define FORMAT_EPS   20
+#define FORMAT_MAIL  21
 #define FORMAT_PNG   22
 #define FORMAT_PDF   24
 #define FORMAT_POS   26

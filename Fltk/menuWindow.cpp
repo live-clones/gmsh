@@ -263,6 +263,8 @@ static int _save_med(const char *name){ return genericMeshFileDialog
     (name, "MED Options", FORMAT_MED, false, false); }
 static int _save_mesh(const char *name){ return genericMeshFileDialog
     (name, "MESH Options", FORMAT_MESH, false, true); }
+static int _save_mail(const char *name){ return genericMeshFileDialog
+    (name, "MAIL Options", FORMAT_MAIL, false, false); }
 static int _save_bdf(const char *name){ return bdfFileDialog(name); }
 static int _save_p3d(const char *name){ return genericMeshFileDialog
     (name, "P3D Options", FORMAT_P3D, false, false); }
@@ -305,6 +307,7 @@ static int _save_auto(const char *name)
   case FORMAT_VTK  : return _save_vtk(name);
   case FORMAT_MED  : return _save_med(name);
   case FORMAT_MESH : return _save_mesh(name);
+  case FORMAT_MAIL : return _save_mail(name);
   case FORMAT_BDF  : return _save_bdf(name);
   case FORMAT_DIFF : return _save_diff(name);
   case FORMAT_INP  : return _save_inp(name);
@@ -356,6 +359,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
     {"MED File" TT "*.med", _save_med},
 #endif
     {"Medit INRIA Mesh" TT "*.mesh", _save_mesh},
+    {"CEA Triangulation" TT "*.mail", _save_mail},
     {"Nastran Bulk Data File" TT "*.bdf", _save_bdf},
     {"Plot3D Structured Mesh" TT "*.p3d", _save_p3d},
     {"STL Surface Mesh" TT "*.stl", _save_stl},
