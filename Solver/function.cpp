@@ -345,6 +345,8 @@ dataCacheMap::~dataCacheMap()
 
 void dataCacheMap::setNbEvaluationPoints(int nbEvaluationPoints) 
 {
+  if (_nbEvaluationPoints == nbEvaluationPoints)
+    return;
   _nbEvaluationPoints = nbEvaluationPoints;
   for(std::set<dataCacheDouble*>::iterator it = _allDataCaches.begin();
       it != _allDataCaches.end(); it++){
