@@ -154,7 +154,6 @@ class adaptivePrism {
     p[5] = p6;
     e[0] = e[1] = e[2]  = e[3]  = NULL;
     e[4] = e[5] = e[6]  = e[7]  = NULL;
-    e[8] = e[9] = e[10] = e[11] = NULL;
   }
   inline double V() const
   {
