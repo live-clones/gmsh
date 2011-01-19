@@ -2626,6 +2626,18 @@ Extrude :
 		    &extr, $$);
       List_Delete($3);
     }
+  | tExtrude tSTRING '[' FExpr ']' '{' ListOfShapes 
+    {
+      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
+      extr.mesh.ViewIndex = $4;
+    }
+                       ExtrudeParameters '}'
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      ExtrudeShapes(BOUNDARY_LAYER, $7, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+		    &extr, $$);
+      List_Delete($7);
+    }
 
   // Deprecated extrude commands (for backward compatibility)
   | tExtrude tPoint '{' FExpr ',' VExpr '}' tEND

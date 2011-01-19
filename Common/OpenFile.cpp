@@ -260,6 +260,10 @@ int MergeFile(std::string fileName, bool warnIfMissing)
       return MergeFile(noExt);
     }
   }
+
+  // force reading msh file even if wrong extension if the header
+  // matches
+  // if(!strncmp(header, "$MeshFormat", 11)) ext = "";
   
   CTX::instance()->geom.draw = 0; // don't try to draw the model while reading
 

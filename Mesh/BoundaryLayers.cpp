@@ -12,21 +12,42 @@
 #include "meshGFace.h"
 #include "GmshMessage.h"
 
+#if defined(HAVE_POST)
+#include "PView.h"
+#include "OctreePost.h"
+#else
+class OctreePost{ int dummy; };
+#endif
+
 template<class T>
-static void addExtrudeNormals(std::vector<T*> &elements, int invert)
+static void addExtrudeNormals(std::vector<T*> &elements, int invert, 
+                              OctreePost *octree)
 {
-  for(unsigned int i = 0; i < elements.size(); i++){
-    MElement *ele = elements[i];
-    for(int j = 0; j < ele->getNumFaces(); j++){
-      MFace fac = ele->getFace(j);
-      SVector3 n = fac.normal();
-      if(invert) n *= -1.;
-      if(n[0] || n[1] || n[2]){
-        double nn[3] = {n[0], n[1], n[2]};
-        for(int k = 0; k < fac.getNumVertices(); k++){
-          MVertex *v = fac.getVertex(k);
-          SPoint3 p(v->x(), v->y(), v->z());
-          ExtrudeParams::normals->add(p[0], p[1], p[2], 3, nn);
+  if(octree){ // get extrusion direction from post-processing view
+    std::set<MVertex*> verts;
+    for(unsigned int i = 0; i < elements.size(); i++)
+      for(int j = 0; j < elements[i]->getNumVertices(); j++)
+        verts.insert(elements[i]->getVertex(j));
+    for(std::set<MVertex*>::iterator it = verts.begin(); it != verts.end(); it++){
+      MVertex *v = *it;
+      double nn[3];
+      octree->searchVector(v->x(), v->y(), v->z(), nn, 0);
+      ExtrudeParams::normals->add(v->x(), v->y(), v->z(), 3, nn);
+    }
+  }
+  else{ // get extrusion data from Gouraud-shaded element normals
+    for(unsigned int i = 0; i < elements.size(); i++){
+      MElement *ele = elements[i];
+      for(int j = 0; j < ele->getNumFaces(); j++){
+        MFace fac = ele->getFace(j);
+        SVector3 n = fac.normal();
+        if(invert) n *= -1.;
+        if(n[0] || n[1] || n[2]){
+          double nn[3] = {n[0], n[1], n[2]};
+          for(int k = 0; k < fac.getNumVertices(); k++){
+            MVertex *v = fac.getVertex(k);
+            ExtrudeParams::normals->add(v->x(), v->y(), v->z(), 3, nn);
+          }
         }
       }
     }
@@ -38,6 +59,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   std::set<GFace*> sourceFaces, otherFaces;
   std::set<GEdge*> sourceEdges, otherEdges;
   std::map<int, bool> sourceFaceInvert;
+  std::map<int, int> sourceUseView;
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
     GFace *gf = *it;
     if(gf->getNativeType() == GEntity::GmshModel && 
@@ -50,6 +72,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
           return 0;
         }
         if(ep->geo.Source < 0) sourceFaceInvert[from->tag()] = true;
+        if(ep->mesh.ViewIndex >= 0) sourceUseView[from->tag()] = ep->mesh.ViewIndex;
         sourceFaces.insert(from);
         std::list<GEdge*> e = from->edges();
         sourceEdges.insert(e.begin(), e.end());
@@ -79,10 +102,22 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   for(std::set<GFace*>::iterator it = sourceFaces.begin(); 
       it != sourceFaces.end(); it++){
     GFace *gf = *it;
-    addExtrudeNormals(gf->triangles, sourceFaceInvert.count(gf->tag()));
-    addExtrudeNormals(gf->quadrangles, sourceFaceInvert.count(gf->tag()));
+    int invert = sourceFaceInvert.count(gf->tag());
+    OctreePost *octree = 0;
+#if defined(HAVE_POST)
+    if(sourceUseView.count(gf->tag())){
+      int index = sourceUseView[gf->tag()];
+      if(index >= 0 && index < PView::list.size())
+        octree = new OctreePost(PView::list[index]);
+      else
+        Msg::Error("Unknown View[%d]: using normals instead", index);
+    }
+#endif
+    addExtrudeNormals(gf->triangles, invert, octree);
+    addExtrudeNormals(gf->quadrangles, invert, octree);
   }
-  ExtrudeParams::normals->normalize();
+  if(sourceUseView.empty())
+    ExtrudeParams::normals->normalize();
 
   // set the position of boundary layer points using the smooth normal
   // field 
