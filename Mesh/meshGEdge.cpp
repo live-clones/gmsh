@@ -367,14 +367,14 @@ void meshGEdge::operator() (GEdge *ge)
     N = ge->meshAttributes.nbPointsTransfinite;
   }
   else{
-    if(CTX::instance()->mesh.lcIntegrationPrecision > 1.e-2){
+    /*if(CTX::instance()->mesh.lcIntegrationPrecision > 1.e-2){ JF says this code was a test but it is not useful
       std::vector<IntPoint> lcPoints;
       Integration(ge, t_begin, t_end, F_Lc_usingInterpLcBis, lcPoints, 
                   CTX::instance()->mesh.lcIntegrationPrecision);
       buildInterpLc(lcPoints);
       a = Integration(ge, t_begin, t_end, F_Lc_usingInterpLc, Points, 1.e-8);
     }
-    else{
+    else*/{
       if (CTX::instance()->mesh.algo2d == ALGO_2D_BAMG) 
 	a = Integration(ge, t_begin, t_end, F_Lc_aniso, Points,
 			CTX::instance()->mesh.lcIntegrationPrecision);
