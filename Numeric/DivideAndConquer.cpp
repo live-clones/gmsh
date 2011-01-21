@@ -824,7 +824,7 @@ DocRecord::DocRecord(int n)
     numPoints(n), points(NULL), numTriangles(0), triangles(NULL)
 {
   if(numPoints)
-    points = new PointRecord[numPoints];
+    points = new PointRecord[numPoints+1000];
 }
 
 DocRecord::~DocRecord()
@@ -863,6 +863,48 @@ void DocRecord::setPoints(fullMatrix<double> *p)
     data(i) = (*p)(i, 2) < 0  ? (void *) 1 : NULL;
   }
 } 
+
+void DocRecord::initialize(){
+  int i;
+  for(i=0;i<numPoints;i++){
+	points[i].flag = 0;
+  }
+}
+
+bool DocRecord::remove_point(int index){
+  if(points[index].flag == 0){
+    points[index].flag = 1;
+    return 1;
+  }
+  else return 0;
+}
+
+void DocRecord::remove_all(){
+  int i;
+  int index;
+  int numPoints2;
+  PointRecord* points2;
+  numPoints2 = 0;
+  for(i=0;i<numPoints;i++){
+    if(points[i].flag==0){
+      numPoints2++;
+    }
+  }
+  points2 = new PointRecord[numPoints2];
+  index = 0;
+  for(i=0;i<numPoints;i++){
+	if(points[i].flag==0){
+	  points2[index].where.h = points[i].where.h;
+	  points2[index].where.v = points[i].where.v;
+	  points2[index].data = points[i].data;
+	  points2[index].flag = points[i].flag;
+	  index++;
+	}
+  }
+  delete [] points;
+  points = points2;
+  numPoints = numPoints2;
+}
 
 #include "Bindings.h"
 

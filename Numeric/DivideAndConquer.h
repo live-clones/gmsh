@@ -29,6 +29,7 @@ struct PointRecord {
   DPoint where;
   DListPeek adjacent;
   void *data;
+  int flag; //0:to be kept, 1:to be removed
   PointRecord() : adjacent(0), data (0) {}
 };
 
@@ -60,7 +61,6 @@ class DocRecord{
  private:
   int _hullSize;
   PointNumero *_hull;
-  STriangle *_adjacencies;
   PointNumero Predecessor(PointNumero a, PointNumero b);
   PointNumero Successor(PointNumero a, PointNumero b);
   int FixFirst(PointNumero x, PointNumero f);
@@ -76,7 +76,6 @@ class DocRecord{
   int Insert(PointNumero a, PointNumero b);
   int DListDelete(DListPeek *dlist, PointNumero oldPoint);
   int Delete(PointNumero a, PointNumero b);
-  PointNumero *ConvertDlistToArray(DListPeek *dlist, int *n);
   int ConvertDListToTriangles();
   void ConvertDListToVoronoiData();
   void RemoveAllDList();
@@ -84,6 +83,7 @@ class DocRecord{
   int CountPointsOnHull();
   void ConvexHull();
  public:
+  STriangle *_adjacencies;
   int numPoints;        // number of points
   PointRecord *points;  // points to triangulate
   int numTriangles;     // number of triangles
@@ -102,6 +102,10 @@ class DocRecord{
   void printMedialAxis(Octree *_octree, std::string, GFace *gf=NULL, GEdge *ge=NULL);
   double Lloyd (int);
   void voronoiCell (PointNumero pt, std::vector<SPoint2> &pts) const;
+  void initialize();
+  bool remove_point(int);
+  void remove_all();
+  PointNumero *ConvertDlistToArray(DListPeek *dlist, int *n);
   static void registerBindings(binding *b);
 };
 
