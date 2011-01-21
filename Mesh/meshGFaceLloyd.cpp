@@ -9,7 +9,7 @@
 #include "meshGFace.h"
 #include "BackgroundMesh.h"
 
-/*List of parameters to modify*/
+/*List of parameters to modify*/ 
 //Line 76 : the variable "number" contains the number of points to remove.
 //Line 165 : the variable "test" is printed by the script.
 //Line 190 : the variable "angle" specifies the orientation of the mesh.
