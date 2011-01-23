@@ -56,6 +56,32 @@ static void addExtrudeNormals(std::vector<T*> &elements, int invert,
   }
 }
 
+template<class T>
+static void addExtrudeNormals(std::set<T*> &entities, std::map<int, bool> &invert,
+                              std::map<int, int> &useView)
+{
+  for(typename std::set<T*>::iterator it = entities.begin(); it != entities.end(); it++){
+    T *ge = *it;
+    int inv = invert.count(ge->tag());
+      OctreePost *octree = 0;
+#if defined(HAVE_POST)
+      if(useView.count(ge->tag())){
+        int index = useView[ge->tag()];
+        if(index >= 0 && index < PView::list.size())
+          octree = new OctreePost(PView::list[index]);
+        else
+          Msg::Error("Unknown View[%d]: using normals instead", index);
+      }
+#endif
+      if(ge->dim() == 1)
+        addExtrudeNormals(((GEdge*)ge)->lines, inv, octree);
+      else if(ge->dim() == 2){
+        addExtrudeNormals(((GFace*)ge)->triangles, inv, octree);
+        addExtrudeNormals(((GFace*)ge)->quadrangles, inv, octree);
+      }
+  }
+}
+
 int Mesh2DWithBoundaryLayers(GModel *m)
 {
   std::set<GFace*> sourceFaces, otherFaces;
@@ -124,44 +150,10 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   // compute a normal field for all the source edges or faces
   if(ExtrudeParams::normals) delete ExtrudeParams::normals;
   ExtrudeParams::normals = new smooth_data();
-  
-  if(sourceFaces.empty()){
-    for(std::set<GEdge*>::iterator it = sourceEdges.begin(); 
-        it != sourceEdges.end(); it++){
-      GEdge *ge = *it;
-      int invert = sourceEdgeInvert.count(ge->tag());
-      OctreePost *octree = 0;
-#if defined(HAVE_POST)
-      if(sourceEdgeUseView.count(ge->tag())){
-        int index = sourceEdgeUseView[ge->tag()];
-        if(index >= 0 && index < PView::list.size())
-          octree = new OctreePost(PView::list[index]);
-        else
-          Msg::Error("Unknown View[%d]: using normals instead", index);
-      }
-#endif
-      addExtrudeNormals(ge->lines, invert, octree);
-    }
-  }
-  else{
-    for(std::set<GFace*>::iterator it = sourceFaces.begin(); 
-        it != sourceFaces.end(); it++){
-      GFace *gf = *it;
-      int invert = sourceFaceInvert.count(gf->tag());
-      OctreePost *octree = 0;
-#if defined(HAVE_POST)
-      if(sourceFaceUseView.count(gf->tag())){
-        int index = sourceFaceUseView[gf->tag()];
-        if(index >= 0 && index < PView::list.size())
-          octree = new OctreePost(PView::list[index]);
-        else
-          Msg::Error("Unknown View[%d]: using normals instead", index);
-      }
-#endif
-      addExtrudeNormals(gf->triangles, invert, octree);
-      addExtrudeNormals(gf->quadrangles, invert, octree);
-    }
-  }
+  if(sourceFaces.empty())
+    addExtrudeNormals(sourceEdges, sourceEdgeInvert, sourceEdgeUseView);
+  else
+    addExtrudeNormals(sourceFaces, sourceFaceInvert, sourceFaceUseView);
   if(sourceEdgeUseView.empty() && sourceFaceUseView.empty())
     ExtrudeParams::normals->normalize();
 
