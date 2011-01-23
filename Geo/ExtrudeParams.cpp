@@ -123,7 +123,7 @@ double ExtrudeParams::u(int iLayer, int iElemLayer)
 
 ExtrudeParams::ExtrusionElementMap::ExtrusionElementMap(ExtrudeParams*const parent)
 {
- _parent = parent;
+  _parent = parent;
 }
 
 std::vector<MElement*>* ExtrudeParams::
@@ -134,6 +134,7 @@ ExtrusionElementMap::getExtrudedElems(MElement* source)
     return &(it->second);
   return NULL;
 }
+
 void ExtrudeParams::ExtrusionElementMap::clear()
 {
   _extrudedElements.clear();
@@ -157,7 +158,7 @@ ExtrusionElementMap::addExtrudedElem(MElement* source, MElement* extrudedElem)
      totalNbElems += _parent->mesh.NbElmLayer[i];
    vec->reserve(totalNbElems);
    vec->push_back(extrudedElem);
-   _extrudedElements.insert(std::pair<MElement*,std::vector<MElement*> >(source,*vec));
+   _extrudedElements.insert(std::pair<MElement*, std::vector<MElement*> >(source, *vec));
   }
   SPoint3 np = extrudedElem->barycenter(), sp = source->barycenter();
 }
@@ -180,11 +181,11 @@ ExtrusionElementMap::propagatePartitionInformation(std::vector<int> *partitionSi
       continue;
     }
     std::vector<MElement*> extrudedElements = (*columnit).second;
-    for(unsigned int iE = 0;iE < extrudedElements.size();iE++) {
+    for(unsigned int iE = 0; iE < extrudedElements.size(); iE++) {
       if(extrudedElements[iE]) {
         extrudedElements[iE]->setPartition(sourceElem->getPartition());
         if (partitionSizes)
-          ++(*partitionSizes)[sourceElem->getPartition()-1];
+          ++(*partitionSizes)[sourceElem->getPartition() - 1];
       }
     }
   }
