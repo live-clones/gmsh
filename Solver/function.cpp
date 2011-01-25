@@ -517,6 +517,33 @@ function *functionScaleNew(const function *f0, const double s) {
   return new functionScale (f0, s);
 }
 
+// functionMean
+
+class functionMean : public function {
+  fullMatrix<double> _f0;
+public:
+  functionMean(const function *f0) : function(f0->getNbCol()) {
+    setArgument (_f0, f0);
+  }
+  void call(dataCacheMap *m, fullMatrix<double> &val)
+  {
+    double mean;
+    for(int j = 0; j < val.size2(); j++) {
+      mean = 0;
+      for(int i = 0; i < val.size1(); i++)
+        mean += _f0(i, j);
+      mean /= (double) val.size1();
+      for(int i = 0; i < val.size1(); i++)
+        val(i, j) = mean;
+    }
+  }
+};
+
+function *functionMeanNew(const function *f0) {
+  return new functionMean (f0);
+}
+
+
 // functionCoordinates (get XYZ coordinates)
 
 class functionCoordinates : public function {
