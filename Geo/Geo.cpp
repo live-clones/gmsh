@@ -1062,7 +1062,7 @@ static void DeletePoint(int ip)
     List_Read(Curves, i, &c);
     for(int j = 0; j < List_Nbr(c->Control_Points); j++) {
       if(!compareVertex(List_Pointer(c->Control_Points, j), &v)){
-                                        List_Delete(Curves);
+        List_Delete(Curves);
         return;
       }
     }
@@ -2115,12 +2115,12 @@ static int Extrude_ProtudePoint(int type, int ip,
     break;
   case BOUNDARY_LAYER:
     chapeau->Typ = MSH_POINT_BND_LAYER;
+    if(e) chapeau->boundaryLayerIndex = e->mesh.BoundaryLayerIndex;
     c = Create_Curve(NEWLINE(), MSH_SEGM_BND_LAYER, 1, NULL, NULL, -1, -1, 0., 1.);
     c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
-    if(e)
-      c->Extrude->mesh = e->mesh;
+    if(e) c->Extrude->mesh = e->mesh;
     List_Add(c->Control_Points, &pv);
     List_Add(c->Control_Points, &chapeau);
     c->beg = pv;
@@ -2281,8 +2281,19 @@ static int Extrude_ProtudeCurve(int type, int ic,
     break;
   case BOUNDARY_LAYER:
     chapeau->Typ = MSH_SEGM_BND_LAYER;
-    if(chapeau->beg) chapeau->beg->Typ = MSH_POINT_BND_LAYER;
-    if(chapeau->end) chapeau->end->Typ = MSH_POINT_BND_LAYER;
+    if(chapeau->beg){
+      chapeau->beg->Typ = MSH_POINT_BND_LAYER;
+      if(e) chapeau->beg->boundaryLayerIndex = e->mesh.BoundaryLayerIndex;
+    }
+    if(chapeau->end){
+      chapeau->end->Typ = MSH_POINT_BND_LAYER;
+      if(e) chapeau->end->boundaryLayerIndex = e->mesh.BoundaryLayerIndex;
+    }
+    for(int i = 0; i < List_Nbr(chapeau->Control_Points); i++){
+      Vertex *v;
+      List_Read(chapeau->Control_Points, i, &v);
+      if(e) v->boundaryLayerIndex = e->mesh.BoundaryLayerIndex;
+    }
     revpc = FindCurve(-chapeau->Num);
     if(revpc) revpc->Typ = MSH_SEGM_BND_LAYER;
     break;
@@ -2495,8 +2506,19 @@ static int Extrude_ProtudeSurface(int type, int is,
       c->Typ = MSH_SEGM_BND_LAYER;
       c = FindCurve(-c->Num);
       c->Typ = MSH_SEGM_BND_LAYER;
-      if(c->beg) c->beg->Typ = MSH_POINT_BND_LAYER;
-      if(c->end) c->end->Typ = MSH_POINT_BND_LAYER;
+      if(c->beg){
+        c->beg->Typ = MSH_POINT_BND_LAYER;
+        if(e) c->beg->boundaryLayerIndex = e->mesh.BoundaryLayerIndex;
+      }
+      if(c->end){
+        c->end->Typ = MSH_POINT_BND_LAYER;
+        if(e) c->end->boundaryLayerIndex = e->mesh.BoundaryLayerIndex;
+      }
+      for(int i = 0; i < List_Nbr(c->Control_Points); i++){
+        Vertex *v;
+        List_Read(c->Control_Points, i, &v);
+        if(e) v->boundaryLayerIndex = e->mesh.BoundaryLayerIndex;
+      }
     }
     break;
   case ROTATE:
@@ -2706,7 +2728,11 @@ static int compareTwoPoints(const void *a, const void *b)
   Vertex *q = *(Vertex **)a;
   Vertex *w = *(Vertex **)b;
 
-  if(q->Typ != w->Typ) return q->Typ - w->Typ;
+  if(q->Typ != w->Typ) 
+    return q->Typ - w->Typ;
+
+  if(q->boundaryLayerIndex != w->boundaryLayerIndex) 
+    return q->boundaryLayerIndex - w->boundaryLayerIndex;
 
   return comparePosition(a, b);
 }
@@ -2753,7 +2779,6 @@ static int compareTwoCurves(const void *a, const void *b)
         return comp;
     }
   }
-
   return 0;
 }
 

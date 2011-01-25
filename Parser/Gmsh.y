@@ -2629,7 +2629,10 @@ Extrude :
   | tExtrude tSTRING '[' FExpr ']' '{' ListOfShapes 
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
-      extr.mesh.ViewIndex = $4;
+      if(!strcmp($2, "Index"))
+        extr.mesh.BoundaryLayerIndex = $4;
+      else if(!strcmp($2, "View"))
+        extr.mesh.ViewIndex = $4;
     }
                        ExtrudeParameters '}'
     {

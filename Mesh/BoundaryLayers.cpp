@@ -22,8 +22,14 @@ class OctreePost{ int dummy; };
 
 template<class T>
 static void addExtrudeNormals(std::vector<T*> &elements, int invert, 
-                              OctreePost *octree)
+                              OctreePost *octree, int index)
 {
+  // FIXME: generalize this
+  if(index < 0 || index > 1){
+    Msg::Error("Boundary layer index should be 0 or 1");
+    return;
+  }
+
   if(octree){ // get extrusion direction from post-processing view
     std::set<MVertex*> verts;
     for(unsigned int i = 0; i < elements.size(); i++)
@@ -32,8 +38,10 @@ static void addExtrudeNormals(std::vector<T*> &elements, int invert,
     for(std::set<MVertex*>::iterator it = verts.begin(); it != verts.end(); it++){
       MVertex *v = *it;
       double nn[3];
+#if defined(HAVE_POST)
       octree->searchVector(v->x(), v->y(), v->z(), nn, 0);
-      ExtrudeParams::normals->add(v->x(), v->y(), v->z(), 3, nn);
+#endif
+      ExtrudeParams::normals[index]->add(v->x(), v->y(), v->z(), 3, nn);
     }
   }
   else{ // get extrusion data from Gouraud-shaded element normals
@@ -49,36 +57,43 @@ static void addExtrudeNormals(std::vector<T*> &elements, int invert,
         double nn[3] = {n[0], n[1], n[2]};
         for(int k = 0; k < ele->getNumVertices(); k++){
           MVertex *v = ele->getVertex(k);
-          ExtrudeParams::normals->add(v->x(), v->y(), v->z(), 3, nn);
+          ExtrudeParams::normals[index]->add(v->x(), v->y(), v->z(), 3, nn);
         }
       }
     }
   }
 }
 
+typedef std::set<std::pair<bool, int> > infoset;
+
 template<class T>
-static void addExtrudeNormals(std::set<T*> &entities, std::map<int, bool> &invert,
-                              std::map<int, int> &useView)
+static void addExtrudeNormals(std::set<T*> &entities, 
+                              std::map<int, infoset> &infos,
+                              std::map<int, int> &views)
 {
   for(typename std::set<T*>::iterator it = entities.begin(); it != entities.end(); it++){
     T *ge = *it;
-    int inv = invert.count(ge->tag());
+    int view = views[ge->tag()];
+    infoset info = infos[ge->tag()];
+    for(infoset::iterator it2 = info.begin(); it2 != info.end(); it2++){
+      bool invert = it2->first;
+      int index = it2->second;
       OctreePost *octree = 0;
 #if defined(HAVE_POST)
-      if(useView.count(ge->tag())){
-        int index = useView[ge->tag()];
-        if(index >= 0 && index < PView::list.size())
-          octree = new OctreePost(PView::list[index]);
+      if(view >= 0){
+        if(view >= 0 && view < PView::list.size())
+          octree = new OctreePost(PView::list[view]);
         else
-          Msg::Error("Unknown View[%d]: using normals instead", index);
+          Msg::Error("Unknown View[%d]: using normals instead", view);
       }
 #endif
       if(ge->dim() == 1)
-        addExtrudeNormals(((GEdge*)ge)->lines, inv, octree);
+        addExtrudeNormals(((GEdge*)ge)->lines, invert, octree, index);
       else if(ge->dim() == 2){
-        addExtrudeNormals(((GFace*)ge)->triangles, inv, octree);
-        addExtrudeNormals(((GFace*)ge)->quadrangles, inv, octree);
+        addExtrudeNormals(((GFace*)ge)->triangles, invert, octree, index);
+        addExtrudeNormals(((GFace*)ge)->quadrangles, invert, octree, index);
       }
+    }
   }
 }
 
@@ -86,8 +101,8 @@ int Mesh2DWithBoundaryLayers(GModel *m)
 {
   std::set<GFace*> sourceFaces, otherFaces;
   std::set<GEdge*> sourceEdges, otherEdges;
-  std::map<int, bool> sourceFaceInvert, sourceEdgeInvert;
-  std::map<int, int> sourceFaceUseView, sourceEdgeUseView;
+  std::map<int, infoset> sourceFaceInfo, sourceEdgeInfo;
+  std::map<int, int> sourceFaceView, sourceEdgeView;
 
   // 2D boundary layers
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
@@ -101,8 +116,9 @@ int Mesh2DWithBoundaryLayers(GModel *m)
           Msg::Error("Unknown source curve %d for boundary layer", ep->geo.Source);
           return 0;
         }
-        if(ep->geo.Source < 0) sourceEdgeInvert[from->tag()] = true;
-        if(ep->mesh.ViewIndex >= 0) sourceEdgeUseView[from->tag()] = ep->mesh.ViewIndex;
+        std::pair<bool, int> tags(ep->geo.Source < 0, ep->mesh.BoundaryLayerIndex);
+        sourceEdgeInfo[from->tag()].insert(tags);
+        sourceEdgeView[from->tag()] = ep->mesh.ViewIndex; 
         sourceEdges.insert(from);
       }
     }
@@ -120,8 +136,9 @@ int Mesh2DWithBoundaryLayers(GModel *m)
           Msg::Error("Unknown source face %d for boundary layer", ep->geo.Source);
           return 0;
         }
-        if(ep->geo.Source < 0) sourceFaceInvert[from->tag()] = true;
-        if(ep->mesh.ViewIndex >= 0) sourceFaceUseView[from->tag()] = ep->mesh.ViewIndex;
+        std::pair<bool, int> tags(ep->geo.Source < 0, ep->mesh.BoundaryLayerIndex);
+        sourceFaceInfo[from->tag()].insert(tags);
+        sourceFaceView[from->tag()] = ep->mesh.ViewIndex; 
         sourceFaces.insert(from);
         std::list<GEdge*> e = from->edges();
         sourceEdges.insert(e.begin(), e.end());
@@ -148,14 +165,17 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   std::for_each(sourceFaces.begin(), sourceFaces.end(), orientMeshGFace());
 
   // compute a normal field for all the source edges or faces
-  if(ExtrudeParams::normals) delete ExtrudeParams::normals;
-  ExtrudeParams::normals = new smooth_data();
+  for(int i = 0; i < 2; i++){
+    if(ExtrudeParams::normals[i]) delete ExtrudeParams::normals[i];
+    ExtrudeParams::normals[i] = new smooth_data();
+  }
   if(sourceFaces.empty())
-    addExtrudeNormals(sourceEdges, sourceEdgeInvert, sourceEdgeUseView);
+    addExtrudeNormals(sourceEdges, sourceEdgeInfo, sourceEdgeView);
   else
-    addExtrudeNormals(sourceFaces, sourceFaceInvert, sourceFaceUseView);
-  if(sourceEdgeUseView.empty() && sourceFaceUseView.empty())
-    ExtrudeParams::normals->normalize();
+    addExtrudeNormals(sourceFaces, sourceFaceInfo, sourceFaceView);
+  if(sourceEdgeView.empty() && sourceFaceView.empty())
+    for(int i = 0; i < 2; i++)
+      ExtrudeParams::normals[i]->normalize();
 
   // set the position of boundary layer points using the smooth normal
   // field 

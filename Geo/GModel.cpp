@@ -518,7 +518,6 @@ int GModel::setOrderN(int order, int linear, int incomplete)
 #endif
 }
 
-
 int GModel::getMeshStatus(bool countDiscrete)
 {
   for(riter it = firstRegion(); it != lastRegion(); ++it)

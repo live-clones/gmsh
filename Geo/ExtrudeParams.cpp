@@ -7,7 +7,7 @@
 #include "Geo.h"
 #include "ExtrudeParams.h"
 
-smooth_data* ExtrudeParams::normals = 0;
+smooth_data* ExtrudeParams::normals[2] = {0, 0};
 
 static void Projette(double p[3], double mat[3][3])
 {
@@ -26,6 +26,7 @@ ExtrudeParams::ExtrudeParams(int ModeEx) : elementMap(this)
   mesh.ExtrudeMesh = false;
   mesh.Recombine = false;
   mesh.ViewIndex = -1;
+  mesh.BoundaryLayerIndex = 0;
 }
 
 void ExtrudeParams::fill(int type,
@@ -94,7 +95,8 @@ void ExtrudeParams::Extrude(double t, double &x, double &y, double &z)
     z += dz;
     break;
   case BOUNDARY_LAYER:
-    if(normals) normals->get(x, y, z, 3, n);
+    if(normals[mesh.BoundaryLayerIndex])
+      normals[mesh.BoundaryLayerIndex]->get(x, y, z, 3, n);
     x += n[0] * t;
     y += n[1] * t;
     z += n[2] * t;

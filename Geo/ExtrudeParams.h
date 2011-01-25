@@ -37,7 +37,7 @@ public :
     bool empty();
     void propagatePartitionInformation(std::vector<int>* partitionSizes = NULL);
   } elementMap;
-  static smooth_data *normals;
+  static smooth_data *normals[2];
   ExtrudeParams(int Mode = EXTRUDED_ENTITY);
   void fill(int type,
             double T0, double T1, double T2,
@@ -55,7 +55,7 @@ public :
     std::vector<int> NbElmLayer;
     std::vector<double> hLayer;
     std::map<int, std::pair<double, std::vector<int> > > Holes;
-    int ViewIndex;
+    int ViewIndex, BoundaryLayerIndex;
   }mesh;
   struct{
     int Mode;
