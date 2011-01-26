@@ -3359,21 +3359,24 @@ Coherence :
         double d;
         List_Read($4, 0, &d);
         Vertex *target = FindPoint((int)d);
-        if(!target) yymsg(0, "Could not find Point %d", (int)d);
-        double x = target->Pos.X, y = target->Pos.Y, z = target->Pos.Z;
-        for(int i = 1; i < List_Nbr($4); i++){
-          List_Read($4, i, &d);
-          Vertex *source = FindPoint((int)d);
-          if(!source) yymsg(0, "Could not find Point %d", (int)d);
-          if(target && source){
-            source->Typ = target->Typ;
-            source->Pos.X = x;
-            source->Pos.Y = y;
-            source->Pos.Z = z;
-            source->boundaryLayerIndex = target->boundaryLayerIndex;
+        if(!target)
+          yymsg(0, "Could not find Point %d", (int)d);
+        else{
+          double x = target->Pos.X, y = target->Pos.Y, z = target->Pos.Z;
+          for(int i = 1; i < List_Nbr($4); i++){
+            List_Read($4, i, &d);
+            Vertex *source = FindPoint((int)d);
+            if(!source) yymsg(0, "Could not find Point %d", (int)d);
+            if(target && source){
+              source->Typ = target->Typ;
+              source->Pos.X = x;
+              source->Pos.Y = y;
+              source->Pos.Z = z;
+              source->boundaryLayerIndex = target->boundaryLayerIndex;
+            }
           }
+          ExtrudeParams::normalsCoherence.push_back(SPoint3(x, y, z));
         }
-        ExtrudeParams::normalsCoherence.push_back(SPoint3(x, y, z));
       }
       else
         yymsg(0, "Need at least two points to merge");
