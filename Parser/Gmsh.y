@@ -2626,22 +2626,6 @@ Extrude :
 		    &extr, $$);
       List_Delete($3);
     }
-  | tExtrude tSTRING '[' FExpr ']' '{' ListOfShapes 
-    {
-      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
-      if(!strcmp($2, "Index"))
-        extr.mesh.BoundaryLayerIndex = $4;
-      else if(!strcmp($2, "View"))
-        extr.mesh.ViewIndex = $4;
-    }
-                       ExtrudeParameters '}'
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShapes(BOUNDARY_LAYER, $7, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
-		    &extr, $$);
-      List_Delete($7);
-    }
-
   // Deprecated extrude commands (for backward compatibility)
   | tExtrude tPoint '{' FExpr ',' VExpr '}' tEND
     {
@@ -2892,6 +2876,14 @@ ExtrudeParameter :
 	}
       }
       List_Delete($6);
+    }
+  | tUsing tSTRING '[' FExpr ']' tEND
+    {
+      if(!strcmp($2, "Index"))
+        extr.mesh.BoundaryLayerIndex = $4;
+      else if(!strcmp($2, "View"))
+        extr.mesh.ViewIndex = $4;
+      Free($2);
     }
 ;
 
@@ -3360,6 +3352,33 @@ Coherence :
       else
         yymsg(0, "Unknown coherence command");
       Free($2);
+    }
+  | tCoherence tPoint '{' RecursiveListOfDouble '}' tEND
+    { 
+      if(List_Nbr($4) >= 2){
+        double d;
+        List_Read($4, 0, &d);
+        Vertex *target = FindPoint((int)d);
+        if(!target) yymsg(0, "Could not find Point %d", (int)d);
+        double x = target->Pos.X, y = target->Pos.Y, z = target->Pos.Z;
+        for(int i = 1; i < List_Nbr($4); i++){
+          List_Read($4, i, &d);
+          Vertex *source = FindPoint((int)d);
+          if(!source) yymsg(0, "Could not find Point %d", (int)d);
+          if(target && source){
+            source->Typ = target->Typ;
+            source->Pos.X = x;
+            source->Pos.Y = y;
+            source->Pos.Z = z;
+            source->boundaryLayerIndex = target->boundaryLayerIndex;
+          }
+        }
+        ExtrudeParams::normalsCoherence.push_back(SPoint3(x, y, z));
+      }
+      else
+        yymsg(0, "Need at least two points to merge");
+      ReplaceAllDuplicates();
+      List_Delete($4);
     }
 ;
 

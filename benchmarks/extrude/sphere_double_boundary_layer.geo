@@ -1,5 +1,3 @@
-Merge "sphere_boundary_layer_from_view.pos";
-
 lc = 0.2;
 
 Point(1) = {0.0,0.0,0.0,lc};
@@ -39,10 +37,5 @@ Ruled Surface(26) = {25};
 Line Loop(27) = {-4,12,-6};
 Ruled Surface(28) = {27};
 
-tmp[] = Extrude {
-  Surface{14:28:2}; Layers{5, 0.2}; Recombine; Using View[0]; Using Index[0];
-};
-
-// test 2nd bnd layer
-Extrude { Surface{14:28:2}; Layers{5, -0.2}; Recombine; Using View[0]; Using Index[1]; }
-
+Extrude { Surface{14:28:2}; Layers{5, 0.1}; Recombine; Using Index[0]; }
+Extrude { Surface{-14,-16,-18,-20,-22,-24,-26,-28}; Layers{5, 0.1}; Recombine; Using Index[1]; }

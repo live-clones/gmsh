@@ -8,6 +8,7 @@
 #include "ExtrudeParams.h"
 
 smooth_data* ExtrudeParams::normals[2] = {0, 0};
+std::vector<SPoint3> ExtrudeParams::normalsCoherence;
 
 static void Projette(double p[3], double mat[3][3])
 {
@@ -95,7 +96,8 @@ void ExtrudeParams::Extrude(double t, double &x, double &y, double &z)
     z += dz;
     break;
   case BOUNDARY_LAYER:
-    if(normals[mesh.BoundaryLayerIndex])
+    if(mesh.BoundaryLayerIndex >= 0 && mesh.BoundaryLayerIndex <= 1 &&
+       normals[mesh.BoundaryLayerIndex])
       normals[mesh.BoundaryLayerIndex]->get(x, y, z, 3, n);
     x += n[0] * t;
     y += n[1] * t;

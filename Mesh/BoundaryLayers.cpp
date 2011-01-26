@@ -53,31 +53,28 @@ static void addExtrudeNormals(std::vector<T*> &elements, int invert,
       else if(ele->getDim() == 1) // FIXME only valid in XY-plane
         n = crossprod(ele->getEdge(0).tangent(), SVector3(0, 0, 1));
       if(invert) n *= -1.;
-      if(n[0] || n[1] || n[2]){
-        double nn[3] = {n[0], n[1], n[2]};
-        for(int k = 0; k < ele->getNumVertices(); k++){
-          MVertex *v = ele->getVertex(k);
-          ExtrudeParams::normals[index]->add(v->x(), v->y(), v->z(), 3, nn);
-        }
+      double nn[3] = {n[0], n[1], n[2]};
+      for(int k = 0; k < ele->getNumVertices(); k++){
+        MVertex *v = ele->getVertex(k);
+        ExtrudeParams::normals[index]->add(v->x(), v->y(), v->z(), 3, nn);
       }
     }
   }
 }
 
-typedef std::set<std::pair<bool, int> > infoset;
+typedef std::set<std::pair<bool, std::pair<int, int> > > infoset;
 
 template<class T>
 static void addExtrudeNormals(std::set<T*> &entities, 
-                              std::map<int, infoset> &infos,
-                              std::map<int, int> &views)
+                              std::map<int, infoset> &infos)
 {
   for(typename std::set<T*>::iterator it = entities.begin(); it != entities.end(); it++){
     T *ge = *it;
-    int view = views[ge->tag()];
     infoset info = infos[ge->tag()];
     for(infoset::iterator it2 = info.begin(); it2 != info.end(); it2++){
       bool invert = it2->first;
-      int index = it2->second;
+      int index = it2->second.first;
+      int view = it2->second.second;
       OctreePost *octree = 0;
 #if defined(HAVE_POST)
       if(view >= 0){
@@ -102,7 +99,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   std::set<GFace*> sourceFaces, otherFaces;
   std::set<GEdge*> sourceEdges, otherEdges;
   std::map<int, infoset> sourceFaceInfo, sourceEdgeInfo;
-  std::map<int, int> sourceFaceView, sourceEdgeView;
+  bool normalize = true;
 
   // 2D boundary layers
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
@@ -116,9 +113,10 @@ int Mesh2DWithBoundaryLayers(GModel *m)
           Msg::Error("Unknown source curve %d for boundary layer", ep->geo.Source);
           return 0;
         }
-        std::pair<bool, int> tags(ep->geo.Source < 0, ep->mesh.BoundaryLayerIndex);
+        if(ep->mesh.ViewIndex >= 0) normalize = false;
+        std::pair<bool, std::pair<int, int> > tags(ep->geo.Source < 0, std::pair<int, int>
+                                                   (ep->mesh.BoundaryLayerIndex, ep->mesh.ViewIndex));
         sourceEdgeInfo[from->tag()].insert(tags);
-        sourceEdgeView[from->tag()] = ep->mesh.ViewIndex; 
         sourceEdges.insert(from);
       }
     }
@@ -136,9 +134,10 @@ int Mesh2DWithBoundaryLayers(GModel *m)
           Msg::Error("Unknown source face %d for boundary layer", ep->geo.Source);
           return 0;
         }
-        std::pair<bool, int> tags(ep->geo.Source < 0, ep->mesh.BoundaryLayerIndex);
+        if(ep->mesh.ViewIndex >= 0) normalize = false;
+        std::pair<bool, std::pair<int, int> > tags(ep->geo.Source < 0, std::pair<int, int>
+                                                   (ep->mesh.BoundaryLayerIndex, ep->mesh.ViewIndex));
         sourceFaceInfo[from->tag()].insert(tags);
-        sourceFaceView[from->tag()] = ep->mesh.ViewIndex; 
         sourceFaces.insert(from);
         std::list<GEdge*> e = from->edges();
         sourceEdges.insert(e.begin(), e.end());
@@ -170,10 +169,22 @@ int Mesh2DWithBoundaryLayers(GModel *m)
     ExtrudeParams::normals[i] = new smooth_data();
   }
   if(sourceFaces.empty())
-    addExtrudeNormals(sourceEdges, sourceEdgeInfo, sourceEdgeView);
+    addExtrudeNormals(sourceEdges, sourceEdgeInfo);
   else
-    addExtrudeNormals(sourceFaces, sourceFaceInfo, sourceFaceView);
-  if(sourceEdgeView.empty() && sourceFaceView.empty())
+    addExtrudeNormals(sourceFaces, sourceFaceInfo);
+
+  // enforce coherent normals at some points if necessary
+  for(int i = 0; i < ExtrudeParams::normalsCoherence.size(); i++){
+    SPoint3 &p(ExtrudeParams::normalsCoherence[i]);
+    double n0[3], n1[3];
+    ExtrudeParams::normals[0]->get(p.x(), p.y(), p.z(), 3, n0);
+    ExtrudeParams::normals[1]->get(p.x(), p.y(), p.z(), 3, n1);
+    ExtrudeParams::normals[0]->add(p.x(), p.y(), p.z(), 3, n1);
+    ExtrudeParams::normals[1]->add(p.x(), p.y(), p.z(), 3, n0);
+  }
+
+  // normalize normals if not using post-processing views
+  if(normalize)
     for(int i = 0; i < 2; i++)
       ExtrudeParams::normals[i]->normalize();
 

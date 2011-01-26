@@ -10,6 +10,7 @@
 #include <map>
 #include <string>
 #include "SmoothData.h"
+#include "SPoint3.h"
 #include "MElement.h"
 
 // geo.Mode
@@ -37,7 +38,6 @@ public :
     bool empty();
     void propagatePartitionInformation(std::vector<int>* partitionSizes = NULL);
   } elementMap;
-  static smooth_data *normals[2];
   ExtrudeParams(int Mode = EXTRUDED_ENTITY);
   void fill(int type,
             double T0, double T1, double T2,
@@ -64,6 +64,10 @@ public :
     double trans[3];
     double axe[3], pt[3], angle;
   }geo;
+
+  // for boundary layers
+  static smooth_data *normals[2];
+  static std::vector<SPoint3> normalsCoherence;
 };
 
 #endif
