@@ -11,8 +11,8 @@ BSpline(1) = {5, 4, 3, 2, 1};
 BSpline(2) = {1, 9, 8, 7, 5};
 Line(3) = {5, 6};
 
-Extrude { Line{1,-3}; Layers{5,0.1}; Using Index[0]; }
-Extrude { Line{2,3}; Layers{5,0.1}; Using Index[1]; }
+Extrude { Line{1,-3}; Layers{5,0.2}; Using Index[0]; }
+Extrude { Line{2,3}; Layers{5,0.2}; Using Index[1]; }
 
 // fix leading edge by hand
 Coherence Point {25, 16};

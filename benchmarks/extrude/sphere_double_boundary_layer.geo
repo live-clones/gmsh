@@ -37,5 +37,8 @@ Ruled Surface(26) = {25};
 Line Loop(27) = {-4,12,-6};
 Ruled Surface(28) = {27};
 
+Surface Loop(1)={14,16,18,20,22,24,26,28};
+Volume(2) = {1};
+
 Extrude { Surface{14:28:2}; Layers{5, 0.1}; Recombine; Using Index[0]; }
 Extrude { Surface{-14,-16,-18,-20,-22,-24,-26,-28}; Layers{5, 0.1}; Recombine; Using Index[1]; }
