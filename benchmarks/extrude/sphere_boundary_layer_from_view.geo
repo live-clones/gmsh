@@ -1,4 +1,5 @@
 Merge "sphere_boundary_layer_from_view.pos";
+Plugin(MathEval).Run;
 
 lc = 0.2;
 
@@ -40,9 +41,12 @@ Line Loop(27) = {-4,12,-6};
 Ruled Surface(28) = {27};
 
 tmp[] = Extrude {
-  Surface{14:28:2}; Layers{5, 0.2}; Recombine; Using View[0]; Using Index[0];
+  Surface{14:28:2}; Layers{5, 0.2}; Recombine; Using Index[0];
+  // can use scalar or vectpr view
+  //Using View[0]; 
+  Using View[1]; 
 };
 
 // test 2nd bnd layer
-Extrude { Surface{14:28:2}; Layers{5, -0.2}; Recombine; Using View[0]; Using Index[1]; }
+//Extrude { Surface{14:28:2}; Layers{5, -0.2}; Recombine; Using View[0]; Using Index[1]; }
 

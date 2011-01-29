@@ -15,6 +15,7 @@
 
 #if defined(HAVE_POST)
 #include "PView.h"
+#include "PViewData.h"
 #include "OctreePost.h"
 #else
 class OctreePost{ int dummy; };
@@ -22,40 +23,46 @@ class OctreePost{ int dummy; };
 
 template<class T>
 static void addExtrudeNormals(std::vector<T*> &elements, int invert, 
-                              OctreePost *octree, int index)
+                              OctreePost *octree, bool gouraud, int index)
 {
-  // FIXME: generalize this
   if(index < 0 || index > 1){
     Msg::Error("Boundary layer index should be 0 or 1");
     return;
   }
-
-  if(octree){ // get extrusion direction from post-processing view
+  
+  if(octree && !gouraud){ // get extrusion direction from post-processing view
     std::set<MVertex*> verts;
     for(unsigned int i = 0; i < elements.size(); i++)
       for(int j = 0; j < elements[i]->getNumVertices(); j++)
         verts.insert(elements[i]->getVertex(j));
     for(std::set<MVertex*>::iterator it = verts.begin(); it != verts.end(); it++){
       MVertex *v = *it;
-      double nn[3];
+      double nn[3] = {0., 0., 0.};
 #if defined(HAVE_POST)
       octree->searchVector(v->x(), v->y(), v->z(), nn, 0);
 #endif
       ExtrudeParams::normals[index]->add(v->x(), v->y(), v->z(), 3, nn);
     }
   }
-  else{ // get extrusion data from Gouraud-shaded element normals
+  else{ // get extrusion direction from Gouraud-shaded element normals
     for(unsigned int i = 0; i < elements.size(); i++){
       MElement *ele = elements[i];
       SVector3 n(0, 0, 0);
       if(ele->getDim() == 2)
         n = ele->getFace(0).normal();
-      else if(ele->getDim() == 1) // FIXME only valid in XY-plane
-        n = crossprod(ele->getEdge(0).tangent(), SVector3(0, 0, 1));
+      else if(ele->getDim() == 1) // FIXME: generalize this!
+        n = crossprod(ele->getEdge(0).tangent(), SVector3(0., 0., 1.));
       if(invert) n *= -1.;
       double nn[3] = {n[0], n[1], n[2]};
       for(int k = 0; k < ele->getNumVertices(); k++){
         MVertex *v = ele->getVertex(k);
+        if(octree){
+#if defined(HAVE_POST)
+          double d;
+          octree->searchScalarWithTol(v->x(), v->y(), v->z(), &d, 0);
+          for(int i = 0; i < 3; i++) nn[i] *= d;
+#endif
+        }
         ExtrudeParams::normals[index]->add(v->x(), v->y(), v->z(), 3, nn);
       }
     }
@@ -75,20 +82,24 @@ static void addExtrudeNormals(std::set<T*> &entities,
       bool invert = it2->first;
       int index = it2->second.first;
       int view = it2->second.second;
+      bool gouraud = true;
       OctreePost *octree = 0;
 #if defined(HAVE_POST)
       if(view >= 0){
-        if(view >= 0 && view < PView::list.size())
+        if(view >= 0 && view < PView::list.size()){
           octree = new OctreePost(PView::list[view]);
+          if(PView::list[view]->getData()->getNumVectors())
+            gouraud = false;
+        }
         else
           Msg::Error("Unknown View[%d]: using normals instead", view);
       }
 #endif
       if(ge->dim() == 1)
-        addExtrudeNormals(((GEdge*)ge)->lines, invert, octree, index);
+        addExtrudeNormals(((GEdge*)ge)->lines, invert, octree, gouraud, index);
       else if(ge->dim() == 2){
-        addExtrudeNormals(((GFace*)ge)->triangles, invert, octree, index);
-        addExtrudeNormals(((GFace*)ge)->quadrangles, invert, octree, index);
+        addExtrudeNormals(((GFace*)ge)->triangles, invert, octree, gouraud, index);
+        addExtrudeNormals(((GFace*)ge)->quadrangles, invert, octree, gouraud, index);
       }
     }
   }
@@ -114,8 +125,9 @@ int Mesh2DWithBoundaryLayers(GModel *m)
           return 0;
         }
         if(ep->mesh.ViewIndex >= 0) normalize = false;
-        std::pair<bool, std::pair<int, int> > tags(ep->geo.Source < 0, std::pair<int, int>
-                                                   (ep->mesh.BoundaryLayerIndex, ep->mesh.ViewIndex));
+        std::pair<bool, std::pair<int, int> > tags
+          (ep->geo.Source < 0, std::pair<int, int>
+           (ep->mesh.BoundaryLayerIndex, ep->mesh.ViewIndex));
         sourceEdgeInfo[from->tag()].insert(tags);
         sourceEdges.insert(from);
       }
@@ -135,8 +147,9 @@ int Mesh2DWithBoundaryLayers(GModel *m)
           return 0;
         }
         if(ep->mesh.ViewIndex >= 0) normalize = false;
-        std::pair<bool, std::pair<int, int> > tags(ep->geo.Source < 0, std::pair<int, int>
-                                                   (ep->mesh.BoundaryLayerIndex, ep->mesh.ViewIndex));
+        std::pair<bool, std::pair<int, int> > tags
+          (ep->geo.Source < 0, std::pair<int, int>
+           (ep->mesh.BoundaryLayerIndex, ep->mesh.ViewIndex));
         sourceFaceInfo[from->tag()].insert(tags);
         sourceFaces.insert(from);
         std::list<GEdge*> e = from->edges();
@@ -183,7 +196,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
     ExtrudeParams::normals[1]->add(p.x(), p.y(), p.z(), 3, n0);
   }
 
-  // normalize normals if not using post-processing views
+  // normalize extrusion directions if not using post-processing views
   if(normalize)
     for(int i = 0; i < 2; i++)
       ExtrudeParams::normals[i]->normalize();
