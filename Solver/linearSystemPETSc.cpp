@@ -159,6 +159,11 @@ int linearSystemPETScBlockDouble::systemSolve()
   KSPSolve(_ksp, _b, _x);
   return 1;
 }
+void linearSystemPETScBlockDouble::insertInSparsityPattern (int i, int j) {
+  i -= _localRowStart;
+  if (i<0 || i>= _localSize) return;
+  _sparsity.insertEntry (i,j);
+}
 
 void linearSystemPETScBlockDouble::preAllocateEntries() 
 {
@@ -220,7 +225,6 @@ linearSystemPETScBlockDouble::linearSystemPETScBlockDouble()
   _entriesPreAllocated = false;
   _isAllocated = false;
   _kspAllocated = false;
-  printf("init\n");
 }
 
 double linearSystemPETScBlockDouble::normInfRightHandSide() const

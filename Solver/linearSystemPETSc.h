@@ -288,6 +288,7 @@ class linearSystemPETScBlockDouble : public linearSystem<fullMatrix<double> > {
   void zeroMatrix();
   void zeroRightHandSide();
   double normInfRightHandSide() const;
+  void insertInSparsityPattern (int i, int j);
   linearSystemPETScBlockDouble();
 };
 
