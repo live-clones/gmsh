@@ -674,7 +674,8 @@ class functionLua : public function {
 // functionC
 void functionC::buildLibraryFromFile(const std::string cfilename, const std::string libfilename) {
   FILE *tmpMake = fopen("_tmpMake", "w");
-  fprintf(tmpMake, "include $(DG_BUILD_DIR)/CMakeFiles/dg.dir/flags.make\n"
+  fprintf(tmpMake, 
+      "include $(DG_BUILD_DIR)/CMakeFiles/dgshared.dir/flags.make\n"
       "%s : %s\n"
       "\tg++ -fPIC -shared -o $@ $(CXX_FLAGS) $(CXX_DEFINES) $<\n",
       libfilename.c_str(), cfilename.c_str());
