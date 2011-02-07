@@ -261,6 +261,58 @@ class linearSystemPETSc : public linearSystem<scalar> {
     return 1;
   }
   Mat &getMatrix(){ return _a; }
+  
+  std::vector<double> getData()
+  {
+    _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
+    _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
+    PetscScalar *v;
+    _try(MatGetArray(_a,&v));
+    MatInfo info;
+    _try(MatGetInfo(_a,MAT_LOCAL,&info));
+    std::vector<double> data; // Maybe I should reserve or resize (SAM)
+    for (int i = 0; i < info.nz_allocated; i++)
+      data.push_back(v[i]);
+    _try(MatRestoreArray(_a,&v));
+    return data;
+  }
+
+  std::vector<int> getRowPointers()
+  {
+    _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
+    _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
+    PetscInt *rows;
+    PetscInt *columns;
+    PetscInt n;
+    PetscTruth done;
+    _try(MatGetRowIJ(_a,0,PETSC_FALSE,PETSC_FALSE,&n,&rows,&columns,&done));        //case done == PETSC_FALSE should be handled
+    std::vector<int> rowPointers; // Maybe I should reserve or resize (SAM)
+    for (int i = 0; i <= n; i++)
+      rowPointers.push_back(rows[i]);
+    _try(MatRestoreRowIJ(_a,0,PETSC_FALSE,PETSC_FALSE,&n,&rows,&columns,&done));
+    return rowPointers;
+  }
+
+  std::vector<int> getColumnsIndices()
+  {
+    _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
+    _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
+    PetscInt *rows;
+    PetscInt *columns;
+    PetscInt n;
+    PetscTruth done;
+    _try(MatGetRowIJ(_a,0,PETSC_FALSE,PETSC_FALSE,&n,&rows,&columns,&done));        //case done == PETSC_FALSE should be handled
+    MatInfo info;
+    _try(MatGetInfo(_a,MAT_LOCAL,&info));
+    std::vector<int> columnIndices; // Maybe I should reserve or resize (SAM)
+    for (int i = 0; i <  info.nz_allocated; i++)
+      columnIndices.push_back(columns[i]);
+    _try(MatRestoreRowIJ(_a,0,PETSC_FALSE,PETSC_FALSE,&n,&rows,&columns,&done));
+    return columnIndices;
+  }
+
+
+  
 };
 
 class binding;
