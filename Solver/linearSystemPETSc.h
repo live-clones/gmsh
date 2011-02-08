@@ -262,7 +262,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
   }
   Mat &getMatrix(){ return _a; }
   
-  std::vector<double> getData()
+  std::vector<scalar> getData()
   {
     _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
     _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
@@ -270,7 +270,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
     _try(MatGetArray(_a,&v));
     MatInfo info;
     _try(MatGetInfo(_a,MAT_LOCAL,&info));
-    std::vector<double> data; // Maybe I should reserve or resize (SAM)
+    std::vector<scalar> data; // Maybe I should reserve or resize (SAM)
     for (int i = 0; i < info.nz_allocated; i++)
       data.push_back(v[i]);
     _try(MatRestoreArray(_a,&v));
