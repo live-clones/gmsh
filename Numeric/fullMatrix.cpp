@@ -156,6 +156,27 @@ void fullMatrix<std::complex<double> >::multAddy(const fullVector<std::complex<d
                  &beta, y._data, &INCY);
 }
 
+
+template<>
+void fullMatrix<double>::multOnBlock(const fullMatrix<double> &b, const int ncol, const int fcol, const int alpha_, const int beta_, fullVector<double> &c,const int row) const
+{
+  int M = 1, N = ncol, K = b.size1() ;
+  int LDA = _r, LDB = b.size1(), LDC = 1;
+  double alpha = alpha_, beta = beta_;
+  F77NAME(dgemm)("N", "N", &M, &N, &K, &alpha, _data, &LDA, &(b._data[fcol*K]), &LDB,
+                 &beta, &(c._data[fcol]), &LDC);
+}
+
+template<>
+void fullMatrix<double>::multWithATranspose(const fullVector<double> &x, const int alpha_, const int beta_,fullVector<double> &y) const
+{
+  int M = _r, N = _c, LDA = _r, INCX = 1, INCY = 1;
+  double alpha = alpha_, beta = beta_;
+  F77NAME(dgemv)("T", &M, &N, &alpha, _data, &LDA, x._data, &INCX,
+                 &beta, y._data, &INCY);
+
+}
+
 #endif
 
 

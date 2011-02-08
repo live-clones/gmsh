@@ -517,6 +517,35 @@ class fullMatrix
     }
   }
 
+// specific functions for dgshell
+  void mult_naiveBlock(const fullMatrix<scalar> &b, const int ncol, const int fcol, const int alpha, const int beta, fullVector<scalar> &c, const int row=0) const
+  {
+    if(beta != 1)
+      c.scale(beta);
+    for(int j = fcol; j < fcol+ncol; j++)
+      for(int k = 0; k < _c ; k++)
+          c._data[j] += alpha*(*this)(row, k) * b(k, j);
+  }
+  void multOnBlock(const fullMatrix<scalar> &b, const int ncol, const int fcol, const int alpha, const int beta, fullVector<scalar> &c,const int row=0) const
+#if !defined(HAVE_BLAS)
+  {
+    mult_naiveBlock(b,ncol,fcol,alpha,beta,c);
+  }
+#endif
+  ;
+
+  void multWithATranspose(const fullVector<scalar> &x, const int alpha_, const int beta_, fullVector<scalar> &y) const
+#if !defined(HAVE_BLAS)
+  {
+    y.scale(beta_);
+    for(int j = 0; j < _c; j++)
+      for(int i = 0; i < _r; i++)
+        y._data[j] += (*this)(i, j) * x(i);
+  }
+#endif
+  ;
+
+
   static void registerBindings(binding *b);
 };
 
