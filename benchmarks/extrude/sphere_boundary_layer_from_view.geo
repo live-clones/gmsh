@@ -1,4 +1,7 @@
+// merge vector view (View[0])
 Merge "sphere_boundary_layer_from_view.pos";
+
+// create scalar view View[1] for testing
 Plugin(MathEval).Run;
 
 lc = 0.2;
@@ -41,10 +44,9 @@ Line Loop(27) = {-4,12,-6};
 Ruled Surface(28) = {27};
 
 tmp[] = Extrude {
-  Surface{14:28:2}; Layers{5, 0.2}; Recombine; Using Index[0];
-  // can use scalar or vectpr view
-  //Using View[0]; 
-  Using View[1]; 
+  Surface{14:28:2}; Layers{5, 0.2}; Recombine;
+  //Using View[0]; // provide extrude directions using vector field
+  Using View[1];  // use mesh normals, but scaled by scalar field
 };
 
 // test 2nd bnd layer

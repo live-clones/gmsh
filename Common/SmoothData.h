@@ -48,6 +48,9 @@ class smooth_data{
  private:
   std::set<xyzv, lessthanxyzv> c;  
  public:
+  typedef std::set<xyzv, lessthanxyzv>::iterator iter;
+  iter begin(){ return c.begin(); }
+  iter end(){ return c.end(); }
   smooth_data() {}
   void add(double x, double y, double z, int n, double *vals);
   bool get(double x, double y, double z, int n, double *vals);
