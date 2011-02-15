@@ -68,7 +68,7 @@ template<class T>
 static void addExtrudeNormals(std::set<T*> &entities, 
                               std::map<int, infoset> &infos)
 {
-  bool normalize = true;
+  bool normalize = true, special3dbox = false;
   std::vector<OctreePost*> octrees;
 
   for(typename std::set<T*>::iterator it = entities.begin(); it != entities.end(); it++){
@@ -80,13 +80,19 @@ static void addExtrudeNormals(std::set<T*> &entities,
       int view = it2->second.second;
       bool gouraud = true;
       OctreePost *octree = 0;
+      if(view != -1){
 #if defined(HAVE_POST)
-      if(view >= 0){
         if(view >= 0 && view < PView::list.size()){
           octree = new OctreePost(PView::list[view]);
           if(PView::list[view]->getData()->getNumVectors())
             gouraud = false;
           octrees.push_back(octree);
+        }
+        else if(view == -3){
+          // Force extrusion normals along x,y,z axes for single
+          // normals or at 45 degrees for multiple normals (allows to
+          // build nice 3D "boxes")
+          special3dbox = true;
         }
         else
           Msg::Error("Unknown View[%d]: using normals instead", view);
@@ -117,6 +123,17 @@ static void addExtrudeNormals(std::set<T*> &entities,
   if(normalize){
     for(int i = 0; i < 2; i++){
       ExtrudeParams::normals[i]->normalize();
+      if(special3dbox){ // force normals for 3d "box" along x,y,z
+        for(smooth_data::iter it = ExtrudeParams::normals[i]->begin(); 
+            it != ExtrudeParams::normals[i]->end(); it++){
+          double val = (it->nboccurences > 1) ? sqrt(2.) / 2. : 1.;
+          for(int j = 0; j < 3; j++){
+            if(it->vals[j] < -0.1) it->vals[j] = -val;
+            else if(it->vals[j] > 0.1) it->vals[j] = val;
+            else it->vals[j] = 0.;
+          }
+        }
+      }
 #if defined(HAVE_POST)
       if(octrees.size()){ // scale normals by scalar views
         for(smooth_data::iter it = ExtrudeParams::normals[i]->begin(); 

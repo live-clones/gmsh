@@ -2884,8 +2884,11 @@ Extrudes both the geometry and the mesh using a combined translation and
 rotation (@pxref{Extrusions}). The @var{layers} option is defined as
 above.
 
-@item Extrude @{ Surface @{ @var{expression-list} @}; @var{layers} @}
-Extrudes a boundary layer along the normals of the specified surfaces.
+@item Extrude @{ Surface @{ @var{expression-list} @}; @var{layers} < Using Index[@var{expr}]; > < Using View[@var{expr}]; > @}
+Extrudes a boundary layer from the specified surfaces. If no view is
+specified, the boundary layer is created using gouraud-shaped (smoothed)
+normal field. Specifying a boundary layer index allows to extrude
+several independent boundary layers (with independent normal smoothing).
 
 @item Transfinite Line @{ @var{expression-list} @} | "*" = @var{expression} < Using Progression | Bump @var{expression} >;
 Selects the lines in @var{expression-list} to be meshed with the 1D
