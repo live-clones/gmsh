@@ -198,6 +198,7 @@ class dataCacheDouble {
   {
     return (_iDependOn.find(&other)!=_iDependOn.end());
   }
+  inline std::vector<dataCacheDouble*> & getDirectDependencies() { return _directDependencies; }
 };
 
 class dataCacheMap {
