@@ -126,10 +126,9 @@ static void addExtrudeNormals(std::set<T*> &entities,
       if(special3dbox){ // force normals for 3d "box" along x,y,z
         for(smooth_data::iter it = ExtrudeParams::normals[i]->begin(); 
             it != ExtrudeParams::normals[i]->end(); it++){
-          double val = (it->nboccurences > 1) ? sqrt(2.) / 2. : 1.;
           for(int j = 0; j < 3; j++){
-            if(it->vals[j] < -0.1) it->vals[j] = -val;
-            else if(it->vals[j] > 0.1) it->vals[j] = val;
+            if(it->vals[j] < -0.1) it->vals[j] = -1.;
+            else if(it->vals[j] > 0.1) it->vals[j] = 1.;
             else it->vals[j] = 0.;
           }
         }
@@ -153,6 +152,20 @@ static void addExtrudeNormals(std::set<T*> &entities,
 
   for(unsigned int i = 0; i < octrees.size(); i++)
     delete octrees[i];
+}
+
+static void checkDepends(GModel *m, GFace *f, std::set<GFace*> &dep)
+{
+  ExtrudeParams *ep = f->meshAttributes.extrude;
+  if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == COPIED_ENTITY){
+    GFace *from = m->getFaceByTag(std::abs(ep->geo.Source));
+    if(!from){
+      Msg::Error("Unknown origin face %d", ep->geo.Source);
+      return;
+    }
+    dep.insert(from);
+    checkDepends(m, from, dep);
+  }
 }
 
 int Mesh2DWithBoundaryLayers(GModel *m)
@@ -208,15 +221,32 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   if(sourceEdges.empty() && sourceFaces.empty())
     return 0;
 
+  // compute mesh dependencies in source faces (so we can e.g. create
+  // a boundary layer on an extruded mesh)
+  std::set<GFace*> sourceFacesDependencies;
+  for(std::set<GFace*>::iterator it = sourceFaces.begin(); it != sourceFaces.end(); it++)
+    checkDepends(m, *it, sourceFacesDependencies);
+  Msg::Info("%d dependencies in mesh of source faces", sourceFacesDependencies.size());
+  for(std::set<GFace*>::iterator it = sourceFacesDependencies.begin();
+      it != sourceFacesDependencies.end(); it++){
+    std::list<GEdge*> e = (*it)->edges();
+    sourceEdges.insert(e.begin(), e.end());
+  }
+
   // compute set of non-source edges and faces
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
     if(sourceEdges.find(*it) == sourceEdges.end()) otherEdges.insert(*it);
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
-    if(sourceFaces.find(*it) == sourceFaces.end()) otherFaces.insert(*it);
+    if(sourceFaces.find(*it) == sourceFaces.end() &&
+       sourceFacesDependencies.find(*it) == sourceFacesDependencies.end()) 
+      otherFaces.insert(*it);
 
-  // mesh source surfaces
+  // mesh source surfaces (and dependencies)
+  for(int i = 0; i < 10; i++) // FIXME: should check PENDING status instead!
+    std::for_each(sourceFacesDependencies.begin(), sourceFacesDependencies.end(), 
+                  meshGFace());  
   std::for_each(sourceFaces.begin(), sourceFaces.end(), meshGFace());  
-  
+
   // make sure the source surfaces for the boundary layers are
   // oriented correctly (normally we do this only after the 3D mesh is
   // done; but here it's critical since we use the normals for the
