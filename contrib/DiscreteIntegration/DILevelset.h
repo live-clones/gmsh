@@ -46,6 +46,7 @@ public:
   void setTag(int t) { tag_ = t; }
   virtual int getTag() const { return tag_; }
   void getPrimitives(std::vector<const gLevelset *> &primitives) const;
+  void getPrimitivesPO(std::vector<const gLevelset *> &primitives) const;
   void getRPN(std::vector<const gLevelset *> &gLsRPN) const;
   double H (const double &x, const double &y, const double &z) const {
     if (isInsideDomain(x,y,z) || isOnBorder(x,y,z)) return 1.0;
@@ -143,7 +144,6 @@ public:
   gLevelsetQuadric() : gLevelsetPrimitive() {init(); }
   gLevelsetQuadric(int &tag) : gLevelsetPrimitive(tag) {init(); }
   gLevelsetQuadric(const gLevelsetQuadric &);
-  
   virtual ~gLevelsetQuadric() {}
   double operator () (const double &x, const double &y, const double &z) const;
   virtual int type() const = 0;
@@ -226,8 +226,6 @@ public:
     if(children.size() != 1) return tag_;
     return children[0]->getTag();
   }
-	
-  
 };
 
 class gLevelsetReverse : public gLevelset
@@ -254,7 +252,7 @@ public:
   gLevelsetCut (std::vector<const gLevelset *> &p) : gLevelsetTools(p) { }
   double choose (double d1, double d2) const {
     return (d1 > -d2) ? d1 : -d2; // greater of d1 and -d2
-  }	
+  }
   gLevelsetCut(const gLevelsetCut &lv):gLevelsetTools(lv){}
   virtual gLevelset * clone() const{return new gLevelsetCut(*this);}
   int type2() const {return CUT;}
@@ -278,10 +276,10 @@ public:
 class gLevelsetIntersection : public gLevelsetTools
 {
 public:
-	gLevelsetIntersection (std::vector<const gLevelset *> &p) : gLevelsetTools(p) { }
-	gLevelsetIntersection(const gLevelsetIntersection &lv):gLevelsetTools(lv){}
-  virtual gLevelset * clone() const{return new gLevelsetIntersection(*this);}
-  
+  gLevelsetIntersection (std::vector<const gLevelset *> &p) : gLevelsetTools(p) { }
+  gLevelsetIntersection(const gLevelsetIntersection &lv):gLevelsetTools(lv) { }
+  virtual gLevelset *clone() const { return new gLevelsetIntersection(*this); }
+
   double choose (double d1, double d2) const {
     return (d1 > d2) ? d1 : d2; // greater of d1 and d2
   }

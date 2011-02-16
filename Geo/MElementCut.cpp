@@ -165,8 +165,10 @@ void MPolygon::_initVertices()
     if(dot(n, ni) < 0.) _parts[i]->revert();
   }
 
-  std::vector<MEdge> edg;
-  for(unsigned int i = 0; i < _parts.size(); i++) {
+  std::vector<MEdge> edg; // outer edges
+  for(int j = 0; j < _parts[0]->getNumEdges(); j++)
+    edg.push_back(_parts[0]->getEdge(j));
+  for(unsigned int i = 1; i < _parts.size(); i++) {
     for(int j = 0; j < 3; j++) {
       int k;
       for(k = edg.size() - 1; k >= 0; k--)
@@ -183,8 +185,8 @@ void MPolygon::_initVertices()
   _edges.push_back(edg[0]);
   edg.erase(edg.begin());
   while(edg.size()) {
+    MVertex *v = _edges[_edges.size() - 1].getVertex(1);
     for(unsigned int i = 0; i < edg.size(); i++) {
-      MVertex *v = _edges[_edges.size() - 1].getVertex(1);
       if(edg[i].getVertex(0) == v) {
         _edges.push_back(edg[i]);
         edg.erase(edg.begin() + i);
@@ -193,6 +195,11 @@ void MPolygon::_initVertices()
       if(edg[i].getVertex(1) == v) {
         _edges.push_back(MEdge(edg[i].getVertex(1), edg[i].getVertex(0)));
         edg.erase(edg.begin() + i);
+        break;
+      }
+      if(i == edg.size() - 1) {
+        _edges.push_back(edg[0]);
+        edg.erase(edg.begin());
         break;
       }
     }
@@ -1118,7 +1125,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   gm->getEntities(gmEntities);
 
   std::vector<const gLevelset *> primitives;
-  ls->getPrimitives(primitives);
+  ls->getPrimitivesPO(primitives);
   int numVert = gm->indexMeshVertices(true);
   int nbLs = (cutElem) ? primitives.size() : 1;
   fullMatrix<double> verticesLs(nbLs, numVert + 1);

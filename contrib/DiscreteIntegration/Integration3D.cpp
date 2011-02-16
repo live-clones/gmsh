@@ -2007,12 +2007,13 @@ bool DI_Line::cut (std::vector<const gLevelset *> &RPN, std::vector<DI_Integrati
   pushSubElements(re, ll_subLines);
   delete re;
 
+  int iPrim = 0;
   if(signChange){
     for(int l = 0; l < (int)RPN.size(); l++) {
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        ll->addLs(this, Lsi, l, nodeLs);
+        ll->addLs(this, Lsi, iPrim++, nodeLs);
         int nbSubLn = ll_subLines.size();
         int nbCP = ll_cp.size();
         for(int i = 0; i < nbSubLn; i++) ll_subLines[i]->addLs(ll);
@@ -2039,7 +2040,7 @@ bool DI_Line::cut (std::vector<const gLevelset *> &RPN, std::vector<DI_Integrati
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        ll->addLs(this, Lsi, l, nodeLs);
+        ll->addLs(this, Lsi, iPrim++, nodeLs);
       }
     }
   }
@@ -2105,12 +2106,13 @@ bool DI_Triangle::cut (std::vector<const gLevelset *> &RPN, std::vector<DI_Integ
   pushSubElements(re, tt_subTriangles);
   delete re;
 
+  int iPrim = 0;
   if(signChange){
     for(int l = 0; l < (int)RPN.size(); l++) {
       const gLevelset *Lsi = RPN[l]; //printf("LS(0,0)=%g LS(1,1)=%g\n",(*Lsi)(0,0,0),(*Lsi)(1,1,0));
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        tt->addLs(this, Lsi, l, nodeLs);
+        tt->addLs(this, Lsi, iPrim++, nodeLs);
         int nbSubQ = tt_subQuads.size(), nbSubQ1 = nbSubQ;
         int nbSubTr = tt_subTriangles.size(), nbSubTr1 = nbSubTr;
         int nbSurfLn = tt_surfLines.size(), nbSurfLn1 = nbSurfLn;
@@ -2193,7 +2195,7 @@ bool DI_Triangle::cut (std::vector<const gLevelset *> &RPN, std::vector<DI_Integ
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        tt->addLs(this, Lsi, l, nodeLs);
+        tt->addLs(this, Lsi, iPrim++, nodeLs);
       }
     }
   }
@@ -2283,12 +2285,13 @@ bool DI_Quad::cut (std::vector<const gLevelset *> &RPN, std::vector<DI_Integrati
   pushSubElements(re, qq_subQuads);
   delete re;
 
+  int iPrim = 0;
   if(signChange) {
     for(int l = 0; l < (int)RPN.size(); l++) {
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        qq->addLs(this, Lsi, l, nodeLs);
+        qq->addLs(this, Lsi, iPrim++, nodeLs);
         int nbSubQ = qq_subQuads.size(), nbSubQ1 = nbSubQ;
         int nbSubTr = qq_subTriangles.size(), nbSubTr1 = nbSubTr;
         int nbSurfLn = qq_surfLines.size(), nbSurfLn1 = nbSurfLn;
@@ -2375,7 +2378,7 @@ bool DI_Quad::cut (std::vector<const gLevelset *> &RPN, std::vector<DI_Integrati
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        qq->addLs(this, Lsi, l, nodeLs);
+        qq->addLs(this, Lsi, iPrim++, nodeLs);
       }
     }
   }
@@ -2479,12 +2482,13 @@ bool DI_Tetra::cut (std::vector<const gLevelset *> &RPN, std::vector<DI_Integrat
   pushSubElements(re, tt_subTetras);
   delete re;
 
+  int iPrim = 0;
   if(signChange) {
     for(int l = 0; l < (int)RPN.size(); l++) {
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        tt->addLs(this, Lsi, l, nodeLs);
+        tt->addLs(this, Lsi, iPrim++, nodeLs);
         int nbSubT = tt_subTetras.size(), nbSubT1 = nbSubT;
         int nbSurfQ = tt_surfQuads.size();
         int nbSurfTr = tt_surfTriangles.size(), nbSurfTr1 = nbSurfTr;
@@ -2549,7 +2553,7 @@ bool DI_Tetra::cut (std::vector<const gLevelset *> &RPN, std::vector<DI_Integrat
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        tt->addLs(this, Lsi, l, nodeLs);
+        tt->addLs(this, Lsi, iPrim++, nodeLs);
       }
     }
   }
@@ -2652,12 +2656,13 @@ bool DI_Hexa::cut (std::vector<const gLevelset *> &RPN, std::vector<DI_Integrati
   pushSubElements(re, hh_subHexas);
   delete re;
 
+  int iPrim = 0;
   if(signChange){
     for(int l = 0; l < (int)RPN.size(); l++) {
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        hh->addLs(this, Lsi, l, nodeLs);
+        hh->addLs(this, Lsi, iPrim++, nodeLs);
         int nbSubH = hh_subHexas.size();
         int nbSubT = hh_subTetras.size(), nbSubT1 = nbSubT;
         int nbSurfQ = hh_surfQuads.size(), nbSurfQ1 = nbSurfQ;
@@ -2779,7 +2784,7 @@ bool DI_Hexa::cut (std::vector<const gLevelset *> &RPN, std::vector<DI_Integrati
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        hh->addLs(this, Lsi, l, nodeLs);
+        hh->addLs(this, Lsi, iPrim++, nodeLs);
       }
     }
   }
