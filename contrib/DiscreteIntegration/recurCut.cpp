@@ -224,11 +224,12 @@ bool signChange (RecurElement *re, const DI_Element *e, const std::vector<const 
   DI_Element* elem = re->root()->el;
   std::vector<DI_CuttingPoint *> cp;
   std::vector<const gLevelset *> RPNi;
+  int iPrim = 0;
   for(unsigned int l = 0; l < RPN.size(); l++) {
     const gLevelset *Lsi = RPN[l];
     RPNi.push_back(Lsi);
     if(Lsi->isPrimitive()) {
-      elem->addLs(e, Lsi, l, nodeLs);
+      elem->addLs(e, Lsi, iPrim++, nodeLs);
       for(unsigned int i = 0; i < cp.size(); i++)
         cp[i]->addLs(elem);
       if (re->super) re->el->addLs(elem);
