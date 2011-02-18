@@ -331,14 +331,19 @@ void GFace::computeMeanPlane()
   if(pts.size() < 3){
     Msg::Info("Adding edge points to compute mean plane of face %d", tag());
     std::list<GEdge*> edg = edges();
-    std::list<GEdge*>::const_iterator ite = edg.begin();
-    for(; ite != edg.end(); ite++){
+    for(std::list<GEdge*>::const_iterator ite = edg.begin(); ite != edg.end(); ite++){
       const GEdge *e = *ite;
-      Range<double> b = e->parBounds(0);
-      GPoint p1 = e->point(b.low() + 0.333 * (b.high() - b.low()));
-      pts.push_back(SPoint3(p1.x(), p1.y(), p1.z()));
-      GPoint p2 = e->point(b.low() + 0.666 * (b.high() - b.low()));
-      pts.push_back(SPoint3(p2.x(), p2.y(), p2.z()));
+      if(e->mesh_vertices.size() > 1){
+        for(unsigned int i = 0; i < e->mesh_vertices.size(); i++)
+          pts.push_back(e->mesh_vertices[i]->point());
+      }
+      else{
+        Range<double> b = e->parBounds(0);
+        GPoint p1 = e->point(b.low() + 0.333 * (b.high() - b.low()));
+        pts.push_back(SPoint3(p1.x(), p1.y(), p1.z()));
+        GPoint p2 = e->point(b.low() + 0.666 * (b.high() - b.low()));
+        pts.push_back(SPoint3(p2.x(), p2.y(), p2.z()));
+      }
     }
   }
 
@@ -499,10 +504,10 @@ end:
       double d = meanPlane.a * v->x() + meanPlane.b * v->y() +
         meanPlane.c * v->z() - meanPlane.d;
       if(fabs(d) > lc * 1.e-3) {
-        Msg::Error("Plane surface %d (%gx+%gy+%gz=%g) is not plane!",
-                   tag(), meanPlane.a, meanPlane.b, meanPlane.c, meanPlane.d);
-        Msg::Error("Control point %d = (%g,%g,%g), val=%g",
-                   v->tag(), v->x(), v->y(), v->z(), d);
+        Msg::Warning("Plane surface %d (%gx+%gy+%gz=%g) is not plane!",
+                     tag(), meanPlane.a, meanPlane.b, meanPlane.c, meanPlane.d);
+        Msg::Warning("Control point %d = (%g,%g,%g), val=%g",
+                     v->tag(), v->x(), v->y(), v->z(), d);
         break;
       }
     }

@@ -304,6 +304,13 @@ int Mesh2DWithBoundaryLayers(GModel *m)
     }
   }
 
+  // recompute mean plane for plane surfaces just in case
+  for(std::set<GFace*>::iterator it = otherFaces.begin(); it != otherFaces.end(); it++){
+    GFace *gf = *it;
+    if(gf->geomType() == GEntity::Plane)
+      gf->computeMeanPlane();
+  }
+
   // mesh non-source surfaces
   std::for_each(otherFaces.begin(), otherFaces.end(), meshGFace());  
 

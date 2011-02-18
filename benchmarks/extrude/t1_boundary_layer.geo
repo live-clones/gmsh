@@ -25,4 +25,7 @@ Line Loop(7) = {5,6,7,1};
 Plane Surface(8) = {7};
 
 // the minus sign inverts the orientation of surface 8
-Extrude { Surface{6, -8}; Layers{5, 0.01}; Recombine; }
+Extrude { 
+  Surface{6, -8}; Layers{5, 0.01}; Recombine; 
+  // Using View[-3];  // Hack to force "box-type" boundary layer along x,y,z axes
+}
