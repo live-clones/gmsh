@@ -158,7 +158,7 @@ void fullMatrix<std::complex<double> >::multAddy(const fullVector<std::complex<d
 
 
 template<>
-void fullMatrix<double>::multOnBlock(const fullMatrix<double> &b, const int ncol, const int fcol, const int alpha_, const int beta_, fullVector<double> &c,const int row) const
+void fullMatrix<double>::multOnBlock(const fullMatrix<double> &b, const int ncol, const int fcol, const int alpha_, const int beta_, fullVector<double> &c) const
 {
   int M = 1, N = ncol, K = b.size1() ;
   int LDA = _r, LDB = b.size1(), LDC = 1;

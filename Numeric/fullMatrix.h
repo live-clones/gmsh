@@ -526,7 +526,7 @@ class fullMatrix
       for(int k = 0; k < _c ; k++)
           c._data[j] += alpha*(*this)(row, k) * b(k, j);
   }
-  void multOnBlock(const fullMatrix<scalar> &b, const int ncol, const int fcol, const int alpha, const int beta, fullVector<scalar> &c,const int row=0) const
+  void multOnBlock(const fullMatrix<scalar> &b, const int ncol, const int fcol, const int alpha, const int beta, fullVector<scalar> &c) const
 #if !defined(HAVE_BLAS)
   {
     mult_naiveBlock(b,ncol,fcol,alpha,beta,c);
@@ -545,6 +545,12 @@ class fullMatrix
 #endif
   ;
 
+  void copyOneColumn(const fullVector<scalar> &x, const int ind) const
+  {
+    int cind = _c*ind;
+    for(int i = 0; i < _r; i++)
+     _data[cind+i] = x(i);
+  }
 
   static void registerBindings(binding *b);
 };
