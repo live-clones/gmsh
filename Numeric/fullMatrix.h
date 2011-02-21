@@ -552,7 +552,15 @@ class fullMatrix
      _data[cind+i] = x(i);
   }
 
+  void gemmWithAtranspose(const fullMatrix<scalar> &a, const fullMatrix<scalar> &b,
+            scalar alpha=1., scalar beta=1.)
+#if !defined(HAVE_BLAS)
+  {
+    Msg::Error("gemmWithAtranspose is only available with blas. If blas is not installed please transpose a before used gemm_naive");
+  }
+#endif
+  ;
+
   static void registerBindings(binding *b);
 };
-
 #endif

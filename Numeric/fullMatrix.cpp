@@ -177,6 +177,28 @@ void fullMatrix<double>::multWithATranspose(const fullVector<double> &x, const i
 
 }
 
+template<>
+void fullMatrix<double>::gemmWithAtranspose(const fullMatrix<double> &a, const fullMatrix<double> &b,
+                                             double alpha, double beta)
+{
+  int M = size2(), N = size2(), K = a.size1();
+  int LDA = a.size1(), LDB = b.size1(), LDC = size1();
+  F77NAME(dgemm)("T", "N", &M, &N, &K, &alpha, a._data, &LDA, b._data, &LDB,
+                 &beta, _data, &LDC);
+}
+
+template<>
+void fullMatrix<std::complex<double> >::gemmWithAtranspose(const fullMatrix<std::complex<double> > &a,
+                                                             const fullMatrix<std::complex<double> > &b,
+                                                             std::complex<double> alpha,
+                                                             std::complex<double> beta)
+{
+  int M = size2(), N = size2(), K = a.size1();
+  int LDA = a.size1(), LDB = b.size1(), LDC = size1();
+  F77NAME(zgemm)("T", "N", &M, &N, &K, &alpha, a._data, &LDA, b._data, &LDB,
+                 &beta, _data, &LDC);
+}
+
 #endif
 
 
