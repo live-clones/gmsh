@@ -1,10 +1,20 @@
 #include "GmshConfig.h"
-
 #if defined(HAVE_PETSC)
+#include "petsc.h"
 #include "linearSystemPETSc.h"
 #include "fullMatrix.h"
 #include <stdlib.h>
 #include "GmshMessage.h"
+
+#include "linearSystemPETSc.hpp"
+
+template class linearSystemPETSc<double>;
+#ifdef PETSC_USE_COMPLEX
+template class linearSystemPETSc<std::complex<double> >;
+#endif
+
+
+
 void linearSystemPETScBlockDouble::_kspCreate() {
   KSPCreate(PETSC_COMM_WORLD, &_ksp);
   if (this->_parameters.count("petscPrefix"))
@@ -232,27 +242,6 @@ double linearSystemPETScBlockDouble::normInfRightHandSide() const
   PetscReal nor;
   VecNorm(_b, NORM_INFINITY, &nor);
   return nor;
-}
-
-#include "Bindings.h"
-void linearSystemPETScRegisterBindings(binding *b) 
-{
- // FIXME on complex arithmetic this crashes
-  #if !defined(PETSC_USE_COMPLEX)
-  classBinding *cb;
-  methodBinding *cm;
-  cb = b->addClass<linearSystemPETSc<PetscScalar> >("linearSystemPETSc");
-  cb->setDescription("A linear system solver, based on PETSc");
-  cm = cb->setConstructor<linearSystemPETSc<PetscScalar> >();
-  cm->setDescription ("A new PETSc<PetscScalar> solver");
-  cb->setParentClass<linearSystem<PetscScalar> >();
-  cm->setArgNames(NULL);
-/*  cb = b->addClass<linearSystemPETScBlockDouble >("linearSystemPETScBlock");
-  cb->setDescription("A linear system solver, based on PETSc");
-  cm = cb->setConstructor<linearSystemPETScBlockDouble >();
-  cm->setDescription ("A new PETScBlockDouble solver");
-  cb->setParentClass<linearSystem<fullMatrix<PetscScalar> > >();*/
-  #endif
 }
 
 #endif // HAVE_PETSC

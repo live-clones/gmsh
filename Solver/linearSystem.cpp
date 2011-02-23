@@ -2,7 +2,6 @@
 #include "linearSystemFull.h"
 #include "linearSystemCSR.h"
 #include "linearSystemGMM.h"
-#include "linearSystemPETSc.h"
 
 #include "Bindings.h"
 
@@ -46,9 +45,6 @@ void linearSystemBase::registerBindings(binding *b){
   cm = cb->addMethod("systemSolve", &linearSystem<fullMatrix<double> >::systemSolve);
   cm->setDescription("compute x = A^{-1}b");
   cb->setParentClass<linearSystemBase>();
-#ifdef HAVE_PETSC
-  linearSystemPETScRegisterBindings (b);
-#endif
 }
 
 void linearSystemBase::setParameter (std::string key, std::string value) {
