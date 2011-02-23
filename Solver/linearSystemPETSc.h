@@ -42,6 +42,7 @@
 #include <vector>
 #if defined(HAVE_PETSC)
 #include "petsc.h"
+#include <petscksp.h>
 template <class scalar>
 class linearSystemPETSc : public linearSystem<scalar> {
   protected:
