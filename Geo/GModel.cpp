@@ -260,20 +260,6 @@ GVertex *GModel::getVertexByTag(int n) const
     return 0;
 }
 
-//we should have dynamic cast to GEdge* instead of returning GEntity*
-std::vector<GEntity*> GModel::getEdgesByStringTag(const std::string tag) 
-{
- std::vector<GEntity*> allEdges;
- std::map<int, std::vector<GEntity*> > physicalGroups[4];
- this->getPhysicalGroups(physicalGroups);
- allEdges = physicalGroups[1][this->getPhysicalNumber(1,tag)];
- return allEdges; 
-}
-GEdge *GModel::getFirstEdgeByStringTag(const std::string tag) 
-{
-  std::vector<GEntity*> allEdges = this->getEdgesByStringTag(tag);
-  return (GEdge*)allEdges[0];
-}
 
 void GModel::remove(GRegion *r)
 {
@@ -2739,9 +2725,6 @@ void GModel::registerBindings(binding *b)
                      "only after the partitions have been assigned");
   cm->setArgNames("createGhostCells",NULL);
 
-  cm = cb->addMethod("getFirstEdgeByStringTag", &GModel::getFirstEdgeByStringTag);
-  cm->setDescription("return the first edge of the physical line with given tag.");
-  cm->setArgNames("string tag",NULL);
 
   cm = cb->addMethod("scaleMesh", &GModel::scaleMesh);
   cm->setDescription("scale the mesh by a factor");

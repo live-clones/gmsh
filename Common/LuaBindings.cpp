@@ -404,9 +404,7 @@ binding::binding()
   GEntity::registerBindings(this);
   GVertex::registerBindings(this);
   GEdge::registerBindings(this);
-  GFace::registerBindings(this);
   GRegion::registerBindings(this);
-  GModel::registerBindings(this);
   GPoint::registerBindings(this);
   MElement::registerBindings(this);
   MVertex::registerBindings(this);

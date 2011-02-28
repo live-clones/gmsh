@@ -208,12 +208,6 @@ class GModel
   GFace *getFaceByTag(int n) const;
   GEdge *getEdgeByTag(int n) const;
   GVertex *getVertexByTag(int n) const;
-
-  //Emi- we should return vector of GEdges instead
-  std::vector<GEntity*> getEdgesByStringTag(const std::string tag) ;
-  //Emi - I do not know how to bind std::vector in lua so I return only first edge
-  //and used Compound Line to have a unique GEdge
-  GEdge *getFirstEdgeByStringTag(const std::string tag) ;
   
   // for lua bindings, temporary solution while iterator are not binded
   std::vector<GRegion*> bindingsGetRegions();
