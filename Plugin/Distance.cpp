@@ -136,8 +136,8 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity*> _entities,
 	std::vector<double> dist;
 	for(int j = 0; j < numNodes; j++) {
 	  MVertex *v =  e->getVertex(j);
-	  if(j) fprintf(fName,",%g,%g,%g",v->x(),v->y(), v->z());
-	  else fprintf(fName,"%g,%g,%g", v->x(),v->y(), v->z());
+	  if(j) fprintf(fName,",%.16g,%.16g,%.16g",v->x(),v->y(), v->z());
+	  else fprintf(fName,"%.16g,%.16g,%.16g", v->x(),v->y(), v->z());
 	  std::map<MVertex*, double>::iterator it = _distance_map.find(v);
 	  dist.push_back(it->second);
 	}
@@ -148,8 +148,8 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity*> _entities,
 	  else if  (_minScale > 0 && _maxScale < 0)
 	    dist[i]=_minScale+dist[i];
 	  out->push_back(dist[i]);
-	  if (i) fprintf(fName,",%g", dist[i]);
-	  else fprintf(fName,"%g", dist[i]);
+	  if (i) fprintf(fName,",%.16g", dist[i]);
+	  else fprintf(fName,"%.16g", dist[i]);
 	}   
 	fprintf(fName,"};\n");
       }
