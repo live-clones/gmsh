@@ -464,6 +464,126 @@ double MElement::interpolateDiv(double val[], double u, double v, double w,
   return fx[0] + fy[1] + fz[2];
 }
 
+double MElement::integrate(double val[], int pOrder, int stride, int order)
+{
+  int npts; IntPt *gp;
+  getIntegrationPoints(pOrder, &npts, &gp);
+  double sum = 0;
+  for (int i = 0; i < npts; i++){
+    double u = gp[i].pt[0];
+    double v = gp[i].pt[1];
+    double w = gp[i].pt[2];
+    double weight = gp[i].weight;
+    double detuvw = getJacobianDeterminant(u, v, w);
+    sum += interpolate(val, u, v, w, stride, order)*weight*detuvw;
+  }
+  return sum;
+}
+
+static int getTriangleType (int order) {
+  switch(order) {
+  case 0 : return MSH_TRI_1;
+  case 1 : return MSH_TRI_3;
+  case 2 : return MSH_TRI_6;
+  case 3 : return MSH_TRI_10;
+  case 4 : return MSH_TRI_15;
+  case 5 : return MSH_TRI_21;
+  case 6 : return MSH_TRI_28;
+  case 7 : return MSH_TRI_36;
+  case 8 : return MSH_TRI_45;
+  case 9 : return MSH_TRI_55;
+  case 10 : return MSH_TRI_66;
+  default : Msg::Error("triangle order %i unknown", order);
+  }
+}
+static int getQuadType (int order) {
+  switch(order) {
+  case 0 : return MSH_QUA_1;
+  case 1 : return MSH_QUA_4;
+  case 2 : return MSH_QUA_9;
+  case 3 : return MSH_QUA_16;
+  case 4 : return MSH_QUA_25;
+  case 5 : return MSH_QUA_36;
+  case 6 : return MSH_QUA_49;
+  case 7 : return MSH_QUA_64;
+  case 8 : return MSH_QUA_81;
+  case 9 : return MSH_QUA_100;
+  case 10 : return MSH_QUA_121;
+  default : Msg::Error("quad order %i unknown", order);
+  }
+}
+static int getLineType (int order) {
+  switch(order) {
+  case 0 : return MSH_LIN_1;
+  case 1 : return MSH_LIN_2;
+  case 2 : return MSH_LIN_3;
+  case 3 : return MSH_LIN_4;
+  case 4 : return MSH_LIN_5;
+  case 5 : return MSH_LIN_6;
+  case 6 : return MSH_LIN_7;
+  case 7 : return MSH_LIN_8;
+  case 8 : return MSH_LIN_9;
+  case 9 : return MSH_LIN_10;
+  case 10 : return MSH_LIN_11;
+  default : Msg::Error("line order %i unknown", order);
+  }
+}
+
+double MElement::integrateCirc(double val[], int edge, int pOrder, int order)
+{
+  if(edge > getNumEdges() - 1){
+    Msg::Error("No edge %d for this element", edge);
+    return 0;
+  }
+  
+  std::vector<MVertex*> v;
+  getEdgeVertices(edge, v);
+  MElementFactory f;
+  int type = getLineType(getPolynomialOrder());
+  MElement* ee = f.create(type, v);
+  
+  double intv[3];
+  for(int i = 0; i < 3; i++){
+    intv[i] = ee->integrate(&val[i], pOrder, 3, order);
+  }  
+  delete ee;
+  
+  double t[3] = {v[1]->x() - v[0]->x(), v[1]->y() - v[0]->y(), v[1]->z() - v[0]->z()};
+  norme(t);
+  double result;
+  prosca(t, intv, &result);
+  return result;
+}
+
+double MElement::integrateFlux(double val[], int face, int pOrder, int order)
+{
+  if(face > getNumFaces() - 1){
+    Msg::Error("No face %d for this element", face);
+    return 0;
+  }
+  std::vector<MVertex*> v;
+  getFaceVertices(face, v);
+  MElementFactory f;
+  int type = 0;
+  if(getType() == TYPE_TRI) type = getTriangleType(getPolynomialOrder());
+  if(getType() == TYPE_QUA) type = getQuadType(getPolynomialOrder());
+  MElement* fe = f.create(type, v);
+
+  double intv[3];
+  for(int i = 0; i < 3; i++){
+    intv[i] = fe->integrate(&val[i], pOrder, 3, order);
+  }
+  delete fe;
+
+  double n[3];
+  normal3points(v[0]->x(), v[0]->y(), v[0]->z(),
+                v[1]->x(), v[1]->y(), v[1]->z(),
+                v[2]->x(), v[2]->y(), v[2]->z(), n);
+  double result;
+  prosca(n, intv, &result);
+  return result;
+}
+
 void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
                         int elementary, int physical, int parentNum,
                         int dom1Num, int dom2Num, std::vector<short> *ghosts)
