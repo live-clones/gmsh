@@ -828,7 +828,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
                   &recoverMapInv);
     optimizeMeshBDS(gf, *m, 2);
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, false,
-                  &recoverMapInv);
+                &recoverMapInv);
     optimizeMeshBDS(gf, *m, 2);
   }
   computeMeshSizeFieldAccuracy(gf, *m, gf->meshStatistics.efficiency_index,

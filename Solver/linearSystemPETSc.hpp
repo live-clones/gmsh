@@ -263,8 +263,14 @@ std::vector<scalar> linearSystemPETSc<scalar>::getData()
   MatInfo info;
   _try(MatGetInfo(_a,MAT_LOCAL,&info));
   std::vector<scalar> data; // Maybe I should reserve or resize (SAM)
+
+#if defined(PETSC_USE_COMPLEX)
+  for (int i = 0; i < info.nz_allocated; i++)
+    data.push_back(v[i].real());
+#else
   for (int i = 0; i < info.nz_allocated; i++)
     data.push_back(v[i]);
+#endif
   _try(MatRestoreArray(_a,&v));
   return data;
 }

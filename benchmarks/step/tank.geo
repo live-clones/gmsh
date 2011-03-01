@@ -3,7 +3,7 @@ Geometry.OCCFixSmallFaces = 1;
 
 Merge "tank.brep";
 
-n = 2;
+n = 1;
 
 Transfinite Line {55, 56, 13, 12, 36, 32, 95, 94, 97, 105, 
     80, 61, 64, 78, 50, 48} = 5*n; // indep.
