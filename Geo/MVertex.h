@@ -23,6 +23,11 @@ class MVertexLessThanLexicographic{
   bool operator()(const MVertex *v1, const MVertex *v2) const;
 };
 
+class MVertexLessThanNum{
+ public:
+  bool operator()(const MVertex *v1, const MVertex *v2) const;
+};
+
 // A mesh vertex.
 class MVertex{
  protected:

@@ -26,6 +26,12 @@ bool MVertexLessThanLexicographic::operator()(const MVertex *v1, const MVertex *
   return false;
 }
 
+bool MVertexLessThanNum::operator()(const MVertex *v1, const MVertex *v2) const
+{
+  if(v1->getNum() < v2->getNum()) return true;
+  return false;
+}
+
 double angle3Vertices(MVertex *p1, MVertex *p2, MVertex *p3)
 {
   SVector3 a(p1->x() - p2->x(), p1->y() - p2->y(), p1->z() - p2->z());

@@ -288,7 +288,7 @@ class MElement
   double integrate(double val[], int pOrder, int stride=1, int order=-1);
   // val[] must contain interpolation data for face/edge vertices of given edge/face
   double integrateCirc(double val[], int edge, int pOrder, int order=-1);
-  virtual double integrateFlux(double val[], int face, int pOrder, int order=-1);
+  double integrateFlux(double val[], int face, int pOrder, int order=-1);
 
   // IO routines
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false,
