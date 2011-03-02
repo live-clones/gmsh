@@ -1525,7 +1525,6 @@ void meshGFace::operator() (GFace *gf)
   deMeshGFace dem;
   dem(gf);
 
-  if(MeshBoundaryLayerSurface(gf)) return;
   if(MeshTransfiniteSurface(gf)) return;
   if(MeshExtrudedSurface(gf)) return;
   if(gf->meshMaster() != gf->tag()){

@@ -23,9 +23,6 @@
 #include "discreteFace.h"
 #include "discreteEdge.h"
 #include "discreteVertex.h"
-#include "boundaryLayerFace.h"
-#include "boundaryLayerEdge.h"
-#include "boundaryLayerVertex.h"
 #include "gmshSurface.h"
 #include "Geo.h"
 #include "SmoothData.h"
@@ -1867,49 +1864,6 @@ GEntity *GModel::extrude(GEntity *e, std::vector<double> p1, std::vector<double>
   return 0;
 }
 
-void GModel::createBoundaryLayer(std::vector<GEntity *> e, double h)
-{
-#if defined(HAVE_MESH)
-  // FIXME remove this!
-  Field *f = _fields->newField(0, "MathEval");
-  char s[128];
-  sprintf(s, "%g", h);
-  f->options["F"]->string() = s;
-
-  GModel *gm = this;
-  for(unsigned int i = 0; i < e.size(); i++){
-    if(e[i]->dim() == 1){
-      GEdge *ge = static_cast<GEdge*>(e[i]);
-      GVertex *beg = ge->getBeginVertex();
-      GVertex *end = ge->getEndVertex();
-      GVertex *v0 = new boundaryLayerVertex(gm, gm->getMaxElementaryNumber(0) + 1, beg);
-      gm->add(v0);
-      GVertex *v1 = new boundaryLayerVertex(gm, gm->getMaxElementaryNumber(0) + 1, end);
-      gm->add(v1);
-      GEdge *e0 = new boundaryLayerEdge(gm, gm->getMaxElementaryNumber(1) + 1, v0, v1, ge);
-      gm->add(e0);
-      GEdge *e1 = new boundaryLayerEdge(gm, gm->getMaxElementaryNumber(1) + 1, beg, v0, beg);
-      gm->add(e1);
-      GEdge *e2 = new boundaryLayerEdge(gm, gm->getMaxElementaryNumber(1) + 1, end, v1, end);
-      gm->add(e2);
-      boundaryLayerFace *f0 = new boundaryLayerFace(gm, gm->getMaxElementaryNumber(2) + 1, e, f, ge);
-      std::vector<int> boundEdges;
-      boundEdges.push_back(ge->tag());
-      boundEdges.push_back(e0->tag());
-      boundEdges.push_back(e1->tag());
-      boundEdges.push_back(e2->tag());
-      f0->setBoundEdges(boundEdges);
-      gm->add(f0);
-    }
-    else{
-      Msg::Error("FIXME: GModel boundary layer creation only for edges for now");
-    }
-  }
-
-  glue(CTX::instance()->geom.tolerance);
-#endif
-}
-
 GEntity *GModel::addPipe(GEntity *e, std::vector<GEdge *>  edges)
 {
   if(_factory) 
@@ -2714,11 +2668,6 @@ void GModel::registerBindings(binding *b)
   cm = cb->addMethod("detectEdges", &GModel::detectEdges);
   cm->setDescription(" use an angle threshold to tag edges.");
   cm->setArgNames("angle",NULL);
-
-  cm = cb->addMethod("createBoundaryLayer", &GModel::createBoundaryLayer);
-  cm->setDescription("create a boundary layer using a given field for the "
-                     "extrusion height.");
-  cm->setArgNames("{list of entities}","height",NULL);
 
   cm = cb->addMethod("createPartitionBoundaries", &GModel::createPartitionBoundaries);
   cm->setDescription("Assigns partition tags to boundary elements. Should be called "
