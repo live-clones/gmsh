@@ -889,6 +889,9 @@ else(HAVE_FLTK)
 endif(HAVE_FLTK)
 target_link_libraries(gmsh ${LINK_LIBRARIES})
 
+add_executable(gmsh_dynamic Fltk/Main.cpp)
+target_link_libraries(gmsh_dynamic shared)
+
 # increase stack to 16Mb on Windows to avoid overflows in recursive
 # tet classification for large 3D Delaunay grids
 if(WIN32 AND NOT MSVC)
@@ -1136,6 +1139,4 @@ if(ENABLE_SWIG_EXPERIMENTAL)
   SET_SOURCE_FILES_PROPERTIES(Common/gmshpy.i PROPERTIES CPLUSPLUS ON)
   SWIG_ADD_MODULE(gmshpy python Common/gmshpy.i)
   SWIG_LINK_LIBRARIES(gmshpy ${PYTHON_LIBRARIES} ${EXTERNAL_LIBRARIES} ${LINK_LIBRARIES} shared)
-  add_executable(gmsh_dynamic Fltk/Main.cpp)
-  target_link_libraries(gmsh_dynamic ${LINK_LIBRARIES} shared ${EXTERNAL_LIBRARIES})
 endif(ENABLE_SWIG_EXPERIMENTAL)
