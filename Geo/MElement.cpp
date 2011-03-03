@@ -1207,6 +1207,26 @@ const fullMatrix<double> &MElement::getGradShapeFunctionsAtIntegrationPoints (in
   }
   return mat;
 }
+
+const fullMatrix<double> &MElement::getShapeFunctionsAtIntegrationPoints (int integrationOrder, int functionSpaceOrder) {
+  static std::map <std::pair<int,int>, fullMatrix<double> > F;
+  const polynomialBasis *fs = getFunctionSpace (functionSpaceOrder);
+  fullMatrix<double> &mat = F [std::make_pair(fs->type, integrationOrder)];
+  if (mat.size1()!=0) return mat;
+  int npts;
+  IntPt *pts;
+  getIntegrationPoints (integrationOrder, &npts, &pts);
+  mat.resize (fs->points.size1(), npts*3);
+  double f[512];
+  for (int i = 0; i < npts; i++) {
+    fs->f (pts[i].pt[0], pts[i].pt[1], pts[i].pt[2], f);
+    for (int j = 0; j < fs->points.size1(); j++) {
+      mat (j, i) = f[j];
+    }
+  }
+  return mat;
+}
+
 const fullMatrix<double> &MElement::getGradShapeFunctionsAtNodes (int functionSpaceOrder) {
   static std::map <int, fullMatrix<double> > DF;
   const polynomialBasis *fs = getFunctionSpace (functionSpaceOrder);

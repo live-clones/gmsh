@@ -420,7 +420,7 @@ class fullMatrix
   }
 #endif
   ;
-  inline fullMatrix<scalar> transpose()
+  inline fullMatrix<scalar> transpose() const
   {
     fullMatrix<scalar> T(size2(), size1());
     for(int i = 0; i < size1(); i++)

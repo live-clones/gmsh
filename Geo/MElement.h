@@ -239,6 +239,8 @@ class MElement
                                      int order=-1);
   const fullMatrix<double> &getGradShapeFunctionsAtIntegrationPoints
     (int integrationOrder, int functionSpaceOrder=-1);
+  const fullMatrix<double> &getShapeFunctionsAtIntegrationPoints
+    (int integrationOrder, int functionSpaceOrder=-1);
   const fullMatrix<double> &getGradShapeFunctionsAtNodes (int functionSpaceOrder=-1);
 
   // return the Jacobian of the element evaluated at point (u,v,w) in
