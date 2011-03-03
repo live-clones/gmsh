@@ -5,6 +5,7 @@
 %include std_list.i
 %{
   #include "GModel.h"
+  #include "DefaultOptions.h"
   #include "fullMatrix.h"
   #include "function.h"
   #include "dofManager.h"
@@ -124,4 +125,5 @@ namespace std {
 %include "SPoint2.h"
 %include "GPoint.h"  
 %include "functionPython.h"
+%include "DefaultOptions.h"
 
