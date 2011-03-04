@@ -31,6 +31,7 @@
   #include "meshPartitionOptions.h"
   #include "linearSystemCSR.h"
   #include "elasticitySolver.h"
+  #include "meshGFaceLloyd.h"
   #include "PView.h"
   #include "PViewData.h"
   #include "PViewFactory.h"
@@ -125,5 +126,6 @@ namespace std {
 %include "SPoint2.h"
 %include "GPoint.h"  
 %include "functionPython.h"
+%include "meshGFaceLloyd.h"
 %include "DefaultOptions.h"
 

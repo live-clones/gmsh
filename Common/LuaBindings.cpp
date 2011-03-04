@@ -33,6 +33,8 @@
 #include "polynomialBasis.h"
 #include "Gauss.h"
 #include "meshPartitionOptions.h"
+#include "meshGFaceOptimize.h"
+#include "meshGFaceLloyd.h"
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
@@ -418,6 +420,7 @@ binding::binding()
   polynomialBasis::registerBindings(this);
   gaussIntegration::registerBindings(this);
   meshPartitionOptions::registerBindings(this);
+  Temporary::registerBindings(this);
 #if defined(HAVE_SOLVER)
   function::registerBindings(this);
   linearSystem<double>::registerBindings(this);

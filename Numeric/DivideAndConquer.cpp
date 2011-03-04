@@ -28,6 +28,30 @@
 #define Pred(x) ((x)->prev)
 #define Succ(x) ((x)->next)
 
+int DocRecord::get_p(){
+  return p;
+}
+
+void DocRecord::set_p(int new_p){
+  p = new_p;
+}
+
+int DocRecord::get_dimension(){
+  return dimension;
+}
+
+void DocRecord::set_dimension(int new_dimension){
+  dimension = new_dimension;
+}
+
+GFace* DocRecord::get_face(){
+  return gf;
+}
+
+void DocRecord::set_face(GFace* new_gf){
+  gf = new_gf;
+}
+
 PointNumero DocRecord::Predecessor(PointNumero a, PointNumero b)
 {
   DListPeek p = points[a].adjacent;
@@ -824,7 +848,7 @@ DocRecord::DocRecord(int n)
     numPoints(n), points(NULL), numTriangles(0), triangles(NULL)
 {
   if(numPoints)
-    points = new PointRecord[numPoints+1000];
+    points = new PointRecord[numPoints+3000];
 }
 
 DocRecord::~DocRecord()
@@ -898,12 +922,22 @@ void DocRecord::remove_all(){
 	  points2[index].where.v = points[i].where.v;
 	  points2[index].data = points[i].data;
 	  points2[index].flag = points[i].flag;
+	  points2[index].identificator = points[i].identificator;
 	  index++;
 	}
   }
   delete [] points;
   points = points2;
   numPoints = numPoints2;
+}
+
+void DocRecord::add_point(double x,double y,GFace*face){
+  PointRecord point;
+  point.where.h = x;
+  point.where.v = y; 
+  point.data = new MVertex(x,y,0.0,(GEntity*)face,2);
+  points[numPoints] = point;
+  numPoints = numPoints+1;
 }
 
 #include "Bindings.h"

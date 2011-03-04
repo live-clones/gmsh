@@ -30,6 +30,7 @@ struct PointRecord {
   DListPeek adjacent;
   void *data;
   int flag; //0:to be kept, 1:to be removed
+  int identificator;
   PointRecord() : adjacent(0), data (0) {}
 };
 
@@ -59,6 +60,9 @@ typedef struct{
 
 class DocRecord{
  private:
+  int p;
+  int dimension;
+  GFace* gf;
   int _hullSize;
   PointNumero *_hull;
   PointNumero Predecessor(PointNumero a, PointNumero b);
@@ -76,15 +80,22 @@ class DocRecord{
   int Insert(PointNumero a, PointNumero b);
   int DListDelete(DListPeek *dlist, PointNumero oldPoint);
   int Delete(PointNumero a, PointNumero b);
-  int ConvertDListToTriangles();
   void ConvertDListToVoronoiData();
+  int ConvertDListToTriangles();
   void RemoveAllDList();
   int BuildDelaunay();
   int CountPointsOnHull();
   void ConvexHull();
  public:
+  int get_p();
+  void set_p(int);
+  int get_dimension();
+  void set_dimension(int);
+  GFace* get_face();
+  void set_face(GFace*);
   STriangle *_adjacencies;
   int numPoints;        // number of points
+  int size_points;
   PointRecord *points;  // points to triangulate
   int numTriangles;     // number of triangles
   Triangle *triangles;  // 2D results
@@ -105,6 +116,7 @@ class DocRecord{
   void initialize();
   bool remove_point(int);
   void remove_all();
+  void add_point(double,double,GFace*);
   PointNumero *ConvertDlistToArray(DListPeek *dlist, int *n);
   static void registerBindings(binding *b);
 };

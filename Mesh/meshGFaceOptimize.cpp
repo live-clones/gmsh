@@ -19,6 +19,10 @@
 #include "Generator.h"
 #include "Context.h"
 #include "OS.h"
+#include "PView.h"
+#include "PViewData.h"
+#include "SVector3.h"
+#include "SPoint3.h"
 
 #ifdef HAVE_MATCH
 extern "C" int FAILED_NODE;
@@ -1512,6 +1516,9 @@ struct RecombineTriangle
 {
   MElement *t1, *t2;
   double angle;
+  double cost_quality; //addition for class Temporary
+  double cost_alignment; //addition for class Temporary
+  double total_cost; //addition for class Temporary
   MVertex *n1, *n2, *n3, *n4;
   RecombineTriangle(const MEdge &me, MElement *_t1, MElement *_t2)
     : t1(_t1), t2(_t2)
@@ -1533,11 +1540,16 @@ struct RecombineTriangle
     angle = fabs(90. - a1);
     angle = std::max(fabs(90. - a2),angle);
     angle = std::max(fabs(90. - a3),angle);
-    angle = std::max(fabs(90. - a4),angle);    
+    angle = std::max(fabs(90. - a4),angle);
+	cost_quality = 1.0 - std::max(1.0 - angle/90.0,0.0); //addition for class Temporary
+	cost_alignment = Temporary::compute_alignment(me,_t1,_t2); //addition for class Temporary
+	total_cost = Temporary::compute_total_cost(cost_quality,cost_alignment); //addition for class Temporary
+	total_cost = 100.0*cost_quality; //addition for class Temporary
   }
   bool operator < (const RecombineTriangle &other) const
   {
-    return angle < other.angle;
+    //return angle < other.angle;
+	return total_cost < other.total_cost; //addition for class Temporary
   }
 };
 
@@ -1640,7 +1652,8 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
       for (int i=0;i<pairs.size();++i){
 	elist[2*i]   = t2n[pairs[i].t1];
 	elist[2*i+1] = t2n[pairs[i].t2];
-	elen [i] =  (int) pairs[i].angle;
+	//elen [i] =  (int) pairs[i].angle;
+	elen [i] = (int) pairs[i].total_cost; //addition for class Temporary
 	double angle = atan2(pairs[i].n1->y()-pairs[i].n2->y(),
 			     pairs[i].n1->x()-pairs[i].n2->x());
 
@@ -2055,3 +2068,166 @@ void recombineIntoQuadsIterative(GFace *gf)
     if (COUNT == 5)break;
   }
 }
+
+
+
+#include "Bindings.h"
+
+double Temporary::w1,Temporary::w2,Temporary::w3;
+std::vector<SVector3> Temporary::gradients;
+
+Temporary::Temporary(){}
+
+Temporary::~Temporary(){}
+
+SVector3 Temporary::compute_gradient(MElement*element){
+  double x1,y1,z1;
+  double x2,y2,z2;
+  double x3,y3,z3;
+  double x,y,z;
+  MVertex*vertex1 = element->getVertex(0);
+  MVertex*vertex2 = element->getVertex(1);
+  MVertex*vertex3 = element->getVertex(2);
+  x1 = vertex1->x();
+  y1 = vertex1->y();
+  z1 = vertex1->z();
+  x2 = vertex2->x();
+  y2 = vertex2->y();
+  z2 = vertex2->z();
+  x3 = vertex3->x();
+  y3 = vertex3->y();
+  z3 = vertex3->z();
+  x = (x1+x2+x3)/3.0;
+  y = (y1+y2+y3)/3.0;
+  z = (z1+z2+z3)/3.0;
+  return SVector3(0.0,1.0,0.0);
+}
+
+void Temporary::select_weights(double new_w1,double new_w2,double new_w3){
+  w1 = new_w1;
+  w2 = new_w2;
+  w3 = new_w3;
+}
+
+double Temporary::compute_total_cost(double f1,double f2){
+  double cost;
+  cost = w1*f1 + w2*f2 + w3*f1*f2;
+  return cost;
+}
+
+SVector3 Temporary::compute_normal(MElement*element){
+  double x1,y1,z1;
+  double x2,y2,z2;
+  double x3,y3,z3;
+  double length;
+  SVector3 vectorA;
+  SVector3 vectorB;
+  SVector3 normal;
+  MVertex*vertex1 = element->getVertex(0);
+  MVertex*vertex2 = element->getVertex(1);
+  MVertex*vertex3 = element->getVertex(2);
+  x1 = vertex1->x();
+  y1 = vertex1->y();
+  z1 = vertex1->z();
+  x2 = vertex2->x();
+  y2 = vertex2->y();
+  z2 = vertex2->z();
+  x3 = vertex3->x();
+  y3 = vertex3->y();
+  z3 = vertex3->z();
+  vectorA = SVector3(x2-x1,y2-y1,z2-z1);
+  vectorB = SVector3(x3-x1,y3-y1,z3-z1);
+  normal = crossprod(vectorA,vectorB);
+  length = norm(normal);
+  return SVector3(normal.x()/length,normal.y()/length,normal.z()/length);
+}
+
+SVector3 Temporary::compute_other_vector(MElement*element){
+  int number;
+  double length;
+  SVector3 normal;
+  SVector3 gradient;
+  SVector3 other_vector;
+  number = element->getNum();
+  normal = Temporary::compute_normal(element);
+  gradient = Temporary::compute_gradient(element);//gradients[number];
+  other_vector = crossprod(gradient,normal);
+  length = norm(other_vector);
+  return SVector3(other_vector.x()/length,other_vector.y()/length,other_vector.z()/length);
+}
+
+double Temporary::compute_alignment(const MEdge&_edge, MElement*element1, MElement*element2){
+  int number;
+  double scalar_productA,scalar_productB;
+  double alignment;
+  SVector3 gradient;
+  SVector3 other_vector;
+  SVector3 edge;
+  MVertex*vertexA;
+  MVertex*vertexB;
+  number = element1->getNum();
+  gradient = Temporary::compute_gradient(element1);//gradients[number];
+  other_vector = Temporary::compute_other_vector(element1);
+  vertexA = _edge.getVertex(0);
+  vertexB = _edge.getVertex(1);
+  edge = SVector3(vertexB->x()-vertexA->x(),vertexB->y()-vertexA->y(),vertexB->z()-vertexA->z());
+  scalar_productA = fabs(dot(gradient,edge));
+  scalar_productB = fabs(dot(other_vector,edge));
+  alignment = std::max(scalar_productA,scalar_productB) - sqrt(2.0)/2.0;
+  alignment = alignment/(1.0-sqrt(2.0)/2.0);	
+  return alignment;
+}
+
+void Temporary::read_data(std::string file_name){
+  int i,j,number;
+  double x,y,z;
+  MElement*element;
+  PView*view;
+  PViewData*data;	
+  PView::readMSH(file_name,-1);
+  std::vector<PView*> list = PView::list;
+  data = list[0]->getData();
+  for(i = 0;i < data->getNumEntities(0);i++)
+  {
+    if(data->skipEntity(0,i)) continue;
+    for(j = 0;j < data->getNumElements(0,i);j++)
+	{
+	  if(data->skipElement(0,i,j)) continue;
+	  element = data->getElement(0,i,j);
+	  number = element->getNum();
+	  data->getValue(0,i,j,0,x);
+	  data->getValue(0,i,j,1,y);
+	  data->getValue(0,i,j,2,z);
+	  gradients[number] = SVector3(x,y,z);
+	}
+  }
+}
+
+void Temporary::quadrilaterize(std::string file_name,double _w1,double _w2,double _w3){
+  GFace*face;
+  GModel*model = GModel::current();
+  GModel::fiter iterator;
+  gradients.resize(model->getNumMeshElements() + 1);
+  w1 = _w1;
+  w2 = _w2;
+  w3 = _w3;
+  Temporary::read_data(file_name);
+  for(iterator = model->firstFace();iterator != model->lastFace();iterator++)
+  {
+    face = *iterator;
+	_recombineIntoQuads(face,1,1);
+  }
+}
+
+void Temporary::registerBindings(binding *b){
+  classBinding*cb = b->addClass<Temporary>("Temporary");
+  cb->setDescription("This class is used to create quad meshes from a script.");
+  methodBinding*cm;
+  cm = cb->setConstructor<Temporary>();
+  cm->setDescription("This is the constructor.");
+  cm = cb->addMethod("quadrilaterize",&Temporary::quadrilaterize);
+  cm->setDescription("This function creates the quad mesh.");
+  cm->setArgNames("file_name","w1","w2","w3",NULL);
+}
+	
+
