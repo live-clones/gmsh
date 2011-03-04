@@ -889,7 +889,7 @@ else(HAVE_FLTK)
 endif(HAVE_FLTK)
 target_link_libraries(gmsh ${LINK_LIBRARIES})
 
-add_executable(gmsh_dynamic Fltk/Main.cpp)
+add_executable(gmsh_dynamic EXCLUDE_FROM_ALL Fltk/Main.cpp)
 target_link_libraries(gmsh_dynamic shared)
 
 # increase stack to 16Mb on Windows to avoid overflows in recursive
