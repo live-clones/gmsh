@@ -60,9 +60,6 @@ typedef struct{
 
 class DocRecord{
  private:
-  int p;
-  int dimension;
-  GFace* gf;
   int _hullSize;
   PointNumero *_hull;
   PointNumero Predecessor(PointNumero a, PointNumero b);
@@ -87,12 +84,6 @@ class DocRecord{
   int CountPointsOnHull();
   void ConvexHull();
  public:
-  int get_p();
-  void set_p(int);
-  int get_dimension();
-  void set_dimension(int);
-  GFace* get_face();
-  void set_face(GFace*);
   STriangle *_adjacencies;
   int numPoints;        // number of points
   int size_points;

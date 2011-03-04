@@ -27,31 +27,6 @@
 
 #define Pred(x) ((x)->prev)
 #define Succ(x) ((x)->next)
-
-int DocRecord::get_p(){
-  return p;
-}
-
-void DocRecord::set_p(int new_p){
-  p = new_p;
-}
-
-int DocRecord::get_dimension(){
-  return dimension;
-}
-
-void DocRecord::set_dimension(int new_dimension){
-  dimension = new_dimension;
-}
-
-GFace* DocRecord::get_face(){
-  return gf;
-}
-
-void DocRecord::set_face(GFace* new_gf){
-  gf = new_gf;
-}
-
 PointNumero DocRecord::Predecessor(PointNumero a, PointNumero b)
 {
   DListPeek p = points[a].adjacent;

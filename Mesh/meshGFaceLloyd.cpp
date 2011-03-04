@@ -19,57 +19,63 @@
 
 /****************fonction callback****************/
 /*************************************************/
+class gradientCallback {
+  DocRecord *_doc;
+  int _p;
+  GFace *_face;
+  int _dimension;
+  std::vector<SVector3> _gradients, _areaCentroids;
+  std::vector<double> _energies, _areas;
 
-void function1_grad(const alglib::real_1d_array& x,double& func,alglib::real_1d_array& grad,void* ptr){
-  int i;
-  int p;
-  int num;
-  int index;
-  int dimension;
-  int identificator;
-  GFace* gf;
-  DocRecord* pointer;
-  	
-  pointer = static_cast<DocRecord*>(ptr);	
-  p = pointer->get_p();
-  dimension = pointer->get_dimension();
-  gf = pointer->get_face();
-  num = pointer->numPoints;
-
-  std::vector<SVector3> gradients(num);
-  std::vector<double> energies(num);
-  std::vector<SVector3> area_centroids(num);
-  std::vector<double> areas(num);	
-	
-  index = 0;
-  for(i=0;i<num;i++){
-    PointRecord &pt = pointer->points[i];
-	MVertex *v = (MVertex*)pt.data;
-	if(v->onWhat()==gf && !pointer->onHull(i)){
-	  pointer->points[i].where.h = x[index];
-	  pointer->points[i].where.v = x[index + dimension/2];
-	  pointer->points[i].identificator = index;
-	  index++;
-	}
+  public :
+  gradientCallback(DocRecord *doc, GFace *face, int dimension, int p){
+    _doc = doc;
+    _face = face;
+    _dimension = dimension;
+    _p = p;
+    _gradients.resize(doc->numPoints);
+    _areaCentroids.resize(doc->numPoints);
+    _energies.resize(doc->numPoints);
+    _areas.resize(doc->numPoints);
   }
-  
-  pointer->Voronoi();
-	
-  lloydAlgorithm lloyd;
-  lloyd.eval(*pointer,gf,gradients,energies,area_centroids,areas,p);
-  func = lloyd.total_energy(energies);
-  printf("%f\n",1E18*func);
-	
-  for(i=0;i<num;i++){
-    PointRecord &pt = pointer->points[i];
-	MVertex *v = (MVertex*)pt.data;
-	if(v->onWhat()==gf && !pointer->onHull(i)){
-	  identificator = pointer->points[i].identificator;
-	  grad[identificator] = gradients[i].x();
-	  grad[identificator + dimension/2] = gradients[i].y();
-	}
-  }	
-}
+
+  void compute(const alglib::real_1d_array& x,double& func,alglib::real_1d_array& grad)
+  {
+    int index = 0;
+    for (int i = 0; i < _doc->numPoints; ++i) {
+      PointRecord &pt = _doc->points[i];
+      MVertex *v = (MVertex*) pt.data;
+      if(v->onWhat() == _face && ! _doc->onHull(i)){
+        _doc->points[i].where.h = x[index];
+        _doc->points[i].where.v = x[index + _dimension/2];
+        _doc->points[i].identificator = index;
+        index++;
+      }
+    }
+    _doc->Voronoi();
+    lloydAlgorithm lloyd;
+    lloyd.eval(*_doc, _face, _gradients, _energies, _areaCentroids, _areas, _p);
+    func = lloyd.total_energy(_energies);
+    printf("%f\n",1E18*func);
+
+    for(int i = 0; i < _doc->numPoints; ++i){
+      PointRecord &pt = _doc->points[i];
+      MVertex *v = (MVertex*)pt.data;
+      if(v->onWhat() == _face && !_doc->onHull(i)){
+        int identificator = _doc->points[i].identificator;
+        grad[identificator] = _gradients[i].x();
+        grad[identificator + _dimension/2] = _gradients[i].y();
+      }
+    }	
+  }
+
+  static void Callback(const alglib::real_1d_array& x,double& func,alglib::real_1d_array& grad, void* ptr)
+  {
+    gradientCallback *cb = static_cast<gradientCallback *> (ptr);
+    cb->compute(x, func, grad);
+  }
+};
+
 
 void topology(const alglib::real_1d_array &x,double func,void *ptr){
 }
@@ -177,21 +183,18 @@ void lloydAlgorithm::operator () (GFace *gf)
   alglib::real_1d_array x;
   x.setcontent(2*num_interior,initial_conditions);
   
-  triangulator.set_p(exponent);
-  triangulator.set_dimension(2*num_interior);
-  triangulator.set_face(gf);	
-  
   double epsg = 0;
   double epsf = 0;
-  double epsx = 0;
+  double epsx = 1e-4;
   alglib::ae_int_t maxits = 0;
   alglib::minlbfgsstate state;
   alglib::minlbfgsreport rep;
 	
-  minlbfgscreate(2*num_interior,4,x,state);
-  minlbfgssetcond(state,epsg,epsf,epsx,maxits);
-  minlbfgsoptimize(state,function1_grad,NULL,&triangulator);
-  minlbfgsresults(state,x,rep);
+  minlbfgscreate(2*num_interior, 4, x, state);
+  minlbfgssetcond(state, epsg, epsf, epsx, maxits);
+  gradientCallback cb(&triangulator, gf, 2 * num_interior, exponent);
+  minlbfgsoptimize(state, gradientCallback::Callback, NULL, &cb);
+  minlbfgsresults(state, x, rep);
 	
   index = 0;
   for(i=0;i<triangulator.numPoints;i++){
@@ -252,7 +255,8 @@ double lloydAlgorithm::optimize(int max,int flag){
 /****************Calcul du gradient****************/
 /**************************************************/
 
-void lloydAlgorithm::eval(DocRecord& triangulator,GFace* gf,std::vector<SVector3>& gradients,std::vector<double>& energies,std::vector<SVector3>& area_centroids,std::vector<double>& areas,int p){
+void lloydAlgorithm::eval(DocRecord& triangulator,GFace* gf,std::vector<SVector3>& gradients,std::vector<double>& energies,std::vector<SVector3>& area_centroids,std::vector<double>& areas,int p)
+{
   int i;
   
   for(i=0;i<triangulator.numPoints;i++){
@@ -740,12 +744,12 @@ SVector3 lloydAlgorithm::dF_dC1(SPoint2 generator,SPoint2 C1,SPoint2 C2,int p){
   comp_y = 0.0;
   for(i=0;i<num;i++){
     x = Tx(pts(i,0),pts(i,1),generator,C1,C2);
-	y = Ty(pts(i,0),pts(i,1),generator,C1,C2);
-	point = SPoint2(x,y);
-	comp_x = comp_x + weights(i,0)*df_dx(point,generator,p)*dTx_dp2x(pts(i,0),pts(i,1))*J(generator,C1,C2);
-	comp_x = comp_x + weights(i,0)*f(point,generator,p)*dJ_dp2x(generator,C1,C2);
-	comp_y = comp_y + weights(i,0)*df_dy(point,generator,p)*dTy_dp2y(pts(i,0),pts(i,1))*J(generator,C1,C2);
-	comp_y = comp_y + weights(i,0)*f(point,generator,p)*dJ_dp2y(generator,C1,C2);
+    y = Ty(pts(i,0),pts(i,1),generator,C1,C2);
+    point = SPoint2(x,y);
+    comp_x = comp_x + weights(i,0)*df_dx(point,generator,p)*dTx_dp2x(pts(i,0),pts(i,1))*J(generator, C1, C2);
+    comp_x = comp_x + weights(i,0)*f(point,generator,p)*dJ_dp2x(generator,C1,C2);
+    comp_y = comp_y + weights(i,0)*df_dy(point,generator,p)*dTy_dp2y(pts(i,0),pts(i,1))*J(generator, C1, C2);
+    comp_y = comp_y + weights(i,0)*f(point,generator,p)*dJ_dp2y(generator,C1,C2);
   }		
   return SVector3(comp_x,comp_y,0.0);
 }
@@ -1121,7 +1125,7 @@ SPoint2 lloydAlgorithm::intersection(SPoint2 p1,SPoint2 p2,SPoint2 p3,SPoint2 p4
   ub = num_ub/denom;
   if(ua<=1.0 && ua>=0.0 && ub<=1.0 && ub>=0.0){
     flag = 1;
-	return SPoint2(x1+ua*(x2-x1),y1+ua*(y2-y1));
+	return SPoint2(x1 + ua * (x2 - x1), y1 + ua * (y2 - y1));
   }
   else{
     flag = 0;
@@ -1130,7 +1134,7 @@ SPoint2 lloydAlgorithm::intersection(SPoint2 p1,SPoint2 p2,SPoint2 p3,SPoint2 p4
 }
 
 /****************Class boundary_edge****************/
-boundary_edge::boundary_edge(SPoint2 new_p1,SPoint2 new_p2){
+boundary_edge::boundary_edge(SPoint2 new_p1, SPoint2 new_p2){
   p1 = new_p1;
   p2 = new_p2;
 }

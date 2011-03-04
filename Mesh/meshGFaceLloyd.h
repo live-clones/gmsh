@@ -16,7 +16,6 @@
 class GFace;
 class boundary_edge;
 
-void function1_grad(const alglib::real_1d_array&,double&,alglib::real_1d_array&,void*);
 void topology(const alglib::real_1d_array &,double,void*);
 
 class lloydAlgorithm {
