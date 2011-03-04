@@ -10,6 +10,7 @@
 #cmakedefine HAVE_ACIS
 #cmakedefine HAVE_ANN
 #cmakedefine HAVE_BAMG
+#cmakedefine HAVE_BFGS
 #cmakedefine HAVE_BLAS
 #cmakedefine HAVE_CHACO
 #cmakedefine HAVE_DLOPEN
