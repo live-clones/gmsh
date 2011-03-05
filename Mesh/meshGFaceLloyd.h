@@ -5,8 +5,12 @@
 
 #ifndef _MESH_GFACE_LLOYD_H_
 #define _MESH_GFACE_LLOYD_H_
+
 #include "fullMatrix.h"
 #include "DivideAndConquer.h"
+#include "GmshConfig.h"
+
+#if defined(HAVE_BFGS)
 #include "ap.h"
 #include "alglibinternal.h"
 #include "alglibmisc.h"
@@ -15,8 +19,6 @@
 
 class GFace;
 class boundary_edge;
-
-void topology(const alglib::real_1d_array &,double,void*);
 
 class lloydAlgorithm {
   int ITER_MAX;
@@ -99,5 +101,7 @@ class boundary_edge{
   SPoint2 get_p1();
   SPoint2 get_p2();
 };
+
+#endif
 
 #endif

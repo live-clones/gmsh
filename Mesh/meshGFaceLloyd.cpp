@@ -1,4 +1,9 @@
 #include <set>
+#include <fstream>
+
+#include "GmshConfig.h"
+#if defined(HAVE_BFGS)
+
 #include "meshGFaceLloyd.h"
 #include "DivideAndConquer.h"
 #include "GFace.h"
@@ -8,13 +13,6 @@
 #include "Context.h"
 #include "meshGFace.h"
 #include "BackgroundMesh.h"
-#include <fstream>
-#include "ap.h"
-#include "alglibinternal.h"
-#include "alglibmisc.h"
-#include "linalg.h"
-#include "optimization.h"
-
 
 
 /****************fonction callback****************/
@@ -75,10 +73,6 @@ class gradientCallback {
     cb->compute(x, func, grad);
   }
 };
-
-
-void topology(const alglib::real_1d_array &x,double func,void *ptr){
-}
 
 
 
@@ -1152,3 +1146,4 @@ SPoint2 boundary_edge::get_p2(){
 }
 
 
+#endif
