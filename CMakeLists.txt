@@ -923,8 +923,6 @@ if(ENABLE_SWIG)
       swig_add_module(gmshpy python Common/gmshpy.i)
       swig_link_libraries(gmshpy ${PYTHON_LIBRARIES} ${LINK_LIBRARIES} shared)
     endif(SWIG_MAJOR_VERSION EQUAL 1)
-  else(SWIG_FOUND)
-    message("WARNING: Could not find SWIG")    
   endif(SWIG_FOUND)
 endif(ENABLE_SWIG)
 
