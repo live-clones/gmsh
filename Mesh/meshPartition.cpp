@@ -488,7 +488,7 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
           break;
         case 4:  // Vertices Multi-Contrained Recursive
           Msg::Info("Vertices Multi-Constrained Recursive Algorithm Used");
-          wgtflag = 2;
+          wgtflag = 3;
           metisOptions[0] = 1;
           metisOptions[1] = options.edge_matching;
           metisOptions[2] = 1;
@@ -497,13 +497,13 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
           graph.fillWithMultipleWeights(options.ncon,options.getWeightMap());
           METIS_mCPartGraphRecursive
             (&n,&options.ncon,&graph.xadj[graph.section[iSec]],
-             &graph.adjncy[graph.section[iSec]], &graph.vwgts[graph.section[iSec]], NULL, &wgtflag, &numflag,
+             &graph.adjncy[graph.section[iSec]], &graph.vwgts[graph.section[iSec]],  &graph.adjwgts[graph.section[iSec]], &wgtflag, &numflag,
              &options.num_partitions, metisOptions, &edgeCut,
              &graph.partition[graph.section[iSec]]);
           break;
         case 5:  // Vertices Multi-Constrained K-way
           Msg::Info("Vertices Multi-Constrained K-way Algorithm Used");
-          wgtflag = 2;
+          wgtflag = 3;
           metisOptions[0] = 1;
           metisOptions[1] = options.edge_matching;
           metisOptions[2] = 1;
@@ -511,9 +511,9 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
           metisOptions[4] = 0;
           printf("Tolerance for Constraints:[");
           for(int u=0;u<options.ncon;u++){
-           ubvec[u]=1.0;
+           ubvec[u]=1.03;
            if(options.tolerance[u]%options.num_partitions>0){
-             ubvec[u] = (float) ceil((float)options.tolerance[u]/options.num_partitions)/((float)options.tolerance[u]/options.num_partitions);
+             //ubvec[u] = (float) ceil((float)options.tolerance[u]/options.num_partitions)/((float)options.tolerance[u]/options.num_partitions);
            }
            printf(" %f", ubvec[u]);
           }
@@ -522,7 +522,7 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
           if (options.num_partitions > 1) {
             METIS_mCPartGraphKway
               (&n,&options.ncon,&graph.xadj[graph.section[iSec]],
-               &graph.adjncy[graph.section[iSec]], &graph.vwgts[graph.section[iSec]], NULL, &wgtflag, &numflag,
+               &graph.adjncy[graph.section[iSec]], &graph.vwgts[graph.section[iSec]], &graph.adjwgts[graph.section[iSec]], &wgtflag, &numflag,
                &options.num_partitions,&ubvec[0], metisOptions, &edgeCut,
                &graph.partition[graph.section[iSec]]);
           }

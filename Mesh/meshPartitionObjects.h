@@ -91,6 +91,8 @@ class Graph
                                         // vertices.
   std::vector<int> vwgts;               // Weights assigned for each 
                                         // vertex
+  std::vector<int> adjwgts;             // Weights assigned for each 
+                                        // edge
   std::vector<int> section;             // For separate partitioning of
                                         // different parts of the mesh
   std::vector<int> partition;           // The partitions output from the
@@ -136,6 +138,7 @@ class Graph
     xadj.resize(_totalGrVert + 1);
     adjncy.reserve(2*totalGrEdge);
     vwgts.resize(_totalGrVert);
+    adjwgts.reserve(2*totalGrEdge);
     partition.resize(_totalGrVert);
     element.resize(_totalGrVert);
     c2w = new int[_totalGrVert];
@@ -187,10 +190,14 @@ class Graph
   {
     std::vector<MElement*>::iterator eIt;
     vwgts.resize(element.size()*ncon);
+    adjwgts.resize(adjncy.size());
     int localElNum=0;
     for(eIt=element.begin();eIt !=element.end();eIt++){
       for(int i=0; i<ncon; i++){
         vwgts[localElNum*ncon+i]=weightMap[(*eIt)->getNum()][i];
+      }
+      for(int j=xadj[localElNum];j<xadj[localElNum+1];j++){
+        adjwgts[j]+=weightMap[(*eIt)->getNum()][0];
       }
       localElNum+=1;
     }
