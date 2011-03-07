@@ -213,7 +213,7 @@ class dataCacheMap {
   int _nbEvaluationPoints;
   std::map<const function*, dataCacheDouble*> _cacheDoubleMap;
   std::set<dataCacheDouble*> _allDataCaches;
-  std::set<dataCacheDouble*> _toInvalidateOnElement;
+  std::vector<dataCacheDouble*> _toInvalidateOnElement;
   MElement *_element;
   dataCacheMap() {
     _functionSolution = _functionSolutionGradient = NULL;
@@ -225,7 +225,7 @@ class dataCacheMap {
   {
     _allDataCaches.insert(data);
     if(invalidatedOnElement)
-      _toInvalidateOnElement.insert(data);
+      _toInvalidateOnElement.push_back(data);
   }
   virtual dgDataCacheMap *asDgDataCacheMap() 
   {
@@ -246,7 +246,7 @@ class dataCacheMap {
   virtual void setElement(MElement *element)
   {
     _element=element;
-    for(std::set<dataCacheDouble*>::iterator it=_toInvalidateOnElement.begin(); 
+    for(std::vector<dataCacheDouble*>::iterator it=_toInvalidateOnElement.begin(); 
         it!= _toInvalidateOnElement.end(); it++) {
       (*it)->_valid=false;
     }
