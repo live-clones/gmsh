@@ -29,7 +29,7 @@
 #include "elasticityTerm.h"
 #include "linearSystemCSR.h"
 #include "linearSystemFull.h"
-#include "linearSystemPetsc.h"
+#include "linearSystemPETSc.h"
 
 #define SQU(a)      ((a)*(a))
 
