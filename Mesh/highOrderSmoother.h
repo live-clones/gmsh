@@ -44,6 +44,11 @@ public:
     _straightSidedLocation[v] = d;
     _targetLocation[v]        = SPoint3(v->x(),v->y(),v->z());
   }  
+  int smooth_with_mixed_formulation(std::vector<MElement*> & , 
+				    double alpha);
+  double apply_incremental_displacement (double max_incr, std::vector<MElement*> & v,
+					 bool mixed, double thres, char *meshName,
+					 std::vector<MElement*> & disto);
   void smooth(std::vector<MElement*> & );
   double smooth_metric_(std::vector<MElement*> &, GFace *gf,
                         dofManager<double> &myAssembler,

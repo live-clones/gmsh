@@ -672,13 +672,16 @@ if(ENABLE_OCC)
                  ${OCC_SYS_NAME}/lib)
     if(OCC_LIB)
       list(APPEND OCC_LIBS ${OCC_LIB})
+    else(OCC_LIB)
+      message(STATUS "OCC lib " ${OCC} " not Found")
     endif(OCC_LIB)
     set(OCC_LIB OCC_LIB-NOTFOUND CACHE INTERNAL "")
     # unset(OCC_LIB CACHE) # cleaner, but only available in cmake >= 2.6.4
   endforeach(OCC)
   list(LENGTH OCC_LIBS NUM_OCC_LIBS)
-  if(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
 
+
+  if(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
     find_path(OCC_INC "BRep_Tool.hxx" PATHS ENV CASROOT PATH_SUFFIXES inc 
               include opencascade)
     if(OCC_INC)

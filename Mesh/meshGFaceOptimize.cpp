@@ -626,7 +626,7 @@ static int _quadWithOneVertexOnBoundary (GFace *gf,
 					 MVertex *v2,
 					 MVertex *v3,
 					 MVertex *v4){
-  return 0;
+  //return 0;
   if (v1->onWhat()->dim() < 2 &&
       v2->onWhat()->dim() == 2 &&
       v3->onWhat()->dim() == 2 &&
@@ -1862,10 +1862,10 @@ void recombineIntoQuads(GFace *gf,
   if(gf->geomType() == GEntity::DiscreteSurface && !gf->getCompound())
     haveParam = false;
 
-  gf->model()->writeMSH("before.msh");
   if(haveParam && topologicalOpti)
     removeFourTrianglesNodes(gf, false);
 
+  gf->model()->writeMSH("before.msh");
   int success = _recombineIntoQuads(gf, 0);
 
   // gf->addLayersOfQuads(1, 0);

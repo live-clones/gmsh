@@ -235,6 +235,7 @@ double qmDistorsionOfMapping (MTriangle *e)
     const double u = pts[i].pt[0];
     const double v = pts[i].pt[1];
     const double di  = mesh_functional_distorsion (e, u, v);
+    //    printf("di = %g\n",di);
     dmin = (i == 0)? di : std::min(dmin, di);
   }
   const fullMatrix<double>& points = e->getFunctionSpace()->points;

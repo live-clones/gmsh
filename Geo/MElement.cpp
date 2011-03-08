@@ -255,7 +255,7 @@ double MElement::getJacobian(double u, double v, double w, double jac[3][3])
   jac[1][0] = jac[1][1] = jac[1][2] = 0.;
   jac[2][0] = jac[2][1] = jac[2][2] = 0.;
 
-  double gsf[256][3];
+  double gsf[1256][3];
   getGradShapeFunctions(u, v, w, gsf);
   for (int i = 0; i < getNumShapeFunctions(); i++) {
     const MVertex *v = getShapeFunctionNode(i);
@@ -298,7 +298,7 @@ double MElement::getPrimaryJacobian(double u, double v, double w, double jac[3][
   jac[1][0] = jac[1][1] = jac[1][2] = 0.;
   jac[2][0] = jac[2][1] = jac[2][2] = 0.;
 
-  double gsf[256][3];
+  double gsf[1256][3];
   getGradShapeFunctions(u, v, w, gsf, 1);
   for(int i = 0; i < getNumPrimaryShapeFunctions(); i++) {
     const MVertex *v = getShapeFunctionNode(i);
@@ -316,7 +316,7 @@ double MElement::getPrimaryJacobian(double u, double v, double w, double jac[3][
 void MElement::pnt(double u, double v, double w, SPoint3 &p)
 {
   double x = 0., y = 0., z = 0.;
-  double sf[256];
+  double sf[1256];
   getShapeFunctions(u, v, w, sf);
   for (int j = 0; j < getNumShapeFunctions(); j++) {
     const MVertex *v = getShapeFunctionNode(j);
@@ -330,7 +330,7 @@ void MElement::pnt(double u, double v, double w, SPoint3 &p)
 void MElement::primaryPnt(double u, double v, double w, SPoint3 &p)
 {
   double x = 0., y = 0., z = 0.;
-  double sf[256];
+  double sf[1256];
   getShapeFunctions(u, v, w, sf, 1);
   for (int j = 0; j < getNumPrimaryShapeFunctions(); j++) {
     const MVertex *v = getShapeFunctionNode(j);
@@ -354,7 +354,7 @@ void MElement::xyz2uvw(double xyz[3], double uvw[3])
     double jac[3][3];
     if(!getJacobian(uvw[0], uvw[1], uvw[2], jac)) break;
     double xn = 0., yn = 0., zn = 0.;
-    double sf[256];
+    double sf[1256];
     getShapeFunctions(uvw[0], uvw[1], uvw[2], sf);
     for (int i = 0; i < getNumShapeFunctions(); i++) {
       MVertex *v = getShapeFunctionNode(i);
@@ -405,7 +405,7 @@ double MElement::interpolate(double val[], double u, double v, double w, int str
 {
   double sum = 0;
   int j = 0;
-  double sf[256];
+  double sf[1256];
   getShapeFunctions(u, v, w, sf, order);
   for(int i = 0; i < getNumShapeFunctions(); i++){
     sum += val[j] * sf[i];
@@ -419,7 +419,7 @@ void MElement::interpolateGrad(double val[], double u, double v, double w, doubl
 {
   double dfdu[3] = {0., 0., 0.};
   int j = 0;
-  double gsf[256][3];
+  double gsf[1256][3];
   getGradShapeFunctions(u, v, w, gsf, order);
   for(int i = 0; i < getNumShapeFunctions(); i++){
     dfdu[0] += val[j] * gsf[i][0];
@@ -1003,6 +1003,20 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_HEX_8  : if(name) *name = "Hexahedron 8";    return 8;
   case MSH_HEX_20 : if(name) *name = "Hexahedron 20";   return 8 + 12;
   case MSH_HEX_27 : if(name) *name = "Hexahedron 27";   return 8 + 12 + 6 + 1;
+  case MSH_HEX_64  : if(name) *name = "Hexahedron 64";    return 64;
+  case MSH_HEX_125  : if(name) *name = "Hexahedron 125";    return 125;
+  case MSH_HEX_216  : if(name) *name = "Hexahedron 216";    return 216;
+  case MSH_HEX_343  : if(name) *name = "Hexahedron 343";    return 343;
+  case MSH_HEX_512  : if(name) *name = "Hexahedron 512";    return 512;
+  case MSH_HEX_729  : if(name) *name = "Hexahedron 729";    return 729;
+  case MSH_HEX_1000  : if(name) *name = "Hexahedron 1000";    return 1000;
+  case MSH_HEX_56  : if(name) *name = "Hexahedron 56";    return 56;
+  case MSH_HEX_98  : if(name) *name = "Hexahedron 98";    return 98;
+  case MSH_HEX_152  : if(name) *name = "Hexahedron 152";    return 152;
+  case MSH_HEX_222  : if(name) *name = "Hexahedron 222";    return 222;
+  case MSH_HEX_296  : if(name) *name = "Hexahedron 296";    return 296;
+  case MSH_HEX_386  : if(name) *name = "Hexahedron 386";    return 386;
+  case MSH_HEX_488  : if(name) *name = "Hexahedron 488";    return 488;
   case MSH_PRI_6  : if(name) *name = "Prism 6";         return 6;
   case MSH_PRI_15 : if(name) *name = "Prism 15";        return 6 + 9;
   case MSH_PRI_18 : if(name) *name = "Prism 18";        return 6 + 9 + 3;
@@ -1164,6 +1178,14 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_TET_220: return new MTetrahedronN(v, 9, num, part);
   case MSH_TET_286: return new MTetrahedronN(v, 10, num, part);
   case MSH_POLYH_: return new MPolyhedron(v, num, part, owner, parent);
+  case MSH_HEX_56: return new MHexahedronN(v, 3, num, part);
+  case MSH_HEX_64: return new MHexahedronN(v, 3, num, part);
+  case MSH_HEX_125: return new MHexahedronN(v, 4, num, part);
+  case MSH_HEX_216: return new MHexahedronN(v, 5, num, part);
+  case MSH_HEX_343: return new MHexahedronN(v, 6, num, part);
+  case MSH_HEX_512: return new MHexahedronN(v, 7, num, part);
+  case MSH_HEX_729: return new MHexahedronN(v, 8, num, part);
+  case MSH_HEX_1000: return new MHexahedronN(v, 9, num, part);
   default:         return 0;
   }
 }

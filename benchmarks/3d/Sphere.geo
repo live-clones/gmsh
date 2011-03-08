@@ -1,6 +1,6 @@
 // Gmsh project created on Fri Feb  1 12:17:44 2008
 
-Delete All;
+//Delete All;
 
 RSphere = 1.;
 lcSphere = .25;

@@ -237,7 +237,7 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
     if(ele->getParent()) ele = ele->getParent();
     int ndofs= ele->getNumShapeFunctions();
     vals.reserve(vals.size()+ndofs);
-    double valsuvw[256];
+    double valsuvw[1256];
     ele->getShapeFunctions(u, v, w, valsuvw);
     for(int i = 0; i < ndofs; ++i)
       vals.push_back(valsuvw[i]);

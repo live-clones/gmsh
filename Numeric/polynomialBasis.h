@@ -115,7 +115,7 @@ class polynomialBasis
   }
   inline void f(double u, double v, double w, double *sf) const
   {
-    double p[256];
+    double p[1256];
     evaluateMonomials(u, v, w, p);
     for (int i = 0; i < coefficients.size1(); i++) {
       sf[i] = 0;
@@ -128,7 +128,7 @@ class polynomialBasis
   // implemented) and is easier to bind
   inline void f(fullMatrix<double> &coord, fullMatrix<double> &sf)
   {
-    double p[256];
+    double p[1256];
     sf.resize (coord.size1(), coefficients.size1());
     for (int iPoint=0; iPoint< coord.size1(); iPoint++) {
       evaluateMonomials(coord(iPoint,0), coord(iPoint,1), coord(iPoint,2), p);

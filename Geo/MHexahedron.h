@@ -57,6 +57,7 @@ class MHexahedron : public MElement {
   virtual int getDim() const { return 3; }
   virtual int getNumVertices() const { return 8; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
+  virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
   virtual MVertex *getVertexMED(int num)
   {
     static const int map[8] = {0, 3, 2, 1, 4, 7, 6, 5};
@@ -403,7 +404,9 @@ class MHexahedron27 : public MHexahedron {
   }
   virtual int getNumEdgeVertices() const { return 12; }
   virtual int getNumFaceVertices() const { return 6; }
-  virtual int getNumVolumeVertices() const { return 1; }
+  virtual int getNumVolumeVertices() const { 
+    return 8;
+  }
   virtual int getNumEdgesRep(){ return 24; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   {
@@ -487,6 +490,143 @@ class MHexahedron27 : public MHexahedron {
     // face vertices
     _vs[13] = old[15]; _vs[15] = old[13];
     _vs[14] = old[16]; _vs[16] = old[14];
+  }
+};
+
+/*
+ * MHexahedronN
+ *
+ *   3----13----2
+ *   |\         |\
+ *   |15    24  | 14
+ *   9  \ 20    11 \
+ *   |   7----19+---6
+ *   |22 |  26  | 23|
+ *   0---+-8----1   |
+ *    \ 17    25 \  18
+ *    10 |  21    12|
+ *      \|         \|
+ *       4----16----5
+ *
+ *    N = 0RDER - 1
+ *    8 := 8 --> 8 + N
+ *    9 := 8 + N + 1 --> 8 +  2 * N
+ *    : 
+ *   19 := 8 + 11 * N + 1 --> 8 +  12 * N
+ *   20 := 8 + 12 * N + 1 --> 8 +  12 * N + N^2
+ *   21 := 8 + 12 * N + N^2 --> 8 +  12 * N + 2 * N^2
+ *    : 
+ *   25 := 8 + 12 * N + 5 * N^2 + 1 --> 8 +  12 * N + 6 * N^2
+ *   26 := 8 + 12 * N + 6 * N^2 + 1 --> 8 +  12 * N + 6 * N^2 + N^3
+ * 
+ */
+
+
+class MHexahedronN : public MHexahedron {
+ protected:
+  const char _order;
+  std::vector<MVertex*> _vs;
+ public :
+ MHexahedronN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
+	      MVertex *v4, MVertex *v5, MVertex *v6, MVertex *v7,
+	      const std::vector<MVertex*> &v, char order, int num=0, int part=0)
+   : MHexahedron(v0,v1,v2,v3,v4,v5,v6,v7, num, part), _order(order), _vs(v)
+    {
+      for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
+    }
+ MHexahedronN(const std::vector<MVertex*> &v, char order, int num=0, int part=0)
+   :  MHexahedron(v[0], v[1], v[2], v[3],v[4], v[5], v[6], v[7], num, part), _order(order)
+  {
+    for(unsigned int i = 8; i < v.size(); i++) _vs.push_back(v[i]);
+    for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
+  }
+  
+  ~MHexahedronN(){}
+  virtual int getPolynomialOrder() const { return (int)_order; }
+  virtual int getNumVertices() const { return 8 + _vs.size(); }
+  virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
+  virtual MVertex *getVertexDIFF(int num)
+  {
+    throw;
+  }
+  virtual int getNumEdgeVertices() const { return 12 * (_order - 1); }
+  virtual int getNumFaceVertices() const { return 6 * (_order - 1)*(_order - 1); }
+  virtual int getNumVolumeVertices() const { 
+    switch(getTypeForMSH()){
+    case MSH_HEX_27 : 
+    case MSH_HEX_64 : 
+    case MSH_HEX_125 : 
+    case MSH_HEX_216 : 
+    case MSH_HEX_343 : 
+    case MSH_HEX_512 : 
+    case MSH_HEX_729 : 
+    case MSH_HEX_1000 : 
+      return (_order - 1)*(_order - 1)*(_order - 1); 
+    default:
+      return 0;
+    }
+  }
+  virtual int getNumEdgesRep();
+  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
+  {
+    v.resize(_order+1);
+    MHexahedron::_getEdgeVertices(num, v);
+    for (int i=0;i<_order-1;i++) v[2+i] = _vs[(_order-1)*num+i];
+  }
+  //virtual int getNumFacesRep();
+  virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
+  {
+    v.resize((_order+1)*(_order+1));
+    MHexahedron::_getFaceVertices(num, v);
+    static const int f[6][4] = {
+      {0, 3, 2, 1},
+      {0, 1, 5, 4},
+      {0, 4, 7, 3},
+      {1, 2, 6, 5},
+      {2, 3, 7, 6},
+      {4, 5, 6, 7}
+    };
+    int count = 4;
+    for (int i=0;i<4;i++){
+      for (int j=0;j<_order-1;j++) v[count++] = _vs[(_order-1)*f[num][i]+j];      
+    }
+    for (int i=0;i<(_order+1)*(_order+1);i++){
+      int N = _order - 1;
+      int start = 8 + 12 * N + num * (_order-1)*(_order-1);
+      v[count++] = _vs[start + i];
+    }
+  }
+  virtual int getTypeForMSH() const
+  {
+    // (p+1)^3
+    if(_order == 3 && _vs.size() + 8 == 64 ) return MSH_HEX_64;
+    if(_order == 4 && _vs.size() + 8 == 125) return MSH_HEX_125;
+    if(_order == 5 && _vs.size() + 8 == 216) return MSH_HEX_216;
+    if(_order == 6 && _vs.size() + 8 == 343) return MSH_HEX_343;
+    if(_order == 7 && _vs.size() + 8 == 512) return MSH_HEX_512;
+    if(_order == 8 && _vs.size() + 8 == 729) return MSH_HEX_729;
+    if(_order == 9 && _vs.size() + 8 == 1000) return MSH_HEX_1000;
+    if(_order == 3 && _vs.size() + 8 == 56 ) return MSH_HEX_56;
+    if(_order == 4 && _vs.size() + 8 == 98) return MSH_HEX_98;
+    if(_order == 5 && _vs.size() + 8 == 152) return MSH_HEX_152;
+    if(_order == 6 && _vs.size() + 8 == 222) return MSH_HEX_222;
+    if(_order == 7 && _vs.size() + 8 == 296) return MSH_HEX_296;
+    if(_order == 8 && _vs.size() + 8 == 386) return MSH_HEX_386;
+    if(_order == 9 && _vs.size() + 8 == 488) return MSH_HEX_488;
+    return 0;
+  }
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int o){
+    MElement::getShapeFunctions (u,v,w,s,o);
+  }
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
+  {
+    MElement::getGradShapeFunctions (u,v,w,s,o);
+  }
+
+  virtual void revert()
+  {
+    Msg::Error("not done yet reverse hexN");
   }
 };
 

@@ -134,9 +134,6 @@
 #define MSH_TET_165  73
 #define MSH_TET_220  74
 #define MSH_TET_286  75
-#define MSH_HEX_64   76
-#define MSH_HEX_125  77
-#define MSH_HEX_196  78
 #define MSH_TET_74   79
 #define MSH_TET_100  80
 #define MSH_TET_130  81 
@@ -150,7 +147,22 @@
 #define MSH_PRI_1    89
 #define MSH_PRI_40   90
 #define MSH_PRI_75   91
-#define MSH_PRI_126  92
+// HEXES COMPLETE (3->9)
+#define MSH_HEX_64   92
+#define MSH_HEX_125  93
+#define MSH_HEX_216  94
+#define MSH_HEX_343  95
+#define MSH_HEX_512  96
+#define MSH_HEX_729  97
+#define MSH_HEX_1000 98
+// HEXES INCOMPLETE (3->9)
+#define MSH_HEX_56   99
+#define MSH_HEX_98  100
+#define MSH_HEX_152 101
+#define MSH_HEX_222 102
+#define MSH_HEX_296 103
+#define MSH_HEX_386 104
+#define MSH_HEX_488 105
 
 #define MSH_NUM_TYPE 92
 

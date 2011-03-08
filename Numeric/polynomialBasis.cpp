@@ -159,7 +159,7 @@ const fullMatrix<double> &polynomialBasis::getGradientAtFaceIntegrationPoints(in
       const polynomialBasis *fsFace = polynomialBases::find(closures[iClosure].type);
       gaussIntegration::get(fsFace->parentType, integrationOrder, integrationFace, weight);
       fullMatrix<double> integration(integrationFace.size1(), 3);
-      double f[256];
+      double f[1256];
       for (int i = 0; i < integrationFace.size1(); i++){
         fsFace->f(integrationFace(i,0),integrationFace(i,1),integrationFace(i,2),f);
         for(size_t j=0; j<closures[iClosure].size(); j++) {
@@ -170,7 +170,7 @@ const fullMatrix<double> &polynomialBasis::getGradientAtFaceIntegrationPoints(in
       }
       fullMatrix<double> &v = dfAtFace[iClosure];
       v.resize(nbPsi, integration.size1()*3);
-      double g[256][3];
+      double g[1256][3];
       for (size_t xi = 0; xi< integration.size1(); xi++) {
         df(integration(xi,0 ), integration(xi,1), integration(xi,2), g);
         for (int j = 0; j < nbPsi; j++) {
@@ -203,6 +203,7 @@ static fullMatrix<double> generatePascalQuad(int order)
   return monomials;
 }
 
+
 /*
 00 10 20 30 40 ⋯
 01 11 21 31 41 ⋯
@@ -213,26 +214,25 @@ static fullMatrix<double> generatePascalQuad(int order)
 */
 
 // generate all monomials xi^m * eta^n with n and m <= order
-static fullMatrix<double> generatePascalHex(int order)
+static fullMatrix<double> generatePascalHex(int order, bool serendip)
 {
-
-  fullMatrix<double> monomials( (order+1)*(order+1)*(order+1), 3);
+  int siz = (order+1)*(order+1)*(order+1);
+  if (serendip) siz -= (order-1)*(order-1)*(order-1);
+  fullMatrix<double> monomials( siz, 3);
   int index = 0;
-  for (int p = 0; p <= order; p++) {
-    for(int i = 0; i < p; i++) {
-      for(int j = 0; j < i; j++, index++) {
-	monomials(index, 0) = p;
-	monomials(index, 1) = i;
-	monomials(index, 2) = j;
-      }
-    }
-    for(int i = 0; i <= p; i++, index++) {
-      for(int j = 0; j <= p; i++, index++) {
-	monomials(index, 0) = p-i;
-	monomials(index, 1) = p;
+  for (int i = 0; i <= order; i++) {
+    for (int j = 0; j <= order; j++) {
+      for (int k = 0; k <= order; k++) {
+	if (!serendip || i<2 || j<2 || k<2){
+	  monomials(index,0) = i;
+	  monomials(index,1) = j;
+	  monomials(index,2) = k;
+	  index++;
+	}
       }
     }
   }
+  //  printf("siz %d %d\n",siz,index );	
   return monomials;
 }
 
@@ -264,6 +264,7 @@ static fullMatrix<double> generatePascalQuadSerendip(int order)
   }
   return monomials;
 }
+
 
 /*static fullMatrix<double> generatePascalQuadSerendip(int order)
 {
@@ -843,7 +844,8 @@ static fullMatrix<double> gmshGeneratePointsQuad(int order, bool serendip)
           point(index, 1) = point(p0, 1) + i*(point(p1,1)-point(p0,1))/order;
         }
       }
-      if (order > 2 && !serendip) {
+      // FIXIT it was > 2 and I beleive it is >= 2 !!
+      if (order >= 2 && !serendip) {
         fullMatrix<double> inner = gmshGeneratePointsQuad(order - 2, false);
         inner.scale(1. - 2./order);
         point.copy(inner, 0, nbPoints - index, 0, 2, index, 0);
@@ -854,6 +856,120 @@ static fullMatrix<double> gmshGeneratePointsQuad(int order, bool serendip)
     point(0, 0) = 0;
     point(0, 1) = 0;
   }
+  return point;
+}
+
+static fullMatrix<double> gmshGeneratePointsHex(int order, bool serendip)
+{
+  int nbPoints = (order+1)*(order+1)*(order+1);
+  if (serendip) nbPoints -= (order-1)*(order-1)*(order-1);
+  fullMatrix<double> point(nbPoints, 3);
+  
+  // should be a public member of MHexahedron, just copied
+  static const int edges[12][2] = {
+    {0, 1},
+    {0, 3},
+    {0, 4},
+    {1, 2},
+    {1, 5},
+    {2, 3},
+    {2, 6},
+    {3, 7},
+    {4, 5},
+    {4, 7},
+    {5, 6},
+    {6, 7}
+  };
+  static const int faces[6][4] = {
+    {0, 3, 2, 1},
+    {0, 1, 5, 4},
+    {0, 4, 7, 3},
+    {1, 2, 6, 5},
+    {2, 3, 7, 6},
+    {4, 5, 6, 7}
+  };
+
+  if (order > 0) {
+    point(0, 0) = -1;
+    point(0, 1) = -1;
+    point(0, 2) = -1;
+    point(1, 0) = 1;
+    point(1, 1) = -1;
+    point(1, 2) = -1;
+    point(2, 0) = 1;
+    point(2, 1) = 1;
+    point(2, 2) = -1;
+    point(3, 0) = -1;
+    point(3, 1) = 1;
+    point(3, 2) = -1;
+
+    point(4, 0) = -1;
+    point(4, 1) = -1;
+    point(4, 2) = 1;
+    point(5, 0) = 1;
+    point(5, 1) = -1;
+    point(5, 2) = 1;
+    point(6, 0) = 1;
+    point(6, 1) = 1;
+    point(6, 2) = 1;
+    point(7, 0) = -1;
+    point(7, 1) = 1;
+    point(7, 2) = 1;
+
+    if (order > 1) {
+      int index = 8;
+      for (int iedge=0; iedge<12; iedge++) {
+        int p0 = edges[iedge][0];
+        int p1 = edges[iedge][1];
+        for (int i = 1; i < order; i++, index++) {
+          point(index, 0) = point(p0, 0) + i*(point(p1,0)-point(p0,0))/order;
+          point(index, 1) = point(p0, 1) + i*(point(p1,1)-point(p0,1))/order;
+          point(index, 2) = point(p0, 2) + i*(point(p1,2)-point(p0,2))/order;
+        }
+      }
+      
+      fullMatrix<double> fp = gmshGeneratePointsQuad(order - 2, false);
+      fp.scale(1. - 2./order);
+      for (int iface=0; iface<6; iface++) {
+	int p0 = faces[iface][0];
+	int p1 = faces[iface][1];
+	int p2 = faces[iface][2];
+	int p3 = faces[iface][3];
+	for (int i=0;i<fp.size1();i++, index++){
+	  const double u = fp(i,0);
+	  const double v = fp(i,1);
+	  const double newU = 
+	    0.25*(1.-u)*(1.-v)*point(p0,0) +
+	    0.25*(1.+u)*(1.-v)*point(p1,0) +
+	    0.25*(1.+u)*(1.+v)*point(p2,0) +
+	    0.25*(1.-u)*(1.+v)*point(p3,0) ;
+	  const double newV = 
+	    0.25*(1.-u)*(1.-v)*point(p0,1) +
+	    0.25*(1.+u)*(1.-v)*point(p1,1) +
+	    0.25*(1.+u)*(1.+v)*point(p2,1) +
+	    0.25*(1.-u)*(1.+v)*point(p3,1) ;
+	  const double newW = 
+	    0.25*(1.-u)*(1.-v)*point(p0,2) +
+	    0.25*(1.+u)*(1.-v)*point(p1,2) +
+	    0.25*(1.+u)*(1.+v)*point(p2,2) +
+	    0.25*(1.-u)*(1.+v)*point(p3,2) ;
+	  point(index, 0) = newU;
+	  point(index, 1) = newV;
+	  point(index, 2) = newW;
+	}
+      } 
+      if (!serendip) {     
+        fullMatrix<double> inner = gmshGeneratePointsHex(order - 2, false);
+        inner.scale(1. - 2./order);
+        point.copy(inner, 0, nbPoints - index, 0, 3, index, 0);
+      }
+    }
+  }
+  else if (order == 0){
+    point(0, 0) = 0;
+    point(0, 1) = 0;
+    point(0, 2) = 0;
+  }  
   return point;
 }
 
@@ -1273,8 +1389,17 @@ static void generateClosureOrder0(polynomialBasis::clCont &closure, int nb)
   }
 }
 
-std::map<int, polynomialBasis> polynomialBases::fs;
+void _oulala_  (const char* a, fullMatrix<double> & m){
+  FILE *f = fopen (a,"w");
+  fprintf(f,"View \"\"{\n");
+  for (int i=0;i<m.size1();i++){
+    fprintf(f,"SP(%g,%g,%g){%d};\n",m(i,0),m(i,1),m(i,2),i);
+  }
+  fprintf(f,"};\n");
+  fclose (f);
+}
 
+std::map<int, polynomialBasis> polynomialBases::fs;
 const polynomialBasis *polynomialBases::find(int tag)
 {
   std::map<int, polynomialBasis>::const_iterator it = fs.find(tag);
@@ -1860,6 +1985,142 @@ const polynomialBasis *polynomialBases::find(int tag)
     generateFaceClosurePrism(F.closures, 2);
     generateFaceClosurePrismFull(F.fullClosures, F.closureRef, 2);
     break;
+  case MSH_HEX_20 :
+    F.numFaces = 6;
+    F.monomials = generatePascalHex(2,true);
+    F.points =    gmshGeneratePointsHex(2, true);
+    F.parentType = TYPE_HEX;
+    //    generateFaceClosureHex(F.closures, 2);
+    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
+    break;
+  case MSH_HEX_27 :
+    F.numFaces = 6;
+    F.monomials = generatePascalHex(2,false);
+    F.points =    gmshGeneratePointsHex(2, false);
+    F.parentType = TYPE_HEX;
+    //    generateFaceClosureHex(F.closures, 2);
+    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
+    break;
+  case MSH_HEX_56 :
+    //    printf("in complete hex at order 3\n");
+    F.numFaces = 6;
+    F.monomials = generatePascalHex(3,true);
+    F.points =    gmshGeneratePointsHex(3, true);
+    F.parentType = TYPE_HEX;
+    //    _oulala_("hex56.pos",F.points);
+    //    generateFaceClosureHex(F.closures, 2);
+    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
+    break;
+  case MSH_HEX_64 :
+    //    printf("complete hex at order 3\n");
+    F.numFaces = 6;
+    F.monomials = generatePascalHex(3,false);
+    //    printf("pas complete hex at order 3 done\n");
+    F.points =    gmshGeneratePointsHex(3, false);
+    //    printf("complete hex at order 3 done\n");
+    //    F.points.print("P3");
+    F.parentType = TYPE_HEX;
+    //    _oulala_("hex64.pos",F.points);
+    //    generateFaceClosureHex(F.closures, 2);
+    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
+    break;
+  case MSH_HEX_98 :
+    F.numFaces = 6;
+    F.monomials = generatePascalHex(4,true);
+    F.points =    gmshGeneratePointsHex(4, true);
+    F.parentType = TYPE_HEX;
+    //    generateFaceClosureHex(F.closures, 2);
+    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
+    break;
+  case MSH_HEX_125 :
+    F.numFaces = 6;
+    F.monomials = generatePascalHex(4,false);
+    F.points =    gmshGeneratePointsHex(4, false);
+    F.parentType = TYPE_HEX;
+    //    _oulala_("hex125.pos",F.points);
+    //    generateFaceClosureHex(F.closures, 2);
+    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
+    break;
+  case MSH_HEX_152 :
+    F.numFaces = 6;
+    F.monomials = generatePascalHex(5,true);
+    F.points =    gmshGeneratePointsHex(5, true);
+    F.parentType = TYPE_HEX;
+    //    generateFaceClosureHex(F.closures, 2);
+    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
+    break;
+  case MSH_HEX_216 :
+    F.numFaces = 6;
+    F.monomials = generatePascalHex(5,false);
+    F.points =    gmshGeneratePointsHex(5, false);
+    F.parentType = TYPE_HEX;
+    //    generateFaceClosureHex(F.closures, 2);
+    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
+    break;
+  case MSH_HEX_222 :
+    F.numFaces = 6;
+    F.monomials = generatePascalHex(6,true);
+    F.points =    gmshGeneratePointsHex(6, true);
+    F.parentType = TYPE_HEX;
+    //    generateFaceClosureHex(F.closures, 2);
+    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
+    break;
+  case MSH_HEX_343 :
+    F.numFaces = 6;
+    F.monomials = generatePascalHex(6,false);
+    F.points =    gmshGeneratePointsHex(6, false);
+    F.parentType = TYPE_HEX;
+    //    generateFaceClosureHex(F.closures, 2);
+    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
+    break;
+  case MSH_HEX_296 :
+    F.numFaces = 6;
+    F.monomials = generatePascalHex(7,true);
+    F.points =    gmshGeneratePointsHex(7, true);
+    F.parentType = TYPE_HEX;
+    //    generateFaceClosureHex(F.closures, 2);
+    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
+    break;
+  case MSH_HEX_512 :
+    F.numFaces = 6;
+    F.monomials = generatePascalHex(7,false);
+    F.points =    gmshGeneratePointsHex(7, false);
+    F.parentType = TYPE_HEX;
+    //    generateFaceClosureHex(F.closures, 2);
+    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
+    break;
+  case MSH_HEX_386 :
+    F.numFaces = 6;
+    F.monomials = generatePascalHex(8,true);
+    F.points =    gmshGeneratePointsHex(8, true);
+    F.parentType = TYPE_HEX;
+    //    generateFaceClosureHex(F.closures, 2);
+    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
+    break;
+  case MSH_HEX_729 :
+    F.numFaces = 6;
+    F.monomials = generatePascalHex(8,false);
+    F.points =    gmshGeneratePointsHex(8, false);
+    F.parentType = TYPE_HEX;
+    //    generateFaceClosureHex(F.closures, 2);
+    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
+    break;
+  case MSH_HEX_488 :
+    F.numFaces = 6;
+    F.monomials = generatePascalHex(9,true);
+    F.points =    gmshGeneratePointsHex(9, true);
+    F.parentType = TYPE_HEX;
+    //    generateFaceClosureHex(F.closures, 2);
+    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
+    break;
+  case MSH_HEX_1000 :
+    F.numFaces = 6;
+    F.monomials = generatePascalHex(9,false);
+    F.points =    gmshGeneratePointsHex(9, false);
+    F.parentType = TYPE_HEX;
+    //    generateFaceClosureHex(F.closures, 2);
+    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
+    break;
   default :
     Msg::Error("Unknown function space %d: reverting to TET_4", tag);
     F.numFaces = 4;
@@ -1900,7 +2161,7 @@ const fullMatrix<double> &polynomialBases::findInjector(int tag1, int tag2)
 
   fullMatrix<double> inj(fs1.points.size1(), fs2.points.size1());
 
-  double sf[256];
+  double sf[1256];
 
   for (int i = 0; i < fs1.points.size1(); i++) {
     fs2.f(fs1.points(i, 0), fs1.points(i, 1), fs1.points(i, 2), sf);
