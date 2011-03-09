@@ -175,8 +175,7 @@ class MHexahedron : public MElement {
     return true;
   }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
- private:
-  int edges_hexa(const int edge, const int vert) const
+  static int edges_hexa(const int edge, const int vert) 
   {
     static const int e[12][2] = {
       {0, 1},
@@ -194,7 +193,7 @@ class MHexahedron : public MElement {
     };
     return e[edge][vert];
   }
-  int faces_hexa(const int face, const int vert) const
+  static int faces_hexa(const int face, const int vert) 
   {
     static const int f[6][4] = {
       {0, 3, 2, 1},
@@ -623,6 +622,8 @@ class MHexahedronN : public MHexahedron {
   {
     MElement::getGradShapeFunctions (u,v,w,s,o);
   }
+  virtual int getNumFacesRep();
+  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
 
   virtual void revert()
   {

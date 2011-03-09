@@ -159,3 +159,199 @@ const polynomialBasis* MHexahedron::getFunctionSpace(int o) const
   }
   return 0;
 }
+
+static void _myGetFaceRep(MHexahedron *hex, int num, double *x, double *y, double *z,
+                          SVector3 *n, int numSubEdges)
+{
+  static double pp[8][3] = {
+    {-1,-1,-1},{1,-1,-1},{1,1,-1},{-1,1,-1},
+    {-1,-1,1},{1,-1,1},{1,1,1},{-1,1,1} };
+
+  int iFace    = num / (2*numSubEdges * numSubEdges);
+  int iSubFace = num % (2*numSubEdges * numSubEdges);
+
+  int iVertex1 = hex->faces_hexa(iFace,0);
+  int iVertex2 = hex->faces_hexa(iFace,1);
+  int iVertex3 = hex->faces_hexa(iFace,2);
+  int iVertex4 = hex->faces_hexa(iFace,3);
+
+  SPoint3 pnt1, pnt2, pnt3;
+  double J1[3][3], J2[3][3], J3[3][3];
+
+
+  /*
+    0
+    0 1
+    0 1 2
+    0 1 2 3
+    0 1 2 3 4
+    0 1 2 3 4 5
+  */
+
+  // on each layer, we have (numSubEdges) * 2 triangles
+  // ix and iy are the coordinates of the sub-quadrangle
+
+  int io = iSubFace%2;
+  int ix = (iSubFace/2)/numSubEdges;
+  int iy = (iSubFace/2)%numSubEdges;
+
+  const double d = 2. / numSubEdges;
+  double ox = -1. + d*ix;
+  double oy = -1. + d*iy;
+
+  if (io == 0){
+    double U1 = 
+      pp[iVertex1][0] * (1.-ox)*(1-oy)*.25 + 
+      pp[iVertex2][0] * (1.+ox)*(1-oy)*.25 + 
+      pp[iVertex3][0] * (1.+ox)*(1+oy)*.25 + 
+      pp[iVertex4][0] * (1.-ox)*(1+oy)*.25; 
+    double V1 = 
+      pp[iVertex1][1] * (1.-ox)*(1-oy)*.25 + 
+      pp[iVertex2][1] * (1.+ox)*(1-oy)*.25 + 
+      pp[iVertex3][1] * (1.+ox)*(1+oy)*.25 + 
+      pp[iVertex4][1] * (1.-ox)*(1+oy)*.25; 
+    double W1 = 
+      pp[iVertex1][2] * (1.-ox)*(1-oy)*.25 + 
+      pp[iVertex2][2] * (1.+ox)*(1-oy)*.25 + 
+      pp[iVertex3][2] * (1.+ox)*(1+oy)*.25 + 
+      pp[iVertex4][2] * (1.-ox)*(1+oy)*.25; 
+
+    ox += d;
+  
+    double U2 = 
+      pp[iVertex1][0] * (1.-ox)*(1-oy)*.25 + 
+      pp[iVertex2][0] * (1.+ox)*(1-oy)*.25 + 
+      pp[iVertex3][0] * (1.+ox)*(1+oy)*.25 + 
+      pp[iVertex4][0] * (1.-ox)*(1+oy)*.25; 
+    double V2 = 
+      pp[iVertex1][1] * (1.-ox)*(1-oy)*.25 + 
+      pp[iVertex2][1] * (1.+ox)*(1-oy)*.25 + 
+      pp[iVertex3][1] * (1.+ox)*(1+oy)*.25 + 
+      pp[iVertex4][1] * (1.-ox)*(1+oy)*.25; 
+    double W2 = 
+      pp[iVertex1][2] * (1.-ox)*(1-oy)*.25 + 
+      pp[iVertex2][2] * (1.+ox)*(1-oy)*.25 + 
+      pp[iVertex3][2] * (1.+ox)*(1+oy)*.25 + 
+      pp[iVertex4][2] * (1.-ox)*(1+oy)*.25; 
+
+    oy += d;
+  
+    double U3 = 
+      pp[iVertex1][0] * (1.-ox)*(1-oy)*.25 + 
+      pp[iVertex2][0] * (1.+ox)*(1-oy)*.25 + 
+      pp[iVertex3][0] * (1.+ox)*(1+oy)*.25 + 
+      pp[iVertex4][0] * (1.-ox)*(1+oy)*.25; 
+    double V3 = 
+      pp[iVertex1][1] * (1.-ox)*(1-oy)*.25 + 
+      pp[iVertex2][1] * (1.+ox)*(1-oy)*.25 + 
+      pp[iVertex3][1] * (1.+ox)*(1+oy)*.25 + 
+      pp[iVertex4][1] * (1.-ox)*(1+oy)*.25; 
+    double W3 = 
+      pp[iVertex1][2] * (1.-ox)*(1-oy)*.25 + 
+      pp[iVertex2][2] * (1.+ox)*(1-oy)*.25 + 
+      pp[iVertex3][2] * (1.+ox)*(1+oy)*.25 + 
+      pp[iVertex4][2] * (1.-ox)*(1+oy)*.25; 
+    
+    hex->pnt(U1,V1,W1, pnt1);
+    hex->pnt(U2,V2,W2, pnt2);
+    hex->pnt(U3,V3,W3, pnt3);
+    //    hex->getJacobian(U1,V1,W1, J1);
+    //    hex->getJacobian(U2,V2,W2, J2);
+    //    hex->getJacobian(U3,V3,W3, J3);
+  } 
+  else{
+    double U1 = 
+      pp[iVertex1][0] * (1.-ox)*(1-oy)*.25 + 
+      pp[iVertex2][0] * (1.+ox)*(1-oy)*.25 + 
+      pp[iVertex3][0] * (1.+ox)*(1+oy)*.25 + 
+      pp[iVertex4][0] * (1.-ox)*(1+oy)*.25; 
+    double V1 = 
+      pp[iVertex1][1] * (1.-ox)*(1-oy)*.25 + 
+      pp[iVertex2][1] * (1.+ox)*(1-oy)*.25 + 
+      pp[iVertex3][1] * (1.+ox)*(1+oy)*.25 + 
+      pp[iVertex4][1] * (1.-ox)*(1+oy)*.25; 
+    double W1 = 
+      pp[iVertex1][2] * (1.-ox)*(1-oy)*.25 + 
+      pp[iVertex2][2] * (1.+ox)*(1-oy)*.25 + 
+      pp[iVertex3][2] * (1.+ox)*(1+oy)*.25 + 
+      pp[iVertex4][2] * (1.-ox)*(1+oy)*.25; 
+
+    ox += d;
+    oy += d;
+  
+    double U2 = 
+      pp[iVertex1][0] * (1.-ox)*(1-oy)*.25 + 
+      pp[iVertex2][0] * (1.+ox)*(1-oy)*.25 + 
+      pp[iVertex3][0] * (1.+ox)*(1+oy)*.25 + 
+      pp[iVertex4][0] * (1.-ox)*(1+oy)*.25; 
+    double V2 = 
+      pp[iVertex1][1] * (1.-ox)*(1-oy)*.25 + 
+      pp[iVertex2][1] * (1.+ox)*(1-oy)*.25 + 
+      pp[iVertex3][1] * (1.+ox)*(1+oy)*.25 + 
+      pp[iVertex4][1] * (1.-ox)*(1+oy)*.25; 
+    double W2 = 
+      pp[iVertex1][2] * (1.-ox)*(1-oy)*.25 + 
+      pp[iVertex2][2] * (1.+ox)*(1-oy)*.25 + 
+      pp[iVertex3][2] * (1.+ox)*(1+oy)*.25 + 
+      pp[iVertex4][2] * (1.-ox)*(1+oy)*.25; 
+
+    ox -= d;
+  
+    double U3 = 
+      pp[iVertex1][0] * (1.-ox)*(1-oy)*.25 + 
+      pp[iVertex2][0] * (1.+ox)*(1-oy)*.25 + 
+      pp[iVertex3][0] * (1.+ox)*(1+oy)*.25 + 
+      pp[iVertex4][0] * (1.-ox)*(1+oy)*.25; 
+    double V3 = 
+      pp[iVertex1][1] * (1.-ox)*(1-oy)*.25 + 
+      pp[iVertex2][1] * (1.+ox)*(1-oy)*.25 + 
+      pp[iVertex3][1] * (1.+ox)*(1+oy)*.25 + 
+      pp[iVertex4][1] * (1.-ox)*(1+oy)*.25; 
+    double W3 = 
+      pp[iVertex1][2] * (1.-ox)*(1-oy)*.25 + 
+      pp[iVertex2][2] * (1.+ox)*(1-oy)*.25 + 
+      pp[iVertex3][2] * (1.+ox)*(1+oy)*.25 + 
+      pp[iVertex4][2] * (1.-ox)*(1+oy)*.25; 
+    
+    hex->pnt(U1,V1,W1, pnt1);
+    hex->pnt(U2,V2,W2, pnt2);
+    hex->pnt(U3,V3,W3, pnt3);
+    //    hex->getJacobian(U1,V1,W1, J1);
+    //    hex->getJacobian(U2,V2,W2, J2);
+    //    hex->getJacobian(U3,V3,W3, J3);
+  }
+  /*
+  {
+    SVector3 d1(J1[0][0], J1[0][1], J1[0][2]);
+    SVector3 d2(J1[1][0], J1[1][1], J1[1][2]);
+    n[0] = crossprod(d1, d2);
+    n[0].normalize();
+  }
+  {
+    SVector3 d1(J2[0][0], J2[0][1], J2[0][2]);
+    SVector3 d2(J2[1][0], J2[1][1], J2[1][2]);
+    n[1] = crossprod(d1, d2);
+    n[1].normalize();
+  }
+  {
+    SVector3 d1(J3[0][0], J3[0][1], J3[0][2]);
+    SVector3 d2(J3[1][0], J3[1][1], J3[1][2]);
+    n[2] = crossprod(d1, d2);
+    n[2].normalize();
+  }
+  */
+  n[0] = 1;
+  n[1] = 1;
+  n[2] = 1;
+  x[0] = pnt1.x(); x[1] = pnt2.x(); x[2] = pnt3.x();
+  y[0] = pnt1.y(); y[1] = pnt2.y(); y[2] = pnt3.y();
+  z[0] = pnt1.z(); z[1] = pnt2.z(); z[2] = pnt3.z();
+}
+
+
+void MHexahedronN::getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
+{
+  _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+}
+
+int MHexahedronN::getNumFacesRep(){ return 6 * (CTX::instance()->mesh.numSubEdges * CTX::instance()->mesh.numSubEdges * 2); }

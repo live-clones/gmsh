@@ -24,7 +24,9 @@ Line(10) = {13,3};
 Line(11) = {12,5};
 Line(12) = {11,4};
 
-Transfinite Line {1:12} = 10;
+N = 3;
+
+Transfinite Line {1:12} = N;
 
 Line Loop(13) = {-10,-6,9,1};
 Plane Surface(14) = {13};
@@ -47,13 +49,13 @@ Recombine Surface {14:22:2};
 Geometry.ExtrudeReturnLateralEntities = 0;
 
 s[] = Extrude {{0,0,1}, {0,0,0}, 2*Pi/3}{
-  Surface{14:22:2}; Recombine; Layers{10,1};
+  Surface{14:22:2}; Recombine; Layers{N,1};
 };
 
 s[] = Extrude {{0,0,1}, {0,0,0}, 2*Pi/3}{
-  Surface{s[{0:8:2}]}; Recombine; Layers{10,1};
+  Surface{s[{0:8:2}]}; Recombine; Layers{N,1};
 };
 
 Extrude {{0,0,1}, {0,0,0}, 2*Pi/3}{
-  Surface{s[{0:8:2}]}; Recombine; Layers{10,1};
+  Surface{s[{0:8:2}]}; Recombine; Layers{N,1};
 }
