@@ -565,8 +565,12 @@ double MElement::integrateFlux(double val[], int face, int pOrder, int order)
   getFaceVertices(face, v);
   MElementFactory f;
   int type = 0;
-  if(getType() == TYPE_TRI) type = getTriangleType(getPolynomialOrder());
-  if(getType() == TYPE_QUA) type = getQuadType(getPolynomialOrder());
+  if(getType() == TYPE_TRI || getType() == TYPE_TET) type = getTriangleType(getPolynomialOrder());
+  else if(getType() == TYPE_QUA || getType() == TYPE_HEX) type = getQuadType(getPolynomialOrder());
+  else if(getType() == TYPE_PYR && face < 4) type = getTriangleType(getPolynomialOrder());
+  else if(getType() == TYPE_PYR && face >= 4) type = getQuadType(getPolynomialOrder());
+  else if(getType() == TYPE_PRI && face < 2) type = getTriangleType(getPolynomialOrder());
+  else if(getType() == TYPE_PRI && face >= 2) type = getQuadType(getPolynomialOrder());
   MElement* fe = f.create(type, v);
 
   double intv[3];
