@@ -355,12 +355,12 @@ void highOrderSmoother::smooth(GFace *gf, bool metric)
   Msg::Info("Smoothing high order mesh : model face %d (%d elements)", gf->tag(),
             v.size());
 
-  gf->model()->writeMSH("before_smoothing.msh");
-  _printJacobiansAtNodes ("before_smoothing_jac.msh", v);
-  smooth_with_mixed_formulation(v,0.2);
-  gf->model()->writeMSH("after_smoothing.msh");
-  _printJacobiansAtNodes ("after_smoothing_jac.msh", v);
-  return;
+  //  gf->model()->writeMSH("before_smoothing.msh");
+  //  _printJacobiansAtNodes ("before_smoothing_jac.msh", v);
+  //  smooth_with_mixed_formulation(v,0.2);
+  //  gf->model()->writeMSH("after_smoothing.msh");
+  //  _printJacobiansAtNodes ("after_smoothing_jac.msh", v);
+  //  return;
 
   if (metric)smooth_metric(v,gf);
   else smooth(v);
@@ -485,7 +485,7 @@ void highOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
   
   getDistordedElements(all, 0.5, v, minD);
 
-  const int nbLayers = 10; //2, originally :)
+  const int nbLayers = 3; //2, originally :)
   for (int i = 0; i < nbLayers; i++){
     addOneLayer(all, v, layer);
     v.insert(v.end(), layer.begin(), layer.end());
@@ -843,8 +843,12 @@ int highOrderSmoother::smooth_with_mixed_formulation (std::vector<MElement*> &al
 
 void highOrderSmoother::smooth(std::vector<MElement*> &all)
 {
-#ifdef HAVE_TAUCS
+#if defined(HAVE_TAUCS)
   linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
+  printf("coucou\n");
+#elif defined(HAVE_PETSC)
+  linearSystemPETSc<double> *lsys = new  linearSystemPETSc<double>;    
+  printf("coucou PETSC\n");
 #else
   linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
   lsys->setNoisy(1);
@@ -864,7 +868,7 @@ void highOrderSmoother::smooth(std::vector<MElement*> &all)
 
   if (!v.size());
 
-  const int nbLayers = 6;
+  const int nbLayers = 3;
   for (int i = 0; i < nbLayers; i++){
     addOneLayer(all, v, layer);
     v.insert(v.end(), layer.begin(), layer.end());
