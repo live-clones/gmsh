@@ -3906,9 +3906,18 @@ for(i = 0; i < number_of_triangles; i++)@{
 @c -------------------------------------------------------------------------
 
 @node Node ordering, Legacy formats, MSH binary file format, File formats
+
 @section Node ordering
 
 @cindex Nodes, ordering
+
+Historically, Gmsh developpers have started by implementing linear elements (lines,
+triangles, quads, tets, prisms and hexes). Then, second and sometimes third
+order elements have been hardcoded. We here distinguish ``low order elements'' that
+have been hardcoded initially and ``high order elements'' that have been coded in
+a general fashion, theoretically valid for any order.  
+
+@subsection Low order elements
 
 For all mesh and post-processing file formats, the reference elements
 are defined as follows.
@@ -4052,9 +4061,12 @@ Pyramid:                     Pyramid13:                   Pyramid14:
 @end group
 @end smallexample
 
-The nodes of a curved element are numbered in the following order:
+@subsection High order elements
+
+The node ordering of a higher order (possibly curved) element is compatible with the numbering
+of low order element (it is a generalization). We number nodes in the following order:
 @itemize --
-@item the element principal vertices;
+@item the element principal or corner vertices;
 @item the internal nodes for each edge;
 @item the internal nodes for each face;
 @item the volume internal nodes.
