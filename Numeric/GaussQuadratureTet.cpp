@@ -23,7 +23,7 @@
 #define  f16  0.0718316452676693
 #define  g16  0.4042339134672644
 
-/* constants for 17-p9oint rule */
+/* constants for 17-point rule */
 #define  a17  0.0314030927894235
 #define  b17  0.0111730972876738
 #define  c17  0.00754759872721232
