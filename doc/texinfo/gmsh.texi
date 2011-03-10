@@ -3699,6 +3699,12 @@ internal to the edge)
 @item 31
 56-node fifth order tetrahedron (4 nodes associated with the vertices,
 24 with the edges, 24 with the faces, 4 in the volume)
+@item 92
+64-node third order hexahedron (8 nodes associated with the vertices, 24
+with the edges, 24 with the faces, 8 in the volume)
+@item 93 
+125-node fourth order hexahedron (8 nodes associated with the vertices, 36
+with the edges, 54 with the faces, 27 in the volume)
 @end table
 See below for the ordering of the nodes.
 
@@ -4054,9 +4060,14 @@ The nodes of a curved element are numbered in the following order:
 @item the volume internal nodes.
 @end itemize
 
-The numbering for face and volume internal nodes is recursive, i.e., the
-numbering follows that of the nodes of an embedded face/volume. The
-higher order nodes are assumed to be equispaced on the element.
+The numbering for internal nodes is recursive, ie. the numbering follows
+that of the nodes of an embedded edge/face/volume of lower order. The
+higher order nodes are assumed to be equispaced. Edges and faces are
+numbered following the lowest order template that generates a single
+high-order on this edge/face. Furthermore, an edge is oriented from the
+vertex with the lowest to the highest index. The orientation of a face
+is such that the computed normal points outward; the starting point is
+the vertex with the lowest index.
 
 @c -------------------------------------------------------------------------
 @c Legacy formats
