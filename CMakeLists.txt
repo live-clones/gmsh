@@ -55,6 +55,7 @@ option(ENABLE_SWIG "Enable swig" ON)
 option(ENABLE_TAUCS "Enable Taucs linear algebra solver" ON)
 option(ENABLE_TETGEN "Enable Tetgen mesh generator" ON)
 option(ENABLE_TETGEN_NEW "Enable experimental version of Tetgen" OFF)
+option(ENABLE_NON_LINEAR_SOLVER "Enable use of non linear solver" OFF)
 
 set(GMSH_MAJOR_VERSION 2)
 set(GMSH_MINOR_VERSION 5)
@@ -277,6 +278,10 @@ endif(ENABLE_BLAS_LAPACK)
 add_subdirectory(Common)
 add_subdirectory(Numeric)
 add_subdirectory(Geo)
+
+if(ENABLE_NON_LINEAR_SOLVER)
+  add_subdirectory(NonLinearSolver)
+endif(ENABLE_NON_LINEAR_SOLVER)
 
 if(ENABLE_MESH)
   add_subdirectory(Mesh)
