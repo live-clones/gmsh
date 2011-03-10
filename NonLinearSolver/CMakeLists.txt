@@ -3,8 +3,8 @@
 # See the LICENSE.txt file for license information. Please report all
 # bugs and problems to <gmsh@geuz.org>.
 
-add_subdirectory(InternalPoints)
-include_directories(InternalPoints)
+add_subdirectory(internalPoints)
+include_directories(internalPoints)
 append_gmsh_src(NonLinearSolver "${SRC};${HDR}")
 set(GMSH_DIRS ${GMSH_DIRS};NonLinearSolver PARENT_SCOPE)
 
