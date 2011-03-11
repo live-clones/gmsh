@@ -73,7 +73,6 @@ void Msg::Init(int argc, char **argv)
 #endif
 #if defined(HAVE_PETSC)
   PetscInitialize(&argc, &argv, PETSC_NULL, PETSC_NULL);
-  printf("coucou\n");
 #endif
 #if defined(HAVE_SLEPC)
   SlepcInitialize(&argc, &argv, PETSC_NULL, PETSC_NULL);

@@ -30,6 +30,7 @@ static void computeMeshMetricsForBamg(GFace *gf, int numV,
                                       double *mm11, double *mm12, double *mm22,
                                       int iter)
 {
+
   //  char name[245];
   //  sprintf(name,"bgmBamg-%d-%d.pos",gf->tag(),iter);
   //  if (iter < 2){
@@ -66,6 +67,7 @@ static void computeMeshMetricsForBamg(GFace *gf, int numV,
 
 static void meshGFaceBamg_(GFace *gf, int iter, bool initialMesh)
 {
+
   std::set<MVertex*> all;
   std::map<int,MVertex*> recover;
   for (unsigned int i = 0; i < gf->triangles.size(); i++){
