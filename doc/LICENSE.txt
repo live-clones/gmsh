@@ -1,5 +1,5 @@
 Gmsh is provided under the terms of the GNU General Public License
-(GPL) with the following exception:
+(GPL), Version 2 or later, with the following exception:
 
   The copyright holders of Gmsh give you permission to combine Gmsh
   with code included in the standard release of TetGen (from Hang Si),
