@@ -342,11 +342,18 @@ static void fillElementsMED(med_int family, std::vector<T*> &elements,
                             std::vector<med_int> &conn, std::vector<med_int> &fam, 
                             med_geometrie_element &type)
 {
+  type = MED_NONE;
+  if(elements.empty()) return;
+  type = msh2medElementType(elements[0]->getTypeForMSH());
+  if(type == MED_NONE){
+    Msg::Warning("Unsupported element type in MED format");
+    return;
+  }
   for(unsigned int i = 0; i < elements.size(); i++){
+    //elements[i]->setVolumePositive();
     for(int j = 0; j < elements[i]->getNumVertices(); j++)
       conn.push_back(elements[i]->getVertexMED(j)->getIndex());
     fam.push_back(family);
-    if(!i) type = msh2medElementType(elements[i]->getTypeForMSH());
   }
 }
 
