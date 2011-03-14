@@ -30,17 +30,19 @@ aboutWindow::aboutWindow()
   win->box(GMSH_WINDOW_BOX);
 
   Fl_Help_View *o = new Fl_Help_View(0, 0, width, height);
+  o->textfont(FL_HELVETICA);
+  o->textsize(FL_NORMAL_SIZE);
   o->box(FL_FLAT_BOX);
   std::ostringstream sstream;
   sstream << "<center><h3>Gmsh</h3><br>version " << GetGmshVersion()
           << "<p>Copyright (C) 1997-2010"
-          << "<br>Christophe Geuzaine and Jean-Fran&ccedil;ois Remacle"
+          << "<br>Christophe Geuzaine and Jean-Francois Remacle"
           << "<p><a href=\"http://geuz.org/gmsh/doc/CREDITS.txt\">Credits</a> "
           << "and <a href=\"http://geuz.org/gmsh/doc/LICENSE.txt\">licensing "
           << "information</a>"
           << "<p>Please send all questions and bug reports to "
           << "<a href=\"mailto:gmsh@geuz.org\">gmsh@geuz.org</a></center>"
-          << "<font color=#888888><ul>"
+          << "<ul>"
           << "<li><i>GUI toolkit:</i> FLTK "
           << FL_MAJOR_VERSION << "." << FL_MINOR_VERSION << "." << FL_PATCH_VERSION
           << "<li><i>Build OS:</i> " << GetGmshBuildOS()
@@ -48,13 +50,11 @@ aboutWindow::aboutWindow()
           << "<li><i>Build host:</i> " << GetGmshBuildHost()
           << "<li><i>Build options:</i>" << GetGmshBuildOptions()
           << "<li><i>Packaged by:</i> " << GetGmshPackager()
-          << "</ul></font><center>"
-          << "Visit <a href=\"http://geuz.org/gmsh/\">http://geuz.org/gmsh/</a> "
+          << "</ul>"
+          << "<center>Visit <a href=\"http://geuz.org/gmsh/\">http://geuz.org/gmsh/</a> "
           << "for more information</center>";
   o->value(sstream.str().c_str());
   o->link(help_link);
-  o->textfont(FL_HELVETICA);
-  o->textsize(FL_NORMAL_SIZE);
 
   win->position(Fl::x() + Fl::w()/2 - width / 2,
                 Fl::y() + Fl::h()/2 - height / 2);
