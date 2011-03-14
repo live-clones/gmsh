@@ -17,32 +17,32 @@ void drawContext::drawString(const std::string &s, const std::string &font_name,
 {
   if(CTX::instance()->printing && !CTX::instance()->print.text) return;
 
+  GLboolean valid;
+  glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
+  if(valid == GL_FALSE) return; // the primitive is culled
+
   // change the raster position only if not creating TeX files
   if(align > 0 && (!CTX::instance()->printing || 
                    CTX::instance()->print.fileFormat != FORMAT_TEX)){
-    GLboolean valid;
-    glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
-    if(valid == GL_TRUE){
-      GLdouble pos[4];
-      glGetDoublev(GL_CURRENT_RASTER_POSITION, pos);
-      double x[3], w[3] = {pos[0], pos[1], pos[2]};
-      drawContext::global()->setFont(font_enum, font_size);
-      double width = drawContext::global()->getStringWidth(s.c_str());
-      double height = drawContext::global()->getStringHeight();
-      switch(align){
-      case 1: w[0] -= width/2.;                     break; // bottom center
-      case 2: w[0] -= width;                        break; // bottom right
-      case 3:                    w[1] -= height;    break; // top left
-      case 4: w[0] -= width/2.;  w[1] -= height;    break; // top center
-      case 5: w[0] -= width;     w[1] -= height;    break; // top right
-      case 6:                    w[1] -= height/2.; break; // center left
-      case 7: w[0] -= width/2.;  w[1] -= height/2.; break; // center center
-      case 8: w[0] -= width;     w[1] -= height/2.; break; // center right
-      default: break;
-      }
-      viewport2World(w, x);
-      glRasterPos3d(x[0], x[1], x[2]);
+    GLdouble pos[4];
+    glGetDoublev(GL_CURRENT_RASTER_POSITION, pos);
+    double x[3], w[3] = {pos[0], pos[1], pos[2]};
+    drawContext::global()->setFont(font_enum, font_size);
+    double width = drawContext::global()->getStringWidth(s.c_str());
+    double height = drawContext::global()->getStringHeight();
+    switch(align){
+    case 1: w[0] -= width/2.;                     break; // bottom center
+    case 2: w[0] -= width;                        break; // bottom right
+    case 3:                    w[1] -= height;    break; // top left
+    case 4: w[0] -= width/2.;  w[1] -= height;    break; // top center
+    case 5: w[0] -= width;     w[1] -= height;    break; // top right
+    case 6:                    w[1] -= height/2.; break; // center left
+    case 7: w[0] -= width/2.;  w[1] -= height/2.; break; // center center
+    case 8: w[0] -= width;     w[1] -= height/2.; break; // center right
+    default: break;
     }
+    viewport2World(w, x);
+    glRasterPos3d(x[0], x[1], x[2]);
   }
   
   if(!CTX::instance()->printing){
@@ -128,7 +128,8 @@ void drawContext::drawSphere(double R, double x, double y, double z,
   glDisable(GL_LIGHTING);
 }
 
-void drawContext::drawEllipse(double x, double y, double z, float v0[3], float v1[3], int light)
+void drawContext::drawEllipse(double x, double y, double z, float v0[3], float v1[3],
+                              int light)
 {
   if(light) glEnable(GL_LIGHTING);
   glPushMatrix();
@@ -144,7 +145,8 @@ void drawContext::drawEllipse(double x, double y, double z, float v0[3], float v
   glDisable(GL_LIGHTING);
 }
 
-void drawContext::drawEllipsoid(double x, double y, double z, float v0[3], float v1[3], float v2[3], int light)
+void drawContext::drawEllipsoid(double x, double y, double z, float v0[3], float v1[3],
+                                float v2[3], int light)
 {
   if(light) glEnable(GL_LIGHTING);
   glPushMatrix();
