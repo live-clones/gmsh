@@ -92,7 +92,7 @@ void elasticitySolver::solve()
   {
     SolverField<SVector3> Field(pAssembler, LagSpace);
     IsotropicElasticTerm Eterm(Field,elasticFields[i]._E,elasticFields[i]._nu);
-    BilinearTermToScalarTerm<SVector3,SVector3> Elastic_Energy_Term(Eterm);
+    BilinearTermToScalarTerm Elastic_Energy_Term(Eterm);
     Assemble(Elastic_Energy_Term,elasticFields[i].g->begin(),elasticFields[i].g->end(),Integ_Bulk,energ);
   }
   printf("elastic energy=%f\n",energ);
@@ -107,7 +107,7 @@ void elasticitySolver::postSolve()
   {
     SolverField<SVector3> Field(pAssembler, LagSpace);
     IsotropicElasticTerm Eterm(Field,elasticFields[i]._E,elasticFields[i]._nu);
-    BilinearTermToScalarTerm<SVector3,SVector3> Elastic_Energy_Term(Eterm);
+    BilinearTermToScalarTerm Elastic_Energy_Term(Eterm);
     Assemble(Elastic_Energy_Term,elasticFields[i].g->begin(),elasticFields[i].g->end(),Integ_Bulk,energ);
   }
   printf("elastic energy=%f\n",energ);
@@ -551,7 +551,7 @@ PView* elasticitySolver::buildStressesView (const std::string postFileName)
     double nu = elasticFields[i]._nu;
     SolverField<SVector3> Field(pAssembler, LagSpace);
     IsotropicElasticTerm Eterm(Field,elasticFields[i]._E,elasticFields[i]._nu);
-    BilinearTermToScalarTerm<SVector3,SVector3> Elastic_Energy_Term(Eterm);
+    BilinearTermToScalarTerm Elastic_Energy_Term(Eterm);
     for (groupOfElements::elementContainer::const_iterator it = elasticFields[i].g->begin(); it != elasticFields[i].g->end(); ++it)
     {
       MElement *e=*it;
@@ -644,8 +644,8 @@ PView *elasticitySolver::buildElasticEnergyView(const std::string postFileName)
     if(elasticFields[i]._E == 0.) continue;
     SolverField<SVector3> Field(pAssembler, LagSpace);
     IsotropicElasticTerm Eterm(Field,elasticFields[i]._E,elasticFields[i]._nu);
-    BilinearTermToScalarTerm<SVector3,SVector3> Elastic_Energy_Term(Eterm);
-    ScalarTermConstant One(1.0);
+    BilinearTermToScalarTerm Elastic_Energy_Term(Eterm);
+    ScalarTermConstant<double> One(1.0);
     for (groupOfElements::elementContainer::const_iterator it = elasticFields[i].g->begin(); it != elasticFields[i].g->end(); ++it)
     {
       MElement *e = *it;
@@ -673,7 +673,7 @@ PView *elasticitySolver::buildVonMisesView(const std::string postFileName)
   {
     SolverField<SVector3> Field(pAssembler, LagSpace);
     IsotropicElasticTerm Eterm(Field,elasticFields[i]._E,elasticFields[i]._nu);
-    BilinearTermToScalarTerm<SVector3,SVector3> Elastic_Energy_Term(Eterm);
+    BilinearTermToScalarTerm Elastic_Energy_Term(Eterm);
     for (groupOfElements::elementContainer::const_iterator it = elasticFields[i].g->begin(); it != elasticFields[i].g->end(); ++it)
     {
       MElement *e=*it;

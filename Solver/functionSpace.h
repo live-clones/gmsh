@@ -3,6 +3,7 @@
 
 #include "SVector3.h"
 #include "STensor3.h"
+#include "STensor43.h"
 #include <vector>
 #include <iterator>
 #include <iostream>
@@ -16,8 +17,8 @@ template<class T> struct TensorialTraits
 {
   typedef T ValType;
   typedef T GradType[3];
-/*  typedef T HessType[3][3];
-  typedef SVoid DivType;
+  typedef T HessType[3][3];
+/*  typedef SVoid DivType;
   typedef SVoid CurlType;*/
 };
 
@@ -26,6 +27,7 @@ template<> struct TensorialTraits<double>
   typedef double ValType;
   typedef SVector3 GradType;
   typedef STensor3 HessType;
+  typedef double TensProdType;
 /*  typedef SVoid DivType;
   typedef SVoid CurlType;*/
 };
@@ -35,9 +37,22 @@ template<> struct TensorialTraits<SVector3>
   typedef SVector3 ValType;
   typedef STensor3 GradType;
   typedef STensor3 HessType;
-  typedef double DivType;
-  typedef SVector3 CurlType;
+  typedef STensor3 TensProdType;
+//  typedef double DivType;
+//  typedef SVector3 CurlType;
 };
+
+template<> struct TensorialTraits<STensor3>
+{
+  typedef STensor3 ValType;
+//  typedef STensor3 GradType;
+//  typedef STensor3 HessType;
+//  typedef STensor3 TensProdType;
+  typedef STensor43 TensProdType;
+//  typedef double DivType;
+//  typedef SVector3 CurlType;
+};
+
 
 class FunctionSpaceBase
 {

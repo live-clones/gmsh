@@ -97,7 +97,7 @@ template<class Iterator, class Assembler> void Assemble(BilinearTermBase &term,
 
 
 
-template<class Iterator, class Assembler> void Assemble(LinearTermBase &term, FunctionSpaceBase &space,
+template<class Iterator, class Assembler> void Assemble(LinearTermBase<double> &term, FunctionSpaceBase &space,
                                                         Iterator itbegin, Iterator itend,
                                                         QuadratureBase &integrator, Assembler &assembler)
 {
@@ -114,7 +114,7 @@ template<class Iterator, class Assembler> void Assemble(LinearTermBase &term, Fu
   }
 }
 
-template<class Assembler> void Assemble(LinearTermBase &term, FunctionSpaceBase &space, MElement *e,
+template<class Assembler> void Assemble(LinearTermBase<double> &term, FunctionSpaceBase &space, MElement *e,
                                         QuadratureBase &integrator, Assembler &assembler)
 {
   fullVector<typename Assembler::dataMat> localVector;
@@ -126,7 +126,7 @@ template<class Assembler> void Assemble(LinearTermBase &term, FunctionSpaceBase 
   assembler.assemble(R, localVector);
 }
 
-template<class Iterator, class dataMat> void Assemble(ScalarTermBase &term,
+template<class Iterator, class dataMat> void Assemble(ScalarTermBase<double> &term,
                                                       Iterator itbegin, Iterator itend,
                                                       QuadratureBase &integrator, dataMat & val)
 {
@@ -140,7 +140,7 @@ template<class Iterator, class dataMat> void Assemble(ScalarTermBase &term,
   }
 }
 
-template<class Iterator, class dataMat> void Assemble(ScalarTermBase &term, MElement *e,
+template<class Iterator, class dataMat> void Assemble(ScalarTermBase<double> &term, MElement *e,
                                                       QuadratureBase &integrator, dataMat & val)
 {
   dataMat localval;

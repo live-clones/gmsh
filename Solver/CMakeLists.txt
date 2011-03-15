@@ -19,6 +19,8 @@ set(SRC
   functionSpace.cpp
   filters.cpp
   sparsityPattern.cpp
+  STensor43.cpp
+  terms.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
