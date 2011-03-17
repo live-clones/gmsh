@@ -63,7 +63,7 @@ class MTriangle : public MElement {
     static const int map[3] = {0, 2, 1};
     return getVertex(map[num]);
   }
-  //virtual void xyz2uvw(double xyz[3], double uvw[3]);
+  virtual void xyz2uvw(double xyz[3], double uvw[3]);
   virtual MVertex *getOtherVertex(MVertex *v1, MVertex *v2)
   {
     if(_v[0] != v1 && _v[0] != v2) return _v[0];
