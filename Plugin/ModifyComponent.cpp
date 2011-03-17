@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -100,7 +100,7 @@ PView *GMSH_ModifyComponentPlugin::execute(PView *view)
   PView *v1 = getView(iView, view);
   if(!v1) return view;
 
-  PViewData *data1 = v1->getData();
+  PViewData *data1 = getPossiblyAdaptiveData(v1);
 
   if(timeStep > data1->getNumTimeSteps() - 1){
     Msg::Error("Invalid time step (%d) in View[%d]: using step 0 instead",
@@ -117,7 +117,7 @@ PView *GMSH_ModifyComponentPlugin::execute(PView *view)
       Msg::Error("View[%d] does not exist: using self", otherView);
   }
 
-  PViewData *data2 = v2->getData();
+  PViewData *data2 = getPossiblyAdaptiveData(v2);
 
   if(otherTimeStep < 0 && data2->getNumTimeSteps() != data1->getNumTimeSteps()){
     Msg::Error("Number of time steps don't match: using step 0");

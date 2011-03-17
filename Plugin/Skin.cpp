@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -143,7 +143,7 @@ PView *GMSH_SkinPlugin::execute(PView *v)
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
-  PViewData *data1 = v1->getData(true); // get adaptive data if available
+  PViewData *data1 = getPossiblyAdaptiveData(v1);
 
   if(data1->hasMultipleMeshes()){
     Msg::Error("Skin plugin cannot be applied to multi-mesh views");

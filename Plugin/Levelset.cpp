@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -407,7 +407,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
   }
 
   // get adaptive data if available
-  PViewData *vdata = v->getData(true), *wdata;
+  PViewData *vdata = getPossiblyAdaptiveData(v), *wdata;
   if(_valueView < 0) {
     wdata = vdata;
   }
@@ -417,7 +417,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
     wdata = vdata;
   }
   else{
-    wdata = PView::list[_valueView]->getData();
+    wdata = getPossiblyAdaptiveData(PView::list[_valueView]);
   }
 
   // sanity checks

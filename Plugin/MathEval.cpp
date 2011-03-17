@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -95,7 +95,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   
   PView *v1 = getView(iView, view);
   if(!v1) return view;
-  PViewData *data1 = v1->getData();
+  PViewData *data1 = getPossiblyAdaptiveData(v1);
 
   if(data1->hasMultipleMeshes()){
     Msg::Error("MathEval plugin cannot be applied to multi-mesh views");
@@ -111,7 +111,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
     }
   }
 
-  PViewData *otherData = otherView->getData();
+  PViewData *otherData = getPossiblyAdaptiveData(otherView);
   if(otherData->hasMultipleMeshes()){
     Msg::Error("MathEval plugin cannot be applied to multi-mesh views");
     return view;

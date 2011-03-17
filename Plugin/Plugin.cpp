@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -88,6 +88,16 @@ PView *GMSH_PostPlugin::getView(int index, PView *view)
     Msg::Error("View[%d] does not exist", index);
     return 0;
   }
+}
+
+PViewData *GMSH_PostPlugin::getPossiblyAdaptiveData(PView *view)
+{
+  if(!view) return 0;
+
+  if(view->getData()->isAdaptive())
+    Msg::Warning("Using adapted data from view '%s': only the current time step "
+                 "is available to the plugin", view->getData()->getName().c_str());
+  return view->getData(true);
 }
 
 PViewDataList *GMSH_PostPlugin::getDataList(PView *view, bool showError)

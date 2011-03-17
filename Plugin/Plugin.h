@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -94,6 +94,9 @@ class GMSH_PostPlugin : public GMSH_Plugin
   virtual PView *getView(int index, PView *view);
   // get the data in list format
   virtual PViewDataList *getDataList(PView *view, bool showError=true);
+  // get the the adapted data (i.e. linear, on refined mesh) if
+  // available, otherwise get the original data
+  virtual PViewData *getPossiblyAdaptiveData(PView *view);
   virtual void assignSpecificVisibility() const {}
   virtual bool geometricalFilter(fullMatrix<double> *) const { return true; }
 };
