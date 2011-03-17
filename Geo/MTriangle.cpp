@@ -91,6 +91,44 @@ double MTriangle::gammaShapeMeasure()
 #endif
 }
 
+// void MTriangle::xyz2uvw(double xyz[3], double uvw[3]){
+
+//   double X[3] = {_v[0]->x(), _v[1]->x(), _v[2]->x()};
+//   double Y[3] = {_v[0]->y(), _v[1]->y(), _v[2]->y()};
+//   double Z[3] = {_v[0]->z(), _v[1]->z(), _v[2]->z()};
+
+  // uvw[0] = uvw[1] = uvw[2] = 0.;
+  
+  // double jac[3][3] = {{X[1]-X[0], X[2]-X[Ø], 0},{}, {}};
+
+
+  // if(!getJacobian(uvw[0], uvw[1], uvw[2], jac)) break;
+
+  // double xn = 0., yn = 0., zn = 0.;
+  // double sf[1256];
+  // getShapeFunctions(uvw[0], uvw[1], uvw[2], sf);
+  // for (int i = 0; i < getNumShapeFunctions(); i++) {
+  //   MVertex *v = getShapeFunctionNode(i);
+  //   xn += v->x() * sf[i];
+  //   yn += v->y() * sf[i];
+  //   zn += v->z() * sf[i];
+  // }
+  // double inv[3][3];
+  // inv3x3(jac, inv);
+  
+  // double un = uvw[0] + inv[0][0] * (xyz[0] - xn) +
+  //   inv[1][0] * (xyz[1] - yn) + inv[2][0] * (xyz[2] - zn);
+  // double vn = uvw[1] + inv[0][1] * (xyz[0] - xn) +
+  //   inv[1][1] * (xyz[1] - yn) + inv[2][1] * (xyz[2] - zn);
+  // double wn = uvw[2] + inv[0][2] * (xyz[0] - xn) +
+  //   inv[1][2] * (xyz[1] - yn) + inv[2][2] * (xyz[2] - zn);
+  
+  // uvw[0] = un;
+  // uvw[1] = vn;
+  // uvw[2] = wn;
+  
+  //}
+
 const polynomialBasis* MTriangle::getFunctionSpace(int o) const
 {
   int order = (o == -1) ? getPolynomialOrder() : o;
