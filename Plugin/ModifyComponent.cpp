@@ -100,7 +100,7 @@ PView *GMSH_ModifyComponentPlugin::execute(PView *view)
   PView *v1 = getView(iView, view);
   if(!v1) return view;
 
-  PViewData *data1 = getPossiblyAdaptiveData(v1);
+  PViewData *data1 = v1->getData();
 
   if(timeStep > data1->getNumTimeSteps() - 1){
     Msg::Error("Invalid time step (%d) in View[%d]: using step 0 instead",
