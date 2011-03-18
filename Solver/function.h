@@ -291,7 +291,8 @@ class functionC : public function {
   functionC (std::string file, std::string symbol, int nbCol, 
              std::vector<const function *> dependencies);
 };
-
+function *functionLevelsetNew (const function *f0, const double valMin, const double valPlus);
+function *functionLevelsetSmoothNew (const function *f0, const double valMin, const double valPlus, const double E);
 function *functionSumNew (const function *f0, const function *f1);
 function *functionProdNew (const function *f0, const function *f1);
 function *functionScaleNew (const function *f0, const double s);

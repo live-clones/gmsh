@@ -417,6 +417,65 @@ function *functionSumNew(const function *f0, const function *f1)
   return new functionSum (f0, f1);
 }
 
+// functionLevelset
+
+class functionLevelset : public function {
+ public:
+  fullMatrix<double> _f0;
+  double _valMin, _valPlus;
+  void call(dataCacheMap *m, fullMatrix<double> &val) 
+  {
+    for (int i = 0; i < val.size1(); i++)
+      for (int j = 0; j < val.size2(); j++){
+	val(i, j)= _valPlus;
+	if (_f0(i,j) < 0.0)
+	  val(i,j) = _valMin;
+      }
+  }
+  functionLevelset(const function *f0, const double valMin, const double valPlus) : function(f0->getNbCol()) 
+  {
+    setArgument (_f0, f0);
+    _valMin  = valMin;
+    _valPlus = valPlus;
+  }
+};
+
+function *functionLevelsetNew(const function *f0, const double valMin, const double valPlus) 
+{
+  return new functionLevelset (f0, valMin, valPlus);
+}
+
+class functionLevelsetSmooth : public function {
+ public:
+  fullMatrix<double> _f0;
+  double _valMin, _valPlus, _E;
+  void call(dataCacheMap *m, fullMatrix<double> &val) 
+  {
+    
+    for (int i = 0; i < val.size1(); i++)
+      for (int j = 0; j < val.size2(); j++){
+	double phi = _f0(i,j);
+	double Heps= 0.5+0.5*phi/_E + 0.5/3.14*sin(3.14*phi/_E);
+	if ( fabs(phi) < _E)  val(i, j)= Heps*_valPlus + (1-Heps)*_valMin;
+	else if (phi >  _E)   val(i, j) = _valPlus;
+	else if (phi < -_E)   val(i, j) = _valMin;
+      }
+  }
+  functionLevelsetSmooth(const function *f0, const double valMin, const double valPlus, const double E) : function(f0->getNbCol()) 
+  {
+    setArgument (_f0, f0);
+    _valMin  = valMin;
+    _valPlus = valPlus;
+    _E = E;
+  }
+};
+
+function *functionLevelsetSmoothNew(const function *f0, const double valMin, const double valPlus, const double E) 
+{
+  return new functionLevelsetSmooth (f0, valMin, valPlus, E);
+}
+
+
 // functionProd
 
 class functionProd : public function {
