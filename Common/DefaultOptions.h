@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -83,7 +83,7 @@ StringXString GeneralOptions_String[] = {
 #elif defined(__APPLE__)
     "open -t %s" ,
 #else
-    "emacs '%s' &" ,
+    "sensible-editor '%s' &" ,
 #endif
     "System command to launch a text editor" },
   { F|S, "TmpFileName" , opt_general_tmp_filename , ".gmsh-tmp" ,
@@ -95,7 +95,7 @@ StringXString GeneralOptions_String[] = {
 #elif defined(__APPLE__)
     "open %s" ,
 #else
-    "firefox %s &" ,
+    "sensible-browser %s &" ,
 #endif
     "System command to launch a web browser" },
 
