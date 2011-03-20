@@ -17,7 +17,9 @@ cd ${GMSH}/bin && \
   ${CMAKE} -DGMSH_EXTRA_VERSION:string="-svn"\
            -DCMAKE_PREFIX_PATH:path="/usr/local;/usr/local/opencascade"\
            -DENABLE_NATIVE_FILE_CHOOSER:bool=FALSE\
+           -DENABLE_SWIG:bool=FALSE\
   ${GMSH} >> ${LOG} 2>&1
+cd ${GMSH}/bin && make html >> ${LOG} 2>&1
 cd ${GMSH}/bin && make package >> ${LOG} 2>&1
 echo "BUILD END: `date`" >> ${LOG}
 scp -C ${GMSH}/bin/gmsh-*.tar.gz ${WEB_BIN}/gmsh-nightly-Linux.tgz

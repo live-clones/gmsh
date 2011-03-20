@@ -18,7 +18,9 @@ cd ${GMSH}/bin && \
            -DCMAKE_PREFIX_PATH:path="/usr/local;/usr/local/opencascade"\
            -DCMAKE_CXX_FLAGS:string="-mno-cygwin"\
            -DCMAKE_C_FLAGS:string="-mno-cygwin"\
+           -DENABLE_SWIG:bool=FALSE\
   ${GMSH} >> ${LOG} 2>&1
+cd ${GMSH}/bin && make html >> ${LOG} 2>&1
 cd ${GMSH}/bin && make package >> ${LOG} 2>&1
 echo "BUILD END: `date`" >> ${LOG}
 scp -C ${GMSH}/bin/gmsh-*.zip ${WEB_BIN}/gmsh-nightly-Windows.zip
