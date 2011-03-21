@@ -455,8 +455,8 @@ class functionLevelsetSmooth : public function {
     for (int i = 0; i < val.size1(); i++)
       for (int j = 0; j < val.size2(); j++){
 	double phi = _f0(i,j);
-	double Heps= 0.5+0.5*phi/_E + 0.5/3.14*sin(3.14*phi/_E);
-	if ( fabs(phi) < _E)  val(i, j)= Heps*_valPlus + (1-Heps)*_valMin;
+	double Heps= 0.5*(1+phi/_E + 1./M_PI*sin(M_PI*phi/_E));
+	if ( fabs(phi) < _E)  val(i, j) = Heps*_valPlus + (1-Heps)*_valMin;
 	else if (phi >  _E)   val(i, j) = _valPlus;
 	else if (phi < -_E)   val(i, j) = _valMin;
       }
