@@ -183,7 +183,7 @@ static std::string stringValue(int numComp, double d[9], double norm,
 }
 
 static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes, int numComp, 
-                             double xyz[PVIEW_NMAX][3], double val[PVIEW_NMAX][9])
+                             double **xyz, double **val)
 {
   PViewOptions *opt = p->getOptions();
   double d[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
@@ -230,7 +230,7 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes, int numCo
 }
 
 static void drawNormalVectorGlyphs(drawContext *ctx, PView *p, int numNodes, 
-                                   double xyz[PVIEW_NMAX][3], double val[PVIEW_NMAX][9])
+                                   double **xyz, double **val)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -252,7 +252,7 @@ static void drawNormalVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
 }
 
 static void drawTangentVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
-                                    double xyz[PVIEW_NMAX][3], double val[PVIEW_NMAX][9])
+                                    double **xyz, double **val)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -292,7 +292,14 @@ static void drawGlyphs(drawContext *ctx, PView *p)
 #endif
 #endif
 
-  double xyz[PVIEW_NMAX][3], val[PVIEW_NMAX][9];
+  //double xyz[PVIEW_NMAX][3], val[PVIEW_NMAX][9];
+  int NMAX = PVIEW_NMAX;
+  double **xyz = new double*[NMAX];
+  double **val = new double*[NMAX];
+  for(int i = 0; i < NMAX; i++){
+    xyz[i] = new double[3];
+    val[i] = new double[9];
+  }
   for(int ent = 0; ent < data->getNumEntities(opt->timeStep); ent++){
     if(data->skipEntity(opt->timeStep, ent)) continue;
     for(int i = 0; i < data->getNumElements(opt->timeStep, ent); i++){
@@ -302,6 +309,23 @@ static void drawGlyphs(drawContext *ctx, PView *p)
       int dim = data->getDimension(opt->timeStep, ent, i);
       int numComp = data->getNumComponents(opt->timeStep, ent, i);
       int numNodes = data->getNumNodes(opt->timeStep, ent, i);
+      if(numNodes > NMAX){
+        if(type == TYPE_POLYG || type == TYPE_POLYH){
+          for(int j = 0; j < NMAX; j++){
+            delete [] xyz[i];
+            delete [] val[i];
+          }
+          delete [] xyz;
+          delete [] val;
+          NMAX = numNodes;
+          xyz = new double*[NMAX];
+          val = new double*[NMAX];
+          for(int j = 0; j < NMAX; j++){
+            xyz[j] = new double[3];
+            val[j] = new double[9];
+          }
+        }
+      }
       for(int j = 0; j < numNodes; j++){
         data->getNode(opt->timeStep, ent, i, j, xyz[j][0], xyz[j][1], xyz[j][2]);
         if(opt->forceNumComponents){
@@ -328,6 +352,12 @@ static void drawGlyphs(drawContext *ctx, PView *p)
         drawTangentVectorGlyphs(ctx, p, numNodes, xyz, val);  
     }
   }
+  for(int j = 0; j < NMAX; j++){
+    delete [] xyz[j];
+    delete [] val[j];
+  }
+  delete [] xyz;
+  delete [] val;
 }
 
 static bool eyeChanged(drawContext *ctx, PView *p)

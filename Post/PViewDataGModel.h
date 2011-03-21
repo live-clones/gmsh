@@ -165,6 +165,7 @@ class PViewDataGModel : public PViewData {
   DataType _type;
   // cache last element to speed up loops
   MElement *_getElement(int step, int ent, int ele);
+  MVertex *_getNode(MElement *e, int nod);
   // helper function to populate the interpolation matrix list
   void _addInterpolationMatricesForElement(MElement *e);
  public:

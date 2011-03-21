@@ -353,24 +353,38 @@ int PViewDataGModel::getNumNodes(int step, int ent, int ele)
     return _steps[step]->getGaussPoints(e->getTypeForMSH()).size() / 3;
   }
   else{
+    if(e->getNumChildren())
+      return e->getNumChildren() * e->getChild(0)->getNumVertices();
     if(isAdaptive())
       return e->getNumVertices();
-    else
-      return e->getNumPrimaryVertices();
+    return e->getNumPrimaryVertices();
   }
+}
+
+MVertex *PViewDataGModel::_getNode(MElement *e, int nod)
+{
+  MVertex *v;
+  if(!e->getNumChildren())
+    v = e->getVertex(nod);
+  else {
+    int nbV = e->getChild(0)->getNumVertices();
+    v = e->getChild((int)(nod / nbV))->getVertex(nod % nbV);
+  }
+  return v;
 }
 
 int PViewDataGModel::getNode(int step, int ent, int ele, int nod,
                              double &x, double &y, double &z)
 {
   MElement *e = _getElement(step, ent, ele);
+  MVertex *v = _getNode(e, nod);
   if(_type == GaussPointData){
     std::vector<double> &p(_steps[step]->getGaussPoints(e->getTypeForMSH()));
     if(p[0] == 1.e22){
       // hack: the points are the element vertices
-      x = e->getVertex(nod)->x();
-      y = e->getVertex(nod)->y();
-      z = e->getVertex(nod)->z();
+      x = v->x();
+      y = v->y();
+      z = v->z();
     }
     else{
       double vx[8], vy[8], vz[8];
@@ -386,7 +400,6 @@ int PViewDataGModel::getNode(int step, int ent, int ele, int nod,
     return 0;
   }
   else{
-    MVertex *v = e->getVertex(nod);
     x = v->x();
     y = v->y();
     z = v->z();
@@ -397,7 +410,8 @@ int PViewDataGModel::getNode(int step, int ent, int ele, int nod,
 void PViewDataGModel::setNode(int step, int ent, int ele, int nod,
                               double x, double y, double z)
 {
-  MVertex *v = _getElement(step, ent, ele)->getVertex(nod);
+  MElement *e = _getElement(step, ent, ele);
+  MVertex *v = _getNode(e, nod);
   v->x() = x;
   v->y() = y;
   v->z() = z;
@@ -405,7 +419,8 @@ void PViewDataGModel::setNode(int step, int ent, int ele, int nod,
 
 void PViewDataGModel::tagNode(int step, int ent, int ele, int nod, int tag)
 {
-  MVertex *v = _getElement(step, ent, ele)->getVertex(nod);
+  MElement *e = _getElement(step, ent, ele);
+  MVertex *v = _getNode(e, nod);
   v->setIndex(tag);
 }
 
@@ -438,7 +453,8 @@ void PViewDataGModel::getValue(int step, int ent, int ele, int idx, double &val)
     int numcomp = _steps[step]->getNumComponents();
     int nod = idx / numcomp;
     int comp = idx % numcomp;
-    val = _steps[step]->getData(e->getVertex(nod)->getNum())[comp];
+    int num = _getNode(e, nod)->getNum();
+    val = _steps[step]->getData(num)[comp];
   }
   else{
     Msg::Error("getValue(index) should not be used on this type of view");
@@ -450,7 +466,10 @@ void PViewDataGModel::getValue(int step, int ent, int ele, int nod, int comp, do
   MElement *e = _getElement(step, ent, ele);
   switch(_type){
   case NodeData:
-    val = _steps[step]->getData(e->getVertex(nod)->getNum())[comp];
+    {
+    int num = _getNode(e, nod)->getNum();
+    val = _steps[step]->getData(num)[comp];
+    }
     break;
   case ElementNodeData:
   case GaussPointData:
@@ -468,7 +487,10 @@ void PViewDataGModel::setValue(int step, int ent, int ele, int nod, int comp, do
   MElement *e = _getElement(step, ent, ele);
   switch(_type){
   case NodeData:
-    _steps[step]->getData(e->getVertex(nod)->getNum())[comp] = val;
+    {
+    int num = _getNode(e, nod)->getNum();
+    _steps[step]->getData(num)[comp] = val;
+    }
     break;
   case ElementNodeData:
   case GaussPointData:
@@ -593,8 +615,8 @@ bool PViewDataGModel::skipElement(int step, int ent, int ele, bool checkVisibili
   MElement *e = _getElement(step, ent, ele);
   if(checkVisibility && !e->getVisibility()) return true;
   if(_type == NodeData){
-    for(int i = 0; i < e->getNumVertices(); i++)
-      if(!sd->getData(e->getVertex(i)->getNum())) return true;
+    for(int i = 0; i < getNumNodes(step, ent, ele); i++)
+      if(!sd->getData(_getNode(e, i)->getNum())) return true;
   }
   else{
     if(!sd->getData(e->getNum())) return true;
