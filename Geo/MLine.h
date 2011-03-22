@@ -78,6 +78,15 @@ class MLine : public MElement {
       return false;
     return true;
   }
+  void getNode(int num, double &u, double &v, double &w)
+  {
+    v = w = 0.;
+    switch(num) {
+    case 0 : u = -1.; break;
+    case 1 : u =  1.; break;
+    default: u =  0.; break;
+    }
+  }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   static void registerBindings(binding *b);
 };

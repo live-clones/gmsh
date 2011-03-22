@@ -165,6 +165,18 @@ class MPrism : public MElement {
     s[5][1] =  0.5 * (1. + w)    ;
     s[5][2] =  0.5 * v           ;
   }*/
+  void getNode(int num, double &u, double &v, double &w)
+  {
+    switch(num) {
+    case 0 : u = 0.; v = 0.; w = -1.; break;
+    case 1 : u = 1.; v = 0.; w = -1.; break;
+    case 2 : u = 0.; v = 1.; w = -1.; break;
+    case 3 : u = 0.; v = 0.; w =  1.; break;
+    case 4 : u = 1.; v = 0.; w =  1.; break;
+    case 5 : u = 0.; v = 1.; w =  1.; break;
+    default: u = 0.; v = 0.; w =  0.; break;
+    }
+  }
   virtual bool isInside(double u, double v, double w)
   {
     double tol = _isInsideTolerance;

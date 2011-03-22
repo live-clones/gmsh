@@ -42,6 +42,10 @@ class MPoint : public MElement {
   virtual int getTypeForMSH() const { return MSH_PNT; }
   virtual int getTypeForVTK() const { return 1; }
   virtual const char *getStringForPOS() const { return "SP"; }
+  void getNode(int num, double &u, double &v, double &w)
+  {
+    u = v = w = 0.;
+  }
   virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
   {
     s[0] = 1.;

@@ -123,6 +123,17 @@ void projectInMeanPlane(double *xn, double *yn);
   virtual const char *getStringForINP() const { return "C2D4"; }
   virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
+  void getNode(int num, double &u, double &v, double &w)
+  {
+    w = 0.;
+    switch(num) {
+    case 0 : u = -1.; v = -1.; break;
+    case 1 : u =  1.; v = -1.; break;
+    case 2 : u =  1.; v =  1.; break;
+    case 3 : u = -1.; v =  1.; break;
+    default: u =  0.; v =  0.; break;
+    }
+  }
   virtual void revert()
   {
     MVertex *tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;

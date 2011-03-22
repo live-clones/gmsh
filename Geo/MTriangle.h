@@ -130,6 +130,16 @@ class MTriangle : public MElement {
   }
   virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
+  void getNode(int num, double &u, double &v, double &w)
+  {
+    w = 0.;
+    switch(num) {
+    case 0 : u = 0.; v = 0.; break;
+    case 1 : u = 1.; v = 0.; break;
+    case 2 : u = 0.; v = 1.; break;
+    default: u = 0.; v = 0.; break;
+    }
+  }
   virtual bool isInside(double u, double v, double w)
   {
     double tol = _isInsideTolerance;
