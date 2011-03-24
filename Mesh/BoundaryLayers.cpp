@@ -22,14 +22,14 @@ class OctreePost{ int dummy; };
 #endif
 
 template<class T>
-static void addExtrudeNormals(std::vector<T*> &elements, int invert, 
+static void addExtrudeNormals(std::vector<T*> &elements, int invert,
                               OctreePost *octree, bool gouraud, int index)
 {
   if(index < 0 || index > 1){
     Msg::Error("Boundary layer index should be 0 or 1");
     return;
   }
-  
+
   if(octree && !gouraud){ // get extrusion direction from post-processing view
     std::set<MVertex*> verts;
     for(unsigned int i = 0; i < elements.size(); i++)
@@ -65,7 +65,7 @@ static void addExtrudeNormals(std::vector<T*> &elements, int invert,
 typedef std::set<std::pair<bool, std::pair<int, int> > > infoset;
 
 template<class T>
-static void addExtrudeNormals(std::set<T*> &entities, 
+static void addExtrudeNormals(std::set<T*> &entities,
                               std::map<int, infoset> &infos)
 {
   bool normalize = true, special3dbox = false;
@@ -80,8 +80,8 @@ static void addExtrudeNormals(std::set<T*> &entities,
       int view = it2->second.second;
       bool gouraud = true;
       OctreePost *octree = 0;
-      if(view != -1){
 #if defined(HAVE_POST)
+      if(view != -1){
         if(view >= 0 && view < PView::list.size()){
           octree = new OctreePost(PView::list[view]);
           if(PView::list[view]->getData()->getNumVectors())
@@ -124,7 +124,7 @@ static void addExtrudeNormals(std::set<T*> &entities,
     for(int i = 0; i < 2; i++){
       ExtrudeParams::normals[i]->normalize();
       if(special3dbox){ // force normals for 3d "box" along x,y,z
-        for(smooth_data::iter it = ExtrudeParams::normals[i]->begin(); 
+        for(smooth_data::iter it = ExtrudeParams::normals[i]->begin();
             it != ExtrudeParams::normals[i]->end(); it++){
           for(int j = 0; j < 3; j++){
             if(it->vals[j] < -0.1) it->vals[j] = -1.;
@@ -135,7 +135,7 @@ static void addExtrudeNormals(std::set<T*> &entities,
       }
 #if defined(HAVE_POST)
       if(octrees.size()){ // scale normals by scalar views
-        for(smooth_data::iter it = ExtrudeParams::normals[i]->begin(); 
+        for(smooth_data::iter it = ExtrudeParams::normals[i]->begin();
             it != ExtrudeParams::normals[i]->end(); it++){
           for(unsigned int j = 0; j < octrees.size(); j++){
             double d;
@@ -177,7 +177,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   // 2D boundary layers
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
     GEdge *ge = *it;
-    if(ge->getNativeType() == GEntity::GmshModel && 
+    if(ge->getNativeType() == GEntity::GmshModel &&
        ge->geomType() == GEntity::BoundaryLayerCurve){
       ExtrudeParams *ep = ge->meshAttributes.extrude;
       if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == COPIED_ENTITY){
@@ -198,7 +198,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   // 3D boundary layers
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
     GFace *gf = *it;
-    if(gf->getNativeType() == GEntity::GmshModel && 
+    if(gf->getNativeType() == GEntity::GmshModel &&
        gf->geomType() == GEntity::BoundaryLayerSurface){
       ExtrudeParams *ep = gf->meshAttributes.extrude;
       if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == COPIED_ENTITY){
@@ -238,14 +238,14 @@ int Mesh2DWithBoundaryLayers(GModel *m)
     if(sourceEdges.find(*it) == sourceEdges.end()) otherEdges.insert(*it);
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
     if(sourceFaces.find(*it) == sourceFaces.end() &&
-       sourceFacesDependencies.find(*it) == sourceFacesDependencies.end()) 
+       sourceFacesDependencies.find(*it) == sourceFacesDependencies.end())
       otherFaces.insert(*it);
 
   // mesh source surfaces (and dependencies)
   for(int i = 0; i < 10; i++) // FIXME: should check PENDING status instead!
-    std::for_each(sourceFacesDependencies.begin(), sourceFacesDependencies.end(), 
-                  meshGFace());  
-  std::for_each(sourceFaces.begin(), sourceFaces.end(), meshGFace());  
+    std::for_each(sourceFacesDependencies.begin(), sourceFacesDependencies.end(),
+                  meshGFace());
+  std::for_each(sourceFaces.begin(), sourceFaces.end(), meshGFace());
 
   // make sure the source surfaces for the boundary layers are
   // oriented correctly (normally we do this only after the 3D mesh is
@@ -264,7 +264,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
     addExtrudeNormals(sourceFaces, sourceFaceInfo);
 
   // set the position of boundary layer points using the smooth normal
-  // field 
+  // field
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
     GEdge *ge = *it;
     if(ge->geomType() == GEntity::BoundaryLayerCurve){
@@ -286,7 +286,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
       }
     }
   }
-  
+
   // remesh non-source edges (since they might have been modified by
   // the change in boundary layer points)
   std::for_each(otherFaces.begin(), otherFaces.end(), deMeshGFace());
@@ -312,7 +312,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   }
 
   // mesh non-source surfaces
-  std::for_each(otherFaces.begin(), otherFaces.end(), meshGFace());  
+  std::for_each(otherFaces.begin(), otherFaces.end(), meshGFace());
 
   // mesh the surfaces bounding the boundary layers by extrusion using
   // the smooth normal field

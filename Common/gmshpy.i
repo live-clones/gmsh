@@ -128,4 +128,3 @@ namespace std {
 %include "functionPython.h"
 %include "meshGFaceLloyd.h"
 %include "DefaultOptions.h"
-

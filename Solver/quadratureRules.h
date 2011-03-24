@@ -24,6 +24,16 @@ class QuadratureBase
   virtual int getIntPoints(MElement *e, IntPt **GP) =0;
 };
 
+// For rigid contact no need of Gauss'integration
+// but to use classcal get function in term npts and IntPt are needed
+// so use a empty gaussQuadrature rule
+class QuadratureVoid : public QuadratureBase
+{
+ public:
+  QuadratureVoid() : QuadratureBase(){}
+  ~QuadratureVoid(){}
+  int getIntPoints(MElement *e, IntPt **GP){GP=NULL; return 0;}
+} ;
 
 class GaussQuadrature : public QuadratureBase
 {
@@ -36,7 +46,7 @@ class GaussQuadrature : public QuadratureBase
   GaussQuadrature(int order_ = 0) : order(order_), info(Other) {}
   GaussQuadrature(IntegCases info_) : order(0), info(info_) {}
   virtual ~GaussQuadrature(){}
-  int getIntPoints(MElement *e, IntPt **GP)
+  virtual int getIntPoints(MElement *e, IntPt **GP)
   {
     int integrationOrder;
     int npts;
@@ -64,6 +74,5 @@ class GaussQuadrature : public QuadratureBase
     return npts;
   }
 };
-
 
 #endif //_QUADRATURERULES_H_

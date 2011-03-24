@@ -11,6 +11,7 @@
 
 template <class scalar>
 class simpleFunction {
+ protected:
   scalar _val;
  public :
   simpleFunction(scalar val=0.0) : _val(val) {}

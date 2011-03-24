@@ -65,7 +65,7 @@ public :
   ScalarTermConstant(T2 val_ = T2()) : cst(val_) {}
   virtual ~ScalarTermConstant() {}
   virtual void get(MElement *ele, int npts, IntPt *GP, T2 &val) const;
-  virtual void get(MElement *ele, int npts, IntPt *GP, std::vector<T2> &vval) const;  
+  virtual void get(MElement *ele, int npts, IntPt *GP, std::vector<T2> &vval) const;
   virtual void get(MVertex *ver, T2 &val) const;
   virtual ScalarTermBase<T2>* clone () const {return new ScalarTermConstant<T2>(cst);}
 };
@@ -259,7 +259,7 @@ public :
   }
   virtual ~LagrangeMultiplierTerm() {}
   virtual void get(MElement *ele, int npts, IntPt *GP, fullMatrix<double> &m) const;
-  virtual void get(MElement *ele, int npts, IntPt *GP, std::vector< fullMatrix<double> > &vm) const{};  
+  virtual void get(MElement *ele, int npts, IntPt *GP, std::vector< fullMatrix<double> > &vm) const{};
   virtual BilinearTermBase* clone () const {return new LagrangeMultiplierTerm(BilinearTerm<SVector3, double>::space1,BilinearTerm<SVector3, double>::space2,_d);}
 };
 

@@ -4,11 +4,8 @@
 # bugs and problems to <gmsh@geuz.org>.
 
 set(SRC
-  ipField.cpp
-  ipstate.cpp
-  # inline
-  ipvariable.h
+  nlTerms.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
-append_gmsh_src(NonLinearSolver/internalPoints "${SRC};${HDR}")
+append_gmsh_src(NonLinearSolver/nlTerms "${SRC};${HDR}")
