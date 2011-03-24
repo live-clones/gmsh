@@ -13,7 +13,7 @@ template <class scalar>
 class simpleFunction {
   scalar _val;
  public :
-  simpleFunction(scalar val=0) : _val(val) {}
+  simpleFunction(scalar val=0.0) : _val(val) {}
   virtual ~simpleFunction(){}
   virtual scalar operator () (double x, double y, double z) const { return _val; }
   virtual void gradient (double x, double y, double z,
