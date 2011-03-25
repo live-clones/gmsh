@@ -103,7 +103,9 @@ void linearSystemPETSc<scalar>::allocate(int nbRows)
     _try(MatAppendOptionsPrefix(_a, this->_parameters["petscPrefix"].c_str()));
   _try(MatSetFromOptions(_a));
   _try(MatGetOwnershipRange(_a, &_localRowStart, &_localRowEnd));
-  _try(MatGetSize(_a, &_globalSize, &_localSize));
+  int nbColumns;
+  _localSize = _localRowEnd - _localRowStart;
+  _try(MatGetSize(_a, &_globalSize, &nbColumns));
   // preallocation option must be set after other options
   _try(VecCreate(PETSC_COMM_WORLD, &_x));
   _try(VecSetSizes(_x, nbRows, PETSC_DETERMINE));
