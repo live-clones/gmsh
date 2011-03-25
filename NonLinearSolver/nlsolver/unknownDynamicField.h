@@ -21,7 +21,7 @@ class unknownDynamicField : public unknownField{
  public:
   unknownDynamicField(dofManager<double> *pas, std::vector<partDomain*> &vdom,
                            nonLinearMechSolver::contactContainer *acontact,
-                                     const int nc, std::vector<std::pair<Dof,initialCondition::whichCondition> > &archiving,
+                                     const int nc, std::vector<archiveDispNode> &archiving,
                                      std::vector<archiveRigidContactDisp> &contactarch, const bool view_=true, const std::string filen="disp.msh");
 
   virtual void update();

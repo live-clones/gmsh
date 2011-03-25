@@ -42,6 +42,15 @@ struct archiveForce{
   ~archiveForce(){}
 };
 
+struct archiveDispNode{
+  int _vernum;
+  int _comp;
+  initialCondition::whichCondition _wc;
+  int _tag;
+  archiveDispNode(const int vernum, const int comp, const int tag,initialCondition::whichCondition wc) : _vernum(vernum), _comp(comp), _wc(wc), _tag(tag){}
+  ~archiveDispNode(){}
+};
+
 struct archiveRigidContactDisp{
   int _physmaster;
   int _comp;
@@ -124,7 +133,7 @@ class nonLinearMechSolver
   std::map<int,double> aefvalue;
   std::vector<fextPrescribedDisp> _allaef;
   // std vector to archive a node displacement
-  std::vector<std::pair<Dof,initialCondition::whichCondition> > anoded;
+  std::vector<archiveDispNode> anoded;
   // std::vector to archive a force (info musy be store before creation because functionSpace are not initialize)
   std::vector<archiveForce> vaf;
   // std vector to archive ipvariable

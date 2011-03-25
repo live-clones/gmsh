@@ -18,8 +18,6 @@
 #include "MInterfaceElement.h"
 class MInterfaceLine : public MLineN, public MInterfaceElement{ // or don't derivate but in this case a vector with the vertices of interface element has to be save ??
   protected :
-    // NUMBER DUPLICATION HOW TO AVOID THIS (MInterfaceElement : public MELelement but 2 MElement at this time and MELement has to be a virtual class ??)
-    int _num;
     // table of pointer on the two elements linked to the interface element
     MElement *_numElem[2];
     // edge's number linked to interface element of minus and plus element
@@ -35,8 +33,7 @@ class MInterfaceLine : public MLineN, public MInterfaceElement{ // or don't deri
     ~MInterfaceLine(){}
 
     // Try to avoid this HOW
-//    int getNum() const{MLineN::getNum();}
-    int getNum() const{return _num;}
+    int getNumber() const{return this->getNum();}
     // Give the number of minus 0 or plus 1 element
     MElement* getElem(int index) const {return _numElem[index];}
 

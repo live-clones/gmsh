@@ -82,7 +82,7 @@ template<class Iterator,class Assembler> void AssembleMass(BilinearTermBase *ter
 
 // Assemble mass for a rigid contact space. Only ddl of GC
 template<class Assembler>
-void AssembleMass(BilinearTermBase *term, rigidContactSpace *space,Assembler *assembler){
+void AssembleMass(BilinearTermBase *term, rigidContactSpaceBase *space,Assembler *assembler){
   fullMatrix<typename Assembler::dataMat> localMatrix;
   explicitHCDofManager<typename Assembler::dataVec>* expAss = dynamic_cast<explicitHCDofManager<typename Assembler::dataVec>*>(assembler);
   std::vector<Dof> R;
@@ -146,7 +146,7 @@ template<class Iterator,class Assembler> void FixNodalDofs(FunctionSpaceBase *sp
 }
 
 template<class Assembler>
-void FixNodalDofs(rigidContactSpace *space,simpleFunction<typename Assembler::dataVec> &fct,FilterDof &filter, Assembler &assembler){
+void FixNodalDofs(rigidContactSpaceBase *space,simpleFunction<typename Assembler::dataVec> &fct,FilterDof &filter, Assembler &assembler){
   std::vector<Dof> R;
   space->getKeysOfGravityCenter(R);
   for(int i=0;i<R.size();i++){
@@ -214,7 +214,7 @@ template<class Iterator,class Assembler> void SetInitialDofs(FunctionSpaceBase *
 
 // Function Numbering Dof for rigid contact (Create Three Dofs for GC of rigid bodies)
 template<class Assembler>
-void NumberDofs(rigidContactSpace &space, Assembler &assembler){
+void NumberDofs(rigidContactSpaceBase &space, Assembler &assembler){
   // get Dofs of GC
   std::vector<Dof> R;
   space.getKeysOfGravityCenter(R);

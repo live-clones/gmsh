@@ -77,7 +77,7 @@ AllIPState::AllIPState(GModel *pModel, std::vector<partDomain*> &vdom)
         for(int i=npts_inter/2;i<npts_inter;i++){
           mlawPlus->createIPState(tp[i],&state,ele,iele->getElem(1)->getNumVertices());
         }
-        _mapall.insert(ipstatePairType(iele->getNum(),tp));
+        _mapall.insert(ipstatePairType(iele->getNumber(),tp));
       }
       // Virtual interface element (no duplication)
       materialLaw *mlaw = dgdom->getMaterialLaw();
@@ -89,7 +89,7 @@ AllIPState::AllIPState(GModel *pModel, std::vector<partDomain*> &vdom)
         for(int i=0;i<npts_inter;i++){
           mlaw->createIPState(tp[i],&state,ele,iele->getElem(0)->getNumVertices());
         }
-        _mapall.insert(ipstatePairType(iele->getNum(),tp));
+        _mapall.insert(ipstatePairType(iele->getNumber(),tp));
       }
     }
     // bulk element

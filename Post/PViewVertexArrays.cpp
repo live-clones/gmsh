@@ -21,8 +21,8 @@
 #include "Options.h"
 #include "StringUtils.h"
 
-static void saturate(int nb, double **val, double vmin, double vmax, 
-                     int i0=0, int i1=1, int i2=2, int i3=3, 
+static void saturate(int nb, double **val, double vmin, double vmax,
+                     int i0=0, int i1=1, int i2=2, int i3=3,
                      int i4=4, int i5=5, int i6=6, int i7=7)
 {
   int id[8] = {i0, i1, i2, i3, i4, i5, i6, i7};
@@ -34,10 +34,10 @@ static void saturate(int nb, double **val, double vmin, double vmax,
 
 static SVector3 normal3(double **xyz, int i0=0, int i1=1, int i2=2)
 {
-  SVector3 t1(xyz[i1][0] - xyz[i0][0], 
+  SVector3 t1(xyz[i1][0] - xyz[i0][0],
               xyz[i1][1] - xyz[i0][1],
               xyz[i1][2] - xyz[i0][2]);
-  SVector3 t2(xyz[i2][0] - xyz[i0][0], 
+  SVector3 t2(xyz[i2][0] - xyz[i0][0],
               xyz[i2][1] - xyz[i0][1],
               xyz[i2][2] - xyz[i0][2]);
   SVector3 n = crossprod(t1, t2);
@@ -103,7 +103,7 @@ static void getLineNormal(PView *p, double x[2], double y[2], double z[2],
   }
 }
 
-static bool getExternalValues(PView *p, int index, int ient, int iele, 
+static bool getExternalValues(PView *p, int index, int ient, int iele,
                               int numNodes, int numComp, double **val,
                               int &numComp2, double **val2)
 {
@@ -145,7 +145,7 @@ static bool getExternalValues(PView *p, int index, int ient, int iele,
   return false;
 }
 
-static void applyGeneralRaise(PView *p, int numNodes, int numComp, 
+static void applyGeneralRaise(PView *p, int numNodes, int numComp,
                               double **vals, double **xyz)
 {
   PViewOptions *opt = p->getOptions();
@@ -179,10 +179,10 @@ void changeCoordinates(PView *p, int ient, int iele,
         xyz[i][j] = barycenter[j] + opt->explode * (xyz[i][j] - barycenter[j]);
   }
 
-  if(opt->transform[0][0] != 1. || opt->transform[0][1] != 0. || 
-     opt->transform[0][2] != 0. || opt->transform[1][0] != 0. || 
+  if(opt->transform[0][0] != 1. || opt->transform[0][1] != 0. ||
+     opt->transform[0][2] != 0. || opt->transform[1][0] != 0. ||
      opt->transform[1][1] != 1. || opt->transform[1][2] != 0. ||
-     opt->transform[2][0] != 0. || opt->transform[2][1] != 0. || 
+     opt->transform[2][0] != 0. || opt->transform[2][1] != 0. ||
      opt->transform[2][2] != 1.){
     for(int i = 0; i < numNodes; i++) {
       double old[3] = {xyz[i][0], xyz[i][1], xyz[i][2]};
@@ -241,7 +241,7 @@ void changeCoordinates(PView *p, int ient, int iele,
     double **val2 = new double*[numNodes];
     for(int i = 0; i < numNodes; i++)
       val2[i] = new double[9];
-    getExternalValues(p, opt->viewIndexForGenRaise, ient, iele, numNodes, 
+    getExternalValues(p, opt->viewIndexForGenRaise, ient, iele, numNodes,
                       numComp, val, numComp2, val2);
     applyGeneralRaise(p, numNodes, numComp2, val2, xyz);
     for(int i = 0; i < numNodes; i++)
@@ -252,9 +252,9 @@ void changeCoordinates(PView *p, int ient, int iele,
 
 static double evalClipPlane(int clip, double x, double y, double z)
 {
-  return CTX::instance()->clipPlane[clip][0] * x + 
-    CTX::instance()->clipPlane[clip][1] * y + 
-    CTX::instance()->clipPlane[clip][2] * z + 
+  return CTX::instance()->clipPlane[clip][0] * x +
+    CTX::instance()->clipPlane[clip][1] * y +
+    CTX::instance()->clipPlane[clip][2] * z +
     CTX::instance()->clipPlane[clip][3];
 }
 
@@ -268,7 +268,7 @@ static double intersectClipPlane(int clip, int numNodes, double **xyz)
   return val;
 }
 
-bool isElementVisible(PViewOptions *opt, int dim, int numNodes, 
+bool isElementVisible(PViewOptions *opt, int dim, int numNodes,
                       double **xyz)
 {
   if(!CTX::instance()->clipWholeElements) return true;
@@ -293,7 +293,7 @@ bool isElementVisible(PViewOptions *opt, int dim, int numNodes,
   return !hidden;
 }
 
-static void addOutlinePoint(PView *p, double **xyz, unsigned int color, 
+static void addOutlinePoint(PView *p, double **xyz, unsigned int color,
                             bool pre, int i0=0)
 {
   if(pre) return;
@@ -301,8 +301,8 @@ static void addOutlinePoint(PView *p, double **xyz, unsigned int color,
   p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &color, 0, true);
 }
 
-static void addScalarPoint(PView *p, double **xyz, 
-                           double **val, bool pre, int i0=0, 
+static void addScalarPoint(PView *p, double **xyz,
+                           double **val, bool pre, int i0=0,
                            bool unique=false)
 {
   if(pre) return;
@@ -313,8 +313,8 @@ static void addScalarPoint(PView *p, double **xyz,
   if(opt->saturateValues) saturate(1, val, vmin, vmax, i0);
 
   if(val[i0][0] >= vmin && val[i0][0] <= vmax){
-    unsigned int col = opt->getColor(val[i0][0], vmin, vmax, false, 
-                                     (opt->intervalsType == PViewOptions::Discrete) ? 
+    unsigned int col = opt->getColor(val[i0][0], vmin, vmax, false,
+                                     (opt->intervalsType == PViewOptions::Discrete) ?
                                      opt->nbIso : -1);
     SVector3 n = getPointNormal(p, val[i0][0]);
     p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &col, 0, unique);
@@ -330,7 +330,7 @@ static void addOutlineLine(PView *p, double **xyz, unsigned int color,
   unsigned int col[2];
   double x[2], y[2], z[2];
   for(int i = 0; i < 2; i++){
-    x[i] = xyz[in[i]][0]; y[i] = xyz[in[i]][1]; z[i] = xyz[in[i]][2]; 
+    x[i] = xyz[in[i]][0]; y[i] = xyz[in[i]][1]; z[i] = xyz[in[i]][2];
     col[i] = color;
   }
   SVector3 n[2];
@@ -338,7 +338,7 @@ static void addOutlineLine(PView *p, double **xyz, unsigned int color,
   p->va_lines->add(x, y, z, n, col, 0, true);
 }
 
-static void addScalarLine(PView *p, double **xyz, 
+static void addScalarLine(PView *p, double **xyz,
                           double **val, bool pre, int i0=0, int i1=1,
                           bool unique=false)
 {
@@ -401,7 +401,7 @@ static void addScalarLine(PView *p, double **xyz,
       if(vmin == vmax) break;
     }
   }
-  
+
   if(opt->intervalsType == PViewOptions::Iso){
     for(int k = 0; k < opt->nbIso; k++) {
       if(vmin == vmax) k = opt->nbIso / 2;
@@ -537,7 +537,7 @@ static void addScalarTriangle(PView *p, double **xyz, double **val,
       if(vmin == vmax) break;
     }
   }
-  
+
   if(opt->intervalsType == PViewOptions::Iso){
     for(int k = 0; k < opt->nbIso; k++) {
       if(vmin == vmax) k = opt->nbIso / 2;
@@ -563,8 +563,8 @@ static void addScalarTriangle(PView *p, double **xyz, double **val,
   }
 }
 
-static void addOutlineQuadrangle(PView *p, double **xyz, 
-                                 unsigned int color, bool pre, int i0=0, int i1=1, 
+static void addOutlineQuadrangle(PView *p, double **xyz,
+                                 unsigned int color, bool pre, int i0=0, int i1=1,
                                  int i2=2, int i3=3)
 {
   PViewOptions *opt = p->getOptions();
@@ -590,8 +590,8 @@ static void addOutlineQuadrangle(PView *p, double **xyz,
   }
 }
 
-static void addScalarQuadrangle(PView *p, double **xyz, 
-                                double **val, bool pre, int i0=0, 
+static void addScalarQuadrangle(PView *p, double **xyz,
+                                double **val, bool pre, int i0=0,
                                 int i1=1, int i2=2, int i3=3, bool unique=false)
 {
   PViewOptions *opt = p->getOptions();
@@ -606,19 +606,19 @@ static void addScalarQuadrangle(PView *p, double **xyz,
     opt->boundary++;
     return;
   }
-  
+
   for(int i = 0; i < 2; i++)
     addScalarTriangle(p, xyz, val, pre, it[i][0], it[i][1], it[i][2], unique);
 }
 
-static void addOutlinePolygon(PView *p, double **xyz, 
+static void addOutlinePolygon(PView *p, double **xyz,
                                   unsigned int color, bool pre, int numNodes)
 {
   for(int i = 0; i < numNodes / 3; i++)
     addOutlineTriangle(p, xyz, color, pre, 3*i, 3*i + 1, 3*i + 2);
 }
 
-static void addScalarPolygon(PView *p, double **xyz, 
+static void addScalarPolygon(PView *p, double **xyz,
                              double **val, bool pre, int numNodes)
 {
   PViewOptions *opt = p->getOptions();
@@ -653,12 +653,12 @@ static void addScalarPolygon(PView *p, double **xyz,
       delete verts[i];
     return;
   }
-  
+
   for(int i = 0; i < numNodes / 3; i++)
     addScalarTriangle(p, xyz, val, pre, 3*i, 3*i+1, 3*i+2);
 }
 
-static void addOutlineTetrahedron(PView *p, double **xyz, 
+static void addOutlineTetrahedron(PView *p, double **xyz,
                                   unsigned int color, bool pre)
 {
   const int it[4][3] = {{0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {3, 1, 2}};
@@ -666,8 +666,8 @@ static void addOutlineTetrahedron(PView *p, double **xyz,
     addOutlineTriangle(p, xyz, color, pre, it[i][0], it[i][1], it[i][2]);
 }
 
-static void addScalarTetrahedron(PView *p, double **xyz, 
-                                 double **val, bool pre, int i0=0, 
+static void addScalarTetrahedron(PView *p, double **xyz,
+                                 double **val, bool pre, int i0=0,
                                  int i1=1, int i2=2, int i3=3)
 {
   PViewOptions *opt = p->getOptions();
@@ -722,18 +722,18 @@ static void addScalarTetrahedron(PView *p, double **xyz,
   }
 }
 
-static void addOutlineHexahedron(PView *p, double **xyz, 
+static void addOutlineHexahedron(PView *p, double **xyz,
                                  unsigned int color, bool pre)
 {
   const int iq[6][4] = {{0, 3, 2, 1}, {0, 1, 5, 4}, {0, 4, 7, 3},
                         {1, 2, 6, 5}, {2, 3, 7, 6}, {4, 5, 6, 7}};
 
   for(int i = 0; i < 6; i++)
-    addOutlineQuadrangle(p, xyz, color, pre, iq[i][0], iq[i][1], 
+    addOutlineQuadrangle(p, xyz, color, pre, iq[i][0], iq[i][1],
                          iq[i][2], iq[i][3]);
 }
 
-static void addScalarHexahedron(PView *p, double **xyz, 
+static void addScalarHexahedron(PView *p, double **xyz,
                                 double **val, bool pre)
 {
   PViewOptions *opt = p->getOptions();
@@ -750,12 +750,12 @@ static void addScalarHexahedron(PView *p, double **xyz,
     opt->boundary++;
     return;
   }
-  
+
   for(int i = 0; i < 6; i++)
     addScalarTetrahedron(p, xyz, val, pre, is[i][0], is[i][1], is[i][2], is[i][3]);
 }
 
-static void addOutlinePrism(PView *p, double **xyz, unsigned int color, 
+static void addOutlinePrism(PView *p, double **xyz, unsigned int color,
                             bool pre)
 {
   const int iq[3][4] = {{0, 1, 4, 3}, {0, 3, 5, 2}, {1, 2, 5, 4}};
@@ -766,7 +766,7 @@ static void addOutlinePrism(PView *p, double **xyz, unsigned int color,
   for(int i = 0; i < 2; i++)
     addOutlineTriangle(p, xyz, color, pre, it[i][0], it[i][1], it[i][2]);
 }
-static void addScalarPrism(PView *p, double **xyz, 
+static void addScalarPrism(PView *p, double **xyz,
                            double **val, bool pre)
 {
   PViewOptions *opt = p->getOptions();
@@ -783,7 +783,7 @@ static void addScalarPrism(PView *p, double **xyz,
     opt->boundary++;
     return;
   }
-  
+
   for(int i = 0; i < 3; i++)
     addScalarTetrahedron(p, xyz, val, pre, is[i][0], is[i][1], is[i][2], is[i][3]);
 }
@@ -798,7 +798,7 @@ static void addOutlinePyramid(PView *p, double **xyz,
     addOutlineTriangle(p, xyz, color, pre, it[i][0], it[i][1], it[i][2]);
 }
 
-static void addScalarPyramid(PView *p, double **xyz, 
+static void addScalarPyramid(PView *p, double **xyz,
                              double **val, bool pre)
 {
   PViewOptions *opt = p->getOptions();
@@ -819,7 +819,7 @@ static void addScalarPyramid(PView *p, double **xyz,
     addScalarTetrahedron(p, xyz, val, pre, is[i][0], is[i][1], is[i][2], is[i][3]);
 }
 
-static void addOutlinePolyhedron(PView *p, double **xyz, 
+static void addOutlinePolyhedron(PView *p, double **xyz,
                                  unsigned int color, bool pre, int numNodes)
 {
   const int it[4][3] = {{0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {3, 1, 2}};
@@ -847,7 +847,7 @@ static void addOutlinePolyhedron(PView *p, double **xyz,
     delete verts[i];
 }
 
-static void addScalarPolyhedron(PView *p, double **xyz, 
+static void addScalarPolyhedron(PView *p, double **xyz,
                                 double **val, bool pre, int numNodes)
 {
   PViewOptions *opt = p->getOptions();
@@ -855,12 +855,12 @@ static void addScalarPolyhedron(PView *p, double **xyz,
   if(opt->boundary > 0){
     return;
   }
-  
+
   for(int i = 0; i < numNodes / 4; i++)
     addScalarTetrahedron(p, xyz, val, pre, 4*i, 4*i + 1, 4*i + 2, 4*i + 3);
 }
 
-static void addOutlineElement(PView *p, int type, double **xyz, 
+static void addOutlineElement(PView *p, int type, double **xyz,
                               bool pre, int numNodes)
 {
   PViewOptions *opt = p->getOptions();
@@ -895,7 +895,7 @@ static void addScalarElement(PView *p, int type, double **xyz,
   }
 }
 
-static void addVectorElement(PView *p, int ient, int iele, int numNodes, 
+static void addVectorElement(PView *p, int ient, int iele, int numNodes,
                              int type, double **xyz,
                              double **val, bool pre)
 {
@@ -907,7 +907,7 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
   double **val2 = new double*[numNodes];
   for(int i = 0; i < numNodes; i++)
     val2[i] = new double[9];
-  getExternalValues(p, opt->externalViewIndex, ient, iele, numNodes, 
+  getExternalValues(p, opt->externalViewIndex, ient, iele, numNodes,
                     3, val, numComp2, val2);
 
   if(opt->vectorType == PViewOptions::Displacement){
@@ -938,12 +938,12 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
         unsigned int col[2];
         double norm[2];
         for(int i = 0; i < 2; i++){
-          norm[i] = sqrt(dxyz[0][i] * dxyz[0][i] + 
-                         dxyz[1][i] * dxyz[1][i] + 
+          norm[i] = sqrt(dxyz[0][i] * dxyz[0][i] +
+                         dxyz[1][i] * dxyz[1][i] +
                          dxyz[2][i] * dxyz[2][i]);
           col[i] = opt->getColor(norm[i], opt->tmpMin, opt->tmpMax);
         }
-        for(int j = 0; j < 3; j++){     
+        for(int j = 0; j < 3; j++){
           dxyz[j][0] = xyz0[j] + dxyz[j][0] * opt->displacementFactor;
           dxyz[j][1] = xyz0[j] + dxyz[j][1] * opt->displacementFactor;
         }
@@ -970,7 +970,7 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
       double v2 = ComputeScalarRep(numComp2, val2[i]);
       if(v2 >= opt->externalMin && v2 <= opt->externalMax){
         unsigned int color = opt->getColor(v2, opt->externalMin, opt->externalMax, false,
-                                           (opt->intervalsType == PViewOptions::Discrete) ? 
+                                           (opt->intervalsType == PViewOptions::Discrete) ?
                                            opt->nbIso : -1);
         unsigned int col[2] = {color, color};
         double dxyz[3][2];
@@ -1003,7 +1003,7 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
     if(v2 >= opt->externalMin * (1. - 1.e-15) &&
        v2 <= opt->externalMax * (1. + 1.e-15)){
       unsigned int color = opt->getColor(v2, opt->externalMin, opt->externalMax, false,
-                                         (opt->intervalsType == PViewOptions::Discrete) ? 
+                                         (opt->intervalsType == PViewOptions::Discrete) ?
                                          opt->nbIso : -1);
       unsigned int col[2] = {color, color};
       double dxyz[3][2];
@@ -1020,7 +1020,7 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
 }
 
 static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int type,
-                             double **xyz, double **val, 
+                             double **xyz, double **val,
                              bool pre)
 {
   PViewOptions *opt = p->getOptions();
@@ -1033,7 +1033,7 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int typ
     for(int i = 0; i < numNodes; i++)
       val[i][0] = ComputeVonMises(val[i]);
     addScalarElement(p, type, xyz, val, pre, numNodes);
-  } 
+  }
   else if (opt->tensorType == PViewOptions::Ellipse ||
            opt->tensorType == PViewOptions::Ellipsoid) {
     if(opt->glyphLocation == PViewOptions::Vertex){
@@ -1053,7 +1053,7 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int typ
         }
         double lmax = std::max(S(0), std::max(S(1), S(2)));
         unsigned int color = opt->getColor
-          (lmax, opt->tmpMin, opt->tmpMax, false, 
+          (lmax, opt->tmpMin, opt->tmpMax, false,
            (opt->intervalsType == PViewOptions::Discrete) ?  opt->nbIso : -1);
         unsigned int col[4] = {color, color, color, color};
         p->va_ellipses->add(vval[0], vval[1], vval[2], 0, col, 0, false);
@@ -1079,7 +1079,7 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int typ
       }
       double lmax = std::max(S(0), std::max(S(1), S(2)));
       unsigned int color = opt->getColor
-        (lmax, opt->tmpMin, opt->tmpMax, false, 
+        (lmax, opt->tmpMin, opt->tmpMax, false,
          (opt->intervalsType == PViewOptions::Discrete) ?  opt->nbIso : -1);
       unsigned int col[4] = {color, color, color, color};
       p->va_ellipses->add(vval[0], vval[1], vval[2], 0, col, 0, false);
@@ -1131,7 +1131,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
   // use adaptive data if available
   PViewData *data = p->getData(true);
   PViewOptions *opt = p->getOptions();
-  
+
   opt->tmpBBox.reset();
 
   int NMAX = PVIEW_NMAX;
@@ -1209,9 +1209,9 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
       for(int j = 0; j < numNodes; j++)
         opt->tmpBBox += SPoint3(xyz[j][0], xyz[j][1], xyz[j][2]);
 
-      if(opt->showElement && !data->useGaussPoints()) 
+      if(opt->showElement && !data->useGaussPoints())
         addOutlineElement(p, type, xyz, preprocessNormalsOnly, numNodes);
-      
+
       if(opt->intervalsType != PViewOptions::Numeric){
         if(data->useGaussPoints()){
           for(int j = 0; j < numNodes; j++){
@@ -1256,7 +1256,7 @@ class initPView {
   // on Windows/Cygwin
   int _estimateIfClipped(PView *p, int num)
   {
-    if(CTX::instance()->clipWholeElements && 
+    if(CTX::instance()->clipWholeElements &&
        CTX::instance()->clipOnlyDrawIntersectingVolume){
       PViewOptions *opt = p->getOptions();
       for(int clip = 0; clip < 6; clip++){
@@ -1296,10 +1296,10 @@ class initPView {
     if(opt->intervalsType == PViewOptions::Iso)
       heuristic = (tets + prisms + pyrs + hexas + polyhs) / 10;
     else if(opt->intervalsType == PViewOptions::Continuous)
-      heuristic = (tris + 2 * quads + 3 * polygs + 6 * tets + 
+      heuristic = (tris + 2 * quads + 3 * polygs + 6 * tets +
                    8 * prisms + 6 * pyrs + 12 * hexas + 10 * polyhs);
     else if(opt->intervalsType == PViewOptions::Discrete)
-      heuristic = (tris + 2 * quads + 3 * polygs + 6 * tets + 
+      heuristic = (tris + 2 * quads + 3 * polygs + 6 * tets +
                    8 * prisms + 6 * pyrs + 12 * hexas + 10 * polyhs) * 2;
     heuristic = _estimateIfClipped(p, heuristic);
     return heuristic + 10000;
@@ -1376,11 +1376,11 @@ class initPView {
     p->va_vectors->finalize();
     p->va_ellipses->finalize();
 
-    Msg::Info("%d vertices in vertex arrays (%g Mb)", p->va_points->getNumVertices() + 
-              p->va_lines->getNumVertices() + p->va_triangles->getNumVertices() + 
+    Msg::Info("%d vertices in vertex arrays (%g Mb)", p->va_points->getNumVertices() +
+              p->va_lines->getNumVertices() + p->va_triangles->getNumVertices() +
               p->va_vectors->getNumVertices() + p->va_ellipses->getNumVertices(),
               p->va_points->getMemoryInMb() +
-              p->va_lines->getMemoryInMb() + p->va_triangles->getMemoryInMb() + 
+              p->va_lines->getMemoryInMb() + p->va_triangles->getMemoryInMb() +
               p->va_vectors->getMemoryInMb() + p->va_ellipses->getMemoryInMb());
 
     p->setChanged(false);
@@ -1393,7 +1393,7 @@ void PView::fillVertexArrays()
   init(this);
 }
 
-void PView::fillVertexArray(ConnectionManager *remote, int length, 
+void PView::fillVertexArray(ConnectionManager *remote, int length,
                             const char *bytes, int swap)
 {
   std::string name;
@@ -1402,7 +1402,7 @@ void PView::fillVertexArray(ConnectionManager *remote, int length,
   if(!VertexArray::decodeHeader(length, bytes, swap, name, num, type, min, max,
                                 numSteps, time, xmin, ymin, zmin, xmax, ymax, zmax))
     return;
-  
+
   Msg::Debug("Filling vertex array (type %d) in view num %d", type, num);
 
   SBoundingBox3d bbox(xmin, ymin, zmin, xmax, ymax, zmax);
@@ -1429,12 +1429,12 @@ void PView::fillVertexArray(ConnectionManager *remote, int length,
 
   switch(type){
   case 1:
-    if(p->va_points) delete p->va_points; 
+    if(p->va_points) delete p->va_points;
     p->va_points = new VertexArray(1, 100);
     p->va_points->fromChar(length, bytes, swap);
     break;
-  case 2: 
-    if(p->va_lines) delete p->va_lines; 
+  case 2:
+    if(p->va_lines) delete p->va_lines;
     p->va_lines = new VertexArray(2, 100);
     p->va_lines->fromChar(length, bytes, swap);
     break;
@@ -1453,7 +1453,7 @@ void PView::fillVertexArray(ConnectionManager *remote, int length,
     p->va_ellipses = new VertexArray(4, 100);
     p->va_ellipses->fromChar(length, bytes, swap);
     break;
-  default: 
+  default:
     Msg::Error("Cannot fill vertex array of type %d", type);
     return;
   }

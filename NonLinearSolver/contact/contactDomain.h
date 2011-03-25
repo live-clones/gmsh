@@ -52,7 +52,6 @@ class contactDomain{
   virtual void setTag(const int t){ _tag =t;}
   virtual void setPhys(const int p){_phys =p;}
   virtual void setPenalty(const double pe){_penalty=pe;}
-  virtual void setDomain(partDomain *dom)=0;
   virtual void setContactType(const int ct);
   virtual void setContactType(const contact ct){_contype =ct;}
   virtual int getTag() const{return _tag;}
@@ -69,11 +68,13 @@ class contactDomain{
   virtual FunctionSpaceBase* getSpace() {return _space;}
   virtual const FunctionSpaceBase* getSpace() const {return _space;}
   virtual QuadratureBase* getGaussIntegration() const{return _integ;}
+  virtual void setDomainAndFunctionSpace(partDomain *dom)=0;
+  virtual void initializeTerms(const unknownField *ufield)=0;
 //  static void registerBindings(binding *b);
 #endif
 };
 
-class rigidCylinderContact : public contactDomain{
+class rigidCylinderContactDomain : public contactDomain{
  protected:
   double _length; // length of cylinder;
   double _radius; // outer radius of cylinder;
@@ -82,27 +83,24 @@ class rigidCylinderContact : public contactDomain{
   double _density; // density of cylinder Not a material law for now
   MVertex *_vergc;  // vertex of gravity center
   SVector3 *_axisDirector; // normalized vector director of cylinder's axis
+#ifndef SWIG
  public:
-  rigidCylinderContact() : contactDomain(), _length(0.), _radius(0.), _thick(0.){
+  rigidCylinderContactDomain() : contactDomain(), _length(0.), _radius(0.), _thick(0.){
     _contype = rigidCylinder;
     _rigid = true;
     _integ = new QuadratureVoid();
   }
-  rigidCylinderContact(const int tag, const int physMaster, const int physSlave, const int physpt1,
-                       const int physpt2,const double penalty,const double h);
-  ~rigidCylinderContact(){delete _axisDirector;}
-  void density(const double rho){ _density = rho;}
-//  void setThicknessContact(const double h){_thickContact = h;}
-#ifndef SWIG
+  rigidCylinderContactDomain(const int tag, const int physMaster, const int physSlave, const int physpt1,
+                       const int physpt2,const double penalty,const double h,const double rho);
+  ~rigidCylinderContactDomain(){delete _axisDirector;}
+  virtual void initializeTerms(const unknownField *ufield);
+  SVector3* getAxisDirector() const{return _axisDirector;}
+  virtual void setDomainAndFunctionSpace(partDomain *dom)=0;
   virtual MVertex* getGC() const{return _vergc;}
   double getDensity() const{return _density;}
   double getLength() const{return _length;}
   double getRadius() const{return _radius;}
   double getThickness() const{return _thick;}
-  void initializeTerms(const unknownField *ufield);
-  SVector3* getAxisDirector() const{return _axisDirector;}
-  virtual void setDomain(partDomain *dom);
 #endif
-
 };
 #endif // CONTACTDOMAIN_H_

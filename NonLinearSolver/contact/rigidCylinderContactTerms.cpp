@@ -11,8 +11,8 @@
 #include "rigidCylinderContactTerms.h"
 #include "contactDomain.h"
 #include "unknownField.h"
-massRigidCylinder::massRigidCylinder(rigidCylinderContact *cdom,
-                                     rigidContactSpace *spc) : _length(cdom->getLength()),_radius(cdom->getRadius()),
+massRigidCylinder::massRigidCylinder(rigidCylinderContactDomain *cdom,
+                                     rigidContactSpaceBase *spc) : _length(cdom->getLength()),_radius(cdom->getRadius()),
                                                                _thick(cdom->getThickness()),_rho(cdom->getDensity()),
                                                                _spc(spc),nbdofs(0.), masse(0.),Rint(0.){}
 
@@ -32,8 +32,8 @@ void massRigidCylinder::get(MElement *ele,int npts,IntPt *GP,fullMatrix<double> 
       m(i,i) = masse;
 }
 
- forceRigidCylinderContact::forceRigidCylinderContact(const rigidCylinderContact *cdom,
-                            rigidContactSpace *sp,const double thick,
+ forceRigidCylinderContact::forceRigidCylinderContact(const rigidCylinderContactDomain *cdom,
+                            rigidContactSpaceBase *sp,const double thick,
                             const unknownField *ufield) : rigidContactLinearTermBase(sp,ufield), _cdom(cdom),
                                                                 _vergc(cdom->getGC()),
                                                                 _axisDirector(cdom->getAxisDirector()),

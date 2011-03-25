@@ -23,11 +23,13 @@
 class contactDomain;
 class elementField;
 struct archiveRigidContactDisp;
+struct archiveDispNode;
 struct archiveNode{
   long int nodenum;
   Dof D;
+  int _comp;
   initialCondition::whichCondition wc;
-  archiveNode(Dof R, int n, initialCondition::whichCondition wv=initialCondition::position) : nodenum(n), D(R), wc(wv){}
+  archiveNode(Dof R, int n, int comp,initialCondition::whichCondition wv=initialCondition::position) : nodenum(n), D(R), _comp(comp), wc(wv){}
   ~archiveNode(){};
 
 };
@@ -42,7 +44,7 @@ class unknownField : public elementField{
  public:
   // update all displacement value
   unknownField(dofManager<double> *pas, std::vector<partDomain*> &elas, std::set<contactDomain*> *acontact,
-                      const int nc, std::vector<std::pair<Dof,initialCondition::whichCondition> > &archiving,
+                      const int nc, std::vector<archiveDispNode> &archiving,
                       std::vector<archiveRigidContactDisp> &contactarch, const bool =true, const std::string="disp.msh");
   ~unknownField(){}
   virtual void update()=0;
@@ -58,7 +60,7 @@ class unknownField : public elementField{
   virtual void get(FunctionSpaceBase *sp1,FunctionSpaceBase *sp2, MInterfaceElement *iele,std::vector<double> &udofs)=0;
   virtual void archiving(const double time)=0;
   virtual void setInitial(const std::vector<Dof> &R,const std::vector<double> &disp)=0;
-//  virtual void buildView(std::vector<partDomain*> &vdom,const double time,
-//                const int nstep, const std::string &valuename, const int cc,const bool binary);
+  virtual void buildView(std::vector<partDomain*> &vdom,const double time,
+                const int nstep, const std::string &valuename, const int cc=-1,const bool binary=false);
 };
 #endif // _UNKNOWNFIELD_H_

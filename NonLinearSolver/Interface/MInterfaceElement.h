@@ -24,7 +24,7 @@ class MInterfaceElement{
   virtual int getEdgeOrFaceNumber(const int index) const=0;
   virtual bool isSameDirection(const int index) const=0;
   // should return the element number !!
-  virtual int getNum() const=0;
+  virtual int getNumber() const=0; // {return{this->getNum();} in your derived class it derived from an MElement* too !!
   // compute the characteritic size of one element (This function can be defined as a method of MElement) ??
   static double characSize(MElement *e); // Area/perimeter
 };

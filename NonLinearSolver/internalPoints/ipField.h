@@ -12,7 +12,6 @@
 # ifndef _IPFIELD_H_
 # define _IPFIELD_H_
 #include<vector>
-#include"Dof3IntType.h"
 #include"quadratureRules.h"
 #include "unknownField.h"
 #include "elementField.h"
@@ -121,7 +120,7 @@ class IPField : public elementField {
   template<class T1,class T2> void getIPv(const MInterfaceElement *iele, const T1** vipv_m, const T2** vipv_p,
                                           const IPStateBase::whichState ws=IPStateBase::current) const
   {
-    AllIPState::ipstateElementContainer *vips = _AIPS->getIPstate(iele->getNum());
+    AllIPState::ipstateElementContainer *vips = _AIPS->getIPstate(iele->getNumber());
     // SAME NUMBER OF GAUSS POINTS ON BOTH SIDES
     int npts = vips->size()/2;
     for(int i=0;i<npts;i++){
@@ -134,7 +133,7 @@ class IPField : public elementField {
   template<class T1,class T2> void getIPv(const MInterfaceElement *iele, const T1** vipv_m, const T1** vipvprev_m,
                                              const T2** vipv_p, const T2** vipvprev_p) const
   {
-    AllIPState::ipstateElementContainer *vips = _AIPS->getIPstate(iele->getNum());
+    AllIPState::ipstateElementContainer *vips = _AIPS->getIPstate(iele->getNumber());
     // SAME NUMBER OF GAUSS POINTS ON BOTH SIDES
     int npts = vips->size()/2;
     for(int i=0;i<npts;i++){
@@ -149,7 +148,7 @@ class IPField : public elementField {
   template<class T1,class T2> void getIPv(const MInterfaceElement *iele, T1** vipv_m, T2** vipv_p,
                                              const IPStateBase::whichState ws=IPStateBase::current) const
   {
-    AllIPState::ipstateElementContainer *vips = _AIPS->getIPstate(iele->getNum());
+    AllIPState::ipstateElementContainer *vips = _AIPS->getIPstate(iele->getNumber());
     // SAME NUMBER OF GAUSS POINTS ON BOTH SIDES
     int npts = vips->size()/2;
     for(int i=0;i<npts;i++){
@@ -162,7 +161,7 @@ class IPField : public elementField {
   template<class T1,class T2> void getIPv(const MInterfaceElement *iele, T1** vipv_m, T2** vipvprev_m,
                                              T2** vipv_p, T2** vipvprev_p) const
   {
-    AllIPState::ipstateElementContainer *vips = _AIPS->getIPstate(iele->getNum());
+    AllIPState::ipstateElementContainer *vips = _AIPS->getIPstate(iele->getNumber());
     // SAME NUMBER OF GAUSS POINTS ON BOTH SIDES
     int npts = vips->size()/2;
     for(int i=0;i<npts;i++){
@@ -179,7 +178,7 @@ class IPField : public elementField {
   template<class T1> void getIPv(const MInterfaceElement *iele, const T1** vipv_m,
                                    const IPStateBase::whichState ws=IPStateBase::current) const
   {
-    AllIPState::ipstateElementContainer *vips = _AIPS->getIPstate(iele->getNum());
+    AllIPState::ipstateElementContainer *vips = _AIPS->getIPstate(iele->getNumber());
     // SAME NUMBER OF GAUSS POINTS ON BOTH SIDES
     int npts = vips->size();
     for(int i=0;i<npts;i++){
@@ -189,7 +188,7 @@ class IPField : public elementField {
   }
   template<class T1> void getIPv(const MInterfaceElement *iele, const T1** vipv_m, const T1** vipvprev_m) const
   {
-    AllIPState::ipstateElementContainer *vips = _AIPS->getIPstate(iele->getNum());
+    AllIPState::ipstateElementContainer *vips = _AIPS->getIPstate(iele->getNumber());
     // SAME NUMBER OF GAUSS POINTS ON BOTH SIDES
     int npts = vips->size();
     for(int i=0;i<npts;i++){
@@ -202,7 +201,7 @@ class IPField : public elementField {
   template<class T1> void getIPv(const MInterfaceElement *iele, T1** vipv_m,
                                    const IPStateBase::whichState ws=IPStateBase::current) const
   {
-    AllIPState::ipstateElementContainer *vips = _AIPS->getIPstate(iele->getNum());
+    AllIPState::ipstateElementContainer *vips = _AIPS->getIPstate(iele->getNumber());
     int npts = vips->size();
     for(int i=0;i<npts;i++){
       IPStateBase *ipsm = (*vips)[i];
@@ -211,7 +210,7 @@ class IPField : public elementField {
   }
   template<class T1> void getIPv(const MInterfaceElement *iele, T1** vipv_m, T1** vipvprev_m) const
   {
-    AllIPState::ipstateElementContainer *vips = _AIPS->getIPstate(iele->getNum());
+    AllIPState::ipstateElementContainer *vips = _AIPS->getIPstate(iele->getNumber());
     int npts = vips->size();
     for(int i=0;i<npts;i++){
       IPStateBase *ipsm = (*vips)[i];

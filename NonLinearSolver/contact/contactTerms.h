@@ -50,7 +50,7 @@ template <class T2=double>class  contactBilinearTermBase : public BilinearTermBa
 template<class T2=double> class rigidContactLinearTermBase : public contactLinearTermBase<T2>{
  protected:
   const unknownField *_ufield;
-  rigidContactSpace *_spc;
+  rigidContactSpaceBase *_spc;
   // data for get function (Allocated once)
   mutable SVector3 _lastNormalContact; // allow to use the normal in the 2 get functions not very elegant
   mutable int nbdofs,nbdofsGC, nbvertex,nbcomp,nbcomptimenbvertex;
@@ -60,7 +60,7 @@ template<class T2=double> class rigidContactLinearTermBase : public contactLinea
   mutable double mvalue[6];
   mutable MVertex *ver;
  public:
-  rigidContactLinearTermBase(rigidContactSpace *sp,
+  rigidContactLinearTermBase(rigidContactSpaceBase *sp,
                              const unknownField *ufield) : contactLinearTermBase<T2>(),
                                                                  _ufield(ufield), _spc(sp), _lastNormalContact(0.,0.,0.),
                                                                  nbdofs(0), nbdofsGC(0), nbvertex(0), nbcomp(0), nbcomptimenbvertex(0)

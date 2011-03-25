@@ -56,7 +56,7 @@ class nonLinearDirichletBC : public nonLinearBoundaryCondition
 class rigidContactBC : public nonLinearBoundaryCondition
 {
  public:
-  rigidContactSpace *space;
+  rigidContactSpaceBase *space;
   int _comp; // component
   simpleFunctionTime<double> _f;
   rigidContactBC(const int physMaster) : nonLinearBoundaryCondition(){
@@ -70,7 +70,7 @@ class rigidContactBC : public nonLinearBoundaryCondition
     _f = source._f;
   }
   ~rigidContactBC(){}
-  void setSpace(rigidContactSpace *sp){space = sp;}
+  void setSpace(rigidContactSpaceBase *sp){space = sp;}
 };
 #endif
 class nonLinearNeumannBC  : public nonLinearBoundaryCondition

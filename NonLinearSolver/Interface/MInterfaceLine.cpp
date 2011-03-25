@@ -13,8 +13,7 @@
 
 #include "MInterfaceLine.h"
 MInterfaceLine::MInterfaceLine(std::vector<MVertex*> &v, int num, int part,
-                               MElement *e_minus, MElement *e_plus) : MLineN(v, num, part), MInterfaceElement(),
-                                                                      _num(MElement::getGlobalNumber()) //avoid this ??
+                               MElement *e_minus, MElement *e_plus) : MLineN(v, num, part), MInterfaceElement()
 {
   _numElem[0]=e_minus;
   _numElem[1]=e_plus;

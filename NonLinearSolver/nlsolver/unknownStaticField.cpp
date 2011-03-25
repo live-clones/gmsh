@@ -14,7 +14,7 @@
 #include "nonLinearMechSolver.h"
 #include "MPoint.h"
 unknownStaticField::unknownStaticField(dofManager<double> *pas, std::vector<partDomain*> &vdom, nonLinearMechSolver::contactContainer *acontact,
-                                     const int nc, std::vector<std::pair<Dof,initialCondition::whichCondition> > &archiving,
+                                     const int nc, std::vector<archiveDispNode> &archiving,
                                      std::vector<archiveRigidContactDisp> &contactarch, const bool view_, const std::string filen
                                                                          ) : unknownField(pas,vdom,acontact,nc,archiving,contactarch,view_,filen)
 {
@@ -37,7 +37,7 @@ unknownStaticField::unknownStaticField(dofManager<double> *pas, std::vector<part
     contactDomain *cdom = *it;
     if(cdom->isRigid()){
       std::vector<Dof> R;
-      rigidContactSpace *sp = dynamic_cast<rigidContactSpace*>(cdom->getSpace());
+      rigidContactSpaceBase *sp = dynamic_cast<rigidContactSpaceBase*>(cdom->getSpace());
       sp->getKeysOfGravityCenter(R);
       for(int i=0;i<R.size(); i++)
         umap.insert(std::pair<Dof,double>(R[i],0.));
@@ -109,17 +109,6 @@ void unknownStaticField::get(std::vector<Dof> &R, fullVector<double> &disp) cons
   }
 }
 
-/*void unknownStaticField:get(MVertex *ver,std::vector<double> &udofs){
-  long int ent;
-  if(!fullDg){
-    ent = ver->getNum();
-    udofs = umap.find(ent)->second;
-  }
-  else{
-    Msg::Error("Impossible to get displacement by vertex for full Dg formulation. Work only with MElement");
-  }
-}*/
-
 void unknownStaticField::get(partDomain *dom, MElement *ele,std::vector<double> &udofs, const int cc){
   std::vector<Dof> R;
   FunctionSpaceBase *sp = dom->getFunctionSpace();
@@ -160,27 +149,6 @@ void unknownStaticField::get(FunctionSpaceBase *sp1, FunctionSpaceBase *sp2,MInt
   }
 }
 
-/*void unknownStaticField:getForPerturbation(FunctionSpaceBase &sp, MInterfaceElement* iele, const bool minus, Dof &D, double pert, std::vector<double> &udofs){
-  double eps = -pert;
-  std::vector<Dof> R;
-  sp.getKeys(iele->getElem(0),R);
-  if(!minus){
-    this->set(D,eps);
-    this->get(R,udofs);
-    this->set(D,pert);
-  }
-  else{
-    this->get(R,udofs);
-    this->set(D,eps);
-  }
-  if(!(iele->getElem(0)==iele->getElem(1)))// Virtual interface element
-    R.clear();
-    sp.getKeys(iele->getElem(1),R);
-    this->get(R,udofs);
-  if(minus)
-    this->set(D,pert);
-}*/
-
 void unknownStaticField::updateFixedDof(){
   double u;
   for(std::vector<Dof>::iterator itD=fixedDof.begin(); itD<fixedDof.end();++itD){
@@ -200,8 +168,7 @@ void unknownStaticField::archiving(const double time){
       oss << it->nodenum;
       std::string s = oss.str();
       // component of displacement
-      int field,comp,num;
-      Dof3IntType::getThreeIntsFromType(it->D.getType(),comp,field,num);
+      int comp = it->_comp;
       oss.str("");
       oss << comp;
       std::string s2 = oss.str();
@@ -217,82 +184,3 @@ void unknownStaticField::setInitial(const std::vector<Dof> &R, const std::vector
     umap[R[i]] = disp[i];
   }
 }
-
-/*
-void unknownField::buildView(std::vector<partDomain*> &vdom,const double time,
-                              const int nstep, const std::string &valuename, const int cc=-1, const bool binary=false){
-  if(view){
-    // test file size (and create a new one if needed)
-    uint32_t fileSize;
-    FILE *fp = fopen(fileName.c_str(), "r");
-    if(!fp){
-      Msg::Error("Unable to open file '%s'", fileName.c_str());
-      return;
-    }
-    fseek (fp, 0, SEEK_END);
-    fileSize = (uint32_t) (ftell(fp));
-    if(fileSize > fmaxsize) this->updateFileName();
-    fclose(fp);
-    fp = fopen(fileName.c_str(), "a");
-
-    // compute the number of element
-    if(binary) Msg::Warning("Binary write not implemented yet");
-    fprintf(fp, "$%s\n",dataname.c_str());
-    fprintf(fp, "1\n\"%s\"\n",valuename.c_str());
-    fprintf(fp, "1\n%.16g\n", time);
-    fprintf(fp, "3\n%d\n%d\n%d\n", nstep, numcomp, totelem);
-    std::vector<double> fieldData;
-    if(type == ElementNodeData){
-      for(std::vector<partDomain*>::iterator itdom=vdom.begin(); itdom!=vdom.end(); ++itdom){
-        partDomain *dom = *itdom;
-        for (groupOfElements::elementContainer::const_iterator it = dom->g->begin(); it != dom->g->end(); ++it){
-          MElement *ele = *it;
-          int numv = ele->getNumVertices();
-          this->get(dom,ele,fieldData,cc);
-          fprintf(fp, "%d %d",ele->getNum(),numv);
-          for(int i=0;i<numv;i++)
-            for(int j=0;j<numcomp;j++)
-              fprintf(fp, " %.16g",fieldData[i+j*numv]);
-          fprintf(fp,"\n");
-          fieldData.clear();
-        }
-      }
-      // loop on contact domain
-      for(nonLinearMechSolver::contactContainer::iterator it=_allContact->begin(); it!=_allContact->end(); ++it){
-        contactDomain *cdom = *it;
-        if(cdom->isRigid()){
-          for (groupOfElements::elementContainer::const_iterator it = cdom->gMaster->begin(); it != cdom->gMaster->end(); ++it){
-            MElement *ele = *it;
-            int numv = ele->getNumVertices();
-            rigidContactSpace *spgc = dynamic_cast<rigidContactSpace*>(cdom->getSpace());
-            std::vector<Dof> R;
-            spgc->getKeysOfGravityCenter(R);
-            this->get(R,fieldData);
-            fprintf(fp, "%d %d",ele->getNum(),numv);
-            for(int i=0;i<numv;i++)
-              for(int j=0;j<numcomp;j++)
-                fprintf(fp, " %.16g",fieldData[j]);
-            fprintf(fp,"\n");
-            fieldData.clear();
-          }
-        }
-      }
-    }
-    else if(type == ElementData){
-      for (unsigned int i = 0; i < vdom.size(); ++i)
-        for (groupOfElements::elementContainer::const_iterator it = vdom[i]->g->begin(); it != vdom[i]->g->end(); ++it){
-          MElement *ele = *it;
-          fieldData.resize(numcomp);
-          this->get(vdom[i],ele,fieldData,cc);
-          fprintf(fp, "%d",ele->getNum());
-          for(int j=0;j<numcomp;j++)
-            fprintf(fp, " %.16g",fieldData[j]);
-          fprintf(fp,"\n");
-        }
-    }
-    fprintf(fp, "$End%s\n",dataname.c_str());
-    fclose(fp);
-  }
-  else Msg::Warning("No displacement view created because the variable view is set to false for this field\n");
-}
-*/

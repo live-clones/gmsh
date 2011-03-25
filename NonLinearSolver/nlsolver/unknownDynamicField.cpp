@@ -13,8 +13,9 @@
 #include "nlsolAlgorithms.h"
 unknownDynamicField::unknownDynamicField(dofManager<double> *pas, std::vector<partDomain*> &vdom,
                                                    nonLinearMechSolver::contactContainer *acontact,
-                                     const int nc, std::vector<std::pair<Dof,initialCondition::whichCondition> > &archiving,
-                                     std::vector<archiveRigidContactDisp> &contactarch, const bool view_, const std::string filen) : unknownField(pas,vdom,acontact,nc,archiving,contactarch,view_,filen)
+                                     const int nc, std::vector<archiveDispNode> &archiving,
+                                     std::vector<archiveRigidContactDisp> &contactarch, const bool view_, const std::string filen) : unknownField(pas,vdom,acontact,nc,archiving,
+                                                                                                                                                  contactarch,view_,filen)
 {
   // to avoid constant dynamic cast
   dynassembler = dynamic_cast<explicitHCDofManager<double>*>(pAssembler);
@@ -149,8 +150,7 @@ void unknownDynamicField::archiving(const double time){
       oss << it->nodenum;
       std::string s = oss.str();
       // component of displacement
-      int field,comp,num;
-      Dof3IntType::getThreeIntsFromType(it->D.getType(),comp,field,num);
+      int comp = it->_comp;
       oss.str("");
       oss << comp;
       std::string s2 = oss.str();

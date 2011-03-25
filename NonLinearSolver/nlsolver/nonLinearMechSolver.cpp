@@ -91,7 +91,7 @@ void nonLinearMechSolver::initContactInteraction(){
         MElement *ele = *ite;
         if(ele == elementcont){
           flagfind =true;
-          cdom->setDomain(dom);
+          cdom->setDomainAndFunctionSpace(dom);
 //          spaceManager->addSpace(cdom);
           break;
         }
@@ -107,7 +107,7 @@ void nonLinearMechSolver::initContactInteraction(){
       for(contactContainer::iterator itcdom = _allContact.begin(); itcdom!=_allContact.end(); ++itcdom){
         contactDomain *cdom = *itcdom;
         if(cdom->getPhys() == diri._tag){
-          rigidContactSpace *sp = dynamic_cast<rigidContactSpace*>(cdom->getSpace());
+          rigidContactSpaceBase *sp = dynamic_cast<rigidContactSpaceBase*>(cdom->getSpace());
           diri.setSpace(sp);
           break;
         }
@@ -342,7 +342,7 @@ void nonLinearMechSolver::numberDofs(linearSystem<double> *lsys){
   for(contactContainer::iterator it = _allContact.begin(); it!=_allContact.end(); ++it){
     contactDomain* cdom = *it;
     if(cdom->isRigid()){
-      rigidContactSpace *rcspace = dynamic_cast<rigidContactSpace*>(cdom->getSpace());
+      rigidContactSpaceBase *rcspace = dynamic_cast<rigidContactSpaceBase*>(cdom->getSpace());
       NumberDofs(*rcspace,*pAssembler);
     }
   }
@@ -566,13 +566,8 @@ void nonLinearMechSolver::initTerms(unknownField *ufield, IPField *ipf){
   // contact domain
   for(contactContainer::iterator it = _allContact.begin(); it!=_allContact.end(); ++it){
     contactDomain *cdom = *it;
-    if(cdom->getContactType() == contactDomain::rigidCylinder){
-      rigidCylinderContact *rcc = dynamic_cast<rigidCylinderContact*>(cdom);
-      rcc->initializeTerms(ufield);
-    }
-    else Msg::Error("Terms are not defined for contact type %d",cdom->getContactType());
+      cdom->initializeTerms(ufield);
   }
-
 }
 
 void nonLinearMechSolver::solveStaticLinar()
@@ -1017,9 +1012,9 @@ void nonLinearMechSolver::archivingNode(const int numphys, const int comp, initi
   std::vector<MVertex*> vv;
   pModel->getMeshVerticesForPhysicalGroup(0,numphys,vv);
 
-  if(vv.size() !=0){
-    std::pair< Dof,initialCondition::whichCondition > pai(Dof(vv[0]->getNum(),Dof3IntType::createTypeWithThreeInts(comp,_tag)),wc);
-    anoded.push_back(pai);
+  if(vv.size() == 1){
+//    std::pair< Dof,initialCondition::whichCondition > pai(Dof(vv[0]->getNum(),Dof3IntType::createTypeWithThreeInts(comp,_tag)),wc);
+    anoded.push_back(archiveDispNode(vv[0]->getNum(),comp,_tag,wc));
     // remove old file (linux only ??)
     std::ostringstream oss;
     oss << vv[0]->getNum(); // Change this
@@ -1042,7 +1037,10 @@ void nonLinearMechSolver::archivingNode(const int numphys, const int comp, initi
     system(rfname.c_str());
   }
   else{
-    Msg::Warning("No physical group %d So it is impossible to archive nodal displacement",numphys);
+    if(vv.size()==0)
+      Msg::Warning("No physical group %d So it is impossible to archive nodal displacement",numphys);
+    else
+      Msg::Warning("More than one node in physical group impssible to archive for now (no loop)",numphys);
   }
 }
 
@@ -1504,7 +1502,7 @@ void nonLinearMechSolver::solveExplicit(){
   for(nonLinearMechSolver::contactContainer::iterator itc = _allContact.begin(); itc!= _allContact.end(); ++itc){
     contactDomain *cdom = *itc;
     if(cdom->isRigid()){
-      rigidContactSpace *rcsp = dynamic_cast<rigidContactSpace*>(cdom->getSpace());
+      rigidContactSpaceBase *rcsp = dynamic_cast<rigidContactSpaceBase*>(cdom->getSpace());
       AssembleMass(cdom->getMassTerm(),rcsp,pAssembler);
     }
   }

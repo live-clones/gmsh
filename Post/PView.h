@@ -53,10 +53,10 @@ class PView{
         std::vector<double> &x, std::vector<double> &y);
   // construct a new model-based view from a bunch of data
   PView(std::string name, std::string type, GModel *model,
-        std::map<int, std::vector<double> > &data, double time=0., 
+        std::map<int, std::vector<double> > &data, double time=0.,
         int numComp = -1);
   // add a new time step to a given model-based view
-  void addStep(GModel *model, std::map<int, std::vector<double> > &data, 
+  void addStep(GModel *model, std::map<int, std::vector<double> > &data,
                double time=0.,int numComp = -1);
 
   // default destructor
@@ -66,8 +66,8 @@ class PView{
   void deleteVertexArrays();
 
   // get/set the display options
-  PViewOptions *getOptions(){ return _options; }  
-  void setOptions(PViewOptions *val=0);  
+  PViewOptions *getOptions(){ return _options; }
+  void setOptions(PViewOptions *val=0);
 
   // get/set the view data
   PViewData *getData(bool useAdaptiveIfAvailable=false);
@@ -100,7 +100,7 @@ class PView{
   // find view by name or by number (if timeStep >= 0, return view
   // only if it does *not* contain that timestep; if partition >= 0,
   // return view only if it does *not* contain that partition)
-  static PView *getViewByName(std::string name, int timeStep=-1, 
+  static PView *getViewByName(std::string name, int timeStep=-1,
                               int partition=-1);
   static PView *getViewByNum(int num, int timeStep=-1, int partition=-1);
 
@@ -120,7 +120,7 @@ class PView{
   void fillVertexArrays();
 
   // fill a vertex array using a raw stream of bytes
-  static void fillVertexArray(ConnectionManager *remote, int length, 
+  static void fillVertexArray(ConnectionManager *remote, int length,
                               const char *data, int swap);
 
   // smoothed normals
@@ -131,11 +131,9 @@ class PView{
 // this is the maximum number of nodes of elements we actually *draw*
 // (high order elements are always subdivided before drawing)
 #define PVIEW_NMAX 8
-
 void changeCoordinates(PView *p, int ient, int iele,
-                       int numNodes, int type, int numComp, 
+                       int numNodes, int type, int numComp,
                        double **xyz, double **val);
-bool isElementVisible(PViewOptions *opt, int dim, int numNodes, 
+bool isElementVisible(PViewOptions *opt, int dim, int numNodes,
                       double **xyz);
-
 #endif

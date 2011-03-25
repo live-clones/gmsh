@@ -47,11 +47,11 @@ MElement* contactDomain::getFirstElement() const {
   return (*it);
 }
 
-rigidCylinderContact::rigidCylinderContact(const int tag, const int physMaster, const int physSlave, const int physPt1,
+rigidCylinderContactDomain::rigidCylinderContactDomain(const int tag, const int physMaster, const int physSlave, const int physPt1,
                                            const int physPt2, const double penalty,
-                                           const double h) : contactDomain(tag,physMaster,physSlave,
+                                           const double h,const double rho) : contactDomain(tag,physMaster,physSlave,
                                                                            penalty,rigidCylinder,true),
-                                                               _thick(h){
+                                                               _thick(h), _density(rho){
 
   // void gauss integration
   _integ = new QuadratureVoid();
@@ -98,18 +98,10 @@ rigidCylinderContact::rigidCylinderContact(const int tag, const int physMaster, 
   _axisDirector->normalize();
 }
 
-void rigidCylinderContact::initializeTerms(const unknownField *ufield){
-  rigidContactSpace *sp = dynamic_cast<rigidContactSpace*>(_space);
+void rigidCylinderContactDomain::initializeTerms(const unknownField *ufield){
+  rigidContactSpaceBase *sp = dynamic_cast<rigidContactSpaceBase*>(_space);
   _massterm = new massRigidCylinder(this,sp);
   _lterm = new forceRigidCylinderContact(this,sp,_thickContact,ufield);
   rigidContactLinearTermBase<double> *rlterm = dynamic_cast<rigidContactLinearTermBase<double>*>(_lterm);
   _bterm = new stiffnessRigidCylinderContact(sp,rlterm,ufield);
 }
-
-void rigidCylinderContact::setDomain(partDomain *dom){
-  _dom = dom;
-  FunctionSpace<double> *spdom = dynamic_cast<FunctionSpace<double>*>(dom->getFunctionSpace());
-  if(_space != NULL) delete _space;
-  _space = new rigidContactSpace(_phys,spdom,_vergc);
-}
-

@@ -116,10 +116,6 @@ class partDomain{
 
 //  static void registerBindings(binding *b);
   virtual void computeIPVariable(AllIPState *aips,const unknownField *ufield,const IPStateBase::whichState ws)=0;
-  virtual void computeIpv(AllIPState *aips,MInterfaceElement *ie, IntPt *GP,const IPStateBase::whichState ws,
-                           partDomain* efMinus, partDomain *efPlus,materialLaw *mlawminus,
-                           materialLaw *mlawplus,fullVector<double> &dispm,
-                           fullVector<double> &dispp,const bool virt,const bool checkfrac=true)=0;
   virtual void computeIpv(AllIPState *aips,MElement *e, IPStateBase::whichState ws,
                            materialLaw *mlaw,fullVector<double> &disp)=0;
   virtual void setGaussIntegrationRule()=0;

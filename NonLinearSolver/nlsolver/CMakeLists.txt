@@ -9,7 +9,6 @@ set(SRC
   unknownField.cpp
   unknownStaticField.cpp
   # inline
-  Dof3IntType.h
   explicitDofManager.h
   explicitHulbertChung.h
   nlsolAlgorithms.h

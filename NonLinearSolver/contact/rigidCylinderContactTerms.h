@@ -13,18 +13,18 @@
 #define RIGIDCONTACTCYLINDER_H_
 #include "contactTerms.h"
 #include "contactFunctionSpace.h"
-class rigidCylinderContact;
+class rigidCylinderContactDomain;
 class massRigidCylinder : public BilinearTermBase{
  protected:
   double _length, _radius, _thick, _rho;
-  rigidContactSpace *_spc;
+  rigidContactSpaceBase *_spc;
   // Data for get function (Allocated once)
   mutable int nbdofs;
   mutable double masse;
   mutable double Rint;
  public:
-  massRigidCylinder(rigidCylinderContact *cdom,rigidContactSpace *spc);
-  massRigidCylinder(rigidContactSpace *spc,double leng, double radius,
+  massRigidCylinder(rigidCylinderContactDomain *cdom,rigidContactSpaceBase *spc);
+  massRigidCylinder(rigidContactSpaceBase *spc,double leng, double radius,
                     double thick,double rho) : _spc(spc), _length(leng), _radius(radius),_thick(thick), _rho(rho){}
   // Arguments are useless but it's allow to use classical assemble function
   void get(MElement *ele, int npts, IntPt *GP, fullMatrix<double> &m) const;
@@ -40,7 +40,7 @@ class massRigidCylinder : public BilinearTermBase{
 
 class forceRigidCylinderContact : public rigidContactLinearTermBase<double>{
  protected:
-  const rigidCylinderContact *_cdom;
+  const rigidCylinderContactDomain *_cdom;
   double _fdgfactor, _facGC;
   const MVertex *_vergc;
   const SVector3* _axisDirector;
@@ -54,8 +54,8 @@ class forceRigidCylinderContact : public rigidContactLinearTermBase<double>{
   mutable double d,penetration,penpen;
   mutable SVector3 dirAC;
  public:
-  forceRigidCylinderContact(const rigidCylinderContact *cdom,
-                            rigidContactSpace *sp,const double thick,
+  forceRigidCylinderContact(const rigidCylinderContactDomain *cdom,
+                            rigidContactSpaceBase *sp,const double thick,
                             const unknownField *ufield);
   ~forceRigidCylinderContact(){}
 //  void get(MElement *ele,int npts, IntPt *GP,fullVector<double> &m);
@@ -79,7 +79,7 @@ class stiffnessRigidCylinderContact : public contactBilinearTermBase<double>{
   void get(MElement *ele, const int verIndex, fullMatrix<double> &m) const;
  protected:
   const unknownField *_ufield;
-  rigidContactSpace *_spc;
+  rigidContactSpaceBase *_spc;
   const double _perturbation; // numerical perturbation
   const double _doublepertexpm1;
   // Data for get function (Allocated Once)
@@ -91,7 +91,7 @@ class stiffnessRigidCylinderContact : public contactBilinearTermBase<double>{
   mutable std::vector<double> disp;
   mutable double pertdisp[6];
  public:
-  stiffnessRigidCylinderContact(rigidContactSpace *space, contactLinearTermBase<double> *lterm, const unknownField *ufield) : contactBilinearTermBase(lterm),
+  stiffnessRigidCylinderContact(rigidContactSpaceBase *space, contactLinearTermBase<double> *lterm, const unknownField *ufield) : contactBilinearTermBase(lterm),
                                                                                                 _ufield(ufield),
                                                                                                 _perturbation(1.e-10),
                                                                                                 _doublepertexpm1(1./(2.e-10)),

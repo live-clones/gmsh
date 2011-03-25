@@ -25,7 +25,7 @@ class unknownStaticField : public unknownField{
     std::map<Dof,double> umap; // One Entry by Dof allow to manage more than 1 domain
   public :
     unknownStaticField(dofManager<double> *pas, std::vector<partDomain*> &elas, std::set<contactDomain*> *acontact,
-                      const int nc, std::vector<std::pair<Dof,initialCondition::whichCondition> > &archiving,
+                      const int nc, std::vector<archiveDispNode> &archiving,
                       std::vector<archiveRigidContactDisp> &contactarch, const bool =true, const std::string="disp.msh"
                                                     ) ;
     // update all displacement value
