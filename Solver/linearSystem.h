@@ -1,16 +1,16 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
 #ifndef _LINEAR_SYSTEM_H_
 #define _LINEAR_SYSTEM_H_
+
 #include <map>
 #include <string>
 
 // A class that encapsulates a linear system solver interface :
 // building a sparse matrix, solving a linear system
-class binding;
 class linearSystemBase {
   protected:
   std::map<std::string, std::string> _parameters;
@@ -23,7 +23,6 @@ class linearSystemBase {
   virtual int systemSolve() = 0;
   void setParameter (std::string key, std::string value);
   virtual void insertInSparsityPattern(int _row, int _col){};
-  static void registerBindings (binding*);
 };
 
 template <class scalar>

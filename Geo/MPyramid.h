@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -67,11 +67,6 @@ class MPyramid : public MElement {
   virtual int getDim() const { return 3; }
   virtual int getNumVertices() const { return 5; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
-  virtual MVertex *getVertexMED(int num)
-  {
-    static const int map[5] = {0, 3, 2, 1, 4};
-    return getVertex(map[num]);
-  }
   virtual int getNumEdges(){ return 8; }
   virtual MEdge getEdge(int num)
   {
@@ -259,11 +254,6 @@ class MPyramid13 : public MPyramid {
   virtual int getPolynomialOrder() const { return 2; }
   virtual int getNumVertices() const { return 13; }
   virtual MVertex *getVertex(int num){ return num < 5 ? _v[num] : _vs[num - 5]; }
-  virtual MVertex *getVertexMED(int num)
-  {
-    static const int map[13] = {0, 3, 2, 1, 4, 6, 10, 8, 5, 7, 12, 11, 9};
-    return getVertex(map[num]);
-  }
   virtual int getNumEdgeVertices() const { return 8; }
   virtual int getNumEdgesRep(){ return 16; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)

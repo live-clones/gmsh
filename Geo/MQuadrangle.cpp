@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -344,29 +344,4 @@ double MQuadrangle::getInnerRadius()
     }
   }
   return R;
-}
-#include "Bindings.h"
-
-static MQuadrangle9* MQuadrangle9_binding(std::vector<MVertex*> v) {
-  return new MQuadrangle9(v);
-}
-
-
-void MQuadrangle::registerBindings(binding *b)
-{
-  classBinding *cb = b->addClass<MQuadrangle>("MQuadrangle");
-  cb->setDescription("A mesh first-order quadrangle.");
-  methodBinding *cm;
-  cm = cb->setConstructor<MQuadrangle,MVertex*,MVertex*,MVertex*,MVertex*>();
-  cm->setArgNames("v0", "v1", "v2", "v3", NULL);
-  cm->setDescription("Create a new quadrangle with vertices (v0,v1,v2,v3).");
-  cb->setParentClass<MElement>();
-
-  cb = b->addClass<MQuadrangle9>("MQuadrangle9");
-  cb->setDescription("A mesh second-order quadrangle.");
-  cm = cb->addMethod("MQuadrangle9",&MQuadrangle9_binding);
-//   cm = cb->setConstructor<MQuadrangle9_binding,std::vector<MVertex*> >();
-  cm->setArgNames("vectorOfVertices", NULL);
-  cm->setDescription("Create a new quadrangle with vertices in vectorV (length=9).");
-  cb->setParentClass<MQuadrangle>();
 }

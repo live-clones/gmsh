@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -14,7 +14,6 @@
 #include "MElementCut.h"
 #include "GmshMessage.h"
 #include "VertexArray.h"
-#include "Bindings.h"
 
 GRegion::GRegion(GModel *model, int tag) : GEntity (model, tag)
 {
@@ -381,26 +380,3 @@ double GRegion::computeSolidProperties (std::vector<double> cg,
   return volume;
 }
 
-void GRegion::addPrism(MPrism *p) 
-{
-  prisms.push_back(p); 
-}
-
-void GRegion::registerBindings(binding *b)
-{
-  classBinding *cb = b->addClass<GRegion>("GRegion");
-  cb->setDescription("A GRegion is a geometrical 3D entity");
-  cb->setParentClass<GEntity>();
-  methodBinding *cm = cb->setConstructor<GRegion,GModel*,int>();
-  cm->setDescription("create a new GRegion");
-  cm->setArgNames("model","tag",NULL);
-  cm = cb->addMethod("set",&GRegion::set);
-  cm->setDescription("set the faces that bound this region");
-  cm->setArgNames("faces",NULL);
-  cm = cb->addMethod("addPrism", &GRegion::addPrism);
-  cm->setDescription("insert a prism mesh element");
-  cm->setArgNames("prism", NULL);
-  cm = cb->addMethod("computeSolidProperties", &GRegion::computeSolidProperties);
-  cm->setDescription("returns the volume and computes the center of gravity and tensor of inertia of the volume (requires a surface mesh)");
-  cm->setArgNames("cg","inertia", NULL);
-}

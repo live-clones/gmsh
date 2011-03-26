@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -80,7 +80,7 @@ void PrintUsage(const char *name)
   Msg::Direct("  -smoothRatio float    Set smoothing ration between mesh sizes at nodes of a same edge (only used in bamg)");
   Msg::Direct("  -clcurv               Automatically compute element sizes from curvatures");
   Msg::Direct("  -epslc1d              Set the accuracy of the evaluation of the LCFIELD for 1D mesh");
-  Msg::Direct("  -swapangle            Set the treshold angle (in degree) between two adjacent faces");
+  Msg::Direct("  -swapangle            Set the threshold angle (in degree) between two adjacent faces");
   Msg::Direct("                          below which a swap is allowed");
   Msg::Direct("  -rand float           Set random perturbation factor");
   Msg::Direct("  -bgm file             Load background mesh from file");
@@ -100,9 +100,6 @@ void PrintUsage(const char *name)
   Msg::Direct("  -                     Parse input files, then exit");
 #if defined(HAVE_FLTK)
   Msg::Direct("  -a, -g, -m, -s, -p    Start in automatic, geometry, mesh, solver or post-processing mode");
-#endif
-#if defined(HAVE_LUA)
-  Msg::Direct("  -lua                  Start an interactive lua session");
 #endif
   Msg::Direct("  -pid                  Print process id on stdout");
   Msg::Direct("  -listen               Always listen to incoming connection requests");
@@ -467,7 +464,7 @@ void GetOptions(int argc, char *argv[])
         if(argv[i]) {
           CTX::instance()->mesh.allowSwapEdgeAngle = atof(argv[i++]);
           if(CTX::instance()->mesh.allowSwapEdgeAngle <= 0.0)
-            Msg::Fatal("Treshold angle for edge swap must be > 0");
+            Msg::Fatal("Threshold angle for edge swap must be > 0");
         }
         else
           Msg::Fatal("Missing number");
@@ -620,7 +617,7 @@ void GetOptions(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "help") || !strcmp(argv[i] + 1, "-help")) {
         fprintf(stderr, "Gmsh, a 3D mesh generator with pre- and post-processing facilities\n");
-        fprintf(stderr, "Copyright (C) 1997-2010 Christophe Geuzaine and Jean-Francois Remacle\n");
+        fprintf(stderr, "Copyright (C) 1997-2011 Christophe Geuzaine and Jean-Francois Remacle\n");
         PrintUsage(argv[0]);
         Msg::Exit(0);
       }
@@ -713,12 +710,6 @@ void GetOptions(int argc, char *argv[])
           CTX::instance()->display = argv[i++];
         else
           Msg::Fatal("Missing argument");
-      }
-#endif
-#if defined (HAVE_LUA)
-      else if(!strcmp(argv[i] + 1, "lua")) {
-        i++;
-        CTX::instance()->batch = -4;
       }
 #endif
 #if defined(__APPLE__)

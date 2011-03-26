@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -58,6 +58,16 @@ class GFace : public GEntity
 
  public: // this will become protected or private
   std::list<GEdgeLoop> edgeLoops;
+
+  // periodic counterparts of edges
+  std::map<int,int> edgeCounterparts;
+
+  // an array with additional vertices that are supposed to exist in
+  // the final mesh of the model face. This can be used for boundary
+  // layer meshes or when using Lloyd-like smoothing algorithms those
+  // vertices are classifed on this GFace, their type is MFaceVertex.
+  // After mesh generation, those are moved to the mesh_vertices array
+  std::vector<MVertex*> additionalVertices;
 
  public:
   GFace(GModel *model, int tag);
@@ -250,6 +260,15 @@ class GFace : public GEntity
   // apply Lloyd's algorithm to the mesh
   void lloyd (int nIter, int infNorm = 0); 
 
+  // replace edges (gor gluing)
+  void replaceEdges(std::list<GEdge*> &);
+  
+  // tells if it's a sphere, and if it is, returns parameters
+  virtual bool isSphere (double &radius, SPoint3 &center) const {return false;}
+
+  // add layers of quads
+  void addLayersOfQuads (int nLayers, GVertex *start, double hmin, double factor);
+  
   struct {
     // do we recombine the triangles of the mesh?
     int recombine;
@@ -301,28 +320,6 @@ class GFace : public GEntity
   void addTriangle(MTriangle *t){ triangles.push_back(t); }
   void addQuadrangle(MQuadrangle *q){ quadrangles.push_back(q); }
   void addPolygon(MPolygon *p){ polygons.push_back(p); }
-
-  // an array with additional vertices that are supposed to exist
-  // in the final mesh of the model face. This can be used for 
-  // boundary layer meshes or when using Lloyd-like smoothing algorithms
-  // those vertices are classifed on this GFace, their type is MFaceVertex.
-  // After mesh generation, those are moved to the mesh_vertices array 
-  std::vector<MVertex*> _additional_vertices;
-
-  // replace edges (gor gluing)
-  void replaceEdges(std::list<GEdge*> &);
-  
-  static void registerBindings(binding *b);
-
-  // periodic counterparts of edges
-  std::map<int,int> edgeCounterparts;
-
-  // tells if it's a sphere, and if it is, returns parameters
-  virtual bool isSphere (double &radius, SPoint3 &center) const {return false;}
-
-  // add layers of quads
-  void addLayersOfQuads (int nLayers, GVertex *start, double hmin, double factor);
-  
 };
 
 #endif

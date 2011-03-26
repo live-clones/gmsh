@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -15,9 +15,7 @@
 
 class GModel;
 class PView;
-template <class t>
-class fullMatrix;
-class binding;
+template <class t> class fullMatrix;
 
 class PViewFactory {
   std::map<int,std::vector<double> > _values;
@@ -25,10 +23,9 @@ class PViewFactory {
   int _dim,_timeStep;
   GModel *_model;
   public:
-  PViewFactory(std::string name, std::string type, GModel *model, int timeStep, int dim);
+  PViewFactory(std::string name, std::string type, GModel *model, int timeStep, int dim=3);
   void setEntry(int id, const fullMatrix<double> &val);
   PView *createView();
-  static void registerBindings(binding *);
 };
 
 #endif

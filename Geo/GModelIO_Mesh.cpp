@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -31,7 +31,6 @@
 #include "MVertexPositionSet.h"
 #include "Context.h"
 #include "OS.h"
-#include "Bindings.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -3331,15 +3330,7 @@ int GModel::readDIFF(const std::string &name)
   fclose(fp);
   return 1;
 }
-int GModel::readLUA(const std::string &name)
-{
-#if defined(HAVE_LUA)
-	int status = binding::instance()->readFile(name.c_str());
-	return status;
-#else
-	return 0;
-#endif
-}
+
 int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
                       double scalingFactor)
 {

@@ -896,7 +896,7 @@ Triangles::Triangles(const char * filename,Real8 cutoffradian)
     else if (ftq) Read_ftq(f_in);
     else 
       { 
-	cerr << " Unkown type mesh " << filename << endl;
+	cerr << " Unknown type mesh " << filename << endl;
 	MeshError(2);
       }
       ConsGeometry(cutoffradian);

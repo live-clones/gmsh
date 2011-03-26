@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -1170,9 +1170,9 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
         else {
           if(numNodesError != numNodes){
             numNodesError = numNodes;
-            Msg::Error("You should never draw views with > %d nodes per element: use",
+            Msg::Error("You should never draw views with > %d nodes per element: use"
+                       "'Adapt visualization grid' to view high-order datasets!",
                        PVIEW_NMAX);
-            Msg::Error("'Adapt visualization grid' to view high-order datasets!");
           }
           continue;
         }
@@ -1180,8 +1180,8 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
       if((numComp > 9 && !opt->forceNumComponents) || opt->forceNumComponents > 9){
         if(numCompError != numComp) {
           numCompError = numComp;
-          Msg::Error("You should never draw views with > 9 values per node: use");
-          Msg::Error("'Adapt visualization grid' to view high-order datasets!");
+          Msg::Error("You should never draw views with > 9 values per node: use"
+                     "'Adapt visualization grid' to view high-order datasets!");
         }
         continue;
       }

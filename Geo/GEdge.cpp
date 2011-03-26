@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -14,7 +14,6 @@
 #include "MLine.h"
 #include "GaussLegendre1D.h"
 #include "Context.h"
-#include "Bindings.h"
 
 GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
   : GEntity(model, tag), _tooSmall(false), v0(_v0), v1(_v1), compound(0)
@@ -90,10 +89,6 @@ void GEdge::resetMeshAttributes()
 void GEdge::addFace(GFace *e)
 {
   l_faces.push_back(e);
-}
-
-void GEdge::addLine (MLine *line){
-  lines.push_back(line);
 }
 
 void GEdge::delFace(GFace *e)
@@ -378,29 +373,3 @@ void GEdge::replaceEndingPoints (GVertex *replOfv0, GVertex *replOfv1)
   }  
 }
 
-void GEdge::registerBindings(binding *b)
-{
-  classBinding *cb = b->addClass<GEdge>("GEdge");
-  cb->setDescription("A GEdge is a geometrical 1D entity");
-  cb->setParentClass<GEntity>();
-  methodBinding *mb = cb->addMethod("getBeginVertex", &GEdge::getBeginVertex);
-  mb->setDescription("get the begin-vertex of the edge");
-  mb = cb->addMethod("getEndVertex", &GEdge::getEndVertex);
-  mb->setDescription("get the end-vertex of the edge");
-  mb = cb->addMethod("addLine", &GEdge::addLine);
-  mb->setDescription("insert a line mesh element");
-  mb->setArgNames("line", NULL);
-
-  mb = cb->addMethod("getLowBound", &GEdge::getLowBound);
-  mb->setDescription("get the lower bound of the parametrization of the Edge");
-  mb = cb->addMethod("getHighBound", &GEdge::getHighBound);
-  mb->setDescription("get the lower bound of the parametrization of the Edge");
-
-  mb = cb->addMethod("getMeshElement", &GEdge::getMeshElement);
-  mb->setDescription("get the mesh element with the given index");
-  mb->setArgNames("index", NULL);
-
-  //mb = cb->addMethod("point", &GEdge::point);
-  //mb->setDescription("returns the GPoint for a given double parameter");
-  //mb->setArgNames("double", NULL);
-}

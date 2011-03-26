@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -19,7 +19,6 @@ class GModel;
 class GEntity;
 class MElement;
 class nameData;
-class binding;
 
 // The abstract interface to post-processing view data.
 class PViewData {
@@ -134,10 +133,6 @@ class PViewData {
   virtual void getValue(int step, int ent, int ele, int nod, int comp, double &val){}
   virtual void setValue(int step, int ent, int ele, int nod, int comp, double val);
 
-  double getValueBinding(int step, int ent, int ele, int nod, int comp);
-  void getAllValuesForElementBinding(int step, int ent, int ele, fullMatrix<double> &m);
-  void getAllNodesForElementBinding(int step, int ent, int ele, fullMatrix<double> &m);
-
   // return a scalar value (same as value for scalars, norm for
   // vectors, etc.) associated with the node-th node from the ele-th
   // element in the ent-th entity
@@ -223,8 +218,6 @@ class PViewData {
                         bool append=false);
   virtual bool writeMSH(std::string fileName, bool binary=false, bool savemesh=true);
   virtual bool writeMED(std::string fileName);
-
-  static void registerBindings(binding *b);
 };
 
 class nameData{

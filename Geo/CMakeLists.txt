@@ -1,11 +1,11 @@
-# Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
 # bugs and problems to <gmsh@geuz.org>.
 
 set(SRC
   GEntity.cpp STensor3.cpp
-    GVertex.cpp GEdge.cpp GFace.cpp GRegion.cpp GPoint.cpp
+    GVertex.cpp GEdge.cpp GFace.cpp GRegion.cpp
     GEdgeLoop.cpp GEdgeCompound.cpp GFaceCompound.cpp GRegionCompound.cpp
     gmshVertex.cpp gmshEdge.cpp gmshFace.cpp gmshRegion.cpp gmshSurface.cpp
     OCCVertex.cpp OCCEdge.cpp OCCFace.cpp OCCRegion.cpp

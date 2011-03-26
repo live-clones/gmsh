@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -10,7 +10,6 @@
 #include "GFace.h"
 #include "MPoint.h"
 #include "GmshMessage.h"
-#include "Bindings.h"
 
 GVertex::GVertex(GModel *m, int tag, double ms) : GEntity(m, tag), meshSize(ms) 
 {
@@ -92,18 +91,4 @@ bool GVertex::isOnSeam(const GFace *gf) const
     if ( (*eIter)->isSeam(gf) ) return true;
   }
   return false;
-}
-
-void GVertex::registerBindings(binding *b)
-{
-  classBinding *cb = b->addClass<GVertex>("GVertex");
-  cb->setDescription("A GVertex is a geometrical 0D entity");
-  cb->setParentClass<GEntity>();
-  methodBinding *cm;
-  cm = cb->addMethod("x", (double (GVertex::*)() const) &GVertex::x);
-  cm->setDescription("Return the x-coordinate.");
-  cm = cb->addMethod("y", (double (GVertex::*)() const) &GVertex::y);
-  cm->setDescription("Return the y-coordinate.");
-  cm = cb->addMethod("z", (double (GVertex::*)() const) &GVertex::z);
-  cm->setDescription("Return the z-coordinate.");
 }

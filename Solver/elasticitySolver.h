@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -82,13 +82,6 @@ class elasticitySolver
   void addNeumannBC (int dim, int entityId, const std::vector<double> value);
   void addElasticDomain (int tag, double e, double nu);
 
-#if defined (HAVE_LUA)
-
-  void addDirichletBCLua (int dim, int entityId, int component, std::string luaFunctionName, lua_State *L);
-  void addNeumannBCLua (int dim, int entityId, std::string luaFunctionName, lua_State *L);
-
-#endif
-
   virtual ~elasticitySolver()
   {
     if (LagSpace) delete LagSpace;
@@ -113,6 +106,4 @@ class elasticitySolver
   //   (const std::string &errorFileName, const elasticityData &ref, double, int);
 };
 
-class binding;
-void elasticitySolverRegisterBindings(binding *b);
 #endif

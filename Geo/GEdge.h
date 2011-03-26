@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -206,9 +206,7 @@ class GEdge : public GEntity {
   
   std::vector<MLine*> lines;
 
-  void addLine(MLine *line);
-
-  static void registerBindings(binding *b);
+  void addLine(MLine *line){ lines.push_back(line); }
 };
 
 #endif

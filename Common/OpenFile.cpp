@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -18,7 +18,6 @@
 #include "OS.h"
 #include "StringUtils.h"
 #include "GeomMeshMatcher.h"
-#include "LuaBindings.h"
 
 #if defined(HAVE_PARSER)
 #include "Parser.h"
@@ -335,11 +334,6 @@ int MergeFile(std::string fileName, bool warnIfMissing)
     status = read_png(fileName);
   }
 #endif
-#endif
-#if defined(HAVE_LUA)
-  else if(ext == ".lua" || ext == ".LUA") {
-    status = binding::instance()->readFile(fileName.c_str());
-  }
 #endif
   else if(ext == ".ply2" || ext == ".PLY2"){
     status = GModel::current()->readPLY2(fileName);

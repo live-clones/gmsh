@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -28,7 +28,6 @@ class CGNSOptions;
 class gLevelset;
 class discreteFace;
 class discreteRegion;
-class binding;
 class MElementOctree;
 class GModelFactory;
 
@@ -118,9 +117,6 @@ class GModel
   std::set<GEdge*, GEntityLessThan> edges;
   std::set<GVertex*, GEntityLessThan> vertices;
 
-  // for bindings
-  void insertRegion(GRegion*);
-
   // map between the pair <dimension, elementary or physical number>
   // and an optional associated name
   std::map<std::pair<int, int>, std::string> physicalNames, elementaryNames;
@@ -209,12 +205,6 @@ class GModel
   GEdge *getEdgeByTag(int n) const;
   GVertex *getVertexByTag(int n) const;
   
-  // for lua bindings, temporary solution while iterator are not binded
-  std::vector<GRegion*> bindingsGetRegions();
-  std::vector<GFace*> bindingsGetFaces();
-  std::vector<GEdge*> bindingsGetEdges();
-  std::vector<GVertex*> bindingsGetVertices();
-
   // add/remove an entity in the model
   void add(GRegion *r) { regions.insert(r); }
   void add(GFace *f) { faces.insert(f); }
@@ -382,8 +372,7 @@ class GModel
   // glue entities in the model (assume a tolerance eps and merge
   // vertices that are too close, then merge edges, faces and
   // regions). Warning: the gluer changes the geometric model, so that
-  // some pointers could become invalid. FIXME: using references to
-  // some tables of pointers for bindings e.g. could be better.
+  // some pointers could become invalid.
   void glue(double eps);
 
   // change the entity creation factory
@@ -420,9 +409,9 @@ class GModel
                    double radius2);
 
   // boolean operators acting on 2 models
-  GModel *computeBooleanUnion(GModel *tool, int createNewModel);
-  GModel *computeBooleanIntersection(GModel *tool, int createNewModel);
-  GModel *computeBooleanDifference(GModel *tool, int createNewModel);
+  GModel *computeBooleanUnion(GModel *tool, int createNewModel=0);
+  GModel *computeBooleanIntersection(GModel *tool, int createNewModel=0);
+  GModel *computeBooleanDifference(GModel *tool, int createNewModel=0);
 
   // build a new GModel by cutting the elements crossed by the levelset ls
   // if cutElem is set to false, split the model without cutting the elements
@@ -456,6 +445,10 @@ class GModel
     _storePhysicalTagsInEntities(dim, physicalMap);
     _associateEntityWithMeshVertices();
   }
+
+  // "automatic" IO based on Gmsh global functions
+  void load(std::string fileName);
+  void save(std::string fileName);
 
   // Gmsh native CAD format (readGEO is static, since it can create
   // multiple models)
@@ -566,13 +559,6 @@ class GModel
   
   // CEA triangulation
   int writeMAIL(const std::string &name, bool saveAll, double scalingFactor);
-  
-  int readLUA(const std::string &name);
-
-  void save(std::string fileName);
-  void load(std::string fileName);
-
-  static void registerBindings(binding *b);
 };
 
 #endif

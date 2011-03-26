@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -18,7 +18,6 @@
 #include "GaussLegendre1D.h"
 #include "Context.h"
 #include "meshGFaceLloyd.h"
-#include "Bindings.h"
 #include "meshGFaceOptimize.h"
 
 #define SQU(a)      ((a)*(a))
@@ -1259,7 +1258,7 @@ void GFace::addLayersOfQuads(int nLayers, GVertex *gv, double hmin, double ratio
 	  double u = p1.x() + n.x() * hmin;
 	  double v = p1.y() + n.y() * hmin;
 	  GPoint gp = point(SPoint2(u,v));
-	  _additional_vertices.push_back(new MFaceVertex(gp.x(),gp.y(),gp.z(),this,u,v));
+	  additionalVertices.push_back(new MFaceVertex(gp.x(),gp.y(),gp.z(),this,u,v));
 	  fprintf(f,"SP(%g, %g, 0){1};\n",gp.x(),gp.y());
 	}
 	hlayer *= ratio;
@@ -1269,32 +1268,4 @@ void GFace::addLayersOfQuads(int nLayers, GVertex *gv, double hmin, double ratio
       fclose(f);
     }
   }  
-}
-
-
-#include "Bindings.h"
-
-void GFace::registerBindings(binding *b)
-{
-  classBinding *cb = b->addClass<GFace>("GFace");
-  cb->setParentClass<GEntity>();
-  cb->setDescription("A GFace is a geometrical 2D entity");
-  methodBinding *mb;
-  mb = cb->addMethod("lloyd", &GFace::lloyd);
-  mb->setDescription("do N iteration of Lloyd's algorithm using or not the infinite norm");
-  mb->setArgNames("N","infiniteNorm",NULL);
-  mb = cb->addMethod("addTriangle", &GFace::addTriangle);
-  mb->setDescription("insert a triangle mesh element");
-  mb->setArgNames("triangle", NULL);
-  mb = cb->addMethod("addQuadrangle", &GFace::addQuadrangle);
-  mb->setDescription("insert a quadrangle mesh element");
-  mb->setArgNames("quadrangle", NULL);
-  mb = cb->addMethod("edges", &GFace::edges);
-  mb->setDescription("return the list of edges bounding this surface");
-  mb = cb->addMethod("addLayersOfQuads", &GFace::addLayersOfQuads);
-  mb->setDescription("insert layers of quads");
-  mb->setArgNames("nLayers","startingVertex", "hmin", "ratio", NULL);
-/*  mb = cb->addMethod("addPolygon", &GFace::addPolygon);
-  mb->setDescription("insert a polygon mesh element");
-  mb->setArgNames("polygon", NULL);*/
 }

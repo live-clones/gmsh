@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -312,19 +312,3 @@ PView *PView::getViewByNum(int num, int timeStep, int partition)
   return 0;
 }
 
-#include "Bindings.h"
-void PView::registerBindings(binding *b)
-{
-  classBinding *cb = b->addClass<PView>("PView");
-  cb->setDescription("A post-processing view");
-  methodBinding *cm;
-  cm = cb->addMethod("write",&PView::write);
-  cm->setArgNames("fileName","format","append",NULL);
-  cm->setDescription("write data to a file. Format can be: 0 for ascii pos file, "
-                     "1 for binary pos file, 2 for parsed pos file, 3 for STL, "
-                     "4 for TXT, 5 for MSH, 6 for MED files, or 10 for automatic. "
-                     "'append' option is only supported for pos format.");
-  cm = cb->addMethod("getData",&PView::getData);
-  cm->setArgNames("useAdaptiveIfAvailable",NULL);
-  cm->setDescription("return the structure containing the data of this view.");
-}

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -15,7 +15,6 @@
 #include "simpleFunction.h"
 #include "Octree.h"
 
-class binding;
 class GFace;
 typedef struct _CDLIST DListRecord, *DListPeek;
 typedef int PointNumero;
@@ -109,7 +108,6 @@ class DocRecord{
   void remove_all();
   void add_point(double,double,GFace*);
   PointNumero *ConvertDlistToArray(DListPeek *dlist, int *n);
-  static void registerBindings(binding *b);
 };
 
 void centroidOfOrientedBox(std::vector<SPoint2> &pts,

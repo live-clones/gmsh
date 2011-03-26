@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -58,11 +58,6 @@ class MTriangle : public MElement {
   virtual double angleShapeMeasure();
   virtual int getNumVertices() const { return 3; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
-  virtual MVertex *getVertexMED(int num)
-  {
-    static const int map[3] = {0, 2, 1};
-    return getVertex(map[num]);
-  }
   virtual void xyz2uvw(double xyz[3], double uvw[3]);
   virtual MVertex *getOtherVertex(MVertex *v1, MVertex *v2)
   {
@@ -159,8 +154,6 @@ class MTriangle : public MElement {
     };
     return e[edge][vert];
   }
-  public:
-  static void registerBindings(binding *b);
 };
 
 /*
@@ -199,11 +192,6 @@ class MTriangle6 : public MTriangle {
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[6] = {0, 3, 1, 4, 2, 5};
-    return getVertex(map[num]);
-  }
-  virtual MVertex *getVertexMED(int num)
-  {
-    static const int map[6] = {0, 2, 1, 5, 4, 3};
     return getVertex(map[num]);
   }
   virtual int getNumEdgeVertices() const { return 3; }

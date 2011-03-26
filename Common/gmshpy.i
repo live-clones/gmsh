@@ -4,6 +4,7 @@
 %include std_vector.i
 %include std_list.i
 %{
+  #include "GmshConfig.h"
   #include "GModel.h"
   #include "DefaultOptions.h"
   #include "fullMatrix.h"
@@ -43,16 +44,18 @@
   #include "SPoint3.h"
   #include "SPoint2.h"
   #include "GPoint.h"  
+  #if defined(HAVE_FLTK)
+  #include "FlGui.h"
+  #endif
   class errorHandler: public GmshMessage {
     void operator()(std::string level, std::string message){
-      //const char *color = colorDefault;
+  #if defined(HAVE_FLTK)
+      // don't output anything special if we're running in a gui
+      if(FlGui::available()) return;
+  #endif
       std::cout<<level<<" : "<<message<<std::endl;
-      if (level=="Error" || level == "Fatal") {
-        //color = colorRed;
-        //color confuses ctest/cdash
-        //std::cout<<color<<level<<" : "<<message<<colorDefault<<"\n";
+      if (level == "Fatal") 
         throw;
-      }
     }
   };
 %}
@@ -79,7 +82,6 @@ namespace std {
    %template(GEdgeVectorVector) vector< std::vector< GEdge *,std::allocator< GEdge * > >,std::allocator< std::vector< GEdge *,std::allocator< GEdge * > > > >;
    %template(GFaceList) list<GFace*, std::allocator<GFace*> >;
 }
-
 
 %include "GmshConfig.h"
 %include "Context.h"
@@ -128,3 +130,6 @@ namespace std {
 %include "functionPython.h"
 %include "meshGFaceLloyd.h"
 %include "DefaultOptions.h"
+#if defined(HAVE_FLTK)
+%include "FlGui.h"
+#endif

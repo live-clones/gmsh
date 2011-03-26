@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -23,7 +23,6 @@
  *   0-----------1
  *
  */
-class binding;
 class MQuadrangle : public MElement {
  protected:
   MVertex *_v[4];
@@ -57,11 +56,6 @@ void projectInMeanPlane(double *xn, double *yn);
   virtual int getNumVertices() const { return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual void setVertex(int num, MVertex *v){_v[num]=v;}
-  virtual MVertex *getVertexMED(int num)
-  {
-    static const int map[4] = {0, 3, 2, 1};
-    return getVertex(map[num]);
-  }
   virtual MVertex *getVertexDIFF(int num)
   {
     static const int map[4] = {0, 1, 3, 2};
@@ -165,9 +159,6 @@ void projectInMeanPlane(double *xn, double *yn);
     };
     return e[edge][vert];
   }
-
- public:
-  static void registerBindings(binding *b);
 };
 
 /*
@@ -206,11 +197,6 @@ class MQuadrangle8 : public MQuadrangle {
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[8] = {0, 4, 1, 5, 2, 6, 3, 7};
-    return getVertex(map[num]);
-  }
-  virtual MVertex *getVertexMED(int num)
-  {
-    static const int map[8] = {0, 3, 2, 1, 7, 6, 5, 4};
     return getVertex(map[num]);
   }
   virtual MVertex *getVertexDIFF(int num)

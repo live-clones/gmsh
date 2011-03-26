@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -99,9 +99,6 @@ static const char *input_formats =
   "All Files" TT "*" NN
   SEPARATOR_IN
   "Gmsh Geometry" TT "*.geo" NN
-#if defined(HAVE_LUA)
-  "Gmsh LUA Script" TT "*.lua" NN
-#endif
   "Gmsh Mesh" TT "*.msh" NN
   "Gmsh Post-processing View" TT "*.pos" NN
 #if defined(HAVE_ACIS) || defined(HAVE_OCC)
@@ -637,7 +634,7 @@ static void help_online_cb(Fl_Widget *w, void *data)
   SystemCall(ReplaceSubString("%s", "http://geuz.org/gmsh/doc/texinfo/", prog));
 }
 
-static void help_about_cb(Fl_Widget *w, void *data)
+void help_about_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->about->win->show();
 }
@@ -2437,8 +2434,12 @@ static Fl_Menu_Item sysbar_table[] = {
     {"Mouse Actions",        0, (Fl_Callback *)help_mouse_cb, 0},
     {"Keyboard Shortcuts",   0, (Fl_Callback *)help_short_cb, 0},
     {"Command Line Options", 0, (Fl_Callback *)help_command_line_cb, 0},
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
+    {"Current Options",      0, (Fl_Callback *)status_options_cb, (void*)"?"},
+#else
     {"Current Options",      0, (Fl_Callback *)status_options_cb, (void*)"?", FL_MENU_DIVIDER},
     {"About Gmsh",           0, (Fl_Callback *)help_about_cb, 0},
+#endif
     {0},
   {0}
 };

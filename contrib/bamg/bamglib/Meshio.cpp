@@ -30,7 +30,7 @@
 #include "Meshio.h"
 namespace bamg {
 
-const char *OFortranUnFormattedFile::unkown("unkown file name");
+const char *OFortranUnFormattedFile::unkown("unknown file name");
 void (*MeshIstreamErrorHandler)(ios & ) =0;
 ///////////////////////////////////////////////////////////
  void WriteStr(ostream & out,char * str)
@@ -335,7 +335,7 @@ void OFortranUnFormattedFile::Error(int err)
   else if (err==3)
     cerr<< "-- Erreur  write record info " ;
   else 
-    cerr << " unkown err " << err ;
+    cerr << " unknown err " << err ;
 
   cerr << " Record number = "    << nb_rec << endl
        << " read position  in file " << j << " < " << n 
@@ -358,7 +358,7 @@ void IFortranUnFormattedFile::Error(int err)
   else if (err==3)
     cerr<< " Erreur  read record info " ;
   else 
-    cerr << " unkown err " << err ;
+    cerr << " unknown err " << err ;
 
   cerr << " Record number = "    << nb_rec << endl
        << " read position  in file " << j << " < " << n 

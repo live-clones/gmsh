@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -73,13 +73,13 @@ class FlGui{
   // check if the GUI is available
   static bool available(){ return (_instance != 0); }
   // run the GUI until there's no window left
-  int run(){ return Fl::run(); }
+  static int run();
   // check (now!) if there are any pending events, and process them
-  void check(){ Fl::check(); }
+  static void check(){ Fl::check(); }
   // wait (possibly indefinitely) for any events, then process them
-  void wait(){ Fl::wait(); }
+  static void wait(){ Fl::wait(); }
   // wait (at most time seconds) for any events, then process them
-  void wait(double time){ Fl::wait(time); }
+  static void wait(double time){ Fl::wait(time); }
   // test application-level keyboard shortcuts
   int testGlobalShortcuts(int event);
   // test the arrow shortcuts (not in the application-level shortcuts)

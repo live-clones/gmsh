@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -204,6 +204,9 @@ FlGui::FlGui(int argc, char **argv)
   // add callback to respond to Mac Finder
 #if defined(__APPLE__)
   fl_open_callback(OpenProjectMacFinder);
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
+  fl_mac_set_about(help_about_cb, 0);
+#endif
 #endif
 
   // all the windows are contructed (even if some are not displayed)
@@ -247,7 +250,8 @@ FlGui::FlGui(int argc, char **argv)
 
   // graphic window should have the initial focus (so we can
   // e.g. directly loop through time steps with the keyboard)
-  graph[0]->gl[0]->take_focus();
+  //graph[0]->gl[0]->take_focus();
+  Fl::focus(graph[0]->gl[0]);
 
   // create additional graphic windows
   for(int i = 1; i < CTX::instance()->numWindows; i++){
@@ -279,6 +283,8 @@ FlGui::FlGui(int argc, char **argv)
   for(unsigned int i = 0; i < graph.size(); i++)
     for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
       graph[i]->gl[j]->redraw();
+
+  menu->setContext(menu_geometry, 0);
 }
 
 FlGui *FlGui::_instance = 0;
@@ -306,6 +312,19 @@ FlGui *FlGui::instance(int argc, char **argv)
     Msg::Info("-------------------------------------------------------");
   }
   return _instance;
+}
+
+int FlGui::run()
+{
+  // bounding box computation necessary if we run the gui without
+  // merging any files (e.g. if we build the geometry with python and
+  // create the gui from the python script)
+  SetBoundingBox();
+ 
+  // draw the scene
+  drawContext::global()->draw();
+
+  return Fl::run(); 
 }
 
 int FlGui::testGlobalShortcuts(int event)
@@ -616,7 +635,8 @@ int FlGui::testGlobalShortcuts(int event)
           (i, GMSH_SET | GMSH_GUI, !opt_view_draw_strings(i, GMSH_GET, 0));
     status = 2;
   }
-  else if(Fl::test_shortcut(FL_ALT + 'e')) {
+  else if(Fl::test_shortcut(FL_ALT + 'e') ||
+          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'e')) {
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_show_element

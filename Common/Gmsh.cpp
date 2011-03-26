@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -33,10 +33,6 @@
 #include "FlGui.h"
 #include "menuWindow.h"
 #include "drawContext.h"
-#endif
-
-#if defined(HAVE_LUA)
-#include "LuaBindings.h"
 #endif
 
 int GmshInitialize(int argc, char **argv)
@@ -154,12 +150,6 @@ int GmshBatch()
   }
 #endif
 
-#if defined(HAVE_LUA)
-  if(CTX::instance()->batch == -4){
-    binding::instance()->interactiveSession();
-  }
-  else 
-#endif 
   if(CTX::instance()->batch == -3){
     GmshRemote();
   }
@@ -256,9 +246,6 @@ int GmshFLTK(int argc, char **argv)
     else
       Msg::Error("Invalid background mesh (no view)");
   }
-
-  // draw the scene
-  drawContext::global()->draw();
 
   // listen to external solvers
   if(CTX::instance()->solver.listen){

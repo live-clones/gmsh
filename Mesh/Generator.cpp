@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -93,17 +93,17 @@ static void buildASetOfEquivalentMeshVertices(GFace *gf,
   }
 }
 
-struct geomTresholdVertexEquivalence 
+struct geomThresholdVertexEquivalence 
 {
   // Initial MVertex associated to one given MVertex
   std::map<GVertex*, MVertex*> backward_map;
   // initiate the forward and backward maps
-  geomTresholdVertexEquivalence(GModel *g);  
+  geomThresholdVertexEquivalence(GModel *g);  
   // restores the initial state
-  ~geomTresholdVertexEquivalence ();
+  ~geomThresholdVertexEquivalence ();
 };
 
-geomTresholdVertexEquivalence::geomTresholdVertexEquivalence(GModel *g)
+geomThresholdVertexEquivalence::geomThresholdVertexEquivalence(GModel *g)
 {
   std::multimap<MVertex*, MVertex*> equivalenceMap;
   for (GModel::fiter it = g->firstFace(); it != g->lastFace(); ++it)
@@ -147,7 +147,7 @@ geomTresholdVertexEquivalence::geomTresholdVertexEquivalence(GModel *g)
   }
 }
 
-geomTresholdVertexEquivalence::~geomTresholdVertexEquivalence()
+geomThresholdVertexEquivalence::~geomThresholdVertexEquivalence()
 {
   // restore the initial data
   for (std::map<GVertex*, MVertex*>::iterator it = backward_map.begin();
@@ -433,7 +433,7 @@ static void Mesh2D(GModel *m)
     (*it)->meshStatistics.status = GFace::PENDING;
 
   // skip short mesh edges
-  //geomTresholdVertexEquivalence inst(m);
+  //geomThresholdVertexEquivalence inst(m);
 
   // boundary layers are special: their generation (including vertices
   // and curve meshes) is global as it depends on a smooth normal

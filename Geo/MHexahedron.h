@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -58,11 +58,6 @@ class MHexahedron : public MElement {
   virtual int getNumVertices() const { return 8; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
-  virtual MVertex *getVertexMED(int num)
-  {
-    static const int map[8] = {0, 3, 2, 1, 4, 7, 6, 5};
-    return getVertex(map[num]);
-  }
   virtual MVertex *getVertexDIFF(int num)
   {
     static const int map[8] = {2, 3, 7, 6, 0, 1, 5, 4};
@@ -273,12 +268,6 @@ class MHexahedron20 : public MHexahedron {
   {
     static const int map[20] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 13,
                                 9, 10, 12, 14, 15, 16, 18, 19, 17};
-    return getVertex(map[num]);
-  }
-  virtual MVertex *getVertexMED(int num)
-  {
-    static const int map[20] = {0, 3, 2, 1, 4, 7, 6, 5, 9, 13, 11,
-                                8, 17, 19, 18, 16, 10, 15, 14, 12};
     return getVertex(map[num]);
   }
   virtual MVertex *getVertexDIFF(int num)

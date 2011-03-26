@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -320,32 +320,3 @@ void MTriangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *npts = getNGQTPts(pOrder);
   *pts = getGQTPts(pOrder);
 }
-#include "Bindings.h"
-static MTriangle6* MTriangle6_binding(std::vector<MVertex*> v) {
-  return new MTriangle6(v);
-}
-
-void MTriangle::registerBindings(binding *b)
-{
-  classBinding *cb = b->addClass<MTriangle>("MTriangle");
-  cb->setDescription("A mesh first-order triangle.");
-  methodBinding *cm;
-  cm = cb->setConstructor<MTriangle,MVertex*,MVertex*,MVertex*>();
-  cm->setArgNames("v0", "v1", "v2", NULL);
-  cm->setDescription("Create a new triangle with vertices (v0,v1,v2).");
-  cb->setParentClass<MElement>();
-
-  cb = b->addClass<MTriangle6>("MTriangle6");
-  cb->setDescription("A mesh second-order triangle.");
-  cm = cb->addMethod("MTriangle6",&MTriangle6_binding);
-  cm->setArgNames("vectorOfVertices", NULL);
-  cm->setDescription("Create a new triangle with vertices given in the vector (length = 6).");
-  cb->setParentClass<MTriangle>();
-
-/*  cb->setDescription("A mesh second-order triangle.");
-  cm = cb->setConstructor<MTriangle6_binding,std::vector<MVertex*> >();
-  cm->setArgNames("vectorOfVertices", NULL);
-  cm->setDescription("Create a new triangle with vertices given in the vector (length = 6).");
-  cb->setParentClass<MTriangle>();*/
-}
-

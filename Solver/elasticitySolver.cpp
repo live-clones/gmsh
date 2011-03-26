@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -263,39 +263,6 @@ void elasticitySolver::readInputFile(const std::string &fn)
   fclose(f);
 }
 
-
-#if defined (HAVE_LUA)
-
-void elasticitySolver::addDirichletBCLua (int dim, int entityId, int component, std::string luaFunctionName, lua_State *L) {
-  dirichletBC diri;
-  diri.g = new groupOfElements (dim, entityId);
-  diri._f= new simpleFunctionLua<double>(L, luaFunctionName,0.);
-  diri._comp=component;
-  diri._tag=entityId;
-  switch (dim) {
-    case 0 : diri.onWhat=BoundaryCondition::ON_VERTEX; break;
-    case 1 : diri.onWhat=BoundaryCondition::ON_EDGE; break;
-    case 2 : diri.onWhat=BoundaryCondition::ON_FACE; break;
-    default : return;
-  }
-  allDirichlet.push_back(diri);
-}
-
-void elasticitySolver::addNeumannBCLua (int dim, int entityId, std::string luaFunctionName, lua_State *L) {
-  neumannBC neu;
-  neu.g = new groupOfElements (dim, entityId);
-  neu._f= new simpleFunctionLua<SVector3>(L, luaFunctionName, SVector3(0,0,0));
-  neu._tag=entityId;
-  switch (dim) {
-    case 0 : neu.onWhat=BoundaryCondition::ON_VERTEX; break;
-    case 1 : neu.onWhat=BoundaryCondition::ON_EDGE; break;
-    case 2 : neu.onWhat=BoundaryCondition::ON_FACE; break;
-    default : return;
-  }
-  allNeumann.push_back(neu);
-}
-
-#endif
 
 void elasticitySolver::addDirichletBC (int dim, int entityId, int component, double value) {
   dirichletBC diri;
@@ -721,80 +688,3 @@ PView* elasticitySolver::buildStressesView (const std::string postFileName)
   return 0;
 }
 #endif
-
-
-
-#include "Bindings.h"
-void elasticitySolverRegisterBindings(binding *b)
-{
-#if defined (HAVE_LUA)
-  classBinding *cb;
-  cb = b->addClass<elasticitySolver> ("elasticitySolver");
-  cb->setDescription("A class that enables to solve elasticity problems");
-
-  methodBinding *cm;
-  cm = cb->addMethod("read", &elasticitySolver::read);
-  cm->setDescription ("reads an input file");
-  cm->setArgNames("fileName",NULL);
-
-  cm = cb->addMethod("postSolve", &elasticitySolver::postSolve);
-  cm->setDescription (" ");
-
-  cm = cb->addMethod("assemble", &elasticitySolver::assemble);
-  cm->setDescription ("assembles the problem");
-  cm->setArgNames ("linearSystem",NULL);
-
-  cm = cb->addMethod("solve", &elasticitySolver::solve);
-  cm->setDescription ("solve the problem");
-  cm->setArgNames (NULL);
-
-  cm = cb->addMethod("addDirichletBC", &elasticitySolver::addDirichletBC);
-  cm->setDescription ("add a Dirichlet (displacement) boundary condition on a given entity");
-  cm->setArgNames ("dim", "entityId", "component", "value", NULL);
-
-  cm = cb->addMethod("addDirichletBCLua", &elasticitySolver::addDirichletBCLua);
-  cm->setDescription ("add a Dirichlet (displacement) boundary condition on a given entity. The lua function takes x,y,z as arguments and return the displacement value.");
-  cm->setArgNames ("dim", "entityId", "component", "luaFunctionName", NULL);
-
-  cm = cb->addMethod("addNeumannBC", &elasticitySolver::addNeumannBC);
-  cm->setDescription ("add a Neumann (force) boundary condition on a given entity. Size of value has to be 3.");
-  cm->setArgNames ("dim", "entityId", "value", NULL);
-
-  cm = cb->addMethod("addNeumannBCLua", &elasticitySolver::addNeumannBCLua);
-  cm->setDescription ("add a Neumann (force) boundary condition on a given entity. The lua function takes x,y,z as arguments and return a vector with the 3 components of the force.");
-  cm->setArgNames ("dim", "entityId", "luaFunctionName", NULL);
-
-  cm = cb->addMethod("addElasticDomain", &elasticitySolver::addElasticDomain);
-  cm->setDescription ("add an elastic region with parameters E and nu");
-  cm->setArgNames ("tag", "E", "nu", NULL);
-
-#if defined HAVE_POST
-
-  cm = cb->addMethod ("buildVonMisesView", &elasticitySolver::buildVonMisesView);
-  cm->setDescription ("create a new view.");
-  cm->setArgNames ("fileName", NULL);
-
-  cm = cb->addMethod ("buildDisplacementView", &elasticitySolver::buildDisplacementView);
-  cm->setDescription ("create a new view.");
-  cm->setArgNames ("fileName", NULL);
-
-  cm = cb->addMethod ("buildStressesView", &elasticitySolver::buildStressesView);
-  cm->setDescription ("create a new view.");
-  cm->setArgNames ("fileName", NULL);
-
-  cm = cb->addMethod ("buildLagrangeMultiplierView", &elasticitySolver::buildLagrangeMultiplierView);
-  cm->setDescription ("create a new view.");
-  cm->setArgNames ("fileName", NULL);
-
-  cm = cb->addMethod ("buildElasticEnergyView", &elasticitySolver::buildElasticEnergyView);
-  cm->setDescription ("create a new view.");
-  cm->setArgNames ("fileName", NULL);
-
-#endif
-
-  cm = cb->setConstructor<elasticitySolver,GModel*,int>();
-  cm->setDescription ("A new elasticitySolver. The parameter is the unknowns tag");
-  cm->setArgNames("model","tag",NULL);
-#endif
-}
-

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -60,11 +60,6 @@ class MTetrahedron : public MElement {
   virtual int getDim() const { return 3; }
   virtual int getNumVertices() const { return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
-  virtual MVertex *getVertexMED(int num)
-  {
-    static const int map[4] = {0, 2, 1, 3};
-    return getVertex(map[num]);
-  }
   virtual int getNumEdges(){ return 6; }
   virtual MEdge getEdge(int num)
   {
@@ -226,11 +221,6 @@ class MTetrahedron10 : public MTetrahedron {
   virtual MVertex *getVertexBDF(int num)
   {
     static const int map[10] = {0, 1, 2, 3, 4, 5, 6, 7, 9, 8};
-    return getVertex(map[num]);
-  }
-  virtual MVertex *getVertexMED(int num)
-  {
-    static const int map[10] = {0, 2, 1, 3, 6, 5, 4, 7, 8, 9};
     return getVertex(map[num]);
   }
   virtual MVertex *getVertexDIFF(int num)

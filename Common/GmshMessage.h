@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -19,7 +19,6 @@ class GmshMessage{
   virtual ~GmshMessage(){}
   virtual void operator()(std::string level, std::string message){}
 };
-class binding;
 
 // a class to manage messages
 class Msg {
@@ -81,7 +80,6 @@ class Msg {
   static void InitClient(std::string sockname);
   static GmshClient *GetClient(){ return _client; }
   static void FinalizeClient();
-  static void registerBindings (binding *b);
 };
 
 #endif

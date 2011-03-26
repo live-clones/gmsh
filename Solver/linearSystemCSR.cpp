@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -338,19 +338,6 @@ void linearSystemCSR<double>::getMatrix(INDEX_TYPE*& jptr,INDEX_TYPE*& ai,double
                  ai, a);
   sorted = true;
 }
-
-#include "Bindings.h"
-
-template<>
-  void linearSystemCSRGmm<double>::registerBindings(binding *b)
-  {
-    classBinding *cb = b->addClass< linearSystemCSRGmm<double> >("linearSystemCSRGmmdouble");
-    cb->setParentClass<linearSystem<double> >();
-    cb->setDescription("Sparse matrix representation.");
-    methodBinding *cm;
-    cm = cb->setConstructor<linearSystemCSRGmm<double> >();
-    cm->setDescription("Build an empty container");
-  }
 
 #if defined(HAVE_GMM)
 

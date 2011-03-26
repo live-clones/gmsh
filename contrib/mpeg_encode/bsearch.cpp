@@ -153,7 +153,7 @@ SetBSearchAlg(char *alg)
     } else if ( strcmp(alg, "EXHAUSTIVE") == 0 ) {
 	bsearchAlg = BSEARCH_EXHAUSTIVE;
     } else {
-	throw "Illegal bsearch algoritm";
+	throw "Illegal bsearch algorithm";
     }
 }
 

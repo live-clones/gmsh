@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -56,8 +56,7 @@ void create_png(FILE *file, PixelBuffer *buffer, int quality)
   int width = buffer->getWidth();
   int numcomp = buffer->getNumComp();
 
-  // Z_DEFAULT_COMPRESSION, Z_BEST_SPEED, Z_BEST_COMPRESSION, Z_NO_COMPRESSION
-  png_set_compression_level(png_ptr, Z_DEFAULT_COMPRESSION);
+  //png_set_compression_level(png_ptr, 5);
   png_set_IHDR(png_ptr, info_ptr, width, height, 8, 
                (numcomp == 3) ? PNG_COLOR_TYPE_RGB : PNG_COLOR_TYPE_RGBA,
                PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);

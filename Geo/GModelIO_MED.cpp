@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -76,43 +76,27 @@ int med2mshElementType(med_geometrie_element med)
 int med2mshNodeIndex(med_geometrie_element med, int k)
 {
   switch(med) {
-  case MED_SEG2: return k;
-  case MED_TRIA3: {
-    static const int map[3] = {0, 2, 1}; 
-    return map[k]; 
-  }
-  case MED_QUAD4: { 
-    static const int map[4] = {0, 3, 2, 1};
-    return map[k];
-  }
+  case MED_POINT1: 
+  case MED_SEG2:
+  case MED_SEG3: 
+  case MED_TRIA3:
+  case MED_TRIA6: 
+  case MED_QUAD4:
+  case MED_QUAD8:
+    {
+      // same node numbering as in Gmsh
+      return k;
+    }
   case MED_TETRA4: {
     static const int map[4] = {0, 2, 1, 3};
-    return map[k];
-  }
-  case MED_HEXA8: {
-    static const int map[8] = {0, 3, 2, 1, 4, 7, 6, 5};
-    return map[k];
-  }
-  case MED_PENTA6: {
-    static const int map[6] = {0, 2, 1, 3, 5, 4};
-    return map[k];
-  }
-  case MED_PYRA5: {
-    static const int map[5] = {0, 3, 2, 1, 4};
-    return map[k];
-  }
-  case MED_SEG3: return k;
-  case MED_TRIA6: {
-    static const int map[6] = {0, 2, 1, 5, 4, 3};
     return map[k];
   }
   case MED_TETRA10: {
     static const int map[10] = {0, 2, 1, 3, 6, 5, 4, 7, 8, 9};
     return map[k];
   }
-  case MED_POINT1: return k;
-  case MED_QUAD8: {
-    static const int map[8] = {0, 3, 2, 1, 7, 6, 5, 4};
+  case MED_HEXA8: {
+    static const int map[8] = {0, 3, 2, 1, 4, 7, 6, 5};
     return map[k];
   }
   case MED_HEXA20: {
@@ -120,8 +104,16 @@ int med2mshNodeIndex(med_geometrie_element med, int k)
                                 10, 19, 9, 18, 17, 15, 12, 14, 13};
     return map[k];
   }
+  case MED_PENTA6: {
+    static const int map[6] = {0, 2, 1, 3, 5, 4};
+    return map[k];
+  }
   case MED_PENTA15: {
     static const int map[15] = {0, 2, 1, 3, 5, 4, 8, 6, 12, 7, 14, 13, 11, 9, 10};
+    return map[k];
+  }
+  case MED_PYRA5: {
+    static const int map[5] = {0, 3, 2, 1, 4};
     return map[k];
   }
   case MED_PYRA13: {
@@ -350,9 +342,9 @@ static void fillElementsMED(med_int family, std::vector<T*> &elements,
     return;
   }
   for(unsigned int i = 0; i < elements.size(); i++){
-    //elements[i]->setVolumePositive();
+    elements[i]->setVolumePositive();
     for(int j = 0; j < elements[i]->getNumVertices(); j++)
-      conn.push_back(elements[i]->getVertexMED(j)->getIndex());
+      conn.push_back(elements[i]->getVertex(med2mshNodeIndex(type, j))->getIndex());
     fam.push_back(family);
   }
 }

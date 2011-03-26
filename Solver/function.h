@@ -16,7 +16,6 @@ class functionConstant;
 class functionReplace;
 class functionReplaceCache;
 class MElement;
-class binding;
 
 // An abstract interface to functions
 class function {
@@ -82,9 +81,6 @@ class function {
          it != dependencies.end(); it++)
       printf("%i %p\n", it->iMap, it->f);
   }
-
-  // bindings
-  static void registerBindings(binding *b);
 };
 
 

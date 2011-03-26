@@ -6,12 +6,10 @@
 #include "MElement.h"
 #include "GModel.h"
 #include "OS.h"
-#include "Bindings.h"
 
 #if defined(HAVE_DLOPEN)
 #include <dlfcn.h>
 #endif
-
 
 // function
 
@@ -703,33 +701,6 @@ class functionStructuredGridFile : public function {
   }
 };
 
-// functionLua
-
-#ifdef HAVE_LUA
-class functionLua : public function {
-  lua_State *_L;
-  std::string _luaFunctionName;
-  std::vector<fullMatrix<double> > args;
- public:
-  void call (dataCacheMap *m, fullMatrix<double> &res) 
-  {
-    lua_getfield(_L, LUA_GLOBALSINDEX, _luaFunctionName.c_str());
-    for (int i = 0; i < arguments.size(); i++)
-      luaStack<const fullMatrix<double>*>::push(_L, &args[i]);
-    luaStack<const fullMatrix<double>*>::push(_L, &res);
-    lua_call(_L, arguments.size()+1, 0);
-  }
-  functionLua (int nbCol, std::string luaFunctionName, 
-               std::vector<const function*> dependencies, lua_State *L)
-    : function(nbCol), _luaFunctionName(luaFunctionName), _L(L)
-  {
-    args.resize(dependencies.size());
-    for (int i = 0; i < dependencies.size(); i++)
-      setArgument(args[i], dependencies[i]);
-  }
-};
-#endif
-
 // functionC
 void functionC::buildLibraryFromFile(const std::string cfilename, const std::string libfilename) {
   FILE *tmpMake = fopen("_tmpMake", "w");
@@ -813,120 +784,3 @@ functionC::functionC (std::string file, std::string symbol, int nbCol,
   Msg::Error("Cannot construct functionC without dlopen");
 #endif
 }
-
-
-void function::registerBindings(binding *b)
-{
-  classBinding *cb = b->addClass<function>("Function");
-  cb->setDescription("A generic function that can be evaluated on a set of points. "
-                     "Functions can call other functions and their values are cached "
-                     "so that if two different functions call the same function f, "
-                     "f is only evaluated once.");
-  methodBinding *mb;
-
-  mb = cb->addMethod("getTime", &function::getTime);
-  mb->setDescription("Return function constant in space which contains the time value");
-
-  cb = b->addClass<functionConstant>("functionConstant");
-  cb->setDescription("A constant (scalar or vector) function");
-  mb = cb->setConstructor<functionConstant, std::vector <double> >();
-  mb->setArgNames("v", NULL);
-  mb->setDescription("A new constant function wich values 'v' everywhere. v can be a row-vector.");
-  cb->setParentClass<function>();
-
-  cb = b->addClass<functionSum>("functionSum");
-  cb->setDescription("A sum of two functions 'a + b'. The arguments a, b must have same dimension.");
-  mb = cb->setConstructor<functionSum, const function*, const function*>();
-  mb->setArgNames("a", "b", NULL);
-  mb->setDescription("Creates a new functionSum instance with given arguments");
-  cb->setParentClass<function>();
-
-  cb = b->addClass<functionProd>("functionProd");
-  cb->setDescription("A pointwise product of two functions 'a(i,j)*b(i,j)'. The arguments a, b must have same dimension.");
-  mb = cb->setConstructor<functionProd, const function*, const function*>();
-  mb->setArgNames("a", "b", NULL);
-  mb->setDescription("Creates a new functionProd instance with given arguments");
-  cb->setParentClass<function>();
-
-  cb = b->addClass<functionExtractComp>("functionExtractComp");
-  cb->setDescription("Extracts a given component of the vector valued function.");
-  mb = cb->setConstructor<functionExtractComp, const function*, int>();
-  mb->setArgNames("function","component", NULL);
-  mb->setDescription("Creates a new functionExtractComp instance with given arguments");
-  cb->setParentClass<function>();
-
-  cb = b->addClass<functionCatComp>("functionCatComp");
-  cb->setDescription("Creates a vector valued function by concatenating the given scalar functions. Uses only the first component of each function.");
-  mb = cb->setConstructor<functionCatComp, std::vector <const function*> >();
-  mb->setArgNames("functionArray", NULL);
-  mb->setDescription("Creates a new functionCatComp instance with given arguments");
-  cb->setParentClass<function>();
-
-  cb = b->addClass<functionScale>("functionScale");
-  cb->setDescription("Scales a function by a given scalar.");
-  mb = cb->setConstructor<functionScale, const function*, double>();
-  mb->setArgNames("function","scalar", NULL);
-  mb->setDescription("Creates a new functionScale instance with given arguments");
-  cb->setParentClass<function>();
-
-  cb = b->addClass<functionCoordinates>("functionCoordinates");
-  cb->setDescription("A function to access the coordinates (xyz). This is a "
-                     "single-instance class, use the 'get' member to access the instance.");
-  mb = cb->addMethod("get", &functionCoordinates::get);
-  mb->setDescription("return the unique instance of this class");
-  cb->setParentClass<function>();
-
-  cb = b->addClass<functionSolution>("functionSolution");
-  cb->setDescription("A function to access the solution. This is a single-instance "
-                     "class, use the 'get' member to access the instance.");
-  mb = cb->addMethod("get", &functionSolution::get);
-  mb->setDescription("return the unique instance of this class");
-  cb->setParentClass<function>();
-
-  cb = b->addClass<functionNormals>("functionNormals");
-  cb->setDescription("A function to access the face normals. This is a single-instance "
-                     "class, use the 'get' member to access the instance.");
-  mb = cb->addMethod("get", &functionNormals::get);
-  mb->setDescription("return the unique instance of this class");
-  cb->setParentClass<function>();
-
-  cb = b->addClass<functionSolutionGradient>("functionSolutionGradient");
-  cb->setDescription("A function to access the gradient of the solution. This is "
-                     "a single-instance class, use the 'get' member to access the instance.");
-  mb = cb->addMethod("get", &functionCoordinates::get);
-  mb->setDescription("return the unique instance of this class");
-  cb->setParentClass<function>();
-
-  cb = b->addClass<functionStructuredGridFile>("functionStructuredGridFile");
-  cb->setParentClass<function>();
-  cb->setDescription("A function to interpolate through data given on a structured grid");
-  mb = cb->setConstructor<functionStructuredGridFile, std::string, const function*>();
-  mb->setArgNames("fileName","coordinateFunction",NULL);
-  mb->setDescription("Tri-linearly interpolate through data in file 'fileName' at "
-                     "coordinate given by 'coordinateFunction'.\nThe file format "
-                     "is :\nx0 y0 z0\ndx dy dz\nnx ny nz\nv(0,0,0) v(0,0,1) v(0 0 2) ...");
-
-#if defined(HAVE_DLOPEN)
-  cb = b->addClass<functionC>("functionC");
-  cb->setDescription("A function that compile a C code");
-  mb = cb->setConstructor<functionC, std::string, std::string, int, std::vector<const function*> >();
-  mb->setArgNames("file", "symbol", "nbCol", "arguments", NULL);
-  mb->setDescription("  ");
-  mb = cb->addMethod("buildLibrary", &functionC::buildLibrary);
-  mb->setArgNames("code", "libraryFileName", NULL);
-  mb->setDescription("build a dynamic library from the given code");
-  cb->setParentClass<function>();
-#endif
-
-#if defined (HAVE_LUA)
-  cb= b->addClass<functionLua>("functionLua");
-  cb->setDescription("A function (see the 'function' documentation entry) defined in LUA.");
-  mb = cb->setConstructor<functionLua, int, std::string, std::vector<const function*>, lua_State*>();
-  mb->setArgNames("d", "f", "dep", NULL);
-  mb->setDescription("A new functionLua which evaluates a vector of dimension 'd' "
-                     "using the lua function 'f'. This function can take other functions "
-                     "as arguments listed by the 'dep' vector.");
-  cb->setParentClass<function>();
-#endif
-}
-

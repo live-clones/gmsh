@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -450,9 +450,9 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
     ++itvx;
   }
  
-  // add _additional_vertices 
-  all_vertices.insert(gf->_additional_vertices.begin(),
-                      gf->_additional_vertices.end());
+  // add additional vertices 
+  all_vertices.insert(gf->additionalVertices.begin(),
+                      gf->additionalVertices.end());
 
 
   if(all_vertices.size() < 3){
@@ -918,9 +918,9 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
                        gf->meshStatistics.nbGoodQuality);
 
   gf->mesh_vertices.insert(gf->mesh_vertices.end(),
-			      gf->_additional_vertices.begin(),
-			      gf->_additional_vertices.end());
-  gf->_additional_vertices.clear();
+			      gf->additionalVertices.begin(),
+			      gf->additionalVertices.end());
+  gf->additionalVertices.clear();
 
   return true;
 }

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -379,43 +379,3 @@ bool fullMatrix<double>::svd(fullMatrix<double> &V, fullVector<double> &S)
 }
 
 #endif
-
-#include "Bindings.h"
-
-template<>
-void fullMatrix<double>::registerBindings(binding *b)
-{
-  classBinding *cb = b->addClass<fullMatrix<double> >("fullMatrix");
-  cb->setDescription("A full matrix of double-precision floating point numbers. "
-                     "The memory is allocated in one continuous block and stored "
-                     "in column major order (like in fortran).");
-  methodBinding *cm;
-  cm = cb->setConstructor<fullMatrix<double>,int,int>();
-  cm->setDescription ("A new matrix of size 'nRows' x 'nColumns'");
-  cm->setArgNames("nRows","nColumns",NULL);
-  cm = cb->addMethod("size1", &fullMatrix<double>::size1);
-  cm->setDescription("Returns the number of rows in the matrix");
-  cm = cb->addMethod("size2", &fullMatrix<double>::size2);
-  cm->setDescription("Returns the number of columns in the matrix");
-  cm = cb->addMethod("get", &fullMatrix<double>::get);
-  cm->setArgNames("i","j",NULL);
-  cm->setDescription("Returns the (i,j) entry of the matrix");
-  cm = cb->addMethod("set", &fullMatrix<double>::set);
-  cm->setArgNames("i","j","v",NULL);
-  cm->setDescription("Sets the (i,j) entry of the matrix to v");
-  cm = cb->addMethod("resize", &fullMatrix<double>::resize);
-  cm->setArgNames("nRows","nColumns","reset",NULL);
-  cm->setDescription("Change the size of the fullMatrix (and re-alloc if needed), "
-                     "values are set to zero if reset is true");
-  cm = cb->addMethod("gemm", &fullMatrix<double>::gemm);
-  cm->setArgNames("A","B","alpha","beta",NULL);
-  cm->setDescription("this = beta*this + alpha * (A.B)");
-  cm = cb->addMethod("gemm_naive", &fullMatrix<double>::gemm_naive);
-  cm->setArgNames("A","B","alpha","beta",NULL);
-  cm->setDescription("this = beta*this + alpha * (A.B)");
-  cm = cb->addMethod("print", &fullMatrix<double>::print);
-  cm->setArgNames("name","format",NULL);
-  cm->setDescription("print the matrix");
-  cm = cb->addMethod("invertInPlace", &fullMatrix<double>::invertInPlace);
-  cm->setDescription("invert the matrix and return the determinant");
-}

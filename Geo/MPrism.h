@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -8,7 +8,6 @@
 
 #include "MElement.h"
 
-class binding;
 /*
  * MPrism
  *
@@ -65,11 +64,6 @@ class MPrism : public MElement {
   virtual int getNumVertices() const { return 6; }
   virtual double getInnerRadius();
   virtual MVertex *getVertex(int num){ return _v[num]; }
-  virtual MVertex *getVertexMED(int num)
-  {
-    static const int map[6] = {0, 2, 1, 3, 5, 4};
-    return getVertex(map[num]);
-  }
   virtual int getNumEdges(){ return 9; }
   virtual MEdge getEdge(int num)
   {
@@ -213,8 +207,6 @@ class MPrism : public MElement {
     };
     return f[face][vert];
   }
-  public:
-  static void registerBindings(binding *b);
 };
 
 /*
@@ -269,11 +261,6 @@ class MPrism15 : public MPrism {
   virtual MVertex *getVertexBDF(int num)
   {
     static const int map[15] = {0, 1, 2, 3, 4, 5, 6, 9, 7, 8, 10, 11, 12, 14, 13};
-    return getVertex(map[num]);
-  }
-  virtual MVertex *getVertexMED(int num)
-  {
-    static const int map[15] = {0, 2, 1, 3, 5, 4, 7, 9, 6, 13, 14, 12, 8, 11, 10};
     return getVertex(map[num]);
   }
   virtual int getNumEdgeVertices() const { return 9; }

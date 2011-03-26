@@ -939,11 +939,11 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "OCCConnectFaces" , opt_geometry_occ_connect_faces , 0. , 
     "Cut and connect faces in STEP, IGES and BRep models" },
   { F,   "OffsetX" , opt_geometry_offset0 , 0. , 
-    "Model diplay offset along X-axis (in model coordinates)" },
+    "Model display offset along X-axis (in model coordinates)" },
   { F,   "OffsetY" , opt_geometry_offset1 , 0. , 
-    "Model diplay offset along Y-axis (in model coordinates)" },
+    "Model display offset along Y-axis (in model coordinates)" },
   { F,   "OffsetZ" , opt_geometry_offset2 , 0. , 
-    "Model diplay offset along Z-axis (in model coordinates)" },
+    "Model display offset along Z-axis (in model coordinates)" },
   { F|O, "OldCircle" , opt_geometry_old_circle , 0. , 
     "Use old circle description (compatibility option for old Gmsh geometries)" },
   { F|O, "OldNewReg" , opt_geometry_old_newreg , 1. , 
@@ -1024,7 +1024,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "AnisoMax" , opt_mesh_aniso_max, 1.e33,
     "Maximum anisotropy of the mesh" },
   { F|O, "AllowSwapAngle" , opt_mesh_allow_swap_edge_angle , 10.0 ,
-    "Treshold angle (in degrees) between faces normals under which we allow "
+    "Threshold angle (in degrees) between faces normals under which we allow "
     "an edge swap" }, 
 
   { F|O, "BdfFieldFormat" , opt_mesh_bdf_field_format , 1. , 

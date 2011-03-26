@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -59,29 +59,4 @@ void MLine::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 double MLine::getInnerRadius()
 {
   return _v[0]->distance(_v[1]);
-}
-
-#include "Bindings.h"
-static MLine* MLine_binding(std::vector<MVertex*> v) {
-  if (v.size() == 2)
-    return new MLine(v);
-  if (v.size() == 3)
-    return new MLine3(v);
-  return new MLineN(v);
-}
-
-void MLine::registerBindings(binding *b)
-{
-  classBinding *cb = b->addClass<MLine>("MLine");
-  cb->setDescription("A line mesh element.");
-
-  methodBinding *cm;
-  cm = cb->addMethod("MLine",&MLine_binding);
-  cm->setArgNames("vectorOfVertices", NULL);
-  cm->setDescription("Create a new line mesh element with the given vertices. "
-                     "First 2 vertices must correspond to the beginning/end of the line.");
-//   cm = cb->setConstructor<MLine,MVertex*,MVertex*>();
-//   cm->setArgNames("v0","v1", NULL);
-//   cm->setDescription("Create a new line mesh element between v0 and v1.");
-  cb->setParentClass<MElement>();
 }

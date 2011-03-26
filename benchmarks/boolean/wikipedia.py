@@ -31,6 +31,7 @@ myModel.computeBooleanDifference(myModel2);
 myModel.setAsCurrent();
 
 myModel.mesh(3);
+myModel.save("wikipedia.msh");
 
 #FlGui.instance();
 #FlGui.run();

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -19,7 +19,6 @@ class MPrism;
 class MPyramid;
 class MPolyhedron;
 class ExtrudeParams;
-class bindings;
 
 // A model region.
 class GRegion : public GEntity {
@@ -60,6 +59,13 @@ class GRegion : public GEntity {
 
   // check if the region is connected to another region by an edge
   bool edgeConnected(GRegion *r) const;
+
+  // replace edges (gor gluing)
+  void replaceFaces (std::list<GFace*> &);
+
+  // compute volume, moment of intertia and center of gravity
+  double computeSolidProperties (std::vector<double> cg,
+				 std::vector<double> inertia);
 
   // return a type-specific additional information string
   virtual std::string getAdditionalInfoString();
@@ -102,16 +108,11 @@ class GRegion : public GEntity {
   std::vector<MPyramid*> pyramids;
   std::vector<MPolyhedron*> polyhedra;
 
-  void addPrism(MPrism *p);
-
-  // replace edges (gor gluing)
-  void replaceFaces (std::list<GFace*> &);
-
-  // compute volume, moment of intertia and center of gravity
-  double computeSolidProperties (std::vector<double> cg,
-				 std::vector<double> inertia);
-
-  static void registerBindings(binding *b);
+  void addTetrahedron(MTetrahedron *t){ tetrahedra.push_back(t); }
+  void addHexahedron(MHexahedron *h){ hexahedra.push_back(h); }
+  void addPrism(MPrism *p){ prisms.push_back(p); }
+  void addPyramid(MPyramid *p){ pyramids.push_back(p); }
+  void addPolyhedron(MPolyhedron *p){ polyhedra.push_back(p); }
 };
 
 #endif

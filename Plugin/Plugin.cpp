@@ -98,8 +98,8 @@ PViewData *GMSH_PostPlugin::getPossiblyAdaptiveData(PView *view)
   PViewData *data = view->getData();
   if(data->isAdaptive() && data->getNumTimeSteps() > 1)
     Msg::Warning("Using adapted data from view '%s': only the current time step (%d/%d) "
-                 "is available to the plugin", view->getOptions()->timeStep, 
-                 data->getNumTimeSteps(), view->getData()->getName().c_str());
+                 "is available to the plugin", view->getData()->getName().c_str(),
+                 view->getOptions()->timeStep, data->getNumTimeSteps());
   return view->getData(true);
 }
 

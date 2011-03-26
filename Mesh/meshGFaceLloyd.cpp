@@ -218,14 +218,14 @@ void lloydAlgorithm::operator () (GFace *gf)
   deMeshGFace killer;
   killer(gf);
   
-  gf->_additional_vertices = mesh_vertices;
+  gf->additionalVertices = mesh_vertices;
   Msg::Info("Lloyd remeshing of face %d ", gf->tag());
   meshGFace mesher;
   mesher(gf);
   gf->mesh_vertices.insert(gf->mesh_vertices.begin(),
-                           gf->_additional_vertices.begin(),  
-                           gf->_additional_vertices.end());  
-  gf->_additional_vertices.clear();  
+                           gf->additionalVertices.begin(),  
+                           gf->additionalVertices.end());  
+  gf->additionalVertices.clear();  
 }
 
 double lloydAlgorithm::optimize(int max,int flag){

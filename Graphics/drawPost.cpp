@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -398,6 +398,19 @@ class drawPView {
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
     else
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+
+    if(opt->axes && opt->type == PViewOptions::Plot3D){
+      glColor4ubv((GLubyte *) & opt->color.axes);
+      glLineWidth((float)CTX::instance()->lineWidth);
+      gl2psLineWidth((float)(CTX::instance()->lineWidth * 
+                             CTX::instance()->print.epsLineWidthFactor));
+      if(!opt->axesAutoPosition)
+        _ctx->drawAxes(opt->axes, opt->axesTics, opt->axesFormat, opt->axesLabel,
+                       opt->axesPosition, opt->axesMikado);
+      else if(!opt->tmpBBox.empty())
+        _ctx->drawAxes(opt->axes, opt->axesTics, opt->axesFormat, opt->axesLabel,
+                       opt->tmpBBox, opt->axesMikado);
+    }
     
     if(!CTX::instance()->clipWholeElements){
       for(int i = 0; i < 6; i++)
@@ -477,20 +490,6 @@ class drawPView {
 
     for(int i = 0; i < 6; i++)
       glDisable((GLenum)(GL_CLIP_PLANE0 + i));
-
-    if(opt->axes && opt->type == PViewOptions::Plot3D){
-      glColor4ubv((GLubyte *) & opt->color.axes);
-      glLineWidth((float)CTX::instance()->lineWidth);
-      gl2psLineWidth((float)(CTX::instance()->lineWidth * 
-                             CTX::instance()->print.epsLineWidthFactor));
-      if(!opt->axesAutoPosition)
-        _ctx->drawAxes(opt->axes, opt->axesTics, opt->axesFormat, opt->axesLabel,
-                       opt->axesPosition, opt->axesMikado);
-      else if(!opt->tmpBBox.empty())
-        _ctx->drawAxes(opt->axes, opt->axesTics, opt->axesFormat, opt->axesLabel,
-                       opt->tmpBBox, opt->axesMikado);
-    }
-    
   }
 };
 

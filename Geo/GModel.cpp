@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -193,26 +193,6 @@ void GModel::deleteMesh()
 bool GModel::empty() const
 {
   return vertices.empty() && edges.empty() && faces.empty() && regions.empty();
-}
-
-std::vector<GRegion*> GModel::bindingsGetRegions()
-{
-  return std::vector<GRegion*> (regions.begin(), regions.end());
-}
-
-std::vector<GFace*> GModel::bindingsGetFaces()
-{
-  return std::vector<GFace*> (faces.begin(), faces.end());
-}
-
-std::vector<GEdge*> GModel::bindingsGetEdges()
-{
-  return std::vector<GEdge*> (edges.begin(), edges.end());
-}
-
-std::vector<GVertex*> GModel::bindingsGetVertices()
-{
-  return std::vector<GVertex*> (vertices.begin(), vertices.end());
 }
 
 GRegion *GModel::getRegionByTag(int n) const
@@ -2161,11 +2141,6 @@ void GModel::glue(double eps)
   }    
 }
 
-void GModel::insertRegion(GRegion *r)
-{
-  regions.insert(r);
-}
-
 GEdge *getNewModelEdge(GFace *gf1, GFace *gf2, 
                        std::map<std::pair<int, int>, GEdge*> &newEdges)
 {
@@ -2498,184 +2473,4 @@ void GModel::createPartitionBoundaries(int createGhostCells)
 #if (defined(HAVE_CHACO) || defined(HAVE_METIS)) && defined(HAVE_MESH)
   CreatePartitionBoundaries(this, createGhostCells);
 #endif
-}
-
-#include "Bindings.h"
-
-void GModel::registerBindings(binding *b)
-{
-  classBinding *cb = b->addClass<GModel>("GModel");
-  cb->setDescription("A GModel contains a geometry and its mesh.");
-
-  methodBinding *cm;
-  cm = cb->addMethod("mesh", &GModel::mesh);
-  cm->setArgNames("dim", NULL);
-  cm->setDescription("Generate a mesh of this model in dimension 'dim'.");
-  cm = cb->addMethod("setOrderN", &GModel::setOrderN);
-  cm->setArgNames("order", "linear", "incomplete", NULL);
-  cm->setDescription(" make the mesh a high order mesh at order N\n linear is 1 if the high order points are not placed on the geometry of the model\n incomplete is 1 if incomplete basis are used.");
-  cm = cb->addMethod("load", &GModel::load);
-  cm->setDescription("Merge the file 'filename' in this model, the file can be "
-                     "in any format (guessed from the extension) known by gmsh.");
-  cm->setArgNames("filename", NULL);
-  cm = cb->addMethod("setFactory", &GModel::setFactory);
-  cm->setDescription("Set the GModel factory: choose between 'Gmsh' or 'OpenCASCADE'.");
-  cm->setArgNames("name", NULL);
-  cm = cb->addMethod("save", &GModel::save);
-  cm->setDescription("Save this model in the file 'filename'. The content of the "
-                     "file depends on the format (guessed from the extension).");
-  cm->setArgNames("filename", NULL);
-  cm = cb->addMethod("getNumMeshElements", (int (GModel::*)())&GModel::getNumMeshElements);
-  cm->setDescription("return the number of mesh elemnts in the model");
-  cm = cb->addMethod("getMeshElementByTag", &GModel::getMeshElementByTag);
-  cm->setArgNames("tag", NULL);
-  cm->setDescription("access a mesh element by tag, using the element cache");
-  cm = cb->addMethod("getNumMeshVertices", &GModel::getNumMeshVertices);
-  cm->setDescription("return the total number of vertices in the mesh");
-  cm = cb->addMethod("getMeshVertexByTag", &GModel::getMeshVertexByTag);
-  cm->setDescription("access a mesh vertex by tag, using the vertex cache");
-  cm->setArgNames("tag", NULL);
-  cm = cb->addMethod("getNumRegions", &GModel::getNumRegions);
-  cm->setDescription("return the number of regions (3D geometrical entities)");
-  cm = cb->addMethod("getNumFaces", &GModel::getNumFaces);
-  cm->setDescription("return the number of faces (2D geometrical entities)");
-  cm = cb->addMethod("getNumEdges", &GModel::getNumEdges);
-  cm->setDescription("return the number of edges (1D geometrical entities)");
-  cm = cb->addMethod("getNumVertices", &GModel::getNumVertices);
-  cm->setDescription("return the number of vertices (0D geometrical entities)");
-  cm = cb->addMethod("getFaceByTag", &GModel::getFaceByTag);
-  cm->setDescription("access a geometrical face by tag");
-  cm->setArgNames("tag", NULL);
-  cm = cb->addMethod("getEdgeByTag", &GModel::getEdgeByTag);
-  cm->setDescription("access a geometrical edge by tag");
-  cm->setArgNames("tag", NULL);
-  cm = cb->addMethod("getVertexByTag", &GModel::getVertexByTag);
-  cm->setDescription("access a geometrical vertex by tag");
-  cm->setArgNames("tag", NULL);
-  cm = cb->addMethod("getRegionByTag", &GModel::getRegionByTag);
-  cm->setDescription("access a geometrical region by tag");
-  cm->setArgNames("tag", NULL);
-
-  cm = cb->addMethod("insertRegion", &GModel::insertRegion);
-  cm->setDescription("insert an existing region to the model list");
-  cm->setArgNames("region", NULL);
-  cm = cb->addMethod("getRegions", &GModel::bindingsGetRegions);
-  cm->setDescription("return a vector of the regions");
-  cm = cb->addMethod("getFaces", &GModel::bindingsGetFaces);
-  cm->setDescription("return a vector of the faces");
-  cm = cb->addMethod("getEdges", &GModel::bindingsGetEdges);
-  cm->setDescription("return a vector of the edges");
-  cm = cb->addMethod("getVertices", &GModel::bindingsGetVertices);
-  cm->setDescription("return a vector of the vertices");
-
-  cm = cb->addMethod("addVertex", &GModel::addVertex);
-  cm->setDescription("create a new vertex at position (x, y, z), with target "
-                     "mesh size lc");
-  cm->setArgNames("x", "y", "z", "lc", NULL);
-  cm = cb->addMethod("addLine", &GModel::addLine);
-  cm->setDescription("create a straight line going from v1 to v2");
-  cm->setArgNames("v1", "v2", NULL);
-  cm = cb->addMethod("addBezier", &GModel::addBezier);
-  cm->setDescription("create a spline going from v1 to v2 and with some control "
-                     "points listed in a fullMatrix(N,3)");
-  cm->setArgNames("v1", "v2", "controlPoints", NULL);
-  cm = cb->addMethod("addNURBS", &GModel::addNURBS);
-  cm->setDescription("creates a NURBS curve from v1 to v2 with control Points, "
-                     "knots, weights and multiplicities");
-  cm->setArgNames("v1", "v2", "{{poles}}","{knots}","{weights}","{mult}",NULL);
-  cm = cb->addMethod("addFace", &GModel::addFace);
-  cm->setDescription("creates a face that is constraint by edges and points");
-  cm->setArgNames("{list of edges}","{{x,y,z},{x,y,z},...}",NULL);
-  cm = cb->addMethod("addRuledFaces", &GModel::addRuledFaces);
-  cm->setDescription("create ruled faces that contains a list of wires");
-  cm->setArgNames("{{list of edges},{list of edges},...}",NULL);
-  cm = cb->addMethod("addPlanarFace", &GModel::addPlanarFace);
-  cm->setDescription("creates a planar face that contains a list of wires");
-  cm->setArgNames("{{list of edges},{list of edges},...}",NULL);
-  cm = cb->addMethod("addVolume", &GModel::addVolume);
-  cm->setDescription("creates a Volume bounded by a list of faces");
-  cm->setArgNames("{{list of faces},{list of faces},...}",NULL);
-  cm = cb->addMethod("addPipe", &GModel::addPipe);
-  cm->setDescription("creates a pipe with a base and a wire for the direction");
-  cm->setArgNames("ge","{list of edges}",NULL);
-  cm = cb->addMethod("addCircleArcCenter", &GModel::addCircleArcCenter);
-  cm->setDescription("create a circle arc going from v1 to v2 with its center "
-                     "at (x,y,z)");
-  cm->setArgNames("x", "y", "z", "v1", "v2", NULL);
-  cm = cb->addMethod("addCircleArc3Points", &GModel::addCircleArc3Points);
-  cm->setDescription("create a circle arc going from v1 to v2 with an "
-                     "intermediary point Xi(x,y,z)");
-  cm->setArgNames("x", "y", "z", "v1", "v2", NULL);
-  cm = cb->addMethod("revolve", &GModel::revolve);
-  cm->setDescription("revolve an entity of a given angle. Axis is defined by 2 "
-                     "points");
-  cm->setArgNames("entity", "{x1,y1,z1}", "{x2,y2,z2}", "angle", NULL);
-  cm = cb->addMethod("extrude", &GModel::extrude);
-  cm->setDescription("extrudes an entity. Axis is defined by 2 points");
-  cm->setArgNames("entity", "{x1,y1,z1}", "{x2,y2,z2}", NULL);
-  cm = cb->addMethod("addSphere", &GModel::addSphere);
-  cm->setDescription("add a sphere");
-  cm->setArgNames("xc", "yc", "zc", "radius", NULL);
-  cm = cb->addMethod("addBlock", &GModel::addBlock);
-  cm->setDescription("add a block");
-  cm->setArgNames("{x1,y1,z1}", "{x2,y2,z2}", NULL);
-  cm = cb->addMethod("addCone", &GModel::addCone);
-  cm->setDescription("add a cone");
-  cm->setArgNames("{x1,y1,z1}","{x2,y2,z2}","R1","R2",NULL);
-  cm = cb->addMethod("addCylinder", &GModel::addCylinder);
-  cm->setDescription("add a cylinder");
-  cm->setArgNames("{x1,y1,z1}","{x2,y2,z2}", "R",NULL);
-  cm = cb->addMethod("addTorus", &GModel::addTorus);
-  cm->setDescription("add a torus");
-  cm->setArgNames("{x1,y1,z1}","{x2,y2,z2}","R1","R2",NULL);
-  cm = cb->addMethod("computeUnion", &GModel::computeBooleanUnion);
-  cm->setDescription("compute the boolean union of the model with another one "
-                     "(tool). The third parameter tells if a new model has to "
-                     "be created");
-  cm->setArgNames("tool", "createNewGModel",NULL);
-  cm = cb->addMethod("computeIntersection", &GModel::computeBooleanIntersection);
-  cm->setDescription("compute the boolean intersection of the model with another "
-                     "one. The third parameter tells if a new model has to be created");
-  cm->setArgNames("tool","createNewGModel",NULL);
-  cm = cb->addMethod("computeDifference", &GModel::computeBooleanDifference);
-  cm->setDescription("compute the boolean difference of the model with another "
-                     "one (tool). The third parameter tells if a new model has to "
-                     "be created");
-  cm->setArgNames("tool","createNewGModel",NULL);
-  cm = cb->addMethod("glue", &GModel::glue);
-  cm->setDescription("glue the geometric model using geometric tolerance eps");
-  cm->setArgNames("eps",NULL);
-  cm = cb->addMethod("setAsCurrent", &GModel::setAsCurrent);
-  cm->setDescription("set the model as the current (active) one");
-  cm = cb->setConstructor<GModel>();
-  cm->setDescription("Create an empty GModel");
-
-  cm = cb->addMethod("getPhysicalName", &GModel::getPhysicalName);
-  cm->setDescription("get the name of an physical group, identified by its "
-                     "dimension and number. Returns empty string if physical "
-                     "name is not assigned");
-  cm->setArgNames("dim","number",NULL);
-  cm = cb->addMethod("setPhysicalName", &GModel::setPhysicalName);
-  cm->setDescription("set the name of an physical group, identified by its "
-                     "dimension and number. If number=0, the first free number "
-                     "is chosen. Returns the number.");
-  cm->setArgNames("physicalName","dim","number",NULL);
-
-  cm = cb->addMethod("createTopology", &GModel::createTopologyFromMesh);
-  cm->setDescription("build the topology for a given mesh.");
-  cm->setArgNames(NULL);
-
-  cm = cb->addMethod("detectEdges", &GModel::detectEdges);
-  cm->setDescription(" use an angle threshold to tag edges.");
-  cm->setArgNames("angle",NULL);
-
-  cm = cb->addMethod("createPartitionBoundaries", &GModel::createPartitionBoundaries);
-  cm->setDescription("Assigns partition tags to boundary elements. Should be called "
-                     "only after the partitions have been assigned");
-  cm->setArgNames("createGhostCells",NULL);
-
-
-  cm = cb->addMethod("scaleMesh", &GModel::scaleMesh);
-  cm->setDescription("scale the mesh by a factor");
-  cm->setArgNames("factor",NULL);
 }

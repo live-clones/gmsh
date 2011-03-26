@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -14,7 +14,9 @@
 #include "Gauss.h"
 
 #include "stdlib.h"
-static void printClosure(polynomialBasis::clCont &fullClosure, std::vector<int> &closureRef, polynomialBasis::clCont &closures) {
+static void printClosure(polynomialBasis::clCont &fullClosure, std::vector<int> &closureRef,
+                         polynomialBasis::clCont &closures)
+{
   for (int i = 0; i <closures.size(); i++) {
     printf("%3i  (%2i): ", i, closureRef[i]);
     if(closureRef[i]==-1){
@@ -35,7 +37,8 @@ static void printClosure(polynomialBasis::clCont &fullClosure, std::vector<int> 
   }
 }
 
-static int getTriangleType (int order) {
+static int getTriangleType (int order)
+{
   switch(order) {
     case 0 : return MSH_TRI_1;
     case 1 : return MSH_TRI_3;
@@ -51,7 +54,9 @@ static int getTriangleType (int order) {
     default : Msg::Error("triangle order %i unknown", order);
   }
 }
-static int getQuadType (int order) {
+
+static int getQuadType (int order)
+{
   switch(order) {
     case 0 : return MSH_QUA_1;
     case 1 : return MSH_QUA_4;
@@ -67,7 +72,9 @@ static int getQuadType (int order) {
     default : Msg::Error("quad order %i unknown", order);
   }
 }
-static int getLineType (int order) {
+
+static int getLineType (int order)
+{
   switch(order) {
     case 0 : return MSH_LIN_1;
     case 1 : return MSH_LIN_2;
@@ -83,7 +90,6 @@ static int getLineType (int order) {
     default : Msg::Error("line order %i unknown", order);
   }
 }
-
 
 static fullMatrix<double> generate1DMonomials(int order)
 {
@@ -149,7 +155,9 @@ static fullMatrix<double> generatePascalSerendipityTriangle(int order)
   return monomials;
 }
 
-const fullMatrix<double> &polynomialBasis::getGradientAtFaceIntegrationPoints(int integrationOrder, int closureId) const{
+const fullMatrix<double> &polynomialBasis::getGradientAtFaceIntegrationPoints(int integrationOrder, 
+                                                                              int closureId) const
+{
   std::vector<fullMatrix<double> > &dfAtFace = _dfAtFace[integrationOrder];
   if (dfAtFace.empty()) {
     dfAtFace.resize(closures.size());
@@ -1010,7 +1018,8 @@ static void generate1dVertexClosure(polynomialBasis::clCont &closure)
   closure[1].type = MSH_PNT;
 }
 
-static void generate1dVertexClosureFull(polynomialBasis::clCont &closure, std::vector<int> &closureRef, int order)
+static void generate1dVertexClosureFull(polynomialBasis::clCont &closure, std::vector<int> &closureRef,
+                                        int order)
 {
   closure.clear();
   closure.resize(2);
@@ -1028,7 +1037,7 @@ static void generate1dVertexClosureFull(polynomialBasis::clCont &closure, std::v
 }
 
 static void getFaceClosureTet(int iFace, int iSign, int iRotate, polynomialBasis::closure &closure,
-                           int order)
+                              int order)
 {
 
   closure.clear();
@@ -1093,7 +1102,8 @@ static void getFaceClosureTet(int iFace, int iSign, int iRotate, polynomialBasis
     break;
   }
 }
-static void generate2dEdgeClosureFull(polynomialBasis::clCont &closure, std::vector<int> &closureRef, int order, int nNod, bool serendip)
+static void generate2dEdgeClosureFull(polynomialBasis::clCont &closure, std::vector<int> &closureRef,
+                                      int order, int nNod, bool serendip)
 {
   closure.clear();
   closure.resize(2*nNod);
@@ -1171,7 +1181,8 @@ static void generateFaceClosureTet(polynomialBasis::clCont &closure, int order)
   }
 }
 
-static void generateFaceClosureTetFull(polynomialBasis::clCont &closureFull, std::vector<int> &closureRef, int order, bool serendip)
+static void generateFaceClosureTetFull(polynomialBasis::clCont &closureFull, std::vector<int> &closureRef,
+                                       int order, bool serendip)
 {
   closureFull.clear();
   //input :
@@ -1297,7 +1308,8 @@ static void generateFaceClosurePrism(polynomialBasis::clCont &closure, int order
   }
 }
 
-static void generateFaceClosurePrismFull(polynomialBasis::clCont &closureFull, std::vector<int> &closureRef, int order) 
+static void generateFaceClosurePrismFull(polynomialBasis::clCont &closureFull, 
+                                         std::vector<int> &closureRef, int order) 
 {
   polynomialBasis::clCont closure;
   closureFull.clear();
@@ -2172,17 +2184,3 @@ const fullMatrix<double> &polynomialBases::findInjector(int tag1, int tag2)
   return injector[key];
 }
 
-#include "Bindings.h"
-void polynomialBasis::registerBindings(binding *b) 
-{
-  classBinding *cb = b->addClass<polynomialBasis>("polynomialBasis");
-  cb->setDescription("polynomial shape functions for elements");
-  methodBinding *mb = cb->addMethod
-    ("f", (void (polynomialBasis::*)(fullMatrix<double>&, fullMatrix<double>&))
-     &polynomialBasis::f);
-  mb->setDescription("evaluate the shape functions");
-  mb->setArgNames("nodes","values",NULL);
-  mb = cb->addMethod("find",&polynomialBases::find);
-  mb->setDescription("return the polynomial basis corresponding to an element type");
-  mb->setArgNames("elementType",NULL);
-}

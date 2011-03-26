@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -11,8 +11,6 @@
 #include "GmshMessage.h"
 #include "linearSystem.h"
 #include "sparsityPattern.h"
-
-class binding;
 
 typedef int INDEX_TYPE ;
 typedef struct {
@@ -179,7 +177,6 @@ class linearSystemCSRGmm : public linearSystemCSR<scalar> {
   }
 #endif
   ;
-  static void registerBindings(binding *b);
 };
 
 template <class scalar>

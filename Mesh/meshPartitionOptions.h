@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -116,7 +116,6 @@ class meshPartitionOptions
     int getNumConstraints(){return ncon;};
     void partition(GModel *model);
     std::map<int,  std::vector<int> >& getWeightMap(){return weightMap;};
-    static void registerBindings(binding *b);
 };
 
 #endif

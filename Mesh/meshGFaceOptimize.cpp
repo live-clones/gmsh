@@ -1,8 +1,9 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include "GmshConfig.h"
 #include "meshGFaceOptimize.h"
 #include "qualityMeasures.h"
 #include "GFace.h"
@@ -2069,10 +2070,6 @@ void recombineIntoQuadsIterative(GFace *gf)
   }
 }
 
-
-
-#include "Bindings.h"
-
 double Temporary::w1,Temporary::w2,Temporary::w3;
 std::vector<SVector3> Temporary::gradients;
 
@@ -2178,7 +2175,8 @@ double Temporary::compute_alignment(const MEdge&_edge, MElement*element1, MEleme
   return alignment;
 }
 
-void Temporary::read_data(std::string file_name){
+void Temporary::read_data(std::string file_name)
+{
   int i,j,number;
   double x,y,z;
   MElement*element;
@@ -2203,7 +2201,8 @@ void Temporary::read_data(std::string file_name){
   }
 }
 
-void Temporary::quadrilaterize(std::string file_name,double _w1,double _w2,double _w3){
+void Temporary::quadrilaterize(std::string file_name,double _w1,double _w2,double _w3)
+{
   GFace*face;
   GModel*model = GModel::current();
   GModel::fiter iterator;
@@ -2218,16 +2217,4 @@ void Temporary::quadrilaterize(std::string file_name,double _w1,double _w2,doubl
 	_recombineIntoQuads(face,1,1);
   }
 }
-
-void Temporary::registerBindings(binding *b){
-  classBinding*cb = b->addClass<Temporary>("Temporary");
-  cb->setDescription("This class is used to create quad meshes from a script.");
-  methodBinding*cm;
-  cm = cb->setConstructor<Temporary>();
-  cm->setDescription("This is the constructor.");
-  cm = cb->addMethod("quadrilaterize",&Temporary::quadrilaterize);
-  cm->setDescription("This function creates the quad mesh.");
-  cm->setArgNames("file_name","w1","w2","w3",NULL);
-}
-
 

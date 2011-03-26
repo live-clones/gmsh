@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -52,7 +52,7 @@ openglWindow::openglWindow(int x, int y, int w, int h, const char *l)
 
 openglWindow::~openglWindow()
 { 
-  delete _ctx; 
+  delete _ctx;
 }
 
 void openglWindow::_drawScreenMessage()

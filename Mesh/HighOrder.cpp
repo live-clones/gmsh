@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -275,7 +275,7 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
         MVertex *v;
         if(linear || !reparamOK || uc < u0 || uc > u1){ 
           Msg::Warning("We don't have a valid parameter on curve %d-%d",
-             v0->getNum(), v1->getNum());
+                       v0->getNum(), v1->getNum());
           // we don't have a (valid) parameter on the curve
           SPoint3 pc = edge.interpolate(t);
           v = new MVertex(pc.x(), pc.y(), pc.z(), ge);

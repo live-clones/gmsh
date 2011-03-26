@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -169,6 +169,7 @@ int MElement::getVolumeSign()
 
 bool MElement::setVolumePositive()
 {
+  if(getDim() < 3) return true;
   int s = getVolumeSign();
   if(s < 0) revert();
   if(!s) return false;
@@ -267,12 +268,6 @@ double MElement::getJacobian(double u, double v, double w, double jac[3][3])
     }
   }
   return _computeDeterminantAndRegularize(this, jac);
-}
-
-//binded
-double MElement::getJacobianDeterminant(double u, double v, double w) {
-  double jac[3][3];
-  return getJacobian(u,v,w,jac);
 }
 
 double MElement::getJacobian(const fullMatrix<double> &gsf, double jac[3][3])
@@ -1272,49 +1267,11 @@ const fullMatrix<double> &MElement::getGradShapeFunctionsAtNodes (int functionSp
   return mat;
 }
 
-void MElement::xyzTouvw(fullMatrix<double> *xu){
+void MElement::xyzTouvw(fullMatrix<double> *xu)
+{
   double _xyz[3] = {(*xu)(0,0),(*xu)(0,1),(*xu)(0,2)},_uvw[3] ;
   xyz2uvw(_xyz,_uvw);
   (*xu)(1,0) = _uvw[0];
   (*xu)(1,1) = _uvw[1];
   (*xu)(1,2) = _uvw[2];
-}
-
-
-#include "Bindings.h"
-
-void MElement::registerBindings(binding *b)
-{
-  classBinding *cb = b->addClass<MElement>("MElement");
-  cb->setDescription("A mesh element.");
-  methodBinding *cm;
-  cm = cb->addMethod("getNum",&MElement::getNum);
-  cm->setDescription("return the tag of the element");
-  cm = cb->addMethod("getNumVertices", &MElement::getNumVertices);
-  cm->setDescription("get the number of vertices of this element");
-  cm = cb->addMethod("getVertex", &MElement::getVertex);
-  cm->setDescription("return the i-th vertex of this element");
-  cm->setArgNames("i",NULL);
-  cm = cb->addMethod("getType", &MElement::getType);
-  cm->setDescription("get the type of the element");
-  cm = cb->addMethod("getTypeForMSH", &MElement::getTypeForMSH);
-  cm->setDescription("get the gmsh type of the element");
-  cm = cb->addMethod("getPartition", &MElement::getPartition);
-  cm->setDescription("get the partition to which the element belongs");
-  cm = cb->addMethod("setPartition", &MElement::setPartition);
-  cm->setDescription("set the partition to which the element belongs");
-  cm->setArgNames("iPartition",NULL);
-  cm = cb->addMethod("getPolynomialOrder", &MElement::getPolynomialOrder);
-  cm->setDescription("return the polynomial order the element");
-  cm = cb->addMethod("getDim", &MElement::getDim);
-  cm->setDescription("return the geometrical dimension of the element");
-  cm = cb->addMethod("getJacobianDeterminant", &MElement::getJacobianDeterminant);
-  cm->setDescription("return the jacobian of the determinant of the transformation");
-  cm->setArgNames("u","v","w",NULL);
-  cm = cb->addMethod("xyzTouvw", &MElement::xyzTouvw);
-  cm->setDescription("get uvw from xyz");
-  cm->setArgNames("xyzuvw",NULL);
-  cm = cb->addMethod("getVertex", &MElement::getVertex);
-  cm->setDescription("get the vertex with the given index");
-  cm->setArgNames("index",NULL);
 }

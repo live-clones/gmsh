@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -19,7 +19,6 @@
 #include "Gauss.h"
 
 class GFace;
-class binding;
 
 // A mesh element.
 class MElement
@@ -100,9 +99,6 @@ class MElement
 
   // get the vertex using the Nastran BDF ordering
   virtual MVertex *getVertexBDF(int num){ return getVertex(num); }
-
-  // get the vertex using MED ordering
-  virtual MVertex *getVertexMED(int num){ return getVertex(num); }
 
   // get the vertex using DIFF ordering
   virtual MVertex *getVertexDIFF(int num){ return getVertex(num); }
@@ -255,7 +251,10 @@ class MElement
   double getJacobian(const fullMatrix<double> &gsf, double jac[3][3]);
   double getJacobian(double u, double v, double w, double jac[3][3]);
   double getPrimaryJacobian(double u, double v, double w, double jac[3][3]);
-  double getJacobianDeterminant(double u, double v, double w);
+  double getJacobianDeterminant(double u, double v, double w)
+  {
+    double jac[3][3]; return getJacobian(u, v, w, jac);
+  }
   virtual int getNumShapeFunctions(){ return getNumVertices(); }
   virtual int getNumPrimaryShapeFunctions(){ return getNumPrimaryVertices(); }
   virtual MVertex *getShapeFunctionNode(int i){ return getVertex(i); }
@@ -338,7 +337,6 @@ class MElement
   static int getInfoMSH(const int typeMSH, const char **const name=0);
   virtual int getNumVerticesForMSH() { return getNumVertices(); }
   virtual int *getVerticesIdForMSH();
-  static void registerBindings(binding *b);
 
   // copy element and parent if any, vertexMap contains the new vertices
   virtual MElement *copy(int &num, std::map<int, MVertex*> &vertexMap,

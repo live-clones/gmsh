@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -88,7 +88,6 @@ class MLine : public MElement {
     }
   }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
-  static void registerBindings(binding *b);
 };
 
 /*
@@ -151,7 +150,6 @@ class MLine3 : public MLine {
  *   0---2---...-(N-1)-1
  *
  */
-class binding;
 class MLineN : public MLine {
  protected:
   std::vector<MVertex *> _vs;

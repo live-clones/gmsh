@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -9,7 +9,6 @@
 #include "MElement.h"
 #include "VertexArray.h"
 #include "Context.h"
-#include "Bindings.h"
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
@@ -69,46 +68,4 @@ GVertex *GEntity::cast2Vertex() { return dynamic_cast<GVertex*>(this); }
 GEdge *GEntity::cast2Edge() { return dynamic_cast<GEdge*>(this); }
 GFace *GEntity::cast2Face() { return dynamic_cast<GFace*>(this); }
 GRegion *GEntity::cast2Region() { return dynamic_cast<GRegion*>(this); }
-
-void GEntity::registerBindings(binding *b)
-{
-  classBinding *cb = b->addClass<GEntity>("GEntity");
-  cb->setDescription("A GEntity is a geometrical entity of the model.");
-  methodBinding *mb;
-  mb = cb->addMethod("getNumMeshElements",
-                     (unsigned int (GEntity::*)())&GEntity::getNumMeshElements);
-  mb->setDescription("return the number of mesh elements in this entity");
-  mb = cb->addMethod("getMeshElement",&GEntity::getMeshElement);
-  mb->setDescription("get the mesh element at the given index");
-  mb->setArgNames("index",NULL);
-  mb = cb->addMethod("getNumMeshVertices",
-                     (unsigned int (GEntity::*)())&GEntity::getNumMeshVertices);
-  mb->setDescription("return the number of mesh vertices in this entity");
-  mb = cb->addMethod("getMeshVertex",&GEntity::getMeshVertex);
-  mb->setDescription("get the mesh vertex at the given index");
-  mb->setArgNames("index",NULL);
-  mb = cb->addMethod("addMeshVertex",&GEntity::addMeshVertex);
-  mb->setDescription("insert a new mesh vertex");
-  mb->setArgNames("vertex",NULL);
-  mb = cb->addMethod("model", &GEntity::model);
-  mb->setDescription("returns the geometric model the entity belongs to.");
-  mb = cb->addMethod("cast2Vertex", &GEntity::cast2Vertex);
-  mb->setDescription("do a dynamic cast of the GEntity to a GVertex (0 if wrong cast).");
-  mb = cb->addMethod("cast2Edge", &GEntity::cast2Edge);
-  mb->setDescription("do a dynamic cast of the GEntity to a GEdge (0 if wrong cast).");
-  mb = cb->addMethod("cast2Face", &GEntity::cast2Face);
-  mb->setDescription("do a dynamic cast of the GEntity to a GFace (0 if wrong cast).");
-  mb = cb->addMethod("cast2Region", &GEntity::cast2Region);
-  mb->setDescription("do a dynamic cast of the GEntity to a GRegion (0 if wrong cast).");
-  mb = cb->addMethod("tag", &GEntity::tag);
-  mb->setDescription("return the tag of this entity.");
-  mb = cb->addMethod("getPhysicalEntities", &GEntity::getPhysicalEntities);
-  mb->setDescription("return a vector of all physical entities that this entity belongs to.");
-  mb = cb->addMethod("addPhysicalEntity", &GEntity::addPhysicalEntity);
-  mb->setArgNames("physicalGroupId",NULL);
-  mb->setDescription("add this element to a physical group.");
-
-}
-
-
 

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -606,21 +606,3 @@ int Msg::GetThreadNum(){ return 0; }
 
 #endif
 
-#include "Bindings.h"
-void Msg::registerBindings (binding *b)
-{
-  classBinding *cb = b->addClass<Msg>("Msg");
-  cb->setDescription("a class to manage messages, intialisations of libraries "
-                     "(like MPI) and mpi rank and size.");
-  methodBinding *mb;
-  mb = cb->setConstructor<Msg>();
-  mb->setDescription("Msg is full static class, instances do not contain anything "
-                     "but they are needed to call the static functions from lua");
-  mb = cb->addMethod("getCommRank", &Msg::GetCommRank);
-  mb->setDescription("return the id of this mpi process");
-  mb = cb->addMethod("getCommSize", &Msg::GetCommSize);
-  mb->setDescription("return the number of mpi processes");
-  mb = cb->addMethod("barrier", &Msg::Barrier);
-  mb->setDescription("an MPI barrier : all processes wait untill they all reach "
-                     "this points");
-}

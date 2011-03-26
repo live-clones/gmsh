@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -34,9 +34,6 @@ IntPt *getGQPriPts(int order);
 int getNGQHPts(int order);
 IntPt *getGQHPts(int order);
 
-//For now this class is only for bindings but maybe the interface is
-//cleaner (it does not add new types) and it can replace the other
-//interface
 class gaussIntegration {
   public:
   static void get(int elementType, int order, fullMatrix<double> &pts, fullMatrix<double> &weights);
@@ -46,7 +43,6 @@ class gaussIntegration {
   static void getTetrahedron(int order, fullMatrix<double> &pts, fullMatrix<double> &weights);
   static void getHexahedron(int order, fullMatrix<double> &pts, fullMatrix<double> &weights);
   static void getPrism(int order, fullMatrix<double> &pts, fullMatrix<double> &weights);
-  static void registerBindings(binding *b);
 };
 
 #endif

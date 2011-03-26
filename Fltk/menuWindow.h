@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -91,5 +91,6 @@ void geometry_reload_cb(Fl_Widget *w, void *data);
 void mesh_1d_cb(Fl_Widget *w, void *data);
 void mesh_2d_cb(Fl_Widget *w, void *data);
 void mesh_3d_cb(Fl_Widget *w, void *data);
+void help_about_cb(Fl_Widget *w, void *data);
 
 #endif

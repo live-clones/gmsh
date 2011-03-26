@@ -57,26 +57,3 @@ void meshPartitionOptions::setAlgorithm(int algo)
 {
   algorithm=algo;
 }
-
-
-#include "Bindings.h"
-void meshPartitionOptions::registerBindings(binding *b){
-  classBinding *cb = b->addClass<meshPartitionOptions>("meshPartitionOptions");
-  cb->setDescription("Defines the options for mesh partitioning (CHACO/METIS)");
-  methodBinding *cm;
-  cm = cb->setConstructor<meshPartitionOptions>();
-  cm->setDescription("Build an object that contains all the options needed to perform a partitioning, when creating object default options are applied");
-  cm->setArgNames(NULL);
-  cm = cb->addMethod("partition", &meshPartitionOptions::partition);
-  cm->setDescription("Partition with the specified option the GModel given as argument");
-  cm->setArgNames("GModel", NULL);
-  cm = cb->addMethod("setNumOfPartitions", &meshPartitionOptions::setNumOfPartitions);
-  cm->setDescription("Define the number of partitions desired");
-  cm->setArgNames("numPart", NULL);
-  cm = cb->addMethod("getNumConstraints", &meshPartitionOptions::getNumConstraints);
-  cm->setDescription("Get the number of different weights on the elements");
-  cm->setArgNames(NULL);
-  cm = cb->addMethod("setAlgorithm", &meshPartitionOptions::setAlgorithm);
-  cm->setDescription("Set the partitionning algorithm");
-  cm->setArgNames("algo", NULL);
-}

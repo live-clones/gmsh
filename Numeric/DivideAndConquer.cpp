@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -863,14 +863,16 @@ void DocRecord::setPoints(fullMatrix<double> *p)
   }
 } 
 
-void DocRecord::initialize(){
+void DocRecord::initialize()
+{
   int i;
   for(i=0;i<numPoints;i++){
 	points[i].flag = 0;
   }
 }
 
-bool DocRecord::remove_point(int index){
+bool DocRecord::remove_point(int index)
+{
   if(points[index].flag == 0){
     points[index].flag = 1;
     return 1;
@@ -878,7 +880,8 @@ bool DocRecord::remove_point(int index){
   else return 0;
 }
 
-void DocRecord::remove_all(){
+void DocRecord::remove_all()
+{
   int i;
   int index;
   int numPoints2;
@@ -906,7 +909,8 @@ void DocRecord::remove_all(){
   numPoints = numPoints2;
 }
 
-void DocRecord::add_point(double x,double y,GFace*face){
+void DocRecord::add_point(double x,double y,GFace*face)
+{
   PointRecord point;
   point.where.h = x;
   point.where.v = y; 
@@ -915,31 +919,3 @@ void DocRecord::add_point(double x,double y,GFace*face){
   numPoints = numPoints+1;
 }
 
-#include "Bindings.h"
-
-void DocRecord::registerBindings(binding *b)
-{
-  classBinding *cb = b->addClass<DocRecord>("Triangulator");
-  cb->setDescription("A class that does 2D delaunay triangulation "
-                     "(JF's SANDBOX for the moment)");
-  methodBinding *cm;
-
-  cm = cb->addMethod("setPoints", &DocRecord::setPoints);
-  cm->setDescription("Set the NumPoints points of the triangulation (x,y,fixed)");
-  cm->setArgNames("points",NULL);
-  cm = cb->addMethod("Triangulate", &DocRecord::MakeMeshWithPoints);
-  cm->setDescription("Compute the Delaunay triangulation");
-  cm = cb->addMethod("Voronoi", &DocRecord::Voronoi);
-  cm->setDescription("Compute the Voronoi cells");
-  cm = cb->addMethod("hullSize", &DocRecord::hullSize);
-  cm->setDescription("returns the size of the hull");
-  cm = cb->addMethod("makePosView", &DocRecord::makePosView);
-  cm->setDescription("save a .pos file with the voronoi in GFace");
-  cm->setArgNames("FileName", "GFace", NULL);
-  cm = cb->addMethod("Lloyd", &DocRecord::Lloyd);
-  cm->setDescription("do one iteration of Lloyd's algorithm");
-  cm->setArgNames("Type",NULL);
-  cm = cb->setConstructor<DocRecord,int>();
-  cm->setDescription ("A Triangulator");
-  cm->setArgNames("NumPoints",NULL);
-}

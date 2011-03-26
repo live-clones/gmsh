@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -183,9 +183,9 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
       // reset translation and scaling, or sync translation and
       // scaling with the first window (alt)
       if (CTX::instance()->camera) {
-	ctx->camera.lookAtCg();}
+	ctx->camera.lookAtCg();
+      }
       else{
-
 	if(Fl::event_state(FL_ALT)){
 	  if(i != 0){
 	    drawContext *ctx0 = gls[0]->getDrawContext();
@@ -202,7 +202,6 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
       }
     }
     else if(!strcmp(str, "reset")){
- 
       if (CTX::instance()->camera) {
 	ctx->camera.init();}
       else{
@@ -583,7 +582,6 @@ graphicWindow::graphicWindow(bool main, int numTiles)
 
   int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
   if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
-  //mode |= FL_STEREO;
   if(CTX::instance()->stereo) { 
     mode |= FL_DOUBLE;
     mode |= FL_STEREO;
@@ -619,37 +617,38 @@ void graphicWindow::split(openglWindow *g, char how)
     // let's be brutal :-)
     int mode = g->mode();
     openglWindow::setLastHandled(0);
-    tile->clear();
+    tile->clear(); // this really deletes the child opengl windows
     gl.clear();
     openglWindow *g2 = new openglWindow(0, 0, tile->w(), tile->h());
-    g2->mode(mode);
     g2->end();
+    g2->mode(mode);
     gl.push_back(g2);
     tile->add(g2);
     g2->show();
-    return;
   }
-
-  int x1 = g->x();
-  int y1 = g->y();
-  int w1 = (how == 'h') ? g->w() / 2 : g->w();
-  int h1 = (how == 'h') ? g->h() : g->h() / 2;
-
-  int x2 = (how == 'h') ? (g->x() + w1) : g->x();
-  int y2 = (how == 'h') ? g->y() : (g->y() + h1);
-  int w2 = (how == 'h') ? (g->w() - w1) : g->w();
-  int h2 = (how == 'h') ? g->h() : (g->h() - h1);
-
-  openglWindow *g2 = new openglWindow(0, 0, w2, h2);
-  g2->mode(g->mode());
-  g2->end();
-
-  gl.push_back(g2);
-  tile->add(g2);
-  g2->show();
-
-  g->resize(x1, y1, w1, h1);
-  g2->resize(x2, y2, w2, h2);
+  else{
+    int x1 = g->x();
+    int y1 = g->y();
+    int w1 = (how == 'h') ? g->w() / 2 : g->w();
+    int h1 = (how == 'h') ? g->h() : g->h() / 2;
+    
+    int x2 = (how == 'h') ? (g->x() + w1) : g->x();
+    int y2 = (how == 'h') ? g->y() : (g->y() + h1);
+    int w2 = (how == 'h') ? (g->w() - w1) : g->w();
+    int h2 = (how == 'h') ? g->h() : (g->h() - h1);
+    
+    openglWindow *g2 = new openglWindow(0, 0, w2, h2);
+    g2->end();
+    g2->mode(g->mode());
+    
+    gl.push_back(g2);
+    tile->add(g2);
+    g2->show();
+    
+    g->resize(x1, y1, w1, h1);
+    g2->resize(x2, y2, w2, h2);
+  }
+  drawContext::global()->draw();
 }
 
 void graphicWindow::setAnimButtons(int mode)

@@ -74,7 +74,7 @@ void Triangles::Write(const char * filename,const TypeFileMesh typein )
        case mshMesh    :  cout << " msh "      ; break;
 	default: 
 	  cerr << endl 
-	       <<  " Unkown type mesh file " << (int) type << " for Writing " << filename <<endl;
+	       <<  " Unknown type mesh file " << (int) type << " for Writing " << filename <<endl;
 	  MeshError(1);
        }     
      Int4 NbOfTria =  nbt-2*NbOfQuad-NbOutT ;
@@ -114,7 +114,7 @@ void Triangles::Write(const char * filename,const TypeFileMesh typein )
        case ftqMesh    :  Write_ftq(f)   ; break;
        case mshMesh    :  Write_msh(f)   ; break;
 	default: 
-	  cerr << " Unkown type mesh file " << (int) type << " for Writing " << filename <<endl;
+	  cerr << " Unknown type mesh file " << (int) type << " for Writing " << filename <<endl;
 	  MeshError(1);
        }
    else
