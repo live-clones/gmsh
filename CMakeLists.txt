@@ -1138,7 +1138,7 @@ endif(APPLE)
 include(CPack)
 
 message("")
-message("Gmsh has been configured for ${GMSH_OS} with the "
+message("Gmsh ${GMSH_VERSION} has been configured for ${GMSH_OS} with the "
         "following options:" ${GMSH_CONFIG_OPTIONS})
 message("")
 message("C compiler: " ${CMAKE_C_COMPILER})
