@@ -1,5 +1,6 @@
 #!/bin/sh
 
+EXTRA_VERSION=$1
 GMSH=${HOME}/src/gmsh
 LOG=${GMSH}/nightly.log
 WEB_BIN=geuzaine@geuz.org:/home/www/geuz.org/gmsh/bin/MacOSX
@@ -14,7 +15,7 @@ echo "BUILD BEGIN: `date`" > ${LOG}
 cd ${GMSH} && svn update >> ${LOG} 2>&1
 mkdir ${GMSH}/bin
 cd ${GMSH}/bin &&\
-  ${CMAKE} -DGMSH_EXTRA_VERSION:string="-svn"\
+  ${CMAKE} -DGMSH_EXTRA_VERSION:string="${EXTRA_VERSION}"\
            -DCMAKE_PREFIX_PATH:path="/usr/local;/usr/local/opencascade"\
            -DENABLE_SWIG:bool=FALSE\
   ${GMSH} >> ${LOG} 2>&1

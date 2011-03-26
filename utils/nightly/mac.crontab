@@ -1,4 +1,4 @@
 #
 # this will launch a new build every night at 0h01
 #
-1 0 * * * ${HOME}/src/gmsh/utils/nightly/mac.sh
+1 0 * * * ${HOME}/src/gmsh/utils/nightly/mac.sh -svn
