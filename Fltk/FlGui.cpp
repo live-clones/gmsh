@@ -55,7 +55,6 @@ class drawContextFltk : public drawContextGlobal{
         FlGui::instance()->graph[i]->gl[j]->redraw();
 	// to initialize the camera distance from model
 	drawContext * ctx = FlGui::instance()->graph[i]->gl[j]->getDrawContext();
-	//ctx->camera.init();
 	ctx->camera.update();
       }
     }
