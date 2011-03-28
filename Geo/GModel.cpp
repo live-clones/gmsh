@@ -195,6 +195,26 @@ bool GModel::empty() const
   return vertices.empty() && edges.empty() && faces.empty() && regions.empty();
 }
 
+std::vector<GRegion*> GModel::bindingsGetRegions()
+{
+  return std::vector<GRegion*> (regions.begin(), regions.end());
+}
+
+std::vector<GFace*> GModel::bindingsGetFaces()
+{
+  return std::vector<GFace*> (faces.begin(), faces.end());
+}
+
+std::vector<GEdge*> GModel::bindingsGetEdges()
+{
+  return std::vector<GEdge*> (edges.begin(), edges.end());
+}
+
+std::vector<GVertex*> GModel::bindingsGetVertices()
+{
+  return std::vector<GVertex*> (vertices.begin(), vertices.end());
+}
+
 GRegion *GModel::getRegionByTag(int n) const
 {
   GEntity tmp((GModel*)this, n);
