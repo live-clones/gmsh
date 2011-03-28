@@ -475,7 +475,8 @@ double MElement::integrate(double val[], int pOrder, int stride, int order)
   return sum;
 }
 
-static int getTriangleType (int order) {
+static int getTriangleType (int order)
+{
   switch(order) {
   case 0 : return MSH_TRI_1;
   case 1 : return MSH_TRI_3;
@@ -488,10 +489,12 @@ static int getTriangleType (int order) {
   case 8 : return MSH_TRI_45;
   case 9 : return MSH_TRI_55;
   case 10 : return MSH_TRI_66;
-  default : Msg::Error("triangle order %i unknown", order);
+  default : Msg::Error("triangle order %i unknown", order); return 0;
   }
 }
-static int getQuadType (int order) {
+
+static int getQuadType (int order)
+{
   switch(order) {
   case 0 : return MSH_QUA_1;
   case 1 : return MSH_QUA_4;
@@ -504,10 +507,12 @@ static int getQuadType (int order) {
   case 8 : return MSH_QUA_81;
   case 9 : return MSH_QUA_100;
   case 10 : return MSH_QUA_121;
-  default : Msg::Error("quad order %i unknown", order);
+  default : Msg::Error("quad order %i unknown", order); return 0;
   }
 }
-static int getLineType (int order) {
+
+static int getLineType (int order)
+{
   switch(order) {
   case 0 : return MSH_LIN_1;
   case 1 : return MSH_LIN_2;
@@ -520,7 +525,7 @@ static int getLineType (int order) {
   case 8 : return MSH_LIN_9;
   case 9 : return MSH_LIN_10;
   case 10 : return MSH_LIN_11;
-  default : Msg::Error("line order %i unknown", order);
+  default : Msg::Error("line order %i unknown", order); return 0;
   }
 }
 

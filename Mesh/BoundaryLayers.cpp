@@ -82,7 +82,7 @@ static void addExtrudeNormals(std::set<T*> &entities,
       OctreePost *octree = 0;
 #if defined(HAVE_POST)
       if(view != -1){
-        if(view >= 0 && view < PView::list.size()){
+        if(view >= 0 && view < (int)PView::list.size()){
           octree = new OctreePost(PView::list[view]);
           if(PView::list[view]->getData()->getNumVectors())
             gouraud = false;
@@ -109,7 +109,7 @@ static void addExtrudeNormals(std::set<T*> &entities,
   }
 
   // enforce coherent normals at some points if necessary
-  for(int i = 0; i < ExtrudeParams::normalsCoherence.size(); i++){
+  for(unsigned int i = 0; i < ExtrudeParams::normalsCoherence.size(); i++){
     SPoint3 &p(ExtrudeParams::normalsCoherence[i]);
     double n0[3], n1[3];
     ExtrudeParams::normals[0]->get(p.x(), p.y(), p.z(), 3, n0);

@@ -17,21 +17,22 @@
 static void printClosure(polynomialBasis::clCont &fullClosure, std::vector<int> &closureRef,
                          polynomialBasis::clCont &closures)
 {
-  for (int i = 0; i <closures.size(); i++) {
+  for (unsigned int i = 0; i < closures.size(); i++) {
     printf("%3i  (%2i): ", i, closureRef[i]);
     if(closureRef[i]==-1){
       printf("\n");
       continue;
     }
-    for (int j = 0; j < fullClosure[i].size(); j++) {
+    for (unsigned int j = 0; j < fullClosure[i].size(); j++) {
       printf("%2i ", fullClosure[i][j]);
     }
     printf ("  --  ");
-    for (int j = 0; j < closures[closureRef[i]].size(); j++) {
+    for (unsigned int j = 0; j < closures[closureRef[i]].size(); j++) {
       std::string equalSign = "-";
       if (fullClosure[i][closures[closureRef[i]][j]] != closures[i][j])
         equalSign = "#";
-      printf("%2i%s%2i ", fullClosure[i][closures[closureRef[i]][j]],equalSign.c_str(), closures[i][j]);
+      printf("%2i%s%2i ", fullClosure[i][closures[closureRef[i]][j]],equalSign.c_str(),
+             closures[i][j]);
     }
     printf("\n");
   }
@@ -51,7 +52,7 @@ static int getTriangleType (int order)
     case 8 : return MSH_TRI_45;
     case 9 : return MSH_TRI_55;
     case 10 : return MSH_TRI_66;
-    default : Msg::Error("triangle order %i unknown", order);
+    default : Msg::Error("triangle order %i unknown", order); return 0;
   }
 }
 
@@ -69,7 +70,7 @@ static int getQuadType (int order)
     case 8 : return MSH_QUA_81;
     case 9 : return MSH_QUA_100;
     case 10 : return MSH_QUA_121;
-    default : Msg::Error("quad order %i unknown", order);
+    default : Msg::Error("quad order %i unknown", order); return 0;
   }
 }
 
@@ -87,7 +88,7 @@ static int getLineType (int order)
     case 8 : return MSH_LIN_9;
     case 9 : return MSH_LIN_10;
     case 10 : return MSH_LIN_11;
-    default : Msg::Error("line order %i unknown", order);
+    default : Msg::Error("line order %i unknown", order); return 0;
   }
 }
 
@@ -162,7 +163,7 @@ const fullMatrix<double> &polynomialBasis::getGradientAtFaceIntegrationPoints(in
   if (dfAtFace.empty()) {
     dfAtFace.resize(closures.size());
     int nbPsi = points.size1();
-    for (int iClosure=0; iClosure< closures.size(); iClosure++) {
+    for (unsigned int iClosure = 0; iClosure < closures.size(); iClosure++) {
       fullMatrix<double> integrationFace, weight;
       const polynomialBasis *fsFace = polynomialBases::find(closures[iClosure].type);
       gaussIntegration::get(fsFace->parentType, integrationOrder, integrationFace, weight);
@@ -170,7 +171,7 @@ const fullMatrix<double> &polynomialBasis::getGradientAtFaceIntegrationPoints(in
       double f[1256];
       for (int i = 0; i < integrationFace.size1(); i++){
         fsFace->f(integrationFace(i,0),integrationFace(i,1),integrationFace(i,2),f);
-        for(size_t j=0; j<closures[iClosure].size(); j++) {
+        for(unsigned int j = 0; j < closures[iClosure].size(); j++) {
           int jNod = closures[iClosure][j];
           for(int k = 0; k < points.size2(); k++)
             integration(i,k) += f[j] * points(jNod,k);
@@ -179,8 +180,8 @@ const fullMatrix<double> &polynomialBasis::getGradientAtFaceIntegrationPoints(in
       fullMatrix<double> &v = dfAtFace[iClosure];
       v.resize(nbPsi, integration.size1()*3);
       double g[1256][3];
-      for (size_t xi = 0; xi< integration.size1(); xi++) {
-        df(integration(xi,0 ), integration(xi,1), integration(xi,2), g);
+      for (int xi = 0; xi < integration.size1(); xi++) {
+        df(integration(xi, 0), integration(xi, 1), integration(xi, 2), g);
         for (int j = 0; j < nbPsi; j++) {
           v(j, xi*3) = g[j][0];
           v(j, xi*3+1) = g[j][1];
@@ -1153,7 +1154,7 @@ static void addEdgeNodes(polynomialBasis::clCont &closureFull, const int *edges,
     nodes2edges[edges[i]][edges[i + 1]] = i;
     nodes2edges[edges[i + 1]][edges[i]] = i + 1;
   }
-  for (int iClosure = 0; iClosure < closureFull.size(); iClosure++) {
+  for (unsigned int iClosure = 0; iClosure < closureFull.size(); iClosure++) {
     std::vector<int> &cl = closureFull[iClosure];
     for (int iEdge = 0; edges[iEdge] >= 0; iEdge += 2) {
       int n0 = cl[edges[iEdge]];
@@ -1202,12 +1203,12 @@ static void generateFaceClosureTetFull(polynomialBasis::clCont &closureFull, std
   //Mapping for the p1 nodes
   polynomialBasis::clCont closure;
   generateFaceClosureTet(closure, 1);
-  for (int i = 0; i < closureFull.size(); i++) {
+  for (unsigned int i = 0; i < closureFull.size(); i++) {
     std::vector<int> &clFull = closureFull[i];
     std::vector<int> &cl = closure[i];
     clFull.resize(4, -1);
     closureRef[i] = 0;
-    for (int j = 0; j < cl.size(); j ++)
+    for (unsigned int j = 0; j < cl.size(); j ++)
       clFull[closure[0][j]] = cl[j];
     for (int j = 0; j < 4; j ++)
       if (clFull[j] == -1)
@@ -1228,7 +1229,7 @@ static void generateFaceClosureTetFull(polynomialBasis::clCont &closureFull, std
   if (order >= 3)
     generate2dEdgeClosureFull(closureTriangles, closureTrianglesRef, order - 3, 3, false); 
   addEdgeNodes(closureFull, edges, order);
-  for (int iClosure = 0; iClosure < closureFull.size(); iClosure++) {
+  for (unsigned int iClosure = 0; iClosure < closureFull.size(); iClosure++) {
     //faces
     std::vector<int> &cl = closureFull[iClosure];
     if (order >= 3) {
@@ -1241,7 +1242,8 @@ static void generateFaceClosureTetFull(polynomialBasis::clCont &closureFull, std
         short int idFace = id/6;
         int nOnFace = closureTriangles[iTriClosure].size();
         for (int i = 0; i < nOnFace; i++) {
-          cl.push_back(4 + 6 * (order - 1) + idFace * nOnFace + closureTriangles[iTriClosure][i]);
+          cl.push_back(4 + 6 * (order - 1) + idFace * nOnFace + 
+                       closureTriangles[iTriClosure][i]);
         }
       }
     }
@@ -1250,9 +1252,9 @@ static void generateFaceClosureTetFull(polynomialBasis::clCont &closureFull, std
     polynomialBasis::clCont insideClosure;
     std::vector<int> fakeClosureRef;
     generateFaceClosureTetFull(insideClosure, fakeClosureRef, order - 4, false);
-    for (int i = 0; i < closureFull.size(); i ++) {
-      int shift = closureFull[i].size();
-      for (int j = 0; j < insideClosure[i].size(); j++)
+    for (unsigned int i = 0; i < closureFull.size(); i ++) {
+      unsigned int shift = closureFull[i].size();
+      for (unsigned int j = 0; j < insideClosure[i].size(); j++)
         closureFull[i].push_back(insideClosure[i][j] + shift);
     }
   }
@@ -1317,7 +1319,7 @@ static void generateFaceClosurePrismFull(polynomialBasis::clCont &closureFull,
   closureRef.resize(40);
   generateFaceClosurePrism(closure, 1);
   int ref3 = -1, ref4a = -1, ref4b = -1;
-  for (int i = 0; i < closure.size(); i++) {
+  for (unsigned int i = 0; i < closure.size(); i++) {
     std::vector<int> &clFull = closureFull[i];
     std::vector<int> &cl = closure[i];
     clFull.resize(6, -1);
@@ -1325,7 +1327,7 @@ static void generateFaceClosurePrismFull(polynomialBasis::clCont &closureFull,
     if (ref == -1)
       ref = i;
     closureRef[i] = ref;
-    for (int j = 0; j < cl.size(); j ++)
+    for (unsigned int j = 0; j < cl.size(); j ++)
       clFull[closure[ref][j]] = cl[j];
     for (int j = 0; j < 6; j ++) {
       if (clFull[j] == -1) {
@@ -1335,12 +1337,14 @@ static void generateFaceClosurePrismFull(polynomialBasis::clCont &closureFull,
       }
     }
   }
-  static const int edges[] = {0, 1,  0, 2,  0, 3,  1, 2,  1, 4,  2, 5,  3, 4,  3, 5,  4, 5,  -1};
+  static const int edges[] = {0, 1,  0, 2,  0, 3,  1, 2,  1, 4,  2, 5,  
+                              3, 4,  3, 5,  4, 5,  -1};
   addEdgeNodes(closureFull, edges, order);
   if ( order < 2 )
     return;
   // face center nodes for p2 prism
-  static const int faces[5][4] = {{0, 2, 1, -1}, {3, 4, 5, -1}, {0, 1, 4,  3}, {0, 3, 5,  2}, {1, 2, 5,  4}};
+  static const int faces[5][4] = {{0, 2, 1, -1}, {3, 4, 5, -1}, {0, 1, 4,  3},
+                                  {0, 3, 5,  2}, {1, 2, 5,  4}};
 
   if ( order == 2 ) {
     int nextFaceNode = 15;
@@ -1354,11 +1358,12 @@ static void generateFaceClosurePrismFull(polynomialBasis::clCont &closureFull,
       }
       nodeSum2Face[nodeSum] = iFace;
     }
-    for (int i = 0; i < closureFull.size(); i++ ) {
+    for (unsigned int i = 0; i < closureFull.size(); i++ ) {
       for (int iFace = 0; iFace < numFaces; iFace++ ) {
         int nodeSum = 0;
         for (int iNode = 0; iNode < numFaceNodes; iNode++)
-          nodeSum += faces[iFace][iNode] < 0 ? faces[iFace][iNode] : closureFull[i][ faces[iFace][iNode] ];
+          nodeSum += faces[iFace][iNode] < 0 ? faces[iFace][iNode] : 
+            closureFull[i][ faces[iFace][iNode] ];
         std::map<int,int>::iterator it = nodeSum2Face.find(nodeSum);
         if (it == nodeSum2Face.end() )
           Msg::Error("Prism face not found");

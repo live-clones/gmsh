@@ -866,8 +866,8 @@ void DocRecord::setPoints(fullMatrix<double> *p)
 void DocRecord::initialize()
 {
   int i;
-  for(i=0;i<numPoints;i++){
-	points[i].flag = 0;
+  for(i = 0; i < numPoints; i++){
+    points[i].flag = 0;
   }
 }
 
@@ -888,21 +888,21 @@ void DocRecord::remove_all()
   PointRecord* points2;
   numPoints2 = 0;
   for(i=0;i<numPoints;i++){
-    if(points[i].flag==0){
+    if(points[i].flag == 0){
       numPoints2++;
     }
   }
   points2 = new PointRecord[numPoints2];
   index = 0;
-  for(i=0;i<numPoints;i++){
-	if(points[i].flag==0){
-	  points2[index].where.h = points[i].where.h;
-	  points2[index].where.v = points[i].where.v;
-	  points2[index].data = points[i].data;
-	  points2[index].flag = points[i].flag;
-	  points2[index].identificator = points[i].identificator;
-	  index++;
-	}
+  for(i = 0; i < numPoints; i++){
+    if(points[i].flag==0){
+      points2[index].where.h = points[i].where.h;
+      points2[index].where.v = points[i].where.v;
+      points2[index].data = points[i].data;
+      points2[index].flag = points[i].flag;
+      points2[index].identificator = points[i].identificator;
+      index++;
+    }
   }
   delete [] points;
   points = points2;

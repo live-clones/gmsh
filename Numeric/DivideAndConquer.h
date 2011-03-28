@@ -30,7 +30,7 @@ struct PointRecord {
   void *data;
   int flag; //0:to be kept, 1:to be removed
   int identificator;
-  PointRecord() : adjacent(0), data (0) {}
+  PointRecord() : adjacent(0), data (0), flag(0) {}
 };
 
 struct _CDLIST{

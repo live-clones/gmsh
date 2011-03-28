@@ -135,7 +135,7 @@ GeomMeshMatcher::matchVertices(GModel* m1, GModel *m2, bool& ok)
       ((GVertex*) best_candidate_ge)->setTag(((GVertex*) *entity1)->tag());
       //m2->remove((GVertex*) best_candidate_ge);
       //vertices.push_back((GVertex*) best_candidate_ge);
-      for (int v = 0; v < ((GVertex*) best_candidate_ge)->getNumMeshVertices(); v++) {
+      for (unsigned int v = 0; v < ((GVertex*) best_candidate_ge)->getNumMeshVertices(); v++) {
 	((GVertex*) best_candidate_ge)->getMeshVertex(v)->setEntity((GVertex*) *entity1);
       }
       num_matched_vertices++;
@@ -225,7 +225,7 @@ GeomMeshMatcher::matchEdges(GModel* m1, GModel* m2,
       choice->reverse();
     }
 
-    for (int v = 0; v < ((GEdge*) choice)->getNumMeshVertices(); v++) {
+    for (unsigned int v = 0; v < ((GEdge*) choice)->getNumMeshVertices(); v++) {
       if (((GEdge*) choice)->getMeshVertex(v)->onWhat()->dim() > 0)
 	((GEdge*) choice)->getMeshVertex(v)->setEntity((GEdge*) *entity1);
     }
@@ -295,7 +295,7 @@ GeomMeshMatcher:: matchFaces(GModel* m1, GModel* m2,
     coresp_f->push_back(Pair<GFace*,GFace*>((GFace*) *entity1 ,
                                              choice));
     choice->setTag(((GFace*) *entity1)->tag());
-    for (int v = 0; v < ((GFace*) choice)->getNumMeshVertices(); v++) {
+    for (unsigned int v = 0; v < ((GFace*) choice)->getNumMeshVertices(); v++) {
       if(((GFace*) choice)->getMeshVertex(v)->onWhat()->dim() > 1)
 	((GFace*) choice)->getMeshVertex(v)->setEntity((GFace*) *entity1);
     }
@@ -394,7 +394,7 @@ GeomMeshMatcher::matchRegions(GModel* m1, GModel* m2,
                                              choice));
        choice->setTag(((GRegion*) *entity1)->tag());
 
-    for (int v = 0; v < ((GRegion*) choice)->getNumMeshVertices(); v++) {
+    for (unsigned int v = 0; v < ((GRegion*) choice)->getNumMeshVertices(); v++) {
       if ( ((GRegion*) choice)->getMeshVertex(v)->onWhat()->dim() > 2)
 	((GRegion*) choice)->getMeshVertex(v)->setEntity((GRegion*) *entity1);
     }

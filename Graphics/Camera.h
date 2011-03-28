@@ -59,7 +59,7 @@ class Camera {
   bool stereoEnable;
   double Lc, eye_sep_ratio, closeness, ndfl, glFnear, glFfar, radians, wd2;
   double glFleft,glFright,glFtop,glFbottom;
-  Camera() : stereoEnable(false), on(false) {}
+  Camera() : on(false), stereoEnable(false) {}
   ~Camera(){}
   void giveViewportDimension(const int& W,const int& H);
   void lookAtCg();

@@ -1209,10 +1209,9 @@ void GFace::moveToValidRange(SPoint2 &pt) const
   }
 }
 
-
-void GFace::addLayersOfQuads(int nLayers, GVertex *gv, double hmin, double ratio){
-  
-  SVector3 ez (0,0,1);
+void GFace::addLayersOfQuads(int nLayers, GVertex *gv, double hmin, double ratio)
+{  
+  SVector3 ez (0, 0, 1);
   std::list<GEdgeLoop>::iterator it = edgeLoops.begin();
   FILE *f = fopen ("coucou.pos","w");
   fprintf(f,"View \"\"{\n");
@@ -1231,21 +1230,23 @@ void GFace::addLayersOfQuads(int nLayers, GVertex *gv, double hmin, double ratio
 	GEdge *ge = it2->ge;
 	SPoint2 p[2];
 	if (it2->_sign == 1){
-	  for (int i=0;i<ge->lines.size();i++){
-	    reparamMeshEdgeOnFace ( ge->lines[i]->getVertex(0), ge->lines[i]->getVertex(1),this,p[0],p[1]);	  	  
-	    contour.push_back(std::make_pair(ge->lines[i]->getVertex(0),p[0]));
+	  for (unsigned int i = 0; i < ge->lines.size(); i++){
+	    reparamMeshEdgeOnFace(ge->lines[i]->getVertex(0), ge->lines[i]->getVertex(1),
+                                  this, p[0], p[1]);	  	  
+	    contour.push_back(std::make_pair(ge->lines[i]->getVertex(0), p[0]));
 	  }
 	}
 	else {
-	  for (int i=ge->lines.size()-1;i>=0;i--){
-	    reparamMeshEdgeOnFace ( ge->lines[i]->getVertex(0), ge->lines[i]->getVertex(1),this,p[0],p[1]);	  	  
+	  for(int i = ge->lines.size() - 1; i >= 0; i--){
+	    reparamMeshEdgeOnFace(ge->lines[i]->getVertex(0), ge->lines[i]->getVertex(1),
+                                  this,p[0],p[1]);	  	  
 	    contour.push_back(std::make_pair(ge->lines[i]->getVertex(1),p[1]));
 	  }
 	}
       }      
       double hlayer = hmin;
-      for (int j=0;j<nLayers;j++){
-	for (int i=0;i<contour.size();i++){
+      for (int j = 0; j < nLayers; j++){
+	for (unsigned int i = 0; i < contour.size(); i++){
 	  SPoint2 p0 = contour[(i+0) % contour.size()].second;
 	  SPoint2 p1 = contour[(i+1) % contour.size()].second;
 	  SPoint2 p2 = contour[(i+2) % contour.size()].second;

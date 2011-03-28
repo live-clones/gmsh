@@ -1037,7 +1037,7 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int typ
   else if (opt->tensorType == PViewOptions::Ellipse ||
            opt->tensorType == PViewOptions::Ellipsoid) {
     if(opt->glyphLocation == PViewOptions::Vertex){
-      double vval[3][4]= {0,0,0, 0,0,0, 0,0,0, 0,0,0};
+      double vval[3][4]= {{0,0,0,0}, {0,0,0,0}, {0,0,0,0}};
       for(int i = 0; i < numNodes; i++){
         for (int j = 0; j < 3; j++) {
           tensor(j,0) = val [i][0+j*3];
@@ -1060,7 +1060,7 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int typ
       }
     }
     else if(opt->glyphLocation == PViewOptions::COG){
-      double vval[3][4]= {0,0,0, 0,0,0, 0,0,0, 0,0,0};
+      double vval[3][4]= {{0,0,0,0}, {0,0,0,0}, {0,0,0,0}};
       for(int i = 0; i < numNodes; i++) {
         for (int j = 0; j < 3; j++) {
           tensor(j,0) = val [i][0+j*3];
