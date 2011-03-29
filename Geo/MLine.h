@@ -78,7 +78,7 @@ class MLine : public MElement {
       return false;
     return true;
   }
-  void getNode(int num, double &u, double &v, double &w)
+  virtual void getNode(int num, double &u, double &v, double &w)
   {
     v = w = 0.;
     switch(num) {
@@ -142,6 +142,10 @@ class MLine3 : public MLine {
   //virtual int getTypeForVTK() const { return 21; }
   virtual const char *getStringForPOS() const { return "SL2"; }
   virtual const char *getStringForINP() const { return "C1D3"; }
+  virtual void getNode(int num, double &u, double &v, double &w)
+  {
+    num < 2 ? MLine::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
+  }
 };
 
 /*
@@ -197,6 +201,10 @@ class MLineN : public MLine {
     if(_vs.size() == 8) return MSH_LIN_10;
     if(_vs.size() == 9) return MSH_LIN_11;
     return 0;
+  }
+  virtual void getNode(int num, double &u, double &v, double &w)
+  {
+    num < 2 ? MLine::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }
 };
 

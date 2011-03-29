@@ -125,7 +125,7 @@ class MTriangle : public MElement {
   }
   virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
-  void getNode(int num, double &u, double &v, double &w)
+  virtual void getNode(int num, double &u, double &v, double &w)
   {
     w = 0.;
     switch(num) {
@@ -225,6 +225,10 @@ class MTriangle6 : public MTriangle {
     MVertex *tmp;
     tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
     tmp = _vs[0]; _vs[0] = _vs[2]; _vs[2] = tmp;
+  }
+  virtual void getNode(int num, double &u, double &v, double &w)
+  {
+    num < 3 ? MTriangle::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }
 };
 
@@ -327,6 +331,10 @@ class MTriangleN : public MTriangle {
     std::vector<MVertex*> inv;
     inv.insert(inv.begin(), _vs.rbegin(), _vs.rend());
     _vs = inv;
+  }
+  virtual void getNode(int num, double &u, double &v, double &w)
+  {
+    num < 3 ? MTriangle::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }
 };
 

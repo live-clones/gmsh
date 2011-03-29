@@ -159,7 +159,7 @@ class MPrism : public MElement {
     s[5][1] =  0.5 * (1. + w)    ;
     s[5][2] =  0.5 * v           ;
   }*/
-  void getNode(int num, double &u, double &v, double &w)
+  virtual void getNode(int num, double &u, double &v, double &w)
   {
     switch(num) {
     case 0 : u = 0.; v = 0.; w = -1.; break;
@@ -329,6 +329,10 @@ class MPrism15 : public MPrism {
     tmp = _vs[2]; _vs[2] = _vs[4]; _vs[4] = tmp;
     tmp = _vs[7]; _vs[7] = _vs[8]; _vs[8] = tmp;
   }
+  virtual void getNode(int num, double &u, double &v, double &w)
+  {
+    num < 6 ? MPrism::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
+  }
 };
 
 /*
@@ -450,6 +454,10 @@ class MPrism18 : public MPrism {
     tmp = _vs[7]; _vs[7] = _vs[8]; _vs[8] = tmp;
     // quad face vertices
     tmp = _vs[10]; _vs[10] = _vs[11]; _vs[11] = tmp;
+  }
+  virtual void getNode(int num, double &u, double &v, double &w)
+  {
+    num < 6 ? MPrism::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }
 };
 

@@ -165,7 +165,7 @@ class MPyramid : public MElement {
     s[4][1] = 0.;
     s[4][2] = 1.;
   }
-  void getNode(int num, double &u, double &v, double &w)
+  virtual void getNode(int num, double &u, double &v, double &w)
   {
     switch(num) {
     case 0 : u = -1.; v = -1.; w = 0.; break;
@@ -321,6 +321,10 @@ class MPyramid13 : public MPyramid {
     tmp = _vs[1]; _vs[1] = _vs[5]; _vs[5] = tmp;
     tmp = _vs[2]; _vs[2] = _vs[6]; _vs[6] = tmp;
   }
+  virtual void getNode(int num, double &u, double &v, double &w)
+  {
+    num < 5 ? MPyramid::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
+  }
 };
 
 /*
@@ -436,6 +440,10 @@ class MPyramid14 : public MPyramid {
     tmp = _vs[0]; _vs[0] = _vs[3]; _vs[3] = tmp;
     tmp = _vs[1]; _vs[1] = _vs[5]; _vs[5] = tmp;
     tmp = _vs[2]; _vs[2] = _vs[6]; _vs[6] = tmp;
+  }
+  virtual void getNode(int num, double &u, double &v, double &w)
+  {
+    num < 5 ? MPyramid::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }
 };
 

@@ -107,6 +107,19 @@ double MElement::rhoShapeMeasure()
     return 0.;
 }
 
+void MElement::getNode(int num, double &u, double &v, double &w)
+{
+  // only for MElements that don't have a lookup table for this
+  // (currently only 1st order elements have)
+  double uvw[3];
+  MVertex* ver = getVertex(num);
+  double xyz[3] = {ver->x(), ver->y(), ver->z()};
+  xyz2uvw(xyz, uvw);
+  u = uvw[0];
+  v = uvw[1];
+  w = uvw[2];
+}
+
 void MElement::getShapeFunctions(double u, double v, double w, double s[], int o)
 {
   const polynomialBasis* fs = getFunctionSpace(o);
@@ -565,12 +578,21 @@ double MElement::integrateFlux(double val[], int face, int pOrder, int order)
   getFaceVertices(face, v);
   MElementFactory f;
   int type = 0;
-  if(getType() == TYPE_TRI || getType() == TYPE_TET) type = getTriangleType(getPolynomialOrder());
-  else if(getType() == TYPE_QUA || getType() == TYPE_HEX) type = getQuadType(getPolynomialOrder());
-  else if(getType() == TYPE_PYR && face < 4) type = getTriangleType(getPolynomialOrder());
-  else if(getType() == TYPE_PYR && face >= 4) type = getQuadType(getPolynomialOrder());
-  else if(getType() == TYPE_PRI && face < 2) type = getTriangleType(getPolynomialOrder());
-  else if(getType() == TYPE_PRI && face >= 2) type = getQuadType(getPolynomialOrder());
+  switch(getType()) {
+  case TYPE_TRI : type = getTriangleType(getPolynomialOrder()); break;
+  case TYPE_TET : type = getTriangleType(getPolynomialOrder()); break;
+  case TYPE_QUA : type = getQuadType(getPolynomialOrder());     break;
+  case TYPE_HEX : type = getQuadType(getPolynomialOrder());     break;
+  case TYPE_PYR : 
+    if(face < 4) type = getTriangleType(getPolynomialOrder());
+    else type = getQuadType(getPolynomialOrder());
+    break;
+  case TYPE_PRI :
+    if(face < 2) type = getTriangleType(getPolynomialOrder());
+    else type = getQuadType(getPolynomialOrder());
+    break;
+  default: type = 0; break;
+  }
   MElement* fe = f.create(type, v);
 
   double intv[3];

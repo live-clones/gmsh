@@ -117,7 +117,7 @@ void projectInMeanPlane(double *xn, double *yn);
   virtual const char *getStringForINP() const { return "C2D4"; }
   virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
-  void getNode(int num, double &u, double &v, double &w)
+  virtual void getNode(int num, double &u, double &v, double &w)
   {
     w = 0.;
     switch(num) {
@@ -237,6 +237,10 @@ class MQuadrangle8 : public MQuadrangle {
     tmp = _vs[0]; _vs[0] = _vs[3]; _vs[3] = tmp;
     tmp = _vs[1]; _vs[1] = _vs[2]; _vs[2] = tmp;
   }
+  virtual void getNode(int num, double &u, double &v, double &w)
+  {
+    num < 4 ? MQuadrangle::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
+  }
 };
 
 /*
@@ -308,6 +312,10 @@ class MQuadrangle9 : public MQuadrangle {
     tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;
     tmp = _vs[0]; _vs[0] = _vs[3]; _vs[3] = tmp;
     tmp = _vs[1]; _vs[1] = _vs[2]; _vs[2] = tmp;
+  }
+  virtual void getNode(int num, double &u, double &v, double &w)
+  {
+    num < 4 ? MQuadrangle::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }
 };
 
@@ -398,6 +406,10 @@ class MQuadrangleN : public MQuadrangle {
     std::vector<MVertex*> inv;
     inv.insert(inv.begin(), _vs.rbegin(), _vs.rend());
     _vs = inv;
+  }
+  virtual void getNode(int num, double &u, double &v, double &w)
+  {
+    num < 4 ? MQuadrangle::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }
 };
 

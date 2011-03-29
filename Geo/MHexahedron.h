@@ -161,7 +161,7 @@ class MHexahedron : public MElement {
     s[7][1] =  0.125 * (1. - u) * (1. + w);
     s[7][2] =  0.125 * (1. - u) * (1. + v);
   }
-  void getNode(int num, double &u, double &v, double &w)
+  virtual void getNode(int num, double &u, double &v, double &w)
   {
     switch(num) {
     case 0 : u = -1.; v = -1.; w = -1.; break;
@@ -352,6 +352,10 @@ class MHexahedron20 : public MHexahedron {
     _vs[8] = old[10]; _vs[10] = old[8];
     _vs[9] = old[11]; _vs[11] = old[9];
   }
+  virtual void getNode(int num, double &u, double &v, double &w)
+  {
+    num < 8 ? MHexahedron::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
+  }
 };
 
 /*
@@ -493,6 +497,10 @@ class MHexahedron27 : public MHexahedron {
     _vs[13] = old[15]; _vs[15] = old[13];
     _vs[14] = old[16]; _vs[16] = old[14];
   }
+  virtual void getNode(int num, double &u, double &v, double &w)
+  {
+    num < 8 ? MHexahedron::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
+  }
 };
 
 /*
@@ -631,6 +639,10 @@ class MHexahedronN : public MHexahedron {
   virtual void revert()
   {
     Msg::Error("not done yet reverse hexN");
+  }
+  virtual void getNode(int num, double &u, double &v, double &w)
+  {
+    num < 8 ? MHexahedron::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }
 };
 

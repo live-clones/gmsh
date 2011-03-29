@@ -220,12 +220,8 @@ class MElement
   // get the function space for the jacobian of the element
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const { return 0; }
 
-  // return parametric coordinates (u, v, w) of a vertex
-  virtual void getNode(int num, double &u, double &v, double &w)
-  {
-    u = v = w = 0.;
-    Msg::Error("Node get not available for this element");
-  }
+  // return parametric coordinates (u,v,w) of a vertex
+  virtual void getNode(int num, double &u, double &v, double &w);
 
   // return the interpolating nodal shape functions evaluated at point
   // (u,v,w) in parametric coordinates (if order == -1, use the
