@@ -13,8 +13,6 @@
 
 #if defined(HAVE_OCC)
 
-
-
 OCCRegion::OCCRegion(GModel *m, TopoDS_Solid _s, int num)
   : GRegion(m, num), s(_s)
 {
@@ -126,4 +124,5 @@ GRegion *getOCCRegionByNativePtr(GModel *model, TopoDS_Solid toFind)
   }
   return 0;
 }
+
 #endif

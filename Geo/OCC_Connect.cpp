@@ -15,6 +15,8 @@
 
 #if defined(HAVE_OCC)
 
+#include <Standard_Version.hxx>
+
 #include <TopoDS.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Solid.hxx>
@@ -597,7 +599,12 @@ void OCC_Connect::Intersect(BRep_Builder &BB, TopoDS_Shape &target,
             double tolerance=std::max(BRep_Tool::Tolerance(edge),
                                       BRep_Tool::Tolerance(vertex));
             for(int i=1;i<=distance.NbExt();i++) {
-                if(distance.Value(i)<tolerance) {
+#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 5)
+              double value = distance.Value(i);
+#else
+              double value = distance.SquareDistance(i);
+#endif
+              if(value<tolerance) {
                     try {
                         // No idea why this can fail
                         splitter1.Add(vertex,distance.Parameter(i),edge);
@@ -616,7 +623,7 @@ void OCC_Connect::Intersect(BRep_Builder &BB, TopoDS_Shape &target,
                             double d2=BRep_Tool::Pnt(v2).Distance(
                                 BRep_Tool::Pnt(vertex));
                             cout << "Adding " << i << " to edge " << e
-                                << " distance=" << distance.Value(i)
+                                << " distance=" << value
                                 << " parameter=" << distance.Parameter(i)
                                 << " point=" << distance.Point(i)
                                 << " dv1=" << d1
@@ -649,7 +656,12 @@ void OCC_Connect::Intersect(BRep_Builder &BB, TopoDS_Shape &target,
             double tolerance=std::max(BRep_Tool::Tolerance(edge),
                                       BRep_Tool::Tolerance(vertex));
             for(int i=1;i<=distance.NbExt();i++) {
-                if(distance.Value(i)<tolerance) {
+#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 5)
+              double value = distance.Value(i);
+#else
+              double value = distance.SquareDistance(i);
+#endif
+              if(value<tolerance) {
                     try {
                         splitter2.Add(vertex,distance.Parameter(i),edge);
                     }
@@ -667,7 +679,7 @@ void OCC_Connect::Intersect(BRep_Builder &BB, TopoDS_Shape &target,
                             double d2=BRep_Tool::Pnt(v2).Distance(
                                 BRep_Tool::Pnt(vertex));
                             cout << "Adding " << i << " to edge " << e
-                                << " distance=" << distance.Value(i)
+                                << " distance=" << value
                                 << " parameter=" << distance.Parameter(i)
                                 << " point=" << distance.Point(i)
                                 << " dv1=" << d1
