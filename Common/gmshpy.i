@@ -81,6 +81,7 @@ namespace std {
    %template(VectorFunctionConst) vector<const function*, std::allocator<const function*> >;
    %template(GEdgeVectorVector) vector< std::vector< GEdge *,std::allocator< GEdge * > >,std::allocator< std::vector< GEdge *,std::allocator< GEdge * > > > >;
    %template(GFaceList) list<GFace*, std::allocator<GFace*> >;
+   %template(GEdgeList) list<GEdge*, std::allocator<GEdge*> >;
 }
 
 %include "GmshConfig.h"
