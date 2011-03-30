@@ -3,8 +3,8 @@ CreateTopology;
 
 Merge "aortaRADIUS2.bgm";
 
-out1[] = Extrude{Surface{1}; Layers{4, 0.8}; Using Index[0]; Using View[0]; };
-out2[] = Extrude{Surface{1}; Layers{4, -0.5}; Using Index[1]; Using View[0]; };
+out1[] = Extrude{Surface{1}; Layers{4, 0.5}; Using Index[0]; Using View[0]; };
+//out2[] = Extrude{Surface{1}; Layers{4, -0.5}; Using Index[1]; Using View[0]; };
 
 Line Loop(60) = {9}; Plane Surface(61) = {60};
 Line Loop(62) = {7}; Plane Surface(63) = {62};
