@@ -675,8 +675,6 @@ if(ENABLE_OCC)
     # unset(OCC_LIB CACHE) # cleaner, but only available in cmake >= 2.6.4
   endforeach(OCC)
   list(LENGTH OCC_LIBS NUM_OCC_LIBS)
-
-
   if(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
     find_path(OCC_INC "BRep_Tool.hxx" PATHS ENV CASROOT PATH_SUFFIXES inc 
               include opencascade)
@@ -773,9 +771,9 @@ endif(MSVC)
 
 if(WIN32 AND NOT HAVE_FLTK)
   if(MSVC)
-	list(APPEND EXTERNAL_LIBRARIES "wsock32.lib")
+    list(APPEND EXTERNAL_LIBRARIES "wsock32.lib")
   ELSE(MSVC)
-	list(APPEND EXTERNAL_LIBRARIES "ws2_32.lib wsock32.lib")
+    list(APPEND EXTERNAL_LIBRARIES "ws2_32.lib wsock32.lib")
   ENDIF(MSVC)
 endif(WIN32 AND NOT HAVE_FLTK)
 
@@ -886,10 +884,15 @@ add_executable(gmsh_dynamic EXCLUDE_FROM_ALL Fltk/Main.cpp)
 target_link_libraries(gmsh_dynamic shared)
 
 # increase stack to 16Mb on Windows to avoid overflows in recursive
-# tet classification for large 3D Delaunay grids
+# tet classification for large 3D Delaunay grids + force static
+# linking of system libraries with cygwin/mingw (to ease distribution 
+# andspeed up app startup time)
 if(WIN32 AND NOT MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS 
-    "-Wl,--stack,16777216 ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win32Icon.res -mwindows")
+    "-Wl,--stack,16777216 ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win32Icon.res -mwindows -static")
+  # remove stupid -Wl,-Bdynamic flags
+  set(CMAKE_EXE_LINK_DYNAMIC_C_FLAGS)
+  set(CMAKE_EXE_LINK_DYNAMIC_CXX_FLAGS)
 elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS "/STACK:16777216")
 endif(WIN32 AND NOT MSVC)
