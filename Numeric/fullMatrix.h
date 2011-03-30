@@ -249,18 +249,6 @@ class fullMatrix
     _own_data = false;
     _data = original._data + c_start * _r;
   }
-  void setAsShapeProxy(fullMatrix<scalar> &original, int nbRow, int nbCol)
-  {
-    if(_data && _own_data)
-      delete [] _data;
-    _c = nbCol;
-    _r = nbRow;
-    if(_c*_r != original._c*original._r)
-      Msg::Error("Trying to reshape a fullMatrix without conserving the "
-                 "total number of entries");
-    _own_data = false;
-    _data = original._data;
-  }
   fullMatrix<scalar> & operator = (const fullMatrix<scalar> &other)
   {
     if(this != &other){
