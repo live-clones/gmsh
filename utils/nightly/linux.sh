@@ -5,9 +5,9 @@ GMSH=${HOME}/src/gmsh
 LOG=${GMSH}/nightly.log
 WEB_BIN=geuzaine@geuz.org:/home/www/geuz.org/gmsh/bin/Linux
 CMAKE=/usr/local/bin/cmake
-PETSC_DIR=${HOME}/src/petsc-3.0.0-p7
-PETSC_ARCH=umfpack-cxx-opt
+PETSC_DIR=${HOME}/src/petsc-3.0.0-p12
 SLEPC_DIR=${HOME}/src/slepc-3.0.0-p7
+PETSC_ARCH=linux_complex_umfpack
 
 rm -f ${LOG}
 rm -rf ${GMSH}/bin
