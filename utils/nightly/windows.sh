@@ -5,9 +5,12 @@ GMSH=${HOME}/src/gmsh
 LOG=${GMSH}/nightly.log
 WEB_BIN=geuzaine@geuz.org:/home/www/geuz.org/gmsh/bin/Windows
 CMAKE=cmake
-PETSC_DIR=${HOME}/src/petsc-3.0.0-p7
-PETSC_ARCH=umfpack-cxx-opt
+CC=/usr/bin/i686-w64-mingw32-gcc.exe
+CXX=/usr/bin/i686-w64-mingw32-g++.exe
+FC=/usr/bin/i686-w64-mingw32-gfortran.exe
+PETSC_DIR=${HOME}/src/petsc-3.0.0-p12
 SLEPC_DIR=${HOME}/src/slepc-3.0.0-p7
+PETSC_ARCH=win32_complex_umfpack
 
 rm -f ${LOG}
 rm -rf ${GMSH}/bin
@@ -16,9 +19,7 @@ cd ${GMSH} && svn update >> ${LOG} 2>&1
 mkdir ${GMSH}/bin
 cd ${GMSH}/bin && \
   ${CMAKE} -DGMSH_EXTRA_VERSION:string="${EXTRA_VERSION}"\
-           -DCMAKE_PREFIX_PATH:path="/usr/local;/usr/local/opencascade"\
-           -DCMAKE_CXX_FLAGS:string="-mno-cygwin"\
-           -DCMAKE_C_FLAGS:string="-mno-cygwin"\
+           -DCMAKE_PREFIX_PATH:path="/usr/local;/usr/local/opencascade;/usr/i686-w64-mingw32/sys-root/mingw"\
            -DENABLE_SWIG:bool=FALSE\
   ${GMSH} >> ${LOG} 2>&1
 cd ${GMSH}/bin && make html >> ${LOG} 2>&1
