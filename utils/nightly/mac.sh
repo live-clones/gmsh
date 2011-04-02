@@ -5,9 +5,9 @@ GMSH=${HOME}/src/gmsh
 LOG=${GMSH}/nightly.log
 WEB_BIN=geuzaine@geuz.org:/home/www/geuz.org/gmsh/bin/MacOSX
 CMAKE=/usr/local/bin/cmake
-PETSC_DIR=${HOME}/src/petsc-3.0.0-p7
-PETSC_ARCH=umfpack-cxx-opt
-SLEPC_DIR=${HOME}/src/slepc-3.0.0-p7
+export PETSC_DIR=${HOME}/src/petsc-3.0.0-p7
+export PETSC_ARCH=umfpack-cxx-opt
+export SLEPC_DIR=${HOME}/src/slepc-3.0.0-p7
 
 rm -f ${LOG}
 rm -rf ${GMSH}/bin

@@ -5,12 +5,12 @@ GMSH=${HOME}/src/gmsh
 LOG=${GMSH}/nightly.log
 WEB_BIN=geuzaine@geuz.org:/home/www/geuz.org/gmsh/bin/Windows
 CMAKE=cmake
-CC=/usr/bin/i686-w64-mingw32-gcc.exe
-CXX=/usr/bin/i686-w64-mingw32-g++.exe
-FC=/usr/bin/i686-w64-mingw32-gfortran.exe
-PETSC_DIR=${HOME}/src/petsc-3.0.0-p12
-SLEPC_DIR=${HOME}/src/slepc-3.0.0-p7
-PETSC_ARCH=win32_complex_umfpack
+export CC=/usr/bin/i686-w64-mingw32-gcc.exe
+export CXX=/usr/bin/i686-w64-mingw32-g++.exe
+export FC=/usr/bin/i686-w64-mingw32-gfortran.exe
+export PETSC_DIR=${HOME}/src/petsc-3.0.0-p12
+export SLEPC_DIR=${HOME}/src/slepc-3.0.0-p7
+export PETSC_ARCH=win32_complex_umfpack
 
 rm -f ${LOG}
 rm -rf ${GMSH}/bin
