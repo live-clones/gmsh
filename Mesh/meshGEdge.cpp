@@ -286,18 +286,18 @@ void meshGEdge::operator() (GEdge *ge)
   ge->setLength(length);
   Points.clear();
 
-  if(length == 0. && CTX::instance()->mesh.toleranceEdgeLength == 0.)
-    Msg::Error("Curve %d has a zero length", ge->tag());
-  else if (length == 0.)
-    Msg::Debug("Curve %d has a zero length", ge->tag());
-
   if(length < CTX::instance()->mesh.toleranceEdgeLength)
     ge->setTooSmall(true);
 
   // Integrate detJ/lc du 
   double a;
   int N;
-  if (ge->degenerate(0)){
+  if(length == 0. && CTX::instance()->mesh.toleranceEdgeLength == 0.){
+    Msg::Error("Curve %d has a zero length", ge->tag());
+    a = 0;
+    N = 1;
+  }
+  else if(ge->degenerate(0)){
     a = 0.;
     N = 1;
   }
@@ -320,7 +320,7 @@ void meshGEdge::operator() (GEdge *ge)
   // recombination
   if(CTX::instance()->mesh.algoRecombine == 1 && N % 2 == 0) N++;
 
-  //  printFandPrimitive(ge->tag(),Points);
+  // printFandPrimitive(ge->tag(),Points);
 
   // if the curve is periodic and if the begin vertex is identical to
   // the end vertex and if this vertex has only one model curve
@@ -348,7 +348,7 @@ void meshGEdge::operator() (GEdge *ge)
     IntPoint P1, P2;
     mesh_vertices.resize(N - 2);
     while(NUMP < N - 1) {
-      P1 = Points[count-1];
+      P1 = Points[count - 1];
       P2 = Points[count];
       const double d = (double)NUMP * b;
       if((fabs(P2.p) >= fabs(d)) && (fabs(P1.p) < fabs(d))) {
