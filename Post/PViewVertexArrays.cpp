@@ -632,7 +632,7 @@ static void addScalarPolygon(PView *p, double **xyz,
     for(int i = 0; i < numNodes / 3; i++){
       for(int j = 0; j < 3; j++) {
         MEdge ed(verts[3*i+il[j][0]], verts[3*i+il[j][1]]);
-        std::map<MEdge, int>::iterator ite;
+        std::map<MEdge, int, Less_Edge>::iterator ite;
         for(ite = edges.begin(); ite != edges.end(); ite++)
           if((*ite).first == ed) break;
         if(ite == edges.end())
@@ -642,7 +642,7 @@ static void addScalarPolygon(PView *p, double **xyz,
     }
 
     opt->boundary--;
-    for(std::map<MEdge, int>::iterator ite = edges.begin(); ite != edges.end(); ite++){
+    for(std::map<MEdge, int, Less_Edge>::iterator ite = edges.begin(); ite != edges.end(); ite++){
       int i = (int) (*ite).second/100;
       int j = (*ite).second%100;
       addScalarLine(p, xyz, val, pre, 3*i+il[j][0], 3*i+il[j][0], true);
@@ -830,7 +830,7 @@ static void addOutlinePolyhedron(PView *p, double **xyz,
   for(int i = 0; i < numNodes / 4; i++){
     for(int j = 0; j < 4; j++) {
       MFace f(verts[4*i+it[j][0]], verts[4*i+it[j][1]], verts[4*i+it[j][2]]);
-      std::map<MFace, int>::iterator ite;
+      std::map<MFace, int, Less_Face>::iterator ite;
       for(ite = triFaces.begin(); ite != triFaces.end(); ite++)
         if((*ite).first == f) break;
       if(ite == triFaces.end())
@@ -838,7 +838,7 @@ static void addOutlinePolyhedron(PView *p, double **xyz,
       else triFaces.erase(ite);
     }
   }
-  for(std::map<MFace, int>::iterator ite = triFaces.begin(); ite != triFaces.end(); ite++){
+  for(std::map<MFace, int, Less_Face>::iterator ite = triFaces.begin(); ite != triFaces.end(); ite++){
     int i = (int) (*ite).second/100;
     int j = (*ite).second%100;
     addOutlineTriangle(p, xyz, color, pre, 4*i+it[j][0], 4*i+it[j][1], 4*i+it[j][2]);
