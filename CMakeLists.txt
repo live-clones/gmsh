@@ -682,7 +682,7 @@ if(ENABLE_OCC)
   set(OCC_LIBS)
   foreach(OCC ${OCC_LIBS_REQUIRED})
     find_library(OCC_LIB ${OCC} PATHS ENV CASROOT PATH_SUFFIXES lib 
-                 ${OCC_SYS_NAME}/lib)
+                 ${OCC_SYS_NAME}/lib ${OCC_SYS_NAME}/vc8/lib)
     if(OCC_LIB)
       list(APPEND OCC_LIBS ${OCC_LIB})
     else(OCC_LIB)
