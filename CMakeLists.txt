@@ -302,28 +302,32 @@ if(ENABLE_PARSER)
 endif(ENABLE_PARSER)
 
 if(ENABLE_FLTK)
-  # try first to use fltk-config (FindFLTK is buggy on Unix, where
-  # e.g. xft and xinerama options are not dealt with)
+  # first, try to use fltk-config for fltk >= 1.3 (FindFLTK is buggy
+  # on Unix, where e.g. xft and xinerama options are not dealt with)
   find_program(FLTK_CONFIG_SCRIPT fltk-config)
   if(FLTK_CONFIG_SCRIPT)
-    add_subdirectory(Fltk)
-    set_config_option(HAVE_FLTK "Fltk")
     execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --api-version
                     OUTPUT_VARIABLE FLTK_VERSION)
     string(STRIP ${FLTK_VERSION} FLTK_VERSION)
-    message(STATUS "Found fltk-config script for FLTK " ${FLTK_VERSION})
-    execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --includedir
-                    OUTPUT_VARIABLE FLTK_INCLUDE_DIR)
-    string(STRIP ${FLTK_INCLUDE_DIR} FLTK_INCLUDE_DIR)
-    list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR} ${FLTK_INCLUDE_DIR}/FL/images
-         ${FLTK_INCLUDE_DIR}/jpeg ${FLTK_INCLUDE_DIR}/zlib ${FLTK_INCLUDE_DIR}/png)
-    execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --ldflags
-                    OUTPUT_VARIABLE FLTK_LIBRARIES)
-    string(STRIP ${FLTK_LIBRARIES} FLTK_LIBRARIES)
-    string(REGEX MATCH "fltk[_ ]jpeg" FLTK_JPEG ${FLTK_LIBRARIES})
-    string(REGEX MATCH "fltk[_ ]z" FLTK_Z ${FLTK_LIBRARIES})
-    string(REGEX MATCH "fltk[_ ]png" FLTK_PNG ${FLTK_LIBRARIES})
-  else(FLTK_CONFIG_SCRIPT)
+    if(FLTK_VERSION GREATER 1.1)
+      add_subdirectory(Fltk)
+      set_config_option(HAVE_FLTK "Fltk")
+      message(STATUS "Using fltk-config script for FLTK " ${FLTK_VERSION})
+      execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --includedir
+                      OUTPUT_VARIABLE FLTK_INCLUDE_DIR)
+      string(STRIP ${FLTK_INCLUDE_DIR} FLTK_INCLUDE_DIR)
+      list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR} ${FLTK_INCLUDE_DIR}/FL/images
+           ${FLTK_INCLUDE_DIR}/jpeg ${FLTK_INCLUDE_DIR}/zlib ${FLTK_INCLUDE_DIR}/png)
+      execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --ldflags
+                      OUTPUT_VARIABLE FLTK_LIBRARIES)
+      string(STRIP ${FLTK_LIBRARIES} FLTK_LIBRARIES)
+      string(REGEX MATCH "fltk[_ ]jpeg" FLTK_JPEG ${FLTK_LIBRARIES})
+      string(REGEX MATCH "fltk[_ ]z" FLTK_Z ${FLTK_LIBRARIES})
+      string(REGEX MATCH "fltk[_ ]png" FLTK_PNG ${FLTK_LIBRARIES})
+    endif(FLTK_VERSION GREATER 1.1)
+  endif(FLTK_CONFIG_SCRIPT)
+  # then try the built-in FindFLTK module
+  if(NOT HAVE_FLTK)
     set(FLTK_SKIP_FORMS TRUE)
     set(FLTK_SKIP_FLUID TRUE)
     find_package(FLTK)
@@ -365,7 +369,7 @@ if(ENABLE_FLTK)
         endforeach(DIR)
       endif(FLTK_PNG)   
     endif(FLTK_FOUND)
-  endif(FLTK_CONFIG_SCRIPT)
+  endif(NOT HAVE_FLTK)
   if(ENABLE_NATIVE_FILE_CHOOSER)
     if(NOT FLTK_VERSION OR FLTK_VERSION EQUAL 1.1)
       add_subdirectory(contrib/NativeFileChooser)
