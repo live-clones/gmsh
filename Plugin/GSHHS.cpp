@@ -800,9 +800,11 @@ public:
       loop_buff.str("");
       first_point_in_loop = ip;
     }
+    int _write_polar_sphere;
   public:
-    GeoEarthImport(const std::string _filename, bool  write_polar_sphere,double radius)
+    GeoEarthImport(const std::string _filename, int  write_polar_sphere,double radius)
     {
+      _write_polar_sphere = write_polar_sphere;
       filename = _filename;
       file=new std::ofstream(filename.c_str());
       loop_buff.precision(16);
@@ -813,7 +815,7 @@ public:
       buff << "ILL = newll;\n";
       buff << "IS = news;\n";
       buff << "IFI = newf;\n";
-      if(write_polar_sphere){
+      if(write_polar_sphere > 0){
         buff << "Point ( IP + " << ip++ << " ) = {0, 0, 0 };\n";
         buff << "Point ( IP + " << ip++ <<" ) = {0, 0,"<<radius<<"};\n";
         buff << "PolarSphere ( IS + " << is++ << " ) = {IP , IP+1};\n";
@@ -832,6 +834,9 @@ public:
     {
       double r=sqrt(point.x()*point.x()+point.y()*point.y()+point.z()*point.z());
       SPoint2 stereo(-point.x() / (r + point.z()), -point.y() / (r + point.z()));
+      if (_write_polar_sphere == -2){
+        stereo = SPoint2(2 * r * point.x() / (r + point.z()), 2 * r * point.y() / (r + point.z()));
+      }
       loop_buff << "Point ( IP + " << ip++ << " ) = {" << stereo.
         x() << ", " << stereo.y() << ", " << 0 << " };\n";
     }
@@ -952,7 +957,7 @@ std::string GMSH_GSHHSPlugin::getHelp() const
     "field(IField) are merged and inner corners which form an "
     "angle < pi/3 are removed.\n\n"
     "The output is always in stereographic coordinates, if "
-    "the \"WritePolarSphere\" option is not 0, a sphere is "
+    "the \"WritePolarSphere\" option is greater than 0, a sphere is "
     "added to the geo file.\n\n"
     "WARNING: this plugin is still experimental and needs "
     "polishing and error-handling. In particular, it will "
@@ -992,7 +997,7 @@ PView *GMSH_GSHHSPlugin::execute(PView * v)
   double utm_equatorial_radius=(double)GSHHSOptions_Number[2].def;
   double utm_polar_radius=(double)GSHHSOptions_Number[3].def;
   double radius=(double)GSHHSOptions_Number[4].def;
-  bool write_polar_sphere = (bool)GSHHSOptions_Number[5].def;
+  int write_polar_sphere = (int)GSHHSOptions_Number[5].def;
   double straits_factor = (double)GSHHSOptions_Number[6].def;
   coordinate_lonlat lonlat(radius);
   coordinate_lonlat_degrees lonlat_degrees(radius);
