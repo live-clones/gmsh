@@ -280,12 +280,12 @@ void lloydAlgorithm::eval(DocRecord& triangulator,GFace* gf,std::vector<SVector3
 		SPoint2 x1(_x1[0],_x1[1]);
 		SPoint2 x2(_x2[0],_x2[1]);
 		SPoint2 x3(_x3[0],_x3[1]);
-		double _C1[2];
-		double _C2[2];
-		circumCenterXY(_x0,_x1,_x2,_C1);
-		circumCenterXY(_x0,_x2,_x3,_C2);
-		SPoint2 C1(_C1[0],_C1[1]);
-		SPoint2 C2(_C2[0],_C2[1]);
+		double CC1[2];
+		double CC2[2];
+		circumCenterXY(_x0,_x1,_x2,CC1);
+		circumCenterXY(_x0,_x2,_x3,CC2);
+		SPoint2 C1(CC1[0],CC1[1]);
+		SPoint2 C2(CC2[0],CC2[1]);
 		is_inside1 = inside_domain(C1.x(),C1.y());
 		is_inside2 = inside_domain(C2.x(),C2.y());
 		if(is_inside1 && is_inside2){
@@ -432,12 +432,12 @@ void lloydAlgorithm::eval(DocRecord& triangulator,GFace* gf,std::vector<SVector3
 		  ok_triangle1 = adjacent(triangulator,index1,index2) && triangle_area(x0,x1,x2)>e;
 		  ok_triangle2 = adjacent(triangulator,index2,index3) && triangle_area(x0,x2,x3)>e;
 		  if(ok_triangle1 && ok_triangle2){
-		    double _C1[2];
-			double _C2[2];
-			circumCenterXY(_x0,_x1,_x2,_C1);
-			circumCenterXY(_x0,_x2,_x3,_C2);
-			SPoint2 C1(_C1[0],_C1[1]);
-			SPoint2 C2(_C2[0],_C2[1]);
+		    double CC1[2];
+			double CC2[2];
+			circumCenterXY(_x0,_x1,_x2,CC1);
+			circumCenterXY(_x0,_x2,_x3,CC2);
+			SPoint2 C1(CC1[0],CC1[1]);
+			SPoint2 C2(CC2[0],CC2[1]);
 			is_inside1 = inside_domain(C1.x(),C1.y());
 			is_inside2 = inside_domain(C2.x(),C2.y());
 		    if(is_inside1 && is_inside2){
@@ -493,9 +493,9 @@ void lloydAlgorithm::eval(DocRecord& triangulator,GFace* gf,std::vector<SVector3
 			}
 		  }
 		  else if(ok_triangle1){
-		    double _C[2];
-		    circumCenterXY(_x0,_x1,_x2,_C);
-			SPoint2 C(_C[0],_C[1]);
+		    double CC[2];
+		    circumCenterXY(_x0,_x1,_x2,CC);
+			SPoint2 C(CC[0],CC[1]);
 			is_inside = inside_domain(C.x(),C.y());
 			if(is_inside){
 			  SPoint2 val;
@@ -506,9 +506,9 @@ void lloydAlgorithm::eval(DocRecord& triangulator,GFace* gf,std::vector<SVector3
 			}	  
 		  }
 		  else if(ok_triangle2){
-		    double _C[2];
-			circumCenterXY(_x0,_x2,_x3,_C);
-			SPoint2 C(_C[0],_C[1]);
+		    double CC[2];
+			circumCenterXY(_x0,_x2,_x3,CC);
+			SPoint2 C(CC[0],CC[1]);
 			is_inside = inside_domain(C.x(),C.y());
 			if(is_inside){
 			  SPoint2 val;
