@@ -405,7 +405,8 @@ class UTMField : public Field
 
 class LonLatField : public Field
 {
-  int iField;
+  int iField, fromStereo;
+  double stereoRadius;
  public:
   std::string getDescription()
   {
@@ -417,6 +418,13 @@ class LonLatField : public Field
     iField = 1;
     options["IField"] = new FieldOptionInt
       (iField, "Index of the field to evaluate.");
+    fromStereo = 0;
+    stereoRadius = 6371e3;
+    
+    options["FromStereo"] = new FieldOptionInt
+      (fromStereo, "if = 1, the mesh is in stereographic coordinates. xi = 2Rx/(R+z),  eta = 2Ry/(R+z)");
+    options["RadiusStereo"] = new FieldOptionDouble
+      (stereoRadius, "radius of the sphere of the stereograpic coordinates");
   }
   const char *getName()
   {
@@ -426,7 +434,15 @@ class LonLatField : public Field
   {
     Field *field = GModel::current()->getFields()->get(iField);
     if(!field || iField == id) return MAX_LC;
-    return (*field)(atan2(y, x), asin(z / sqrt(x * x + y * y + z * z)), 0);
+    if (fromStereo == 1) {
+      double xi = x;
+      double eta = y;
+      double r2 = stereoRadius * stereoRadius;
+      x = 4 * r2 * xi / ( 4 * r2 + xi * xi + eta * eta);
+      y = 4 * r2 * eta / ( 4 * r2 + xi * xi + eta * eta);
+      z = stereoRadius * (4 * r2 - eta * eta - xi * xi) / ( 4 * r2 + xi * xi + eta * eta);
+    }
+    return (*field)(atan2(y, x), asin(z / stereoRadius), 0);
   }
 };
 
