@@ -315,7 +315,8 @@ if(ENABLE_FLTK)
     execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --includedir
                     OUTPUT_VARIABLE FLTK_INCLUDE_DIR)
     string(STRIP ${FLTK_INCLUDE_DIR} FLTK_INCLUDE_DIR)
-    list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR})
+    list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR} ${FLTK_INCLUDE_DIR}/FL/images
+         ${FLTK_INCLUDE_DIR}/jpeg ${FLTK_INCLUDE_DIR}/zlib ${FLTK_INCLUDE_DIR}/png)
     execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --ldflags
                     OUTPUT_VARIABLE FLTK_LIBRARIES)
     string(STRIP ${FLTK_LIBRARIES} FLTK_LIBRARIES)
