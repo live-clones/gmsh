@@ -155,7 +155,7 @@ void lloydAlgorithm::operator () (GFace *gf)
   triangulator.makePosView("LloydInit.pos");
   	
   int num_interior;
-  double initial_conditions[2*triangulator.numPoints];
+  std::vector<double> initial_conditions(2*triangulator.numPoints);
   num_interior = 0;
   for(int i=0;i<triangulator.numPoints;i++){
     PointRecord& pt = triangulator.points[i];
@@ -175,7 +175,7 @@ void lloydAlgorithm::operator () (GFace *gf)
 	}
   }
   alglib::real_1d_array x;
-  x.setcontent(2*num_interior,initial_conditions);
+  x.setcontent(2*num_interior,&initial_conditions[0]);
   
   double epsg = 0;
   double epsf = 0;
