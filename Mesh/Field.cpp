@@ -1488,6 +1488,8 @@ class AttractorField : public Field
   ANNdistArray dist;
   std::list<int> nodes_id, edges_id, faces_id;
   std::vector<AttractorInfo> _infos;
+  int _xFieldId, _yFieldId, _zFieldId;
+  Field *_xField, *_yField, *_zField;
   int n_nodes_by_edge;  
  public:
   AttractorField() : kdtree(0), zeronodes(0)
@@ -1506,6 +1508,10 @@ class AttractorField : public Field
       (faces_id, "Indices of surfaces in the geometric model (Warning, this feature "
        "is still experimental. It might (read: will probably) give wrong results "
        "for complex surfaces)", &update_needed);
+    _xFieldId = _yFieldId = _zFieldId = -1;
+    options["FieldX"] = new FieldOptionInt(_xFieldId, "Id of the field to use as x coordinate.", &update_needed);
+    options["FieldY"] = new FieldOptionInt(_yFieldId, "Id of the field to use as y coordinate.", &update_needed);
+    options["FieldZ"] = new FieldOptionInt(_zFieldId, "Id of the field to use as z coordinate.", &update_needed);
   }
   ~AttractorField()
   {
@@ -1525,6 +1531,12 @@ class AttractorField : public Field
       "is replaced by NNodesByEdge equidistant nodes and the distance from those "
       "nodes is computed.";
   }
+  void getCoord(double x, double y, double z, double &cx, double &cy, double &cz, GEntity *ge = NULL) {
+    cx = _xField ? (*_xField)(x, y, z, ge) : x;
+    cy = _yField ? (*_yField)(x, y, z, ge) : y;
+    cz = _zField ? (*_zField)(x, y, z, ge) : z;
+  }
+
   std::pair<AttractorInfo,SPoint3> getAttractorInfo() const 
   {
     return std::make_pair(_infos[index[0]], SPoint3(zeronodes[index[0]][0],
@@ -1533,6 +1545,10 @@ class AttractorField : public Field
   }
   virtual double operator() (double X, double Y, double Z, GEntity *ge=0)
   {
+    _xField = _xFieldId >= 0 ? (GModel::current()->getFields()->get(_xFieldId)) : NULL;
+    _yField = _yFieldId >= 0 ? (GModel::current()->getFields()->get(_yFieldId)) : NULL;
+    _zField = _zFieldId >= 0 ? (GModel::current()->getFields()->get(_zFieldId)) : NULL;
+
     if(update_needed) {
       if(zeronodes) {
         annDeallocPts(zeronodes);
@@ -1549,16 +1565,14 @@ class AttractorField : public Field
           it != nodes_id.end(); ++it) {
         Vertex *v = FindPoint(*it);
         if(v) {
-          zeronodes[k][0] = v->Pos.X;
-          zeronodes[k][1] = v->Pos.Y;
-          zeronodes[k++][2] = v->Pos.Z;
+          getCoord(v->Pos.X, v->Pos.Y, v->Pos.Z, zeronodes[k][0], zeronodes[k][1], zeronodes[k][2]);
+          k++;
         }
         else {
           GVertex *gv = GModel::current()->getVertexByTag(*it);
           if(gv) {
-            zeronodes[k][0] = gv->x();
-            zeronodes[k][1] = gv->y();
-            zeronodes[k++][2] = gv->z();
+            getCoord(gv->x(), gv->y(), gv->z(), zeronodes[k][0], zeronodes[k][1], zeronodes[k][2], gv);
+            k++;
           }
         }
       }
@@ -1569,9 +1583,7 @@ class AttractorField : public Field
           for(int i = 0; i < n_nodes_by_edge; i++) {
             double u = (double)i / (n_nodes_by_edge - 1);
             Vertex V = InterpolateCurve(c, u, 0);
-            zeronodes[k][0] = V.Pos.X;
-            zeronodes[k][1] = V.Pos.Y;
-            zeronodes[k][2] = V.Pos.Z;
+            getCoord(V.Pos.X, V.Pos.Y, V.Pos.Z, zeronodes[k][0], zeronodes[k][1], zeronodes[k][2]);
 	    _infos[k++] = AttractorInfo(*it,1,u,0);
           }
         }
@@ -1583,9 +1595,7 @@ class AttractorField : public Field
               Range<double> b = e->parBounds(0);
               double t = b.low() + u * (b.high() - b.low());
               GPoint gp = e->point(t);
-              zeronodes[k][0] = gp.x();
-              zeronodes[k][1] = gp.y();
-              zeronodes[k][2] = gp.z();
+              getCoord(gp.x(), gp.y(), gp.z(), zeronodes[k][0], zeronodes[k][1], zeronodes[k][2], e);
 	      _infos[k++] = AttractorInfo(*it,1,u,0);
             }
           }
@@ -1603,9 +1613,7 @@ class AttractorField : public Field
               double u = (double)i / (n_nodes_by_edge - 1);
               double v = (double)j / (n_nodes_by_edge - 1);
               Vertex V = InterpolateSurface(s, u, v, 0, 0);
-              zeronodes[k][0] = V.Pos.X;
-              zeronodes[k][1] = V.Pos.Y;
-              zeronodes[k][2] = V.Pos.Z;
+              getCoord(V.Pos.X, V.Pos.Y, V.Pos.Z, zeronodes[k][0], zeronodes[k][1], zeronodes[k][2]);
 	      _infos[k++] = AttractorInfo(*it,2,u,v);
             }
           }
@@ -1622,9 +1630,7 @@ class AttractorField : public Field
                 double t1 = b1.low() + u * (b1.high() - b1.low());
                 double t2 = b2.low() + v * (b2.high() - b2.low());
                 GPoint gp = f->point(t1, t2);
-                zeronodes[k][0] = gp.x();
-                zeronodes[k][1] = gp.y();
-                zeronodes[k][2] = gp.z();
+                getCoord(gp.x(), gp.y(), gp.z(), zeronodes[k][0], zeronodes[k][1], zeronodes[k][2], f);
 		_infos[k++] = AttractorInfo(*it,2,u,v);
               }
             }
@@ -1634,7 +1640,8 @@ class AttractorField : public Field
       kdtree = new ANNkd_tree(zeronodes, totpoints, 3);
       update_needed = false;
     }
-    double xyz[3] = { X, Y, Z };
+    double xyz[3];
+    getCoord(X, Y, Z, xyz[0], xyz[1], xyz[2], ge);
     kdtree->annkSearch(xyz, 1, index, dist);
     return sqrt(dist[0]);
   }
