@@ -89,11 +89,26 @@ class DocRecord{
   PointRecord *points;  // points to triangulate
   int numTriangles;     // number of triangles
   Triangle *triangles;  // 2D results
+  std::set<std::pair<void*,void*> > boundaryEdges;
   DocRecord(int n);
   double &x(int i){ return points[i].where.h; } 
   double &y(int i){ return points[i].where.v; } 
   void*  &data(int i){ return points[i].data; } 
-  void setPoints(fullMatrix<double> *p);
+  void addBoundaryEdge (void* p1, void* p2){
+    void *a = (p1 < p2) ? p1 : p2;
+    void *b = (p1 > p2) ? p1 : p2;
+    boundaryEdges.insert(std::make_pair(a,b));
+  }
+  bool lookForBoundaryEdge(void *p1, void* p2){
+    void *a = (p1 < p2) ? p1 : p2;
+    void *b = (p1 > p2) ? p1 : p2;
+    std::set<std::pair<void*,void*> >::iterator it = boundaryEdges.find(std::make_pair(a,b));
+    return it != boundaryEdges.end();
+  } 
+  void recur_tag_triangles (int iTriangle, 
+			    std::set<int> &taggedTriangles, 
+			    std::map< std::pair<void*,void*>, std::pair<int,int> > & edgesToTriangles);
+    void setPoints(fullMatrix<double> *p);
   ~DocRecord();
   void MakeMeshWithPoints();
   void Voronoi ();
@@ -108,6 +123,7 @@ class DocRecord{
   void remove_all();
   void add_point(double,double,GFace*);
   PointNumero *ConvertDlistToArray(DListPeek *dlist, int *n);
+  std::set<int> tagInterior (double x, double y);
 };
 
 void centroidOfOrientedBox(std::vector<SPoint2> &pts,

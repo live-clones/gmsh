@@ -9,6 +9,7 @@
 
 #include "HighOrder.h"
 #include "highOrderSmoother.h"
+#include "highOrderTools.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -256,7 +257,7 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
         if(reparamOK){
           double relax = 1.;
           while (1){
-            if(computeEquidistantParameters(ge, u0, u1, nPts + 2, US, relax)) 
+            if(computeEquidistantParameters(ge, std::min(u0,u1), std::max(u0,u1), nPts + 2, US, relax)) 
                 break;
             relax /= 2.0;
             if(relax < 1.e-2) 
@@ -264,8 +265,8 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
           } 
           if(relax < 1.e-2)
             Msg::Warning
-              ("Failed to compute equidistant parameters (relax = %g) for edge %d-%d",
-               relax, v0->getNum(), v1->getNum());
+              ("Failed to compute equidistant parameters (relax = %g, value = %g) for edge %d-%d parametrized with %g %g on GEdge %d",
+               relax, US[1], v0->getNum(), v1->getNum(),u0,u1,ge->tag());
         }
       }
       for(int j = 0; j < nPts; j++){
@@ -273,7 +274,7 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
         
         double uc = (1. - t) * u0 + t * u1; // can be wrong, that's ok
         MVertex *v;
-        if(linear || !reparamOK || uc < u0 || uc > u1){ 
+        if(linear || !reparamOK || uc < std::min(u0,u1) || uc > std::max(u0,u1)){ 
           Msg::Warning("We don't have a valid parameter on curve %d-%d",
                        v0->getNum(), v1->getNum());
           // we don't have a (valid) parameter on the curve
@@ -281,8 +282,8 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
           v = new MVertex(pc.x(), pc.y(), pc.z(), ge);
         }
         else {          
-          GPoint pc = ge->point(US[j + 1]);
-          v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, US[j + 1]);
+          GPoint pc = ge->point(US[u0<u1? j + 1 : nPts - 1 - (j + 1)]);
+          v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, US[u0<u1? j + 1 : nPts - 1 - (j + 1)]);
             
           if (displ2D || displ3D){
             SPoint3 pc2 = edge.interpolate(t);          
@@ -1212,10 +1213,10 @@ void checkHighOrderTriangles(const char* cc, GModel *m,
     }
   }
   if (minJGlob > 0) 
-    Msg::Info("%s : Worst Face Smoothness %g Gamma %g NbFair = %d", 
+    Msg::Info("%s : Worst Face Distorsion Mapping %g Gamma %g Nb elem. (0<d<0.2) = %d", 
               cc, minJGlob, minGGlob,nbfair );
     else
-    Msg::Warning("%s : Worst Face Smoothness %g (%d negative jacobians) "
+    Msg::Warning("%s : Worst Face Distorsion Mapping %g (%d negative jacobians) "
                  "Worst Gamma %g Avg Smoothness %g", cc, minJGlob, bad.size(),
                  minGGlob, avg / (count ? count : 1));
 }
@@ -1252,7 +1253,7 @@ static void checkHighOrderTetrahedron(const char* cc, GModel *m,
 
 extern double mesh_functional_distorsion(MElement *t, double u, double v);
 
-static void printJacobians(GModel *m, const char *nm)
+void printJacobians(GModel *m, const char *nm)
 {
   const int n = 100;
   double D[n][n], X[n][n], Y[n][n], Z[n][n];
@@ -1380,5 +1381,10 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   //  printJacobians(m, "smoothness.pos");
   
   double t2 = Cpu();
+
+  highOrderTools hot (m);
+  hot.ensureMinimumDistorsion(0.1);
+  checkHighOrderTriangles("final mesh", m, bad, worst);
+
   Msg::StatusBar(2, true, "Done meshing order %d (%g s)", order, t2 - t1);
 }

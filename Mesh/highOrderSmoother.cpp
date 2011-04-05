@@ -483,7 +483,7 @@ void highOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
   std::vector<MElement*> layer, v;
   double minD;
   
-  getDistordedElements(all, 0.5, v, minD);
+  getDistordedElements(all, 0.99, v, minD);
 
   const int nbLayers = 3; //2, originally :)
   for (int i = 0; i < nbLayers; i++){
@@ -591,11 +591,6 @@ double highOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
 
   if (myAssembler.sizeOfR()){
 
-    // initialize _materialLaw to 1 everywhere
-    for (unsigned int i = 0; i < v.size(); i++){
-      MElement *e = v[i];
-      //      _materialLaw[e] = 1.0;
-    }
     // while convergence -------------------------------------------------------
     for (unsigned int i = 0; i < v.size(); i++){
       MElement *e = v[i];
@@ -612,8 +607,6 @@ double highOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
       fullMatrix<double> J23K33(n2, n3);
       K33.setAll(0.0);
       SElement se(e);
-      // set kappa to the actual kappa of the material law
-      //      El.setCompressibility( compressibilityFunction ( _materialLaw[e] ) );
       El.elementMatrix(&se, K33);
       computeMetricVector(gf, e, J32, J23, D3);
       J23K33.gemm(J23, K33, 1, 0);
@@ -861,7 +854,7 @@ void highOrderSmoother::smooth(std::vector<MElement*> &all)
   std::vector<MElement*> layer, v;
   double minD;
 
-  getDistordedElements(all, 0.5, v, minD);
+  getDistordedElements(all, 0.85, v, minD);
 
   Msg::Info("%d elements / %d distorted  min Disto = %g\n",
              all.size(), v.size(), minD);
@@ -1755,6 +1748,72 @@ void  highOrderSmoother::smooth_pNpoint(GFace *gf)
 {
   findOptimalLocationsPN(gf,this);
 }
+
+//-------------------------------------------------
+// Assume a GModel that is meshed with high order nodes that
+// are on their final position (at least they all lie on
+// surfaces and curves and the smoother may move them)
+//-------------------------------------------------
+
+highOrderSmoother::highOrderSmoother (GModel *gm)
+  : _tag(111)
+{
+  _clean();
+  // compute straigh sided positions that are actually X,Y,Z positions
+  // that are NOT always on curves and surfaces 
+
+  // compute stright sided positions of vertices that are classified on model edges
+  for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it){    
+    for (int i=0;i<(*it)->lines.size();i++){
+      MLine *l = (*it)->lines[i];
+      int N = l->getNumVertices()-2;
+      SVector3 p0((*it)->lines[i]->getVertex(0)->x(),
+		  (*it)->lines[i]->getVertex(0)->y(),
+		  (*it)->lines[i]->getVertex(0)->z());
+      SVector3 p1((*it)->lines[i]->getVertex(1)->x(),
+		  (*it)->lines[i]->getVertex(1)->y(),
+		  (*it)->lines[i]->getVertex(1)->z());
+      for (int j=1;j<=N;j++){
+	const double xi = (double)j/(N+1);
+	const SVector3 straightSidedPoint = p0 *(1.-xi) + p1*xi;
+	_straightSidedLocation [(*it)->lines[i]->getVertex(j)] = straightSidedPoint;
+      }
+    }
+  }
+
+  // compute stright sided positions of vertices that are classified on model faces
+  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it){
+    for (int i=0;i<(*it)->triangles.size();i++){
+      MTriangle *t = (*it)->triangles[i];
+      MFace face = t->getFace(0);
+      const polynomialBasis* fs = t->getFunctionSpace();
+      for (int j=0;j<t->getNumVertices();j++){
+	if (t->getVertex(j)->onWhat() == *it){
+	  const double t1 = fs->points(j, 0);
+	  const double t2 = fs->points(j, 1);
+	  SPoint3 pc = face.interpolate(t1, t2);
+	  _straightSidedLocation [t->getVertex(j)] = 
+	    SVector3(pc.x(),pc.y(),pc.z()); 
+	}
+      }
+    }
+    for (int i=0;i<(*it)->quadrangles.size();i++){
+      MQuadrangle *q = (*it)->quadrangles[i];
+      MFace face = q->getFace(0);
+      const polynomialBasis* fs = q->getFunctionSpace();
+      for (int j=0;j<q->getNumVertices();j++){
+	if (q->getVertex(j)->onWhat() == *it){
+	  const double t1 = fs->points(j, 0);
+	  const double t2 = fs->points(j, 1);
+	  SPoint3 pc = face.interpolate(t1, t2);
+	  _straightSidedLocation [q->getVertex(j)] = 
+	    SVector3(pc.x(),pc.y(),pc.z()); 
+	}
+      }
+    }
+  }
+}
+
 
 #endif
 

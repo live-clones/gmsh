@@ -15,6 +15,7 @@
 #include "Context.h"
 #include "GmshMessage.h"
 #include "MLine.h"
+#include "MQuadrangle.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "discreteEdge.h"
 #include "discreteFace.h"
@@ -104,9 +105,12 @@ static void select_elements_cb(Fl_Widget *w, void *data)
 
   if(all){
     for(GModel::fiter it = GModel::current()->firstFace(); 
-        it != GModel::current()->lastFace(); ++it)
+        it != GModel::current()->lastFace(); ++it){
       e->elements.insert(e->elements.end(), (*it)->triangles.begin(), 
                          (*it)->triangles.end());
+      e->elements.insert(e->elements.end(), (*it)->quadrangles.begin(), 
+                         (*it)->quadrangles.end());
+    }
   }
   else{
     CTX::instance()->pickElements = 1;
@@ -120,9 +124,9 @@ static void select_elements_cb(Fl_Widget *w, void *data)
       if(ib == 'l') {
         for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++){
           MElement *me = FlGui::instance()->selectedElements[i];
-          if(me->getType() == TYPE_TRI && me->getVisibility() != 2){
+          if(me->getDim() == 2 && me->getVisibility() != 2){
             me->setVisibility(2); 
-            e->elements.push_back((MTriangle*)me);
+            e->elements.push_back(me);
           }
         }
       }
@@ -148,7 +152,7 @@ static void select_elements_cb(Fl_Widget *w, void *data)
   }
 
   e2t_cont adj;
-  buildEdgeToTriangle(e->elements, adj);
+  buildEdgeToElements(e->elements, adj);
   buildListOfEdgeAngle(adj, e->edges_detected, e->edges_lonly);
   ElementsSelectedMode(e);
   update_edges_cb(0, data);

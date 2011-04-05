@@ -246,6 +246,16 @@ class MElement
   // parametric coordinates
   double getJacobian(const fullMatrix<double> &gsf, double jac[3][3]);
   double getJacobian(double u, double v, double w, double jac[3][3]);
+  inline double getJacobian(double u, double v, double w, fullMatrix<double> &j){
+    double JAC[3][3];
+    const double detJ = getJacobian (u,v,w,JAC);
+    for (int i=0;i<3;i++){
+      j(i,0) = JAC[i][0];
+      j(i,1) = JAC[i][1];
+      j(i,2) = JAC[i][2];
+    }
+    return detJ;
+  }
   double getPrimaryJacobian(double u, double v, double w, double jac[3][3]);
   double getJacobianDeterminant(double u, double v, double w)
   {

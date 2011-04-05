@@ -228,6 +228,7 @@ GEdge *OCCFactory::addCircleArc(GModel *gm, const arcCreationMethod &method,
   gp_Pnt aP3(end->x(), end->y(), end->z());
   TopoDS_Edge occEdge;
 
+
   OCCVertex *occv1 = dynamic_cast<OCCVertex*>(start);
   OCCVertex *occv2 = dynamic_cast<OCCVertex*>(end);
 
@@ -241,7 +242,7 @@ GEdge *OCCFactory::addCircleArc(GModel *gm, const arcCreationMethod &method,
   }
   else if (method == GModelFactory::CENTER_START_END){
     Standard_Real Radius = aP1.Distance(aP2);
-    gce_MakeCirc MC(aP1,gce_MakePln(aP1, aP2, aP3).Value(), Radius);
+    gce_MakeCirc MC(aP2,gce_MakePln(aP1, aP2, aP3).Value(), Radius);
     const gp_Circ& Circ = MC.Value();
     Standard_Real Alpha1 = ElCLib::Parameter(Circ, aP1);
     Standard_Real Alpha2 = ElCLib::Parameter(Circ, aP3);

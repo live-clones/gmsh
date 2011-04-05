@@ -143,7 +143,7 @@ void elasticityMixedTerm::elementMatrix(SElement *se, fullMatrix<double> &m) con
 {
   setPolynomialBasis(se);
   MElement *e = se->getMeshElement();
-  int integrationOrder = 3 * (e->getPolynomialOrder()) + 2;
+  int integrationOrder = 4 * (e->getPolynomialOrder()) + 2;
   int npts;
   IntPt *GP;
   double jac[3][3];
@@ -158,6 +158,7 @@ void elasticityMixedTerm::elementMatrix(SElement *se, fullMatrix<double> &m) con
   fullMatrix<double> KUG(3 * _sizeN,_sizeM);
   fullMatrix<double> KPG(_sizeM,_sizeM);
   fullMatrix<double> KGG(_sizeM,_sizeM);
+  fullMatrix<double> KPP(_sizeM,_sizeM); // stabilization
 
   double FACT = _E / ((1 + _nu)*(1.-2*_nu));
   double C11 = FACT * (1 - _nu) ;
@@ -192,7 +193,7 @@ void elasticityMixedTerm::elementMatrix(SElement *se, fullMatrix<double> &m) con
     for (int j = 0; j < 6; j++)
       H(i, j) = C[i][j];
 
-  double _dimension = 3.0;
+  double _dimension = 2.0;
 
   for (int i = 0; i < npts; i++){
     const double u = GP[i].pt[0];
@@ -206,33 +207,69 @@ void elasticityMixedTerm::elementMatrix(SElement *se, fullMatrix<double> &m) con
 
     B.setAll(0.);
     BT.setAll(0.);
+
+    const double K = .0000002*weight * detJ * pow (detJ,2/_dimension); // the second detJ is for stabilization
+
+    for (int j = 0; j < _sizeM; j++){
+      for (int k = 0; k < _sizeM; k++){
+	KPP(j, k) += (Grads[j][0] * Grads[k][0] +
+		      Grads[j][1] * Grads[k][1] +
+		      Grads[j][2] * Grads[k][2])* K;
+      }
+    }
+
+    const double K2 = weight * detJ; 
+
+    for (int j = 0; j < _sizeN; j++){
+      for (int k = 0; k < _sizeM; k++){
+	KUP(j+0*_sizeN, k) += Grads[j][0] * SF[k] * K2;
+	KUP(j+1*_sizeN, k) += Grads[j][1] * SF[k] * K2;
+	KUP(j+2*_sizeN, k) += Grads[j][2] * SF[k] * K2;
+      }
+    }
+
+    const double K3 = weight * detJ * _E/(2*(1+_nu)); 
+    /*
+    for (int j = 0; j < _sizeN; j++){
+      for (int k = 0; k < _sizeN; k++){
+	const double fa = (Grads[j][0] * Grads[k][0] +
+			   Grads[j][1] * Grads[k][1] +
+			   Grads[j][2] * Grads[k][2]) * K3;
+	KUU(j+0*_sizeN, k+0*_sizeN) += fa;
+	KUU(j+1*_sizeN, k+1*_sizeN) += fa;
+	KUU(j+2*_sizeN, k+2*_sizeN) += fa;
+      }
+    }
+    */
+
+
     for (int j = 0; j < _sizeN; j++){
 
       //      printf("%g %g %g\n",Grads[j][0],Grads[j][1],Grads[j][2]);
 
       BDILT(j, 0) = BDIL(0, j) = Grads[j][0]/_dimension;
 
-      BT(j, 0) = B(0, j) = Grads[j][0]-Grads[j][0]/_dimension;
-      BT(j, 1) = B(1, j) =            -Grads[j][1]/_dimension;
-      BT(j, 2) = B(2, j) =            -Grads[j][2]/_dimension;
+      BT(j, 0) = B(0, j) = Grads[j][0];//-Grads[j][0]/_dimension;
+      //      BT(j, 1) = B(1, j) =            -Grads[j][1]/_dimension;
+      //      BT(j, 2) = B(2, j) =            -Grads[j][2]/_dimension;
 
       BT(j, 3) = B(3, j) = Grads[j][1];
       BT(j, 4) = B(4, j) = Grads[j][2];
       
       BDILT(j + _sizeN, 0) = BDIL(0, j + _sizeN) = Grads[j][1]/_dimension;
 
-      BT(j + _sizeN, 0) = B(0, j + _sizeN) =            -Grads[j][0]/_dimension;
-      BT(j + _sizeN, 1) = B(1, j + _sizeN) = Grads[j][1]-Grads[j][1]/_dimension;
-      BT(j + _sizeN, 2) = B(2, j + _sizeN) =            -Grads[j][2]/_dimension;
+      //      BT(j + _sizeN, 0) = B(0, j + _sizeN) =            -Grads[j][0]/_dimension;
+      BT(j + _sizeN, 1) = B(1, j + _sizeN) = Grads[j][1];//-Grads[j][1]/_dimension;
+      //      BT(j + _sizeN, 2) = B(2, j + _sizeN) =            -Grads[j][2]/_dimension;
 
       BT(j + _sizeN, 3) = B(3, j + _sizeN) = Grads[j][0];
       BT(j + _sizeN, 5) = B(5, j + _sizeN) = Grads[j][2];
       
       BDILT(j + 2 * _sizeN, 0) = BDIL(0, j + 2 * _sizeN) = Grads[j][2]/_dimension;
 
-      BT(j + 2 * _sizeN, 0) = B(0, j + 2 * _sizeN) =            -Grads[j][0]/_dimension;
-      BT(j + 2 * _sizeN, 1) = B(1, j + 2 * _sizeN) =            -Grads[j][1]/_dimension;
-      BT(j + 2 * _sizeN, 2) = B(2, j + 2 * _sizeN) = Grads[j][2]-Grads[j][2]/_dimension;
+      //      BT(j + 2 * _sizeN, 0) = B(0, j + 2 * _sizeN) =            -Grads[j][0]/_dimension;
+      //      BT(j + 2 * _sizeN, 1) = B(1, j + 2 * _sizeN) =            -Grads[j][1]/_dimension;
+      BT(j + 2 * _sizeN, 2) = B(2, j + 2 * _sizeN) = Grads[j][2];//-Grads[j][2]/_dimension;
 
       BT(j + 2 * _sizeN, 4) = B(4, j + 2 * _sizeN) = Grads[j][1];
       BT(j + 2 * _sizeN, 5) = B(5, j + 2 * _sizeN) = Grads[j][0];
@@ -252,17 +289,17 @@ void elasticityMixedTerm::elementMatrix(SElement *se, fullMatrix<double> &m) con
     }
 
     KUU.gemm(BTH, B, weight * detJ);
-    KUP.gemm(BDILT, M, weight * detJ);
-    KPG.gemm(MT, M, -weight * detJ);
-    KUG.gemm(trBTH, M, weight * detJ/_dimension);
-    KGG.gemm(MT, M, weight * detJ * (_K)/(_dimension*_dimension));    
+    //    KUP.gemm(BDILT, M, weight * detJ);
+    //    KPG.gemm(MT, M, -weight * detJ);
+    //    KUG.gemm(trBTH, M, weight * detJ/_dimension);
+    //    KGG.gemm(MT, M, weight * detJ * (_K)/(_dimension*_dimension));    
 
   }
     /*       
             3*_sizeN  _sizeM _sizeM
 
             KUU     KUP     KUG
-      m  =  KUP^t    0      KPG
+      m  =  KUP^t   KPP      KPG
             KUG^T    KPG^t  KGG
       
      */
@@ -287,6 +324,8 @@ void elasticityMixedTerm::elementMatrix(SElement *se, fullMatrix<double> &m) con
       m(j+3*_sizeN+_sizeM,i+3*_sizeN) = KPG(i,j); // assemble KPG^t
 
       m(i+3*_sizeN+_sizeM,j+3*_sizeN+_sizeM) = KGG(i,j); // assemble KGG
+
+      m(i+3*_sizeN,j+3*_sizeN) = KPP(i,j); // assemble KPP
 
     }
   }

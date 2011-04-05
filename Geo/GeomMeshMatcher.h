@@ -35,6 +35,8 @@ class GeomMeshMatcher {
   static GeomMeshMatcher *instance();
   static void destroy();
   int match(GModel* geom, GModel* mesh);
+  int forceTomatch(GModel *geom, GModel *mesh, const double TOL);
+
 };
 
 #endif

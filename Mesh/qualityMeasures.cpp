@@ -212,20 +212,22 @@ double mesh_functional_distorsion(MElement *t, double u, double v)
 
 double mesh_functional_distorsion_p2(MTriangle *t)
 {
-  double d = mesh_functional_distorsion(t,0.,0.);
-  d = std::min(d,mesh_functional_distorsion(t,1.,0.));
-  d = std::min(d,mesh_functional_distorsion(t,0.,1.));
-  d = std::min(d,mesh_functional_distorsion(t,.5,0.));
-  d = std::min(d,mesh_functional_distorsion(t,0.,0.5));
-  d = std::min(d,mesh_functional_distorsion(t,.5,0.5));
-  return d;
+  double d1 =mesh_functional_distorsion(t,0.0,0.0);
+  double d2 =mesh_functional_distorsion(t,1.0,0.0);
+  double d3 =mesh_functional_distorsion(t,0.0,1.0);
+  double d4 =mesh_functional_distorsion(t,0.5,0.0);
+  double d5 =mesh_functional_distorsion(t,0.5,0.5);
+  double d6 =mesh_functional_distorsion(t,0.0,0.5);
+  double d[6] = {d1,d2,d3,4*d4-d1-d2,4*d5-d2-d3,4*d6-d1-d3};
+  
+  return *std::min_element(d,d+6);
 }
 
 double qmDistorsionOfMapping (MTriangle *e)
 {
   //  return 1.0;
   if (e->getPolynomialOrder() == 1) return 1.0;
-  //  if (e->getPolynomialOrder() == 2) return mesh_functional_distorsion_p2(e);
+  if (e->getPolynomialOrder() == 2) return mesh_functional_distorsion_p2(e);
 
   IntPt *pts;
   int npts;

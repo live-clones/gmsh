@@ -31,7 +31,7 @@
 
 class classificationEditor {
  public:
-  std::vector<MTriangle*> elements;
+  std::vector<MElement*> elements;
   std::set<GFace*> faces;
   Fl_Window *window;
   Fl_Button *buttons[10];

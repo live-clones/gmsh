@@ -17,6 +17,8 @@
 #include "GmshMessage.h"
 #include "SOrientedBoundingBox.h"
 #include "MElement.h"
+#include "MTriangle.h"
+#include "MQuadrangle.h"
 #include "MVertex.h"
 #include "MLine.h"
 #include "MPoint.h"
@@ -422,6 +424,173 @@ void GeomMeshMatcher::destroy()
   if (GeomMeshMatcher::_gmm_instance)
     delete GeomMeshMatcher::_gmm_instance;
 }
+
+static GVertex *getGVertex (MVertex *v1, GModel *gm, const double TOL){
+  GVertex *best = 0;
+  double bestScore = TOL;
+  for (GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it){
+    {
+      GVertex *v2 = (*it)->getBeginVertex();    
+      double score = sqrt((v1->x() - v2->x())*(v1->x() - v2->x()) +
+			  (v1->y() - v2->y())*(v1->y() - v2->y()) +
+			  (v1->z() - v2->z())*(v1->z() - v2->z()));
+      if (score < bestScore){
+	bestScore = score;
+	best =  v2;
+      }    
+    }
+    {
+      GVertex *v2 = (*it)->getEndVertex();    
+      double score = sqrt((v1->x() - v2->x())*(v1->x() - v2->x()) +
+			  (v1->y() - v2->y())*(v1->y() - v2->y()) +
+			  (v1->z() - v2->z())*(v1->z() - v2->z()));
+      if (score < bestScore){
+	bestScore = score;
+	best =  v2;
+      }    
+    }
+  }
+  //  if (best)printf("getting point %g %g on vertices best score is %12.5E\n",v1->x(),v1->y(),bestScore);
+  return best;
+}
+
+static GPoint getGEdge (MVertex *v1, GModel *gm, const double TOL){
+  GPoint gpBest;
+  double bestScore = TOL;
+  
+
+  for (GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it){
+    GEdge *e = *it;
+    double pp;
+    GPoint gp = e->closestPoint(SPoint3(v1->x(),v1->y(),v1->z()), pp);
+    double score = sqrt((v1->x() - gp.x())*(v1->x() - gp.x()) +
+			(v1->y() - gp.y())*(v1->y() - gp.y()) +
+			(v1->z() - gp.z())*(v1->z() - gp.z()));
+    if (score < bestScore){
+      bestScore = score;
+      gpBest =  gp;
+    }    
+  }
+  
+  //  printf("getting point %g %g (%g %g) on edges best score is %12.5E\n",v1->x(),v1->y(),gpBest.x(),gpBest.y(),bestScore);
+  return gpBest;
+}
+
+static GPoint getGFace (MVertex *v1, GModel *gm, const double TOL){
+  GPoint gpBest;
+  double bestScore = TOL;
+  for (GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it){
+    GFace *gf = *it;
+    SPoint2 pp;
+    double guess[2] = {0,0};
+    GPoint gp = gf->closestPoint(SPoint3(v1->x(),v1->y(),v1->z()), guess);
+    double score = sqrt((v1->x() - gp.x())*(v1->x() - gp.x()) +
+			(v1->y() - gp.y())*(v1->y() - gp.y()) +
+			(v1->z() - gp.z())*(v1->z() - gp.z()));
+    if (score < bestScore){
+      bestScore = score;
+      gpBest =  gp;
+    }    
+  }
+  //  printf("getting point %g %g (%g %g) on faces best score is %12.5E\n",v1->x(),v1->y(),gpBest.x(),gpBest.y(),bestScore);
+  return gpBest;
+}
+
+
+int GeomMeshMatcher::forceTomatch(GModel *geom, GModel *mesh, const double TOL)
+{
+  // assume that the geometry is the right one
+
+  std::vector<GEntity*> entities;
+  mesh->getEntities(entities);
+  for(unsigned int i = 0; i < entities.size(); i++){
+    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+      MVertex *v = entities[i]->mesh_vertices[j];
+      GVertex *gv = getGVertex (v, geom, TOL);
+      bool found = 0;
+      if (gv){
+	printf("vertex %d matches GVertex %d\n",v->getNum(),gv->tag());
+	found=1;
+	MVertex *vvv = new MVertex (v->x(),v->y(),v->z(),gv,v->getNum());
+	gv->mesh_vertices.push_back(vvv);
+	gv->points.push_back(new MPoint(vvv,v->getNum()));
+	
+      }
+      else if (v->onWhat()->dim() == 1){
+	GPoint gp = getGEdge (v, geom, 1.e22);
+	if(gp.g()){
+	  GEntity *gg = (GEntity*)gp.g();
+	  found=1;
+	  //	  printf("vertex %d matches GEdge %d on position %g\n",v->getNum(),gg->tag(),gp.u());
+	  gg->mesh_vertices.push_back(new MEdgeVertex (gp.x(),gp.y(),gp.z(),
+						       gg,gp.u(),-1.,v->getNum()));
+	}
+      }
+      if (!found && v->onWhat()->dim() <= 2){
+	GPoint gp = getGFace (v, geom, TOL);
+	if(gp.g()){
+	  GEntity *gg = (GEntity*)gp.g();
+	  found = 1;
+	  //	  printf("vertex %d matches GFace %d\n",v->getNum(),gg->tag());
+	  gg->mesh_vertices.push_back(new MFaceVertex (gp.x(),gp.y(),gp.z(),
+						       gg,gp.u(),gp.v(),v->getNum()));
+	}	
+      }
+      if (!found) Msg::Error("vertex %d classified on %d %d not matched",v->getNum(),v->onWhat()->dim(),v->onWhat()->tag());
+    }
+  }
+  //  printf("creating edges\n");
+  for (GModel::eiter it = mesh->firstEdge(); it != mesh->lastEdge(); ++it){
+    //    printf("edge %d\n",(*it)->tag());
+    for (int i=0;i<(*it)->lines.size();i++){
+      //      printf("medge %d %d\n",(*it)->lines[i]->getVertex(0)->getNum(),(*it)->lines[i]->getVertex(1)->getNum());
+      MVertex *v1 = geom->getMeshVertexByTag((*it)->lines[i]->getVertex(0)->getNum());
+      MVertex *v2 = geom->getMeshVertexByTag((*it)->lines[i]->getVertex(1)->getNum());
+      if (v1 && v2){
+	GEdge *ge= 0;
+	if (v1->onWhat()->dim() == 1)ge = (GEdge*)v1->onWhat();
+	if (v2->onWhat()->dim() == 1)ge = (GEdge*)v2->onWhat();
+	if (ge){
+	  double u1,u2;
+	  reparamMeshVertexOnEdge(v1, ge, u1);
+	  reparamMeshVertexOnEdge(v2, ge, u2);
+	  if (u1< u2)ge->lines.push_back(new MLine(v1,v2)); 
+	  else ge->lines.push_back(new MLine(v2,v1)); 
+	}
+	else printf("argh !\n");
+      }
+      else{
+	if (!v1)printf("Vertex %d has not been found\n", (*it)->lines[i]->getVertex(0)->getNum());
+	if (!v2)printf("Vertex %d has not been found\n", (*it)->lines[i]->getVertex(1)->getNum());
+      }
+    }
+  }  
+  printf("creating faces\n");
+  for (GModel::fiter it = mesh->firstFace(); it != mesh->lastFace(); ++it){
+    for (int i=0;i<(*it)->triangles.size();i++){
+      MVertex *v1 = geom->getMeshVertexByTag((*it)->triangles[i]->getVertex(0)->getNum());
+      MVertex *v2 = geom->getMeshVertexByTag((*it)->triangles[i]->getVertex(1)->getNum());
+      MVertex *v3 = geom->getMeshVertexByTag((*it)->triangles[i]->getVertex(2)->getNum());
+      if (v1->onWhat()->dim() == 2)((GFace*)v1->onWhat())->triangles.push_back(new MTriangle(v1,v2,v3)); 
+      else if (v2->onWhat()->dim() == 2)((GFace*)v2->onWhat())->triangles.push_back(new MTriangle(v1,v2,v3)); 
+      else if (v3->onWhat()->dim() == 2)((GFace*)v3->onWhat())->triangles.push_back(new MTriangle(v1,v2,v3));       
+    }
+    for (int i=0;i<(*it)->quadrangles.size();i++){
+      MVertex *v1 = geom->getMeshVertexByTag((*it)->quadrangles[i]->getVertex(0)->getNum());
+      MVertex *v2 = geom->getMeshVertexByTag((*it)->quadrangles[i]->getVertex(1)->getNum());
+      MVertex *v3 = geom->getMeshVertexByTag((*it)->quadrangles[i]->getVertex(2)->getNum());
+      MVertex *v4 = geom->getMeshVertexByTag((*it)->quadrangles[i]->getVertex(3)->getNum());
+      //      printf("quad %p %p %p %p\n",v1,v2,v3,v4);
+      if (v1->onWhat()->dim() == 2)((GFace*)v1->onWhat())->quadrangles.push_back(new MQuadrangle(v1,v2,v3,v4)); 
+      else if (v2->onWhat()->dim() == 2)((GFace*)v2->onWhat())->quadrangles.push_back(new MQuadrangle(v1,v2,v3,v4)); 
+      else if (v3->onWhat()->dim() == 2)((GFace*)v3->onWhat())->quadrangles.push_back(new MQuadrangle(v1,v2,v3,v4));       
+      else if (v4->onWhat()->dim() == 2)((GFace*)v4->onWhat())->quadrangles.push_back(new MQuadrangle(v1,v2,v3,v4));       
+    }
+  }  
+  geom->writeMSH("hopla.msh",2.2,false,false,true);
+}
+
+
 
 int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
 {

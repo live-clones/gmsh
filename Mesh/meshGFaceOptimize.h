@@ -54,6 +54,8 @@ void buildVertexToTriangle(std::vector<MTriangle*> &, v2t_cont &adj);
 void buildEdgeToTriangle(std::vector<MTriangle*> &, e2t_cont &adj);
 void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
                           std::vector<edge_angle> &edges_lonly);
+void buildEdgeToElements(std::vector<MElement*> &tris, e2t_cont &adj);
+
 void laplaceSmoothing(GFace *gf, int niter=1);
 void edgeSwappingLawson(GFace *gf);
 

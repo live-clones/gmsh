@@ -231,6 +231,12 @@ void buildEdgeToTriangle(std::vector<MTriangle*> &tris, e2t_cont &adj)
   buildEdgeToElement(tris, adj);
 }
 
+void buildEdgeToElements(std::vector<MElement*> &tris, e2t_cont &adj)
+{
+  adj.clear();
+  buildEdgeToElement(tris, adj);
+}
+
 void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
                           std::vector<edge_angle> &edges_lonly)
 {

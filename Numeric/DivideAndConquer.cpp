@@ -835,7 +835,7 @@ DocRecord::~DocRecord()
     for(int i = 0; i < numPoints; i++)
       delete [] _adjacencies[i].t;
     delete _adjacencies;
-  }
+  }  
 }
 
 void DocRecord::MakeMeshWithPoints()
@@ -852,6 +852,59 @@ void DocRecord::Voronoi()
   BuildDelaunay();
   ConvertDListToVoronoiData();
 }
+
+void DocRecord::recur_tag_triangles (int iTriangle, 
+				     std::set<int> &taggedTriangles, 
+				     std::map< std::pair<void*,void*>, std::pair<int,int> > & edgesToTriangles){
+
+  if (taggedTriangles.find(iTriangle) != taggedTriangles.end())return;
+  
+  taggedTriangles.insert(iTriangle);
+  
+  int a = triangles[iTriangle].a;
+  int b = triangles[iTriangle].b;
+  int c = triangles[iTriangle].c;
+  PointRecord *p[3] = {&points[a],&points[b],&points[c]};
+  
+  for (int j=0;j<3;j++){
+    if (!lookForBoundaryEdge(p[j]->data,p[(j+1)%3]->data)){
+      std::pair<void*,void*> ab = std::make_pair(std::min(p[j]->data,p[(j+1)%3]->data),std::max(p[j]->data,p[(j+1)%3]->data));
+      std::pair<int,int> & adj = edgesToTriangles[ab];
+      if (iTriangle == adj.first && adj.second != -1)recur_tag_triangles(adj.second, taggedTriangles, edgesToTriangles);
+      else recur_tag_triangles(adj.first, taggedTriangles, edgesToTriangles);
+    }
+  }  
+}
+
+
+std::set<int> DocRecord::tagInterior (double x, double y){
+  std::map< std::pair<void*,void*>, std::pair<int,int> > edgesToTriangles;
+  int iFirst = 1;
+  for (int i=0;i<numTriangles;i++){
+    int a = triangles[i].a;
+    int b = triangles[i].b;
+    int c = triangles[i].c;
+    PointRecord *p[3] = {&points[a],&points[b],&points[c]};
+
+    // TODO : regarde quel triangle contient x y et retiens le dans iFirst;
+
+    for (int j=0;j<3;j++){
+      std::pair<void*,void*> ab = std::make_pair(std::min(p[j]->data,p[(j+1)%3]->data),std::max(p[j]->data,p[(j+1)%3]->data));
+      std::map< std::pair<void*,void*>, std::pair<int,int> > :: iterator it = edgesToTriangles.find(ab);
+      if (it == edgesToTriangles.end()){
+	edgesToTriangles[ab] = std::make_pair(i,-1);
+      }
+      else {
+	it->second.second = i;
+      }
+    }
+  }
+  
+  std::set<int> taggedTriangles;
+  recur_tag_triangles (iFirst, taggedTriangles, edgesToTriangles);  
+  return taggedTriangles;
+}
+
 
 void DocRecord::setPoints(fullMatrix<double> *p)
 { 

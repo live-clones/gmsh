@@ -6,6 +6,7 @@
 %{
   #include "GmshConfig.h"
   #include "GModel.h"
+  #include "highOrderTools.h"
   #include "DefaultOptions.h"
   #include "fullMatrix.h"
   #include "function.h"
@@ -92,6 +93,7 @@ namespace std {
 %include "dofManager.h"
 %template(dofManagerDouble) dofManager<double>;
 %include "GModel.h"
+%include "highOrderTools.h"
 %include "function.h"
 %include "linearSystem.h"
 %template(linearSystemDouble) linearSystem<double>;
