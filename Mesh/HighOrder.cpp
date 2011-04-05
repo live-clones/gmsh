@@ -1382,9 +1382,11 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   
   double t2 = Cpu();
 
-  highOrderTools hot (m);
-  hot.ensureMinimumDistorsion(0.1);
-  checkHighOrderTriangles("final mesh", m, bad, worst);
+  if (!linear){
+    highOrderTools hot (m);
+    hot.ensureMinimumDistorsion(0.1);
+    checkHighOrderTriangles("final mesh", m, bad, worst);
+  }
 
   Msg::StatusBar(2, true, "Done meshing order %d (%g s)", order, t2 - t1);
 }
