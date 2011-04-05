@@ -1350,6 +1350,8 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
     setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts,
                  displ2D, displ3D);
 
+  highOrderTools hot (m);
+
   // now we smooth mesh the internal vertices of the faces
   // we do that model face by model face
   std::vector<MElement*> bad;
@@ -1383,7 +1385,6 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   double t2 = Cpu();
 
   if (!linear){
-    highOrderTools hot (m);
     hot.ensureMinimumDistorsion(0.1);
     checkHighOrderTriangles("final mesh", m, bad, worst);
   }

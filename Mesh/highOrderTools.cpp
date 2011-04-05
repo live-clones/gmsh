@@ -73,8 +73,10 @@ void highOrderTools::ensureMinimumDistorsion(MElement *e, double threshold)
   }
   // a == 0 -> straight
   // a == 1 -> curved
+  int ITER = 1;
   while(1){
     double a = 0.5*(a1+a2);
+    if (ITER > 10) a = 0.;
     for(int i = 0; i < e->getNumVertices(); i++){
       MVertex *v = e->getVertex(i);
       v->x() = a * x[i][0] + (1.-a) * X[i][0]; 
@@ -87,6 +89,8 @@ void highOrderTools::ensureMinimumDistorsion(MElement *e, double threshold)
     if (dist > 0 && fabs(dist-threshold) < .05)break;
     if (dist < threshold)a2 = a;
     else a1 = a;    
+    if (a > .99 || a < .01) break;
+    ++ITER;
   }
   //  printf("element done\n");
 }
@@ -612,11 +616,14 @@ double highOrderTools::apply_incremental_displacement (double max_incr,
 // uncurve elements that are invalid
 void highOrderTools::ensureMinimumDistorsion (std::vector<MElement*> &all, 
 					      double threshold){
+  int num = 0;
   while(1){
     double minD;
     std::vector<MElement*> disto;
     getDistordedElements(all, threshold, disto, minD);    
+    if (num == disto.size())break;
     if (!disto.size())break;
+    num = disto.size();
     Msg::Info("fixing %d bad curved elements (worst disto %g)",disto.size(),minD);
     for (int i=0;i<disto.size();i++){
       ensureMinimumDistorsion(disto[i],threshold);
