@@ -648,7 +648,6 @@ void graphicWindow::split(openglWindow *g, char how)
     g->resize(x1, y1, w1, h1);
     g2->resize(x2, y2, w2, h2);
   }
-  drawContext::global()->draw();
 }
 
 void graphicWindow::setAnimButtons(int mode)

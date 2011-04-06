@@ -242,6 +242,7 @@ static void file_window_cb(Fl_Widget *w, void *data)
   else if(str == "split_u"){
     FlGui::instance()->splitCurrentOpenglWindow('u');
   }
+  drawContext::global()->draw();
 }
 
 static int _save_msh(const char *name){ return mshFileDialog(name); }
