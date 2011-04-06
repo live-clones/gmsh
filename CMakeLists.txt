@@ -312,7 +312,7 @@ if(ENABLE_FLTK)
     if(FLTK_VERSION GREATER 1.1)
       add_subdirectory(Fltk)
       set_config_option(HAVE_FLTK "Fltk")
-      message(STATUS "Using fltk-config script for FLTK " ${FLTK_VERSION})
+      message(STATUS "Using fltk-config script for Fltk " ${FLTK_VERSION})
       execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --includedir
                       OUTPUT_VARIABLE FLTK_INCLUDE_DIR)
       string(STRIP ${FLTK_INCLUDE_DIR} FLTK_INCLUDE_DIR)
