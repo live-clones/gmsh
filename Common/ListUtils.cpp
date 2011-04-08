@@ -12,6 +12,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/types.h>
+#include <inttypes.h>
 #include "MallocUtils.h"
 #include "ListUtils.h"
 #include "TreeUtils.h"
@@ -198,7 +199,7 @@ int List_PSuppress(List_T * liste, int index)
     return (0);
 
   liste->n--;
-  len = liste->n - (((long)ptr - (long)liste->array) / liste->size);
+  len = liste->n - (((intptr_t)ptr - (intptr_t)liste->array) / liste->size);
   if(len > 0)
     memmove(ptr, ptr + liste->size, len * liste->size);
   return (1);

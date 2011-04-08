@@ -26,6 +26,7 @@
 // Modified for Gmsh (C++ and 64 bit compatibility)
 
 #include <stdio.h>
+#include <inttypes.h>
 
 #include "avl.h"
 #include "MallocUtils.h"
@@ -43,7 +44,7 @@
 
 #define COMPARE(key, nodekey, compare)                  \
     ((compare == avl_numcmp) ?                          \
-        (long int) key - (long int) nodekey :                   \
+        (intptr_t) key - (intptr_t) nodekey :                   \
         (*compare)(key, nodekey))
 
 static void avl_record_gen_forward(avl_node *node, avl_generator *gen);
@@ -353,9 +354,10 @@ static avl_node *new_node(void *key, void *value)
     newn->left = newn->right = NIL(avl_node);
     return newn;
 }
+
 int avl_numcmp(const void *x, const void*y)
 {
-    return (long int) x - (long int) y;
+    return (intptr_t) x - (intptr_t) y;
 }
 
 int avl_check_tree(avl_tree *tree)
