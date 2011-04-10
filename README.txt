@@ -10,9 +10,11 @@ See the doc/ and tutorial/ directories for documentation. The
 reference manual is located in doc/texinfo/. See the demos/ directory
 and the web site http://geuz.org/gmsh for additional examples.
 
-Building Gmsh from source requires CMake (http://www.cmake.org).
-Building the graphical user interface requires FLTK 1.1.7 or above
-(http://www.fltk.org), configured with OpenGL support.
+Building Gmsh from its source code requires a C++ compiler and CMake
+(http://cmake.org).  Building the graphical user interface requires
+FLTK 1.1.7 or above (http://fltk.org), configured with OpenGL
+support. Building the 64 bit graphical version on MacOS X requires
+FLTK 1.3.
 
 
 Build Gmsh using CMake's graphical user interface
@@ -70,16 +72,17 @@ Build Gmsh from the command line
 
     ccmake ..
 
-  or you can specify options directly on the command line, for example
+  or you can specify options directly on the command line. For
+  example, you can use
 
     cmake -DCMAKE_PREFIX_PATH=/opt/local ..
 
   to specify the location of external packages installed in
-  non-standard directories, 
+  non-standard directories. You can use
 
     cmake -DCMAKE_INSTALL_PREFIX=/opt
 
-  to change the installation directory, or
+  to change the installation directory. Or you can use
 
     cmake -DENABLE_FLTK=0 ..
 
