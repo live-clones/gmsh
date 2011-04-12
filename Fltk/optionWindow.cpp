@@ -4,6 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string.h>
+#include <inttypes.h>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Scroll.H>
 #include <FL/Fl_Color_Chooser.H>
@@ -544,7 +545,7 @@ static void post_options_ok_cb(Fl_Widget *w, void *data)
 
 void view_options_cb(Fl_Widget *w, void *data)
 {
-  FlGui::instance()->options->showGroup((int)(long)data + 6);
+  FlGui::instance()->options->showGroup((intptr_t)data + 6);
 }
 
 static void view_options_timestep_cb(Fl_Widget *w, void *data)

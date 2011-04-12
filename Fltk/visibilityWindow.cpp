@@ -7,6 +7,7 @@
 #include <sstream>
 #include <map>
 #include <vector>
+#include <inttypes.h>
 #include <string.h>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Box.H>
@@ -896,7 +897,7 @@ static void visibility_number_cb(Fl_Widget *w, void *data)
   // for surfaces, 5 for volumes, 6 for physical points, 7 for
   // physical lines, 8 for physical surfaces and 9 for physical
   // volumes
-  int what = (int)(long)data;
+  int what = (intptr_t)data;
   char val;
   if(what >= 100){ // show
     val = 1;

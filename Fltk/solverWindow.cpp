@@ -4,6 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string.h>
+#include <inttypes.h>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
@@ -273,7 +274,7 @@ void ConnectionManager::run(std::string args)
 
 void solver_cb(Fl_Widget *w, void *data)
 {
-  int num = (int)(long)data;
+  int num = (intptr_t)data;
 
   std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
 
@@ -306,7 +307,7 @@ void solver_cb(Fl_Widget *w, void *data)
 
 static void solver_ok_cb(Fl_Widget *w, void *data)
 {
-  int num = (int)(long)data;
+  int num = (intptr_t)data;
 
   opt_solver_client_server
     (num, GMSH_SET, FlGui::instance()->solver[num]->menu->menu()[0].value() ? 1 : 0);
@@ -336,7 +337,7 @@ static void solver_ok_cb(Fl_Widget *w, void *data)
 
 static void solver_choose_executable_cb(Fl_Widget *w, void *data)
 {
-  int num = (int)(long)data;
+  int num = (intptr_t)data;
   std::string pattern = "*";
 #if defined(WIN32)
   pattern += ".exe";
@@ -350,7 +351,7 @@ static void solver_choose_executable_cb(Fl_Widget *w, void *data)
 
 static void solver_file_open_cb(Fl_Widget *w, void *data)
 {
-  int num = (int)(long)data;
+  int num = (intptr_t)data;
   std::string pattern = "*" + ConnectionManager::get(num)->inputFileExtension;
 
   if(fileChooser(FILE_CHOOSER_SINGLE, "Choose", pattern.c_str())) {
@@ -361,7 +362,7 @@ static void solver_file_open_cb(Fl_Widget *w, void *data)
 
 static void solver_file_edit_cb(Fl_Widget *w, void *data)
 {
-  int num = (int)(long)data;
+  int num = (intptr_t)data;
   std::string prog = FixWindowsPath(CTX::instance()->editor);
   std::string file = FixWindowsPath(FlGui::instance()->solver[num]->input[0]->value());
   SystemCall(ReplaceSubString("%s", file, prog));
@@ -369,7 +370,7 @@ static void solver_file_edit_cb(Fl_Widget *w, void *data)
 
 static void solver_choose_mesh_cb(Fl_Widget *w, void *data)
 {
-  int num = (int)(long)data;
+  int num = (intptr_t)data;
   if(fileChooser(FILE_CHOOSER_SINGLE, "Choose", "*.msh")){
     FlGui::instance()->solver[num]->input[1]->value(fileChooserGetName(1).c_str());
     solver_ok_cb(w, data);
@@ -409,7 +410,7 @@ static void solver_command_cb(Fl_Widget *w, void *data)
 
 static void solver_kill_cb(Fl_Widget *w, void *data)
 {
-  int num = (int)(long)data;
+  int num = (intptr_t)data;
   ConnectionManager::get(num)->kill();
 }
 

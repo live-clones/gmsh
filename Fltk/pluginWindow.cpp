@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <string.h>
+#include <inttypes.h>
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Value_Input.H>
@@ -36,7 +37,7 @@ class PluginDialogBox{
 
 void plugin_cb(Fl_Widget *w, void *data)
 {
-  FlGui::instance()->plugins->show((int)(long)data);
+  FlGui::instance()->plugins->show((intptr_t)data);
 }
 
 static void plugin_input_value_cb(Fl_Widget *w, void *data)

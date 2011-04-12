@@ -5,6 +5,7 @@
 
 #include <sstream>
 #include <string.h>
+#include <inttypes.h>
 #include <FL/Fl.H>
 #include <FL/Fl_Tooltip.H>
 #include <FL/Fl_Shared_Image.H>
@@ -85,7 +86,7 @@ class drawContextFltk : public drawContextGlobal{
   int getFontEnum(int index)
   {
     if(index >= 0 && index < NUM_FONTS)
-      return (long)menu_font_names[index].user_data();
+      return (intptr_t)menu_font_names[index].user_data();
     return FL_HELVETICA;
   }
   const char *getFontName(int index)

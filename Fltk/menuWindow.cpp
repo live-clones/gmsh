@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <inttypes.h>
 #include <time.h>
 #include <FL/Fl_Box.H>
 #include <FL/fl_ask.H>
@@ -1825,13 +1826,15 @@ static void mesh_change_order_cb(Fl_Widget *w, void *data)
 
 static void mesh_degree_cb(Fl_Widget *w, void *data)
 {
-  if((long)data == 2)
+  int degree = (intptr_t)data;
+  if(degree == 2)
     SetOrderN(GModel::current(), 2, CTX::instance()->mesh.secondOrderLinear, 
               CTX::instance()->mesh.secondOrderIncomplete);
-  else if ((long)data == 1)
+  else if (degree == 1)
     SetOrder1(GModel::current());
   else // For now, use the same options as for second order meshes
-    SetOrderN(GModel::current(), (long)data, CTX::instance()->mesh.secondOrderLinear, 
+    SetOrderN(GModel::current(), degree, 
+	      CTX::instance()->mesh.secondOrderLinear, 
               CTX::instance()->mesh.secondOrderIncomplete);
   CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();
@@ -2083,7 +2086,7 @@ static void mesh_define_compound_entity_cb(Fl_Widget *w, void *data)
 
 static void view_toggle_cb(Fl_Widget *w, void *data)
 {
-  int num = (int)(long)data;
+  int num = (intptr_t)data;
   opt_view_visible(num, GMSH_SET,
                    FlGui::instance()->menu->toggle[num]->value());
   drawContext::global()->draw();
@@ -2122,7 +2125,7 @@ static void view_reload(int index)
 
 static void view_reload_cb(Fl_Widget *w, void *data)
 {
-  view_reload((int)(long)data);
+  view_reload((intptr_t)data);
   drawContext::global()->draw();
 }
 
@@ -2145,7 +2148,7 @@ static void view_remove_other_cb(Fl_Widget *w, void *data)
 {
   if(PView::list.empty()) return;
   for(int i = PView::list.size() - 1; i >= 0; i--)
-    if(i != (long)data) delete PView::list[i];
+    if(i != (intptr_t)data) delete PView::list[i];
   FlGui::instance()->updateViews();
   drawContext::global()->draw();
 }
@@ -2187,7 +2190,7 @@ static void view_remove_empty_cb(Fl_Widget *w, void *data)
 
 static void view_remove_cb(Fl_Widget *w, void *data)
 {
-  delete PView::list[(int)(long)data];
+  delete PView::list[(intptr_t)data];
   FlGui::instance()->updateViews();
   drawContext::global()->draw();
 }
@@ -2212,49 +2215,49 @@ static void view_save_as(int index, const char *title, int format)
 
 static void view_save_ascii_cb(Fl_Widget *w, void *data)
 {
-  view_save_as((int)(long)data, "Save As ASCII View", 0);
+  view_save_as((intptr_t)data, "Save As ASCII View", 0);
 }
 
 static void view_save_binary_cb(Fl_Widget *w, void *data)
 {
-  view_save_as((int)(long)data, "Save As Binary View", 1);
+  view_save_as((intptr_t)data, "Save As Binary View", 1);
 }
 
 static void view_save_parsed_cb(Fl_Widget *w, void *data)
 {
-  view_save_as((int)(long)data, "Save As Parsed View", 2);
+  view_save_as((intptr_t)data, "Save As Parsed View", 2);
 }
 
 static void view_save_stl_cb(Fl_Widget *w, void *data)
 {
-  view_save_as((int)(long)data, "Save As STL Triangulation", 3);
+  view_save_as((intptr_t)data, "Save As STL Triangulation", 3);
 }
 
 static void view_save_txt_cb(Fl_Widget *w, void *data)
 {
-  view_save_as((int)(long)data, "Save As Raw Text", 4);
+  view_save_as((intptr_t)data, "Save As Raw Text", 4);
 }
 
 static void view_save_msh_cb(Fl_Widget *w, void *data)
 {
-  view_save_as((int)(long)data, "Save As Gmsh Mesh", 5);
+  view_save_as((intptr_t)data, "Save As Gmsh Mesh", 5);
 }
 
 static void view_save_med_cb(Fl_Widget *w, void *data)
 {
-  view_save_as((int)(long)data, "Save As MED file", 6);
+  view_save_as((intptr_t)data, "Save As MED file", 6);
 }
 
 static void view_alias_cb(Fl_Widget *w, void *data)
 {
-  new PView(PView::list[(int)(long)data], false);
+  new PView(PView::list[(intptr_t)data], false);
   FlGui::instance()->updateViews();
   drawContext::global()->draw();
 }
 
 static void view_alias_with_options_cb(Fl_Widget *w, void *data)
 {
-  new PView(PView::list[(int)(long)data], true);
+  new PView(PView::list[(intptr_t)data], true);
   FlGui::instance()->updateViews();
   drawContext::global()->draw();
 }
@@ -2305,14 +2308,14 @@ static void view_all_visible_cb(Fl_Widget *w, void *data)
 {
   for(unsigned int i = 0; i < PView::list.size(); i++)
     opt_view_visible(i, GMSH_SET | GMSH_GUI, 
-                     (long)data < 0 ? !opt_view_visible(i, GMSH_GET, 0) :
-                     (long)data > 0 ? 1 : 0);
+                     (intptr_t)data < 0 ? !opt_view_visible(i, GMSH_GET, 0) :
+                     (intptr_t)data > 0 ? 1 : 0);
   drawContext::global()->draw();
 }
 
 static void view_applybgmesh_cb(Fl_Widget *w, void *data)
 {
-  int index =  (int)(long)data;
+  int index =  (intptr_t)data;
   if(index >= 0 && index < (int)PView::list.size()){
     GModel::current()->getFields()->setBackgroundMesh(index);
   }
