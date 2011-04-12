@@ -1326,9 +1326,12 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   else Msg::StatusBar(2, true, "Meshing order %d, curvilinear OFF...", order);
   double t1 = Cpu();
 
+  
 
   // first, make sure to remove any existsing second order vertices/elements
   SetOrder1(m);    
+
+  //  m->writeMSH("BEFORE.msh");
 
   highOrderSmoother *displ2D = 0; 
   highOrderSmoother *displ3D = 0; 
@@ -1357,6 +1360,9 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   std::vector<MElement*> bad;
   double worst;
   //  printJacobians(m, "smoothness_b.pos");
+
+  //  m->writeMSH("RAW.msh");
+
   if (displ2D){
     checkHighOrderTriangles("Before optimization", m, bad, worst);
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
@@ -1384,10 +1390,14 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   
   double t2 = Cpu();
 
+  //  m->writeMSH("SMOOTHED.msh");
+
   if (!linear){
     hot.ensureMinimumDistorsion(0.1);
     checkHighOrderTriangles("final mesh", m, bad, worst);
   }
+
+  //  m->writeMSH("CORRECTED.msh");
 
   Msg::StatusBar(2, true, "Done meshing order %d (%g s)", order, t2 - t1);
 }

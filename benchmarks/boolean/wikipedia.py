@@ -32,6 +32,7 @@ myModel.setAsCurrent();
 
 myModel.mesh(3);
 myModel.save("wikipedia.msh");
+myModel.save("wikipedia.brep");
 
 #FlGui.instance();
 #FlGui.run();

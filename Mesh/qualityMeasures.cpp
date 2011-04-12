@@ -210,73 +210,164 @@ double mesh_functional_distorsion(MElement *t, double u, double v)
   return det;
 }
 
-double mesh_functional_distorsion_p2(MTriangle *t)
-{
-  double d1 =mesh_functional_distorsion(t,0.0,0.0);
-  double d2 =mesh_functional_distorsion(t,1.0,0.0);
-  double d3 =mesh_functional_distorsion(t,0.0,1.0);
-  double d4 =mesh_functional_distorsion(t,0.5,0.0);
-  double d5 =mesh_functional_distorsion(t,0.5,0.5);
-  double d6 =mesh_functional_distorsion(t,0.0,0.5);
-  double d[6] = {d1,d2,d3,4*d4-d1-d2,4*d5-d2-d3,4*d6-d1-d3};
-  
-  return *std::min_element(d,d+6);
+static double MINQ (double a, double b, double c){
+  if (a == 0) return std::min(a+b+c,c);
+  double xmin = -b/(2*a);
+  if (xmin < 0 || xmin > 1)return std::min(c,a+b+c);
+  return std::min(c,std::min(a+b+c,a * xmin * xmin + b * xmin + c));
 }
+
+
+double mesh_functional_distorsion_p2_bezier_refined(MTriangle *t)
+{
+  double J1 =mesh_functional_distorsion(t,0.0,0.0);
+  double J2 =mesh_functional_distorsion(t,1.0,0.0);
+  double J3 =mesh_functional_distorsion(t,0.0,1.0);
+  double J4 =mesh_functional_distorsion(t,0.5,0.0);
+  double J5 =mesh_functional_distorsion(t,0.5,0.5);
+  double J6 =mesh_functional_distorsion(t,0.0,0.5);
+
+  double J36 =mesh_functional_distorsion(t,0.0,.75);
+  double J35 =mesh_functional_distorsion(t,0.25,.75);
+  double J56 =mesh_functional_distorsion(t,0.25,.5);
+
+  double J16 =mesh_functional_distorsion(t,0.0,.25);
+  double J14 =mesh_functional_distorsion(t,0.25,.0);
+  double J46 =mesh_functional_distorsion(t,0.25,.25);
+
+
+  double J45 =mesh_functional_distorsion(t,0.5,.25);
+  double J52 =mesh_functional_distorsion(t,0.75,.25);
+  double J24 =mesh_functional_distorsion(t,0.75,.0);
+
+  double d[15] = {
+    J1,J6,J4,2*J16-0.5*(J1+J6),2*J14-0.5*(J1+J4),2*J46-0.5*(J6+J4),
+    J3,J5,2*J36-0.5*(J3+J6),2*J35-0.5*(J3+J5),2*J56-0.5*(J5+J6),
+    J2,2*J45-0.5*(J4+J5),2*J52-0.5*(J5+J2),2*J24-0.5*(J2+J4)};
+  return  *std::min_element(d,d+15);  
+}
+
+double mesh_functional_distorsion_p2_exact(MTriangle *t)
+{
+  double J1 =mesh_functional_distorsion(t,0.0,0.0);
+  double J2 =mesh_functional_distorsion(t,1.0,0.0);
+  double J3 =mesh_functional_distorsion(t,0.0,1.0);
+  double J4 =mesh_functional_distorsion(t,0.5,0.0);
+  double J5 =mesh_functional_distorsion(t,0.5,0.5);
+  double J6 =mesh_functional_distorsion(t,0.0,0.5);
+
+  const double a = J1;
+  const double b = -3*J1-J2+4*J4;
+  const double c = -3*J1-J3+4*J6;
+  const double d = 4*(J1-J4+J5-J6);
+  const double e = 2*(J1+J2-2*J4);
+  const double f = 2*(J1+J3-2*J6);
+
+  double js[3] = {
+    MINQ (2*(J1+J2-2*J4), -3*J1-J2+4*J4, J1),
+    MINQ (2*(J1+J3-2*J6), -3*J1-J3+4*J6, J1),
+    MINQ (2*(J3+J2-2*J5), -3*J2-J3+4*J5, J2)
+  };
+  double min_interm =  *std::min_element(js,js+3);
+
+  double mat[2][2] = {{2*e,d},{d,2*f}};
+  double x[2], rhs[2] = {-b,-c};
+
+  if (!sys2x2(mat,rhs,x))return min_interm;
+
+  const double ximin = x[0];
+  const double etamin  = x[1];
+
+  if (ximin> 0 && etamin > 0 && 1-ximin-etamin>0){
+    const double m4 = a+b*ximin+c*etamin+d*ximin*etamin+
+      e*ximin*ximin + f*etamin*etamin;      
+    /*
+    if (m4 < min_interm && (m4 < .9 || m4 > 1.1)){
+      printf("m4  = %g xi = %g eta  = %g min_interm = %g min_edges = %g %g %g\n",m4,ximin,etamin,min_interm, MINQ (e,b,a), MINQ (f,c,a), MINQ (-d+e+f,b-c+d-2*f,a+c+f));
+      FILE *f = fopen ("t.pos","w");
+      fprintf(f,"ST2(%g,%g,0,%g,%g,0,%g,%g,0,%g,%g,0,%g,%g,0,%g,%g,0){%g,%g,%g,%g,%g,%g}\n",
+	      t->getVertex(0)->x(),t->getVertex(0)->y(),
+	      t->getVertex(1)->x(),t->getVertex(1)->y(),
+	      t->getVertex(2)->x(),t->getVertex(2)->y(),
+	      t->getVertex(3)->x(),t->getVertex(3)->y(),
+	      t->getVertex(4)->x(),t->getVertex(4)->y(),
+	      t->getVertex(5)->x(),t->getVertex(5)->y(),
+	    J1,J2,J3,J4,J5,J6);
+      fclose(f);
+      getchar();
+    }
+    */
+    return std::min(m4, min_interm);
+  }
+  return min_interm;
+}
+
+double mesh_functional_distorsion_pN(MElement *t)
+{
+  const JacobianBasis *jac = t->getJacobianFuncSpace();
+  //  jac->monomials.print("coucou");
+  fullVector<double>Ji(jac->points.size1());
+  for (int i=0;i<jac->points.size1();i++){
+    const double u = jac->points(i,0);
+    const double v = jac->points(i,1);
+    Ji(i) = mesh_functional_distorsion(t,u,v);    
+  }
+ 
+  fullVector<double> Bi( jac->matrixLag2Bez.size1() );
+  jac->matrixLag2Bez.mult(Ji,Bi);
+ 
+  return *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
+}
+
 
 double qmDistorsionOfMapping (MTriangle *e)
 {
   //  return 1.0;
   if (e->getPolynomialOrder() == 1) return 1.0;
-  if (e->getPolynomialOrder() == 2) return mesh_functional_distorsion_p2(e);
+  else if  (e->getPolynomialOrder() == 2) {
+    //    const double exact = mesh_functional_distorsion_p2_exact(e);
+    const double bezier= mesh_functional_distorsion_pN(e);
+    if (bezier < .1){
+      const double bezier_refined= mesh_functional_distorsion_p2_bezier_refined(e);
+      return bezier_refined;
+    }
+    /*
+    if (exact < .99 || exact > 1.01){
+      FILE *f = fopen ("statistics.dat","a");
+      fprintf(f,"%12.5E %12.5E %12.5E\n",exact,bezier,bezier_refined);
+      fclose(f);
 
-  IntPt *pts;
-  int npts;
-  e->getIntegrationPoints(e->getPolynomialOrder(),&npts, &pts);
-  double dmin;
-  for (int i = 0 ; i < npts; i++){
-    const double u = pts[i].pt[0];
-    const double v = pts[i].pt[1];
-    const double di  = mesh_functional_distorsion (e, u, v);
-    //    printf("di = %g\n",di);
-    dmin = (i == 0)? di : std::min(dmin, di);
+      if (exact > 0 && bezier < 0){
+	f = fopen ("t.pos","w");
+	double J1 =mesh_functional_distorsion(e,0.0,0.0);
+	double J2 =mesh_functional_distorsion(e,1.0,0.0);
+	double J3 =mesh_functional_distorsion(e,0.0,1.0);
+	double J4 =mesh_functional_distorsion(e,0.5,0.0);
+	double J5 =mesh_functional_distorsion(e,0.5,0.5);
+	double J6 =mesh_functional_distorsion(e,0.0,0.5);
+	fprintf(f,"ST2(%g,%g,0,%g,%g,0,%g,%g,0,%g,%g,0,%g,%g,0,%g,%g,0){%g,%g,%g,%g,%g,%g}\n",
+		e->getVertex(0)->x(),e->getVertex(0)->y(),
+		e->getVertex(1)->x(),e->getVertex(1)->y(),
+		e->getVertex(2)->x(),e->getVertex(2)->y(),
+		e->getVertex(3)->x(),e->getVertex(3)->y(),
+		e->getVertex(4)->x(),e->getVertex(4)->y(),
+		e->getVertex(5)->x(),e->getVertex(5)->y(),
+		J1,J2,J3,J4,J5,J6);
+	fclose(f);
+	getchar();
+      }
+    }
+  */
+    return bezier;
   }
-  const fullMatrix<double>& points = e->getFunctionSpace()->points;
-
-  for (int i = 0; i < e->getNumPrimaryVertices(); i++) {
-    const double u = points(i, 0);
-    const double v = points(i, 1);
-    const double di  = mesh_functional_distorsion (e, u, v);
-    dmin = std::min(dmin, di);
-  }
-  return dmin;
+  else return  mesh_functional_distorsion_pN(e);
 }
 
 double qmDistorsionOfMapping (MQuadrangle *e)
 {
   //  return 1.0;
   if (e->getPolynomialOrder() == 1) return 1.0;
-  //  if (e->getPolynomialOrder() == 2) return mesh_functional_distorsion_p2(e);
-
-  IntPt *pts;
-  int npts;
-  e->getIntegrationPoints(e->getPolynomialOrder(),&npts, &pts);
-  double dmin;
-  for (int i = 0 ; i < npts; i++){
-    const double u = pts[i].pt[0];
-    const double v = pts[i].pt[1];
-    const double di  = mesh_functional_distorsion (e, u, v);
-    dmin = (i == 0)? di : std::min(dmin, di);
-  }
-  const fullMatrix<double>& points = e->getFunctionSpace()->points;
-
-  for (int i = 0; i < e->getNumPrimaryVertices(); i++) {
-    const double u = points(i, 0);
-    const double v = points(i, 1);
-    const double di  = mesh_functional_distorsion (e, u, v);
-    dmin = std::min(dmin, di);
-  }
-  //  printf("%g\n",dmin);
-  return dmin;
+  else return mesh_functional_distorsion_pN(e);
 }
 
 
@@ -284,49 +375,30 @@ static double mesh_functional_distorsion(MTetrahedron *t, double u, double v, do
 {
   // compute uncurved element jacobian d_u x and d_v x
   double mat[3][3];  
-  t->getPrimaryJacobian(u, v, w, mat);
-  
+  t->getPrimaryJacobian(u, v, w, mat);  
   const double det1 = det3x3(mat);
-
-   //const double det1 = t->getJacobian(u,v,w,mat);
-  // const double det1 = det3x3(mat);
   t->getJacobian(u, v, w, mat);
   const double detN = det3x3(mat);
-  // const double detN = det3x3(mat);
-
-  //  printf("%g %g %g = %g %g\n",u,v,w,det1,detN);
-
   if (det1 == 0 || detN == 0) return 0;
-  double dist = std::min(detN / det1, det1 / detN); 
+  double dist = det1 / detN; 
   return dist;
 }
 
-double qmDistorsionOfMapping(MTetrahedron *e)
+double qmDistorsionOfMapping(MTetrahedron *t)
 {
-  if (e->getPolynomialOrder() == 1) return 1.0;
-  IntPt *pts;
-  int npts;
-  e->getIntegrationPoints(e->getPolynomialOrder(), &npts, &pts);
-  double dmin;
-  for (int i = 0; i < npts; i++){
-    const double u = pts[i].pt[0];
-    const double v = pts[i].pt[1];
-    const double w = pts[i].pt[2];
-    const double di  = mesh_functional_distorsion(e, u, v, w);
-    dmin = (i == 0) ? di : std::min(dmin, di);
+  const JacobianBasis *jac = t->getJacobianFuncSpace();
+  fullVector<double>Ji(jac->points.size1());
+  for (int i=0;i<jac->points.size1();i++){
+    const double u = jac->points(i,0);
+    const double v = jac->points(i,1);
+    const double w = jac->points(i,2);
+    Ji(i) = mesh_functional_distorsion(t,u,v,w);    
   }
-  
-  const fullMatrix<double>& points = e->getFunctionSpace()->points;
-
-  for (int i = 0; i < e->getNumPrimaryVertices(); i++) {
-    const double u = points(i, 0);
-    const double v = points(i, 1);
-    const double w = points(i, 2);
-    const double di  = mesh_functional_distorsion(e, u, v, w);
-    dmin = std::min(dmin, di);
-  }
-
-  return dmin;
+ 
+  fullVector<double> Bi( jac->matrixLag2Bez.size1() );
+  jac->matrixLag2Bez.mult(Ji,Bi);
+ 
+  return *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
 }
 
 double qmTriangleAngles (MTriangle *e) {
