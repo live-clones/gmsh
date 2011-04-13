@@ -775,7 +775,7 @@ set(CMAKE_EXTRA_INCLUDE_FILES)
 check_include_file(dlfcn.h DLFCN_H)
 if(DLFCN_H)
   set_config_option(HAVE_DLOPEN "Dlopen")
-  list(APPEND EXTERNAL_LIBRARIES ${CMAKE_DL_LIB})
+  list(APPEND EXTERNAL_LIBRARIES ${CMAKE_DL_LIBS})
 endif(DLFCN_H)
 
 if(UNIX)
