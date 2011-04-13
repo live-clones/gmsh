@@ -156,15 +156,14 @@ ExtrusionElementMap::addExtrudedElem(MElement* source, MElement* extrudedElem)
   if(it != _extrudedElements.end())
     it->second.push_back(extrudedElem);
   else {
-   std::vector<MElement*>* vec = new std::vector<MElement*>();
-   int totalNbElems = 0;
-   for (int i = 0;i<_parent->mesh.NbLayer;i++)
-     totalNbElems += _parent->mesh.NbElmLayer[i];
-   vec->reserve(totalNbElems);
-   vec->push_back(extrudedElem);
-   _extrudedElements.insert(std::pair<MElement*, std::vector<MElement*> >(source, *vec));
+    int totalNbElems = 0;
+    for (int i = 0; i <_parent->mesh.NbLayer;i++)
+      totalNbElems += _parent->mesh.NbElmLayer[i];
+    // This expression automatically creates the new map key
+    std::vector<MElement*> *vec = &(_extrudedElements[source]);
+    vec->reserve( totalNbElems );
+    vec->push_back( extrudedElem );
   }
-  SPoint3 np = extrudedElem->barycenter(), sp = source->barycenter();
 }
 
 // Propagates the partition information from the source elements to
