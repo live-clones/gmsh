@@ -518,7 +518,8 @@ void OCCFace::replaceEdgesInternal(std::list<GEdge*> &new_edges)
   setup();
 }
 
-bool OCCFace::isSphere (double &radius, SPoint3 &center) const{
+bool OCCFace::isSphere (double &radius, SPoint3 &center) const
+{
   switch(geomType()){
   case GEntity::Sphere:
     {
@@ -532,7 +533,6 @@ bool OCCFace::isSphere (double &radius, SPoint3 &center) const{
   default:
     return false;
   }
-  
 }
 
 
