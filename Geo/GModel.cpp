@@ -245,8 +245,6 @@ GEdge *GModel::getEdgeByTag(int n) const
     return 0;
 }
 
-
-
 GVertex *GModel::getVertexByTag(int n) const
 {
   GEntity tmp((GModel*)this, n);
@@ -257,6 +255,19 @@ GVertex *GModel::getVertexByTag(int n) const
     return 0;
 }
 
+std::vector<int> GModel::getEdgesByStringTag(const std::string tag) 
+{ 
+  std::vector<int> nums;
+  std::map<int, std::vector<GEntity*> > physicalGroups[4]; 
+  getPhysicalGroups(physicalGroups); 
+  std::vector<GEntity*> allEdges = physicalGroups[1][this->getPhysicalNumber(1,tag)]; 
+  for ( std::vector<GEntity*>::iterator it = allEdges.begin(); it != allEdges.end(); it++){
+    GEntity *ge = *it;
+    nums.push_back(ge->tag());
+  }
+
+  printf("edges size = %d \n", nums.size());
+}
 
 void GModel::remove(GRegion *r)
 {

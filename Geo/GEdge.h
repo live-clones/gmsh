@@ -159,6 +159,8 @@ class GEdge : public GEntity {
 
   // get bounds of parametric coordinate 
   virtual Range<double> parBounds(int i) const = 0;
+  inline double getLowerBound() const{ return parBounds(0).low();};
+  inline double getUpperBound() const{ return parBounds(0).high();};
   
   // return the point on the face closest to the given point
   virtual GPoint closestPoint(const SPoint3 &queryPoint, double &param) const;

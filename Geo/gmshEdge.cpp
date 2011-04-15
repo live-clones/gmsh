@@ -36,6 +36,7 @@ Range<double> gmshEdge::parBounds(int i) const
 
 GPoint gmshEdge::point(double par) const
 {
+  
   Vertex a = InterpolateCurve(c, par, 0);
   return GPoint(a.Pos.X, a.Pos.Y, a.Pos.Z, this, par);
 }
@@ -48,7 +49,7 @@ SVector3 gmshEdge::firstDer(double par) const
 
 SVector3 gmshEdge::secondDer(double par) const
 {
-  //  printf("coucou mon chou\n");
+ 
   Vertex a = InterpolateCurve(c, par, 2);
   return SVector3(a.Pos.X, a.Pos.Y, a.Pos.Z);
 }

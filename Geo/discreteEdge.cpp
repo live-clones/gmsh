@@ -268,10 +268,11 @@ void discreteEdge::parametrize(std::map<GFace*, std::map<MVertex*, MVertex*,
                                std::map<GRegion*, std::map<MVertex*, MVertex*,
                                std::less<MVertex*> > > &region2Vert)
 { 
-  for (unsigned int i = 0; i < lines.size() + 1; i++){
-    _pars.push_back(i);
+  if (_pars.empty()){
+    for (unsigned int i = 0; i < lines.size() + 1; i++){
+      _pars.push_back(i);
+    }
   }
-
   //Replace MVertex by MedgeVertex
   std::map<MVertex*, MVertex*, std::less<MVertex*> > old2new;   
   old2new.clear();
@@ -397,7 +398,7 @@ void discreteEdge::computeNormals () const
 bool discreteEdge::getLocalParameter(const double &t, int &iLine,
                                      double &tLoc) const
 {
-  if(_pars.empty()) return false;
+
   for (iLine = 0; iLine < (int)lines.size(); iLine++){
     double tmin = _pars[iLine];
     double tmax = _pars[iLine+1];

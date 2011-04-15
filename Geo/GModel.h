@@ -204,6 +204,7 @@ class GModel
   GFace *getFaceByTag(int n) const;
   GEdge *getEdgeByTag(int n) const;
   GVertex *getVertexByTag(int n) const;
+  std::vector<int> getEdgesByStringTag(const std::string tag);
 
   // for python, temporary solution while iterator are not binded
   std::vector<GRegion*> bindingsGetRegions();
