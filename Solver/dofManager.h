@@ -55,9 +55,9 @@ template<class T> struct dofTraits
 {
   typedef T VecType;
   typedef T MatType;
-  inline static void gemm(VecType &r, const MatType &m, const VecType &v, 
+  inline static void gemm(VecType &r, const MatType &m, const VecType &v,
                           double alpha, double beta)
-  { 
+  {
     r = beta * r + alpha * m * v;
   }
 };
@@ -68,7 +68,7 @@ template<class T> struct dofTraits<fullMatrix<T> >
   typedef fullMatrix<T> MatType;
   inline static void gemm (VecType &r, const MatType &m, const VecType &v,
                            double alpha, double beta)
-  { 
+  {
     r.gemm(m, v, alpha,beta);
   }
 };
@@ -132,10 +132,10 @@ class dofManager{
   void _parallelFinalize();
 
  public:
-  dofManager(linearSystem<dataMat> *l, bool isParallel=false) 
-    : _current(l), _isParallel(isParallel), _parallelFinalized(false) 
-  { 
-    _linearSystems["A"] = l; 
+  dofManager(linearSystem<dataMat> *l, bool isParallel=false)
+    : _current(l), _isParallel(isParallel), _parallelFinalized(false)
+  {
+    _linearSystems["A"] = l;
   }
   dofManager(linearSystem<dataMat> *l1, linearSystem<dataMat> *l2)
     : _current(l1), _isParallel(false), _parallelFinalized(false)
@@ -178,7 +178,7 @@ class dofManager{
     if (ghosted.find(key) != ghosted.end()) return;
     ghosted[key] = procId;
   }
-  inline void numberDof(Dof key)
+  virtual inline void numberDof(Dof key) // derived in staticDofManager in NonLinearSolver project
   {
     if (fixed.find(key) != fixed.end()) return;
     if (constraints.find(key) != constraints.end()) return;
@@ -275,7 +275,7 @@ class dofManager{
     getDofValue(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField), value);
   }
 
-  inline void insertInSparsityPatternLinConst(const Dof &R, const Dof &C) 
+  inline void insertInSparsityPatternLinConst(const Dof &R, const Dof &C)
   {
     std::map<Dof, int>::iterator itR = unknown.find(R);
     if (itR != unknown.end())
@@ -348,7 +348,7 @@ class dofManager{
       assembleLinConst(R, C, value);
     }
   }
-  inline void assemble(std::vector<Dof> &R, std::vector<Dof> &C, 
+  inline void assemble(std::vector<Dof> &R, std::vector<Dof> &C,
                        const fullMatrix<dataMat> &m)
   {
     if (_isParallel && !_parallelFinalized) _parallelFinalize();
@@ -628,7 +628,7 @@ void dofManager<T>::_parallelFinalize()
     }
   }
   int index;
-  while (MPI_Waitany (2*Msg::GetCommSize(), reqRecv0, &index, &status) == 0 && 
+  while (MPI_Waitany (2*Msg::GetCommSize(), reqRecv0, &index, &status) == 0 &&
          index != MPI_UNDEFINED) {
     if (status.MPI_TAG == 0) {
       for (int j = 0; j < nRequested[index]; j++) {
@@ -638,7 +638,7 @@ void dofManager<T>::_parallelFinalize()
           Msg::Error ("ghost Dof does not exist on parent process");
         send1[index][j] = it->second;
       }
-      MPI_Isend(send1[index], nRequested[index], MPI_INT, index, 1, 
+      MPI_Isend(send1[index], nRequested[index], MPI_INT, index, 1,
                 MPI_COMM_WORLD, &reqSend1[index]);
     }
   }
