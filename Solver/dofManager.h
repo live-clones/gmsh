@@ -178,7 +178,7 @@ class dofManager{
     if (ghosted.find(key) != ghosted.end()) return;
     ghosted[key] = procId;
   }
-  virtual inline void numberDof(Dof key) // derived in staticDofManager in NonLinearSolver project
+  inline void numberDof(Dof key)
   {
     if (fixed.find(key) != fixed.end()) return;
     if (constraints.find(key) != constraints.end()) return;
