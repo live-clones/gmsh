@@ -31,6 +31,8 @@
   #include "polynomialBasis.h"
   #include "Gauss.h"
   #include "meshPartitionOptions.h"
+  #include "meshGFaceOptimize.h"
+  #include "Generator.h"
   #include "linearSystemCSR.h"
   #include "elasticitySolver.h"
   #include "meshGFaceLloyd.h"
@@ -133,6 +135,8 @@ namespace std {
 %include "functionPython.h"
 %include "meshGFaceLloyd.h"
 %include "DefaultOptions.h"
+%include "meshGFaceOptimize.h"
+%include "Generator.h"
 #if defined(HAVE_FLTK)
 %include "FlGui.h"
 #endif

@@ -57,7 +57,9 @@ void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
 void buildEdgeToElements(std::vector<MElement*> &tris, e2t_cont &adj);
 
 void laplaceSmoothing(GFace *gf, int niter=1);
+/*
 void edgeSwappingLawson(GFace *gf);
+*/
 
 enum swapCriterion {SWCR_DEL, SWCR_QUAL, SWCR_NORM, SWCR_CLOSE};
 enum splitCriterion {SPCR_CLOSE, SPCR_QUAL, SPCR_ALLWAYS};
@@ -69,20 +71,20 @@ int edgeSwapPass(GFace *gf,
                  const std::vector<double> &Vs,
                  const std::vector<double> &vSizes, 
                  const std::vector<double> &vSizesBGM);
-int edgeSplitPass(double maxLC, GFace *gf, 
+/*int edgeSplitPass(double maxLC, GFace *gf, 
                   std::set<MTri3*, compareTri3Ptr> &allTris,
                   const splitCriterion &cr,   
                   std::vector<double> &Us,
                   std::vector<double> &Vs,
                   std::vector<double> &vSizes ,
                   std::vector<double> &vSizesBGM);
-void removeFourTrianglesNodes(GFace *gf, bool replace_by_quads);
 int edgeCollapsePass(double minLC, GFace *gf, 
                      std::set<MTri3*, compareTri3Ptr> &allTris,
                      std::vector<double> &Us,
                      std::vector<double> &Vs,
                      std::vector<double> &vSizes ,
-                     std::vector<double> &vSizesBGM);
+                     std::vector<double> &vSizesBGM);*/
+void removeFourTrianglesNodes(GFace *gf, bool replace_by_quads);
 void buildMeshGenerationDataStructures(GFace *gf, 
                                        std::set<MTri3*, compareTri3Ptr> &AllTris,
                                        std::vector<double> &vSizes,
