@@ -1,8 +1,5 @@
 %feature("autodoc", "1");
 %module gmshpy
-%include std_string.i
-%include std_vector.i
-%include std_list.i
 %{
   #include "GmshConfig.h"
   #include "GModel.h"
@@ -63,6 +60,10 @@
     }
   };
 %}
+
+%include std_string.i
+%include std_vector.i
+%include std_list.i
 
 %init %{
   errorHandler *eH = new errorHandler;
