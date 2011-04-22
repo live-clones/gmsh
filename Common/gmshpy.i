@@ -47,6 +47,7 @@
   #include "SPoint3.h"
   #include "SPoint2.h"
   #include "GPoint.h"  
+  #include "JacobianBasis.h"  
   #if defined(HAVE_FLTK)
   #include "FlGui.h"
   #endif
@@ -105,6 +106,7 @@ namespace std {
 %include "linearSystemPETSc.h"
 %template(linearSystemPETScDouble) linearSystemPETSc<double>;
 %include "linearSystemCSR.h"
+%template(linearSystemCSRDouble) linearSystemCSR<double>;
 %template(linearSystemTAUCSDouble) linearSystemCSRTaucs<double>;
 %include "GEntity.h"
 %include "GVertex.h"
@@ -137,6 +139,7 @@ namespace std {
 %include "DefaultOptions.h"
 %include "meshGFaceOptimize.h"
 %include "Generator.h"
+%include "JacobianBasis.h"  
 #if defined(HAVE_FLTK)
 %include "FlGui.h"
 #endif
