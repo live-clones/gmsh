@@ -66,7 +66,9 @@ static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
 void Msg::Init(int argc, char **argv)
 {
 #if defined(HAVE_MPI)
-  MPI_Init(&argc, &argv);
+  int flag;
+  MPI_Initialized(&flag);
+  if(!flag) MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &_commRank);
   MPI_Comm_size(MPI_COMM_WORLD, &_commSize);
   MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
