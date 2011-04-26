@@ -2671,7 +2671,7 @@ contextItem menu_mesh[] = {
     {""} 
   };  
   contextItem menu_mesh_degree[] = {
-    {"1Mesh> Set order"} ,
+    {"1Mesh>Set order"} ,
     {"1",  (Fl_Callback *)mesh_degree_cb, (void*)1},
     {"2",  (Fl_Callback *)mesh_degree_cb, (void*)2},
     {"3",  (Fl_Callback *)mesh_degree_cb, (void*)3},
