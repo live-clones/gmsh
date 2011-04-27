@@ -200,6 +200,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
       for(int nod = 0; nod < numNodes; nod++) out->push_back(y[nod]); 
       for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]); 
       for(int step = timeBeg; step < timeEnd; step++){
+	if(!data1->hasTimeStep(step)) continue;
         int step2 = (otherTimeStep < 0) ? step : otherTimeStep;
         for(int nod = 0; nod < numNodes; nod++){
           std::vector<double> v(std::max(9, numComp), 0.);
@@ -227,8 +228,10 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   }
   
   if(timeStep < 0){
-    for(int i = firstNonEmptyStep; i < data1->getNumTimeSteps(); i++)
+    for(int i = firstNonEmptyStep; i < data1->getNumTimeSteps(); i++) {
+      if(!data1->hasTimeStep(i)) continue;
       data2->Time.push_back(data1->getTime(i));
+    }
   }
   else
     data2->Time.push_back(data1->getTime(timeStep));
