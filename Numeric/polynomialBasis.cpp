@@ -1009,12 +1009,12 @@ static fullMatrix<double> generateLagrangeMonomialCoefficients
   return coefficient;
 }
 
-static void generate1dVertexClosure(polynomialBasis::clCont &closure)
+static void generate1dVertexClosure(polynomialBasis::clCont &closure, int order)
 {
   closure.clear();
   closure.resize(2);
   closure[0].push_back(0);
-  closure[1].push_back(1);
+  closure[1].push_back(order == 0 ? 0 : 1);
   closure[0].type = MSH_PNT;
   closure[1].type = MSH_PNT;
 }
@@ -1025,8 +1025,10 @@ static void generate1dVertexClosureFull(polynomialBasis::clCont &closure, std::v
   closure.clear();
   closure.resize(2);
   closure[0].push_back(0);
-  closure[0].push_back(1);
-  closure[1].push_back(1);
+  if (order != 0) {
+    closure[0].push_back(1);
+    closure[1].push_back(1);
+  }
   closure[1].push_back(0);
   for (int i = 0; i < order - 1; i++) {
     closure[0].push_back(2 + i);
@@ -1406,759 +1408,188 @@ static void generateClosureOrder0(polynomialBasis::clCont &closure, int nb)
   }
 }
 
-void _oulala_  (const char* a, fullMatrix<double> & m){
-  FILE *f = fopen (a,"w");
-  fprintf(f,"View \"\"{\n");
-  for (int i=0;i<m.size1();i++){
-    fprintf(f,"SP(%g,%g,%g){%d};\n",m(i,0),m(i,1),m(i,2),i);
-  }
-  fprintf(f,"};\n");
-  fclose (f);
-}
-
 std::map<int, polynomialBasis> polynomialBases::fs;
 const polynomialBasis *polynomialBases::find(int tag)
 {
   std::map<int, polynomialBasis>::const_iterator it = fs.find(tag);
   if (it != fs.end())     return &it->second;
   polynomialBasis F;
-  F.numFaces = -1;
-  switch (tag){
-  case MSH_PNT:
-    F.numFaces = 1;
-    F.monomials = generate1DMonomials(0);
-    F.points    = generate1DPoints(0);
-    F.parentType = TYPE_PNT;
-    break;
-  case MSH_LIN_1 :
-    F.numFaces = 2;
-    F.monomials = generate1DMonomials(0);
-    F.points    = generate1DPoints(0);
-    generateClosureOrder0(F.closures,2);
-    generate1dVertexClosureFull(F.fullClosures, F.closureRef, 0);
-    F.parentType = TYPE_LIN;
-    break;
-  case MSH_LIN_2 :
-    F.numFaces = 2;
-    F.monomials = generate1DMonomials(1);
-    F.points    = generate1DPoints(1);
-    generate1dVertexClosure(F.closures);
-    generate1dVertexClosureFull(F.fullClosures, F.closureRef, 1);
-    F.parentType = TYPE_LIN;
-    break;
-  case MSH_LIN_3 :
-    F.numFaces = 2;
-    F.monomials = generate1DMonomials(2);
-    F.points    = generate1DPoints(2);
-    generate1dVertexClosure(F.closures);
-    generate1dVertexClosureFull(F.fullClosures, F.closureRef, 2);
-    F.parentType = TYPE_LIN;
-    break;
-  case MSH_LIN_4:
-    F.numFaces = 2;
-    F.monomials = generate1DMonomials(3);
-    F.points    = generate1DPoints(3);
-    F.parentType = TYPE_LIN;
-    generate1dVertexClosure(F.closures);
-    generate1dVertexClosureFull(F.fullClosures, F.closureRef, 3);
-    break;
-  case MSH_LIN_5:
-    F.numFaces = 2;
-    F.monomials = generate1DMonomials(4);
-    F.points    = generate1DPoints(4);
-    F.parentType = TYPE_LIN;
-    generate1dVertexClosure(F.closures);
-    generate1dVertexClosureFull(F.fullClosures, F.closureRef, 4);
-    break;
-  case MSH_LIN_6:
-    F.numFaces = 2;
-    F.monomials = generate1DMonomials(5);
-    F.points    = generate1DPoints(5);
-    F.parentType = TYPE_LIN;
-    generate1dVertexClosure(F.closures);
-    generate1dVertexClosureFull(F.fullClosures, F.closureRef, 5);
-    break;
-  case MSH_LIN_7:
-    F.numFaces = 2;
-    F.monomials = generate1DMonomials(6);
-    F.points    = generate1DPoints(6);
-    F.parentType = TYPE_LIN;
-    generate1dVertexClosure(F.closures);
-    generate1dVertexClosureFull(F.fullClosures, F.closureRef, 6);
-    break;
-  case MSH_LIN_8:
-    F.numFaces = 2;
-    F.monomials = generate1DMonomials(7);
-    F.points    = generate1DPoints(7);
-    F.parentType = TYPE_LIN;
-    generate1dVertexClosure(F.closures);
-    generate1dVertexClosureFull(F.fullClosures, F.closureRef, 7);
-    break;
-  case MSH_LIN_9:
-    F.numFaces = 2;
-    F.monomials = generate1DMonomials(8);
-    F.points    = generate1DPoints(8);
-    F.parentType = TYPE_LIN;
-    generate1dVertexClosure(F.closures);
-    generate1dVertexClosureFull(F.fullClosures, F.closureRef, 8);
-    break;
-  case MSH_LIN_10:
-    F.numFaces = 2;
-    F.monomials = generate1DMonomials(9);
-    F.points    = generate1DPoints(9);
-    F.parentType = TYPE_LIN;
-    generate1dVertexClosure(F.closures);
-    generate1dVertexClosureFull(F.fullClosures, F.closureRef, 9);
-    break;
-  case MSH_LIN_11:
-    F.numFaces = 2;
-    F.monomials = generate1DMonomials(10);
-    F.points    = generate1DPoints(10);
-    F.parentType = TYPE_LIN;
-    generate1dVertexClosure(F.closures);
-    generate1dVertexClosureFull(F.fullClosures, F.closureRef, 10);
-    break;
-  case MSH_TRI_1 :
-    F.numFaces = 3;
-    F.monomials = generatePascalTriangle(0);
-    F.points =    gmshGeneratePointsTriangle(0, false);
-    F.parentType = TYPE_TRI;
-    generateClosureOrder0(F.closures, 6);
-    generateClosureOrder0(F.fullClosures, 6);
-    F.closureRef.resize(6, 0);
-    break;
-  case MSH_TRI_3 :
-    F.numFaces = 3;
-    F.monomials = generatePascalTriangle(1);
-    F.points =    gmshGeneratePointsTriangle(1, false);
-    F.parentType = TYPE_TRI;
-    generate2dEdgeClosure(F.closures, 1);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 1, 3, false);
-    break;
-  case MSH_TRI_6 :
-    F.numFaces = 3;
-    F.monomials = generatePascalTriangle(2);
-    F.points =    gmshGeneratePointsTriangle(2, false);
-    F.parentType = TYPE_TRI;
-    generate2dEdgeClosure(F.closures, 2);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 2, 3, false);
-    break;
-  case MSH_TRI_9 :
-    F.numFaces = 3;
-    F.monomials = generatePascalSerendipityTriangle(3);
-    F.points =    gmshGeneratePointsTriangle(3, true);
-    F.parentType = TYPE_TRI;
-    generate2dEdgeClosure(F.closures, 3);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 3, 3, true);
-    break;
-  case MSH_TRI_10 :
-    F.numFaces = 3;
-    F.monomials = generatePascalTriangle(3);
-    F.points =    gmshGeneratePointsTriangle(3, false);
-    F.parentType = TYPE_TRI;
-    generate2dEdgeClosure(F.closures, 3);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 3, 3, false);
-    break;
-  case MSH_TRI_12 :
-    F.numFaces = 3;
-    F.monomials = generatePascalSerendipityTriangle(4);
-    F.points =    gmshGeneratePointsTriangle(4, true);
-    F.parentType = TYPE_TRI;
-    generate2dEdgeClosure(F.closures, 4);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 4, 3, true);
-    break;
-  case MSH_TRI_15 :
-    F.numFaces = 3;
-    F.monomials = generatePascalTriangle(4);
-    F.points =    gmshGeneratePointsTriangle(4, false);
-    F.parentType = TYPE_TRI;
-    generate2dEdgeClosure(F.closures, 4);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 4, 3, false);
-    break;
-  case MSH_TRI_15I :
-    F.numFaces = 3;
-    F.monomials = generatePascalSerendipityTriangle(5);
-    F.points =    gmshGeneratePointsTriangle(5, true);
-    F.parentType = TYPE_TRI;
-    generate2dEdgeClosure(F.closures, 5);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 5, 3, true);
-    break;
-  case MSH_TRI_21 :
-    F.numFaces = 3;
-    F.monomials = generatePascalTriangle(5);
-    F.points =    gmshGeneratePointsTriangle(5, false);
-    F.parentType = TYPE_TRI;
-    generate2dEdgeClosure(F.closures, 5);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 5, 3, false);
-    break;
-  case MSH_TRI_28 :
-    F.numFaces = 3;
-    F.monomials = generatePascalTriangle(6);
-    F.points =    gmshGeneratePointsTriangle(6, false);    
-    F.parentType = TYPE_TRI;
-    generate2dEdgeClosure(F.closures, 6);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 6, 3, false);
-    break;
-  case MSH_TRI_36 :
-    F.numFaces = 3;
-    F.monomials = generatePascalTriangle(7);
-    F.points =    gmshGeneratePointsTriangle(7, false);
-    F.parentType = TYPE_TRI;
-    generate2dEdgeClosure(F.closures, 7);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 7, 3, false);
-    break;
-  case MSH_TRI_45 :
-    F.numFaces = 3;
-    F.monomials = generatePascalTriangle(8);
-    F.points =    gmshGeneratePointsTriangle(8, false);
-    F.parentType = TYPE_TRI;
-    generate2dEdgeClosure(F.closures, 8);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 8, 3, false);
-    break;
-  case MSH_TRI_55 :
-    F.numFaces = 3;
-    F.monomials = generatePascalTriangle(9);
-    F.points =    gmshGeneratePointsTriangle(9, false);
-    F.parentType = TYPE_TRI;
-    generate2dEdgeClosure(F.closures, 9);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 9, 3, false);
-    break;
-  case MSH_TRI_66 :
-    F.numFaces = 3;
-    F.monomials = generatePascalTriangle(10);
-    F.points =    gmshGeneratePointsTriangle(10, false);
-    F.parentType = TYPE_TRI;
-    generate2dEdgeClosure(F.closures, 10);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 10, 3, false);
-    break;
-  case MSH_TRI_18 :
-    F.numFaces = 3;
-    F.monomials = generatePascalSerendipityTriangle(6);
-    F.points =    gmshGeneratePointsTriangle(6, true);
-    F.parentType = TYPE_TRI;
-    generate2dEdgeClosure(F.closures, 6);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 6, 3, true);
-    break;
-  case MSH_TRI_21I :
-    F.numFaces = 3;
-    F.monomials = generatePascalSerendipityTriangle(7);
-    F.points =    gmshGeneratePointsTriangle(7, true);
-    F.parentType = TYPE_TRI;
-    generate2dEdgeClosure(F.closures, 7);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 7, 3, true);
-    break;
-  case MSH_TRI_24 :
-    F.numFaces = 3;
-    F.monomials = generatePascalSerendipityTriangle(8);
-    F.points =    gmshGeneratePointsTriangle(8, true);
-    F.parentType = TYPE_TRI;
-    generate2dEdgeClosure(F.closures, 8);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 8, 3, true);
-    break;
-  case MSH_TRI_27 :
-    F.numFaces = 3;
-    F.monomials = generatePascalSerendipityTriangle(9);
-    F.points =    gmshGeneratePointsTriangle(9, true);
-    F.parentType = TYPE_TRI;
-    generate2dEdgeClosure(F.closures, 9);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 9, 3, true);
-    break;
-  case MSH_TRI_30 :
-    F.numFaces = 3;
-    F.monomials = generatePascalSerendipityTriangle(10);
-    F.points =    gmshGeneratePointsTriangle(10, true);
-    F.parentType = TYPE_TRI;
-    generate2dEdgeClosure(F.closures, 10);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 10, 3, true);
-    break;
-  case MSH_TET_1 :
-    F.numFaces = 4;
-    F.monomials = generatePascalTetrahedron(0);
-    F.points =    gmshGeneratePointsTetrahedron(0, false);
-    F.parentType = TYPE_TET;
-    generateClosureOrder0(F.closures,24);
-    generateClosureOrder0(F.fullClosures, 24);
-    F.closureRef.resize(24, 0);
-    break;
-  case MSH_TET_4 :
-    F.numFaces = 4;
-    F.monomials = generatePascalTetrahedron(1);
-    F.points =    gmshGeneratePointsTetrahedron(1, false);
-    F.parentType = TYPE_TET;
-    generateFaceClosureTet(F.closures, 1);
-    generateFaceClosureTetFull(F.fullClosures, F.closureRef, 1, false);
-    break;
-  case MSH_TET_10 :
-    F.numFaces = 4;
-    F.monomials = generatePascalTetrahedron(2);
-    F.points =    gmshGeneratePointsTetrahedron(2, false);
-    F.parentType = TYPE_TET;
-    generateFaceClosureTet(F.closures, 2);
-    generateFaceClosureTetFull(F.fullClosures, F.closureRef, 2, false);
-    break;
-  case MSH_TET_20 :
-    F.numFaces = 4;
-    F.monomials = generatePascalTetrahedron(3);
-    F.points =    gmshGeneratePointsTetrahedron(3, false);
-    F.parentType = TYPE_TET;
-    generateFaceClosureTet(F.closures, 3);
-    generateFaceClosureTetFull(F.fullClosures, F.closureRef, 3, false);
-    break;
-  case MSH_TET_35 :
-    F.numFaces = 4;
-    F.monomials = generatePascalTetrahedron(4);
-    F.points =    gmshGeneratePointsTetrahedron(4, false);
-    F.parentType = TYPE_TET;
-    generateFaceClosureTet(F.closures, 4);
-    generateFaceClosureTetFull(F.fullClosures, F.closureRef, 4, false);
-    break;
-  case MSH_TET_34 :
-    F.numFaces = 4;
-    F.monomials = generatePascalSerendipityTetrahedron(4);
-    F.points =    gmshGeneratePointsTetrahedron(4, true);
-    F.parentType = TYPE_TET;
-    generateFaceClosureTet(F.closures, 4);
-    generateFaceClosureTetFull(F.fullClosures, F.closureRef, 4, true);
-    break;
-  case MSH_TET_52 :
-    F.numFaces = 4;
-    F.monomials = generatePascalSerendipityTetrahedron(5);
-    F.points =    gmshGeneratePointsTetrahedron(5, true);
-    F.parentType = TYPE_TET;
-    generateFaceClosureTet(F.closures, 5);
-    generateFaceClosureTetFull(F.fullClosures, F.closureRef, 5, true);
-    break;
-  case MSH_TET_56 :
-    F.numFaces = 4;
-    F.monomials = generatePascalTetrahedron(5);
-    F.points =    gmshGeneratePointsTetrahedron(5, false);
-    F.parentType = TYPE_TET;
-    generateFaceClosureTet(F.closures, 5);
-    generateFaceClosureTetFull(F.fullClosures, F.closureRef, 5, false);
-    break;
-  case MSH_TET_74 :
-    F.numFaces = 4;
-    F.monomials = generatePascalSerendipityTetrahedron(6);
-    F.points =    gmshGeneratePointsTetrahedron(6, true);
-    F.parentType = TYPE_TET;
-    generateFaceClosureTet(F.closures, 6);
-    generateFaceClosureTetFull(F.fullClosures, F.closureRef, 6, true);
-    break;
-  case MSH_TET_84 :
-    F.numFaces = 4;
-    F.monomials = generatePascalTetrahedron(6);
-    F.points =    gmshGeneratePointsTetrahedron(6, false);
-    F.parentType = TYPE_TET;
-    generateFaceClosureTet(F.closures, 6);
-    generateFaceClosureTetFull(F.fullClosures, F.closureRef, 6, false);
-    break;
-  case MSH_TET_100 :
-    F.numFaces = 4;
-    F.monomials = generatePascalSerendipityTetrahedron(7);
-    F.points =    gmshGeneratePointsTetrahedron(7, true);
-    F.parentType = TYPE_TET;
-    generateFaceClosureTet(F.closures, 7);
-    generateFaceClosureTetFull(F.fullClosures, F.closureRef, 7, true);
-    break;
-  case MSH_TET_120 :
-    F.numFaces = 4;
-    F.monomials = generatePascalTetrahedron(7);
-    F.points =    gmshGeneratePointsTetrahedron(7, false);
-    F.parentType = TYPE_TET;
-    generateFaceClosureTet(F.closures, 7);
-    generateFaceClosureTetFull(F.fullClosures, F.closureRef, 7, false);
-    break;
-  case MSH_TET_130 :
-    F.numFaces = 4;
-    F.monomials = generatePascalSerendipityTetrahedron(8);
-    F.points =    gmshGeneratePointsTetrahedron(8, true);
-    F.parentType = TYPE_TET;
-    generateFaceClosureTet(F.closures, 8);
-    generateFaceClosureTetFull(F.fullClosures, F.closureRef, 8, true);
-    break;
-  case MSH_TET_164 :
-    F.numFaces = 4;
-    F.monomials = generatePascalSerendipityTetrahedron(9);
-    F.points =    gmshGeneratePointsTetrahedron(9, true);
-    F.parentType = TYPE_TET;
-    generateFaceClosureTet(F.closures, 9);
-    generateFaceClosureTetFull(F.fullClosures, F.closureRef, 9, true);
-    break;
-  case MSH_TET_165 :
-    F.numFaces = 4;
-    F.monomials = generatePascalTetrahedron(8);
-    F.points =    gmshGeneratePointsTetrahedron(8, false);
-    F.parentType = TYPE_TET;
-    generateFaceClosureTet(F.closures, 8);
-    generateFaceClosureTetFull(F.fullClosures, F.closureRef, 8, false);
-    break;
-  case MSH_TET_202 :
-    F.numFaces = 4;
-    F.monomials = generatePascalSerendipityTetrahedron(10);
-    F.points =    gmshGeneratePointsTetrahedron(10, true);
-    F.parentType = TYPE_TET;
-    generateFaceClosureTet(F.closures, 10);
-    generateFaceClosureTetFull(F.fullClosures, F.closureRef, 10, true);
-    break;
-  case MSH_TET_220 :
-    F.numFaces = 4;
-    F.monomials = generatePascalTetrahedron(9);
-    F.points =    gmshGeneratePointsTetrahedron(9, false);
-    F.parentType = TYPE_TET;
-    generateFaceClosureTet(F.closures, 9);
-    generateFaceClosureTetFull(F.fullClosures, F.closureRef, 9, false);
-    break;
-  case MSH_TET_286 :
-    F.numFaces = 4;
-    F.monomials = generatePascalTetrahedron(10);
-    F.points =    gmshGeneratePointsTetrahedron(10, false);
-    F.parentType = TYPE_TET;
-    generateFaceClosureTet(F.closures, 10);
-    generateFaceClosureTetFull(F.fullClosures, F.closureRef, 10, false);
-    break;
-  case MSH_QUA_1 :
-    F.numFaces = 4;
-    F.monomials = generatePascalQuad(0);
-    F.points =    gmshGeneratePointsQuad(0,false);
-    F.parentType = TYPE_QUA;
-    generateClosureOrder0(F.closures,8);
-    generateClosureOrder0(F.fullClosures,8);
-    F.closureRef.resize(8, 0);
-    break;
-  case MSH_QUA_4 :
-    F.numFaces = 4;
-    F.monomials = generatePascalQuad(1);
-    F.points =    gmshGeneratePointsQuad(1,false);
-    F.parentType = TYPE_QUA;
-    generate2dEdgeClosure(F.closures, 1, 4);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 1, 4, false);
-    break;
-  case MSH_QUA_9 :
-    F.numFaces = 4;
-    F.monomials = generatePascalQuad(2);
-    F.points =    gmshGeneratePointsQuad(2,false);
-    F.parentType = TYPE_QUA;
-    generate2dEdgeClosure(F.closures, 2, 4);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 2, 4, false);
-    break;
-  case MSH_QUA_16 :
-    F.numFaces = 4;
-    F.monomials = generatePascalQuad(3);
-    F.points =    gmshGeneratePointsQuad(3,false);
-    F.parentType = TYPE_QUA;
-    generate2dEdgeClosure(F.closures, 3, 4);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 3, 4, false);
-    break;
-  case MSH_QUA_25 :
-    F.numFaces = 4;
-    F.monomials = generatePascalQuad(4);
-    F.points =    gmshGeneratePointsQuad(4,false);
-    F.parentType = TYPE_QUA;
-    generate2dEdgeClosure(F.closures, 4, 4);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 4, 4, false);
-    break;
-  case MSH_QUA_36 :
-    F.numFaces = 4;
-    F.monomials = generatePascalQuad(5);
-    F.points =    gmshGeneratePointsQuad(5,false);
-    F.parentType = TYPE_QUA;
-    generate2dEdgeClosure(F.closures, 5, 4);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 5, 4, false);
-    break;
-  case MSH_QUA_49 :
-    F.numFaces = 4;
-    F.monomials = generatePascalQuad(6);
-    F.points =    gmshGeneratePointsQuad(6,false);
-    F.parentType = TYPE_QUA;
-    generate2dEdgeClosure(F.closures, 6, 4);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 6, 4, false);
-    break;
-  case MSH_QUA_64 :
-    F.numFaces = 4;
-    F.monomials = generatePascalQuad(7);
-    F.points =    gmshGeneratePointsQuad(7,false);
-    F.parentType = TYPE_QUA;
-    generate2dEdgeClosure(F.closures, 7, 4);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 7, 4, false);
-    break;
-  case MSH_QUA_81 :
-    F.numFaces = 4;
-    F.monomials = generatePascalQuad(8);
-    F.points =    gmshGeneratePointsQuad(8,false);
-    F.parentType = TYPE_QUA;
-    generate2dEdgeClosure(F.closures, 8, 4);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 8, 4, false);
-    break;
-  case MSH_QUA_100 :
-    F.numFaces = 4;
-    F.monomials = generatePascalQuad(9);
-    F.points =    gmshGeneratePointsQuad(9,false);
-    F.parentType = TYPE_QUA;
-    generate2dEdgeClosure(F.closures, 9, 4);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 9, 4, false);
-    break;
-  case MSH_QUA_121 :
-    F.numFaces = 4;
-    F.monomials = generatePascalQuad(10);
-    F.points =    gmshGeneratePointsQuad(10,false);
-    F.parentType = TYPE_QUA;
-    generate2dEdgeClosure(F.closures, 10, 4);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 10, 4, false);
-    break;
-  case MSH_QUA_8 :
-    F.numFaces = 4;
-    F.monomials = generatePascalQuadSerendip(2);
-    F.points =    gmshGeneratePointsQuad(2,true);
-    F.parentType = TYPE_QUA;
-    generate2dEdgeClosure(F.closures, 2, 4);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 2, 4, true);
-    break;
-  case MSH_QUA_12 :
-    F.numFaces = 4;
-    F.monomials = generatePascalQuadSerendip(3);
-    F.points =    gmshGeneratePointsQuad(3,true);
-    F.parentType = TYPE_QUA;
-    generate2dEdgeClosure(F.closures, 3, 4);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 3, 4, true);
-    break;
-  case MSH_QUA_16I :
-    F.numFaces = 4;
-    F.monomials = generatePascalQuadSerendip(4);
-    F.points =    gmshGeneratePointsQuad(4,true);
-    F.parentType = TYPE_QUA;
-    generate2dEdgeClosure(F.closures, 4, 4);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 4, 4, true);
-    break;
-  case MSH_QUA_20 :
-    F.numFaces = 4;
-    F.monomials = generatePascalQuadSerendip(5);
-    F.points =    gmshGeneratePointsQuad(5,true);
-    F.parentType = TYPE_QUA;
-    generate2dEdgeClosure(F.closures, 5, 4);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 5, 4, true);
-    break;
-  case MSH_QUA_24 :
-    F.numFaces = 4;
-    F.monomials = generatePascalQuadSerendip(6);
-    F.points =    gmshGeneratePointsQuad(6,true);
-    F.parentType = TYPE_QUA;
-    generate2dEdgeClosure(F.closures, 6, 4);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 6, 4, true);
-    break;
-  case MSH_QUA_28 :
-    F.numFaces = 4;
-    F.monomials = generatePascalQuadSerendip(7);
-    F.points =    gmshGeneratePointsQuad(7,true);
-    F.parentType = TYPE_QUA;
-    generate2dEdgeClosure(F.closures, 7, 4);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 7, 4, true);
-    break;
-  case MSH_QUA_32 :
-    F.numFaces = 4;
-    F.monomials = generatePascalQuadSerendip(8);
-    F.points =    gmshGeneratePointsQuad(8,true);
-    F.parentType = TYPE_QUA;
-    generate2dEdgeClosure(F.closures, 8, 4);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 8, 4, true);
-    break;
-  case MSH_QUA_36I :
-    F.numFaces = 4;
-    F.monomials = generatePascalQuadSerendip(9);
-    F.points =    gmshGeneratePointsQuad(9,true);
-    F.parentType = TYPE_QUA;
-    generate2dEdgeClosure(F.closures, 9, 4);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 9, 4, true);
-    break;
-  case MSH_QUA_40 :
-    F.numFaces = 4;
-    F.monomials = generatePascalQuadSerendip(10);
-    F.points =    gmshGeneratePointsQuad(10,true);
-    F.parentType = TYPE_QUA;
-    generate2dEdgeClosure(F.closures, 10, 4);
-    generate2dEdgeClosureFull(F.fullClosures, F.closureRef, 10, 4, true);
-    break;
-  case MSH_PRI_1 :
-    F.numFaces = 5;
-    F.monomials = generatePascalPrism(0);
-    F.points =    gmshGeneratePointsPrism(0, false);
-    F.parentType = TYPE_PRI;
-    generateClosureOrder0(F.closures,48);
-    generateClosureOrder0(F.fullClosures,48);
-    F.closureRef.resize(48, 0);
-    break;
-  case MSH_PRI_6 :
-    F.numFaces = 5;
-    F.monomials = generatePascalPrism(1);
-    F.points =    gmshGeneratePointsPrism(1, false);
-    F.parentType = TYPE_PRI;
-    generateFaceClosurePrism(F.closures, 1);
-    generateFaceClosurePrismFull(F.fullClosures, F.closureRef, 1);
-    break;
-  case MSH_PRI_18 :
-    F.numFaces = 5;
-    F.monomials = generatePascalPrism(2);
-    F.points =    gmshGeneratePointsPrism(2, false);
-    F.parentType = TYPE_PRI;
-    generateFaceClosurePrism(F.closures, 2);
-    generateFaceClosurePrismFull(F.fullClosures, F.closureRef, 2);
-    break;
-  case MSH_HEX_20 :
-    F.numFaces = 6;
-    F.monomials = generatePascalHex(2,true);
-    F.points =    gmshGeneratePointsHex(2, true);
-    F.parentType = TYPE_HEX;
-    //    generateFaceClosureHex(F.closures, 2);
-    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
-    break;
-  case MSH_HEX_27 :
-    F.numFaces = 6;
-    F.monomials = generatePascalHex(2,false);
-    F.points =    gmshGeneratePointsHex(2, false);
-    F.parentType = TYPE_HEX;
-    //    generateFaceClosureHex(F.closures, 2);
-    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
-    break;
-  case MSH_HEX_56 :
-    //    printf("in complete hex at order 3\n");
-    F.numFaces = 6;
-    F.monomials = generatePascalHex(3,true);
-    F.points =    gmshGeneratePointsHex(3, true);
-    F.parentType = TYPE_HEX;
-    //    _oulala_("hex56.pos",F.points);
-    //    generateFaceClosureHex(F.closures, 2);
-    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
-    break;
-  case MSH_HEX_64 :
-    //    printf("complete hex at order 3\n");
-    F.numFaces = 6;
-    F.monomials = generatePascalHex(3,false);
-    //    printf("pas complete hex at order 3 done\n");
-    F.points =    gmshGeneratePointsHex(3, false);
-    //    printf("complete hex at order 3 done\n");
-    //    F.points.print("P3");
-    F.parentType = TYPE_HEX;
-    //    _oulala_("hex64.pos",F.points);
-    //    generateFaceClosureHex(F.closures, 2);
-    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
-    break;
-  case MSH_HEX_98 :
-    F.numFaces = 6;
-    F.monomials = generatePascalHex(4,true);
-    F.points =    gmshGeneratePointsHex(4, true);
-    F.parentType = TYPE_HEX;
-    //    generateFaceClosureHex(F.closures, 2);
-    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
-    break;
-  case MSH_HEX_125 :
-    F.numFaces = 6;
-    F.monomials = generatePascalHex(4,false);
-    F.points =    gmshGeneratePointsHex(4, false);
-    F.parentType = TYPE_HEX;
-    //    _oulala_("hex125.pos",F.points);
-    //    generateFaceClosureHex(F.closures, 2);
-    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
-    break;
-  case MSH_HEX_152 :
-    F.numFaces = 6;
-    F.monomials = generatePascalHex(5,true);
-    F.points =    gmshGeneratePointsHex(5, true);
-    F.parentType = TYPE_HEX;
-    //    generateFaceClosureHex(F.closures, 2);
-    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
-    break;
-  case MSH_HEX_216 :
-    F.numFaces = 6;
-    F.monomials = generatePascalHex(5,false);
-    F.points =    gmshGeneratePointsHex(5, false);
-    F.parentType = TYPE_HEX;
-    //    generateFaceClosureHex(F.closures, 2);
-    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
-    break;
-  case MSH_HEX_222 :
-    F.numFaces = 6;
-    F.monomials = generatePascalHex(6,true);
-    F.points =    gmshGeneratePointsHex(6, true);
-    F.parentType = TYPE_HEX;
-    //    generateFaceClosureHex(F.closures, 2);
-    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
-    break;
-  case MSH_HEX_343 :
-    F.numFaces = 6;
-    F.monomials = generatePascalHex(6,false);
-    F.points =    gmshGeneratePointsHex(6, false);
-    F.parentType = TYPE_HEX;
-    //    generateFaceClosureHex(F.closures, 2);
-    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
-    break;
-  case MSH_HEX_296 :
-    F.numFaces = 6;
-    F.monomials = generatePascalHex(7,true);
-    F.points =    gmshGeneratePointsHex(7, true);
-    F.parentType = TYPE_HEX;
-    //    generateFaceClosureHex(F.closures, 2);
-    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
-    break;
-  case MSH_HEX_512 :
-    F.numFaces = 6;
-    F.monomials = generatePascalHex(7,false);
-    F.points =    gmshGeneratePointsHex(7, false);
-    F.parentType = TYPE_HEX;
-    //    generateFaceClosureHex(F.closures, 2);
-    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
-    break;
-  case MSH_HEX_386 :
-    F.numFaces = 6;
-    F.monomials = generatePascalHex(8,true);
-    F.points =    gmshGeneratePointsHex(8, true);
-    F.parentType = TYPE_HEX;
-    //    generateFaceClosureHex(F.closures, 2);
-    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
-    break;
-  case MSH_HEX_729 :
-    F.numFaces = 6;
-    F.monomials = generatePascalHex(8,false);
-    F.points =    gmshGeneratePointsHex(8, false);
-    F.parentType = TYPE_HEX;
-    //    generateFaceClosureHex(F.closures, 2);
-    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
-    break;
-  case MSH_HEX_488 :
-    F.numFaces = 6;
-    F.monomials = generatePascalHex(9,true);
-    F.points =    gmshGeneratePointsHex(9, true);
-    F.parentType = TYPE_HEX;
-    //    generateFaceClosureHex(F.closures, 2);
-    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
-    break;
-  case MSH_HEX_1000 :
-    F.numFaces = 6;
-    F.monomials = generatePascalHex(9,false);
-    F.points =    gmshGeneratePointsHex(9, false);
-    F.parentType = TYPE_HEX;
-    //    generateFaceClosureHex(F.closures, 2);
-    //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, 2);
-    break;
-  default :
-    Msg::Error("Unknown function space %d: reverting to TET_4", tag);
-    F.numFaces = 4;
-    F.monomials = generatePascalTetrahedron(1);
-    F.parentType = TYPE_TET;
-    F.points =    gmshGeneratePointsTetrahedron(1, false);
-    generateFaceClosureTet(F.closures, 1);
-    break;
-  }
   F.type = tag;
-
+  switch (tag) {
+    case MSH_PNT     : F.parentType = TYPE_PNT; F.order = 0; F.serendip = false; break;
+    case MSH_LIN_1   : F.parentType = TYPE_LIN; F.order = 0; F.serendip = false; break;
+    case MSH_LIN_2   : F.parentType = TYPE_LIN; F.order = 1; F.serendip = false; break;
+    case MSH_LIN_3   : F.parentType = TYPE_LIN; F.order = 2; F.serendip = false; break;
+    case MSH_LIN_4   : F.parentType = TYPE_LIN; F.order = 3; F.serendip = false; break;
+    case MSH_LIN_5   : F.parentType = TYPE_LIN; F.order = 4; F.serendip = false; break;
+    case MSH_LIN_6   : F.parentType = TYPE_LIN; F.order = 5; F.serendip = false; break;
+    case MSH_LIN_7   : F.parentType = TYPE_LIN; F.order = 6; F.serendip = false; break;
+    case MSH_LIN_8   : F.parentType = TYPE_LIN; F.order = 7; F.serendip = false; break;
+    case MSH_LIN_9   : F.parentType = TYPE_LIN; F.order = 8; F.serendip = false; break;
+    case MSH_LIN_10  : F.parentType = TYPE_LIN; F.order = 9; F.serendip = false; break;
+    case MSH_LIN_11  : F.parentType = TYPE_LIN; F.order = 10;F.serendip = false; break;
+    case MSH_TRI_1   : F.parentType = TYPE_TRI; F.order = 0; F.serendip = false; break;
+    case MSH_TRI_3   : F.parentType = TYPE_TRI; F.order = 1; F.serendip = false; break;
+    case MSH_TRI_6   : F.parentType = TYPE_TRI; F.order = 2; F.serendip = false; break;
+    case MSH_TRI_10  : F.parentType = TYPE_TRI; F.order = 3; F.serendip = false; break;
+    case MSH_TRI_15  : F.parentType = TYPE_TRI; F.order = 4; F.serendip = false; break;
+    case MSH_TRI_21  : F.parentType = TYPE_TRI; F.order = 5; F.serendip = false; break;
+    case MSH_TRI_28  : F.parentType = TYPE_TRI; F.order = 6; F.serendip = false; break;
+    case MSH_TRI_36  : F.parentType = TYPE_TRI; F.order = 7; F.serendip = false; break;
+    case MSH_TRI_45  : F.parentType = TYPE_TRI; F.order = 8; F.serendip = false; break;
+    case MSH_TRI_55  : F.parentType = TYPE_TRI; F.order = 9; F.serendip = false; break;
+    case MSH_TRI_66  : F.parentType = TYPE_TRI; F.order = 10;F.serendip = false; break;
+    case MSH_TRI_9   : F.parentType = TYPE_TRI; F.order = 3; F.serendip = true;  break;
+    case MSH_TRI_12  : F.parentType = TYPE_TRI; F.order = 4; F.serendip = true;  break;
+    case MSH_TRI_15I : F.parentType = TYPE_TRI; F.order = 5; F.serendip = true;  break;
+    case MSH_TRI_18  : F.parentType = TYPE_TRI; F.order = 6; F.serendip = true;  break;
+    case MSH_TRI_21I : F.parentType = TYPE_TRI; F.order = 7; F.serendip = true;  break;
+    case MSH_TRI_24  : F.parentType = TYPE_TRI; F.order = 8; F.serendip = true;  break;
+    case MSH_TRI_27  : F.parentType = TYPE_TRI; F.order = 9; F.serendip = true;  break;
+    case MSH_TRI_30  : F.parentType = TYPE_TRI; F.order = 10;F.serendip = true;  break;
+    case MSH_TET_1   : F.parentType = TYPE_TET; F.order = 0; F.serendip = false; break;
+    case MSH_TET_4   : F.parentType = TYPE_TET; F.order = 1; F.serendip = false; break;
+    case MSH_TET_10  : F.parentType = TYPE_TET; F.order = 2; F.serendip = false; break;
+    case MSH_TET_20  : F.parentType = TYPE_TET; F.order = 3; F.serendip = false; break;
+    case MSH_TET_35  : F.parentType = TYPE_TET; F.order = 4; F.serendip = false; break;
+    case MSH_TET_56  : F.parentType = TYPE_TET; F.order = 5; F.serendip = false; break;
+    case MSH_TET_84  : F.parentType = TYPE_TET; F.order = 6; F.serendip = false; break;
+    case MSH_TET_120 : F.parentType = TYPE_TET; F.order = 7; F.serendip = false; break;
+    case MSH_TET_165 : F.parentType = TYPE_TET; F.order = 8; F.serendip = false; break;
+    case MSH_TET_220 : F.parentType = TYPE_TET; F.order = 9; F.serendip = false; break;
+    case MSH_TET_286 : F.parentType = TYPE_TET; F.order = 10;F.serendip = false; break;
+    case MSH_TET_34  : F.parentType = TYPE_TET; F.order = 4; F.serendip = true;  break;
+    case MSH_TET_52  : F.parentType = TYPE_TET; F.order = 5; F.serendip = true;  break;
+    case MSH_TET_74  : F.parentType = TYPE_TET; F.order = 6; F.serendip = true;  break;
+    case MSH_TET_100 : F.parentType = TYPE_TET; F.order = 7; F.serendip = true;  break;
+    case MSH_TET_130 : F.parentType = TYPE_TET; F.order = 8; F.serendip = true;  break;
+    case MSH_TET_164 : F.parentType = TYPE_TET; F.order = 9; F.serendip = true;  break;
+    case MSH_TET_202 : F.parentType = TYPE_TET; F.order = 10;F.serendip = true;  break;
+    case MSH_QUA_1   : F.parentType = TYPE_QUA; F.order = 0; F.serendip = false; break;
+    case MSH_QUA_4   : F.parentType = TYPE_QUA; F.order = 1; F.serendip = false; break;
+    case MSH_QUA_9   : F.parentType = TYPE_QUA; F.order = 2; F.serendip = false; break;
+    case MSH_QUA_16  : F.parentType = TYPE_QUA; F.order = 3; F.serendip = false; break;
+    case MSH_QUA_25  : F.parentType = TYPE_QUA; F.order = 4; F.serendip = false; break;
+    case MSH_QUA_36  : F.parentType = TYPE_QUA; F.order = 5; F.serendip = false; break;
+    case MSH_QUA_49  : F.parentType = TYPE_QUA; F.order = 6; F.serendip = false; break;
+    case MSH_QUA_64  : F.parentType = TYPE_QUA; F.order = 7; F.serendip = false; break;
+    case MSH_QUA_81  : F.parentType = TYPE_QUA; F.order = 8; F.serendip = false; break;
+    case MSH_QUA_100 : F.parentType = TYPE_QUA; F.order = 9; F.serendip = false; break;
+    case MSH_QUA_121 : F.parentType = TYPE_QUA; F.order = 10;F.serendip = false; break;
+    case MSH_QUA_8   : F.parentType = TYPE_QUA; F.order = 2; F.serendip = true;  break;
+    case MSH_QUA_12  : F.parentType = TYPE_QUA; F.order = 3; F.serendip = true;  break;
+    case MSH_QUA_16I : F.parentType = TYPE_QUA; F.order = 4; F.serendip = true;  break;
+    case MSH_QUA_20  : F.parentType = TYPE_QUA; F.order = 5; F.serendip = true;  break;
+    case MSH_QUA_24  : F.parentType = TYPE_QUA; F.order = 6; F.serendip = true;  break;
+    case MSH_QUA_28  : F.parentType = TYPE_QUA; F.order = 7; F.serendip = true;  break;
+    case MSH_QUA_32  : F.parentType = TYPE_QUA; F.order = 8; F.serendip = true;  break;
+    case MSH_QUA_36I : F.parentType = TYPE_QUA; F.order = 9; F.serendip = true;  break;
+    case MSH_QUA_40  : F.parentType = TYPE_QUA; F.order = 10;F.serendip = true;  break;
+    case MSH_PRI_1   : F.parentType = TYPE_PRI; F.order = 0; F.serendip = false; break;
+    case MSH_PRI_6   : F.parentType = TYPE_PRI; F.order = 1; F.serendip = false; break;
+    case MSH_PRI_18  : F.parentType = TYPE_PRI; F.order = 2; F.serendip = false; break;
+    case MSH_HEX_8   : F.parentType = TYPE_HEX; F.order = 1; F.serendip = false; break;
+    case MSH_HEX_27  : F.parentType = TYPE_HEX; F.order = 2; F.serendip = false; break;
+    case MSH_HEX_64  : F.parentType = TYPE_HEX; F.order = 3; F.serendip = false; break;
+    case MSH_HEX_125 : F.parentType = TYPE_HEX; F.order = 4; F.serendip = false; break;
+    case MSH_HEX_216 : F.parentType = TYPE_HEX; F.order = 5; F.serendip = false; break;
+    case MSH_HEX_343 : F.parentType = TYPE_HEX; F.order = 6; F.serendip = false; break;
+    case MSH_HEX_512 : F.parentType = TYPE_HEX; F.order = 7; F.serendip = false; break;
+    case MSH_HEX_729 : F.parentType = TYPE_HEX; F.order = 8; F.serendip = false; break;
+    case MSH_HEX_1000: F.parentType = TYPE_HEX; F.order = 9; F.serendip = false; break;
+    case MSH_HEX_20  : F.parentType = TYPE_HEX; F.order = 2; F.serendip = false; break;
+    case MSH_HEX_56  : F.parentType = TYPE_HEX; F.order = 3; F.serendip = false; break;
+    case MSH_HEX_98  : F.parentType = TYPE_HEX; F.order = 4; F.serendip = false; break;
+    case MSH_HEX_152 : F.parentType = TYPE_HEX; F.order = 5; F.serendip = false; break;
+    case MSH_HEX_222 : F.parentType = TYPE_HEX; F.order = 6; F.serendip = false; break;
+    case MSH_HEX_296 : F.parentType = TYPE_HEX; F.order = 7; F.serendip = false; break;
+    case MSH_HEX_386 : F.parentType = TYPE_HEX; F.order = 8; F.serendip = false; break;
+    case MSH_HEX_488 : F.parentType = TYPE_HEX; F.order = 9; F.serendip = false; break;
+    default :
+      Msg::Error("Unknown function space %d: reverting to TET_4", tag);
+      F.parentType = TYPE_TET; F.order = 1; F.serendip = false;
+  }
+  switch (F.parentType) {
+    case TYPE_PNT :
+      F.numFaces = 1;
+      F.dimension = 0;
+      F.monomials = generate1DMonomials(0);
+      F.points = generate1DPoints(0);
+      break;
+    case TYPE_LIN :
+      F.numFaces = 2;
+      F.dimension = 1;
+      F.monomials = generate1DMonomials(F.order);
+      F.points = generate1DPoints(F.order);
+      generate1dVertexClosure(F.closures, F.order);
+      generate1dVertexClosureFull(F.fullClosures, F.closureRef, F.order);
+      break;
+    case TYPE_TRI :
+      F.numFaces = 3;
+      F.dimension = 2;
+      F.monomials = generatePascalTriangle(F.order);
+      F.points =    gmshGeneratePointsTriangle(F.order, F.serendip);
+      if (F.order == 0) {
+        generateClosureOrder0(F.closures, 6);
+        generateClosureOrder0(F.fullClosures, 6);
+        F.closureRef.resize(6, 0);
+      } else {
+        generate2dEdgeClosure(F.closures, F.order);
+        generate2dEdgeClosureFull(F.fullClosures, F.closureRef, F.order, 3, F.serendip);
+      }
+      break;
+    case TYPE_QUA :
+      F.numFaces = 4;
+      F.dimension = 2;
+      F.monomials = generatePascalQuad(F.order);
+      F.points = gmshGeneratePointsQuad(F.order, F.serendip);
+      if (F.order == 0) {
+        generateClosureOrder0(F.closures, 8);
+        generateClosureOrder0(F.fullClosures, 8);
+        F.closureRef.resize(8, 0);
+      } else {
+        generate2dEdgeClosure(F.closures, F.order, 4);
+        generate2dEdgeClosureFull(F.fullClosures, F.closureRef, F.order, 4, F.serendip);
+      }
+      break;
+    case TYPE_TET :
+      F.numFaces = 4;
+      F.dimension = 3;
+      F.monomials = generatePascalTetrahedron(F.order);
+      F.points = gmshGeneratePointsTetrahedron(F.order, F.serendip);
+      if (F.order == 0) {
+        generateClosureOrder0(F.closures,24);
+        generateClosureOrder0(F.fullClosures, 24);
+        F.closureRef.resize(24, 0);
+      } else {
+        generateFaceClosureTet(F.closures, F.order);
+        generateFaceClosureTetFull(F.fullClosures, F.closureRef, F.order, F.serendip);
+      }
+      break;
+    case TYPE_PRI :
+      F.numFaces = 5;
+      F.dimension = 3;
+      F.monomials = generatePascalPrism(0);
+      F.points = gmshGeneratePointsPrism(0, F.serendip);
+      if (F.order == 0) {
+        generateClosureOrder0(F.closures,48);
+        generateClosureOrder0(F.fullClosures,48);
+        F.closureRef.resize(48, 0);
+      } else {
+        generateFaceClosurePrism(F.closures, 1);
+        generateFaceClosurePrismFull(F.fullClosures, F.closureRef, F.order);
+      }
+      break;
+    case TYPE_HEX :
+      F.numFaces = 6;
+      F.dimension = 3;
+      F.monomials = generatePascalHex(F.order,F.serendip);
+      F.points =    gmshGeneratePointsHex(F.order, F.serendip);
+      //    generateFaceClosureHex(F.closures, F.order);
+      //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, F.order, F.serendip);
+      break;
+  }
   F.coefficients = generateLagrangeMonomialCoefficients(F.monomials, F.points);
-
-  // printf("Case: %d coeffs:\n",tag);
-  // for (int i = 0; i<F.coefficients.size1(); i++) {
-  //   for (int j = 0; j<F.coefficients.size2(); j++) {
-  //     printf("%4.1f ",F.coefficients(i,j));
-  //   }
-  //   printf("\n");
-  // }
-
   fs.insert(std::make_pair(tag, F));
   return &fs[tag];
 }

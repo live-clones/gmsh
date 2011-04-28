@@ -71,7 +71,8 @@ class polynomialBasis
  public:
   //for now the only implemented polynomial basis are nodal poly
   //basis, we use the type of the corresponding gmsh element as type
-  int type, parentType;
+  int type, parentType, order, dimension;
+  bool serendip;
   class closure : public std::vector<int> {
     public: 
     int type;
