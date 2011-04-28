@@ -191,7 +191,7 @@ static fullMatrix<double> generatePascalSerendipityTriangle(int order)
   return monomials;
 }
 
-const fullMatrix<double> &polynomialBasis::getGradientAtFaceIntegrationPoints(int integrationOrder, 
+const fullMatrix<double> &polynomialBasis::getGradientAtFaceIntegrationPoints(int integrationOrder,
                                                                               int closureId) const
 {
   std::vector<fullMatrix<double> > &dfAtFace = _dfAtFace[integrationOrder];
@@ -276,7 +276,7 @@ static fullMatrix<double> generatePascalHex(int order, bool serendip)
       }
     }
   }
-  //  printf("siz %d %d\n",siz,index );	
+  //  printf("siz %d %d\n",siz,index );
   return monomials;
 }
 
@@ -445,7 +445,7 @@ static fullMatrix<double> generatePascalPrism(int order)
         monomials(index,2) = lineMonoms(iL,0);
         index ++;
       }
-    }    
+    }
   }
 //   monomials.print("Pri monoms");
   return monomials;
@@ -908,7 +908,7 @@ static fullMatrix<double> gmshGeneratePointsHex(int order, bool serendip)
   int nbPoints = (order+1)*(order+1)*(order+1);
   if (serendip) nbPoints -= (order-1)*(order-1)*(order-1);
   fullMatrix<double> point(nbPoints, 3);
-  
+
   // should be a public member of MHexahedron, just copied
   static const int edges[12][2] = {
     {0, 1},
@@ -971,7 +971,7 @@ static fullMatrix<double> gmshGeneratePointsHex(int order, bool serendip)
           point(index, 2) = point(p0, 2) + i*(point(p1,2)-point(p0,2))/order;
         }
       }
-      
+
       fullMatrix<double> fp = gmshGeneratePointsQuad(order - 2, false);
       fp.scale(1. - 2./order);
       for (int iface=0; iface<6; iface++) {
@@ -982,17 +982,17 @@ static fullMatrix<double> gmshGeneratePointsHex(int order, bool serendip)
 	for (int i=0;i<fp.size1();i++, index++){
 	  const double u = fp(i,0);
 	  const double v = fp(i,1);
-	  const double newU = 
+	  const double newU =
 	    0.25*(1.-u)*(1.-v)*point(p0,0) +
 	    0.25*(1.+u)*(1.-v)*point(p1,0) +
 	    0.25*(1.+u)*(1.+v)*point(p2,0) +
 	    0.25*(1.-u)*(1.+v)*point(p3,0) ;
-	  const double newV = 
+	  const double newV =
 	    0.25*(1.-u)*(1.-v)*point(p0,1) +
 	    0.25*(1.+u)*(1.-v)*point(p1,1) +
 	    0.25*(1.+u)*(1.+v)*point(p2,1) +
 	    0.25*(1.-u)*(1.+v)*point(p3,1) ;
-	  const double newW = 
+	  const double newW =
 	    0.25*(1.-u)*(1.-v)*point(p0,2) +
 	    0.25*(1.+u)*(1.-v)*point(p1,2) +
 	    0.25*(1.+u)*(1.+v)*point(p2,2) +
@@ -1001,8 +1001,8 @@ static fullMatrix<double> gmshGeneratePointsHex(int order, bool serendip)
 	  point(index, 1) = newV;
 	  point(index, 2) = newW;
 	}
-      } 
-      if (!serendip) {     
+      }
+      if (!serendip) {
         fullMatrix<double> inner = gmshGeneratePointsHex(order - 2, false);
         inner.scale(1. - 2./order);
         point.copy(inner, 0, nbPoints - index, 0, 3, index, 0);
@@ -1013,7 +1013,7 @@ static fullMatrix<double> gmshGeneratePointsHex(int order, bool serendip)
     point(0, 0) = 0;
     point(0, 1) = 0;
     point(0, 2) = 0;
-  }  
+  }
   return point;
 }
 
@@ -1021,6 +1021,7 @@ static fullMatrix<double> generateLagrangeMonomialCoefficients
   (const fullMatrix<double>& monomial, const fullMatrix<double>& point)
 {
   if(monomial.size1() != point.size1() || monomial.size2() != point.size2()){
+    Msg::Info("Here");
     Msg::Fatal("Wrong sizes for Lagrange coefficients generation %d %d -- %d %d",
          monomial.size1(),point.size1(),
          monomial.size2(),point.size2() );
@@ -1149,13 +1150,13 @@ static void generate2dEdgeClosureFull(polynomialBasis::clCont &closure, std::vec
   int shift = 0;
   for (int corder = order; corder>=0; corder -= (nNod == 3 ? 3 : 2)) {
     if (corder == 0) {
-      for (int r = 0; r < nNod ; r++){ 
+      for (int r = 0; r < nNod ; r++){
         closure[r].push_back(shift);
         closure[r+nNod].push_back(shift);
       }
       break;
     }
-    for (int r = 0; r < nNod ; r++){ 
+    for (int r = 0; r < nNod ; r++){
       for (int j = 0; j < nNod; j++) {
         closure[r].push_back(shift + (r + j) % nNod);
         closure[r + nNod].push_back(shift + (r - j + 1 + nNod) % nNod);
@@ -1163,7 +1164,7 @@ static void generate2dEdgeClosureFull(polynomialBasis::clCont &closure, std::vec
     }
     shift += nNod;
     int n = nNod*(corder-1);
-    for (int r = 0; r < nNod ; r++){ 
+    for (int r = 0; r < nNod ; r++){
       for (int j = 0; j < n; j++){
         closure[r].push_back(shift + (j + (corder - 1) * r) % n);
         closure[r + nNod].push_back(shift + (n - j - 1 + (corder - 1) * (r + 1)) % n);
@@ -1178,9 +1179,9 @@ static void generate2dEdgeClosureFull(polynomialBasis::clCont &closure, std::vec
   }
 }
 
-static void addEdgeNodes(polynomialBasis::clCont &closureFull, const int *edges, int order) 
+static void addEdgeNodes(polynomialBasis::clCont &closureFull, const int *edges, int order)
 {
-  if (order < 2) 
+  if (order < 2)
     return;
   int numNodes = 0;
   for (int i = 0; edges[i] >= 0; ++i) {
@@ -1264,7 +1265,7 @@ static void generateFaceClosureTetFull(polynomialBasis::clCont &closureFull, std
   polynomialBasis::clCont closureTriangles;
   std::vector<int> closureTrianglesRef;
   if (order >= 3)
-    generate2dEdgeClosureFull(closureTriangles, closureTrianglesRef, order - 3, 3, false); 
+    generate2dEdgeClosureFull(closureTriangles, closureTrianglesRef, order - 3, 3, false);
   addEdgeNodes(closureFull, edges, order);
   for (unsigned int iClosure = 0; iClosure < closureFull.size(); iClosure++) {
     //faces
@@ -1279,7 +1280,7 @@ static void generateFaceClosureTetFull(polynomialBasis::clCont &closureFull, std
         short int idFace = id/6;
         int nOnFace = closureTriangles[iTriClosure].size();
         for (int i = 0; i < nOnFace; i++) {
-          cl.push_back(4 + 6 * (order - 1) + idFace * nOnFace + 
+          cl.push_back(4 + 6 * (order - 1) + idFace * nOnFace +
                        closureTriangles[iTriClosure][i]);
         }
       }
@@ -1347,8 +1348,8 @@ static void generateFaceClosurePrism(polynomialBasis::clCont &closure, int order
   }
 }
 
-static void generateFaceClosurePrismFull(polynomialBasis::clCont &closureFull, 
-                                         std::vector<int> &closureRef, int order) 
+static void generateFaceClosurePrismFull(polynomialBasis::clCont &closureFull,
+                                         std::vector<int> &closureRef, int order)
 {
   polynomialBasis::clCont closure;
   closureFull.clear();
@@ -1374,7 +1375,7 @@ static void generateFaceClosurePrismFull(polynomialBasis::clCont &closureFull,
       }
     }
   }
-  static const int edges[] = {0, 1,  0, 2,  0, 3,  1, 2,  1, 4,  2, 5,  
+  static const int edges[] = {0, 1,  0, 2,  0, 3,  1, 2,  1, 4,  2, 5,
                               3, 4,  3, 5,  4, 5,  -1};
   addEdgeNodes(closureFull, edges, order);
   if ( order < 2 )
@@ -1399,7 +1400,7 @@ static void generateFaceClosurePrismFull(polynomialBasis::clCont &closureFull,
       for (int iFace = 0; iFace < numFaces; iFace++ ) {
         int nodeSum = 0;
         for (int iNode = 0; iNode < numFaceNodes; iNode++)
-          nodeSum += faces[iFace][iNode] < 0 ? faces[iFace][iNode] : 
+          nodeSum += faces[iFace][iNode] < 0 ? faces[iFace][iNode] :
             closureFull[i][ faces[iFace][iNode] ];
         std::map<int,int>::iterator it = nodeSum2Face.find(nodeSum);
         if (it == nodeSum2Face.end() )
@@ -1413,7 +1414,7 @@ static void generateFaceClosurePrismFull(polynomialBasis::clCont &closureFull,
   } else {
     Msg::Error("Prisms of order %d not implemented",order);
   }
-  
+
 }
 
 static void generate2dEdgeClosure(polynomialBasis::clCont &closure, int order, int nNod = 3)
@@ -1437,7 +1438,7 @@ static void generateClosureOrder0(polynomialBasis::clCont &closure, int nb)
 {
   closure.clear();
   closure.resize(nb);
-  for (int i=0; i < nb; i++) { 
+  for (int i=0; i < nb; i++) {
     closure[i].push_back(0);
     closure[i].type = MSH_PNT;
   }

@@ -42,13 +42,13 @@ static void computeAndSendVertexArrays(GmshClient *client, bool compute=true)
       min = data->getMin(opt->timeStep);
       max = data->getMax(opt->timeStep);
     }
-    VertexArray *va[4] = 
+    VertexArray *va[4] =
       {p->va_points, p->va_lines, p->va_triangles, p->va_vectors};
     for(int type = 0; type < 4; type++){
       if(va[type]){
         int len;
         char *str = va[type]->toChar
-          (p->getNum(), data->getName(), type + 1, min, max, 
+          (p->getNum(), data->getName(), type + 1, min, max,
            data->getNumTimeSteps(), data->getTime(opt->timeStep),
            data->getBoundingBox(), len);
         client->SendMessage(GmshSocket::GMSH_VERTEX_ARRAY, len, str);
@@ -80,13 +80,13 @@ static void computeAndSendVertexArrays()
       min = data->getMin(opt->timeStep);
       max = data->getMax(opt->timeStep);
     }
-    VertexArray *va[4] = 
+    VertexArray *va[4] =
       {p->va_points, p->va_lines, p->va_triangles, p->va_vectors};
     for(int type = 0; type < 4; type++){
       if(va[type]){
         int len;
         char *str = va[type]->toChar
-          (p->getNum(), data->getName(), type + 1, min, max, 
+          (p->getNum(), data->getName(), type + 1, min, max,
            data->getNumTimeSteps(), data->getTime(opt->timeStep),
            data->getBoundingBox(), len);
         MPI_Send(&len, 1, MPI_INT, 0, MPI_GMSH_VARRAY_LEN, MPI_COMM_WORLD);
@@ -108,15 +108,15 @@ static void addToVertexArrays(int length, const char* bytes, int swap)
 
   PView *p = PView::list[num - 1];
   PViewData *data = p->getData();
-  
-  VertexArray *varrays[4] = 
+
+  VertexArray *varrays[4] =
     {p->va_points, p->va_lines, p->va_triangles, p->va_vectors};
-  
+
   VertexArray *va = varrays[type - 1];
 
   if (data->getMin() > min) data->setMin(min);
   if (data->getMax() < max) data->setMax(max);
-  
+
   SBoundingBox3d bbox(xmin, ymin, zmin, xmax, ymax, zmax);
   SBoundingBox3d bb = data->getBoundingBox();
   bb += bbox;
@@ -169,15 +169,15 @@ static void gatherAndSendVertexArrays(GmshClient* client, bool swap)
 int GmshRemote()
 {
   GmshClient *client = Msg::GetClient();
-  
+
   int rank = Msg::GetCommRank();
   int nbDaemon = Msg::GetCommSize();
 
   if(!client && rank == 0) return 0;
 
-  if(client && nbDaemon < 2) 
+  if(client && nbDaemon < 2)
     computeAndSendVertexArrays(client);
-  else if(client && nbDaemon >= 2 && rank == 0) 
+  else if(client && nbDaemon >= 2 && rank == 0)
     gatherAndSendVertexArrays(client, false);
 
   while(1){
@@ -200,7 +200,7 @@ int GmshRemote()
         client->Error("Did not receive message header: stopping remote Gmsh...");
         break;
       }
-      
+
       char *msg = new char[length + 1];
       if(!client->ReceiveString(length, msg)){
         client->Error("Did not receive message body: stopping remote Gmsh...");
@@ -254,12 +254,12 @@ int GmshRemote()
       else{
         client->Error("Ignoring unknown message");
       }
-    
+
       delete [] msg;
-    } 
+    }
     else { // if we're not on the master node (rank != 0) wait for him...
 #if defined(HAVE_MPI)
-      int mpi_msg; 
+      int mpi_msg;
       MPI_Bcast(&mpi_msg, 1, MPI_INT, 0, MPI_COMM_WORLD);
       if (mpi_msg == MPI_GMSH_COMPUTE_VIEW)
         computeAndSendVertexArrays();
@@ -282,7 +282,7 @@ int GmshRemote()
 #endif
     }
   }
-  
+
 #if defined(HAVE_MPI)
   int mpi_msg = MPI_GMSH_SHUTDOWN;
   MPI_Bcast(&mpi_msg, 1, MPI_INT, 0, MPI_COMM_WORLD);
