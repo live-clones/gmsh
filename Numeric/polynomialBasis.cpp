@@ -1562,8 +1562,8 @@ const polynomialBasis *polynomialBases::find(int tag)
     case TYPE_TRI :
       F.numFaces = 3;
       F.dimension = 2;
-      F.monomials = generatePascalTriangle(F.order);
-      F.points =    gmshGeneratePointsTriangle(F.order, F.serendip);
+      F.monomials = F.serendip ? generatePascalSerendipityTriangle(F.order) : generatePascalTriangle(F.order);
+      F.points = gmshGeneratePointsTriangle(F.order, F.serendip);
       if (F.order == 0) {
         generateClosureOrder0(F.closures, 6);
         generateClosureOrder0(F.fullClosures, 6);
@@ -1576,7 +1576,7 @@ const polynomialBasis *polynomialBases::find(int tag)
     case TYPE_QUA :
       F.numFaces = 4;
       F.dimension = 2;
-      F.monomials = generatePascalQuad(F.order);
+      F.monomials = F.serendip ? generatePascalQuadSerendip(F.order) : generatePascalQuad(F.order);
       F.points = gmshGeneratePointsQuad(F.order, F.serendip);
       if (F.order == 0) {
         generateClosureOrder0(F.closures, 8);
@@ -1590,7 +1590,7 @@ const polynomialBasis *polynomialBases::find(int tag)
     case TYPE_TET :
       F.numFaces = 4;
       F.dimension = 3;
-      F.monomials = generatePascalTetrahedron(F.order);
+      F.monomials = F.serendip ? generatePascalSerendipityTetrahedron(F.order) : generatePascalTetrahedron(F.order);
       F.points = gmshGeneratePointsTetrahedron(F.order, F.serendip);
       if (F.order == 0) {
         generateClosureOrder0(F.closures,24);
@@ -1618,7 +1618,7 @@ const polynomialBasis *polynomialBases::find(int tag)
     case TYPE_HEX :
       F.numFaces = 6;
       F.dimension = 3;
-      F.monomials = generatePascalHex(F.order,F.serendip);
+      F.monomials = generatePascalHex(F.order, F.serendip);
       F.points =    gmshGeneratePointsHex(F.order, F.serendip);
       //    generateFaceClosureHex(F.closures, F.order);
       //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, F.order, F.serendip);
