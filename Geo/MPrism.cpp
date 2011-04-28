@@ -63,15 +63,15 @@ const JacobianBasis* MPrism::getJacobianFuncSpace(int o) const
   
   if ((nv == 0) && (o == -1)) {
     switch (order) {
-    case 1: return JacobianBases::find(MSH_PRI_6);
-    case 2: return JacobianBases::find(MSH_PRI_18);
+    case 1: return JacobianBasis::find(MSH_PRI_6);
+    case 2: return JacobianBasis::find(MSH_PRI_18);
     default: Msg::Error("Order %d prism function space not implemented", order);
     }
   }
   else { 
     switch (order) {
-    case 1: return JacobianBases::find(MSH_PRI_6);
-    case 2: return JacobianBases::find(MSH_PRI_18);
+    case 1: return JacobianBasis::find(MSH_PRI_6);
+    case 2: return JacobianBasis::find(MSH_PRI_18);
     default: Msg::Error("Order %d prism function space not implemented", order);
     }
   }

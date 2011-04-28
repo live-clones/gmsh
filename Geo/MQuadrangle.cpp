@@ -62,29 +62,29 @@ const JacobianBasis* MQuadrangle::getJacobianFuncSpace(int o) const
 
   if ((nf == 0) && (o == -1)) {
     switch (order) {
-      case 1: return JacobianBases::find(MSH_QUA_4);
-      case 2: return JacobianBases::find(MSH_QUA_8);
-      case 3: return JacobianBases::find(MSH_QUA_12);
-      case 4: return JacobianBases::find(MSH_QUA_16I);
-      case 5: return JacobianBases::find(MSH_QUA_20);
-      case 6: return JacobianBases::find(MSH_QUA_24);
-      case 7: return JacobianBases::find(MSH_QUA_28);
-      case 8: return JacobianBases::find(MSH_QUA_32);
-      case 9: return JacobianBases::find(MSH_QUA_36I);
-      case 10: return JacobianBases::find(MSH_QUA_40);
+      case 1: return JacobianBasis::find(MSH_QUA_4);
+      case 2: return JacobianBasis::find(MSH_QUA_8);
+      case 3: return JacobianBasis::find(MSH_QUA_12);
+      case 4: return JacobianBasis::find(MSH_QUA_16I);
+      case 5: return JacobianBasis::find(MSH_QUA_20);
+      case 6: return JacobianBasis::find(MSH_QUA_24);
+      case 7: return JacobianBasis::find(MSH_QUA_28);
+      case 8: return JacobianBasis::find(MSH_QUA_32);
+      case 9: return JacobianBasis::find(MSH_QUA_36I);
+      case 10: return JacobianBasis::find(MSH_QUA_40);
     }
   }
   switch (order) {
-    case 1: return JacobianBases::find(MSH_QUA_4);
-    case 2: return JacobianBases::find(MSH_QUA_9);
-    case 3: return JacobianBases::find(MSH_QUA_16);
-    case 4: return JacobianBases::find(MSH_QUA_25);
-    case 5: return JacobianBases::find(MSH_QUA_36);
-    case 6: return JacobianBases::find(MSH_QUA_49);
-    case 7: return JacobianBases::find(MSH_QUA_64);
-    case 8: return JacobianBases::find(MSH_QUA_81);
-    case 9: return JacobianBases::find(MSH_QUA_100);
-    case 10: return JacobianBases::find(MSH_QUA_121);
+    case 1: return JacobianBasis::find(MSH_QUA_4);
+    case 2: return JacobianBasis::find(MSH_QUA_9);
+    case 3: return JacobianBasis::find(MSH_QUA_16);
+    case 4: return JacobianBasis::find(MSH_QUA_25);
+    case 5: return JacobianBasis::find(MSH_QUA_36);
+    case 6: return JacobianBasis::find(MSH_QUA_49);
+    case 7: return JacobianBasis::find(MSH_QUA_64);
+    case 8: return JacobianBasis::find(MSH_QUA_81);
+    case 9: return JacobianBasis::find(MSH_QUA_100);
+    case 10: return JacobianBasis::find(MSH_QUA_121);
     default: Msg::Error("Order %d triangle function space not implemented", order);
   }
   return 0;

@@ -38,7 +38,7 @@ class GMSH_AnalyseCurvedMeshPlugin : public GMSH_PostPlugin
   //int checkJacobian(MElement *, int depth);
   //int *checkJacobian2(MElement *const *, int numEl, int depth);
   int *checkJacobian(MElement *const *, int numEl, int depth, int method);
-  int division(const JacobianBasis *, const fullVector<double> &, int depth);
+  int division(const bezierBasis *, const fullVector<double> &, int depth);
 };
 
 #endif

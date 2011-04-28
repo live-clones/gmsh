@@ -60,7 +60,7 @@ class MPoint : public MElement {
   }
   virtual const JacobianBasis* getJacobianFuncSpace(int o) const
   {
-    return JacobianBases::find(MSH_PNT);
+    return JacobianBasis::find(MSH_PNT);
   }
   virtual bool isInside(double u, double v, double w)
   {

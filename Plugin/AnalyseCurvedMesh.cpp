@@ -517,22 +517,23 @@ int GMSH_AnalyseCurvedMeshPlugin::method_1_1(MElement *el, int depth)
     Msg::Error("Jacobian function space not implemented for type of element %d", el->getNum());
     return 0;
   }
+  const bezierBasis *bb = jfs->bezier;
 
-  int numSamplingPt = jfs->points.size1();
-  int dim = jfs->points.size2();
+  int numSamplingPt = bb->points.size1();
+  int dim = bb->points.size2();
   fullVector<double> jacobian(numSamplingPt);
 
   for (int i = 0; i < numSamplingPt; i++) {
     double gsf[256][3];
     switch (dim) {
       case 1 :
-        fs->df(jfs->points(i,0),0,0, gsf);
+        fs->df(bb->points(i,0),0,0, gsf);
         break;
       case 2 :
-        fs->df(jfs->points(i,0),jfs->points(i,1),0, gsf);
+        fs->df(bb->points(i,0),bb->points(i,1),0, gsf);
         break;
       case 3 :
-        fs->df(jfs->points(i,0),jfs->points(i,1),jfs->points(i,2), gsf);
+        fs->df(bb->points(i,0),bb->points(i,1),bb->points(i,2), gsf);
         break;
       default :
         Msg::Error("Can't get the gradient for %dD elements.", dim);
@@ -548,7 +549,7 @@ int GMSH_AnalyseCurvedMeshPlugin::method_1_1(MElement *el, int depth)
 
 
   fullVector<double> jacBez(jacobian.size());
-  jfs->matrixLag2Bez.mult(jacobian, jacBez);
+  bb->matrixLag2Bez.mult(jacobian, jacBez);
 
   bool allPtPositive = true;
   for (int i = 0; i < jacBez.size(); i++) {
@@ -561,7 +562,7 @@ int GMSH_AnalyseCurvedMeshPlugin::method_1_1(MElement *el, int depth)
     return 0;
   }
   else{
-    int tag = division(jfs, jacBez, depth-1);
+    int tag = division(bb, jacBez, depth-1);
     if (tag < 0)
       return tag - 1;
     if (tag > 0)
@@ -583,9 +584,10 @@ int GMSH_AnalyseCurvedMeshPlugin::method_1_2(MElement *el, int depth)
     Msg::Error("Jacobian function space not implemented for type of element %d", el->getNum());
     return 0;
   }
+  const bezierBasis *bb = jfs->bezier;
 
-  int numSamplingPt = jfs->points.size1();
-  int dim = jfs->points.size2();
+  int numSamplingPt = bb->points.size1();
+  int dim = bb->points.size2();
   fullVector<double> jacobian(numSamplingPt);
 
   
@@ -606,7 +608,7 @@ int GMSH_AnalyseCurvedMeshPlugin::method_1_2(MElement *el, int depth)
 
 
   fullVector<double> jacBez(jacobian.size());
-  jfs->matrixLag2Bez.mult(jacobian, jacBez);
+  bb->matrixLag2Bez.mult(jacobian, jacBez);
 
   bool allPtPositive = true;
   for (int i = 0; i < jacBez.size(); i++) {
@@ -619,7 +621,7 @@ int GMSH_AnalyseCurvedMeshPlugin::method_1_2(MElement *el, int depth)
     return 0;
   }
   else{
-    int tag = division(jfs, jacBez, depth-1);
+    int tag = division(bb, jacBez, depth-1);
     if (tag < 0)
       return tag - 1;
     if (tag > 0)
@@ -642,9 +644,10 @@ void GMSH_AnalyseCurvedMeshPlugin::method_2_2
     Msg::Error("Jacobian function space not implemented for type of element %d", el[0]->getNum());
     return;
   }
+  const bezierBasis *bb = jfs->bezier;
 
-  int numSamplingPt = jfs->points.size1();
-  int dim = jfs->points.size2();
+  int numSamplingPt = bb->points.size1();
+  int dim = bb->points.size2();
   int numEl = tags.size();
 
   fullMatrix<double> jacobian(numSamplingPt, numEl);
@@ -671,7 +674,7 @@ void GMSH_AnalyseCurvedMeshPlugin::method_2_2
   double critere = .2; // à définir suivant le temps de chaque opération
   if ((double) numBad / (double) numEl < critere) {// il vaut mieux calculer les points de controle de chaque élément
     jacBez.resize(numSamplingPt, numEl);
-    jfs->matrixLag2Bez.mult(jacobian, jacBez);
+    bb->matrixLag2Bez.mult(jacobian, jacBez);
     correspondingEl.resize(numEl);
     for (int i = 0; i < numEl; i++) correspondingEl[i] = i;
   }
@@ -690,7 +693,7 @@ void GMSH_AnalyseCurvedMeshPlugin::method_2_2
       }
     }
     jacBez.resize(numSamplingPt, numEl-numBad);
-    jfs->matrixLag2Bez.mult(jacobian, jacBez);
+    bb->matrixLag2Bez.mult(jacobian, jacBez);
   }
 
 
@@ -728,7 +731,7 @@ void GMSH_AnalyseCurvedMeshPlugin::method_2_2
 }
 
 int GMSH_AnalyseCurvedMeshPlugin::division
-  (const JacobianBasis *jfs, const fullVector<double> &jacobian, int depth)
+  (const bezierBasis *jfs, const fullVector<double> &jacobian, int depth)
 {
   if (jfs->divisor.size2() != jacobian.size()) {
     Msg::Error("Wrong sizes in division : [%d,%d] * [%d]",

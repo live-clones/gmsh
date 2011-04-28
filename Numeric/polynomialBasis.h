@@ -279,6 +279,7 @@ class polynomialBasis
     }
   }
   const fullMatrix<double> &getGradientAtFaceIntegrationPoints(int integrationOrder, int closureId) const;
+  static int getTag(int parentTag, int order, bool serendip = false);
 };
 
 class polynomialBases

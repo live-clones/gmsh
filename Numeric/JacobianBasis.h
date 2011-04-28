@@ -9,23 +9,25 @@
 #include <map>
 #include <vector>
 #include "fullMatrix.h"
-
-class JacobianBasis
-{
-  public:
-    int numLagPts;
-    int numDivisions;
-    fullMatrix<double> exposants; //exposants of Bezier FF
-    fullMatrix<double> points; //sampling point
-    fullMatrix<double> matrixLag2Bez;
-    fullMatrix<double> gradShapeMatX;
-    fullMatrix<double> gradShapeMatY;
-    fullMatrix<double> gradShapeMatZ;
-    fullMatrix<double> divisor;
+class bezierBasis {
+ private :
+  static std::map<int, bezierBasis> _bbs;
+ public :
+  int numLagPts;
+  int numDivisions;
+  fullMatrix<double> exposants; //exposants of Bezier FF
+  fullMatrix<double> points; //sampling point
+  fullMatrix<double> matrixLag2Bez;
+  fullMatrix<double> divisor;
+  static const bezierBasis *find(int);
 };
 
-class JacobianBases
-{
+class JacobianBasis {
+ public :
+  const bezierBasis *bezier;
+  fullMatrix<double> gradShapeMatX;
+  fullMatrix<double> gradShapeMatY;
+  fullMatrix<double> gradShapeMatZ;
  private:
   static std::map<int, JacobianBasis> fs;
  public:

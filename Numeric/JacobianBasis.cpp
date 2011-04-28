@@ -1187,19 +1187,17 @@ static void generateGradShapes(JacobianBasis &jfs, const fullMatrix<double> &poi
   }
   return;
 }
+std::map<int, bezierBasis> bezierBasis::_bbs;
 
-std::map<int, JacobianBasis> JacobianBases::fs;
-
-const JacobianBasis *JacobianBases::find(int tag)
+const bezierBasis *bezierBasis::find(int tag)
 {
-  std::map<int, JacobianBasis>::const_iterator it = fs.find(tag);
-  if (it != fs.end())     return &it->second;
-  
-  JacobianBasis B;
-  B.numLagPts = -1;
+  std::map<int, bezierBasis>::const_iterator it = _bbs.find(tag);
+  if (it != _bbs.end())
+    return &it->second;
 
+  bezierBasis &B = _bbs[tag];
   const polynomialBasis *F = polynomialBases::find(tag);
-  int order = F->order;
+  int o = F->order;
   switch (F->parentType) {
     case TYPE_PNT :
       B.numLagPts = 1;
@@ -1208,7 +1206,6 @@ const JacobianBasis *JacobianBases::find(int tag)
       B.matrixLag2Bez = generateLag2BezMatrix(B.exposants, B.points, 0, 0);
       break;
     case TYPE_LIN : {
-      int o = order - 1;
       B.numLagPts = 2;
       B.exposants = generate1DExposants(o);
       B.points    = generate1DPoints(o);
@@ -1216,68 +1213,82 @@ const JacobianBasis *JacobianBases::find(int tag)
       std::vector< fullMatrix<double> > subPoints = generateSubPointsLine(0);
       B.divisor   = generateDivisor(B.exposants, subPoints, B.matrixLag2Bez, o, 0);
       const polynomialBasis *F = polynomialBases::find(tag);
-      generateGradShapes(B, B.points, F->monomials, F->coefficients);
       break;
     }
     case TYPE_TRI : {
-      int o = 2 * (order - 1);
       B.numLagPts = 3;
       B.exposants = generateExposantsTriangle(o);
       B.points    = gmshGeneratePointsTriangle(o,false);
       B.matrixLag2Bez = generateLag2BezMatrix(B.exposants, B.points, o, 2);
       std::vector< fullMatrix<double> > subPoints = generateSubPointsTriangle(o);
       B.divisor   = generateDivisor(B.exposants, subPoints, B.matrixLag2Bez, o, 2);
-      generateGradShapes(B, B.points, F->monomials, F->coefficients);
       break;
     }
     case TYPE_TET : {
-      int o = 3 * (order - 1);
       B.numLagPts = 4;
       B.exposants = generateExposantsTetrahedron(o);
       B.points    = gmshGeneratePointsTetrahedron(o,false);
       B.matrixLag2Bez = generateLag2BezMatrix(B.exposants, B.points, o, 3);
       std::vector< fullMatrix<double> > subPoints = generateSubPointsTetrahedron(o);
       B.divisor   = generateDivisor(B.exposants, subPoints, B.matrixLag2Bez, o, 3);
-      generateGradShapes(B, B.points, F->monomials, F->coefficients);
       break;
     }
     case TYPE_QUA : {
-      int o = 2 * order - 1;
       B.numLagPts = 4;
       B.exposants = generateExposantsQuad(o);
       B.points    = generatePointsQuad(o,false);
       B.matrixLag2Bez = generateLag2BezMatrix(B.exposants, B.points, o, 0);
       std::vector< fullMatrix<double> > subPoints = generateSubPointsQuad(o);
       B.divisor   = generateDivisor(B.exposants, subPoints, B.matrixLag2Bez, o, 0);
-      generateGradShapes(B, B.points, F->monomials, F->coefficients);
       break;
     }
     case TYPE_PRI : {
-      int o = order * 3 - 1; // o=3*ord-2 on triangle base and =3*ord-1 for third dimension
       B.numLagPts = 4;
       B.exposants = generateExposantsPrism(o);
       B.points    = generatePointsPrism(o,false);
       B.matrixLag2Bez = generateLag2BezMatrix(B.exposants, B.points, o, 2);
       std::vector< fullMatrix<double> > subPoints = generateSubPointsPrism(o);
       B.divisor   = generateDivisor(B.exposants, subPoints, B.matrixLag2Bez, o, 2);
-      generateGradShapes(B, B.points, F->monomials, F->coefficients);
       break;
     }
     default : {
       Msg::Error("Unknown function space %d: reverting to TET_4", tag);
       B.numLagPts = 4;
       B.exposants = generateExposantsTetrahedron(0);
-      B.points    = gmshGeneratePointsTetrahedron(0,false);
+      B.points    = gmshGeneratePointsTetrahedron(0, false);
       B.matrixLag2Bez = generateLag2BezMatrix(B.exposants, B.points, 0, 3);
       std::vector< fullMatrix<double> > subPoints = generateSubPointsTetrahedron(0);
       B.divisor   = generateDivisor(B.exposants, subPoints, B.matrixLag2Bez, 0, 3);
       F = polynomialBases::find(MSH_TET_4);
-      generateGradShapes(B, B.points, F->monomials, F->coefficients);
     }
   }
 
   B.numDivisions = (int) pow(2., (int) B.points.size2());
+  return &B;
+}
 
-  fs.insert(std::make_pair(tag, B));
-  return &fs[tag];
+std::map<int, JacobianBasis> JacobianBasis::fs;
+
+const JacobianBasis *JacobianBasis::find(int tag)
+{
+  std::map<int, JacobianBasis>::const_iterator it = fs.find(tag);
+  if (it != fs.end())
+    return &it->second;
+  JacobianBasis &B = fs[tag];
+  const polynomialBasis *F = polynomialBases::find(tag);
+  int jacobianOrder;
+  switch (F->parentType) {
+    case TYPE_PNT : jacobianOrder = 0; break;
+    case TYPE_LIN : jacobianOrder = F->order - 1; break;
+    case TYPE_TRI : jacobianOrder = 2 * (F->order - 1); break;
+    case TYPE_TET : jacobianOrder = 3 * (F->order - 1); break;
+    case TYPE_QUA : jacobianOrder = 2 * F->order - 1; break;
+    case TYPE_PRI : jacobianOrder = F->order * 3 - 1; break; // o=3*ord-2 on triangle base and =3*ord-1 for third dimension
+    default :
+      Msg::Error("Unknown function space %d: reverting to TET_4", tag);
+      jacobianOrder = 0;
+  }
+  B.bezier = bezierBasis::find(polynomialBasis::getTag(F->parentType, jacobianOrder, false));
+  generateGradShapes(B, B.bezier->points, F->monomials, F->coefficients);
+  return &B;
 }

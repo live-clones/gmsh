@@ -304,7 +304,7 @@ double mesh_functional_distorsion_p2_exact(MTriangle *t)
 
 double mesh_functional_distorsion_pN(MElement *t)
 {
-  const JacobianBasis *jac = t->getJacobianFuncSpace();
+  const bezierBasis *jac = t->getJacobianFuncSpace()->bezier;
   //  jac->monomials.print("coucou");
   fullVector<double>Ji(jac->points.size1());
   for (int i=0;i<jac->points.size1();i++){
@@ -386,7 +386,7 @@ static double mesh_functional_distorsion(MTetrahedron *t, double u, double v, do
 
 double qmDistorsionOfMapping(MTetrahedron *t)
 {
-  const JacobianBasis *jac = t->getJacobianFuncSpace();
+  const bezierBasis *jac = t->getJacobianFuncSpace()->bezier;
   fullVector<double>Ji(jac->points.size1());
   for (int i=0;i<jac->points.size1();i++){
     const double u = jac->points(i,0);
