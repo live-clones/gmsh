@@ -47,6 +47,7 @@
 #cmakedefine HAVE_QT
 #cmakedefine HAVE_READLINE
 #cmakedefine HAVE_SLEPC
+#cmakedefine HAVE_SALOME
 #cmakedefine HAVE_SOLVER
 #cmakedefine HAVE_TAUCS
 #cmakedefine HAVE_TETGEN

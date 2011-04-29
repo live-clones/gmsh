@@ -21,7 +21,6 @@ set(SRC
     GModelIO_Mesh.cpp
     GModelIO_OCC.cpp
     GModelIO_ACIS.cpp
-      OCC_Connect.cpp
     GModelIO_Fourier.cpp
     GModelIO_CGNS.cpp
     GModelIO_MED.cpp

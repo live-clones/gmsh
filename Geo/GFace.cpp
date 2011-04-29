@@ -238,7 +238,6 @@ void GFace::setVisibility(char val, bool recursive)
     std::list<GEdge*>::iterator it = l_edges.begin();
     while (it != l_edges.end()){
       (*it)->setVisibility(val, recursive);
-
       ++it;
     }
   }
