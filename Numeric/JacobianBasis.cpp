@@ -991,9 +991,9 @@ static int nChoosek(int n, int k)
 }
 
 
-static fullMatrix<double> generateLag2BezMatrix
+static fullMatrix<double> generateBez2LagMatrix
   (const fullMatrix<double> &exposant, const fullMatrix<double> &point,
-   int order, int dimSimplex, bool invert = true)
+   int order, int dimSimplex)
 {
   
   if(exposant.size1() != point.size1() || exposant.size2() != point.size2()){
@@ -1029,12 +1029,7 @@ static fullMatrix<double> generateLag2BezMatrix
       Vandermonde(j, i) = dd;
     }
   }
-
-  if (!invert) return Vandermonde;
-
-  fullMatrix<double> coefficient(ndofs, ndofs);
-  Vandermonde.invert(coefficient);
-  return coefficient;
+  return Vandermonde;
 }
 
 
@@ -1058,7 +1053,7 @@ static fullMatrix<double> generateDivisor
 
   for (unsigned int i = 0; i < subPoints.size(); i++) {
     fullMatrix<double> intermediate1 =
-      generateLag2BezMatrix(exposants, subPoints[i], order, dimSimplex, false);
+      generateBez2LagMatrix(exposants, subPoints[i], order, dimSimplex);
     lag2Bez.mult(intermediate1, intermediate2);
     divisor.copy(intermediate2, 0, nbPts, 0, nbPts, i*nbPts, 0);
   }
@@ -1197,71 +1192,68 @@ const bezierBasis *bezierBasis::find(int tag)
 
   bezierBasis &B = _bbs[tag];
   const polynomialBasis *F = polynomialBases::find(tag);
-  int o = F->order;
+  int dimSimplex;
+  std::vector< fullMatrix<double> > subPoints;
   switch (F->parentType) {
     case TYPE_PNT :
       B.numLagPts = 1;
       B.exposants = generate1DExposants(0);
       B.points    = generate1DPoints(0);
-      B.matrixLag2Bez = generateLag2BezMatrix(B.exposants, B.points, 0, 0);
+      dimSimplex = 0;
       break;
     case TYPE_LIN : {
       B.numLagPts = 2;
-      B.exposants = generate1DExposants(o);
-      B.points    = generate1DPoints(o);
-      B.matrixLag2Bez = generateLag2BezMatrix(B.exposants, B.points, o, 0);
-      std::vector< fullMatrix<double> > subPoints = generateSubPointsLine(0);
-      B.divisor   = generateDivisor(B.exposants, subPoints, B.matrixLag2Bez, o, 0);
-      const polynomialBasis *F = polynomialBases::find(tag);
+      B.exposants = generate1DExposants(F->order);
+      B.points    = generate1DPoints(F->order);
+      dimSimplex = 0;
+      subPoints = generateSubPointsLine(0);
       break;
     }
     case TYPE_TRI : {
       B.numLagPts = 3;
-      B.exposants = generateExposantsTriangle(o);
-      B.points    = gmshGeneratePointsTriangle(o,false);
-      B.matrixLag2Bez = generateLag2BezMatrix(B.exposants, B.points, o, 2);
-      std::vector< fullMatrix<double> > subPoints = generateSubPointsTriangle(o);
-      B.divisor   = generateDivisor(B.exposants, subPoints, B.matrixLag2Bez, o, 2);
+      B.exposants = generateExposantsTriangle(F->order);
+      B.points    = gmshGeneratePointsTriangle(F->order,false);
+      dimSimplex = 2;
+      subPoints = generateSubPointsTriangle(F->order);
       break;
     }
     case TYPE_TET : {
       B.numLagPts = 4;
-      B.exposants = generateExposantsTetrahedron(o);
-      B.points    = gmshGeneratePointsTetrahedron(o,false);
-      B.matrixLag2Bez = generateLag2BezMatrix(B.exposants, B.points, o, 3);
-      std::vector< fullMatrix<double> > subPoints = generateSubPointsTetrahedron(o);
-      B.divisor   = generateDivisor(B.exposants, subPoints, B.matrixLag2Bez, o, 3);
+      B.exposants = generateExposantsTetrahedron(F->order);
+      B.points    = gmshGeneratePointsTetrahedron(F->order,false);
+      dimSimplex = 3;
+      subPoints = generateSubPointsTetrahedron(F->order);
       break;
     }
     case TYPE_QUA : {
       B.numLagPts = 4;
-      B.exposants = generateExposantsQuad(o);
-      B.points    = generatePointsQuad(o,false);
-      B.matrixLag2Bez = generateLag2BezMatrix(B.exposants, B.points, o, 0);
-      std::vector< fullMatrix<double> > subPoints = generateSubPointsQuad(o);
-      B.divisor   = generateDivisor(B.exposants, subPoints, B.matrixLag2Bez, o, 0);
+      B.exposants = generateExposantsQuad(F->order);
+      B.points    = generatePointsQuad(F->order,false);
+      dimSimplex = 0;
+      subPoints = generateSubPointsQuad(F->order);
       break;
     }
     case TYPE_PRI : {
       B.numLagPts = 4;
-      B.exposants = generateExposantsPrism(o);
-      B.points    = generatePointsPrism(o,false);
-      B.matrixLag2Bez = generateLag2BezMatrix(B.exposants, B.points, o, 2);
-      std::vector< fullMatrix<double> > subPoints = generateSubPointsPrism(o);
-      B.divisor   = generateDivisor(B.exposants, subPoints, B.matrixLag2Bez, o, 2);
+      B.exposants = generateExposantsPrism(F->order);
+      B.points    = generatePointsPrism(F->order, false);
+      dimSimplex = 2;
+      subPoints = generateSubPointsPrism(F->order);
       break;
     }
     default : {
-      Msg::Error("Unknown function space %d: reverting to TET_4", tag);
+      Msg::Error("Unknown function space %d: reverting to TET_1", tag);
+      F = polynomialBases::find(MSH_TET_1);
       B.numLagPts = 4;
       B.exposants = generateExposantsTetrahedron(0);
       B.points    = gmshGeneratePointsTetrahedron(0, false);
-      B.matrixLag2Bez = generateLag2BezMatrix(B.exposants, B.points, 0, 3);
-      std::vector< fullMatrix<double> > subPoints = generateSubPointsTetrahedron(0);
-      B.divisor   = generateDivisor(B.exposants, subPoints, B.matrixLag2Bez, 0, 3);
-      F = polynomialBases::find(MSH_TET_4);
+      dimSimplex = 3;
+      subPoints = generateSubPointsTetrahedron(0);
     }
   }
+  B.matrixBez2Lag = generateBez2LagMatrix(B.exposants, B.points, F->order, dimSimplex);
+  B.matrixBez2Lag.invert(B.matrixLag2Bez);
+  B.divisor = generateDivisor(B.exposants, subPoints, B.matrixLag2Bez, F->order, dimSimplex);
 
   B.numDivisions = (int) pow(2., (int) B.points.size2());
   return &B;

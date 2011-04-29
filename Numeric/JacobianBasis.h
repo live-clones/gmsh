@@ -17,7 +17,7 @@ class bezierBasis {
   int numDivisions;
   fullMatrix<double> exposants; //exposants of Bezier FF
   fullMatrix<double> points; //sampling point
-  fullMatrix<double> matrixLag2Bez;
+  fullMatrix<double> matrixLag2Bez, matrixBez2Lag;
   fullMatrix<double> divisor;
   static const bezierBasis *find(int);
 };
