@@ -20,8 +20,9 @@ connection), Matt Gundry (Plot3d mesh format), Matti Pellikka
 format), Pierre Badel (root finding and minimization), Ruth Sabariego
 (pyramids), Stephen Guzik (CGNS and partitioners), Bastien Gorissen
 (parallel remote), Eric Bechet (solver), Gilles Marckmann (camera and
-stero mode). See comments in the sources for more information. If we
-forgot to list your contributions please send us an email!
+stero mode), Ashish Negi (Salome/Netgen CAD healing). See comments in
+the sources for more information. If we forgot to list your
+contributions please send us an email!
 
 The AVL tree code (Common/avl.*) and the YUV image code
 (Graphics/gl2yuv.*) are copyright (C) 1988-1993, 1995 The Regents of
