@@ -1259,14 +1259,10 @@ void VisibilityShape(int Type, int Num, int Mode)
   switch (Type) {
   case MSH_POINT:
   case MSH_POINT_FROM_GMODEL:
-    if((v = FindPoint(Num)))
-      v->Visible = Mode;
-    else{
+    {
+      if((v = FindPoint(Num))) v->Visible = Mode;
       GVertex *gv = GModel::current()->getVertexByTag(Num);
-      if(gv)
-        gv->setVisibility(Mode);
-      else
-        Msg::Warning("Unknown point %d (use '*' to hide/show all points)", Num);
+      if(gv) gv->setVisibility(Mode);
     }
     break;
   case MSH_SEGM_LINE:
@@ -1281,14 +1277,10 @@ void VisibilityShape(int Type, int Num, int Mode)
   case MSH_SEGM_DISCRETE:
   case MSH_SEGM_COMPOUND:
   case MSH_SEGM_FROM_GMODEL:
-    if((c = FindCurve(Num)))
-      c->Visible = Mode;
-    else{
+    {
+      if((c = FindCurve(Num))) c->Visible = Mode;
       GEdge *ge = GModel::current()->getEdgeByTag(Num);
-      if(ge)
-        ge->setVisibility(Mode);
-      else
-        Msg::Warning("Unknown line %d (use '*' to hide/show all lines)", Num);
+      if(ge) ge->setVisibility(Mode);
     }
     break;
   case MSH_SURF_TRIC:
@@ -1297,28 +1289,20 @@ void VisibilityShape(int Type, int Num, int Mode)
   case MSH_SURF_DISCRETE:
   case MSH_SURF_COMPOUND:
   case MSH_SURF_FROM_GMODEL:
-    if((s = FindSurface(Num)))
-      s->Visible = Mode;
-    else{
+    {
+      if((s = FindSurface(Num))) s->Visible = Mode;
       GFace *gf = GModel::current()->getFaceByTag(Num);
-      if(gf)
-        gf->setVisibility(Mode);
-      else
-        Msg::Warning("Unknown surface %d (use '*' to hide/show all surfaces)", Num);
+      if(gf) gf->setVisibility(Mode);
     }
     break;
   case MSH_VOLUME:
   case MSH_VOLUME_DISCRETE:
   case MSH_VOLUME_COMPOUND:
   case MSH_VOLUME_FROM_GMODEL:
-    if((V = FindVolume(Num)))
-      V->Visible = Mode;
-    else{
+    {
+      if((V = FindVolume(Num))) V->Visible = Mode;
       GRegion *gr = GModel::current()->getRegionByTag(Num);
-      if(gr)
-        gr->setVisibility(Mode);
-      else
-        Msg::Warning("Unknown volume %d (use '*' to hide/show all volumes)", Num);
+      if(gr) gr->setVisibility(Mode);
     }
     break;
   default:
