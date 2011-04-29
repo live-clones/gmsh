@@ -90,36 +90,6 @@ function *function::getSolutionGradient()
   return functionSolutionGradient::get();
 }
 
-
-// Get Parametric Coordinates + Additionnal class
-
-class functionParametricCoordinates : public function {
-  static functionParametricCoordinates *_instance;
-  // constructor is private only 1 instance can exists, call get to
-  // access the instance
-  functionParametricCoordinates():function(0, false){} 
- public:
-  void call(dataCacheMap *m, fullMatrix<double> &sol) 
-  {
-    Msg::Error("a function requires the parametric coordinates but this "
-               "algorithm does not provide the parametric coordinates");
-    throw;
-  }
-  static function *get() 
-  {
-    if(!_instance)
-      _instance = new functionParametricCoordinates();
-    return _instance;
-  }
-};
-
-functionParametricCoordinates *functionParametricCoordinates::_instance = NULL;
-
-function *function::getParametricCoordinates() 
-{
-  return functionParametricCoordinates::get();
-}
-
 // Get Normals + Additionnal class
 
 class functionNormals : public function {
@@ -132,7 +102,6 @@ class functionNormals : public function {
   {
     Msg::Error("a function requires the normals coordinates but this "
                "algorithm does not provide the normals");
-    throw;
   }
   static function *get() 
   {
@@ -598,44 +567,6 @@ public:
 
 function *functionMeanNew(const function *f0) {
   return new functionMean (f0);
-}
-
-
-// functionCoordinates (get XYZ coordinates)
-
-class functionCoordinates : public function {
-  static functionCoordinates *_instance;
-  fullMatrix<double> uvw;
-  void call (dataCacheMap *m, fullMatrix<double> &xyz) 
-  {
-    for (int i = 0; i < uvw.size1(); i++) {
-      SPoint3 p;
-      m->getElement()->pnt(uvw(i, 0), uvw(i, 1), uvw(i, 2), p);
-      xyz(i, 0) = p.x();
-      xyz(i, 1) = p.y();
-      xyz(i, 2) = p.z();
-    }
-  }
-  functionCoordinates() : function(3) 
-  { 
-    // constructor is private only 1 instance can exists, call get to
-    // access the instance
-    setArgument(uvw, function::getParametricCoordinates());
-  };
- public:
-  static function *get() 
-  {
-    if(!_instance)
-      _instance = new functionCoordinates();
-    return _instance;
-  }
-};
-
-functionCoordinates *functionCoordinates::_instance = NULL;
-
-function *getFunctionCoordinates() 
-{
-  return functionCoordinates::get();
 }
 
 // functionStructuredGridFile

@@ -73,7 +73,6 @@ class function {
   static functionConstant *getDT();
   static function *getSolution();
   static function *getSolutionGradient();
-  static function *getParametricCoordinates();
   static function *getNormals();
   void printDep()
   {
@@ -295,7 +294,4 @@ function *functionScaleNew (const function *f0, const double s);
 function *functionExtractCompNew (const function *f0, const int iComp);
 function *functionCatCompNew(std::vector<const function *> fArray);
 function *functionMeanNew(const function *f0);
-
-function *getFunctionCoordinates();
-
 #endif
