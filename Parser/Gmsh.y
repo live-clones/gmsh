@@ -3920,6 +3920,22 @@ FExpr_Multi :
 	List_Add($$, &v->Pos.Z);
       }
     }
+  | tPoint tBIGSTR
+    {
+      $$ = GetAllEntityNumbers(0);
+    }
+  | tLine tBIGSTR
+    {
+      $$ = GetAllEntityNumbers(1);
+    }
+  | tSurface tBIGSTR
+    {
+      $$ = GetAllEntityNumbers(2);
+    }
+  | tVolume tBIGSTR
+    {
+      $$ = GetAllEntityNumbers(3);
+    }
   | Transform
     {
       $$ = List_Create(List_Nbr($1), 1, sizeof(double));

@@ -257,15 +257,17 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
         if(reparamOK){
           double relax = 1.;
           while (1){
-            if(computeEquidistantParameters(ge, std::min(u0,u1), std::max(u0,u1), nPts + 2, US, relax)) 
-                break;
+            if(computeEquidistantParameters(ge, std::min(u0,u1), std::max(u0,u1), 
+                                            nPts + 2, US, relax)) 
+              break;
             relax /= 2.0;
             if(relax < 1.e-2) 
               break;
           } 
           if(relax < 1.e-2)
             Msg::Warning
-              ("Failed to compute equidistant parameters (relax = %g, value = %g) for edge %d-%d parametrized with %g %g on GEdge %d",
+              ("Failed to compute equidistant parameters (relax = %g, value = %g) "
+               "for edge %d-%d parametrized with %g %g on GEdge %d",
                relax, US[1], v0->getNum(), v1->getNum(),u0,u1,ge->tag());
         }
       }
@@ -283,8 +285,8 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
         }
         else {          
           GPoint pc = ge->point(US[u0<u1? j + 1 : nPts - 1 - (j + 1)]);
-          v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, US[u0<u1? j + 1 : nPts - 1 - (j + 1)]);
-            
+          v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, 
+                              US[u0 < u1 ? j + 1 : nPts - 1 - (j + 1)]);
           if (displ2D || displ3D){
             SPoint3 pc2 = edge.interpolate(t);          
             if (displ2D)displ2D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
@@ -540,15 +542,30 @@ static void reorientQuadPoints(std::vector<MVertex*> &vtcs, int orientation,
 	int p1 = indices[iEdge];
 	int p2 = indices[(iEdge+1)%4];
 	int nbP = order-1;
-	if      (p1 == 0 && p2 == 1){for (int i=4+0*nbP;i< 4+1*nbP;i++) tmp[index++] = vtcs[i];}
-	else if (p1 == 1 && p2 == 2){for (int i=4+1*nbP;i< 4+2*nbP;i++) tmp[index++] = vtcs[i];}
-	else if (p1 == 2 && p2 == 3){for (int i=4+2*nbP;i< 4+3*nbP;i++) tmp[index++] = vtcs[i];}
-	else if (p1 == 3 && p2 == 0){for (int i=4+3*nbP;i< 4+4*nbP;i++) tmp[index++] = vtcs[i];}
-
-	else if (p1 == 1 && p2 == 0){for (int i=4+1*nbP-1;i>= 4+0*nbP;i--) tmp[index++] = vtcs[i];}
-	else if (p1 == 2 && p2 == 1){for (int i=4+2*nbP-1;i>= 4+1*nbP;i--) tmp[index++] = vtcs[i];}
-	else if (p1 == 3 && p2 == 2){for (int i=4+3*nbP-1;i>= 4+2*nbP;i--) tmp[index++] = vtcs[i];}
-	else if (p1 == 0 && p2 == 3){for (int i=4+4*nbP-1;i>= 4+3*nbP;i--) tmp[index++] = vtcs[i];}
+	if      (p1 == 0 && p2 == 1){
+          for (int i = 4+0*nbP; i < 4+1*nbP; i++) tmp[index++] = vtcs[i];
+        }
+	else if (p1 == 1 && p2 == 2){
+          for (int i = 4+1*nbP; i< 4+2*nbP; i++) tmp[index++] = vtcs[i];
+        }
+	else if (p1 == 2 && p2 == 3){
+          for (int i = 4+2*nbP; i< 4+3*nbP; i++) tmp[index++] = vtcs[i];
+        }
+	else if (p1 == 3 && p2 == 0){
+          for (int i = 4+3*nbP; i< 4+4*nbP; i++) tmp[index++] = vtcs[i];
+        }
+	else if (p1 == 1 && p2 == 0){
+          for (int i = 4+1*nbP-1; i >= 4+0*nbP; i--) tmp[index++] = vtcs[i];
+        }
+	else if (p1 == 2 && p2 == 1){
+          for (int i = 4+2*nbP-1; i >= 4+1*nbP; i--) tmp[index++] = vtcs[i];
+        }
+	else if (p1 == 3 && p2 == 2){
+          for (int i = 4+3*nbP-1; i >= 4+2*nbP; i--) tmp[index++] = vtcs[i];
+        }
+	else if (p1 == 0 && p2 == 3){
+          for (int i = 4+4*nbP-1; i >= 4+3*nbP; i--) tmp[index++] = vtcs[i];
+        }
 	else printf("ouuls\n");
       }	
       for (int i=0;i<index;i++)vtcs[start+4+i] = tmp[i];      
@@ -558,11 +575,7 @@ static void reorientQuadPoints(std::vector<MVertex*> &vtcs, int orientation,
     order -= 2;
     if (start >= vtcs.size()) break;
   }
-  //  printf("after : ");
-  //  for (int i=0;i<vtcs.size();i++)printf("%p ",vtcs[i]);
-  //  printf("\n");
 } 
-
 
 // KH: check face orientation wrt element ... 
 
@@ -827,9 +840,9 @@ static void getRegionVertices(GRegion *gr, MElement *incomplete, MElement *ele,
     const double t2 = points(k, 1);
     const double t3 = points(k, 2);
     SPoint3 pos;
-    incomplete->pnt(t1,t2,t3,pos);
-    //    printf("pnt(%g %g %g) = %g %g %g\n",t1,t2,t3,pos.x(),pos.y(),pos.z());
-    v = new MVertex(pos.x(),pos.y(),pos.z(),gr);
+    incomplete->pnt(t1, t2, t3, pos);
+    // printf("pnt(%g %g %g) = %g %g %g\n",t1,t2,t3,pos.x(),pos.y(),pos.z());
+    v = new MVertex(pos.x(), pos.y(), pos.z(), gr);
     gr->mesh_vertices.push_back(v);
     vr.push_back(v);
   }

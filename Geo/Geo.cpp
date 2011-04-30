@@ -875,6 +875,80 @@ PhysicalGroup *FindPhysicalGroup(int num, int type)
   return NULL;
 }
 
+static void GetAllEntityNumbers(int dim, std::set<int> &nums)
+{
+  GModel *m = GModel::current();
+  switch(dim){
+  case 0:
+    {
+      List_T *l = Tree2List(m->getGEOInternals()->Points);
+      Vertex *p;
+      for(int i = 0; i < List_Nbr(l); i++){
+        List_Read(l, i, &p);
+        nums.insert(p->Num);
+      }
+      List_Delete(l);
+      for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++)
+        nums.insert((*it)->tag());
+    }
+    break;
+  case 1:
+    {
+      List_T *l = Tree2List(m->getGEOInternals()->Curves);
+      Curve *p;
+      for(int i = 0; i < List_Nbr(l); i++){
+        List_Read(l, i, &p);
+        if(p->Num >= 0)
+          nums.insert(p->Num);
+      }
+      List_Delete(l);
+      for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
+        if((*it)->tag() >= 0)
+          nums.insert((*it)->tag());
+      }
+    }
+    break;
+  case 2:
+    {
+      List_T *l = Tree2List(m->getGEOInternals()->Surfaces);
+      Surface *p;
+      for(int i = 0; i < List_Nbr(l); i++){
+        List_Read(l, i, &p);
+        nums.insert(p->Num);
+      }
+      List_Delete(l);
+      for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
+        nums.insert((*it)->tag());
+    }
+    break;
+  case 3:
+    {
+      List_T *l = Tree2List(m->getGEOInternals()->Volumes);
+      Volume *p;
+      for(int i = 0; i < List_Nbr(l); i++){
+        List_Read(l, i, &p);
+        nums.insert(p->Num);
+      }
+      List_Delete(l);
+      for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
+        nums.insert((*it)->tag());
+    }
+    break;
+  }
+}
+
+List_T *GetAllEntityNumbers(int dim)
+{
+  std::set<int> nums;
+  GetAllEntityNumbers(dim, nums);
+  List_T *l = List_Create(nums.size(), 1, sizeof(double));
+  for(std::set<int>::iterator it = nums.begin(); it != nums.end(); it++){
+    double a = *it;
+    List_Add(l, &a);
+  }
+  return l;
+}
+
 static void CopyVertex(Vertex *v, Vertex *vv)
 {
   vv->lc = v->lc;
