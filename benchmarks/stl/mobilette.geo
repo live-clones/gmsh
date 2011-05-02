@@ -1,12 +1,15 @@
 Mesh.Algorithm = 6; //(1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=bamg) 
-Mesh.CharacteristicLengthMin=1.5;
-Mesh.CharacteristicLengthMax=2.5;
+Mesh.CharacteristicLengthMin=1.5/2;
+Mesh.CharacteristicLengthMax=2.5/2;
 Mesh.RemeshAlgorithm=1;
 Mesh.RemeshParametrization=1;//(0) harmonic (1) conformal 
 
+// merge reclassified STL
+Merge "mobilette-class.msh";
 
-//Merge "mobilette-class.msh"; // oringinal STL is a bit coarse
-Merge "mobilette-class-fine.msh"; // this was produced by refining once
+// oringinal STL is a bit coarse: refine it once!
+RefineMesh;
+
 CreateTopology;
 
 ll[] = Line "*";
@@ -22,3 +25,5 @@ EndFor
 
 Surface Loop(1) = {s : s + #ss[]-1};
 Volume(1) = {1};
+
+//Physical Surface(1) = {s : s + #ss[]-1};

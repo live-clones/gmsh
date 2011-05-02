@@ -366,6 +366,9 @@ class GModel
   // incomplete is 1 if incomplete basis are used
   int setOrderN(int order, int linear, int incomplete);
 
+  // refine the mesh by splitting all elements
+  int refineMesh(int linear);
+
   // create partition boundaries
   void createPartitionBoundaries(int createGhostCells);
 

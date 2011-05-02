@@ -500,6 +500,16 @@ int GModel::mesh(int dimension)
 #endif
 }
 
+int GModel::refineMesh(int linear)
+{
+#if defined(HAVE_MESH)
+  RefineMesh(this, linear);
+  return true;
+#else
+  Msg::Error("Mesh module not compiled");
+  return false;
+#endif
+}
 
 int GModel::setOrderN(int order, int linear, int incomplete)
 {
