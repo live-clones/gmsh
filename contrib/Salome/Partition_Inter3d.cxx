@@ -32,6 +32,7 @@
 #if !defined(HAVE_NO_OCC_CONFIG_H)
 #include <config.h>
 #endif
+#include <Standard_Version.hxx>
 
 //using namespace std;
 #include <climits>

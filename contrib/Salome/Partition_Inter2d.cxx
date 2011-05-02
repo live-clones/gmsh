@@ -28,6 +28,7 @@
 //  Module : GEOM
 //  $Header: /cvs/netgen/netgen/libsrc/occ/Partition_Inter2d.cxx,v 1.5 2008/03/31 14:20:28 wabro Exp $
 
+#include <Standard_Version.hxx>
 #include "Partition_Inter2d.ixx"
 
 //#include "utilities.h"
