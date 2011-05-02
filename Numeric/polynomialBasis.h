@@ -125,9 +125,7 @@ class polynomialBasis
       }
     }
   }
-  // I would favour this interface that allows optimizations (not
-  // implemented) and is easier to bind
-  inline void f(fullMatrix<double> &coord, fullMatrix<double> &sf)
+  inline void f(fullMatrix<double> &coord, fullMatrix<double> &sf) const
   {
     double p[1256];
     sf.resize (coord.size1(), coefficients.size1());
@@ -136,6 +134,21 @@ class polynomialBasis
       for (int i = 0; i < coefficients.size1(); i++)
         for (int j = 0; j < coefficients.size2(); j++)
           sf(iPoint,i) += coefficients(i, j) * p[j];
+    }
+  }
+  inline void df(fullMatrix<double> &coord, fullMatrix<double> &dfm) const
+  {
+    double dfv[1256][3];
+    dfm.resize (coefficients.size1(), coord.size1() * 3, false);
+    int ii = 0;
+    for (int iPoint=0; iPoint< coord.size1(); iPoint++) {
+      df(coord(iPoint,0), coord(iPoint, 1), coord(iPoint, 2), dfv);
+      for (int i = 0; i < coefficients.size1(); i++) {
+        dfm(i, iPoint * 3 + 0) = dfv[i][0];
+        dfm(i, iPoint * 3 + 1) = dfv[i][1];
+        dfm(i, iPoint * 3 + 2) = dfv[i][2];
+        ++ii;
+      }
     }
   }
   inline void df(double u, double v, double w, double grads[][3]) const
