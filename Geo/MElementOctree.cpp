@@ -115,7 +115,16 @@ MElement *MElementOctree::find(double x, double y, double z, int dim)
 {
   double P[3] = {x, y, z};
   MElement *e = (MElement*)Octree_Search(P, _octree);
-
+  if (dim == -1 || !e || e->getDim() == dim)
+    return e;
+  std::list<void*> l;
+  Octree_SearchAll(P, _octree, &l);
+  for (std::list<void*>::iterator it = l.begin(); it != l.end(); it++) {
+    MElement *el = (MElement*) *it;
+    if (el->getDim() == dim)
+      return el;
+  }
+  // JF : can you check if this is still needed, now that we changed Octree_SearchAll
   if (!e || (dim != -1 && e->getDim() != dim)){
     double initialTol = MElement::getTolerance();
     double tol = initialTol;
@@ -129,7 +138,6 @@ MElement *MElementOctree::find(double x, double y, double z, int dim)
 	  e = entities[i]->getMeshElement(j);
 	  if (dim == -1 ||  e->getDim() == dim){
 	    if (MElementInEle(e, P)){
-	      //	      printf("coucou FOUND\n");
 	      MElement::setTolerance(initialTol);
 	      return e;
 	    }	    
@@ -139,17 +147,6 @@ MElement *MElementOctree::find(double x, double y, double z, int dim)
     }
     MElement::setTolerance(initialTol);
     Msg::Warning("Point %g %g %g not found",x,y,z);
-  }
-  
-
-  if (dim == -1 || !e || e->getDim() == dim)
-    return e;
-  std::list<void*> l;
-  Octree_SearchAll(P, _octree, &l);
-  for (std::list<void*>::iterator it = l.begin(); it != l.end(); it++) {
-    MElement *el = (MElement*) *it;
-    if (el->getDim() == dim)
-      return el;
   }
   return NULL;
 }

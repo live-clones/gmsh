@@ -403,6 +403,18 @@ void *searchAllElements(octantBucket *_buckets_head, double *_pt, globalInfo *_g
 #endif
 
   flag1 = 0;
+  ELink ptr1 = ptrBucket->lhead;
+  while (ptr1 != NULL){
+    flag = xyzInElementBB(_pt, ptr1->region, BBElement);
+    if (flag == 1)
+      flag = xyzInElement(ptr1->region, _pt);
+    if (flag == 1) {
+      _elements->push_back(ptr1->region);
+      flag1 = 1;
+    }
+    ptr1 = ptr1->next;
+  }
+
   for (iter = (ptrBucket->listBB).begin(); 
        iter != (ptrBucket->listBB).end(); iter++){
     flag = xyzInElementBB(_pt, *iter, BBElement);
