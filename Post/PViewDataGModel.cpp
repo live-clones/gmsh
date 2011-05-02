@@ -66,31 +66,34 @@ bool PViewDataGModel::finalize(bool computeMinMax)
 
   // add interpolation data for known element types (this might be
   // overidden later)
-  for(int step = 0; step < getNumTimeSteps(); step++){
-    GModel *m = _steps[step]->getModel();
-    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
-      if((*it)->lines.size())
-        _addInterpolationMatricesForElement((*it)->lines[0]);
-    }
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
-      if((*it)->triangles.size())
-        _addInterpolationMatricesForElement((*it)->triangles[0]);
-      if((*it)->quadrangles.size())
-        _addInterpolationMatricesForElement((*it)->quadrangles[0]);
-      if((*it)->polygons.size())
-        _addInterpolationMatricesForElement((*it)->polygons[0]);
-    }
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
-      if((*it)->tetrahedra.size())
-        _addInterpolationMatricesForElement((*it)->tetrahedra[0]);
-      if((*it)->hexahedra.size())
-        _addInterpolationMatricesForElement((*it)->hexahedra[0]);
-      if((*it)->prisms.size())
-        _addInterpolationMatricesForElement((*it)->prisms[0]);
-      if((*it)->pyramids.size())
-        _addInterpolationMatricesForElement((*it)->pyramids[0]);
-      if((*it)->polyhedra.size())
-        _addInterpolationMatricesForElement((*it)->polyhedra[0]);
+  if(!haveInterpolationMatrices()){
+    for(int step = 0; step < getNumTimeSteps(); step++){
+      if(!_steps[step]->getNumData()) continue;
+      GModel *m = _steps[step]->getModel();
+      for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
+        if((*it)->lines.size())
+          _addInterpolationMatricesForElement((*it)->lines[0]);
+      }
+      for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
+        if((*it)->triangles.size())
+          _addInterpolationMatricesForElement((*it)->triangles[0]);
+        if((*it)->quadrangles.size())
+          _addInterpolationMatricesForElement((*it)->quadrangles[0]);
+        if((*it)->polygons.size())
+          _addInterpolationMatricesForElement((*it)->polygons[0]);
+      }
+      for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
+        if((*it)->tetrahedra.size())
+          _addInterpolationMatricesForElement((*it)->tetrahedra[0]);
+        if((*it)->hexahedra.size())
+          _addInterpolationMatricesForElement((*it)->hexahedra[0]);
+        if((*it)->prisms.size())
+          _addInterpolationMatricesForElement((*it)->prisms[0]);
+        if((*it)->pyramids.size())
+          _addInterpolationMatricesForElement((*it)->pyramids[0]);
+        if((*it)->polyhedra.size())
+          _addInterpolationMatricesForElement((*it)->polyhedra[0]);
+      }
     }
   }
 

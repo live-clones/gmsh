@@ -52,18 +52,24 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
   Msg::Info("Reading step %d (time %g) partition %d: %d records",
             step, time, partition, numEnt);
 
-  while(step >= (int)_steps.size())
-    _steps.push_back(new stepData<double>(GModel::current(), numComp));
-
+  while(step >= (int)_steps.size()){
+    if(_steps.empty() || _steps.back()->getNumData())
+      _steps.push_back(new stepData<double>(GModel::current(), numComp));
+    else // faster since we avoid computing model bounds
+      _steps.push_back(new stepData<double>(*_steps.back()));
+  }
+  
   _steps[step]->setFileName(fileName);
   _steps[step]->setFileIndex(fileIndex);
   _steps[step]->setTime(time);
 
+  /*
   // if we already have maxSteps for this view, return
   int numSteps = 0, maxSteps = 1000000000;
   for(unsigned int i = 0; i < _steps.size(); i++)
     numSteps += _steps[i]->getNumData() ? 1 : 0;
   if(numSteps > maxSteps) return true;
+  */
 
   _steps[step]->resizeData(numEnt);
 
