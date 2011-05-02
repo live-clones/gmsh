@@ -248,7 +248,11 @@ static void PutInBounds (const TopoDS_Face&          F,
       Standard_Integer i, nbExt = anExtPS.NbExt();
       Extrema_POnSurf aPOnSurf;
       for (i = 1; i <= nbExt; ++i )
+#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 5)
+        if (anExtPS.Value( i ) <= TolE) {
+#else
         if (anExtPS.SquareDistance( i ) <= TolE) {
+#endif
           aPOnSurf = anExtPS.Point( i );
           break;
         }
