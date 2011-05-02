@@ -500,11 +500,7 @@ static void EdgesPartition(const TopoDS_Face&            F,
       TolConf2 = TolConf * TolConf;
       if (!intersect)
         TolConf2 *= 100;
-#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 5)
-      Standard_Real SqDist = P1.Value(P2);
-#else
       Standard_Real SqDist = P1.SquareDistance(P2);
-#endif
       if (SqDist <= TolConf2) {
         TopoDS_Vertex V = BRepLib_MakeVertex(P1);
         V.Orientation(TopAbs_INTERNAL);
