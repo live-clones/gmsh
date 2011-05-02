@@ -461,10 +461,10 @@ void CreateOutputFile(std::string fileName, int format)
       }
       int numViews = (int)opt_post_nb_views(0, GMSH_GET, 0), numSteps = 0;
 
-      // FIXME: this does not handle empty time steps!
       for(int i = 0; i < numViews; i++){
         if(opt_view_visible(i, GMSH_GET, 0))
-          numSteps = std::max(numSteps, (int)opt_view_nb_timestep(i, GMSH_GET, 0));
+          numSteps = std::max(numSteps,
+                              (int)opt_view_nb_non_empty_timestep(i, GMSH_GET, 0));
       }
       std::vector<std::string> frames;
       for(int i = 0; i < (CTX::instance()->post.animCycle ? numViews : numSteps); i++){

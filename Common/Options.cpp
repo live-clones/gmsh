@@ -6525,6 +6525,20 @@ double opt_view_nb_timestep(OPT_ARGS_NUM)
 #endif
 }
 
+double opt_view_nb_non_empty_timestep(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEW(0.);
+  if(!data) return 0;
+  int n = 0;
+  for(unsigned int i = 0; i < data->getNumTimeSteps(); i++)
+    if(data->hasTimeStep(i)) n++;
+  return n;
+#else
+  return 0.;
+#endif
+}
+
 double opt_view_timestep(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)
