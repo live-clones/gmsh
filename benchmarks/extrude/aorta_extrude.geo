@@ -3,7 +3,10 @@ CreateTopology;
 
 Merge "aortaRADIUS2.bgm";
 
+// create a boundary layer, whose tickness is given in View[0]
 out1[] = Extrude{Surface{1}; Layers{4, 0.5}; Using Index[0]; Using View[0]; };
+
+// we could create a second boundary layer inside...
 //out2[] = Extrude{Surface{1}; Layers{4, -0.5}; Using Index[1]; Using View[0]; };
 
 Line Loop(60) = {9}; Plane Surface(61) = {60};

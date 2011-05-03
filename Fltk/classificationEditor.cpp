@@ -450,7 +450,7 @@ classificationEditor::classificationEditor() : selected(0)
   const int width = (int)(3.15 * BBB), height = (int)(9.5 * BH);
 
   window = new paletteWindow
-    (width, height, CTX::instance()->nonModalWindows ? true : false, "Reclassify");
+    (width, height, CTX::instance()->nonModalWindows ? true : false, "Reclassify 2D");
   window->box(GMSH_WINDOW_BOX);
   
   int x = WB, y = WB;
