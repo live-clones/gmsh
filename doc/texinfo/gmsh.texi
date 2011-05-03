@@ -1325,21 +1325,25 @@ List of expressions are also widely used, and are defined as:
   Point @{ @var{expression} @} |
   @var{transform} |
   @var{extrude}
+  Point @{ @var{expression} @} |
+  Point|Line|Surface|Volume "*" |
 @c  @var{duplicata} - already implemented: should we explain this?
 @end example
 
-The second case in this last definition permits to create a list containing
-the range of numbers comprised between two @w{@var{expression}s}, with a
-unit incrementation step. The third case also permits to create a list
-containing the range of numbers comprised between two @w{@var{expression}s},
-but with a positive or negative incrementation step equal to the third
-@var{expression}. The fourth case permits to reference an expression list.
-The fifth case permits to reference an expression sublist (whose elements
-are those corresponding to the indices provided by the
-@var{expression-list}). The sixth case permits to retrieve the coordinates
-of a given geometry point (@pxref{Points}). The last two cases permit to
-retrieve the indices of entities created through geometrical transformations
-and extrusions (see @ref{Transformations}, and @ref{Extrusions}).
+The second case in this last definition permits to create a list
+containing the range of numbers comprised between two
+@w{@var{expression}s}, with a unit incrementation step. The third case
+also permits to create a list containing the range of numbers comprised
+between two @w{@var{expression}s}, but with a positive or negative
+incrementation step equal to the third @var{expression}. The fourth case
+permits to reference an expression list.  The fifth case permits to
+reference an expression sublist (whose elements are those corresponding
+to the indices provided by the @var{expression-list}).  The next two
+cases permit to retrieve the indices of entities created through
+geometrical transformations and extrusions (see @ref{Transformations},
+and @ref{Extrusions}). The last two cases permit to retrieve the
+coordinates of a given geometry point (@pxref{Points}), or to retrieve
+the id numbers of all points, lines, surfaces or volumes in the model.
 
 To see the practical use of such expressions, have a look at the first
 couple of examples in @ref{Tutorial}. Note that, in order to lighten the
@@ -1934,7 +1938,13 @@ Deletes the current options and revert to the default values.
 Deletes the expression @var{string}.
 
 @item Mesh @var{expression};
-Generate @var{expression}-D mesh.
+Generates @var{expression}-D mesh.
+
+@item RefineMesh;
+Refines the current mesh by splitting all elements. If
+@code{Mesh.SecondOrderLinear} is set, the new vertices are inserted by
+linear interpolatinon. Otherwise they are snapped on the actual
+geometry.
 
 @item Print @var{char-expression};
 Prints the graphic window in a file named @var{char-expression}, using
