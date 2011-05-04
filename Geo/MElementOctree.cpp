@@ -115,16 +115,18 @@ MElement *MElementOctree::find(double x, double y, double z, int dim)
 {
   double P[3] = {x, y, z};
   MElement *e = (MElement*)Octree_Search(P, _octree);
-  if (dim == -1 || !e || e->getDim() == dim)
+  if (e && (dim == -1 || e->getDim() == dim))
     return e;
   std::list<void*> l;
-  Octree_SearchAll(P, _octree, &l);
-  for (std::list<void*>::iterator it = l.begin(); it != l.end(); it++) {
-    MElement *el = (MElement*) *it;
-    if (el->getDim() == dim)
-      return el;
+  if (e && e->getDim() != dim) {
+    Octree_SearchAll(P, _octree, &l);
+    for (std::list<void*>::iterator it = l.begin(); it != l.end(); it++) {
+      MElement *el = (MElement*) *it;
+      if (el->getDim() == dim) {
+        return el;
+      }
+    }
   }
-  // JF : can you check if this is still needed, now that we changed Octree_SearchAll
   if (!e || (dim != -1 && e->getDim() != dim)){
     double initialTol = MElement::getTolerance();
     double tol = initialTol;
