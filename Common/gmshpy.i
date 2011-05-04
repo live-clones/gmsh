@@ -48,6 +48,7 @@
   #include "SPoint3.h"
   #include "SPoint2.h"
   #include "GPoint.h"  
+  #include "GmshDefines.h"
   #include "JacobianBasis.h"  
   #if defined(HAVE_FLTK)
   #include "FlGui.h"
@@ -140,6 +141,7 @@ namespace std {
 %include "DefaultOptions.h"
 %include "meshGFaceOptimize.h"
 %include "Generator.h"
+%include "GmshDefines.h"
 %include "JacobianBasis.h"  
 #if defined(HAVE_FLTK)
 %include "FlGui.h"
