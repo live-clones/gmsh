@@ -1605,14 +1605,14 @@ const polynomialBasis *polynomialBases::find(int tag)
     case TYPE_PRI :
       F.numFaces = 5;
       F.dimension = 3;
-      F.monomials = generatePascalPrism(0);
-      F.points = gmshGeneratePointsPrism(0, F.serendip);
+      F.monomials = generatePascalPrism(F.order);
+      F.points = gmshGeneratePointsPrism(F.order, F.serendip);
       if (F.order == 0) {
         generateClosureOrder0(F.closures,48);
         generateClosureOrder0(F.fullClosures,48);
         F.closureRef.resize(48, 0);
       } else {
-        generateFaceClosurePrism(F.closures, 1);
+        generateFaceClosurePrism(F.closures, F.order);
         generateFaceClosurePrismFull(F.fullClosures, F.closureRef, F.order);
       }
       break;
