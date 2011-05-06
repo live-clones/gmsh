@@ -85,6 +85,7 @@ void PrintUsage(const char *name)
   Msg::Direct("  -rand float           Set random perturbation factor");
   Msg::Direct("  -bgm file             Load background mesh from file");
   Msg::Direct("  -check                Perform various consistency checks on mesh");
+  Msg::Direct("  -mpass int            Do several passes on the mesh for complex backround fields");
 #if defined(HAVE_FLTK)
   Msg::Direct("Post-processing options:");
   Msg::Direct("  -link int             Select link mode between views (0, 1, 2, 3, 4)");
@@ -434,6 +435,16 @@ void GetOptions(int argc, char *argv[])
           CTX::instance()->mesh.lcMax = atof(argv[i++]);
           if(CTX::instance()->mesh.lcMax <= 0.0)
             Msg::Fatal("Maximum length size must be > 0");
+        }
+        else
+          Msg::Fatal("Missing number");
+      }
+      else if(!strcmp(argv[i] + 1, "mpass")) {
+        i++;
+        if(argv[i]) {
+          CTX::instance()->mesh.multiplePasses = atoi(argv[i++]);
+          if(CTX::instance()->mesh.multiplePasses <= 0)
+            Msg::Fatal("Number of Mesh Passes must be > 0");
         }
         else
           Msg::Fatal("Missing number");

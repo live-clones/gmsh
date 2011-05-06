@@ -481,6 +481,55 @@ void highOrderTools::computeStraightSidedPositions ()
     }
   }
 
+  for(GModel::riter it = _gm->firstRegion(); it != _gm->lastRegion(); ++it){
+    for (int i=0;i<(*it)->mesh_vertices.size();i++){
+      MVertex *v = (*it)->mesh_vertices[i];
+      _targetLocation[v] = SVector3(v->x(),v->y(),v->z());      
+    }
+    for (int i=0;i<(*it)->tetrahedra.size();i++){
+      _dim = 3;
+      MTetrahedron *t = (*it)->tetrahedra[i];
+      MTetrahedron t_1 ((*it)->tetrahedra[i]->getVertex(0),
+		       (*it)->tetrahedra[i]->getVertex(1),
+		       (*it)->tetrahedra[i]->getVertex(2),
+		       (*it)->tetrahedra[i]->getVertex(3));      
+      const polynomialBasis* fs = t->getFunctionSpace();
+      for (int j=0;j<t->getNumVertices();j++){
+	if (t->getVertex(j)->onWhat() == *it){
+	  double t1 = fs->points(j, 0);
+	  double t2 = fs->points(j, 1);
+	  double t3 = fs->points(j, 2);
+	  SPoint3 pc; t_1.pnt(t1, t2, t3,pc);
+	  _straightSidedLocation [t->getVertex(j)] = 
+	    SVector3(pc.x(),pc.y(),pc.z()); 
+	}
+      }
+    }    
+    for (int i=0;i<(*it)->hexahedra.size();i++){
+      _dim = 3;
+      MHexahedron *h = (*it)->hexahedra[i];
+      MHexahedron h_1 ((*it)->hexahedra[i]->getVertex(0),
+			(*it)->hexahedra[i]->getVertex(1),
+			(*it)->hexahedra[i]->getVertex(2),
+			(*it)->hexahedra[i]->getVertex(3),
+			(*it)->hexahedra[i]->getVertex(4),
+			(*it)->hexahedra[i]->getVertex(5),
+			(*it)->hexahedra[i]->getVertex(6),
+			(*it)->hexahedra[i]->getVertex(7));
+      const polynomialBasis* fs = h->getFunctionSpace();
+      for (int j=0;j<h->getNumVertices();j++){
+	if (h->getVertex(j)->onWhat() == *it){
+	  double t1 = fs->points(j, 0);
+	  double t2 = fs->points(j, 1);
+	  double t3 = fs->points(j, 2);
+	  SPoint3 pc; h_1.pnt(t1, t2, t3,pc);
+	  _straightSidedLocation [h->getVertex(j)] = 
+	    SVector3(pc.x(),pc.y(),pc.z()); 
+	}
+      }
+    }    
+  }
+
   Msg::Info("highOrderTools has been set up : %d nodes are considered",_straightSidedLocation.size());
 }
 
@@ -621,10 +670,10 @@ void highOrderTools::ensureMinimumDistorsion (std::vector<MElement*> &all,
     double minD;
     std::vector<MElement*> disto;
     getDistordedElements(all, threshold, disto, minD);    
-    if (num == disto.size())break;
+    //    if (num == disto.size())break;
     if (!disto.size())break;
     num = disto.size();
-    Msg::Info("fixing %d bad curved elements (worst disto %g)",disto.size(),minD);
+    Msg::Info("Fixing %d bad curved elements (worst disto %g)",disto.size(),minD);
     for (int i=0;i<disto.size();i++){
       ensureMinimumDistorsion(disto[i],threshold);
     } 

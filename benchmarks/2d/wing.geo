@@ -1,6 +1,6 @@
 scale = 2 ;
 
-lc1 = 5.e-3 *scale ;
+lc1 = 15.e-3 *scale ;
 lc2 = 1.e-2 *scale ;
 lc3 = 10 *scale ;
 

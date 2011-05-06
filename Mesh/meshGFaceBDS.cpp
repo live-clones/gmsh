@@ -558,7 +558,8 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
              (coord * e->p1->u + (1 - coord) * e->p2->u)*m.scalingU,
              (coord * e->p1->v + (1 - coord) * e->p2->v)*m.scalingV,
              mid->X,mid->Y,mid->Z);
-          mid->lc() = 0.5 * (e->p1->lc() +  e->p2->lc());
+	  //          mid->lc() = exp(0.5 * (log(e->p1->lc()) +  log(e->p2->lc())));
+	  mid->lc() = 0.5 * (e->p1->lc() +  e->p2->lc());
         }
         if(!m.split_edge(e, mid)) m.del_point(mid);
         else nb_split++;

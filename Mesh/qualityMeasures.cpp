@@ -203,10 +203,10 @@ double mesh_functional_distorsion(MElement *t, double u, double v)
   double sign = 1.0;
   prosca(normal1, normal, &sign);
   double det = norm3(normal) * (sign > 0 ? 1. : -1.) / nn;  
-  //double det = norm3(normal);
 
-  // compute distorsion
-  //  double dist = std::min(1. / det, det); 
+  //  printf("%g %g : %g : %g n1 (%g,%g,%g)\n",u,v,sign,det, normal1[0], normal1[1], normal1[2]);
+  //  printf("n (%g,%g,%g)\n", normal[0], normal[1], normal[2]);
+  
   return det;
 }
 
@@ -305,17 +305,27 @@ double mesh_functional_distorsion_p2_exact(MTriangle *t)
 double mesh_functional_distorsion_pN(MElement *t)
 {
   const bezierBasis *jac = t->getJacobianFuncSpace()->bezier;
-  //  jac->monomials.print("coucou");
   fullVector<double>Ji(jac->points.size1());
+  //  printf("%d points for bez \n",jac->points.size1());
   for (int i=0;i<jac->points.size1();i++){
-    const double u = jac->points(i,0);
-    const double v = jac->points(i,1);
-    Ji(i) = mesh_functional_distorsion(t,u,v);    
+    double u = jac->points(i,0);
+    double v = jac->points(i,1);
+
+    // JF : bezier points are defined in the [0,1] x [0,1] quad
+    if (t->getType() == TYPE_QUA){
+      u = -1 + 2*u;
+      v = -1 + 2*v;
+    }
+
+    Ji(i) = mesh_functional_distorsion(t,u,v);   
+    //    printf("J(%g,%g) = %12.5E\n",u,v,Ji(i));
   }
  
   fullVector<double> Bi( jac->matrixLag2Bez.size1() );
   jac->matrixLag2Bez.mult(Ji,Bi);
  
+  //  jac->matrixLag2Bez.print("Lag2Bez");
+
   return *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
 }
 

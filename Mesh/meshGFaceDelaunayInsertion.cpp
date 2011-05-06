@@ -616,10 +616,17 @@ static void insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
     // printf("the new point is %g %g\n",p.x(),p.y());
     MVertex *v = new MFaceVertex(p.x(), p.y(), p.z(), gf, center[0], center[1]);
     v->setIndex(Us.size());
-    double lc1 = ((1. - uv[0] - uv[1]) * vSizes[ptin->tri()->getVertex(0)->getIndex()] + 
-                  uv[0] * vSizes[ptin->tri()->getVertex(1)->getIndex()] + 
-                  uv[1] * vSizes[ptin->tri()->getVertex(2)->getIndex()]); 
-    double lc = BGM_MeshSize(gf, center[0], center[1], p.x(), p.y(), p.z());
+    double lc1,lc;
+    if (backgroundMesh::current()){
+      lc1 = lc = 
+	backgroundMesh::current()->operator()(center[0], center[1], 0.0);
+    }
+    else {
+      lc1 = ((1. - uv[0] - uv[1]) * vSizes[ptin->tri()->getVertex(0)->getIndex()] + 
+		    uv[0] * vSizes[ptin->tri()->getVertex(1)->getIndex()] + 
+		    uv[1] * vSizes[ptin->tri()->getVertex(2)->getIndex()]); 
+      lc = BGM_MeshSize(gf, center[0], center[1], p.x(), p.y(), p.z());
+    }
     //SMetric3 metr = BGM_MeshMetric(gf, center[0], center[1], p.x(), p.y(), p.z());
     //                               vMetricsBGM.push_back(metr);
     vSizesBGM.push_back(lc);

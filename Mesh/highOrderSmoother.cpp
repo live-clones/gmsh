@@ -402,7 +402,7 @@ void highOrderSmoother::optimize(GFace * gf,
     //    }
     // then try to swap for better configurations  
 
-    smooth(gf, !CTX::instance()->mesh.highOrderNoMetric);
+    //smooth(gf, !CTX::instance()->mesh.highOrderNoMetric);
     
     
     //    for (int i=0;i<100;i++){
@@ -411,7 +411,7 @@ void highOrderSmoother::optimize(GFace * gf,
 	//      printf("%d swaps\n",nbSwap);
     //    }
     
-    // smooth(gf,true);
+     smooth(gf,true);
     // smooth(gf,true);
     // smooth(gf,true);
     // smooth(gf,true);
@@ -838,10 +838,8 @@ void highOrderSmoother::smooth(std::vector<MElement*> &all)
 {
 #if defined(HAVE_TAUCS)
   linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
-  printf("coucou\n");
 #elif defined(HAVE_PETSC)
   linearSystemPETSc<double> *lsys = new  linearSystemPETSc<double>;    
-  printf("coucou PETSC\n");
 #else
   linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
   lsys->setNoisy(1);
@@ -854,9 +852,9 @@ void highOrderSmoother::smooth(std::vector<MElement*> &all)
   std::vector<MElement*> layer, v;
   double minD;
 
-  getDistordedElements(all, 0.85, v, minD);
+  getDistordedElements(all, 0.15, v, minD);
 
-  Msg::Info("%d elements / %d distorted  min Disto = %g\n",
+  Msg::Info("%d elements / %d distorted  min Disto = %g",
              all.size(), v.size(), minD);
 
   if (!v.size());

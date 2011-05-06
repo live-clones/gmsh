@@ -5839,6 +5839,13 @@ double opt_mesh_second_order_experimental(OPT_ARGS_NUM)
   return CTX::instance()->mesh.secondOrderExperimental;
 }
 
+double opt_mesh_multiple_passes(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.multiplePasses = (int)val;
+  return CTX::instance()->mesh.multiplePasses;
+}
+
 double opt_mesh_second_order_linear(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

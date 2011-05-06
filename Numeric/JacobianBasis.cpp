@@ -108,6 +108,8 @@ static fullMatrix<double> generateExposantsQuad(int order)
     }
   }
 
+  //  exposants.print("expq");
+
   return exposants;
 }
 static int nbdoftriangle(int order) { return (order + 1) * (order + 2) / 2; }
@@ -760,19 +762,19 @@ static fullMatrix<double> generatePointsPrism(int order, bool serendip)
   return point;
 }
 
-static fullMatrix<double> generatePointsQuad(int order, bool serendip)
+static fullMatrix<double> generatePointsQuadRecur(int order, bool serendip)
 {
   int nbPoints = serendip ? order*4 : (order+1)*(order+1);
   fullMatrix<double> point(nbPoints, 2);
 
   if (order > 0) {
-    point(0, 0) = 0;
-    point(0, 1) = 0;
+    point(0, 0) = -1;
+    point(0, 1) = -1;
     point(1, 0) = 1;
-    point(1, 1) = 0;
+    point(1, 1) = -1;
     point(2, 0) = 1;
     point(2, 1) = 1;
-    point(3, 0) = 0;
+    point(3, 0) = -1;
     point(3, 1) = 1;
 
     if (order > 1) {
@@ -786,8 +788,8 @@ static fullMatrix<double> generatePointsQuad(int order, bool serendip)
           point(index, 1) = point(p0, 1) + i*(point(p1,1)-point(p0,1))/order;
         }
       }
-      if (order > 2 && !serendip) {
-        fullMatrix<double> inner = generatePointsQuad(order - 2, false);
+      if (order >= 2 && !serendip) {
+        fullMatrix<double> inner = generatePointsQuadRecur(order - 2, false);
         inner.scale(1. - 2./order);
         point.copy(inner, 0, nbPoints - index, 0, 2, index, 0);
       }
@@ -797,8 +799,21 @@ static fullMatrix<double> generatePointsQuad(int order, bool serendip)
     point(0, 0) = 0;
     point(0, 1) = 0;
   }
+
+
   return point;
 }
+
+static fullMatrix<double> generatePointsQuad(int order, bool serendip){
+  fullMatrix<double>  point = generatePointsQuadRecur(order, serendip);
+  // rescale to [0,1] x [0,1]
+  for (int i=0;i<point.size1();i++){
+    point(i,0) = (1.+point(i,0))*.5;
+    point(i,1) = (1.+point(i,1))*.5;
+  }
+  return point;
+}
+
 
 // Sub Control Points
 static std::vector< fullMatrix<double> > generateSubPointsLine(int order)
@@ -1231,6 +1246,7 @@ const bezierBasis *bezierBasis::find(int tag)
       B.points    = generatePointsQuad(F->order,false);
       dimSimplex = 0;
       subPoints = generateSubPointsQuad(F->order);
+      //      B.points.print("points");
       break;
     }
     case TYPE_PRI : {

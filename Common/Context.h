@@ -37,6 +37,7 @@ struct contextMeshOptions {
   int saveElementTagType;
   int switchElementTags;
   int highOrderNoMetric;
+  int multiplePasses;
 };
 
 struct contextGeometryOptions {

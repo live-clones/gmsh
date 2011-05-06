@@ -16,6 +16,7 @@
 #include "MElementOctree.h"
 #include "MLine.h"
 #include "MTriangle.h"
+#include "MQuadrangle.h"
 #include "MVertex.h"
 
 #if defined(HAVE_SOLVER)
@@ -410,6 +411,10 @@ void backgroundMesh::unset()
 
 backgroundMesh::backgroundMesh(GFace *_gf)
 {
+  // create a bunch of triangles on the parametric space
+  // those triangles are local to the backgroundMesh so that
+  // they do not depend on the actual mesh that can be deleted
+
   for (unsigned int i = 0; i < _gf->triangles.size(); i++){
     MTriangle *e = _gf->triangles[i];
     MVertex *news[3];
@@ -429,7 +434,11 @@ backgroundMesh::backgroundMesh(GFace *_gf)
     }
     _triangles.push_back(new MTriangle(news[0],news[1],news[2]));
   }
+
+  // build a search structure
   _octree = new MElementOctree(_triangles); 
+
+  // compute the mesh sizes at nodes
   if (CTX::instance()->mesh.lcFromPoints)
     propagate1dMesh(_gf);
   else {
@@ -438,7 +447,12 @@ backgroundMesh::backgroundMesh(GFace *_gf)
       _sizes[itv2->first] = MAX_LC;
     }
   }
+  // ensure that other criteria are fullfilled 
   updateSizes(_gf);
+
+  // compute optimal mesh orientations
+  propagatecrossField(_gf);
+
   _3Dto2D.clear();
   _2Dto3D.clear();
 }
@@ -450,13 +464,9 @@ backgroundMesh::~backgroundMesh()
   delete _octree;
 }
 
-void backgroundMesh::propagate1dMesh(GFace *_gf)
+static void propagateValuesOnFace (GFace *_gf, 				  
+				   std::map<MVertex*,double> &dirichlet)
 {
-#if defined(HAVE_SOLVER)
-  std::list<GEdge*> e = _gf->edges();
-  std::list<GEdge*>::const_iterator it = e.begin();
-  std::map<MVertex*,double> sizes;
-  
   linearSystem<double> *_lsys = 0;
 #if defined(HAVE_PETSC) && !defined(HAVE_TAUCS)
   _lsys = new linearSystemPETSc<double>;
@@ -469,8 +479,50 @@ void backgroundMesh::propagate1dMesh(GFace *_gf)
 #else
   _lsys = new linearSystemFull<double>;
 #endif
-  
+
   dofManager<double> myAssembler(_lsys);
+
+  // fix boundary conditions
+  std::map<MVertex*, double>::iterator itv = dirichlet.begin();
+  for ( ; itv != dirichlet.end(); ++itv){
+    myAssembler.fixVertex(itv->first, 0, 1, itv->second);
+  }
+
+
+  // Number vertices
+  std::set<MVertex*> vs;
+  for (unsigned int k = 0; k < _gf->triangles.size(); k++)
+    for (int j=0;j<3;j++)vs.insert(_gf->triangles[k]->getVertex(j));
+  for (unsigned int k = 0; k < _gf->quadrangles.size(); k++)
+    for (int j=0;j<4;j++)vs.insert(_gf->quadrangles[k]->getVertex(j));
+  for (std::set<MVertex*>::iterator it = vs.begin(); it != vs.end(); ++it)
+    myAssembler.numberVertex(*it, 0, 1);
+
+  // Assemble
+  simpleFunction<double> ONE(1.0);
+  laplaceTerm l(0, 1, &ONE);
+  for (unsigned int k = 0; k < _gf->triangles.size(); k++){
+    MTriangle *t = _gf->triangles[k];
+    SElement se(t);
+    l.addToMatrix(myAssembler, &se);    
+  }
+
+  // Solve
+  _lsys->systemSolve();
+
+  // save solution
+  for (std::set<MVertex*>::iterator it = vs.begin(); it != vs.end(); ++it){
+    myAssembler.getDofValue(*it, 0, 1, dirichlet[*it]);
+  }
+  
+  delete _lsys;
+}
+
+void backgroundMesh::propagate1dMesh(GFace *_gf)
+{
+  std::list<GEdge*> e = _gf->edges();
+  std::list<GEdge*>::const_iterator it = e.begin();
+  std::map<MVertex*,double> sizes;
   
   for( ; it != e.end(); ++it ){
     if (!(*it)->isSeam(_gf)){
@@ -484,48 +536,93 @@ void backgroundMesh::propagate1dMesh(GFace *_gf)
           MVertex *v = (*it)->lines[i]->getVertex(k);
           std::map<MVertex*, double>::iterator itv = sizes.find(v);
           if (itv == sizes.end())
-            sizes[v] = d;
+            sizes[v] = log(d);
           else 
-            itv->second = 0.5 * (itv->second + d);
+            itv->second = 0.5 * (itv->second + log(d));
         }      
       }
     }
   }
-  std::map<MVertex*, double>::iterator itv = sizes.begin();
-  for ( ; itv != sizes.end(); ++itv){
-    myAssembler.fixVertex(itv->first, 0, 1, itv->second);
-  }
 
-  simpleFunction<double> ONE(1.0);
-  laplaceTerm l(0, 1, &ONE);
-
-  for (unsigned int k = 0; k < _gf->triangles.size(); k++){
-    MTriangle *t = _gf->triangles[k];
-    myAssembler.numberVertex(t->getVertex(0), 0, 1);
-    myAssembler.numberVertex(t->getVertex(1), 0, 1);
-    myAssembler.numberVertex(t->getVertex(2), 0, 1); 
-  }
-  
-  for (unsigned int k = 0; k < _gf->triangles.size(); k++){
-    MTriangle *t = _gf->triangles[k];
-    SElement se(t);
-    l.addToMatrix(myAssembler, &se);    
-  }
-  _lsys->systemSolve();
+  propagateValuesOnFace(_gf,sizes);
 
   std::map<MVertex*,MVertex*>::iterator itv2 = _2Dto3D.begin();
   for ( ; itv2 != _2Dto3D.end(); ++itv2){
     MVertex *v_2D = itv2->first;
     MVertex *v_3D = itv2->second;
-    myAssembler.getDofValue(v_3D, 0, 1, _sizes[v_2D]);
+    _sizes[v_2D] = exp(sizes[v_3D]);
   }
-  delete _lsys;
-#endif
 }
+
+// C R O S S   F I E L D S 
+
+crossField2d :: crossField2d (MVertex* v, GEdge* ge){
+  double p;
+  bool success = reparamMeshVertexOnEdge(v, ge, p); 
+  if (!success){
+    Msg::Warning("cannot reparametrize a point in crossField");
+    _angle = 0;
+    return;
+  }
+  SVector3 t = ge->firstDer (p);
+  t.normalize();
+  _angle = atan2 (t.y(),t.x());
+  crossField2d::normalizeAngle (_angle);
+}
+
+
+
+
+void backgroundMesh::propagatecrossField(GFace *_gf)
+{
+  std::map<MVertex*,double> _cosines4,_sines4;
+  std::list<GEdge*> e = _gf->edges();
+  std::list<GEdge*>::const_iterator it = e.begin();
+  
+  for( ; it != e.end(); ++it ){
+    if (!(*it)->isSeam(_gf)){
+      for(unsigned int i = 0; i < (*it)->lines.size(); i++ ){
+	MVertex *v[2];
+        v[0] = (*it)->lines[i]->getVertex(0);
+        v[1] = (*it)->lines[i]->getVertex(1);
+	SPoint2 p1,p2;	
+	bool success = reparamMeshEdgeOnFace(v[0],v[1],_gf,p1,p2);
+	//	double angle = atan2 ( p1.y()-p2.y() , p1.x()-p2.x() );
+	double angle = atan2 ( v[0]->y()-v[1]->y() , v[0]->x()- v[1]->x() );
+	crossField2d::normalizeAngle (angle);
+	for (int i=0;i<2;i++){
+	  std::map<MVertex*,double>::iterator itc = _cosines4.find(v[i]);
+	  std::map<MVertex*,double>::iterator its = _sines4.find(v[i]);
+	  if (itc != _cosines4.end()){
+	    itc->second  = 0.5*(itc->second + cos(4*angle));   
+	    its->second  = 0.5*(its->second + sin(4*angle));   
+	  }
+	  else {
+	    _cosines4[v[i]] = cos(4*angle);
+	    _sines4[v[i]] = sin(4*angle);
+	  }
+	}
+      }
+    }
+  }
+
+  propagateValuesOnFace(_gf,_cosines4);
+  propagateValuesOnFace(_gf,_sines4);
+
+  std::map<MVertex*,MVertex*>::iterator itv2 = _2Dto3D.begin();
+  for ( ; itv2 != _2Dto3D.end(); ++itv2){
+    MVertex *v_2D = itv2->first;
+    MVertex *v_3D = itv2->second;
+    double angle = atan2(_sines4[v_3D],_cosines4[v_3D]) / 4.0;
+    crossField2d::normalizeAngle (angle);
+    _angles[v_2D] = angle;
+  }
+
+}
+
 
 void backgroundMesh::updateSizes(GFace *_gf)
 {
-#if defined(HAVE_SOLVER)
   std::map<MVertex*,double>::iterator itv = _sizes.begin();
   for ( ; itv != _sizes.end(); ++itv){    
     SPoint2 p;
@@ -548,80 +645,6 @@ void backgroundMesh::updateSizes(GFace *_gf)
     itv->second = std::max(itv->second, CTX::instance()->mesh.lcMin);
     itv->second = std::min(itv->second, CTX::instance()->mesh.lcMax);
   }  
-  // return;
-  // now do some diffusion
-
-  std::list<GEdge*> e = _gf->edges();
-  std::list<GEdge*>::const_iterator it = e.begin();
-
-  linearSystem<double> *_lsys = 0;
-#if defined(HAVE_PETSC) && !defined(HAVE_TAUCS)
-  _lsys = new linearSystemPETSc<double>;
-#elif defined(HAVE_GMM) && !defined(HAVE_TAUCS)
-  linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
-  _lsysb->setGmres(1);
-  _lsys = _lsysb;
-#elif defined(HAVE_TAUCS) 
-  _lsys = new linearSystemCSRTaucs<double>;
-#else
-  _lsys = new linearSystemFull<double>;
-#endif
-  
-  dofManager<double> myAssembler(_lsys);
-  
-  // M (U^{t+1} - U^{t})/DT  + K U^{t+1} = 0 
-
-  for( ; it != e.end(); ++it ){
-    if (!(*it)->isSeam(_gf)){
-      for(unsigned int i = 0; i < (*it)->lines.size(); i++ ){
-        MVertex *v1 = (*it)->lines[i]->getVertex(0);
-        MVertex *v2 = (*it)->lines[i]->getVertex(1);
-        MVertex *v1_2D = _3Dto2D[ v1 ]; 
-        MVertex *v2_2D = _3Dto2D[ v2 ]; 
-        
-        myAssembler.fixVertex(v1, 0, 1, _sizes[v1_2D]);
-        myAssembler.fixVertex(v2, 0, 1, _sizes[v2_2D]);
-      }
-    }
-  }
-
-  double DT = 0.01;
-  simpleFunction<double> ONEOVERDT(1.0/DT);
-  simpleFunction<double> ONE(1.0);
-  helmholtzTerm<double> diffusionTerm(0,1, 1, &ONE,&ONEOVERDT);
-  helmholtzTerm<double> massTerm(0,1, 1, 0,&ONEOVERDT);
-
-  for (unsigned int k= 0; k< _gf->triangles.size(); k++){
-    MTriangle *t = _gf->triangles[k];
-    myAssembler.numberVertex(t->getVertex(0), 0, 1);
-    myAssembler.numberVertex(t->getVertex(1), 0, 1);
-    myAssembler.numberVertex(t->getVertex(2), 0, 1); 
-  }
-  fullMatrix<double> mass_matrix(3,3);
-  for (unsigned int k= 0; k< _gf->getNumMeshElements(); k++){
-    MElement *e = _gf->getMeshElement(k);
-    SElement se(e);
-    diffusionTerm.addToMatrix(myAssembler, &se);  
-    massTerm.elementMatrix(&se,mass_matrix);
-    for (int i = 0; i < e->getNumVertices();i++){
-      double TERM = 0.0;
-      for (int j = 0; j < e->getNumVertices();j++){
-        MVertex *v_2D = _3Dto2D[ e->getVertex(j) ];     
-        TERM+=_sizes[v_2D] * mass_matrix(i,j);
-      }
-      myAssembler.assemble(e->getVertex(i),0,1,TERM);
-    }
-  }
-  _lsys->systemSolve();
-
-  std::map<MVertex*,MVertex*>::iterator itv2 = _2Dto3D.begin();
-  for ( ; itv2 != _2Dto3D.end(); ++itv2){
-    MVertex *v_2D = itv2->first;
-    MVertex *v_3D = itv2->second;
-    myAssembler.getDofValue(v_3D, 0, 1, _sizes[v_2D]);
-  }
-  delete _lsys;
-#endif
 }
 
 double backgroundMesh::operator() (double u, double v, double w) const
@@ -641,7 +664,35 @@ double backgroundMesh::operator() (double u, double v, double w) const
   return itv1->second * (1-uv2[0]-uv2[1]) + itv2->second * uv2[0] + itv3->second * uv2[1];
 }
 
-void backgroundMesh::print (const std::string &filename, GFace *gf) const
+double backgroundMesh::getAngle (double u, double v, double w) const
+{
+  double uv[3] = {u, v, w};
+  double uv2[3];
+  //  return 1.0;
+  MElement *e = _octree->find(u, v, w);
+  if (!e) {
+    Msg::Error("cannot find %g %g", u, v);
+    return 0.0;
+  }
+  e->xyz2uvw(uv, uv2);
+  std::map<MVertex*,double>::const_iterator itv1 = _angles.find(e->getVertex(0));
+  std::map<MVertex*,double>::const_iterator itv2 = _angles.find(e->getVertex(1));
+  std::map<MVertex*,double>::const_iterator itv3 = _angles.find(e->getVertex(2));
+
+  double cos4 = cos (4*itv1->second) * (1-uv2[0]-uv2[1]) + 
+    cos (4*itv2->second) * uv2[0] + 
+    cos (4*itv3->second) * uv2[1] ;
+  double sin4 = sin (4*itv1->second) * (1-uv2[0]-uv2[1]) + 
+    cos (4*itv2->second) * uv2[0] + 
+    cos (4*itv3->second) * uv2[1] ;
+  double angle = atan2(sin4,cos4)/4.0;
+  crossField2d::normalizeAngle (angle);
+
+  return angle;
+}
+
+
+void backgroundMesh::print (const std::string &filename, GFace *gf, const std::map<MVertex*,double> &_whatToPrint) const
 {
   FILE *f = fopen (filename.c_str(),"w");
   fprintf(f,"View \"Background Mesh\"{\n");
@@ -649,9 +700,9 @@ void backgroundMesh::print (const std::string &filename, GFace *gf) const
     MVertex *v1 = _triangles[i]->getVertex(0);
     MVertex *v2 = _triangles[i]->getVertex(1);
     MVertex *v3 = _triangles[i]->getVertex(2);
-    std::map<MVertex*,double>::const_iterator itv1 = _sizes.find(v1);
-    std::map<MVertex*,double>::const_iterator itv2 = _sizes.find(v2);
-    std::map<MVertex*,double>::const_iterator itv3 = _sizes.find(v3);
+    std::map<MVertex*,double>::const_iterator itv1 = _whatToPrint.find(v1);
+    std::map<MVertex*,double>::const_iterator itv2 = _whatToPrint.find(v2);
+    std::map<MVertex*,double>::const_iterator itv3 = _whatToPrint.find(v3);
     if (!gf){
       fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
               v1->x(),v1->y(),v1->z(),

@@ -1576,19 +1576,22 @@ void meshGFace::operator() (GFace *gf)
   Msg::Debug("Type %d %d triangles generated, %d internal vertices",
              gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
 
-  // test : recompute the background mesh using a PDE
-  /*
-    if (backgroundMesh::current()){
+  // do the 2D mesh in several passes. For second and other passes,
+  // a background mesh is constructed with the previous mesh and
+  // nodal values of the metric are computed that take into account
+  // complex size fields that are tedious to evaluate on the fly
+  if (!twoPassesMesh)return;
+  twoPassesMesh--;
+  if (backgroundMesh::current()){
     backgroundMesh::unset();
-    }    
-    else{
-    backgroundMesh::set(gf);
-    char name[256];
-    sprintf(name,"bgm-%d.pos",gf->tag());
-    backgroundMesh::current()->print(name,gf);
-    (*this)(gf);
-    }
-  */
+  }    
+  backgroundMesh::set(gf);
+  char name[256];
+  sprintf(name,"bgm-%d.pos",gf->tag());
+  backgroundMesh::current()->print(name,gf);
+  sprintf(name,"cross-%d.pos",gf->tag());
+  backgroundMesh::current()->print(name,gf,1);
+  (*this)(gf);
 }
 
 bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge*> &edges)

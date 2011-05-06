@@ -29,32 +29,7 @@
 static bool mappingIsInvertible(MTetrahedron *e)
 {
   if (e->getPolynomialOrder() == 1) return true;
-  
-  double mat[3][3];
-  e->getPrimaryJacobian(0., 0., 0., mat);  
-  double det0 = det3x3(mat);
-  
-  fullMatrix<double> df;
-  {
-    const fullMatrix<double> &alldf = 
-      e->getGradShapeFunctionsAtIntegrationPoints(e->getPolynomialOrder());
-    for (int i = 0; i < alldf.size2()/3; i++){
-      df.setAsProxy(alldf, 3*i, 3);
-      e->getJacobian(df, mat);
-      if (det0 * det3x3(mat) <= 0.) return false;
-    }
-  }
-  {
-    const fullMatrix<double> &points = e->getFunctionSpace()->points;
-    const fullMatrix<double> &alldf = 
-      e->getGradShapeFunctionsAtNodes(e->getPolynomialOrder());
-    for (int i = 0; i < alldf.size2() / 3; i++){
-      df.setAsProxy(alldf, 3*i, 3);
-      e->getJacobian(df, mat);
-      if (det0 * det3x3(mat) <= 0.) return false;
-    }
-  }
-  return true;
+  if (e->getPolynomialOrder() == 1) return e->distoShapeMeasure() > 0;
 }
 
 // The aim here is to build a polynomial representation that consist
@@ -267,8 +242,8 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
           if(relax < 1.e-2)
             Msg::Warning
               ("Failed to compute equidistant parameters (relax = %g, value = %g) "
-               "for edge %d-%d parametrized with %g %g on GEdge %d",
-               relax, US[1], v0->getNum(), v1->getNum(),u0,u1,ge->tag());
+               "for edge %d-%d parametrized with %g %g on GEdge %d linear %d",
+               relax, US[1], v0->getNum(), v1->getNum(),u0,u1,ge->tag(), linear);
         }
       }
       for(int j = 0; j < nPts; j++){
@@ -277,8 +252,9 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
         double uc = (1. - t) * u0 + t * u1; // can be wrong, that's ok
         MVertex *v;
         if(linear || !reparamOK || uc < std::min(u0,u1) || uc > std::max(u0,u1)){ 
-          Msg::Warning("We don't have a valid parameter on curve %d-%d",
-                       v0->getNum(), v1->getNum());
+	  if (!linear)
+	    Msg::Warning("We don't have a valid parameter on curve %d-%d",
+			 v0->getNum(), v1->getNum());
           // we don't have a (valid) parameter on the curve
           SPoint3 pc = edge.interpolate(t);
           v = new MVertex(pc.x(), pc.y(), pc.z(), ge);
@@ -1256,10 +1232,10 @@ static void checkHighOrderTetrahedron(const char* cc, GModel *m,
     }
   }
   if (minJGlob < 0)
-    Msg::Info("%s : Worst Tetrahedron Smoothness %g Gamma %g NbFair = %d", 
-              cc, minJGlob, minGGlob, nbfair);
-    else 
-    Msg::Warning("%s : Worst Tetrahedron Smoothness %g (%d negative jacobians) "
+    Msg::Warning("%s : Worst Tetrahedron Smoothness %g Gamma %g NbFair = %d NbBad = %d", 
+              cc, minJGlob, minGGlob, nbfair, bad.size());
+  else 
+    Msg::Info("%s : Worst Tetrahedron Smoothness %g (%d negative jacobians) "
                  "Worst Gamma %g Avg Smoothness %g", cc, minJGlob, bad.size(),
                  minGGlob, avg / (count ? count : 1));
 }
@@ -1407,7 +1383,8 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
 
   if (!linear){
     hot.ensureMinimumDistorsion(0.1);
-    checkHighOrderTriangles("final mesh", m, bad, worst);
+    checkHighOrderTriangles("Final mesh", m, bad, worst);
+    checkHighOrderTetrahedron("Final mesh", m, bad, worst);
   }
 
   //  m->writeMSH("CORRECTED.msh");

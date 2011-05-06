@@ -22,6 +22,7 @@
 #include "GmshMessage.h"
 #include "Numeric.h"
 #include "mathEvaluator.h"
+#include "BackgroundMesh.h"
 
 #if defined(HAVE_POST)
 #include "OctreePost.h"
@@ -1710,9 +1711,15 @@ public:
     // (dist/hwall)*(ratio-1) + 1 = ratio^{m}
     // lc =  dist*(ratio-1) + hwall 
     const double ll1   = dist*(ratio-1) + hwall_n;
-    const double lc_n  = std::min(ll1,hfar);
+    double lc_n  = std::min(ll1,hfar);
     const double ll2   = dist*(ratio-1) + hwall_t;
     double lc_t  = std::min(lc_n*CTX::instance()->mesh.anisoMax, std::min(ll2,hfar));
+
+    if (backgroundMesh::current()){
+      const double lcBG = backgroundMesh::current()->operator() (x,y,z);
+      lc_n = std::min(lc_n, lcBG);
+      lc_t = std::min(lc_t, lcBG);
+    }
 
     SVector3 t1,t2,t3;
     double L1,L2,L3;

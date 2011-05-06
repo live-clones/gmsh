@@ -1764,7 +1764,7 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 	for (int k=0;k<elist[0];k++){
 	  int i1 = elist[1+3*k],i2 = elist[1+3*k+1],an=elist[1+3*k+2];
 	  // FIXME !!
-	  if (an == 100000){// || an == 1000){
+	  if (an == 100000 || an == 1000){
 	    toProcess.push_back(std::make_pair(n2t[i1],n2t[i2]));
 	    Msg::Debug("Extra edge found in blossom algorithm, optimization will be required");
 	  }

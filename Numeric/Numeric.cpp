@@ -522,7 +522,7 @@ void FindCubicRoots(const double coef[4], double real[3], double imag[3])
   double d = coef[0];
 
   if(!a || !d){
-    Msg::Error("Degenerate cubic: use a second degree solver!");
+    //    Msg::Error("Degenerate cubic: use a second degree solver!");
     return;
   }
 

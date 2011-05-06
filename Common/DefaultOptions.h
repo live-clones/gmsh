@@ -1152,6 +1152,8 @@ StringXNumber MeshOptions_Number[] = {
     "Version of the MSH file format to use" },
   { F|O, "MshFilePartitioned" , opt_mesh_msh_file_partitioned , 0. , 
     "Split MSH file by mesh partition" },
+  { F|O, "MultiplePassesMeshes" , opt_mesh_multiple_passes , 0. , 
+    "Do a first simple mesh and use it for complex background meshes (curvatures...)" },
   
   { F|O, "PartitionHexWeight"     , opt_mesh_partition_hex_weight , 1 , 
     "Weight of hexahedral element for METIS load balancing" },
