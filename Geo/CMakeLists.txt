@@ -19,7 +19,8 @@ set(SRC
     GModelFactory.cpp
     GModelIO_Geo.cpp
     GModelIO_Mesh.cpp
-    GModelIO_OCC.cpp
+    GModelIO_OCC.cpp 
+      OCC_Connect.cpp
     GModelIO_ACIS.cpp
     GModelIO_Fourier.cpp
     GModelIO_CGNS.cpp
