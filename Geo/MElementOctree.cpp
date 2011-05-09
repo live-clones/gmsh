@@ -111,7 +111,7 @@ MElementOctree::~MElementOctree()
   Octree_Delete(_octree);
 }
 
-MElement *MElementOctree::find(double x, double y, double z, int dim)
+MElement *MElementOctree::find(double x, double y, double z, int dim, bool strict)
 {
   double P[3] = {x, y, z};
   MElement *e = (MElement*)Octree_Search(P, _octree);
@@ -127,7 +127,7 @@ MElement *MElementOctree::find(double x, double y, double z, int dim)
       }
     }
   }
-  if (!e || (dim != -1 && e->getDim() != dim)){
+  if (!strict) {
     double initialTol = MElement::getTolerance();
     double tol = initialTol;
     while (tol < 1){
@@ -149,6 +149,5 @@ MElement *MElementOctree::find(double x, double y, double z, int dim)
     }
     MElement::setTolerance(initialTol);
     Msg::Warning("Point %g %g %g not found",x,y,z);
-  }
-  return NULL;
+  } return NULL;
 }
