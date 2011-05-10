@@ -73,8 +73,12 @@ bool PViewDataGModel::finalize(bool computeMinMax, const std::string &interpolat
       Msg::Error("Could not find interpolation scheme '%s'", 
                  interpolationScheme.c_str());
     for(interpolationMatrices::iterator it = m.begin(); it != m.end(); it++){
-      if(it->second.size() == 2)
+      if(it->second.size() == 2){
         setInterpolationMatrices(it->first, *(it->second[0]), *(it->second[1]));
+        // we should maybe automatically add the geometrical
+        // interpolation matrices here (if geometrically the elements
+        // are of order > 1)
+      }
       else if(it->second.size() == 4)
         setInterpolationMatrices(it->first, *it->second[0], *it->second[1],
                                  *it->second[2], *it->second[3]);
