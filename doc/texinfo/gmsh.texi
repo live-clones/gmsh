@@ -3581,7 +3581,15 @@ $ElementNodeData
 @dots{}
 @var{elm-number} @var{number-of-nodes-per-element} @var{value} @dots{}
 @dots{}
-$ElementEndNodeData
+$EndElementNodeData
+$InterpolationScheme
+"@var{name}"
+@var{number-of-element-types}
+@var{elm-type}
+@var{number-of-interpolation-matrices}
+@var{num-rows} @var{num-columns} @var{value} @dots{}
+@dots{}
+$EndInterpolationScheme
 @end example
 
 @noindent
@@ -3731,8 +3739,11 @@ the nodes is given in @ref{Node ordering}.
 
 @item @var{number-of-string-tags}
 gives the number of string tags that follow. By default the first
-@var{string-tag} is interpreted as the name of the post-processing view.
-@c todo: and the second as the name of the interpolation scheme?
+@var{string-tag} is interpreted as the name of the post-processing view
+and the second as the name of the interpolation scheme. The
+interpolation scheme is provided in the @code{$InterpolationScheme}
+section. The interpolation matrices have the same meaning as in
+@ref{Post-processing commands}.
 
 @item @var{number-of-real-tags}
 gives the number of real number tags that follow. By default the first
