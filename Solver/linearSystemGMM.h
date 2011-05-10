@@ -19,9 +19,9 @@ template <class scalar>
 class linearSystemGmm : public linearSystem<scalar> {
  protected:
   std::vector<scalar> *_x; // the nonLinearSystemGmm has to access to this vector
+  std::vector<scalar> *_b; // idem
  private:
   gmm::row_matrix<gmm::wsvector<scalar> > *_a;
-  std::vector<scalar> *_b;
   double _prec;
   int _noisy, _gmres;
  public:

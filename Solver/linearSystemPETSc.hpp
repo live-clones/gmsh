@@ -2,13 +2,13 @@
 #include <petsc.h>
 #include <petscksp.h>
 #include "linearSystemPETSc.h"
-static void  _try(int ierr) 
+static void  _try(int ierr)
 {
   CHKERRABORT(PETSC_COMM_WORLD, ierr);
 }
 
 template <class scalar>
-void linearSystemPETSc<scalar>::_kspCreate() 
+void linearSystemPETSc<scalar>::_kspCreate()
 {
   _try(KSPCreate(PETSC_COMM_WORLD, &_ksp));
   PC pc;
@@ -120,7 +120,7 @@ void linearSystemPETSc<scalar>::allocate(int nbRows)
 }
 
 template <class scalar>
-void linearSystemPETSc<scalar>::print() 
+void linearSystemPETSc<scalar>::print()
 {
   _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
   _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
@@ -254,7 +254,7 @@ int linearSystemPETSc<scalar>::systemSolve()
   //Msg::Info("%d iterations", its);
   return 1;
 }
-  
+
 template <class scalar>
 std::vector<scalar> linearSystemPETSc<scalar>::getData()
 {
