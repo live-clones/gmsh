@@ -4,6 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "PViewDataGModel.h"
+#include "MPoint.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -23,6 +24,63 @@ PViewDataGModel::PViewDataGModel(DataType type)
 PViewDataGModel::~PViewDataGModel()
 {
   for(unsigned int i = 0; i < _steps.size(); i++) delete _steps[i];
+}
+
+static MElement *_getOneElementOfGivenType(GModel *m, int type)
+{
+  switch(type){
+  case TYPE_PNT:
+    for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++){
+      if((*it)->points.size()) return (*it)->points[0];
+    }
+    break;
+  case TYPE_LIN: 
+    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
+      if((*it)->lines.size()) return (*it)->lines[0];
+    }
+    break;
+  case TYPE_TRI:
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
+      if((*it)->triangles.size()) return (*it)->triangles[0];
+    }
+    break;
+  case TYPE_QUA:
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
+      if((*it)->quadrangles.size()) return (*it)->quadrangles[0];
+    }
+    break;
+  case TYPE_POLYG:
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
+      if((*it)->polygons.size()) return (*it)->polygons[0];
+    }
+    break;
+  case TYPE_TET:
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
+      if((*it)->tetrahedra.size()) return (*it)->tetrahedra[0];
+    }
+    break;
+  case TYPE_HEX:
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
+      if((*it)->hexahedra.size()) return (*it)->hexahedra[0];
+    }
+    break;
+  case TYPE_PRI:
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
+      if((*it)->prisms.size()) return (*it)->prisms[0];
+    }
+    break;
+  case TYPE_PYR:
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
+      if((*it)->pyramids.size()) return (*it)->pyramids[0];
+    }
+    break;
+  case TYPE_POLYH:
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
+      if((*it)->polyhedra.size()) return (*it)->polyhedra[0];
+    }
+    break;
+  }
+  return 0;
 }
 
 bool PViewDataGModel::finalize(bool computeMinMax, const std::string &interpolationScheme)
@@ -64,75 +122,68 @@ bool PViewDataGModel::finalize(bool computeMinMax, const std::string &interpolat
     }
   }
 
-  if(interpolationScheme.size()){
-    interpolationMatrices m = _interpolationSchemes[interpolationScheme];
-    if(m.size())
-      Msg::Info("Setting interpolation matrices from scheme '%s'", 
-                interpolationScheme.c_str());
-    else
-      Msg::Error("Could not find interpolation scheme '%s'", 
-                 interpolationScheme.c_str());
-    for(interpolationMatrices::iterator it = m.begin(); it != m.end(); it++){
-      if(it->second.size() == 2){
-        setInterpolationMatrices(it->first, *(it->second[0]), *(it->second[1]));
-        // we should maybe automatically add the geometrical
-        // interpolation matrices here (if geometrically the elements
-        // are of order > 1)
-      }
-      else if(it->second.size() == 4)
-        setInterpolationMatrices(it->first, *it->second[0], *it->second[1],
-                                 *it->second[2], *it->second[3]);
+  // set up interpolation matrices
+  if(!haveInterpolationMatrices()){
+
+    GModel *model = _steps[0]->getModel();
+    
+    // if an interpolation scheme is explicitly provided, use it
+    if(interpolationScheme.size()){
+      interpolationMatrices m = _interpolationSchemes[interpolationScheme];
+      if(m.size())
+        Msg::Info("Setting interpolation matrices from scheme '%s'", 
+                  interpolationScheme.c_str());
       else
-        Msg::Error("Wrong number of interpolation matrices (%d) for scheme '%s'",
-                   (int)it->second.size(), interpolationScheme.c_str());
-    }
-  }
-  else if(!haveInterpolationMatrices()){
-    // add default interpolation matrices for known element types
-    for(int step = 0; step < getNumTimeSteps(); step++){
-      if(!_steps[step]->getNumData()) continue;
-      GModel *m = _steps[step]->getModel();
-      for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
-        if((*it)->lines.size())
-          _addInterpolationMatricesForElement((*it)->lines[0]);
-      }
-      for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
-        if((*it)->triangles.size())
-          _addInterpolationMatricesForElement((*it)->triangles[0]);
-        if((*it)->quadrangles.size())
-          _addInterpolationMatricesForElement((*it)->quadrangles[0]);
-        if((*it)->polygons.size())
-          _addInterpolationMatricesForElement((*it)->polygons[0]);
-      }
-      for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
-        if((*it)->tetrahedra.size())
-          _addInterpolationMatricesForElement((*it)->tetrahedra[0]);
-        if((*it)->hexahedra.size())
-          _addInterpolationMatricesForElement((*it)->hexahedra[0]);
-        if((*it)->prisms.size())
-          _addInterpolationMatricesForElement((*it)->prisms[0]);
-        if((*it)->pyramids.size())
-          _addInterpolationMatricesForElement((*it)->pyramids[0]);
-        if((*it)->polyhedra.size())
-          _addInterpolationMatricesForElement((*it)->polyhedra[0]);
+        Msg::Error("Could not find interpolation scheme '%s'", 
+                   interpolationScheme.c_str());
+      for(interpolationMatrices::iterator it = m.begin(); it != m.end(); it++){
+        if(it->second.size() == 2){
+          // use provided interpolation matrices for field interpolation
+          // and use geometrical interpolation matrices from the mesh if
+          // the mesh is curved
+          MElement *e = _getOneElementOfGivenType(model, it->first);
+          if(e && e->getPolynomialOrder() > 1 && e->getFunctionSpace()){
+            const polynomialBasis *fs = e->getFunctionSpace();
+            setInterpolationMatrices(it->first, *(it->second[0]), *(it->second[1]),
+                                     fs->coefficients, fs->monomials);
+          }
+          else
+            setInterpolationMatrices(it->first, *(it->second[0]), *(it->second[1]));
+        }
+        else if(it->second.size() == 4){
+          // use provided matrices for field and geometry
+          setInterpolationMatrices(it->first, *it->second[0], *it->second[1],
+                                   *it->second[2], *it->second[3]);
+        }
+        else
+          Msg::Error("Wrong number of interpolation matrices (%d) for scheme '%s'",
+                     (int)it->second.size(), interpolationScheme.c_str());
       }
     }
-  }
+    
+    // if we don't have interpolation matrices for a given element type,
+    // assume isoparametric elements
+    int types[] = {TYPE_PNT, TYPE_LIN, TYPE_TRI, TYPE_QUA, TYPE_TET, TYPE_HEX,
+                   TYPE_PRI, TYPE_PYR, TYPE_POLYG, TYPE_POLYH};
+    for(int i = 0; i < sizeof(types) / sizeof(types[0]); i++){
+      if(!haveInterpolationMatrices(types[i])){
+        MElement *e = _getOneElementOfGivenType(model, types[i]);
+        if(e){
+          const polynomialBasis *fs = e->getFunctionSpace();
+          if(fs){
+            if(e->getPolynomialOrder() > 1)
+              setInterpolationMatrices(types[i], fs->coefficients, fs->monomials,
+                                       fs->coefficients, fs->monomials);
+            else
+              setInterpolationMatrices(types[i], fs->coefficients, fs->monomials);
+          }
+        }
+      }
+    }
 
+  }
+  
   return PViewData::finalize();
-}
-
-void PViewDataGModel::_addInterpolationMatricesForElement(MElement *e)
-{
-  int type = e->getType();
-  const polynomialBasis *fs = e->getFunctionSpace();
-  if(fs){
-    if(e->getPolynomialOrder() > 1)
-      setInterpolationMatrices(type, fs->coefficients, fs->monomials,
-                               fs->coefficients, fs->monomials);
-    else
-      setInterpolationMatrices(type, fs->coefficients, fs->monomials);
-  }
 }
 
 MElement *PViewDataGModel::_getElement(int step, int ent, int ele)

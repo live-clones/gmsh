@@ -118,6 +118,14 @@ int PViewData::getInterpolationMatrices(int type, std::vector<fullMatrix<double>
   return 0;
 }
 
+bool PViewData::haveInterpolationMatrices(int type)
+{ 
+  if(!type) 
+    return !_interpolation.empty();
+  else
+    return _interpolation.count(type) ? true : false;
+}
+
 void PViewData::removeInterpolationScheme(const std::string &name)
 {
   std::map<std::string, interpolationMatrices>::iterator it = _interpolationSchemes.find(name);

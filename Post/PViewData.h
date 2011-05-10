@@ -200,7 +200,7 @@ class PViewData {
                                 const fullMatrix<double> &coefGeo, 
                                 const fullMatrix<double> &expGeo);
   int getInterpolationMatrices(int type, std::vector<fullMatrix<double>*> &p);
-  inline bool haveInterpolationMatrices(){ return !_interpolation.empty(); }
+  bool haveInterpolationMatrices(int type=0);
 
   // access to global interpolation schemes
   static void removeInterpolationScheme(const std::string &name);
