@@ -15,14 +15,14 @@ class PViewData;
 class PViewDataList;
 class GMSH_PostPlugin;
 
-class adaptivePoint {
+class adaptiveVertex {
  public:
   double x, y, z, X, Y, Z;
   double val, valx, valy, valz;
  public:
-  static adaptivePoint *add(double x, double y, double z, 
-                            std::set<adaptivePoint> &allPoints);
-  bool operator < (const adaptivePoint &other) const
+  static adaptiveVertex *add(double x, double y, double z, 
+                             std::set<adaptiveVertex> &allVertice);
+  bool operator < (const adaptiveVertex &other) const
   {
     if(other.x < x) return true;
     if(other.x > x) return false;
@@ -33,16 +33,45 @@ class adaptivePoint {
   }
 };
 
+class adaptivePoint {
+ public:
+  bool visible;
+  adaptiveVertex *p[1];
+  adaptivePoint *e[1];
+  static std::list<adaptivePoint*> all;
+  static std::set<adaptiveVertex> allVertices;
+  static int numNodes, numEdges;
+ public:
+  adaptivePoint(adaptiveVertex *p1)
+    : visible(false)
+  {
+    p[0] = p1;
+    e[0] = 0;
+  } 
+  inline double V() const
+  {
+    return p[0]->val;
+  }
+  inline static void GSF(double u, double v, double w, fullVector<double> &sf)
+  {
+    sf(0) = 1;
+  }
+  static void create(int maxlevel);
+  static void recurCreate(adaptivePoint *e, int maxlevel, int level);
+  static void error(double AVG, double tol);
+  static void recurError(adaptivePoint *e, double AVG, double tol);
+};
+
 class adaptiveLine {
  public:
   bool visible;
-  adaptivePoint *p[2];
+  adaptiveVertex *p[2];
   adaptiveLine *e[2];
   static std::list<adaptiveLine*> all;
-  static std::set<adaptivePoint> allPoints;
+  static std::set<adaptiveVertex> allVertices;
   static int numNodes, numEdges;
  public:
-  adaptiveLine(adaptivePoint *p1, adaptivePoint *p2)
+  adaptiveLine(adaptiveVertex *p1, adaptiveVertex *p2)
     : visible(false)
   {
     p[0] = p1;
@@ -67,13 +96,13 @@ class adaptiveLine {
 class adaptiveTriangle {
  public:
   bool visible;
-  adaptivePoint *p[3];
+  adaptiveVertex *p[3];
   adaptiveTriangle *e[4];
   static std::list<adaptiveTriangle*> all;
-  static std::set<adaptivePoint> allPoints;
+  static std::set<adaptiveVertex> allVertices;
   static int numNodes, numEdges;
  public:
-  adaptiveTriangle(adaptivePoint *p1, adaptivePoint *p2, adaptivePoint *p3)
+  adaptiveTriangle(adaptiveVertex *p1, adaptiveVertex *p2, adaptiveVertex *p3)
     : visible(false)
   {
     p[0] = p1;
@@ -100,14 +129,14 @@ class adaptiveTriangle {
 class adaptiveQuadrangle {
  public:
   bool visible;
-  adaptivePoint *p[4];
+  adaptiveVertex *p[4];
   adaptiveQuadrangle *e[4];
   static std::list<adaptiveQuadrangle*> all;
-  static std::set<adaptivePoint> allPoints;
+  static std::set<adaptiveVertex> allVertices;
   static int numNodes, numEdges;
  public:
-  adaptiveQuadrangle(adaptivePoint *p1, adaptivePoint *p2, 
-                     adaptivePoint *p3, adaptivePoint *p4)    
+  adaptiveQuadrangle(adaptiveVertex *p1, adaptiveVertex *p2, 
+                     adaptiveVertex *p3, adaptiveVertex *p4)    
     : visible(false)
   {
     p[0] = p1;
@@ -136,14 +165,14 @@ class adaptiveQuadrangle {
 class adaptivePrism {
  public:
   bool visible;
-  adaptivePoint *p[6];
+  adaptiveVertex *p[6];
   adaptivePrism *e[8];
   static std::list<adaptivePrism*> all;
-  static std::set<adaptivePoint> allPoints;
+  static std::set<adaptiveVertex> allVertices;
   static int numNodes, numEdges;
  public:
-  adaptivePrism(adaptivePoint *p1, adaptivePoint *p2, adaptivePoint *p3, 
-                adaptivePoint *p4, adaptivePoint *p5, adaptivePoint *p6)
+  adaptivePrism(adaptiveVertex *p1, adaptiveVertex *p2, adaptiveVertex *p3, 
+                adaptiveVertex *p4, adaptiveVertex *p5, adaptiveVertex *p6)
     : visible(false)
   {
     p[0] = p1;
@@ -177,14 +206,14 @@ class adaptivePrism {
 class adaptiveTetrahedron {
  public:
   bool visible;
-  adaptivePoint *p[4];
+  adaptiveVertex *p[4];
   adaptiveTetrahedron *e[8];
   static std::list<adaptiveTetrahedron*> all;
-  static std::set<adaptivePoint> allPoints;
+  static std::set<adaptiveVertex> allVertices;
   static int numNodes, numEdges;
  public:
-  adaptiveTetrahedron(adaptivePoint *p1, adaptivePoint *p2, 
-                      adaptivePoint *p3, adaptivePoint *p4)
+  adaptiveTetrahedron(adaptiveVertex *p1, adaptiveVertex *p2, 
+                      adaptiveVertex *p3, adaptiveVertex *p4)
     : visible(false)
   {
     p[0] = p1;
@@ -214,15 +243,15 @@ class adaptiveTetrahedron {
 class adaptiveHexahedron {
  public:
   bool visible;
-  adaptivePoint *p[8];
+  adaptiveVertex *p[8];
   adaptiveHexahedron *e[8];
   static std::list<adaptiveHexahedron*> all;
-  static std::set<adaptivePoint> allPoints;
+  static std::set<adaptiveVertex> allVertices;
   static int numNodes, numEdges;
  public:
-  adaptiveHexahedron(adaptivePoint *p1, adaptivePoint *p2, adaptivePoint *p3, 
-                     adaptivePoint *p4, adaptivePoint *p5, adaptivePoint *p6, 
-                     adaptivePoint *p7, adaptivePoint *p8)
+  adaptiveHexahedron(adaptiveVertex *p1, adaptiveVertex *p2, adaptiveVertex *p3, 
+                     adaptiveVertex *p4, adaptiveVertex *p5, adaptiveVertex *p6, 
+                     adaptiveVertex *p7, adaptiveVertex *p8)
     : visible(false)
   {
     p[0] = p1;
@@ -310,6 +339,7 @@ class adaptiveData {
   double _tol;
   PViewData *_inData;
   PViewDataList *_outData;
+  adaptiveElements<adaptivePoint> *_points;
   adaptiveElements<adaptiveLine> *_lines;
   adaptiveElements<adaptiveTriangle> *_triangles;
   adaptiveElements<adaptiveQuadrangle> *_quadrangles;
