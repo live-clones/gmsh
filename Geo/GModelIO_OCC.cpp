@@ -14,6 +14,7 @@
 #include "MElement.h"
 #include "MLine.h"
 #include "OpenFile.h"
+#include "OCC_Connect.h"
 
 #if defined(HAVE_OCC)
 
@@ -492,24 +493,25 @@ void OCC_Internals::healGeometry(double tolerance, bool fixsmalledges,
 
   if (connect){
 #if defined(HAVE_SALOME)
-    Msg::Info("- running SALOME partition splitter");
+    Msg::Info("- cutting and connecting faces with Salome's Partition_Spliter");
     TopExp_Explorer e2;
     Partition_Spliter ps;
-    int count = 0;
-    
-    for (e2.Init(shape, TopAbs_SOLID); e2.More(); e2.Next()){
-      count++;
+    for (e2.Init(shape, TopAbs_SOLID); e2.More(); e2.Next())
       ps.AddShape(e2.Current());
+    try{
+      ps.Compute();
+      shape = ps.Shape();
     }
-    
-    ps.Compute();
-    shape = ps.Shape();
-    
-    Msg::Info("  before: %d solids", count);
-    
-    count = 0;
-    for (e2.Init (shape, TopAbs_SOLID); e2.More(); e2.Next()) count++;
-    Msg::Info("  after : %d solids", count);
+    catch(Standard_Failure &err){
+      Msg::Error("%s", err.GetMessageString());
+    }
+#else
+    Msg::Info("- cutting and connecting faces with OCC_Connect");
+    OCC_Connect connect(1);
+    for(TopExp_Explorer p(shape, TopAbs_SOLID); p.More(); p.Next())
+      connect.Add(p.Current());
+    connect.Connect();
+    shape = connect;
 #endif
   }
   

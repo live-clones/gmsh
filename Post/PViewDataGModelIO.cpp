@@ -47,7 +47,8 @@ bool PViewDataGModel::addData(GModel *model, std::map<int, std::vector<double> >
 
 bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
                               bool binary, bool swap, int step, double time,
-                              int partition, int numComp, int numEnt)
+                              int partition, int numComp, int numEnt,
+                              const std::string &interpolationScheme)
 {
   Msg::Info("Reading step %d (time %g) partition %d: %d records",
             step, time, partition, numEnt);
@@ -122,7 +123,7 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
   if(partition >= 0)
     _steps[step]->getPartitions().insert(partition);
 
-  finalize(false);
+  finalize(false, interpolationScheme);
   return true;
 }
 

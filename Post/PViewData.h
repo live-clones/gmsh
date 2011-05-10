@@ -20,6 +20,8 @@ class GEntity;
 class MElement;
 class nameData;
 
+typedef std::map<int, std::vector<fullMatrix<double>*> > interpolationMatrices;
+
 // The abstract interface to post-processing view data.
 class PViewData {
  private:
@@ -36,7 +38,9 @@ class PViewData {
   // adaptive visualization data
   adaptiveData *_adaptive;
   // interpolation matrices, indexed by the type of element
-  std::map<int, std::vector<fullMatrix<double>*> > _interpolation;
+  interpolationMatrices _interpolation;
+  // global map of "named" interpolation matrices
+  static std::map<std::string, interpolationMatrices> _interpolationSchemes;
 
  public:
   PViewData();
@@ -47,7 +51,8 @@ class PViewData {
   virtual void setDirty(bool val){ _dirty = val; }
 
   // finalize the view data (compute min/max, etc.)
-  virtual bool finalize(bool computeMinMax=true);
+  virtual bool finalize(bool computeMinMax=true,
+                        const std::string &interpolationScheme="");
 
   // get/set name
   virtual std::string getName(){ return _name; }
@@ -196,6 +201,11 @@ class PViewData {
                                 const fullMatrix<double> &expGeo);
   int getInterpolationMatrices(int type, std::vector<fullMatrix<double>*> &p);
   inline bool haveInterpolationMatrices(){ return !_interpolation.empty(); }
+
+  // access to global interpolation schemes
+  static void removeInterpolationScheme(const std::string &name);
+  static void addMatrixToInterpolationScheme(const std::string &name, int type,
+                                             fullMatrix<double> &mat);
 
   // smooth the data in the view (makes it C0)
   virtual void smooth();

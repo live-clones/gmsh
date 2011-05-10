@@ -25,7 +25,7 @@ PViewDataGModel::~PViewDataGModel()
   for(unsigned int i = 0; i < _steps.size(); i++) delete _steps[i];
 }
 
-bool PViewDataGModel::finalize(bool computeMinMax)
+bool PViewDataGModel::finalize(bool computeMinMax, const std::string &interpolationScheme)
 {
   if(computeMinMax){
     _min = VAL_INF;
@@ -64,9 +64,27 @@ bool PViewDataGModel::finalize(bool computeMinMax)
     }
   }
 
-  // add interpolation data for known element types (this might be
-  // overidden later)
-  if(!haveInterpolationMatrices()){
+  if(interpolationScheme.size()){
+    interpolationMatrices m = _interpolationSchemes[interpolationScheme];
+    if(m.size())
+      Msg::Info("Setting interpolation matrices from scheme '%s'", 
+                interpolationScheme.c_str());
+    else
+      Msg::Error("Could not find interpolation scheme '%s'", 
+                 interpolationScheme.c_str());
+    for(interpolationMatrices::iterator it = m.begin(); it != m.end(); it++){
+      if(it->second.size() == 2)
+        setInterpolationMatrices(it->first, *(it->second[0]), *(it->second[1]));
+      else if(it->second.size() == 4)
+        setInterpolationMatrices(it->first, *it->second[0], *it->second[1],
+                                 *it->second[2], *it->second[3]);
+      else
+        Msg::Error("Wrong number of interpolation matrices (%d) for scheme '%s'",
+                   (int)it->second.size(), interpolationScheme.c_str());
+    }
+  }
+  else if(!haveInterpolationMatrices()){
+    // add default interpolation matrices for known element types
     for(int step = 0; step < getNumTimeSteps(); step++){
       if(!_steps[step]->getNumData()) continue;
       GModel *m = _steps[step]->getModel();

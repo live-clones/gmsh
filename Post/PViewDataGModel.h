@@ -171,7 +171,7 @@ class PViewDataGModel : public PViewData {
  public:
   PViewDataGModel(DataType type=NodeData);
   ~PViewDataGModel();
-  bool finalize(bool computeMinMax=true);
+  bool finalize(bool computeMinMax=true, const std::string &interpolationScheme="");
   std::string getFileName(int step=-1);
   int getNumTimeSteps();
   double getTime(int step);
@@ -239,7 +239,7 @@ class PViewDataGModel : public PViewData {
   // I/O routines
   bool readMSH(std::string fileName, int fileIndex, FILE *fp, bool binary, 
                bool swap, int step, double time, int partition, 
-               int numComp, int numNodes);
+               int numComp, int numNodes, const std::string &interpolationScheme);
   bool writeMSH(std::string fileName, bool binary=false, bool savemesh=true);
   bool readMED(std::string fileName, int fileIndex);
   bool writeMED(std::string fileName);

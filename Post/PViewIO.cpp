@@ -125,6 +125,32 @@ bool PView::readMSH(std::string fileName, int fileIndex)
         }
       }
     }
+    else if(!strncmp(&str[1], "InterpolationScheme", 19)){
+      std::string name;
+      if(!fgets(str, sizeof(str), fp)) return false;
+      name = ExtractDoubleQuotedString(str, sizeof(str));
+      Msg::Info("Reading interpolation scheme '%s'", name.c_str());
+      PViewData::removeInterpolationScheme(name);
+      int numTypes;
+      if(fscanf(fp, "%d", &numTypes) != 1) return false;
+      for(int i = 0; i < numTypes; i++){
+        int type, numMatrices;
+        if(fscanf(fp, "%d %d", &type, &numMatrices) != 2) return false;
+        for(int j = 0; j < numMatrices; j++){
+          int m, n;
+          if(fscanf(fp, "%d %d", &m, &n) != 2) return false;
+          fullMatrix<double> mat(m, n);
+          for(int k = 0; k < m; k++){
+            for(int l = 0; l < n; l++){
+              double d;
+              if(fscanf(fp, "%lf", &d) != 1) return false;
+              mat.set(k, l, d);
+            }
+          }
+          PViewData::addMatrixToInterpolationScheme(name, type, mat);
+        }
+      }
+    }
     else if(!strncmp(&str[1], "NodeData", 8) ||
             !strncmp(&str[1], "ElementData", 11) ||
             !strncmp(&str[1], "ElementNodeData", 15)) {
@@ -139,7 +165,7 @@ bool PView::readMSH(std::string fileName, int fileIndex)
           type = PViewDataGModel::ElementNodeData;
         int numTags;
         // string tags
-        std::string viewName, interpolName;
+        std::string viewName, interpolationScheme;
         if(!fgets(str, sizeof(str), fp)) return false;
         if(sscanf(str, "%d", &numTags) != 1) return false;
         for(int i = 0; i < numTags; i++){
@@ -147,7 +173,7 @@ bool PView::readMSH(std::string fileName, int fileIndex)
           if(i == 0) 
             viewName = ExtractDoubleQuotedString(str, sizeof(str));
           else if(i == 1) 
-            interpolName = ExtractDoubleQuotedString(str, sizeof(str));
+            interpolationScheme = ExtractDoubleQuotedString(str, sizeof(str));
         }
         // double tags
         double time = 0.;
@@ -185,7 +211,7 @@ bool PView::readMSH(std::string fileName, int fileIndex)
         bool create = d ? false : true;
         if(create) d = new PViewDataGModel(type);
         if(!d->readMSH(fileName, fileIndex, fp, binary, swap, timeStep, 
-                       time, partition, numComp, numEnt)){
+                       time, partition, numComp, numEnt, interpolationScheme)){
           Msg::Error("Could not read data in msh file");
           if(create) delete d;
           return false;

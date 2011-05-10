@@ -8,6 +8,8 @@
 #include "Numeric.h"
 #include "GmshMessage.h"
 
+std::map<std::string, interpolationMatrices> PViewData::_interpolationSchemes;
+
 PViewData::PViewData()
   : _dirty(true), _fileIndex(0), _adaptive(0)
 {
@@ -16,13 +18,13 @@ PViewData::PViewData()
 PViewData::~PViewData()
 {
   if(_adaptive) delete _adaptive;
-  for(std::map<int, std::vector<fullMatrix<double>*> >::iterator it = _interpolation.begin();
+  for(interpolationMatrices::iterator it = _interpolation.begin();
       it != _interpolation.end(); it++)
     for(unsigned int i = 0; i < it->second.size(); i++)
       delete it->second[i];
 }
 
-bool PViewData::finalize(bool computeMinMax)
+bool PViewData::finalize(bool computeMinMax, const std::string &interpolationScheme)
 { 
   _dirty = false;
   return true;
@@ -114,6 +116,24 @@ int PViewData::getInterpolationMatrices(int type, std::vector<fullMatrix<double>
     return p.size();
   }
   return 0;
+}
+
+void PViewData::removeInterpolationScheme(const std::string &name)
+{
+  std::map<std::string, interpolationMatrices>::iterator it = _interpolationSchemes.find(name);
+  if(it != _interpolationSchemes.end()){
+    for(interpolationMatrices::iterator it2 = it->second.begin();
+        it2 != it->second.end(); it2++)
+      for(unsigned int i = 0; i < it2->second.size(); i++)
+        delete it2->second[i];
+    _interpolationSchemes.erase(it);
+  }
+}
+
+void PViewData::addMatrixToInterpolationScheme(const std::string &name, int type,
+                                               fullMatrix<double> &mat)
+{
+  _interpolationSchemes[name][type].push_back(new fullMatrix<double>(mat));
 }
 
 void PViewData::smooth()
