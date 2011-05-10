@@ -683,8 +683,8 @@ double backgroundMesh::getAngle (double u, double v, double w) const
     cos (4*itv2->second) * uv2[0] + 
     cos (4*itv3->second) * uv2[1] ;
   double sin4 = sin (4*itv1->second) * (1-uv2[0]-uv2[1]) + 
-    cos (4*itv2->second) * uv2[0] + 
-    cos (4*itv3->second) * uv2[1] ;
+    sin (4*itv2->second) * uv2[0] + 
+    sin (4*itv3->second) * uv2[1] ;
   double angle = atan2(sin4,cos4)/4.0;
   crossField2d::normalizeAngle (angle);
 
