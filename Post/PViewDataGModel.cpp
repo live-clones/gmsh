@@ -456,7 +456,11 @@ int PViewDataGModel::getNumComponents(int step, int ent, int ele)
 
 int PViewDataGModel::getNumValues(int step, int ent, int ele)
 {
-  if(_type == ElementNodeData || _type == NodeData){
+  if(_type == ElementNodeData){
+    MElement *e = _getElement(step, ent, ele);
+    return _steps[step]->getMult(e->getNum()) * getNumComponents(step, ent, ele);
+  }
+  else if(_type == NodeData){
     return getNumNodes(step, ent, ele) * getNumComponents(step, ent, ele);
   }
   else if(_type == ElementData){
@@ -492,8 +496,8 @@ void PViewDataGModel::getValue(int step, int ent, int ele, int nod, int comp, do
   switch(_type){
   case NodeData:
     {
-    int num = _getNode(e, nod)->getNum();
-    val = _steps[step]->getData(num)[comp];
+      int num = _getNode(e, nod)->getNum();
+      val = _steps[step]->getData(num)[comp];
     }
     break;
   case ElementNodeData:
@@ -513,8 +517,8 @@ void PViewDataGModel::setValue(int step, int ent, int ele, int nod, int comp, do
   switch(_type){
   case NodeData:
     {
-    int num = _getNode(e, nod)->getNum();
-    _steps[step]->getData(num)[comp] = val;
+      int num = _getNode(e, nod)->getNum();
+      _steps[step]->getData(num)[comp] = val;
     }
     break;
   case ElementNodeData:
