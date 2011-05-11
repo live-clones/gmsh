@@ -266,7 +266,7 @@ std::vector<int> GModel::getEdgesByStringTag(const std::string tag)
     nums.push_back(ge->tag());
   }
 
-  printf("edges size = %d \n", nums.size());
+  return nums;
 }
 
 void GModel::remove(GRegion *r)

@@ -28,7 +28,7 @@ Plane Surface(10) = {5};
 //Compound Surface(100)={10};
 
 Physical Surface(100)={10};
-//Physical Line(200)={10};
+Physical Line(200)={1,2,3,4};
 
 
 

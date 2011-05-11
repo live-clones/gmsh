@@ -3,6 +3,7 @@
 %include std_string.i
 %include std_vector.i
 %include std_list.i
+%include cpointer.i 
 
 %{
   #include "GmshConfig.h"
@@ -72,6 +73,8 @@
   GmshInitialize();
 %}
 
+%pointer_functions(double,doublep)
+%pointer_functions(int,intp)
 namespace std {
    %template(IntVector) vector<int>;
    %template(DoubleVector) vector<double, std::allocator<double> >;
