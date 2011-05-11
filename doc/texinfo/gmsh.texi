@@ -3584,8 +3584,8 @@ $ElementNodeData
 $EndElementNodeData
 $InterpolationScheme
 "@var{name}"
-@var{number-of-element-types}
-@var{elm-type}
+@var{number-of-element-topologies}
+@var{elm-topology}
 @var{number-of-interpolation-matrices}
 @var{num-rows} @var{num-columns} @var{value} @dots{}
 @dots{}
@@ -3742,8 +3742,7 @@ gives the number of string tags that follow. By default the first
 @var{string-tag} is interpreted as the name of the post-processing view
 and the second as the name of the interpolation scheme. The
 interpolation scheme is provided in the @code{$InterpolationScheme}
-section. The interpolation matrices have the same meaning as in
-@ref{Post-processing commands}.
+section (see below). 
 
 @item @var{number-of-real-tags}
 gives the number of real number tags that follow. By default the first
@@ -3768,6 +3767,23 @@ there are @var{ncomp} values per node (resp. per element), where
 @var{ncomp} is the number of field components. For
 @code{ElementNodeData} views, there are @var{ncomp} times
 @var{number-of-nodes-per-elements} values per element.
+
+@item @var{number-of-element-topologies}
+is the number of element topologies for which interpolation matrices are
+provided
+
+@item @var{elm-topology}
+is the id tag of a given element topology: 1 for points, 2 for lines, 3
+for triangles, 4 for quadrangles, 5 for tetrahedra, 6 for pyramids, 7
+for prisms, 8 for hexahedra, 9 for polygons and 10 for polyhedra.
+
+@item @var{number-of-interpolation-matrices} 
+is the number of interpolation matrices provided for this element
+topology. Currently you should provide either 2 or 4 matrices: the
+matrices have the same meaning as in @ref{Post-processing commands}.
+The matrices are specified by 2 integers (@var{num-rows} and
+@var{num-columns}) followed by the values.
+
 @end table
 
 Below is a small example (a mesh consisting of two quadrangles with an
@@ -3809,6 +3825,7 @@ $NodeData
 6 0.4
 $EndNodeData 
 @end smallexample
+
 
 @c -------------------------------------------------------------------------
 @c MSH binary file format
