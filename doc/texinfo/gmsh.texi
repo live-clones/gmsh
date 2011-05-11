@@ -3779,10 +3779,10 @@ for prisms, 8 for hexahedra, 9 for polygons and 10 for polyhedra.
 
 @item @var{number-of-interpolation-matrices} 
 is the number of interpolation matrices provided for this element
-topology. Currently you should provide either 2 or 4 matrices: the
-matrices have the same meaning as in @ref{Post-processing commands}.
-The matrices are specified by 2 integers (@var{num-rows} and
-@var{num-columns}) followed by the values.
+topology. Currently you should provide 2 matrices, i.e., the matrices
+that specify how to interpolate the data (they have the same meaning as
+in @ref{Post-processing commands}).  The matrices are specified by 2
+integers (@var{num-rows} and @var{num-columns}) followed by the values.
 
 @end table
 

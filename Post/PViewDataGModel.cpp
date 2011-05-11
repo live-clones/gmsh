@@ -152,6 +152,9 @@ bool PViewDataGModel::finalize(bool computeMinMax, const std::string &interpolat
         }
         else if(it->second.size() == 4){
           // use provided matrices for field and geometry
+          Msg::Warning("You should not specify the geometrical interpolation "
+                       "in ElementNodeData: the geometry is completely determined "
+                       "by the mesh element type. This feature will be removed");
           setInterpolationMatrices(it->first, *it->second[0], *it->second[1],
                                    *it->second[2], *it->second[3]);
         }
