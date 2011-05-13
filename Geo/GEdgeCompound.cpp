@@ -16,6 +16,7 @@ GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound,
                              std::vector<int> &orientation)
   : GEdge(m, tag, 0, 0), _compound(compound), _orientation(orientation)
 {
+ 
   int N = _compound.size();
   v0 = _orientation[0] ? _compound[0]->getBeginVertex() : _compound[0]->getEndVertex();
   v1 = _orientation[N-1] ? _compound[N-1]->getEndVertex() : _compound[N-1]->getBeginVertex();

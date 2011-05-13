@@ -1335,7 +1335,7 @@ void GModel::createTopologyFromMesh()
     if((*it)->geomType() == GEntity::DiscreteVolume)
       discRegions.push_back((discreteRegion*) *it);
   createTopologyFromRegions(discRegions);
-
+ 
   // create topology for all discrete faces
   std::vector<discreteFace*> discFaces;
   for(fiter it = firstFace(); it != lastFace(); it++)
@@ -1345,7 +1345,7 @@ void GModel::createTopologyFromMesh()
 
   // create old format (necessary for boundary layers)
   exportDiscreteGEOInternals();
-  
+ 
   double t2 = Cpu();
   Msg::StatusBar(2, true, "Done creating topology from mesh (%g s)", t2 - t1);
 }
