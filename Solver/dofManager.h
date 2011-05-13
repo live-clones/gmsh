@@ -513,7 +513,7 @@ class dofManager{
       throw;
     }
   }
-  linearSystem<dataMat> *getLinearSystem(std::string &name)
+  virtual linearSystem<dataMat> *getLinearSystem(std::string &name)
   {
     typename std::map<const std::string, linearSystem<dataMat>*>::iterator it =
       _linearSystems.find(name);
