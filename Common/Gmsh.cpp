@@ -52,7 +52,7 @@ int GmshInitialize(int argc, char **argv)
 
   // Make sure we have enough resources (stack)
   CheckResources();
-  
+
 #if defined(HAVE_PLUGINS)
   // Initialize the default plugins
   PluginManager::instance()->registerDefaultPlugins();
@@ -72,7 +72,7 @@ int GmshSetMessageHandler(GmshMessage *callback)
 }
 
 int GmshSetBoundingBox(double xmin, double xmax,
-                       double ymin, double ymax, 
+                       double ymin, double ymax,
                        double zmin, double zmax)
 {
   SetBoundingBox(xmin, xmax, ymin, ymax, zmin, zmax);
@@ -127,7 +127,7 @@ int GmshFinalize()
 
 int GmshBatch()
 {
-  Msg::Info("Running '%s' [%d node(s), max. %d thread(s)]", 
+  Msg::Info("Running '%s' [%d node(s), max. %d thread(s)]",
             Msg::GetCommandLineArgs().c_str(),
             Msg::GetCommSize(), Msg::GetMaxThreads());
   Msg::Info("Started on %s", Msg::GetLaunchDate().c_str());
@@ -157,7 +157,7 @@ int GmshBatch()
     GModel::current()->checkMeshCoherence(CTX::instance()->geom.tolerance);
   }
   else if(CTX::instance()->batch == -1){
-    CreateOutputFile(CTX::instance()->outputFileName, 
+    CreateOutputFile(CTX::instance()->outputFileName,
                      CTX::instance()->outputFileName.empty() ? FORMAT_GEO :
                      FORMAT_AUTO);
   }
@@ -218,7 +218,7 @@ int GmshFLTK(int argc, char **argv)
     else
       MergeFile(CTX::instance()->files[i]);
   }
-  
+
   if(CTX::instance()->post.combineTime){
     PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
     FlGui::instance()->updateViews();
