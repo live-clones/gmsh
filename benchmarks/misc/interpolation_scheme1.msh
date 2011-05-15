@@ -1,0 +1,45 @@
+$MeshFormat
+2.0 0 8
+$EndMeshFormat
+$Nodes
+6
+1 0.0 0.0 0.0
+2 0.1 0.0 0.0
+3 0.1 0.3 0.0
+4 0.0 0.3 0.0
+5 0.0 0.15 0.0
+6 0.1 0.15 0.0
+$EndNodes
+$Elements
+2
+1000 3  2 6 100  1 2 6 5
+1001 3  2 6 100  5 6 3 4
+$EndElements
+$InterpolationScheme
+ "bilinear quads"
+ 1
+  4
+   2
+  4 4
+      .25 -.25 -.25 .25
+      .25 -.25 .25 -.25
+      .25 .25 .25 .25
+      .25 .25 -.25 -.25
+  4 3 0 0 0
+      0 1 0
+      1 0 0
+      1 1 0
+$EndInterpolationScheme
+$ElementNodeData
+2
+  "test"
+  "bilinear quads"
+1
+  0.0002
+3
+  0
+  1
+  2
+1000 4   1 2 3 4
+1001 4   1 2 3 4
+$EndElementNodeData
