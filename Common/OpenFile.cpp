@@ -299,6 +299,9 @@ int MergeFile(std::string fileName, bool warnIfMissing)
   else if(ext == ".mesh" || ext == ".MESH"){
     status = GModel::current()->readMESH(fileName);
   }
+  else if(ext == ".diff" || ext == ".DIFF"){
+    status = GModel::current()->readDIFF(fileName);
+  }
   else if(ext == ".med" || ext == ".MED" || ext == ".mmed" || ext == ".MMED" ||
           ext == ".rmed" || ext == ".RMED"){
     status = GModel::readMED(fileName);
