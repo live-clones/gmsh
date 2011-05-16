@@ -203,7 +203,8 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
     }
     else if(!strcmp(str, "reset")){
       if (CTX::instance()->camera) {
-	ctx->camera.init();}
+	ctx->camera.init();
+      }
       else{
 	// reset everything
 	ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
