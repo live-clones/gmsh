@@ -611,14 +611,16 @@ void GFaceCompound::one2OneMap() const
 
 bool GFaceCompound::parametrize() const
 {
- 
+
  if (_compound.size() > 1) coherencePatches();
  
   bool paramOK = true;
   if(oct) return paramOK; 
   if(trivial()) return paramOK;
 
-  coordinates.clear(); 
+  if (_mapping != RBF)
+    coordinates.clear(); 
+  
   computeNormals();  
 
   if(allNodes.empty()) buildAllNodes();
@@ -628,6 +630,7 @@ bool GFaceCompound::parametrize() const
     
   // Laplace parametrization
   if (_mapping == HARMONIC){
+    printf("Parametrizing surface %d with 'harmonic map' \n", tag());
     Msg::Debug("Parametrizing surface %d with 'harmonic map'", tag()); 
     fillNeumannBCS();
     parametrize(ITERU,HARMONIC); 
@@ -650,15 +653,16 @@ bool GFaceCompound::parametrize() const
       Msg::Warning("!!! Overlap: parametrization switched to 'FE conformal' map");
       noOverlap = parametrize_conformal();
     }
-    // if (!noOverlap) {
-       //   Msg::Warning("!!! Overlap: parametrization switched to 'nonLIN conformal' map");
-       //   noOverlap = parametrize_conformal_nonLinear() ;
-    //}
     if (!noOverlap || !checkOrientation(0) ){
       Msg::Warning("$$$ Flipping: parametrization switched to 'harmonic' map");
       parametrize(ITERU,HARMONIC); 
       parametrize(ITERV,HARMONIC);
     }
+  }
+  // Radial-Basis Function parametrization
+  else if (_mapping == RBF){
+    printf("Parametrizing surface %d with 'rbf' \n", tag());
+    Msg::Debug("Parametrizing surface %d with 'rbf's'", tag());
   }
 
   buildOct();  
@@ -681,6 +685,12 @@ bool GFaceCompound::parametrize() const
   }
 
   return paramOK;
+}
+
+void GFaceCompound::setParam(std::map<MVertex*, SPoint3> rbf_param) const{
+  
+  coordinates  = rbf_param;
+  
 }
 
 void GFaceCompound::getBoundingEdges()
@@ -1046,7 +1056,6 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
 
 void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
 {  
-  
   dofManager<double> myAssembler(_lsys);
   
   // EMI-test for paper Dong: fix only 2 vertices
@@ -1608,7 +1617,7 @@ void GFaceCompound::computeNormals() const
 
 double GFaceCompound::curvatureMax(const SPoint2 &param) const
 {
-
+  
   if(!oct) parametrize();
 
   if(trivial()){
@@ -1756,7 +1765,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
 
 Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
 {
-  
+ 
   if(!oct) parametrize();
   
   if(trivial())
@@ -2248,7 +2257,7 @@ int GFaceCompound::genusGeom() const
 
 void GFaceCompound::printStuff(int iNewton) const
 {
-  if( !CTX::instance()->mesh.saveAll) return;  
+  //if( !CTX::instance()->mesh.saveAll) return;  
  
   std::list<GFace*>::const_iterator it = _compound.begin();
  
