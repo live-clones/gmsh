@@ -16,7 +16,7 @@ eigenSolver::eigenSolver(dofManager<double> *manager, std::string A,
 {
   if(A.size()){
     _A = dynamic_cast<linearSystemPETSc<double>*>(manager->getLinearSystem(A));
-    if(!_A) Msg::Error("Could not find PETSc system '%s' ffffd", A.c_str());
+    if(!_A) Msg::Error("Could not find PETSc system '%s'", A.c_str());
   }
   if(B.size()){
     _B = dynamic_cast<linearSystemPETSc<double>*>(manager->getLinearSystem(B));
@@ -55,8 +55,8 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
 
   // set some default options
   _try(EPSSetDimensions(eps, numEigenValues, PETSC_DECIDE, PETSC_DECIDE));
-  //_try(EPSSetTolerances(eps, 1.e-7, 20));//1.e-6 50
-  _try(EPSSetType(eps, EPSKRYLOVSCHUR)); //default
+  _try(EPSSetTolerances(eps, 1.e-7, 20));//1.e-6 50
+  //_try(EPSSetType(eps, EPSKRYLOVSCHUR)); //default
   _try(EPSSetType(eps, EPSARNOLDI));
   //_try(EPSSetType(eps, EPSARPACK));
   //_try(EPSSetType(eps, EPSPOWER));
