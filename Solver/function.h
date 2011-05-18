@@ -289,6 +289,7 @@ class functionC : public function {
 function *functionLevelsetNew (const function *f0, const double valMin, const double valPlus);
 function *functionLevelsetSmoothNew (const function *f0, const double valMin, const double valPlus, const double E);
 function *functionSumNew (const function *f0, const function *f1);
+function *functionMinusNew (const function *f0, const function *f1);
 function *functionProdNew (const function *f0, const function *f1);
 function *functionScaleNew (const function *f0, const double s);
 function *functionExtractCompNew (const function *f0, const int iComp);
