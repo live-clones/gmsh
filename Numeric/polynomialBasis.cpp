@@ -8,12 +8,12 @@
 //   Jonathan Lambrechts
 //
 
+#include <stdlib.h>
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "polynomialBasis.h"
 #include "Gauss.h"
 
-#include "stdlib.h"
 static void printClosure(polynomialBasis::clCont &fullClosure, std::vector<int> &closureRef,
                          polynomialBasis::clCont &closures)
 {
@@ -191,8 +191,8 @@ static fullMatrix<double> generatePascalSerendipityTriangle(int order)
   return monomials;
 }
 
-const fullMatrix<double> &polynomialBasis::getGradientAtFaceIntegrationPoints(int integrationOrder,
-                                                                              int closureId) const
+const fullMatrix<double> &polynomialBasis::
+getGradientAtFaceIntegrationPoints(int integrationOrder, int closureId) const
 {
   std::vector<fullMatrix<double> > &dfAtFace = _dfAtFace[integrationOrder];
   if (dfAtFace.empty()) {
@@ -229,6 +229,7 @@ const fullMatrix<double> &polynomialBasis::getGradientAtFaceIntegrationPoints(in
 }
 
 // generate all monomials xi^m * eta^n with n and m <= order
+
 static fullMatrix<double> generatePascalQuad(int order)
 {
 
@@ -247,7 +248,6 @@ static fullMatrix<double> generatePascalQuad(int order)
   return monomials;
 }
 
-
 /*
 00 10 20 30 40 ⋯
 01 11 21 31 41 ⋯
@@ -258,6 +258,7 @@ static fullMatrix<double> generatePascalQuad(int order)
 */
 
 // generate all monomials xi^m * eta^n with n and m <= order
+
 static fullMatrix<double> generatePascalHex(int order, bool serendip)
 {
   int siz = (order+1)*(order+1)*(order+1);
@@ -276,7 +277,6 @@ static fullMatrix<double> generatePascalHex(int order, bool serendip)
       }
     }
   }
-  //  printf("siz %d %d\n",siz,index );
   return monomials;
 }
 
@@ -308,29 +308,6 @@ static fullMatrix<double> generatePascalQuadSerendip(int order)
   }
   return monomials;
 }
-
-
-/*static fullMatrix<double> generatePascalQuadSerendip(int order)
-{
-
-  fullMatrix<double> monomials( order*4, 2);
-  int index = 0;
-  for (int p = 0; p < order; p++) {
-    monomials(p, 0) = p;
-    monomials(p, 1) = 0;
-
-    monomials(p+order, 0) = order;
-    monomials(p+order, 1) = p;
-
-    monomials(p+3*order, 0) = order-p;
-    monomials(p+3*order, 1) = order;
-
-    monomials(p+2*order, 0) = 0;
-    monomials(p+2*order, 1) = order-p;
-  }
-  monomials.print();
-  return monomials;
-}*/
 
 // generate the monomials subspace of all monomials of order exactly == p
 
@@ -447,12 +424,11 @@ static fullMatrix<double> generatePascalPrism(int order)
       }
     }
   }
-//   monomials.print("Pri monoms");
+
   return monomials;
 }
 
 static int nbdoftriangle(int order) { return (order + 1) * (order + 2) / 2; }
-//static int nbdoftriangleserendip(int order) { return 3 * order; }
 
 //KH : caveat : node coordinates are not yet coherent with node numbering associated
 //              to numbering of principal vertices of face !!!!
@@ -1055,8 +1031,8 @@ static void generate1dVertexClosure(polynomialBasis::clCont &closure, int order)
   closure[1].type = MSH_PNT;
 }
 
-static void generate1dVertexClosureFull(polynomialBasis::clCont &closure, std::vector<int> &closureRef,
-                                        int order)
+static void generate1dVertexClosureFull(polynomialBasis::clCont &closure,
+                                        std::vector<int> &closureRef, int order)
 {
   closure.clear();
   closure.resize(2);
@@ -1075,10 +1051,9 @@ static void generate1dVertexClosureFull(polynomialBasis::clCont &closure, std::v
   closureRef[1] = 0;
 }
 
-static void getFaceClosureTet(int iFace, int iSign, int iRotate, polynomialBasis::closure &closure,
-                              int order)
+static void getFaceClosureTet(int iFace, int iSign, int iRotate,
+                              polynomialBasis::closure &closure, int order)
 {
-
   closure.clear();
   closure.resize((order + 1) * (order + 2) / 2);
   closure.type = polynomialBasis::getTag(TYPE_TRI, order, false);
@@ -1141,7 +1116,9 @@ static void getFaceClosureTet(int iFace, int iSign, int iRotate, polynomialBasis
     break;
   }
 }
-static void generate2dEdgeClosureFull(polynomialBasis::clCont &closure, std::vector<int> &closureRef,
+
+static void generate2dEdgeClosureFull(polynomialBasis::clCont &closure,
+                                      std::vector<int> &closureRef,
                                       int order, int nNod, bool serendip)
 {
   closure.clear();
@@ -1220,7 +1197,8 @@ static void generateFaceClosureTet(polynomialBasis::clCont &closure, int order)
   }
 }
 
-static void generateFaceClosureTetFull(polynomialBasis::clCont &closureFull, std::vector<int> &closureRef,
+static void generateFaceClosureTetFull(polynomialBasis::clCont &closureFull,
+                                       std::vector<int> &closureRef,
                                        int order, bool serendip)
 {
   closureFull.clear();
@@ -1563,13 +1541,15 @@ const polynomialBasis *polynomialBases::find(int tag)
     case TYPE_TRI :
       F.numFaces = 3;
       F.dimension = 2;
-      F.monomials = F.serendip ? generatePascalSerendipityTriangle(F.order) : generatePascalTriangle(F.order);
+      F.monomials = F.serendip ? generatePascalSerendipityTriangle(F.order) :
+        generatePascalTriangle(F.order);
       F.points = gmshGeneratePointsTriangle(F.order, F.serendip);
       if (F.order == 0) {
         generateClosureOrder0(F.closures, 6);
         generateClosureOrder0(F.fullClosures, 6);
         F.closureRef.resize(6, 0);
-      } else {
+      }
+      else {
         generate2dEdgeClosure(F.closures, F.order);
         generate2dEdgeClosureFull(F.fullClosures, F.closureRef, F.order, 3, F.serendip);
       }
@@ -1577,13 +1557,15 @@ const polynomialBasis *polynomialBases::find(int tag)
     case TYPE_QUA :
       F.numFaces = 4;
       F.dimension = 2;
-      F.monomials = F.serendip ? generatePascalQuadSerendip(F.order) : generatePascalQuad(F.order);
+      F.monomials = F.serendip ? generatePascalQuadSerendip(F.order) :
+        generatePascalQuad(F.order);
       F.points = gmshGeneratePointsQuad(F.order, F.serendip);
       if (F.order == 0) {
         generateClosureOrder0(F.closures, 8);
         generateClosureOrder0(F.fullClosures, 8);
         F.closureRef.resize(8, 0);
-      } else {
+      }
+      else {
         generate2dEdgeClosure(F.closures, F.order, 4);
         generate2dEdgeClosureFull(F.fullClosures, F.closureRef, F.order, 4, F.serendip);
       }
@@ -1591,13 +1573,15 @@ const polynomialBasis *polynomialBases::find(int tag)
     case TYPE_TET :
       F.numFaces = 4;
       F.dimension = 3;
-      F.monomials = F.serendip ? generatePascalSerendipityTetrahedron(F.order) : generatePascalTetrahedron(F.order);
+      F.monomials = F.serendip ? generatePascalSerendipityTetrahedron(F.order) :
+        generatePascalTetrahedron(F.order);
       F.points = gmshGeneratePointsTetrahedron(F.order, F.serendip);
       if (F.order == 0) {
         generateClosureOrder0(F.closures,24);
         generateClosureOrder0(F.fullClosures, 24);
         F.closureRef.resize(24, 0);
-      } else {
+      } 
+      else {
         generateFaceClosureTet(F.closures, F.order);
         generateFaceClosureTetFull(F.fullClosures, F.closureRef, F.order, F.serendip);
       }
@@ -1611,7 +1595,8 @@ const polynomialBasis *polynomialBases::find(int tag)
         generateClosureOrder0(F.closures,48);
         generateClosureOrder0(F.fullClosures,48);
         F.closureRef.resize(48, 0);
-      } else {
+      }
+      else {
         generateFaceClosurePrism(F.closures, F.order);
         generateFaceClosurePrismFull(F.fullClosures, F.closureRef, F.order);
       }
@@ -1621,8 +1606,8 @@ const polynomialBasis *polynomialBases::find(int tag)
       F.dimension = 3;
       F.monomials = generatePascalHex(F.order, F.serendip);
       F.points =    gmshGeneratePointsHex(F.order, F.serendip);
-      //    generateFaceClosureHex(F.closures, F.order);
-      //    generateFaceClosureHexFull(F.fullClosures, F.closureRef, F.order, F.serendip);
+      // generateFaceClosureHex(F.closures, F.order);
+      // generateFaceClosureHexFull(F.fullClosures, F.closureRef, F.order, F.serendip);
       break;
   }
   F.coefficients = generateLagrangeMonomialCoefficients(F.monomials, F.points);
@@ -1655,4 +1640,3 @@ const fullMatrix<double> &polynomialBases::findInjector(int tag1, int tag2)
   injector.insert(std::make_pair(key, inj));
   return injector[key];
 }
-
