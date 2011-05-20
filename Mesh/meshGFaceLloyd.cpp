@@ -1,9 +1,4 @@
 #include <set>
-#include <fstream>
-
-#include "GmshConfig.h"
-#if defined(HAVE_BFGS)
-
 #include "meshGFaceLloyd.h"
 #include "DivideAndConquer.h"
 #include "GFace.h"
@@ -12,85 +7,167 @@
 #include "MTriangle.h"
 #include "Context.h"
 #include "meshGFace.h"
-#include "BackgroundMesh.h"
+#include "BackgroundMesh.h" 
+#include <fstream>
+#include "ap.h"
+#include "alglibinternal.h"
+#include "alglibmisc.h"
+#include "linalg.h"
+#include "optimization.h"
+#include "polynomialBasis.h"
+#include "MElementOctree.h"
+
 
 
 /****************fonction callback****************/
 /*************************************************/
-class gradientCallback {
-  DocRecord *_doc;
-  int _p;
-  GFace *_face;
-  int _dimension;
-  std::vector<SVector3> _gradients, _areaCentroids;
-  std::vector<double> _energies, _areas;
 
-  public :
-  gradientCallback(DocRecord *doc, GFace *face, int dimension, int p){
-    _doc = doc;
-    _face = face;
-    _dimension = dimension;
-    _p = p;
-    _gradients.resize(doc->numPoints);
-    _areaCentroids.resize(doc->numPoints);
-    _energies.resize(doc->numPoints);
-    _areas.resize(doc->numPoints);
+void callback(const alglib::real_1d_array& x,double& func,alglib::real_1d_array& grad,void* ptr){
+  int i;
+  int p;
+  int num;
+  int index;
+  int dimension;
+  int identificator;
+  int iteration;
+  int max;
+  bool error1;
+  bool error2;
+  bool error3;
+  bool inside;
+  bool conformity;
+  double energy;
+  double start;
+  double u;
+  double v;
+  SPoint2 val;
+  GFace* gf;
+  DocRecord* pointer;
+  wrapper* w;
+  MElementOctree* octree;
+  lpcvt obj;
+  std::vector<SVector3> gradients;
+  	
+  w = static_cast<wrapper*>(ptr);	
+  p = w->get_p();
+  dimension = w->get_dimension();
+  gf = w->get_face();
+  iteration = w->get_iteration();
+  max = w->get_max();
+  start = w->get_start();
+  pointer = w->get_triangulator();
+  octree = w->get_octree();
+  num = pointer->numPoints;
+  gradients.resize(num);
+  error1 = 0;
+  error2 = 0;
+  error3 = 0;
+	
+  index = 0;
+  for(i=0;i<num;i++){
+	if(obj.interior(*pointer,gf,i)){
+	  u = x[index];
+	  v = x[index + dimension/2];
+	  inside = domain_search(octree,gf,u,v);
+	  if(!inside) error1 = 1;
+	  pointer->points[i].where.h = u;
+	  pointer->points[i].where.v = v;
+	  pointer->points[i].identificator = index;
+	  index++;
+	}
   }
 
-  void compute(const alglib::real_1d_array& x,double& func,alglib::real_1d_array& grad)
-  {
-    int index = 0;
-    for (int i = 0; i < _doc->numPoints; ++i) {
-      PointRecord &pt = _doc->points[i];
-      MVertex *v = (MVertex*) pt.data;
-      if(v->onWhat() == _face && ! _doc->onHull(i)){
-        _doc->points[i].where.h = x[index];
-        _doc->points[i].where.v = x[index + _dimension/2];
-        _doc->points[i].identificator = index;
-        index++;
-      }
-    }
-    _doc->Voronoi();
-    lloydAlgorithm lloyd;
-    lloyd.eval(*_doc, _face, _gradients, _energies, _areaCentroids, _areas, _p);
-    func = lloyd.total_energy(_energies);
-    printf("%f\n",1E18*func);
-
-    for(int i = 0; i < _doc->numPoints; ++i){
-      PointRecord &pt = _doc->points[i];
-      MVertex *v = (MVertex*)pt.data;
-      if(v->onWhat() == _face && !_doc->onHull(i)){
-        int identificator = _doc->points[i].identificator;
-        grad[identificator] = _gradients[i].x();
-        grad[identificator + _dimension/2] = _gradients[i].y();
-      }
-    }	
+  if(iteration>=max){
+    error2 = 1;
+  }
+	
+  if(!error1 && !error2){
+    pointer->Voronoi();
+	pointer->build_edges();
+	conformity = pointer->delaunay_conformity(gf);
+	if(!conformity) error3 = 1;
+	pointer->clear_edges();
+	if(!error3){
+      val = obj.seed(*pointer,gf);
+      pointer->concave(val.x(),val.y(),gf);
+	  obj.compute_metrics(*pointer);
+      obj.clip_cells(*pointer,gf);
+      obj.swap();
+      obj.get_gauss();
+      obj.eval(*pointer,gradients,energy,p);
+      func = energy;
+	}
+  }
+	
+  if(error1 || error2 || error3){
+	energy = 1000000000.0;
+	for(i=0;i<num;i++){
+	  gradients[i] = SVector3(0.0,0.0,0.0);
+	}
+	func = energy;
   }
 
-  static void Callback(const alglib::real_1d_array& x,double& func,alglib::real_1d_array& grad, void* ptr)
-  {
-    gradientCallback *cb = static_cast<gradientCallback *> (ptr);
-    cb->compute(x, func, grad);
+  if(error1){
+    printf("Vertices outside domain.\n");
   }
-};
+	
+  if(error2){
+    printf("Oscillations.\n");
+  }
+	
+  if(error3){
+    printf("Boundary intersection.\n");
+  }	
+	
+  if(start>0.0){
+    printf("%d %.3f\n",iteration,100.0*(start-energy)/start);
+  }
+  else if(!error1 && !error2 && !error3){
+    w->set_start(energy);
+  }
+  w->set_iteration(iteration+1);
+  
+  for(i=0;i<num;i++){
+    if(obj.interior(*pointer,gf,i)){
+	  identificator = pointer->points[i].identificator;
+	  grad[identificator] = gradients[i].x();
+	  grad[identificator + dimension/2] = gradients[i].y();
+	}
+  }	
+}
+
+bool domain_search(MElementOctree* octree,GFace* gf,double x,double y){
+  GPoint gp;
+  MElement* element;
+	
+  gp = gf->point(x,y);
+  element = (MElement*)octree->find(gp.x(),gp.y(),gp.z(),2,true);
+  if(element!=NULL) return 1;
+  else return 0;
+}
 
 
 
-/****************fonctions principales****************/
-/*****************************************************/
+/****************class lloydAlgorithm****************/
 
 void lloydAlgorithm::operator () (GFace *gf)
 {
   std::set<MVertex*> all;
 
+  // get all the points of the face ...
   for (unsigned int i = 0; i < gf->getNumMeshElements(); i++){
     MElement *e = gf->getMeshElement(i);
     for (int j = 0;j<e->getNumVertices(); j++){
       MVertex *v = e->getVertex(j);
-	  all.insert(v);
+      //if (v->onWhat()->dim() < 2){
+	all.insert(v);
+	//}
     }
   }
 
+  backgroundMesh::set(gf);	
+
+  // Create a triangulator
   DocRecord triangulator(all.size());
   
   Range<double> du = gf->parBounds(0) ;
@@ -98,6 +175,9 @@ void lloydAlgorithm::operator () (GFace *gf)
 
   const double LC2D = sqrt((du.high()-du.low())*(du.high()-du.low()) +
                            (dv.high()-dv.low())*(dv.high()-dv.low()));  
+
+  //printf("Lloyd on face %d %d elements %d nodes LC %g\n", gf->tag(),
+  //       gf->getNumMeshElements(), (int)all.size(), LC2D);
 
   int i = 0;
   for (std::set<MVertex*>::iterator it = all.begin(); it != all.end(); ++it){
@@ -137,64 +217,130 @@ void lloydAlgorithm::operator () (GFace *gf)
   }
   triangulator.remove_all();	
 	
-  /*triangulator.Voronoi();
+  triangulator.Voronoi();
   double delta;
-  delta = 0.2;
+  delta = 0.01;
   for(int i=0;i<triangulator.numPoints;i++){
     PointRecord& pt = triangulator.points[i];
 	MVertex* v = (MVertex*)pt.data;
 	if(v->onWhat()==gf && !triangulator.onHull(i)){
-	  triangulator.points[i].where.h = delta + (1.0-2.0*delta)*((double)rand()/(double)RAND_MAX);
-	  triangulator.points[i].where.v = delta + (1.0-2.0*delta)*((double)rand()/(double)RAND_MAX);
+	  //triangulator.points[i].where.h = delta + (1.0-2.0*delta)*((double)rand()/(double)RAND_MAX);
+	  //triangulator.points[i].where.v = delta + (1.0-2.0*delta)*((double)rand()/(double)RAND_MAX);
 	}
-  }*/	
+  }		
 
-  int exponent = 8;	
+  int index1 = -1;
+  int index2 = -1;
+  int index3 = -1;
+  int index4 = -1;
+  int index5 = -1;
+  int index6 = -1;
+  int index7 = -1;
+  int index8 = -1;
+  for(int i=0;i<triangulator.numPoints;i++){
+    PointRecord& pt = triangulator.points[i];
+	MVertex* v = (MVertex*)pt.data;
+	if(v->onWhat()==gf && !triangulator.onHull(i)){
+	  if(index1==-1) index1 = i;
+	  else if(index2==-1) index2 = i;
+	  else if(index3==-1) index3 = i;
+	  else if(index4==-1) index4 = i;
+	  else if(index5==-1) index5 = i;
+	  else if(index6==-1) index6 = i;
+	  else if(index7==-1) index7 = i;
+	  else if(index8==-1) index8 = i;
+		
+	}
+  }
+  /*triangulator.points[index1].where.h = 0.01;
+  triangulator.points[index1].where.v = 0.01;
+  triangulator.points[index2].where.h = 0.01;
+  triangulator.points[index2].where.v = 0.99;
+  triangulator.points[index3].where.h = 0.99;
+  triangulator.points[index3].where.v = 0.01;
+  triangulator.points[index4].where.h = 0.99;
+  triangulator.points[index4].where.v = 0.99;*/
+  /*triangulator.points[index5].where.h = 0.500;
+  triangulator.points[index5].where.v = 0.002;
+  triangulator.points[index6].where.h = 0.510;
+  triangulator.points[index6].where.v = 0.001;
+  triangulator.points[index7].where.h = 0.520;
+  triangulator.points[index7].where.v = 0.003;
+  triangulator.points[index8].where.h = 0.530;
+  triangulator.points[index8].where.v = 0.004;*/
 	
+  // compute the Voronoi diagram
   triangulator.Voronoi();
+  //printf("hullSize = %d\n",triangulator.hullSize());
   triangulator.makePosView("LloydInit.pos");
-  	
+  //triangulator.printMedialAxis("medialAxis.pos");
+	
+  int exponent;
   int num_interior;
-  std::vector<double> initial_conditions(2*triangulator.numPoints);
+  double epsg;
+  double epsf;
+  double epsx;
+  lpcvt obj;
+  double initial_conditions[2*triangulator.numPoints];
+  alglib::ae_int_t maxits;
+  alglib::minlbfgsstate state;
+  alglib::minlbfgsreport rep;
+  alglib::real_1d_array x;
+  wrapper w;
+  MElementOctree* octree;
+  
+  exponent = NORM;
+  epsg = 0;
+  epsf = 0;
+  epsx = 0;
+  maxits = ITER_MAX;
+	
   num_interior = 0;
   for(int i=0;i<triangulator.numPoints;i++){
-    PointRecord& pt = triangulator.points[i];
-	MVertex* v = (MVertex*)pt.data;
-	if(v->onWhat()==gf && !triangulator.onHull(i)){
+   	if(obj.interior(triangulator,gf,i)){
 	  num_interior++;
 	}
   }
+
   index = 0;
   for(int i=0;i<triangulator.numPoints;i++){
-    PointRecord& pt = triangulator.points[i];
-	MVertex* v = (MVertex*)pt.data;
-	if(v->onWhat()==gf && !triangulator.onHull(i)){
+	if(obj.interior(triangulator,gf,i)){
 	  initial_conditions[index] = triangulator.points[i].where.h;
 	  initial_conditions[index+num_interior] = triangulator.points[i].where.v;
 	  index++;
 	}
   }
-  alglib::real_1d_array x;
-  x.setcontent(2*num_interior,&initial_conditions[0]);
-  
-  double epsg = 0;
-  double epsf = 0;
-  double epsx = 1e-4;
-  alglib::ae_int_t maxits = 0;
-  alglib::minlbfgsstate state;
-  alglib::minlbfgsreport rep;
 	
-  minlbfgscreate(2*num_interior, 4, x, state);
-  minlbfgssetcond(state, epsg, epsf, epsx, maxits);
-  gradientCallback cb(&triangulator, gf, 2 * num_interior, exponent);
-  minlbfgsoptimize(state, gradientCallback::Callback, NULL, &cb);
-  minlbfgsresults(state, x, rep);
+  x.setcontent(2*num_interior,initial_conditions);
+
+  octree = new MElementOctree(gf->model());	
+	
+  w.set_p(exponent);
+  w.set_dimension(2*num_interior);
+  w.set_face(gf);
+  w.set_max(2*ITER_MAX);
+  w.set_triangulator(&triangulator);
+  w.set_octree(octree);
+	
+  minlbfgscreate(2*num_interior,4,x,state);
+  minlbfgssetcond(state,epsg,epsf,epsx,maxits);
+  minlbfgsoptimize(state,callback,NULL,&w);
+  minlbfgsresults(state,x,rep);
+
+  delete octree;	
+	
+  /*lpcvt obj2;
+  SPoint2 val = obj2.seed(triangulator,gf);
+  triangulator.concave(val.x(),val.y(),gf);
+  obj2.compute_metrics(triangulator);
+  obj2.clip_cells(triangulator,gf);
+  obj2.swap();
+  obj2.get_gauss();
+  obj2.write(triangulator,gf,6);*/	
 	
   index = 0;
   for(i=0;i<triangulator.numPoints;i++){
-    PointRecord &pt = triangulator.points[i];
-	MVertex *v = (MVertex*)pt.data;
-	if(v->onWhat()==gf && !triangulator.onHull(i)){
+	if(obj.interior(triangulator,gf,i)){
 	  triangulator.points[i].where.h = x[index];
 	  triangulator.points[i].where.v = x[index + num_interior];
 	  index++;
@@ -202,37 +348,55 @@ void lloydAlgorithm::operator () (GFace *gf)
   }
   triangulator.Voronoi();	
 	
-  test = 0;
+  //lpcvt obj;
+  //SPoint2 val = obj.seed(triangulator,gf);
+  //triangulator.concave(val.x(),val.y(),gf);
+  //obj.clip_cells(triangulator,gf);
+  //obj.print_voronoi1();
+  //obj.print_voronoi2();
+  //obj.print_delaunay(triangulator);
+  //test = obj.total_area();
+  //obj.swap();
+  //obj.get_gauss();
+  //obj.write(triangulator,gf,6);
+	
+  // now create the vertices
   std::vector<MVertex*> mesh_vertices;
   for (int i=0; i<triangulator.numPoints;i++){
+    // get the ith vertex
     PointRecord &pt = triangulator.points[i];
     MVertex *v = (MVertex*)pt.data;
     if (v->onWhat() == gf && !triangulator.onHull(i)){
       GPoint gp = gf->point (pt.where.h,pt.where.v);
       MFaceVertex *v = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
       mesh_vertices.push_back(v);
-	  test++;
     }
   }
 
+  // destroy the mesh
   deMeshGFace killer;
   killer(gf);
   
+  // put all additional vertices in the list of
+  // vertices
   gf->additionalVertices = mesh_vertices;
+  // remesh the face with all those vertices in
   Msg::Info("Lloyd remeshing of face %d ", gf->tag());
   meshGFace mesher;
   mesher(gf);
+  // assign those vertices to the face internal vertices
   gf->mesh_vertices.insert(gf->mesh_vertices.begin(),
                            gf->additionalVertices.begin(),  
                            gf->additionalVertices.end());  
+  // clear the list of additional vertices
   gf->additionalVertices.clear();  
 }
 
-double lloydAlgorithm::optimize(int max,int flag){
+void lloydAlgorithm::optimize(int itermax,int norm){
   GFace*face;
   GModel*model = GModel::current();
   GModel::fiter iterator;
-  lloydAlgorithm lloyd(max,flag);
+  lloydAlgorithm lloyd(itermax,norm);
   for(iterator = model->firstFace();iterator != model->lastFace();iterator++)
   {
     face = *iterator;
@@ -241,763 +405,35 @@ double lloydAlgorithm::optimize(int max,int flag){
 	  recombineIntoQuads(face,1,1);
 	}
   }
-  return lloyd.test;
 }
 
 
 
-/****************Calcul du gradient****************/
-/**************************************************/
+/****************class lpcvt****************/
 
-void lloydAlgorithm::eval(DocRecord& triangulator,GFace* gf,std::vector<SVector3>& gradients,std::vector<double>& energies,std::vector<SVector3>& area_centroids,std::vector<double>& areas,int p)
-{
-  int i;
-  
-  for(i=0;i<triangulator.numPoints;i++){
-    gradients[i] = SVector3(0.0,0.0,0.0);
-	energies[i] = 0.0;
-    area_centroids[i] = SVector3(0.0,0.0,0.0);
-	areas[i] = 0.0;
-  }
-	
-  for(i=0;i<triangulator.numPoints;i++){
-    PointRecord &pt = triangulator.points[i];
-	MVertex *v = (MVertex*)pt.data;
-	if(v->onWhat()==gf && !triangulator.onHull(i)){
-	  bool is_inside1;
-	  bool is_inside2;
-	  bool flag;
-	  int num = triangulator._adjacencies[i].t_length;
-	  for(int j=0;j<num;j++){
-	    int index3 = triangulator._adjacencies[i].t[j];
-		int index2 = triangulator._adjacencies[i].t[(j+1)%num];
-		int index1 = triangulator._adjacencies[i].t[(j+2)%num];
-		double _x0[2] = {triangulator.points[i].where.h,triangulator.points[i].where.v};
-		double _x1[2] = {triangulator.points[index1].where.h,triangulator.points[index1].where.v};
-	    double _x2[2] = {triangulator.points[index2].where.h,triangulator.points[index2].where.v};
-		double _x3[2] = {triangulator.points[index3].where.h,triangulator.points[index3].where.v};
-		SPoint2 x0(_x0[0],_x0[1]);
-		SPoint2 x1(_x1[0],_x1[1]);
-		SPoint2 x2(_x2[0],_x2[1]);
-		SPoint2 x3(_x3[0],_x3[1]);
-		double CC1[2];
-		double CC2[2];
-		circumCenterXY(_x0,_x1,_x2,CC1);
-		circumCenterXY(_x0,_x2,_x3,CC2);
-		SPoint2 C1(CC1[0],CC1[1]);
-		SPoint2 C2(CC2[0],CC2[1]);
-		is_inside1 = inside_domain(C1.x(),C1.y());
-		is_inside2 = inside_domain(C2.x(),C2.y());
-		if(is_inside1 && is_inside2){
-		  energies[i] = energies[i] + F(x0,C1,C2,p);
-		  gradients[i] = gradients[i] + simple(x0,C1,C2,p);
-		  area_centroids[i] = area_centroids[i] + area_centroid(x0,C1,C2);
-		  areas[i] = areas[i] + triangle_area(x0,C1,C2);
-		  SVector3 grad1 = dF_dC1(x0,C1,C2,p);
-		  SVector3 grad2 = dF_dC2(x0,C1,C2,p);
-		  gradients[i] = gradients[i] + inner_dFdx0(grad1,C1,x0,x1,x2);
-		  gradients[index1] = gradients[index1] + inner_dFdx0(grad1,C1,x1,x0,x2);
-		  gradients[index2] = gradients[index2] + inner_dFdx0(grad1,C1,x2,x0,x1);
-		  gradients[i] = gradients[i] + inner_dFdx0(grad2,C2,x0,x2,x3);
-		  gradients[index2] = gradients[index2] + inner_dFdx0(grad2,C2,x2,x0,x3);
-		  gradients[index3] = gradients[index3] + inner_dFdx0(grad2,C2,x3,x0,x2);
-		}
-		else if(is_inside1){
-		  SPoint2 first;
-		  SPoint2 second;
-		  SVector3 vecA;
-		  SVector3 vecB;
-		  first = boundary_intersection(C1,C2,flag,vecA);
-		  second = boundary_intersection(x0,C2,flag,vecB);
-		  energies[i] = energies[i] + F(x0,C1,first,p);
-		  energies[i] = energies[i] + F(x0,first,second,p);
-		  gradients[i] = gradients[i] + simple(x0,C1,first,p);
-		  gradients[i] = gradients[i] + simple(x0,first,second,p);
-		  area_centroids[i] = area_centroids[i] + area_centroid(x0,C1,first);
-		  area_centroids[i] = area_centroids[i] + area_centroid(x0,first,second);
-		  areas[i] = areas[i] + triangle_area(x0,C1,first);
-		  areas[i] = areas[i] + triangle_area(x0,first,second);
-		  SVector3 grad1 = dF_dC1(x0,C1,first,p);
-		  SVector3 grad2 = dF_dC2(x0,C1,first,p);
-		  SVector3 grad3 = dF_dC1(x0,first,second,p);
-		  gradients[i] = gradients[i] + inner_dFdx0(grad1,C1,x0,x1,x2);
-		  gradients[index1] = gradients[index1] + inner_dFdx0(grad1,C1,x1,x0,x2);
-		  gradients[index2] = gradients[index2] + inner_dFdx0(grad1,C1,x2,x0,x1);
-		  gradients[i] = gradients[i] + boundary_dFdx0(grad2,first,x0,x2,vecA);
-		  gradients[index2] = gradients[index2] + boundary_dFdx0(grad2,first,x2,x0,vecA);
-		  gradients[i] = gradients[i] + boundary_dFdx0(grad3,first,x0,x2,vecA);
-		  gradients[index2] = gradients[index2] + boundary_dFdx0(grad3,first,x2,x0,vecA);
-		}
-		else if(is_inside2){
-		  SPoint2 first;
-		  SPoint2 second;
-		  SVector3 vecA;
-		  SVector3 vecB;
-		  first = boundary_intersection(C1,C2,flag,vecA);
-		  second = boundary_intersection(x0,C1,flag,vecB);
-		  energies[i] = energies[i] + F(x0,second,first,p);
-		  energies[i] = energies[i] + F(x0,first,C2,p);
-		  gradients[i] = gradients[i] + simple(x0,second,first,p);
-		  gradients[i] = gradients[i] + simple(x0,first,C2,p);
-		  area_centroids[i] = area_centroids[i] + area_centroid(x0,second,first);
-		  area_centroids[i] = area_centroids[i] + area_centroid(x0,first,C2);
-		  areas[i] = areas[i] + triangle_area(x0,second,first);
-		  areas[i] = areas[i] + triangle_area(x0,first,C2);
-		  SVector3 grad1 = dF_dC2(x0,second,first,p);
-		  SVector3 grad2 = dF_dC1(x0,first,C2,p);
-		  SVector3 grad3 = dF_dC2(x0,first,C2,p);
-		  gradients[i] = gradients[i] + inner_dFdx0(grad3,C2,x0,x2,x3);
-		  gradients[index2] = gradients[index2] + inner_dFdx0(grad3,C2,x2,x0,x3);
-		  gradients[index3] = gradients[index3] + inner_dFdx0(grad3,C2,x3,x0,x2);
-		  gradients[i] = gradients[i] + boundary_dFdx0(grad2,first,x0,x2,vecA);
-		  gradients[index2] = gradients[index2] + boundary_dFdx0(grad2,first,x2,x0,vecA);
-		  gradients[i] = gradients[i] + boundary_dFdx0(grad1,first,x0,x2,vecA);
-		  gradients[index2] = gradients[index2] + boundary_dFdx0(grad1,first,x2,x0,vecA);
-		}
-		else{
-		  SPoint2 first;
-		  SPoint2 second;
-		  SPoint2 third;
-		  SPoint2 fourth;
-		  SPoint2 median;
-		  SPoint2 any;
-		  SVector3 vecA;
-		  SVector3 vecB;
-		  SVector3 vec;
-		  any = boundary_intersection(C1,C2,flag,vec);
-		  if(flag){
-		    median = mid(x0,x2);
-			first = boundary_intersection(median,C1,flag,vecA);
-			second = boundary_intersection(median,C2,flag,vecB);
-			third = boundary_intersection(x0,C1,flag,vec);
-			fourth = boundary_intersection(x0,C2,flag,vec);
-			energies[i] = energies[i] + F(x0,first,second,p);
-			energies[i] = energies[i] + F(x0,third,first,p);
-			energies[i] = energies[i] + F(x0,second,fourth,p);
-			gradients[i] = gradients[i] + simple(x0,first,second,p);
-			gradients[i] = gradients[i] + simple(x0,third,first,p);
-			gradients[i] = gradients[i] + simple(x0,second,fourth,p);
-			area_centroids[i] = area_centroids[i] + area_centroid(x0,first,second);
-			area_centroids[i] = area_centroids[i] + area_centroid(x0,third,first);
-			area_centroids[i] = area_centroids[i] + area_centroid(x0,second,fourth);
-			areas[i] = areas[i] + triangle_area(x0,first,second);
-			areas[i] = areas[i] + triangle_area(x0,third,first);
-			areas[i] = areas[i] + triangle_area(x0,second,fourth);
-			SVector3 grad1 = dF_dC1(x0,first,second,p);
-			SVector3 grad2 = dF_dC2(x0,first,second,p);  
-			SVector3 grad3 = dF_dC2(x0,third,first,p);  
-			SVector3 grad4 = dF_dC1(x0,second,fourth,p);  
-			gradients[i] = gradients[i] + boundary_dFdx0(grad1,first,x0,x2,vecA);
-			gradients[index2] = gradients[index2] + boundary_dFdx0(grad1,first,x2,x0,vecA);  
-			gradients[i] = gradients[i] + boundary_dFdx0(grad2,second,x0,x2,vecB);
-			gradients[index2] = gradients[index2] + boundary_dFdx0(grad2,second,x2,x0,vecB);
-			gradients[i] = gradients[i] + boundary_dFdx0(grad3,first,x0,x2,vecA);
-			gradients[index2] = gradients[index2] + boundary_dFdx0(grad3,first,x2,x0,vecA);  
-			gradients[i] = gradients[i] + boundary_dFdx0(grad4,second,x0,x2,vecB);
-			gradients[index2] = gradients[index2] + boundary_dFdx0(grad4,second,x2,x0,vecB);
-		  }
-		  else{
-		    first = boundary_intersection(x0,C1,flag,vec);
-			second = boundary_intersection(x0,C2,flag,vec);
-			energies[i] = energies[i] + F(x0,first,second,p);
-			gradients[i] = gradients[i] + simple(x0,first,second,p);
-			area_centroids[i] = area_centroids[i] + area_centroid(x0,first,second);
-			areas[i] = areas[i] + triangle_area(x0,first,second);
-		  }
-	    }
-	  }
-	}
-	else {
-      double e = 0.00000001;
-	  bool ok_triangle1;
-	  bool ok_triangle2;
-	  bool is_inside1;
-	  bool is_inside2;
-	  bool is_inside;
-	  bool flag;
-	  int num = triangulator._adjacencies[i].t_length;
-	  for(int j=0;j<num;j++){
-	    int index3 = triangulator._adjacencies[i].t[j];
-		int index2 = triangulator._adjacencies[i].t[(j+1)%num];
-		int index1 = triangulator._adjacencies[i].t[(j+2)%num];
-		if(index1!=index2 && index1!=index3 && index2!=index3 && i!=index1 && i!=index2 && i!=index3){
-		  double _x0[2] = {triangulator.points[i].where.h,triangulator.points[i].where.v};
-		  double _x1[2] = {triangulator.points[index1].where.h,triangulator.points[index1].where.v};
-		  double _x2[2] = {triangulator.points[index2].where.h,triangulator.points[index2].where.v};
-		  double _x3[2] = {triangulator.points[index3].where.h,triangulator.points[index3].where.v};
-		  SPoint2 x0(_x0[0],_x0[1]);
-		  SPoint2 x1(_x1[0],_x1[1]);
-		  SPoint2 x2(_x2[0],_x2[1]);
-		  SPoint2 x3(_x3[0],_x3[1]);
-		  ok_triangle1 = adjacent(triangulator,index1,index2) && triangle_area(x0,x1,x2)>e;
-		  ok_triangle2 = adjacent(triangulator,index2,index3) && triangle_area(x0,x2,x3)>e;
-		  if(ok_triangle1 && ok_triangle2){
-		    double CC1[2];
-			double CC2[2];
-			circumCenterXY(_x0,_x1,_x2,CC1);
-			circumCenterXY(_x0,_x2,_x3,CC2);
-			SPoint2 C1(CC1[0],CC1[1]);
-			SPoint2 C2(CC2[0],CC2[1]);
-			is_inside1 = inside_domain(C1.x(),C1.y());
-			is_inside2 = inside_domain(C2.x(),C2.y());
-		    if(is_inside1 && is_inside2){
-			  energies[i] = energies[i] + F(x0,C1,C2,p);
-			  SVector3 grad1 = dF_dC1(x0,C1,C2,p);
-			  SVector3 grad2 = dF_dC2(x0,C1,C2,p);
-			  gradients[index1] = gradients[index1] + inner_dFdx0(grad1,C1,x1,x0,x2);
-			  gradients[index2] = gradients[index2] + inner_dFdx0(grad1,C1,x2,x0,x1);
-			  gradients[index2] = gradients[index2] + inner_dFdx0(grad2,C2,x2,x0,x3);
-			  gradients[index3] = gradients[index3] + inner_dFdx0(grad2,C2,x3,x0,x2);
-		    }
-		    else if(is_inside1){
-		      SPoint2 val;
-			  SVector3 vec;
-			  val = boundary_intersection(C1,C2,flag,vec);
-			  energies[i] = energies[i] + F(x0,C1,val,p);
-			  SVector3 grad1 = dF_dC1(x0,C1,val,p);
-			  SVector3 grad2 = dF_dC2(x0,C1,val,p);
-			  gradients[index1] = gradients[index1] + inner_dFdx0(grad1,C1,x1,x0,x2);
-			  gradients[index2] = gradients[index2] + inner_dFdx0(grad1,C1,x2,x0,x1);
-			  gradients[index2] = gradients[index2] + boundary_dFdx0(grad2,val,x2,x0,vec);
-		    }
-		    else if(is_inside2){
-		      SPoint2 val;
-			  SVector3 vec;
-			  val = boundary_intersection(C1,C2,flag,vec);
-			  energies[i] = energies[i] + F(x0,val,C2,p);
-			  SVector3 grad1 = dF_dC1(x0,val,C2,p);
-			  SVector3 grad2 = dF_dC2(x0,val,C2,p);
-			  gradients[index2] = gradients[index2] + inner_dFdx0(grad2,C2,x2,x0,x3);
-			  gradients[index3] = gradients[index3] + inner_dFdx0(grad2,C2,x3,x0,x2);
-			  gradients[index2] = gradients[index2] + boundary_dFdx0(grad1,val,x2,x0,vec);
-		    }
-			else{
-			  SPoint2 first;
-			  SPoint2 second;
-			  SPoint2 median;
-			  SPoint2 any;
-			  SVector3 vecA;
-			  SVector3 vecB;
-			  SVector3 vec;
-			  any = boundary_intersection(C1,C2,flag,vec);
-			  if(flag){
-			    median = mid(x0,x2);
-				first = boundary_intersection(median,C1,flag,vecA);
-				second = boundary_intersection(median,C2,flag,vecB);
-				energies[i] = energies[i] + F(x0,first,second,p);
-				SVector3 grad1 = dF_dC1(x0,first,second,p);
-				SVector3 grad2 = dF_dC2(x0,first,second,p);
-				gradients[index2] = gradients[index2] + boundary_dFdx0(grad1,first,x2,x0,vecA);
-				gradients[index2] = gradients[index2] + boundary_dFdx0(grad2,second,x2,x0,vecB);
-			  }
-			}
-		  }
-		  else if(ok_triangle1){
-		    double CC[2];
-		    circumCenterXY(_x0,_x1,_x2,CC);
-			SPoint2 C(CC[0],CC[1]);
-			is_inside = inside_domain(C.x(),C.y());
-			if(is_inside){
-			  SPoint2 val;
-			  val = mid(x0,x2);
-			  energies[i] = energies[i] + F(x0,C,val,p);
-			  SVector3 grad1 = dF_dC1(x0,C,val,p);
-			  gradients[index1] = gradients[index1] + inner_dFdx0(grad1,C,x1,x0,x2);
-			}	  
-		  }
-		  else if(ok_triangle2){
-		    double CC[2];
-			circumCenterXY(_x0,_x2,_x3,CC);
-			SPoint2 C(CC[0],CC[1]);
-			is_inside = inside_domain(C.x(),C.y());
-			if(is_inside){
-			  SPoint2 val;
-			  val = mid(x0,x2);
-			  energies[i] = energies[i] + F(x0,val,C,p);
-			  SVector3 grad1 = dF_dC2(x0,val,C,p);
-			  gradients[index3] = gradients[index3] + inner_dFdx0(grad1,C,x3,x0,x2);
-		    }
-		  }
-	    }
-	  }
-    }
-  }
+lpcvt::lpcvt(){}
+
+lpcvt::~lpcvt(){}
+
+double lpcvt::angle(SPoint2 p1,SPoint2 p2,SPoint2 p3){
+  double x1,x2;
+  double y1,y2;
+  double product;
+  double norm1,norm2;
+  double angle;
+  x1 = p2.x() - p1.x();
+  y1 = p2.y() - p1.y();
+  x2 = p3.x() - p1.x();
+  y2 = p3.y() - p1.y();
+  norm1 = sqrt(x1*x1 + y1*y1);
+  norm2 = sqrt(x2*x2 + y2*y2);
+  product = x1*x2 + y1*y2;
+  angle = product/(norm1*norm2);
+  angle = 180.0*myacos(angle)/M_PI;
+  return angle;	
 }
 
-double lloydAlgorithm::total_energy(std::vector<double> energies){
-  int i;
-  double total;
-  total = 0.0;
-  for(i=0;i<energies.size();i++){
-    total = total + energies[i];
-  }
-  return total;
-}
-
-SVector3 lloydAlgorithm::numerical(DocRecord& triangulator,GFace* gf,int index,int p){
-  double x_original;
-  double y_original;
-  double energy_right;
-  double energy_left;
-  double energy_up;
-  double energy_down;
-  double comp_x;
-  double comp_y;
-  double e;
-  std::vector<double> energies(triangulator.numPoints);
-  std::vector<SVector3> gradients(triangulator.numPoints);
-  std::vector<SVector3> area_centroids(triangulator.numPoints);
-  std::vector<double> areas(triangulator.numPoints);
-  e = 0.00001;
-  x_original = triangulator.points[index].where.h;
-  y_original = triangulator.points[index].where.v;
-  
-  triangulator.points[index].where.h = x_original + e;
-  triangulator.points[index].where.v = y_original;
-  eval(triangulator,gf,gradients,energies,area_centroids,areas,p);
-  energy_right = total_energy(energies);
-
-  triangulator.points[index].where.h = x_original - e;
-  triangulator.points[index].where.v = y_original;
-  eval(triangulator,gf,gradients,energies,area_centroids,areas,p);
-  energy_left = total_energy(energies);
-	
-  triangulator.points[index].where.h = x_original;
-  triangulator.points[index].where.v = y_original + e;
-  eval(triangulator,gf,gradients,energies,area_centroids,areas,p);
-  energy_up = total_energy(energies);
-	
-  triangulator.points[index].where.h = x_original;
-  triangulator.points[index].where.v = y_original - e;
-  eval(triangulator,gf,gradients,energies,area_centroids,areas,p);
-  energy_down = total_energy(energies);
-  
-  comp_x = (energy_right - energy_left)/(2*e);	
-  comp_y = (energy_up - energy_down)/(2*e);		
-  
-  triangulator.points[index].where.h = x_original;
-  triangulator.points[index].where.v = y_original;	
-	
-  return SVector3(comp_x,comp_y,0.0);
-}
-
-void lloydAlgorithm::write(DocRecord& triangulator,GFace* gf,int p){
-  int i;
-  SVector3 grad1;
-  SVector3 grad2;
-  SVector3 ecart;
-  std::vector<SVector3> gradients(triangulator.numPoints);
-  std::vector<double> energies(triangulator.numPoints);
-  std::vector<SVector3> area_centroids(triangulator.numPoints);
-  std::vector<double> areas(triangulator.numPoints);
-	
-  eval(triangulator,gf,gradients,energies,area_centroids,areas,p);
-  
-  std::ofstream file("gradient");
-  
-  for(i=0;i<triangulator.numPoints;i++){
-    PointRecord& pt = triangulator.points[i];
-	MVertex* v = (MVertex*)pt.data;
-	if(v->onWhat()==gf && !triangulator.onHull(i)){
-	  grad1 = numerical(triangulator,gf,i,p);
-	  grad2 = gradients[i];
-	  ecart = grad1-grad2;
-	  file << grad1.x() << "  ";
-	  file << grad2.x() << "      ";
-	  file << grad1.y() << "  ";
-	  file << grad2.y() << "      ";
-	  file << 100.0*ecart.norm()/grad1.norm() << " ";
-	  file << "\n";
-	}
-  }
-}
-
-void lloydAlgorithm::write2(DocRecord& triangulator,GFace* gf){
-  int i;
-  SPoint2 generator;
-  SVector3 grad1;
-  SVector3 grad2;
-  SVector3 ecart;
-  std::vector<SVector3> gradients(triangulator.numPoints);
-  std::vector<double> energies(triangulator.numPoints);
-  std::vector<SVector3> area_centroids(triangulator.numPoints);
-  std::vector<double> areas(triangulator.numPoints);
-	
-  eval(triangulator,gf,gradients,energies,area_centroids,areas,2);
-	
-  std::ofstream file("gradient2");
-	
-  for(i=0;i<triangulator.numPoints;i++){
-    PointRecord& pt = triangulator.points[i];
-	MVertex* v = (MVertex*)pt.data;
-	if(v->onWhat()==gf && !triangulator.onHull(i)){
-	  generator = SPoint2(triangulator.points[i].where.h,triangulator.points[i].where.v);
-	  grad1 = analytical(generator,area_centroids[i],areas[i]);
-	  grad2 = gradients[i];
-	  ecart = grad1-grad2;
-	  file << grad1.x() << "  ";
-	  file << grad2.x() << "      ";
-	  file << grad1.y() << "  ";
-	  file << grad2.y() << "      ";
-	  file << 100.0*ecart.norm()/grad1.norm() << " ";
-	  file << "\n";
-	}
-  }
-}
-
-SVector3 lloydAlgorithm::analytical(SPoint2 generator,SVector3 area_centroid,double area){
-  SVector3 _generator;
-  SVector3 val;
-  _generator = SVector3(generator.x(),generator.y(),0.0);
-  val = 2.0*area*(_generator - (1.0/area)*area_centroid);
-  return val;
-}
-
-SVector3 lloydAlgorithm::area_centroid(SPoint2 p1,SPoint2 p2,SPoint2 p3){
-  double x;
-  double y;
-  double area;
-  area = triangle_area(p1,p2,p3);
-  x = (1.0/3.0)*(p1.x() + p2.x() + p3.x());
-  y = (1.0/3.0)*(p1.y() + p2.y() + p3.y());
-  return SVector3(area*x,area*y,0.0);
-}
-
-
-
-/****************Fonctions pour le calcul du gradient****************/
-/********************************************************************/
-
-double lloydAlgorithm::F(SPoint2 generator,SPoint2 C1,SPoint2 C2,int p){
-  int i;
-  int num;
-  int order;
-  double x;
-  double y;
-  double energy;
-  SPoint2 point;
-  fullMatrix<double> pts;
-  fullMatrix<double> weights;
-  order = 8;
-  gaussIntegration::getTriangle(order,pts,weights);
-  num = pts.size1();
-  energy = 0.0;
-  for(i=0;i<num;i++){
-    x = Tx(pts(i,0),pts(i,1),generator,C1,C2);
-	y = Ty(pts(i,0),pts(i,1),generator,C1,C2);
-	point = SPoint2(x,y);
-	energy = energy + weights(i,0)*f(generator,point,p);
-  }
-  energy = J(generator,C1,C2)*energy;
-  return energy;
-}
-
-SVector3 lloydAlgorithm::simple(SPoint2 generator,SPoint2 C1,SPoint2 C2,int p){
-  int i;
-  int num;
-  int order;
-  double x;
-  double y;
-  double comp_x;
-  double comp_y;
-  SPoint2 point;
-  fullMatrix<double> pts;
-  fullMatrix<double> weights;
-  order = 8;
-  gaussIntegration::getTriangle(order,pts,weights);
-  num = pts.size1();
-  comp_x = 0.0;
-  comp_y = 0.0;
-  for(i=0;i<num;i++){
-    x = Tx(pts(i,0),pts(i,1),generator,C1,C2);
-	y = Ty(pts(i,0),pts(i,1),generator,C1,C2);
-	point = SPoint2(x,y);
-	comp_x = comp_x + weights(i,0)*df_dx(generator,point,p);
-	comp_y = comp_y + weights(i,0)*df_dy(generator,point,p);
-  }
-  comp_x = J(generator,C1,C2)*comp_x;
-  comp_y = J(generator,C1,C2)*comp_y; 
-  return SVector3(comp_x,comp_y,0.0);
-}
-
-SVector3 lloydAlgorithm::dF_dC1(SPoint2 generator,SPoint2 C1,SPoint2 C2,int p){
-  int i;
-  int num;
-  int order;
-  double x;
-  double y;
-  double comp_x;
-  double comp_y;
-  SPoint2 point;
-  fullMatrix<double> pts;
-  fullMatrix<double> weights;
-  order = 8;
-  gaussIntegration::getTriangle(order,pts,weights);
-  num = pts.size1();
-  comp_x = 0.0;
-  comp_y = 0.0;
-  for(i=0;i<num;i++){
-    x = Tx(pts(i,0),pts(i,1),generator,C1,C2);
-    y = Ty(pts(i,0),pts(i,1),generator,C1,C2);
-    point = SPoint2(x,y);
-    comp_x = comp_x + weights(i,0)*df_dx(point,generator,p)*dTx_dp2x(pts(i,0),pts(i,1))*J(generator, C1, C2);
-    comp_x = comp_x + weights(i,0)*f(point,generator,p)*dJ_dp2x(generator,C1,C2);
-    comp_y = comp_y + weights(i,0)*df_dy(point,generator,p)*dTy_dp2y(pts(i,0),pts(i,1))*J(generator, C1, C2);
-    comp_y = comp_y + weights(i,0)*f(point,generator,p)*dJ_dp2y(generator,C1,C2);
-  }		
-  return SVector3(comp_x,comp_y,0.0);
-}
-
-SVector3 lloydAlgorithm::dF_dC2(SPoint2 generator,SPoint2 C1,SPoint2 C2,int p){
-  int i;
-  int num;
-  int order;
-  double x;
-  double y;
-  double comp_x;
-  double comp_y;
-  SPoint2 point;
-  fullMatrix<double> pts;
-  fullMatrix<double> weights;
-  order = 8;
-  gaussIntegration::getTriangle(order,pts,weights);
-  num = pts.size1();
-  comp_x = 0.0;
-  comp_y = 0.0;
-  for(i=0;i<num;i++){
-    x = Tx(pts(i,0),pts(i,1),generator,C1,C2);
-	y = Ty(pts(i,0),pts(i,1),generator,C1,C2);
-	point = SPoint2(x,y);
-	comp_x = comp_x + weights(i,0)*df_dx(point,generator,p)*dTx_dp3x(pts(i,0),pts(i,1))*J(generator,C1,C2);
-	comp_x = comp_x + weights(i,0)*f(point,generator,p)*dJ_dp3x(generator,C1,C2);
-	comp_y = comp_y + weights(i,0)*df_dy(point,generator,p)*dTy_dp3y(pts(i,0),pts(i,1))*J(generator,C1,C2);
-	comp_y = comp_y + weights(i,0)*f(point,generator,p)*dJ_dp3y(generator,C1,C2);
-  }		
-  return SVector3(comp_x,comp_y,0.0);
-}
-
-double lloydAlgorithm::f(SPoint2 p1,SPoint2 p2,int p){
-  double val;
-  val = exp(p1.x()-p2.x(),p) + exp(p1.y()-p2.y(),p);
-  return val;
-}
-
-double lloydAlgorithm::df_dx(SPoint2 p1,SPoint2 p2,int p){
-  double val;
-  val = ((double)p)*exp(p1.x()-p2.x(),p-1);
-  return val;
-}
-
-double lloydAlgorithm::df_dy(SPoint2 p1,SPoint2 p2,int p){
-  double val;
-  val = ((double)p)*exp(p1.y()-p2.y(),p-1);
-  return val;
-}
-
-double lloydAlgorithm::L1(double u,double v){
-  double val;
-  val = 1.0-u-v;
-  return val;
-}
-
-double lloydAlgorithm::dL1_du(){
-  return -1.0;
-}
-
-double lloydAlgorithm::dL1_dv(){
-  return -1.0;
-}
-
-double lloydAlgorithm::L2(double u,double v){
-  double val;
-  val = u;
-  return val;
-}
-
-double lloydAlgorithm::dL2_du(){
-  return 1.0;
-}
-
-double lloydAlgorithm::dL2_dv(){
-  return 0.0;
-}
-
-double lloydAlgorithm::L3(double u,double v){
-  double val;
-  val = v;
-  return val;
-}
-
-double lloydAlgorithm::dL3_du(){
-  return 0.0;
-}
-
-double lloydAlgorithm::dL3_dv(){
-  return 1.0;
-}
-
-double lloydAlgorithm::Tx(double u,double v,SPoint2 p1,SPoint2 p2,SPoint2 p3){
-  double val;
-  val = L1(u,v)*p1.x() + L2(u,v)*p2.x() + L3(u,v)*p3.x();
-  return val;
-}
-
-double lloydAlgorithm::dTx_dp1x(double u,double v){
-  return L1(u,v);
-}
-
-double lloydAlgorithm::dTx_dp2x(double u,double v){
-  return L2(u,v);
-}
-
-double lloydAlgorithm::dTx_dp3x(double u,double v){
-  return L3(u,v);
-}
-
-double lloydAlgorithm::dTx_du(SPoint2 p1,SPoint2 p2,SPoint2 p3){
-  double val;
-  val = dL1_du()*p1.x() + dL2_du()*p2.x() + dL3_du()*p3.x();
-  return val;
-}
-
-double lloydAlgorithm::dTx_dv(SPoint2 p1,SPoint2 p2,SPoint2 p3){
-  double val;
-  val = dL1_dv()*p1.x() + dL2_dv()*p2.x() + dL3_dv()*p3.x();
-  return val;
-}
-
-double lloydAlgorithm::Ty(double u,double v,SPoint2 p1,SPoint2 p2,SPoint2 p3){
-  double val;
-  val = L1(u,v)*p1.y() + L2(u,v)*p2.y() + L3(u,v)*p3.y();
-  return val;
-}
-
-double lloydAlgorithm::dTy_dp1y(double u,double v){
-  return L1(u,v);
-}
-
-double lloydAlgorithm::dTy_dp2y(double u,double v){
-  return L2(u,v);
-}
-
-double lloydAlgorithm::dTy_dp3y(double u,double v){
-  return L3(u,v);
-}
-
-double lloydAlgorithm::dTy_du(SPoint2 p1,SPoint2 p2,SPoint2 p3){
-  double val;
-  val = dL1_du()*p1.y() + dL2_du()*p2.y() + dL3_du()*p3.y();
-  return val;
-}
-
-double lloydAlgorithm::dTy_dv(SPoint2 p1,SPoint2 p2,SPoint2 p3){
-  double val;
-  val = dL1_dv()*p1.y() + dL2_dv()*p2.y() + dL3_dv()*p3.y();
-  return val;
-}
-
-double lloydAlgorithm::J(SPoint2 p1,SPoint2 p2,SPoint2 p3){
-  double val;
-  val = dTx_du(p1,p2,p3)*dTy_dv(p1,p2,p3) - dTx_dv(p1,p2,p3)*dTy_du(p1,p2,p3);
-  return val;
-}
-
-double lloydAlgorithm::dJ_dp1x(SPoint2 p1,SPoint2 p2,SPoint2 p3){
-  double val;
-  val = dL1_du()*dTy_dv(p1,p2,p3) - dL1_dv()*dTy_du(p1,p2,p3);
-  return val;
-}
-
-double lloydAlgorithm::dJ_dp2x(SPoint2 p1,SPoint2 p2,SPoint2 p3){
-  double val;
-  val = dL2_du()*dTy_dv(p1,p2,p3) - dL2_dv()*dTy_du(p1,p2,p3);
-  return val;
-}
-
-double lloydAlgorithm::dJ_dp3x(SPoint2 p1,SPoint2 p2,SPoint2 p3){
-  double val;
-  val = dL3_du()*dTy_dv(p1,p2,p3) - dL3_dv()*dTy_du(p1,p2,p3);
-  return val;
-}
-
-double lloydAlgorithm::dJ_dp1y(SPoint2 p1,SPoint2 p2,SPoint2 p3){
-  double val;
-  val = dTx_du(p1,p2,p3)*dL1_dv() - dTx_dv(p1,p2,p3)*dL1_du();
-  return val;
-}
-
-double lloydAlgorithm::dJ_dp2y(SPoint2 p1,SPoint2 p2,SPoint2 p3){
-  double val;
-  val = dTx_du(p1,p2,p3)*dL2_dv() - dTx_dv(p1,p2,p3)*dL2_du();
-  return val;
-}
-
-double lloydAlgorithm::dJ_dp3y(SPoint2 p1,SPoint2 p2,SPoint2 p3){
-  double val;
-  val = dTx_du(p1,p2,p3)*dL3_dv() - dTx_dv(p1,p2,p3)*dL3_du();
-  return val;
-}
-
-SVector3 lloydAlgorithm::inner_dFdx0(SVector3 dFdC,SPoint2 C,SPoint2 x0,SPoint2 x1,SPoint2 x2){
-  fullMatrix<double> A(2,2);
-  fullMatrix<double> B(2,2);
-  fullMatrix<double> M(2,2);
-  fullMatrix<double> _dFdC(1,2);
-  fullMatrix<double> _val(1,2);
-  A(0,0) = x1.x() - x0.x(); 
-  A(0,1) = x1.y() - x0.y();
-  A(1,0) = x2.x() - x0.x(); 
-  A(1,1) = x2.y() - x0.y();
-  A.invertInPlace();
-  B(0,0) = C.x() - x0.x();
-  B(0,1) = C.y() - x0.y();
-  B(1,0) = C.x() - x0.x();
-  B(1,1) = C.y() - x0.y();
-  A.mult_naive(B,M);
-  _dFdC(0,0) = dFdC.x();
-  _dFdC(0,1) = dFdC.y();
-  _dFdC.mult_naive(M,_val);
-  return SVector3(_val(0,0),_val(0,1),0.0);	
-}
-
-SVector3 lloydAlgorithm::boundary_dFdx0(SVector3 dFdC,SPoint2 C,SPoint2 x0,SPoint2 x1,SVector3 normal){
-  fullMatrix<double> A(2,2);
-  fullMatrix<double> B(2,2);
-  fullMatrix<double> M(2,2);
-  fullMatrix<double> _dFdC(1,2);
-  fullMatrix<double> _val(1,2);
-  A(0,0) = x1.x() - x0.x(); 
-  A(0,1) = x1.y() - x0.y();
-  A(1,0) = normal.x(); 
-  A(1,1) = normal.y();
-  A.invertInPlace();
-  B(0,0) = C.x() - x0.x();
-  B(0,1) = C.y() - x0.y();
-  B(1,0) = 0.0;
-  B(1,1) = 0.0;
-  A.mult_naive(B,M);
-  _dFdC(0,0) = dFdC.x();
-  _dFdC(0,1) = dFdC.y();
-  _dFdC.mult_naive(M,_val);
-  return SVector3(_val(0,0),_val(0,1),0.0);	
-}
-
-double lloydAlgorithm::exp(double a,int b)
-{
-  int i;
-  double val = 1.0;
-  for(i=0;i<b;i++){
-    val = val*a;	
-  }
-  return val;
-}
-
-
-
-/****************Calcul des intersections****************/
-/********************************************************/
-
-SVector3 lloydAlgorithm::normal(SPoint2 p1,SPoint2 p2){
+SVector3 lpcvt::normal(SPoint2 p1,SPoint2 p2){
   double x;
   double y;
   SVector3 val;
@@ -1007,7 +443,7 @@ SVector3 lloydAlgorithm::normal(SPoint2 p1,SPoint2 p2){
   return val;
 }
 
-SPoint2 lloydAlgorithm::mid(SPoint2 p1,SPoint2 p2){
+SPoint2 lpcvt::mid(SPoint2 p1,SPoint2 p2){
   double x;
   double y;
   x = 0.5*(p1.x() + p2.x());
@@ -1015,24 +451,79 @@ SPoint2 lloydAlgorithm::mid(SPoint2 p1,SPoint2 p2){
   return SPoint2(x,y);
 }
 
-void lloydAlgorithm::print_segment(SPoint2 p1,SPoint2 p2,std::ofstream& file){
-  file << "SL (" << p1.x() << ", "
-	             << p1.y() << ", 0, "
-	             << p2.x() << ", "
-	             << p2.y() << ", 0){" << "10, 20};\n";	
+bool lpcvt::same_side(SPoint2 p1,SPoint2 p2,SPoint2 p3,SPoint2 p4){
+  double x1,y1;
+  double x2,y2;
+  double x3,y3;
+  double product1;
+  double product2;
+  x1 = p2.x()-p1.x();
+  y1 = p2.y()-p1.y();
+  x2 = p3.x()-p1.x();
+  y2 = p3.y()-p1.y();
+  x3 = p4.x()-p1.x();
+  y3 = p4.y()-p1.y();
+  product1 = x2*y1 - x1*y2;
+  product2 = x3*y1 - x1*y3;
+  if(product1>0.0 && product2>0.0){
+    return 1;
+  }
+  else if(product1<0.0 && product2<0.0){
+    return 1;
+  }
+  else return 0;
 }
 
-bool lloydAlgorithm::adjacent(const DocRecord& triangulator,int index1,int index2){
-  int num = triangulator._adjacencies[index1].t_length;
-  for(int i=0;i<num;i++){
-    if(triangulator._adjacencies[index1].t[i] == index2){
-	  return 1;
+bool lpcvt::interior(DocRecord& triangulator,GFace* gf,int index){
+  PointRecord& temp = triangulator.points[index];
+  MVertex* vertex = (MVertex*)temp.data;
+  if(vertex->onWhat()==gf && !triangulator.onHull(index)){
+    return 1;
+  }
+  else return 0;
+}
+
+bool lpcvt::interior(DocRecord& triangulator,segment s1,segment s2,double angle,SPoint2 p){
+  SPoint2 p1,p2,p3,p4;
+  SPoint2 reference1,reference2;
+  bool condition1,condition2;
+  p1 = convert(triangulator,s1.get_index1());
+  p2 = convert(triangulator,s1.get_index2());
+  p3 = convert(triangulator,s2.get_index1());
+  p4 = convert(triangulator,s2.get_index2());
+  reference1 = convert(triangulator,s1.get_reference());
+  reference2 = convert(triangulator,s2.get_reference());
+  condition1 = same_side(p1,p2,reference1,p);
+  condition2 = same_side(p3,p4,reference2,p);
+  if(angle>=180.0){
+	if(condition1 || condition2) return 1;
+	else return 0;
+  }
+  else{
+	if(condition1 && condition2) return 1;
+	else return 0;
+  }
+}
+
+bool lpcvt::invisible(DocRecord& triangulator,GFace* gf,int index){
+  int i;
+  int num;
+  int index2;
+  num = triangulator._adjacencies[index].t_length;
+  for(i=0;i<num;i++){
+    index2 = triangulator._adjacencies[index].t[i];
+	if(interior(triangulator,gf,index2)){
+	  return 0;
 	}
   }
-  return 0;
+  return 1;
 }
 
-double lloydAlgorithm::triangle_area(SPoint2 p1,SPoint2 p2,SPoint2 p3){
+bool lpcvt::real(DocRecord& triangulator,int index1,int index2,int index3){
+  return triangulator.contain(index1,index2,index3);
+}
+
+double lpcvt::triangle_area(SPoint2 p1,SPoint2 p2,SPoint2 p3){
   double area;
   double x1,y1;
   double x2,y2;
@@ -1044,52 +535,51 @@ double lloydAlgorithm::triangle_area(SPoint2 p1,SPoint2 p2,SPoint2 p3){
   return area;
 }
 
-SPoint2 lloydAlgorithm::boundary_intersection(SPoint2 p1,SPoint2 p2,bool& flag,SVector3& vec){
-  int i;
-  int num;
+bool lpcvt::sliver(SPoint2 p1,SPoint2 p2,SPoint2 p3){
+  double area;
+  double e;
+  e = 0.000000001;
+  area = triangle_area(p1,p2,p3);
+  if(area<e) return 1;
+  else return 0;
+}
+
+SPoint2 lpcvt::intersection(DocRecord& triangulator,segment s1,segment s2,SPoint2 p1,SPoint2 p2,bool &flag,SVector3& vec,segment& s){
+  bool flag1;
   bool flag2;
   SPoint2 p3;
   SPoint2 p4;
-  SPoint2 val;
-  boundary_edge edge;	
-  num = get_number_boundary_edges();
-  for(i=0;i<num;i++){
-    edge = get_boundary_edge(i);
-	p3 = edge.get_p1();
-	p4 = edge.get_p2();
-	val = intersection(p1,p2,p3,p4,flag2);
-	if(flag2){
-	  flag = 1;
-	  vec = normal(p3,p4);
-	  return val;
-	}
+  SPoint2 p5;
+  SPoint2 p6;
+  SPoint2 val1;
+  SPoint2 val2;
+  p3 = convert(triangulator,s1.get_index1());
+  p4 = convert(triangulator,s1.get_index2());
+  p5 = convert(triangulator,s2.get_index1());
+  p6 = convert(triangulator,s2.get_index2());
+  val1 = intersection(p3,p4,p1,p2,flag1);
+  val2 = intersection(p5,p6,p1,p2,flag2);
+  if(flag1){
+	flag = 1;
+	vec = normal(p3,p4);
+	s = s1;
+	return val1;
   }
-  flag = 0;
-  vec = SVector3(0.0,0.0,0.0);
-  return SPoint2(0.0,0.0);
-}
-
-bool lloydAlgorithm::inside_domain(double x,double y){
-  if(x<=1.0 && x>=0.0 && y<=1.0 && y>=0.0){
-    return 1;
+  else if(flag2){
+	flag = 1;
+	vec = normal(p5,p6);
+	s = s2;
+	return val2;
   }
   else{
-    return 0;
+	flag = 0;
+	vec = SVector3(0.0,0.0,0.0);
+	s = segment(-1,-1,-1);
+	return SPoint2(0.0,0.0);
   }
 }
 
-int lloydAlgorithm::get_number_boundary_edges(){
-  return 4;
-}
-
-boundary_edge lloydAlgorithm::get_boundary_edge(int i){
-  if(i==0) return boundary_edge(SPoint2(0.0,0.0),SPoint2(1.0,0.0));
-  else if(i==1) return boundary_edge(SPoint2(1.0,0.0),SPoint2(1.0,1.0));
-  else if(i==2) return boundary_edge(SPoint2(1.0,1.0),SPoint2(0.0,1.0));
-  else if(i==3) return boundary_edge(SPoint2(0.0,1.0),SPoint2(0.0,0.0));
-}
-
-SPoint2 lloydAlgorithm::intersection(SPoint2 p1,SPoint2 p2,SPoint2 p3,SPoint2 p4,bool& flag){
+SPoint2 lpcvt::intersection(SPoint2 p1,SPoint2 p2,SPoint2 p3,SPoint2 p4,bool& flag){
   double x1,y1;
   double x2,y2;
   double x3,y3;
@@ -1119,7 +609,7 @@ SPoint2 lloydAlgorithm::intersection(SPoint2 p1,SPoint2 p2,SPoint2 p3,SPoint2 p4
   ub = num_ub/denom;
   if(ua<=1.0 && ua>=0.0 && ub<=1.0 && ub>=0.0){
     flag = 1;
-	return SPoint2(x1 + ua * (x2 - x1), y1 + ua * (y2 - y1));
+	return SPoint2(x1+ua*(x2-x1),y1+ua*(y2-y1));
   }
   else{
     flag = 0;
@@ -1127,23 +617,1308 @@ SPoint2 lloydAlgorithm::intersection(SPoint2 p1,SPoint2 p2,SPoint2 p3,SPoint2 p4
   }
 }
 
-/****************Class boundary_edge****************/
-boundary_edge::boundary_edge(SPoint2 new_p1, SPoint2 new_p2){
-  p1 = new_p1;
-  p2 = new_p2;
+SPoint2 lpcvt::convert(DocRecord& triangulator,int index){
+  SPoint2 p;
+  double _p[2] = {triangulator.points[index].where.h,triangulator.points[index].where.v};
+  p = SPoint2(_p[0],_p[1]);
+  return p;
 }
 
-boundary_edge::boundary_edge(){}
-
-boundary_edge::~boundary_edge(){}
-
-SPoint2 boundary_edge::get_p1(){
-  return p1;
+SPoint2 lpcvt::circumcircle(DocRecord& triangulator,int index1,int index2,int index3){
+  double _C[2];
+  SPoint2 C;
+  double _x1[2] = {triangulator.points[index1].where.h,triangulator.points[index1].where.v};
+  double _x2[2] = {triangulator.points[index2].where.h,triangulator.points[index2].where.v};
+  double _x3[2] = {triangulator.points[index3].where.h,triangulator.points[index3].where.v};
+  circumCenterXY(_x1,_x2,_x3,_C);
+  C = SPoint2(_C[0],_C[1]);
+  return C;
 }
 
-SPoint2 boundary_edge::get_p2(){
-  return p2;
+SPoint2 lpcvt::seed(DocRecord& triangulator,GFace* gf){
+  int i;
+  int j;
+  int num;
+  int index1;
+  int index2;
+  double x,y;
+  SPoint2 x0,x1,x2;
+  for(i=0;i<triangulator.numPoints;i++){
+    if(interior(triangulator,gf,i)){
+	  num = triangulator._adjacencies[i].t_length;
+	  for(j=0;j<num;j++){
+	    index1 = triangulator._adjacencies[i].t[j];
+		index2 = triangulator._adjacencies[i].t[(j+1)%num];
+		if(interior(triangulator,gf,index1) && interior(triangulator,gf,index2)){
+		  x0 = convert(triangulator,i);
+		  x1 = convert(triangulator,index1);
+		  x2 = convert(triangulator,index2);
+		  x = (x0.x() + x1.x() + x2.x())/3.0;
+		  y = (x0.y() + x1.y() + x2.y())/3.0;
+		  return SPoint2(x,y);
+		}
+	  }
+	}
+  }
+  return SPoint2(0.0,0.0);
+}
+
+void lpcvt::step1(DocRecord& triangulator,GFace* gf){
+  int i;
+  int j;
+  int num;
+  int index1,index2,index3;
+  bool ok_triangle1,ok_triangle2;
+  SPoint2 x0,x1,x2,x3;
+  
+  borders.resize(triangulator.numPoints);
+  angles.resize(triangulator.numPoints);
+  for(i=0;i<triangulator.numPoints;i++){
+	angles[i] = 0.0;
+  }
+  temp.resize(triangulator.numPoints);
+  
+  for(i=0;i<triangulator.numPoints;i++){
+    if(!interior(triangulator,gf,i) && !invisible(triangulator,gf,i)){
+	  num = triangulator._adjacencies[i].t_length;
+	  for(j=0;j<num;j++){
+        index1 = triangulator._adjacencies[i].t[j];
+	    index2 = triangulator._adjacencies[i].t[(j+1)%num];
+	    index3 = triangulator._adjacencies[i].t[(j+2)%num];
+		x0 = convert(triangulator,i);
+		x1 = convert(triangulator,index1);
+		x2 = convert(triangulator,index2);
+		x3 = convert(triangulator,index3);
+		ok_triangle1 = real(triangulator,i,index1,index2) && !sliver(x0,x1,x2);
+		ok_triangle2 = real(triangulator,i,index2,index3) && !sliver(x0,x2,x3);
+		if(ok_triangle1 && !ok_triangle2){
+	      borders[i].add_segment(i,index2,index1);
+		}
+		else if(!ok_triangle1 && ok_triangle2){
+	      borders[i].add_segment(i,index2,index3);
+		}
+		  
+		if(ok_triangle1){
+		  angles[i] = angles[i] + angle(x0,x1,x2);
+		}
+	  }
+    }
+  }
+}
+
+void lpcvt::step2(DocRecord& triangulator,GFace* gf){
+  int i;
+  int j;
+  int num;
+  int index1,index2;
+  SPoint2 C;
+  voronoi_vertex vertex;
+  for(i=0;i<triangulator.numPoints;i++){
+    if(interior(triangulator,gf,i)){
+	  num = triangulator._adjacencies[i].t_length;
+	  for(j=0;j<num;j++){
+	    index1 = triangulator._adjacencies[i].t[j];
+		index2 = triangulator._adjacencies[i].t[(j+1)%num];
+		C = circumcircle(triangulator,i,index1,index2);
+		vertex = voronoi_vertex(C);
+		vertex.set_index1(i);
+		vertex.set_index2(index1);
+		vertex.set_index3(index2);
+		temp[i].add_vertex(vertex);
+	  }
+	}
+  }	
+}
+
+void lpcvt::step3(DocRecord& triangulator,GFace* gf){
+  int i;
+  int j;
+  int num;
+  double angle;
+  bool ok_triangle1,ok_triangle2;
+  bool is_inside,is_inside1,is_inside2;
+  bool flag,flag1,flag2;
+  SPoint2 x0,x1,x2,x3;
+  SPoint2 C,C1,C2;
+  SPoint2 val;
+  SPoint2 first,second,median,any;
+  SVector3 vec,vecA,vecB;
+  segment s,s1,s2,s3,s4;
+  voronoi_vertex vertex,vertex1,vertex2,vertex3;
+  for(i=0;i<triangulator.numPoints;i++){
+    if(!interior(triangulator,gf,i) && !invisible(triangulator,gf,i)){
+	  num = triangulator._adjacencies[i].t_length;
+	  s1 = borders[i].get_segment(0);
+	  s2 = borders[i].get_segment(1);
+	  angle = angles[i];
+	  for(j=0;j<num;j++){
+	    int index1 = triangulator._adjacencies[i].t[j];
+		int index2 = triangulator._adjacencies[i].t[(j+1)%num];
+		int index3 = triangulator._adjacencies[i].t[(j+2)%num];
+		x0 = convert(triangulator,i);
+		x1 = convert(triangulator,index1);
+		x2 = convert(triangulator,index2);
+		x3 = convert(triangulator,index3);
+		ok_triangle1 = real(triangulator,i,index1,index2) && !sliver(x0,x1,x2);
+		ok_triangle2 = real(triangulator,i,index2,index3) && !sliver(x0,x2,x3);
+		if(ok_triangle1 && ok_triangle2){
+		  C1 = circumcircle(triangulator,i,index1,index2);
+		  C2 = circumcircle(triangulator,i,index2,index3);
+		  is_inside1 = interior(triangulator,s1,s2,angle,C1);
+		  is_inside2 = interior(triangulator,s1,s2,angle,C2);
+		  if(is_inside1 && is_inside2){
+			vertex = voronoi_vertex(C1);
+			vertex.set_index1(i);
+			vertex.set_index2(index1);
+			vertex.set_index3(index2);
+			temp[i].add_vertex(vertex);
+		  }
+		  else if(is_inside1){
+		    val = intersection(triangulator,s1,s2,C1,C2,flag,vec,s);
+			vertex1 = voronoi_vertex(C1);
+			vertex1.set_index1(i);
+			vertex1.set_index2(index1);
+			vertex1.set_index3(index2);
+			vertex2 = voronoi_vertex(val);
+			vertex2.set_index1(i);
+			vertex2.set_index2(index2);
+			vertex2.set_normal(vec);
+			temp[i].add_vertex(vertex1);
+			temp[i].add_vertex(vertex2);
+			flag = borders[index2].add_segment(s);
+			if(flag){
+			  fifo.push(index2);
+			}
+		  }
+		  else if(is_inside2){
+		    val = intersection(triangulator,s1,s2,C1,C2,flag,vec,s);
+			vertex1 = voronoi_vertex(x0);
+			vertex1.set_duplicate(1);
+			vertex2 = voronoi_vertex(val);
+			vertex2.set_index1(i);
+			vertex2.set_index2(index2);
+			vertex2.set_normal(vec);
+			temp[i].add_vertex(vertex1);
+			temp[i].add_vertex(vertex2);
+			flag = borders[index2].add_segment(s);
+			if(flag){
+			  fifo.push(index2);
+			}
+		  }
+		  else{
+			any = intersection(triangulator,s1,s2,C1,C2,flag,vec,s);
+			if(flag){
+			  median = mid(x0,x2);
+			  first = intersection(triangulator,s1,s2,C1,median,flag,vecA,s3);
+			  second = intersection(triangulator,s1,s2,C2,median,flag,vecB,s4);
+			  vertex1 = voronoi_vertex(x0);
+			  vertex1.set_duplicate(1);
+			  vertex2 = voronoi_vertex(first);
+			  vertex2.set_index1(i);
+			  vertex2.set_index2(index2);
+			  vertex2.set_normal(vecA);
+			  vertex3 = voronoi_vertex(second);
+			  vertex3.set_index1(i);
+			  vertex3.set_index2(index2);
+			  vertex3.set_normal(vecB);
+			  temp[i].add_vertex(vertex1);
+			  temp[i].add_vertex(vertex2);
+			  temp[i].add_vertex(vertex3);
+			  flag1 = borders[index2].add_segment(s3);
+			  flag2 = borders[index2].add_segment(s4);
+			  if(flag1 || flag2){
+			    fifo.push(index2);
+			  }
+			}
+		  }
+		}
+		else if(ok_triangle1){
+		  C = circumcircle(triangulator,i,index1,index2);
+		  is_inside = interior(triangulator,s1,s2,angle,C);
+		  if(is_inside){
+		    val = mid(x0,x2);
+			vertex1 = voronoi_vertex(C);
+			vertex1.set_index1(i);
+			vertex1.set_index2(index1);
+			vertex1.set_index3(index2);
+			vertex2 = voronoi_vertex(val);
+			temp[i].add_vertex(vertex1);
+			temp[i].add_vertex(vertex2);
+		  }	  
+		}
+		else if(ok_triangle2){
+		  C = circumcircle(triangulator,i,index2,index3);
+		  is_inside = interior(triangulator,s1,s2,angle,C);
+		  if(is_inside){
+		    val = mid(x0,x2);
+			vertex1 = voronoi_vertex(x0);
+			vertex1.set_duplicate(1);
+			vertex2 = voronoi_vertex(val);
+			temp[i].add_vertex(vertex1);
+			temp[i].add_vertex(vertex2);
+		  }
+		}
+	  }
+    }
+  }
+}
+
+void lpcvt::step4(DocRecord& triangulator,GFace* gf){
+  int i;
+  int j;
+  int num;
+  int index;
+  int start;
+  int opposite;
+  bool flag1,flag2;
+  SPoint2 val;
+  SPoint2 C1,C2;
+  SPoint2 p1,p2;
+  voronoi_vertex vertex1,vertex2;
+  segment s;
+  while(!fifo.empty()){
+	index = fifo.front();
+	fifo.pop();
+	num = temp[index].get_number_vertices();
+	if(interior(triangulator,gf,index)){
+	  start = 0;
+	}
+	else start = 2;
+	for(i=start;i<borders[index].get_number_segments();i++){
+	  s = borders[index].get_segment(i);
+	  p1 = convert(triangulator,s.get_index1());
+	  p2 = convert(triangulator,s.get_index2());
+	  for(j=0;j<num;j++){
+		vertex1 = temp[index].get_vertex(j);
+		vertex2 = temp[index].get_vertex((j+1)%num);
+		C1 = vertex1.get_point();
+		C2 = vertex2.get_point();
+		val = intersection(C1,C2,p1,p2,flag1);
+		if(flag1){
+		  if(vertex1.get_index3()!=-1){
+		    opposite = vertex1.get_index3();    
+		  }
+		  else if(vertex1.get_index2()!=-1){
+		    opposite = vertex1.get_index2();
+		  }
+		  else if(vertex2.get_index2()!=-1){
+		    opposite = vertex2.get_index2();
+		  }
+		  flag2 = borders[opposite].add_segment(s);
+		  if(flag2){
+			fifo.push(opposite);
+		  }
+		}
+	  }
+	}
+  }
+}
+
+void lpcvt::step5(DocRecord& triangulator,GFace* gf){
+  int i;
+  int j;
+  int k;
+  int num;
+  int start;
+  int opposite;
+  bool flag;
+  SPoint2 p1,p2,p3,p4,reference,val;
+  SVector3 n;
+  segment s;
+  voronoi_vertex vertex,vertex1,vertex2;
+  voronoi_cell cell;
+  for(i=0;i<triangulator.numPoints;i++){
+    cell.clear();
+	if(interior(triangulator,gf,i)){
+	  start = 0;
+	}
+	else start = 2;
+	for(j=start;j<borders[i].get_number_segments();j++){
+	  s = borders[i].get_segment(j);
+	  p3 = convert(triangulator,s.get_index1());
+	  p4 = convert(triangulator,s.get_index2());
+	  reference = convert(triangulator,s.get_reference());
+	  n = normal(p3,p4);
+	  num = temp[i].get_number_vertices();
+	  for(k=0;k<num;k++){
+	    vertex1 = temp[i].get_vertex(k);
+		vertex2 = temp[i].get_vertex((k+1)%num);
+		p1 = vertex1.get_point();
+		p2 = vertex2.get_point();
+		if(same_side(p3,p4,reference,p1)){
+		  cell.add_vertex(vertex1);
+		}
+		val = intersection(p1,p2,p3,p4,flag);
+		if(flag){
+		  if(vertex1.get_index3()!=-1){
+		    opposite = vertex1.get_index3();    
+		  }
+		  else if(vertex1.get_index2()!=-1){
+		    opposite = vertex1.get_index2();
+		  }
+		  else if(vertex2.get_index2()!=-1){
+		    opposite = vertex2.get_index2();
+		  }
+		  vertex = voronoi_vertex(val);
+		  vertex.set_index1(i);
+		  vertex.set_index2(opposite);
+		  vertex.set_normal(n);
+		  cell.add_vertex(vertex);
+		}
+	  }
+	  temp[i].clear();
+	  for(k=0;k<cell.get_number_vertices();k++){
+	    temp[i].add_vertex(cell.get_vertex(k));
+	  }
+	  cell.clear();
+	}
+	num = temp[i].get_number_vertices();
+	for(j=0;j<num;j++){
+	  vertex = voronoi_vertex(convert(triangulator,i));
+	  vertex.set_index1(i);
+	  vertex1 = temp[i].get_vertex(j);
+	  vertex2 = temp[i].get_vertex((j+1)%num);
+	  if(!vertex1.get_duplicate() && !vertex2.get_duplicate()){
+	    clipped.push_back(voronoi_element(vertex,vertex1,vertex2));
+	  }
+	}
+  }
+}
+
+void lpcvt::clip_cells(DocRecord& triangulator,GFace* gf){
+  step1(triangulator,gf);
+  step2(triangulator,gf);
+  step3(triangulator,gf);
+  step4(triangulator,gf);
+  step5(triangulator,gf);
+}
+
+void lpcvt::clear(){
+  int i;
+  for(i=0;i<fifo.size();i++){
+    fifo.pop();
+  }
+  clipped.clear();
+  borders.clear();
+  angles.clear();
+  temp.clear();
+  metrics.clear();
+}
+
+double lpcvt::total_area(){
+  double total;
+  SPoint2 p1,p2,p3;
+  voronoi_vertex v1,v2,v3;
+  std::list<voronoi_element>::iterator it;
+  total = 0.0;
+  for(it=clipped.begin();it!=clipped.end();it++){
+    v1 = it->get_v1();
+    v2 = it->get_v2();
+    v3 = it->get_v3();
+	p1 = v1.get_point();
+	p2 = v2.get_point();
+	p3 = v3.get_point();
+	total = total + triangle_area(p1,p2,p3);
+  }
+  return total;
+}
+
+void lpcvt::print_voronoi1(){
+  SPoint2 p1,p2,p3;
+  voronoi_vertex v1,v2,v3;
+  std::list<voronoi_element>::iterator it;
+  std::ofstream file("voronoi1.pos");
+  file << "View \"test\" {\n";
+  for(it=clipped.begin();it!=clipped.end();it++){
+    v1 = it->get_v1();
+	v2 = it->get_v2();
+	v3 = it->get_v3();
+	p1 = v1.get_point();
+	p2 = v2.get_point();
+	p3 = v3.get_point();
+	print_segment(p2,p3,file);
+  }	
+  file << "};\n";
+}
+
+void lpcvt::print_voronoi2(){
+  int i;
+  int j;
+  int num;
+  SPoint2 p1,p2;
+  voronoi_vertex v1,v2;
+  std::ofstream file("voronoi2.pos");
+  file << "View \"test\" {\n";
+  for(i=0;i<temp.size();i++){
+    num = temp[i].get_number_vertices();
+	for(j=0;j<num;j++){
+	  v1 = temp[i].get_vertex(j);
+	  v2 = temp[i].get_vertex((j+1)%num);
+	  p1 = v1.get_point();
+	  p2 = v2.get_point();
+	  print_segment(p1,p2,file);
+	}
+  }
+  file << "};\n";
+}
+	
+void lpcvt::print_delaunay(DocRecord& triangulator){
+  int i;
+  int j;
+  int num;
+  int index1;
+  int index2;
+  SPoint2 x1,x2;
+  std::ofstream file("delaunay.pos");
+  file << "View \"test\" {\n";
+  for(i=0;i<triangulator.numPoints;i++){
+    num = triangulator._adjacencies[i].t_length;
+	for(j=0;j<num;j++){
+	  index1 = triangulator._adjacencies[i].t[j];
+	  index2 = triangulator._adjacencies[i].t[(j+1)%num];
+	  if(triangulator.contain(i,index1,index2)){
+		x1 = convert(triangulator,index1);
+		x2 = convert(triangulator,index2);
+		print_segment(x1,x2,file);
+	  }
+	}
+  }
+  file << "};\n";
+}
+
+void lpcvt::print_segment(SPoint2 p1,SPoint2 p2,std::ofstream& file){
+  file << "SL (" << p1.x() << ", " << p1.y() << ", 0, "
+  << p2.x() << ", " << p2.y() << ", 0){"
+  << "10, 20};\n";	
+}
+
+void lpcvt::compute_metrics(DocRecord& triangulator){
+  int i;
+  double x;
+  double y;
+  double angle;
+  double cosinus;
+  double sinus;
+  SPoint2 point;
+  metric m;
+	
+  metrics.resize(triangulator.numPoints);	
+	
+  for(i=0;i<triangulator.numPoints;i++){
+    point = convert(triangulator,i);
+	x = point.x();
+	y = point.y();
+	angle = backgroundMesh::current()->getAngle(x,y,0.0); //-myatan2(y,x);
+	cosinus = cos(angle);
+	sinus = sin(angle);
+	m = metric(cosinus,-sinus,sinus,cosinus);
+	metrics[i] = m;  
+  }
+}
+
+double lpcvt::get_rho(SPoint2 point,int p){
+  double x;
+  double y;
+  double h;
+  double rho;
+	
+  x = point.x();
+  y = point.y();
+  h = backgroundMesh::current()->operator()(x,y,0.0); //0.1;
+  if(h>=0.0){
+    rho = pow_int(1.0/h,p+1); //integer only, theoric value : p+2
+  }
+  else{
+    rho = -1000.0;
+  }
+  return rho;
+}
+
+double lpcvt::drho_dx(SPoint2 point,int p){
+  double x;
+  double y;
+  double e;
+  double val;
+  double rho;
+  double rho_less2;
+  double rho_less1;
+  double rho_plus1;
+  double rho_plus2;
+  SPoint2 less2;
+  SPoint2 less1;
+  SPoint2 plus1;
+  SPoint2 plus2;
+	
+  x = point.x();
+  y = point.y();
+  e = 0.00000001;
+  less2 = SPoint2(x-2.0*e,y);
+  less1 = SPoint2(x-e,y);
+  plus1 = SPoint2(x+e,y);
+  plus2 = SPoint2(x+2.0*e,y);
+  rho = get_rho(point,p);
+  rho_less2 = get_rho(less2,p);
+  rho_less1 = get_rho(less1,p);
+  rho_plus1 = get_rho(plus1,p);
+  rho_plus2 = get_rho(plus2,p);
+  if(rho_less2>=0.0 && rho_less1>=0.0 && rho_plus1>=0.0 && rho_plus2>=0.0){
+    val = (rho_less2 - 8.0*rho_less1 + 8.0*rho_plus1 - rho_plus2)/(12.0*e);
+  }
+  else if(rho_less1>=0.0 && rho>=0.0){
+    val = (rho - rho_less1)/e;
+  }
+  else if(rho>=0.0 && rho_plus1>=0.0){
+    val = (rho_plus1 - rho)/e;
+  }
+  else{
+	val = 0.0;
+  }
+  return val;
+}
+
+double lpcvt::drho_dy(SPoint2 point,int p){
+  double x;
+  double y;
+  double e;
+  double val;
+  double rho;
+  double rho_less2;
+  double rho_less1;
+  double rho_plus1;
+  double rho_plus2;
+  SPoint2 less2;
+  SPoint2 less1;
+  SPoint2 plus1;
+  SPoint2 plus2;
+	
+  x = point.x();
+  y = point.y();
+  e = 0.00000001;
+  less2 = SPoint2(x,y-2.0*e);
+  less1 = SPoint2(x,y-e);
+  plus1 = SPoint2(x,y+e);
+  plus2 = SPoint2(x,y+2.0*e);
+  rho = get_rho(point,p);
+  rho_less2 = get_rho(less2,p);
+  rho_less1 = get_rho(less1,p);
+  rho_plus1 = get_rho(plus1,p);
+  rho_plus2 = get_rho(plus2,p);
+  if(rho_less2>=0.0 && rho_less1>=0.0 && rho_plus1>=0.0 && rho_plus2>=0.0){
+    val = (rho_less2 - 8.0*rho_less1 + 8.0*rho_plus1 - rho_plus2)/(12.0*e);
+  }
+  else if(rho_less1>=0.0 && rho>=0.0){
+    val = (rho - rho_less1)/e;
+  }
+  else if(rho>=0.0 && rho_plus1>=0.0){
+    val = (rho_plus1 - rho)/e;
+  }
+  else{
+    val = 0.0;
+  }
+  return val;
+}
+
+void lpcvt::write(DocRecord& triangulator,GFace* gf,int p){
+  int i;
+  double energy;
+  SVector3 grad;
+  std::vector<SVector3> gradients(triangulator.numPoints);
+	
+  eval(triangulator,gradients,energy,p);
+	
+  std::ofstream file("gradient");
+	
+  for(i=0;i<triangulator.numPoints;i++){
+    if(interior(triangulator,gf,i)){
+	  grad = gradients[i];
+	  file << grad.x() << "  ";
+	  file << grad.y() << "  ";
+	  file << "\n";
+	}
+  }
+}
+
+void lpcvt::eval(DocRecord& triangulator,std::vector<SVector3>& gradients,double& energy,int p){
+  int i;
+  int index;
+  int index1;
+  int index2;
+  int index3;
+  SPoint2 generator;
+  SPoint2 C1,C2;
+  SPoint2 p1,p2,p3;
+  SVector3 grad1,grad2;
+  SVector3 normal;
+  voronoi_vertex v1,v2,v3;
+  std::list<voronoi_element>::iterator it;
+	
+  for(i=0;i<gradients.size();i++){
+    gradients[i] = SVector3(0.0,0.0,0.0);
+  }
+  energy = 0.0;
+	
+  for(it=clipped.begin();it!=clipped.end();it++){
+    v1 = it->get_v1();
+	v2 = it->get_v2();
+	v3 = it->get_v3();
+	generator = v1.get_point();
+	C1 = v2.get_point();
+	C2 = v3.get_point();
+	index = v1.get_index1();
+	energy = energy + F(generator,C1,C2,p,index);
+	gradients[index] = gradients[index] + simple(generator,C1,C2,p,index);
+	grad1 = dF_dC1(generator,C1,C2,p,index);
+	grad2 = dF_dC2(generator,C1,C2,p,index);
+	if(v2.get_index3()!=-1){
+	  index1 = v2.get_index1();
+	  index2 = v2.get_index2();
+	  index3 = v2.get_index3();
+	  p1 = convert(triangulator,index1);
+	  p2 = convert(triangulator,index2);
+	  p3 = convert(triangulator,index3);
+	  gradients[index1] = gradients[index1] + inner_dFdx0(grad1,C1,p1,p2,p3);
+	  gradients[index2] = gradients[index2] + inner_dFdx0(grad1,C1,p2,p1,p3);
+	  gradients[index3] = gradients[index3] + inner_dFdx0(grad1,C1,p3,p1,p2);
+	}
+	else if(v2.get_index2()!=-1){
+	  index1 = v2.get_index1();
+	  index2 = v2.get_index2();
+	  normal = v2.get_normal();
+	  p1 = convert(triangulator,index1);
+	  p2 = convert(triangulator,index2);
+	  gradients[index1] = gradients[index1] + boundary_dFdx0(grad1,C1,p1,p2,normal);
+	  gradients[index2] = gradients[index2] + boundary_dFdx0(grad1,C1,p2,p1,normal);
+	}
+	if(v3.get_index3()!=-1){
+	  index1 = v3.get_index1();
+	  index2 = v3.get_index2();
+	  index3 = v3.get_index3();
+	  p1 = convert(triangulator,index1);
+	  p2 = convert(triangulator,index2);
+	  p3 = convert(triangulator,index3);
+	  gradients[index1] = gradients[index1] + inner_dFdx0(grad2,C2,p1,p2,p3);
+	  gradients[index2] = gradients[index2] + inner_dFdx0(grad2,C2,p2,p1,p3);
+	  gradients[index3] = gradients[index3] + inner_dFdx0(grad2,C2,p3,p1,p2);
+	}
+	else if(v3.get_index2()!=-1){
+	  index1 = v3.get_index1();
+	  index2 = v3.get_index2();
+	  normal = v3.get_normal();
+	  p1 = convert(triangulator,index1);
+	  p2 = convert(triangulator,index2);
+	  gradients[index1] = gradients[index1] + boundary_dFdx0(grad2,C2,p1,p2,normal);
+	  gradients[index2] = gradients[index2] + boundary_dFdx0(grad2,C2,p2,p1,normal);
+	}
+  }
+}
+
+void lpcvt::swap(){
+  voronoi_vertex vertex;
+  std::list<voronoi_element>::iterator it;
+  for(it=clipped.begin();it!=clipped.end();it++){
+    vertex = it->get_v3();
+	it->set_v3(it->get_v2());
+	it->set_v2(vertex);
+  }
+}
+
+void lpcvt::get_gauss(){
+  int order;
+  order = 8;
+  gaussIntegration::getTriangle(order,gauss_points,gauss_weights);
+  gauss_num = gauss_points.size1();
+}
+
+double lpcvt::F(SPoint2 generator,SPoint2 C1,SPoint2 C2,int p,int index){
+  int i;
+  double x;
+  double y;
+  double energy;
+  double u;
+  double v;
+  double weight;
+  SPoint2 point;
+  energy = 0.0;
+  for(i=0;i<gauss_num;i++){
+	u = gauss_points(i,0);
+	v = gauss_points(i,1);
+	weight = gauss_weights(i,0);
+    x = Tx(u,v,generator,C1,C2);
+	y = Ty(u,v,generator,C1,C2);
+	point = SPoint2(x,y);
+	energy = energy + weight*get_rho(point,p)*f(generator,point,p,index);
+  }
+  energy = J(generator,C1,C2)*energy;
+  return energy;
+}
+
+SVector3 lpcvt::simple(SPoint2 generator,SPoint2 C1,SPoint2 C2,int p,int index){
+  int i;
+  double x;
+  double y;
+  double comp_x;
+  double comp_y;
+  double jacobian;
+  double u;
+  double v;
+  double weight;
+  double rho;
+  SPoint2 point;
+  comp_x = 0.0;
+  comp_y = 0.0;
+  jacobian = J(generator,C1,C2);
+  for(i=0;i<gauss_num;i++){
+	u = gauss_points(i,0);
+	v = gauss_points(i,1);
+	weight = gauss_weights(i,0);
+    x = Tx(u,v,generator,C1,C2);
+	y = Ty(u,v,generator,C1,C2);
+	point = SPoint2(x,y);
+	rho = get_rho(point,p);
+	comp_x = comp_x + weight*rho*df_dx(generator,point,p,index);
+	comp_y = comp_y + weight*rho*df_dy(generator,point,p,index);
+  }
+  comp_x = jacobian*comp_x;
+  comp_y = jacobian*comp_y; 
+  return SVector3(comp_x,comp_y,0.0);
+}
+
+SVector3 lpcvt::dF_dC1(SPoint2 generator,SPoint2 C1,SPoint2 C2,int p,int index){
+  int i;
+  double x;
+  double y;
+  double comp_x;
+  double comp_y;
+  double jacobian;
+  double u;
+  double v;
+  double weight;
+  double rho;
+  SPoint2 point;
+  comp_x = 0.0;
+  comp_y = 0.0;
+  jacobian = J(generator,C1,C2);
+  for(i=0;i<gauss_num;i++){
+	u = gauss_points(i,0);
+	v = gauss_points(i,1);
+	weight = gauss_weights(i,0);
+    x = Tx(u,v,generator,C1,C2);
+	y = Ty(u,v,generator,C1,C2);
+	point = SPoint2(x,y);
+	rho = get_rho(point,p);
+	comp_x = comp_x + weight*rho*df_dx(point,generator,p,index)*u*jacobian;
+	comp_x = comp_x + weight*rho*f(point,generator,p,index)*(C2.y()-generator.y());
+	comp_x = comp_x + weight*drho_dx(point,p)*u*f(point,generator,p,index)*jacobian;
+	comp_y = comp_y + weight*rho*df_dy(point,generator,p,index)*u*jacobian;
+	comp_y = comp_y + weight*rho*f(point,generator,p,index)*(generator.x()-C2.x());
+	comp_y = comp_y + weight*drho_dy(point,p)*u*f(point,generator,p,index)*jacobian;
+  }		
+  return SVector3(comp_x,comp_y,0.0);
+}
+
+SVector3 lpcvt::dF_dC2(SPoint2 generator,SPoint2 C1,SPoint2 C2,int p,int index){
+  int i;
+  double x;
+  double y;
+  double comp_x;
+  double comp_y;
+  double jacobian;
+  double u;
+  double v;
+  double weight;
+  double rho;
+  SPoint2 point;
+  comp_x = 0.0;
+  comp_y = 0.0;
+  jacobian = J(generator,C1,C2);
+  for(i=0;i<gauss_num;i++){
+	u = gauss_points(i,0);
+	v = gauss_points(i,1);
+	weight = gauss_weights(i,0);
+    x = Tx(u,v,generator,C1,C2);
+	y = Ty(u,v,generator,C1,C2);
+	point = SPoint2(x,y);
+	rho = get_rho(point,p);
+	comp_x = comp_x + weight*rho*df_dx(point,generator,p,index)*v*jacobian;
+	comp_x = comp_x + weight*rho*f(point,generator,p,index)*(generator.y()-C1.y());
+	comp_x = comp_x + weight*drho_dx(point,p)*v*f(point,generator,p,index)*jacobian;
+	comp_y = comp_y + weight*rho*df_dy(point,generator,p,index)*v*jacobian;
+	comp_y = comp_y + weight*rho*f(point,generator,p,index)*(C1.x()-generator.x());
+	comp_y = comp_y + weight*drho_dy(point,p)*v*f(point,generator,p,index)*jacobian;
+  }		
+  return SVector3(comp_x,comp_y,0.0);
+}
+
+double lpcvt::f(SPoint2 p1,SPoint2 p2,int p,int index){
+  double x1;
+  double y1;
+  double x2;
+  double y2;
+  double val1;
+  double val2;
+  double val;
+  double a;
+  double b;
+  double c;
+  double d;
+  metric m;
+  
+  x1 = p1.x();
+  y1 = p1.y();
+  x2 = p2.x();
+  y2 = p2.y();
+  m = metrics[index];
+  a = m.get_a();
+  b = m.get_b();
+  c = m.get_c();
+  d = m.get_d();
+  val1 = a*x1 + b*y1 - a*x2 - b*y2;
+  val2 = c*x1 + d*y1 - c*x2 - d*y2;
+  val = pow_int(val1,p) + pow_int(val2,p);
+  return val;
+}
+
+double lpcvt::df_dx(SPoint2 p1,SPoint2 p2,int p,int index){
+  double x1;
+  double y1;
+  double x2;
+  double y2;
+  double val1;
+  double val2;
+  double val;
+  double a;
+  double b;
+  double c;
+  double d;
+  metric m;
+  
+  x1 = p1.x();
+  y1 = p1.y();
+  x2 = p2.x();
+  y2 = p2.y();
+  m = metrics[index];
+  a = m.get_a();
+  b = m.get_b();
+  c = m.get_c();
+  d = m.get_d();
+  val1 = a*x1 + b*y1 - a*x2 - b*y2;
+  val2 = c*x1 + d*y1 - c*x2 - d*y2;
+  val = ((double)p)*pow_int(val1,p-1)*a + ((double)p)*pow_int(val2,p-1)*c;
+  return val;
+}
+
+double lpcvt::df_dy(SPoint2 p1,SPoint2 p2,int p,int index){
+  double x1;
+  double y1;
+  double x2;
+  double y2;
+  double val1;
+  double val2;
+  double val;
+  double a;
+  double b;
+  double c;
+  double d;
+  metric m;
+  
+  x1 = p1.x();
+  y1 = p1.y();
+  x2 = p2.x();
+  y2 = p2.y();
+  m = metrics[index];
+  a = m.get_a();
+  b = m.get_b();
+  c = m.get_c();
+  d = m.get_d();
+  val1 = a*x1 + b*y1 - a*x2 - b*y2;
+  val2 = c*x1 + d*y1 - c*x2 - d*y2;
+  val = ((double)p)*pow_int(val1,p-1)*b + ((double)p)*pow_int(val2,p-1)*d;
+  return val;
+}
+
+double lpcvt::Tx(double u,double v,SPoint2 p1,SPoint2 p2,SPoint2 p3){
+  double val;
+  val = (1.0-u-v)*p1.x() + u*p2.x() + v*p3.x();
+  return val;
+}
+
+double lpcvt::Ty(double u,double v,SPoint2 p1,SPoint2 p2,SPoint2 p3){
+  double val;
+  val = (1.0-u-v)*p1.y() + u*p2.y() + v*p3.y();
+  return val;
+}
+
+double lpcvt::J(SPoint2 p1,SPoint2 p2,SPoint2 p3){
+  double val;
+  val = (p2.x()-p1.x())*(p3.y()-p1.y()) - (p3.x()-p1.x())*(p2.y()-p1.y());
+  return val;
+}
+
+SVector3 lpcvt::inner_dFdx0(SVector3 dFdC,SPoint2 C,SPoint2 x0,SPoint2 x1,SPoint2 x2){
+  double det;
+  double A[2][2];
+  double B[2][2];
+  double M[2][2];
+  det = (x1.x()-x0.x())*(x2.y()-x0.y()) - (x1.y() - x0.y())*(x2.x() - x0.x());
+  A[0][0] = (x2.y() - x0.y())/det;
+  A[0][1] = -(x1.y() - x0.y())/det;
+  A[1][0] = -(x2.x() - x0.x())/det; 
+  A[1][1] = (x1.x() - x0.x())/det;
+  B[0][0] = C.x() - x0.x();
+  B[0][1] = C.y() - x0.y();
+  B[1][0] = C.x() - x0.x();
+  B[1][1] = C.y() - x0.y();
+  M[0][0] = A[0][0]*B[0][0] + A[0][1]*B[1][0];
+  M[0][1] = A[0][0]*B[0][1] + A[0][1]*B[1][1];
+  M[1][0] = A[1][0]*B[0][0] + A[1][1]*B[1][0];
+  M[1][1] = A[1][0]*B[0][1] + A[1][1]*B[1][1];
+  return SVector3(dFdC.x()*M[0][0]+dFdC.y()*M[1][0],dFdC.x()*M[0][1]+dFdC.y()*M[1][1],0.0);
+}
+
+SVector3 lpcvt::boundary_dFdx0(SVector3 dFdC,SPoint2 C,SPoint2 x0,SPoint2 x1,SVector3 normal){
+  fullMatrix<double> A(2,2);
+  fullMatrix<double> B(2,2);
+  fullMatrix<double> M(2,2);
+  fullMatrix<double> _dFdC(1,2);
+  fullMatrix<double> _val(1,2);
+  A(0,0) = x1.x() - x0.x(); 
+  A(0,1) = x1.y() - x0.y();
+  A(1,0) = normal.x(); 
+  A(1,1) = normal.y();
+  A.invertInPlace();
+  B(0,0) = C.x() - x0.x();
+  B(0,1) = C.y() - x0.y();
+  B(1,0) = 0.0;
+  B(1,1) = 0.0;
+  A.mult_naive(B,M);
+  _dFdC(0,0) = dFdC.x();
+  _dFdC(0,1) = dFdC.y();
+  _dFdC.mult_naive(M,_val);
+  return SVector3(_val(0,0),_val(0,1),0.0);	
 }
 
 
-#endif
+
+/****************class voronoi_vertex****************/
+
+voronoi_vertex::voronoi_vertex(SPoint2 new_point){
+  point = new_point;
+  index1 = -1;
+  index2 = -1;
+  index3 = -1;
+  normal = SVector3(0.0,0.0,0.0);
+  duplicate = 0;
+}
+
+voronoi_vertex::voronoi_vertex(){}
+
+voronoi_vertex::~voronoi_vertex(){}
+
+SPoint2 voronoi_vertex::get_point(){
+  return point;
+}
+
+int voronoi_vertex::get_index1(){
+  return index1;
+}
+
+int voronoi_vertex::get_index2(){
+  return index2;
+}
+
+int voronoi_vertex::get_index3(){
+  return index3;
+}
+
+SVector3 voronoi_vertex::get_normal(){
+  return normal;
+}
+
+bool voronoi_vertex::get_duplicate(){
+  return duplicate;
+}
+
+void voronoi_vertex::set_point(SPoint2 new_point){
+  point = new_point;
+}
+
+void voronoi_vertex::set_index1(int new_index1){
+  index1 = new_index1;
+}
+
+void voronoi_vertex::set_index2(int new_index2){
+  index2 = new_index2;
+}
+
+void voronoi_vertex::set_index3(int new_index3){
+  index3 = new_index3;
+}
+
+void voronoi_vertex::set_normal(SVector3 new_normal){
+  normal = new_normal;
+}
+
+void voronoi_vertex::set_duplicate(bool new_duplicate){
+  duplicate = new_duplicate;
+}
+
+
+
+/****************class voronoi_element****************/
+
+voronoi_element::voronoi_element(voronoi_vertex new_v1,voronoi_vertex new_v2,voronoi_vertex new_v3){
+  v1 = new_v1;
+  v2 = new_v2;
+  v3 = new_v3;
+}
+
+voronoi_element::voronoi_element(){}
+
+voronoi_element::~voronoi_element(){}
+
+voronoi_vertex voronoi_element::get_v1(){
+  return v1;
+}
+
+voronoi_vertex voronoi_element::get_v2(){
+  return v2;
+}
+
+voronoi_vertex voronoi_element::get_v3(){
+  return v3;
+}
+
+void voronoi_element::set_v1(voronoi_vertex new_v1){
+  v1 = new_v1;
+}
+
+void voronoi_element::set_v2(voronoi_vertex new_v2){
+  v2 = new_v2;
+}
+
+void voronoi_element::set_v3(voronoi_vertex new_v3){
+  v3 = new_v3;
+}
+
+
+
+/****************class voronoi_cell****************/
+
+voronoi_cell::voronoi_cell(){}
+
+voronoi_cell::~voronoi_cell(){}
+
+int voronoi_cell::get_number_vertices(){
+  return vertices.size();
+}
+
+voronoi_vertex voronoi_cell::get_vertex(int index){
+  return vertices[index];
+}
+
+void voronoi_cell::add_vertex(voronoi_vertex vertex){
+  vertices.push_back(vertex);
+}
+
+void voronoi_cell::clear(){
+  vertices.clear();
+}
+
+
+
+/****************class segment****************/
+
+segment::segment(int new_index1,int new_index2,int new_reference){
+  index1 = new_index1;
+  index2 = new_index2;
+  reference = new_reference;
+}
+
+segment::segment(){}
+
+segment::~segment(){}
+
+int segment::get_index1(){
+  return index1;
+}
+
+int segment::get_index2(){
+  return index2;
+}
+
+int segment::get_reference(){
+  return reference;
+}
+
+void segment::set_index1(int new_index1){
+  index1 = new_index1;
+}
+
+void segment::set_index2(int new_index2){
+  index2 = new_index2;
+}
+
+void segment::set_reference(int new_reference){
+  reference = new_reference;
+}
+
+bool segment::equal(int index3,int index4){
+  if(index1==index3 && index2==index4){
+    return 1;
+  }
+  else if(index1==index4 && index2==index3){
+    return 1;
+  }
+  else return 0;
+}
+
+
+
+/****************class list_segment****************/
+
+segment_list::segment_list(){}
+
+segment_list::~segment_list(){}
+
+int segment_list::get_number_segments(){
+  return segments.size();
+}
+
+segment segment_list::get_segment(int index){
+  return segments[index];
+}
+
+bool segment_list::add_segment(int index1,int index2,int reference){
+  int i;
+  for(i=0;i<segments.size();i++){
+	if(segments[i].equal(index1,index2)) return 0;
+  }
+  segments.push_back(segment(index1,index2,reference));
+  return 1;
+}
+
+bool segment_list::add_segment(segment s){
+  return add_segment(s.get_index1(),s.get_index2(),s.get_reference());
+}
+
+
+
+/****************class metric****************/
+
+metric::metric(double new_a,double new_b,double new_c,double new_d){
+  a = new_a;
+  b = new_b;
+  c = new_c;
+  d = new_d;
+}
+
+metric::metric(){}
+
+metric::~metric(){}
+
+void metric::set_a(double new_a){
+  a = new_a;
+}
+
+void metric::set_b(double new_b){
+  b = new_b;
+}
+
+void metric::set_c(double new_c){
+  c = new_c;
+}
+
+void metric::set_d(double new_d){
+  d = new_d;
+}
+
+double metric::get_a(){
+  return a;
+}
+
+double metric::get_b(){
+  return b;
+}
+
+double metric::get_c(){
+  return c;
+}
+
+double metric::get_d(){
+  return d;
+}
+
+
+
+/****************class wrapper****************/
+
+wrapper::wrapper(){
+  iteration = 0;
+  start = -100.0;
+}
+
+wrapper::~wrapper(){}
+
+int wrapper::get_p(){
+  return p;
+}
+
+void wrapper::set_p(int new_p){
+  p = new_p;
+}
+
+int wrapper::get_dimension(){
+  return dimension;
+}
+
+void wrapper::set_dimension(int new_dimension){
+  dimension = new_dimension;
+}
+
+GFace* wrapper::get_face(){
+  return gf;
+}
+
+void wrapper::set_face(GFace* new_gf){
+  gf = new_gf;
+}
+
+int wrapper::get_iteration(){
+  return iteration;
+}
+
+void wrapper::set_iteration(int new_iteration){
+  iteration = new_iteration;
+}
+
+int wrapper::get_max(){
+  return max;
+}
+
+void wrapper::set_max(int new_max){
+  max = new_max;
+}
+
+double wrapper::get_start(){
+  return start;
+}
+
+void wrapper::set_start(double new_start){
+  start = new_start;
+}
+
+DocRecord* wrapper::get_triangulator(){
+  return triangulator;
+}
+
+void wrapper::set_triangulator(DocRecord* new_triangulator){
+  triangulator = new_triangulator;
+}
+
+MElementOctree* wrapper::get_octree(){
+  return octree;
+}
+
+void wrapper::set_octree(MElementOctree* new_octree){
+  octree = new_octree;
+}

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -27,6 +27,7 @@
 
 #define Pred(x) ((x)->prev)
 #define Succ(x) ((x)->next)
+
 PointNumero DocRecord::Predecessor(PointNumero a, PointNumero b)
 {
   DListPeek p = points[a].adjacent;
@@ -835,7 +836,7 @@ DocRecord::~DocRecord()
     for(int i = 0; i < numPoints; i++)
       delete [] _adjacencies[i].t;
     delete _adjacencies;
-  }  
+  }
 }
 
 void DocRecord::MakeMeshWithPoints()
@@ -843,7 +844,7 @@ void DocRecord::MakeMeshWithPoints()
   if(numPoints < 3) return;
   BuildDelaunay();
   ConvertDListToTriangles();
-  RemoveAllDList();
+  //RemoveAllDList();
 }
 
 void DocRecord::Voronoi()
@@ -852,59 +853,6 @@ void DocRecord::Voronoi()
   BuildDelaunay();
   ConvertDListToVoronoiData();
 }
-
-void DocRecord::recur_tag_triangles (int iTriangle, 
-				     std::set<int> &taggedTriangles, 
-				     std::map< std::pair<void*,void*>, std::pair<int,int> > & edgesToTriangles){
-
-  if (taggedTriangles.find(iTriangle) != taggedTriangles.end())return;
-  
-  taggedTriangles.insert(iTriangle);
-  
-  int a = triangles[iTriangle].a;
-  int b = triangles[iTriangle].b;
-  int c = triangles[iTriangle].c;
-  PointRecord *p[3] = {&points[a],&points[b],&points[c]};
-  
-  for (int j=0;j<3;j++){
-    if (!lookForBoundaryEdge(p[j]->data,p[(j+1)%3]->data)){
-      std::pair<void*,void*> ab = std::make_pair(std::min(p[j]->data,p[(j+1)%3]->data),std::max(p[j]->data,p[(j+1)%3]->data));
-      std::pair<int,int> & adj = edgesToTriangles[ab];
-      if (iTriangle == adj.first && adj.second != -1)recur_tag_triangles(adj.second, taggedTriangles, edgesToTriangles);
-      else recur_tag_triangles(adj.first, taggedTriangles, edgesToTriangles);
-    }
-  }  
-}
-
-
-std::set<int> DocRecord::tagInterior (double x, double y){
-  std::map< std::pair<void*,void*>, std::pair<int,int> > edgesToTriangles;
-  int iFirst = 1;
-  for (int i=0;i<numTriangles;i++){
-    int a = triangles[i].a;
-    int b = triangles[i].b;
-    int c = triangles[i].c;
-    PointRecord *p[3] = {&points[a],&points[b],&points[c]};
-
-    // TODO : regarde quel triangle contient x y et retiens le dans iFirst;
-
-    for (int j=0;j<3;j++){
-      std::pair<void*,void*> ab = std::make_pair(std::min(p[j]->data,p[(j+1)%3]->data),std::max(p[j]->data,p[(j+1)%3]->data));
-      std::map< std::pair<void*,void*>, std::pair<int,int> > :: iterator it = edgesToTriangles.find(ab);
-      if (it == edgesToTriangles.end()){
-	edgesToTriangles[ab] = std::make_pair(i,-1);
-      }
-      else {
-	it->second.second = i;
-      }
-    }
-  }
-  
-  std::set<int> taggedTriangles;
-  recur_tag_triangles (iFirst, taggedTriangles, edgesToTriangles);  
-  return taggedTriangles;
-}
-
 
 void DocRecord::setPoints(fullMatrix<double> *p)
 { 
@@ -916,16 +864,140 @@ void DocRecord::setPoints(fullMatrix<double> *p)
   }
 } 
 
-void DocRecord::initialize()
-{
+void DocRecord::recur_tag_triangles(int iTriangle,std::set<int>& taggedTriangles,std::map<std::pair<void*,void*>,std::pair<int,int> >& edgesToTriangles){
+  if(taggedTriangles.find(iTriangle)!=taggedTriangles.end()) return;
+	
+  taggedTriangles.insert(iTriangle);
+	
+  int a = triangles[iTriangle].a;
+  int b = triangles[iTriangle].b;
+  int c = triangles[iTriangle].c;
+  PointRecord* p[3] = {&points[a],&points[b],&points[c]};
+	
+  for(int j=0;j<3;j++){
+    if(!lookForBoundaryEdge(p[j]->data,p[(j+1)%3]->data)){
+	  std::pair<void*,void*> ab = std::make_pair(std::min(p[j]->data,p[(j+1)%3]->data),std::max(p[j]->data,p[(j+1)%3]->data));
+	  std::pair<int,int>& adj = (edgesToTriangles.find(ab))->second;
+	  if(iTriangle==adj.first && adj.second!=-1) recur_tag_triangles(adj.second,taggedTriangles,edgesToTriangles);
+	  else recur_tag_triangles(adj.first,taggedTriangles,edgesToTriangles);
+	}
+  }  
+}
+
+std::set<int> DocRecord::tagInterior(double x,double y){
+  std::map<std::pair<void*,void*>,std::pair<int,int> > edgesToTriangles;
+  int iFirst = 1;
+  for(int i=0;i<numTriangles;i++){
+    int a = triangles[i].a;
+	int b = triangles[i].b;
+	int c = triangles[i].c;
+	PointRecord* p[3] = {&points[a],&points[b],&points[c]};
+
+	//Weisstein, Eric W. "Triangle Interior." From MathWorld--A Wolfram Web Resource.
+	double x0 = points[a].where.h;
+	double y0 = points[a].where.v;
+	double x1 = points[b].where.h - points[a].where.h;
+	double y1 = points[b].where.v - points[a].where.v;
+	double x2 = points[c].where.h - points[a].where.h;
+	double y2 = points[c].where.v - points[a].where.v;
+	double k1 = ((x*y2-x2*y)-(x0*y2-x2*y0))/(x1*y2-x2*y1); 
+	double k2 = -((x*y1-x1*y)-(x0*y1-x1*y0))/(x1*y2-x2*y1);
+	if(k1>0.0 && k2>0.0 && k1+k2<1.0) iFirst = i;
+
+	for(int j=0;j<3;j++){
+	  std::pair<void*,void*> ab = std::make_pair(std::min(p[j]->data,p[(j+1)%3]->data),std::max(p[j]->data,p[(j+1)%3]->data));
+	  std::map<std::pair<void*,void*>,std::pair<int,int> >::iterator it = edgesToTriangles.find(ab);
+	  if(it==edgesToTriangles.end()){
+	    edgesToTriangles[ab] = std::make_pair(i,-1);
+	  }
+	  else{
+	    it->second.second = i;
+	  }
+	}
+  }
+  std::set<int> taggedTriangles;
+  recur_tag_triangles(iFirst,taggedTriangles,edgesToTriangles);
+  return taggedTriangles;
+}
+
+void DocRecord::concave(double x,double y,GFace* gf){
   int i;
-  for(i = 0; i < numPoints; i++){
-    points[i].flag = 0;
+  int index1;
+  int index2;
+  int index3;
+  GEdge* edge;
+  MElement* element;
+  MVertex* vertex1;
+  MVertex* vertex2;
+  std::list<GEdge*> list;
+  std::list<GEdge*>::iterator it1;
+  std::set<int> set;
+  std::set<int>::iterator it2;
+  
+  list = gf->edges();
+  for(it1=list.begin();it1!=list.end();it1++){
+	edge = *it1;
+	for(i=0;i<edge->getNumMeshElements();i++){
+	  element = edge->getMeshElement(i);
+	  vertex1 = element->getVertex(0);
+	  vertex2 = element->getVertex(1);
+	  addBoundaryEdge(vertex1,vertex2);
+	}
+  }
+
+  for(i=0;i<numPoints;i++){
+    points[i].vicinity.clear();
+  }
+	
+  MakeMeshWithPoints();
+  set = tagInterior(x,y);
+  for(it2=set.begin();it2!=set.end();it2++){
+	index1 = triangles[*it2].a;
+	index2 = triangles[*it2].b;
+	index3 = triangles[*it2].c;
+	
+	add(index1,index2);
+	add(index1,index3);
+	
+	add(index2,index1);
+	add(index2,index3);
+	  
+	add(index3,index1);
+	add(index3,index2);
   }
 }
 
-bool DocRecord::remove_point(int index)
-{
+bool DocRecord::contain(int index1,int index2,int index3){
+  int i;
+  void* dataA;
+  void* dataB;
+  dataA = points[index2].data;
+  dataB = points[index3].data;
+  for(i=0;i<points[index1].vicinity.size()-1;i=i+2){
+	if(points[index1].vicinity[i]==dataA && points[index1].vicinity[i+1]==dataB){
+	  return 1;
+	}
+	else if(points[index1].vicinity[i]==dataB && points[index1].vicinity[i+1]==dataA){
+	  return 1;
+	}
+  }
+  return 0;
+}
+
+void DocRecord::add(int index1,int index2){
+  void* data;
+  data = points[index2].data;
+  points[index1].vicinity.push_back(data);
+}
+
+void DocRecord::initialize(){
+  int i;
+  for(i=0;i<numPoints;i++){
+	points[i].flag = 0;
+  }
+}
+
+bool DocRecord::remove_point(int index){
   if(points[index].flag == 0){
     points[index].flag = 1;
     return 1;
@@ -933,37 +1005,35 @@ bool DocRecord::remove_point(int index)
   else return 0;
 }
 
-void DocRecord::remove_all()
-{
+void DocRecord::remove_all(){
   int i;
   int index;
   int numPoints2;
   PointRecord* points2;
   numPoints2 = 0;
   for(i=0;i<numPoints;i++){
-    if(points[i].flag == 0){
+    if(points[i].flag==0){
       numPoints2++;
     }
   }
   points2 = new PointRecord[numPoints2];
   index = 0;
-  for(i = 0; i < numPoints; i++){
-    if(points[i].flag==0){
-      points2[index].where.h = points[i].where.h;
-      points2[index].where.v = points[i].where.v;
-      points2[index].data = points[i].data;
-      points2[index].flag = points[i].flag;
-      points2[index].identificator = points[i].identificator;
-      index++;
-    }
+  for(i=0;i<numPoints;i++){
+	if(points[i].flag==0){
+	  points2[index].where.h = points[i].where.h;
+	  points2[index].where.v = points[i].where.v;
+	  points2[index].data = points[i].data;
+	  points2[index].flag = points[i].flag;
+	  points2[index].identificator = points[i].identificator;
+	  index++;
+	}
   }
   delete [] points;
   points = points2;
   numPoints = numPoints2;
 }
 
-void DocRecord::add_point(double x,double y,GFace*face)
-{
+void DocRecord::add_point(double x,double y,GFace*face){
   PointRecord point;
   point.where.h = x;
   point.where.v = y; 
@@ -972,3 +1042,50 @@ void DocRecord::add_point(double x,double y,GFace*face)
   numPoints = numPoints+1;
 }
 
+void DocRecord::build_edges(){
+  int i;
+  int j;
+  int num;
+  int index;
+  MVertex* vertex1;
+  MVertex* vertex2;
+	
+  for(i=0;i<numPoints;i++){
+    vertex1 = (MVertex*)points[i].data;
+	num = _adjacencies[i].t_length;
+	for(j=0;j<num;j++){
+	  index = _adjacencies[i].t[j];
+	  vertex2 = (MVertex*)points[index].data;
+	  add_edge(vertex1,vertex2);
+	}
+  }
+}
+
+void DocRecord::clear_edges(){
+  mesh_edges.clear();
+}
+
+bool DocRecord::delaunay_conformity(GFace* gf){
+  int i;
+  bool flag;
+  GEdge* edge;
+  MElement* element;
+  MVertex* vertex1;
+  MVertex* vertex2;
+  std::list<GEdge*> list;
+  std::list<GEdge*>::iterator it;
+	
+  list = gf->edges();
+  for(it=list.begin();it!=list.end();it++){
+    edge = *it;
+	for(i=0;i<edge->getNumMeshElements();i++){
+	  element = edge->getMeshElement(i);
+	  vertex1 = element->getVertex(0);
+	  vertex2 = element->getVertex(1);
+	  flag = find_edge(vertex1,vertex2);
+	  if(!flag) return 0;
+	}
+  }
+  return 1;
+}
+	

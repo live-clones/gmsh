@@ -652,10 +652,10 @@ double backgroundMesh::operator() (double u, double v, double w) const
   double uv[3] = {u, v, w};
   double uv2[3];
   //  return 1.0;
-  MElement *e = _octree->find(u, v, w);
+  MElement *e = _octree->find(u, v, w, 2, true);
   if (!e) {
     Msg::Error("cannot find %g %g", u, v);
-    return 1.0;
+    return -1000.0;
   }
   e->xyz2uvw(uv, uv2);
   std::map<MVertex*,double>::const_iterator itv1 = _sizes.find(e->getVertex(0));
@@ -669,7 +669,7 @@ double backgroundMesh::getAngle (double u, double v, double w) const
   double uv[3] = {u, v, w};
   double uv2[3];
   //  return 1.0;
-  MElement *e = _octree->find(u, v, w);
+  MElement *e = _octree->find(u, v, w, 2, true);
   if (!e) {
     Msg::Error("cannot find %g %g", u, v);
     return 0.0;

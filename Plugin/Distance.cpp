@@ -190,7 +190,6 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     return view;
   }
   
-  std::map<MVertex*,double > _distance_map;
   std::vector<SPoint3> pts;
   std::vector<double> distances;
   std::vector<MVertex* > pt2Vertex;

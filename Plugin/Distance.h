@@ -26,6 +26,7 @@ class GMSH_DistancePlugin : public GMSH_PostPlugin
   int _maxDim;
   PViewDataList *_data;
  public:
+  std::map<MVertex*,double > _distance_map;
   GMSH_DistancePlugin(); 
   std::string getName() const { return "Distance"; }
   std::string getShortHelp() const

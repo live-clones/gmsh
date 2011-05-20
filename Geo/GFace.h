@@ -67,12 +67,13 @@ class GFace : public GEntity
   // layer meshes or when using Lloyd-like smoothing algorithms those
   // vertices are classifed on this GFace, their type is MFaceVertex.
   // After mesh generation, those are moved to the mesh_vertices array
-  std::vector<MVertex*> additionalVertices;
 
  public:
   GFace(GModel *model, int tag);
   virtual ~GFace();
 
+  std::vector<MVertex*> additionalVertices;	
+	
   // delete mesh data
   virtual void deleteMesh();
 
