@@ -54,6 +54,7 @@ PView *GMSH_LongituteLatitudePlugin::execute(PView *v)
       }
     }
   } 
+  double gxmin = 180, gxmax = -180, gymin = 90, gymax = -90;
   // transform all "0" nodes
   for(int step = 0; step < data1->getNumTimeSteps(); step++){
     for(int ent = 0; ent < data1->getNumEntities(step); ent++){
@@ -72,6 +73,10 @@ PView *GMSH_LongituteLatitudePlugin::execute(PView *v)
             x2 = atan2(y, x);
             xmin=std::min(x2, xmin);
             xmax=std::max(x2, xmax);
+            gxmin = std::min(x2 * 180 / M_PI, gxmin);
+            gxmax = std::max(x2 * 180 / M_PI, gxmax);
+            gymin = std::min(y2 * 180 / M_PI, gymin);
+            gymax = std::max(y2 * 180 / M_PI, gymax);
             data1->setNode(step, ent, ele, nod, x2 * 180 / M_PI, y2 * 180 / M_PI, 0);
             data1->tagNode(step, ent, ele, nod, 1);
             if(nbComp == 3){
@@ -103,6 +108,8 @@ PView *GMSH_LongituteLatitudePlugin::execute(PView *v)
   data1->destroyAdaptiveData();
   data1->finalize();
   SetBoundingBox();
+  SBoundingBox3d bb(gxmin, gymin, 0, gxmax, gymax, 0);
+  data1->setBoundingBox(bb);
   v1->setChanged(true);
   return v1;
 }
