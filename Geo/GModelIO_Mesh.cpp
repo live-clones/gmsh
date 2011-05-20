@@ -3499,9 +3499,6 @@ int GModel::writeINP(const std::string &name, bool saveAll,
     return 0;
   }
 
-  Msg::Error("Abaqus INP export has not been tested yet -- please give us"
-             "feedback!");
-
   if(noPhysicalGroups()) saveAll = true;
 
   indexMeshVertices(saveAll);

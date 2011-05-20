@@ -517,10 +517,6 @@ class MHexahedronN : public MHexahedron {
   virtual int getPolynomialOrder() const { return (int)_order; }
   virtual int getNumVertices() const { return 8 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
-  virtual MVertex *getVertexDIFF(int num)
-  {
-    throw;
-  }
   virtual int getNumEdgeVertices() const { return 12 * (_order - 1); }
   virtual int getNumFaceVertices() const { return 6 * (_order - 1)*(_order - 1); }
   virtual int getNumVolumeVertices() const { 

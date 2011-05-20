@@ -26,4 +26,5 @@ EndFor
 Surface Loop(1) = {s : s + #ss[]-1};
 Volume(1) = {1};
 
-//Physical Surface(1) = {s : s + #ss[]-1};
+Physical Surface(1) = {s : s + #ss[]-1};
+Physical Volume(1) = 1;

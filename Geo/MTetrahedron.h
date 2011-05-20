@@ -223,25 +223,19 @@ class MTetrahedron10 : public MTetrahedron {
     static const int map[10] = {0, 1, 2, 3, 4, 5, 6, 7, 9, 8};
     return getVertex(map[num]);
   }
-  virtual MVertex *getVertexDIFF(int num)
-  {
-    static const int map[10] = {0, 1, 2, 3, 4, 5, 6, 7, 9, 8};
-    return getVertex(map[num]);
-  }
+  virtual MVertex *getVertexDIFF(int num){ return getVertexBDF(num); }
+  virtual MVertex *getVertexINP(int num){ return getVertexBDF(num); }
   virtual int getNumEdgeVertices() const { return 6; }
-
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual int getNumEdgesRep();
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual int getNumFacesRep();
-
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);
     MTetrahedron::_getEdgeVertices(num, v);
     v[2] = _vs[num];
   }
-
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(6);
