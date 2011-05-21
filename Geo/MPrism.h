@@ -233,7 +233,7 @@ class MPrism15 : public MPrism {
     static const int map[15] = {0, 1, 2, 3, 4, 5, 6, 9, 7, 8, 10, 11, 12, 14, 13};
     return getVertex(map[num]);
   }
-  virtual MVertex *getVertexINP(int num){ return getVertexBDF(); }
+  virtual MVertex *getVertexINP(int num){ return getVertexBDF(num); }
   virtual int getNumEdgeVertices() const { return 9; }
   virtual int getNumEdgesRep(){ return 18; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)

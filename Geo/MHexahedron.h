@@ -232,7 +232,7 @@ class MHexahedron20 : public MHexahedron {
                                 9, 10, 12, 14, 15, 16, 18, 19, 17};
     return getVertex(map[num]);
   }
-  virtual MVertex *getVertexINP(int num){ return getVertexBDF(); }
+  virtual MVertex *getVertexINP(int num){ return getVertexBDF(num); }
   virtual MVertex *getVertexDIFF(int num)
   {
     static const int map[20] = {2, 3, 7, 6, 0, 1, 5, 4, 9, 18, 12,
