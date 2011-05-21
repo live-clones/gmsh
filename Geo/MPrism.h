@@ -129,36 +129,6 @@ class MPrism : public MElement {
   virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
   virtual int getVolumeSign();
-/*  virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
-  {
-    s[0] = (1. - u - v) * (1. - w) * 0.5;
-    s[1] =       u      * (1. - w) * 0.5;
-    s[2] =           v  * (1. - w) * 0.5;
-    s[3] = (1. - u - v) * (1. + w) * 0.5;
-    s[4] =       u      * (1. + w) * 0.5;
-    s[5] =           v  * (1. + w) * 0.5;
-  }*/
-/*  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
-  {
-    s[0][0] = -0.5 * (1. - w)    ;
-    s[0][1] = -0.5 * (1. - w)    ;
-    s[0][2] = -0.5 * (1. - u - v);
-    s[1][0] =  0.5 * (1. - w)    ;
-    s[1][1] =  0.                ;
-    s[1][2] = -0.5 * u           ;
-    s[2][0] =  0.                ;
-    s[2][1] =  0.5 * (1. - w)    ;
-    s[2][2] = -0.5 * v           ;
-    s[3][0] = -0.5 * (1. + w)    ;
-    s[3][1] = -0.5 * (1. + w)    ;
-    s[3][2] =  0.5 * (1. - u - v);
-    s[4][0] =  0.5 * (1. + w)    ;
-    s[4][1] =  0.                ;
-    s[4][2] =  0.5 * u           ;
-    s[5][0] =  0.                ;
-    s[5][1] =  0.5 * (1. + w)    ;
-    s[5][2] =  0.5 * v           ;
-  }*/
   virtual void getNode(int num, double &u, double &v, double &w)
   {
     switch(num) {
@@ -263,6 +233,7 @@ class MPrism15 : public MPrism {
     static const int map[15] = {0, 1, 2, 3, 4, 5, 6, 9, 7, 8, 10, 11, 12, 14, 13};
     return getVertex(map[num]);
   }
+  virtual MVertex *getVertexINP(int num){ return getVertexBDF(); }
   virtual int getNumEdgeVertices() const { return 9; }
   virtual int getNumEdgesRep(){ return 18; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
@@ -320,6 +291,7 @@ class MPrism15 : public MPrism {
   virtual int getTypeForMSH() const { return MSH_PRI_15; }
   virtual int getTypeForUNV() const { return 113; } // solid parabolic wedge
   virtual const char *getStringForBDF() const { return "CPENTA"; }
+  virtual const char *getStringForINP() const { return "C3D15"; }
   virtual void revert()
   {
     MVertex *tmp;

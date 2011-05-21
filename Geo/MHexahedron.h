@@ -232,6 +232,7 @@ class MHexahedron20 : public MHexahedron {
                                 9, 10, 12, 14, 15, 16, 18, 19, 17};
     return getVertex(map[num]);
   }
+  virtual MVertex *getVertexINP(int num){ return getVertexBDF(); }
   virtual MVertex *getVertexDIFF(int num)
   {
     static const int map[20] = {2, 3, 7, 6, 0, 1, 5, 4, 9, 18, 12,
@@ -300,6 +301,7 @@ class MHexahedron20 : public MHexahedron {
   virtual int getTypeForUNV() const { return 116; } // solid parabolic brick
   //virtual int getTypeForVTK() const { return 25; }
   virtual const char *getStringForBDF() const { return "CHEXA"; }
+  virtual const char *getStringForINP() const { return "C3D20"; }
   virtual const char *getStringForDIFF() const { return "ElmB20n3D"; }
   virtual void revert()
   {
