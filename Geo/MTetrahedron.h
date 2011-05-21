@@ -256,6 +256,7 @@ class MTetrahedron10 : public MTetrahedron {
   virtual const char *getStringForPOS() const { return "SS2"; }
   virtual const char *getStringForBDF() const { return "CTETRA"; }
   virtual const char *getStringForDIFF() const { return "ElmT10n3D"; }
+  virtual const char *getStringForINP() const { return "C3D10"; }
   virtual void revert()
   {
     MVertex *tmp;
