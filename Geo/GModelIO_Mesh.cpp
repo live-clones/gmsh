@@ -3510,13 +3510,8 @@ int GModel::writeINP(const std::string &name, bool saveAll,
 
   fprintf(fp, "*Node\n");
   for(unsigned int i = 0; i < entities.size(); i++)
-    if(entities[i]->physicals.size() || saveAll)
-      for(unsigned int j = 0; j < entities[i]->getNumMeshVertices(); j++){
-        MVertex *v = entities[i]->getMeshVertex(j);
-        if(v->getIndex() >= 0)
-          fprintf(fp, "%d, %.16g, %.16g, %.16g\n", v->getIndex(), v->x() * scalingFactor,
-                  v->y() * scalingFactor, v->z() * scalingFactor);
-      }
+    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
+      entities[i]->mesh_vertices[j]->writeINP(fp, scalingFactor);
 
   int ne = 1;
   for(viter it = firstVertex(); it != lastVertex(); ++it){

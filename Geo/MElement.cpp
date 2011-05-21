@@ -966,90 +966,90 @@ void MElement::writeINP(FILE *fp, int num)
 int MElement::getInfoMSH(const int typeMSH, const char **const name)
 {
   switch(typeMSH){
-  case MSH_PNT    : if(name) *name = "Point";           return 1;
-  case MSH_LIN_2  : if(name) *name = "Line 2";          return 2;
-  case MSH_LIN_3  : if(name) *name = "Line 3";          return 2 + 1;
-  case MSH_LIN_4  : if(name) *name = "Line 4";          return 2 + 2;
-  case MSH_LIN_5  : if(name) *name = "Line 5";          return 2 + 3;
-  case MSH_LIN_6  : if(name) *name = "Line 6";          return 2 + 4;
-  case MSH_LIN_7  : if(name) *name = "Line 7";          return 2 + 5;
-  case MSH_LIN_8  : if(name) *name = "Line 8";          return 2 + 6;
-  case MSH_LIN_9  : if(name) *name = "Line 9";          return 2 + 7;
-  case MSH_LIN_10 : if(name) *name = "Line 10";         return 2 + 8;
-  case MSH_LIN_11 : if(name) *name = "Line 11";         return 2 + 9;
-  case MSH_LIN_B  : if(name) *name = "Line Border";     return 2;
-  case MSH_LIN_C  : if(name) *name = "Line Child";      return 2;
-  case MSH_TRI_3  : if(name) *name = "Triangle 3";      return 3;
-  case MSH_TRI_6  : if(name) *name = "Triangle 6";      return 3 + 3;
-  case MSH_TRI_9  : if(name) *name = "Triangle 9";      return 3 + 6;
-  case MSH_TRI_10 : if(name) *name = "Triangle 10";     return 3 + 6 + 1;
-  case MSH_TRI_12 : if(name) *name = "Triangle 12";     return 3 + 9;
-  case MSH_TRI_15 : if(name) *name = "Triangle 15";     return 3 + 9 + 3;
-  case MSH_TRI_15I: if(name) *name = "Triangle 15I";    return 3 + 12;
-  case MSH_TRI_21 : if(name) *name = "Triangle 21";     return 3 + 12 + 6;
-  case MSH_TRI_28 : if(name) *name = "Triangle 28";     return 3 + 15 + 10;
-  case MSH_TRI_36 : if(name) *name = "Triangle 36";     return 3 + 18 + 15;
-  case MSH_TRI_45 : if(name) *name = "Triangle 45";     return 3 + 21 + 21;
-  case MSH_TRI_55 : if(name) *name = "Triangle 55";     return 3 + 24 + 28;
-  case MSH_TRI_66 : if(name) *name = "Triangle 66";     return 3 + 27 + 36;
-  case MSH_TRI_18 : if(name) *name = "Triangle 18";     return 3 + 15;
-  case MSH_TRI_21I: if(name) *name = "Triangle 21I";    return 3 + 18;
-  case MSH_TRI_24 : if(name) *name = "Triangle 24";     return 3 + 21;
-  case MSH_TRI_27 : if(name) *name = "Triangle 27";     return 3 + 24;
-  case MSH_TRI_30 : if(name) *name = "Triangle 30";     return 3 + 27;
-  case MSH_TRI_B  : if(name) *name = "Triangle Border"; return 3;
-  case MSH_QUA_4  : if(name) *name = "Quadrilateral 4"; return 4;
-  case MSH_QUA_8  : if(name) *name = "Quadrilateral 8"; return 4 + 4;
-  case MSH_QUA_9  : if(name) *name = "Quadrilateral 9"; return 9;
-  case MSH_QUA_16 : if(name) *name = "Quadrilateral 16"; return 16;
-  case MSH_QUA_25 : if(name) *name = "Quadrilateral 25"; return 25;
-  case MSH_QUA_36 : if(name) *name = "Quadrilateral 36"; return 36;
-  case MSH_QUA_49 : if(name) *name = "Quadrilateral 49"; return 49;
-  case MSH_QUA_64 : if(name) *name = "Quadrilateral 64"; return 64;
-  case MSH_QUA_81 : if(name) *name = "Quadrilateral 81"; return 81;
-  case MSH_QUA_100: if(name) *name = "Quadrilateral 100"; return 100;
-  case MSH_QUA_121: if(name) *name = "Quadrilateral 121"; return 121;
-  case MSH_QUA_12 : if(name) *name = "Quadrilateral 12"; return 12;
-  case MSH_QUA_16I: if(name) *name = "Quadrilateral 16I"; return 16;
-  case MSH_QUA_20 : if(name) *name = "Quadrilateral 20"; return 20;
-  case MSH_POLYG_ : if(name) *name = "Polygon";         return 0;
-  case MSH_POLYG_B: if(name) *name = "Polygon Border";  return 0;
-  case MSH_TET_4  : if(name) *name = "Tetrahedron 4";   return 4;
-  case MSH_TET_10 : if(name) *name = "Tetrahedron 10";  return 4 + 6;
-  case MSH_TET_20 : if(name) *name = "Tetrahedron 20";  return 4 + 12 + 4;
-  case MSH_TET_34 : if(name) *name = "Tetrahedron 34";  return 4 + 18 + 12 + 0;
-  case MSH_TET_35 : if(name) *name = "Tetrahedron 35";  return 4 + 18 + 12 + 1;
-  case MSH_TET_52 : if(name) *name = "Tetrahedron 52";  return 4 + 24 + 24 + 0;
-  case MSH_TET_56 : if(name) *name = "Tetrahedron 56";  return 4 + 24 + 24 + 4;
-  case MSH_TET_84 : if(name) *name = "Tetrahedron 84";  return (7*8*9)/6;
+  case MSH_PNT     : if(name) *name = "Point";            return 1;
+  case MSH_LIN_2   : if(name) *name = "Line 2";           return 2;
+  case MSH_LIN_3   : if(name) *name = "Line 3";           return 2 + 1;
+  case MSH_LIN_4   : if(name) *name = "Line 4";           return 2 + 2;
+  case MSH_LIN_5   : if(name) *name = "Line 5";           return 2 + 3;
+  case MSH_LIN_6   : if(name) *name = "Line 6";           return 2 + 4;
+  case MSH_LIN_7   : if(name) *name = "Line 7";           return 2 + 5;
+  case MSH_LIN_8   : if(name) *name = "Line 8";           return 2 + 6;
+  case MSH_LIN_9   : if(name) *name = "Line 9";           return 2 + 7;
+  case MSH_LIN_10  : if(name) *name = "Line 10";          return 2 + 8;
+  case MSH_LIN_11  : if(name) *name = "Line 11";          return 2 + 9;
+  case MSH_LIN_B   : if(name) *name = "Line Border";      return 2;
+  case MSH_LIN_C   : if(name) *name = "Line Child";       return 2;
+  case MSH_TRI_3   : if(name) *name = "Triangle 3";       return 3;
+  case MSH_TRI_6   : if(name) *name = "Triangle 6";       return 3 + 3;
+  case MSH_TRI_9   : if(name) *name = "Triangle 9";       return 3 + 6;
+  case MSH_TRI_10  : if(name) *name = "Triangle 10";      return 3 + 6 + 1;
+  case MSH_TRI_12  : if(name) *name = "Triangle 12";      return 3 + 9;
+  case MSH_TRI_15  : if(name) *name = "Triangle 15";      return 3 + 9 + 3;
+  case MSH_TRI_15I : if(name) *name = "Triangle 15I";     return 3 + 12;
+  case MSH_TRI_21  : if(name) *name = "Triangle 21";      return 3 + 12 + 6;
+  case MSH_TRI_28  : if(name) *name = "Triangle 28";      return 3 + 15 + 10;
+  case MSH_TRI_36  : if(name) *name = "Triangle 36";      return 3 + 18 + 15;
+  case MSH_TRI_45  : if(name) *name = "Triangle 45";      return 3 + 21 + 21;
+  case MSH_TRI_55  : if(name) *name = "Triangle 55";      return 3 + 24 + 28;
+  case MSH_TRI_66  : if(name) *name = "Triangle 66";      return 3 + 27 + 36;
+  case MSH_TRI_18  : if(name) *name = "Triangle 18";      return 3 + 15;
+  case MSH_TRI_21I : if(name) *name = "Triangle 21I";     return 3 + 18;
+  case MSH_TRI_24  : if(name) *name = "Triangle 24";      return 3 + 21;
+  case MSH_TRI_27  : if(name) *name = "Triangle 27";      return 3 + 24;
+  case MSH_TRI_30  : if(name) *name = "Triangle 30";      return 3 + 27;
+  case MSH_TRI_B   : if(name) *name = "Triangle Border";  return 3;
+  case MSH_QUA_4   : if(name) *name = "Quadrilateral 4";  return 4;
+  case MSH_QUA_8   : if(name) *name = "Quadrilateral 8";  return 4 + 4;
+  case MSH_QUA_9   : if(name) *name = "Quadrilateral 9";  return 9;
+  case MSH_QUA_16  : if(name) *name = "Quadrilateral 16"; return 16;
+  case MSH_QUA_25  : if(name) *name = "Quadrilateral 25"; return 25;
+  case MSH_QUA_36  : if(name) *name = "Quadrilateral 36"; return 36;
+  case MSH_QUA_49  : if(name) *name = "Quadrilateral 49"; return 49;
+  case MSH_QUA_64  : if(name) *name = "Quadrilateral 64"; return 64;
+  case MSH_QUA_81  : if(name) *name = "Quadrilateral 81"; return 81;
+  case MSH_QUA_100 : if(name) *name = "Quadrilateral 100";return 100;
+  case MSH_QUA_121 : if(name) *name = "Quadrilateral 121";return 121;
+  case MSH_QUA_12  : if(name) *name = "Quadrilateral 12"; return 12;
+  case MSH_QUA_16I : if(name) *name = "Quadrilateral 16I";return 16;
+  case MSH_QUA_20  : if(name) *name = "Quadrilateral 20"; return 20;
+  case MSH_POLYG_  : if(name) *name = "Polygon";          return 0;
+  case MSH_POLYG_B : if(name) *name = "Polygon Border";   return 0;
+  case MSH_TET_4   : if(name) *name = "Tetrahedron 4";    return 4;
+  case MSH_TET_10  : if(name) *name = "Tetrahedron 10";   return 4 + 6;
+  case MSH_TET_20  : if(name) *name = "Tetrahedron 20";   return 4 + 12 + 4;
+  case MSH_TET_34  : if(name) *name = "Tetrahedron 34";   return 4 + 18 + 12 + 0;
+  case MSH_TET_35  : if(name) *name = "Tetrahedron 35";   return 4 + 18 + 12 + 1;
+  case MSH_TET_52  : if(name) *name = "Tetrahedron 52";   return 4 + 24 + 24 + 0;
+  case MSH_TET_56  : if(name) *name = "Tetrahedron 56";   return 4 + 24 + 24 + 4;
+  case MSH_TET_84  : if(name) *name = "Tetrahedron 84";   return (7*8*9)/6;
   case MSH_TET_120 : if(name) *name = "Tetrahedron 120";  return (8*9*10)/6;
   case MSH_TET_165 : if(name) *name = "Tetrahedron 165";  return (9*10*11)/6;
   case MSH_TET_220 : if(name) *name = "Tetrahedron 220";  return (10*11*12)/6;
   case MSH_TET_286 : if(name) *name = "Tetrahedron 286";  return (11*12*13)/6;
-  case MSH_HEX_8  : if(name) *name = "Hexahedron 8";    return 8;
-  case MSH_HEX_20 : if(name) *name = "Hexahedron 20";   return 8 + 12;
-  case MSH_HEX_27 : if(name) *name = "Hexahedron 27";   return 8 + 12 + 6 + 1;
+  case MSH_HEX_8   : if(name) *name = "Hexahedron 8";     return 8;
+  case MSH_HEX_20  : if(name) *name = "Hexahedron 20";    return 8 + 12;
+  case MSH_HEX_27  : if(name) *name = "Hexahedron 27";    return 8 + 12 + 6 + 1;
   case MSH_HEX_64  : if(name) *name = "Hexahedron 64";    return 64;
-  case MSH_HEX_125  : if(name) *name = "Hexahedron 125";    return 125;
-  case MSH_HEX_216  : if(name) *name = "Hexahedron 216";    return 216;
-  case MSH_HEX_343  : if(name) *name = "Hexahedron 343";    return 343;
-  case MSH_HEX_512  : if(name) *name = "Hexahedron 512";    return 512;
-  case MSH_HEX_729  : if(name) *name = "Hexahedron 729";    return 729;
-  case MSH_HEX_1000  : if(name) *name = "Hexahedron 1000";    return 1000;
+  case MSH_HEX_125 : if(name) *name = "Hexahedron 125";   return 125;
+  case MSH_HEX_216 : if(name) *name = "Hexahedron 216";   return 216;
+  case MSH_HEX_343 : if(name) *name = "Hexahedron 343";   return 343;
+  case MSH_HEX_512 : if(name) *name = "Hexahedron 512";   return 512;
+  case MSH_HEX_729 : if(name) *name = "Hexahedron 729";   return 729;
+  case MSH_HEX_1000: if(name) *name = "Hexahedron 1000";  return 1000;
   case MSH_HEX_56  : if(name) *name = "Hexahedron 56";    return 56;
   case MSH_HEX_98  : if(name) *name = "Hexahedron 98";    return 98;
-  case MSH_HEX_152  : if(name) *name = "Hexahedron 152";    return 152;
-  case MSH_HEX_222  : if(name) *name = "Hexahedron 222";    return 222;
-  case MSH_HEX_296  : if(name) *name = "Hexahedron 296";    return 296;
-  case MSH_HEX_386  : if(name) *name = "Hexahedron 386";    return 386;
-  case MSH_HEX_488  : if(name) *name = "Hexahedron 488";    return 488;
-  case MSH_PRI_6  : if(name) *name = "Prism 6";         return 6;
-  case MSH_PRI_15 : if(name) *name = "Prism 15";        return 6 + 9;
-  case MSH_PRI_18 : if(name) *name = "Prism 18";        return 6 + 9 + 3;
-  case MSH_PYR_5  : if(name) *name = "Pyramid 5";       return 5;
-  case MSH_PYR_13 : if(name) *name = "Pyramid 13";      return 5 + 8;
-  case MSH_PYR_14 : if(name) *name = "Pyramid 14";      return 5 + 8 + 1;
-  case MSH_POLYH_ : if(name) *name = "Polyhedron";      return 0;
+  case MSH_HEX_152 : if(name) *name = "Hexahedron 152";   return 152;
+  case MSH_HEX_222 : if(name) *name = "Hexahedron 222";   return 222;
+  case MSH_HEX_296 : if(name) *name = "Hexahedron 296";   return 296;
+  case MSH_HEX_386 : if(name) *name = "Hexahedron 386";   return 386;
+  case MSH_HEX_488 : if(name) *name = "Hexahedron 488";   return 488;
+  case MSH_PRI_6   : if(name) *name = "Prism 6";          return 6;
+  case MSH_PRI_15  : if(name) *name = "Prism 15";         return 6 + 9;
+  case MSH_PRI_18  : if(name) *name = "Prism 18";         return 6 + 9 + 3;
+  case MSH_PYR_5   : if(name) *name = "Pyramid 5";        return 5;
+  case MSH_PYR_13  : if(name) *name = "Pyramid 13";       return 5 + 8;
+  case MSH_PYR_14  : if(name) *name = "Pyramid 14";       return 5 + 8 + 1;
+  case MSH_POLYH_  : if(name) *name = "Polyhedron";       return 0;
   default:
     Msg::Error("Unknown type of element %d", typeMSH);
     if(name) *name = "Unknown";
@@ -1141,144 +1141,130 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
                                   MElement *d1, MElement *d2)
 {
   switch (type) {
-  case MSH_PNT:    return new MPoint(v, num, part);
-  case MSH_LIN_2:  return new MLine(v, num, part);
-  case MSH_LIN_3:  return new MLine3(v, num, part);
-  case MSH_LIN_4:  return new MLineN(v, num, part);
-  case MSH_LIN_5:  return new MLineN(v, num, part);
-  case MSH_LIN_6:  return new MLineN(v, num, part);
-  case MSH_LIN_7:  return new MLineN(v, num, part);
-  case MSH_LIN_8:  return new MLineN(v, num, part);
-  case MSH_LIN_9:  return new MLineN(v, num, part);
-  case MSH_LIN_10: return new MLineN(v, num, part);
-  case MSH_LIN_11: return new MLineN(v, num, part);
-  case MSH_LIN_B:  return new MLineBorder(v, num, part, d1, d2);
-  case MSH_LIN_C:  return new MLineChild(v, num, part, owner, parent);
-  case MSH_TRI_3:  return new MTriangle(v, num, part);
-  case MSH_TRI_6:  return new MTriangle6(v, num, part);
-  case MSH_TRI_9:  return new MTriangleN(v, 3, num, part);
-  case MSH_TRI_10: return new MTriangleN(v, 3, num, part);
-  case MSH_TRI_12: return new MTriangleN(v, 4, num, part);
-  case MSH_TRI_15: return new MTriangleN(v, 4, num, part);
-  case MSH_TRI_15I:return new MTriangleN(v, 5, num, part);
-  case MSH_TRI_21: return new MTriangleN(v, 5, num, part);
-  case MSH_TRI_28: return new MTriangleN(v, 6, num, part);
-  case MSH_TRI_36: return new MTriangleN(v, 7, num, part);
-  case MSH_TRI_45: return new MTriangleN(v, 8, num, part);
-  case MSH_TRI_55: return new MTriangleN(v, 9, num, part);
-  case MSH_TRI_66: return new MTriangleN(v,10, num, part);
-  case MSH_TRI_B:  return new MTriangleBorder(v, num, part, d1, d2);
-  case MSH_QUA_4:  return new MQuadrangle(v, num, part);
-  case MSH_QUA_8:  return new MQuadrangle8(v, num, part);
-  case MSH_QUA_9:  return new MQuadrangle9(v, num, part);
-  case MSH_QUA_12: return new MQuadrangleN(v, 3, num, part);
-  case MSH_QUA_16: return new MQuadrangleN(v, 3, num, part);
-  case MSH_QUA_25: return new MQuadrangleN(v, 4, num, part);
-  case MSH_QUA_36: return new MQuadrangleN(v, 5, num, part);
-  case MSH_QUA_49: return new MQuadrangleN(v, 6, num, part);
-  case MSH_QUA_64: return new MQuadrangleN(v, 7, num, part);
-  case MSH_QUA_81: return new MQuadrangleN(v, 8, num, part);
-  case MSH_QUA_100:return new MQuadrangleN(v, 9, num, part);
-  case MSH_QUA_121:return new MQuadrangleN(v, 10, num, part);
-  case MSH_POLYG_: return new MPolygon(v, num, part, owner, parent);
-  case MSH_POLYG_B:return new MPolygonBorder(v, num, part, d1, d2);
-  case MSH_TET_4:  return new MTetrahedron(v, num, part);
-  case MSH_TET_10: return new MTetrahedron10(v, num, part);
-  case MSH_HEX_8:  return new MHexahedron(v, num, part);
-  case MSH_HEX_20: return new MHexahedron20(v, num, part);
-  case MSH_HEX_27: return new MHexahedron27(v, num, part);
-  case MSH_PRI_6:  return new MPrism(v, num, part);
-  case MSH_PRI_15: return new MPrism15(v, num, part);
-  case MSH_PRI_18: return new MPrism18(v, num, part);
-  case MSH_PYR_5:  return new MPyramid(v, num, part);
-  case MSH_PYR_13: return new MPyramid13(v, num, part);
-  case MSH_PYR_14: return new MPyramid14(v, num, part);
-  case MSH_TET_20: return new MTetrahedronN(v, 3, num, part);
-  case MSH_TET_34: return new MTetrahedronN(v, 3, num, part);
-  case MSH_TET_35: return new MTetrahedronN(v, 4, num, part);
-  case MSH_TET_52: return new MTetrahedronN(v, 5, num, part);
-  case MSH_TET_56: return new MTetrahedronN(v, 5, num, part);
-  case MSH_TET_84: return new MTetrahedronN(v, 6, num, part);
+  case MSH_PNT:     return new MPoint(v, num, part);
+  case MSH_LIN_2:   return new MLine(v, num, part);
+  case MSH_LIN_3:   return new MLine3(v, num, part);
+  case MSH_LIN_4:   return new MLineN(v, num, part);
+  case MSH_LIN_5:   return new MLineN(v, num, part);
+  case MSH_LIN_6:   return new MLineN(v, num, part);
+  case MSH_LIN_7:   return new MLineN(v, num, part);
+  case MSH_LIN_8:   return new MLineN(v, num, part);
+  case MSH_LIN_9:   return new MLineN(v, num, part);
+  case MSH_LIN_10:  return new MLineN(v, num, part);
+  case MSH_LIN_11:  return new MLineN(v, num, part);
+  case MSH_LIN_B:   return new MLineBorder(v, num, part, d1, d2);
+  case MSH_LIN_C:   return new MLineChild(v, num, part, owner, parent);
+  case MSH_TRI_3:   return new MTriangle(v, num, part);
+  case MSH_TRI_6:   return new MTriangle6(v, num, part);
+  case MSH_TRI_9:   return new MTriangleN(v, 3, num, part);
+  case MSH_TRI_10:  return new MTriangleN(v, 3, num, part);
+  case MSH_TRI_12:  return new MTriangleN(v, 4, num, part);
+  case MSH_TRI_15:  return new MTriangleN(v, 4, num, part);
+  case MSH_TRI_15I: return new MTriangleN(v, 5, num, part);
+  case MSH_TRI_21:  return new MTriangleN(v, 5, num, part);
+  case MSH_TRI_28:  return new MTriangleN(v, 6, num, part);
+  case MSH_TRI_36:  return new MTriangleN(v, 7, num, part);
+  case MSH_TRI_45:  return new MTriangleN(v, 8, num, part);
+  case MSH_TRI_55:  return new MTriangleN(v, 9, num, part);
+  case MSH_TRI_66:  return new MTriangleN(v,10, num, part);
+  case MSH_TRI_B:   return new MTriangleBorder(v, num, part, d1, d2);
+  case MSH_QUA_4:   return new MQuadrangle(v, num, part);
+  case MSH_QUA_8:   return new MQuadrangle8(v, num, part);
+  case MSH_QUA_9:   return new MQuadrangle9(v, num, part);
+  case MSH_QUA_12:  return new MQuadrangleN(v, 3, num, part);
+  case MSH_QUA_16:  return new MQuadrangleN(v, 3, num, part);
+  case MSH_QUA_25:  return new MQuadrangleN(v, 4, num, part);
+  case MSH_QUA_36:  return new MQuadrangleN(v, 5, num, part);
+  case MSH_QUA_49:  return new MQuadrangleN(v, 6, num, part);
+  case MSH_QUA_64:  return new MQuadrangleN(v, 7, num, part);
+  case MSH_QUA_81:  return new MQuadrangleN(v, 8, num, part);
+  case MSH_QUA_100: return new MQuadrangleN(v, 9, num, part);
+  case MSH_QUA_121: return new MQuadrangleN(v, 10, num, part);
+  case MSH_POLYG_:  return new MPolygon(v, num, part, owner, parent);
+  case MSH_POLYG_B: return new MPolygonBorder(v, num, part, d1, d2);
+  case MSH_TET_4:   return new MTetrahedron(v, num, part);
+  case MSH_TET_10:  return new MTetrahedron10(v, num, part);
+  case MSH_HEX_8:   return new MHexahedron(v, num, part);
+  case MSH_HEX_20:  return new MHexahedron20(v, num, part);
+  case MSH_HEX_27:  return new MHexahedron27(v, num, part);
+  case MSH_PRI_6:   return new MPrism(v, num, part);
+  case MSH_PRI_15:  return new MPrism15(v, num, part);
+  case MSH_PRI_18:  return new MPrism18(v, num, part);
+  case MSH_PYR_5:   return new MPyramid(v, num, part);
+  case MSH_PYR_13:  return new MPyramid13(v, num, part);
+  case MSH_PYR_14:  return new MPyramid14(v, num, part);
+  case MSH_TET_20:  return new MTetrahedronN(v, 3, num, part);
+  case MSH_TET_34:  return new MTetrahedronN(v, 3, num, part);
+  case MSH_TET_35:  return new MTetrahedronN(v, 4, num, part);
+  case MSH_TET_52:  return new MTetrahedronN(v, 5, num, part);
+  case MSH_TET_56:  return new MTetrahedronN(v, 5, num, part);
+  case MSH_TET_84:  return new MTetrahedronN(v, 6, num, part);
   case MSH_TET_120: return new MTetrahedronN(v, 7, num, part);
   case MSH_TET_165: return new MTetrahedronN(v, 8, num, part);
   case MSH_TET_220: return new MTetrahedronN(v, 9, num, part);
   case MSH_TET_286: return new MTetrahedronN(v, 10, num, part);
-  case MSH_POLYH_: return new MPolyhedron(v, num, part, owner, parent);
-  case MSH_HEX_56: return new MHexahedronN(v, 3, num, part);
-  case MSH_HEX_64: return new MHexahedronN(v, 3, num, part);
+  case MSH_POLYH_:  return new MPolyhedron(v, num, part, owner, parent);
+  case MSH_HEX_56:  return new MHexahedronN(v, 3, num, part);
+  case MSH_HEX_64:  return new MHexahedronN(v, 3, num, part);
   case MSH_HEX_125: return new MHexahedronN(v, 4, num, part);
   case MSH_HEX_216: return new MHexahedronN(v, 5, num, part);
   case MSH_HEX_343: return new MHexahedronN(v, 6, num, part);
   case MSH_HEX_512: return new MHexahedronN(v, 7, num, part);
   case MSH_HEX_729: return new MHexahedronN(v, 8, num, part);
-  case MSH_HEX_1000: return new MHexahedronN(v, 9, num, part);
-  default:         return 0;
+  case MSH_HEX_1000:return new MHexahedronN(v, 9, num, part);
+  default:          return 0;
   }
 }
 
-/*const fullMatrix<double> &MElement::getShapeFunctionsAtIntegrationPoints (int integrationOrder, int functionSpaceOrder) {
-  static std::map <std::pair<int,int>, fullMatrix<double> > F;
-  const polynomialBasis *fs = getFunctionSpace (functionSpaceOrder);
-  fullMatrix<double> &mat = F [std::make_pair(fs->type, integrationOrder)];
-  if (mat.size1()!=0) return mat;
-  int npts;
-  IntPt *pts;
-  getIntegrationPoints (integrationOrder, &npts, &pts);
-  mat.resize (fs->points.size1(), npts);
-  double f[512];
-  for (int i = 0; i < npts; i++) {
-    fs->f (pts[i].pt[0], pts[i].pt[1], pts[i].pt[2], f);
-    for (int j = 0; j < fs->points.size1(); j++) {
-      mat (i, j) = f[j];
-    }
-  }
-  return mat;
-}*/
-
-const fullMatrix<double> &MElement::getGradShapeFunctionsAtIntegrationPoints (int integrationOrder, int functionSpaceOrder) {
+const fullMatrix<double> &MElement::
+getGradShapeFunctionsAtIntegrationPoints(int integrationOrder, int functionSpaceOrder)
+{
   static std::map <std::pair<int,int>, fullMatrix<double> > DF;
-  const polynomialBasis *fs = getFunctionSpace (functionSpaceOrder);
-  fullMatrix<double> &mat = DF [std::make_pair(fs->type, integrationOrder)];
-  if (mat.size1()!=0) return mat;
+  const polynomialBasis *fs = getFunctionSpace(functionSpaceOrder);
+  fullMatrix<double> &mat = DF[std::make_pair(fs->type, integrationOrder)];
+  if (mat.size1() != 0) return mat;
   int npts;
   IntPt *pts;
-  getIntegrationPoints (integrationOrder, &npts, &pts);
-  mat.resize (fs->points.size1(), npts*3);
+  getIntegrationPoints(integrationOrder, &npts, &pts);
+  mat.resize(fs->points.size1(), npts*3);
   double df[512][3];
   for (int i = 0; i < npts; i++) {
-    fs->df (pts[i].pt[0], pts[i].pt[1], pts[i].pt[2], df);
+    fs->df(pts[i].pt[0], pts[i].pt[1], pts[i].pt[2], df);
     for (int j = 0; j < fs->points.size1(); j++) {
-      mat (j, i*3+0) = df[j][0];
-      mat (j, i*3+1) = df[j][1];
-      mat (j, i*3+2) = df[j][2];
+      mat(j, i*3+0) = df[j][0];
+      mat(j, i*3+1) = df[j][1];
+      mat(j, i*3+2) = df[j][2];
     }
   }
   return mat;
 }
 
-const fullMatrix<double> &MElement::getShapeFunctionsAtIntegrationPoints (int integrationOrder, int functionSpaceOrder) {
+const fullMatrix<double> &MElement::
+getShapeFunctionsAtIntegrationPoints (int integrationOrder, int functionSpaceOrder)
+{
   static std::map <std::pair<int,int>, fullMatrix<double> > F;
   const polynomialBasis *fs = getFunctionSpace (functionSpaceOrder);
-  fullMatrix<double> &mat = F [std::make_pair(fs->type, integrationOrder)];
-  if (mat.size1()!=0) return mat;
+  fullMatrix<double> &mat = F[std::make_pair(fs->type, integrationOrder)];
+  if (mat.size1() != 0) return mat;
   int npts;
   IntPt *pts;
-  getIntegrationPoints (integrationOrder, &npts, &pts);
-  mat.resize (fs->points.size1(), npts*3);
+  getIntegrationPoints(integrationOrder, &npts, &pts);
+  mat.resize(fs->points.size1(), npts*3);
   double f[512];
   for (int i = 0; i < npts; i++) {
-    fs->f (pts[i].pt[0], pts[i].pt[1], pts[i].pt[2], f);
+    fs->f(pts[i].pt[0], pts[i].pt[1], pts[i].pt[2], f);
     for (int j = 0; j < fs->points.size1(); j++) {
-      mat (j, i) = f[j];
+      mat(j, i) = f[j];
     }
   }
   return mat;
 }
 
-const fullMatrix<double> &MElement::getGradShapeFunctionsAtNodes (int functionSpaceOrder) {
+const fullMatrix<double> &MElement::getGradShapeFunctionsAtNodes(int functionSpaceOrder)
+{
   static std::map <int, fullMatrix<double> > DF;
-  const polynomialBasis *fs = getFunctionSpace (functionSpaceOrder);
-  fullMatrix<double> &mat = DF [fs->type];
+  const polynomialBasis *fs = getFunctionSpace(functionSpaceOrder);
+  fullMatrix<double> &mat = DF[fs->type];
   if (mat.size1()!=0) return mat;
   const fullMatrix<double> &points = fs->points;
   mat.resize (points.size1(), points.size1()*3);
@@ -1286,9 +1272,9 @@ const fullMatrix<double> &MElement::getGradShapeFunctionsAtNodes (int functionSp
   for (int i = 0; i < points.size1(); i++) {
     fs->df (points(i,0), points(i,1), points(i,2), df);
     for (int j = 0; j < points.size1(); j++) {
-      mat (j, i*3+0) = df[j][0];
-      mat (j, i*3+1) = df[j][1];
-      mat (j, i*3+2) = df[j][2];
+      mat(j, i*3+0) = df[j][0];
+      mat(j, i*3+1) = df[j][1];
+      mat(j, i*3+2) = df[j][2];
     }
   }
   return mat;
@@ -1296,8 +1282,8 @@ const fullMatrix<double> &MElement::getGradShapeFunctionsAtNodes (int functionSp
 
 void MElement::xyzTouvw(fullMatrix<double> *xu)
 {
-  double _xyz[3] = {(*xu)(0,0),(*xu)(0,1),(*xu)(0,2)},_uvw[3] ;
-  xyz2uvw(_xyz,_uvw);
+  double _xyz[3] = {(*xu)(0,0),(*xu)(0,1),(*xu)(0,2)}, _uvw[3];
+  xyz2uvw(_xyz, _uvw);
   (*xu)(1,0) = _uvw[0];
   (*xu)(1,1) = _uvw[1];
   (*xu)(1,2) = _uvw[2];

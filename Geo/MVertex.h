@@ -116,6 +116,7 @@ class MVertex{
                 bool bigEndian=false);
   void writeMESH(FILE *fp, double scalingFactor=1.0);
   void writeBDF(FILE *fp, int format=0, double scalingFactor=1.0);
+  void writeINP(FILE *fp, double scalingFactor=1.0);
   void writeDIFF(FILE *fp, bool binary, double scalingFactor=1.0);
 };
 

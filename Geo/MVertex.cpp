@@ -233,12 +233,20 @@ void MVertex::writeBDF(FILE *fp, int format, double scalingFactor)
   }
 }
 
+void MVertex::writeINP(FILE *fp, double scalingFactor)
+{
+  if(_index < 0) return; // negative index vertices are never saved
+
+  fprintf(fp, "%d, %.16g, %.16g, %.16g\n", _index, x() * scalingFactor,
+          y() * scalingFactor, z() * scalingFactor);
+}
+
 void MVertex::writeDIFF(FILE *fp, bool binary, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
   fprintf(fp, " %d ( %25.16E , %25.16E , %25.16E )",
-          getIndex(), x() * scalingFactor, y() * scalingFactor, z() * scalingFactor);
+          _index, x() * scalingFactor, y() * scalingFactor, z() * scalingFactor);
 }
 
 std::set<MVertex*, MVertexLessThanLexicographic>::iterator 
