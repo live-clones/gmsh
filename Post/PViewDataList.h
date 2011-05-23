@@ -58,7 +58,7 @@ class PViewDataList : public PViewData {
  public:
   PViewDataList();
   ~PViewDataList(){}
-  bool finalize(bool computeMinMax=true);
+  bool finalize(bool computeMinMax=true, const std::string &interpolationScheme="");
   int getNumTimeSteps(){ return NbTimeStep; }
   double getTime(int step);
   double getMin(int step=-1, bool onlyVisible=false);

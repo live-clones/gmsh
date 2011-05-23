@@ -29,7 +29,10 @@ class PViewDataRemote : public PViewData {
     : _remote(remote), _min(min), _max(max), _numTimeSteps(numsteps), 
       _time(time), _bbox(bbox) {}
   ~PViewDataRemote(){}
-  bool finalize(){ return true; }
+  bool finalize(bool computeMinMax=true, const std::string &interpolationScheme="")
+  {
+    return true;
+  }
   int getNumTimeSteps(){ return _numTimeSteps; }
   double getMin(int step=-1, bool onlyVisible=false){ return _min; }
   double getMax(int step=-1, bool onlyVisible=false){ return _max; }

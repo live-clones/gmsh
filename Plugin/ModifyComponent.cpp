@@ -148,8 +148,6 @@ PView *GMSH_ModifyComponentPlugin::execute(PView *view)
     octree = new OctreePost(v2);
   }
 
-  v1->setChanged(true);
-
   for(int step = 0; step < data1->getNumTimeSteps(); step++){
     if(timeStep >= 0 && timeStep != step) continue;
 
@@ -207,6 +205,7 @@ PView *GMSH_ModifyComponentPlugin::execute(PView *view)
   if(octree) delete octree;
 
   data1->finalize();
+  v1->setChanged(true);
 
   return v1;
 }
