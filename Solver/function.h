@@ -72,6 +72,7 @@ class function {
   static functionConstant *getTime();
   static functionConstant *getDT();
   static function *getSolution();
+  static function *getCoordinates();
   static function *getSolutionGradient();
   static function *getNormals();
   void printDep()
@@ -197,7 +198,7 @@ class dataCacheDouble {
 };
 
 class dataCacheMap {
-  const function *_functionSolution, *_functionSolutionGradient;
+  const function *_functionSolution, *_functionSolutionGradient, *_functionCoordinates;
   //handle function solution and funciton solution gradient
   //we should get rid of them
   const function * _translate (const function *) const;
@@ -211,7 +212,7 @@ class dataCacheMap {
   std::vector<dataCacheDouble*> _toInvalidateOnElement;
   MElement *_element;
   dataCacheMap() {
-    _functionSolution = _functionSolutionGradient = NULL;
+    _functionSolution = _functionSolutionGradient = _functionCoordinates = NULL;
     _nbEvaluationPoints = 0;
     _parent=NULL;
   }
@@ -257,6 +258,9 @@ class dataCacheMap {
     _children.push_back(m);
     m->_nbEvaluationPoints = 0;
     return m;
+  }
+  inline void setFunctionCoordinates(const function *functionCoordinates) {
+    _functionCoordinates = functionCoordinates;
   }
   inline void setSolutionFunction(const function *functionSolution, const function *functionSolutionGradient) {
     _functionSolution = functionSolution;

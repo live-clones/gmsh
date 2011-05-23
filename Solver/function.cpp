@@ -224,6 +224,19 @@ const function * dataCacheMap::_translate(const function *f) const
       Msg::Error ("solution function gradient has not been set");
     }
   }
+  if (f == function::getCoordinates()) {
+    f = _functionCoordinates;
+    if (f == NULL) {
+      dataCacheMap *parent = _parent;
+      while (parent) {
+        f = parent->_functionCoordinates;
+        if (f) break;
+        parent = parent->_parent;
+      }
+      if (f == NULL) 
+        Msg::Error ("function coordinates has not been set");
+    }
+  }
   return f;
 }
 
@@ -748,4 +761,28 @@ functionC::functionC (std::string file, std::string symbol, int nbCol,
 #else
   Msg::Error("Cannot construct functionC without dlopen");
 #endif
+}
+
+class functionCoordinates : public function {
+  static functionCoordinates *_instance;
+  functionCoordinates() : function(3) {}; 
+ public:
+  void call(dataCacheMap *m, fullMatrix<double> &sol)
+  {
+    Msg::Error("A function requires the coordinates but this algorithm does "
+               "not provide the coordinates");
+    throw;
+  }
+  static functionCoordinates *get()
+  {
+    if(!_instance)
+      _instance = new functionCoordinates();
+    return _instance;
+  }
+};
+functionCoordinates *functionCoordinates::_instance = NULL;
+
+function *function::getCoordinates() 
+{
+  return functionCoordinates::get();
 }
