@@ -30,6 +30,7 @@
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
+#include "PViewOptions.h"
 #endif
 
 #if defined(HAVE_FLTK)
@@ -91,17 +92,18 @@ void SetBoundingBox(double xmin, double xmax,
     CTX::instance()->cg[i] = 0.5 * (CTX::instance()->min[i] + CTX::instance()->max[i]);
 }
 
-void SetBoundingBox()
+void SetBoundingBox(bool aroundVisible)
 {
   if(CTX::instance()->forcedBBox) return;
 
-  SBoundingBox3d bb = GModel::current()->bounds();
+  SBoundingBox3d bb = GModel::current()->bounds(aroundVisible);
   
 #if defined(HAVE_POST)
   if(bb.empty()) {
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(!PView::list[i]->getData()->getBoundingBox().empty())
-        bb += PView::list[i]->getData()->getBoundingBox();
+        if(!aroundVisible || PView::list[i]->getOptions()->visible)
+          bb += PView::list[i]->getData()->getBoundingBox();
   }
 #endif
   

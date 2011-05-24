@@ -281,7 +281,7 @@ class GModel
   void setSelection(int val);
 
   // the bounding box
-  SBoundingBox3d bounds();
+  SBoundingBox3d bounds(bool aroundVisible=false);
 
   // return the mesh status for the entire model
   int getMeshStatus(bool countDiscrete=true);

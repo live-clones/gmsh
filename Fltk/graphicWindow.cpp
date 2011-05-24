@@ -17,6 +17,7 @@
 #include "PView.h"
 #include "PViewData.h"
 #include "OS.h"
+#include "OpenFile.h"
 #include "Options.h"
 #include "Context.h"
 
@@ -180,6 +181,10 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
       }
     }
     else if(!strcmp(str, "1:1")){
+      // if Shift is pressed, reset bounding box around visible
+      // entities
+      if(Fl::event_state(FL_SHIFT))
+        SetBoundingBox(true);
       // reset translation and scaling, or sync translation and
       // scaling with the first window (alt)
       if (CTX::instance()->camera) {
@@ -493,7 +498,8 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   x += sw;  
   butt[3] = new Fl_Button(x, glheight + 2, 2 * FL_NORMAL_SIZE, sht, "1:1");
   butt[3]->callback(status_xyz1p_cb, (void *)"1:1");
-  butt[3]->tooltip("Set unit scale, or sync scale (Alt)");
+  butt[3]->tooltip("Set unit scale, sync scale between viewports (Alt), "
+                   "or reset bounding box around visible entities (Shift)");
   x += 2 * FL_NORMAL_SIZE;  
   butt[8] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_ortho");
   butt[8]->callback(status_options_cb, (void *)"p");

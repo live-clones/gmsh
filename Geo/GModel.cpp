@@ -474,18 +474,20 @@ void GModel::setSelection(int val)
   }
 }
 
-SBoundingBox3d GModel::bounds()
+SBoundingBox3d GModel::bounds(bool aroundVisible)
 {
   std::vector<GEntity*> entities;
   getEntities(entities);
   // using the mesh vertices for now; should use entities[i]->bounds() instead
   SBoundingBox3d bb;
   for(unsigned int i = 0; i < entities.size(); i++)
-    if(entities[i]->dim() == 0)
-      bb += static_cast<GVertex*>(entities[i])->xyz();
-    else
-      for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
-        bb += entities[i]->mesh_vertices[j]->point();
+    if(!aroundVisible || entities[i]->getVisibility()){
+      if(entities[i]->dim() == 0)
+        bb += static_cast<GVertex*>(entities[i])->xyz();
+      else
+        for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
+          bb += entities[i]->mesh_vertices[j]->point();
+    }
   return bb;
 }
 

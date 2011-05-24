@@ -18,7 +18,7 @@ void ClearProject();
 void SetBoundingBox(double xmin, double xmax,
                     double ymin, double ymax, 
                     double zmin, double zmax);
-void SetBoundingBox();
+void SetBoundingBox(bool aroundVisible=false);
 void AddToTemporaryBoundingBox(double x, double y, double z);
 
 #endif

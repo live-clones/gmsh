@@ -215,12 +215,9 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
       else
         ve.insert(ve.end(), edgeVertices[p].rbegin(), edgeVertices[p].rend());
     }
-    
     else{  
-      
       MVertex *v0 = edge.getVertex(0), *v1 = edge.getVertex(1);
       std::vector<MVertex*> temp;
-        
       double u0 = 0., u1 = 0., US[100];
       bool reparamOK = true;
       if(!linear) {
@@ -248,7 +245,6 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
       }
       for(int j = 0; j < nPts; j++){
         const double t = (double)(j + 1)/(nPts + 1);
-        
         double uc = (1. - t) * u0 + t * u1; // can be wrong, that's ok
         MVertex *v;
         if(linear || !reparamOK || uc < std::min(u0,u1) || uc > std::max(u0,u1)){ 
@@ -463,8 +459,9 @@ static void reorientTrianglePoints(std::vector<MVertex*> &vtcs, int orientation,
       tmp[pos+2] = vtcs[pos+1];
       for (int i = 0; i < 3*(o-1); i++)
         tmp[pos+3+i] = vtcs[pos+3*o-i-1];
-    } else {
-      for (int i=0; i< 3*o; i++)
+    }
+    else {
+      for (int i = 0; i < 3*o; i++)
         tmp[pos+i] = vtcs[pos+i];
     }
     for (int i = 0; i < 3; i++) {
