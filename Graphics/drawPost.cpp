@@ -270,6 +270,8 @@ static void drawTangentVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
 
 static void drawGlyphs(drawContext *ctx, PView *p)
 {
+  static int numNodesError = 0;
+
   // use adaptive data if available
   PViewData *data = p->getData(true);
   PViewOptions *opt = p->getOptions();
@@ -324,6 +326,15 @@ static void drawGlyphs(drawContext *ctx, PView *p)
             xyz[j] = new double[3];
             val[j] = new double[9];
           }
+        }
+        else{
+          if(numNodesError != numNodes){
+            numNodesError = numNodes;
+            Msg::Error("You should never draw views with > %d nodes per element: use"
+                       "'Adapt visualization grid' to view high-order datasets!",
+                       PVIEW_NMAX);
+          }
+          continue;
         }
       }
       for(int j = 0; j < numNodes; j++){
