@@ -642,9 +642,10 @@ static void addScalarPolygon(PView *p, double **xyz,
     }
 
     opt->boundary--;
-    for(std::map<MEdge, int, Less_Edge>::iterator ite = edges.begin(); ite != edges.end(); ite++){
-      int i = (int) (*ite).second/100;
-      int j = (*ite).second%100;
+    for(std::map<MEdge, int, Less_Edge>::iterator ite = edges.begin(); 
+        ite != edges.end(); ite++){
+      int i = (int) (*ite).second / 100;
+      int j = (*ite).second % 100;
       addScalarLine(p, xyz, val, pre, 3*i+il[j][0], 3*i+il[j][0], true);
     }
     opt->boundary++;
@@ -838,9 +839,10 @@ static void addOutlinePolyhedron(PView *p, double **xyz,
       else triFaces.erase(ite);
     }
   }
-  for(std::map<MFace, int, Less_Face>::iterator ite = triFaces.begin(); ite != triFaces.end(); ite++){
-    int i = (int) (*ite).second/100;
-    int j = (*ite).second%100;
+  for(std::map<MFace, int, Less_Face>::iterator ite = triFaces.begin();
+      ite != triFaces.end(); ite++){
+    int i = (int) (*ite).second / 100;
+    int j = (*ite).second % 100;
     addOutlineTriangle(p, xyz, color, pre, 4*i+it[j][0], 4*i+it[j][1], 4*i+it[j][2]);
   }
   for(int i = 0; i < numNodes; i++)
