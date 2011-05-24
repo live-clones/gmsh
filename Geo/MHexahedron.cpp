@@ -124,8 +124,6 @@ const polynomialBasis* MHexahedron::getFunctionSpace(int o) const
 
   int nv = getNumVolumeVertices();
 
-  printf("nv = %d\n", nv);
-
   if ((nv == 0) && (o == -1)) {
     switch (order) {
     case 0: return polynomialBases::find(MSH_HEX_1);
@@ -146,7 +144,7 @@ const polynomialBasis* MHexahedron::getFunctionSpace(int o) const
     case 0: return polynomialBases::find(MSH_HEX_1);
     case 1: return polynomialBases::find(MSH_HEX_8);
     case 2: return polynomialBases::find(MSH_HEX_27);
-    case 3: printf("BBBBBBBBBBB\n"); return polynomialBases::find(MSH_HEX_64);
+    case 3: return polynomialBases::find(MSH_HEX_64);
     case 4: return polynomialBases::find(MSH_HEX_125);
     case 5: return polynomialBases::find(MSH_HEX_216);
     case 6: return polynomialBases::find(MSH_HEX_343);
