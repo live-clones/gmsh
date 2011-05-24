@@ -374,9 +374,7 @@ class MHexahedron27 : public MHexahedron {
   }
   virtual int getNumEdgeVertices() const { return 12; }
   virtual int getNumFaceVertices() const { return 6; }
-  virtual int getNumVolumeVertices() const { 
-    return 8;
-  }
+  virtual int getNumVolumeVertices() const { return 1; }
   virtual int getNumEdgesRep(){ return 24; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   {
@@ -521,7 +519,8 @@ class MHexahedronN : public MHexahedron {
   virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
   virtual int getNumEdgeVertices() const { return 12 * (_order - 1); }
   virtual int getNumFaceVertices() const { return 6 * (_order - 1)*(_order - 1); }
-  virtual int getNumVolumeVertices() const { 
+  virtual int getNumVolumeVertices() const 
+  { 
     switch(getTypeForMSH()){
     case MSH_HEX_27 : 
     case MSH_HEX_64 : 
@@ -531,7 +530,7 @@ class MHexahedronN : public MHexahedron {
     case MSH_HEX_512 : 
     case MSH_HEX_729 : 
     case MSH_HEX_1000 : 
-      return (_order - 1)*(_order - 1)*(_order - 1); 
+      return (_order - 1) * (_order - 1) * (_order - 1); 
     default:
       return 0;
     }
