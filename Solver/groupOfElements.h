@@ -67,6 +67,10 @@ class groupOfElements {
       return _elements.size();
     }
 
+    size_t vsize() const {
+      return _vertices.size();
+    }
+
     // FIXME : NOT VERY ELEGANT !!!
     bool find (MElement *e) const       // if same parent but different physicals return true ?!
     {

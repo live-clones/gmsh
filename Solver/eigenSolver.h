@@ -35,13 +35,14 @@ class eigenSolver{
 };
 
 #else
-
+#include "linearSystemPETSc.h"
 class eigenSolver{
  private:
   std::vector<std::complex<double> > _dummy;
  public:
   eigenSolver(dofManager<double> *manager, std::string A,
               std::string B="", bool hermitian=false){}
+  eigenSolver(linearSystemPETSc<double> *A,linearSystemPETSc<double>* B = NULL, bool hermitian=false){}
   bool solve(int numEigenValues=0, std::string which="")
   {
     Msg::Error("Eigen solver requires SLEPc");
