@@ -102,8 +102,8 @@ void MHexahedronN::getEdgeRep(int num, double *x, double *y, double *z, SVector3
   double w2 = pp[iVertex1][2] * (1.-t2) + pp[iVertex2][2] * t2;
 
   SPoint3 pnt1, pnt2;
-  pnt(u1,v1,w1,pnt1);
-  pnt(u2,v2,w2,pnt2);
+  pnt(u1, v1, w1, pnt1);
+  pnt(u2, v2, w2, pnt2);
   x[0] = pnt1.x(); x[1] = pnt2.x();
   y[0] = pnt1.y(); y[1] = pnt2.y();
   z[0] = pnt1.z(); z[1] = pnt2.z();
@@ -113,19 +113,18 @@ void MHexahedronN::getEdgeRep(int num, double *x, double *y, double *z, SVector3
   n[0] = n[1] = 1 ;
 }
 
-int  MHexahedronN::getNumEdgesRep(){
+int MHexahedronN::getNumEdgesRep()
+{
   return 12 * CTX::instance()->mesh.numSubEdges;
 }
-
-//int MHexaedronN::getNumFacesRep(){ 
-//  return 8 * SQU(CTX::instance()->mesh.numSubEdges); 
-//}
 
 const polynomialBasis* MHexahedron::getFunctionSpace(int o) const
 {
   int order = (o == -1) ? getPolynomialOrder() : o;
 
   int nv = getNumVolumeVertices();
+
+  printf("nv = %d\n", nv);
 
   if ((nv == 0) && (o == -1)) {
     switch (order) {
@@ -147,7 +146,7 @@ const polynomialBasis* MHexahedron::getFunctionSpace(int o) const
     case 0: return polynomialBases::find(MSH_HEX_1);
     case 1: return polynomialBases::find(MSH_HEX_8);
     case 2: return polynomialBases::find(MSH_HEX_27);
-    case 3: return polynomialBases::find(MSH_HEX_64);
+    case 3: printf("BBBBBBBBBBB\n"); return polynomialBases::find(MSH_HEX_64);
     case 4: return polynomialBases::find(MSH_HEX_125);
     case 5: return polynomialBases::find(MSH_HEX_216);
     case 6: return polynomialBases::find(MSH_HEX_343);
@@ -177,7 +176,6 @@ static void _myGetFaceRep(MHexahedron *hex, int num, double *x, double *y, doubl
 
   SPoint3 pnt1, pnt2, pnt3;
   double J1[3][3], J2[3][3], J3[3][3];
-
 
   /*
     0
@@ -252,12 +250,9 @@ static void _myGetFaceRep(MHexahedron *hex, int num, double *x, double *y, doubl
       pp[iVertex3][2] * (1.+ox)*(1+oy)*.25 + 
       pp[iVertex4][2] * (1.-ox)*(1+oy)*.25; 
     
-    hex->pnt(U1,V1,W1, pnt1);
-    hex->pnt(U2,V2,W2, pnt2);
-    hex->pnt(U3,V3,W3, pnt3);
-    //    hex->getJacobian(U1,V1,W1, J1);
-    //    hex->getJacobian(U2,V2,W2, J2);
-    //    hex->getJacobian(U3,V3,W3, J3);
+    hex->pnt(U1, V1, W1, pnt1);
+    hex->pnt(U2, V2, W2, pnt2);
+    hex->pnt(U3, V3, W3, pnt3);
   } 
   else{
     double U1 = 
@@ -313,45 +308,29 @@ static void _myGetFaceRep(MHexahedron *hex, int num, double *x, double *y, doubl
       pp[iVertex3][2] * (1.+ox)*(1+oy)*.25 + 
       pp[iVertex4][2] * (1.-ox)*(1+oy)*.25; 
     
-    hex->pnt(U1,V1,W1, pnt1);
-    hex->pnt(U2,V2,W2, pnt2);
-    hex->pnt(U3,V3,W3, pnt3);
-    //    hex->getJacobian(U1,V1,W1, J1);
-    //    hex->getJacobian(U2,V2,W2, J2);
-    //    hex->getJacobian(U3,V3,W3, J3);
+    hex->pnt(U1, V1, W1, pnt1);
+    hex->pnt(U2, V2, W2, pnt2);
+    hex->pnt(U3, V3, W3, pnt3);
   }
-  /*
-  {
-    SVector3 d1(J1[0][0], J1[0][1], J1[0][2]);
-    SVector3 d2(J1[1][0], J1[1][1], J1[1][2]);
-    n[0] = crossprod(d1, d2);
-    n[0].normalize();
-  }
-  {
-    SVector3 d1(J2[0][0], J2[0][1], J2[0][2]);
-    SVector3 d2(J2[1][0], J2[1][1], J2[1][2]);
-    n[1] = crossprod(d1, d2);
-    n[1].normalize();
-  }
-  {
-    SVector3 d1(J3[0][0], J3[0][1], J3[0][2]);
-    SVector3 d2(J3[1][0], J3[1][1], J3[1][2]);
-    n[2] = crossprod(d1, d2);
-    n[2].normalize();
-  }
-  */
-  n[0] = 1;
-  n[1] = 1;
-  n[2] = 1;
+
   x[0] = pnt1.x(); x[1] = pnt2.x(); x[2] = pnt3.x();
   y[0] = pnt1.y(); y[1] = pnt2.y(); y[2] = pnt3.y();
   z[0] = pnt1.z(); z[1] = pnt2.z(); z[2] = pnt3.z();
-}
 
+  SVector3 d1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
+  SVector3 d2(x[2] - x[0], y[2] - y[0], z[2] - z[0]);
+  n[0] = crossprod(d1, d2);
+  n[0].normalize();
+  n[1] = n[0];
+  n[2] = n[0];
+}
 
 void MHexahedronN::getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
 {
   _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
 }
 
-int MHexahedronN::getNumFacesRep(){ return 6 * (CTX::instance()->mesh.numSubEdges * CTX::instance()->mesh.numSubEdges * 2); }
+int MHexahedronN::getNumFacesRep()
+{ 
+  return 6 * (CTX::instance()->mesh.numSubEdges * CTX::instance()->mesh.numSubEdges * 2);
+}

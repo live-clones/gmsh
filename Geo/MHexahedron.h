@@ -502,17 +502,16 @@ class MHexahedronN : public MHexahedron {
  MHexahedronN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
 	      MVertex *v4, MVertex *v5, MVertex *v6, MVertex *v7,
 	      const std::vector<MVertex*> &v, char order, int num=0, int part=0)
-   : MHexahedron(v0,v1,v2,v3,v4,v5,v6,v7, num, part), _order(order), _vs(v)
-    {
-      for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
-    }
+   : MHexahedron(v0, v1, v2, v3, v4, v5, v6, v7, num, part), _order(order), _vs(v)
+  {
+    for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
+  }
  MHexahedronN(const std::vector<MVertex*> &v, char order, int num=0, int part=0)
    :  MHexahedron(v[0], v[1], v[2], v[3],v[4], v[5], v[6], v[7], num, part), _order(order)
   {
     for(unsigned int i = 8; i < v.size(); i++) _vs.push_back(v[i]);
     for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
   }
-  
   ~MHexahedronN(){}
   virtual int getPolynomialOrder() const { return (int)_order; }
   virtual int getNumVertices() const { return 8 + _vs.size(); }
@@ -541,7 +540,7 @@ class MHexahedronN : public MHexahedron {
   {
     v.resize(_order+1);
     MHexahedron::_getEdgeVertices(num, v);
-    for (int i=0;i<_order-1;i++) v[2+i] = _vs[(_order-1)*num+i];
+    for (int i = 0; i < _order - 1; i++) v[2+i] = _vs[(_order-1)*num+i];
   }
   //virtual int getNumFacesRep();
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
@@ -557,12 +556,12 @@ class MHexahedronN : public MHexahedron {
       {4, 5, 6, 7}
     };
     int count = 4;
-    for (int i=0;i<4;i++){
-      for (int j=0;j<_order-1;j++) v[count++] = _vs[(_order-1)*f[num][i]+j];      
+    for (int i = 0; i < 4; i++){
+      for (int j = 0; j < _order - 1; j++) v[count++] = _vs[(_order-1)*f[num][i]+j];      
     }
-    for (int i=0;i<(_order+1)*(_order+1);i++){
+    for (int i = 0; i < (_order + 1) * (_order + 1); i++){
       int N = _order - 1;
-      int start = 8 + 12 * N + num * (_order-1)*(_order-1);
+      int start = 8 + 12 * N + num * (_order - 1) * (_order - 1);
       v[count++] = _vs[start + i];
     }
   }
@@ -585,16 +584,8 @@ class MHexahedronN : public MHexahedron {
     if(_order == 9 && _vs.size() + 8 == 488) return MSH_HEX_488;
     return 0;
   }
-  virtual void getShapeFunctions(double u, double v, double w, double s[], int o){
-    MElement::getShapeFunctions (u,v,w,s,o);
-  }
-  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
-  {
-    MElement::getGradShapeFunctions (u,v,w,s,o);
-  }
   virtual int getNumFacesRep();
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
-
   virtual void revert()
   {
     Msg::Error("not done yet reverse hexN");
