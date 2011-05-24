@@ -1512,13 +1512,13 @@ const polynomialBasis *polynomialBases::find(int tag)
     case MSH_HEX_729 : F.parentType = TYPE_HEX; F.order = 8; F.serendip = false; break;
     case MSH_HEX_1000: F.parentType = TYPE_HEX; F.order = 9; F.serendip = false; break;
     case MSH_HEX_20  : F.parentType = TYPE_HEX; F.order = 2; F.serendip = false; break;
-    case MSH_HEX_56  : F.parentType = TYPE_HEX; F.order = 3; F.serendip = false; break;
-    case MSH_HEX_98  : F.parentType = TYPE_HEX; F.order = 4; F.serendip = false; break;
-    case MSH_HEX_152 : F.parentType = TYPE_HEX; F.order = 5; F.serendip = false; break;
-    case MSH_HEX_222 : F.parentType = TYPE_HEX; F.order = 6; F.serendip = false; break;
-    case MSH_HEX_296 : F.parentType = TYPE_HEX; F.order = 7; F.serendip = false; break;
-    case MSH_HEX_386 : F.parentType = TYPE_HEX; F.order = 8; F.serendip = false; break;
-    case MSH_HEX_488 : F.parentType = TYPE_HEX; F.order = 9; F.serendip = false; break;
+    case MSH_HEX_56  : F.parentType = TYPE_HEX; F.order = 3; F.serendip = true; break;
+    case MSH_HEX_98  : F.parentType = TYPE_HEX; F.order = 4; F.serendip = true; break;
+    case MSH_HEX_152 : F.parentType = TYPE_HEX; F.order = 5; F.serendip = true; break;
+    case MSH_HEX_222 : F.parentType = TYPE_HEX; F.order = 6; F.serendip = true; break;
+    case MSH_HEX_296 : F.parentType = TYPE_HEX; F.order = 7; F.serendip = true; break;
+    case MSH_HEX_386 : F.parentType = TYPE_HEX; F.order = 8; F.serendip = true; break;
+    case MSH_HEX_488 : F.parentType = TYPE_HEX; F.order = 9; F.serendip = true; break;
     default :
       Msg::Error("Unknown function space %d: reverting to TET_4", tag);
       F.parentType = TYPE_TET; F.order = 1; F.serendip = false;
