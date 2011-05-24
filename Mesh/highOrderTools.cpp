@@ -160,7 +160,8 @@ double highOrderTools::applySmoothingTo(GFace *gf, double tres, bool mixed)
 }
 
 
-void highOrderTools::ensureMinimumDistorsion (double threshold){
+void highOrderTools::ensureMinimumDistorsion (double threshold)
+{
   std::vector<MElement*> v;
   if (_dim == 2){
     for (GModel::fiter fit = _gm->firstFace(); fit != _gm->lastFace(); ++fit) {
@@ -663,20 +664,18 @@ double highOrderTools::apply_incremental_displacement (double max_incr,
 }
 
 // uncurve elements that are invalid
-void highOrderTools::ensureMinimumDistorsion (std::vector<MElement*> &all, 
-					      double threshold){
-  int num = 0;
-  while(1){
+void highOrderTools::ensureMinimumDistorsion(std::vector<MElement*> &all, 
+                                             double threshold)
+{
+  for(int tries = 0; tries < 100; tries++){
     double minD;
     std::vector<MElement*> disto;
     getDistordedElements(all, threshold, disto, minD);    
-    //    if (num == disto.size())break;
-    if (!disto.size())break;
-    num = disto.size();
-    Msg::Info("Fixing %d bad curved elements (worst disto %g)",disto.size(),minD);
-    for (int i=0;i<disto.size();i++){
-      ensureMinimumDistorsion(disto[i],threshold);
-    } 
+    if (disto.empty()) break;
+    Msg::Info("Fixing %d bad curved elements (worst disto %g)", disto.size(), minD);
+    for (int i = 0; i < disto.size(); i++){
+      ensureMinimumDistorsion(disto[i], threshold);
+    }
   }
 }
 

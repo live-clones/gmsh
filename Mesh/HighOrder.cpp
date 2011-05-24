@@ -26,12 +26,6 @@
 
 #define SQU(a)      ((a)*(a))
 
-static bool mappingIsInvertible(MTetrahedron *e)
-{
-  if (e->getPolynomialOrder() == 1) return true;
-  if (e->getPolynomialOrder() == 1) return e->distoShapeMeasure() > 0;
-}
-
 // The aim here is to build a polynomial representation that consist
 // in polynomial segments of equal length
 
@@ -536,7 +530,7 @@ static void reorientQuadPoints(std::vector<MVertex*> &vtcs, int orientation,
 	else if (p1 == 0 && p2 == 3){
           for (int i = 4+4*nbP-1; i >= 4+3*nbP; i--) tmp[index++] = vtcs[i];
         }
-	else printf("ouuls\n");
+	else Msg::Error("ouuls");
       }	
       for (int i=0;i<index;i++)vtcs[start+4+i] = tmp[i];      
       start += (4+index);
@@ -856,8 +850,6 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
                          int nPts = 1, highOrderSmoother *displ2D = 0,
                          highOrderSmoother *displ3D = 0)
 {
-  int nbCorr = 0;
-  
   std::vector<MTetrahedron*> tetrahedra2;
   for(unsigned int i = 0; i < gr->tetrahedra.size(); i++){
     MTetrahedron *t = gr->tetrahedra[i];
@@ -871,33 +863,18 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
     else{
       getFaceVertices(gr, t, vf, faceVertices, edgeVertices, linear, nPts);
       ve.insert(ve.end(), vf.begin(), vf.end());     
-      MTetrahedronN incpl(t->getVertex(0), t->getVertex(1), t->getVertex(2), t->getVertex(3),
-                          ve, nPts + 1);
+      MTetrahedronN incpl(t->getVertex(0), t->getVertex(1), t->getVertex(2), 
+                          t->getVertex(3), ve, nPts + 1);
       getRegionVertices(gr, &incpl, t, vr, linear, nPts); 
       ve.insert(ve.end(), vr.begin(), vr.end());
       MTetrahedron* n = new MTetrahedronN(t->getVertex(0), t->getVertex(1), 
                                           t->getVertex(2), t->getVertex(3), ve, nPts + 1);
-      if (!mappingIsInvertible(n)){
-        Msg::Warning("Found invalid curved volume element (# %d in list)", i);
-      }
       tetrahedra2.push_back(n);
     }
     delete t;
   }
   gr->tetrahedra = tetrahedra2;
 
-  std::vector<int> invalid;
-  if (nbCorr != 0) {
-    for(unsigned int i = 0; i < gr->tetrahedra.size(); i++)
-      if (!mappingIsInvertible(gr->tetrahedra[i])) invalid.push_back(i);
-    if (invalid.size()) {
-      Msg::Warning("We have %d invalid elements remaining", (int)invalid.size());
-      std::vector<int>::iterator iIter = invalid.begin();
-      for (; iIter != invalid.end(); ++iIter)
-        Msg::Warning("%d", *iIter);
-    }
-  }
-  
   std::vector<MHexahedron*> hexahedra2;
   for(unsigned int i = 0; i < gr->hexahedra.size(); i++){
     MHexahedron *h = gr->hexahedra[i];
@@ -928,14 +905,14 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
     else {
       getFaceVertices(gr, h, vf, faceVertices, edgeVertices, linear, nPts);
       ve.insert(ve.end(), vf.begin(), vf.end());     
-      MHexahedronN incpl(h->getVertex(0), h->getVertex(1), h->getVertex(2), h->getVertex(3),
-			 h->getVertex(4), h->getVertex(5), h->getVertex(6), h->getVertex(7),
-			 ve, nPts + 1);
+      MHexahedronN incpl(h->getVertex(0), h->getVertex(1), h->getVertex(2),
+                         h->getVertex(3), h->getVertex(4), h->getVertex(5),
+                         h->getVertex(6), h->getVertex(7), ve, nPts + 1);
       getRegionVertices(gr, &incpl, h, vr, linear, nPts); 
       ve.insert(ve.end(), vr.begin(), vr.end());
-      MHexahedron* n = new MHexahedronN(h->getVertex(0), h->getVertex(1), h->getVertex(2), h->getVertex(3),
-                                        h->getVertex(4), h->getVertex(5), h->getVertex(6), h->getVertex(7),
-                                        ve, nPts + 1);
+      MHexahedron* n = new MHexahedronN(h->getVertex(0), h->getVertex(1), h->getVertex(2), 
+                                        h->getVertex(3), h->getVertex(4), h->getVertex(5),
+                                        h->getVertex(6), h->getVertex(7), ve, nPts + 1);
       hexahedra2.push_back(n);     
     }
     delete h;
@@ -1226,8 +1203,8 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   // we do that model face by model face
   std::vector<MElement*> bad;
   double worst;
-  // printJacobians(m, "smoothness_b.pos");
 
+  // printJacobians(m, "smoothness_b.pos");
   // m->writeMSH("RAW.msh");
 
   if (displ2D){
@@ -1253,10 +1230,9 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   if(displ2D) delete displ2D;
   if(displ3D) delete displ3D;
 
-  //  printJacobians(m, "smoothness.pos");
-  
   double t2 = Cpu();
 
+  // printJacobians(m, "smoothness.pos");
   // m->writeMSH("SMOOTHED.msh");
 
   if (!linear){
