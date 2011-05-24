@@ -202,7 +202,8 @@ void openglWindow::draw()
       cam->giveViewportDimension(_ctx->viewport[2],_ctx->viewport[3]);  
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
-      glFrustum(cam->glFleft,cam->glFright,cam->glFbottom,cam->glFtop,cam->glFnear,cam->glFfar); 
+      glFrustum(cam->glFleft, cam->glFright, cam->glFbottom,
+                cam->glFtop, cam->glFnear, cam->glFfar); 
       glMatrixMode(GL_MODELVIEW);
       glLoadIdentity();
       glDrawBuffer(GL_BACK);
@@ -221,52 +222,8 @@ void openglWindow::draw()
       Camera *cam = &(_ctx->camera);
       if(!cam->on) cam->init();
       cam->giveViewportDimension(_ctx->viewport[2], _ctx->viewport[3]);
-
-      // for RED/CYAN stereo pairs but not convincing
-      /*
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      glClear(GL_ACCUM_BUFFER_BIT);  
-      glColorMask(GL_FALSE,GL_TRUE,GL_TRUE,GL_TRUE);
-      glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
-      XYZ eye =cam->eyesep / 2.0* cam->right;
-      double left  = - cam->screenratio * cam->wd2 - 0.5 * cam->eyesep * cam->ndfl;
-      double right =   cam->screenratio * cam->wd2 - 0.5 * cam->eyesep * cam->ndfl;
-      double top    =   cam->wd2;
-      double  bottom = - cam->wd2;
-      glFrustum(left,right,bottom,top,cam->glFnear,cam->glFfar);
-      glMatrixMode(GL_MODELVIEW);
-      glLoadIdentity();
-      gluLookAt(cam->position.x+eye.x, cam->position.y+eye.y,  cam->position.z+eye.z,
-		cam->target.x+eye.x,  cam->target.y+eye.y,  cam->target.z+eye.z,
-		cam->up.x,  cam->up.y,  cam->up.z); 
-      _ctx->draw3d();
-      glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE); 
-      glAccum(GL_LOAD,1.0);  
-      //left eye
-      glDrawBuffer(GL_BACK);
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
-      left  = - cam->screenratio * cam->wd2 + 0.5 * cam->eyesep * cam->ndfl;
-      right =   cam->screenratio * cam->wd2 + 0.5 * cam->eyesep * cam->ndfl;
-      top    =   cam->wd2;
-      bottom = - cam->wd2;
-      glFrustum(left,right,bottom,top,cam->glFnear,cam->glFfar);
-      glColorMask(GL_TRUE,GL_FALSE,GL_FALSE,GL_TRUE);
-      glMatrixMode(GL_MODELVIEW);
-      glLoadIdentity();
-      gluLookAt(cam->position.x-eye.x, cam->position.y-eye.y, cam->position.z-eye.z,
-		cam->target.x-eye.x, cam->target.y-eye.y, cam->target.z-eye.z,
-		cam->up.x, cam->up.y, cam->up.z); 
-      _ctx->draw3d();
-      glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE); 
-      glAccum(GL_ACCUM,1.0);
-      glAccum(GL_RETURN,1.0);
-      */   
-      
-      // right eye
       XYZ eye = cam->eyesep / 2.0 * cam->right;
+      // right eye
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
       double left   = - cam->screenratio * cam->wd2 - 0.5 * cam->eyesep * cam->ndfl;
@@ -285,7 +242,6 @@ void openglWindow::draw()
       _ctx->draw2d();
       _drawScreenMessage();
       _drawBorder();
-    
       // left eye
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
@@ -512,7 +468,8 @@ int openglWindow::handle(int event)
 	  // isotrop zoom in camera mode
 	  if (CTX::instance()->camera){
 	    double dy= (int)_curr.win[1] - (int)_prev.win[1];
-	    double fact = (CTX::instance()->zoomFactor * fabs(dy) + (double)h()) / (double)h();
+	    double fact = (CTX::instance()->zoomFactor * fabs(dy) + (double)h()) /
+              (double)h();
 	    fact= ((dy > 0) ? fact : 1./fact);
 	    _ctx->camera.zoom(fact);
 	    _ctx->camera.update();
@@ -535,8 +492,10 @@ int openglWindow::handle(int event)
 	else {
 	  if (CTX::instance()->camera){
 	    Camera * cam= &(_ctx->camera);      
-	    double theta_x = cam->radians * (-(double)_prev.win[0] + (double)_curr.win[0]) * 2. / h();
-	    double theta_y = cam->radians * (-(double)_prev.win[1] + (double)_curr.win[1]) * 2. / h();
+	    double theta_x = cam->radians * (-(double)_prev.win[0] + 
+                                             (double)_curr.win[0]) * 2. / h();
+	    double theta_y = cam->radians * (-(double)_prev.win[1] +
+                                             (double)_curr.win[1]) * 2. / h();
 	    cam->moveRight(theta_x); 
 	    cam->moveUp(theta_y); 
 	  }	
