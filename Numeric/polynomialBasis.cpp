@@ -41,89 +41,89 @@ static void printClosure(polynomialBasis::clCont &fullClosure, std::vector<int> 
 int polynomialBasis::getTag(int parentTag, int order, bool serendip)
 {
   switch (parentTag) {
-    case TYPE_PNT :
-      return MSH_PNT;
-    case TYPE_LIN :
-      switch(order) {
-        case 0 : return MSH_LIN_1;
-        case 1 : return MSH_LIN_2;
-        case 2 : return MSH_LIN_3;
-        case 3 : return MSH_LIN_4;
-        case 4 : return MSH_LIN_5;
-        case 5 : return MSH_LIN_6;
-        case 6 : return MSH_LIN_7;
-        case 7 : return MSH_LIN_8;
-        case 8 : return MSH_LIN_9;
-        case 9 : return MSH_LIN_10;
-        case 10: return MSH_LIN_11;
-        default : Msg::Error("line order %i unknown", order); return 0;
-      }
-    case TYPE_TRI :
-      switch(order) {
-        case 0 : return MSH_TRI_1;
-        case 1 : return MSH_TRI_3;
-        case 2 : return MSH_TRI_6;
-        case 3 : return serendip ? MSH_TRI_9  : MSH_TRI_10;
-        case 4 : return serendip ? MSH_TRI_12 : MSH_TRI_15;
-        case 5 : return serendip ? MSH_TRI_15I: MSH_TRI_21;
-        case 6 : return serendip ? MSH_TRI_18 : MSH_TRI_28;
-        case 7 : return serendip ? MSH_TRI_21I: MSH_TRI_36;
-        case 8 : return serendip ? MSH_TRI_24 : MSH_TRI_45;
-        case 9 : return serendip ? MSH_TRI_27 : MSH_TRI_55;
-        case 10: return serendip ? MSH_TRI_30 : MSH_TRI_66;
-        default : Msg::Error("triangle order %i unknown", order); return 0;
-      }
-    case TYPE_QUA :
-      switch(order) {
-        case 0 : return MSH_QUA_1;
-        case 1 : return MSH_QUA_4;
-        case 2 : return serendip ? MSH_QUA_8  : MSH_QUA_9;
-        case 3 : return serendip ? MSH_QUA_12 : MSH_QUA_16;
-        case 4 : return serendip ? MSH_QUA_16I: MSH_QUA_25;
-        case 5 : return serendip ? MSH_QUA_20 : MSH_QUA_36;
-        case 6 : return serendip ? MSH_QUA_24 : MSH_QUA_49;
-        case 7 : return serendip ? MSH_QUA_28 : MSH_QUA_64;
-        case 8 : return serendip ? MSH_QUA_32 : MSH_QUA_81;
-        case 9 : return serendip ? MSH_QUA_36I: MSH_QUA_100;
-        case 10: return serendip ? MSH_QUA_40 : MSH_QUA_121;
-        default : Msg::Error("quad order %i unknown", order); return 0;
-      }
-    case TYPE_TET :
-      switch(order) {
-        case 0 : return MSH_TET_1;
-        case 1 : return MSH_TET_4;
-        case 2 : return MSH_TET_10;
-        case 3 : return MSH_TET_20;
-        case 4 : return serendip ? MSH_TET_34 : MSH_TET_35;
-        case 5 : return serendip ? MSH_TET_52 : MSH_TET_56;
-        case 6 : return serendip ? MSH_TET_74 : MSH_TET_84;
-        case 7 : return serendip ? MSH_TET_100: MSH_TET_120;
-        case 8 : return serendip ? MSH_TET_130: MSH_TET_165;
-        case 9 : return serendip ? MSH_TET_164: MSH_TET_220;
-        case 10: return serendip ? MSH_TET_202: MSH_TET_286;
-        default : Msg::Error("terahedron order %i unknown", order); return 0;
-      }
-    case TYPE_HEX :
-      switch(order) {
-        case 1 : return MSH_HEX_8;
-        case 2 : return serendip ? MSH_HEX_20 : MSH_HEX_27;
-        case 3 : return serendip ? MSH_HEX_56 : MSH_HEX_64;
-        case 4 : return serendip ? MSH_HEX_98 : MSH_HEX_125;
-        case 5 : return serendip ? MSH_HEX_152: MSH_HEX_216;
-        case 6 : return serendip ? MSH_HEX_222: MSH_HEX_343;
-        case 7 : return serendip ? MSH_HEX_296: MSH_HEX_512;
-        case 8 : return serendip ? MSH_HEX_386: MSH_HEX_729;
-        case 9 : return serendip ? MSH_HEX_488: MSH_HEX_1000;
-        default : Msg::Error("hexahedron order %i unknown", order); return 0;
-      }
-    case TYPE_PRI :
-      switch(order) {
-      case 0 : return MSH_PRI_1;
-      case 1 : return MSH_PRI_6;
-      case 2 : return MSH_PRI_18;
-      default : Msg::Error("prism order %i unknown", order); return 0;
+  case TYPE_PNT :
+    return MSH_PNT;
+  case TYPE_LIN :
+    switch(order) {
+    case 0 : return MSH_LIN_1;
+    case 1 : return MSH_LIN_2;
+    case 2 : return MSH_LIN_3;
+    case 3 : return MSH_LIN_4;
+    case 4 : return MSH_LIN_5;
+    case 5 : return MSH_LIN_6;
+    case 6 : return MSH_LIN_7;
+    case 7 : return MSH_LIN_8;
+    case 8 : return MSH_LIN_9;
+    case 9 : return MSH_LIN_10;
+    case 10: return MSH_LIN_11;
+    default : Msg::Error("line order %i unknown", order); return 0;
     }
-    default : Msg::Error("unknown element type %i", parentTag); return 0;
+  case TYPE_TRI :
+    switch(order) {
+    case 0 : return MSH_TRI_1;
+    case 1 : return MSH_TRI_3;
+    case 2 : return MSH_TRI_6;
+    case 3 : return serendip ? MSH_TRI_9  : MSH_TRI_10;
+    case 4 : return serendip ? MSH_TRI_12 : MSH_TRI_15;
+    case 5 : return serendip ? MSH_TRI_15I: MSH_TRI_21;
+    case 6 : return serendip ? MSH_TRI_18 : MSH_TRI_28;
+    case 7 : return serendip ? MSH_TRI_21I: MSH_TRI_36;
+    case 8 : return serendip ? MSH_TRI_24 : MSH_TRI_45;
+    case 9 : return serendip ? MSH_TRI_27 : MSH_TRI_55;
+    case 10: return serendip ? MSH_TRI_30 : MSH_TRI_66;
+    default : Msg::Error("triangle order %i unknown", order); return 0;
+    }
+  case TYPE_QUA :
+    switch(order) {
+    case 0 : return MSH_QUA_1;
+    case 1 : return MSH_QUA_4;
+    case 2 : return serendip ? MSH_QUA_8  : MSH_QUA_9;
+    case 3 : return serendip ? MSH_QUA_12 : MSH_QUA_16;
+    case 4 : return serendip ? MSH_QUA_16I: MSH_QUA_25;
+    case 5 : return serendip ? MSH_QUA_20 : MSH_QUA_36;
+    case 6 : return serendip ? MSH_QUA_24 : MSH_QUA_49;
+    case 7 : return serendip ? MSH_QUA_28 : MSH_QUA_64;
+    case 8 : return serendip ? MSH_QUA_32 : MSH_QUA_81;
+    case 9 : return serendip ? MSH_QUA_36I: MSH_QUA_100;
+    case 10: return serendip ? MSH_QUA_40 : MSH_QUA_121;
+    default : Msg::Error("quad order %i unknown", order); return 0;
+    }
+  case TYPE_TET :
+    switch(order) {
+    case 0 : return MSH_TET_1;
+    case 1 : return MSH_TET_4;
+    case 2 : return MSH_TET_10;
+    case 3 : return MSH_TET_20;
+    case 4 : return serendip ? MSH_TET_34 : MSH_TET_35;
+    case 5 : return serendip ? MSH_TET_52 : MSH_TET_56;
+    case 6 : return serendip ? MSH_TET_74 : MSH_TET_84;
+    case 7 : return serendip ? MSH_TET_100: MSH_TET_120;
+    case 8 : return serendip ? MSH_TET_130: MSH_TET_165;
+    case 9 : return serendip ? MSH_TET_164: MSH_TET_220;
+    case 10: return serendip ? MSH_TET_202: MSH_TET_286;
+    default : Msg::Error("terahedron order %i unknown", order); return 0;
+    }
+  case TYPE_HEX :
+    switch(order) {
+    case 1 : return MSH_HEX_8;
+    case 2 : return serendip ? MSH_HEX_20 : MSH_HEX_27;
+    case 3 : return serendip ? MSH_HEX_56 : MSH_HEX_64;
+    case 4 : return serendip ? MSH_HEX_98 : MSH_HEX_125;
+    case 5 : return serendip ? MSH_HEX_152: MSH_HEX_216;
+    case 6 : return serendip ? MSH_HEX_222: MSH_HEX_343;
+    case 7 : return serendip ? MSH_HEX_296: MSH_HEX_512;
+    case 8 : return serendip ? MSH_HEX_386: MSH_HEX_729;
+    case 9 : return serendip ? MSH_HEX_488: MSH_HEX_1000;
+    default : Msg::Error("hexahedron order %i unknown", order); return 0;
+    }
+  case TYPE_PRI :
+    switch(order) {
+    case 0 : return MSH_PRI_1;
+    case 1 : return MSH_PRI_6;
+    case 2 : return MSH_PRI_18;
+    default : Msg::Error("prism order %i unknown", order); return 0;
+    }
+  default : Msg::Error("unknown element type %i", parentTag); return 0;
   }
 }
 
@@ -1423,198 +1423,200 @@ static void generateClosureOrder0(polynomialBasis::clCont &closure, int nb)
 }
 
 std::map<int, polynomialBasis> polynomialBases::fs;
+
 const polynomialBasis *polynomialBases::find(int tag)
 {
   std::map<int, polynomialBasis>::const_iterator it = fs.find(tag);
-  if (it != fs.end())     return &it->second;
+  if (it != fs.end()) return &it->second;
+
   polynomialBasis F;
   F.type = tag;
   switch (tag) {
-    case MSH_PNT     : F.parentType = TYPE_PNT; F.order = 0; F.serendip = false; break;
-    case MSH_LIN_1   : F.parentType = TYPE_LIN; F.order = 0; F.serendip = false; break;
-    case MSH_LIN_2   : F.parentType = TYPE_LIN; F.order = 1; F.serendip = false; break;
-    case MSH_LIN_3   : F.parentType = TYPE_LIN; F.order = 2; F.serendip = false; break;
-    case MSH_LIN_4   : F.parentType = TYPE_LIN; F.order = 3; F.serendip = false; break;
-    case MSH_LIN_5   : F.parentType = TYPE_LIN; F.order = 4; F.serendip = false; break;
-    case MSH_LIN_6   : F.parentType = TYPE_LIN; F.order = 5; F.serendip = false; break;
-    case MSH_LIN_7   : F.parentType = TYPE_LIN; F.order = 6; F.serendip = false; break;
-    case MSH_LIN_8   : F.parentType = TYPE_LIN; F.order = 7; F.serendip = false; break;
-    case MSH_LIN_9   : F.parentType = TYPE_LIN; F.order = 8; F.serendip = false; break;
-    case MSH_LIN_10  : F.parentType = TYPE_LIN; F.order = 9; F.serendip = false; break;
-    case MSH_LIN_11  : F.parentType = TYPE_LIN; F.order = 10;F.serendip = false; break;
-    case MSH_TRI_1   : F.parentType = TYPE_TRI; F.order = 0; F.serendip = false; break;
-    case MSH_TRI_3   : F.parentType = TYPE_TRI; F.order = 1; F.serendip = false; break;
-    case MSH_TRI_6   : F.parentType = TYPE_TRI; F.order = 2; F.serendip = false; break;
-    case MSH_TRI_10  : F.parentType = TYPE_TRI; F.order = 3; F.serendip = false; break;
-    case MSH_TRI_15  : F.parentType = TYPE_TRI; F.order = 4; F.serendip = false; break;
-    case MSH_TRI_21  : F.parentType = TYPE_TRI; F.order = 5; F.serendip = false; break;
-    case MSH_TRI_28  : F.parentType = TYPE_TRI; F.order = 6; F.serendip = false; break;
-    case MSH_TRI_36  : F.parentType = TYPE_TRI; F.order = 7; F.serendip = false; break;
-    case MSH_TRI_45  : F.parentType = TYPE_TRI; F.order = 8; F.serendip = false; break;
-    case MSH_TRI_55  : F.parentType = TYPE_TRI; F.order = 9; F.serendip = false; break;
-    case MSH_TRI_66  : F.parentType = TYPE_TRI; F.order = 10;F.serendip = false; break;
-    case MSH_TRI_9   : F.parentType = TYPE_TRI; F.order = 3; F.serendip = true;  break;
-    case MSH_TRI_12  : F.parentType = TYPE_TRI; F.order = 4; F.serendip = true;  break;
-    case MSH_TRI_15I : F.parentType = TYPE_TRI; F.order = 5; F.serendip = true;  break;
-    case MSH_TRI_18  : F.parentType = TYPE_TRI; F.order = 6; F.serendip = true;  break;
-    case MSH_TRI_21I : F.parentType = TYPE_TRI; F.order = 7; F.serendip = true;  break;
-    case MSH_TRI_24  : F.parentType = TYPE_TRI; F.order = 8; F.serendip = true;  break;
-    case MSH_TRI_27  : F.parentType = TYPE_TRI; F.order = 9; F.serendip = true;  break;
-    case MSH_TRI_30  : F.parentType = TYPE_TRI; F.order = 10;F.serendip = true;  break;
-    case MSH_TET_1   : F.parentType = TYPE_TET; F.order = 0; F.serendip = false; break;
-    case MSH_TET_4   : F.parentType = TYPE_TET; F.order = 1; F.serendip = false; break;
-    case MSH_TET_10  : F.parentType = TYPE_TET; F.order = 2; F.serendip = false; break;
-    case MSH_TET_20  : F.parentType = TYPE_TET; F.order = 3; F.serendip = false; break;
-    case MSH_TET_35  : F.parentType = TYPE_TET; F.order = 4; F.serendip = false; break;
-    case MSH_TET_56  : F.parentType = TYPE_TET; F.order = 5; F.serendip = false; break;
-    case MSH_TET_84  : F.parentType = TYPE_TET; F.order = 6; F.serendip = false; break;
-    case MSH_TET_120 : F.parentType = TYPE_TET; F.order = 7; F.serendip = false; break;
-    case MSH_TET_165 : F.parentType = TYPE_TET; F.order = 8; F.serendip = false; break;
-    case MSH_TET_220 : F.parentType = TYPE_TET; F.order = 9; F.serendip = false; break;
-    case MSH_TET_286 : F.parentType = TYPE_TET; F.order = 10;F.serendip = false; break;
-    case MSH_TET_34  : F.parentType = TYPE_TET; F.order = 4; F.serendip = true;  break;
-    case MSH_TET_52  : F.parentType = TYPE_TET; F.order = 5; F.serendip = true;  break;
-    case MSH_TET_74  : F.parentType = TYPE_TET; F.order = 6; F.serendip = true;  break;
-    case MSH_TET_100 : F.parentType = TYPE_TET; F.order = 7; F.serendip = true;  break;
-    case MSH_TET_130 : F.parentType = TYPE_TET; F.order = 8; F.serendip = true;  break;
-    case MSH_TET_164 : F.parentType = TYPE_TET; F.order = 9; F.serendip = true;  break;
-    case MSH_TET_202 : F.parentType = TYPE_TET; F.order = 10;F.serendip = true;  break;
-    case MSH_QUA_1   : F.parentType = TYPE_QUA; F.order = 0; F.serendip = false; break;
-    case MSH_QUA_4   : F.parentType = TYPE_QUA; F.order = 1; F.serendip = false; break;
-    case MSH_QUA_9   : F.parentType = TYPE_QUA; F.order = 2; F.serendip = false; break;
-    case MSH_QUA_16  : F.parentType = TYPE_QUA; F.order = 3; F.serendip = false; break;
-    case MSH_QUA_25  : F.parentType = TYPE_QUA; F.order = 4; F.serendip = false; break;
-    case MSH_QUA_36  : F.parentType = TYPE_QUA; F.order = 5; F.serendip = false; break;
-    case MSH_QUA_49  : F.parentType = TYPE_QUA; F.order = 6; F.serendip = false; break;
-    case MSH_QUA_64  : F.parentType = TYPE_QUA; F.order = 7; F.serendip = false; break;
-    case MSH_QUA_81  : F.parentType = TYPE_QUA; F.order = 8; F.serendip = false; break;
-    case MSH_QUA_100 : F.parentType = TYPE_QUA; F.order = 9; F.serendip = false; break;
-    case MSH_QUA_121 : F.parentType = TYPE_QUA; F.order = 10;F.serendip = false; break;
-    case MSH_QUA_8   : F.parentType = TYPE_QUA; F.order = 2; F.serendip = true;  break;
-    case MSH_QUA_12  : F.parentType = TYPE_QUA; F.order = 3; F.serendip = true;  break;
-    case MSH_QUA_16I : F.parentType = TYPE_QUA; F.order = 4; F.serendip = true;  break;
-    case MSH_QUA_20  : F.parentType = TYPE_QUA; F.order = 5; F.serendip = true;  break;
-    case MSH_QUA_24  : F.parentType = TYPE_QUA; F.order = 6; F.serendip = true;  break;
-    case MSH_QUA_28  : F.parentType = TYPE_QUA; F.order = 7; F.serendip = true;  break;
-    case MSH_QUA_32  : F.parentType = TYPE_QUA; F.order = 8; F.serendip = true;  break;
-    case MSH_QUA_36I : F.parentType = TYPE_QUA; F.order = 9; F.serendip = true;  break;
-    case MSH_QUA_40  : F.parentType = TYPE_QUA; F.order = 10;F.serendip = true;  break;
-    case MSH_PRI_1   : F.parentType = TYPE_PRI; F.order = 0; F.serendip = false; break;
-    case MSH_PRI_6   : F.parentType = TYPE_PRI; F.order = 1; F.serendip = false; break;
-    case MSH_PRI_18  : F.parentType = TYPE_PRI; F.order = 2; F.serendip = false; break;
-    case MSH_HEX_8   : F.parentType = TYPE_HEX; F.order = 1; F.serendip = false; break;
-    case MSH_HEX_27  : F.parentType = TYPE_HEX; F.order = 2; F.serendip = false; break;
-    case MSH_HEX_64  : F.parentType = TYPE_HEX; F.order = 3; F.serendip = false; break;
-    case MSH_HEX_125 : F.parentType = TYPE_HEX; F.order = 4; F.serendip = false; break;
-    case MSH_HEX_216 : F.parentType = TYPE_HEX; F.order = 5; F.serendip = false; break;
-    case MSH_HEX_343 : F.parentType = TYPE_HEX; F.order = 6; F.serendip = false; break;
-    case MSH_HEX_512 : F.parentType = TYPE_HEX; F.order = 7; F.serendip = false; break;
-    case MSH_HEX_729 : F.parentType = TYPE_HEX; F.order = 8; F.serendip = false; break;
-    case MSH_HEX_1000: F.parentType = TYPE_HEX; F.order = 9; F.serendip = false; break;
-    case MSH_HEX_20  : F.parentType = TYPE_HEX; F.order = 2; F.serendip = false; break;
-    case MSH_HEX_56  : F.parentType = TYPE_HEX; F.order = 3; F.serendip = true; break;
-    case MSH_HEX_98  : F.parentType = TYPE_HEX; F.order = 4; F.serendip = true; break;
-    case MSH_HEX_152 : F.parentType = TYPE_HEX; F.order = 5; F.serendip = true; break;
-    case MSH_HEX_222 : F.parentType = TYPE_HEX; F.order = 6; F.serendip = true; break;
-    case MSH_HEX_296 : F.parentType = TYPE_HEX; F.order = 7; F.serendip = true; break;
-    case MSH_HEX_386 : F.parentType = TYPE_HEX; F.order = 8; F.serendip = true; break;
-    case MSH_HEX_488 : F.parentType = TYPE_HEX; F.order = 9; F.serendip = true; break;
-    default :
-      Msg::Error("Unknown function space %d: reverting to TET_4", tag);
-      F.parentType = TYPE_TET; F.order = 1; F.serendip = false;
+  case MSH_PNT     : F.parentType = TYPE_PNT; F.order = 0; F.serendip = false; break;
+  case MSH_LIN_1   : F.parentType = TYPE_LIN; F.order = 0; F.serendip = false; break;
+  case MSH_LIN_2   : F.parentType = TYPE_LIN; F.order = 1; F.serendip = false; break;
+  case MSH_LIN_3   : F.parentType = TYPE_LIN; F.order = 2; F.serendip = false; break;
+  case MSH_LIN_4   : F.parentType = TYPE_LIN; F.order = 3; F.serendip = false; break;
+  case MSH_LIN_5   : F.parentType = TYPE_LIN; F.order = 4; F.serendip = false; break;
+  case MSH_LIN_6   : F.parentType = TYPE_LIN; F.order = 5; F.serendip = false; break;
+  case MSH_LIN_7   : F.parentType = TYPE_LIN; F.order = 6; F.serendip = false; break;
+  case MSH_LIN_8   : F.parentType = TYPE_LIN; F.order = 7; F.serendip = false; break;
+  case MSH_LIN_9   : F.parentType = TYPE_LIN; F.order = 8; F.serendip = false; break;
+  case MSH_LIN_10  : F.parentType = TYPE_LIN; F.order = 9; F.serendip = false; break;
+  case MSH_LIN_11  : F.parentType = TYPE_LIN; F.order = 10;F.serendip = false; break;
+  case MSH_TRI_1   : F.parentType = TYPE_TRI; F.order = 0; F.serendip = false; break;
+  case MSH_TRI_3   : F.parentType = TYPE_TRI; F.order = 1; F.serendip = false; break;
+  case MSH_TRI_6   : F.parentType = TYPE_TRI; F.order = 2; F.serendip = false; break;
+  case MSH_TRI_10  : F.parentType = TYPE_TRI; F.order = 3; F.serendip = false; break;
+  case MSH_TRI_15  : F.parentType = TYPE_TRI; F.order = 4; F.serendip = false; break;
+  case MSH_TRI_21  : F.parentType = TYPE_TRI; F.order = 5; F.serendip = false; break;
+  case MSH_TRI_28  : F.parentType = TYPE_TRI; F.order = 6; F.serendip = false; break;
+  case MSH_TRI_36  : F.parentType = TYPE_TRI; F.order = 7; F.serendip = false; break;
+  case MSH_TRI_45  : F.parentType = TYPE_TRI; F.order = 8; F.serendip = false; break;
+  case MSH_TRI_55  : F.parentType = TYPE_TRI; F.order = 9; F.serendip = false; break;
+  case MSH_TRI_66  : F.parentType = TYPE_TRI; F.order = 10;F.serendip = false; break;
+  case MSH_TRI_9   : F.parentType = TYPE_TRI; F.order = 3; F.serendip = true;  break;
+  case MSH_TRI_12  : F.parentType = TYPE_TRI; F.order = 4; F.serendip = true;  break;
+  case MSH_TRI_15I : F.parentType = TYPE_TRI; F.order = 5; F.serendip = true;  break;
+  case MSH_TRI_18  : F.parentType = TYPE_TRI; F.order = 6; F.serendip = true;  break;
+  case MSH_TRI_21I : F.parentType = TYPE_TRI; F.order = 7; F.serendip = true;  break;
+  case MSH_TRI_24  : F.parentType = TYPE_TRI; F.order = 8; F.serendip = true;  break;
+  case MSH_TRI_27  : F.parentType = TYPE_TRI; F.order = 9; F.serendip = true;  break;
+  case MSH_TRI_30  : F.parentType = TYPE_TRI; F.order = 10;F.serendip = true;  break;
+  case MSH_TET_1   : F.parentType = TYPE_TET; F.order = 0; F.serendip = false; break;
+  case MSH_TET_4   : F.parentType = TYPE_TET; F.order = 1; F.serendip = false; break;
+  case MSH_TET_10  : F.parentType = TYPE_TET; F.order = 2; F.serendip = false; break;
+  case MSH_TET_20  : F.parentType = TYPE_TET; F.order = 3; F.serendip = false; break;
+  case MSH_TET_35  : F.parentType = TYPE_TET; F.order = 4; F.serendip = false; break;
+  case MSH_TET_56  : F.parentType = TYPE_TET; F.order = 5; F.serendip = false; break;
+  case MSH_TET_84  : F.parentType = TYPE_TET; F.order = 6; F.serendip = false; break;
+  case MSH_TET_120 : F.parentType = TYPE_TET; F.order = 7; F.serendip = false; break;
+  case MSH_TET_165 : F.parentType = TYPE_TET; F.order = 8; F.serendip = false; break;
+  case MSH_TET_220 : F.parentType = TYPE_TET; F.order = 9; F.serendip = false; break;
+  case MSH_TET_286 : F.parentType = TYPE_TET; F.order = 10;F.serendip = false; break;
+  case MSH_TET_34  : F.parentType = TYPE_TET; F.order = 4; F.serendip = true;  break;
+  case MSH_TET_52  : F.parentType = TYPE_TET; F.order = 5; F.serendip = true;  break;
+  case MSH_TET_74  : F.parentType = TYPE_TET; F.order = 6; F.serendip = true;  break;
+  case MSH_TET_100 : F.parentType = TYPE_TET; F.order = 7; F.serendip = true;  break;
+  case MSH_TET_130 : F.parentType = TYPE_TET; F.order = 8; F.serendip = true;  break;
+  case MSH_TET_164 : F.parentType = TYPE_TET; F.order = 9; F.serendip = true;  break;
+  case MSH_TET_202 : F.parentType = TYPE_TET; F.order = 10;F.serendip = true;  break;
+  case MSH_QUA_1   : F.parentType = TYPE_QUA; F.order = 0; F.serendip = false; break;
+  case MSH_QUA_4   : F.parentType = TYPE_QUA; F.order = 1; F.serendip = false; break;
+  case MSH_QUA_9   : F.parentType = TYPE_QUA; F.order = 2; F.serendip = false; break;
+  case MSH_QUA_16  : F.parentType = TYPE_QUA; F.order = 3; F.serendip = false; break;
+  case MSH_QUA_25  : F.parentType = TYPE_QUA; F.order = 4; F.serendip = false; break;
+  case MSH_QUA_36  : F.parentType = TYPE_QUA; F.order = 5; F.serendip = false; break;
+  case MSH_QUA_49  : F.parentType = TYPE_QUA; F.order = 6; F.serendip = false; break;
+  case MSH_QUA_64  : F.parentType = TYPE_QUA; F.order = 7; F.serendip = false; break;
+  case MSH_QUA_81  : F.parentType = TYPE_QUA; F.order = 8; F.serendip = false; break;
+  case MSH_QUA_100 : F.parentType = TYPE_QUA; F.order = 9; F.serendip = false; break;
+  case MSH_QUA_121 : F.parentType = TYPE_QUA; F.order = 10;F.serendip = false; break;
+  case MSH_QUA_8   : F.parentType = TYPE_QUA; F.order = 2; F.serendip = true;  break;
+  case MSH_QUA_12  : F.parentType = TYPE_QUA; F.order = 3; F.serendip = true;  break;
+  case MSH_QUA_16I : F.parentType = TYPE_QUA; F.order = 4; F.serendip = true;  break;
+  case MSH_QUA_20  : F.parentType = TYPE_QUA; F.order = 5; F.serendip = true;  break;
+  case MSH_QUA_24  : F.parentType = TYPE_QUA; F.order = 6; F.serendip = true;  break;
+  case MSH_QUA_28  : F.parentType = TYPE_QUA; F.order = 7; F.serendip = true;  break;
+  case MSH_QUA_32  : F.parentType = TYPE_QUA; F.order = 8; F.serendip = true;  break;
+  case MSH_QUA_36I : F.parentType = TYPE_QUA; F.order = 9; F.serendip = true;  break;
+  case MSH_QUA_40  : F.parentType = TYPE_QUA; F.order = 10;F.serendip = true;  break;
+  case MSH_PRI_1   : F.parentType = TYPE_PRI; F.order = 0; F.serendip = false; break;
+  case MSH_PRI_6   : F.parentType = TYPE_PRI; F.order = 1; F.serendip = false; break;
+  case MSH_PRI_18  : F.parentType = TYPE_PRI; F.order = 2; F.serendip = false; break;
+  case MSH_HEX_8   : F.parentType = TYPE_HEX; F.order = 1; F.serendip = false; break;
+  case MSH_HEX_27  : F.parentType = TYPE_HEX; F.order = 2; F.serendip = false; break;
+  case MSH_HEX_64  : F.parentType = TYPE_HEX; F.order = 3; F.serendip = false; break;
+  case MSH_HEX_125 : F.parentType = TYPE_HEX; F.order = 4; F.serendip = false; break;
+  case MSH_HEX_216 : F.parentType = TYPE_HEX; F.order = 5; F.serendip = false; break;
+  case MSH_HEX_343 : F.parentType = TYPE_HEX; F.order = 6; F.serendip = false; break;
+  case MSH_HEX_512 : F.parentType = TYPE_HEX; F.order = 7; F.serendip = false; break;
+  case MSH_HEX_729 : F.parentType = TYPE_HEX; F.order = 8; F.serendip = false; break;
+  case MSH_HEX_1000: F.parentType = TYPE_HEX; F.order = 9; F.serendip = false; break;
+  case MSH_HEX_20  : F.parentType = TYPE_HEX; F.order = 2; F.serendip = false; break;
+  case MSH_HEX_56  : F.parentType = TYPE_HEX; F.order = 3; F.serendip = true; break;
+  case MSH_HEX_98  : F.parentType = TYPE_HEX; F.order = 4; F.serendip = true; break;
+  case MSH_HEX_152 : F.parentType = TYPE_HEX; F.order = 5; F.serendip = true; break;
+  case MSH_HEX_222 : F.parentType = TYPE_HEX; F.order = 6; F.serendip = true; break;
+  case MSH_HEX_296 : F.parentType = TYPE_HEX; F.order = 7; F.serendip = true; break;
+  case MSH_HEX_386 : F.parentType = TYPE_HEX; F.order = 8; F.serendip = true; break;
+  case MSH_HEX_488 : F.parentType = TYPE_HEX; F.order = 9; F.serendip = true; break;
+  default :
+    Msg::Error("Unknown function space %d: reverting to TET_4", tag);
+    F.parentType = TYPE_TET; F.order = 1; F.serendip = false; break;
   }
+
   switch (F.parentType) {
-    case TYPE_PNT :
-      F.numFaces = 1;
-      F.dimension = 0;
-      F.monomials = generate1DMonomials(0);
-      F.points = generate1DPoints(0);
-      break;
-    case TYPE_LIN :
-      F.numFaces = 2;
-      F.dimension = 1;
-      F.monomials = generate1DMonomials(F.order);
-      F.points = generate1DPoints(F.order);
-      generate1dVertexClosure(F.closures, F.order);
-      generate1dVertexClosureFull(F.fullClosures, F.closureRef, F.order);
-      break;
-    case TYPE_TRI :
-      F.numFaces = 3;
-      F.dimension = 2;
-      F.monomials = F.serendip ? generatePascalSerendipityTriangle(F.order) :
-        generatePascalTriangle(F.order);
-      F.points = gmshGeneratePointsTriangle(F.order, F.serendip);
-      if (F.order == 0) {
-        generateClosureOrder0(F.closures, 6);
-        generateClosureOrder0(F.fullClosures, 6);
-        F.closureRef.resize(6, 0);
-      }
-      else {
-        generate2dEdgeClosure(F.closures, F.order);
-        generate2dEdgeClosureFull(F.fullClosures, F.closureRef, F.order, 3, F.serendip);
-      }
-      break;
-    case TYPE_QUA :
-      F.numFaces = 4;
-      F.dimension = 2;
-      F.monomials = F.serendip ? generatePascalQuadSerendip(F.order) :
-        generatePascalQuad(F.order);
-      F.points = gmshGeneratePointsQuad(F.order, F.serendip);
-      if (F.order == 0) {
-        generateClosureOrder0(F.closures, 8);
-        generateClosureOrder0(F.fullClosures, 8);
-        F.closureRef.resize(8, 0);
-      }
-      else {
-        generate2dEdgeClosure(F.closures, F.order, 4);
-        generate2dEdgeClosureFull(F.fullClosures, F.closureRef, F.order, 4, F.serendip);
-      }
-      break;
-    case TYPE_TET :
-      F.numFaces = 4;
-      F.dimension = 3;
-      F.monomials = F.serendip ? generatePascalSerendipityTetrahedron(F.order) :
-        generatePascalTetrahedron(F.order);
-      F.points = gmshGeneratePointsTetrahedron(F.order, F.serendip);
-      if (F.order == 0) {
-        generateClosureOrder0(F.closures,24);
-        generateClosureOrder0(F.fullClosures, 24);
-        F.closureRef.resize(24, 0);
-      } 
-      else {
-        generateFaceClosureTet(F.closures, F.order);
-        generateFaceClosureTetFull(F.fullClosures, F.closureRef, F.order, F.serendip);
-      }
-      break;
-    case TYPE_PRI :
-      F.numFaces = 5;
-      F.dimension = 3;
-      F.monomials = generatePascalPrism(F.order);
-      F.points = gmshGeneratePointsPrism(F.order, F.serendip);
-      if (F.order == 0) {
-        generateClosureOrder0(F.closures,48);
-        generateClosureOrder0(F.fullClosures,48);
-        F.closureRef.resize(48, 0);
-      }
-      else {
-        generateFaceClosurePrism(F.closures, F.order);
-        generateFaceClosurePrismFull(F.fullClosures, F.closureRef, F.order);
-      }
-      break;
-    case TYPE_HEX :
-      F.numFaces = 6;
-      F.dimension = 3;
-      F.monomials = generatePascalHex(F.order, F.serendip);
-      F.points =    gmshGeneratePointsHex(F.order, F.serendip);
-      // generateFaceClosureHex(F.closures, F.order);
-      // generateFaceClosureHexFull(F.fullClosures, F.closureRef, F.order, F.serendip);
-      break;
+  case TYPE_PNT :
+    F.numFaces = 1;
+    F.dimension = 0;
+    F.monomials = generate1DMonomials(0);
+    F.points = generate1DPoints(0);
+    break;
+  case TYPE_LIN :
+    F.numFaces = 2;
+    F.dimension = 1;
+    F.monomials = generate1DMonomials(F.order);
+    F.points = generate1DPoints(F.order);
+    generate1dVertexClosure(F.closures, F.order);
+    generate1dVertexClosureFull(F.fullClosures, F.closureRef, F.order);
+    break;
+  case TYPE_TRI :
+    F.numFaces = 3;
+    F.dimension = 2;
+    F.monomials = F.serendip ? generatePascalSerendipityTriangle(F.order) :
+      generatePascalTriangle(F.order);
+    F.points = gmshGeneratePointsTriangle(F.order, F.serendip);
+    if (F.order == 0) {
+      generateClosureOrder0(F.closures, 6);
+      generateClosureOrder0(F.fullClosures, 6);
+      F.closureRef.resize(6, 0);
+    }
+    else {
+      generate2dEdgeClosure(F.closures, F.order);
+      generate2dEdgeClosureFull(F.fullClosures, F.closureRef, F.order, 3, F.serendip);
+    }
+    break;
+  case TYPE_QUA :
+    F.numFaces = 4;
+    F.dimension = 2;
+    F.monomials = F.serendip ? generatePascalQuadSerendip(F.order) :
+      generatePascalQuad(F.order);
+    F.points = gmshGeneratePointsQuad(F.order, F.serendip);
+    if (F.order == 0) {
+      generateClosureOrder0(F.closures, 8);
+      generateClosureOrder0(F.fullClosures, 8);
+      F.closureRef.resize(8, 0);
+    }
+    else {
+      generate2dEdgeClosure(F.closures, F.order, 4);
+      generate2dEdgeClosureFull(F.fullClosures, F.closureRef, F.order, 4, F.serendip);
+    }
+    break;
+  case TYPE_TET :
+    F.numFaces = 4;
+    F.dimension = 3;
+    F.monomials = F.serendip ? generatePascalSerendipityTetrahedron(F.order) :
+      generatePascalTetrahedron(F.order);
+    F.points = gmshGeneratePointsTetrahedron(F.order, F.serendip);
+    if (F.order == 0) {
+      generateClosureOrder0(F.closures,24);
+      generateClosureOrder0(F.fullClosures, 24);
+      F.closureRef.resize(24, 0);
+    } 
+    else {
+      generateFaceClosureTet(F.closures, F.order);
+      generateFaceClosureTetFull(F.fullClosures, F.closureRef, F.order, F.serendip);
+    }
+    break;
+  case TYPE_PRI :
+    F.numFaces = 5;
+    F.dimension = 3;
+    F.monomials = generatePascalPrism(F.order);
+    F.points = gmshGeneratePointsPrism(F.order, F.serendip);
+    if (F.order == 0) {
+      generateClosureOrder0(F.closures,48);
+      generateClosureOrder0(F.fullClosures,48);
+      F.closureRef.resize(48, 0);
+    }
+    else {
+      generateFaceClosurePrism(F.closures, F.order);
+      generateFaceClosurePrismFull(F.fullClosures, F.closureRef, F.order);
+    }
+    break;
+  case TYPE_HEX :
+    F.numFaces = 6;
+    F.dimension = 3;
+    F.monomials = generatePascalHex(F.order, F.serendip);
+    F.points = gmshGeneratePointsHex(F.order, F.serendip);
+    // generateFaceClosureHex(F.closures, F.order);
+    // generateFaceClosureHexFull(F.fullClosures, F.closureRef, F.order, F.serendip);
+    break;
   }
   F.coefficients = generateLagrangeMonomialCoefficients(F.monomials, F.points);
   fs.insert(std::make_pair(tag, F));
   return &fs[tag];
 }
-
 
 std::map<std::pair<int, int>, fullMatrix<double> > polynomialBases::injector;
 

@@ -67,10 +67,11 @@ inline double pow_int(const double &a, const int &n)
 
 class polynomialBasis
 {
-  mutable std::map<int,std::vector<fullMatrix<double> > > _dfAtFace; //integrationOrder, closureId => df/dXi
+  // integrationOrder, closureId => df/dXi
+  mutable std::map<int,std::vector<fullMatrix<double> > > _dfAtFace;
  public:
-  //for now the only implemented polynomial basis are nodal poly
-  //basis, we use the type of the corresponding gmsh element as type
+  // for now the only implemented polynomial basis are nodal poly
+  // basis, we use the type of the corresponding gmsh element as type
   int type, parentType, order, dimension;
   bool serendip;
   class closure : public std::vector<int> {
@@ -291,7 +292,8 @@ class polynomialBasis
       break;
     }
   }
-  const fullMatrix<double> &getGradientAtFaceIntegrationPoints(int integrationOrder, int closureId) const;
+  const fullMatrix<double> &getGradientAtFaceIntegrationPoints(int integrationOrder,
+                                                               int closureId) const;
   static int getTag(int parentTag, int order, bool serendip = false);
 };
 

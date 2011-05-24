@@ -2886,7 +2886,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       view.butt[10] = new Fl_Check_Button
         (L + 2 * WB, 2 * WB + 4 * BH, BW / 2, BH, "Draw element outlines");
-      view.butt[10]->tooltip("(Alt+Shift+e)");
+      view.butt[10]->tooltip("(Alt+e)");
       view.butt[10]->type(FL_TOGGLE_BUTTON);
       view.butt[10]->callback(view_options_ok_cb);
 
