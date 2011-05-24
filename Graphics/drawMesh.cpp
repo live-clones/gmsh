@@ -177,6 +177,8 @@ static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
     MElement *ele = elements[i];
     for(int j = 0; j < ele->getNumVertices(); j++){
       MVertex *v = ele->getVertex(j);
+      // FIXME isElementVisible() can be slow: we should also use a
+      // vertex array for drawing vertices...
       if(isElementVisible(ele) && v->getVisibility()){
         if(CTX::instance()->mesh.points) {
           if(v->getPolynomialOrder() > 1)
