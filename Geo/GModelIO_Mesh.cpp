@@ -1039,12 +1039,13 @@ int GModel::readSTL(const std::string &name, double tolerance)
   }
   if(empty) points.clear();
 
-
   // binary STL (we also try to read in binary mode if the header told
   // us the format was ASCII but we could not read any vertices)
   if(binary || empty){
-    if(binary) Msg::Info("Mesh is in binary format");
-    else Msg::Info("Wrong ASCII header or empty file: trying binary read");
+    if(binary)
+      Msg::Info("Mesh is in binary format");
+    else
+      Msg::Info("Wrong ASCII header or empty file: trying binary read");
     rewind(fp);
     while(!feof(fp)) {
       char header[80];
@@ -1125,7 +1126,8 @@ int GModel::readSTL(const std::string &name, double tolerance)
       }
     }
   }
-  if (nbDuplic) Msg::Warning("%d Duplicate triangle in STL file read",nbDuplic);
+  if (nbDuplic)
+    Msg::Warning("%d duplicate triangles in STL file", nbDuplic);
 
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertices); // will delete unused vertices
