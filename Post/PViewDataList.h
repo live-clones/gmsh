@@ -54,7 +54,7 @@ class PViewDataList : public PViewData {
                 std::vector<double> &list, int nblist);
   void _getString(int dim, int i, int timestep, std::string &str, 
                   double &x, double &y, double &z, double &style);
-  void _getRawData(int idxtype, std::vector<double> **l, int **ne, int *nc, int *nn);
+  int _getRawData(int idxtype, std::vector<double> **l, int **ne, int *nc, int *nn);
  public:
   PViewDataList();
   ~PViewDataList(){}

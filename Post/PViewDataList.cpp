@@ -740,7 +740,7 @@ bool PViewDataList::combineTime(nameData &nd)
   return finalize();
 }
 
-void PViewDataList::_getRawData(int idxtype, std::vector<double> **l, int **ne, 
+int PViewDataList::_getRawData(int idxtype, std::vector<double> **l, int **ne, 
                                 int *nc, int *nn)
 {
   int type = 0;
@@ -777,6 +777,7 @@ void PViewDataList::_getRawData(int idxtype, std::vector<double> **l, int **ne,
     int nim = getInterpolationMatrices(type, im);
     if(nim == 4) *nn = im[2]->size1();
   }
+  return type;
 }
 
 void PViewDataList::setOrder2(int type)
