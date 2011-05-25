@@ -3484,7 +3484,9 @@ static void writeElementsINP(FILE *fp, GEntity *ge, std::vector<T*> &elements,
       int np = (saveAll ? 1 : ge->physicals.size());
       for(int p = 0; p < np; p++){
         int part = (saveAll ? ge->tag() : ge->physicals[p]);
-        fprintf(fp, "*Element, type=%s, ELSET=PART%d\n", typ, part);
+        const char *str = (ge->dim() == 3) ? "VOLUME" : (ge->dim() == 2) ? 
+          "SURFACE" : (ge->dim() == 1) ? "CURVE" : "POINT";
+        fprintf(fp, "*Element, type=%s, ELSET=%s%d\n", typ, str, part);
         for(unsigned int i = 0; i < elements.size(); i++)
           elements[i]->writeINP(fp, ne++);
       }
