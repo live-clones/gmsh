@@ -697,7 +697,6 @@ bool PViewDataGModel::skipElement(int step, int ent, int ele, bool checkVisibili
   stepData<double> *sd = _steps[step];
   if(!_steps[step]->getNumData()) return true;
   MElement *e = _getElement(step, ent, ele);
-  if(!e) return true;
   if(checkVisibility && !e->getVisibility()) return true;
   if(_type == NodeData){
     for(int i = 0; i < getNumNodes(step, ent, ele); i++)

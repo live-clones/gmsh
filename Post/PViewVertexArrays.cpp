@@ -120,7 +120,9 @@ static bool getExternalValues(PView *p, int index, int ient, int iele,
   if(index < 0 || index >= (int)PView::list.size()) return false;
 
   PView *p2 = PView::list[index];
-  PViewData *data2 = p2->getData();
+  PViewData *data2 = p2->getData(true); // use adaptive data if available
+
+  if(iele >= data2->getNumElements(opt->timeStep, ient)) return false;
 
   if(!data2->skipElement(opt->timeStep, ient, iele) &&
      data2->getNumNodes(opt->timeStep, ient, iele) == numNodes){
