@@ -488,9 +488,13 @@ int SubdivideExtrudedMesh(GModel *m)
     j = swap;
   } while(swap);
 
-  // delete "recombined" volume elements and create tetrahedra instead
+  // delete volume elements and create tetrahedra instead
   for(unsigned int i = 0; i < regions.size(); i++){
     GRegion *gr = regions[i];
+
+    for(unsigned int i = 0; i < gr->tetrahedra.size(); i++) 
+      delete gr->tetrahedra[i];
+    gr->tetrahedra.clear();
     for(unsigned int i = 0; i < gr->hexahedra.size(); i++) 
       delete gr->hexahedra[i];
     gr->hexahedra.clear();
