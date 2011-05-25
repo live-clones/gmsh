@@ -1116,7 +1116,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
         double z = points[i][j + k].z();
         v[k] = pos.find(x, y, z, eps);
       }
-      MFace mf (v[0],v[1],v[2]);
+      MFace mf (v[0], v[1], v[2]);
       if (unique.find(mf) == unique.end()){
 	faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
 	unique.insert(mf);
