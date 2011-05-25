@@ -10,6 +10,10 @@
 #include<fstream>
 #include<cmath>
 
+#define NEXT(i) ((i)<2 ? (i)+1 : (i)-2)
+#define PREV(i) ((i)>0 ? (i)-1 : (i)+2)
+
+//std::cout << "NEXT(1) = " << NEXT(1) << std::endl;
 //========================================================================================================
 
 //CONSTRUCTOR
@@ -118,6 +122,8 @@ void Curvature::initializeMap()
 }
 
 //========================================================================================================
+
+//COMPUTE THE NORMAL AT THE VERTEX AND THE AREA AROUND
 
 void Curvature::computeVertexNormals()
 {
@@ -278,7 +284,7 @@ void Curvature::curvatureTensor()
 
 //========================================================================================================
 
-void Curvature::computeCurvature()
+void Curvature::computeCurvature_Simple()
 {
     SVector3 vector_E;
     SVector3 vector_A;
@@ -354,6 +360,394 @@ void Curvature::computeCurvature()
 
     }
 }
+
+//========================================================================================================
+
+// Compute per-vertex point areas
+void Curvature::computePointareas()
+{
+
+//    if (_pointareas.size() == _VertexToInt.size())
+//        return;
+//        need_faces();
+
+    std::cout << "Computing point areas... " << std::endl;
+//    std::cout << "The mesh has " << _VertexToInt.size() << " nodes" << std::endl;
+
+    SVector3 e[3];
+    SVector3 l2;
+    SVector3 ew;
+
+    _pointareas.resize(_VertexToInt.size());
+    _cornerareas.resize(_ElementToInt.size());
+
+
+    for (int i = 0; i< _ptFinalEntityList.size(); ++i)
+    {
+      GEntity* entity = _ptFinalEntityList[i]; //entity is a pointer to one surface of the group "FinalEntityList"
+
+      for (int iElem = 0; iElem < entity->getNumMeshElements(); iElem++) //Loop over the element all the element of the "myTag"-surface
+      {
+          MElement *E = entity->getMeshElement(iElem);  //Pointer to one element
+          // The NEW tag of the corresponding element
+          const int EIdx = _ElementToInt[E->getNum()];
+
+          MVertex* A = E->getVertex(0);  //Pointers to vertices of triangle
+          MVertex* B = E->getVertex(1);
+          MVertex* C = E->getVertex(2);
+
+          //Edges
+          e[0] = SVector3(C->x() - B->x(), C->y() - B->y(), C->z() - B->z()); //vector side of a triangilar element
+          e[1] = SVector3(A->x() - C->x(), A->y() - C->y(), A->z() - C->z());
+          e[2] = SVector3(B->x() - A->x(), B->y() - A->y(), B->z() - A->z());
+
+          // Compute corner weights
+          //SVector3 len = crossprod(e[0], e[1]);
+          //len = norm
+          //len2 = normSq
+          double area = 0.5 * norm(crossprod(e[0], e[1])); //area of a triangle
+          l2 = SVector3( normSq(e[0]), normSq(e[1]), normSq(e[2]) );
+          ew = SVector3( l2[0] * (l2[1] + l2[2] - l2[0]),
+                          l2[1] * (l2[2] + l2[0] - l2[1]),
+                          l2[2] * (l2[0] + l2[1] - l2[2]) );
+
+          if (ew[0] <= 0.0)
+          {
+              _cornerareas[EIdx][1] = -0.25 * l2[2] * area / dot(e[0], e[2]);
+              _cornerareas[EIdx][2] = -0.25 * l2[1] * area / dot(e[0], e[1]);
+              _cornerareas[EIdx][0] = area - _cornerareas[EIdx][1] - _cornerareas[EIdx][2];
+
+          }
+          else if (ew[1] <= 0.0)
+          {
+              _cornerareas[EIdx][2] = -0.25 * l2[0] * area / dot(e[1], e[0]);
+              _cornerareas[EIdx][0] = -0.25 * l2[2] * area / dot(e[1], e[2]);
+              _cornerareas[EIdx][1] = area - _cornerareas[EIdx][2] - _cornerareas[EIdx][0];
+           }
+          else if (ew[2] <= 0.0)
+          {
+              _cornerareas[EIdx][0] = -0.25 * l2[1] * area / dot(e[2], e[1]);
+              _cornerareas[EIdx][1] = -0.25 * l2[0] * area / dot(e[2], e[0]);
+              _cornerareas[EIdx][2] = area - _cornerareas[EIdx][0] - _cornerareas[EIdx][1];
+           }
+          else
+          {
+              float ewscale = 0.5 * area / (ew[0] + ew[1] + ew[2]);
+              for (int j = 0; j < 3; j++)
+                  _cornerareas[EIdx][j] = ewscale * (ew[(j+1)%3] + ew[(j+2)%3]);
+          }
+
+          const int V0 = _VertexToInt[A->getNum()];
+          const int V1 = _VertexToInt[B->getNum()];
+          const int V2 = _VertexToInt[C->getNum()];
+
+          _pointareas[V0] += _cornerareas[EIdx][0];
+          //_pointareas[faces[i][0]] += _cornerareas[i][0];
+
+          _pointareas[V1] += _cornerareas[EIdx][1];
+
+          _pointareas[V2] += _cornerareas[EIdx][2];
+
+      }//End of loop over iElem
+
+      std::cout << "Done computing pointareas" << std::endl;
+//      std::cout << "_pointareas.size = " << _pointareas.size() << std::endl;
+//      std::cout << "_cornerareas.size = " << _cornerareas.size() << std::endl;
+
+    }//End of loop over _ptFinalEntityList
+
+}//End of the method "computePointareas"
+
+
+//========================================================================================================
+
+//Rotate a coordinate system to be perpendicular to the given normal
+
+void Curvature::rot_coord_sys(const SVector3 &old_u, const SVector3 &old_v, const SVector3 &new_norm, SVector3 &new_u, SVector3 &new_v)
+{
+  new_u = old_u;
+  new_v = old_v;
+  SVector3 old_norm = crossprod(old_u, old_v);
+  double ndot = dot(old_norm, new_norm);
+//  if (unlikely(ndot <= -1.0f))
+  if (ndot <= -1.0f)
+  {
+    new_u = -1.0*new_u;
+    new_v = -1.0*new_v;
+    return;
+  }//end of if-condtion
+
+  SVector3 perp_old = new_norm - ndot*old_norm;
+  SVector3 dperp = 1.0f/(1 + ndot) * (old_norm + new_norm);
+  new_u -= dperp*dot(new_u, perp_old);
+  new_v -= dperp*dot(new_v, perp_old);
+
+}
+
+
+//========================================================================================================
+
+//Project a curvature tensor from the basis spanned by old_u and old_v
+//(which are assumed to be unit-length and perpendicular) to the new_u
+//and new_v basis
+
+void Curvature::proj_curv( const SVector3 &old_u, const SVector3 &old_v,
+                          double old_ku, double old_kuv, double old_kv,
+                          const SVector3  &new_u, const SVector3 &new_v,
+                          double &new_ku, double &new_kuv, double &new_kv)
+{
+  SVector3 r_new_u;
+  SVector3 r_new_v;
+  rot_coord_sys(new_u, new_v, crossprod(old_u,old_v), r_new_u, r_new_v);
+
+  double u1 = dot(r_new_u, old_u);
+  double v1 = dot(r_new_u, old_v);
+  double u2 = dot(r_new_v, old_u);
+  double v2 = dot(r_new_v, old_v);
+
+  new_ku  =   old_ku*u1*u1 + old_kuv*(2.0f * u1*v1)   + old_kv*v1*v1;
+  new_kuv  =  old_ku*u1*u2 + old_kuv*(u1*v2 * u2*v1)  + old_kv*v1*v2;
+  new_kv  =   old_ku*u2*u2 + old_kuv*(2.0f * u2*v2)   + old_kv*v2*v2;
+
+
+}
+
+
+//========================================================================================================
+
+//Given a curvature tensor, find principal directions and curvatures
+//Makes sure that pdir1 and pdir2 are perpendicular to normal
+
+void Curvature::diagonalize_curv(const SVector3 &old_u, const SVector3 &old_v,
+                      double ku, double kuv, double kv,
+                      const SVector3 &new_norm,
+                      SVector3 &pdir1, SVector3 &pdir2, double &k1, double &k2)
+{
+  SVector3 r_old_u;
+  SVector3 r_old_v;
+
+  double c = 1.0;
+  double s = 0.0;
+  double tt = 0.0;
+
+  rot_coord_sys(old_u, old_v, new_norm, r_old_u, r_old_v);
+
+//  if(unlikely(kuv !=0.0f))
+  if(kuv !=0.0)
+  {
+    //Jacobi rotation to diagonalize
+    double h= 0.5*(kv -ku)/ kuv;
+    tt = (h<0.0) ?
+          1.0 / (h - std::sqrt(1.0 + h*h)):
+          1.0 / (h + std::sqrt(1.0 + h*h));
+    c = 1.0 / std::sqrt(1.0 + tt*tt);
+    s = tt*c;
+  }
+
+  k1 = ku - tt *kuv;
+  k2 = kv + tt *kuv;
+
+  if(std::abs(k1) >= std::abs(k2))
+  {
+    pdir1 = c*r_old_u - s*r_old_v;
+  }
+  else
+  {
+    std::swap(k1,k2);
+    pdir1 = s*r_old_u + c*r_old_v;
+  }
+  pdir2 = crossprod(new_norm, pdir1);
+}
+
+//========================================================================================================
+
+void Curvature::computeCurvature_Rusinkiewicz()
+{
+  initializeMap();
+  computeVertexNormals();
+  computePointareas();
+
+  SVector3 e[3];
+  STensor3 w;
+  SVector3 t;
+  SVector3 n;
+  SVector3 b;
+  SVector3 m;
+  SVector3 dn;
+
+  int vj;
+
+  double u;
+  double v;
+  double dnu;
+  double dnv;
+  double c1;
+  double c2;
+  double c12;
+  double wt;
+
+  _pdir1.resize(_VertexToInt.size());
+  _pdir2.resize(_VertexToInt.size());
+
+  _curv1.resize(_VertexToInt.size());
+  _curv2.resize(_VertexToInt.size());
+  _curv12.resize(_VertexToInt.size());
+
+
+
+  std::cout << "Computing Curvature.." << std::endl;
+
+  for (int i = 0; i< _ptFinalEntityList.size(); ++i)
+  {
+    GEntity* entity = _ptFinalEntityList[i]; //entity is a pointer to one surface of the group "FinalEntityList"
+
+    for (int iElem = 0; iElem < entity->getNumMeshElements(); iElem++) //Loop over the element all the element of the "myTag"-surface
+    {
+      MElement *E = entity->getMeshElement(iElem);  //Pointer to one element
+
+      MVertex* A = E->getVertex(0);  //Pointers to vertices of triangle
+      MVertex* B = E->getVertex(1);
+      MVertex* C = E->getVertex(2);
+
+      const int V0 = _VertexToInt[A->getNum()];  //Tag of the 1st vertex of the triangle
+      const int V1 = _VertexToInt[B->getNum()];
+      const int V2 = _VertexToInt[C->getNum()];
+
+
+      ///Set up an initial coordinate system per vertex:
+
+      _pdir1[V0] = SVector3(B->x() - A->x(), B->y() - A->y(), B->z() - A->z());
+      _pdir1[V1] = SVector3(C->x() - B->x(), C->y() - B->y(), C->z() - B->z());
+      _pdir1[V2] = SVector3(A->x() - C->x(), A->y() - C->y(), A->z() - C->z());
+
+    }
+  }
+
+    for (int ivertex = 0; ivertex < _VertexToInt.size(); ++ivertex)
+    {
+      _pdir1[ivertex] = crossprod(_pdir1[ivertex], _VertexNormal[ivertex]);
+      _pdir1[ivertex].normalize();
+      _pdir2[ivertex] = crossprod(_VertexNormal[ivertex], _pdir1[ivertex]);
+    }
+
+    // Compute curvature per face:
+    for (int i = 0; i< _ptFinalEntityList.size(); ++i)
+    {
+      GEntity* entity = _ptFinalEntityList[i]; //entity is a pointer to one surface of the group "FinalEntityList"
+      for (int iElem = 0; iElem < entity->getNumMeshElements(); iElem++) //Loop over the element all the element of the "myTag"-surface
+      {
+        MElement *E = entity->getMeshElement(iElem);  //Pointer to one element
+        // The NEW tag of the corresponding element
+        const int EIdx = _ElementToInt[E->getNum()];
+
+        MVertex* A = E->getVertex(0);  //Pointers to vertices of triangle
+        MVertex* B = E->getVertex(1);
+        MVertex* C = E->getVertex(2);
+
+        e[0] = SVector3(C->x() - B->x(), C->y() - B->y(), C->z() - B->z());
+        e[1] = SVector3(A->x() - C->x(), A->y() - C->y(), A->z() - C->z());
+        e[2] = SVector3(B->x() - A->x(), B->y() - A->y(), B->z() - A->z());
+
+        //SVector3 e[3] = {SVector3(C->x() - B->x(), C->y() - B->y(), C->z() - B->z()), SVector3(A->x() - C->x(), A->y() - C->y(), A->z() - C->z()), SVector3(B->x() - A->x(), B->y() - A->y(), B->z() - A->z()) };
+
+
+        //N-T-B coordinate system per face
+        t = e[0];
+        t.normalize();
+        n = crossprod( e[0], e[1]);
+        b = crossprod(n, t);
+        b.normalize();
+
+        //Estimate curvature based on variations of normals along edges:
+        //intialization:
+        m = SVector3(0.0, 0.0, 0.0);
+        //maybe double m[3] = { 0.0, 0.0, 0.0 };
+        // w *= 0.0; //Reset w to zero
+        for (int i  = 0; i< 3; ++i)
+        {
+          for (int j = 0; j<3; ++j)
+          {
+            w(i,j) = 0.0;
+          }
+        }
+
+        //filling:
+        for (int j = 0; j< 3; ++j)
+        {
+          u = dot(e[j], t);
+          v = dot(e[j], b);
+
+          w(0,0) += u*u;
+          w(0,1) += u*v;
+          w(2,2) += v*v;
+
+          MVertex* U = E->getVertex(PREV(j));
+          MVertex* V = E->getVertex(NEXT(j));
+
+          const int UIdx = _VertexToInt[U->getNum()];
+          const int VIdx = _VertexToInt[V->getNum()];
+
+          dn = _VertexNormal[UIdx] - _VertexNormal[VIdx];
+
+          dnu = dot(dn, t);
+          dnv = dot(dn, b);
+
+          m[0] += dnu*u;
+          m[1] += dnu*v + dnv*u;
+          m[2] += dnv*v;
+        }
+
+        w(1,1) = w(0,0) + w(2,2);
+        w(1,2) = w(0,1);
+
+        //Least Square Solution
+        double diag[3];
+        if (!ldltdc(w, diag))
+        {
+          std::cout << "ldltdc failed" << std::endl;
+          continue;
+        }
+        ldltsl(w, diag, m, m);
+
+        //Push it back out to the vertices
+        for (int j = 0; j< 3; ++j)
+        {
+          const int old_vj = E->getVertex(j)->getNum();
+          const int vj = _VertexToInt[old_vj];
+          proj_curv(t, b, m[0], m[1], m[2], _pdir1[vj], _pdir2[vj], c1, c12, c2);
+          wt = _cornerareas[EIdx][j]/_pointareas[vj];
+//          wt = 1.0;
+
+          _curv1[vj] += wt*c1;
+          _curv12[vj] += wt*c12;
+          _curv2[vj] += wt*c2;
+
+        }
+
+    } //End of loop over the element (iElem)
+
+  } //End of loop over "_ptFinalEntityList"
+
+
+    //Compute principal directions and curvatures at each vertex
+    for (int ivertex = 0; ivertex < _VertexToInt.size(); ++ivertex)
+    {
+        diagonalize_curv(_pdir1[ivertex], _pdir2[ivertex], _curv1[ivertex], _curv12[ivertex], _curv2[ivertex],
+                         _VertexNormal[ivertex], _pdir1[ivertex], _pdir2[ivertex], _curv1[ivertex], _curv2[ivertex]);
+    }
+
+    std::cout << "Done" << std::endl;
+
+    _VertexCurve.resize( _VertexToInt.size() );
+
+    for (int ivertex = 0; ivertex < _VertexToInt.size(); ++ivertex)
+    {
+        _VertexCurve[ivertex] = (_curv1[ivertex]+_curv2[ivertex])*0.5;
+
+    }
+
+} //End of the "computeCurvature_Rusinkiewicz" method
+
 
 //========================================================================================================
 
