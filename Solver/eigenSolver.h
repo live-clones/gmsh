@@ -27,7 +27,7 @@ class eigenSolver{
  public:
   eigenSolver(dofManager<double> *manager, std::string A,
               std::string B="", bool hermitian=true);
-  eigenSolver(linearSystemPETSc<double> *A,linearSystemPETSc<double>* B = NULL, bool hermitian=false);
+  eigenSolver(linearSystemPETSc<double> *A,linearSystemPETSc<double>* B = NULL, bool hermitian=true);
   bool solve(int numEigenValues=0, std::string which="");
   int getNumEigenValues(){ return _eigenValues.size(); }
   std::complex<double> getEigenValue(int num){ return _eigenValues[num]; }
