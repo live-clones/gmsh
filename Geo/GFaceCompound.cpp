@@ -661,8 +661,8 @@ bool GFaceCompound::parametrize() const
   }
   // Radial-Basis Function parametrization
   else if (_mapping == RBF){
-    printf("Parametrizing surface %d with 'rbf' \n", tag());
-    Msg::Debug("Parametrizing surface %d with 'rbf's'", tag());
+    printf("Parametrizing surface %d with 'RBF' \n", tag());
+    Msg::Debug("Parametrizing surface %d with 'RBF''", tag());
   }
 
   buildOct();  
@@ -1727,7 +1727,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
     //     b102 = (2*lt->v3 + lt->v1-w31*n3)*0.333;
     //     b201 = (2*lt->v1 + lt->v3-w13*n1)*0.333;
 
-    //tagged PN trinagles (sigma=1)
+    //tagged PN triangles (sigma=1)
     double theta = 0.0;
     SVector3 d1 = lt->v1+.33*(1-theta)*(lt->v2-lt->v1);
     SVector3 d2 = lt->v2+.33*(1-theta)*(lt->v1-lt->v2);

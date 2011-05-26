@@ -101,6 +101,13 @@ class SMetric3 {
     ithis.setMat(m);
     return ithis;
   }
+  double determinant () const
+  {
+    fullMatrix<double> m(3,3);
+    getMat(m);
+    double det = m.determinant();
+    return det;
+  }
   SMetric3 operator + (const SMetric3 &other) const
   {
     SMetric3 res(*this);
@@ -229,6 +236,7 @@ class STensor3 {
     ithis.setMat(m);
     return ithis;
   }
+
   STensor3 operator + (const STensor3 &other) const
   {
     STensor3 res(*this);
