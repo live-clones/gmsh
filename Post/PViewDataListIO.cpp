@@ -10,6 +10,7 @@
 #include "StringUtils.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
+#include "MVertexPositionSet.h"
 #include "Context.h"
 #include "adaptiveData.h"
 
@@ -430,32 +431,8 @@ bool PViewDataList::writePOS(std::string fileName, bool binary, bool parsed, boo
   return true;
 }
 
-class pVertex{
- public:
-  int Num;
-  double X, Y, Z;
-  std::vector<double> Val;
-  pVertex() : Num(0), X(0.), Y(0.), Z(0.) {}
-  pVertex(double x, double y, double z) : Num(0), X(x), Y(y), Z(z) {}
-};
-
-class pVertexLessThan{
- public:
-  bool operator()(const pVertex ent1, const pVertex ent2) const
-  {
-    double tol = CTX::instance()->lc * 1.e-10 ;
-    if(ent1.X - ent2.X  >  tol) return true;
-    if(ent1.X - ent2.X  < -tol) return false;
-    if(ent1.Y - ent2.Y  >  tol) return true;
-    if(ent1.Y - ent2.Y  < -tol) return false;
-    if(ent1.Z - ent2.Z  >  tol) return true;
-    return false;
-  }
-};
-
-static void getNodeMSH(int nbelm, std::vector<double> &list,
-                       int nbnod, int nbcomp, int nbstep,
-                       std::set<pVertex, pVertexLessThan> *nodes, int *numelm)
+static void createVertices(std::vector<double> &list, int nbelm, int nbnod, 
+                           std::vector<MVertex*> &nodes)
 {
   if(!nbelm) return;
   int nb = list.size() / nbelm;
@@ -463,84 +440,84 @@ static void getNodeMSH(int nbelm, std::vector<double> &list,
     double *x = &list[i];
     double *y = &list[i + nbnod];
     double *z = &list[i + 2 * nbnod];
-    double *v = &list[i + 3 * nbnod];
-    for(int j = 0; j < nbnod; j++) {
-      pVertex n(x[j], y[j], z[j]);
-      std::set<pVertex, pVertexLessThan>::iterator it = nodes->find(n);
-      if(it == nodes->end()){
-        n.Num = nodes->size() + 1;
-        for(int ts = 0; ts < nbstep; ts++)
-          for(int k = 0; k < nbcomp; k++)
-            n.Val.push_back(v[nbcomp * nbnod * ts + nbcomp * j + k]);
-        nodes->insert(n);
-      }
-    }
-    (*numelm)++;
-  }
+    for(int j = 0; j < nbnod; j++)
+      nodes.push_back(new MVertex(x[j], y[j], z[j]));
+  }    
 }
 
-static void writeElementMSH(FILE *fp, int num, int nbnod, pVertex nod[8],
-                            int nbcomp, double *vals, int dim)
-{
-  switch(dim){
-  case 0:
-    fprintf(fp, "%d 15 2 0 %d %d\n", num, num, nod[0].Num);
-    break;
-  case 1:
-    fprintf(fp, "%d 1 0 %d %d\n", num, nod[0].Num, nod[1].Num);
-    break;
-  case 2:
-    if(nbnod == 3)
-      fprintf(fp, "%d 2 0 %d %d %d\n", num, nod[0].Num, nod[1].Num, nod[2].Num);
-    else
-      fprintf(fp, "%d 3 0 %d %d %d %d\n", num, nod[0].Num, nod[1].Num,
-              nod[2].Num, nod[3].Num);
-    break;
-  case 3:
-  default:
-    if(nbnod == 4)
-      fprintf(fp, "%d 4 0 %d %d %d %d\n", num, nod[0].Num, nod[1].Num,
-              nod[2].Num, nod[3].Num);
-    else if(nbnod == 5)
-      fprintf(fp, "%d 7 0 %d %d %d %d %d\n", num, nod[0].Num, nod[1].Num,
-              nod[2].Num, nod[3].Num, nod[4].Num);
-    else if(nbnod == 6)
-      fprintf(fp, "%d 6 0 %d %d %d %d %d %d\n", num, nod[0].Num, nod[1].Num,
-              nod[2].Num, nod[3].Num, nod[4].Num, nod[5].Num);
-    else
-      fprintf(fp, "%d 5 0 %d %d %d %d %d %d %d %d\n", num, nod[0].Num,
-              nod[1].Num, nod[2].Num, nod[3].Num, nod[4].Num, nod[5].Num,
-              nod[6].Num, nod[7].Num);
-    break;
-  }
-}
-
-static void writeElementsMSH(FILE *fp, int nbelm, std::vector<double> &list,
-                             int nbnod, int nbcomp, int dim,
-                             std::set<pVertex, pVertexLessThan> *nodes,
-                             int *numelm)
+static void createElements(std::vector<double> &list, int nbelm, int nbnod, 
+                           MVertexPositionSet &pos, std::vector<MElement*> &elements,
+                           double eps, int type)
 {
   if(!nbelm) return;
-  pVertex nod[8];
+  int t = 0;
+  // reverse-engineer geometrical element type according to the number
+  // of nodes (this should be completed, but is likely enough for most
+  // legacy .pos files out there...)
+  switch(type){
+  case TYPE_PNT : t = MSH_PNT; break;
+  case TYPE_LIN :
+    switch(nbnod){
+    case 2: t = MSH_LIN_2; break;
+    case 3: t = MSH_LIN_3; break;
+    }
+    break;
+  case TYPE_TRI :
+    switch(nbnod){
+    case 3: t = MSH_TRI_3; break;
+    case 6: t = MSH_TRI_6; break;
+    }
+    break;
+  case TYPE_QUA :
+    switch(nbnod){
+    case 4: t = MSH_QUA_4; break; 
+    case 8: t = MSH_QUA_8; break;
+    case 9: t = MSH_QUA_9; break;
+    }
+    break;
+  case TYPE_TET :
+    switch(nbnod){
+    case 4: t = MSH_TET_4; break;
+    case 10: t = MSH_TET_10; break;
+    }
+    break;
+  case TYPE_HEX :
+    switch(nbnod){
+    case 8: t = MSH_HEX_8; break;
+    case 20: t = MSH_HEX_20; break;
+    case 27: t = MSH_HEX_27; break;
+    }
+    break;
+  case TYPE_PRI :
+    switch(nbnod){
+    case 6: t = MSH_PRI_6; break;
+    case 15: t = MSH_PRI_15; break;
+    case 18: t = MSH_PRI_18; break;
+    }
+    break;
+  case TYPE_PYR :
+    switch(nbnod){
+    case 5: t = MSH_PYR_5; break;
+    case 13: t = MSH_PYR_13; break;
+    case 14: t = MSH_PYR_14; break;
+    }
+    break;
+  }
+  if(!t){
+    Msg::Warning("Discarding elements of type (%d nodes)", nbnod);
+    return;
+  }
+  MElementFactory factory;
   int nb = list.size() / nbelm;
   for(unsigned int i = 0; i < list.size(); i += nb){
     double *x = &list[i];
     double *y = &list[i + nbnod];
     double *z = &list[i + 2 * nbnod];
-    double *v = &list[i + 3 * nbnod];
-    for(int j = 0; j < nbnod; j++) {
-      pVertex n(x[j], y[j], z[j]);
-      std::set<pVertex, pVertexLessThan>::iterator it = nodes->find(n);
-      if(it == nodes->end()){
-        Msg::Error("Unknown node in element");
-        return;
-      }
-      else{
-        nod[j] = (pVertex)(*it);
-      }
-    }
-    (*numelm)++;
-    writeElementMSH(fp, *numelm, nbnod, nod, nbcomp, v, dim);
+    std::vector<MVertex*> verts(nbnod);
+    for(int j = 0; j < nbnod; j++)
+      verts[j] = pos.find(x[j], y[j], z[j], eps);
+    MElement *e = factory.create(t, verts);
+    elements.push_back(e);
   }
 }
 
@@ -550,11 +527,6 @@ bool PViewDataList::writeMSH(std::string fileName, bool binary, bool savemesh)
     Msg::Warning("Writing adapted dataset (will only export current time step)");
     return _adaptive->getData()->writeMSH(fileName, binary);
   }
-  else if(haveInterpolationMatrices()){
-    Msg::Error("Cannot (yet) export datasets with interpolation matrices: use");
-    Msg::Error("'Adapt visualization grid' before exporting!");
-    return false;
-  }
 
   FILE *fp = fopen(fileName.c_str(), "w");
   if(!fp){
@@ -562,90 +534,100 @@ bool PViewDataList::writeMSH(std::string fileName, bool binary, bool savemesh)
     return false;
   }
 
-  if(binary) Msg::Warning("Binary write not implemented yet");
+  double tol = CTX::instance()->geom.tolerance;
+  double eps = norm(SVector3(BBox.max(), BBox.min())) * tol;
 
-  std::set<pVertex, pVertexLessThan> nodes;
-  int numelm = 0;
-  getNodeMSH(NbSP, SP, 1, 1, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbVP, VP, 1, 3, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbTP, TP, 1, 9, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbSL, SL, 2, 1, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbVL, VL, 2, 3, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbTL, TL, 2, 9, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbST, ST, 3, 1, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbVT, VT, 3, 3, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbTT, TT, 3, 9, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbSQ, SQ, 4, 1, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbVQ, VQ, 4, 3, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbTQ, TQ, 4, 9, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbSS, SS, 4, 1, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbVS, VS, 4, 3, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbTS, TS, 4, 9, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbSH, SH, 8, 1, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbVH, VH, 8, 3, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbTH, TH, 8, 9, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbSI, SI, 6, 1, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbVI, VI, 6, 3, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbTI, TI, 6, 9, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbSY, SY, 5, 1, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbVY, VY, 5, 3, NbTimeStep, &nodes, &numelm);
-  getNodeMSH(NbTY, TY, 5, 9, NbTimeStep, &nodes, &numelm);
-  fprintf(fp, "$MeshFormat\n2 0 8\n$EndMeshFormat\n");
+  std::vector<MVertex*> vertices;
+  std::vector<MElement*> elements;
+
+  int numComponents = 9;
+  for(int i = 0; i < 24; i++){
+    std::vector<double> *list = 0;
+    int *numEle = 0, numNodes, numComp;
+    _getRawData(i, &list, &numEle, &numComp, &numNodes);
+    if(*numEle) numComponents = std::min(numComponents, numComp);
+    createVertices(*list, *numEle, numNodes, vertices);
+  }
+  MVertexPositionSet pos(vertices);
+
+  for(int i = 0; i < 24; i++){
+    std::vector<double> *list = 0;
+    int *numEle = 0, numComp, numNodes;
+    int typ = _getRawData(i, &list, &numEle, &numComp, &numNodes);
+    createElements(*list, *numEle, numNodes, pos, elements, eps, typ);
+  }
+
+  int num = 0;
+  for(unsigned int i = 0; i < vertices.size(); i++)
+    if(vertices[i]->getIndex() < 0) 
+      vertices[i]->setIndex(++num);
+
+  fprintf(fp, "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n");
   fprintf(fp, "$Nodes\n");
-  fprintf(fp, "%d\n", (int)nodes.size());
-  for(std::set<pVertex, pVertexLessThan>::iterator it = nodes.begin();
-      it != nodes.end(); ++it){
-    fprintf(fp, "%d %.16g %.16g %.16g\n", it->Num, it->X, it->Y, it->Z);
+  fprintf(fp, "%d\n", num);
+  for(unsigned int i = 0; i < vertices.size(); i++){
+    MVertex *v = vertices[i];
+    if(v->getIndex() > 0)
+      fprintf(fp, "%d %.16g %.16g %.16g\n", v->getIndex(), v->x(), v->y(), v->z());
   }
   fprintf(fp, "$EndNodes\n");
 
   fprintf(fp, "$Elements\n");
-  fprintf(fp, "%d\n", numelm);
-  numelm = 0;
-  writeElementsMSH(fp, NbSP, SP, 1, 1, 0, &nodes, &numelm);
-  writeElementsMSH(fp, NbVP, VP, 1, 3, 0, &nodes, &numelm);
-  writeElementsMSH(fp, NbTP, TP, 1, 9, 0, &nodes, &numelm);
-  writeElementsMSH(fp, NbSL, SL, 2, 1, 1, &nodes, &numelm);
-  writeElementsMSH(fp, NbVL, VL, 2, 3, 1, &nodes, &numelm);
-  writeElementsMSH(fp, NbTL, TL, 2, 9, 1, &nodes, &numelm);
-  writeElementsMSH(fp, NbST, ST, 3, 1, 2, &nodes, &numelm);
-  writeElementsMSH(fp, NbVT, VT, 3, 3, 2, &nodes, &numelm);
-  writeElementsMSH(fp, NbTT, TT, 3, 9, 2, &nodes, &numelm);
-  writeElementsMSH(fp, NbSQ, SQ, 4, 1, 2, &nodes, &numelm);
-  writeElementsMSH(fp, NbVQ, VQ, 4, 3, 2, &nodes, &numelm);
-  writeElementsMSH(fp, NbTQ, TQ, 4, 9, 2, &nodes, &numelm);
-  writeElementsMSH(fp, NbSS, SS, 4, 1, 3, &nodes, &numelm);
-  writeElementsMSH(fp, NbVS, VS, 4, 3, 3, &nodes, &numelm);
-  writeElementsMSH(fp, NbTS, TS, 4, 9, 3, &nodes, &numelm);
-  writeElementsMSH(fp, NbSH, SH, 8, 1, 3, &nodes, &numelm);
-  writeElementsMSH(fp, NbVH, VH, 8, 3, 3, &nodes, &numelm);
-  writeElementsMSH(fp, NbTH, TH, 8, 9, 3, &nodes, &numelm);
-  writeElementsMSH(fp, NbSI, SI, 6, 1, 3, &nodes, &numelm);
-  writeElementsMSH(fp, NbVI, VI, 6, 3, 3, &nodes, &numelm);
-  writeElementsMSH(fp, NbTI, TI, 6, 9, 3, &nodes, &numelm);
-  writeElementsMSH(fp, NbSY, SY, 5, 1, 3, &nodes, &numelm);
-  writeElementsMSH(fp, NbVY, VY, 5, 3, 3, &nodes, &numelm);
-  writeElementsMSH(fp, NbTY, TY, 5, 9, 3, &nodes, &numelm);
+  fprintf(fp, "%d\n", (int)elements.size());
+  for(unsigned int i = 0; i < elements.size(); i++)
+    elements[i]->writeMSH(fp, 2.2, false, i + 1);
   fprintf(fp, "$EndElements\n");
 
-  int numNodes = nodes.size();
-  if(numNodes){
-    int numComp = nodes.begin()->Val.size() / NbTimeStep;
-    for(int ts = 0; ts < NbTimeStep; ts++){
-      double time = getTime(ts);
-      fprintf(fp, "$NodeData\n");
-      fprintf(fp, "1\n\"%s\"\n", getName().c_str());
-      fprintf(fp, "1\n%.16g\n", time);
-      fprintf(fp, "3\n%d\n%d\n%d\n", ts, numComp, numNodes);
-      for(std::set<pVertex, pVertexLessThan>::iterator it = nodes.begin();
-          it != nodes.end(); ++it){
-        fprintf(fp, "%d", it->Num);
-        for(int i = 0; i < numComp; i++)
-          fprintf(fp, " %.16g", it->Val[ts * numComp + i]);
-        fprintf(fp, "\n");
+  if(haveInterpolationMatrices()){
+    fprintf(fp, "$InterpolationScheme\n");
+    fprintf(fp, "\"INTERPOLATION_SCHEME\"\n");
+    fprintf(fp, "%d\n", (int)_interpolation.size());
+    for(interpolationMatrices::iterator it = _interpolation.begin();
+        it != _interpolation.end(); it++){
+      if(it->second.size() >= 2){
+        fprintf(fp, "%d\n2\n", it->first);
+        for(int mat = 0; mat < 2; mat++){
+          int m = it->second[mat]->size1(), n = it->second[mat]->size2();
+          fprintf(fp, "%d %d\n", m, n);
+          for(int i = 0; i < m; i++){
+            for(int j = 0; j < n; j++)
+              fprintf(fp, "%.16g ", it->second[mat]->get(i, j));
+            fprintf(fp, "\n");
+          }
+        }
       }
-      fprintf(fp, "$EndNodeData\n");
     }
+    fprintf(fp, "$EndInterpolationScheme\n");
+  }
+
+  for(int ts = 0; ts < NbTimeStep; ts++){
+    fprintf(fp, "$ElementNodeData\n");
+    if(haveInterpolationMatrices())
+      fprintf(fp, "2\n\"%s\"\n\"INTERPOLATION_SCHEME\"\n", getName().c_str());
+    else
+      fprintf(fp, "1\n\"%s\"\n", getName().c_str());
+    fprintf(fp, "1\n%.16g\n", getTime(ts));
+    fprintf(fp, "3\n%d\n%d\n%d\n", ts, numComponents, (int)elements.size());
+    num = 0;
+    for(int i = 0; i < 24; i++){
+      std::vector<double> *list = 0;
+      int *numEle = 0, numComp, numNodes;
+      int typ = _getRawData(i, &list, &numEle, &numComp, &numNodes);
+      if(*numEle){
+        int mult = numNodes;
+        if(_interpolation.count(typ))
+          mult = _interpolation[typ][0]->size1();
+        int nb = list->size() / *numEle;
+        for(unsigned int i = 0; i < list->size(); i += nb){
+          double *v = &(*list)[i + 3 * numNodes];
+          fprintf(fp, "%d %d", ++num, mult);
+          for(int j = 0; j < numComponents * mult; j++)
+            fprintf(fp, " %.16g", v[numComponents * mult * ts + j]);
+          fprintf(fp, "\n");
+        }
+      }
+    }
+    fprintf(fp, "$EndElementNodeData\n");
   }
 
   fclose(fp);
