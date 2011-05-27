@@ -5501,8 +5501,6 @@ double opt_mesh_aniso_max(OPT_ARGS_NUM)
   return CTX::instance()->mesh.anisoMax;
 }
 
-
-
 double opt_mesh_angle_smooth_normals(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
