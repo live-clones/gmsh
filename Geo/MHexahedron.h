@@ -542,7 +542,6 @@ class MHexahedronN : public MHexahedron {
     MHexahedron::_getEdgeVertices(num, v);
     for (int i = 0; i < _order - 1; i++) v[2+i] = _vs[(_order-1)*num+i];
   }
-  //virtual int getNumFacesRep();
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize((_order+1)*(_order+1));
@@ -588,7 +587,7 @@ class MHexahedronN : public MHexahedron {
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual void revert()
   {
-    Msg::Error("not done yet reverse hexN");
+    Msg::Error("Revert not implemented yet for MHexahedronN");
   }
   virtual void getNode(int num, double &u, double &v, double &w)
   {
