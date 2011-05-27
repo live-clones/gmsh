@@ -6,8 +6,10 @@
 #include <stdio.h>
 #include <string.h>
 #include "GmshMessage.h"
+#include "GmshDefines.h"
 #include "Numeric.h"
 #include "PViewData.h"
+#include "adaptiveData.h"
 
 bool PViewData::writeSTL(std::string fileName)
 {
@@ -22,7 +24,7 @@ bool PViewData::writeSTL(std::string fileName)
     return false;
   }
 
-  int step = 0;
+  int step = getFirstNonEmptyTimeStep();
 
   fprintf(fp, "solid Created by Gmsh\n");
   for(int ent = 0; ent < getNumEntities(step); ent++){
@@ -102,8 +104,67 @@ bool PViewData::writeTXT(std::string fileName)
 
 bool PViewData::writePOS(std::string fileName, bool binary, bool parsed, bool append)
 { 
-  Msg::Error("POS export not implemented for this view type");
-  return false; 
+  if(_adaptive){
+    Msg::Warning("Writing adapted dataset (will only export current time step)");
+    return _adaptive->getData()->writePOS(fileName, binary, parsed, append);
+  }
+  if(hasMultipleMeshes()){
+    Msg::Error("Cannot export multi-mesh datasets in .pos format");
+    return false;
+  }
+  if(haveInterpolationMatrices())
+    Msg::Warning("Discarding interpolation matrices when saving in .pos format");
+  if(binary || !parsed)
+    Msg::Warning("Only parsed .pos files can be exported for this view type");
+
+  FILE *fp = fopen(fileName.c_str(), append ? "a" : "w");
+  if(!fp){
+    Msg::Error("Unable to open file '%s'", fileName.c_str());
+    return false;
+  }
+
+  fprintf(fp, "View \"%s\" {\n", getName().c_str());
+
+  int firstNonEmptyStep = getFirstNonEmptyTimeStep();  
+  for(int ent = 0; ent < getNumEntities(firstNonEmptyStep); ent++){
+    for(int ele = 0; ele < getNumElements(firstNonEmptyStep, ent); ele++){
+      if(skipElement(firstNonEmptyStep, ent, ele)) continue;
+      int type = getType(firstNonEmptyStep, ent, ele);
+      int numComp = getNumComponents(firstNonEmptyStep, ent, ele);
+      const char *s = 0;
+      switch(type){
+      case TYPE_PNT: s = (numComp == 9) ? "TP" : (numComp == 3) ? "VP" : "SP"; break;
+      case TYPE_LIN: s = (numComp == 9) ? "TL" : (numComp == 3) ? "VL" : "SL"; break;
+      case TYPE_TRI: s = (numComp == 9) ? "TT" : (numComp == 3) ? "VT" : "ST"; break;
+      case TYPE_QUA: s = (numComp == 9) ? "TQ" : (numComp == 3) ? "VQ" : "SQ"; break;
+      case TYPE_TET: s = (numComp == 9) ? "TS" : (numComp == 3) ? "VS" : "SS"; break;
+      case TYPE_HEX: s = (numComp == 9) ? "TH" : (numComp == 3) ? "VH" : "SH"; break;
+      case TYPE_PRI: s = (numComp == 9) ? "TI" : (numComp == 3) ? "VI" : "SI"; break;
+      case TYPE_PYR: s = (numComp == 9) ? "TY" : (numComp == 3) ? "VY" : "SY"; break;
+      }
+      if(s){
+        int numNod = getNumNodes(firstNonEmptyStep, ent, ele);
+        std::vector<double> x(numNod), y(numNod), z(numNod);
+        for(int nod = 0; nod < numNod; nod++)
+          getNode(firstNonEmptyStep, ent, ele, nod, x[nod], y[nod], z[nod]);
+        for(int step = 0; step < getNumTimeSteps(); step++){
+          if(hasTimeStep(step)){
+            for(int nod = 0; nod < numNod; nod++){
+              for(int comp = 0; comp < numComp; comp++){   
+                double val;
+                getValue(step, ent, ele, nod, comp, val);
+                printf("val = %g\n", val);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  fprintf(fp, "};\n");
+  
+  return true; 
 }
 
 bool PViewData::writeMSH(std::string fileName, bool binary, bool savemesh)

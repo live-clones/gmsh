@@ -1237,7 +1237,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   // printJacobians(m, "smoothness.pos");
   // m->writeMSH("SMOOTHED.msh");
 
-  if (0 && !linear){
+  if (!linear){
     hot.ensureMinimumDistorsion(0.1);
     checkHighOrderTriangles("Final mesh", m, bad, worst);
     checkHighOrderTetrahedron("Final mesh", m, bad, worst);

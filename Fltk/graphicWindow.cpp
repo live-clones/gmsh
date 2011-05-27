@@ -378,15 +378,7 @@ static void status_rewind_cb(Fl_Widget *w, void *data)
 {
   if(!CTX::instance()->post.animCycle) {
     for(unsigned int i = 0; i < PView::list.size(); i++) {
-      // skip empty steps
-      int numSteps = (int)opt_view_nb_timestep(i, GMSH_GET, 0);
-      int step = 0;
-      while(step < numSteps){
-	if(PView::list[i]->getData()->hasTimeStep(step))
-	  break;
-	else
-	  step++;
-      }
+      int step = PView::list[i]->getData()->getFirstNonEmptyTimeStep();
       opt_view_timestep(i, GMSH_SET | GMSH_GUI, step);
     }
   }

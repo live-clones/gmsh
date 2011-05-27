@@ -172,6 +172,7 @@ class PViewDataGModel : public PViewData {
   bool finalize(bool computeMinMax=true, const std::string &interpolationScheme="");
   std::string getFileName(int step=-1);
   int getNumTimeSteps();
+  int getFirstNonEmptyTimeStep();
   double getTime(int step);
   double getMin(int step=-1, bool onlyVisible=false);
   double getMax(int step=-1, bool onlyVisible=false);

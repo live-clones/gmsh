@@ -635,21 +635,6 @@ void _printTris(char *name, std::set<MTri3*, compareTri3Ptr> &AllTris,
   fclose (ff);
 }
 
-static MTri3* search4Triangle (MTri3 *t, double pt[2], 
-			       std::vector<double> &Us, std::vector<double> &Vs,
-			       std::set<MTri3*,compareTri3Ptr> &AllTris) {
-  
-  double uv[2];
-  bool inside = invMapUV(t->tri(), pt, Us, Vs, uv, 1.e-8);    
-  if (inside) return starting_point;
-  while (1){
-    for (int i=0;i<3;i++){
-      MTri3 *tn = t->getNeigh(0);      
-      
-    }
-  }
-}
-
 static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it,
                          double center[2], double metric[3], 
                          std::vector<double> &Us, std::vector<double> &Vs,

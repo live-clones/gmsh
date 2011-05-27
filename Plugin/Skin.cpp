@@ -156,14 +156,7 @@ PView *GMSH_SkinPlugin::execute(PView *v)
   std::set<ElmData, ElmDataLessThan> skin;
   ElmDataLessThan::tolerance = CTX::instance()->lc * 1.e-12;
 
-  int firstNonEmptyStep = 0;
-  for(int step = 0; step < data1->getNumTimeSteps(); step++){
-    if(data1->hasTimeStep(step)){
-      firstNonEmptyStep = step;
-      break;
-    }
-  }
-
+  int firstNonEmptyStep = data1->getFirstNonEmptyTimeStep();
   for(int ent = 0; ent < data1->getNumEntities(firstNonEmptyStep); ent++){
     if(visible && data1->skipEntity(firstNonEmptyStep, ent)) continue;
     for(int ele = 0; ele < data1->getNumElements(firstNonEmptyStep, ent); ele++){
