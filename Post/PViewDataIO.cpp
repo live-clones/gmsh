@@ -143,21 +143,28 @@ bool PViewData::writePOS(std::string fileName, bool binary, bool parsed, bool ap
       case TYPE_PYR: s = (numComp == 9) ? "TY" : (numComp == 3) ? "VY" : "SY"; break;
       }
       if(s){
+        fprintf(fp, "%s(", s);
         int numNod = getNumNodes(firstNonEmptyStep, ent, ele);
-        std::vector<double> x(numNod), y(numNod), z(numNod);
-        for(int nod = 0; nod < numNod; nod++)
-          getNode(firstNonEmptyStep, ent, ele, nod, x[nod], y[nod], z[nod]);
+        for(int nod = 0; nod < numNod; nod++){
+          double x, y, z;
+          getNode(firstNonEmptyStep, ent, ele, nod, x, y, z);
+          fprintf(fp, "%.16g,%.16g,%.16g", x, y, z);
+          if(nod != numNod - 1) fprintf(fp, ",");
+        }
+        bool first = true;
         for(int step = 0; step < getNumTimeSteps(); step++){
           if(hasTimeStep(step)){
             for(int nod = 0; nod < numNod; nod++){
               for(int comp = 0; comp < numComp; comp++){   
                 double val;
                 getValue(step, ent, ele, nod, comp, val);
-                printf("val = %g\n", val);
+                if(first){ fprintf(fp, "){%.16g", val); first = false; }
+                else fprintf(fp, ",%.16g", val);
               }
             }
           }
         }
+        fprintf(fp, "};\n");
       }
     }
   }
