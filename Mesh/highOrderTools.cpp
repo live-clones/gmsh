@@ -112,8 +112,8 @@ static void getDistordedElements(const std::vector<MElement*> &v,
 }
 
 static void addOneLayer(const std::vector<MElement*> &v, 
-                 std::vector<MElement*> &d,
-                 std::vector<MElement*> &layer)
+                        std::vector<MElement*> &d,
+                        std::vector<MElement*> &layer)
 {
   std::set<MVertex*> all;
   for (unsigned int i = 0; i < d.size(); i++){

@@ -878,7 +878,8 @@ SPoint2 GFace::parFromPoint(const SPoint3 &p, bool onSurface) const
 GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[2]) const
 {
   Msg::Error("Closest point not implemented for this type of surface");
-  return GPoint(0, 0, 0);
+  SPoint2 p = parFromPoint(queryPoint, false);
+  return point(p);
 }
 
 bool GFace::containsParam(const SPoint2 &pt) const

@@ -912,10 +912,105 @@ void bowyerWatsonFrontal(GFace *gf)
   transferDataStructure(gf, AllTris, Us, Vs); 
 } 
 
-void addBoundaryLayers(GFace *gf) {
-  // first compute the distance function u on the existing mesh
-  // then compute the dual function v that has gradients orthogonal everywhere
-  // build a set of points in the boundary layer
-  // connect everybody with delaunay 
+// give it a try : add one quad layer on the
+  /*
+void addOneLayerOnContour(GFace *gf, GVertex *gv){
+, int nbLayers, double hplus, double factor){
+  // for each vertex
+  std::map<MVertex*,std::vector<MVertex*> >layers;
+  std::vector<MQuadrangle*> newQuads;
+  std::vector<MTriangle*> newTris;
 
+  std::list<GEdgeLoop>::iterator it = gf->edgeLoops.begin();
+  for (; it != gf->edgeLoops.end(); ++it){
+    bool found = false;
+    std::list<GEdge*> ed;
+    for (GEdgeLoop::iter it2 = it->begin(); it2 != it->end(); ++it2){
+      if (it2->ge->getBeginVertex() == gv || it2->ge->getEndVertex() == gv) {
+	found = true;
+      }
+      ed.push_back(it2->ge);
+    }
+    // we found an edge loop with the GVertex that was specified
+    if (found){
+      // compute model vertices that will produce fans
+      for (GEdgeLoop::iter it2 = it->begin(); it2 != it->end(); ++it2){
+	GEdgeLoop::iter it3 = it2; ++it3;
+	GVertex *gv = it2->getEndVertex();
+	GEdgeSigned *before,*after = *it2;
+	if (it3 == it->end()){
+	  before = *(it->begin());
+	}
+	else{
+	  before = *it2;
+	}
+      }
+
+      for (std::list<GEdge*>::iterator it = ed.begin(); it != ed.end(); ++it){
+	GEdge *ge = *it;
+	for (int i=0;i<ge->lines.size();i++){
+	  SPoint2 p[2];
+	  reparamMeshEdgeOnFace ( ge->lines[i]->getVertex(0), ge->lines[i]->getVertex(1),gf,p[0],p[1]);
+	  MVertex *vd[2];
+	  for (int j=0;j<2;j++){
+	    MVertex *v = ge->lines[i]->getVertex(j);
+	    std::map<MVertex*,MVertex*>::iterator itv = duplicates.find(v);
+	    if (itv == duplicates.end()){
+	      vd[j] = new MFaceVertex(v->x(),v->y(),v->z(),gf,p[j].x(),p[j].y());
+	      duplicates[v] = vd[j];
+	      gf->mesh_vertices.push_back(vd[j]);
+	    }
+	    else
+	      vd[j] = itv->second;
+	  }
+	  newQuads.push_back(new MQuadrangle(ge->lines[i]->getVertex(0), ge->lines[i]->getVertex(1),vd[1],vd[0]));
+	}
+      }
+      for (int i=0;i<gf->quadrangles.size();i++){
+	MQuadrangle *q = gf->quadrangles[i];
+	MVertex *vs[4];
+	for (int j=0;j<4;j++){
+	  MVertex *v = q->getVertex(j);
+	  std::map<MVertex*,MVertex*>::iterator itv = duplicates.find(v);
+	  if (itv == duplicates.end()){
+	    vs[j] = v;
+	  }
+	  else{
+	    vs[j] = itv->second;
+	  }
+	}
+	newQuads.push_back(new MQuadrangle(vs[0],vs[1],vs[2],vs[3]));
+	delete q;
+      }
+      for (int i=0;i<gf->triangles.size();i++){
+	MTriangle *t = gf->triangles[i];
+	MVertex *vs[3];
+	for (int j=0;j<3;j++){
+	  MVertex *v = t->getVertex(j);
+	  std::map<MVertex*,MVertex*>::iterator itv = duplicates.find(v);
+	  if (itv == duplicates.end()){
+	    vs[j] = v;
+	  }
+	  else{
+	    vs[j] = itv->second;
+	  }
+	}
+	newTris.push_back(new MTriangle(vs[0],vs[1],vs[2]));
+	delete t;
+      }
+
+      gf->triangles = newTris;
+      gf->quadrangles = newQuads;
+    }
+  }
+}
+*/
+
+void addBoundaryLayers(GFace *gf)
+{
+  if (backgroundMesh::current()){
+  }
+  // first compute the cross field if it is not computed yet
+  // start from a selection of edges and create points in the boundary layer
+  // connect everybody with delaunay 
 }

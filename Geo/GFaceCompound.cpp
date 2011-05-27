@@ -1019,14 +1019,14 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
         vR = ge->mesh_vertices[j];
         vR->getParameter(0,tR);
         if(!vR->getParameter(0,tR)) {
-          Msg::Error("vertex vr %p not MedgeVertex \n", vR);
+          Msg::Error("vertex vr %p not MedgeVertex", vR);
           Msg::Exit(1);
         }
         if(tLoc > tL && tLoc < tR){
           found = true;
           itR = coordinates.find(vR);
           if(itR == coordinates.end()){
-            Msg::Error("vertex %p (%g %g %g) not found\n", vR, vR->x(), vR->y(), vR->z());
+            Msg::Error("vertex %p (%g %g %g) not found", vR, vR->x(), vR->y(), vR->z());
             Msg::Exit(1);
           }
           break;
