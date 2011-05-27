@@ -36,7 +36,7 @@ class linearSystemCSR : public linearSystem<scalar> {
   sparsityPattern _sparsity; // only used for pre-allocation, does not store the sparsity once allocated
  public:
   linearSystemCSR()
-    : sorted(false), _a(0), _b(0), _x(0) {}
+    : sorted(false), _entriesPreAllocated(false), _a(0), _b(0), _x(0) {}
   virtual bool isAllocated() const { return _a != 0; }
   virtual void allocate(int) ;
   virtual void clear()
