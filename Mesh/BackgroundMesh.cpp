@@ -369,6 +369,12 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
   
   // take the minimum, then constrain by lcMin and lcMax
   double lc = std::min(l1, l2);
+
+  if (backgroundMesh::current()){
+    const double lcBG = backgroundMesh::current()->operator() (U,V,0);
+    lc = std::min(lc,lcBG);
+  }
+
   lc = std::max(lc, CTX::instance()->mesh.lcMin);
   lc = std::min(lc, CTX::instance()->mesh.lcMax);
 
@@ -381,7 +387,10 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
   SMetric3 LC(1./(lc*lc));
   SMetric3 m = intersection(intersection (l4, LC),l3);
   //  printf("%g %g %g %g %g %g\n",m(0,0),m(1,1),m(2,2),m(0,1),m(0,2),m(1,2));
-  return m;
+ 
+
+
+ return m;
   //  return lc * CTX::instance()->mesh.lcFactor;
 }
 
@@ -448,7 +457,7 @@ backgroundMesh::backgroundMesh(GFace *_gf)
     }
   }
   // ensure that other criteria are fullfilled 
-  updateSizes(_gf);
+  //  updateSizes(_gf);
 
   // compute optimal mesh orientations
   propagatecrossField(_gf);

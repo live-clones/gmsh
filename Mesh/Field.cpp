@@ -1715,12 +1715,6 @@ public:
     const double ll2   = dist*(ratio-1) + hwall_t;
     double lc_t  = std::min(lc_n*CTX::instance()->mesh.anisoMax, std::min(ll2,hfar));
 
-    if (backgroundMesh::current()){
-      const double lcBG = backgroundMesh::current()->operator() (x,y,z);
-      lc_n = std::min(lc_n, lcBG);
-      lc_t = std::min(lc_t, lcBG);
-    }
-
     SVector3 t1,t2,t3;
     double L1,L2,L3;
 

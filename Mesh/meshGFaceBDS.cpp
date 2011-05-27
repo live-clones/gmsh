@@ -518,27 +518,14 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
 
   std::sort(edges.begin(), edges.end());
 
-  double RADIUS;
-  SPoint3 CENTER;
-  bool isSphere = gf->isSphere(RADIUS,CENTER);
-
   for (unsigned int i = 0; i < edges.size(); ++i){
     BDS_Edge *e = edges[i].second;
     if (!e->deleted){
       const double coord = 0.5;
-      //const double coord = computeEdgeMiddleCoord((*it)->p1, (*it)->p2, gf,
-      //                                          m.scalingU, m.scalingV);
       BDS_Point *mid ;
-
       double U, V;
-      if (0 && isSphere){	
-        midpointsphere(gf,e->p1->u,e->p1->v,e->p2->u,e->p2->v,U,V,
-                       CENTER,RADIUS);
-      }
-      else{
-        U = coord * e->p1->u + (1 - coord) * e->p2->u;
-        V = coord * e->p1->v + (1 - coord) * e->p2->v;
-      }
+      U = coord * e->p1->u + (1 - coord) * e->p2->u;
+      V = coord * e->p1->v + (1 - coord) * e->p2->v;
 
       GPoint gpp = gf->point(m.scalingU*U,m.scalingV*V);
       if (gpp.succeeded()){  
@@ -558,7 +545,6 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
              (coord * e->p1->u + (1 - coord) * e->p2->u)*m.scalingU,
              (coord * e->p1->v + (1 - coord) * e->p2->v)*m.scalingV,
              mid->X,mid->Y,mid->Z);
-	  //          mid->lc() = exp(0.5 * (log(e->p1->lc()) +  log(e->p2->lc())));
 	  mid->lc() = 0.5 * (e->p1->lc() +  e->p2->lc());
         }
         if(!m.split_edge(e, mid)) m.del_point(mid);

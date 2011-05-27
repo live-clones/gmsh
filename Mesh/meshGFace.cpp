@@ -300,7 +300,8 @@ static bool algoDelaunay2D(GFace *gf)
 
   if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY ||
      CTX::instance()->mesh.algo2d == ALGO_2D_BAMG || 
-     CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL) 
+     CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL || 
+     CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL_QUAD) 
     return true;
 
   if(CTX::instance()->mesh.algo2d == ALGO_2D_AUTO && gf->geomType() == GEntity::Plane)
@@ -884,6 +885,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   if(algoDelaunay2D(gf)){
     if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
       bowyerWatsonFrontal(gf);
+    else if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL_QUAD)
+      bowyerWatsonFrontalQuad(gf);
     else if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY ||
             CTX::instance()->mesh.algo2d == ALGO_2D_AUTO)
       bowyerWatson(gf);
@@ -1473,6 +1476,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   if(algoDelaunay2D(gf)){
     if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
       bowyerWatsonFrontal(gf);
+    else if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL_QUAD)
+      bowyerWatsonFrontalQuad(gf);
     else if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY ||
             CTX::instance()->mesh.algo2d == ALGO_2D_AUTO)
       bowyerWatson(gf);
@@ -1544,6 +1549,7 @@ void meshGFace::operator() (GFace *gf)
   switch(CTX::instance()->mesh.algo2d){
   case ALGO_2D_MESHADAPT : algo = "MeshAdapt"; break;
   case ALGO_2D_FRONTAL : algo = "Frontal"; break;
+  case ALGO_2D_FRONTAL_QUAD : algo = "Frontal Quad"; break;
   case ALGO_2D_DELAUNAY : algo = "Delaunay"; break;
   case ALGO_2D_MESHADAPT_OLD : algo = "MeshAdapt (old)"; break;
   case ALGO_2D_BAMG : algo = "Bamg"; break;

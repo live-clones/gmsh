@@ -1,4 +1,4 @@
-Mesh.SubdivisionAlgorithm = 3;
+Mesh.RecombinationAlgorithm = 1;
 Point(1) = {0, 0, 0, 9.999999999999999e-05};
 Point(2) = {0.00125, 0.045983013167908, 0, 0.0002};
 Point(3) = {-0.00125, 0.045983013167908, 0, 0.0002};
