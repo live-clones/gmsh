@@ -51,26 +51,11 @@ CTX::CTX()
   drawRotationCenter = 0;
   pickElements = 0;
   geom.draw = 1;
-  
   mesh.draw = 1;
-  mesh.qualityInf = mesh.qualitySup = mesh.radiusInf = mesh.radiusSup = mesh.qualityType = 0;
-  mesh.triangles = mesh.tetrahedra = mesh.quadrangles = mesh.prisms = mesh.pyramids = mesh.hexahedra = mesh.lines = 0;
-  mesh.volumesEdges = mesh.volumesFaces = mesh.surfacesEdges = mesh.surfacesFaces = 0;
-  mesh.volumesFaces = mesh.surfacesEdges = mesh.surfacesFaces = 0;
-  mesh.smoothInternalEdges = mesh.smoothNormals = mesh.reverseAllNormals = mesh.explode = mesh.angleSmoothNormals = 0;
-  mesh.colorCarousel = 0;
-  mesh.changed = 0;
-  
-  color.mesh.tangents = color.mesh.tetrahedron = color.mesh.triangle = color.mesh.prism = color.mesh.pyramid = color.mesh.hexahedron = 0;
-  color.mesh.tangents = color.mesh.line = color.mesh.quadrangle = 0;
-    for (int i = 0; i < 20; i++)
-        color.mesh.carousel[i] = 0;
-
   post.draw = 1;
-  post.combineTime = 0; // try to combineTime views at startup
-  
   lock = 0; // very primitive locking
-    
+  mesh.changed = 0;
+  post.combineTime = 0; // try to combineTime views at startup
 #if defined(HAVE_FLTK)
   glFontEnum = FL_HELVETICA;
 #else
