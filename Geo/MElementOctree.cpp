@@ -83,7 +83,7 @@ MElementOctree::MElementOctree(std::vector<MElement*> &v) : _gm(0)
   SBoundingBox3d bb;
   for (unsigned int i = 0; i < v.size(); i++){
     for(int j = 0; j < v[i]->getNumVertices(); j++){
-      if (!_gm) _gm = v[i]->getVertex(j)->onWhat()->model();
+      //if (!_gm) _gm = v[i]->getVertex(j)->onWhat()->model();
       bb += SPoint3(v[i]->getVertex(j)->x(),
                     v[i]->getVertex(j)->y(),
                     v[i]->getVertex(j)->z());
@@ -127,7 +127,7 @@ MElement *MElementOctree::find(double x, double y, double z, int dim, bool stric
       }
     }
   }
-  if (!strict) {
+  if (!strict && _gm) {
     double initialTol = MElement::getTolerance();
     double tol = initialTol;
     while (tol < 1){
