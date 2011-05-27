@@ -164,7 +164,7 @@
 #define MSH_HEX_386 104
 #define MSH_HEX_488 105
 
-#define MSH_NUM_TYPE 92
+#define MSH_NUM_TYPE 105
 
 // Geometric entities
 #define ENT_NONE     0
