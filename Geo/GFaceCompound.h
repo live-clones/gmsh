@@ -19,6 +19,7 @@
 #include "GEdgeCompound.h"
 #include "meshGFaceOptimize.h"
 #include "linearSystem.h"
+//#include "rbf.h"
 
 #define AR_MAX 5 //maximal geometrical aspect ratio
 
@@ -50,6 +51,7 @@ class  GFaceCompoundTriangle {
 };
 
 class Octree;
+//class rbf;
 
 class GFaceCompound : public GFace {
  public:
@@ -57,8 +59,9 @@ class GFaceCompound : public GFace {
   typedef enum {HARMONIC=1,CONFORMAL=2, CONVEXCOMBINATION=3, MULTISCALE=4, RBF=5} typeOfMapping;
   typedef enum {UNITCIRCLE, SQUARE} typeOfIsomorphism;
   void computeNormals(std::map<MVertex*, SVector3> &normals) const;
-  void setParam(std::map<MVertex*, SPoint3> rbf_param) const;
+  void setParam(std::map<MVertex*, SPoint3> rbf_param); //, rbf *myRBF);
  protected:
+  //rbf *_rbf;
   simpleFunction<double> *ONE;
   simpleFunction<double> *MONE;
   std::list<GFace*> _compound;

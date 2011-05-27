@@ -40,6 +40,7 @@
 #include "discreteFace.h"
 #include "eigenSolver.h"
 #include "multiscaleLaplace.h"
+//#include "rbf.h"
 
 static void fixEdgeToValue(GEdge *ed, double value, dofManager<double> &myAssembler)
 {
@@ -687,8 +688,9 @@ bool GFaceCompound::parametrize() const
   return paramOK;
 }
 
-void GFaceCompound::setParam(std::map<MVertex*, SPoint3> rbf_param) const{
+void GFaceCompound::setParam(std::map<MVertex*, SPoint3> rbf_param) {//, rbf *myRBF){
   
+  //_rbf = myRBF;
   coordinates  = rbf_param;
   
 }
@@ -1676,6 +1678,13 @@ GPoint GFaceCompound::point(double par1, double par2) const
 
   if(!oct) parametrize();
 
+  if (_mapping == RBF){
+    double x, y,z;
+    //_rbf->UVStoXYZ(par1, par2,x,y,z);
+    //printf("XYZ =%g %g %g \n", x,y,z);
+    //exit(1);
+    //return GPoint(x,y,z);
+  }
   double U,V;
   double par[2] = {par1,par2};
   GFaceCompoundTriangle *lt;
