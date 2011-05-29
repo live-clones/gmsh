@@ -20,7 +20,7 @@ class GMSH_LevelsetPlugin : public GMSH_PostPlugin
                           int ent, int ele, int step, int wstep,
                           double x[8], double y[8], double z[8],
                           double levels[8], double scalarValues[8],
-                          PViewDataList *out, bool firstStep);
+                          PViewDataList *out);
  protected:
   double _ref[3], _targetError;
   int _valueTimeStep, _valueView, _valueIndependent, _recurLevel, _extractVolume;

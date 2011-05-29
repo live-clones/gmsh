@@ -94,7 +94,7 @@ static void removeIdenticalNodes(int *np, int numComp,
          fabs(zp[j] - zpi[i]) < 1.e-12) {
         break;
       }
-      if(i == npi-1) {
+      if(i == npi - 1) {
         affect(xpi, ypi, zpi, valpi, epi, npi, xp, yp, zp, valp, ep, j, numComp);
         npi++;
         break;
@@ -261,144 +261,163 @@ void GMSH_LevelsetPlugin::_addElement(int np, int numEdges, int numComp,
 }
 
 void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
-                                             int ent, int ele, int step, int wstep, 
+                                             int ent, int ele, int vstep, int wstep, 
                                              double x[8], double y[8], double z[8],
                                              double levels[8], double scalarValues[8],
-                                             PViewDataList* out, bool firstStep)
+                                             PViewDataList* out)
 {
-  int numNodes = vdata->getNumNodes(step, ent, ele);
-  int numEdges = vdata->getNumEdges(step, ent, ele);
-  int numComp = wdata->getNumComponents(wstep, ent, ele);
-  int type = vdata->getType(step, ent, ele);
+  int stepmin = vstep, stepmax = vstep + 1, otherstep = wstep;
+  if(stepmin < 0){
+    stepmin = vdata->getFirstNonEmptyTimeStep();
+    stepmax = vdata->getNumTimeSteps();
+  }
+  if(wstep < 0) otherstep = wdata->getFirstNonEmptyTimeStep();
+ 
+  int numNodes = vdata->getNumNodes(stepmin, ent, ele);
+  int numEdges = vdata->getNumEdges(stepmin, ent, ele);
+  int numComp = wdata->getNumComponents(otherstep, ent, ele);
+  int type = vdata->getType(stepmin, ent, ele);
 
+  // decompose the element into simplices
   for(int simplex = 0; simplex < numSimplexDec(type); simplex++){
-    double xp[12], yp[12], zp[12], valp[12][9];
-    int n[4], np = 0, ep[12], nsn, nse;
-    getSimplexDec(numNodes, numEdges, type, simplex, n[0], n[1], n[2], n[3], nsn, nse);
 
-    for(int i = 0; i < nse; i++){
-      int n0 = exn[nse][i][0], n1 = exn[nse][i][1];
-      if(levels[n[n0]] * levels[n[n1]] <= 0.) {
-        double c = InterpolateIso(x, y, z, levels, 0., n[n0], n[n1], 
-                                  &xp[np], &yp[np], &zp[np]);
-        for(int comp = 0; comp < numComp; comp++){
-          double v0, v1;
-          wdata->getValue(wstep, ent, ele, n[n0], comp, v0);
-          wdata->getValue(wstep, ent, ele, n[n1], comp, v1);
-          valp[np][comp] = v0 + c * (v1 - v0);
-        }
-        ep[np++] = i + 1;
-      }
-    }
+    int n[4], ep[12], nsn, nse;
+    getSimplexDec(numNodes, numEdges, type, simplex, n[0], n[1], n[2], n[3],
+                  nsn, nse);
 
-    // Remove identical nodes (this can happen if an edge actually
-    // belongs to the zero levelset, i.e., if levels[] * levels[] == 0)
-    if(np > 1) removeIdenticalNodes(&np, numComp, xp, yp, zp, valp, ep);
+    // loop over time steps
+    for(int step = stepmin; step < stepmax; step++){
 
-    // if there are no cuts and we extract the volume, save the full
-    // element if it is on the correct side of the levelset
-    if(np <= 1 && _extractVolume){
-      bool add = true;
-      for(int nod = 0; nod < nsn; nod++){
-        if((_extractVolume < 0. && levels[n[nod]] > 0.) ||
-           (_extractVolume > 0. && levels[n[nod]] < 0.)){
-          add = false;
-          break;
+      // check which edges cut the iso and interpolate the value
+      if(wstep < 0) otherstep = step;
+      int np = 0;
+      double xp[12], yp[12], zp[12], valp[12][9];
+      for(int i = 0; i < nse; i++){
+        int n0 = exn[nse][i][0], n1 = exn[nse][i][1];
+        if(levels[n[n0]] * levels[n[n1]] <= 0.) {
+          double c = InterpolateIso(x, y, z, levels, 0., n[n0], n[n1], 
+                                    &xp[np], &yp[np], &zp[np]);
+          for(int comp = 0; comp < numComp; comp++){
+            double v0, v1;
+            wdata->getValue(otherstep, ent, ele, n[n0], comp, v0);
+            wdata->getValue(otherstep, ent, ele, n[n1], comp, v1);
+            valp[np][comp] = v0 + c * (v1 - v0);
+          }
+          ep[np++] = i + 1;
         }
       }
-      if(add){
-        double xp[12], yp[12], zp[12], valp[12][9];
+      
+      // remove identical nodes (this can happen if an edge actually
+      // belongs to the zero levelset, i.e., if levels[] * levels[] == 0)
+      if(np > 1) removeIdenticalNodes(&np, numComp, xp, yp, zp, valp, ep);
+      
+      // if there are no cuts and we extract the volume, save the full
+      // element if it is on the correct side of the levelset
+      if(np <= 1 && _extractVolume){
+        bool add = true;
         for(int nod = 0; nod < nsn; nod++){
-          xp[nod] = x[n[nod]];
-          yp[nod] = y[n[nod]];
-          zp[nod] = z[n[nod]];
-          for(int comp = 0; comp < numComp; comp++)
-            wdata->getValue(wstep, ent, ele, nod, comp, valp[n[nod]][comp]);
+          if((_extractVolume < 0. && levels[n[nod]] > 0.) ||
+             (_extractVolume > 0. && levels[n[nod]] < 0.)){
+            add = false;
+            break;
+          }
         }
-        _addElement(nsn, nse, numComp, xp, yp, zp, valp, out, firstStep);
-      }
-      continue;
-    }
-
-    if(numEdges > 4 && np < 3) // 3D input should only lead to 2D output
-      continue;
-    else if(numEdges > 1 && np < 2) // 2D input should only lead to 1D output
-      continue;
-    else if(np < 1 || np > 4) // can't deal with this
-      continue;
-
-    // avoid "butterflies"
-    if(np == 4) reorderQuad(numComp, xp, yp, zp, valp, ep);
-
-    // orient the triangles and the quads to get the normals right
-    if(!_extractVolume && (np == 3 || np == 4)) {
-      if(firstStep || !_valueIndependent) {
-        // test this only once for spatially-fixed views
-        double v1[3] = {xp[2] - xp[0], yp[2] - yp[0], zp[2] - zp[0]};
-        double v2[3] = {xp[1] - xp[0], yp[1] - yp[0], zp[1] - zp[0]};
-        double gr[3], normal[3];
-        prodve(v1, v2, normal);
-        switch (_orientation) {
-        case MAP:
-          gradSimplex(x, y, z, scalarValues, gr);
-          prosca(gr, normal, &_invert);
-          break;
-        case PLANE:
-          prosca(normal, _ref, &_invert);
-          break;
-        case SPHERE:
-          gr[0] = xp[0] - _ref[0];
-          gr[1] = yp[0] - _ref[1];
-          gr[2] = zp[0] - _ref[2];
-          prosca(gr, normal, &_invert);
-        case NONE:
-        default:
-          break;
+        if(add){
+          for(int nod = 0; nod < nsn; nod++){
+            xp[nod] = x[n[nod]];
+            yp[nod] = y[n[nod]];
+            zp[nod] = z[n[nod]];
+            for(int comp = 0; comp < numComp; comp++)
+              wdata->getValue(otherstep, ent, ele, n[nod], comp, valp[nod][comp]);
+          }
+          _addElement(nsn, nse, numComp, xp, yp, zp, valp, out, step == stepmin);
         }
-      }
-      if(_invert > 0.) {
-        double xpi[12], ypi[12], zpi[12], valpi[12][9];
-        int epi[12];
-        for(int k = 0; k < np; k++)
-          affect(xpi, ypi, zpi, valpi, epi, k, xp, yp, zp, valp, ep, k, numComp);
-        for(int k = 0; k < np; k++)
-          affect(xp, yp, zp, valp, ep, k, xpi, ypi, zpi, valpi, epi, np - k - 1, numComp);
-      }
-    }
-
-    // if we compute isovolumes, add the nodes on the chosen side
-    // (FIXME: when cutting 2D views, the elts can have the wrong
-    // orientation)
-    if(_extractVolume){
-      int nbCut = np;
-      for(int nod = 0; nod < nsn; nod++){
-        if((_extractVolume < 0. && levels[n[nod]] < 0.) ||
-           (_extractVolume > 0. && levels[n[nod]] > 0.)){
-          xp[np] = x[n[nod]];
-          yp[np] = y[n[nod]];
-          zp[np] = z[n[nod]];
-          for(int comp = 0; comp < numComp; comp++)
-            wdata->getValue(wstep, ent, ele, n[nod], comp, valp[np][comp]);
-          ep[np] = -(nod + 1); // store node num!
-          np++;
-        }
-      }
-      removeIdenticalNodes(&np, numComp, xp, yp, zp, valp, ep);
-      if(np == 4 && numEdges <= 4)
-        reorderQuad(numComp, xp, yp, zp, valp, ep);
-      if(np == 6)
-        reorderPrism(numComp, xp, yp, zp, valp, ep, nbCut);
-      if(np > 8) // can't deal with this
         continue;
-    }
+      }
 
-    _addElement(np, numEdges, numComp, xp, yp, zp, valp, out, firstStep);
+      // discard invalid cases
+      if(numEdges > 4 && np < 3) // 3D input should only lead to 2D output
+        continue;
+      else if(numEdges > 1 && np < 2) // 2D input should only lead to 1D output
+        continue;
+      else if(np < 1 || np > 4) // can't deal with this
+        continue;
+      
+      // avoid "butterflies"
+      if(np == 4) reorderQuad(numComp, xp, yp, zp, valp, ep);
+      
+      // orient the triangles and the quads to get the normals right
+      if(!_extractVolume && (np == 3 || np == 4)) {
+        // compute invertion test only once for spatially-fixed views
+        if(step == stepmin || !_valueIndependent) {
+          double v1[3] = {xp[2] - xp[0], yp[2] - yp[0], zp[2] - zp[0]};
+          double v2[3] = {xp[1] - xp[0], yp[1] - yp[0], zp[1] - zp[0]};
+          double gr[3], normal[3];
+          prodve(v1, v2, normal);
+          switch (_orientation) {
+          case MAP:
+            gradSimplex(x, y, z, scalarValues, gr);
+            prosca(gr, normal, &_invert);
+            break;
+          case PLANE:
+            prosca(normal, _ref, &_invert);
+            break;
+          case SPHERE:
+            gr[0] = xp[0] - _ref[0];
+            gr[1] = yp[0] - _ref[1];
+            gr[2] = zp[0] - _ref[2];
+            prosca(gr, normal, &_invert);
+          case NONE:
+          default:
+            break;
+          }
+        }
+        if(_invert > 0.) {
+          double xpi[12], ypi[12], zpi[12], valpi[12][9];
+          int epi[12];
+          for(int k = 0; k < np; k++)
+            affect(xpi, ypi, zpi, valpi, epi, k, xp, yp, zp, valp, ep, k, numComp);
+          for(int k = 0; k < np; k++)
+            affect(xp, yp, zp, valp, ep, k, xpi, ypi, zpi, valpi, epi, np - k - 1, numComp);
+        }
+      }
+      
+      // if we extract volumes, add the nodes on the chosen side
+      // (FIXME: when cutting 2D views, the elts can have the wrong
+      // orientation)
+      if(_extractVolume){
+        int nbCut = np;
+        for(int nod = 0; nod < nsn; nod++){
+          if((_extractVolume < 0. && levels[n[nod]] < 0.) ||
+             (_extractVolume > 0. && levels[n[nod]] > 0.)){
+            xp[np] = x[n[nod]];
+            yp[np] = y[n[nod]];
+            zp[np] = z[n[nod]];
+            for(int comp = 0; comp < numComp; comp++)
+              wdata->getValue(otherstep, ent, ele, n[nod], comp, valp[np][comp]);
+            ep[np] = -(nod + 1); // store node num!
+            np++;
+          }
+        }
+        removeIdenticalNodes(&np, numComp, xp, yp, zp, valp, ep);
+        if(np == 4 && numEdges <= 4)
+          reorderQuad(numComp, xp, yp, zp, valp, ep);
+        if(np == 6)
+          reorderPrism(numComp, xp, yp, zp, valp, ep, nbCut);
+        if(np > 8) // can't deal with this
+          continue;
+      }
+
+      // finally, add the new element
+      _addElement(np, numEdges, numComp, xp, yp, zp, valp, out, step == stepmin);
+
+    }
   }
 }
 
 PView *GMSH_LevelsetPlugin::execute(PView *v)
 {
-  // FIXME: we can only run the plugin on one step at a time
+  // for adapted views we can only run the plugin on one step at a time
   if(v->getData()->isAdaptive()){
     PViewOptions *opt = v->getOptions();
     v->getData()->getAdaptiveData()->changeResolution
@@ -406,7 +425,6 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
     v->setChanged(true);
   }
 
-  // get adaptive data if available
   PViewData *vdata = getPossiblyAdaptiveData(v), *wdata;
   if(_valueView < 0) {
     wdata = vdata;
@@ -446,17 +464,11 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
       for(int ele = 0; ele < vdata->getNumElements(firstNonEmptyStep, ent); ele++){
         if(vdata->skipElement(firstNonEmptyStep, ent, ele)) continue;
         for(int nod = 0; nod < vdata->getNumNodes(firstNonEmptyStep, ent, ele); nod++){
-          vdata->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
+          vdata->getNode(firstNonEmptyStep, ent, ele, nod, x[nod], y[nod], z[nod]);
           levels[nod] = levelset(x[nod], y[nod], z[nod], 0.);
         }
-        for(int step = 0; step < vdata->getNumTimeSteps(); step++){
-          if(vdata->hasTimeStep(step)){
-            int wstep = (_valueTimeStep < 0) ? step : _valueTimeStep;
-            bool firstStep = (step == firstNonEmptyStep);
-            _cutAndAddElements(vdata, wdata, ent, ele, step, wstep, x, y, z,
-                               levels, scalarValues, out, firstStep);
-          }
-        }
+        _cutAndAddElements(vdata, wdata, ent, ele, -1, _valueTimeStep, x, y, z,
+                           levels, scalarValues, out);
       }
     }
     out->setName(vdata->getName() + "_Levelset");
@@ -477,7 +489,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
           }
           int wstep = (_valueTimeStep < 0) ? step : _valueTimeStep;
           _cutAndAddElements(vdata, wdata, ent, ele, step, wstep, x, y, z,
-                             levels, scalarValues, out, true);
+                             levels, scalarValues, out);
         }
       }
       char tmp[246];
@@ -501,7 +513,7 @@ static bool recur_sign_change(adaptiveTriangle *t,
     double v1 = plug->levelset(t->p[0]->X, t->p[0]->Y, t->p[0]->Z, t->p[0]->val);
     double v2 = plug->levelset(t->p[1]->X, t->p[1]->Y, t->p[1]->Z, t->p[1]->val);
     double v3 = plug->levelset(t->p[2]->X, t->p[2]->Y, t->p[2]->Z, t->p[2]->val);
-    if(v1 * v2 > 0 && v1 * v3 > 0 && v2 * v3 > 0)
+    if(v1 * v2 > 0 && v1 * v3 > 0)
       t->visible = false;
     else
       t->visible = true;
@@ -638,6 +650,47 @@ static bool recur_sign_change(adaptiveHexahedron *t,
   }      
 }
 
+static bool recur_sign_change(adaptivePrism *t,
+                              const GMSH_LevelsetPlugin *plug)
+{
+  if (!t->e[0] || t->visible){
+    double v1 = plug->levelset(t->p[0]->X, t->p[0]->Y, t->p[0]->Z, t->p[0]->val);
+    double v2 = plug->levelset(t->p[1]->X, t->p[1]->Y, t->p[1]->Z, t->p[1]->val);
+    double v3 = plug->levelset(t->p[2]->X, t->p[2]->Y, t->p[2]->Z, t->p[2]->val);
+    double v4 = plug->levelset(t->p[3]->X, t->p[3]->Y, t->p[3]->Z, t->p[3]->val);
+    double v5 = plug->levelset(t->p[4]->X, t->p[4]->Y, t->p[4]->Z, t->p[4]->val);
+    double v6 = plug->levelset(t->p[5]->X, t->p[5]->Y, t->p[5]->Z, t->p[5]->val);
+    if(v1 * v2 > 0 && v1 * v3 > 0 && v1 * v4 > 0 && v1 * v5 > 0 && v1 * v6 > 0)
+      t->visible = false;
+    else
+      t->visible = true;
+    return t->visible;
+  }
+  else{
+    bool sc1 = recur_sign_change(t->e[0], plug);
+    bool sc2 = recur_sign_change(t->e[1], plug);
+    bool sc3 = recur_sign_change(t->e[2], plug);
+    bool sc4 = recur_sign_change(t->e[3], plug);
+    bool sc5 = recur_sign_change(t->e[4], plug);
+    bool sc6 = recur_sign_change(t->e[5], plug);
+    bool sc7 = recur_sign_change(t->e[6], plug);
+    bool sc8 = recur_sign_change(t->e[7], plug);
+    if(sc1 || sc2 || sc3 || sc4 || sc5 || sc6 || sc7 || sc8){
+      if (!sc1) t->e[0]->visible = true;
+      if (!sc2) t->e[1]->visible = true;
+      if (!sc3) t->e[2]->visible = true;
+      if (!sc4) t->e[3]->visible = true;
+      if (!sc5) t->e[4]->visible = true;
+      if (!sc6) t->e[5]->visible = true;
+      if (!sc7) t->e[6]->visible = true;
+      if (!sc8) t->e[7]->visible = true;
+      return true;
+    }
+    t->visible = false;
+    return false;
+  }      
+}
+
 void GMSH_LevelsetPlugin::assignSpecificVisibility() const
 {
   if(adaptiveTriangle::all.size()){
@@ -645,15 +698,19 @@ void GMSH_LevelsetPlugin::assignSpecificVisibility() const
     if(!t->visible) t->visible = !recur_sign_change(t, this);
   }
   if(adaptiveQuadrangle::all.size()){
-    adaptiveQuadrangle *qe = *adaptiveQuadrangle::all.begin();
-    if(!qe->visible) qe->visible = !recur_sign_change(qe, this);
+    adaptiveQuadrangle *q = *adaptiveQuadrangle::all.begin();
+    if(!q->visible) q->visible = !recur_sign_change(q, this);
   }
   if(adaptiveTetrahedron::all.size()){
-    adaptiveTetrahedron *te = *adaptiveTetrahedron::all.begin();
-    if(!te->visible) te->visible = !recur_sign_change(te, this);
+    adaptiveTetrahedron *t = *adaptiveTetrahedron::all.begin();
+    if(!t->visible) t->visible = !recur_sign_change(t, this);
   }
   if(adaptiveHexahedron::all.size()){
-    adaptiveHexahedron *he = *adaptiveHexahedron::all.begin();
-    if(!he->visible) he->visible = !recur_sign_change(he, this);
+    adaptiveHexahedron *h = *adaptiveHexahedron::all.begin();
+    if(!h->visible) h->visible = !recur_sign_change(h, this);
+  }
+  if(adaptivePrism::all.size()){
+    adaptivePrism *p = *adaptivePrism::all.begin();
+    if(!p->visible) p->visible = !recur_sign_change(p, this);
   }
 }

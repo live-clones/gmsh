@@ -659,7 +659,7 @@ void adaptiveHexahedron::recurCreate(adaptiveHexahedron *h, int maxlevel, int le
     (p03, p0347, pc, p0312, p3, p37, p2367, p23); // p3
   recurCreate(h7, maxlevel, level);
   adaptiveHexahedron *h8 = new adaptiveHexahedron
-    (p0312, pc, p1256, p12, p23, p2367, p26, p2); //p2
+    (p0312, pc, p1256, p12, p23, p2367, p26, p2); // p2
   recurCreate(h8, maxlevel, level);
   h->e[0] = h1;
   h->e[1] = h2;
