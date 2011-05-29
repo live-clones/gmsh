@@ -119,11 +119,16 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
   else
     sprintf(str, "%d", v->getNum());
 
-  if(v->getPolynomialOrder() > 1)
-    glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
-  else
-    glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);   
-
+  if(CTX::instance()->mesh.colorCarousel == 0){ // by element type
+    if(v->getPolynomialOrder() > 1)
+      glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
+    else
+      glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);   
+  }
+  else{
+    unsigned int col = getColorByEntity(e);
+    glColor4ubv((GLubyte *) & col);
+  }
   double offset = (0.5 * CTX::instance()->mesh.pointSize + 
                    0.1 * CTX::instance()->glFontSize) * ctx->pixel_equiv_x;
   glRasterPos3d(v->x() + offset / ctx->s[0],
@@ -139,10 +144,16 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
       for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
         MVertex *v = e->mesh_vertices[i];
         if(!v->getVisibility()) continue;
-        if(v->getPolynomialOrder() > 1)
-          glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
-        else
-          glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);     
+        if(CTX::instance()->mesh.colorCarousel == 0){ // by element type
+          if(v->getPolynomialOrder() > 1)
+            glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
+          else
+            glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);
+        }
+        else{
+          unsigned int col = getColorByEntity(e);
+          glColor4ubv((GLubyte *) & col);
+        }
         ctx->drawSphere(CTX::instance()->mesh.pointSize, v->x(), v->y(), v->z(), 
                         CTX::instance()->mesh.light);
       }
@@ -152,10 +163,16 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
       for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
         MVertex *v = e->mesh_vertices[i];
         if(!v->getVisibility()) continue;
-        if(v->getPolynomialOrder() > 1)
-          glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
-        else
-          glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);     
+        if(CTX::instance()->mesh.colorCarousel == 0){ // by element type
+          if(v->getPolynomialOrder() > 1)
+            glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
+          else
+            glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);     
+        }
+        else{
+          unsigned int col = getColorByEntity(e);
+          glColor4ubv((GLubyte *) & col);
+        }
         glVertex3d(v->x(), v->y(), v->z());
       }
       glEnd();
@@ -181,10 +198,16 @@ static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
       // vertex array for drawing vertices...
       if(isElementVisible(ele) && v->getVisibility()){
         if(CTX::instance()->mesh.points) {
-          if(v->getPolynomialOrder() > 1)
-            glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
-          else
-            glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);   
+          if(CTX::instance()->mesh.colorCarousel == 0){ // by element type
+            if(v->getPolynomialOrder() > 1)
+              glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
+            else
+              glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);   
+          }
+          else{
+            unsigned int col = getColorByEntity(e);
+            glColor4ubv((GLubyte *) & col);
+          }
           if(CTX::instance()->mesh.pointType)
             ctx->drawSphere(CTX::instance()->mesh.pointSize, v->x(), v->y(), v->z(),
                             CTX::instance()->mesh.light);
@@ -575,7 +598,6 @@ class drawMeshGRegion {
 static void beginFakeTransparency()
 {
   return;
-  CTX::instance()->color.mesh.triangle = CTX::instance()->packColor(255, 0, 0, 128);
   // simple additive blending "a la xpost":
   glBlendFunc(GL_SRC_ALPHA, GL_ONE); // glBlendEquation(GL_FUNC_ADD);
   // maximum intensity projection "a la volsuite":
