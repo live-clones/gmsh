@@ -496,7 +496,7 @@ class dofManager{
   }
   int sizeOfR() const { return _isParallel ? _localSize : unknown.size(); }
   int sizeOfF() const { return fixed.size(); }
-  void systemSolve(){ _current->systemSolve(); }
+  virtual void systemSolve(){ _current->systemSolve(); }
   void systemClear()
   {
     _current->zeroMatrix();
@@ -513,7 +513,7 @@ class dofManager{
       throw;
     }
   }
-  virtual linearSystem<dataMat> *getLinearSystem(std::string &name)
+  linearSystem<dataMat> *getLinearSystem(std::string &name)
   {
     typename std::map<const std::string, linearSystem<dataMat>*>::iterator it =
       _linearSystems.find(name);

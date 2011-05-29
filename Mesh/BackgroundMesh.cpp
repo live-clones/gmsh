@@ -26,6 +26,7 @@
 #include "linearSystemCSR.h"
 #include "linearSystemFull.h"
 #include "linearSystemPETSc.h"
+#include "SElement.h"
 #endif
 
 // computes the characteristic length of the mesh at a vertex in order
@@ -39,10 +40,10 @@ SMetric3 buildMetricTangentToCurve (SVector3 &t, double curvature, double &lambd
   SVector3 a;
   if (t(0) <= t(1) && t(0) <= t(2)){
     a = SVector3(1,0,0);
-  } 
+  }
   else if (t(1) <= t(0) && t(1) <= t(2)){
     a = SVector3(0,1,0);
-  } 
+  }
   else{
     a = SVector3(0,0,1);
   }
@@ -63,10 +64,10 @@ SMetric3 max_edge_curvature_metric(const GVertex *gv, double &length)
   SMetric3 val (1.e-12);
   length = 1.e22;
   std::list<GEdge*> l_edges = gv->edges();
-  for (std::list<GEdge*>::const_iterator ite = l_edges.begin(); 
+  for (std::list<GEdge*>::const_iterator ite = l_edges.begin();
        ite != l_edges.end(); ++ite){
     GEdge *_myGEdge = *ite;
-    Range<double> range = _myGEdge->parBounds(0);      
+    Range<double> range = _myGEdge->parBounds(0);
     SMetric3 cc;
     double l;
     if (gv == _myGEdge->getBeginVertex()) {
@@ -88,17 +89,17 @@ SMetric3 max_edge_curvature_metric(const GVertex *gv, double &length)
 SMetric3 max_edge_curvature_metric(const GEdge *ge, double u, double &l){
   SVector3 t =  ge->firstDer(u);
   t.normalize();
-  return buildMetricTangentToCurve(t,ge->curvature(u),l);  
+  return buildMetricTangentToCurve(t,ge->curvature(u),l);
 }
 
 static double max_edge_curvature(const GVertex *gv)
 {
   double val = 0;
   std::list<GEdge*> l_edges = gv->edges();
-  for (std::list<GEdge*>::const_iterator ite = l_edges.begin(); 
+  for (std::list<GEdge*>::const_iterator ite = l_edges.begin();
        ite != l_edges.end(); ++ite){
     GEdge *_myGEdge = *ite;
-    Range<double> range = _myGEdge->parBounds(0);      
+    Range<double> range = _myGEdge->parBounds(0);
     double cc;
     if (gv == _myGEdge->getBeginVertex()) cc = _myGEdge->curvature(range.low());
     else cc = _myGEdge->curvature(range.high());
@@ -119,7 +120,7 @@ static double max_surf_curvature(const GEdge *ge, double u)
       val = std::max(cc, val);
     }
     ++it;
-  }  
+  }
   return val;
 }
 
@@ -127,7 +128,7 @@ static double max_surf_curvature(const GVertex *gv)
 {
   double val = 0;
   std::list<GEdge*> l_edges = gv->edges();
-  for (std::list<GEdge*>::const_iterator ite = l_edges.begin(); 
+  for (std::list<GEdge*>::const_iterator ite = l_edges.begin();
        ite != l_edges.end(); ++ite){
     GEdge *_myGEdge = *ite;
     Range<double> bounds = _myGEdge->parBounds(0);
@@ -162,7 +163,7 @@ static SMetric3 metric_based_on_surface_curvature(const GFace *gf, double u, dou
 	   Z.x(),Z.y(),Z.z(),
 	   lambda1,lambda2);
   */
-  SMetric3 curvMetric (1./(lambda1*lambda1),1./(lambda2*lambda2),1.e-5, 
+  SMetric3 curvMetric (1./(lambda1*lambda1),1./(lambda2*lambda2),1.e-5,
 		       dirMin, dirMax, Z );
   return curvMetric;
 }
@@ -182,7 +183,7 @@ static SMetric3 metric_based_on_surface_curvature(const GEdge *ge, double u)
       count++;
     }
     ++it;
-  }  
+  }
   double Crv = ge->curvature(u);
   double lambda =  ((2 * M_PI) /( fabs(Crv) *  CTX::instance()->mesh.minCircPoints ) );
   SMetric3 curvMetric (1./(lambda*lambda));
@@ -193,7 +194,7 @@ static SMetric3 metric_based_on_surface_curvature(const GVertex *gv)
 {
   SMetric3 mesh_size(1.e-5);
   std::list<GEdge*> l_edges = gv->edges();
-  for (std::list<GEdge*>::const_iterator ite = l_edges.begin(); 
+  for (std::list<GEdge*>::const_iterator ite = l_edges.begin();
        ite != l_edges.end(); ++ite){
     GEdge *_myGEdge = *ite;
     Range<double> bounds = _myGEdge->parBounds(0);
@@ -203,7 +204,7 @@ static SMetric3 metric_based_on_surface_curvature(const GVertex *gv)
          metric_based_on_surface_curvature(_myGEdge, bounds.low()));
     else
       mesh_size = intersection
-        (mesh_size, 
+        (mesh_size,
          metric_based_on_surface_curvature(_myGEdge, bounds.high()));
   }
   return mesh_size;
@@ -219,7 +220,7 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
 {
   double Crv = 0;
   switch(ge->dim()){
-  case 0:        
+  case 0:
     Crv = max_edge_curvature((const GVertex *)ge);
     Crv = std::max(max_surf_curvature((const GVertex *)ge), Crv);
     //Crv = max_surf_curvature((const GVertex *)ge);
@@ -229,7 +230,7 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
       GEdge *ged = (GEdge *)ge;
       Crv = ged->curvature(U)*2;
       Crv = std::max(Crv, max_surf_curvature(ged, U));
-      //Crv = max_surf_curvature(ged, U);      
+      //Crv = max_surf_curvature(ged, U);
     }
     break;
   case 2:
@@ -239,7 +240,7 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
     }
     break;
   }
- 
+
   double lc = Crv > 0 ? 2 * M_PI / Crv / CTX::instance()->mesh.minCircPoints : MAX_LC;
   return lc;
 }
@@ -274,16 +275,16 @@ static double LC_MVertex_PNTS(GEntity *ge, double U, double V)
       GVertex *v1 = ged->getBeginVertex();
       GVertex *v2 = ged->getEndVertex();
       if (v1 && v2){
-        Range<double> range = ged->parBounds(0);      
-        double a = (U - range.low()) / (range.high() - range.low()); 
+        Range<double> range = ged->parBounds(0);
+        double a = (U - range.low()) / (range.high() - range.low());
         double lc = (1 - a) * v1->prescribedMeshSizeAtVertex() +
           (a) * v2->prescribedMeshSizeAtVertex() ;
         // FIXME we might want to remove this to make all lc treatment consistent
         if(lc >= MAX_LC) return CTX::instance()->lc / 10.;
         return lc;
       }
-      else 
-        return MAX_LC; 
+      else
+        return MAX_LC;
     }
   default:
     return MAX_LC;
@@ -291,7 +292,7 @@ static double LC_MVertex_PNTS(GEntity *ge, double U, double V)
 }
 
 // This is the only function that is used by the meshers
-double BGM_MeshSize(GEntity *ge, double U, double V, 
+double BGM_MeshSize(GEntity *ge, double U, double V,
                     double X, double Y, double Z)
 {
   // default lc (mesh size == size of the model)
@@ -299,7 +300,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V,
 
   // lc from points
   double l2 = MAX_LC;
-  if(CTX::instance()->mesh.lcFromPoints && ge->dim() < 2) 
+  if(CTX::instance()->mesh.lcFromPoints && ge->dim() < 2)
     l2 = LC_MVertex_PNTS(ge, U, V);
 
   // lc from curvature
@@ -335,18 +336,18 @@ double BGM_MeshSize(GEntity *ge, double U, double V,
 // for now, only works with bamg in 2D, work
 // in progress
 
-SMetric3 BGM_MeshMetric(GEntity *ge, 
-                        double U, double V, 
+SMetric3 BGM_MeshMetric(GEntity *ge,
+                        double U, double V,
                         double X, double Y, double Z)
 {
   // default lc (mesh size == size of the model)
   double l1 = CTX::instance()->lc;
 
-  // lc from points            
+  // lc from points
   double l2 = MAX_LC;
-  if(CTX::instance()->mesh.lcFromPoints && ge->dim() < 2) 
+  if(CTX::instance()->mesh.lcFromPoints && ge->dim() < 2)
     l2 = LC_MVertex_PNTS(ge, U, V);
-  
+
   // lc from curvature
   SMetric3 l3(1./(MAX_LC*MAX_LC));
   if(CTX::instance()->mesh.lcFromCurvature && ge->dim() < 3)
@@ -366,7 +367,7 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
       }
     }
   }
-  
+
   // take the minimum, then constrain by lcMin and lcMax
   double lc = std::min(l1, l2);
 
@@ -383,7 +384,7 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
                lc, CTX::instance()->mesh.lcMin, CTX::instance()->mesh.lcMax);
     lc = l1;
   }
-  
+
   SMetric3 LC(1./(lc*lc));
   SMetric3 m = intersection(intersection (l4, LC),l3);
   //  printf("%g %g %g %g %g %g\n",m(0,0),m(1,1),m(2,2),m(0,1),m(0,2),m(1,2));
@@ -432,7 +433,7 @@ backgroundMesh::backgroundMesh(GFace *_gf)
       MVertex *newv =0;
       if (it == _3Dto2D.end()){
         SPoint2 p;
-        bool success = reparamMeshVertexOnFace(e->getVertex(j), _gf, p);       
+        bool success = reparamMeshVertexOnFace(e->getVertex(j), _gf, p);
         newv = new MVertex (p.x(), p.y(), 0.0);
         _vertices.push_back(newv);
         _3Dto2D[e->getVertex(j)] = newv;
@@ -445,7 +446,7 @@ backgroundMesh::backgroundMesh(GFace *_gf)
   }
 
   // build a search structure
-  _octree = new MElementOctree(_triangles); 
+  _octree = new MElementOctree(_triangles);
 
   // compute the mesh sizes at nodes
   if (CTX::instance()->mesh.lcFromPoints)
@@ -456,7 +457,7 @@ backgroundMesh::backgroundMesh(GFace *_gf)
       _sizes[itv2->first] = MAX_LC;
     }
   }
-  // ensure that other criteria are fullfilled 
+  // ensure that other criteria are fullfilled
   //  updateSizes(_gf);
 
   // compute optimal mesh orientations
@@ -473,7 +474,7 @@ backgroundMesh::~backgroundMesh()
   delete _octree;
 }
 
-static void propagateValuesOnFace (GFace *_gf, 				  
+static void propagateValuesOnFace (GFace *_gf,
 				   std::map<MVertex*,double> &dirichlet)
 {
   linearSystem<double> *_lsys = 0;
@@ -483,7 +484,7 @@ static void propagateValuesOnFace (GFace *_gf,
   linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
   _lsysb->setGmres(1);
   _lsys = _lsysb;
-#elif defined(HAVE_TAUCS) 
+#elif defined(HAVE_TAUCS)
   _lsys = new linearSystemCSRTaucs<double>;
 #else
   _lsys = new linearSystemFull<double>;
@@ -513,7 +514,7 @@ static void propagateValuesOnFace (GFace *_gf,
   for (unsigned int k = 0; k < _gf->triangles.size(); k++){
     MTriangle *t = _gf->triangles[k];
     SElement se(t);
-    l.addToMatrix(myAssembler, &se);    
+    l.addToMatrix(myAssembler, &se);
   }
 
   // Solve
@@ -523,7 +524,7 @@ static void propagateValuesOnFace (GFace *_gf,
   for (std::set<MVertex*>::iterator it = vs.begin(); it != vs.end(); ++it){
     myAssembler.getDofValue(*it, 0, 1, dirichlet[*it]);
   }
-  
+
   delete _lsys;
 }
 
@@ -532,7 +533,7 @@ void backgroundMesh::propagate1dMesh(GFace *_gf)
   std::list<GEdge*> e = _gf->edges();
   std::list<GEdge*>::const_iterator it = e.begin();
   std::map<MVertex*,double> sizes;
-  
+
   for( ; it != e.end(); ++it ){
     if (!(*it)->isSeam(_gf)){
       for(unsigned int i = 0; i < (*it)->lines.size(); i++ ){
@@ -546,9 +547,9 @@ void backgroundMesh::propagate1dMesh(GFace *_gf)
           std::map<MVertex*, double>::iterator itv = sizes.find(v);
           if (itv == sizes.end())
             sizes[v] = log(d);
-          else 
+          else
             itv->second = 0.5 * (itv->second + log(d));
-        }      
+        }
       }
     }
   }
@@ -563,11 +564,11 @@ void backgroundMesh::propagate1dMesh(GFace *_gf)
   }
 }
 
-// C R O S S   F I E L D S 
+// C R O S S   F I E L D S
 
 crossField2d :: crossField2d (MVertex* v, GEdge* ge){
   double p;
-  bool success = reparamMeshVertexOnEdge(v, ge, p); 
+  bool success = reparamMeshVertexOnEdge(v, ge, p);
   if (!success){
     Msg::Warning("cannot reparametrize a point in crossField");
     _angle = 0;
@@ -587,14 +588,14 @@ void backgroundMesh::propagatecrossField(GFace *_gf)
   std::map<MVertex*,double> _cosines4,_sines4;
   std::list<GEdge*> e = _gf->edges();
   std::list<GEdge*>::const_iterator it = e.begin();
-  
+
   for( ; it != e.end(); ++it ){
     if (!(*it)->isSeam(_gf)){
       for(unsigned int i = 0; i < (*it)->lines.size(); i++ ){
 	MVertex *v[2];
         v[0] = (*it)->lines[i]->getVertex(0);
         v[1] = (*it)->lines[i]->getVertex(1);
-	SPoint2 p1,p2;	
+	SPoint2 p1,p2;
 	bool success = reparamMeshEdgeOnFace(v[0],v[1],_gf,p1,p2);
 	//	double angle = atan2 ( p1.y()-p2.y() , p1.x()-p2.x() );
 	double angle = atan2 ( v[0]->y()-v[1]->y() , v[0]->x()- v[1]->x() );
@@ -603,8 +604,8 @@ void backgroundMesh::propagatecrossField(GFace *_gf)
 	  std::map<MVertex*,double>::iterator itc = _cosines4.find(v[i]);
 	  std::map<MVertex*,double>::iterator its = _sines4.find(v[i]);
 	  if (itc != _cosines4.end()){
-	    itc->second  = 0.5*(itc->second + cos(4*angle));   
-	    its->second  = 0.5*(its->second + sin(4*angle));   
+	    itc->second  = 0.5*(itc->second + cos(4*angle));
+	    its->second  = 0.5*(its->second + sin(4*angle));
 	  }
 	  else {
 	    _cosines4[v[i]] = cos(4*angle);
@@ -633,7 +634,7 @@ void backgroundMesh::propagatecrossField(GFace *_gf)
 void backgroundMesh::updateSizes(GFace *_gf)
 {
   std::map<MVertex*,double>::iterator itv = _sizes.begin();
-  for ( ; itv != _sizes.end(); ++itv){    
+  for ( ; itv != _sizes.end(); ++itv){
     SPoint2 p;
     MVertex *v = _2Dto3D[itv->first];
     double lc;
@@ -646,14 +647,14 @@ void backgroundMesh::updateSizes(GFace *_gf)
       lc = BGM_MeshSize(v->onWhat(), u, 0, v->x(), v->y(), v->z());
     }
     else{
-      bool success = reparamMeshVertexOnFace(v, _gf, p);       
+      bool success = reparamMeshVertexOnFace(v, _gf, p);
       lc = BGM_MeshSize(_gf, p.x(), p.y(), v->x(), v->y(), v->z());
     }
     //    printf("2D -- %g %g 3D -- %g %g\n",p.x(),p.y(),v->x(),v->y());
     itv->second = std::min(lc,itv->second);
     itv->second = std::max(itv->second, CTX::instance()->mesh.lcMin);
     itv->second = std::min(itv->second, CTX::instance()->mesh.lcMax);
-  }  
+  }
 }
 
 double backgroundMesh::operator() (double u, double v, double w) const
@@ -688,11 +689,11 @@ double backgroundMesh::getAngle (double u, double v, double w) const
   std::map<MVertex*,double>::const_iterator itv2 = _angles.find(e->getVertex(1));
   std::map<MVertex*,double>::const_iterator itv3 = _angles.find(e->getVertex(2));
 
-  double cos4 = cos (4*itv1->second) * (1-uv2[0]-uv2[1]) + 
-    cos (4*itv2->second) * uv2[0] + 
+  double cos4 = cos (4*itv1->second) * (1-uv2[0]-uv2[1]) +
+    cos (4*itv2->second) * uv2[0] +
     cos (4*itv3->second) * uv2[1] ;
-  double sin4 = sin (4*itv1->second) * (1-uv2[0]-uv2[1]) + 
-    sin (4*itv2->second) * uv2[0] + 
+  double sin4 = sin (4*itv1->second) * (1-uv2[0]-uv2[1]) +
+    sin (4*itv2->second) * uv2[0] +
     sin (4*itv3->second) * uv2[1] ;
   double angle = atan2(sin4,cos4)/4.0;
   crossField2d::normalizeAngle (angle);
