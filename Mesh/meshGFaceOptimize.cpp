@@ -150,7 +150,7 @@ void buildMeshGenerationDataStructures(GFace *gf,
     double lc = 0.3333333333 * (vSizes[gf->triangles[i]->getVertex(0)->getIndex()] +
                                 vSizes[gf->triangles[i]->getVertex(1)->getIndex()] +
                                 vSizes[gf->triangles[i]->getVertex(2)->getIndex()]);
-    AllTris.insert(new MTri3(gf->triangles[i], lc));
+    AllTris.insert(new MTri3(gf->triangles[i], lc, 0, &Us, &Vs, gf));
   }
   gf->triangles.clear();
   connectTriangles(AllTris);
@@ -1327,9 +1327,9 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
                                   vSizesBGM[t2b->getVertex(1)->getIndex()] +
                                   vSizesBGM[t2b->getVertex(2)->getIndex()]);
   MTri3 *t1b3 = new MTri3(t1b, Extend1dMeshIn2dSurfaces() ?
-                          std::min(lc1, lcBGM1) : lcBGM1);
+                          std::min(lc1, lcBGM1) : lcBGM1, 0, &Us, &Vs, gf);
   MTri3 *t2b3 = new MTri3(t2b, Extend1dMeshIn2dSurfaces() ?
-                          std::min(lc2, lcBGM2) : lcBGM2);
+                          std::min(lc2, lcBGM2) : lcBGM2, 0, &Us, &Vs, gf);
 
   cavity.push_back(t1b3);
   cavity.push_back(t2b3);

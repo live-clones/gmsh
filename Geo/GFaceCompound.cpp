@@ -51,9 +51,9 @@ static void fixEdgeToValue(GEdge *ed, double value, dofManager<double> &myAssemb
   }
 }
 
-static int intersection_segments (SPoint3 &p1, SPoint3 &p2,
-                                  SPoint3 &q1, SPoint3 &q2, 
-                                  double x[2])
+int intersection_segments (SPoint3 &p1, SPoint3 &p2,
+			   SPoint3 &q1, SPoint3 &q2, 
+			   double x[2])
 {
   double xp_max = std::max(p1.x(),p2.x()); 
   double yp_max = std::max(p1.y(),p2.y()); 
