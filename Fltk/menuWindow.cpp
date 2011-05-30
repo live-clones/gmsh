@@ -235,6 +235,8 @@ static int _save_msh(const char *name){ return mshFileDialog(name); }
 static int _save_pos(const char *name){ return posFileDialog(name); }
 static int _save_options(const char *name){ return optionsFileDialog(name); }
 static int _save_geo(const char *name){ return geoFileDialog(name); }
+static int _save_brep(const char *name){ CreateOutputFile(name, FORMAT_BREP); return 1; }
+static int _save_step(const char *name){ CreateOutputFile(name, FORMAT_STEP); return 1; }
 static int _save_cgns(const char *name){ return cgnsFileDialog(name); }
 static int _save_unv(const char *name){ return unvFileDialog(name); }
 static int _save_vtk(const char *name){ return genericMeshFileDialog
@@ -286,6 +288,8 @@ static int _save_auto(const char *name)
   case FORMAT_POS  : return _save_pos(name);
   case FORMAT_OPT  : return _save_options(name);
   case FORMAT_GEO  : return _save_geo(name);
+  case FORMAT_BREP : return _save_brep(name);
+  case FORMAT_STEP : return _save_step(name);
   case FORMAT_CGNS : return _save_cgns(name);
   case FORMAT_UNV  : return _save_unv(name);
   case FORMAT_VTK  : return _save_vtk(name);
@@ -330,6 +334,10 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
     {"Gmsh Mesh Statistics" TT "*.pos", _save_pos},
     {"Gmsh Options" TT "*.opt", _save_options},
     {"Gmsh Unrolled Geometry" TT "*.geo", _save_geo},
+#if defined(HAVE_OCC)
+    {"OpenCASCADE STEP" TT "*.step", _save_step},
+    {"OpenCASCADE BRep" TT "*.brep", _save_brep},
+#endif
     {"Abaqus INP Mesh" TT "*.inp", _save_inp},
 #if defined(HAVE_LIBCGNS)
     {"CGNS (Experimental)" TT "*.cgns", _save_cgns},

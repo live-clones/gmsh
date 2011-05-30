@@ -969,7 +969,7 @@ int GModel::readOCCIGES(const std::string &fn)
 int GModel::writeOCCBREP(const std::string &fn)
 {
   if (!_occ_internals){
-    Msg::Error("No OCC Model Found");
+    Msg::Error("No OpenCASCADE model found");
     return 0;
   }
   else
@@ -980,7 +980,7 @@ int GModel::writeOCCBREP(const std::string &fn)
 int GModel::writeOCCSTEP(const std::string &fn)
 {
   if (!_occ_internals){
-    Msg::Error("No OCC Model Found");
+    Msg::Error("No OpenCASCADE model found");
     return 0;
   }
   else

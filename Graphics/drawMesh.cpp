@@ -315,7 +315,7 @@ static void drawVoronoiDual(std::vector<T*> &elements)
   gl2psDisable(GL2PS_LINE_STIPPLE);
 }
 
-// Routines for filling and drawing the vertex arrays
+// Routine for drawing the vertex arrays
 
 static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va, GLint type, 
                        bool useNormalArray, int forceColor=0, unsigned int color=0)
