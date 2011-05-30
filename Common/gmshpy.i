@@ -51,6 +51,7 @@
   #include "GPoint.h"  
   #include "GmshDefines.h"
   #include "JacobianBasis.h"  
+  #include "Curvature.h"  
   #if defined(HAVE_FLTK)
   #include "FlGui.h"
   #endif
@@ -146,6 +147,7 @@ namespace std {
 %include "Generator.h"
 %include "GmshDefines.h"
 %include "JacobianBasis.h"  
+%include "Curvature.h"  
 #if defined(HAVE_FLTK)
 %include "FlGui.h"
 #endif

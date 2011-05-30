@@ -26,7 +26,7 @@ print "Model is loaded"
 
 cv = Curvature(g)
 cv.retrievePhysicalSurfaces("Wall")
-cv.computeCurvature()
+cv.computeCurvature_Rusinkiewicz()
 cv.writeToFile("result.pos")
 
 

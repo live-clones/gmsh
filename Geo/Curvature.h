@@ -82,6 +82,7 @@ private:
                           const SVector3 &new_norm,
                           SVector3 &pdir1, SVector3 &pdir2, double &k1, double &k2);
     void computePointareas();
+    void computeRusinkiewiczNormals();
 
     // Perform LDL^T decomposition of a symmetric positive definite matrix.
     // Like Cholesky, but no square roots.  Overwrites lower triangle of matrix.
