@@ -1164,8 +1164,10 @@ bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
 void GFace::lloyd(int nbiter, int infn)
 {
 #if defined(HAVE_MESH) && defined(HAVE_BFGS)
-  lloydAlgorithm algo(nbiter, infn);
-  algo(this);
+  smoothing s = smoothing(nbiter,infn);
+  s.optimize_face(this);	
+  //lloydAlgorithm algo(nbiter, infn);
+  //algo(this);
 #endif
 }
 

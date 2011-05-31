@@ -26,14 +26,13 @@ class metric;
 void callback(const alglib::real_1d_array&,double&,alglib::real_1d_array&,void*);
 bool domain_search(MElementOctree*,GFace*,double,double);
 
-class lloydAlgorithm {
+class smoothing{
   int ITER_MAX;
   int NORM;
  public :
-  lloydAlgorithm (int itermax, int norm) : ITER_MAX(itermax), NORM(norm) {}
-  lloydAlgorithm() {}
-  void operator () (GFace *);
-  void optimize(int,int);
+  smoothing(int,int);
+  void optimize_face(GFace*);
+  void optimize_model();
 };
 
 class lpcvt{

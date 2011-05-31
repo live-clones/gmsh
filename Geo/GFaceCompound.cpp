@@ -2009,6 +2009,9 @@ bool GFaceCompound::checkTopology() const
   
   //TODO: smthg to exit here for lloyd remeshing
   
+  //fixme tristan
+  //return true;
+	
   bool correctTopo = true;
   if(allNodes.empty()) buildAllNodes();
 
