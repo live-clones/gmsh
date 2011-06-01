@@ -50,11 +50,11 @@ class PView{
   // construct a new list-based view from a simple 2D dataset
   PView(std::string xname, std::string yname,
         std::vector<double> &x, std::vector<double> &y);
-  // construct a new model-based view from a bunch of data
+  // construct a new mesh-based view from a bunch of data
   PView(std::string name, std::string type, GModel *model,
         std::map<int, std::vector<double> > &data, double time=0.,
         int numComp = -1);
-  // add a new time step to a given model-based view
+  // add a new time step to a given mesh-based view
   void addStep(GModel *model, std::map<int, std::vector<double> > &data,
                double time=0.,int numComp = -1);
 

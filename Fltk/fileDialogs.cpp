@@ -1179,6 +1179,8 @@ int posFileDialog(const char *name)
   static Fl_Menu_Item formatmenu[] = {
     {"Parsed", 0, 0, 0},
     {"Mesh-based", 0, 0, 0},
+    {"Legacy ASCII", 0, 0, 0},
+    {"Legacy Binary", 0, 0, 0},
     {0}
   };
 
@@ -1210,7 +1212,13 @@ int posFileDialog(const char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-        int format = (dialog->c[1]->value() == 1) ? 5 : 2;
+        int format = 2;
+        switch(dialog->c[1]->value()){
+        case 0: format = 2;
+        case 1: format = 5;
+        case 2: format = 0;
+        case 3: format = 1;
+        }
         bool canAppend = (format == 2) ? true : false;
         _saveViews(name, dialog->c[0]->value(), format, canAppend);
         dialog->window->hide();

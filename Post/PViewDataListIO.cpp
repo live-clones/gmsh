@@ -346,9 +346,11 @@ bool PViewDataList::writePOS(std::string fileName, bool binary, bool parsed, boo
     Msg::Warning("Writing adapted dataset (will only export current time step)");
     return _adaptive->getData()->writePOS(fileName, binary, parsed, append);
   }
-  else if(haveInterpolationMatrices()){
-    Msg::Error("Cannot (yet) export datasets with interpolation matrices: use");
-    Msg::Error("'Adapt visualization grid' before exporting!");
+
+  if(haveInterpolationMatrices()){
+    Msg::Error("Cannot export datasets with interpolation matrices in old POS format: "
+               "consider using the new mesh-based format instead, or select 'Adapt "
+               "post-processing data' before exporting");
     return false;
   }
 

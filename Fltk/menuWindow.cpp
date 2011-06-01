@@ -416,9 +416,6 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
   }
 }
 
-#undef TT
-#undef NN
-
 static void file_options_save_cb(Fl_Widget *w, void *data)
 {
   std::string str((const char*)data), fileName;
@@ -2195,12 +2192,20 @@ static void view_remove_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-static void view_save_as(int index, const char *title, int format)
+static void view_save_cb(Fl_Widget *w, void *data)
 {
-  PView *view = PView::list[index];
-  
+  static const char *formats =
+    "Gmsh Parsed" TT "*.pos" NN
+    "Gmsh Mesh-based" TT "*.pos" NN
+    "Gmsh Legacy ASCII" TT "*.pos" NN
+    "Gmsh Legacy Binary" TT "*.pos" NN
+    "MED" TT "*.rmed" NN
+    "STL Surface" TT "*.stl" NN
+    "Generic TXT" TT "*.txt" NN;
+
+  PView *view = PView::list[(intptr_t)data];
  test:
-  if(fileChooser(FILE_CHOOSER_CREATE, title, "*", 
+  if(fileChooser(FILE_CHOOSER_CREATE, "Save As", formats, 
                  view->getData()->getFileName().c_str())){
     std::string name = fileChooserGetName(1);
     if(CTX::instance()->confirmOverwrite) {
@@ -2209,44 +2214,22 @@ static void view_save_as(int index, const char *title, int format)
                       "Cancel", "Replace", 0, name.c_str()))
           goto test;
     }
+    int format = 0;
+    switch(fileChooserGetFilter()){
+    case 0: format = 2; break;
+    case 1: format = 5; break;
+    case 2: format = 0; break;
+    case 3: format = 1; break;
+    case 4: format = 6; break;
+    case 5: format = 3; break;
+    case 6: format = 4; break;
+    }
     view->write(name, format);
   }
 }
 
-static void view_save_ascii_cb(Fl_Widget *w, void *data)
-{
-  view_save_as((intptr_t)data, "Save As ASCII View", 0);
-}
-
-static void view_save_binary_cb(Fl_Widget *w, void *data)
-{
-  view_save_as((intptr_t)data, "Save As Binary View", 1);
-}
-
-static void view_save_parsed_cb(Fl_Widget *w, void *data)
-{
-  view_save_as((intptr_t)data, "Save As Parsed View", 2);
-}
-
-static void view_save_stl_cb(Fl_Widget *w, void *data)
-{
-  view_save_as((intptr_t)data, "Save As STL Triangulation", 3);
-}
-
-static void view_save_txt_cb(Fl_Widget *w, void *data)
-{
-  view_save_as((intptr_t)data, "Save As Raw Text", 4);
-}
-
-static void view_save_msh_cb(Fl_Widget *w, void *data)
-{
-  view_save_as((intptr_t)data, "Save As Gmsh Mesh", 5);
-}
-
-static void view_save_med_cb(Fl_Widget *w, void *data)
-{
-  view_save_as((intptr_t)data, "Save As MED file", 6);
-}
+#undef TT
+#undef NN
 
 static void view_alias_cb(Fl_Widget *w, void *data)
 {
@@ -2316,9 +2299,8 @@ static void view_all_visible_cb(Fl_Widget *w, void *data)
 static void view_applybgmesh_cb(Fl_Widget *w, void *data)
 {
   int index =  (intptr_t)data;
-  if(index >= 0 && index < (int)PView::list.size()){
+  if(index >= 0 && index < (int)PView::list.size())
     GModel::current()->getFields()->setBackgroundMesh(index);
-  }
 }
 
 // The static menus (we cannot use the 'g', 'm' 's' and 'p' mnemonics
@@ -2963,24 +2945,10 @@ void menuWindow::setContext(contextItem *menu_asked, int flag)
                   (Fl_Callback *) view_all_visible_cb, (void *)0, 0);
         p[j]->add("Set Visibility/Invert", 0, 
                   (Fl_Callback *) view_all_visible_cb, (void *)-1, 0);
-        p[j]->add("Save As/Parsed View...", 0, 
-                  (Fl_Callback *) view_save_parsed_cb, (void *)nb, 0);
-        p[j]->add("Save As/ASCII View...", 0, 
-                  (Fl_Callback *) view_save_ascii_cb, (void *)nb, 0);
-        p[j]->add("Save As/Binary View...", 0, 
-                  (Fl_Callback *) view_save_binary_cb, (void *)nb, 0);
-        p[j]->add("Save As/STL Triangulation...", 0, 
-                  (Fl_Callback *) view_save_stl_cb, (void *)nb, 0);
-        p[j]->add("Save As/Raw Text...", 0, 
-                  (Fl_Callback *) view_save_txt_cb, (void *)nb, 0);
-        p[j]->add("Save As/Gmsh Mesh...", 0, 
-                  (Fl_Callback *) view_save_msh_cb, (void *)nb, 0);
-#if defined(HAVE_MED)
-        p[j]->add("Save As/MED file...", 0, 
-                  (Fl_Callback *) view_save_med_cb, (void *)nb, 0);
-#endif
         p[j]->add("Apply As Background Mesh", 0, 
-                  (Fl_Callback *) view_applybgmesh_cb, (void *)nb, FL_MENU_DIVIDER);
+                  (Fl_Callback *) view_applybgmesh_cb, (void *)nb, 0);
+        p[j]->add("Save As...", 0, 
+                  (Fl_Callback *) view_save_cb, (void *)nb, FL_MENU_DIVIDER);
         p[j]->add("Options", 'o', 
                   (Fl_Callback *) view_options_cb, (void *)nb, 0);
         p[j]->add("Plugins", 'p', 

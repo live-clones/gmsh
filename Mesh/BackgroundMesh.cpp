@@ -33,7 +33,8 @@
 // CTX::instance()->mesh.minCircPoints tells the minimum number of points per
 // radius of curvature
 
-SMetric3 buildMetricTangentToCurve (SVector3 &t, double curvature, double &lambda){
+SMetric3 buildMetricTangentToCurve (SVector3 &t, double curvature, double &lambda)
+{
   lambda = 1.e22;
   if (curvature == 0.0)return SMetric3(1.e-22);
   SVector3 a;
@@ -85,7 +86,8 @@ SMetric3 max_edge_curvature_metric(const GVertex *gv, double &length)
   return val;
 }
 
-SMetric3 max_edge_curvature_metric(const GEdge *ge, double u, double &l){
+SMetric3 max_edge_curvature_metric(const GEdge *ge, double u, double &l)
+{
   SVector3 t =  ge->firstDer(u);
   t.normalize();
   return buildMetricTangentToCurve(t,ge->curvature(u),l);  
@@ -577,7 +579,8 @@ void backgroundMesh::propagate1dMesh(GFace *_gf)
 
 // C R O S S   F I E L D S 
 
-crossField2d :: crossField2d (MVertex* v, GEdge* ge){
+crossField2d::crossField2d(MVertex* v, GEdge* ge)
+{
   double p;
   bool success = reparamMeshVertexOnEdge(v, ge, p); 
   if (!success){
@@ -590,9 +593,6 @@ crossField2d :: crossField2d (MVertex* v, GEdge* ge){
   _angle = atan2 (t.y(),t.x());
   crossField2d::normalizeAngle (_angle);
 }
-
-
-
 
 void backgroundMesh::propagatecrossField(GFace *_gf)
 {
@@ -681,7 +681,6 @@ void backgroundMesh::propagatecrossField(GFace *_gf)
 
 }
 
-
 void backgroundMesh::updateSizes(GFace *_gf)
 {
   std::map<MVertex*,double>::iterator itv = _sizes.begin();
@@ -725,7 +724,7 @@ double backgroundMesh::operator() (double u, double v, double w) const
   return itv1->second * (1-uv2[0]-uv2[1]) + itv2->second * uv2[0] + itv3->second * uv2[1];
 }
 
-double backgroundMesh::getAngle (double u, double v, double w) const
+double backgroundMesh::getAngle(double u, double v, double w) const
 {
   double uv[3] = {u, v, w};
   double uv2[3];
@@ -752,8 +751,8 @@ double backgroundMesh::getAngle (double u, double v, double w) const
   return angle;
 }
 
-
-void backgroundMesh::print (const std::string &filename, GFace *gf, const std::map<MVertex*,double> &_whatToPrint) const
+void backgroundMesh::print(const std::string &filename, GFace *gf,
+                           const std::map<MVertex*,double> &_whatToPrint) const
 {
   FILE *f = fopen (filename.c_str(),"w");
   fprintf(f,"View \"Background Mesh\"{\n");

@@ -142,7 +142,7 @@ void PView::addStep(GModel *model, std::map<int, std::vector<double> > &data,
 {
   PViewDataGModel *d = dynamic_cast<PViewDataGModel*>(_data);
   if(d) d->addData(model, data, d->getNumTimeSteps(), time, 1, numComp);
-  else Msg::Error("Can only add step data to model-based datasets");
+  else Msg::Error("Can only add step data to mesh-based datasets");
 }
 
 PView::~PView()
@@ -264,7 +264,7 @@ void PView::combine(bool time, int how, bool remove)
         data = new PViewDataGModel(d2->getType());
       }
       else{
-        Msg::Error("Cannot combine hybrid list/model-based datasets");
+        Msg::Error("Cannot combine hybrid list/mesh-based datasets");
         continue;
       }
       PView *p = new PView(data);
