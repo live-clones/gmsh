@@ -36,9 +36,11 @@ int GuessFileFormatFromFileName(std::string fileName)
   else if(ext == ".opt")  return FORMAT_OPT;
   else if(ext == ".unv")  return FORMAT_UNV;
   else if(ext == ".vtk")  return FORMAT_VTK;
+  else if(ext == ".txt")  return FORMAT_TXT;
   else if(ext == ".stl")  return FORMAT_STL;
   else if(ext == ".cgns") return FORMAT_CGNS;
   else if(ext == ".med")  return FORMAT_MED;
+  else if(ext == ".rmed") return FORMAT_RMED;
   else if(ext == ".ir3")  return FORMAT_IR3;
   else if(ext == ".mesh") return FORMAT_MESH;
   else if(ext == ".mail") return FORMAT_MAIL;
@@ -85,6 +87,7 @@ std::string GetDefaultFileName(int format)
   case FORMAT_STL:  name += ".stl"; break;
   case FORMAT_CGNS: name += ".cgns"; break;
   case FORMAT_MED:  name += ".med"; break;
+  case FORMAT_RMED: name += ".rmed"; break;
   case FORMAT_IR3:  name += ".ir3"; break;
   case FORMAT_MESH: name += ".mesh"; break;
   case FORMAT_MAIL: name += ".mail"; break;

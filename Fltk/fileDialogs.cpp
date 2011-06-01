@@ -8,6 +8,7 @@
 //
 
 #include <limits>
+#include <sstream>
 #include <errno.h>
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Check_Button.H>
@@ -23,11 +24,13 @@
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "FlGui.h"
+#include "optionWindow.h"
 #include "fileDialogs.h"
 #include "CreateFile.h"
 #include "Options.h"
-#include "GModel.h"
 #include "Context.h"
+#include "PView.h"
+#include "PViewOptions.h"
 
 // File chooser
 
@@ -733,19 +736,19 @@ int geoFileDialog(const char *name)
   return 0;
 }
 
-int posFileDialog(const char *name)
+int meshStatFileDialog(const char *name)
 {
-  struct _posFileDialog{
+  struct _meshStatFileDialog{
     Fl_Window *window;
     Fl_Check_Button *b[7];
     Fl_Button *ok, *cancel;
   };
-  static _posFileDialog *dialog = NULL;
+  static _meshStatFileDialog *dialog = NULL;
 
   int BBB = BB + 9; // labels too long
 
   if(!dialog){
-    dialog = new _posFileDialog;
+    dialog = new _meshStatFileDialog;
     int h = 3 * WB + 8 * BH, w = 2 * BBB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "POS Options");
     dialog->window->box(GMSH_WINDOW_BOX);
@@ -1022,7 +1025,7 @@ int bdfFileDialog(const char *name)
 // Generic mesh dialog
 
 int genericMeshFileDialog(const char *name, const char *title, int format,
-                        bool binary_support, bool element_tag_support)
+                          bool binary_support, bool element_tag_support)
 {
   struct _genericMeshFileDialog{
     Fl_Window *window;
@@ -1094,6 +1097,177 @@ int genericMeshFileDialog(const char *name, const char *title, int format,
                                        dialog->d->value() + 1);
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
         CreateOutputFile(name, format);
+        dialog->window->hide();
+        return 1;
+      }
+      if (o == dialog->window || o == dialog->cancel){
+        dialog->window->hide();
+        return 0;
+      }
+    }
+  }
+  return 0;
+}
+
+// POS format post-processing export dialog
+
+static void _saveViews(const std::string &name, int which, int format, bool canAppend)
+{
+  if(PView::list.empty()){
+    Msg::Error("No views to save");
+  }
+  else if(which == 0){
+    int iview = FlGui::instance()->options->view.index;
+    if(iview < 0 || iview >= PView::list.size()){
+      Msg::Info("No or invalid current view: saving View[0]");
+      iview = 0;
+    }
+    PView::list[iview]->write(name, format);
+  }
+  else if(which == 1){
+    int numVisible = 0;
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(PView::list[i]->getOptions()->visible)
+        numVisible++;
+    if(!numVisible){
+      Msg::Error("No visible view");
+    }
+    else{
+      bool first = true;
+      for(unsigned int i = 0; i < PView::list.size(); i++){
+        if(PView::list[i]->getOptions()->visible){
+          std::string fileName = name;
+          if(!canAppend && numVisible > 1){
+            std::ostringstream os;
+            os << "_" << i;
+            fileName += os.str();
+          }
+          PView::list[i]->write(fileName, format, first ? false : canAppend);
+          first = false;
+        }
+      }
+    }
+  }
+  else{
+    for(unsigned int i = 0; i < PView::list.size(); i++){
+      std::string fileName = name;
+      if(!canAppend && PView::list.size() > 1){
+        std::ostringstream os;
+        os << "_" << i;
+        fileName += os.str();
+      }
+      PView::list[i]->write(fileName, format, i ? canAppend : false);
+    }
+  }
+}
+
+int posFileDialog(const char *name)
+{
+  struct _posFileDialog{
+    Fl_Window *window;
+    Fl_Choice *c[2];
+    Fl_Button *ok, *cancel;
+  };
+  static _posFileDialog *dialog = NULL;
+
+  static Fl_Menu_Item viewmenu[] = {
+    {"Current", 0, 0, 0},
+    {"Visible", 0, 0, 0},
+    {"All", 0, 0, 0},
+    {0}
+  };
+  static Fl_Menu_Item formatmenu[] = {
+    {"Parsed", 0, 0, 0},
+    {"Mesh-based", 0, 0, 0},
+    {0}
+  };
+
+  int BBB = BB + 9; // labels too long
+
+  if(!dialog){
+    dialog = new _posFileDialog;
+    int h = 3 * WB + 3 * BH, w = 2 * BBB + 3 * WB, y = WB;
+    dialog->window = new Fl_Double_Window(w, h, "POS Options");
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
+    dialog->c[0] = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "View(s)"); y += BH;
+    dialog->c[0]->menu(viewmenu);
+    dialog->c[0]->align(FL_ALIGN_RIGHT);
+    dialog->c[1] = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "Format"); y += BH;
+    dialog->c[1]->menu(formatmenu);
+    dialog->c[1]->align(FL_ALIGN_RIGHT);
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+
+  dialog->window->show();
+
+  while(dialog->window->shown()){
+    Fl::wait();
+    for (;;) {
+      Fl_Widget* o = Fl::readqueue();
+      if (!o) break;
+      if (o == dialog->ok) {
+        int format = (dialog->c[1]->value() == 1) ? 5 : 2;
+        bool canAppend = (format == 2) ? true : false;
+        _saveViews(name, dialog->c[0]->value(), format, canAppend);
+        dialog->window->hide();
+        return 1;
+      }
+      if (o == dialog->window || o == dialog->cancel){
+        dialog->window->hide();
+        return 0;
+      }
+    }
+  }
+  return 0;
+}
+
+int genericViewFileDialog(const char *name, const char *title, int format)
+{
+  struct _viewFileDialog{
+    Fl_Window *window;
+    Fl_Choice *c[1];
+    Fl_Button *ok, *cancel;
+  };
+  static _viewFileDialog *dialog = NULL;
+
+  static Fl_Menu_Item viewmenu[] = {
+    {"Current", 0, 0, 0},
+    {"Visible", 0, 0, 0},
+    {"All", 0, 0, 0},
+    {0}
+  };
+
+  int BBB = BB + 9; // labels too long
+
+  if(!dialog){
+    dialog = new _viewFileDialog;
+    int h = 3 * WB + 2 * BH, w = 2 * BBB + 3 * WB, y = WB;
+    dialog->window = new Fl_Double_Window(w, h);
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
+    dialog->c[0] = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "View(s)"); y += BH;
+    dialog->c[0]->menu(viewmenu);
+    dialog->c[0]->align(FL_ALIGN_RIGHT);
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+
+  dialog->window->label(title);
+  dialog->window->show();
+
+  while(dialog->window->shown()){
+    Fl::wait();
+    for (;;) {
+      Fl_Widget* o = Fl::readqueue();
+      if (!o) break;
+      if (o == dialog->ok) {
+        _saveViews(name, dialog->c[0]->value(), format, false);
         dialog->window->hide();
         return 1;
       }

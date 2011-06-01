@@ -29,7 +29,9 @@
 #define FORMAT_EPS   20
 #define FORMAT_MAIL  21
 #define FORMAT_PNG   22
+#define FORMAT_TXT   23
 #define FORMAT_PDF   24
+#define FORMAT_RMED  25
 #define FORMAT_POS   26
 #define FORMAT_STL   27
 #define FORMAT_P3D   28

@@ -232,7 +232,7 @@ static void file_window_cb(Fl_Widget *w, void *data)
 }
 
 static int _save_msh(const char *name){ return mshFileDialog(name); }
-static int _save_pos(const char *name){ return posFileDialog(name); }
+static int _save_mesh_stat(const char *name){ return meshStatFileDialog(name); }
 static int _save_options(const char *name){ return optionsFileDialog(name); }
 static int _save_geo(const char *name){ return geoFileDialog(name); }
 static int _save_brep(const char *name){ CreateOutputFile(name, FORMAT_BREP); return 1; }
@@ -280,12 +280,18 @@ static int _save_svg(const char *name){ return gl2psFileDialog
     (name, "SVG Options", FORMAT_SVG); }
 static int _save_yuv(const char *name){ return genericBitmapFileDialog
     (name, "YUV Options", FORMAT_YUV); }
+static int _save_view_pos(const char *name){ return posFileDialog(name); }
+static int _save_view_med(const char *name){ return genericViewFileDialog
+    (name, "MED Options", 6); }
+static int _save_view_txt(const char *name){ return genericViewFileDialog
+    (name, "TXT Options", 4); }
 
 static int _save_auto(const char *name)
 {
   switch(GuessFileFormatFromFileName(name)){
   case FORMAT_MSH  : return _save_msh(name);
-  case FORMAT_POS  : return _save_pos(name);
+  case FORMAT_POS  : return _save_view_pos(name);
+  case FORMAT_TXT  : return _save_view_txt(name);
   case FORMAT_OPT  : return _save_options(name);
   case FORMAT_GEO  : return _save_geo(name);
   case FORMAT_BREP : return _save_brep(name);
@@ -294,6 +300,7 @@ static int _save_auto(const char *name)
   case FORMAT_UNV  : return _save_unv(name);
   case FORMAT_VTK  : return _save_vtk(name);
   case FORMAT_MED  : return _save_med(name);
+  case FORMAT_RMED : return _save_view_med(name);
   case FORMAT_MESH : return _save_mesh(name);
   case FORMAT_MAIL : return _save_mail(name);
   case FORMAT_BDF  : return _save_bdf(name);
@@ -330,49 +337,54 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
 {
   static patXfunc formats[] = {
     {"Guess From Extension" TT "*.*", _save_auto},
-    {"Gmsh Mesh" TT "*.msh", _save_msh},
-    {"Gmsh Mesh Statistics" TT "*.pos", _save_pos},
-    {"Gmsh Options" TT "*.opt", _save_options},
-    {"Gmsh Unrolled Geometry" TT "*.geo", _save_geo},
+    {"Geometry - Gmsh Options" TT "*.opt", _save_options},
+    {"Geometry - Gmsh Unrolled GEO" TT "*.geo", _save_geo},
 #if defined(HAVE_OCC)
-    {"OpenCASCADE STEP" TT "*.step", _save_step},
-    {"OpenCASCADE BRep" TT "*.brep", _save_brep},
+    {"Geometry - OpenCASCADE STEP" TT "*.step", _save_step},
+    {"Geometry - OpenCASCADE BRep" TT "*.brep", _save_brep},
 #endif
-    {"Abaqus INP Mesh" TT "*.inp", _save_inp},
+    {"Mesh - Gmsh MSH" TT "*.msh", _save_msh},
+    {"Mesh - Abaqus INP" TT "*.inp", _save_inp},
 #if defined(HAVE_LIBCGNS)
-    {"CGNS (Experimental)" TT "*.cgns", _save_cgns},
+    {"Mesh - CGNS (Experimental)" TT "*.cgns", _save_cgns},
 #endif
-    {"Diffpack 3D Mesh" TT "*.diff", _save_diff},
-    {"I-deas Universal Mesh" TT "*.unv", _save_unv},
-    {"Iridum Mesh" TT "*.ir3", _save_ir3},
+    {"Mesh - Diffpack 3D" TT "*.diff", _save_diff},
+    {"Mesh - I-deas Universal" TT "*.unv", _save_unv},
+    {"Mesh - Iridum" TT "*.ir3", _save_ir3},
 #if defined(HAVE_MED)
-    {"MED File" TT "*.med", _save_med},
+    {"Mesh - MED" TT "*.med", _save_med},
 #endif
-    {"Medit INRIA Mesh" TT "*.mesh", _save_mesh},
-    {"CEA Triangulation" TT "*.mail", _save_mail},
-    {"Nastran Bulk Data File" TT "*.bdf", _save_bdf},
-    {"Plot3D Structured Mesh" TT "*.p3d", _save_p3d},
-    {"STL Surface Mesh" TT "*.stl", _save_stl},
-    {"VRML Surface Mesh" TT "*.wrl", _save_vrml},
-    {"VTK Mesh" TT "*.vtk", _save_vtk},
-    {"PLY2 Mesh" TT "*.ply2", _save_ply2},
-    {"Encapsulated PostScript" TT "*.eps", _save_eps},
-    {"GIF" TT "*.gif", _save_gif},
+    {"Mesh - INRIA Medit" TT "*.mesh", _save_mesh},
+    {"Mesh - CEA Triangulation" TT "*.mail", _save_mail},
+    {"Mesh - Nastran Bulk Data File" TT "*.bdf", _save_bdf},
+    {"Mesh - Plot3D Structured Mesh" TT "*.p3d", _save_p3d},
+    {"Mesh - STL Surface" TT "*.stl", _save_stl},
+    {"Mesh - VRML Surface" TT "*.wrl", _save_vrml},
+    {"Mesh - VTK" TT "*.vtk", _save_vtk},
+    {"Mesh - PLY2" TT "*.ply2", _save_ply2},
+    {"Post-processing - Gmsh POS" TT "*.pos", _save_view_pos},
+#if defined(HAVE_MED)
+    {"Post-processing - MED" TT "*.rmed", _save_view_med},
+#endif
+    {"Post-processing - Generic TXT" TT "*.txt", _save_view_txt},
+    {"Post-processing - Mesh Statistics" TT "*.pos", _save_mesh_stat},
+    {"Image - Encapsulated PostScript" TT "*.eps", _save_eps},
+    {"Image - GIF" TT "*.gif", _save_gif},
 #if defined(HAVE_LIBJPEG)
-    {"JPEG" TT "*.jpg", _save_jpeg},
+    {"Image - JPEG" TT "*.jpg", _save_jpeg},
 #endif
-    {"LaTeX" TT "*.tex", _save_tex},
-#if defined(HAVE_MPEG_ENCODE)
-    {"MPEG Movie" TT "*.mpg", _save_mpeg},
-#endif
-    {"PDF" TT "*.pdf", _save_pdf},
+    {"Image - LaTeX" TT "*.tex", _save_tex},
+    {"Image - PDF" TT "*.pdf", _save_pdf},
 #if defined(HAVE_LIBPNG)
-    {"PNG" TT "*.png", _save_png},
+    {"Image - PNG" TT "*.png", _save_png},
 #endif
-    {"PostScript" TT "*.ps", _save_ps},
-    {"PPM" TT "*.ppm", _save_ppm},
-    {"SVG" TT "*.svg", _save_svg},
-    {"YUV" TT "*.yuv", _save_yuv},
+    {"Image - PostScript" TT "*.ps", _save_ps},
+    {"Image - PPM" TT "*.ppm", _save_ppm},
+    {"Image - SVG" TT "*.svg", _save_svg},
+    {"Image - YUV" TT "*.yuv", _save_yuv},
+#if defined(HAVE_MPEG_ENCODE)
+    {"Movie - MPEG" TT "*.mpg", _save_mpeg},
+#endif
   };
   int nbformats = sizeof(formats) / sizeof(formats[0]);
   static char *pat = 0;

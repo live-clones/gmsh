@@ -28,7 +28,7 @@ EndFor
 EndFor
 Combine Views;
 
-Plugin(Evaluate).Expression = "0.5 * ((x-0.5)^2 + (y-0.5)^2 + (z-0.5)^2) + 0.01";
-Plugin(Evaluate).Run;
+Plugin(ModifyComponent).Expression = "0.2 * ((x-0.95)^2 + (y-0.5)^2 + (z-0.5)^2) + 0.01";
+Plugin(ModifyComponent).Run;
 
 Background Mesh View[0];

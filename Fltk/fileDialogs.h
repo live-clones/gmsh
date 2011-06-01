@@ -28,9 +28,11 @@ int geoFileDialog(const char *filename);
 int genericBitmapFileDialog(const char *filename, const char *title, int format);
 int genericMeshFileDialog(const char *filename, const char *title, int format,
                           bool binary_support, bool element_tag_support);
+int posFileDialog(const char *name);
+int genericViewFileDialog(const char *name, const char *title, int format);
 int gl2psFileDialog(const char *filename, const char *title, int format);
 int optionsFileDialog(const char *filename);
-int posFileDialog(const char *filename);
+int meshStatFileDialog(const char *filename);
 int mshFileDialog(const char *filename);
 int unvFileDialog(const char *filename);
 int bdfFileDialog(const char *filename);
