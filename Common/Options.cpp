@@ -4775,8 +4775,17 @@ double opt_geometry_old_newreg(OPT_ARGS_NUM)
 
 double opt_geometry_num_sub_edges(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
+  if(action & GMSH_SET){
     CTX::instance()->geom.numSubEdges = (int)val;
+    if(CTX::instance()->geom.numSubEdges < 1)
+      CTX::instance()->geom.numSubEdges = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->options->geo.value[19]->value
+      (CTX::instance()->geom.numSubEdges);
+  }
+#endif
   return CTX::instance()->geom.numSubEdges;
 }
 
@@ -4892,6 +4901,7 @@ double opt_mesh_optimize_netgen(OPT_ARGS_NUM)
 #endif
   return CTX::instance()->mesh.optimizeNetgen;
 }
+
 double opt_mesh_remove_4_triangles(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -4908,7 +4918,7 @@ double opt_mesh_remove_4_triangles(OPT_ARGS_NUM)
 double opt_mesh_refine_steps(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.refineSteps =(int) val;
+    CTX::instance()->mesh.refineSteps = (int)val;
   return CTX::instance()->mesh.refineSteps;
 }
 
@@ -4927,8 +4937,18 @@ double opt_mesh_normals(OPT_ARGS_NUM)
 
 double opt_mesh_num_sub_edges(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
-    CTX::instance()->mesh.numSubEdges =(int) val;
+  if(action & GMSH_SET){
+    if(CTX::instance()->mesh.numSubEdges != val) 
+      CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+    CTX::instance()->mesh.numSubEdges = (int)val;
+    if(CTX::instance()->mesh.numSubEdges < 1)
+      CTX::instance()->mesh.numSubEdges = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->mesh.value[14]->value
+      (CTX::instance()->mesh.numSubEdges);
+#endif
   return CTX::instance()->mesh.numSubEdges;
 }
 

@@ -111,7 +111,7 @@ static const char *input_formats =
   "STL Surface Mesh" TT "*.stl" NN
   "VTK Mesh" TT "*.vtk" NN
   "VRML Surface Mesh" TT "*.{wrl,vrml}" NN
-  "PLY2 Surface Mesh" TT "*.{ply2}" NN
+  "PLY2 Surface Mesh" TT "*.ply2" NN
   "BMP" TT "*.bmp" NN
 #if defined(HAVE_LIBJPEG)
   "JPEG" TT "*.{jpg,jpeg}" NN

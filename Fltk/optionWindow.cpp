@@ -403,6 +403,7 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_offset0(0, GMSH_SET, o->geo.value[10]->value());
   opt_geometry_offset1(0, GMSH_SET, o->geo.value[14]->value());
   opt_geometry_offset2(0, GMSH_SET, o->geo.value[18]->value());
+  opt_geometry_num_sub_edges(0, GMSH_SET, o->geo.value[19]->value());
 
   opt_geometry_point_type(0, GMSH_SET, o->geo.choice[0]->value());
   opt_geometry_line_type(0, GMSH_SET, o->geo.choice[1]->value());
@@ -466,6 +467,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_normals(0, GMSH_SET, o->mesh.value[8]->value());
   opt_mesh_explode(0, GMSH_SET, o->mesh.value[9]->value());
   opt_mesh_tangents(0, GMSH_SET, o->mesh.value[13]->value());
+  opt_mesh_num_sub_edges(0, GMSH_SET, o->mesh.value[14]->value());
   opt_mesh_point_size(0, GMSH_SET, o->mesh.value[10]->value());
   opt_mesh_line_width(0, GMSH_SET, o->mesh.value[11]->value());
   opt_mesh_label_sampling(0, GMSH_SET, o->mesh.value[12]->value());
@@ -1974,8 +1976,16 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.choice[1]->align(FL_ALIGN_RIGHT);     
       geo.choice[1]->callback(geometry_options_ok_cb);
 
+      geo.value[19] = new Fl_Value_Input
+        (L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Line subdivisions");
+      geo.value[19]->minimum(1);
+      geo.value[19]->maximum(50);
+      geo.value[19]->step(1);
+      geo.value[19]->align(FL_ALIGN_RIGHT);
+      geo.value[19]->callback(geometry_options_ok_cb);
+
       geo.value[4] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Line width");
+        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Line width");
       geo.value[4]->minimum(0.1);
       geo.value[4]->maximum(50);
       geo.value[4]->step(0.1);
@@ -1983,7 +1993,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.value[4]->callback(geometry_options_ok_cb);
 
       geo.value[6] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Selected line width");
+        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Selected line width");
       geo.value[6]->minimum(0.1);
       geo.value[6]->maximum(50);
       geo.value[6]->step(0.1);
@@ -1991,7 +2001,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.value[6]->callback(geometry_options_ok_cb);
 
       geo.choice[2] = new Fl_Choice
-        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Surface display");
+        (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Surface display");
       geo.choice[2]->menu(menu_surface_display);
       geo.choice[2]->align(FL_ALIGN_RIGHT);     
       geo.choice[2]->callback(geometry_options_ok_cb);
@@ -2408,6 +2418,15 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[11]->step(0.1);
       mesh.value[11]->align(FL_ALIGN_RIGHT);
       mesh.value[11]->callback(mesh_options_ok_cb);
+
+      mesh.value[14] = new Fl_Value_Input
+        (L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "High-order element subdivisions");
+      mesh.value[14]->minimum(1);
+      mesh.value[14]->maximum(10);
+      mesh.value[14]->step(1);
+      mesh.value[14]->align(FL_ALIGN_RIGHT);
+      mesh.value[14]->when(FL_WHEN_RELEASE);
+      mesh.value[14]->callback(mesh_options_ok_cb);
 
       o->end();
     }
