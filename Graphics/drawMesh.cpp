@@ -119,7 +119,9 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
   else
     sprintf(str, "%d", v->getNum());
 
-  if(CTX::instance()->mesh.colorCarousel == 0){ // by element type
+  if(CTX::instance()->mesh.colorCarousel == 0 || 
+     CTX::instance()->mesh.volumesFaces || 
+     CTX::instance()->mesh.surfacesFaces){ // by element type
     if(v->getPolynomialOrder() > 1)
       glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
     else
@@ -144,7 +146,9 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
       for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
         MVertex *v = e->mesh_vertices[i];
         if(!v->getVisibility()) continue;
-        if(CTX::instance()->mesh.colorCarousel == 0){ // by element type
+        if(CTX::instance()->mesh.colorCarousel == 0 ||
+           CTX::instance()->mesh.volumesFaces || 
+           CTX::instance()->mesh.surfacesFaces){ // by element type
           if(v->getPolynomialOrder() > 1)
             glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
           else
@@ -163,7 +167,9 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
       for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
         MVertex *v = e->mesh_vertices[i];
         if(!v->getVisibility()) continue;
-        if(CTX::instance()->mesh.colorCarousel == 0){ // by element type
+        if(CTX::instance()->mesh.colorCarousel == 0 ||
+           CTX::instance()->mesh.volumesFaces || 
+           CTX::instance()->mesh.surfacesFaces){ // by element type
           if(v->getPolynomialOrder() > 1)
             glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
           else
@@ -198,7 +204,9 @@ static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
       // vertex array for drawing vertices...
       if(isElementVisible(ele) && v->getVisibility()){
         if(CTX::instance()->mesh.points) {
-          if(CTX::instance()->mesh.colorCarousel == 0){ // by element type
+          if(CTX::instance()->mesh.colorCarousel == 0 ||
+             CTX::instance()->mesh.volumesFaces || 
+             CTX::instance()->mesh.surfacesFaces){ // by element type
             if(v->getPolynomialOrder() > 1)
               glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
             else
