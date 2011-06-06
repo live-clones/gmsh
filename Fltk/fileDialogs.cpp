@@ -1214,10 +1214,10 @@ int posFileDialog(const char *name)
       if (o == dialog->ok) {
         int format = 2;
         switch(dialog->c[1]->value()){
-        case 0: format = 2;
-        case 1: format = 5;
-        case 2: format = 0;
-        case 3: format = 1;
+        case 0: format = 2; break;
+        case 1: format = 5; break;
+        case 2: format = 0; break;
+        case 3: format = 1; break;
         }
         bool canAppend = (format == 2) ? true : false;
         _saveViews(name, dialog->c[0]->value(), format, canAppend);
