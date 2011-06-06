@@ -68,7 +68,7 @@ void callback(const alglib::real_1d_array& x,double& func,alglib::real_1d_array&
 	if(obj.interior(*pointer,gf,i)){
 	  u = x[index];
 	  v = x[index + dimension/2];
-	  inside = domain_search(octree,gf,u,v);
+	  inside = domain_search(octree,u,v);
 	  if(!inside) error1 = 1;
 	  pointer->points[i].where.h = u;
 	  pointer->points[i].where.v = v;
@@ -136,12 +136,10 @@ void callback(const alglib::real_1d_array& x,double& func,alglib::real_1d_array&
   }	
 }
 
-bool domain_search(MElementOctree* octree,GFace* gf,double x,double y){
-  GPoint gp;
+bool domain_search(MElementOctree* octree,double x,double y){
   MElement* element;
 	
-  gp = gf->point(x,y);
-  element = (MElement*)octree->find(gp.x(),gp.y(),gp.z(),2,true);
+  element = (MElement*)octree->find(x,y,0.0,2,true);
   if(element!=NULL) return 1;
   else return 0;
 }
@@ -317,7 +315,7 @@ void smoothing::optimize_face(GFace* gf){
 	
   x.setcontent(2*num_interior,initial_conditions);
 
-  octree = new MElementOctree(gf->model());	
+  octree = backgroundMesh::current()->get_octree();	
 	
   w.set_p(exponent);
   w.set_dimension(2*num_interior);
@@ -331,8 +329,6 @@ void smoothing::optimize_face(GFace* gf){
   minlbfgsoptimize(state,callback,NULL,&w);
   minlbfgsresults(state,x,rep);
 
-  delete octree;	
-	
   /*lpcvt obj2;
   SPoint2 val = obj2.seed(triangulator,gf);
   triangulator.concave(val.x(),val.y(),gf);

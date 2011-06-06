@@ -24,7 +24,7 @@ class segment_list;
 class metric;
 
 void callback(const alglib::real_1d_array&,double&,alglib::real_1d_array&,void*);
-bool domain_search(MElementOctree*,GFace*,double,double);
+bool domain_search(MElementOctree*,double,double);
 
 class smoothing{
   int ITER_MAX;

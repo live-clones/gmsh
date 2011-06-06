@@ -62,6 +62,7 @@ class backgroundMesh : public simpleFunction<double>
     default : print(filename,gf,_angles); return;
     }
   }
+  MElementOctree* get_octree();
 };
 
 double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double Z);
