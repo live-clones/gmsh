@@ -1976,16 +1976,8 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.choice[1]->align(FL_ALIGN_RIGHT);     
       geo.choice[1]->callback(geometry_options_ok_cb);
 
-      geo.value[19] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Line subdivisions");
-      geo.value[19]->minimum(1);
-      geo.value[19]->maximum(50);
-      geo.value[19]->step(1);
-      geo.value[19]->align(FL_ALIGN_RIGHT);
-      geo.value[19]->callback(geometry_options_ok_cb);
-
       geo.value[4] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Line width");
+        (L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Line width");
       geo.value[4]->minimum(0.1);
       geo.value[4]->maximum(50);
       geo.value[4]->step(0.1);
@@ -1993,12 +1985,20 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.value[4]->callback(geometry_options_ok_cb);
 
       geo.value[6] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Selected line width");
+        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Selected line width");
       geo.value[6]->minimum(0.1);
       geo.value[6]->maximum(50);
       geo.value[6]->step(0.1);
       geo.value[6]->align(FL_ALIGN_RIGHT);
       geo.value[6]->callback(geometry_options_ok_cb);
+
+      geo.value[19] = new Fl_Value_Input
+        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Curve subdivisions");
+      geo.value[19]->minimum(1);
+      geo.value[19]->maximum(50);
+      geo.value[19]->step(1);
+      geo.value[19]->align(FL_ALIGN_RIGHT);
+      geo.value[19]->callback(geometry_options_ok_cb);
 
       geo.choice[2] = new Fl_Choice
         (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Surface display");
