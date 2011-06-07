@@ -1508,7 +1508,7 @@ void GModel::createTopologyFromRegions(std::vector<discreteRegion*> &discRegions
   Msg::Debug("Done creating topology from regions");
 }
 
-void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
+void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int onlyOneBoundary)
 {
   Msg::Debug("Creating topology from faces...");
 
@@ -1596,6 +1596,11 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
   
     std::vector<std::vector<MEdge> > boundaries;
     int nbBounds = connectedSurfaceBoundaries(myEdges, boundaries);   
+
+    //EMI RBF fix
+    if (onlyOneBoundary){
+      nbBounds = 1;
+    }
 
     // create new discrete edges
     for (int ib = 0; ib < nbBounds; ib++){
