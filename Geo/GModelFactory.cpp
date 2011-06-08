@@ -68,15 +68,42 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
     int numl = gm->getMaxElementaryNumber(1) + i;
     while (FindEdgeLoop(numl)){
       numl++;
-      if (!FindEdgeLoop(numl)) break;
     }
     int nl=(int)edges[i].size();
+    const GEdge &e0 = *edges[i][0];
+    const GVertex *frontV = e0.getBeginVertex();
     List_T *iListl = List_Create(nl, nl, sizeof(int));
-    for(int j = 0; j < nl; j++){
-      int numEdge = edges[i][j]->tag();
+    if (nl > 1) {
+      const GEdge &e1 = *edges[i][1];
+      if (e0.getEndVertex() != e1.getBeginVertex() && e0.getEndVertex() != e1.getEndVertex()) {
+        frontV = e0.getEndVertex();
+        if (e0.getBeginVertex() != e1.getBeginVertex() && e0.getBeginVertex() != e1.getEndVertex()) {
+          Msg::Error("Invalid line loop");
+          return NULL;
+        }
+      }
+    }
+    const GVertex *firstV = frontV;
+    for (int j = 0; j < nl; j++){
+      const GEdge &e = *edges[i][j];
+      int numEdge = e.tag();
+      if (frontV == e.getBeginVertex()) {
+        frontV = e.getEndVertex();
+      } else if (frontV == e.getEndVertex()){
+        frontV = e.getBeginVertex();
+        numEdge = -numEdge;
+      } else {
+        Msg::Error("Invalid line loop");
+        List_Delete(iListl);
+        return NULL;
+      }
       List_Add(iListl, &numEdge);
     }
-    sortEdgesInLoop(numl, iListl);
+    if (firstV != frontV) {
+      Msg::Error("Invalid line loop");
+      List_Delete(iListl);
+      return NULL;
+    }
     EdgeLoop *l = Create_EdgeLoop(numl, iListl);
     vecLoops.push_back(l);
     Tree_Add(GModel::current()->getGEOInternals()->EdgeLoops, &l);
