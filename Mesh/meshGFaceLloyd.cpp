@@ -323,11 +323,13 @@ void smoothing::optimize_face(GFace* gf){
   w.set_max(2*ITER_MAX);
   w.set_triangulator(&triangulator);
   w.set_octree(octree);
-	
-  minlbfgscreate(2*num_interior,4,x,state);
-  minlbfgssetcond(state,epsg,epsf,epsx,maxits);
-  minlbfgsoptimize(state,callback,NULL,&w);
-  minlbfgsresults(state,x,rep);
+
+  if(num_interior>0){
+    minlbfgscreate(2*num_interior,4,x,state);
+    minlbfgssetcond(state,epsg,epsf,epsx,maxits);
+    minlbfgsoptimize(state,callback,NULL,&w);
+    minlbfgsresults(state,x,rep);
+  }
 
   /*lpcvt obj2;
   SPoint2 val = obj2.seed(triangulator,gf);

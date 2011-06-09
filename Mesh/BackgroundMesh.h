@@ -9,6 +9,7 @@
 #include "STensor3.h"
 #include "simpleFunction.h"
 #include <vector>
+#include <list>
 
 class MElementOctree;
 class GFace;
@@ -71,5 +72,6 @@ bool Extend1dMeshIn2dSurfaces();
 bool Extend2dMeshIn3dVolumes();
 SMetric3 max_edge_curvature_metric(const GVertex *gv, double &l);
 SMetric3 max_edge_curvature_metric(const GEdge *ge, double u, double &l);
+void replaceMeshCompound(GFace*,std::list<GEdge*>&);
 
 #endif

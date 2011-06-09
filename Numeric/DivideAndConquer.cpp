@@ -19,6 +19,7 @@
 #include "DivideAndConquer.h"
 #include "Numeric.h"
 #include "robustPredicates.h"
+#include "BackgroundMesh.h"
 
 // FIXME: should not introduce dependencies to Geo/ code in Numeric
 #include "GPoint.h"
@@ -935,6 +936,7 @@ void DocRecord::concave(double x,double y,GFace* gf){
   std::set<int>::iterator it2;
   
   list = gf->edges();
+  replaceMeshCompound(gf,list);
   for(it1=list.begin();it1!=list.end();it1++){
 	edge = *it1;
 	for(i=0;i<edge->getNumMeshElements();i++){
@@ -1076,6 +1078,7 @@ bool DocRecord::delaunay_conformity(GFace* gf){
   std::list<GEdge*>::iterator it;
 	
   list = gf->edges();
+  replaceMeshCompound(gf,list);
   for(it=list.begin();it!=list.end();it++){
     edge = *it;
 	for(i=0;i<edge->getNumMeshElements();i++){
