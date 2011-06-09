@@ -8,6 +8,7 @@
 #include "MTriangle.h"
 #include "MVertex.h"
 #include "BackgroundMesh.h"
+#include "Context.h"
 
 extern "C" {
 #include <libmmg3d.h>
@@ -70,10 +71,34 @@ void gmsh2MMG (GRegion *gr, MMG_pMesh mmg, MMG_pSol sol, std::map<int,MVertex*> 
   mmg->disp  = (MMG_pDispl)calloc(mmg->npmax+1,sizeof(MMG_Displ));
   mmg->adja = (int*)calloc(4*mmg->nemax+5,sizeof(int));
 
-  sol->offset = 1;
+  sol->offset = 6;
   sol->met = (double*)calloc(sol->npmax+1,sol->offset*sizeof(double)); 
+  sol->metold = (double*)calloc(sol->npmax+1,sol->offset*sizeof(double)); 
+
+  std::map<MVertex*,std::pair<double,int> > LCS;
+  if (CTX::instance()->mesh.lcExtendFromBoundary){
+    for (std::list<GFace*>::iterator it = f.begin(); it != f.end() ; ++it){
+      for (int i=0;i<(*it)->triangles.size();i++){
+	MTriangle *t = (*it)->triangles[i];
+	double L = t->maxEdge();
+	for (int k=0;k<3;k++){
+	  MVertex *v = t->getVertex(k);
+	  std::map<MVertex*,std::pair<double,int> >::iterator itv = LCS.find(v);
+	  if (itv != LCS.end()){
+	    itv->second.first += L;
+	    itv->second.second ++;
+	  }
+	  else {
+	    LCS[v] = std::make_pair(L,1);
+	  }
+	}
+      }
+    }
+  }
+
   
   int k=1;
+  int count = 1;//sol->offset;
   std::map<int,int> gmsh2mmg_num;
   for (std::set<MVertex*>::iterator it = allVertices.begin() ; it != allVertices.end() ; ++it){
     MMG_pPoint ppt = &mmg->point[k]; 
@@ -96,11 +121,31 @@ void gmsh2MMG (GRegion *gr, MMG_pMesh mmg, MMG_pSol sol, std::map<int,MVertex*> 
       v->getParameter(1,V);
     }
     double lc = BGM_MeshSize(v->onWhat(), U,V,v->x(), v->y(), v->z());  
-    int isol = (k-1) * sol->offset + 1; 
-    for (int i=0; i<sol->offset; i++)  {
-      sol->met[isol + i] = lc;
-      //      printf("sol[%d] = %12.5E\n",isol + i,lc);
+    //SMetric3 m = BGM_MeshMetric(v->onWhat(), U,V,v->x(), v->y(), v->z());  
+
+    if (CTX::instance()->mesh.lcExtendFromBoundary){
+      std::map<MVertex*,std::pair<double,int> >::iterator itv = LCS.find(v);
+      if (itv != LCS.end()){
+	double LL = itv->second.first/itv->second.second;
+	//	SMetric3 l4(1./(LL*LL));
+	//	SMetric3 MM = intersection (l4, m);	
+	//	m = MM;
+	lc = std::min(LL,lc);
+      }
     }
+
+    sol->met[count++] = 1/(lc*lc);
+    sol->met[count++] = 0;
+    sol->met[count++] = 0;
+    sol->met[count++] = 1/(lc*lc);
+    sol->met[count++] = 0;
+    sol->met[count++] = 1/(lc*lc);
+    //    printf("%g %g %g %g %g %g\n",m(0,0),m(0,1),m(0,2),m(1,1),m(1,2),m(2,2));
+    
+    //    for (int i=0; i<sol->offset; i++)  {
+    //      sol->met[isol + i] = lc;
+      //      printf("sol[%d] = %12.5E\n",isol + i,lc);
+    //    }
     k++;
   }
   

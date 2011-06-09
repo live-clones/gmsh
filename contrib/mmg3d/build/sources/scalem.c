@@ -161,14 +161,14 @@ int MMG_scaleMesh(pMesh mesh,pSol sol) {
       }
       mold    = &sol->metold[iadr]; 
       kk = 0;
-	  for (ii=0; ii<3; ii++) {
-         for (jj=ii; jj<3; jj++) {
-            mold[kk] = lambda[0]*v[0][ii]*v[0][jj] + 
- 	                   lambda[1]*v[1][ii]*v[1][jj] +
-                       lambda[2]*v[2][ii]*v[2][jj]; 
-            kk = kk+1;
-         }                     
-       }
+      for (ii=0; ii<3; ii++) {
+	for (jj=ii; jj<3; jj++) {
+	  mold[kk] = lambda[0]*v[0][ii]*v[0][jj] + 
+	    lambda[1]*v[1][ii]*v[1][jj] +
+	    lambda[2]*v[2][ii]*v[2][jj]; 
+	  kk = kk+1;
+	}                     
+      }
     }
     break;
   default:
