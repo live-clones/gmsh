@@ -96,7 +96,7 @@ void connectTriangles(std::vector<MTri3*> &);
 void connectTriangles(std::set<MTri3*,compareTri3Ptr> &AllTris);
 void bowyerWatson(GFace *gf);
 void bowyerWatsonFrontal(GFace *gf);
-void bowyerWatsonFrontalQuad(GFace *gf);
+void bowyerWatsonFrontalLayers(GFace *gf, bool quad);
 
 struct edgeXface
 {

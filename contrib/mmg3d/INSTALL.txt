@@ -1,0 +1,40 @@
+MMG3D 4.0 installation instructions
+====================================
+
+The simplest way to compile is to use cmake  : 
+
+1) The cmake tool is available at this adress :
+
+http://www.cmake.org/
+
+2) 'cd' to the directory build/ containing :
+CMakeLists.txt 
+a directory named sources/ containing all the MMG3D files.
+
+3) Configure and create the makefile with cmake :  
+
+By default, the configuration is done to create an executable
+of MMG3D. 
+
+NB : By default, cmake find Scotch software : 
+http://www.labri.fr/perso/pelegrin/scotch/scotch_en.html
+
+i) If you use the gui interface of cmake : 'cmake-gui' 
+You can specify if you would compile the shared or static library  
+and if you have or not Scotch software.
+
+OR
+
+ii) 'cmake . ' 
+You can specify the following option :
+-DCOMPIL_STATIC_LIBRARY="ON"  or -DCOMPIL_SHARED_LIBRARY="ON"   
+(by default : OFF)
+-DUSE_SCOTCH="OFF" ' (by default : ON)
+
+
+
+4) Compile MMG3D :
+'make'
+
+
+

@@ -222,16 +222,16 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
   double Crv = 0;
   switch(ge->dim()){
   case 0:        
-    Crv = max_edge_curvature((const GVertex *)ge);
-    Crv = std::max(max_surf_curvature((const GVertex *)ge), Crv);
-    //Crv = max_surf_curvature((const GVertex *)ge);
+    //    Crv = max_edge_curvature((const GVertex *)ge);
+    //    Crv = std::max(max_surf_curvature((const GVertex *)ge), Crv);
+    Crv = max_surf_curvature((const GVertex *)ge);
     break;
   case 1:
     {
       GEdge *ged = (GEdge *)ge;
-      Crv = ged->curvature(U)*2;
-      Crv = std::max(Crv, max_surf_curvature(ged, U));
-      //Crv = max_surf_curvature(ged, U);      
+      //      Crv = ged->curvature(U)*2;
+      //      Crv = std::max(Crv, max_surf_curvature(ged, U));
+      Crv = max_surf_curvature(ged, U);
     }
     break;
   case 2:
@@ -441,16 +441,17 @@ backgroundMesh::backgroundMesh(GFace *_gf)
   _octree = new MElementOctree(_triangles); 
 
   // compute the mesh sizes at nodes
-  if (CTX::instance()->mesh.lcFromPoints)
+  if (CTX::instance()->mesh.lcExtendFromBoundary){
     propagate1dMesh(_gf);
+  }
   else {
     std::map<MVertex*, MVertex*>::iterator itv2 = _2Dto3D.begin();
     for ( ; itv2 != _2Dto3D.end(); ++itv2){
       _sizes[itv2->first] = MAX_LC;
     }
   }
-  // ensure that other criteria are fullfilled 
-  updateSizes(_gf);
+  // ensure that other criteria are fullfilled
+  //    updateSizes(_gf);
 
   // compute optimal mesh orientations
   propagatecrossField(_gf);
@@ -700,7 +701,7 @@ void backgroundMesh::updateSizes(GFace *_gf)
       bool success = reparamMeshVertexOnFace(v, _gf, p);       
       lc = BGM_MeshSize(_gf, p.x(), p.y(), v->x(), v->y(), v->z());
     }
-    //    printf("2D -- %g %g 3D -- %g %g\n",p.x(),p.y(),v->x(),v->y());
+    //    printf("2D -- %g %g 3D -- %g %g lc %g\n",p.x(),p.y(),v->x(),v->y(),lc);
     itv->second = std::min(lc,itv->second);
     itv->second = std::max(itv->second, CTX::instance()->mesh.lcMin);
     itv->second = std::min(itv->second, CTX::instance()->mesh.lcMax);

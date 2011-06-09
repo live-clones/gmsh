@@ -31,6 +31,7 @@
 #cmakedefine HAVE_MED
 #cmakedefine HAVE_MESH
 #cmakedefine HAVE_METIS
+#cmakedefine HAVE_MMG3D
 #cmakedefine HAVE_MPEG_ENCODE
 #cmakedefine HAVE_MPI
 #cmakedefine HAVE_NATIVE_FILE_CHOOSER

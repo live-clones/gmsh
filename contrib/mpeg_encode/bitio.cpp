@@ -82,6 +82,7 @@
 #include <assert.h>
 #include <time.h>
 #include <stdio.h>
+#include <string.h>
 #include "all.h"
 #include "byteorder.h"
 #include "bitio.h"

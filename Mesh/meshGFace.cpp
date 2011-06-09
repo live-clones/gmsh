@@ -886,7 +886,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
     if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
       bowyerWatsonFrontal(gf);
     else if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL_QUAD)
-      bowyerWatsonFrontalQuad(gf);
+      bowyerWatsonFrontalLayers(gf,true);
     else if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY ||
             CTX::instance()->mesh.algo2d == ALGO_2D_AUTO)
       bowyerWatson(gf);
@@ -1477,7 +1477,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
       bowyerWatsonFrontal(gf);
     else if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL_QUAD)
-      bowyerWatsonFrontalQuad(gf);
+      bowyerWatsonFrontalLayers(gf,true);
     else if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY ||
             CTX::instance()->mesh.algo2d == ALGO_2D_AUTO)
       bowyerWatson(gf);

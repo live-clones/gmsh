@@ -188,6 +188,9 @@
 // 3D meshing algorithms (numbers should not be changed)
 #define ALGO_3D_DELAUNAY       1
 #define ALGO_3D_FRONTAL        4
+#define ALGO_3D_FRONTAL_DEL    5
+#define ALGO_3D_FRONTAL_HEX    6
+#define ALGO_3D_MMG3D          7
 
 // Meshing methods
 #define MESH_NONE         0

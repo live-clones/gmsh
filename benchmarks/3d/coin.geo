@@ -14,8 +14,9 @@
 0.085 261542 1568048 1285.29
 */
 lcar1 = .2;
+lcar2 = .2;
 
-Point(newp) = {0.5,0.5,0.5,lcar1}; /* Point      1 */
+Point(newp) = {0.5,0.5,0.5,lcar2}; /* Point      1 */
 Point(newp) = {0.5,0.5,0,lcar1}; /* Point      2 */
 Point(newp) = {0,0.5,0.5,lcar1}; /* Point      3 */
 Point(newp) = {0,0,0.5,lcar1}; /* Point      4 */

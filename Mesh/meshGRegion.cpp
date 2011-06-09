@@ -21,6 +21,7 @@
 #include "BDS.h"
 #include "Context.h"
 #include "GFaceCompound.h"
+#include "meshGRegionMMG3D.h"
 
 #if defined(HAVE_ANN)
 #include "ANN/ANN.h"
@@ -561,7 +562,14 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
   }
 
   // now do insertion of points
-  insertVerticesInRegion(gr);
+ if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_DEL)
+   bowyerWatsonFrontalLayers(gr, false);
+ else if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_HEX)
+   bowyerWatsonFrontalLayers(gr, true);
+ else if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D)
+   refineMeshMMG(gr);
+ else
+   insertVerticesInRegion(gr);
 #endif
 }
 
@@ -851,7 +859,7 @@ void meshGRegion::operator() (GRegion *gr)
 
   std::list<GFace*> myface = gr->faces();
 
-  if(CTX::instance()->mesh.algo3d == ALGO_3D_DELAUNAY){
+  if(CTX::instance()->mesh.algo3d != ALGO_3D_FRONTAL){
     delaunay.push_back(gr);
   }
   else if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL){

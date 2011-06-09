@@ -3543,7 +3543,7 @@ void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
     if(c)
       List_Add(s->EmbeddedCurves, &c);
     else
-      Msg::Error("Unknown curve %d", iCurve);
+      Msg::Error("Unknown curve %d", (int)iCurve);
   }
 }
 

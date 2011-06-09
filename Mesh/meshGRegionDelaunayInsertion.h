@@ -55,6 +55,7 @@ class MTet4
   MTet4 *neigh[4];
   GRegion *gr;
  public :
+  static int radiusNorm; // 2 is euclidian norm, -1 is infinite norm  
   ~MTet4(){}
   MTet4() 
     : deleted(false), circum_radius(0.0), base(0), gr(0)
@@ -170,6 +171,7 @@ class MTet4
 void connectTets(std::list<MTet4*> &);
 void connectTets(std::vector<MTet4*> &);
 void insertVerticesInRegion(GRegion *gr);
+void bowyerWatsonFrontalLayers(GRegion *gr, bool hex);
 
 class compareTet4Ptr
 {

@@ -1018,7 +1018,7 @@ StringXNumber MeshOptions_Number[] = {
 #else
     ALGO_3D_FRONTAL ,
 #endif
-    "3D mesh algorithm (1=Delaunay, 4=Frontal)" }, 
+    "3D mesh algorithm (1=Delaunay, 4=Frontal, 5=Frontal Delaunay, 6=Frontal Hex, 7=MMG3D)" }, 
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" }, 
   { F|O, "AnisoMax" , opt_mesh_aniso_max, 1.e33,

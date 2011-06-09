@@ -482,6 +482,9 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
                   ALGO_2D_AUTO);
   opt_mesh_algo3d(0, GMSH_SET,
                   (o->mesh.choice[3]->value() == 0) ? ALGO_3D_DELAUNAY : 
+                  (o->mesh.choice[3]->value() == 2) ? ALGO_3D_FRONTAL_DEL : 
+                  (o->mesh.choice[3]->value() == 3) ? ALGO_3D_FRONTAL_HEX : 
+                  (o->mesh.choice[3]->value() == 4) ? ALGO_3D_MMG3D : 
                   ALGO_3D_FRONTAL);
   opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
   opt_mesh_recombine_all(0, GMSH_SET, o->mesh.butt[21]->value());
@@ -2068,6 +2071,9 @@ optionWindow::optionWindow(int deltaFontSize)
       static Fl_Menu_Item menu_3d_algo[] = {
         {"Delaunay", 0, 0, 0},
         {"Frontal", 0, 0, 0},
+        {"Frontal Delaunay", 0, 0, 0},
+        {"Frontal Hex", 0, 0, 0},
+        {"MMG3D", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_recombination_algo[] = {

@@ -117,7 +117,7 @@
  *==============*/
 
 #include "all.h"
-//#include <sys/param.h>
+#include <string.h>
 #include <assert.h>
 #include "mtypes.h"
 #include "bitio.h"

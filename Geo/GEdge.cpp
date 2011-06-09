@@ -219,6 +219,17 @@ SVector3 GEdge::secondDer(double par) const
 {
   // use central differences
   const double eps = 1.e-3;
+  Range<double> rg = parBounds(0);
+  if (par-eps <= rg.low()){
+    SVector3 x1 = firstDer(par);
+    SVector3 x2 = firstDer(par + eps);
+    return 1000 * (x2 - x1);
+  }
+  else if (par+eps >= rg.high()){
+    SVector3 x1 = firstDer(par-eps);
+    SVector3 x2 = firstDer(par);
+    return 1000 * (x2 - x1);
+  }
   SVector3 x1 = firstDer(par - eps);
   SVector3 x2 = firstDer(par + eps);
   return 500 * (x2 - x1);

@@ -1697,13 +1697,18 @@ GPoint GFaceCompound::point(double par1, double par2) const
   }
   
   const bool LINEARMESH = true; //false
+  
+  if (lt->gf->geomType() != GEntity::DiscreteSurface){
+    SPoint2 pParam = lt->gfp1*(1.-U-V) + lt->gfp2*U + lt->gfp3*V;
+    return lt->gf->point(pParam);
+  }
 
   if(LINEARMESH){
 
     //linear Lagrange mesh
     //-------------------------
     p = lt->v1*(1.-U-V) + lt->v2*U + lt->v3*V;
-    return GPoint(p.x(),p.y(),p.z(),this,par);
+    return GPoint(p.x(),p.y(),p.z(),this,par);    
 
   }
   else{

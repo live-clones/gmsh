@@ -16,7 +16,7 @@ set(SRC
     meshGRegion.cpp 
       meshGRegionDelaunayInsertion.cpp meshGRegionTransfinite.cpp 
       meshGRegionExtruded.cpp  meshGRegionCarveHole.cpp 
-      meshGRegionLocalMeshMod.cpp
+      meshGRegionLocalMeshMod.cpp meshGRegionMMG3D.cpp
     BackgroundMesh.cpp 
     qualityMeasures.cpp 
     BoundaryLayers.cpp 

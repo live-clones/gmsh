@@ -1,4 +1,4 @@
-Mesh.Algorithm = 6; //(1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=bamg) 
+Mesh.Algorithm = 8; //(1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=bamg) 
 Mesh.CharacteristicLengthMin=1.5/2;
 Mesh.CharacteristicLengthMax=2.5/2;
 Mesh.RemeshAlgorithm=1;
@@ -25,6 +25,9 @@ EndFor
 
 Surface Loop(1) = {s : s + #ss[]-1};
 Volume(1) = {1};
+
+Mesh.RecombineAll=1;
+Mesh.RecombinationAlgorithm=1;
 
 Physical Surface(1) = {s : s + #ss[]-1};
 Physical Volume(1) = 1;

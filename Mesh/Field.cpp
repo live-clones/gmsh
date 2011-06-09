@@ -1580,7 +1580,8 @@ class AttractorField : public Field
       for(std::list<int>::iterator it = edges_id.begin();
           it != edges_id.end(); ++it) {
         Curve *c = FindCurve(*it);
-        if(c) {
+	GEdge *e = GModel::current()->getEdgeByTag(*it);
+        if(c && !e) {
           for(int i = 0; i < n_nodes_by_edge; i++) {
             double u = (double)i / (n_nodes_by_edge - 1);
             Vertex V = InterpolateCurve(c, u, 0);
@@ -1589,7 +1590,6 @@ class AttractorField : public Field
           }
         }
         else {
-          GEdge *e = GModel::current()->getEdgeByTag(*it);
           if(e) {
             for(int i = 0; i < n_nodes_by_edge; i++) {
               double u = (double)i / (n_nodes_by_edge - 1);

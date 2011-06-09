@@ -138,7 +138,7 @@
 
 
 #include <time.h>
-//#include <sys/param.h>
+#include <string.h>
 #include "all.h"
 #include "mtypes.h"
 #include "frames.h"
