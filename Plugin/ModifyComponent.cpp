@@ -14,7 +14,8 @@ StringXNumber ModifyComponentOptions_Number[] = {
   {GMSH_FULLRC, "TimeStep", NULL, -1.},
   {GMSH_FULLRC, "View", NULL, -1.},
   {GMSH_FULLRC, "OtherTimeStep", NULL, -1.},
-  {GMSH_FULLRC, "OtherView", NULL, -1.}
+  {GMSH_FULLRC, "OtherView", NULL, -1.},
+  {GMSH_FULLRC, "ForceInterpolation", NULL, 0.}
 };
 
 StringXString ModifyComponentOptions_String[] = {
@@ -96,6 +97,7 @@ PView *GMSH_ModifyComponentPlugin::execute(PView *view)
   int iView = (int)ModifyComponentOptions_Number[2].def;
   int otherTimeStep = (int)ModifyComponentOptions_Number[3].def;
   int otherView = (int)ModifyComponentOptions_Number[4].def;
+  int forceInterpolation = (int)ModifyComponentOptions_Number[5].def;
 
   PView *v1 = getView(iView, view);
   if(!v1) return view;
@@ -142,7 +144,8 @@ PView *GMSH_ModifyComponentPlugin::execute(PView *view)
   std::vector<double> values(numVariables), res(1);
 
   OctreePost *octree = 0;
-  if((data1->getNumEntities() != data2->getNumEntities()) ||
+  if(forceInterpolation ||
+     (data1->getNumEntities() != data2->getNumEntities()) ||
      (data1->getNumElements() != data2->getNumElements())){
     Msg::Info("Other view based on different grid: interpolating...");
     octree = new OctreePost(v2);

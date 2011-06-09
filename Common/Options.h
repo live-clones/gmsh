@@ -585,7 +585,6 @@ double opt_mesh_partition_chaco_terminal_propogation(OPT_ARGS_NUM);
 double opt_mesh_partition_metis_algorithm(OPT_ARGS_NUM);
 double opt_mesh_partition_metis_edge_matching(OPT_ARGS_NUM);
 double opt_mesh_partition_metis_refine_algorithm(OPT_ARGS_NUM);
-double opt_mesh_partition_by_extrusion(OPT_ARGS_NUM);
 double opt_mesh_clip(OPT_ARGS_NUM);
 double opt_solver_listen(OPT_ARGS_NUM);
 double opt_solver_timeout(OPT_ARGS_NUM);

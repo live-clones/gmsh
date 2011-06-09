@@ -39,7 +39,6 @@ void meshPartitionOptions::setDefaults()
   refine_algorithm = 3;
   createPartitionBoundaries = true;
   createGhostCells = true;
-  partitionByExtrusion =false;
   triWeight = 1;
   quaWeight = 1;
   tetWeight = 1;

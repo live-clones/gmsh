@@ -80,8 +80,6 @@ class meshPartitionOptions
                                           // 3 - Random boundary refinement (with
                                           //     minimization of connectivity
                                           //     along sub-domains)
-    int partitionByExtrusion;            // if true, all extruded elements belong
-                                         // to the same partition as the source element
   
     // element weights for load-balancing (currently used in METIS algorithm 3) 
     

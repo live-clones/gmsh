@@ -83,13 +83,6 @@ int MeshExtrudedCurve(GEdge *ge)
       ge->getEndVertex()->mesh_vertices[0] : ge->mesh_vertices[i];
     MLine* newElem = new MLine(v0, v1);
     ge->lines.push_back(newElem);
-    if(ep->geo.Mode == COPIED_ENTITY) {
-      // Extrusion information is only stored for copied edges
-      // (the source of extruded edge is a vertex, not an element)
-      GEdge *from = ge->model()->getEdgeByTag(std::abs(ep->geo.Source));
-      MElement* sourceElem = from->getMeshElement(i);
-      ep->elementMap.addExtrudedElem(sourceElem, newElem);
-    }
   }
 
   ge->meshStatistics.status = GEdge::DONE;

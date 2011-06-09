@@ -25,19 +25,6 @@
 
 class ExtrudeParams{
 public :
-  class ExtrusionElementMap {
-   private:
-    ExtrudeParams* _parent;
-    // maps source element to all extruded elements
-    std::map<MElement*,std::vector<MElement*> > _extrudedElements;
-   public:
-    ExtrusionElementMap(ExtrudeParams* const parent);
-    std::vector<MElement*>* getExtrudedElems(MElement* source);
-    void addExtrudedElem(MElement* source,MElement* extrudedElem);
-    void clear();
-    bool empty();
-    void propagatePartitionInformation(std::vector<int>* partitionSizes = NULL);
-  } elementMap;
   ExtrudeParams(int Mode = EXTRUDED_ENTITY);
   void fill(int type,
             double T0, double T1, double T2,
