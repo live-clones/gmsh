@@ -326,7 +326,13 @@ void GFace::computeMeanPlane()
     pts.push_back(SPoint3(v->x(), v->y(), v->z()));
   }
 
-  if(pts.size() < 3){
+  bool colinear = (pts.size() < 3);
+  if(pts.size() > 2){
+    SVector3 d01(pts[0], pts[1]), d02(pts[0], pts[2]);
+    if(norm(crossprod(d01, d02)) < 1e-12) colinear = true;
+  }
+  
+  if(colinear){
     Msg::Info("Adding edge points to compute mean plane of face %d", tag());
     std::list<GEdge*> edg = edges();
     for(std::list<GEdge*>::const_iterator ite = edg.begin(); ite != edg.end(); ite++){
