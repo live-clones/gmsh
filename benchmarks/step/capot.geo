@@ -1,13 +1,10 @@
 Mesh.RemeshParametrization=1; //(0) harmonic (1) conformal 
 Mesh.RemeshAlgorithm=0; //(0) nosplit (1) automatic (2) split metis
 
-Mesh.Algorithm = 8; //(1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=bamg)
-Mesh.RecombinationAlgorithm = 1;
+Mesh.CharacteristicLengthFactor=0.2;
+//Mesh.Algorithm = 8; //(1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=bamg, 8=delquad)
+//Mesh.RecombinationAlgorithm = 1;
 
-
-
-
-//Mesh.CharacteristicLengthFactor=0.2;
 Merge "capot.brep";
 
 Compound Line(1000) = {47,50};

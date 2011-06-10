@@ -3,11 +3,12 @@
 //Field[1].NNodesByEdge = 10;
 //Background Field = 1;
 
-Field[1] = MathEval;
-Field[1].F = "1.0"; //0.1*x+0.1";
-Background Field = 1;
+//Field[1] = MathEval;
+//Field[1].F = "1.0"; //0.1*x+0.1";
+//Background Field = 1;
 
-//Mesh.CharacteristicLengthFactor=1.0;
+Mesh.Algorithm=1;
+Mesh.CharacteristicLengthFactor=1.5;
 
 lc=0.1;
 Point(1) = {0, 0, 0}; //,lc};
@@ -24,11 +25,13 @@ Plane Surface(10) = {5};
 
 //----------------------
 
-//Compound Line(10)={1,2,3,4};
-//Compound Surface(100)={10};
+Compound Line(10)={1,2,3,4};
+Compound Surface(100)={10};
 
-Physical Surface(100)={10};
-Physical Line(200)={1,2,3,4};
+Line {1,2,3,4} In Surface{100};
+
+//Physical Surface(100)={10};
+//Physical Line(200)={1,2,3,4};
 
 
 

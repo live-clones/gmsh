@@ -1321,7 +1321,7 @@ void GModel::makeDiscreteFacesSimplyConnected()
   Msg::Debug("Done making discrete faces simply connected");
 }
 
-void GModel::createTopologyFromMesh()
+void GModel::createTopologyFromMesh(int ignoreHoles)
 {
   Msg::StatusBar(2, true, "Creating topology from mesh...");
   double t1 = Cpu();
@@ -1343,7 +1343,7 @@ void GModel::createTopologyFromMesh()
   for(fiter it = firstFace(); it != lastFace(); it++)
     if((*it)->geomType() == GEntity::DiscreteSurface)
       discFaces.push_back((discreteFace*) *it);
-  createTopologyFromFaces(discFaces);
+  createTopologyFromFaces(discFaces, ignoreHoles);
 
   // create old format (necessary for boundary layers)
   exportDiscreteGEOInternals();
@@ -1508,7 +1508,7 @@ void GModel::createTopologyFromRegions(std::vector<discreteRegion*> &discRegions
   Msg::Debug("Done creating topology from regions");
 }
 
-void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int onlyOneBoundary)
+void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int ignoreHoles)
 {
   Msg::Debug("Creating topology from faces...");
 
@@ -1598,12 +1598,22 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
     int nbBounds = connectedSurfaceBoundaries(myEdges, boundaries);   
 
     //EMI RBF fix
-    if (onlyOneBoundary){
-      nbBounds = 1;
+    if (ignoreHoles){
+      int index = 0;
+      int boundSize = 0;
+      for (int ib = 0; ib < nbBounds; ib++){
+	if (boundaries[ib].size() > boundSize){
+	  boundSize = boundaries[ib].size() ;
+	  index = ib;
+	}
+      }
+      std::vector<std::vector<MEdge> > new_boundaries;
+      new_boundaries.push_back(boundaries[index]);
+      boundaries =  new_boundaries;
     }
 
     // create new discrete edges
-    for (int ib = 0; ib < nbBounds; ib++){
+    for (int ib = 0; ib < boundaries.size(); ib++){
       int numE = getMaxElementaryNumber(1) + 1;
       discreteEdge *e = new discreteEdge(this, numE, 0, 0);
       add(e);

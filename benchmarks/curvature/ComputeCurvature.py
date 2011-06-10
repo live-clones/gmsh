@@ -1,4 +1,3 @@
-from dgpy import *
 from gmshpy import *
 import os
 import sys

@@ -395,6 +395,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
                           bool repairSelfIntersecting1dMesh,
                           bool debug = true)
 {
+
   BDS_GeomEntity CLASS_F(1, 2);
   BDS_GeomEntity CLASS_EXTERIOR(1, 3);
   std::map<BDS_Point*, MVertex*> recoverMap;
@@ -1604,7 +1605,6 @@ bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge*> &edges)
 {
   bool isMeshed = false;
 #if defined(HAVE_SOLVER)  
-
   bool correctTopo = gf->checkTopology();
   if (!correctTopo && gf->allowPartition()){
     partitionAndRemesh((GFaceCompound*) gf);
@@ -1694,7 +1694,6 @@ void partitionAndRemesh(GFaceCompound *gf)
   }
 
   //Parametrize Compound surfaces
-  std::list<GEdge*> b[4];
   std::set<MVertex*> allNod; 
   for (int i=0; i < NF; i++){
     std::list<GFace*> f_compound;
@@ -1704,8 +1703,7 @@ void partitionAndRemesh(GFaceCompound *gf)
     Msg::Info("Parametrize Compound Surface (%d) = %d discrete face",
               num_gfc, pf->tag());
 
-    GFaceCompound *gfc = new GFaceCompound(gf->model(), num_gfc, f_compound,
-                                            b[0], b[1], b[2], b[3], 0,
+    GFaceCompound *gfc = new GFaceCompound(gf->model(), num_gfc, f_compound, 0,
                                             gf->getTypeOfMapping());
 
     gfc->meshAttributes.recombine = gf->meshAttributes.recombine;

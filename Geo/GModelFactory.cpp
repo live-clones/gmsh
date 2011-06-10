@@ -255,7 +255,6 @@ GEdge *OCCFactory::addCircleArc(GModel *gm, const arcCreationMethod &method,
   gp_Pnt aP3(end->x(), end->y(), end->z());
   TopoDS_Edge occEdge;
 
-
   OCCVertex *occv1 = dynamic_cast<OCCVertex*>(start);
   OCCVertex *occv2 = dynamic_cast<OCCVertex*>(end);
 
@@ -851,7 +850,7 @@ GFace *OCCFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
       }
     }
     TopoDS_Wire myWire = wire_maker.Wire();
-    if (i)myWire.Reverse();
+    //if (i)myWire.Reverse();
     aGenerator.Add (myWire);
   }
 

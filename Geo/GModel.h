@@ -349,9 +349,9 @@ class GModel
   int removeDuplicateMeshVertices(double tolerance);
 
   // create topology from mesh
-  void createTopologyFromMesh();
+  void createTopologyFromMesh(int ignoreHoles=0);
   void createTopologyFromRegions(std::vector<discreteRegion*> &discRegions);
-  void createTopologyFromFaces(std::vector<discreteFace*> &pFaces, int onlyOneBoundary=0);
+  void createTopologyFromFaces(std::vector<discreteFace*> &pFaces, int ignoreHoles=0);
   void makeDiscreteRegionsSimplyConnected();
   void makeDiscreteFacesSimplyConnected();
 

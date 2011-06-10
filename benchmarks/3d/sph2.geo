@@ -3,7 +3,9 @@ dext = 1;
 dint = 0.2;
 angle = Pi/4;
 nbdiv = 2;
-//Mesh.ElementOrder = 2;
+Mesh.ElementOrder = 2;
+Mesh.SecondOrderLinear = 0;
+
 
 Point(1) = {0,0,0,lc};  
 Point(2) = {dint,0,0,lc};

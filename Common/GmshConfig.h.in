@@ -52,6 +52,7 @@
 #cmakedefine HAVE_SOLVER
 #cmakedefine HAVE_TAUCS
 #cmakedefine HAVE_TETGEN
+#cmakedefine HAVE_RBF
 
 #define GMSH_CONFIG_OPTIONS "${GMSH_CONFIG_OPTIONS}"
 

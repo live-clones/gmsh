@@ -174,6 +174,7 @@ void circumCenterMetric(MTriangle *base, const double *metric,
 void buildMetric(GFace *gf, double *uv, double *metric)
 {
   Pair<SVector3, SVector3> der = gf->firstDer(SPoint2(uv[0], uv[1]));
+  
   metric[0] = dot(der.first(), der.first());
   metric[1] = dot(der.second(), der.first());
   metric[2] = dot(der.second(), der.second());
@@ -185,8 +186,9 @@ void buildMetric(GFace *gf, double *uv, double *metric)
 
 void buildMetric(GFace *gf, double *uv, SMetric3 & m, double *metric)
 {
+
   Pair<SVector3, SVector3> der = gf->firstDer(SPoint2(uv[0], uv[1]));
-  
+
   SVector3 x1(m(0,0) * der.first().x() +
               m(1,0) * der.first().y() +
               m(2,0) * der.first().z(),

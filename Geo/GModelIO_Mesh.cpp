@@ -690,8 +690,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     version = 1.0;
 
   // if there are no physicals we save all the elements
-  if(noPhysicalGroups()) saveAll = true;
-
+  if(noPhysicalGroups())    saveAll = true;
+  
   // get the number of vertices and index the vertices in a continuous
   // sequence
   int numVertices = indexMeshVertices(saveAll, saveSinglePartition);

@@ -17,7 +17,9 @@ endif(DEFINED CMAKE_BUILD_TYPE)
 project(gmsh CXX C)
 
 option(ENABLE_ACIS "Enable ACIS geometrical models" ON)
-option(ENABLE_ANN "Enable ANN to compute Approximate Nearest Neighbors" ON)
+option(ENABLE_ANN "Enable ANN to compute Approximate Nearest
+Neighbors" ON)
+option(ENABLE_RBF "Enable RBF project" OFF)
 option(ENABLE_BAMG "Enable Bamg mesh generator" ON)
 option(ENABLE_BFGS "Enable BFGS" ON)
 option(ENABLE_BLAS_LAPACK "Use BLAS/Lapack for basic linear algebra" ON)
@@ -453,6 +455,11 @@ if(ENABLE_ANN)
   include_directories(contrib/ANN/include)
   set_config_option(HAVE_ANN "Ann")
 endif(ENABLE_ANN)
+
+if(ENABLE_RBF)
+  include_directories(projects/rbf)
+  set_config_option(HAVE_RBF "RBF")
+endif(ENABLE_RBF)
 
 if(ENABLE_CHACO)
   add_subdirectory(contrib/Chaco)
