@@ -24,8 +24,6 @@
 #endif
 #define AR_MAX 5 //maximal geometrical aspect ratio
 
-class rbf;
-
 /*
 A GFaceCompound is a model face that is the compound of model faces.
 
