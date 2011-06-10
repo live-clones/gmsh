@@ -46,6 +46,7 @@ class lpcvt{
   fullMatrix<double> gauss_weights;
   std::vector<metric> metrics;
   int gauss_num;
+  GFace* work_around;
  public :
   lpcvt();
   ~lpcvt();
@@ -81,6 +82,7 @@ class lpcvt{
   double get_rho(SPoint2,int);
   double drho_dx(SPoint2,int);
   double drho_dy(SPoint2,int);
+  double ratio(SPoint2);
   void write(DocRecord&,GFace*,int);
   void eval(DocRecord&,std::vector<SVector3>&,double&,int);
   void swap();

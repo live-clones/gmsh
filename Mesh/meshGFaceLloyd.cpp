@@ -402,7 +402,7 @@ void smoothing::optimize_model(){
   for(it=model->firstFace();it!=model->lastFace();it++)
   {
     gf = *it;
-	if(gf->getNumMeshElements()>0){
+	if(gf->getNumMeshElements()>0 && gf->geomType()==GEntity::CompoundSurface){
 	  optimize_face(gf);
 	  recombineIntoQuads(gf,1,1);
 	}
@@ -645,6 +645,9 @@ SPoint2 lpcvt::seed(DocRecord& triangulator,GFace* gf){
   int index2;
   double x,y;
   SPoint2 x0,x1,x2;
+	
+  work_around = gf;	
+	
   for(i=0;i<triangulator.numPoints;i++){
     if(interior(triangulator,gf,i)){
 	  num = triangulator._adjacencies[i].t_length;
@@ -1126,7 +1129,7 @@ double lpcvt::get_rho(SPoint2 point,int p){
 	
   x = point.x();
   y = point.y();
-  h = backgroundMesh::current()->operator()(x,y,0.0); //0.1;
+  h = backgroundMesh::current()->operator()(x,y,0.0)*ratio(point); //0.1;
   if(h>=0.0){
     rho = pow_int(1.0/h,p+1); //integer only, theoric value : p+2
   }
@@ -1217,6 +1220,18 @@ double lpcvt::drho_dy(SPoint2 point,int p){
   else{
     val = 0.0;
   }
+  return val;
+}
+
+double lpcvt::ratio(SPoint2 point){
+  double val;
+  double uv[2];
+  double metric[3];
+	
+  uv[0] = point.x();
+  uv[1] = point.y();
+  buildMetric(work_around,uv,metric);
+  val = 1.0/pow(metric[0]*metric[2]-metric[1]*metric[1],0.25);
   return val;
 }
 
