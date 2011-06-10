@@ -65,7 +65,9 @@ class GFaceCompound : public GFace {
   void setParam(std::map<MVertex*, SPoint3> rbf_param, rbf *myRBF);
 #endif
  protected:
+#ifdef HAVE_RBF
   rbf *_rbf;
+#endif
   simpleFunction<double> *ONE;
   simpleFunction<double> *MONE;
   std::list<GFace*> _compound;
