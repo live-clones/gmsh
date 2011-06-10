@@ -56,7 +56,7 @@
 static void file_new_cb(Fl_Widget *w, void *data)
 {
  test:
-  if(fileChooser(FILE_CHOOSER_CREATE, "New", "*")) {
+  if(fileChooser(FILE_CHOOSER_CREATE, "New", "")) {
     std::string name = fileChooserGetName(1);
     if(!StatFile(name)){
       if(fl_choice("File '%s' already exists.\n\nDo you want to erase it?",
@@ -88,7 +88,7 @@ static void file_new_cb(Fl_Widget *w, void *data)
 #endif
 
 static const char *input_formats =
-  "All Files" TT "*" NN
+  "All Files" TT "*.*" NN
   "Gmsh Geometry" TT "*.geo" NN
   "Gmsh Mesh" TT "*.msh" NN
   "Gmsh Post-processing View" TT "*.pos" NN
@@ -434,7 +434,7 @@ static void file_options_save_cb(Fl_Widget *w, void *data)
 static void file_rename_cb(Fl_Widget *w, void *data)
 {
  test:
-  if(fileChooser(FILE_CHOOSER_CREATE, "Rename", "*",
+  if(fileChooser(FILE_CHOOSER_CREATE, "Rename", "",
                  GModel::current()->getFileName().c_str())) {
     std::string name = fileChooserGetName(1);
     if(CTX::instance()->confirmOverwrite) {
