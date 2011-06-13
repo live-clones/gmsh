@@ -13,7 +13,8 @@ StringXNumber MathEvalOptions_Number[] = {
   {GMSH_FULLRC, "TimeStep", NULL, -1.},
   {GMSH_FULLRC, "View", NULL, -1.},
   {GMSH_FULLRC, "OtherTimeStep", NULL, -1.},
-  {GMSH_FULLRC, "OtherView", NULL, -1.}
+  {GMSH_FULLRC, "OtherView", NULL, -1.},
+  {GMSH_FULLRC, "ForceInterpolation", NULL, 0.}
 };
 
 StringXString MathEvalOptions_String[] = {
@@ -90,6 +91,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   int iView = (int)MathEvalOptions_Number[1].def;
   int otherTimeStep = (int)MathEvalOptions_Number[2].def;
   int iOtherView = (int)MathEvalOptions_Number[3].def;
+  int forceInterpolation = (int)MathEvalOptions_Number[4].def;
   std::vector<std::string> expr(9);
   for(int i = 0; i < 9; i++) expr[i] = MathEvalOptions_String[i].def;
   
@@ -118,7 +120,8 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   }
 
   OctreePost *octree = 0;
-  if((data1->getNumEntities() != otherData->getNumEntities()) ||
+  if(forceInterpolation ||
+     (data1->getNumEntities() != otherData->getNumEntities()) ||
      (data1->getNumElements() != otherData->getNumElements())){
     Msg::Info("Other view based on different grid: interpolating...");
     octree = new OctreePost(otherView);
