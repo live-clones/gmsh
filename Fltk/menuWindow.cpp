@@ -149,9 +149,8 @@ static void file_merge_cb(Fl_Widget *w, void *data)
 }
 
 static void file_open_recent_cb(Fl_Widget *w, void *data)
-{  
+{
   std::string str((const char*)data);
-
   int n = PView::list.size();
   OpenProject(str);
   drawContext::global()->draw();
@@ -2310,11 +2309,11 @@ static Fl_Menu_Item bar_table[] = {
     {"&New...",     FL_CTRL+'n', (Fl_Callback *)file_new_cb, 0},
     {"&Open...",    FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
     {"Open Recent", 0, 0, 0, FL_SUBMENU},
-      {"History1", 0, 0, 0, FL_MENU_INVISIBLE},
-      {"History2", 0, 0, 0, FL_MENU_INVISIBLE},
-      {"History3", 0, 0, 0, FL_MENU_INVISIBLE},
-      {"History4", 0, 0, 0, FL_MENU_INVISIBLE},
-      {"History5", 0, 0, 0, FL_MENU_INVISIBLE},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
       {0},
     {"M&erge...",   FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)file_merge_cb, 0},
     {"Watch Pattern...",    0, (Fl_Callback *)file_watch_cb, 0},
@@ -2369,15 +2368,16 @@ static Fl_Menu_Item sysbar_table[] = {
   {"File", 0, 0, 0, FL_SUBMENU},
     {"New...",     FL_META+'n', (Fl_Callback *)file_new_cb, 0},
     {"Open...",    FL_META+'o', (Fl_Callback *)file_open_cb, 0},
-  /* system menu bar is not dynamic in fltk 1.1; it will be in fltk 1.3
+  // system menu bar is not dynamic in fltk 1.1; it is in fltk 1.3
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
     {"Open Recent", 0, 0, 0, FL_SUBMENU},
-      {"History1", 0, 0, 0, FL_MENU_INVISIBLE},
-      {"History2", 0, 0, 0, FL_MENU_INVISIBLE},
-      {"History3", 0, 0, 0, FL_MENU_INVISIBLE},
-      {"History4", 0, 0, 0, FL_MENU_INVISIBLE},
-      {"History5", 0, 0, 0, FL_MENU_INVISIBLE},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
       {0},
-  */
+#endif
     {"Merge...",   FL_META+FL_SHIFT+'o', (Fl_Callback *)file_merge_cb, 0},
     {"Watch Pattern...",   0, (Fl_Callback *)file_watch_cb, 0},
     {"Clear",      0, (Fl_Callback *)file_clear_cb, 0, FL_MENU_DIVIDER},
@@ -2709,6 +2709,7 @@ menuWindow::menuWindow()
     sysbar = new Fl_Sys_Menu_Bar(1, 1, 1, 1);
     sysbar->menu(sysbar_table);
     sysbar->global();
+    fillRecentHistoryMenu();
     Fl_Box *o = new Fl_Box(0, 0, width, BH + 6);
     o->box(FL_UP_BOX);
     y = 3;
@@ -2719,10 +2720,7 @@ menuWindow::menuWindow()
     bar->menu(bar_table);
     bar->box(FL_UP_BOX);
     bar->global();
-    
-    // create recent history menu
     fillRecentHistoryMenu();
-    
     Fl_Box *o = new Fl_Box(0, BH, width, BH + 6);
     o->box(FL_UP_BOX);
     y = BH + 3;
@@ -2986,15 +2984,19 @@ void menuWindow::setContext(contextItem *menu_asked, int flag)
 
 void menuWindow::fillRecentHistoryMenu()
 {
-  int last = 0;
-  for(unsigned int i = 0; i < CTX::instance()->recentFiles.size(); i++)
-    if(CTX::instance()->recentFiles[i].size()) last = i + 1;
-  for(int i = 0; i < last; i++){
-    bar_table[4 + i].text = CTX::instance()->recentFiles[i].c_str();
-    bar_table[4 + i].callback_ = (Fl_Callback *)file_open_recent_cb;
-    bar_table[4 + i].user_data_ = (void*)CTX::instance()->recentFiles[i].c_str();
-    bar_table[4 + i].show();
+  Fl_Menu_Item *table = bar_table;
+#if defined(__APPLE__) && (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
+  if(CTX::instance()->systemMenuBar)
+    table = sysbar_table;
+#endif
+
+  for(int i = 0; i < 5; i++){
+    table[4 + i].text = CTX::instance()->recentFiles[i].c_str();
+    table[4 + i].user_data_ = (void*)CTX::instance()->recentFiles[i].c_str();
   }
-  for (unsigned int i = last; i < 5; i++)
-    bar_table[4 + i].hide();
+
+#if defined(__APPLE__) && (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
+  if(CTX::instance()->systemMenuBar)
+    sysbar->menu(table);
+#endif
 }

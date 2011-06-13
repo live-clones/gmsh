@@ -233,7 +233,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
   // contain binary data
   FILE *fp = fopen(fileName.c_str(), "rb");
   if(!fp){
-    if(warnIfMissing) 
+    if(warnIfMissing)
       Msg::Warning("Unable to open file '%s'", fileName.c_str());
     return 0;
   }
