@@ -176,7 +176,7 @@ void bowyerWatsonFrontalLayers(GRegion *gr, bool hex);
 class compareTet4Ptr
 {
  public:
-  inline bool operator () (const MTet4 *a, const MTet4 *b) 
+  inline bool operator () (const MTet4 *a, const MTet4 *b)  const
   { 
     if (a->getRadius() > b->getRadius()) return true;
     if (a->getRadius() < b->getRadius()) return false;

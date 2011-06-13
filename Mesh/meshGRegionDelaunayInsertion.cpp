@@ -190,7 +190,7 @@ bool insertVertex(MVertex *v,
       ++ittet;
     }
 
-  MTet4** newTets = new MTet4*[shell.size()];;
+  MTet4** newTets = new MTet4*[shell.size()];
   int k = 0;
 
   std::list<faceXtet>::iterator it = shell.begin();
@@ -966,7 +966,7 @@ void bowyerWatsonFrontalLayers(GRegion *gr, bool hex)
   }
 
   if (hex){
-    LIMIT_ = sqrt(2)*.99;
+    LIMIT_ = sqrt(2.) * .99;
     MTet4::radiusNorm =-1;
   }
 

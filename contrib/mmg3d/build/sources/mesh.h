@@ -111,7 +111,10 @@ along with MMG3D. If not, see <http://www.gnu.org/licenses/>.
 #undef INT_MAX
 #undef SHORT_MAX
 #endif
-*/#define INT_MAX      0x7fffffff
+*/
+#ifndef INT_MAX
+#define INT_MAX      0x7fffffff
+#endif
 #define SHORT_MAX    0x7fff
 
 

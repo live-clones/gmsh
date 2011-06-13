@@ -728,7 +728,9 @@ int MMG_cavity_iso(pMesh mesh,pSol sol,int iel,int ip,pList list,int lon) {
   if ( ppt->tag & M_UNUSED )  return(0);
 
   tref = mesh->tetra[list->tetra[1]/6].ref;
+#if !defined(_MSC_VER)
 #warning remove this test
+#endif
   for (k=1; k<=lon; k++)
     if(tref!=mesh->tetra[list->tetra[k]/6].ref) 
        printf("pbs coquil %d %d tet %d\n",tref,mesh->tetra[list->tetra[k]/6].ref,list->tetra[k]/6);

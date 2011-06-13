@@ -307,8 +307,9 @@ int MMG_analarcutting(pMesh mesh,pSol sol,pHedge hash,int *alert,double* lmoy,do
   printf("6 cut : %8d\n",n6);
   printf("---------------------------\n"); */  
 	if ( !na )  return(na);
+#if !defined(_MSC_VER)
 #warning check memory allocation
-  
+#endif
   //printf("%d cut init --- nb tet %d\n",na,mesh->ne);
   return(na);
 }

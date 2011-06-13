@@ -261,7 +261,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 	  if((e->getNumVertices() == 2 && order==1) || (e->getNumVertices() == 3 && order==2)){
 	    signedDistancesPointsLine(iDistances, iClosePts, pts, p1,p2);
 	  }
-	  else if((e->getNumVertices() == 3 and order==1) or (e->getNumVertices() == 6 and order==2)){
+	  else if((e->getNumVertices() == 3 && order == 1) || (e->getNumVertices() == 6 && order==2)){
 	    MVertex *v3 = e->getVertex(2);
 	    SPoint3 p3 (v3->x(),v3->y(),v3->z());
 	    signedDistancesPointsTriangle(iDistances, iClosePts, pts, p1, p2, p3);

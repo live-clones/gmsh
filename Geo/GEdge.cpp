@@ -279,7 +279,7 @@ double GEdge::length(const double &u0, const double &u1, const int nbQuadPoints)
 
 */
 
-const double GOLDEN  = (1. + sqrt(5)) / 2.;
+const double GOLDEN  = (1. + sqrt(5.)) / 2.;
 const double GOLDEN2 = 2 - GOLDEN;
  
 // x1 and x3 are the current bounds; the minimum is between them.

@@ -1138,7 +1138,7 @@ void optimalPointFrontalQuad (GFace *gf,
   const double rhoM  = Extend1dMeshIn2dSurfaces() ? std::min(rhoM1, rhoM2) : rhoM2;
   
   const double rhoM_hat = std::min(std::max(rhoM, p), (p * p + q * q) / (2 * q));
-  const double factor = (rhoM_hat + sqrt (rhoM_hat * rhoM_hat - p * p)) /(sqrt(3)*p);
+  const double factor = (rhoM_hat + sqrt (rhoM_hat * rhoM_hat - p * p)) /(sqrt(3.)*p);
 	
   double npx,npy;
   if (xp*yp >  0){
@@ -1197,7 +1197,7 @@ void bowyerWatsonFrontalLayers(GFace *gf, bool quad)
   }
 
   if (quad){
-    LIMIT_ = sqrt(2)*.99;
+    LIMIT_ = sqrt(2.) * .99;
     MTri3::radiusNorm =-1;
   }
   

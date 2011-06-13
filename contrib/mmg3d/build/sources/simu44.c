@@ -47,7 +47,7 @@ along with MMG3D. If not, see <http://www.gnu.org/licenses/>.
 
 /* return 41-42 for config */
 int MMG_simu44(pMesh mesh,pSol sol,pList list,double crit) {
-  pTetra	pt,pt1;;
+  pTetra	pt,pt1;
   double	caltab[2];
   int		ia,ib,s1,s2,s3,s4,iadr,*adja,k,adj,iel,iar;
   short		voy;

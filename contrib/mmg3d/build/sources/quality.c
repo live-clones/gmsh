@@ -479,7 +479,7 @@ double MMG_calte1_ani(pMesh mesh,pSol sol,int iel) {
   double     h1,h2,h3,h4,h5,h6,rapmax,vol,det,v1,v2,v3;
   double     air,dd,num;
   double    *a,*b,*c,*d;
-  double     *ma,*mb,*mc,*md,mm[6];;
+  double     *ma,*mb,*mc,*md,mm[6];
   int        j,ia,ib,ic,id,iadr;
 
   pt = &mesh->tetra[iel];
@@ -1479,7 +1479,7 @@ double MMG_calte3_ani(pMesh mesh,pSol sol,int iel) {
   double     cal,ab[3],ac[3],ad[3],bc[3],bd[3],cd[3];
   double     vol,det,v1,v2,v3,air,dd;
   double    *a,*b,*c,*d;
-  double     *ma,*mb,*mc,*md,mm[6];;
+  double     *ma,*mb,*mc,*md,mm[6];
   int        j,ia,ib,ic,id,iadr;
   static double id3[6] ={1.0,0.,0.,1.,0.,1.};
 
