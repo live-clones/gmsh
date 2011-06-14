@@ -5750,7 +5750,7 @@ double opt_mesh_remesh_param(OPT_ARGS_NUM)
   if(action & GMSH_SET){
     CTX::instance()->mesh.remeshParam = (int)val;
     if(CTX::instance()->mesh.remeshParam < 0 && 
-       CTX::instance()->mesh.remeshParam > 1)
+       CTX::instance()->mesh.remeshParam > 2)
       CTX::instance()->mesh.remeshParam = 0;
   }
 #if defined(HAVE_FLTK)

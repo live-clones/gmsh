@@ -2096,6 +2096,7 @@ optionWindow::optionWindow(int deltaFontSize)
       static Fl_Menu_Item menu_remeshing_param[] = {
         {"Harmonic", 0, 0, 0},
         {"Conformal", 0, 0, 0},
+	{"Rbf Harmonic", 0, 0, 0},
         {0}
       };
 

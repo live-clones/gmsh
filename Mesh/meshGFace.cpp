@@ -1695,6 +1695,7 @@ void partitionAndRemesh(GFaceCompound *gf)
 
   //Parametrize Compound surfaces
   std::set<MVertex*> allNod; 
+  std::list<GEdge*> U0;
   for (int i=0; i < NF; i++){
     std::list<GFace*> f_compound;
     GFace *pf =  gf->model()->getFaceByTag(numf+i);//partition face 
@@ -1702,10 +1703,9 @@ void partitionAndRemesh(GFaceCompound *gf)
     f_compound.push_back(pf);     
     Msg::Info("Parametrize Compound Surface (%d) = %d discrete face",
               num_gfc, pf->tag());
-
-    GFaceCompound *gfc = new GFaceCompound(gf->model(), num_gfc, f_compound, 0,
+    
+    GFaceCompound *gfc = new GFaceCompound(gf->model(), num_gfc, f_compound, U0, 0,
                                             gf->getTypeOfMapping());
-
     gfc->meshAttributes.recombine = gf->meshAttributes.recombine;
     gf->model()->add(gfc);
 

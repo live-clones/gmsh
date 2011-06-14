@@ -109,6 +109,7 @@ Coordinates             return tCoordinates;
 CatmullRom		return tSpline;
 Call                    return tCall;
 CreateTopology          return tCreateTopology;
+CreateTopologyNoHoles   return tCreateTopologyNoHoles;
 
 Delete                  return tDelete;
 Degenerated             return tDegenerated;

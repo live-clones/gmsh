@@ -183,10 +183,12 @@ int GModel::importGEOInternals()
           }
         }
  	int param = CTX::instance()->mesh.remeshParam;
+	GFaceCompound::typeOfMapping typ = GFaceCompound::HARMONIC;
+	if (param == 1) typ =  GFaceCompound::CONFORMAL;
+	if (param == 2) typ =  GFaceCompound::RBF;
 	int algo = CTX::instance()->mesh.remeshAlgo;
-        f = new GFaceCompound(this, s->Num, comp, 0,
-                              (param == 0) ? GFaceCompound::HARMONIC :
-                              GFaceCompound::CONFORMAL, algo);
+        f = new GFaceCompound(this, s->Num, comp, U0, 0, typ, algo);
+
 	f->meshAttributes.recombine = s->Recombine;
 	f->meshAttributes.recombineAngle = s->RecombineAngle;
 	f->meshAttributes.Method = s->Method;

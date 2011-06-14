@@ -103,7 +103,7 @@ fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
 %token tFmod tModulo tHypot 
 %token tPrintf tSprintf tStrCat tStrPrefix tStrRelative
-%token tBoundingBox tDraw tToday tSyncModel tCreateTopology tDistanceFunction
+%token tBoundingBox tDraw tToday tSyncModel tCreateTopology tCreateTopologyNoHoles tDistanceFunction
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
@@ -2412,6 +2412,10 @@ Command :
    | tCreateTopology tEND
     {
       GModel::current()->createTopologyFromMesh();
+    }
+   | tCreateTopologyNoHoles tEND
+    {
+      GModel::current()->createTopologyFromMesh(1);
     }
    | tRefineMesh tEND
     {

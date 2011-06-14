@@ -19,9 +19,8 @@
 #include "GEdgeCompound.h"
 #include "meshGFaceOptimize.h"
 #include "linearSystem.h"
-#ifdef HAVE_RBF
-#include "rbf.h"
-#endif
+#include "GRbf.h"
+
 #define AR_MAX 5 //maximal geometrical aspect ratio
 
 /*
@@ -52,22 +51,16 @@ class  GFaceCompoundTriangle {
 };
 
 class Octree;
-#ifdef HAVE_RBF
-class rbf;
-#endif
+class GRbf;
+
 class GFaceCompound : public GFace {
  public:
   typedef enum {ITERU=0,ITERV=1,ITERD=2} iterationStep;
   typedef enum {HARMONIC=1,CONFORMAL=2, CONVEXCOMBINATION=3, MULTISCALE=4, RBF=5} typeOfMapping;
   typedef enum {UNITCIRCLE, SQUARE} typeOfIsomorphism;
   void computeNormals(std::map<MVertex*, SVector3> &normals) const;
-#ifdef HAVE_RBF
-  void setParam(std::map<MVertex*, SPoint3> rbf_param, rbf *myRBF);
-#endif
  protected:
-#ifdef HAVE_RBF
-  rbf *_rbf;
-#endif
+  mutable GRbf *_rbf;
   simpleFunction<double> *ONE;
   simpleFunction<double> *MONE;
   std::list<GFace*> _compound;
@@ -86,6 +79,7 @@ class GFaceCompound : public GFace {
   mutable std::set<MVertex*> fillNodes;
   mutable std::vector<MVertex*> _ordered;
   mutable std::vector<double> _coords;
+  mutable std::map<MVertex*, int> _mapV;
   void buildOct() const ;
   void buildAllNodes() const; 
   void parametrize(iterationStep, typeOfMapping) const;
@@ -108,6 +102,7 @@ class GFaceCompound : public GFace {
   linearSystem <double> *_lsys;
   double getSizeH() const;
   double getSizeBB(const std::list<GEdge* > &elist) const;
+  double getDistMin() const;
   SBoundingBox3d boundEdges(const std::list<GEdge* > &elist) const;
   SOrientedBoundingBox obb_boundEdges(const std::list<GEdge* > &elist) const;
   void fillNeumannBCS() const;
@@ -115,7 +110,7 @@ class GFaceCompound : public GFace {
 
  public: 
   GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
-                linearSystem<double>* lsys =0,
+		std::list<GEdge*> &U0, linearSystem<double>* lsys =0,
                 typeOfMapping typ = HARMONIC, int allowPartition=1);
   virtual ~GFaceCompound();
   Range<double> parBounds(int i) const 
@@ -152,7 +147,7 @@ class GFaceCompound : public GFace {
  public:
   typedef enum {HARMONIC=1,CONFORMAL=2, CONVEXCOMBINATION=3, MULTISCALE=4} typeOfMapping;
  GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
-                linearSystem<double>* lsys =0,
+	       std::list<GEdge*> &U0, linearSystem<double>* lsys =0,
                 typeOfMapping typ = HARMONIC, int allowPartition=1)
     : GFace(m, tag)
   {

@@ -40,9 +40,8 @@
 #include "discreteFace.h"
 #include "eigenSolver.h"
 #include "multiscaleLaplace.h"
-#ifdef HAVE_RBF
-#include "rbf.h"
-#endif
+#include "GRbf.h"
+
 static void fixEdgeToValue(GEdge *ed, double value, dofManager<double> &myAssembler)
 {
   myAssembler.fixVertex(ed->getBeginVertex()->mesh_vertices[0], 0, 1, value);
@@ -86,6 +85,7 @@ int intersection_segments (SPoint3 &p1, SPoint3 &p2,
 static bool orderVertices(const std::list<GEdge*> &e, std::vector<MVertex*> &l,
                           std::vector<double> &coord)
 {
+
   l.clear();
   coord.clear();
 
@@ -618,8 +618,8 @@ bool GFaceCompound::parametrize() const
   if(oct) return paramOK; 
   if(trivial()) return paramOK;
 
-  if (_mapping != RBF)
-    coordinates.clear(); 
+  // if (_mapping != RBF)
+  //   coordinates.clear(); 
   
   computeNormals();  
 
@@ -659,8 +659,34 @@ bool GFaceCompound::parametrize() const
     }
   }
   // Radial-Basis Function parametrization
-  else if (_mapping == RBF){
-    Msg::Debug("Parametrizing surface %d with 'RBF''", tag());
+  else if (_mapping == RBF){    
+    Msg::Debug("Parametrizing surface %d with 'RBF' ", tag());
+     
+    int variableEps = 0;
+    int radFunInd = 1; //MQ RBF
+    double delta = 0.33*getDistMin();
+    double epsilon = 0.15*(allNodes.size()/150.0)/delta; //max(2.5, 0.5*(nbNodes/150.0)/dist_min);
+    double radius= 3.*getSizeH()/sqrt(allNodes.size());   
+        
+    Msg::Info("*****************************************");
+    Msg::Info("*** RBF rad=%g dist_min =%g ", radius, 3.*delta);
+    Msg::Info("*** RBF eps=%g  delta =%g ", epsilon, delta);
+    Msg::Info("*****************************************");
+    
+    fullMatrix<double> Oper(3*allNodes.size(),3*allNodes.size());
+    _rbf = new GRbf(epsilon, delta, radius,  variableEps, radFunInd, _normals, allNodes);
+    
+    _rbf->RbfLapSurface_global_CPM_low(_rbf->getXYZ(), _rbf->getN(), Oper);
+    //_rbf->RbfLapSurface_local_CPM(true, _rbf->getXYZ(), _rbf->getN(), Oper);
+    //_rbf->RbfLapSurface_global_CPM_high(_rbf->getXYZ(), _rbf->getN(), Oper);
+    //_rbf->RbfLapSurface_local_CPM(false, _rbf->getXYZ(), _rbf->getN(),  Oper);
+    //_rbf->RbfLapSurface_global_projection(_rbf->getXYZ(), _rbf->getN(), Oper);
+    //_rbf->RbfLapSurface_local_projection(_rbf->getXYZ(), _rbf->getN(), Oper);
+    
+    _rbf->solveHarmonicMap(Oper, _ordered, _coords, coordinates);
+    printStuff();
+    exit(1);
+
   }
 
   buildOct();  
@@ -686,15 +712,6 @@ bool GFaceCompound::parametrize() const
 
   return paramOK;
 }
-
-#ifdef HAVE_RBF
-void GFaceCompound::setParam(std::map<MVertex*, SPoint3> rbf_param, rbf *myRBF){
-  
-  _rbf = myRBF;
-  coordinates  = rbf_param;
-
-}
-#endif
 
 void GFaceCompound::getBoundingEdges()
 {
@@ -730,7 +747,7 @@ void GFaceCompound::getBoundingEdges()
     computeALoop(_unique,loop); 
     while(!_unique.empty())  computeALoop(_unique, loop); 
 
-    // assign Derichlet BC (_U0) to bound with largest size
+    // assign Derichlet BC (_U0) to boundary with largest size
     double maxSize = 0.0;
     for(std::list<std::list<GEdge*> >::iterator it = _interior_loops.begin();
         it != _interior_loops.end(); it++){
@@ -761,6 +778,21 @@ double GFaceCompound::getSizeH() const
   return H;
 }
 
+double GFaceCompound::getDistMin() const
+{
+    double dist_min = 1.e6;
+    for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; itv++){
+      for(std::set<MVertex *>::iterator itv2 = allNodes.begin(); itv2 !=allNodes.end() ; itv2++){
+	MVertex *v1 = *itv;
+	MVertex *v2 = *itv2;
+	double dist = sqrt((v1->x()-v2->x())*(v1->x()-v2->x())+(v1->y()-v2->y())*(v1->y()-v2->y())
+			   +(v1->z()-v2->z())*(v1->z()-v2->z()));
+	if (dist<dist_min && dist != 0.0) dist_min = dist;
+      }
+    }
+
+    return dist_min;
+}
 double GFaceCompound::getSizeBB(const std::list<GEdge* > &elist) const
 {
   //SOrientedBoundingBox obboxD = obb_boundEdges(elist);
@@ -916,9 +948,10 @@ void GFaceCompound::computeALoop(std::set<GEdge*> &_unique, std::list<GEdge*> &l
 }
 
 GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
+			     std::list<GEdge*> &U0, 
                              linearSystem<double> *lsys, typeOfMapping mpg, 
                              int allowPartition)
-  : GFace(m, tag), _compound(compound),  oct(0),
+  : GFace(m, tag), _compound(compound),  oct(0), _U0(U0), 
     _lsys(lsys),_mapping(mpg), _allowPartition(allowPartition)
 {
   ONE = new simpleFunction<double>(1.0);
@@ -1051,20 +1084,6 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
 void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
 {  
   dofManager<double> myAssembler(_lsys);
-  
-  // EMI-test for paper Dong: fix only 2 vertices
-  // MVertex *v1;
-  // MVertex *v2;
-  // double zmin = 1.e6;
-  // double zmax = 0.0;
-  // for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
-  //   MVertex  *v = *itv;
-  //   double z = v->z();
-  //   if (z > zmax){ zmax = z; v2 = v;}
-  //   if (z < zmin){ zmin = z; v1 = v;}
-  // }
-  // myAssembler.fixVertex(v1, 0, 1, 0.0);
-  // myAssembler.fixVertex(v2, 0, 1, 1.0);
 
   if(_type == UNITCIRCLE){
     for(unsigned int i = 0; i < _ordered.size(); i++){
@@ -1426,7 +1445,6 @@ GPoint GFaceCompound::point(double par1, double par2) const
 
   if(!oct) parametrize();
 
-#ifdef HAVE_RBF
   if (_mapping == RBF){
     double x, y, z;
     SVector3 dXdu, dXdv;
@@ -1435,7 +1453,6 @@ GPoint GFaceCompound::point(double par1, double par2) const
     //exit(1);
     return GPoint(x,y,z);
   }
-#endif
 
   double U,V;
   double par[2] = {par1,par2};
@@ -1474,24 +1491,9 @@ GPoint GFaceCompound::point(double par1, double par2) const
     
     SVector3 b300,b030,b003;
     SVector3 b210,b120,b021,b012,b102,b201,E,VV,b111;
-    //double  w12,w21,w23,w32,w31,w13;
-
     b300 = lt->v1;
     b030 = lt->v2;
     b003 = lt->v3;
-
-    //     w12 = dot(lt->v2 - lt->v1, n1);
-    //     w21 = dot(lt->v1 - lt->v2, n2);
-    //     w23 = dot(lt->v3 - lt->v2, n2);
-    //     w32 = dot(lt->v2 - lt->v3, n3);
-    //     w31 = dot(lt->v1 - lt->v3, n3);
-    //     w13 = dot(lt->v3 - lt->v1, n1);
-    //     b210 = (2*lt->v1 + lt->v2-w12*n1)*0.333; 
-    //     b120 = (2*lt->v2 + lt->v1-w21*n2)*0.333;
-    //     b021 = (2*lt->v2 + lt->v3-w23*n2)*0.333;
-    //     b012 = (2*lt->v3 + lt->v2-w32*n3)*0.333;
-    //     b102 = (2*lt->v3 + lt->v1-w31*n3)*0.333;
-    //     b201 = (2*lt->v1 + lt->v3-w13*n1)*0.333;
 
     //tagged PN triangles (sigma=1)
     double theta = 0.0;
@@ -1537,14 +1539,12 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
   if(trivial())
     return (*(_compound.begin()))->firstDer(param);
 
-#ifdef HAVE_RBF
    if (_mapping == RBF){
      double x, y, z;
      SVector3 dXdu, dXdv  ;
      _rbf->UVStoXYZ(param.x(), param.y(), x,y,z, dXdu, dXdv);
     return Pair<SVector3, SVector3>(dXdu,dXdv);
    }
-#endif
 
   double U, V;
   GFaceCompoundTriangle *lt;
@@ -1773,9 +1773,6 @@ bool GFaceCompound::checkTopology() const
 {
   
   if (_mapping == RBF) return true; 
-
-  //fixme tristan
-  //return true;
 	
   bool correctTopo = true;
   if(allNodes.empty()) buildAllNodes();
@@ -1997,6 +1994,7 @@ void GFaceCompound::coherenceNormals()
 
 void GFaceCompound::buildAllNodes() const
 {
+  int index = 0;
   std::list<GFace*>::const_iterator it = _compound.begin();
   for( ; it != _compound.end() ; ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){

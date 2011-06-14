@@ -76,7 +76,7 @@ set(GMSH_API
     Numeric/simpleFunction.h Numeric/cartesian.h
   Geo/GModel.h Geo/GEntity.h Geo/GPoint.h Geo/GVertex.h Geo/GEdge.h 
     Geo/GFace.h Geo/GRegion.h Geo/GEdgeLoop.h Geo/GEdgeCompound.h 
-    Geo/GFaceCompound.h Geo/GRegionCompound.h Geo/MVertex.h Geo/MEdge.h 
+    Geo/GFaceCompound.h Geo/GRegionCompound.h Geo/GRbf.h Geo/MVertex.h Geo/MEdge.h 
     Geo/MFace.h Geo/MElement.h Geo/MPoint.h Geo/MLine.h Geo/MTriangle.h 
     Geo/MQuadrangle.h Geo/MTetrahedron.h Geo/MHexahedron.h Geo/MPrism.h 
     Geo/MPyramid.h Geo/MElementCut.h Geo/discreteVertex.h Geo/discreteEdge.h
@@ -455,10 +455,6 @@ if(ENABLE_ANN)
   set_config_option(HAVE_ANN "Ann")
 endif(ENABLE_ANN)
 
-if(ENABLE_RBF)
-  include_directories(projects/rbf)
-  set_config_option(HAVE_RBF "RBF")
-endif(ENABLE_RBF)
 
 if(ENABLE_CHACO)
   add_subdirectory(contrib/Chaco)
