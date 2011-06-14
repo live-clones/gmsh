@@ -187,8 +187,9 @@ void refineMeshMMG(GRegion *gr){
   gr->mesh_vertices.clear();
 
 
-  MMG2gmsh (gr, mmg, mmg2gmsh);  
-  MMG_saveMesh(mmg ,"test.mesh");
+  MMG2gmsh (gr, mmg, mmg2gmsh);
+  char test[] = "test.mesh";
+  MMG_saveMesh(mmg, test);
 }
 
 #else

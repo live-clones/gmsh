@@ -7,7 +7,7 @@
 #include "SPoint3.h"
 #include "SVector3.h"
 #include "SBoundingBox3d.h"
-#include "Os.h"
+#include "OS.h"
 #include "MVertex.h"
 
 #if defined(HAVE_ANN)

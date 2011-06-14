@@ -692,9 +692,9 @@ double highOrderTools::applySmoothingTo (std::vector<MElement*> &all,
 
   _gm->writeMSH("straightSided.msh");
 
-
-  double percentage_of_what_is_left = apply_incremental_displacement (1.,all, mixed, -100000000 ,"sm.msh",all);
-  ensureMinimumDistorsion (all,threshold);
+  char sm[] = "sm.msh";
+  double percentage_of_what_is_left = apply_incremental_displacement (1., all, mixed, -100000000, sm, all);
+  ensureMinimumDistorsion (all, threshold);
   return 1.;
 
   double percentage = 0.0;
