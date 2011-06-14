@@ -150,6 +150,7 @@ static void file_merge_cb(Fl_Widget *w, void *data)
 
 static void file_open_recent_cb(Fl_Widget *w, void *data)
 {
+  if(!data) return;
   std::string str((const char*)data);
   int n = PView::list.size();
   OpenProject(str);
