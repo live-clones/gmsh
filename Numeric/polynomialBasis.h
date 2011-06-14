@@ -103,9 +103,16 @@ class polynomialBasis
   {
     return fullClosures[id];
   }
-  inline int getClosureId(int iEl, int iSign=1, int iRot=0) const
+  inline int getClosureId(int iFace, int iSign=1, int iRot=0) const
   {
-    return iEl + numFaces*(iSign == 1 ? 0 : 1) + 2*numFaces*iRot;
+    return iFace + numFaces*(iSign == 1 ? 0 : 1) + 2*numFaces*iRot;
+  }
+  inline void breakClosureId(int i, int &iFace, int &iSign, int &iRot) const
+  {
+    iFace = i % numFaces;
+    i = (i - iFace)/numFaces;
+    iSign = i % 2;
+    iRot = (i - iSign) / 2;
   }
   inline void evaluateMonomials(double u, double v, double w, double p[]) const
   {
