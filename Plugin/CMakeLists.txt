@@ -6,11 +6,11 @@
 set(SRC
   Plugin.cpp PluginManager.cpp
   Levelset.cpp
-    CutPlane.cpp CutSphere.cpp Isosurface.cpp 
+  CutPlane.cpp CutSphere.cpp Isosurface.cpp 
   Smooth.cpp CutParametric.cpp
   Lambda2.cpp
   Eigenvectors.cpp Eigenvalues.cpp
-  StreamLines.cpp Particles.cpp CutGrid.cpp
+  StreamLines.cpp Particles.cpp CutGrid.cpp CutBox.cpp
   Transform.cpp
     LongitudeLatitude.cpp
   Triangulate.cpp Tetrahedralize.cpp
@@ -25,7 +25,7 @@ set(SRC
   HomologyComputation.cpp
   Distance.cpp ExtractEdges.cpp NearestNeighbor.cpp
   AnalyseCurvedMesh.cpp FieldFromAmplitudePhase.cpp
-  Bubbles.cpp
+  Bubbles.cpp NearToFarField.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
