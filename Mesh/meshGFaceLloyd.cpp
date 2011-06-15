@@ -178,8 +178,9 @@ void smoothing::optimize_face(GFace* gf){
   const double LC2D = sqrt((du.high()-du.low())*(du.high()-du.low()) +
                            (dv.high()-dv.low())*(dv.high()-dv.low()));  
 
-  //printf("Lloyd on face %d %d elements %d nodes LC %g\n", gf->tag(),
-  //       gf->getNumMeshElements(), (int)all.size(), LC2D);
+
+  printf("Lloyd on face %d %d elements %d nodes LC %g\n", gf->tag(),
+         gf->getNumMeshElements(), (int)all.size(), LC2D);
 
   int i = 0;
   for (std::set<MVertex*>::iterator it = all.begin(); it != all.end(); ++it){
@@ -197,8 +198,11 @@ void smoothing::optimize_face(GFace* gf){
     triangulator.x(i) = p.x() + XX;
     triangulator.y(i) = p.y() + YY;
     triangulator.data(i++) = (*it);
+
+    //    GPoint pp = gf->point(p);
+    //    printf("point %d %g %g %g %g %g \n",(*it)->getNum(),(*it)->x(),(*it)->y(),(*it)->z(),p.x(),p.y());
   }
- 
+
   triangulator.Voronoi();
   triangulator.initialize();
   int index,number,count,max;
@@ -209,13 +213,13 @@ void smoothing::optimize_face(GFace* gf){
   for(int i=0;i<max;i++)
   {
     if(count>=number) break;
-	index = (int)((triangulator.numPoints-1)*((double)rand()/(double)RAND_MAX));
-	PointRecord& pt = triangulator.points[index];
-	MVertex* v = (MVertex*)pt.data;
-	if(v->onWhat()==gf && !triangulator.onHull(index)){
-	  flag = triangulator.remove_point(index);
-	  if(flag) count++;
-	}
+  	index = (int)((triangulator.numPoints-1)*((double)rand()/(double)RAND_MAX));
+  	PointRecord& pt = triangulator.points[index];
+  	MVertex* v = (MVertex*)pt.data;
+  	if(v->onWhat()==gf && !triangulator.onHull(index)){
+  	  flag = triangulator.remove_point(index);
+  	  if(flag) count++;
+  	}
   }
   triangulator.remove_all();	
 	
@@ -224,11 +228,11 @@ void smoothing::optimize_face(GFace* gf){
   delta = 0.01;
   for(int i=0;i<triangulator.numPoints;i++){
     PointRecord& pt = triangulator.points[i];
-	MVertex* v = (MVertex*)pt.data;
-	if(v->onWhat()==gf && !triangulator.onHull(i)){
-	  //triangulator.points[i].where.h = delta + (1.0-2.0*delta)*((double)rand()/(double)RAND_MAX);
-	  //triangulator.points[i].where.v = delta + (1.0-2.0*delta)*((double)rand()/(double)RAND_MAX);
-	}
+  	MVertex* v = (MVertex*)pt.data;
+  	if(v->onWhat()==gf && !triangulator.onHull(i)){
+  	  //triangulator.points[i].where.h = delta + (1.0-2.0*delta)*((double)rand()/(double)RAND_MAX);
+  	  //triangulator.points[i].where.v = delta + (1.0-2.0*delta)*((double)rand()/(double)RAND_MAX);
+  	}
   }		
 
   int index1 = -1;
@@ -241,18 +245,18 @@ void smoothing::optimize_face(GFace* gf){
   int index8 = -1;
   for(int i=0;i<triangulator.numPoints;i++){
     PointRecord& pt = triangulator.points[i];
-	MVertex* v = (MVertex*)pt.data;
-	if(v->onWhat()==gf && !triangulator.onHull(i)){
-	  if(index1==-1) index1 = i;
-	  else if(index2==-1) index2 = i;
-	  else if(index3==-1) index3 = i;
-	  else if(index4==-1) index4 = i;
-	  else if(index5==-1) index5 = i;
-	  else if(index6==-1) index6 = i;
-	  else if(index7==-1) index7 = i;
-	  else if(index8==-1) index8 = i;
+  	MVertex* v = (MVertex*)pt.data;
+  	if(v->onWhat()==gf && !triangulator.onHull(i)){
+  	  if(index1==-1) index1 = i;
+  	  else if(index2==-1) index2 = i;
+  	  else if(index3==-1) index3 = i;
+  	  else if(index4==-1) index4 = i;
+  	  else if(index5==-1) index5 = i;
+  	  else if(index6==-1) index6 = i;
+  	  else if(index7==-1) index7 = i;
+  	  else if(index8==-1) index8 = i;
 		
-	}
+  	}
   }
   /*triangulator.points[index1].where.h = 0.01;
   triangulator.points[index1].where.v = 0.01;
@@ -300,17 +304,17 @@ void smoothing::optimize_face(GFace* gf){
   num_interior = 0;
   for(int i=0;i<triangulator.numPoints;i++){
    	if(obj.interior(triangulator,gf,i)){
-	  num_interior++;
-	}
+  	  num_interior++;
+  	}
   }
 
   index = 0;
   for(int i=0;i<triangulator.numPoints;i++){
-	if(obj.interior(triangulator,gf,i)){
-	  initial_conditions[index] = triangulator.points[i].where.h;
-	  initial_conditions[index+num_interior] = triangulator.points[i].where.v;
-	  index++;
-	}
+  	if(obj.interior(triangulator,gf,i)){
+  	  initial_conditions[index] = triangulator.points[i].where.h;
+  	  initial_conditions[index+num_interior] = triangulator.points[i].where.v;
+  	  index++;
+  	}
   }
 	
   x.setcontent(2*num_interior, &initial_conditions[0]);
@@ -342,11 +346,11 @@ void smoothing::optimize_face(GFace* gf){
 	
   index = 0;
   for(i=0;i<triangulator.numPoints;i++){
-	if(obj.interior(triangulator,gf,i)){
-	  triangulator.points[i].where.h = x[index];
-	  triangulator.points[i].where.v = x[index + num_interior];
-	  index++;
-	}
+  	if(obj.interior(triangulator,gf,i)){
+  	  triangulator.points[i].where.h = x[index];
+  	  triangulator.points[i].where.v = x[index + num_interior];
+  	  index++;
+  	}
   }
   triangulator.Voronoi();	
 	
@@ -368,9 +372,13 @@ void smoothing::optimize_face(GFace* gf){
     // get the ith vertex
     PointRecord &pt = triangulator.points[i];
     MVertex *v = (MVertex*)pt.data;
+    if (v->onWhat() == gf && triangulator.onHull(i)){
+      //      printf("strange !!\n");
+    }
     if (v->onWhat() == gf && !triangulator.onHull(i)){
       GPoint gp = gf->point (pt.where.h,pt.where.v);
-      MFaceVertex *v = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
+      //      printf("%g %g vs %g %g\n",pt.where.h,pt.where.v,gp.u(),gp.v());
+      MFaceVertex *v = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,pt.where.h,pt.where.v);
       mesh_vertices.push_back(v);
     }
   }
@@ -378,13 +386,17 @@ void smoothing::optimize_face(GFace* gf){
   // destroy the mesh
   deMeshGFace killer;
   killer(gf);
+  backgroundMesh::unset();	
   
   // put all additional vertices in the list of
   // vertices
   gf->additionalVertices = mesh_vertices;
   // remesh the face with all those vertices in
   Msg::Info("Lloyd remeshing of face %d ", gf->tag());
+
+
   meshGFace mesher;
+  mesher.setOnlyInitial();
   mesher(gf);
   // assign those vertices to the face internal vertices
   gf->mesh_vertices.insert(gf->mesh_vertices.begin(),

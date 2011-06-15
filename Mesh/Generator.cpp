@@ -21,6 +21,7 @@
 #include "meshGEdge.h"
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
+#include "meshGFaceLloyd.h"
 #include "meshGFaceBDS.h"
 #include "meshGRegion.h"
 #include "BackgroundMesh.h"
@@ -465,11 +466,21 @@ static void Mesh2D(GModel *m)
       }
       if(!nbPending) break;
       if(nIter++ > 10) break;
-    }
+    }    
   }
+
 
   // lloyd optimization
   if (CTX::instance()->mesh.optimizeLloyd){
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
+      if((*it)->geomType()==GEntity::CompoundSurface){
+	smoothing smm(CTX::instance()->mesh.optimizeLloyd,6);
+	smm.optimize_face(*it);
+	int rec = (CTX::instance()->mesh.recombineAll || (*it)->meshAttributes.recombine);
+	if(rec) recombineIntoQuads(*it);
+      }
+    }
+    /*
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
       GFace *gf = *it;
       if(gf->geomType() == GEntity::DiscreteSurface) continue; 
@@ -477,11 +488,10 @@ static void Mesh2D(GModel *m)
         GFaceCompound *gfc = (GFaceCompound*) gf;
         if(gfc->getNbSplit() != 0) continue;
       }
-      int rec = (CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine);
       Msg::Info("Lloyd optimization for face %d", gf->tag());
       gf->lloyd(25, rec);
-      if(rec) recombineIntoQuads(gf);
     }
+    */
   }
 
   // collapseSmallEdges(*m);

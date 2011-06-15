@@ -1469,7 +1469,8 @@ GPoint GFaceCompound::point(double par1, double par2) const
   
   if (lt->gf->geomType() != GEntity::DiscreteSurface){
     SPoint2 pParam = lt->gfp1*(1.-U-V) + lt->gfp2*U + lt->gfp3*V;
-    return lt->gf->point(pParam);
+    GPoint pp = lt->gf->point(pParam);
+    return GPoint(pp.x(),pp.y(),pp.z(),this,par);
   }
 
   if(LINEARMESH){

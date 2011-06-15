@@ -18,9 +18,14 @@ class GFaceCompound;
 class meshGFace {
   const bool repairSelfIntersecting1dMesh;
   int twoPassesMesh;
+  bool onlyInitialMesh;
  public :
-  meshGFace (bool r = true, int t = 0) : repairSelfIntersecting1dMesh(r), twoPassesMesh(t){}
+  meshGFace (bool r = true, int t = 0) : repairSelfIntersecting1dMesh(r), twoPassesMesh(t)
+    ,onlyInitialMesh(false)
+  {
+  }
   void operator () (GFace *);
+  void setOnlyInitial() {onlyInitialMesh = true;}
 };
 
 // Destroy the mesh of the face

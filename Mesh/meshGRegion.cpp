@@ -503,8 +503,18 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
     char opts[128];
     buildTetgenStructure(gr, in, numberedV);
     //if (Msg::GetVerbosity() == 20) sprintf(opts, "peVvS0"); 
-    sprintf(opts, "pe%c",  (Msg::GetVerbosity() < 3) ? 'Q': 
-            (Msg::GetVerbosity() > 6) ? 'V': '\0');
+    if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_DEL ||
+       CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_HEX ||
+       CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D || 
+       CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL_QUAD ||
+       CTX::instance()->mesh.algo2d == ALGO_2D_BAMG){
+      sprintf(opts, "pY",  (Msg::GetVerbosity() < 3) ? 'Q': 
+	      (Msg::GetVerbosity() > 6) ? 'V': '\0');
+    }
+    else {
+      sprintf(opts, "pe%c",  (Msg::GetVerbosity() < 3) ? 'Q': 
+	      (Msg::GetVerbosity() > 6) ? 'V': '\0');
+    }
     try{
       tetrahedralize(opts, &in, &out);
     }

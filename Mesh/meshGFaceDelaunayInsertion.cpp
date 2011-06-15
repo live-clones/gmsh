@@ -1039,6 +1039,7 @@ void bowyerWatsonFrontal(GFace *gf)
       ActiveTris.insert(*it);
     else if ((*it)->getRadius() < LIMIT_)break;
   }
+
   
   // insert points
   while (1){

@@ -171,7 +171,7 @@ MMG_bouffe = 0;
   for (k=1; k<=nedep; k++) {
     pt = &mesh->tetra[k];
     if ( !pt->v[0] )  continue;
-    else if ( pt->flag != base-1 )  continue; 
+    //    else if ( pt->flag != base-1 )  continue; 
     if ( pt->qual < declic ) continue;
     pt->flag = base-2;                
         

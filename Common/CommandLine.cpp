@@ -279,7 +279,10 @@ void GetOptions(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "optimize_lloyd")) {
         i++;
-        CTX::instance()->mesh.optimizeLloyd = 1;
+        if(argv[i])
+          CTX::instance()->mesh.optimizeLloyd = atoi(argv[i++]);
+        else
+          Msg::Fatal("Missing number of lloyd iterations");
       }
       else if(!strcmp(argv[i] + 1, "nopopup")) {
         CTX::instance()->noPopup = 1;

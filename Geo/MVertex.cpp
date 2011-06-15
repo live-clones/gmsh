@@ -398,6 +398,7 @@ bool reparamMeshVertexOnFace(const MVertex *v, const GFace *gf, SPoint2 &param,
   else{
     double uu, vv;
     if(v->onWhat() == gf && v->getParameter(0, uu) && v->getParameter(1, vv)){
+      //      printf("%d face %d pos %g %g\n",v->getNum(),gf->tag(),uu,vv);
       param = SPoint2(uu, vv);
     }
     else {
