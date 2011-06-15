@@ -17,6 +17,7 @@
 #include "CutPlane.h"
 #include "CutParametric.h"
 #include "CutSphere.h"
+#include "CutBox.h"
 #include "Skin.h"
 #include "AnalyseCurvedMesh.h"
 #include "MathEval.h"
@@ -50,6 +51,7 @@
 #include "ExtractEdges.h"
 #include "FieldFromAmplitudePhase.h"
 #include "Bubbles.h"
+#include "NearToFarField.h"
 
 // for testing purposes only :-)
 #undef HAVE_DLOPEN
@@ -158,6 +160,8 @@ void PluginManager::registerDefaultPlugins()
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("CutGrid", GMSH_RegisterCutGridPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("CutBox", GMSH_RegisterCutBoxPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Isosurface", GMSH_RegisterIsosurfacePlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("CutPlane", GMSH_RegisterCutPlanePlugin()));
@@ -223,6 +227,8 @@ void PluginManager::registerDefaultPlugins()
                       ("ExtractEdges", GMSH_RegisterExtractEdgesPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("FieldFromAmplitudePhase", GMSH_RegisterFieldFromAmplitudePhasePlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("NearToFarField", GMSH_RegisterNearToFarFieldPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Bubbles", GMSH_RegisterBubblesPlugin()));
 #if defined(HAVE_TETGEN)
