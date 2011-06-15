@@ -32,8 +32,10 @@ class GRbf {
   int nn;
   int num_neighbours;
 
-  double ep_scalar; // Shape parameter
+  double epsilonXYZ; // Shape parameter
+  double epsilonUV; // Shape parameter
   double delta; //offset level set
+  double deltaUV; //offset level set
   double radius;
   int variableShapeParam; // 1 if one chooses epsilon to vary spatially, 0 if one chooses it to be constant
   int radialFunctionIndex; // Index corresponding to the radial function used (0 - GA,1 - MQ, ... )
@@ -79,22 +81,23 @@ class GRbf {
   //(p)th derivative of the radial function w.r.t. the (q)th variable
   fullMatrix<double> generateRbfMat(int p,
 				    const fullMatrix<double> &nodes1,
-				    const fullMatrix<double> &nodes2);
+				    const fullMatrix<double> &nodes2, 
+				    int inUV=0);
   
   // Computes the interpolation(p==0) or the derivative (p!=0) operator(mxn) (n:number of centers, m: number of evaluation nodes)
   void RbfOp(int p, // (p)th derivatives
 	     const fullMatrix<double> &cntrs,
 	     const fullMatrix<double> &nodes, 
-	     fullMatrix<double> &D);
+	     fullMatrix<double> &D, int inUV=0);
 
   // Computes the interpolant(p==0) or the derivative (p!=0) of the function values entered and evaluates it at the new nodes
   void evalRbfDer(int p, // (p)th derivatives
 		  const fullMatrix<double> &cntrs,
 		  const fullMatrix<double> &nodes,
 		  const fullMatrix<double> &fValues, 
-		  fullMatrix<double> &fApprox);
+		  fullMatrix<double> &fApprox, int inUV=0);
 
-  void computeEpsilon(const fullMatrix<double> &cntrs, fullVector<double> &epsilon);
+  void computeEpsilon(const fullMatrix<double> &cntrs, fullVector<double> &epsilon, int inUV=0);
 
   // Finds surface differentiation matrix using the LOCAL projection method
   void RbfLapSurface_local_projection(const fullMatrix<double> &cntrs,
@@ -129,12 +132,11 @@ class GRbf {
 		 const fullMatrix<double> &node,
 		 fullMatrix<double> &curvature);
 
- virtual void UVStoXYZ_global(const double u_eval,
-			      const double v_eval,
-			      double &XX, double &YY, double &ZZ, 
-			       SVector3 &dXdu, SVector3& dxdv);
- virtual void UVStoXYZ(const double u_eval,
-		       const double v_eval,
+ void UVStoXYZ_global(const double u_eval, const double v_eval,
+		      double &XX, double &YY, double &ZZ, 
+		      SVector3 &dXdu, SVector3& dxdv);
+
+ bool UVStoXYZ(const double u_eval, const double v_eval,
 		       double &XX, double &YY, double &ZZ,
 		       SVector3 &dXdu, SVector3& dxdv);
 

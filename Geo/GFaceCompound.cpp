@@ -665,7 +665,7 @@ bool GFaceCompound::parametrize() const
     int variableEps = 0;
     int radFunInd = 1; //MQ RBF
     double delta = 0.33*getDistMin();
-    double epsilon = 0.15*(allNodes.size()/150.0)/delta; //max(2.5, 0.5*(nbNodes/150.0)/dist_min);
+    double epsilon = 0.5/getDistMin(); //0.15*(allNodes.size()/150.0)/delta; //max(2.5, 0.5*(nbNodes/150.0)/dist_min);
     double radius= 3.*getSizeH()/sqrt(allNodes.size());   
         
     Msg::Info("*****************************************");
@@ -685,8 +685,7 @@ bool GFaceCompound::parametrize() const
     
     _rbf->solveHarmonicMap(Oper, _ordered, _coords, coordinates);
     printStuff();
-    exit(1);
-
+   
   }
 
   buildOct();  
@@ -780,18 +779,18 @@ double GFaceCompound::getSizeH() const
 
 double GFaceCompound::getDistMin() const
 {
-    double dist_min = 1.e6;
-    for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; itv++){
-      for(std::set<MVertex *>::iterator itv2 = allNodes.begin(); itv2 !=allNodes.end() ; itv2++){
-	MVertex *v1 = *itv;
-	MVertex *v2 = *itv2;
-	double dist = sqrt((v1->x()-v2->x())*(v1->x()-v2->x())+(v1->y()-v2->y())*(v1->y()-v2->y())
-			   +(v1->z()-v2->z())*(v1->z()-v2->z()));
-	if (dist<dist_min && dist != 0.0) dist_min = dist;
-      }
+  double dist_min = 1.e6;
+  double tol = 1.e-8;
+  for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; itv++){
+    for(std::set<MVertex *>::iterator itv2 = allNodes.begin(); itv2 !=allNodes.end() ; itv2++){
+      MVertex *v1 = *itv;
+      MVertex *v2 = *itv2;
+      double dist = sqrt((v1->x()-v2->x())*(v1->x()-v2->x())+(v1->y()-v2->y())*(v1->y()-v2->y())
+			 +(v1->z()-v2->z())*(v1->z()-v2->z()));
+      if (dist<dist_min && dist > tol) dist_min = dist;
     }
-
-    return dist_min;
+  }
+  return dist_min;
 }
 double GFaceCompound::getSizeBB(const std::list<GEdge* > &elist) const
 {
@@ -1446,11 +1445,15 @@ GPoint GFaceCompound::point(double par1, double par2) const
   if(!oct) parametrize();
 
   if (_mapping == RBF){
+    if (fabs(par1) > 1 || fabs(par2) > 1){
+      GPoint gp (3,3,0,this);
+      gp.setNoSuccess();
+      return gp;
+    } 
     double x, y, z;
     SVector3 dXdu, dXdv;
-    _rbf->UVStoXYZ(par1, par2,x,y,z, dXdu, dXdv);
-    //printf("XYZ =%g %g %g \n", x,y,z);
-    //exit(1);
+    bool conv = _rbf->UVStoXYZ(par1, par2,x,y,z, dXdu, dXdv);
+    if (!conv) printf("UV=%g %g \n", par1, par2);
     return GPoint(x,y,z);
   }
 
@@ -1543,7 +1546,7 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
    if (_mapping == RBF){
      double x, y, z;
      SVector3 dXdu, dXdv  ;
-     _rbf->UVStoXYZ(param.x(), param.y(), x,y,z, dXdu, dXdv);
+     bool conv = _rbf->UVStoXYZ(param.x(), param.y(), x,y,z, dXdu, dXdv);
     return Pair<SVector3, SVector3>(dXdu,dXdv);
    }
 
@@ -1892,6 +1895,8 @@ double GFaceCompound::checkAspectRatio() const
 
 void GFaceCompound::coherencePatches() const
 {
+
+  if (_mapping == RBF) return;
   Msg::Info("Re-orient all %d compound patches normals coherently", _compound.size());
 
   std::map<MEdge, std::set<MElement*>, Less_Edge > edge2elems;
@@ -2033,7 +2038,7 @@ int GFaceCompound::genusGeom() const
 
 void GFaceCompound::printStuff(int iNewton) const
 {
-  if( !CTX::instance()->mesh.saveAll) return;  
+  //if( !CTX::instance()->mesh.saveAll) return;  
  
   std::list<GFace*>::const_iterator it = _compound.begin();
  

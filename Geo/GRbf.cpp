@@ -45,7 +45,7 @@ static int SphereInEle(void *a, double*c){
 
 GRbf::GRbf (double eps, double del, double rad, int variableEps, int rbfFun, 
 	    std::map<MVertex*, SVector3> _normals, std::set<MVertex *> allNodes) 
-  :  ep_scalar(eps), delta(del),  radius (rad), variableShapeParam(variableEps), 
+  :  epsilonXYZ(eps), epsilonUV(eps), delta(del),  radius (rad), variableShapeParam(variableEps), 
      radialFunctionIndex (rbfFun),  XYZkdtree(0)
 {
   
@@ -230,20 +230,23 @@ double GRbf::evalRadialFnDer (int p, double dx, double dy, double dz, double ep)
 }
 
 fullMatrix<double> GRbf::generateRbfMat(int p, 
-				       const fullMatrix<double> &nodes1,
-				       const fullMatrix<double> &nodes2) {
+					const fullMatrix<double> &nodes1,
+					const fullMatrix<double> &nodes2, 
+					int inUV) {
 
   int m = nodes2.size1();
   int n = nodes1.size1();
   fullMatrix<double> rbfMat(m,n);
-  fullVector<double > epsilon;
-  computeEpsilon(nodes1, epsilon);
+  //fullVector<double > epsilon;
+  //computeEpsilon(nodes1, epsilon, inUN);
+  double eps = epsilonXYZ;
+  if (inUV) eps = epsilonUV;
   for (int i = 0; i < m; i++) {
     for (int j = 0; j < n; j++) {
       double dx = -nodes2(i,0)+nodes1(j,0);
       double dy = -nodes2(i,1)+nodes1(j,1);
       double dz = -nodes2(i,2)+nodes1(j,2);
-      rbfMat(i,j) = evalRadialFnDer(p,dx,dy,dz,epsilon(j));
+      rbfMat(i,j) = evalRadialFnDer(p,dx,dy,dz,eps);
     }
   }
 
@@ -254,28 +257,28 @@ fullMatrix<double> GRbf::generateRbfMat(int p,
 void GRbf::RbfOp(int p,
 		const fullMatrix<double> &cntrs,
 		const fullMatrix<double> &nodes, 
-		fullMatrix<double> &D) {
+		 fullMatrix<double> &D, int inUV) {
 
   fullMatrix<double> rbfInvA, rbfMatB; 
 
   D.resize(nodes.size1(), cntrs.size1());
 
   if (isLocal){
-    rbfInvA = generateRbfMat(0,cntrs,cntrs);
+    rbfInvA = generateRbfMat(0,cntrs,cntrs, inUV);
     rbfInvA.invertInPlace();
    }
    else{
-     if (cntrs.size1() == nbNodes )
+     if (cntrs.size1() == nbNodes && !inUV)
        rbfInvA = matAInv;
-     else if (cntrs.size1() == 3*nbNodes )
+     else if (cntrs.size1() == 3*nbNodes && !inUV)
        rbfInvA  = matAInv_nn;
      else{
-       rbfInvA = generateRbfMat(0,cntrs,cntrs);
+       rbfInvA = generateRbfMat(0,cntrs,cntrs, inUV);
        rbfInvA.invertInPlace();
      }
  }
  
-  rbfMatB = generateRbfMat(p,cntrs,nodes);
+  rbfMatB = generateRbfMat(p,cntrs,nodes, inUV);
   D.gemm(rbfMatB, rbfInvA, 1.0, 0.0);
 }
 
@@ -284,19 +287,22 @@ void GRbf::evalRbfDer(int p,
 		     const fullMatrix<double> &cntrs,
 		     const fullMatrix<double> &nodes,
 		     const fullMatrix<double> &fValues, 
-		     fullMatrix<double> &fApprox) {
+		      fullMatrix<double> &fApprox, 
+		      int inUV) {
 
   fApprox.resize(nodes.size1(),fValues.size2());
   fullMatrix<double> D;
-  RbfOp(p,cntrs,nodes,D);
+  RbfOp(p,cntrs,nodes,D, inUV);
   fApprox.gemm(D,fValues, 1.0, 0.0);
 
 }
 
-void GRbf::computeEpsilon(const fullMatrix<double> &cntrs, fullVector<double> &epsilon){
+void GRbf::computeEpsilon(const fullMatrix<double> &cntrs, fullVector<double> &epsilon, 
+			  int inUV){
 
   epsilon.resize(nbNodes*3);
-  epsilon.setAll(ep_scalar);
+  if (inUV) epsilon.setAll(epsilonUV);
+  epsilon.setAll(epsilonXYZ);
   
   if (variableShapeParam) {
 
@@ -342,7 +348,7 @@ void GRbf::setup_level_set(const fullMatrix<double> &cntrs,
     for (int j=0;j<3 ; ++j){
       level_set_nodes(i,j) = cntrs(i,j);
       level_set_nodes(i+numNodes,j) = cntrs(i,j)-delta*normals(i,j);
-      level_set_nodes(i+2*numNodes,j) = cntrs(i,j)+delta*normals(i,j);
+      level_set_nodes(i+2*numNodes,j) = cntrs(i,j)+delta*normals(i,j);  
     }
     level_set_funvals(i,0) = 0.0;
     level_set_funvals(i+numNodes,0) = -1;
@@ -603,20 +609,12 @@ void GRbf::solveHarmonicMap(fullMatrix<double> Oper,
   int nb = Oper.size2(); 
   UV.resize(nb,2);
 
-  fullMatrix<double> dirichletBC(ordered.size(),2);
-  for(unsigned int i = 0; i < ordered.size(); i++){
-    MVertex *v = ordered[i];
-    std::map<MVertex*, int>::iterator itm = _mapV.find(v);
-    const double theta = 2 * M_PI * coords[i];
-    dirichletBC(i,0) = itm->second;
-    dirichletBC(i,1) = theta;
-  }
-
   fullMatrix<double> F(nb,2);
   F.scale(0.0);
   for (int i=0; i < ordered.size(); i++){
-    int iFix = (int)dirichletBC(i,0);
-    double theta = dirichletBC(i,1);
+    std::map<MVertex*, int>::iterator itm = _mapV.find(ordered[i]);
+    double theta = 2 * M_PI * coords[i];
+    int iFix = itm->second;
     for (int j=0;j<nb ; ++j) Oper(iFix,j) = 0.0;
     Oper(iFix,iFix) = 1.0;
     F(iFix,0) = cos(theta);
@@ -626,17 +624,26 @@ void GRbf::solveHarmonicMap(fullMatrix<double> Oper,
   Oper.invertInPlace();
   Oper.mult(F,UV);
 
+  //ANN UVtree + dist_min
+ double dist_min = 1.e6;
 #if defined (HAVE_ANN)
   UVnodes = annAllocPts(nbNodes, 3);
   for(int i = 0; i < nbNodes; i++){
     UVnodes[i][0] = UV(i,0); 
     UVnodes[i][1] = UV(i,1); 
     UVnodes[i][2] = 0.0; 
+    for(int j = i+1; j < nbNodes; j++){
+      double dist = sqrt((UV(i,0)-UV(j,0))*(UV(i,0)-UV(j,0))+
+			 (UV(i,1)-UV(j,1))*(UV(i,1)-UV(j,1)));
+      if (dist<dist_min) dist_min = dist;
+    }
   }
   UVkdtree = new ANNkd_tree(UVnodes, nbNodes, 3);
   index = new ANNidx[num_neighbours];
   dist = new ANNdist[num_neighbours];
 #endif
+  epsilonUV = 0.5/dist_min;
+  deltaUV = 0.6*dist_min;
 
   //fill rbf_param
   std::map<MVertex*, int>::iterator itm = _mapV.begin();
@@ -728,7 +735,7 @@ void GRbf::UVStoXYZ_global(const double  u_eval, const double v_eval,
   
 }
 
-void GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
+bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
 		   double &XX, double &YY, double &ZZ, 
 		   SVector3 &dXdu, SVector3& dXdv){
 
@@ -736,6 +743,7 @@ void GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
   //Thus in total, we're working with '3*num_neighbours' nodes
   //Say that the vector 'index' gives us the indices of the closest points
   //TO FILL IN
+  bool converged = true;
 
 #if defined (HAVE_ANN)
    double uvw[3] = { u_eval, v_eval, 0.0 };
@@ -753,15 +761,16 @@ void GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
     //THE LOCAL UVS
     u_vec(i,0) = UV(index[i],0);
     u_vec(i,1) = UV(index[i],1);
-    u_vec(i,2) = surfInterp(index[i],0);
+    u_vec(i,2) = 0.0;
 
     u_vec(i+num_neighbours,0) = UV(index[i]+nbNodes,0);
     u_vec(i+num_neighbours,1) = UV(index[i]+nbNodes,1);
-    u_vec(i+num_neighbours,2) = surfInterp(index[i]+nbNodes,0);
+    u_vec(i+num_neighbours,2) = surfInterp(index[i]+nbNodes,0)*deltaUV;
 
     u_vec(i+2*num_neighbours,0) = UV(index[i]+2*nbNodes,0);
     u_vec(i+2*num_neighbours,1) = UV(index[i]+2*nbNodes,1);
-    u_vec(i+2*num_neighbours,2) = surfInterp(index[i]+2*nbNodes,0);
+    u_vec(i+2*num_neighbours,2) = surfInterp(index[i]+2*nbNodes,0)*deltaUV;
+
 
     //THE LOCAL XYZ
     xyz_local(i,0) = extendedX(index[i],0);
@@ -784,7 +793,13 @@ void GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
   u_vec_eval(0,2) = 0.0;
 
   //we will use a local interpolation to find the corresponding XYZ point to (u_eval,v_eval).
-  evalRbfDer(0, u_vec, u_vec_eval,xyz_local, nodes_eval);
+  evalRbfDer(0, u_vec, u_vec_eval,xyz_local, nodes_eval, 1);
+  //printf("nodes eval =%g %g %g \n", nodes_eval(0,0), nodes_eval(0,1), nodes_eval(0,2));
+  //exit(1);
+
+  // nodes_eval(0,0) = extendedX(index[0],0); 
+  // nodes_eval(0,1) = extendedX(index[0],1); 
+  // nodes_eval(0,2) = extendedX(index[0],2);
 
   u_temp(0,0)  = u_eval;
   u_temp(0,1)  = v_eval;
@@ -793,7 +808,7 @@ void GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
   int incr = 0;
   double norm_s = 0.0;
   fullMatrix<double> Jac(3,3);
-  while(norm_s <5 && incr < 5){
+  while(norm_s <5 && incr < 10){
 
     // Find the entries of the m Jacobians
     evalRbfDer(1,xyz_local,nodes_eval,u_vec,ux);
@@ -822,14 +837,16 @@ void GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
 
     incr++;
   }  
-  if (norm_s < 5 )
-    printf("Newton not converged for point (uv)=(%g,%g -> norm_s =%g )\n", u_eval, v_eval, norm_s);
-  
+  if (norm_s < 5 ){
+    printf("Newton not converged for point (uv)=(%g,%g -> norm_s =%g ) XYZ =%g %g %g \n", u_eval, v_eval, norm_s, nodes_eval(0,0), nodes_eval(0,1), nodes_eval(0,2));
+    converged = false;
+  }
   XX = nodes_eval(0,0);
   YY = nodes_eval(0,1);
   ZZ = nodes_eval(0,2);
   dXdu = SVector3(Jac(0,0), Jac(1,0), Jac(2,0));
   dXdv = SVector3(Jac(0,1), Jac(1,1), Jac(2,1));
  
+  return converged;
 }
 
