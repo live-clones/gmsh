@@ -499,6 +499,57 @@ void GRbf::RbfLapSurface_local_CPM(bool isLow,
   }
  }
 
+// void GRbf::RbfLapSurface_global_CPM_high(const fullMatrix<double> &cntrs,
+// 					const fullMatrix<double> &normals,
+// 					fullMatrix<double> &Oper){
+
+//   int numNodes = cntrs.size1();
+//   int nnTot = 3*numNodes;
+//   Oper.resize(nnTot,nnTot);
+
+//   fullMatrix<double> sx, sy, sz, sxx, sxy, sxz,syy, syz, szz; 
+//   fullMatrix<double> Dx, Dy, Dz, Dxx, Dxy, Dxz, Dyy, Dyz, Dzz, Lap, extX, surf; 
+
+//   setup_level_set(cntrs,normals,extX,surf);
+//   if (!isLocal) extendedX = extX;
+//   if (!isLocal) surfInterp = surf;
+
+//   // Find derivatives of the surface interpolant
+//   evalRbfDer(1,extX,cntrs,surf,sx);
+//   evalRbfDer(2,extX,cntrs,surf,sy);
+//   evalRbfDer(3,extX,cntrs,surf,sz);
+//   evalRbfDer(11,extX,cntrs,surf,sxx);
+//   evalRbfDer(12,extX,cntrs,surf,sxy);
+//   evalRbfDer(13,extX,cntrs,surf,sxz);
+//   evalRbfDer(22,extX,cntrs,surf,syy);
+//   evalRbfDer(23,extX,cntrs,surf,syz);
+//   evalRbfDer(33,extX,cntrs,surf,szz);
+	
+//   // Finds differentiation matrices
+//   RbfOp(1,extX,cntrs,Dx);
+//   RbfOp(2,extX,cntrs,Dy);
+//   RbfOp(3,extX,cntrs,Dz);
+//   RbfOp(11,extX,cntrs,Dxx);
+//   RbfOp(12,extX,cntrs,Dxy);
+//   RbfOp(13,extX,cntrs,Dxz);
+//   RbfOp(22,extX,cntrs,Dyy);
+//   RbfOp(23,extX,cntrs,Dyz);
+//   RbfOp(33,extX,cntrs,Dzz);
+//   RbfOp(222,extX,cntrs,Lap);
+
+//   // Fills up the operator matrix
+//   for (int i=0;i<numNodes ; ++i){
+//     for (int j=0;j<nnTot ; ++j){
+//       Oper(i,j) = Lap(i,j);
+//       Oper(i+numNodes,j)=sx(i,0)*Dx(i,j)+sy(i,0)*Dy(i,j)+sz(i,0)*Dz(i,j);
+//       Oper(i+2*numNodes,j)=sx(i,0)*sx(i,0)*Dxx(i,j)+sy(i,0)*sy(i,0)*Dyy(i,j)+sz(i,0)*sz(i,0)*Dzz(i,j)+2*sx(i,0)*sy(i,0)*Dxy(i,j)+2*sx(i,0)*sz(i,0)*Dxz(i,j)+2*sy(i,0)*sz(i,0)*Dyz(i,j)+(sx(i,0)*sxx(i,0)+sy(i,0)*sxy(i,0)+sz(i,0)*sxz(i,0))*Dx(i,j)+(sx(i,0)*sxy(i,0)+sy(i,0)*syy(i,0)+sz(i,0)*syz(i,0))*Dy(i,j)+(sx(i,0)*sxz(i,0)+sy(i,0)*syz(i,0)+sz(i,0)*szz(i,0))*Dz(i,j);
+//     }
+//   }
+
+// }
+
+
+//NEW METHOD #1 CPM GLOBAL HIGH
 void GRbf::RbfLapSurface_global_CPM_high(const fullMatrix<double> &cntrs,
 					const fullMatrix<double> &normals,
 					fullMatrix<double> &Oper){
@@ -508,7 +559,7 @@ void GRbf::RbfLapSurface_global_CPM_high(const fullMatrix<double> &cntrs,
   Oper.resize(nnTot,nnTot);
 
   fullMatrix<double> sx, sy, sz, sxx, sxy, sxz,syy, syz, szz; 
-  fullMatrix<double> Dx, Dy, Dz, Dxx, Dxy, Dxz, Dyy, Dyz, Dzz, Lap, extX, surf; 
+  fullMatrix<double> A, Ax, Ay, Az, Axx, Axy, Axz, Ayy, Ayz, Azz, Alap, AOper, extX, surf; 
 
   setup_level_set(cntrs,normals,extX,surf);
   if (!isLocal) extendedX = extX;
@@ -525,28 +576,92 @@ void GRbf::RbfLapSurface_global_CPM_high(const fullMatrix<double> &cntrs,
   evalRbfDer(23,extX,cntrs,surf,syz);
   evalRbfDer(33,extX,cntrs,surf,szz);
 	
+  szz.print("szz");
   // Finds differentiation matrices
-  RbfOp(1,extX,cntrs,Dx);
-  RbfOp(2,extX,cntrs,Dy);
-  RbfOp(3,extX,cntrs,Dz);
-  RbfOp(11,extX,cntrs,Dxx);
-  RbfOp(12,extX,cntrs,Dxy);
-  RbfOp(13,extX,cntrs,Dxz);
-  RbfOp(22,extX,cntrs,Dyy);
-  RbfOp(23,extX,cntrs,Dyz);
-  RbfOp(33,extX,cntrs,Dzz);
-  RbfOp(222,extX,cntrs,Lap);
+  A=generateRbfMat(0,extX,extX,0);
+  Ax=generateRbfMat(1,extX,cntrs,0);
+  Ay=generateRbfMat(2,extX,cntrs,0);
+  Az=generateRbfMat(3,extX,cntrs,0);
+  Axx=generateRbfMat(11,extX,cntrs,0);
+  Axy=generateRbfMat(12,extX,cntrs,0);
+  Axz=generateRbfMat(13,extX,cntrs,0);
+  Ayy=generateRbfMat(22,extX,cntrs,0);
+  Ayz=generateRbfMat(23,extX,cntrs,0);
+  Azz=generateRbfMat(33,extX,cntrs,0);
+  Alap=generateRbfMat(222,extX,cntrs,0);
 
   // Fills up the operator matrix
   for (int i=0;i<numNodes ; ++i){
     for (int j=0;j<nnTot ; ++j){
-      Oper(i,j) = Lap(i,j);
-      Oper(i+numNodes,j)=sx(i,0)*Dx(i,j)+sy(i,0)*Dy(i,j)+sz(i,0)*Dz(i,j);
-      Oper(i+2*numNodes,j)=sx(i,0)*sx(i,0)*Dxx(i,j)+sy(i,0)*sy(i,0)*Dyy(i,j)+sz(i,0)*sz(i,0)*Dzz(i,j)+2*sx(i,0)*sy(i,0)*Dxy(i,j)+2*sx(i,0)*sz(i,0)*Dxz(i,j)+2*sy(i,0)*sz(i,0)*Dyz(i,j)+(sx(i,0)*sxx(i,0)+sy(i,0)*sxy(i,0)+sz(i,0)*sxz(i,0))*Dx(i,j)+(sx(i,0)*sxy(i,0)+sy(i,0)*syy(i,0)+sz(i,0)*syz(i,0))*Dy(i,j)+(sx(i,0)*sxz(i,0)+sy(i,0)*syz(i,0)+sz(i,0)*szz(i,0))*Dz(i,j);
+      AOper(i,j) = Alap(i,j);
+      AOper(i+numNodes,j)=sx(i,0)*Ax(i,j)+sy(i,0)*Ay(i,j)+sz(i,0)*Az(i,j);
+      AOper(i+2*numNodes,j)=sx(i,0)*sx(i,0)*Axx(i,j)+sy(i,0)*sy(i,0)*Ayy(i,j)+sz(i,0)*sz(i,0)*Azz(i,j)+2*sx(i,0)*sy(i,0)*Axy(i,j)+2*sx(i,0)*sz(i,0)*Axz(i,j)+2*sy(i,0)*sz(i,0)*Ayz(i,j)+(sx(i,0)*sxx(i,0)+sy(i,0)*sxy(i,0)+sz(i,0)*sxz(i,0))*Ax(i,j)+(sx(i,0)*sxy(i,0)+sy(i,0)*syy(i,0)+sz(i,0)*syz(i,0))*Ay(i,j)+(sx(i,0)*sxz(i,0)+sy(i,0)*syz(i,0)+sz(i,0)*szz(i,0))*Az(i,j);
     }
   }
-
+  A.invertInPlace();
+  Oper.gemm(AOper, A, 1.0, 0.0);
 }
+
+
+// NEW METHOD #2 CPM GLOBAL HIGH
+// Produces a nxn differentiation matrix (like the projection method)
+// So the local method for this is the local projection method
+// void GRbf::RbfLapSurface_global_CPM_high(const fullMatrix<double> &cntrs,
+// 					const fullMatrix<double> &normals,
+// 					fullMatrix<double> &Oper){
+
+//   int numNodes = cntrs.size1();
+//   int nnTot = 3*numNodes;
+//   Oper.resize(nnTot,nnTot);
+
+//   fullMatrix<double> sx, sy, sz, sxx, sxy, sxz,syy, syz, szz; 
+//   fullMatrix<double> A, Ax, Ay, Az, Axx, Axy, Axz, Ayy, Ayz, Azz, Alap, AOper, Temp, extX, surf; 
+
+//   setup_level_set(cntrs,normals,extX,surf);
+//   if (!isLocal) extendedX = extX;
+//   if (!isLocal) surfInterp = surf;
+
+//   // Find derivatives of the surface interpolant
+//   evalRbfDer(1,extX,cntrs,surf,sx);
+//   evalRbfDer(2,extX,cntrs,surf,sy);
+//   evalRbfDer(3,extX,cntrs,surf,sz);
+//   evalRbfDer(11,extX,cntrs,surf,sxx);
+//   evalRbfDer(12,extX,cntrs,surf,sxy);
+//   evalRbfDer(13,extX,cntrs,surf,sxz);
+//   evalRbfDer(22,extX,cntrs,surf,syy);
+//   evalRbfDer(23,extX,cntrs,surf,syz);
+//   evalRbfDer(33,extX,cntrs,surf,szz);
+	
+//   // Finds differentiation matrices
+//   A=generateRbfMat(0,extX,extX,0);
+//   Ax=generateRbfMat(1,extX,cntrs,0);
+//   Ay=generateRbfMat(2,extX,cntrs,0);
+//   Az=generateRbfMat(3,extX,cntrs,0);
+//   Axx=generateRbfMat(11,extX,cntrs,0);
+//   Axy=generateRbfMat(12,extX,cntrs,0);
+//   Axz=generateRbfMat(13,extX,cntrs,0);
+//   Ayy=generateRbfMat(22,extX,cntrs,0);
+//   Ayz=generateRbfMat(23,extX,cntrs,0);
+//   Azz=generateRbfMat(33,extX,cntrs,0);
+//   Alap=generateRbfMat(222,extX,cntrs,0);
+
+//   // Fills up the operator matrix
+//   for (int i=0;i<numNodes ; ++i){
+//     for (int j=0;j<nnTot ; ++j){
+//       AOper(i,j) = A(i,j);
+//       AOper(i+numNodes,j)=sx(i,0)*Ax(i,j)+sy(i,0)*Ay(i,j)+sz(i,0)*Az(i,j);
+//       AOper(i+2*numNodes,j)=sx(i,0)*sx(i,0)*Axx(i,j)+sy(i,0)*sy(i,0)*Ayy(i,j)+sz(i,0)*sz(i,0)*Azz(i,j)+2*sx(i,0)*sy(i,0)*Axy(i,j)+2*sx(i,0)*sz(i,0)*Axz(i,j)+2*sy(i,0)*sz(i,0)*Ayz(i,j)+(sx(i,0)*sxx(i,0)+sy(i,0)*sxy(i,0)+sz(i,0)*sxz(i,0))*Ax(i,j)+(sx(i,0)*sxy(i,0)+sy(i,0)*syy(i,0)+sz(i,0)*syz(i,0))*Ay(i,j)+(sx(i,0)*sxz(i,0)+sy(i,0)*syz(i,0)+sz(i,0)*szz(i,0))*Az(i,j);
+//     }
+//   }
+//   AOper.invertInPlace();
+//   Temp.gemm(Alap, AOper, 1.0, 0.0);
+
+//   for (int i=0;i<numNodes ; ++i){
+//     for (int j=0;j<numNodes ; ++j){
+//       Oper(i,j) = Temp(i,j);
+//     }
+//   }
+// }
 
 void GRbf::RbfLapSurface_global_CPM_low(const fullMatrix<double> &cntrs,
 				       const fullMatrix<double> &normals,
@@ -657,9 +772,8 @@ void GRbf::solveHarmonicMap(fullMatrix<double> Oper,
 
 void GRbf::UVStoXYZ_global(const double  u_eval, const double v_eval,
 			  double &XX, double &YY, double &ZZ, 
-			  SVector3 &dXdu, SVector3& dXdv) 
+			  SVector3 &dXdu, SVector3& dXdv)
 {
-
   int numNodes = 3*nbNodes; //WARNING: THIS IS KO FOR PROJECTION ??
   double norm_s = 0.0;
   fullMatrix<double> u_temp(1,3);
@@ -673,7 +787,7 @@ void GRbf::UVStoXYZ_global(const double  u_eval, const double v_eval,
     u_vec(i,1) = UV(i,1);
     u_vec(i,2) = surfInterp(i,0);
   }
- 
+
   // u_vec_eval = [u_eval v_eval s_eval]
   fullMatrix<double> u_vec_eval(1, 3);
   u_vec_eval(0,0) = u_eval;
@@ -683,13 +797,15 @@ void GRbf::UVStoXYZ_global(const double  u_eval, const double v_eval,
   //Start with the closest point (u,v)
 #if defined (HAVE_ANN)
   double uvw[3] = { u_eval, v_eval, 0.0 };
-  UVkdtree->annkSearch(uvw, num_neighbours, index, dist);
+  ANNidxArray index1; 
+  ANNdistArray dist1; 
+  UVkdtree->annkSearch(uvw, 1, index1, dist1);
 #endif
-  nodes_eval(0,0) = extendedX(index[0],0);
-  nodes_eval(0,1) = extendedX(index[0],1);
-  nodes_eval(0,2) = extendedX(index[0],2); 
-  u_temp(0,0)  = UV(index[0],0);
-  u_temp(0,1)  = UV(index[0],1);
+  nodes_eval(0,0) = extendedX(index1[0],0);
+  nodes_eval(0,1) = extendedX(index1[0],1);
+  nodes_eval(0,2) = extendedX(index1[0],2); 
+  u_temp(0,0)  = UV(index1[0],0);
+  u_temp(0,1)  = UV(index1[0],1);
   u_temp(0,2)  = 0.0;
 
   int incr =0;
@@ -725,19 +841,32 @@ void GRbf::UVStoXYZ_global(const double  u_eval, const double v_eval,
   }  
   if (norm_s < 5 )
     printf("Newton not converged for point (uv)=(%g,%g -> norm_s =%g )\n", u_eval, v_eval, norm_s);
-  
+
   XX = nodes_eval(0,0);
   YY = nodes_eval(0,1);
   ZZ = nodes_eval(0,2);
 
   dXdu = SVector3(Jac(0,0), Jac(1,0), Jac(2,0));
   dXdv = SVector3(Jac(0,1), Jac(1,1), Jac(2,1));
+
+  delete [] index1;
+  delete [] dist1;
   
 }
 
 bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
 		   double &XX, double &YY, double &ZZ, 
 		   SVector3 &dXdu, SVector3& dXdv){
+
+
+  fullMatrix<double> vec(3*nbNodes,3);
+  for (int i=0; i<3*nbNodes;i++){
+    vec(i,0) =  normals(i,0);
+    vec(i,1) =  normals(i,1);
+    vec(i,2) =  normals(i,2);
+    printf("%g %g %g\n", vec(i,0),vec(i,1),vec(i,2));
+  }
+  exit(1);
 
   //Finds the U,V,S (in the 0-level set) that are the 'num_neighbours' closest to u_eval and v_eval.
   //Thus in total, we're working with '3*num_neighbours' nodes
@@ -747,13 +876,16 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
 
 #if defined (HAVE_ANN)
    double uvw[3] = { u_eval, v_eval, 0.0 };
-   UVkdtree->annkSearch(uvw, num_neighbours, index, dist);
+   ANNidxArray index2 = new ANNidx[num_neighbours];
+   ANNdistArray dist2 = new ANNdist[num_neighbours];
+   UVkdtree->annkSearch(uvw, num_neighbours, index2, dist2);
 #endif
 
   fullMatrix<double> ux(1,3), uy(1,3), uz(1,3), u_temp(1,3);
   fullMatrix<double> nodes_eval(1,3);
   fullMatrix<double> u_vec(3*num_neighbours,3); 
   fullMatrix<double> xyz_local(3*num_neighbours,3); 
+
 
   // u_vec = [u v s] : These are the u,v,s that are on the surface *and* outside of it also! 
   for (int i = 0; i < num_neighbours; i++){
@@ -773,17 +905,17 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
 
 
     //THE LOCAL XYZ
-    xyz_local(i,0) = extendedX(index[i],0);
-    xyz_local(i,1) = extendedX(index[i],1);
-    xyz_local(i,2) = extendedX(index[i],2);
+    xyz_local(i,0) = extendedX(index2[i],0);
+    xyz_local(i,1) = extendedX(index2[i],1);
+    xyz_local(i,2) = extendedX(index2[i],2);
 
-    xyz_local(i+num_neighbours,0) = extendedX(index[i]+nbNodes,0); 
-    xyz_local(i+num_neighbours,1) = extendedX(index[i]+nbNodes,1);
-    xyz_local(i+num_neighbours,2) = extendedX(index[i]+nbNodes,2);
+    xyz_local(i+num_neighbours,0) = extendedX(index2[i]+nbNodes,0); 
+    xyz_local(i+num_neighbours,1) = extendedX(index2[i]+nbNodes,1);
+    xyz_local(i+num_neighbours,2) = extendedX(index2[i]+nbNodes,2);
 
-    xyz_local(i+2*num_neighbours,0) = extendedX(index[i]+2*nbNodes,0);
-    xyz_local(i+2*num_neighbours,1) = extendedX(index[i]+2*nbNodes,1);
-    xyz_local(i+2*num_neighbours,2) = extendedX(index[i]+2*nbNodes,2);
+    xyz_local(i+2*num_neighbours,0) = extendedX(index2[i]+2*nbNodes,0);
+    xyz_local(i+2*num_neighbours,1) = extendedX(index2[i]+2*nbNodes,1);
+    xyz_local(i+2*num_neighbours,2) = extendedX(index2[i]+2*nbNodes,2);
 
   }
   // u_vec_eval = [u_eval v_eval s_eval]
@@ -846,6 +978,9 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
   ZZ = nodes_eval(0,2);
   dXdu = SVector3(Jac(0,0), Jac(1,0), Jac(2,0));
   dXdv = SVector3(Jac(0,1), Jac(1,1), Jac(2,1));
+
+   delete [] index2;
+   delete [] dist2;
  
   return converged;
 }
