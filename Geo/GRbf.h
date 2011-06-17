@@ -132,7 +132,7 @@ class GRbf {
 		 const fullMatrix<double> &node,
 		 fullMatrix<double> &curvature);
 
- void UVStoXYZ_global(const double u_eval, const double v_eval,
+  bool UVStoXYZ_global(const double u_eval, const double v_eval,
 		      double &XX, double &YY, double &ZZ, 
 		      SVector3 &dXdu, SVector3& dxdv);
 

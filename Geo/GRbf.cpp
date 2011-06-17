@@ -548,7 +548,6 @@ void GRbf::RbfLapSurface_local_CPM(bool isLow,
 
 // }
 
-
 //NEW METHOD #1 CPM GLOBAL HIGH
 void GRbf::RbfLapSurface_global_CPM_high(const fullMatrix<double> &cntrs,
 					const fullMatrix<double> &normals,
@@ -576,8 +575,7 @@ void GRbf::RbfLapSurface_global_CPM_high(const fullMatrix<double> &cntrs,
   evalRbfDer(23,extX,cntrs,surf,syz);
   evalRbfDer(33,extX,cntrs,surf,szz);
 	
-  szz.print("szz");
-  // Finds differentiation matrices
+   // Finds differentiation matrices
   A=generateRbfMat(0,extX,extX,0);
   Ax=generateRbfMat(1,extX,cntrs,0);
   Ay=generateRbfMat(2,extX,cntrs,0);
@@ -591,6 +589,7 @@ void GRbf::RbfLapSurface_global_CPM_high(const fullMatrix<double> &cntrs,
   Alap=generateRbfMat(222,extX,cntrs,0);
 
   // Fills up the operator matrix
+  AOper.resize(nnTot, nnTot);
   for (int i=0;i<numNodes ; ++i){
     for (int j=0;j<nnTot ; ++j){
       AOper(i,j) = Alap(i,j);
@@ -770,10 +769,13 @@ void GRbf::solveHarmonicMap(fullMatrix<double> Oper,
  
 }
 
-void GRbf::UVStoXYZ_global(const double  u_eval, const double v_eval,
+bool GRbf::UVStoXYZ_global(const double  u_eval, const double v_eval,
 			  double &XX, double &YY, double &ZZ, 
-			  SVector3 &dXdu, SVector3& dXdv)
+			  SVector3 &dXdu, SVector3& dXdv) 
 {
+
+  bool converged = true;
+
   int numNodes = 3*nbNodes; //WARNING: THIS IS KO FOR PROJECTION ??
   double norm_s = 0.0;
   fullMatrix<double> u_temp(1,3);
@@ -787,7 +789,7 @@ void GRbf::UVStoXYZ_global(const double  u_eval, const double v_eval,
     u_vec(i,1) = UV(i,1);
     u_vec(i,2) = surfInterp(i,0);
   }
-
+ 
   // u_vec_eval = [u_eval v_eval s_eval]
   fullMatrix<double> u_vec_eval(1, 3);
   u_vec_eval(0,0) = u_eval;
@@ -797,15 +799,13 @@ void GRbf::UVStoXYZ_global(const double  u_eval, const double v_eval,
   //Start with the closest point (u,v)
 #if defined (HAVE_ANN)
   double uvw[3] = { u_eval, v_eval, 0.0 };
-  ANNidxArray index1; 
-  ANNdistArray dist1; 
-  UVkdtree->annkSearch(uvw, 1, index1, dist1);
+  UVkdtree->annkSearch(uvw, num_neighbours, index, dist);
 #endif
-  nodes_eval(0,0) = extendedX(index1[0],0);
-  nodes_eval(0,1) = extendedX(index1[0],1);
-  nodes_eval(0,2) = extendedX(index1[0],2); 
-  u_temp(0,0)  = UV(index1[0],0);
-  u_temp(0,1)  = UV(index1[0],1);
+  nodes_eval(0,0) = extendedX(index[0],0);
+  nodes_eval(0,1) = extendedX(index[0],1);
+  nodes_eval(0,2) = extendedX(index[0],2); 
+  u_temp(0,0)  = UV(index[0],0);
+  u_temp(0,1)  = UV(index[0],1);
   u_temp(0,2)  = 0.0;
 
   int incr =0;
@@ -839,8 +839,10 @@ void GRbf::UVStoXYZ_global(const double  u_eval, const double v_eval,
 
     incr++;
   }  
-  if (norm_s < 5 )
+  if (norm_s < 5 ){
     printf("Newton not converged for point (uv)=(%g,%g -> norm_s =%g )\n", u_eval, v_eval, norm_s);
+    converged = false;
+  }
 
   XX = nodes_eval(0,0);
   YY = nodes_eval(0,1);
@@ -849,24 +851,13 @@ void GRbf::UVStoXYZ_global(const double  u_eval, const double v_eval,
   dXdu = SVector3(Jac(0,0), Jac(1,0), Jac(2,0));
   dXdv = SVector3(Jac(0,1), Jac(1,1), Jac(2,1));
 
-  delete [] index1;
-  delete [] dist1;
-  
+  return converged;
+
 }
 
 bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
 		   double &XX, double &YY, double &ZZ, 
 		   SVector3 &dXdu, SVector3& dXdv){
-
-
-  fullMatrix<double> vec(3*nbNodes,3);
-  for (int i=0; i<3*nbNodes;i++){
-    vec(i,0) =  normals(i,0);
-    vec(i,1) =  normals(i,1);
-    vec(i,2) =  normals(i,2);
-    printf("%g %g %g\n", vec(i,0),vec(i,1),vec(i,2));
-  }
-  exit(1);
 
   //Finds the U,V,S (in the 0-level set) that are the 'num_neighbours' closest to u_eval and v_eval.
   //Thus in total, we're working with '3*num_neighbours' nodes
@@ -876,16 +867,13 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
 
 #if defined (HAVE_ANN)
    double uvw[3] = { u_eval, v_eval, 0.0 };
-   ANNidxArray index2 = new ANNidx[num_neighbours];
-   ANNdistArray dist2 = new ANNdist[num_neighbours];
-   UVkdtree->annkSearch(uvw, num_neighbours, index2, dist2);
+   UVkdtree->annkSearch(uvw, num_neighbours, index, dist);
 #endif
 
   fullMatrix<double> ux(1,3), uy(1,3), uz(1,3), u_temp(1,3);
   fullMatrix<double> nodes_eval(1,3);
   fullMatrix<double> u_vec(3*num_neighbours,3); 
   fullMatrix<double> xyz_local(3*num_neighbours,3); 
-
 
   // u_vec = [u v s] : These are the u,v,s that are on the surface *and* outside of it also! 
   for (int i = 0; i < num_neighbours; i++){
@@ -905,17 +893,17 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
 
 
     //THE LOCAL XYZ
-    xyz_local(i,0) = extendedX(index2[i],0);
-    xyz_local(i,1) = extendedX(index2[i],1);
-    xyz_local(i,2) = extendedX(index2[i],2);
+    xyz_local(i,0) = extendedX(index[i],0);
+    xyz_local(i,1) = extendedX(index[i],1);
+    xyz_local(i,2) = extendedX(index[i],2);
 
-    xyz_local(i+num_neighbours,0) = extendedX(index2[i]+nbNodes,0); 
-    xyz_local(i+num_neighbours,1) = extendedX(index2[i]+nbNodes,1);
-    xyz_local(i+num_neighbours,2) = extendedX(index2[i]+nbNodes,2);
+    xyz_local(i+num_neighbours,0) = extendedX(index[i]+nbNodes,0); 
+    xyz_local(i+num_neighbours,1) = extendedX(index[i]+nbNodes,1);
+    xyz_local(i+num_neighbours,2) = extendedX(index[i]+nbNodes,2);
 
-    xyz_local(i+2*num_neighbours,0) = extendedX(index2[i]+2*nbNodes,0);
-    xyz_local(i+2*num_neighbours,1) = extendedX(index2[i]+2*nbNodes,1);
-    xyz_local(i+2*num_neighbours,2) = extendedX(index2[i]+2*nbNodes,2);
+    xyz_local(i+2*num_neighbours,0) = extendedX(index[i]+2*nbNodes,0);
+    xyz_local(i+2*num_neighbours,1) = extendedX(index[i]+2*nbNodes,1);
+    xyz_local(i+2*num_neighbours,2) = extendedX(index[i]+2*nbNodes,2);
 
   }
   // u_vec_eval = [u_eval v_eval s_eval]
@@ -978,9 +966,6 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
   ZZ = nodes_eval(0,2);
   dXdu = SVector3(Jac(0,0), Jac(1,0), Jac(2,0));
   dXdv = SVector3(Jac(0,1), Jac(1,1), Jac(2,1));
-
-   delete [] index2;
-   delete [] dist2;
  
   return converged;
 }
