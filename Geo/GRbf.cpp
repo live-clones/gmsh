@@ -243,9 +243,9 @@ fullMatrix<double> GRbf::generateRbfMat(int p,
   if (inUV) eps = epsilonUV;
   for (int i = 0; i < m; i++) {
     for (int j = 0; j < n; j++) {
-      double dx = -nodes2(i,0)+nodes1(j,0);
-      double dy = -nodes2(i,1)+nodes1(j,1);
-      double dz = -nodes2(i,2)+nodes1(j,2);
+      double dx = nodes2(i,0)-nodes1(j,0);
+      double dy = nodes2(i,1)-nodes1(j,1);
+      double dz = nodes2(i,2)-nodes1(j,2);
       rbfMat(i,j) = evalRadialFnDer(p,dx,dy,dz,eps);
     }
   }
@@ -499,60 +499,10 @@ void GRbf::RbfLapSurface_local_CPM(bool isLow,
   }
  }
 
-// void GRbf::RbfLapSurface_global_CPM_high(const fullMatrix<double> &cntrs,
-// 					const fullMatrix<double> &normals,
-// 					fullMatrix<double> &Oper){
-
-//   int numNodes = cntrs.size1();
-//   int nnTot = 3*numNodes;
-//   Oper.resize(nnTot,nnTot);
-
-//   fullMatrix<double> sx, sy, sz, sxx, sxy, sxz,syy, syz, szz; 
-//   fullMatrix<double> Dx, Dy, Dz, Dxx, Dxy, Dxz, Dyy, Dyz, Dzz, Lap, extX, surf; 
-
-//   setup_level_set(cntrs,normals,extX,surf);
-//   if (!isLocal) extendedX = extX;
-//   if (!isLocal) surfInterp = surf;
-
-//   // Find derivatives of the surface interpolant
-//   evalRbfDer(1,extX,cntrs,surf,sx);
-//   evalRbfDer(2,extX,cntrs,surf,sy);
-//   evalRbfDer(3,extX,cntrs,surf,sz);
-//   evalRbfDer(11,extX,cntrs,surf,sxx);
-//   evalRbfDer(12,extX,cntrs,surf,sxy);
-//   evalRbfDer(13,extX,cntrs,surf,sxz);
-//   evalRbfDer(22,extX,cntrs,surf,syy);
-//   evalRbfDer(23,extX,cntrs,surf,syz);
-//   evalRbfDer(33,extX,cntrs,surf,szz);
-	
-//   // Finds differentiation matrices
-//   RbfOp(1,extX,cntrs,Dx);
-//   RbfOp(2,extX,cntrs,Dy);
-//   RbfOp(3,extX,cntrs,Dz);
-//   RbfOp(11,extX,cntrs,Dxx);
-//   RbfOp(12,extX,cntrs,Dxy);
-//   RbfOp(13,extX,cntrs,Dxz);
-//   RbfOp(22,extX,cntrs,Dyy);
-//   RbfOp(23,extX,cntrs,Dyz);
-//   RbfOp(33,extX,cntrs,Dzz);
-//   RbfOp(222,extX,cntrs,Lap);
-
-//   // Fills up the operator matrix
-//   for (int i=0;i<numNodes ; ++i){
-//     for (int j=0;j<nnTot ; ++j){
-//       Oper(i,j) = Lap(i,j);
-//       Oper(i+numNodes,j)=sx(i,0)*Dx(i,j)+sy(i,0)*Dy(i,j)+sz(i,0)*Dz(i,j);
-//       Oper(i+2*numNodes,j)=sx(i,0)*sx(i,0)*Dxx(i,j)+sy(i,0)*sy(i,0)*Dyy(i,j)+sz(i,0)*sz(i,0)*Dzz(i,j)+2*sx(i,0)*sy(i,0)*Dxy(i,j)+2*sx(i,0)*sz(i,0)*Dxz(i,j)+2*sy(i,0)*sz(i,0)*Dyz(i,j)+(sx(i,0)*sxx(i,0)+sy(i,0)*sxy(i,0)+sz(i,0)*sxz(i,0))*Dx(i,j)+(sx(i,0)*sxy(i,0)+sy(i,0)*syy(i,0)+sz(i,0)*syz(i,0))*Dy(i,j)+(sx(i,0)*sxz(i,0)+sy(i,0)*syz(i,0)+sz(i,0)*szz(i,0))*Dz(i,j);
-//     }
-//   }
-
-// }
-
 //NEW METHOD #1 CPM GLOBAL HIGH
 void GRbf::RbfLapSurface_global_CPM_high(const fullMatrix<double> &cntrs,
 					const fullMatrix<double> &normals,
 					fullMatrix<double> &Oper){
-
   int numNodes = cntrs.size1();
   int nnTot = 3*numNodes;
   Oper.resize(nnTot,nnTot);
@@ -602,65 +552,64 @@ void GRbf::RbfLapSurface_global_CPM_high(const fullMatrix<double> &cntrs,
 }
 
 
-// NEW METHOD #2 CPM GLOBAL HIGH
-// Produces a nxn differentiation matrix (like the projection method)
-// So the local method for this is the local projection method
-// void GRbf::RbfLapSurface_global_CPM_high(const fullMatrix<double> &cntrs,
-// 					const fullMatrix<double> &normals,
-// 					fullMatrix<double> &Oper){
+//NEW METHOD #2 CPM GLOBAL HIGH
+//Produces a nxn differentiation matrix (like the projection method)
+//So the local method for this is the local projection method
+void GRbf::RbfLapSurface_global_CPM_high_2(const fullMatrix<double> &cntrs,
+					const fullMatrix<double> &normals,
+					fullMatrix<double> &Oper){
 
-//   int numNodes = cntrs.size1();
-//   int nnTot = 3*numNodes;
-//   Oper.resize(nnTot,nnTot);
+  int numNodes = cntrs.size1();
+  int nnTot = 3*numNodes;
+  Oper.resize(numNodes,numNodes);
 
-//   fullMatrix<double> sx, sy, sz, sxx, sxy, sxz,syy, syz, szz; 
-//   fullMatrix<double> A, Ax, Ay, Az, Axx, Axy, Axz, Ayy, Ayz, Azz, Alap, AOper, Temp, extX, surf; 
+  fullMatrix<double> sx(numNodes,1), sy(numNodes,1), sz(numNodes,1), sxx(numNodes,1), sxy(numNodes,1), sxz(numNodes,1),syy(numNodes,1), syz(numNodes,1), szz(numNodes,1); 
+  fullMatrix<double> A(nnTot,nnTot), Ax(numNodes,nnTot), Ay(numNodes,nnTot), Az(numNodes,nnTot), Axx(numNodes,nnTot), Axy(numNodes,nnTot), Axz(numNodes,nnTot), Ayy(numNodes,nnTot), Ayz(numNodes,nnTot), Azz(numNodes,nnTot), Alap(numNodes,nnTot), AOper(nnTot,nnTot), Temp(numNodes,nnTot), extX(nnTot,3), surf(nnTot,1); 
 
-//   setup_level_set(cntrs,normals,extX,surf);
-//   if (!isLocal) extendedX = extX;
-//   if (!isLocal) surfInterp = surf;
+  setup_level_set(cntrs,normals,extX,surf);
+  if (!isLocal) extendedX = extX;
+  if (!isLocal) surfInterp = surf;
 
-//   // Find derivatives of the surface interpolant
-//   evalRbfDer(1,extX,cntrs,surf,sx);
-//   evalRbfDer(2,extX,cntrs,surf,sy);
-//   evalRbfDer(3,extX,cntrs,surf,sz);
-//   evalRbfDer(11,extX,cntrs,surf,sxx);
-//   evalRbfDer(12,extX,cntrs,surf,sxy);
-//   evalRbfDer(13,extX,cntrs,surf,sxz);
-//   evalRbfDer(22,extX,cntrs,surf,syy);
-//   evalRbfDer(23,extX,cntrs,surf,syz);
-//   evalRbfDer(33,extX,cntrs,surf,szz);
+  // Find derivatives of the surface interpolant
+  evalRbfDer(1,extX,cntrs,surf,sx);
+  evalRbfDer(2,extX,cntrs,surf,sy);
+  evalRbfDer(3,extX,cntrs,surf,sz);
+  evalRbfDer(11,extX,cntrs,surf,sxx);
+  evalRbfDer(12,extX,cntrs,surf,sxy);
+  evalRbfDer(13,extX,cntrs,surf,sxz);
+  evalRbfDer(22,extX,cntrs,surf,syy);
+  evalRbfDer(23,extX,cntrs,surf,syz);
+  evalRbfDer(33,extX,cntrs,surf,szz);
 	
-//   // Finds differentiation matrices
-//   A=generateRbfMat(0,extX,extX,0);
-//   Ax=generateRbfMat(1,extX,cntrs,0);
-//   Ay=generateRbfMat(2,extX,cntrs,0);
-//   Az=generateRbfMat(3,extX,cntrs,0);
-//   Axx=generateRbfMat(11,extX,cntrs,0);
-//   Axy=generateRbfMat(12,extX,cntrs,0);
-//   Axz=generateRbfMat(13,extX,cntrs,0);
-//   Ayy=generateRbfMat(22,extX,cntrs,0);
-//   Ayz=generateRbfMat(23,extX,cntrs,0);
-//   Azz=generateRbfMat(33,extX,cntrs,0);
-//   Alap=generateRbfMat(222,extX,cntrs,0);
+  // Finds differentiation matrices
+  A=generateRbfMat(0,extX,extX,0);
+  Ax=generateRbfMat(1,extX,cntrs,0);
+  Ay=generateRbfMat(2,extX,cntrs,0);
+  Az=generateRbfMat(3,extX,cntrs,0);
+  Axx=generateRbfMat(11,extX,cntrs,0);
+  Axy=generateRbfMat(12,extX,cntrs,0);
+  Axz=generateRbfMat(13,extX,cntrs,0);
+  Ayy=generateRbfMat(22,extX,cntrs,0);
+  Ayz=generateRbfMat(23,extX,cntrs,0);
+  Azz=generateRbfMat(33,extX,cntrs,0);
+  Alap=generateRbfMat(222,extX,cntrs,0);
 
-//   // Fills up the operator matrix
-//   for (int i=0;i<numNodes ; ++i){
-//     for (int j=0;j<nnTot ; ++j){
-//       AOper(i,j) = A(i,j);
-//       AOper(i+numNodes,j)=sx(i,0)*Ax(i,j)+sy(i,0)*Ay(i,j)+sz(i,0)*Az(i,j);
-//       AOper(i+2*numNodes,j)=sx(i,0)*sx(i,0)*Axx(i,j)+sy(i,0)*sy(i,0)*Ayy(i,j)+sz(i,0)*sz(i,0)*Azz(i,j)+2*sx(i,0)*sy(i,0)*Axy(i,j)+2*sx(i,0)*sz(i,0)*Axz(i,j)+2*sy(i,0)*sz(i,0)*Ayz(i,j)+(sx(i,0)*sxx(i,0)+sy(i,0)*sxy(i,0)+sz(i,0)*sxz(i,0))*Ax(i,j)+(sx(i,0)*sxy(i,0)+sy(i,0)*syy(i,0)+sz(i,0)*syz(i,0))*Ay(i,j)+(sx(i,0)*sxz(i,0)+sy(i,0)*syz(i,0)+sz(i,0)*szz(i,0))*Az(i,j);
-//     }
-//   }
-//   AOper.invertInPlace();
-//   Temp.gemm(Alap, AOper, 1.0, 0.0);
-
-//   for (int i=0;i<numNodes ; ++i){
-//     for (int j=0;j<numNodes ; ++j){
-//       Oper(i,j) = Temp(i,j);
-//     }
-//   }
-// }
+  // Fills up the operator matrix
+  for (int i=0;i<numNodes ; ++i){
+    for (int j=0;j<nnTot ; ++j){
+      AOper(i,j) = A(i,j);
+      AOper(i+numNodes,j)=sx(i,0)*Ax(i,j)+sy(i,0)*Ay(i,j)+sz(i,0)*Az(i,j);
+      AOper(i+2*numNodes,j)=sx(i,0)*sx(i,0)*Axx(i,j)+sy(i,0)*sy(i,0)*Ayy(i,j)+sz(i,0)*sz(i,0)*Azz(i,j)+2*sx(i,0)*sy(i,0)*Axy(i,j)+2*sx(i,0)*sz(i,0)*Axz(i,j)+2*sy(i,0)*sz(i,0)*Ayz(i,j)+(sx(i,0)*sxx(i,0)+sy(i,0)*sxy(i,0)+sz(i,0)*sxz(i,0))*Ax(i,j)+(sx(i,0)*sxy(i,0)+sy(i,0)*syy(i,0)+sz(i,0)*syz(i,0))*Ay(i,j)+(sx(i,0)*sxz(i,0)+sy(i,0)*syz(i,0)+sz(i,0)*szz(i,0))*Az(i,j);
+    }
+  }
+  AOper.invertInPlace();
+  Alap.mult(AOper,Temp);
+  for (int i=0;i<numNodes ; ++i){
+    for (int j=0;j<numNodes ; ++j){
+      Oper(i,j) = Temp(i,j);
+    }
+  }
+}
 
 void GRbf::RbfLapSurface_global_CPM_low(const fullMatrix<double> &cntrs,
 				       const fullMatrix<double> &normals,
@@ -719,7 +668,6 @@ void GRbf::solveHarmonicMap(fullMatrix<double> Oper,
 			   std::vector<MVertex*> ordered, 
 			    std::vector<double> coords, 
 			    std::map<MVertex*, SPoint3> &rbf_param){
-
   int nb = Oper.size2(); 
   UV.resize(nb,2);
 
@@ -945,9 +893,9 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
 
     for (int j = 0; j< 3;j++)
       nodes_eval(0,j) = nodes_eval(0,j) 
-  	- Jac(j,0)*(u_vec_eval(0,0) - u_temp(0,0)) 
-  	- Jac(j,1)*(u_vec_eval(0,1) - u_temp(0,1)) 
-  	- Jac(j,2)*(0.0             - u_temp(0,2));
+  	- Jac(j,0)*(-u_vec_eval(0,0) + u_temp(0,0)) 
+  	- Jac(j,1)*(-u_vec_eval(0,1) + u_temp(0,1)) 
+  	- Jac(j,2)*(-0.0             + u_temp(0,2));
    
     // Find the corresponding u, v, s
     evalRbfDer(0,xyz_local,nodes_eval,u_vec,u_temp);
@@ -970,3 +918,40 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
   return converged;
 }
 
+
+void GRbf::test(const fullMatrix<double> &cntrs) {
+
+  fullMatrix<double> theta(100,1),f_theta(100,1),f_prime_theta(100,1),f_prime_approx(100,1),rbfInvA(100,100),rbfMatB(100,100),D(100,100);
+  for (int j = 0; j< 100;j++){
+    theta(j,0) = 2*3.14*j/100;
+    f_theta(j,0) = cos(theta(j,0));
+    f_prime_theta(j,0) = -sin(theta(j,0));
+  }
+
+  for (int i = 0; i < 100; i++) {
+    for (int j = 0; j < 100; j++) {
+      double dx = theta(i,0)-theta(j,0);
+      double dy = 0;
+      double dz = 0;
+      rbfInvA(i,j) = evalRadialFnDer(0,dx,dy,dz,2);
+    }
+  }
+
+  rbfInvA.invertInPlace();
+
+  for (int i = 0; i < 100; i++) {
+    for (int j = 0; j < 100; j++) {
+      double dx = theta(i,0)-theta(j,0);
+      double dy = 0;
+      double dz = 0;
+      rbfMatB(i,j) = evalRadialFnDer(1,dx,dy,dz,2);
+    }
+  }
+
+  D.gemm(rbfMatB, rbfInvA, 1.0, 0.0);
+  f_prime_approx.gemm(D,f_theta, 1.0, 0.0);
+
+  f_prime_approx.print("f_prime_approx");
+  f_prime_theta.print("f_prime_theta");
+
+}

@@ -124,6 +124,11 @@ class GRbf {
   void RbfLapSurface_global_CPM_high(const fullMatrix<double> &cntrs,
 				     const fullMatrix<double> &normals,
 				     fullMatrix<double> &D);
+
+  // Second method that Finds global surface differentiation matrix (method CPMH)
+  void RbfLapSurface_global_CPM_high_2(const fullMatrix<double> &cntrs,
+				     const fullMatrix<double> &normals,
+				     fullMatrix<double> &D);
   
 
   // Calculates the curvature of a surface at a certain node
@@ -146,6 +151,8 @@ class GRbf {
  inline const fullMatrix<double> getUV() {return UV;};
  inline const fullMatrix<double> getXYZ() {return centers;};
  inline const fullMatrix<double> getN() {return normals;};
+
+  void test(const fullMatrix<double> &cntrs);
 
 };
 
