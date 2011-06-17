@@ -25,7 +25,7 @@ class QuadratureBase
 };
 
 // For rigid contact no need of Gauss'integration
-// but to use classcal get function in term npts and IntPt are needed
+// but to use clasical get function in term npts and IntPt are needed
 // so use a empty gaussQuadrature rule
 class QuadratureVoid : public QuadratureBase
 {

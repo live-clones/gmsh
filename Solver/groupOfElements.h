@@ -95,6 +95,13 @@ class groupOfElements {
         }
       }
     }
+
+    inline void clearAll()
+    {
+      _vertices.clear();
+      _elements.clear();
+      _parents.clear();
+    }
 };
 
 // child elements in pElem restricted to elements who have parent in sElem
