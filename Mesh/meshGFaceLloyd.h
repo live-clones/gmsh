@@ -79,18 +79,16 @@ class lpcvt{
   void print_segment(SPoint2,SPoint2,std::ofstream&);
 
   void compute_metrics(DocRecord&);
-  double get_rho(SPoint2,int);
-  double drho_dx(SPoint2,int);
-  double drho_dy(SPoint2,int);
+  void compute_parameters(int);
   double ratio(SPoint2);
   void write(DocRecord&,GFace*,int);
   void eval(DocRecord&,std::vector<SVector3>&,double&,int);
   void swap();
   void get_gauss();
-  double F(SPoint2,SPoint2,SPoint2,int,int);
-  SVector3 simple(SPoint2,SPoint2,SPoint2,int,int);
-  SVector3 dF_dC1(SPoint2,SPoint2,SPoint2,int,int);
-  SVector3 dF_dC2(SPoint2,SPoint2,SPoint2,int,int);
+  double F(voronoi_element,int,int);
+  SVector3 simple(voronoi_element,int,int);
+  SVector3 dF_dC1(voronoi_element,int,int);
+  SVector3 dF_dC2(voronoi_element,int,int);
   double f(SPoint2,SPoint2,int,int);
   double df_dx(SPoint2,SPoint2,int,int);
   double df_dy(SPoint2,SPoint2,int,int);
@@ -109,6 +107,7 @@ class voronoi_vertex{
   int index3;
   SVector3 normal;
   bool duplicate;
+  double h;
  public :
   voronoi_vertex(SPoint2);
   voronoi_vertex();
@@ -119,12 +118,14 @@ class voronoi_vertex{
   int get_index3();
   SVector3 get_normal();
   bool get_duplicate();
+  double get_h();
   void set_point(SPoint2);
   void set_index1(int);
   void set_index2(int);
   void set_index3(int);
   void set_normal(SVector3);
   void set_duplicate(bool);
+  void set_h(double);
 };
 
 class voronoi_element{
@@ -132,6 +133,8 @@ class voronoi_element{
   voronoi_vertex v1;
   voronoi_vertex v2;
   voronoi_vertex v3;
+  double drho_dx;
+  double drho_dy;
  public :
   voronoi_element(voronoi_vertex,voronoi_vertex,voronoi_vertex);
   voronoi_element();
@@ -139,9 +142,14 @@ class voronoi_element{
   voronoi_vertex get_v1();
   voronoi_vertex get_v2();
   voronoi_vertex get_v3();
+  double get_rho(double,double,int);
+  double get_drho_dx();
+  double get_drho_dy();
   void set_v1(voronoi_vertex);
   void set_v2(voronoi_vertex);
   void set_v3(voronoi_vertex);
+  void deriv_rho(int);
+  double compute_rho(double,int);
 };
 
 class voronoi_cell{

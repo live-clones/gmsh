@@ -93,6 +93,7 @@ void callback(const alglib::real_1d_array& x,double& func,alglib::real_1d_array&
 	  obj.compute_metrics(*pointer);
       obj.clip_cells(*pointer,gf);
       obj.swap();
+	  obj.compute_parameters(p);
       obj.get_gauss();
       obj.eval(*pointer,gradients,energy,p);
       func = energy;
@@ -178,9 +179,8 @@ void smoothing::optimize_face(GFace* gf){
   const double LC2D = sqrt((du.high()-du.low())*(du.high()-du.low()) +
                            (dv.high()-dv.low())*(dv.high()-dv.low()));  
 
-
-  printf("Lloyd on face %d %d elements %d nodes LC %g\n", gf->tag(),
-         gf->getNumMeshElements(), (int)all.size(), LC2D);
+  //printf("Lloyd on face %d %d elements %d nodes LC %g\n", gf->tag(),
+  //       gf->getNumMeshElements(), (int)all.size(), LC2D);
 
   int i = 0;
   for (std::set<MVertex*>::iterator it = all.begin(); it != all.end(); ++it){
@@ -198,11 +198,8 @@ void smoothing::optimize_face(GFace* gf){
     triangulator.x(i) = p.x() + XX;
     triangulator.y(i) = p.y() + YY;
     triangulator.data(i++) = (*it);
-
-    //    GPoint pp = gf->point(p);
-    //    printf("point %d %g %g %g %g %g \n",(*it)->getNum(),(*it)->x(),(*it)->y(),(*it)->z(),p.x(),p.y());
   }
-
+ 
   triangulator.Voronoi();
   triangulator.initialize();
   int index,number,count,max;
@@ -213,13 +210,13 @@ void smoothing::optimize_face(GFace* gf){
   for(int i=0;i<max;i++)
   {
     if(count>=number) break;
-  	index = (int)((triangulator.numPoints-1)*((double)rand()/(double)RAND_MAX));
-  	PointRecord& pt = triangulator.points[index];
-  	MVertex* v = (MVertex*)pt.data;
-  	if(v->onWhat()==gf && !triangulator.onHull(index)){
-  	  flag = triangulator.remove_point(index);
-  	  if(flag) count++;
-  	}
+	index = (int)((triangulator.numPoints-1)*((double)rand()/(double)RAND_MAX));
+	PointRecord& pt = triangulator.points[index];
+	MVertex* v = (MVertex*)pt.data;
+	if(v->onWhat()==gf && !triangulator.onHull(index)){
+	  flag = triangulator.remove_point(index);
+	  if(flag) count++;
+	}
   }
   triangulator.remove_all();	
 	
@@ -228,11 +225,11 @@ void smoothing::optimize_face(GFace* gf){
   delta = 0.01;
   for(int i=0;i<triangulator.numPoints;i++){
     PointRecord& pt = triangulator.points[i];
-  	MVertex* v = (MVertex*)pt.data;
-  	if(v->onWhat()==gf && !triangulator.onHull(i)){
-  	  //triangulator.points[i].where.h = delta + (1.0-2.0*delta)*((double)rand()/(double)RAND_MAX);
-  	  //triangulator.points[i].where.v = delta + (1.0-2.0*delta)*((double)rand()/(double)RAND_MAX);
-  	}
+	MVertex* v = (MVertex*)pt.data;
+	if(v->onWhat()==gf && !triangulator.onHull(i)){
+	  //triangulator.points[i].where.h = delta + (1.0-2.0*delta)*((double)rand()/(double)RAND_MAX);
+	  //triangulator.points[i].where.v = delta + (1.0-2.0*delta)*((double)rand()/(double)RAND_MAX);
+	}
   }		
 
   int index1 = -1;
@@ -245,18 +242,18 @@ void smoothing::optimize_face(GFace* gf){
   int index8 = -1;
   for(int i=0;i<triangulator.numPoints;i++){
     PointRecord& pt = triangulator.points[i];
-  	MVertex* v = (MVertex*)pt.data;
-  	if(v->onWhat()==gf && !triangulator.onHull(i)){
-  	  if(index1==-1) index1 = i;
-  	  else if(index2==-1) index2 = i;
-  	  else if(index3==-1) index3 = i;
-  	  else if(index4==-1) index4 = i;
-  	  else if(index5==-1) index5 = i;
-  	  else if(index6==-1) index6 = i;
-  	  else if(index7==-1) index7 = i;
-  	  else if(index8==-1) index8 = i;
+	MVertex* v = (MVertex*)pt.data;
+	if(v->onWhat()==gf && !triangulator.onHull(i)){
+	  if(index1==-1) index1 = i;
+	  else if(index2==-1) index2 = i;
+	  else if(index3==-1) index3 = i;
+	  else if(index4==-1) index4 = i;
+	  else if(index5==-1) index5 = i;
+	  else if(index6==-1) index6 = i;
+	  else if(index7==-1) index7 = i;
+	  else if(index8==-1) index8 = i;
 		
-  	}
+	}
   }
   /*triangulator.points[index1].where.h = 0.01;
   triangulator.points[index1].where.v = 0.01;
@@ -287,7 +284,7 @@ void smoothing::optimize_face(GFace* gf){
   double epsf;
   double epsx;
   lpcvt obj;
-  std::vector<double> initial_conditions(2*triangulator.numPoints);
+  double initial_conditions[2*triangulator.numPoints];
   alglib::ae_int_t maxits;
   alglib::minlbfgsstate state;
   alglib::minlbfgsreport rep;
@@ -304,20 +301,20 @@ void smoothing::optimize_face(GFace* gf){
   num_interior = 0;
   for(int i=0;i<triangulator.numPoints;i++){
    	if(obj.interior(triangulator,gf,i)){
-  	  num_interior++;
-  	}
+	  num_interior++;
+	}
   }
 
   index = 0;
   for(int i=0;i<triangulator.numPoints;i++){
-  	if(obj.interior(triangulator,gf,i)){
-  	  initial_conditions[index] = triangulator.points[i].where.h;
-  	  initial_conditions[index+num_interior] = triangulator.points[i].where.v;
-  	  index++;
-  	}
+	if(obj.interior(triangulator,gf,i)){
+	  initial_conditions[index] = triangulator.points[i].where.h;
+	  initial_conditions[index+num_interior] = triangulator.points[i].where.v;
+	  index++;
+	}
   }
 	
-  x.setcontent(2*num_interior, &initial_conditions[0]);
+  x.setcontent(2*num_interior,initial_conditions);
 
   octree = backgroundMesh::current()->get_octree();	
 	
@@ -341,16 +338,17 @@ void smoothing::optimize_face(GFace* gf){
   obj2.compute_metrics(triangulator);
   obj2.clip_cells(triangulator,gf);
   obj2.swap();
+  obj2.compute_parameters(exponent);
   obj2.get_gauss();
   obj2.write(triangulator,gf,6);*/	
 	
   index = 0;
   for(i=0;i<triangulator.numPoints;i++){
-  	if(obj.interior(triangulator,gf,i)){
-  	  triangulator.points[i].where.h = x[index];
-  	  triangulator.points[i].where.v = x[index + num_interior];
-  	  index++;
-  	}
+	if(obj.interior(triangulator,gf,i)){
+	  triangulator.points[i].where.h = x[index];
+	  triangulator.points[i].where.v = x[index + num_interior];
+	  index++;
+	}
   }
   triangulator.Voronoi();	
 	
@@ -372,13 +370,9 @@ void smoothing::optimize_face(GFace* gf){
     // get the ith vertex
     PointRecord &pt = triangulator.points[i];
     MVertex *v = (MVertex*)pt.data;
-    if (v->onWhat() == gf && triangulator.onHull(i)){
-      //      printf("strange !!\n");
-    }
     if (v->onWhat() == gf && !triangulator.onHull(i)){
       GPoint gp = gf->point (pt.where.h,pt.where.v);
-      //      printf("%g %g vs %g %g\n",pt.where.h,pt.where.v,gp.u(),gp.v());
-      MFaceVertex *v = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,pt.where.h,pt.where.v);
+      MFaceVertex *v = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
       mesh_vertices.push_back(v);
     }
   }
@@ -386,17 +380,13 @@ void smoothing::optimize_face(GFace* gf){
   // destroy the mesh
   deMeshGFace killer;
   killer(gf);
-  backgroundMesh::unset();	
   
   // put all additional vertices in the list of
   // vertices
   gf->additionalVertices = mesh_vertices;
   // remesh the face with all those vertices in
   Msg::Info("Lloyd remeshing of face %d ", gf->tag());
-
-
   meshGFace mesher;
-  mesher.setOnlyInitial();
   mesher(gf);
   // assign those vertices to the face internal vertices
   gf->mesh_vertices.insert(gf->mesh_vertices.begin(),
@@ -1133,106 +1123,34 @@ void lpcvt::compute_metrics(DocRecord& triangulator){
   }
 }
 
-double lpcvt::get_rho(SPoint2 point,int p){
-  double x;
-  double y;
-  double h;
-  double rho;
+void lpcvt::compute_parameters(int p){
+  double h1,h2,h3;
+  double k;
+  SPoint2 center,p1,p2,p3;
+  voronoi_vertex v1,v2,v3;
+  std::list<voronoi_element>::iterator it;
 	
-  x = point.x();
-  y = point.y();
-  h = backgroundMesh::current()->operator()(x,y,0.0)*ratio(point); //0.1;
-  if(h>=0.0){
-    rho = pow_int(1.0/h,p+1); //integer only, theoric value : p+2
-  }
-  else{
-    rho = -1000.0;
-  }
-  return rho;
-}
-
-double lpcvt::drho_dx(SPoint2 point,int p){
-  double x;
-  double y;
-  double e;
-  double val;
-  double rho;
-  double rho_less2;
-  double rho_less1;
-  double rho_plus1;
-  double rho_plus2;
-  SPoint2 less2;
-  SPoint2 less1;
-  SPoint2 plus1;
-  SPoint2 plus2;
-	
-  x = point.x();
-  y = point.y();
-  e = 0.00000001;
-  less2 = SPoint2(x-2.0*e,y);
-  less1 = SPoint2(x-e,y);
-  plus1 = SPoint2(x+e,y);
-  plus2 = SPoint2(x+2.0*e,y);
-  rho = get_rho(point,p);
-  rho_less2 = get_rho(less2,p);
-  rho_less1 = get_rho(less1,p);
-  rho_plus1 = get_rho(plus1,p);
-  rho_plus2 = get_rho(plus2,p);
-  if(rho_less2>=0.0 && rho_less1>=0.0 && rho_plus1>=0.0 && rho_plus2>=0.0){
-    val = (rho_less2 - 8.0*rho_less1 + 8.0*rho_plus1 - rho_plus2)/(12.0*e);
-  }
-  else if(rho_less1>=0.0 && rho>=0.0){
-    val = (rho - rho_less1)/e;
-  }
-  else if(rho>=0.0 && rho_plus1>=0.0){
-    val = (rho_plus1 - rho)/e;
-  }
-  else{
-	val = 0.0;
-  }
-  return val;
-}
-
-double lpcvt::drho_dy(SPoint2 point,int p){
-  double x;
-  double y;
-  double e;
-  double val;
-  double rho;
-  double rho_less2;
-  double rho_less1;
-  double rho_plus1;
-  double rho_plus2;
-  SPoint2 less2;
-  SPoint2 less1;
-  SPoint2 plus1;
-  SPoint2 plus2;
-	
-  x = point.x();
-  y = point.y();
-  e = 0.00000001;
-  less2 = SPoint2(x,y-2.0*e);
-  less1 = SPoint2(x,y-e);
-  plus1 = SPoint2(x,y+e);
-  plus2 = SPoint2(x,y+2.0*e);
-  rho = get_rho(point,p);
-  rho_less2 = get_rho(less2,p);
-  rho_less1 = get_rho(less1,p);
-  rho_plus1 = get_rho(plus1,p);
-  rho_plus2 = get_rho(plus2,p);
-  if(rho_less2>=0.0 && rho_less1>=0.0 && rho_plus1>=0.0 && rho_plus2>=0.0){
-    val = (rho_less2 - 8.0*rho_less1 + 8.0*rho_plus1 - rho_plus2)/(12.0*e);
-  }
-  else if(rho_less1>=0.0 && rho>=0.0){
-    val = (rho - rho_less1)/e;
-  }
-  else if(rho>=0.0 && rho_plus1>=0.0){
-    val = (rho_plus1 - rho)/e;
-  }
-  else{
-    val = 0.0;
-  }
-  return val;
+  k = 1.0;	
+  for(it=clipped.begin();it!=clipped.end();it++){
+    v1 = it->get_v1();
+	v2 = it->get_v2();
+	v3 = it->get_v3();
+	p1 = v1.get_point();
+	p2 = v2.get_point();
+	p3 = v3.get_point();
+	center = SPoint2((p1.x()+p2.x()+p3.x())/3.0,(p1.y()+p2.y()+p3.y())/3.0);
+	h1 = k*backgroundMesh::current()->operator()(p1.x(),p1.y(),0.0)*ratio(center);
+	h2 = k*backgroundMesh::current()->operator()(p2.x(),p2.y(),0.0)*ratio(center);
+	h3 = k*backgroundMesh::current()->operator()(p3.x(),p3.y(),0.0)*ratio(center);
+	v1.set_h(h1);
+	v2.set_h(h2);
+	v3.set_h(h3);
+	it->set_v1(v1);
+	it->set_v2(v2);
+	it->set_v3(v3);
+	it->deriv_rho(p);
+	//printf("%f %f %f\n",h1,h2,h3);
+  }	
 }
 
 double lpcvt::ratio(SPoint2 point){
@@ -1294,10 +1212,10 @@ void lpcvt::eval(DocRecord& triangulator,std::vector<SVector3>& gradients,double
 	C1 = v2.get_point();
 	C2 = v3.get_point();
 	index = v1.get_index1();
-	energy = energy + F(generator,C1,C2,p,index);
-	gradients[index] = gradients[index] + simple(generator,C1,C2,p,index);
-	grad1 = dF_dC1(generator,C1,C2,p,index);
-	grad2 = dF_dC2(generator,C1,C2,p,index);
+	energy = energy + F(*it,p,index);
+	gradients[index] = gradients[index] + simple(*it,p,index);
+	grad1 = dF_dC1(*it,p,index);
+	grad2 = dF_dC2(*it,p,index);
 	if(v2.get_index3()!=-1){
 	  index1 = v2.get_index1();
 	  index2 = v2.get_index2();
@@ -1358,52 +1276,72 @@ void lpcvt::get_gauss(){
   gauss_num = gauss_points.size1();
 }
 
-double lpcvt::F(SPoint2 generator,SPoint2 C1,SPoint2 C2,int p,int index){
+double lpcvt::F(voronoi_element element,int p,int index){
   int i;
+  double u;
+  double v;
   double x;
   double y;
   double energy;
-  double u;
-  double v;
   double weight;
-  SPoint2 point;
+  double rho;
+  SPoint2 point,generator,C1,C2;
+  voronoi_vertex v1,v2,v3;
+
+  v1 = element.get_v1();
+  v2 = element.get_v2();
+  v3 = element.get_v3();
+  generator = v1.get_point();
+  C1 = v2.get_point();
+  C2 = v3.get_point();
   energy = 0.0;
+	
   for(i=0;i<gauss_num;i++){
 	u = gauss_points(i,0);
 	v = gauss_points(i,1);
-	weight = gauss_weights(i,0);
     x = Tx(u,v,generator,C1,C2);
 	y = Ty(u,v,generator,C1,C2);
 	point = SPoint2(x,y);
-	energy = energy + weight*get_rho(point,p)*f(generator,point,p,index);
+	weight = gauss_weights(i,0);
+	rho = element.get_rho(u,v,p);
+	energy = energy + weight*rho*f(generator,point,p,index);
   }
   energy = J(generator,C1,C2)*energy;
   return energy;
 }
 
-SVector3 lpcvt::simple(SPoint2 generator,SPoint2 C1,SPoint2 C2,int p,int index){
+SVector3 lpcvt::simple(voronoi_element element,int p,int index){
   int i;
+  double u;
+  double v;
   double x;
   double y;
   double comp_x;
   double comp_y;
-  double jacobian;
-  double u;
-  double v;
   double weight;
   double rho;
-  SPoint2 point;
+  double jacobian;
+  SPoint2 point,generator,C1,C2;
+  voronoi_vertex v1,v2,v3;
+
+  v1 = element.get_v1();
+  v2 = element.get_v2();
+  v3 = element.get_v3();
+  generator = v1.get_point();
+  C1 = v2.get_point();
+  C2 = v3.get_point();
   comp_x = 0.0;
   comp_y = 0.0;
   jacobian = J(generator,C1,C2);
+  
   for(i=0;i<gauss_num;i++){
 	u = gauss_points(i,0);
 	v = gauss_points(i,1);
-	weight = gauss_weights(i,0);
     x = Tx(u,v,generator,C1,C2);
 	y = Ty(u,v,generator,C1,C2);
 	point = SPoint2(x,y);
-	rho = get_rho(point,p);
+	weight = gauss_weights(i,0);
+	rho = element.get_rho(u,v,p);
 	comp_x = comp_x + weight*rho*df_dx(generator,point,p,index);
 	comp_y = comp_y + weight*rho*df_dy(generator,point,p,index);
   }
@@ -1412,68 +1350,94 @@ SVector3 lpcvt::simple(SPoint2 generator,SPoint2 C1,SPoint2 C2,int p,int index){
   return SVector3(comp_x,comp_y,0.0);
 }
 
-SVector3 lpcvt::dF_dC1(SPoint2 generator,SPoint2 C1,SPoint2 C2,int p,int index){
+SVector3 lpcvt::dF_dC1(voronoi_element element,int p,int index){
   int i;
+  double u;
+  double v;
   double x;
   double y;
   double comp_x;
   double comp_y;
-  double jacobian;
-  double u;
-  double v;
   double weight;
   double rho;
-  SPoint2 point;
+  double drho_dx;
+  double drho_dy;
+  double jacobian;
+  SPoint2 point,generator,C1,C2;
+  voronoi_vertex v1,v2,v3;
+	
+  v1 = element.get_v1();
+  v2 = element.get_v2();
+  v3 = element.get_v3();
+  generator = v1.get_point();
+  C1 = v2.get_point();
+  C2 = v3.get_point();
   comp_x = 0.0;
   comp_y = 0.0;
   jacobian = J(generator,C1,C2);
+	
   for(i=0;i<gauss_num;i++){
 	u = gauss_points(i,0);
 	v = gauss_points(i,1);
-	weight = gauss_weights(i,0);
     x = Tx(u,v,generator,C1,C2);
 	y = Ty(u,v,generator,C1,C2);
 	point = SPoint2(x,y);
-	rho = get_rho(point,p);
+	weight = gauss_weights(i,0);
+	rho = element.get_rho(u,v,p);
+	drho_dx = element.get_drho_dx();
+	drho_dy = element.get_drho_dy();
 	comp_x = comp_x + weight*rho*df_dx(point,generator,p,index)*u*jacobian;
 	comp_x = comp_x + weight*rho*f(point,generator,p,index)*(C2.y()-generator.y());
-	comp_x = comp_x + weight*drho_dx(point,p)*u*f(point,generator,p,index)*jacobian;
+	comp_x = comp_x + weight*drho_dx*u*f(point,generator,p,index)*jacobian;
 	comp_y = comp_y + weight*rho*df_dy(point,generator,p,index)*u*jacobian;
 	comp_y = comp_y + weight*rho*f(point,generator,p,index)*(generator.x()-C2.x());
-	comp_y = comp_y + weight*drho_dy(point,p)*u*f(point,generator,p,index)*jacobian;
+	comp_y = comp_y + weight*drho_dy*u*f(point,generator,p,index)*jacobian;
   }		
   return SVector3(comp_x,comp_y,0.0);
 }
 
-SVector3 lpcvt::dF_dC2(SPoint2 generator,SPoint2 C1,SPoint2 C2,int p,int index){
+SVector3 lpcvt::dF_dC2(voronoi_element element,int p,int index){
   int i;
+  double u;
+  double v;
   double x;
   double y;
   double comp_x;
   double comp_y;
-  double jacobian;
-  double u;
-  double v;
   double weight;
   double rho;
-  SPoint2 point;
+  double drho_dx;
+  double drho_dy;
+  double jacobian;
+  SPoint2 point,generator,C1,C2;
+  voronoi_vertex v1,v2,v3;
+	
+  v1 = element.get_v1();
+  v2 = element.get_v2();
+  v3 = element.get_v3();
+  generator = v1.get_point();
+  C1 = v2.get_point();
+  C2 = v3.get_point();
   comp_x = 0.0;
   comp_y = 0.0;
   jacobian = J(generator,C1,C2);
+	
   for(i=0;i<gauss_num;i++){
 	u = gauss_points(i,0);
 	v = gauss_points(i,1);
-	weight = gauss_weights(i,0);
-    x = Tx(u,v,generator,C1,C2);
+	x = Tx(u,v,generator,C1,C2);
 	y = Ty(u,v,generator,C1,C2);
 	point = SPoint2(x,y);
-	rho = get_rho(point,p);
+	weight = gauss_weights(i,0);
+	rho = element.get_rho(u,v,p);
+	drho_dx = element.get_drho_dx();
+	drho_dy = element.get_drho_dy();
 	comp_x = comp_x + weight*rho*df_dx(point,generator,p,index)*v*jacobian;
 	comp_x = comp_x + weight*rho*f(point,generator,p,index)*(generator.y()-C1.y());
-	comp_x = comp_x + weight*drho_dx(point,p)*v*f(point,generator,p,index)*jacobian;
+	comp_x = comp_x + weight*drho_dx*v*f(point,generator,p,index)*jacobian;
 	comp_y = comp_y + weight*rho*df_dy(point,generator,p,index)*v*jacobian;
 	comp_y = comp_y + weight*rho*f(point,generator,p,index)*(C1.x()-generator.x());
-	comp_y = comp_y + weight*drho_dy(point,p)*v*f(point,generator,p,index)*jacobian;
+	comp_y = comp_y + weight*drho_dy*v*f(point,generator,p,index)*jacobian;
   }		
   return SVector3(comp_x,comp_y,0.0);
 }
@@ -1667,6 +1631,10 @@ bool voronoi_vertex::get_duplicate(){
   return duplicate;
 }
 
+double voronoi_vertex::get_h(){
+  return h;
+}
+
 void voronoi_vertex::set_point(SPoint2 new_point){
   point = new_point;
 }
@@ -1689,6 +1657,10 @@ void voronoi_vertex::set_normal(SVector3 new_normal){
 
 void voronoi_vertex::set_duplicate(bool new_duplicate){
   duplicate = new_duplicate;
+}
+
+void voronoi_vertex::set_h(double new_h){
+  h = new_h;
 }
 
 
@@ -1717,6 +1689,29 @@ voronoi_vertex voronoi_element::get_v3(){
   return v3;
 }
 
+double voronoi_element::get_rho(double u,double v,int p){
+  double h1;
+  double h2;
+  double h3;
+  double h;
+  double rho;
+	
+  h1 = v1.get_h();
+  h2 = v2.get_h();
+  h3 = v3.get_h();
+  h = h1*(1.0-u-v) + h2*u + h3*v;
+  rho = compute_rho(h,p);
+  return rho;
+}
+
+double voronoi_element::get_drho_dx(){
+  return drho_dx;
+}
+
+double voronoi_element::get_drho_dy(){
+  return drho_dy;
+}
+
 void voronoi_element::set_v1(voronoi_vertex new_v1){
   v1 = new_v1;
 }
@@ -1727,6 +1722,58 @@ void voronoi_element::set_v2(voronoi_vertex new_v2){
 
 void voronoi_element::set_v3(voronoi_vertex new_v3){
   v3 = new_v3;
+}
+
+void voronoi_element::deriv_rho(int p){
+  double h1;
+  double h2;
+  double h3;
+  double rho1;
+  double rho2;
+  double rho3;
+  double a;
+  double b;
+  double c;
+  double d;
+  double jacobian;
+  double drho_du;
+  double drho_dv;
+  double du_dx;
+  double dv_dx;
+  double du_dy;
+  double dv_dy;
+  SPoint2 p1;
+  SPoint2 p2;
+  SPoint2 p3;
+	
+  h1 = v1.get_h();
+  h2 = v2.get_h();
+  h3 = v3.get_h();
+  rho1 = compute_rho(h1,p);
+  rho2 = compute_rho(h2,p);
+  rho3 = compute_rho(h3,p);
+  p1 = v1.get_point();
+  p2 = v2.get_point();
+  p3 = v3.get_point();
+  a = p2.x() - p1.x();
+  b = p3.x() - p1.x();
+  c = p2.y() - p1.y();
+  d = p3.y() - p1.y();
+  jacobian = a*d-b*c;
+  drho_du = rho2-rho1;
+  drho_dv = rho3-rho1;
+  du_dx = d/jacobian;
+  dv_dx = -c/jacobian;
+  du_dy = -b/jacobian;
+  dv_dy = a/jacobian;
+  drho_dx = drho_du*du_dx + drho_dv*dv_dx;
+  drho_dy = drho_du*du_dy + drho_dv*dv_dy;
+}
+
+double voronoi_element::compute_rho(double h,int p){
+  double rho;
+  rho = pow_int(1.0/h,p+1);
+  return rho;
 }
 
 

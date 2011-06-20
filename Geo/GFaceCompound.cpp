@@ -1779,6 +1779,9 @@ bool GFaceCompound::checkTopology() const
 {
   
   if (_mapping == RBF) return true; 
+
+  //fixme tristan
+  //return true;
 	
   bool correctTopo = true;
   if(allNodes.empty()) buildAllNodes();
