@@ -14,7 +14,7 @@
 class SMetric3 {
  protected:
   // lower diagonal storage
-  // 00 10 11 20 21 22 
+  // 00 10 11 20 21 22
   double _val[6];
  public:
   inline int getIndex(int i, int j) const
@@ -26,7 +26,7 @@ class SMetric3 {
   {
     for (int i = 0; i < 3; i++){
       for (int j = 0; j < 3; j++){
-        mat(i,j) = _val[getIndex(i, j)];                      
+        mat(i,j) = _val[getIndex(i, j)];
       }
     }
   }
@@ -40,7 +40,7 @@ class SMetric3 {
   {
     for (int i = 0; i < 6; i++) _val[i] = m._val[i];
   }
-  // default constructor, identity 
+  // default constructor, identity
   SMetric3(const double v = 1.0)
   {
     _val[0] = _val[2] = _val[5] = v;
@@ -56,14 +56,14 @@ class SMetric3 {
     // M = e^1 * diag * e^1^t
     // where the elements of diag are l_i = h_i^-2
     // and the rows of e are the UNIT and ORTHOGONAL directions
-    
+
     fullMatrix<double> e(3,3);
     e(0,0) = t1(0); e(0,1) = t1(1); e(0,2) = t1(2);
     e(1,0) = t2(0); e(1,1) = t2(1); e(1,2) = t2(2);
     e(2,0) = t3(0); e(2,1) = t3(1); e(2,2) = t3(2);
     e.transposeInPlace();
     //      e.invertInPlace();
-    
+
     fullMatrix<double> tmp(3,3);
     tmp(0,0) = l1 * e(0,0);
     tmp(0,1) = l2 * e(0,1);
@@ -74,9 +74,9 @@ class SMetric3 {
     tmp(2,0) = l1 * e(2,0);
     tmp(2,1) = l2 * e(2,1);
     tmp(2,2) = l3 * e(2,2);
-    
+
     e.transposeInPlace();
-    
+
     _val[0] = tmp(0,0) * e(0,0) + tmp(0,1) * e(1,0) + tmp(0,2) * e(2,0);
     _val[1] = tmp(1,0) * e(0,0) + tmp(1,1) * e(1,0) + tmp(1,2) * e(2,0);
     _val[2] = tmp(1,0) * e(0,1) + tmp(1,1) * e(1,1) + tmp(1,2) * e(2,1);
@@ -91,7 +91,7 @@ class SMetric3 {
   inline double operator()(int i, int j) const
   {
     return _val[getIndex(i, j)];
-  }  
+  }
   SMetric3 invert () const
   {
     fullMatrix<double> m(3, 3);
@@ -119,12 +119,12 @@ class SMetric3 {
     for (int i = 0; i < 6; i++) _val[i] += other._val[i];
     return *this;
   }
-  SMetric3& operator *= (const double &other) 
+  SMetric3& operator *= (const double &other)
   {
     for (int i = 0; i < 6; i++) _val[i] *= other;
     return *this;
   }
-  SMetric3& operator *= (const SMetric3 &other) 
+  SMetric3& operator *= (const SMetric3 &other)
   {
     fullMatrix<double> m1(3, 3), m2(3, 3), m3(3, 3);
     getMat(m1);
@@ -141,7 +141,7 @@ class SMetric3 {
     V.transpose().mult(m,temp);
     temp.mult(V,result);
     SMetric3 a; a.setMat(result);
-    return a;    
+    return a;
   }
   // s: true if eigenvalues are sorted (from min to max of the REAL part)
   void eig(fullMatrix<double> &V, fullVector<double> &S, bool s=false) const
@@ -156,28 +156,28 @@ class SMetric3 {
 
 // scalar product with respect to the metric
 inline double dot(const SVector3 &a, const SMetric3 &m, const SVector3 &b)
-{ 
-  return 
-    b.x() * ( m(0,0) * a.x() + m(1,0) * a.y() + m(2,0) * a.z() ) + 
-    b.y() * ( m(0,1) * a.x() + m(1,1) * a.y() + m(2,1) * a.z() ) + 
+{
+  return
+    b.x() * ( m(0,0) * a.x() + m(1,0) * a.y() + m(2,0) * a.z() ) +
+    b.y() * ( m(0,1) * a.x() + m(1,1) * a.y() + m(2,1) * a.z() ) +
     b.z() * ( m(0,2) * a.x() + m(1,2) * a.y() + m(2,2) * a.z() ) ;
 }
 
 // compute the largest inscribed ellipsoid...
-SMetric3 intersection (const SMetric3 &m1, 
+SMetric3 intersection (const SMetric3 &m1,
                        const SMetric3 &m2);
-SMetric3 interpolation (const SMetric3 &m1, 
-                        const SMetric3 &m2, 
+SMetric3 interpolation (const SMetric3 &m1,
+                        const SMetric3 &m2,
                         const double t);
-SMetric3 interpolation (const SMetric3 &m1, 
-                        const SMetric3 &m2, 
-                        const SMetric3 &m3, 
+SMetric3 interpolation (const SMetric3 &m1,
+                        const SMetric3 &m2,
+                        const SMetric3 &m3,
                         const double u,
                         const double v);
-SMetric3 interpolation (const SMetric3 &m1, 
-                        const SMetric3 &m2, 
-                        const SMetric3 &m3, 
-                        const SMetric3 &m4, 
+SMetric3 interpolation (const SMetric3 &m1,
+                        const SMetric3 &m2,
+                        const SMetric3 &m3,
+                        const SMetric3 &m4,
                         const double u,
                         const double v,
                         const double w);
@@ -186,7 +186,7 @@ SMetric3 interpolation (const SMetric3 &m1,
 
 class STensor3 {
  protected:
-  // 00 01 02 10 11 12 20 21 22 
+  // 00 01 02 10 11 12 20 21 22
   double _val[9];
  public:
   inline int getIndex(int i, int j) const
@@ -226,7 +226,7 @@ class STensor3 {
   inline double operator()(int i, int j) const
   {
     return _val[getIndex(i, j)];
-  }  
+  }
   STensor3 invert () const
   {
     fullMatrix<double> m(3, 3);
@@ -248,12 +248,12 @@ class STensor3 {
     for (int i = 0; i < 9; i++) _val[i] += other._val[i];
     return *this;
   }
-  STensor3& operator *= (const double &other) 
+  STensor3& operator *= (const double &other)
   {
     for (int i = 0; i < 9; i++) _val[i] *= other;
     return *this;
   }
-  STensor3& operator *= (const STensor3 &other) 
+  STensor3& operator *= (const STensor3 &other)
   {
     fullMatrix<double> m1(3, 3), m2(3, 3), m3(3, 3);
     getMat(m1);
@@ -262,20 +262,43 @@ class STensor3 {
     setMat(m3);
     return *this;
   }
+  void operator-= (const STensor3 &other)
+  {
+    for(int i=0;i<9;i++) _val[i]-=other._val[i];
+  }
+  void daxpy(const STensor3 &other, const double alpha=1.)
+  {
+    if(alpha==1.)
+      for(int i=0;i<9;i++) _val[i]+=other._val[i];
+    else
+      for(int i=0;i<9;i++) _val[i]+=alpha*other._val[i];
+  }
+  double trace() const
+  {
+    return ((_val[0]+_val[4]+_val[8])/3.);
+  }
+
+  double dotprod() const
+  {
+    double prod=0;
+    for(int i=0;i<9;i++) prod+=_val[i]*_val[i];
+    return prod;
+  }
+
   void print(const char *) const;
 };
 
 // tensor product
 inline void tensprod(const SVector3 &a, const SVector3 &b, STensor3 &c)
-{ 
+{
     for (int i = 0; i < 3; i++)
       for (int j = 0; j < 3; j++)
         c(i,j)=a(i)*b(j);
 }
 
 inline double dot(const STensor3 &a, const STensor3 &b)
-{ 
-  double prod=0;  
+{
+  double prod=0;
   for (int i = 0; i < 3; i++)
     for (int j = 0; j < 3; j++)
       prod+=a(i,j)*b(i,j);
@@ -283,14 +306,14 @@ inline double dot(const STensor3 &a, const STensor3 &b)
 }
 
 inline STensor3 operator*(const STensor3 &t, double m)
-{ 
+{
   STensor3 val(t);
   val *= m;
   return val;
 }
 
 inline STensor3 operator*(double m,const STensor3 &t)
-{ 
+{
   STensor3 val(t);
   val *= m;
   return val;
