@@ -1126,6 +1126,7 @@ void lpcvt::compute_metrics(DocRecord& triangulator){
 void lpcvt::compute_parameters(int p){
   double h1,h2,h3;
   double k;
+  double ratio;
   SPoint2 center,p1,p2,p3;
   voronoi_vertex v1,v2,v3;
   std::list<voronoi_element>::iterator it;
@@ -1139,9 +1140,10 @@ void lpcvt::compute_parameters(int p){
 	p2 = v2.get_point();
 	p3 = v3.get_point();
 	center = SPoint2((p1.x()+p2.x()+p3.x())/3.0,(p1.y()+p2.y()+p3.y())/3.0);
-	h1 = k*backgroundMesh::current()->operator()(p1.x(),p1.y(),0.0)*ratio(center);
-	h2 = k*backgroundMesh::current()->operator()(p2.x(),p2.y(),0.0)*ratio(center);
-	h3 = k*backgroundMesh::current()->operator()(p3.x(),p3.y(),0.0)*ratio(center);
+	ratio = get_ratio(center);
+	h1 = k*backgroundMesh::current()->operator()(p1.x(),p1.y(),0.0)*ratio;
+	h2 = k*backgroundMesh::current()->operator()(p2.x(),p2.y(),0.0)*ratio;
+	h3 = k*backgroundMesh::current()->operator()(p3.x(),p3.y(),0.0)*ratio;
 	v1.set_h(h1);
 	v2.set_h(h2);
 	v3.set_h(h3);
@@ -1153,7 +1155,7 @@ void lpcvt::compute_parameters(int p){
   }	
 }
 
-double lpcvt::ratio(SPoint2 point){
+double lpcvt::get_ratio(SPoint2 point){
   double val;
   double uv[2];
   double metric[3];

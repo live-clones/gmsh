@@ -80,7 +80,7 @@ class lpcvt{
 
   void compute_metrics(DocRecord&);
   void compute_parameters(int);
-  double ratio(SPoint2);
+  double get_ratio(SPoint2);
   void write(DocRecord&,GFace*,int);
   void eval(DocRecord&,std::vector<SVector3>&,double&,int);
   void swap();
