@@ -237,6 +237,8 @@ fullMatrix<double> GRbf::generateRbfMat(int p,
   int m = nodes2.size1();
   int n = nodes1.size1();
   fullMatrix<double> rbfMat(m,n);
+
+
   //fullVector<double > epsilon;
   //computeEpsilon(nodes1, epsilon, inUN);
   double eps = epsilonXYZ;
@@ -249,6 +251,31 @@ fullMatrix<double> GRbf::generateRbfMat(int p,
       rbfMat(i,j) = evalRadialFnDer(p,dx,dy,dz,eps);
     }
   }
+
+
+
+  // ////////////////////// 
+  // double min_dist = 10;
+  // for (int i = 0; i < m; i++) {
+  //   for (int j = i+1; j < n; j++) {
+  //     double dx = nodes1(i,0)-nodes1(j,0);
+  //     double dy = nodes1(i,1)-nodes1(j,1);
+  //     double dz = nodes1(i,2)-nodes1(j,2);
+  //     double dist_node = sqrt(dx*dx+dy*dy+dz*dz);
+  //     if (dist_node<min_dist) min_dist = dist_node;
+  //   }
+  // }
+  // double eps = 0.5/min_dist;
+  // for (int i = 0; i < m; i++) {
+  //   for (int j = 0; j < n; j++) {
+  //     double dx = nodes2(i,0)-nodes1(j,0);
+  //     double dy = nodes2(i,1)-nodes1(j,1);
+  //     double dz = nodes2(i,2)-nodes1(j,2);
+  //     rbfMat(i,j) = evalRadialFnDer(p,dx,dy,dz,eps);
+  //   }
+  // }
+  // //////////////////////
+
 
   return rbfMat;
 
@@ -502,7 +529,7 @@ void GRbf::RbfLapSurface_local_CPM(bool isLow,
 //NEW METHOD #1 CPM GLOBAL HIGH
 void GRbf::RbfLapSurface_global_CPM_high(const fullMatrix<double> &cntrs,
 					const fullMatrix<double> &normals,
-					fullMatrix<double> &Oper){
+					 fullMatrix<double> &Oper){
   int numNodes = cntrs.size1();
   int nnTot = 3*numNodes;
   Oper.resize(nnTot,nnTot);
@@ -681,12 +708,14 @@ void GRbf::solveHarmonicMap(fullMatrix<double> Oper,
     Oper(iFix,iFix) = 1.0;
     F(iFix,0) = cos(theta);
     F(iFix,1) = sin(theta);
+
   }
   
   Oper.invertInPlace();
   Oper.mult(F,UV);
 
   //ANN UVtree + dist_min
+
  double dist_min = 1.e6;
 #if defined (HAVE_ANN)
   UVnodes = annAllocPts(nbNodes, 3);
@@ -775,9 +804,9 @@ bool GRbf::UVStoXYZ_global(const double  u_eval, const double v_eval,
 
     for (int j = 0; j< 3;j++)
       nodes_eval(0,j) = nodes_eval(0,j) 
-	- Jac(j,0)*(u_vec_eval(0,0) - u_temp(0,0)) 
-	- Jac(j,1)*(u_vec_eval(0,1) - u_temp(0,1)) 
-	- Jac(j,2)*(0.0             - u_temp(0,2));
+	- Jac(j,0)*(-u_vec_eval(0,0) + u_temp(0,0)) 
+	- Jac(j,1)*(-u_vec_eval(0,1) + u_temp(0,1)) 
+	- Jac(j,2)*(-0.0             + u_temp(0,2));
    
     // Find the corresponding u, v, s
     evalRbfDer(0,extendedX,nodes_eval,u_vec,u_temp);
@@ -833,11 +862,11 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
 
     u_vec(i+num_neighbours,0) = UV(index[i]+nbNodes,0);
     u_vec(i+num_neighbours,1) = UV(index[i]+nbNodes,1);
-    u_vec(i+num_neighbours,2) = surfInterp(index[i]+nbNodes,0)*deltaUV;
+    u_vec(i+num_neighbours,2) = surfInterp(index[i]+nbNodes,0);//*deltaUV;
 
     u_vec(i+2*num_neighbours,0) = UV(index[i]+2*nbNodes,0);
     u_vec(i+2*num_neighbours,1) = UV(index[i]+2*nbNodes,1);
-    u_vec(i+2*num_neighbours,2) = surfInterp(index[i]+2*nbNodes,0)*deltaUV;
+    u_vec(i+2*num_neighbours,2) = surfInterp(index[i]+2*nbNodes,0);//*deltaUV;
 
 
     //THE LOCAL XYZ
@@ -861,13 +890,13 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
   u_vec_eval(0,2) = 0.0;
 
   //we will use a local interpolation to find the corresponding XYZ point to (u_eval,v_eval).
-  evalRbfDer(0, u_vec, u_vec_eval,xyz_local, nodes_eval, 1);
+  //evalRbfDer(0, u_vec, u_vec_eval,xyz_local, nodes_eval, 1);
   //printf("nodes eval =%g %g %g \n", nodes_eval(0,0), nodes_eval(0,1), nodes_eval(0,2));
   //exit(1);
 
-  // nodes_eval(0,0) = extendedX(index[0],0); 
-  // nodes_eval(0,1) = extendedX(index[0],1); 
-  // nodes_eval(0,2) = extendedX(index[0],2);
+  nodes_eval(0,0) = extendedX(index[0],0); 
+  nodes_eval(0,1) = extendedX(index[0],1); 
+  nodes_eval(0,2) = extendedX(index[0],2);
 
   u_temp(0,0)  = u_eval;
   u_temp(0,1)  = v_eval;
@@ -902,19 +931,24 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
     
     double normSq =  sqrt(u_temp(0,2)*u_temp(0,2));
     norm_s = fabs(log10(normSq));
-
     incr++;
   }  
   if (norm_s < 5 ){
     printf("Newton not converged for point (uv)=(%g,%g -> norm_s =%g ) XYZ =%g %g %g \n", u_eval, v_eval, norm_s, nodes_eval(0,0), nodes_eval(0,1), nodes_eval(0,2));
     converged = false;
+
+
+    // if Newton diverges, call the routine again with 
+    // num_neighbors = num_neighbors + 5;
+    // UVStoXYZ(const double  u_eval, const double v_eval,
+    //		   double &XX, double &YY, double &ZZ, 
+    //		   SVector3 &dXdu, SVector3& dXdv)
   }
   XX = nodes_eval(0,0);
   YY = nodes_eval(0,1);
   ZZ = nodes_eval(0,2);
   dXdu = SVector3(Jac(0,0), Jac(1,0), Jac(2,0));
   dXdv = SVector3(Jac(0,1), Jac(1,1), Jac(2,1));
- 
   return converged;
 }
 
