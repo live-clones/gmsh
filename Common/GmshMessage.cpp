@@ -134,7 +134,8 @@ void Msg::Exit(int level)
 #if defined(HAVE_MPI)
   MPI_Finalize();
 #endif
-  exit(0);
+
+  exit(_errorCount);
 }
 
 void Msg::Fatal(const char *fmt, ...)
