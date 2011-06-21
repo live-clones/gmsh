@@ -165,6 +165,28 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary, bool savemesh)
     fprintf(fp, "$EndMeshFormat\n");
   }
 
+  if(haveInterpolationMatrices()){
+    fprintf(fp, "$InterpolationScheme\n");
+    fprintf(fp, "\"INTERPOLATION_SCHEME\"\n");
+    fprintf(fp, "%d\n", (int)_interpolation.size());
+    for(interpolationMatrices::iterator it = _interpolation.begin();
+        it != _interpolation.end(); it++){
+      if(it->second.size() >= 2){
+        fprintf(fp, "%d\n2\n", it->first);
+        for(int mat = 0; mat < 2; mat++){
+          int m = it->second[mat]->size1(), n = it->second[mat]->size2();
+          fprintf(fp, "%d %d\n", m, n);
+          for(int i = 0; i < m; i++){
+            for(int j = 0; j < n; j++)
+              fprintf(fp, "%.16g ", it->second[mat]->get(i, j));
+            fprintf(fp, "\n");
+          }
+        }
+      }
+    }
+    fprintf(fp, "$EndInterpolationScheme\n");
+  }
+
   for(unsigned int step = 0; step < _steps.size(); step++){
     int numEnt = 0, numComp = _steps[step]->getNumComponents();
     for(int i = 0; i < _steps[step]->getNumData(); i++)
@@ -203,7 +225,11 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary, bool savemesh)
           fprintf(fp, "$ElementNodeData\n");
         else
           fprintf(fp, "$ElementData\n");
-        fprintf(fp, "1\n\"%s\"\n", getName().c_str());
+        if(haveInterpolationMatrices())
+          fprintf(fp, "2\n\"%s\"\n\"INTERPOLATION_SCHEME\"\n", getName().c_str());
+        else
+          fprintf(fp, "1\n\"%s\"\n", getName().c_str());
+        
         fprintf(fp, "1\n%.16g\n", _steps[step]->getTime());
         fprintf(fp, "3\n%d\n%d\n%d\n", step, numComp, numEnt);
         for(int i = 0; i < _steps[step]->getNumData(); i++){
