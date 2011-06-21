@@ -45,7 +45,7 @@ static int SphereInEle(void *a, double*c){
 
 GRbf::GRbf (double eps, double del, double rad, int variableEps, int rbfFun, 
 	    std::map<MVertex*, SVector3> _normals, std::set<MVertex *> allNodes) 
-  :  epsilonXYZ(eps), epsilonUV(eps), delta(del),  radius (rad), variableShapeParam(variableEps), 
+  :  delta(del),  radius (rad), variableShapeParam(variableEps), 
      radialFunctionIndex (rbfFun),  XYZkdtree(0)
 {
   
@@ -70,7 +70,7 @@ GRbf::GRbf (double eps, double del, double rad, int variableEps, int rbfFun,
   matAInv = generateRbfMat(0,centers,centers);
   matAInv.invertInPlace();
   isLocal = false;
-  num_neighbours = std::min(12, nbNodes);//ANN_search in UV
+  num_neighbours = std::min(20, nbNodes);//ANN_search in UV
   extendedX.resize(3*nbNodes,3);
 
 }
@@ -232,17 +232,38 @@ double GRbf::evalRadialFnDer (int p, double dx, double dy, double dz, double ep)
 fullMatrix<double> GRbf::generateRbfMat(int p, 
 					const fullMatrix<double> &nodes1,
 					const fullMatrix<double> &nodes2, 
-					int inUV) {
+					int isExt) {
 
   int m = nodes2.size1();
   int n = nodes1.size1();
   fullMatrix<double> rbfMat(m,n);
 
-
   //fullVector<double > epsilon;
   //computeEpsilon(nodes1, epsilon, inUN);
-  double eps = epsilonXYZ;
-  if (inUV) eps = epsilonUV;
+  // double eps = epsilonXYZ;
+  // if (inUV) eps = epsilonUV;
+  // for (int i = 0; i < m; i++) {
+  //   for (int j = 0; j < n; j++) {
+  //     double dx = nodes2(i,0)-nodes1(j,0);
+  //     double dy = nodes2(i,1)-nodes1(j,1);
+  //     double dz = nodes2(i,2)-nodes1(j,2);
+  //     rbfMat(i,j) = evalRadialFnDer(p,dx,dy,dz,eps);
+  //   }
+  // }
+  
+  int nbLocNodes = n;
+  if (isExt) nbLocNodes /= 3;
+  double min_dist = 1.e6;
+  for (int i = 0; i < nbLocNodes; i++) {
+    for (int j = i+1; j < nbLocNodes; j++) {
+      double dx = nodes1(i,0)-nodes1(j,0);
+      double dy = nodes1(i,1)-nodes1(j,1);
+      double dz = nodes1(i,2)-nodes1(j,2);
+      double dist_node = sqrt(dx*dx+dy*dy+dz*dz);
+      if (dist_node<min_dist) min_dist = dist_node;
+    }
+  }
+  double eps = 0.5/min_dist;
   for (int i = 0; i < m; i++) {
     for (int j = 0; j < n; j++) {
       double dx = nodes2(i,0)-nodes1(j,0);
@@ -252,31 +273,6 @@ fullMatrix<double> GRbf::generateRbfMat(int p,
     }
   }
 
-
-
-  // ////////////////////// 
-  // double min_dist = 10;
-  // for (int i = 0; i < m; i++) {
-  //   for (int j = i+1; j < n; j++) {
-  //     double dx = nodes1(i,0)-nodes1(j,0);
-  //     double dy = nodes1(i,1)-nodes1(j,1);
-  //     double dz = nodes1(i,2)-nodes1(j,2);
-  //     double dist_node = sqrt(dx*dx+dy*dy+dz*dz);
-  //     if (dist_node<min_dist) min_dist = dist_node;
-  //   }
-  // }
-  // double eps = 0.5/min_dist;
-  // for (int i = 0; i < m; i++) {
-  //   for (int j = 0; j < n; j++) {
-  //     double dx = nodes2(i,0)-nodes1(j,0);
-  //     double dy = nodes2(i,1)-nodes1(j,1);
-  //     double dz = nodes2(i,2)-nodes1(j,2);
-  //     rbfMat(i,j) = evalRadialFnDer(p,dx,dy,dz,eps);
-  //   }
-  // }
-  // //////////////////////
-
-
   return rbfMat;
 
 }
@@ -284,28 +280,28 @@ fullMatrix<double> GRbf::generateRbfMat(int p,
 void GRbf::RbfOp(int p,
 		const fullMatrix<double> &cntrs,
 		const fullMatrix<double> &nodes, 
-		 fullMatrix<double> &D, int inUV) {
+		 fullMatrix<double> &D, int isExt) {
 
   fullMatrix<double> rbfInvA, rbfMatB; 
 
   D.resize(nodes.size1(), cntrs.size1());
 
   if (isLocal){
-    rbfInvA = generateRbfMat(0,cntrs,cntrs, inUV);
+    rbfInvA = generateRbfMat(0,cntrs,cntrs, isExt);
     rbfInvA.invertInPlace();
    }
    else{
-     if (cntrs.size1() == nbNodes && !inUV)
+     if (cntrs.size1() == nbNodes )
        rbfInvA = matAInv;
-     else if (cntrs.size1() == 3*nbNodes && !inUV)
+     else if (cntrs.size1() == 3*nbNodes)
        rbfInvA  = matAInv_nn;
      else{
-       rbfInvA = generateRbfMat(0,cntrs,cntrs, inUV);
+       rbfInvA = generateRbfMat(0,cntrs,cntrs, isExt);
        rbfInvA.invertInPlace();
      }
  }
  
-  rbfMatB = generateRbfMat(p,cntrs,nodes, inUV);
+  rbfMatB = generateRbfMat(p,cntrs,nodes, isExt);
   D.gemm(rbfMatB, rbfInvA, 1.0, 0.0);
 }
 
@@ -315,52 +311,52 @@ void GRbf::evalRbfDer(int p,
 		     const fullMatrix<double> &nodes,
 		     const fullMatrix<double> &fValues, 
 		      fullMatrix<double> &fApprox, 
-		      int inUV) {
+		      int isExt) {
 
   fApprox.resize(nodes.size1(),fValues.size2());
   fullMatrix<double> D;
-  RbfOp(p,cntrs,nodes,D, inUV);
+  RbfOp(p,cntrs,nodes,D, isExt);
   fApprox.gemm(D,fValues, 1.0, 0.0);
 
 }
 
-void GRbf::computeEpsilon(const fullMatrix<double> &cntrs, fullVector<double> &epsilon, 
-			  int inUV){
+// void GRbf::computeEpsilon(const fullMatrix<double> &cntrs, fullVector<double> &epsilon, 
+// 			  int inUV){
 
-  epsilon.resize(nbNodes*3);
-  if (inUV) epsilon.setAll(epsilonUV);
-  epsilon.setAll(epsilonXYZ);
+//   epsilon.resize(nbNodes*3);
+//   if (inUV) epsilon.setAll(epsilonUV);
+//   epsilon.setAll(epsilonXYZ);
   
-  if (variableShapeParam) {
+//   if (variableShapeParam) {
 
-#if defined (HAVE_ANN)
-  ANNpointArray myNodes = annAllocPts(cntrs.size1(), 3);
-  ANNkd_tree *mykdtree = new ANNkd_tree(myNodes, cntrs.size1(), 3);
-  for(int i = 0; i < cntrs.size1(); i++){
-    myNodes[i][0] = cntrs(i,0); 
-    myNodes[i][1] = cntrs(i,1); 
-    myNodes[i][2] = cntrs(i,2); 
-  }
-   ANNidxArray index3 = new ANNidx[3];
-   ANNdistArray dist3 = new ANNdist[3];
+// #if defined (HAVE_ANN)
+//   ANNpointArray myNodes = annAllocPts(cntrs.size1(), 3);
+//   ANNkd_tree *mykdtree = new ANNkd_tree(myNodes, cntrs.size1(), 3);
+//   for(int i = 0; i < cntrs.size1(); i++){
+//     myNodes[i][0] = cntrs(i,0); 
+//     myNodes[i][1] = cntrs(i,1); 
+//     myNodes[i][2] = cntrs(i,2); 
+//   }
+//    ANNidxArray index3 = new ANNidx[3];
+//    ANNdistArray dist3 = new ANNdist[3];
     
-   for (int i= 0; i < cntrs.size1(); i++){
-     double xyz[3] = {cntrs(i,0), cntrs(i,1), cntrs(i,2) };
-     mykdtree->annkSearch(xyz, 3, index3, dist3);
-     double dist_min = sqrt(dist3[0]);
-     if (dist_min == 0.0 || dist_min == delta) dist_min = sqrt(dist3[1]);
-     if (dist_min == 0.0 || dist_min == delta) dist_min = sqrt(dist3[2]);
-     epsilon(i) /= dist_min;
-   }
+//    for (int i= 0; i < cntrs.size1(); i++){
+//      double xyz[3] = {cntrs(i,0), cntrs(i,1), cntrs(i,2) };
+//      mykdtree->annkSearch(xyz, 3, index3, dist3);
+//      double dist_min = sqrt(dist3[0]);
+//      if (dist_min == 0.0 || dist_min == delta) dist_min = sqrt(dist3[1]);
+//      if (dist_min == 0.0 || dist_min == delta) dist_min = sqrt(dist3[2]);
+//      epsilon(i) /= dist_min;
+//    }
     
-  delete mykdtree;
-  annDeallocPts(myNodes);
-  delete [] index3;
-  delete [] dist3;
-#endif
-  }
+//   delete mykdtree;
+//   annDeallocPts(myNodes);
+//   delete [] index3;
+//   delete [] dist3;
+// #endif
+//   }
 
-}
+// }
 void GRbf::setup_level_set(const fullMatrix<double> &cntrs,
 			  const fullMatrix<double> &normals,
 			  fullMatrix<double> &level_set_nodes, 
@@ -381,9 +377,10 @@ void GRbf::setup_level_set(const fullMatrix<double> &cntrs,
     level_set_funvals(i+numNodes,0) = -1;
     level_set_funvals(i+2*numNodes,0) = 1;
   }
-
+  
+  int isExt = 1;
   matAInv_nn.resize(nTot, nTot);
-  matAInv_nn = generateRbfMat(0,level_set_nodes,level_set_nodes);
+  matAInv_nn = generateRbfMat(0,level_set_nodes,level_set_nodes, isExt);
   matAInv_nn.invertInPlace();
 
 }
@@ -541,29 +538,30 @@ void GRbf::RbfLapSurface_global_CPM_high(const fullMatrix<double> &cntrs,
   if (!isLocal) extendedX = extX;
   if (!isLocal) surfInterp = surf;
 
+  int isExt = 1;
   // Find derivatives of the surface interpolant
-  evalRbfDer(1,extX,cntrs,surf,sx);
-  evalRbfDer(2,extX,cntrs,surf,sy);
-  evalRbfDer(3,extX,cntrs,surf,sz);
-  evalRbfDer(11,extX,cntrs,surf,sxx);
-  evalRbfDer(12,extX,cntrs,surf,sxy);
-  evalRbfDer(13,extX,cntrs,surf,sxz);
-  evalRbfDer(22,extX,cntrs,surf,syy);
-  evalRbfDer(23,extX,cntrs,surf,syz);
-  evalRbfDer(33,extX,cntrs,surf,szz);
+  evalRbfDer(1,extX,cntrs,surf,sx, isExt);
+  evalRbfDer(2,extX,cntrs,surf,sy, isExt);
+  evalRbfDer(3,extX,cntrs,surf,sz, isExt);
+  evalRbfDer(11,extX,cntrs,surf,sxx, isExt);
+  evalRbfDer(12,extX,cntrs,surf,sxy, isExt);
+  evalRbfDer(13,extX,cntrs,surf,sxz, isExt);
+  evalRbfDer(22,extX,cntrs,surf,syy, isExt);
+  evalRbfDer(23,extX,cntrs,surf,syz, isExt);
+  evalRbfDer(33,extX,cntrs,surf,szz, isExt);
 	
    // Finds differentiation matrices
-  A=generateRbfMat(0,extX,extX,0);
-  Ax=generateRbfMat(1,extX,cntrs,0);
-  Ay=generateRbfMat(2,extX,cntrs,0);
-  Az=generateRbfMat(3,extX,cntrs,0);
-  Axx=generateRbfMat(11,extX,cntrs,0);
-  Axy=generateRbfMat(12,extX,cntrs,0);
-  Axz=generateRbfMat(13,extX,cntrs,0);
-  Ayy=generateRbfMat(22,extX,cntrs,0);
-  Ayz=generateRbfMat(23,extX,cntrs,0);
-  Azz=generateRbfMat(33,extX,cntrs,0);
-  Alap=generateRbfMat(222,extX,cntrs,0);
+  A=generateRbfMat(0,extX,extX,isExt);
+  Ax=generateRbfMat(1,extX,cntrs,isExt);
+  Ay=generateRbfMat(2,extX,cntrs,isExt);
+  Az=generateRbfMat(3,extX,cntrs,isExt);
+  Axx=generateRbfMat(11,extX,cntrs,isExt);
+  Axy=generateRbfMat(12,extX,cntrs,isExt);
+  Axz=generateRbfMat(13,extX,cntrs,isExt);
+  Ayy=generateRbfMat(22,extX,cntrs,isExt);
+  Ayz=generateRbfMat(23,extX,cntrs,isExt);
+  Azz=generateRbfMat(33,extX,cntrs,isExt);
+  Alap=generateRbfMat(222,extX,cntrs,isExt);
 
   // Fills up the operator matrix
   AOper.resize(nnTot, nnTot);
@@ -597,29 +595,30 @@ void GRbf::RbfLapSurface_global_CPM_high_2(const fullMatrix<double> &cntrs,
   if (!isLocal) extendedX = extX;
   if (!isLocal) surfInterp = surf;
 
+  int isExt = 1;
   // Find derivatives of the surface interpolant
-  evalRbfDer(1,extX,cntrs,surf,sx);
-  evalRbfDer(2,extX,cntrs,surf,sy);
-  evalRbfDer(3,extX,cntrs,surf,sz);
-  evalRbfDer(11,extX,cntrs,surf,sxx);
-  evalRbfDer(12,extX,cntrs,surf,sxy);
-  evalRbfDer(13,extX,cntrs,surf,sxz);
-  evalRbfDer(22,extX,cntrs,surf,syy);
-  evalRbfDer(23,extX,cntrs,surf,syz);
-  evalRbfDer(33,extX,cntrs,surf,szz);
+  evalRbfDer(1,extX,cntrs,surf,sx, isExt);
+  evalRbfDer(2,extX,cntrs,surf,sy, isExt);
+  evalRbfDer(3,extX,cntrs,surf,sz, isExt);
+  evalRbfDer(11,extX,cntrs,surf,sxx, isExt);
+  evalRbfDer(12,extX,cntrs,surf,sxy, isExt);
+  evalRbfDer(13,extX,cntrs,surf,sxz, isExt);
+  evalRbfDer(22,extX,cntrs,surf,syy, isExt);
+  evalRbfDer(23,extX,cntrs,surf,syz, isExt);
+  evalRbfDer(33,extX,cntrs,surf,szz, isExt);
 	
   // Finds differentiation matrices
-  A=generateRbfMat(0,extX,extX,0);
-  Ax=generateRbfMat(1,extX,cntrs,0);
-  Ay=generateRbfMat(2,extX,cntrs,0);
-  Az=generateRbfMat(3,extX,cntrs,0);
-  Axx=generateRbfMat(11,extX,cntrs,0);
-  Axy=generateRbfMat(12,extX,cntrs,0);
-  Axz=generateRbfMat(13,extX,cntrs,0);
-  Ayy=generateRbfMat(22,extX,cntrs,0);
-  Ayz=generateRbfMat(23,extX,cntrs,0);
-  Azz=generateRbfMat(33,extX,cntrs,0);
-  Alap=generateRbfMat(222,extX,cntrs,0);
+  A=generateRbfMat(0,extX,extX,isExt);
+  Ax=generateRbfMat(1,extX,cntrs,isExt);
+  Ay=generateRbfMat(2,extX,cntrs,isExt);
+  Az=generateRbfMat(3,extX,cntrs,isExt);
+  Axx=generateRbfMat(11,extX,cntrs,isExt);
+  Axy=generateRbfMat(12,extX,cntrs,isExt);
+  Axz=generateRbfMat(13,extX,cntrs,isExt);
+  Ayy=generateRbfMat(22,extX,cntrs,isExt);
+  Ayz=generateRbfMat(23,extX,cntrs,isExt);
+  Azz=generateRbfMat(33,extX,cntrs, isExt);
+  Alap=generateRbfMat(222,extX,cntrs,isExt);
 
   // Fills up the operator matrix
   for (int i=0;i<numNodes ; ++i){
@@ -655,10 +654,11 @@ void GRbf::RbfLapSurface_global_CPM_low(const fullMatrix<double> &cntrs,
   if (!isLocal) extendedX = extX;
   if (!isLocal) surfInterp = surf;
 
+  int isExt = 1;
   //Computes the normal vectors to the surface at each node
-  evalRbfDer(1,extX,extX,surf,sx);
-  evalRbfDer(2,extX,extX,surf,sy);
-  evalRbfDer(3,extX,extX,surf,sz);
+  evalRbfDer(1,extX,extX,surf,sx, isExt);
+  evalRbfDer(2,extX,extX,surf,sy, isExt);
+  evalRbfDer(3,extX,extX,surf,sz, isExt);
   for (int i=0;i<nnTot ; ++i){
     double normFactor = sqrt(sx(i,0)*sx(i,0)+sy(i,0)*sy(i,0)+sz(i,0)*sz(i,0));
     sx(i,0) = sx(i,0)/normFactor;
@@ -683,9 +683,11 @@ void GRbf::RbfLapSurface_global_CPM_low(const fullMatrix<double> &cntrs,
   for (int i=0; i < numNodes; i++){
     for (int j=0; j < nnTot ; ++j){
       Oper(i,j) = PLap(i,j);
-      int del = (i == j) ? 1: 0; 
-      Oper(i+numNodes,j) = -Ix2extX(i,j)+del;
-      Oper(i+2*numNodes,j) = -Ix2extX(i+numNodes,j)+del;
+      double del = (i == j) ? -1.0: 0.0; 
+      double pos1 = (i+numNodes == j) ? 1.0: 0.0; 
+      double pos2 = (i+2*numNodes == j) ? 1.0: 0.0; 
+      Oper(i+numNodes,j) = del + Ix2extX(i,j);//+ pos1; //
+      Oper(i+2*numNodes,j) = del + Ix2extX(i+numNodes,j); //pos2; //
     }
   }
   
@@ -714,8 +716,7 @@ void GRbf::solveHarmonicMap(fullMatrix<double> Oper,
   Oper.invertInPlace();
   Oper.mult(F,UV);
 
-  //ANN UVtree + dist_min
-
+  //ANN UVtree
  double dist_min = 1.e6;
 #if defined (HAVE_ANN)
   UVnodes = annAllocPts(nbNodes, 3);
@@ -723,18 +724,11 @@ void GRbf::solveHarmonicMap(fullMatrix<double> Oper,
     UVnodes[i][0] = UV(i,0); 
     UVnodes[i][1] = UV(i,1); 
     UVnodes[i][2] = 0.0; 
-    for(int j = i+1; j < nbNodes; j++){
-      double dist = sqrt((UV(i,0)-UV(j,0))*(UV(i,0)-UV(j,0))+
-			 (UV(i,1)-UV(j,1))*(UV(i,1)-UV(j,1)));
-      if (dist<dist_min) dist_min = dist;
-    }
   }
   UVkdtree = new ANNkd_tree(UVnodes, nbNodes, 3);
   index = new ANNidx[num_neighbours];
   dist = new ANNdist[num_neighbours];
 #endif
-  epsilonUV = 0.5/dist_min;
-  deltaUV = 0.6*dist_min;
 
   //fill rbf_param
   std::map<MVertex*, int>::iterator itm = _mapV.begin();
@@ -786,13 +780,14 @@ bool GRbf::UVStoXYZ_global(const double  u_eval, const double v_eval,
   u_temp(0,2)  = 0.0;
 
   int incr =0;
+  int isExt = 1;
   fullMatrix<double> Jac(3,3);
   while(norm_s < 5 && incr < 10){
  
     // Find the entries of the m Jacobians
-    evalRbfDer(1,extendedX,nodes_eval,u_vec,ux);
-    evalRbfDer(2,extendedX,nodes_eval,u_vec,uy);
-    evalRbfDer(3,extendedX,nodes_eval,u_vec,uz);
+    evalRbfDer(1,extendedX,nodes_eval,u_vec,ux,isExt);
+    evalRbfDer(2,extendedX,nodes_eval,u_vec,uy,isExt);
+    evalRbfDer(3,extendedX,nodes_eval,u_vec,uz,isExt);
 
     // Jacobian of the UVS coordinate system w.r.t. XYZ
     for (int k = 0; k < 3;k++){
@@ -804,12 +799,12 @@ bool GRbf::UVStoXYZ_global(const double  u_eval, const double v_eval,
 
     for (int j = 0; j< 3;j++)
       nodes_eval(0,j) = nodes_eval(0,j) 
-	- Jac(j,0)*(-u_vec_eval(0,0) + u_temp(0,0)) 
-	- Jac(j,1)*(-u_vec_eval(0,1) + u_temp(0,1)) 
-	- Jac(j,2)*(-0.0             + u_temp(0,2));
+	+ Jac(j,0)*(u_vec_eval(0,0) - u_temp(0,0)) 
+	+ Jac(j,1)*(u_vec_eval(0,1) - u_temp(0,1)) 
+	+ Jac(j,2)*(0.0             - u_temp(0,2));
    
     // Find the corresponding u, v, s
-    evalRbfDer(0,extendedX,nodes_eval,u_vec,u_temp);
+    evalRbfDer(0,extendedX,nodes_eval,u_vec,u_temp, isExt);
     
     double normSq =  sqrt(u_temp(0,2)*u_temp(0,2));
     norm_s = fabs(log10(normSq));
@@ -839,7 +834,7 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
   //Finds the U,V,S (in the 0-level set) that are the 'num_neighbours' closest to u_eval and v_eval.
   //Thus in total, we're working with '3*num_neighbours' nodes
   //Say that the vector 'index' gives us the indices of the closest points
-  //TO FILL IN
+
   bool converged = true;
 
 #if defined (HAVE_ANN)
@@ -853,6 +848,7 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
   fullMatrix<double> xyz_local(3*num_neighbours,3); 
 
   // u_vec = [u v s] : These are the u,v,s that are on the surface *and* outside of it also! 
+  double distUV = 1.e6;
   for (int i = 0; i < num_neighbours; i++){
 
     //THE LOCAL UVS
@@ -862,11 +858,11 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
 
     u_vec(i+num_neighbours,0) = UV(index[i]+nbNodes,0);
     u_vec(i+num_neighbours,1) = UV(index[i]+nbNodes,1);
-    u_vec(i+num_neighbours,2) = surfInterp(index[i]+nbNodes,0);//*deltaUV;
+    u_vec(i+num_neighbours,2) = surfInterp(index[i]+nbNodes,0);
 
     u_vec(i+2*num_neighbours,0) = UV(index[i]+2*nbNodes,0);
     u_vec(i+2*num_neighbours,1) = UV(index[i]+2*nbNodes,1);
-    u_vec(i+2*num_neighbours,2) = surfInterp(index[i]+2*nbNodes,0);//*deltaUV;
+    u_vec(i+2*num_neighbours,2) = surfInterp(index[i]+2*nbNodes,0);
 
 
     //THE LOCAL XYZ
@@ -883,6 +879,7 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
     xyz_local(i+2*num_neighbours,2) = extendedX(index[i]+2*nbNodes,2);
 
   }
+ 
   // u_vec_eval = [u_eval v_eval s_eval]
   fullMatrix<double> u_vec_eval(1, 3);
   u_vec_eval(0,0) = u_eval;
@@ -891,9 +888,6 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
 
   //we will use a local interpolation to find the corresponding XYZ point to (u_eval,v_eval).
   //evalRbfDer(0, u_vec, u_vec_eval,xyz_local, nodes_eval, 1);
-  //printf("nodes eval =%g %g %g \n", nodes_eval(0,0), nodes_eval(0,1), nodes_eval(0,2));
-  //exit(1);
-
   nodes_eval(0,0) = extendedX(index[0],0); 
   nodes_eval(0,1) = extendedX(index[0],1); 
   nodes_eval(0,2) = extendedX(index[0],2);
@@ -903,40 +897,42 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
   u_temp(0,2)  = 0.0;
 
   int incr = 0;
+  int isExt = 1;
   double norm_s = 0.0;
   fullMatrix<double> Jac(3,3);
+  printf("newton \n");
   while(norm_s <5 && incr < 10){
 
     // Find the entries of the m Jacobians
-    evalRbfDer(1,xyz_local,nodes_eval,u_vec,ux);
-    evalRbfDer(2,xyz_local,nodes_eval,u_vec,uy);
-    evalRbfDer(3,xyz_local,nodes_eval,u_vec,uz);
+    evalRbfDer(1,xyz_local,nodes_eval,u_vec,ux, isExt);
+    evalRbfDer(2,xyz_local,nodes_eval,u_vec,uy, isExt);
+    evalRbfDer(3,xyz_local,nodes_eval,u_vec,uz, isExt);
 
     // Jacobian of the UVS coordinate system w.r.t. XYZ
     for (int k = 0; k < 3;k++){
       Jac(k,0) = ux(0,k);
       Jac(k,1) = uy(0,k);
       Jac(k,2) = uz(0,k);
-    }
+    }    
     Jac.invertInPlace(); 
-
+    
     for (int j = 0; j< 3;j++)
       nodes_eval(0,j) = nodes_eval(0,j) 
-  	- Jac(j,0)*(-u_vec_eval(0,0) + u_temp(0,0)) 
-  	- Jac(j,1)*(-u_vec_eval(0,1) + u_temp(0,1)) 
-  	- Jac(j,2)*(-0.0             + u_temp(0,2));
+  	+ Jac(j,0)*( u_vec_eval(0,0) - u_temp(0,0)) 
+  	+ Jac(j,1)*( u_vec_eval(0,1) - u_temp(0,1)) 
+	+ Jac(j,2)*( 0.0 - u_temp(0,2));
    
     // Find the corresponding u, v, s
-    evalRbfDer(0,xyz_local,nodes_eval,u_vec,u_temp);
+    evalRbfDer(0,xyz_local,nodes_eval,u_vec,u_temp, isExt);
     
     double normSq =  sqrt(u_temp(0,2)*u_temp(0,2));
     norm_s = fabs(log10(normSq));
+    printf(" (uv)=(%g,%g -> norm_s =%g )  XYZ =%g %g %g \n", u_eval, v_eval, norm_s, nodes_eval(0,0), nodes_eval(0,1), nodes_eval(0,2));
     incr++;
   }  
   if (norm_s < 5 ){
     printf("Newton not converged for point (uv)=(%g,%g -> norm_s =%g ) XYZ =%g %g %g \n", u_eval, v_eval, norm_s, nodes_eval(0,0), nodes_eval(0,1), nodes_eval(0,2));
     converged = false;
-
 
     // if Newton diverges, call the routine again with 
     // num_neighbors = num_neighbors + 5;
@@ -953,39 +949,3 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
 }
 
 
-void GRbf::test(const fullMatrix<double> &cntrs) {
-
-  fullMatrix<double> theta(100,1),f_theta(100,1),f_prime_theta(100,1),f_prime_approx(100,1),rbfInvA(100,100),rbfMatB(100,100),D(100,100);
-  for (int j = 0; j< 100;j++){
-    theta(j,0) = 2*3.14*j/100;
-    f_theta(j,0) = cos(theta(j,0));
-    f_prime_theta(j,0) = -sin(theta(j,0));
-  }
-
-  for (int i = 0; i < 100; i++) {
-    for (int j = 0; j < 100; j++) {
-      double dx = theta(i,0)-theta(j,0);
-      double dy = 0;
-      double dz = 0;
-      rbfInvA(i,j) = evalRadialFnDer(0,dx,dy,dz,2);
-    }
-  }
-
-  rbfInvA.invertInPlace();
-
-  for (int i = 0; i < 100; i++) {
-    for (int j = 0; j < 100; j++) {
-      double dx = theta(i,0)-theta(j,0);
-      double dy = 0;
-      double dz = 0;
-      rbfMatB(i,j) = evalRadialFnDer(1,dx,dy,dz,2);
-    }
-  }
-
-  D.gemm(rbfMatB, rbfInvA, 1.0, 0.0);
-  f_prime_approx.gemm(D,f_theta, 1.0, 0.0);
-
-  f_prime_approx.print("f_prime_approx");
-  f_prime_theta.print("f_prime_theta");
-
-}

@@ -34,8 +34,9 @@ class GRbf {
 
   double epsilonXYZ; // Shape parameter
   double epsilonUV; // Shape parameter
+
   double delta; //offset level set
-  double deltaUV; //offset level set
+  /* double deltaUV; //offset level set */
   double radius;
   int variableShapeParam; // 1 if one chooses epsilon to vary spatially, 0 if one chooses it to be constant
   int radialFunctionIndex; // Index corresponding to the radial function used (0 - GA,1 - MQ, ... )
@@ -97,7 +98,7 @@ class GRbf {
 		  const fullMatrix<double> &fValues, 
 		  fullMatrix<double> &fApprox, int inUV=0);
 
-  void computeEpsilon(const fullMatrix<double> &cntrs, fullVector<double> &epsilon, int inUV=0);
+  //void computeEpsilon(const fullMatrix<double> &cntrs, fullVector<double> &epsilon, int inUV=0);
 
   // Finds surface differentiation matrix using the LOCAL projection method
   void RbfLapSurface_local_projection(const fullMatrix<double> &cntrs,
@@ -130,7 +131,6 @@ class GRbf {
 				     const fullMatrix<double> &normals,
 				     fullMatrix<double> &D);
   
-
   // Calculates the curvature of a surface at a certain node
   void curvature(double radius, 
 		 const fullMatrix<double> &cntrs,
@@ -151,8 +151,6 @@ class GRbf {
  inline const fullMatrix<double> getUV() {return UV;};
  inline const fullMatrix<double> getXYZ() {return centers;};
  inline const fullMatrix<double> getN() {return normals;};
-
-  void test(const fullMatrix<double> &cntrs);
 
 };
 

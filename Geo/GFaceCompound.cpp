@@ -673,21 +673,22 @@ bool GFaceCompound::parametrize() const
     Msg::Info("*** RBF eps=%g  delta =%g ", epsilon, delta);
     Msg::Info("*****************************************");
     
+    // printf("allNodes=%d \n", allNodes.size());
+    // exit(1);
     fullMatrix<double> Oper(3*allNodes.size(),3*allNodes.size());
     _rbf = new GRbf(epsilon, delta, radius,  variableEps, radFunInd, _normals, allNodes);
-    
-    //_rbf->test(_rbf->getXYZ());
-    
-    //_rbf->RbfLapSurface_global_CPM_low(_rbf->getXYZ(), _rbf->getN(), Oper);
+
+    _rbf->RbfLapSurface_global_CPM_low(_rbf->getXYZ(), _rbf->getN(), Oper);
     //_rbf->RbfLapSurface_local_CPM(true, _rbf->getXYZ(), _rbf->getN(), Oper);
-    _rbf->RbfLapSurface_global_CPM_high(_rbf->getXYZ(), _rbf->getN(), Oper);
+    //_rbf->RbfLapSurface_global_CPM_high(_rbf->getXYZ(), _rbf->getN(), Oper);
     //_rbf->RbfLapSurface_local_CPM(false, _rbf->getXYZ(), _rbf->getN(),  Oper);
     //_rbf->RbfLapSurface_global_projection(_rbf->getXYZ(), _rbf->getN(), Oper);
     //_rbf->RbfLapSurface_local_projection(_rbf->getXYZ(), _rbf->getN(), Oper);
-    
+  
     _rbf->solveHarmonicMap(Oper, _ordered, _coords, coordinates);
     printStuff();
-   
+
+
   }
 
   buildOct();  
@@ -782,7 +783,7 @@ double GFaceCompound::getSizeH() const
 double GFaceCompound::getDistMin() const
 {
   double dist_min = 1.e6;
-  double tol = 1.e-8;
+  double tol = CTX::instance()->geom.tolerance;
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; itv++){
     for(std::set<MVertex *>::iterator itv2 = allNodes.begin(); itv2 !=allNodes.end() ; itv2++){
       MVertex *v1 = *itv;

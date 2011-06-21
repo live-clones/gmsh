@@ -1,7 +1,7 @@
 Merge "aorta2.stl";
 CreateTopology;
 
-Merge "aortaRADIUS2.bgm";
+//Merge "aortaRADIUS2.bgm";
 
 // create a boundary layer, whose tickness is given in View[0]
 out1[] = Extrude{Surface{1}; Layers{4, 0.5}; Using Index[0]; Using View[0]; };
