@@ -173,7 +173,7 @@ void linearSystemPETSc<scalar>::getFromRightHandSide(int row, scalar &val) const
   // FIXME specialize this routine
   val = s.real();
 #else
-  VecGetValues(_b, 1, &row, &val);
+  _try(VecGetValues(_b, 1, &row, &val));
 #endif
 }
 
@@ -181,6 +181,8 @@ template <class scalar>
 double linearSystemPETSc<scalar>::normInfRightHandSide() const
 {
   PetscReal nor;
+  VecAssemblyBegin(_b);
+  VecAssemblyEnd(_b);
   _try(VecNorm(_b, NORM_INFINITY, &nor));
   return nor;
 }
@@ -205,7 +207,7 @@ void linearSystemPETSc<scalar>::getFromSolution(int row, scalar &val) const
   _try(VecRestoreArray(_x, &tmp));
   val = s.real();
 #else
-  VecGetValues(_x, 1, &row, &val);
+  _try(VecGetValues(_x, 1, &row, &val));
 #endif
 }
 

@@ -240,6 +240,8 @@ linearSystemPETScBlockDouble::linearSystemPETScBlockDouble()
 double linearSystemPETScBlockDouble::normInfRightHandSide() const
 {
   PetscReal nor;
+  VecAssemblyBegin(_b);
+  VecAssemblyEnd(_b);
   VecNorm(_b, NORM_INFINITY, &nor);
   return nor;
 }
