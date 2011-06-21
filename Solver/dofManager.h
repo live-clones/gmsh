@@ -124,12 +124,15 @@ class dofManager{
  private :
   // those dof are images of ghost located on another proc (id givent by the map).
   // this is a first try, maybe not the final implementation
-  std::map<Dof, int > ghosted;  // dof => procId
+  std::map<Dof, std::pair<int, int> > ghostByDof;  // dof => procId, globalId
+  std::map<Dof, T> ghostValue;
+  std::vector<std::vector<Dof> > ghostByProc, parentByProc;
   int _localSize;
   bool _parallelFinalized;
   bool _isParallel;
-  public:
   void _parallelFinalize();
+  public:
+  void scatterSolution();
 
  public:
   dofManager(linearSystem<dataMat> *l, bool isParallel=false)
@@ -175,14 +178,14 @@ class dofManager{
   inline void numberGhostDof (Dof key, int procId) {
     if (fixed.find(key) != fixed.end()) return;
     if (constraints.find(key) != constraints.end()) return;
-    if (ghosted.find(key) != ghosted.end()) return;
-    ghosted[key] = procId;
+    if (ghostByDof.find(key) != ghostByDof.end()) return;
+    ghostByDof[key] = std::make_pair(procId, 0);
   }
   inline void numberDof(Dof key)
   {
     if (fixed.find(key) != fixed.end()) return;
     if (constraints.find(key) != constraints.end()) return;
-    if (ghosted.find(key) != ghosted.end()) return;
+    if (ghostByDof.find(key) != ghostByDof.end()) return; 
 
     std::map<Dof, int> :: iterator it = unknown.find(key);
     if (it == unknown.end()) {
@@ -208,8 +211,8 @@ class dofManager{
   virtual inline void getDofValue(Dof key,  dataVec &val) const
   {
     {
-      typename std::map<Dof, dataVec>::const_iterator it = fixed.find(key);
-      if (it != fixed.end()) {
+      typename std::map<Dof, dataVec>::const_iterator it = ghostValue.find(key);
+      if (it != ghostValue.end()) {
         val =  it->second;
         return;
       }
@@ -218,6 +221,13 @@ class dofManager{
       std::map<Dof, int>::const_iterator it = unknown.find(key);
       if (it != unknown.end()) {
         _current->getFromSolution(it->second, val);
+        return;
+      }
+    }
+    {
+      typename std::map<Dof, dataVec>::const_iterator it = fixed.find(key);
+      if (it != fixed.end()) {
+        val =  it->second;
         return;
       }
     }
@@ -239,36 +249,7 @@ class dofManager{
   }
   inline void getDofValue(int ent, int type, dataVec &v) const
   {
-    Dof key(ent, type);
-    {
-      typename std::map<Dof, dataVec>::const_iterator it = fixed.find(key);
-      if (it != fixed.end()){
-        v = it->second;
-        return;
-      }
-    }
-    {
-      std::map<Dof, int>::const_iterator it = unknown.find(key);
-      if (it != unknown.end()){
-        _current->getFromSolution(it->second, v);
-        return;
-      }
-    }
-    {
-      typename std::map<Dof, DofAffineConstraint< dataVec > >::const_iterator it =
-        constraints.find(key);
-      if (it != constraints.end()){
-        v = it->second.shift;
-        dataVec tmp(v);
-        for (unsigned i = 0; i < (it->second).linear.size(); i++){
-          std::map<Dof, int>::const_iterator itu = unknown.find
-            (((it->second).linear[i]).first);
-          getDofValue(((it->second).linear[i]).first, tmp);
-          dofTraits<T>::gemm(v, ((it->second).linear[i]).second, tmp, 1, 1);
-        }
-        return;
-      }
-    }
+    getDofValue(Dof(ent, type), v);
   }
   inline void getDofValue(MVertex *v, int iComp, int iField, dataVec &value) const
   {
@@ -576,6 +557,8 @@ void dofManager<T>::_parallelFinalize()
   int _numStart;
   int _numTotal;
   MPI_Status status;
+  parentByProc.resize(Msg::GetCommSize());
+  ghostByProc.resize(Msg::GetCommSize());
   if (Msg::GetCommRank() == 0){
     _numStart = 0;
   }
@@ -592,8 +575,10 @@ void dofManager<T>::_parallelFinalize()
   int *nRequested = new int[Msg::GetCommSize()];
   for (int i = 0; i<Msg::GetCommSize(); i++)
     nRequest[i] = 0;
-  for (std::map <Dof, int >::iterator it = ghosted.begin(); it != ghosted.end(); it++)
-    nRequest[it->second] ++;
+  for (std::map <Dof, std::pair<int, int> >::iterator it = ghostByDof.begin(); it != ghostByDof.end(); it++) {
+    int procId = it->second.first;
+    it->second.second = nRequest[procId]++;
+  }
   MPI_Alltoall(nRequest, 1, MPI_INT, nRequested, 1, MPI_INT, MPI_COMM_WORLD);
   long int **recv0 = new long int*[Msg::GetCommSize()];
   int **recv1 = new int*[Msg::GetCommSize()];
@@ -609,13 +594,16 @@ void dofManager<T>::_parallelFinalize()
     send1[i] = new int[nRequested[i]];
     recv1[i] = new int[nRequest[i]];
     reqSend0[i] = reqSend1[i] = reqRecv0[i] = reqRecv1[i] = MPI_REQUEST_NULL;
+    parentByProc[i].resize(nRequested[i], Dof(0,0));
+    ghostByProc[i].resize(nRequest[i], Dof(0,0));
   }
   for (int i = 0; i<Msg::GetCommSize(); i++)
     nRequest [i] = 0;
-  for (std::map <Dof, int >::iterator it = ghosted.begin(); it != ghosted.end(); it++) {
-    int proc = it->second;
+  for (std::map <Dof, std::pair<int, int> >::iterator it = ghostByDof.begin(); it != ghostByDof.end(); it++) {
+    int proc = it->second.first;
     send0 [proc] [nRequest[proc]*2] = it->first.getEntity();
     send0 [proc] [nRequest[proc]*2+1] = it->first.getType();
+    ghostByProc[proc][nRequest[proc]] = it->first;
     nRequest [proc] ++;
   }
   for (int i = 0; i<Msg::GetCommSize(); i++) {
@@ -632,20 +620,22 @@ void dofManager<T>::_parallelFinalize()
          index != MPI_UNDEFINED) {
     if (status.MPI_TAG == 0) {
       for (int j = 0; j < nRequested[index]; j++) {
-        std::map<Dof, int>::iterator it = unknown.find
-          (Dof(recv0[index][j*2], recv0[index][j*2+1]));
+        Dof d(recv0[index][j*2], recv0[index][j*2+1]);
+        std::map<Dof, int>::iterator it = unknown.find(d);
         if (it == unknown.end ())
           Msg::Error ("ghost Dof does not exist on parent process");
         send1[index][j] = it->second;
+        parentByProc[index][j] = d;
       }
       MPI_Isend(send1[index], nRequested[index], MPI_INT, index, 1,
                 MPI_COMM_WORLD, &reqSend1[index]);
     }
   }
   for (int i = 0; i<Msg::GetCommSize(); i++)
+  for (int i = 0; i<Msg::GetCommSize(); i++)
     nRequest[i] = 0;
-  for (std::map <Dof, int>::iterator it = ghosted.begin(); it != ghosted.end(); it++) {
-    int proc = it->second;
+  for (std::map <Dof, std::pair<int, int> >::iterator it = ghostByDof.begin(); it != ghostByDof.end(); it++) {
+    int proc = it->second.first;
     unknown[it->first] = recv1 [proc][nRequest[proc] ++];
   }
   MPI_Waitall (Msg::GetCommSize(), reqSend0, MPI_STATUS_IGNORE);
