@@ -34,9 +34,8 @@ class GRbf {
 
   double epsilonXYZ; // Shape parameter
   double epsilonUV; // Shape parameter
-
+ 
   double delta; //offset level set
-  /* double deltaUV; //offset level set */
   double radius;
   int variableShapeParam; // 1 if one chooses epsilon to vary spatially, 0 if one chooses it to be constant
   int radialFunctionIndex; // Index corresponding to the radial function used (0 - GA,1 - MQ, ... )
@@ -83,7 +82,7 @@ class GRbf {
   fullMatrix<double> generateRbfMat(int p,
 				    const fullMatrix<double> &nodes1,
 				    const fullMatrix<double> &nodes2, 
-				    int inUV=0);
+				    int isExt=0);
   
   // Computes the interpolation(p==0) or the derivative (p!=0) operator(mxn) (n:number of centers, m: number of evaluation nodes)
   void RbfOp(int p, // (p)th derivatives

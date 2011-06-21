@@ -238,10 +238,10 @@ fullMatrix<double> GRbf::generateRbfMat(int p,
   int n = nodes1.size1();
   fullMatrix<double> rbfMat(m,n);
 
-  //fullVector<double > epsilon;
-  //computeEpsilon(nodes1, epsilon, inUN);
+  // fullVector<double > epsilon;
+  // //computeEpsilon(nodes1, epsilon, inUN);
   // double eps = epsilonXYZ;
-  // if (inUV) eps = epsilonUV;
+  // if (_inUV) eps = epsilonUV;
   // for (int i = 0; i < m; i++) {
   //   for (int j = 0; j < n; j++) {
   //     double dx = nodes2(i,0)-nodes1(j,0);
@@ -293,7 +293,7 @@ void GRbf::RbfOp(int p,
    else{
      if (cntrs.size1() == nbNodes )
        rbfInvA = matAInv;
-     else if (cntrs.size1() == 3*nbNodes)
+     else if (cntrs.size1() == 3*nbNodes )
        rbfInvA  = matAInv_nn;
      else{
        rbfInvA = generateRbfMat(0,cntrs,cntrs, isExt);
@@ -444,11 +444,6 @@ void GRbf::RbfLapSurface_global_projection( const fullMatrix<double> &cntrs,
     sx(i,0) /= norm;
     sy(i,0) /= norm;
     sz(i,0) /= norm;
-    //fix emi
-    //sx(i,0) = normals(i,0);
-    //sy(i,0) = normals(i,1);
-    //sz(i,0) = normals(i,2);
-    //printf("normals =%g %g %g sxyz =%g %g %g \n", normals(i,0), normals(i,1), normals(i,2), sx(i,0), sy(i,0), sz(i,0));
   }
 
   // Finds differentiation matrices
@@ -676,8 +671,8 @@ void GRbf::RbfLapSurface_global_CPM_low(const fullMatrix<double> &cntrs,
   }
 	
   //Computes the gradient operators
-  RbfOp(0,extX,extRBFX,Ix2extX); //'0' for interpolation
-  RbfOp(222,extX,cntrs,PLap); //'222' for the Laplacian
+  RbfOp(0,extX,extRBFX,Ix2extX, isExt); //'0' for interpolation
+  RbfOp(222,extX,cntrs,PLap, isExt); //'222' for the Laplacian
 
   // Fills up the operator matrix	
   for (int i=0; i < numNodes; i++){
@@ -717,14 +712,21 @@ void GRbf::solveHarmonicMap(fullMatrix<double> Oper,
   Oper.mult(F,UV);
 
   //ANN UVtree
- double dist_min = 1.e6;
+  //double dist_min = 1.e6;
 #if defined (HAVE_ANN)
   UVnodes = annAllocPts(nbNodes, 3);
   for(int i = 0; i < nbNodes; i++){
     UVnodes[i][0] = UV(i,0); 
     UVnodes[i][1] = UV(i,1); 
     UVnodes[i][2] = 0.0; 
+    // for(int j = i+1; j < nbNodes; j++){
+    //   double dist = sqrt((UV(i,0)-UV(j,0))*(UV(i,0)-UV(j,0))+
+    // 			 (UV(i,1)-UV(j,1))*(UV(i,1)-UV(j,1)));
+    //   if (dist<dist_min) dist_min = dist;
+    // }
   }
+  // epsilonUV = 0.5/dist_min;
+  // deltaUV = 0.6*dist_min; 
   UVkdtree = new ANNkd_tree(UVnodes, nbNodes, 3);
   index = new ANNidx[num_neighbours];
   dist = new ANNdist[num_neighbours];
@@ -740,6 +742,7 @@ void GRbf::solveHarmonicMap(fullMatrix<double> Oper,
  
 }
 
+ //WARNING: THIS IS KO FOR PROJECTION ??
 bool GRbf::UVStoXYZ_global(const double  u_eval, const double v_eval,
 			  double &XX, double &YY, double &ZZ, 
 			  SVector3 &dXdu, SVector3& dXdv) 
@@ -747,7 +750,7 @@ bool GRbf::UVStoXYZ_global(const double  u_eval, const double v_eval,
 
   bool converged = true;
 
-  int numNodes = 3*nbNodes; //WARNING: THIS IS KO FOR PROJECTION ??
+  int numNodes = 3*nbNodes;
   double norm_s = 0.0;
   fullMatrix<double> u_temp(1,3);
   fullMatrix<double> ux(1,3), uy(1,3), uz(1,3);
@@ -858,11 +861,11 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
 
     u_vec(i+num_neighbours,0) = UV(index[i]+nbNodes,0);
     u_vec(i+num_neighbours,1) = UV(index[i]+nbNodes,1);
-    u_vec(i+num_neighbours,2) = surfInterp(index[i]+nbNodes,0);
+    u_vec(i+num_neighbours,2) = surfInterp(index[i]+nbNodes,0); //*deltaUV;
 
     u_vec(i+2*num_neighbours,0) = UV(index[i]+2*nbNodes,0);
     u_vec(i+2*num_neighbours,1) = UV(index[i]+2*nbNodes,1);
-    u_vec(i+2*num_neighbours,2) = surfInterp(index[i]+2*nbNodes,0);
+    u_vec(i+2*num_neighbours,2) = surfInterp(index[i]+2*nbNodes,0); //*deltaUV;
 
 
     //THE LOCAL XYZ
@@ -887,20 +890,20 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
   u_vec_eval(0,2) = 0.0;
 
   //we will use a local interpolation to find the corresponding XYZ point to (u_eval,v_eval).
-  //evalRbfDer(0, u_vec, u_vec_eval,xyz_local, nodes_eval, 1);
+  // evalRbfDer(0, u_vec, u_vec_eval,xyz_local, nodes_eval, 1);
+
+  //we use the closest point
   nodes_eval(0,0) = extendedX(index[0],0); 
   nodes_eval(0,1) = extendedX(index[0],1); 
   nodes_eval(0,2) = extendedX(index[0],2);
-
-  u_temp(0,0)  = u_eval;
-  u_temp(0,1)  = v_eval;
+  u_temp(0,0)  = UV(index[0],0);
+  u_temp(0,1)  = UV(index[0],1);
   u_temp(0,2)  = 0.0;
 
   int incr = 0;
   int isExt = 1;
   double norm_s = 0.0;
   fullMatrix<double> Jac(3,3);
-  printf("newton \n");
   while(norm_s <5 && incr < 10){
 
     // Find the entries of the m Jacobians
@@ -927,19 +930,15 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
     
     double normSq =  sqrt(u_temp(0,2)*u_temp(0,2));
     norm_s = fabs(log10(normSq));
-    printf(" (uv)=(%g,%g -> norm_s =%g )  XYZ =%g %g %g \n", u_eval, v_eval, norm_s, nodes_eval(0,0), nodes_eval(0,1), nodes_eval(0,2));
     incr++;
   }  
   if (norm_s < 5 ){
     printf("Newton not converged for point (uv)=(%g,%g -> norm_s =%g ) XYZ =%g %g %g \n", u_eval, v_eval, norm_s, nodes_eval(0,0), nodes_eval(0,1), nodes_eval(0,2));
     converged = false;
-
     // if Newton diverges, call the routine again with 
     // num_neighbors = num_neighbors + 5;
-    // UVStoXYZ(const double  u_eval, const double v_eval,
-    //		   double &XX, double &YY, double &ZZ, 
-    //		   SVector3 &dXdu, SVector3& dXdv)
   }
+
   XX = nodes_eval(0,0);
   YY = nodes_eval(0,1);
   ZZ = nodes_eval(0,2);
