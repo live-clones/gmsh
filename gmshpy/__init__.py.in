@@ -1,0 +1,2 @@
+${GMSH_PYTHON_MODULES_INCLUDE_CODE}
+GmshInitialize()
