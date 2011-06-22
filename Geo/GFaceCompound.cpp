@@ -669,6 +669,7 @@ bool GFaceCompound::parametrize() const
     double radius= 3.*getSizeH()/sqrt(allNodes.size());   
         
     Msg::Info("*****************************************");
+    Msg::Info("*** RBF nbNodes=%d ", allNodes.size());
     Msg::Info("*** RBF rad=%g dist_min =%g ", radius, 3.*delta);
     Msg::Info("*** RBF eps=%g  delta =%g ", epsilon, delta);
     Msg::Info("*****************************************");

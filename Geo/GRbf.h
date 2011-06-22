@@ -32,13 +32,16 @@ class GRbf {
   int nn;
   int num_neighbours;
 
-  double epsilonXYZ; // Shape parameter
-  double epsilonUV; // Shape parameter
- 
+  int _inUV;
+  double epsilonUV;
+
+  double epsilonXYZ; // Shape parameter 
   double delta; //offset level set
+  double deltaUV; //offset level set
   double radius;
-  int variableShapeParam; // 1 if one chooses epsilon to vary spatially, 0 if one chooses it to be constant
-  int radialFunctionIndex; // Index corresponding to the radial function used (0 - GA,1 - MQ, ... )
+
+  int variableShapeParam; 
+  int radialFunctionIndex; // Index for the radial function used (0 - GA,1 - MQ, ... )
 
   fullMatrix<double> centers; // Data centers
   fullMatrix<double> normals; // Data normals
@@ -49,8 +52,6 @@ class GRbf {
 #if defined (HAVE_ANN)
   ANNkd_tree *XYZkdtree; 
   ANNkd_tree *UVkdtree; 
-  ANNidxArray index; 
-  ANNdistArray dist;  
   ANNpointArray XYZnodes;
   ANNpointArray UVnodes;
 #endif
@@ -81,23 +82,20 @@ class GRbf {
   //(p)th derivative of the radial function w.r.t. the (q)th variable
   fullMatrix<double> generateRbfMat(int p,
 				    const fullMatrix<double> &nodes1,
-				    const fullMatrix<double> &nodes2, 
-				    int isExt=0);
+				    const fullMatrix<double> &nodes2);
   
   // Computes the interpolation(p==0) or the derivative (p!=0) operator(mxn) (n:number of centers, m: number of evaluation nodes)
   void RbfOp(int p, // (p)th derivatives
 	     const fullMatrix<double> &cntrs,
 	     const fullMatrix<double> &nodes, 
-	     fullMatrix<double> &D, int inUV=0);
+	     fullMatrix<double> &D);
 
   // Computes the interpolant(p==0) or the derivative (p!=0) of the function values entered and evaluates it at the new nodes
   void evalRbfDer(int p, // (p)th derivatives
 		  const fullMatrix<double> &cntrs,
 		  const fullMatrix<double> &nodes,
 		  const fullMatrix<double> &fValues, 
-		  fullMatrix<double> &fApprox, int inUV=0);
-
-  //void computeEpsilon(const fullMatrix<double> &cntrs, fullVector<double> &epsilon, int inUV=0);
+		  fullMatrix<double> &fApprox);
 
   // Finds surface differentiation matrix using the LOCAL projection method
   void RbfLapSurface_local_projection(const fullMatrix<double> &cntrs,
@@ -138,11 +136,14 @@ class GRbf {
 
   bool UVStoXYZ_global(const double u_eval, const double v_eval,
 		      double &XX, double &YY, double &ZZ, 
-		      SVector3 &dXdu, SVector3& dxdv);
+		       SVector3 &dXdu, SVector3& dxdv, int num_neighbours=10);
 
+  //Finds the U,V,S (in the 0-level set) that are the 'num_neighbours' closest to u_eval and v_eval.
+  //Thus in total, we're working with '3*num_neighbours' nodes
+  //Say that the vector 'index' gives us the indices of the closest points
  bool UVStoXYZ(const double u_eval, const double v_eval,
-		       double &XX, double &YY, double &ZZ,
-		       SVector3 &dXdu, SVector3& dxdv);
+	       double &XX, double &YY, double &ZZ,
+	       SVector3 &dXdu, SVector3& dxdv, int num_neighbours=10);
 
  void solveHarmonicMap(fullMatrix<double> Oper, std::vector<MVertex*> ordered, 
 		       std::vector<double> coords, std::map<MVertex*, SPoint3> &rbf_param);
