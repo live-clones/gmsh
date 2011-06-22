@@ -252,18 +252,19 @@ fullMatrix<double> GRbf::generateRbfMat(int p,
   // }
   
   int nbLocNodes = n;
-  if (isExt) nbLocNodes /= 3;
-  double min_dist = 1.e6;
-  for (int i = 0; i < nbLocNodes; i++) {
-    for (int j = i+1; j < nbLocNodes; j++) {
-      double dx = nodes1(i,0)-nodes1(j,0);
-      double dy = nodes1(i,1)-nodes1(j,1);
-      double dz = nodes1(i,2)-nodes1(j,2);
-      double dist_node = sqrt(dx*dx+dy*dy+dz*dz);
-      if (dist_node<min_dist) min_dist = dist_node;
-    }
-  }
-  double eps = 0.5/min_dist;
+  if (isExt) nbLocNodes /= 1;
+  // double min_dist = 1.e6;
+  // for (int i = 0; i < nbLocNodes; i++) {
+  //   for (int j = i+1; j < nbLocNodes; j++) {
+  //     double dx = nodes1(i,0)-nodes1(j,0);
+  //     double dy = nodes1(i,1)-nodes1(j,1);
+  //     double dz = nodes1(i,2)-nodes1(j,2);
+  //     double dist_node = sqrt(dx*dx+dy*dy+dz*dz);
+  //     if (dist_node<min_dist) min_dist = dist_node;
+  //   }
+  // }
+  double eps =0.4/delta;//0.0677*(nbNodes^0.28)/min_dist;
+  //  printf("epsilon = %g\n", eps);
   for (int i = 0; i < m; i++) {
     for (int j = 0; j < n; j++) {
       double dx = nodes2(i,0)-nodes1(j,0);
@@ -525,6 +526,7 @@ void GRbf::RbfLapSurface_global_CPM_high(const fullMatrix<double> &cntrs,
   int numNodes = cntrs.size1();
   int nnTot = 3*numNodes;
   Oper.resize(nnTot,nnTot);
+  printf("n = %i \n", numNodes);
 
   fullMatrix<double> sx, sy, sz, sxx, sxy, sxz,syy, syz, szz; 
   fullMatrix<double> A, Ax, Ay, Az, Axx, Axy, Axz, Ayy, Ayz, Azz, Alap, AOper, extX, surf; 
@@ -917,8 +919,8 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
       Jac(k,1) = uy(0,k);
       Jac(k,2) = uz(0,k);
     }    
-    Jac.invertInPlace(); 
-    
+    Jac.invertInPlace();
+
     for (int j = 0; j< 3;j++)
       nodes_eval(0,j) = nodes_eval(0,j) 
   	+ Jac(j,0)*( u_vec_eval(0,0) - u_temp(0,0)) 
