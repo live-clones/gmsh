@@ -664,20 +664,10 @@ bool GFaceCompound::parametrize() const
      
     int variableEps = 0;
     int radFunInd = 1; //MQ RBF
-    double delta = 0.33*getDistMin();
-    double epsilon = 0.5/getDistMin(); //0.15*(allNodes.size()/150.0)/delta; //max(2.5, 0.5*(nbNodes/150.0)/dist_min);
-    double radius= 3.*getSizeH()/sqrt(allNodes.size());   
-        
-    Msg::Info("*****************************************");
-    Msg::Info("*** RBF nbNodes=%d ", allNodes.size());
-    Msg::Info("*** RBF rad=%g dist_min =%g ", radius, 3.*delta);
-    Msg::Info("*** RBF eps=%g  delta =%g ", epsilon, delta);
-    Msg::Info("*****************************************");
-    
-    // printf("allNodes=%d \n", allNodes.size());
-    // exit(1);
+    double sizeBox = getSizeH();
+
     fullMatrix<double> Oper(3*allNodes.size(),3*allNodes.size());
-    _rbf = new GRbf(epsilon, delta, radius,  variableEps, radFunInd, _normals, allNodes);
+    _rbf = new GRbf(sizeBox, variableEps, radFunInd, _normals, allNodes, _ordered);
 
     //_rbf->RbfLapSurface_global_CPM_low(_rbf->getXYZ(), _rbf->getN(), Oper);
     //_rbf->RbfLapSurface_local_CPM(true, _rbf->getXYZ(), _rbf->getN(), Oper);
@@ -687,8 +677,8 @@ bool GFaceCompound::parametrize() const
     //_rbf->RbfLapSurface_local_projection(_rbf->getXYZ(), _rbf->getN(), Oper);
   
     _rbf->solveHarmonicMap(Oper, _ordered, _coords, coordinates);
+    
     printStuff();
-
 
   }
 
@@ -781,21 +771,6 @@ double GFaceCompound::getSizeH() const
   return H;
 }
 
-double GFaceCompound::getDistMin() const
-{
-  double dist_min = 1.e6;
-  double tol = CTX::instance()->geom.tolerance;
-  for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; itv++){
-    for(std::set<MVertex *>::iterator itv2 = allNodes.begin(); itv2 !=allNodes.end() ; itv2++){
-      MVertex *v1 = *itv;
-      MVertex *v2 = *itv2;
-      double dist = sqrt((v1->x()-v2->x())*(v1->x()-v2->x())+(v1->y()-v2->y())*(v1->y()-v2->y())
-			 +(v1->z()-v2->z())*(v1->z()-v2->z()));
-      if (dist<dist_min && dist > tol) dist_min = dist;
-    }
-  }
-  return dist_min;
-}
 double GFaceCompound::getSizeBB(const std::list<GEdge* > &elist) const
 {
   //SOrientedBoundingBox obboxD = obb_boundEdges(elist);

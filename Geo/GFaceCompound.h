@@ -102,7 +102,6 @@ class GFaceCompound : public GFace {
   linearSystem <double> *_lsys;
   double getSizeH() const;
   double getSizeBB(const std::list<GEdge* > &elist) const;
-  double getDistMin() const;
   SBoundingBox3d boundEdges(const std::list<GEdge* > &elist) const;
   SOrientedBoundingBox obb_boundEdges(const std::list<GEdge* > &elist) const;
   void fillNeumannBCS() const;

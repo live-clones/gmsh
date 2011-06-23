@@ -7,6 +7,7 @@
 #include "SPoint3.h"
 #include "SVector3.h"
 #include "MVertex.h"
+#include "Context.h"
 #if defined(HAVE_ANN)
 #include <ANN/ANN.h>
 #endif
@@ -22,6 +23,7 @@ class Sphere{
 class GRbf {
 
   std::map<MVertex*, int> _mapV;
+  std::map<MVertex*, int> _mapAllV;
   std::map<int, std::vector<int> > nodesInSphere;
 
   fullMatrix<double> matA, matAInv;
@@ -33,17 +35,17 @@ class GRbf {
   int num_neighbours;
 
   int _inUV;
-  double epsilonUV;
-
-  double epsilonXYZ; // Shape parameter 
   double delta; //offset level set
   double deltaUV; //offset level set
   double radius;
+  double sBox;
 
   int variableShapeParam; 
   int radialFunctionIndex; // Index for the radial function used (0 - GA,1 - MQ, ... )
 
-  fullMatrix<double> centers; // Data centers
+  std::set<MVertex *> myNodes;
+  fullMatrix<double> centers; // Data centers (without duplicates)
+  fullMatrix<double> allCenters; // Data centers
   fullMatrix<double> normals; // Data normals
   fullMatrix<double> surfInterp;//level set
   fullMatrix<double> extendedX;//X values extend in and out
@@ -58,8 +60,9 @@ class GRbf {
 
  public:
 
-  GRbf (double eps, double del, double radius, int variableEps, int rbfFun, 
-	std::map<MVertex*, SVector3> normals, std::set<MVertex *> allNodes);
+  GRbf (double sizeBox, int variableEps, int rbfFun, 
+	std::map<MVertex*, SVector3> normals, 
+	std::set<MVertex *> allNodes, std::vector<MVertex*> bcNodes);
   ~GRbf();
 
   //build octree
@@ -134,16 +137,12 @@ class GRbf {
 		 const fullMatrix<double> &node,
 		 fullMatrix<double> &curvature);
 
-  bool UVStoXYZ_global(const double u_eval, const double v_eval,
-		      double &XX, double &YY, double &ZZ, 
-		       SVector3 &dXdu, SVector3& dxdv, int num_neighbours=10);
-
   //Finds the U,V,S (in the 0-level set) that are the 'num_neighbours' closest to u_eval and v_eval.
   //Thus in total, we're working with '3*num_neighbours' nodes
   //Say that the vector 'index' gives us the indices of the closest points
  bool UVStoXYZ(const double u_eval, const double v_eval,
 	       double &XX, double &YY, double &ZZ,
-	       SVector3 &dXdu, SVector3& dxdv, int num_neighbours=10);
+	       SVector3 &dXdu, SVector3& dxdv, int num_neighbours=15);
 
  void solveHarmonicMap(fullMatrix<double> Oper, std::vector<MVertex*> ordered, 
 		       std::vector<double> coords, std::map<MVertex*, SPoint3> &rbf_param);

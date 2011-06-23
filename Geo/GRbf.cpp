@@ -9,6 +9,7 @@
 #include "SBoundingBox3d.h"
 #include "OS.h"
 #include "MVertex.h"
+#include "MVertexPositionSet.h"
 
 #if defined(HAVE_ANN)
 #include <ANN/ANN.h>
@@ -41,36 +42,84 @@ static int SphereInEle(void *a, double*c){
   }
   return 0;
 }
+static void printNodes(std::set<MVertex *> myNodes){
+  FILE * xyz = fopen("myNodes.pos","w");
+  fprintf(xyz,"View \"\"{\n");
+ for(std::set<MVertex *>::iterator itv = myNodes.begin(); itv !=myNodes.end() ; ++itv){
+   MVertex *v = *itv;
+   fprintf(xyz,"SP(%g,%g,%g){%g};\n", v->x(), v->y(), v->z(), 1.0);
+ }
+ fprintf(xyz,"};\n");
+ fclose(xyz);
+}
 
-
-GRbf::GRbf (double eps, double del, double rad, int variableEps, int rbfFun, 
-	    std::map<MVertex*, SVector3> _normals, std::set<MVertex *> allNodes) 
-  :  delta(del),  radius (rad), variableShapeParam(variableEps), 
-     radialFunctionIndex (rbfFun),  XYZkdtree(0), _inUV(0)
+GRbf::GRbf (double sizeBox, int variableEps, int rbfFun, std::map<MVertex*, SVector3> _normals, 
+	    std::set<MVertex *> allNodes, std::vector<MVertex*> bcNodes) 
+  :  sBox(sizeBox), variableShapeParam(variableEps), radialFunctionIndex (rbfFun),  XYZkdtree(0), _inUV(0)
 {
-  
-  nbNodes= allNodes.size();
+
+  allCenters.resize(allNodes.size(),3);
+  double tol=  8.e-2*sBox;
+
+  //remove duplicate vertices
+  //add bc nodes
+  for(unsigned int i = 0; i < bcNodes.size(); i++) myNodes.insert(bcNodes[i]);
+  //then  create Mvertex position
+  std::vector<MVertex*> vertices( allNodes.begin(), allNodes.end() );
+  MVertexPositionSet pos(vertices);
+  for(unsigned int i = 0; i < vertices.size(); i++){
+    MVertex *v = vertices[i];
+    pos.find(v->x(), v->y(), v->z(), tol);
+    allCenters(i,0) = v->x()/sBox;
+    allCenters(i,1) = v->y()/sBox;
+    allCenters(i,2) = v->z()/sBox;
+    _mapAllV.insert(std::make_pair(v, i));
+  }
+  //keep only no duplicate vertices
+  for(unsigned int i = 0; i < vertices.size(); i++)
+    if(vertices[i]->getIndex()) myNodes.insert(vertices[i]);
+      
+  //initialize with  points 
+  nbNodes= myNodes.size();
   centers.resize(nbNodes,3);
   normals.resize(nbNodes,3);
   int index = 0;
-  for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
-    MVertex *v = *itv;
-    centers(index,0) = v->x();
-    centers(index,1) = v->y();
-    centers(index,2) = v->z();
-    std::map<MVertex*, SVector3>::iterator itn = _normals.find(v);
+  double dist_min = 1.e6;
+  for(std::set<MVertex *>::iterator itv = myNodes.begin(); itv !=myNodes.end() ; ++itv){
+    MVertex *v1 = *itv;
+    centers(index,0) = v1->x()/sBox;
+    centers(index,1) = v1->y()/sBox;
+    centers(index,2) = v1->z()/sBox;
+    std::map<MVertex*, SVector3>::iterator itn = _normals.find(v1);
     normals(index,0) = itn->second.x();
     normals(index,1) = itn->second.y();
     normals(index,2) = itn->second.z();
-    _mapV.insert(std::make_pair(v, index));
+    _mapV.insert(std::make_pair(v1, index));
+    for(std::set<MVertex *>::iterator itv2 = myNodes.begin(); itv2 !=myNodes.end() ; itv2++){
+      MVertex *v2 = *itv2;
+      double dist = sqrt((v1->x()-v2->x())*(v1->x()-v2->x())+(v1->y()-v2->y())*(v1->y()-v2->y())
+			 +(v1->z()-v2->z())*(v1->z()-v2->z()))/sBox;
+      if (dist<dist_min && *itv != *itv2) dist_min = dist;
+    }
     index++;
   }
+ 
+  delta = 0.33*dist_min;//0.6
+  radius= nbNodes/10.;   
 
   matAInv.resize(nbNodes, nbNodes);
   matAInv = generateRbfMat(0,centers,centers);
   matAInv.invertInPlace();
   isLocal = false;
   extendedX.resize(3*nbNodes,3);
+
+  Msg::Info("*****************************************");
+  Msg::Info("*** RBF nbNodes=%d (all=%d) ", myNodes.size(), allNodes.size());
+  Msg::Info("*** RBF rad=%g dist_min =%g ", radius, dist_min);
+  Msg::Info("*****************************************");  
+
+  printNodes(myNodes);
+  //exit(1);
 
 }
 
@@ -235,7 +284,7 @@ fullMatrix<double> GRbf::generateRbfMat(int p,
   fullMatrix<double> rbfMat(m,n);
 
   double eps =0.5/delta; //0.0677*(nbNodes^0.28)/min_dist;
-  if (_inUV) eps = epsilonUV;
+  if (_inUV) eps = 0.4/deltaUV;
   for (int i = 0; i < m; i++) {
     for (int j = 0; j < n; j++) {
       double dx = nodes2(i,0)-nodes1(j,0);
@@ -637,7 +686,7 @@ void GRbf::RbfLapSurface_global_CPM_low(const fullMatrix<double> &cntrs,
 }
 
 void GRbf::solveHarmonicMap(fullMatrix<double> Oper, 
-			   std::vector<MVertex*> ordered, 
+			    std::vector<MVertex*> bcNodes, 
 			    std::vector<double> coords, 
 			    std::map<MVertex*, SPoint3> &rbf_param){
   int nb = Oper.size2(); 
@@ -645,15 +694,17 @@ void GRbf::solveHarmonicMap(fullMatrix<double> Oper,
 
   fullMatrix<double> F(nb,2);
   F.scale(0.0);
-  for (int i=0; i < ordered.size(); i++){
-    std::map<MVertex*, int>::iterator itm = _mapV.find(ordered[i]);
-    double theta = 2 * M_PI * coords[i];
-    int iFix = itm->second;
-    for (int j=0;j<nb ; ++j) Oper(iFix,j) = 0.0;
-    Oper(iFix,iFix) = 1.0;
-    F(iFix,0) = cos(theta);
-    F(iFix,1) = sin(theta);
-
+  for (int i=0; i < bcNodes.size(); i++){
+    // std::set<MVertex *>::iterator itN = myNodes.find(bcNodes[i]);
+    // if (itN != myNodes.end()){
+	std::map<MVertex*, int>::iterator itm = _mapV.find(bcNodes[i]);
+	double theta = 2 * M_PI * coords[i];
+	int iFix = itm->second;
+	for (int j=0;j<nb ; ++j) Oper(iFix,j) = 0.0;
+	Oper(iFix,iFix) = 1.0;
+	F(iFix,0) = cos(theta);
+	F(iFix,1) = sin(theta);
+    //}
   }
   Oper.invertInPlace();
   Oper.mult(F,UV);
@@ -672,109 +723,22 @@ void GRbf::solveHarmonicMap(fullMatrix<double> Oper,
       if (dist<dist_min) dist_min = dist;
     }
   }
-  epsilonUV = 0.5/dist_min;
   deltaUV = 0.6*dist_min; 
   UVkdtree = new ANNkd_tree(UVnodes, nbNodes, 3);
 #endif
 
+  //interpolate
+  fullMatrix<double> UVall(allCenters.size1(), 3);
+  evalRbfDer(0,centers,allCenters,UV,UVall);
+
   //fill rbf_param
-  std::map<MVertex*, int>::iterator itm = _mapV.begin();
-  for (; itm != _mapV.end(); itm++){
+  std::map<MVertex*, int>::iterator itm = _mapAllV.begin();
+  for (; itm != _mapAllV.end(); itm++){
     int index = itm->second;
-    SPoint3 coords(UV(index,0), UV(index,1), 0.0);
+    SPoint3 coords(UVall(index,0), UVall(index,1), 0.0);
     rbf_param.insert(std::make_pair(itm->first,coords));
   }
  
-}
-
- //WARNING: THIS IS KO FOR PROJECTION 
-bool GRbf::UVStoXYZ_global(const double  u_eval, const double v_eval,
-			  double &XX, double &YY, double &ZZ, 
-			   SVector3 &dXdu, SVector3& dXdv, int num_neighbours) {
-  bool converged = true;
-#if defined (HAVE_ANN)
-
-  int numNodes = 3*nbNodes;
-  double norm_s = 0.0;
-  fullMatrix<double> u_temp(1,3);
-  fullMatrix<double> ux(1,3), uy(1,3), uz(1,3);
-  fullMatrix<double> nodes_eval(1,3);
- 
-  // u_vec = [u v s] : These are the u,v,s that are on the surface *and* outside of it also!
-  fullMatrix<double> u_vec(numNodes,3);
-  for (int i = 0; i < numNodes; i++){
-    u_vec(i,0) = UV(i,0);
-    u_vec(i,1) = UV(i,1);
-    u_vec(i,2) = surfInterp(i,0);
-  }
- 
-  // u_vec_eval = [u_eval v_eval s_eval]
-  fullMatrix<double> u_vec_eval(1, 3);
-  u_vec_eval(0,0) = u_eval;
-  u_vec_eval(0,1) = v_eval;
-  u_vec_eval(0,2) = 0.0;
-
-  //Start with the closest point (u,v)
-  double uvw[3] = { u_eval, v_eval, 0.0 };
-  ANNidxArray index = new ANNidx[num_neighbours];
-  ANNdistArray dist = new ANNdist[num_neighbours]; 
-  UVkdtree->annkSearch(uvw, num_neighbours, index, dist);
-
-  nodes_eval(0,0) = extendedX(index[0],0);
-  nodes_eval(0,1) = extendedX(index[0],1);
-  nodes_eval(0,2) = extendedX(index[0],2); 
-  u_temp(0,0)  = UV(index[0],0);
-  u_temp(0,1)  = UV(index[0],1);
-  u_temp(0,2)  = 0.0;
-
-  delete [] index;
-  delete [] dist;
-
-  int incr =0;
-  fullMatrix<double> Jac(3,3);
-  while(norm_s < 5 && incr < 10){
- 
-    // Find the entries of the m Jacobians
-    evalRbfDer(1,extendedX,nodes_eval,u_vec,ux);
-    evalRbfDer(2,extendedX,nodes_eval,u_vec,uy);
-    evalRbfDer(3,extendedX,nodes_eval,u_vec,uz);
-
-    // Jacobian of the UVS coordinate system w.r.t. XYZ
-    for (int k = 0; k < 3;k++){
-      Jac(k,0) = ux(0,k);
-      Jac(k,1) = uy(0,k);
-      Jac(k,2) = uz(0,k);
-    }
-    Jac.invertInPlace(); 
-
-    for (int j = 0; j< 3;j++)
-      nodes_eval(0,j) = nodes_eval(0,j) 
-	+ Jac(j,0)*(u_vec_eval(0,0) - u_temp(0,0)) 
-	+ Jac(j,1)*(u_vec_eval(0,1) - u_temp(0,1)) 
-	+ Jac(j,2)*(0.0             - u_temp(0,2));
-   
-    // Find the corresponding u, v, s
-    evalRbfDer(0,extendedX,nodes_eval,u_vec,u_temp);
-    
-    double normSq =  sqrt(u_temp(0,2)*u_temp(0,2));
-    norm_s = fabs(log10(normSq));
-
-    incr++;
-  }  
-  if (norm_s < 5 ){
-    printf("Newton not converged for point (uv)=(%g,%g -> norm_s =%g )\n", u_eval, v_eval, norm_s);
-    converged = false;
-  }
-
-  XX = nodes_eval(0,0);
-  YY = nodes_eval(0,1);
-  ZZ = nodes_eval(0,2);
-
-  dXdu = SVector3(Jac(0,0), Jac(1,0), Jac(2,0));
-  dXdv = SVector3(Jac(0,1), Jac(1,1), Jac(2,1));
-
-  return converged;
-#endif
 }
 
 bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
@@ -845,7 +809,6 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
    u_temp(0,1) =  temp_u_temp(0,1);
    u_temp(0,2) =  temp_u_temp(0,2);
 
-
   //we use the closest point
   for (int i_nbr = 1; i_nbr < N_nbr; i_nbr++){
     nodes_eval(i_nbr,0) = extendedX(index[i_nbr-1],0); 
@@ -883,7 +846,6 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
       }    
       Jac.invertInPlace();
       JacV.push_back(Jac);
-
       for (int j = 0; j< 3;j++)
 	nodes_eval(i_nbr,j) = nodes_eval(i_nbr,j) 
 	  + Jac(j,0)*( u_vec_eval(0,0) - u_temp(i_nbr,0)) 
@@ -917,17 +879,17 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
 
 if (norm < norm_treshhold ){
   printf("Newton not converged (norm=%g, dist=%g) for uv=(%g,%g) UVS=(%g,%g,%g) NB=%d \n", norm, dist_test,u_eval, v_eval, u_test_vec_eval(0,0), u_test_vec_eval(0,1), u_test_vec_eval(0,2), num_neighbours);
-  //converged = false;
-  return UVStoXYZ(u_eval, v_eval, XX, YY,ZZ, dXdu, dXdv, num_neighbours+5);
- }
+  if (num_neighbours+5 < nbNodes)
+    return UVStoXYZ(u_eval, v_eval, XX, YY,ZZ, dXdu, dXdv, num_neighbours+5);
+  else converged = false;
+}
 
-XX = nodes_vec_eval(0,0);
-YY = nodes_vec_eval(0,1);
-ZZ = nodes_vec_eval(0,2);
-dXdu = SVector3(best_Jac(0,0), best_Jac(1,0), best_Jac(2,0));
-dXdv = SVector3(best_Jac(0,1), best_Jac(1,1), best_Jac(2,1));
-// printf("Converged (norm=%g, dist=%g) for uv=(%g,%g) UVS=(%g,%g,%g) NB=%d \n", norm, dist_test,u_eval, v_eval,u_test_vec_eval(0,0), u_test_vec_eval(0,1), u_test_vec_eval(0,2), num_neighbours);
- printf("Converged (norm=%g, dist=%g) for uvs-UVS=(%g,%g,%g) NB=%d \n", norm, dist_test,u_eval-u_test_vec_eval(0,0), v_eval-u_test_vec_eval(0,1), u_test_vec_eval(0,2), num_neighbours);
+XX = nodes_vec_eval(0,0)*sBox;
+YY = nodes_vec_eval(0,1)*sBox;
+ZZ = nodes_vec_eval(0,2)*sBox;
+dXdu = SVector3(best_Jac(0,0)*sBox, best_Jac(1,0)*sBox, best_Jac(2,0)*sBox);
+dXdv = SVector3(best_Jac(0,1)*sBox, best_Jac(1,1)*sBox, best_Jac(2,1)*sBox);
+
 return converged;
 
 #endif
