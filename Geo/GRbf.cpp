@@ -234,7 +234,7 @@ fullMatrix<double> GRbf::generateRbfMat(int p,
   int n = nodes1.size1();
   fullMatrix<double> rbfMat(m,n);
 
-  double eps =0.4/delta; //0.0677*(nbNodes^0.28)/min_dist;
+  double eps =0.5/delta; //0.0677*(nbNodes^0.28)/min_dist;
   if (_inUV) eps = epsilonUV;
   for (int i = 0; i < m; i++) {
     for (int j = 0; j < n; j++) {
@@ -292,20 +292,38 @@ void GRbf::evalRbfDer(int p,
 }
 
 void GRbf::setup_level_set(const fullMatrix<double> &cntrs,
-			  const fullMatrix<double> &normals,
-			  fullMatrix<double> &level_set_nodes, 
-			  fullMatrix<double> &level_set_funvals){
+			   const fullMatrix<double> &normals,
+			   fullMatrix<double> &level_set_nodes, 
+			   fullMatrix<double> &level_set_funvals){
 
   int numNodes = cntrs.size1();
   int nTot = 3*numNodes;
+  double normFactor;
   level_set_nodes.resize(nTot,3);
   level_set_funvals.resize(nTot,1);
+  fullMatrix<double> ONES(numNodes,1),sx(numNodes,1),sy(numNodes,1),sz(numNodes,1),norms(numNodes,3);
+
+  //Computes the normal vectors to the surface at each node
+  for (int i=0;i<numNodes ; ++i){
+    ONES(i,0)=1.0;
+  }
+
+  evalRbfDer(1,cntrs,cntrs,ONES,sx);
+  evalRbfDer(2,cntrs,cntrs,ONES,sy);
+  evalRbfDer(3,cntrs,cntrs,ONES,sz);
+  for (int i=0;i<numNodes ; ++i){
+    normFactor = sqrt(sx(i,0)*sx(i,0)+sy(i,0)*sy(i,0)+sz(i,0)*sz(i,0));
+    sx(i,0) = sx(i,0)/normFactor;
+    sy(i,0) = sy(i,0)/normFactor;
+    sz(i,0) = sz(i,0)/normFactor;
+    norms(i,0) = sx(i,0);norms(i,1) = sy(i,0);norms(i,2) = sz(i,0);
+  }
 
   for (int i=0;i<numNodes ; ++i){
     for (int j=0;j<3 ; ++j){
       level_set_nodes(i,j) = cntrs(i,j);
-      level_set_nodes(i+numNodes,j) = cntrs(i,j)-delta*normals(i,j);
-      level_set_nodes(i+2*numNodes,j) = cntrs(i,j)+delta*normals(i,j);  
+      level_set_nodes(i+numNodes,j) = cntrs(i,j)-delta*norms(i,j);
+      level_set_nodes(i+2*numNodes,j) = cntrs(i,j)+delta*norms(i,j);  
     }
     level_set_funvals(i,0) = 0.0;
     level_set_funvals(i+numNodes,0) = -1;
@@ -637,7 +655,6 @@ void GRbf::solveHarmonicMap(fullMatrix<double> Oper,
     F(iFix,1) = sin(theta);
 
   }
-  
   Oper.invertInPlace();
   Oper.mult(F,UV);
 
@@ -775,9 +792,9 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
   ANNidxArray index = new ANNidx[num_neighbours];
   ANNdistArray dist = new ANNdist[num_neighbours]; 
   UVkdtree->annkSearch(uvw, num_neighbours, index, dist);
-
-  fullMatrix<double> ux(1,3), uy(1,3), uz(1,3), u_temp(1,3);
-  fullMatrix<double> nodes_eval(1,3);
+  int N_nbr = 5;//num_neighbours;
+  fullMatrix<double> ux(N_nbr,3), uy(N_nbr,3), uz(N_nbr,3), u_temp(N_nbr,3);
+  fullMatrix<double> nodes_eval(N_nbr,3),temp_nodes_eval(1,3),temp_u_temp(1,3);
   fullMatrix<double> u_vec(3*num_neighbours,3); 
   fullMatrix<double> xyz_local(3*num_neighbours,3); 
 
@@ -811,75 +828,107 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
   }
 
   // u_vec_eval = [u_eval v_eval s_eval]
-  fullMatrix<double> u_vec_eval(1, 3);
+  fullMatrix<double> u_vec_eval(1, 3),nodes_vec_eval(1,3),u_test_vec_eval(1,3);
   u_vec_eval(0,0) = u_eval;
   u_vec_eval(0,1) = v_eval;
   u_vec_eval(0,2) = 0.0;
 
   //we will use a local interpolation to find the corresponding XYZ point to (u_eval,v_eval).
   _inUV = 1;
-   evalRbfDer(0, u_vec, u_vec_eval,xyz_local, nodes_eval);
-   u_temp(0,0)  = u_eval;
-   u_temp(0,1)  = v_eval;
-   u_temp(0,2)  = 0.0;
+   evalRbfDer(0, u_vec, u_vec_eval,xyz_local, temp_nodes_eval);
+   nodes_eval(0,0) =  temp_nodes_eval(0,0);
+   nodes_eval(0,1) =  temp_nodes_eval(0,1);
+   nodes_eval(0,2) =  temp_nodes_eval(0,2);
    _inUV= 0;
+   evalRbfDer(0,xyz_local,nodes_eval,u_vec,temp_u_temp);
+   u_temp(0,0) =  temp_u_temp(0,0);
+   u_temp(0,1) =  temp_u_temp(0,1);
+   u_temp(0,2) =  temp_u_temp(0,2);
+
 
   //we use the closest point
-  // nodes_eval(0,0) = extendedX(index[0],0); 
-  // nodes_eval(0,1) = extendedX(index[0],1); 
-  // nodes_eval(0,2) = extendedX(index[0],2);
-  // u_temp(0,0)  = UV(index[0],0);
-  // u_temp(0,1)  = UV(index[0],1);
-  // u_temp(0,2)  = 0.0;
-
+  for (int i_nbr = 1; i_nbr < N_nbr; i_nbr++){
+    nodes_eval(i_nbr,0) = extendedX(index[i_nbr-1],0); 
+    nodes_eval(i_nbr,1) = extendedX(index[i_nbr-1],1); 
+    nodes_eval(i_nbr,2) = extendedX(index[i_nbr-1],2);
+    u_temp(i_nbr,0)  = UV(index[i_nbr-1],0);
+    u_temp(i_nbr,1)  = UV(index[i_nbr-1],1);
+    u_temp(i_nbr,2)  = 0.0;
+  }
   delete [] index;
   delete [] dist;
-
+  
   int incr = 0;
   double norm = 0.0;
-  fullMatrix<double> Jac(3,3);
-  while(norm < 5 && incr < 10){
+  double norm_temp = 0.0;
+  double dist_test = 0.0;
+  fullMatrix<double> Jac(3,3),best_Jac(3,3);
+  fullMatrix<double> normDist(N_nbr,1);
+  fullMatrix<double> nodes_eval_temp(N_nbr,3);
+  double norm_treshhold = 8.0;
+  std::vector<fullMatrix<double> >JacV;
 
+  while(norm < norm_treshhold && incr < 10){
     // Find the entries of the m Jacobians
     evalRbfDer(1,xyz_local,nodes_eval,u_vec,ux);
     evalRbfDer(2,xyz_local,nodes_eval,u_vec,uy);
     evalRbfDer(3,xyz_local,nodes_eval,u_vec,uz);
+    
+    for (int i_nbr = 0; i_nbr < N_nbr; i_nbr++){
+      // Jacobian of the UVS coordinate system w.r.t. XYZ
+      for (int k = 0; k < 3;k++){
+	Jac(k,0) = ux(i_nbr,k);
+	Jac(k,1) = uy(i_nbr,k);
+	Jac(k,2) = uz(i_nbr,k);
+      }    
+      Jac.invertInPlace();
+      JacV.push_back(Jac);
 
-    // Jacobian of the UVS coordinate system w.r.t. XYZ
-    for (int k = 0; k < 3;k++){
-      Jac(k,0) = ux(0,k);
-      Jac(k,1) = uy(0,k);
-      Jac(k,2) = uz(0,k);
-    }    
-    Jac.invertInPlace();
-
-    for (int j = 0; j< 3;j++)
-      nodes_eval(0,j) = nodes_eval(0,j) 
-  	+ Jac(j,0)*( u_vec_eval(0,0) - u_temp(0,0)) 
-  	+ Jac(j,1)*( u_vec_eval(0,1) - u_temp(0,1)) 
-	+ Jac(j,2)*( 0.0 - u_temp(0,2));
-   
+      for (int j = 0; j< 3;j++)
+	nodes_eval(i_nbr,j) = nodes_eval(i_nbr,j) 
+	  + Jac(j,0)*( u_vec_eval(0,0) - u_temp(i_nbr,0)) 
+	  + Jac(j,1)*( u_vec_eval(0,1) - u_temp(i_nbr,1)) 
+	  + Jac(j,2)*( 0.0 - u_temp(i_nbr,2)); 
+    } 
     // Find the corresponding u, v, s
     evalRbfDer(0,xyz_local,nodes_eval,u_vec,u_temp);
-    
-    double normDist = sqrt((u_temp(0,0)-u_eval)*(u_temp(0,0)-u_eval)+(u_temp(0,1)-v_eval)*(u_temp(0,1)-v_eval)+(u_temp(0,2)*u_temp(0,2)));
-    norm = fabs(log10(normDist));
+    norm = 0;
+    for (int i_nbr = 0; i_nbr < N_nbr; i_nbr++){
+      normDist(i_nbr,0) = sqrt((u_temp(i_nbr,0)-u_vec_eval(0,0))*(u_temp(i_nbr,0)-u_vec_eval(0,0))+(u_temp(i_nbr,1)-u_vec_eval(0,1))*(u_temp(i_nbr,1)-u_vec_eval(0,1))+(u_temp(i_nbr,2)*u_temp(i_nbr,2)));
+      norm_temp = -(log10(normDist(i_nbr,0)));
+      
+      if (norm_temp>norm_treshhold){
+      	norm = norm_temp;
+       	nodes_vec_eval(0,0)=nodes_eval(i_nbr,0);
+       	nodes_vec_eval(0,1)=nodes_eval(i_nbr,1);
+	nodes_vec_eval(0,2)=nodes_eval(i_nbr,2);
 
-    incr++;
-  }  
-  if (norm < 5 ){
-    printf("Newton not converged (norm=%g) for uv=(%g,%g) UVS=(%g,%g,%g) NB=%d \n", norm, u_eval, v_eval, u_temp(0,0), u_temp(0,1), u_temp(0,2), num_neighbours);
-    //converged = false;
-    return UVStoXYZ(u_eval, v_eval, XX, YY,ZZ, dXdu, dXdv, num_neighbours+5);
-  }
+	u_test_vec_eval(0,0)=u_temp(i_nbr,0);
+	u_test_vec_eval(0,1)=u_temp(i_nbr,1);
+	u_test_vec_eval(0,2)=u_temp(i_nbr,2);
 
-  XX = nodes_eval(0,0);
-  YY = nodes_eval(0,1);
-  ZZ = nodes_eval(0,2);
-  dXdu = SVector3(Jac(0,0), Jac(1,0), Jac(2,0));
-  dXdv = SVector3(Jac(0,1), Jac(1,1), Jac(2,1));
-  
-  return converged;
+	best_Jac = JacV[i_nbr];
+	dist_test = normDist(i_nbr,0);
+	i_nbr=N_nbr; //To get out of the for loof and thus also to get out of the while loop
+      }
+    }
+  incr++;
+}  
+
+if (norm < norm_treshhold ){
+  printf("Newton not converged (norm=%g, dist=%g) for uv=(%g,%g) UVS=(%g,%g,%g) NB=%d \n", norm, dist_test,u_eval, v_eval, u_test_vec_eval(0,0), u_test_vec_eval(0,1), u_test_vec_eval(0,2), num_neighbours);
+  //converged = false;
+  return UVStoXYZ(u_eval, v_eval, XX, YY,ZZ, dXdu, dXdv, num_neighbours+5);
+ }
+
+XX = nodes_vec_eval(0,0);
+YY = nodes_vec_eval(0,1);
+ZZ = nodes_vec_eval(0,2);
+dXdu = SVector3(best_Jac(0,0), best_Jac(1,0), best_Jac(2,0));
+dXdv = SVector3(best_Jac(0,1), best_Jac(1,1), best_Jac(2,1));
+// printf("Converged (norm=%g, dist=%g) for uv=(%g,%g) UVS=(%g,%g,%g) NB=%d \n", norm, dist_test,u_eval, v_eval,u_test_vec_eval(0,0), u_test_vec_eval(0,1), u_test_vec_eval(0,2), num_neighbours);
+ printf("Converged (norm=%g, dist=%g) for uvs-UVS=(%g,%g,%g) NB=%d \n", norm, dist_test,u_eval-u_test_vec_eval(0,0), v_eval-u_test_vec_eval(0,1), u_test_vec_eval(0,2), num_neighbours);
+return converged;
 
 #endif
 }
