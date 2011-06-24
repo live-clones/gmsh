@@ -1,9 +1,10 @@
 //Mesh.Algorithm = 8; //(1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=bamg) 
-Mesh.CharacteristicLengthMin=1.5/2;
-Mesh.CharacteristicLengthMax=2.5/2;
+Mesh.CharacteristicLengthMin=1.5;
+Mesh.CharacteristicLengthMax=2.5;
 Mesh.RemeshAlgorithm=1;
 Mesh.RemeshParametrization=1;//(0) harmonic (1) conformal 
-
+Mesh.RecombinationAlgorithm=1;
+Mesh.RecombineAll=1;
 // merge reclassified STL
 Merge "mobilette-class.msh";
 
