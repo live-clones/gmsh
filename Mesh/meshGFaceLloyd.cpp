@@ -1268,6 +1268,7 @@ SVector3 lpcvt::dF_dC1(voronoi_element element,int p){
   double drho_dx;
   double drho_dy;
   double jacobian;
+  double distance;
   SPoint2 point,generator,C1,C2;
   voronoi_vertex v1,v2,v3;
   metric m;
@@ -1293,12 +1294,13 @@ SVector3 lpcvt::dF_dC1(voronoi_element element,int p){
 	rho = element.get_rho(u,v,p);
 	drho_dx = element.get_drho_dx();
 	drho_dy = element.get_drho_dy();
+	distance = f(point,generator,m,p);
 	comp_x = comp_x + weight*rho*df_dx(point,generator,m,p)*u*jacobian;
-	comp_x = comp_x + weight*rho*f(point,generator,m,p)*(C2.y()-generator.y());
-	comp_x = comp_x + weight*drho_dx*u*f(point,generator,m,p)*jacobian;
+	comp_x = comp_x + weight*rho*distance*(C2.y()-generator.y());
+	comp_x = comp_x + weight*drho_dx*u*distance*jacobian;
 	comp_y = comp_y + weight*rho*df_dy(point,generator,m,p)*u*jacobian;
-	comp_y = comp_y + weight*rho*f(point,generator,m,p)*(generator.x()-C2.x());
-	comp_y = comp_y + weight*drho_dy*u*f(point,generator,m,p)*jacobian;
+	comp_y = comp_y + weight*rho*distance*(generator.x()-C2.x());
+	comp_y = comp_y + weight*drho_dy*u*distance*jacobian;
   }		
   return SVector3(comp_x,comp_y,0.0);
 }
@@ -1316,6 +1318,7 @@ SVector3 lpcvt::dF_dC2(voronoi_element element,int p){
   double drho_dx;
   double drho_dy;
   double jacobian;
+  double distance;
   SPoint2 point,generator,C1,C2;
   voronoi_vertex v1,v2,v3;
   metric m;
@@ -1341,12 +1344,13 @@ SVector3 lpcvt::dF_dC2(voronoi_element element,int p){
 	rho = element.get_rho(u,v,p);
 	drho_dx = element.get_drho_dx();
 	drho_dy = element.get_drho_dy();
+	distance = f(point,generator,m,p);
 	comp_x = comp_x + weight*rho*df_dx(point,generator,m,p)*v*jacobian;
-	comp_x = comp_x + weight*rho*f(point,generator,m,p)*(generator.y()-C1.y());
-	comp_x = comp_x + weight*drho_dx*v*f(point,generator,m,p)*jacobian;
+	comp_x = comp_x + weight*rho*distance*(generator.y()-C1.y());
+	comp_x = comp_x + weight*drho_dx*v*distance*jacobian;
 	comp_y = comp_y + weight*rho*df_dy(point,generator,m,p)*v*jacobian;
-	comp_y = comp_y + weight*rho*f(point,generator,m,p)*(C1.x()-generator.x());
-	comp_y = comp_y + weight*drho_dy*v*f(point,generator,m,p)*jacobian;
+	comp_y = comp_y + weight*rho*distance*(C1.x()-generator.x());
+	comp_y = comp_y + weight*drho_dy*v*distance*jacobian;
   }		
   return SVector3(comp_x,comp_y,0.0);
 }
