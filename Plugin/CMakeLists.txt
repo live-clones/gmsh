@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
 # bugs and problems to <gmsh@geuz.org>.
@@ -10,7 +10,7 @@ set(SRC
   Smooth.cpp CutParametric.cpp
   Lambda2.cpp
   Eigenvectors.cpp Eigenvalues.cpp
-  StreamLines.cpp Particles.cpp CutGrid.cpp
+  StreamLines.cpp Particles.cpp CutGrid.cpp CutBox.cpp
   Transform.cpp
     LongitudeLatitude.cpp
   Triangulate.cpp Tetrahedralize.cpp
@@ -24,7 +24,8 @@ set(SRC
   HarmonicToTime.cpp ModulusPhase.cpp
   HomologyComputation.cpp
   Distance.cpp ExtractEdges.cpp NearestNeighbor.cpp
-  AnalyseCurvedMesh.cpp
+  AnalyseCurvedMesh.cpp FieldFromAmplitudePhase.cpp
+  Bubbles.cpp NearToFarField.cpp
   DiscretizationError.cpp
 )
 

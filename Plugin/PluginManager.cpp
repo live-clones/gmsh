@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -17,6 +17,7 @@
 #include "CutPlane.h"
 #include "CutParametric.h"
 #include "CutSphere.h"
+#include "CutBox.h"
 #include "Skin.h"
 #include "AnalyseCurvedMesh.h"
 #include "MathEval.h"
@@ -48,6 +49,9 @@
 #include "GSHHS.h"
 #include "HomologyComputation.h"
 #include "ExtractEdges.h"
+#include "FieldFromAmplitudePhase.h"
+#include "Bubbles.h"
+#include "NearToFarField.h"
 #include "DiscretizationError.h"
 
 // for testing purposes only :-)
@@ -163,6 +167,8 @@ void PluginManager::registerDefaultPlugins()
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("CutSphere", GMSH_RegisterCutSpherePlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("CutBox", GMSH_RegisterCutBoxPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Skin", GMSH_RegisterSkinPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("MathEval", GMSH_RegisterMathEvalPlugin()));
@@ -220,6 +226,12 @@ void PluginManager::registerDefaultPlugins()
                       ("GSHHS", GMSH_RegisterGSHHSPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("ExtractEdges", GMSH_RegisterExtractEdgesPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("FieldFromAmplitudePhase", GMSH_RegisterFieldFromAmplitudePhasePlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("NearToFarField", GMSH_RegisterNearToFarFieldPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("Bubbles", GMSH_RegisterBubblesPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("DiscretizationError", GMSH_RegisterDiscretizationErrorPlugin()));
 
