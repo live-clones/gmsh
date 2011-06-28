@@ -19,13 +19,19 @@ private:
     //-----------------------------------------
     // TYPEDEFS
 
-    typedef std::vector<GEntity*> GEntityList;
     typedef std::vector<GFace*> GFaceList;
-    typedef std::map<int, GEntityList >::iterator GEntityIter;
+    //typedef std::map<int, GEntityList >::iterator GEntityIter;
     typedef std::map<int, GFaceList >::iterator GFaceIter;
 
     //-----------------------------------------
     // MEMBER VARIABLES
+
+    //Static member variable to implement the class curvature as a Singleton
+    static Curvature *_instance;
+    static bool _destroyed;
+
+    //Boolean to check if the curvature has already been computed
+    static bool _alreadyComputedCurvature;
 
     //Map definition
     std::map<int, int> _VertexToInt;
@@ -34,7 +40,7 @@ private:
     //Model and list of selected entities with give physical tag:
     GModel* _model;    
 
-    GEntityList _ptFinalEntityList;
+    GFaceList _ptFinalEntityList;
 
     //Averaged vertex normals
     std::vector<SVector3> _VertexNormal;
@@ -68,6 +74,17 @@ private:
 
     //-----------------------------------------
     // PRIVATE METHODS
+
+    //Constructor
+    Curvature();
+
+    //Destructor
+    ~Curvature();
+
+    static void create();
+
+    static void onDeadReference();
+
 
     void initializeMap();
     void computeVertexNormals();
@@ -141,13 +158,14 @@ public:
 
   //-----------------------------------------
   // PUBLIC METHODS
-  //Constructor
-  Curvature(GModel* model);
 
-  //Destructor
-  ~Curvature();
+  static Curvature& getInstance();
+  static bool valueAlreadyComputed();
+  void setGModel(GModel* model);
 
-  void retrievePhysicalSurfaces(const std::string & face_tag);
+  void retrieveCompounds();
+  //void retrievePhysicalSurfaces(const std::string & face_tag);
+
   /// The following function implements algorithm from:
   /// Implementation of an Algorithm for Approximating the Curvature Tensor
   /// on a Triangular Surface Mesh in the Vish Environment
@@ -159,6 +177,8 @@ public:
   /// Szymon Rusinkiewicz, Princeton University
   /// Code taken from Rusinkiewicz' 'trimesh2' library
   void computeCurvature_Rusinkiewicz();
+
+  void elementNodalValues(MTriangle* triangle, double& c0, double& c1, double& c2);
 
   void writeToFile( const std::string & filename);
 

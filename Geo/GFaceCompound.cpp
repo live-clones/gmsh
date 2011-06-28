@@ -41,6 +41,7 @@
 #include "eigenSolver.h"
 #include "multiscaleLaplace.h"
 #include "GRbf.h"
+#include "Curvature.h"
 
 static void fixEdgeToValue(GEdge *ed, double value, dofManager<double> &myAssembler)
 {
@@ -1367,25 +1368,67 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
   
   if(!oct) parametrize();
 
-  if(trivial()){
+
+  Curvature& curvature = Curvature::getInstance();
+
+  if( !Curvature::valueAlreadyComputed() )
+  {
+    std::cout << "Need to compute curvature" << std::endl;
+    std::cout << "Getting instance of curvature" << std::endl;
+
+    curvature.setGModel( model() );
+    curvature.computeCurvature_Rusinkiewicz();
+    curvature.writeToFile("curvature.pos");
+
+    std::cout << " ... finished" << std::endl;
+
+  }
+
+
+    // find the proper triangle that contains point param
+    // find the curvature values of the three vertices of this triangle
+    // compute the curvature value as cv = C1*(1-U-V)+C2*U+C3*V
+    // return cv
+
+
+
+
+ if(trivial()){
     return (*(_compound.begin()))->curvatureMax(param);
   }
 
   double U, V;
   GFaceCompoundTriangle *lt;
   getTriangle(param.x(), param.y(), &lt, U,V);  
-  if(!lt){
+  if(!lt)
+  {
     return  0.0;   
   }
-  if(lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface){
+
+  if(lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface)
+  {
+    std::cout << "I'm not in DiscreteSurface" << std::endl;
     SPoint2 pv = lt->gfp1*(1.-U-V) + lt->gfp2*U + lt->gfp3*V;
     return lt->gf->curvatureMax(pv);
   }
-  else if (lt->gf->geomType() == GEntity::DiscreteSurface) {
-    double curv= 0.;
-    curv = locCurvature(lt->tri,U,V);
-    return curv;
+  else if (lt->gf->geomType() == GEntity::DiscreteSurface)
+  {
+    std::cout << "I'm in DiscreteSurface" << std::endl;
+    double c0;
+    double c1;
+    double c2;
+    curvature.elementNodalValues(lt->tri,c0, c1, c2);
+    double cv = (1-U-V)*c0 + U*c1 + V*c2;
+    //std::cin.get();
+    std::cout << "The curvature of the triangle " << lt->tri->getNum() << " is " << cv << std::endl;
+    return cv;
+
+//    double curv= 0.;
+//    curv = locCurvature(lt->tri,U,V);
+//    return curv;
   }
+
+  std::cin.get();
   return 0.;
 }
 
