@@ -1407,20 +1407,21 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
 
   if(lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface)
   {
-    std::cout << "I'm not in DiscreteSurface" << std::endl;
+    //std::cout << "I'm not in DiscreteSurface" << std::endl;
     SPoint2 pv = lt->gfp1*(1.-U-V) + lt->gfp2*U + lt->gfp3*V;
     return lt->gf->curvatureMax(pv);
   }
   else if (lt->gf->geomType() == GEntity::DiscreteSurface)
   {
-    std::cout << "I'm in DiscreteSurface" << std::endl;
+    //std::cout << "I'm in DiscreteSurface" << std::endl;
     double c0;
     double c1;
     double c2;
     curvature.elementNodalValues(lt->tri,c0, c1, c2);
     double cv = (1-U-V)*c0 + U*c1 + V*c2;
     //std::cin.get();
-    std::cout << "The curvature of the triangle " << lt->tri->getNum() << " is " << cv << std::endl;
+    //std::cout << "(" << c0 << "," << c1 << "," << c2 << ")" << std::endl;
+    //std::cout << "The curvature of the triangle " << lt->tri->getNum() << " is " << cv << std::endl;
     return cv;
 
 //    double curv= 0.;

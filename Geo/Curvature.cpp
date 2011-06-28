@@ -853,37 +853,12 @@ void Curvature::computeCurvature_Rusinkiewicz()
   {
     //**Mean Curvature:**
     _VertexCurve[ivertex] = (_curv1[ivertex]+_curv2[ivertex])*0.5;
-    //_VertexCurve[ivertex] = std::abs(_curv1[ivertex]) + std::abs(_curv2[ivertex]);
+//    _VertexCurve[ivertex] = std::abs(_curv1[ivertex]) + std::abs(_curv2[ivertex]);
     //**Gaussian Curvature:**
-    //_VertexCurve[ivertex] = (_curv1[ivertex]*_curv2[ivertex]);
+//    _VertexCurve[ivertex] = std::abs( _curv1[ivertex]*_curv2[ivertex] );
     //_VertexCurve[ivertex] = std::abs(_VertexCurve[ivertex]);
 
   }
-
-/*
-  std::vector<double>::iterator MaxVal = std::max_element(_VertexCurve.begin(), _VertexCurve.end());
-
-  const double max_double_value = *MaxVal;
-  std::cout << "The max value is: " << max_double_value << std::endl;
-
-  for (int ivertex = 0; ivertex < _VertexToInt.size(); ++ivertex)
-  {
-    _VertexCurve[ivertex]= 1.1*max_double_value - _VertexCurve[ivertex];
-//        _VertexCurve[ivertex]= MaxVal - _VertexCurve[ivertex];
-
-  }
-*/
-
-  //Emilie Marchandise:
-
-  const int N = 5;
-
-  for (int ivertex = 0; ivertex < _VertexToInt.size(); ++ivertex)
-  {
-   //_VertexCurve[ivertex] = 2.*3.14159/( std::abs(_VertexCurve[ivertex]) * N);
-   _VertexCurve[ivertex] = 1./ std::pow( std::exp(std::abs(_VertexCurve[ivertex])), 0.25 );
-  }
-
   _alreadyComputedCurvature = true;
 
 } //End of the "computeCurvature_Rusinkiewicz" method
@@ -937,9 +912,9 @@ void Curvature::computeCurvature_Rusinkiewicz()
 //   const int V1 = _VertexToInt[B->getNum()];
 //   const int V2 = _VertexToInt[C->getNum()];
 
-   c0 = 0.5*(_curv1[V0] + _curv2[V0]); //Mean curvature in vertex 0
-   c1 = 0.5*(_curv1[V1] + _curv2[V1]); //Mean curvature in vertex 1
-   c2 = 0.5*(_curv1[V2] + _curv2[V2]); //Mean curvature in vertex 2
+   c0 = _VertexCurve[V0]; //Mean curvature in vertex 0
+   c1 = _VertexCurve[V1]; //Mean curvature in vertex 1
+   c2 = _VertexCurve[V2]; //Mean curvature in vertex 2
 
  }
 

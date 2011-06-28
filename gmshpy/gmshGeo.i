@@ -8,7 +8,6 @@
 %{
   #include "GmshConfig.h"
 
-  #include "Curvature.h"  
   #include "GModel.h"
   #include "GPoint.h"  
   #include "GEntity.h"
@@ -43,7 +42,6 @@ namespace std {
 
 %include "GmshConfig.h"
 
-%include "Curvature.h"  
 %include "GModel.h"
 %include "GPoint.h"  
 %include "GEntity.h"
