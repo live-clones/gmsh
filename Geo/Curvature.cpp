@@ -920,7 +920,7 @@ void Curvature::computeCurvature_Rusinkiewicz()
 
 //========================================================================================================
 
-void Curvature::writeToFile( const std::string & filename)
+void Curvature::writeToPosFile( const std::string & filename)
 {
   std::ofstream outfile;
   outfile.precision(18);
@@ -978,5 +978,128 @@ outfile.close();
 }
 
 //========================================================================================================
+
+void Curvature::writeToVtkFile( const std::string & filename)
+{
+
+  std::ofstream outfile;
+  outfile.precision(18);
+  outfile.open(filename.c_str());
+  outfile << "# vtk DataFile Version 2.0" << std::endl;
+  outfile << "Surface curvature computed by Gmsh" << std::endl;
+  outfile << "ASCII" << std::endl;
+  outfile << "DATASET UNSTRUCTURED_GRID" << std::endl;
+
+  const int npoints = _VertexToInt.size();
+
+  outfile << "POINTS " << npoints << " double" << std::endl;
+
+  /// Build a table of coordinates
+  /// Loop over all elements and look at the 'old' (not necessarily continuous) numbers of vertices
+  /// Get the 'new' index of each vertex through _VertexToInt and the [x,y,z] coordinates of this vertex
+  /// Store them in coordx,coordy and coordz
+
+
+  std::vector<VtkPoint> coord;
+
+  coord.resize(npoints);
+
+  for (int i = 0; i< _ptFinalEntityList.size(); ++i)
+  {
+    GFace* face = _ptFinalEntityList[i];
+
+    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++)
+    {
+      MElement *e = face->getMeshElement(iElem);
+
+      MVertex* A = e->getVertex(0);  //Pointers to vertices of triangle
+      MVertex* B = e->getVertex(1);
+      MVertex* C = e->getVertex(2);
+
+      const int oldIdxA = A->getNum();
+      const int oldIdxB = B->getNum();
+      const int oldIdxC = C->getNum();
+
+      const int newIdxA = _VertexToInt[oldIdxA];
+      const int newIdxB = _VertexToInt[oldIdxB];
+      const int newIdxC = _VertexToInt[oldIdxC];
+
+      coord[newIdxA].x = A->x();
+      coord[newIdxA].y = A->y();
+      coord[newIdxA].z = A->z();
+
+      coord[newIdxB].x = B->x();
+      coord[newIdxB].y = B->y();
+      coord[newIdxB].z = B->z();
+
+      coord[newIdxC].x = C->x();
+      coord[newIdxC].y = C->y();
+      coord[newIdxC].z = C->z();
+    }
+  }
+
+  for (int v = 0; v < npoints; ++v)
+  {
+    outfile << coord[v].x << " " << coord[v].y << " " << coord[v].z << std::endl;
+  }
+
+  /// Empty the array 'coord' to free the memory
+  /// Point coordinates will not be needed anymore
+  coord.clear();
+
+  /// Write the cell connectivity
+
+  outfile << std::endl << "CELLS " << _ElementToInt.size() << " " << 4*_ElementToInt.size() << std::endl;
+
+  for (int i = 0; i< _ptFinalEntityList.size(); ++i)
+  {
+    GFace* face = _ptFinalEntityList[i];
+
+    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++)
+    {
+      MElement *e = face->getMeshElement(iElem);
+
+      MVertex* A = e->getVertex(0);  //Pointers to vertices of triangle
+      MVertex* B = e->getVertex(1);
+      MVertex* C = e->getVertex(2);
+
+      const int oldIdxA = A->getNum();
+      const int oldIdxB = B->getNum();
+      const int oldIdxC = C->getNum();
+
+      const int newIdxA = _VertexToInt[oldIdxA];
+      const int newIdxB = _VertexToInt[oldIdxB];
+      const int newIdxC = _VertexToInt[oldIdxC];
+
+      outfile << "3 " << newIdxA << " " << newIdxB << " " << newIdxC << std::endl;
+    }
+  }
+
+  outfile << std::endl << "CELL_TYPES " << _ElementToInt.size() << std::endl;
+  for(int ie = 0; ie < _ElementToInt.size(); ++ie)
+  {
+    outfile << "5" << std::endl; //Triangle is element type 5 in vtk
+
+  }
+
+  /// Write the curvature values as vtk 'point data'
+
+  outfile << std::endl << "POINT_DATA " << npoints << std::endl;
+  outfile << "SCALARS curvature float 1" << std::endl;
+  outfile << "LOOKUP_TABLE default" << std::endl;
+
+  for (int iv = 0; iv < npoints; ++iv)
+  {
+    outfile << _VertexCurve[iv] << std::endl;
+  }
+
+  outfile.close();
+
+
+}
+
+
+//========================================================================================================
+
 
 

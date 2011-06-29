@@ -1378,7 +1378,8 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
 
     curvature.setGModel( model() );
     curvature.computeCurvature_Rusinkiewicz();
-    curvature.writeToFile("curvature.pos");
+    curvature.writeToPosFile("curvature.pos");
+    curvature.writeToVtkFile("curvature.vtk");
 
     std::cout << " ... finished" << std::endl;
 

@@ -24,6 +24,15 @@ private:
     typedef std::map<int, GFaceList >::iterator GFaceIter;
 
     //-----------------------------------------
+    // HELPER TYPE FOR WRITING TO VTK FILES
+    struct VtkPoint
+    {
+      double x;
+      double y;
+      double z;
+    };
+
+    //-----------------------------------------
     // MEMBER VARIABLES
 
     //Static member variable to implement the class curvature as a Singleton
@@ -180,7 +189,9 @@ public:
 
   void elementNodalValues(MTriangle* triangle, double& c0, double& c1, double& c2);
 
-  void writeToFile( const std::string & filename);
+  void writeToPosFile( const std::string & filename);
+
+  void writeToVtkFile( const std::string & filename);
 
 
 
