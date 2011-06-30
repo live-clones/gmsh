@@ -75,6 +75,7 @@ void Msg::Init(int argc, char **argv)
 #endif
 #if defined(HAVE_PETSC)
   PetscInitialize(&argc, &argv, PETSC_NULL, PETSC_NULL);
+  PetscPopSignalHandler();
 #endif
 #if defined(HAVE_SLEPC)
   SlepcInitialize(&argc, &argv, PETSC_NULL, PETSC_NULL);
