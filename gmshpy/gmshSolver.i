@@ -3,6 +3,7 @@
 %include std_string.i
 %include std_vector.i
 %import "gmshCommon.i"
+%import "gmshNumeric.i"
 
 %{
   #include "GmshConfig.h"
