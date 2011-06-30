@@ -11,6 +11,7 @@
   #include "dofManager.h"
   #include "elasticitySolver.h"
   #include "function.h"
+  #include "functionDerivator.h"
   #include "functionPython.h"
   #include "linearSystem.h"
   #include "linearSystemCSR.h"
@@ -28,6 +29,7 @@ namespace std {
 %template(dofManagerDouble) dofManager<double>;
 %include "elasticitySolver.h"
 %include "function.h"
+%include "functionDerivator.h"
 %include "functionPython.h"
 %include "linearSystem.h"
 %template(linearSystemDouble) linearSystem<double>;

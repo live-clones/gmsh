@@ -68,7 +68,7 @@ class function {
 
   // get or print information
   inline bool isInvalitedOnElement() { return _invalidatedOnElement; }
-  inline int getNbCol() const        { return _nbCol; }
+  inline int getNbCol() const        {if(_nbCol ==0) Msg::Error("Cannot ask nbCol of functionSolution"); return _nbCol; }
   static functionConstant *getTime();
   static functionConstant *getDT();
   static function *getSolution();
