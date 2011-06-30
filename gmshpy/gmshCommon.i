@@ -24,7 +24,7 @@
 #endif
       std::cout<<level<<" : "<<message<<std::endl;
       if (level == "Fatal") 
-        throw;
+        Msg::Exit(1);
     }
   };
 %}

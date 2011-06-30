@@ -20,7 +20,14 @@ class functionPython : public function {
   {
     R.setAsProxy(res); 
     R.setDataCacheMap(m);
-    PyEval_CallObject(_pycallback, _pyargs);
+    PyObject *result = PyEval_CallObject(_pycallback, _pyargs);
+    if (result) {
+      Py_DECREF(result);
+    }
+    else {
+      PyErr_Print();
+      Msg::Fatal("An error occurs in the python function.");
+    }
   }
   functionPython (int nbCol, PyObject *callback, std::vector<const function*> dependencies)
     : function(nbCol), _pycallback(callback)
