@@ -191,43 +191,6 @@ static fullMatrix<double> generatePascalSerendipityTriangle(int order)
   return monomials;
 }
 
-const fullMatrix<double> &polynomialBasis::
-getGradientAtFaceIntegrationPoints(int integrationOrder, int closureId) const
-{
-  std::vector<fullMatrix<double> > &dfAtFace = _dfAtFace[integrationOrder];
-  if (dfAtFace.empty()) {
-    dfAtFace.resize(closures.size());
-    int nbPsi = points.size1();
-    for (unsigned int iClosure = 0; iClosure < closures.size(); iClosure++) {
-      fullMatrix<double> integrationFace, weight;
-      const polynomialBasis *fsFace = polynomialBases::find(closures[iClosure].type);
-      gaussIntegration::get(fsFace->parentType, integrationOrder, integrationFace, weight);
-      fullMatrix<double> integration(integrationFace.size1(), 3);
-      double f[1256];
-      for (int i = 0; i < integrationFace.size1(); i++){
-        fsFace->f(integrationFace(i,0),integrationFace(i,1),integrationFace(i,2),f);
-        for(unsigned int j = 0; j < closures[iClosure].size(); j++) {
-          int jNod = closures[iClosure][j];
-          for(int k = 0; k < points.size2(); k++)
-            integration(i,k) += f[j] * points(jNod,k);
-        }
-      }
-      fullMatrix<double> &v = dfAtFace[iClosure];
-      v.resize(nbPsi, integration.size1()*3);
-      double g[1256][3];
-      for (int xi = 0; xi < integration.size1(); xi++) {
-        df(integration(xi, 0), integration(xi, 1), integration(xi, 2), g);
-        for (int j = 0; j < nbPsi; j++) {
-          v(j, xi*3) = g[j][0];
-          v(j, xi*3+1) = g[j][1];
-          v(j, xi*3+2) = g[j][2];
-        }
-      }
-    }
-  }
-  return dfAtFace[closureId];
-}
-
 // generate all monomials xi^m * eta^n with n and m <= order
 
 static fullMatrix<double> generatePascalQuad(int order)

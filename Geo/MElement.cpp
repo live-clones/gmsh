@@ -291,7 +291,7 @@ double MElement::getJacobian(const fullMatrix<double> &gsf, double jac[3][3])
 
   for (int i = 0; i < getNumShapeFunctions(); i++) {
     const MVertex *v = getShapeFunctionNode(i);
-    for (int j = 0; j < 3; j++) {
+    for (int j = 0; j < gsf.size2(); j++) {
       jac[j][0] += v->x() * gsf(i, j);
       jac[j][1] += v->y() * gsf(i, j);
       jac[j][2] += v->z() * gsf(i, j);
@@ -1214,70 +1214,6 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_HEX_1000:return new MHexahedronN(v, 9, num, part);
   default:          return 0;
   }
-}
-
-const fullMatrix<double> &MElement::
-getGradShapeFunctionsAtIntegrationPoints(int integrationOrder, int functionSpaceOrder)
-{
-  static std::map <std::pair<int,int>, fullMatrix<double> > DF;
-  const polynomialBasis *fs = getFunctionSpace(functionSpaceOrder);
-  fullMatrix<double> &mat = DF[std::make_pair(fs->type, integrationOrder)];
-  if (mat.size1() != 0) return mat;
-  int npts;
-  IntPt *pts;
-  getIntegrationPoints(integrationOrder, &npts, &pts);
-  mat.resize(fs->points.size1(), npts*3);
-  double df[512][3];
-  for (int i = 0; i < npts; i++) {
-    fs->df(pts[i].pt[0], pts[i].pt[1], pts[i].pt[2], df);
-    for (int j = 0; j < fs->points.size1(); j++) {
-      mat(j, i*3+0) = df[j][0];
-      mat(j, i*3+1) = df[j][1];
-      mat(j, i*3+2) = df[j][2];
-    }
-  }
-  return mat;
-}
-
-const fullMatrix<double> &MElement::
-getShapeFunctionsAtIntegrationPoints (int integrationOrder, int functionSpaceOrder)
-{
-  static std::map <std::pair<int,int>, fullMatrix<double> > F;
-  const polynomialBasis *fs = getFunctionSpace (functionSpaceOrder);
-  fullMatrix<double> &mat = F[std::make_pair(fs->type, integrationOrder)];
-  if (mat.size1() != 0) return mat;
-  int npts;
-  IntPt *pts;
-  getIntegrationPoints(integrationOrder, &npts, &pts);
-  mat.resize(fs->points.size1(), npts*3);
-  double f[512];
-  for (int i = 0; i < npts; i++) {
-    fs->f(pts[i].pt[0], pts[i].pt[1], pts[i].pt[2], f);
-    for (int j = 0; j < fs->points.size1(); j++) {
-      mat(j, i) = f[j];
-    }
-  }
-  return mat;
-}
-
-const fullMatrix<double> &MElement::getGradShapeFunctionsAtNodes(int functionSpaceOrder)
-{
-  static std::map <int, fullMatrix<double> > DF;
-  const polynomialBasis *fs = getFunctionSpace(functionSpaceOrder);
-  fullMatrix<double> &mat = DF[fs->type];
-  if (mat.size1()!=0) return mat;
-  const fullMatrix<double> &points = fs->points;
-  mat.resize (points.size1(), points.size1()*3);
-  double df[512][3];
-  for (int i = 0; i < points.size1(); i++) {
-    fs->df (points(i,0), points(i,1), points(i,2), df);
-    for (int j = 0; j < points.size1(); j++) {
-      mat(j, i*3+0) = df[j][0];
-      mat(j, i*3+1) = df[j][1];
-      mat(j, i*3+2) = df[j][2];
-    }
-  }
-  return mat;
 }
 
 void MElement::xyzTouvw(fullMatrix<double> *xu)
