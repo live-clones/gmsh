@@ -754,7 +754,7 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
 		    double &XX, double &YY, double &ZZ, 
 		    SVector3 &dXdu, SVector3& dXdv, int num_neighbours){
 
- num_neighbours = 50;
+ num_neighbours = 30;
  fullMatrix<double> u_vec(num_neighbours,3), xyz_local(num_neighbours,3); 
  fullMatrix<double> u_vec_eval(1, 3), nodes_eval(1,3), xu(1,3), xv(1,3);
  u_vec_eval(0,0) = u_eval;
