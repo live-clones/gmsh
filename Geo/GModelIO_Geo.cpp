@@ -153,7 +153,7 @@ int GModel::importGEOInternals()
           add(e);
         }
         else if(!e){
-          e = new gmshEdge(this, c);
+          e = new gmshEdge(this, c, 0, 0);
           add(e);
         }
         else
