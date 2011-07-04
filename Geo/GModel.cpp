@@ -1522,14 +1522,14 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
   
   // return if no boundary edges (torus, sphere, ...)
   if (map_edges.empty()) return;
-
+  
   // get currently defined discrete edges
   std::vector<discreteEdge*> discEdges;
   for(eiter it = firstEdge(); it != lastEdge(); it++){
     if((*it)->geomType() == GEntity::DiscreteCurve)
       discEdges.push_back((discreteEdge*) *it);
   }
-
+  
   // create reverse map storing for each discrete face the list of
   // discrete edges on its boundary
   std::map<int, std::vector<int> > face2Edges;
@@ -1598,7 +1598,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
     int nbBounds = connectedSurfaceBoundaries(myEdges, boundaries);   
 
     //EMI RBF fix
-    if (ignoreHoles){
+    if (ignoreHoles && nbBounds > 0){
       int index = 0;
       int boundSize = 0;
       for (int ib = 0; ib < nbBounds; ib++){
