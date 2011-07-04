@@ -59,7 +59,7 @@ GRbf::GRbf (double sizeBox, int variableEps, int rbfFun, std::map<MVertex*, SVec
 {
 
   allCenters.resize(allNodes.size(),3);
-  double tol=  8.e-2*sBox;
+  double tol=  1.e-2*sBox;
 
   //remove duplicate vertices
   //add bc nodes
