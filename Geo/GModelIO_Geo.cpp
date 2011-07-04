@@ -152,6 +152,10 @@ int GModel::importGEOInternals()
                            getVertexByTag(c->end->Num));
           add(e);
         }
+        else if(!e){
+          e = new gmshEdge(this, c);
+          add(e);
+        }
         else
           e->resetMeshAttributes();
         if(!c->Visible) e->setVisibility(0);
