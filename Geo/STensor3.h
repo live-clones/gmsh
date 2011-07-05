@@ -227,6 +227,14 @@ class STensor3 {
   {
     return _val[getIndex(i, j)];
   }
+  inline double operator[](int i) const
+  {
+    return _val[i];
+  }
+  inline double &operator[](int i)
+  {
+    return _val[i];
+  }
   STensor3 invert () const
   {
     fullMatrix<double> m(3, 3);
