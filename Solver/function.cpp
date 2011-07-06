@@ -96,7 +96,7 @@ class functionNormals : public function {
   static functionNormals *_instance;
   // constructor is private only 1 instance can exists, call get to
   // access the instance
-  functionNormals() : function(0){} 
+  functionNormals() : function(3){} 
  public:
   void call(dataCacheMap *m, fullMatrix<double> &sol) 
   {
