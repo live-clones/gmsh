@@ -298,5 +298,5 @@ function *functionProdNew (const function *f0, const function *f1);
 function *functionScaleNew (const function *f0, const double s);
 function *functionExtractCompNew (const function *f0, const int iComp);
 function *functionCatCompNew(std::vector<const function *> fArray);
-function *functionMeanNew(const function *f0);
+function *functionMeanP1New(const function *f, const function *df);
 #endif

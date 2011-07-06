@@ -96,7 +96,7 @@ class functionNormals : public function {
   static functionNormals *_instance;
   // constructor is private only 1 instance can exists, call get to
   // access the instance
-  functionNormals() : function(1){} 
+  functionNormals() : function(0){} 
  public:
   void call(dataCacheMap *m, fullMatrix<double> &sol) 
   {
@@ -468,11 +468,11 @@ class functionLevelsetSmooth : public function {
     
     for (int i = 0; i < val.size1(); i++)
       for (int j = 0; j < val.size2(); j++){
-	double phi = _f0(i,j);
-	double Heps= 0.5*(1+phi/_E + 1./M_PI*sin(M_PI*phi/_E));
-	if ( fabs(phi) < _E)  val(i, j) = Heps*_valPlus + (1-Heps)*_valMin;
-	else if (phi >  _E)   val(i, j) = _valPlus;
-	else if (phi < -_E)   val(i, j) = _valMin;
+        double phi = _f0(i,j);
+        double Heps = 0.5 * (1 + phi / _E + 1. / M_PI * sin(M_PI * phi / _E));
+        if (fabs(phi) < _E)  val(i, j) = Heps * _valPlus + (1 - Heps) * _valMin;
+        else if (phi >  _E)  val(i, j) = _valPlus;
+        else if (phi < -_E)  val(i, j) = _valMin;
       }
   }
   functionLevelsetSmooth(const function *f0, const double valMin, const double valPlus, const double E) : function(f0->getNbCol()) 
@@ -592,28 +592,28 @@ function *functionScaleNew(const function *f0, const double s) {
 
 // functionMean
 
-class functionMean : public function {
-  fullMatrix<double> _f0;
+class functionMeanP1 : public function {
+  fullMatrix<double> _f, _df, _xyz;
 public:
-  functionMean(const function *f0) : function(f0->getNbCol()) {
-    setArgument (_f0, f0);
+  functionMeanP1(const function *f, const function *df) : function(f->getNbCol()) {
+    setArgument (_f, f);
+    setArgument (_df, df);
+    setArgument (_xyz, function::getCoordinates());
   }
   void call(dataCacheMap *m, fullMatrix<double> &val)
   {
-    double mean;
-    for(int j = 0; j < val.size2(); j++) {
-      mean = 0;
+    SPoint3 center = m->getElement()->barycenter();
+    for(int j = 0; j < val.size2(); j++)
       for(int i = 0; i < val.size1(); i++)
-        mean += _f0(i, j);
-      mean /= (double) val.size1();
-      for(int i = 0; i < val.size1(); i++)
-        val(i, j) = mean;
-    }
+        val(i, j) = _f(i, j)
+                  + _df(i, 3 * j + 0) * ( center.x() - _xyz(i, 0) )
+                  + _df(i, 3 * j + 1) * ( center.y() - _xyz(i, 1) )
+                  + _df(i, 3 * j + 2) * ( center.z() - _xyz(i, 2) );
   }
 };
 
-function *functionMeanNew(const function *f0) {
-  return new functionMean (f0);
+function *functionMeanP1New(const function *f, const function *df) {
+  return new functionMeanP1 (f, df);
 }
 
 // functionStructuredGridFile
