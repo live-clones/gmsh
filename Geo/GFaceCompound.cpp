@@ -1373,7 +1373,7 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
 
   if( !Curvature::valueAlreadyComputed() )
   {
-    std::cout << "Need to compute curvature" << std::endl;
+    std::cout << "Need to compute discrete curvature" << std::endl;
     std::cout << "Getting instance of curvature" << std::endl;
 
     curvature.setGModel( model() );
@@ -1381,7 +1381,7 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
     curvature.writeToPosFile("curvature.pos");
     curvature.writeToVtkFile("curvature.vtk");
 
-    std::cout << " ... finished" << std::endl;
+    std::cout << " ... computing curvature finished" << std::endl;
 
   }
 
@@ -1414,15 +1414,29 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
   }
   else if (lt->gf->geomType() == GEntity::DiscreteSurface)
   {
-    //std::cout << "I'm in DiscreteSurface" << std::endl;
+//    std::cout << "I'm in DiscreteSurface" << std::endl;
     double c0;
     double c1;
     double c2;
-    curvature.elementNodalValues(lt->tri,c0, c1, c2);
+    //curvature.elementNodalValues(lt->tri,c0, c1, c2);
+    curvature.elementNodalAbsoluteValues(lt->tri,c0, c1, c2);
+
     double cv = (1-U-V)*c0 + U*c1 + V*c2;
-    //std::cin.get();
-    //std::cout << "(" << c0 << "," << c1 << "," << c2 << ")" << std::endl;
-    //std::cout << "The curvature of the triangle " << lt->tri->getNum() << " is " << cv << std::endl;
+//    std::cout << "(" << c0 << "," << c1 << "," << c2 << ")" << std::endl;
+//    MVertex* V0 = lt->tri->getVertex(0);
+//    MVertex* V1 = lt->tri->getVertex(1);
+//    MVertex* V2 = lt->tri->getVertex(2);
+
+//    std::cout << "=====================================================" << std::endl;
+//    std::cout << "Parametric coordinates: " << param.x() << "," << param.y() << std::endl;
+//    std::cout << "The coordinates of the triangle are:" << std::endl;
+//    std::cout << "\t[" << V0->x() << "," << V0->y() << "," << V0->z() << "]" << std::endl;
+//    std::cout << "\t[" << V1->x() << "," << V1->y() << "," << V1->z() << "]" << std::endl;
+//    std::cout << "\t[" << V2->x() << "," << V2->y() << "," << V2->z() << "]" << std::endl;
+//    std::cout << "The curvature of the triangle " << lt->tri->getNum() << " is " << cv << std::endl;
+//    std::cout << std::endl;
+//    std::cin.get();
+//    return 1.0;
     return cv;
 
 //    double curv= 0.;
@@ -1430,7 +1444,6 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
 //    return curv;
   }
 
-  std::cin.get();
   return 0.;
 }
 

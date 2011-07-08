@@ -189,6 +189,8 @@ public:
 
   void elementNodalValues(MTriangle* triangle, double& c0, double& c1, double& c2);
 
+  void elementNodalAbsoluteValues(MTriangle* triangle, double& c0, double& c1, double& c2);
+
   void writeToPosFile( const std::string & filename);
 
   void writeToVtkFile( const std::string & filename);
