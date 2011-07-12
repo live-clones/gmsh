@@ -95,15 +95,15 @@ void ColorTable_Recompute(GmshColorTable * ct)
         double ii = (double)(s - bias) * 128.;
         if(ii < 0) ii = 0;
         if(ii > 128) ii = 128;
-        double rr = 
-          ii <= 46 ? 0. : 
+        double rr =
+          ii <= 46 ? 0. :
           ii >= 111 ? -0.03125 * (ii - 111) + 1. :
-          ii >= 78 ? 1. : 
+          ii >= 78 ? 1. :
           0.03125 * (ii - 46);
-        double gg = 
-          ii <= 14 || ii >= 111 ? 0. : 
-          ii >= 79 ? -0.03125 * (ii - 111) : 
-          ii <= 46 ? 0.03125 * (ii - 14) : 
+        double gg =
+          ii <= 14 || ii >= 111 ? 0. :
+          ii >= 79 ? -0.03125 * (ii - 111) :
+          ii <= 46 ? 0.03125 * (ii - 14) :
           1.;
         double bb =
           ii >= 79 ? 0. :
@@ -246,8 +246,30 @@ void ColorTable_Recompute(GmshColorTable * ct)
         r = g = b = (int)(255 * (1. - curvature));
       }
       break;
-    case 10: // all white
-      r = g = b = 255;
+    case 10: // "french flag"
+      {
+        double ii = (double)(s - bias);
+        if(ii < 0) ii = 0;
+        if(ii > 1) ii = 1;
+        double rr =
+          ii >= .75 ? 2*(0.75-ii) + 1.:
+          ii >= .5  ? 1. :
+          ii >= .25 ? 4. * (ii-0.25) :
+          0.;
+        double gg =
+          ii <= .25 ? 1.33333 * ii :
+          ii <= .5  ? 0.33333 + 2.66667 * (ii-0.25) :
+          ii <= .75 ? 1 - 2.66667 * (ii-0.5) :
+          1.33333 * (1.-ii);
+        double bb =
+          ii <= 0.25 ? 2*ii + 0.5 :
+          ii <= 0.5  ? 1. :
+          ii <= 0.75 ? 4*(0.75-ii) :
+          0.;
+        r = (int)(rr * 255.);
+        g = (int)(gg * 255.);
+        b = (int)(bb * 255.);
+      }
       break;
     case 11: // matlab "hsv"
       {
@@ -321,7 +343,7 @@ void ColorTable_Recompute(GmshColorTable * ct)
       g = (int)(255. * pow((double)g / 255., gamma));
       b = (int)(255. * pow((double)b / 255., gamma));
     }
-    
+
     if(ct->ipar[COLORTABLE_INVERT]) {
       r = 255 - r;
       g = 255 - g;
@@ -333,7 +355,7 @@ void ColorTable_Recompute(GmshColorTable * ct)
     g = g < 0 ? 0 : (g > 255 ? 255 : g);
     b = b < 0 ? 0 : (b > 255 ? 255 : b);
     a = a < 0 ? 0 : (a > 255 ? 255 : a);
-    
+
     ct->table[i] = CTX::instance()->packColor(r, g, b, a);
   }
 
@@ -407,14 +429,14 @@ int ColorTable_IsAlpha(GmshColorTable * ct)
 
 // HSV/RBG conversion routines
 
-void HSV_to_RGB(double H, double S, double V, 
-                double *R, double *G, double *B) 
+void HSV_to_RGB(double H, double S, double V,
+                double *R, double *G, double *B)
 {
   if(S < 5.0e-6) {
     *R = *G = *B = V;
   }
   else {
-    int i = (int)H;  
+    int i = (int)H;
     double f = H - (float)i;
     double p1 = V * (1.0 - S);
     double p2 = V * (1.0 - S * f);
@@ -430,8 +452,8 @@ void HSV_to_RGB(double H, double S, double V,
   }
 }
 
-void RGB_to_HSV(double R, double G, double B, 
-                double *H, double *S, double *V) 
+void RGB_to_HSV(double R, double G, double B,
+                double *H, double *S, double *V)
 {
   double maxv = R > G ? R : G; if(B > maxv) maxv = B;
   *V = maxv;
