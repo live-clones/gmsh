@@ -187,9 +187,13 @@ public:
   /// Code taken from Rusinkiewicz' 'trimesh2' library
   void computeCurvature_Rusinkiewicz();
 
-  void elementNodalValues(MTriangle* triangle, double& c0, double& c1, double& c2);
+  void triangleNodalValues(MTriangle* triangle, double& c0, double& c1, double& c2);
 
-  void elementNodalAbsoluteValues(MTriangle* triangle, double& c0, double& c1, double& c2);
+  void triangleNodalAbsValues(MTriangle* triangle, double& c0, double& c1, double& c2);
+
+  void edgeNodalValues(MLine* edge, double& c0, double& c1);
+
+  void edgeNodalAbsValues(MLine* edge, double& c0, double& c1);
 
   void writeToPosFile( const std::string & filename);
 

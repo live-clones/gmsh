@@ -23,6 +23,7 @@ class discreteEdge : public GEdge {
   virtual GeomType geomType() const { return DiscreteCurve; }
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
+  virtual double curvature(double par) const;
   virtual Range<double> parBounds(int) const;
   void parametrize(std::map<GFace*, std::map<MVertex*, MVertex*, 
                    std::less<MVertex*> > > &face2Verts, 

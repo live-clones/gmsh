@@ -1421,7 +1421,7 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
     double c1;
     double c2;
     //curvature.elementNodalValues(lt->tri,c0, c1, c2);
-    curvature.elementNodalAbsoluteValues(lt->tri,c0, c1, c2);
+    curvature.triangleNodalAbsValues(lt->tri,c0, c1, c2);
 
     double cv = (1-U-V)*c0 + U*c1 + V*c2;
 //    std::cout << "(" << c0 << "," << c1 << "," << c2 << ")" << std::endl;
