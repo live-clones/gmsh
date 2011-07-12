@@ -42,6 +42,7 @@
 #include "multiscaleLaplace.h"
 #include "GRbf.h"
 #include "Curvature.h"
+#include "MPoint.h"
 
 static void fixEdgeToValue(GEdge *ed, double value, dofManager<double> &myAssembler)
 {
@@ -670,9 +671,9 @@ bool GFaceCompound::parametrize() const
     fullMatrix<double> Oper(3*allNodes.size(),3*allNodes.size());
     _rbf = new GRbf(sizeBox, variableEps, radFunInd, _normals, allNodes, _ordered);
 
-    //_rbf->RbfLapSurface_global_CPM_low(_rbf->getXYZ(), _rbf->getN(), Oper);
+    _rbf->RbfLapSurface_global_CPM_low(_rbf->getXYZ(), _rbf->getN(), Oper);
     //_rbf->RbfLapSurface_local_CPM(true, _rbf->getXYZ(), _rbf->getN(), Oper);
-    _rbf->RbfLapSurface_global_CPM_high(_rbf->getXYZ(), _rbf->getN(), Oper);
+    //_rbf->RbfLapSurface_global_CPM_high(_rbf->getXYZ(), _rbf->getN(), Oper);
     //_rbf->RbfLapSurface_local_CPM(false, _rbf->getXYZ(), _rbf->getN(),  Oper);
     //_rbf->RbfLapSurface_global_projection(_rbf->getXYZ(), _rbf->getN(), Oper);
     //_rbf->RbfLapSurface_local_projection(_rbf->getXYZ(), _rbf->getN(), Oper);
@@ -959,7 +960,7 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   
   getBoundingEdges();
   _type = UNITCIRCLE;
-
+ 
   nbSplit = 0;
   fillTris.clear();
 }
@@ -1065,6 +1066,7 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
   dofManager<double> myAssembler(_lsys);
 
   if(_type == UNITCIRCLE){
+    printf("unit circle \n");
     for(unsigned int i = 0; i < _ordered.size(); i++){
       MVertex *v = _ordered[i];
       const double theta = 2 * M_PI * _coords[i];
@@ -1481,7 +1483,19 @@ GPoint GFaceCompound::point(double par1, double par2) const
 
   if(!oct) parametrize();
 
-  if (_mapping == RBF){
+ 
+
+  double U,V;
+  double par[2] = {par1,par2};
+  GFaceCompoundTriangle *lt;
+  getTriangle (par1, par2, &lt, U,V);  
+  SPoint3 p(3, 3, 0); 
+  if(!lt && _mapping != RBF){
+    GPoint gp (p.x(),p.y(),p.z(),this);
+    gp.setNoSuccess();
+    return gp;
+  }
+  else if (!lt && _mapping == RBF){
     if (fabs(par1) > 1 || fabs(par2) > 1){
       GPoint gp (3,3,0,this);
       gp.setNoSuccess();
@@ -1490,22 +1504,8 @@ GPoint GFaceCompound::point(double par1, double par2) const
     double x, y, z;
     SVector3 dXdu, dXdv;
     bool conv = _rbf->UVStoXYZ(par1, par2,x,y,z, dXdu, dXdv);
-    if (!conv) printf("UV=%g %g \n", par1, par2);
     return GPoint(x,y,z);
   }
-
-  double U,V;
-  double par[2] = {par1,par2};
-  GFaceCompoundTriangle *lt;
-  getTriangle (par1, par2, &lt, U,V);  
-  SPoint3 p(3, 3, 0); 
-  if(!lt){
-    GPoint gp (p.x(),p.y(),p.z(),this);
-    gp.setNoSuccess();
-    return gp;
-  }
-  
-  const bool LINEARMESH = true; //false
   
   if (lt->gf->geomType() != GEntity::DiscreteSurface){
     SPoint2 pParam = lt->gfp1*(1.-U-V) + lt->gfp2*U + lt->gfp3*V;
@@ -1513,6 +1513,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
     return GPoint(pp.x(),pp.y(),pp.z(),this,par);
   }
 
+  const bool LINEARMESH = true; //false
   if(LINEARMESH){
 
     //linear Lagrange mesh
@@ -1580,24 +1581,29 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
   if(trivial())
     return (*(_compound.begin()))->firstDer(param);
 
-   if (_mapping == RBF){
+  double U, V;
+  GFaceCompoundTriangle *lt;
+  getTriangle(param.x(), param.y(), &lt, U,V);
+  if(!lt && _mapping != RBF)
+    return Pair<SVector3, SVector3>(SVector3(1, 0, 0), SVector3(0, 1, 0));
+  else if (!lt && _mapping == RBF){
      double x, y, z;
      SVector3 dXdu, dXdv  ;
      bool conv = _rbf->UVStoXYZ(param.x(), param.y(), x,y,z, dXdu, dXdv);
     return Pair<SVector3, SVector3>(dXdu,dXdv);
    }
 
-  double U, V;
-  GFaceCompoundTriangle *lt;
-  getTriangle(param.x(), param.y(), &lt, U,V);
-  if(!lt)
-    return Pair<SVector3, SVector3>(SVector3(1, 0, 0), SVector3(0, 1, 0));
-
   double mat[2][2] = {{lt->p2.x() - lt->p1.x(), lt->p3.x() - lt->p1.x()},
                       {lt->p2.y() - lt->p1.y(), lt->p3.y() - lt->p1.y()}};
   double inv[2][2];
-  inv2x2(mat,inv);
- 
+  double det = inv2x2(mat,inv);
+  if (!det && _mapping == RBF){
+     double x, y, z;
+     SVector3 dXdu, dXdv  ;
+     bool conv = _rbf->UVStoXYZ(param.x(), param.y(), x,y,z, dXdu, dXdv);
+     return Pair<SVector3, SVector3>(dXdu,dXdv);
+  }
+
   SVector3 dXdxi(lt->v2 - lt->v1);
   SVector3 dXdeta(lt->v3 - lt->v1);
 
@@ -1716,14 +1722,14 @@ void GFaceCompound::getTriangle(double u, double v,
 {
   double uv[3] = {u, v, 0};
   *lt = (GFaceCompoundTriangle*)Octree_Search(uv, oct);
-  //  if(!(*lt)) {
+  // if(!(*lt)) {
   //     for(int i=0;i<nbT;i++){
   //       if(GFaceCompoundInEle (&_gfct[i],uv)){
   //      *lt = &_gfct[i];
   //      break;
   //       }
   //     } 
-  //   }
+  // }
   if(!(*lt)){
     return;
   }
