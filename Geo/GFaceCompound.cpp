@@ -1368,41 +1368,17 @@ void GFaceCompound::computeNormals() const
 double GFaceCompound::curvatureMax(const SPoint2 &param) const
 {
   
-  if(!oct) parametrize();
+ if(!oct) parametrize();
 
-
-  Curvature& curvature = Curvature::getInstance();
-
-  if( !Curvature::valueAlreadyComputed() )
-  {
-    std::cout << "Need to compute discrete curvature" << std::endl;
-    std::cout << "Getting instance of curvature" << std::endl;
-
-    curvature.setGModel( model() );
-    curvature.computeCurvature_Rusinkiewicz();
-    curvature.writeToPosFile("curvature.pos");
-    curvature.writeToVtkFile("curvature.vtk");
-
-    std::cout << " ... computing curvature finished" << std::endl;
-
-  }
-
-
-    // find the proper triangle that contains point param
-    // find the curvature values of the three vertices of this triangle
-    // compute the curvature value as cv = C1*(1-U-V)+C2*U+C3*V
-    // return cv
-
-
-
-
- if(trivial()){
+ if(trivial())
+ {
     return (*(_compound.begin()))->curvatureMax(param);
-  }
+ }
 
   double U, V;
   GFaceCompoundTriangle *lt;
-  getTriangle(param.x(), param.y(), &lt, U,V);  
+  getTriangle(param.x(), param.y(), &lt, U,V);
+
   if(!lt)
   {
     return  0.0;   
@@ -1416,31 +1392,34 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
   }
   else if (lt->gf->geomType() == GEntity::DiscreteSurface)
   {
+
+    Curvature& curvature = Curvature::getInstance();
+
+    if( !Curvature::valueAlreadyComputed() )
+    {
+      std::cout << "Need to compute discrete curvature" << std::endl;
+      std::cout << "Getting instance of curvature" << std::endl;
+
+      curvature.setGModel( model() );
+      curvature.computeCurvature_Rusinkiewicz();
+      curvature.writeToPosFile("curvature.pos");
+      curvature.writeToVtkFile("curvature.vtk");
+
+      std::cout << " ... computing curvature finished" << std::endl;
+
+    }
+
+
 //    std::cout << "I'm in DiscreteSurface" << std::endl;
     double c0;
     double c1;
     double c2;
-    //curvature.elementNodalValues(lt->tri,c0, c1, c2);
     curvature.triangleNodalAbsValues(lt->tri,c0, c1, c2);
 
     double cv = (1-U-V)*c0 + U*c1 + V*c2;
-//    std::cout << "(" << c0 << "," << c1 << "," << c2 << ")" << std::endl;
-//    MVertex* V0 = lt->tri->getVertex(0);
-//    MVertex* V1 = lt->tri->getVertex(1);
-//    MVertex* V2 = lt->tri->getVertex(2);
-
-//    std::cout << "=====================================================" << std::endl;
-//    std::cout << "Parametric coordinates: " << param.x() << "," << param.y() << std::endl;
-//    std::cout << "The coordinates of the triangle are:" << std::endl;
-//    std::cout << "\t[" << V0->x() << "," << V0->y() << "," << V0->z() << "]" << std::endl;
-//    std::cout << "\t[" << V1->x() << "," << V1->y() << "," << V1->z() << "]" << std::endl;
-//    std::cout << "\t[" << V2->x() << "," << V2->y() << "," << V2->z() << "]" << std::endl;
-//    std::cout << "The curvature of the triangle " << lt->tri->getNum() << " is " << cv << std::endl;
-//    std::cout << std::endl;
-//    std::cin.get();
-//    return 1.0;
     return cv;
 
+//Original code:
 //    double curv= 0.;
 //    curv = locCurvature(lt->tri,U,V);
 //    return curv;
