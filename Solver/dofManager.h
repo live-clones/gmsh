@@ -185,7 +185,7 @@ class dofManager{
   {
     if (fixed.find(key) != fixed.end()) return;
     if (constraints.find(key) != constraints.end()) return;
-    if (ghostByDof.find(key) != ghostByDof.end()) return; 
+    if (ghostByDof.find(key) != ghostByDof.end()) return;
 
     std::map<Dof, int> :: iterator it = unknown.find(key);
     if (it == unknown.end()) {
