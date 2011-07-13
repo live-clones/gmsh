@@ -10,6 +10,7 @@
 #include <set>
 #include "SPoint2.h"
 #include "SPoint3.h"
+#include "MVertexBoundaryLayerData.h"
 
 class GEntity;
 class GEdge;
@@ -124,6 +125,8 @@ class MEdgeVertex : public MVertex{
  protected:
   double _u, _lc;
  public:
+  MVertexBoundaryLayerData* bl_data;
+
   MEdgeVertex(double x, double y, double z, GEntity *ge, double u, double lc = -1.0,
               int num = 0) 
     : MVertex(x, y, z, ge,num), _u(u), _lc(lc)
@@ -139,6 +142,8 @@ class MFaceVertex : public MVertex{
  protected:
   double _u, _v;
  public :
+  MVertexBoundaryLayerData* bl_data;
+
   MFaceVertex(double x, double y, double z, GEntity *ge, double u, double v, int num = 0) 
     : MVertex(x, y, z, ge, num), _u(u), _v(v)
   {
