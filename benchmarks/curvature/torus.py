@@ -10,7 +10,7 @@ g = GModel();
 g.setFactory('OpenCASCADE')
 
 #g.addBlock([-R,-R,-R],[R,R,R]);
-g.addTorus([0,0,0],[1,0,0], 3.0, 1.0);
+g.addTorus([0,0,0],[1,0,0], 2.0, 1.5);
 
 #g.mesh(2);
 #g.save("occtorus.msh");
