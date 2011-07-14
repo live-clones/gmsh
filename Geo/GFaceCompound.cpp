@@ -1375,8 +1375,7 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
 {
   
  if(!oct) parametrize();
- if(trivial())
- {
+ if(trivial()) {
     return (*(_compound.begin()))->curvatureMax(param);
  }
 
@@ -1384,50 +1383,38 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
   GFaceCompoundTriangle *lt;
   getTriangle(param.x(), param.y(), &lt, U,V);
 
-  if(!lt)
-  {
+  if(!lt)  {
     return  0.0;   
   }
 
-  if(lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface)
-  {
-    //std::cout << "I'm not in DiscreteSurface" << std::endl;
+  if(lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface)  {
     SPoint2 pv = lt->gfp1*(1.-U-V) + lt->gfp2*U + lt->gfp3*V;
     return lt->gf->curvatureMax(pv);
   }
-  else if (lt->gf->geomType() == GEntity::DiscreteSurface)
-  {
+  else if (lt->gf->geomType() == GEntity::DiscreteSurface)  {
 
     Curvature& curvature = Curvature::getInstance();
 
-    if( !Curvature::valueAlreadyComputed() )
-    {
+    if( !Curvature::valueAlreadyComputed() ) {
       std::cout << "Need to compute discrete curvature" << std::endl;
       std::cout << "Getting instance of curvature" << std::endl;
 
       curvature.setGModel( model() );
-      curvature.computeCurvature_Rusinkiewicz();
+      int computeMax = 1;
+      curvature.computeCurvature_Rusinkiewicz(computeMax);
       curvature.writeToPosFile("curvature.pos");
       curvature.writeToVtkFile("curvature.vtk");
-
       std::cout << " ... computing curvature finished" << std::endl;
-
     }
 
-
-//    std::cout << "I'm in DiscreteSurface" << std::endl;
     double c0;
     double c1;
     double c2;
-    curvature.triangleNodalAbsValues(lt->tri,c0, c1, c2);
+    curvature.triangleNodalValues(lt->tri,c0, c1, c2, 1);
 
     double cv = (1-U-V)*c0 + U*c1 + V*c2;
     return cv;
 
-//Original code:
-//    double curv= 0.;
-//    curv = locCurvature(lt->tri,U,V);
-//    return curv;
   }
 
   return 0.;

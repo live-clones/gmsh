@@ -17,8 +17,8 @@ Mesh.CharacteristicLengthExtendFromBoundary=0;
 
 //Merge "TorusRemeshedBAMG.stl";
 //Merge "SimpleTorus.msh";
-//Merge "TorusInput.stl";
-Merge "occtorus.stl";
+Merge "TorusInput.stl";
+//Merge "occtorus.stl";
 
 CreateTopology;
 

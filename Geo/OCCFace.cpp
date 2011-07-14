@@ -222,6 +222,7 @@ GEntity::GeomType OCCFace::geomType() const
 
 double OCCFace::curvatureMax(const SPoint2 &param) const
 {
+
   const double eps = 1.e-12;
   BRepAdaptor_Surface sf(s, Standard_True);
   BRepLProp_SLProps prop(sf, 2, eps);
@@ -230,16 +231,17 @@ double OCCFace::curvatureMax(const SPoint2 &param) const
   if (!prop.IsCurvatureDefined()){
     return eps;
   }
+  
   return std::max(fabs(prop.MinCurvature()), fabs(prop.MaxCurvature()));
+
 }
-
-
 double OCCFace::curvatures(const SPoint2 &param,
                            SVector3 *dirMax,
                            SVector3 *dirMin,
                            double *curvMax,
                            double *curvMin) const
 {
+
   const double eps = 1.e-12;
   BRepAdaptor_Surface sf(s, Standard_True);
   BRepLProp_SLProps prop(sf, 2, eps);
