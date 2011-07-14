@@ -501,7 +501,6 @@ double discreteEdge::curvature(double par) const
 
   double c0, c1;
 
-
   Curvature& curvature = Curvature::getInstance();
 
   if( !Curvature::valueAlreadyComputed() )
@@ -522,6 +521,7 @@ double discreteEdge::curvature(double par) const
 
   double cv = (1-tLoc)*c0 + tLoc*c1;
 
+  //printf("curv edge =%g \n", cv);
   return cv;
 
 }

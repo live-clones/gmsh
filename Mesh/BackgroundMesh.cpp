@@ -303,7 +303,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V,
   double l2 = MAX_LC;
   if(CTX::instance()->mesh.lcFromPoints && ge->dim() < 2) 
     l2 = LC_MVertex_PNTS(ge, U, V);
-
+  
   // lc from curvature
   double l3 = MAX_LC;
   if(CTX::instance()->mesh.lcFromCurvature && ge->dim() < 3)
@@ -314,15 +314,16 @@ double BGM_MeshSize(GEntity *ge, double U, double V,
   FieldManager *fields = ge->model()->getFields();
   if(fields->background_field > 0){
     Field *f = fields->get(fields->background_field);
-    //    printf("field %p %s %d %p\n",f,f->getName(),fields->size(), ge->model());
+    //printf("field %p %s %d %p\n",f,f->getName(),fields->size(), ge->model());
     if(f) l4 = (*f)(X, Y, Z, ge);
+    //printf("X Y Z =%g %g %g L4=%g L3=%g L2=%g L1=%g\n", X, Y, Z, l4, l3, l2, l1);
   }
 
   // take the minimum, then constrain by lcMin and lcMax
   double lc = std::min(std::min(std::min(l1, l2), l3), l4);
   lc = std::max(lc, CTX::instance()->mesh.lcMin);
   lc = std::min(lc, CTX::instance()->mesh.lcMax);
-
+ 
   if(lc <= 0.){
     Msg::Error("Wrong mesh element size lc = %g (lcmin = %g, lcmax = %g)",
                lc, CTX::instance()->mesh.lcMin, CTX::instance()->mesh.lcMax);

@@ -671,6 +671,7 @@ bool GFaceCompound::parametrize() const
     fullMatrix<double> Oper(3*allNodes.size(),3*allNodes.size());
     _rbf = new GRbf(sizeBox, variableEps, radFunInd, _normals, allNodes, _ordered);
 
+    double t0 = Cpu();
     //_rbf->RbfLapSurface_global_CPM_low(_rbf->getXYZ(), _rbf->getN(), Oper);
     //_rbf->RbfLapSurface_local_CPM(true, _rbf->getXYZ(), _rbf->getN(), Oper);
     _rbf->RbfLapSurface_global_CPM_high(_rbf->getXYZ(), _rbf->getN(), Oper);
@@ -679,8 +680,11 @@ bool GFaceCompound::parametrize() const
     //_rbf->RbfLapSurface_local_projection(_rbf->getXYZ(), _rbf->getN(), Oper);
   
     _rbf->solveHarmonicMap(Oper, _ordered, _coords, coordinates);
-    
-    printStuff();
+    double t1 = Cpu();
+
+    printf("Time =%g \n", t1-t0);
+
+    //printStuff();
 
   }
 
@@ -952,6 +956,9 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
  }
 
   for(std::list<GFace*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
+    //EMI FIX
+    //if ((*it)->tag() == 3) _mapping = CONFORMAL;
+
     if(!(*it)){
       Msg::Error("Incorrect face in compound surface %d\n", tag);
       Msg::Exit(1);
@@ -1066,7 +1073,6 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
   dofManager<double> myAssembler(_lsys);
 
   if(_type == UNITCIRCLE){
-    printf("unit circle \n");
     for(unsigned int i = 0; i < _ordered.size(); i++){
       MVertex *v = _ordered[i];
       const double theta = 2 * M_PI * _coords[i];
@@ -1369,7 +1375,6 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
 {
   
  if(!oct) parametrize();
-
  if(trivial())
  {
     return (*(_compound.begin()))->curvatureMax(param);
@@ -1462,12 +1467,10 @@ GPoint GFaceCompound::point(double par1, double par2) const
 
   if(!oct) parametrize();
 
- 
-
   double U,V;
   double par[2] = {par1,par2};
   GFaceCompoundTriangle *lt;
-  getTriangle (par1, par2, &lt, U,V);  
+  getTriangle (par1, par2, &lt, U,V);
   SPoint3 p(3, 3, 0); 
   if(!lt && _mapping != RBF){
     GPoint gp (p.x(),p.y(),p.z(),this);
@@ -1566,9 +1569,9 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
   if(!lt && _mapping != RBF)
     return Pair<SVector3, SVector3>(SVector3(1, 0, 0), SVector3(0, 1, 0));
   else if (!lt && _mapping == RBF){
-     double x, y, z;
-     SVector3 dXdu, dXdv  ;
-     bool conv = _rbf->UVStoXYZ(param.x(), param.y(), x,y,z, dXdu, dXdv);
+    double x, y, z;
+    SVector3 dXdu, dXdv  ;
+    bool conv = _rbf->UVStoXYZ(param.x(), param.y(), x,y,z, dXdu, dXdv);
     return Pair<SVector3, SVector3>(dXdu,dXdv);
    }
 
@@ -1700,7 +1703,22 @@ void GFaceCompound::getTriangle(double u, double v,
                                 double &_u, double &_v) const
 {
   double uv[3] = {u, v, 0};
-  *lt = (GFaceCompoundTriangle*)Octree_Search(uv, oct);
+  // if (_mapping == RBF){
+  //   std::list<void*> l;
+  //   Octree_SearchAll(uv, oct, &l);
+  //   if (l.size() > 1 || l.size() == 0){
+  //     GFaceCompoundTriangle *gfct = NULL;
+  //     *lt = gfct;
+  //     return;
+  //   }
+  //   else{
+  //     std::list<void*>::iterator it = l.begin();     
+  //     *lt = (GFaceCompoundTriangle*)(*it);
+  //   }
+  // }
+  
+  *lt = (GFaceCompoundTriangle*)Octree_Search(uv, oct); 
+
   // if(!(*lt)) {
   //     for(int i=0;i<nbT;i++){
   //       if(GFaceCompoundInEle (&_gfct[i],uv)){

@@ -160,9 +160,9 @@ void GEdgeCompound::orderEdges()
 
 int GEdgeCompound::minimumMeshSegments() const
 {
-  int N = 0;
-  for (unsigned int i = 0; i < _compound.size(); i++) 
-    N +=_compound[i]->minimumMeshSegments();
+  // int N = 0;
+  // for (unsigned int i = 0; i < _compound.size(); i++) 
+  //   N +=_compound[i]->minimumMeshSegments();
   return 3;
 }
 

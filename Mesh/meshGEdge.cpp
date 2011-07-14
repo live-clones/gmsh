@@ -39,8 +39,10 @@ static double F_Lc(GEdge *ge, double t)
   SVector3 der = ge->firstDer(t);
   //const double d = norm(der);
   //return d / lc_here; 
+
   SMetric3 metric(1. / (lc_here * lc_here));
   double lSquared = dot(der, metric, der);
+  
   return sqrt(lSquared);
 }
 

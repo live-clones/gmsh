@@ -4,6 +4,7 @@
 %include std_string.i
 %include std_list.i
 %include std_vector.i
+%import "gmshCommon.i"
 
 %{
   #include "GmshConfig.h"

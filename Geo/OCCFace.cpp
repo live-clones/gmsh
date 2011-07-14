@@ -233,6 +233,7 @@ double OCCFace::curvatureMax(const SPoint2 &param) const
   return std::max(fabs(prop.MinCurvature()), fabs(prop.MaxCurvature()));
 }
 
+
 double OCCFace::curvatures(const SPoint2 &param,
                            SVector3 *dirMax,
                            SVector3 *dirMin,
