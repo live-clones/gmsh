@@ -165,8 +165,42 @@
 #define MSH_HEX_296 103
 #define MSH_HEX_386 104
 #define MSH_HEX_488 105
+// PRISMS COMPLETE (5->9)
+#define MSH_PRI_126 106
+#define MSH_PRI_196 107
+#define MSH_PRI_288 108
+#define MSH_PRI_405 109
+#define MSH_PRI_550 110
+// PRISMS INCOMPLETE (3->9)
+#define MSH_PRI_38  111
+#define MSH_PRI_66  112
+#define MSH_PRI_102 113
+#define MSH_PRI_146 114
+#define MSH_PRI_198 115
+#define MSH_PRI_258 116
+#define MSH_PRI_326 117
+// PYRAMIDS COMPLETE (3->9)
+#define MSH_PYR_30  118
+#define MSH_PYR_55  119
+#define MSH_PYR_91  120
+#define MSH_PYR_140 121
+#define MSH_PYR_204 122
+#define MSH_PYR_285 123
+#define MSH_PYR_385 124
+// PYRAMIDS INCOMPLETE (3->9)
+#define MSH_PYR_29  125
+#define MSH_PYR_50  126
+#define MSH_PYR_77  127
+#define MSH_PYR_110 128
+#define MSH_PYR_149 129
+#define MSH_PYR_194 130
+#define MSH_PYR_245 131
 
+<<<<<<< .mine
+#define MSH_NUM_TYPE 131
+=======
 #define MSH_NUM_TYPE 105
+>>>>>>> .r9504
 
 // Geometric entities
 #define ENT_NONE     0
