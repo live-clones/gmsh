@@ -671,7 +671,6 @@ bool GFaceCompound::parametrize() const
     fullMatrix<double> Oper(3*allNodes.size(),3*allNodes.size());
     _rbf = new GRbf(sizeBox, variableEps, radFunInd, _normals, allNodes, _ordered);
 
-    double t0 = Cpu();
     //_rbf->RbfLapSurface_global_CPM_low(_rbf->getXYZ(), _rbf->getN(), Oper);
     //_rbf->RbfLapSurface_local_CPM(true, _rbf->getXYZ(), _rbf->getN(), Oper);
     _rbf->RbfLapSurface_global_CPM_high(_rbf->getXYZ(), _rbf->getN(), Oper);
@@ -680,12 +679,11 @@ bool GFaceCompound::parametrize() const
     //_rbf->RbfLapSurface_local_projection(_rbf->getXYZ(), _rbf->getN(), Oper);
   
     _rbf->solveHarmonicMap(Oper, _ordered, _coords, coordinates);
-    double t1 = Cpu();
 
-    printf("Time =%g \n", t1-t0);
+    //_rbf->computeCurvature(coordinates);
+    //exit(1);
 
     //printStuff();
-
   }
 
   buildOct();  
@@ -1400,7 +1398,7 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
       std::cout << "Getting instance of curvature" << std::endl;
 
       curvature.setGModel( model() );
-      int computeMax = 1;
+      int computeMax = 0;
       curvature.computeCurvature_Rusinkiewicz(computeMax);
       curvature.writeToPosFile("curvature.pos");
       curvature.writeToVtkFile("curvature.vtk");
@@ -1411,7 +1409,7 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
     double c1;
     double c2;
     curvature.triangleNodalValues(lt->tri,c0, c1, c2, 1);
-
+    
     double cv = (1-U-V)*c0 + U*c1 + V*c2;
     return cv;
 
@@ -1586,53 +1584,7 @@ void GFaceCompound::secondDer(const SPoint2 &param,
                               SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
 {
 
-  if(!oct) parametrize();
-
-  //use central differences
-
-  //EMI: TODO should take size of two or three triangles
-  //   double eps = 1e+2;
-  
-  //   double u  = param.x();
-  //   double v = param.y();
-  //   Pair<SVector3,SVector3> Der_u, Der_ueps, Der_v, Der_veps;
-  
-  //   if(u - eps < 0.0) {
-  //     Der_u = firstDer(SPoint2(u,v));
-  //     Der_ueps = firstDer(SPoint2(u+eps,v));
-  //   }
-  //   else {
-  //     Der_u = firstDer(SPoint2(u-eps,v));
-  //     Der_ueps = firstDer(SPoint2(u,v));
-  //   }
-  
-  //   if(v - eps < 0.0) {
-  //     Der_v = firstDer(SPoint2(u,v));
-  //     Der_veps = firstDer(SPoint2(u,v+eps));
-  //   }
-  //   else {
-  //     Der_v = firstDer(SPoint2(u,v-eps));
-  //     Der_veps = firstDer(SPoint2(u,v));
-  //   }
-  
-  //   SVector3 dXdu_u =  Der_u.first();
-  //   SVector3 dXdv_u =  Der_u.second();
-  //   SVector3 dXdu_ueps =  Der_ueps.first();
-  //   SVector3 dXdv_ueps =  Der_ueps.second();
-  //   SVector3 dXdu_v =  Der_v.first();
-  //   SVector3 dXdv_v =  Der_v.second();
-  //   SVector3 dXdu_veps =  Der_veps.first();
-  //   SVector3 dXdv_veps =  Der_veps.second();
-  
-  //   double inveps = 1./eps;
-  //   *dudu = inveps * (dXdu_u - dXdu_ueps) ;
-  //   *dvdv = inveps * (dXdv_v - dXdv_veps) ;
-  //   *dudv = inveps * (dXdu_v - dXdu_veps) ;
-
-  //printf("der second dudu = %g %g %g \n", dudu->x(),  dudu->y(),  dudu->z());
-  //printf("der second dvdv = %g %g %g \n", dvdv->x(),  dvdv->y(),  dvdv->z());
-  //printf("der second dudv = %g %g %g \n", dudv->x(),  dudv->y(),  dudv->z());
-  
+  if(!oct) parametrize();  
   Msg::Debug("Computation of the second derivatives is not implemented for compound faces");
   
 }

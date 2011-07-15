@@ -241,7 +241,6 @@ double OCCFace::curvatures(const SPoint2 &param,
                            double *curvMax,
                            double *curvMin) const
 {
-
   const double eps = 1.e-12;
   BRepAdaptor_Surface sf(s, Standard_True);
   BRepLProp_SLProps prop(sf, 2, eps);

@@ -802,9 +802,9 @@ void Curvature::computeCurvature_Rusinkiewicz(int isMax){
         wt = _cornerareas[EIdx][j]/_pointareas[vj];
 //          wt = 1.0;
 
-        _curv1[vj] += wt*c1;
+        _curv1[vj]  += wt*c1;
         _curv12[vj] += wt*c12;
-        _curv2[vj] += wt*c2;
+        _curv2[vj]  += wt*c2;
       }
 
     } //End of loop over the element (iElem)

@@ -483,7 +483,7 @@ SVector3 discreteEdge::firstDer(double par) const
   MVertex *vE = lines[iEdge]->getVertex(1);
 
   double dx, dy, dz;
-  double dt = 1.0;
+  double dt = 2.0;
   dx = (vE->x() - vB->x()) / dt;
   dy = (vE->y() - vB->y()) / dt;
   dz = (vE->z() - vB->z()) / dt;
@@ -506,7 +506,7 @@ double discreteEdge::curvature(double par) const{
     std::cout << "Getting instance of curvature" << std::endl;
 
     curvature.setGModel( model() );
-    int computeMax = 1;
+    int computeMax = 0;
     curvature.computeCurvature_Rusinkiewicz(computeMax);
     curvature.writeToPosFile("curvature.pos");
     curvature.writeToVtkFile("curvature.vtk");
@@ -515,7 +515,6 @@ double discreteEdge::curvature(double par) const{
   }
 
   curvature.edgeNodalValues(lines[iEdge],c0, c1, 1);
-
   double cv = (1-tLoc)*c0 + tLoc*c1;
 
   //printf("curv edge =%g \n", cv);

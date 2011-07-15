@@ -330,6 +330,8 @@ double BGM_MeshSize(GEntity *ge, double U, double V,
     lc = l1;
   }
 
+  //printf("BGM X Y Z =%g %g %g L4=%g L3=%g L2=%g L1=%g LC=%g LFINAL=%g \n", X, Y, Z, l4, l3, l2, l1, lc , lc* CTX::instance()->mesh.lcFactor);
+
   return lc * CTX::instance()->mesh.lcFactor;
 }
 

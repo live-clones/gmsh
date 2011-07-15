@@ -22,6 +22,7 @@ typedef struct {
 
 static double F_Lc(GEdge *ge, double t)
 {
+  //printf("FLC \n");
   GPoint p = ge->point(t);
   double lc_here;
 
