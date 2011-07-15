@@ -138,8 +138,8 @@
 #define MSH_TET_286  75
 #define MSH_TET_74   79
 #define MSH_TET_100  80
-#define MSH_TET_130  81 
-#define MSH_TET_164  82 
+#define MSH_TET_130  81
+#define MSH_TET_164  82
 #define MSH_TET_202  83
 #define MSH_LIN_1    84
 #define MSH_TRI_1    85
@@ -196,11 +196,7 @@
 #define MSH_PYR_194 130
 #define MSH_PYR_245 131
 
-<<<<<<< .mine
 #define MSH_NUM_TYPE 131
-=======
-#define MSH_NUM_TYPE 105
->>>>>>> .r9504
 
 // Geometric entities
 #define ENT_NONE     0
