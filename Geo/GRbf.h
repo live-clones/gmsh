@@ -40,13 +40,16 @@ class GRbf {
   double radius;
   double sBox;
 
+  SVector3 lastDXDU, lastDXDV;
+  double lastX, lastY, lastZ, lastU, lastV;
+
   int variableShapeParam; 
   int radialFunctionIndex; // Index for the radial function used (0 - GA,1 - MQ, ... )
 
-  std::set<MVertex *> myNodes;
+  std::set<MVertex *> myNodes; //Used mesh vertices for light rbf
   fullMatrix<double> centers; // Data centers (without duplicates)
   fullMatrix<double> allCenters; // Data centers
-  fullMatrix<double> normals; // Data normals
+  fullMatrix<double> normals; // Data normals(without Duplicates)
   fullMatrix<double> surfInterp;//level set
   fullMatrix<double> extendedX;//X values extend in and out
   fullMatrix<double> UV;//solution harmonic map laplu=0 and laplV=0
@@ -131,11 +134,8 @@ class GRbf {
 				     const fullMatrix<double> &normals,
 				     fullMatrix<double> &D);
   
-  // Calculates the curvature of a surface at a certain node
-  void curvature(double radius, 
-		 const fullMatrix<double> &cntrs,
-		 const fullMatrix<double> &node,
-		 fullMatrix<double> &curvature);
+  // Calculates the curvature of a surface at centers
+  void computeCurvature(std::map<MVertex*, SPoint3> &rbf_curv);
 
   //Finds the U,V,S (in the 0-level set) that are the 'num_neighbours' closest to u_eval and v_eval.
   //Thus in total, we're working with '3*num_neighbours' nodes
