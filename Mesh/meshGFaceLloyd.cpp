@@ -253,7 +253,7 @@ void smoothing::optimize_face(GFace* gf){
   w.set_triangulator(&triangulator);
   w.set_octree(octree);
 
-  if(num_interior>0){
+  if(num_interior>1){
     minlbfgscreate(2*num_interior,4,x,state);
     minlbfgssetcond(state,epsg,epsf,epsx,maxits);
     minlbfgsoptimize(state,callback,NULL,&w);
@@ -516,7 +516,7 @@ SPoint2 lpcvt::intersection(SPoint2 p1,SPoint2 p2,SPoint2 p3,SPoint2 p4,bool& fl
   y3 = p3.y();
   x4 = p4.x();
   y4 = p4.y();
-  e = 0.000001;
+  e = 0.00000000001;
   denom = (y4-y3)*(x2-x1) - (x4-x3)*(y2-y1);
   if(fabs(denom)<e){
     flag = 0;
@@ -569,14 +569,12 @@ SPoint2 lpcvt::seed(DocRecord& triangulator,GFace* gf){
 	  for(j=0;j<num;j++){
 	    index1 = triangulator._adjacencies[i].t[j];
 		index2 = triangulator._adjacencies[i].t[(j+1)%num];
-		if(interior(triangulator,gf,index1) && interior(triangulator,gf,index2)){
-		  x0 = convert(triangulator,i);
-		  x1 = convert(triangulator,index1);
-		  x2 = convert(triangulator,index2);
-		  x = (x0.x() + x1.x() + x2.x())/3.0;
-		  y = (x0.y() + x1.y() + x2.y())/3.0;
-		  return SPoint2(x,y);
-		}
+		x0 = convert(triangulator,i);
+		x1 = convert(triangulator,index1);
+		x2 = convert(triangulator,index2);
+		x = (x0.x() + x1.x() + x2.x())/3.0;
+		y = (x0.y() + x1.y() + x2.y())/3.0;
+		return SPoint2(x,y);
 	  }
 	}
   }
