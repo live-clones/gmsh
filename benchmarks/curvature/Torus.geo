@@ -1,11 +1,12 @@
 
 Mesh.CharacteristicLengthFactor = 0.6;
 Mesh.CharacteristicLengthFromCurvature = 1; //-clcurv
-Mesh.CharacteristicLengthMin = 0.1; //-clmin
+Mesh.CharacteristicLengthMin = 0.01; //-clmin
 Mesh.CharacteristicLengthMax = 2.5; //-clmax
 Mesh.LcIntegrationPrecision=1.e-5; //-epslc1d
 Mesh.MinimumCirclePoints=15; //default=7
 Mesh.CharacteristicLengthExtendFromBoundary = 0;
+Mesh.CharacteristicLengthFromPoints = 0;
 
 lc = 0.1;          
 Point(1) = {2.0,0.0,0.0,lc};          

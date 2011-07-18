@@ -687,6 +687,7 @@ double GFace::curvatureMax(const SPoint2 &param) const
 double GFace::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
                          double *curvMax, double *curvMin) const
 {
+  printf("in curv face \n");
   Pair<SVector3, SVector3> D1 = firstDer(param);
 
   if(geomType() == Plane){

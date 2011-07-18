@@ -30,9 +30,9 @@ myModel.computeBooleanDifference(myModel2);
 
 myModel.setAsCurrent();
 
-myModel.mesh(3);
-myModel.save("wikipedia.msh");
+#myModel.mesh(3);
+#myModel.save("wikipedia.msh");
 myModel.save("wikipedia.brep");
 
-#FlGui.instance();
-#FlGui.run();
+FlGui.instance();
+FlGui.run();

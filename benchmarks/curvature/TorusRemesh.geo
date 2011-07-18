@@ -2,7 +2,7 @@
 // The following settings were copied from benchmarks/step/linkrods.geo
 // ======================================================================
 
-Mesh.Algorithm=6; //1=MeshAdapt, 5=Delaunay, 6=Frontal, 7=bamg
+Mesh.Algorithm=7; //1=MeshAdapt, 5=Delaunay, 6=Frontal, 7=bamg
 Mesh.RemeshParametrization= 1; //(0) harmonic (1) conformal 
 Mesh.RemeshAlgorithm = 1;
 
@@ -17,8 +17,8 @@ Mesh.CharacteristicLengthExtendFromBoundary=0;
 
 //Merge "TorusRemeshedBAMG.stl";
 //Merge "SimpleTorus.msh";
-Merge "TorusInput.stl";
-//Merge "occtorus.stl";
+//Merge "TorusInput.stl";
+Merge "occtorus.stl";
 
 CreateTopology;
 

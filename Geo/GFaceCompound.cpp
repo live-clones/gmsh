@@ -681,9 +681,9 @@ bool GFaceCompound::parametrize() const
     _rbf->solveHarmonicMap(Oper, _ordered, _coords, coordinates);
 
     //_rbf->computeCurvature(coordinates);
+    //printStuff();
     //exit(1);
 
-    //printStuff();
   }
 
   buildOct();  
@@ -1585,7 +1585,7 @@ void GFaceCompound::secondDer(const SPoint2 &param,
 {
 
   if(!oct) parametrize();  
-  Msg::Debug("Computation of the second derivatives is not implemented for compound faces");
+  Msg::Fatal("Computation of the second derivatives is not implemented for compound faces");
   
 }
 

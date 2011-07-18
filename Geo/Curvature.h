@@ -12,8 +12,7 @@
 #include<map>
 #include<vector>
 
-class Curvature
-{
+class Curvature {
 private:
 
     //-----------------------------------------
