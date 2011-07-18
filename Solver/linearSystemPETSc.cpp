@@ -86,7 +86,7 @@ void linearSystemPETScBlockDouble::getFromRightHandSide(int row, fullMatrix<doub
   }
 }
 
-void linearSystemPETScBlockDouble::getFromSolution(int row, fullMatrix<double> &val) const 
+void linearSystemPETScBlockDouble::getFromSolution(int row, fullMatrix<double> &val) const
 {
   for (int i = 0; i < _blockSize; i++) {
     int ii = row*_blockSize +i;
@@ -100,7 +100,7 @@ void linearSystemPETScBlockDouble::getFromSolution(int row, fullMatrix<double> &
   }
 }
 
-void linearSystemPETScBlockDouble::allocate(int nbRows) 
+void linearSystemPETScBlockDouble::allocate(int nbRows)
 {
   if (this->_parameters.count("petscOptions"))
     PetscOptionsInsertString(this->_parameters["petscOptions"].c_str());
@@ -108,7 +108,7 @@ void linearSystemPETScBlockDouble::allocate(int nbRows)
   if (_blockSize == 0)
     Msg::Error ("'blockSize' parameters must be set for linearSystemPETScBlock");
   clear();
-  MatCreate(PETSC_COMM_WORLD, &_a); 
+  MatCreate(PETSC_COMM_WORLD, &_a);
   MatSetSizes(_a,nbRows * _blockSize, nbRows * _blockSize, PETSC_DETERMINE, PETSC_DETERMINE);
   if (Msg::GetCommSize() > 1) {
     MatSetType(_a, MATMPIBAIJ);
@@ -139,7 +139,7 @@ void linearSystemPETScBlockDouble::allocate(int nbRows)
 
 bool linearSystemPETScBlockDouble::isAllocated() const
 {
-  return _isAllocated; 
+  return _isAllocated;
 }
 
 void linearSystemPETScBlockDouble::clear()
@@ -175,7 +175,7 @@ void linearSystemPETScBlockDouble::insertInSparsityPattern (int i, int j) {
   _sparsity.insertEntry (i,j);
 }
 
-void linearSystemPETScBlockDouble::preAllocateEntries() 
+void linearSystemPETScBlockDouble::preAllocateEntries()
 {
   if (_entriesPreAllocated) return;
   if (!_isAllocated) Msg::Fatal("system must be allocated first");
