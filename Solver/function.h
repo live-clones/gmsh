@@ -164,6 +164,7 @@ class dataCacheDouble {
   void _eval();
   void resize(int nrow);
  public:
+  inline function * getFunction() {return _function;}
   //set the value (without computing it by _eval) and invalidate the
   // dependencies this function is needed to be able to pass the
   // _value to functions like gemm or mult but you cannot keep the

@@ -325,17 +325,19 @@ dataCacheMap::~dataCacheMap()
 
 void dataCacheMap::setNbEvaluationPoints(int nbEvaluationPoints) 
 {
-  if (_nbEvaluationPoints == nbEvaluationPoints)
+  for(std::list<dataCacheMap*>::iterator it = _children.begin(); it != _children.end(); it++) {
+    (*it)->setNbEvaluationPoints(nbEvaluationPoints);
+  }
+  if (_nbEvaluationPoints == nbEvaluationPoints) {
+    for(std::set<dataCacheDouble*>::iterator it = _allDataCaches.begin(); it != _allDataCaches.end(); it++)
+      (*it)->_valid = false;
     return;
+  }
   _nbEvaluationPoints = nbEvaluationPoints;
   for(std::set<dataCacheDouble*>::iterator it = _allDataCaches.begin();
       it != _allDataCaches.end(); it++){
     (*it)->resize(nbEvaluationPoints);
   }
-    for(std::list<dataCacheMap*>::iterator it = _children.begin();
-        it != _children.end(); it++) {
-      (*it)->setNbEvaluationPoints(nbEvaluationPoints);
-    }
 }
 
 // Some examples of functions
@@ -356,14 +358,14 @@ void functionConstant::call(dataCacheMap *m, fullMatrix<double> &val)
       val(i, j)=_source(j, 0);
 }
 
-functionConstant::functionConstant(std::vector<double> source) : function(source.size())
+functionConstant::functionConstant(std::vector<double> source) : function(source.size(), false)
 {
   _source = fullMatrix<double>(source.size(), 1);
   for (size_t i = 0; i < source.size(); i++)
     _source(i, 0) = source[i];
 }
 
-functionConstant::functionConstant(double source) : function(1)
+functionConstant::functionConstant(double source) : function(1, false)
 {
   _source.resize(1, 1);
   _source(0, 0) = source;
