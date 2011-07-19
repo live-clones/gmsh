@@ -237,6 +237,7 @@ double GEdgeCompound::curvature(double par) const
   double tLoc;
   int iEdge;
   getLocalParameter(par,iEdge,tLoc);
+
   return _compound[iEdge]->curvature(tLoc);
 }
 

@@ -30,12 +30,14 @@ static double F_Lc(GEdge *ge, double t)
   double t_begin = bounds.low();
   double t_end = bounds.high();
 
+  //printf("FLC going to BGM ! \n");
+ 
   if(t == t_begin)
     lc_here = BGM_MeshSize(ge->getBeginVertex(), t, 0, p.x(), p.y(), p.z());
   else if(t == t_end)
     lc_here = BGM_MeshSize(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
   else
-    lc_here = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
+    lc_here = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z()); 
  
   SVector3 der = ge->firstDer(t);
   //const double d = norm(der);
@@ -43,7 +45,7 @@ static double F_Lc(GEdge *ge, double t)
 
   SMetric3 metric(1. / (lc_here * lc_here));
   double lSquared = dot(der, metric, der);
-  
+
   return sqrt(lSquared);
 }
 
@@ -318,6 +320,8 @@ void meshGEdge::operator() (GEdge *ge)
                       CTX::instance()->mesh.lcIntegrationPrecision);
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }
+  //printf("going to exit !!");
+  //exit(1);
 
   // force odd number of points for if blossom is used for
   // recombination

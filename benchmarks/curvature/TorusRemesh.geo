@@ -2,7 +2,7 @@
 // The following settings were copied from benchmarks/step/linkrods.geo
 // ======================================================================
 
-Mesh.Algorithm=7; //1=MeshAdapt, 5=Delaunay, 6=Frontal, 7=bamg
+Mesh.Algorithm=1; //1=MeshAdapt, 5=Delaunay, 6=Frontal, 7=bamg
 Mesh.RemeshParametrization= 1; //(0) harmonic (1) conformal 
 Mesh.RemeshAlgorithm = 1;
 

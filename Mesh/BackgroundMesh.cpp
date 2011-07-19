@@ -111,11 +111,13 @@ static double max_edge_curvature(const GVertex *gv)
 
 static double max_surf_curvature(const GEdge *ge, double u)
 {
+  //printf("max surf \n");
   double val = 0;
   std::list<GFace *> faces = ge->faces();
   std::list<GFace *>::iterator it = faces.begin();
   while(it != faces.end()){
-    if ((*it)->geomType() != GEntity::CompoundSurface){
+    if ((*it)->geomType() != GEntity::CompoundSurface &&
+	(*it)->geomType() != GEntity::DiscreteSurface){
       SPoint2 par = ge->reparamOnFace((*it), u, 1);
       double cc = (*it)->curvature(par);
       val = std::max(cc, val);
@@ -219,6 +221,7 @@ static SMetric3 metric_based_on_surface_curvature(const GVertex *gv)
 
 static double LC_MVertex_CURV(GEntity *ge, double U, double V)
 {
+
   double Crv = 0;
   switch(ge->dim()){
   case 0:        
@@ -308,7 +311,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V,
   double l3 = MAX_LC;
   if(CTX::instance()->mesh.lcFromCurvature && ge->dim() < 3)
     l3 = LC_MVertex_CURV(ge, U, V);
-
+  
   // lc from fields
   double l4 = MAX_LC;
   FieldManager *fields = ge->model()->getFields();
