@@ -111,7 +111,6 @@ static double max_edge_curvature(const GVertex *gv)
 
 static double max_surf_curvature(const GEdge *ge, double u)
 {
-  //printf("max surf \n");
   double val = 0;
   std::list<GFace *> faces = ge->faces();
   std::list<GFace *>::iterator it = faces.begin();

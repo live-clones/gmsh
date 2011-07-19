@@ -22,7 +22,6 @@ typedef struct {
 
 static double F_Lc(GEdge *ge, double t)
 {
-  //printf("FLC \n");
   GPoint p = ge->point(t);
   double lc_here;
 
@@ -30,8 +29,6 @@ static double F_Lc(GEdge *ge, double t)
   double t_begin = bounds.low();
   double t_end = bounds.high();
 
-  //printf("FLC going to BGM ! \n");
- 
   if(t == t_begin)
     lc_here = BGM_MeshSize(ge->getBeginVertex(), t, 0, p.x(), p.y(), p.z());
   else if(t == t_end)
@@ -320,8 +317,6 @@ void meshGEdge::operator() (GEdge *ge)
                       CTX::instance()->mesh.lcIntegrationPrecision);
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }
-  //printf("going to exit !!");
-  //exit(1);
 
   // force odd number of points for if blossom is used for
   // recombination
