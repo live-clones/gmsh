@@ -73,6 +73,8 @@ class GaussQuadrature : public QuadratureBase
     e->getIntegrationPoints(integrationOrder, &npts, GP);
     return npts;
   }
+  // copy constructor
+  GaussQuadrature(const GaussQuadrature &other) : info(other.info), order(other.order){}
 };
 
 #endif //_QUADRATURERULES_H_
