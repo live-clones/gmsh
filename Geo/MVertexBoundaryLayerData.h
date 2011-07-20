@@ -22,6 +22,9 @@ class MVertexBoundaryLayerData {
   std::vector<std::vector<MVertex*> > children;
 
  public:
+  MVertexBoundaryLayerData(){};
+  ~MVertexBoundaryLayerData(){};
+
   std::vector<MVertex*>* getChildren(int i);
   int getNumChildren(int i);
 

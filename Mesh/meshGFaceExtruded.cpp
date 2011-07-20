@@ -66,7 +66,10 @@ static void extrudeMesh(GEdge *from, GFace *to,
   // create vertices (if the edges are constrained, they already exist)
   if(!constrainedEdges){
     for(unsigned int i = 0; i < from->mesh_vertices.size(); i++){
+      std::vector<MVertex*> extruded_vertices;
       MVertex *v = from->mesh_vertices[i];
+      MEdgeVertex *mv = (MEdgeVertex*) v;
+      mv->bl_data = new MVertexBoundaryLayerData();
       for(int j = 0; j < ep->mesh.NbLayer; j++) {
         for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
           double x = v->x(), y = v->y(), z = v->z();
@@ -75,9 +78,11 @@ static void extrudeMesh(GEdge *from, GFace *to,
             MVertex *newv = new MVertex(x, y, z, to);
             to->mesh_vertices.push_back(newv);
             pos.insert(newv);
+	    extruded_vertices.push_back(newv);
           }
         }
       }
+      mv->bl_data->addChildrenFamily(extruded_vertices);
     }
   }
 
