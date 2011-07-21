@@ -759,7 +759,7 @@ functionC::functionC (std::string file, std::string symbol, int nbCol,
   dlHandler = dlopen(file.c_str(), RTLD_NOW);
   callback = (void(*)(void))dlsym(dlHandler, symbol.c_str());
   if(!callback)
-    Msg::Error("Cannot get the callback to the compiled C function");
+    Msg::Error("Cannot get the callback to the compiled C function: %s", symbol.c_str());
 #else
   Msg::Error("Cannot construct functionC without dlopen");
 #endif
