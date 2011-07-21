@@ -251,20 +251,7 @@ class fullMatrix
   }
   fullMatrix<scalar> & operator = (const fullMatrix<scalar> &other)
   {
-    if(this != &other){
-      if (_r != other._r || _c != other._c) {
-        _r = other._r;
-        _c = other._c;
-        if (_data && _own_data) delete[] _data;
-        if ((_r == 0) || (_c == 0))
-          _data=0;
-        else{
-          _data = new scalar[_r * _c];
-          _own_data=true;
-        }
-      }
-      for(int i = 0; i < _r * _c; ++i) _data[i] = other._data[i];
-    }
+    copy(other);
     return *this;
   }
   void operator += (const fullMatrix<scalar> &other)
@@ -300,6 +287,8 @@ class fullMatrix
   }
   void copy(const fullMatrix<scalar> &a)
   {
+    if (_data && !_own_data)
+      Msg::Fatal("fullMatrix::copy operation is prohibited for proxies, use setAll instead");
     if (_r != a._r || _c != a._c) {
       if(_data && _own_data)
         delete [] _data;
@@ -360,6 +349,8 @@ class fullMatrix
   }
   inline void setAll(const fullMatrix<scalar> &m)
   {
+    if (_r != m._r || _c != m._c )
+      Msg::Fatal("fullMatrix size does not match");
     for(int i = 0; i < _r * _c; i++) _data[i] = m._data[i];
   }
   void scale(const double s)
