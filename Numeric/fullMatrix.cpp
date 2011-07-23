@@ -297,6 +297,7 @@ bool fullMatrix<double>::invert(fullMatrix<double> &result) const
 {
   int M = size1(), N = size2(), lda = size1(), info;
   int *ipiv = new int[std::min(M, N)];
+  result.resize(M,N,false);
   result.setAll(*this);
   F77NAME(dgetrf)(&M, &N, result._data, &lda, ipiv, &info);
   if(info == 0){
