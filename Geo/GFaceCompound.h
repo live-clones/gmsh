@@ -124,6 +124,8 @@ class GFaceCompound : public GFace {
   void * getNativePtr() const { return 0; }
   virtual SPoint2 getCoordinates(MVertex *v) const;
   virtual double curvatureMax(const SPoint2 &param) const;
+  virtual double curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
+   double *curvMax, double *curvMin) const;
   virtual int genusGeom () const;
   virtual bool checkTopology() const;
   bool parametrize() const ;
