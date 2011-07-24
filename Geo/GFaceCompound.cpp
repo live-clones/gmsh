@@ -1417,7 +1417,67 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
 
   return 0.;
 }
+double GFaceCompound::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
+                         double *curvMax, double *curvMin) const
+{
 
+ if(!oct) parametrize();
+ if(trivial()) {
+   //Implement this
+//    return (*(_compound.begin()))->curvatureMax(param);
+ }
+
+  double U, V;
+  GFaceCompoundTriangle *lt;
+  getTriangle(param.x(), param.y(), &lt, U,V);
+
+  if(!lt)  {
+    return  0.0;
+  }
+
+  if(lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface)  {
+      //Implement this...
+//    SPoint2 pv = lt->gfp1*(1.-U-V) + lt->gfp2*U + lt->gfp3*V;
+//    return lt->gf->curvatureMax(pv);
+  }
+  else if (lt->gf->geomType() == GEntity::DiscreteSurface)  {
+
+    Curvature& curvature = Curvature::getInstance();
+
+    if( !Curvature::valueAlreadyComputed() ) {
+      std::cout << "Need to compute discrete curvature" << std::endl;
+      std::cout << "Getting instance of curvature" << std::endl;
+
+      curvature.setGModel( model() );
+      int computeMax = 0;
+      curvature.computeCurvature_Rusinkiewicz(computeMax);
+      curvature.writeToPosFile("curvature.pos");
+      curvature.writeToVtkFile("curvature.vtk");
+      curvature.writeDirectionsToPosFile("curvature_directions.pos");
+      std::cout << " ... computing curvature finished" << std::endl;
+    }
+
+    std::cout << "I'm using curvatures in GFaceCompound.cpp" << std::endl;
+    double cMin[3];
+    double cMax[3];
+    SVector3 dMin[3];
+    SVector3 dMax[3];
+
+    curvature.triangleNodalValuesAndDirections(lt->tri, dMax, dMin, cMax, cMin, 0);
+    //curvature.triangleNodalValuesAndDirections(lt->tri, dMax, dMin, cMax, cMin, 1);
+
+    * dirMax = (1-U-V)*dMax[0] + U*dMax[1] + V*dMax[2];
+    * dirMin = (1-U-V)*dMin[0] + U*dMin[1] + V*dMin[2];
+    * curvMax = (1-U-V)*cMax[0] + U*cMax[1] + V*cMax[2];
+    * curvMin = (1-U-V)*cMin[0] + U*cMin[1] + V*cMin[2];
+
+    return * curvMax;
+
+
+  }
+
+  return 0.;
+}
 double GFaceCompound::locCurvature(MTriangle *t, double u, double v) const
 {
 

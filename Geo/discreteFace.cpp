@@ -102,6 +102,18 @@ double discreteFace::curvatureMax(const SPoint2 &param) const
   }
 }
 
+double discreteFace::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
+                                double *curvMax, double *curvMin) const
+{
+  if (getCompound()){
+    return getCompound()->curvatures(param, dirMax, dirMin, curvMax, curvMin);
+  }
+  else{
+    Msg::Error("Cannot evaluate curvatures and curvature directions on discrete face");
+    return false;
+  }
+}
+
 Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 {
   if (getCompound()){

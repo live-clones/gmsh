@@ -882,6 +882,74 @@ void Curvature::triangleNodalValues(MTriangle* triangle, double& c0, double& c1,
 
   }
 
+//========================================================================================================
+
+void Curvature::triangleNodalValuesAndDirections(MTriangle* triangle, SVector3* dMax, SVector3* dMin, double* cMax, double* cMin, int isAbs)
+{
+  MVertex* A = triangle->getVertex(0);
+  MVertex* B = triangle->getVertex(1);
+  MVertex* C = triangle->getVertex(2);
+
+  int V0 = 0;
+  int V1 = 0;
+  int V2 = 0;
+
+  std::map<int,int>::iterator vertexIterator;
+  vertexIterator = _VertexToInt.find( A->getNum() );
+  if ( vertexIterator != _VertexToInt.end() )  V0 = (*vertexIterator).second;
+  else
+    std::cout << "Didn't find vertex with number " << A->getNum() << " in _VertextToInt !" << std::endl;
+
+  vertexIterator = _VertexToInt.find( B->getNum() );
+  if ( vertexIterator != _VertexToInt.end() )  V1 = (*vertexIterator).second;
+  else
+    std::cout << "Didn't find vertex with number " << B->getNum() << " in _VertextToInt !" << std::endl;
+
+  vertexIterator = _VertexToInt.find( C->getNum() );
+  if ( vertexIterator != _VertexToInt.end() )  V2 = (*vertexIterator).second;
+  else
+    std::cout << "Didn't find vertex with number " << C->getNum() << " in _VertextToInt !" << std::endl;
+
+  if (isAbs){
+    dMax[0] = _pdir1[V0];
+    dMax[1] = _pdir1[V1];
+    dMax[2] = _pdir1[V2];
+
+    dMin[0] = _pdir2[V0];
+    dMin[1] = _pdir2[V1];
+    dMin[2] = _pdir2[V2];
+
+    cMax[0]  = std::abs(_curv1[V0]);
+    cMax[1]  = std::abs(_curv1[V1]);
+    cMax[2]  = std::abs(_curv1[V2]);
+
+    cMin[0]  = std::abs(_curv2[V0]);
+    cMin[1]  = std::abs(_curv2[V1]);
+    cMin[2]  = std::abs(_curv2[V2]);
+
+  }
+  else{
+
+    dMax[0] = _pdir1[V0];
+    dMax[1] = _pdir1[V1];
+    dMax[2] = _pdir1[V2];
+
+    dMin[0] = _pdir2[V0];
+    dMin[1] = _pdir2[V1];
+    dMin[2] = _pdir2[V2];
+
+    cMax[0]  = _curv1[V0];
+    cMax[1]  = _curv1[V1];
+    cMax[2]  = _curv1[V2];
+
+    cMin[0]  = _curv2[V0];
+    cMin[1]  = _curv2[V1];
+    cMin[2]  = _curv2[V2];
+  }
+}
+
+
+
   //========================================================================================================
 
 void Curvature::edgeNodalValues(MLine* edge, double& c0, double& c1, int isAbs)
@@ -922,6 +990,8 @@ void Curvature::writeToPosFile( const std::string & filename)
   outfile.open(filename.c_str());
   outfile << "View \"Curvature \"{" << std::endl;
 
+  int idxelem = 0;
+
   for (int i = 0; i< _ptFinalEntityList.size(); ++i)
   {
     GFace* face = _ptFinalEntityList[i]; //face is a pointer to one surface of the group "FinalEntityList"
@@ -944,7 +1014,7 @@ void Curvature::writeToPosFile( const std::string & filename)
       //Here is printing the triplet X-Y-Z of each vertex:
       //*************************************************
 
-      outfile << "ST("; //VT = vector triangles   //ST = scalar triangle
+      outfile << idxelem << " ST("; //VT = vector triangles   //ST = scalar triangle
       outfile << A->x() << ","<< A->y() << "," << A->z()<< ",";
       outfile << B->x() << ","<< B->y() << "," << B->z()<< ",";
       outfile << C->x() << ","<< C->y() << "," << C->z();
@@ -963,7 +1033,10 @@ void Curvature::writeToPosFile( const std::string & filename)
 
       outfile << "};" << std::endl;
 
+      idxelem++;
+
   } //Loop over elements
+    std::cout << "The Total Number of triangle is: " << idxelem << std::endl;
 
 } // Loop over ptFinalEntityList
 
@@ -1093,7 +1166,114 @@ void Curvature::writeToVtkFile( const std::string & filename)
 
 }
 
+//========================================================================================================
 
+void Curvature::writeDirectionsToPosFile( const std::string & filename)
+{
+  std::ofstream outfile;
+  outfile.precision(18);
+  outfile.open(filename.c_str());
+  outfile << "View \"Curvature_DirMax \"{" << std::endl;
+
+  for (int i = 0; i< _ptFinalEntityList.size(); ++i)
+  {
+    GFace* face = _ptFinalEntityList[i]; //face is a pointer to one surface of the group "FinalEntityList"
+
+    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++) //Loop over the element all the element of the "myTag"-surface
+    {
+      MElement *e = face->getMeshElement(iElem);  //Pointer to one element
+      const int E = _ElementToInt[e->getNum()]; //The NEW tag of the corresponding element
+
+      //std::cout << "We are now looking at element Nr: " << E << std::endl;
+
+      MVertex* A = e->getVertex(0);  //Pointers to vertices of triangle
+      MVertex* B = e->getVertex(1);
+      MVertex* C = e->getVertex(2);
+
+      const int V1 = _VertexToInt[A->getNum()];                //Tag of the 1st vertex of the triangle
+      const int V2 = _VertexToInt[B->getNum()];                //Tag of the 2nd vertex of the triangle
+      const int V3 = _VertexToInt[C->getNum()];                //Tag of the 3rd vertex of the triangle
+
+      //Here is printing the triplet X-Y-Z of each vertex:
+      //*************************************************
+
+      outfile << "VT("; //VT = vector triangles   //ST = scalar triangle
+      outfile << A->x() << ","<< A->y() << "," << A->z()<< ",";
+      outfile << B->x() << ","<< B->y() << "," << B->z()<< ",";
+      outfile << C->x() << ","<< C->y() << "," << C->z();
+
+      outfile << ")";
+      outfile <<"{";
+
+      //Here is printing the 3 components of the curvature max direction for each vertex:
+      //*********************************************************************************
+
+         outfile << _pdir1[V1].x() << ","<< _pdir1[V1].y() << ","<< _pdir1[V1].z() << ",";
+         outfile << _pdir1[V2].x() << ","<< _pdir1[V2].y() << ","<< _pdir1[V2].z() << ",";
+         outfile << _pdir1[V3].x() << ","<< _pdir1[V3].y() << ","<< _pdir1[V3].z();
+
+
+      outfile << "};" << std::endl;
+
+  } //Loop over elements
+
+} // Loop over ptFinalEntityList
+
+outfile << "};" << std::endl;
+
+
+//----------------------------------------------------------------------------------------------
+
+outfile << "View \"Curvature_DirMin \"{" << std::endl;
+
+for (int i = 0; i< _ptFinalEntityList.size(); ++i)
+{
+  GFace* face = _ptFinalEntityList[i]; //face is a pointer to one surface of the group "FinalEntityList"
+
+  for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++) //Loop over the element all the element of the "myTag"-surface
+  {
+    MElement *e = face->getMeshElement(iElem);  //Pointer to one element
+    const int E = _ElementToInt[e->getNum()]; //The NEW tag of the corresponding element
+
+    //std::cout << "We are now looking at element Nr: " << E << std::endl;
+
+    MVertex* A = e->getVertex(0);  //Pointers to vertices of triangle
+    MVertex* B = e->getVertex(1);
+    MVertex* C = e->getVertex(2);
+
+    const int V1 = _VertexToInt[A->getNum()];                //Tag of the 1st vertex of the triangle
+    const int V2 = _VertexToInt[B->getNum()];                //Tag of the 2nd vertex of the triangle
+    const int V3 = _VertexToInt[C->getNum()];                //Tag of the 3rd vertex of the triangle
+
+    //Here is printing the triplet X-Y-Z of each vertex:
+    //*************************************************
+
+    outfile << "VT("; //VT = vector triangles   //ST = scalar triangle
+    outfile << A->x() << ","<< A->y() << "," << A->z()<< ",";
+    outfile << B->x() << ","<< B->y() << "," << B->z()<< ",";
+    outfile << C->x() << ","<< C->y() << "," << C->z();
+
+    outfile << ")";
+    outfile <<"{";
+
+    //Here is printing the 3 components of the curvature min direction for each vertex:
+    //*********************************************************************************
+
+       outfile << _pdir2[V1].x() << ","<< _pdir2[V1].y() << ","<< _pdir2[V1].z() << ",";
+       outfile << _pdir2[V2].x() << ","<< _pdir2[V2].y() << ","<< _pdir2[V2].z() << ",";
+       outfile << _pdir2[V3].x() << ","<< _pdir2[V3].y() << ","<< _pdir2[V3].z();
+
+
+    outfile << "};" << std::endl;
+
+} //Loop over elements
+
+} // Loop over ptFinalEntityList
+
+outfile << "};" << std::endl;
+
+outfile.close();
+}
 //========================================================================================================
 
 
