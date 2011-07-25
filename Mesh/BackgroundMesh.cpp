@@ -250,7 +250,10 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
 
 static SMetric3 LC_MVertex_CURV_ANISO(GEntity *ge, double U, double V)
 {
+  //std::cout << "I'm in LC_MVertex_CURV_ANISO" << std::endl;
+  //std::cout << "The dimension of the entity is: "<< ge->dim() << std::endl;
   switch(ge->dim()){
+  //std::cout << "The dimension of the entity is: "<< ge->dim() << std::endl;
   case 0: return metric_based_on_surface_curvature((const GVertex *)ge);
   case 1: return metric_based_on_surface_curvature((const GEdge *)ge, U);
   case 2: return metric_based_on_surface_curvature((const GFace *)ge, U, V);
