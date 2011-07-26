@@ -1014,7 +1014,7 @@ void Curvature::writeToPosFile( const std::string & filename)
       //Here is printing the triplet X-Y-Z of each vertex:
       //*************************************************
 
-      outfile << idxelem << " ST("; //VT = vector triangles   //ST = scalar triangle
+      outfile << "ST("; //VT = vector triangles   //ST = scalar triangle
       outfile << A->x() << ","<< A->y() << "," << A->z()<< ",";
       outfile << B->x() << ","<< B->y() << "," << B->z()<< ",";
       outfile << C->x() << ","<< C->y() << "," << C->z();

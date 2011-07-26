@@ -177,7 +177,7 @@ static SMetric3 metric_based_on_surface_curvature(const GEdge *ge, double u)
   std::list<GFace *>::iterator it = faces.begin();
   int count = 0;
   while(it != faces.end()){
-    if ((*it)->geomType() != GEntity::CompoundSurface){
+    if ( ((*it)->geomType() != GEntity::CompoundSurface) && ((*it)->geomType() != GEntity::DiscreteSurface) ){
       SPoint2 par = ge->reparamOnFace((*it), u, 1);
       SMetric3 m = metric_based_on_surface_curvature (*it, par.x(), par.y());
       if (!count) mesh_size = m;

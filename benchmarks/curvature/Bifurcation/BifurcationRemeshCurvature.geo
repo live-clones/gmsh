@@ -14,7 +14,7 @@ CreateTopology;
 
 Compound Surface(20) = {1};
 Mesh.RemeshParametrization=1; //(0) harmonic (1) conformal 
-Mesh.RemeshAlgorithm=1; //(0) nosplit (1) automatic (2) split only with metis ///Default: 1 
+Mesh.RemeshAlgorithm=0; //(0) nosplit (1) automatic (2) split only with metis ///Default: 1 
 
 Physical Surface("Wall") = {20};
 

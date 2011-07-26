@@ -1394,15 +1394,15 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
     Curvature& curvature = Curvature::getInstance();
 
     if( !Curvature::valueAlreadyComputed() ) {
-      std::cout << "Need to compute discrete curvature" << std::endl;
-      std::cout << "Getting instance of curvature" << std::endl;
+      Msg::Info("Need to compute discrete curvature for isotropic remesh");
+      Msg::Info("Getting instance of curvature");
 
       curvature.setGModel( model() );
       int computeMax = 0;
       curvature.computeCurvature_Rusinkiewicz(computeMax);
       curvature.writeToPosFile("curvature.pos");
       curvature.writeToVtkFile("curvature.vtk");
-      std::cout << " ... computing curvature finished" << std::endl;
+      Msg::Info(" ... computing curvature finished");
     }
 
     double c0;
@@ -1445,8 +1445,8 @@ double GFaceCompound::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector
     Curvature& curvature = Curvature::getInstance();
 
     if( !Curvature::valueAlreadyComputed() ) {
-      std::cout << "Need to compute discrete curvature" << std::endl;
-      std::cout << "Getting instance of curvature" << std::endl;
+      Msg::Info("Need to compute discrete curvature for anisotropic remesh");
+      Msg::Info("Getting instance of curvature");
 
       curvature.setGModel( model() );
       int computeMax = 0;
@@ -1454,10 +1454,10 @@ double GFaceCompound::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector
       curvature.writeToPosFile("curvature.pos");
       curvature.writeToVtkFile("curvature.vtk");
       curvature.writeDirectionsToPosFile("curvature_directions.pos");
-      std::cout << " ... computing curvature finished" << std::endl;
+      Msg::Info(" ... computing curvature finished");
     }
 
-    std::cout << "I'm using curvatures in GFaceCompound.cpp" << std::endl;
+    //std::cout << "I'm using curvatures in GFaceCompound.cpp" << std::endl;
     double cMin[3];
     double cMax[3];
     SVector3 dMin[3];

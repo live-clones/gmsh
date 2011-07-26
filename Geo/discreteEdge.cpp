@@ -509,6 +509,7 @@ double discreteEdge::curvature(double par) const{
     int computeMax = 0;
     curvature.computeCurvature_Rusinkiewicz(computeMax);
     curvature.writeToPosFile("curvature.pos");
+    curvature.writeDirectionsToPosFile("curvature_directions.pos");
     curvature.writeToVtkFile("curvature.vtk");
 
     std::cout << " ... computing curvature finished" << std::endl;
