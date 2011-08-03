@@ -1519,7 +1519,7 @@ void _triangleSplit (GFace *gf, MElement *t, bool swop = false) {
 }
 
 
-struct RecombineTriangle
+/*struct RecombineTriangle
 {
   MElement *t1, *t2;
   double angle;
@@ -1558,7 +1558,7 @@ struct RecombineTriangle
     //return angle < other.angle;
 	return total_cost < other.total_cost; //addition for class Temporary
   }
-};
+};*///DEV amaury
 
 static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 {
@@ -1602,17 +1602,15 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
   e2t_cont adj;
   buildEdgeToElement(gf->triangles, adj);
 
-  std::map<MVertex*,std::pair<MElement*,MElement*> > makeGraphPeriodic;
-
   std::vector<RecombineTriangle> pairs;
-  int nbValidPairs = 0;
+  std::map<MVertex*,std::pair<MElement*,MElement*> > makeGraphPeriodic;
+  
   for(e2t_cont::iterator it = adj.begin(); it!= adj.end(); ++it){
     if(it->second.second &&
         it->second.first->getNumVertices() == 3 &&
         it->second.second->getNumVertices() == 3 &&
         (emb_edgeverts.find(it->first.getVertex(0)) == emb_edgeverts.end() ||
          emb_edgeverts.find(it->first.getVertex(1)) == emb_edgeverts.end())){
-
       pairs.push_back(RecombineTriangle(it->first,
                                      it->second.first,
                                      it->second.second));
@@ -1637,7 +1635,6 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 
   std::sort(pairs.begin(),pairs.end());
   std::set<MElement*> touched;
-
 
   if(CTX::instance()->mesh.algoRecombine == 1){
 #ifdef HAVE_MATCH
@@ -1812,7 +1809,7 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
     Msg::Warning("Gmsh should be compiled with the Blossom IV code and CONCORDE in order to allow the Blossom optimization");
 #endif
   }
-
+  
   std::vector<RecombineTriangle>::iterator itp = pairs.begin();
   while(itp != pairs.end()){
     // recombine if difference between max quad angle and right
@@ -1863,6 +1860,12 @@ void recombineIntoQuads(GFace *gf,
 			bool topologicalOpti,
 			bool nodeRepositioning)
 {
+  if (false) { //|| CTX::instance()->mesh.algoRecombine == 2) {
+    Msg::Warning("New technic of recombination in development (Amaury)");
+    devRecombine_Amaury(gf,topologicalOpti,nodeRepositioning);
+    return;
+  }
+  
   double t1 = Cpu();
 
   bool haveParam = true;
@@ -1915,6 +1918,204 @@ void recombineIntoQuads(GFace *gf,
   if(haveParam)  laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing);
 
   //  gf->model()->writeMSH("after.msh");
+
+  double t2 = Cpu();
+  Msg::Info("Simple recombination algorithm completed (%g s)", t2 - t1);
+}
+
+static void _makeQuad_devAmaury(GFace *gf, SetRecombTri::iterator it)
+{
+  MElement *t1 = (*it)->t1;
+  MElement *t2 = (*it)->t2;
+  int orientation = 0;
+  for(int i = 0; i < 3; i++) {
+    if(t1->getVertex(i) == (*it)->n1) {
+      if(t1->getVertex((i + 1) % 3) == (*it)->n2)
+        orientation = 1;
+      else
+        orientation = -1;
+      break;
+    }
+  }
+  MQuadrangle *q;
+  if(orientation < 0)
+    q = new MQuadrangle((*it)->n1, (*it)->n3, (*it)->n2, (*it)->n4);
+  else
+    q = new MQuadrangle((*it)->n1, (*it)->n4, (*it)->n2, (*it)->n3);
+  gf->quadrangles.push_back(q);
+}
+
+static double *_devRecombine_Amaury(GFace *gf, int depth, bool cubicGraph = 1)
+{
+  int success = 1;
+  double glob_benef = 0;
+
+  std::set<MVertex*> emb_edgeverts;
+  {
+    std::list<GEdge*> emb_edges = gf->embeddedEdges();
+    std::list<GEdge*>::iterator ite = emb_edges.begin();
+    while(ite != emb_edges.end()){
+      if(!(*ite)->isMeshDegenerated()){
+        emb_edgeverts.insert((*ite)->mesh_vertices.begin(),
+                             (*ite)->mesh_vertices.end() );
+        emb_edgeverts.insert((*ite)->getBeginVertex()->mesh_vertices.begin(),
+                             (*ite)->getBeginVertex()->mesh_vertices.end());
+        emb_edgeverts.insert((*ite)->getEndVertex()->mesh_vertices.begin(),
+                             (*ite)->getEndVertex()->mesh_vertices.end());
+      }
+      ++ite;
+    }
+  }
+
+  {
+    std::list<GEdge*> _edges = gf->edges();
+    std::list<GEdge*>::iterator ite = _edges.begin();
+    while(ite != _edges.end()){
+      if(!(*ite)->isMeshDegenerated()){
+	if ((*ite)->isSeam(gf)){
+	  emb_edgeverts.insert((*ite)->mesh_vertices.begin(),
+			       (*ite)->mesh_vertices.end() );
+	  emb_edgeverts.insert((*ite)->getBeginVertex()->mesh_vertices.begin(),
+			       (*ite)->getBeginVertex()->mesh_vertices.end());
+	  emb_edgeverts.insert((*ite)->getEndVertex()->mesh_vertices.begin(),
+			       (*ite)->getEndVertex()->mesh_vertices.end());
+	}
+      }
+      ++ite;
+    }
+  }
+
+  e2t_cont adj;
+  buildEdgeToElement(gf->triangles, adj);
+
+  SetRecombTri pairs;
+  MapElemToIncomp incomp;
+  
+  for (e2t_cont::iterator it = adj.begin(); it!= adj.end(); ++it) {
+    if (it->second.second &&
+        it->second.first->getNumVertices() == 3 &&
+        it->second.second->getNumVertices() == 3 &&
+        (emb_edgeverts.find(it->first.getVertex(0)) == emb_edgeverts.end() ||
+        emb_edgeverts.find(it->first.getVertex(1)) == emb_edgeverts.end())) {
+      RecombineTriangle *rt = new RecombineTriangle(it->first, it->second.first, it->second.second);
+      pairs.insert(rt);
+      incomp[it->second.first].push_back(rt);
+      incomp[it->second.second].push_back(rt);
+    }
+  }
+  
+  std::set<MElement*> touched;
+  SetRecombTri::iterator itp = pairs.begin();
+  while (itp != pairs.end()) {
+    RecombSeq rs(itp, pairs.end(), depth);
+    
+    if (rs.optimal() || !rs.shouldBeSkipped()) {
+      _makeQuad_devAmaury(gf, itp);
+      glob_benef += 1 - (*itp)->cost_quality;
+      
+      MElement *t1 = (*itp)->t1;
+      MElement *t2 = (*itp)->t2;
+      touched.insert(t1);
+      touched.insert(t2);
+      
+      MapElemToIncomp::iterator iti;
+      SetRecombTri::iterator itmp;
+      
+      iti = incomp.find(t1);
+      for (int i = 0; i < iti->second.size(); i++)
+        if ((itmp = pairs.find(iti->second[i])) != pairs.end())
+          pairs.erase(itmp);
+      incomp.erase(iti);
+      
+      iti = incomp.find(t2);
+      for (int i = 0; i < iti->second.size(); i++)
+        if ((itmp = pairs.find(iti->second[i])) != pairs.end())
+          pairs.erase(itmp);
+      incomp.erase(iti);
+    }
+    else {
+      pairs.erase(itp);
+    }
+    itp = pairs.begin();
+  }
+
+  std::vector<MTriangle*> triangles2;
+  for(unsigned int i = 0; i < gf->triangles.size(); i++){
+    if(touched.find(gf->triangles[i]) == touched.end()){
+      triangles2.push_back(gf->triangles[i]);
+    }
+    else {
+      delete gf->triangles[i];
+    }
+  }
+  gf->triangles = triangles2;
+  
+  double *b = new double[2];
+  *b = glob_benef;
+  b[1] = touched.size()/2;
+  return b;
+}
+
+void devRecombine_Amaury(GFace *gf, bool topologicalOpti, bool nodeRepositioning)
+{ 
+  double t1 = Cpu();
+
+  bool haveParam = true;
+  if(gf->geomType() == GEntity::DiscreteSurface && !gf->getCompound())
+    haveParam = false;
+
+  if(haveParam && topologicalOpti)
+    removeFourTrianglesNodes(gf, false);
+
+  gf->model()->writeMSH("before.msh");
+  Msg::Info("Nombre de triangles : %d", gf->triangles.size());
+  double tt1 = Cpu();
+  int d = 700;
+  double max = 0, maxQuad = 0;
+  while (Cpu() - tt1 < 30) {
+    double tt2 = Cpu();
+    double *b = _devRecombine_Amaury(gf, d);
+    if (*b > max) max = *b;
+    if (b[1] > maxQuad) maxQuad = b[1];
+    Msg::Info("depth %d in (%g s) : benef = %lf / numQuad = %f", d++, Cpu() - tt2, *b, b[1]);
+    if (d > 200 && d < 100) d = 620;
+    break;
+  }
+  Msg::Info("Benef max = %lf", max);
+  Msg::Info("Max quad = %f sur %d", maxQuad, gf->triangles.size()/2);
+
+  gf->model()->writeMSH("raw.msh");
+  /*if(haveParam && nodeRepositioning)
+    laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing);
+
+  // blossom-quad algo
+  if(success){
+    if(topologicalOpti){
+      if(haveParam){
+        gf->model()->writeMSH("smoothed.msh");
+        int COUNT = 0;
+        char NAME[256];
+        while(1){
+          int x = removeTwoQuadsNodes(gf);
+          if(x){ sprintf(NAME,"iter%dTQ.msh",COUNT++); gf->model()->writeMSH(NAME);}
+          int y = removeDiamonds(gf);
+          if(y){ sprintf(NAME,"iter%dD.msh",COUNT++); gf->model()->writeMSH(NAME); }
+          laplaceSmoothing(gf);
+          int z = 0; //edgeSwapQuadsForBetterQuality(gf);
+          if(z){ sprintf(NAME,"iter%dS.msh",COUNT++); gf->model()->writeMSH(NAME); }
+          if (!(x+y+z)) break;
+        }
+      }
+      edgeSwapQuadsForBetterQuality(gf);
+      //if(z){ sprintf(NAME,"iter%dS.msh",COUNT++); gf->model()->writeMSH(NAME); }
+      if(haveParam) laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
+    }
+    double t2 = Cpu();
+    Msg::Info("Tree recombination algorithm completed (%g s)", t2 - t1);
+    return;
+  }
+
+  gf->model()->writeMSH("after.msh");*/
 
   double t2 = Cpu();
   Msg::Info("Simple recombination algorithm completed (%g s)", t2 - t1);
@@ -2130,3 +2331,137 @@ void Temporary::quadrilaterize(std::string file_name,double _w1,double _w2,doubl
   }
 }
 
+
+bool RecombineTriangle::operator < (const RecombineTriangle &other) const
+{
+  //return angle < other.angle;
+      //return total_cost < other.total_cost; //addition for class Temporary
+    return cost_quality < other.cost_quality; // DEV AMAURY !!!!!!!!!!
+}
+bool RecombSeq::parcours(int d, int countdown)
+{
+  if (d < 1 || countdown < 1) return true;
+  
+  if (_toBeSkipped.find(*_it2) != _toBeSkipped.end() ||
+      _toBeKept.find(*_it2) != _toBeKept.end()   ) {
+    if (++_it2 == _ite) return true;
+    return parcours(d, countdown); 
+  }
+  
+  MElement *t1 = (*_it2)->t1;
+  MElement *t2 = (*_it2)->t2;
+  
+  bool a, b;
+  std::map< MElement*, std::pair<RecombineTriangle*, bool> >::iterator m1, m2;
+  a = (m1 = _touched.find(t1)) != _touched.end();
+  b = (m2 = _touched.find(t2)) != _touched.end();
+  
+  if (a || b) {
+    MElement *t3;
+    if (a) {
+      (*m1).second.second = true;
+      if((*m1).second.first->t1 == t1)
+        t3 = (*m1).second.first->t2;
+      else
+        t3 = (*m1).second.first->t1;
+      if (_touched[t3].second == true) _canBeSkipped.insert((*m1).second.first);
+    }
+    if (b) {
+      (*m2).second.second = true;
+      if((*m2).second.first->t1 == t2)
+        t3 = (*m2).second.first->t2;
+      else
+        t3 = (*m2).second.first->t1;
+      if (_touched[t3].second == true) _canBeSkipped.insert((*m2).second.first);
+    }
+    if (++_it2 == _ite) return true;
+    return parcours(d, --countdown);
+  }
+  
+  _touched[t1] = std::make_pair(*_it2,false);
+  _touched[t2] = std::make_pair(*_it2,false);
+  _benef += 1 - (*_it2)->cost_quality;
+  if (++_it2 == _ite) return true;
+  d--;
+  //_perspect = (1 - (*(_it2))->cost_quality) * d;
+  //if (_benef+_perspect < best) return false;
+  
+  return parcours(d);
+}
+
+bool RecombSeq::shouldBeSkipped()
+{
+  //if (_canBeSkipped.find(*_it1) == _canBeSkipped.end())
+  //  return false;
+  SetRecombTri::iterator itmp = _it1;
+  itmp++;
+  RecombSeq rs(itmp, _ite, _depth);
+  if(rs.getBenef() > getBenef())
+    return true;
+  return false;
+  if (rs.getOptimalBenef(true) > getOptimalBenef(false))
+    return true;
+  return false;
+}
+
+RecombSeq::RecombSeq(SetRecombTri::iterator it,
+                     SetRecombTri::iterator itend,
+                     int depth,
+                     SetRecombTri toBeSkipped,
+                     SetRecombTri toBeKept)
+                : _it1(it), _ite(itend), _depth(depth),
+                  _toBeSkipped(toBeSkipped), _toBeKept(toBeKept)
+{
+  _benef = 0;
+  _it2 = it;
+  
+  if (depth < _toBeKept.size()) return;
+  
+  SetRecombTri::iterator itmp = _toBeKept.begin();
+  while (itmp != _toBeKept.end()) {
+    MElement *t1 = (*itmp)->t1;
+    MElement *t2 = (*itmp)->t2;
+    _touched[t1] = std::make_pair(*itmp,false);
+    _touched[t2] = std::make_pair(*itmp,false);
+    _benef += 1 - (*itmp++)->cost_quality;
+  }
+  
+  parcours(depth - _toBeKept.size());
+}
+
+double RecombSeq::getOptimalBenef(bool firstSkipable)
+{
+  if (!firstSkipable)
+    if (_canBeSkipped.find(*_it1) != _canBeSkipped.end())
+      _canBeSkipped.erase(*_it1);
+  
+  if (_canBeSkipped.empty())
+    return getBenef();
+  
+  double maxBenef = getBenef();
+  SetRecombTri toBeKept(_toBeKept);
+  SetRecombTri toBeSkipped(_toBeSkipped);
+  SetRecombTri::iterator it = _canBeSkipped.begin();
+  
+  if (_toBeKept.find(*it) == _toBeKept.end()) {
+    toBeSkipped.insert(*it);
+    RecombSeq rs(_it1, _it2, _depth, toBeSkipped, toBeKept);
+    double b;
+    if ((b = rs.getOptimalBenef(firstSkipable)) > maxBenef)
+      maxBenef = b;
+  }
+  
+  while(it != --_canBeSkipped.end()) {
+    toBeSkipped.erase(*it);
+    toBeKept.insert(*it++);
+    if (_toBeKept.find(*it) == _toBeKept.end()) {
+      toBeSkipped.insert(*it);
+      RecombSeq rs(_it1, _it2, _depth, toBeSkipped, toBeKept);
+      double b;
+      if ((b = rs.getOptimalBenef(firstSkipable)) > maxBenef)
+        maxBenef = b;
+    }
+  }
+  
+  return maxBenef;
+}
