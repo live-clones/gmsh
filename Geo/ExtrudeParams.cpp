@@ -26,6 +26,7 @@ ExtrudeParams::ExtrudeParams(int ModeEx)
   geo.Source = -1;
   mesh.ExtrudeMesh = false;
   mesh.Recombine = false;
+  mesh.QuadToTri = NO_QUADTRI;
   mesh.ViewIndex = -1;
   mesh.BoundaryLayerIndex = 0;
 }

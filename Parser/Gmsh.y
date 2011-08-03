@@ -111,6 +111,7 @@ fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset
 %token tLoop tRecombine tSmoother tSplit tDelete tCoherence tIntersect
 %token tLayers tHole tAlias tAliasWithOptions
+%token tQuadTriDbl tQuadTriSngl tRecombLaterals tTransfQuadTri
 %token tText2D tText3D tInterpolationScheme  tTime tCombine
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
@@ -2590,6 +2591,7 @@ Extrude :
   | tExtrude VExpr '{' ListOfShapes 
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
+      extr.mesh.QuadToTri = NO_QUADTRI;
     }
                        ExtrudeParameters '}'
     {
@@ -2602,6 +2604,7 @@ Extrude :
   | tExtrude '{' VExpr ',' VExpr ',' FExpr '}' '{' ListOfShapes 
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
+      extr.mesh.QuadToTri = NO_QUADTRI;
     }
                                                    ExtrudeParameters '}'
     {
@@ -2614,6 +2617,7 @@ Extrude :
   | tExtrude '{' VExpr ',' VExpr ',' VExpr ',' FExpr '}' '{' ListOfShapes
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
+      extr.mesh.QuadToTri = NO_QUADTRI;
     }
                                                              ExtrudeParameters '}'
     {
@@ -2626,6 +2630,7 @@ Extrude :
   | tExtrude '{' ListOfShapes 
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
+      extr.mesh.QuadToTri = NO_QUADTRI;
     }
                        ExtrudeParameters '}'
     {
@@ -2701,6 +2706,7 @@ Extrude :
   | tExtrude tPoint '{' FExpr ',' VExpr '}' 
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
+      extr.mesh.QuadToTri = NO_QUADTRI;
     }
                     '{' ExtrudeParameters '}' tEND
     {
@@ -2712,6 +2718,7 @@ Extrude :
   | tExtrude tLine '{' FExpr ',' VExpr '}'
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
+      extr.mesh.QuadToTri = NO_QUADTRI;
     }
                    '{' ExtrudeParameters '}' tEND
     {
@@ -2723,6 +2730,7 @@ Extrude :
   | tExtrude tSurface '{' FExpr ',' VExpr '}' 
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
+      extr.mesh.QuadToTri = NO_QUADTRI;
     }
                       '{' ExtrudeParameters '}' tEND
     {
@@ -2734,6 +2742,7 @@ Extrude :
   | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
+      extr.mesh.QuadToTri = NO_QUADTRI;
     }
                     '{' ExtrudeParameters '}' tEND
     {
@@ -2745,6 +2754,7 @@ Extrude :
   | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
+      extr.mesh.QuadToTri = NO_QUADTRI;
     }
                    '{' ExtrudeParameters '}' tEND
     {
@@ -2756,6 +2766,7 @@ Extrude :
   | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
+      extr.mesh.QuadToTri = NO_QUADTRI;
     }
                       '{' ExtrudeParameters '}' tEND
     {
@@ -2767,6 +2778,7 @@ Extrude :
   | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr'}' 
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
+      extr.mesh.QuadToTri = NO_QUADTRI;
     }
                     '{' ExtrudeParameters '}' tEND
     {
@@ -2778,6 +2790,7 @@ Extrude :
   | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}' 
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
+      extr.mesh.QuadToTri = NO_QUADTRI;
     }
                    '{' ExtrudeParameters '}' tEND
     {
@@ -2789,6 +2802,7 @@ Extrude :
   | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}' 
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
+      extr.mesh.QuadToTri = NO_QUADTRI;
     }
                       '{' ExtrudeParameters '}' tEND
     {
@@ -2865,6 +2879,22 @@ ExtrudeParameter :
   | tRecombine tEND
     {
       extr.mesh.Recombine = true;
+    }
+  | tQuadTriDbl tEND
+    {
+      extr.mesh.QuadToTri = QUADTRI_DBL_1;
+    }
+  | tQuadTriDbl tRecombLaterals tEND
+    {
+      extr.mesh.QuadToTri = QUADTRI_DBL_1_RECOMB;
+    }
+  | tQuadTriSngl tEND
+    {
+      extr.mesh.QuadToTri = QUADTRI_SNGL_1;
+    }
+  | tQuadTriSngl tRecombLaterals tEND
+    {
+      extr.mesh.QuadToTri = QUADTRI_SNGL_1_RECOMB;
     }
   | tHole '(' FExpr ')' tAFFECT ListOfDouble tUsing FExpr tEND
     {
@@ -3149,6 +3179,42 @@ Transfinite :
         }
       }
       List_Delete($4);
+    }
+  | tTransfQuadTri ListOfDoubleOrAll tEND
+    {
+      if(!$2){
+  	  List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Volumes);
+        if(List_Nbr(tmp)){
+          for(int i = 0; i < List_Nbr(tmp); i++){
+            Volume *v;
+            List_Read(tmp, i, &v);
+            v->QuadTri = TRANSFINITE_QUADTRI_1;
+          }
+        }
+        else{
+          for(GModel::riter it = GModel::current()->firstRegion(); 
+              it != GModel::current()->lastRegion(); it++)
+            (*it)->meshAttributes.QuadTri = TRANSFINITE_QUADTRI_1;
+        }
+        List_Delete(tmp);
+      }
+      else{
+        for(int i = 0; i < List_Nbr($2); i++){
+          double d;
+          List_Read($2, i, &d);
+          Volume *v = FindVolume((int)d);
+          if(v)
+            v->QuadTri = TRANSFINITE_QUADTRI_1;
+          else{
+            GRegion *gr = GModel::current()->getRegionByTag((int)d);
+            if(gr)
+              gr->meshAttributes.QuadTri = TRANSFINITE_QUADTRI_1;
+            else
+              yymsg(1, "Unknown region %d", (int)d);
+          }
+        }
+        List_Delete($2);
+      }
     }
   | tRecombine tSurface ListOfDoubleOrAll RecombineAngle tEND
     {

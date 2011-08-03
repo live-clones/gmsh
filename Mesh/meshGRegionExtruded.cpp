@@ -16,6 +16,7 @@
 #include "meshGRegion.h"
 #include "Context.h"
 #include "GmshMessage.h"
+#include "QuadTriExtruded3D.h"
 
 static void addTetrahedron(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4, 
                            GRegion *to)
@@ -157,6 +158,11 @@ static void extrudeMesh(GFace *from, GRegion *to,
         }
       }
     }
+  }
+
+  if(ep && ep->mesh.ExtrudeMesh && ep->mesh.QuadToTri && ep->mesh.Recombine){
+    meshQuadToTriRegion(to, pos);
+    return;
   }
 
   // create elements (note that it would be faster to access the
@@ -442,8 +448,10 @@ static void phase3(GRegion *gr,
 
 int SubdivideExtrudedMesh(GModel *m)
 {
-  // get all non-recombined extruded regions and vertices
-  std::vector<GRegion*> regions;
+  // get all non-recombined extruded regions and vertices; also,
+  // create a vector of quadToTri regions that have NOT been meshed
+  // yet
+  std::vector<GRegion*> regions, regions_quadToTri;
   double old_tol = MVertexLessThanLexicographic::tolerance; 
   MVertexLessThanLexicographic::tolerance = 1.e-12 * CTX::instance()->lc;
   std::set<MVertex*, MVertexLessThanLexicographic> pos;
@@ -453,6 +461,11 @@ int SubdivideExtrudedMesh(GModel *m)
        !ep->mesh.Recombine){
       regions.push_back(*it);
       insertAllVertices(*it, pos);
+    }
+    // create vector of valid quadToTri regions...not all will necessarily be meshed here.
+    if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY &&
+       ep->mesh.Recombine && ep->mesh.QuadToTri){
+      regions_quadToTri.push_back(*it);
     }
   }
 
@@ -517,10 +530,33 @@ int SubdivideExtrudedMesh(GModel *m)
     }
   }
   
+  // now mesh the QuadToTri regions. Everything can be done locally
+  // for each quadToTri region, but still use edge set from above just
+  // to make sure laterals get remeshed properly (
+  // QuadToTriEdgeGenerator detects if the neighbor has been meshed or
+  // if a lateral surface should remain static for any other reason).
+  // If this function detects allNonGlobalSharedLaterals, it won't
+  // mesh the region (should already be done in ExtrudeMesh).
+  for(unsigned int i = 0; i < regions_quadToTri.size(); i++){
+    GRegion *gr = regions_quadToTri[i];
+    std::set<MVertex*, MVertexLessThanLexicographic> pos_local;
+    insertAllVertices(gr, pos_local);
+    meshQuadToTriRegionAfterGlobalSubdivide(gr, &edges, pos_local);
+  }
+
   // carve holes if any
   // TODO: update extrusion information
   for(unsigned int i = 0; i < regions.size(); i++){
     GRegion *gr = regions[i];
+    ExtrudeParams *ep = gr->meshAttributes.extrude;
+    if(ep->mesh.Holes.size()){
+      std::map<int, std::pair<double, std::vector<int> > >::iterator it;
+      for(it = ep->mesh.Holes.begin(); it != ep->mesh.Holes.end(); it++)
+        carveHole(gr, it->first, it->second.first, it->second.second);
+    }
+  }
+  for(unsigned int i = 0; i < regions_quadToTri.size(); i++){
+    GRegion *gr = regions_quadToTri[i];
     ExtrudeParams *ep = gr->meshAttributes.extrude;
     if(ep->mesh.Holes.size()){
       std::map<int, std::pair<double, std::vector<int> > >::iterator it;

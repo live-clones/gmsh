@@ -11,6 +11,7 @@
 #include "ExtrudeParams.h"
 #include "Context.h"
 #include "GmshMessage.h"
+#include "QuadTriExtruded2D.h"
 
 static void addTriangle(MVertex* v1, MVertex* v2, MVertex* v3,
                         GFace *to) 
@@ -26,7 +27,7 @@ static void addQuadrangle(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4,
 
 static void createQuaTri(std::vector<MVertex*> &v, GFace *to,
                          std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges,
-                         MLine* source)
+                         MLine* source, int tri_quad_flag)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
   if(v[0] == v[1] || v[1] == v[3])
@@ -36,7 +37,8 @@ static void createQuaTri(std::vector<MVertex*> &v, GFace *to,
   else if(v[0] == v[3] || v[1] == v[2])
     Msg::Error("Uncoherent extruded quadrangle in surface %d", to->tag());
   else{
-    if(ep->mesh.Recombine){
+    // Trevor Strickler added the tri_quad_flag stuff here.
+    if(ep->mesh.Recombine && tri_quad_flag != 2 || tri_quad_flag == 1){
       addQuadrangle(v[0], v[1], v[3], v[2], to);
     }
     else if(!constrainedEdges){
@@ -86,6 +88,18 @@ static void extrudeMesh(GEdge *from, GFace *to,
     }
   }
 
+  // figure out whether to recombine this surface or not in the event
+  // of quadToTri region neighbors (if QuadToTri, tri_quad_flag is an
+  // int flag that lets createQuadTri() override the surface's
+  // intrinsic ep->mesh.Recombine flag.  tri_quad_flag values: 0 = no
+  // override, 1 = mesh with quads, 2 = mesh with triangles.)
+  bool detectQuadToTriLateral = false;
+  int tri_quad_flag = 0;
+  bool quadToTri_valid = IsValidQuadToTriLateral(to, &tri_quad_flag, &detectQuadToTriLateral);
+  if(detectQuadToTriLateral && !quadToTri_valid)
+    Msg::Error("In MeshGFaceExtrudedSurface::extrudeMesh(), Mesh of QuadToTri Lateral surface %d "
+               "likely has errors.", to->tag());
+
   // create elements (note that it would be faster to access the
   // *interior* nodes by direct indexing, but it's just simpler to
   // query everything by position)
@@ -117,7 +131,7 @@ static void extrudeMesh(GEdge *from, GFace *to,
           }
           verts.push_back(*itp);
         }
-        createQuaTri(verts, to, constrainedEdges,from->lines[i]);
+        createQuaTri(verts, to, constrainedEdges,from->lines[i], tri_quad_flag);
       }
     }
   }
@@ -162,6 +176,24 @@ static void copyMesh(GFace *from, GFace *to,
     }
     addTriangle(verts[0], verts[1], verts[2], to);
   }
+
+  // if performing QuadToTri mesh, cannot simply copy the mesh from
+  // the source.  The vertices and triangles can be copied directly
+  // though.  First, of course, do some checks and make sure this is a
+  // valid QuadToTri top surface before engaging in QuadToTri meshing.
+  int quadToTri= NO_QUADTRI;
+  bool detectQuadToTriTop = false;
+  bool quadToTri_valid = IsValidQuadToTriTop(to, &quadToTri, &detectQuadToTriTop);
+  if(detectQuadToTriTop){
+    if(!quadToTri_valid)
+      Msg::Error("In MeshGFaceExtrudedSurface::copyMesh(), Mesh of QuadToTri top surface %d "
+                 "likely has errors.", to->tag());
+    if(!MeshQuadToTriTopSurface(from, to, pos))
+      Msg::Error("In MeshExtrudedSurface()::copyMesh(), mesh of QuadToTri top surface %d failed.",
+                 to->tag() );
+    return;
+  } 
+
   for(unsigned int i = 0; i < from->quadrangles.size(); i++){
     std::vector<MVertex*> verts;
     for(int j = 0; j < 4; j++){

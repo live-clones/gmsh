@@ -227,4 +227,12 @@
 #define MESH_TRANSFINITE  1
 #define MESH_UNSTRUCTURED 2
 
+// QuadTri options (structured/unstructured coupling with pyramids)
+#define NO_QUADTRI               0
+#define QUADTRI_DBL_1            1
+#define QUADTRI_DBL_1_RECOMB     2
+#define QUADTRI_SNGL_1           3
+#define QUADTRI_SNGL_1_RECOMB    4
+#define TRANSFINITE_QUADTRI_1    5
+
 #endif

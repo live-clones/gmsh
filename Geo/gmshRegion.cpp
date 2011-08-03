@@ -43,6 +43,7 @@ gmshRegion::gmshRegion(GModel *m, ::Volume *volume)
 void gmshRegion::resetMeshAttributes()
 {
   meshAttributes.Method = v->Method;
+  meshAttributes.QuadTri = v->QuadTri;
   meshAttributes.extrude = v->Extrude;
   if(meshAttributes.Method == MESH_TRANSFINITE){
     meshAttributes.corners.clear();

@@ -38,6 +38,7 @@ public :
   struct{
     bool ExtrudeMesh;
     bool Recombine;
+    int QuadToTri;
     int NbLayer;
     std::vector<int> NbElmLayer;
     std::vector<double> hLayer;

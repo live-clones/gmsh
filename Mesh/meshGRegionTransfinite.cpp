@@ -2,6 +2,10 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
+//
+// Contributor(s):
+//   Trevor S. Strickler
+//
 
 #include <map>
 #include "meshGFace.h"
@@ -13,6 +17,7 @@
 #include "MPrism.h"
 #include "Context.h"
 #include "GmshMessage.h"
+#include "QuadTriTransfinite3D.h"
 
 /*  
   Transfinite volume meshes
@@ -450,10 +455,45 @@ int MeshTransfiniteVolume(GRegion *gr)
 
   // create elements
 
+  // for QuadTri, get external boundary diagonals for element
+  // subdivision purposes
+  std::set< std::pair<MVertex*, MVertex*> > boundary_diags;
+  if(gr->meshAttributes.QuadTri){
+    if(!getTransfiniteBoundaryDiags( gr, &boundary_diags)){
+      Msg::Error("In MeshTransfiniteVolume(), getTransfiniteBoundaryDiags() failed. "
+                 "Aborting mesh of region %d.", gr->tag());
+      return 0;
+    }
+  }
+
   if(faces.size() == 6) {
     for(int i = 0; i < N_i - 1; i++) {
       for(int j = 0; j < N_j - 1; j++) {
         for(int k = 0; k < N_k - 1; k++) {
+          if(gr->meshAttributes.QuadTri){
+            // create vertex array
+            std::vector<MVertex*> verts;
+            verts.resize(8);
+            verts[0] = tab[i][j][k];       verts[1] = tab[i+1][j][k];
+            verts[2] = tab[i+1][j+1][k];   verts[3] = tab[i][j+1][k];
+            verts[4] = tab[i][j][k+1];     verts[5] = tab[i+1][j][k+1];
+            verts[6] = tab[i+1][j+1][k+1]; verts[7] = tab[i][j+1][k+1];
+            if(!orientedFaces[3].recombined() && i == 0     ||
+               !orientedFaces[1].recombined() && i == N_i-2 ||   
+               !orientedFaces[0].recombined() && j == 0     ||   
+               !orientedFaces[2].recombined() && j == N_j-2 ||   
+               !orientedFaces[4].recombined() && k == 0     ||   
+               !orientedFaces[5].recombined() && k == N_k-2 ){
+              // make subdivided element
+              meshTransfElemWithInternalVertex(gr, verts, &boundary_diags);
+            }
+            // if not adjacent to unrecombined edge
+            else
+              gr->hexahedra.push_back(new MHexahedron(verts[0], verts[1], verts[2], verts[3],
+                                                      verts[4], verts[5], verts[6], verts[7]));
+            // continue, skipping the rest which is for non-divided elements
+            continue;
+          }
           if(orientedFaces[0].recombined() && orientedFaces[1].recombined() && 
              orientedFaces[2].recombined() && orientedFaces[3].recombined() && 
              orientedFaces[4].recombined() && orientedFaces[5].recombined()) {
@@ -518,6 +558,25 @@ int MeshTransfiniteVolume(GRegion *gr)
   else if(faces.size() == 5) {
     for(int j = 0; j < N_j - 1; j++) {
       for(int k = 0; k < N_k - 1; k++) {
+        if(gr->meshAttributes.QuadTri){
+          // create vertex array
+          std::vector<MVertex*> verts;
+          verts.resize(6);
+          verts[0] = tab[0][j][k];     verts[1] = tab[1][j][k];
+          verts[2] = tab[1][j+1][k];   verts[3] = tab[0][j][k+1];   
+          verts[4] = tab[1][j][k+1];   verts[5] = tab[1][j+1][k+1]; 
+          if(!orientedFaces[0].recombined() && j == 0     ||   
+             !orientedFaces[2].recombined() && j == N_j-2 ||   
+             !orientedFaces[4].recombined() && k == 0     ||   
+             !orientedFaces[5].recombined() && k == N_k-2 ){
+            // make subdivided element
+            meshTransfElemWithInternalVertex(gr, verts, &boundary_diags);
+          }
+          else
+            gr->prisms.push_back(new MPrism( verts[0], verts[1], verts[2], verts[3], verts[4], verts[5]));
+          // continue, skipping the rest which is for non-divided elements
+          continue;
+        }
         if((orientedFaces[0].recombined() && orientedFaces[1].recombined() && 
             orientedFaces[2].recombined() && orientedFaces[4].recombined() && 
             orientedFaces[5].recombined()) ||
@@ -556,6 +615,28 @@ int MeshTransfiniteVolume(GRegion *gr)
     for(int i = 1; i < N_i - 1; i++) {
       for(int j = 0; j < N_j - 1; j++) {
         for(int k = 0; k < N_k - 1; k++) {
+          if(gr->meshAttributes.QuadTri){
+            // create vertex array
+            std::vector<MVertex*> verts;
+            verts.resize(8);
+            verts[0] = tab[i][j][k];       verts[1] = tab[i+1][j][k];
+            verts[2] = tab[i+1][j+1][k];   verts[3] = tab[i][j+1][k];
+            verts[4] = tab[i][j][k+1];     verts[5] = tab[i+1][j][k+1];
+            verts[6] = tab[i+1][j+1][k+1]; verts[7] = tab[i][j+1][k+1];
+            if(!orientedFaces[1].recombined() && i == N_i-2 ||   
+               !orientedFaces[0].recombined() && j == 0     ||   
+               !orientedFaces[2].recombined() && j == N_j-2 ||   
+               !orientedFaces[4].recombined() && k == 0     ||   
+               !orientedFaces[5].recombined() && k == N_k-2 ){
+              // make subdivided element
+              meshTransfElemWithInternalVertex(gr, verts, &boundary_diags);
+            }
+            else
+              gr->hexahedra.push_back(new MHexahedron(verts[0], verts[1], verts[2], verts[3],
+                                                      verts[4], verts[5], verts[6], verts[7]));
+            // continue, skipping the rest which is for non-divided elements
+            continue;
+          }
           if(orientedFaces[0].recombined() && orientedFaces[1].recombined() && 
              orientedFaces[2].recombined() && orientedFaces[4].recombined() &&
              orientedFaces[5].recombined()) {

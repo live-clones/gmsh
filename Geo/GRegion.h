@@ -96,6 +96,8 @@ class GRegion : public GEntity {
     ExtrudeParams *extrude;
     // corners of the transfinite interpolation
     std::vector<GVertex*> corners;
+    // structured/unstructured coupling using pyramids
+    int QuadTri;
   } meshAttributes ;
 
   // a array for accessing the transfinite vertices using a triplet of

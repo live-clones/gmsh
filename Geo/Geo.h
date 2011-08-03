@@ -182,6 +182,7 @@ class Volume {
   int Typ;
   char Visible;
   int Method;
+  int QuadTri;
   ExtrudeParams *Extrude;
   List_T *TrsfPoints;
   List_T *Surfaces;

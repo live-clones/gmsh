@@ -109,6 +109,7 @@ void GRegion::resetMeshAttributes()
 {
   meshAttributes.Method = MESH_UNSTRUCTURED;
   meshAttributes.extrude = 0;
+  meshAttributes.QuadTri = NO_QUADTRI;
 }
 
 SBoundingBox3d GRegion::bounds() const
@@ -239,6 +240,9 @@ void GRegion::writeGEO(FILE *fp)
       fprintf(fp, "}");
     }
     fprintf(fp, ";\n");
+
+    if(meshAttributes.QuadTri != NO_QUADTRI )
+      fprintf(fp, "TransfQuadTri {%d};\n", tag());
   }
 }
 

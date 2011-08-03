@@ -626,6 +626,7 @@ Volume *Create_Volume(int Num, int Typ)
     std::max(GModel::current()->getGEOInternals()->MaxVolumeNum, Num);
   pV->Typ = Typ;
   pV->Method = MESH_UNSTRUCTURED;
+  pV->QuadTri = NO_QUADTRI;
   pV->TrsfPoints = List_Create(6, 6, sizeof(Vertex *));
   pV->Surfaces = List_Create(1, 2, sizeof(Surface *));
   pV->SurfacesOrientations = List_Create(1, 2, sizeof(int));
@@ -1047,6 +1048,7 @@ static void CopyVolume(Volume *v, Volume *vv, bool copyMeshingMethod)
   vv->Typ = v->Typ;
   if(copyMeshingMethod){
     vv->Method = v->Method;
+    vv->QuadTri = v->QuadTri;
     if(List_Nbr(v->TrsfPoints))
       Msg::Warning("Only automatic transfinite volume specifications can be copied");
   }
