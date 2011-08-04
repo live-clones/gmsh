@@ -468,13 +468,25 @@ class functionLevelsetSmooth : public function {
   void call(dataCacheMap *m, fullMatrix<double> &val) 
   {
     
+    double ivalPlus = 1./_valPlus;
+    double ivalMin = 1./_valMin;
     for (int i = 0; i < val.size1(); i++)
       for (int j = 0; j < val.size2(); j++){
         double phi = _f0(i,j);
-        double Heps = 0.5 * (1 + phi / _E + 1. / M_PI * sin(M_PI * phi / _E));
-        if (fabs(phi) < _E)  val(i, j) = Heps * _valPlus + (1 - Heps) * _valMin;
+
+        //double Heps = 0.5 * (1 + phi / _E + 1. / M_PI * sin(M_PI * phi / _E));
+	//double Heps = 0.5 + 1./32.*(45.*phi/_E - 50.*pow(phi/_E,3.) + 21.*pow(phi/_E,5.)  );
+	//double Heps = 0.5*(1+tanh(M_PI*phi/_E));
+	double Heps = 0.75 * (phi/_E - 0.33*pow(phi/_E,3.0)) + 0.5;
+
+        //if (fabs(phi) < _E)  val(i, j) = 1./(Heps * ivalPlus + (1 - Heps) * ivalMin);
+        //else if (phi >  _E)  val(i, j) = 1./ivalPlus;
+        //else if (phi < -_E)  val(i, j) = 1./ivalMin;
+
+        if (fabs(phi) < _E)  val(i, j) = (Heps * _valPlus + (1 - Heps) * _valMin);
         else if (phi >  _E)  val(i, j) = _valPlus;
         else if (phi < -_E)  val(i, j) = _valMin;
+
       }
   }
   functionLevelsetSmooth(const function *f0, const double valMin, const double valPlus, const double E) : function(f0->getNbCol()) 

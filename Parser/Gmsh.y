@@ -30,6 +30,7 @@
 #include "CreateFile.h"
 #include "gmshSurface.h"
 #include "gmshLevelset.h"
+#include "fullMatrix.h"
 
 #if defined(HAVE_MESH)
 #include "Generator.h"
@@ -108,7 +109,7 @@ fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
 %token tUsing tPlugin tDegenerated
-%token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset
+%token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tPoints
 %token tLoop tRecombine tSmoother tSplit tDelete tCoherence tIntersect
 %token tLayers tHole tAlias tAliasWithOptions
 %token tQuadTriDbl tQuadTriSngl tRecombLaterals tTransfQuadTri
@@ -1806,6 +1807,29 @@ LevelSet :
         yymsg(0, "Wrong levelset definition (%d)", $4);
 #endif
     }
+  | tLevelset tPoints '(' FExpr ')' tAFFECT '{' RecursiveListOfListOfDouble '}' tEND
+    {
+#if defined(HAVE_DINTEGRATION)
+      int t = (int)$4;
+      if(FindLevelSet(t)){
+	yymsg(0, "Levelset %d already exists", t);
+      }
+      else {
+	//Msg::Info("nb = %d \n",List_Nbr($8) );
+	fullMatrix<double> centers(List_Nbr($8),3);
+	for (int i = 0; i < List_Nbr($8); i++){
+	  List_T *l = *(List_T**)List_Pointer($8, i);
+	  for (int j = 0; j < List_Nbr(l); j++){
+	    //Msg::Info("nb j = %d \n",List_Nbr(l) );
+	    centers(i,j) = (double)(*(double*)List_Pointer(l, j));
+	  }
+	}
+	 gLevelset *ls = new gLevelsetPoints(centers, t);
+	 LevelSet *l = Create_LevelSet(ls->getTag(), ls);
+	 Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
+      }
+#endif
+    }
   | tLevelset tPlane '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ',' 
                                                RecursiveListOfDouble '}' tEND
     {
@@ -2006,13 +2030,19 @@ LevelSet :
       if(!strcmp($2, "CutMesh")){
         int t = (int)$4;
         GModel *GM = GModel::current();
-        GM->buildCutGModel(FindLevelSet(t)->ls);
+        GM->buildCutGModel(FindLevelSet(t)->ls, true, false);
+        GM->setVisibility(0);
+      }
+      if(!strcmp($2, "CutMeshTri")){
+        int t = (int)$4;
+        GModel *GM = GModel::current();
+        GM->buildCutGModel(FindLevelSet(t)->ls, true, true);
         GM->setVisibility(0);
       }
       else if(!strcmp($2, "SplitMesh")){
         int t = (int)$4;
         GModel *GM = GModel::current();
-        GM->buildCutGModel(FindLevelSet(t)->ls, false);
+        GM->buildCutGModel(FindLevelSet(t)->ls, false, true);
         GM->setVisibility(0);
       }
       else

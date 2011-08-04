@@ -72,9 +72,20 @@ MElementOctree::MElementOctree(GModel *m) : _gm(m)
                           MElementBB, MElementCentroid, MElementInEle);
   std::vector<GEntity*> entities;
   m->getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
-      Octree_Insert(entities[i]->getMeshElement(j), _octree);
+  //do not add Gvertex non-assoiociated to any GEdge
+  for(unsigned int i = 0; i < entities.size(); i++){
+      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+	if (entities[i]->dim() == 0){
+	  GVertex *gv = dynamic_cast<GVertex*>(entities[i]);
+	  if (gv && gv->edges().size() >0){
+	    Octree_Insert(entities[i]->getMeshElement(j), _octree);
+	  }
+	}
+	else
+	  Octree_Insert(entities[i]->getMeshElement(j), _octree);
+    }
+  }
+  //exit(1);
   Octree_Arrange(_octree);
 }
 

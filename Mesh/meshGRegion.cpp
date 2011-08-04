@@ -32,7 +32,6 @@ void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
   std::vector<MTetrahedron*> elements = gr->tetrahedra;
   std::list<GFace*> allFaces = gr->faces();
 
-
   //building maps
   std::map<MVertex*, std::set<MTetrahedron*> > node2Tet;
   std::map<MFace, std::vector<MTetrahedron*> , Less_Face> face2Tet;
@@ -87,9 +86,9 @@ void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
     	poleTet = *it;
       }
     }
-    if (v->onWhat()->dim() == 2 ){
+    //if (v->onWhat()->dim() == 2 ){
       SPoint3 pc = poleTet->circumcenter();
-      // double nx,ny,nz;
+      //double nx,ny,nz;
       // SVector3 vN = snorm->get(v->x(), v->y(), v->z(), nx,ny,nz);
       // SVector3 pcv(pc.x()-nx, pc.y()-ny,pc.z()-nz); 
       // printf("nx=%g ny=%g nz=%g dot=%g \n",  nx,ny,nz, dot(vN, pcv));
@@ -98,12 +97,12 @@ void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
       double uvw[3];
       poleTet->xyz2uvw(x, uvw);
       bool inside = poleTet->isInside(uvw[0], uvw[1], uvw[2]);
-      if (inside){
+      //if (inside){
 	fprintf(outfile,"SP(%g,%g,%g)  {%g};\n",
 		pc.x(), pc.y(), pc.z(), maxRadius);
 	candidates.insert(pc);
-      }
-    }
+	//}
+    //}
   }
   fprintf(outfile,"};\n");  
   fclose(outfile);
@@ -121,10 +120,10 @@ void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
     std::set<SPoint3>::const_iterator it1 = candidates.find(pc1);
     std::set<SPoint3>::const_iterator it2 = candidates.find(pc2);
     //if( it1 != candidates.end() || it2 != candidates.end())
-    fprintf(outfile2,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
-	    pc1.x(), pc1.y(), pc1.z(), pc2.x(), pc2.y(), pc2.z(),
-	    allTets[0]->getCircumRadius(),allTets[1]->getCircumRadius());
-    }
+      fprintf(outfile2,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
+	      pc1.x(), pc1.y(), pc1.z(), pc2.x(), pc2.y(), pc2.z(),
+	      allTets[0]->getCircumRadius(),allTets[1]->getCircumRadius());
+   }
   fprintf(outfile2,"};\n");  
   fclose(outfile2);
 

@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h> // for abs()
 #include <vector>
+#include "fullMatrix.h"
+#include "MVertex.h"
 
 // PRIMITIVE LEVELSET
 #define UNKNOWN      0
@@ -18,6 +20,7 @@
 #define CYLINDER     8
 #define CONROD       9
 #define LSMESH      10
+#define POINTS      11
 // TOOLS
 #define CUT       11
 #define UNION     12
@@ -95,6 +98,7 @@ public:
   }
   virtual int type() const = 0;
   bool isPrimitive() const {return true;}
+  
 };
 
 class gLevelsetSphere : public gLevelsetPrimitive
@@ -126,6 +130,43 @@ public:
   virtual double operator() (const double &x, const double &y, const double &z) const
     {return a * x + b * y + c * z + d;} 
   int type() const {return PLANE;}
+};
+
+class gLevelsetPoints : public gLevelsetPrimitive
+{
+protected:
+  fullMatrix<double> points;
+  fullMatrix<double> surf;
+  fullMatrix<double> matAInv;
+  double delta;
+  std::map<SPoint3,double> mapP;
+  fullMatrix<double> generateRbfMat(int p, int index,
+				    const fullMatrix<double> &nodes1,
+				    const fullMatrix<double> &nodes2) const;
+  void RbfOp(int p, int index, 
+	     const fullMatrix<double> &cntrs,
+	     const fullMatrix<double> &nodes, 
+	     fullMatrix<double> &D, 
+	     bool isLocal = false) const;
+  void evalRbfDer(int p, int index,
+		  const fullMatrix<double> &cntrs,
+		  const fullMatrix<double> &nodes,
+		  const fullMatrix<double> &fValues, 
+		fullMatrix<double> &fApprox, bool isLocal = false) const;
+  void setup_level_set(const fullMatrix<double> &cntrs,
+		       fullMatrix<double> &level_set_nodes, 
+		       fullMatrix<double> &level_set_funvals);
+
+public:
+  // define the data points
+  gLevelsetPoints(fullMatrix<double> &_centers, int &tag); 
+  // copy constructor
+  gLevelsetPoints(const gLevelsetPoints &lv);
+  virtual gLevelset * clone() const{return new gLevelsetPoints(*this);}
+  // return negative value inward and positive value outward
+  virtual double operator() (const double &x, const double &y, const double &z) const;
+  void computeLS(std::vector<MVertex*> &vert, std::map<MVertex*, double> &myMap);
+  int type() const {return POINTS;}
 };
 
 class gLevelsetQuadric : public gLevelsetPrimitive

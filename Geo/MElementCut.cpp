@@ -1129,18 +1129,42 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   int numVert = gm->indexMeshVertices(true);
   int nbLs = (cutElem) ? primitives.size() : 1;
   fullMatrix<double> verticesLs(nbLs, numVert + 1);
+
+ //Emi test compute all at once for POINTS (type = 11)
+  std::vector<MVertex *> vert;
+  std::map<MVertex*, double> myMap;
+  for(unsigned int i = 0; i < gmEntities.size(); i++) {
+    for(unsigned int j = 0; j < gmEntities[i]->getNumMeshVertices(); j++) {
+      vert.push_back(gmEntities[i]->getMeshVertex(j));
+    }
+  }
+  if(cutElem){
+    for(unsigned int k = 0; k < primitives.size(); k++){
+      if (primitives[k]->type() == 11){ //points
+	((gLevelsetPoints*)primitives[k])->computeLS(vert, myMap); 
+      }
+    }
+  }
+  else{
+    if (ls->type() == 11)((gLevelsetPoints*)ls)->computeLS(vert, myMap); 
+  }
+
   //compute and store levelset values
   for(unsigned int i = 0; i < gmEntities.size(); i++) {
     for(unsigned int j = 0; j < gmEntities[i]->getNumMeshVertices(); j++) {
       MVertex *vi = gmEntities[i]->getMeshVertex(j);
-      if(cutElem)
-        for(unsigned int k = 0; k < primitives.size(); k++)
-          verticesLs(k, vi->getIndex()) = (*primitives[k])(vi->x(), vi->y(), vi->z());
+      if(cutElem){
+	for(unsigned int k = 0; k < primitives.size(); k++){
+      	  //std::map<MVertex*,double>::iterator it = myMap.find(vi); 
+      	  //verticesLs(k, vi->getIndex()) = it->second;
+	  verticesLs(k, vi->getIndex()) = (*primitives[k])(vi->x(), vi->y(), vi->z());
+      	}
+      }
       else
         verticesLs(0, vi->getIndex()) = (*ls)(vi->x(), vi->y(), vi->z());
     }
   }
-
+  
   std::map<int, int> newElemTags[4]; //map<oldElementary,newElementary>[dim]
   std::map<int, int> newPhysTags[4]; //map<oldPhysical,newPhysical>[dim]
   for(int d = 0; d < 4; d++){

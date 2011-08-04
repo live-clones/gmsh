@@ -625,6 +625,21 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
   int par = (parentNum) ? 1 : 0;
   int dom = (dom1Num) ? 2 : 0;
   bool poly = (type == MSH_POLYG_ || type == MSH_POLYH_ || type == MSH_POLYG_B);
+  bool polyb  = (type == MSH_LIN_B );
+
+  // if poly loop over children
+  if ( CTX::instance()->mesh.saveTri && poly){
+    for (int i = 0; i < getNumChildren() ; i++){
+       MElement *t = getChild(i);
+       t->writeMSH(fp, version,binary,num,elementary,physical,0,0,0,ghosts);
+    }
+    return;
+  }
+  else if (CTX::instance()->mesh.saveTri && polyb){
+    MLine *l = (MLine*)this;
+    l->writeMSH(fp, version,binary,num,elementary,physical, 0,0,0,ghosts);
+    return;
+  }
 
   if(!binary){
     fprintf(fp, "%d %d", num ? num : _num, type);

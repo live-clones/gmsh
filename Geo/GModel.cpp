@@ -1339,13 +1339,13 @@ void GModel::createTopologyFromMesh(int ignoreHoles)
   createTopologyFromRegions(discRegions);
  
   // create topology for all discrete faces
-  std::vector<discreteFace*> discFaces;
-  for(fiter it = firstFace(); it != lastFace(); it++)
-    if((*it)->geomType() == GEntity::DiscreteSurface)
-      discFaces.push_back((discreteFace*) *it);
-  createTopologyFromFaces(discFaces, ignoreHoles);
+   std::vector<discreteFace*> discFaces;
+   for(fiter it = firstFace(); it != lastFace(); it++)
+     if((*it)->geomType() == GEntity::DiscreteSurface)
+       discFaces.push_back((discreteFace*) *it);
+   createTopologyFromFaces(discFaces, ignoreHoles);
 
-  // create old format (necessary for boundary layers)
+  //create old format (necessary for boundary layers)
   exportDiscreteGEOInternals();
  
   double t2 = Cpu();
@@ -1667,7 +1667,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
 
   Msg::Debug("Done creating topology from faces");
 
-  Msg::Debug("Creating topology for edges...");
+  Msg::Debug("Creating topology for %d edges...", discEdges.size());
 
   // for each discreteEdge, create topology
   std::map<GFace*, std::map<MVertex*, MVertex*, std::less<MVertex*> > > face2Vert;
@@ -1682,13 +1682,16 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
 
   // fill edgeLoops of Faces or correct sign of l_edges
   // for (std::vector<discreteFace*>::iterator itF = discFaces.begin();
-  //      itF != discFaces.end(); itF++){
-  //   //EMI, TODO
-  //   std::list<GEdgeLoop> edgeLoops = (*itF)->edgeLoops; 
-  //   edgeLoops.clear();
-  //   GEdgeLoop el((*itF)->edges());
-  //   edgeLoops.push_back(el);
-  // }
+  //       itF != discFaces.end(); itF++){
+  //    //EMI, TODO
+  //    std::list<GEdgeLoop> edgeLoops = (*itF)->edgeLoops; 
+  //    edgeLoops.clear();
+  //    GEdgeLoop el((*itF)->edges());
+  //    edgeLoops.push_back(el);
+  //  }
+
+  Msg::Debug("Done creating topology for edges...");
+
 
   // we need to recreate all mesh elements because some mesh vertices
   // might have been changed during the parametrization process
@@ -1766,8 +1769,14 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
   Msg::Debug("Done creating topology from edges");
 }
 
-GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem)
+GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem, bool saveTri)
 {
+  
+  if (saveTri)
+   CTX::instance()->mesh.saveTri = 1;
+  else
+   CTX::instance()->mesh.saveTri = 0;
+
   std::map<int, std::vector<MElement*> > elements[10];
   std::map<int, std::map<int, std::string> > physicals[4];
   std::map<int, MVertex*> vertexMap;

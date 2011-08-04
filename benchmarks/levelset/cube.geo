@@ -1,4 +1,3 @@
-
 lc = 0.1;
 Point(1) = {0.0,0.0,0.0,lc};
 Point(2) = {1,0.0,0.0,lc};
@@ -26,4 +25,7 @@ Levelset Intersection (10) = {1,2,3};
 Levelset Intersection (11) = {5,6};
 Levelset Cut (12) = {3,7};
 
-Levelset CutMesh {1};
+Levelset Points(13)={{0.5,0,0},{0.5,0.5,0.},{0.5,1,0},{0.5,0,0.5},{0.5,0,0.8},{0.5,0.5,0.5},{0.5,0.5,1},{0.5,1,0.5},{1.5,1,1}};
+
+Levelset CutMeshTri {12};
+

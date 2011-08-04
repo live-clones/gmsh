@@ -32,7 +32,7 @@ struct contextMeshOptions {
   int order, secondOrderLinear, secondOrderIncomplete;
   int secondOrderExperimental, meshOnlyVisible;
   int smoothInternalEdges, minCircPoints, minCurvPoints;
-  int saveAll, saveGroupsOfNodes, binary, bdfFieldFormat, saveParametric;
+  int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat, saveParametric;
   int smoothNormals, reverseAllNormals, zoneDefinition, clip;
   int saveElementTagType;
   int switchElementTags;

@@ -425,7 +425,7 @@ class GModel
 
   // build a new GModel by cutting the elements crossed by the levelset ls
   // if cutElem is set to false, split the model without cutting the elements
-  GModel *buildCutGModel(gLevelset *ls, bool cutElem = true);
+  GModel *buildCutGModel(gLevelset *ls, bool cutElem=true, bool saveTri=false);
 
   // create a GModel by importing a mesh (vertexMap has a dim equal to
   // the number of vertices and all the other vectors have a dim equal

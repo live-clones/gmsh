@@ -4,6 +4,8 @@
 #include "DILevelset.h"
 #include <queue>
 #include <stack>
+#include "fullMatrix.h"
+
 
 inline double det3(double d11, double d12, double d13, double d21, double d22, double d23, double d31, double d32, double d33) {
   return d11 * (d22 * d33 - d23 * d32) - d21 * (d12 * d33 - d13 * d32) + d31 * (d12 * d23 - d13 * d22);
@@ -30,6 +32,37 @@ inline bool isPlanar(const double *pt1, const double *pt2, const double *pt3, co
   double n1[3]; norm(c1, n1);
   double n2[3]; norm(c2, n2);
   return (n1[0] == n2[0] && n1[1] == n2[1] && n1[2] == n2[2]);
+}
+
+inline double evalRadialFnDer (int p, int index, double dx, double dy, double dz, double ep){
+	
+  double r2 = dx*dx+dy*dy+dz*dz; //r^2 
+  switch (index) {
+  case 0 : // GA
+    switch (p) {
+    case 0: return exp(-ep*ep*r2);
+    case 1: return -2*ep*ep*dx*exp(-ep*ep*r2); // _x
+    case 2: return -2*ep*ep*dy*exp(-ep*ep*r2); // _y
+    case 3: return -2*ep*ep*dz*exp(-ep*ep*r2); // _z
+    }
+  case 1 : //MQ
+    switch (p) {
+    case 0: return sqrt(1+ep*ep*r2);
+    case 1: return ep*ep*dx/sqrt(1+ep*ep*r2);
+    case 2: return ep*ep*dy/sqrt(1+ep*ep*r2);
+    case 3: return ep*ep*dz/sqrt(1+ep*ep*r2);
+    }  
+  }
+}
+
+inline void printNodes(fullMatrix<double> &myNodes, fullMatrix<double> &surf){
+  FILE * xyz = fopen("myNodes.pos","w");
+  fprintf(xyz,"View \"\"{\n");
+  for(int itv = 1; itv !=myNodes.size1() ; ++itv){
+    fprintf(xyz,"SP(%g,%g,%g){%g};\n", myNodes(itv,0),myNodes(itv,1),myNodes(itv,2),surf(itv,0));
+ }
+ fprintf(xyz,"};\n");
+ fclose(xyz);
 }
 
 // extrude a list of the primitive levelsets with a "Level-order traversal sequence"
@@ -131,6 +164,178 @@ gLevelsetPlane::gLevelsetPlane(const gLevelsetPlane &lv) : gLevelsetPrimitive(lv
   c = lv.c;
   d = lv.d;
 }
+
+//level set defined by points (RBF interpolation)
+
+fullMatrix<double> gLevelsetPoints::generateRbfMat(int p, int index,
+						   const fullMatrix<double> &nodes1,
+						   const fullMatrix<double> &nodes2) const {
+  int m = nodes2.size1();
+  int n = nodes1.size1();
+  fullMatrix<double> rbfMat(m,n);
+
+  double eps =0.5/delta; 
+  for (int i = 0; i < m; i++) {
+    for (int j = 0; j < n; j++) {
+      double dx = nodes2(i,0)-nodes1(j,0);
+      double dy = nodes2(i,1)-nodes1(j,1);
+      double dz = nodes2(i,2)-nodes1(j,2);
+      rbfMat(i,j) = evalRadialFnDer(p, index, dx,dy,dz,eps);
+    }
+  }
+  return rbfMat;
+
+}
+void gLevelsetPoints::RbfOp(int p, int index, 
+			    const fullMatrix<double> &cntrs,
+			    const fullMatrix<double> &nodes, 
+			    fullMatrix<double> &D, 
+			    bool isLocal) const {
+
+  fullMatrix<double> rbfMatB = generateRbfMat(p,index, cntrs,nodes);
+  //printf("size=%d %d \n", rbfMatB.size1(), rbfMatB.size2());
+  //rbfMatB.print("MatB");
+
+  fullMatrix<double> rbfInvA;
+  if (isLocal){
+    rbfInvA = generateRbfMat(0,index, cntrs,cntrs);
+    rbfInvA.invertInPlace();
+    //printf("size=%d %d \n", rbfInvA.size1(), rbfInvA.size2());
+    //rbfInvA.print("invA");
+  }
+  else {
+    rbfInvA = matAInv;
+  }
+
+  D.resize(nodes.size1(), cntrs.size1());
+  D.gemm(rbfMatB, rbfInvA, 1.0, 0.0);
+
+}
+
+
+void gLevelsetPoints::evalRbfDer(int p, int index,
+		       const fullMatrix<double> &cntrs,
+		       const fullMatrix<double> &nodes,
+		       const fullMatrix<double> &fValues, 
+		       fullMatrix<double> &fApprox, bool isLocal) const {
+  
+  fApprox.resize(nodes.size1(),fValues.size2());
+  fullMatrix<double> D;
+  RbfOp(p,index, cntrs,nodes,D,isLocal);
+  //D.print("D");
+  fApprox.gemm(D,fValues, 1.0, 0.0);
+
+}
+
+
+void gLevelsetPoints::setup_level_set(const fullMatrix<double> &cntrs,
+				      fullMatrix<double> &level_set_nodes, 
+				      fullMatrix<double> &level_set_funvals){
+
+  int numNodes = cntrs.size1();
+  int nTot = 3*numNodes;
+  double normFactor;
+  level_set_nodes.resize(nTot,3);
+  level_set_funvals.resize(nTot,1);
+  fullMatrix<double> ONES(numNodes+1,1),sx(numNodes,1),sy(numNodes,1),sz(numNodes,1),norms(numNodes,3), cntrsPlus(numNodes+1,3);
+
+  //Computes the normal vectors to the surface at each node
+  double dist_min = 1.e6;
+  double dist_max = 1.e-6;
+  for (int i=0;i<numNodes ; ++i){
+    ONES(i,0)=1.0;
+    cntrsPlus(i,0) = cntrs(i,0);
+    cntrsPlus(i,1) = cntrs(i,1);
+    cntrsPlus(i,2) = cntrs(i,2);
+    for(int j = i+1; j < numNodes; j++){
+      double dist = sqrt((cntrs(i,0)-cntrs(j,0))*(cntrs(i,0)-cntrs(j,0))+
+    			 (cntrs(i,1)-cntrs(j,1))*(cntrs(i,1)-cntrs(j,1))+
+			 (cntrs(i,2)-cntrs(j,2))*(cntrs(i,2)-cntrs(j,2)));
+      if (dist<dist_min) dist_min = dist;
+      if (dist>dist_max) dist_max = dist;
+    }
+  }
+  ONES(numNodes,0) = -1.0;
+  cntrsPlus(numNodes,0) = cntrs(0,0)+dist_max;
+  cntrsPlus(numNodes,1) = cntrs(0,1)+dist_max;
+  cntrsPlus(numNodes,2) = cntrs(0,2)+dist_max;
+
+  delta =   0.23*dist_min;
+  evalRbfDer(1, 1, cntrsPlus,cntrs,ONES,sx, true);
+  evalRbfDer(2, 1, cntrsPlus,cntrs,ONES,sy, true);
+  evalRbfDer(3, 1, cntrsPlus,cntrs,ONES,sz, true);
+  for (int i=0;i<numNodes ; ++i){
+    normFactor = sqrt(sx(i,0)*sx(i,0)+sy(i,0)*sy(i,0)+sz(i,0)*sz(i,0));
+    sx(i,0) = sx(i,0)/normFactor;
+    sy(i,0) = sy(i,0)/normFactor;
+    sz(i,0) = sz(i,0)/normFactor;
+    norms(i,0) = sx(i,0);norms(i,1) = sy(i,0);norms(i,2) = sz(i,0);
+  }
+ 
+  for (int i=0;i<numNodes ; ++i){
+    for (int j=0;j<3 ; ++j){
+      level_set_nodes(i,j) = cntrs(i,j);
+      level_set_nodes(i+numNodes,j) = cntrs(i,j)-delta*norms(i,j);
+      level_set_nodes(i+2*numNodes,j) = cntrs(i,j)+delta*norms(i,j);  
+    }
+    level_set_funvals(i,0) = 0.0;
+    level_set_funvals(i+numNodes,0) = -1;
+    level_set_funvals(i+2*numNodes,0) = 1;
+  }
+}
+
+
+gLevelsetPoints::gLevelsetPoints(fullMatrix<double> &centers, int &tag) : gLevelsetPrimitive(tag) {
+  int nbNodes = 3*centers.size1();
+
+  setup_level_set(centers, points, surf);
+  printNodes(points, surf);
+ 
+  //build invA matrix for 3*n points
+  int indexRBF = 1;
+  matAInv.resize(nbNodes, nbNodes);
+  matAInv = generateRbfMat(0, indexRBF, points,points);
+  matAInv.invertInPlace();
+  
+  printf("End init levelset points %d \n", points.size1());
+
+}
+
+gLevelsetPoints::gLevelsetPoints(const gLevelsetPoints &lv) : gLevelsetPrimitive(lv) {
+  points = lv.points;
+}
+
+double gLevelsetPoints::operator()(const double &x, const double &y, const double &z) const{
+
+  SPoint3 sp(x,y,z);
+  std::map<SPoint3,double>::const_iterator it = mapP.find(sp);
+  return it->second;
+
+  // fullMatrix<double> xyz_eval(1, 3), surf_eval(1,1);
+  // xyz_eval(0,0) = x;
+  // xyz_eval(0,1) = y;
+  // xyz_eval(0,2) = z;
+  // evalRbfDer(0, 1, points, xyz_eval, surf, surf_eval);
+  // return surf_eval(0,0);
+
+}
+
+void gLevelsetPoints::computeLS(std::vector<MVertex*> &vert, std::map<MVertex*, double> &myMap){
+
+  
+  fullMatrix<double> xyz_eval(vert.size(), 3), surf_eval(vert.size(), 1);
+  for (int i = 0; i< vert.size(); i++){
+    xyz_eval(i,0) = vert[i]->x();
+    xyz_eval(i,1) = vert[i]->y();
+    xyz_eval(i,2) = vert[i]->z();
+  }
+  evalRbfDer(0, 1, points, xyz_eval, surf, surf_eval);
+  for (int i = 0; i< vert.size(); i++){
+    myMap[vert[i]] = surf_eval(i,0);
+    mapP[SPoint3(vert[i]->x(), vert[i]->y(),vert[i]->z())] = surf_eval(i,0);
+  }
+}
+
 /*
   assume a quadric 
   x^T A x + b^T x + c = 0

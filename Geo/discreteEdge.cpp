@@ -475,6 +475,7 @@ GPoint discreteEdge::point(double par) const
 
 SVector3 discreteEdge::firstDer(double par) const
 {
+  
   double tLoc;
   int iEdge;
   getLocalParameter(par, iEdge, tLoc);
@@ -483,7 +484,7 @@ SVector3 discreteEdge::firstDer(double par) const
   MVertex *vE = lines[iEdge]->getVertex(1);
 
   double dx, dy, dz;
-  double dt = 2.0;
+  double dt = 1.0;
   dx = (vE->x() - vB->x()) / dt;
   dy = (vE->y() - vB->y()) / dt;
   dz = (vE->z() - vB->z()) / dt;

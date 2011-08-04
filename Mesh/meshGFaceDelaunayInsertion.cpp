@@ -1226,7 +1226,7 @@ void bowyerWatsonFrontalLayers(GFace *gf, bool quad)
   int max_layers = quad ? 10000 : 4;
   while (1){
     ITERATION ++;
-    if(ITERATION % 1== 0){
+    if(ITERATION % 1== 0 && CTX::instance()->mesh.saveAll){
       char name[245];
       sprintf(name,"denInfinite_GFace_%d_Layer_%d.pos",gf->tag(),ITERATION);
       _printTris (name, AllTris, Us,Vs,true);
