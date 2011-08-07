@@ -794,6 +794,10 @@ sessions, use the `File->Save Default Options' menu instead. Finally,
 you can also save the current options in an arbitrary file by choosing
 the `Gmsh options' format in `File->Save As'.
 
+For more information about available options (and how to reset them to
+their default values), see @ref{Options}.
+
+
 @c -------------------------------------------------------------------------
 @c Non-interactive mode
 @c -------------------------------------------------------------------------
@@ -4609,14 +4613,24 @@ system}. Screencasts that show how to use the GUI are available on
 @node Options, Information for developers, Tutorial, Top
 @appendix Options
 
-This appendix lists all the available options. Gmsh's default behavior
+This appendix lists all the available options.  Gmsh's default behavior
 is to save some of these options in a per-user ``session resource'' file
-(@code{General.SessionFileName}) every time Gmsh is shut down. This
-permits for example to automatically remember the size and location of
-the windows or which fonts to use. Other options can be saved in a
-per-user ``option'' file (@code{General.OptionsFileName}), automatically
-loaded by Gmsh every time it starts up, by using the `File->Save Default
-Options' menu.
+(cf. ``Saved in: @code{General.SessionFileName}'' in the lists below)
+every time Gmsh is shut down. This permits for example to automatically
+remember the size and location of the windows or which fonts to use. A
+second set of options can be saved (automatically or manually with
+the `File->Save Options->As Default' menu) in a per-user ``option'' file
+(cf. ``Saved in: @code{General.OptionsFileName}'' in the lists below),
+automatically loaded by Gmsh every time it starts up. Finally, other
+options are only saved to disk manually, either by explicitely saving an
+option file with `File->Save As', or when saving per-model options with
+`File->Save Options->For Current File' (cf. ``Saved in: @code{-}'' in
+the lists below).
+
+To reset all options to their default values, use the `Restore default
+options' button in `Tools->Options->General->Output', or erase the
+@code{General.SessionFileName} and @code{General.OptionsFileName} files
+by hand.
 
 @c All the included files are generated automatically with `gmsh -doc'
 
