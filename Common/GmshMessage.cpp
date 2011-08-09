@@ -120,9 +120,13 @@ void Msg::Exit(int level)
     if(CTX::instance()->sessionSave)
       PrintOptions(0, GMSH_SESSIONRC, 0, 0,
                    (CTX::instance()->homeDir + CTX::instance()->sessionFileName).c_str());
-    if(CTX::instance()->optionsSave)
+    if(CTX::instance()->optionsSave == 1)
       PrintOptions(0, GMSH_OPTIONSRC, 1, 0,
                    (CTX::instance()->homeDir + CTX::instance()->optionsFileName).c_str());
+    else if(CTX::instance()->optionsSave == 2){
+      std::string fileName = GModel::current()->getFileName() + ".opt";
+      PrintOptions(0, GMSH_FULLRC, 1, 0, fileName.c_str());
+    }
   }
 #endif
 

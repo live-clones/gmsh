@@ -805,8 +805,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Z coordinate of the center of rotation" }, 
 
   { F|S, "SaveOptions" , opt_general_options_save, 0. , 
-    "Automatically save current options in General.OptionsFileName each time "
-    "you quit Gmsh?" }, 
+    "Automatically save current options in General.OptionsFileName (1) or per model (2)"
+    "each time you quit Gmsh?" }, 
   { F|S, "SaveSession" , opt_general_session_save, 1. , 
     "Automatically save session specific information in General.SessionFileName "
     "each time you quit Gmsh?" }, 

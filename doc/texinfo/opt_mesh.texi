@@ -5,12 +5,12 @@
 
 @ftable @code
 @item Mesh.Algorithm
-2D mesh algorithm (1=MeshAdapt, 5=Delaunay, 6=Frontal)@*
-Default value: @code{1}@*
+2D mesh algorithm (1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=bamg, 8=delquad)@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Algorithm3D
-3D mesh algorithm (1=Delaunay, 4=Frontal)@*
+3D mesh algorithm (1=Delaunay, 4=Frontal, 5=Frontal Delaunay, 6=Frontal Hex, 7=MMG3D)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -25,7 +25,7 @@ Default value: @code{1e+33}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.AllowSwapAngle
-Treshold angle (in degrees) between faces normals under which we allow an edge swap@*
+Threshold angle (in degrees) between faces normals under which we allow an edge swap@*
 Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -194,6 +194,11 @@ Display mesh hexahedra?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.HighOrderNoMetric
+Don't use metric computation to create high-order meshes.@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.LabelSampling
 Label sampling rate (display one label every `LabelSampling' elements)@*
 Default value: @code{1}@*
@@ -279,6 +284,11 @@ Split MSH file by mesh partition@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.MultiplePassesMeshes
+Do a first simple mesh and use it for complex background meshes (curvatures...)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.PartitionHexWeight
 Weight of hexahedral element for METIS load balancing@*
 Default value: @code{1}@*
@@ -307,11 +317,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.PartitionTriWeight
 Weight of triangle for METIS load balancing@*
 Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PartitionByExtrusion
-Special partitioner that annotates all all extruded elements to the same node as the source element@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.NbHexahedra
@@ -460,7 +465,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RemeshParametrization
-Remsh Parametrization (0=harmonic, 1=conformal)@*
+Remsh Parametrization (0=harmonic, 1=conformal, 2=rbf harmonic)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -556,6 +561,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SurfaceNumbers
 Display surface mesh element numbers?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.SwitchElementTags
+Invert elementary and physical tags when reading the mesh@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

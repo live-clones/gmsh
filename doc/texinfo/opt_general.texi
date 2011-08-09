@@ -81,27 +81,27 @@ Saved in: @code{General.SessionFileName}
 
 @item General.RecentFile1
 Most recent opened file@*
-Default value: @code{""}@*
+Default value: @code{"untitled.geo"}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.RecentFile2
 2nd most recent opened file@*
-Default value: @code{""}@*
+Default value: @code{"untitled.geo"}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.RecentFile3
 3rd most recent opened file@*
-Default value: @code{""}@*
+Default value: @code{"untitled.geo"}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.RecentFile4
 4th most recent opened file@*
-Default value: @code{""}@*
+Default value: @code{"untitled.geo"}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.RecentFile5
 5th most recent opened file@*
-Default value: @code{""}@*
+Default value: @code{"untitled.geo"}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.SessionFileName
@@ -229,6 +229,26 @@ Y position (in pixels) of background image (< 0: measure from bottom edge; >= 1e
 Default value: @code{100000}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.Camera
+Enable camera view mode@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.CameraAperture
+Camera aperture in degrees@*
+Default value: @code{40}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.CameraEyeSeparationRatio
+Eye separation ratio in % for stereo rendering@*
+Default value: @code{1.5}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.CameraFocalLengthRatio
+Camera Focal length ratio@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.Clip0A
 First coefficient in equation for clipping plane 0 (`A' in `AX+BY+CZ+D=0')@*
 Default value: @code{1}@*
@@ -306,7 +326,7 @@ Saved in: @code{-}
 
 @item General.Clip3D
 Fourth coefficient in equation for clipping plane 3@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{-}
 
 @item General.Clip4A
@@ -326,7 +346,7 @@ Saved in: @code{-}
 
 @item General.Clip4D
 Fourth coefficient in equation for clipping plane 4@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{-}
 
 @item General.Clip5A
@@ -346,7 +366,7 @@ Saved in: @code{-}
 
 @item General.Clip5D
 Fourth coefficient in equation for clipping plane 5@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{-}
 
 @item General.ClipFactor
@@ -398,6 +418,11 @@ Saved in: @code{General.SessionFileName}
 Vertical position (in pixels) of the upper left corner of the contextual windows@*
 Default value: @code{150}@*
 Saved in: @code{General.SessionFileName}
+
+@item General.DisplayBorderFactor
+Border factor for model display (0: model fits window size exactly)@*
+Default value: @code{0.333333}@*
+Saved in: @code{General.OptionsFileName}
 
 @item General.DoubleBuffer
 Use a double buffered graphic window (on Unix, should be set to 0 when working on a remote host without GLX)@*
@@ -835,7 +860,7 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.SaveOptions
-Automatically save current options in General.OptionsFileName each time you quit Gmsh?@*
+Automatically save current options in General.OptionsFileName (1) or per model (2)each time you quit Gmsh?@*
 Default value: @code{0}@*
 Saved in: @code{General.SessionFileName}
 
@@ -931,6 +956,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.Trackball
 Use trackball rotation mode@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.TrackballHyperbolicSheet
+Use hyperbolic sheet away from trackball center for z-rotations@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

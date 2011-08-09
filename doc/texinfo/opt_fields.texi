@@ -16,6 +16,18 @@ default value: @code{@{@}}
 Indices of surfaces in the geometric model (Warning, this feature is still experimental. It might (read: will probably) give wrong results for complex surfaces)@*
 type: list@*
 default value: @code{@{@}}
+@item FieldX
+Id of the field to use as x coordinate.@*
+type: integer@*
+default value: @code{-1}
+@item FieldY
+Id of the field to use as y coordinate.@*
+type: integer@*
+default value: @code{-1}
+@item FieldZ
+Id of the field to use as z coordinate.@*
+type: integer@*
+default value: @code{-1}
 @item NNodesByEdge
 Number of nodes used to discretized each curve@*
 type: integer@*
@@ -24,6 +36,44 @@ default value: @code{20}
 Indices of nodes in the geometric model@*
 type: list@*
 default value: @code{@{@}}
+@end table
+
+@item AttractorAnisoCurve
+Compute the distance from the nearest curve in a list. Then the mesh size can be specified independently in the direction normal to the curve and in the direction parallel to the curve (Each curve is replaced by NNodesByEdge equidistant nodes and the distance from those nodes is computed.)@*
+Options:@*
+@table @code
+@item EdgesList
+Indices of curves in the geometric model@*
+type: list@*
+default value: @code{@{@}}
+@item NNodesByEdge
+Number of nodes used to discretized each curve@*
+type: integer@*
+default value: @code{20}
+@item dMax
+Maxmium distance, above this distance from the curves, prescribe the maximum mesh sizes.@*
+type: float@*
+default value: @code{0.5}
+@item dMin
+Minimum distance, bellow this distance from the curves, prescribe the minimum mesh sizes.@*
+type: float@*
+default value: @code{0.1}
+@item lMaxNormal
+Maximum mesh size in the direction normal to the closest curve.@*
+type: float@*
+default value: @code{0.5}
+@item lMaxTangent
+Maximum mesh size in the direction tangeant to the closest curve.@*
+type: float@*
+default value: @code{0.5}
+@item lMinNormal
+Minimum mesh size in the direction normal to the closest curve.@*
+type: float@*
+default value: @code{0.05}
+@item lMinTangent
+Minimum mesh size in the direction tangeant to the closest curve.@*
+type: float@*
+default value: @code{0.5}
 @end table
 
 @item BoundaryLayer
@@ -202,10 +252,18 @@ Evaluate Field[IField] in geographic coordinates (longitude, latitude):@*
   F = Field[IField](atan(y/x), asin(z/sqrt(x^2+y^2+z^2))@*
 Options:@*
 @table @code
+@item FromStereo
+if = 1, the mesh is in stereographic coordinates. xi = 2Rx/(R+z),  eta = 2Ry/(R+z)@*
+type: integer@*
+default value: @code{0}
 @item IField
 Index of the field to evaluate.@*
 type: integer@*
 default value: @code{1}
+@item RadiusStereo
+radius of the sphere of the stereograpic coordinates@*
+type: float@*
+default value: @code{6371000}
 @end table
 
 @item MathEval

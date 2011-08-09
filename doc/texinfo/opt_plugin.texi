@@ -37,6 +37,21 @@ Default value: @code{14}
 Default value: @code{-1}
 @end table
 
+@item Plugin(Bubbles)
+Plugin(Bubbles) constructs a geometry consisting of `bubbles' inscribed in the Voronoi of an input triangulation. `ShrinkFactor' allows to change the size of the bubbles. The plugin expects a triangulation in the `z = 0' plane to exist in the current model.
+
+Plugin(Bubbles) creates one `.geo' file.
+String options:
+@table @code
+@item OutputFile
+Default value: @code{"bubbles.geo"}
+@end table
+Numeric options:
+@table @code
+@item ShrinkFactor
+Default value: @code{0}
+@end table
+
 @item Plugin(Curl)
 Plugin(Curl) computes the curl of the field in the view `View'.
 
@@ -45,6 +60,58 @@ If `View' < 0, the plugin is run on the current view.
 Plugin(Curl) creates one new view.
 Numeric options:
 @table @code
+@item View
+Default value: @code{-1}
+@end table
+
+@item Plugin(CutBox)
+Plugin(CutBox) cuts the view `View' with a rectangular box defined by the 4 points (`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of U), (`X2',`Y2',`Z2') (axis of V) and (`X3',`Y3',`Z3') (axis of W).
+
+The number of points along U, V, W is set with the options `NumPointsU', `NumPointsV' and `NumPointsW'.
+
+If `ConnectPoints' is zero, the plugin creates points; otherwise, the plugin generates hexahedra, quadrangles, lines or points depending on the values of `NumPointsU', `NumPointsV' and `NumPointsW'.
+
+If `Boundary' is zero, the plugin interpolates the view inside the box; otherwise the plugin interpolates the view at its boundary.
+
+If `View' < 0, the plugin is run on the current view.
+
+Plugin(CutBox) creates one new view.
+Numeric options:
+@table @code
+@item X0
+Default value: @code{0}
+@item Y0
+Default value: @code{0}
+@item Z0
+Default value: @code{0}
+@item X1
+Default value: @code{1}
+@item Y1
+Default value: @code{0}
+@item Z1
+Default value: @code{0}
+@item X2
+Default value: @code{0}
+@item Y2
+Default value: @code{1}
+@item Z2
+Default value: @code{0}
+@item X3
+Default value: @code{0}
+@item Y3
+Default value: @code{0}
+@item Z3
+Default value: @code{1}
+@item NumPointsU
+Default value: @code{20}
+@item NumPointsV
+Default value: @code{20}
+@item NumPointsW
+Default value: @code{20}
+@item ConnectPoints
+Default value: @code{1}
+@item Boundary
+Default value: @code{1}
 @item View
 Default value: @code{-1}
 @end table
@@ -176,6 +243,14 @@ Default value: @code{0}
 Default value: @code{-1}
 @end table
 
+@item Plugin(DiscretizationError)
+Plugin(DiscretizationError) computes the error between the mesh and the geometry. It does so by supersampling the elements and computing the distance between the supersampled points dans their projection on the geometry.
+Numeric options:
+@table @code
+@item SuperSamplingNodes
+Default value: @code{10}
+@end table
+
 @item Plugin(Distance)
 Plugin(Distance) computes distances to physical entities in a mesh.
 
@@ -281,6 +356,27 @@ Default value: @code{1}
 Default value: @code{-1}
 @end table
 
+@item Plugin(FieldFromAmplitudePhase)
+Plugin(FieldFromAmplitudePhase) builds a complex field 'u' from amplitude 'a' (complex) and phase 'phi' given in two different 'Views' u = a * exp(k*phi), with k the wavenumber. 
+
+The result is to be interpolated in a sufficiently fine mesh: 'MeshFile'. 
+
+Plugin(FieldFromAmplitudePhase) generates one new view.
+String options:
+@table @code
+@item MeshFile
+Default value: @code{"fine.msh"}
+@end table
+Numeric options:
+@table @code
+@item Wavenumber
+Default value: @code{5}
+@item AmplitudeView
+Default value: @code{0}
+@item PhaseView
+Default value: @code{1}
+@end table
+
 @item Plugin(GSHHS)
 Plugin(GSHHS) read different kind of contour lines data and write a .geo file on the surface of a sphere (the Earth).
 
@@ -318,7 +414,7 @@ If the "iField" option is set, consecutive points closer than the value of the f
 
 If "MinStraitsFactor" > 0 and if a field iField is provided, coastlines closer than MinStraitsFactor * field(IField) are merged and inner corners which form an angle < pi/3 are removed.
 
-The output is always in stereographic coordinates, if the "WritePolarSphere" option is not 0, a sphere is added to the geo file.
+The output is always in stereographic coordinates, if the "WritePolarSphere" option is greater than 0, a sphere is added to the geo file.
 
 WARNING: this plugin is still experimental and needs polishing and error-handling. In particular, it will probably crash if an inexistant field id is given or if the input/output cannot be open.
 String options:
@@ -542,6 +638,8 @@ Default value: @code{-1}
 Default value: @code{-1}
 @item OtherView
 Default value: @code{-1}
+@item ForceInterpolation
+Default value: @code{0}
 @end table
 
 @item Plugin(MinMax)
@@ -604,6 +702,8 @@ Default value: @code{-1}
 Default value: @code{-1}
 @item OtherView
 Default value: @code{-1}
+@item ForceInterpolation
+Default value: @code{0}
 @end table
 
 @item Plugin(ModulusPhase)
@@ -620,6 +720,34 @@ Default value: @code{0}
 Default value: @code{1}
 @item View
 Default value: @code{-1}
+@end table
+
+@item Plugin(NearToFarField)
+Plugin(NearToFarField) computes the far field pattern from the near electric and magnetic fields on a surface (regular grid) enclosing the radiating device (antenna).
+
+Parameters: the wavenumber, the far field distance (radious) and angular discretisation, i.e. the number of divisions for phi in [0, 2*Pi] and theta in [0, Pi].
+
+If `View' < 0, the plugin is run on the current view.
+
+Plugin(NearToFarField) creates one new view.
+Numeric options:
+@table @code
+@item Wavenumber
+Default value: @code{1}
+@item FarDistance
+Default value: @code{1}
+@item NumPointsPhi
+Default value: @code{120}
+@item NumPointsTheta
+Default value: @code{60}
+@item EView
+Default value: @code{0}
+@item HView
+Default value: @code{1}
+@item Normalize
+Default value: @code{1}
+@item dB
+Default value: @code{1}
 @end table
 
 @item Plugin(NearestNeighbor)
