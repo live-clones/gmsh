@@ -2035,14 +2035,14 @@ bool DI_Line::cut (std::vector<const gLevelset *> &RPN, std::vector<DI_Integrati
     }
   }
   else{
-    ll_subLines[0]->addLs(this, RPN.back());
     for(int l = 0; l < (int)RPN.size(); l++) {
       const gLevelset *Lsi = RPN[l];
-      RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
         ll->addLs(this, Lsi, iPrim++, nodeLs);
       }
     }
+    if(iPrim == 1) iPrim--;
+    ll_subLines[0]->addLs(this, RPN.back(), iPrim, nodeLs);
   }
 
   for(int l = 0; l < (int)ll_subLines.size(); l++) {
@@ -2190,14 +2190,14 @@ bool DI_Triangle::cut (std::vector<const gLevelset *> &RPN, std::vector<DI_Integ
     }
   }
   else{
-    tt_subTriangles[0]->addLs(this, RPN.back());
     for(int l = 0; l < (int)RPN.size(); l++) {
       const gLevelset *Lsi = RPN[l];
-      RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
         tt->addLs(this, Lsi, iPrim++, nodeLs);
       }
     }
+    if(iPrim == 1) iPrim--;
+    tt_subTriangles[0]->addLs(this, RPN.back(), iPrim, nodeLs);
   }
 
   for(int q = 0; q < (int)tt_subQuads.size(); q++) {
@@ -2373,14 +2373,14 @@ bool DI_Quad::cut (std::vector<const gLevelset *> &RPN, std::vector<DI_Integrati
     }
   }
   else {
-    qq_subQuads[0]->addLs(this, RPN.back());
     for(int l = 0; l < (int)RPN.size(); l++) {
       const gLevelset *Lsi = RPN[l];
-      RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
         qq->addLs(this, Lsi, iPrim++, nodeLs);
       }
     }
+    if(iPrim == 1) iPrim--;
+    qq_subQuads[0]->addLs(this, RPN.back(), iPrim, nodeLs);
   }
 
   for(int q = 0; q < (int)qq_subQuads.size(); q++) {
@@ -2548,14 +2548,14 @@ bool DI_Tetra::cut (std::vector<const gLevelset *> &RPN, std::vector<DI_Integrat
     }
   }
   else {
-    tt_subTetras[0]->addLs(this, RPN.back());
     for(int l = 0; l < (int)RPN.size(); l++) {
       const gLevelset *Lsi = RPN[l];
-      RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
         tt->addLs(this, Lsi, iPrim++, nodeLs);
       }
     }
+    if(iPrim == 1) iPrim--;
+    tt_subTetras[0]->addLs(this, RPN.back(), iPrim, nodeLs);
   }
 
   for(int i = 0; i < (int)QError.size(); i++) {
@@ -2779,14 +2779,14 @@ bool DI_Hexa::cut (std::vector<const gLevelset *> &RPN, std::vector<DI_Integrati
     }
   }
   else {
-    hh_subHexas[0]->addLs(this, RPN.back());
     for(int l = 0; l < (int)RPN.size(); l++) {
       const gLevelset *Lsi = RPN[l];
-      RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
         hh->addLs(this, Lsi, iPrim++, nodeLs);
       }
     }
+    if(iPrim == 1) iPrim--;
+    hh_subHexas[0]->addLs(this, RPN.back(), iPrim, nodeLs);
   }
 
   for(int i = 0; i < (int)QError.size(); i++) {

@@ -36,7 +36,7 @@ public:
   gLevelset() : tag_(-1) {}
   gLevelset(const gLevelset &);
   virtual ~gLevelset(){}
-  virtual gLevelset * clone() const{printf("Error virtual fct called gLevelset::clone()");	return 0;}
+  virtual gLevelset * clone() const{printf("Error virtual fct called gLevelset::clone()"); return 0;}
   virtual double operator() (const double &x, const double &y, const double &z) const = 0;
   // inline double operator () (const SPoint3 &p) const {return this->operator()(p.x(),p.y(),p.z());}
   bool isInsideDomain (const double &x, const double &y, const double &z) const {return this->operator()(x,y,z) * insideDomain > 0.;}
@@ -165,7 +165,7 @@ public:
   virtual gLevelset * clone() const{return new gLevelsetPoints(*this);}
   // return negative value inward and positive value outward
   virtual double operator() (const double &x, const double &y, const double &z) const;
-  void computeLS(std::vector<MVertex*> &vert, std::map<MVertex*, double> &myMap);
+  void computeLS(std::vector<MVertex*> &vert);
   int type() const {return POINTS;}
 };
 

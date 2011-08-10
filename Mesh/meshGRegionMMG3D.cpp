@@ -255,8 +255,9 @@ void refineMeshMMG(GRegion *gr){
     mmg3d::MMG_mmg3dlib(opt,mmg,sol); 
     Msg::Debug("-------- MG3D TERMINATED -------------------");
     updateSizes (gr,mmg, sol);
-  }    
-  MMG_saveMesh(mmg,"test.mesh");
+  }  
+  char test[] = "test.mesh";  
+  MMG_saveMesh(mmg, test);
 
   gr->deleteVertexArrays();
   for (int i=0;i<gr->tetrahedra.size();++i)delete gr->tetrahedra[i];

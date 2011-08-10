@@ -307,9 +307,14 @@ gLevelsetPoints::gLevelsetPoints(const gLevelsetPoints &lv) : gLevelsetPrimitive
 
 double gLevelsetPoints::operator()(const double &x, const double &y, const double &z) const{
 
+  if(mapP.empty()) printf("Levelset Points : call computeLS() before calling operator()\n");
+
   SPoint3 sp(x,y,z);
   std::map<SPoint3,double>::const_iterator it = mapP.find(sp);
-  return it->second;
+  if(it != mapP.end())
+    return it->second;
+  printf("Levelset Points : Point not found\n");
+  return 0;
 
   // fullMatrix<double> xyz_eval(1, 3), surf_eval(1,1);
   // xyz_eval(0,0) = x;
@@ -320,9 +325,8 @@ double gLevelsetPoints::operator()(const double &x, const double &y, const doubl
 
 }
 
-void gLevelsetPoints::computeLS(std::vector<MVertex*> &vert, std::map<MVertex*, double> &myMap){
+void gLevelsetPoints::computeLS(std::vector<MVertex*> &vert){
 
-  
   fullMatrix<double> xyz_eval(vert.size(), 3), surf_eval(vert.size(), 1);
   for (int i = 0; i< vert.size(); i++){
     xyz_eval(i,0) = vert[i]->x();
@@ -331,7 +335,6 @@ void gLevelsetPoints::computeLS(std::vector<MVertex*> &vert, std::map<MVertex*, 
   }
   evalRbfDer(0, 1, points, xyz_eval, surf, surf_eval);
   for (int i = 0; i< vert.size(); i++){
-    myMap[vert[i]] = surf_eval(i,0);
     mapP[SPoint3(vert[i]->x(), vert[i]->y(),vert[i]->z())] = surf_eval(i,0);
   }
 }
