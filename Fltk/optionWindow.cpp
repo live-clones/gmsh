@@ -1349,6 +1349,60 @@ optionWindow::optionWindow(int deltaFontSize)
     }
     {
       Fl_Group *o = new Fl_Group
+        (L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Advanced");
+
+      general.input[1] = new Fl_Input
+        (L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Text editor command");
+      general.input[1]->align(FL_ALIGN_RIGHT);
+      general.input[1]->callback(general_options_ok_cb);
+
+      general.input[2] = new Fl_Input
+        (L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Web browser command");
+      general.input[2]->align(FL_ALIGN_RIGHT);
+      general.input[2]->callback(general_options_ok_cb);
+
+      general.butt[7] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Print messages on terminal");
+      general.butt[7]->type(FL_TOGGLE_BUTTON);
+      general.butt[7]->callback(general_options_ok_cb);
+
+      general.butt[8] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Save session information on exit");
+      general.butt[8]->type(FL_TOGGLE_BUTTON);
+      general.butt[8]->callback(general_options_ok_cb);
+
+      general.butt[9] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 5 * BH, BW/2-WB, BH, "Save options on exit");
+      general.butt[9]->type(FL_TOGGLE_BUTTON);
+      general.butt[9]->callback(general_options_ok_cb);
+
+      Fl_Button *b0 = new Fl_Button
+        (L + width / 2, 2 * WB + 5 * BH, (int)(1.75*BB), BH, "Restore default options");
+      b0->callback(options_restore_defaults_cb);
+
+      general.butt[14] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
+         "Ask confirmation before overwriting files");
+      general.butt[14]->type(FL_TOGGLE_BUTTON);
+      general.butt[14]->callback(general_options_ok_cb);
+
+      general.value[5] = new Fl_Value_Input
+        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Message verbosity");
+      general.value[5]->minimum(0);
+      general.value[5]->maximum(10);
+      general.value[5]->step(1);
+      general.value[5]->align(FL_ALIGN_RIGHT);
+      general.value[5]->callback(general_options_ok_cb);
+
+      general.input[0] = new Fl_Input
+        (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Default file name");
+      general.input[0]->align(FL_ALIGN_RIGHT);
+      general.input[0]->callback(general_options_ok_cb);
+
+      o->end();
+    }
+    {
+      Fl_Group *o = new Fl_Group
         (L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Axes");
 
       general.choice[4] = new Fl_Choice
@@ -1453,60 +1507,6 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[27]->maximum(2000);
       general.value[27]->step(1);
       general.value[27]->callback(general_options_ok_cb);
-
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group
-        (L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Output");
-
-      general.input[1] = new Fl_Input
-        (L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Text editor command");
-      general.input[1]->align(FL_ALIGN_RIGHT);
-      general.input[1]->callback(general_options_ok_cb);
-
-      general.input[2] = new Fl_Input
-        (L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Web browser command");
-      general.input[2]->align(FL_ALIGN_RIGHT);
-      general.input[2]->callback(general_options_ok_cb);
-
-      general.butt[7] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Print messages on terminal");
-      general.butt[7]->type(FL_TOGGLE_BUTTON);
-      general.butt[7]->callback(general_options_ok_cb);
-
-      general.butt[8] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Save session information on exit");
-      general.butt[8]->type(FL_TOGGLE_BUTTON);
-      general.butt[8]->callback(general_options_ok_cb);
-
-      general.butt[9] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 5 * BH, BW/2-WB, BH, "Save options on exit");
-      general.butt[9]->type(FL_TOGGLE_BUTTON);
-      general.butt[9]->callback(general_options_ok_cb);
-
-      Fl_Button *b0 = new Fl_Button
-        (L + width / 2, 2 * WB + 5 * BH, (int)(1.75*BB), BH, "Restore default options");
-      b0->callback(options_restore_defaults_cb);
-
-      general.butt[14] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
-         "Ask confirmation before overwriting files");
-      general.butt[14]->type(FL_TOGGLE_BUTTON);
-      general.butt[14]->callback(general_options_ok_cb);
-
-      general.value[5] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Message verbosity");
-      general.value[5]->minimum(0);
-      general.value[5]->maximum(10);
-      general.value[5]->step(1);
-      general.value[5]->align(FL_ALIGN_RIGHT);
-      general.value[5]->callback(general_options_ok_cb);
-
-      general.input[0] = new Fl_Input
-        (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Default file name");
-      general.input[0]->align(FL_ALIGN_RIGHT);
-      general.input[0]->callback(general_options_ok_cb);
 
       o->end();
     }

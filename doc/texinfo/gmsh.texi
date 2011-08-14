@@ -4628,7 +4628,7 @@ option file with `File->Save As', or when saving per-model options with
 the lists below).
 
 To reset all options to their default values, use the `Restore default
-options' button in `Tools->Options->General->Output', or erase the
+options' button in `Tools->Options->General->Advanced', or erase the
 @code{General.SessionFileName} and @code{General.OptionsFileName} files
 by hand.
 
