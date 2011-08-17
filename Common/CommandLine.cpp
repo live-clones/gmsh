@@ -59,7 +59,7 @@ void PrintUsage(const char *name)
   Msg::Direct("  -1, -2, -3            Perform 1D, 2D or 3D mesh generation, then exit");
   Msg::Direct("  -refine               Perform uniform mesh refinement, then exit");
   Msg::Direct("  -part int             Partition after batch mesh generation");
-  Msg::Direct("  -partWeight <tri|quad|tet|prism|hex> = int    Weight of a triangle/... during partitioning");
+  Msg::Direct("  -partWeight <tri|quad|tet|prism|hex> int    Weight of a triangle/... during partitioning");
   Msg::Direct("  -renumber             Renumber the mesh elements after batch mesh generation");
   Msg::Direct("  -saveall              Save all elements (discard physical group definitions)");
   Msg::Direct("  -o file               Specify output file name");
