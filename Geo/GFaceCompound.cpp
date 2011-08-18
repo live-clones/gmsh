@@ -83,6 +83,19 @@ int intersection_segments (SPoint3 &p1, SPoint3 &p2,
 	    x[1] >= 0.0 && x[1] <= 1.);
   }
 }
+static void printBound(std::vector<MVertex*> &l, int tag){
+  //print boundary
+  char name[256];
+  sprintf(name, "myBOUND%d.pos", tag);
+  FILE * xyz = fopen(name,"w");
+  fprintf(xyz,"View \"\"{\n");
+  for(int i = 0; i < l.size(); i++){
+   MVertex *v = l[i];
+   fprintf(xyz,"SP(%g,%g,%g){%d};\n", v->x(), v->y(), v->z(), i);
+ }
+ fprintf(xyz,"};\n");
+ fclose(xyz);
+}
 
 static bool orderVertices(const std::list<GEdge*> &e, std::vector<MVertex*> &l,
                           std::vector<double> &coord)
@@ -144,6 +157,7 @@ static bool orderVertices(const std::list<GEdge*> &e, std::vector<MVertex*> &l,
     }
     if(!found) return false;
   }    
+
   return true;
 }
 
@@ -628,7 +642,8 @@ bool GFaceCompound::parametrize() const
   if(allNodes.empty()) buildAllNodes();
   
   bool success = orderVertices(_U0, _ordered, _coords);
-  if(!success) Msg::Error("Could not order vertices on boundary");
+  printBound(_ordered, this->tag());
+  if(!success) {Msg::Error("Could not order vertices on boundary");exit(1);}
     
   // Laplace parametrization
   if (_mapping == HARMONIC){
@@ -636,6 +651,8 @@ bool GFaceCompound::parametrize() const
     fillNeumannBCS();
     parametrize(ITERU,HARMONIC); 
     parametrize(ITERV,HARMONIC);
+    //parametrize(ITERU,CONVEXCOMBINATION);
+    //parametrize(ITERV,CONVEXCOMBINATION);
   }
   // Multiscale Laplace parametrization
   else if (_mapping == MULTISCALE){
@@ -663,9 +680,9 @@ bool GFaceCompound::parametrize() const
   // Radial-Basis Function parametrization
   else if (_mapping == RBF){    
     Msg::Debug("Parametrizing surface %d with 'RBF' ", tag());
-     
+    double t1 = Cpu();
     int variableEps = 0;
-    int radFunInd = 1; //MQ RBF
+    int radFunInd = 1; // 1 MQ RBF , 0 GA
     double sizeBox = getSizeH();
 
     fullMatrix<double> Oper(3*allNodes.size(),3*allNodes.size());
@@ -683,7 +700,8 @@ bool GFaceCompound::parametrize() const
     //_rbf->computeCurvature(coordinates);
     //printStuff();
     //exit(1);
-
+    double t2 = Cpu();
+    printf("param RBF in %g sec \n", t2-t1);
   }
 
   buildOct();  

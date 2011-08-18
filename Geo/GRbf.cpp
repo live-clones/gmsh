@@ -74,13 +74,13 @@ GRbf::GRbf (double sizeBox, int variableEps, int rbfFun, std::map<MVertex*, SVec
 {
 
   allCenters.resize(allNodes.size(),3);
-  double tol =  4.e-2*sBox;
+  double tol =  6.e-2*sBox;
 
   //remove duplicate vertices
   //add bc nodes
   for(unsigned int i = 0; i < bcNodes.size(); i++){
     myNodes.insert(bcNodes[i]);
-    //if (bcNodes.size()  > 20) i+=3;
+    //if (bcNodes.size()  > 20) i+=2;
   }
   
   //then  create Mvertex position
@@ -104,6 +104,7 @@ GRbf::GRbf (double sizeBox, int variableEps, int rbfFun, std::map<MVertex*, SVec
   normals.resize(nbNodes,3);
   int index = 0;
   double dist_min = 1.e6;
+  double dist_max = 1.e-6;
   for(std::set<MVertex *>::iterator itv = myNodes.begin(); itv !=myNodes.end() ; ++itv){
     MVertex *v1 = *itv;
     centers(index,0) = v1->x()/sBox;
@@ -118,12 +119,12 @@ GRbf::GRbf (double sizeBox, int variableEps, int rbfFun, std::map<MVertex*, SVec
       MVertex *v2 = *itv2;
       double dist = sqrt((v1->x()-v2->x())*(v1->x()-v2->x())+(v1->y()-v2->y())*(v1->y()-v2->y())
 			 +(v1->z()-v2->z())*(v1->z()-v2->z()))/sBox;
-      if (dist<dist_min && *itv != *itv2 && dist > 1.e-6) dist_min = dist;
+      if (dist<dist_min && *itv != *itv2 && dist > 1.e-5) dist_min = dist;
     }
     index++;
   }
  
-  delta = 0.33*dist_min;//0.6
+  delta = 0.33*dist_min;//0.33
   radius= nbNodes/10.;   
 
   matAInv.resize(nbNodes, nbNodes);
@@ -134,7 +135,7 @@ GRbf::GRbf (double sizeBox, int variableEps, int rbfFun, std::map<MVertex*, SVec
 
   Msg::Info("*****************************************");
   Msg::Info("*** RBF nbNodes=%d (all=%d) ", myNodes.size(), allNodes.size());
-  Msg::Info("*** RBF rad=%g dist_min =%g ", radius, dist_min);
+  Msg::Info("*** RBF rad=%g dist_min =%g", radius, dist_min);
   Msg::Info("*****************************************");  
 
   printNodes(myNodes);
@@ -843,7 +844,7 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
     for (int j = i+1; j < num_neighbours; j++){
       double dist = sqrt((UV(index[i],0)-UV(index[j],0))*(UV(index[i],0)-UV(index[j],0))+
     			 (UV(index[i],1)-UV(index[j],1))*(UV(index[i],1)-UV(index[j],1)));
-      if (dist<dist_min && dist > 1.e-6) dist_min = dist;
+      if (dist<dist_min && dist > 1.e-5) dist_min = dist;
     }
  }
  delete [] index;

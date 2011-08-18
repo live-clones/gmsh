@@ -467,7 +467,6 @@ class functionLevelsetSmooth : public function {
   double _valMin, _valPlus, _E;
   void call(dataCacheMap *m, fullMatrix<double> &val) 
   {
-    
     double ivalPlus = 1./_valPlus;
     double ivalMin = 1./_valMin;
     for (int i = 0; i < val.size1(); i++)
@@ -491,6 +490,7 @@ class functionLevelsetSmooth : public function {
   }
   functionLevelsetSmooth(const function *f0, const double valMin, const double valPlus, const double E) : function(f0->getNbCol()) 
   {
+    printf("Levelset bandwidth is E = %g \n", E);
     setArgument (_f0, f0);
     _valMin  = valMin;
     _valPlus = valPlus;
