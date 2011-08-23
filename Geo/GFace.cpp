@@ -331,7 +331,7 @@ void GFace::computeMeanPlane()
     SVector3 d01(pts[0], pts[1]), d02(pts[0], pts[2]);
     if(norm(crossprod(d01, d02)) < 1e-12) colinear = true;
   }
-  
+
   if(colinear){
     Msg::Info("Adding edge points to compute mean plane of face %d", tag());
     std::list<GEdge*> edg = edges();
@@ -1172,7 +1172,7 @@ void GFace::lloyd(int nbiter, int infn)
 {
 #if defined(HAVE_MESH) && defined(HAVE_BFGS)
   smoothing s = smoothing(nbiter,infn);
-  s.optimize_face(this);	
+  s.optimize_face(this);
   //lloydAlgorithm algo(nbiter, infn);
   //algo(this);
 #endif
@@ -1219,7 +1219,7 @@ void GFace::moveToValidRange(SPoint2 &pt) const
 }
 
 void GFace::addLayersOfQuads(int nLayers, GVertex *gv, double hmin, double ratio)
-{  
+{
   SVector3 ez (0, 0, 1);
   std::list<GEdgeLoop>::iterator it = edgeLoops.begin();
   FILE *f = fopen ("coucou.pos","w");
@@ -1241,18 +1241,18 @@ void GFace::addLayersOfQuads(int nLayers, GVertex *gv, double hmin, double ratio
 	if (it2->_sign == 1){
 	  for (unsigned int i = 0; i < ge->lines.size(); i++){
 	    reparamMeshEdgeOnFace(ge->lines[i]->getVertex(0), ge->lines[i]->getVertex(1),
-                                  this, p[0], p[1]);	  	  
+                                  this, p[0], p[1]);
 	    contour.push_back(std::make_pair(ge->lines[i]->getVertex(0), p[0]));
 	  }
 	}
 	else {
 	  for(int i = ge->lines.size() - 1; i >= 0; i--){
 	    reparamMeshEdgeOnFace(ge->lines[i]->getVertex(0), ge->lines[i]->getVertex(1),
-                                  this,p[0],p[1]);	  	  
+                                  this,p[0],p[1]);
 	    contour.push_back(std::make_pair(ge->lines[i]->getVertex(1),p[1]));
 	  }
 	}
-      }      
+      }
       double hlayer = hmin;
       for (int j = 0; j < nLayers; j++){
 	for (unsigned int i = 0; i < contour.size(); i++){
@@ -1277,5 +1277,5 @@ void GFace::addLayersOfQuads(int nLayers, GVertex *gv, double hmin, double ratio
       fprintf(f,"};\n");
       fclose(f);
     }
-  }  
+  }
 }
