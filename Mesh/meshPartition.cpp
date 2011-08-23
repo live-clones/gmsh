@@ -6,13 +6,13 @@
 // Partition.cpp - Copyright (C) 2008 S. Guzik, C. Geuzaine, J.-F. Remacle
 
 #include "GmshConfig.h"
+#include "meshPartition.h"
+#include "meshPartitionOptions.h"
 
 #if defined(HAVE_CHACO) || defined(HAVE_METIS)
 
 #include "GModel.h"
-#include "meshPartition.h"
 #include "meshPartitionObjects.h"
-#include "meshPartitionOptions.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MTetrahedron.h"
@@ -1361,6 +1361,15 @@ template void MakeGraphDIM<3, GModel::riter, GModel::fiter>
 (const GModel::riter begin, const GModel::riter end,
  const GModel::fiter beginBE, const GModel::fiter endBE,
  Graph &graph, BoElemGrVec *const boElemGrVec);
+
+
+#else
+
+int PartitionMesh(GModel *const model, meshPartitionOptions &options)
+{
+  Msg::Error("Gmsh must be compiled with METIS or Chaco support to partition meshes");
+  return 0;
+}
 
 
 #endif
