@@ -418,7 +418,7 @@ static int MeshQuadToTriTopUnstructured(GFace *from, GFace *to,
     double d1 = verts[0]->distance(verts[2]);
     double d2 = verts[1]->distance(verts[3]);
     
-    if( std::fabs(d1*d1-mag_sq_ave) <= std::fabs(d2*d2-mag_sq_ave) ){ 
+    if(fabs(d1*d1-mag_sq_ave) <= fabs(d2*d2-mag_sq_ave) ){ 
       addTriangle(verts[0],verts[1],verts[2],to,element);
       addTriangle(verts[0],verts[2],verts[3],to,element);
     }

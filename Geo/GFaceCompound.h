@@ -146,7 +146,9 @@ class GFaceCompound : public GFace {
 template<class scalar> class linearSystem;
 class GFaceCompound : public GFace {
  public:
-  typedef enum {HARMONIC=1,CONFORMAL=2, CONVEXCOMBINATION=3, MULTISCALE=4} typeOfMapping;
+  typedef enum {ITERU=0,ITERV=1,ITERD=2} iterationStep;
+  typedef enum {HARMONIC=1,CONFORMAL=2, CONVEXCOMBINATION=3, MULTISCALE=4, RBF=5} typeOfMapping;
+  typedef enum {UNITCIRCLE, SQUARE} typeOfIsomorphism;
  GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 	       std::list<GEdge*> &U0, linearSystem<double>* lsys =0,
                 typeOfMapping typ = HARMONIC, int allowPartition=1)

@@ -1,6 +1,14 @@
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+
 #include "GmshConfig.h"
+#include "GmshMessage.h"
 #include "meshGRegionMMG3D.h"
-#ifdef HAVE_MMG3D
+
+#if defined(HAVE_MMG3D)
+
 #include <set>
 #include "GRegion.h"
 #include "GFace.h"
@@ -15,7 +23,8 @@ extern "C" {
 #define M_UNUSED    (1 << 0)
 }
 
-void MMG2gmsh (GRegion *gr, MMG_pMesh mmg, std::map<int,MVertex*> &mmg2gmsh){
+void MMG2gmsh (GRegion *gr, MMG_pMesh mmg, std::map<int,MVertex*> &mmg2gmsh)
+{
   std::map<int,MVertex*> kToMVertex;
   for (int k=1;k<= mmg->np ; k++){
     MMG_pPoint ppt = &mmg->point[k]; 
@@ -38,15 +47,16 @@ void MMG2gmsh (GRegion *gr, MMG_pMesh mmg, std::map<int,MVertex*> &mmg2gmsh){
       MVertex *v3 = kToMVertex[ptetra->v[2]];
       MVertex *v4 = kToMVertex[ptetra->v[3]];
       if (!v1 || !v2 || !v3 || !v4){
-	Msg::Error("Element %d Unknown Vertex in MMG2gmsh %d(%p) %d(%p) %d(%p) %d(%p)",k,ptetra->v[0],v1,ptetra->v[1],v2,ptetra->v[2],v3,ptetra->v[3],v4);
+	Msg::Error("Element %d Unknown Vertex in MMG2gmsh %d(%p) %d(%p) %d(%p) %d(%p)",
+                   k,ptetra->v[0],v1,ptetra->v[1],v2,ptetra->v[2],v3,ptetra->v[3],v4);
       }
       else gr->tetrahedra.push_back(new MTetrahedron(v1,v2,v3,v4));
     }
   }
 }
 
-void gmsh2MMG (GRegion *gr, MMG_pMesh mmg, MMG_pSol sol, std::map<int,MVertex*> &mmg2gmsh){
-
+void gmsh2MMG (GRegion *gr, MMG_pMesh mmg, MMG_pSol sol, std::map<int,MVertex*> &mmg2gmsh)
+{
   mmg->ne = gr->tetrahedra.size();
   std::set<MVertex*> allVertices;
   for (int i=0;i< gr->tetrahedra.size() ; i++){
@@ -174,7 +184,8 @@ void gmsh2MMG (GRegion *gr, MMG_pMesh mmg, MMG_pSol sol, std::map<int,MVertex*> 
   
 }
 
-void updateSizes (GRegion *gr, MMG_pMesh mmg, MMG_pSol sol){
+void updateSizes (GRegion *gr, MMG_pMesh mmg, MMG_pSol sol)
+{
   std::list<GFace*> f = gr->faces();
   /*
   std::map<MVertex*,std::pair<double,int> > LCS;
@@ -228,7 +239,8 @@ void updateSizes (GRegion *gr, MMG_pMesh mmg, MMG_pSol sol){
 }
 
 
-void FREEMMG (MMG_pMesh mmgMesh, MMG_pSol mmgSol){
+void FREEMMG (MMG_pMesh mmgMesh, MMG_pSol mmgSol)
+{
   free(mmgMesh->point);
   //  free(mmgMesh->disp->alpha);
   //  free(mmgMesh->disp->mv);
@@ -243,7 +255,8 @@ void FREEMMG (MMG_pMesh mmgMesh, MMG_pSol mmgSol){
   free(mmgSol);
 }
 
-void refineMeshMMG(GRegion *gr){
+void refineMeshMMG(GRegion *gr)
+{
   MMG_pMesh mmg = (MMG_pMesh)calloc(1,sizeof(MMG_Mesh)); 
   MMG_pSol  sol = (MMG_pSol)calloc(1,sizeof(MMG_Sol)); 
   std::map<int,MVertex*> mmg2gmsh;
@@ -270,7 +283,10 @@ void refineMeshMMG(GRegion *gr){
 }
 
 #else
-void refineMeshMMG(GRegion *gr){
+
+void refineMeshMMG(GRegion *gr)
+{
   Msg::Error("You should compile your version of Gmsh with MMG3D, the Mobile Mesh Generator");
 }
+
 #endif

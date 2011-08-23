@@ -21,13 +21,13 @@
 #include "meshGEdge.h"
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
-#include "meshGFaceLloyd.h"
 #include "meshGFaceBDS.h"
 #include "meshGRegion.h"
 #include "BackgroundMesh.h"
 #include "BoundaryLayers.h"
 #include "HighOrder.h"
 #include "Generator.h"
+#include "meshGFaceLloyd.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -470,6 +470,7 @@ static void Mesh2D(GModel *m)
   }
 
 
+#if defined(HAVE_BFGS)
   // lloyd optimization
   if (CTX::instance()->mesh.optimizeLloyd){
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
@@ -493,6 +494,7 @@ static void Mesh2D(GModel *m)
     }
     */
   }
+#endif
 
   // collapseSmallEdges(*m);
 

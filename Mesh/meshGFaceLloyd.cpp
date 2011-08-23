@@ -1,5 +1,8 @@
 #include <set>
 #include "meshGFaceLloyd.h"
+
+#if defined(HAVE_BFGS)
+
 #include "DivideAndConquer.h"
 #include "GFace.h"
 #include "MElement.h"
@@ -1911,3 +1914,5 @@ MElementOctree* wrapper::get_octree(){
 void wrapper::set_octree(MElementOctree* new_octree){
   octree = new_octree;
 }
+
+#endif

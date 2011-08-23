@@ -5,6 +5,11 @@
 
 #ifndef _MESH_GFACE_LLOYD_H_
 #define _MESH_GFACE_LLOYD_H_
+
+#include "GmshConfig.h"
+
+#if defined(HAVE_BFGS)
+
 #include "fullMatrix.h"
 #include "DivideAndConquer.h"
 #include <queue>
@@ -241,5 +246,7 @@ class wrapper{
   MElementOctree* get_octree();
   void set_octree(MElementOctree*);
 };
+
+#endif
 
 #endif

@@ -565,7 +565,7 @@ int IsSurfaceALateralForRegion(GRegion *region, GFace *face)
     source_v = reg_source->vertices();
     std::list<GVertex*>::iterator itvs;
     double tol = 1.00e-12; 
-    double eps = std::fabs( tol * CTX::instance()->lc ); 
+    double eps = fabs( tol * CTX::instance()->lc ); 
     unsigned int j_top, k_top;
     j_top = reg_ep->mesh.NbLayer-1;
     k_top = reg_ep->mesh.NbElmLayer[j_top];
@@ -577,7 +577,7 @@ int IsSurfaceALateralForRegion(GRegion *region, GFace *face)
       bool found_one = false;
       for( itvf = face_v.begin(); itvf != face_v.end(); itvf++ ){
         double x2 = (*itvf)->x(), y2 = (*itvf)->y(), z2 = (*itvf)->z();
-        if( std::fabs(x2-x1) <= eps && std::fabs(y2-y1) <= eps && std::fabs(z2-z1) <= eps ){
+        if( fabs(x2-x1) <= eps && fabs(y2-y1) <= eps && fabs(z2-z1) <= eps ){
           found_one = true;
           break;
         }

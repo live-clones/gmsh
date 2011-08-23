@@ -10,6 +10,7 @@
 #include <vector>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "GModel.h"
 
 #if defined(HAVE_SOLVER)
 
@@ -80,11 +81,12 @@ class highOrderTools
 class highOrderTools
 {
  public:
-  highOrderTools(GModel *gm);
+  highOrderTools(GModel *gm)
   {
     Msg::Error("Gmsh has to be compiled with solver support to use highOrderSmoother");
   }
   void applyGlobalSmoothing (){}
+  void ensureMinimumDistorsion (double threshold){}
 };
 
 #endif

@@ -17,7 +17,6 @@
 #include "Numeric.h"
 #include "GaussLegendre1D.h"
 #include "Context.h"
-#include "meshGFaceLloyd.h"
 #include "meshGFaceOptimize.h"
 
 #define SQU(a)      ((a)*(a))

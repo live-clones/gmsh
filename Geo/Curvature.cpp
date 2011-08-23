@@ -5,6 +5,7 @@
 
 #include "Curvature.h"
 #include "MElement.h"
+#include "MTriangle.h"
 #include "GEntity.h"
 #include "GFaceCompound.h"
 #include "MLine.h"
@@ -87,7 +88,7 @@ Curvature& Curvature::getInstance()
 
  //========================================================================================================
  void Curvature::retrieveCompounds()  {
-
+#if defined(HAVE_SOLVER)
    std::vector<GEntity*> entities;
    _model->getEntities(entities);
 
@@ -104,6 +105,7 @@ Curvature& Curvature::getInstance()
      }
 
    }
+#endif
  }
 
 //========================================================================================================

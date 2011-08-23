@@ -477,6 +477,7 @@ backgroundMesh::~backgroundMesh()
 static void propagateValuesOnFace (GFace *_gf, 				  
 				   std::map<MVertex*,double> &dirichlet)
 {
+#if defined(HAVE_SOLVER)
   linearSystem<double> *_lsys = 0;
 #if defined(HAVE_PETSC) && !defined(HAVE_TAUCS)
   _lsys = new linearSystemPETSc<double>;
@@ -526,10 +527,12 @@ static void propagateValuesOnFace (GFace *_gf,
   }
   
   delete _lsys;
+#endif
 }
 
 void replaceMeshCompound(GFace *gf, std::list<GEdge*> &edges)
 {
+#if defined(HAVE_SOLVER)
   std::list<GEdge*> e = gf->edges();
   //Replace edges by their compounds
   std::set<GEdge*> mySet;
@@ -545,6 +548,7 @@ void replaceMeshCompound(GFace *gf, std::list<GEdge*> &edges)
   }
   edges.clear();
   edges.insert(edges.begin(), mySet.begin(), mySet.end());
+#endif
 }
 
 void backgroundMesh::propagate1dMesh(GFace *_gf)
@@ -575,7 +579,7 @@ void backgroundMesh::propagate1dMesh(GFace *_gf)
     }
   }
 
-  propagateValuesOnFace(_gf,sizes);
+  propagateValuesOnFace(_gf, sizes);
 
   std::map<MVertex*,MVertex*>::iterator itv2 = _2Dto3D.begin();
   for ( ; itv2 != _2Dto3D.end(); ++itv2){
