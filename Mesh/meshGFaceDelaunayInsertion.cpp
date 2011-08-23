@@ -655,10 +655,6 @@ void _printTris(char *name, std::set<MTri3*, compareTri3Ptr> &AllTris,
   fclose (ff);
 }
 
-int intersection_segments (SPoint3 &p1, SPoint3 &p2,
-			   SPoint3 &q1, SPoint3 &q2, 
-			   double x[2]);
-
 static MTri3* search4Triangle (MTri3 *t, double pt[2], 
 			       std::vector<double> &Us, std::vector<double> &Vs,
 			       std::set<MTri3*,compareTri3Ptr> &AllTris) {

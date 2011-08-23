@@ -20,12 +20,15 @@
 #include "Generator.h"
 #include "Context.h"
 #include "OS.h"
-#include "PView.h"
-#include "PViewData.h"
 #include "SVector3.h"
 #include "SPoint3.h"
 
-#ifdef HAVE_MATCH
+#if defined(HAVE_POST)
+#include "PView.h"
+#include "PViewData.h"
+#endif
+
+#if defined(HAVE_MATCH)
 extern "C" int FAILED_NODE;
 extern "C" struct CCdatagroup;
 extern "C" int perfect_match
@@ -2290,6 +2293,7 @@ double Temporary::compute_alignment(const MEdge&_edge, MElement*element1, MEleme
 
 void Temporary::read_data(std::string file_name)
 {
+#if defined(HAVE_POST)
   int i,j,number;
   double x,y,z;
   MElement*element;
@@ -2312,6 +2316,7 @@ void Temporary::read_data(std::string file_name)
 	  gradients[number] = SVector3(x,y,z);
 	}
   }
+#endif
 }
 
 void Temporary::quadrilaterize(std::string file_name,double _w1,double _w2,double _w3)

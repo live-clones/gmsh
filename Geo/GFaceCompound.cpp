@@ -53,36 +53,6 @@ static void fixEdgeToValue(GEdge *ed, double value, dofManager<double> &myAssemb
   }
 }
 
-int intersection_segments (SPoint3 &p1, SPoint3 &p2,
-			   SPoint3 &q1, SPoint3 &q2, 
-			   double x[2])
-{
-  double xp_max = std::max(p1.x(),p2.x()); 
-  double yp_max = std::max(p1.y(),p2.y()); 
-  double xq_max = std::max(q1.x(),q2.x()); 
-  double yq_max = std::max(q1.y(),q2.y()); 
-
-  double xp_min = std::min(p1.x(),p2.x()); 
-  double yp_min = std::min(p1.y(),p2.y()); 
-  double xq_min = std::min(q1.x(),q2.x()); 
-  double yq_min = std::min(q1.y(),q2.y()); 
-  if (yq_min > yp_max || xq_min >  xp_max ||
-      yq_max < yp_min || xq_max <  xp_min){
-    return 0;
-  }
-  else{
-    double A[2][2];
-    A[0][0] = p2.x()-p1.x();
-    A[0][1] = q1.x()-q2.x();
-    A[1][0] = p2.y()-p1.y();
-    A[1][1] = q1.y()-q2.y();
-    double b[2] = {q1.x()-p1.x(),q1.y()-p1.y()};
-    sys2x2(A,b,x);
-
-    return (x[0] >= 0.0 && x[0] <= 1. &&
-	    x[1] >= 0.0 && x[1] <= 1.);
-  }
-}
 static void printBound(std::vector<MVertex*> &l, int tag){
   //print boundary
   char name[256];

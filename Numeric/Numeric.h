@@ -110,4 +110,9 @@ void signedDistancesPointsEllipseLine (std::vector<double>&distances,
                                        std::vector<SPoint3>&closePts,
                                        const std::vector<SPoint3> &pts,
                                        const SPoint3 &p1, const SPoint3 &p2);
+
+int intersection_segments (SPoint3 &p1, SPoint3 &p2,
+			   SPoint3 &q1, SPoint3 &q2, 
+			   double x[2]);
+
 #endif
