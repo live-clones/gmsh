@@ -61,15 +61,18 @@ GEdge *GeoFactory::addLine(GModel *gm, GVertex *start, GVertex *end)
 
 GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> > edges)
 { 
-  //create line loops
+  // create line loops 
+  // FIXME: having non-ordered lines in the loop triggers a warning; we should 
+  // eventually return an error, but createTopolpgyFromMesh() does not currently 
+  // sort edges in loops; once it does, we can be stricter here.
   std::vector<EdgeLoop *> vecLoops;
   int nLoops = edges.size();
-  for (int i=0; i< nLoops; i++){
+  for (int i = 0; i< nLoops; i++){
     int numl = gm->getMaxElementaryNumber(1) + i;
     while (FindEdgeLoop(numl)){
       numl++;
     }
-    int nl=(int)edges[i].size();
+    int nl = (int)edges[i].size();
     const GEdge &e0 = *edges[i][0];
     const GVertex *frontV = e0.getBeginVertex();
     List_T *iListl = List_Create(nl, nl, sizeof(int));
@@ -78,8 +81,8 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
       if (e0.getEndVertex() != e1.getBeginVertex() && e0.getEndVertex() != e1.getEndVertex()) {
         frontV = e0.getEndVertex();
         if (e0.getBeginVertex() != e1.getBeginVertex() && e0.getBeginVertex() != e1.getEndVertex()) {
-          Msg::Error("Invalid line loop");
-          return NULL;
+          Msg::Warning("Edges 0 and 1 not consecutive in line loop %d", i);
+          //return NULL;
         }
       }
     }
@@ -89,20 +92,22 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
       int numEdge = e.tag();
       if (frontV == e.getBeginVertex()) {
         frontV = e.getEndVertex();
-      } else if (frontV == e.getEndVertex()){
+      } 
+      else if (frontV == e.getEndVertex()){
         frontV = e.getBeginVertex();
         numEdge = -numEdge;
-      } else {
-        Msg::Error("Invalid line loop");
-        List_Delete(iListl);
-        return NULL;
+      }
+      else {
+        Msg::Warning("Edge %d out of order in line loop %d", j, i);
+        //List_Delete(iListl);
+        //return NULL;
       }
       List_Add(iListl, &numEdge);
     }
     if (firstV != frontV) {
-      Msg::Error("Invalid line loop");
-      List_Delete(iListl);
-      return NULL;
+      Msg::Warning("Unordered line loop %d", i);
+      //List_Delete(iListl);
+      //return NULL;
     }
     EdgeLoop *l = Create_EdgeLoop(numl, iListl);
     vecLoops.push_back(l);
