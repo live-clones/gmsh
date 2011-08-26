@@ -18,6 +18,29 @@
 #include "TreeUtils.h"
 #include "GmshMessage.h"
 
+int fcmp_int(const void *a, const void *b)
+{
+  return (*(int *)a - *(int *)b);
+}
+
+int fcmp_absint(const void *a, const void *b)
+{
+  return (abs(*(int *)a) - abs(*(int *)b));
+}
+
+int fcmp_double(const void *a, const void *b)
+{
+  double cmp;
+
+  cmp = *(double *)a - *(double *)b;
+  if(cmp > 1.e-16)
+    return 1;
+  else if(cmp < -1.e-16)
+    return -1;
+  else
+    return 0;
+}
+
 List_T *List_Create(int n, int incr, int size)
 {
   List_T *liste;
@@ -269,30 +292,5 @@ List_T *ListOfDouble2ListOfInt(List_T *dList)
     List_Add(iList, &j);
   }
   return iList;
-}
-
-// Comparison functions
-
-int fcmp_int(const void *a, const void *b)
-{
-  return (*(int *)a - *(int *)b);
-}
-
-int fcmp_absint(const void *a, const void *b)
-{
-  return (abs(*(int *)a) - abs(*(int *)b));
-}
-
-int fcmp_double(const void *a, const void *b)
-{
-  double cmp;
-
-  cmp = *(double *)a - *(double *)b;
-  if(cmp > 1.e-16)
-    return 1;
-  else if(cmp < -1.e-16)
-    return -1;
-  else
-    return 0;
 }
 

@@ -409,7 +409,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   // if necessary split compound and remesh parts
   bool isMeshed = false;
   if(gf->geomType() == GEntity::CompoundSurface  && !onlyInitialMesh){
-	  isMeshed = checkMeshCompound((GFaceCompound*) gf, edges);
+    isMeshed = checkMeshCompound((GFaceCompound*) gf, edges);
     if (isMeshed) return true;
   }
 
