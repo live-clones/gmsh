@@ -1537,15 +1537,19 @@ void meshGFace::operator() (GFace *gf)
   if(MeshExtrudedSurface(gf)) return;
   if(gf->meshMaster() != gf->tag()){
     GFace *gff = gf->model()->getFaceByTag(abs(gf->meshMaster()));
-    if (gff->meshStatistics.status != GFace::DONE){
-      gf->meshStatistics.status = GFace::PENDING;
+    if(gff){
+      if (gff->meshStatistics.status != GFace::DONE){
+        gf->meshStatistics.status = GFace::PENDING;
+        return;
+      }
+      Msg::Info("Meshing face %d (%s) as a copy of %d", gf->tag(), 
+                gf->getTypeString().c_str(), gf->meshMaster());
+      copyMesh(gff, gf);
+      gf->meshStatistics.status = GFace::DONE;
       return;
     }
-    Msg::Info("Meshing face %d (%s) as a copy of %d", gf->tag(), 
-              gf->getTypeString().c_str(), gf->meshMaster());
-    copyMesh(gff, gf);
-    gf->meshStatistics.status = GFace::DONE;
-    return;    
+    else
+      Msg::Warning("Unknown mesh master face %d", abs(gf->meshMaster()));
   }
 
   const char *algo = "Unknown";
