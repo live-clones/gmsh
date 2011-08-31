@@ -1,118 +1,100 @@
-// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
-//
-// See the LICENSE.txt file for license information. Please report all
-// bugs and problems to <gmsh@geuz.org>.
-//
-// Contributed by Matti Pellikka <matti.pellikka@tut.fi>.
-
 #ifndef _CELL_H_
 #define _CELL_H_
 
-#include "GmshConfig.h"
-
-#if defined(HAVE_KBIPACK)
-
-#include <stdio.h>
-#include <string>
-#include <algorithm>
-#include <set>
-#include <list>
 #include <map>
-#include "CellComplex.h"
+#include <vector>
 #include "MElement.h"
-#include "MVertex.h"
 
 class Cell;
 
-// Ordering of the cells
-class Less_Cell{
-  public:
-   bool operator()(const Cell* c1, const Cell* c2) const;
+class Less_Cell {
+public:
+  bool operator()(const Cell* c1, const Cell* c2) const;
 };
 
+// Class to save cell boundary orientation information
+class BdInfo {
+ private:
+  short int _ori;
+  short int _origOri;
+
+ public:
+  BdInfo(int ori) { _ori = ori; _origOri = 0; }
+  
+  int get() const { return _ori; }
+  void reset() { _ori = _origOri; }
+  void init() { _origOri = _ori; }
+  void set(int ori) { _ori = ori; } 
+  int geto() const { return _origOri; }
+
+};
+
+
 // Class representing an elementary cell of a cell complex.
-class Cell
-{  
+class Cell {
+
  protected:
+  static int _globalNum;
   
-  // whether this cell belongs to a subdomain
-  // used in relative homology computation
-  bool _subdomain;
-  
+  int _num;
+  // mutable index for each cell (used to create boundary operator matrices)
+  int _index;
+
+  int _domain;
+
   // whether this cell a combinded cell of elemetary cells
   bool _combined; 
-  
-  // mutable index for each cell (used to create boundary operator matrices)
-  int _index; 
-  
   // for some algorithms to omit this cell
   bool _immune;
-  
-  // mutable list of cells on the boundary and on the coboundary of this cell
-  std::map< Cell*, int, Less_Cell > _bd;
-  std::map< Cell*, int, Less_Cell > _cbd;
-  // immutable original boundary and coboundary before the reduction of the
-  // cell complex
-  std::map<Cell*, int, Less_Cell > _obd;
-  std::map<Cell*, int, Less_Cell > _ocbd;
 
+  // list of cells on the boundary and on the coboundary of this cell
+  std::map<Cell*, BdInfo, Less_Cell> _bd;
+  std::map<Cell*, BdInfo, Less_Cell> _cbd;
+  
  private:
-  
+
+  int _dim;
+  int _pnum;
+  int _type;
   // sorted vertices of this cell (used for ordering of the cells)
-  std::vector<int> _vs;
-  
-  // the mesh element that is the image of this cell
-  MElement* _image;
-  // whether to delete the mesh element when done
-  // (set to true if created for homology computation only)
-  bool _delimage;
-  
-  // get vertex 
-  MVertex* getVertex(int vertex) const { return _image->getVertex(vertex); }  
-   // get the number of vertices this cell has
-  int getNumVertices() const { return _image->getNumPrimaryVertices(); }
-  // get the number of facets of this cell
-  int getNumFacets() const;
-  // get the vertices on a facet of this cell
-  void getFacetVertices(const int num, std::vector<MVertex*> &v) const;
-  
+  std::vector<MVertex*> _v;
+
  public:
 
-  Cell() : _subdomain(false), _combined(false), _index(0), _immune(false), _image(NULL), 
-    _delimage(false) {}
-  Cell(MElement* image);
-  ~Cell();
+  Cell(int dim, std::vector<MVertex*>& v); 
+ Cell() : _num(0), _dim(0), _index(0), _type(0), _domain(0), _combined(false),  _immune(false) {}
 
-  // the mesh element this cell is represented by
-  MElement* getImageMElement() const { 
-    if(_image == NULL || _combined){
-      printf("ERROR: No image mesh element for cell. \n"); }
-    return _image; }
-  // get the cell dimension
-  virtual int getDim() const { return _image->getDim(); };
-  // get/set whether the image mesh element should be deleted when
-  // this cell gets deleted 
-  // (was the mesh element in the original mesh,
-  // is it needed after homology computation for visualization?) 
-  void setDeleteImage(bool delimage) { if(!_combined) _delimage = delimage; }
-  bool getDeleteImage() const { 
-    if(!_combined) return _delimage;
-    else return false; }
+  Cell(MElement* element, int domain);
+  Cell(Cell* parent, int i);
 
-  // find the cells on the boundary of this cell
-  bool findBoundaryElements(std::vector<MElement*>& bdElements);
-  // get boundary cell orientation
-  int findBoundaryCellOrientation(Cell* cell);
-  
+  int getDomain() const { return _domain; }
+  int getNum() const { return _num; }
+  void setNum(int num) { _num = num; };
+  int getType() const { return _type; }
+  int getTypeMSH() const; 
+  virtual int getDim() const { return _dim; }
+  int getParentNum() const { return _pnum; }
+  bool inSubdomain() const { if(_domain != 0) return true; else return false; }
+  void getMeshVertices(std::vector<MVertex*>& v) const { v = _v; }
+
   int getIndex() const { return _index; };
   void setIndex(int index) { _index = index; };
   void setImmune(bool immune) { _immune = immune; };
   bool getImmune() const { return _immune; };
-  bool inSubdomain() const { return _subdomain; }
-  void setInSubdomain(bool subdomain)  { _subdomain = subdomain; }
-  virtual int getNumSortedVertices() const { return _vs.size(); }
-  virtual int getSortedVertex(int vertex) const { return _vs.at(vertex); }
-  virtual int getNum() const { return 0; }
+
+  int getNumSortedVertices() const { return _v.size(); }
+  int getSortedVertex(int vertex) const { return _v.at(vertex)->getNum(); }
+  int getNumVertices() const { return _v.size(); }
+  int getVertex(int vertex) const { return _v.at(vertex)->getNum(); }
+  MVertex* getMeshVertex(int vertex) const { return _v.at(vertex); }
+  void clearSortedVertices() { _v.clear(); }
+
+  void findBdElement(int i, int& type, std::vector<MVertex*>& vertices) const;
+  int getNumBdElements() const;
+  int findBdCellOrientation(Cell* cell) const;
+
+  void revertGlobalNum() { _globalNum--; }
+  void increaseGlobalNum() { _globalNum++; }
 
   // restores the cell information to its original state before reduction
   void restoreCell();
@@ -121,36 +103,73 @@ class Cell
   virtual bool hasVertex(int vertex) const;
   
   // (co)boundary cell iterator
-  typedef std::map<Cell*, int, Less_Cell>::iterator biter;
+  typedef std::map<Cell*, BdInfo, Less_Cell>::iterator biter;
   // iterators to (first/last (co)boundary cells of this cell
   // (orig: to original (co)boundary cells of this cell)
   biter firstBoundary(bool orig=false){ 
-    return orig ? _obd.begin() : _bd.begin(); }
-  biter lastBoundary(bool orig=false){ 
-    return orig ? _obd.end() : _bd.end(); }
+    biter it = _bd.begin();
+    if(!orig) while(it->second.get() == 0 && it != _bd.end()) it++;
+    else while(it->second.geto() == 0 && it != _bd.end()) it++;
+    return it;
+  }
+  biter lastBoundary(){ return _bd.end(); }
   biter firstCoboundary(bool orig=false){ 
-    return orig ? _ocbd.begin() : _cbd.begin(); }
-  biter lastCoboundary(bool orig=false){ 
-    return orig ? _ocbd.end() : _cbd.end(); }
+    biter it = _cbd.begin();
+    if(!orig) while(it->second.get() == 0 && it != _cbd.end()) it++;
+    else while(it->second.geto() == 0 && it != _cbd.end()) it++;
+    return it; 
+  }
+  biter lastCoboundary(){ return _cbd.end(); }
 
-  int getBoundarySize() { return _bd.size(); }
-  int getCoboundarySize() { return _cbd.size(); }
+  int getBoundarySize(bool orig=false) { 
+    int size = 0;
+    for(biter bit = _bd.begin(); bit != _bd.end(); bit++){
+      if(!orig && bit->second.get() != 0) size++;
+      else if(orig && bit->second.geto() != 0) size++;
+    }
+    return size; }
+  int getCoboundarySize(bool orig=false) { 
+    int size = 0;
+    for(biter bit = _cbd.begin(); bit != _cbd.end(); bit++){
+      if(!orig && bit->second.get() != 0) size++;
+      else if(orig && bit->second.geto() != 0) size++;
+    }
+    return size; }
    
   // get the (orig: original) cell boundary
-  void getBoundary(std::map<Cell*, int, Less_Cell >& boundary, 
-		   bool orig=false){
-    orig ? boundary = _obd : boundary =  _bd; }
-  void getCoboundary(std::map<Cell*, int, Less_Cell >& coboundary,
-		     bool orig=false){
-    orig ? coboundary = _ocbd : coboundary = _cbd; }
+  void getBoundary(std::map<Cell*, short int, Less_Cell >& boundary, bool orig=false){
+    boundary.clear();
+    for(biter it = firstBoundary(); it != lastBoundary(); it++){
+      Cell* cell = it->first;
+      if(!orig && it->second.get() != 0) boundary[cell] = it->second.get();
+      if(orig && it->second.geto() != 0) boundary[cell] = it->second.geto();
+    }
+  }
+  void getCoboundary(std::map<Cell*, short int, Less_Cell >& coboundary, bool orig = false){
+    coboundary.clear();
+    for(biter it = firstCoboundary(); it != lastCoboundary(); it++){
+      Cell* cell = it->first;
+      if(!orig && it->second.get() != 0) coboundary[cell] = it->second.get();
+      if(orig && it->second.geto() != 0) coboundary[cell] = it->second.geto();
+    }
+  }
+
   
-  // add (co)boundary cell (orig: as original)
+  // add (co)boundary cell
   // (other: reciprocally also add this cell from the other cell's (co)boundary)
-  void addBoundaryCell(int orientation, Cell* cell, 
-		       bool orig, bool other); 
-  void addCoboundaryCell(int orientation, Cell* cell, 
-			 bool orig, bool other);
+  void addBoundaryCell(int orientation, Cell* cell, bool other); 
+  void addCoboundaryCell(int orientation, Cell* cell, bool other);
   
+  //void saveOriginalBd() { _obd = _bd; _ocbd = _cbd; }
+  void saveOriginalBd() { 
+    for(biter it = firstCoboundary(); it != lastCoboundary(); it++){
+      it->second.init();
+    }
+    for(biter it = firstBoundary(); it != lastBoundary(); it++){
+      it->second.init();
+    }
+  }
+
   // remove (co)boundary cell 
   // (other: reciprocally also revove this cell from the other cell's (co)boundary)
   void removeBoundaryCell(Cell* cell, bool other);
@@ -160,13 +179,13 @@ class Cell
   bool hasBoundary(Cell* cell, bool orig=false);
   bool hasCoboundary(Cell* cell, bool orig=false);
   
-  void clearBoundary() { _bd.clear(); }
-  void clearCoboundary() { _cbd.clear(); }
+  void clearBoundary() { }//_bd.clear(); }
+  void clearCoboundary() {}// _cbd.clear(); }
   
   // print cell debug info
   virtual void printCell();
-  virtual void printBoundary(bool orig=false);
-  virtual void printCoboundary(bool orig=false);   
+  //virtual void printBoundary(bool orig=false);
+  //virtual void printCoboundary(bool orig=false);   
   
   // tools for combined cells
   bool isCombined() const { return _combined; }
@@ -178,21 +197,13 @@ class Cell
   virtual int getNumCells() const {return 1;}
   typedef std::map<Cell*, int, Less_Cell>::iterator citer;
 
-  // equivalence
-  virtual bool operator==(const Cell& c2) const {  
-    if(this->isCombined() != c2.isCombined()) return false;
-    
-    if(this->getNumSortedVertices() != c2.getNumSortedVertices()){
-      return false;
-    }
-    for(int i=0; i < this->getNumSortedVertices();i++){
-      if(this->getSortedVertex(i) != c2.getSortedVertex(i)){
-	return false;
-      }
-    }
-    return true;
+  bool operator==(const Cell& c2) const {
+    //if(this->isCombined() != c2.isCombined()) return false;
+    return (this->getNum() == c2.getNum());
   }
+
 };
+
 
 // A cell that is a combination of cells of same dimension
 class CombinedCell : public Cell{
@@ -201,10 +212,6 @@ class CombinedCell : public Cell{
   // list of cells this cell is a combination of
   std::map< Cell*, int, Less_Cell > _cells;
 
-  // combined cell number, used for ordering
-  int _num;
-  static int _globalNum;
-
  public:
   
   CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co=false);
@@ -212,20 +219,15 @@ class CombinedCell : public Cell{
   ~CombinedCell() {}
 
   int getDim() const { return _cells.begin()->first->getDim(); }
-  int getNumSortedVertices() const { return 0; }
-  int getSortedVertex(int vertex) const { return 0; }
   void getCells(std::map< Cell*, int, Less_Cell >& cells) { cells = _cells; }
   int getNumCells() const {return _cells.size();}  
-  int getNum() const { return _num; }
   bool hasVertex(int vertex) const;
 
   bool operator==(const Cell& c2) const {
-    if(this->isCombined() != c2.isCombined()) return false;
-    if(this->getNum() != c2.getNum()) return false;
-    else return true;
+    //if(this->isCombined() != c2.isCombined()) return false;
+    return (this->getNum() == c2.getNum());
   }
 };
-  
-#endif
+
 
 #endif

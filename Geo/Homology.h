@@ -43,16 +43,26 @@ class Homology
   std::vector<GEntity*> _domainEntities;
   std::vector<GEntity*> _subdomainEntities;  
 
-  // physical group numbers of resulted generator chains in model
-  std::vector<int> _generators;
+  // use cell combining
+  bool _combine;
+  // use cell omit
+  bool _omit;
+  // use chain smoothning
+  bool _smoothen;
+
+  int _maxdomain;
+  int _maxnum;
 
   // file name to store the results
   std::string _fileName;
  
+  std::map<int, Chain*> _basisChains;
+
  public:
   
   Homology(GModel* model, std::vector<int> physicalDomain,
-	   std::vector<int> physicalSubdomain);
+	   std::vector<int> physicalSubdomain, 
+	   bool combine=true, bool omit=true, bool smoothen=true);
   ~Homology();
   
   // create a cell complex from a mesh in geometrical entities of Gmsh
@@ -67,9 +77,8 @@ class Homology
   void findGenerators(CellComplex* cellComplex=NULL);
   void findDualGenerators(CellComplex* cellComplex=NULL);
 
-
   // experimental
-  void findHomSequence();
+  void findHomSequence() {}
   void computeRanks() {}  
    
   // create a string describing the generator
@@ -82,11 +91,13 @@ class Homology
   // in _model, for debugging
   void storeCells(CellComplex* cellComplex, int dim);
 
+  GModel* getModel() const { return _model; }
+
 };
 
 // A class representing a chain.
-// Used to visualize and post-process generators of the homology spaces in Gmsh.
-class Chain{
+// Used to store generators of the homology spaces and visualize them in Gmsh.
+class Chain {
   
  private:
   // cells and their coefficients in this chain
@@ -97,7 +108,6 @@ class Chain{
   int _num;
   // cell complex this chain belongs to
   CellComplex* _cellComplex;
-  GModel* _model;
    
   // torsion coefficient
   int _torsion;
@@ -105,50 +115,22 @@ class Chain{
   int _dim;
   
  public:
-  Chain() {}
-  Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, 
-	CellComplex* cellComplex, GModel* model,
-	std::string name="Chain", int torsion=0);
   Chain(std::map<Cell*, int, Less_Cell>& chain,
-        CellComplex* cellComplex, GModel* model,
+        CellComplex* cellComplex, int num,
         std::string name="Chain", int torsion=0);
-  Chain(Chain* chain){ 
-    chain->getCells(_cells);
-    _torsion = chain->getTorsion();
-    _name = chain->getName();
-    _cellComplex = chain->getCellComplex();
-    _dim = chain->getDim();
-    _model = chain->getGModel();
-    _num = chain->getNum();
-  }  
+
   typedef std::map<Cell*, int, Less_Cell>::iterator citer;
   citer firstCell() {return _cells.begin(); }
   citer lastCell() {return _cells.end(); }
 
-  ~Chain() {} 
-
-  // remove a cell from this chain
-  void removeCell(Cell* cell);
-   
-  // add a cell to this chain
-  void addCell(Cell* cell, int coeff);
-  
-  bool hasCell(Cell* c);
-  Cell* findCell(Cell* c);
-  int getCoeff(Cell* c);
-  
-  
   int getTorsion() const { return _torsion; }
   int getDim() const { return _dim; }
   CellComplex* getCellComplex() const { return _cellComplex; }
-  GModel* getGModel() const { return _model; }
-  void getCells(std::map<Cell*, int, Less_Cell> cells) const{ cells = _cells; }
+  void getCells(std::map<Cell*, int, Less_Cell> cells) const { 
+    cells = _cells; }
   
   // erase cells from the chain with zero coefficient
   void eraseNullCells();
-
-  // set all cell in chain not immune
-  void deImmuneCells();
   
   // number of cells in this chain 
   int getSize() const { return _cells.size();}
@@ -164,7 +146,7 @@ class Chain{
   // for debugging only
   int writeChainMSH(const std::string &name);
 
-  // create a physical group of this chain.
+  // create a Gmsh physical group from this chain.
   int createPGroup();
   
 };
