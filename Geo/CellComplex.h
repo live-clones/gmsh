@@ -1,10 +1,9 @@
-// Homology Solver 
-// 
-//  Copyright (C) 2010 Matti Pellikka and Saku Suuriniemi
-//  Tampere University of Technology, Electromagnetics
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
 //
-//  See LICENCE.txt for license information.
-//  See README.txt for more information.
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+//
+// Contributed by Matti Pellikka <matti.pellikka@tut.fi>.
 
 #ifndef _CELLCOMPLEX_H_
 #define _CELLCOMPLEX_H_
