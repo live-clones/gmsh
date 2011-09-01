@@ -6,6 +6,9 @@
 //  See LICENCE.txt for license information.
 //  See README.txt for more information.
 
+#include "GmshConfig.h"
+#if defined(HAVE_KBIPACK)
+
 #include "ChainComplex.h"
 
 ChainComplex::ChainComplex(CellComplex* cellComplex, int domain)
@@ -1030,3 +1033,4 @@ void HomologySequence::blockHBasis(gmp_matrix* block1T,
   destroy_gmp_matrix(temp2);
 }
 
+#endif
