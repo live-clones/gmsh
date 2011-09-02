@@ -20,24 +20,25 @@ class fullVector
  private:
   int _r;          // size of the vector
   scalar *_data;   // pointer on the first element
+  bool _own_data;
   friend class fullMatrix<scalar>;
 
  public:
   // constructor and destructor
-  fullVector(void) : _r(0),_data(0) {}
-  fullVector(int r) : _r(r)
+  fullVector(void) : _r(0),_data(0),_own_data(1) {}
+  fullVector(int r) : _r(r),_own_data(1)
   {
     _data = new scalar[_r];
     setAll(0.);
   }
-  fullVector(const fullVector<scalar> &other) : _r(other._r)
+  fullVector(const fullVector<scalar> &other) : _r(other._r),_own_data(1)
   {
     _data = new scalar[_r];
     for(int i = 0; i < _r; ++i) _data[i] = other._data[i];
   }
   ~fullVector()
   {
-    if(_data) delete [] _data;
+    if(_own_data && _data) delete [] _data;
   }
 
   // get information (size, value)
@@ -74,9 +75,17 @@ class fullVector
   }
   void setAsProxy(const fullVector<scalar> &original, int r_start, int r)
   {
-    if(_data) delete [] _data;
+    if(_own_data && _data) delete [] _data;
+    _own_data = false;
     _r = r;
     _data = original._data + r_start;
+  }
+  void setAsProxy(const fullMatrix<scalar> &original, int c)
+  {
+    if(_own_data && _data) delete [] _data;
+    _own_data = false;
+    _r = original._r;
+    _data = original._data + c * _r;
   }
   inline void scale(const scalar s)
   {
