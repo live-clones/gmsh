@@ -19,14 +19,14 @@
 #include "meshGFaceOptimize.h"
 
 class RecombTriangle;
-class Node;
+class Recomb2D_Node;
 struct lessRecombTri {
   bool operator()(RecombTriangle *rt1, RecombTriangle *rt2) const;
 };
 
 typedef std::set<RecombTriangle*,lessRecombTri> Set_Recomb;
 typedef std::map<MElement*,std::set<RecombTriangle*> > Map_Tri_Recomb;
-typedef std::map<MElement*,Node*> Map_Tri_Node;
+typedef std::map<MElement*,Recomb2D_Node*> Map_Tri_Node;
 
 class Recombine2D {
   private :
@@ -44,7 +44,7 @@ class Recombine2D {
     void _recombine();
     Set_Recomb::iterator _bestNextRecombination();
     void _removeImpossible(Set_Recomb::iterator);
-    void _rmRT(RecombTriangle *, MElement *);
+    void _rmRT(RecombTriangle *, MElement *e = NULL);
     
   public :
     Recombine2D(GFace*, int horizon);
@@ -62,6 +62,7 @@ class RecombTriangle {
     double _angle;
     double _benefit;
     bool _formingQuad;
+    int _sign;
     
   public :
     RecombTriangle(const MEdge &, MElement *, MElement *);
@@ -85,10 +86,10 @@ class RecombTriangle {
     double compute_alignment(const MEdge&, MElement*, MElement*);
 };
 
-class Node {
+class Recomb2D_Node {
   private :  
     double _benef, _totBenef;
-    int _nskip;
+    int _nskip, _depth;
     Set_Recomb::iterator _recomb;
     Map_Tri_Node *_touch;
     std::vector<Map_Tri_Node::iterator> _vit;
@@ -96,15 +97,19 @@ class Node {
   
   public :
     //Node(){}
-    Node(Set_Recomb::iterator, Map_Tri_Node &, int, double ben = .0);
-    ~Node();
+    //Recomb2D_Node(Set_Recomb::iterator, Map_Tri_Node &, int, double ben = .0);
+    
+    Recomb2D_Node(Set_Recomb::iterator, int nskip, int depth, Map_Tri_Node &);
+    Recomb2D_Node(Set_Recomb::iterator, int nskip, Recomb2D_Node *);
+    ~Recomb2D_Node();
     
     void erase();
     void blocking(const Map_Tri_Node::iterator &);
     bool isBetter() {return _blocking.size() < 2;}
     Set_Recomb::iterator getItRecomb() {return _recomb;}
     double getTotBenef() {return _totBenef;}
-    double getnSkip() {return _nskip;}
+    int getnSkip() {return _nskip;}
+    double getBound() {return _totBenef + _benef * _depth;}
 };
 
 
