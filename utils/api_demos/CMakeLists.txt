@@ -14,7 +14,7 @@ project(api_demos CXX)
 add_subdirectory(../.. "${CMAKE_CURRENT_BINARY_DIR}/gmsh")
 
 include_directories(../../Common ../../Numeric ../../Geo ../../Mesh 
-   ../../Solver ../../Post ../../Plugin ../../Graphics 
+   ../../Solver ../../Post ../../Plugin ../../Graphics ../../contrib/ANN/include
    ../../contrib/DiscreteIntegration ${GMSH_EXTERNAL_INCLUDE_DIRS}
    ${CMAKE_CURRENT_BINARY_DIR}/gmsh/Common)
 
@@ -50,3 +50,6 @@ target_link_libraries(mainPost shared)
 
 add_executable(mainSimple mainSimple.cpp)
 target_link_libraries(mainSimple shared)
+
+add_executable(mainMoving mainMoving.cpp)
+target_link_libraries(mainMoving shared)

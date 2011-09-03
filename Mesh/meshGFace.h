@@ -8,8 +8,9 @@
 
 #include <vector>
 #include <set>
-#include "GFaceCompound.h"
+#include <list>
 
+class GEdge;
 class GFace;
 class MVertex;
 class GFaceCompound;
@@ -20,19 +21,19 @@ class meshGFace {
   int twoPassesMesh;
   bool onlyInitialMesh;
  public :
-  meshGFace (bool r = true, int t = 0) : repairSelfIntersecting1dMesh(r), twoPassesMesh(t)
-    ,onlyInitialMesh(false)
+  meshGFace(bool r = true, int t = 0)
+    : repairSelfIntersecting1dMesh(r), twoPassesMesh(t), onlyInitialMesh(false)
   {
   }
-  void operator () (GFace *);
-  void setOnlyInitial() {onlyInitialMesh = true;}
+  void operator()(GFace *);
+  void setOnlyInitial(){ onlyInitialMesh = true; }
 };
 
 // Destroy the mesh of the face
 class deMeshGFace {
  public :
-  deMeshGFace (){}
-  void operator () (GFace *);
+  deMeshGFace(){}
+  void operator()(GFace *);
 };
 
 // Orient the mesh of a face to match the orientation of the
@@ -42,8 +43,8 @@ class deMeshGFace {
 // 2) some volume algorithms need to change the surface mesh
 //    orientation
 class orientMeshGFace {
-  public :
-  void operator () (GFace *);
+ public :
+  void operator()(GFace *);
 };
 
 void fourthPoint(double *p1, double *p2, double *p3, double *p4);
