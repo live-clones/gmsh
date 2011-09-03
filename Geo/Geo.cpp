@@ -1025,6 +1025,7 @@ static void CopySurface(Surface *s, Surface *ss, bool copyMeshingMethod)
       Msg::Warning("Only automatic transfinite surface specifications can be copied");
   }
   ss->Generatrices = List_Create(List_Nbr(s->Generatrices), 1, sizeof(Curve *));
+  ss->InSphereCenter = s->InSphereCenter; // FIXME: hack...
   List_Copy(s->Generatrices, ss->Generatrices);
   End_Surface(ss);
 }
