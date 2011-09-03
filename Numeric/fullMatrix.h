@@ -80,6 +80,7 @@ class fullVector
     _r = r;
     _data = original._data + r_start;
   }
+ #ifndef SWIG // NO FRIEND CLASS SUPPORT FOR SWIG !! FIX IT
   void setAsProxy(const fullMatrix<scalar> &original, int c)
   {
     if(_own_data && _data) delete [] _data;
@@ -87,6 +88,7 @@ class fullVector
     _r = original._r;
     _data = original._data + c * _r;
   }
+ #endif // SWIG
   inline void scale(const scalar s)
   {
     if(s == 0.)
