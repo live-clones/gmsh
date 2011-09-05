@@ -160,6 +160,7 @@ void openglWindow::draw()
     glDisable(GL_BLEND);
     glDisable(GL_LINE_STIPPLE);
     glEnable(GL_DEPTH_TEST);
+    glDrawBuffer(GL_BACK);
   }
   else if(addPointMode) { 
     // draw the whole scene and the point to add
@@ -397,7 +398,7 @@ int openglWindow::handle(int event)
     }
     _click.set(_ctx, Fl::event_x(), Fl::event_y());
     _prev.set(_ctx, Fl::event_x(), Fl::event_y());
-   FlGui::instance()->manip->update();
+    FlGui::instance()->manip->update();
     return 1;
 
   case FL_RELEASE:
