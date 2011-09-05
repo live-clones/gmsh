@@ -395,9 +395,6 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
       strcat(pat, NN);
       strcat(pat, formats[i].pat);
     }
-#if defined(HAVE_NATIVE_FILE_CHOOSER) // fix crash in early fltk 1.3.x
-    strcat(pat, NN);
-#endif
   }
 
  test:
