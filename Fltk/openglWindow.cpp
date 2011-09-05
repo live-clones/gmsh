@@ -134,6 +134,7 @@ void openglWindow::draw()
     glLoadIdentity();
     glColor3d(1., 1., 1.);
     glDisable(GL_DEPTH_TEST);
+    glDrawBuffer(GL_FRONT_AND_BACK);
     if(selectionMode && CTX::instance()->mouseSelection){
       glEnable(GL_LINE_STIPPLE);
       glLineStipple(1, 0x0F0F);
