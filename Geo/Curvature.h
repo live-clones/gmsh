@@ -163,6 +163,7 @@ public:
   
   void setGModel(GModel* model);
   void retrieveCompounds();
+  double getAtVertex(const MVertex *v) const;
   //void retrievePhysicalSurfaces(const std::string & face_tag);
 
   /// The following function implements algorithm from:

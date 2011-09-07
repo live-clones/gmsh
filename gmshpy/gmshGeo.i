@@ -32,6 +32,7 @@
   #include "SPoint3.h"
   #include "SPoint2.h"
   #include "SBoundingBox3d.h"
+  #include "Curvature.h"
 %}
 
 namespace std {
@@ -72,3 +73,4 @@ namespace std {
 %include "SPoint3.h"
 %include "SPoint2.h"
 %include "SBoundingBox3d.h"
+%include "Curvature.h"

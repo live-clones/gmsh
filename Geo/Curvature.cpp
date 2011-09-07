@@ -100,10 +100,14 @@ Curvature& Curvature::getInstance()
        std::list<GFace*>::iterator surfIterator;
 
        for(surfIterator = tempcompounds.begin(); surfIterator != tempcompounds.end(); ++surfIterator) {
-         _ptFinalEntityList.push_back(*surfIterator);
+         if ((*surfIterator)->geomType() == GEntity::DiscreteSurface) {
+           _ptFinalEntityList.push_back(*surfIterator);
+         }
        }
      }
-
+     else if (entities[ie]->geomType() == GEntity::DiscreteSurface) {
+         _ptFinalEntityList.push_back(dynamic_cast<GFace*>(entities[ie]));
+     }
    }
 #endif
  }
@@ -984,6 +988,15 @@ void Curvature::edgeNodalValues(MLine* edge, double& c0, double& c1, int isAbs)
    }
 
 //========================================================================================================
+
+double Curvature::getAtVertex(const MVertex *v) const {
+  std::map<int,int>::const_iterator it = _VertexToInt.find(v->getNum());
+  if (it == _VertexToInt.end()) {
+    Msg::Error("curvature has not been computed for vertex %i (%i)", v->getNum(), _VertexToInt.size());
+    return 1;
+  }
+  return _VertexCurve[it->second];
+}
 
 void Curvature::writeToPosFile( const std::string & filename)
 {

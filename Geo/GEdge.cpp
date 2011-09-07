@@ -245,7 +245,6 @@ SPoint2 GEdge::reparamOnFace(const GFace *face, double epar,int dir) const
 
 double GEdge::curvature(double par) const
 {
-  printf("in curv edge \n");
   SVector3 d1 = firstDer(par);
   SVector3 d2 = secondDer(par);
   
