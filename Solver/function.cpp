@@ -44,6 +44,7 @@ void function::setArgument(fullMatrix<double> &v, const function *f, int iMap)
 
 functionConstant *function::_timeFunction = NULL;
 functionConstant *function::_dtFunction = NULL;
+functionConstant *function::_dtSubFunction = NULL;
 
 functionConstant *function::getTime()
 {
@@ -57,6 +58,12 @@ functionConstant *function::getDT()
   if (! _dtFunction)
     _dtFunction = new functionConstant(0.);
   return _dtFunction;
+}
+functionConstant *function::getSubDT()
+{
+  if (! _dtSubFunction)
+    _dtSubFunction = new functionConstant(0.);
+  return _dtSubFunction;
 }
 
 functionSolution *functionSolution::_instance = NULL;
