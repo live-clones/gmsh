@@ -18,7 +18,7 @@
 #include "MPyramid.h"
 #include "MElementCut.h"
 #include "GEntity.h"
-#include "GFace.h"
+//#include "GFace.h" ??
 #include "StringUtils.h"
 #include "Numeric.h"
 #include "Context.h"

@@ -298,6 +298,7 @@ function *functionLevelsetSmoothNew (const function *f0, const double valMin, co
 function *functionSumNew (const function *f0, const function *f1);
 function *functionMinusNew (const function *f0, const function *f1);
 function *functionProdNew (const function *f0, const function *f1);
+function *functionQuotientNew (const function *f0, const function *f1);
 function *functionScaleNew (const function *f0, const double s);
 function *functionExtractCompNew (const function *f0, const int iComp);
 function *functionCatCompNew(std::vector<const function *> fArray);

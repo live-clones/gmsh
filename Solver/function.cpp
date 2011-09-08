@@ -103,7 +103,7 @@ class functionNormals : public function {
   static functionNormals *_instance;
   // constructor is private only 1 instance can exists, call get to
   // access the instance
-  functionNormals() : function(3){} 
+  functionNormals() : function(3){} //TODO TOFIX : set to zero, but not display the error (in function.h)
  public:
   void call(dataCacheMap *m, fullMatrix<double> &sol) 
   {
@@ -300,7 +300,7 @@ dataCacheDouble *dataCacheMap::get(const function *f, dataCacheDouble *caller, b
       replaceCache.map = rMap;
       r->functionReplaceCaches.push_back (replaceCache); 
     }
-    ((function*)f)->registerInDataCacheMap(this, r);
+    ((function*)f)->registerInDataCacheMap(this, r); // set if dofFunction(Gradient) as neededDof in dgDataCM
   }
 
   // update the dependency tree
@@ -538,6 +538,37 @@ function *functionProdNew(const function *f0, const function *f1)
 {
   return new functionProd (f0, f1);
 }
+
+// functionQuotient
+
+class functionQuotient : public function {
+ public:
+  fullMatrix<double> _f0, _f1;
+  void call(dataCacheMap *m, fullMatrix<double> &val) 
+  {
+    for (int i = 0; i < val.size1(); i++)
+      for (int j = 0; j < val.size2(); j++)
+        val(i, j)= _f0(i, j) / _f1(i, j);
+  }
+  functionQuotient(const function *f0, const function *f1) : function(f0->getNbCol()) 
+  {
+    if (f0->getNbCol() != f1->getNbCol()) {
+      Msg::Error("trying to compute product of 2 functions of different sizes: %d %d\n",
+                 f0->getNbCol(), f1->getNbCol());
+      throw;
+    }
+    setArgument (_f0, f0);
+    setArgument (_f1, f1);
+  }
+};
+
+function *functionQuotientNew (const function *f0, const function *f1)
+{
+  return new functionQuotient (f0, f1);
+}
+
+
+
 
 // functionExtractComp
 

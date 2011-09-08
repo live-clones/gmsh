@@ -185,6 +185,24 @@ class GEntity {
   // vertices that bound this entity.
   virtual std::list<GVertex*> vertices() const { return std::list<GVertex*>(); }
 
+  // for python, temporary solution while iterator are not binded
+  std::vector<GRegion*> bindingsGetRegions() { 
+    std::list<GRegion*> r = regions();  // NOTE : two-line to dont create two different lists with diff pointers
+    return std::vector<GRegion*> (r.begin(), r.end());
+  }
+  std::vector<GFace*> bindingsGetFaces() {
+    std::list<GFace*> f = faces();
+    return std::vector<GFace*> (f.begin(), f.end());
+  }
+  std::vector<GEdge*> bindingsGetEdges() {
+    std::list<GEdge*> e = edges();
+    return std::vector<GEdge*> (e.begin(), e.end());
+  }
+  std::vector<GVertex*> bindingsGetVertices() {
+    std::list<GVertex*> v = vertices();
+    return std::vector<GVertex*> (v.begin(), v.end());
+  }
+
   // underlying geometric representation of this entity.
   virtual GeomType geomType() const { return Unknown; }
 

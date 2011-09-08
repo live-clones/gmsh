@@ -355,12 +355,12 @@ int MergeFile(std::string fileName, bool warnIfMissing)
        !strncmp(header, "$PARA", 5) || !strncmp(header, "$ELM", 4) ||
        !strncmp(header, "$MeshFormat", 11) || !strncmp(header, "$Comments", 9)) {
       // mesh matcher
-      if(CTX::instance()->geom.matchGeomAndMesh && !GModel::current()->empty()){
-	GModel* tmp2 = GModel::current();
+      if(CTX::instance()->geom.matchGeomAndMesh && !GModel::current()->empty()) {
+        GModel* tmp2 = GModel::current();
         GModel* tmp = new GModel();
         tmp->readMSH(fileName);
         if(GeomMeshMatcher::instance()->match(tmp2, tmp))
-	  fileName = "out.msh";
+          fileName = "out.msh";
         delete tmp;
       }
       status = GModel::current()->readMSH(fileName);
@@ -368,9 +368,9 @@ int MergeFile(std::string fileName, bool warnIfMissing)
       if(status > 1) status = PView::readMSH(fileName);
 #endif
 #if defined(HAVE_MESH)
-      if(CTX::instance()->mesh.order > 1) 
+      if(CTX::instance()->mesh.order > 1)
         SetOrderN(GModel::current(), CTX::instance()->mesh.order,
-                  CTX::instance()->mesh.secondOrderLinear, 
+                  CTX::instance()->mesh.secondOrderLinear,
                   CTX::instance()->mesh.secondOrderIncomplete);
 #endif
     }

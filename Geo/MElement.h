@@ -18,7 +18,7 @@
 #include "JacobianBasis.h"
 #include "Gauss.h"
 
-class GFace;
+//class GFace; ??
 
 // A mesh element.
 class MElement
