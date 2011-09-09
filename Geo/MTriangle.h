@@ -215,7 +215,7 @@ class MTriangle6 : public MTriangle {
   }
   virtual int getTypeForMSH() const { return MSH_TRI_6; }
   virtual int getTypeForUNV() const { return 92; } // thin shell parabolic triangle
-  //virtual int getTypeForVTK() const { return 22; }
+  virtual int getTypeForVTK() const { return 22; }
   virtual const char *getStringForPOS() const { return "ST2"; }
   virtual const char *getStringForBDF() const { return "CTRIA6"; }
   virtual const char *getStringForDIFF() const { return "ElmT6n2D"; }

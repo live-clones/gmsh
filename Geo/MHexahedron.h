@@ -299,7 +299,7 @@ class MHexahedron20 : public MHexahedron {
   }
   virtual int getTypeForMSH() const { return MSH_HEX_20; }
   virtual int getTypeForUNV() const { return 116; } // solid parabolic brick
-  //virtual int getTypeForVTK() const { return 25; }
+  virtual int getTypeForVTK() const { return 25; }
   virtual const char *getStringForBDF() const { return "CHEXA"; }
   virtual const char *getStringForINP() const { return "C3D20"; }
   virtual const char *getStringForDIFF() const { return "ElmB20n3D"; }

@@ -139,7 +139,7 @@ class MLine3 : public MLine {
   }
   virtual int getTypeForMSH() const { return MSH_LIN_3; }
   virtual int getTypeForUNV() const { return 24; } // parabolic beam
-  //virtual int getTypeForVTK() const { return 21; }
+  virtual int getTypeForVTK() const { return 21; }
   virtual const char *getStringForPOS() const { return "SL2"; }
   virtual const char *getStringForINP() const { return "C1D3"; }
   virtual void getNode(int num, double &u, double &v, double &w)

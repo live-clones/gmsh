@@ -252,7 +252,7 @@ class MTetrahedron10 : public MTetrahedron {
   }
   virtual int getTypeForMSH() const { return MSH_TET_10; }
   virtual int getTypeForUNV() const { return 118; } // solid parabolic tetrahedron
-  //virtual int getTypeForVTK() const { return 24; }
+  virtual int getTypeForVTK() const { return 24; }
   virtual const char *getStringForPOS() const { return "SS2"; }
   virtual const char *getStringForBDF() const { return "CTETRA"; }
   virtual const char *getStringForDIFF() const { return "ElmT10n3D"; }

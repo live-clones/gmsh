@@ -226,7 +226,7 @@ class MQuadrangle8 : public MQuadrangle {
   }
   virtual int getTypeForMSH() const { return MSH_QUA_8; }
   virtual int getTypeForUNV() const { return 95; } // shell parabolic quadrilateral
-  //virtual int getTypeForVTK() const { return 23; }
+  virtual int getTypeForVTK() const { return 23; }
   virtual const char *getStringForBDF() const { return "CQUAD8"; }
   virtual const char *getStringForDIFF() const { return "ElmB8n2D"; }
   virtual const char *getStringForINP() const { return "C2D8"; }
