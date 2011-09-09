@@ -80,7 +80,6 @@ class fullVector
     _r = r;
     _data = original._data + r_start;
   }
- #ifndef SWIG // NO FRIEND CLASS SUPPORT FOR SWIG !! FIX IT
   void setAsProxy(const fullMatrix<scalar> &original, int c)
   {
     if(_own_data && _data) delete [] _data;
@@ -88,7 +87,6 @@ class fullVector
     _r = original._r;
     _data = original._data + c * _r;
   }
- #endif // SWIG
   inline void scale(const scalar s)
   {
     if(s == 0.)
@@ -152,6 +150,7 @@ class fullMatrix
   bool _own_data; // should data be freed on delete ?
   int _r, _c; // size of the matrix
   scalar *_data; // pointer on the first element
+  friend class fullVector<scalar>;
 
  public:
   // constructor and destructor
@@ -219,7 +218,7 @@ class fullMatrix
     scalar n = 0.;
     for(int i = 0; i < _r; ++i)
       for(int j = 0; j < _c; ++j)
-	n += (*this)(i, j) * (*this)(i, j);
+        n += (*this)(i, j) * (*this)(i, j);
     return sqrt(n);
   }
   bool resize(int r, int c, bool resetValue = true) // data will be owned (same as constructor)
