@@ -663,8 +663,10 @@ static int getNumElementsMSH(GModel *m, bool saveAll, int saveSinglePartition)
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
     n += getNumElementsMSH(*it, saveAll, saveSinglePartition);
     if ( CTX::instance()->mesh.saveTri){
-      for(unsigned int i = 0; i < (*it)->polygons.size(); i++)
-	n += (*it)->polygons[i]->getNumChildren()-1;
+      for(unsigned int i = 0; i < (*it)->polygons.size(); i++){
+        int nbC = (*it)->polygons[i]->getNumChildren()-1;
+	n += (saveAll ? nbC : nbC * (*it)->physicals.size());
+      }
     }
     else{
       for(unsigned int i = 0; i < (*it)->polygons.size(); i++)
