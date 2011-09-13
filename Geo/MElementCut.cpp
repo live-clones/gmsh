@@ -1150,9 +1150,8 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
       MVertex *vi = gmEntities[i]->getMeshVertex(j);
       if(cutElem){
         int k = 0;
-        for(; k < primS; k++){
+        for(; k < primS; k++)
           verticesLs(k, vi->getIndex()) = (*primitives[k])(vi->x(), vi->y(), vi->z());
-      	}
         if(primS > 1)
           verticesLs(k, vi->getIndex()) = (*ls)(vi->x(), vi->y(), vi->z());
       }
@@ -1199,6 +1198,10 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   std::vector<const gLevelset *> RPN;
   ls->getRPN(RPN);
   for(unsigned int i = 0; i < gmEntities.size(); i++) {
+    std::vector<int> oldLineRegs;
+    for (std::map<int, std::vector<MElement*> >::iterator it = elements[1].begin();
+         it != elements[1].end(); it++)
+      oldLineRegs.push_back(it->first);
     for(unsigned int j = 0; j < gmEntities[i]->getNumMeshElements(); j++) {
       MElement *e = gmEntities[i]->getMeshElement(j);
       e->setVolumePositive();
@@ -1207,6 +1210,58 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
                      borderElemTags, borderPhysTags, cp, lines, triangles, quads, tetras, hexas);
       cutGM->getMeshPartitions().insert(e->getPartition());
     }
+
+    // Create elementary and physical for non connected border lines
+    if(triangles.size() && lines.size()){
+      std::vector<int> newLineRegs;
+      int k = 0;
+      for (std::map<int, std::vector<MElement*> >::iterator it = elements[1].begin();
+           it != elements[1].end(); it++){
+        if(oldLineRegs.size() && it->first == oldLineRegs[k])
+          k++;
+        else
+          newLineRegs.push_back(it->first);
+      }
+      for(unsigned int j = 0; j < newLineRegs.size(); j++){
+        int nLR = newLineRegs[j];
+        while(1){
+          std::vector<MElement*> conLines; 
+          conLines.push_back(elements[1][nLR][0]);
+          elements[1][nLR].erase(elements[1][nLR].begin());
+          MVertex *v1 = conLines[0]->getVertex(0);
+          MVertex *v2 = conLines[0]->getVertex(1);
+          for(int k = 0; k < elements[1][nLR].size(); ){
+            MVertex *va = elements[1][nLR][k]->getVertex(0);
+            MVertex *vb = elements[1][nLR][k]->getVertex(1);
+            if(va == v1 || vb == v1 || va == v2 || vb == v2){
+              conLines.push_back(elements[1][nLR][k]);
+              elements[1][nLR].erase(elements[1][nLR].begin() + k);
+              if(v1 == va) v1 = vb;
+              else if(v1 == vb) v1 = va;
+              else if(v2 == va) v2 = vb;
+              else if(v2 == vb) v2 = va;
+              k = 0;
+            }
+            else
+              k++;
+          }
+          if(!elements[1][nLR].empty()){
+            int newReg = ++newElemTags[1][0];
+            int newPhys = ++newPhysTags[1][0];
+            std::vector<int> phys; phys.push_back(newPhys);
+            assignPhysicals(gm, phys, newReg, 1, physicals);
+            for(int k = 0; k < conLines.size(); k++)
+              elements[1][newReg].push_back(conLines[k]);
+          }
+          else {
+            for(int k = 0; k < conLines.size(); k++)
+              elements[1][nLR].push_back(conLines[k]);
+            break;
+          }
+        }
+      }
+    }
+
     for(DI_Point::Container::iterator it = cp.begin(); it != cp.end(); it++) delete *it;
     for(unsigned int k = 0; k < lines.size(); k++) delete lines[k];
     for(unsigned int k = 0; k < triangles.size(); k++) delete triangles[k];
