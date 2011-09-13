@@ -1,4 +1,4 @@
-#include "levy3D.h"
+#include "Levy3D.h"
 #include "polynomialBasis.h"
 #include "Gauss.h"
 #include "GModel.h"
