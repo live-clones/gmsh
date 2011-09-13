@@ -85,7 +85,7 @@ set(GMSH_API
     Geo/SOrientedBoundingBox.h Geo/CellComplex.h Geo/ChainComplex.h Geo/Cell.h
     Geo/Homology.h
   Mesh/meshGEdge.h Mesh/meshGFace.h Mesh/meshGFaceOptimize.h 
-    Mesh/meshGFaceDelaunayInsertion.h
+    Mesh/meshGFaceDelaunayInsertion.h Mesh/levy3D.h
   Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h Solver/elasticityTerm.h
     Solver/crossConfTerm.h Solver/orthogonalTerm.h
     Solver/linearSystem.h Solver/linearSystemGMM.h Solver/linearSystemCSR.h 

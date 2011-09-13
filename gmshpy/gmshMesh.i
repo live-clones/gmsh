@@ -10,6 +10,7 @@
   #include "meshGFaceLloyd.h"
   #include "meshGFaceOptimize.h"
   #include "meshPartitionOptions.h"
+  #include "Levy3D.h"
 %}
 
 %include "GmshConfig.h"
@@ -18,3 +19,4 @@
 %include "meshGFaceLloyd.h"
 %include "meshGFaceOptimize.h"
 %include "meshPartitionOptions.h"
+%include "Levy3D.h"

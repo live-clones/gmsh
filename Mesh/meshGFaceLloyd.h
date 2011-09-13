@@ -126,7 +126,7 @@ class voronoi_vertex{
   int index3;
   SVector3 normal;
   bool duplicate;
-  double h;
+  double rho;
  public :
   voronoi_vertex(SPoint2);
   voronoi_vertex();
@@ -137,14 +137,14 @@ class voronoi_vertex{
   int get_index3();
   SVector3 get_normal();
   bool get_duplicate();
-  double get_h();
+  double get_rho();
   void set_point(SPoint2);
   void set_index1(int);
   void set_index2(int);
   void set_index3(int);
   void set_normal(SVector3);
   void set_duplicate(bool);
-  void set_h(double);
+  void set_rho(double);
 };
 
 class voronoi_element{
@@ -162,7 +162,7 @@ class voronoi_element{
   voronoi_vertex get_v1();
   voronoi_vertex get_v2();
   voronoi_vertex get_v3();
-  double get_rho(double,double,int);
+  double get_rho(double,double);
   double get_drho_dx();
   double get_drho_dy();
   metric get_metric();

@@ -727,7 +727,7 @@ double backgroundMesh::operator() (double u, double v, double w) const
   MElement *e = _octree->find(u, v, w, 2, true);
   if (!e) {
     Msg::Error("cannot find %g %g", u, v);
-    return -1000.0;
+	return -1000.0;//0.4;
   }
   e->xyz2uvw(uv, uv2);
   std::map<MVertex*,double>::const_iterator itv1 = _sizes.find(e->getVertex(0));

@@ -1014,6 +1014,7 @@ void lpcvt::print_segment(SPoint2 p1,SPoint2 p2,std::ofstream& file){
 
 void lpcvt::compute_parameters(GFace* gf,int p){
   double h1,h2,h3;
+  double rho1,rho2,rho3;
   double k;
   double ratio;
   double angle;
@@ -1038,13 +1039,16 @@ void lpcvt::compute_parameters(GFace* gf,int p){
 	h1 = k*backgroundMesh::current()->operator()(p1.x(),p1.y(),0.0)*ratio;
 	h2 = k*backgroundMesh::current()->operator()(p2.x(),p2.y(),0.0)*ratio;
 	h3 = k*backgroundMesh::current()->operator()(p3.x(),p3.y(),0.0)*ratio;
+	rho1 = it->compute_rho(h1,p);
+	rho2 = it->compute_rho(h2,p);
+	rho3 = it->compute_rho(h3,p);
 	angle = -backgroundMesh::current()->getAngle(p1.x(),p1.y(),0.0);
 	cosinus = cos(angle);
 	sinus = sin(angle);
 	m = metric(cosinus,-sinus,sinus,cosinus);
-	v1.set_h(h1);
-	v2.set_h(h2);
-	v3.set_h(h3);
+	v1.set_rho(rho1);
+	v2.set_rho(rho2);
+	v3.set_rho(rho3);
 	it->set_v1(v1);
 	it->set_v2(v2);
 	it->set_v3(v3);
@@ -1207,7 +1211,7 @@ double lpcvt::F(voronoi_element element,int p){
 	y = Ty(u,v,generator,C1,C2);
 	point = SPoint2(x,y);
 	weight = gauss_weights(i,0);
-	rho = element.get_rho(u,v,p);
+	rho = element.get_rho(u,v);
 	energy = energy + weight*rho*f(generator,point,m,p);
   }
   energy = J(generator,C1,C2)*energy;
@@ -1247,7 +1251,7 @@ SVector3 lpcvt::simple(voronoi_element element,int p){
 	y = Ty(u,v,generator,C1,C2);
 	point = SPoint2(x,y);
 	weight = gauss_weights(i,0);
-	rho = element.get_rho(u,v,p);
+	rho = element.get_rho(u,v);
 	comp_x = comp_x + weight*rho*df_dx(generator,point,m,p);
 	comp_y = comp_y + weight*rho*df_dy(generator,point,m,p);
   }
@@ -1292,7 +1296,7 @@ SVector3 lpcvt::dF_dC1(voronoi_element element,int p){
 	y = Ty(u,v,generator,C1,C2);
 	point = SPoint2(x,y);
 	weight = gauss_weights(i,0);
-	rho = element.get_rho(u,v,p);
+	rho = element.get_rho(u,v);
 	drho_dx = element.get_drho_dx();
 	drho_dy = element.get_drho_dy();
 	distance = f(point,generator,m,p);
@@ -1342,7 +1346,7 @@ SVector3 lpcvt::dF_dC2(voronoi_element element,int p){
 	y = Ty(u,v,generator,C1,C2);
 	point = SPoint2(x,y);
 	weight = gauss_weights(i,0);
-	rho = element.get_rho(u,v,p);
+	rho = element.get_rho(u,v);
 	drho_dx = element.get_drho_dx();
 	drho_dy = element.get_drho_dy();
 	distance = f(point,generator,m,p);
@@ -1586,8 +1590,8 @@ bool voronoi_vertex::get_duplicate(){
   return duplicate;
 }
 
-double voronoi_vertex::get_h(){
-  return h;
+double voronoi_vertex::get_rho(){
+  return rho;
 }
 
 void voronoi_vertex::set_point(SPoint2 new_point){
@@ -1614,8 +1618,8 @@ void voronoi_vertex::set_duplicate(bool new_duplicate){
   duplicate = new_duplicate;
 }
 
-void voronoi_vertex::set_h(double new_h){
-  h = new_h;
+void voronoi_vertex::set_rho(double new_rho){
+  rho = new_rho;
 }
 
 
@@ -1644,18 +1648,16 @@ voronoi_vertex voronoi_element::get_v3(){
   return v3;
 }
 
-double voronoi_element::get_rho(double u,double v,int p){
-  double h1;
-  double h2;
-  double h3;
-  double h;
+double voronoi_element::get_rho(double u,double v){
+  double rho1;
+  double rho2;
+  double rho3;
   double rho;
 	
-  h1 = v1.get_h();
-  h2 = v2.get_h();
-  h3 = v3.get_h();
-  h = h1*(1.0-u-v) + h2*u + h3*v;
-  rho = compute_rho(h,p);
+  rho1 = v1.get_rho();
+  rho2 = v2.get_rho();
+  rho3 = v3.get_rho();
+  rho = rho1*(1.0-u-v) + rho2*u + rho3*v;
   return rho;
 }
 
@@ -1688,9 +1690,6 @@ void voronoi_element::set_metric(metric new_m){
 }
 
 void voronoi_element::deriv_rho(int p){
-  double h1;
-  double h2;
-  double h3;
   double rho1;
   double rho2;
   double rho3;
@@ -1709,12 +1708,9 @@ void voronoi_element::deriv_rho(int p){
   SPoint2 p2;
   SPoint2 p3;
 	
-  h1 = v1.get_h();
-  h2 = v2.get_h();
-  h3 = v3.get_h();
-  rho1 = compute_rho(h1,p);
-  rho2 = compute_rho(h2,p);
-  rho3 = compute_rho(h3,p);
+  rho1 = v1.get_rho();
+  rho2 = v2.get_rho();
+  rho3 = v3.get_rho();
   p1 = v1.get_point();
   p2 = v2.get_point();
   p3 = v3.get_point();
