@@ -2033,7 +2033,7 @@ LevelSet :
         GM->buildCutGModel(FindLevelSet(t)->ls, true, false);
         GM->setVisibility(0);
       }
-      if(!strcmp($2, "CutMeshTri")){
+      else if(!strcmp($2, "CutMeshTri")){
         int t = (int)$4;
         GModel *GM = GModel::current();
         GM->buildCutGModel(FindLevelSet(t)->ls, true, true);
