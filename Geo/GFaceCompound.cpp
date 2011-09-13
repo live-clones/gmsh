@@ -612,7 +612,6 @@ bool GFaceCompound::parametrize() const
   if(allNodes.empty()) buildAllNodes();
   
   bool success = orderVertices(_U0, _ordered, _coords);
-  printBound(_ordered, this->tag());
   if(!success) {Msg::Error("Could not order vertices on boundary");exit(1);}
     
   // Laplace parametrization
@@ -659,17 +658,18 @@ bool GFaceCompound::parametrize() const
     _rbf = new GRbf(sizeBox, variableEps, radFunInd, _normals, allNodes, _ordered);
 
     //_rbf->RbfLapSurface_global_CPM_low(_rbf->getXYZ(), _rbf->getN(), Oper);
-    //_rbf->RbfLapSurface_local_CPM(true, _rbf->getXYZ(), _rbf->getN(), Oper);
+    //_rbf->RbfLapSurface_local_CPM(true, _rbf->getXYZ(), _rbf->getN(), Oper, true);
     _rbf->RbfLapSurface_global_CPM_high(_rbf->getXYZ(), _rbf->getN(), Oper);
-    //_rbf->RbfLapSurface_local_CPM(false, _rbf->getXYZ(), _rbf->getN(),  Oper);
+    //_rbf->RbfLapSurface_local_CPM(false, _rbf->getXYZ(), _rbf->getN(),  Oper, true);
     //_rbf->RbfLapSurface_global_projection(_rbf->getXYZ(), _rbf->getN(), Oper);
-    //_rbf->RbfLapSurface_local_projection(_rbf->getXYZ(), _rbf->getN(), Oper);
+    //_rbf->RbfLapSurface_local_projection(_rbf->getXYZ(), _rbf->getN(), Oper, true);
   
     _rbf->solveHarmonicMap(Oper, _ordered, _coords, coordinates);
 
     //_rbf->computeCurvature(coordinates);
     //printStuff();
     //exit(1);
+
     double t2 = Cpu();
     printf("param RBF in %g sec \n", t2-t1);
   }
@@ -1144,6 +1144,7 @@ bool GFaceCompound::parametrize_conformal_spectral() const
   Msg::Error("Switch to harmonic map or see doc on the wiki for installing petsc and slepc:");
   Msg::Error("https://geuz.org/trac/gmsh/wiki/STLRemeshing (username:gmsh,passwd:gmsh)");
   return false;
+  parametrize_conformal();
 #else
   linearSystem <double> *lsysA  = new linearSystemPETSc<double>;
   linearSystem <double> *lsysB  = new linearSystemPETSc<double>;
@@ -1383,11 +1384,12 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
 
     if( !Curvature::valueAlreadyComputed() ) {
       Msg::Info("Need to compute discrete curvature for isotropic remesh");
-      Msg::Info("Getting instance of curvature");
+      Msg::Info("Getting instance of curvature!");
 
       curvature.setGModel( model() );
       int computeMax = 0;
       curvature.computeCurvature_Rusinkiewicz(computeMax);
+      //curvature.computeCurvature_RBF();
       curvature.writeToPosFile("curvature.pos");
       curvature.writeToVtkFile("curvature.vtk");
       Msg::Info(" ... computing curvature finished");
@@ -1439,13 +1441,14 @@ double GFaceCompound::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector
       curvature.setGModel( model() );
       int computeMax = 0;
       curvature.computeCurvature_Rusinkiewicz(computeMax);
+      //curvature.computeCurvature_RBF();
       curvature.writeToPosFile("curvature.pos");
-      curvature.writeToVtkFile("curvature.vtk");
-      curvature.writeDirectionsToPosFile("curvature_directions.pos");
+      //curvature.writeToVtkFile("curvature.vtk");
+      //curvature.writeDirectionsToPosFile("curvature_directions.pos");
       Msg::Info(" ... computing curvature finished");
     }
 
-    //std::cout << "I'm using curvatures in GFaceCompound.cpp" << std::endl;
+    std::cout << "I'm using curvatures in GFaceCompound.cpp" << std::endl;
     double cMin[3];
     double cMax[3];
     SVector3 dMin[3];

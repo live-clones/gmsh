@@ -69,12 +69,13 @@ static void exportParametrizedMesh(fullMatrix<double> &UV, int nbNodes){
 }
 
 GRbf::GRbf (double sizeBox, int variableEps, int rbfFun, std::map<MVertex*, SVector3> _normals, 
-	    std::set<MVertex *> allNodes, std::vector<MVertex*> bcNodes) 
-  :  sBox(sizeBox), variableShapeParam(variableEps), radialFunctionIndex (rbfFun),  XYZkdtree(0), _inUV(0)
+	    std::set<MVertex *> allNodes, std::vector<MVertex*> bcNodes, bool _isLocal) 
+  :  sBox(sizeBox), variableShapeParam(variableEps), radialFunctionIndex (rbfFun),  XYZkdtree(0), _inUV(0), isLocal(_isLocal)
 {
 
   allCenters.resize(allNodes.size(),3);
-  double tol =  6.e-2*sBox;
+  double tol =  6.e-1*sBox;
+  if (isLocal) tol = 1.e-15;
 
   //remove duplicate vertices
   //add bc nodes
@@ -111,9 +112,11 @@ GRbf::GRbf (double sizeBox, int variableEps, int rbfFun, std::map<MVertex*, SVec
     centers(index,1) = v1->y()/sBox;
     centers(index,2) = v1->z()/sBox;
     std::map<MVertex*, SVector3>::iterator itn = _normals.find(v1);
-    normals(index,0) = itn->second.x();
-    normals(index,1) = itn->second.y();
-    normals(index,2) = itn->second.z();
+    if (itn != _normals.end()){
+      normals(index,0) = itn->second.x();
+      normals(index,1) = itn->second.y();
+      normals(index,2) = itn->second.z();
+    }
     _mapV.insert(std::make_pair(v1, index));
     for(std::set<MVertex *>::iterator itv2 = myNodes.begin(); itv2 !=myNodes.end() ; itv2++){
       MVertex *v2 = *itv2;
@@ -125,13 +128,7 @@ GRbf::GRbf (double sizeBox, int variableEps, int rbfFun, std::map<MVertex*, SVec
   }
  
   delta = 0.33*dist_min;//0.33
-  radius= nbNodes/10.;   
-
-  matAInv.resize(nbNodes, nbNodes);
-  matAInv = generateRbfMat(0,centers,centers);
-  matAInv.invertInPlace();
-  isLocal = false;
-  extendedX.resize(3*nbNodes,3);
+  radius= 1.0/6.0; //size 1 is non dim size   
 
   Msg::Info("*****************************************");
   Msg::Info("*** RBF nbNodes=%d (all=%d) ", myNodes.size(), allNodes.size());
@@ -139,7 +136,14 @@ GRbf::GRbf (double sizeBox, int variableEps, int rbfFun, std::map<MVertex*, SVec
   Msg::Info("*****************************************");  
 
   printNodes(myNodes);
-  //exit(1);
+
+  if (!isLocal){
+    matAInv.resize(nbNodes, nbNodes);
+    matAInv = generateRbfMat(0,centers,centers);
+    matAInv.invertInPlace();
+  }
+
+  extendedX.resize(3*nbNodes,3);
 
 }
 
@@ -166,6 +170,7 @@ void GRbf::buildXYZkdtree(){
 
 void GRbf::buildOctree(double radius){
 
+  printf("building octree radius = %g \n", radius);
   SBoundingBox3d bb;
   for (int i= 0; i< nbNodes; i++)
     bb += SPoint3(centers(i,0),centers(i,1), centers(i,2));
@@ -197,6 +202,7 @@ void GRbf::buildOctree(double radius){
       std::vector<int> &pts = nodesInSphere[i];
       if (sph->index != i)  nodesInSphere[i].push_back(sph->index);
     }
+    printf("size node i =%d = %d \n", i , nodesInSphere[i].size());
   }
 
   Octree_Delete(oct);
@@ -205,44 +211,82 @@ void GRbf::buildOctree(double radius){
 
 }
 //compute curvature from level set
-void GRbf::computeCurvature(std::map<MVertex*, SPoint3> &rbf_curv){
+
+void GRbf::curvatureRBF(const fullMatrix<double> &cntrs,
+		     fullMatrix<double> &curvature){
 
   fullMatrix<double> extX, surf, sx,sy,sz, sxx,syy,szz, sxy,sxz,syz,sLap;
+  setup_level_set(cntrs,normals,extX, surf);
 
-  isLocal = true;
-  fullMatrix<double> curvature(centers.size1(), 1);
+  evalRbfDer(1,extX,cntrs,surf,sx);
+  evalRbfDer(2,extX,cntrs,surf,sy);
+  evalRbfDer(3,extX,cntrs,surf,sz);
+  //evalRbfDer(11,extX,cntrs,surf,sxx);
+  //evalRbfDer(12,extX,cntrs,surf,sxy);
+  //evalRbfDer(13,extX,cntrs,surf,sxz);
+  //evalRbfDer(22,extX,cntrs,surf,syy);
+  //evalRbfDer(23,extX,cntrs,surf,syz);
+  //evalRbfDer(33,extX,cntrs,surf,szz);
+  evalRbfDer(222,extX,cntrs,surf,sLap);
 
-  setup_level_set(centers,normals,extX, surf);
-
-  evalRbfDer(1,extX,centers,surf,sx);
-  evalRbfDer(2,extX,centers,surf,sy);
-  evalRbfDer(3,extX,centers,surf,sz);
-  evalRbfDer(11,extX,centers,surf,sxx);
-  evalRbfDer(12,extX,centers,surf,sxy);
-  evalRbfDer(13,extX,centers,surf,sxz);
-  evalRbfDer(22,extX,centers,surf,syy);
-  evalRbfDer(23,extX,centers,surf,syz);
-  evalRbfDer(33,extX,centers,surf,szz);
-  evalRbfDer(222,extX,centers,surf,sLap);
-
-  for (int i = 0; i < centers.size1(); i++) {
+  for (int i = 0; i < cntrs.size1(); i++) {
     double norm_grad_s = sqrt(sx(i,0)*sx(i,0)+sy(i,0)*sy(i,0)+sz(i,0)*sz(i,0));
     double curv = -sLap(i,0)/norm_grad_s; //+(sx(i,0)*sx(i,0)*sxx(i,0)+sy(i,0)*sy(i,0)*syy(i,0)+sz(i,0)*sz(i,0)*szz(i,0)+2*sx(i,0)*sy(i,0)*sxy(i,0)+2*sy(i,0)*sz(i,0)*syz(i,0)+2*sx(i,0)*sz(i,0)*sxz(i,0))/ (norm_grad_s*norm_grad_s*norm_grad_s);
     curvature(i,0) = fabs(curv)/sBox;
   }
+}
+
+void GRbf::computeCurvature(const fullMatrix<double> &cntrs,
+			    std::map<MVertex*, double> &rbf_curv){
+ 
+  fullMatrix<double> curvature(cntrs.size1(), 1);
+  curvatureRBF(cntrs, curvature);
 
   //interpolate
   fullMatrix<double> curvatureAll(allCenters.size1(), 1);
-  evalRbfDer(0,centers,allCenters,curvature,curvatureAll);
+  evalRbfDer(0,cntrs,allCenters,curvature,curvatureAll);
 
   //fill rbf_curv
   std::map<MVertex*, int>::iterator itm = _mapAllV.begin();
   for (; itm != _mapAllV.end(); itm++){
     int index = itm->second;
-    SPoint3 coords(curvatureAll(index,0), 0.0, 0.0);
-    rbf_curv.insert(std::make_pair(itm->first,coords));
+    rbf_curv.insert(std::make_pair(itm->first,curvatureAll(index,0)));
   }
   
+}
+
+void GRbf::computeLocalCurvature(const fullMatrix<double> &cntrs,
+				 std::map<MVertex*, double> &rbf_curv) {
+
+  int numNodes = cntrs.size1();
+ 
+  if(nodesInSphere.size() == 0) buildOctree(radius);
+  fullMatrix<double> curvature(cntrs.size1(), 1);
+
+  for (int i=0;i<numNodes ; ++i){
+    std::vector<int> &pts = nodesInSphere[i];
+
+    fullMatrix<double> nodes_in_sph(pts.size(),3);
+    fullMatrix<double> LocalOper;
+
+    for (int k=0; k< pts.size(); k++){
+      nodes_in_sph(k,0) = cntrs(pts[k],0);
+      nodes_in_sph(k,1) = cntrs(pts[k],1);
+      nodes_in_sph(k,2) = cntrs(pts[k],2);
+    }
+    
+    fullMatrix<double> curv(pts.size(), 1);
+    curvatureRBF(nodes_in_sph,curv);
+    printf("curv(0,0) = %g \n", curv(0,0));
+    curvature(i,0) = curv(0,0);  
+  }
+
+  std::map<MVertex*, int>::iterator itm = _mapAllV.begin();
+  for (; itm != _mapAllV.end(); itm++){
+    int index = itm->second;
+    rbf_curv.insert(std::make_pair(itm->first,curvature(index,0)));
+  }
+
 }
 
 double GRbf::evalRadialFnDer (int p, double dx, double dy, double dz, double ep){

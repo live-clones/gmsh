@@ -65,7 +65,7 @@ class GRbf {
 
   GRbf (double sizeBox, int variableEps, int rbfFun, 
 	std::map<MVertex*, SVector3> normals, 
-	std::set<MVertex *> allNodes, std::vector<MVertex*> bcNodes);
+	std::set<MVertex *> allNodes, std::vector<MVertex*> bcNodes, bool isLocal = false);
   ~GRbf();
 
   //build octree
@@ -135,7 +135,15 @@ class GRbf {
 				     fullMatrix<double> &D);
   
   // Calculates the curvature of a surface at centers
-  void computeCurvature(std::map<MVertex*, SPoint3> &rbf_curv);
+
+  void curvatureRBF(const fullMatrix<double> &cntrs,
+		    fullMatrix<double> &curvature);
+
+  void computeCurvature(const fullMatrix<double> &cntrs, 
+			std::map<MVertex*, double>&rbf_curv);
+
+  void computeLocalCurvature(const fullMatrix<double> &cntrs, 
+		       std::map<MVertex*, double>&rbf_curv);
 
   //Finds the U,V,S (in the 0-level set) that are the 'num_neighbours' closest to u_eval and v_eval.
   //Thus in total, we're working with '3*num_neighbours' nodes

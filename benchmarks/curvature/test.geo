@@ -5,8 +5,7 @@
 
  //Mesh.CharacteristicLengthFactor= 0.1;
  Mesh.CharacteristicLengthFromPoints = 0;
- Mesh.CharacteristicLengthFromPoints = 0;
- Mesh.CharacteristicLengthMin = 0.01;
+ Mesh.CharacteristicLengthMin = 0.001;
  Mesh.CharacteristicLengthMax = 10.00;
  Mesh.LcIntegrationPrecision=1.e-5;
  Mesh.MinimumCirclePoints=20; 

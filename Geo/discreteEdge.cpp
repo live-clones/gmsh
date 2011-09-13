@@ -503,15 +503,16 @@ double discreteEdge::curvature(double par) const{
   Curvature& curvature  = Curvature::getInstance();
 
   if( !Curvature::valueAlreadyComputed() ) {
-    std::cout << "Need to compute discrete curvature" << std::endl;
+    std::cout << "Need to compute discrete curvature (in Edge)" << std::endl;
     std::cout << "Getting instance of curvature" << std::endl;
 
     curvature.setGModel( model() );
     int computeMax = 0;
     curvature.computeCurvature_Rusinkiewicz(computeMax);
+    //curvature.computeCurvature_RBF();
     curvature.writeToPosFile("curvature.pos");
-    curvature.writeDirectionsToPosFile("curvature_directions.pos");
-    curvature.writeToVtkFile("curvature.vtk");
+    //curvature.writeDirectionsToPosFile("curvature_directions.pos");
+    //curvature.writeToVtkFile("curvature.vtk");
 
     std::cout << " ... computing curvature finished" << std::endl;
   }

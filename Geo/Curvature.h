@@ -178,6 +178,8 @@ public:
   /// Code taken from Rusinkiewicz' 'trimesh2' library
   void computeCurvature_Rusinkiewicz(int isMax=0);
 
+  void computeCurvature_RBF();
+
   void triangleNodalValues(MTriangle* triangle, double& c0, double& c1, double& c2, int isAbs=0);
   void triangleNodalValuesAndDirections(MTriangle* triangle, SVector3* dMax, SVector3* dMin, double* cMax, double* cMin, int isAbs=0);
 
