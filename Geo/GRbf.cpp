@@ -70,8 +70,12 @@ static void exportParametrizedMesh(fullMatrix<double> &UV, int nbNodes){
 
 GRbf::GRbf (double sizeBox, int variableEps, int rbfFun, std::map<MVertex*, SVector3> _normals, 
 	    std::set<MVertex *> allNodes, std::vector<MVertex*> bcNodes, bool _isLocal) 
-  :  sBox(sizeBox), variableShapeParam(variableEps), radialFunctionIndex (rbfFun),  XYZkdtree(0), _inUV(0), isLocal(_isLocal)
+  :  sBox(sizeBox), variableShapeParam(variableEps), radialFunctionIndex (rbfFun),   _inUV(0), isLocal(_isLocal)
 {
+
+  #if defined (HAVE_ANN)
+XYZkdtree=0
+#endif
 
   allCenters.resize(allNodes.size(),3);
   double tol =  6.e-1*sBox;
@@ -148,10 +152,13 @@ GRbf::GRbf (double sizeBox, int variableEps, int rbfFun, std::map<MVertex*, SVec
 }
 
 GRbf::~GRbf(){
+#if defined (HAVE_ANN)
   delete XYZkdtree;
   delete UVkdtree;
   annDeallocPts(XYZnodes);
   annDeallocPts(UVnodes);
+#endif
+
 }
 
 void GRbf::buildXYZkdtree(){
@@ -868,13 +875,14 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
   u_vec_eval(0,1) = v_eval;
   u_vec_eval(0,2) = 0.0;
 
+   double dist_min  = 1.e6;
+
 #if defined (HAVE_ANN)
    double uvw[3] = { u_eval, v_eval, 0.0 };
    ANNidxArray index = new ANNidx[num_neighbours];
    ANNdistArray dist = new ANNdist[num_neighbours]; 
    UVkdtree->annkSearch(uvw, num_neighbours, index, dist);
 
- double dist_min  = 1.e6;
  for (int i = 0; i < num_neighbours; i++){
 
     u_vec(i,0) = UV(index[i],0);
