@@ -73,8 +73,8 @@ GRbf::GRbf (double sizeBox, int variableEps, int rbfFun, std::map<MVertex*, SVec
   :  sBox(sizeBox), variableShapeParam(variableEps), radialFunctionIndex (rbfFun),   _inUV(0), isLocal(_isLocal)
 {
 
-  #if defined (HAVE_ANN)
-XYZkdtree=0
+#if defined (HAVE_ANN)
+  XYZkdtree=0;
 #endif
 
   allCenters.resize(allNodes.size(),3);
