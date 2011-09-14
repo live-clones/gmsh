@@ -1032,6 +1032,65 @@ void LpSmoother::improve_region(GRegion* gr){
   //regions.push_back(gr);
   //meshGRegion mesher(regions);
   //mesher(gr);
+	
+  delete octree;
+}
+
+/*********class Wrap*********/
+
+Wrap::Wrap(){
+  iteration = 0;
+  initial_energy = -1.0;
+}
+
+Wrap::~Wrap(){}
+
+int Wrap::get_p(){
+  return p;
+}
+
+int Wrap::get_dimension(){
+  return dimension;
+}
+
+int Wrap::get_iteration(){
+  return iteration;
+}
+
+int Wrap::get_max_iteration(){
+  return max_iteration;
+}
+
+double Wrap::get_initial_energy(){
+  return initial_energy;
+}
+
+MElementOctree* Wrap::get_octree(){
+  return octree;
+}
+
+void Wrap::set_p(int new_p){
+  p = new_p;
+}
+
+void Wrap::set_dimension(int new_dimension){
+  dimension = new_dimension;
+}
+
+void Wrap::set_iteration(int new_iteration){
+  iteration = new_iteration;
+}
+
+void Wrap::set_max_iteration(int new_max_iteration){
+  max_iteration = new_max_iteration;
+}
+
+void Wrap::set_initial_energy(double new_initial_energy){
+  initial_energy = new_initial_energy;
+}
+
+void Wrap::set_octree(MElementOctree* new_octree){
+  octree = new_octree;
 }
 
 /*********functions*********/

@@ -48,9 +48,9 @@ class VoronoiVertex{
 /*********class Metric*********/
 
 class Metric{
- private :
+ private:
   double m11,m12,m13,m21,m22,m23,m31,m32,m33;
- public :
+ public:
   Metric();
   ~Metric();
   void set_m11(double);
@@ -151,6 +151,33 @@ class LpSmoother{
   ~LpSmoother();
   void improve_model();
   void improve_region(GRegion*);
+};
+
+/*********class Wrap*********/
+
+class Wrap{
+ private:
+  int p;
+  int dimension;
+  int iteration;
+  int max_iteration;
+  double initial_energy;
+  MElementOctree* octree;
+ public:
+  Wrap();
+  ~Wrap();
+  int get_p();
+  int get_dimension();
+  int get_iteration();
+  int get_max_iteration();
+  double get_initial_energy();
+  MElementOctree* get_octree();
+  void set_p(int);
+  void set_dimension(int);
+  void set_iteration(int);
+  void set_max_iteration(int);
+  void set_initial_energy(double);
+  void set_octree(MElementOctree*);
 };
 
 /*********functions*********/
