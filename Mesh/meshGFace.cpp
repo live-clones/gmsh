@@ -1597,12 +1597,14 @@ void meshGFace::operator() (GFace *gf)
   if (backgroundMesh::current()){
     backgroundMesh::unset();
   }    
-  backgroundMesh::set(gf);
-  char name[256];
-  sprintf(name,"bgm-%d.pos",gf->tag());
-  backgroundMesh::current()->print(name,gf);
-  sprintf(name,"cross-%d.pos",gf->tag());
-  backgroundMesh::current()->print(name,gf,1);
+  if (CTX::instance()->mesh.saveAll){
+    backgroundMesh::set(gf);
+    char name[256];
+    sprintf(name,"bgm-%d.pos",gf->tag());
+    backgroundMesh::current()->print(name,gf);
+    sprintf(name,"cross-%d.pos",gf->tag());
+    backgroundMesh::current()->print(name,gf,1);
+  }
   (*this)(gf);
 }
 

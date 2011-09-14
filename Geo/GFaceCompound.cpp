@@ -427,7 +427,7 @@ void GFaceCompound::fillNeumannBCS() const
   }
 
   //printing
-  if(!CTX::instance()->mesh.saveAll){
+  if(CTX::instance()->mesh.saveAll){
     if (fillTris.size() > 0){
       char name[256];
       std::list<GFace*>::const_iterator itf = _compound.begin();
@@ -2071,8 +2071,8 @@ int GFaceCompound::genusGeom() const
 
 void GFaceCompound::printStuff(int iNewton) const
 {
-  //if( !CTX::instance()->mesh.saveAll) return;  
- 
+  if( !CTX::instance()->mesh.saveAll) return;  
+
   std::list<GFace*>::const_iterator it = _compound.begin();
  
   char name0[256], name1[256], name2[256], name3[256];

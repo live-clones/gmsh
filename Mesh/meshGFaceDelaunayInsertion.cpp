@@ -1185,10 +1185,12 @@ void bowyerWatsonFrontalLayers(GFace *gf, bool quad)
     CTX::instance()->mesh.lcFromCurvature = CurvControl;    
     backgroundMesh::set(gf);
     char name[256];
-    sprintf(name,"bgm-%d.pos",gf->tag());
-    backgroundMesh::current()->print(name,gf);
-    sprintf(name,"cross-%d.pos",gf->tag());
-    backgroundMesh::current()->print(name,gf,1);
+    if (CTX::instance()->mesh.saveAll){
+      sprintf(name,"bgm-%d.pos",gf->tag());
+      backgroundMesh::current()->print(name,gf);
+      sprintf(name,"cross-%d.pos",gf->tag());
+      backgroundMesh::current()->print(name,gf,1);
+    }
     // FIXME DELETE CURRENT MESH
     gf->triangles = TR;    
   }

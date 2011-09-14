@@ -220,7 +220,7 @@ void GRbf::buildOctree(double radius){
 //compute curvature from level set
 
 void GRbf::curvatureRBF(const fullMatrix<double> &cntrs,
-		     fullMatrix<double> &curvature){
+			fullMatrix<double> &curvature){
 
   fullMatrix<double> extX, surf, sx,sy,sz, sxx,syy,szz, sxy,sxz,syz,sLap;
   setup_level_set(cntrs,normals,extX, surf);

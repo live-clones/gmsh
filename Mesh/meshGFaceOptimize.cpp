@@ -1872,18 +1872,19 @@ void recombineIntoQuads(GFace *gf,
   double t1 = Cpu();
 
   bool haveParam = true;
+  bool saveAll = CTX::instance()->mesh.saveAll;
   if(gf->geomType() == GEntity::DiscreteSurface && !gf->getCompound())
     haveParam = false;
 
   if(haveParam && topologicalOpti)
     removeFourTrianglesNodes(gf, false);
 
-  gf->model()->writeMSH("before.msh");
+  if (saveAll) gf->model()->writeMSH("before.msh");
   int success = _recombineIntoQuads(gf, 0);
 
   // gf->addLayersOfQuads(1, 0);
 
-  gf->model()->writeMSH("raw.msh");
+  if (saveAll) gf->model()->writeMSH("raw.msh");
   if(haveParam && nodeRepositioning)
     laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing);
 
@@ -1891,17 +1892,18 @@ void recombineIntoQuads(GFace *gf,
   if(success && CTX::instance()->mesh.algoRecombine == 1){
     if(topologicalOpti){
       if(haveParam){
-        gf->model()->writeMSH("smoothed.msh");
+        if (saveAll) gf->model()->writeMSH("smoothed.msh");
         int COUNT = 0;
         char NAME[256];
+
         while(1){
           int x = removeTwoQuadsNodes(gf);
-          if(x){ sprintf(NAME,"iter%dTQ.msh",COUNT++); gf->model()->writeMSH(NAME);}
+          if(x && saveAll){ sprintf(NAME,"iter%dTQ.msh",COUNT++); gf->model()->writeMSH(NAME);}
           int y = removeDiamonds(gf);
-          if(y){ sprintf(NAME,"iter%dD.msh",COUNT++); gf->model()->writeMSH(NAME); }
+          if(y && saveAll){ sprintf(NAME,"iter%dD.msh",COUNT++); gf->model()->writeMSH(NAME); }
           laplaceSmoothing(gf);
           int z = 0; //edgeSwapQuadsForBetterQuality(gf);
-          if(z){ sprintf(NAME,"iter%dS.msh",COUNT++); gf->model()->writeMSH(NAME); }
+          if(z && saveAll){ sprintf(NAME,"iter%dS.msh",COUNT++); gf->model()->writeMSH(NAME); }
           if (!(x+y+z)) break;
         }
       }
@@ -1920,7 +1922,7 @@ void recombineIntoQuads(GFace *gf,
   _recombineIntoQuads(gf, 0);
   if(haveParam)  laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing);
 
-  //  gf->model()->writeMSH("after.msh");
+  if (saveAll) gf->model()->writeMSH("after.msh");
 
   double t2 = Cpu();
   Msg::Info("Simple recombination algorithm completed (%g s)", t2 - t1);
