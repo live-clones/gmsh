@@ -823,8 +823,8 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
   // fclose(fp);
 }
 
-void meshGRegion::operator() (GRegion *gr) 
-{  
+void meshGRegion::operator() (GRegion *gr)
+{ 
   gr->model()->setCurrentMeshEntity(gr);
 
   if(gr->geomType() == GEntity::DiscreteVolume) return;

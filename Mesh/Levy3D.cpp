@@ -979,13 +979,21 @@ void LpSmoother::improve_model(){
 void LpSmoother::improve_region(GRegion* gr){
   int i;
   int j;
+  double epsg;
+  double epsf;
+  double epsx;
   MVertex* vertex;
   MElement* element;
   MElementOctree* octree;
   deMeshGRegion deleter;
+  double initial_conditions[2];
   std::set<MVertex*> all_vertices;
   std::vector<MVertex*> interior_vertices;
   std::set<MVertex*>::iterator it;
+  alglib::ae_int_t maxits;
+  alglib::minlbfgsstate state;
+  alglib::minlbfgsreport rep;
+  alglib::real_1d_array x;
 	
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
@@ -997,17 +1005,33 @@ void LpSmoother::improve_region(GRegion* gr){
 	
   octree = new MElementOctree(gr->model());
 	
+  epsg = 0;
+  epsf = 0;
+  epsx = 0;
+  maxits = max_iter;
+  
+  initial_conditions[0] = 12.0;
+  initial_conditions[1] = 37.0;
+  x.setcontent(2,initial_conditions);
+	
+  minlbfgscreate(2,1,x,state);
+  minlbfgssetcond(state,epsg,epsf,epsx,maxits);
+  minlbfgsoptimize(state,call_back,NULL,NULL);
+  minlbfgsresults(state,x,rep);
+  printf("%f %f\n",x[0],x[1]);
+	
   for(it=all_vertices.begin();it!=all_vertices.end();it++){
 	if((*it)->onWhat()->dim()==3){
 	  interior_vertices.push_back(*it);
 	}
   }
+  printf("%d\n",interior_vertices.size());
 	
   deleter(gr);
   //std::vector<GRegion*> regions;
   //regions.push_back(gr);
   //meshGRegion mesher(regions);
-  //mesher(gr); 
+  //mesher(gr);
 }
 
 /*********functions*********/
@@ -1017,4 +1041,10 @@ bool inside_domain(MElementOctree* octree,double x,double y,double z){
   element = (MElement*)octree->find(x,y,z,3,true);
   if(element!=NULL) return 1;
   else return 0;
+}
+
+void call_back(const alglib::real_1d_array& x,double& func,alglib::real_1d_array& grad,void* ptr){
+  func = pow_int(3.0-x[0],2) + pow_int(4.0-x[1],2);
+  grad[0] = -2.0*(3.0-x[0]);
+  grad[1] = -2.0*(4.0-x[1]);
 }
