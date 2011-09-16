@@ -876,9 +876,9 @@ include_directories(Common Fltk Geo Graphics Mesh Solver Numeric Parser
 
 # set this for external codes that might include this CMakeList file
 set(GMSH_EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDES} CACHE 
-    STRING "External include directories")
+    STRING "External include directories" FORCE)
 set(GMSH_EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} CACHE 
-    STRING "External libraries")
+    STRING "External libraries" FORCE)
 
 # group sources for easier navigation in IDEs
 foreach(DIR ${GMSH_DIRS})
