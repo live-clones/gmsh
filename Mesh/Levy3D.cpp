@@ -1,3 +1,7 @@
+#include "GmshConfig.h"
+
+#if defined(HAVE_BFGS)
+
 #include "Levy3D.h"
 #include "polynomialBasis.h"
 #include "Gauss.h"
@@ -1107,3 +1111,5 @@ void call_back(const alglib::real_1d_array& x,double& func,alglib::real_1d_array
   grad[0] = -2.0*(3.0-x[0]);
   grad[1] = -2.0*(4.0-x[1]);
 }
+
+#endif
