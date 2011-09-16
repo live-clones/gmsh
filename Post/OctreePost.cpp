@@ -377,13 +377,12 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
 
   std::vector<double> nodeval(e->getNumVertices() * 9);
   for(int step = 0; step < _theViewDataGModel->getNumTimeSteps(); step++){
+    if(!_theViewDataGModel->hasTimeStep(step)) continue;
     if(timestep < 0 || step == timestep){
       for(int nod = 0; nod < e->getNumVertices(); nod++){
-        for(int comp = 0; comp < nbComp; comp++){
-          if(!_theViewDataGModel->getValueByIndex(step, dataIndex[nod], nod, comp, 
-                                                  nodeval[nod * nbComp + comp]))
-            return false;
-        }
+        for(int comp = 0; comp < nbComp; comp++)
+          _theViewDataGModel->getValueByIndex(step, dataIndex[nod], nod, comp, 
+                                              nodeval[nod * nbComp + comp]);
       }
       for(int comp = 0; comp < nbComp; comp++){
         double val = e->interpolate(&nodeval[comp], U[0], U[1], U[2], nbComp);
