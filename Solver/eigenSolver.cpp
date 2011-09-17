@@ -105,8 +105,10 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
     Msg::Error("SLEPc diverged after %d iterations", its);
   else if(reason == EPS_DIVERGED_BREAKDOWN)
     Msg::Error("SLEPc generic breakdown in method");
+#if !(PETSC_VERSION_RELEASE == 0) // petsc-dev
   else if(reason == EPS_DIVERGED_NONSYMMETRIC)
     Msg::Error("The operator is nonsymmetric");
+#endif
 
   // get number of converged approximate eigenpairs
   PetscInt nconv;
@@ -152,11 +154,20 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
       }
        _eigenVectors.push_back(ev);
     }
+#if (PETSC_VERSION_RELEASE == 0) // petsc-dev
+    _try(VecDestroy(&xr));
+    _try(VecDestroy(&xi));
+#else
     _try(VecDestroy(xr));
     _try(VecDestroy(xi));
+#endif
   }
 
+#if (PETSC_VERSION_RELEASE == 0) // petsc-dev
+  _try(EPSDestroy(&eps));
+#else
   _try(EPSDestroy(eps));
+#endif
 
   if(reason == EPS_CONVERGED_TOL){
     Msg::Debug("SLEPc done");

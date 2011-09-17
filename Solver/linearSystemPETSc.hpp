@@ -2,6 +2,12 @@
 #include <petsc.h>
 #include <petscksp.h>
 #include "linearSystemPETSc.h"
+
+#if (PETSC_VERSION_RELEASE == 0) // petsc-dev
+#define PetscTruth PetscBool
+#define PetscOptionsGetTruth PetscOptionsGetBool
+#endif
+
 static void  _try(int ierr)
 {
   CHKERRABORT(PETSC_COMM_WORLD, ierr);
@@ -39,8 +45,12 @@ template <class scalar>
 linearSystemPETSc<scalar>::~linearSystemPETSc()
 {
   clear();
-  if (_kspAllocated)
-    _try (KSPDestroy (_ksp));
+  if(_kspAllocated)
+#if (PETSC_VERSION_RELEASE == 0) // petsc-dev
+    _try(KSPDestroy(&_ksp));
+#else
+    _try(KSPDestroy(_ksp));
+#endif
 }
 
 template <class scalar>
@@ -141,9 +151,15 @@ template <class scalar>
 void linearSystemPETSc<scalar>::clear()
 {
   if(_isAllocated){
+#if (PETSC_VERSION_RELEASE == 0) // petsc-dev
+    _try(MatDestroy(&_a));
+    _try(VecDestroy(&_x));
+    _try(VecDestroy(&_b));
+#else
     _try(MatDestroy(_a));
     _try(VecDestroy(_x));
     _try(VecDestroy(_b));
+#endif
   }
   _isAllocated = false;
 }
