@@ -276,6 +276,22 @@ extern "C" {
 #include <med.h>
 }
 
+#if (MED_MAJOR_NUM == 3)
+
+bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
+{
+  Msg::Error("FIXME reading MED3 fields is not implemented yet");
+  return false;
+}
+
+bool PViewDataGModel::writeMED(std::string fileName)
+{
+  Msg::Error("FIXME writing MED3 fields is not implemented yet");
+  return false;
+}
+
+#else
+
 extern int med2mshElementType(med_geometrie_element med);
 extern int med2mshNodeIndex(med_geometrie_element med, int k);
 
@@ -596,6 +612,8 @@ bool PViewDataGModel::writeMED(std::string fileName)
   }
   return true;
 }
+
+#endif
 
 #else
 

@@ -243,15 +243,27 @@ extern "C" {
 
 bool PView::readMED(std::string fileName, int fileIndex)
 {
+#if (MED_MAJOR_NUM == 3)
+  med_idt fid = MEDfileOpen(fileName.c_str(), MED_ACC_RDONLY);
+#else
   med_idt fid = MEDouvrir((char*)fileName.c_str(), MED_LECTURE);
+#endif
   if(fid < 0) {
     Msg::Error("Unable to open file '%s'", fileName.c_str());
     return false;
   }
   
+#if (MED_MAJOR_NUM == 3)
+  med_int numFields = MEDnField(fid);
+#else
   med_int numFields = MEDnChamp(fid, 0);
+#endif
 
+#if (MED_MAJOR_NUM == 3)
+  if(MEDfileClose(fid) < 0){
+#else
   if(MEDfermer(fid) < 0){
+#endif
     Msg::Error("Unable to close file '%s'", fileName.c_str());
     return false;
   }
@@ -280,7 +292,7 @@ bool PView::readMED(std::string fileName, int fileIndex)
 bool PView::readMED(std::string fileName, int fileIndex)
 {
   Msg::Error("Gmsh must be compiled with MED support to read '%s'", 
-      fileName.c_str());
+             fileName.c_str());
   return false;
 }
 
