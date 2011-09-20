@@ -277,20 +277,25 @@ extern "C" {
 }
 
 #if (MED_MAJOR_NUM == 3)
-
-bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
-{
-  Msg::Error("FIXME reading MED3 fields is not implemented yet");
-  return false;
-}
-
-bool PViewDataGModel::writeMED(std::string fileName)
-{
-  Msg::Error("FIXME writing MED3 fields is not implemented yet");
-  return false;
-}
-
-#else
+// To avoid too many ifdefs below we use defines for the bits of the
+// API that did not change too much between MED2 and MED3. If we
+// remove MED2 support at some point, please remove these defines and
+// replace the symbols accordingly.
+#define med_geometrie_element med_geometry_type
+#define med_entite_maillage med_entity_type
+#define med_type_champ med_field_type
+#define MED_TAILLE_NOM MED_NAME_SIZE
+#define MED_TAILLE_PNOM MED_SNAME_SIZE
+#define MED_LECTURE MED_ACC_RDONLY
+#define MED_NOEUD MED_NODE
+#define MED_MAILLE MED_CELL
+#define MED_NOEUD_MAILLE MED_NODE_ELEMENT
+#define MED_NOPFL MED_NO_PROFILE
+#define MEDouvrir MEDfileOpen
+#define MEDfermer MEDfileClose
+#define MEDnChamp MEDfieldnComponent
+#define MEDnValProfil MEDprofileSizeByName
+#endif
 
 extern int med2mshElementType(med_geometrie_element med);
 extern int med2mshNodeIndex(med_geometrie_element med, int k);
@@ -309,12 +314,20 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
     return false;
   }
 
-  char name[MED_TAILLE_NOM + 1];
+  char name[MED_TAILLE_NOM + 1], meshName[MED_TAILLE_NOM + 1];
   std::vector<char> compName(numComp * MED_TAILLE_PNOM + 1);
   std::vector<char> compUnit(numComp * MED_TAILLE_PNOM + 1);
+  std::vector<char> dtUnit(MED_TAILLE_PNOM + 1);
+  med_int numSteps = 0;
   med_type_champ type;
+#if (MED_MAJOR_NUM == 3)
+  med_bool localMesh;
+  if(MEDfieldInfo(fid, fileIndex + 1, name, meshName, &localMesh, &type, 
+                  &compName[0], &compUnit[0], &dtUnit[0], &numSteps) < 0){
+#else
   if(MEDchampInfo(fid, fileIndex + 1, name, &type, &compName[0], &compUnit[0],
                   numComp) < 0){
+#endif
     Msg::Error("Could not get MED field info");
     return false;
   }
@@ -333,23 +346,37 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
   // with which we implicitly index them in GModel::readMED)
   const med_entite_maillage entType[] =
     {MED_NOEUD, MED_MAILLE, MED_NOEUD_MAILLE};
+#if (MED_MAJOR_NUM == 3)
   const med_geometrie_element eleType[] =
     {MED_NONE, MED_SEG2, MED_TRIA3, MED_QUAD4, MED_TETRA4, MED_HEXA8,
-     MED_PENTA6, MED_PYRA5, MED_SEG3, MED_TRIA6, MED_TETRA10,
+     MED_PENTA6, MED_PYRA5, MED_SEG3, MED_TRIA6, MED_QUAD9, MED_TETRA10, 
+     MED_HEXA27, MED_POINT1, MED_QUAD8, MED_HEXA20, MED_PENTA15, MED_PYRA13};
+  const int nodesPerEle[] =
+    {0, 2, 3, 4, 4, 8, 6, 5, 3, 6, 9, 10, 27, 1, 8, 20, 15, 13};
+#else
+  const med_geometrie_element eleType[] =
+    {MED_NONE, MED_SEG2, MED_TRIA3, MED_QUAD4, MED_TETRA4, MED_HEXA8,
+     MED_PENTA6, MED_PYRA5, MED_SEG3, MED_TRIA6, MED_TETRA10, 
      MED_POINT1, MED_QUAD8, MED_HEXA20, MED_PENTA15, MED_PYRA13};
   const int nodesPerEle[] =
     {0, 2, 3, 4, 4, 8, 6, 5, 3, 6, 10, 1, 8, 20, 15, 13};
+#endif
 
-  med_int numSteps = 0;
   std::vector<std::pair<int, int> > pairs;
   for(unsigned int i = 0; i < sizeof(entType) / sizeof(entType[0]); i++){
     for(unsigned int j = 0; j < sizeof(eleType) / sizeof(eleType[0]); j++){
-      med_int n = MEDnPasdetemps(fid, name, entType[i], eleType[j]);
-      if(n > 0){
-        pairs.push_back(std::pair<int, int>(i, j));
-        numSteps = std::max(numSteps, n);
+      if((!i && !j) || j){
+#if (MED_MAJOR_NUM == 3)
+        med_int n = numSteps;
+#else
+        med_int n = MEDnPasdetemps(fid, name, entType[i], eleType[j]);
+#endif
+        if(n > 0){
+          pairs.push_back(std::pair<int, int>(i, j));
+          numSteps = std::max(numSteps, n);
+        }
+        if(!i && !j) break; // MED_NOEUD does not care about eleType
       }
-      if(!i && !j) break; // MED_NOEUD does not care about eleType
     }
   }
 
@@ -357,27 +384,33 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
     Msg::Error("Nothing to import from MED file");
     return false;
   }
-  else{
-    med_entite_maillage ent = entType[pairs[0].first];
-    _type = (ent == MED_NOEUD) ? NodeData : (ent == MED_MAILLE) ? ElementData :
-      ElementNodeData;
-  }
 
   for(int step = 0; step < numSteps; step++){
+
+    // FIXME: we should loop over all profiles instead of relying of
+    // the default one per step field
+
+    // FIXME: MED3 allows to store multi-step meshes; we should
+    // interface this with our own gmodel-per-step structure
+
     for(unsigned int pair = 0; pair < pairs.size(); pair++){
       // get step info
       med_entite_maillage ent = entType[pairs[pair].first];
       med_geometrie_element ele = eleType[pairs[pair].second];
-      med_int numdt, numo, ngauss, numMeshes;
-      char dtunit[MED_TAILLE_PNOM + 1], meshName[MED_TAILLE_NOM + 1];
+      med_int numdt, numit, ngauss;
+      char dtunit[MED_TAILLE_PNOM + 1];
       med_float dt;
+#if (MED_MAJOR_NUM == 3)
+      if(MEDfieldComputingStepInfo(fid, name, step + 1, &numdt, &numit, &dt) < 0){
+#else
       med_booleen local;
-      if(MEDpasdetempsInfo(fid, name, ent, ele, step + 1, &ngauss, &numdt, &numo,
+      med_int numMeshes;
+      if(MEDpasdetempsInfo(fid, name, ent, ele, step + 1, &ngauss, &numdt, &numit,
                            dtunit, &dt, meshName, &local, &numMeshes) < 0){
+#endif
         Msg::Error("Could not read step info");
         return false;
       }
-
       // create step data
       if(!pair){
         GModel *m = GModel::findByName(meshName);
@@ -392,17 +425,29 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
         _steps[step]->setTime(dt);
       }
 
+      char locName[MED_TAILLE_NOM + 1], profileName[MED_TAILLE_NOM + 1];
+
       // get number of values in the field (numVal takes the number of
       // Gauss points or the number of nodes per element into account,
       // but not the number of components)
-      med_int numVal = MEDnVal(fid, name, ent, ele, numdt, numo, meshName,
+#if (MED_MAJOR_NUM == 3)
+      int profileSize;
+      med_int numVal = MEDfieldnValueWithProfile(fid, name, numdt, numit, ent, ele,
+                                                 1, MED_COMPACT_STMODE, profileName, &profileSize, 
+                                                 locName, &ngauss);
+      numVal *= ngauss;
+#else
+      med_int numVal = MEDnVal(fid, name, ent, ele, numdt, numit, meshName,
                                MED_COMPACT);
+#endif
       if(numVal <= 0) continue;
+
+      _type = (ent == MED_NOEUD) ? NodeData : (ent == MED_MAILLE) ? ElementData : ElementNodeData;
       int mult = 1;
       if(ent == MED_NOEUD_MAILLE){
         mult = nodesPerEle[pairs[pair].second];
       }
-      else if(ngauss != MED_NOPG){
+      else if(ngauss != 1){
         mult = ngauss;
         _type = GaussPointData;
       }
@@ -410,19 +455,30 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 
       // read field data
       std::vector<double> val(numVal * numComp);
-      char locname[MED_TAILLE_NOM + 1], profileName[MED_TAILLE_NOM + 1];
+#if (MED_MAJOR_NUM == 3)
+      if(MEDfieldValueWithProfileRd(fid, name, numdt, numit, ent, ele, MED_COMPACT_STMODE, 
+                                    profileName, MED_FULL_INTERLACE, MED_ALL_CONSTITUENT,
+                                    (unsigned char*)&val[0]) < 0){
+#else
       if(MEDchampLire(fid, meshName, name, (unsigned char*)&val[0], MED_FULL_INTERLACE,
-                      MED_ALL, locname, profileName, MED_COMPACT, ent, ele,
-                      numdt, numo) < 0){
+                      MED_ALL, locName, profileName, MED_COMPACT, ent, ele,
+                      numdt, numit) < 0){
+#endif
         Msg::Error("Could not read field values");
         return false;
       }
 
+      Msg::Debug("MED: eletyp=%d entity=%d (0:cell, 3:node, 4:elenode) ngauss=%d "
+                 "localizationName=%s profileName=%s -- stepDataType=%d", 
+                 ele, ent, ngauss, locName, profileName, _type);
+
       // read Gauss point data
       if(_type == GaussPointData){
         std::vector<double> &p(_steps[step]->getGaussPoints(med2mshElementType(ele)));
-        if(std::string(locname) == MED_GAUSS_ELNO){
-          // hack: the points are the vertices
+        if(std::string(locName) == MED_GAUSS_ELNO){
+          // special case: the gauss points are the vertices of the
+          // element; in this case no explicit localization has to be
+          // created in MED
           p.resize(ngauss * 3, 1.e22);
         }
         else{
@@ -430,8 +486,13 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
           std::vector<med_float> refcoo((ele % 100) * dim);
           std::vector<med_float> gscoo(ngauss * dim);
           std::vector<med_float> wg(ngauss);
+#if (MED_MAJOR_NUM == 3)          
+          if(MEDlocalizationRd(fid, locName, MED_FULL_INTERLACE, &refcoo[0], 
+                               &gscoo[0], &wg[0]) < 0){
+#else
           if(MEDgaussLire(fid, &refcoo[0], &gscoo[0], &wg[0], MED_FULL_INTERLACE,
-                          locname) < 0){
+                          locName) < 0){
+#endif
             Msg::Error("Could not read Gauss points");
             return false;
           }
@@ -450,7 +511,11 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
         med_int n = MEDnValProfil(fid, profileName);
         if(n > 0){
           profile.resize(n);
+#if (MED_MAJOR_NUM == 3)
+          if(MEDprofileRd(fid, profileName, &profile[0]) < 0){
+#else
           if(MEDprofilLire(fid, &profile[0], profileName) < 0){
+#endif
             Msg::Error("Could not read profile");
             return false;
           }
@@ -464,13 +529,30 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 
       // get size of full array and tags (if any) of entities
       bool nodal = (ent == MED_NOEUD);
+#if (MED_MAJOR_NUM == 3)
+      med_bool changeOfCoord;
+      med_bool geoTransform;  
+      med_int numEnt = MEDmeshnEntity(fid, meshName, MED_NO_DT, MED_NO_IT, 
+                                      nodal ? MED_NODE : MED_CELL, 
+                                      nodal ? MED_NO_GEOTYPE : ele,
+                                      nodal ? MED_COORDINATE : MED_CONNECTIVITY,
+                                      nodal ? MED_NO_CMODE : MED_NODAL, 
+                                      &changeOfCoord, &geoTransform);
+#else
       med_int numEnt = MEDnEntMaa(fid, meshName, nodal ? MED_COOR : MED_CONN,
                                   nodal ? MED_NOEUD : MED_MAILLE,
                                   nodal ? MED_NONE : ele,
                                   nodal ? (med_connectivite)0 : MED_NOD);
+#endif
       std::vector<med_int> tags(numEnt);
+#if (MED_MAJOR_NUM == 3)
+      if(MEDmeshEntityNumberRd(fid, meshName, MED_NO_DT, MED_NO_IT, 
+                               nodal ? MED_NODE : MED_CELL, 
+                               nodal ? MED_NO_GEOTYPE : ele, &tags[0]) < 0)
+#else
       if(MEDnumLire(fid, meshName, &tags[0], numEnt, nodal ? MED_NOEUD : MED_MAILLE,
                     nodal ? MED_NONE : ele) < 0)
+#endif
         tags.clear();
 
       // if we don't have tags, compute the starting index (i.e., how
@@ -479,8 +561,14 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
       int startIndex = 0;
       if(!nodal && tags.empty()){
         for(int i = 1; i < pairs[pair].second; i++){
+#if (MED_MAJOR_NUM == 3)
+          med_int n = MEDmeshnEntity(fid, meshName, MED_NO_DT, MED_NO_IT, 
+                                     MED_CELL, eleType[i], MED_CONNECTIVITY,
+                                     MED_NODAL, &changeOfCoord, &geoTransform);
+#else
           med_int n = MEDnEntMaa(fid, meshName, MED_CONN, MED_MAILLE,
                                  eleType[i], MED_NOD);
+#endif
           if(n > 0) startIndex += n;
         }
       }
@@ -517,6 +605,16 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
   }
   return true;
 }
+
+#if (MED_MAJOR_NUM == 3)
+
+bool PViewDataGModel::writeMED(std::string fileName)
+{
+  Msg::Error("FIXME writing MED3 fields is not implemented yet");
+  return false;
+}
+
+#else
 
 bool PViewDataGModel::writeMED(std::string fileName)
 {

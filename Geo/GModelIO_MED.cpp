@@ -30,8 +30,8 @@ extern "C" {
 }
 
 #if (MED_MAJOR_NUM == 3)
-// To avoid to many ifdef's below we use defines for the bits of the
-// API that did not change to much between MED2 and MED3. If we remove
+// To avoid too many ifdefs below we use defines for the bits of the
+// API that did not change too much between MED2 and MED3. If we remove
 // MED2 support at some point, please remove these defines and replace
 // the symbols accordingly.
 #define med_geometrie_element med_geometry_type
@@ -384,7 +384,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
   }
   for(int i = 0; i < numFamilies; i++){
 #if (MED_MAJOR_NUM == 3)
-    med_int numAttrib = (vf[0] == 3) ? 0 : MEDnFamily23Attribute(fid, meshName, i + 1);
+    med_int numAttrib = (vf[0] == 2) ? MEDnFamily23Attribute(fid, meshName, i + 1) : 0;
     med_int numGroups = MEDnFamilyGroup(fid, meshName, i + 1);
 #else
     med_int numAttrib = MEDnAttribut(fid, meshName, i + 1);
@@ -401,16 +401,16 @@ int GModel::readMED(const std::string &name, int meshIndex)
     char familyName[MED_TAILLE_NOM + 1];
     med_int familyNum;
 #if (MED_MAJOR_NUM == 3)
-    if(vf[0] == 3){ // MED3 file
-      if(MEDfamilyInfo(fid, meshName, i + 1, familyName, &familyNum, &groupNames[0]) < 0){
-        Msg::Error("Could not read info for MED3 family %d", i + 1);
+    if(vf[0] == 2){ // MED2 file
+      if(MEDfamily23Info(fid, meshName, i + 1, familyName, &attribId[0], 
+                         &attribVal[0], &attribDes[0], &familyNum, &groupNames[0]) < 0){
+        Msg::Error("Could not read info for MED2 family %d", i + 1);
         continue;
       }
     }
     else{
-      if(MEDfamily23Info(fid, meshName, i + 1, familyName, &attribId[0], 
-                         &attribVal[0], &attribDes[0], &familyNum, &groupNames[0]) < 0){
-        Msg::Error("Could not read info for MED2 family %d", i + 1);
+      if(MEDfamilyInfo(fid, meshName, i + 1, familyName, &familyNum, &groupNames[0]) < 0){
+        Msg::Error("Could not read info for MED3 family %d", i + 1);
         continue;
       }
     }
@@ -422,7 +422,6 @@ int GModel::readMED(const std::string &name, int meshIndex)
       continue;
     }
 #endif
-
     // family tags are unique (for all dimensions)
     GEntity *ge;
     if((ge = getRegionByTag(-familyNum))){}
