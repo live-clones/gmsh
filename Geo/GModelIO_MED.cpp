@@ -116,10 +116,7 @@ int med2mshNodeIndex(med_geometrie_element med, int k)
 #if (MED_MAJOR_NUM == 3)
   case MED_QUAD9:
 #endif
-    {
-      // same node numbering as in Gmsh
-      return k;
-    }
+    return k; // same node numbering as in Gmsh
   case MED_TETRA4: {
     static const int map[4] = {0, 2, 1, 3};
     return map[k];
@@ -139,7 +136,7 @@ int med2mshNodeIndex(med_geometrie_element med, int k)
   }
 #if (MED_MAJOR_NUM == 3)
   case MED_HEXA27: {
-    Msg::Error("FIXME HEX27 not implemented for MED3");
+    Msg::Error("FIXME HEX27 not yet implemented for MED3");
     return k;
   }
 #endif
@@ -190,7 +187,7 @@ int GModel::readMED(const std::string &name)
     med_maillage meshType;
 #if (MED_MAJOR_NUM == 3)
     med_int meshDim, nStep;
-    char dtUnit[ MED_SNAME_SIZE + 1];
+    char dtUnit[MED_SNAME_SIZE + 1];
     char axisName[3 * MED_SNAME_SIZE + 1], axisUnit[3 * MED_SNAME_SIZE + 1];
     med_sorting_type sortingType;
     med_axis_type axisType;
@@ -242,10 +239,10 @@ int GModel::readMED(const std::string &name, int meshIndex)
 
   // read mesh info
   char meshName[MED_TAILLE_NOM + 1], meshDesc[MED_TAILLE_DESC + 1];
-  med_int spaceDim;
+  med_int spaceDim, nStep = 1;
   med_maillage meshType;
 #if (MED_MAJOR_NUM == 3)
-  med_int meshDim, nStep;
+  med_int meshDim;
   char dtUnit[MED_SNAME_SIZE + 1];
   char axisName[3 * MED_SNAME_SIZE + 1], axisUnit[3 * MED_SNAME_SIZE + 1];
   med_sorting_type sortingType;
@@ -258,12 +255,20 @@ int GModel::readMED(const std::string &name, int meshIndex)
     Msg::Error("Unable to read mesh information");
     return 0;
   }
+
+  // FIXME: we should support multi-step MED3 meshes (probably by
+  // storing each mesh as a separate model, with a naming convention
+  // e.g. meshName_step%d). This way we could also handle multi-mesh
+  // time sequences in MED3.
+  if(nStep > 1)
+    Msg::Error("Discarding %d last meshes in multi-step MED mesh", nStep - 1);
+
   setName(meshName);
   if(meshType == MED_NON_STRUCTURE){
     Msg::Info("Reading %d-D unstructured mesh <<%s>>", spaceDim, meshName);
   }
   else{
-    Msg::Error("Cannot read structured mesh");
+    Msg::Error("Reading structured MED meshes is not supported");
     return 0;
   }
   med_int vf[3];
@@ -403,13 +408,15 @@ int GModel::readMED(const std::string &name, int meshIndex)
 #if (MED_MAJOR_NUM == 3)
     if(vf[0] == 2){ // MED2 file
       if(MEDfamily23Info(fid, meshName, i + 1, familyName, &attribId[0], 
-                         &attribVal[0], &attribDes[0], &familyNum, &groupNames[0]) < 0){
+                         &attribVal[0], &attribDes[0], &familyNum,
+                         &groupNames[0]) < 0){
         Msg::Error("Could not read info for MED2 family %d", i + 1);
         continue;
       }
     }
     else{
-      if(MEDfamilyInfo(fid, meshName, i + 1, familyName, &familyNum, &groupNames[0]) < 0){
+      if(MEDfamilyInfo(fid, meshName, i + 1, familyName, &familyNum,
+                       &groupNames[0]) < 0){
         Msg::Error("Could not read info for MED3 family %d", i + 1);
         continue;
       }
@@ -489,7 +496,7 @@ static void writeElementsMED(med_idt &fid, char *meshName, std::vector<med_int> 
                     0, MED_FAUX, 0, MED_FAUX, &fam[0], (med_int)fam.size(),
                     MED_MAILLE, type, MED_NOD) < 0)
 #endif
-    Msg::Error("Could not write elements");
+    Msg::Error("Could not write MED elements");
 }
 
 int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor)

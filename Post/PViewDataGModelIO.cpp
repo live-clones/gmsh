@@ -287,6 +287,7 @@ extern "C" {
 #define MED_TAILLE_NOM MED_NAME_SIZE
 #define MED_TAILLE_PNOM MED_SNAME_SIZE
 #define MED_LECTURE MED_ACC_RDONLY
+#define MED_LECTURE_AJOUT MED_ACC_RDEXT
 #define MED_NOEUD MED_NODE
 #define MED_MAILLE MED_CELL
 #define MED_NOEUD_MAILLE MED_NODE_ELEMENT
@@ -303,7 +304,7 @@ extern int med2mshNodeIndex(med_geometrie_element med, int k);
 bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 {
   med_idt fid = MEDouvrir((char*)fileName.c_str(), MED_LECTURE);
-  if(fid < 0) {
+  if(fid < 0){
     Msg::Error("Unable to open file '%s'", fileName.c_str());
     return false;
   }
@@ -315,15 +316,15 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
   }
 
   char name[MED_TAILLE_NOM + 1], meshName[MED_TAILLE_NOM + 1];
+  char dtUnit[MED_TAILLE_PNOM + 1];
   std::vector<char> compName(numComp * MED_TAILLE_PNOM + 1);
   std::vector<char> compUnit(numComp * MED_TAILLE_PNOM + 1);
-  std::vector<char> dtUnit(MED_TAILLE_PNOM + 1);
   med_int numSteps = 0;
   med_type_champ type;
 #if (MED_MAJOR_NUM == 3)
   med_bool localMesh;
   if(MEDfieldInfo(fid, fileIndex + 1, name, meshName, &localMesh, &type, 
-                  &compName[0], &compUnit[0], &dtUnit[0], &numSteps) < 0){
+                  &compName[0], &compUnit[0], dtUnit, &numSteps) < 0){
 #else
   if(MEDchampInfo(fid, fileIndex + 1, name, &type, &compName[0], &compUnit[0],
                   numComp) < 0){
@@ -338,7 +339,9 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
   int numCompMsh =
     (numComp <= 1) ? 1 : (numComp <= 3) ? 3 : (numComp <= 9) ? 9 : numComp;
 
-  if(numCompMsh > 9) Msg::Warning("More than 9 components in field");
+  if(numCompMsh > 9) 
+    Msg::Warning("More than 9 components in field: you will probably want to force "
+                 "the field type to scalar, vector or tensor in the options");
 
   // Warning! The ordering of the elements in the last two lists is
   // important: it should match the ordering of the MSH element types
@@ -387,8 +390,8 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 
   for(int step = 0; step < numSteps; step++){
 
-    // FIXME: we should loop over all profiles instead of relying of
-    // the default one per step field
+    // FIXME: in MED3 we might want to loop over all profiles instead
+    // of relying of the default one
 
     // FIXME: MED3 allows to store multi-step meshes; we should
     // interface this with our own gmodel-per-step structure
@@ -433,8 +436,8 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 #if (MED_MAJOR_NUM == 3)
       int profileSize;
       med_int numVal = MEDfieldnValueWithProfile(fid, name, numdt, numit, ent, ele,
-                                                 1, MED_COMPACT_STMODE, profileName, &profileSize, 
-                                                 locName, &ngauss);
+                                                 1, MED_COMPACT_STMODE, profileName,
+                                                 &profileSize, locName, &ngauss);
       numVal *= ngauss;
 #else
       med_int numVal = MEDnVal(fid, name, ent, ele, numdt, numit, meshName,
@@ -442,7 +445,8 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 #endif
       if(numVal <= 0) continue;
 
-      _type = (ent == MED_NOEUD) ? NodeData : (ent == MED_MAILLE) ? ElementData : ElementNodeData;
+      _type = (ent == MED_NOEUD) ? NodeData : (ent == MED_MAILLE) ? 
+        ElementData : ElementNodeData;
       int mult = 1;
       if(ent == MED_NOEUD_MAILLE){
         mult = nodesPerEle[pairs[pair].second];
@@ -606,16 +610,6 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
   return true;
 }
 
-#if (MED_MAJOR_NUM == 3)
-
-bool PViewDataGModel::writeMED(std::string fileName)
-{
-  Msg::Error("FIXME writing MED3 fields is not implemented yet");
-  return false;
-}
-
-#else
-
 bool PViewDataGModel::writeMED(std::string fileName)
 {
   if(_steps.empty()) return true;
@@ -639,7 +633,7 @@ bool PViewDataGModel::writeMED(std::string fileName)
   char *fieldName = (char*)getName().c_str();
 
   med_idt fid = MEDouvrir((char*)fileName.c_str(), MED_LECTURE_AJOUT);
-  if(fid < 0) {
+  if(fid < 0){
     Msg::Error("Unable to open file '%s'", fileName.c_str());
     return false;
   }
@@ -664,20 +658,36 @@ bool PViewDataGModel::writeMED(std::string fileName)
     return false;
   }
 
+#if (MED_MAJOR_NUM == 3)
+  if(MEDprofileWr(fid, profileName, (med_int)profile.size(), &profile[0]) < 0){
+#else
   if(MEDprofilEcr(fid, &profile[0], (med_int)profile.size(), profileName) < 0){
+#endif
     Msg::Error("Could not create MED profile");
     return false;
   }
 
   int numComp = _steps[0]->getNumComponents();
+#if (MED_MAJOR_NUM == 3)
+  if(MEDfieldCr(fid, fieldName, MED_FLOAT64, (med_int)numComp, "unknown", "unknown",
+                "unknown", meshname) < 0){
+#else
   if(MEDchampCr(fid, fieldName, MED_FLOAT64, (char*)"unknown", (char*)"unknown",
                 (med_int)numComp) < 0){
+#endif
     Msg::Error("Could not create MED field");
     return false;
   }
 
+#if (MED_MAJOR_NUM == 3)
+  med_bool changeOfCoord, geoTransform;  
+  med_int numNodes = MEDmeshnEntity(fid, meshName, MED_NO_DT, MED_NO_IT, MED_NODE,
+                                    MED_NO_GEOTYPE, MED_COORDINATE, MED_NO_CMODE, 
+                                    &changeOfCoord, &geoTransform);
+#else
   med_int numNodes = MEDnEntMaa(fid, meshName, MED_COOR, MED_NOEUD,
                                 MED_NONE, (med_connectivite)0);
+#endif
   if(numNodes <= 0){
     Msg::Error("Could not get valid number of nodes in mesh");
     return false;
@@ -695,10 +705,18 @@ bool PViewDataGModel::writeMED(std::string fileName)
     for(unsigned int i = 0; i < profile.size(); i++)
       for(int k = 0; k < numComp; k++)
         val[i * numComp + k] = _steps[step]->getData(indices[i])[k];
+#if (MED_MAJOR_NUM == 3)
+    if(MEDfieldValueWithProfileWr(fid, fieldName, (med_int)(step + 1), MED_NO_IT,
+                                  time, MED_NODE, MED_NO_GEOTYPE, MED_COMPACT_STMODE,
+                                  profileName, "", MED_FULL_INTERLACE, 
+                                  MED_ALL_CONSTITUENT, numNodes, 
+                                  (unsigned char*)&val[0]) < 0){
+#else
     if(MEDchampEcr(fid, meshName, fieldName, (unsigned char*)&val[0],
                    MED_FULL_INTERLACE, numNodes, (char*)MED_NOGAUSS, MED_ALL,
                    profileName, MED_COMPACT, MED_NOEUD, MED_NONE, (med_int)step,
-                   (char*)"unknown", time, MED_NONOR) < 0) {
+                   (char*)"unknown", time, MED_NONOR) < 0){
+#endif
       Msg::Error("Could not write MED field");
       return false;
     }
@@ -710,8 +728,6 @@ bool PViewDataGModel::writeMED(std::string fileName)
   }
   return true;
 }
-
-#endif
 
 #else
 
