@@ -434,7 +434,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
       // Gauss points or the number of nodes per element into account,
       // but not the number of components)
 #if (MED_MAJOR_NUM == 3)
-      int profileSize;
+      med_int profileSize;
       med_int numVal = MEDfieldnValueWithProfile(fid, name, numdt, numit, ent, ele,
                                                  1, MED_COMPACT_STMODE, profileName,
                                                  &profileSize, locName, &ngauss);
