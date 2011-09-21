@@ -16,7 +16,7 @@ cd ${GMSH} && svn update >> ${LOG} 2>&1
 mkdir ${GMSH}/bin
 cd ${GMSH}/bin && \
   ${CMAKE} -DGMSH_EXTRA_VERSION:string="${EXTRA_VERSION}"\
-           -DCMAKE_PREFIX_PATH:path="/usr/local;/usr/local/opencascade"\
+           -DCMAKE_PREFIX_PATH:path="/usr/local/med;/usr/local/opencascade;/usr/local"\
            -DENABLE_NATIVE_FILE_CHOOSER:bool=FALSE\
            -DENABLE_SWIG:bool=FALSE\
   ${GMSH} >> ${LOG} 2>&1
