@@ -20,7 +20,7 @@
 #define CYLINDER     8
 #define CONROD       9
 #define LSMESH      10
-#define POINTS      11
+#define LSPOINTS    11 // don't define 'POINTS' as it's reserved by win32
 // TOOLS
 #define CUT       11
 #define UNION     12
@@ -166,7 +166,7 @@ public:
   // return negative value inward and positive value outward
   virtual double operator() (const double &x, const double &y, const double &z) const;
   void computeLS(std::vector<MVertex*> &vert);
-  int type() const {return POINTS;}
+  int type() const {return LSPOINTS;}
 };
 
 class gLevelsetQuadric : public gLevelsetPrimitive

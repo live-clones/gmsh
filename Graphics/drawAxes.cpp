@@ -327,9 +327,6 @@ void drawContext::drawAxes()
                  CTX::instance()->rotationCenter[1], CTX::instance()->rotationCenter[2],
                  CTX::instance()->geom.light);
   }
-
-
-
 }
 
 void drawContext::drawSmallAxes()
