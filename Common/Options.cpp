@@ -2753,7 +2753,7 @@ double opt_general_options_save(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->general.butt[9]->value
-      (CTX::instance()->optionsSave);
+      (CTX::instance()->optionsSave ? 1 : 0);
 #endif
   return CTX::instance()->optionsSave;
 }

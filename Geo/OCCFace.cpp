@@ -235,6 +235,7 @@ double OCCFace::curvatureMax(const SPoint2 &param) const
   return std::max(fabs(prop.MinCurvature()), fabs(prop.MaxCurvature()));
 
 }
+
 double OCCFace::curvatures(const SPoint2 &param,
                            SVector3 *dirMax,
                            SVector3 *dirMin,
@@ -340,7 +341,8 @@ bool OCCFace::buildSTLTriangulation(bool force)
 
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
-  BRepMesh_FastDiscret aMesher(0.1, 0.5, aBox, Standard_False, Standard_False, Standard_True, Standard_False);
+  BRepMesh_FastDiscret aMesher(0.1, 0.5, aBox, Standard_False, Standard_False, 
+                               Standard_True, Standard_False);
   aMesher.Add(s);
 #if !((OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 5))
   aMesher.Process(s);
@@ -536,6 +538,5 @@ bool OCCFace::isSphere (double &radius, SPoint3 &center) const
     return false;
   }
 }
-
 
 #endif

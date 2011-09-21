@@ -9,7 +9,7 @@ View "Primitives"{
   T3(x,y--,z,0){"Scalar, vector and tensor points"};
   SP(x,y--,z){1};
   VP(x,y--,z){1,0,0};
-  TP(x,y--,z){1,0,0,0,0,0,0,0,0};
+  TP(x,y--,z){1,0,0,0,2,0,0,0,1};
 
   T3(x,y--,z,0){"Scalar, vector and tensor lines"};
   SL(x,y--,z, x+.5,y,z){1,2};

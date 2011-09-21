@@ -94,21 +94,19 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
   const double dx = p1.x()-p2.x();
   const double dy = p1.y()-p2.y();
   const double dz = p1.z()-p2.z();
-  if(sqrt(dx * dx + dy * dy + dz * dz) > 1.e-2 * CTX::instance()->lc && 0){
-    // return reparamOnFace(face, epar,-1);      
-    Msg::Warning("Reparam on face partially failed for curve %d surface %d at point %g",
+  if(sqrt(dx * dx + dy * dy + dz * dz) > 1.e-2 * CTX::instance()->lc){
+    Msg::Warning("Reparam on face was inaccurate for curve %d on surface %d at point %g",
                  tag(), face->tag(), epar);
     Msg::Warning("On the face %d local (%g %g) global (%g %g %g)",
                  face->tag(), u, v, p2.x(), p2.y(), p2.z());
     Msg::Warning("On the edge %d local (%g) global (%g %g %g)",
                  tag(), epar, p1.x(), p1.y(), p1.z());
-    // GPoint ppp = face->closestPoint(SPoint3(p1.x(), p1.y(), p1.z()));
-    // return SPoint2(ppp.u(), ppp.v());
   }
   return SPoint2(u, v);
 }
 
-GPoint OCCEdge::closestPoint(const SPoint3 &qp, double &param) const{
+GPoint OCCEdge::closestPoint(const SPoint3 &qp, double &param) const
+{
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
   GeomAPI_ProjectPointOnCurve proj(pnt, curve, s0, s1);
   
@@ -119,8 +117,6 @@ GPoint OCCEdge::closestPoint(const SPoint3 &qp, double &param) const{
   
   param = proj.LowerDistanceParameter();
 
-  //  Msg::Info("projection lower distance parameters %g %g",pp[0],pp[1]);
-
   if(param < s0 || param > s1){
     Msg::Error("Point projection is out of edge bounds");
     return GPoint(0, 0);
@@ -128,9 +124,7 @@ GPoint OCCEdge::closestPoint(const SPoint3 &qp, double &param) const{
 
   pnt = proj.NearestPoint();
   return GPoint(pnt.X(), pnt.Y(), pnt.Z(), this, param);
-
 }
-
 
 // True if the edge is a seam for the given face
 bool OCCEdge::isSeam(const GFace *face) const
@@ -296,10 +290,11 @@ void OCCEdge::writeGEO(FILE *fp)
   else
     GEdge::writeGEO(fp);
 }
+
 // sometimes, we ask to replace the ending points of the curve
 // in gluing operations for example
-void OCCEdge::replaceEndingPointsInternals(GVertex *g0, GVertex *g1){
-
+void OCCEdge::replaceEndingPointsInternals(GVertex *g0, GVertex *g1)
+{
   TopoDS_Vertex aV1  = *((TopoDS_Vertex*)v0->getNativePtr());
   TopoDS_Vertex aV2  = *((TopoDS_Vertex*)v1->getNativePtr());
   TopoDS_Vertex aVR1 = *((TopoDS_Vertex*)g0->getNativePtr());
@@ -352,6 +347,5 @@ void OCCEdge::replaceEndingPointsInternals(GVertex *g0, GVertex *g1){
   c_rev.Reverse();
   
 }
-
 
 #endif

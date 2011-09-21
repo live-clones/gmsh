@@ -1,3 +1,14 @@
+2.6.0 (): new tensor field visualization modes (eigenvectors,
+ellipsoid, etc.); added support for interpolation schemes in .msh
+file; added support for MED3 format; rescale viewport around visible
+entities (shift+1:1 in GUI); unified post-processing field export; new
+experimental stereo+camera visu mode; new DelQuad and Auto 2D meshing
+algorithms; experimental BAMG & MMG3D support for anisotropic mesh
+generation; new OCC cut&merge faces algorithm imported from Salome;
+new ability to connect extruded meshes to tetrahedral grids using
+pyramids; Abaqus (INP) mesh export; various bug fixes and
+improvements.
+
 2.5.0 (Oct 15, 2010): new compound geometrical entities (for remeshing
 and/or trans-patch meshing); improved mesh reclassification tool; new
 client/server visualization mode; new ability to watch a pattern of
@@ -26,7 +37,7 @@ improvements all over the place.
 2.3.1 (Mar 18, 2009): removed GSL dependency (Gmsh now simply uses
 Blas and Lapack); new per-window visibility; added support for
 composite window printing and background images; fixed string option
-affectation in parser; fixed surface mesh orientation for Open Cascade
+affectation in parser; fixed surface mesh orientation for Open CASCADE
 models; fixed random triangle orientations in Delaunay and Frontal
 algorithms.
 
