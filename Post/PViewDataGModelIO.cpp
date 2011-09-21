@@ -670,7 +670,7 @@ bool PViewDataGModel::writeMED(std::string fileName)
   int numComp = _steps[0]->getNumComponents();
 #if (MED_MAJOR_NUM == 3)
   if(MEDfieldCr(fid, fieldName, MED_FLOAT64, (med_int)numComp, "unknown", "unknown",
-                "unknown", meshname) < 0){
+                "unknown", meshName) < 0){
 #else
   if(MEDchampCr(fid, fieldName, MED_FLOAT64, (char*)"unknown", (char*)"unknown",
                 (med_int)numComp) < 0){
