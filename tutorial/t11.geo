@@ -1,8 +1,8 @@
 /********************************************************************* 
  *
- *  Gmsh tutorial 12
+ *  Gmsh tutorial 11
  * 
- *  Unstructured quadrangular meshes
+ *  Unstructured quadrangular meshes with DelQuad and BlossomQuad
  *
  *********************************************************************/
 
