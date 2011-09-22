@@ -105,6 +105,27 @@ This version of Gmsh may contain code (in the contrib/Tetgen
 subdirectory) copyright (C) 2002-2007 Hang Si: check the configuration
 options.
 
+This version of Gmsh may contain code (in the contrib/Salome
+subdirectory) copyright (C) 2003 OPEN CASCADE, EADS/CCR, LIP6,
+CEA/DEN, CEDRAT, EDF R& D, LEG, PRINCIPIA R& D, BUREAU VERITAS: check
+the configuration options.
+
+This version of Gmsh may contain code (in the contrib/bamg
+subdirectory) from Freefem++ copyright (C) Frederic Hecht: check the
+configuration options.
+
+This version of Gmsh may contain code (in the contrib/lbfgs
+subdirectory) (C) Sergey Bochkanov (ALGLIB project): check the
+configuration options.
+
+This version of Gmsh may contain code (in the contrib/mmg3d
+subdirectory) from MMG3D Version 4.0 (C) 2004-2011 Cecile Dobrzynski
+and Pascal Frey (IPB - UPMC - INRIA): check the configuration options.
+
+This version of Gmsh may contain code (in the contrib/Blossom
+subdirectory) copyright (C) 1995-1997 Bill Cook et al.: check the
+configuration options.
+
 Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher, Greg
 Ercolano and others for the Fast Light Tool Kit on which Gmsh's GUI is
 based. See http://www.fltk.org for more info on this excellent

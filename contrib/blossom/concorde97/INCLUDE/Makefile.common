@@ -1,0 +1,77 @@
+# 
+# rules common to most of the makefiles
+#
+
+OBJS=$(LIBSRCS:.c=.$o)
+
+ifneq ($(OBJS),)
+$(LIB): $(LIB)($(OBJS))
+	$(RANLIB) $(LIB)
+endif
+
+ifneq ($(OBJS),)
+$(ROOT)/concorde.a: $(ROOT)/concorde.a($(OBJS))
+	$(RANLIB) $(ROOT)/concorde.a
+#else
+$(ROOT)/concorde.a:
+endif
+
+depend:
+	mv Makefile Makefile.orig
+	sed -e '/^# DO NOT DELETE THIS LINE -- make depend depends on it.$$/,$$d' < Makefile.orig > Makefile
+	echo "# DO NOT DELETE THIS LINE -- make depend depends on it." >> Makefile
+	echo >> Makefile
+	echo "I=$$(INCLUDE)" >> Makefile
+	echo >> Makefile
+	gcc -DSYSGNUSOLARIS -I$(ROOT)/INCLUDE $(CPLEX_INCFLAG) -MM \
+            `echo $(ALLSRCS) | tr ' ' '\012' | sort -u` | \
+            sed -e 's,../INCLUDE,$$(I),g' -e 's,\.o,.$$o,g' | \
+            awk '{for(i=1;i<=NF;i++){if($$i=="\\"){next;}if(ecnt==0){ \
+            printf("%-12s ",$$i);}else if(ecnt==1){printf("%-10s ",$$i);} \
+            else{if(ecnt>=5&&ecnt%4==1)printf("\\\n        "); \
+            if(substr($$i,1,5)=="$$(I)/")printf("%-15s ",$$i);else \
+            printf ("     %-10s ",$$i);}ecnt++;}printf("\n");ecnt=0;}' >> Makefile
+
+.PHONY: concorde.a
+concorde.a: $(ROOT)/concorde.a
+
+.PHONY: $(ROOT)/BIGGUY/bigguy.a
+$(ROOT)/BIGGUY/bigguy.a:
+	$(MAKE) -C $(ROOT)/BIGGUY bigguy.a
+
+.PHONY: $(ROOT)/CUT/cut.a
+$(ROOT)/CUT/cut.a:
+	$(MAKE) -C $(ROOT)/CUT cut.a
+
+.PHONY: $(ROOT)/EDGEGEN/edgegen.a
+$(ROOT)/EDGEGEN/edgegen.a:
+	$(MAKE) -C $(ROOT)/EDGEGEN edgegen.a
+
+.PHONY: $(ROOT)/FMATCH/fmatch.a
+$(ROOT)/FMATCH/fmatch.a:
+	$(MAKE) -C $(ROOT)/FMATCH fmatch.a
+
+.PHONY: $(ROOT)/KDTREE/kdtree.a
+$(ROOT)/KDTREE/kdtree.a:
+	$(MAKE) -C $(ROOT)/KDTREE kdtree.a
+
+.PHONY: $(ROOT)/LINKERN/linkern.a
+$(ROOT)/LINKERN/linkern.a:
+	$(MAKE) -C $(ROOT)/LINKERN linkern.a
+
+.PHONY: $(ROOT)/LP/lp.a
+$(ROOT)/LP/lp.a:
+	$(MAKE) -C $(ROOT)/LP lp.a
+
+.PHONY: $(ROOT)/TSP/tsp.a
+$(ROOT)/TSP/tsp.a:
+	$(MAKE) -C $(ROOT)/TSP tsp.a
+
+.PHONY: $(ROOT)/UTIL/util.a
+$(ROOT)/UTIL/util.a:
+	$(MAKE) -C $(ROOT)/UTIL util.a
+
+.PHONY: $(ROOT)/XSTUFF/Xstuff.a
+$(ROOT)/XSTUFF/Xstuff.a:
+	$(MAKE) -C $(ROOT)/XSTUFF Xstuff.a
+

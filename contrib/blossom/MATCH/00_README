@@ -1,0 +1,81 @@
+The file match.tar should consist of the following files:
+
+./MATCH/00_README       this file
+./MATCH/100.dat         example x-y file
+./MATCH/100.edge        example edge-file
+./MATCH/Makefile        gmake Makefile
+./MATCH/mat_main.c      main program for blossom4 code
+./MATCH/match.[ch]      matching routines
+./MATCH/matprice.[ch]   pricing routines
+./MATCH/mp_main.c       main program for price4 code
+./MATCH/tri_call.c      program to call the triangle package
+
+------------------------------------------------------------
+
+Installation:
+
+This package is an add-up to the concorde package written
+by Applegate, Bixby, Chvatal and Cook and which can be 
+found at <http://www.concorde.com/>.
+
+Type 'tar xvf match.tar', the MATCH directory will be created.
+Type 'cd MATCH' to get to the MATCH directory.
+
+To built the programs, first look at the Makefile and insert 
+the right compiler, compiling options and the concorde 
+directory (this is the directory with the concorde.a and the
+concorde.h file).
+
+After that just type 'make' or e.g. 'make blossom4', if you
+just want to get the blossom4 program. Other possibilities
+are 'make price4' or 'make tri_call'.
+
+------------------------------------------------------------
+
+Usage:
+
+After the programs are built, you can use them in the 
+following way:
+
+- blossom4
+    Type blossom4 to see different options.
+    Here some standard calls:
+
+    blossom4 -k 1000 
+        Calculate matching for 1000 random points.
+
+    blossom4 -k 1000 -s 1 
+        Calculate matching for 1000 random points
+        with random seed 1.
+
+    blossom4 -x 100.dat 
+        Calculate matching with the points from the file
+        100.dat.
+
+    blossom4 -b -x 12345.bin  -e 12345.del -5 
+        Calculate matching with the points from the binary
+        file 12345.bin, starting with the edge-set 12345.del 
+        and working with the ATT norm.
+
+    blossom4 -e 12345.del -B 12345.price
+        Calculate matching for the graph 12345.del and write 
+        the data necessary for the pricing program to the file
+        12345.price.
+
+- price4
+
+    Type price4 to see different options.
+    Here is a standard call:
+
+    price4 -b -n 12345.bin -d 12345.price -o 12345.bad.edges
+        Calculate the bad edges for the pricing file generated
+        with the blossom4 call above.
+
+- tri_call
+    All the necessary information about tri_call can be found
+    in the header of the tri_call.c file.
+ 
+For further information about options and file-formats
+see the concorde README file.
+
+------------------------------------------------------------

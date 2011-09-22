@@ -28,7 +28,7 @@
 #include "PViewData.h"
 #endif
 
-#if defined(HAVE_MATCH)
+#if defined(HAVE_BLOSSOM)
 extern "C" int FAILED_NODE;
 extern "C" struct CCdatagroup;
 extern "C" int perfect_match
@@ -1640,7 +1640,7 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
   std::set<MElement*> touched;
 
   if(CTX::instance()->mesh.algoRecombine == 1){
-#ifdef HAVE_MATCH
+#if defined(HAVE_BLOSSOM)
     int ncount = gf->triangles.size();
     if (ncount % 2 == 0) {
       int ecount =  cubicGraph ? pairs.size() + makeGraphPeriodic.size() : pairs.size();

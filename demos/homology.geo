@@ -1,7 +1,7 @@
 /********************************************************************* 
  *
  *  Gmsh tutorial 10
- * 
+ *
  *  Homology computation
  *
  *********************************************************************/
@@ -133,6 +133,7 @@ Physical Surface(74) = {46, 18, 20, 52, 22, 50, 24, 48, 66, 63, 60, 58, 56, 54};
 // Complement of the domain surface respect to the four terminals
 Physical Surface(75) = {46, 63, 66, 52, 50, 48, 54, 60, 58, 56};
 
+/*
 // Create a mesh of the model
 Mesh 3;
 
@@ -156,3 +157,4 @@ HomCut("t10_hom.msh") = {{69}, {70, 71, 72, 73}};
 //  HomGen("t10_hom.msh") = {{}, {}};
 //  HomGen("t10_hom.msh") = {{69}, {74}}; 
 //  HomGen("t10_hom.msh") = {{}, {74}}; 
+*/

@@ -12,6 +12,7 @@
 #cmakedefine HAVE_BAMG
 #cmakedefine HAVE_BFGS
 #cmakedefine HAVE_BLAS
+#cmakedefine HAVE_BLOSSOM
 #cmakedefine HAVE_CHACO
 #cmakedefine HAVE_DLOPEN
 #cmakedefine HAVE_DINTEGRATION
@@ -26,7 +27,6 @@
 #cmakedefine HAVE_LIBJPEG
 #cmakedefine HAVE_LIBPNG
 #cmakedefine HAVE_LIBZ
-#cmakedefine HAVE_MATCH
 #cmakedefine HAVE_MATHEX
 #cmakedefine HAVE_MED
 #cmakedefine HAVE_MESH

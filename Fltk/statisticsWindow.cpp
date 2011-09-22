@@ -206,6 +206,7 @@ void statisticsWindow::compute(bool elementQuality)
   printf("Angles = min=%g av=%g \n", minAngle, meanAngle);*/
   //hack emi
   //Emi hack - MESH DEGREE VERTICES
+#if 0
   std::vector<GEntity*> entities;
   std::set<MEdge, Less_Edge> edges;
   GModel::current()->getEntities(entities);
@@ -280,6 +281,7 @@ void statisticsWindow::compute(bool elementQuality)
 	}
   }
   fclose(fp);
+#endif
   //emi end hack
 
   int num = 0;

@@ -1,0 +1,42 @@
+INSTRUCTIONS FOR CONFIGURING:  (Preliminary Version (27.08.97))
+
+1.  Edit Makefile.conf to describe your system.  If you are fortunate,
+your processor, operating system, and compiler already have a prebuilt
+entry listed in the comments at the start of the file.  If so,
+uncomment the "SYS=" line and set it to your system's configuration
+name.
+
+2.  Otherwise, edit the lines defining CC, OPTFLAGS, COMFLAGS,
+LOADFLAGS, RANLIB, OBJNAME, and CCSYSNAME.  Each entry in
+Makefile.conf is preceeded by a brief comment describing its meaning.
+Try CCSYS_STANDARD if you have an ANSI C compiler, and
+CCSYS_STANDARD_KNR if you have an older, K&R C compiler.  If you are
+fortunate, that will be enough.
+
+3.  Otherwise, you will have to create an entry in INCLUDE/machdefs.h.
+Each stanza in machdefs.h contains system-dependent information for
+the compiler.  Pick a system that you think is "close" to yours, copy
+it, and choose a new name (which you will use in Makefile.conf) for
+the new description.  If you have an ANSI C compiler, include the line
+"#define CC_PROTOTYPE_ANSI", otherwise include the line "#undef
+CC_PROTOTYPE_ANSI".  You may need to adjust the list of system include
+files to match your system.  Then, select a way to access the amount of
+cpu time a process has used on your system.  Most systems can access
+the cpu time through either get_rusage() or times().  In this case,
+just "#define CC_ZEIT_RUSAGE" or "#define CC_ZEIT_TIMES".  Otherwise,
+use "#define CC_ZEIT_DUMMY", in which case all cpu times reported by
+the programs will be 0.0, or define a new CCutil_zeit() function which
+returns the accumulated cpu time on your system.
+
+
+INSTRUCTIONS FOR COMPILING:
+
+Once you have configured your system, compiling is straightforward.
+The makefiles included with the code depend upon GNU Make.  If you
+don't have it, the source code can be downloaded by anonymous ftp from
+ftp://prep.ai.mit.edu/pub/gnu/make-3.75.tar.gz.  Then, to make
+everything, in the top level directory, enter the command "make all".
+If you only want to make concorde.a and concorde.h, enter the command
+"make".  If you only want to make the executable and library in one
+subdirectory, cd into that subdirectory and enter "make".
+
