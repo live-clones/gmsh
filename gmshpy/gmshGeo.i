@@ -45,6 +45,7 @@ namespace std {
   %template(MVertexVector) vector< MVertex *,std::allocator< MVertex * > >;
   %template(MElementVector) vector< MElement *,std::allocator< MElement * > >;
   %template(GEdgeVectorVector) vector< std::vector< GEdge *,std::allocator< GEdge * > >,std::allocator< std::vector< GEdge *,std::allocator< GEdge * > > > >;
+  %template(GFaceVectorVector) vector< std::vector< GFace *,std::allocator< GFace * > >,std::allocator< std::vector< GFace *,std::allocator< GFace * > > > >;
   %template(GFaceList) list<GFace*, std::allocator<GFace*> >;
   %template(GEdgeList) list<GEdge*, std::allocator<GEdge*> >;
 }
