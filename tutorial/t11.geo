@@ -2,7 +2,7 @@
  *
  *  Gmsh tutorial 11
  * 
- *  Unstructured quadrangular meshes.
+ *  Unstructured quadrangular meshes
  *
  *********************************************************************/
 
