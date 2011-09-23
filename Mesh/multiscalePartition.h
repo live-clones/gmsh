@@ -2,6 +2,9 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
+//
+// Contributor(s):
+//   Emilie Marchandise
 
 #ifndef _MULTI_PARTITION_H_
 #define _MULTI_PARTITION_H_

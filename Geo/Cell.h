@@ -1,3 +1,10 @@
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+//
+// Contributed by Matti Pellikka <matti.pellikka@tut.fi>.
+
 #ifndef _CELL_H_
 #define _CELL_H_
 
