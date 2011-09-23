@@ -46,6 +46,8 @@ Compound Line(101) = {6, 7, 8};
 // Treat surfaces 12, 14 and 16 as a single surface
 Compound Surface(200) = {12, 14, 16};
 
+Hide {Surface{12, 14, 16}; }
+
 // More details about the reparametrization technique can be found in
 // the following papers:
 //

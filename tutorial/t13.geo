@@ -43,7 +43,7 @@ Physical Volume(1) = 1;
 
 // Apply a funny mesh size field, just because we can :-)
 Field[1] = MathEval;
-Field[1].F = "2*Sin((x+y)/5) + 3.3";
+Field[1].F = "2*Sin((x+y)/5) + 3";
 Background Field = 1;
 
 Mesh.RemeshAlgorithm = 1; // (0) no split (1) automatic (2) automatic only with metis
