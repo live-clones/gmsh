@@ -26,6 +26,11 @@ Recombine2D::Recombine2D(GFace *gf, int horizon)
 {
   if (_horizon < 1) _horizon = 1;
   
+  //return;
+  
+  laplaceSmoothing(gf,100);
+  gf->model()->writeMSH("befSquare.msh");
+  
   Msg::Info("Branching with horizon %d", _horizon = HORIZ);
   
   _haveParam = gf->geomType() != GEntity::DiscreteSurface || gf->getCompound();
@@ -60,7 +65,7 @@ Recombine2D::Recombine2D(GFace *gf, int horizon)
     }
   }
   
-  std::map<MElement*, int>::iterator itt;
+  /*std::map<MElement*, int>::iterator itt;
   
   for (itt = boundaryTriangle.begin(); itt != boundaryTriangle.end(); ++itt) {
     RecombTriangle *rt;
@@ -75,7 +80,7 @@ Recombine2D::Recombine2D(GFace *gf, int horizon)
       ret = _pairs.insert(rt);
     }
     _possibleRecomb[itt->first].insert(rt);
-  }
+  }*/
   
   Msg::Info("poss %d", _possibleRecomb.size());
   Msg::Info("pairs %d", _pairs.size());
@@ -117,12 +122,18 @@ void Recombine2D::_recombine()
 {
   SetBoundingBox();
   
+  /*Map_Tri_Recomb::iterator itt;
+  
+  for (itt = _possibleRecomb.begin(); itt != _possibleRecomb.end(); ++itt) {
+    if
+  }*/
+  
   int i = 0;
   while ((!_pairs.empty() || !_lastRecomb.empty()) && i < 1000) {
     Msg::Info("%d",i);
     Set_Recomb::iterator it = _bestNextRecombination();
     
-    if (it != _pairs.begin()) {
+    /*if (it != _pairs.begin()) {
       std::set<MElement*> isolatedCP(_isolated);
       _isolated.clear();
       Set_Recomb::iterator itnp = _pairs.begin();
@@ -146,7 +157,7 @@ void Recombine2D::_recombine()
       if (!Msg::GetAnswer("Continue ?", 1, "no", "yes"))
         Msg::Info("I continue anyway :p");
       _isolated = isolatedCP;
-    }
+    }*/
     
     _benef += (*it)->getBenef();
     if ((*it)->isQuad())
@@ -180,6 +191,7 @@ Set_Recomb::iterator Recombine2D::_bestNextRecombination()
   int h = 0, nSkip = 0;
   double maxBenef = _horizon * -200.;
   bool haveOptimal = false;
+  int maxH = 0;
   
   int numb = 0;
   while (!haveOptimal) {
@@ -211,9 +223,10 @@ NEW_NODE++;
     
     if (--h < 0) haveOptimal = true;
     
-    if (nodes[h]->getTotBenef() > maxBenef) {
+    if (nodes[h]->getTotBenef() > maxBenef && h >= maxH) {
       maxBenef = nodes[h]->getTotBenef();
       itmax = nodes[0]->getItRecomb();
+      maxH = h;
     }
     
     /*nSkip = 0;
@@ -226,13 +239,11 @@ NEW_NODE++;
            nodes[h]->beSkipped() &&
            nodes[h]->getnSkip() >= 2 * (_horizon - h))
       nodes[h--]->erase();*/
-    delete nodes[h];
-DEL_NODE++;
-    while (--h >= 0 &&
+    while (h >= 0 &&
            (nodes[h]->isBetter() ||
             nodes[h]->getnSkip() >= 2 * (_horizon - h) - 1)){
 DEL_NODE++;
-      delete nodes[h];
+      delete nodes[h--];
     }
     
     if (h < 0) haveOptimal = true;
@@ -285,8 +296,8 @@ void Recombine2D::_rmRT(RecombTriangle *rt, MElement *el)
     itmtri->second.erase(rt);
     switch (itmtri->second.size()) {
       case 1 :
-        //_pairs.erase(*itmtri->second.begin());
-        //_lastRecomb.insert(*itmtri->second.begin());
+        _pairs.erase(*itmtri->second.begin());
+        _lastRecomb.insert(*itmtri->second.begin());
         break;
       case 0 :
         _isolated.insert(tri);
@@ -315,6 +326,9 @@ int Recombine2D::apply()
   _gf->quadrangles = _quads;
   
   _applied = true;
+  _gf->model()->writeMSH("recSquare.msh");
+  laplaceSmoothing(_gf,100);
+  _gf->model()->writeMSH("aftSquare.msh");
   return 1;
 }
 

@@ -20,6 +20,9 @@
 
 class RecombTriangle;
 class Recomb2D_Node;
+class Rec2d_node;
+class Rec2d_edge;
+class Rec2d_cycle;
 struct lessRecombTri {
   bool operator()(RecombTriangle *rt1, RecombTriangle *rt2) const;
 };
@@ -48,11 +51,17 @@ class Recombine2D {
     
   public :
     Recombine2D(GFace*, int horizon);
+    Recombine2D(GFace*);
     ~Recombine2D();
     
     int apply();
     double getBenef() const {return _benef;}
     int numTriangle() const {return _isolated.size();}
+    
+  private :
+    std::set<Rec2d_node*> _nodes;
+    std::set<Rec2d_edge*> _edges;
+    std::set<Rec2d_cycle*> _cycles;
 };
 
 class RecombTriangle {
@@ -110,6 +119,45 @@ class Recomb2D_Node {
     double getTotBenef() {return _totBenef;}
     int getnSkip() {return _nskip;}
     double getBound() {return _totBenef + _benef * _depth;}
+};
+
+
+class Rec2d_node {
+  private :
+    std::set<Rec2d_edge*> _freeEdges;
+    std::set<Rec2d_cycle*> _cycle3;
+    std::set<Rec2d_cycle*> _cycle4;
+  
+  public :
+    Rec2d_node(){}
+    
+    void addCycle(Rec2d_cycle*, int n = 0);
+    void addEdge(Rec2d_edge*);
+    
+    void print();
+};
+class Rec2d_edge {
+  private :
+    Rec2d_node *_nodes[2];
+    std::set<Rec2d_cycle*> _cycles;
+  
+  public :
+    Rec2d_edge(Rec2d_node*, Rec2d_node*);
+    
+    void addCycle(Rec2d_cycle*);
+    
+    void print();
+};
+class Rec2d_cycle {
+  private :
+    std::set<Rec2d_edge*> _edges;
+  
+  public :
+    Rec2d_cycle(){}
+    void addEdge(Rec2d_edge*);
+    int size() {return _edges.size();}
+    
+    void print();
 };
 
 
