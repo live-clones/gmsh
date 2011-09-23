@@ -18,6 +18,7 @@
 #include <assert.h>
 #include <time.h>
 #undef CC_ZEIT_TIMES
+#define CC_ZEIT_DUMMY
 #endif
 
 #ifdef  CCSYS_STANDARD_KNR
