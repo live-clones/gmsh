@@ -110,13 +110,17 @@ double GMSH_NearToFarFieldPlugin::getFarField(PViewData *eData, PViewData *hData
       int numComp  = eData->getNumComponents(0, ent, ele);
       if(numComp != 3) continue ;
       int numNodes = eData->getNumNodes(0, ent, ele);
-      double x[numNodes], y[numNodes], z[numNodes] ;
-      int tag[numNodes];
+      std::vector<double> x(numNodes), y(numNodes), z(numNodes);
+      std::vector<int> tag(numNodes);
 
       for(int nod = 0; nod < numNodes; nod++)
         tag[nod] = eData->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
       double n[3] = {0.,0.,0.};
       normal3points(x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], n); 
+
+      Msg::Error("FIXME JS and MS computation need to be recoded");
+      // cannot allocate like this + fix numSteps
+      /* 
       double Js[numSteps][numNodes*numComp], Ms[numSteps][numNodes*numComp] ;
 
       for(int step = 0; step < numSteps; step++){
@@ -159,6 +163,8 @@ double GMSH_NearToFarFieldPlugin::getFarField(PViewData *eData, PViewData *hData
 
         eData->tagNode(0, ent, ele, nod, 1);
       }
+      */
+
     }
   }
   

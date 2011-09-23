@@ -26,7 +26,7 @@
 // Modified for Gmsh (C++ and 64 bit compatibility)
 
 #include <stdio.h>
-#include <inttypes.h>
+#include <stdint.h>
 
 #include "avl.h"
 #include "MallocUtils.h"

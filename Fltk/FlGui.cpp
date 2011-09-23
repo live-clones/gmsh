@@ -5,7 +5,7 @@
 
 #include <sstream>
 #include <string.h>
-#include <inttypes.h>
+#include <stdint.h>
 #include <FL/Fl.H>
 #include <FL/Fl_Tooltip.H>
 #include <FL/Fl_Shared_Image.H>

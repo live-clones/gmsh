@@ -215,7 +215,7 @@ void smoothing::optimize_face(GFace* gf){
   double epsf;
   double epsx;
   lpcvt obj;
-  double initial_conditions[2*triangulator.numPoints];
+  std::vector<double> initial_conditions(2*triangulator.numPoints);
   alglib::ae_int_t maxits;
   alglib::minlbfgsstate state;
   alglib::minlbfgsreport rep;
@@ -245,7 +245,7 @@ void smoothing::optimize_face(GFace* gf){
 	}
   }
 	
-  x.setcontent(2*num_interior,initial_conditions);
+  x.setcontent(2*num_interior, &initial_conditions[0]);
 
   octree = backgroundMesh::current()->get_octree();	
 	

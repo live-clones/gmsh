@@ -588,9 +588,8 @@ int GeomMeshMatcher::forceTomatch(GModel *geom, GModel *mesh, const double TOL)
     }
   }  
   geom->writeMSH("hopla.msh",2.2,false,false,true);
+  return 0;
 }
-
-
 
 int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
 {

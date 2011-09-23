@@ -183,7 +183,7 @@ static int get2DExtrudedVertices( MElement *elem, ExtrudeParams *ep, unsigned in
 
   std::set<MVertex *, MVertexLessThanLexicographic>::iterator itp;
   int sz = source_verts.size();
-  double x[sz], y[sz], z[sz];
+  std::vector<double> x(sz), y(sz), z(sz);
   for( int p = 0; p < sz; p++ ){
     x[p] = source_verts[p]->x();
     y[p] = source_verts[p]->y();
@@ -413,9 +413,9 @@ static std::map<std::string, std::vector<int> > getFaceTypes(GRegion *gr, MEleme
   }
 
   // create an array that holds info about whether a face touches a boundary
-  int touch_bnd[n_lat];
+  std::vector<int> touch_bnd(n_lat);
 
-  fill_touch_bnd(touch_bnd, vert_bnd, n_lat);    
+  fill_touch_bnd(&touch_bnd[0], vert_bnd, n_lat);
    
   // Classify the laterals of each little mesh volume:
 

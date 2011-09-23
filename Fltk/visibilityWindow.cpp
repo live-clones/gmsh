@@ -7,7 +7,7 @@
 #include <sstream>
 #include <map>
 #include <vector>
-#include <inttypes.h>
+#include <stdint.h>
 #include <string.h>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Box.H>

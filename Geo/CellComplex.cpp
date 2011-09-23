@@ -603,8 +603,8 @@ int CellComplex::saveComplex(std::string filename)
 
   printf("Wrote %d cells to '%s' \n", 
 	 getSize(0)+getSize(1)+getSize(2)+getSize(3), filename.c_str());
-
-	 return 1;*/
+  */
+  return 1;
 }
 
 int CellComplex::loadComplex(std::string filename)
@@ -676,5 +676,6 @@ int CellComplex::loadComplex(std::string filename)
   }
 
   fclose(fp);
-  return 1;*/
+*/
+  return 1;
 }
