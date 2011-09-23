@@ -421,7 +421,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.DisplayBorderFactor
 Border factor for model display (0: model fits window size exactly)@*
-Default value: @code{0.333333}@*
+Default value: @code{0.2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.DoubleBuffer

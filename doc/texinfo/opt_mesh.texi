@@ -451,7 +451,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RecombinationAlgorithm
 Mesh recombination algorithm (0=standard, 1=blossom)@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RecombineAll

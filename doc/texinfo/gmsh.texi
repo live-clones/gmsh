@@ -233,6 +233,9 @@ Tutorial
 * t7.geo::                      
 * t8.geo::                      
 * t9.geo::                      
+* t10.geo::                     
+* t11.geo::                     
+* t12.geo::                     
 
 Options
 
@@ -3946,7 +3949,6 @@ for(i = 0; i < number_of_triangles; i++)@{
 @c -------------------------------------------------------------------------
 
 @node Node ordering, Legacy formats, MSH binary file format, File formats
-
 @section Node ordering
 
 @cindex Nodes, ordering
@@ -4505,9 +4507,9 @@ the same for all other kinds of values.
 @cindex Examples
 @cindex Tutorial
 
-The nine following examples introduce new features gradually, starting with
-@file{t1.geo}. The files corresponding to these examples are available in
-the @file{tutorial} directory of the Gmsh distribution.
+The following examples introduce new features gradually, starting with
+@file{t1.geo}. The files corresponding to these examples are available
+in the @file{tutorial} directory of the Gmsh distribution.
 
 To learn how to run Gmsh on your computer, see @ref{Running Gmsh on your
 system}. Screencasts that show how to use the GUI are available on
@@ -4523,6 +4525,9 @@ system}. Screencasts that show how to use the GUI are available on
 * t7.geo::                      
 * t8.geo::                      
 * t9.geo::                      
+* t10.geo::                     
+* t11.geo::                     
+* t12.geo::                     
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -4601,10 +4606,37 @@ system}. Screencasts that show how to use the GUI are available on
 @c t9.geo
 @c -------------------------------------------------------------------------
 
-@node t9.geo,  , t8.geo, Tutorial
+@node t9.geo, t10.geo, t8.geo, Tutorial
 @section @file{t9.geo}
 
 @verbatiminclude ../../tutorial/t9.geo
+
+@c -------------------------------------------------------------------------
+@c t10.geo
+@c -------------------------------------------------------------------------
+
+@node t10.geo, t11.geo, t9.geo, Tutorial
+@section @file{t10.geo}
+
+@verbatiminclude ../../tutorial/t10.geo
+
+@c -------------------------------------------------------------------------
+@c t11.geo
+@c -------------------------------------------------------------------------
+
+@node t11.geo, t12.geo, t10.geo, Tutorial
+@section @file{t11.geo}
+
+@verbatiminclude ../../tutorial/t11.geo
+
+@c -------------------------------------------------------------------------
+@c t12.geo
+@c -------------------------------------------------------------------------
+
+@node t12.geo,  , t11.geo, Tutorial
+@section @file{t12.geo}
+
+@verbatiminclude ../../tutorial/t12.geo
 
 @c =========================================================================
 @c Options
