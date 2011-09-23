@@ -104,7 +104,8 @@ fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
 %token tFmod tModulo tHypot 
 %token tPrintf tSprintf tStrCat tStrPrefix tStrRelative
-%token tBoundingBox tDraw tToday tSyncModel tCreateTopology tCreateTopologyNoHoles tDistanceFunction
+%token tBoundingBox tDraw tToday tSyncModel tCreateTopology tCreateTopologyNoHoles
+%token tDistanceFunction
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
@@ -119,7 +120,6 @@ fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 %token tField tReturn tCall tFunction tShow tHide tGetValue tGetEnv tGetString
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 %token tHomRank tHomGen tHomCut tHomSeq
-
 
 %type <d> FExpr FExpr_Single 
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
@@ -696,6 +696,16 @@ Affectation :
       // appends to the list
       for(int i = 0; i < List_Nbr($5); i++)
 	gmsh_yysymbols[$1].push_back(*(double*)List_Pointer($5, i));
+      Free($1);
+      List_Delete($5);
+    }
+  | tSTRING '[' ']' tAFFECTMINUS ListOfDouble tEND
+    {
+      // remove from the list
+      for(int i = 0; i < List_Nbr($5); i++)
+        gmsh_yysymbols[$1].erase(std::find(gmsh_yysymbols[$1].begin(), 
+                                           gmsh_yysymbols[$1].end(), 
+                                           *(double*)List_Pointer($5, i)));
       Free($1);
       List_Delete($5);
     }
