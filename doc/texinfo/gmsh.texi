@@ -236,6 +236,7 @@ Tutorial
 * t10.geo::                     
 * t11.geo::                     
 * t12.geo::                     
+* t13.geo::                     
 
 Options
 
@@ -4528,6 +4529,7 @@ system}. Screencasts that show how to use the GUI are available on
 * t10.geo::                     
 * t11.geo::                     
 * t12.geo::                     
+* t13.geo::                     
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -4633,10 +4635,19 @@ system}. Screencasts that show how to use the GUI are available on
 @c t12.geo
 @c -------------------------------------------------------------------------
 
-@node t12.geo,  , t11.geo, Tutorial
+@node t12.geo, t13.geo, t11.geo, Tutorial
 @section @file{t12.geo}
 
 @verbatiminclude ../../tutorial/t12.geo
+
+@c -------------------------------------------------------------------------
+@c t13.geo
+@c -------------------------------------------------------------------------
+
+@node t13.geo,  , t12.geo, Tutorial
+@section @file{t13.geo}
+
+@verbatiminclude ../../tutorial/t13.geo
 
 @c =========================================================================
 @c Options
