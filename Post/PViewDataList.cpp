@@ -104,15 +104,51 @@ double PViewDataList::getTime(int step)
   return Time[step];
 }
 
-double PViewDataList::getMin(int step, bool onlyVisible)
+double PViewDataList::getMin(int step, bool onlyVisible, int forceNumComponents,
+                             int componentMap[9])
 {
-  if(step < 0 || step >= (int)TimeStepMin.size()) return Min;
+  if(step >= (int)TimeStepMin.size()) return Min;
+
+  if(forceNumComponents){
+    double vmin = VAL_INF;
+    for(int ent = 0; ent < getNumEntities(step); ent++){
+      for(int ele = 0; ele < getNumElements(step, ent); ele++){
+        for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
+          double val;
+          getScalarValue(step, ent, ele, nod, val, 
+                         forceNumComponents, componentMap);
+          vmin = std::min(vmin, val);
+        }
+      }
+    }
+    return vmin;
+  }
+
+  if(step < 0) return Min;
   return TimeStepMin[step];
 }
 
-double PViewDataList::getMax(int step, bool onlyVisible)
+double PViewDataList::getMax(int step, bool onlyVisible, int forceNumComponents,
+                             int componentMap[9])
 {
-  if(step < 0 || step >= (int)TimeStepMax.size()) return Max;
+  if(step >= (int)TimeStepMax.size()) return Max;
+
+  if(forceNumComponents){
+    double vmax = -VAL_INF;
+    for(int ent = 0; ent < getNumEntities(step); ent++){
+      for(int ele = 0; ele < getNumElements(step, ent); ele++){
+        for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
+          double val;
+          getScalarValue(step, ent, ele, nod, val, 
+                         forceNumComponents, componentMap);
+          vmax = std::max(vmax, val);
+        }
+      }
+    }
+    return vmax;
+  }
+
+  if(step < 0) return Max;
   return TimeStepMax[step];
 }
 

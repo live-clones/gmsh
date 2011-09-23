@@ -57,10 +57,22 @@ bool PViewData::skipElement(int step, int ent, int ele, bool checkVisibility,
   return ele % samplingRate;
 }
 
-void PViewData::getScalarValue(int step, int ent, int ele, int nod, double &val)
+void PViewData::getScalarValue(int step, int ent, int ele, int nod, double &val,
+                               int forceNumComponents, int componentMap[9])
 {
   int numComp = getNumComponents(step, ent, ele);
-  if(numComp == 1){
+  if(forceNumComponents && componentMap){
+    std::vector<double> d(forceNumComponents);
+    for(int i = 0; i < forceNumComponents; i++){
+      int comp = componentMap[i];
+      if(comp >= 0 && comp < numComp)
+        getValue(step, ent, ele, nod, comp, d[i]);
+      else
+        d[i] = 0.;
+    }
+    val = ComputeScalarRep(forceNumComponents, &d[0]);
+  }
+  else if(numComp == 1){
     getValue(step, ent, ele, nod, 0, val);
   }
   else{

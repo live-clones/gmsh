@@ -74,8 +74,10 @@ class PViewData {
   virtual double getTime(int step){ return 0.; }
 
   // get/set min/max for given step (global over all steps if step=-1)
-  virtual double getMin(int step=-1, bool onlyVisible=false) = 0;
-  virtual double getMax(int step=-1, bool onlyVisible=false) = 0;
+  virtual double getMin(int step=-1, bool onlyVisible=false, 
+                        int forceNumComponents=0, int componentMap[9]=0) = 0;
+  virtual double getMax(int step=-1, bool onlyVisible=false,
+                        int forceNumComponents=0, int componentMap[9]=0) = 0;
   virtual void setMin(double min) = 0;
   virtual void setMax(double max) = 0;
 
@@ -142,7 +144,8 @@ class PViewData {
   // return a scalar value (same as value for scalars, norm for
   // vectors, etc.) associated with the node-th node from the ele-th
   // element in the ent-th entity
-  void getScalarValue(int step, int ent, int ele, int nod, double &val);
+  void getScalarValue(int step, int ent, int ele, int nod, double &val,
+                      int forceNumComponents=0, int componentMap[9]=0);
 
   // return the number of edges of the ele-th element in the ent-th
   // entity

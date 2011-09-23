@@ -222,17 +222,21 @@ double PViewDataGModel::getTime(int step)
   return _steps[step]->getTime();
 }
 
-double PViewDataGModel::getMin(int step, bool onlyVisible)
+double PViewDataGModel::getMin(int step, bool onlyVisible, int forceNumComponents,
+                               int componentMap[9])
 {
-  if(onlyVisible){
+  if(_steps.empty()) return _min;
+
+  if(onlyVisible || forceNumComponents){
     double vmin = VAL_INF;
     for(int ent = 0; ent < getNumEntities(step); ent++){
-      if(skipEntity(step, ent)) continue;
+      if(onlyVisible && skipEntity(step, ent)) continue;
       for(int ele = 0; ele < getNumElements(step, ent); ele++){
-        if(skipElement(step, ent, ele, true)) continue;
+        if(skipElement(step, ent, ele, onlyVisible)) continue;
         for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
           double val;
-          getScalarValue(step, ent, ele, nod, val);
+          getScalarValue(step, ent, ele, nod, val, 
+                         forceNumComponents, componentMap);
           vmin = std::min(vmin, val);
         }
       }
@@ -240,21 +244,25 @@ double PViewDataGModel::getMin(int step, bool onlyVisible)
     return vmin;
   }
 
-  if(step < 0 || _steps.empty()) return _min;
+  if(step < 0) return _min;
   return _steps[step]->getMin();
 }
 
-double PViewDataGModel::getMax(int step, bool onlyVisible)
+double PViewDataGModel::getMax(int step, bool onlyVisible, int forceNumComponents,
+                               int componentMap[9])
 {
-  if(onlyVisible){
+  if(_steps.empty()) return _max;
+
+  if(onlyVisible || forceNumComponents){
     double vmax = -VAL_INF;
     for(int ent = 0; ent < getNumEntities(step); ent++){
-      if(skipEntity(step, ent)) continue;
+      if(onlyVisible && skipEntity(step, ent)) continue;
       for(int ele = 0; ele < getNumElements(step, ent); ele++){
-        if(skipElement(step, ent, ele, true)) continue;
+        if(skipElement(step, ent, ele, onlyVisible)) continue;
         for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
           double val;
-          getScalarValue(step, ent, ele, nod, val);
+          getScalarValue(step, ent, ele, nod, val, 
+                         forceNumComponents, componentMap);
           vmax = std::max(vmax, val);
         }
       }
@@ -262,7 +270,7 @@ double PViewDataGModel::getMax(int step, bool onlyVisible)
     return vmax;
   }
 
-  if(step < 0 || _steps.empty()) return _max;
+  if(step < 0) return _max;
   return _steps[step]->getMax();
 }
 

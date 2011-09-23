@@ -174,8 +174,10 @@ class PViewDataGModel : public PViewData {
   int getNumTimeSteps();
   int getFirstNonEmptyTimeStep();
   double getTime(int step);
-  double getMin(int step=-1, bool onlyVisible=false);
-  double getMax(int step=-1, bool onlyVisible=false);
+  double getMin(int step=-1, bool onlyVisible=false, int forceNumComponents=0,
+                int componentMap[9]=0);
+  double getMax(int step=-1, bool onlyVisible=false, int forceNumComponents=0,
+                int componentMap[9]=0);
   void setMin(double min){ _min = min; }
   void setMax(double max){ _max = max; }
   SBoundingBox3d getBoundingBox(int step=-1);
