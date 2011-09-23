@@ -2,7 +2,7 @@
  *
  *  Gmsh tutorial 12
  * 
- *  Remeshing with compounds
+ *  Remeshing STL with compounds
  *
  *********************************************************************/
 
