@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <time.h>
-#define CC_ZEIT_TIMES
+#undef CC_ZEIT_TIMES
 #endif
 
 #ifdef  CCSYS_STANDARD_KNR
