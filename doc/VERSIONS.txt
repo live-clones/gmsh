@@ -1,12 +1,12 @@
-2.6.0 (): new tensor field visualization modes (eigenvectors,
-ellipsoid, etc.); added support for interpolation schemes in .msh
-file; added support for MED3 format; rescale viewport around visible
-entities (shift+1:1 in GUI); unified post-processing field export; new
-experimental stereo+camera visu mode; new DelQuad and Auto 2D meshing
-algorithms; experimental BAMG & MMG3D support for anisotropic mesh
-generation; new OCC cut&merge faces algorithm imported from Salome;
-new ability to connect extruded meshes to tetrahedral grids using
-pyramids; Abaqus (INP) mesh export; various bug fixes and
+2.6.0 (): new quadrilateral meshing algoroithms (Blossom and DelQuad);
+new tensor field visualization modes (eigenvectors, ellipsoid, etc.);
+added support for interpolation schemes in .msh file; added support
+for MED3 format; rescale viewport around visible entities (shift+1:1
+in GUI); unified post-processing field export; new experimental
+stereo+camera visualization mode; experimental BAMG & MMG3D support
+for anisotropic mesh generation; new OCC cut&merge algorithm imported
+from Salome; new ability to connect extruded meshes to tetrahedral
+grids using pyramids; Abaqus (INP) mesh export; various bug fixes and
 improvements.
 
 2.5.0 (Oct 15, 2010): new compound geometrical entities (for remeshing
@@ -42,12 +42,11 @@ models; fixed random triangle orientations in Delaunay and Frontal
 algorithms.
 
 2.3.0 (Jan 23, 2009): major graphics and GUI code refactoring; new
-full-quad/hexa subdivision algorithm (removed Mesh.RecombineAlgo);
-improved automatic transfinite corner selection (now also for
-volumes); improved visibility browser; new automatic adaptive
-visualization for high-order simplices; modified arrow size, clipping
-planes and transform options; many improvements and bug fixes all over
-the place.
+full-quad/hexa subdivision algorithm; improved automatic transfinite
+corner selection (now also for volumes); improved visibility browser;
+new automatic adaptive visualization for high-order simplices;
+modified arrow size, clipping planes and transform options; many
+improvements and bug fixes all over the place.
 
 2.2.6 (Nov 21, 2008): better transfinite smoothing and automatic
 corner selection; fixed high order meshing crashes on Windows and

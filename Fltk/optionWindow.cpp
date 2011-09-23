@@ -2113,7 +2113,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.choice[3]->callback(mesh_options_ok_cb);
 
       mesh.choice[1] = new Fl_Choice
-        (L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "2D Recombination algorithm");
+        (L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "2D recombination algorithm");
       mesh.choice[1]->menu(menu_recombination_algo);
       mesh.choice[1]->align(FL_ALIGN_RIGHT);
       mesh.choice[1]->callback(mesh_options_ok_cb);
