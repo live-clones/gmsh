@@ -12,31 +12,21 @@
 // it were a single CAD entity.
 
 lc = 0.2;
-Point(1) = {0, 0, 0, lc};
-Point(2) = {1, 0, 0, lc};
-Point(3) = {1, 1, 0.5, lc};
-Point(4) = {0, 1, 0.4, lc};
-Point(5) = {0.3, 0.2, 0, lc};
-Point(6) = {0, 0.01, 0.01, lc};
-Point(7) = {0, 0.02, 0.02, lc};
-Point(8) = {1, 0.05, 0.02, lc};
+
+Point(1) = {0, 0, 0, lc};       Point(2) = {1, 0, 0, lc};
+Point(3) = {1, 1, 0.5, lc};     Point(4) = {0, 1, 0.4, lc};
+Point(5) = {0.3, 0.2, 0, lc};   Point(6) = {0, 0.01, 0.01, lc};
+Point(7) = {0, 0.02, 0.02, lc}; Point(8) = {1, 0.05, 0.02, lc};
 Point(9) = {1, 0.32, 0.02, lc};
-Line(1) = {1, 2};
-Line(2) = {2, 8};
-Line(3) = {8, 9};
-Line(4) = {9, 3};
-Line(5) = {3, 4};
-Line(6) = {4, 7};
-Line(7) = {7, 6};
-Line(8) = {6, 1};
-Spline(9) = {7, 5, 9};
+
+Line(1) = {1, 2}; Line(2) = {2, 8}; Line(3) = {8, 9}; 
+Line(4) = {9, 3}; Line(5) = {3, 4}; Line(6) = {4, 7}; 
+Line(7) = {7, 6}; Line(8) = {6, 1}; Spline(9) = {7, 5, 9}; 
 Line(10) = {6, 8};
-Line Loop(11) = {5, 6, 9, 4};
-Ruled Surface(12) = {11};
-Line Loop(13) = {9, -3, -10, -7};
-Ruled Surface(14) = {13};
-Line Loop(15) = {10, -2, -1, -8};
-Ruled Surface(16) = {15};
+
+Line Loop(11) = {5, 6, 9, 4};     Ruled Surface(12) = {11};
+Line Loop(13) = {9, -3, -10, -7}; Ruled Surface(14) = {13};
+Line Loop(15) = {10, -2, -1, -8}; Ruled Surface(16) = {15};
 
 // Treat lines 2, 3 and 4 as a single line
 Compound Line(100) = {2, 3, 4};
