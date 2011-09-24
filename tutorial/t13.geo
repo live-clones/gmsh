@@ -7,8 +7,8 @@
  *********************************************************************/
 
 // Since compound geometrical compute a new parametrization, one can
-// also use them to remesh STL files, even if there's only a single
-// elementary per compound.
+// also use them to remesh STL files, even if in this case there's
+// usually only a single elementary geometrical entity per compound.
 
 // Let's merge the mesh that we would like to remesh. This mesh was
 // reclassified ("colored") from an initial STL triangulation using
@@ -48,4 +48,3 @@ Background Field = 1;
 
 Mesh.RemeshAlgorithm = 1; // (0) no split (1) automatic (2) automatic only with metis
 Mesh.RemeshParametrization = 1; // (0) harmonic (1) conformal 
-

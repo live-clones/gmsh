@@ -79,18 +79,12 @@ Function CheeseHole
   p6 = newp; Point(p6) = {x,  y-r,z,  lcar3} ;
   p7 = newp; Point(p7) = {x,  y,  z-r,lcar3} ;
 
-  c1 = newreg; Circle(c1) = {p2,p1,p7};
-  c2 = newreg; Circle(c2) = {p7,p1,p5};
-  c3 = newreg; Circle(c3) = {p5,p1,p4};
-  c4 = newreg; Circle(c4) = {p4,p1,p2};
-  c5 = newreg; Circle(c5) = {p2,p1,p3};
-  c6 = newreg; Circle(c6) = {p3,p1,p5};
-  c7 = newreg; Circle(c7) = {p5,p1,p6};
-  c8 = newreg; Circle(c8) = {p6,p1,p2};
-  c9 = newreg; Circle(c9) = {p7,p1,p3};
-  c10 = newreg; Circle(c10) = {p3,p1,p4};
-  c11 = newreg; Circle(c11) = {p4,p1,p6};
-  c12 = newreg; Circle(c12) = {p6,p1,p7};
+  c1 = newreg; Circle(c1) = {p2,p1,p7}; c2 = newreg; Circle(c2) = {p7,p1,p5};
+  c3 = newreg; Circle(c3) = {p5,p1,p4}; c4 = newreg; Circle(c4) = {p4,p1,p2};
+  c5 = newreg; Circle(c5) = {p2,p1,p3}; c6 = newreg; Circle(c6) = {p3,p1,p5};
+  c7 = newreg; Circle(c7) = {p5,p1,p6}; c8 = newreg; Circle(c8) = {p6,p1,p2};
+  c9 = newreg; Circle(c9) = {p7,p1,p3}; c10 = newreg; Circle(c10) = {p3,p1,p4};
+  c11 = newreg; Circle(c11) = {p4,p1,p6}; c12 = newreg; Circle(c12) = {p6,p1,p7};
 
   // We need non-plane surfaces to define the spherical holes. Here we
   // use ruled surfaces, which can have 3 or 4 sides:
