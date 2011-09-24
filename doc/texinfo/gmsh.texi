@@ -1862,6 +1862,9 @@ or to a real option.
 Appends @var{expression-list} to an existing expression list or creates
 a new expression list with @var{expression-list}).
 
+@item @var{string} [ ] -= @{ @var{expression-list} @};
+Removes the items in @var{expression-list} from the existing expression.
+
 @item @var{string} [ @{ @var{expression-list} @} ] += @{ @var{expression-list} @};
 Adds and affects, item per item, the right hand side @var{expression-list}
 to an existing expression list identifier.
