@@ -66,10 +66,8 @@ Printf("New surfaces '%g' and '%g'", my_new_surfs[0], my_new_surfs[1]);
 // following volume does not have holes and thus consists of a single
 // surface loop:
 
-Point(100) = {0., 0.3, 0.13, lc};
-Point(101) = {0.08, 0.3, 0.1, lc};
-Point(102) = {0.08, 0.4, 0.1, lc};
-Point(103) = {0., 0.4, 0.13, lc};
+Point(100) = {0., 0.3, 0.13, lc};  Point(101) = {0.08, 0.3, 0.1, lc};
+Point(102) = {0.08, 0.4, 0.1, lc}; Point(103) = {0., 0.4, 0.13, lc};
 
 Line(110) = {4, 100};   Line(111) = {3, 101};
 Line(112) = {6, 102};   Line(113) = {5, 103};
