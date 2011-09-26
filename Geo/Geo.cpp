@@ -1960,6 +1960,7 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined)
     case MSH_SEGM_NURBS:
     case MSH_SEGM_BEZIER:
     case MSH_SEGM_BND_LAYER:
+    case MSH_SEGM_DISCRETE:
       {
         Curve *c = FindCurve(O.Num);
         if(c){
@@ -2005,6 +2006,7 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined)
     case MSH_SURF_REGL:
     case MSH_SURF_TRIC:
     case MSH_SURF_BND_LAYER:
+    case MSH_SURF_DISCRETE:
       {
         Surface *s = FindSurface(O.Num);
         if(s){
@@ -2038,6 +2040,7 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined)
       }
       break;
     case MSH_VOLUME:
+    case MSH_VOLUME_DISCRETE:
       {
         Volume *v = FindVolume(O.Num);
         if(v){
