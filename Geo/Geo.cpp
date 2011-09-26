@@ -3478,8 +3478,14 @@ void sortEdgesInLoop(int num, List_T *edges)
   for(int i = 0; i < nbEdges; i++) {
     int j;
     List_Read(edges, i, &j);
-    if((c = FindCurve(j)))
+    if((c = FindCurve(j))){
       List_Add(temp, &c);
+      if(c->Typ == MSH_SEGM_DISCRETE){
+        Msg::Warning("Aborting line loop sort for discrete edge: hope you know "
+                     "what you're doing ;-)");
+        return;
+      }
+    }
     else{
       return;
       Msg::Error("Unknown curve %d in line loop %d", j, num);
