@@ -684,8 +684,8 @@ if(ENABLE_SLEPC AND HAVE_PETSC)
   set(ENV_SLEPC_DIR $ENV{SLEPC_DIR})
   find_library(SLEPC_LIB slepc PATHS ${ENV_SLEPC_DIR}/${ENV_PETSC_ARCH}/lib)
   if(SLEPC_LIB)
-    find_path(SLPEC_INC "slepc.h" PATHS ${ENV_SLEPC_DIR}/${ENV_SLEPC_ARCH} 
-              PATH_SUFFIXES include include/slepc)
+    find_path(SLEPC_INC "slepc.h" PATHS ${ENV_SLEPC_DIR} PATH_SUFFIXES include 
+              ${ENV_PETSC_ARCH}/include include/slepc)
     if(SLEPC_INC)
       set_config_option(HAVE_SLEPC "SLEPc")
       list(APPEND EXTERNAL_LIBRARIES ${SLEPC_LIB})
