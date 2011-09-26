@@ -417,6 +417,24 @@ static void remove_graphic_window_cb(Fl_Widget *w, void *data)
   }
 }
 
+static void message_copy_cb(Fl_Widget *w, void *data)
+{
+  std::string buff;
+  for(int i = 1; i <= FlGui::instance()->graph[0]->browser->size(); i++) {
+    if(FlGui::instance()->graph[0]->browser->selected(i)) {
+      const char *c = FlGui::instance()->graph[0]->browser->text(i);
+      if(strlen(c) > 5 && c[0] == '@')
+        buff += std::string(&c[5]);
+      else
+        buff += std::string(c);
+      buff += "\n";
+    }
+  }
+  // bof bof bof
+  Fl::copy(buff.c_str(), buff.size(), 0);
+  Fl::copy(buff.c_str(), buff.size(), 1);
+}
+
 // This dummy box class permits to define a box widget that will not
 // eat the FL_ENTER/FL_LEAVE events (the new Box widget in fltk > 1.1
 // does that, so that gl->handle() was not called when the mouse
@@ -448,7 +466,8 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   int sw = FL_NORMAL_SIZE + 3; // status button width
   int width = CTX::instance()->glSize[0];
   int glheight = CTX::instance()->glSize[1];
-  int height = glheight + sh;
+  int mheight = glheight / 4;
+  int height = glheight + mheight + sh;
   
   // the graphic window should be a "normal" window (neither modal nor
   // non-modal)
@@ -462,69 +481,69 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   }
 
   // bottom button bar
-  bottom = new Fl_Box(0, glheight, width, sh);
+  bottom = new Fl_Box(0, glheight + mheight, width, sh);
   bottom->box(FL_FLAT_BOX);
   
   int x = 2;
   int sht = sh - 4; // leave a 2 pixel border at the bottom
   
-  butt[5] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_models");
+  butt[5] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_models");
   butt[5]->callback(status_options_cb, (void *)"model");
   butt[5]->tooltip("Select active model");
   x += sw;
-  butt[0] = new Fl_Button(x, glheight + 2, sw, sht, "X");
+  butt[0] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "X");
   butt[0]->callback(status_xyz1p_cb, (void *)"x");
   butt[0]->tooltip("Set +X or -X view (Alt+x or Alt+Shift+x)");
   x += sw;  
-  butt[1] = new Fl_Button(x, glheight + 2, sw, sht, "Y");
+  butt[1] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "Y");
   butt[1]->callback(status_xyz1p_cb, (void *)"y");
   butt[1]->tooltip("Set +Y or -Y view (Alt+y or Alt+Shift+y)");
   x += sw;  
-  butt[2] = new Fl_Button(x, glheight + 2, sw, sht, "Z");
+  butt[2] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "Z");
   butt[2]->callback(status_xyz1p_cb, (void *)"z");
   butt[2]->tooltip("Set +Z or -Z view (Alt+z or Alt+Shift+z)");
   x += sw;  
-  butt[4] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_rotate");
+  butt[4] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_rotate");
   butt[4]->callback(status_xyz1p_cb, (void *)"r");
   butt[4]->tooltip("Rotate +90 or -90 (Shift) degrees, or sync rotations (Alt)");
   x += sw;  
-  butt[3] = new Fl_Button(x, glheight + 2, 2 * FL_NORMAL_SIZE, sht, "1:1");
+  butt[3] = new Fl_Button(x, glheight + mheight + 2, 2 * FL_NORMAL_SIZE, sht, "1:1");
   butt[3]->callback(status_xyz1p_cb, (void *)"1:1");
   butt[3]->tooltip("Set unit scale, sync scale between viewports (Alt), "
                    "or reset bounding box around visible entities (Shift)");
   x += 2 * FL_NORMAL_SIZE;  
-  butt[8] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_ortho");
+  butt[8] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_ortho");
   butt[8]->callback(status_options_cb, (void *)"p");
   butt[8]->tooltip("Toggle projection mode (Alt+o or Alt+Shift+o)");
   x += sw;  
-  butt[12] = new Fl_Button(x, glheight + 2, sw, sht, "M");
+  butt[12] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "M");
   butt[12]->callback(status_options_cb, (void *)"M");
   butt[12]->tooltip("Toggle mesh visibility (Alt+m)");
   x += sw;  
-  butt[13] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_clscale");
+  butt[13] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_clscale");
   butt[13]->callback(status_options_cb, (void *)"clscale");
   butt[13]->tooltip("Change mesh element size factor");
   x += sw;  
-  butt[9] = new Fl_Button(x, glheight + 2, sw, sht, "S");
+  butt[9] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "S");
   butt[9]->callback(status_options_cb, (void *)"S");
   butt[9]->tooltip("Toggle mouse selection ON/OFF (Escape)");
   x += sw;  
-  butt[6] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_rewind");
+  butt[6] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_rewind");
   butt[6]->callback(status_rewind_cb);
   butt[6]->tooltip("Rewind animation");
   butt[6]->deactivate();
   x += sw;  
-  butt[10] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_back");
+  butt[10] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_back");
   butt[10]->callback(status_stepbackward_cb);
   butt[10]->tooltip("Step backward");
   butt[10]->deactivate();
   x += sw;  
-  butt[7] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_play");
+  butt[7] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_play");
   butt[7]->callback(status_play_cb);
   butt[7]->tooltip("Play/pause animation");
   butt[7]->deactivate();
   x += sw;  
-  butt[11] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_forward");
+  butt[11] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_forward");
   butt[11]->callback(status_stepforward_cb);
   butt[11]->tooltip("Step forward");
   butt[11]->deactivate();
@@ -540,8 +559,8 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   int wleft = (width - x) / 3 - 1;
   int wright = (width - x) - (width - x) / 3 - 1;
   
-  label[0] = new Fl_Box(x, glheight + 2, wleft, sht);
-  label[1] = new Fl_Box(x + (width - x) / 3, glheight + 2, wright, sht);
+  label[0] = new Fl_Box(x, glheight + mheight + 2, wleft, sht);
+  label[1] = new Fl_Box(x + (width - x) / 3, glheight + mheight + 2, wright, sht);
   for(int i = 0; i < 2; i++) {
     label[i]->box(FL_THIN_DOWN_BOX);
     label[i]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
@@ -557,7 +576,7 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   win->size_range(minWidth, minHeight);
 
   // tiled opengl windows
-  tile = new Fl_Tile(0, 0, width, glheight);
+  tile = new Fl_Tile(0, 0, width, glheight + mheight);
 
   int w2 = width / 2, h2 = glheight / 2;
   if(numTiles == 2){
@@ -597,8 +616,16 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   }
   for(unsigned int i = 0; i < gl.size(); i++) gl[i]->mode(mode);
 
-  tile->end();
+  browser = new Fl_Browser(0, glheight, width, mheight);
+  browser->box(FL_THIN_DOWN_BOX);
+  browser->textfont(FL_COURIER);
+  browser->textsize(FL_NORMAL_SIZE - 1);
+  browser->type(FL_MULTI_BROWSER);
+  browser->callback(message_copy_cb);
+  browser->has_scrollbar(Fl_Browser_::VERTICAL);
 
+  tile->end();
+  
   win->position(CTX::instance()->glPosition[0], CTX::instance()->glPosition[1]);
   win->end();
 }
@@ -697,4 +724,44 @@ void graphicWindow::checkAnimButtons()
     butt[10]->deactivate();
     butt[11]->deactivate();
   }
+}
+
+void graphicWindow::showMessages(int numLines)
+{
+  // change tile "live" by changing the position of a tile intersection
+  if(browser->h() == 0)
+    tile->position(0, win->h() - bottom->h(),
+                   0, win->h() - bottom->h() - 300);
+  if(numLines && CTX::instance()->msgAutoScroll)
+    browser->bottomline(browser->size());
+  //tile->show();
+  //printf("msg height = %d\n", msg->h());
+}
+
+void graphicWindow::addMessage(const char *msg)
+{
+  browser->add(msg, 0);
+  if(win->shown() && browser->h() > 10 && CTX::instance()->msgAutoScroll)
+    browser->bottomline(browser->size());
+}
+
+void graphicWindow::saveMessages(const char *filename)
+{
+  FILE *fp = fopen(filename, "w");
+
+  if(!fp) {
+    Msg::Error("Unable to open file '%s'", filename);
+    return;
+  }
+
+  Msg::StatusBar(2, true, "Writing '%s'...", filename);
+  for(int i = 1; i <= browser->size(); i++) {
+    const char *c = browser->text(i);
+    if(c[0] == '@')
+      fprintf(fp, "%s\n", &c[5]);
+    else
+      fprintf(fp, "%s\n", c);
+  }
+  Msg::StatusBar(2, true, "Done writing '%s'", filename);
+  fclose(fp);
 }

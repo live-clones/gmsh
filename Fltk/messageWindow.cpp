@@ -11,6 +11,7 @@
 #include "FlGui.h"
 #include "messageWindow.h"
 #include "paletteWindow.h"
+#include "graphicWindow.h"
 #include "fileDialogs.h"
 #include "GmshMessage.h"
 #include "OS.h"
@@ -18,7 +19,8 @@
 
 void message_cb(Fl_Widget *w, void *data)
 {
-  FlGui::instance()->messages->show();
+  FlGui::instance()->graph[0]->showMessages(10);
+  FlGui::check();
 }
 
 static void message_auto_scroll_cb(Fl_Widget *w, void *data)

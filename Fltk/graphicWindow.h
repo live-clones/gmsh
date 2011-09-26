@@ -13,6 +13,7 @@
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Tile.H>
+#include <FL/Fl_Browser.H>
 #include "openglWindow.h"
 
 class graphicWindow{
@@ -22,6 +23,7 @@ class graphicWindow{
   Fl_Window *win;
   Fl_Tile *tile;
   std::vector<openglWindow*> gl;
+  Fl_Browser *browser;
   Fl_Box *bottom;
   Fl_Button *butt[14];
   Fl_Box *label[2];
@@ -33,6 +35,9 @@ class graphicWindow{
   void split(openglWindow *g, char how);
   void setAnimButtons(int mode);
   void checkAnimButtons();
+  void showMessages(int numLines);
+  void addMessage(const char *msg);
+  void saveMessages(const char *filename);
 };
 
 void status_xyz1p_cb(Fl_Widget *w, void *data);

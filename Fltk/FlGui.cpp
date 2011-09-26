@@ -907,3 +907,19 @@ void window_cb(Fl_Widget *w, void *data)
   }
 }
 
+void FlGui::addMessage(const char *msg)
+{
+  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+    FlGui::instance()->graph[i]->addMessage(msg);
+}
+
+void FlGui::showMessages(int numLines)
+{
+  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+    FlGui::instance()->graph[i]->showMessages(numLines);
+}
+
+void FlGui::saveMessages(const char *fileName)
+{
+  FlGui::instance()->graph[0]->saveMessages(fileName);
+}
