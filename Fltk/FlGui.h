@@ -106,12 +106,6 @@ class FlGui{
   void setStatus(const char *msg, int num);
   // create the window for physical context dependant definitions
   void callForSolverPlugin(int dim);
-  // add line in message console(s)
-  void addMessage(const char *msg);
-  // show (or hide, if numLines=0) the message console
-  void showMessages(int numLines=-1);
-  // add line in message console(s)
-  void saveMessages(const char *fileName);
 };
 
 void redraw_cb(Fl_Widget *w, void *data);
