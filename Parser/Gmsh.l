@@ -176,7 +176,6 @@ Physical                return tPhysical;
 Pi                      return tPi;
 Plane                   return tPlane;
 Point                   return tPoint;
-Points                  return tPoints;
 Parametric		return tParametric;
 PolarSphere             return tPolarSphere;
 Printf                  return tPrintf;

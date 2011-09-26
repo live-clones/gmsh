@@ -110,7 +110,7 @@ fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
 %token tUsing tPlugin tDegenerated
-%token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tPoints
+%token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset
 %token tLoop tRecombine tSmoother tSplit tDelete tCoherence tIntersect
 %token tLayers tHole tAlias tAliasWithOptions
 %token tQuadTriDbl tQuadTriSngl tRecombLaterals tTransfQuadTri
@@ -1817,7 +1817,7 @@ LevelSet :
         yymsg(0, "Wrong levelset definition (%d)", $4);
 #endif
     }
-  | tLevelset tPoints '(' FExpr ')' tAFFECT '{' RecursiveListOfListOfDouble '}' tEND
+  | tLevelset tPoint '(' FExpr ')' tAFFECT '{' RecursiveListOfListOfDouble '}' tEND
     {
 #if defined(HAVE_DINTEGRATION)
       int t = (int)$4;
