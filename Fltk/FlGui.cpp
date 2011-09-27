@@ -858,6 +858,8 @@ void window_cb(Fl_Widget *w, void *data)
       oldw = FlGui::instance()->graph[0]->win->w();
       oldh = FlGui::instance()->graph[0]->win->h();
       FlGui::instance()->graph[0]->win->resize(Fl::x(), Fl::y(), Fl::w(), Fl::h());
+      FlGui::instance()->graph[0]->hideMessages();
+      FlGui::check();
       //FlGui::instance()->graph[0]->win->fullscreen();
       zoom = 0;
     }
@@ -866,7 +868,6 @@ void window_cb(Fl_Widget *w, void *data)
       //FlGui::instance()->graph[0]->win->fullscreen_off(oldx, oldy, oldw, oldh);
       zoom = 1;
     }
-    FlGui::instance()->graph[0]->win->show();
     FlGui::instance()->menu->win->show();
   }
   else if(str == "front"){
