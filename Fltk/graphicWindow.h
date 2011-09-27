@@ -19,6 +19,7 @@
 class graphicWindow{
  private:
   std::string _title;
+  int _savedMessageHeight;
  public:
   Fl_Window *win;
   Fl_Tile *tile;
@@ -35,13 +36,18 @@ class graphicWindow{
   void split(openglWindow *g, char how);
   void setAnimButtons(int mode);
   void checkAnimButtons();
-  void showMessages(int numLines);
+  void showMessages();
+  void hideMessages();
+  void resizeMessages(int dh);
   void addMessage(const char *msg);
+  void clearMessages();
   void saveMessages(const char *filename);
+  void copySelectedMessagesToClipboard();
 };
 
 void status_xyz1p_cb(Fl_Widget *w, void *data);
 void status_options_cb(Fl_Widget *w, void *data);
 void status_play_manual(int time, int incr);
+void message_cb(Fl_Widget *w, void *data);
 
 #endif

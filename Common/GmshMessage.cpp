@@ -30,7 +30,6 @@
 #if defined(HAVE_FLTK)
 #include <FL/fl_ask.H>
 #include "FlGui.h"
-#include "messageWindow.h"
 #include "extraDialogs.h"
 #endif
 
@@ -160,9 +159,9 @@ void Msg::Fatal(const char *fmt, ...)
   if(FlGui::available()){
     FlGui::instance()->check();
     std::string tmp = std::string("@C1@.") + "Fatal   : " + str;
-    FlGui::instance()->messages->add(tmp.c_str());
-    FlGui::instance()->messages->show();
-    FlGui::instance()->messages->save
+    FlGui::instance()->addMessage(tmp.c_str());
+    FlGui::instance()->showMessages();
+    FlGui::instance()->saveMessages
       ((CTX::instance()->homeDir + CTX::instance()->errorFileName).c_str());
     fl_alert("A fatal error has occurred which will force Gmsh to abort.\n"
              "The error messages have been saved in the following file:\n\n%s",
@@ -201,8 +200,8 @@ void Msg::Error(const char *fmt, ...)
   if(FlGui::available()){
     FlGui::instance()->check();
     std::string tmp = std::string("@C1@.") + "Error   : " + str;
-    FlGui::instance()->messages->add(tmp.c_str());
-    FlGui::instance()->messages->show();
+    FlGui::instance()->addMessage(tmp.c_str());
+    FlGui::instance()->showMessages();
   }
 #endif
 
@@ -234,7 +233,7 @@ void Msg::Warning(const char *fmt, ...)
   if(FlGui::available()){
     FlGui::instance()->check();
     std::string tmp = std::string("@C1@.") + "Warning : " + str;
-    FlGui::instance()->messages->add(tmp.c_str());
+    FlGui::instance()->addMessage(tmp.c_str());
   }
 #endif
 
@@ -261,7 +260,7 @@ void Msg::Info(const char *fmt, ...)
   if(FlGui::available()){
     FlGui::instance()->check();
     std::string tmp = std::string("Info    : ") + str;
-    FlGui::instance()->messages->add(tmp.c_str());
+    FlGui::instance()->addMessage(tmp.c_str());
   }
 #endif
 
@@ -305,9 +304,9 @@ void Msg::Direct(int level, const char *fmt, ...)
       tmp = std::string("@C1@.") + str;
     else
       tmp = std::string("@C4@.") + str;
-    FlGui::instance()->messages->add(tmp.c_str());
+    FlGui::instance()->addMessage(tmp.c_str());
     if(level == 1)
-      FlGui::instance()->messages->show();
+      FlGui::instance()->showMessages();
   }
 #endif
 
@@ -338,7 +337,7 @@ void Msg::StatusBar(int num, bool log, const char *fmt, ...)
       FlGui::instance()->setStatus(str, num - 1);
     if(log){
       std::string tmp = std::string("Info    : ") + str;
-      FlGui::instance()->messages->add(tmp.c_str());
+      FlGui::instance()->addMessage(tmp.c_str());
     }
   }
 #endif
@@ -365,7 +364,7 @@ void Msg::Debug(const char *fmt, ...)
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
     std::string tmp = std::string("Debug   : ") + str;
-    FlGui::instance()->messages->add(tmp.c_str());
+    FlGui::instance()->addMessage(tmp.c_str());
   }
 #endif
 
@@ -468,14 +467,14 @@ void Msg::PrintErrorCounter(const char *title)
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
     std::string red("@C1@.");
-    FlGui::instance()->messages->add((red + prefix + line).c_str());
-    FlGui::instance()->messages->add((red + prefix + title).c_str());
-    FlGui::instance()->messages->add((red + prefix + warn).c_str());
-    FlGui::instance()->messages->add((red + prefix + err).c_str());
-    FlGui::instance()->messages->add((red + prefix + help).c_str());
-    FlGui::instance()->messages->add((red + prefix + line).c_str());
+    FlGui::instance()->addMessage((red + prefix + line).c_str());
+    FlGui::instance()->addMessage((red + prefix + title).c_str());
+    FlGui::instance()->addMessage((red + prefix + warn).c_str());
+    FlGui::instance()->addMessage((red + prefix + err).c_str());
+    FlGui::instance()->addMessage((red + prefix + help).c_str());
+    FlGui::instance()->addMessage((red + prefix + line).c_str());
     if(_errorCount){
-      FlGui::instance()->messages->show();
+      FlGui::instance()->showMessages();
       fl_beep();
     }
   }

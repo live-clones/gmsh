@@ -93,10 +93,8 @@ class CTX {
   std::string watchFilePattern;
   // show tootips in the GUI?
   int tooltips;
-  // scroll automatically to last message in the message window?
-  int msgAutoScroll;
   // position and size of various windows in the GUI
-  int menuPosition[2], glPosition[2], glSize[2], msgPosition[2], msgSize[2];
+  int menuPosition[2], glPosition[2], glSize[2], msgSize;
   int optPosition[2], visPosition[2], clipPosition[2], manipPosition[2];
   int statPosition[2], ctxPosition[2], solverPosition[2];
   int pluginPosition[2], pluginSize[2], fieldPosition[2], fieldSize[2];

@@ -83,8 +83,9 @@ void openglWindow::_drawScreenMessage()
 
 void openglWindow::_drawBorder()
 {
-  // draw thin border if the parent group has several children
-  if(parent()->children() > 1){
+  // draw thin border if the parent group has more than 2 children (it
+  // has at least 2: the message console and one opengl window)
+  if(parent()->children() > 2){
     unsigned char r, g, b;
     Fl::get_color(color(), r, g, b);
     /* would need to redraw all gl's when _lastHandled is changed

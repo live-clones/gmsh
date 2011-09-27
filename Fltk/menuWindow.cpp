@@ -21,7 +21,6 @@
 #include "graphicWindow.h"
 #include "optionWindow.h"
 #include "statisticsWindow.h"
-#include "messageWindow.h"
 #include "contextWindow.h"
 #include "visibilityWindow.h"
 #include "clippingWindow.h"
@@ -587,7 +586,7 @@ static void help_short_cb(Fl_Widget *w, void *data)
   Msg::Direct("  Alt+Shift+y   Set -Y view"); 
   Msg::Direct("  Alt+Shift+z   Set -Z view"); 
   Msg::Direct(" ");
-  FlGui::instance()->messages->show();
+  FlGui::instance()->showMessages();
 }
 
 #undef CC
@@ -617,14 +616,14 @@ static void help_mouse_cb(Fl_Widget *w, void *data)
   Msg::Direct("  For a 1 button mouse, Middle button = Shift+Left button, "
               "Right button = Alt+Left button");
   Msg::Direct(" ");
-  FlGui::instance()->messages->show();
+  FlGui::instance()->showMessages();
 }
 
 static void help_command_line_cb(Fl_Widget *w, void *data)
 {
   Msg::Direct(" ");
   PrintUsage("gmsh");
-  FlGui::instance()->messages->show();
+  FlGui::instance()->showMessages();
 }
 
 static void help_online_cb(Fl_Widget *w, void *data)
@@ -1800,7 +1799,7 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
         Msg::Direct("  Disto: %g", ele->distoShapeMeasure());
         CTX::instance()->mesh.changed = ENT_ALL;
         drawContext::global()->draw();
-        FlGui::instance()->messages->show();
+        FlGui::instance()->showMessages();
       }
     }
     if(ib == 'q') {

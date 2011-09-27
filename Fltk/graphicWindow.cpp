@@ -11,9 +11,9 @@
 #include "paletteWindow.h"
 #include "mainWindow.h"
 #include "menuWindow.h"
-#include "messageWindow.h"
 #include "manipWindow.h"
 #include "extraDialogs.h"
+#include "fileDialogs.h"
 #include "PView.h"
 #include "PViewData.h"
 #include "OS.h"
@@ -231,7 +231,7 @@ void status_options_cb(Fl_Widget *w, void *data)
   }
   else if(!strcmp(str, "?")){ // display options
     PrintOptions(0, GMSH_FULLRC, 0, 1, NULL);
-    FlGui::instance()->messages->show();
+    FlGui::instance()->showMessages();
   }
   else if(!strcmp(str, "p")){ // toggle projection mode
     if(!Fl::event_state(FL_SHIFT)){
@@ -417,6 +417,32 @@ static void remove_graphic_window_cb(Fl_Widget *w, void *data)
   }
 }
 
+void message_cb(Fl_Widget *w, void *data)
+{
+  if(FlGui::instance()->graph[0]->browser->h())
+    FlGui::instance()->graph[0]->hideMessages();
+  else 
+    FlGui::instance()->graph[0]->showMessages();
+  FlGui::check();
+}
+
+static void message_event_cb(Fl_Widget *w, void *data)
+{
+  graphicWindow *g = (graphicWindow*)data;
+
+  if(Fl::event_button() == 3 || Fl::event_state(FL_CTRL)){
+    int a = Msg::GetAnswer("Save or clear messages?", 0, 
+                           "Cancel", "Save", "Clear");
+    if(a == 1){
+      if(fileChooser(FILE_CHOOSER_CREATE, "Save", ""))
+        g->saveMessages(fileChooserGetName(1).c_str());
+    }
+    else if(a == 2) g->clearMessages();
+  }
+  else
+    g->copySelectedMessagesToClipboard();
+}
+
 // This dummy box class permits to define a box widget that will not
 // eat the FL_ENTER/FL_LEAVE events (the new Box widget in fltk > 1.1
 // does that, so that gl->handle() was not called when the mouse
@@ -447,8 +473,15 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   int sh = 2 * FL_NORMAL_SIZE - 4; // status bar height
   int sw = FL_NORMAL_SIZE + 3; // status button width
   int width = CTX::instance()->glSize[0];
+  int mheight = CTX::instance()->msgSize;
   int glheight = CTX::instance()->glSize[1];
-  int height = glheight + sh;
+  int height = glheight + mheight + sh;
+
+  // no tile should be zero during tile creation
+  if(CTX::instance()->msgSize <= 0 || CTX::instance()->msgSize >= glheight){
+    mheight = 10;
+    glheight = CTX::instance()->glSize[1] - 10;
+  }
   
   // the graphic window should be a "normal" window (neither modal nor
   // non-modal)
@@ -462,69 +495,69 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   }
 
   // bottom button bar
-  bottom = new Fl_Box(0, glheight, width, sh);
+  bottom = new Fl_Box(0, glheight + mheight, width, sh);
   bottom->box(FL_FLAT_BOX);
   
   int x = 2;
   int sht = sh - 4; // leave a 2 pixel border at the bottom
   
-  butt[5] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_models");
+  butt[5] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_models");
   butt[5]->callback(status_options_cb, (void *)"model");
   butt[5]->tooltip("Select active model");
   x += sw;
-  butt[0] = new Fl_Button(x, glheight + 2, sw, sht, "X");
+  butt[0] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "X");
   butt[0]->callback(status_xyz1p_cb, (void *)"x");
   butt[0]->tooltip("Set +X or -X view (Alt+x or Alt+Shift+x)");
   x += sw;  
-  butt[1] = new Fl_Button(x, glheight + 2, sw, sht, "Y");
+  butt[1] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "Y");
   butt[1]->callback(status_xyz1p_cb, (void *)"y");
   butt[1]->tooltip("Set +Y or -Y view (Alt+y or Alt+Shift+y)");
   x += sw;  
-  butt[2] = new Fl_Button(x, glheight + 2, sw, sht, "Z");
+  butt[2] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "Z");
   butt[2]->callback(status_xyz1p_cb, (void *)"z");
   butt[2]->tooltip("Set +Z or -Z view (Alt+z or Alt+Shift+z)");
   x += sw;  
-  butt[4] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_rotate");
+  butt[4] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_rotate");
   butt[4]->callback(status_xyz1p_cb, (void *)"r");
   butt[4]->tooltip("Rotate +90 or -90 (Shift) degrees, or sync rotations (Alt)");
   x += sw;  
-  butt[3] = new Fl_Button(x, glheight + 2, 2 * FL_NORMAL_SIZE, sht, "1:1");
+  butt[3] = new Fl_Button(x, glheight + mheight + 2, 2 * FL_NORMAL_SIZE, sht, "1:1");
   butt[3]->callback(status_xyz1p_cb, (void *)"1:1");
   butt[3]->tooltip("Set unit scale, sync scale between viewports (Alt), "
                    "or reset bounding box around visible entities (Shift)");
   x += 2 * FL_NORMAL_SIZE;  
-  butt[8] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_ortho");
+  butt[8] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_ortho");
   butt[8]->callback(status_options_cb, (void *)"p");
   butt[8]->tooltip("Toggle projection mode (Alt+o or Alt+Shift+o)");
   x += sw;  
-  butt[12] = new Fl_Button(x, glheight + 2, sw, sht, "M");
+  butt[12] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "M");
   butt[12]->callback(status_options_cb, (void *)"M");
   butt[12]->tooltip("Toggle mesh visibility (Alt+m)");
   x += sw;  
-  butt[13] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_clscale");
+  butt[13] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_clscale");
   butt[13]->callback(status_options_cb, (void *)"clscale");
   butt[13]->tooltip("Change mesh element size factor");
   x += sw;  
-  butt[9] = new Fl_Button(x, glheight + 2, sw, sht, "S");
+  butt[9] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "S");
   butt[9]->callback(status_options_cb, (void *)"S");
   butt[9]->tooltip("Toggle mouse selection ON/OFF (Escape)");
   x += sw;  
-  butt[6] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_rewind");
+  butt[6] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_rewind");
   butt[6]->callback(status_rewind_cb);
   butt[6]->tooltip("Rewind animation");
   butt[6]->deactivate();
   x += sw;  
-  butt[10] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_back");
+  butt[10] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_back");
   butt[10]->callback(status_stepbackward_cb);
   butt[10]->tooltip("Step backward");
   butt[10]->deactivate();
   x += sw;  
-  butt[7] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_play");
+  butt[7] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_play");
   butt[7]->callback(status_play_cb);
   butt[7]->tooltip("Play/pause animation");
   butt[7]->deactivate();
   x += sw;  
-  butt[11] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_forward");
+  butt[11] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_forward");
   butt[11]->callback(status_stepforward_cb);
   butt[11]->tooltip("Step forward");
   butt[11]->deactivate();
@@ -540,8 +573,8 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   int wleft = (width - x) / 3 - 1;
   int wright = (width - x) - (width - x) / 3 - 1;
   
-  label[0] = new Fl_Box(x, glheight + 2, wleft, sht);
-  label[1] = new Fl_Box(x + (width - x) / 3, glheight + 2, wright, sht);
+  label[0] = new Fl_Box(x, glheight + mheight + 2, wleft, sht);
+  label[1] = new Fl_Box(x + (width - x) / 3, glheight + mheight + 2, wright, sht);
   for(int i = 0; i < 2; i++) {
     label[i]->box(FL_THIN_DOWN_BOX);
     label[i]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
@@ -557,7 +590,7 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   win->size_range(minWidth, minHeight);
 
   // tiled opengl windows
-  tile = new Fl_Tile(0, 0, width, glheight);
+  tile = new Fl_Tile(0, 0, width, glheight + mheight);
 
   int w2 = width / 2, h2 = glheight / 2;
   if(numTiles == 2){
@@ -597,7 +630,19 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   }
   for(unsigned int i = 0; i < gl.size(); i++) gl[i]->mode(mode);
 
+  browser = new Fl_Browser(0, glheight, width, mheight);
+  browser->box(FL_THIN_DOWN_BOX);
+  browser->textfont(FL_COURIER);
+  browser->textsize(FL_NORMAL_SIZE - 1);
+  browser->type(FL_MULTI_BROWSER);
+  browser->callback(message_event_cb, this);
+  browser->has_scrollbar(Fl_Browser_::VERTICAL);
+
   tile->end();
+
+  // resize the tile to match the prescribed sizes
+  tile->position(0, glheight, 0, CTX::instance()->glSize[1]);
+  _savedMessageHeight = CTX::instance()->msgSize;
 
   win->position(CTX::instance()->glPosition[0], CTX::instance()->glPosition[1]);
   win->end();
@@ -626,9 +671,12 @@ void graphicWindow::split(openglWindow *g, char how)
     // let's be brutal :-)
     int mode = g->mode();
     openglWindow::setLastHandled(0);
-    tile->clear(); // this really deletes the child opengl windows
+    for(unsigned int i = 0; i < gl.size(); i++){
+      tile->remove(gl[i]);
+      delete gl[i];
+    }
     gl.clear();
-    openglWindow *g2 = new openglWindow(0, 0, tile->w(), tile->h());
+    openglWindow *g2 = new openglWindow(0, 0, tile->w(), tile->h() - browser->h());
     g2->end();
     g2->mode(mode);
     gl.push_back(g2);
@@ -636,6 +684,8 @@ void graphicWindow::split(openglWindow *g, char how)
     g2->show();
   }
   else{
+    // make sure browser is not zero-size when adding children
+    if(browser->h() == 0) resizeMessages(1);
     int x1 = g->x();
     int y1 = g->y();
     int w1 = (how == 'h') ? g->w() / 2 : g->w();
@@ -697,4 +747,82 @@ void graphicWindow::checkAnimButtons()
     butt[10]->deactivate();
     butt[11]->deactivate();
   }
+}
+
+void graphicWindow::resizeMessages(int dh)
+{
+  for(unsigned int i = 0; i < gl.size(); i++){
+    if(gl[i]->y() + gl[i]->h() == browser->y())
+      gl[i]->resize(gl[i]->x(), gl[i]->y(), gl[i]->w(), gl[i]->h() - dh);
+  }
+  browser->resize(browser->x(), browser->y() - dh, browser->w(), browser->h() + dh);
+  browser->redraw();
+}
+
+void graphicWindow::showMessages()
+{
+  int height = _savedMessageHeight;
+  if(height < 10) height = 100;
+  int maxh = win->h() - bottom->h();
+  if(height > maxh) height = maxh / 2;
+  resizeMessages(height - browser->h());
+  if(browser->h())
+    browser->bottomline(browser->size());
+}
+
+void graphicWindow::hideMessages()
+{
+  _savedMessageHeight = browser->h();
+  resizeMessages(-browser->h());
+}
+
+void graphicWindow::addMessage(const char *msg)
+{
+  browser->add(msg, 0);
+  if(win->shown() && browser->h() >= 10)
+    browser->bottomline(browser->size());
+}
+
+void graphicWindow::clearMessages()
+{
+  browser->clear();
+}
+
+void graphicWindow::saveMessages(const char *filename)
+{
+  FILE *fp = fopen(filename, "w");
+
+  if(!fp) {
+    Msg::Error("Unable to open file '%s'", filename);
+    return;
+  }
+
+  Msg::StatusBar(2, true, "Writing '%s'...", filename);
+  for(int i = 1; i <= browser->size(); i++) {
+    const char *c = browser->text(i);
+    if(c[0] == '@')
+      fprintf(fp, "%s\n", &c[5]);
+    else
+      fprintf(fp, "%s\n", c);
+  }
+  Msg::StatusBar(2, true, "Done writing '%s'", filename);
+  fclose(fp);
+}
+
+void graphicWindow::copySelectedMessagesToClipboard()
+{
+  std::string buff;
+  for(int i = 1; i <= browser->size(); i++) {
+    if(browser->selected(i)) {
+      const char *c = browser->text(i);
+      if(strlen(c) > 5 && c[0] == '@')
+        buff += std::string(&c[5]);
+      else
+        buff += std::string(c);
+      buff += "\n";
+    }
+  }
+  // bof bof bof
+  Fl::copy(buff.c_str(), buff.size(), 0);
+  Fl::copy(buff.c_str(), buff.size(), 1);
 }

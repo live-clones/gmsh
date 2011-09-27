@@ -46,7 +46,6 @@
 #include "optionWindow.h"
 #include "solverWindow.h"
 #include "manipWindow.h"
-#include "messageWindow.h"
 #include "contextWindow.h"
 #include "clippingWindow.h"
 #endif
@@ -2470,8 +2469,10 @@ double opt_general_graphics_position1(OPT_ARGS_NUM)
 
 double opt_general_graphics_size0(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
+  if(action & GMSH_SET){
     CTX::instance()->glSize[0] = (int)val;
+    if(CTX::instance()->glSize[0] <= 0) CTX::instance()->glSize[0] = 800;
+  }
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
     if(action & GMSH_SET){
@@ -2489,8 +2490,10 @@ double opt_general_graphics_size0(OPT_ARGS_NUM)
 
 double opt_general_graphics_size1(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
+  if(action & GMSH_SET){
     CTX::instance()->glSize[1] = (int)val;
+    if(CTX::instance()->glSize[1] <= 0) CTX::instance()->glSize[1] = 600;
+  }
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
     if(action & GMSH_SET){
@@ -2569,43 +2572,13 @@ double opt_general_system_menu_bar(OPT_ARGS_NUM)
   return CTX::instance()->systemMenuBar;
 }
 
-double opt_general_message_position0(OPT_ARGS_NUM)
+double opt_general_message_size(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
-    CTX::instance()->msgPosition[0] = (int)val;
-  return CTX::instance()->msgPosition[0];
-}
-
-double opt_general_message_position1(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->msgPosition[1] = (int)val;
-  return CTX::instance()->msgPosition[1];
-}
-
-double opt_general_message_size0(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->msgSize[0] = (int)val;
-  return CTX::instance()->msgSize[0];
-}
-
-double opt_general_message_size1(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->msgSize[1] = (int)val;
-  return CTX::instance()->msgSize[1];
-}
-
-double opt_general_message_auto_scroll(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->msgAutoScroll = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->messages->butt->value(CTX::instance()->msgAutoScroll);
-#endif
-  return CTX::instance()->msgAutoScroll;
+  if(action & GMSH_SET){
+    CTX::instance()->msgSize = (int)val;
+    if(CTX::instance()->msgSize < 0) CTX::instance()->msgSize = 0;
+  }
+  return CTX::instance()->msgSize;
 }
 
 double opt_general_option_position0(OPT_ARGS_NUM)

@@ -21,7 +21,6 @@
 #include "statisticsWindow.h"
 #include "visibilityWindow.h"
 #include "clippingWindow.h"
-#include "messageWindow.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
 #include "solverWindow.h"
@@ -268,7 +267,6 @@ FlGui::FlGui(int argc, char **argv)
   stats = new statisticsWindow(CTX::instance()->deltaFontSize);
   visibility = new visibilityWindow(CTX::instance()->deltaFontSize);
   clipping = new clippingWindow(CTX::instance()->deltaFontSize);
-  messages = new messageWindow(CTX::instance()->deltaFontSize);
   manip = new manipWindow(CTX::instance()->deltaFontSize);
   geoContext = new geometryContextWindow(CTX::instance()->deltaFontSize);
   meshContext = new meshContextWindow(CTX::instance()->deltaFontSize);
@@ -785,11 +783,9 @@ void FlGui::storeCurrentWindowsInfo()
   CTX::instance()->glPosition[0] = graph[0]->win->x();
   CTX::instance()->glPosition[1] = graph[0]->win->y();
   CTX::instance()->glSize[0] = graph[0]->win->w();
-  CTX::instance()->glSize[1] = (graph[0]->win->h() - graph[0]->bottom->h());
-  CTX::instance()->msgPosition[0] = messages->win->x();
-  CTX::instance()->msgPosition[1] = messages->win->y();
-  CTX::instance()->msgSize[0] = messages->win->w();
-  CTX::instance()->msgSize[1] = messages->win->h();
+  CTX::instance()->glSize[1] = (graph[0]->win->h() - graph[0]->bottom->h() -
+                                graph[0]->browser->h());
+  CTX::instance()->msgSize = graph[0]->browser->h();
   CTX::instance()->optPosition[0] = options->win->x();
   CTX::instance()->optPosition[1] = options->win->y();
   CTX::instance()->pluginPosition[0] = plugins->win->x();
@@ -852,8 +848,6 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->manip->win->iconize();
     if(FlGui::instance()->stats->win->shown())
       FlGui::instance()->stats->win->iconize();
-    if(FlGui::instance()->messages->win->shown())
-      FlGui::instance()->messages->win->iconize();
     if(FlGui::instance()->menu->win->shown())
       FlGui::instance()->menu->win->iconize();
   }
@@ -901,9 +895,23 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->manip->win->show();
     if(FlGui::instance()->stats->win->shown())
       FlGui::instance()->stats->win->show();
-    if(FlGui::instance()->messages->win->shown())
-      FlGui::instance()->messages->win->show();
     FlGui::instance()->menu->win->show();
   }
 }
 
+void FlGui::addMessage(const char *msg)
+{
+  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+    FlGui::instance()->graph[i]->addMessage(msg);
+}
+
+void FlGui::showMessages()
+{
+  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+    FlGui::instance()->graph[i]->showMessages();
+}
+
+void FlGui::saveMessages(const char *fileName)
+{
+  FlGui::instance()->graph[0]->saveMessages(fileName);
+}

@@ -20,7 +20,6 @@
 #include "menuWindow.h"
 #include "solverWindow.h"
 #include "paletteWindow.h"
-#include "messageWindow.h"
 #include "fileDialogs.h"
 #include "StringUtils.h"
 #include "Options.h"
@@ -395,7 +394,7 @@ static void solver_command_cb(Fl_Widget *w, void *data)
   int idx = ((int *)data)[1];
 
   if(ConnectionManager::get(num)->popupMessages)
-    FlGui::instance()->messages->show(true);
+    FlGui::instance()->showMessages();
 
   int optionIndex = 0;
   for(int i = 0; i < idx; i++)

@@ -15,7 +15,6 @@ set(SRC
     statisticsWindow.cpp
     visibilityWindow.cpp
     clippingWindow.cpp
-    messageWindow.cpp
     manipWindow.cpp
     contextWindow.cpp
     solverWindow.cpp
