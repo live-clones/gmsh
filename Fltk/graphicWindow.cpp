@@ -419,10 +419,12 @@ static void remove_graphic_window_cb(Fl_Widget *w, void *data)
 
 void message_cb(Fl_Widget *w, void *data)
 {
-  if(FlGui::instance()->graph[0]->browser->h())
-    FlGui::instance()->graph[0]->hideMessages();
+  graphicWindow *g = getGraphicWindow
+    (FlGui::instance()->getCurrentOpenglWindow()->parent());
+  if(g->browser->h())
+    g->hideMessages();
   else 
-    FlGui::instance()->graph[0]->showMessages();
+    g->showMessages();
   FlGui::check();
 }
 
@@ -430,8 +432,8 @@ static void message_event_cb(Fl_Widget *w, void *data)
 {
   graphicWindow *g = (graphicWindow*)data;
 
-  if(Fl::event_button() == 3 || Fl::event_state(FL_CTRL)){
-    int a = Msg::GetAnswer("Save or clear messages?", 0, 
+  if(Fl::event_button() == 3 || Fl::event_state(FL_CTRL) || Fl::event_clicks()){
+    int a = Msg::GetAnswer("Clear or save messages?", 0, 
                            "Cancel", "Save", "Clear");
     if(a == 1){
       if(fileChooser(FILE_CHOOSER_CREATE, "Save", ""))
