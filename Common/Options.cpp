@@ -2471,7 +2471,7 @@ double opt_general_graphics_size0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     CTX::instance()->glSize[0] = (int)val;
-    if(CTX::instance()->glSize[0] <= 0) CTX::instance()->glSize[0] = 800;
+    if(CTX::instance()->glSize[0] <= 0) CTX::instance()->glSize[0] = 600;
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
