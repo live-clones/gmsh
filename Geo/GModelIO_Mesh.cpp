@@ -888,7 +888,7 @@ int GModel::writePartitionedMSH(const std::string &baseName, bool binary,
     int partition = *it;
 
     std::ostringstream sstream;
-    sstream << baseName << "_" << std::setw(3) << std::setfill('0') << partition;
+    sstream << baseName << "_" << std::setw(6) << std::setfill('0') << partition;
 
     int startNum = index ? getNumElementsMSH(this, saveAll, partition) : 0;
     Msg::Info("Writing partition %d in file '%s'", partition, sstream.str().c_str());
