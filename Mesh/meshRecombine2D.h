@@ -167,7 +167,7 @@ class TrianglesUnion {
     
   public :
     TrianglesUnion(GFace *, std::list<MTriangle*> &, std::list<MEdge> &,
-                   std::list<Rec2d_vertex*> &, std::map<MVertex*,double*> &);
+                   std::list<Rec2d_vertex*> &, std::map<MVertex*,double> &);
     
     bool operator<(TrianglesUnion &other);
     inline double getEdgeValue() {return _embEdgeValue;}

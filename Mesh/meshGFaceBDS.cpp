@@ -166,7 +166,7 @@ static double correctLC_(BDS_Point *p1,BDS_Point *p2, GFace *f,
     //      GPoint GP = f->point(SPoint2(0.5 * (p1->u + p2->u) * SCALINGU,
     //                                   0.5 * (p1->v + p2->v) * SCALINGV));
     //      double l3 = BGM_MeshSize(f,GP.u(),GP.v(),GP.x(),GP.y(),GP.z());
-    double l3 = l2;
+    double l3 = l;
     double lcmin = std::min(std::min(l1, l2), l3);
     l1 = std::min(lcmin*1.2,l1);
     l2 = std::min(lcmin*1.2,l2);

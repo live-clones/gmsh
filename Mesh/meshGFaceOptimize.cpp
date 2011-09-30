@@ -2082,6 +2082,7 @@ double Temporary::compute_alignment(const MEdge&_edge, MElement*element1, MEleme
   vertexA = _edge.getVertex(0);
   vertexB = _edge.getVertex(1);
   edge = SVector3(vertexB->x()-vertexA->x(),vertexB->y()-vertexA->y(),vertexB->z()-vertexA->z());
+  edge = edge * (1/norm(edge));
   scalar_productA = fabs(dot(gradient,edge));
   scalar_productB = fabs(dot(other_vector,edge));
   alignment = std::max(scalar_productA,scalar_productB) - sqrt(2.0)/2.0;

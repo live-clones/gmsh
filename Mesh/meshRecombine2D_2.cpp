@@ -16,6 +16,7 @@
 #include "FlGui.h"
 #include "Context.h"
 #include "OpenFile.h"//pas propre
+#include "Field.h"
 
 static int HORIZ = 20;
 
@@ -31,6 +32,10 @@ Recombine2D::Recombine2D(GFace *gf)
 : _horizon(0), _gf(gf), _benef(.0), _applied(true)
 {
   Msg::Warning("[meshRecombine2D] Alignement computation ok uniquely for xy or yz plane mesh !");
+  {
+    FieldManager *fields = gf->model()->getFields();
+    fields->newField(fields->newId(), "Param");
+  }
   
   // be able to compute geometrical angle at corners
   std::map<MVertex*, std::set<GEdge*> > mapCornerVert;
@@ -64,7 +69,7 @@ Recombine2D::Recombine2D(GFace *gf)
   std::map<MVertex*, Rec2d_vertex*>::iterator itV2N = mapV2N.begin();
   std::list<std::map<MVertex*, std::list<MTriangle*> >::iterator> fourTri;
   for (; itvert != mapVert.end(); itvert++) {
-    if ((*itvert).second.size() == 4)
+    if ((*itvert).second.size() == 4 && (*itvert).first->onWhat()->dim() == 2)
       fourTri.push_back(itvert);
     Rec2d_vertex *n = new Rec2d_vertex((*itvert).first, (*itvert).second, mapCornerVert);
     itV2N = mapV2N.insert(itV2N, std::make_pair((*itvert).first,n));
@@ -72,8 +77,8 @@ Recombine2D::Recombine2D(GFace *gf)
     TrianglesUnion::_ValVert += n->getReward();
   }
   
-  // store mesh size and parametric coordinates for better performance
-  std::map<MVertex*,double*> mapV2LcUV;
+  // store mesh size for better performance
+  std::map<MVertex*,double> mapV2LcUV;
   
   // Create 'TrianglesUnion' for pattern of 4 triangles
 /*
@@ -127,7 +132,7 @@ Recombine2D::Recombine2D(GFace *gf)
   |  \|
   +---+
 */
-  /*std::map<MEdge, std::list<MTriangle*> >::iterator itedge = mapEdge.begin();
+  std::map<MEdge, std::list<MTriangle*> >::iterator itedge = mapEdge.begin();
   for (; itedge != mapEdge.end(); itedge++) {
     if ((*itedge).second.size() == 2) {
       std::list<MEdge> listEmbEdge;
@@ -141,12 +146,12 @@ Recombine2D::Recombine2D(GFace *gf)
       TrianglesUnion::_ValEdge += tu->getEdgeValue();
     }
     else
-      Msg::Info("[bord] %d", (*itedge).second.size());
+      ;//Msg::Info("[bord] %d", (*itedge).second.size());
   }
   _setQuads.sort(lessTriUnion());
   
   _recombine(true);
-  _applied = true;*/
+  _applied = false;
 }
 
 
@@ -154,7 +159,6 @@ void Recombine2D::_recombine(bool a)
 { 
   int i = 0;
   while (!_setQuads.empty()) {
-    Msg::Info("%d",i);
     std::list<TrianglesUnion*>::iterator it = _setQuads.begin();
     
     (*it)->select();
@@ -200,7 +204,7 @@ MQuadrangle *TrianglesUnion::createQuad() const
   
   MVertex *v1, *v2, *v3, *v4;
   v1 = listBoundEdge.begin()->getMinVertex();
-  v2 = listBoundEdge.begin()->getMinVertex();
+  v2 = listBoundEdge.begin()->getMaxVertex();
   std::list<MEdge>::iterator it = listBoundEdge.begin();
   for (it++; it != listBoundEdge.end(); it++) {
     if (v2 == (*it).getMinVertex()) {
@@ -407,7 +411,7 @@ TrianglesUnion::TrianglesUnion(GFace *gf,
                                std::list<MTriangle*> &t,
                                std::list<MEdge> &e,
                                std::list<Rec2d_vertex*> &v,
-                               std::map<MVertex*,double*> &v2lcUV)
+                               std::map<MVertex*,double> &v2lcUV)
 {
   _numTri = t.size();
   _numEmbEdge = e.size();
@@ -417,9 +421,8 @@ TrianglesUnion::TrianglesUnion(GFace *gf,
   
   _triangles = new MTriangle*[_numTri];
   std::list<MTriangle*>::iterator itt = t.begin();
-  for (int k = 0; itt != t.end(); itt++, k++) {
+  for (int k = 0; itt != t.end(); itt++, k++)
     _triangles[k] = *itt;
-  }
   
   std::list<MEdge>::iterator ite = e.begin();
   for (; ite != e.end(); ite++) {
@@ -427,33 +430,28 @@ TrianglesUnion::TrianglesUnion(GFace *gf,
     MVertex *vert[2];
     for (int i = 0; i < 2; i++) {
       vert[i] = (*ite).getVertex(i);
-      std::map<MVertex*,double*>::iterator itlc;
+      vert[i]->getParameter(0, u[i]);
+      vert[i]->getParameter(1, v[i]); // Warning : should check if vertex on face or on edge
+      std::map<MVertex*,double>::iterator itlc;
       if ((itlc = v2lcUV.find(vert[i])) == v2lcUV.end()) {
-        double *a = new double[3];
-        gf->XYZtoUV(vert[i]->x(), vert[i]->y(), vert[i]->z(), a[1], a[2], 1.);
-        sumlc += a[0] = BGM_MeshSize(gf, a[1], a[2], vert[i]->x(), vert[i]->y(), vert[i]->z());
-        u[i] = a[1];
-        v[i] = a[2];
-        v2lcUV[vert[i]] = a;
+        sumlc += v2lcUV[vert[i]] = BGM_MeshSize(gf, u[i], v[i], vert[i]->x(), vert[i]->y(), vert[i]->z());
       }
-      else {
-        sumlc += (*itlc).second[0];
-        u[i] = (*itlc).second[1];
-        v[i] = (*itlc).second[2];
-      }
+      else
+        sumlc += (*itlc).second;
     }
+    
+    sumlc = .2; // FIXME BGM_MeshSize returns wrong meshsize
 
     double length = _computeEdgeLength(gf, vert, u, v, 0);
-    _embEdgeValue += length / sumlc * (1 + _computeAlignment(*ite, t));
-    Msg::Info("Edge a : %lf/%lf = %lf <-> %lf", length, sumlc / 2, 2 * length / sumlc, _computeAlignment(*ite, t));
+    double a = 0;
+    _embEdgeValue += length / sumlc * (a + (2-a) *_computeAlignment(*ite, t));
+    //Msg::Info("Edge a : {%lf/.1 = %lf <-> %lf} => %lf", length, 2 * length / sumlc, 1 - _computeAlignment(*ite, t),length / sumlc * (1 + _computeAlignment(*ite, t)));
   }
   
   _vertices = new Rec2d_vertex*[_numBoundVert];
   std::list<Rec2d_vertex*>::iterator itv = v.begin();
-  for (int k = 0; itv != v.end() && k < _numBoundVert; itv++, k++) {
-    _globValIfExecuted += (*itv)->getReward(-1);
+  for (int k = 0; itv != v.end() && k < _numBoundVert; itv++, k++)
     _vertices[k] = *itv;
-  }
   for (_numEmbVert = 0; itv != v.end(); itv++, _numEmbVert++)
     _embVertValue += (*itv)->getReward();
   
@@ -535,7 +533,7 @@ bool TrianglesUnion::operator<(TrianglesUnion &other)
 
 bool lessTriUnion::operator()(TrianglesUnion *tu1, TrianglesUnion *tu2) const
 {
-  return *tu1 < *tu2;
+  return *tu2 < *tu1;
 }
 
 /*map tri to recomb
