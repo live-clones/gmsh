@@ -699,11 +699,11 @@ if(ENABLE_SLEPC AND HAVE_PETSC)
 endif(ENABLE_SLEPC AND HAVE_PETSC)
 
 if(ENABLE_OCC)
-  if(WIN32)
+  if(WIN32 OR CYGWIN)
     set(OCC_SYS_NAME win32)
-  else(WIN32)
+  else(WIN32 OR CYGWIN)
     set(OCC_SYS_NAME ${CMAKE_SYSTEM_NAME})
-  endif(WIN32)
+  endif(WIN32 OR CYGWIN)
   set(OCC_LIBS_REQUIRED
       # subset of DataExchange
       TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKXSBase
@@ -813,9 +813,9 @@ if(MSVC)
   set(GMSH_SRC ${GMSH_SRC};Fltk/Win32Icon.rc)
 endif(MSVC)
 
-if(WIN32)
+if(WIN32 OR CYGWIN)
   list(APPEND EXTERNAL_LIBRARIES wsock32 ws2_32)
-endif(WIN32)
+endif(WIN32 OR CYGWIN)
 
 list(SORT CONFIG_OPTIONS)
 set(GMSH_CONFIG_OPTIONS "")
@@ -926,7 +926,7 @@ target_link_libraries(gmsh ${LINK_LIBRARIES})
 # tet classification for large 3D Delaunay grids + force static
 # linking of system libraries with cygwin/mingw (to ease distribution 
 # andspeed up app startup time)
-if(WIN32 AND NOT MSVC)
+if(WIN32 AND NOT MSVC OR CYGWIN)
   if(HAVE_64BIT_SIZE_T)
     set_target_properties(gmsh PROPERTIES LINK_FLAGS 
       "-Wl,--stack,16777216 -mwindows -static")
@@ -939,7 +939,7 @@ if(WIN32 AND NOT MSVC)
   set(CMAKE_EXE_LINK_DYNAMIC_CXX_FLAGS)
 elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS "/STACK:16777216")
-endif(WIN32 AND NOT MSVC)
+endif(WIN32 AND NOT MSVC OR CYGWIN)
 
 add_subdirectory(gmshpy)
 
@@ -992,7 +992,7 @@ macro(unix2dos VARNAME)
   set(${VARNAME} ${UNIX2DOS_FILES})
 endmacro(unix2dos)
 
-if(WIN32)
+if(WIN32 OR CYGWIN)
   set(GMSH_BIN .)
   set(GMSH_DOC .)
   set(GMSH_MAN .)
@@ -1011,11 +1011,11 @@ elseif(APPLE)
   set(GMSH_BIN ../MacOS)
   set(GMSH_DOC ../../..)
   set(GMSH_MAN ../../..)
-else(WIN32)
+else(WIN32 OR CYGWIN)
   set(GMSH_BIN bin)
   set(GMSH_DOC share/doc/gmsh)
   set(GMSH_MAN share/man/man1)
-endif(WIN32)
+endif(WIN32 OR CYGWIN)
 
 # mark targets as optional so we can install them separately if needed
 # (e.g. "make lib" or "make shared" followed by "make install/fast")
@@ -1144,7 +1144,7 @@ if(APPLE)
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsPos.icns DESTINATION .
           RENAME GmshPos.icns)
   set(CPACK_PACKAGE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIcons.icns)
-elseif(WIN32)
+elseif(WIN32 OR CYGWIN)
   set(CPACK_GENERATOR ZIP)
 else(APPLE)
   set(CPACK_GENERATOR TGZ)
