@@ -20,11 +20,13 @@
 
 class RecombTriangle;
 class Recomb2D_Node;
-class Rec2d_node;
-class Rec2d_edge;
-class Rec2d_cycle;
+class TrianglesUnion;
+class Rec2d_vertex;
 struct lessRecombTri {
   bool operator()(RecombTriangle *rt1, RecombTriangle *rt2) const;
+};
+struct lessTriUnion {
+  bool operator()(TrianglesUnion *, TrianglesUnion *) const;
 };
 
 typedef std::set<RecombTriangle*,lessRecombTri> Set_Recomb;
@@ -55,13 +57,15 @@ class Recombine2D {
     ~Recombine2D();
     
     int apply();
-    double getBenef() const {return _benef;}
-    int numTriangle() const {return _isolated.size();}
+    int apply(bool);
+    inline double getBenef() const {return _benef;}
+    inline int numTriangle() const {return _isolated.size();}
     
   private :
-    std::set<Rec2d_node*> _nodes;
-    std::set<Rec2d_edge*> _edges;
-    std::set<Rec2d_cycle*> _cycles;
+    //std::set<TrianglesUnion*, lessTriUnion> _setQuads;
+    std::list<TrianglesUnion*> _setQuads;
+    void _removeImpossible(std::list<TrianglesUnion*>::iterator);
+    void _recombine(bool);
 };
 
 class RecombTriangle {
@@ -82,15 +86,15 @@ class RecombTriangle {
     MQuadrangle *createQuad() const;
     bool operator<(const RecombTriangle &other) const;
     
-    void triangles(std::vector<MElement *> &v) const {v = _t;}
-    int numTriangles() const {return (int) _t.size();}
+    inline void triangles(std::vector<MElement *> &v) const {v = _t;}
+    inline int numTriangles() const {return (int) _t.size();}
     MElement *triangle(int i) const {
       if (i >= 0 && i < _t.size())
-	return _t[i];
+        return _t[i];
       return NULL;
     }
-    bool isQuad() const {return _formingQuad;}
-    double getBenef() const {return _benefit;}
+    inline bool isQuad() const {return _formingQuad;}
+    inline double getBenef() const {return _benefit;}
     
     double compute_alignment(const MEdge&, MElement*, MElement*);
 };
@@ -114,51 +118,71 @@ class Recomb2D_Node {
     
     void erase();
     void blocking(const Map_Tri_Node::iterator &);
-    bool isBetter() {return _blocking.size() < 2;}
-    Set_Recomb::iterator getItRecomb() {return _recomb;}
-    double getTotBenef() {return _totBenef;}
-    int getnSkip() {return _nskip;}
-    double getBound() {return _totBenef + _benef * _depth;}
+    inline bool isBetter() {return _blocking.size() < 2;}
+    inline Set_Recomb::iterator getItRecomb() {return _recomb;}
+    inline double getTotBenef() {return _totBenef;}
+    inline int getnSkip() {return _nskip;}
+    inline double getBound() {return _totBenef + _benef * _depth;}
 };
 
 
-class Rec2d_node {
+class Rec2d_vertex {
   private :
-    std::set<Rec2d_edge*> _freeEdges;
-    std::set<Rec2d_cycle*> _cycle3;
-    std::set<Rec2d_cycle*> _cycle4;
+    // _onWhat={-1:corner,0:edge,1:face,(2:volume)}
+    int _onWhat, _numEl;
+    double _angle;
+    // GEdge : virtual SVector3 firstDer(double par) const = 0;
+    // GEntity : virtual Range<double> parBounds(int i)
+    static double **_Vvalues;
+    static double **_Vbenefs;
+    
+    void _initStaticTable();
+    double _computeAngle(MVertex *, std::list<MTriangle*> &, std::set<GEdge*> &);
   
   public :
-    Rec2d_node(){}
+    Rec2d_vertex(MVertex *, std::list<MTriangle*> &,
+                 std::map<MVertex*, std::set<GEdge*> > &);
     
-    void addCycle(Rec2d_cycle*, int n = 0);
-    void addEdge(Rec2d_edge*);
-    
-    void print();
-};
-class Rec2d_edge {
-  private :
-    Rec2d_node *_nodes[2];
-    std::set<Rec2d_cycle*> _cycles;
-  
-  public :
-    Rec2d_edge(Rec2d_node*, Rec2d_node*);
-    
-    void addCycle(Rec2d_cycle*);
-    
-    void print();
-};
-class Rec2d_cycle {
-  private :
-    std::set<Rec2d_edge*> _edges;
-  
-  public :
-    Rec2d_cycle(){}
-    void addEdge(Rec2d_edge*);
-    int size() {return _edges.size();}
-    
-    void print();
+    inline void changeNumEl(int c) {_numEl += c;}
+    double getReward();
+    double getReward(int);
 };
 
-
+class TrianglesUnion {
+  private :
+    int _numEmbEdge, _numEmbVert, _numBoundVert, _numTri, _computation;
+    double _embEdgeValue, _embVertValue, _globValIfExecuted;
+    Rec2d_vertex **_vertices;
+    MTriangle **_triangles;
+    static int _RECOMPUTE; //incremented when a recombination is executed
+    public:
+    static int _NumEdge, _NumVert;
+    static double _ValEdge, _ValVert;
+    private:
+    
+    double _computeEdgeLength(GFace *, MVertex **, double *u, double *v,
+                              int numIntermedPoint= 1);
+    double _computeAlignment(MEdge &, std::list<MTriangle*> &);
+    void _update();
+    
+  public :
+    TrianglesUnion(GFace *, std::list<MTriangle*> &, std::list<MEdge> &,
+                   std::list<Rec2d_vertex*> &, std::map<MVertex*,double*> &);
+    
+    bool operator<(TrianglesUnion &other);
+    inline double getEdgeValue() {return _embEdgeValue;}
+    inline double getNumTriangles() {return _numTri;}
+    inline MTriangle *getTriangle(int num) {return _triangles[num];}
+    void select() {
+      _ValEdge -= _embEdgeValue;
+      _NumEdge -= _numEmbEdge;
+      _ValVert -= _embVertValue;
+      _NumVert -= _numEmbVert;
+      for (int i = 0; i < _numBoundVert; i++) {
+        _ValVert += _vertices[i]->getReward(-1);
+      }
+      _RECOMPUTE++;
+    }
+    MQuadrangle *createQuad() const;
+};
 #endif
