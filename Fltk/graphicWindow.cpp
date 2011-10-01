@@ -479,6 +479,9 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   int glheight = CTX::instance()->glSize[1];
   int height = glheight + mheight + sh;
 
+  // FIXME: make sure height < screen_height
+
+
   // no tile should be zero during tile creation
   if(CTX::instance()->msgSize <= 0 || CTX::instance()->msgSize >= glheight){
     mheight = 10;

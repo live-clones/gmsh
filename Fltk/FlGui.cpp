@@ -24,6 +24,7 @@
 #include "manipWindow.h"
 #include "contextWindow.h"
 #include "solverWindow.h"
+#include "onelabWindow.h"
 #include "aboutWindow.h"
 #include "colorbarWindow.h"
 #include "fileDialogs.h"
@@ -271,6 +272,7 @@ FlGui::FlGui(int argc, char **argv)
   geoContext = new geometryContextWindow(CTX::instance()->deltaFontSize);
   meshContext = new meshContextWindow(CTX::instance()->deltaFontSize);
   about = new aboutWindow();
+  onelab = new onelabWindow();
   for(int i = 0; i < NB_SOLVER_MAX; i++)
     solver.push_back(new solverWindow(i, CTX::instance()->deltaFontSize));
 
@@ -647,6 +649,10 @@ int FlGui::testGlobalShortcuts(int event)
       opt_view_visible(i, GMSH_SET | GMSH_GUI, show);
     show = !show;
     status = 2;
+  }
+  else if(Fl::test_shortcut('@')) {
+    onelab_cb(0, (void*)"laucnhed_from_shortcut");
+    status = 1;
   }
   else if(testArrowShortcuts()) {
     status = 1;

@@ -70,6 +70,7 @@ class GmshSocket{
     GMSH_MERGE_FILE   = 20,
     GMSH_PARSE_STRING = 21,
     GMSH_VERTEX_ARRAY = 22,
+    GMSH_ONELAB_PARAM = 23,
     GMSH_SPEED_TEST   = 30,
     GMSH_OPTION_1     = 100,
     GMSH_OPTION_2     = 101,
@@ -202,6 +203,11 @@ class GmshSocket{
         return 1;
       }
     }
+    return 0;
+  }
+  int ReceiveMessage(int len, void *buffer)
+  {
+    if(_ReceiveData(buffer, len) == len) return 1;
     return 0;
   }
   // str should be allocated with size (len+1)

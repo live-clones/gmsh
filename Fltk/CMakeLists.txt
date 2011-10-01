@@ -24,6 +24,7 @@ set(SRC
     projectionEditor.cpp
     classificationEditor.cpp
     partitionDialog.cpp
+    onelabWindow.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 

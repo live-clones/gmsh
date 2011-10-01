@@ -33,6 +33,7 @@ class geometryContextWindow;
 class meshContextWindow;
 class aboutWindow;
 class solverWindow;
+class onelabWindow;
 
 class GVertex;
 class GEdge;
@@ -62,6 +63,7 @@ class FlGui{
   geometryContextWindow *geoContext;
   meshContextWindow *meshContext;
   aboutWindow *about;
+  onelabWindow *onelab;
   std::vector<solverWindow*> solver;
  public:
   FlGui(int argc, char **argv);
