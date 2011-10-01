@@ -7,8 +7,12 @@
 #include "GmshMessage.h"
 #include "Context.h"
 #include "OS.h"
+#include "OpenFile.h"
+#include "drawContext.h"
+#include "PView.h"
 #include "FlGui.h"
 #include "paletteWindow.h"
+#include "menuWindow.h"
 #include "onelabWindow.h"
 
 // This file contains the Gmsh/FLTK specific parts of the ONELAB
@@ -98,41 +102,52 @@ bool onelab::localNetworkClient::run(const std::string &what)
 
     double timer = GetTimeInSeconds();
     
-    char *message = new char[length + 1];
-    if(!server->ReceiveString(length, message)){
+    std::string message(length, ' ');
+    if(!server->ReceiveMessage(length, &message[0])){
       Msg::Error("Did not receive message body: stopping server");
-      delete [] message;
       break;
     }
 
     switch (type) {
     case GmshSocket::GMSH_START:
-      _pid = atoi(message);
+      _pid = atoi(message.c_str());
       break;
     case GmshSocket::GMSH_STOP:
       _pid = -1;
       break;
     case GmshSocket::GMSH_ONELAB_PARAM:
-      printf("server: got onelab param!\n");
+      printf("server: got onelab param %s!\n", message.c_str());
       break;
     case GmshSocket::GMSH_PROGRESS:
-      Msg::StatusBar(2, false, "%s %s", _name.c_str(), message);
+      Msg::StatusBar(2, false, "%s %s", _name.c_str(), message.c_str());
       break;
     case GmshSocket::GMSH_INFO:
-      Msg::Direct("%-8.8s: %s", _name.c_str(), message);
+      Msg::Direct("%-8.8s: %s", _name.c_str(), message.c_str());
       break;
     case GmshSocket::GMSH_WARNING:
-      Msg::Direct(2, "%-8.8s: %s", _name.c_str(), message);
+      Msg::Direct(2, "%-8.8s: %s", _name.c_str(), message.c_str());
       break;
     case GmshSocket::GMSH_ERROR:
-      Msg::Direct(1, "%-8.8s: %s", _name.c_str(), message);
+      Msg::Direct(1, "%-8.8s: %s", _name.c_str(), message.c_str());
+      break;
+    case GmshSocket::GMSH_MERGE_FILE:
+      {
+        int n = PView::list.size();
+        MergeFile(message);
+        drawContext::global()->draw();
+        if(n != (int)PView::list.size()) 
+          FlGui::instance()->menu->setContext(menu_post, 0);
+      }
+      break;
+    case GmshSocket::GMSH_PARSE_STRING:
+      ParseString(message);
+      drawContext::global()->draw();
       break;
     default:
       Msg::Warning("Received unknown message type (%d)", type);
       break;
     }
 
-    delete [] message;
     FlGui::instance()->check();
   }
 
@@ -140,8 +155,7 @@ bool onelab::localNetworkClient::run(const std::string &what)
   delete server;
 
   Msg::StatusBar(2, true, "Done running '%s'", _name.c_str());
-
-  return false;
+  return true;
 }
 
 bool onelab::localNetworkClient::kill()
@@ -169,6 +183,17 @@ void onelab_cb(Fl_Widget *w, void *data)
   FlGui::instance()->onelab->show();
 }
 
+void onelab_compute_cb(Fl_Widget *w, void *data)
+{
+  printf("onelab has %d clients\n", onelab::server::instance()->getNumClients());
+  for(onelab::server::citer it = onelab::server::instance()->firstClient();
+      it != onelab::server::instance()->lastClient(); it++){
+    onelab::client *c = it->second;
+    printf("client name = %s\n", c->getName().c_str());
+    c->run("/Users/geuzaine/src/getdp/demos/test.pro -solve MagSta_phi -pos phi");
+  }
+}
+
 onelabWindow::onelabWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
@@ -184,6 +209,7 @@ onelabWindow::onelabWindow(int deltaFontSize)
   }
   
   _run = new Fl_Button(width - WB - BB, height - WB - BH, BB, BH, "Compute");
+  _run->callback(onelab_compute_cb);
 
   _win->position
     (CTX::instance()->solverPosition[0], CTX::instance()->solverPosition[1]);

@@ -522,7 +522,7 @@ namespace onelab{
           _gmshClient->Error("Did not receive message header: aborting remote get");
           return false;
         }
-        std::string msg(length);
+        std::string msg(length, ' ');
         if(!_gmshClient->ReceiveMessage(length, &msg[0])){
           _gmshClient->Error("Did not receive message body: aborting remote get");
           return false;
