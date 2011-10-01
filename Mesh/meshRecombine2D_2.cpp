@@ -148,6 +148,7 @@ Recombine2D::Recombine2D(GFace *gf)
     else
       ;//Msg::Info("[bord] %d", (*itedge).second.size());
   }
+  TrianglesUnion::addRec();
   _setQuads.sort(lessTriUnion());
   
   _recombine(true);
@@ -156,11 +157,25 @@ Recombine2D::Recombine2D(GFace *gf)
 
 
 void Recombine2D::_recombine(bool a)
-{ 
+{
+  SetBoundingBox();
+  
   int i = 0;
-  while (!_setQuads.empty()) {
+  while (!_setQuads.empty() && i < 1000) {
     std::list<TrianglesUnion*>::iterator it = _setQuads.begin();
-    
+        Msg::Info("------------------ %d", _setQuads.size());
+    {
+      Msg::Info("Expected return %lf", (*it)->getReturn());
+      _applied = false;
+      apply();
+      _applied = false;
+      CTX::instance()->mesh.changed = (ENT_ALL);
+      //drawContext::global()->draw();
+      //FlGui::instance()->check();
+      drawContext::global()->draw();
+      //if (!Msg::GetAnswer("Continue ?", 1, "no", "yes"))
+      //  Msg::Info("I continue anyway :p");
+    }   
     (*it)->select();
     
     _quads.push_back((*it)->createQuad());
@@ -239,10 +254,14 @@ int Recombine2D::apply(bool a)
   
   std::vector<MTriangle*> triangles2;
   for (int i = 0; i < _gf->triangles.size(); i++) {
-    delete _gf->triangles[i];
+    if (_isolated.find(_gf->triangles[i]) != _isolated.end())
+      delete _gf->triangles[i];
+    else
+      triangles2.push_back(_gf->triangles[i]);
   }
   _gf->triangles = triangles2;
   _gf->quadrangles = _quads;
+  _isolated.clear();
   
   _applied = true;
   return 1;
@@ -262,8 +281,12 @@ void Recombine2D::_removeImpossible(std::list<TrianglesUnion*>::iterator it)
       if (touched.find((*it)->getTriangle(i)) != touched.end())
         b = true;
     }
-    if (b)
+    if (b) {
+      for (int i = 0; i < (*it)->getNumTriangles(); i++) {
+        _isolated.insert((*it)->getTriangle(i));
+      }
       _setQuads.erase(it++);
+    }
     else
       it++;
   }
@@ -455,8 +478,7 @@ TrianglesUnion::TrianglesUnion(GFace *gf,
   for (_numEmbVert = 0; itv != v.end(); itv++, _numEmbVert++)
     _embVertValue += (*itv)->getReward();
   
-  _computation = _RECOMPUTE - 1;
-  _update();
+  _computation = _RECOMPUTE;
 }
 
 
@@ -514,6 +536,7 @@ void TrianglesUnion::_update()
 {
   if (_computation >= _RECOMPUTE)
     return;
+  double r = _globValIfExecuted;
   double alpha = _ValVert - _embVertValue;
   for (int i = 0; i < _numBoundVert; i++) {
     alpha += _vertices[i]->getReward(-1);

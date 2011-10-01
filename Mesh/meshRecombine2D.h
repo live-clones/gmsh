@@ -180,9 +180,17 @@ class TrianglesUnion {
       _NumVert -= _numEmbVert;
       for (int i = 0; i < _numBoundVert; i++) {
         _ValVert += _vertices[i]->getReward(-1);
+        _vertices[i]->changeNumEl(-1);
       }
       _RECOMPUTE++;
     }
     MQuadrangle *createQuad() const;
+    void print() {
+      Msg::Info("Printing TU (%d,%d,%d,%d)", _numEmbVert, _numBoundVert, _numEmbEdge, _numTri);
+      for (int i = 0; i < _numTri; i++)
+        Msg::Info("Triangle %d", _triangles[i]->getNum());
+    }
+    static inline void addRec() {_RECOMPUTE++;}
+    inline double getReturn() {return _globValIfExecuted;}
 };
 #endif
