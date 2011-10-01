@@ -375,8 +375,8 @@ namespace onelab{
     client(const std::string &name) : _name(name){}
     virtual ~client(){}
     std::string getName(){ return _name; }
-    virtual bool run(const std::string &what) = 0;
-    virtual bool kill() = 0;
+    virtual bool run(const std::string &what){ return false; }
+    virtual bool kill(){ return false; }
   };
 
   // The onelab server: a singleton that stores the parameter space
@@ -445,8 +445,6 @@ namespace onelab{
       _server->get(parameters, name);
       return true;
     }
-    virtual bool run(const std::string &what){ return false; }
-    virtual bool kill(){ return false; }
   };
 
   class localNetworkClient : public localClient{
@@ -540,6 +538,12 @@ namespace onelab{
       }
       return true;
     }
+    void sendInfo(const std::string &msg){ _gmshClient->Info(msg.c_str()); }
+    void sendWarning(const std::string &msg){ _gmshClient->Warning(msg.c_str()); }
+    void sendError(const std::string &msg){ _gmshClient->Error(msg.c_str()); }
+    void sendProgress(const std::string &msg){ _gmshClient->Progress(msg.c_str()); }
+    void sendMergeFileRequest(const std::string &msg){ _gmshClient->MergeFile(msg.c_str()); }
+    void sendParseStringRequest(const std::string &msg){ _gmshClient->ParseString(msg.c_str()); }
   };
 
 }

@@ -64,7 +64,7 @@ bool onelab::localNetworkClient::run(const std::string &what)
   onelabGmshServer *server = new onelabGmshServer(this);
  
   std::string sockname = "localhost:1631";
-  std::string command = "getdp -onelab -socket localhost:1631 test.pro &";
+  std::string command = _commandLine + " " + what +  " -onelab " + sockname + " &";
 
   int sock;
   try{
@@ -164,6 +164,7 @@ void onelab_cb(Fl_Widget *w, void *data)
       it != onelab::server::instance()->lastClient(); it++){
     onelab::client *c = it->second;
     printf("client name = %s\n", c->getName().c_str());
+    c->run("/Users/geuzaine/src/getdp/demos/test.pro");
   }
   FlGui::instance()->onelab->show();
 }
