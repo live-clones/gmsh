@@ -2622,7 +2622,7 @@ contextItem menu_mesh[] = {
 };  
   contextItem menu_mesh_define[] = {
     {"1Mesh>Define"} ,
-    {"Fields",      (Fl_Callback *)field_cb},
+    {"Size fields",  (Fl_Callback *)field_cb},
     {"Element size at points", (Fl_Callback *)mesh_define_length_cb  } ,
     {"Embedded points", (Fl_Callback *)mesh_define_embedded_cb, (void*)"point" } ,
     {"Recombine",   (Fl_Callback *)mesh_define_recombine_cb  } ,

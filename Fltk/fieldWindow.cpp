@@ -102,7 +102,7 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
     CTX::instance()->fieldSize[1];
 
   win = new paletteWindow
-    (width, height, CTX::instance()->nonModalWindows ? true : false, "Fields");
+    (width, height, CTX::instance()->nonModalWindows ? true : false, "Size fields");
   win->box(GMSH_WINDOW_BOX);
 
   int x = WB, y = WB, w = (int)(1.5 * BB), h = height - 2 * WB - 3 * BH;
