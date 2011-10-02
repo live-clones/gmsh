@@ -15,6 +15,8 @@
 #include "menuWindow.h"
 #include "onelabWindow.h"
 
+#include <FL/Fl_Value_Input.H>
+
 // This file contains the Gmsh/FLTK specific parts of the ONELAB
 // interface. You'll need to reimplement this if you plan to build
 // a different ONELAB server.
@@ -122,7 +124,7 @@ bool onelab::localNetworkClient::run(const std::string &what)
         if(type == "number"){
           onelab::number par;
           par.fromChar(message);
-          set(par);
+          set(par, false);
           printf("gmsh got '%s' from %s\n", par.toChar().c_str(), _name.c_str());
         }
       }
@@ -201,6 +203,7 @@ void onelab_cb(Fl_Widget *w, void *data)
     onelab::client *c = it->second;
     c->run("/Users/geuzaine/src/getdp/demos/test.pro");
   }
+  FlGui::instance()->onelab->rebuildTree();
   FlGui::instance()->onelab->show();
 }
 
@@ -238,4 +241,48 @@ onelabWindow::onelabWindow(int deltaFontSize)
 
   onelab::server::instance()->registerClient(new onelab::localNetworkClient
                                              ("getdp", "/Users/geuzaine/src/getdp/bin/getdp"));
+}
+
+void number_cb(Fl_Widget *w, void *data)
+{
+  Fl_Value_Input *v = (Fl_Value_Input*)w;
+  std::vector<onelab::number> numbers;
+  onelab::server::instance()->get(numbers, v->label());
+  if(numbers.size()){
+    numbers[0].setValue(v->value());
+    onelab::server::instance()->set(numbers[0]);
+  }
+  FlGui::instance()->onelab->redrawTree();
+}
+
+void onelabWindow::rebuildTree()
+{
+  _tree->clear();
+
+  std::vector<onelab::number> numbers;
+  onelab::server::instance()->get(numbers);
+
+  for(unsigned int i = 0; i < numbers.size(); i++){
+    Fl_Tree_Item *n = _tree->add(numbers[i].getName().c_str());
+    _tree->begin();
+    Fl_Value_Input *but = new Fl_Value_Input(1,1,IW,1);
+    but->copy_label(numbers[i].getName().c_str());
+    but->value(numbers[i].getValue());
+    but->minimum(0.);
+    but->maximum(10.);
+    but->step(0.1);
+    but->align(FL_ALIGN_RIGHT);
+    but->callback(number_cb);
+    n->widget(but);
+    _tree->end();
+  }
+  
+  _tree->redraw();
+  //n->user_data((void*)gv);
+  //n->close();
+}
+
+void onelabWindow::redrawTree()
+{
+  _tree->redraw();
 }

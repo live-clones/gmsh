@@ -19,6 +19,8 @@ class onelabWindow{
   Fl_Button *_run;
  public:
   onelabWindow(int deltaFontSize=0);
+  void rebuildTree();
+  void redrawTree();
   void show(){ _win->show(); }
 };
 

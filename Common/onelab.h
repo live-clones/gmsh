@@ -196,6 +196,7 @@ namespace onelab{
         _defaultValue(defaultValue)
     {
     }
+    void setValue(const std::string &value){ _value = value; }
     std::string getType() const { return "region"; }
     const std::string &getValue() const { return _value; }
     const std::string &getDefaultValue() const { return _defaultValue; }
@@ -281,22 +282,21 @@ namespace onelab{
     std::set<region*, parameterLessThan> _regions;
     std::set<function*, parameterLessThan> _functions;
     // set a parameter in the parameter space; if it already exists,
-    // use the new value but make sure to add new clients if
-    // necessary.  This needs to be locked to avoid race conditions
-    // when several clients try to set a parameter at the same time
-    template <class T> bool _set(T &p, std::set<T*, parameterLessThan> &parameters)
+    // add new clients if necessary.  This needs to be locked to avoid
+    // race conditions when several clients try to set a parameter at
+    // the same time
+    template <class T> bool _set(T &p, std::set<T*, parameterLessThan> &parameters,
+                                 bool value=true)
     {
-      std::set<std::string> clients;
       typename std::set<T*, parameterLessThan>::iterator it = parameters.find(&p);
       if(it != parameters.end()){
-        parameters.erase(it);
-        T* oldp = *it;
-        clients = oldp->getClients();
-        delete oldp;
+        std::set<std::string> clients = p.getClients();
+        (*it)->addClients(clients);
+        if(value) (*it)->setValue(p.getValue());
       }
-      T* newp = new T(p);
-      newp->addClients(clients);
-      parameters.insert(newp);
+      else{
+        parameters.insert(new T(p));
+      }
       return true;
     }
     // get the parameter matching the given name, or all the
@@ -334,10 +334,10 @@ namespace onelab{
           it != _functions.end(); it++)
         delete *it;
     }
-    bool set(number &p){ return _set(p, _numbers); }
-    bool set(string &p){ return _set(p, _strings); }
-    bool set(region &p){ return _set(p, _regions); }
-    bool set(function &p){ return _set(p, _functions); }
+    bool set(number &p, bool value=true){ return _set(p, _numbers, value); }
+    bool set(string &p, bool value=true){ return _set(p, _strings, value); }
+    bool set(region &p, bool value=true){ return _set(p, _regions, value); }
+    bool set(function &p, bool value=true){ return _set(p, _functions, value); }
     bool get(std::vector<number> &p, const std::string &name="")
     {
       return _get(p, name, _numbers); 
@@ -401,9 +401,9 @@ namespace onelab{
       if(!_server) _server = new server(address);
       return _server;
     }
-    template <class T> bool set(T &p)
+    template <class T> bool set(T &p, bool value=true)
     {
-      return _parameterSpace.set(p); 
+      return _parameterSpace.set(p, value); 
     }
     template <class T> bool get(std::vector<T> &p, const std::string &name="")
     {
@@ -434,10 +434,10 @@ namespace onelab{
       _server->registerClient(this);
     }
     virtual ~localClient(){}
-    template <class T> bool set(T &parameter)
+    template <class T> bool set(T &parameter, bool value=true)
     {
       parameter.addClient(_name);
-      _server->set(parameter);
+      _server->set(parameter, value);
       return true;
     }
     template <class T> bool get(std::vector<T> &parameters,
