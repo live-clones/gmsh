@@ -115,8 +115,31 @@ bool onelab::localNetworkClient::run(const std::string &what)
     case GmshSocket::GMSH_STOP:
       _pid = -1;
       break;
-    case GmshSocket::GMSH_ONELAB_PARAM:
-      printf("server: got onelab param %s!\n", message.c_str());
+    case GmshSocket::GMSH_PARAMETER:
+      {
+        std::string type, name;
+        onelab::parameter::getTypeAndNameFromChar(message, type, name);
+        if(type == "number"){
+          onelab::number par;
+          par.fromChar(message);
+          set(par);
+          printf("gmsh got '%s' from %s\n", par.toChar().c_str(), _name.c_str());
+        }
+      }
+      break;
+    case GmshSocket::GMSH_PARAMETER_QUERY:
+      {
+        std::string type, name;
+        onelab::parameter::getTypeAndNameFromChar(message, type, name);
+        if(type == "number"){
+          std::vector<onelab::number> par;
+          get(par, name);
+          std::string reply;
+          if(par.size() == 1) reply = par[0].toChar();
+          else reply = message;
+          server->SendMessage(GmshSocket::GMSH_PARAMETER, reply.size(), &reply[0]);
+        }
+      }
       break;
     case GmshSocket::GMSH_PROGRESS:
       Msg::StatusBar(2, false, "%s %s", _name.c_str(), message.c_str());
@@ -173,11 +196,9 @@ bool onelab::localNetworkClient::kill()
 
 void onelab_cb(Fl_Widget *w, void *data)
 {
-  printf("onelab has %d clients\n", onelab::server::instance()->getNumClients());
   for(onelab::server::citer it = onelab::server::instance()->firstClient();
       it != onelab::server::instance()->lastClient(); it++){
     onelab::client *c = it->second;
-    printf("client name = %s\n", c->getName().c_str());
     c->run("/Users/geuzaine/src/getdp/demos/test.pro");
   }
   FlGui::instance()->onelab->show();
@@ -185,11 +206,9 @@ void onelab_cb(Fl_Widget *w, void *data)
 
 void onelab_compute_cb(Fl_Widget *w, void *data)
 {
-  printf("onelab has %d clients\n", onelab::server::instance()->getNumClients());
   for(onelab::server::citer it = onelab::server::instance()->firstClient();
       it != onelab::server::instance()->lastClient(); it++){
     onelab::client *c = it->second;
-    printf("client name = %s\n", c->getName().c_str());
     c->run("/Users/geuzaine/src/getdp/demos/test.pro -solve MagSta_phi -pos phi");
   }
 }

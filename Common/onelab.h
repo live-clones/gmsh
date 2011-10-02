@@ -35,8 +35,6 @@
 
 namespace onelab{
 
-  typedef enum { NUMBER = 1, STRING = 2, REGION = 3, FUNCTION = 4 } parameterType;
-
   // The base parameter class.
   class parameter{
   private:
@@ -50,29 +48,24 @@ namespace onelab{
     // client code(s) for which this parameter makes sense
     std::set<std::string> _clients;
   public:
-    parameter(const std::string &name, const std::string &shortHelp="", 
+    parameter(const std::string &name="", const std::string &shortHelp="", 
               const std::string &help="")
       : _name(name), _shortHelp(shortHelp), _help(help){}
-    void setShortHelp(std::string &shortHelp){ _shortHelp = shortHelp; }
-    void setHelp(std::string &help){ _help = help; }
+    void setName(const std::string &name){ _name = name; }
+    void setShortHelp(const std::string &shortHelp){ _shortHelp = shortHelp; }
+    void setHelp(const std::string &help){ _help = help; }
     void setClients(std::set<std::string> &clients){ _clients = clients; }
-    void addClient(std::string &client){ _clients.insert(client); }
+    void addClient(const std::string &client){ _clients.insert(client); }
     void addClients(std::set<std::string> &clients)
     { 
       _clients.insert(clients.begin(), clients.end()); 
     }
-    virtual parameterType getType() const = 0;
-    std::string getTypeAsString()
-    {
-      std::ostringstream sstream;
-      sstream << getType();
-      return sstream.str();
-    }
+    virtual std::string getType() const = 0;
     const std::string &getName() const { return _name; }
     const std::string &getShortHelp() const { return _shortHelp; }
     const std::string &getHelp() const { return _help; }
     const std::set<std::string> &getClients() const { return _clients; }
-    char charSep(){ return '\0'; }
+    static char charSep(){ return '|' /* '\0' */; }
     std::string sanitize(const std::string &in)
     {
       std::string out(in);
@@ -80,8 +73,28 @@ namespace onelab{
         if(out[i] == charSep()) out[i] = ' ';
       return out;
     }
-    virtual std::string toChar() = 0;
-    virtual void fromChar(const std::string &c){}
+    virtual std::string toChar()
+    {
+      std::ostringstream sstream;
+      sstream << getType() << charSep() << sanitize(getName()) << charSep() 
+              << sanitize(getShortHelp()) << charSep() << sanitize(getHelp());
+      return sstream.str();
+    }
+    virtual void fromChar(const std::string &msg){}
+    static std::string getNextToken(const std::string &msg, std::string::size_type &first)
+    {
+      std::string::size_type last = msg.find_first_of(charSep(), first);
+      std::string next = msg.substr(first, last - first);
+      first = (last == std::string::npos) ? last : last + 1;
+      return next;
+    }
+    static void getTypeAndNameFromChar(const std::string &msg, std::string &type, 
+                                       std::string &name)
+    {
+      std::string::size_type first = 0;
+      type = getNextToken(msg, first);
+      name = getNextToken(msg, first);
+    }
   };
   
   class parameterLessThan{
@@ -103,34 +116,24 @@ namespace onelab{
     double _defaultValue, _min, _max, _step;
     std::vector<double> _choices;
   public:
-    number(const std::string &name) 
-      : parameter(name), _value(0.), _defaultValue(0.), 
-        _min(1.), _max(0.), _step(0.)
-    {
-    }
-    number(const std::string &name, double defaultValue,
+    number(const std::string &name="", double defaultValue=0.,
            const std::string &shortHelp="", const std::string &help="") 
       : parameter(name, shortHelp, help), _value(defaultValue), 
-        _defaultValue(defaultValue), _min(1.), _max(0.), _step(0.)
-    {
-    }
+        _defaultValue(defaultValue), _min(1.), _max(0.), _step(0.) {}
     void setValue(double value){ _value = value; }
     void setMin(double min){ _min = min; }
     void setMax(double max){ _min = max; }
     void setStep(double step){ _step = step; }
     void setChoices(std::vector<double> &choices){ _choices = choices; }
-    parameterType getType() const { return NUMBER; }
+    std::string getType() const { return "number"; }
     double getValue() const { return _value; }
     double getDefaultValue() const { return _defaultValue; }
     std::string toChar()
     {
       std::ostringstream sstream;
-      sstream << getType() << charSep() << sanitize(getName()) << charSep() 
-              << sanitize(getShortHelp()) << charSep() 
-              << sanitize(getHelp()) << charSep() << _value << charSep()
-              << _defaultValue << charSep()
-              << _min << charSep() << _max << charSep() << _step << charSep()
-              << _choices.size() << charSep();
+      sstream << parameter::toChar() << charSep() << _value << charSep() 
+              << _defaultValue << charSep() << _min << charSep() << _max 
+              << charSep() << _step << charSep() << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << _choices[i] << charSep();
       sstream << getClients().size() << charSep();
@@ -138,6 +141,15 @@ namespace onelab{
           it != getClients().end(); it++)
         sstream << *it << charSep();
       return sstream.str();
+    }
+    void fromChar(const std::string &msg)
+    {
+      std::string::size_type pos = 0;
+      if(getNextToken(msg, pos) != getType()) return;
+      setName(getNextToken(msg, pos));
+      setShortHelp(getNextToken(msg, pos));
+      setHelp(getNextToken(msg, pos));
+      setValue(atof(getNextToken(msg, pos).c_str()));
     }
   };
 
@@ -148,29 +160,20 @@ namespace onelab{
     std::string _defaultValue;
     std::vector<std::string> _choices;
   public:
-    string(const std::string &name) 
-      : parameter(name), _value(""), _defaultValue("")
-    {
-    }
-    string(const std::string &name, const std::string &defaultValue, 
+    string(const std::string &name="", const std::string &defaultValue="", 
            const std::string &shortHelp="", const std::string &help="") 
       : parameter(name, shortHelp, help), _value(defaultValue), 
-        _defaultValue(defaultValue)
-    {
-    }
+        _defaultValue(defaultValue) {}
     void setValue(const std::string &value){ _value = value; }
     void setChoices(std::vector<std::string> &choices){ _choices = choices; }
-    parameterType getType() const { return STRING; }
+    std::string getType() const { return "string"; }
     const std::string &getValue() const { return _value; }
     const std::string &getDefaultValue() const { return _defaultValue; }
     std::string toChar()
     {
       std::ostringstream sstream;
-      sstream << getType() << charSep() << sanitize(getName()) << charSep() 
-              << sanitize(getShortHelp()) << charSep() 
-              << sanitize(getHelp()) << charSep() << sanitize(_value) << charSep()
-              << sanitize(_defaultValue) << charSep()
-              << _choices.size() << charSep();
+      sstream << parameter::toChar() << charSep() << sanitize(_value) << charSep()
+              << sanitize(_defaultValue) << charSep() << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << sanitize(_choices[i]) << charSep();
       sstream << getClients().size() << charSep();
@@ -187,26 +190,20 @@ namespace onelab{
     std::string _value, _defaultValue;
     std::vector<std::string> _choices;
   public:
-    region(const std::string &name) 
-      : parameter(name), _value(""), _defaultValue("")
-    {
-    }
-    region(const std::string &name, const std::string &defaultValue,
+    region(const std::string &name="", const std::string &defaultValue="",
            const std::string &shortHelp="", const std::string &help="") 
       : parameter(name, shortHelp, help), _value(defaultValue), 
         _defaultValue(defaultValue)
     {
     }
-    parameterType getType() const { return REGION; }
+    std::string getType() const { return "region"; }
     const std::string &getValue() const { return _value; }
     const std::string &getDefaultValue() const { return _defaultValue; }
     std::string toChar()
     {
       std::ostringstream sstream;
-      sstream << getType() << charSep() << sanitize(getName()) << charSep() 
-              << sanitize(getShortHelp()) << charSep() << sanitize(getHelp()) 
-              << charSep() << _value << charSep() << _defaultValue << charSep()
-              << _choices.size() << charSep();
+      sstream << parameter::toChar() << charSep() << _value << charSep() 
+              << _defaultValue << charSep() << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << _choices[i] << charSep();
       sstream << getClients().size() << charSep();
@@ -227,16 +224,10 @@ namespace onelab{
     std::map<std::string, std::string> _pieceWiseValues;
     std::vector<std::string> _choices;
   public:
-    function(const std::string &name) 
-      : parameter(name), _value(""), _defaultValue("")
-    {
-    }
-    function(const std::string &name, const std::string &defaultValue,
+    function(const std::string &name="", const std::string &defaultValue="",
              const std::string &shortHelp="", const std::string &help="") 
       : parameter(name, shortHelp, help), _value(defaultValue), 
-        _defaultValue(defaultValue)
-    {
-    }
+        _defaultValue(defaultValue) {}
     void setValue(const std::string &value, const std::string &region="")
     {
       if(region.empty())
@@ -244,7 +235,7 @@ namespace onelab{
       else
         _pieceWiseValues[region] = value;
     }
-    parameterType getType() const { return FUNCTION; }
+    std::string getType() const { return "function"; }
     const std::string getValue(const std::string &region="") const
     {
       if(region.size()){
@@ -263,10 +254,8 @@ namespace onelab{
     std::string toChar()
     {
       std::ostringstream sstream;
-      sstream << getType() << charSep() << sanitize(getName()) << charSep() 
-              << sanitize(getShortHelp()) << charSep() 
-              << sanitize(getHelp()) << charSep() << sanitize(_value) << charSep()
-              << sanitize(_defaultValue) << charSep()
+      sstream << parameter::toChar() << charSep() << sanitize(_value) << charSep()
+              << sanitize(_defaultValue) << charSep() 
               << _pieceWiseValues.size() << charSep();
         for(std::map<std::string, std::string>::const_iterator it =
               _pieceWiseValues.begin(); it != _pieceWiseValues.end(); it++)
@@ -292,7 +281,9 @@ namespace onelab{
     std::set<region*, parameterLessThan> _regions;
     std::set<function*, parameterLessThan> _functions;
     // set a parameter in the parameter space; if it already exists,
-    // use the new value but make sure to add new clients if necessary
+    // use the new value but make sure to add new clients if
+    // necessary.  This needs to be locked to avoid race conditions
+    // when several clients try to set a parameter at the same time
     template <class T> bool _set(T &p, std::set<T*, parameterLessThan> &parameters)
     {
       std::set<std::string> clients;
@@ -363,6 +354,17 @@ namespace onelab{
     {
       return _get(p, name, _functions);
     }
+    void print()
+    {
+      for(std::set<number*, parameterLessThan>::iterator it = _numbers.begin();
+          it != _numbers.end(); it++) std::cout << (*it)->toChar() << std::endl;
+      for(std::set<string*, parameterLessThan>::iterator it = _strings.begin();
+          it != _strings.end(); it++) std::cout << (*it)->toChar() << std::endl;
+      for(std::set<region*, parameterLessThan>::iterator it = _regions.begin();
+          it != _regions.end(); it++) std::cout << (*it)->toChar() << std::endl;
+      for(std::set<function*, parameterLessThan>::iterator it = _functions.begin();
+          it != _functions.end(); it++) std::cout << (*it)->toChar() << std::endl;
+    }
   };
 
   // The onelab client: a class that communicates with the onelab
@@ -401,8 +403,6 @@ namespace onelab{
     }
     template <class T> bool set(T &p)
     {
-      // this needs to be locked to avoid race conditions when several
-      // clients try to set a parameter at the same time
       return _parameterSpace.set(p); 
     }
     template <class T> bool get(std::vector<T> &p, const std::string &name="")
@@ -420,6 +420,7 @@ namespace onelab{
     citer lastClient(){ return _clients.end(); }
     citer findClient(const std::string &name){ return _clients.find(name); }
     int getNumClients(){ return _clients.size(); }
+    void print(){ _parameterSpace.print(); }
   };
     
   class localClient : public client{
@@ -445,6 +446,7 @@ namespace onelab{
       _server->get(parameters, name);
       return true;
     }
+    void print(){ _server->print(); }
   };
 
   class localNetworkClient : public localClient{
@@ -495,7 +497,7 @@ namespace onelab{
       if(!_gmshClient) return false;
       parameter.addClient(_name);
       std::string msg = parameter.toChar();
-      _gmshClient->SendMessage(GmshSocket::GMSH_ONELAB_PARAM, msg.size(), &msg[0]);
+      _gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER, msg.size(), &msg[0]);
       return true;
     }
     template <class T> bool get(std::vector<T> &parameters, 
@@ -505,10 +507,10 @@ namespace onelab{
       T parameter(name);
       parameter.addClient(_name);
       std::string msg = parameter.toChar();
-      _gmshClient->SendMessage(GmshSocket::GMSH_ONELAB_PARAM, msg.size(), &msg[0]);
+      _gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER_QUERY, msg.size(), &msg[0]);
       while(1){
-        // stop if we have no communications for 30 seconds
-        int ret = _gmshClient->Select(30, 0);
+        // stop if we have no communications for 10 secs
+        int ret = _gmshClient->Select(10, 0);
         if(!ret){
           _gmshClient->Info("Timout: aborting remote get");
           return false;
@@ -527,8 +529,10 @@ namespace onelab{
           _gmshClient->Error("Did not receive message body: aborting remote get");
           return false;
         }
-        if(type == GmshSocket::GMSH_ONELAB_PARAM){
-          printf("Remote: got %s!\n", msg.c_str());
+        if(type == GmshSocket::GMSH_PARAMETER){
+          T p;
+          p.fromChar(msg);
+          parameters.push_back(p);
           return true;
         }
         else{
