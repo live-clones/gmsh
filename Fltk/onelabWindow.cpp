@@ -10,7 +10,9 @@
 #include <FL/Fl_Box.H>
 #include "GmshMessage.h"
 #include "Context.h"
+#include "Options.h"
 #include "OS.h"
+#include "StringUtils.h"
 #include "OpenFile.h"
 #include "drawContext.h"
 #include "PView.h"
@@ -228,7 +230,7 @@ void onelab_cb(Fl_Widget *w, void *data)
     if(action == "check")
       c->run(what);
     else if(action == "compute"){
-      if(c->getName() == "getdp"){
+      if(c->getName() == "GetDP"){
         std::vector<onelab::string> str;
         onelab::server::instance()->get(str, "GetDP/Resolution");
         if(str.size()) what += " -solve " + str[0].getValue();
@@ -282,9 +284,10 @@ onelabWindow::onelabWindow(int deltaFontSize)
 
   _model = new Fl_Input(WB, WB, width - 2*WB - (2*BB)/3, BH);
   _model->align(FL_ALIGN_RIGHT);
-  _model->value("/Users/geuzaine/src/getdp/demos/test.pro");
   _model->callback(onelab_cb, (void*)"check");
   _model->when(FL_WHEN_RELEASE|FL_WHEN_ENTER_KEY);
+  std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
+  _model->value((split[0]+split[1]+".pro").c_str());
 
   Fl_Button *choose = new Fl_Button(width - WB - (2*BB)/3, WB, (2*BB)/3, BH, "Choose");
   choose->callback(onelab_cb, (void*)"choose model");
@@ -308,7 +311,8 @@ onelabWindow::onelabWindow(int deltaFontSize)
   FL_NORMAL_SIZE += deltaFontSize;
 
   onelab::server::instance()->registerClient
-    (new onelab::localNetworkClient("getdp", "/Users/geuzaine/src/getdp/bin/getdp"));
+    (new onelab::localNetworkClient("GetDP",
+                                    opt_solver_executable0(0, GMSH_GET, "")));
 }
 
 static std::string getShortName(const std::string &name) 
