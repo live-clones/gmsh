@@ -207,7 +207,7 @@ void onelab_cb(Fl_Widget *w, void *data)
     onelab::client *c = it->second;
     c->run("/Users/geuzaine/src/getdp/demos/test.pro");
   }
-  printf("**** ONELAB DB DUMP:\n");
+  printf("**** GMSH ONELAB DB DUMP:\n");
   onelab::server::instance()->print();
   printf("**** \n");
   FlGui::instance()->onelab->rebuildTree();

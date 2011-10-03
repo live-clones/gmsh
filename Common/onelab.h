@@ -81,7 +81,8 @@ namespace onelab{
       return sstream.str();
     }
     virtual void fromChar(const std::string &msg){}
-    static std::string getNextToken(const std::string &msg, std::string::size_type &first)
+    static std::string getNextToken(const std::string &msg, 
+                                    std::string::size_type &first)
     {
       std::string::size_type last = msg.find_first_of(charSep(), first);
       std::string next = msg.substr(first, last - first);
@@ -285,34 +286,35 @@ namespace onelab{
     // add new clients if necessary.  This needs to be locked to avoid
     // race conditions when several clients try to set a parameter at
     // the same time
-    template <class T> bool _set(T &p, std::set<T*, parameterLessThan> &parameters,
+    template <class T> bool _set(T &p, std::set<T*, parameterLessThan> &ps,
                                  bool value=true)
     {
-      typename std::set<T*, parameterLessThan>::iterator it = parameters.find(&p);
-      if(it != parameters.end()){
+      typename std::set<T*, parameterLessThan>::iterator it = ps.find(&p);
+      if(it != ps.end()){
         std::set<std::string> clients = p.getClients();
         (*it)->addClients(clients);
         if(value) (*it)->setValue(p.getValue());
       }
       else{
-        parameters.insert(new T(p));
+        ps.insert(new T(p));
       }
       return true;
     }
     // get the parameter matching the given name, or all the
     // parameters in the category if no name is given
     template <class T> bool _get(std::vector<T> &p, const std::string &name,
-                                 std::set<T*, parameterLessThan> &parameters)
+                                 std::set<T*, parameterLessThan> &ps)
     {
+      p.clear();
       if(name.empty()){
-        for(typename std::set<T*, parameterLessThan>::iterator it = parameters.begin();
-            it != parameters.end(); it++)
+        for(typename std::set<T*, parameterLessThan>::iterator it = ps.begin();
+            it != ps.end(); it++)
           p.push_back(**it);
       }
       else{
         T tmp(name);
-        typename std::set<T*, parameterLessThan>::iterator it = parameters.find(&tmp);
-        if(it != parameters.end())
+        typename std::set<T*, parameterLessThan>::iterator it = ps.find(&tmp);
+        if(it != ps.end())
           p.push_back(**it);
       }
       return true;
@@ -338,21 +340,21 @@ namespace onelab{
     bool set(string &p, bool value=true){ return _set(p, _strings, value); }
     bool set(region &p, bool value=true){ return _set(p, _regions, value); }
     bool set(function &p, bool value=true){ return _set(p, _functions, value); }
-    bool get(std::vector<number> &p, const std::string &name="")
+    bool get(std::vector<number> &ps, const std::string &name="")
     {
-      return _get(p, name, _numbers); 
+      return _get(ps, name, _numbers); 
     }
-    bool get(std::vector<string> &p, const std::string &name="")
+    bool get(std::vector<string> &ps, const std::string &name="")
     {
-      return _get(p, name, _strings); 
+      return _get(ps, name, _strings); 
     }
-    bool get(std::vector<region> &p, const std::string &name="")
+    bool get(std::vector<region> &ps, const std::string &name="")
     {
-      return _get(p, name, _regions); 
+      return _get(ps, name, _regions); 
     }
-    bool get(std::vector<function> &p, const std::string &name="")
+    bool get(std::vector<function> &ps, const std::string &name="")
     {
-      return _get(p, name, _functions);
+      return _get(ps, name, _functions);
     }
     void print()
     {
@@ -386,14 +388,26 @@ namespace onelab{
     virtual void sendProgress(const std::string &msg){ std::cout << msg << std::endl; }
     virtual void sendMergeFileRequest(const std::string &msg){}
     virtual void sendParseStringRequest(const std::string &msg){}
-    virtual bool set(number &parameter, bool value=true){ return false; }
-    virtual bool set(string &parameter, bool value=true){ return false; }
-    virtual bool set(region &parameter, bool value=true){ return false; }
-    virtual bool set(function &parameter, bool value=true){ return false; }
-    virtual bool get(std::vector<number> &parameters, const std::string &name=""){ return false; }
-    virtual bool get(std::vector<string> &parameters, const std::string &name=""){ return false; }
-    virtual bool get(std::vector<region> &parameters, const std::string &name=""){ return false; }
-    virtual bool get(std::vector<function> &parameters, const std::string &name=""){ return false; }
+    virtual bool set(number &p, bool value=true){ return false; }
+    virtual bool set(string &p, bool value=true){ return false; }
+    virtual bool set(region &p, bool value=true){ return false; }
+    virtual bool set(function &p, bool value=true){ return false; }
+    virtual bool get(std::vector<number> &ps, const std::string &name="")
+    {
+      return false; 
+    }
+    virtual bool get(std::vector<string> &ps, const std::string &name="")
+    {
+      return false; 
+    }
+    virtual bool get(std::vector<region> &ps, const std::string &name="")
+    {
+      return false; 
+    }
+    virtual bool get(std::vector<function> &ps, const std::string &name="")
+    {
+      return false; 
+    }
   };
 
   // The onelab server: a singleton that stores the parameter space
@@ -420,9 +434,9 @@ namespace onelab{
     {
       return _parameterSpace.set(p, value); 
     }
-    template <class T> bool get(std::vector<T> &p, const std::string &name="")
+    template <class T> bool get(std::vector<T> &ps, const std::string &name="")
     {
-      return _parameterSpace.get(p, name); 
+      return _parameterSpace.get(ps, name); 
     }
     bool registerClient(client *c)
     {
@@ -442,16 +456,16 @@ namespace onelab{
   protected:
     // the pointer to the server
     server *_server;
-    template <class T> bool _set(T &parameter, bool value=true)
+    template <class T> bool _set(T &p, bool value=true)
     {
-      parameter.addClient(_name);
-      _server->set(parameter, value);
+      p.addClient(_name);
+      _server->set(p, value);
       return true;
     }
-    template <class T> bool _get(std::vector<T> &parameters,
+    template <class T> bool _get(std::vector<T> &ps,
                                  const std::string &name="")
     {
-      _server->get(parameters, name);
+      _server->get(ps, name);
       return true;
     }
   public:
@@ -465,10 +479,22 @@ namespace onelab{
     virtual bool set(string &p, bool value=true){ return _set(p, value); }
     virtual bool set(function &p, bool value=true){ return _set(p, value); }
     virtual bool set(region &p, bool value=true){ return _set(p, value); }
-    virtual bool get(std::vector<number> &p, const std::string &name=""){ return _get(p, name); }
-    virtual bool get(std::vector<string> &p, const std::string &name=""){ return _get(p, name); }
-    virtual bool get(std::vector<function> &p, const std::string &name=""){ return _get(p, name); }
-    virtual bool get(std::vector<region> &p, const std::string &name=""){ return _get(p, name); }
+    virtual bool get(std::vector<number> &ps, const std::string &name="")
+    {
+      return _get(ps, name); 
+    }
+    virtual bool get(std::vector<string> &ps, const std::string &name="")
+    {
+      return _get(ps, name); 
+    }
+    virtual bool get(std::vector<function> &ps, const std::string &name="")
+    {
+      return _get(ps, name);
+    }
+    virtual bool get(std::vector<region> &ps, const std::string &name="")
+    {
+      return _get(ps, name); 
+    }
     virtual void print(){ _server->print(); }
   };
 
@@ -493,21 +519,22 @@ namespace onelab{
     std::string _serverAddress;
     // underlying GmshClient
     GmshClient *_gmshClient;
-    template <class T> bool _set(T &parameter)
+    template <class T> bool _set(T &p)
     {
       if(!_gmshClient) return false;
-      parameter.addClient(_name);
-      std::string msg = parameter.toChar();
+      p.addClient(_name);
+      std::string msg = p.toChar();
       _gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER, msg.size(), &msg[0]);
       return true;
     }
-    template <class T> bool _get(std::vector<T> &parameters, 
+    template <class T> bool _get(std::vector<T> &ps, 
                                  const std::string &name="")
     {
+      ps.clear();
       if(!_gmshClient) return false;
-      T parameter(name);
-      parameter.addClient(_name);
-      std::string msg = parameter.toChar();
+      T p(name);
+      p.addClient(_name);
+      std::string msg = p.toChar();
       _gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER_QUERY, msg.size(), &msg[0]);
       while(1){
         // stop if we have no communications for 10 secs
@@ -533,7 +560,7 @@ namespace onelab{
         if(type == GmshSocket::GMSH_PARAMETER){
           T p;
           p.fromChar(msg);
-          parameters.push_back(p);
+          ps.push_back(p);
           return true;
         }
         else if(type == GmshSocket::GMSH_INFO){
@@ -573,16 +600,34 @@ namespace onelab{
     virtual bool set(string &p, bool value=true){ return _set(p); }
     virtual bool set(function &p, bool value=true){ return _set(p); }
     virtual bool set(region &p, bool value=true){ return _set(p); }
-    virtual bool get(std::vector<number> &p, const std::string &name=""){ return _get(p, name); }
-    virtual bool get(std::vector<string> &p, const std::string &name=""){ return _get(p, name); }
-    virtual bool get(std::vector<function> &p, const std::string &name=""){ return _get(p, name); }
-    virtual bool get(std::vector<region> &p, const std::string &name=""){ return _get(p, name); }
+    virtual bool get(std::vector<number> &ps, const std::string &name="")
+    {
+      return _get(ps, name); 
+    }
+    virtual bool get(std::vector<string> &ps, const std::string &name="")
+    {
+      return _get(ps, name); 
+    }
+    virtual bool get(std::vector<function> &ps, const std::string &name="")
+    {
+      return _get(ps, name); 
+    }
+    virtual bool get(std::vector<region> &ps, const std::string &name="")
+    {
+      return _get(ps, name); 
+    }
     void sendInfo(const std::string &msg){ _gmshClient->Info(msg.c_str()); }
     void sendWarning(const std::string &msg){ _gmshClient->Warning(msg.c_str()); }
     void sendError(const std::string &msg){ _gmshClient->Error(msg.c_str()); }
     void sendProgress(const std::string &msg){ _gmshClient->Progress(msg.c_str()); }
-    void sendMergeFileRequest(const std::string &msg){ _gmshClient->MergeFile(msg.c_str()); }
-    void sendParseStringRequest(const std::string &msg){ _gmshClient->ParseString(msg.c_str()); }
+    void sendMergeFileRequest(const std::string &msg)
+    {
+      _gmshClient->MergeFile(msg.c_str()); 
+    }
+    void sendParseStringRequest(const std::string &msg)
+    {
+      _gmshClient->ParseString(msg.c_str()); 
+    }
   };
 
 }
