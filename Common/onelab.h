@@ -203,9 +203,7 @@ namespace onelab{
     region(const std::string &name="", const std::string &defaultValue="",
            const std::string &shortHelp="", const std::string &help="") 
       : parameter(name, shortHelp, help), _value(defaultValue), 
-        _defaultValue(defaultValue)
-    {
-    }
+        _defaultValue(defaultValue) {}
     void setValue(const std::string &value){ _value = value; }
     std::string getType() const { return "region"; }
     const std::string &getValue() const { return _value; }
@@ -349,22 +347,14 @@ namespace onelab{
     bool set(string &p, bool value=true){ return _set(p, _strings, value); }
     bool set(region &p, bool value=true){ return _set(p, _regions, value); }
     bool set(function &p, bool value=true){ return _set(p, _functions, value); }
-    bool get(std::vector<number> &ps, const std::string &name="")
-    {
-      return _get(ps, name, _numbers); 
-    }
-    bool get(std::vector<string> &ps, const std::string &name="")
-    {
-      return _get(ps, name, _strings); 
-    }
-    bool get(std::vector<region> &ps, const std::string &name="")
-    {
-      return _get(ps, name, _regions); 
-    }
-    bool get(std::vector<function> &ps, const std::string &name="")
-    {
-      return _get(ps, name, _functions);
-    }
+    bool get(std::vector<number> &ps,
+             const std::string &name=""){ return _get(ps, name, _numbers); }
+    bool get(std::vector<string> &ps,
+             const std::string &name=""){ return _get(ps, name, _strings); }
+    bool get(std::vector<region> &ps,
+             const std::string &name=""){ return _get(ps, name, _regions); }
+    bool get(std::vector<function> &ps,
+             const std::string &name=""){ return _get(ps, name, _functions); }
     void print()
     {
       for(std::set<number*, parameterLessThan>::iterator it = _numbers.begin();
@@ -397,26 +387,14 @@ namespace onelab{
     virtual void sendProgress(const std::string &msg){ std::cout << msg << std::endl; }
     virtual void sendMergeFileRequest(const std::string &msg){}
     virtual void sendParseStringRequest(const std::string &msg){}
-    virtual bool set(number &p, bool value=true){ return false; }
-    virtual bool set(string &p, bool value=true){ return false; }
-    virtual bool set(region &p, bool value=true){ return false; }
-    virtual bool set(function &p, bool value=true){ return false; }
-    virtual bool get(std::vector<number> &ps, const std::string &name="")
-    {
-      return false; 
-    }
-    virtual bool get(std::vector<string> &ps, const std::string &name="")
-    {
-      return false; 
-    }
-    virtual bool get(std::vector<region> &ps, const std::string &name="")
-    {
-      return false; 
-    }
-    virtual bool get(std::vector<function> &ps, const std::string &name="")
-    {
-      return false; 
-    }
+    virtual bool set(number &p, bool value=true) = 0;
+    virtual bool set(string &p, bool value=true) = 0;
+    virtual bool set(region &p, bool value=true) = 0;
+    virtual bool set(function &p, bool value=true) = 0;
+    virtual bool get(std::vector<number> &ps, const std::string &name="") = 0;
+    virtual bool get(std::vector<string> &ps, const std::string &name="") = 0;
+    virtual bool get(std::vector<region> &ps, const std::string &name="") = 0;
+    virtual bool get(std::vector<function> &ps, const std::string &name="") = 0;
   };
 
   // The onelab server: a singleton that stores the parameter space
@@ -488,22 +466,14 @@ namespace onelab{
     virtual bool set(string &p, bool value=true){ return _set(p, value); }
     virtual bool set(function &p, bool value=true){ return _set(p, value); }
     virtual bool set(region &p, bool value=true){ return _set(p, value); }
-    virtual bool get(std::vector<number> &ps, const std::string &name="")
-    {
-      return _get(ps, name); 
-    }
-    virtual bool get(std::vector<string> &ps, const std::string &name="")
-    {
-      return _get(ps, name); 
-    }
-    virtual bool get(std::vector<function> &ps, const std::string &name="")
-    {
-      return _get(ps, name);
-    }
-    virtual bool get(std::vector<region> &ps, const std::string &name="")
-    {
-      return _get(ps, name); 
-    }
+    virtual bool get(std::vector<number> &ps,
+                     const std::string &name=""){ return _get(ps, name); }
+    virtual bool get(std::vector<string> &ps,
+                     const std::string &name=""){ return _get(ps, name); }
+    virtual bool get(std::vector<function> &ps,
+                     const std::string &name=""){ return _get(ps, name); }
+    virtual bool get(std::vector<region> &ps,
+                     const std::string &name=""){ return _get(ps, name); }
     virtual void print(){ _server->print(); }
   };
 
@@ -609,22 +579,14 @@ namespace onelab{
     virtual bool set(string &p, bool value=true){ return _set(p); }
     virtual bool set(function &p, bool value=true){ return _set(p); }
     virtual bool set(region &p, bool value=true){ return _set(p); }
-    virtual bool get(std::vector<number> &ps, const std::string &name="")
-    {
-      return _get(ps, name); 
-    }
-    virtual bool get(std::vector<string> &ps, const std::string &name="")
-    {
-      return _get(ps, name); 
-    }
-    virtual bool get(std::vector<function> &ps, const std::string &name="")
-    {
-      return _get(ps, name); 
-    }
-    virtual bool get(std::vector<region> &ps, const std::string &name="")
-    {
-      return _get(ps, name); 
-    }
+    virtual bool get(std::vector<number> &ps, 
+                     const std::string &name=""){ return _get(ps, name); }
+    virtual bool get(std::vector<string> &ps,
+                     const std::string &name=""){ return _get(ps, name); }
+    virtual bool get(std::vector<function> &ps, 
+                     const std::string &name=""){ return _get(ps, name); }
+    virtual bool get(std::vector<region> &ps,
+                     const std::string &name=""){ return _get(ps, name); }
     void sendInfo(const std::string &msg){ _gmshClient->Info(msg.c_str()); }
     void sendWarning(const std::string &msg){ _gmshClient->Warning(msg.c_str()); }
     void sendError(const std::string &msg){ _gmshClient->Error(msg.c_str()); }
