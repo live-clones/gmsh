@@ -6,6 +6,8 @@
 #ifndef _ONELAB_WINDOW_H_
 #define _ONELAB_WINDOW_H_
 
+#include "GmshConfig.h"
+#if defined(HAVE_FL_TREE)
 #include <vector>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Tree.H>
@@ -26,4 +28,5 @@ class onelabWindow{
 
 void onelab_cb(Fl_Widget *w, void *data);
 
+#endif
 #endif

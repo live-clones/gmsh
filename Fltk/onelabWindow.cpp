@@ -4,6 +4,8 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "onelab.h"
+
+#if defined(HAVE_FL_TREE)
 #include "GmshMessage.h"
 #include "Context.h"
 #include "OS.h"
@@ -102,8 +104,6 @@ bool onelab::localNetworkClient::run(const std::string &what)
       break;
     }
 
-    double timer = GetTimeInSeconds();
-    
     std::string message(length, ' ');
     if(!server->ReceiveMessage(length, &message[0])){
       Msg::Error("Did not receive message body: stopping server");
@@ -226,10 +226,8 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _win = new paletteWindow
     (width, height, CTX::instance()->nonModalWindows ? true : false, "ONELAB");
   _win->box(GMSH_WINDOW_BOX);
-  {
-    _tree = new Fl_Tree(WB, WB, width - 2 * WB, height - 3 * WB - BH);
-  }
-  
+
+  _tree = new Fl_Tree(WB, WB, width - 2 * WB, height - 3 * WB - BH);
   _run = new Fl_Button(width - WB - BB, height - WB - BH, BB, BH, "Compute");
   _run->callback(onelab_compute_cb);
 
@@ -239,8 +237,8 @@ onelabWindow::onelabWindow(int deltaFontSize)
 
   FL_NORMAL_SIZE += deltaFontSize;
 
-  onelab::server::instance()->registerClient(new onelab::localNetworkClient
-                                             ("getdp", "/Users/geuzaine/src/getdp/bin/getdp"));
+  onelab::server::instance()->registerClient
+    (new onelab::localNetworkClient("getdp", "/Users/geuzaine/src/getdp/bin/getdp"));
 }
 
 void number_cb(Fl_Widget *w, void *data)
@@ -252,7 +250,6 @@ void number_cb(Fl_Widget *w, void *data)
     numbers[0].setValue(v->value());
     onelab::server::instance()->set(numbers[0]);
   }
-  FlGui::instance()->onelab->redrawTree();
 }
 
 void onelabWindow::rebuildTree()
@@ -286,3 +283,5 @@ void onelabWindow::redrawTree()
 {
   _tree->redraw();
 }
+
+#endif
