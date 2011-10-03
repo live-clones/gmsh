@@ -183,6 +183,15 @@ namespace onelab{
         sstream << *it << charSep();
       return sstream.str();
     }
+    void fromChar(const std::string &msg)
+    {
+      std::string::size_type pos = 0;
+      if(getNextToken(msg, pos) != getType()) return;
+      setName(getNextToken(msg, pos));
+      setShortHelp(getNextToken(msg, pos));
+      setHelp(getNextToken(msg, pos));
+      setValue(getNextToken(msg, pos));
+    }
   };
 
   // The region class. A region can be any kind of geometrical entity.

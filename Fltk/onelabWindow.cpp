@@ -6,6 +6,8 @@
 #include "onelab.h"
 
 #if defined(HAVE_FL_TREE)
+#include <FL/Fl_Value_Input.H>
+#include <FL/Fl_Box.H>
 #include "GmshMessage.h"
 #include "Context.h"
 #include "OS.h"
@@ -15,9 +17,8 @@
 #include "FlGui.h"
 #include "paletteWindow.h"
 #include "menuWindow.h"
+#include "fileDialogs.h"
 #include "onelabWindow.h"
-
-#include <FL/Fl_Value_Input.H>
 
 // This file contains the Gmsh/FLTK specific parts of the ONELAB
 // interface. You'll need to reimplement this if you plan to build
@@ -122,10 +123,16 @@ bool onelab::localNetworkClient::run(const std::string &what)
         std::string type, name;
         onelab::parameter::getTypeAndNameFromChar(message, type, name);
         if(type == "number"){
-          onelab::number par;
-          par.fromChar(message);
-          set(par, false);
-          printf("gmsh got '%s' from %s\n", par.toChar().c_str(), _name.c_str());
+          onelab::number p;
+          p.fromChar(message);
+          set(p, false);
+          printf("gmsh got '%s' from %s\n", p.toChar().c_str(), _name.c_str());
+        }
+        else if(type == "string"){
+          onelab::string p;
+          p.fromChar(message);
+          set(p, false);
+          printf("gmsh got '%s' from %s\n", p.toChar().c_str(), _name.c_str());
         }
       }
       break;
@@ -144,6 +151,9 @@ bool onelab::localNetworkClient::run(const std::string &what)
             std::string reply = "Parameter " + name + " not found";
             server->SendMessage(GmshSocket::GMSH_INFO, reply.size(), &reply[0]);
           }
+        }
+        else if(type == "string"){
+          Msg::Error("FIXME do strings");
         }
       }
       break;
@@ -202,10 +212,31 @@ bool onelab::localNetworkClient::kill()
 
 void onelab_cb(Fl_Widget *w, void *data)
 {
+  if(!data) return;
+  std::string action((const char*)data);
+
+  if(action == "choose model"){
+    if(fileChooser(FILE_CHOOSER_SINGLE, "Choose", "*.pro"))
+      FlGui::instance()->onelab->setModelName(fileChooserGetName(1));
+    action = "check";
+  }
+
   for(onelab::server::citer it = onelab::server::instance()->firstClient();
       it != onelab::server::instance()->lastClient(); it++){
     onelab::client *c = it->second;
-    c->run("/Users/geuzaine/src/getdp/demos/test.pro");
+    std::string what = FlGui::instance()->onelab->getModelName();
+    if(action == "check")
+      c->run(what);
+    else if(action == "compute"){
+      if(c->getName() == "getdp"){
+        std::vector<onelab::string> str;
+        onelab::server::instance()->get(str, "GetDP/Resolution");
+        if(str.size()) what += " -solve " + str[0].getValue();
+        onelab::server::instance()->get(str, "GetDP/Post-processing");
+        if(str.size()) what += " -pos " + str[0].getValue();
+        c->run(what);
+      }
+    }
   }
   printf("**** GMSH ONELAB DB DUMP:\n");
   onelab::server::instance()->print();
@@ -214,16 +245,27 @@ void onelab_cb(Fl_Widget *w, void *data)
   FlGui::instance()->onelab->show();
 }
 
-void onelab_compute_cb(Fl_Widget *w, void *data)
+static void onelab_number_cb(Fl_Widget *w, void *data)
 {
-  printf("**** ONELAB DB DUMP:\n");
-  onelab::server::instance()->print();
-  printf("**** \n");
+  if(!data) return;
+  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
+  std::vector<onelab::number> numbers;
+  onelab::server::instance()->get(numbers, name);
+  if(numbers.size()){
+    numbers[0].setValue(((Fl_Value_Input*)w)->value());
+    onelab::server::instance()->set(numbers[0]);
+  }
+}
 
-  for(onelab::server::citer it = onelab::server::instance()->firstClient();
-      it != onelab::server::instance()->lastClient(); it++){
-    onelab::client *c = it->second;
-    c->run("/Users/geuzaine/src/getdp/demos/test.pro -solve MagSta_phi -pos phi");
+static void onelab_string_cb(Fl_Widget *w, void *data)
+{
+  if(!data) return;
+  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
+  std::vector<onelab::string> strings;
+  onelab::server::instance()->get(strings, name);
+  if(strings.size()){
+    strings[0].setValue(((Fl_Input*)w)->value());
+    onelab::server::instance()->set(strings[0]);
   }
 }
 
@@ -231,18 +273,33 @@ onelabWindow::onelabWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int width = 32 * FL_NORMAL_SIZE;
+  int width = 25 * FL_NORMAL_SIZE;
   int height = 10 * BH + 3 * WB;
   
   _win = new paletteWindow
     (width, height, CTX::instance()->nonModalWindows ? true : false, "ONELAB");
   _win->box(GMSH_WINDOW_BOX);
 
-  _tree = new Fl_Tree(WB, WB, width - 2 * WB, height - 3 * WB - BH);
-  _tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
+  _model = new Fl_Input(WB, WB, width - 2*WB - (2*BB)/3, BH);
+  _model->align(FL_ALIGN_RIGHT);
+  _model->value("/Users/geuzaine/src/getdp/demos/test.pro");
+  _model->callback(onelab_cb, (void*)"check");
+  _model->when(FL_WHEN_RELEASE|FL_WHEN_ENTER_KEY);
 
-  _run = new Fl_Button(width - WB - BB, height - WB - BH, BB, BH, "Compute");
-  _run->callback(onelab_compute_cb);
+  Fl_Button *choose = new Fl_Button(width - WB - (2*BB)/3, WB, (2*BB)/3, BH, "Choose");
+  choose->callback(onelab_cb, (void*)"choose model");
+
+  _tree = new Fl_Tree(WB, WB+BH, width - 2 * WB, height - 3 * WB - 2 * BH);
+  _tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
+  _tree->showroot(0);
+
+  _butt[0] = new Fl_Button(width - WB - BB, height - WB - BH, BB, BH, "Compute");
+  _butt[0]->callback(onelab_cb, (void*)"compute");
+  _butt[1] = new Fl_Button(width - 2*WB - 2*BB, height - WB - BH, BB, BH, "Check");
+  _butt[1]->callback(onelab_cb, (void*)"check");
+
+  Fl_Box *resbox = new Fl_Box(WB, height - BH - 3 * WB, WB, WB);
+  _win->resizable(resbox);
 
   _win->position
     (CTX::instance()->solverPosition[0], CTX::instance()->solverPosition[1]);
@@ -254,44 +311,59 @@ onelabWindow::onelabWindow(int deltaFontSize)
     (new onelab::localNetworkClient("getdp", "/Users/geuzaine/src/getdp/bin/getdp"));
 }
 
-void number_cb(Fl_Widget *w, void *data)
+static std::string getShortName(const std::string &name) 
 {
-  Fl_Value_Input *v = (Fl_Value_Input*)w;
-  std::vector<onelab::number> numbers;
-  onelab::server::instance()->get(numbers, v->label());
-  if(numbers.size()){
-    numbers[0].setValue(v->value());
-    onelab::server::instance()->set(numbers[0]);
-  }
+  std::string::size_type last = name.find_last_of('/');
+  if(last != std::string::npos)
+    return name.substr(last + 1);
+  return name;
 }
 
 void onelabWindow::rebuildTree()
 {
   printf("rebulding tree\n");
+  _tree->deactivate();
   _tree->clear();
   for(unsigned int i = 0; i < _treeWidgets.size(); i++)
-    delete _treeWidgets[i];
+    Fl::delete_widget(_treeWidgets[i]);
   _treeWidgets.clear();
 
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers);
-
   for(unsigned int i = 0; i < numbers.size(); i++){
     Fl_Tree_Item *n = _tree->add(numbers[i].getName().c_str());
     _tree->begin();
     Fl_Value_Input *but = new Fl_Value_Input(1,1,IW,1);
     _treeWidgets.push_back(but);
-    but->copy_label(numbers[i].getName().c_str());
+    but->copy_label(getShortName(numbers[i].getName()).c_str());
     but->value(numbers[i].getValue());
     but->minimum(0.);
     but->maximum(10.);
     but->step(0.1);
     but->align(FL_ALIGN_RIGHT);
-    but->callback(number_cb);
+    but->callback(onelab_number_cb, (void*)n);
+    but->when(FL_WHEN_RELEASE|FL_WHEN_ENTER_KEY);
+    n->widget(but);
+    _tree->end();
+  }
+
+  std::vector<onelab::string> strings;
+  onelab::server::instance()->get(strings);
+  for(unsigned int i = 0; i < strings.size(); i++){
+    Fl_Tree_Item *n = _tree->add(strings[i].getName().c_str());
+    _tree->begin();
+    Fl_Input *but = new Fl_Input(1,1,IW,1);
+    _treeWidgets.push_back(but);
+    but->copy_label(getShortName(strings[i].getName()).c_str());
+    but->value(strings[i].getValue().c_str());
+    but->align(FL_ALIGN_RIGHT);
+    but->callback(onelab_string_cb, (void*)n);
+    but->when(FL_WHEN_RELEASE|FL_WHEN_ENTER_KEY);
     n->widget(but);
     _tree->end();
   }
   
+  _tree->activate();
   _tree->redraw();
   //n->user_data((void*)gv);
   //n->close();

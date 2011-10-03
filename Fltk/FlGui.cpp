@@ -654,7 +654,7 @@ int FlGui::testGlobalShortcuts(int event)
   }
 #if defined(HAVE_FL_TREE)
   else if(Fl::test_shortcut('@')) {
-    onelab_cb(0, (void*)"laucnhed_from_shortcut");
+    onelab_cb(0, (void*)"check");
     status = 1;
   }
 #endif
