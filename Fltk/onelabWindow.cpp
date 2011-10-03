@@ -228,6 +228,8 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _win->box(GMSH_WINDOW_BOX);
 
   _tree = new Fl_Tree(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+  _tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
+
   _run = new Fl_Button(width - WB - BB, height - WB - BH, BB, BH, "Compute");
   _run->callback(onelab_compute_cb);
 
