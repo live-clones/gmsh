@@ -19,6 +19,7 @@ class onelabWindow{
   Fl_Window *_win;
   Fl_Tree *_tree;
   Fl_Button *_run;
+  std::vector<Fl_Widget*> _treeWidgets;
  public:
   onelabWindow(int deltaFontSize=0);
   void rebuildTree();

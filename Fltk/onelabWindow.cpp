@@ -136,10 +136,14 @@ bool onelab::localNetworkClient::run(const std::string &what)
         if(type == "number"){
           std::vector<onelab::number> par;
           get(par, name);
-          std::string reply;
-          if(par.size() == 1) reply = par[0].toChar();
-          else reply = message;
-          server->SendMessage(GmshSocket::GMSH_PARAMETER, reply.size(), &reply[0]);
+          if(par.size() == 1){
+            std::string reply = par[0].toChar();
+            server->SendMessage(GmshSocket::GMSH_PARAMETER, reply.size(), &reply[0]);
+          }
+          else{
+            std::string reply = "Parameter " + name + " not found";
+            server->SendMessage(GmshSocket::GMSH_INFO, reply.size(), &reply[0]);
+          }
         }
       }
       break;
@@ -203,12 +207,19 @@ void onelab_cb(Fl_Widget *w, void *data)
     onelab::client *c = it->second;
     c->run("/Users/geuzaine/src/getdp/demos/test.pro");
   }
+  printf("**** ONELAB DB DUMP:\n");
+  onelab::server::instance()->print();
+  printf("**** \n");
   FlGui::instance()->onelab->rebuildTree();
   FlGui::instance()->onelab->show();
 }
 
 void onelab_compute_cb(Fl_Widget *w, void *data)
 {
+  printf("**** ONELAB DB DUMP:\n");
+  onelab::server::instance()->print();
+  printf("**** \n");
+
   for(onelab::server::citer it = onelab::server::instance()->firstClient();
       it != onelab::server::instance()->lastClient(); it++){
     onelab::client *c = it->second;
@@ -256,7 +267,11 @@ void number_cb(Fl_Widget *w, void *data)
 
 void onelabWindow::rebuildTree()
 {
+  printf("rebulding tree\n");
   _tree->clear();
+  for(unsigned int i = 0; i < _treeWidgets.size(); i++)
+    delete _treeWidgets[i];
+  _treeWidgets.clear();
 
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers);
@@ -265,6 +280,7 @@ void onelabWindow::rebuildTree()
     Fl_Tree_Item *n = _tree->add(numbers[i].getName().c_str());
     _tree->begin();
     Fl_Value_Input *but = new Fl_Value_Input(1,1,IW,1);
+    _treeWidgets.push_back(but);
     but->copy_label(numbers[i].getName().c_str());
     but->value(numbers[i].getValue());
     but->minimum(0.);

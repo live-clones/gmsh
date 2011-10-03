@@ -379,6 +379,21 @@ namespace onelab{
     std::string getName(){ return _name; }
     virtual bool run(const std::string &what){ return false; }
     virtual bool kill(){ return false; }
+    virtual void print(){}
+    virtual void sendInfo(const std::string &msg){ std::cout << msg << std::endl; }
+    virtual void sendWarning(const std::string &msg){ std::cerr << msg << std::endl; }
+    virtual void sendError(const std::string &msg){ std::cerr << msg << std::endl; }
+    virtual void sendProgress(const std::string &msg){ std::cout << msg << std::endl; }
+    virtual void sendMergeFileRequest(const std::string &msg){}
+    virtual void sendParseStringRequest(const std::string &msg){}
+    virtual bool set(number &parameter, bool value=true){ return false; }
+    virtual bool set(string &parameter, bool value=true){ return false; }
+    virtual bool set(region &parameter, bool value=true){ return false; }
+    virtual bool set(function &parameter, bool value=true){ return false; }
+    virtual bool get(std::vector<number> &parameters, const std::string &name=""){ return false; }
+    virtual bool get(std::vector<string> &parameters, const std::string &name=""){ return false; }
+    virtual bool get(std::vector<region> &parameters, const std::string &name=""){ return false; }
+    virtual bool get(std::vector<function> &parameters, const std::string &name=""){ return false; }
   };
 
   // The onelab server: a singleton that stores the parameter space
@@ -427,6 +442,18 @@ namespace onelab{
   protected:
     // the pointer to the server
     server *_server;
+    template <class T> bool _set(T &parameter, bool value=true)
+    {
+      parameter.addClient(_name);
+      _server->set(parameter, value);
+      return true;
+    }
+    template <class T> bool _get(std::vector<T> &parameters,
+                                 const std::string &name="")
+    {
+      _server->get(parameters, name);
+      return true;
+    }
   public:
     localClient(const std::string &name) : client(name)
     {
@@ -434,19 +461,15 @@ namespace onelab{
       _server->registerClient(this);
     }
     virtual ~localClient(){}
-    template <class T> bool set(T &parameter, bool value=true)
-    {
-      parameter.addClient(_name);
-      _server->set(parameter, value);
-      return true;
-    }
-    template <class T> bool get(std::vector<T> &parameters,
-                                const std::string &name="")
-    {
-      _server->get(parameters, name);
-      return true;
-    }
-    void print(){ _server->print(); }
+    virtual bool set(number &p, bool value=true){ return _set(p, value); }
+    virtual bool set(string &p, bool value=true){ return _set(p, value); }
+    virtual bool set(function &p, bool value=true){ return _set(p, value); }
+    virtual bool set(region &p, bool value=true){ return _set(p, value); }
+    virtual bool get(std::vector<number> &p, const std::string &name=""){ return _get(p, name); }
+    virtual bool get(std::vector<string> &p, const std::string &name=""){ return _get(p, name); }
+    virtual bool get(std::vector<function> &p, const std::string &name=""){ return _get(p, name); }
+    virtual bool get(std::vector<region> &p, const std::string &name=""){ return _get(p, name); }
+    virtual void print(){ _server->print(); }
   };
 
   class localNetworkClient : public localClient{
@@ -470,29 +493,7 @@ namespace onelab{
     std::string _serverAddress;
     // underlying GmshClient
     GmshClient *_gmshClient;
-  public:
-    remoteNetworkClient(const std::string &name, const std::string &serverAddress)
-      : client(name), _serverAddress(serverAddress)
-    {
-      _gmshClient = new GmshClient();
-      if(_gmshClient->Connect(_serverAddress.c_str()) < 0){
-        delete _gmshClient;
-        _gmshClient = 0;
-      }
-      else{
-        _gmshClient->Start();
-      }
-    }
-    virtual ~remoteNetworkClient()
-    {
-      if(_gmshClient){
-        _gmshClient->Stop();
-        _gmshClient->Disconnect();
-        delete _gmshClient;
-        _gmshClient = 0;
-      }
-    }
-    template <class T> bool set(T &parameter)
+    template <class T> bool _set(T &parameter)
     {
       if(!_gmshClient) return false;
       parameter.addClient(_name);
@@ -500,8 +501,8 @@ namespace onelab{
       _gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER, msg.size(), &msg[0]);
       return true;
     }
-    template <class T> bool get(std::vector<T> &parameters, 
-                                const std::string &name="")
+    template <class T> bool _get(std::vector<T> &parameters, 
+                                 const std::string &name="")
     {
       if(!_gmshClient) return false;
       T parameter(name);
@@ -535,6 +536,10 @@ namespace onelab{
           parameters.push_back(p);
           return true;
         }
+        else if(type == GmshSocket::GMSH_INFO){
+          // parameter not found
+          return true;
+        }
         else{
           _gmshClient->Error("Unknown message type: aborting remote get");
           return false;
@@ -542,6 +547,36 @@ namespace onelab{
       }
       return true;
     }
+  public:
+    remoteNetworkClient(const std::string &name, const std::string &serverAddress)
+      : client(name), _serverAddress(serverAddress)
+    {
+      _gmshClient = new GmshClient();
+      if(_gmshClient->Connect(_serverAddress.c_str()) < 0){
+        delete _gmshClient;
+        _gmshClient = 0;
+      }
+      else{
+        _gmshClient->Start();
+      }
+    }
+    virtual ~remoteNetworkClient()
+    {
+      if(_gmshClient){
+        _gmshClient->Stop();
+        _gmshClient->Disconnect();
+        delete _gmshClient;
+        _gmshClient = 0;
+      }
+    }
+    virtual bool set(number &p, bool value=true){ return _set(p); }
+    virtual bool set(string &p, bool value=true){ return _set(p); }
+    virtual bool set(function &p, bool value=true){ return _set(p); }
+    virtual bool set(region &p, bool value=true){ return _set(p); }
+    virtual bool get(std::vector<number> &p, const std::string &name=""){ return _get(p, name); }
+    virtual bool get(std::vector<string> &p, const std::string &name=""){ return _get(p, name); }
+    virtual bool get(std::vector<function> &p, const std::string &name=""){ return _get(p, name); }
+    virtual bool get(std::vector<region> &p, const std::string &name=""){ return _get(p, name); }
     void sendInfo(const std::string &msg){ _gmshClient->Info(msg.c_str()); }
     void sendWarning(const std::string &msg){ _gmshClient->Warning(msg.c_str()); }
     void sendError(const std::string &msg){ _gmshClient->Error(msg.c_str()); }
