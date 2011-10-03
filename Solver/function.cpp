@@ -206,7 +206,7 @@ void dataCacheDouble::_eval()
 const function * dataCacheMap::_translate(const function *f) const 
 {
   //special case
-  if (f == function::getSolution()) {
+  if (f == function::getSolution() || f == _containerSolution) {
     f = _functionSolution;
     if (f == NULL) {
       dataCacheMap *parent = _parent;
@@ -218,7 +218,7 @@ const function * dataCacheMap::_translate(const function *f) const
       if (f == NULL) 
         Msg::Error ("solution function has not been set");
     }
-  } else if (f == function::getSolutionGradient()) {
+  } else if (f == function::getSolutionGradient() || f == _containerSolutionGradient) {
     f = _functionSolutionGradient;
     if (f == NULL) {
       dataCacheMap *parent = _parent;

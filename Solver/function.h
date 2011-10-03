@@ -201,7 +201,7 @@ class dataCacheDouble {
 };
 
 class dataCacheMap {
-  const function *_functionSolution, *_functionSolutionGradient, *_functionCoordinates;
+  const function *_functionSolution, *_functionSolutionGradient, *_functionCoordinates, *_containerSolution, *_containerSolutionGradient;
   //handle function solution and funciton solution gradient
   //we should get rid of them
   const function * _translate (const function *) const;
@@ -215,9 +215,9 @@ class dataCacheMap {
   std::vector<dataCacheDouble*> _toInvalidateOnElement;
   MElement *_element;
   dataCacheMap() {
-    _functionSolution = _functionSolutionGradient = _functionCoordinates = NULL;
+    _functionSolution = _functionSolutionGradient = _functionCoordinates = _containerSolution = _containerSolutionGradient = NULL;
     _nbEvaluationPoints = 0;
-    _parent=NULL;
+    _parent = NULL;
   }
   ~dataCacheMap();
   void addDataCacheDouble(dataCacheDouble *data, bool invalidatedOnElement)
@@ -268,6 +268,13 @@ class dataCacheMap {
   inline void setSolutionFunction(const function *functionSolution, const function *functionSolutionGradient) {
     _functionSolution = functionSolution;
     _functionSolutionGradient = functionSolutionGradient;
+  }
+  inline void setReferenceSolutionFunction(const function *functionSolution, const function *functionSolutionGradient) {
+    _containerSolution = functionSolution;
+    _containerSolutionGradient = functionSolutionGradient;
+    for(std::list<dataCacheMap*>::iterator it = _children.begin(); it != _children.end(); it++) {
+      (*it)->setReferenceSolutionFunction(functionSolution, functionSolutionGradient);
+    }
   }
   void setNbEvaluationPoints(int nbEvaluationPoints);
   inline int getNbEvaluationPoints() { return _nbEvaluationPoints; }
