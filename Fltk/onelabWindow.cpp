@@ -222,6 +222,10 @@ void onelab_cb(Fl_Widget *w, void *data)
       FlGui::instance()->onelab->setModelName(fileChooserGetName(1));
     action = "check";
   }
+  if(FlGui::instance()->onelab->getModelName().empty()){
+    std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
+    FlGui::instance()->onelab->setModelName(split[0] + split[1] + ".pro");
+  }
 
   for(onelab::server::citer it = onelab::server::instance()->firstClient();
       it != onelab::server::instance()->lastClient(); it++){
@@ -286,8 +290,6 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _model->align(FL_ALIGN_RIGHT);
   _model->callback(onelab_cb, (void*)"check");
   _model->when(FL_WHEN_RELEASE|FL_WHEN_ENTER_KEY);
-  std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
-  _model->value((split[0]+split[1]+".pro").c_str());
 
   Fl_Button *choose = new Fl_Button(width - WB - (2*BB)/3, WB, (2*BB)/3, BH, "Choose");
   choose->callback(onelab_cb, (void*)"choose model");
