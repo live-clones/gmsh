@@ -3,7 +3,7 @@
 #include <petscksp.h>
 #include "linearSystemPETSc.h"
 
-#if (PETSC_VERSION_RELEASE == 0) // petsc-dev
+#if (PETSC_VERSION_RELEASE == 0 || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR == 2))) // petsc-dev
 #define PetscTruth PetscBool
 #define PetscOptionsGetTruth PetscOptionsGetBool
 #endif
@@ -46,7 +46,7 @@ linearSystemPETSc<scalar>::~linearSystemPETSc()
 {
   clear();
   if(_kspAllocated)
-#if (PETSC_VERSION_RELEASE == 0) // petsc-dev
+#if (PETSC_VERSION_RELEASE == 0 || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR == 2))) // petsc-dev
     _try(KSPDestroy(&_ksp));
 #else
     _try(KSPDestroy(_ksp));
@@ -151,7 +151,7 @@ template <class scalar>
 void linearSystemPETSc<scalar>::clear()
 {
   if(_isAllocated){
-#if (PETSC_VERSION_RELEASE == 0) // petsc-dev
+#if (PETSC_VERSION_RELEASE == 0 || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR == 2))) // petsc-dev
     _try(MatDestroy(&_a));
     _try(VecDestroy(&_x));
     _try(VecDestroy(&_b));
