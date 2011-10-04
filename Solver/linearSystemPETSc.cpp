@@ -145,7 +145,7 @@ bool linearSystemPETScBlockDouble::isAllocated() const
 void linearSystemPETScBlockDouble::clear()
 {
   if(_isAllocated){
-#if (PETSC_VERSION_RELEASE == 0) // petsc-dev
+#if (PETSC_VERSION_RELEASE == 0 || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR == 2))) // petsc-dev
     MatDestroy(&_a);
     VecDestroy(&_x);
     VecDestroy(&_b);
