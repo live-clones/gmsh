@@ -387,6 +387,7 @@ namespace onelab{
     virtual void sendProgress(const std::string &msg){ std::cout << msg << std::endl; }
     virtual void sendMergeFileRequest(const std::string &msg){}
     virtual void sendParseStringRequest(const std::string &msg){}
+    virtual void sendVertexArray(const std::string &msg){}
     virtual bool set(number &p, bool value=true) = 0;
     virtual bool set(string &p, bool value=true) = 0;
     virtual bool set(region &p, bool value=true) = 0;
@@ -440,7 +441,7 @@ namespace onelab{
   };
     
   class localClient : public client{
-  protected:
+  private:
     // the pointer to the server
     server *_server;
     template <class T> bool _set(T &p, bool value=true)
@@ -587,17 +588,29 @@ namespace onelab{
                      const std::string &name=""){ return _get(ps, name); }
     virtual bool get(std::vector<region> &ps,
                      const std::string &name=""){ return _get(ps, name); }
-    void sendInfo(const std::string &msg){ _gmshClient->Info(msg.c_str()); }
-    void sendWarning(const std::string &msg){ _gmshClient->Warning(msg.c_str()); }
-    void sendError(const std::string &msg){ _gmshClient->Error(msg.c_str()); }
-    void sendProgress(const std::string &msg){ _gmshClient->Progress(msg.c_str()); }
+    void sendInfo(const std::string &msg)
+    {
+      if(_gmshClient) _gmshClient->Info(msg.c_str()); 
+    }
+    void sendWarning(const std::string &msg)
+    {
+      if(_gmshClient) _gmshClient->Warning(msg.c_str()); 
+    }
+    void sendError(const std::string &msg)
+    {
+      if(_gmshClient) _gmshClient->Error(msg.c_str()); 
+    }
+    void sendProgress(const std::string &msg)
+    {
+      if(_gmshClient) _gmshClient->Progress(msg.c_str()); 
+    }
     void sendMergeFileRequest(const std::string &msg)
     {
-      _gmshClient->MergeFile(msg.c_str()); 
+      if(_gmshClient) _gmshClient->MergeFile(msg.c_str()); 
     }
     void sendParseStringRequest(const std::string &msg)
     {
-      _gmshClient->ParseString(msg.c_str()); 
+      if(_gmshClient) _gmshClient->ParseString(msg.c_str()); 
     }
   };
 
