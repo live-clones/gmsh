@@ -272,7 +272,7 @@ FlGui::FlGui(int argc, char **argv)
   geoContext = new geometryContextWindow(CTX::instance()->deltaFontSize);
   meshContext = new meshContextWindow(CTX::instance()->deltaFontSize);
   about = new aboutWindow();
-#if defined(HAVE_FL_TREE)
+#if defined(FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
   onelab = new onelabWindow();
 #endif
   for(int i = 0; i < NB_SOLVER_MAX; i++)
@@ -652,7 +652,7 @@ int FlGui::testGlobalShortcuts(int event)
     show = !show;
     status = 2;
   }
-#if defined(HAVE_FL_TREE)
+#if defined(FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
   else if(Fl::test_shortcut('@')) {
     onelab_cb(0, (void*)"check");
     status = 1;

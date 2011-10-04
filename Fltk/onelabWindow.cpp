@@ -5,7 +5,7 @@
 
 #include "onelab.h"
 
-#if defined(HAVE_FL_TREE)
+#if defined(FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Box.H>
 #include "GmshMessage.h"
