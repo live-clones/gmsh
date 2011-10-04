@@ -7,7 +7,7 @@
 #define _ONELAB_WINDOW_H_
 
 #include "GmshConfig.h"
-#if defined(FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
 #include <vector>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Tree.H>
