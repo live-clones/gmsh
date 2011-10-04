@@ -658,9 +658,9 @@ bool GFaceCompound::parametrize() const
     _rbf = new GRbf(sizeBox, variableEps, radFunInd, _normals, allNodes, _ordered);
 
     //_rbf->RbfLapSurface_global_CPM_low(_rbf->getXYZ(), _rbf->getN(), Oper);
-    //_rbf->RbfLapSurface_local_CPM(true, _rbf->getXYZ(), _rbf->getN(), Oper, true);
-    _rbf->RbfLapSurface_global_CPM_high(_rbf->getXYZ(), _rbf->getN(), Oper);
-    //_rbf->RbfLapSurface_local_CPM(false, _rbf->getXYZ(), _rbf->getN(),  Oper, true);
+    //_rbf->RbfLapSurface_local_CPM(true, _rbf->getXYZ(), _rbf->getN(), Oper);
+    _rbf->RbfLapSurface_global_CPM_high_2(_rbf->getXYZ(), _rbf->getN(), Oper);
+    //_rbf->RbfLapSurface_local_CPM(false, _rbf->getXYZ(), _rbf->getN(),  Oper);
     //_rbf->RbfLapSurface_global_projection(_rbf->getXYZ(), _rbf->getN(), Oper);
     //_rbf->RbfLapSurface_local_projection(_rbf->getXYZ(), _rbf->getN(), Oper, true);
   
@@ -1379,30 +1379,16 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
     return lt->gf->curvatureMax(pv);
   }
   else if (lt->gf->geomType() == GEntity::DiscreteSurface)  {
-
     Curvature& curvature = Curvature::getInstance();
-
     if( !Curvature::valueAlreadyComputed() ) {
-      Msg::Info("Need to compute discrete curvature for isotropic remesh");
-      Msg::Info("Getting instance of curvature!");
-
-      curvature.setGModel( model() );
-      int computeMax = 0;
-      curvature.computeCurvature_Rusinkiewicz(computeMax);
-      //curvature.computeCurvature_RBF();
-      curvature.writeToPosFile("curvature.pos");
-      curvature.writeToVtkFile("curvature.vtk");
-      Msg::Info(" ... computing curvature finished");
+      Msg::Info("Need to compute discrete curvature for isotropic remesh (in GFace)");
+      Curvature::typeOfCurvature type = Curvature::RUSIN;
+      curvature.computeCurvature(model(), type); 
     }
-
-    double c0;
-    double c1;
-    double c2;
+    double c0,c1,c2;
     curvature.triangleNodalValues(lt->tri,c0, c1, c2, 1);
-    
     double cv = (1-U-V)*c0 + U*c1 + V*c2;
     return cv;
-
   }
 
   return 0.;
@@ -1413,8 +1399,7 @@ double GFaceCompound::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector
 
  if(!oct) parametrize();
  if(trivial()) {
-   //Implement this
-//    return (*(_compound.begin()))->curvatureMax(param);
+   return (*(_compound.begin()))->curvatures(param, dirMax,dirMin, curvMax, curvMin); 
  }
 
   double U, V;
@@ -1426,34 +1411,22 @@ double GFaceCompound::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector
   }
 
   if(lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface)  {
-      //Implement this...
-//    SPoint2 pv = lt->gfp1*(1.-U-V) + lt->gfp2*U + lt->gfp3*V;
-//    return lt->gf->curvatureMax(pv);
+    SPoint2 pv = lt->gfp1*(1.-U-V) + lt->gfp2*U + lt->gfp3*V;
+    return lt->gf->curvatures(pv, dirMax,dirMin, curvMax, curvMin);
   }
+
   else if (lt->gf->geomType() == GEntity::DiscreteSurface)  {
-
     Curvature& curvature = Curvature::getInstance();
-
     if( !Curvature::valueAlreadyComputed() ) {
-      Msg::Info("Need to compute discrete curvature for anisotropic remesh");
-      Msg::Info("Getting instance of curvature");
-
-      curvature.setGModel( model() );
-      int computeMax = 0;
-      curvature.computeCurvature_Rusinkiewicz(computeMax);
-      //curvature.computeCurvature_RBF();
-      curvature.writeToPosFile("curvature.pos");
-      //curvature.writeToVtkFile("curvature.vtk");
-      //curvature.writeDirectionsToPosFile("curvature_directions.pos");
-      Msg::Info(" ... computing curvature finished");
+      Msg::Info("Need to compute discrete curvature for anisotropic remesh (in GFace)");
+      Curvature::typeOfCurvature type = Curvature::RUSIN;//RBF
+      curvature.computeCurvature(model(), type); 
     }
 
-    std::cout << "I'm using curvatures in GFaceCompound.cpp" << std::endl;
     double cMin[3];
     double cMax[3];
     SVector3 dMin[3];
     SVector3 dMax[3];
-
     curvature.triangleNodalValuesAndDirections(lt->tri, dMax, dMin, cMax, cMin, 0);
     //curvature.triangleNodalValuesAndDirections(lt->tri, dMax, dMin, cMax, cMin, 1);
 
@@ -1463,8 +1436,6 @@ double GFaceCompound::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector
     * curvMin = (1-U-V)*cMin[0] + U*cMin[1] + V*cMin[2];
 
     return * curvMax;
-
-
   }
 
   return 0.;

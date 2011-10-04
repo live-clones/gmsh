@@ -482,8 +482,8 @@ class functionLevelsetSmooth : public function {
 
         //double Heps = 0.5 * (1 + phi / _E + 1. / M_PI * sin(M_PI * phi / _E));
 	//double Heps = 0.5 + 1./32.*(45.*phi/_E - 50.*pow(phi/_E,3.) + 21.*pow(phi/_E,5.)  );
-	//double Heps = 0.5*(1+tanh(M_PI*phi/_E));
-	double Heps = 0.75 * (phi/_E - 0.33*pow(phi/_E,3.0)) + 0.5;
+	double Heps = 0.5*(1+tanh(M_PI*phi/_E));
+	//double Heps = 0.75 * (phi/_E - 0.33*pow(phi/_E,3.0)) + 0.5;
 
         //if (fabs(phi) < _E)  val(i, j) = 1./(Heps * ivalPlus + (1 - Heps) * ivalMin);
         //else if (phi >  _E)  val(i, j) = 1./ivalPlus;

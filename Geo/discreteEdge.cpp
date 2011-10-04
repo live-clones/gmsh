@@ -499,22 +499,11 @@ double discreteEdge::curvature(double par) const{
   if(!getLocalParameter(par,iEdge,tLoc)) return MAX_LC;
 
   double c0, c1;
-
   Curvature& curvature  = Curvature::getInstance();
-
   if( !Curvature::valueAlreadyComputed() ) {
-    std::cout << "Need to compute discrete curvature (in Edge)" << std::endl;
-    std::cout << "Getting instance of curvature" << std::endl;
-
-    curvature.setGModel( model() );
-    int computeMax = 0;
-    curvature.computeCurvature_Rusinkiewicz(computeMax);
-    //curvature.computeCurvature_RBF();
-    curvature.writeToPosFile("curvature.pos");
-    //curvature.writeDirectionsToPosFile("curvature_directions.pos");
-    //curvature.writeToVtkFile("curvature.vtk");
-
-    std::cout << " ... computing curvature finished" << std::endl;
+    std::cout << "Need to compute discrete curvature (in discreteEdge)" << std::endl;
+    Curvature::typeOfCurvature type = Curvature::RUSIN; //RBF
+    curvature.computeCurvature(model(), type); 
   }
 
   curvature.edgeNodalValues(lines[iEdge],c0, c1, 1);
@@ -524,7 +513,6 @@ double discreteEdge::curvature(double par) const{
   return cv;
 
 }
-
 
 Range<double> discreteEdge::parBounds(int i) const
 {

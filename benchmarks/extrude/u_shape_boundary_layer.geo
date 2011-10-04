@@ -1,3 +1,5 @@
+Mesh.Algorithm = 5; //(1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=bamg)
+
 Point(1) = {0, 0.5, 0, 0.1};
 Point(2) = {0.1, 0.7, 0, 0.1};
 Point(3) = {0.3, 0.8, 0, 0.1};
@@ -11,10 +13,10 @@ BSpline(1) = {5, 4, 3, 2, 1};
 BSpline(2) = {1, 9, 8, 7, 5};
 Line(3) = {5, 6};
 
-Extrude { Line{1,-3}; Layers{5,0.04}; Using Index[0]; }
-Extrude { Line{2,3}; Layers{5,0.04}; Using Index[1]; }
+Extrude { Line{1,-3}; Layers{2,0.04}; Using Index[0]; }
+Extrude { Line{2,3}; Layers{2,0.04}; Using Index[1]; }
 
-// fix leading edge by hand
+//fix leading edge by hand
 Coherence Point {25, 16};
 
 Point(31) = {-0.5, 1.5, 0, 0.2};

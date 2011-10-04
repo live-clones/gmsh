@@ -45,4 +45,4 @@ Recombine Surface{100};
 // triangulation algorithm that enables to create right triangles
 // almost everywhere. Uncomment the following line to try DelQuad:
 
-// Mesh.Algorithm = 8; // DelQuad (experimental)
+Mesh.Algorithm = 8; // DelQuad (experimental)

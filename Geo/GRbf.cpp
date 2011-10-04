@@ -78,7 +78,7 @@ GRbf::GRbf (double sizeBox, int variableEps, int rbfFun, std::map<MVertex*, SVec
 #endif
 
   allCenters.resize(allNodes.size(),3);
-  double tol =  6.e-1*sBox;
+  double tol =  4.e-2*sBox;
   if (isLocal) tol = 1.e-15;
 
   //remove duplicate vertices
@@ -203,13 +203,13 @@ void GRbf::buildOctree(double radius){
     double P[3] = {centers(i,0),centers(i,1), centers(i,2)};
     Octree_SearchAll(P, oct, &l);
     nodesInSphere[i].push_back(i);
-    if (l.size()== 1) printf("*** WARNING: Found only %d sphere ! \n", (int)l.size());
+    if (l.size() == 1) printf("*** WARNING: Found only %d sphere ! \n", (int)l.size());
     for (std::list<void*>::iterator it = l.begin(); it != l.end(); it++) {
       Sphere *sph = (Sphere*) *it;
       std::vector<int> &pts = nodesInSphere[i];
       if (sph->index != i)  nodesInSphere[i].push_back(sph->index);
     }
-    printf("size node i =%d = %d \n", i , nodesInSphere[i].size());
+    //printf("size node i =%d = %d \n", i , nodesInSphere[i].size());
   }
 
   Octree_Delete(oct);
@@ -228,18 +228,12 @@ void GRbf::curvatureRBF(const fullMatrix<double> &cntrs,
   evalRbfDer(1,extX,cntrs,surf,sx);
   evalRbfDer(2,extX,cntrs,surf,sy);
   evalRbfDer(3,extX,cntrs,surf,sz);
-  //evalRbfDer(11,extX,cntrs,surf,sxx);
-  //evalRbfDer(12,extX,cntrs,surf,sxy);
-  //evalRbfDer(13,extX,cntrs,surf,sxz);
-  //evalRbfDer(22,extX,cntrs,surf,syy);
-  //evalRbfDer(23,extX,cntrs,surf,syz);
-  //evalRbfDer(33,extX,cntrs,surf,szz);
   evalRbfDer(222,extX,cntrs,surf,sLap);
 
   for (int i = 0; i < cntrs.size1(); i++) {
     double norm_grad_s = sqrt(sx(i,0)*sx(i,0)+sy(i,0)*sy(i,0)+sz(i,0)*sz(i,0));
-    double curv = -sLap(i,0)/norm_grad_s; //+(sx(i,0)*sx(i,0)*sxx(i,0)+sy(i,0)*sy(i,0)*syy(i,0)+sz(i,0)*sz(i,0)*szz(i,0)+2*sx(i,0)*sy(i,0)*sxy(i,0)+2*sy(i,0)*sz(i,0)*syz(i,0)+2*sx(i,0)*sz(i,0)*sxz(i,0))/ (norm_grad_s*norm_grad_s*norm_grad_s);
-    curvature(i,0) = fabs(curv)/sBox;
+    double curv = -sLap(i,0)/norm_grad_s; 
+    curvature(i,0) = 0.5*fabs(curv)/sBox;
   }
 }
 
@@ -284,7 +278,6 @@ void GRbf::computeLocalCurvature(const fullMatrix<double> &cntrs,
     
     fullMatrix<double> curv(pts.size(), 1);
     curvatureRBF(nodes_in_sph,curv);
-    printf("curv(0,0) = %g \n", curv(0,0));
     curvature(i,0) = curv(0,0);  
   }
 
@@ -339,7 +332,7 @@ fullMatrix<double> GRbf::generateRbfMat(int p,
   int n = nodes1.size1();
   fullMatrix<double> rbfMat(m,n);
 
-  double eps =0.5/delta; //0.0677*(nbNodes^0.28)/min_dist; //0.5
+  double eps = 0.5/delta; //0.0677*(nbNodes^0.28)/min_dist; //0.5
   if (_inUV) eps = 0.4/deltaUV;
   for (int i = 0; i < m; i++) {
     for (int j = 0; j < n; j++) {
@@ -411,12 +404,12 @@ void GRbf::setup_level_set(const fullMatrix<double> &cntrs,
 
   //Computes the normal vectors to the surface at each node
   for (int i=0;i<numNodes ; ++i){
-    ONES(i,0)=1.0;
+    ONES(i,0) = 0.0;
     cntrsPlus(i,0) = cntrs(i,0);
     cntrsPlus(i,1) = cntrs(i,1);
     cntrsPlus(i,2) = cntrs(i,2);
   }
-  ONES(numNodes,0) = 5.0;
+  ONES(numNodes,0) = 1.0;
   cntrsPlus(numNodes,0) = cntrs(0,0)+10.*sBox;
   cntrsPlus(numNodes,1) = cntrs(0,1)+10.*sBox;
   cntrsPlus(numNodes,2) = cntrs(0,2)+10.*sBox;
@@ -425,6 +418,11 @@ void GRbf::setup_level_set(const fullMatrix<double> &cntrs,
   evalRbfDer(2,cntrsPlus,cntrs,ONES,sy);
   evalRbfDer(3,cntrsPlus,cntrs,ONES,sz);
   for (int i=0;i<numNodes ; ++i){
+    //GMSH NORMALS
+    //sx(i,0) = normals(i,0);
+    //sy(i,0) = normals(i,1);
+    //sz(i,0) = normals(i,2);
+    //END GMSH NORMALS
     normFactor = sqrt(sx(i,0)*sx(i,0)+sy(i,0)*sy(i,0)+sz(i,0)*sz(i,0));
     sx(i,0) = sx(i,0)/normFactor;
     sy(i,0) = sy(i,0)/normFactor;
@@ -562,7 +560,7 @@ void GRbf::RbfLapSurface_local_CPM(bool isLow,
 
     LocalOper.setAll(0.0);
     if (isLow) RbfLapSurface_global_CPM_low(nodes_in_sph,local_normals,LocalOper);
-    else       RbfLapSurface_global_CPM_high(nodes_in_sph,local_normals,LocalOper);
+    else       RbfLapSurface_global_CPM_high_2(nodes_in_sph,local_normals,LocalOper);
 
     for (int j = 0; j < nbp ; j++){
 

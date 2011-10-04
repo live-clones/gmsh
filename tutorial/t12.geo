@@ -38,7 +38,7 @@ Compound Surface(200) = {12, 14, 16};
 
 // Hide the original surfaces so we only see the compound
 // (cross-patch) mesh
-Hide {Surface{12, 14, 16}; }
+//Hide {Surface{12, 14, 16}; }
 
 // More details about the reparametrization technique can be found in
 // the following papers:

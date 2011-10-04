@@ -13,11 +13,8 @@
 #include<vector>
 
 class Curvature {
+
 private:
-
-    //-----------------------------------------
-    // TYPEDEFS
-
     typedef std::vector<GFace*> GFaceList;
     //typedef std::map<int, GEntityList >::iterator GEntityIter;
     typedef std::map<int, GFaceList >::iterator GFaceIter;
@@ -102,7 +99,6 @@ private:
 
     // Perform LDL^T decomposition of a symmetric positive definite matrix.
     // Like Cholesky, but no square roots.  Overwrites lower triangle of matrix.
-
     static inline bool ldltdc(STensor3& A, double rdiag[3])
     {
       double v[2];
@@ -131,7 +127,6 @@ private:
 
       return true;
     }
-
     // Solve Ax=B after ldltdc
     static inline void ldltsl(STensor3& A, double rdiag[3], double B[3], double x[3])
     {
@@ -152,20 +147,18 @@ private:
       }
     }
 
-
 public:
 
-  //-----------------------------------------
-  // PUBLIC METHODS
-
+  typedef enum {RUSIN=1,RBF=2, SIMPLE=3} typeOfCurvature;
   static Curvature& getInstance();
   static bool valueAlreadyComputed();
   
-  void setGModel(GModel* model);
   void retrieveCompounds();
   double getAtVertex(const MVertex *v) const;
   //void retrievePhysicalSurfaces(const std::string & face_tag);
 
+  void computeCurvature(GModel* model, typeOfCurvature typ);
+  
   /// The following function implements algorithm from:
   /// Implementation of an Algorithm for Approximating the Curvature Tensor
   /// on a Triangular Surface Mesh in the Vish Environment

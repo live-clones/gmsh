@@ -212,10 +212,8 @@ void statisticsWindow::compute(bool elementQuality)
   GModel::current()->getEntities(entities);
   std::map<MVertex*, int > vert2Deg;
   for(unsigned int i = 0; i < entities.size(); i++){
-    printf("entity dim =%d tag=%d \n", entities[i]->dim() , entities[i]->tag());
 	if(entities[i]->dim() < 2 ) continue;
 	if(entities[i]->tag() != 10) continue;
-	printf("continuing \n");
 	for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
 	  MElement *e =  entities[i]->getMeshElement(j);
 	  for(unsigned int k = 0; k < e->getNumEdges(); k++){
@@ -251,15 +249,13 @@ void statisticsWindow::compute(bool elementQuality)
   FieldManager *fields = GModel::current()->getFields();
   Field *f = fields->get(fields->background_field);
   int nbEdges = edges.size();
-  printf("nb edges =%d \n", nbEdges);
   system("rm qualEdges.txt");
   FILE *fp = fopen("qualEdges.txt", "w");
   std::vector<int> qualE;
   int nbS = 50;
   qualE.resize(nbS);
   if(fields->background_field > 0){
-    printf("found field \n");
-	std::set<MEdge, Less_Edge>::iterator it = edges.begin();
+ 	std::set<MEdge, Less_Edge>::iterator it = edges.begin();
 	double sum = 0;
 	for (; it !=edges.end();++it){
 	  MVertex *v0 = it->getVertex(0);
@@ -273,7 +269,6 @@ void statisticsWindow::compute(bool elementQuality)
 	  sum += e - 1.0;
 	}
 	double tau = exp ((1./edges.size()) * sum);
-	printf("N edges = %d tau = %g\n",(int)edges.size(),tau);
 	double ibegin = 2./(2*nbS);
 	double inext = 2./nbS;
 	for (int i= 0; i< qualE.size(); i++){

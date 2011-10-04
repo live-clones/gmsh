@@ -10,6 +10,7 @@
 #include "GFaceCompound.h"
 #include "MLine.h"
 #include "GRbf.h"
+#include "Os.h"
 #include "SBoundingBox3d.h"
 
 #include<iostream>
@@ -79,13 +80,6 @@ Curvature& Curvature::getInstance()
  {
    static Curvature instance;
    _instance = & instance;
- }
-
-//========================================================================================================
-
- void Curvature::setGModel(GModel* model)
- {
-   _model = model;
  }
 
  //========================================================================================================
@@ -415,10 +409,8 @@ void Curvature::computeRusinkiewiczNormals()
     {
       // Pointer to one element
       MElement *e = face->getMeshElement(iElem);
-      // The NEW tag of the corresponding element
       const int E = _ElementToInt[e->getNum()];
-      // std::cout << "We are now looking at element Nr: " << E << std::endl;
-
+    
       // Pointers to vertices of triangle
       MVertex* A = e->getVertex(0);
       MVertex* B = e->getVertex(1);
@@ -432,13 +424,10 @@ void Curvature::computeRusinkiewiczNormals()
       vector_AC = SVector3(C->x() - A->x(), C->y() - A->y(), C->z() - A->z() );
       vector_BC = SVector3(C->x() - B->x(), C->y() - B->y(), C->z() - B->z() );
 
-
       const SVector3 cross = crossprod(vector_AB, vector_AC);
 
       // Area of the triangles:
       _TriangleArea[E] = 0.5*cross.norm();
-      // std::cout << "The area of the triangle nr: " << e->getNum() << " is: "<< TriangleArea[E] << std::endl;
-
 
       const double l_AB = vector_AB.normSq();
       const double l_AC = vector_AC.normSq();
@@ -460,13 +449,8 @@ void Curvature::computeRusinkiewiczNormals()
 }
 
 //========================================================================================================
-
 // Compute per-vertex point areas
-void Curvature::computePointareas()
-{
-
-//  std::cout << "Computing point areas... " << std::endl;
-//    std::cout << "The mesh has " << _VertexToInt.size() << " nodes" << std::endl;
+void Curvature::computePointareas(){
 
   SVector3 e[3];
   SVector3 l2;
@@ -547,17 +531,13 @@ void Curvature::computePointareas()
 
   } //End of loop over _ptFinalEntityList
 
-  //std::cout << "Done computing pointareas" << std::endl;
-
 } //End of the method "computePointareas"
 
 
 //========================================================================================================
-
 //Rotate a coordinate system to be perpendicular to the given normal
+void Curvature::rot_coord_sys(const SVector3 &old_u, const SVector3 &old_v, const SVector3 &new_norm, SVector3 &new_u, SVector3 &new_v){
 
-void Curvature::rot_coord_sys(const SVector3 &old_u, const SVector3 &old_v, const SVector3 &new_norm, SVector3 &new_u, SVector3 &new_v)
-{
   new_u = old_u;
   new_v = old_v;
   SVector3 old_norm = crossprod(old_u, old_v);
@@ -585,8 +565,7 @@ void Curvature::rot_coord_sys(const SVector3 &old_u, const SVector3 &old_v, cons
 void Curvature::proj_curv( const SVector3 &old_u, const SVector3 &old_v,
                           double old_ku, double old_kuv, double old_kv,
                           const SVector3  &new_u, const SVector3 &new_v,
-                          double &new_ku, double &new_kuv, double &new_kv)
-{
+                          double &new_ku, double &new_kuv, double &new_kv){
   SVector3 r_new_u;
   SVector3 r_new_v;
   rot_coord_sys(new_u, new_v, crossprod(old_u,old_v), r_new_u, r_new_v);
@@ -610,8 +589,7 @@ void Curvature::proj_curv( const SVector3 &old_u, const SVector3 &old_v,
 void Curvature::diagonalize_curv(const SVector3 &old_u, const SVector3 &old_v,
                       double ku, double kuv, double kv,
                       const SVector3 &new_norm,
-                      SVector3 &pdir1, SVector3 &pdir2, double &k1, double &k2)
-{
+                      SVector3 &pdir1, SVector3 &pdir2, double &k1, double &k2){
   SVector3 r_old_u;
   SVector3 r_old_v;
 
@@ -646,8 +624,30 @@ void Curvature::diagonalize_curv(const SVector3 &old_u, const SVector3 &old_v,
 }
 
 //========================================================================================================
+void Curvature::computeCurvature(GModel* model, typeOfCurvature typ)
+{
 
-void Curvature::computeCurvature_Rusinkiewicz(int isMax){
+  _model = model;
+
+  double t0 = Cpu();
+  Msg::StatusBar(2, true, "(C) Computing Curvature");
+  if (typ == RUSIN)
+    computeCurvature_Rusinkiewicz(0);
+  else if (typ == RBF)
+    computeCurvature_RBF();
+  else if (typ == SIMPLE)
+    computeCurvature_Simple();
+
+  double t1 = Cpu();
+  Msg::StatusBar(2, true, "(C) Done Computing Curvature (%g s)", t1-t0);
+
+  writeToPosFile("curvature.pos");
+  writeToVtkFile("curvature.vtk");
+
+}
+
+void Curvature::computeCurvature_Rusinkiewicz(int isMax)
+{
   retrieveCompounds();
   initializeMap();
   computeRusinkiewiczNormals();
@@ -678,8 +678,6 @@ void Curvature::computeCurvature_Rusinkiewicz(int isMax){
   _curv1.resize(_VertexToInt.size());
   _curv2.resize(_VertexToInt.size());
   _curv12.resize(_VertexToInt.size());
-
-  std::cout << "Computing Curvature.." << std::endl;
 
   for (int i = 0; i< _ptFinalEntityList.size(); ++i)
   {
@@ -813,18 +811,14 @@ void Curvature::computeCurvature_Rusinkiewicz(int isMax){
 
 
   //Compute principal directions and curvatures at each vertex
-  for (int ivertex = 0; ivertex < _VertexToInt.size(); ++ivertex)
-  {
+  for (int ivertex = 0; ivertex < _VertexToInt.size(); ++ivertex)  {
     diagonalize_curv(_pdir1[ivertex], _pdir2[ivertex], _curv1[ivertex], _curv12[ivertex], _curv2[ivertex],
                      _VertexNormal[ivertex], _pdir1[ivertex], _pdir2[ivertex], _curv1[ivertex], _curv2[ivertex]);
   }
 
-  std::cout << "Done" << std::endl;
-
   _VertexCurve.resize( _VertexToInt.size() );
 
-  for (int ivertex = 0; ivertex < _VertexToInt.size(); ++ivertex)
-  {
+  for (int ivertex = 0; ivertex < _VertexToInt.size(); ++ivertex){
 
     if (isMax){
       _VertexCurve[ivertex] = std::max(fabs(_curv1[ivertex]), fabs(_curv2[ivertex]));
@@ -842,11 +836,10 @@ void Curvature::computeCurvature_Rusinkiewicz(int isMax){
 } //End of the "computeCurvature_Rusinkiewicz" method
 
 
-void Curvature::computeCurvature_RBF(){
+void Curvature::computeCurvature_RBF()
+{
   retrieveCompounds();
   initializeMap();
- 
-  std::cout << "Computing Curvature RBF ..." << std::endl;
   
   //fill set of MVertex
   std::set<MVertex*> allNodes;
@@ -869,17 +862,17 @@ void Curvature::computeCurvature_RBF(){
     bb +=pt;
   }
   double sizeBox = norm(SVector3(bb.max(), bb.min()));
-  printf("allNodes := %d sizeBox = %g \n", allNodes.size(), sizeBox);
 
   //compure curvature RBF
   std::map<MVertex*, SVector3> _normals;
   std::vector<MVertex*> _ordered;
   std::map<MVertex*, double> curvRBF;
-  GRbf *_rbf = new GRbf(sizeBox, 0, 1, _normals, allNodes, _ordered); //, true);
+  //GLOBAL
+  GRbf *_rbf = new GRbf(sizeBox, 0, 1, _normals, allNodes, _ordered); 
   _rbf->computeCurvature(_rbf->getXYZ(),curvRBF);
-  // _rbf->computeLocalCurvature(_rbf->getXYZ(),curvRBF);
-
-  std::cout << "Done" << std::endl;
+  //LOCAL FD
+  //GRbf *_rbf = new GRbf(sizeBox, 0, 1, _normals, allNodes, _ordered, true); 
+  //_rbf->computeLocalCurvature(_rbf->getXYZ(),curvRBF);
 
   //fill vertex curve
   _VertexCurve.resize( _VertexToInt.size() );
