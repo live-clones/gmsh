@@ -3,8 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include "onelab.h"
-
+#include <FL/Fl.H>
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Box.H>
@@ -20,6 +19,7 @@
 #include "paletteWindow.h"
 #include "menuWindow.h"
 #include "fileDialogs.h"
+#include "onelab.h"
 #include "onelabWindow.h"
 
 // This file contains the Gmsh/FLTK specific parts of the ONELAB
