@@ -10,7 +10,7 @@
 #include "GFaceCompound.h"
 #include "MLine.h"
 #include "GRbf.h"
-#include "Os.h"
+#include "OS.h"
 #include "SBoundingBox3d.h"
 
 #include<iostream>
