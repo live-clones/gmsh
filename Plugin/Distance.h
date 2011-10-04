@@ -2,8 +2,6 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
-//
-// Contributed by Matti Pellikka <matti.pellikka@tut.fi>.
 
 #ifndef _DISTANCE_H_
 #define _DISTANCE_H_
