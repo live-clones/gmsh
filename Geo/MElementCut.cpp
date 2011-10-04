@@ -1197,11 +1197,13 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   std::vector<DI_Hexa *> hexas;
   std::vector<const gLevelset *> RPN;
   ls->getRPN(RPN);
+  std::vector<int> lsLineRegs;
   for(unsigned int i = 0; i < gmEntities.size(); i++) {
     std::vector<int> oldLineRegs;
     for (std::map<int, std::vector<MElement*> >::iterator it = elements[1].begin();
          it != elements[1].end(); it++)
       oldLineRegs.push_back(it->first);
+    int nbBorders = borders[0].size();
     for(unsigned int j = 0; j < gmEntities[i]->getNumMeshElements(); j++) {
       MElement *e = gmEntities[i]->getMeshElement(j);
       e->setVolumePositive();
@@ -1212,18 +1214,17 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
     }
 
     // Create elementary and physical for non connected border lines
-    if(triangles.size() && lines.size()){
-      std::vector<int> newLineRegs;
+    if(borders[0].size() > nbBorders && gmEntities[i]->dim() == 2){
       int k = 0;
       for (std::map<int, std::vector<MElement*> >::iterator it = elements[1].begin();
            it != elements[1].end(); it++){
         if(oldLineRegs.size() && it->first == oldLineRegs[k])
           k++;
         else
-          newLineRegs.push_back(it->first);
+          lsLineRegs.push_back(it->first);
       }
-      for(unsigned int j = 0; j < newLineRegs.size(); j++){
-        int nLR = newLineRegs[j];
+      for(unsigned int j = 0; j < lsLineRegs.size(); j++){
+        int nLR = lsLineRegs[j];
         while(1){
           std::vector<MElement*> conLines; 
           conLines.push_back(elements[1][nLR][0]);
