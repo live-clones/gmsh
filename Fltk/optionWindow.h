@@ -21,8 +21,6 @@
 #include "spherePositionWidget.h"
 #include "colorbarWindow.h"
 
-
-
 #define NUM_FONTS 14
 extern Fl_Menu_Item menu_font_names[];
 

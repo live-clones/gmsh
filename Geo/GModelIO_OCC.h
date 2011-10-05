@@ -32,9 +32,10 @@ class OCC_Internals {
   void buildLists();
   void buildShapeFromLists(TopoDS_Shape _shape);
   void addShapeToLists(TopoDS_Shape shape);
-  void healGeometry(double tolerance, bool fixsmalledges, 
-                    bool fixspotstripfaces, bool sewfaces, 
-                    bool makesolids=false, bool connect=false);
+  void healGeometry(double tolerance, bool fixdegenerated,
+                    bool fixsmalledges, bool fixspotstripfaces,
+                    bool sewfaces, bool makesolids=false, 
+                    bool connect=false);
   void loadBREP(const char *);  
   void writeBREP(const char *);  
   void loadSTEP(const char *);

@@ -378,7 +378,7 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_auto_coherence(0, GMSH_SET, o->geo.butt[8]->value());
   opt_geometry_light(0, GMSH_SET, o->geo.butt[9]->value());
   opt_geometry_highlight_orphans(0, GMSH_SET, o->geo.butt[10]->value());
-  opt_geometry_occ_fix_small_edges(0, GMSH_SET, o->geo.butt[11]->value());
+  opt_geometry_occ_fix_degenerated(0, GMSH_SET, o->geo.butt[16]->value());
   opt_geometry_occ_fix_small_faces(0, GMSH_SET, o->geo.butt[12]->value());
   opt_geometry_occ_sew_faces(0, GMSH_SET, o->geo.butt[13]->value());
   opt_geometry_light_two_side(0, GMSH_SET, o->geo.butt[14]->value());
@@ -1796,28 +1796,34 @@ optionWindow::optionWindow(int deltaFontSize)
         (FL_NO_BOX, L + 2 * WB, 2 * WB + 3 * BH + 1, IW, BH, "Open CASCADE model healing options (experimental):");
       b2->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
 
+      geo.butt[16] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Remove degenerated edges and faces");
+      geo.butt[16]->type(FL_TOGGLE_BUTTON);
+      geo.butt[16]->callback(geometry_options_ok_cb);
+
       geo.butt[11] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Remove small edges");
+        (L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Remove small edges");
       geo.butt[11]->type(FL_TOGGLE_BUTTON);
       geo.butt[11]->callback(geometry_options_ok_cb);
 
       geo.butt[12] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Remove small faces");
+        (L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Remove small faces");
       geo.butt[12]->type(FL_TOGGLE_BUTTON);
       geo.butt[12]->callback(geometry_options_ok_cb);
 
       geo.butt[13] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Sew faces");
+        (L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Sew faces");
       geo.butt[13]->type(FL_TOGGLE_BUTTON);
       geo.butt[13]->callback(geometry_options_ok_cb);
 
       geo.butt[15] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Cut and merge faces");
+        (L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Cut and merge faces");
       geo.butt[15]->type(FL_TOGGLE_BUTTON);
       geo.butt[15]->callback(geometry_options_ok_cb);
 
 #if !defined(HAVE_OCC)
       b2->deactivate();
+      geo.butt[16]->deactivate();
       geo.butt[11]->deactivate();
       geo.butt[12]->deactivate();
       geo.butt[13]->deactivate();

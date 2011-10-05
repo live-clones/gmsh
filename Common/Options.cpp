@@ -4680,6 +4680,19 @@ double opt_geometry_light_two_side(OPT_ARGS_NUM)
   return CTX::instance()->geom.lightTwoSide;
 }
 
+double opt_geometry_occ_fix_degenerated(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occFixDegenerated = val ? 1 : 0;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->options->geo.butt[16]->value
+      (CTX::instance()->geom.occFixDegenerated);
+  }
+#endif
+  return CTX::instance()->geom.occFixSmallEdges;
+}
+
 double opt_geometry_occ_fix_small_edges(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

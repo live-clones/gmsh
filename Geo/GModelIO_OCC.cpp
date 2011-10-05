@@ -207,10 +207,15 @@ void OCC_Internals::addShapeToLists(TopoDS_Shape _shape)
   
 }
 
-void OCC_Internals::healGeometry(double tolerance, bool fixsmalledges, 
-                                 bool fixspotstripfaces, bool sewfaces, 
-                                 bool makesolids, bool connect)
+void OCC_Internals::healGeometry(double tolerance, bool fixdegenerated,
+                                 bool fixsmalledges, bool fixspotstripfaces, 
+                                 bool sewfaces, bool makesolids, bool connect)
 {
+  if(!fixdegenerated && !fixsmalledges && !fixspotstripfaces &&
+     !sewfaces && !makesolids && !connect) return;
+
+  Msg::Info("Starting geometry healing procedure (tolerance: %g)", tolerance);
+
   buildLists();
   TopExp_Explorer exp0, exp1;
   int nrc = 0, nrcs = 0;
@@ -218,21 +223,7 @@ void OCC_Internals::healGeometry(double tolerance, bool fixsmalledges,
   int nrw = wmap.Extent(), nre = emap.Extent(), nrv = vmap.Extent();
   for (exp0.Init(shape, TopAbs_COMPOUND); exp0.More(); exp0.Next()) nrc++;
   for (exp0.Init(shape, TopAbs_COMPSOLID); exp0.More(); exp0.Next()) nrcs++;
-
-  Msg::Info("Starting geometry healing procedure (tolerance: %g)", tolerance);
-
-  {
-    Handle_ShapeBuild_ReShape rebuild = new ShapeBuild_ReShape;
-    rebuild->Apply(shape);
-    for (exp1.Init (shape, TopAbs_EDGE); exp1.More(); exp1.Next()){
-      TopoDS_Edge edge = TopoDS::Edge(exp1.Current());
-      if(BRep_Tool::Degenerated(edge))
-        rebuild->Remove(edge, false);
-    }
-    shape = rebuild->Apply(shape);
-  }
-  buildLists();
-
+ 
   double surfacecont = 0;
   for (exp0.Init(shape, TopAbs_FACE); exp0.More(); exp0.Next()){
     TopoDS_Face face = TopoDS::Face(exp0.Current());
@@ -241,55 +232,69 @@ void OCC_Internals::healGeometry(double tolerance, bool fixsmalledges,
     surfacecont += system.Mass();
   }
 
-  {
-    Msg::Info("- repairing faces");
+  if (fixdegenerated){
+    Msg::Info("- fix degenerated edges and faces");
 
-    Handle(ShapeFix_Face) sff;
-    Handle_ShapeBuild_ReShape rebuild = new ShapeBuild_ReShape;
-    rebuild->Apply(shape);
+    {
+      Handle_ShapeBuild_ReShape rebuild = new ShapeBuild_ReShape;
+      rebuild->Apply(shape);
+      for (exp1.Init (shape, TopAbs_EDGE); exp1.More(); exp1.Next()){
+        TopoDS_Edge edge = TopoDS::Edge(exp1.Current());
+        if(BRep_Tool::Degenerated(edge))
+          rebuild->Remove(edge, false);
+      }
+      shape = rebuild->Apply(shape);
+    }
+    buildLists();
 
-    for (exp0.Init (shape, TopAbs_FACE); exp0.More(); exp0.Next()){
-      TopoDS_Face face = TopoDS::Face(exp0.Current());
-
-      sff = new ShapeFix_Face (face);
-      sff->FixAddNaturalBoundMode() = Standard_True;
-      sff->FixSmallAreaWireMode() = Standard_True;
-      sff->Perform();
+    {
+      Handle(ShapeFix_Face) sff;
+      Handle_ShapeBuild_ReShape rebuild = new ShapeBuild_ReShape;
+      rebuild->Apply(shape);
       
-      if(sff->Status(ShapeExtend_DONE1) ||
-         sff->Status(ShapeExtend_DONE2) ||
-         sff->Status(ShapeExtend_DONE3) ||
-         sff->Status(ShapeExtend_DONE4) ||
-         sff->Status(ShapeExtend_DONE5))
-        {
-          Msg::Info("  repaired face %d", fmap.FindIndex(face));
-          if(sff->Status(ShapeExtend_DONE1))
-            Msg::Info("  (some wires are fixed)");
-          else if(sff->Status(ShapeExtend_DONE2))
-            Msg::Info("  (orientation of wires fixed)");
-          else if(sff->Status(ShapeExtend_DONE3))
-            Msg::Info("  (missing seam added)");
-          else if(sff->Status(ShapeExtend_DONE4))
-            Msg::Info("  (small area wire removed)");
-          else if(sff->Status(ShapeExtend_DONE5))
-            Msg::Info("  (natural bounds added)");
-          TopoDS_Face newface = sff->Face();
-          
-          rebuild->Replace(face, newface, Standard_False);
-        }
+      for (exp0.Init (shape, TopAbs_FACE); exp0.More(); exp0.Next()){
+        TopoDS_Face face = TopoDS::Face(exp0.Current());
+
+        sff = new ShapeFix_Face (face);
+        sff->FixAddNaturalBoundMode() = Standard_True;
+        sff->FixSmallAreaWireMode() = Standard_True;
+        sff->Perform();
+        
+        if(sff->Status(ShapeExtend_DONE1) ||
+           sff->Status(ShapeExtend_DONE2) ||
+           sff->Status(ShapeExtend_DONE3) ||
+           sff->Status(ShapeExtend_DONE4) ||
+           sff->Status(ShapeExtend_DONE5))
+          {
+            Msg::Info("  repaired face %d", fmap.FindIndex(face));
+            if(sff->Status(ShapeExtend_DONE1))
+              Msg::Info("  (some wires are fixed)");
+            else if(sff->Status(ShapeExtend_DONE2))
+              Msg::Info("  (orientation of wires fixed)");
+            else if(sff->Status(ShapeExtend_DONE3))
+              Msg::Info("  (missing seam added)");
+            else if(sff->Status(ShapeExtend_DONE4))
+              Msg::Info("  (small area wire removed)");
+            else if(sff->Status(ShapeExtend_DONE5))
+              Msg::Info("  (natural bounds added)");
+            TopoDS_Face newface = sff->Face();
+            
+            rebuild->Replace(face, newface, Standard_False);
+          }
+      }
+      shape = rebuild->Apply(shape);
     }
-    shape = rebuild->Apply(shape);
-  }
-  
-  {
-    Handle_ShapeBuild_ReShape rebuild = new ShapeBuild_ReShape;
-    rebuild->Apply(shape);
-    for (exp1.Init (shape, TopAbs_EDGE); exp1.More(); exp1.Next()){
-      TopoDS_Edge edge = TopoDS::Edge(exp1.Current());
-      if ( BRep_Tool::Degenerated(edge) )
-        rebuild->Remove(edge, false);
+    
+    {
+      Handle_ShapeBuild_ReShape rebuild = new ShapeBuild_ReShape;
+      rebuild->Apply(shape);
+      for (exp1.Init (shape, TopAbs_EDGE); exp1.More(); exp1.Next()){
+        TopoDS_Edge edge = TopoDS::Edge(exp1.Current());
+        if (BRep_Tool::Degenerated(edge))
+          rebuild->Remove(edge, false);
+      }
+      shape = rebuild->Apply(shape);
     }
-    shape = rebuild->Apply(shape);
   }
   
   if (fixsmalledges){
@@ -549,6 +554,7 @@ void OCC_Internals::loadBREP(const char *fn)
   BRepTools::Read(shape, (char*)fn, aBuilder);
   BRepTools::Clean(shape);
   healGeometry(CTX::instance()->geom.tolerance, 
+               CTX::instance()->geom.occFixDegenerated,
                CTX::instance()->geom.occFixSmallEdges,
                CTX::instance()->geom.occFixSmallFaces,
                CTX::instance()->geom.occSewFaces,
@@ -580,6 +586,7 @@ void OCC_Internals::loadSTEP(const char *fn)
   shape = reader.OneShape();  
   BRepTools::Clean(shape);
   healGeometry(CTX::instance()->geom.tolerance, 
+               CTX::instance()->geom.occFixDegenerated,
                CTX::instance()->geom.occFixSmallEdges,
                CTX::instance()->geom.occFixSmallFaces,
                CTX::instance()->geom.occSewFaces,
@@ -606,6 +613,7 @@ void OCC_Internals::loadIGES(const char *fn)
   shape = reader.OneShape();  
   BRepTools::Clean(shape);
   healGeometry(CTX::instance()->geom.tolerance, 
+               CTX::instance()->geom.occFixDegenerated,
                CTX::instance()->geom.occFixSmallEdges,
                CTX::instance()->geom.occFixSmallFaces,
                CTX::instance()->geom.occSewFaces,

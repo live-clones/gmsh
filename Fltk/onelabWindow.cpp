@@ -187,7 +187,7 @@ bool onelab::localNetworkClient::run(const std::string &what)
     default:
       Msg::Warning("Received unknown message type (%d)", type);
       break;
-    }
+    } 
 
     FlGui::instance()->check();
   }

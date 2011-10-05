@@ -920,6 +920,8 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "NumSubEdges" , opt_geometry_num_sub_edges , 20. ,
     "Number of edge subdivisions between control points when displaying curves" }, 
 
+  { F|O, "OCCFixDegenerated" , opt_geometry_occ_fix_degenerated , 0. , 
+    "Fix degenerated edges/faces in STEP, IGES and BRep models" },
   { F|O, "OCCFixSmallEdges" , opt_geometry_occ_fix_small_edges , 0. , 
     "Fix small edges in STEP, IGES and BRep models" },
   { F|O, "OCCFixSmallFaces" , opt_geometry_occ_fix_small_faces , 0. , 
