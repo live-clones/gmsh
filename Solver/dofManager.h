@@ -547,6 +547,14 @@ class dofManager{
       R.push_back(it->first);
     }
   }
+
+  int getDofNumber(Dof& key){
+		std::map<Dof,int>::iterator it = unknown.find(key);
+		if (it == unknown.end()) {
+			return -1;
+		}
+		else return it->second;
+	};
 };
 
 template<class T>
