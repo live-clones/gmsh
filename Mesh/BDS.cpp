@@ -15,7 +15,7 @@
 
 void outputScalarField(std::list<BDS_Face*> t, const char *iii, int param, GFace *gf)
 {
-  FILE *f = fopen(iii, "w");
+    FILE *f = fopen(iii, "w");
   if(!f) return;
   fprintf(f, "View \"scalar\" {\n");
   std::list<BDS_Face*>::iterator tit = t.begin();

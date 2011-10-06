@@ -623,6 +623,7 @@ void GFace::getMeanPlaneData(double plan[3][3]) const
 
 double GFace::curvatureDiv(const SPoint2 &param) const
 {
+
   if (geomType() == Plane) return 0;
 
   // X=X(u,v) Y=Y(u,v) Z=Z(u,v)
@@ -687,7 +688,6 @@ double GFace::curvatureMax(const SPoint2 &param) const
 double GFace::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
                          double *curvMax, double *curvMin) const
 {
-  printf("in curv face \n");
   Pair<SVector3, SVector3> D1 = firstDer(param);
 
   if(geomType() == Plane){
@@ -729,6 +729,7 @@ double GFace::getMetricEigenvalue(const SPoint2 &)
 void GFace::getMetricEigenVectors(const SPoint2 &param,
                                   double eigVal[2], double eigVec[4]) const
 {
+
   // first derivatives
   Pair<SVector3,SVector3> D1 = firstDer(param);
   SVector3 du = D1.first();

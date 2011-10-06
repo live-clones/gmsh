@@ -888,8 +888,9 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   if(algoDelaunay2D(gf) && !onlyInitialMesh){
     if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
       bowyerWatsonFrontal(gf);
-    else if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL_QUAD)
+    else if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL_QUAD){
       bowyerWatsonFrontalLayers(gf,true);
+    }
     else if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY ||
             CTX::instance()->mesh.algo2d == ALGO_2D_AUTO)
       bowyerWatson(gf);
@@ -1412,7 +1413,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     outputScalarField(m->triangles, name, 1);
   }
 
-  // start mesh generation
+  // start mesh generation for periodic face
   if(!algoDelaunay2D(gf)){
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true);
     optimizeMeshBDS(gf, *m, 2);
@@ -1513,7 +1514,7 @@ void deMeshGFace::operator() (GFace *gf)
 }
 
 // for debugging, change value from -1 to -100;
-int debugSurface = -1; 
+int debugSurface = -100 ; //-1; 
 
 void meshGFace::operator() (GFace *gf)
 {
@@ -1582,7 +1583,7 @@ void meshGFace::operator() (GFace *gf)
   else {
     if(!meshGeneratorPeriodic
        (gf, debugSurface >= 0 || debugSurface == -100))
-      Msg::Error("Impossible to mesh face %d", gf->tag());
+      Msg::Error("Impossible to mesh periodic face %d", gf->tag());
   }
   
   Msg::Debug("Type %d %d triangles generated, %d internal vertices",

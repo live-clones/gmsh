@@ -452,9 +452,10 @@ bool GFaceCompound::trivial() const
 {
   if(_compound.size() == 1 && 
      (*(_compound.begin()))->getNativeType() == GEntity::OpenCascadeModel &&
-     (*(_compound.begin()))->geomType() != GEntity::DiscreteSurface){
+     (*(_compound.begin()))->geomType() != GEntity::DiscreteSurface &&
+     _mapping != CONFORMAL){
     if ((*(_compound.begin()))->periodic(0) || 
-	(*(_compound.begin()))->periodic(1) )return false; 
+	(*(_compound.begin()))->periodic(1) ) return false; 
     return true;
   }
   return false;
@@ -1605,9 +1606,9 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
 void GFaceCompound::secondDer(const SPoint2 &param, 
                               SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
 {
-
   if(!oct) parametrize();  
-  Msg::Fatal("Computation of the second derivatives is not implemented for compound faces");
+  //leave debug here (since outputScalarField calls curvatureDiv)
+  Msg::Debug("Computation of the second derivatives is not implemented for compound faces");
   
 }
 
