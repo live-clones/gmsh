@@ -53,7 +53,6 @@ class functionPython : public function {
     : function(nbCol), _pycallback(callback)
   {
     args.resize(dependencies.size());
-    _swigA.resize(args.size());
     for (int i = 0; i < dependencies.size(); i++) {
       setArgument(args[i], dependencies[i]);
     }
@@ -63,9 +62,7 @@ class functionPython : public function {
     : function(nbCol), _pycallback(callback)
   {
     args.resize(dependencies.size());
-    _swigA.resize(args.size());
     for (int i = 0; i < dependencies.size(); i++) {
-      printf("%p %i\n", dependencies[i].first, dependencies[i].second);
       setArgument(args[i], dependencies[i].first, dependencies[i].second);
     }
     _init();
