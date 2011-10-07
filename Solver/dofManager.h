@@ -548,7 +548,7 @@ class dofManager{
     }
   }
 
-  int getDofNumber(Dof& key){
+  int getDofNumber(const Dof& key){
 		std::map<Dof,int>::iterator it = unknown.find(key);
 		if (it == unknown.end()) {
 			return -1;
