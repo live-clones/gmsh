@@ -98,8 +98,7 @@ class GFaceCompound : public GFace {
                    double &_u, double &_v) const;
   virtual double locCurvature(MTriangle *t, double u, double v) const;
   void printStuff(int iNewton=0) const;
-  bool trivial() const ;
-  linearSystem <double> *_lsys;
+  bool trivial() const;
   double getSizeH() const;
   double getSizeBB(const std::list<GEdge* > &elist) const;
   SBoundingBox3d boundEdges(const std::list<GEdge* > &elist) const;
@@ -109,8 +108,7 @@ class GFaceCompound : public GFace {
 
  public: 
   GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
-		std::list<GEdge*> &U0, linearSystem<double>* lsys =0,
-                typeOfMapping typ = HARMONIC, int allowPartition=1);
+		std::list<GEdge*> &U0, typeOfMapping typ = HARMONIC, int allowPartition=1);
   virtual ~GFaceCompound();
   Range<double> parBounds(int i) const 
   { return trivial() ? (*(_compound.begin()))->parBounds(i) : Range<double>(-1, 1); }
@@ -150,8 +148,7 @@ class GFaceCompound : public GFace {
   typedef enum {HARMONIC=1,CONFORMAL=2, CONVEXCOMBINATION=3, MULTISCALE=4, RBF=5} typeOfMapping;
   typedef enum {UNITCIRCLE, SQUARE} typeOfIsomorphism;
  GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
-	       std::list<GEdge*> &U0, linearSystem<double>* lsys =0,
-                typeOfMapping typ = HARMONIC, int allowPartition=1)
+	       std::list<GEdge*> &U0, typeOfMapping typ = HARMONIC, int allowPartition=1)
     : GFace(m, tag)
   {
     Msg::Error("Gmsh has to be compiled with solver support to use GFaceCompounds");

@@ -1514,7 +1514,7 @@ void deMeshGFace::operator() (GFace *gf)
 }
 
 // for debugging, change value from -1 to -100;
-int debugSurface = -100 ; //-1; 
+int debugSurface = -1 ; //-1; 
 
 void meshGFace::operator() (GFace *gf)
 {
@@ -1712,7 +1712,7 @@ void partitionAndRemesh(GFaceCompound *gf)
     Msg::Info("Parametrize Compound Surface (%d) = %d discrete face",
               num_gfc, pf->tag());
     
-    GFaceCompound *gfc = new GFaceCompound(gf->model(), num_gfc, f_compound, U0, 0,
+    GFaceCompound *gfc = new GFaceCompound(gf->model(), num_gfc, f_compound, U0,
                                             gf->getTypeOfMapping());
     gfc->meshAttributes.recombine = gf->meshAttributes.recombine;
     gf->model()->add(gfc);

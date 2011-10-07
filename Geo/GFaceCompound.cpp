@@ -919,28 +919,13 @@ void GFaceCompound::computeALoop(std::set<GEdge*> &_unique, std::list<GEdge*> &l
 }
 
 GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
-			     std::list<GEdge*> &U0, 
-                             linearSystem<double> *lsys, typeOfMapping mpg, 
+			     std::list<GEdge*> &U0, typeOfMapping mpg, 
                              int allowPartition)
   : GFace(m, tag), _compound(compound),  oct(0), _U0(U0), 
-    _lsys(lsys),_mapping(mpg), _allowPartition(allowPartition)
+    _mapping(mpg), _allowPartition(allowPartition)
 {
   ONE = new simpleFunction<double>(1.0);
   MONE = new simpleFunction<double>(-1.0);
-
-  if (!_lsys) {
-#if defined(HAVE_PETSC) && !defined(HAVE_TAUCS)
-    _lsys = new linearSystemPETSc<double>;
-#elif defined(HAVE_GMM) && !defined(HAVE_TAUCS)
-    linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
-    _lsysb->setGmres(1);
-    _lsys = _lsysb;
-#elif defined(HAVE_TAUCS) 
-    _lsys = new linearSystemCSRTaucs<double>;
-#else
-    _lsys = new linearSystemFull<double>;
-#endif
- }
 
   for(std::list<GFace*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
     //EMI FIX
@@ -965,7 +950,6 @@ GFaceCompound::~GFaceCompound()
     Octree_Delete(oct);
     delete [] _gfct;
   }
-  if (_lsys)delete _lsys;
   delete ONE;
   delete MONE;
 }
@@ -1057,6 +1041,20 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
 
 void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
 {  
+
+linearSystem<double> *_lsys = 0;
+#if defined(HAVE_PETSC) && !defined(HAVE_TAUCS)
+  _lsys = new linearSystemPETSc<double>;
+#elif defined(HAVE_GMM) && !defined(HAVE_TAUCS)
+  linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
+  _lsysb->setGmres(1);
+  _lsys = _lsysb;
+#elif defined(HAVE_TAUCS) 
+  _lsys = new linearSystemCSRTaucs<double>;
+#else
+  _lsys = new linearSystemFull<double>;
+#endif
+
   dofManager<double> myAssembler(_lsys);
 
   if(_type == UNITCIRCLE){
@@ -1133,10 +1131,9 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
     }
   }
 
-  _lsys->clear();
+  delete _lsys;
 
 }
-
 
 bool GFaceCompound::parametrize_conformal_spectral() const
 {
@@ -1247,9 +1244,9 @@ bool GFaceCompound::parametrize_conformal_spectral() const
       k = k+2;
     }
     
-    lsysA->clear();
-    lsysB->clear();
-    
+    delete lsysA;
+    delete lsysB;
+
     return checkOverlap();
     
   }
@@ -1259,6 +1256,20 @@ bool GFaceCompound::parametrize_conformal_spectral() const
 
 bool GFaceCompound::parametrize_conformal() const
 {
+
+  linearSystem<double> *_lsys = 0;
+#if defined(HAVE_PETSC) && !defined(HAVE_TAUCS)
+  _lsys = new linearSystemPETSc<double>;
+#elif defined(HAVE_GMM) && !defined(HAVE_TAUCS)
+  linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
+  _lsysb->setGmres(1);
+  _lsys = _lsysb;
+#elif defined(HAVE_TAUCS) 
+  _lsys = new linearSystemCSRTaucs<double>;
+#else
+  _lsys = new linearSystemFull<double>;
+#endif
+
   dofManager<double> myAssembler(_lsys);
 
   MVertex *v1  = _ordered[0];
@@ -1324,7 +1335,7 @@ bool GFaceCompound::parametrize_conformal() const
     coordinates[v] = SPoint3(value1,value2,0.0);
   }
 
-  _lsys->clear();
+  delete _lsys; 
 
   //check for overlapping triangles
   return checkOverlap();
