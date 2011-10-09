@@ -326,9 +326,9 @@ int Recombine2D::apply()
   _gf->quadrangles = _quads;
   
   _applied = true;
-  _gf->model()->writeMSH("recSquare.msh");
-  laplaceSmoothing(_gf,100);
-  _gf->model()->writeMSH("aftSquare.msh");
+  //_gf->model()->writeMSH("recSquare.msh");
+  laplaceSmoothing(_gf,10);
+  //_gf->model()->writeMSH("aftSquare.msh");
   return 1;
 }
 
