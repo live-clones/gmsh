@@ -227,3 +227,14 @@ Plane Surface(11) = {9,10};
 //Physical Surface(11)={11};
 //Point(9999) = {0.6,0,0,1};
 
+Field[2] = BoundaryLayer;
+Field[2].NodesList = {1};
+//Field[2].EdgesList = {1,2,3,4};
+Field[2].EdgesList = {1,2,3,4};
+Field[2].hfar = 1.5;
+Field[2].hwall_n = 0.0001;
+Field[2].hwall_t = 0.03;
+Field[2].ratio = 1.3;
+Field[2].thickness = .05;
+Background Field = 2;
+

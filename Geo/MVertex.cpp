@@ -324,10 +324,10 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
   else if (p1.size() == 1 && p2.size() == 2){
     double d1 = 
       (p1[0].x() - p2[0].x()) * (p1[0].x() - p2[0].x()) +
-      (p1[0].x() - p2[0].y()) * (p1[0].y() - p2[0].y());
+      (p1[0].y() - p2[0].y()) * (p1[0].y() - p2[0].y());
     double d2 = 
       (p1[0].x() - p2[1].x()) * (p1[0].x() - p2[1].x()) +
-      (p1[0].x() - p2[1].y()) * (p1[0].y() - p2[1].y());
+      (p1[0].y() - p2[1].y()) * (p1[0].y() - p2[1].y());
     param1 = p1[0];
     param2 = d2 < d1 ? p2[1] : p2[0];
     return true;
@@ -335,10 +335,10 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
   else if (p2.size() == 1 && p1.size() == 2){
     double d1 = 
       (p2[0].x() - p1[0].x()) * (p2[0].x() - p1[0].x()) +
-      (p2[0].x() - p1[0].y()) * (p2[0].y() - p1[0].y());
+      (p2[0].y() - p1[0].y()) * (p2[0].y() - p1[0].y());
     double d2 = 
       (p2[0].x() - p1[1].x()) * (p2[0].x() - p1[1].x()) +
-      (p2[0].x() - p1[1].y()) * (p2[0].y() - p1[1].y());
+      (p2[0].y() - p1[1].y()) * (p2[0].y() - p1[1].y());
     param1 = d2 < d1 ? p1[1] : p1[0];
     param2 = p2[0];
     return true;
@@ -346,6 +346,9 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
   else if(p1.size() > 1 && p2.size() > 1){
     param1 = p1[0];
     param2 = p2[0];
+
+    printf("NO WAY : TWO VERTICES ON THE SEAM, CANNOT CHOOSE\n");
+    
     // shout, both vertices are on seams
     return false;
   }
@@ -356,6 +359,8 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
     return true;
   }
 }
+
+
 
 bool reparamMeshVertexOnFace(const MVertex *v, const GFace *gf, SPoint2 &param,
                              bool onSurface)

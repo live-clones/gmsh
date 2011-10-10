@@ -28,18 +28,33 @@ double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2)
   const double dx = p1->X - p2->X;
   const double dy = p1->Y - p2->Y;
   const double dz = p1->Z - p2->Z;
+  // FIXME SUPER HACK
+  //const double l = std::max(fabs(dx),std::max(fabs(dy),fabs(dz)));
   const double l = sqrt(dx * dx + dy * dy + dz * dz);
   return l;
 }
 
+extern double lengthInfniteNorm(const double p[2], const double q[2], 
+				const double quadAngle);
+
 inline double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2, GFace *f,
                                       double SCALINGU, double SCALINGV)
 {
+  // FIXME SUPER HACK
+  /*
+  if (CTX::instance()->mesh.recombineAll || f->meshAttributes.recombine){
+    double quadAngle  = backgroundMesh::current()->getAngle (0.5 * (p1->u + p2->u) * SCALINGU, 0.5 * (p1->v + p2->v) * SCALINGV,0);
+    const double a [2] = {p1->u,p1->v};
+    const double b [2] = {p2->u,p2->v};
+    return lengthInfniteNorm(a,b, quadAngle);
+  }
+  */
   GPoint GP = f->point(SPoint2(0.5 * (p1->u + p2->u) * SCALINGU,
                                0.5 * (p1->v + p2->v) * SCALINGV));
 
   if (!GP.succeeded())
     return computeEdgeLinearLength(p1,p2);
+
 
   const double dx1 = p1->X - GP.x();
   const double dy1 = p1->Y - GP.y();
@@ -143,6 +158,7 @@ inline double computeEdgeMiddleCoord(BDS_Point *p1, BDS_Point *p2, GFace *f,
 inline double computeEdgeLinearLength(BDS_Edge *e, GFace *f, 
                                       double SCALINGU, double SCALINGV)
 {
+  // FIXME !!!
   if (f->geomType() == GEntity::Plane)
     return e->length();
   else
@@ -532,7 +548,7 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
         mid  = m.add_point(++m.MAXPOINTNUMBER, gpp.x(),gpp.y(),gpp.z());
         mid->u = U;
         mid->v = V;
-        if (backgroundMesh::current()){
+        if (backgroundMesh::current() && 0){
           mid->lc() = mid->lcBGM() = 
             backgroundMesh::current()->operator()
             ((coord * e->p1->u + (1 - coord) * e->p2->u)*m.scalingU,
@@ -613,7 +629,8 @@ void collapseEdgePassUnSorted(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
 
 void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q)
 {
-  //  return;
+  // FIXME SUPER HACK
+  //    return;
   std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
   while(itp != m.points.end()){      
     if(m.smooth_point_centroid(*itp, gf,q))
@@ -676,7 +693,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
 
   double t_spl = 0, t_sw = 0,t_col = 0,t_sm = 0;
 
-  const double MINE_ = 0.67, MAXE_ = 1.4;
+  const double MINE_ = 0.6666, MAXE_ = 1.4;
 
   while (1){
     

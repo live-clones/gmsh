@@ -145,10 +145,10 @@ class MFaceVertex : public MVertex{
   MVertexBoundaryLayerData* bl_data;
 
   MFaceVertex(double x, double y, double z, GEntity *ge, double u, double v, int num = 0) 
-    : MVertex(x, y, z, ge, num), _u(u), _v(v)
+    : MVertex(x, y, z, ge, num), _u(u), _v(v),bl_data(0)
   {
   }
-  virtual ~MFaceVertex(){}
+  virtual ~MFaceVertex(){if(bl_data) delete bl_data;}
   virtual bool getParameter(int i, double &par) const { par = (i ? _v : _u); return true; }
   virtual bool setParameter(int i, double par)
   {

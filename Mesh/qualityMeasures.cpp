@@ -323,8 +323,14 @@ double mesh_functional_distorsion_pN(MElement *t)
  
   fullVector<double> Bi( jac->matrixLag2Bez.size1() );
   jac->matrixLag2Bez.mult(Ji,Bi);
- 
-  //  jac->matrixLag2Bez.print("Lag2Bez");
+  /* 
+      jac->matrixLag2Bez.print("Lag2Bez");
+
+      jac->points.print("Points");
+      t->getFunctionSpace(t->getPolynomialOrder())->points.print("lagrangianNodes");
+      t->getFunctionSpace(t->getPolynomialOrder())->monomials.print("Monomials");
+      t->getFunctionSpace(t->getPolynomialOrder())->coefficients.print("Coefficients");
+  */
 
   return *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
 }
@@ -337,10 +343,10 @@ double qmDistorsionOfMapping (MTriangle *e)
   else if  (e->getPolynomialOrder() == 2) {
     //    const double exact = mesh_functional_distorsion_p2_exact(e);
     const double bezier= mesh_functional_distorsion_pN(e);
-    if (bezier < .1){
-      const double bezier_refined= mesh_functional_distorsion_p2_bezier_refined(e);
-      return bezier_refined;
-    }
+    //    if (bezier < .1){
+    //      const double bezier_refined= mesh_functional_distorsion_p2_bezier_refined(e);
+    //      return bezier_refined;
+    //    }
     /*
     if (exact < .99 || exact > 1.01){
       FILE *f = fopen ("statistics.dat","a");
@@ -527,7 +533,7 @@ double qmQuadrangleAngles (MQuadrangle *e) {
 
     double c;
     prosca(v1,v2,&c);
-    printf("Youhou %g %g\n",c,acos(c)*180/M_PI);
+    //    printf("Youhou %g %g\n",c,acos(c)*180/M_PI);
     double x = fabs(acos(c))-M_PI/2;
     double quality = (atan(a*(x+M_PI/4)) + atan(a*(2*M_PI/4 - (x+M_PI/4))))/den;
     worst_quality = std::min(worst_quality, quality);

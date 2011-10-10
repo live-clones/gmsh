@@ -474,11 +474,14 @@ static void Mesh2D(GModel *m)
   // lloyd optimization
   if (CTX::instance()->mesh.optimizeLloyd){
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
-      if((*it)->geomType()==GEntity::CompoundSurface){
+      if((*it)->geomType()==GEntity::CompoundSurface || (*it)->geomType()==GEntity::Plane){
 	smoothing smm(CTX::instance()->mesh.optimizeLloyd,6);
+	m->writeMSH("beforeLLoyd.msh");
 	smm.optimize_face(*it);
-	int rec = (CTX::instance()->mesh.recombineAll || (*it)->meshAttributes.recombine);
-	if(rec) recombineIntoQuads(*it);
+	int rec = 1;//(CTX::instance()->mesh.recombineAll || (*it)->meshAttributes.recombine);
+	m->writeMSH("afterLLoyd.msh");
+	if(rec){printf("recombine\n"); recombineIntoQuads(*it);}
+	m->writeMSH("afterRecombine.msh");
       }
     }
     /*

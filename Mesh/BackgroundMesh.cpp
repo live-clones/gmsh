@@ -457,7 +457,7 @@ backgroundMesh::backgroundMesh(GFace *_gf)
       _sizes[itv2->first] = MAX_LC;
     }
   }
-  // ensure that other criteria are fullfilled 
+  // ensure that other criteria are fullfilled
   updateSizes(_gf);
 
   // compute optimal mesh orientations
@@ -717,6 +717,29 @@ void backgroundMesh::updateSizes(GFace *_gf)
     itv->second = std::max(itv->second, CTX::instance()->mesh.lcMin);
     itv->second = std::min(itv->second, CTX::instance()->mesh.lcMax);
   }  
+  // do not allow large variations in the size field
+  // INTERNATIONAL JOURNAL FOR NUMERICAL METHODS IN ENGINEERING Int. J. Numer. Meth. Engng. 43, 1143–1165 (1998)
+  // MESH GRADATION CONTROL, BOROUCHAKI, HECHT, FREY
+  std::set<MEdge,Less_Edge> edges;
+  for (int i=0;i < _triangles.size();i++){
+    for (int j=0;j< _triangles[i]->getNumEdges();j++){
+      edges.insert(_triangles[i]->getEdge(j));
+    }
+  }
+  const double _beta = 1.3;
+  for (int i=0;i<0;i++){
+    std::set<MEdge,Less_Edge>::iterator it = edges.begin();
+    for ( ; it != edges.end(); ++it){
+      MVertex *v0 = it->getVertex(0);
+      MVertex *v1 = it->getVertex(1);
+      MVertex *V0 = _2Dto3D[v0];
+      MVertex *V1 = _2Dto3D[v1];
+      std::map<MVertex*,double>::iterator s0 = _sizes.find(V0);    
+      std::map<MVertex*,double>::iterator s1 = _sizes.find(V1);    
+      if (s0->second < s1->second)s1->second = std::min(s1->second,_beta*s0->second);
+      else s0->second = std::min(s0->second,_beta*s1->second);
+    }
+  }
 }
 
 double backgroundMesh::operator() (double u, double v, double w) const

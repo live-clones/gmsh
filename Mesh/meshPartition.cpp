@@ -987,8 +987,12 @@ void assignPartitionBoundary(GModel *model, MFace &me,
   }
   else ppe = *it;
   // to finish !!
-  ppe->triangles.push_back(new MTriangle (me.getVertex(0),me.getVertex(1),
-                                          me.getVertex(2)));
+  if (me.getNumVertices() == 3)
+    ppe->triangles.push_back(new MTriangle (me.getVertex(0),me.getVertex(1),
+					    me.getVertex(2)));
+  else
+    ppe->quadrangles.push_back(new MQuadrangle (me.getVertex(0),me.getVertex(1),
+					      me.getVertex(2),me.getVertex(3)));
 }
 
 void assignPartitionBoundary(GModel *model,

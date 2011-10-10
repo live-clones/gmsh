@@ -846,6 +846,8 @@ static void _relocateVertexConstrained (GFace *gf,
 					const std::vector<MElement*> &lt){
   if( ver->onWhat()->dim() == 2){
 
+    MFaceVertex *fv = dynamic_cast<MFaceVertex*>(ver);
+    if (fv->bl_data)return;
 
     std::map<MVertex*,p1p2p3> ring;
     double initu,initv;
@@ -923,8 +925,13 @@ static void _relocateVertexConstrained (GFace *gf,
 static void _relocateVertex (GFace *gf,
 			     MVertex *ver,
 			     const std::vector<MElement*> &lt){
+  
   double R; SPoint3 c; bool isSphere = gf->isSphere(R,c);
   if( ver->onWhat()->dim() == 2){
+
+    MFaceVertex *fv = dynamic_cast<MFaceVertex*>(ver);
+    if (fv->bl_data)return;
+
     double initu,initv;
     ver->getParameter(0, initu);
     ver->getParameter(1, initv);
@@ -957,17 +964,18 @@ static void _relocateVertex (GFace *gf,
       }
       bool success = false;
       double factor = 1.0;
+      SPoint2 newp;
       for (int i=0;i<10;i++){
-	SPoint2 newp = after + before*(1.-factor);
+	newp = after + before*(1.-factor);
 	success = _isItAGoodIdeaToMoveThatVertex (gf,  lt, ver,before,newp);
 	if (success)break;
 	factor *= 0.5;
       }
 
-      if (success){ // ne devrait-on pas utiliser newp ici au lieu de after ??? (vu la boucle precedente)
-	ver->setParameter(0, after.x());
-	ver->setParameter(1, after.y());
-	GPoint pt = gf->point(after);
+      if (success){ 
+	ver->setParameter(0, newp.x());
+	ver->setParameter(1, newp.y());
+	GPoint pt = gf->point(newp);
 	if(pt.succeeded()){
 	  ver->x() = pt.x();
 	  ver->y() = pt.y();
@@ -1876,8 +1884,6 @@ void recombineIntoQuads(GFace *gf,
   if (saveAll) gf->model()->writeMSH("before.msh");
   int success = _recombineIntoQuads(gf, 0);
 
-  // gf->addLayersOfQuads(1, 0);
-
   if (saveAll) gf->model()->writeMSH("raw.msh");
   if(haveParam && nodeRepositioning)
     laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing);
@@ -1895,7 +1901,7 @@ void recombineIntoQuads(GFace *gf,
           if(x && saveAll){ sprintf(NAME,"iter%dTQ.msh",COUNT++); gf->model()->writeMSH(NAME);}
           int y = removeDiamonds(gf);
           if(y && saveAll){ sprintf(NAME,"iter%dD.msh",COUNT++); gf->model()->writeMSH(NAME); }
-          laplaceSmoothing(gf);
+          laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
           int z = 0; //edgeSwapQuadsForBetterQuality(gf);
           if(z && saveAll){ sprintf(NAME,"iter%dS.msh",COUNT++); gf->model()->writeMSH(NAME); }
           if (!(x+y+z)) break;
@@ -1922,7 +1928,7 @@ void recombineIntoQuads(GFace *gf,
   Msg::Info("Simple recombination algorithm completed (%g s)", t2 - t1);
 }
 
-void quadsToTriangles(GFace *gf, double minqual = -10000.)
+void quadsToTriangles(GFace *gf, double minqual)
 {
   std::vector<MQuadrangle*> qds;
   for (int i=0;i<gf->quadrangles.size();i++){
@@ -1968,7 +1974,7 @@ void recombineIntoQuadsIterative(GFace *gf)
   return;
   int COUNT = 0;
   while (1){
-    quadsToTriangles(gf);
+    quadsToTriangles(gf,-10000);
     {char NAME[245];sprintf(NAME,"iterT%d.msh",COUNT); gf->model()->writeMSH(NAME);}
     std::set<MTri3*,compareTri3Ptr> AllTris;
     std::vector<double> vSizes, vSizesBGM, Us, Vs;

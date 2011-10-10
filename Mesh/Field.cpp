@@ -1422,7 +1422,7 @@ class AttractorAnisoCurveField : public Field {
         it != edges_id.end(); ++it) {
       Curve *c = FindCurve(*it);
       if(c) {
-        for(int i = 0; i < n_nodes_by_edge; i++) {
+        for(int i = 1; i < n_nodes_by_edge-1; i++) {
           double u = (double)i / (n_nodes_by_edge - 1);
           Vertex V = InterpolateCurve(c, u, 0);
           zeronodes[k][0] = V.Pos.X;
@@ -1437,7 +1437,7 @@ class AttractorAnisoCurveField : public Field {
       else {
         GEdge *e = GModel::current()->getEdgeByTag(*it);
         if(e) {
-          for(int i = 0; i < n_nodes_by_edge; i++) {
+          for(int i = 1; i < n_nodes_by_edge-1; i++) {
             double u = (double)i / (n_nodes_by_edge - 1);
             Range<double> b = e->parBounds(0);
             double t = b.low() + u * (b.high() - b.low());
@@ -1493,6 +1493,16 @@ class AttractorField : public Field
   Field *_xField, *_yField, *_zField;
   int n_nodes_by_edge;  
  public:
+  AttractorField(int dim, int tag, int nbe) : kdtree(0), zeronodes(0), n_nodes_by_edge(nbe)
+  {
+    index = new ANNidx[1];
+    dist = new ANNdist[1];
+    if (dim == 0) nodes_id.push_back(tag);
+    else if (dim == 1) edges_id.push_back(tag);
+    else if (dim == 2) faces_id.push_back(tag);
+    _xFieldId = _yFieldId = _zFieldId = -1;
+    update_needed = true;
+  }
   AttractorField() : kdtree(0), zeronodes(0)
   {
     index = new ANNidx[1];
@@ -1555,7 +1565,7 @@ class AttractorField : public Field
         annDeallocPts(zeronodes);
         delete kdtree;
       }
-      int totpoints = nodes_id.size() + n_nodes_by_edge * edges_id.size() + 
+      int totpoints = nodes_id.size() + (n_nodes_by_edge-2) * edges_id.size() + 
         n_nodes_by_edge * n_nodes_by_edge * faces_id.size();
       if(totpoints){
         zeronodes = annAllocPts(totpoints, 3);
@@ -1567,22 +1577,22 @@ class AttractorField : public Field
         Vertex *v = FindPoint(*it);
         if(v) {
           getCoord(v->Pos.X, v->Pos.Y, v->Pos.Z, zeronodes[k][0], zeronodes[k][1], zeronodes[k][2]);
-          k++;
+	  _infos[k++] = AttractorInfo(*it,0,0,0);
         }
         else {
           GVertex *gv = GModel::current()->getVertexByTag(*it);
           if(gv) {
             getCoord(gv->x(), gv->y(), gv->z(), zeronodes[k][0], zeronodes[k][1], zeronodes[k][2], gv);
-            k++;
+	    _infos[k++] = AttractorInfo(*it,0,0,0);
           }
         }
       }
       for(std::list<int>::iterator it = edges_id.begin();
           it != edges_id.end(); ++it) {
         Curve *c = FindCurve(*it);
-	GEdge *e = GModel::current()->getEdgeByTag(*it);
+	GEdge *e = GModel::current()->getEdgeByTag(*it);	
         if(c && !e) {
-          for(int i = 0; i < n_nodes_by_edge; i++) {
+          for(int i = 1; i < n_nodes_by_edge -1 ; i++) {
             double u = (double)i / (n_nodes_by_edge - 1);
             Vertex V = InterpolateCurve(c, u, 0);
             getCoord(V.Pos.X, V.Pos.Y, V.Pos.Z, zeronodes[k][0], zeronodes[k][1], zeronodes[k][2]);
@@ -1591,7 +1601,7 @@ class AttractorField : public Field
         }
         else {
           if(e) {
-            for(int i = 0; i < n_nodes_by_edge; i++) {
+            for(int i = 1; i < n_nodes_by_edge - 1; i++) {
               double u = (double)i / (n_nodes_by_edge - 1);
               Range<double> b = e->parBounds(0);
               double t = b.low() + u * (b.high() - b.low());
@@ -1648,203 +1658,235 @@ class AttractorField : public Field
   }
 };
 
-class BoundaryLayerField : public Field {
-  int iField;
-  double hwall_n,hwall_t,ratio,hfar; 
-public:
-  virtual bool isotropic () const {return false;}
-  virtual const char *getName()
-  {
-    return "BoundaryLayer";
-  }
-  virtual std::string getDescription()
-  {
-    return "hwall * ratio^(dist/hwall)";
-  }
-  BoundaryLayerField()
-  {
-    iField = 0;
-    hwall_n = .1;
-    hwall_t = .5;
-    hfar = 1;
-    ratio = 1.1;    
-    options["IField"] = new FieldOptionInt
-      (iField, "Index of the field that contains the distance function");
-    options["hwall_n"] = new FieldOptionDouble
-      (hwall_n, "Mesh Size Normal to the The Wall");
-    options["hwall_t"] = new FieldOptionDouble
-      (hwall_t, "Mesh Size Tangent to the Wall");
-    options["ratio"] = new FieldOptionDouble
-      (ratio, "Size Ratio Between Two Successive Layers");
-    options["hfar"] = new FieldOptionDouble
-      (hfar, "Element size far from the wall");
-  }
-  virtual double operator() (double x, double y, double z, GEntity *ge=0)
-  {
-    Field *field = GModel::current()->getFields()->get(iField);
-    if(!field || iField == id) {
-      return MAX_LC;
+const char *BoundaryLayerField ::getName()
+{
+  return "BoundaryLayer";
+}
+std::string BoundaryLayerField :: getDescription()
+{
+  return "hwall * ratio^(dist/hwall)";
+}
+BoundaryLayerField :: BoundaryLayerField()
+{
+  hwall_n = .1;
+  hwall_t = .5;
+  hfar = 1;
+  ratio = 1.1;    
+  thickness = 1.e-2;    
+  options["NodesList"] = new FieldOptionList
+    (nodes_id, "Indices of nodes in the geometric model", &update_needed);
+  options["EdgesList"] = new FieldOptionList
+    (edges_id, "Indices of curves in the geometric model for which a boundary layer is needed", &update_needed);
+  //  options["IField"] = new FieldOptionInt
+  //    (iField, "Index of the field that contains the distance function");
+  options["hwall_n"] = new FieldOptionDouble
+    (hwall_n, "Mesh Size Normal to the The Wall");
+  options["hwall_t"] = new FieldOptionDouble
+    (hwall_t, "Mesh Size Tangent to the Wall");
+  options["ratio"] = new FieldOptionDouble
+    (ratio, "Size Ratio Between Two Successive Layers");
+  options["hfar"] = new FieldOptionDouble
+    (hfar, "Element size far from the wall");
+  options["thickness"] = new FieldOptionDouble
+    (thickness, "Maximal thickness of the boundary layer");
+}
+
+double BoundaryLayerField :: operator() (double x, double y, double z, GEntity *ge)
+{
+  double dist = 1.e22;
+  AttractorField *cc;
+  for (std::list<AttractorField*>::iterator it = _att_fields.begin();
+       it != _att_fields.end(); ++it){
+    double cdist = (*(*it)) (x, y, z);
+    if (cdist < dist){
+      cc = *it;
+      dist = cdist;
     }
-    const double dist = (*field) (x, y, z);
-    const double lc = dist*(ratio-1) + hwall_n;
-    //    double lc = hwall * pow (ratio, dist / hwall);
-    return std::min (hfar,lc);
   }
-  virtual void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0)
-  {
-    Field *field = GModel::current()->getFields()->get(iField);
-    if(!field || iField == id) {
-      metr(0,0) = 1/(MAX_LC*MAX_LC);
-      metr(1,1) = 1/(MAX_LC*MAX_LC);
-      metr(2,2) = 1/(MAX_LC*MAX_LC);
-      metr(0,1) = metr(0,2) = metr(1,2) = 0;
-      return;
-    }
-    const double dist = (*field) (x, y, z);
+  current_distance = dist;
+  //  const double dist = (*field) (x, y, z);
+  //  current_distance = dist;
+  const double lc = dist*(ratio-1) + hwall_t;
+  //    double lc = hwall * pow (ratio, dist / hwall);
+  //  printf("coucou\n");
+  return std::min (hfar,lc);
+}
 
-    // dist = hwall -> lc = hwall * ratio
-    // dist = hwall (1+ratio) -> lc = hwall ratio ^ 2
-    // dist = hwall (1+ratio+ratio^2) -> lc = hwall ratio ^ 3
-    // dist = hwall (1+ratio+ratio^2+...+ratio^{m-1}) = (ratio^{m} - 1)/(ratio-1) -> lc = hwall ratio ^ m
-    // -> find m
-    // dist/hwall = (ratio^{m} - 1)/(ratio-1)
-    // (dist/hwall)*(ratio-1) + 1 = ratio^{m}
-    // lc =  dist*(ratio-1) + hwall 
-    const double ll1   = dist*(ratio-1) + hwall_n;
-    double lc_n  = std::min(ll1,hfar);
-    const double ll2   = dist*(ratio-1) + hwall_t;
-    double lc_t  = std::min(lc_n*CTX::instance()->mesh.anisoMax, std::min(ll2,hfar));
+void BoundaryLayerField :: operator() (AttractorField *cc, double dist, double x, double y, double z, SMetric3 &metr, GEntity *ge)
+{
+  // dist = hwall -> lc = hwall * ratio
+  // dist = hwall (1+ratio) -> lc = hwall ratio ^ 2
+  // dist = hwall (1+ratio+ratio^2) -> lc = hwall ratio ^ 3
+  // dist = hwall (1+ratio+ratio^2+...+ratio^{m-1}) = (ratio^{m} - 1)/(ratio-1) -> lc = hwall ratio ^ m
+  // -> find m
+  // dist/hwall = (ratio^{m} - 1)/(ratio-1)
+  // (dist/hwall)*(ratio-1) + 1 = ratio^{m}
+  // lc =  dist*(ratio-1) + hwall 
 
-    SVector3 t1,t2,t3;
-    double L1,L2,L3;
-
-    AttractorField *cc = dynamic_cast<AttractorField*> (field);
-    if (cc){      
-      std::pair<AttractorInfo,SPoint3> pp = cc->getAttractorInfo();
-      if (pp.first.dim ==1){
-	GEdge *e = GModel::current()->getEdgeByTag(pp.first.ent);
-
-	// the tangent size at this point is the size of the
-	// 1D mesh at this point !
-	// hack : use curvature
-	if(CTX::instance()->mesh.lcFromCurvature){
-	  double Crv = e->curvature(pp.first.u);
-	  double lc = Crv > 0 ? 2 * M_PI / Crv / CTX::instance()->mesh.minCircPoints : 1.e-22;
-	  const double ll2b   = dist*(ratio-1) + lc;
-	  double lc_tb  = std::min(lc_n*CTX::instance()->mesh.anisoMax, std::min(ll2b,hfar));
-	  lc_t = std::min(lc_t,lc_tb);
-	}
-
-
-	if (dist < hwall_t){
-	  L1 = lc_t;
-	  L2 = lc_n;
-	  L3 = lc_n;
-	  t1 = e->firstDer(pp.first.u);
-	  t1.normalize();
-	  if (fabs(t1.x()) < fabs(t1.y()) && fabs(t1.x()) < fabs(t1.z()))
-	    t2 = SVector3(1,0,0);
-	  else if (fabs(t1.y()) < fabs(t1.x()) && fabs(t1.y()) < fabs(t1.z()))
-	    t2 = SVector3(0,1,0);
-	  else
-	    t2 = SVector3(0,0,1);
-	  t3 = crossprod(t1,t2);
-	  t3.normalize();
-	  t2 = crossprod(t3,t1);
-	  //	  printf("hfar = %g lc = %g dir %g %g \n",hfar,lc,t1.x(),t1.y());
-	}
-	else {
-	  L1 = lc_t;
-	  L2 = lc_n;
-	  L3 = lc_t;
-	  GPoint p = e->point(pp.first.u);
-	  t2 = SVector3(p.x() -x,p.y() -y,p.z() -z);
-	  if (fabs(t2.x()) < fabs(t2.y()) && fabs(t2.x()) < fabs(t2.z()))
-	    t1 = SVector3(1,0,0);
-	  else if (fabs(t2.y()) < fabs(t2.x()) && fabs(t2.y()) < fabs(t2.z()))
-	    t1 = SVector3(0,1,0);
-	  else
-	    t1 = SVector3(0,0,1);
-	  t2.normalize();
-	  t3 = crossprod(t1,t2);
-	  t3.normalize();
-	  t1 = crossprod(t3,t2);	  
-	}
+  const double ll1   = dist*(ratio-1) + hwall_n;
+  double lc_n  = std::min(ll1,hfar);
+  const double ll2   = dist*(ratio-1) + hwall_t;
+  double lc_t  = std::min(lc_n*CTX::instance()->mesh.anisoMax, std::min(ll2,hfar));
+  
+  SVector3 t1,t2,t3;
+  double L1,L2,L3;
+  
+  std::pair<AttractorInfo,SPoint3> pp = cc->getAttractorInfo();
+  if (pp.first.dim ==0){
+    L1 = lc_n;
+    L2 = lc_n;
+    L3 = lc_n;
+    GVertex *v = GModel::current()->getVertexByTag(pp.first.ent);
+    t1 = SVector3(v->x() -x,v->y() -y,v->z() -z);
+    t1.normalize();
+    //      printf("%p %g %g %g\n",v,t1.x(),t1.y(),t1.z());
+    if (t1.norm() == 0)t1 = SVector3(1,0,0);
+    if (fabs(t1.x()) < fabs(t1.y()) && fabs(t1.x()) < fabs(t1.z()))
+      t2 = SVector3(1,0,0);
+    else if (fabs(t1.y()) < fabs(t1.x()) && fabs(t1.y()) < fabs(t1.z()))
+      t2 = SVector3(0,1,0);
+    else
+      t2 = SVector3(0,0,1);
+    t3 = crossprod(t1,t2);
+    t3.normalize();
+    t2 = crossprod(t3,t1);
+    //      printf("t1 %p %g %g %g\n",v,t1.x(),t1.y(),t1.z());
+    //      printf("t2 %p %g %g %g\n",v,t2.x(),t2.y(),t2.z());
+    //      printf("t3 %p %g %g %g\n",v,t3.x(),t3.y(),t3.z());
+  }
+  else if (pp.first.dim ==1){
+    GEdge *e = GModel::current()->getEdgeByTag(pp.first.ent);
+    
+    // the tangent size at this point is the size of the
+    // 1D mesh at this point !
+    // hack : use curvature
+    /*
+      if(CTX::instance()->mesh.lcFromCurvature){
+      double Crv = e->curvature(pp.first.u);
+      double lc = Crv > 0 ? 2 * M_PI / Crv / CTX::instance()->mesh.minCircPoints : 1.e-22;
+      const double ll2b   = dist*(ratio-1) + lc;
+      double lc_tb  = std::min(lc_n*CTX::instance()->mesh.anisoMax, std::min(ll2b,hfar));
+      lc_t = std::min(lc_t,lc_tb);
       }
-      else {
-	GFace *gf = GModel::current()->getFaceByTag(pp.first.ent);
-	
-	if (dist < hwall_t){
-	  L1 = lc_n;
-	  L2 = lc_t;
-	  L3 = lc_t;
-	  t1 = gf->normal(SPoint2(pp.first.u,pp.first.v));
-	  t1.normalize();
-	  if (fabs(t1.x()) < fabs(t1.y()) && fabs(t1.x()) < fabs(t1.z()))
-	    t2 = SVector3(1,0,0);
-	  else if (fabs(t1.y()) < fabs(t1.x()) && fabs(t1.y()) < fabs(t1.z()))
-	    t2 = SVector3(0,1,0);
-	  else
-	    t2 = SVector3(0,0,1);
-	  t3 = crossprod(t1,t2);
-	  t3.normalize();
-	  t2 = crossprod(t3,t1);
-	  //	  printf("hfar = %g lc = %g dir %g %g \n",hfar,lc,t1.x(),t1.y());
-	}
-	else {
-	  L1 = lc_t;
-	  L2 = lc_n;
-	  L3 = lc_t;
-	  GPoint p = gf->point(SPoint2(pp.first.u,pp.first.v));
-	  t2 = SVector3(p.x() -x,p.y() -y,p.z() -z);
-	  if (fabs(t2.x()) < fabs(t2.y()) && fabs(t2.x()) < fabs(t2.z()))
-	    t1 = SVector3(1,0,0);
-	  else if (fabs(t2.y()) < fabs(t2.x()) && fabs(t2.y()) < fabs(t2.z()))
-	    t1 = SVector3(0,1,0);
-	  else
-	    t1 = SVector3(0,0,1);
-	  t2.normalize();
-	  t3 = crossprod(t1,t2);
-	  t3.normalize();
-	  t1 = crossprod(t3,t2);	  
-	}	
-      }
+      */      
+    
+    if (dist < hwall_t){
+      L1 = lc_t;
+      L2 = lc_n;
+      L3 = lc_n;
+      t1 = e->firstDer(pp.first.u);
+      t1.normalize();
+      if (fabs(t1.x()) < fabs(t1.y()) && fabs(t1.x()) < fabs(t1.z()))
+	t2 = SVector3(1,0,0);
+      else if (fabs(t1.y()) < fabs(t1.x()) && fabs(t1.y()) < fabs(t1.z()))
+	t2 = SVector3(0,1,0);
+      else
+	t2 = SVector3(0,0,1);
+      t3 = crossprod(t1,t2);
+      t3.normalize();
+      t2 = crossprod(t3,t1);
+      //	  printf("hfar = %g lc = %g dir %g %g \n",hfar,lc,t1.x(),t1.y());
     }
-    else{   
-      double delta = std::min(CTX::instance()->lc / 1e2, dist);
-      double gx =
-	((*field) (x + delta / 2, y, z) -
-	 (*field) (x - delta / 2, y, z)) / delta;
-      double gy =
-	((*field) (x, y + delta / 2, z) -
-	 (*field) (x, y - delta / 2, z)) / delta;
-      double gz =
-	((*field) (x, y, z + delta / 2) -
-	 (*field) (x, y, z - delta / 2)) / delta;
-      SVector3 g = SVector3 (gx,gy,gz);
-      g.normalize();
-      
-      if (fabs(g.x()) < fabs(g.y()) && fabs(g.x()) < fabs(g.z()))
-	t1 = SVector3(1,0,0);
-      else if (fabs(g.y()) < fabs(g.x()) && fabs(g.y()) < fabs(g.z()))
+    else {
+      L1 = lc_t;
+      L2 = lc_n;
+      L3 = lc_t;
+      GPoint p = e->point(pp.first.u);
+      t2 = SVector3(p.x() -x,p.y() -y,p.z() -z);
+      if (fabs(t2.x()) < fabs(t2.y()) && fabs(t2.x()) < fabs(t2.z()))
+	  t1 = SVector3(1,0,0);
+      else if (fabs(t2.y()) < fabs(t2.x()) && fabs(t2.y()) < fabs(t2.z()))
 	t1 = SVector3(0,1,0);
       else
 	t1 = SVector3(0,0,1);
-      
-      t2 = crossprod(g,t1);
       t2.normalize();
-      t1 = crossprod(t2,g);   
-      t3 = g;
+      t3 = crossprod(t1,t2);
+      t3.normalize();
+      t1 = crossprod(t3,t2);	  
+    }
+  }
+  else {
+    GFace *gf = GModel::current()->getFaceByTag(pp.first.ent);
+    
+    if (dist < hwall_t){
       L1 = lc_n;
       L2 = lc_t;
       L3 = lc_t;
+      t1 = gf->normal(SPoint2(pp.first.u,pp.first.v));
+      t1.normalize();
+      if (fabs(t1.x()) < fabs(t1.y()) && fabs(t1.x()) < fabs(t1.z()))
+	t2 = SVector3(1,0,0);
+      else if (fabs(t1.y()) < fabs(t1.x()) && fabs(t1.y()) < fabs(t1.z()))
+	t2 = SVector3(0,1,0);
+      else
+	t2 = SVector3(0,0,1);
+      t3 = crossprod(t1,t2);
+      t3.normalize();
+      t2 = crossprod(t3,t1);
+      //	  printf("hfar = %g lc = %g dir %g %g \n",hfar,lc,t1.x(),t1.y());
     }
-    metr  = SMetric3(1./(L1*L1), 
-                     1./(L2*L2),
-                     1./(L3*L3),
-                     t1,t2,t3);
+    else {
+      L1 = lc_t;
+      L2 = lc_n;
+      L3 = lc_t;
+      GPoint p = gf->point(SPoint2(pp.first.u,pp.first.v));
+      t2 = SVector3(p.x() -x,p.y() -y,p.z() -z);
+      if (fabs(t2.x()) < fabs(t2.y()) && fabs(t2.x()) < fabs(t2.z()))
+	t1 = SVector3(1,0,0);
+      else if (fabs(t2.y()) < fabs(t2.x()) && fabs(t2.y()) < fabs(t2.z()))
+	t1 = SVector3(0,1,0);
+      else
+	t1 = SVector3(0,0,1);
+      t2.normalize();
+      t3 = crossprod(t1,t2);
+      t3.normalize();
+      t1 = crossprod(t3,t2);	  
+    }	
   }
-};
+  metr  = SMetric3(1./(L1*L1), 
+		   1./(L2*L2),
+		   1./(L3*L3),
+		   t1,t2,t3);
+}
+
+void BoundaryLayerField :: operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge)
+{
+
+  if (update_needed){
+    for(std::list<int>::iterator it = nodes_id.begin();
+	it != nodes_id.end(); ++it) {
+      _att_fields.push_back(new AttractorField(0,*it,100000));
+    }
+    for(std::list<int>::iterator it = edges_id.begin();
+	it != edges_id.end(); ++it) {
+      _att_fields.push_back(new AttractorField(1,*it,300000));
+    }
+    update_needed = false;
+  }
+
+  current_distance = 1.e22;
+  current_closest = 0;
+  SMetric3 v (1./MAX_LC);
+  std::vector<SMetric3> hop;
+  for (std::list<AttractorField*>::iterator it = _att_fields.begin();
+       it != _att_fields.end(); ++it){
+    double cdist = (*(*it)) (x, y, z);
+    SPoint3 CLOSEST= (*it)->getAttractorInfo().second;
+
+    SMetric3 localMetric;
+    (*this)(*it, cdist,x, y, z, localMetric, ge);      
+    hop.push_back(localMetric);
+    //v = intersection(v,localMetric);
+    if (cdist < current_distance){
+      current_distance = cdist;
+      current_closest = *it;
+      v = localMetric;
+      _closest_point = CLOSEST;
+    }
+  }
+  //  for (int i=0;i<hop.size();i++)v = intersection_conserveM1(v,hop[i]);
+  metr = v;
+}
 #endif
 
 template<class F> class FieldFactoryT : public FieldFactory {

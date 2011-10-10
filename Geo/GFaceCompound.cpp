@@ -450,6 +450,7 @@ void GFaceCompound::fillNeumannBCS() const
 
 bool GFaceCompound::trivial() const
 {
+  return false;
   if(_compound.size() == 1 && 
      (*(_compound.begin()))->getNativeType() == GEntity::OpenCascadeModel &&
      (*(_compound.begin()))->geomType() != GEntity::DiscreteSurface &&
@@ -1763,9 +1764,24 @@ void GFaceCompound::buildOct() const
       _gfct[count].p2 = it1->second;
       _gfct[count].p3 = it2->second;
       if((*it)->geomType() != GEntity::DiscreteSurface){
-        reparamMeshVertexOnFace(t->getVertex(0), *it, _gfct[count].gfp1); 
-        reparamMeshVertexOnFace(t->getVertex(1), *it, _gfct[count].gfp2); 
-        reparamMeshVertexOnFace(t->getVertex(2), *it, _gfct[count].gfp3); 
+	// take care of the seam !!!!
+	if (t->getVertex(0)->onWhat()->dim() == 2){
+	  reparamMeshEdgeOnFace(t->getVertex(0), t->getVertex(1),*it, _gfct[count].gfp1, _gfct[count].gfp2); 
+	  reparamMeshEdgeOnFace(t->getVertex(0), t->getVertex(2),*it, _gfct[count].gfp1, _gfct[count].gfp3); 
+	}
+	else if (t->getVertex(1)->onWhat()->dim() == 2){
+	  reparamMeshEdgeOnFace(t->getVertex(1), t->getVertex(0),*it, _gfct[count].gfp2, _gfct[count].gfp1); 
+	  reparamMeshEdgeOnFace(t->getVertex(1), t->getVertex(2),*it, _gfct[count].gfp2, _gfct[count].gfp3); 
+	}
+	else if (t->getVertex(2)->onWhat()->dim() == 2){
+	  reparamMeshEdgeOnFace(t->getVertex(2), t->getVertex(0),*it, _gfct[count].gfp3, _gfct[count].gfp1); 
+	  reparamMeshEdgeOnFace(t->getVertex(2), t->getVertex(1),*it, _gfct[count].gfp3, _gfct[count].gfp2); 
+	}
+	else {
+	  reparamMeshVertexOnFace(t->getVertex(0), *it, _gfct[count].gfp1); 
+	  reparamMeshVertexOnFace(t->getVertex(1), *it, _gfct[count].gfp2); 
+	  reparamMeshVertexOnFace(t->getVertex(2), *it, _gfct[count].gfp3); 
+	}
       }
       _gfct[count].v1 = SPoint3(t->getVertex(0)->x(), t->getVertex(0)->y(),
                                 t->getVertex(0)->z());      

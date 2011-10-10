@@ -421,7 +421,7 @@ class drawGRegion {
   void operator () (GRegion *r)
   {
     if(!r->getVisibility()) return;
-    if(r->geomType() == GEntity::DiscreteVolume) return;
+    //    if(r->geomType() == GEntity::DiscreteVolume) return;
     
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 
                    r->model() == GModel::current());

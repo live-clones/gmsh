@@ -1,5 +1,6 @@
+Mesh.CharacteristicLengthExtendFromBoundary= 0;
 
-scale = .01 ;
+scale = 1 ;
 
 lc_wing = 0.05 * scale ;
 lc_box = 30 * scale ;
@@ -604,5 +605,16 @@ Circle(408) = {4355,4351,4354};
 Circle(409) = {4354,4351,4353};
 Circle(410) = {4353,4351,4352};
 */
-Recombine Surface {406};
-Mesh.RecombinationAlgorithm=1;
+//Recombine Surface {406};
+//Mesh.RecombinationAlgorithm=1;
+
+Field[2] = BoundaryLayer;
+Field[2].EdgesList = {12,1,2,3,4,5,6,11,10};
+Field[2].NodesList = {3847,3846,4006,4007,4008,4222,4221};
+Field[2].hfar = 20.1;
+Field[2].hwall_n = 1e-04;
+Field[2].hwall_t = 14.e-3;
+Field[2].ratio = 1.2;
+//Field[2].thickness = .01;
+Field[2].thickness = .0075;
+Background Field = 2;

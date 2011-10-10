@@ -309,7 +309,8 @@ void meshGEdge::operator() (GEdge *ge)
     N = ge->meshAttributes.nbPointsTransfinite;
   }
   else{
-    if (CTX::instance()->mesh.algo2d == ALGO_2D_BAMG) 
+    if (CTX::instance()->mesh.algo2d == ALGO_2D_BAMG /*|| 1  || // FIXME
+							CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL_QUAD */) 
       a = Integration(ge, t_begin, t_end, F_Lc_aniso, Points,
                       CTX::instance()->mesh.lcIntegrationPrecision);
     else

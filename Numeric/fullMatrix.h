@@ -125,12 +125,12 @@ class fullVector
   // printing and file treatment
   void print(const char *name="") const
   {
-    printf("Printing vector %s:\n", name);
-    printf("  ");
+    printf("double %s[%d]=\n", name,size());
+    printf("{  ");
     for(int I = 0; I < size(); I++){
       printf("%12.5E ", (*this)(I));
     }
-    printf("\n");
+    printf("};\n");
   }
   void binarySave (FILE *f) const
   {
@@ -493,16 +493,19 @@ class fullMatrix
 
   void print(const std::string name = "", const std::string format = "%12.5E ") const
   {
-    printf("Printing matrix %s:\n", name.c_str());
     int ni = size1();
     int nj = size2();
+    printf("double %s [ %d ][ %d ]= { \n", name.c_str(),ni,nj);
     for(int I = 0; I < ni; I++){
-      printf("  ");
+      printf("{  ");
       for(int J = 0; J < nj; J++){
         printf(format.c_str(), (*this)(I, J));
+	if (J!=nj-1)printf(",");
       }
-      printf("\n");
+      if (I!=ni-1)printf("},\n");
+      else printf("}\n");
     }
+    printf("};\n");
   }
 
 // specific functions for dgshell

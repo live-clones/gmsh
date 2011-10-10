@@ -53,7 +53,7 @@ void OCCFace::setup()
       }
       else{
         l_wire.push_back(e);
-        Msg::Debug("Edge %d ori %d", e->tag(), edge.Orientation());
+        Msg::Debug("Edge %d (%d --> %d) ori %d", e->tag(), e->getBeginVertex()->tag(), e->getEndVertex()->tag(), edge.Orientation());
         e->addFace(this);
         if(!e->is3D()){
           OCCEdge *occe = (OCCEdge*)e;
@@ -95,17 +95,12 @@ void OCCFace::setup()
   umax += fabs(du) / 100.0;
   vmax += fabs(dv) / 100.0;
   occface = BRep_Tool::Surface(s);
-  // specific parametrization for a sphere.
-  _isSphere = isSphere(_radius,_center);
-  if (_isSphere){
-    for (std::list<GEdge*>::iterator it = l_edges.begin();
-	 it != l_edges.end(); ++it){
-      GEdge *ge = *it;
-      if (ge->isSeam(this)){
-	
-      }
-    }    
-  }
+
+  //  std::list<GEdge*>::const_iterator it = l_edges.begin();
+  //  for (; it != l_edges.end(); ++it){
+  //    printf("edge %d : %d %d iseam %d \n",(*it)->tag(),(*it)->getBeginVertex()->tag(),(*it)->getEndVertex()->tag(),(*it)->isSeam(this));
+  //  }
+
 }
 
 Range<double> OCCFace::parBounds(int i) const

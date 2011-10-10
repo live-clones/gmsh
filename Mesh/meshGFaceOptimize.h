@@ -98,6 +98,7 @@ void recombineIntoQuads(GFace *gf,
 			bool topologicalOpti   = true, 
 			bool nodeRepositioning = true);
 void recombineIntoQuadsIterative(GFace *gf);
+void quadsToTriangles(GFace *gf, double minqual);
 
 struct swapquad{
   int v[4];

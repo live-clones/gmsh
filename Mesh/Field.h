@@ -101,4 +101,29 @@ class FieldManager : public std::map<int, Field*> {
   void setBackgroundMesh(int iView);
 };
 
+// Boundary Layer Field
+// specific field that allow to build boundary layers
+// is used both for anisotropic meshing and BL extrusion
+
+#if defined(HAVE_ANN)
+class AttractorField;// : public Field;
+
+class BoundaryLayerField : public Field {
+  std::list<AttractorField *> _att_fields;
+  std::list<int> nodes_id, edges_id, faces_id;
+  void operator() (AttractorField *cc, double dist, double x, double y, double z, SMetric3 &metr, GEntity *ge);
+public:
+  double hwall_n,hwall_t,ratio,hfar,thickness; 
+  double current_distance;
+  SPoint3 _closest_point;
+  AttractorField *current_closest;
+  virtual bool isotropic () const {return false;}
+  virtual const char *getName();
+  virtual std::string getDescription();
+  BoundaryLayerField();
+  virtual double operator() (double x, double y, double z, GEntity *ge=0);
+  virtual void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0);
+};
+#endif
+
 #endif
