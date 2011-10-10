@@ -260,7 +260,7 @@ dataCacheDouble *dataCacheMap::get(const function *f, dataCacheDouble *caller, b
       if (it->iMap > _parent->_secondaryCaches.size())
         okFromParent = false;
       dataCacheMap *m = getSecondaryCache(it->iMap);
-      if (m->_cacheDoubleMap.find(it->f) != m->_cacheDoubleMap.end()) {
+      if (m->_cacheDoubleMap.find(_translate(it->f)) != m->_cacheDoubleMap.end()) {
         okFromParent = false;
         break;
       }
