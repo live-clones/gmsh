@@ -12,6 +12,7 @@
 #include "GmshMessage.h"
 #include "Context.h"
 #include "STensor3.h"
+#include "Field.h"
 
 #define SQU(a)      ((a)*(a))
 
@@ -245,6 +246,15 @@ static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
 
 void meshGEdge::operator() (GEdge *ge) 
 {  
+
+  FieldManager *fields = ge->model()->getFields();
+  BoundaryLayerField *blf = 0;
+  if(fields->background_field > 0){
+    Field *bl_field = fields->get(fields->background_field);
+    blf = dynamic_cast<BoundaryLayerField*> (bl_field);
+  }
+
+
   ge->model()->setCurrentMeshEntity(ge);
 
   if(ge->geomType() == GEntity::DiscreteCurve) return;
@@ -309,10 +319,11 @@ void meshGEdge::operator() (GEdge *ge)
     N = ge->meshAttributes.nbPointsTransfinite;
   }
   else{
-    if (CTX::instance()->mesh.algo2d == ALGO_2D_BAMG /*|| 1  || // FIXME
-							CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL_QUAD */) 
+    if (CTX::instance()->mesh.algo2d == ALGO_2D_BAMG || blf/*|| 1  || // FIXME
+							     CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL_QUAD */) {
       a = Integration(ge, t_begin, t_end, F_Lc_aniso, Points,
                       CTX::instance()->mesh.lcIntegrationPrecision);
+    }
     else
       a = Integration(ge, t_begin, t_end, F_Lc, Points,
                       CTX::instance()->mesh.lcIntegrationPrecision);

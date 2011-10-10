@@ -1135,7 +1135,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   delete m;
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) && 
-     !CTX::instance()->mesh.optimizeLloyd)
+     !CTX::instance()->mesh.optimizeLloyd && !onlyInitialMesh)
     recombineIntoQuadsIterative(gf);
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,

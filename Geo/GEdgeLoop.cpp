@@ -105,6 +105,18 @@ GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire)
 
   GEdgeSigned *prevOne = 0;
 
+  // Sometimes OCC puts a nasty degenerated edge in the middle of the wire ...
+  // pushing it to front fixes the problem as it concerns gmsh 
+  for (std::list<GEdge*>::iterator it = wire.begin(); it != wire.end() ; ++it){ // TEST
+    GEdge *ed = *it;
+    if (ed->degenerate(0)){
+      wire.erase(it);
+      wire.push_front(ed);
+      break;
+    }
+  }
+
+
   GEdgeSigned ges(0,0);
   while(wire.size()){
     ges = nextOne(prevOne, wire);
@@ -116,7 +128,7 @@ GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire)
       break;
     }
     prevOne = &ges;
-    // ges.print();
+    //    ges.print();
     loop.push_back(ges);
   }
 }
