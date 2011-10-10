@@ -516,7 +516,7 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
   int eType = e->getTypeForMSH();
   std::vector<int> gePhysicals = ge->physicals;
 
-  MElement *copy = e->copy(numEle, vertexMap, newParents, newDomains);
+  MElement *copy = e->copy(vertexMap, newParents, newDomains);
 
   double lsMean = 0.;
   for(int k = 0; k < e->getNumVertices(); k++)
@@ -642,7 +642,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
   unsigned int nbTr = triangles.size();
   unsigned int nbTe = tetras.size();
 
-  MElement *copy = e->copy(numEle, vertexMap, newParents, newDomains);
+  MElement *copy = e->copy(vertexMap, newParents, newDomains);
   MElement *parent = eParent ? copy->getParent() : copy;
 
   double **nodeLs = new double*[e->getNumPrimaryVertices()];
@@ -1131,7 +1131,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   int nbLs = (cutElem) ? ((primS > 1) ? primS + 1 : 1) : 1;
   fullMatrix<double> verticesLs(nbLs, numVert + 1);
 
- //Emi test compute all at once for POINTS (type = 11)
+ //compute all at once for ls POINTS (type = 11)
   std::vector<MVertex *> vert;
   for(unsigned int i = 0; i < gmEntities.size(); i++) {
     for(unsigned int j = 0; j < gmEntities[i]->getNumMeshVertices(); j++) {
@@ -1139,7 +1139,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
     }
   }
   for(int k = 0; k < primS; k++){
-    if (primitives[k]->type() == 11){ //points
+    if (primitives[k]->type() == 11){
       ((gLevelsetPoints*)primitives[k])->computeLS(vert);
     }
   }
@@ -1167,7 +1167,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
     newPhysTags[d][0] = gm->getMaxPhysicalNumber(d); //max value at [dim][0]
   }
 
-  int numEle = gm->getNumMeshElements(); //element number increment
+  int numEle = gm->getNumMeshElements() + gm->getNumMeshParentElements(); //element number increment
   std::map<MElement*, MElement*> newParents; //map<oldParent, newParent>
   std::map<MElement*, MElement*> newDomains; //map<oldDomain, newDomain>
 

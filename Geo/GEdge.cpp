@@ -53,8 +53,17 @@ void GEdge::reverse()
 }
 
 unsigned int GEdge::getNumMeshElements()
-{ 
+{
   return lines.size();
+}
+
+unsigned int GEdge::getNumMeshParentElements()
+{
+  unsigned int n = 0;
+  for(unsigned int i = 0; i < lines.size(); i++)
+    if(lines[i]->ownsParent())
+      n++;
+  return n;
 }
 
 void GEdge::getNumMeshElements(unsigned *const c) const

@@ -141,6 +141,7 @@ class GEdge : public GEntity {
 
   // get total/by-type number of elements in the mesh
   unsigned int getNumMeshElements();
+  unsigned int getNumMeshParentElements();
   void getNumMeshElements(unsigned *const c) const;
 
   // get the start of the array of a type of element

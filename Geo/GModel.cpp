@@ -566,6 +566,16 @@ int GModel::getNumMeshElements()
   return n;
 }
 
+int GModel::getNumMeshParentElements()
+{
+  std::vector<GEntity*> entities;
+  getEntities(entities);
+  unsigned int n = 0;
+  for(unsigned int i = 0; i < entities.size(); i++)
+    n += entities[i]->getNumMeshParentElements();
+  return n;
+}
+
 int GModel::getNumMeshElements(unsigned c[5])
 {
   c[0] = 0; c[1] = 0; c[2] = 0; c[3] = 0; c[4] = 0;

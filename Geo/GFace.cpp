@@ -93,6 +93,15 @@ unsigned int GFace::getNumMeshElements()
   return triangles.size() + quadrangles.size() + polygons.size();
 }
 
+unsigned int GFace::getNumMeshParentElements()
+{
+  unsigned int n = 0;
+  for(unsigned int i = 0; i < polygons.size(); i++)
+    if(polygons[i]->ownsParent())
+      n++;
+  return n;
+}
+
 void GFace::getNumMeshElements(unsigned *const c) const
 {
   c[0] += triangles.size();

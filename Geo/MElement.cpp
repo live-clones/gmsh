@@ -1080,7 +1080,7 @@ int *MElement::getVerticesIdForMSH()
   return verts;
 }
 
-MElement *MElement::copy(int &num, std::map<int, MVertex*> &vertexMap,
+MElement *MElement::copy(std::map<int, MVertex*> &vertexMap,
                          std::map<MElement*, MElement*> &newParents,
                          std::map<MElement*, MElement*> &newDomains)
 {
@@ -1123,7 +1123,7 @@ MElement *MElement::copy(int &num, std::map<int, MVertex*> &vertexMap,
     std::map<MElement*, MElement*>::iterator it = newParents.find(eParent);
     MElement *newParent;
     if(it == newParents.end()) {
-      newParent = eParent->copy(++num, vertexMap, newParents, newDomains);
+      newParent = eParent->copy(vertexMap, newParents, newDomains);
       newParents[eParent] = newParent;
     }
     else
@@ -1140,7 +1140,7 @@ MElement *MElement::copy(int &num, std::map<int, MVertex*> &vertexMap,
     std::map<MElement*, MElement*>::iterator it = newDomains.find(dom);
     MElement *newDom;
     if(it == newDomains.end()) {
-      newDom = dom->copy(++num, vertexMap, newParents, newDomains);
+      newDom = dom->copy(vertexMap, newParents, newDomains);
       newDomains[dom] = newDom;
     }
     else

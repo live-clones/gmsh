@@ -288,6 +288,7 @@ class GModel
 
   // return the total number of elements in the mesh
   int getNumMeshElements();
+  int getNumMeshParentElements();
 
   // get the number of each type of element in the mesh at the largest
   // dimension and return the dimension

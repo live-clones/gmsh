@@ -56,6 +56,15 @@ unsigned int GRegion::getNumMeshElements()
     polyhedra.size();
 }
 
+unsigned int GRegion::getNumMeshParentElements()
+{
+  unsigned int n = 0;
+  for(unsigned int i = 0; i < polyhedra.size(); i++)
+    if(polyhedra[i]->ownsParent())
+      n++;
+  return n;
+}
+
 void GRegion::getNumMeshElements(unsigned *const c) const
 {
   c[0] += tetrahedra.size();
