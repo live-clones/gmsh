@@ -102,9 +102,17 @@ class list_actions {
           while (it == la->_end(p) && ++p != la->_size()) {
             ++pos;
             it = la->_begin(pos);
-            if (p != pos)
-              Msg::Error(" ");
           }
+          return *this;
+        }
+        iterator& operator--() {
+          int p = pos;
+          while (it == la->_begin(p) && --p > -1) {
+            --pos;
+            it = la->_end(pos);
+          }
+          if (p > -1)
+            --it;
           return *this;
         }
         iterator operator++(int n) {
@@ -238,12 +246,21 @@ class Recombine2D {
     void _removeImpossible(TrianglesUnion*);
     void _recombine(bool);
     
-    void _lookAhead(std::list<TrianglesUnion*>&, int horiz);
-    void _getIncompatibles(const TrianglesUnion*, setTriUnion&);
-    void _getNeighbors(const TrianglesUnion*, setTriUnion&);
-    void _addNeighbors(int horiz, std::vector<list_actions::iterator>&, int current, list_actions*);
+    void _lookAhead(std::list<TrianglesUnion*> &, int horiz);
+    void _lookAhead2(std::list<TrianglesUnion*> &, int horiz);
+    void _getIncompatibles(const TrianglesUnion*, setTriUnion &);
+    void _getNeighbors(const TrianglesUnion*, setTriUnion &);
+    void _addNeighbors(int horiz, std::vector<list_actions::iterator> &,
+                       int current, list_actions*);
     void _removeNeighbors(int horiz, int current, list_actions*);
-    int _checkIsolatedTri(std::vector<list_actions::iterator>&, int size, std::set<MTriangle*>&);
+    int _checkIsolatedTri(const std::vector<list_actions::iterator> &,
+                          int size, std::set<MTriangle*> &);
+    double _realisticReturn(const int *num,
+                            const double *val,
+                            const std::map<Rec2d_vertex*, int> &,
+                            const std::vector<list_actions::iterator> &,
+                            int size,
+                            const std::set<MTriangle*> &);
 
   public :
     int apply(bool);
@@ -334,8 +351,8 @@ class Rec2d_vertex {
 
 class TrianglesUnion {
   private :
-    int _numEmbEdge, _numEmbVert, _numBoundVert, _numTri, _computation;
-    double _embEdgeValue, _embVertValue, _globValIfExecuted;
+    int _numEmbEdge, _numboundEdge, _numEmbVert, _numBoundVert, _numTri, _computation;
+    double _embEdgeValue, _boundEdgeValue, _embVertValue, _globValIfExecuted;
     Rec2d_vertex **_vertices;
     MTriangle **_triangles;
     static int _RECOMPUTE; //incremented when a recombination is executed
@@ -347,7 +364,8 @@ class TrianglesUnion {
     
   public :
     TrianglesUnion(GFace *, std::list<MTriangle*> &, std::list<MEdge> &,
-                   std::list<Rec2d_vertex*> &, std::map<MVertex*,double> &);
+                   std::list<Rec2d_vertex*> &, std::map<MVertex*,double> &,
+                   std::map<MEdge, std::list<MTriangle*>, Less_Edge>&);
     
     bool operator<(TrianglesUnion &other);
     void addTri(std::set<MTriangle*>&) const;
@@ -367,6 +385,8 @@ class TrianglesUnion {
     void select() {
       _ValEdge -= _embEdgeValue;
       _NumEdge -= _numEmbEdge;
+      _ValEdge += _boundEdgeValue;
+      _NumEdge += _numboundEdge;
       _ValVert -= _embVertValue;
       _NumVert -= _numEmbVert;
       for (int i = 0; i < _numBoundVert; i++) {
@@ -383,11 +403,15 @@ class TrianglesUnion {
     }
     static inline void addRec() {_RECOMPUTE++;}
     inline double getReturn() {return _globValIfExecuted;}
+    inline static double getActualReturn() {
+      return _ValEdge/_NumEdge * _ValVert/_NumVert * _ValVert/_NumVert;
+    }
   
   private:  
-    double _computeEdgeLength(GFace *, MVertex **, double *u, double *v,
+    double _computeEdgeLength(GFace*, MVertex**, double *u, double *v,
                               int numIntermedPoint= 1);
-    double _computeAlignment(MEdge &, std::list<MTriangle*> &);
+    double _computeAlignment(const MEdge&, std::list<MTriangle*>&,
+                             std::map<MEdge, std::list<MTriangle*>, Less_Edge>&);
     void _update();
 };
 #endif
