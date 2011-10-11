@@ -604,6 +604,7 @@ static bool _isItAGoodIdeaToMoveThatVertex (GFace *gf,
   if ( surface_new - surface_old  > 1.e-10 * surface_old) {
     return false;
   }
+  //printf("returning true ... \n");
   return true;
   int nBetter=0,nWorse=0;
   int nReallyBadOld=0,nReallyBadNew=0;
@@ -955,6 +956,7 @@ static void _relocateVertex (GFace *gf,
       }
       fact += lt[i]->getNumVertices();
     }
+    SPoint2 newp ;
     if(fact != 0.0){
       SPoint2 before(initu,initv);
       SPoint2 after(cu / fact,cv / fact);
@@ -968,7 +970,7 @@ static void _relocateVertex (GFace *gf,
       for (int i=0;i<10;i++){
 	newp = after + before*(1.-factor);
 	success = _isItAGoodIdeaToMoveThatVertex (gf,  lt, ver,before,newp);
-	if (success)break;
+	if (success) break;
 	factor *= 0.5;
       }
 

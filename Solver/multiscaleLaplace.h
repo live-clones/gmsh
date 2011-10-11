@@ -30,7 +30,6 @@ public:
   void cut (std::vector<MElement *> &elements);  
   typedef enum {HARMONIC=1,CONFORMAL=2, CONVEXCOMBINATION=3} typeOfMapping;
 
-  linearSystem<double> *_lsys;
   multiscaleLaplaceLevel* root;
   void fillCoordinates (multiscaleLaplaceLevel & level,
                         std::map<MVertex*, SPoint3> &allCoordinates,

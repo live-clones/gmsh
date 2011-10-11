@@ -235,8 +235,6 @@ static int intersection_segments (SPoint2 &p1, SPoint2 &p2,
   
 }
 //--------------------------------------------------------------
-
-
 static void recur_compute_centers_ (double R, double a1, double a2,
                                     multiscaleLaplaceLevel * root, int &nbElems ){
   
@@ -265,7 +263,6 @@ static void recur_compute_centers_ (double R, double a1, double a2,
     }
     centersChild.push_back(m->center);
   }
-
   
   //add the center of real holes ... 
   std::vector<std::vector<MEdge> > boundaries;
@@ -825,16 +822,6 @@ multiscaleLaplace::multiscaleLaplace (std::vector<MElement *> &elements,
   std::vector<std::pair<MVertex*,double> > boundaryNodes;
   ordering_dirichlet(elements,boundaryNodes);
 
-#if defined(HAVE_TAUCS)
-  _lsys = new linearSystemCSRTaucs<double>;
-#elif defined(HAVE_GMM)
-  linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
-  _lsysb->setGmres(1);
-  _lsys = _lsysb;
-#else
-  _lsys = new linearSystemFull<double>;
-#endif
-
   //Assign Dirichlet BCs
   root = new multiscaleLaplaceLevel;
   root->elements = elements;
@@ -863,7 +850,7 @@ multiscaleLaplace::multiscaleLaplace (std::vector<MElement *> &elements,
   //printf("CENTERS: elements =%d, recur nbElems = %d \n", elements.size(), nbElems);
 
   //Partition the mesh in left and right
-  cut (elements); 
+  cut(elements); 
 
   //---- Testing other cut for partitionning  ----
   //---- cutEdges and connected_regions       ----
@@ -1159,6 +1146,17 @@ void multiscaleLaplace::parametrize_method (multiscaleLaplaceLevel & level,
                                             typeOfMapping tom)
 {
 
+  linearSystem<double> *_lsys;
+#if defined(HAVE_TAUCS)
+  _lsys = new linearSystemCSRTaucs<double>;
+#elif defined(HAVE_GMM)
+  linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
+  _lsysb->setGmres(1);
+  _lsys = _lsysb;
+#else
+  _lsys = new linearSystemFull<double>;
+#endif
+
   solution.clear();
   simpleFunction<double> ONE(1.0);
 
@@ -1207,8 +1205,10 @@ void multiscaleLaplace::parametrize_method (multiscaleLaplaceLevel & level,
     _lsys->clear();
 
   }
+
+  delete _lsys;
 }
-void multiscaleLaplace::cut (std::vector<MElement *> &elements)
+void multiscaleLaplace::cut(std::vector<MElement *> &elements)
 {
 
   std::vector<MElement*> left,right;
@@ -1241,8 +1241,6 @@ void multiscaleLaplace::cut (std::vector<MElement *> &elements)
   elements.clear();
   elements.insert(elements.end(),left.begin(),left.end());
   elements.insert(elements.end(),right.begin(),right.end());
-
-  //exit(1);
 
 }
 

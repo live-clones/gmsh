@@ -19,7 +19,7 @@ class gLevelsetMathEval: public gLevelsetPrimitive
 {
   mathEvaluator *_expr;
 public:
-  gLevelsetMathEval(std::string f, int &tag) : gLevelsetPrimitive(tag)
+  gLevelsetMathEval(std::string f, int tag) : gLevelsetPrimitive(tag)
   {
     std::vector<std::string> expressions(1, f);
     std::vector<std::string> variables(3);
@@ -51,7 +51,7 @@ class gLevelsetPostView : public gLevelsetPrimitive
   int _viewIndex;
   OctreePost *_octree;
 public:
-  gLevelsetPostView(int index, int &tag) : gLevelsetPrimitive(tag), _viewIndex(index)
+  gLevelsetPostView(int index, int tag) : gLevelsetPrimitive(tag), _viewIndex(index)
   {
     if(_viewIndex >= 0 && _viewIndex < (int)PView::list.size()){
       PView *view = PView::list[_viewIndex];
