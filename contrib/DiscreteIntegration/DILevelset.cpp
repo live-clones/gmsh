@@ -546,11 +546,11 @@ gLevelsetBox::gLevelsetBox(const double *pt, const double *dir1, const double *d
   double pt2[3] = {pt[0] + a * n1[0] + b * n2[0] + c * n3[0], pt[1] + a * n1[1] + b * n2[1] + c * n3[1],
                    pt[2] + a * n1[2] + b * n2[2] + c * n3[2]};
   std::vector<const gLevelset *> p;
-  p.push_back(new gLevelsetPlane(pt2, dir3, tag));
-  p.push_back(new gLevelsetPlane(pt, dir3m, tag));
-  p.push_back(new gLevelsetPlane(pt, dir2m, tag));
-  p.push_back(new gLevelsetPlane(pt2, dir2, tag));
-  p.push_back(new gLevelsetPlane(pt2, dir1, tag));
+  p.push_back(new gLevelsetPlane(pt2, dir3, tag++));
+  p.push_back(new gLevelsetPlane(pt, dir3m, tag++));
+  p.push_back(new gLevelsetPlane(pt, dir2m, tag++));
+  p.push_back(new gLevelsetPlane(pt2, dir2, tag++));
+  p.push_back(new gLevelsetPlane(pt2, dir1, tag++));
   p.push_back(new gLevelsetPlane(pt, dir1m, tag));
   Ls = new gLevelsetIntersection(p);
 }
@@ -563,11 +563,11 @@ gLevelsetBox::gLevelsetBox(const double *pt1, const double *pt2, const double *p
            isPlanar(pt1, pt2, pt3, pt4), isPlanar(pt5, pt6, pt7, pt8), isPlanar(pt1, pt2, pt5, pt6),
            isPlanar(pt3, pt4, pt7, pt8), isPlanar(pt1, pt4, pt5, pt8), isPlanar(pt2, pt3, pt6, pt7));
   std::vector<const gLevelset *> p;
-  p.push_back(new gLevelsetPlane(pt5, pt6, pt8, tag));
-  p.push_back(new gLevelsetPlane(pt1, pt4, pt2, tag));
-  p.push_back(new gLevelsetPlane(pt1, pt2, pt5, tag));
-  p.push_back(new gLevelsetPlane(pt3, pt4, pt7, tag));
-  p.push_back(new gLevelsetPlane(pt2, pt3, pt6, tag));
+  p.push_back(new gLevelsetPlane(pt5, pt6, pt8, tag++));
+  p.push_back(new gLevelsetPlane(pt1, pt4, pt2, tag++));
+  p.push_back(new gLevelsetPlane(pt1, pt2, pt5, tag++));
+  p.push_back(new gLevelsetPlane(pt3, pt4, pt7, tag++));
+  p.push_back(new gLevelsetPlane(pt2, pt3, pt6, tag++));
   p.push_back(new gLevelsetPlane(pt1, pt5, pt4, tag));
   Ls = new gLevelsetIntersection(p);
 }
@@ -579,8 +579,8 @@ gLevelsetCylinder::gLevelsetCylinder(const double *pt, const double *dir, const 
   double n[3]; norm(dir, n);
   double pt2[3] = {pt[0] + H * n[0], pt[1] + H * n[1], pt[2] + H * n[2]};
   std::vector<const gLevelset *> p;
-  p.push_back(new gLevelsetGenCylinder(pt, dir, R, tag));
-  p.push_back(new gLevelsetPlane(pt, dir2, tag));
+  p.push_back(new gLevelsetGenCylinder(pt, dir, R, tag++));
+  p.push_back(new gLevelsetPlane(pt, dir2, tag++));
   p.push_back(new gLevelsetPlane(pt2, dir, tag));
   Ls = new gLevelsetIntersection(p);
 }
@@ -590,9 +590,9 @@ gLevelsetCylinder::gLevelsetCylinder(const double * pt, const double *dir, const
   double n[3]; norm(dir, n);
   double pt2[3] = {pt[0] + H * n[0], pt[1] + H * n[1], pt[2] + H * n[2]};
   std::vector<const gLevelset *> p1;
-  p1.push_back(new gLevelsetGenCylinder(pt, dir, R, tag));
-  p1.push_back(new gLevelsetPlane(pt, dir2, tag));
-  p1.push_back(new gLevelsetPlane(pt2, dir, tag));
+  p1.push_back(new gLevelsetGenCylinder(pt, dir, R, tag++));
+  p1.push_back(new gLevelsetPlane(pt, dir2, tag++));
+  p1.push_back(new gLevelsetPlane(pt2, dir, tag++));
   std::vector<const gLevelset *> p2;
   p2.push_back(new gLevelsetIntersection(p1));
   p2.push_back(new gLevelsetGenCylinder(pt, dir, r, tag));
@@ -624,12 +624,12 @@ gLevelsetConrod::gLevelsetConrod(const double *pt, const double *dir1, const dou
   double pt38[3] = {pt37[0] + n3[0] * L2, pt37[1] + n3[1] * L2, pt37[2] + n3[2] * L2};
   std::vector<const gLevelset *> p1;
   p1.push_back(new gLevelsetBox(pt31, pt32, pt33, pt34, pt35, pt36, pt37, pt38, tag));
-  p1.push_back(new gLevelsetCylinder(pt1, dir2, R1, H1, tag));
-  p1.push_back(new gLevelsetCylinder(pt2, dir2, R2, H2, tag));
+  p1.push_back(new gLevelsetCylinder(pt1, dir2, R1, H1, tag+6));
+  p1.push_back(new gLevelsetCylinder(pt2, dir2, R2, H2, tag+9));
   std::vector<const gLevelset *> p2;
   p2.push_back(new gLevelsetUnion(p1));
-  p2.push_back(new gLevelsetGenCylinder(pt1, dir2, r1, tag));
-  p2.push_back(new gLevelsetGenCylinder(pt2, dir2, r2, tag));
+  p2.push_back(new gLevelsetGenCylinder(pt1, dir2, r1, tag+12));
+  p2.push_back(new gLevelsetGenCylinder(pt2, dir2, r2, tag+13));
   Ls = new gLevelsetCut(p2);
 }
 

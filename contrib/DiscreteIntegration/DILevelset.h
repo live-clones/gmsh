@@ -90,7 +90,7 @@ public:
       printf("Tag of the levelset (%d) must be greater than 0.\n", tag);
       tag = abs(tag);
     }
-    tag_ = tag++;
+    tag_ = tag;
   }
   virtual double operator () (const double &x, const double &y, const double &z) const = 0;
   std::vector<const gLevelset *> getChildren() const { std::vector<const gLevelset *> p; return p; }
