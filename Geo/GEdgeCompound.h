@@ -34,7 +34,7 @@ class GEdgeCompound : public GEdge {
   virtual double curvature(double t) const;
   virtual int minimumMeshSegments() const;
   virtual int minimumDrawSegments() const;
-  std::vector<GEdge*>  getEdgesOfCompound() const { return _compound; }
+  std::vector<GEdge*>  getCompounds() const { return _compound; }
 };
 
 #endif

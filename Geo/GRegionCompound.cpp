@@ -15,6 +15,15 @@
 GRegionCompound::GRegionCompound(GModel *m, int tag, std::vector<GRegion*> &compound)
   : GRegion(m, tag), _compound(compound)
 {
+  
+  for (unsigned int i = 0; i < _compound.size(); i++){
+    if(!_compound[i]){
+      Msg::Error("Incorrect region in compound region %d\n", tag);
+      Msg::Exit(1);
+    }
+  }
+  for (unsigned int i = 0; i < _compound.size(); i++)
+    _compound[i]->setCompound(this);
   getBoundingFaces();
 }
 

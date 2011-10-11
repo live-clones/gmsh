@@ -707,6 +707,8 @@ void OCC_Internals::buildGModel(GModel *model)
     if (!getOCCRegionByNativePtr(model, TopoDS::Solid(somap(i))))
       model->add(new OCCRegion(model, TopoDS::Solid(somap(i)), num));
   }
+  
+  model->updateUpperTopology();
 }
 
 void addSimpleShapes(TopoDS_Shape theShape, TopTools_ListOfShape &theList)

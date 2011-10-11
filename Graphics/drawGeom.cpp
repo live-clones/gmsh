@@ -97,6 +97,7 @@ class drawGEdge {
     if(e->geomType() == GEntity::DiscreteCurve) return;
     if(e->geomType() == GEntity::PartitionCurve) return;
     if(e->geomType() == GEntity::BoundaryLayerCurve) return;
+    if(e->geomType() == GEntity::CompoundCurve) return; 
     
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 
                    e->model() == GModel::current());
@@ -236,8 +237,6 @@ class drawGFace {
   }
   void _drawParametricGFace(GFace *f)
   {
-    if (f->geomType() == GEntity::CompoundSurface) return;
-
     if(CTX::instance()->geom.surfaceType > 0)
       f->fillVertexArray(f->geomType() == GEntity::ProjectionFace);
 
@@ -248,9 +247,12 @@ class drawGFace {
 
     if(CTX::instance()->geom.surfaces){
       if(CTX::instance()->geom.surfaceType > 0 && f->va_geom_triangles){
+        bool selected = false;
+        if (f->getSelection() || (f->getCompound() && f->getCompound()->getSelection()))
+          selected = true;
         _drawVertexArray
           (f->va_geom_triangles, CTX::instance()->geom.light, 
-           (f->geomType() == GEntity::ProjectionFace) ? true : f->getSelection(), 
+           (f->geomType() == GEntity::ProjectionFace) ? true : selected, 
            (f->geomType() == GEntity::ProjectionFace) ? 
            CTX::instance()->color.geom.projection : 
            CTX::instance()->color.geom.selection);
@@ -319,6 +321,9 @@ class drawGFace {
       f->buildRepresentationCross();
 
     if(CTX::instance()->geom.surfaces) {
+      bool selected = false;
+      if (f->getSelection() || (f->getCompound() && f->getCompound()->getSelection()))
+          selected = true;
       if(CTX::instance()->geom.surfaceType > 0 && f->va_geom_triangles){
         _drawVertexArray(f->va_geom_triangles, CTX::instance()->geom.light, 
                          f->getSelection(), CTX::instance()->color.geom.selection);
@@ -371,14 +376,32 @@ class drawGFace {
                        CTX::instance()->geom.light);
     }
   }
+  
+  void _drawCompoundGFace(GFace *f, bool visible = false, bool selected = false)
+  {
+    GFaceCompound *fc = (GFaceCompound*) f;
+    std::list<GFace*> faces = fc->getCompounds();
+    for (std::list<GFace*>::iterator it = faces.begin(); it!=faces.end(); it++) {
+      if ((*it)->geomType() == GEntity::DiscreteSurface) continue;
+      if ((*it)->geomType() == GEntity::PartitionSurface) continue;
+      if ((*it)->geomType() == GEntity::BoundaryLayerSurface) continue;
+        
+      if((*it)->geomType() == GEntity::CompoundSurface)
+        _drawCompoundGFace((*it));
+      else if ((*it)->geomType() == GEntity::Plane)
+        _drawPlaneGFace((*it));
+      else
+        _drawParametricGFace((*it));
+    }
+  }
  
  public :
   drawGFace(drawContext *ctx) : _ctx(ctx) {}
   void operator () (GFace *f)
   {
     if(!f->getVisibility()) return;
-     if(f->geomType() == GEntity::DiscreteSurface) return;
-     if(f->geomType() == GEntity::PartitionSurface) return;
+    if(f->geomType() == GEntity::DiscreteSurface) return;
+    if(f->geomType() == GEntity::PartitionSurface) return;
     if(f->geomType() == GEntity::BoundaryLayerSurface) return;
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 
@@ -401,7 +424,9 @@ class drawGFace {
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.surface);
     }
 
-    if(f->geomType() == GEntity::Plane)
+    if(f->geomType() == GEntity::CompoundSurface)
+      _drawCompoundGFace(f);
+    else if(f->geomType() == GEntity::Plane)
       _drawPlaneGFace(f);
     else
       _drawParametricGFace(f);
@@ -484,12 +509,14 @@ void drawContext::drawGeom()
         std::for_each(m->firstVertex(), m->lastVertex(), drawGVertex(this));
       if(CTX::instance()->geom.lines || CTX::instance()->geom.linesNum || 
          CTX::instance()->geom.tangents)
-        std::for_each(m->firstEdge(), m->lastEdge(), drawGEdge(this));
+        std::for_each(m->firstEdge(true), m->lastEdge(true), drawGEdge(this));
       if(CTX::instance()->geom.surfaces || CTX::instance()->geom.surfacesNum ||
-         CTX::instance()->geom.normals)
-        std::for_each(m->firstFace(), m->lastFace(), drawGFace(this));
+         CTX::instance()->geom.normals) {
+        GModel::fiter test = m->firstFace(true); 
+        std::for_each(m->firstFace(true), m->lastFace(true), drawGFace(this));
+      }
       if(CTX::instance()->geom.volumes || CTX::instance()->geom.volumesNum)
-        std::for_each(m->firstRegion(), m->lastRegion(), drawGRegion(this));
+        std::for_each(m->firstRegion(true), m->lastRegion(true), drawGRegion(this));
     }
   }
   

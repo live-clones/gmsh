@@ -116,6 +116,12 @@ class GModel
   std::set<GFace*, GEntityLessThan> faces;
   std::set<GEdge*, GEntityLessThan> edges;
   std::set<GVertex*, GEntityLessThan> vertices;
+  
+  // represents uppermost topology level, when using compounds
+  // same as normal regions, edges, vertices but without entities contained in compounds
+  std::set<GRegion*, GEntityLessThan> regionsUpper;
+  std::set<GFace*, GEntityLessThan> facesUpper;
+  std::set<GEdge*, GEntityLessThan> edgesUpper;
 
   // map between the pair <dimension, elementary or physical number>
   // and an optional associated name
@@ -157,6 +163,9 @@ class GModel
   OCC_Internals *getOCCInternals(){ return _occ_internals; }
   FM_Internals *getFMInternals() { return _fm_internals; }
   ACIS_Internals *getACISInternals(){ return _acis_internals; }
+  
+  // if model has been loaded or changed fill facesUpper, edgesUpper
+  void updateUpperTopology();
 
   // access characteristic length (mesh size) fields
   FieldManager *getFields(){ return _fields; }
@@ -190,13 +199,13 @@ class GModel
   typedef std::set<GVertex*, GEntityLessThan>::iterator viter;
 
   // get an iterator initialized to the first/last entity in this model
-  riter firstRegion() { return regions.begin(); }
-  fiter firstFace() { return faces.begin(); }
-  eiter firstEdge() { return edges.begin(); }
+  riter firstRegion(const bool upper = false) { return upper ? regionsUpper.begin() : regions.begin(); }
+  fiter firstFace(const bool upper = false)   { return upper ? facesUpper.begin() : faces.begin(); }
+  eiter firstEdge(const bool upper = false)   { return upper ? edgesUpper.begin() : edges.begin(); }
   viter firstVertex() { return vertices.begin(); }
-  riter lastRegion() { return regions.end(); }
-  fiter lastFace() { return faces.end(); }
-  eiter lastEdge() { return edges.end(); }
+  riter lastRegion(const bool upper = false)  { return upper ? regionsUpper.end() : regions.end(); }
+  fiter lastFace(const bool upper = false)    { return upper ? facesUpper.end() : faces.end(); }
+  eiter lastEdge(const bool upper = false)    { return upper ? edgesUpper.end() : edges.end(); }
   viter lastVertex() { return vertices.end(); }
 
   // find the entity with the given tag

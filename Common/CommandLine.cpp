@@ -96,6 +96,7 @@ void PrintUsage(const char *name)
   Msg::Direct("  -fontsize int         Specify the font size for the GUI");
   Msg::Direct("  -theme string         Specify FLTK GUI theme");
   Msg::Direct("  -display string       Specify display");
+  Msg::Direct("  -compound_only        Hide underlying surfaces/edges of compounds");
 #endif
   Msg::Direct("Other options:");      
   Msg::Direct("  -                     Parse input files, then exit");
@@ -732,6 +733,10 @@ void GetOptions(int argc, char *argv[])
           CTX::instance()->display = argv[i++];
         else
           Msg::Fatal("Missing argument");
+      }
+      else if(!strcmp(argv[i] + 1, "compound_only")) {
+        CTX::instance()->compoundOnly = 1;
+        i++;
       }
 #endif
 #if defined(__APPLE__)

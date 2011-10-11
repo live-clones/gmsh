@@ -247,6 +247,7 @@ void ACIS_Internals::loadSAT(std::string fileName, GModel *gm)
       }
     }
   }
+  gm->updateUpperTopology();
 }
 
 int GModel::readACISSAT(const std::string &fn)

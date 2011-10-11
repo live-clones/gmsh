@@ -242,12 +242,19 @@ std::list<GVertex*> GFace::vertices() const
 
 void GFace::setVisibility(char val, bool recursive)
 {
-  GEntity::setVisibility(val);
-  if(recursive){
-    std::list<GEdge*>::iterator it = l_edges.begin();
-    while (it != l_edges.end()){
-      (*it)->setVisibility(val, recursive);
-      ++it;
+  if (getCompound() && CTX::instance()->compoundOnly) {
+    GEntity::setVisibility(0);
+    for (std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it)
+      (*it)->setVisibility(0, true);
+    std::list<GEdge*> edgesComp = getCompound()->edges();
+    //show edges of the compound surface
+    for (std::list<GEdge*>::iterator it = edgesComp.begin(); it != edgesComp.end(); ++it)
+      (*it)->setVisibility(1, true);
+  } else {
+    GEntity::setVisibility(val);
+    if(recursive){
+      for (std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it)
+        (*it)->setVisibility(val, recursive);
     }
   }
 }

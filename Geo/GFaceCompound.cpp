@@ -984,7 +984,7 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
 
       //compute local parameter on Edge
       gec->getLocalParameter(tGlob,iEdge,tLoc);
-      std::vector<GEdge*> gev = gec->getEdgesOfCompound();
+      std::vector<GEdge*> gev = gec->getCompounds();
       GEdge *ge = gev[iEdge];
        
       //left and right vertex of the Edge

@@ -19,13 +19,15 @@ class MPrism;
 class MPyramid;
 class MPolyhedron;
 class ExtrudeParams;
+class GRegionCompound;
 
 // A model region.
 class GRegion : public GEntity {
  protected:
   std::list<GFace*> l_faces;
   std::list<int> l_dirs;
-
+  GRegionCompound *compound; // this model ede belongs to a compound 
+  
   // replace faces (for gluing) for specific modelers, we have to
   // re-create internal data ...
   virtual void replaceFacesInternal (std::list<GFace*> &) {}
@@ -89,6 +91,10 @@ class GRegion : public GEntity {
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
+  
+  // compound
+  void setCompound(GRegionCompound *grc) { compound = grc; }
+  GRegionCompound *getCompound() const { return compound; }
 
   struct {
     // is this surface meshed using a transfinite interpolation
