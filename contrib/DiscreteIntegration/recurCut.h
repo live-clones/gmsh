@@ -1,7 +1,7 @@
 #ifndef _RECUR_H_
 #define _RECUR_H_
 
-#include "DILevelset.h"
+#include "gmshLevelset.h"
 #include "Integration3D.h"
 
 class RecurElement

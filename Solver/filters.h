@@ -15,7 +15,7 @@
 #include "dofManager.h"
 #include "GModel.h"
 #include "groupOfElements.h"
-#include "DILevelset.h"
+#include "gmshLevelset.h"
 
 class FilterNodeEnriched
 {

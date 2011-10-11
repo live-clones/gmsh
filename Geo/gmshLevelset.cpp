@@ -1,11 +1,8 @@
-#ifndef LEVELSET_CC
-#define LEVELSET_CC
-
-#include "DILevelset.h"
+#include "gmshLevelset.h"
 #include <queue>
 #include <stack>
 #include "fullMatrix.h"
-
+#include "mathEvaluator.h"
 
 inline double det3(double d11, double d12, double d13, double d21, double d22, double d23, double d31, double d32, double d33) {
   return d11 * (d22 * d33 - d23 * d32) - d21 * (d12 * d33 - d13 * d32) + d31 * (d12 * d23 - d13 * d22);
@@ -305,7 +302,7 @@ gLevelsetPoints::gLevelsetPoints(const gLevelsetPoints &lv) : gLevelsetPrimitive
   points = lv.points;
 }
 
-double gLevelsetPoints::operator()(const double &x, const double &y, const double &z) const{
+double gLevelsetPoints::operator()(const double x, const double y, const double z) const{
 
   if(mapP.empty()) printf("Levelset Points : call computeLS() before calling operator()\n");
 
@@ -465,9 +462,47 @@ void gLevelsetQuadric::init(){
   C = 0.;
 }
 
-double gLevelsetQuadric::operator()(const double &x, const double &y, const double &z) const{
+double gLevelsetQuadric::operator()(const double x, const double y, const double z) const{
   return(A[0][0] * x * x + 2. * A[0][1] * x * y + 2. * A[0][2] * x * z + A[1][1] * y * y 
         + 2. * A[1][2] * y * z + A[2][2] * z * z + B[0] * x + B[1] * y + B[2] * z + C);
+}
+
+gLevelsetMathEval::gLevelsetMathEval(std::string f, int tag) : gLevelsetPrimitive(tag) {
+    std::vector<std::string> expressions(1, f);
+    std::vector<std::string> variables(3);
+    variables[0] = "x";
+    variables[1] = "y";
+    variables[2] = "z";
+    _expr = new mathEvaluator(expressions, variables);
+}
+
+double gLevelsetMathEval::operator() (const double x, const double y, const double z) const {
+    std::vector<double> values(3), res(1);
+    values[0] = x;
+    values[1] = y;
+    values[2] = z;
+    if(_expr->eval(values, res)) return res[0];
+    return 1.;
+}
+
+#if defined (HAVE_POST)
+gLevelsetPostView::gLevelsetPostView(int index, int tag) : gLevelsetPrimitive(tag), _viewIndex(index){
+  if(_viewIndex >= 0 && _viewIndex < (int)PView::list.size()){
+    PView *view = PView::list[_viewIndex];
+    _octree = new OctreePost(view);
+  }
+  else{
+    Msg::Error("Unknown View[%d] in PostView levelset", _viewIndex);
+    _octree = 0;
+  }
+}
+#endif
+
+double gLevelsetPostView::operator () (const double x, const double y, const double z) const  {
+  if(!_octree) return 1.;
+  double val = 1.;
+  _octree->searchScalar(x, y, z, &val, 0);
+  return val;
 }
 
 gLevelsetGenCylinder::gLevelsetGenCylinder(const double *pt, const double *dir, const double &R,
@@ -634,4 +669,3 @@ gLevelsetConrod::gLevelsetConrod(const double *pt, const double *dir1, const dou
 }
 
 gLevelsetConrod::gLevelsetConrod(const gLevelsetConrod &lv) : gLevelsetImproved(lv){}
-#endif

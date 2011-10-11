@@ -20,10 +20,7 @@
   #include "discreteFace.h"
   #include "discreteEdge.h"
   #include "discreteVertex.h"
-#ifdef HAVE_DINTEGRATION
   #include "gmshLevelset.h"
-  #include "DILevelset.h"
-#endif
   #include "MElement.h"
   #include "MVertex.h"
   #include "MTriangle.h"
@@ -81,8 +78,5 @@ namespace std {
 %include "SPoint2.h"
 %include "SBoundingBox3d.h"
 %include "Curvature.h"
-#ifdef HAVE_DINTEGRATION
 %include "gmshLevelset.h"
-%include "DILevelset.h"
-#endif
 

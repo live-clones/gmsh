@@ -18,7 +18,7 @@
 #include "quadratureRules.h"
 #include "solverField.h"
 #include "MPoint.h"
-#include "DILevelset.h"
+#include "gmshLevelset.h"
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"

@@ -12,8 +12,7 @@
 #define _FUNCHEAVISIDE_H_
 
 #include "simpleFunction.h"
-#include "DILevelset.h"
-
+#include "gmshLevelset.h"
 
 class FuncHeaviside : public  simpleFunctionOnElement<double> {
  private :

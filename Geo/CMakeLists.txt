@@ -29,6 +29,7 @@ set(SRC
   ExtrudeParams.cpp
   Geo.cpp
   GeoStringInterface.cpp GeoInterpolation.cpp
+  gmshLevelset.cpp
   findLinks.cpp
   SOrientedBoundingBox.cpp
   GeomMeshMatcher.cpp

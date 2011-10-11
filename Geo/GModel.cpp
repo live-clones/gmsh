@@ -1800,7 +1800,6 @@ GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem, bool saveTri)
     cutGM->_storeElementsInEntities(elements[i]);
 
   cutGM->_associateEntityWithMeshVertices();
-
   cutGM->_storeVerticesInEntities(vertexMap);
 
   for(int i = 0; i < 4; i++)

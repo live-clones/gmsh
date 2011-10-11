@@ -12,7 +12,7 @@
 #define _FUNCGRADDISC_H_
 
 #include "simpleFunction.h"
-#include "DILevelset.h"
+#include "gmshLevelset.h"
 #include "MVertex.h"
 #include "GModel.h"
 //#include "gLevelSetMesh.cpp"

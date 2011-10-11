@@ -4,7 +4,6 @@
 # bugs and problems to <gmsh@geuz.org>.
 
 set(SRC
-  DILevelset.cpp
   Integration3D.cpp
   recurCut.cpp
 )

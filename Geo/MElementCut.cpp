@@ -8,9 +8,9 @@
 #include "GModel.h"
 #include "MElement.h"
 #include "MElementCut.h"
+#include "gmshLevelset.h"
 
 #if defined(HAVE_DINTEGRATION)
-#include "DILevelset.h"
 #include "Integration3D.h"
 #endif
 

@@ -6,7 +6,7 @@
 #include <set>
 #include <map>
 #include <cmath>
-#include "DILevelset.h"
+#include "gmshLevelset.h"
 
 // Element type
 #define DI_LIN  1
