@@ -28,8 +28,6 @@ double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2)
   const double dx = p1->X - p2->X;
   const double dy = p1->Y - p2->Y;
   const double dz = p1->Z - p2->Z;
-  // FIXME SUPER HACK
-  //const double l = std::max(fabs(dx),std::max(fabs(dy),fabs(dz)));
   const double l = sqrt(dx * dx + dy * dy + dz * dz);
   return l;
 }
@@ -41,14 +39,14 @@ inline double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2, GFace *f,
                                       double SCALINGU, double SCALINGV)
 {
   // FIXME SUPER HACK
-  /*
-  if (CTX::instance()->mesh.recombineAll || f->meshAttributes.recombine){
-    double quadAngle  = backgroundMesh::current()->getAngle (0.5 * (p1->u + p2->u) * SCALINGU, 0.5 * (p1->v + p2->v) * SCALINGV,0);
-    const double a [2] = {p1->u,p1->v};
-    const double b [2] = {p2->u,p2->v};
-    return lengthInfniteNorm(a,b, quadAngle);
-  }
-  */
+  
+  //  if (CTX::instance()->mesh.recombineAll || f->meshAttributes.recombine || 1){
+  //    double quadAngle  = backgroundMesh::current()->getAngle (0.5 * (p1->u + p2->u) * SCALINGU, 0.5 * (p1->v + p2->v) * SCALINGV,0);
+  //    const double a [2] = {p1->u,p1->v};
+  //    const double b [2] = {p2->u,p2->v};
+  //    return lengthInfniteNorm(a,b, quadAngle);
+  //  }
+  
   GPoint GP = f->point(SPoint2(0.5 * (p1->u + p2->u) * SCALINGU,
                                0.5 * (p1->v + p2->v) * SCALINGV));
 

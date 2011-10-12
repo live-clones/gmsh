@@ -101,25 +101,43 @@ int GEdgeLoop::count(GEdge* ge) const
 
 GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire)
 {
-  std::list<GEdge*> wire(cwire);
 
-  GEdgeSigned *prevOne = 0;
 
   // Sometimes OCC puts a nasty degenerated edge in the middle of the wire ...
   // pushing it to front fixes the problem as it concerns gmsh 
-  for (std::list<GEdge*>::iterator it = wire.begin(); it != wire.end() ; ++it){ // TEST
+
+  std::list<GEdge*> wire;
+  std::vector<GEdge*> degenerated;
+  GEdge *degeneratedToInsert = 0;
+  for (std::list<GEdge*>::const_iterator it = cwire.begin(); it != cwire.end() ; ++it){ // TEST
     GEdge *ed = *it;
-    if (ed->degenerate(0)){
-      wire.erase(it);
-      wire.push_front(ed);
-      break;
-    }
+    if (ed->degenerate(0))degenerated.push_back(ed);
+    else wire.push_back(ed);
   }
 
-
+  if (degenerated.size() == 1){
+    wire.push_front(degenerated[0]);
+  }
+  else if (degenerated.size() == 2){
+    degeneratedToInsert = degenerated[1];
+    wire.push_front(degenerated[0]);
+  }
+  else if (degenerated.size() > 2){
+    Msg::Error("More than two degenerated edges in one model face");
+  }
+  
+  GEdgeSigned *prevOne = 0;
   GEdgeSigned ges(0,0);
+
+  //  printf("go !!!\n");
   while(wire.size()){
-    ges = nextOne(prevOne, wire);
+    if (prevOne && degeneratedToInsert && 
+	degeneratedToInsert->getBeginVertex () == prevOne->getEndVertex()){
+      ges = GEdgeSigned(1,degeneratedToInsert);
+      degeneratedToInsert = 0;
+      //      printf("second degenerated edge inserted\n");
+    }
+    else ges = nextOne(prevOne, wire);
     if(ges.getSign() == 0){ // oops
       Msg::Error("Something wrong in edge loop of size=%d, no sign !", wire.size());
       for (std::list<GEdge* >::iterator it = wire.begin(); it != wire.end(); it++){

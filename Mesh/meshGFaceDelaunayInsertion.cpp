@@ -1410,6 +1410,9 @@ void optimalPointFrontalQuadAniso (GFace *gf,
 
 void buildBackGroundMesh (GFace *gf) {
 
+  //  printf("build bak mesh\n");
+  quadsToTriangles(gf, 100000);
+
   if (!backgroundMesh::current()) {
     std::vector<MTriangle*> TR;
     for(int i=0;i<gf->triangles.size();i++){
@@ -1427,7 +1430,9 @@ void buildBackGroundMesh (GFace *gf) {
     //  Re-enable curv control if asked
     CTX::instance()->mesh.lcFromCurvature = CurvControl;    
     // apply this to the BGM
+    //    printf("1 end build bak mesh\n");
     backgroundMesh::set(gf);
+    //    printf("2 end build bak mesh\n");
     char name[256];
     if (CTX::instance()->mesh.saveAll){
       sprintf(name,"bgm-%d.pos",gf->tag());
@@ -1435,7 +1440,10 @@ void buildBackGroundMesh (GFace *gf) {
       sprintf(name,"cross-%d.pos",gf->tag());
       backgroundMesh::current()->print(name,gf,1);
     }
+    gf->triangles = TR;
   }  
+  //  printf("end build bak mesh\n");
+
 }
 
 void bowyerWatsonFrontalLayers(GFace *gf, bool quad)

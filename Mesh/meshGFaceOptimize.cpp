@@ -1689,7 +1689,7 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 	if (pairs[i].n2->onWhat()->dim() < 2)NB++;
 	if (pairs[i].n3->onWhat()->dim() < 2)NB++;
 	if (pairs[i].n4->onWhat()->dim() < 2)NB++;
-	if (elen[i] > 60 && NB > 2) {elen[i] = 1000;}
+	if (elen[i] >  gf->meshAttributes.recombineAngle && NB > 2) {elen[i] = 1000;}
       }
 
       if (cubicGraph){
@@ -1827,6 +1827,7 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
   while(itp != pairs.end()){
     // recombine if difference between max quad angle and right
     // angle is smaller than tol
+    //    printf("%g %g\n",gf->meshAttributes.recombineAngle,itp->angle);
     if(itp->angle < gf->meshAttributes.recombineAngle){
       MElement *t1 = itp->t1;
       MElement *t2 = itp->t2;
@@ -1932,6 +1933,7 @@ void recombineIntoQuads(GFace *gf,
 
 void quadsToTriangles(GFace *gf, double minqual)
 {
+  printf("COUCOU %g\n",minqual);
   std::vector<MQuadrangle*> qds;
   for (int i=0;i<gf->quadrangles.size();i++){
     MQuadrangle *q = gf->quadrangles[i];
@@ -1972,7 +1974,7 @@ void quadsToTriangles(GFace *gf, double minqual)
 void recombineIntoQuadsIterative(GFace *gf)
 {
   recombineIntoQuads(gf);
-  quadsToTriangles(gf,0.03);
+  //  quadsToTriangles(gf, 1. - gf->meshAttributes.recombineAngle/90. );
   return;
   int COUNT = 0;
   while (1){

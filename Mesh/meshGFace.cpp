@@ -618,8 +618,9 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers  (GFace *gf){
 
   deMeshGFace kil_;
   kil_(gf);
-  
+  printf("remeshing after hoplaboum\n");
   meshGenerator(gf, 0, 0, true , true, &hop); 
+  printf("remeshing after hoplaboum\n");
   
   gf->quadrangles = blQuads;
   gf->triangles.insert(gf->triangles.begin(),blTris.begin(),blTris.end());
@@ -1060,32 +1061,31 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     gf->model()->add(ge);
   }
 
-  gf->triangles.clear();
-  gf->quadrangles.clear();
-
   {
     int nb_swap;
     Msg::Debug("Delaunizing the initial mesh");
     delaunayizeBDS(gf, *m, nb_swap);
   }
+  gf->triangles.clear();
+  gf->quadrangles.clear();
 
   Msg::Debug("Starting to add internal points");
   // start mesh generation
   if(!algoDelaunay2D(gf) && !onlyInitialMesh){
-    if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) {
-      printf("coucou here !!!\n");
-      backgroundMesh::unset();
-      buildBackGroundMesh (gf);
-    }     
+    //    if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine || 1) {
+    //      printf("coucou here !!!\n");
+    //      backgroundMesh::unset();
+    //      buildBackGroundMesh (gf);
+    //    }     
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true,
                   &recoverMapInv);
     optimizeMeshBDS(gf, *m, 2);
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, false,
                 &recoverMapInv);
     optimizeMeshBDS(gf, *m, 2);
-    if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) {
-      backgroundMesh::unset();
-    }     
+    //    if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine || 1) {
+    //      backgroundMesh::unset();
+    //    }     
   }
   /*
   computeMeshSizeFieldAccuracy(gf, *m, gf->meshStatistics.efficiency_index,
@@ -1636,11 +1636,11 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   // start mesh generation for periodic face
   if(!algoDelaunay2D(gf)){
     // need for a BGM for cross field
-    if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) {
-      //      printf("coucou here !!!\n");
-      //      backgroundMesh::unset();
-      //      buildBackGroundMesh (gf);
-    }     
+    //    if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine || 1) {
+    //      printf("coucou here !!!\n");
+    //      backgroundMesh::unset();
+    //      buildBackGroundMesh (gf);
+    //    }     
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true);
     optimizeMeshBDS(gf, *m, 2);
     refineMeshBDS(gf, *m, -CTX::instance()->mesh.refineSteps, false);
@@ -1653,9 +1653,9 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
                                  gf->meshStatistics.nbEdge,
                                  gf->meshStatistics.nbGoodLength);*/
     gf->meshStatistics.status = GFace::DONE;
-    if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) {
-      //      backgroundMesh::unset();
-    }     
+    //    if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine || 1) {
+    //            backgroundMesh::unset();
+    //    }     
   }
   
   // fill the small gmsh structures
