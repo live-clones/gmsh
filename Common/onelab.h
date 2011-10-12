@@ -113,8 +113,7 @@ namespace onelab{
   // to make the interface nicer.
   class number : public parameter{
   private:
-    double _value;
-    double _defaultValue, _min, _max, _step;
+    double _value, _defaultValue, _min, _max, _step;
     std::vector<double> _choices;
   public:
     number(const std::string &name="", double defaultValue=0.,
@@ -122,8 +121,9 @@ namespace onelab{
       : parameter(name, shortHelp, help), _value(defaultValue), 
         _defaultValue(defaultValue), _min(1.), _max(0.), _step(0.) {}
     void setValue(double value){ _value = value; }
+    void setDefaultValue(double value){ _defaultValue = value; }
     void setMin(double min){ _min = min; }
-    void setMax(double max){ _min = max; }
+    void setMax(double max){ _max = max; }
     void setStep(double step){ _step = step; }
     void setChoices(std::vector<double> &choices){ _choices = choices; }
     std::string getType() const { return "number"; }
@@ -151,6 +151,13 @@ namespace onelab{
       setShortHelp(getNextToken(msg, pos));
       setHelp(getNextToken(msg, pos));
       setValue(atof(getNextToken(msg, pos).c_str()));
+      setDefaultValue(atof(getNextToken(msg, pos).c_str()));
+      setMin(atof(getNextToken(msg, pos).c_str()));
+      setMax(atof(getNextToken(msg, pos).c_str()));
+      setStep(atoi(getNextToken(msg, pos).c_str()));
+      _choices.resize(atoi(getNextToken(msg, pos).c_str()));
+      for(unsigned int i = 0; i < _choices.size(); i++)
+        _choices[i] = atof(getNextToken(msg, pos).c_str());
     }
   };
 
@@ -166,6 +173,7 @@ namespace onelab{
       : parameter(name, shortHelp, help), _value(defaultValue), 
         _defaultValue(defaultValue) {}
     void setValue(const std::string &value){ _value = value; }
+    void setDefaultValue(const std::string &value){ _defaultValue = value; }
     void setChoices(std::vector<std::string> &choices){ _choices = choices; }
     std::string getType() const { return "string"; }
     const std::string &getValue() const { return _value; }
@@ -191,6 +199,10 @@ namespace onelab{
       setShortHelp(getNextToken(msg, pos));
       setHelp(getNextToken(msg, pos));
       setValue(getNextToken(msg, pos));
+      setDefaultValue(getNextToken(msg, pos));
+      _choices.resize(atoi(getNextToken(msg, pos).c_str()));
+      for(unsigned int i = 0; i < _choices.size(); i++)
+        _choices[i] = getNextToken(msg, pos);
     }
   };
 
