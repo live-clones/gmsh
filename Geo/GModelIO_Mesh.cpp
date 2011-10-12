@@ -213,12 +213,14 @@ static void getDomains(int dom1Num, int dom2Num, int type,
                       MElement *doms[])
 {
   int domNums[2] = {dom1Num, dom2Num};
+  int nbD = (dom1Num == 0 || dom2Num == 0) ? 1 : 2;
+  if(dom1Num == 0) domNums[0] = dom2Num;
   switch(type){
   case MSH_LIN_B :
-    getElementsByNum(domNums, elements[8], false, doms, 2);
+    getElementsByNum(domNums, elements[8], false, doms, nbD);
     return;
   case MSH_TRI_B : case MSH_POLYG_B :
-    getElementsByNum(domNums, elements[9], false, doms, 2);
+    getElementsByNum(domNums, elements[9], false, doms, nbD);
     return;
   }
 }
@@ -461,11 +463,11 @@ int GModel::readMSH(const std::string &name)
           if(dom1) {
             getDomains(dom1, dom2, type, elements, doms);
             if(!doms[0]) Msg::Error("Domain element %d not found for element %d", dom1, num);
-            if(!doms[1]) Msg::Error("Domain element %d not found for element %d", dom2, num);
+            if(dom2 && !doms[1]) Msg::Error("Domain element %d not found for element %d", dom2, num);
           }
           MElement *e = createElementMSH(this, num, type, physical, elementary,
                                          partition, vertices, elements, physicals,
-                                         own, p, doms[1], doms[0]);
+                                         own, p, doms[0], doms[1]);
           for(unsigned int j = 0; j < ghosts.size(); j++)
             _ghostCells.insert(std::pair<MElement*, short>(e, ghosts[j]));
           if(numElements > 100000)
@@ -702,8 +704,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     version = 1.0;
 
   // if there are no physicals we save all the elements
-  if(noPhysicalGroups())    saveAll = true;
-  
+  if(noPhysicalGroups()) saveAll = true;
+
   // get the number of vertices and index the vertices in a continuous
   // sequence
   int numVertices = indexMeshVertices(saveAll, saveSinglePartition);
@@ -767,7 +769,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   _elementIndexCache.clear();
 
   //parents
-  if ( !CTX::instance()->mesh.saveTri){
+  if (!CTX::instance()->mesh.saveTri){
    for(eiter it = firstEdge(); it != lastEdge(); ++it)
      for(unsigned int i = 0; i < (*it)->lines.size(); i++)
        if((*it)->lines[i]->ownsParent())

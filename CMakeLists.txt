@@ -69,7 +69,8 @@ set(GMSH_SHORT_LICENSE "GNU General Public License")
 set(GMSH_API
   ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h 
   ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h
-  Common/Gmsh.h Common/Context.h Common/GmshDefines.h Common/GmshMessage.h Common/VertexArray.h
+  Common/Gmsh.h Common/Context.h Common/GmshDefines.h Common/GmshMessage.h
+    Common/VertexArray.h Common/Octree.h Common/OctreeInternals.h
   Numeric/Numeric.h Numeric/Gauss.h Numeric/polynomialBasis.h
     Numeric/JacobianBasis.h Numeric/fullMatrix.h
     Numeric/simpleFunction.h Numeric/cartesian.h
@@ -83,18 +84,20 @@ set(GMSH_API
     Geo/discreteFace.h Geo/discreteRegion.h Geo/SPoint2.h Geo/SPoint3.h
     Geo/SVector3.h Geo/STensor3.h Geo/SBoundingBox3d.h Geo/Pair.h Geo/Range.h 
     Geo/SOrientedBoundingBox.h Geo/CellComplex.h Geo/ChainComplex.h Geo/Cell.h
-    Geo/Homology.h Geo/partitionEdge.h Geo/CGNSOptions.h
+    Geo/Homology.h Geo/partitionEdge.h Geo/CGNSOptions.h Geo/gmshLevelset.h
   Mesh/meshGEdge.h Mesh/meshGFace.h Mesh/meshGFaceOptimize.h Mesh/meshPartition.h
     Mesh/meshGFaceDelaunayInsertion.h Mesh/Levy3D.h Mesh/meshPartitionOptions.h
+  Numeric/mathEvaluator.h
   Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h Solver/elasticityTerm.h
     Solver/crossConfTerm.h Solver/orthogonalTerm.h
     Solver/linearSystem.h Solver/linearSystemGMM.h Solver/linearSystemCSR.h 
     Solver/linearSystemFull.h Solver/elasticitySolver.h
-  Post/PView.h Post/PViewData.h Plugin/PluginManager.h
+  Post/PView.h Post/PViewData.h Plugin/PluginManager.h Post/OctreePost.h
   Graphics/drawContext.h
   contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h 
     contrib/kbipack/gmp_blas.h contrib/kbipack/mpz.h
-  contrib/DiscreteIntegration/DILevelset.h)
+  contrib/DiscreteIntegration/Integration3D.h
+  contrib/MathEx/mathex.h)
 
 execute_process(COMMAND date "+%Y%m%d" OUTPUT_VARIABLE DATE 
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
