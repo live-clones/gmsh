@@ -1026,7 +1026,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     outputScalarField(m->triangles, name, 1);
   }
   
-  if(1){
+  if(0){
     std::list<BDS_Face*>::iterator itt = m->triangles.begin();
     while (itt != m->triangles.end()){
       BDS_Face *t = *itt;
