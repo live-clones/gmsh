@@ -854,8 +854,9 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
         int c = elements[2].count(lsT) + elements[3].count(lsT) + elements[8].count(lsT);
         // the surfaces are cut before the volumes!
         int reg = getBorderTag(lsT, c, newElemTags[2][0], borderElemTags[1]);
-        int physTag = getBorderTag(lsT, c, newPhysTags[2][0], borderPhysTags[1]);
-        std::vector<int> phys; phys.push_back(physTag);
+        int physTag = (!gePhysicals.size()) ? 0 : getBorderTag(lsT, c, newPhysTags[2][0], borderPhysTags[1]);
+        std::vector<int> phys;
+        if(physTag) phys.push_back(physTag);
         elements[2][reg].push_back(tri);
         assignPhysicals(GM, phys, reg, 2, physicals);
         for(int i = 0; i < 2; i++)
@@ -1027,8 +1028,9 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
         int c = elements[1].count(lsL);
         // the lines are cut before the surfaces!
         int reg = getBorderTag(lsL, c, newElemTags[1][0], borderElemTags[0]);
-        int physTag = getBorderTag(lsL, c, newPhysTags[1][0], borderPhysTags[0]);
-        std::vector<int> phys; phys.push_back(physTag);
+        int physTag = (!gePhysicals.size()) ? 0 : getBorderTag(lsL, c, newPhysTags[1][0], borderPhysTags[0]);
+        std::vector<int> phys;
+        if(physTag) phys.push_back(physTag);
         elements[1][reg].push_back(lin);
         assignPhysicals(GM, phys, reg, 1, physicals);
         for(int i = 0; i < 2; i++)
