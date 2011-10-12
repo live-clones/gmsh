@@ -481,8 +481,9 @@ graphicWindow::graphicWindow(bool main, int numTiles)
 
   // make sure height < screen height
   if(height > Fl::h()){
+    height = Fl::h();
     mheight = 100;
-    glheight = Fl::h() - mheight - sh;
+    glheight = height - mheight - sh;
     CTX::instance()->msgSize = mheight;
     CTX::instance()->glSize[1] = glheight;
   }
