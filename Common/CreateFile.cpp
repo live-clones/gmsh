@@ -471,7 +471,7 @@ void CreateOutputFile(std::string fileName, int format)
       std::vector<std::string> frames;
       for(int i = 0; i < (CTX::instance()->post.animCycle ? numViews : numSteps); i++){
         char tmp[256];
-        sprintf(tmp, ".gmsh-%03d.ppm", i);
+        sprintf(tmp, ".gmsh-%06d.ppm", i);
         frames.push_back(tmp);
       }
       status_play_manual(!CTX::instance()->post.animCycle, 0);
