@@ -129,6 +129,10 @@ namespace onelab{
     std::string getType() const { return "number"; }
     double getValue() const { return _value; }
     double getDefaultValue() const { return _defaultValue; }
+    double getMin(){ return _min; }
+    double getMax(){ return _max; }
+    double getStep(){ return _step; }
+    const std::vector<double> &getChoices(){ return _choices; }
     std::string toChar()
     {
       std::ostringstream sstream;
@@ -154,7 +158,7 @@ namespace onelab{
       setDefaultValue(atof(getNextToken(msg, pos).c_str()));
       setMin(atof(getNextToken(msg, pos).c_str()));
       setMax(atof(getNextToken(msg, pos).c_str()));
-      setStep(atoi(getNextToken(msg, pos).c_str()));
+      setStep(atof(getNextToken(msg, pos).c_str()));
       _choices.resize(atoi(getNextToken(msg, pos).c_str()));
       for(unsigned int i = 0; i < _choices.size(); i++)
         _choices[i] = atof(getNextToken(msg, pos).c_str());
@@ -178,6 +182,7 @@ namespace onelab{
     std::string getType() const { return "string"; }
     const std::string &getValue() const { return _value; }
     const std::string &getDefaultValue() const { return _defaultValue; }
+    const std::vector<std::string> &getChoices(){ return _choices; }
     std::string toChar()
     {
       std::ostringstream sstream;
@@ -367,16 +372,18 @@ namespace onelab{
              const std::string &name=""){ return _get(ps, name, _regions); }
     bool get(std::vector<function> &ps,
              const std::string &name=""){ return _get(ps, name, _functions); }
-    void print()
+    std::string toChar()
     {
+      std::string s;
       for(std::set<number*, parameterLessThan>::iterator it = _numbers.begin();
-          it != _numbers.end(); it++) std::cout << (*it)->toChar() << std::endl;
+          it != _numbers.end(); it++) s += (*it)->toChar() + "\n";
       for(std::set<string*, parameterLessThan>::iterator it = _strings.begin();
-          it != _strings.end(); it++) std::cout << (*it)->toChar() << std::endl;
+          it != _strings.end(); it++) s += (*it)->toChar() + "\n"; 
       for(std::set<region*, parameterLessThan>::iterator it = _regions.begin();
-          it != _regions.end(); it++) std::cout << (*it)->toChar() << std::endl;
+          it != _regions.end(); it++) s += (*it)->toChar() + "\n";
       for(std::set<function*, parameterLessThan>::iterator it = _functions.begin();
-          it != _functions.end(); it++) std::cout << (*it)->toChar() << std::endl;
+          it != _functions.end(); it++) s += (*it)->toChar() + "\n";
+      return s;
     }
   };
 
@@ -392,7 +399,6 @@ namespace onelab{
     std::string getName(){ return _name; }
     virtual bool run(const std::string &what){ return false; }
     virtual bool kill(){ return false; }
-    virtual void print(){}
     virtual void sendInfo(const std::string &msg){ std::cout << msg << std::endl; }
     virtual void sendWarning(const std::string &msg){ std::cerr << msg << std::endl; }
     virtual void sendError(const std::string &msg){ std::cerr << msg << std::endl; }
@@ -449,7 +455,7 @@ namespace onelab{
     citer lastClient(){ return _clients.end(); }
     citer findClient(const std::string &name){ return _clients.find(name); }
     int getNumClients(){ return _clients.size(); }
-    void print(){ _parameterSpace.print(); }
+    std::string toChar(){ return _parameterSpace.toChar(); }
   };
     
   class localClient : public client{
@@ -487,7 +493,6 @@ namespace onelab{
                      const std::string &name=""){ return _get(ps, name); }
     virtual bool get(std::vector<region> &ps,
                      const std::string &name=""){ return _get(ps, name); }
-    virtual void print(){ _server->print(); }
   };
 
   class localNetworkClient : public localClient{

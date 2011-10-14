@@ -25,7 +25,9 @@ class onelabWindow{
  public:
   onelabWindow(int deltaFontSize=0);
   void rebuildTree();
-  void redrawTree();
+  void redrawTree(){ _tree->redraw(); }
+  void activate(){ _butt[0]->activate(); _butt[1]->activate(); }
+  void deactivate(){ _butt[0]->deactivate(); _butt[1]->deactivate(); }
   void show(){ _win->show(); }
   std::string getModelName(){ return _model->value(); }
   void setModelName(const std::string &name){ _model->value(name.c_str()); }

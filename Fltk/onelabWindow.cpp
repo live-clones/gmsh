@@ -6,6 +6,8 @@
 #include <FL/Fl.H>
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
 #include <FL/Fl_Value_Input.H>
+#include <FL/Fl_Input_Choice.H>
+#include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Box.H>
 #include "GmshMessage.h"
 #include "Context.h"
@@ -128,13 +130,11 @@ bool onelab::localNetworkClient::run(const std::string &what)
           onelab::number p;
           p.fromChar(message);
           set(p, false);
-          printf("gmsh got '%s' from %s\n", p.toChar().c_str(), _name.c_str());
         }
         else if(type == "string"){
           onelab::string p;
           p.fromChar(message);
           set(p, false);
-          printf("gmsh got '%s' from %s\n", p.toChar().c_str(), _name.c_str());
         }
       }
       break;
@@ -150,12 +150,21 @@ bool onelab::localNetworkClient::run(const std::string &what)
             server->SendMessage(GmshSocket::GMSH_PARAMETER, reply.size(), &reply[0]);
           }
           else{
-            std::string reply = "Parameter " + name + " not found";
+            std::string reply = "Parameter (number) " + name + " not found";
             server->SendMessage(GmshSocket::GMSH_INFO, reply.size(), &reply[0]);
           }
         }
         else if(type == "string"){
-          Msg::Error("FIXME do strings");
+          std::vector<onelab::string> par;
+          get(par, name);
+          if(par.size() == 1){
+            std::string reply = par[0].toChar();
+            server->SendMessage(GmshSocket::GMSH_PARAMETER, reply.size(), &reply[0]);
+          }
+          else{
+            std::string reply = "Parameter (string) " + name + " not found";
+            server->SendMessage(GmshSocket::GMSH_INFO, reply.size(), &reply[0]);
+          }
         }
       }
       break;
@@ -227,6 +236,7 @@ void onelab_cb(Fl_Widget *w, void *data)
     FlGui::instance()->onelab->setModelName(split[0] + split[1] + ".pro");
   }
 
+  FlGui::instance()->onelab->deactivate();
   for(onelab::server::citer it = onelab::server::instance()->firstClient();
       it != onelab::server::instance()->lastClient(); it++){
     onelab::client *c = it->second;
@@ -234,24 +244,31 @@ void onelab_cb(Fl_Widget *w, void *data)
     if(action == "check")
       c->run(what);
     else if(action == "compute"){
-      if(c->getName() == "GetDP"){
-        std::vector<onelab::string> str;
-        onelab::server::instance()->get(str, "GetDP/Resolution");
-        if(str.size()) what += " -solve " + str[0].getValue();
-        onelab::server::instance()->get(str, "GetDP/Post-processing");
-        if(str.size()) what += " -pos " + str[0].getValue();
-        c->run(what);
-      }
+      if(c->getName() == "GetDP") what += " -solve -pos";
+      c->run(what);
     }
   }
-  printf("**** GMSH ONELAB DB DUMP:\n");
-  onelab::server::instance()->print();
-  printf("**** \n");
+  FlGui::instance()->onelab->activate();
+
+  printf("Gmsh ONELAB db:\n%s\n", onelab::server::instance()->toChar().c_str());
+
   FlGui::instance()->onelab->rebuildTree();
   FlGui::instance()->onelab->show();
 }
 
-static void onelab_number_cb(Fl_Widget *w, void *data)
+static void onelab_check_button_cb(Fl_Widget *w, void *data)
+{
+  if(!data) return;
+  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
+  std::vector<onelab::number> numbers;
+  onelab::server::instance()->get(numbers, name);
+  if(numbers.size()){
+    numbers[0].setValue(((Fl_Check_Button*)w)->value());
+    onelab::server::instance()->set(numbers[0]);
+  }
+}
+
+static void onelab_value_input_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
   std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
@@ -263,14 +280,14 @@ static void onelab_number_cb(Fl_Widget *w, void *data)
   }
 }
 
-static void onelab_string_cb(Fl_Widget *w, void *data)
+static void onelab_input_choice_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
   std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
   std::vector<onelab::string> strings;
   onelab::server::instance()->get(strings, name);
   if(strings.size()){
-    strings[0].setValue(((Fl_Input*)w)->value());
+    strings[0].setValue(((Fl_Input_Choice*)w)->value());
     onelab::server::instance()->set(strings[0]);
   }
 }
@@ -327,9 +344,8 @@ static std::string getShortName(const std::string &name)
 
 void onelabWindow::rebuildTree()
 {
-  printf("rebulding tree\n");
-  _tree->deactivate();
   _tree->clear();
+  _tree->sortorder(FL_TREE_SORT_ASCENDING);
   for(unsigned int i = 0; i < _treeWidgets.size(); i++)
     Fl::delete_widget(_treeWidgets[i]);
   _treeWidgets.clear();
@@ -339,17 +355,31 @@ void onelabWindow::rebuildTree()
   for(unsigned int i = 0; i < numbers.size(); i++){
     Fl_Tree_Item *n = _tree->add(numbers[i].getName().c_str());
     _tree->begin();
-    Fl_Value_Input *but = new Fl_Value_Input(1,1,IW,1);
-    _treeWidgets.push_back(but);
-    but->copy_label(getShortName(numbers[i].getName()).c_str());
-    but->value(numbers[i].getValue());
-    but->minimum(0.);
-    but->maximum(10.);
-    but->step(0.1);
-    but->align(FL_ALIGN_RIGHT);
-    but->callback(onelab_number_cb, (void*)n);
-    but->when(FL_WHEN_RELEASE|FL_WHEN_ENTER_KEY);
-    n->widget(but);
+    if(numbers[i].getChoices().size() == 2 &&
+       numbers[i].getChoices()[0] == 0 && numbers[i].getChoices()[1] == 1){
+      Fl_Check_Button *but = new Fl_Check_Button(1,1,IW,1);
+      _treeWidgets.push_back(but);
+      but->copy_label(getShortName(numbers[i].getName()).c_str());
+      but->value(numbers[i].getValue());
+      but->callback(onelab_check_button_cb, (void*)n);
+      n->widget(but);
+    }
+    else{
+      Fl_Value_Input *but = new Fl_Value_Input(1,1,IW,1);
+      _treeWidgets.push_back(but);
+      but->copy_label(getShortName(numbers[i].getName()).c_str());
+      but->value(numbers[i].getValue());
+      if(numbers[i].getMin() != -1.e200)
+        but->minimum(numbers[i].getMin());
+      if(numbers[i].getMax() != 1.e200)
+        but->maximum(numbers[i].getMax());
+      if(numbers[i].getStep())
+        but->step(numbers[i].getStep());
+      but->align(FL_ALIGN_RIGHT);
+      but->callback(onelab_value_input_cb, (void*)n);
+      but->when(FL_WHEN_RELEASE|FL_WHEN_ENTER_KEY);
+      n->widget(but);
+    }
     _tree->end();
   }
 
@@ -358,25 +388,19 @@ void onelabWindow::rebuildTree()
   for(unsigned int i = 0; i < strings.size(); i++){
     Fl_Tree_Item *n = _tree->add(strings[i].getName().c_str());
     _tree->begin();
-    Fl_Input *but = new Fl_Input(1,1,IW,1);
+    Fl_Input_Choice *but = new Fl_Input_Choice(1,1,IW,1);
     _treeWidgets.push_back(but);
     but->copy_label(getShortName(strings[i].getName()).c_str());
+    for(unsigned int j = 0; j < strings[i].getChoices().size(); j++)
+      but->add(strings[i].getChoices()[j].c_str());
     but->value(strings[i].getValue().c_str());
     but->align(FL_ALIGN_RIGHT);
-    but->callback(onelab_string_cb, (void*)n);
+    but->callback(onelab_input_choice_cb, (void*)n);
     but->when(FL_WHEN_RELEASE|FL_WHEN_ENTER_KEY);
     n->widget(but);
     _tree->end();
   }
   
-  _tree->activate();
-  _tree->redraw();
-  //n->user_data((void*)gv);
-  //n->close();
-}
-
-void onelabWindow::redrawTree()
-{
   _tree->redraw();
 }
 
