@@ -1305,7 +1305,7 @@ int CreatePartitionBoundaries(GModel *model, bool createGhostCells)
   return 1;
 }
 
-void createPartitionFaces(GModel *model, GFaceCompound *gf, int N, 
+void createPartitionFaces(GModel *model,  std::vector<MElement *> &elements, int N, 
                           std::vector<discreteFace*> &discreteFaces)
 {
 #if defined(HAVE_SOLVER)
@@ -1314,29 +1314,20 @@ void createPartitionFaces(GModel *model, GFaceCompound *gf, int N,
   std::vector<std::set<MVertex*> > allNodes;
   int numMax = model->getMaxElementaryNumber(2) + 1;
   for(int i = 0; i < N; i++){
-    //printf("*** Created discreteFace %d \n", numMax+i);
     discreteFace *face = new discreteFace(model, numMax+i);
     discreteFaces.push_back(face);
-    model->add(face);//delete this    
+    model->add(face); //delete this
     std::set<MVertex*> mySet;
     allNodes.push_back(mySet);
   }
 
-  std::list<GFace*> _compound =  gf->getCompounds();
-  std::list<GFace*>::iterator it = _compound.begin();
-
-  for( ; it != _compound.end(); ++it){
-    //printf("tag compound =%d \n", (*it)->tag());
-    for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-      MTriangle *e = (*it)->triangles[i];
-      int part = e->getPartition();
-      for(int j = 0; j < 3; j++){
-        MVertex *v0 = e->getVertex(j);
-        //printf("v0=%d part=%d\n", v0->getNum(), part); //returns part 0 ???
-        allNodes[part-1].insert(v0);
-      }
-      discreteFaces[part-1]->triangles.push_back(new MTriangle(e->getVertex(0),e->getVertex(1),e->getVertex(2)));     
+  for(unsigned int i = 0; i < elements.size(); ++i){
+    MElement *e = elements[i];
+    int part = e->getPartition()-1;
+    for(int j = 0; j < 3; j++){   
+      allNodes[part].insert(e->getVertex(j));
     }
+    discreteFaces[part]->triangles.push_back(new MTriangle(e->getVertex(0),e->getVertex(1),e->getVertex(2))) ;
   }
 
   for(int i = 0; i < N; i++){
@@ -1344,6 +1335,7 @@ void createPartitionFaces(GModel *model, GFaceCompound *gf, int N,
       discreteFaces[i]->mesh_vertices.push_back(*it);
     }
  }
+  
 #endif
 }
   

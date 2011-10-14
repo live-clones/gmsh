@@ -38,7 +38,7 @@ class multiscalePartition{
  public:
   multiscalePartition(std::vector<MElement *> &elements, int nbParts, 
 		      typeOfPartition method, int allowPartition);
-  int assembleAllPartitions();
+  int assembleAllPartitions(std::vector<MElement*> & elements);
   void setNumberOfPartitions(int &nbParts);
   int getNumberOfParts(){return totalParts;}
 };

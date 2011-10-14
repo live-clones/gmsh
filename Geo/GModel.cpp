@@ -1815,16 +1815,13 @@ GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem, bool saveTri)
 
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
     cutGM->_storeElementsInEntities(elements[i]);
-
   cutGM->_associateEntityWithMeshVertices();
   cutGM->_storeVerticesInEntities(vertexMap);
 
   for(int i = 0; i < 4; i++)
     cutGM->_storePhysicalTagsInEntities(i, physicals[i]);
 
-  double t2 = Cpu();
-
-  Msg::Info("Mesh cutting complete (%g s)", t2 - t1);
+  Msg::Info("Mesh cutting complete (%g s)", Cpu() - t1);
   return cutGM;
 }
 

@@ -1933,7 +1933,7 @@ void recombineIntoQuads(GFace *gf,
 
 void quadsToTriangles(GFace *gf, double minqual)
 {
-  printf("COUCOU %g\n",minqual);
+
   std::vector<MQuadrangle*> qds;
   for (int i=0;i<gf->quadrangles.size();i++){
     MQuadrangle *q = gf->quadrangles[i];

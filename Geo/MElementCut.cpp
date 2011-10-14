@@ -853,6 +853,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
         int lsT = triangles[i]->lsTag();
         int c = elements[2].count(lsT) + elements[3].count(lsT) + elements[8].count(lsT);
         // the surfaces are cut before the volumes!
+	//bool havePhys = e->
         int reg = getBorderTag(lsT, c, newElemTags[2][0], borderElemTags[1]);
         int physTag = (!gePhysicals.size()) ? 0 : getBorderTag(lsT, c, newPhysTags[2][0], borderPhysTags[1]);
         std::vector<int> phys;
@@ -1209,6 +1210,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
     return cutGM;
   }
 
+  //CutMesh
   newVerticesContainer newVertices;
   std::map<int, int> borderElemTags[2]; //map<lsTag,elementary>[line=0,surface=1]
   std::map<int, int> borderPhysTags[2]; //map<lstag,physical>[line=0,surface=1]

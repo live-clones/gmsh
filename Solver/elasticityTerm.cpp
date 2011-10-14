@@ -79,7 +79,6 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
       }
     }
     else{
-      printf("coucou AAAAAAAAAAAAARGH \n");
       se->gradNodalTestFunctions (u, v, w, invjac,GradsT);
       for (int j = 0; j < nbSF; j++){
         BT(j, 0) = Grads[j][0]; B(0, j) = GradsT[j][0];

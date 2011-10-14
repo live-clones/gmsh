@@ -60,6 +60,7 @@ class GFaceCompound : public GFace {
   typedef enum {UNITCIRCLE, SQUARE} typeOfIsomorphism;
   void computeNormals(std::map<MVertex*, SVector3> &normals) const;
  protected:
+  mutable std::set<MVertex *> ov;
   mutable GRbf *_rbf;
   simpleFunction<double> *ONE;
   simpleFunction<double> *MONE;
@@ -83,11 +84,11 @@ class GFaceCompound : public GFace {
   void buildOct() const ;
   void buildAllNodes() const; 
   void parametrize(iterationStep, typeOfMapping) const;
-  bool parametrize_conformal() const;
+  bool parametrize_conformal(int iter, MVertex *v1, MVertex *v2) const;
   bool parametrize_conformal_spectral() const;
   void compute_distance() const;
   bool checkOrientation(int iter) const;
-  bool checkOverlap() const;
+  bool checkOverlap(std::vector<MVertex *> &vert) const;
   void one2OneMap() const;
   double checkAspectRatio() const;
   void computeNormals () const;
@@ -105,7 +106,7 @@ class GFaceCompound : public GFace {
   SOrientedBoundingBox obb_boundEdges(const std::list<GEdge* > &elist) const;
   void fillNeumannBCS() const;
   /* double sumAngles(std::vector<MVertex*> ordered) const; */
-
+ 
  public: 
   GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 		std::list<GEdge*> &U0, typeOfMapping typ = HARMONIC, int allowPartition=1);

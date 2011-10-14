@@ -1910,7 +1910,7 @@ void partitionAndRemesh(GFaceCompound *gf)
   int nume = gf->model()->getMaxElementaryNumber(1) + 1;
   int numf = gf->model()->getMaxElementaryNumber(2) + 1;
   std::vector<discreteFace*> pFaces;
-  createPartitionFaces(gf->model(), gf, NF, pFaces); 
+  createPartitionFaces(gf->model(), elements, NF, pFaces); 
   
   gf->model()->createTopologyFromFaces(pFaces);
    
@@ -1952,6 +1952,7 @@ void partitionAndRemesh(GFaceCompound *gf)
     
     GFaceCompound *gfc = new GFaceCompound(gf->model(), num_gfc, f_compound, U0,
                                             gf->getTypeOfMapping());
+
     gfc->meshAttributes.recombine = gf->meshAttributes.recombine;
     gf->model()->add(gfc);
 

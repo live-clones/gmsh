@@ -6371,7 +6371,7 @@ yyreduce:
         int t = (int)(yyvsp[(4) - (6)].d);
         GModel *GM = GModel::current();
         GM->buildCutGModel(FindLevelSet(t)->ls, true, true);
-        GM->setVisibility(0);
+  	GM->setVisibility(0);
       }
       else if(!strcmp((yyvsp[(2) - (6)].c), "SplitMesh")){
         int t = (int)(yyvsp[(4) - (6)].d);

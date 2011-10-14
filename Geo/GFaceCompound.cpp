@@ -464,10 +464,11 @@ bool GFaceCompound::trivial() const
 
 // For the conformal map the linear system cannot guarantee there is
 // no overlapping of triangles
-bool GFaceCompound::checkOverlap() const
+bool GFaceCompound::checkOverlap(std::vector<MVertex *> &vert) const
 {
-  bool has_no_overlap = true;
-
+  vert.clear();
+  bool has_overlap = false;
+  double EPS = 1.e-2;
   for(std::list<std::list<GEdge*> >::const_iterator iloop = _interior_loops.begin(); 
       iloop != _interior_loops.end(); iloop++){
     std::list<GEdge*> loop = *iloop;
@@ -488,20 +489,33 @@ bool GFaceCompound::checkOverlap() const
 	SPoint3 q2 = coordinates[orderedLoop[k+1]];
 	double x[2];
 	int inters = intersection_segments (p1,p2,q1,q2,x);
-	if (inters > 0){
-	  has_no_overlap = false; 
-	  break;
+	if (inters && x[1] > EPS && x[1] < 1.-EPS){
+	  has_overlap = true; 
+	  MVertex *v1 = orderedLoop[i];
+	  MVertex *v2 = orderedLoop[k];
+	  std::set<MVertex *>::iterator it1 = ov.find(v1);
+	  std::set<MVertex *>::iterator it2 = ov.find(v2);
+	  vert.push_back(v1);
+	  vert.push_back(v2);
+	  return has_overlap;
+	  // if(it1 == ov.end() && it1 == ov.end()){
+	  //   ov.insert(v1);
+	  //   ov.insert(v2);
+	  //   vert.push_back(v1);
+	  //   vert.push_back(v2);
+	  //   return has_overlap;
+	  // }
 	}
       }
     }
     
   }
   
-  if ( !has_no_overlap ) {
+  if (has_overlap ) {
     Msg::Debug("Overlap for compound face %d", this->tag());
   }
 
-  return has_no_overlap;
+  return has_overlap;
 
 }
 
@@ -548,7 +562,7 @@ bool GFaceCompound::checkOrientation(int iter) const
   }
   else if (oriented && iter < iterMax){
     Msg::Info("Parametrization is bijective (no flips)");
-    printStuff(); 
+    //printStuff(); 
   }
 
   return oriented;
@@ -622,8 +636,6 @@ bool GFaceCompound::parametrize() const
     fillNeumannBCS();
     parametrize(ITERU,HARMONIC); 
     parametrize(ITERV,HARMONIC);
-    //parametrize(ITERU,CONVEXCOMBINATION);
-    //parametrize(ITERV,CONVEXCOMBINATION);
   }
   // Multiscale Laplace parametrization
   else if (_mapping == MULTISCALE){
@@ -637,13 +649,10 @@ bool GFaceCompound::parametrize() const
   else if (_mapping == CONFORMAL){
     Msg::Debug("Parametrizing surface %d with 'conformal map'", tag());
     fillNeumannBCS();
-    bool noOverlap = parametrize_conformal_spectral() ;
-    if (!noOverlap){
-      Msg::Warning("!!! Overlap: parametrization switched to 'FE conformal' map");
-      noOverlap = parametrize_conformal();
-    }
-    if (!noOverlap || !checkOrientation(0) ){
-      Msg::Warning("$$$ Flipping: parametrization switched to 'harmonic' map");
+    bool hasOverlap = parametrize_conformal_spectral();
+    if (hasOverlap || !checkOrientation(0) ){
+      printStuff(33);
+      Msg::Warning("$$$ Overlap or Flipping: parametrization switched to 'harmonic' map");
       parametrize(ITERU,HARMONIC); 
       parametrize(ITERV,HARMONIC);
     }
@@ -929,9 +938,6 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   MONE = new simpleFunction<double>(-1.0);
 
   for(std::list<GFace*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
-    //EMI FIX
-    //if ((*it)->tag() == 3) _mapping = CONFORMAL;
-
     if(!(*it)){
       Msg::Error("Incorrect face in compound surface %d\n", tag);
       Msg::Exit(1);
@@ -1139,12 +1145,15 @@ linearSystem<double> *_lsys = 0;
 bool GFaceCompound::parametrize_conformal_spectral() const
 {
 #if !defined(HAVE_PETSC) && !defined(HAVE_SLEPC)
-  Msg::Error("Gmsh should be compiled with petsc and slepc for using the conformal map.");
-  Msg::Error("Switch to harmonic map or see doc on the wiki for installing petsc and slepc:");
-  Msg::Error("https://geuz.org/trac/gmsh/wiki/STLRemeshing (username:gmsh,passwd:gmsh)");
-  return false;
-  parametrize_conformal();
+
+  //Msg::Error("Gmsh should be compiled with petsc and slepc for using the conformal map.");
+  //Msg::Error("Switch to harmonic map or see doc on the wiki for installing petsc and slepc:");
+  //Msg::Error("https://geuz.org/trac/gmsh/wiki/STLRemeshing (username:gmsh,passwd:gmsh)");
+  Msg::Warning("Slepc not installed: parametrization switched to 'FE conformal' map");
+  return parametrize_conformal(0,NULL,NULL);
+
 #else
+
   linearSystem <double> *lsysA  = new linearSystemPETSc<double>;
   linearSystem <double> *lsysB  = new linearSystemPETSc<double>;
   dofManager<double> myAssembler(lsysA, lsysB);
@@ -1244,18 +1253,28 @@ bool GFaceCompound::parametrize_conformal_spectral() const
       coordinates[v] = SPoint3(paramu,paramv,0.0);
       k = k+2;
     }
-    
     delete lsysA;
     delete lsysB;
-
-    return checkOverlap();
-    
   }
-  else return false;
+  else{
+    Msg::Warning("Slepc not converged: parametrization switched to 'FE conformal' map");
+    return parametrize_conformal(0,NULL,NULL);  
+  }
+
+   std::vector<MVertex *> vert;
+   bool hasOverlap = checkOverlap(vert);
+   if (hasOverlap){
+     Msg::Warning("!!! Overlap: parametrization switched to 'FE conformal' map");
+     printStuff(3);
+     return hasOverlap = parametrize_conformal(0, vert[0], vert[1]);
+   }
+
+   return hasOverlap;
+    
 #endif
 }
 
-bool GFaceCompound::parametrize_conformal() const
+bool GFaceCompound::parametrize_conformal(int iter, MVertex *v1, MVertex *v2) const
 {
 
   linearSystem<double> *_lsys = 0;
@@ -1273,8 +1292,8 @@ bool GFaceCompound::parametrize_conformal() const
 
   dofManager<double> myAssembler(_lsys);
 
-  MVertex *v1  = _ordered[0];
-  MVertex *v2  = _ordered[(int)ceil((double)_ordered.size()/2.)];
+  if (!v1) v1  = _ordered[0];
+  if (!v2) v2  = _ordered[(int)ceil((double)_ordered.size()/2.)];
   myAssembler.fixVertex(v1, 0, 1, 1.);
   myAssembler.fixVertex(v1, 0, 2, 0.);
   myAssembler.fixVertex(v2, 0, 1, -1.);
@@ -1338,8 +1357,18 @@ bool GFaceCompound::parametrize_conformal() const
 
   delete _lsys; 
 
-  //check for overlapping triangles
-  return checkOverlap();
+
+  //check for overlap and compute new mapping with new pinned vertices
+  std::vector<MVertex *> vert;
+  bool hasOverlap = checkOverlap(vert);
+  if (hasOverlap && iter < 3){
+    printf("**********Loop FE conformal iter (%d) v1=%d v2=%d \n", iter, vert[0]->getNum(), vert[1]->getNum());
+     printStuff(100+iter);
+     return hasOverlap = parametrize_conformal(iter+1, vert[0],vert[1]);
+  }
+  else{
+    return hasOverlap;
+  }
 
 }
 

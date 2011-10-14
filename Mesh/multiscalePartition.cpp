@@ -234,7 +234,6 @@ static void getGenusAndRatio(std::vector<MElement *> &elements, int & genus, int
   AR = getAspectRatio(elements, boundaries);
 
 }
-
 static void partitionRegions(std::vector<MElement*> &elements, 
                              std::vector<std::vector<MElement*> > &regions)
 {
@@ -325,7 +324,8 @@ multiscalePartition::multiscalePartition(std::vector<MElement *> &elements,
 
   partition(*level, nbParts, method);
 
-  totalParts = assembleAllPartitions();
+  totalParts = assembleAllPartitions(elements);
+
 }
 
 void multiscalePartition::setNumberOfPartitions(int &nbParts)
@@ -365,15 +365,13 @@ void multiscalePartition::partition(partitionLevel & level, int nbParts,
     int genus, AR, NB;
     getGenusAndRatio(regions[i], genus, AR, NB);
 
-    //printLevel (nextLevel->elements, nextLevel->recur,nextLevel->region);  
-
     if (genus < 0) {
       Msg::Error("Genus partition is negative G=%d!", genus);
       exit(1);
     }  
    
     if (genus != 0 ){
-      int nbParts = 2; //std::max(genus+2,2);
+      int nbParts = std::max(genus+2,2);
       Msg::Info("Mesh partition: level (%d-%d)  is %d-GENUS (AR=%d) ---> MULTILEVEL partition %d parts",
                 nextLevel->recur,nextLevel->region, genus, AR, nbParts);  
       partition(*nextLevel, nbParts, MULTILEVEL);
@@ -401,15 +399,17 @@ void multiscalePartition::partition(partitionLevel & level, int nbParts,
 #endif
 }
 
-int multiscalePartition::assembleAllPartitions()
+int multiscalePartition::assembleAllPartitions(std::vector<MElement*> & elements)
 {
   int iPart =  1;   
 
+  elements.clear();
   for (unsigned i = 0; i< levels.size(); i++){
     partitionLevel *iLevel = levels[i];
     if(iLevel->elements.size() > 0){
       for (unsigned j = 0; j < iLevel->elements.size(); j++){
         MElement *e = iLevel->elements[j];
+	elements.push_back(e);
         e->setPartition(iPart);
       }
       iPart++;

@@ -2,7 +2,7 @@
 #include <queue>
 #include <stack>
 #include "fullMatrix.h"
-#include "mathEvaluator.h"
+
 
 inline double det3(double d11, double d12, double d13, double d21, double d22, double d23, double d31, double d32, double d33) {
   return d11 * (d22 * d33 - d23 * d32) - d21 * (d12 * d33 - d13 * d32) + d31 * (d12 * d23 - d13 * d22);

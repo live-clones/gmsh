@@ -41,7 +41,6 @@
 #define INTER     14
 #define CRACK     15
 
-
 class gLevelset
 {
 protected:
@@ -121,7 +120,7 @@ class gLevelsetSphere : public gLevelsetPrimitive
 protected:
   double xc, yc, zc, r;
 public:
-  gLevelsetSphere (const double &x, const double &y, const double &z, const double &R, int tag) : gLevelsetPrimitive(tag), xc(x), yc(y), zc(z), r(R) {}
+  gLevelsetSphere (const double &x, const double &y, const double &z, const double &R, int tag=1) : gLevelsetPrimitive(tag), xc(x), yc(y), zc(z), r(R) {}
   virtual double operator () (const double x, const double y, const double z) const
     {return sqrt((xc - x) * (xc - x) + (yc - y) * (yc - y) + (zc - z) * (zc - z)) - r;}
   int type() const {return SPHERE;}
@@ -133,11 +132,11 @@ protected:
   double a, b, c, d;
 public:
   // define the plane _a*x+_b*y+_c*z+_d, with outward normal (a,b,c)
-  gLevelsetPlane (const double _a, const double _b, const double _c, const double _d, int tag) : gLevelsetPrimitive(tag), a(_a), b(_b), c(_c), d(_d) {}
+  gLevelsetPlane (const double _a, const double _b, const double _c, const double _d, int tag=1) : gLevelsetPrimitive(tag), a(_a), b(_b), c(_c), d(_d) {}
   // define the plane passing through the point pt and with outward normal norm
-  gLevelsetPlane (const double *pt, const double *norm, int tag);
+  gLevelsetPlane (const double *pt, const double *norm, int tag=1);
   // define the plane passing through the 3 points pt1,pt2,pt3 and with outward normal (pt1,pt2)x(pt1,pt3)
-  gLevelsetPlane (const double *pt1, const double *pt2, const double *pt3, int tag);
+  gLevelsetPlane (const double *pt1, const double *pt2, const double *pt3, int tag=1);
   // copy constructor
   gLevelsetPlane(const gLevelsetPlane &lv);
   virtual gLevelset * clone() const{return new gLevelsetPlane(*this);}
@@ -174,7 +173,7 @@ protected:
 
 public:
   // define the data points
-  gLevelsetPoints(fullMatrix<double> &_centers, int tag); 
+  gLevelsetPoints(fullMatrix<double> &_centers, int tag=1); 
   // copy constructor
   gLevelsetPoints(const gLevelsetPoints &lv);
   virtual gLevelset * clone() const{return new gLevelsetPoints(*this);}
@@ -198,7 +197,7 @@ protected:
 
 public:
   gLevelsetQuadric() : gLevelsetPrimitive() {init(); }
-  gLevelsetQuadric(int tag) : gLevelsetPrimitive(tag) {init(); }
+  gLevelsetQuadric(int tag=1) : gLevelsetPrimitive(tag) {init(); }
   gLevelsetQuadric(const gLevelsetQuadric &);
   virtual ~gLevelsetQuadric() {}
   double operator () (const double x, const double y, const double z) const;
@@ -208,7 +207,7 @@ public:
 class gLevelsetGenCylinder : public gLevelsetQuadric
 {
 public:
-  gLevelsetGenCylinder (const double *pt, const double *dir, const double &R, int tag);
+  gLevelsetGenCylinder (const double *pt, const double *dir, const double &R, int tag=1);
   gLevelsetGenCylinder (const gLevelsetGenCylinder& );
   virtual gLevelset * clone() const{return new gLevelsetGenCylinder(*this);}
   int type() const {return GENCYLINDER;}
@@ -217,7 +216,7 @@ public:
 class gLevelsetEllipsoid : public gLevelsetQuadric
 {
 public:
-  gLevelsetEllipsoid (const double *pt, const double *dir, const double &a, const double &b, const double &c, int tag);
+  gLevelsetEllipsoid (const double *pt, const double *dir, const double &a, const double &b, const double &c, int tag=1);
   gLevelsetEllipsoid (const gLevelsetEllipsoid& );
   virtual gLevelset * clone() const{return new gLevelsetEllipsoid(*this);}
   int type() const {return ELLIPS;}
@@ -226,7 +225,7 @@ public:
 class gLevelsetCone : public gLevelsetQuadric
 {
 public:
-  gLevelsetCone (const double *pt, const double *dir, const double &angle, int tag);
+  gLevelsetCone (const double *pt, const double *dir, const double &angle, int tag=1);
   gLevelsetCone (const gLevelsetCone& );
   virtual gLevelset * clone() const{return new gLevelsetCone(*this);}
   int type() const {return CONE;}
@@ -236,7 +235,7 @@ class gLevelsetGeneralQuadric : public gLevelsetQuadric
 {
 public:
   gLevelsetGeneralQuadric (const double *pt, const double *dir, const double &x2, const double &y2, const double &z2,
-                           const double &z, const double &c, int tag);
+                           const double &z, const double &c, int tag=1);
   gLevelsetGeneralQuadric (const gLevelsetGeneralQuadric& );
   virtual gLevelset * clone() const{return new gLevelsetGeneralQuadric(*this);}
   int type() const {return QUADRIC;}
@@ -246,7 +245,7 @@ class gLevelsetMathEval: public gLevelsetPrimitive
 {
   mathEvaluator *_expr;
 public:
-  gLevelsetMathEval(std::string f, int tag);
+  gLevelsetMathEval(std::string f, int tag=1);
   ~gLevelsetMathEval(){ if (_expr) delete _expr; }
   double operator () (const double x, const double y, const double z) const;
   int type() const { return UNKNOWN; }
@@ -259,7 +258,7 @@ class gLevelsetPostView : public gLevelsetPrimitive
   int _viewIndex;
   OctreePost *_octree;
 public:
-  gLevelsetPostView(int index, int tag) ;
+  gLevelsetPostView(int index, int tag=1) ;
   ~gLevelsetPostView(){ if(_octree) delete _octree;}
   double operator () (const double x, const double y, const double z) const;
   int type() const { return UNKNOWN; }
@@ -417,7 +416,7 @@ public:
   //                         face normal to dir1 and not including pt : tag+4
   //                         face normal to dir1 and     including pt : tag+5
   gLevelsetBox(const double *pt, const double *dir1, const double *dir2, const double *dir3,
-               const double &a, const double &b, const double &c, int tag);
+               const double &a, const double &b, const double &c, int tag=1);
   // create a box with the 8 vertices (pt1,...,pt8). 
   // check if the faces are planar.
   // tags of the faces are : face(pt5,pt6,pt7,pt8) : tag+0
@@ -427,7 +426,7 @@ public:
   //                         face(pt2,pt3,pt7,pt6) : tag+4
   //                         face(pt1,pt5,pt8,pt4) : tag+5
   gLevelsetBox(const double *pt1, const double *pt2, const double *pt3, const double *pt4,
-               const double *pt5, const double *pt6, const double *pt7, const double *pt8, int tag);
+               const double *pt5, const double *pt6, const double *pt7, const double *pt8, int tag=1);
   gLevelsetBox(const gLevelsetBox &);
   virtual gLevelset * clone() const{return new gLevelsetBox(*this);}
   int type() const {return BOX;}
@@ -443,7 +442,7 @@ public:
   // tags of the faces are : exterior face :             tag+0
   //                         plane face including pt :   tag+1
   //                         plane face opposite to pt : tag+2
-  gLevelsetCylinder (const double *pt, const double *dir, const double &R, const double &H, int tag);
+  gLevelsetCylinder (const double *pt, const double *dir, const double &R, const double &H, int tag=1);
   // create a cylinder : pt is the point in the middle of the cylinder base,
   //                     dir is the direction of the cylinder axis,
   //                     R is the outer radius of the cylinder,
@@ -453,7 +452,7 @@ public:
   //                         plane face including pt :   tag+1
   //                         plane face opposite to pt : tag+2
   //                         interior face :             tag+3
-  gLevelsetCylinder (const double *pt, const double *dir, const double &R, const double &r, const double &H, int tag);
+  gLevelsetCylinder (const double *pt, const double *dir, const double &R, const double &r, const double &H, int tag=1);
   gLevelsetCylinder(const gLevelsetCylinder &);
   virtual gLevelset * clone() const{return new gLevelsetCylinder(*this);}
   int type() const {return CYLINDER;}
@@ -490,7 +489,7 @@ public:
   gLevelsetConrod (const double *pt, const double *dir1, const double *dir2,
                    const double &H1, const double &H2, const double &H3,
                    const double &R1, const double &r1, const double &R2, const double &r2,
-                   const double &L1, const double &L2, const double &E, int tag);
+                   const double &L1, const double &L2, const double &E, int tag=1);
   gLevelsetConrod(const gLevelsetConrod &);
   virtual gLevelset * clone() const{return new gLevelsetConrod(*this);}
   int type() const {return CONROD;}
