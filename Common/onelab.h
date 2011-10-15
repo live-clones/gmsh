@@ -503,7 +503,7 @@ namespace onelab{
     int _pid;
   public:
     localNetworkClient(const std::string &name, const std::string &commandLine)
-      : localClient(name), _commandLine(commandLine){}
+      : localClient(name), _commandLine(commandLine), _pid(-1) {}
     virtual ~localNetworkClient(){}
     int getPid(){ return _pid; }
     void setPid(int pid){ _pid = pid; }

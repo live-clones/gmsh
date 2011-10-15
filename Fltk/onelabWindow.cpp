@@ -136,6 +136,8 @@ bool onelab::localNetworkClient::run(const std::string &what)
           p.fromChar(message);
           set(p, false);
         }
+        else
+          Msg::Error("FIXME not done for this parameter type");
       }
       break;
     case GmshSocket::GMSH_PARAMETER_QUERY:
@@ -166,6 +168,8 @@ bool onelab::localNetworkClient::run(const std::string &what)
             server->SendMessage(GmshSocket::GMSH_INFO, reply.size(), &reply[0]);
           }
         }
+        else
+          Msg::Error("FIXME query not done for this parameter type");
       }
       break;
     case GmshSocket::GMSH_PROGRESS:
@@ -354,12 +358,14 @@ void onelabWindow::rebuildTree()
   onelab::server::instance()->get(numbers);
   for(unsigned int i = 0; i < numbers.size(); i++){
     Fl_Tree_Item *n = _tree->add(numbers[i].getName().c_str());
+    std::string label = numbers[i].getShortHelp();
+    if(label.empty()) label = getShortName(numbers[i].getName());
     _tree->begin();
     if(numbers[i].getChoices().size() == 2 &&
        numbers[i].getChoices()[0] == 0 && numbers[i].getChoices()[1] == 1){
       Fl_Check_Button *but = new Fl_Check_Button(1,1,IW,1);
       _treeWidgets.push_back(but);
-      but->copy_label(getShortName(numbers[i].getName()).c_str());
+      but->copy_label(label.c_str());
       but->value(numbers[i].getValue());
       but->callback(onelab_check_button_cb, (void*)n);
       n->widget(but);
@@ -367,7 +373,7 @@ void onelabWindow::rebuildTree()
     else{
       Fl_Value_Input *but = new Fl_Value_Input(1,1,IW,1);
       _treeWidgets.push_back(but);
-      but->copy_label(getShortName(numbers[i].getName()).c_str());
+      but->copy_label(label.c_str());
       but->value(numbers[i].getValue());
       if(numbers[i].getMin() != -1.e200)
         but->minimum(numbers[i].getMin());
@@ -387,10 +393,12 @@ void onelabWindow::rebuildTree()
   onelab::server::instance()->get(strings);
   for(unsigned int i = 0; i < strings.size(); i++){
     Fl_Tree_Item *n = _tree->add(strings[i].getName().c_str());
+    std::string label = strings[i].getShortHelp();
+    if(label.empty()) label = getShortName(strings[i].getName());
     _tree->begin();
     Fl_Input_Choice *but = new Fl_Input_Choice(1,1,IW,1);
     _treeWidgets.push_back(but);
-    but->copy_label(getShortName(strings[i].getName()).c_str());
+    but->copy_label(label.c_str());
     for(unsigned int j = 0; j < strings[i].getChoices().size(); j++)
       but->add(strings[i].getChoices()[j].c_str());
     but->value(strings[i].getValue().c_str());
