@@ -340,16 +340,22 @@ onelabWindow::onelabWindow(int deltaFontSize)
 
 static std::string getShortName(const std::string &name) 
 {
+  std::string s = name;
+  // remove path
   std::string::size_type last = name.find_last_of('/');
   if(last != std::string::npos)
-    return name.substr(last + 1);
-  return name;
+    s = name.substr(last + 1);
+  // remove starting numbers
+  while(s.size() && s[0] >= '0' && s[0] <= '9')
+    s = s.substr(1);
+  return s;
 }
 
 void onelabWindow::rebuildTree()
 {
   _tree->clear();
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
+  _tree->selectmode(FL_TREE_SELECT_NONE);
   for(unsigned int i = 0; i < _treeWidgets.size(); i++)
     Fl::delete_widget(_treeWidgets[i]);
   _treeWidgets.clear();
@@ -358,6 +364,7 @@ void onelabWindow::rebuildTree()
   onelab::server::instance()->get(numbers);
   for(unsigned int i = 0; i < numbers.size(); i++){
     Fl_Tree_Item *n = _tree->add(numbers[i].getName().c_str());
+    n->labelsize(FL_NORMAL_SIZE + 2);
     std::string label = numbers[i].getShortHelp();
     if(label.empty()) label = getShortName(numbers[i].getName());
     _tree->begin();
@@ -393,6 +400,7 @@ void onelabWindow::rebuildTree()
   onelab::server::instance()->get(strings);
   for(unsigned int i = 0; i < strings.size(); i++){
     Fl_Tree_Item *n = _tree->add(strings[i].getName().c_str());
+    n->labelsize(FL_NORMAL_SIZE + 2);
     std::string label = strings[i].getShortHelp();
     if(label.empty()) label = getShortName(strings[i].getName());
     _tree->begin();
@@ -408,8 +416,21 @@ void onelabWindow::rebuildTree()
     n->widget(but);
     _tree->end();
   }
+
+  for(Fl_Tree_Item *n = _tree->first(); n; n = n->next()){
+    if(n->has_children()){
+      _tree->begin();
+      Fl_Box *but = new Fl_Box(1,1,IW,1);
+      but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+      _treeWidgets.push_back(but);
+      but->copy_label(getShortName(n->label()).c_str());
+      n->widget(but);
+      _tree->end();
+    }
+  }
   
   _tree->redraw();
 }
 
 #endif
+

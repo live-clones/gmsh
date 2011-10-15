@@ -772,13 +772,15 @@ void graphicWindow::resizeMessages(int dh)
 
 void graphicWindow::showMessages()
 {
-  int height = _savedMessageHeight;
-  if(height < 10) height = 100;
-  int maxh = win->h() - bottom->h();
-  if(height > maxh) height = maxh / 2;
-  resizeMessages(height - browser->h());
-  if(browser->h())
-    browser->bottomline(browser->size());
+  if(!win->shown()) return;
+  if(browser->h() < 10){
+    int height = _savedMessageHeight;
+    if(height < 1) height = 100;
+    int maxh = win->h() - bottom->h();
+    if(height > maxh) height = maxh / 2;
+    resizeMessages(height - browser->h());
+  }
+  browser->bottomline(browser->size());
 }
 
 void graphicWindow::hideMessages()

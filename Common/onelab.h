@@ -38,10 +38,9 @@ namespace onelab{
   // The base parameter class.
   class parameter{
   private:
-    // the name of the parameter, including its "path" in the
-    // parameter hierarchy. The path separator '/' can be followed by
-    // a number to force ordering (hence a parameter name cannot start
-    // with a number).
+    // the name of the parameter, including its '/'-separated path in
+    // the parameter hierarchy. Parameters or subpaths can start with
+    // numbers to force their relative ordering.
     std::string _name;
     // optional help strings
     std::string _shortHelp, _help;
