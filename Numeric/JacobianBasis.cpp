@@ -9,40 +9,40 @@
 #include <vector>
 #include "polynomialBasis.h"
 
-// Bezier Exposants
-static fullMatrix<double> generate1DExposants(int order)
+// Bezier Exponents
+static fullMatrix<double> generate1DExponents(int order)
 {
-  fullMatrix<double> exposants(order + 1, 1);
-  exposants(0, 0) = 0;
+  fullMatrix<double> exponents(order + 1, 1);
+  exponents(0, 0) = 0;
   if (order > 0) {
-    exposants(1, 0) = order;
-    for (int i = 2; i < order + 1; i++) exposants(i, 0) = i - 1;
+    exponents(1, 0) = order;
+    for (int i = 2; i < order + 1; i++) exponents(i, 0) = i - 1;
   }
 
-  return exposants;
+  return exponents;
 }
 
-static fullMatrix<double> generateExposantsTriangle(int order)
+static fullMatrix<double> generateExponentsTriangle(int order)
 {
   int nbPoints = (order + 1) * (order + 2) / 2;
-  fullMatrix<double> exposants(nbPoints, 2);
+  fullMatrix<double> exponents(nbPoints, 2);
 
-  exposants(0, 0) = 0;
-  exposants(0, 1) = 0;
+  exponents(0, 0) = 0;
+  exponents(0, 1) = 0;
 
   if (order > 0) {
-    exposants(1, 0) = order;
-    exposants(1, 1) = 0;
-    exposants(2, 0) = 0;
-    exposants(2, 1) = order;
+    exponents(1, 0) = order;
+    exponents(1, 1) = 0;
+    exponents(2, 0) = 0;
+    exponents(2, 1) = order;
 
     if (order > 1) {
       int index = 3, ksi = 0, eta = 0;
 
       for (int i = 0; i < order - 1; i++, index++) {
         ksi++;
-        exposants(index, 0) = ksi;
-        exposants(index, 1) = eta;
+        exponents(index, 0) = ksi;
+        exponents(index, 1) = eta;
       }
 
       ksi = order;
@@ -50,8 +50,8 @@ static fullMatrix<double> generateExposantsTriangle(int order)
       for (int i = 0; i < order - 1; i++, index++) {
         ksi--;
         eta++;
-        exposants(index, 0) = ksi;
-        exposants(index, 1) = eta;
+        exponents(index, 0) = ksi;
+        exponents(index, 1) = eta;
       }
 
       eta = order;
@@ -59,35 +59,35 @@ static fullMatrix<double> generateExposantsTriangle(int order)
 
       for (int i = 0; i < order - 1; i++, index++) {
         eta--;
-        exposants(index, 0) = ksi;
-        exposants(index, 1) = eta;
+        exponents(index, 0) = ksi;
+        exponents(index, 1) = eta;
       }
 
       if (order > 2) {
-        fullMatrix<double> inner = generateExposantsTriangle(order - 3);
+        fullMatrix<double> inner = generateExponentsTriangle(order - 3);
         inner.add(1);
-        exposants.copy(inner, 0, nbPoints - index, 0, 2, index, 0);
+        exponents.copy(inner, 0, nbPoints - index, 0, 2, index, 0);
       }
     }
   }
 
-  return exposants;
+  return exponents;
 }
-static fullMatrix<double> generateExposantsQuad(int order)
+static fullMatrix<double> generateExponentsQuad(int order)
 {
   int nbPoints = (order+1)*(order+1);
-  fullMatrix<double> exposants(nbPoints, 2);
+  fullMatrix<double> exponents(nbPoints, 2);
 
-  exposants(0, 0) = 0;
-  exposants(0, 1) = 0;
+  exponents(0, 0) = 0;
+  exponents(0, 1) = 0;
 
   if (order > 0) {
-    exposants(1, 0) = order;
-    exposants(1, 1) = 0;
-    exposants(2, 0) = order;
-    exposants(2, 1) = order;
-    exposants(3, 0) = 0;
-    exposants(3, 1) = order;
+    exponents(1, 0) = order;
+    exponents(1, 1) = 0;
+    exponents(2, 0) = order;
+    exponents(2, 1) = order;
+    exponents(3, 0) = 0;
+    exponents(3, 1) = order;
 
     if (order > 1) {
       int index = 4;
@@ -96,21 +96,21 @@ static fullMatrix<double> generateExposantsQuad(int order)
         int p0 = edges[iedge][0];
         int p1 = edges[iedge][1];
         for (int i = 1; i < order; i++, index++) {
-          exposants(index, 0) = exposants(p0, 0) + i*(exposants(p1,0)-exposants(p0,0))/order;
-          exposants(index, 1) = exposants(p0, 1) + i*(exposants(p1,1)-exposants(p0,1))/order;
+          exponents(index, 0) = exponents(p0, 0) + i*(exponents(p1,0)-exponents(p0,0))/order;
+          exponents(index, 1) = exponents(p0, 1) + i*(exponents(p1,1)-exponents(p0,1))/order;
         }
       }
       if (order > 2) {
-        fullMatrix<double> inner = generateExposantsQuad(order - 2);
+        fullMatrix<double> inner = generateExponentsQuad(order - 2);
         inner.add(1);
-        exposants.copy(inner, 0, nbPoints - index, 0, 2, index, 0);
+        exponents.copy(inner, 0, nbPoints - index, 0, 2, index, 0);
       }
     }
   }
 
-  //  exposants.print("expq");
+  //  exponents.print("expq");
 
-  return exposants;
+  return exponents;
 }
 static int nbdoftriangle(int order) { return (order + 1) * (order + 2) / 2; }
 
@@ -274,58 +274,58 @@ static void nodepositionface3(int order,  double *u,  double *v,  double *w)
    }
 }
 
-static fullMatrix<double> generateExposantsTetrahedron(int order)
+static fullMatrix<double> generateExponentsTetrahedron(int order)
 {
   int nbPoints = (order + 1) * (order + 2) * (order + 3) / 6;
 
-  fullMatrix<double> exposants(nbPoints, 3);
+  fullMatrix<double> exponents(nbPoints, 3);
 
-  exposants(0, 0) = 0;
-  exposants(0, 1) = 0;
-  exposants(0, 2) = 0;
+  exponents(0, 0) = 0;
+  exponents(0, 1) = 0;
+  exponents(0, 2) = 0;
 
   if (order > 0) {
-    exposants(1, 0) = order;
-    exposants(1, 1) = 0;
-    exposants(1, 2) = 0;
+    exponents(1, 0) = order;
+    exponents(1, 1) = 0;
+    exponents(1, 2) = 0;
 
-    exposants(2, 0) = 0;
-    exposants(2, 1) = order;
-    exposants(2, 2) = 0;
+    exponents(2, 0) = 0;
+    exponents(2, 1) = order;
+    exponents(2, 2) = 0;
 
-    exposants(3, 0) = 0;
-    exposants(3, 1) = 0;
-    exposants(3, 2) = order;
+    exponents(3, 0) = 0;
+    exponents(3, 1) = 0;
+    exponents(3, 2) = order;
 
     // edges e5 and e6 switched in original version, opposite direction
     // the template has been defined in table edges_tetra and faces_tetra (MElement.h)
 
     if (order > 1) {
       for (int k = 0; k < (order - 1); k++) {
-        exposants(4 + k, 0) = k + 1;
-        exposants(4 +      order - 1  + k, 0) = order - 1 - k;
-        exposants(4 + 2 * (order - 1) + k, 0) = 0;
-        exposants(4 + 3 * (order - 1) + k, 0) = 0;
-        // exposants(4 + 4 * (order - 1) + k, 0) = order - 1 - k;
-        // exposants(4 + 5 * (order - 1) + k, 0) = 0.;
-        exposants(4 + 4 * (order - 1) + k, 0) = 0;
-        exposants(4 + 5 * (order - 1) + k, 0) = k+1;
+        exponents(4 + k, 0) = k + 1;
+        exponents(4 +      order - 1  + k, 0) = order - 1 - k;
+        exponents(4 + 2 * (order - 1) + k, 0) = 0;
+        exponents(4 + 3 * (order - 1) + k, 0) = 0;
+        // exponents(4 + 4 * (order - 1) + k, 0) = order - 1 - k;
+        // exponents(4 + 5 * (order - 1) + k, 0) = 0.;
+        exponents(4 + 4 * (order - 1) + k, 0) = 0;
+        exponents(4 + 5 * (order - 1) + k, 0) = k+1;
 
-        exposants(4 + k, 1) = 0;
-        exposants(4 +      order - 1  + k, 1) = k + 1;
-        exposants(4 + 2 * (order - 1) + k, 1) = order - 1 - k;
-        exposants(4 + 3 * (order - 1) + k, 1) = 0;
-        //         exposants(4 + 4 * (order - 1) + k, 1) = 0.;
-        //         exposants(4 + 5 * (order - 1) + k, 1) = order - 1 - k;
-        exposants(4 + 4 * (order - 1) + k, 1) = k+1;
-        exposants(4 + 5 * (order - 1) + k, 1) = 0;
+        exponents(4 + k, 1) = 0;
+        exponents(4 +      order - 1  + k, 1) = k + 1;
+        exponents(4 + 2 * (order - 1) + k, 1) = order - 1 - k;
+        exponents(4 + 3 * (order - 1) + k, 1) = 0;
+        //         exponents(4 + 4 * (order - 1) + k, 1) = 0.;
+        //         exponents(4 + 5 * (order - 1) + k, 1) = order - 1 - k;
+        exponents(4 + 4 * (order - 1) + k, 1) = k+1;
+        exponents(4 + 5 * (order - 1) + k, 1) = 0;
 
-        exposants(4 + k, 2) = 0;
-        exposants(4 +      order - 1  + k, 2) = 0;
-        exposants(4 + 2 * (order - 1) + k, 2) = 0;
-        exposants(4 + 3 * (order - 1) + k, 2) = order - 1 - k;
-        exposants(4 + 4 * (order - 1) + k, 2) = order - 1 - k;
-        exposants(4 + 5 * (order - 1) + k, 2) = order - 1 - k;
+        exponents(4 + k, 2) = 0;
+        exponents(4 +      order - 1  + k, 2) = 0;
+        exponents(4 + 2 * (order - 1) + k, 2) = 0;
+        exponents(4 + 3 * (order - 1) + k, 2) = order - 1 - k;
+        exponents(4 + 4 * (order - 1) + k, 2) = order - 1 - k;
+        exponents(4 + 5 * (order - 1) + k, 2) = order - 1 - k;
       }
 
       if (order > 2) {
@@ -341,9 +341,9 @@ static fullMatrix<double> generateExposantsTetrahedron(int order)
         // u-v plane
 
         for (int i = 0; i < nbdofface; i++){
-          exposants(ns + i, 0) = u[i] * (order - 3) + 1;
-          exposants(ns + i, 1) = v[i] * (order - 3) + 1;
-          exposants(ns + i, 2) = w[i] * (order - 3);
+          exponents(ns + i, 0) = u[i] * (order - 3) + 1;
+          exponents(ns + i, 1) = v[i] * (order - 3) + 1;
+          exponents(ns + i, 2) = w[i] * (order - 3);
         }
 
         ns = ns + nbdofface;
@@ -353,9 +353,9 @@ static fullMatrix<double> generateExposantsTetrahedron(int order)
         nodepositionface1(order - 3, u, v, w);
 
         for (int i=0; i < nbdofface; i++){
-          exposants(ns + i, 0) = u[i] * (order - 3) + 1;
-          exposants(ns + i, 1) = v[i] * (order - 3) ;
-          exposants(ns + i, 2) = w[i] * (order - 3) + 1;
+          exponents(ns + i, 0) = u[i] * (order - 3) + 1;
+          exponents(ns + i, 1) = v[i] * (order - 3) ;
+          exponents(ns + i, 2) = w[i] * (order - 3) + 1;
         }
 
         // v-w plane
@@ -365,9 +365,9 @@ static fullMatrix<double> generateExposantsTetrahedron(int order)
         nodepositionface2(order - 3, u, v, w);
 
         for (int i = 0; i < nbdofface; i++){
-          exposants(ns + i, 0) = u[i] * (order - 3);
-          exposants(ns + i, 1) = v[i] * (order - 3) + 1;
-          exposants(ns + i, 2) = w[i] * (order - 3) + 1;
+          exponents(ns + i, 0) = u[i] * (order - 3);
+          exponents(ns + i, 1) = v[i] * (order - 3) + 1;
+          exponents(ns + i, 2) = w[i] * (order - 3) + 1;
         }
 
         // u-v-w plane
@@ -377,9 +377,9 @@ static fullMatrix<double> generateExposantsTetrahedron(int order)
         nodepositionface3(order - 3, u, v, w);
 
         for (int i = 0; i < nbdofface; i++){
-          exposants(ns + i, 0) = u[i] * (order - 3) + 1;
-          exposants(ns + i, 1) = v[i] * (order - 3) + 1;
-          exposants(ns + i, 2) = w[i] * (order - 3) + 1;
+          exponents(ns + i, 0) = u[i] * (order - 3) + 1;
+          exponents(ns + i, 1) = v[i] * (order - 3) + 1;
+          exponents(ns + i, 2) = w[i] * (order - 3) + 1;
         }
 
         ns = ns + nbdofface;
@@ -390,129 +390,115 @@ static fullMatrix<double> generateExposantsTetrahedron(int order)
 
         if (order > 3) {
 
-          fullMatrix<double> interior = generateExposantsTetrahedron(order - 4);
+          fullMatrix<double> interior = generateExponentsTetrahedron(order - 4);
           for (int k = 0; k < interior.size1(); k++) {
-            exposants(ns + k, 0) = 1 + interior(k, 0);
-            exposants(ns + k, 1) = 1 + interior(k, 1);
-            exposants(ns + k, 2) = 1 + interior(k, 2);
+            exponents(ns + k, 0) = 1 + interior(k, 0);
+            exponents(ns + k, 1) = 1 + interior(k, 1);
+            exponents(ns + k, 2) = 1 + interior(k, 2);
           }
         }
       }
     }
   }
 
-  return exposants;
+  return exponents;
 }
 
-static fullMatrix<double> generateExposantsPrism(int order)
+static fullMatrix<double> generateExponentsPrism(int order)
 {
-//  int nbMonomials = (order + 1) * (order + 1) * (order + 2) / 2;
-//
-//  fullMatrix<double> monomials(nbMonomials, 3);
-//  int index = 0;
-//  fullMatrix<double> lineMonoms = generate1DMonomials(order);
-//  fullMatrix<double> triMonoms = generateExposantsTriangle(order);
-//  // store monomials in right order
-//  for (int currentOrder = 0; currentOrder <= order; currentOrder++) {
-//    int orderT = currentOrder, orderL = currentOrder;
-//    for (orderL = 0; orderL < currentOrder; orderL++) {
-//      // do all permutations of monoms for orderL, orderT
-//      int iL = orderL;
-//      for (int iT = (orderT)*(orderT+1)/2; iT < (orderT+1)*(orderT+2)/2 ;iT++) {
-//        monomials(index,0) = triMonoms(iT,0);
-//        monomials(index,1) = triMonoms(iT,1);
-//        monomials(index,2) = lineMonoms(iL,0);
-//        index ++;
-//      }
-//    }
-//    orderL = currentOrder;
-//    for (orderT = 0; orderT <= currentOrder; orderT++) {
-//      int iL = orderL;
-//      for (int iT = (orderT)*(orderT+1)/2; iT < (orderT+1)*(orderT+2)/2 ;iT++) {
-//        monomials(index,0) = triMonoms(iT,0);
-//        monomials(index,1) = triMonoms(iT,1);
-//        monomials(index,2) = lineMonoms(iL,0);
-//        index ++;
-//      }
-//    }    
-//  }
-////   monomials.print("Pri monoms");
-//  return monomials;
-
-  //const double prism18Pts[18][3] = {
- //   {0, 0, -1}, // 0
- //   {1, 0, -1}, // 1
- //   {0, 1, -1}, // 2
- //   {0, 0, 1},  // 3
- //   {1, 0, 1},  // 4
- //   {0, 1, 1},  // 5
- //   {0.5, 0, -1},  // 6
- //   {0, 0.5, -1},  // 7
- //   {0, 0, 0},  // 8
- //   {0.5, 0.5, -1},  // 9
- //   {1, 0, 0},  // 10
- //   {0, 1, 0},  // 11
- //   {0.5, 0, 1},  // 12
- //   {0, 0.5, 1},  // 13
- //   {0.5, 0.5, 1},  // 14
- //   {0.5, 0, 0},  // 15
- //   {0, 0.5, 0},  // 16
- //   {0.5, 0.5, 0},  // 17
- // };
-
   int nbPoints = (order + 1)*(order + 1)*(order + 2)/2;
-  fullMatrix<double> exposants(nbPoints, 3);
+  fullMatrix<double> exponents(nbPoints, 3);
 
   int index = 0;
-  fullMatrix<double> triExp = generateExposantsTriangle(order);
-  fullMatrix<double> lineExp = generate1DExposants(order);
+  fullMatrix<double> triExp = generateExponentsTriangle(order);
+  fullMatrix<double> lineExp = generate1DExponents(order);
+  // First exponents (i < 3) must relate to corner
+  for (int i = 0; i < triExp.size1(); i++) {
+    exponents(index,0) = triExp(i,0);
+    exponents(index,1) = triExp(i,1);
+    exponents(index,2) = lineExp(0,0);
+    index ++;
+    exponents(index,0) = triExp(i,0);
+    exponents(index,1) = triExp(i,1);
+    exponents(index,2) = lineExp(1,0);
+    index ++;
+  }
+  for (int j = 2; j <lineExp.size1() ; j++) {
+    for (int i = 0; i < triExp.size1(); i++) {
+      exponents(index,0) = triExp(i,0);
+      exponents(index,1) = triExp(i,1);
+      exponents(index,2) = lineExp(j,0);
+      index ++;
+    }
+  }
 
- /* if (order == 2)
-    for (int i =0; i<18; i++)
-      for (int j=0; j<3;j++)
-        exposants(i,j) = prism18Pts[i][j];
-  else*/
-  {
-    for (int i = 0; i < 3; i++) {
-      exposants(index,0) = triExp(i,0);
-      exposants(index,1) = triExp(i,1);
-      exposants(index,2) = lineExp(0,0);
-      index ++;
-      exposants(index,0) = triExp(i,0);
-      exposants(index,1) = triExp(i,1);
-      exposants(index,2) = lineExp(1,0);
-      index ++;
+  return exponents;
+}
+
+static fullMatrix<double> generateExponentsHex(int order)
+{
+  int nbPoints = (order+1) * (order+1) * (order+1);
+  fullMatrix<double> exponents(nbPoints, 3);
+  
+  if (order == 0) {
+    exponents(0, 0) = .0;
+    return exponents;
+  }
+
+  int index = 0;
+  fullMatrix<double> lineExp = generate1DExponents(order);
+
+  for (int i = 0; i < 2; ++i) {
+    for (int j = 0; i < 2; ++j) {
+      for (int k = 0; i < 2; ++k) {
+        exponents(index, 0) = lineExp(i, 0);
+        exponents(index, 1) = lineExp(j, 0);
+        exponents(index, 2) = lineExp(k, 0);
+        ++index;
+      }
     }
-    for (int i = 3; i < triExp.size1(); i++) {
-      exposants(index,0) = triExp(i,0);
-      exposants(index,1) = triExp(i,1);
-      exposants(index,2) = lineExp(0,0);
-      index ++;
-      exposants(index,0) = triExp(i,0);
-      exposants(index,1) = triExp(i,1);
-      exposants(index,2) = lineExp(1,0);
-      index ++;
+  }
+  
+  for (int i = 2; i < lineExp.size1(); ++i) {
+    for (int j = 0; i < 2; ++j) {
+      for (int k = 0; i < 2; ++k) {
+        exponents(index, 0) = lineExp(i, 0);
+        exponents(index, 1) = lineExp(j, 0);
+        exponents(index, 2) = lineExp(k, 0);
+        ++index;
+      }
     }
-    for (int j = 2; j <lineExp.size1() ; j++) {
-      for (int i = 0; i < triExp.size1(); i++) {
-        exposants(index,0) = triExp(i,0);
-        exposants(index,1) = triExp(i,1);
-        exposants(index,2) = lineExp(j,0);
-        index ++;
+  }
+  for (int i = 0; i < lineExp.size1(); ++i) {
+    for (int j = 2; i < lineExp.size1(); ++j) {
+      for (int k = 0; i < 2; ++k) {
+        exponents(index, 0) = lineExp(i, 0);
+        exponents(index, 1) = lineExp(j, 0);
+        exponents(index, 2) = lineExp(k, 0);
+        ++index;
+      }
+    }
+  }
+  for (int i = 0; i < lineExp.size1(); ++i) {
+    for (int j = 0; i < lineExp.size1(); ++j) {
+      for (int k = 2; i < lineExp.size1(); ++k) {
+        exponents(index, 0) = lineExp(i, 0);
+        exponents(index, 1) = lineExp(j, 0);
+        exponents(index, 2) = lineExp(k, 0);
+        ++index;
       }
     }
   }
 
-  return exposants;
+  return exponents;
 }
 
 // Sampling Points
 static fullMatrix<double> generate1DPoints(int order)
 {
   fullMatrix<double> line(order + 1, 1);
-  line(0,0) = 0;
+  line(0,0) = .0;
   if (order > 0) {
-    line(0, 0) = 0.;
     line(1, 0) = 1.;
     double dd = 1. / order;
     for (int i = 2; i < order + 1; i++) line(i, 0) = dd * (i - 1);
@@ -520,6 +506,118 @@ static fullMatrix<double> generate1DPoints(int order)
 
   return line;
 }
+
+static fullMatrix<double> gmshGeneratePointsTriangle(int order, bool serendip)
+{
+  int nbPoints = serendip ? 3 * order : (order + 1) * (order + 2) / 2;
+  fullMatrix<double> point(nbPoints, 2);
+
+  point(0, 0) = 0;
+  point(0, 1) = 0;
+
+  if (order > 0) {
+    double dd = 1. / order;
+
+    point(1, 0) = 1;
+    point(1, 1) = 0;
+    point(2, 0) = 0;
+    point(2, 1) = 1;
+
+    int index = 3;
+
+    if (order > 1) {
+
+      double ksi = 0;
+      double eta = 0;
+
+      for (int i = 0; i < order - 1; i++, index++) {
+        ksi += dd;
+        point(index, 0) = ksi;
+        point(index, 1) = eta;
+      }
+
+      ksi = 1.;
+
+      for (int i = 0; i < order - 1; i++, index++) {
+        ksi -= dd;
+        eta += dd;
+        point(index, 0) = ksi;
+        point(index, 1) = eta;
+      }
+
+      eta = 1.;
+      ksi = 0.;
+
+      for (int i = 0; i < order - 1; i++, index++) {
+        eta -= dd;
+        point(index, 0) = ksi;
+        point(index, 1) = eta;
+      }
+
+      if (order > 2 && !serendip) {
+        fullMatrix<double> inner = gmshGeneratePointsTriangle(order - 3, serendip);
+        inner.scale(1. - 3. * dd);
+        inner.add(dd);
+        point.copy(inner, 0, nbPoints - index, 0, 2, index, 0);
+      }
+    }
+  }
+  return point;
+}
+
+static fullMatrix<double> generatePointsQuadRecur(int order, bool serendip)
+{
+  int nbPoints = serendip ? order*4 : (order+1)*(order+1);
+  fullMatrix<double> point(nbPoints, 2);
+
+  if (order > 0) {
+    point(0, 0) = -1;
+    point(0, 1) = -1;
+    point(1, 0) = 1;
+    point(1, 1) = -1;
+    point(2, 0) = 1;
+    point(2, 1) = 1;
+    point(3, 0) = -1;
+    point(3, 1) = 1;
+
+    if (order > 1) {
+      int index = 4;
+      const static int edges[4][2]={{0,1},{1,2},{2,3},{3,0}};
+      for (int iedge=0; iedge<4; iedge++) {
+        int p0 = edges[iedge][0];
+        int p1 = edges[iedge][1];
+        for (int i = 1; i < order; i++, index++) {
+          point(index, 0) = point(p0, 0) + i*(point(p1,0)-point(p0,0))/order;
+          point(index, 1) = point(p0, 1) + i*(point(p1,1)-point(p0,1))/order;
+        }
+      }
+      if (order >= 2 && !serendip) {
+        fullMatrix<double> inner = generatePointsQuadRecur(order - 2, false);
+        inner.scale(1. - 2./order);
+        point.copy(inner, 0, nbPoints - index, 0, 2, index, 0);
+      }
+    }
+  }
+  else {
+    point(0, 0) = 0;
+    point(0, 1) = 0;
+  }
+
+
+  return point;
+}
+
+static fullMatrix<double> generatePointsQuad(int order, bool serendip)
+{
+  fullMatrix<double>  point = generatePointsQuadRecur(order, serendip);
+  // rescale to [0,1] x [0,1]
+  for (int i=0;i<point.size1();i++){
+    point(i,0) = (1.+point(i,0))*.5;
+    point(i,1) = (1.+point(i,1))*.5;
+  }
+  return point;
+}
+
 
 static fullMatrix<double> gmshGeneratePointsTetrahedron(int order, bool serendip)
 {
@@ -657,64 +755,6 @@ static fullMatrix<double> gmshGeneratePointsTetrahedron(int order, bool serendip
   return point;
 }
 
-static fullMatrix<double> gmshGeneratePointsTriangle(int order, bool serendip)
-{
-  int nbPoints = serendip ? 3 * order : (order + 1) * (order + 2) / 2;
-  fullMatrix<double> point(nbPoints, 2);
-
-  point(0, 0) = 0;
-  point(0, 1) = 0;
-
-  if (order > 0) {
-    double dd = 1. / order;
-
-    point(1, 0) = 1;
-    point(1, 1) = 0;
-    point(2, 0) = 0;
-    point(2, 1) = 1;
-
-    int index = 3;
-
-    if (order > 1) {
-
-      double ksi = 0;
-      double eta = 0;
-
-      for (int i = 0; i < order - 1; i++, index++) {
-        ksi += dd;
-        point(index, 0) = ksi;
-        point(index, 1) = eta;
-      }
-
-      ksi = 1.;
-
-      for (int i = 0; i < order - 1; i++, index++) {
-        ksi -= dd;
-        eta += dd;
-        point(index, 0) = ksi;
-        point(index, 1) = eta;
-      }
-
-      eta = 1.;
-      ksi = 0.;
-
-      for (int i = 0; i < order - 1; i++, index++) {
-        eta -= dd;
-        point(index, 0) = ksi;
-        point(index, 1) = eta;
-      }
-
-      if (order > 2 && !serendip) {
-        fullMatrix<double> inner = gmshGeneratePointsTriangle(order - 3, serendip);
-        inner.scale(1. - 3. * dd);
-        inner.add(dd);
-        point.copy(inner, 0, nbPoints - index, 0, 2, index, 0);
-      }
-    }
-  }
-  return point;
-}
-
 static fullMatrix<double> generatePointsPrism(int order, bool serendip)
 {
   const double prism18Pts[18][3] = {
@@ -762,64 +802,32 @@ static fullMatrix<double> generatePointsPrism(int order, bool serendip)
   return point;
 }
 
-static fullMatrix<double> generatePointsQuadRecur(int order, bool serendip)
+static fullMatrix<double> generatePointsHex(int order, bool serendip)
 {
-  int nbPoints = serendip ? order*4 : (order+1)*(order+1);
-  fullMatrix<double> point(nbPoints, 2);
-
-  if (order > 0) {
-    point(0, 0) = -1;
-    point(0, 1) = -1;
-    point(1, 0) = 1;
-    point(1, 1) = -1;
-    point(2, 0) = 1;
-    point(2, 1) = 1;
-    point(3, 0) = -1;
-    point(3, 1) = 1;
-
-    if (order > 1) {
-      int index = 4;
-      const static int edges[4][2]={{0,1},{1,2},{2,3},{3,0}};
-      for (int iedge=0; iedge<4; iedge++) {
-        int p0 = edges[iedge][0];
-        int p1 = edges[iedge][1];
-        for (int i = 1; i < order; i++, index++) {
-          point(index, 0) = point(p0, 0) + i*(point(p1,0)-point(p0,0))/order;
-          point(index, 1) = point(p0, 1) + i*(point(p1,1)-point(p0,1))/order;
-        }
-      }
-      if (order >= 2 && !serendip) {
-        fullMatrix<double> inner = generatePointsQuadRecur(order - 2, false);
-        inner.scale(1. - 2./order);
-        point.copy(inner, 0, nbPoints - index, 0, 2, index, 0);
+  int nbPoints = (order+1) * (order+1) * (order+1);
+  fullMatrix<double> point(nbPoints, 3);
+  
+  fullMatrix<double> linePoints = generate1DPoints(order);
+  int index = 0;
+    
+  for (int i = 0; i < linePoints.size1(); ++i) {
+    for (int j = 0; j < linePoints.size1(); ++j) {
+      for (int k = 0; k < linePoints.size1(); ++k) {
+        point(index, 0) = linePoints(i, 0);
+        point(index, 1) = linePoints(j, 0);
+        point(index, 2) = linePoints(k, 0);
+        ++index;
       }
     }
   }
-  else {
-    point(0, 0) = 0;
-    point(0, 1) = 0;
-  }
-
 
   return point;
 }
-
-static fullMatrix<double> generatePointsQuad(int order, bool serendip){
-  fullMatrix<double>  point = generatePointsQuadRecur(order, serendip);
-  // rescale to [0,1] x [0,1]
-  for (int i=0;i<point.size1();i++){
-    point(i,0) = (1.+point(i,0))*.5;
-    point(i,1) = (1.+point(i,1))*.5;
-  }
-  return point;
-}
-
 
 // Sub Control Points
 static std::vector< fullMatrix<double> > generateSubPointsLine(int order)
 {
   std::vector< fullMatrix<double> > subPoints(2);
-  fullMatrix<double> prox;
   
   subPoints[0] = generate1DPoints(order);
   subPoints[0].scale(.5);
@@ -849,6 +857,29 @@ static std::vector< fullMatrix<double> > generateSubPointsTriangle(int order)
   subPoints[3].copy(subPoints[0]);
   subPoints[3].scale(-1.);
   subPoints[3].add(.5);
+
+  return subPoints;
+}
+
+static std::vector< fullMatrix<double> > generateSubPointsQuad(int order)
+{
+  std::vector< fullMatrix<double> > subPoints(4);
+  fullMatrix<double> prox;
+  
+  subPoints[0] = generatePointsQuad(order, false);
+  subPoints[0].scale(.5);
+
+  subPoints[1].copy(subPoints[0]);
+  prox.setAsProxy(subPoints[1], 0, 1);
+  prox.add(.5);
+
+  subPoints[2].copy(subPoints[0]);
+  prox.setAsProxy(subPoints[2], 1, 1);
+  prox.add(.5);
+
+  subPoints[3].copy(subPoints[1]);
+  prox.setAsProxy(subPoints[3], 1, 1);
+  prox.add(.5);
 
   return subPoints;
 }
@@ -923,29 +954,6 @@ static std::vector< fullMatrix<double> > generateSubPointsTetrahedron(int order)
   return subPoints;
 }
 
-static std::vector< fullMatrix<double> > generateSubPointsQuad(int order)
-{
-  std::vector< fullMatrix<double> > subPoints(4);
-  fullMatrix<double> prox;
-  
-  subPoints[0] = generatePointsQuad(order, false);
-  subPoints[0].scale(.5);
-
-  subPoints[1].copy(subPoints[0]);
-  prox.setAsProxy(subPoints[1], 0, 1);
-  prox.add(.5);
-
-  subPoints[2].copy(subPoints[0]);
-  prox.setAsProxy(subPoints[2], 1, 1);
-  prox.add(.5);
-
-  subPoints[3].copy(subPoints[1]);
-  prox.setAsProxy(subPoints[3], 1, 1);
-  prox.add(.5);
-
-  return subPoints;
-}
-
 static std::vector< fullMatrix<double> > generateSubPointsPrism(int order)
 {
   std::vector< fullMatrix<double> > subPoints(8);
@@ -965,6 +973,45 @@ static std::vector< fullMatrix<double> > generateSubPointsPrism(int order)
   subPoints[3].copy(subPoints[0]);
   prox.setAsProxy(subPoints[3], 0, 2);
   prox.scale(-1.);
+  prox.add(.5);
+
+  subPoints[4].copy(subPoints[0]);
+  prox.setAsProxy(subPoints[4], 2, 1);
+  prox.add(.5);
+
+  subPoints[5].copy(subPoints[1]);
+  prox.setAsProxy(subPoints[5], 2, 1);
+  prox.add(.5);
+
+  subPoints[6].copy(subPoints[2]);
+  prox.setAsProxy(subPoints[6], 2, 1);
+  prox.add(.5);
+
+  subPoints[7].copy(subPoints[3]);
+  prox.setAsProxy(subPoints[7], 2, 1);
+  prox.add(.5);
+
+  return subPoints;
+}
+
+static std::vector< fullMatrix<double> > generateSubPointsHex(int order)
+{
+  std::vector< fullMatrix<double> > subPoints(8);
+  fullMatrix<double> prox;
+  
+  subPoints[0] = generatePointsHex(order, false);
+  subPoints[0].scale(.5);
+
+  subPoints[1].copy(subPoints[0]);
+  prox.setAsProxy(subPoints[1], 0, 1);
+  prox.add(.5);
+
+  subPoints[2].copy(subPoints[0]);
+  prox.setAsProxy(subPoints[2], 1, 1);
+  prox.add(.5);
+
+  subPoints[3].copy(subPoints[1]);
+  prox.setAsProxy(subPoints[3], 1, 1);
   prox.add(.5);
 
   subPoints[4].copy(subPoints[0]);
@@ -1007,56 +1054,58 @@ static int nChoosek(int n, int k)
 
 
 static fullMatrix<double> generateBez2LagMatrix
-  (const fullMatrix<double> &exposant, const fullMatrix<double> &point,
+  (const fullMatrix<double> &exponent, const fullMatrix<double> &point,
    int order, int dimSimplex)
 {
   
-  if(exposant.size1() != point.size1() || exposant.size2() != point.size2()){
+  if(exponent.size1() != point.size1() || exponent.size2() != point.size2()){
     Msg::Fatal("Wrong sizes for Bezier coefficients generation %d %d -- %d %d",
-      exposant.size1(),point.size1(),
-      exposant.size2(),point.size2());
+      exponent.size1(),point.size1(),
+      exponent.size2(),point.size2());
     return fullMatrix<double>(1, 1);
   }
 
-  int ndofs = exposant.size1();
-  int dim = exposant.size2();
+  int ndofs = exponent.size1();
+  int dim = exponent.size2();
 
-  fullMatrix<double> Vandermonde(ndofs, ndofs);
+  fullMatrix<double> bez2Lag(ndofs, ndofs);
   for (int i = 0; i < ndofs; i++) {
     for (int j = 0; j < ndofs; j++) {
       double dd = 1.;
-
-      double pointCompl = 1.;
-      int exposantCompl = order;
-      for (int k = 0; k < dimSimplex; k++) {
-        dd *= nChoosek(exposantCompl, (int) exposant(i, k))
-          * pow(point(j, k), exposant(i, k));
-        pointCompl -= point(j, k);
-        exposantCompl -= (int) exposant(i, k);
+      
+      {
+        double pointCompl = 1.;
+        int exponentCompl = order;
+        for (int k = 0; k < dimSimplex; k++) {
+          dd *= nChoosek(exponentCompl, (int) exponent(i, k))
+            * pow(point(j, k), exponent(i, k));
+          pointCompl -= point(j, k);
+          exponentCompl -= (int) exponent(i, k);
+        }
+        dd *= pow(pointCompl, exponentCompl);
       }
-      dd *= pow(pointCompl, exposantCompl);
-
+      
       for (int k = dimSimplex; k < dim; k++)
-        dd *= nChoosek(order, (int) exposant(i, k))
-            * pow(point(j, k), exposant(i, k))
-            * pow(1. - point(j, k), order - exposant(i, k));
-
-      Vandermonde(j, i) = dd;
+        dd *= nChoosek(order, (int) exponent(i, k))
+            * pow(point(j, k), exponent(i, k))
+            * pow(1. - point(j, k), order - exponent(i, k));
+      
+      bez2Lag(j, i) = dd;
     }
   }
-  return Vandermonde;
+  return bez2Lag;
 }
 
 
 
-static fullMatrix<double> generateDivisor
-  (const fullMatrix<double> &exposants, const std::vector< fullMatrix<double> > &subPoints,
+static fullMatrix<double> generateSubDivisor
+  (const fullMatrix<double> &exponents, const std::vector< fullMatrix<double> > &subPoints,
    const fullMatrix<double> &lag2Bez, int order, int dimSimplex)
 {
-  if (exposants.size1() != lag2Bez.size1() || exposants.size1() != lag2Bez.size2()){
+  if (exponents.size1() != lag2Bez.size1() || exponents.size1() != lag2Bez.size2()){
     Msg::Fatal("Wrong sizes for Bezier Divisor %d %d -- %d %d",
-      exposants.size1(), lag2Bez.size1(),
-      exposants.size1(), lag2Bez.size2());
+      exponents.size1(), lag2Bez.size1(),
+      exponents.size1(), lag2Bez.size2());
     return fullMatrix<double>(1, 1);
   }
 
@@ -1064,15 +1113,15 @@ static fullMatrix<double> generateDivisor
   int nbSubPts = nbPts * subPoints.size();
 
   fullMatrix<double> intermediate2(nbPts, nbPts);
-  fullMatrix<double> divisor(nbSubPts, nbPts);
+  fullMatrix<double> subDivisor(nbSubPts, nbPts);
 
   for (unsigned int i = 0; i < subPoints.size(); i++) {
     fullMatrix<double> intermediate1 =
-      generateBez2LagMatrix(exposants, subPoints[i], order, dimSimplex);
+      generateBez2LagMatrix(exponents, subPoints[i], order, dimSimplex);
     lag2Bez.mult(intermediate1, intermediate2);
-    divisor.copy(intermediate2, 0, nbPts, 0, nbPts, i*nbPts, 0);
+    subDivisor.copy(intermediate2, 0, nbPts, 0, nbPts, i*nbPts, 0);
   }
-  return divisor;
+  return subDivisor;
 }
 
 
@@ -1080,41 +1129,6 @@ static fullMatrix<double> generateDivisor
 static void generateGradShapes(JacobianBasis &jfs, const fullMatrix<double> &points
   , const fullMatrix<double> &monomials, const fullMatrix<double> &coefficients)
 {
-
-  /*{
-    Msg::Info("Printing vector jacobian':");
-    int ni = points.size1();
-    int nj = points.size2();
-    Msg::Info("  ");
-    for(int I = 0; I < ni; I++){
-        Msg::Info("%lf - %lf", points(I, 0), points(I, 1));
-    }
-    Msg::Info(" ");
-  }
-  {
-    Msg::Info("Printing vector jacobian':");
-    int ni = monomials.size1();
-    int nj = monomials.size2();
-    Msg::Info("  ");
-    for(int I = 0; I < ni; I++){
-        Msg::Info("%lf - %lf", monomials(I, 0), monomials(I, 1));
-    }
-    Msg::Info(" ");
-  }
-  {
-    Msg::Info("Printing vector jacobian':");
-    int ni = coefficients.size1();
-    int nj = coefficients.size2();
-    Msg::Info("  ");
-    for(int I = 0; I < ni; I++){
-      Msg::Info("  ");
-      for(int J = 0; J < nj; J++){
-        Msg::Info("%lf", coefficients(J, I));
-      }
-    }
-    Msg::Info(" ");
-  }*/
-
   int nbPts = points.size1();
   int nbDofs = monomials.size1();
   int dim = points.size2();
@@ -1130,14 +1144,14 @@ static void generateGradShapes(JacobianBasis &jfs, const fullMatrix<double> &poi
     default :
       return;
   }
-
+  
   double dx, dy, dz;
-
+  
   switch (dim) {
     case 3 :
       for (int i = 0; i < nbDofs; i++) {
         for (int k = 0; k < nbPts; k++) {
-
+          
           if ((int) monomials(i, 0) > 0) {
             dx = pow( points(k, 0), monomials(i, 0)-1 ) * monomials(i, 0)
                * pow( points(k, 1), monomials(i, 1) )
@@ -1162,7 +1176,7 @@ static void generateGradShapes(JacobianBasis &jfs, const fullMatrix<double> &poi
         }
       }
       return;
-
+    
     case 2 :
       for (int i = 0; i < nbDofs; i++) {
         for (int k = 0; k < nbPts; k++) {
@@ -1182,7 +1196,7 @@ static void generateGradShapes(JacobianBasis &jfs, const fullMatrix<double> &poi
         }
       }
       return;
-
+    
     case 1 :
       for (int i = 0; i < nbDofs; i++) {
         for (int k = 0; k < nbPts; k++) {
@@ -1197,8 +1211,8 @@ static void generateGradShapes(JacobianBasis &jfs, const fullMatrix<double> &poi
   }
   return;
 }
-std::map<int, bezierBasis> bezierBasis::_bbs;
 
+std::map<int, bezierBasis> bezierBasis::_bbs;
 const bezierBasis *bezierBasis::find(int tag)
 {
   std::map<int, bezierBasis>::const_iterator it = _bbs.find(tag);
@@ -1212,13 +1226,13 @@ const bezierBasis *bezierBasis::find(int tag)
   switch (F->parentType) {
     case TYPE_PNT :
       B.numLagPts = 1;
-      B.exposants = generate1DExposants(0);
+      B.exponents = generate1DExponents(0);
       B.points    = generate1DPoints(0);
       dimSimplex = 0;
       break;
     case TYPE_LIN : {
       B.numLagPts = 2;
-      B.exposants = generate1DExposants(F->order);
+      B.exponents = generate1DExponents(F->order);
       B.points    = generate1DPoints(F->order);
       dimSimplex = 0;
       subPoints = generateSubPointsLine(0);
@@ -1226,77 +1240,85 @@ const bezierBasis *bezierBasis::find(int tag)
     }
     case TYPE_TRI : {
       B.numLagPts = 3;
-      B.exposants = generateExposantsTriangle(F->order);
+      B.exponents = generateExponentsTriangle(F->order);
       B.points    = gmshGeneratePointsTriangle(F->order,false);
       dimSimplex = 2;
       subPoints = generateSubPointsTriangle(F->order);
       break;
     }
-    case TYPE_TET : {
-      B.numLagPts = 4;
-      B.exposants = generateExposantsTetrahedron(F->order);
-      B.points    = gmshGeneratePointsTetrahedron(F->order,false);
-      dimSimplex = 3;
-      subPoints = generateSubPointsTetrahedron(F->order);
-      break;
-    }
     case TYPE_QUA : {
       B.numLagPts = 4;
-      B.exposants = generateExposantsQuad(F->order);
+      B.exponents = generateExponentsQuad(F->order);
       B.points    = generatePointsQuad(F->order,false);
       dimSimplex = 0;
       subPoints = generateSubPointsQuad(F->order);
       //      B.points.print("points");
       break;
     }
-    case TYPE_PRI : {
+    case TYPE_TET : {
       B.numLagPts = 4;
-      B.exposants = generateExposantsPrism(F->order);
+      B.exponents = generateExponentsTetrahedron(F->order);
+      B.points    = gmshGeneratePointsTetrahedron(F->order,false);
+      dimSimplex = 3;
+      subPoints = generateSubPointsTetrahedron(F->order);
+      break;
+    }
+    case TYPE_PRI : {
+      B.numLagPts = 6;
+      B.exponents = generateExponentsPrism(F->order);
       B.points    = generatePointsPrism(F->order, false);
       dimSimplex = 2;
       subPoints = generateSubPointsPrism(F->order);
+      break;
+    }
+    case TYPE_HEX : {
+      B.numLagPts = 8;
+      B.exponents = generateExponentsHex(F->order);
+      B.points    = generatePointsHex(F->order, false);
+      dimSimplex = 0;
+      subPoints = generateSubPointsHex(F->order);
       break;
     }
     default : {
       Msg::Error("Unknown function space %d: reverting to TET_1", tag);
       F = polynomialBases::find(MSH_TET_1);
       B.numLagPts = 4;
-      B.exposants = generateExposantsTetrahedron(0);
+      B.exponents = generateExponentsTetrahedron(0);
       B.points    = gmshGeneratePointsTetrahedron(0, false);
       dimSimplex = 3;
       subPoints = generateSubPointsTetrahedron(0);
     }
   }
-  B.matrixBez2Lag = generateBez2LagMatrix(B.exposants, B.points, F->order, dimSimplex);
+  B.matrixBez2Lag = generateBez2LagMatrix(B.exponents, B.points, F->order, dimSimplex);
   B.matrixBez2Lag.invert(B.matrixLag2Bez);
-  B.divisor = generateDivisor(B.exposants, subPoints, B.matrixLag2Bez, F->order, dimSimplex);
+  B.subDivisor = generateSubDivisor(B.exponents, subPoints, B.matrixLag2Bez, F->order, dimSimplex);
 
   B.numDivisions = (int) pow(2., (int) B.points.size2());
   return &B;
 }
 
-std::map<int, JacobianBasis> JacobianBasis::fs;
-
+std::map<int, JacobianBasis> JacobianBasis::_fs;
 const JacobianBasis *JacobianBasis::find(int tag)
 {
-  std::map<int, JacobianBasis>::const_iterator it = fs.find(tag);
-  if (it != fs.end())
+  std::map<int, JacobianBasis>::const_iterator it = _fs.find(tag);
+  if (it != _fs.end())
     return &it->second;
-  JacobianBasis &B = fs[tag];
+  JacobianBasis &J = _fs[tag];
   const polynomialBasis *F = polynomialBases::find(tag);
   int jacobianOrder;
   switch (F->parentType) {
     case TYPE_PNT : jacobianOrder = 0; break;
     case TYPE_LIN : jacobianOrder = F->order - 1; break;
     case TYPE_TRI : jacobianOrder = 2 * (F->order - 1); break;
-    case TYPE_TET : jacobianOrder = 3 * (F->order - 1); break;
     case TYPE_QUA : jacobianOrder = 2 * F->order - 1; break;
-    case TYPE_PRI : jacobianOrder = F->order * 3 - 1; break; // o=3*ord-2 on triangle base and =3*ord-1 for third dimension
+    case TYPE_TET : jacobianOrder = 3 * (F->order - 1); break;
+    case TYPE_PRI : jacobianOrder = 3 * F->order - 1; break;
+    case TYPE_HEX : jacobianOrder = 3 * F->order - 1; break;
     default :
       Msg::Error("Unknown function space %d: reverting to TET_4", tag);
       jacobianOrder = 0;
   }
-  B.bezier = bezierBasis::find(polynomialBasis::getTag(F->parentType, jacobianOrder, false));
-  generateGradShapes(B, B.bezier->points, F->monomials, F->coefficients);
-  return &B;
+  J.bezier = bezierBasis::find(polynomialBasis::getTag(F->parentType, jacobianOrder, false));
+  generateGradShapes(J, J.bezier->points, F->monomials, F->coefficients);
+  return &J;
 }

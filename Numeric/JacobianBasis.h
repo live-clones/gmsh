@@ -15,22 +15,22 @@ class bezierBasis {
  public :
   int numLagPts;
   int numDivisions;
-  fullMatrix<double> exposants; //exposants of Bezier FF
+    // The 'numLagPts' first exponents are related to 'Lagrangian' values
+  fullMatrix<double> exponents; //exposants of Bezier FF
   fullMatrix<double> points; //sampling point
   fullMatrix<double> matrixLag2Bez, matrixBez2Lag;
-  fullMatrix<double> divisor;
+  fullMatrix<double> subDivisor;
   static const bezierBasis *find(int);
 };
 
 class JacobianBasis {
+ private:
+  static std::map<int, JacobianBasis> _fs;
  public :
   const bezierBasis *bezier;
   fullMatrix<double> gradShapeMatX;
   fullMatrix<double> gradShapeMatY;
   fullMatrix<double> gradShapeMatZ;
- private:
-  static std::map<int, JacobianBasis> fs;
- public:
   static const JacobianBasis *find(int);
 };
 
