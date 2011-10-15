@@ -362,7 +362,7 @@ static void status_play_cb(Fl_Widget *w, void *data)
       break;
     if(GetTimeInSeconds() - anim_time > CTX::instance()->post.animDelay) {
       anim_time = GetTimeInSeconds();
-      status_play_manual(!CTX::instance()->post.animCycle, 1);
+      status_play_manual(!CTX::instance()->post.animCycle, CTX::instance()->post.animStep);
     }
     FlGui::instance()->check();
   }
@@ -392,12 +392,12 @@ static void status_rewind_cb(Fl_Widget *w, void *data)
 
 static void status_stepbackward_cb(Fl_Widget *w, void *data)
 {
-  status_play_manual(!CTX::instance()->post.animCycle, -1);
+  status_play_manual(!CTX::instance()->post.animCycle, -CTX::instance()->post.animStep);
 }
 
 static void status_stepforward_cb(Fl_Widget *w, void *data)
 {
-  status_play_manual(!CTX::instance()->post.animCycle, 1);
+  status_play_manual(!CTX::instance()->post.animCycle, CTX::instance()->post.animStep);
 }
 
 static void remove_graphic_window_cb(Fl_Widget *w, void *data)

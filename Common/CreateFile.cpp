@@ -469,15 +469,16 @@ void CreateOutputFile(std::string fileName, int format)
                               (int)opt_view_nb_non_empty_timestep(i, GMSH_GET, 0));
       }
       std::vector<std::string> frames;
-      for(int i = 0; i < (CTX::instance()->post.animCycle ? numViews : numSteps); i++){
+      for(int i = 0; i < (CTX::instance()->post.animCycle ? numViews : numSteps); 
+          i += CTX::instance()->post.animStep){
         char tmp[256];
-        sprintf(tmp, ".gmsh-%06d.ppm", i);
+        sprintf(tmp, ".gmsh-%06d.ppm", (int)frames.size());
         frames.push_back(tmp);
       }
       status_play_manual(!CTX::instance()->post.animCycle, 0);
       for(unsigned int i = 0; i < frames.size(); i++){
         CreateOutputFile(CTX::instance()->homeDir + frames[i], FORMAT_PPM);
-        status_play_manual(!CTX::instance()->post.animCycle, 1);
+        status_play_manual(!CTX::instance()->post.animCycle, CTX::instance()->post.animStep);
       }
       int repeat = (int)(CTX::instance()->post.animDelay * 24);
       if(repeat < 1) repeat = 1;

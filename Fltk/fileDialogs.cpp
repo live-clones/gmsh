@@ -360,14 +360,14 @@ int mpegFileDialog(const char *name)
     Fl_Window *window;
     Fl_Round_Button *b[2];
     Fl_Check_Button *c[2];
-    Fl_Value_Input *v[1];
+    Fl_Value_Input *v[2];
     Fl_Button *ok, *cancel;
   };
   static _mpegFileDialog *dialog = NULL;
 
   if(!dialog){
     dialog = new _mpegFileDialog;
-    int h = 3 * WB + 6 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 7 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "MPEG Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
@@ -388,6 +388,13 @@ int mpegFileDialog(const char *name)
     dialog->v[0]->step(1. / 24.);
     dialog->v[0]->precision(3);
     dialog->v[0]->align(FL_ALIGN_RIGHT);
+
+    dialog->v[1] = new Fl_Value_Input
+      (WB, y, BB / 2, BH, "Increment step"); y += BH;
+    dialog->v[1]->minimum(1);
+    dialog->v[1]->maximum(100);
+    dialog->v[1]->step(1);
+    dialog->v[1]->align(FL_ALIGN_RIGHT);
     
     dialog->c[0] = new Fl_Check_Button
       (WB, y, 2 * BB + WB, BH, "Composite all window tiles"); y += BH;
@@ -406,6 +413,7 @@ int mpegFileDialog(const char *name)
   dialog->b[0]->value(!CTX::instance()->post.animCycle);
   dialog->b[1]->value(CTX::instance()->post.animCycle);
   dialog->v[0]->value(CTX::instance()->post.animDelay);
+  dialog->v[1]->value(CTX::instance()->post.animStep);
   dialog->c[0]->value(CTX::instance()->print.compositeWindows);
   dialog->c[1]->value(CTX::instance()->print.deleteTmpFiles);
   dialog->window->show();
@@ -418,6 +426,7 @@ int mpegFileDialog(const char *name)
       if (o == dialog->ok) {
         opt_post_anim_cycle(0, GMSH_SET | GMSH_GUI, (int)dialog->b[1]->value());
         opt_post_anim_delay(0, GMSH_SET | GMSH_GUI, dialog->v[0]->value());
+        opt_post_anim_step(0, GMSH_SET | GMSH_GUI, (int)dialog->v[1]->value());
         opt_print_composite_windows(0, GMSH_SET | GMSH_GUI, (int)dialog->c[0]->value());
         opt_print_delete_tmp_files(0, GMSH_SET | GMSH_GUI, (int)dialog->c[1]->value());
         CreateOutputFile(name, FORMAT_MPEG);

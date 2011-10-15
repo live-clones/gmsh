@@ -6487,6 +6487,20 @@ double opt_post_anim_cycle(OPT_ARGS_NUM)
   return CTX::instance()->post.animCycle;
 }
 
+double opt_post_anim_step(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->post.animStep = (int)val;
+    if(CTX::instance()->post.animStep < 1) CTX::instance()->post.animStep = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->post.value[1]->value
+      (CTX::instance()->post.animStep);
+#endif
+  return CTX::instance()->post.animStep;
+}
+
 double opt_post_combine_remove_orig(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

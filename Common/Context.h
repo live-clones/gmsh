@@ -208,7 +208,7 @@ class CTX {
   // post processing options 
   struct{
     int draw, link, horizontalScales;
-    int smooth, animCycle, combineTime, combineRemoveOrig;
+    int smooth, animCycle, animStep, combineTime, combineRemoveOrig;
     int fileFormat, plugins;
     double animDelay;
   }post;

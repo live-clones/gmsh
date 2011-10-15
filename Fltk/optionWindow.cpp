@@ -540,6 +540,7 @@ static void post_options_ok_cb(Fl_Widget *w, void *data)
   opt_post_horizontal_scales(0, GMSH_SET, o->post.butt[2]->value());
 
   opt_post_anim_delay(0, GMSH_SET, o->post.value[0]->value());
+  opt_post_anim_step(0, GMSH_SET, o->post.value[1]->value());
 
   opt_post_link(0, GMSH_SET, o->post.choice[0]->value());
 
@@ -2574,25 +2575,33 @@ optionWindow::optionWindow(int deltaFontSize)
       post.choice[0]->callback(post_options_ok_cb);
 
       post.value[0] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Animation delay");
+        (L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Frame duration (in seconds)");
       post.value[0]->minimum(0);
       post.value[0]->maximum(10);
       post.value[0]->step(0.01);
       post.value[0]->align(FL_ALIGN_RIGHT);
       post.value[0]->callback(post_options_ok_cb);
 
+      post.value[1] = new Fl_Value_Input
+        (L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Animation increment step");
+      post.value[1]->minimum(1);
+      post.value[1]->maximum(100);
+      post.value[1]->step(1);
+      post.value[1]->align(FL_ALIGN_RIGHT);
+      post.value[1]->callback(post_options_ok_cb);
+
       post.butt[0] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Cycle through views instead of time steps");
+        (L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Cycle through views instead of time steps");
       post.butt[0]->type(FL_TOGGLE_BUTTON);
       post.butt[0]->callback(post_options_ok_cb);
 
       post.butt[1] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Remove original views after combination");
+        (L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Remove original views after combination");
       post.butt[1]->type(FL_TOGGLE_BUTTON);
       post.butt[1]->callback(post_options_ok_cb);
 
       post.butt[2] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Draw value scales horizontally");
+        (L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Draw value scales horizontally");
       post.butt[2]->type(FL_TOGGLE_BUTTON);
       post.butt[2]->callback(post_options_ok_cb);
 

@@ -1352,6 +1352,8 @@ StringXNumber PostProcessingOptions_Number[] = {
     "Delay (in seconds) between frames in automatic animation mode" },
   { F|O, "AnimationCycle" , opt_post_anim_cycle , 0. ,
     "Cycle through time steps (0) or views (1) for animations" },
+  { F|O, "AnimationStep" , opt_post_anim_step , 1. ,
+    "Step increment for animations" },
 
   { F|O, "CombineRemoveOriginal" , opt_post_combine_remove_orig , 1. ,
     "Remove original views after a Combine operation" },

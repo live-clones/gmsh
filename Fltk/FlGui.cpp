@@ -675,19 +675,19 @@ int FlGui::testGlobalShortcuts(int event)
 int FlGui::testArrowShortcuts()
 {
   if(Fl::test_shortcut(FL_Left)) {
-    status_play_manual(1, -1);
+    status_play_manual(1, -CTX::instance()->post.animStep);
     return 1;
   }
   else if(Fl::test_shortcut(FL_Right)) {
-    status_play_manual(1, 1);
+    status_play_manual(1, CTX::instance()->post.animStep);
     return 1;
   }
   else if(Fl::test_shortcut(FL_Up)) {
-    status_play_manual(0, -1);
+    status_play_manual(0, -CTX::instance()->post.animStep);
     return 1;
   }
   else if(Fl::test_shortcut(FL_Down)) {
-    status_play_manual(0, 1);
+    status_play_manual(0, CTX::instance()->post.animStep);
     return 1;
   }
   return 0;
