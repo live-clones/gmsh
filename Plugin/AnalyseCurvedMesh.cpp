@@ -733,15 +733,15 @@ void GMSH_AnalyseCurvedMeshPlugin::method_2_2
 int GMSH_AnalyseCurvedMeshPlugin::division
   (const bezierBasis *jfs, const fullVector<double> &jacobian, int depth)
 {
-  if (jfs->divisor.size2() != jacobian.size()) {
+  if (jfs->subDivisor.size2() != jacobian.size()) {
     Msg::Error("Wrong sizes in division : [%d,%d] * [%d]",
-      jfs->divisor.size1(), jfs->divisor.size2(), jacobian.size());
+      jfs->subDivisor.size1(), jfs->subDivisor.size2(), jacobian.size());
     Msg::Info(" ");
     return 0;
   }
 
-  fullVector<double> newJacobian(jfs->divisor.size1());
-  jfs->divisor.mult(jacobian, newJacobian);
+  fullVector<double> newJacobian(jfs->subDivisor.size1());
+  jfs->subDivisor.mult(jacobian, newJacobian);
   
   for (int i = 0; i < jfs->numDivisions; i++) {
     for (int j = 0; j < jfs->numLagPts; j++)
