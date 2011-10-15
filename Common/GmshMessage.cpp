@@ -232,7 +232,7 @@ void Msg::Warning(const char *fmt, ...)
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
     FlGui::instance()->check();
-    std::string tmp = std::string("@C1@.") + "Warning : " + str;
+    std::string tmp = std::string("@C5@.") + "Warning : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
   }
 #endif
@@ -300,8 +300,10 @@ void Msg::Direct(int level, const char *fmt, ...)
   if(FlGui::available()){
     FlGui::instance()->check();
     std::string tmp;
-    if(level < 3)
+    if(level < 2)
       tmp = std::string("@C1@.") + str;
+    else if(level < 3)
+      tmp = std::string("@C5@.") + str;
     else
       tmp = std::string("@C4@.") + str;
     FlGui::instance()->addMessage(tmp.c_str());
