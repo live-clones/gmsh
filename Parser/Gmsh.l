@@ -111,6 +111,7 @@ Call                    return tCall;
 CreateTopology          return tCreateTopology;
 CreateTopologyNoHoles   return tCreateTopologyNoHoles;
 
+DefineConstant          return tDefineConstant;
 Delete                  return tDelete;
 Degenerated             return tDegenerated;
 Dilate                  return tDilate;

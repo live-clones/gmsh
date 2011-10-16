@@ -245,8 +245,13 @@ void onelab_cb(Fl_Widget *w, void *data)
       it != onelab::server::instance()->lastClient(); it++){
     onelab::client *c = it->second;
     std::string what = FlGui::instance()->onelab->getModelName();
-    if(action == "check")
+    // FIXME should be more intelligent, and only perform check if we changed
+    // some parameters which depend on the client
+    if(action == "check"){
+      if(c->getName() == "Gmsh" && onelab::server::instance()->dependsOnClient("Gmsh"))
+        geometry_reload_cb(0, 0);
       c->run(what);
+    }
     else if(action == "compute"){
       if(c->getName() == "GetDP") what += " -solve -pos";
       c->run(what);
@@ -301,7 +306,7 @@ onelabWindow::onelabWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 25 * FL_NORMAL_SIZE;
-  int height = 10 * BH + 3 * WB;
+  int height = 15 * BH + 3 * WB;
   
   _win = new paletteWindow
     (width, height, CTX::instance()->nonModalWindows ? true : false, "ONELAB");

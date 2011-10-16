@@ -10,6 +10,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GmshSocket.h"
+#include "onelab.h"
 #include "Gmsh.h"
 #include "Options.h"
 #include "Context.h"
@@ -45,6 +46,7 @@ GmshMessage *Msg::_callback = 0;
 std::string Msg::_commandLine;
 std::string Msg::_launchDate;
 GmshClient *Msg::_client = 0;
+onelab::client *Msg::_onelabClient = 0;
 
 #if defined(HAVE_NO_VSNPRINTF)
 static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
@@ -88,6 +90,7 @@ void Msg::Init(int argc, char **argv)
     if(i) _commandLine += " ";
     _commandLine += argv[i];
   }
+  InitializeOnelab();
 }
 
 void Msg::Exit(int level)
@@ -109,6 +112,7 @@ void Msg::Exit(int level)
 #if defined(HAVE_MPI)
     MPI_Finalize();
 #endif
+    FinalizeOnelab();
     exit(level);
   }
 
@@ -138,7 +142,7 @@ void Msg::Exit(int level)
 #if defined(HAVE_MPI)
   MPI_Finalize();
 #endif
-
+  FinalizeOnelab();
   exit(_errorCount);
 }
 
@@ -592,6 +596,66 @@ void Msg::FinalizeClient()
   _client = 0;
 }
 
+void Msg::InitializeOnelab(const std::string &sockname)
+{
+  // Gmsh could also be used as a distant CAD/post-pro client... 
+  _onelabClient = new onelab::localClient("Gmsh");
+}
+
+void Msg::ExchangeOnelabParameter(const std::string &key,
+                                  std::vector<double> &val,
+                                  std::map<std::string, std::vector<double> > &fopt,
+                                  std::map<std::string, std::vector<std::string> > &copt)
+{
+  if(!_onelabClient || val.empty()) return;
+
+  std::string name(key);
+  if(copt.count("Path")){
+    std::string path = copt["Path"][0];
+    // if path ends with a number, assume it's for ordering purposes
+    if(path.size() && path[path.size() - 1] >= '0' && path[path.size() - 1] <= '9')
+      name = path + name;
+    else if(path.size() && path[path.size() - 1] == '/')
+      name = path + name;
+    else
+      name = path + "/" + name;
+  }
+
+  std::vector<onelab::number> ps;
+  _onelabClient->get(ps, name);
+  if(ps.size()){ // use value from server
+    val[0] = ps[0].getValue();
+  }
+  else{ // send value to server
+    onelab::number o(name, val[0]);
+    if(fopt.count("Range") && fopt["Range"].size() == 2){
+      o.setMin(fopt["Range"][0]); o.setMax(fopt["Range"][1]);
+    }
+    else if(fopt.count("Min") && fopt.count("Max")){
+      o.setMin(fopt["Min"][0]); o.setMax(fopt["Max"][0]);
+    }
+    else if(fopt.count("Min")){
+      o.setMin(fopt["Min"][0]); o.setMax(1.e200);
+    }
+    else if(fopt.count("Max")){
+      o.setMax(fopt["Max"][0]); o.setMin(-1.e200);
+    }
+    if(fopt.count("Step")) o.setStep(fopt["Step"][0]);
+    if(fopt.count("Choices")) o.setChoices(fopt["Choices"]);
+    if(copt.count("Help")) o.setHelp(copt["Help"][0]);
+    if(copt.count("ShortHelp")) o.setShortHelp(copt["ShortHelp"][0]);
+    _onelabClient->set(o);
+  }
+}
+
+void Msg::FinalizeOnelab()
+{
+  if(_onelabClient){
+    delete _onelabClient;
+    _onelabClient = 0;
+  }
+}
+
 void Msg::Barrier()
 {
 #if defined(HAVE_MPI)
@@ -614,4 +678,3 @@ int Msg::GetMaxThreads(){ return 1; }
 int Msg::GetThreadNum(){ return 0; }
 
 #endif
-

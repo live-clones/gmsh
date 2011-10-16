@@ -62,7 +62,7 @@ int gmsh_yyviewindex = 0;
 std::map<std::string, std::vector<double> > gmsh_yysymbols;
 
 // Static parser variables (accessible only in this file)
-static std::map<std::string, std::string > gmsh_yystringsymbols;
+static std::map<std::string, std::string> gmsh_yystringsymbols;
 #if defined(HAVE_POST)
 static PViewDataList *ViewData;
 #endif
@@ -78,6 +78,8 @@ static fpos_t yyposImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static int yylinenoImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static double LoopControlVariablesTab[MAX_RECUR_LOOPS][3];
 static const char *LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
+static std::map<std::string, std::vector<double> > floatOptions;
+static std::map<std::string, std::vector<std::string> > charOptions;
 
 void yyerror(const char *s);
 void yymsg(int level, const char *fmt, ...);
@@ -105,7 +107,7 @@ fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 %token tFmod tModulo tHypot 
 %token tPrintf tSprintf tStrCat tStrPrefix tStrRelative
 %token tBoundingBox tDraw tToday tSyncModel tCreateTopology tCreateTopologyNoHoles
-%token tDistanceFunction
+%token tDistanceFunction tDefineConstant
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
@@ -587,8 +589,9 @@ NumericIncrement :
 Affectation :
 
   // Variables
+    tDefineConstant '[' DefineConstants ']' tEND
 
-    tSTRING NumericAffectation FExpr tEND
+  | tSTRING NumericAffectation FExpr tEND
     {
       if(!gmsh_yysymbols.count($1)){
 	if(!$2)
@@ -985,6 +988,71 @@ Affectation :
       Free($3); Free($6); Free($8);
     }
 ;
+
+Comma : /* none */ | ',' ;
+
+DefineConstants :
+    /* none */
+  | DefineConstants Comma tSTRING
+    {
+      std::string key($3);
+      std::vector<double> val(1, 0.);
+      floatOptions.clear(); charOptions.clear();
+      if(!gmsh_yysymbols.count(key)){
+        Msg::ExchangeOnelabParameter(key, val, floatOptions, charOptions);
+        gmsh_yysymbols[key] = val;
+      }
+      Free($3);
+    }
+  | DefineConstants Comma tSTRING tAFFECT FExpr
+    {
+      std::string key($3);
+      std::vector<double> val(1, $5);
+      floatOptions.clear(); charOptions.clear();
+      if(!gmsh_yysymbols.count(key)){
+        Msg::ExchangeOnelabParameter(key, val, floatOptions, charOptions);
+        gmsh_yysymbols[key] = val;
+      }
+      Free($3);
+    }
+  | DefineConstants Comma tSTRING tAFFECT '{' FExpr
+    { floatOptions.clear(); charOptions.clear(); } 
+    FloatParameterOptions '}'
+    { 
+      std::string key($3);
+      std::vector<double> val(1, $6);
+      if(!gmsh_yysymbols.count(key)){
+        Msg::ExchangeOnelabParameter(key, val, floatOptions, charOptions);
+        gmsh_yysymbols[key] = val;
+      }
+    }
+ ;
+
+FloatParameterOptions :
+  | FloatParameterOptions FloatParameterOption 
+ ;
+
+FloatParameterOption :
+    ',' tSTRING ListOfDouble
+    {
+      std::string key($2);
+      for(int i = 0; i < List_Nbr($3); i++){
+        double v; 
+        List_Read($3, i, &v);
+        floatOptions[key].push_back(v);
+      }
+      Free($2);
+      List_Delete($3);
+    }
+  | ',' tSTRING tBIGSTR
+    {
+      std::string key($2);
+      std::string val($3);
+      charOptions[key].push_back(val);
+      Free($2);
+      Free($3);
+    }
+ ;
 
 //  S H A P E
 

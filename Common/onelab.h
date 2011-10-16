@@ -59,6 +59,10 @@ namespace onelab{
     { 
       _clients.insert(clients.begin(), clients.end()); 
     }
+    bool hasClient(const std::string &client)
+    {
+      return (_clients.find(client) != _clients.end());
+    }
     virtual std::string getType() const = 0;
     const std::string &getName() const { return _name; }
     const std::string &getShortHelp() const { return _shortHelp; }
@@ -324,8 +328,11 @@ namespace onelab{
       return true;
     }
     // get the parameter matching the given name, or all the
-    // parameters in the category if no name is given
+    // parameters in the category if no name is given. If we find a
+    // given parameter by name, we add the client requesting the
+    // parameter to the list of clients for this parameter.
     template <class T> bool _get(std::vector<T> &p, const std::string &name,
+                                 const std::string &client,
                                  std::set<T*, parameterLessThan> &ps)
     {
       p.clear();
@@ -337,51 +344,56 @@ namespace onelab{
       else{
         T tmp(name);
         typename std::set<T*, parameterLessThan>::iterator it = ps.find(&tmp);
-        if(it != ps.end())
+        if(it != ps.end()){
+          (*it)->addClient(client);
           p.push_back(**it);
+        }
       }
       return true;
+    }
+    void _getAllParameters(std::set<parameter*> &ps)
+    {
+      ps.insert(_numbers.begin(), _numbers.end());
+      ps.insert(_strings.begin(), _strings.end());
+      ps.insert(_regions.begin(), _regions.end());
+      ps.insert(_functions.begin(), _functions.end());
     }
   public:
     parameterSpace(){}
     ~parameterSpace()
     {
-      for(std::set<number*, parameterLessThan>::iterator it = _numbers.begin();
-          it != _numbers.end(); it++)
-        delete *it;
-      for(std::set<string*, parameterLessThan>::iterator it = _strings.begin();
-          it != _strings.end(); it++)
-        delete *it;
-      for(std::set<region*, parameterLessThan>::iterator it = _regions.begin();
-          it != _regions.end(); it++)
-        delete *it;
-      for(std::set<function*, parameterLessThan>::iterator it = _functions.begin();
-          it != _functions.end(); it++)
+      std::set<parameter*> ps;
+      _getAllParameters(ps);
+      for(std::set<parameter*>::iterator it = ps.begin(); it != ps.end(); it++)
         delete *it;
     }
     bool set(number &p, bool value=true){ return _set(p, _numbers, value); }
     bool set(string &p, bool value=true){ return _set(p, _strings, value); }
     bool set(region &p, bool value=true){ return _set(p, _regions, value); }
     bool set(function &p, bool value=true){ return _set(p, _functions, value); }
-    bool get(std::vector<number> &ps,
-             const std::string &name=""){ return _get(ps, name, _numbers); }
-    bool get(std::vector<string> &ps,
-             const std::string &name=""){ return _get(ps, name, _strings); }
-    bool get(std::vector<region> &ps,
-             const std::string &name=""){ return _get(ps, name, _regions); }
-    bool get(std::vector<function> &ps,
-             const std::string &name=""){ return _get(ps, name, _functions); }
+    bool get(std::vector<number> &ps, const std::string &name="", 
+             const std::string &client=""){ return _get(ps, name, client, _numbers); }
+    bool get(std::vector<string> &ps, const std::string &name="",
+             const std::string &client=""){ return _get(ps, name, client, _strings); }
+    bool get(std::vector<region> &ps, const std::string &name="",
+             const std::string &client=""){ return _get(ps, name, client, _regions); }
+    bool get(std::vector<function> &ps, const std::string &name="",
+             const std::string &client=""){ return _get(ps, name, client, _functions); }
+    bool hasClient(const std::string &client)
+    {
+      std::set<parameter*> ps;
+      _getAllParameters(ps);
+      for(std::set<parameter*>::iterator it = ps.begin(); it != ps.end(); it++)
+        if((*it)->hasClient(client)) return true;
+      return false;
+    }
     std::string toChar()
     {
       std::string s;
-      for(std::set<number*, parameterLessThan>::iterator it = _numbers.begin();
-          it != _numbers.end(); it++) s += (*it)->toChar() + "\n";
-      for(std::set<string*, parameterLessThan>::iterator it = _strings.begin();
-          it != _strings.end(); it++) s += (*it)->toChar() + "\n"; 
-      for(std::set<region*, parameterLessThan>::iterator it = _regions.begin();
-          it != _regions.end(); it++) s += (*it)->toChar() + "\n";
-      for(std::set<function*, parameterLessThan>::iterator it = _functions.begin();
-          it != _functions.end(); it++) s += (*it)->toChar() + "\n";
+      std::set<parameter*> ps;
+      _getAllParameters(ps);
+      for(std::set<parameter*>::iterator it = ps.begin(); it != ps.end(); it++)
+        s += (*it)->toChar() + "\n";
       return s;
     }
   };
@@ -439,9 +451,10 @@ namespace onelab{
     {
       return _parameterSpace.set(p, value); 
     }
-    template <class T> bool get(std::vector<T> &ps, const std::string &name="")
+    template <class T> bool get(std::vector<T> &ps, const std::string &name="",
+                                const std::string &client="")
     {
-      return _parameterSpace.get(ps, name); 
+      return _parameterSpace.get(ps, name, client); 
     }
     bool registerClient(client *c)
     {
@@ -454,6 +467,10 @@ namespace onelab{
     citer lastClient(){ return _clients.end(); }
     citer findClient(const std::string &name){ return _clients.find(name); }
     int getNumClients(){ return _clients.size(); }
+    bool dependsOnClient(const std::string &client)
+    {
+      return _parameterSpace.hasClient(client);
+    }
     std::string toChar(){ return _parameterSpace.toChar(); }
   };
     
@@ -470,7 +487,7 @@ namespace onelab{
     template <class T> bool _get(std::vector<T> &ps,
                                  const std::string &name="")
     {
-      _server->get(ps, name);
+      _server->get(ps, name, _name);
       return true;
     }
   public:

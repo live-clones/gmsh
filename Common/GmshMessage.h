@@ -7,10 +7,12 @@
 #define _GMSH_MESSAGE_H_
 
 #include <map>
+#include <vector>
 #include <string>
 #include <stdarg.h>
 
 class GmshClient;
+namespace onelab{ class client; }
 
 // the external message handler
 class GmshMessage{
@@ -40,6 +42,8 @@ class Msg {
   static std::string _commandLine, _launchDate;
   // communication with Gmsh when run remotely
   static GmshClient *_client;
+  // communication with onelab server
+  static onelab::client *_onelabClient;
  public:
   Msg() {}
   static void Init(int argc, char **argv);
@@ -80,6 +84,13 @@ class Msg {
   static void InitClient(std::string sockname);
   static GmshClient *GetClient(){ return _client; }
   static void FinalizeClient();
+  static void InitializeOnelab(const std::string &sockname="");
+  static void FinalizeOnelab();
+  static bool UseOnelab(){ return _onelabClient ? true : false; }
+  static void ExchangeOnelabParameter(const std::string &key, 
+                                      std::vector<double> &val,
+                                      std::map<std::string, std::vector<double> > &fopt,
+                                      std::map<std::string, std::vector<std::string> > &copt);
 };
 
 #endif
