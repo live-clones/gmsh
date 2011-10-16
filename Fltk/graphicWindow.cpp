@@ -482,7 +482,7 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   // make sure height < screen height
   if(height > Fl::h()){
     height = Fl::h();
-    mheight = 100;
+    mheight = 50;
     glheight = height - mheight - sh;
     CTX::instance()->msgSize = mheight;
     CTX::instance()->glSize[1] = glheight;
@@ -775,7 +775,7 @@ void graphicWindow::showMessages()
   if(!win->shown()) return;
   if(browser->h() < 10){
     int height = _savedMessageHeight;
-    if(height < 1) height = 100;
+    if(height < 1) height = 50;
     int maxh = win->h() - bottom->h();
     if(height > maxh) height = maxh / 2;
     resizeMessages(height - browser->h());
