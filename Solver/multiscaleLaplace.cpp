@@ -342,10 +342,10 @@ static void recur_compute_centers_ (double R, double a1, double a2,
   }
 
   //sort centers from left to right
-  //std::sort(centers.begin(),centers.end(), sort_pred(PL,PR));
+  std::sort(centers.begin(),centers.end(), sort_pred(PL,PR));
   
   //sort from distances
-  sort_centers_dist(centers, PL);
+  //sort_centers_dist(centers, PL);
 
   centers.insert(centers.begin(), std::make_pair(PL,zero));  
   centers.push_back(std::make_pair(PR,zero));

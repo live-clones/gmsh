@@ -1842,6 +1842,27 @@ void GModel::save(std::string fileName)
   GModel::setCurrent(temp);
 }
 
+GFaceCompound* GModel::addCompoundFace(std::vector<GFace*> faces, int typeP, int typeS)
+{
+
+  int num =  getMaxElementaryNumber(2) + 1;
+
+  std::list<GFace*> comp(faces.begin(), faces.end());
+  std::list<GEdge*> U0;
+
+  GFaceCompound::typeOfMapping typ = GFaceCompound::HARMONIC;
+  if (typeP == 1) typ =  GFaceCompound::CONFORMAL;
+  if (typeP == 2) typ =  GFaceCompound::RBF;
+
+  printf("new compound %d \n", num);
+  GFaceCompound *gfc = new GFaceCompound(this, num, comp, U0, typ, typeS);
+
+  add(gfc);
+
+  return gfc;
+
+}
+
 GVertex *GModel::addVertex(double x, double y, double z, double lc)
 {
   if(_factory) return _factory->addVertex(this, x, y, z, lc);

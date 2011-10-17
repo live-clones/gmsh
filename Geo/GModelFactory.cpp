@@ -15,6 +15,7 @@
 #include "MLine.h"
 #include "GModel.h"
 
+
 GVertex *GeoFactory::addVertex(GModel *gm, double x, double y, double z, double lc)
 {
   int num =  gm->getMaxElementaryNumber(0) + 1;

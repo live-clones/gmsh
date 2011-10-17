@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _GMODEL_FACTORY_H_
+#ifndef _GMODEL_FACT@ORY_H_
 #define _GMODEL_FACTORY_H_
 
 #include <vector>
@@ -32,6 +32,7 @@ class GModelFactory {
   virtual GEdge *addLine(GModel *, GVertex *v1, GVertex *v2) = 0;
   virtual GFace *addPlanarFace(GModel *gm, std::vector<std::vector<GEdge *> > edges) = 0;
   virtual GRegion*addVolume(GModel *gm, std::vector<std::vector<GFace *> > faces) = 0;
+
   virtual GEdge *addCircleArc(GModel *gm, const arcCreationMethod &method,
                               GVertex *start, GVertex *end, 
                               const SPoint3 &aPoint)

@@ -399,6 +399,7 @@ class GModel
   void setFactory(std::string name);
 
   // create brep geometry entities using the factory
+  GFaceCompound *addCompoundFace(std::vector<GFace*> faces, int typeP, int typeS);
   GVertex *addVertex(double x, double y, double z, double lc);
   GEdge *addLine(GVertex *v1, GVertex *v2);
   GEdge *addCircleArcCenter(double x, double y, double z, GVertex *start, GVertex *end);
