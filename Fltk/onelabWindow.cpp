@@ -269,9 +269,10 @@ void onelab_cb(Fl_Widget *w, void *data)
       c->run(what);
     }
     else if(action == "compute"){
-      // FIXME we should define a string (invisible param) in the db
-      // that stores this information
-      if(c->getName() == "GetDP") what += " -solve -pos";
+      // get command line from the server
+      std::vector<onelab::string> ps;
+      onelab::server::instance()->get(ps, c->getName() + "/9Compute");
+      if(ps.size()) what += " " + ps[0].getValue();
       c->run(what);
     }
   }
