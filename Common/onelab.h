@@ -40,11 +40,13 @@ namespace onelab{
   private:
     // the name of the parameter, including its '/'-separated path in
     // the parameter hierarchy. Parameters or subpaths can start with
-    // numbers to force their relative ordering.
+    // numbers to force their relative ordering (such numbers could be
+    // automatically hidden in a GUI).
     std::string _name;
-    // optional help strings
+    // optional help strings (the short help can serve as a better way
+    // to display the parameter in a GUI)
     std::string _shortHelp, _help;
-    // client code(s) for which this parameter makes sense
+    // client code(s) that use this parameter
     std::set<std::string> _clients;
   public:
     parameter(const std::string &name="", const std::string &shortHelp="", 
@@ -330,7 +332,8 @@ namespace onelab{
     // get the parameter matching the given name, or all the
     // parameters in the category if no name is given. If we find a
     // given parameter by name, we add the client requesting the
-    // parameter to the list of clients for this parameter.
+    // parameter to the list of clients for this parameter. This also
+    // needs to be locked.
     template <class T> bool _get(std::vector<T> &p, const std::string &name,
                                  const std::string &client,
                                  std::set<T*, parameterLessThan> &ps)
@@ -529,6 +532,7 @@ namespace onelab{
 
   class remoteNetworkClient : public client{
   private:
+    // address (inet:port or unix socket) of the server
     std::string _serverAddress;
     // underlying GmshClient
     GmshClient *_gmshClient;
