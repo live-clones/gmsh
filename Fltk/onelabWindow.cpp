@@ -240,19 +240,20 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   FlGui::instance()->onelab->deactivate();
   
-  // Gmsh client is special (always gets executed first). The
+  // the Gmsh client is special: it always gets executed first. (The
   // meta-model will allow more flexibility: but in the simple GUI we
-  // can assume this
+  // can assume this)
   if(onelab::server::instance()->findClient("Gmsh") != 
      onelab::server::instance()->lastClient()){
-    // reload geometry if Gmsh parameters have been modified
+    // reload geometry and/or mesh if Gmsh parameters have been modified
     if(onelab::server::instance()->getChanged("Gmsh")){
       if(action == "check"){
         geometry_reload_cb(0, 0);
       }
       else if(action == "compute"){
+        geometry_reload_cb(0, 0);
         mesh_3d_cb(0, 0);
-        mesh_save_cb(0, (void*)"force");
+        mesh_save_cb(0, (void*)"force_overwrite");
         onelab::server::instance()->setChanged(false, "Gmsh");
       }
     }
