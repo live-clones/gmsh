@@ -28,8 +28,6 @@
 // interface. You'll need to reimplement this if you plan to build
 // a different ONELAB server.
 
-onelab::server *onelab::server::_server = 0;
-
 class onelabGmshServer : public GmshServer{
  private:
   onelab::localNetworkClient *_client;
