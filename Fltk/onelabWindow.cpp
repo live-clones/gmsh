@@ -253,7 +253,7 @@ void onelab_cb(Fl_Widget *w, void *data)
       else if(action == "compute"){
         geometry_reload_cb(0, 0);
         mesh_3d_cb(0, 0);
-        mesh_save_cb(0, (void*)"force_overwrite");
+        mesh_save_cb(0, (void*)"force overwrite");
         onelab::server::instance()->setChanged(false, "Gmsh");
       }
     }
@@ -265,7 +265,7 @@ void onelab_cb(Fl_Widget *w, void *data)
     onelab::client *c = it->second;
     if(c->getName() == "Gmsh") continue;
     std::string what = FlGui::instance()->onelab->getModelName();
-    if(action == "check"){
+    if(action == "initial check" || action == "check"){
       c->run(what);
     }
     else if(action == "compute"){

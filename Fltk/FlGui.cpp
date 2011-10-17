@@ -654,7 +654,7 @@ int FlGui::testGlobalShortcuts(int event)
   }
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
   else if(Fl::test_shortcut('@')) {
-    onelab_cb(0, (void*)"check");
+    onelab_cb(0, (void*)"initial check");
     status = 1;
   }
 #endif

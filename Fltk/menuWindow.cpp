@@ -1598,7 +1598,7 @@ void mesh_save_cb(Fl_Widget *w, void *data)
   bool force_overwrite = false;
   if(data){
     std::string str((const char*)data);
-    if(str == "force_overwrite") force_overwrite = true;
+    if(str == "force overwrite") force_overwrite = true;
   }
 
   std::string name = CTX::instance()->outputFileName;
