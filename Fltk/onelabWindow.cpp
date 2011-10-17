@@ -239,22 +239,42 @@ void onelab_cb(Fl_Widget *w, void *data)
   }
 
   FlGui::instance()->onelab->deactivate();
+  
+  // Gmsh client is special (always gets executed first). The
+  // meta-model will allow more flexibility: but in the simple GUI we
+  // can assume this
+  if(onelab::server::instance()->findClient("Gmsh") != 
+     onelab::server::instance()->lastClient()){
+    // reload geometry if Gmsh parameters have been modified
+    if(onelab::server::instance()->getChanged("Gmsh")){
+      if(action == "check"){
+        geometry_reload_cb(0, 0);
+      }
+      else if(action == "compute"){
+        mesh_3d_cb(0, 0);
+        mesh_save_cb(0, (void*)"force");
+        onelab::server::instance()->setChanged(false, "Gmsh");
+      }
+    }
+  }
+
+  // Iterate over all other clients
   for(onelab::server::citer it = onelab::server::instance()->firstClient();
       it != onelab::server::instance()->lastClient(); it++){
     onelab::client *c = it->second;
+    if(c->getName() == "Gmsh") continue;
     std::string what = FlGui::instance()->onelab->getModelName();
-    // FIXME should be more intelligent, and only perform check if we changed
-    // some parameters which depend on the client
     if(action == "check"){
-      if(c->getName() == "Gmsh" && onelab::server::instance()->dependsOnClient("Gmsh"))
-        geometry_reload_cb(0, 0);
       c->run(what);
     }
     else if(action == "compute"){
+      // FIXME we should define a string (invisible param) in the db
+      // that stores this information
       if(c->getName() == "GetDP") what += " -solve -pos";
       c->run(what);
     }
   }
+
   FlGui::instance()->onelab->activate();
 
   printf("Gmsh ONELAB db:\n%s\n", onelab::server::instance()->toChar().c_str());
