@@ -378,12 +378,17 @@ namespace onelab{
     }
   public:
     parameterSpace(){}
-    ~parameterSpace()
+    ~parameterSpace(){ clear(); }
+    void clear()
     {
       std::set<parameter*> ps;
       _getAllParameters(ps);
       for(std::set<parameter*>::iterator it = ps.begin(); it != ps.end(); it++)
         delete *it;
+      _numbers.clear();
+      _strings.clear();
+      _regions.clear();
+      _functions.clear();
     }
     bool set(number &p, bool value=true){ return _set(p, _numbers, value); }
     bool set(string &p, bool value=true){ return _set(p, _strings, value); }
@@ -487,6 +492,7 @@ namespace onelab{
       if(!_server) _server = new server(address);
       return _server;
     }
+    void clear(){ _parameterSpace.clear(); }
     template <class T> bool set(T &p, bool value=true)
     {
       return _parameterSpace.set(p, value); 

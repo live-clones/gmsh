@@ -74,12 +74,16 @@ bool onelab::localNetworkClient::run(const std::string &what)
   _pid = 0;
   onelabGmshServer *server = new onelabGmshServer(this);
  
-  std::string sockname = "localhost:1631";
-  std::string command = _commandLine + " " + what +  " -onelab " + sockname + " &";
+  std::string sockname = CTX::instance()->solver.socketName;
+  std::string command = _commandLine + " " + what +  " -onelab " + sockname;
+#if !defined(WIN32)
+  command += " &";
+#endif
 
   int sock;
   try{
-    sock = server->Start(command.c_str(), sockname.c_str(), 30);
+    sock = server->Start(command.c_str(), sockname.c_str(),
+                         CTX::instance()->solver.timeout);
   }
   catch(const char *err){
     Msg::Error("%s (on socket '%s')", err, sockname.c_str());
@@ -228,6 +232,14 @@ void onelab_cb(Fl_Widget *w, void *data)
   if(!data) return;
   std::string action((const char*)data);
 
+  if(action == "reset"){
+    onelab::server::instance()->clear();
+    if(onelab::server::instance()->findClient("Gmsh") != 
+       onelab::server::instance()->lastClient())
+      geometry_reload_cb(0, 0);
+    action = "initial check";
+  }
+
   if(action == "choose model"){
     if(fileChooser(FILE_CHOOSER_SINGLE, "Choose", "*.pro"))
       FlGui::instance()->onelab->setModelName(fileChooserGetName(1));
@@ -252,8 +264,10 @@ void onelab_cb(Fl_Widget *w, void *data)
       }
       else if(action == "compute"){
         geometry_reload_cb(0, 0);
-        mesh_3d_cb(0, 0);
-        mesh_save_cb(0, (void*)"force overwrite");
+        if(FlGui::instance()->onelab->meshAuto()){
+          mesh_3d_cb(0, 0);
+          mesh_save_cb(0, (void*)"force overwrite");
+        }
         onelab::server::instance()->setChanged(false, "Gmsh");
       }
     }
@@ -349,6 +363,16 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _butt[1] = new Fl_Button(width - 2*WB - 2*BB, height - WB - BH, BB, BH, "Check");
   _butt[1]->callback(onelab_cb, (void*)"check");
 
+  static Fl_Menu_Item gear_menu[] = {
+    {"Reset database", 0, onelab_cb, (void*)"reset"},
+    {"Mesh automatically", 0, 0, 0, FL_MENU_TOGGLE},
+    {0}
+  };
+  gear_menu[1].set();
+  _gear = new Fl_Menu_Button
+    (_butt[1]->x() - WB - BB/2, _butt[1]->y(), BB/2, BH, "@-1gmsh_gear");
+  _gear->menu(gear_menu);
+  
   Fl_Box *resbox = new Fl_Box(WB, height - BH - 3 * WB, WB, WB);
   _win->resizable(resbox);
 
@@ -358,6 +382,7 @@ onelabWindow::onelabWindow(int deltaFontSize)
 
   FL_NORMAL_SIZE += deltaFontSize;
 
+  // FIXME adding GetDP client
   onelab::server::instance()->registerClient
     (new onelab::localNetworkClient("GetDP",
                                     opt_solver_executable0(0, GMSH_GET, "")));

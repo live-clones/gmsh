@@ -55,7 +55,7 @@ static void gmsh_forward(Fl_Color c)
 
 static void gmsh_back(Fl_Color c)
 {
-  fl_rotate(180);  
+  fl_rotate(180);
   gmsh_forward(c);
 }
 
@@ -91,6 +91,23 @@ static void gmsh_clscale(Fl_Color c)
   fl_color(c);
   bl; vv(-0.8,0.8); vv(-0.1,0.8); vv(-0.8,0.1); el;
   bl; vv(-0.2,0.2); vv(0.9,0.2); vv(-0.2,-0.9); el;
+}
+
+static void gmsh_gear(Fl_Color c)
+{
+  fl_color(c);
+  fl_line_style(FL_SOLID, 2);
+  fl_begin_line(); fl_arc(0.0, 0.0, 0.5, 0.0, 360.0); fl_end_line();
+  for(int i = 0; i < 8; i++){
+    fl_rotate(i * 360./8.);
+    fl_begin_complex_polygon();
+    fl_vertex(0.5, -0.13);
+    fl_vertex(1.0, -0.13);
+    fl_vertex(1.0, 0.13);
+    fl_vertex(0.5, 0.13);
+    fl_end_complex_polygon();
+  }
+  fl_line_style(FL_SOLID);
 }
 
 #undef vv
@@ -469,6 +486,7 @@ graphicWindow::graphicWindow(bool main, int numTiles)
     fl_add_symbol("gmsh_rotate", gmsh_rotate, 1);
     fl_add_symbol("gmsh_models", gmsh_models, 1);
     fl_add_symbol("gmsh_clscale", gmsh_clscale, 1);
+    fl_add_symbol("gmsh_gear", gmsh_gear, 1);
     first = false;
   }
   
