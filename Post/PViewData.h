@@ -124,7 +124,7 @@ class PViewData {
                        double x, double y, double z);
   virtual void tagNode(int step, int ent, int ele, int nod, int tag){}
 
-  // return the number of componts available for the ele-th element in
+  // return the number of components available for the ele-th element in
   // the ent-th entity
   virtual int getNumComponents(int step, int ent, int ele){ return 0; }
 
@@ -228,8 +228,7 @@ class PViewData {
   // I/O routines
   virtual bool writeSTL(std::string fileName);
   virtual bool writeTXT(std::string fileName);
-  virtual bool writePOS(std::string fileName, bool binary=false, bool parsed=true,
-                        bool append=false);
+  virtual bool writePOS(std::string fileName, bool binary=false, bool parsed=true, bool append=false);
   virtual bool writeMSH(std::string fileName, bool binary=false, bool savemesh=true);
   virtual bool writeMED(std::string fileName);
 };
