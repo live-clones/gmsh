@@ -75,8 +75,23 @@ bool onelab::localNetworkClient::run(const std::string &what)
   _pid = 0;
   onelabGmshServer *server = new onelabGmshServer(this);
  
-  std::string sockname = CTX::instance()->solver.socketName;
-  std::string command = _commandLine + " " + what +  " -onelab " + sockname;
+  std::string sockname;
+  if(!strstr(CTX::instance()->solver.socketName.c_str(), ":")){
+    // Unix socket
+    std::ostringstream tmp;
+    tmp << CTX::instance()->homeDir << CTX::instance()->solver.socketName;
+    sockname = FixWindowsPath(tmp.str());
+  }
+  else{
+    // TCP/IP socket
+    sockname = CTX::instance()->solver.socketName;
+    // if only the port is given, prepend the host name
+    if(sockname.size() && sockname[0] == ':')
+      sockname = GetHostName() + sockname;
+  }
+
+  std::string prog = FixWindowsPath(_commandLine);
+  std::string command = prog + " " + what +  " -onelab " + sockname;
 #if !defined(WIN32)
   command += " &";
 #endif
@@ -200,6 +215,16 @@ bool onelab::localNetworkClient::run(const std::string &what)
       ParseString(message);
       drawContext::global()->draw();
       break;
+    /* FIXME need to change PViewDataRemote to work without ConnectionManager
+    case GmshSocket::GMSH_VERTEX_ARRAY:
+      {
+        int n = PView::list.size();
+        PView::fillVertexArray(this, length, &message[0], swap);
+        FlGui::instance()->updateViews(n != (int)PView::list.size());
+        drawContext::global()->draw();
+      }
+      break;
+    */
     default:
       Msg::Warning("Received unknown message type (%d)", type);
       break;
