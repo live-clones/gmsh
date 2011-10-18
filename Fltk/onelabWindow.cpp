@@ -15,6 +15,7 @@
 #include "OS.h"
 #include "StringUtils.h"
 #include "OpenFile.h"
+#include "CreateFile.h"
 #include "drawContext.h"
 #include "PView.h"
 #include "FlGui.h"
@@ -227,6 +228,27 @@ bool onelab::localNetworkClient::kill()
   return false;
 }
 
+static void save_mesh(onelab::client *c)
+{
+  std::vector<onelab::string> ps;
+  c->get(ps, "Gmsh/MshFileName");
+  if(ps.size()){
+    CreateOutputFile(ps[0].getValue(), CTX::instance()->mesh.fileFormat);
+  }
+  else{
+    std::string name = CTX::instance()->outputFileName;
+    if(name.empty()){
+      if(CTX::instance()->mesh.fileFormat == FORMAT_AUTO)
+        name = GetDefaultFileName(FORMAT_MSH);
+      else
+        name = GetDefaultFileName(CTX::instance()->mesh.fileFormat);
+    }
+    onelab::string o("Gmsh/MshFileName", name, "Mesh name");
+    c->set(o);
+    CreateOutputFile(o.getValue(), CTX::instance()->mesh.fileFormat);
+  }
+}
+
 void onelab_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
@@ -255,10 +277,14 @@ void onelab_cb(Fl_Widget *w, void *data)
   // the Gmsh client is special: it always gets executed first. (The
   // meta-model will allow more flexibility: but in the simple GUI we
   // can assume this)
-  if(onelab::server::instance()->findClient("Gmsh") != 
-     onelab::server::instance()->lastClient()){
-    // reload geometry and/or mesh if Gmsh parameters have been modified
-    if(onelab::server::instance()->getChanged("Gmsh")){
+  onelab::server::citer it = onelab::server::instance()->findClient("Gmsh");
+  if(it != onelab::server::instance()->lastClient()){
+    static std::string gmshModelName = GModel::current()->getName();
+    // reload geometry and/or mesh it if Gmsh parameters have been
+    // modified or if the geometrical model has changed
+    if(onelab::server::instance()->getChanged("Gmsh") ||
+       gmshModelName != GModel::current()->getName()){
+      gmshModelName = GModel::current()->getName();
       if(action == "check"){
         geometry_reload_cb(0, 0);
       }
@@ -266,7 +292,7 @@ void onelab_cb(Fl_Widget *w, void *data)
         geometry_reload_cb(0, 0);
         if(FlGui::instance()->onelab->meshAuto()){
           mesh_3d_cb(0, 0);
-          mesh_save_cb(0, (void*)"force overwrite");
+          save_mesh(it->second);
         }
         onelab::server::instance()->setChanged(false, "Gmsh");
       }

@@ -1595,12 +1595,6 @@ static void geometry_physical_add_cb(Fl_Widget *w, void *data)
 
 void mesh_save_cb(Fl_Widget *w, void *data)
 {
-  bool force_overwrite = false;
-  if(data){
-    std::string str((const char*)data);
-    if(str == "force overwrite") force_overwrite = true;
-  }
-
   std::string name = CTX::instance()->outputFileName;
   if(name.empty()){
     if(CTX::instance()->mesh.fileFormat == FORMAT_AUTO)
@@ -1608,7 +1602,7 @@ void mesh_save_cb(Fl_Widget *w, void *data)
     else
       name = GetDefaultFileName(CTX::instance()->mesh.fileFormat);
   }
-  if(!force_overwrite && CTX::instance()->confirmOverwrite) {
+  if(CTX::instance()->confirmOverwrite) {
     if(!StatFile(name))
       if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
                     "Cancel", "Replace", 0, name.c_str()))

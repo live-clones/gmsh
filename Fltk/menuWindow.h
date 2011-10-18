@@ -91,7 +91,6 @@ void geometry_reload_cb(Fl_Widget *w, void *data);
 void mesh_1d_cb(Fl_Widget *w, void *data);
 void mesh_2d_cb(Fl_Widget *w, void *data);
 void mesh_3d_cb(Fl_Widget *w, void *data);
-void mesh_save_cb(Fl_Widget *w, void *data);
 void help_about_cb(Fl_Widget *w, void *data);
 
 #endif
