@@ -600,7 +600,11 @@ void Msg::FinalizeClient()
 void Msg::InitializeOnelab(const std::string &sockname)
 {
   // Gmsh could also be used as a distant CAD/post-pro client... 
-  _onelabClient = new onelab::localClient("Gmsh");
+  if (sockname.empty())
+    _onelabClient = new onelab::localClient("Gmsh");
+  else {
+    _onelabClient = new onelab::remoteNetworkClient("GmshRemote",sockname);
+  }
 }
 
 void Msg::ExchangeOnelabParameter(const std::string &key,

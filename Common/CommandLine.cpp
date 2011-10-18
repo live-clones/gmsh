@@ -138,6 +138,14 @@ void GetOptions(int argc, char *argv[])
         CTX::instance()->batch = -99;
         i++;
       }
+      else if(!strcmp(argv[i] + 1, "onelab")) {
+        i++;        
+        if(argv[i])
+           Msg::InitializeOnelab(argv[i++]);
+        else
+          Msg::Fatal("Missing string");
+        CTX::instance()->batch = -4;
+      }
       else if(!strcmp(argv[i] + 1, "socket")) {
         i++;        
         if(argv[i])

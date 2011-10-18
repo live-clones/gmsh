@@ -150,7 +150,10 @@ int GmshBatch()
   }
 #endif
 
-  if(CTX::instance()->batch == -3){
+  if(CTX::instance()->batch == -4){
+    // 
+  }
+  else if(CTX::instance()->batch == -3){
     GmshRemote();
   }
   else if(CTX::instance()->batch == -2){
