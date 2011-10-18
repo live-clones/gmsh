@@ -1107,12 +1107,13 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int typ
         val[i][0] = S(2);
       else if (PViewOptions::EigenVectors == opt->tensorType) {
         for (int j = 0; j < 3; j++) {
-          vval[j][i][0] = V(j,0)*S(j);
-          vval[j][i][1] = V(j,1)*S(j);
-          vval[j][i][2] = V(j,2)*S(j);
+          vval[0][i][j] = V(j,0)*S(0);
+          vval[1][i][j] = V(j,1)*S(1);
+          vval[2][i][j] = V(j,2)*S(2);
         }
       }
     }
+
     if (PViewOptions::EigenVectors == opt->tensorType) {
       addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[0], pre);
       addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval[1], pre);
