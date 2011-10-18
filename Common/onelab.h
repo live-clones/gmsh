@@ -31,7 +31,7 @@
 #include <map>
 #include <iostream>
 #include <sstream>
-#include "GmshSocket.h";
+#include "GmshSocket.h"
 
 namespace onelab{
 
@@ -454,6 +454,7 @@ namespace onelab{
     virtual ~client(){}
     std::string getName(){ return _name; }
     virtual bool run(const std::string &what){ return false; }
+    virtual bool isNetworkClient(){ return false; }
     virtual bool kill(){ return false; }
     virtual void sendInfo(const std::string &msg){ std::cout << msg << std::endl; }
     virtual void sendWarning(const std::string &msg){ std::cerr << msg << std::endl; }
@@ -572,6 +573,7 @@ namespace onelab{
     localNetworkClient(const std::string &name, const std::string &commandLine)
       : localClient(name), _commandLine(commandLine), _pid(-1) {}
     virtual ~localNetworkClient(){}
+    virtual bool isNetworkClient(){ return true; }
     const std::string &getCommandLine(){ return _commandLine; }
     void setCommandLine(const std::string &s){ _commandLine = s; }
     int getPid(){ return _pid; }
@@ -663,6 +665,7 @@ namespace onelab{
         _gmshClient = 0;
       }
     }
+    virtual bool isNetworkClient(){ return true; }
     virtual bool set(number &p, bool value=true){ return _set(p); }
     virtual bool set(string &p, bool value=true){ return _set(p); }
     virtual bool set(function &p, bool value=true){ return _set(p); }

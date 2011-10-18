@@ -23,8 +23,12 @@ class onelabWindow{
   Fl_Input *_model;
   Fl_Menu_Button *_gear;
   std::vector<Fl_Widget*> _treeWidgets;
+  std::string _title;
  public:
   onelabWindow(int deltaFontSize=0);
+  int x(){ return _win->x(); }
+  int y(){ return _win->y(); }
+  void rebuildSolverList();
   void rebuildTree();
   void redrawTree(){ _tree->redraw(); }
   void activate(){ _butt[0]->activate(); _butt[1]->activate(); }
@@ -39,6 +43,8 @@ class onelabWindow{
     _tree->item_pathname(path, 1024, item);
     return std::string(path);
   }
+  void addSolver(const std::string &name, const std::string &commandLine);
+  void removeSolver(const std::string &name);
 };
 
 void onelab_cb(Fl_Widget *w, void *data);

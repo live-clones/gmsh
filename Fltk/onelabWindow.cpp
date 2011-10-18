@@ -228,7 +228,7 @@ bool onelab::localNetworkClient::kill()
   return false;
 }
 
-static void save_mesh(onelab::client *c)
+static void onelab_save_mesh(onelab::client *c)
 {
   std::vector<onelab::string> ps;
   c->get(ps, "Gmsh/MshFileName");
@@ -300,7 +300,7 @@ void onelab_cb(Fl_Widget *w, void *data)
         geometry_reload_cb(0, 0);
         if(FlGui::instance()->onelab->meshAuto()){
           mesh_3d_cb(0, 0);
-          save_mesh(it->second);
+          onelab_save_mesh(it->second);
         }
         onelab::server::instance()->setChanged(false, "Gmsh");
       }
@@ -369,6 +369,27 @@ static void onelab_input_choice_cb(Fl_Widget *w, void *data)
   }
 }
 
+static void onelab_choose_executable_cb(Fl_Widget *w, void *data)
+{
+  onelab::localNetworkClient *c = (onelab::localNetworkClient*)data;
+  std::string pattern = "*";
+#if defined(WIN32)
+  pattern += ".exe";
+#endif
+  if(fileChooser(FILE_CHOOSER_SINGLE, "Choose executable", pattern.c_str())){
+    std::string exe = fileChooserGetName(1);
+    c->setCommandLine(exe);
+    // FIXME hack
+    opt_solver_executable(0, GMSH_SET, exe);
+  }
+}
+
+static void onelab_remove_solver_cb(Fl_Widget *w, void *data)
+{
+  onelab::client *c = (onelab::client*)data;
+  FlGui::instance()->onelab->removeSolver(c->getName());
+}
+
 onelabWindow::onelabWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
@@ -411,17 +432,6 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;
-
-  // FIXME this should be called when we click on "GetDP" in the
-  // solver menu
-  onelab::server::instance()->registerClient
-    (new onelab::localNetworkClient("GetDP",
-                                    opt_solver_executable0(0, GMSH_GET, "")));
-  // onelab::server::citer it = onelab::server::instance()->findClient("GetDP");
-  // onelab::client *c = it->second;
-  // c->setCommandLine(newcommand);
-  // delete c;
-  //onelab::server::instance()->removeClient("GetDP");
 }
 
 static std::string getShortName(const std::string &name) 
@@ -516,6 +526,61 @@ void onelabWindow::rebuildTree()
   }
   
   _tree->redraw();
+}
+
+void onelabWindow::rebuildSolverList()
+{
+  for(int i = _gear->menu()->size(); i >= 2; i--){
+    _gear->remove(i);
+  }
+  _title = "ONELAB";
+  for(onelab::server::citer it = onelab::server::instance()->firstClient();
+      it != onelab::server::instance()->lastClient(); it++){
+    onelab::client *c = it->second;
+    char tmp[256];
+    if(c->isNetworkClient()){
+      sprintf(tmp, "%s/Choose executable", c->getName().c_str());
+      _gear->add(tmp, 0, onelab_choose_executable_cb, (void*)c);
+    }
+    sprintf(tmp, "%s/Remove", c->getName().c_str());
+    _gear->add(tmp, 0, onelab_remove_solver_cb, (void*)c);
+    _title += " " + c->getName();
+  }
+  _win->label(_title.c_str());
+}
+
+void onelabWindow::addSolver(const std::string &name, const std::string &commandLine)
+{
+  onelab::server::citer it = onelab::server::instance()->findClient(name);
+  if(it == onelab::server::instance()->lastClient()){
+    onelab::client *c = new onelab::localNetworkClient(name, commandLine);
+    onelab::server::instance()->registerClient(c);
+  }
+  FlGui::instance()->onelab->rebuildSolverList();
+}
+
+void onelabWindow::removeSolver(const std::string &name)
+{
+  onelab::server::citer it = onelab::server::instance()->findClient(name);
+  if(it != onelab::server::instance()->lastClient()){
+    onelab::client *c = it->second;
+    onelab::server::instance()->removeClient(name);
+    if(c->isNetworkClient()) // cannot delete local gmsh client (allocated in Msg)
+      delete it->second;
+  }
+  FlGui::instance()->onelab->rebuildSolverList();
+}
+
+// new solver interface (onelab-based)
+void solver_cb(Fl_Widget *w, void *data)
+{
+  int num = (intptr_t)data;
+
+  std::string name = opt_solver_name(num, GMSH_GET, "");
+  std::string exe = opt_solver_executable(num, GMSH_GET, "");
+  FlGui::instance()->onelab->addSolver(name, exe);
+
+  onelab_cb(0, (void*)"initial check");
 }
 
 #endif

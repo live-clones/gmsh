@@ -271,6 +271,8 @@ void ConnectionManager::run(std::string args)
   }
 }
 
+#if (FL_MAJOR_VERSION != 1) || (FL_MINOR_VERSION != 3)
+// old solver interface
 void solver_cb(Fl_Widget *w, void *data)
 {
   int num = (intptr_t)data;
@@ -303,6 +305,7 @@ void solver_cb(Fl_Widget *w, void *data)
 
   ConnectionManager::get(num)->runToGetOptions();
 }
+#endif
 
 static void solver_ok_cb(Fl_Widget *w, void *data)
 {

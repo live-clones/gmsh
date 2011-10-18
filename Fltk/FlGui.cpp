@@ -652,12 +652,6 @@ int FlGui::testGlobalShortcuts(int event)
     show = !show;
     status = 2;
   }
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
-  else if(Fl::test_shortcut('@')) {
-    onelab_cb(0, (void*)"initial check");
-    status = 1;
-  }
-#endif
   else if(testArrowShortcuts()) {
     status = 1;
   }
@@ -816,8 +810,13 @@ void FlGui::storeCurrentWindowsInfo()
   CTX::instance()->manipPosition[1] = manip->win->y();
   CTX::instance()->ctxPosition[0] = geoContext->win->x();
   CTX::instance()->ctxPosition[1] = meshContext->win->y();
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
+  CTX::instance()->solverPosition[0] = onelab->x();
+  CTX::instance()->solverPosition[1] = onelab->y();
+#else
   CTX::instance()->solverPosition[0] = solver[0]->win->x();
   CTX::instance()->solverPosition[1] = solver[0]->win->y();
+#endif
   fileChooserGetPosition(&CTX::instance()->fileChooserPosition[0],
                          &CTX::instance()->fileChooserPosition[1]);
 }
