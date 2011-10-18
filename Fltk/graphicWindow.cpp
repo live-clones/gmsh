@@ -497,6 +497,8 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   int glheight = CTX::instance()->glSize[1];
   int height = glheight + mheight + sh;
 
+  printf("mheight=%d glheight=%d height=%d\n", mheight, glheight, height);
+
   // make sure height < screen height
   if(height > Fl::h()){
     height = Fl::h();
@@ -507,7 +509,7 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   }
 
   // no tile should be zero during tile creation
-  if(CTX::instance()->msgSize <= 0 || CTX::instance()->msgSize >= glheight){
+  if(CTX::instance()->msgSize <= 0){
     mheight = 10;
     glheight = CTX::instance()->glSize[1] - 10;
   }
