@@ -512,6 +512,7 @@ namespace onelab{
     citer firstClient(){ return _clients.begin(); }
     citer lastClient(){ return _clients.end(); }
     citer findClient(const std::string &name){ return _clients.find(name); }
+    citer removeClient(const std::string &name){ _clients.erase(name); }
     int getNumClients(){ return _clients.size(); }
     void setChanged(bool changed, const std::string &client="")
     {
@@ -571,6 +572,8 @@ namespace onelab{
     localNetworkClient(const std::string &name, const std::string &commandLine)
       : localClient(name), _commandLine(commandLine), _pid(-1) {}
     virtual ~localNetworkClient(){}
+    const std::string &getCommandLine(){ return _commandLine; }
+    void setCommandLine(const std::string &s){ _commandLine = s; }
     int getPid(){ return _pid; }
     void setPid(int pid){ _pid = pid; }
     virtual bool run(const std::string &what);

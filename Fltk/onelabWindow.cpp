@@ -254,6 +254,13 @@ void onelab_cb(Fl_Widget *w, void *data)
   if(!data) return;
   std::string action((const char*)data);
 
+  if(action == "edit model"){
+    std::string prog = FixWindowsPath(CTX::instance()->editor);
+    std::string file = FixWindowsPath(FlGui::instance()->onelab->getModelName());
+    SystemCall(ReplaceSubString("%s", file, prog));
+    return;
+  }
+
   if(action == "reset"){
     onelab::server::instance()->clear();
     if(onelab::server::instance()->findClient("Gmsh") != 
@@ -267,6 +274,7 @@ void onelab_cb(Fl_Widget *w, void *data)
       FlGui::instance()->onelab->setModelName(fileChooserGetName(1));
     action = "check";
   }
+
   if(FlGui::instance()->onelab->getModelName().empty()){
     std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
     FlGui::instance()->onelab->setModelName(split[0] + split[1] + ".pro");
@@ -372,13 +380,14 @@ onelabWindow::onelabWindow(int deltaFontSize)
     (width, height, CTX::instance()->nonModalWindows ? true : false, "ONELAB");
   _win->box(GMSH_WINDOW_BOX);
 
-  _model = new Fl_Input(WB, WB, width - 2*WB - (2*BB)/3, BH);
+  _model = new Fl_Input(WB, WB, width - 2*WB - BB/3, BH);
   _model->align(FL_ALIGN_RIGHT);
   _model->callback(onelab_cb, (void*)"check");
   _model->when(FL_WHEN_RELEASE|FL_WHEN_ENTER_KEY);
 
-  Fl_Button *choose = new Fl_Button(width - WB - (2*BB)/3, WB, (2*BB)/3, BH, "Choose");
-  choose->callback(onelab_cb, (void*)"choose model");
+  Fl_Menu_Button *menu = new Fl_Menu_Button(width - WB - BB/3, WB, BB/3, BH);
+  menu->add("Choose new model", 0, onelab_cb, (void*)"choose model");
+  menu->add("Edit model",  0, onelab_cb, (void*)"edit model");
 
   _tree = new Fl_Tree(WB, WB+BH, width - 2 * WB, height - 3 * WB - 2 * BH);
   _tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
@@ -388,16 +397,11 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _butt[0]->callback(onelab_cb, (void*)"compute");
   _butt[1] = new Fl_Button(width - 2*WB - 2*BB, height - WB - BH, BB, BH, "Check");
   _butt[1]->callback(onelab_cb, (void*)"check");
-
-  static Fl_Menu_Item gear_menu[] = {
-    {"Reset database", 0, onelab_cb, (void*)"reset"},
-    {"Mesh automatically", 0, 0, 0, FL_MENU_TOGGLE},
-    {0}
-  };
-  gear_menu[1].set();
   _gear = new Fl_Menu_Button
     (_butt[1]->x() - WB - BB/2, _butt[1]->y(), BB/2, BH, "@-1gmsh_gear");
-  _gear->menu(gear_menu);
+  _gear->add("Reset database", 0, onelab_cb, (void*)"reset");
+  _gear->add("Mesh automatically", 0, 0, 0, FL_MENU_TOGGLE);
+  ((Fl_Menu_Item*)_gear->menu())[1].set();
   
   Fl_Box *resbox = new Fl_Box(WB, height - BH - 3 * WB, WB, WB);
   _win->resizable(resbox);
@@ -408,10 +412,16 @@ onelabWindow::onelabWindow(int deltaFontSize)
 
   FL_NORMAL_SIZE += deltaFontSize;
 
-  // FIXME adding GetDP client
+  // FIXME this should be called when we click on "GetDP" in the
+  // solver menu
   onelab::server::instance()->registerClient
     (new onelab::localNetworkClient("GetDP",
                                     opt_solver_executable0(0, GMSH_GET, "")));
+  // onelab::server::citer it = onelab::server::instance()->findClient("GetDP");
+  // onelab::client *c = it->second;
+  // c->setCommandLine(newcommand);
+  // delete c;
+  //onelab::server::instance()->removeClient("GetDP");
 }
 
 static std::string getShortName(const std::string &name) 
