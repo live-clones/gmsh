@@ -497,8 +497,6 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   int glheight = CTX::instance()->glSize[1];
   int height = glheight + mheight + sh;
 
-  printf("mheight=%d glheight=%d height=%d\n", mheight, glheight, height);
-
   // make sure height < screen height
   if(height > Fl::h()){
     height = Fl::h();
