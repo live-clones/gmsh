@@ -1313,7 +1313,13 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
         printf("\n");
       }
     }
-  }printf("\n");
+  }
+  printf("PHYS\n");
+  for(int i=0;i<4;i++)
+    for(std::map<int, std::map<int, std::string> >::iterator it=physicals[i].begin();it!=physicals[i].end();it++) 
+      for(std::map<int, std::string>::iterator it2 = it->second.begin(); it2!=it->second.end(); it2++)
+        printf(" dim=%d reg=%d phys=%d \"%s\"\n",i,it->first,it2->first,it2->second.c_str());
+  printf("\n");
 #endif
 
   for(newVerticesContainer::iterator it = newVertices.begin() ; it != newVertices.end(); ++it) {

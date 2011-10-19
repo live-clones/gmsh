@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _GMODEL_FACT@ORY_H_
+#ifndef _GMODEL_FACTORY_H_
 #define _GMODEL_FACTORY_H_
 
 #include <vector>
