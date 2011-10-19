@@ -1818,8 +1818,16 @@ GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem, bool saveTri)
   cutGM->_associateEntityWithMeshVertices();
   cutGM->_storeVerticesInEntities(vertexMap);
 
-  for(int i = 0; i < 4; i++)
+  for(int i = 0; i < 4; i++){
     cutGM->_storePhysicalTagsInEntities(i, physicals[i]);
+    std::map<int, std::map<int, std::string> >::iterator it = physicals[i].begin();
+    for(; it != physicals[i].end(); it++){
+      std::map<int, std::string>::iterator it2 = it->second.begin();
+      for(; it2 != it->second.end(); it2++)
+        if(it2->second != "")
+          cutGM->setPhysicalName(it2->second, i, it2->first);
+    }
+  }
 
   Msg::Info("Mesh cutting complete (%g s)", Cpu() - t1);
   return cutGM;

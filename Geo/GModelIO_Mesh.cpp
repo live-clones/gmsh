@@ -54,11 +54,8 @@ void GModel::_storePhysicalTagsInEntities(int dim,
       std::map<int, std::string>::const_iterator it2 = it->second.begin();
       for(; it2 != it->second.end(); ++it2){
         if(std::find(ge->physicals.begin(), ge->physicals.end(), it2->first) ==
-           ge->physicals.end()){
+           ge->physicals.end())
           ge->physicals.push_back(it2->first);
-          if(it2->second != "")
-            setPhysicalName(it2->second, dim, it2->first);
-        }
       }
     }
   }
