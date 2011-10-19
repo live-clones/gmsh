@@ -1,12 +1,3 @@
-//Field[1] = Attractor;
-//Field[1].EdgesList = {1};
-//Field[1].NNodesByEdge = 10;
-//Background Field = 1;
-
-//Field[1] = MathEval;
-//Field[1].F = "1.0"; //0.1*x+0.1";
-//Background Field = 1;
-
 Mesh.Algorithm=1;
 Mesh.CharacteristicLengthFactor=1.5;
 
@@ -21,7 +12,13 @@ Line(3) = {4, 1};
 Line(4) = {1, 2};
 
 Line Loop(5) = {1, 2, 3, 4};
-Plane Surface(10) = {5};
+Plane Surface(6) = {5};
+
+Physical Line("top") = {1};
+Physical Line("bottom") = {3};
+Physical Line("left") = {4};
+Physical Line("right") = {2};
+Physical Surface("inside") = {6};
 
 Mesh 2;
 Levelset Plane (1) = {0,1,0,-7};
@@ -29,7 +26,7 @@ Levelset Plane (1) = {0,1,0,-7};
 
 Levelset CutMeshTri {1};
 
-Print "square_cut.msh";
+Print "squareP_cut.msh";
 
 
 

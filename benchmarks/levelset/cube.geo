@@ -29,4 +29,8 @@ Levelset Point(13)={{0.5,0,0},{0.5,0.5,0.},{0.5,1,0},{0.5,0,0.5},{0.5,0,0.8},{0.
 
 Levelset CutMeshTri {5};
 
+Print "cube_cut.msh";
+
+
+
 
