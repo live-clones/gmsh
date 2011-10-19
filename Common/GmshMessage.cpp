@@ -91,7 +91,7 @@ void Msg::Init(int argc, char **argv)
     if(i) _commandLine += " ";
     _commandLine += argv[i];
   }
-  InitializeOnelab();
+  InitializeOnelab("Gmsh");
 }
 
 void Msg::Exit(int level)
@@ -597,14 +597,13 @@ void Msg::FinalizeClient()
   _client = 0;
 }
 
-void Msg::InitializeOnelab(const std::string &sockname)
+void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
 {
-  // Gmsh could also be used as a distant CAD/post-pro client... 
+  if(_onelabClient) delete _onelabClient;
   if (sockname.empty())
-    _onelabClient = new onelab::localClient("Gmsh");
-  else {
-    _onelabClient = new onelab::remoteNetworkClient("GmshRemote",sockname);
-  }
+    _onelabClient = new onelab::localClient(name);
+  else
+    _onelabClient = new onelab::remoteNetworkClient(name, sockname);
 }
 
 void Msg::ExchangeOnelabParameter(const std::string &key,
