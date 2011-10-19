@@ -6,7 +6,7 @@
 #include <string.h>
 #include "GmshMessage.h"
 #include "GmshDefines.h"
-#include "ConnectionManager.h"
+#include "onelab.h"
 #include "Iso.h"
 #include "PView.h"
 #include "PViewOptions.h"
@@ -1398,7 +1398,7 @@ void PView::fillVertexArrays()
   init(this);
 }
 
-void PView::fillVertexArray(ConnectionManager *remote, int length,
+void PView::fillVertexArray(onelab::localNetworkClient *remote, int length,
                             const char *bytes, int swap)
 {
   std::string name;

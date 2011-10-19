@@ -21,7 +21,6 @@ set(SRC
   ListUtils.cpp
   TreeUtils.cpp avl.cpp
   MallocUtils.cpp
-  ConnectionManager.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 

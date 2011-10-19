@@ -147,10 +147,9 @@ void GetOptions(int argc, char *argv[])
         CTX::instance()->batch = -4;
       }
       else if(!strcmp(argv[i] + 1, "socket")) {
-        // FIXME: this will create the "GmshRemote" onelab client in the future
         i++;        
         if(argv[i])
-          Msg::InitClient(argv[i++]);
+          Msg::InitializeOnelab("GmshRemote", argv[i++]);
         else
           Msg::Fatal("Missing string");
         CTX::instance()->batch = -3;

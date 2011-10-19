@@ -11,7 +11,6 @@
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
-#include "ConnectionManager.h"
 #include "FlGui.h"
 #include "optionWindow.h"
 #include "paletteWindow.h"
@@ -28,6 +27,7 @@
 #include "Context.h"
 #include "graphicWindow.h"
 #include "openglWindow.h"
+#include "onelab.h"
 
 extern StringXColor GeneralOptions_Color[] ;
 extern StringXColor GeometryOptions_Color[] ;
@@ -513,8 +513,11 @@ static void solver_options_ok_cb(Fl_Widget *w, void *data)
 
   int old_listen = (int)opt_solver_listen(0, GMSH_GET, o->solver.butt[0]->value());
   opt_solver_listen(0, GMSH_SET, o->solver.butt[0]->value());
-  if(!old_listen && o->solver.butt[0]->value())
-    ConnectionManager::get(-1)->run("");
+  if(!old_listen && o->solver.butt[0]->value()){
+    onelab::localNetworkClient *c = new onelab::localNetworkClient("Listen", "");
+    onelab::server::instance()->registerClient(c);
+    c->run("");
+  }
 
   opt_solver_socket_name(0, GMSH_SET, o->solver.input[0]->value());
   opt_solver_timeout(0, GMSH_SET, o->solver.value[0]->value());

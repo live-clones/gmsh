@@ -98,7 +98,7 @@ bool onelab::localNetworkClient::run(const std::string &what)
 
   std::string command = FixWindowsPath(_commandLine);
   if(command.size()){
-    command += " " + what +  " -onelab " + sockname;
+    command += " " + what +  " " + _socketSwitch + " " + sockname;
 #if !defined(WIN32)
     command += " &";
 #endif
@@ -638,6 +638,14 @@ void solver_cb(Fl_Widget *w, void *data)
   FlGui::instance()->onelab->addSolver(name, exe);
 
   onelab_cb(0, (void*)"initial check");
+}
+
+#else
+
+// new solver interface (onelab-based)
+void solver_cb(Fl_Widget *w, void *data)
+{
+  Msg::Error("The solver interface requires FLTK 1.3");
 }
 
 #endif

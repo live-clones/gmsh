@@ -32,7 +32,6 @@ class manipWindow;
 class geometryContextWindow;
 class meshContextWindow;
 class aboutWindow;
-class solverWindow;
 class onelabWindow;
 
 class GVertex;
@@ -66,7 +65,6 @@ class FlGui{
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
   onelabWindow *onelab;
 #endif
-  std::vector<solverWindow*> solver;
  public:
   FlGui(int argc, char **argv);
   ~FlGui(){}

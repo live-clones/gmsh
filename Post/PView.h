@@ -17,7 +17,7 @@ class VertexArray;
 class smooth_normals;
 class GModel;
 class GMSH_PostPlugin;
-class ConnectionManager;
+namespace onelab{ class localNetworkClient; }
 
 // A post-processing view.
 class PView{
@@ -119,7 +119,7 @@ class PView{
   void fillVertexArrays();
 
   // fill a vertex array using a raw stream of bytes
-  static void fillVertexArray(ConnectionManager *remote, int length,
+  static void fillVertexArray(onelab::localNetworkClient *remote, int length,
                               const char *data, int swap);
 
   // smoothed normals

@@ -23,7 +23,6 @@
 #include "clippingWindow.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
-#include "solverWindow.h"
 #include "onelabWindow.h"
 #include "aboutWindow.h"
 #include "colorbarWindow.h"
@@ -275,8 +274,6 @@ FlGui::FlGui(int argc, char **argv)
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
   onelab = new onelabWindow();
 #endif
-  for(int i = 0; i < NB_SOLVER_MAX; i++)
-    solver.push_back(new solverWindow(i, CTX::instance()->deltaFontSize));
 
   // init solver plugin stuff
   callForSolverPlugin(-1);
@@ -813,9 +810,6 @@ void FlGui::storeCurrentWindowsInfo()
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
   CTX::instance()->solverPosition[0] = onelab->x();
   CTX::instance()->solverPosition[1] = onelab->y();
-#else
-  CTX::instance()->solverPosition[0] = solver[0]->win->x();
-  CTX::instance()->solverPosition[1] = solver[0]->win->y();
 #endif
   fileChooserGetPosition(&CTX::instance()->fileChooserPosition[0],
                          &CTX::instance()->fileChooserPosition[1]);
@@ -893,10 +887,10 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->geoContext->win->show();
     if(FlGui::instance()->meshContext->win->shown())
       FlGui::instance()->meshContext->win->show();
-    for(unsigned int i = 0; i < FlGui::instance()->solver.size(); i++) {
-      if(FlGui::instance()->solver[i]->win->shown())
-        FlGui::instance()->solver[i]->win->show();
-    }
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
+    if(FlGui::instance()->onelab->shown())
+      FlGui::instance()->onelab->show();
+#endif
     if(FlGui::instance()->visibility->win->shown())
       FlGui::instance()->visibility->win->show();
     if(FlGui::instance()->clipping->win->shown())

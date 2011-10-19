@@ -509,7 +509,6 @@ namespace onelab{
     }
     bool registerClient(client *c)
     {
-      if(_clients.count(c->getName())) return false;
       _clients[c->getName()] = c;
       c->setId(_clients.size());
       return true;
@@ -572,17 +571,22 @@ namespace onelab{
   private:
     // command line to launch the remote network client
     std::string _commandLine;
+    // command line option to specify socket
+    std::string _socketSwitch;
     // pid of the remote network client
     int _pid;
     // underlying GmshServer
     GmshServer *_gmshServer;
   public:
     localNetworkClient(const std::string &name, const std::string &commandLine)
-      : localClient(name), _commandLine(commandLine), _pid(-1), _gmshServer(0) {}
+      : localClient(name), _commandLine(commandLine), _socketSwitch("-onelab"),
+        _pid(-1), _gmshServer(0) {}
     virtual ~localNetworkClient(){}
     virtual bool isNetworkClient(){ return true; }
     const std::string &getCommandLine(){ return _commandLine; }
     void setCommandLine(const std::string &s){ _commandLine = s; }
+    const std::string &getSocketSwitch(){ return _socketSwitch; }
+    void setSocketSwitch(const std::string &s){ _socketSwitch = s; }
     int getPid(){ return _pid; }
     void setPid(int pid){ _pid = pid; }
     GmshServer const *getServer(){ return _gmshServer; }

@@ -6,14 +6,15 @@
 #ifndef _ONELAB_WINDOW_H_
 #define _ONELAB_WINDOW_H_
 
+#include "onelab.h"
 #include <FL/Fl.H>
+
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
 #include <vector>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Tree.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Input.H>
-#include "onelab.h"
 
 class onelabWindow{
  private:
@@ -34,6 +35,7 @@ class onelabWindow{
   void activate(){ _butt[0]->activate(); _butt[1]->activate(); }
   void deactivate(){ _butt[0]->deactivate(); _butt[1]->deactivate(); }
   void show(){ _win->show(); }
+  int shown(){ return _win->shown(); }
   std::string getModelName(){ return _model->value(); }
   void setModelName(const std::string &name){ _model->value(name.c_str()); }
   int meshAuto(){ return _gear->menu()[1].value(); }
@@ -50,4 +52,7 @@ class onelabWindow{
 void onelab_cb(Fl_Widget *w, void *data);
 
 #endif
+
+void solver_cb(Fl_Widget *w, void *data);
+
 #endif

@@ -9,7 +9,7 @@
 #include <vector>
 #include <string>
 #include "GmshMessage.h"
-#include "ConnectionManager.h"
+#include "onelab.h"
 #include "GmshSocket.h"
 #include "PViewData.h"
 #include "SBoundingBox3d.h"
@@ -18,13 +18,13 @@
 // data)
 class PViewDataRemote : public PViewData {
  private: 
-  ConnectionManager *_remote;
+  onelab::localNetworkClient *_remote;
   double _min, _max;
   int _numTimeSteps;
   double _time;
   SBoundingBox3d _bbox;
  public:
-  PViewDataRemote(ConnectionManager *remote, double min, double max, int numsteps, 
+  PViewDataRemote(onelab::localNetworkClient *remote, double min, double max, int numsteps, 
                   double time, SBoundingBox3d &bbox)
     : _remote(remote), _min(min), _max(max), _numTimeSteps(numsteps), 
       _time(time), _bbox(bbox) {}
@@ -49,7 +49,7 @@ class PViewDataRemote : public PViewData {
   bool isRemote(){ return true; }
   int fillRemoteVertexArrays(std::string &options)
   {
-    GmshServer *server = _remote->getServer();
+    GmshServer *server = (GmshServer*)_remote->getServer();
     if(!server){
       Msg::Error("Remote server not running: please start server");
       return 1;

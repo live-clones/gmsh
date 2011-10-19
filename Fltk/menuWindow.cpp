@@ -14,7 +14,6 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GmshSocket.h"
-#include "ConnectionManager.h"
 #include "FlGui.h"
 #include "menuWindow.h"
 #include "mainWindow.h"
@@ -27,8 +26,8 @@
 #include "manipWindow.h"
 #include "fieldWindow.h"
 #include "pluginWindow.h"
-#include "solverWindow.h"
 #include "aboutWindow.h"
+#include "onelabWindow.h"
 #include "fileDialogs.h"
 #include "extraDialogs.h"
 #include "partitionDialog.h"
@@ -166,8 +165,17 @@ static void file_clear_cb(Fl_Widget *w, void *data)
 
 static void file_remote_cb(Fl_Widget *w, void *data)
 {
-  GmshServer *server = ConnectionManager::get(99)->getServer();
-
+  onelab::localNetworkClient *c;
+  onelab::server::citer it = onelab::server::instance()->findClient("GmshRemote");
+  if(it == onelab::server::instance()->lastClient()){
+    c = new onelab::localNetworkClient("GmshRemote", "");
+    c->setSocketSwitch("-socket");
+    onelab::server::instance()->registerClient(c);
+  }
+  else
+    c = (onelab::localNetworkClient*)it->second;
+  GmshServer *server = (GmshServer*)c->getServer();
+  
   std::string str((const char*)data);
 
   if(str == "start"){
@@ -175,11 +183,8 @@ static void file_remote_cb(Fl_Widget *w, void *data)
       Msg::Error("Cannot start: remote Gmsh is already running");
       return;
     }
-    ConnectionManager::get(99)->name = "Remote";
-    ConnectionManager::get(99)->socketSwitch = "-socket %s";
-    ConnectionManager::get(99)->executable = connectionChooser();
-    if(ConnectionManager::get(99)->executable.size())
-      ConnectionManager::get(99)->run("");
+    c->setCommandLine(connectionChooser());
+    if(c->getCommandLine().size()) c->run("");
   }
   else{
     if(!server){
