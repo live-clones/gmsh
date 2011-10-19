@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 
   // Non-interactive Gmsh
   if(CTX::instance()->batch) {
-    if(!Msg::GetClient()) CTX::instance()->terminal = 1;
+    if(!Msg::GetGmshClient()) CTX::instance()->terminal = 1;
     GmshBatch();
     GmshFinalize();
     Msg::Exit(0);

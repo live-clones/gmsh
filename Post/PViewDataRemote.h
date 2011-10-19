@@ -49,7 +49,7 @@ class PViewDataRemote : public PViewData {
   bool isRemote(){ return true; }
   int fillRemoteVertexArrays(std::string &options)
   {
-    GmshServer *server = (GmshServer*)_remote->getServer();
+    GmshServer *server = _remote->getGmshServer();
     if(!server){
       Msg::Error("Remote server not running: please start server");
       return 1;

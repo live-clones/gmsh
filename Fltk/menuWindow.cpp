@@ -174,7 +174,7 @@ static void file_remote_cb(Fl_Widget *w, void *data)
   }
   else
     c = (onelab::localNetworkClient*)it->second;
-  GmshServer *server = (GmshServer*)c->getServer();
+  GmshServer *server = c->getGmshServer();
   
   std::string str((const char*)data);
 

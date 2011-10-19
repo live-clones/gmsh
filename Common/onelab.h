@@ -589,7 +589,7 @@ namespace onelab{
     void setSocketSwitch(const std::string &s){ _socketSwitch = s; }
     int getPid(){ return _pid; }
     void setPid(int pid){ _pid = pid; }
-    GmshServer const *getServer(){ return _gmshServer; }
+    GmshServer *getGmshServer(){ return _gmshServer; }
     void setServer(GmshServer *server){ _gmshServer = server; }
     virtual bool run(const std::string &what);
     virtual bool kill();
@@ -678,6 +678,7 @@ namespace onelab{
         _gmshClient = 0;
       }
     }
+    GmshClient *getGmshClient(){ return _gmshClient; }
     virtual bool isNetworkClient(){ return true; }
     virtual bool set(number &p, bool value=true){ return _set(p); }
     virtual bool set(string &p, bool value=true){ return _set(p); }

@@ -237,7 +237,6 @@ bool onelab::localNetworkClient::run(const std::string &what)
       Msg::Info("got %d Mb message in %g seconds",
                 length / 1024 / 1024, GetTimeInSeconds() - timer);
       break;
-    /* FIXME PViewDataRemote should store the onelab::localNetworkClient
     case GmshSocket::GMSH_VERTEX_ARRAY:
       {
         int n = PView::list.size();
@@ -246,7 +245,6 @@ bool onelab::localNetworkClient::run(const std::string &what)
         drawContext::global()->draw();
       }
       break;
-    */
     default:
       Msg::Warning("Received unknown message type (%d)", type);
       break;

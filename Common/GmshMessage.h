@@ -81,10 +81,8 @@ class Msg {
   static std::string GetString(const char *text, std::string defaultval);
   static int GetAnswer(const char *question, int defaultval, const char *zero, 
                        const char *one, const char *two=0);
-  static void InitClient(std::string sockname);
-  static GmshClient *GetClient(){ return _client; }
-  static void FinalizeClient();
   static void InitializeOnelab(const std::string &name, const std::string &sockname="");
+  static GmshClient *GetGmshClient(){ return _client; }
   static void FinalizeOnelab();
   static bool UseOnelab(){ return _onelabClient ? true : false; }
   static void ExchangeOnelabParameter(const std::string &key, 

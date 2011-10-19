@@ -168,7 +168,7 @@ static void gatherAndSendVertexArrays(GmshClient* client, bool swap)
 
 int GmshRemote()
 {
-  GmshClient *client = Msg::GetClient();
+  GmshClient *client = Msg::GetGmshClient();
 
   int rank = Msg::GetCommRank();
   int nbDaemon = Msg::GetCommSize();

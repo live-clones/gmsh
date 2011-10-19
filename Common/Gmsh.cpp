@@ -197,8 +197,6 @@ int GmshBatch()
   currtime.resize(currtime.size() - 1);
   Msg::Info("Stopped on %s", currtime.c_str());
 
-  Msg::FinalizeClient();
-
   return 1;
 }
 

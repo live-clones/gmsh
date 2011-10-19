@@ -574,36 +574,16 @@ int Msg::GetAnswer(const char *question, int defaultval, const char *zero,
     return atoi(ret);
 }
 
-void Msg::InitClient(std::string sockname)
-{
-  if(_client) delete _client;
-  _client = new GmshClient();
-  if(_client->Connect(sockname.c_str()) < 0){
-    Msg::Error("Unable to connect to server on %s", sockname.c_str());
-    delete _client;
-    _client = 0;
-  }
-  else
-    _client->Start();
-}
-
-void Msg::FinalizeClient()
-{
-  if(_client){
-    _client->Stop();
-    _client->Disconnect();
-    delete _client;
-  }
-  _client = 0;
-}
-
 void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
 {
   if(_onelabClient) delete _onelabClient;
   if (sockname.empty())
     _onelabClient = new onelab::localClient(name);
-  else
-    _onelabClient = new onelab::remoteNetworkClient(name, sockname);
+  else{
+    onelab::remoteNetworkClient *c = new onelab::remoteNetworkClient(name, sockname);
+    _onelabClient = c;
+    _client = c->getGmshClient();
+  }
 }
 
 void Msg::ExchangeOnelabParameter(const std::string &key,
@@ -657,6 +637,7 @@ void Msg::FinalizeOnelab()
   if(_onelabClient){
     delete _onelabClient;
     _onelabClient = 0;
+    _client = 0;
   }
 }
 
