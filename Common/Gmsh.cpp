@@ -16,7 +16,7 @@
 #include "CommandLine.h"
 #include "OS.h"
 #include "Context.h"
-#include "ConnectionManager.h"
+#include "onelab.h"
 #include "robustPredicates.h"
 
 #if defined(HAVE_MESH)
@@ -252,8 +252,9 @@ int GmshFLTK(int argc, char **argv)
 
   // listen to external solvers
   if(CTX::instance()->solver.listen){
-    ConnectionManager::get(-1)->name = "unknown";
-    ConnectionManager::get(-1)->run("");
+    onelab::localNetworkClient *c = new onelab::localNetworkClient("Listen", "");
+    onelab::server::instance()->registerClient(c);
+    c->run("");
   }
 
   // loop

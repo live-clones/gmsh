@@ -25,7 +25,7 @@ class GmshInteractiveClient{
     _client.Stop();
     _client.Disconnect();
   }
-  void read(char *prompt)
+  void read(const char *prompt)
   {
     // pre-load a few commands in the history:
     add_history("lc = 1.;");

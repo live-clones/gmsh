@@ -46,8 +46,9 @@ class onelabGmshServer : public GmshServer{
       if(timeout > 0 && GetTimeInSeconds() - start > timeout)
         return 2; // timout
 
-      if(_client->getPid() < 0)
-        return 1; // process has been killed
+      if(_client->getPid() < 0 ||
+         (_client->getCommandLine().empty() &&  !CTX::instance()->solver.listen))
+        return 1; // process has been killed or we stopped listening
 
       // check if there is data (call select with a zero timeout to
       // return immediately, i.e., do polling)
@@ -64,6 +65,7 @@ class onelabGmshServer : public GmshServer{
       else{ 
         // an error happened
         _client->setPid(-1);
+        _client->setServer(0);
         return 1;
       }
     }
@@ -72,29 +74,38 @@ class onelabGmshServer : public GmshServer{
 
 bool onelab::localNetworkClient::run(const std::string &what)
 {
+ new_connection:
   _pid = 0;
+  _gmshServer = 0;
+
   onelabGmshServer *server = new onelabGmshServer(this);
- 
+
   std::string sockname;
+  std::ostringstream tmp;
   if(!strstr(CTX::instance()->solver.socketName.c_str(), ":")){
     // Unix socket
-    std::ostringstream tmp;
-    tmp << CTX::instance()->homeDir << CTX::instance()->solver.socketName;
+    tmp << CTX::instance()->homeDir << CTX::instance()->solver.socketName << getId();
     sockname = FixWindowsPath(tmp.str());
   }
   else{
     // TCP/IP socket
-    sockname = CTX::instance()->solver.socketName;
-    // if only the port is given, prepend the host name
-    if(sockname.size() && sockname[0] == ':')
-      sockname = GetHostName() + sockname;
+    if(CTX::instance()->solver.socketName.size() && 
+       CTX::instance()->solver.socketName[0] == ':')
+      tmp << GetHostName(); // prepend hostname if only port is given
+    tmp << CTX::instance()->solver.socketName << getId();
+    sockname = tmp.str();
   }
 
-  std::string prog = FixWindowsPath(_commandLine);
-  std::string command = prog + " " + what +  " -onelab " + sockname;
+  std::string command = FixWindowsPath(_commandLine);
+  if(command.size()){
+    command += " " + what +  " -onelab " + sockname;
 #if !defined(WIN32)
-  command += " &";
+    command += " &";
 #endif
+  }
+  else{
+    Msg::Info("Listening on socket '%s'", sockname.c_str());
+  }
 
   int sock;
   try{
@@ -116,10 +127,15 @@ bool onelab::localNetworkClient::run(const std::string &what)
 
   while(1) {
 
-    if(_pid < 0) break;
+    if(_pid < 0 || (command.empty() && !CTX::instance()->solver.listen))
+      break;
     
     int stop = server->NonBlockingWait(sock, 0.1, 0.);
-    if(stop || _pid < 0) break;
+
+    if(stop || _pid < 0 || (command.empty() && !CTX::instance()->solver.listen))
+      break;
+
+    double timer = GetTimeInSeconds();
     
     int type, length, swap;
     if(!server->ReceiveHeader(&type, &length, &swap)){
@@ -136,9 +152,11 @@ bool onelab::localNetworkClient::run(const std::string &what)
     switch (type) {
     case GmshSocket::GMSH_START:
       _pid = atoi(message.c_str());
+      _gmshServer = server;
       break;
     case GmshSocket::GMSH_STOP:
       _pid = -1;
+      _gmshServer = 0;
       break;
     case GmshSocket::GMSH_PARAMETER:
       {
@@ -215,7 +233,11 @@ bool onelab::localNetworkClient::run(const std::string &what)
       ParseString(message);
       drawContext::global()->draw();
       break;
-    /* FIXME need to change PViewDataRemote to work without ConnectionManager
+    case GmshSocket::GMSH_SPEED_TEST:
+      Msg::Info("got %d Mb message in %g seconds",
+                length / 1024 / 1024, GetTimeInSeconds() - timer);
+      break;
+    /* FIXME PViewDataRemote should store the onelab::localNetworkClient
     case GmshSocket::GMSH_VERTEX_ARRAY:
       {
         int n = PView::list.size();
@@ -233,10 +255,17 @@ bool onelab::localNetworkClient::run(const std::string &what)
     FlGui::instance()->check();
   }
 
+  _gmshServer = 0;
   server->Shutdown();
   delete server;
 
   Msg::StatusBar(2, true, "Done running '%s'", _name.c_str());
+
+  if(command.empty()){
+    Msg::Info("Client disconnected: starting new connection");
+    goto new_connection;
+  }
+
   return true;
 }
 
@@ -336,7 +365,10 @@ void onelab_cb(Fl_Widget *w, void *data)
   for(onelab::server::citer it = onelab::server::instance()->firstClient();
       it != onelab::server::instance()->lastClient(); it++){
     onelab::client *c = it->second;
-    if(c->getName() == "Gmsh") continue;
+    if(c->getName() == "Gmsh" || // local Gmsh client
+       c->getName() == "Listen" || // unknown client connecting through "-listen"
+       c->getName() == "GmshRemote") // distant post-processing Gmsh client
+      continue;
     std::string what = FlGui::instance()->onelab->getModelName();
     if(action == "initial check" || action == "check"){
       c->run(what);
@@ -609,4 +641,3 @@ void solver_cb(Fl_Widget *w, void *data)
 }
 
 #endif
-

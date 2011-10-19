@@ -61,21 +61,23 @@ class GmshSocket{
   // receive data from a machine with a different byte ordering, and
   // we swap the bytes in the payload)
   enum MessageType{ 
-    GMSH_START        = 1,
-    GMSH_STOP         = 2,
-    GMSH_INFO         = 10,
-    GMSH_WARNING      = 11,
-    GMSH_ERROR        = 12,
-    GMSH_PROGRESS     = 13,
-    GMSH_MERGE_FILE   = 20,
-    GMSH_PARSE_STRING = 21,
-    GMSH_VERTEX_ARRAY = 22,
-    GMSH_SPEED_TEST   = 30,
-    GMSH_OPTION_1     = 100,
-    GMSH_OPTION_2     = 101,
-    GMSH_OPTION_3     = 102,
-    GMSH_OPTION_4     = 103,
-    GMSH_OPTION_5     = 104};
+    GMSH_START           = 1,
+    GMSH_STOP            = 2,
+    GMSH_INFO            = 10,
+    GMSH_WARNING         = 11,
+    GMSH_ERROR           = 12,
+    GMSH_PROGRESS        = 13,
+    GMSH_MERGE_FILE      = 20,
+    GMSH_PARSE_STRING    = 21,
+    GMSH_VERTEX_ARRAY    = 22,
+    GMSH_PARAMETER       = 23,
+    GMSH_PARAMETER_QUERY = 24,
+    GMSH_SPEED_TEST      = 30,
+    GMSH_OPTION_1        = 100,
+    GMSH_OPTION_2        = 101,
+    GMSH_OPTION_3        = 102,
+    GMSH_OPTION_4        = 103,
+    GMSH_OPTION_5        = 104};
  protected:
   // the socket descriptor
   int _sock;
@@ -202,6 +204,11 @@ class GmshSocket{
         return 1;
       }
     }
+    return 0;
+  }
+  int ReceiveMessage(int len, void *buffer)
+  {
+    if(_ReceiveData(buffer, len) == len) return 1;
     return 0;
   }
   // str should be allocated with size (len+1)
@@ -365,7 +372,7 @@ class GmshServer : public GmshSocket{
     }
 
     if(command && strlen(command)){
-      SystemCall(command); // Start the solver
+      SystemCall(command); // start the solver
     }
     else{
       timeout = 0.; // no command launched: don't set a timeout
