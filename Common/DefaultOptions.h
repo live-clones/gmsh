@@ -62,15 +62,15 @@ StringXString GeneralOptions_String[] = {
   { F|S, "OptionsFileName" , opt_general_options_filename , ".gmsh-options" ,
     "Option file created with `Tools->Options->Save'; automatically read on startup" },
 
-  { F|S, "RecentFile1", opt_general_recent_file1 , "untitled.geo" ,
+  { F|S, "RecentFile0", opt_general_recent_file0 , "untitled.geo" ,
     "Most recent opened file"},
-  { F|S, "RecentFile2", opt_general_recent_file2 , "untitled.geo" ,
+  { F|S, "RecentFile1", opt_general_recent_file1 , "untitled.geo" ,
     "2nd most recent opened file"},
-  { F|S, "RecentFile3", opt_general_recent_file3 , "untitled.geo" ,
+  { F|S, "RecentFile2", opt_general_recent_file2 , "untitled.geo" ,
     "3rd most recent opened file"},
-  { F|S, "RecentFile4", opt_general_recent_file4 , "untitled.geo" ,
+  { F|S, "RecentFile3", opt_general_recent_file3 , "untitled.geo" ,
     "4th most recent opened file"},
-  { F|S, "RecentFile5", opt_general_recent_file5 , "untitled.geo" ,
+  { F|S, "RecentFile4", opt_general_recent_file4 , "untitled.geo" ,
     "5th most recent opened file"},
   
   { 0,   "SessionFileName" , opt_general_session_filename , ".gmshrc" ,
@@ -114,31 +114,26 @@ StringXString MeshOptions_String[] = {
 } ;
 
 StringXString SolverOptions_String[] = {
-  { F|O, "Executable0" , opt_solver_executable0 , 
-#if defined(WIN32)
-    "getdp.exe" , 
-#else
-    "getdp" , 
-#endif
+  { F|S, "Executable0" , opt_solver_executable0 , "",
     "System command to launch solver 0 (should not contain the `&' character)" },
-  { F|O, "Executable1" , opt_solver_executable1 , "" , 
+  { F|S, "Executable1" , opt_solver_executable1 , "" , 
     "System command to launch solver 1 (should not contain the `&' character)" },
-  { F|O, "Executable2" , opt_solver_executable2 , "" , 
+  { F|S, "Executable2" , opt_solver_executable2 , "" , 
     "System command to launch solver 2 (should not contain the `&' character)" },
-  { F|O, "Executable3" , opt_solver_executable3 , "" , 
+  { F|S, "Executable3" , opt_solver_executable3 , "" , 
     "System command to launch solver 3 (should not contain the `&' character)" },
-  { F|O, "Executable4" , opt_solver_executable4 , "" , 
+  { F|S, "Executable4" , opt_solver_executable4 , "" , 
     "System command to launch solver 4 (should not contain the `&' character)" },
 
-  { F|O, "Name0" , opt_solver_name0 , "GetDP" ,
+  { F|S, "Name0" , opt_solver_name0 , "GetDP" ,
     "Name of solver 0" },
-  { F|O, "Name1" , opt_solver_name1 , "" ,
+  { F|S, "Name1" , opt_solver_name1 , "" ,
     "Name of solver 1" },
-  { F|O, "Name2" , opt_solver_name1 , "" ,
+  { F|S, "Name2" , opt_solver_name1 , "" ,
     "Name of solver 2" },
-  { F|O, "Name3" , opt_solver_name1 , "" ,
+  { F|S, "Name3" , opt_solver_name1 , "" ,
     "Name of solver 3" },
-  { F|O, "Name4" , opt_solver_name1 , "" ,
+  { F|S, "Name4" , opt_solver_name1 , "" ,
     "Name of solver 4" },
 
   { F|O, "SocketName" , opt_solver_socket_name , 

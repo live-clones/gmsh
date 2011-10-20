@@ -65,7 +65,7 @@ class onelabGmshServer : public GmshServer{
       else{ 
         // an error happened
         _client->setPid(-1);
-        _client->setServer(0);
+        _client->setGmshServer(0);
         return 1;
       }
     }
@@ -434,8 +434,8 @@ static void onelab_choose_executable_cb(Fl_Widget *w, void *data)
   if(fileChooser(FILE_CHOOSER_SINGLE, "Choose executable", pattern.c_str())){
     std::string exe = fileChooserGetName(1);
     c->setCommandLine(exe);
-    // FIXME hack
-    opt_solver_executable(0, GMSH_SET, exe);
+    if(c->getIndex() >= 0 && c->getIndex() < 5)
+      opt_solver_executable(c->getIndex(), GMSH_SET, exe);
   }
 }
 
@@ -604,11 +604,15 @@ void onelabWindow::rebuildSolverList()
   _win->label(_title.c_str());
 }
 
-void onelabWindow::addSolver(const std::string &name, const std::string &commandLine)
+void onelabWindow::addSolver(const std::string &name, const std::string &commandLine,
+                             int index)
 {
   onelab::server::citer it = onelab::server::instance()->findClient(name);
-  if(it == onelab::server::instance()->lastClient())
-    new onelab::localNetworkClient(name, commandLine);
+  if(it == onelab::server::instance()->lastClient()){
+    onelab::localNetworkClient *c = new onelab::localNetworkClient(name, commandLine);
+    c->setIndex(index);
+    if(commandLine.empty()) onelab_choose_executable_cb(0, (void *)c);
+  }
   FlGui::instance()->onelab->rebuildSolverList();
 }
 
@@ -624,21 +628,19 @@ void onelabWindow::removeSolver(const std::string &name)
   FlGui::instance()->onelab->rebuildSolverList();
 }
 
-// new solver interface (onelab-based)
 void solver_cb(Fl_Widget *w, void *data)
 {
   int num = (intptr_t)data;
 
   std::string name = opt_solver_name(num, GMSH_GET, "");
   std::string exe = opt_solver_executable(num, GMSH_GET, "");
-  FlGui::instance()->onelab->addSolver(name, exe);
+  FlGui::instance()->onelab->addSolver(name, exe, num);
 
   onelab_cb(0, (void*)"initial check");
 }
 
 #else
 
-// new solver interface (onelab-based)
 void solver_cb(Fl_Widget *w, void *data)
 {
   Msg::Error("The solver interface requires FLTK 1.3");

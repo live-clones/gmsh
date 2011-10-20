@@ -989,35 +989,35 @@ std::string opt_general_options_filename(OPT_ARGS_STR)
   return CTX::instance()->optionsFileName;
 }
 
-std::string opt_general_recent_file1(OPT_ARGS_STR)
+std::string opt_general_recent_file0(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX::instance()->recentFiles[0] = val;
   return CTX::instance()->recentFiles[0];
 }
 
-std::string opt_general_recent_file2(OPT_ARGS_STR)
+std::string opt_general_recent_file1(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX::instance()->recentFiles[1] = val;
   return CTX::instance()->recentFiles[1];
 }
 
-std::string opt_general_recent_file3(OPT_ARGS_STR)
+std::string opt_general_recent_file2(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX::instance()->recentFiles[2] = val;
   return CTX::instance()->recentFiles[2];
 }
 
-std::string opt_general_recent_file4(OPT_ARGS_STR)
+std::string opt_general_recent_file3(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX::instance()->recentFiles[3] = val;
   return CTX::instance()->recentFiles[3];
 }
 
-std::string opt_general_recent_file5(OPT_ARGS_STR)
+std::string opt_general_recent_file4(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX::instance()->recentFiles[4] = val;

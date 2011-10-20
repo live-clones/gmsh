@@ -451,12 +451,16 @@ namespace onelab{
     std::string _name;
     // the id of the client, used to create a unique socket for this client
     int _id;
+    // the index of the client in an external solver list (if any)
+    int _index;
   public:
-    client(const std::string &name) : _name(name){}
+    client(const std::string &name) : _name(name), _id(0), _index(-1){}
     virtual ~client(){}
     std::string getName(){ return _name; }
     void setId(int id){ _id = id; }
     int getId(){ return _id; }
+    void setIndex(int index){ _index = index; }
+    int getIndex(){ return _index; }
     virtual bool run(const std::string &what){ return false; }
     virtual bool isNetworkClient(){ return false; }
     virtual bool kill(){ return false; }
@@ -590,7 +594,7 @@ namespace onelab{
     int getPid(){ return _pid; }
     void setPid(int pid){ _pid = pid; }
     GmshServer *getGmshServer(){ return _gmshServer; }
-    void setServer(GmshServer *server){ _gmshServer = server; }
+    void setGmshServer(GmshServer *server){ _gmshServer = server; }
     virtual bool run(const std::string &what);
     virtual bool kill();
   };
