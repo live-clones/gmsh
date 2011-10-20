@@ -78,7 +78,8 @@ CTX::CTX()
   mesh.volumesEdges = mesh.volumesFaces = mesh.surfacesEdges = mesh.surfacesFaces = 0;
   mesh.volumesFaces = mesh.surfacesEdges = mesh.surfacesFaces = 0;
   mesh.smoothInternalEdges = mesh.smoothNormals = mesh.reverseAllNormals = 0;
-  mesh.explode = mesh.numSubEdges = mesh.angleSmoothNormals = 0;
+  mesh.explode = mesh.angleSmoothNormals = 0.;
+  mesh.numSubEdges = 0;
   mesh.colorCarousel = 0;
   color.mesh.tangents = color.mesh.tetrahedron = color.mesh.triangle = 0;
   color.mesh.prism = color.mesh.pyramid = color.mesh.hexahedron = 0;
