@@ -485,6 +485,7 @@ double gLevelsetMathEval::operator() (const double x, const double y, const doub
     return 1.;
 }
 
+
 #if defined (HAVE_POST)
 gLevelsetPostView::gLevelsetPostView(int index, int tag) : gLevelsetPrimitive(tag), _viewIndex(index){
   if(_viewIndex >= 0 && _viewIndex < (int)PView::list.size()){

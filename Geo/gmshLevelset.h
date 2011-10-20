@@ -355,6 +355,7 @@ public:
 class gLevelsetIntersection : public gLevelsetTools
 {
 public:
+  gLevelsetIntersection (std::vector<gLevelset *> &p){ "Coucou here \n";};
   gLevelsetIntersection (std::vector<const gLevelset *> &p) : gLevelsetTools(p) { }
   gLevelsetIntersection(const gLevelsetIntersection &lv):gLevelsetTools(lv) { }
   virtual gLevelset *clone() const { return new gLevelsetIntersection(*this); }

@@ -9976,8 +9976,8 @@ yyreduce:
 
 
 
-/* Line 1464 of yacc.c  */
-#line 9959 "Gmsh.tab.cpp"
+/* Line 1806 of yacc.c  */
+#line 9981 "Gmsh.tab.cpp"
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
