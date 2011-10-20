@@ -92,7 +92,7 @@ bool onelab::localNetworkClient::run(const std::string &what)
     // TCP/IP socket
     if(CTX::instance()->solver.socketName.size() && 
        CTX::instance()->solver.socketName[0] == ':')
-      tmp << GetHostName(); // prepend hostname if only port is given
+      tmp << GetHostName(); // prepend hostname if only the port number is given
     tmp << CTX::instance()->solver.socketName << getId();
     sockname = tmp.str();
   }
@@ -281,7 +281,7 @@ bool onelab::localNetworkClient::kill()
   return false;
 }
 
-static void onelab_save_mesh(onelab::client *c)
+static void saveMesh(onelab::client *c)
 {
   std::vector<onelab::string> ps;
   c->get(ps, "Gmsh/MshFileName");
@@ -353,7 +353,7 @@ void onelab_cb(Fl_Widget *w, void *data)
         geometry_reload_cb(0, 0);
         if(FlGui::instance()->onelab->meshAuto()){
           mesh_3d_cb(0, 0);
-          onelab_save_mesh(it->second);
+          saveMesh(it->second);
         }
         onelab::server::instance()->setChanged(false, "Gmsh");
       }
@@ -645,11 +645,13 @@ void solver_cb(Fl_Widget *w, void *data)
 bool onelab::localNetworkClient::run(const std::string &what)
 {
   Msg::Error("The solver interface requires FLTK 1.3");
+  return false;
 }
 
 bool onelab::localNetworkClient::kill()
 {
   Msg::Error("The solver interface requires FLTK 1.3");
+  return false;
 }
 
 void solver_cb(Fl_Widget *w, void *data)
