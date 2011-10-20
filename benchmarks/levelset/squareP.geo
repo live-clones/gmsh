@@ -24,7 +24,7 @@ Mesh 2;
 Levelset Plane (1) = {0,1,0,-7};
 //Levelset Point (1) = {{0.1, 2, 0},{3,2,0},{9,2,0},{5,2,0}, {0.1, 2.2, -1},{3,2.5,-1},{9,2,-1},{5,2,-1}, {0.2, 2, 1},{3,2,1},{9,2,1},{5,2,1}}; 
 
-Levelset CutMeshTri {1};
+Levelset CutMesh {1};
 
 Print "squareP_cut.msh";
 

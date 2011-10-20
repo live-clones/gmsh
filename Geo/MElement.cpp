@@ -626,7 +626,7 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
   bool poly = (type == MSH_POLYG_ || type == MSH_POLYH_ || type == MSH_POLYG_B);
   bool polyl  = (type == MSH_LIN_B || type == MSH_LIN_C);
 
-  // if poly loop over children
+  // if polygon loop over children (triangles and tets)
   if(CTX::instance()->mesh.saveTri && poly){
     for (int i = 0; i < getNumChildren() ; i++){
        MElement *t = getChild(i);

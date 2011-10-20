@@ -192,7 +192,7 @@ int GModel::importGEOInternals()
         if (param == 1) typ =  GFaceCompound::CONFORMAL;
         if (param == 2) typ =  GFaceCompound::RBF;
         int algo = CTX::instance()->mesh.remeshAlgo;
-              f = new GFaceCompound(this, s->Num, comp, U0, typ, algo);
+	f = new GFaceCompound(this, s->Num, comp, U0, typ, algo);
 
         f->meshAttributes.recombine = s->Recombine;
         f->meshAttributes.recombineAngle = s->RecombineAngle;

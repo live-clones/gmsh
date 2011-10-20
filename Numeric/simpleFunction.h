@@ -20,10 +20,6 @@ class simpleFunction {
   virtual void gradient (double x, double y, double z,
 			 scalar & dfdx, scalar & dfdy, scalar & dfdz) const
   { dfdx = dfdy = dfdz = 0.0; }
-/*  virtual scalar operator () (double x, double y, double z,MElement *e) const { return _val; }
-  virtual void gradient (double x, double y, double z,
-			 scalar & dfdx, scalar & dfdy, scalar & dfdz, MElement *e) const
-  { dfdx = dfdy = dfdz = 0.0; }*/
 };
 
 template <class scalar>

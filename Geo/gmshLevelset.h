@@ -251,7 +251,6 @@ public:
   int type() const { return UNKNOWN; }
 };
 
-
 #if defined(HAVE_POST)
 class gLevelsetPostView : public gLevelsetPrimitive
 {

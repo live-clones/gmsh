@@ -54,8 +54,9 @@ void GModel::_storePhysicalTagsInEntities(int dim,
       std::map<int, std::string>::const_iterator it2 = it->second.begin();
       for(; it2 != it->second.end(); ++it2){
         if(std::find(ge->physicals.begin(), ge->physicals.end(), it2->first) ==
-           ge->physicals.end())
+           ge->physicals.end()){
           ge->physicals.push_back(it2->first);
+	}
       }
     }
   }
@@ -530,7 +531,7 @@ int GModel::readMSH(const std::string &name)
                 _ghostCells.insert(std::pair<MElement*, short>(e, -data[5 + j]));
             if(numElements > 100000)
               Msg::ProgressMeter(numElementsPartial + i + 1, numElements,
-                                 "Reading elements");
+                                 "Readsing elements");
           }
           delete [] data;
           numElementsPartial += numElms;
@@ -651,6 +652,7 @@ static int getNumElementsMSH(GEntity *ge, bool saveAll, int saveSinglePartition)
 
 static int getNumElementsMSH(GModel *m, bool saveAll, int saveSinglePartition)
 {
+
   int n = 0;
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it)
     n += getNumElementsMSH(*it, saveAll, saveSinglePartition);
@@ -786,17 +788,14 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
          writeElementMSH(fp, this, (*it)->polyhedra[i]->getParent(),
                          saveAll, version, binary, num, (*it)->tag(), (*it)->physicals);
   }
-
   // points
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     writeElementsMSH(fp, this, (*it)->points, saveAll, saveSinglePartition,
                      version, binary, num, (*it)->tag(), (*it)->physicals);
-
   // lines
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     writeElementsMSH(fp, this, (*it)->lines, saveAll, saveSinglePartition,
                      version, binary, num, (*it)->tag(), (*it)->physicals);
-
   // triangles
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, this, (*it)->triangles, saveAll, saveSinglePartition,
@@ -806,12 +805,10 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, this, (*it)->quadrangles, saveAll, saveSinglePartition,
                      version, binary, num, (*it)->tag(), (*it)->physicals);
-
   // polygons
   for(fiter it = firstFace(); it != lastFace(); it++)
     writeElementsMSH(fp, this, (*it)->polygons, saveAll, saveSinglePartition,
                      version, binary, num, (*it)->tag(), (*it)->physicals);
-
   // tets
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, this, (*it)->tetrahedra, saveAll, saveSinglePartition,
@@ -837,7 +834,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     writeElementsMSH(fp, this, (*it)->polyhedra, saveAll, saveSinglePartition,
                      version, binary, num, (*it)->tag(), (*it)->physicals);
 
-  // borders
+  // level set faces
   for(fiter it = firstFace(); it != lastFace(); ++it) {
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
       MTriangle *t = (*it)->triangles[i];
@@ -856,7 +853,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
                         getMeshElementIndex(p->getDomain(1)));
     }
   }
-  for(eiter it = firstEdge(); it != lastEdge(); ++it) //border lines after border surfaces
+  //level set lines
+  for(eiter it = firstEdge(); it != lastEdge(); ++it) {
     for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
       MLine *l = (*it)->lines[i];
       if(l->getDomain(0))
@@ -865,7 +863,9 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
                         getMeshElementIndex(l->getDomain(0)),
                         getMeshElementIndex(l->getDomain(1)));
     }
+  }
 
+ 
   if(binary) fprintf(fp, "\n");
 
   if(version >= 2.0){
