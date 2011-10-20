@@ -1839,6 +1839,17 @@ GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem, bool saveTri)
 
   Msg::Info("Mesh cutting completed (%g s)", Cpu() - t1);
 
+  //emi debug
+  // std::vector<GEntity*> entities;
+  // cutGM->getEntities(entities);
+  // for(unsigned int i = 0; i < entities.size(); i++){
+  //   std::vector<int> phys = entities[i]->getPhysicalEntities();
+  //   for (int j= 0; j < phys.size(); j++){
+  // 	std::string name = cutGM->getPhysicalName(entities[i]->dim(), phys[j]);
+  // 	printf("dim =%d elem=%d phys =%s \n", entities[i]->dim(),entities[i]->tag(), name.c_str() );
+  //   }
+  // }
+
   return cutGM;
 }
 

@@ -63,12 +63,12 @@ inline void printNodes(fullMatrix<double> &myNodes, fullMatrix<double> &surf){
 }
 
 // extrude a list of the primitive levelsets with a "Level-order traversal sequence"
-void gLevelset::getPrimitives(std::vector<const gLevelset *> &gLsPrimitives) const {
-  std::queue<const gLevelset *> Q;
+void gLevelset::getPrimitives(std::vector<gLevelset *> &gLsPrimitives)  {
+  std::queue<gLevelset *> Q;
   Q.push(this);
   while(!Q.empty()){
-    const gLevelset *p = Q.front();
-    std::vector<const gLevelset *> pp;
+    gLevelset *p = Q.front();
+    std::vector<gLevelset *> pp;
     pp = p->getChildren();
     if(pp.empty())
       gLsPrimitives.push_back(p);
@@ -80,13 +80,13 @@ void gLevelset::getPrimitives(std::vector<const gLevelset *> &gLsPrimitives) con
   }
 }
 // extrude a list of the primitive levelsets with a "post-order traversal sequence"
-void gLevelset::getPrimitivesPO(std::vector<const gLevelset *> &gLsPrimitives) const {
-  std::stack<const gLevelset *> S;
-  std::stack<const gLevelset *> Sc; // levelset checked
+void gLevelset::getPrimitivesPO(std::vector<gLevelset *> &gLsPrimitives)  {
+  std::stack<gLevelset *> S;
+  std::stack<gLevelset *> Sc; // levelset checked
   S.push(this);
   while(!S.empty()){
-    const gLevelset *p = S.top();
-    std::vector<const gLevelset *> pp;
+    gLevelset *p = S.top();
+    std::vector<gLevelset *> pp;
     pp = p->getChildren();
     if(pp.empty()) {
       gLsPrimitives.push_back(p);
@@ -109,13 +109,13 @@ void gLevelset::getPrimitivesPO(std::vector<const gLevelset *> &gLsPrimitives) c
 }
 
 // return a list with the levelsets in a "Reverse Polish Notation"
-void gLevelset::getRPN(std::vector<const gLevelset *> &gLsRPN) const {
-  std::stack<const gLevelset *> S;
-  std::stack<const gLevelset *> Sc; // levelset checked
+void gLevelset::getRPN(std::vector<gLevelset *> &gLsRPN) {
+  std::stack<gLevelset *> S;
+  std::stack<gLevelset *> Sc; // levelset checked
   S.push(this);
   while(!S.empty()){
-    const gLevelset *p = S.top();
-    std::vector<const gLevelset *> pp;
+    gLevelset *p = S.top();
+    std::vector<gLevelset *> pp;
     pp = p->getChildren();
     if(pp.empty()) {
       gLsRPN.push_back(p);
@@ -561,7 +561,7 @@ gLevelsetGeneralQuadric::gLevelsetGeneralQuadric (const gLevelsetGeneralQuadric&
 
 gLevelsetTools::gLevelsetTools(const gLevelsetTools &lv) : gLevelset(lv)
 {
-  std::vector<const gLevelset *> _children=lv.getChildren();
+  std::vector<gLevelset *> _children=lv.getChildren();
   unsigned siz = _children.size();
   children.resize(siz);
   for(unsigned i = 0; i < siz; ++i)	
@@ -581,7 +581,7 @@ gLevelsetBox::gLevelsetBox(const double *pt, const double *dir1, const double *d
   double n3[3]; norm(dir3, n3);
   double pt2[3] = {pt[0] + a * n1[0] + b * n2[0] + c * n3[0], pt[1] + a * n1[1] + b * n2[1] + c * n3[1],
                    pt[2] + a * n1[2] + b * n2[2] + c * n3[2]};
-  std::vector<const gLevelset *> p;
+  std::vector<gLevelset *> p;
   p.push_back(new gLevelsetPlane(pt2, dir3, tag++));
   p.push_back(new gLevelsetPlane(pt, dir3m, tag++));
   p.push_back(new gLevelsetPlane(pt, dir2m, tag++));
@@ -598,7 +598,7 @@ gLevelsetBox::gLevelsetBox(const double *pt1, const double *pt2, const double *p
     printf("WARNING : faces of the box are not planar! %d, %d, %d, %d, %d, %d\n",
            isPlanar(pt1, pt2, pt3, pt4), isPlanar(pt5, pt6, pt7, pt8), isPlanar(pt1, pt2, pt5, pt6),
            isPlanar(pt3, pt4, pt7, pt8), isPlanar(pt1, pt4, pt5, pt8), isPlanar(pt2, pt3, pt6, pt7));
-  std::vector<const gLevelset *> p;
+  std::vector<gLevelset *> p;
   p.push_back(new gLevelsetPlane(pt5, pt6, pt8, tag++));
   p.push_back(new gLevelsetPlane(pt1, pt4, pt2, tag++));
   p.push_back(new gLevelsetPlane(pt1, pt2, pt5, tag++));
@@ -614,7 +614,7 @@ gLevelsetCylinder::gLevelsetCylinder(const double *pt, const double *dir, const 
   double dir2[3] = {-dir[0], -dir[1], -dir[2]};
   double n[3]; norm(dir, n);
   double pt2[3] = {pt[0] + H * n[0], pt[1] + H * n[1], pt[2] + H * n[2]};
-  std::vector<const gLevelset *> p;
+  std::vector<gLevelset *> p;
   p.push_back(new gLevelsetGenCylinder(pt, dir, R, tag++));
   p.push_back(new gLevelsetPlane(pt, dir2, tag++));
   p.push_back(new gLevelsetPlane(pt2, dir, tag));
@@ -625,11 +625,11 @@ gLevelsetCylinder::gLevelsetCylinder(const double * pt, const double *dir, const
   double dir2[3] = {-dir[0], -dir[1], -dir[2]};
   double n[3]; norm(dir, n);
   double pt2[3] = {pt[0] + H * n[0], pt[1] + H * n[1], pt[2] + H * n[2]};
-  std::vector<const gLevelset *> p1;
+  std::vector<gLevelset *> p1;
   p1.push_back(new gLevelsetGenCylinder(pt, dir, R, tag++));
   p1.push_back(new gLevelsetPlane(pt, dir2, tag++));
   p1.push_back(new gLevelsetPlane(pt2, dir, tag++));
-  std::vector<const gLevelset *> p2;
+  std::vector<gLevelset *> p2;
   p2.push_back(new gLevelsetIntersection(p1));
   p2.push_back(new gLevelsetGenCylinder(pt, dir, r, tag));
   Ls = new gLevelsetCut(p2);
@@ -658,11 +658,11 @@ gLevelsetConrod::gLevelsetConrod(const double *pt, const double *dir1, const dou
   double pt36[3] = {pt35[0] - n3[0] * L2, pt35[1] - n3[1] * L2, pt35[2] - n3[2] * L2};
   double pt37[3] = {pt36[0] + n2[0] * H3, pt36[1] + n2[1] * H3, pt36[2] + n2[2] * H3};
   double pt38[3] = {pt37[0] + n3[0] * L2, pt37[1] + n3[1] * L2, pt37[2] + n3[2] * L2};
-  std::vector<const gLevelset *> p1;
+  std::vector<gLevelset *> p1;
   p1.push_back(new gLevelsetBox(pt31, pt32, pt33, pt34, pt35, pt36, pt37, pt38, tag));
   p1.push_back(new gLevelsetCylinder(pt1, dir2, R1, H1, tag+6));
   p1.push_back(new gLevelsetCylinder(pt2, dir2, R2, H2, tag+9));
-  std::vector<const gLevelset *> p2;
+  std::vector<gLevelset *> p2;
   p2.push_back(new gLevelsetUnion(p1));
   p2.push_back(new gLevelsetGenCylinder(pt1, dir2, r1, tag+12));
   p2.push_back(new gLevelsetGenCylinder(pt2, dir2, r2, tag+13));

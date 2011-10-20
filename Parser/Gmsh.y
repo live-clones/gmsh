@@ -1980,7 +1980,7 @@ LevelSet :
 	  yymsg(0, "Levelset %d already exists", t);
         }
         else {
-          std::vector<const gLevelset *> vl;
+          std::vector<gLevelset *> vl;
           for(int i = 0; i < List_Nbr($7); i++) {
             double d; List_Read($7, i, &d);
             LevelSet *pl = FindLevelSet((int)d);
@@ -1998,7 +1998,7 @@ LevelSet :
 	  yymsg(0, "Levelset %d already exists", t);
         }
         else {
-          std::vector<const gLevelset *> vl;
+          std::vector<gLevelset *> vl;
           for(int i = 0; i < List_Nbr($7); i++) {
             double d; List_Read($7, i, &d);
             LevelSet *pl = FindLevelSet((int)d);
@@ -2016,7 +2016,7 @@ LevelSet :
 	  yymsg(0, "Levelset %d already exists", t);
         }
         else {
-          std::vector<const gLevelset *> vl;
+          std::vector<gLevelset *> vl;
           for(int i = 0; i < List_Nbr($7); i++) {
             double d; List_Read($7, i, &d);
             LevelSet *pl = FindLevelSet((int)d);
@@ -2034,7 +2034,7 @@ LevelSet :
 	  yymsg(0, "Levelset %d already exists", t);
         }
         else {
-          std::vector<const gLevelset *> vl;
+          std::vector<gLevelset *> vl;
           for(int i = 0; i < List_Nbr($7); i++) {
             double d; List_Read($7, i, &d);
             LevelSet *pl = FindLevelSet((int)d);

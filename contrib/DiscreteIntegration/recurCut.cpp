@@ -218,15 +218,15 @@ void recurCut(RecurElement *re, int maxlevel, int level)
 
 // return true if the element re->el is crossed or run along by a primitive levelset in RPN and by the final levelset
 // (the levelset is computed with the values at the nodes of the element e)
-bool signChange (RecurElement *re, const DI_Element *e, const std::vector<const gLevelset *> &RPN,
+bool signChange (RecurElement *re, const DI_Element *e, const std::vector<gLevelset *> &RPN,
                  double **nodeLs) {
   bool cS = false;
   DI_Element* elem = re->root()->el;
   std::vector<DI_CuttingPoint *> cp;
-  std::vector<const gLevelset *> RPNi;
+  std::vector<gLevelset *> RPNi;
   int iPrim = 0;
   for(unsigned int l = 0; l < RPN.size(); l++) {
-    const gLevelset *Lsi = RPN[l];
+    gLevelset *Lsi = RPN[l];
     RPNi.push_back(Lsi);
     if(Lsi->isPrimitive()) {
       elem->addLs(e, Lsi, iPrim++, nodeLs);
@@ -256,7 +256,7 @@ bool signChange (RecurElement *re, const DI_Element *e, const std::vector<const 
 // Set isCrossed to true if a sub RecurElement is crossed. 
 // If it has no sub RecurElement, set isCrossed to true if the element is crossed or run along by the levelset
 //(the levelset is computed with the values at the nodes of the triangle e)
-bool computeIsCrossed (RecurElement *re, const DI_Element *e, const std::vector<const gLevelset *> &RPN,
+bool computeIsCrossed (RecurElement *re, const DI_Element *e, const std::vector<gLevelset *> &RPN,
                        double **nodeLs) {
   if (!re->sub[0])
     re->isCrossed = signChange(re, e, RPN, nodeLs);
@@ -284,7 +284,7 @@ void recurChangeVisibility(RecurElement *re){
     recurChangeVisibility(re->sub[i]);
 }
 
-void recurChangeVisibility(RecurElement *re, const std::vector<const gLevelset *> &RPN, double TOL){
+void recurChangeVisibility(RecurElement *re, const std::vector<gLevelset *> &RPN, double TOL){
   printf("rCV : "); re->el->printls();
   if(!re->sub[0]){
     re->visible = true;
@@ -398,7 +398,7 @@ double RecurElement::ls() const
   return Tot / nbVert();
 }
 
-bool RecurElement::cut(int maxlevel, const DI_Element *e, std::vector<const gLevelset *> &LsRPN,
+bool RecurElement::cut(int maxlevel, const DI_Element *e, std::vector<gLevelset *> &LsRPN,
                        double TOL, double **nodeLs)
 {
   recurCut(this, maxlevel, 0);

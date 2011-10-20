@@ -23,7 +23,7 @@ class RecurElement
   inline double ls() const;
   // creates RecurElements forming a mesh of the DI_Element e with refined elements close to the zero levelset
   // return false if the element is not crossed or run along by the levelset
-  bool cut (int maxlevel, const DI_Element *e, std::vector<const gLevelset *> &LsRPN, double TOL = -1.,
+  bool cut (int maxlevel, const DI_Element *e, std::vector<gLevelset *> &LsRPN, double TOL = -1.,
             double **nodeLs = NULL);
 };
 

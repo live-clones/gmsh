@@ -55,15 +55,15 @@ public:
   bool isInsideDomain (const double &x, const double &y, const double &z) const {return this->operator()(x,y,z) * insideDomain > 0.;}
   bool isOutsideDomain (const double &x, const double &y, const double &z) const {return this->operator()(x,y,z) * insideDomain < 0.;}
   bool isOnBorder      (const double &x, const double &y, const double &z) const {return this->operator()(x,y,z) == 0.;}
-  virtual std::vector<const gLevelset *> getChildren() const = 0;
+  virtual std::vector<gLevelset *> getChildren() const = 0;
   virtual double choose (double d1, double d2) const = 0;
   virtual int type() const = 0;
   virtual bool isPrimitive() const = 0;
   void setTag(int t) { tag_ = t; }
   virtual int getTag() const { return tag_; }
-  void getPrimitives(std::vector<const gLevelset *> &primitives) const;
-  void getPrimitivesPO(std::vector<const gLevelset *> &primitives) const;
-  void getRPN(std::vector<const gLevelset *> &gLsRPN) const;
+  void getPrimitives(std::vector<gLevelset *> &primitives) ;
+  void getPrimitivesPO(std::vector<gLevelset *> &primitives) ;
+  void getRPN(std::vector<gLevelset *> &gLsRPN) ;
   double H (const double &x, const double &y, const double &z) const {
     if (isInsideDomain(x,y,z) || isOnBorder(x,y,z)) return 1.0;
     return 0.0;
@@ -105,7 +105,7 @@ public:
     tag_ = tag;
   }
   virtual double operator () (const double x, const double y, const double z) const = 0;
-  std::vector<const gLevelset *> getChildren() const { std::vector<const gLevelset *> p; return p; }
+  std::vector<gLevelset *> getChildren() const { std::vector<gLevelset *> p; return p; }
   double choose (double d1, double d2) const {
     printf("Cannot use function \"choose\" with a primitive!\n");
     return d1;
@@ -270,10 +270,10 @@ public:
 class gLevelsetTools : public gLevelset
 {
 protected:
-  std::vector<const gLevelset *> children;
+  std::vector<gLevelset *> children;
 public:
   gLevelsetTools () {}
-  gLevelsetTools (std::vector<const gLevelset *> &p) {children = p;}
+  gLevelsetTools (std::vector<gLevelset *> &p) {children = p;}
   gLevelsetTools (const gLevelsetTools &);
   ~gLevelsetTools () {
     for(int i = 0; i < (int)children.size(); i++)
@@ -287,7 +287,7 @@ public:
     }
     return d;
   }
-  std::vector<const gLevelset *> getChildren() const {
+  std::vector<gLevelset *> getChildren() const {
     if(children.size() != 1) return children;
     return children[0]->getChildren();
   }
@@ -310,13 +310,13 @@ public:
 class gLevelsetReverse : public gLevelset
 {
 protected:
-  const gLevelset *ls;
+  gLevelset *ls;
 public:
-  gLevelsetReverse (const gLevelset *p) : ls(p){}
+  gLevelsetReverse (gLevelset *p) : ls(p){}
   double operator () (const double x, const double y, const double z) const {
     return -(*ls)(x, y, z);
   }
-  std::vector<const gLevelset *> getChildren() const {return ls->getChildren();}
+  std::vector<gLevelset *> getChildren() const {return ls->getChildren();}
   bool isPrimitive() const {return ls->isPrimitive();}
   virtual double choose (double d1, double d2) const {return -ls->choose(d1,d2);}
   virtual int type() const {return ls->type();}
@@ -328,7 +328,7 @@ public:
 class gLevelsetCut : public gLevelsetTools
 {
 public:
-  gLevelsetCut (std::vector<const gLevelset *> &p) : gLevelsetTools(p) { }
+  gLevelsetCut (std::vector<gLevelset *> p) : gLevelsetTools(p) { }
   double choose (double d1, double d2) const {
     return (d1 > -d2) ? d1 : -d2; // greater of d1 and -d2
   }
@@ -341,7 +341,7 @@ public:
 class gLevelsetUnion : public gLevelsetTools
 {
 public:
-  gLevelsetUnion (std::vector<const gLevelset *> &p) : gLevelsetTools(p) { }
+  gLevelsetUnion (std::vector<gLevelset *> p) : gLevelsetTools(p) { }
   gLevelsetUnion(const gLevelsetUnion &lv):gLevelsetTools(lv){}
   virtual gLevelset * clone() const{return new gLevelsetUnion(*this);}
   
@@ -355,8 +355,7 @@ public:
 class gLevelsetIntersection : public gLevelsetTools
 {
 public:
-  gLevelsetIntersection (std::vector<gLevelset *> &p){ "Coucou here \n";};
-  gLevelsetIntersection (std::vector<const gLevelset *> &p) : gLevelsetTools(p) { }
+  gLevelsetIntersection (std::vector<gLevelset *> p) : gLevelsetTools(p) { }
   gLevelsetIntersection(const gLevelsetIntersection &lv):gLevelsetTools(lv) { }
   virtual gLevelset *clone() const { return new gLevelsetIntersection(*this); }
 
@@ -370,7 +369,7 @@ public:
 class gLevelsetCrack : public gLevelsetTools
 {
 public:
-  gLevelsetCrack (std::vector<const gLevelset *> &p) {
+  gLevelsetCrack (std::vector<gLevelset *> p) {
     if (p.size() != 2)
       printf("Error : gLevelsetCrack needs 2 levelsets\n");
     children.push_back(p[0]);
@@ -393,7 +392,7 @@ public:
   gLevelsetImproved(){}
   gLevelsetImproved(const gLevelsetImproved &lv);
   double operator() (const double x, const double y, const double z) const {return (*Ls)(x, y, z);}
-  std::vector<const gLevelset *> getChildren() const { return Ls->getChildren(); }
+  std::vector<gLevelset *> getChildren() const { return Ls->getChildren(); }
   double choose (double d1, double d2) const { return Ls->choose(d1, d2); }
   virtual int type() const = 0;
   bool isPrimitive() const {return Ls->isPrimitive();}
