@@ -4,12 +4,12 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <FL/Fl.H>
+#include "GmshMessage.h"
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Input_Choice.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Box.H>
-#include "GmshMessage.h"
 #include "Context.h"
 #include "Options.h"
 #include "OS.h"
