@@ -5,6 +5,7 @@
 
 #include <FL/Fl.H>
 #include "GmshMessage.h"
+#include "onelab.h"
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Input_Choice.H>
@@ -640,6 +641,16 @@ void solver_cb(Fl_Widget *w, void *data)
 }
 
 #else
+
+bool onelab::localNetworkClient::run(const std::string &what)
+{
+  Msg::Error("The solver interface requires FLTK 1.3");
+}
+
+bool onelab::localNetworkClient::kill()
+{
+  Msg::Error("The solver interface requires FLTK 1.3");
+}
 
 void solver_cb(Fl_Widget *w, void *data)
 {

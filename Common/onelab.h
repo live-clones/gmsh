@@ -595,8 +595,8 @@ namespace onelab{
     void setPid(int pid){ _pid = pid; }
     GmshServer *getGmshServer(){ return _gmshServer; }
     void setGmshServer(GmshServer *server){ _gmshServer = server; }
-    virtual bool run(const std::string &what){ return false; }
-    virtual bool kill(){ return false; }
+    virtual bool run(const std::string &what);
+    virtual bool kill();
   };
 
   class remoteNetworkClient : public client{
