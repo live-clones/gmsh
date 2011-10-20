@@ -79,27 +79,27 @@ Option file created with `Tools->Options->Save'; automatically read on startup@*
 Default value: @code{".gmsh-options"}@*
 Saved in: @code{General.SessionFileName}
 
-@item General.RecentFile1
+@item General.RecentFile0
 Most recent opened file@*
 Default value: @code{"untitled.geo"}@*
 Saved in: @code{General.SessionFileName}
 
-@item General.RecentFile2
+@item General.RecentFile1
 2nd most recent opened file@*
 Default value: @code{"untitled.geo"}@*
 Saved in: @code{General.SessionFileName}
 
-@item General.RecentFile3
+@item General.RecentFile2
 3rd most recent opened file@*
 Default value: @code{"untitled.geo"}@*
 Saved in: @code{General.SessionFileName}
 
-@item General.RecentFile4
+@item General.RecentFile3
 4th most recent opened file@*
 Default value: @code{"untitled.geo"}@*
 Saved in: @code{General.SessionFileName}
 
-@item General.RecentFile5
+@item General.RecentFile4
 5th most recent opened file@*
 Default value: @code{"untitled.geo"}@*
 Saved in: @code{General.SessionFileName}
@@ -704,29 +704,9 @@ Vertical position (in pixels) of the upper left corner of the menu window@*
 Default value: @code{50}@*
 Saved in: @code{General.SessionFileName}
 
-@item General.MessageAutoScroll
-Automatically scroll message window@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item General.MessagePositionX
-Horizontal position (in pixels) of the upper left corner of the message window@*
-Default value: @code{650}@*
-Saved in: @code{General.SessionFileName}
-
-@item General.MessagePositionY
-Vertical position (in pixels) of the upper left corner of the message window@*
-Default value: @code{490}@*
-Saved in: @code{General.SessionFileName}
-
 @item General.MessageHeight
-Height (in pixels) of the message window@*
+Height (in pixels) of the message console@*
 Default value: @code{300}@*
-Saved in: @code{General.SessionFileName}
-
-@item General.MessageWidth
-Width (in pixels) of the message window@*
-Default value: @code{400}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.MinX

@@ -14,6 +14,11 @@ Cycle through time steps (0) or views (1) for animations@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item PostProcessing.AnimationStep
+Step increment for animations@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item PostProcessing.CombineRemoveOriginal
 Remove original views after a Combine operation@*
 Default value: @code{1}@*

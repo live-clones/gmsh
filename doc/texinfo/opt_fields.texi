@@ -80,10 +80,14 @@ default value: @code{0.5}
 hwall * ratio^(dist/hwall)@*
 Options:@*
 @table @code
-@item IField
-Index of the field that contains the distance function@*
-type: integer@*
-default value: @code{0}
+@item EdgesList
+Indices of curves in the geometric model for which a boundary layer is needed@*
+type: list@*
+default value: @code{@{@}}
+@item NodesList
+Indices of nodes in the geometric model@*
+type: list@*
+default value: @code{@{@}}
 @item hfar
 Element size far from the wall@*
 type: float@*
@@ -100,6 +104,10 @@ default value: @code{0.5}
 Size Ratio Between Two Successive Layers@*
 type: float@*
 default value: @code{1.1}
+@item thickness
+Maximal thickness of the boundary layer@*
+type: float@*
+default value: @code{0.01}
 @end table
 
 @item Box

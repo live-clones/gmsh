@@ -89,6 +89,11 @@ Number of edge subdivisions between control points when displaying curves@*
 Default value: @code{20}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OCCFixDegenerated
+Fix degenerated edges/faces in STEP, IGES and BRep models@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.OCCFixSmallEdges
 Fix small edges in STEP, IGES and BRep models@*
 Default value: @code{0}@*
