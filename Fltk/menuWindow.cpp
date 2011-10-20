@@ -170,7 +170,6 @@ static void file_remote_cb(Fl_Widget *w, void *data)
   if(it == onelab::server::instance()->lastClient()){
     c = new onelab::localNetworkClient("GmshRemote", "");
     c->setSocketSwitch("-socket");
-    onelab::server::instance()->registerClient(c);
   }
   else
     c = (onelab::localNetworkClient*)it->second;

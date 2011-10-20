@@ -514,9 +514,13 @@ static void solver_options_ok_cb(Fl_Widget *w, void *data)
   int old_listen = (int)opt_solver_listen(0, GMSH_GET, o->solver.butt[0]->value());
   opt_solver_listen(0, GMSH_SET, o->solver.butt[0]->value());
   if(!old_listen && o->solver.butt[0]->value()){
-    onelab::localNetworkClient *c = new onelab::localNetworkClient("Listen", "");
-    onelab::server::instance()->registerClient(c);
-    c->run("");
+    onelab::server::citer it = onelab::server::instance()->findClient("Listen");
+    if(it == onelab::server::instance()->lastClient()){
+      onelab::localNetworkClient *c = new onelab::localNetworkClient("Listen", "");
+      c->run("");
+    }
+    else
+      it->second->run("");
   }
 
   opt_solver_socket_name(0, GMSH_SET, o->solver.input[0]->value());

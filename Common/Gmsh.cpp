@@ -251,7 +251,6 @@ int GmshFLTK(int argc, char **argv)
   // listen to external solvers
   if(CTX::instance()->solver.listen){
     onelab::localNetworkClient *c = new onelab::localNetworkClient("Listen", "");
-    onelab::server::instance()->registerClient(c);
     c->run("");
   }
 

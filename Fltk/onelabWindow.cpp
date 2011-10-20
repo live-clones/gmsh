@@ -607,10 +607,8 @@ void onelabWindow::rebuildSolverList()
 void onelabWindow::addSolver(const std::string &name, const std::string &commandLine)
 {
   onelab::server::citer it = onelab::server::instance()->findClient(name);
-  if(it == onelab::server::instance()->lastClient()){
-    onelab::client *c = new onelab::localNetworkClient(name, commandLine);
-    onelab::server::instance()->registerClient(c);
-  }
+  if(it == onelab::server::instance()->lastClient())
+    new onelab::localNetworkClient(name, commandLine);
   FlGui::instance()->onelab->rebuildSolverList();
 }
 
