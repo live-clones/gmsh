@@ -864,11 +864,11 @@ Save all elements (discard physical group definitions)
 @item -o file
 Specify mesh output file name
 @item -format string
-Set output mesh format (msh, msh1, msh2, unv, vrml, stl, mesh, bdf, p3d, cgns, med)
+Set output mesh format (msh, msh1, msh2, unv, vrml, stl, mesh, bdf, p3d, cgns, med, ...)
 @item -bin
 Use binary format when available
 @item -algo string
-Select mesh algorithm (meshadapt, del2d, front2d, del3d, front3d)
+Select mesh algorithm (meshadapt, del2d, front2d, del3d, front3d, ...)
 @item -smooth int
 Set number of mesh smoothing steps
 @item -optimize[_netgen]
