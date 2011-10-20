@@ -1819,17 +1819,6 @@ GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem, bool saveTri)
   Msg::Info("Cutting mesh...");
   double t1 = Cpu();
 
-  //emi debug
-  std::vector<GEntity*> entities0;
-  this->getEntities(entities0);
-  for(unsigned int i = 0; i < entities0.size(); i++){
-    std::vector<int> phys = entities0[i]->getPhysicalEntities();
-    for (int j= 0; j < phys.size(); j++){
-	std::string name = this->getPhysicalName(entities0[i]->dim(), phys[j]);
-	printf("dim =%d elem=%d phys =%s \n", entities0[i]->dim(),entities0[i]->tag(), name.c_str() );
-    }
-  }
-
   GModel *cutGM = buildCutMesh(this, ls, elements, vertexMap, physicals, cutElem);
 
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
@@ -1848,27 +1837,7 @@ GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem, bool saveTri)
     }
   }
 
-  //set physical names
-  for(int i = 0; i < 4; i++){
-    std::map<int, std::map<int, std::string> >::const_iterator it = physicals[i].begin();
-    for(; it != physicals[i].end(); ++it){
-      std::map<int, std::string>::const_iterator it2 = it->second.begin();
-      cutGM->setPhysicalName(it2->second, i, it2->first);
-    }
-  }
-
   Msg::Info("Mesh cutting completed (%g s)", Cpu() - t1);
-
-  //emi debug
-  std::vector<GEntity*> entities;
-  cutGM->getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++){
-    std::vector<int> phys = entities[i]->getPhysicalEntities();
-    for (int j= 0; j < phys.size(); j++){
-	std::string name = cutGM->getPhysicalName(entities[i]->dim(), phys[j]);
-	printf("dim =%d elem=%d phys =%s \n", entities[i]->dim(),entities[i]->tag(), name.c_str() );
-    }
-  }
 
   return cutGM;
 }

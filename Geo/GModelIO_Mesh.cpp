@@ -531,7 +531,7 @@ int GModel::readMSH(const std::string &name)
                 _ghostCells.insert(std::pair<MElement*, short>(e, -data[5 + j]));
             if(numElements > 100000)
               Msg::ProgressMeter(numElementsPartial + i + 1, numElements,
-                                 "Readsing elements");
+                                 "Reading elements");
           }
           delete [] data;
           numElementsPartial += numElms;
@@ -865,7 +865,6 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     }
   }
 
- 
   if(binary) fprintf(fp, "\n");
 
   if(version >= 2.0){

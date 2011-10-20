@@ -453,18 +453,11 @@ void MLineBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 static void assignPhysicals(GModel *GM, std::vector<int> &gePhysicals, int reg, int dim,
                             std::map<int, std::map<int, std::string> > physicals[4])
 {
-  //printf("assign \n");
   for(unsigned int i = 0; i < gePhysicals.size(); i++){
     int phys = gePhysicals[i];
-    //printf("dim=%d elem=%d phys=%d \n", dim, reg, phys);
-    if(phys && (!physicals[dim].count(reg) || !physicals[dim][reg].count(phys))){
-      std::string name = GM->getPhysicalName(dim, phys);
-      physicals[dim][reg][phys] = name;
-      //GM->setPhysicalName(name, dim, reg);
-      //printf("true name = %s \n", GM->getPhysicalName(dim, phys).c_str());
-    }
+    if(phys && (!physicals[dim].count(reg) || !physicals[dim][reg].count(phys)))
+      physicals[dim][reg][phys] = GM->getPhysicalName(dim, phys);
   }
-
 }
 
 static int getElementaryTag(int lsTag, int elementary, std::map<int, int> &newElemTags)
@@ -484,20 +477,16 @@ static void getPhysicalTag(int lsTag, const std::vector<int> &physicals,
                            std::vector<int> &phys2, std::map<int, int> &newPhysTags)
 {
   phys2.clear();
-  //printf("getPhysical\n");
 
   for(unsigned int i = 0; i < physicals.size(); i++){
     int phys = physicals[i];
-    //printf("lstag %d physOLD=%d \n", lsTag, phys);
-    if(lsTag < 0 ){
+    if(lsTag < 0){
       if(!newPhysTags.count(phys))
         newPhysTags[phys] = ++newPhysTags[0];
       phys = newPhysTags[phys];
     }
     phys2.push_back(phys);
-    //printf("lstag %d phys=%d \n", lsTag, phys);
   }
-
 }
 
 static int getBorderTag(int lsTag, int count, int &maxTag, std::map<int, int> &borderTags)
@@ -563,7 +552,6 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
   case MSH_POLYG_ :
   case MSH_POLYG_B :
     {
-      printf("in tri poly \n");
       int reg = getElementaryTag(lsTag, elementary, newElemTags[2]);
       std::vector<int> phys;
       getPhysicalTag(lsTag, gePhysicals, phys, newPhysTags[2]);
@@ -579,7 +567,6 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
   case MSH_LIN_2 :
   case MSH_LIN_B :
     {
-      printf("in line \n");
       int reg = getElementaryTag(lsTag, elementary, newElemTags[1]);
       std::vector<int> phys;
       getPhysicalTag(lsTag, gePhysicals, phys, newPhysTags[1]);
@@ -589,7 +576,6 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
     break;
   case MSH_PNT :
     {
-      printf("in point \n");
       int reg = getElementaryTag(lsTag, elementary, newElemTags[0]);
       std::vector<int> phys;
       getPhysicalTag(lsTag, gePhysicals, phys, newPhysTags[0]);
@@ -601,7 +587,6 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
     Msg::Error("This type of element cannot be split.");
     return;
   }
-
 }
 
 #if defined(HAVE_DINTEGRATION)
