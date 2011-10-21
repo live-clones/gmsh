@@ -5,27 +5,27 @@
 
 @ftable @code
 @item Solver.Executable0
-System command to launch solver 0 (should not contain the `&' character)@*
+System command to launch solver 0@*
 Default value: @code{""}@*
 Saved in: @code{General.SessionFileName}
 
 @item Solver.Executable1
-System command to launch solver 1 (should not contain the `&' character)@*
+System command to launch solver 1@*
 Default value: @code{""}@*
 Saved in: @code{General.SessionFileName}
 
 @item Solver.Executable2
-System command to launch solver 2 (should not contain the `&' character)@*
+System command to launch solver 2@*
 Default value: @code{""}@*
 Saved in: @code{General.SessionFileName}
 
 @item Solver.Executable3
-System command to launch solver 3 (should not contain the `&' character)@*
+System command to launch solver 3@*
 Default value: @code{""}@*
 Saved in: @code{General.SessionFileName}
 
 @item Solver.Executable4
-System command to launch solver 4 (should not contain the `&' character)@*
+System command to launch solver 4@*
 Default value: @code{""}@*
 Saved in: @code{General.SessionFileName}
 

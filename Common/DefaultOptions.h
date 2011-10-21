@@ -115,15 +115,15 @@ StringXString MeshOptions_String[] = {
 
 StringXString SolverOptions_String[] = {
   { F|S, "Executable0" , opt_solver_executable0 , "",
-    "System command to launch solver 0 (should not contain the `&' character)" },
+    "System command to launch solver 0" },
   { F|S, "Executable1" , opt_solver_executable1 , "" , 
-    "System command to launch solver 1 (should not contain the `&' character)" },
+    "System command to launch solver 1" },
   { F|S, "Executable2" , opt_solver_executable2 , "" , 
-    "System command to launch solver 2 (should not contain the `&' character)" },
+    "System command to launch solver 2" },
   { F|S, "Executable3" , opt_solver_executable3 , "" , 
-    "System command to launch solver 3 (should not contain the `&' character)" },
+    "System command to launch solver 3" },
   { F|S, "Executable4" , opt_solver_executable4 , "" , 
-    "System command to launch solver 4 (should not contain the `&' character)" },
+    "System command to launch solver 4" },
 
   { F|S, "Name0" , opt_solver_name0 , "GetDP" ,
     "Name of solver 0" },

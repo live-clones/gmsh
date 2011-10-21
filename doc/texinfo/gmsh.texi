@@ -447,12 +447,12 @@ for the unstructured part.}.
 @section Solver: external solver interface
 
 External solvers can be interfaced with Gmsh through Unix or TCP/IP
-sockets, which permits to launch external computations and to collect
-and process the results directly from within Gmsh's post-processing
-module. The default solver interfaced with Gmsh is GetDP
-(@uref{http://geuz.org/getdp/}). Examples on how to interface solvers
-written in C, C++, Perl and Python are available in the source
-distribution (in the @file{utils/solvers/} directory).
+sockets, which permits to modify solver parameters, launch external
+computations and process the results directly from within Gmsh's
+post-processing module. The default solver interfaced with Gmsh is GetDP
+(@uref{http://geuz.org/getdp/}). Examples on how to interface other
+solvers are available in the source distribution (in the
+@file{utils/solvers/} directory).
 
 @c -------------------------------------------------------------------------
 @c Post-processing: scalar, vector and tensor field visualization
@@ -507,8 +507,8 @@ flexible mesh size fields (@pxref{Mesh commands});
 create simple extruded geometries and meshes (see @ref{Geometry commands},
 and @ref{Mesh commands});
 @item
-interact with external solvers. Gmsh provides C, C++, Perl and Python
-interfaces, and others can be easily added (@pxref{Solver module});
+interact with external solvers through a simple client-server
+architecture (@pxref{Solver module});
 @item
 visualize and export computational results in a great variety of
 ways. Gmsh can display scalar, vector and tensor datasets, perform
@@ -3034,26 +3034,17 @@ as well as the way meshes are displayed in the GUI, is given in
 @cindex Solver, module
 @cindex Module, Solver
 
-Five external solvers can be interfaced simultaneously with Gmsh.
+External solvers can be interfaced with Gmsh using a simple
+client-server model.
 
-If you just want to start a solver from the solver module, with no
-further interactions between the solver and Gmsh, just edit the options
-relative to one of the five available solvers (e.g.,
-@code{Solver.Name0}, @code{Solver.Executable0}, @dots{}; see @ref{Solver
-options list}), and set the corresponding ``client-server'' option to
-zero (e.g., @code{Solver.ClientServer0 = 0}). This doesn't require any
-modification to be made to the solver.
+To add a new solver in the solver module, you need to specify its name
+(@code{Solver.Name0}, @code{Solver.Name1}, etc.) and the path to the
+executable (@code{Solver.Executable0}, @code{Solver.Executable1}, etc.);
+see @ref{Solver options list}).
 
-If you want the solver to interact with Gmsh (for error messages, option
-definitions, post-processing, etc.), you need to include
-@file{GmshSocket.h} in your code and add the appropriate function calls
-inside your program. You can then proceed as in the previous case, but
-this time you should set the client-server option to 1 (e.g.,
-@code{Solver.ClientServer0 = 1}), so that Gmsh and the solver can
-communicate through a Unix socket. See @ref{Solver example}, for an
-example of how to interface a C++ solver. Bindings for solvers written
-in other languages (C, Perl and Python) are available in the source
-distribution.
+The client-server API for the solver interface is defined in the
+@file{onelab.h} header: see @ref{Solver example}, for an example of how
+to interface a C++ solver.
 
 @menu
 * Solver options::              
@@ -3084,8 +3075,7 @@ The list of all the solver options is given in @ref{Solver options list}.
 
 Here is a small example of how to interface a C++ solver with Gmsh. The
 following listing reproduces the @file{utils/solvers/c++/solver.cpp} file
-from the Gmsh source distribution (C, Perl and Python examples are also
-available).
+from the Gmsh source distribution.
 
 @sp 1
 
