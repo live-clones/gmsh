@@ -281,12 +281,12 @@ bool onelab::localNetworkClient::kill()
   return false;
 }
 
-static void saveMesh(onelab::client *c)
+static std::string getMshFileName(onelab::client *c)
 {
   std::vector<onelab::string> ps;
   c->get(ps, "Gmsh/MshFileName");
   if(ps.size()){
-    CreateOutputFile(ps[0].getValue(), CTX::instance()->mesh.fileFormat);
+    return ps[0].getValue();
   }
   else{
     std::string name = CTX::instance()->outputFileName;
@@ -298,7 +298,7 @@ static void saveMesh(onelab::client *c)
     }
     onelab::string o("Gmsh/MshFileName", name, "Mesh name");
     c->set(o);
-    CreateOutputFile(o.getValue(), CTX::instance()->mesh.fileFormat);
+    return name;
   }
 }
 
@@ -340,23 +340,39 @@ void onelab_cb(Fl_Widget *w, void *data)
   // can assume this)
   onelab::server::citer it = onelab::server::instance()->findClient("Gmsh");
   if(it != onelab::server::instance()->lastClient()){
-    static std::string gmshModelName = GModel::current()->getName();
-    // reload geometry and/or mesh it if Gmsh parameters have been
-    // modified or if the geometrical model has changed
-    if(onelab::server::instance()->getChanged("Gmsh") ||
-       gmshModelName != GModel::current()->getName()){
-      gmshModelName = GModel::current()->getName();
-      if(action == "check"){
+    onelab::client *c = it->second;
+    std::string mshFileName = getMshFileName(c);
+    static std::string modelName = GModel::current()->getName();
+    if(action == "check"){
+      if(onelab::server::instance()->getChanged("Gmsh") ||
+         modelName != GModel::current()->getName()){
+        // reload geometry if Gmsh parameters have been modified or if
+        // the model name has changed
+        modelName = GModel::current()->getName();
         geometry_reload_cb(0, 0);
       }
-      else if(action == "compute"){
+    }
+    else if(action == "compute"){
+      if(onelab::server::instance()->getChanged("Gmsh") ||
+         modelName != GModel::current()->getName()){
+        // reload the geometry, mesh it and save the mesh if Gmsh
+        // parameters have been modified or if the model name has
+        // changed
+        modelName = GModel::current()->getName();
         geometry_reload_cb(0, 0);
         if(FlGui::instance()->onelab->meshAuto()){
           mesh_3d_cb(0, 0);
-          saveMesh(it->second);
+          CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
         }
-        onelab::server::instance()->setChanged(false, "Gmsh");
       }
+      else if(StatFile(mshFileName)){
+        // mesh+save if the mesh file does not exist
+        if(FlGui::instance()->onelab->meshAuto()){
+          mesh_3d_cb(0, 0);
+          CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
+        }
+      }
+      onelab::server::instance()->setChanged(false, "Gmsh");
     }
   }
 
