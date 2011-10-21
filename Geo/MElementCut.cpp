@@ -1338,9 +1338,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
     }
 
     for(DI_Point::Container::iterator it = cp.begin(); it != cp.end(); it++) delete *it;
-    printf("coucou delet dim =%d\n", gmEntities[i]->dim());
     for(unsigned int k = 0; k < lines.size(); k++) delete lines[k];
-    printf("coucou delet \n");
     for(unsigned int k = 0; k < triangles.size(); k++) delete triangles[k];
     for(unsigned int k = 0; k < quads.size(); k++) delete quads[k];
     for(unsigned int k = 0; k < tetras.size(); k++) delete tetras[k];

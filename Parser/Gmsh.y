@@ -1987,7 +1987,7 @@ LevelSet :
 	    if(!pl) yymsg(0, "Levelset Union %d : unknown levelset %d", t, (int)d);
             else vl.push_back(pl->ls);
           }
-          gLevelset *ls = new gLevelsetUnion(vl);
+          gLevelset *ls = new gLevelsetUnion(vl, True);
           LevelSet *l = Create_LevelSet(t, ls);
           Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
         }
@@ -2005,7 +2005,7 @@ LevelSet :
 	    if(!pl) yymsg(0, "Levelset Intersection %d : unknown levelset %d", t, (int)d);
             else vl.push_back(pl->ls);
           }
-          gLevelset *ls = new gLevelsetIntersection(vl);
+          gLevelset *ls = new gLevelsetIntersection(vl, True);
           LevelSet *l = Create_LevelSet(t, ls);
           Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
         }
@@ -2023,7 +2023,7 @@ LevelSet :
 	    if(!pl) yymsg(0, "Levelset Cut %d : unknown levelset %d", t, (int)d);
             else vl.push_back(pl->ls);
           }
-          gLevelset *ls = new gLevelsetCut(vl);
+          gLevelset *ls = new gLevelsetCut(vl, True);
           LevelSet *l = Create_LevelSet(t, ls);
           Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
         }
@@ -2041,7 +2041,7 @@ LevelSet :
 	    if(!pl) yymsg(0, "Levelset Crack %d : unknown levelset %d", t, (int)d);
             else vl.push_back(pl->ls);
           }
-          gLevelset *ls = new gLevelsetCrack(vl);
+          gLevelset *ls = new gLevelsetCrack(vl, True);
           LevelSet *l = Create_LevelSet(t, ls);
           Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
         }

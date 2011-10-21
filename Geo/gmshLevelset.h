@@ -271,13 +271,16 @@ class gLevelsetTools : public gLevelset
 {
 protected:
   std::vector<gLevelset *> children;
+  bool _delChildren;//flag to delete only if called from gmsh Parser
 public:
   gLevelsetTools () {}
-  gLevelsetTools (std::vector<gLevelset *> &p) {children = p;}
+  gLevelsetTools (const std::vector<gLevelset *> &p, bool delC=false) {children = p; _delChildren=delC;}
   gLevelsetTools (const gLevelsetTools &);
-  ~gLevelsetTools () {
-    for(int i = 0; i < (int)children.size(); i++)
-      delete children[i];
+  virtual ~gLevelsetTools () {
+    if (_delChildren){
+      for(int i = 0; i < (int)children.size(); i++)
+	delete children[i];
+    }
   }
   double operator () (const double x, const double y, const double z) const {
     double d = (*children[0])(x, y, z);
@@ -328,7 +331,7 @@ public:
 class gLevelsetCut : public gLevelsetTools
 {
 public:
-  gLevelsetCut (std::vector<gLevelset *> p) : gLevelsetTools(p) { }
+  gLevelsetCut (std::vector<gLevelset *> p, bool delC=false) : gLevelsetTools(p,delC) { }
   double choose (double d1, double d2) const {
     return (d1 > -d2) ? d1 : -d2; // greater of d1 and -d2
   }
@@ -341,7 +344,7 @@ public:
 class gLevelsetUnion : public gLevelsetTools
 {
 public:
-  gLevelsetUnion (std::vector<gLevelset *> p) : gLevelsetTools(p) { }
+  gLevelsetUnion (std::vector<gLevelset *> p, bool delC=false) : gLevelsetTools(p,delC) { }
   gLevelsetUnion(const gLevelsetUnion &lv):gLevelsetTools(lv){}
   virtual gLevelset * clone() const{return new gLevelsetUnion(*this);}
   
@@ -355,7 +358,7 @@ public:
 class gLevelsetIntersection : public gLevelsetTools
 {
 public:
-  gLevelsetIntersection (std::vector<gLevelset *> p) : gLevelsetTools(p) { }
+  gLevelsetIntersection (std::vector<gLevelset *> p, bool delC=false) : gLevelsetTools(p,delC) { }
   gLevelsetIntersection(const gLevelsetIntersection &lv):gLevelsetTools(lv) { }
   virtual gLevelset *clone() const { return new gLevelsetIntersection(*this); }
 
