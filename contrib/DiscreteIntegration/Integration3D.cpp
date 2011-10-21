@@ -5,7 +5,7 @@
 #include "recurCut.h"
 #include "Gauss.h"
 
-#define ZERO_LS_TOL  1.e-7
+#define ZERO_LS_TOL  1.e-3
 #define EQUALITY_TOL 1.e-15
 
 // cross product
@@ -729,7 +729,7 @@ bool DI_Element::addQuadEdge (int edge, DI_Point *xm,
   double sideLength = distance(pt(s1), pt(s2));
   if (dist / sideLength < 1.e-5) {
     if(order0 == 1) setPolynomialOrder(1);
-    printf("dist=%.20f, sideLength=%g, d/sL=%g => do not add quad edge\n", dist, sideLength, dist/sideLength);
+    printf("dist=%.20f, sideLength=%g, d/sL=%g => do not add quadratic edge\n", dist, sideLength, dist/sideLength);
     return true; // do not add the quadratic edge if xm is very close from the middle of the edge
   }
   DI_Point *p0 = &mid_[edge];
@@ -1447,7 +1447,8 @@ void DI_Triangle::selfSplit (const DI_Element *e, const std::vector<gLevelset *>
                              std::vector<DI_Quad *> &subQuads, std::vector<DI_Triangle *> &subTriangles,
                              std::vector<DI_Line *> &surfLines, std::vector<DI_CuttingPoint *> &cuttingPoints) const
 {
-  bool quadT = (e->getPolynomialOrder() == 2) ? true : false; // if true, use quadratic sub triangles
+  //bool quadT = (e->getPolynomialOrder() == 2) ? true : false; // if true, use quadratic sub triangles
+  bool quadT = false;
   int LStag = RPNi.back()->getTag();
 
   int nbZe = 0, ze[3];
@@ -1565,7 +1566,8 @@ void DI_Tetra::selfSplit (const DI_Element *e, const std::vector<gLevelset *> &R
                        std::vector<DI_Tetra *> &subTetras, std::vector<DI_Triangle *> &surfTriangles,
                        std::vector<DI_CuttingPoint *> &cuttingPoints, std::vector<DI_QualError *> &QError) const
 {
-  bool quadT = (e->getPolynomialOrder() == 2) ? true : false; // use of quadratic surf triangles and quadratic sub tetrahedra
+  //bool quadT = (e->getPolynomialOrder() == 2) ? true : false; // use of quadratic surf triangles and quadratic sub tetrahedra
+  bool quadT = false;
   int tag = RPNi.back()->getTag();
 
   int nbZe = 0, ze[4];

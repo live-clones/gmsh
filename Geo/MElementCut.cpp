@@ -950,30 +950,31 @@ static void elementCutMesh(MElement *e, std::vector<gLevelset *> &RPN,
           else
             poly[1].push_back(mt);
         }
-	// //if quads
-        // for (unsigned int i = nbQ; i < quads.size(); i++){
-        //   MVertex *mv[4] = {NULL, NULL, NULL, NULL};
-        //   for(int j = 0; j < 4; j++){
-        //   int numV = getElementVertexNum(triangles[i]->pt(j), e);
-        //     if(numV == -1) {
-        //       MVertex *newv = new MVertex(quads[i]->x(j), quads[i]->y(j), quads[i]->z(j));
-        //       std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
-        //       mv[j] = *(it.first);
-        //       if (!it.second) newv->deleteLast();
-        //     }
-        //     else {
-	//       std::map<int, MVertex*>::iterator it = vertexMap.find(numV);
-	//       if(it == vertexMap.end()) {
-        //         mv[j] = new MVertex(quads[i]->x(j), quads[i]->y(j),
-        //                             quads[i]->z(j), 0, numV);
-        //         vertexMap[numV] = mv[j];
-        //       }
-        //       else mv[j] = it->second;
-        //     }
-	//   }
-        //   MQuadrangle *mq = new MQuadrangle(mv[0], mv[1], mv[2], mv[3], 0, 0);
-	//   elements[3][reg].push_back(mq);
-        // }
+	//if quads
+        for (unsigned int i = nbQ; i < quads.size(); i++){
+          MVertex *mv[4] = {NULL, NULL, NULL, NULL};
+          for(int j = 0; j < 4; j++){
+          int numV = getElementVertexNum(quads[i]->pt(j), e);
+            if(numV == -1) {
+              MVertex *newv = new MVertex(quads[i]->x(j), quads[i]->y(j), quads[i]->z(j));
+              std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
+              mv[j] = *(it.first);
+              if (!it.second) newv->deleteLast();
+            }
+            else {
+	      std::map<int, MVertex*>::iterator it = vertexMap.find(numV);
+	      if(it == vertexMap.end()) {
+                mv[j] = new MVertex(quads[i]->x(j), quads[i]->y(j),
+                                    quads[i]->z(j), 0, numV);
+                vertexMap[numV] = mv[j];
+              }
+              else mv[j] = it->second;
+            }
+	  }
+          MQuadrangle *mq = new MQuadrangle(mv[0], mv[1], mv[2], mv[3], 0, 0);
+	  int reg = getElementaryTag(quads[i]->lsTag(), elementary, newElemTags[2]);
+	  elements[3][reg].push_back(mq);
+        }
 
         bool own = (eParent && !e->ownsParent()) ? false : true;
         if(poly[0].size()) {
@@ -1337,7 +1338,9 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
     }
 
     for(DI_Point::Container::iterator it = cp.begin(); it != cp.end(); it++) delete *it;
+    printf("coucou delet dim =%d\n", gmEntities[i]->dim());
     for(unsigned int k = 0; k < lines.size(); k++) delete lines[k];
+    printf("coucou delet \n");
     for(unsigned int k = 0; k < triangles.size(); k++) delete triangles[k];
     for(unsigned int k = 0; k < quads.size(); k++) delete quads[k];
     for(unsigned int k = 0; k < tetras.size(); k++) delete tetras[k];
