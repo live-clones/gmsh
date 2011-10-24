@@ -46,9 +46,9 @@ class GMSH_AnalyseCurvedMeshPlugin : public GMSH_PostPlugin
   private :
     void checkValidity(int toDo);
     void computeMinMax();
-    void checkValidity(MElement *const *, int numEl, std::vector<MElement*> &invalids);
     void computeMinMax(MElement *const *, int numEl);
     void hideValid_ShowInvalid(std::vector<MElement*> &invalids);
+    int subDivision(const bezierBasis*, const fullVector<double>&, int depth);
     /*bool isJacPositive(MElement *);
     int method_1_1(MElement *, int depth);
     int method_1_2(MElement *, int depth);
