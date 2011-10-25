@@ -19,7 +19,7 @@
 #include "CutSphere.h"
 #include "CutBox.h"
 #include "Skin.h"
-//#include "AnalyseCurvedMesh.h"
+#include "AnalyseCurvedMesh.h"
 #include "MathEval.h"
 #include "ExtractElements.h"
 #include "HarmonicToTime.h"
