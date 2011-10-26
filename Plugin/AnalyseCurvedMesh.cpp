@@ -9,10 +9,14 @@
 #include "JacobianBasis.h"
 #include "polynomialBasis.h"
 #include "AnalyseCurvedMesh.h"
-#include "FlGui.h"
 #include "Context.h"
 #include "drawContext.h"
 #include "OS.h"
+
+#if defined(HAVE_FLTK)
+#include "FlGui.h"
+#endif
+
 #define UNDEF_JAC_TAG -999
 
 
