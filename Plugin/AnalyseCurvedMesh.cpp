@@ -10,7 +10,11 @@
 #include "polynomialBasis.h"
 #include "AnalyseCurvedMesh.h"
 #include "Context.h"
+
+#if defined(HAVE_OPENGL)
 #include "drawContext.h"
+#endif
+
 #include "OS.h"
 
 #if defined(HAVE_FLTK)
@@ -568,7 +572,9 @@ void GMSH_AnalyseCurvedMeshPlugin::checkValidity(int toDo)
     hideValid_ShowInvalid(invalids);
     CTX::instance()->mesh.changed = (ENT_ALL);
     FlGui::instance()->check();
+#if defined(HAVE_OPENGL)
     drawContext::global()->draw();
+#endif
   }
 }
 
