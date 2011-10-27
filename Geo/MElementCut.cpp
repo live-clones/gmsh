@@ -914,7 +914,8 @@ static void elementCutMesh(MElement *e, std::vector<gLevelset *> &RPN,
         int reg = getBorderTag(lsTag, c, newElemTags[2][0], borderElemTags[1]);
         int physTag = (!gePhysicals.size()) ? 0 : getBorderTag(lsTag, c, newPhysTags[2][0], borderPhysTags[1]);
         elements[2][reg].push_back(tri);
-        assignLsPhysical(GM, reg, 2, physicals, physTag, lsTag);
+        if(physTag)
+          assignLsPhysical(GM, reg, 2, physicals, physTag, lsTag);
         for(int i = 0; i < 2; i++)
           if(tri->getDomain(i))
             borders[1].insert(std::pair<MElement*, MElement*>(tri->getDomain(i), tri));
@@ -1009,9 +1010,16 @@ static void elementCutMesh(MElement *e, std::vector<gLevelset *> &RPN,
               else mv[j] = it->second;
             }
 	  }
-          MQuadrangle *mq = new MQuadrangle(mv[0], mv[1], mv[2], mv[3], 0, 0);
-	  int reg = getElementaryTag(quads[i]->lsTag(), elementary, newElemTags[2]);
-	  elements[3][reg].push_back(mq);
+          MTriangle *mt0 = new MTriangle(mv[0], mv[1], mv[2], 0, 0);
+          MTriangle *mt1 = new MTriangle(mv[0], mv[2], mv[3], 0, 0);
+          if(quads[i]->lsTag() < 0){
+            poly[0].push_back(mt0);
+            poly[0].push_back(mt1);
+          }
+          else{
+            poly[1].push_back(mt0);
+            poly[1].push_back(mt1);
+          }
         }
 
         bool own = (eParent && !e->ownsParent()) ? false : true;
@@ -1116,7 +1124,8 @@ static void elementCutMesh(MElement *e, std::vector<gLevelset *> &RPN,
         int reg = getBorderTag(lsTag, c, newElemTags[1][0], borderElemTags[0]);
         int physTag = (!gePhysicals.size()) ? 0 : getBorderTag(lsTag, c, newPhysTags[1][0], borderPhysTags[0]);
         elements[1][reg].push_back(lin);
-        assignLsPhysical(GM, reg, 1, physicals, physTag, lsTag);
+        if(physTag)
+          assignLsPhysical(GM, reg, 1, physicals, physTag, lsTag);
         for(int i = 0; i < 2; i++)
           if(lin->getDomain(i))
             borders[0].insert(std::pair<MElement*, MElement*>(lin->getDomain(i), lin));
