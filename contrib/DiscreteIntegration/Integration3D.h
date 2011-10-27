@@ -7,6 +7,8 @@
 #include <map>
 #include <cmath>
 #include "gmshLevelset.h"
+#include "PolynomialBasis.h"
+#include "GmshDefines.h"
 
 // Element type
 #define DI_LIN  1
@@ -43,6 +45,16 @@ class DI_Point
   DI_Point (double x, double y, double z, const double ls) : x_(x), y_(y), z_(z) {addLs(ls);}
   DI_Point (double x, double y, double z, const DI_Element *e,
             const std::vector<gLevelset *> &RPNi) : x_(x), y_(y), z_(z) {computeLs(e, RPNi);}
+  virtual const polynomialBasis* getFunctionSpace(int o) const
+  { return polynomialBases::find(MSH_PNT);  }
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
+  {
+    s[0] = 1.;
+  }
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
+  {
+    s[0][0] = s[0][1] = s[0][2] = 0.;
+  }
   // assignment
   DI_Point & operator=(const DI_Point & rhs);
   // add a levelset value (adjusted to 0 if ls<ZERO_LS_TOL) into the vector Ls
@@ -230,6 +242,7 @@ class DI_Element
     if(pts_) delete [] pts_;
     if(mid_) delete [] mid_;
   }
+  virtual const polynomialBasis* getFunctionSpace(int order=-1) const { return 0; }
   // return type
   virtual int type() const = 0;
   // return the dimension of the element
@@ -324,16 +337,17 @@ class DI_Element
   inline int sizeLs() const {return pts_[0].sizeLs();}
   // return the interpolating nodal shape functions evaluated at point (u,v,w)
   // in parametric coordinates (if order = -1, use the polynomial order of the element)
-  virtual void getShapeFunctions (double u, double v, double w, double s[], int order = -1) const = 0;
+  virtual void getShapeFunctions (double u, double v, double w, double s[], int order = -1) const;
+  // return the gradient of the shape functions evaluated at point (u,v,w) in the reference element
+  virtual void getGradShapeFunctions (const double u, const double v, const double w,
+                                      double s[][3], int order = -1) const;
   // compute the coordinates in the element from the local coordinates (x,y,z)
   void evalC (const double x, const double y, const double z, double *ev, int order = -1) const;
   // evaluate the levelset at the local coordinates
   // with the ith levelset value in the vector Ls of the points
   // if i=-1, use the last value in Ls
   double evalLs (const double x, const double y, const double z, int iLs = -1, int order = -1) const;
-  // return the gradient of the shape functions evaluated at point (u,v,w) in the reference element
-  virtual void getGradShapeFunctions (const double u, const double v, const double w,
-                                      double s[][3], int order = -1) const = 0;
+
   // compute the determinant of the jacobian at the point (u,v,w) in the reference element
   double detJ (const double u, const double v, const double w) const;
   // compute DetJ at each point, return false if 2 values have opposite sign
@@ -399,6 +413,7 @@ class DI_Line : public DI_Element
     }
   }
   inline int nbEdg() const {return 1;}
+  virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
   void computeIntegral();
   inline double refIntegral() const {return 2.;}
   inline DI_Point* pt (int i) const {return i < 2 ? &pts_[i] : &mid_[i - 2];}
@@ -414,9 +429,6 @@ class DI_Line : public DI_Element
   void midV (const int e, int *s, int &n) const {
     s[0] = 0; s[1] = 1; n = 2;
   }
-  void getShapeFunctions (double u, double v, double w, double s[], int order = -1) const;
-  void getGradShapeFunctions (const double u, const double v, const double w,
-                              double s[][3], int order = -1) const;
   double detJ (const double &xP, const double &yP, const double &zP) const;
   bool cut (std::vector<gLevelset *> &LsRPN, std::vector<DI_IntegrationPoint *> &ip,
             DI_Point::Container &cp, const int polynomialOrderL,
@@ -477,6 +489,7 @@ class DI_Triangle : public DI_Element
     }
   }
   inline int nbEdg() const {return 3;}
+  virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
   void computeIntegral();
   inline double refIntegral() const {return 0.5;}
   inline DI_Point* pt (int i) const {return i < 3 ? &pts_[i] : &mid_[i - 3];}
@@ -499,9 +512,6 @@ class DI_Triangle : public DI_Element
     default : n = 0; return;
     }
   }
-  void getShapeFunctions (double u, double v, double w, double s[], int order = -1) const;
-  void getGradShapeFunctions (const double u, const double v, const double w,
-                              double s[][3], int order = -1) const;
   double detJ (const double &xP, const double &yP, const double &zP) const;
   bool cut (std::vector<gLevelset *> &LsRPN, std::vector<DI_IntegrationPoint *> &ip,
             std::vector<DI_IntegrationPoint *> &ipS, DI_Point::Container &cp,
@@ -573,6 +583,7 @@ class DI_Quad : public DI_Element
     }
   }
   inline int nbEdg() const {return 4;}
+  virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
   void computeIntegral();
   inline double refIntegral() const {return 4.;}
   inline DI_Point* pt (int i) const {return i < 4 ? &pts_[i] : &mid_[i - 4];}
@@ -597,9 +608,6 @@ class DI_Quad : public DI_Element
     default : n = 0; return;
     }
   }
-  void getShapeFunctions (double u, double v, double w, double s[], int order = -1) const;
-  void getGradShapeFunctions (const double u, const double v, const double w,
-                              double s[][3], int order = -1) const;
   double detJ (const double &xP, const double &yP, const double &zP) const;
   bool cut (std::vector<gLevelset *> &LsRPN, std::vector<DI_IntegrationPoint *> &ip,
             std::vector<DI_IntegrationPoint *> &ipS, DI_Point::Container &cp,
@@ -667,6 +675,7 @@ class DI_Tetra : public DI_Element
     }
   }
   inline int nbEdg() const {return 6;}
+  virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
   void computeIntegral();
   inline double refIntegral() const {return 1. / 6.;}
   inline DI_Point* pt (int i) const {return i < 4 ? &pts_[i] : &mid_[i - 4];}
@@ -692,9 +701,6 @@ class DI_Tetra : public DI_Element
     default : n = 0; return;
     }
   }
-  void getShapeFunctions (double u, double v, double w, double s[], int order = -1) const;
-  void getGradShapeFunctions (const double u, const double v, const double w,
-                              double s[][3], int order = -1) const;
   double detJ (const double &xP, const double &yP, const double &zP) const;
   bool cut (std::vector<gLevelset *> &LsRPN, std::vector<DI_IntegrationPoint *> &ip,
             std::vector<DI_IntegrationPoint *> &ipS, DI_Point::Container &cp,
@@ -781,6 +787,7 @@ class DI_Hexa : public DI_Element
     }
   }
   inline int nbEdg() const {return 12;}
+  virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
   void computeIntegral();
   inline double refIntegral() const {return 8.;}
   inline DI_Point* pt (int i) const {return i < 8 ? &pts_[i] : &mid_[i - 8];}
@@ -821,9 +828,6 @@ class DI_Hexa : public DI_Element
     default : n = 0; return;
     }
   }
-  void getShapeFunctions (double u, double v, double w, double s[], int order = -1) const;
-  void getGradShapeFunctions (const double u, const double v, const double w,
-                              double s[][3], int order = -1) const;
   double detJ (const double &xP, const double &yP, const double &zP) const;
   bool cut (std::vector<gLevelset *> &LsRPN, std::vector<DI_IntegrationPoint *> &ip,
             std::vector<DI_IntegrationPoint *> &ipS, DI_Point::Container &cp,

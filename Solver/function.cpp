@@ -497,7 +497,7 @@ class functionLevelsetSmooth : public function {
   }
   functionLevelsetSmooth(const function *f0, const double valMin, const double valPlus, const double E) : function(f0->getNbCol()) 
   {
-    printf("Levelset bandwidth is E = %g \n", E);
+    //printf("Levelset bandwidth is E = %g \n", E);
     setArgument (_f0, f0);
     _valMin  = valMin;
     _valPlus = valPlus;

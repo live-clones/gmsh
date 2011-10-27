@@ -4,6 +4,8 @@
 #include "Integration3D.h"
 #include "recurCut.h"
 #include "Gauss.h"
+#include "polynomialBasis.h"
+#include "GmshDefines.h" 
 
 #define ZERO_LS_TOL  1.e-3
 #define EQUALITY_TOL 1.e-15
@@ -613,9 +615,24 @@ DI_Element & DI_Element::operator= (const DI_Element &rhs){
   }
   return *this;
 }
+void DI_Element::getShapeFunctions(double u, double v, double w, double s[], int o) const
+{
+  //printf("type elem =%d  order =%d\n", type(), o);
+  const polynomialBasis* fs = getFunctionSpace(o);
+  if(fs) fs->f(u, v, w, s);
+  else Msg::Error("Function space not implemented for this type of element");
+}
+
+void DI_Element::getGradShapeFunctions(double u, double v, double w, double s[][3],
+                                     int o) const
+{
+  const polynomialBasis* fs = getFunctionSpace(o);
+  if(fs) fs->df(u, v, w, s);
+  else Msg::Error("Function space not implemented for this type of element");
+}
 void DI_Element::setPolynomialOrder (int o) {
   if(polOrder_ == o) return;
-  delete [] mid_;
+  if (mid_) delete [] mid_;
   polOrder_ = o;
   switch (o) {
   case 1 :
@@ -632,12 +649,13 @@ void DI_Element::setPolynomialOrder (int o) {
     }
     return;
   default :
-    printf("Order %d line function space not implemented ", o); print();
+    return;
+    //printf("Order %d line function space not implemented ", o); print();
   }
 }
 void DI_Element::setPolynomialOrder (int o, const DI_Element *e, const std::vector<gLevelset *> &RPNi) {
   if(polOrder_ == o) return;
-  delete [] mid_;
+  if (mid_) delete [] mid_;
   polOrder_ = o;
   switch (o) {
   case 1 :
@@ -742,6 +760,7 @@ bool DI_Element::addQuadEdge (int edge, DI_Point *xm,
     printf("detJ<0 when trying to add a quadratic edge in "); print();
     return false;
   }
+  printf("in add quad edge \n");
   computeIntegral();
   return true;
 }
@@ -1042,369 +1061,159 @@ bool DI_ElementLessThan::operator()(const DI_Element *e1, const DI_Element *e2) 
 }
 
 // DI_Line methods --------------------------------------------------------------------------------
-void DI_Line::computeIntegral() {
-  switch (getPolynomialOrder()) {
-  case 1 :
-    integral_ = LineLength(pt(0), pt(1));
-    break;
-  case 2 :
-    integral_ = LineLength(pt(0), mid(0)) + LineLength(mid(0), pt(1));
-    break;
-  default :
-    printf("Order %d line function space not implemented ", getPolynomialOrder()); print();
-  }
-}
-void DI_Line::getShapeFunctions (double u, double v, double w, double s[], int ord) const {
-  int order = (ord == -1) ? getPolynomialOrder() : ord;
-  double valm = (fabs(1. - u) < 1.e-16) ? 0. : (1. - u);
-  double valp = (fabs(1. + u) < 1.e-16) ? 0. : (1. + u);
+const polynomialBasis* DI_Line::getFunctionSpace(int o) const{
+  int order = (o == -1) ? getPolynomialOrder() : o;
   switch (order) {
-  case 1 :
-    s[0] = valm / 2.;
-    s[1] = valp / 2.;
-    break;
-  case 2 :
-    s[0] = -u * valm / 2.;
-    s[1] = u * valp / 2.;
-    s[2] = valm * valp;
-    break;
-  default : printf("Order %d line function space not implemented ", order); print();
+  case 0: return polynomialBases::find(MSH_LIN_1);
+  case 1: return polynomialBases::find(MSH_LIN_2);
+  case 2: return polynomialBases::find(MSH_LIN_3);
+  case 3: return polynomialBases::find(MSH_LIN_4);
+  case 4: return polynomialBases::find(MSH_LIN_5);
+  case 5: return polynomialBases::find(MSH_LIN_6);
+  case 6: return polynomialBases::find(MSH_LIN_7);
+  case 7: return polynomialBases::find(MSH_LIN_8);
+  case 8: return polynomialBases::find(MSH_LIN_9);
+  case 9: return polynomialBases::find(MSH_LIN_10);
+  case 10: return polynomialBases::find(MSH_LIN_11);
+  default: Msg::Error("Order %d line function space not implemented", order);
   }
-}
-void DI_Line::getGradShapeFunctions (const double u, const double v, const double w, double s[][3], int ord) const {
-  int order = (ord == -1) ? getPolynomialOrder() : ord;
-  switch (order) {
-  case 1 :
-    s[0][0] = -0.5; s[0][1] = 0.; s[0][2] = 0.;
-    s[1][0] =  0.5; s[1][1] = 0.; s[1][2] = 0.;
-    break;
-  case 2 :
-    s[0][0] = u - 0.5; s[0][1] = 0.; s[0][2] = 0.;
-    s[1][0] = u + 0.5; s[1][1] = 0.; s[1][2] = 0.;
-    s[2][0] = -2. * u; s[2][1] = 0.; s[2][2] = 0.;
-    break;
-  default :
-    printf("Order %d line function space not implemented ", order); print();
-  }
+  return 0;
 }
 
+void DI_Line::computeIntegral() {
+  integral_ = LineLength(pt(0), pt(1));
+  // switch (getPolynomialOrder()) {
+  // case 1 :
+  //   integral_ = LineLength(pt(0), pt(1));
+  //   break;
+  // case 2 :
+  //   integral_ = LineLength(pt(0), mid(0)) + LineLength(mid(0), pt(1));
+  //   break;
+  // default :
+  //   printf("Order %d line function space not implemented ", getPolynomialOrder()); print();
+  // }
+}
 // DI_Triangle methods ----------------------------------------------------------------------------
+const polynomialBasis* DI_Triangle::getFunctionSpace(int o) const
+{
+  int order = (o == -1) ? getPolynomialOrder() : o;
+  switch (order) {
+    case 0: return polynomialBases::find(MSH_TRI_1);
+    case 1: return polynomialBases::find(MSH_TRI_3);
+    case 2: return polynomialBases::find(MSH_TRI_6);
+    case 3: return polynomialBases::find(MSH_TRI_10);
+    case 4: return polynomialBases::find(MSH_TRI_15);
+    case 5: return polynomialBases::find(MSH_TRI_21);
+    case 6: return polynomialBases::find(MSH_TRI_28);
+    case 7: return polynomialBases::find(MSH_TRI_36);
+    case 8: return polynomialBases::find(MSH_TRI_45);
+    case 9: return polynomialBases::find(MSH_TRI_55);
+    case 10: return polynomialBases::find(MSH_TRI_66);
+    default: Msg::Error("Order %d triangle function space not implemented", order);
+    }
+}
 void DI_Triangle::computeIntegral() {
-  switch (getPolynomialOrder()) {
-  case 1 :
-    integral_ = TriSurf(pt(0), pt(1), pt(2));
-    break;
-  case 2 :
-    integral_ = TriSurf(pt(0), mid(0), mid(2)) + TriSurf(pt(1), mid(0), mid(1))
-              + TriSurf(pt(2), mid(1), mid(2)) + TriSurf(mid(0), mid(1), mid(2));
-    break;
-  default :
-    printf("Order %d triangle function space not implemented ", getPolynomialOrder()); print();
-  }
-}
-void DI_Triangle::getShapeFunctions (double u, double v, double w, double s[], int ord) const {
-  int order = (ord == -1) ? getPolynomialOrder() : ord;
-  double val1 = (fabs(1. - u - v) < 1.e-16) ? 0. : (1. - u - v);
-  switch (order) {
-  case 1 :
-    s[0] = val1;
-    s[1] = u;
-    s[2] = v;
-    break;
-  case 2 :
-    s[0] = val1 * (1. - 2. * u - 2. * v);
-    s[1] = u * (2. * u - 1.);
-    s[2] = v * (2. * v - 1.);
-    s[3] = 4. * u * val1;
-    s[4] = 4. * u * v;
-    s[5] = 4. * v * val1;
-    break;
-  default :
-    printf("Order %d triangle function space not implemented ", order); print();
-  }
-}
-void DI_Triangle::getGradShapeFunctions (const double u, const double v, const double w,
-                                         double s[][3], int ord) const {
-  int order = (ord == -1) ? getPolynomialOrder() : ord;
-  switch (order) {
-  case 1 :
-    s[0][0] = -1.; s[0][1] = -1.; s[0][2] = 0.;
-    s[1][0] =  1.; s[1][1] =  0.; s[1][2] = 0.;
-    s[2][0] =  0.; s[2][1] =  1.; s[2][2] = 0.;
-    break;
-  case 2 :
-    s[0][0] = 4. * u + 4. * v - 3.;
-    s[0][1] = 4. * u + 4. * v - 3.;
-    s[0][2] = 0.;
-    s[1][0] = 4. * u -1.;
-    s[1][1] = 0.;
-    s[1][2] = 0.;
-    s[2][0] = 0.;
-    s[2][1] = 4. * v - 1.;
-    s[2][2] = 0.;
-    s[3][0] = -8. * u - 4. * v + 4.;
-    s[3][1] = -4. * u;
-    s[3][2] = 0.;
-    s[4][0] = 4. * v;
-    s[4][1] = 4. * u;
-    s[4][2] = 0.;
-    s[5][0] = -4. * v;
-    s[5][1] = -4. * u - 8. * v + 4.;
-    s[5][2] = 0.;
-    break;
-  default :
-    printf("Order %d triangle function space not implemented ", order); print();
-  }
+  integral_ = TriSurf(pt(0), pt(1), pt(2));
+  // switch (getPolynomialOrder()) {
+  // case 1 :
+  //   integral_ = TriSurf(pt(0), pt(1), pt(2));
+  //   break;
+  // case 2 :
+  //   integral_ = TriSurf(pt(0), mid(0), mid(2)) + TriSurf(pt(1), mid(0), mid(1))
+  //             + TriSurf(pt(2), mid(1), mid(2)) + TriSurf(mid(0), mid(1), mid(2));
+  //   break;
+  // default :
+  //   printf("Order %d triangle function space not implemented ", getPolynomialOrder()); print();
+  // }
 }
 double DI_Triangle::quality() const {
   return qualityTri(pt(0), pt(1), pt(2));
 }
 
 // DI_Quad methods --------------------------------------------------------------------------------
-void DI_Quad::computeIntegral() {
-  switch (getPolynomialOrder()) {
-  case 1 :
-    integral_ = TriSurf(pt(0), pt(1), pt(2)) + TriSurf(pt(0), pt(2), pt(3));
-    break;
-  case 2 :
-    integral_ = TriSurf(pt(0), mid(0), mid(4)) + TriSurf(pt(0), mid(4), mid(3))
-              + TriSurf(pt(1), mid(1), mid(4)) + TriSurf(pt(1), mid(4), mid(0))
-              + TriSurf(pt(2), mid(2), mid(4)) + TriSurf(pt(2), mid(4), mid(1))
-              + TriSurf(pt(3), mid(3), mid(4)) + TriSurf(pt(3), mid(4), mid(2));
-    break;
-  default :
-    printf("Order %d quadrangle function space not implemented ", getPolynomialOrder()); print();
-  }
-}
-void DI_Quad::getShapeFunctions (double u, double v, double w, double s[], int ord) const {
-  int order = (ord == -1) ? getPolynomialOrder() : ord;
-  switch (order) {
-  case 1 :
-    s[0] = (1. - u) * (1. - v) / 4.;
-    s[1] = (1. + u) * (1. - v) / 4.;
-    s[2] = (1. + u) * (1. + v) / 4.;
-    s[3] = (1. - u) * (1. + v) / 4.;
-    break;
-  case 2 :
-    s[0] =  u * v * (1. - u) * (1. - v) / 4.;
-    s[1] = -u * v * (1. + u) * (1. - v) / 4.;
-    s[2] =  u * v * (1. + u) * (1. + v) / 4.;
-    s[3] = -u * v * (1. - u) * (1. + v) / 4.;
-    s[4] = -v * (1. - u) * (1. + u) * (1. - v) / 2.;
-    s[5] =  u * (1. + u) * (1. - v) * (1. + v) / 2.;
-    s[6] =  v * (1. - u) * (1. + u) * (1. + v) / 2.;
-    s[7] = -u * (1. - u) * (1. - v) * (1. + v) / 2.;
-    s[8] =  (1. - u) * (1. + u) * (1. - v) * (1. + v);
-    break;
-  default :
-    printf("Order %d quadrangle function space not implemented ", order); print();
-  }
-}
-void DI_Quad::getGradShapeFunctions (const double u, const double v, const double w, double s[][3], int ord) const {
-  int order = (ord == -1) ? getPolynomialOrder() : ord;
-  switch (order) {
-  case 1 :
-    s[0][0] = -0.25 * (1. - v); s[0][1] = -0.25 * (1. - u); s[0][2] = 0.;
-    s[1][0] =  0.25 * (1. - v); s[1][1] = -0.25 * (1. + u); s[1][2] = 0.;
-    s[2][0] =  0.25 * (1. + v); s[2][1] =  0.25 * (1. + u); s[2][2] = 0.;
-    s[3][0] = -0.25 * (1. + v); s[3][1] =  0.25 * (1. - u); s[3][2] = 0.;
-    break;
-  case 2 :
-    s[0][0] = v * (1. - v) * (1. - 2. * u) / 4.;
-    s[0][1] = u * (1. - u) * (1. - 2.* v ) / 4.;
-    s[0][2] = 0.;
-    s[1][0] = -v * (1. - v) * (1. + 2. * u) / 4.;
-    s[1][1] = -u * (1. + u) * (1. - 2. * v) / 4.;
-    s[1][2] = 0.;
-    s[2][0] = v * (1. + v) * (1. + 2. * u) / 4.;
-    s[2][1] = u * (1. + u) * (1. + 2. * v) / 4.;
-    s[2][2] = 0.;
-    s[3][0] = -v * (1. + v) * (1. - 2. * u) / 4.;
-    s[3][1] = -u * (1. - u) * (1. + 2. * v) / 4.;
-    s[3][2] = 0.;
-    s[4][0] = v * (1. - v) * u;
-    s[4][1] = -(1. - u * u) * (1. - 2. * v) / 2.;
-    s[4][2] = 0.;
-    s[5][0] = (1. - v * v) * (1. + 2. * u) / 2.;
-    s[5][1] = -u * (1. + u) * v;
-    s[5][2] = 0.;
-    s[6][0] = -v * (1. + v) * u;
-    s[6][1] = (1. - u * u) * (1. + 2. * v) / 2.;
-    s[6][2] = 0.;
-    s[7][0] = -(1. - v * v) * (1. - 2. * u) / 2.;
-    s[7][1] = u * (1. - u) * v;
-    s[7][2] = 0.;
-    s[8][0] = -(1. - v * v) * u * 2.;
-    s[8][1] = -(1. - u * u) * v * 2.;
-    s[8][2] = 0.;
-    break;
-  default :
-    printf("Order %d quadrangle function space not implemented ", order); print();
+const polynomialBasis* DI_Quad::getFunctionSpace(int o) const{
+ int order = (o == -1) ? getPolynomialOrder() : o;
+ switch (order) {
+    case 0: return polynomialBases::find(MSH_QUA_1);
+    case 1: return polynomialBases::find(MSH_QUA_4);
+    case 2: return polynomialBases::find(MSH_QUA_9);
+    case 3: return polynomialBases::find(MSH_QUA_16);
+    case 4: return polynomialBases::find(MSH_QUA_25);
+    case 5: return polynomialBases::find(MSH_QUA_36);
+    case 6: return polynomialBases::find(MSH_QUA_49);
+    case 7: return polynomialBases::find(MSH_QUA_64);
+    case 8: return polynomialBases::find(MSH_QUA_81);
+    case 9: return polynomialBases::find(MSH_QUA_100);
+    case 10: return polynomialBases::find(MSH_QUA_121);
+    default: Msg::Error("Order %d quadrangle function space not implemented", order);
   }
 }
 
+void DI_Quad::computeIntegral() {
+  integral_ = TriSurf(pt(0), pt(1), pt(2)) + TriSurf(pt(0), pt(2), pt(3));
+  // switch (getPolynomialOrder()) {
+  // case 1 :
+  //   integral_ = TriSurf(pt(0), pt(1), pt(2)) + TriSurf(pt(0), pt(2), pt(3));
+  //   break;
+  // case 2 :
+  //   integral_ = TriSurf(pt(0), mid(0), mid(4)) + TriSurf(pt(0), mid(4), mid(3))
+  //             + TriSurf(pt(1), mid(1), mid(4)) + TriSurf(pt(1), mid(4), mid(0))
+  //             + TriSurf(pt(2), mid(2), mid(4)) + TriSurf(pt(2), mid(4), mid(1))
+  //             + TriSurf(pt(3), mid(3), mid(4)) + TriSurf(pt(3), mid(4), mid(2));
+  //   break;
+  // default :
+  //   printf("Order %d quadrangle function space not implemented ", getPolynomialOrder()); print();
+  // }
+}
+
 // DI_Tetra methods -------------------------------------------------------------------------------
+const polynomialBasis* DI_Tetra::getFunctionSpace(int o) const{
+ int order = (o == -1) ? getPolynomialOrder() : o;
+ switch (order) {
+    case 0: return polynomialBases::find(MSH_TET_1);
+    case 1: return polynomialBases::find(MSH_TET_4);
+    case 2: return polynomialBases::find(MSH_TET_10);
+    case 3: return polynomialBases::find(MSH_TET_20);
+    case 4: return polynomialBases::find(MSH_TET_35);
+    case 5: return polynomialBases::find(MSH_TET_56);
+    case 6: return polynomialBases::find(MSH_TET_84);
+    case 7: return polynomialBases::find(MSH_TET_120);
+    case 8: return polynomialBases::find(MSH_TET_165);
+    case 9: return polynomialBases::find(MSH_TET_220);
+    case 10: return polynomialBases::find(MSH_TET_286);
+    default: Msg::Error("Order %d tetrahedron function space not implemented", order);
+    }
+}
+
 void DI_Tetra::computeIntegral() {
     integral_ = TetraVol(pt(0), pt(1), pt(2), pt(3));
-}
-void DI_Tetra::getShapeFunctions (double u, double v, double w, double s[], int ord) const {
-  int order = (ord == -1) ? getPolynomialOrder() : ord;
-  switch (order) {
-  case 1 :
-    s[0] = 1. - u - v - w;
-    s[1] = u;
-    s[2] = v;
-    s[3] = w;
-    break;
-  case 2 :
-    s[0] = (1. - u - v - w) * (1. - 2. * u - 2. * v - 2. * w);
-    s[1] = u * (2. * u - 1.);
-    s[2] = v * (2. * v - 1.);
-    s[3] = w * (2. * w - 1.);
-    s[4] = 4. * u * (1. - u - v - w);
-    s[5] = 4. * v * (1. - u - v - w);
-    s[6] = 4. * w * (1. - u - v - w);
-    s[7] = 4. * u * v;
-    s[8] = 4. * v * w;
-    s[9] = 4. * u * w;
-    break;
-  default :
-    printf("Order %d tetrahedron function space not implemented ", order); print();
-  }
-}
-void DI_Tetra::getGradShapeFunctions (const double u, const double v, const double w, double s[][3], int ord) const {
-  int order = (ord == -1) ? getPolynomialOrder() : ord;
-  switch (order) {
-  case 1 :
-    s[0][0] = -1.; s[0][1] = -1.; s[0][2] = -1.;
-    s[1][0] =  1.; s[1][1] =  0.; s[1][2] =  0.;
-    s[2][0] =  0.; s[2][1] =  1.; s[2][2] =  0.;
-    s[3][0] =  0.; s[3][1] =  0.; s[3][2] =  1.;
-    break;
-  case 2 :
-    s[0][0] = -3. + 4. * u + 4. * v + 4. * w;
-    s[0][1] = -3. + 4. * u + 4. * v + 4. * w;
-    s[0][2] = -3. + 4. * u + 4. * v + 4. * w;
-    s[1][0] = 4. * u - 1.;
-    s[1][1] = 0.;
-    s[1][2] = 0.;
-    s[2][0] = 0.;
-    s[2][1] = 4. * v - 1.;
-    s[2][2] = 0.;
-    s[3][0] = 0.;
-    s[3][1] = 0.;
-    s[3][2] = 4. * w - 1.;
-    s[4][0] = 4. * (1. - 2. * u - v - w);
-    s[4][1] = -4. * u;
-    s[4][2] = -4. * u;
-    s[5][0] = -4. * v;
-    s[5][1] = 4. * (1. - u - 2. * v - w);
-    s[5][2] = -4. * v;
-    s[6][0] = -4. * w;
-    s[6][1] = -4. * w;
-    s[6][2] = 4. * (1. - u - v - 2. * w);
-    s[7][0] = 4. * v;
-    s[7][1] = 4. * u;
-    s[7][2] = 0.;
-    s[8][0] = 0.;
-    s[8][1] = 4. * w;
-    s[8][2] = 4. * v;
-    s[9][0] = 4. * w;
-    s[9][1] = 0.;
-    s[9][2] = 4. * u;
-    break;
-  default :
-    printf("Order %d tetrahedron function space not implemented ", order); print();
-  }
 }
 double DI_Tetra::quality() const {
   return qualityTet(x(0), y(0), z(0), x(1), y(1), z(1), x(2), y(2), z(2), x(3), y(3), z(3));
 }
 
+
 // Hexahedron methods -----------------------------------------------------------------------------
+const polynomialBasis* DI_Hexa::getFunctionSpace(int o) const{
+  int order = (o == -1) ? getPolynomialOrder() : o;
+  switch (order) {
+    case 0: return polynomialBases::find(MSH_HEX_1);
+    case 1: return polynomialBases::find(MSH_HEX_8);
+    case 2: return polynomialBases::find(MSH_HEX_27);
+    case 3: return polynomialBases::find(MSH_HEX_64);
+    case 4: return polynomialBases::find(MSH_HEX_125);
+    case 5: return polynomialBases::find(MSH_HEX_216);
+    case 6: return polynomialBases::find(MSH_HEX_343);
+    case 7: return polynomialBases::find(MSH_HEX_512);
+    case 8: return polynomialBases::find(MSH_HEX_729);
+    case 9: return polynomialBases::find(MSH_HEX_1000);
+    default: Msg::Error("Order %d hex function space not implemented", order);
+    }
+}
 void DI_Hexa::computeIntegral() {
     integral_ = TetraVol(pt(0), pt(1), pt(3), pt(4)) + TetraVol(pt(1), pt(4), pt(5), pt(7))
               + TetraVol(pt(1), pt(3), pt(4), pt(7)) + TetraVol(pt(2), pt(5), pt(6), pt(7))
               + TetraVol(pt(1), pt(2), pt(3), pt(7)) + TetraVol(pt(1), pt(5), pt(2), pt(7));
-}
-void DI_Hexa::getShapeFunctions (double u, double v, double w, double s[], int ord) const {
-  int order = (ord == -1) ? getPolynomialOrder() : ord;
-  switch (order) {
-  case 1 :
-    s[0] = (1. - u) * (1. - v) * (1. - w) / 8.;
-    s[1] = (1. + u) * (1. - v) * (1. - w) / 8.;
-    s[2] = (1. + u) * (1. + v) * (1. - w) / 8.;
-    s[3] = (1. - u) * (1. + v) * (1. - w) / 8.;
-    s[4] = (1. - u) * (1. - v) * (1. + w) / 8.;
-    s[5] = (1. + u) * (1. - v) * (1. + w) / 8.;
-    s[6] = (1. + u) * (1. + v) * (1. + w) / 8.;
-    s[7] = (1. - u) * (1. + v) * (1. + w) / 8.;
-    break;
-  case 2 :
-    s[0] = -u * v * w * (1. - u) * (1. - v) * (1. - w) / 8.;
-    s[1] =  u * v * w * (1. + u) * (1. - v) * (1. - w) / 8.;
-    s[2] = -u * v * w * (1. + u) * (1. + v) * (1. - w) / 8.;
-    s[3] =  u * v * w * (1. - u) * (1. + v) * (1. - w) / 8.;
-    s[4] =  u * v * w * (1. - u) * (1. - v) * (1. + w) / 8.;
-    s[5] = -u * v * w * (1. + u) * (1. - v) * (1. + w) / 8.;
-    s[6] =  u * v * w * (1. + u) * (1. + v) * (1. + w) / 8.;
-    s[7] = -u * v * w * (1. - u) * (1. + v) * (1. + w) / 8.;
-    s[8] =  v * w * (1. - u) * (1. + u) * (1. - v) * (1. - w) / 4.;
-    s[9] = -u * w * (1. - v) * (1. + v) * (1. + u) * (1. - w) / 4.;
-    s[10] = -v * w * (1. - u) * (1. + u) * (1. + v) * (1. - w) / 4.;
-    s[11] =  u * w * (1. - v) * (1. + v) * (1. - u) * (1. - w) / 4.;
-    s[12] =  u * v * (1. - w) * (1. + w) * (1. - u) * (1. - v) / 4.;
-    s[13] = -u * v * (1. - w) * (1. + w) * (1. + u) * (1. - v) / 4.;
-    s[14] =  u * v * (1. - w) * (1. + w) * (1. + u) * (1. + v) / 4.;
-    s[15] = -u * v * (1. - w) * (1. + w) * (1. - u) * (1. + v) / 4.;
-    s[16] = -v * w * (1. - u) * (1. + u) * (1. - v) * (1. + w) / 4.;
-    s[17] =  u * w * (1. - v) * (1. + v) * (1. + u) * (1. + w) / 4.;
-    s[18] =  v * w * (1. - u) * (1. + u) * (1. + v) * (1. + w) / 4.;
-    s[19] = -u * w * (1. - v) * (1. + v) * (1. - u) * (1. + w) / 4.;
-    s[20] = -w * (1. - w) * (1. + u) * (1. - u) * (1. + v) * (1. - v) / 2.;
-    s[21] = -v * (1. - v) * (1. + u) * (1. - u) * (1. + w) * (1. - w) / 2.;
-    s[22] =  u * (1. + u) * (1. + v) * (1. - v) * (1. + w) * (1. - w) / 2.;
-    s[23] =  v * (1. + v) * (1. + u) * (1. - u) * (1. + w) * (1. - w) / 2.;
-    s[24] = -u * (1. - u) * (1. + v) * (1. - v) * (1. + w) * (1. - w) / 2.;
-    s[25] =  w * (1. + w) * (1. + u) * (1. - u) * (1. + v) * (1. - v) / 2.;
-    s[26] =  (1. + u) * (1. - u) * (1. + v) * (1. - v) * (1. + w) * (1. - w);
-    break;
-  default :
-    printf("Order %d hexahedron function space not implemented ", order); print();
-  }
-}
-void DI_Hexa::getGradShapeFunctions (const double u, const double v, const double w, double s[][3], int ord) const {
-  int order = (ord == -1) ? getPolynomialOrder() : ord;
-  switch (order) {
-  case 1 :
-    s[0][0] = -0.125 * (1. - v) * (1. - w);
-    s[0][1] = -0.125 * (1. - u) * (1. - w);
-    s[0][2] = -0.125 * (1. - u) * (1. - v);
-    s[1][0] =  0.125 * (1. - v) * (1. - w);
-    s[1][1] = -0.125 * (1. + u) * (1. - w);
-    s[1][2] = -0.125 * (1. + u) * (1. - v);
-    s[2][0] =  0.125 * (1. + v) * (1. - w);
-    s[2][1] =  0.125 * (1. + u) * (1. - w);
-    s[2][2] = -0.125 * (1. + u) * (1. + v);
-    s[3][0] = -0.125 * (1. + v) * (1. - w);
-    s[3][1] =  0.125 * (1. - u) * (1. - w);
-    s[3][2] = -0.125 * (1. - u) * (1. + v);
-    s[4][0] = -0.125 * (1. - v) * (1. + w);
-    s[4][1] = -0.125 * (1. - u) * (1. + w);
-    s[4][2] =  0.125 * (1. - u) * (1. - v);
-    s[5][0] =  0.125 * (1. - v) * (1. + w);
-    s[5][1] = -0.125 * (1. + u) * (1. + w);
-    s[5][2] =  0.125 * (1. + u) * (1. - v);
-    s[6][0] =  0.125 * (1. + v) * (1. + w);
-    s[6][1] =  0.125 * (1. + u) * (1. + w);
-    s[6][2] =  0.125 * (1. + u) * (1. + v);
-    s[7][0] = -0.125 * (1. + v) * (1. + w);
-    s[7][1] =  0.125 * (1. - u) * (1. + w);
-    s[7][2] =  0.125 * (1. - u) * (1. + v);
-    break;
-  default :
-    printf("Order %d hexahedron function space not implemented ", order); print();
-  }
 }
 
 // ----------------------------------------------------------------------------

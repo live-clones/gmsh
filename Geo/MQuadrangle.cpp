@@ -49,7 +49,7 @@ const polynomialBasis* MQuadrangle::getFunctionSpace(int o) const
     case 8: return polynomialBases::find(MSH_QUA_81);
     case 9: return polynomialBases::find(MSH_QUA_100);
     case 10: return polynomialBases::find(MSH_QUA_121);
-    default: Msg::Error("Order %d triangle function space not implemented", order);
+    default: Msg::Error("Order %d quadrangle function space not implemented", order);
   }
   return 0;
 }
@@ -85,7 +85,7 @@ const JacobianBasis* MQuadrangle::getJacobianFuncSpace(int o) const
     case 8: return JacobianBasis::find(MSH_QUA_81);
     case 9: return JacobianBasis::find(MSH_QUA_100);
     case 10: return JacobianBasis::find(MSH_QUA_121);
-    default: Msg::Error("Order %d triangle function space not implemented", order);
+    default: Msg::Error("Order %d quadrangle function space not implemented", order);
   }
   return 0;
 }
