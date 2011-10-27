@@ -571,7 +571,9 @@ void GMSH_AnalyseCurvedMeshPlugin::checkValidity(int toDo)
     Msg::Info("(To revert visibility : Tools > Visibility > Interactive > Show All)");
     hideValid_ShowInvalid(invalids);
     CTX::instance()->mesh.changed = (ENT_ALL);
+#if defined(HAVE_FLTK)
     FlGui::instance()->check();
+#endif
 #if defined(HAVE_OPENGL)
     drawContext::global()->draw();
 #endif
