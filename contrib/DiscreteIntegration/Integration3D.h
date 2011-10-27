@@ -7,7 +7,7 @@
 #include <map>
 #include <cmath>
 #include "gmshLevelset.h"
-#include "PolynomialBasis.h"
+#include "polynomialBasis.h"
 #include "GmshDefines.h"
 
 // Element type
