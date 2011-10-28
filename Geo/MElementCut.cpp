@@ -566,10 +566,19 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
 
   MElement *copy = e->copy(vertexMap, newParents, newDomains);
 
-  double lsMean = 0.;
-  for(int k = 0; k < e->getNumVertices(); k++)
-    lsMean += verticesLs(0, e->getVertex(k)->getIndex());
-  int lsTag = (lsMean < 0) ? 1 : -1;
+  //split acording to center of gravity
+  // double lsMean = 0.;
+  // for(int k = 0; k < e->getNumVertices(); k++)
+  //   lsMean += verticesLs(0, e->getVertex(k)->getIndex());
+  // int lsTag = (lsMean < 0) ? 1 : -1;
+
+  //EMI : better for embedded dirichlet with smoothed properties
+  //split according to values of vertices (keep +)
+  int lsTag = 1; //negative ls
+  for(int k = 0; k < e->getNumVertices(); k++){
+   double val = verticesLs(0, e->getVertex(k)->getIndex());
+   if (val > 0.0) { lsTag = -1; break; }
+  }
 
   switch (eType) {
   case MSH_TET_4 :
