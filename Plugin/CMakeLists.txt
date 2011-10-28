@@ -28,6 +28,7 @@ set(SRC
   FieldFromAmplitudePhase.cpp
   Bubbles.cpp NearToFarField.cpp
   DiscretizationError.cpp
+  Scal2Vec.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

@@ -53,6 +53,7 @@
 #include "Bubbles.h"
 #include "NearToFarField.h"
 #include "DiscretizationError.h"
+#include "Scal2Vec.h"
 
 // for testing purposes only :-)
 #undef HAVE_DLOPEN
@@ -234,6 +235,8 @@ void PluginManager::registerDefaultPlugins()
                       ("Bubbles", GMSH_RegisterBubblesPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("DiscretizationError", GMSH_RegisterDiscretizationErrorPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("Scal2Vec", GMSH_RegisterScal2VecPlugin()));
 
 #if defined(HAVE_TETGEN)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
