@@ -14,7 +14,8 @@ StringXNumber MathEvalOptions_Number[] = {
   {GMSH_FULLRC, "View", NULL, -1.},
   {GMSH_FULLRC, "OtherTimeStep", NULL, -1.},
   {GMSH_FULLRC, "OtherView", NULL, -1.},
-  {GMSH_FULLRC, "ForceInterpolation", NULL, 0.}
+  {GMSH_FULLRC, "ForceInterpolation", NULL, 0.},
+  {GMSH_FULLRC, "PhysicalRegion", NULL, -1.}
 };
 
 StringXString MathEvalOptions_String[] = {
@@ -62,6 +63,9 @@ std::string GMSH_MathEvalPlugin::getHelp() const
     "If `TimeStep' < 0, the plugin extracts data from all "
     "the time steps in the view.\n\n"
     "If `View' < 0, the plugin is run on the current view.\n\n"
+    "Plugin(MathEval) creates one new view."
+    "If `PhysicalRegion' < 0, the plugin is run"
+    "on all physical regions.\n\n"
     "Plugin(MathEval) creates one new view.";
 }
 
@@ -92,6 +96,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   int otherTimeStep = (int)MathEvalOptions_Number[2].def;
   int iOtherView = (int)MathEvalOptions_Number[3].def;
   int forceInterpolation = (int)MathEvalOptions_Number[4].def;
+  int region = (int)MathEvalOptions_Number[5].def;
   std::vector<std::string> expr(9);
   for(int i = 0; i < 9; i++) expr[i] = MathEvalOptions_String[i].def;
   
@@ -180,6 +185,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   int timeBeg = (timeStep < 0) ? firstNonEmptyStep : timeStep;
   int timeEnd = (timeStep < 0) ? -timeStep : timeStep + 1;
   for(int ent = 0; ent < data1->getNumEntities(timeBeg); ent++){
+    if (region>0 && ent!=region) continue;
     for(int ele = 0; ele < data1->getNumElements(timeBeg, ent); ele++){
       if(data1->skipElement(timeBeg, ent, ele)) continue;
       int numNodes = data1->getNumNodes(timeBeg, ent, ele);
