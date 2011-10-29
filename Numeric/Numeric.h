@@ -18,6 +18,13 @@
 double myatan2(double a, double b);
 double myasin(double a);
 double myacos(double a);
+
+inline double crossProd(double a[3], double b[3], int i)
+{
+  int i1 = (i+1) % 3;
+  int i2 = (i+2) % 3;
+  return a[i1]*b[i2] - a[i2]*b[i1];
+}
 inline void prodve(double a[3], double b[3], double c[3])
 {
   c[2] = a[0] * b[1] - a[1] * b[0];
@@ -28,6 +35,7 @@ inline void prosca(double a[3], double b[3], double *c)
 {
   *c = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
+
 void matvec(double mat[3][3], double vec[3], double res[3]);
 void matmat(double mat1[3][3], double mat2[3][3], double res[3][3]);
 inline double norm3(double a[3])
