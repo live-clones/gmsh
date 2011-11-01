@@ -322,15 +322,19 @@ void onelab_cb(Fl_Widget *w, void *data)
     action = "initial check";
   }
 
+  std::string ext = FlGui::instance()->onelab->getModelExtension();
+
   if(action == "choose model"){
-    if(fileChooser(FILE_CHOOSER_SINGLE, "Choose", "*.pro"))
+    std::string pattern = "*";
+    pattern += ext;
+    if(fileChooser(FILE_CHOOSER_SINGLE, "Choose", pattern.c_str()))
       FlGui::instance()->onelab->setModelName(fileChooserGetName(1));
     action = "check";
   }
 
   if(FlGui::instance()->onelab->getModelName().empty()){
     std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
-    FlGui::instance()->onelab->setModelName(split[0] + split[1] + ".pro");
+    FlGui::instance()->onelab->setModelName(split[0] + split[1] + ext);
   }
 
   FlGui::instance()->onelab->deactivate();
@@ -629,6 +633,10 @@ void onelabWindow::addSolver(const std::string &name, const std::string &command
     onelab::localNetworkClient *c = new onelab::localNetworkClient(name, commandLine);
     c->setIndex(index);
     if(commandLine.empty()) onelab_choose_executable_cb(0, (void *)c);
+    if(name == "GetDP")
+      setModelExtension(".pro");
+    else
+      setModelExtension(".py");
   }
   FlGui::instance()->onelab->rebuildSolverList();
 }
