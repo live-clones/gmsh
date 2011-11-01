@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
   new GModel();
   GmshInitialize(argc, argv);
 
-  if(!Msg::GetClient()) CTX::instance()->terminal = 1;
+  if(!Msg::GetGmshClient()) CTX::instance()->terminal = 1;
   CTX::instance()->noPopup = 1;
 
   GmshBatch();
