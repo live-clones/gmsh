@@ -496,6 +496,7 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _butt[1]->callback(onelab_cb, (void*)"check");
   _gear = new Fl_Menu_Button
     (_butt[1]->x() - WB - BB/2, _butt[1]->y(), BB/2, BH, "@-1gmsh_gear");
+  _gear->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   _gear->add("Reset database", 0, onelab_cb, (void*)"reset");
   _gear->add("Mesh automatically", 0, 0, 0, FL_MENU_TOGGLE);
   ((Fl_Menu_Item*)_gear->menu())[1].set();
