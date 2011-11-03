@@ -304,6 +304,7 @@ double mesh_functional_distorsion_p2_exact(MTriangle *t)
 
 double mesh_functional_distorsion_pN(MElement *t)
 {
+  //  printf("element disto -->\n");
   const bezierBasis *jac = t->getJacobianFuncSpace()->bezier;
   fullVector<double>Ji(jac->points.size1());
   //  printf("%d points for bez \n",jac->points.size1());
@@ -318,18 +319,24 @@ double mesh_functional_distorsion_pN(MElement *t)
     }
 
     Ji(i) = mesh_functional_distorsion(t,u,v);   
-    //    printf("J(%g,%g) = %12.5E\n",u,v,Ji(i));
   }
  
   fullVector<double> Bi( jac->matrixLag2Bez.size1() );
-  jac->matrixLag2Bez.mult(Ji,Bi);
-  /* 
-      jac->matrixLag2Bez.print("Lag2Bez");
+  jac->matrixLag2Bez.mult(Ji,Bi);   
 
-      jac->points.print("Points");
-      t->getFunctionSpace(t->getPolynomialOrder())->points.print("lagrangianNodes");
-      t->getFunctionSpace(t->getPolynomialOrder())->monomials.print("Monomials");
-      t->getFunctionSpace(t->getPolynomialOrder())->coefficients.print("Coefficients");
+  //  for (int i=0;i<jac->points.size1();i++){
+  //    printf("J(%d) = %12.5E\n",i,Bi(i));
+  //  }
+
+  /*   
+  if (t->getType() == TYPE_QUA){
+    jac->matrixLag2Bez.print("lag2bez");
+    
+    jac->points.print("lagrangianNodesBezierQ");
+    t->getFunctionSpace(t->getPolynomialOrder())->points.print("lagrangianNodesQ");
+    t->getFunctionSpace(t->getPolynomialOrder())->monomials.print("MonomialsQ");
+    t->getFunctionSpace(t->getPolynomialOrder())->coefficients.print("shapeFunctionCoeffQ");
+  }
   */
 
   return *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
@@ -413,7 +420,15 @@ double qmDistorsionOfMapping(MTetrahedron *t)
  
   fullVector<double> Bi( jac->matrixLag2Bez.size1() );
   jac->matrixLag2Bez.mult(Ji,Bi);
- 
+  /* 
+     jac->matrixLag2Bez.print("Lag2Bez");
+
+      jac->points.print("Points");
+      t->getFunctionSpace(t->getPolynomialOrder())->points.print("lagrangianNodes");
+      t->getFunctionSpace(t->getPolynomialOrder())->monomials.print("Monomials");
+      t->getFunctionSpace(t->getPolynomialOrder())->coefficients.print("Coefficients");
+  */
+
   return *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
 }
 

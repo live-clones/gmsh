@@ -1881,8 +1881,9 @@ void recombineIntoQuads(GFace *gf,
   if(gf->geomType() == GEntity::DiscreteSurface && !gf->getCompound())
     haveParam = false;
 
-  if(haveParam && topologicalOpti)
-    removeFourTrianglesNodes(gf, false);
+  // PLEASE DO NOT UNCOMMENT !!!! THIS IS SHIT
+  //  if(haveParam && topologicalOpti)
+  //    removeFourTrianglesNodes(gf, false);
 
   if (saveAll) gf->model()->writeMSH("before.msh");
   int success = _recombineIntoQuads(gf, 0);

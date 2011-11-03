@@ -99,10 +99,11 @@ void buildMeshMetric(GFace *gf, double *uv, SMetric3 &m, double metric[3])
 BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf, double _treshold) {
 
   FieldManager *fields = gf->model()->getFields();
-  if(fields->background_field <= 0){
+  if(fields->boundaryLayer_field <= 0){
+    printf("no bl\n");
     return 0;
   }
-  Field *bl_field = fields->get(fields->background_field);
+  Field *bl_field = fields->get(fields->boundaryLayer_field);
   BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField*> (bl_field);
   
   if (!blf)return 0;
@@ -115,6 +116,8 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf, double _treshold) {
 
   // build vertex to vertex connexions 
   std::list<GEdge*> edges = gf->edges();
+  std::list<GEdge*> embedded_edges = gf->embeddedEdges();
+  edges.insert(edges.begin(), embedded_edges.begin(),embedded_edges.end());
   std::list<GEdge*>::iterator ite = edges.begin();
   std::set<MVertex*> _vertices;
   while(ite != edges.end()){
@@ -134,7 +137,6 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf, double _treshold) {
   // assume that the initial mesh has been created i.e. that there exist
   // triangles inside the domain. Triangles are used to define
   // exterior normals 
-  std::multimap<MEdge,SVector3,Less_Edge> _normals;
   for (int i=0;i<gf->triangles.size();i++){
     SPoint2 p0,p1,p2;
     MVertex *v0 = gf->triangles[i]->getVertex(0);
@@ -145,15 +147,15 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf, double _treshold) {
 
     MEdge me01(v0,v1);
     SVector3 v01 = interiorNormal (p0,p1,p2);        
-    _normals.insert(std::make_pair(me01,v01));
+    _columns->_normals.insert(std::make_pair(me01,v01));
 
     MEdge me02(v0,v2);
     SVector3 v02 = interiorNormal (p0,p2,p1);        
-    _normals.insert(std::make_pair(me02,v02));
+    _columns->_normals.insert(std::make_pair(me02,v02));
 
     MEdge me21(v2,v1);
     SVector3 v21 = interiorNormal (p2,p1,p0);        
-    _normals.insert(std::make_pair(me21,v21));
+    _columns->_normals.insert(std::make_pair(me21,v21));
   }  
 
   // for all boundry points
@@ -164,74 +166,127 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf, double _treshold) {
     for ( std::multimap<MVertex*,MVertex*> :: iterator itm  = _columns->_non_manifold_edges.lower_bound(*it);
 	  itm != _columns->_non_manifold_edges.upper_bound(*it); ++itm)
       _connections.push_back (itm->second);
-    // STANDARD CASE, one vertex connected to two neighboring vertices
     //    printf("point %d %d edegs connected\n",(*it)->getNum(),_connections.size());
+    // Trailing edge : 3 edges incident to a vertex
+    if (_connections.size() == 3){
+      MEdge e1 (*it,_connections[0]);
+      MEdge e2 (*it,_connections[1]);
+      MEdge e3 (*it,_connections[2]);
+      std::vector<SVector3> N1,N2,N3;
+      for ( std::multimap<MEdge,SVector3,Less_Edge> :: iterator itm  = _columns->_normals.lower_bound(e1);
+	    itm != _columns->_normals.upper_bound(e1); ++itm) N1.push_back(itm->second);
+      for ( std::multimap<MEdge,SVector3,Less_Edge> :: iterator itm  = _columns->_normals.lower_bound(e2);
+	    itm != _columns->_normals.upper_bound(e2); ++itm) N2.push_back(itm->second);
+      for ( std::multimap<MEdge,SVector3,Less_Edge> :: iterator itm  = _columns->_normals.lower_bound(e3);
+	    itm != _columns->_normals.upper_bound(e3); ++itm) N3.push_back(itm->second);
+
+      SVector3 x1,x2;
+      if (N1.size() == 2){
+      }
+      else if (N2.size() == 2){
+	std::vector<SVector3> temp = N1;
+	N1.clear();
+	N1 = N2;
+	N2.clear();
+	N2 = temp;
+      }
+      else if (N3.size() == 2){
+	std::vector<SVector3> temp = N1;
+	N1.clear();
+	N1 = N3;
+	N3.clear();
+	N3 = temp;
+      }
+      else {
+	Msg::Fatal("IMPOSSIBLE BL CONFIGURATION");
+      }
+      if (dot(N1[0],N2[0]) > dot(N1[0],N3[0])){
+	x1 = N1[0]*1.01+N2[0];
+	x2 = N1[1]*1.01+N3[0];
+      }
+      else {
+	x1 = N1[1]*1.01+N2[0];
+	x2 = N1[0]*1.01+N3[0];
+      }
+      x1.normalize();
+      _dirs.push_back(x1);
+      x2.normalize();
+      _dirs.push_back(x2);
+      printf("%g %g vs %g %g\n",N1[0].x(),N1[0].y(),N1[1].x(),N1[1].y());
+      printf("%g %g vs %g %g\n",N2[0].x(),N2[0].y(),N3[0].x(),N3[0].y());
+      printf("%g %g vs %g %g\n",x1.x(),x1.y(),x2.x(),x2.y());
+    }
+    // STANDARD CASE, one vertex connected to two neighboring vertices
     if (_connections.size() == 2){
       MEdge e1 (*it,_connections[0]);
       MEdge e2 (*it,_connections[1]);
       LL = 0.5 * (e1.length() + e2.length()); 
       std::vector<SVector3> N1,N2;
-      for ( std::multimap<MEdge,SVector3,Less_Edge> :: iterator itm  = _normals.lower_bound(e1);
-	    itm != _normals.upper_bound(e1); ++itm) N1.push_back(itm->second);
-      for ( std::multimap<MEdge,SVector3,Less_Edge> :: iterator itm  = _normals.lower_bound(e2);
-	    itm != _normals.upper_bound(e2); ++itm) N2.push_back(itm->second);
-      // STANDARD CASE : ONLY ONE SIDE FOR THE BL
+      for ( std::multimap<MEdge,SVector3,Less_Edge> :: iterator itm  = _columns->_normals.lower_bound(e1);
+	    itm != _columns->_normals.upper_bound(e1); ++itm) N1.push_back(itm->second);
+      for ( std::multimap<MEdge,SVector3,Less_Edge> :: iterator itm  = _columns->_normals.lower_bound(e2);
+	    itm != _columns->_normals.upper_bound(e2); ++itm) N2.push_back(itm->second);
       double LL;
-      if (N1.size() == 1 && N2.size() == 1){
-	// IF THE ANGLE IS GREATER THAN THRESHOLD, ADD DIRECTIONS !!
-	double angle = computeAngle (gf,e1,e2,N1[0],N2[0]);
-	
-	if (angle < _treshold /*&& angle > - _treshold*/){
-	  SVector3 x = N1[0]*1.01+N2[0];
-	  x.normalize();
-	  _dirs.push_back(x);
-	}
-	else if (angle >= _treshold){	  
-	  int fanSize = (int)(angle / _treshold);
-	  printf("ONE FAN HAS BEEN CREATED : %d %d %d %d ANGLE = %g | %g %g %g %g\n",e1.getVertex(0)->getNum(),
-		 e1.getVertex(1)->getNum(),e2.getVertex(0)->getNum(),e2.getVertex(1)->getNum(),
-		 angle/M_PI*180,N1[0].x(),N1[0].y(),N2[0].x(),N2[0].y());
-	  // if the angle is greater than PI, than reverse the sense
-	  double alpha1 = atan2(N1[0].y(),N1[0].x());
-	  double alpha2 = atan2(N2[0].y(),N2[0].x());
-	  double AMAX = std::max(alpha1,alpha2);
-	  double AMIN = std::min(alpha1,alpha2);
-	  MEdge ee[2];
-	  if (alpha1 > alpha2){
-	    //	    _dirs.push_back(N2[0]);
-	    //	    _dirs.push_back(N1[0]);
-	    ee[0] = e2;ee[1] = e1;
-	    //	    printf("reversing the first and the last normal %g %g\n",alpha2,alpha1);
-	  }
-	  else {
-	    //	    _dirs.push_back(N1[0]);
-	    //	    _dirs.push_back(N2[0]);
-	    ee[0] = e1;ee[1] = e2;
-	    //	    printf("the first and the last normal are ok %g %g\n",alpha1,alpha2);
-	  }
-	  if ( AMAX - AMIN >= M_PI){
-	    double temp = AMAX;
-	    AMAX = AMIN + 2*M_PI;
-	    AMIN = temp;
-	    //	    printf("wrong part of the quadrant taken %g %g\n",AMIN,AMAX);
-	    //	    fanSize = 0;
-	    MEdge eee0 = ee[0];
-	    ee[0] = ee[1];ee[1] = eee0;
-	  }
-	  _columns->addFan (*it,ee[0],ee[1],true);
-
-	  for (int i=-1; i<=fanSize; i++){
-	    double t = (double)(i+1)/ (fanSize+1);
-	    double alpha = t * AMAX + (1.-t)* AMIN;
-	    //	    printf("%d %g %g %g %g\n",i,alpha,alpha1,alpha2,alpha2-alpha1);	    
-	    SVector3 x (cos(alpha),sin(alpha),0);
+      if (N1.size() == N2.size()){
+	//	if (N1.size() > 1)printf("%d sides\n",N1.size());
+	for (int SIDE = 0; SIDE < N1.size() ; SIDE++){	
+	  // IF THE ANGLE IS GREATER THAN THRESHOLD, ADD DIRECTIONS !!
+	  double angle = computeAngle (gf,e1,e2,N1[SIDE],N2[SIDE]);	
+	  //	  if (N1.size() > 1)printf("angle = %g\n",angle);
+	  if (angle < _treshold /*&& angle > - _treshold*/){
+	    SVector3 x = N1[SIDE]*1.01+N2[SIDE];
 	    x.normalize();
 	    _dirs.push_back(x);
-	  }	  
+	  }
+	  else if (angle >= _treshold){	  
+	    int fanSize = angle /  _treshold;
+	    printf("ONE FAN HAS BEEN CREATED : %d %d %d %d ANGLE = %g | %g %g %g %g\n",e1.getVertex(0)->getNum(),
+		   e1.getVertex(1)->getNum(),e2.getVertex(0)->getNum(),e2.getVertex(1)->getNum(),
+		   angle/M_PI*180,N1[SIDE].x(),N1[SIDE].y(),N2[SIDE].x(),N2[SIDE].y());
+	    // if the angle is greater than PI, than reverse the sense
+	    double alpha1 = atan2(N1[SIDE].y(),N1[SIDE].x());
+	    double alpha2 = atan2(N2[SIDE].y(),N2[SIDE].x());
+	    double AMAX = std::max(alpha1,alpha2);
+	    double AMIN = std::min(alpha1,alpha2);
+	    MEdge ee[2];
+	    if (alpha1 > alpha2){
+	      //	    _dirs.push_back(N2[0]);
+	      //	    _dirs.push_back(N1[0]);
+	      ee[0] = e2;ee[1] = e1;
+	      //	    printf("reversing the first and the last normal %g %g\n",alpha2,alpha1);
+	    }
+	    else {
+	      //	    _dirs.push_back(N1[0]);
+	      //	    _dirs.push_back(N2[0]);
+	      ee[0] = e1;ee[1] = e2;
+	      //	    printf("the first and the last normal are ok %g %g\n",alpha1,alpha2);
+	    }
+	    if ( AMAX - AMIN >= M_PI){
+	      double temp = AMAX;
+	      AMAX = AMIN + 2*M_PI;
+	      AMIN = temp;
+	      //	    printf("wrong part of the quadrant taken %g %g\n",AMIN,AMAX);
+	      //	    fanSize = 0;
+	      MEdge eee0 = ee[0];
+	      ee[0] = ee[1];ee[1] = eee0;
+	    }
+	    _columns->addFan (*it,ee[0],ee[1],true);
+	    
+	    for (int i=-1; i<=fanSize; i++){
+	      double t = (double)(i+1)/ (fanSize+1);
+	      double alpha = t * AMAX + (1.-t)* AMIN;
+	      //	    printf("%d %g %g %g %g\n",i,alpha,alpha1,alpha2,alpha2-alpha1);	    
+	      SVector3 x (cos(alpha),sin(alpha),0);
+	      x.normalize();
+	      _dirs.push_back(x);
+	    }	  
+	  }
 	}
       }
     }
     
+    //    if (_dirs.size() > 1)printf("%d directions\n",_dirs.size());
+
     // now create the BL points 
     for (int DIR=0;DIR<_dirs.size();DIR++){
       SPoint2 p;
@@ -308,7 +363,7 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf, double _treshold) {
 	if (_column.size() > nbCol)break; // FIXME
 	p = pnew;
       }
-      _columns->addColumn(*it, _column, _metrics);
+      _columns->addColumn(n,*it, _column, _metrics);
     }
   }  
   // HERE WE SHOULD FILTER THE POINTS IN ORDER NOT TO HAVE POINTS THAT ARE TOO CLOSE 

@@ -125,7 +125,7 @@ void GetOptions(int argc, char *argv[])
 {
   // print messages on terminal
   int terminal = CTX::instance()->terminal;
-  CTX::instance()->terminal = 1;
+  CTX::instance()->terminal = 0;
 
 #if defined(HAVE_PARSER)
   // Parse session and option files

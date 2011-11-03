@@ -456,6 +456,8 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers  (GFace *gf){
   std::vector<MQuadrangle*> blQuads;
   std::vector<MTriangle*> blTris;
   std::list<GEdge*> edges = gf->edges();
+  std::list<GEdge*> embedded_edges = gf->embeddedEdges();
+  edges.insert(edges.begin(), embedded_edges.begin(),embedded_edges.end());
   std::list<GEdge*>::iterator ite = edges.begin();
   FILE *ff2 = fopen ("tato.pos","w");
   fprintf(ff2,"View \" \"{\n");
@@ -466,11 +468,11 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers  (GFace *gf){
       MVertex *v2 = (*ite)->lines[i]->getVertex(1);
       MEdge dv(v1,v2);
       addOrRemove(v1,v2,bedges);
-      int nbCol1 = _columns->getNbColumns(v1);
-      int nbCol2 = _columns->getNbColumns(v2);
-      if (nbCol1 > 0 && nbCol2 > 0){ 
-	const BoundaryLayerData & c1 = _columns->getColumn(v1,MEdge(v1,v2));
-	const BoundaryLayerData & c2 = _columns->getColumn(v2,MEdge(v1,v2));
+
+      for (int SIDE = 0 ; SIDE < _columns->_normals.count(dv) ; SIDE ++){
+	edgeColumn ec =  _columns->getColumns(v1,v2,SIDE);
+	const BoundaryLayerData & c1 = ec._c1;
+	const BoundaryLayerData & c2 = ec._c2;
 	int N = std::min(c1._column.size(),c2._column.size());
 	for (int l=0;l < N ;++l){
 	  MVertex *v11,*v12,*v21,*v22;
@@ -506,7 +508,7 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers  (GFace *gf){
 		  v22->x(),v22->y(),v22->z(),
 		  v21->x(),v21->y(),v21->z());
 	}
-	int M = std::max(c1._column.size(),c2._column.size());
+	//	int M = std::max(c1._column.size(),c2._column.size());
 
 	/*
 	if (M>N) M = N+1;

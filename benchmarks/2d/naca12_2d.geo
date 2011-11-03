@@ -1,6 +1,6 @@
 lc = .033 ;
 lc2 = 2.2 ;
-lc3 = .03 ;
+lc3 = .033 ;
 Point(1) =  {1.000000e+00,0.000000e+00,0.000000e+00,lc3}; 
 Point(2) =  {9.997533e-01,0.000000e+00,-3.498543e-05,lc}; 
 Point(3) =  {9.990134e-01,0.000000e+00,-1.398841e-04,lc}; 
@@ -233,8 +233,22 @@ Field[2].NodesList = {1};
 Field[2].EdgesList = {1,2,3,4};
 Field[2].hfar = 1.5;
 Field[2].hwall_n = 0.0001;
-Field[2].hwall_t = 0.03;
+Field[2].hwall_t = 0.01;
 Field[2].ratio = 1.3;
-Field[2].thickness = .05;
+Field[2].thickness = .01;
 Background Field = 2;
 
+Field[1] = Box;
+Field[1].VIn = 0.01;
+Field[1].VOut = 1;
+Field[1].XMax = 0.6;
+Field[1].XMin = 0.4;
+Field[1].YMax = 0.1;
+Field[1].YMin = -0.1;
+Field[1].ZMax = 1;
+Field[1].ZMin = -1;
+
+Field[3] = MinAniso;
+Field[3].FieldsList = {1, 2};
+Background Field = 3;
+BoundaryLayer Field = 2;

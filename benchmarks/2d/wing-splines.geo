@@ -605,7 +605,7 @@ Circle(408) = {4355,4351,4354};
 Circle(409) = {4354,4351,4353};
 Circle(410) = {4353,4351,4352};
 */
-Recombine Surface {406} = 90;
+//Recombine Surface {406} = 90;
 Mesh.RecombinationAlgorithm=1;
 
 Field[2] = BoundaryLayer;
