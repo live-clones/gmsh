@@ -174,7 +174,7 @@ static int globalShortcut(int event)
   return FlGui::instance()->testGlobalShortcuts(event);
 }
 
-FlGui::FlGui(int argc, char **argv)
+FlGui::FlGui(int argc, char **argv) : _openedThroughMacFinder(false)
 {
   // set X display
   if(CTX::instance()->display.size())

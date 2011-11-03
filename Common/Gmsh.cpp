@@ -210,14 +210,16 @@ int GmshFLTK(int argc, char **argv)
   FlGui::instance()->check();
 
   // open project file and merge all other input files
-  OpenProject(GModel::current()->getFileName());
-  for(unsigned int i = 1; i < CTX::instance()->files.size(); i++){
-    if(CTX::instance()->files[i] == "-new"){
-      GModel::current()->setVisibility(0);
-      new GModel();
+  if(!FlGui::instance()->getOpenedThroughMacFinder()){
+    OpenProject(GModel::current()->getFileName());
+    for(unsigned int i = 1; i < CTX::instance()->files.size(); i++){
+      if(CTX::instance()->files[i] == "-new"){
+        GModel::current()->setVisibility(0);
+        new GModel();
+      }
+      else
+        MergeFile(CTX::instance()->files[i]);
     }
-    else
-      MergeFile(CTX::instance()->files[i]);
   }
 
   if(CTX::instance()->post.combineTime){

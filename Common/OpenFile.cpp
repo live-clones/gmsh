@@ -504,14 +504,8 @@ void OpenProject(std::string fileName)
 void OpenProjectMacFinder(const char *fileName)
 {
 #if defined(HAVE_FLTK)
-  static int first = 1;
-  if(first || !FlGui::available()){
-    // just copy the filename: it will be opened when the GUI is ready
-    // in main()
-    GModel::current()->setFileName(fileName);
-    first = 0;
-  }
-  else{
+  if(FlGui::available()){
+    FlGui::instance()->setOpenedThroughMacFinder(true);
     OpenProject(fileName);
     drawContext::global()->draw();
   }
