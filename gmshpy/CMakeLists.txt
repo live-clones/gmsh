@@ -79,10 +79,13 @@ if(ENABLE_SWIG)
         swig_link_libraries(${module} ${PYTHON_LIBRARIES} shared)
         SET(GMSH_PYTHON_MODULES_INCLUDE_CODE 
             "${GMSH_PYTHON_MODULES_INCLUDE_CODE}from ${module} import *\n")
+        list(APPEND GMSHPY_DEPENDS "_${module}")
       endforeach(module)
+      add_custom_target("_gmshpy" DEPENDS ${GMSHPY_DEPENDS})
 
       configure_file(${CMAKE_CURRENT_SOURCE_DIR}/__init__.py.in 
                      ${CMAKE_CURRENT_BINARY_DIR}/__init__.py)
+
 
     endif(SWIG_MAJOR_VERSION EQUAL 1)
   endif(SWIG_FOUND)
