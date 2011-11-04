@@ -441,6 +441,15 @@ namespace onelab{
         s += (*it)->toChar() + "\n";
       return s;
     }
+    std::string toCharIfClient(const std::string &client="")
+    {
+      std::string s;
+      std::set<parameter*> ps;
+      _getAllParameters(ps);
+      for(std::set<parameter*>::iterator it = ps.begin(); it != ps.end(); it++)
+        if ((*it)->hasClient(client)) s += (*it)->toChar() + "\n";
+      return s;
+    }
   };
 
   // The onelab client: a class that communicates with the onelab
@@ -532,6 +541,8 @@ namespace onelab{
       return _parameterSpace.getChanged(client);
     }
     std::string toChar(){ return _parameterSpace.toChar(); }
+    std::string toCharIfClient(const std::string &client="")
+      { return _parameterSpace.toCharIfClient(client); }
   };
     
   class localClient : public client{
