@@ -245,7 +245,6 @@ class GmshClient : public GmshSocket {
     // slight delay to make sure that the socket is bound by the
     // server before we attempt to connect to it
     _Sleep(100);
-
     if(strstr(sockname, "/") || strstr(sockname, "\\") || !strstr(sockname, ":")){
 #if !defined(WIN32) || defined(__CYGWIN__)
       // UNIX socket (testing ":" is not enough with Windows paths)
@@ -277,6 +276,7 @@ class GmshClient : public GmshSocket {
       if(remotelen > 0)
         strncpy(remote, sockname, remotelen);
       remote[remotelen] = '\0';
+      printf("FHF Client conected on portno=%d remote=%s\n",portno,remote);
       struct hostent *server;
       if(!(server = gethostbyname(remote))){
         CloseSocket(_sock);
@@ -288,8 +288,9 @@ class GmshClient : public GmshSocket {
       memcpy((char *)&addr_in.sin_addr.s_addr, (char *)server->h_addr, server->h_length);
       addr_in.sin_port = htons(portno);
       for(int tries = 0; tries < 5; tries++) {
-        if(connect(_sock, (struct sockaddr *)&addr_in, sizeof(addr_in)) >= 0)
+        if(connect(_sock, (struct sockaddr *)&addr_in, sizeof(addr_in)) >= 0){
           return _sock;
+	}
         _Sleep(100);
       }
     }
@@ -320,6 +321,10 @@ class GmshServer : public GmshSocket{
   virtual int NonBlockingWait(int socket, double waitint, double timeout) = 0;
   int Start(const char *command, const char *sockname, double timeout)
   {
+    char cmd[1024], soc[1024];
+    strcpy(soc, sockname); // sockname is 'const'
+    strcpy(cmd, command);  // command is 'const'
+
     if(!sockname) throw "Invalid (null) socket name";
     _sockname = sockname;
     int tmpsock;
@@ -350,7 +355,7 @@ class GmshServer : public GmshSocket{
     else{
       // TCP/IP socket
       const char *port = strstr(_sockname, ":");
-      _portno = atoi(port + 1);
+      _portno = atoi(port + 1); // can be zero in case of random port assignation
       // create a socket
       tmpsock = socket(AF_INET, SOCK_STREAM, 0);
 #if !defined(WIN32) || defined(__CYGWIN__)
@@ -364,15 +369,29 @@ class GmshServer : public GmshSocket{
       memset((char *) &addr_in, 0, sizeof(addr_in));
       addr_in.sin_family = AF_INET;
       addr_in.sin_addr.s_addr = INADDR_ANY;
-      addr_in.sin_port = htons(_portno);
+      addr_in.sin_port = htons(_portno); // random assign if _portno=0
       if(bind(tmpsock, (struct sockaddr *)&addr_in, sizeof(addr_in)) < 0){
         CloseSocket(tmpsock);
         throw "Couldn't bind socket to name";
       }
+      // retrieve the number of the randomly assigned port
+      socklen_t addrlen = sizeof(addr_in);
+      int rc = getsockname(tmpsock,(struct sockaddr *)&addr_in, &addrlen);
+      _portno = ntohs(addr_in.sin_port);
+      printf("FHF server listening on portno=%d\n",_portno);
+      char tmp[10];
+      sprintf(tmp,"%d",_portno);
+      strcat(soc, tmp);
+      _sockname = soc;
     }
 
-    if(command && strlen(command)){
-      SystemCall(command); // start the solver
+    strcat(cmd, soc);
+#if !defined(WIN32)
+    strcat(cmd, " &");
+#endif
+
+    if(cmd && strlen(cmd)){
+      SystemCall(cmd); // start the solver
     }
     else{
       timeout = 0.; // no command launched: don't set a timeout
