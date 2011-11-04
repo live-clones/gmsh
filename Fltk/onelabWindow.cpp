@@ -93,16 +93,14 @@ bool onelab::localNetworkClient::run(const std::string &what)
     if(CTX::instance()->solver.socketName.size() && 
        CTX::instance()->solver.socketName[0] == ':')
       tmp << GetHostName(); // prepend hostname if only the port number is given
-    tmp << CTX::instance()->solver.socketName << getId();
+    //tmp << CTX::instance()->solver.socketName << getId();
+    tmp << CTX::instance()->solver.socketName;
     sockname = tmp.str();
   }
 
   std::string command = FixWindowsPath(_commandLine);
   if(command.size()){
-    command += " " + what +  " " + _socketSwitch + " " + sockname;
-#if !defined(WIN32)
-    command += " &";
-#endif
+    command += " " + what + " " + _socketSwitch + " ";
   }
   else{
     Msg::Info("Listening on socket '%s'", sockname.c_str());
