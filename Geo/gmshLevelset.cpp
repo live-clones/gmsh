@@ -497,7 +497,6 @@ gLevelsetPostView::gLevelsetPostView(int index, int tag) : gLevelsetPrimitive(ta
     _octree = 0;
   }
 }
-#endif
 
 double gLevelsetPostView::operator () (const double x, const double y, const double z) const  {
   if(!_octree) return 1.;
@@ -505,6 +504,7 @@ double gLevelsetPostView::operator () (const double x, const double y, const dou
   _octree->searchScalar(x, y, z, &val, 0);
   return val;
 }
+#endif
 
 gLevelsetGenCylinder::gLevelsetGenCylinder(const double *pt, const double *dir, const double &R,
                                            int tag) : gLevelsetQuadric(tag) {

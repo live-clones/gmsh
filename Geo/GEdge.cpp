@@ -10,6 +10,7 @@
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "GEdge.h"
+#include "GEdgeCompound.h"
 #include "GFace.h"
 #include "MLine.h"
 #include "GaussLegendre1D.h"
