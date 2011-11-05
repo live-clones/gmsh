@@ -378,8 +378,8 @@ class GmshServer : public GmshSocket{
         char tmp[10];
         sprintf(tmp, "%d", _portno);
         // FIXME: I don't understand this -- what should be the syntax
-        // to use a remote port? "hostname:" ? Then I don't get how
-        // _portno can be 0 above
+        // to use a random port? "hostname:"? Then I don't get how
+        // _portno can be 0 above. If it's "hostname:-1", then this is wrong.
         _sockname += tmp;
       }
     }
