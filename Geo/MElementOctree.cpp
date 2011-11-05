@@ -122,6 +122,21 @@ MElementOctree::~MElementOctree()
   Octree_Delete(_octree);
 }
 
+
+std::vector<MElement *> MElementOctree::findAll(double x, double y, double z, int dim)
+{
+  double P[3] = {x, y, z};
+  std::list<void*> v;
+  std::vector<MElement*> e;
+  Octree_SearchAll(P, _octree,&v);
+  for (std::list<void*>::iterator it = v.begin();
+       it != v.end(); ++it){
+    MElement *el = (MElement*) *it;
+    if (dim == -1 || el->getDim() == dim)e.push_back(el);
+  }
+  return e;
+}
+
 MElement *MElementOctree::find(double x, double y, double z, int dim, bool strict)
 {
   double P[3] = {x, y, z};

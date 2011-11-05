@@ -322,8 +322,19 @@ GRegion *getRegionFromBoundingFaces(GModel *model,
                                     std::set<GFace *> &faces_bound)
 {
   GModel::riter git = model->firstRegion();
+  //  for (std::set<GFace *>::iterator it = faces_bound.begin();
+  //       it != faces_bound.end(); ++it){
+  //    printf(" %d",(*it)->tag());
+  //  }
+  //  printf("\n");
   while (git != model->lastRegion()){
     std::list <GFace *> _faces = (*git)->faces();
+    //    printf("region %d %d faces\n",(*git)->tag(),_faces.size());
+    //    for (std::list<GFace *>::iterator it = _faces.begin(); it != _faces.end(); ++it){
+    //      printf(" %d",(*it)->tag());      
+    //    }
+    //  printf("\n");
+	   
     if(_faces.size() == faces_bound.size()){
       bool ok = true;
       for (std::list<GFace *>::iterator it = _faces.begin(); it != _faces.end(); ++it){
@@ -783,7 +794,7 @@ void insertVerticesInRegion (GRegion *gr)
       Msg::Debug("found %d tets with %d faces (%g sec for the classification)",
                  theRegion.size(), faces_bound.size(), _t2 - _t1);
       GRegion *myGRegion = getRegionFromBoundingFaces(gr->model(), faces_bound);
-      // Msg::Info("a region is found %p",myGRegion);
+       Msg::Info("a region is found %p",myGRegion);
       if(myGRegion) // a geometrical region associated to the list of faces has been found
         for(std::list<MTet4*>::iterator it2 = theRegion.begin(); 
             it2 != theRegion.end(); ++it2) (*it2)->setOnWhat(myGRegion);

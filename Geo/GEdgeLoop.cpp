@@ -146,7 +146,7 @@ GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire)
       break;
     }
     prevOne = &ges;
-    //    ges.print();
+    //        ges.print();
     loop.push_back(ges);
   }
 }

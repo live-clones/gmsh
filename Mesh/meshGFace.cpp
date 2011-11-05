@@ -445,6 +445,37 @@ static void addOrRemove ( MVertex *v1, MVertex *v2, std::set<MEdge,Less_Edge> & 
   else bedges.erase(it);
 }
 
+void filterOverlappingElements (int dim, std::vector<MElement*> &e, std::vector<MElement*> &eout,  std::vector<MElement*> &einter){
+  eout.clear();
+  MElementOctree octree (e);
+  for (int i=0;i<e.size();++i){
+    MElement *el = e[i];
+    bool intersection = false;
+    for (int j=0;j<el->getNumVertices();++j){
+      MVertex *v = el->getVertex(j);
+      std::vector<MElement *> inters = octree.findAll(v->x(),v->y(),v->z(),dim);
+      std::vector<MElement *> inters2;      
+      for (int k=0;k<inters.size();k++){
+	bool found = false;
+	for (int l=0;l<inters[k]->getNumVertices();l++){
+	  if (inters[k]->getVertex(l) == v)found = true;
+	}
+	if (!found)inters2.push_back(inters[k]);
+      }
+      if (inters2.size() >= 1 ){
+	intersection = true;
+      }
+    }
+    if (intersection){
+      printf("intersection found\n");
+      einter.push_back(el);       
+    }
+    else {
+      eout.push_back(el);
+    }
+  }
+}
+
 void modifyInitialMeshForTakingIntoAccountBoundaryLayers  (GFace *gf){
 
   BoundaryLayerColumns *_columns = buidAdditionalPoints2D (gf, M_PI/6.);
@@ -490,18 +521,7 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers  (GFace *gf){
 
 	  //avoid convergent errors
 	  if (dv2.length() < 0.5 * dv.length())break;
-	  //	printf("quadrangle generated\n");
 	  blQuads.push_back(new MQuadrangle(v11,v12,v22,v21));
-	  //blTris.push_back(new MTriangle(v11,v12,v22));
-	  //	  blTris.push_back(new MTriangle(v11,v22,v21));
-	  addOrRemove(v11,v12,bedges);
-	  addOrRemove(v12,v22,bedges);
-	  addOrRemove(v22,v21,bedges);
-	  addOrRemove(v21,v11,bedges);
-	  if(v11->onWhat() == gf)verts.insert(v11);
-	  if(v21->onWhat() == gf)verts.insert(v21);
-	  if(v12->onWhat() == gf)verts.insert(v12);
-	  if(v22->onWhat() == gf)verts.insert(v22);
 	  fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
 		  v11->x(),v11->y(),v11->z(),
 		  v12->x(),v12->y(),v12->z(),
@@ -510,95 +530,76 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers  (GFace *gf){
 	}
 	//	int M = std::max(c1._column.size(),c2._column.size());
 
-	/*
-	if (M>N) M = N+1;
-	// close with triangles
- 	for (int l=N-1;l < M-1 ;++l){
-	  MVertex *v11,*v12,*v21,*v22;
-	  v11 = c1._column[l>=c1._column.size() ? c1._column.size() -1 : l];
-	  v12 = c2._column[l>=c2._column.size() ? c2._column.size() -1 : l];
-	  v21 = c1._column[(l+1)>=c1._column.size() ? c1._column.size() -1 : l+1];
-	  v22 = c2._column[(l+1)>=c2._column.size() ? c2._column.size() -1 : l+1];
-
-	  MTriangle *nt = (v11 == v21) ? new MTriangle(v11,v12,v22) : new MTriangle(v11,v12,v21) ;
-	  blTris.push_back(nt);
-	  v11 = nt->getVertex(0);
-	  v12 = nt->getVertex(1);
-	  v21 = nt->getVertex(2);
-
-	  addOrRemove(v11,v12,bedges);
-	  addOrRemove(v12,v21,bedges);
-	  addOrRemove(v21,v11,bedges);
-	  if(v11->onWhat() == gf)verts.insert(v11);
-	  if(v21->onWhat() == gf)verts.insert(v21);
-	  if(v12->onWhat() == gf)verts.insert(v12);
-	  fprintf(ff2,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1};\n",
-		  v11->x(),v11->y(),v11->z(),
-		  v12->x(),v12->y(),v12->z(),
-		  v21->x(),v21->y(),v21->z());
-	}
-	*/
       }
    }
     ++ite;
   }
 
-  if (1){
-    for (BoundaryLayerColumns::iterf itf = _columns->beginf();
-	 itf != _columns->endf() ; ++itf){
-      MVertex *v = itf->first;
-      int nbCol = _columns->getNbColumns(v);
-      
-      for (int i=0;i<nbCol-1;i++){
-	//	printf("permut %d %d\n",permut[i],permut[i+1]);
-	const BoundaryLayerData & c1 = _columns->getColumn(v,i);
-	const BoundaryLayerData & c2 = _columns->getColumn(v,i+1);
-	int N = std::min(c1._column.size(),c2._column.size());
-	for (int l=0;l < N ;++l){
-	  MVertex *v11,*v12,*v21,*v22;
-	  v21 = c1._column[l];
-	  v22 = c2._column[l];	    
-	  if (l == 0){
-	    v11 = v;
-	    v12 = v;
-	  }
-	  else {
-	    v11 = c1._column[l-1];
-	    v12 = c2._column[l-1];	    
-	  }
-	  //	printf("quadrangle generated\n");
-	  if (v11 != v12){
-	    addOrRemove(v11,v12,bedges);
-	    addOrRemove(v12,v22,bedges);
-	    addOrRemove(v22,v21,bedges);
-	    addOrRemove(v21,v11,bedges);
-	    blQuads.push_back(new MQuadrangle(v11,v12,v22,v21));
-	    fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
-		    v11->x(),v11->y(),v11->z(),
+  for (BoundaryLayerColumns::iterf itf = _columns->beginf();
+       itf != _columns->endf() ; ++itf){
+    MVertex *v = itf->first;
+    int nbCol = _columns->getNbColumns(v);
+    
+    for (int i=0;i<nbCol-1;i++){
+      const BoundaryLayerData & c1 = _columns->getColumn(v,i);
+      const BoundaryLayerData & c2 = _columns->getColumn(v,i+1);
+      int N = std::min(c1._column.size(),c2._column.size());
+      for (int l=0;l < N ;++l){
+	MVertex *v11,*v12,*v21,*v22;
+	v21 = c1._column[l];
+	v22 = c2._column[l];	    
+	if (l == 0){
+	  v11 = v;
+	  v12 = v;
+	}
+	else {
+	  v11 = c1._column[l-1];
+	  v12 = c2._column[l-1];	    
+	}
+	if (v11 != v12){
+	  blQuads.push_back(new MQuadrangle(v11,v12,v22,v21));
+	  fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
+		  v11->x(),v11->y(),v11->z(),
 		    v12->x(),v12->y(),v12->z(),
-		    v22->x(),v22->y(),v22->z(),
-		    v21->x(),v21->y(),v21->z());
-	  }
-	  else {
-	    addOrRemove(v,v22,bedges);
-	    addOrRemove(v22,v21,bedges);
-	    addOrRemove(v21,v,bedges);
-	    blTris.push_back(new MTriangle(v,v22,v21));
-	    fprintf(ff2,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
-		    v->x(),v->y(),v->z(),
-		    v22->x(),v22->y(),v22->z(),
-		    v21->x(),v21->y(),v21->z());
-	  }
-	  if(v11->onWhat() == gf)verts.insert(v11);
-	  if(v21->onWhat() == gf)verts.insert(v21);
-	  if(v12->onWhat() == gf)verts.insert(v12);
-	  if(v22->onWhat() == gf)verts.insert(v22);
+		  v22->x(),v22->y(),v22->z(),
+		  v21->x(),v21->y(),v21->z());
+	}
+	else {
+	  blTris.push_back(new MTriangle(v,v22,v21));
+	  fprintf(ff2,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
+		  v->x(),v->y(),v->z(),
+		  v22->x(),v22->y(),v22->z(),
+		  v21->x(),v21->y(),v21->z());
 	}
       }
     }
   }
+
   fprintf(ff2,"};\n");
   fclose(ff2);
+  
+  std::vector<MElement*> els,newels,oldels;
+  for (int i=0;i<blQuads.size();i++)els.push_back(blQuads[i]);
+  filterOverlappingElements (2,els,newels,oldels);
+  blQuads.clear();
+  for (int i=0;i<newels.size();i++)blQuads.push_back((MQuadrangle*)newels[i]);
+  for (int i=0;i<oldels.size();i++)delete oldels[i];
+  
+  for (int i=0;i<blQuads.size();i++){    
+    addOrRemove(blQuads[i]->getVertex(0),blQuads[i]->getVertex(1),bedges);
+    addOrRemove(blQuads[i]->getVertex(1),blQuads[i]->getVertex(2),bedges);
+    addOrRemove(blQuads[i]->getVertex(2),blQuads[i]->getVertex(3),bedges);
+    addOrRemove(blQuads[i]->getVertex(3),blQuads[i]->getVertex(0),bedges);
+    for (int j=0;j<4;j++) 
+      if(blQuads[i]->getVertex(j)->onWhat() == gf)verts.insert(blQuads[i]->getVertex(j));
+  }
+  for (int i=0;i<blTris.size();i++){    
+    addOrRemove(blTris[i]->getVertex(0),blTris[i]->getVertex(1),bedges);
+    addOrRemove(blTris[i]->getVertex(1),blTris[i]->getVertex(2),bedges);
+    addOrRemove(blTris[i]->getVertex(2),blTris[i]->getVertex(0),bedges);
+    for (int j=0;j<3;j++) 
+      if(blTris[i]->getVertex(j)->onWhat() == gf)verts.insert(blTris[i]->getVertex(j));
+  }
 
   discreteEdge ne (gf->model(), 444444,0,
 		   (*edges.begin())->getEndVertex());
@@ -1026,7 +1027,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     outputScalarField(m->triangles, name, 1);
   }
   
-  if(0){
+  if(1){
     std::list<BDS_Face*>::iterator itt = m->triangles.begin();
     while (itt != m->triangles.end()){
       BDS_Face *t = *itt;
@@ -1744,7 +1745,7 @@ void deMeshGFace::operator() (GFace *gf)
 }
 
 // for debugging, change value from -1 to -100;
-int debugSurface = -1; //-1; 
+int debugSurface = -100; //-1; 
 
 void meshGFace::operator() (GFace *gf)
 {

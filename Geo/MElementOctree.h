@@ -22,6 +22,7 @@ class MElementOctree{
   ~MElementOctree();
   MElement *find(double x, double y, double z, int dim = -1, bool strict = false);
   Octree *getInternalOctree(){ return _octree; }
+  std::vector<MElement *> findAll(double x, double y, double z, int dim);
 };
 
 #endif

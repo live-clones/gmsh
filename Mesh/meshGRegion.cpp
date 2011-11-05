@@ -512,7 +512,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
     }
     else {
       sprintf(opts, "pe%c",  (Msg::GetVerbosity() < 3) ? 'Q': 
-	      (Msg::GetVerbosity() > 6) ? 'V': '\0');
+      	      (Msg::GetVerbosity() > 6) ? 'V': '\0');
     }
     try{
       tetrahedralize(opts, &in, &out);
@@ -936,8 +936,16 @@ bool buildFaceSearchStructure(GModel *model, fs_cont &search)
 {  
   search.clear();
 
-  GModel::fiter fit = model->firstFace();
-  while(fit != model->lastFace()){    
+  std::set<GFace*> faces_to_consider;
+  GModel::riter rit = model->firstRegion();
+  while(rit != model->lastRegion()){
+    std::list <GFace *> _faces = (*rit)->faces();
+    faces_to_consider.insert( _faces.begin(),_faces.end());
+    rit++;
+  }    
+
+  std::set<GFace*>::iterator fit = faces_to_consider.begin();
+  while(fit != faces_to_consider.end()){    
     for(unsigned int i = 0; i < (*fit)->triangles.size(); i++){
       MVertex *p1 = (*fit)->triangles[i]->getVertex(0);
       MVertex *p2 = (*fit)->triangles[i]->getVertex(1);

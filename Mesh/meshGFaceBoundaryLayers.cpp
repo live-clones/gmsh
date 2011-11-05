@@ -100,7 +100,6 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf, double _treshold) {
 
   FieldManager *fields = gf->model()->getFields();
   if(fields->boundaryLayer_field <= 0){
-    printf("no bl\n");
     return 0;
   }
   Field *bl_field = fields->get(fields->boundaryLayer_field);

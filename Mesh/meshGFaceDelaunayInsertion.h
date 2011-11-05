@@ -98,7 +98,6 @@ void bowyerWatson(GFace *gf);
 void bowyerWatsonFrontal(GFace *gf);
 void bowyerWatsonFrontalLayers(GFace *gf, bool quad);
 void buildBackGroundMesh (GFace *gf);
-void addBoundaryLayerPoints  (GFace *gf);
 
 struct edgeXface
 {
