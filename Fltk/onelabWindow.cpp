@@ -93,8 +93,7 @@ bool onelab::localNetworkClient::run(const std::string &what)
     if(CTX::instance()->solver.socketName.size() && 
        CTX::instance()->solver.socketName[0] == ':')
       tmp << GetHostName(); // prepend hostname if only the port number is given
-    //tmp << CTX::instance()->solver.socketName << getId();
-    tmp << CTX::instance()->solver.socketName;
+    tmp << CTX::instance()->solver.socketName << getId();
     sockname = tmp.str();
   }
 
