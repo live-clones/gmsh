@@ -377,7 +377,10 @@ class GmshServer : public GmshSocket{
         _portno = ntohs(addr_in.sin_port);
         char tmp[10];
         sprintf(tmp, "%d", _portno);
-        _sockname = tmp;
+        // FIXME: I don't understand this -- what should be the syntax
+        // to use a remote port? "hostname:" ? Then I don't get how
+        // _portno can be 0 above
+        _sockname += tmp;
       }
     }
 
