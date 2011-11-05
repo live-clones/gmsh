@@ -18,6 +18,7 @@ project(gmsh CXX C)
 
 option(ENABLE_ACIS "Enable ACIS geometrical models" ON)
 option(ENABLE_ANN "Enable ANN to compute Approximate Nearest Neighbors" ON)
+option(ENABLE_APP_BUNDLE_PATH "Use special install path for .app bundle on Mac" ON)
 option(ENABLE_BAMG "Enable Bamg mesh generator" ON)
 option(ENABLE_BFGS "Enable BFGS" ON)
 option(ENABLE_BLAS_LAPACK "Use BLAS/Lapack for basic linear algebra" ON)
@@ -1024,10 +1025,9 @@ if(WIN32 OR CYGWIN)
     unix2dos(TUTORIAL_FILES)
     unix2dos(DEMO_FILES)
   endif(CYGWIN)
-elseif(APPLE)
+elseif(APPLE AND ENABLE_APP_BUNDLE_PATH)
   # set these so that the files get installed nicely in the MacOSX
-  # .app bundle (FIXME: this screws up a standard "make install" on
-  # MacOS)
+  # .app bundle
   set(GMSH_BIN ../MacOS)
   set(GMSH_DOC ../../..)
   set(GMSH_MAN ../../..)
@@ -1157,12 +1157,14 @@ if(APPLE)
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/Info.plist "${F1}")
   set(CPACK_BUNDLE_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
   set(CPACK_BUNDLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIcons.icns)
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsGeo.icns DESTINATION .
-          RENAME GmshGeo.icns)
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsMsh.icns DESTINATION .
-          RENAME GmshMsh.icns)
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsPos.icns DESTINATION .
-          RENAME GmshPos.icns)
+  if(ENABLE_APP_BUNDLE_PATH)
+    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsGeo.icns DESTINATION .
+            RENAME GmshGeo.icns)
+    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsMsh.icns DESTINATION .
+            RENAME GmshMsh.icns)
+    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsPos.icns DESTINATION .
+            RENAME GmshPos.icns)
+  endif(ENABLE_APP_BUNDLE_PATH)
   set(CPACK_PACKAGE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIcons.icns)
 elseif(WIN32 OR CYGWIN)
   set(CPACK_GENERATOR ZIP)
