@@ -324,17 +324,17 @@ namespace onelab{
     std::set<region*, parameterLessThan> _regions;
     std::set<function*, parameterLessThan> _functions;
     // set a parameter in the parameter space; if it already exists,
-    // add new clients if necessary.  This needs to be locked to avoid
-    // race conditions when several clients try to set a parameter at
-    // the same time
+    // add new clients if necessary, and (optinally) update its value.
+    // This needs to be locked to avoid race conditions when several
+    // clients try to set a parameter at the same time
     template <class T> bool _set(T &p, std::set<T*, parameterLessThan> &ps,
-                                 bool value=true)
+                                 bool update=true)
     {
       typename std::set<T*, parameterLessThan>::iterator it = ps.find(&p);
       if(it != ps.end()){
         std::set<std::string> clients = p.getClients();
         (*it)->addClients(clients);
-        if(value && p.getValue() != (*it)->getValue()){
+        if(update && p.getValue() != (*it)->getValue()){
           (*it)->setValue(p.getValue());
           (*it)->setChanged(true);
         }
@@ -390,10 +390,10 @@ namespace onelab{
       _regions.clear();
       _functions.clear();
     }
-    bool set(number &p, bool value=true){ return _set(p, _numbers, value); }
-    bool set(string &p, bool value=true){ return _set(p, _strings, value); }
-    bool set(region &p, bool value=true){ return _set(p, _regions, value); }
-    bool set(function &p, bool value=true){ return _set(p, _functions, value); }
+    bool set(number &p, bool update=true){ return _set(p, _numbers, update); }
+    bool set(string &p, bool update=true){ return _set(p, _strings, update); }
+    bool set(region &p, bool update=true){ return _set(p, _regions, update); }
+    bool set(function &p, bool update=true){ return _set(p, _functions, update); }
     bool get(std::vector<number> &ps, const std::string &name="", 
              const std::string &client=""){ return _get(ps, name, client, _numbers); }
     bool get(std::vector<string> &ps, const std::string &name="",
@@ -402,6 +402,7 @@ namespace onelab{
              const std::string &client=""){ return _get(ps, name, client, _regions); }
     bool get(std::vector<function> &ps, const std::string &name="",
              const std::string &client=""){ return _get(ps, name, client, _functions); }
+    // check if at least one parameter depends on the given client
     bool hasClient(const std::string &client)
     {
       std::set<parameter*> ps;
@@ -422,7 +423,7 @@ namespace onelab{
       }
       return false;
     }
-    // set all parameters as unchanged (optionnally only affect those
+    // set the changed flag for all parameters (optionnally only affect those
     // parameters that depend on a given client)
     bool setChanged(bool changed, const std::string &client="")
     {
@@ -432,6 +433,8 @@ namespace onelab{
         if(client.empty() || (*it)->hasClient(client))
           (*it)->setChanged(changed);
     }
+    // print the parameter space (optinally only print those
+    // parameters that depend on the given client)
     std::string toChar(const std::string &client="")
     {
       std::string s;
@@ -471,10 +474,10 @@ namespace onelab{
     virtual void sendMergeFileRequest(const std::string &msg){}
     virtual void sendParseStringRequest(const std::string &msg){}
     virtual void sendVertexArray(const std::string &msg){}
-    virtual bool set(number &p, bool value=true) = 0;
-    virtual bool set(string &p, bool value=true) = 0;
-    virtual bool set(region &p, bool value=true) = 0;
-    virtual bool set(function &p, bool value=true) = 0;
+    virtual bool set(number &p, bool update=true) = 0;
+    virtual bool set(string &p, bool update=true) = 0;
+    virtual bool set(region &p, bool update=true) = 0;
+    virtual bool set(function &p, bool update=true) = 0;
     virtual bool get(std::vector<number> &ps, const std::string &name="") = 0;
     virtual bool get(std::vector<string> &ps, const std::string &name="") = 0;
     virtual bool get(std::vector<region> &ps, const std::string &name="") = 0;
@@ -502,9 +505,9 @@ namespace onelab{
       return _server;
     }
     void clear(){ _parameterSpace.clear(); }
-    template <class T> bool set(T &p, bool value=true)
+    template <class T> bool set(T &p, bool update=true)
     {
-      return _parameterSpace.set(p, value); 
+      return _parameterSpace.set(p, update); 
     }
     template <class T> bool get(std::vector<T> &ps, const std::string &name="",
                                 const std::string &client="")
@@ -541,10 +544,10 @@ namespace onelab{
   private:
     // the pointer to the server
     server *_server;
-    template <class T> bool _set(T &p, bool value=true)
+    template <class T> bool _set(T &p, bool update=true)
     {
       p.addClient(_name);
-      _server->set(p, value);
+      _server->set(p, update);
       return true;
     }
     template <class T> bool _get(std::vector<T> &ps,
@@ -560,10 +563,10 @@ namespace onelab{
       _server->registerClient(this);
     }
     virtual ~localClient(){}
-    virtual bool set(number &p, bool value=true){ return _set(p, value); }
-    virtual bool set(string &p, bool value=true){ return _set(p, value); }
-    virtual bool set(function &p, bool value=true){ return _set(p, value); }
-    virtual bool set(region &p, bool value=true){ return _set(p, value); }
+    virtual bool set(number &p, bool update=true){ return _set(p, update); }
+    virtual bool set(string &p, bool update=true){ return _set(p, update); }
+    virtual bool set(function &p, bool update=true){ return _set(p, update); }
+    virtual bool set(region &p, bool update=true){ return _set(p, update); }
     virtual bool get(std::vector<number> &ps,
                      const std::string &name=""){ return _get(ps, name); }
     virtual bool get(std::vector<string> &ps,
@@ -687,10 +690,10 @@ namespace onelab{
     }
     GmshClient *getGmshClient(){ return _gmshClient; }
     virtual bool isNetworkClient(){ return true; }
-    virtual bool set(number &p, bool value=true){ return _set(p); }
-    virtual bool set(string &p, bool value=true){ return _set(p); }
-    virtual bool set(function &p, bool value=true){ return _set(p); }
-    virtual bool set(region &p, bool value=true){ return _set(p); }
+    virtual bool set(number &p, bool update=true){ return _set(p); }
+    virtual bool set(string &p, bool update=true){ return _set(p); }
+    virtual bool set(function &p, bool update=true){ return _set(p); }
+    virtual bool set(region &p, bool update=true){ return _set(p); }
     virtual bool get(std::vector<number> &ps, 
                      const std::string &name=""){ return _get(ps, name); }
     virtual bool get(std::vector<string> &ps,
