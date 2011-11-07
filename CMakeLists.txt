@@ -940,6 +940,8 @@ elseif(HAVE_QT)
   add_executable(gmsh WIN32 Qt/Main.cpp ${GMSH_SRC} ${GMSH_MOC_SRC})
 else(HAVE_FLTK)
   add_executable(gmsh Common/Main.cpp ${GMSH_SRC})
+  add_executable(gmsh_dynamic EXCLUDE_FROM_ALL Common/Main.cpp)
+  target_link_libraries(gmsh_dynamic shared)
 endif(HAVE_FLTK)
 target_link_libraries(gmsh ${LINK_LIBRARIES})
 
