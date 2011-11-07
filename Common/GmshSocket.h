@@ -351,8 +351,11 @@ class GmshServer : public GmshSocket{
     }
     else{
       // TCP/IP socket
+      // valid TCP/IP socket descriptors are either explicit: "hostname:12345" 
+      // or implicit: "hostname:" "hostname: " "hostname:0"
+      // in which case the system attributes at random an available port.
       const char *port = strstr(_sockname.c_str(), ":");
-      _portno = atoi(port + 1); // can be zero in case of random port assignation
+      _portno = atoi(port+1); 
       // create a socket
       tmpsock = socket(AF_INET, SOCK_STREAM, 0);
 #if !defined(WIN32) || defined(__CYGWIN__)
@@ -375,12 +378,10 @@ class GmshServer : public GmshSocket{
         socklen_t addrlen = sizeof(addr_in);
         int rc = getsockname(tmpsock, (struct sockaddr *)&addr_in, &addrlen);
         _portno = ntohs(addr_in.sin_port);
-        char tmp[10];
-        sprintf(tmp, "%d", _portno);
-        // FIXME: I don't understand this -- what should be the syntax
-        // to use a random port? "hostname:"? Then I don't get how
-        // _portno can be 0 above. If it's "hostname:-1", then this is wrong.
-        _sockname += tmp;
+        char tmp[256];
+	int pos=_sockname.find(':'); // remove trailing ' ' or '0'
+	sprintf(tmp, "%s:%d",_sockname.substr(0,pos).c_str(),_portno);
+        _sockname.assign(tmp);
       }
     }
 
@@ -392,7 +393,7 @@ class GmshServer : public GmshSocket{
 #if !defined(WIN32)
       cmd += " &";
 #endif
-      SystemCall(cmd.c_str()); // start the solver
+      SystemCall(cmd.c_str()); // starts the solver
     }
     else{
       timeout = 0.; // no command launched: don't set a timeout
