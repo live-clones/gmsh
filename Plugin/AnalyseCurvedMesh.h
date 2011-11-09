@@ -28,6 +28,7 @@ class GMSH_AnalyseCurvedMeshPlugin : public GMSH_PostPlugin
     double _min_Javg, _max_Javg;
     double _min_pJmin, _avg_pJmin;
     double _min_ratioJ, _avg_ratioJ;
+    //
     
   public :
     GMSH_AnalyseCurvedMeshPlugin(){}
@@ -42,6 +43,7 @@ class GMSH_AnalyseCurvedMeshPlugin : public GMSH_PostPlugin
     StringXNumber *getOption(int);  
     PView *execute(PView *);
     void checkValidity(MElement *const *, int numEl, std::vector<MElement*> &invalids);
+    void checkValidity_BLAS(MElement *const *, int numEl, std::vector<MElement*> &invalids);
     
   private :
     void checkValidity(int toDo);
@@ -60,6 +62,39 @@ class GMSH_AnalyseCurvedMeshPlugin : public GMSH_PostPlugin
     int *checkJacobian(MElement *const *, int numEl, int depth, int method);
     int division(const bezierBasis *, const fullVector<double> &, int depth);
     */
+};
+
+class BezierJacobian
+{
+private:
+  fullVector<double> _jacBez;
+  double _minJ, _maxJ, _minB, _maxB; //Extremum of Jac at corners and of bezier values
+  int _depthSub;
+  int _num; // Used for map of minmaxB
+  static int _globalNum;
+  
+public:
+  BezierJacobian(fullVector<double> &, const JacobianBasis *, int depth);
+  inline bool operator<(const BezierJacobian &other) const
+    {return other._maxB - _maxB - other._minB + _minB < 0;}
+  void partition(fullVector<double> &, const JacobianBasis *) const;
+  inline bool isObsolet(double maxLB, double minUB, double tol) const
+    {return _maxB - maxLB < tol &&  minUB - _minB < tol;}
+  
+  int num() const {return _num;}
+  int depth() const {return _depthSub;}
+  double minJ() const {return _minJ;}
+  double minB() const {return _minB;}
+  double maxJ() const {return _maxJ;}
+  double maxB() const {return _maxB;}
+  double setMinMaxBounds(double &minLB, double &minUB, double &maxLB, double &maxUB) const
+  {
+    /*Msg::Info("setminmax : %g = %g - %g",_minJ-_minB,_minJ,_minB);
+    Msg::Info("setminmax : %g = %g - %g",_maxB-_maxJ,_maxB,_maxJ);Msg::Info(" ");
+    
+    int g;
+    std::cin >> g;*/
+      minUB = _minJ; minLB = _minB; maxUB = _maxB; maxLB = _maxJ;}
 };
 
 #endif
