@@ -1225,7 +1225,7 @@ void multiscaleLaplace::cutElems(std::vector<MElement *> &elements)
    
    connected_left_right(left, right);
    if (left.size()== 0 || right.size() == 0) {
-     printf("KO size left=%d, right=%d  not good (zero elems)\n", left.size(), right.size() );
+     printf("KO size left=%d, right=%d  not good (zero elems)\n", (int) left.size(), (int) right.size() );
      exit(1);
    }
 

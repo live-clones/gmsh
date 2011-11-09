@@ -42,6 +42,14 @@ void function::setArgument(fullMatrix<double> &v, const function *f, int iMap)
   }
 }
 
+void function::setArgumentWrapped(fullMatrix<double> &v, const function *f, int expectedNbCol, std::string funcName, int iMap)
+{
+  if(f != function::getSolution() && f != function::getSolutionGradient() && f != function::getNormals())
+    if(f->getNbCol() != expectedNbCol)
+      Msg::Fatal("Wrong number of expected outputs in %s (%d, expected %d)", funcName.c_str(), f->getNbCol(), expectedNbCol);
+  setArgument(v, f, iMap);
+}
+
 functionConstant *function::_timeFunction = NULL;
 functionConstant *function::_dtFunction = NULL;
 functionConstant *function::_dtSubFunction = NULL;
@@ -642,6 +650,29 @@ function *functionScaleNew(const function *f0, const double s) {
   return new functionScale (f0, s);
 }
 
+// functionAbs
+
+class functionAbs : public function {
+ public:
+  fullMatrix<double> _f0;
+  void call(dataCacheMap *m, fullMatrix<double> &val) 
+  {
+    for(int i = 0; i < val.size1(); i++)
+      for(int j = 0; j < val.size2(); j++)
+        val(i, j) = fabs(_f0(i, j));
+  }
+  functionAbs(const function *f0) : function(f0->getNbCol())
+  {
+    setArgument (_f0, f0);
+  }
+};
+
+function *functionAbsNew (const function *f0) {
+  return new functionAbs (f0);
+}
+
+
+
 // functionMean
 
 class functionMeanP1 : public function {
@@ -741,7 +772,7 @@ void functionC::buildLibraryFromFile(const std::string cfilename, const std::str
       libfilename.c_str(), cfilename.c_str());
   fclose(tmpMake);
   if(system("make -f _tmpMake"))
-    Msg::Error("make command failed\n");
+    Msg::Fatal("make command failed\n");
   UnlinkFile("_tmpMake.cpp");
 }
 

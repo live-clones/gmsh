@@ -1037,7 +1037,7 @@ void LpSmoother::improve_region(GRegion* gr){
 	  interior_vertices.push_back(*it);
 	}
   }
-  printf("%d\n",interior_vertices.size());
+  printf("%d\n", (int) interior_vertices.size());
 	
   deleter(gr);
   //std::vector<GRegion*> regions;

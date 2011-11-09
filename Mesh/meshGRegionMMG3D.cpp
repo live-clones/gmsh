@@ -107,7 +107,7 @@ void gmsh2MMG (GRegion *gr, MMG_pMesh mmg, MMG_pSol sol, std::map<int,MVertex*> 
     }
   }
 
-  printf("%d vertices %d on faces\n",allVertices.size(), LCS.size());
+  printf("%d vertices %d on faces\n", (int) allVertices.size(), (int) LCS.size());
   
   int k=1;
   int count = 1;//sol->offset;

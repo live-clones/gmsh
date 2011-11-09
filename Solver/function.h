@@ -64,6 +64,7 @@ class function {
 
   void addFunctionReplace(functionReplace &fr);
   void setArgument(fullMatrix<double> &v, const function *f, int iMap = 0);
+  void setArgumentWrapped(fullMatrix<double> &v, const function *f, int expectedNbCol, std::string funcName="a function", int iMap=0);
   virtual void call(dataCacheMap *m, fullMatrix<double> &res) = 0;
   virtual void registerInDataCacheMap(dataCacheMap *m, dataCacheDouble *d) {}
 
@@ -307,6 +308,7 @@ function *functionMinusNew (const function *f0, const function *f1);
 function *functionProdNew (const function *f0, const function *f1);
 function *functionQuotientNew (const function *f0, const function *f1);
 function *functionScaleNew (const function *f0, const double s);
+function *functionAbsNew (const function *f0);
 function *functionExtractCompNew (const function *f0, const int iComp);
 function *functionCatCompNew(std::vector<const function *> fArray);
 function *functionMeanP1New(const function *f, const function *df);

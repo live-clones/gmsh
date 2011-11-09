@@ -333,7 +333,7 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf, double _treshold) {
 	if (blf->current_closest != catt || blf -> current_distance <  _current_distance){
 	  SVector3 aaa (_close- blf->_closest_point);
 	  if (aaa.norm() > 8*blf->hwall_n || blf -> current_distance <  _current_distance){
-	    printf("reaching the skelton %d\n",_column.size());
+	    printf("reaching the skelton %d\n", (int) _column.size());
 	    delete _column[_column.size()-1];
 	    _column.erase(--_column.end());
 	    _metrics.erase(--_metrics.end());
