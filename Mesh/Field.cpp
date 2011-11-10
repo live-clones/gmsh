@@ -1677,6 +1677,8 @@ BoundaryLayerField :: BoundaryLayerField()
     (nodes_id, "Indices of nodes in the geometric model", &update_needed);
   options["EdgesList"] = new FieldOptionList
     (edges_id, "Indices of curves in the geometric model for which a boundary layer is needed", &update_needed);
+  options["FacesList"] = new FieldOptionList
+    (faces_id, "Indices of faces in the geometric model for which a boundary layer is needed", &update_needed);
   //  options["IField"] = new FieldOptionInt
   //    (iField, "Index of the field that contains the distance function");
   options["hwall_n"] = new FieldOptionDouble
@@ -1860,6 +1862,10 @@ void BoundaryLayerField :: operator() (double x, double y, double z, SMetric3 &m
     for(std::list<int>::iterator it = edges_id.begin();
 	it != edges_id.end(); ++it) {
       _att_fields.push_back(new AttractorField(1,*it,300000));
+    }
+    for(std::list<int>::iterator it = faces_id.begin();
+	it != faces_id.end(); ++it) {
+      _att_fields.push_back(new AttractorField(2,*it,300));
     }
     update_needed = false;
   }
