@@ -873,11 +873,10 @@ void DI_Element::evalC (const double u, const double v, const double w, double *
   int nbV = nbVert() + nbMid();
   std::vector<double> s(nbV);
   ev[0] = 0; ev[1] = 0; ev[2] = 0;
-  getShapeFunctions (u, v, w, &s[0], order);
   for(int i = 0; i < nbV; i++){
-    ev[0] += x(i) * s[i];
-    ev[1] += y(i) * s[i];
-    ev[2] += z(i) * s[i];
+      ev[0] += x(i) * s[i];
+      ev[1] += y(i) * s[i];
+      ev[2] += z(i) * s[i];
   }
 }
 double DI_Element::evalLs (const double u, const double v, const double w, int iLs, int order) const{

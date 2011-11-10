@@ -558,10 +558,13 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
                              std::map<int, std::vector<MElement*> > elements[10],
                              std::map<int, std::map<int, std::string> > physicals[4],
                              std::map<int, int> newElemTags[4],
-                             std::map<int, int> newPhysTags[4])
+                             std::map<int, int> newPhysTags[4],
+			     std::map<int, int> borderElemTags[2],
+			     std::map<int, int> borderPhysTags[2], 
+			     int gLsTag)
 {
   int elementary = ge->tag();
-  int eType = e->getTypeForMSH();
+  int eType = e->getType();
   std::vector<int> gePhysicals = ge->physicals;
 
   MElement *copy = e->copy(vertexMap, newParents, newDomains);
@@ -574,52 +577,60 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
 
   //EMI : better for embedded dirichlet with smoothed properties
   //split according to values of vertices (keep +)
-  int lsTag = 1; //negative ls
-  for(int k = 0; k < e->getNumVertices(); k++){
-   double val = verticesLs(0, e->getVertex(k)->getIndex());
-   if (val > 0.0) { lsTag = -1; break; }
+  bool splitElem = false;
+  int lsTag =  (verticesLs(0, e->getVertex(0)->getIndex()) > 0.0) ? -1 : 1;
+  for(int k = 1; k < e->getNumVertices(); k++){
+    int lsTag2 = (verticesLs(0, e->getVertex(k)->getIndex()) > 0.0) ? -1: 1;
+    if (lsTag*lsTag2 < 0.0) {
+      lsTag = -1;
+      splitElem = true;
+      break;
+    } 
   }
+  // int lsTag = 1; //negative ls
+  // for(int k = 0; k < e->getNumVertices(); k++){
+  //  double val = verticesLs(0, e->getVertex(k)->getIndex());
+  //  if (val > 0.0) { lsTag = -1; break; }
+  // }
 
   switch (eType) {
-  case MSH_TET_4 :
-  case MSH_HEX_8 :
-  case MSH_PYR_5 :
-  case MSH_PRI_6 :
-  case MSH_POLYH_ :
+  case TYPE_TET :
+  case TYPE_HEX :
+  case TYPE_PYR :
+  case TYPE_PRI :
+  case TYPE_POLYH :
     {
       int reg = getElementaryTag(lsTag, elementary, newElemTags[3]);
       getPhysicalTag(lsTag, gePhysicals, newPhysTags[3]);
-      if(eType == MSH_TET_4)
+      if(eType == TYPE_TET)
         elements[4][reg].push_back(copy);
-      else if(eType == MSH_HEX_8)
+      else if(eType == TYPE_HEX)
         elements[5][reg].push_back(copy);
-      else if(eType == MSH_PRI_6)
+      else if(eType == TYPE_PRI)
         elements[6][reg].push_back(copy);
-      else if(eType == MSH_PYR_5)
+      else if(eType == TYPE_PYR)
         elements[7][reg].push_back(copy);
-      else if(eType == MSH_POLYH_)
+      else if(eType == TYPE_POLYH)
         elements[9][reg].push_back(copy);
       assignPhysicals(GM, gePhysicals, reg, 3, physicals, newPhysTags[3], lsTag);
     }
     break;
-  case MSH_TRI_3 :
-  case MSH_QUA_4 :
-  case MSH_POLYG_ :
-  case MSH_POLYG_B :
+  case TYPE_TRI :
+  case TYPE_QUA :
+  case TYPE_POLYG :
     {
       int reg = getElementaryTag(lsTag, elementary, newElemTags[2]);
       getPhysicalTag(lsTag, gePhysicals, newPhysTags[2]);
-      if(eType == MSH_TRI_3)
+      if(eType == TYPE_TRI)
         elements[2][reg].push_back(copy);
-      else if(eType == MSH_QUA_4)
+      else if(eType == TYPE_QUA)
         elements[3][reg].push_back(copy);
-      else if(eType == MSH_POLYG_ || eType == MSH_POLYG_B)
+      else if(eType == TYPE_POLYG)
         elements[8][reg].push_back(copy);
       assignPhysicals(GM, gePhysicals, reg, 2, physicals, newPhysTags[2], lsTag);
     }
     break;
-  case MSH_LIN_2 :
-  case MSH_LIN_B :
+  case TYPE_LIN :
     {
       int reg = getElementaryTag(lsTag, elementary, newElemTags[1]);
       getPhysicalTag(lsTag, gePhysicals, newPhysTags[1]);
@@ -627,7 +638,7 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
       assignPhysicals(GM, gePhysicals, reg, 1, physicals, newPhysTags[1], lsTag);
     }
     break;
-  case MSH_PNT :
+  case TYPE_PNT :
     {
       int reg = getElementaryTag(lsTag, elementary, newElemTags[0]);
       getPhysicalTag(lsTag, gePhysicals, newPhysTags[0]);
@@ -639,6 +650,53 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
     Msg::Error("This type of element cannot be split.");
     return;
   }
+
+  //create level set interface (pt in 1D, line in 2D or face in 3D)
+  if (splitElem && copy->getDim()==2){
+     for(int k = 0; k < copy->getNumEdges(); k++){
+      MEdge me  = copy->getEdge(k);
+      MVertex *v0 = me.getVertex(0);
+      MVertex *v1 = me.getVertex(1);
+      double val0 = verticesLs(0, v0->getIndex());
+      double val1 = verticesLs(0, v1->getIndex());
+      if (val0*val1 > 0.0 && val0 < 0.0) { 
+  	MLine *lin = new MLine(v0, v1); 
+   	getPhysicalTag(-1, gePhysicals, newPhysTags[1]);
+	int c = elements[1].count(gLsTag);
+        int reg = getBorderTag(gLsTag, c, newElemTags[1][0], borderElemTags[0]);
+        int physTag = (!gePhysicals.size()) ? 0 : getBorderTag(gLsTag, c, newPhysTags[1][0], borderPhysTags[0]);
+  	elements[1][reg].push_back(lin);
+	if(physTag) assignLsPhysical(GM, reg, 1, physicals, physTag, gLsTag);
+      }    
+    }
+  }
+  else if (splitElem && copy->getDim()==3){
+    for(int k = 0; k < copy->getNumFaces(); k++){
+      MFace mf  = copy->getFace(k);
+      bool sameSign = true;
+      double val0 = verticesLs(0,  mf.getVertex(0)->getIndex());
+      for (int j= 1; j< mf.getNumVertices(); j++){
+	double valj = verticesLs(0,  mf.getVertex(j)->getIndex());
+	if (val0*valj < 0.0){ sameSign = false; break;}
+      }
+      if (sameSign && val0 < 0.0) {
+	getPhysicalTag(-1, gePhysicals, newPhysTags[2]);
+	int c = elements[2].count(gLsTag) + elements[3].count(gLsTag) + elements[8].count(gLsTag);
+        int reg = getBorderTag(gLsTag, c, newElemTags[2][0], borderElemTags[1]);
+        int physTag = (!gePhysicals.size()) ? 0 : getBorderTag(gLsTag, c, newPhysTags[2][0], borderPhysTags[1]);
+	if(mf.getNumVertices() == 3){
+	  MTriangle *tri = new MTriangle(mf.getVertex(0), mf.getVertex(1), mf.getVertex(2));
+          elements[2][reg].push_back(tri);
+	}
+        else if(mf.getNumVertices() == 4){
+	  MQuadrangle *quad = new MQuadrangle(mf.getVertex(0), mf.getVertex(1), mf.getVertex(2), mf.getVertex(3));
+          elements[3][reg].push_back(quad);
+	}
+        if(physTag)  assignLsPhysical(GM, reg, 2, physicals, physTag, gLsTag);
+      }    
+     }
+  }
+
 }
 
 #if defined(HAVE_DINTEGRATION)
@@ -800,7 +858,6 @@ static void elementCutMesh(MElement *e, std::vector<gLevelset *> &RPN,
           isCut = (isCut || iC);
         }
       }
-
       MPolyhedron *p1 = NULL, *p2 = NULL;
       if(isCut) {
         std::vector<MTetrahedron*> poly[2];
@@ -1295,6 +1352,8 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
 
   std::map<MElement*, MElement*> newParents; //map<oldParent, newParent>
   std::map<MElement*, MElement*> newDomains; //map<oldDomain, newDomain>
+  std::map<int, int> borderElemTags[2]; //map<lsTag,elementary>[line=0,surface=1]
+  std::map<int, int> borderPhysTags[2]; //map<lstag,physical>[line=0,surface=1]
 
   //SplitMesh
   if(!cutElem) {
@@ -1303,7 +1362,8 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
         MElement *e = gmEntities[i]->getMeshElement(j);
         e->setVolumePositive();
         elementSplitMesh(e, verticesLs, gmEntities[i], gm, numEle, vertexMap, newParents,
-                         newDomains, elements, physicals, newElemTags, newPhysTags);
+                         newDomains, elements, physicals, newElemTags, newPhysTags, 
+			 borderElemTags, borderPhysTags, ls->getTag());
         cutGM->getMeshPartitions().insert(e->getPartition());
       }
     }
@@ -1312,8 +1372,6 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
 
   //CutMesh
   newVerticesContainer newVertices;
-  std::map<int, int> borderElemTags[2]; //map<lsTag,elementary>[line=0,surface=1]
-  std::map<int, int> borderPhysTags[2]; //map<lstag,physical>[line=0,surface=1]
   std::multimap<MElement*, MElement*> borders[2]; //multimap<domain,border>[polyg=0,polyh=1]
   DI_Point::Container cp;
   std::vector<DI_Line *> lines;
