@@ -80,6 +80,7 @@ namespace onelab{
     bool getVisible() const { return _visible; }
     const std::set<std::string> &getClients() const { return _clients; }
     static char charSep(){ return '|' /* '\0' */; }
+    static double maxNumber(){ return 1e200; }
     std::string sanitize(const std::string &in)
     {
       std::string out(in);
@@ -134,7 +135,8 @@ namespace onelab{
     number(const std::string &name="", double defaultValue=0.,
            const std::string &shortHelp="", const std::string &help="") 
       : parameter(name, shortHelp, help), _value(defaultValue), 
-        _defaultValue(defaultValue), _min(1.), _max(0.), _step(0.) {}
+        _defaultValue(defaultValue), _min(-maxNumber()), _max(maxNumber()), 
+        _step(0.) {}
     void setValue(double value){ _value = value; }
     void setDefaultValue(double value){ _defaultValue = value; }
     void setMin(double min){ _min = min; }
@@ -144,10 +146,25 @@ namespace onelab{
     std::string getType() const { return "number"; }
     double getValue() const { return _value; }
     double getDefaultValue() const { return _defaultValue; }
-    double getMin(){ return _min; }
-    double getMax(){ return _max; }
-    double getStep(){ return _step; }
+    double getMin() const { return _min; }
+    double getMax() const { return _max; }
+    double getStep() const { return _step; }
     const std::vector<double> &getChoices(){ return _choices; }
+    void update(const number &p)
+    {
+      if(p.getValue() != getValue()){
+        setValue(p.getValue());
+        setChanged(true);
+      }
+      if(p.getDefaultValue() && p.getDefaultValue() != getDefaultValue())
+        setDefaultValue(p.getDefaultValue());
+      if(p.getMin() != -maxNumber())
+        setMin(p.getMin());
+      if(p.getMax() != maxNumber())
+        setMax(p.getMax());
+      if(p.getStep() != getStep())
+        setStep(p.getStep());
+    }
     std::string toChar()
     {
       std::ostringstream sstream;
@@ -194,11 +211,22 @@ namespace onelab{
         _defaultValue(defaultValue) {}
     void setValue(const std::string &value){ _value = value; }
     void setDefaultValue(const std::string &value){ _defaultValue = value; }
-    void setChoices(std::vector<std::string> &choices){ _choices = choices; }
+    void setChoices(const std::vector<std::string> &choices){ _choices = choices; }
     std::string getType() const { return "string"; }
     const std::string &getValue() const { return _value; }
     const std::string &getDefaultValue() const { return _defaultValue; }
-    const std::vector<std::string> &getChoices(){ return _choices; }
+    const std::vector<std::string> &getChoices() const { return _choices; }
+    void update(const string &p)
+    {
+      if(p.getValue() != getValue()){
+        setValue(p.getValue());
+        setChanged(true);
+      }
+      if(p.getDefaultValue().size() && p.getDefaultValue() != getDefaultValue())
+        setDefaultValue(p.getDefaultValue());
+      if(p.getChoices().size())
+        setChoices(p.getChoices());
+    }
     std::string toChar()
     {
       std::ostringstream sstream;
@@ -242,6 +270,13 @@ namespace onelab{
     std::string getType() const { return "region"; }
     const std::string &getValue() const { return _value; }
     const std::string &getDefaultValue() const { return _defaultValue; }
+    void update(const region &p)
+    {
+      if(p.getValue() != getValue()){
+        setValue(p.getValue());
+        setChanged(true);
+      }
+    }
     std::string toChar()
     {
       std::ostringstream sstream;
@@ -294,6 +329,13 @@ namespace onelab{
       return _pieceWiseValues; 
     }
     const std::string &getDefaultValue() const { return _defaultValue; }
+    void update(const function &p)
+    {
+      if(p.getValue() != getValue()){
+        setValue(p.getValue());
+        setChanged(true);
+      }
+    }
     std::string toChar()
     {
       std::ostringstream sstream;
@@ -324,7 +366,7 @@ namespace onelab{
     std::set<region*, parameterLessThan> _regions;
     std::set<function*, parameterLessThan> _functions;
     // set a parameter in the parameter space; if it already exists,
-    // add new clients if necessary, and (optinally) update its value.
+    // add new clients if necessary, and (optionnally) update its value.
     // This needs to be locked to avoid race conditions when several
     // clients try to set a parameter at the same time
     template <class T> bool _set(T &p, std::set<T*, parameterLessThan> &ps,
@@ -334,10 +376,7 @@ namespace onelab{
       if(it != ps.end()){
         std::set<std::string> clients = p.getClients();
         (*it)->addClients(clients);
-        if(update && p.getValue() != (*it)->getValue()){
-          (*it)->setValue(p.getValue());
-          (*it)->setChanged(true);
-        }
+        if(update) (*it)->update(p);
       }
       else{
         ps.insert(new T(p));
