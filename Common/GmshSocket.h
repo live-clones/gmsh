@@ -350,12 +350,11 @@ class GmshServer : public GmshSocket{
 #endif
     }
     else{
-      // TCP/IP socket
-      // valid TCP/IP socket descriptors are either explicit: "hostname:12345" 
-      // or implicit: "hostname:" "hostname: " "hostname:0"
-      // in which case the system attributes at random an available port.
+      // TCP/IP socket: valid names are either explicit ("hostname:12345")
+      // or implicit ("hostname:", "hostname: ", "hostname:0") in which case
+      // the system attributes at random an available port
       const char *port = strstr(_sockname.c_str(), ":");
-      _portno = atoi(port+1); 
+      _portno = atoi(port + 1);
       // create a socket
       tmpsock = socket(AF_INET, SOCK_STREAM, 0);
 #if !defined(WIN32) || defined(__CYGWIN__)
@@ -369,7 +368,7 @@ class GmshServer : public GmshSocket{
       memset((char *) &addr_in, 0, sizeof(addr_in));
       addr_in.sin_family = AF_INET;
       addr_in.sin_addr.s_addr = INADDR_ANY;
-      addr_in.sin_port = htons(_portno); // random assign if _portno=0
+      addr_in.sin_port = htons(_portno); // random assign if _portno == 0
       if(bind(tmpsock, (struct sockaddr *)&addr_in, sizeof(addr_in)) < 0){
         CloseSocket(tmpsock);
         throw "Couldn't bind socket to name";
@@ -378,22 +377,21 @@ class GmshServer : public GmshSocket{
         socklen_t addrlen = sizeof(addr_in);
         int rc = getsockname(tmpsock, (struct sockaddr *)&addr_in, &addrlen);
         _portno = ntohs(addr_in.sin_port);
+	int pos = _sockname.find(':'); // remove trailing ' ' or '0'
         char tmp[256];
-	int pos=_sockname.find(':'); // remove trailing ' ' or '0'
-	sprintf(tmp, "%s:%d",_sockname.substr(0,pos).c_str(),_portno);
+	sprintf(tmp, "%s:%d", _sockname.substr(0, pos).c_str(), _portno);
         _sockname.assign(tmp);
       }
     }
 
     if(command && strlen(command)){
-      // FIXME: this is ugly - we assume that the command line always
-      // ends with the socket name
+      // we assume that the command line always ends with the socket name
       std::string cmd(command);
       cmd += " " + _sockname;
 #if !defined(WIN32)
       cmd += " &";
 #endif
-      SystemCall(cmd.c_str()); // starts the solver
+      SystemCall(cmd.c_str()); // start the solver
     }
     else{
       timeout = 0.; // no command launched: don't set a timeout
