@@ -166,7 +166,7 @@ double MElement::getVolume()
   double vol = 0.;
   for (int i = 0; i < npts; i++){
     vol += getJacobianDeterminant(pts[i].pt[0], pts[i].pt[1], pts[i].pt[2])
-      * pts[i].weight;    
+      * pts[i].weight;
   }
   return vol;
 }
@@ -547,19 +547,19 @@ double MElement::integrateCirc(double val[], int edge, int pOrder, int order)
     Msg::Error("No edge %d for this element", edge);
     return 0;
   }
-  
+
   std::vector<MVertex*> v;
   getEdgeVertices(edge, v);
   MElementFactory f;
   int type = getLineType(getPolynomialOrder());
   MElement* ee = f.create(type, v);
-  
+
   double intv[3];
   for(int i = 0; i < 3; i++){
     intv[i] = ee->integrate(&val[i], pOrder, 3, order);
-  }  
+  }
   delete ee;
-  
+
   double t[3] = {v[1]->x() - v[0]->x(), v[1]->y() - v[0]->y(), v[1]->z() - v[0]->z()};
   norme(t);
   double result;
@@ -582,7 +582,7 @@ double MElement::integrateFlux(double val[], int face, int pOrder, int order)
   case TYPE_TET : type = getTriangleType(getPolynomialOrder()); break;
   case TYPE_QUA : type = getQuadType(getPolynomialOrder());     break;
   case TYPE_HEX : type = getQuadType(getPolynomialOrder());     break;
-  case TYPE_PYR : 
+  case TYPE_PYR :
     if(face < 4) type = getTriangleType(getPolynomialOrder());
     else type = getQuadType(getPolynomialOrder());
     break;
@@ -1131,7 +1131,7 @@ MElement *MElement::copy(std::map<int, MVertex*> &vertexMap,
       newParent = it->second;
     parent = newParent;
   }
-  
+
   MElementFactory factory;
   MElement *newEl = factory.create(eType, vmv, getNum(), _partition, ownsParent(), parent);
 

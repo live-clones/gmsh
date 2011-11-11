@@ -80,13 +80,13 @@ class MElement
     verts.resize(N);
     for(int i = 0; i < N; i++) verts[i] = getVertex(i);
   }
-  virtual void setVertex(int num, MVertex *v) 
+  virtual void setVertex(int num, MVertex *v)
   {
     Msg::Error("Vertex set not supported for this element");
   }
 
   // give an MVertex as input and get its local number
-  virtual void getVertexInfo(const MVertex *vertex, int &ithVertex) const 
+  virtual void getVertexInfo(const MVertex *vertex, int &ithVertex) const
   {
     Msg::Error("Vertex information not available for this element");
   }
@@ -188,7 +188,7 @@ class MElement
   // otherwise get the minimum radius of all the circles/spheres
   // tangent to the most boundaries of the element.
   virtual double getInnerRadius(){ return 0.; }
-  
+
   // get the radius of the circumscribed circle/sphere if it exists,
   // otherwise get the maximum radius of all the circles/spheres
   // tangent to the most boundaries of the element.
