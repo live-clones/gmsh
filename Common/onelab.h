@@ -132,28 +132,19 @@ namespace onelab{
     double _value, _defaultValue, _min, _max, _step;
     std::vector<double> _choices;
   public:
-    number(const std::string &name="", double defaultValue=maxNumber(),
+    number(const std::string &name="", double defaultValue=0.,
            const std::string &shortHelp="", const std::string &help="") 
       : parameter(name, shortHelp, help), _value(defaultValue), 
         _defaultValue(defaultValue), _min(-maxNumber()), _max(maxNumber()), 
         _step(0.) {}
     void setValue(double value){ _value = value; }
-    void setDefaultValue(double value) { _defaultValue = value; }
+    void setDefaultValue(double value){ _defaultValue = value; }
     void setMin(double min){ _min = min; }
     void setMax(double max){ _max = max; }
     void setStep(double step){ _step = step; }
     void setChoices(std::vector<double> &choices){ _choices = choices; }
     std::string getType() const { return "number"; }
-    double getValue() const { // never returns an unset value
-      if( _value != maxNumber())
-	return _value; 
-      else if( _defaultValue != maxNumber())
-	return _defaultValue; 
-      else {
-	std::cerr << "The number " << getName() << " is not set" << std::endl;
-	exit(1);
-      }
-    }
+    double getValue() const { return _value; }
     double getDefaultValue() const { return _defaultValue; }
     double getMin() const { return _min; }
     double getMax() const { return _max; }
@@ -161,11 +152,11 @@ namespace onelab{
     const std::vector<double> &getChoices(){ return _choices; }
     void update(const number &p)
     {
-      if( (p._value != maxNumber()/*=is set*/) && (p._value != _value)){
-        setValue(p._value);
+      if(p.getValue() != getValue()){
+        setValue(p.getValue());
         setChanged(true);
       }
-      if((p.getDefaultValue() != maxNumber()/*=is set*/) && (p.getDefaultValue() != getDefaultValue()))
+      if(p.getDefaultValue() && p.getDefaultValue() != getDefaultValue())
         setDefaultValue(p.getDefaultValue());
       if(p.getMin() != -maxNumber())
         setMin(p.getMin());
@@ -173,10 +164,6 @@ namespace onelab{
         setMax(p.getMax());
       if(p.getStep() != getStep())
         setStep(p.getStep());
-      if(p.getHelp().size() && p.getHelp() != getHelp())
-	setHelp(p.getHelp());
-      if(p.getShortHelp().size() && p.getShortHelp() != getShortHelp())
-	setHelp(p.getShortHelp());
     }
     std::string toChar()
     {

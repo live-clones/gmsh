@@ -610,26 +610,26 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(ps.size()){ // use value from server
     val[0] = ps[0].getValue();
   }
-
-  onelab::number o(name);
-  o.setDefaultValue(val[0]);
-  if(fopt.count("Range") && fopt["Range"].size() == 2){
-    o.setMin(fopt["Range"][0]); o.setMax(fopt["Range"][1]);
+  else{ // send value to server
+    onelab::number o(name, val[0]);
+    if(fopt.count("Range") && fopt["Range"].size() == 2){
+      o.setMin(fopt["Range"][0]); o.setMax(fopt["Range"][1]);
+    }
+    else if(fopt.count("Min") && fopt.count("Max")){
+      o.setMin(fopt["Min"][0]); o.setMax(fopt["Max"][0]);
+    }
+    else if(fopt.count("Min")){
+      o.setMin(fopt["Min"][0]); o.setMax(1.e200);
+    }
+    else if(fopt.count("Max")){
+      o.setMax(fopt["Max"][0]); o.setMin(-1.e200);
+    }
+    if(fopt.count("Step")) o.setStep(fopt["Step"][0]);
+    if(fopt.count("Choices")) o.setChoices(fopt["Choices"]);
+    if(copt.count("Help")) o.setHelp(copt["Help"][0]);
+    if(copt.count("ShortHelp")) o.setShortHelp(copt["ShortHelp"][0]);
+    _onelabClient->set(o);
   }
-  else if(fopt.count("Min") && fopt.count("Max")){
-    o.setMin(fopt["Min"][0]); o.setMax(fopt["Max"][0]);
-  }
-  else if(fopt.count("Min")){
-    o.setMin(fopt["Min"][0]); o.setMax(1.e200);
-  }
-  else if(fopt.count("Max")){
-    o.setMax(fopt["Max"][0]); o.setMin(-1.e200);
-  }
-  if(fopt.count("Step")) o.setStep(fopt["Step"][0]);
-  if(fopt.count("Choices")) o.setChoices(fopt["Choices"]);
-  if(copt.count("Help")) o.setHelp(copt["Help"][0]);
-  if(copt.count("ShortHelp")) o.setShortHelp(copt["ShortHelp"][0]);
-  _onelabClient->set(o);
 }
 
 void Msg::FinalizeOnelab()
