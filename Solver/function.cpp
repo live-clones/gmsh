@@ -343,6 +343,9 @@ void dataCacheMap::setNbEvaluationPoints(int nbEvaluationPoints)
   for(std::list<dataCacheMap*>::iterator it = _children.begin(); it != _children.end(); it++) {
     (*it)->setNbEvaluationPoints(nbEvaluationPoints);
   }
+  for(std::vector<dataCacheMap*>::iterator it = _secondaryCaches.begin(); it != _secondaryCaches.end(); it++) {
+    (*it)->setNbEvaluationPoints(nbEvaluationPoints);
+  }
   if (_nbEvaluationPoints == nbEvaluationPoints) {
     for(std::set<dataCacheDouble*>::iterator it = _allDataCaches.begin(); it != _allDataCaches.end(); it++)
       (*it)->_valid = false;

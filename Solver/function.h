@@ -204,7 +204,6 @@ class dataCacheDouble {
 class dataCacheMap {
   const function *_functionSolution, *_functionSolutionGradient, *_functionCoordinates, *_containerSolution, *_containerSolutionGradient;
   //handle function solution and funciton solution gradient
-  //we should get rid of them
   const function * _translate (const function *) const;
  public:
   dataCacheMap  *_parent;
@@ -269,11 +268,17 @@ class dataCacheMap {
   inline void setSolutionFunction(const function *functionSolution, const function *functionSolutionGradient) {
     _functionSolution = functionSolution;
     _functionSolutionGradient = functionSolutionGradient;
+    for(std::vector<dataCacheMap*>::iterator it = _secondaryCaches.begin(); it != _secondaryCaches.end(); it++) {
+      (*it)->setSolutionFunction(functionSolution, functionSolutionGradient);
+    }
   }
   inline void setReferenceSolutionFunction(const function *functionSolution, const function *functionSolutionGradient) {
     _containerSolution = functionSolution;
     _containerSolutionGradient = functionSolutionGradient;
     for(std::list<dataCacheMap*>::iterator it = _children.begin(); it != _children.end(); it++) {
+      (*it)->setReferenceSolutionFunction(functionSolution, functionSolutionGradient);
+    }
+    for(std::vector<dataCacheMap*>::iterator it = _secondaryCaches.begin(); it != _secondaryCaches.end(); it++) {
       (*it)->setReferenceSolutionFunction(functionSolution, functionSolutionGradient);
     }
   }
