@@ -193,7 +193,7 @@ class CTX {
   // hide all unselected entities?
   int hideUnselected;
   // hide underlying curves and surfaces of compounds (makes work a lot easier)
-  int compoundOnly;
+  int showCompounds;
   // temporary storage of rotation, translation, scale (until the GUI
   // is ready)
   double tmpRotation[3], tmpTranslation[3], tmpScale[3], tmpQuaternion[4];

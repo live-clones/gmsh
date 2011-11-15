@@ -242,7 +242,7 @@ std::list<GVertex*> GFace::vertices() const
 
 void GFace::setVisibility(char val, bool recursive)
 {
-  if (getCompound() && CTX::instance()->compoundOnly) {
+  if (getCompound() && !CTX::instance()->showCompounds) {
     GEntity::setVisibility(0);
     for (std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it)
       (*it)->setVisibility(0, true);

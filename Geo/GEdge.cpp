@@ -163,7 +163,7 @@ SOrientedBoundingBox GEdge::getOBB()
 
 void GEdge::setVisibility(char val, bool recursive)
 {
-  if (getCompound() && CTX::instance()->compoundOnly) {
+  if (getCompound() && !CTX::instance()->showCompounds) {
     // use visibility info of compound edge if this edge belongs to it 
     GEntity::setVisibility(0);
     if(v0) v0->setVisibility(0);

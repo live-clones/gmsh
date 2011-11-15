@@ -199,7 +199,7 @@ int GModel::importGEOInternals()
         f->meshAttributes.Method = s->Method;
         f->meshAttributes.extrude = s->Extrude;
         add(f);
-        if (CTX::instance()->compoundOnly)
+        if (!CTX::instance()->showCompounds)
           for (std::list<GFace*>::iterator it = comp.begin(); it != comp.end(); ++it)
             (*it)->setVisibility(0,true);
         if(s->EmbeddedCurves){

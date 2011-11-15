@@ -62,7 +62,7 @@ CTX::CTX()
 #endif
   forcedBBox = 0;
   hideUnselected = 0;
-  compoundOnly = 1;
+  showCompounds = 0;
   numWindows = numTiles = 1;
   deltaFontSize = 0;
   recentFiles.resize(5);
