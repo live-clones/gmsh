@@ -314,7 +314,9 @@ static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
     // then refresh the browser to account for recursive selections
     for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++)
       if(VisibilityList::instance()->getVisibility(i))
-        FlGui::instance()->visibility->browser->select(i + 1);
+        FlGui::instance()->visibility->browser->select(i + 1,true);
+      else
+        FlGui::instance()->visibility->browser->select(i + 1,false);
     drawContext::global()->draw();
   }
 }

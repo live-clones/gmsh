@@ -97,7 +97,6 @@ void FM_Internals::buildGModel(FM::Reader* reader, GModel* model)
 {
   for (int i = 0; i < reader->GetNumPatches(); i++)
     makeGFace(reader->GetPatch(i), model);
-  model->updateUpperTopology();
 }
 
 void GModel::_createFMInternals()

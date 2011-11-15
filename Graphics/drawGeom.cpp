@@ -509,14 +509,13 @@ void drawContext::drawGeom()
         std::for_each(m->firstVertex(), m->lastVertex(), drawGVertex(this));
       if(CTX::instance()->geom.lines || CTX::instance()->geom.linesNum || 
          CTX::instance()->geom.tangents)
-        std::for_each(m->firstEdge(true), m->lastEdge(true), drawGEdge(this));
+        std::for_each(m->firstEdge(), m->lastEdge(), drawGEdge(this));
       if(CTX::instance()->geom.surfaces || CTX::instance()->geom.surfacesNum ||
          CTX::instance()->geom.normals) {
-        GModel::fiter test = m->firstFace(true); 
-        std::for_each(m->firstFace(true), m->lastFace(true), drawGFace(this));
+        std::for_each(m->firstFace(), m->lastFace(), drawGFace(this));
       }
       if(CTX::instance()->geom.volumes || CTX::instance()->geom.volumesNum)
-        std::for_each(m->firstRegion(true), m->lastRegion(true), drawGRegion(this));
+        std::for_each(m->firstRegion(), m->lastRegion(), drawGRegion(this));
     }
   }
   

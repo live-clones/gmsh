@@ -247,9 +247,14 @@ void GFace::setVisibility(char val, bool recursive)
     for (std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it)
       (*it)->setVisibility(0, true);
     std::list<GEdge*> edgesComp = getCompound()->edges();
+    bool val2 = getCompound()->getVisibility();
     //show edges of the compound surface
-    for (std::list<GEdge*>::iterator it = edgesComp.begin(); it != edgesComp.end(); ++it)
-      (*it)->setVisibility(1, true);
+    for (std::list<GEdge*>::iterator it = edgesComp.begin(); it != edgesComp.end(); ++it) {
+      if((*it)->getCompound())
+        (*it)->getCompound()->setVisibility(val2, true);
+      else
+        (*it)->setVisibility(val2, true);
+    }
   } else {
     GEntity::setVisibility(val);
     if(recursive){

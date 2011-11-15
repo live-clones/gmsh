@@ -482,23 +482,6 @@ void GModel::setSelection(int val)
   }
 }
 
-void GModel::updateUpperTopology()
-{
-  for(eiter it = firstEdge(); it != lastEdge(); ++it) {
-    if(!(*it)->getCompound() && !edgesUpper.count((*it)))
-      edgesUpper.insert((*it));
-  }
-  for(fiter it = firstFace(); it != lastFace(); ++it) {
-    if(!(*it)->getCompound() && !facesUpper.count((*it)))
-      facesUpper.insert((*it));
-  }
-  for(riter it = firstRegion(); it != lastRegion(); ++it) {
-    if(!(*it)->getCompound() && !regionsUpper.count((*it)))
-      regionsUpper.insert((*it));
-  }
-}
-
-
 SBoundingBox3d GModel::bounds(bool aroundVisible)
 {
   std::vector<GEntity*> entities;

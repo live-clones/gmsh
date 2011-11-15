@@ -251,8 +251,13 @@ class initMeshGEdge {
  public:
   void operator () (GEdge *e)
   {
-    if(!e->getVisibility()) return;
-
+    if(!e->getVisibility()) {
+      if(e->getCompound()) {
+        if(!e->getCompound()->getVisibility()) return;
+      } else
+        return;
+    }
+      
     e->deleteVertexArrays();
     e->setAllElementsVisible(CTX::instance()->mesh.lines &&
                              areAllElementsVisible(e->lines));
@@ -302,7 +307,12 @@ class initMeshGFace {
  public:
   void operator () (GFace *f)
   {
-    if(!f->getVisibility()) return;
+    if(!f->getVisibility()) {
+      if(f->getCompound()) {
+        if(!f->getCompound()->getVisibility()) return;
+      } else
+        return;
+    }
 
     f->deleteVertexArrays();
     f->setAllElementsVisible

@@ -145,6 +145,9 @@ int GModel::importGEOInternals()
           }
           e = new GEdgeCompound(this, c->Num, comp);
           add(e);
+          if (!CTX::instance()->showCompounds)
+            for (std::vector<GEdge*>::iterator it = comp.begin(); it != comp.end(); ++it)
+              (*it)->setVisibility(0,true);
         }
         else if(!e && c->beg && c->end){
           e = new gmshEdge(this, c,
@@ -192,7 +195,7 @@ int GModel::importGEOInternals()
         if (param == 1) typ =  GFaceCompound::CONFORMAL;
         if (param == 2) typ =  GFaceCompound::RBF;
         int algo = CTX::instance()->mesh.remeshAlgo;
-	f = new GFaceCompound(this, s->Num, comp, U0, typ, algo);
+        f = new GFaceCompound(this, s->Num, comp, U0, typ, algo);
 
         f->meshAttributes.recombine = s->Recombine;
         f->meshAttributes.recombineAngle = s->RecombineAngle;
@@ -281,8 +284,6 @@ int GModel::importGEOInternals()
         ge->physicals.push_back(pnum);
     }
   }
-
-  updateUpperTopology();
 
   Msg::Debug("Gmsh model (GModel) imported:");
   Msg::Debug("%d Vertices", vertices.size());

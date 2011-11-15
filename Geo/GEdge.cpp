@@ -168,8 +168,9 @@ void GEdge::setVisibility(char val, bool recursive)
     GEntity::setVisibility(0);
     if(v0) v0->setVisibility(0);
     if(v1) v1->setVisibility(0);
-    if(getCompound()->v0) getCompound()->v0->setVisibility(1);
-    if(getCompound()->v1) getCompound()->v1->setVisibility(1);
+    bool val2 = getCompound()->getVisibility();
+    if(getCompound()->v0) getCompound()->v0->setVisibility(val2);
+    if(getCompound()->v1) getCompound()->v1->setVisibility(val2);
   } else {
     GEntity::setVisibility(val);
     if(recursive){

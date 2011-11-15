@@ -141,6 +141,12 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
 
 static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
 {
+  //if(e->dim() == 2) {
+  //  if(e->cast2Edge()->getCompound()) {
+  //    if(e->cast2Edge()->getCompound()
+  //    
+   // }
+  //}
   if(CTX::instance()->mesh.points) {
     if(CTX::instance()->mesh.pointType) {
       for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
@@ -398,7 +404,7 @@ class drawMeshGVertex {
  public:
   drawMeshGVertex(drawContext *ctx) : _ctx(ctx){}
   void operator () (GVertex *v)
-  {  
+  { 
     if(!v->getVisibility()) return;
     
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 
@@ -427,7 +433,12 @@ class drawMeshGEdge {
   drawMeshGEdge(drawContext *ctx) : _ctx(ctx){}
   void operator () (GEdge *e)
   {  
-    if(!e->getVisibility()) return;
+    if(!e->getVisibility()) {
+      if(e->getCompound()) {
+        if(!e->getCompound()->getVisibility()) return;
+      } else
+        return;
+    }
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 
                    e->model() == GModel::current());    
@@ -468,7 +479,12 @@ class drawMeshGFace {
   drawMeshGFace(drawContext *ctx) : _ctx(ctx){}
   void operator () (GFace *f)
   {  
-    if(!f->getVisibility()) return;
+    if(!f->getVisibility()) {
+      if(f->getCompound()) {
+        if(!f->getCompound()->getVisibility()) return;
+      } else
+        return;
+    }
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    f->model() == GModel::current());
