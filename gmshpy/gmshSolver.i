@@ -13,6 +13,7 @@
   #include "function.h"
   #include "functionDerivator.h"
   #include "functionPython.h"
+  #include "functionNumpy.h"
   #include "linearSystem.h"
   #include "linearSystemCSR.h"
   #include "linearSystemFull.h"
@@ -31,6 +32,7 @@ namespace std {
 %include "function.h"
 %include "functionDerivator.h"
 %include "functionPython.h"
+%include "functionNumpy.h"
 %include "linearSystem.h"
 %template(linearSystemDouble) linearSystem<double>;
 %template(linearSystemFullMatrixDouble) linearSystem<fullMatrix<double> >;

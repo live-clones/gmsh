@@ -56,37 +56,29 @@ MACRO(SWIG_GET_WRAPPER_DEPENDENCIES swigFile genWrapper language DEST_VARIABLE)
   ENDIF(NOT ${swig_getdeps_error} EQUAL 0)
 ENDMACRO(SWIG_GET_WRAPPER_DEPENDENCIES)
 
-if(ENABLE_SWIG)
-  find_package(SWIG)
-  if(SWIG_FOUND)
-    message(STATUS "Found SWIG version " ${SWIG_VERSION})
-    string(SUBSTRING ${SWIG_VERSION} 0 1 SWIG_MAJOR_VERSION)
-    if(SWIG_MAJOR_VERSION EQUAL 1)
-      message("WARNING: Python bindings require SWIG >= 2: disabling Python")
-    else(SWIG_MAJOR_VERSION EQUAL 1)
-      include(${SWIG_USE_FILE})
-      find_package(PythonLibs)
-      include_directories(${PYTHON_INCLUDE_DIR})
+if(HAVE_SWIG)
+  include(${SWIG_USE_FILE})
+  include_directories(${PYTHON_INCLUDE_DIR})
+  if(HAVE_NUMPY)
+    include_directories(${NUMPY_INC})
+    add_definitions(-DHAVE_NUMPY)
+  endif(HAVE_NUMPY)
 
-      foreach(module ${SWIG_MODULES})
-        set_source_files_properties(${module}.i PROPERTIES CPLUSPLUS ON)
+  foreach(module ${SWIG_MODULES})
+    set_source_files_properties(${module}.i PROPERTIES CPLUSPLUS ON)
 
-        # code backported from CMake git version, see CMake bug 4147
-        SWIG_GET_WRAPPER_DEPENDENCIES(${CMAKE_CURRENT_SOURCE_DIR}/\${module}.i ${CMAKE_CURRENT_BINARY_DIR}/${module}PYTHON_wrap.cxx python swig_extra_dependencies)
-        LIST(APPEND SWIG_MODULE_${module}_EXTRA_DEPS ${swig_extra_dependencies})
+    # code backported from CMake git version, see CMake bug 4147
+    SWIG_GET_WRAPPER_DEPENDENCIES(${CMAKE_CURRENT_SOURCE_DIR}/\${module}.i ${CMAKE_CURRENT_BINARY_DIR}/${module}PYTHON_wrap.cxx python swig_extra_dependencies)
+    LIST(APPEND SWIG_MODULE_${module}_EXTRA_DEPS ${swig_extra_dependencies})
 
-        swig_add_module(${module} python ${module}.i)
-        swig_link_libraries(${module} ${PYTHON_LIBRARIES} shared)
-        SET(GMSH_PYTHON_MODULES_INCLUDE_CODE 
-            "${GMSH_PYTHON_MODULES_INCLUDE_CODE}from ${module} import *\n")
-        list(APPEND GMSHPY_DEPENDS "_${module}")
-      endforeach(module)
-      add_custom_target("_gmshpy" DEPENDS ${GMSHPY_DEPENDS})
+    swig_add_module(${module} python ${module}.i)
+    swig_link_libraries(${module} ${PYTHON_LIBRARIES} shared)
+    SET(GMSH_PYTHON_MODULES_INCLUDE_CODE 
+        "${GMSH_PYTHON_MODULES_INCLUDE_CODE}from ${module} import *\n")
+    list(APPEND GMSHPY_DEPENDS "_${module}")
+  endforeach(module)
+  add_custom_target("_gmshpy" DEPENDS ${GMSHPY_DEPENDS})
 
-      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/__init__.py.in 
-                     ${CMAKE_CURRENT_BINARY_DIR}/__init__.py)
-
-
-    endif(SWIG_MAJOR_VERSION EQUAL 1)
-  endif(SWIG_FOUND)
-endif(ENABLE_SWIG)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/__init__.py.in 
+                 ${CMAKE_CURRENT_BINARY_DIR}/__init__.py)
+endif(HAVE_SWIG)
