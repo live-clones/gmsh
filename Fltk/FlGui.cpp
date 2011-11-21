@@ -44,6 +44,15 @@
 #include "Generator.h"
 #include "gl2ps.h"
 
+// check (now!) if there are any pending events, and process them
+void FlGui::check(){ Fl::check(); }
+
+// wait (possibly indefinitely) for any events, then process them
+void FlGui::wait(){ Fl::wait(); }
+
+// wait (at most time seconds) for any events, then process them
+void FlGui::wait(double time){ Fl::wait(time); }
+
 class drawContextFltk : public drawContextGlobal{
  public:
   void draw()

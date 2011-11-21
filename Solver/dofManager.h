@@ -12,14 +12,9 @@
 #include <map>
 #include <list>
 #include <iostream>
-#include "GmshConfig.h"
 #include "MVertex.h"
 #include "linearSystem.h"
 #include "fullMatrix.h"
-
-#if defined(HAVE_MPI)
-#include "mpi.h"
-#endif
 
 class Dof{
  protected:
@@ -88,18 +83,41 @@ class DofAffineConstraint{
   typename dofTraits<T>::VecType shift;
 };
 
+//non template part that can be implemented in the cxx file (and so avoid to include mpi.h in the .h file)
+class dofManagerBase{
+  protected:
+  // numbering of unknown dof blocks
+  std::map<Dof, int> unknown;
+
+  // associatations (not used ?)
+  std::map<Dof, Dof> associatedWith;
+
+  // parallel section
+  // those dof are images of ghost located on another proc (id givent by the map).
+  // this is a first try, maybe not the final implementation
+  std::map<Dof, std::pair<int, int> > ghostByDof;  // dof => procId, globalId
+  std::vector<std::vector<Dof> > ghostByProc, parentByProc;
+  int _localSize;
+  bool _parallelFinalized;
+  bool _isParallel;
+  void _parallelFinalize();
+  dofManagerBase(bool isParallel) {
+    _isParallel = isParallel;
+    _parallelFinalized = false;
+  }
+};
+
 // A manager for degrees of freedoms, templated on the value of a dof
 // (what the functional returns): float, double, complex<double>,
 // fullVecor<double>, ...
 template <class T>
-class dofManager{
+class dofManager : public dofManagerBase{
  public:
   typedef typename dofTraits<T>::VecType dataVec;
   typedef typename dofTraits<T>::MatType dataMat;
  protected:
   // general affine constraint on sub-blocks, treated by adding
   // equations:
-
   //   Dof = \sum_i dataMat_i x Dof_i + dataVec
   std::map<Dof, DofAffineConstraint< dataVec > > constraints;
 
@@ -110,38 +128,22 @@ class dofManager{
   // initial conditions (not used ?)
   std::map<Dof, std::vector<dataVec> > initial;
 
-  // numbering of unknown dof blocks
-  std::map<Dof, int> unknown;
-
-  // associatations (not used ?)
-  std::map<Dof, Dof> associatedWith;
-
   // linearSystems
-  std::map<const std::string, linearSystem<dataMat>*> _linearSystems;
   linearSystem<dataMat> *_current;
+  std::map<const std::string, linearSystem<dataMat>*> _linearSystems;
 
-  // parallel section
- private :
-  // those dof are images of ghost located on another proc (id givent by the map).
-  // this is a first try, maybe not the final implementation
-  std::map<Dof, std::pair<int, int> > ghostByDof;  // dof => procId, globalId
   std::map<Dof, T> ghostValue;
-  std::vector<std::vector<Dof> > ghostByProc, parentByProc;
-  int _localSize;
-  bool _parallelFinalized;
-  bool _isParallel;
-  void _parallelFinalize();
   public:
   void scatterSolution();
 
  public:
   dofManager(linearSystem<dataMat> *l, bool isParallel=false)
-    : _current(l), _isParallel(isParallel), _parallelFinalized(false)
+    :dofManagerBase(isParallel), _current(l)
   {
     _linearSystems["A"] = l;
   }
   dofManager(linearSystem<dataMat> *l1, linearSystem<dataMat> *l2)
-    : _current(l1), _isParallel(false), _parallelFinalized(false)
+    :dofManagerBase(false), _current(l1)
   {
     _linearSystems.insert(std::make_pair("A", l1));
     _linearSystems.insert(std::make_pair("B", l2));
@@ -556,113 +558,5 @@ class dofManager{
 		else return it->second;
 	};
 };
-
-template<class T>
-void dofManager<T>::_parallelFinalize()
-{
-  _localSize = unknown.size();
-#ifdef HAVE_MPI
-  int _numStart;
-  int _numTotal;
-  MPI_Status status;
-  parentByProc.resize(Msg::GetCommSize());
-  ghostByProc.resize(Msg::GetCommSize());
-  if (Msg::GetCommRank() == 0){
-    _numStart = 0;
-  }
-  else
-    MPI_Recv (&_numStart, 1, MPI_INT, Msg::GetCommRank()-1, 0, MPI_COMM_WORLD, &status);
-  _numTotal = _numStart + _localSize;
-  if (Msg::GetCommRank() != Msg::GetCommSize()-1)
-    MPI_Send (&_numTotal, 1, MPI_INT, Msg::GetCommRank()+1, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&_numTotal, 1, MPI_INT, Msg::GetCommSize()-1, MPI_COMM_WORLD);
-  for (std::map <Dof, int> ::iterator it = unknown.begin(); it!= unknown.end(); it++)
-    it->second += _numStart;
-  std::vector<std::list<Dof> >  ghostedByProc;
-  int *nRequest = new int[Msg::GetCommSize()];
-  int *nRequested = new int[Msg::GetCommSize()];
-  for (int i = 0; i<Msg::GetCommSize(); i++)
-    nRequest[i] = 0;
-  for (std::map <Dof, std::pair<int, int> >::iterator it = ghostByDof.begin(); it != ghostByDof.end(); it++) {
-    int procId = it->second.first;
-    it->second.second = nRequest[procId]++;
-  }
-  MPI_Alltoall(nRequest, 1, MPI_INT, nRequested, 1, MPI_INT, MPI_COMM_WORLD);
-  long int **recv0 = new long int*[Msg::GetCommSize()];
-  int **recv1 = new int*[Msg::GetCommSize()];
-  long int **send0 = new long int*[Msg::GetCommSize()];
-  int **send1 = new int*[Msg::GetCommSize()];
-  MPI_Request *reqRecv0 = new MPI_Request[2*Msg::GetCommSize()];
-  MPI_Request *reqRecv1 = reqRecv0 + Msg::GetCommSize();
-  MPI_Request *reqSend0 = new MPI_Request[Msg::GetCommSize()];
-  MPI_Request *reqSend1 = new MPI_Request[Msg::GetCommSize()];
-  for (int i = 0; i < Msg::GetCommSize(); i++) {
-    send0[i] = new long int[nRequest[i]*2];
-    recv0[i] = new long int[nRequested[i]*2];
-    send1[i] = new int[nRequested[i]];
-    recv1[i] = new int[nRequest[i]];
-    reqSend0[i] = reqSend1[i] = reqRecv0[i] = reqRecv1[i] = MPI_REQUEST_NULL;
-    parentByProc[i].resize(nRequested[i], Dof(0,0));
-    ghostByProc[i].resize(nRequest[i], Dof(0,0));
-  }
-  for (int i = 0; i<Msg::GetCommSize(); i++)
-    nRequest [i] = 0;
-  for (std::map <Dof, std::pair<int, int> >::iterator it = ghostByDof.begin(); it != ghostByDof.end(); it++) {
-    int proc = it->second.first;
-    send0 [proc] [nRequest[proc]*2] = it->first.getEntity();
-    send0 [proc] [nRequest[proc]*2+1] = it->first.getType();
-    ghostByProc[proc][nRequest[proc]] = it->first;
-    nRequest [proc] ++;
-  }
-  for (int i = 0; i<Msg::GetCommSize(); i++) {
-    if (nRequested[i] > 0) {
-      MPI_Irecv (recv0[i], 2*nRequested[i], MPI_LONG, i, 0, MPI_COMM_WORLD, &reqRecv0[i]);
-    }
-    if (nRequest[i] > 0) {
-      MPI_Irecv (recv1[i], 2*nRequest[i], MPI_INT, i, 1, MPI_COMM_WORLD, &reqRecv1[i]);
-      MPI_Isend (send0[i], 2*nRequest[i], MPI_LONG, i, 0, MPI_COMM_WORLD, &reqSend0[i]);
-    }
-  }
-  int index;
-  while (MPI_Waitany (2*Msg::GetCommSize(), reqRecv0, &index, &status) == 0 &&
-         index != MPI_UNDEFINED) {
-    if (status.MPI_TAG == 0) {
-      for (int j = 0; j < nRequested[index]; j++) {
-        Dof d(recv0[index][j*2], recv0[index][j*2+1]);
-        std::map<Dof, int>::iterator it = unknown.find(d);
-        if (it == unknown.end ())
-          Msg::Error ("ghost Dof does not exist on parent process");
-        send1[index][j] = it->second;
-        parentByProc[index][j] = d;
-      }
-      MPI_Isend(send1[index], nRequested[index], MPI_INT, index, 1,
-                MPI_COMM_WORLD, &reqSend1[index]);
-    }
-  }
-  for (int i = 0; i<Msg::GetCommSize(); i++)
-  for (int i = 0; i<Msg::GetCommSize(); i++)
-    nRequest[i] = 0;
-  for (std::map <Dof, std::pair<int, int> >::iterator it = ghostByDof.begin(); it != ghostByDof.end(); it++) {
-    int proc = it->second.first;
-    unknown[it->first] = recv1 [proc][nRequest[proc] ++];
-  }
-  MPI_Waitall (Msg::GetCommSize(), reqSend0, MPI_STATUS_IGNORE);
-  MPI_Waitall (Msg::GetCommSize(), reqSend1, MPI_STATUS_IGNORE);
-  for (int i = 0; i < Msg::GetCommSize(); i++) {
-    delete [] send0[i];
-    delete [] send1[i];
-    delete [] recv0[i];
-    delete [] recv1[i];
-  }
-  delete [] send0;
-  delete [] send1;
-  delete [] recv0;
-  delete [] recv1;
-  delete [] reqSend0;
-  delete [] reqSend1;
-  delete [] reqRecv0;
-#endif
-  _parallelFinalized = true;
-}
 
 #endif

@@ -56,6 +56,11 @@ MACRO(SWIG_GET_WRAPPER_DEPENDENCIES swigFile genWrapper language DEST_VARIABLE)
   ENDIF(NOT ${swig_getdeps_error} EQUAL 0)
 ENDMACRO(SWIG_GET_WRAPPER_DEPENDENCIES)
 
+option(ENABLE_PYTHON_LIB_API "Export all C header files needed to build the python library" OFF)
+if(ENABLE_PYTHON_LIB_API)
+  set(GMSH_API ${GMSH_API} Geo/Curvature.h Mesh/Generator.h Mesh/highOrderTools.h Mesh/meshGFaceLloyd.h Numeric/DivideAndConquer.h Post/PViewFactory.h Solver/function.h Solver/functionDerivator.h Solver/functionPython.h Solver/functionNumpy.h Solver/linearSystemPETSc.h Fltk/FlGui.h Solver/functionSpace.h Solver/STensor43.h Solver/sparsityPattern.h Solver/SElement.h Solver/groupOfElements.h PARENT_SCOPE)
+endif(ENABLE_PYTHON_LIB_API)
+
 if(HAVE_SWIG)
   include(${SWIG_USE_FILE})
   include_directories(${PYTHON_INCLUDE_DIR})

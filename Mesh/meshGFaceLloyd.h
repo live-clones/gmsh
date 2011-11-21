@@ -13,12 +13,6 @@
 #include "fullMatrix.h"
 #include "DivideAndConquer.h"
 #include <queue>
-#include "ap.h"
-#include "alglibinternal.h"
-#include "alglibmisc.h" 
-#include "linalg.h"
-#include "optimization.h"
-#include "MElementOctree.h"
 
 class GFace;
 class voronoi_vertex;
@@ -28,8 +22,6 @@ class segment;
 class segment_list;
 class metric;
 
-void callback(const alglib::real_1d_array&,double&,alglib::real_1d_array&,void*);
-bool domain_search(MElementOctree*,double,double);
 
 class smoothing{
   int ITER_MAX;
@@ -214,37 +206,6 @@ class segment_list{
   segment get_segment(int);
   bool add_segment(int,int,int);
   bool add_segment(segment);
-};
-
-class wrapper{
- private :
-  int p;
-  int dimension;
-  GFace* gf;
-  int iteration;
-  int max;
-  double start;
-  DocRecord* triangulator;
-  MElementOctree* octree;
- public :
-  wrapper();
-  ~wrapper();
-  int get_p();
-  void set_p(int);
-  int get_dimension();
-  void set_dimension(int);
-  GFace* get_face();
-  void set_face(GFace*);
-  int get_iteration();
-  void set_iteration(int);
-  int get_max();
-  void set_max(int);
-  double get_start();
-  void set_start(double);
-  DocRecord* get_triangulator();
-  void set_triangulator(DocRecord*);
-  MElementOctree* get_octree();
-  void set_octree(MElementOctree*);
 };
 
 #endif

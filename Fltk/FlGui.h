@@ -8,7 +8,6 @@
 
 #include <string>
 #include <vector>
-#include <FL/Fl.H>
 
 #define GMSH_WINDOW_BOX FL_FLAT_BOX
 #define NB_BUTT_SCROLL 25
@@ -33,6 +32,7 @@ class geometryContextWindow;
 class meshContextWindow;
 class aboutWindow;
 class onelabWindow;
+class Fl_Widget;
 
 class GVertex;
 class GEdge;
@@ -76,11 +76,11 @@ class FlGui{
   // run the GUI until there's no window left
   static int run();
   // check (now!) if there are any pending events, and process them
-  static void check(){ Fl::check(); }
+  static void check();
   // wait (possibly indefinitely) for any events, then process them
-  static void wait(){ Fl::wait(); }
+  static void wait();
   // wait (at most time seconds) for any events, then process them
-  static void wait(double time){ Fl::wait(time); }
+  static void wait(double time);
   // is a file opened through the Mac Finder?
   void setOpenedThroughMacFinder(bool val){ _openedThroughMacFinder = val; }
   bool getOpenedThroughMacFinder(){ return _openedThroughMacFinder; }

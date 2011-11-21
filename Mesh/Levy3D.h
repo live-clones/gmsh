@@ -10,12 +10,7 @@
 #include <list>
 #include "fullMatrix.h"
 #include "GRegion.h"
-#include "MElementOctree.h"
-#include "ap.h"
-#include "alglibinternal.h"
-#include "alglibmisc.h" 
-#include "linalg.h"
-#include "optimization.h"
+class MElementOctree;
 
 /*********class VoronoiVertex*********/
 
@@ -191,4 +186,3 @@ class Wrap{
 /*********functions*********/
 
 bool inside_domain(MElementOctree*,double,double,double);
-void call_back(const alglib::real_1d_array&,double&,alglib::real_1d_array&,void*);

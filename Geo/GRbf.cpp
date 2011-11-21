@@ -153,10 +153,12 @@ GRbf::GRbf (double sizeBox, int variableEps, int rbfFun, std::map<MVertex*, SVec
 
 GRbf::~GRbf(){
 #if defined (HAVE_ANN)
+  ANNpointArray XYZNodes = XYZkdtree->thePoints();
+  ANNpointArray UVNodes = UVkdtree->thePoints();
+  annDeallocPts(XYZNodes);
+  annDeallocPts(UVNodes);
   delete XYZkdtree;
   delete UVkdtree;
-  annDeallocPts(XYZnodes);
-  annDeallocPts(UVnodes);
 #endif
 
 }
@@ -164,7 +166,7 @@ GRbf::~GRbf(){
 void GRbf::buildXYZkdtree(){
 
 #if defined (HAVE_ANN)
-  XYZnodes = annAllocPts(nbNodes, 3);
+  ANNpointArray XYZnodes = annAllocPts(nbNodes, 3);
   for(int i = 0; i < nbNodes; i++){
     XYZnodes[i][0] = centers(i,0); 
     XYZnodes[i][1] = centers(i,1); 
@@ -821,7 +823,7 @@ void GRbf::solveHarmonicMap(fullMatrix<double> Oper,
   //ANN UVtree
   double dist_min = 1.e6;
 #if defined (HAVE_ANN)
-  UVnodes = annAllocPts(nbNodes, 3);
+  ANNpointArray UVnodes = annAllocPts(nbNodes, 3);
   for(int i = 0; i < nbNodes; i++){
     UVnodes[i][0] = UV(i,0); 
     UVnodes[i][1] = UV(i,1); 

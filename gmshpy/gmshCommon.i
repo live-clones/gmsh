@@ -9,7 +9,6 @@
   #include "GmshConfig.h"
 
   #include "Context.h"
-  #include "DefaultOptions.h"
   #include "Gmsh.h"
   #include "GmshDefines.h"
   #include "GmshMessage.h"
@@ -46,7 +45,6 @@ namespace std {
 %include "GmshConfig.h"
 
 %include "Context.h"
-#include "DefaultOptions.h"
 #if defined(HAVE_FLTK)
 %include "FlGui.h"
 #endif

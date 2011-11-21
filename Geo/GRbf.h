@@ -9,7 +9,7 @@
 #include "MVertex.h"
 #include "Context.h"
 #if defined(HAVE_ANN)
-#include <ANN/ANN.h>
+class ANNkd_tree;
 #endif
 
 
@@ -57,8 +57,6 @@ class GRbf {
 #if defined (HAVE_ANN)
   ANNkd_tree *XYZkdtree; 
   ANNkd_tree *UVkdtree; 
-  ANNpointArray XYZnodes;
-  ANNpointArray UVnodes;
 #endif
 
  public:

@@ -17,6 +17,13 @@
 #include "MElement.h"
 #include "MElementOctree.h"
 #include "meshGRegion.h"
+#include "ap.h"
+#include "alglibinternal.h"
+#include "alglibmisc.h" 
+#include "linalg.h"
+#include "optimization.h"
+
+void call_back(const alglib::real_1d_array&,double&,alglib::real_1d_array&,void*);
 
 /*********class VoronoiVertex*********/
 

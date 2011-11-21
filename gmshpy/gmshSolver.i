@@ -41,5 +41,7 @@ namespace std {
 %template(linearSystemTAUCSDouble) linearSystemCSRTaucs<double>;
 %include "linearSystemFull.h"
 %template(linearSystemFullDouble) linearSystemFull<double> ;
+#ifdef HAVE_PETSC
 %include "linearSystemPETSc.h"
 %template(linearSystemPETScDouble) linearSystemPETSc<double>;
+#endif

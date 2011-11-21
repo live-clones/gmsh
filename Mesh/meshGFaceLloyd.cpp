@@ -28,6 +28,47 @@
 #include "polynomialBasis.h"
 #include "MElementOctree.h"
 
+bool domain_search(MElementOctree* octree,double x,double y){
+  MElement* element;
+	
+  element = (MElement*)octree->find(x,y,0.0,2,true);
+  if(element!=NULL) return 1;
+  else return 0;
+}
+
+
+
+class wrapper{
+ private :
+  int p;
+  int dimension;
+  GFace* gf;
+  int iteration;
+  int max;
+  double start;
+  DocRecord* triangulator;
+  MElementOctree* octree;
+ public :
+  wrapper();
+  ~wrapper();
+  int get_p();
+  void set_p(int);
+  int get_dimension();
+  void set_dimension(int);
+  GFace* get_face();
+  void set_face(GFace*);
+  int get_iteration();
+  void set_iteration(int);
+  int get_max();
+  void set_max(int);
+  double get_start();
+  void set_start(double);
+  DocRecord* get_triangulator();
+  void set_triangulator(DocRecord*);
+  MElementOctree* get_octree();
+  void set_octree(MElementOctree*);
+};
+
 
 
 /****************fonction callback****************/
@@ -146,15 +187,6 @@ void callback(const alglib::real_1d_array& x,double& func,alglib::real_1d_array&
 	}
   }	
 }
-
-bool domain_search(MElementOctree* octree,double x,double y){
-  MElement* element;
-	
-  element = (MElement*)octree->find(x,y,0.0,2,true);
-  if(element!=NULL) return 1;
-  else return 0;
-}
-
 
 
 /****************class smoothing****************/
