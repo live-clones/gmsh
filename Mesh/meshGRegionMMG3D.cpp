@@ -267,7 +267,7 @@ void refineMeshMMG(GRegion *gr)
     Msg::Debug("-------- GMSH LAUNCHES MMG3D ---------------");
     mmg3d::MMG_mmg3dlib(opt,mmg,sol); 
     Msg::Debug("-------- MG3D TERMINATED -------------------");
-    updateSizes (gr,mmg, sol);
+    updateSizes(gr,mmg, sol);
   }  
   char test[] = "test.mesh";  
   MMG_saveMesh(mmg, test);
