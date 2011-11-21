@@ -9,6 +9,7 @@
 #include <math.h>
 #include <FL/Fl_Widget.H>
 #include <FL/fl_draw.H>
+#include <FL/Fl.H>
 
 // A small 2D widget to set the coordinates of a point on the unit
 // sphere.
