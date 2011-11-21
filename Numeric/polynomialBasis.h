@@ -93,7 +93,7 @@ class polynomialBasis
   fullMatrix<double> monomials;
   fullMatrix<double> coefficients;
   int numFaces;
-  inline int getNumShapeFunctions() const {return coefficients.size1();};
+  inline int getNumShapeFunctions() const {return coefficients.size1();}
   // for a given face/edge, with both a sign and a rotation, give an
   // ordered list of nodes on this face/edge
   inline const std::vector<int> &getClosure(int id) const

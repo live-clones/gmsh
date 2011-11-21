@@ -1,3 +1,5 @@
+//Author : Gaetan Bricteux
+
 #ifndef _RECUR_H_
 #define _RECUR_H_
 

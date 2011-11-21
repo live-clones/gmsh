@@ -1,3 +1,5 @@
+// Author : Gaetan Bricteux
+
 #ifndef _INTEGRATION3D_H_
 #define _INTEGRATION3D_H_
 
@@ -322,17 +324,17 @@ class DI_Element
   void getCuttingPoints (const DI_Element *e, const std::vector<gLevelset *> &RPNi,
                          std::vector<DI_CuttingPoint*> &cp) const;
   // return the ith point
-  virtual DI_Point* pt (int i) const = 0;
+  virtual DI_Point* pt(int i) const {return (i < nbVert()) ? &(pts_[i]) : &(mid_[i - nbVert()]);}
   // return the ith middle point
-  inline DI_Point* mid (int i) const {return &mid_[i];}
+  inline DI_Point* mid(int i) const {return mid_ ? &(mid_[i]) : NULL;}
   // return the coordinates of the ith point
-  virtual double x (int i) const = 0;
-  virtual double y (int i) const = 0;
-  virtual double z (int i) const = 0;
+  virtual double x(int i) const {return pt(i)->x();}
+  virtual double y(int i) const {return pt(i)->y();}
+  virtual double z(int i) const {return pt(i)->z();}
   // return the last levelset value of the ith point
-  virtual double ls (int i) const = 0;
+  virtual double ls(int i) const {return pt(i)->ls();}
   // return the jth levelset value of the ith point
-  virtual double ls (int i, int j) const = 0;
+  virtual double ls(int i, int j) const {return pt(i)->ls(j);}
   // return the number of levelset values of the points
   inline int sizeLs() const {return pts_[0].sizeLs();}
   // return the interpolating nodal shape functions evaluated at point (u,v,w)
@@ -405,27 +407,16 @@ class DI_Line : public DI_Element
   inline int type() const {return DI_LIN;}
   inline int getDim() const {return 1;}
   inline int nbVert() const {return 2;}
-  inline int nbMid() const {
-    switch(polOrder_) {
-    case 1 : return 0;
-    case 2 : return 1;
-    default : return 0;
-    }
-  }
+  inline int nbMid() const {return polOrder_ - 1;}
   inline int nbEdg() const {return 1;}
   virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
   void computeIntegral();
   inline double refIntegral() const {return 2.;}
-  inline DI_Point* pt (int i) const {return i < 2 ? &pts_[i] : &mid_[i - 2];}
-  inline double x (int i) const {return i < 2 ? pts_[i].x() : mid_[i - 2].x();}
-  inline double y (int i) const {return i < 2 ? pts_[i].y() : mid_[i - 2].y();}
-  inline double z (int i) const {return i < 2 ? pts_[i].z() : mid_[i - 2].z();}
-  inline double ls (int i) const {return i < 2 ? pts_[i].ls() : mid_[i - 2].ls();}
-  inline double ls (int i, int j) const {return i < 2 ? pts_[i].ls(j) : mid_[i - 2].ls(j);}
   void getRefIntegrationPoints (const int polynomialOrder,
                                 std::vector<DI_IntegrationPoint *> &ipS) const;
   inline void vert(const int edge, int &s1, int &s2) const {
-    s1 = 0; s2 = 1;}
+    s1 = 0; s2 = 1;
+  }
   void midV (const int e, int *s, int &n) const {
     s[0] = 0; s[1] = 1; n = 2;
   }
@@ -482,22 +473,12 @@ class DI_Triangle : public DI_Element
   inline int getDim() const {return 2;}
   inline int nbVert() const {return 3;}
   inline int nbMid() const {
-    switch(polOrder_) {
-    case 1 : return 0;
-    case 2 : return 3;
-    default : return 0;
-    }
+    return 0.5 * (polOrder_ - 1) * (polOrder_ + 4);
   }
   inline int nbEdg() const {return 3;}
   virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
   void computeIntegral();
   inline double refIntegral() const {return 0.5;}
-  inline DI_Point* pt (int i) const {return i < 3 ? &pts_[i] : &mid_[i - 3];}
-  inline double x (int i) const {return i < 3 ? pts_[i].x() : mid_[i - 3].x();}
-  inline double y (int i) const {return i < 3 ? pts_[i].y() : mid_[i - 3].y();}
-  inline double z (int i) const {return i < 3 ? pts_[i].z() : mid_[i - 3].z();}
-  inline double ls (int i) const {return i < 3 ? pts_[i].ls() : mid_[i - 3].ls();}
-  inline double ls (int i, int j) const {return i < 3 ? pts_[i].ls(j) : mid_[i - 3].ls(j);}
   void getRefIntegrationPoints (const int polynomialOrder,
                                 std::vector<DI_IntegrationPoint *> &ipS) const;
   inline void vert(const int edge, int &s1, int &s2) const {
@@ -576,22 +557,12 @@ class DI_Quad : public DI_Element
   inline int getDim() const {return 2;}
   inline int nbVert() const {return 4;}
   inline int nbMid() const {
-    switch(polOrder_) {
-    case 1 : return 0;
-    case 2 : return 5;
-    default : return 0;
-    }
+    return (polOrder_ - 1) * (polOrder_ + 3);
   }
   inline int nbEdg() const {return 4;}
   virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
   void computeIntegral();
   inline double refIntegral() const {return 4.;}
-  inline DI_Point* pt (int i) const {return i < 4 ? &pts_[i] : &mid_[i - 4];}
-  inline double x (int i) const {return i < 4 ? pts_[i].x() : mid_[i - 4].x();}
-  inline double y (int i) const {return i < 4 ? pts_[i].y() : mid_[i - 4].y();}
-  inline double z (int i) const {return i < 4 ? pts_[i].z() : mid_[i - 4].z();}
-  inline double ls (int i) const {return i < 4 ? pts_[i].ls() : mid_[i - 4].ls();}
-  inline double ls (int i, int j) const {return i < 4 ? pts_[i].ls(j) : mid_[i - 4].ls(j);}
   void getRefIntegrationPoints (const int polynomialOrder,
                                         std::vector<DI_IntegrationPoint *> &ipS) const;
   inline void vert(const int edge, int &s1, int &s2) const{
@@ -668,22 +639,12 @@ class DI_Tetra : public DI_Element
   inline int getDim() const {return 3;}
   inline int nbVert() const {return 4;}
   inline int nbMid() const {
-    switch(polOrder_) {
-    case 1 : return 0;
-    case 2 : return 6;
-    default : return 0;
-    }
+    return (polOrder_ + 1) * (polOrder_ + 2) * (polOrder_ + 3) / 6 - 4;
   }
   inline int nbEdg() const {return 6;}
   virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
   void computeIntegral();
   inline double refIntegral() const {return 1. / 6.;}
-  inline DI_Point* pt (int i) const {return i < 4 ? &pts_[i] : &mid_[i - 4];}
-  inline double x (int i) const {return i < 4 ? pts_[i].x() : mid_[i - 4].x();}
-  inline double y (int i) const {return i < 4 ? pts_[i].y() : mid_[i - 4].y();}
-  inline double z (int i) const {return i < 4 ? pts_[i].z() : mid_[i - 4].z();}
-  inline double ls (int i) const {return i < 4 ? pts_[i].ls() : mid_[i - 4].ls();}
-  inline double ls (int i, int j) const {return i < 4 ? pts_[i].ls(j) : mid_[i - 4].ls(j);}
   inline void getRefIntegrationPoints (const int polynomialOrder,
                                         std::vector<DI_IntegrationPoint *> &ip) const;
   inline void vert(const int edge, int &s1, int &s2) const {
@@ -780,22 +741,12 @@ class DI_Hexa : public DI_Element
   inline int getDim() const {return 3;}
   inline int nbVert() const {return 8;}
   inline int nbMid() const {
-    switch(polOrder_) {
-    case 1 : return 0;
-    case 2 : return 19;
-    default : return 0;
-    }
+    return (polOrder_ + 1) * (polOrder_ + 1) * (polOrder_ + 1) - 8;
   }
   inline int nbEdg() const {return 12;}
   virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
   void computeIntegral();
   inline double refIntegral() const {return 8.;}
-  inline DI_Point* pt (int i) const {return i < 8 ? &pts_[i] : &mid_[i - 8];}
-  inline double x (int i) const {return i < 8 ? pts_[i].x() : mid_[i - 8].x();}
-  inline double y (int i) const {return i < 8 ? pts_[i].y() : mid_[i - 8].y();}
-  inline double z (int i) const {return i < 8 ? pts_[i].z() : mid_[i - 8].z();}
-  inline double ls (int i) const {return i < 8 ? pts_[i].ls() : mid_[i - 8].ls();}
-  inline double ls (int i, int j) const {return i < 8 ? pts_[i].ls(j) : mid_[i - 8].ls(j);}
   void getRefIntegrationPoints (const int polynomialOrder,
                                 std::vector<DI_IntegrationPoint *> &ip) const;
   inline void vert(const int edge, int &s1, int &s2) const {

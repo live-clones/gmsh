@@ -2,6 +2,9 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
+//
+// Contributor(s):
+//   Gaetan Bricteux
 
 #ifndef _MELEMENTCUT_H_
 #define _MELEMENTCUT_H_

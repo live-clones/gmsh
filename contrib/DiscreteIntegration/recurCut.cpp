@@ -1,3 +1,5 @@
+//Author : Gaetan Bricteux
+
 #ifndef RECURCUT_CC
 #define RECURCUT_CC
 
@@ -232,13 +234,13 @@ bool signChange (RecurElement *re, const DI_Element *e, const std::vector<gLevel
       elem->addLs(e, Lsi, iPrim++, nodeLs);
       for(unsigned int i = 0; i < cp.size(); i++)
         cp[i]->addLs(elem);
-      if (re->super) re->el->addLs(elem);
+      if(re->super) re->el->addLs(elem);
       re->el->getCuttingPoints(elem, RPNi, cp);
     }
     else {
       for(unsigned int p = 0; p < cp.size(); p++)
         cp[p]->chooseLs(Lsi);
-      if (re->super) re->el->chooseLs(Lsi);
+      if(re->super) re->el->chooseLs(Lsi);
     }
   }
   re->root()->el->clearLs();

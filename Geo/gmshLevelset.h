@@ -2,6 +2,9 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
+//
+// Contributor(s):
+//   Gaetan Bricteux
 
 #ifndef _GMSH_LEVELSET_H_
 #define _GMSH_LEVELSET_H_
@@ -122,7 +125,7 @@ protected:
 public:
   gLevelsetSphere (const double &x, const double &y, const double &z, const double &R, int tag=1) : gLevelsetPrimitive(tag), xc(x), yc(y), zc(z), r(R) {}
   virtual double operator () (const double x, const double y, const double z) const
-    {return sqrt((xc - x) * (xc - x) + (yc - y) * (yc - y) + (zc - z) * (zc - z)) - r;}
+    {return (sqrt((xc - x) * (xc - x) + (yc - y) * (yc - y) + (zc - z) * (zc - z)) - abs(r)) * r / abs(r);}
   int type() const {return SPHERE;}
 };
 
