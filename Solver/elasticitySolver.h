@@ -12,7 +12,6 @@
 #include "dofManager.h"
 #include "simpleFunction.h"
 #include "functionSpace.h"
-#include "function.h"
 
 class GModel;
 class PView;

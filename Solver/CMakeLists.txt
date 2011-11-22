@@ -14,8 +14,6 @@ set(SRC
   SElement.cpp
   eigenSolver.cpp
   multiscaleLaplace.cpp
-  function.cpp
-  functionDerivator.cpp
   functionSpace.cpp
   filters.cpp
   sparsityPattern.cpp

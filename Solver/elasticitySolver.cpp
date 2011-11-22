@@ -22,7 +22,6 @@
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
-#include "function.h"
 #endif
 
 static void printLinearSystem(linearSystemCSRTaucs<double> *lsys)
