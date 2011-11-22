@@ -36,7 +36,7 @@ class eigenSolver{
 		_eigenValues.clear();
 		_eigenVectors.clear();
 	};
-	std::complex<double>& getEigenVectorComp(int num, int com){
+	std::complex<double> getEigenVectorComp(int num, int com){
 		return _eigenVectors[num][com];
 	};
 };
@@ -59,7 +59,7 @@ class eigenSolver{
   std::complex<double> getEigenValue(int num){ return 0.; }
   std::vector<std::complex<double> > &getEigenVector(int num){ return _dummy; }
   void clear(){};
-  std::complex<double>& getEigenVectorComp(int num, int com) return 0;
+  std::complex<double> getEigenVectorComp(int num, int com) {return 0.;};
 };
 
 #endif
