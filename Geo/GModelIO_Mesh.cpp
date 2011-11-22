@@ -86,10 +86,10 @@ static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
 }
 
 static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
-                        std::vector<MVertex*> &vertices)
+                        std::vector<MVertex*> &vertices, int minVertex = 0)
 {
   for(int i = 0; i < num; i++){
-    if(indices[i] < 0 || indices[i] > (int)(vec.size() - 1)){
+    if(indices[i] < minVertex || indices[i] > (int)(vec.size() - 1 + minVertex)){
       Msg::Error("Wrong vertex index %d", indices[i]);
       return false;
     }
@@ -241,6 +241,7 @@ int GModel::readMSH(const std::string &name)
   std::map<int, std::map<int, std::string> > physicals[4];
   std::map<int, MVertex*> vertexMap;
   std::vector<MVertex*> vertexVector;
+  int minVertex = 0;
 
   while(1) {
 
@@ -297,7 +298,8 @@ int GModel::readMSH(const std::string &name)
       Msg::ResetProgressMeter();
       vertexVector.clear();
       vertexMap.clear();
-      int minVertex = numVertices + 1, maxVertex = -1;
+      minVertex = numVertices + 1;
+      int maxVertex = -1;
       for(int i = 0; i < numVertices; i++) {
         int num;
         double xyz[3], uv[2];
@@ -441,7 +443,7 @@ int GModel::readMSH(const std::string &name)
             if(fscanf(fp, "%d", &indices[j]) != 1) return 0;
           std::vector<MVertex*> vertices;
           if(vertexVector.size()){
-            if(!getVertices(numVertices, indices, vertexVector, vertices)) return 0;
+            if(!getVertices(numVertices, indices, vertexVector, vertices, minVertex)) return 0;
           }
           else{
             if(!getVertices(numVertices, indices, vertexMap, vertices)) return 0;
@@ -504,7 +506,7 @@ int GModel::readMSH(const std::string &name)
             int *indices = &data[numTags + 1];
             std::vector<MVertex*> vertices;
             if(vertexVector.size()){
-              if(!getVertices(numVertices, indices, vertexVector, vertices)) return 0;
+              if(!getVertices(numVertices, indices, vertexVector, vertices, minVertex)) return 0;
             }
             else{
               if(!getVertices(numVertices, indices, vertexMap, vertices)) return 0;
