@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _GAUSS_H_
-#define _GAUSS_H_
+#ifndef _GAUSS_INTEGRATION_H_
+#define _GAUSS_INTEGRATION_H_
 
 #include "fullMatrix.h"
 

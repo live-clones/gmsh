@@ -5,7 +5,7 @@
 
 #include "Integration3D.h"
 #include "recurCut.h"
-#include "Gauss.h"
+#include "GaussIntegration.h"
 #include "polynomialBasis.h"
 #include "GmshDefines.h" 
 

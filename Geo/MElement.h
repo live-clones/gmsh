@@ -16,9 +16,7 @@
 #include "MFace.h"
 #include "polynomialBasis.h"
 #include "JacobianBasis.h"
-#include "Gauss.h"
-
-//class GFace; ??
+#include "GaussIntegration.h"
 
 // A mesh element.
 class MElement

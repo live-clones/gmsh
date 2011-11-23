@@ -12,7 +12,7 @@
 
 #include "Levy3D.h"
 #include "polynomialBasis.h"
-#include "Gauss.h"
+#include "GaussIntegration.h"
 #include "GModel.h"
 #include "MElement.h"
 #include "MElementOctree.h"

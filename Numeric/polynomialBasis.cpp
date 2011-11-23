@@ -12,7 +12,7 @@
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "polynomialBasis.h"
-#include "Gauss.h"
+#include "GaussIntegration.h"
 
 static void printClosure(polynomialBasis::clCont &fullClosure, std::vector<int> &closureRef,
                          polynomialBasis::clCont &closures)

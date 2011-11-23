@@ -8,14 +8,14 @@ set(SRC
     fullMatrix.cpp
     polynomialBasis.cpp
     JacobianBasis.cpp
-  GaussQuadratureLin.cpp
+  GaussIntegration.cpp
+    GaussQuadratureLin.cpp
     GaussQuadratureTri.cpp
     GaussQuadratureQuad.cpp
     GaussQuadratureTet.cpp
     GaussQuadratureHex.cpp
     GaussQuadraturePri.cpp
     GaussLegendreSimplex.cpp
-    Gauss.cpp
   robustPredicates.cpp
   mathEvaluator.cpp
   Iso.cpp

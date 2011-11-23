@@ -14,7 +14,7 @@
 #ifndef _QUADRATURERULES_H_
 #define _QUADRATURERULES_H_
 
-#include "Gauss.h"
+#include "GaussIntegration.h"
 #include "MElement.h"
 
 class QuadratureBase

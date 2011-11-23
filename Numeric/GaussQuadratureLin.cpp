@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include "Gauss.h"
+#include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
 
 IntPt * GQL[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};

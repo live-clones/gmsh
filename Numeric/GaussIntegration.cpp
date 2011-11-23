@@ -1,4 +1,4 @@
-#include "Gauss.h"
+#include "GaussIntegration.h"
 #include "GmshDefines.h"
 
 static void pts2fullMatrix(int npts, IntPt *pts, fullMatrix<double> &pMatrix, 

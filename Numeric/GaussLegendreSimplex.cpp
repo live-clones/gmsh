@@ -4,7 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <math.h>
-#include "Gauss.h"
+#include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
 
 static void brickToTet(double xi, double eta, double zeta,

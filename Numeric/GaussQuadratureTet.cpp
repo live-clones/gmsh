@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include "Gauss.h"
+#include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
 
 /* constants for 4-point rule */
