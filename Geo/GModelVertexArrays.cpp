@@ -7,6 +7,7 @@
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "GModel.h"
+#include "GEdgeCompound.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -254,7 +255,8 @@ class initMeshGEdge {
     if(!e->getVisibility()) {
       if(e->getCompound()) {
         if(!e->getCompound()->getVisibility()) return;
-      } else
+      } 
+      else
         return;
     }
       
