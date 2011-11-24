@@ -9,6 +9,7 @@
 #include "GModel.h"
 #include "GFace.h"
 #include "GEdge.h"
+#include "GFaceCompound.h"
 #include "GEdgeCompound.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"

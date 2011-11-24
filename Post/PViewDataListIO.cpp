@@ -6,6 +6,7 @@
 #include <string.h>
 #include <set>
 #include "PViewDataList.h"
+#include "MElement.h"
 #include "Numeric.h"
 #include "StringUtils.h"
 #include "GmshMessage.h"

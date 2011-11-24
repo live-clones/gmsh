@@ -6,6 +6,7 @@
 #include <math.h>
 #include <algorithm>
 #include "GmshConfig.h"
+#include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "drawContext.h"
 #include "PView.h"

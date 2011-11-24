@@ -12,6 +12,8 @@
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Box.H>
 #include "Context.h"
+#include "GModel.h"
+#include "GmshDefines.h"
 #include "Options.h"
 #include "OS.h"
 #include "StringUtils.h"

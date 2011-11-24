@@ -9,6 +9,7 @@
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "GModelFactory.h"
+#include "GFaceCompound.h"
 #include "MPoint.h"
 #include "MLine.h"
 #include "MTriangle.h"

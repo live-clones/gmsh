@@ -169,4 +169,6 @@ class GFaceCompound : public GFace {
 
 #endif
 
+void replaceMeshCompound(GFace*,std::list<GEdge*>&);
+
 #endif

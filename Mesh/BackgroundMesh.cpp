@@ -10,6 +10,7 @@
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
+#include "GFaceCompound.h"
 #include "GModel.h"
 #include "Field.h"
 #include "MElement.h"
@@ -527,27 +528,6 @@ static void propagateValuesOnFace (GFace *_gf,
   }
   
   delete _lsys;
-#endif
-}
-
-void replaceMeshCompound(GFace *gf, std::list<GEdge*> &edges)
-{
-#if defined(HAVE_SOLVER)
-  std::list<GEdge*> e = gf->edges();
-  //Replace edges by their compounds
-  std::set<GEdge*> mySet;
-  std::list<GEdge*>::iterator it = e.begin();
-  while(it != e.end()){
-    if((*it)->getCompound()){
-      mySet.insert((*it)->getCompound());
-    }
-    else{ 
-      mySet.insert(*it);
-    }
-    ++it;
-  }
-  edges.clear();
-  edges.insert(edges.begin(), mySet.begin(), mySet.end());
 #endif
 }
 

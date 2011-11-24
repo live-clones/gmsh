@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include "GmshConfig.h"
 #include "GModel.h"
 #include "meshGFaceOptimize.h"
 #include "ExtractEdges.h"
@@ -52,6 +53,7 @@ static void add_edge(edge_angle &ea, PViewDataList *data)
 
 PView *GMSH_ExtractEdgesPlugin::execute(PView *v)
 {
+#if defined(HAVE_MESH)
   std::vector<MTriangle*> elements;
   for(GModel::fiter it = GModel::current()->firstFace(); 
       it != GModel::current()->lastFace(); ++it)
@@ -88,4 +90,8 @@ PView *GMSH_ExtractEdgesPlugin::execute(PView *v)
   data2->finalize();
 
   return v2;
+#else
+  Msg::Error("Plugin(ExtractEdges) requires the mesh module");
+  return v;
+#endif
 }

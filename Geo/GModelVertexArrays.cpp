@@ -7,6 +7,7 @@
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "GModel.h"
+#include "GFaceCompound.h"
 #include "GEdgeCompound.h"
 #include "MLine.h"
 #include "MTriangle.h"

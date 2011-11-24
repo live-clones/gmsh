@@ -12,6 +12,7 @@
 #include "GmshSocket.h"
 #include "onelab.h"
 #include "Gmsh.h"
+#include "GModel.h"
 #include "Options.h"
 #include "Context.h"
 #include "OS.h"

@@ -10,6 +10,8 @@
 #include "GModel.h"
 #include "SBoundingBox3d.h"
 #include "GmshMessage.h"
+#include "GEdgeCompound.h"
+#include "GFaceCompound.h"
 
 class drawGVertex {
  private :

@@ -24,6 +24,7 @@
 // FIXME: should not introduce dependencies to Geo/ code in Numeric
 #include "GPoint.h"
 #include "GFace.h"
+#include "GFaceCompound.h"
 #include "MLine.h"
 
 #define Pred(x) ((x)->prev)

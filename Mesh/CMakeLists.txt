@@ -25,7 +25,6 @@ set(SRC
       highOrderSmoother.cpp 
       highOrderTools.cpp 
     meshPartition.cpp
-    meshPartitionOptions.cpp
     meshRefine.cpp
     multiscalePartition.cpp
     QuadTriUtils.cpp

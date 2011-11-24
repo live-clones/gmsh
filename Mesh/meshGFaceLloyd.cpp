@@ -7,26 +7,28 @@
 //   Tristan Carrier
 
 #include <set>
+#include <fstream>
 #include "meshGFaceLloyd.h"
-
-#if defined(HAVE_BFGS)
-
 #include "DivideAndConquer.h"
+#include "GModel.h"
 #include "GFace.h"
 #include "MElement.h"
 #include "MVertex.h"
 #include "MTriangle.h"
 #include "Context.h"
 #include "meshGFace.h"
+#include "meshGFaceOptimize.h"
 #include "BackgroundMesh.h" 
-#include <fstream>
+#include "polynomialBasis.h"
+#include "MElementOctree.h"
+
+#if defined(HAVE_BFGS)
+
 #include "ap.h"
 #include "alglibinternal.h"
 #include "alglibmisc.h"
 #include "linalg.h"
 #include "optimization.h"
-#include "polynomialBasis.h"
-#include "MElementOctree.h"
 
 bool domain_search(MElementOctree* octree,double x,double y){
   MElement* element;

@@ -150,7 +150,6 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity*> _entities,
 
 PView *GMSH_DistancePlugin::execute(PView *v)
 {
-
   int id_pt =     (int) DistanceOptions_Number[0].def;
   int id_line =   (int) DistanceOptions_Number[1].def;
   int id_face =   (int) DistanceOptions_Number[2].def;
@@ -159,7 +158,8 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   
   PView *view = new PView();
   _data = getDataList(view);
-#ifdef HAVE_TAUCS
+#if defined(HAVE_SOLVER)
+#if defined(HAVE_TAUCS)
   linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
 #else
   linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
@@ -168,7 +168,8 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   lsys->setPrec(5.e-8);
 #endif
   dofManager<double> * dofView = new dofManager<double>(lsys);
-    
+#endif
+
   std::vector<GEntity*> _entities;
   GModel::current()->getEntities(_entities);
   GEntity* ge = _entities[_entities.size()-1];

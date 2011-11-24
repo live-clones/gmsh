@@ -8,6 +8,8 @@
 #include "GmshDefines.h"
 #include "onelab.h"
 #include "Iso.h"
+#include "MEdge.h"
+#include "MFace.h"
 #include "PView.h"
 #include "PViewOptions.h"
 #include "PViewData.h"
