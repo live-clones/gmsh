@@ -60,49 +60,49 @@ static void centroid(int n, double *X, double *Y, double *Z, double *c)
   c[2] *= oc;
 }
 
-void linBB(void *a, double *min, double *max)
+static void linBB(void *a, double *min, double *max)
 {
   double *X = (double*) a, *Y = &X[2], *Z = &X[4];
   minmax(2, X, Y, Z, min, max);
 }
 
-void triBB(void *a, double *min, double *max)
+static void triBB(void *a, double *min, double *max)
 {
   double *X = (double*) a, *Y = &X[3], *Z = &X[6];
   minmax(3, X, Y, Z, min, max);
 }
 
-void quaBB(void *a, double *min, double *max)
+static void quaBB(void *a, double *min, double *max)
 {
   double *X = (double*) a, *Y = &X[4], *Z = &X[8];
   minmax(4, X, Y, Z, min, max);
 }
 
-void tetBB(void *a, double *min, double *max)
+static void tetBB(void *a, double *min, double *max)
 {
   double *X = (double*) a, *Y = &X[4], *Z = &X[8];
   minmax(4, X, Y, Z, min, max);
 }
 
-void hexBB(void *a, double *min, double *max)
+static void hexBB(void *a, double *min, double *max)
 {
   double *X = (double*) a, *Y = &X[8], *Z = &X[16];
   minmax(8, X, Y, Z, min, max);
 }
 
-void priBB(void *a, double *min, double *max)
+static void priBB(void *a, double *min, double *max)
 {
   double *X = (double*) a, *Y = &X[6], *Z = &X[12];
   minmax(6, X, Y, Z, min, max);
 }
 
-void pyrBB(void *a, double *min, double *max)
+static void pyrBB(void *a, double *min, double *max)
 {
   double *X = (double*) a, *Y = &X[5], *Z = &X[10];
   minmax(5, X, Y, Z, min, max);
 }
 
-int linInEle(void *a, double *x)
+static int linInEle(void *a, double *x)
 {
   double *X = (double*) a, *Y = &X[2], *Z = &X[4], uvw[3];
   line lin(X, Y, Z);
@@ -110,7 +110,7 @@ int linInEle(void *a, double *x)
   return lin.isInside(uvw[0], uvw[1], uvw[2]);
 }
 
-int triInEle(void *a, double *x)
+static int triInEle(void *a, double *x)
 {
   double *X = (double*) a, *Y = &X[3], *Z = &X[6], uvw[3];
   triangle tri(X, Y, Z);
@@ -118,7 +118,7 @@ int triInEle(void *a, double *x)
   return tri.isInside(uvw[0], uvw[1], uvw[2]);
 }
 
-int quaInEle(void *a, double *x)
+static int quaInEle(void *a, double *x)
 {
   double *X = (double*) a, *Y = &X[4], *Z = &X[8], uvw[3];
   quadrangle qua(X, Y, Z);
@@ -126,7 +126,7 @@ int quaInEle(void *a, double *x)
   return qua.isInside(uvw[0], uvw[1], uvw[2]);
 }
 
-int tetInEle(void *a, double *x)
+static int tetInEle(void *a, double *x)
 {
   double *X = (double*) a, *Y = &X[4], *Z = &X[8], uvw[3];
   tetrahedron tet(X, Y, Z);
@@ -134,7 +134,7 @@ int tetInEle(void *a, double *x)
   return tet.isInside(uvw[0], uvw[1], uvw[2]);
 }
 
-int hexInEle(void *a, double *x)
+static int hexInEle(void *a, double *x)
 {
   double *X = (double*) a, *Y = &X[8], *Z = &X[16], uvw[3];
   hexahedron hex(X, Y, Z);
@@ -142,7 +142,7 @@ int hexInEle(void *a, double *x)
   return hex.isInside(uvw[0], uvw[1], uvw[2]);
 }
 
-int priInEle(void *a, double *x)
+static int priInEle(void *a, double *x)
 {
   double *X = (double*) a, *Y = &X[6], *Z = &X[12], uvw[3];
   prism pri(X, Y, Z);
@@ -150,7 +150,7 @@ int priInEle(void *a, double *x)
   return pri.isInside(uvw[0], uvw[1], uvw[2]);
 }
 
-int pyrInEle(void *a, double *x)
+static int pyrInEle(void *a, double *x)
 {
   double *X = (double*) a, *Y = &X[5], *Z = &X[10], uvw[3];
   pyramid pyr(X, Y, Z);
@@ -158,43 +158,43 @@ int pyrInEle(void *a, double *x)
   return pyr.isInside(uvw[0], uvw[1], uvw[2]);
 }
 
-void linCentroid(void *a, double *x)
+static void linCentroid(void *a, double *x)
 {
   double *X = (double*) a, *Y = &X[2], *Z = &X[4];
   centroid(2, X, Y, Z, x);
 }
 
-void triCentroid(void *a, double *x)
+static void triCentroid(void *a, double *x)
 {
   double *X = (double*) a, *Y = &X[3], *Z = &X[6];
   centroid(3, X, Y, Z, x);
 }
 
-void quaCentroid(void *a, double *x)
+static void quaCentroid(void *a, double *x)
 {
   double *X = (double*) a, *Y = &X[4], *Z = &X[8];
   centroid(4, X, Y, Z, x);
 }
 
-void tetCentroid(void *a, double *x)
+static void tetCentroid(void *a, double *x)
 {
   double *X = (double*) a, *Y = &X[4], *Z = &X[8];
   centroid(4, X, Y, Z, x);
 }
 
-void hexCentroid(void *a, double *x)
+static void hexCentroid(void *a, double *x)
 {
   double *X = (double*) a, *Y = &X[8], *Z = &X[16];
   centroid(8, X, Y, Z, x);
 }
 
-void priCentroid(void *a, double *x)
+static void priCentroid(void *a, double *x)
 {
   double *X = (double*) a, *Y = &X[6], *Z = &X[12];
   centroid(6, X, Y, Z, x);
 }
 
-void pyrCentroid(void *a, double *x)
+static void pyrCentroid(void *a, double *x)
 {
   double *X = (double*) a, *Y = &X[5], *Z = &X[10];
   centroid(5, X, Y, Z, x);
