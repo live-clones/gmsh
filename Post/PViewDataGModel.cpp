@@ -449,7 +449,7 @@ int PViewDataGModel::getNumNodes(int step, int ent, int ele)
   else{
     if(e->getNumChildren())
       return e->getNumChildren() * e->getChild(0)->getNumVertices();
-    if(isAdaptive())
+    if(getAdaptiveData())
       return e->getNumVertices();
     return e->getNumPrimaryVertices();
   }

@@ -6,6 +6,7 @@
 #include "Octree.h"
 #include "OctreePost.h"
 #include "PView.h"
+#include "PViewData.h"
 #include "PViewDataList.h"
 #include "PViewDataGModel.h"
 #include "Numeric.h"
@@ -219,22 +220,33 @@ OctreePost::~OctreePost()
 }
 
 OctreePost::OctreePost(PView *v) 
-  : _SL(0), _VL(0), _TL(0), _ST(0), _VT(0), _TT(0), _SQ(0), _VQ(0), _TQ(0), 
-    _SS(0), _VS(0), _TS(0), _SH(0), _VH(0), _TH(0), _SI(0), _VI(0), _TI(0),
-    _SY(0), _VY(0), _TY(0),
-    _theView(v), _theViewDataList(0), _theViewDataGModel(0)
 {
-  _theViewDataGModel = dynamic_cast<PViewDataGModel*>(_theView->getData());
+  _create(v->getData(true)); // use adaptive data if available
+}
+
+OctreePost::OctreePost(PViewData *data) 
+{
+  _create(data);
+}
+
+void OctreePost::_create(PViewData *data)
+{
+  _SL = _VL = _TL = _ST = _VT = _TT = _SQ = _VQ = _TQ = 0; 
+  _SS = _VS = _TS = _SH = _VH = _TH = _SI = _VI = _TI = 0;
+  _SY = _VY = _TY = 0;
+  _theViewDataList = 0;
+  _theViewDataGModel = 0;
+
+  _theViewDataGModel = dynamic_cast<PViewDataGModel*>(data);
 
   if(_theViewDataGModel) return; // the octree is already available in the model
 
-  // use adaptive data if available
-  _theViewDataList = dynamic_cast<PViewDataList*>(_theView->getData(true));
+  _theViewDataList = dynamic_cast<PViewDataList*>(data);
 
   if(_theViewDataList){
     PViewDataList *l = _theViewDataList;
 
-    if(l->haveInterpolationMatrices() && !_theView->getData()->isAdaptive()){
+    if(l->haveInterpolationMatrices() && !l->isAdapted()){
       Msg::Error("Cannot create octree for non-adapted high-order list-based view: you need");
       Msg::Error("to select 'Adapt visualization grid' first");
       return;
@@ -403,9 +415,14 @@ bool OctreePost::searchScalar(double x, double y, double z, double *values,
 {
   double P[3] = {x, y, z};
 
-  if(step < 0)
-    for(int i = 0; i < _theView->getData()->getNumTimeSteps(); i++)
+  if(step < 0){
+    int numSteps = 1;
+    if(_theViewDataList) numSteps = _theViewDataList->getNumTimeSteps();
+    else if(_theViewDataGModel) numSteps = _theViewDataGModel->getNumTimeSteps();
+    for(int i = 0; i < numSteps; i++){
       values[i] = 0.0; 
+    }
+  }
   else
     values[0] = 0.0;
 
@@ -450,9 +467,13 @@ bool OctreePost::searchVector(double x, double y, double z, double *values,
 {
   double P[3] = {x, y, z};
 
-  if(step < 0)
-    for(int i = 0; i < 3 * _theView->getData()->getNumTimeSteps(); i++)
+  if(step < 0){
+    int numSteps = 1;
+    if(_theViewDataList) numSteps = _theViewDataList->getNumTimeSteps();
+    else if(_theViewDataGModel) numSteps = _theViewDataGModel->getNumTimeSteps();
+    for(int i = 0; i < 3 * numSteps; i++)
       values[i] = 0.0; 
+  }
   else
     for(int i = 0; i < 3; i++)
       values[i] = 0.0;
@@ -482,9 +503,13 @@ bool OctreePost::searchTensor(double x, double y, double z, double *values,
 {
   double P[3] = {x, y, z};
 
-  if(step < 0)
-    for(int i = 0; i < 9 * _theView->getData()->getNumTimeSteps(); i++)
+  if(step < 0){
+    int numSteps = 1;
+    if(_theViewDataList) numSteps = _theViewDataList->getNumTimeSteps();
+    else if(_theViewDataGModel) numSteps = _theViewDataGModel->getNumTimeSteps();
+    for(int i = 0; i < 9 * numSteps; i++)
       values[i] = 0.0; 
+  }
   else
     for(int i = 0; i < 9; i++)
       values[i] = 0.0;

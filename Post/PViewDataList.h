@@ -47,6 +47,7 @@ class PViewDataList : public PViewData {
   int _lastElement, _lastDimension;
   int _lastNumNodes, _lastNumComponents, _lastNumValues, _lastNumEdges, _lastType;
   double *_lastXYZ, *_lastVal;
+  bool _isAdapted;
   void _stat(std::vector<double> &D, std::vector<char> &C, int nb);
   void _stat(std::vector<double> &list, int nbcomp, int nbelm, int nbnod, int type);
   void _setLast(int ele);
@@ -56,8 +57,9 @@ class PViewDataList : public PViewData {
                   double &x, double &y, double &z, double &style);
   int _getRawData(int idxtype, std::vector<double> **l, int **ne, int *nc, int *nn);
  public:
-  PViewDataList();
+  PViewDataList(bool isAdapted=false);
   ~PViewDataList(){}
+  bool isAdapted(){ return _isAdapted; }
   bool finalize(bool computeMinMax=true, const std::string &interpolationScheme="");
   int getNumTimeSteps(){ return NbTimeStep; }
   double getTime(int step);

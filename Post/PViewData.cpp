@@ -7,11 +7,12 @@
 #include "adaptiveData.h"
 #include "Numeric.h"
 #include "GmshMessage.h"
+#include "OctreePost.h"
 
 std::map<std::string, interpolationMatrices> PViewData::_interpolationSchemes;
 
 PViewData::PViewData()
-  : _dirty(true), _fileIndex(0), _adaptive(0)
+  : _dirty(true), _fileIndex(0), _octree(0), _adaptive(0)
 {
 }
 
@@ -22,6 +23,7 @@ PViewData::~PViewData()
       it != _interpolation.end(); it++)
     for(unsigned int i = 0; i < it->second.size(); i++)
       delete it->second[i];
+  if(_octree) delete _octree;
 }
 
 bool PViewData::finalize(bool computeMinMax, const std::string &interpolationScheme)
@@ -171,4 +173,32 @@ bool PViewData::combineSpace(nameData &nd)
 { 
   Msg::Error("Combine space is not implemented for this type of data");
   return false; 
+}
+
+bool PViewData::searchScalar(double x, double y, double z, double *values, 
+                             int step, double *size)
+{
+  if(!_octree) _octree = new OctreePost(this);
+  return _octree->searchScalar(x, y, z, values, step, size);
+}
+
+bool PViewData::searchScalarWithTol(double x, double y, double z, double *values, 
+                                    int step, double *size, double tol)
+{
+  if(!_octree) _octree = new OctreePost(this);
+  return _octree->searchScalarWithTol(x, y, z, values, step, size, tol);
+}
+
+bool PViewData::searchVector(double x, double y, double z, double *values, 
+                             int step, double *size)
+{
+  if(!_octree) _octree = new OctreePost(this);
+  return _octree->searchVector(x, y, z, values, step, size);
+}
+
+bool PViewData::searchTensor(double x, double y, double z, double *values, 
+                             int step, double *size)
+{
+  if(!_octree) _octree = new OctreePost(this);
+  return _octree->searchTensor(x, y, z, values, step, size);
 }

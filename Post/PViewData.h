@@ -19,6 +19,7 @@ class GModel;
 class GEntity;
 class MElement;
 class nameData;
+class OctreePost;
 
 typedef std::map<int, std::vector<fullMatrix<double>*> > interpolationMatrices;
 
@@ -33,6 +34,8 @@ class PViewData {
   std::string _fileName;
   // index of the view in the file
   int _fileIndex;
+  // octree for rapid search
+  OctreePost *_octree;
 
  protected:
   // adaptive visualization data
@@ -184,9 +187,6 @@ class PViewData {
   // true if data is given at Gauss points (instead of vertices)
   virtual bool useGaussPoints(){ return false; }
 
-  // check if the view is adaptive
-  bool isAdaptive(){ return _adaptive ? true : false; }
-
   // initialize/destroy adaptive data
   void initAdaptiveData(int step, int level, double tol);
   void destroyAdaptiveData();
@@ -224,6 +224,20 @@ class PViewData {
 
   // get MElement (if view supports it)
   virtual MElement *getElement(int step, int entity, int element);
+
+  // search for the value of the View at point x, y, z. Values are
+  // interpolated using standard first order shape functions in the
+  // post element. If several time steps are present, they are all
+  // interpolated unless time step is set to a different value than
+  // -1.
+  bool searchScalar(double x, double y, double z, double *values, 
+                    int step=-1, double *size=0);
+  bool searchScalarWithTol(double x, double y, double z, double *values, 
+                           int step=-1, double *size=0, double tol=1.e-2);
+  bool searchVector(double x, double y, double z, double *values, 
+                    int step=-1, double *size=0);
+  bool searchTensor(double x, double y, double z, double *values, 
+                    int step=-1, double *size=0);
 
   // I/O routines
   virtual bool writeSTL(std::string fileName);

@@ -11,7 +11,7 @@
 #include "SmoothData.h"
 #include "Context.h"
 
-PViewDataList::PViewDataList()
+PViewDataList::PViewDataList(bool isAdapted)
   : PViewData(), NbTimeStep(0), Min(VAL_INF), Max(-VAL_INF), Time(0),
     NbSP(0), NbVP(0), NbTP(0), SP(0), VP(0), TP(0),
     NbSL(0), NbVL(0), NbTL(0), NbST(0), NbVT(0), NbTT(0),
@@ -20,7 +20,7 @@ PViewDataList::PViewDataList()
     NbSY(0), NbVY(0), NbTY(0), NbT2(0), NbT3(0),
     _lastElement(-1), _lastDimension(-1), _lastNumNodes(-1), 
     _lastNumComponents(-1), _lastNumValues(-1), _lastNumEdges(-1),
-    _lastType(-1), _lastXYZ(0), _lastVal(0)
+    _lastType(-1), _lastXYZ(0), _lastVal(0), _isAdapted(isAdapted)
 {
   for(int i = 0; i < 24; i++) _index[i] = 0;
 }

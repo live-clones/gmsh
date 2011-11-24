@@ -9,6 +9,7 @@
 #include "Octree.h"
 
 class PView;
+class PViewData;
 class PViewDataList;
 class PViewDataGModel;
 
@@ -22,16 +23,17 @@ class OctreePost
   Octree *_SH, *_VH, *_TH;
   Octree *_SI, *_VI, *_TI;
   Octree *_SY, *_VY, *_TY;
-  PView *_theView;
   PViewDataList *_theViewDataList;
   PViewDataGModel *_theViewDataGModel;
+  void _create(PViewData *data);
   bool _getValue(void *in, int dim, int nbNod, int nbComp, 
                  double P[3], int step, double *values,
                  double *elementSize);
   bool _getValue(void *in, int nbComp, double P[3], int step, 
                  double *values, double *elementSize);
  public :
-  OctreePost(PView *);
+  OctreePost(PView *v);
+  OctreePost(PViewData *data);
   ~OctreePost();
   // search for the value of the View at point x, y, z. Values are
   // interpolated using standard first order shape functions in the

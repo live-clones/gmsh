@@ -418,7 +418,7 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
 PView *GMSH_LevelsetPlugin::execute(PView *v)
 {
   // for adapted views we can only run the plugin on one step at a time
-  if(v->getData()->isAdaptive()){
+  if(v->getData()->getAdaptiveData()){
     PViewOptions *opt = v->getOptions();
     v->getData()->getAdaptiveData()->changeResolution
       (opt->timeStep, _recurLevel, _targetError, this);
