@@ -639,22 +639,23 @@ void DI_Element::setPolynomialOrder (int o) {
     mid_ = NULL;
   }
   polOrder_ = o;
-  switch (o) {
-  case 1 :
-    return;
-  case 2 :
-    mid_ = new DI_Point[nbMid()];
-    for(int i = 0; i < nbMid(); i++) {
-      std::vector<int> s(nbVert()); int n;
-      midV(i, &s[0], n);
-      double xc = 0, yc = 0, zc = 0;
-      for(int j = 0; j < n; j++){
-        xc += x(s[j]); yc += y(s[j]); zc += z(s[j]); }
-      mid_[i] = DI_Point(xc/n, yc/n, zc/n);
-    }
-    return;
-  default :
-    printf("Order %d function space not implemented ", o); print();
+
+  if(o == 1) return;
+
+  const polynomialBasis *fs = getFunctionSpace(o);
+  if(!fs) Msg::Error("Function space not implemented for this type of element");
+
+  mid_ = new DI_Point[nbMid()];
+  int j = nbVert();
+  int dim = getDim();
+  double u, v, w;
+  double xyz[3];
+  for(int i = 0; i < nbMid(); i++, j++) {
+    u = fs->points(j,0);
+    v = (dim > 1) ? fs->points(j,1) : 0.;
+    w = (dim > 2) ? fs->points(j,2) : 0.;
+    evalC(u, v, w, xyz, 1);
+    mid_[i] = DI_Point(xyz[0], xyz[1], xyz[2]);
   }
 }
 void DI_Element::setPolynomialOrder (int o, const DI_Element *e, const std::vector<gLevelset *> &RPNi) {
@@ -664,22 +665,23 @@ void DI_Element::setPolynomialOrder (int o, const DI_Element *e, const std::vect
     mid_ = NULL;
   }
   polOrder_ = o;
-  switch (o) {
-  case 1 :
-    return;
-  case 2 :
-    mid_ = new DI_Point[nbMid()];
-    for(int i = 0; i < nbMid(); i++) {
-      std::vector<int> s(nbVert()); int n;
-      midV(i, &s[0], n);
-      double xc = 0, yc = 0, zc = 0;
-      for(int j = 0; j < n; j++){
-        xc += x(s[j]); yc += y(s[j]); zc += z(s[j]); }
-      mid_[i] = DI_Point(xc/n, yc/n, zc/n, e, RPNi);
-    }
-    return;
-  default :
-    printf("Order %d function space not implemented ", o); print();
+
+  if(o == 1) return;
+
+  const polynomialBasis *fs = getFunctionSpace(o);
+  if(!fs) Msg::Error("Function space not implemented for this type of element");
+
+  mid_ = new DI_Point[nbMid()];
+  int j = nbVert();
+  int dim = getDim();
+  double u, v, w;
+  double xyz[3];
+  for(int i = 0; i < nbMid(); i++, j++) {
+    u = fs->points(j,0);
+    v = (dim > 1) ? fs->points(j,1) : 0.;
+    w = (dim > 2) ? fs->points(j,2) : 0.;
+    evalC(u, v, w, xyz, 1);
+    mid_[i] = DI_Point(xyz[0], xyz[1], xyz[2], e, RPNi);
   }
 }
 void DI_Element::addLs (const double *ls) {
@@ -1042,21 +1044,8 @@ bool DI_ElementLessThan::operator()(const DI_Element *e1, const DI_Element *e2) 
 // DI_Line methods --------------------------------------------------------------------------------
 const polynomialBasis* DI_Line::getFunctionSpace(int o) const{
   int order = (o == -1) ? getPolynomialOrder() : o;
-  switch (order) {
-  case 0: return polynomialBases::find(MSH_LIN_1);
-  case 1: return polynomialBases::find(MSH_LIN_2);
-  case 2: return polynomialBases::find(MSH_LIN_3);
-  case 3: return polynomialBases::find(MSH_LIN_4);
-  case 4: return polynomialBases::find(MSH_LIN_5);
-  case 5: return polynomialBases::find(MSH_LIN_6);
-  case 6: return polynomialBases::find(MSH_LIN_7);
-  case 7: return polynomialBases::find(MSH_LIN_8);
-  case 8: return polynomialBases::find(MSH_LIN_9);
-  case 9: return polynomialBases::find(MSH_LIN_10);
-  case 10: return polynomialBases::find(MSH_LIN_11);
-  default: Msg::Error("Order %d line function space not implemented", order);
-  }
-  return 0;
+  int tag = polynomialBasis::getTag(TYPE_LIN, order);
+  return polynomialBases::find(tag);
 }
 
 void DI_Line::computeIntegral() {
@@ -1076,20 +1065,8 @@ void DI_Line::computeIntegral() {
 const polynomialBasis* DI_Triangle::getFunctionSpace(int o) const
 {
   int order = (o == -1) ? getPolynomialOrder() : o;
-  switch (order) {
-    case 0: return polynomialBases::find(MSH_TRI_1);
-    case 1: return polynomialBases::find(MSH_TRI_3);
-    case 2: return polynomialBases::find(MSH_TRI_6);
-    case 3: return polynomialBases::find(MSH_TRI_10);
-    case 4: return polynomialBases::find(MSH_TRI_15);
-    case 5: return polynomialBases::find(MSH_TRI_21);
-    case 6: return polynomialBases::find(MSH_TRI_28);
-    case 7: return polynomialBases::find(MSH_TRI_36);
-    case 8: return polynomialBases::find(MSH_TRI_45);
-    case 9: return polynomialBases::find(MSH_TRI_55);
-    case 10: return polynomialBases::find(MSH_TRI_66);
-    default: Msg::Error("Order %d triangle function space not implemented", order);
-  }
+  int tag = polynomialBasis::getTag(TYPE_TRI, order);
+  return polynomialBases::find(tag);
 }
 void DI_Triangle::computeIntegral() {
   integral_ = TriSurf(pt(0), pt(1), pt(2));
@@ -1112,20 +1089,8 @@ double DI_Triangle::quality() const {
 // DI_Quad methods --------------------------------------------------------------------------------
 const polynomialBasis* DI_Quad::getFunctionSpace(int o) const{
  int order = (o == -1) ? getPolynomialOrder() : o;
- switch (order) {
-    case 0: return polynomialBases::find(MSH_QUA_1);
-    case 1: return polynomialBases::find(MSH_QUA_4);
-    case 2: return polynomialBases::find(MSH_QUA_9);
-    case 3: return polynomialBases::find(MSH_QUA_16);
-    case 4: return polynomialBases::find(MSH_QUA_25);
-    case 5: return polynomialBases::find(MSH_QUA_36);
-    case 6: return polynomialBases::find(MSH_QUA_49);
-    case 7: return polynomialBases::find(MSH_QUA_64);
-    case 8: return polynomialBases::find(MSH_QUA_81);
-    case 9: return polynomialBases::find(MSH_QUA_100);
-    case 10: return polynomialBases::find(MSH_QUA_121);
-    default: Msg::Error("Order %d quadrangle function space not implemented", order);
-  }
+  int tag = polynomialBasis::getTag(TYPE_QUA, order);
+  return polynomialBases::find(tag);
 }
 
 void DI_Quad::computeIntegral() {
@@ -1148,20 +1113,8 @@ void DI_Quad::computeIntegral() {
 // DI_Tetra methods -------------------------------------------------------------------------------
 const polynomialBasis* DI_Tetra::getFunctionSpace(int o) const{
  int order = (o == -1) ? getPolynomialOrder() : o;
- switch (order) {
-    case 0: return polynomialBases::find(MSH_TET_1);
-    case 1: return polynomialBases::find(MSH_TET_4);
-    case 2: return polynomialBases::find(MSH_TET_10);
-    case 3: return polynomialBases::find(MSH_TET_20);
-    case 4: return polynomialBases::find(MSH_TET_35);
-    case 5: return polynomialBases::find(MSH_TET_56);
-    case 6: return polynomialBases::find(MSH_TET_84);
-    case 7: return polynomialBases::find(MSH_TET_120);
-    case 8: return polynomialBases::find(MSH_TET_165);
-    case 9: return polynomialBases::find(MSH_TET_220);
-    case 10: return polynomialBases::find(MSH_TET_286);
-    default: Msg::Error("Order %d tetrahedron function space not implemented", order);
-    }
+  int tag = polynomialBasis::getTag(TYPE_TET, order);
+  return polynomialBases::find(tag);
 }
 
 void DI_Tetra::computeIntegral() {
@@ -1175,19 +1128,8 @@ double DI_Tetra::quality() const {
 // Hexahedron methods -----------------------------------------------------------------------------
 const polynomialBasis* DI_Hexa::getFunctionSpace(int o) const{
   int order = (o == -1) ? getPolynomialOrder() : o;
-  switch (order) {
-    case 0: return polynomialBases::find(MSH_HEX_1);
-    case 1: return polynomialBases::find(MSH_HEX_8);
-    case 2: return polynomialBases::find(MSH_HEX_27);
-    case 3: return polynomialBases::find(MSH_HEX_64);
-    case 4: return polynomialBases::find(MSH_HEX_125);
-    case 5: return polynomialBases::find(MSH_HEX_216);
-    case 6: return polynomialBases::find(MSH_HEX_343);
-    case 7: return polynomialBases::find(MSH_HEX_512);
-    case 8: return polynomialBases::find(MSH_HEX_729);
-    case 9: return polynomialBases::find(MSH_HEX_1000);
-    default: Msg::Error("Order %d hex function space not implemented", order);
-    }
+  int tag = polynomialBasis::getTag(TYPE_HEX, order);
+  return polynomialBases::find(tag);
 }
 void DI_Hexa::computeIntegral() {
     integral_ = TetraVol(pt(0), pt(1), pt(3), pt(4)) + TetraVol(pt(1), pt(4), pt(5), pt(7))

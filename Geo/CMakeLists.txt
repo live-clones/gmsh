@@ -34,6 +34,7 @@ set(SRC
   SOrientedBoundingBox.cpp
   GeomMeshMatcher.cpp
   MVertex.cpp
+  MEdge.cpp
   MFace.cpp
   MElement.cpp MElementOctree.cpp
     MLine.cpp MTriangle.cpp MQuadrangle.cpp MTetrahedron.cpp

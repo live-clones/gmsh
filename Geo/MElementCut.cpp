@@ -169,20 +169,51 @@ void MPolygon::_initVertices()
     SVector3 ni = _parts[i]->getFace(0).normal();
     if(dot(n, ni) < 0.) _parts[i]->revert();
   }
-
-  std::vector<MEdge> edg; // outer edges
+  // select only outer edges in vector edg
+  std::vector<MEdge> edg;
+  std::vector<MEdge> multiEdges;
   for(int j = 0; j < _parts[0]->getNumEdges(); j++)
     edg.push_back(_parts[0]->getEdge(j));
   for(unsigned int i = 1; i < _parts.size(); i++) {
-    for(int j = 0; j < 3; j++) {
+    for(int j = 0; j < _parts[i]->getNumEdges(); j++) {
+      bool found = false;
+      MEdge ed = _parts[i]->getEdge(j);
       int k;
-      for(k = edg.size() - 1; k >= 0; k--)
-        if(_parts[i]->getEdge(j) == edg[k])
-          break;
-      if(k < 0)
-        edg.push_back(_parts[i]->getEdge(j));
-      else
-        edg.erase(edg.begin() + k);
+      for(k = edg.size() - 1; k >= 0; k--){
+        if(ed == edg[k]){
+          edg.erase(edg.begin() + k);
+          found = true; break;
+        }
+      }
+      if(!found){
+        for(k = 0; k < multiEdges.size(); k++)
+          if(multiEdges[k].isInside(ed.getVertex(0)) &&
+             multiEdges[k].isInside(ed.getVertex(1))){
+            found = true; break;
+          }
+      }
+      if(!found){
+        for(k = edg.size() - 1; k >= 0; k--){
+          if(edg[k].isInside(ed.getVertex(0)) && edg[k].isInside(ed.getVertex(1))){
+            multiEdges.push_back(edg[k]);
+            edg.erase(edg.begin() + k);
+            found = true; break;
+          }
+        }
+      }
+      if(!found){
+        for(k = edg.size() - 1; k >= 0; k--){
+          if(ed.isInside(edg[k].getVertex(0)) && ed.isInside(edg[k].getVertex(1))){
+            edg.erase(edg.begin() + k);
+            int nbME = multiEdges.size();
+            if(nbME == 0 || multiEdges[nbME - 1] != ed)
+              multiEdges.push_back(ed);
+            found = true;
+          }
+        }
+      }
+      if(!found)
+        edg.push_back(ed);
     }
   }
 
