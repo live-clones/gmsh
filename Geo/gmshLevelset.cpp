@@ -499,15 +499,42 @@ double gLevelsetMathEval::operator() (const double x, const double y, const doub
 gLevelsetDistGeom::gLevelsetDistGeom(std::string name, int tag) : gLevelsetPrimitive(tag) {
   _model = new GModel();
   _model->load(name);
-   for (GModel::fiter fit = _model->firstFace(); fit != _model->lastFace(); fit++){
-     if((*it)->geomType() == GEntity::DiscreteSurface){
-
-     }
-     else{
-       for (int i = 0; i < (*fit)->stl_triangles.size(); i += 3){
-       }
-     }
-   }
+  // std::vector<double> distances;
+  // distances.clear();
+  // for (GModel::fiter fit = _model->firstFace(); fit != _model->lastFace(); fit++){
+  //   if((*it)->geomType() == GEntity::DiscreteSurface){
+  //     for(unsigned int k = 0; k < fit->getNumMeshElements(); k++){ 
+  // 	  std::vector<double> iDistances;
+  // 	  std::vector<SPoint3> iClosePts;
+  //         std::vector<double> iDistancesE;
+  // 	  MElement *e = fit->getMeshElement(k);
+  // 	  MVertex *v1 = e->getVertex(0);
+  // 	  MVertex *v2 = e->getVertex(1);
+  // 	  SPoint3 p1(v1->x(), v1->y(), v1->z());
+  // 	  SPoint3 p2(v2->x(), v2->y(), v2->z());
+  // 	  if((e->getNumVertices() == 2 && order==1) || (e->getNumVertices() == 3 && order==2)){
+  // 	    signedDistancesPointsLine(iDistances, iClosePts, pts, p1,p2);
+  // 	  }
+  // 	  else if((e->getNumVertices() == 3 && order == 1) || (e->getNumVertices() == 6 && order==2)){
+  // 	    MVertex *v3 = e->getVertex(2);
+  // 	    SPoint3 p3 (v3->x(),v3->y(),v3->z());
+  // 	    signedDistancesPointsTriangle(iDistances, iClosePts, pts, p1, p2, p3);
+  // 	  }
+  // 	  for (unsigned int kk = 0; kk< pts.size(); kk++) {
+  // 	    if (std::abs(iDistances[kk]) < distances[kk]){
+  // 	      distances[kk] = std::abs(iDistances[kk]);
+  // 	      MVertex *v = pt2Vertex[kk];
+  // 	      _distance_map[v] = distances[kk];
+  //           }
+  // 	  }
+  // 	}
+  //    }
+  //    else{
+  //      //look in utils_api_demos maincartesian
+  //      // for (int i = 0; i < (*fit)->stl_triangles.size(); i += 3){
+  //      // }
+  //    }
+  //  }
 }
 
 double gLevelsetDistGeom::operator() (const double x, const double y, const double z) const {
