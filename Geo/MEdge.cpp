@@ -25,7 +25,7 @@ bool MEdge::isInside(MVertex *v) const
   if(x < x0 - tol || x > x1 + tol ||
      y < std::min(y0, y1) - tol || y > std::max(y0, y1) + tol ||
      z < std::min(z0, z1) - tol || z > std::max(z0, z1) + tol)
-    ;return false;
+    return false;
   if(fabs(x1 - x0) > tol){
     double tx = (x - x0) / (x1 - x0);
     if(fabs(y1 - y0) > tol){
