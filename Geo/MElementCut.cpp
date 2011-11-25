@@ -612,9 +612,12 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
   //EMI : better for embedded dirichlet with smoothed properties
   //split according to values of vertices (keep +)
   bool splitElem = false;
-  int lsTag =  (verticesLs(0, e->getVertex(0)->getIndex()) > 0.0) ? -1 : 1;
+  double eps = 1.e-9;
+  int lsTag =  (verticesLs(0, e->getVertex(0)->getIndex()) > eps) ? -1 : 1;
+  //printf("*** elementsplit %g(%d) \n", verticesLs(0, e->getVertex(0)->getIndex()) , e->getVertex(0)->getIndex());
   for(int k = 1; k < e->getNumVertices(); k++){
-    int lsTag2 = (verticesLs(0, e->getVertex(k)->getIndex()) > 0.0) ? -1: 1;
+    int lsTag2 = (verticesLs(0, e->getVertex(k)->getIndex()) > eps) ? -1: 1;
+    //printf("elementsplit %g(%d) \n", verticesLs(0, e->getVertex(k)->getIndex()) , e->getVertex(k)->getIndex());
     if (lsTag*lsTag2 < 0.0) {
       lsTag = -1;
       splitElem = true;
@@ -687,13 +690,17 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
 
   //create level set interface (pt in 1D, line in 2D or face in 3D)
   if (splitElem && copy->getDim()==2){
+    //printf("*** SPLITELEM \n");
     for(int k = 0; k < copy->getNumEdges(); k++){
       MEdge me  = copy->getEdge(k);
       MVertex *v0 = me.getVertex(0);
       MVertex *v1 = me.getVertex(1);
-      double val0 = verticesLs(0, v0->getIndex());
-      double val1 = verticesLs(0, v1->getIndex());
-      if (val0*val1 > 0.0 && val0 < 0.0) { 
+      double val0 = verticesLs(0, v0->getIndex())-eps; 
+      double val1 = verticesLs(0, v1->getIndex())-eps; 
+      //printf("splitedge v0= (%g,%g) v1= (%g,%g) val0= %g(%d) val1= %g(%d) nums (%d %d)\n", v0->x(), v0->y(), v1->x(), v1->y(), 
+      //      val0, val1, v0->getIndex(), v1->getIndex(), v0->getNum(), v1->getNum());
+      if ( (val0*val1 > 0.0 && val0 < 0.0 ) ) { 
+	//printf("split edge \n");
         MLine *lin = new MLine(v0, v1); 
         getPhysicalTag(-1, gePhysicals, newPhysTags[1]);
         int c = elements[1].count(gLsTag);
@@ -701,7 +708,7 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
         int physTag = (!gePhysicals.size()) ? 0 : getBorderTag(gLsTag, c, newPhysTags[1][0], borderPhysTags[0]);
         elements[1][reg].push_back(lin);
         if(physTag) assignLsPhysical(GM, reg, 1, physicals, physTag, gLsTag);
-      }   
+      }
     }
   }
   else if (splitElem && copy->getDim()==3){
@@ -1366,10 +1373,13 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
         if(primS > 1)
           verticesLs(k, vi->getIndex()) = (*ls)(vi->x(), vi->y(), vi->z());
       }
-      else
+      else{
         verticesLs(0, vi->getIndex()) = (*ls)(vi->x(), vi->y(), vi->z());
+	//printf("xy = (%g,%g) val= %g(%g) ind=%d\n",vi->x(), vi->y(),  verticesLs(0, vi->getIndex()),-vi->x()+0.41, vi->getIndex() );
+      }
     }
   }
+  //exit(1);
 
   int numEle = gm->getNumMeshElements() + gm->getNumMeshParentElements(); //element number increment
   for(unsigned int i = 0; i < gmEntities.size(); i++) {

@@ -254,6 +254,17 @@ public:
   int type() const { return UNKNOWN; }
 };
 
+class GModel;
+class gLevelsetDistGeom: public gLevelsetPrimitive
+{
+  GModel *_model;
+public:
+  gLevelsetDistGeom(std::string f, int tag=1);
+  ~gLevelsetDistGeom(){ if (_model) delete _model; }
+  double operator () (const double x, const double y, const double z) const;
+  int type() const { return UNKNOWN; }
+};
+
 #if defined(HAVE_POST)
 class gLevelsetPostView : public gLevelsetPrimitive
 {

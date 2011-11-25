@@ -11,6 +11,7 @@
 #include <queue>
 #include <stack>
 #include "fullMatrix.h"
+#include "GModel.h"
 
 
 inline double det3(double d11, double d12, double d13, double d21, double d22, double d23, double d31, double d32, double d33) {
@@ -492,6 +493,26 @@ double gLevelsetMathEval::operator() (const double x, const double y, const doub
     values[2] = z;
     if(_expr->eval(values, res)) return res[0];
     return 1.;
+}
+
+//EMI TO DO 
+gLevelsetDistGeom::gLevelsetDistGeom(std::string name, int tag) : gLevelsetPrimitive(tag) {
+  _model = new GModel();
+  _model->load(name);
+   for (GModel::fiter fit = _model->firstFace(); fit != _model->lastFace(); fit++){
+     if((*it)->geomType() == GEntity::DiscreteSurface){
+
+     }
+     else{
+       for (int i = 0; i < (*fit)->stl_triangles.size(); i += 3){
+       }
+     }
+   }
+}
+
+double gLevelsetDistGeom::operator() (const double x, const double y, const double z) const {
+  double dist = 1.0;
+  return dist;
 }
 
 
