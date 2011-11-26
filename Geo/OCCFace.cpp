@@ -53,7 +53,9 @@ void OCCFace::setup()
       }
       else{
         l_wire.push_back(e);
-        Msg::Debug("Edge %d (%d --> %d) ori %d", e->tag(), e->getBeginVertex()->tag(), e->getEndVertex()->tag(), edge.Orientation());
+        Msg::Debug("Edge %d (%d --> %d) ori %d", e->tag(),
+                   e->getBeginVertex()->tag(), e->getEndVertex()->tag(),
+                   edge.Orientation());
         e->addFace(this);
         if(!e->is3D()){
           OCCEdge *occe = (OCCEdge*)e;
@@ -63,7 +65,7 @@ void OCCFace::setup()
     }
 
     GEdgeLoop el(l_wire);
-    //    printf("l_wire of size %d %d\n",l_wire.size(),el.count());
+    // printf("l_wire of size %d %d\n",l_wire.size(),el.count());
     for(GEdgeLoop::citer it = el.begin(); it != el.end(); ++it){
       l_edges.push_back(it->ge);
       l_dirs.push_back(it->_sign);
@@ -96,11 +98,12 @@ void OCCFace::setup()
   vmax += fabs(dv) / 100.0;
   occface = BRep_Tool::Surface(s);
 
-  //  std::list<GEdge*>::const_iterator it = l_edges.begin();
-  //  for (; it != l_edges.end(); ++it){
-  //    printf("edge %d : %d %d iseam %d \n",(*it)->tag(),(*it)->getBeginVertex()->tag(),(*it)->getEndVertex()->tag(),(*it)->isSeam(this));
-  //  }
-
+  // std::list<GEdge*>::const_iterator it = l_edges.begin();
+  // for (; it != l_edges.end(); ++it){
+  //   printf("edge %d : %d %d iseam %d \n", (*it)->tag(), 
+  //          (*it)->getBeginVertex()->tag(), (*it)->getEndVertex()->tag(),
+  //          (*it)->isSeam(this));
+  // }
 }
 
 Range<double> OCCFace::parBounds(int i) const
@@ -133,7 +136,6 @@ Pair<SVector3,SVector3> OCCFace::firstDer(const SPoint2 &param) const
   gp_Pnt pnt;
   gp_Vec du, dv;
   occface->D1(param.x(), param.y(), pnt, du, dv);
-
   return Pair<SVector3,SVector3>(SVector3(du.X(), du.Y(), du.Z()),
                                  SVector3(dv.X(), dv.Y(), dv.Z()));
 }
@@ -170,7 +172,7 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp, const double initialGuess[2]) co
   double pp[2] = {initialGuess[0],initialGuess[1]};
   proj.LowerDistanceParameters(pp[0], pp[1]);
 
-  //  Msg::Info("projection lower distance parameters %g %g",pp[0],pp[1]);
+  // Msg::Info("projection lower distance parameters %g %g",pp[0],pp[1]);
 
   if((pp[0] < umin || umax < pp[0]) || (pp[1]<vmin || vmax<pp[1])){
     Msg::Error("Point projection is out of face bounds");
@@ -217,18 +219,16 @@ GEntity::GeomType OCCFace::geomType() const
 
 double OCCFace::curvatureMax(const SPoint2 &param) const
 {
-
   const double eps = 1.e-12;
   BRepAdaptor_Surface sf(s, Standard_True);
   BRepLProp_SLProps prop(sf, 2, eps);
-  prop.SetParameters (param.x(),param.y());
+  prop.SetParameters (param.x(), param.y());
 
-  if (!prop.IsCurvatureDefined()){
+  if(!prop.IsCurvatureDefined()){
     return eps;
   }
   
   return std::max(fabs(prop.MinCurvature()), fabs(prop.MaxCurvature()));
-
 }
 
 double OCCFace::curvatures(const SPoint2 &param,
@@ -506,7 +506,6 @@ void OCCFace::replaceEdgesInternal(std::list<GEdge*> &new_edges)
       else {
 	aER.Orientation(aE.Orientation());
       }
-      //
       aBB.Add(newWire, aER);
     }
     aBB.Add(newFace, newWire);

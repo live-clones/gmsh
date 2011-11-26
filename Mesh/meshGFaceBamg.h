@@ -7,6 +7,7 @@
 #define _MESHGFACE_BAMG_
 
 class GFace;
+
 void meshGFaceBamg(GFace *gf);
 
 #endif

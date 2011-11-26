@@ -23,7 +23,7 @@ extern "C" {
 #define M_UNUSED    (1 << 0)
 }
 
-void MMG2gmsh (GRegion *gr, MMG_pMesh mmg, std::map<int,MVertex*> &mmg2gmsh)
+static void MMG2gmsh(GRegion *gr, MMG_pMesh mmg, std::map<int,MVertex*> &mmg2gmsh)
 {
   std::map<int,MVertex*> kToMVertex;
   for (int k=1;k<= mmg->np ; k++){
@@ -37,7 +37,6 @@ void MMG2gmsh (GRegion *gr, MMG_pMesh mmg, std::map<int,MVertex*> &mmg2gmsh)
     }
     else kToMVertex[k] = it->second;
   }  
-
   
   for (int k=1; k<=mmg->ne; k++) { 
     MMG_pTetra ptetra = &mmg->tetra[k]; 
@@ -55,7 +54,8 @@ void MMG2gmsh (GRegion *gr, MMG_pMesh mmg, std::map<int,MVertex*> &mmg2gmsh)
   }
 }
 
-void gmsh2MMG (GRegion *gr, MMG_pMesh mmg, MMG_pSol sol, std::map<int,MVertex*> &mmg2gmsh)
+static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol, 
+                     std::map<int,MVertex*> &mmg2gmsh)
 {
   mmg->ne = gr->tetrahedra.size();
   std::set<MVertex*> allVertices;
@@ -112,7 +112,8 @@ void gmsh2MMG (GRegion *gr, MMG_pMesh mmg, MMG_pSol sol, std::map<int,MVertex*> 
   int k=1;
   int count = 1;//sol->offset;
   std::map<int,int> gmsh2mmg_num;
-  for (std::set<MVertex*>::iterator it = allVertices.begin() ; it != allVertices.end() ; ++it){
+  for (std::set<MVertex*>::iterator it = allVertices.begin();
+       it != allVertices.end(); ++it){
     MMG_pPoint ppt = &mmg->point[k]; 
 
     ppt->c[0] = (*it)->x();
@@ -184,7 +185,7 @@ void gmsh2MMG (GRegion *gr, MMG_pMesh mmg, MMG_pSol sol, std::map<int,MVertex*> 
   
 }
 
-void updateSizes (GRegion *gr, MMG_pMesh mmg, MMG_pSol sol)
+static void updateSizes(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol)
 {
   std::list<GFace*> f = gr->faces();
   /*
@@ -238,8 +239,7 @@ void updateSizes (GRegion *gr, MMG_pMesh mmg, MMG_pSol sol)
   sol->metold = (double*)calloc(sol->npmax+1,sol->offset*sizeof(double)); 
 }
 
-
-void FREEMMG (MMG_pMesh mmgMesh, MMG_pSol mmgSol)
+static void freeMMG(MMG_pMesh mmgMesh, MMG_pSol mmgSol)
 {
   free(mmgMesh->point);
   //  free(mmgMesh->disp->alpha);
@@ -275,18 +275,18 @@ void refineMeshMMG(GRegion *gr)
   gr->deleteVertexArrays();
   for (int i=0;i<gr->tetrahedra.size();++i)delete gr->tetrahedra[i];
   gr->tetrahedra.clear();
-  //    for (int i=0;i<gr->mesh_vertices.size();++i)delete gr->mesh_vertices[i];
-  //gr->mesh_vertices.clear();
+  // for (int i=0;i<gr->mesh_vertices.size();++i)delete gr->mesh_vertices[i];
+  // gr->mesh_vertices.clear();
   
-  MMG2gmsh (gr, mmg, mmg2gmsh);  
-  FREEMMG (mmg,sol);
+  MMG2gmsh(gr, mmg, mmg2gmsh);
+  freeMMG(mmg, sol);
 }
 
 #else
 
 void refineMeshMMG(GRegion *gr)
 {
-  Msg::Error("You should compile your version of Gmsh with MMG3D, the Mobile Mesh Generator");
+  Msg::Error("This version of Gmsh is not compiled with MMG3D support");
 }
 
 #endif

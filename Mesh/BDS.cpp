@@ -15,7 +15,7 @@
 
 void outputScalarField(std::list<BDS_Face*> t, const char *iii, int param, GFace *gf)
 {
-    FILE *f = fopen(iii, "w");
+  FILE *f = fopen(iii, "w");
   if(!f) return;
   fprintf(f, "View \"scalar\" {\n");
   std::list<BDS_Face*>::iterator tit = t.begin();
@@ -263,7 +263,8 @@ BDS_Edge *BDS_Mesh::recover_edge_fast(BDS_Point *p1, BDS_Point *p2){
   return 0;
 }
 
-BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal, std::set<EdgeToRecover> *e2r, 
+BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
+                                 std::set<EdgeToRecover> *e2r, 
                                  std::set<EdgeToRecover> *not_recovered)
 {
   BDS_Edge *e = find_edge(num1, num2);

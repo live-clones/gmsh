@@ -1,5 +1,11 @@
-#include "GRbf.h"
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+//
+// Contributed by FIXME
 
+#include "GRbf.h"
 #include <math.h>
 #include <vector>
 #include "fullMatrix.h"
@@ -15,7 +21,8 @@
 #include <ANN/ANN.h>
 #endif
 
-static void SphereBB(void *a, double*mmin, double*mmax){
+static void SphereBB(void *a, double*mmin, double*mmax)
+{
   Sphere *t = (Sphere *)a;
   mmin[0] = t->center.x()-t->radius; 
   mmin[1] = t->center.y()-t->radius;
@@ -25,14 +32,16 @@ static void SphereBB(void *a, double*mmin, double*mmax){
   mmax[2] = t->center.z()+t->radius; 
 }
 
-static void SphereCentroid(void *a, double*c){
+static void SphereCentroid(void *a, double*c)
+{
   Sphere *t = (Sphere *)a;
   c[0] = t->center.x();
   c[1] = t->center.y();
   c[2] = t->center.z();
 }
 
-static int SphereInEle(void *a, double*c){
+static int SphereInEle(void *a, double*c)
+{
   Sphere *t = (Sphere *)a;
   double dist = sqrt((c[0]-t->center.x())*(c[0]-t->center.x())+
 		     (c[1]-t->center.y())*(c[1]-t->center.y())+
@@ -42,7 +51,9 @@ static int SphereInEle(void *a, double*c){
   }
   return 0;
 }
-static void printNodes(std::set<MVertex *> myNodes){
+
+static void printNodes(std::set<MVertex *> myNodes)
+{
   FILE * xyz = fopen("myNodes.pos","w");
   fprintf(xyz,"View \"\"{\n");
  for(std::set<MVertex *>::iterator itv = myNodes.begin(); itv !=myNodes.end() ; ++itv){
@@ -53,9 +64,8 @@ static void printNodes(std::set<MVertex *> myNodes){
  fclose(xyz);
 }
 
-
-static void exportParametrizedMesh(fullMatrix<double> &UV, int nbNodes){
-
+static void exportParametrizedMesh(fullMatrix<double> &UV, int nbNodes)
+{
   FILE *f = fopen ("UV.pos", "w");
   fprintf(f,"View  \" uv \" {\n");
 
@@ -68,27 +78,28 @@ static void exportParametrizedMesh(fullMatrix<double> &UV, int nbNodes){
   fclose(f);
 }
 
-GRbf::GRbf (double sizeBox, int variableEps, int rbfFun, std::map<MVertex*, SVector3> _normals, 
-	    std::set<MVertex *> allNodes, std::vector<MVertex*> bcNodes, bool _isLocal) 
-  :  sBox(sizeBox), variableShapeParam(variableEps), radialFunctionIndex (rbfFun),   _inUV(0), isLocal(_isLocal)
+GRbf::GRbf(double sizeBox, int variableEps, int rbfFun, 
+           std::map<MVertex*, SVector3> _normals, 
+           std::set<MVertex *> allNodes, std::vector<MVertex*> bcNodes, bool _isLocal) 
+  :  sBox(sizeBox), variableShapeParam(variableEps), radialFunctionIndex (rbfFun),
+     _inUV(0), isLocal(_isLocal)
 {
-
 #if defined (HAVE_ANN)
-  XYZkdtree=0;
+  XYZkdtree = 0;
 #endif
 
   allCenters.resize(allNodes.size(),3);
   double tol =  4.e-2*sBox;
   if (isLocal) tol = 1.e-15;
 
-  //remove duplicate vertices
-  //add bc nodes
+  // remove duplicate vertices
+  // add bc nodes
   for(unsigned int i = 0; i < bcNodes.size(); i++){
     myNodes.insert(bcNodes[i]);
     //if (bcNodes.size()  > 20) i+=2;
   }
   
-  //then  create Mvertex position
+  // then create Mvertex position
   std::vector<MVertex*> vertices( allNodes.begin(), allNodes.end() );
   MVertexPositionSet pos(vertices);
   for(unsigned int i = 0; i < vertices.size(); i++){
@@ -99,18 +110,18 @@ GRbf::GRbf (double sizeBox, int variableEps, int rbfFun, std::map<MVertex*, SVec
     allCenters(i,2) = v->z()/sBox;
     _mapAllV.insert(std::make_pair(v, i));
   }
-  //keep only no duplicate vertices
+  // keep only no duplicate vertices
   for(unsigned int i = 0; i < vertices.size(); i++)
     if(vertices[i]->getIndex()) myNodes.insert(vertices[i]);
       
-  //initialize with  points 
+  // initialize with  points 
   nbNodes= myNodes.size();
   centers.resize(nbNodes,3);
   normals.resize(nbNodes,3);
   int index = 0;
   double dist_min = 1.e6;
   double dist_max = 1.e-6;
-  for(std::set<MVertex *>::iterator itv = myNodes.begin(); itv !=myNodes.end() ; ++itv){
+  for(std::set<MVertex *>::iterator itv = myNodes.begin(); itv !=myNodes.end(); ++itv){
     MVertex *v1 = *itv;
     centers(index,0) = v1->x()/sBox;
     centers(index,1) = v1->y()/sBox;
@@ -122,10 +133,11 @@ GRbf::GRbf (double sizeBox, int variableEps, int rbfFun, std::map<MVertex*, SVec
       normals(index,2) = itn->second.z();
     }
     _mapV.insert(std::make_pair(v1, index));
-    for(std::set<MVertex *>::iterator itv2 = myNodes.begin(); itv2 !=myNodes.end() ; itv2++){
+    for(std::set<MVertex *>::iterator itv2 = myNodes.begin(); itv2 !=myNodes.end(); itv2++){
       MVertex *v2 = *itv2;
-      double dist = sqrt((v1->x()-v2->x())*(v1->x()-v2->x())+(v1->y()-v2->y())*(v1->y()-v2->y())
-			 +(v1->z()-v2->z())*(v1->z()-v2->z()))/sBox;
+      double dist = sqrt((v1->x()-v2->x())*(v1->x()-v2->x())+
+                         (v1->y()-v2->y())*(v1->y()-v2->y())+
+                         (v1->z()-v2->z())*(v1->z()-v2->z()))/sBox;
       if (dist<dist_min && *itv != *itv2 && dist > 1.e-5) dist_min = dist;
     }
     index++;
@@ -148,10 +160,10 @@ GRbf::GRbf (double sizeBox, int variableEps, int rbfFun, std::map<MVertex*, SVec
   }
 
   extendedX.resize(3*nbNodes,3);
-
 }
 
-GRbf::~GRbf(){
+GRbf::~GRbf()
+{
 #if defined (HAVE_ANN)
   ANNpointArray XYZNodes = XYZkdtree->thePoints();
   ANNpointArray UVNodes = UVkdtree->thePoints();
@@ -160,11 +172,10 @@ GRbf::~GRbf(){
   delete XYZkdtree;
   delete UVkdtree;
 #endif
-
 }
 
-void GRbf::buildXYZkdtree(){
-
+void GRbf::buildXYZkdtree()
+{
 #if defined (HAVE_ANN)
   ANNpointArray XYZnodes = annAllocPts(nbNodes, 3);
   for(int i = 0; i < nbNodes; i++){
@@ -174,11 +185,10 @@ void GRbf::buildXYZkdtree(){
   }
   XYZkdtree = new ANNkd_tree(XYZnodes, nbNodes, 3);
 #endif
-  
 }
 
-void GRbf::buildOctree(double radius){
-
+void GRbf::buildOctree(double radius)
+{
   printf("building octree radius = %g \n", radius);
   SBoundingBox3d bb;
   for (int i= 0; i< nbNodes; i++)
@@ -215,15 +225,13 @@ void GRbf::buildOctree(double radius){
   }
 
   Octree_Delete(oct);
-
   buildXYZkdtree();
-
 }
-//compute curvature from level set
 
+// compute curvature from level set
 void GRbf::curvatureRBF(const fullMatrix<double> &cntrs,
-			fullMatrix<double> &curvature){
-
+			fullMatrix<double> &curvature)
+{
   fullMatrix<double> extX, surf, sx,sy,sz, sxx,syy,szz, sxy,sxz,syz,sLap;
   setup_level_set(cntrs,normals,extX, surf);
 
@@ -240,8 +248,8 @@ void GRbf::curvatureRBF(const fullMatrix<double> &cntrs,
 }
 
 void GRbf::computeCurvature(const fullMatrix<double> &cntrs,
-			    std::map<MVertex*, double> &rbf_curv){
- 
+			    std::map<MVertex*, double> &rbf_curv)
+{
   fullMatrix<double> curvature(cntrs.size1(), 1);
   curvatureRBF(cntrs, curvature);
 
@@ -259,8 +267,8 @@ void GRbf::computeCurvature(const fullMatrix<double> &cntrs,
 }
 
 void GRbf::computeLocalCurvature(const fullMatrix<double> &cntrs,
-				 std::map<MVertex*, double> &rbf_curv) {
-
+				 std::map<MVertex*, double> &rbf_curv)
+{
   int numNodes = cntrs.size1();
  
   if(nodesInSphere.size() == 0) buildOctree(radius);
@@ -291,8 +299,8 @@ void GRbf::computeLocalCurvature(const fullMatrix<double> &cntrs,
 
 }
 
-double GRbf::evalRadialFnDer (int p, double dx, double dy, double dz, double ep){
-	
+double GRbf::evalRadialFnDer (int p, double dx, double dy, double dz, double ep)
+{
   double r2 = dx*dx+dy*dy+dz*dz; //r^2 
   switch (radialFunctionIndex) {
   case 0 : // GA
@@ -328,8 +336,8 @@ double GRbf::evalRadialFnDer (int p, double dx, double dy, double dz, double ep)
 
 fullMatrix<double> GRbf::generateRbfMat(int p, 
 					const fullMatrix<double> &nodes1,
-					const fullMatrix<double> &nodes2) {
-
+					const fullMatrix<double> &nodes2)
+{
   int m = nodes2.size1();
   int n = nodes1.size1();
   fullMatrix<double> rbfMat(m,n);
@@ -346,15 +354,14 @@ fullMatrix<double> GRbf::generateRbfMat(int p,
   }
 
   return rbfMat;
-
 }
 
 //DL matrix (B*inv A)
 void GRbf::RbfOp(int p,
 		const fullMatrix<double> &cntrs,
 		const fullMatrix<double> &nodes, 
-		 fullMatrix<double> &D) {
-
+		 fullMatrix<double> &D)
+{
   fullMatrix<double> rbfInvA, rbfMatB; 
 
   D.resize(nodes.size1(), cntrs.size1());
@@ -383,26 +390,26 @@ void GRbf::evalRbfDer(int p,
 		     const fullMatrix<double> &cntrs,
 		     const fullMatrix<double> &nodes,
 		     const fullMatrix<double> &fValues, 
-		      fullMatrix<double> &fApprox) {
-
+		      fullMatrix<double> &fApprox) 
+{
   fApprox.resize(nodes.size1(),fValues.size2());
   fullMatrix<double> D;
   RbfOp(p,cntrs,nodes,D);
   fApprox.gemm(D,fValues, 1.0, 0.0);
-
 }
 
 void GRbf::setup_level_set(const fullMatrix<double> &cntrs,
 			   const fullMatrix<double> &normals,
 			   fullMatrix<double> &level_set_nodes, 
-			   fullMatrix<double> &level_set_funvals){
-
+			   fullMatrix<double> &level_set_funvals)
+{
   int numNodes = cntrs.size1();
   int nTot = 3*numNodes;
   double normFactor;
   level_set_nodes.resize(nTot,3);
   level_set_funvals.resize(nTot,1);
-  fullMatrix<double> ONES(numNodes+1,1),sx(numNodes,1),sy(numNodes,1),sz(numNodes,1),norms(numNodes,3), cntrsPlus(numNodes+1,3);
+  fullMatrix<double> ONES(numNodes+1,1), sx(numNodes,1), sy(numNodes,1);
+  fullMatrix<double> sz(numNodes,1),norms(numNodes,3), cntrsPlus(numNodes+1,3);
 
   //Computes the normal vectors to the surface at each node
   for (int i=0;i<numNodes ; ++i){
@@ -446,13 +453,12 @@ void GRbf::setup_level_set(const fullMatrix<double> &cntrs,
   matAInv_nn.resize(nTot, nTot);
   matAInv_nn = generateRbfMat(0,level_set_nodes,level_set_nodes);
   matAInv_nn.invertInPlace();
-
 }
-
 
 void GRbf::RbfLapSurface_local_projection(const fullMatrix<double> &cntrs,
 					 const fullMatrix<double> &normals,
-					 fullMatrix<double> &Oper) {
+					 fullMatrix<double> &Oper)
+{
   isLocal = true;
   int numNodes = cntrs.size1();
   Oper.resize(numNodes,numNodes);
@@ -485,8 +491,8 @@ void GRbf::RbfLapSurface_local_projection(const fullMatrix<double> &cntrs,
 
 void GRbf::RbfLapSurface_global_projection( const fullMatrix<double> &cntrs,
 					   const fullMatrix<double> &normals,
-					   fullMatrix<double> &Oper){
- 
+					   fullMatrix<double> &Oper)
+{
   int numNodes = cntrs.size1();
   Oper.resize(numNodes,numNodes);
 
@@ -536,8 +542,8 @@ void GRbf::RbfLapSurface_global_projection( const fullMatrix<double> &cntrs,
 void GRbf::RbfLapSurface_local_CPM(bool isLow, 
 				  const fullMatrix<double> &cntrs,
 				  const fullMatrix<double> &normals,
-				  fullMatrix<double> &Oper){
-
+				  fullMatrix<double> &Oper)
+{
   isLocal = true;
   int numNodes = cntrs.size1();
   Oper.resize(3*numNodes,3*numNodes);
@@ -582,10 +588,11 @@ void GRbf::RbfLapSurface_local_CPM(bool isLow,
   }
  }
 
-//NEW METHOD #1 CPM GLOBAL HIGH
+// NEW METHOD #1 CPM GLOBAL HIGH
 void GRbf::RbfLapSurface_global_CPM_high_2(const fullMatrix<double> &cntrs,
 					   const fullMatrix<double> &normals,
-					   fullMatrix<double> &Oper){
+					   fullMatrix<double> &Oper)
+{
   Msg::Info("*** RBF ... building Laplacian operator");
   int numNodes = cntrs.size1();
   int nnTot = 3*numNodes;
@@ -637,14 +644,13 @@ void GRbf::RbfLapSurface_global_CPM_high_2(const fullMatrix<double> &cntrs,
   Msg::Info("*** RBF builded Laplacian operator");
 }
 
-
 //NEW METHOD #2 CPM GLOBAL HIGH
 //Produces a nxn differentiation matrix (like the projection method)
 //So the local method for this is the local projection method
 void GRbf::RbfLapSurface_global_CPM_high(const fullMatrix<double> &cntrs,
 					const fullMatrix<double> &normals,
-					fullMatrix<double> &Oper){
-
+					fullMatrix<double> &Oper)
+{
   Msg::Info("*** RBF ... building Laplacian operator");
   int numNodes = cntrs.size1();
   int nnTot = 3*numNodes;
@@ -702,8 +708,8 @@ void GRbf::RbfLapSurface_global_CPM_high(const fullMatrix<double> &cntrs,
 
 void GRbf::RbfLapSurface_global_CPM_low(const fullMatrix<double> &cntrs,
 				       const fullMatrix<double> &normals,
-				       fullMatrix<double> &Oper) {
-
+				       fullMatrix<double> &Oper) 
+{
   int numNodes = cntrs.size1();
   int nnTot = 3*numNodes;
   Oper.resize(nnTot,nnTot);
@@ -758,7 +764,8 @@ void GRbf::RbfLapSurface_global_CPM_low(const fullMatrix<double> &cntrs,
 void GRbf::solveHarmonicMap(fullMatrix<double> Oper, 
 			    std::vector<MVertex*> bcNodes, 
 			    std::vector<double> coords, 
-			    std::map<MVertex*, SPoint3> &rbf_param){
+			    std::map<MVertex*, SPoint3> &rbf_param)
+{
   Msg::Info("*** RBF ... solving map");
   int nb = Oper.size2(); 
   UV.resize(nb,2);
@@ -852,13 +859,12 @@ void GRbf::solveHarmonicMap(fullMatrix<double> Oper,
  
   Msg::Info("*** RBF solved map");
   exportParametrizedMesh(UV, nbNodes);
-
 }
 
 bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
 		    double &XX, double &YY, double &ZZ, 
-		    SVector3 &dXdu, SVector3& dXdv, int num_neighbours){
-
+		    SVector3 &dXdu, SVector3& dXdv, int num_neighbours)
+{
   if (u_eval == lastU && v_eval == lastV){
     XX = lastX;
     YY = lastY;
@@ -875,16 +881,16 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
   u_vec_eval(0,1) = v_eval;
   u_vec_eval(0,2) = 0.0;
 
-   double dist_min  = 1.e6;
-
+  double dist_min  = 1.e6;
+   
 #if defined (HAVE_ANN)
-   double uvw[3] = { u_eval, v_eval, 0.0 };
-   ANNidxArray index = new ANNidx[num_neighbours];
-   ANNdistArray dist = new ANNdist[num_neighbours]; 
-   UVkdtree->annkSearch(uvw, num_neighbours, index, dist);
-
- for (int i = 0; i < num_neighbours; i++){
-
+  double uvw[3] = { u_eval, v_eval, 0.0 };
+  ANNidxArray index = new ANNidx[num_neighbours];
+  ANNdistArray dist = new ANNdist[num_neighbours]; 
+  UVkdtree->annkSearch(uvw, num_neighbours, index, dist);
+  
+  for (int i = 0; i < num_neighbours; i++){
+    
     u_vec(i,0) = UV(index[i],0);
     u_vec(i,1) = UV(index[i],1);
     u_vec(i,2) = 0.0;
@@ -898,34 +904,33 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
     			 (UV(index[i],1)-UV(index[j],1))*(UV(index[i],1)-UV(index[j],1)));
       if (dist<dist_min && dist > 1.e-5) dist_min = dist;
     }
- }
- delete [] index;
- delete [] dist;
+  }
+  delete [] index;
+  delete [] dist;
 #endif
   
-   _inUV = 1;
-   deltaUV = 0.3*dist_min;
-   evalRbfDer(0, u_vec, u_vec_eval,xyz_local, nodes_eval);
-   evalRbfDer(1, u_vec, u_vec_eval,xyz_local, xu);
-   evalRbfDer(2, u_vec, u_vec_eval,xyz_local, xv);
-   _inUV= 0; 
-
-   XX = nodes_eval(0,0)*sBox;
-   YY = nodes_eval(0,1)*sBox;
-   ZZ = nodes_eval(0,2)*sBox;
-   dXdu = SVector3(xu(0,0)*sBox, xu(0,1)*sBox, xu(0,2)*sBox);
-   dXdv = SVector3(xv(0,0)*sBox, xv(0,1)*sBox, xv(0,2)*sBox);
-   
-   //store last computation
-   lastU = u_eval;
-   lastV = v_eval;
-   lastX = XX;
-   lastY = YY;
-   lastZ = ZZ;
-   lastDXDU = dXdu ;
-   lastDXDV = dXdv ;
-   return true;
-
+  _inUV = 1;
+  deltaUV = 0.3*dist_min;
+  evalRbfDer(0, u_vec, u_vec_eval,xyz_local, nodes_eval);
+  evalRbfDer(1, u_vec, u_vec_eval,xyz_local, xu);
+  evalRbfDer(2, u_vec, u_vec_eval,xyz_local, xv);
+  _inUV= 0; 
+  
+  XX = nodes_eval(0,0)*sBox;
+  YY = nodes_eval(0,1)*sBox;
+  ZZ = nodes_eval(0,2)*sBox;
+  dXdu = SVector3(xu(0,0)*sBox, xu(0,1)*sBox, xu(0,2)*sBox);
+  dXdv = SVector3(xv(0,0)*sBox, xv(0,1)*sBox, xv(0,2)*sBox);
+  
+  //store last computation
+  lastU = u_eval;
+  lastV = v_eval;
+  lastX = XX;
+  lastY = YY;
+  lastZ = ZZ;
+  lastDXDU = dXdu ;
+  lastDXDV = dXdv ;
+  return true;
 }
 
 // bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
@@ -1082,5 +1087,4 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
 
 // #endif
 // }
-
 

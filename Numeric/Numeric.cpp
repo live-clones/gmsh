@@ -504,10 +504,10 @@ void eigenvalue(double mat[3][3], double v[3])
   c[1] = 0.5 * (c[2] * c[2] - trace2(mat));
   c[0] = - det3x3(mat);
   
-  //printf("%g %g %g\n", mat[0][0], mat[0][1], mat[0][2]);
-  //printf("%g %g %g\n", mat[1][0], mat[1][1], mat[1][2]);
-  //printf("%g %g %g\n", mat[2][0], mat[2][1], mat[2][2]);
-  //printf("%g x^3 + %g x^2 + %g x + %g = 0\n", c[3], c[2], c[1], c[0]);
+  // printf("%g %g %g\n", mat[0][0], mat[0][1], mat[0][2]);
+  // printf("%g %g %g\n", mat[1][0], mat[1][1], mat[1][2]);
+  // printf("%g %g %g\n", mat[2][0], mat[2][1], mat[2][2]);
+  // printf("%g x^3 + %g x^2 + %g x + %g = 0\n", c[3], c[2], c[1], c[0]);
   
   double imag[3];
   FindCubicRoots(c, v, imag);
@@ -522,7 +522,7 @@ void FindCubicRoots(const double coef[4], double real[3], double imag[3])
   double d = coef[0];
 
   if(!a || !d){
-    //    Msg::Error("Degenerate cubic: use a second degree solver!");
+    // Msg::Error("Degenerate cubic: use a second degree solver!");
     return;
   }
 
@@ -896,7 +896,8 @@ void signedDistancesPointsTriangle(std::vector<double> &distances,
         closePt = p3;
         d = sign * std::min(fabs(d), p.distance(p3));
       }
-      //d = sign * std::min(fabs(d), std::min(std::min(p.distance(p1), p.distance(p2)),p.distance(p3)));
+      //d = sign * std::min(fabs(d), std::min(std::min(p.distance(p1),
+      //      p.distance(p2)),p.distance(p3)));
       distances[i] = d;
       closePts[i] = closePt;
     }
@@ -952,41 +953,49 @@ void changeReferential(const int direction,const SPoint3 &p,const SPoint3 &close
                        const SPoint3 &p1, const SPoint3 &p2, double* xp, double* yp,
                        double* otherp, double* x, double* y, double* other)
 {
-  if (direction == 1){
-    const SPoint3 &d1=SPoint3(1.0,0.0,0.0);
-    const SPoint3 &d=SPoint3(p2.x()-p1.x(),p2.y()-p1.y(),p2.z()-p1.z());
-    double norm=sqrt( d.x()*d.x()+d.y()*d.y()+d.z()*d.z() );
-    const SPoint3 &dn=SPoint3(d.x()/norm,d.y()/norm,d.z()/norm);
-    const SPoint3 &d3=SPoint3(d1.y()*dn.z()-d1.z()*dn.y(),d1.z()*dn.x()-d1.x()*dn.z(),d1.x()*dn.y()-d1.y()*dn.x());
-    norm=sqrt( d3.x()*d3.x()+d3.y()*d3.y()+d3.z()*d3.z() );
-    const SPoint3 &d3n=SPoint3(d3.x()/norm,d3.y()/norm,d3.z()/norm);
-    const SPoint3 &d2=SPoint3(d3n.y()*d1.z()-d3n.z()*d1.y(),d3n.z()*d1.x()-d3n.x()*d1.z(),d3n.x()*d1.y()-d3n.y()*d1.x());
-    norm=sqrt( d2.x()*d2.x()+d2.y()*d2.y()+d2.z()*d2.z() );
-    const SPoint3 &d2n=SPoint3(d2.x()/norm,d2.y()/norm,d2.z()/norm);
-    *xp=p.x()*d1.x()+p.y()*d1.y()+p.z()*d1.z();
-    *yp=p.x()*d3n.x()+p.y()*d3n.y()+p.z()*d3n.z();
-    *otherp=p.x()*d2n.x()+p.y()*d2n.y()+p.z()*d2n.z();
-    *x=closePt.x()*d1.x()+closePt.y()*d1.y()+closePt.z()*d1.z();
-    *y=closePt.x()*d3n.x()+closePt.y()*d3n.y()+closePt.z()*d3n.z();
-    *other=closePt.x()*d2n.x()+closePt.y()*d2n.y()+closePt.z()*d2n.z();
+  if(direction == 1){
+    const SPoint3 &d1 = SPoint3(1.0, 0.0, 0.0);
+    const SPoint3 &d = SPoint3(p2.x() - p1.x(), p2.y() - p1.y(), p2.z() - p1.z());
+    double norm = sqrt(d.x() * d.x() + d.y() * d.y() + d.z() * d.z());
+    const SPoint3 &dn = SPoint3(d.x() / norm, d.y() / norm, d.z() / norm);
+    const SPoint3 &d3 = SPoint3(d1.y() * dn.z() - d1.z() * dn.y(),
+                                d1.z() * dn.x() - d1.x() * dn.z(),
+                                d1.x() * dn.y() - d1.y() * dn.x());
+    norm = sqrt(d3.x() * d3.x() + d3.y() * d3.y() + d3.z() * d3.z());
+    const SPoint3 &d3n = SPoint3(d3.x() / norm, d3.y() / norm, d3.z() / norm);
+    const SPoint3 &d2 = SPoint3(d3n.y() * d1.z() - d3n.z() * d1.y(),
+                                d3n.z() * d1.x() - d3n.x() * d1.z(),
+                                d3n.x() * d1.y() - d3n.y() * d1.x());
+    norm = sqrt(d2.x() * d2.x() + d2.y() * d2.y() + d2.z() * d2.z());
+    const SPoint3 &d2n = SPoint3(d2.x() / norm, d2.y() / norm, d2.z() / norm);
+    *xp = p.x() * d1.x() + p.y() * d1.y() + p.z() * d1.z();
+    *yp = p.x() * d3n.x() + p.y() * d3n.y() + p.z() * d3n.z();
+    *otherp = p.x() * d2n.x() + p.y() * d2n.y() + p.z() * d2n.z();
+    *x = closePt.x() * d1.x() + closePt.y() * d1.y() + closePt.z() * d1.z();
+    *y = closePt.x() * d3n.x() + closePt.y() * d3n.y() + closePt.z() * d3n.z();
+    *other = closePt.x() * d2n.x() + closePt.y() * d2n.y() + closePt.z() * d2n.z();
   }
   else{
-    const SPoint3 &d2=SPoint3(0.0,1.0,0.0);
-    const SPoint3 &d=SPoint3(p2.x()-p1.x(),p2.y()-p1.y(),p2.z()-p1.z());
-    double norm=sqrt( d.x()*d.x()+d.y()*d.y()+d.z()*d.z() );
-    const SPoint3 &dn=SPoint3(d.x()/norm,d.y()/norm,d.z()/norm);
-    const SPoint3 &d3=SPoint3(dn.y()*d2.z()-dn.z()*d2.y(),dn.z()*d2.x()-dn.x()*d2.z(),dn.x()*d2.y()-dn.y()*d2.x());
-    norm=sqrt( d3.x()*d3.x()+d3.y()*d3.y()+d3.z()*d3.z() );
-    const SPoint3 &d3n=SPoint3(d3.x()/norm,d3.y()/norm,d3.z()/norm);
-    const SPoint3 &d1=SPoint3(d2.y()*d3n.z()-d2.z()*d3n.y(),d2.z()*d3n.x()-d2.x()*d3n.z(),d2.x()*d3n.y()-d2.y()*d3n.x());
-    norm=sqrt( d1.x()*d1.x()+d1.y()*d1.y()+d1.z()*d1.z() );
-    const SPoint3 &d1n=SPoint3(d1.x()/norm,d1.y()/norm,d1.z()/norm);
-    *xp=p.x()*d2.x()+p.y()*d2.y()+p.z()*d2.z();
-    *yp=p.x()*d3n.x()+p.y()*d3n.y()+p.z()*d3n.z();
-    *otherp=p.x()*d1n.x()+p.y()*d1n.y()+p.z()*d1n.z();
-    *x=closePt.x()*d2.x()+closePt.y()*d2.y()+closePt.z()*d2.z();
-    *y=closePt.x()*d3n.x()+closePt.y()*d3n.y()+closePt.z()*d3n.z();
-    *other=closePt.x()*d1n.x()+closePt.y()*d1n.y()+closePt.z()*d1n.z();
+    const SPoint3 &d2 = SPoint3(0.0, 1.0, 0.0);
+    const SPoint3 &d = SPoint3(p2.x() - p1.x(), p2.y() - p1.y(), p2.z() - p1.z());
+    double norm = sqrt(d.x() * d.x() + d.y() * d.y() + d.z() * d.z());
+    const SPoint3 &dn = SPoint3(d.x() / norm, d.y() / norm, d.z() / norm);
+    const SPoint3 &d3 = SPoint3(dn.y() * d2.z() - dn.z() * d2.y(),
+                                dn.z() * d2.x() - dn.x() * d2.z(),
+                                dn.x() * d2.y() - dn.y() * d2.x());
+    norm = sqrt(d3.x() * d3.x() + d3.y() * d3.y() + d3.z() * d3.z());
+    const SPoint3 &d3n = SPoint3(d3.x() / norm, d3.y() / norm, d3.z() / norm);
+    const SPoint3 &d1 = SPoint3(d2.y() * d3n.z() - d2.z() * d3n.y(),
+                                d2.z() * d3n.x() - d2.x() * d3n.z(),
+                                d2.x() * d3n.y() - d2.y() * d3n.x());
+    norm = sqrt(d1.x() * d1.x() + d1.y() * d1.y() + d1.z() * d1.z());
+    const SPoint3 &d1n = SPoint3(d1.x() / norm, d1.y() / norm, d1.z() / norm);
+    *xp = p.x() * d2.x() + p.y() * d2.y() + p.z() * d2.z();
+    *yp = p.x() * d3n.x() + p.y() * d3n.y() + p.z() * d3n.z();
+    *otherp = p.x() * d1n.x() + p.y() * d1n.y() + p.z() * d1n.z();
+    *x = closePt.x() * d2.x() + closePt.y() * d2.y() + closePt.z() * d2.z();
+    *y = closePt.x() * d3n.x() + closePt.y() * d3n.y() + closePt.z() * d3n.z();
+    *other = closePt.x() * d1n.x() + closePt.y() * d1n.y() + closePt.z() * d1n.z();
   }
 }
 
@@ -996,100 +1005,114 @@ int computeDistanceRatio(const double &y, const double &yp, const double &x,
 {
   double b;
   double a;
-  if (y==yp){
-    b=-y;
-    a=0.0;
-  }else{
-    if (x==xp){
-      b=-x;
-      a=0.0;
-    }else{
-      b=(xp*y-x*yp)/(yp-y);
-      if (yp==0.0){
+  if (y == yp){
+    b = -y;
+    a = 0.0;
+  }
+  else{
+    if (x == xp){
+      b = -x;
+      a = 0.0;
+    }
+    else{
+      b = (xp * y - x * yp) / (yp - y);
+      if (yp == 0.0){
         a=-(b+x)/y;
-      }else{
-        a=-(b+xp)/yp;
+      }
+      else{
+        a = -(b + xp) / yp;
       }
     }
   }
   double ae;
   double be;
   double ce;
-  double da=r1*r1;
-  double db=r2*r2;
-  if (y==yp){
-    ae=1.0/da;
-    be=-(2*x)/da;
-    ce=(x*x/da)-1.0;
-  }else{
-    if (x==xp){
-      ae = 1.0/db;
-      be = -(2.0*y)/db;
-      ce = (y*y/db)-1.0;
-    }else{
-      if (fabs(a)<0.00001){
-        ae = 1.0/db;
-        be = -(2.0*y)/db;
-        ce = (y*y/db)-1.0;
-      }else{
-        double a2=a*a;
-        ae=(1.0/da)+(1.0/(db*a2));
-        be=(2.0*y)/(db*a)+(2.0*b)/(a2*db)-((2.0*x)/da);
-        ce=(x*x)/da+(b*b)/(db*a2)+(2.0*b*y)/(a*db)+(y*y/db)-1.0;
+  double da = r1 * r1;
+  double db = r2 * r2;
+  if (y == yp){
+    ae = 1.0 / da;
+    be = -(2 * x) / da;
+    ce = (x * x / da) - 1.0;
+  }
+  else{
+    if (x == xp){
+      ae = 1.0 / db;
+      be = -(2.0 * y) / db;
+      ce = (y * y / db) - 1.0;
+    }
+    else{
+      if (fabs(a) < 0.00001){
+        ae = 1.0 / db;
+        be = -(2.0 * y) / db;
+        ce = (y * y / db) - 1.0;
+      }
+      else{
+        double a2 = a * a;
+        ae = (1.0 / da) + (1.0 / (db * a2));
+        be = (2.0 * y)/(db * a) + (2.0 * b) / (a2 * db) - ((2.0 * x) / da);
+        ce = (x * x) / da + (b * b) / (db * a2) +
+          (2.0 * b * y) / (a * db) + (y * y / db) - 1.0;
       }
     }
   }
-  double rho=be*be-4*ae*ce;
-  double x1,x2,y1,y2,propdist;
-  if (rho<0) {
+  double rho = be * be - 4 * ae * ce;
+  double x1, x2, y1, y2, propdist;
+  if (rho < 0) {
     return 1;
-  }else{
-    x1=-(be+sqrt(rho))/(2.0*ae);
-    x2=(-be+sqrt(rho))/(2.0*ae);
-    if (y==yp){
-      y1=-b;
-      y2=-b;
-    }else{
-      if (x==xp){
-	y1=x1;
-        y2=x2;
-	x1=-b;
-        x2=-b;
-      }else{
-        if (fabs(a)<0.00001){
-          y1=x1;
-          y2=x2;
-          x1=-b;
-          x2=-b;
-        }else{
-          y1=-(b+x1)/a;
-          y2=-(b+x2)/a;
+  }
+  else{
+    x1 = -(be + sqrt(rho)) / (2.0 * ae);
+    x2 = (-be + sqrt(rho)) / (2.0 * ae);
+    if (y == yp){
+      y1 = -b;
+      y2 = -b;
+    }
+    else{
+      if (x == xp){
+	y1 = x1;
+        y2 = x2;
+	x1 = -b;
+        x2 = -b;
+      }
+      else{
+        if (fabs(a) < 0.00001){
+          y1 = x1;
+          y2 = x2;
+          x1 = -b;
+          x2 = -b;
+        }
+        else{
+          y1 = -(b + x1) / a;
+          y2 = -(b + x2) / a;
 	}
       }
     }
-    if (x1==x2){
-      propdist=(y1-y)/(yp-y);
-      if(propdist<0.0){
-	propdist=(y2-y)/(yp-y);
+    if (x1 == x2){
+      propdist = (y1 - y) / (yp - y);
+      if(propdist < 0.0){
+	propdist = (y2 - y) / (yp - y);
       }
-    }else{
-      if (xp!=x){
-        propdist=(x1-x)/(xp-x);
-	if (propdist<0.0){
-	  propdist=(x2-x)/(xp-x);
+    }
+    else{
+      if (xp != x){
+        propdist = (x1 - x) / (xp - x);
+	if (propdist < 0.0){
+	  propdist = (x2 - x) / (xp - x);
 	}
-      }else{
-	if (yp!=y){
-	  propdist=(y1-y)/(yp-y);
-	  if(propdist<0.0){
-	    propdist=(y2-y)/(yp-y);
+      }
+      else{
+	if (yp != y){
+	  propdist = (y1 - y) / (yp - y);
+	  if(propdist < 0.0){
+	    propdist = (y2 - y) / (yp - y);
 	  }
-	}else{
-	  propdist=0.01;
+	}
+        else{
+	  propdist = 0.01;
 	}
       }
     }
-    *distance=propdist;
+    *distance = propdist;
     return 0;
   }
 }
@@ -1123,76 +1146,82 @@ void signedDistancesPointsEllipseLine(std::vector<double>&distances,
       double xp,yp,x,y,otherp,other,propdist;
       if (p1.x()==p2.x()){
         direction=1;
-        if (fabs(closePt.x()-0.0)<0.00000001) isInYarn[i]=1;
-        if (fabs(closePt.x()-2.2)<0.00000001) isInYarn[i]=4;
-        if (fabs(closePt.x()-4.4)<0.00000001) isInYarn[i]=2;
-        if (fabs(closePt.x()-6.6)<0.00000001) isInYarn[i]=5;
-        if (fabs(closePt.x()-8.8)<0.00000001) isInYarn[i]=3;
-	if (fabs(closePt.x()-11.0)<0.00000001) isInYarn[i]=1;
-      }else{
-        if (p1.y()==p2.y()){
-          direction=2;
-	  if (fabs(closePt.y()-0.0)<0.00000001) isInYarn[i]=6;
-	  if (fabs(closePt.y()-2.2)<0.00000001) isInYarn[i]=7;
-	  if (fabs(closePt.y()-4.4)<0.00000001) isInYarn[i]=8;
-	  if (fabs(closePt.y()-6.6)<0.00000001) isInYarn[i]=9;
-	  if (fabs(closePt.y()-8.8)<0.00000001) isInYarn[i]=10;
-	  if (fabs(closePt.y()-11.0)<0.00000001) isInYarn[i]=6;
-        }else{
-	  printf("WTF %lf %lf\n",closePt.x(),closePt.y());
+        if (fabs(closePt.x() - 0.0) < 0.00000001) isInYarn[i] = 1;
+        if (fabs(closePt.x() - 2.2) < 0.00000001) isInYarn[i] = 4;
+        if (fabs(closePt.x() - 4.4) < 0.00000001) isInYarn[i] = 2;
+        if (fabs(closePt.x() - 6.6) < 0.00000001) isInYarn[i] = 5;
+        if (fabs(closePt.x() - 8.8) < 0.00000001) isInYarn[i] = 3;
+	if (fabs(closePt.x() - 11.0) < 0.00000001) isInYarn[i] = 1;
+      }
+      else{
+        if (p1.y() == p2.y()){
+          direction = 2;
+	  if (fabs(closePt.y() - 0.0) < 0.00000001) isInYarn[i] = 6;
+	  if (fabs(closePt.y() - 2.2) < 0.00000001) isInYarn[i] = 7;
+	  if (fabs(closePt.y() - 4.4) < 0.00000001) isInYarn[i] = 8;
+	  if (fabs(closePt.y() - 6.6) < 0.00000001) isInYarn[i] = 9;
+	  if (fabs(closePt.y() - 8.8) < 0.00000001) isInYarn[i] = 10;
+	  if (fabs(closePt.y() - 11.0) < 0.00000001) isInYarn[i] = 6;
+        }
+        else{
+	  printf("WTF %lf %lf\n", closePt.x(), closePt.y());
         }
       }
-      changeReferential(direction,p,closePt,p1,p2,&xp,&yp,&otherp,&x,&y,&other);
+      changeReferential(direction, p, closePt, p1, p2, &xp, &yp,
+                        &otherp, &x, &y, &other);
       int result;
-      if (fabs(other-otherp)>0.01){
-	result=1;
-      }else{
-        result=computeDistanceRatio(y,yp,x,xp,&propdist,1.1,0.0875);
+      if (fabs(other-otherp) > 0.01){
+	result = 1;
       }
-      if (result==1){
-          distancesE[i] = 1.e10;
-          isInYarn[i]=0;
-      }else{
-        if (propdist<1.0){
-          isInYarn[i]=0;
-          distancesE[i]=(1.0/propdist)-1.0;
-        }else{
-	  distancesE[i]=(1.0-(1.0/propdist))/3.0;
+      else{
+        result = computeDistanceRatio(y, yp, x, xp, &propdist, 1.1, 0.0875);
+      }
+      if (result == 1){
+        distancesE[i] = 1.e10;
+        isInYarn[i] = 0;
+      }
+      else{
+        if (propdist < 1.0){
+          isInYarn[i] = 0;
+          distancesE[i] = (1.0 / propdist) - 1.0;
+        }
+        else{
+	  distancesE[i] = (1.0 - (1.0 / propdist)) / 3.0;
         }
       }
-    }else{
-        isInYarn[i]=0;
-        distancesE[i]=1000000.0;
+    }
+    else{
+      isInYarn[i] = 0;
+      distancesE[i] = 1000000.0;
     }
   }
 }
 
-int intersection_segments (SPoint3 &p1, SPoint3 &p2,
-			   SPoint3 &q1, SPoint3 &q2, 
-			   double x[2])
+int intersection_segments(SPoint3 &p1, SPoint3 &p2,
+                          SPoint3 &q1, SPoint3 &q2, 
+                          double x[2])
 {
-  double xp_max = std::max(p1.x(),p2.x()); 
-  double yp_max = std::max(p1.y(),p2.y()); 
-  double xq_max = std::max(q1.x(),q2.x()); 
-  double yq_max = std::max(q1.y(),q2.y()); 
+  double xp_max = std::max(p1.x(), p2.x()); 
+  double yp_max = std::max(p1.y(), p2.y()); 
+  double xq_max = std::max(q1.x(), q2.x()); 
+  double yq_max = std::max(q1.y(), q2.y()); 
 
-  double xp_min = std::min(p1.x(),p2.x()); 
-  double yp_min = std::min(p1.y(),p2.y()); 
-  double xq_min = std::min(q1.x(),q2.x()); 
-  double yq_min = std::min(q1.y(),q2.y()); 
+  double xp_min = std::min(p1.x(), p2.x()); 
+  double yp_min = std::min(p1.y(), p2.y()); 
+  double xq_min = std::min(q1.x(), q2.x()); 
+  double yq_min = std::min(q1.y(), q2.y()); 
   if (yq_min > yp_max || xq_min >  xp_max ||
       yq_max < yp_min || xq_max <  xp_min){
     return 0;
   }
   else{
     double A[2][2];
-    A[0][0] = p2.x()-p1.x();
-    A[0][1] = q1.x()-q2.x();
-    A[1][0] = p2.y()-p1.y();
-    A[1][1] = q1.y()-q2.y();
-    double b[2] = {q1.x()-p1.x(),q1.y()-p1.y()};
-    sys2x2(A,b,x);
-
+    A[0][0] = p2.x() - p1.x();
+    A[0][1] = q1.x() - q2.x();
+    A[1][0] = p2.y() - p1.y();
+    A[1][1] = q1.y() - q2.y();
+    double b[2] = {q1.x() - p1.x(), q1.y() - p1.y()};
+    sys2x2(A, b, x);
     return (x[0] >= 0.0 && x[0] <= 1. &&
 	    x[1] >= 0.0 && x[1] <= 1.);
   }

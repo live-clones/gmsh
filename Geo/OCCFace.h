@@ -52,6 +52,7 @@ class OCCFace : public GFace {
   // tells if it's a sphere, and if it is, returns parameters
   virtual bool isSphere (double &radius, SPoint3 &center) const;
 };
+
 GFace *getOCCFaceByNativePtr(GModel *model, TopoDS_Face toFind);
 
 #endif

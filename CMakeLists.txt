@@ -18,7 +18,7 @@ project(gmsh CXX C)
 
 option(ENABLE_ACIS "Enable ACIS geometrical models" ON)
 option(ENABLE_ANN "Enable ANN to compute Approximate Nearest Neighbors" ON)
-option(ENABLE_APP_BUNDLE_PATH "Use special install path for .app bundle on Mac" ON)
+option(ENABLE_APP_BUNDLE "Create .app bundle on Mac when installing" ON)
 option(ENABLE_BAMG "Enable Bamg mesh generator" ON)
 option(ENABLE_BFGS "Enable BFGS" ON)
 option(ENABLE_BLAS_LAPACK "Use BLAS and Lapack for linear algebra" ON)
@@ -48,7 +48,7 @@ option(ENABLE_PARSER "Build the GEO file parser" ON)
 option(ENABLE_PETSC "Enable PETSc linear algebra solvers" ON)
 option(ENABLE_PLUGINS "Build the post-processing plugins" ON)
 option(ENABLE_POST "Build the post-processing module" ON)
-option(ENABLE_QT "Build QT GUI (not functional: for testing only)" OFF)
+option(ENABLE_QT "Build proof-of-concept QT GUI" OFF)
 option(ENABLE_RBF "Enable RBF project" OFF)
 option(ENABLE_SALOME "Enable Salome routines for CAD healing" ON)
 option(ENABLE_SLEPC "Enable SLEPc eigensolvers" ON)
@@ -135,8 +135,7 @@ include(CheckFunctionExists)
 include(CheckIncludeFile)
 
 if(MSVC)
-  # remove really annoying (and stupid, and wrong) warning about
-  # bool/int cast performance in Visual C++
+  # remove annoying warning about bool/int cast performance
   set(GMSH_CONFIG_PRAGMAS "#pragma warning(disable:4800)")
   if(ENABLE_MSVC_STATIC_RUNTIME)
     foreach(VAR
@@ -1046,7 +1045,7 @@ if(WIN32 OR CYGWIN)
     unix2dos(TUTORIAL_FILES)
     unix2dos(DEMO_FILES)
   endif(CYGWIN)
-elseif(APPLE AND ENABLE_APP_BUNDLE_PATH)
+elseif(APPLE AND ENABLE_APP_BUNDLE)
   # set these so that the files get installed nicely in the MacOSX
   # .app bundle
   set(GMSH_BIN ../MacOS)
@@ -1170,7 +1169,7 @@ if(UNIX)
   set(CPACK_INSTALL_COMMANDS "rm -rf ${CMAKE_CURRENT_BINARY_DIR}/_CPack_Packages")
 endif(UNIX)
 
-if(APPLE)
+if(APPLE AND ENABLE_APP_BUNDLE)
   set(CPACK_GENERATOR Bundle)
   set(CPACK_BUNDLE_NAME Gmsh)
   file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/gmsh_app.plist F0)
@@ -1178,20 +1177,18 @@ if(APPLE)
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/Info.plist "${F1}")
   set(CPACK_BUNDLE_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
   set(CPACK_BUNDLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIcons.icns)
-  if(ENABLE_APP_BUNDLE_PATH)
-    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsGeo.icns DESTINATION .
-            RENAME GmshGeo.icns)
-    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsMsh.icns DESTINATION .
-            RENAME GmshMsh.icns)
-    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsPos.icns DESTINATION .
-            RENAME GmshPos.icns)
-  endif(ENABLE_APP_BUNDLE_PATH)
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsGeo.icns DESTINATION .
+          RENAME GmshGeo.icns)
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsMsh.icns DESTINATION .
+          RENAME GmshMsh.icns)
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsPos.icns DESTINATION .
+          RENAME GmshPos.icns)
   set(CPACK_PACKAGE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIcons.icns)
 elseif(WIN32 OR CYGWIN)
   set(CPACK_GENERATOR ZIP)
-else(APPLE)
+else(APPLE AND ENABLE_APP_BUNDLE)
   set(CPACK_GENERATOR TGZ)
-endif(APPLE)
+endif(APPLE AND ENABLE_APP_BUNDLE)
 
 include(CPack)
 
@@ -1214,4 +1211,3 @@ message("")
 
 mark_as_advanced(BISON FLEX GMP_LIB GMSH_EXTRA_VERSION HDF5_LIB MAKEINFO 
                  MED_LIB OCC_INC SZ_LIB TAUCS_LIB ACIS_LIB TEXI2PDF)
-

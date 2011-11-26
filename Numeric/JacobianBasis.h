@@ -15,9 +15,9 @@ class bezierBasis {
  public :
   int numLagPts;
   int numDivisions;
-    // The 'numLagPts' first exponents are related to 'Lagrangian' values
-  fullMatrix<double> exponents; //exposants of Bezier FF
-  fullMatrix<double> points; //sampling point
+  // the 'numLagPts' first exponents are related to 'Lagrangian' values
+  fullMatrix<double> exponents; // exponents of Bezier FF
+  fullMatrix<double> points; // sampling point
   fullMatrix<double> matrixLag2Bez, matrixBez2Lag;
   fullMatrix<double> subDivisor;
   static const bezierBasis *find(int);

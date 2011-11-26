@@ -48,6 +48,7 @@ class OCCEdge : public GEdge {
   TopoDS_Edge getTopoDS_EdgeOld() const {return _replacement;}
   void replaceEndingPointsInternals(GVertex *, GVertex *);
 };
+
 GEdge *getOCCEdgeByNativePtr(GModel *model, TopoDS_Edge toFind);
 
 #endif

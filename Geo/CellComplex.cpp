@@ -1,6 +1,12 @@
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+//
+// Contributed by Matti Pellikka <matti.pellikka@tut.fi>.
+
 #include "CellComplex.h"
 #include "MElement.h"
-
 
 CellComplex::CellComplex(GModel* model,
 			 std::vector<MElement*>& domainElements, 
@@ -10,7 +16,6 @@ CellComplex::CellComplex(GModel* model,
 
   _insertCells(subdomainElements, 1);
   _insertCells(domainElements, 0);  
-
 
   int num = 0;
   for(int dim = 0; dim < 4; dim++){

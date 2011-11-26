@@ -10,12 +10,11 @@
 #include <algorithm>
 #include "fullMatrix.h"
 
-// FIXME: should not introduce dependencies to Geo/ code in Numeric
+// FIXME: should not introduce dependencies to Geo/ code in Numeric!
 #include "SPoint2.h"
 #include "simpleFunction.h"
 #include "Octree.h"
 
-class binding;
 class GFace;
 typedef struct _CDLIST DListRecord, *DListPeek;
 typedef int PointNumero;
@@ -108,25 +107,28 @@ class DocRecord{
  
   std::set<std::pair<void*,void*> > boundaryEdges;
 
-  void addBoundaryEdge(void* p1,void* p2){
-    void* a = (p1 < p2) ? p1 : p2;
-	void* b = (p1 > p2) ? p1 : p2;
-	boundaryEdges.insert(std::make_pair(a,b));
+  void addBoundaryEdge(void* p1,void* p2)
+  {
+    void *a = (p1 < p2) ? p1 : p2;
+    void *b = (p1 > p2) ? p1 : p2;
+    boundaryEdges.insert(std::make_pair(a,b));
   }
-  
-  bool lookForBoundaryEdge(void* p1,void* p2){
-    void* a = (p1 < p2) ? p1 : p2;
-	void* b = (p1 > p2) ? p1 : p2;
-	std::set<std::pair<void*,void*> >::iterator it = boundaryEdges.find(std::make_pair(a,b));
-	return it!=boundaryEdges.end();
+  bool lookForBoundaryEdge(void* p1,void* p2)
+  {
+    void *a = (p1 < p2) ? p1 : p2;
+    void *b = (p1 > p2) ? p1 : p2;
+    std::set<std::pair<void*,void*> >::iterator it = 
+      boundaryEdges.find(std::make_pair(a,b));
+    return it != boundaryEdges.end();
   } 	
  
-  void recur_tag_triangles(int,std::set<int>&,std::map<std::pair<void*,void*>,std::pair<int,int> >&);
+  void recur_tag_triangles(int, std::set<int>&, std::map<std::pair<void*,void*>,
+                           std::pair<int,int> >&);
   std::set<int> tagInterior(double,double);
   void concave(double,double,GFace*);
   bool contain(int,int,int);
   void add(int,int);
-  	
+
   void initialize();
   bool remove_point(int);
   void remove_all();
@@ -134,17 +136,19 @@ class DocRecord{
 	
   std::set<std::pair<void*,void*> > mesh_edges;
 	
-  void add_edge(void* p1,void* p2){
-    void* a = (p1 < p2) ? p1 : p2;
-	void* b = (p1 > p2) ? p1 : p2;
-	mesh_edges.insert(std::make_pair(a,b));
+  void add_edge(void* p1,void* p2)
+  {
+    void *a = (p1 < p2) ? p1 : p2;
+    void *b = (p1 > p2) ? p1 : p2;
+    mesh_edges.insert(std::make_pair(a,b));
   }
-	
-  bool find_edge(void* p1,void* p2){
-    void* a = (p1 < p2) ? p1 : p2;
-	void* b = (p1 > p2) ? p1 : p2;
-	std::set<std::pair<void*,void*> >::iterator it = mesh_edges.find(std::make_pair(a,b));
-	return it!=mesh_edges.end();
+  bool find_edge(void* p1,void* p2)
+  {
+    void *a = (p1 < p2) ? p1 : p2;
+    void *b = (p1 > p2) ? p1 : p2;
+    std::set<std::pair<void*,void*> >::iterator it = 
+      mesh_edges.find(std::make_pair(a,b));
+    return it != mesh_edges.end();
   } 	
 	
   void build_edges();
@@ -167,6 +171,5 @@ void centroidOfPolygon(SPoint2 &pc,
                        double &inertia,
 		       double &areaCell,
                        simpleFunction<double> *bgm = 0);
-
 
 #endif

@@ -10,14 +10,12 @@
 
 class MVertex;
 
-/* A simple data structure to keep track of the "children" of
- * vertices in a boundary layer meshes.
- * 
- * It should be filled for each MVertex on the boundary of the
- * geometry with the vertices along the normal direction, in order.
- */
-class MVertexBoundaryLayerData {
+// A simple data structure to keep track of the "children" of vertices
+// in a boundary layer mesh. It should be filled for each MVertex on
+// the boundary of the geometry with the vertices along the normal
+// direction, in order.
 
+class MVertexBoundaryLayerData {
  private:
   std::vector<std::vector<MVertex*> > children;
 
@@ -31,6 +29,5 @@ class MVertexBoundaryLayerData {
   int getNumChildrenFamilies();
   void addChildrenFamily(std::vector<MVertex*> family);
 };
-
 
 #endif

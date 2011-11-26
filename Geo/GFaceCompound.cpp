@@ -51,8 +51,8 @@ static void fixEdgeToValue(GEdge *ed, double value, dofManager<double> &myAssemb
   }
 }
 
-static void printBound(std::vector<MVertex*> &l, int tag){
-  //print boundary
+static void printBound(std::vector<MVertex*> &l, int tag)
+{
   char name[256];
   sprintf(name, "myBOUND%d.pos", tag);
   FILE * xyz = fopen(name,"w");
@@ -68,7 +68,6 @@ static void printBound(std::vector<MVertex*> &l, int tag){
 static bool orderVertices(const std::list<GEdge*> &e, std::vector<MVertex*> &l,
                           std::vector<double> &coord)
 {
-
   l.clear();
   coord.clear();
 
@@ -130,7 +129,8 @@ static bool orderVertices(const std::list<GEdge*> &e, std::vector<MVertex*> &l,
 }
 
 static void computeCGKernelPolygon(std::map<MVertex*,SPoint3> &coordinates, 
-                                   std::vector<MVertex*> &cavV, double &ucg, double &vcg)
+                                   std::vector<MVertex*> &cavV, 
+                                   double &ucg, double &vcg)
 {
   ucg = 0.0;
   vcg = 0.0;
@@ -237,13 +237,6 @@ static void myPolygon(std::vector<MElement*> &vTri, std::vector<MVertex*> &vPoly
     }
   }
 
-  //   printf("epoly.size=%d  vTri=%d\n", ePoly.size(), vTri.size());
-  //   for(std::vector<MEdge>::iterator ite = ePoly.begin(); ite != ePoly.end(); ite++){
-  //      MVertex *vB = ite->getVertex(0);
-  //      MVertex *vE = ite->getVertex(1);
-  //      printf("VB=%d vE=%d \n", vB->getNum(), vE->getNum());
-  //   }
-
   std::vector<MEdge>::iterator ite= ePoly.begin() ;
   MVertex *vINIT = ite->getVertex(0);
   vPoly.push_back(vINIT);
@@ -266,11 +259,6 @@ static void myPolygon(std::vector<MElement*> &vTri, std::vector<MVertex*> &vPoly
       else ite++;
     }
   }
-
-  //   printf("epoly.size=%d  vTri=%d, cavV.size =%d\n", ePoly.size(), vTri.size(), vPoly.size());
-  //   for(std::vector<MVertex*>::iterator itv = vPoly.begin(); itv != vPoly.end(); itv++){
-  //     printf("VV=%d \n", (*itv)->getNum());
-  //   }
 }
 
 bool checkCavity(std::vector<MElement*> &vTri, std::map<MVertex*, SPoint2> &vCoord)
@@ -351,27 +339,26 @@ void GFaceCompound::fillNeumannBCS() const
 	MVertex *v0 = orderedLoop[i];
 	MVertex *v1 = (i==nbLoop-1) ? orderedLoop[0]: orderedLoop[i+1];
   
-	//loopfillTris.push_back(new MTriangle(v0,v1, c));
-
-	// MVertex *v2 = new MVertex(.5*(v0->x()+c->x()), .5*(v0->y()+c->y()), .5*(v0->z()+c->z()));
-	// MVertex *v3 = new MVertex(.5*(v1->x()+c->x()), .5*(v1->y()+c->y()), .5*(v1->z()+c->z()));
-	// fillNodes.insert(c); fillNodes.insert(v2); fillNodes.insert(v3);
-	// loopfillTris.push_back(new MTriangle(v0,v2,v3));
-	// loopfillTris.push_back(new MTriangle(v2,c, v3));
-	// loopfillTris.push_back(new MTriangle(v0,v3, v1));
-
-	double k = 1/3.; double kk = 2/3.;
-	MVertex *v2 = new MVertex(kk*v0->x()+k*c->x(), kk*v0->y()+k*c->y(),kk*v0->z()+k*c->z());
-	MVertex *v3 = new MVertex(kk*v1->x()+k*c->x(), kk*v1->y()+k*c->y(),kk*v1->z()+k*c->z());
-	MVertex *v4 = new MVertex(k*v0->x()+kk*c->x(), k*v0->y()+kk*c->y(),k*v0->z()+kk*c->z());
-	MVertex *v5 = new MVertex(k*v1->x()+kk*c->x(), k*v1->y()+kk*c->y(),k*v1->z()+kk*c->z()); 
+	double k = 1. / 3.; double kk = 2. / 3.;
+	MVertex *v2 = new MVertex(kk * v0->x() + k * c->x(), 
+                                  kk * v0->y() + k * c->y(), 
+                                  kk * v0->z() + k * c->z());
+	MVertex *v3 = new MVertex(kk * v1->x() + k * c->x(), 
+                                  kk * v1->y() + k * c->y(),
+                                  kk * v1->z() + k * c->z());
+	MVertex *v4 = new MVertex(k * v0->x() + kk * c->x(),
+                                  k * v0->y() + kk * c->y(),
+                                  k * v0->z() + kk * c->z());
+	MVertex *v5 = new MVertex(k * v1->x() + kk * c->x(), 
+                                  k * v1->y() + kk * c->y(),
+                                  k * v1->z() + kk * c->z()); 
 	fillNodes.insert(c); fillNodes.insert(v2); fillNodes.insert(v3);
 	fillNodes.insert(v4); fillNodes.insert(v5);
-	loopfillTris.push_back(new MTriangle(v0,v2,v3));
-	loopfillTris.push_back(new MTriangle(v2,v5,v3));
-	loopfillTris.push_back(new MTriangle(v2,v4,v5));
-	loopfillTris.push_back(new MTriangle(v4,c,v5));
-	loopfillTris.push_back(new MTriangle(v0,v3,v1));
+	loopfillTris.push_back(new MTriangle(v0, v2, v3));
+	loopfillTris.push_back(new MTriangle(v2, v5, v3));
+	loopfillTris.push_back(new MTriangle(v2, v4, v5));
+	loopfillTris.push_back(new MTriangle(v4, c, v5));
+	loopfillTris.push_back(new MTriangle(v0, v3, v1));
       }
       
     }
@@ -379,10 +366,12 @@ void GFaceCompound::fillNeumannBCS() const
     //check normal orientations of loopfillTris
     bool invertTris = false;
     std::map<MEdge, std::set<MTriangle*>, Less_Edge > edge2tris;
-    for(std::list<MTriangle*>::iterator t= loopfillTris.begin(); t!=loopfillTris.end(); t++){
+    for(std::list<MTriangle*>::iterator t = loopfillTris.begin();
+        t != loopfillTris.end(); t++){
       for (int j = 0; j < 3; j++){
 	MEdge me = (*t)->getEdge(j);
-	std::map<MEdge, std::set<MTriangle*, std::less<MTriangle*> >, Less_Edge >::iterator it = edge2tris.find(me);
+	std::map<MEdge, std::set<MTriangle*, std::less<MTriangle*> >,
+          Less_Edge >::iterator it = edge2tris.find(me);
 	if (it == edge2tris.end()) {
 	  std::set<MTriangle*, std::less<MTriangle*> > mySet;
 	  mySet.insert(*t);
@@ -402,7 +391,8 @@ void GFaceCompound::fillNeumannBCS() const
 	MTriangle *t = (*itf)->triangles[i];
 	for (int j = 0; j < 3; j++){
 	  MEdge me = t->getEdge(j);
-	  std::map<MEdge, std::set<MTriangle*>, Less_Edge >::iterator it = edge2tris.find(me);
+	  std::map<MEdge, std::set<MTriangle*>, Less_Edge >::iterator it = 
+            edge2tris.find(me);
 	  if(it != edge2tris.end()){
 	    t->getEdgeInfo(me, iE,si);
 	    MTriangle* t2 = *((it->second).begin());
@@ -416,12 +406,12 @@ void GFaceCompound::fillNeumannBCS() const
       } 
     }
     if (invertTris){
-      for (std::list<MTriangle*>::iterator it = loopfillTris.begin(); it !=loopfillTris.end(); it++ )
+      for (std::list<MTriangle*>::iterator it = loopfillTris.begin(); 
+           it != loopfillTris.end(); it++ )
 	(*it)->revert();
     }
     
     fillTris.insert(fillTris.begin(),loopfillTris.begin(),loopfillTris.end());
-
   }
 
   //printing
@@ -432,7 +422,8 @@ void GFaceCompound::fillNeumannBCS() const
       sprintf(name, "fillTris-%d.pos", (*itf)->tag());
       FILE * ftri = fopen(name,"w");
       fprintf(ftri,"View \"\"{\n");
-      for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 !=fillTris.end(); it2++ ){
+      for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); 
+           it2 !=fillTris.end(); it2++ ){
 	MTriangle *t = (*it2);
 	fprintf(ftri,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 		t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
@@ -521,7 +512,6 @@ bool GFaceCompound::checkOverlap(std::vector<MVertex *> &vert) const
 // the mapped triangles have the same normal orientation
 bool GFaceCompound::checkOrientation(int iter) const
 {
- 
   std::list<GFace*>::const_iterator it = _compound.begin();
   double a_old = 0.0, a_new=0.0;
   bool oriented = true;
@@ -611,7 +601,6 @@ void GFaceCompound::one2OneMap() const
 
 bool GFaceCompound::parametrize() const
 {
-
  if (_compound.size() > 1) coherencePatches();
  
   bool paramOK = true;
@@ -638,7 +627,8 @@ bool GFaceCompound::parametrize() const
   // Multiscale Laplace parametrization
   else if (_mapping == MULTISCALE){
     std::vector<MElement*> _elements;
-    for( std::list<GFace*>::const_iterator itt = _compound.begin(); itt != _compound.end(); ++itt)
+    for(std::list<GFace*>::const_iterator itt = _compound.begin(); 
+        itt != _compound.end(); ++itt)
       for(unsigned int i = 0; i < (*itt)->triangles.size(); ++i)
         _elements.push_back((*itt)->triangles[i]);
     multiscaleLaplace multiLaplace(_elements, coordinates); 
@@ -686,7 +676,7 @@ bool GFaceCompound::parametrize() const
   buildOct();  
  
   if (_mapping != RBF){
-    if (!checkOrientation(0) ){
+    if (!checkOrientation(0)){
       Msg::Info("### Flipping: parametrization switched to convex combination map");
       coordinates.clear(); 
       Octree_Delete(oct);
@@ -709,8 +699,7 @@ bool GFaceCompound::parametrize() const
 
 void GFaceCompound::getBoundingEdges()
 {
- 
-  for(std::list<GFace*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
+   for(std::list<GFace*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
     (*it)->setCompound(this);
   }
 
@@ -751,7 +740,6 @@ void GFaceCompound::getBoundingEdges()
 	maxSize = size;
       }
     }
-
   }
 }
 
@@ -759,7 +747,8 @@ double GFaceCompound::getSizeH() const
 {
   SBoundingBox3d bb;
   std::vector<SPoint3> vertices;
-  for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+  for(std::set<MVertex *>::iterator itv = allNodes.begin(); 
+      itv != allNodes.end() ; ++itv){
     SPoint3 pt((*itv)->x(),(*itv)->y(), (*itv)->z());
     vertices.push_back(pt);
     bb +=pt;
@@ -837,7 +826,6 @@ SOrientedBoundingBox GFaceCompound::obb_boundEdges(const std::list<GEdge* > &eli
   res = SOrientedBoundingBox::buildOBB(vertices);
   return res;
 }
-
 
 void GFaceCompound::getUniqueEdges(std::set<GEdge*> &_unique) 
 {
@@ -973,31 +961,30 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
     return SPoint2(it->second.x(),it->second.y()); 
   }
   else{
-
     double tGlob, tLoc;
     double tL, tR;
     int iEdge;
 
-    //getParameter Point
+    // getParameter Point
     v->getParameter(0,tGlob);
  
-    //find compound Edge
+    // find compound Edge
     GEdgeCompound *gec = dynamic_cast<GEdgeCompound*>(v->onWhat());
      
     if(gec){
-
-      //compute local parameter on Edge
+      // compute local parameter on Edge
       gec->getLocalParameter(tGlob,iEdge,tLoc);
       std::vector<GEdge*> gev = gec->getCompounds();
       GEdge *ge = gev[iEdge];
        
-      //left and right vertex of the Edge
+      // left and right vertex of the Edge
       MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
       MVertex *v1 = ge->getEndVertex()->mesh_vertices[0];
       std::map<MVertex*,SPoint3>::iterator itL = coordinates.find(v0);
       std::map<MVertex*,SPoint3>::iterator itR = coordinates.find(v1);
   
-      //for the Edge, find the left and right vertices of the initial 1D mesh and interpolate to find (u,v)
+      // for the Edge, find the left and right vertices of the initial
+      // 1D mesh and interpolate to find (u,v)
       MVertex *vL = v0;
       MVertex *vR = v1;
       double tB = ge->parBounds(0).low();
@@ -1033,21 +1020,21 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
         tR = tE;
       }
 
-      //Linear interpolation between tL and tR
+      // linear interpolation between tL and tR
       double uloc, vloc;
       uloc = itL->second.x() + (tLoc-tL)/(tR-tL) * (itR->second.x()-itL->second.x());
       vloc = itL->second.y() + (tLoc-tL)/(tR-tL) * (itR->second.y()-itL->second.y());
       return SPoint2(uloc,vloc);
     }
   }
+
   // never here
   return SPoint2(0, 0);
 }
 
 void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
 {  
-
-linearSystem<double> *_lsys = 0;
+  linearSystem<double> *_lsys = 0;
 #if defined(HAVE_PETSC) && !defined(HAVE_TAUCS)
   _lsys = new linearSystemPETSc<double>;
 #elif defined(HAVE_GMM) && !defined(HAVE_TAUCS)
@@ -1137,19 +1124,13 @@ linearSystem<double> *_lsys = 0;
   }
 
   delete _lsys;
-
 }
 
 bool GFaceCompound::parametrize_conformal_spectral() const
 {
 #if !defined(HAVE_PETSC) && !defined(HAVE_SLEPC)
-
-  //Msg::Error("Gmsh should be compiled with petsc and slepc for using the conformal map.");
-  //Msg::Error("Switch to harmonic map or see doc on the wiki for installing petsc and slepc:");
-  //Msg::Error("https://geuz.org/trac/gmsh/wiki/STLRemeshing (username:gmsh,passwd:gmsh)");
   Msg::Warning("Slepc not installed: parametrization switched to 'FE conformal' map");
-  return parametrize_conformal(0,NULL,NULL);
-
+  return parametrize_conformal(0, NULL, NULL);
 #else
 
   linearSystem <double> *lsysA  = new linearSystemPETSc<double>;
@@ -1228,7 +1209,7 @@ bool GFaceCompound::parametrize_conformal_spectral() const
   }
   
   // FIXME: force non-hermitian. For some reason (roundoff errors?)
-  // on some machines et for some meshes slepc complains about bad IP
+  // on some machines and for some meshes slepc complains about bad IP
   // norm otherwise
   eigenSolver eig(&myAssembler, "B" , "A", false);
   bool converged = eig.solve(1, "largest");
@@ -1259,22 +1240,20 @@ bool GFaceCompound::parametrize_conformal_spectral() const
     return parametrize_conformal(0,NULL,NULL);  
   }
 
-   std::vector<MVertex *> vert;
-   bool hasOverlap = checkOverlap(vert);
-   if (hasOverlap){
-     Msg::Warning("!!! Overlap: parametrization switched to 'FE conformal' map");
-     printStuff(3);
-     return hasOverlap = parametrize_conformal(0, vert[0], vert[1]);
-   }
-
-   return hasOverlap;
-    
+  std::vector<MVertex *> vert;
+  bool hasOverlap = checkOverlap(vert);
+  if (hasOverlap){
+    Msg::Warning("!!! Overlap: parametrization switched to 'FE conformal' map");
+    printStuff(3);
+    return hasOverlap = parametrize_conformal(0, vert[0], vert[1]);
+  }
+  
+  return hasOverlap;
 #endif
 }
 
 bool GFaceCompound::parametrize_conformal(int iter, MVertex *v1, MVertex *v2) const
 {
-
   linearSystem<double> *_lsys = 0;
 #if defined(HAVE_PETSC) && !defined(HAVE_TAUCS)
   _lsys = new linearSystemPETSc<double>;
@@ -1290,8 +1269,8 @@ bool GFaceCompound::parametrize_conformal(int iter, MVertex *v1, MVertex *v2) co
 
   dofManager<double> myAssembler(_lsys);
 
-  if (!v1) v1  = _ordered[0];
-  if (!v2) v2  = _ordered[(int)ceil((double)_ordered.size()/2.)];
+  if(!v1) v1 = _ordered[0];
+  if(!v2) v2 = _ordered[(int)ceil((double)_ordered.size()/2.)];
   myAssembler.fixVertex(v1, 0, 1, 1.);
   myAssembler.fixVertex(v1, 0, 2, 0.);
   myAssembler.fixVertex(v2, 0, 1, -1.);
@@ -1309,7 +1288,8 @@ bool GFaceCompound::parametrize_conformal(int iter, MVertex *v1, MVertex *v2) co
       myAssembler.numberVertex(t->getVertex(2), 0, 2); 
     }    
   }  
-  for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 !=fillTris.end(); it2++ ){
+  for (std::list<MTriangle*>::iterator it2 = fillTris.begin();
+       it2 !=fillTris.end(); it2++){
     MTriangle *t = (*it2);
     myAssembler.numberVertex(t->getVertex(0), 0, 1);
     myAssembler.numberVertex(t->getVertex(1), 0, 1);
@@ -1333,7 +1313,8 @@ bool GFaceCompound::parametrize_conformal(int iter, MVertex *v1, MVertex *v2) co
       cross21.addToMatrix(myAssembler, &se);
     }
   }
-  for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 !=fillTris.end(); it2++ ){
+  for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); 
+       it2 != fillTris.end(); it2++ ){
     SElement se((*it2));
     laplace1.addToMatrix(myAssembler, &se);
     laplace2.addToMatrix(myAssembler, &se);
@@ -1345,7 +1326,8 @@ bool GFaceCompound::parametrize_conformal(int iter, MVertex *v1, MVertex *v2) co
   _lsys->systemSolve();
   Msg::Debug("System solved");
 
-  for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+  for(std::set<MVertex *>::iterator itv = allNodes.begin(); 
+      itv != allNodes.end() ; ++itv){
     MVertex *v = *itv;
     double value1, value2; 
     myAssembler.getDofValue(v, 0, 1, value1);
@@ -1355,19 +1337,19 @@ bool GFaceCompound::parametrize_conformal(int iter, MVertex *v1, MVertex *v2) co
 
   delete _lsys; 
 
-
-  //check for overlap and compute new mapping with new pinned vertices
+  // check for overlap and compute new mapping with new pinned
+  // vertices
   std::vector<MVertex *> vert;
   bool hasOverlap = checkOverlap(vert);
   if (hasOverlap && iter < 3){
-    printf("**********Loop FE conformal iter (%d) v1=%d v2=%d \n", iter, vert[0]->getNum(), vert[1]->getNum());
-     printStuff(100+iter);
-     return hasOverlap = parametrize_conformal(iter+1, vert[0],vert[1]);
+    Msg::Info("Loop FE conformal iter (%d) v1=%d v2=%d", iter, 
+              vert[0]->getNum(), vert[1]->getNum());
+    printStuff(100+iter);
+    return hasOverlap = parametrize_conformal(iter+1, vert[0],vert[1]);
   }
   else{
     return hasOverlap;
   }
-
 }
 
 void GFaceCompound::computeNormals(std::map<MVertex*,SVector3> &normals) const
@@ -1385,7 +1367,7 @@ void GFaceCompound::computeNormals() const
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *t = (*it)->triangles[i];
       t->getJacobian(0, 0, 0, J);
-      SVector3 n (J[2][0],J[2][1],J[2][2]);
+      SVector3 n (J[2][0], J[2][1], J[2][2]);
       n.normalize();
       for(int j = 0; j < 3; j++){
         std::map<MVertex*, SVector3>::iterator itn = _normals.find(t->getVertex(j));
@@ -1400,25 +1382,22 @@ void GFaceCompound::computeNormals() const
 
 double GFaceCompound::curvatureMax(const SPoint2 &param) const
 {
-  
- if(!oct) parametrize();
- if(trivial()) {
+  if(!oct) parametrize();
+  if(trivial()) {
     return (*(_compound.begin()))->curvatureMax(param);
- }
+  }
 
   double U, V;
   GFaceCompoundTriangle *lt;
   getTriangle(param.x(), param.y(), &lt, U,V);
 
-  if(!lt)  {
-    return  0.0;   
-  }
+  if(!lt) return 0.0;
 
-  if(lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface)  {
+  if(lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface) {
     SPoint2 pv = lt->gfp1*(1.-U-V) + lt->gfp2*U + lt->gfp3*V;
     return lt->gf->curvatureMax(pv);
   }
-  else if (lt->gf->geomType() == GEntity::DiscreteSurface)  {
+  else if (lt->gf->geomType() == GEntity::DiscreteSurface) {
     Curvature& curvature = Curvature::getInstance();
     if( !Curvature::valueAlreadyComputed() ) {
       Msg::Info("Need to compute discrete curvature for isotropic remesh (in GFace)");
@@ -1433,33 +1412,30 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
 
   return 0.;
 }
-double GFaceCompound::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
-                         double *curvMax, double *curvMin) const
-{
 
- if(!oct) parametrize();
- if(trivial()) {
-   return (*(_compound.begin()))->curvatures(param, dirMax,dirMin, curvMax, curvMin); 
- }
+double GFaceCompound::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
+                                 double *curvMax, double *curvMin) const
+{
+  if(!oct) parametrize();
+  if(trivial()) {
+    return (*(_compound.begin()))->curvatures(param, dirMax,dirMin, curvMax, curvMin); 
+  }
 
   double U, V;
   GFaceCompoundTriangle *lt;
   getTriangle(param.x(), param.y(), &lt, U,V);
 
-  if(!lt)  {
-    return  0.0;
-  }
+  if(!lt) return 0.0;
 
-  if(lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface)  {
+  if(lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface){
     SPoint2 pv = lt->gfp1*(1.-U-V) + lt->gfp2*U + lt->gfp3*V;
     return lt->gf->curvatures(pv, dirMax,dirMin, curvMax, curvMin);
   }
-
-  else if (lt->gf->geomType() == GEntity::DiscreteSurface)  {
+  else if (lt->gf->geomType() == GEntity::DiscreteSurface){
     Curvature& curvature = Curvature::getInstance();
     if( !Curvature::valueAlreadyComputed() ) {
       Msg::Info("Need to compute discrete curvature for anisotropic remesh (in GFace)");
-      Curvature::typeOfCurvature type = Curvature::RUSIN;//RBF
+      Curvature::typeOfCurvature type = Curvature::RUSIN; //RBF
       curvature.computeCurvature(model(), type); 
     }
 
@@ -1470,28 +1446,25 @@ double GFaceCompound::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector
     curvature.triangleNodalValuesAndDirections(lt->tri, dMax, dMin, cMax, cMin, 0);
     //curvature.triangleNodalValuesAndDirections(lt->tri, dMax, dMin, cMax, cMin, 1);
 
-    * dirMax = (1-U-V)*dMax[0] + U*dMax[1] + V*dMax[2];
-    * dirMin = (1-U-V)*dMin[0] + U*dMin[1] + V*dMin[2];
-    * curvMax = (1-U-V)*cMax[0] + U*cMax[1] + V*cMax[2];
-    * curvMin = (1-U-V)*cMin[0] + U*cMin[1] + V*cMin[2];
+    *dirMax = (1-U-V)*dMax[0] + U*dMax[1] + V*dMax[2];
+    *dirMin = (1-U-V)*dMin[0] + U*dMin[1] + V*dMin[2];
+    *curvMax = (1-U-V)*cMax[0] + U*cMax[1] + V*cMax[2];
+    *curvMin = (1-U-V)*cMin[0] + U*cMin[1] + V*cMin[2];
 
-    return * curvMax;
+    return *curvMax;
   }
-
   return 0.;
 }
+
 double GFaceCompound::locCurvature(MTriangle *t, double u, double v) const
 {
-
   SVector3 n1 = _normals[t->getVertex(0)];
   SVector3 n2 = _normals[t->getVertex(1)];
   SVector3 n3 = _normals[t->getVertex(2)];
   double val[9] = {n1.x(), n2.x(), n3.x(),
                    n1.y(), n2.y(), n3.y(),
                    n1.z(), n2.z(), n3.z()};
-
   return fabs(t->interpolateDiv(val, u, v, 3));
-
 }
 
 SPoint2 GFaceCompound::parFromPoint(const SPoint3 &p, bool onSurface) const
@@ -1502,12 +1475,10 @@ SPoint2 GFaceCompound::parFromPoint(const SPoint3 &p, bool onSurface) const
   SPoint3 sp = it->second;
 
   return SPoint2(sp.x(), sp.y());
-
 }
 
 GPoint GFaceCompound::point(double par1, double par2) const
 {
-
   if(trivial()){
     return (*(_compound.begin()))->point(par1,par2);
   }
@@ -1544,29 +1515,23 @@ GPoint GFaceCompound::point(double par1, double par2) const
 
   const bool LINEARMESH = true; //false
   if(LINEARMESH){
-
-    //linear Lagrange mesh
-    //-------------------------
+    // linear Lagrange mesh
     p = lt->v1*(1.-U-V) + lt->v2*U + lt->v3*V;
     return GPoint(p.x(),p.y(),p.z(),this,par);    
-
   }
   else{
-
-    //curved PN triangle
-    //-------------------------
-    printf("normals size=%d vertex=%d \n", (int)_normals.size(), lt->tri->getVertex(0)->getNum());
+    // curved PN triangle
     const SVector3 n1 = _normals[lt->tri->getVertex(0)];
     const SVector3 n2 = _normals[lt->tri->getVertex(1)];
     const SVector3 n3 = _normals[lt->tri->getVertex(2)];
     
-    SVector3 b300,b030,b003;
-    SVector3 b210,b120,b021,b012,b102,b201,E,VV,b111;
+    SVector3 b300, b030, b003;
+    SVector3 b210, b120, b021, b012, b102, b201, E, VV, b111;
     b300 = lt->v1;
     b030 = lt->v2;
     b003 = lt->v3;
-
-    //tagged PN triangles (sigma=1)
+    
+    // tagged PN triangles (sigma=1)
     double theta = 0.0;
     SVector3 d1 = lt->v1+.33*(1-theta)*(lt->v2-lt->v1);
     SVector3 d2 = lt->v2+.33*(1-theta)*(lt->v1-lt->v2);
@@ -1604,7 +1569,6 @@ GPoint GFaceCompound::point(double par1, double par2) const
 
 Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
 {
- 
   if(!oct) parametrize();
   
   if(trivial())
@@ -1620,27 +1584,27 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
     SVector3 dXdu, dXdv  ;
     bool conv = _rbf->UVStoXYZ(param.x(), param.y(), x,y,z, dXdu, dXdv);
     return Pair<SVector3, SVector3>(dXdu,dXdv);
-   }
+  }
 
   double mat[2][2] = {{lt->p2.x() - lt->p1.x(), lt->p3.x() - lt->p1.x()},
                       {lt->p2.y() - lt->p1.y(), lt->p3.y() - lt->p1.y()}};
   double inv[2][2];
   double det = inv2x2(mat,inv);
   if (!det && _mapping == RBF){
-     double x, y, z;
-     SVector3 dXdu, dXdv  ;
-     bool conv = _rbf->UVStoXYZ(param.x(), param.y(), x,y,z, dXdu, dXdv);
-     return Pair<SVector3, SVector3>(dXdu,dXdv);
+    double x, y, z;
+    SVector3 dXdu, dXdv  ;
+    bool conv = _rbf->UVStoXYZ(param.x(), param.y(), x,y,z, dXdu, dXdv);
+    return Pair<SVector3, SVector3>(dXdu,dXdv);
   }
-
+  
   SVector3 dXdxi(lt->v2 - lt->v1);
   SVector3 dXdeta(lt->v3 - lt->v1);
-
+  
   SVector3 dXdu(dXdxi * inv[0][0] + dXdeta * inv[1][0]);
   SVector3 dXdv(dXdxi * inv[0][1] + dXdeta * inv[1][1]);
-
-  return Pair<SVector3, SVector3>(dXdu,dXdv);
-} 
+  
+  return Pair<SVector3, SVector3>(dXdu, dXdv);
+}
 
 void GFaceCompound::secondDer(const SPoint2 &param, 
                               SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
@@ -1648,7 +1612,6 @@ void GFaceCompound::secondDer(const SPoint2 &param,
   if(!oct) parametrize();  
   //leave debug here (since outputScalarField calls curvatureDiv)
   Msg::Debug("Computation of the second derivatives is not implemented for compound faces");
-  
 }
 
 static void GFaceCompoundBB(void *a, double*mmin, double*mmax)
@@ -1681,7 +1644,7 @@ static void GFaceCompoundCentroid(void *a, double*c)
 static int GFaceCompoundInEle(void *a, double*c)
 {
   GFaceCompoundTriangle *t = (GFaceCompoundTriangle *)a;
-  double M[2][2],R[2],X[2];
+  double M[2][2], R[2], X[2];
   const double eps = 1.e-8;
   const SPoint3 p0 = t->p1;
   const SPoint3 p1 = t->p2;
@@ -1692,7 +1655,7 @@ static int GFaceCompoundInEle(void *a, double*c)
   M[1][1] = p2.y() - p0.y();
   R[0] = (c[0] - p0.x());
   R[1] = (c[1] - p0.y());
-  sys2x2(M,R,X);
+  sys2x2(M, R, X);
   if(X[0] > -eps && X[1] > -eps && 1. - X[0] - X[1] > -eps){
     return 1;
   }
@@ -1742,15 +1705,13 @@ void GFaceCompound::getTriangle(double u, double v,
   M[1][1] = p2.y() - p0.y();
   R[0] = (u - p0.x());
   R[1] = (v - p0.y());
-  sys2x2(M,R,X);
+  sys2x2(M, R, X);
   _u = X[0];
   _v = X[1];
 }
 
-
 void GFaceCompound::buildOct() const
 {
-
   SBoundingBox3d bb;
   int count = 0;
   std::list<GFace*>::const_iterator it = _compound.begin();
@@ -1793,16 +1754,22 @@ void GFaceCompound::buildOct() const
       if((*it)->geomType() != GEntity::DiscreteSurface){
 	// take care of the seam !!!!
 	if (t->getVertex(0)->onWhat()->dim() == 2){
-	  reparamMeshEdgeOnFace(t->getVertex(0), t->getVertex(1),*it, _gfct[count].gfp1, _gfct[count].gfp2); 
-	  reparamMeshEdgeOnFace(t->getVertex(0), t->getVertex(2),*it, _gfct[count].gfp1, _gfct[count].gfp3); 
+	  reparamMeshEdgeOnFace(t->getVertex(0), t->getVertex(1), *it,
+                                _gfct[count].gfp1, _gfct[count].gfp2); 
+	  reparamMeshEdgeOnFace(t->getVertex(0), t->getVertex(2), *it,
+                                _gfct[count].gfp1, _gfct[count].gfp3); 
 	}
 	else if (t->getVertex(1)->onWhat()->dim() == 2){
-	  reparamMeshEdgeOnFace(t->getVertex(1), t->getVertex(0),*it, _gfct[count].gfp2, _gfct[count].gfp1); 
-	  reparamMeshEdgeOnFace(t->getVertex(1), t->getVertex(2),*it, _gfct[count].gfp2, _gfct[count].gfp3); 
+	  reparamMeshEdgeOnFace(t->getVertex(1), t->getVertex(0), *it,
+                                _gfct[count].gfp2, _gfct[count].gfp1); 
+	  reparamMeshEdgeOnFace(t->getVertex(1), t->getVertex(2), *it,
+                                _gfct[count].gfp2, _gfct[count].gfp3); 
 	}
 	else if (t->getVertex(2)->onWhat()->dim() == 2){
-	  reparamMeshEdgeOnFace(t->getVertex(2), t->getVertex(0),*it, _gfct[count].gfp3, _gfct[count].gfp1); 
-	  reparamMeshEdgeOnFace(t->getVertex(2), t->getVertex(1),*it, _gfct[count].gfp3, _gfct[count].gfp2); 
+	  reparamMeshEdgeOnFace(t->getVertex(2), t->getVertex(0), *it,
+                                _gfct[count].gfp3, _gfct[count].gfp1); 
+	  reparamMeshEdgeOnFace(t->getVertex(2), t->getVertex(1), *it,
+                                _gfct[count].gfp3, _gfct[count].gfp2); 
 	}
 	else {
 	  reparamMeshVertexOnFace(t->getVertex(0), *it, _gfct[count].gfp1); 
@@ -1811,27 +1778,25 @@ void GFaceCompound::buildOct() const
 	}
       }
       _gfct[count].v1 = SPoint3(t->getVertex(0)->x(), t->getVertex(0)->y(),
-                                t->getVertex(0)->z());      
+                                t->getVertex(0)->z());
       _gfct[count].v2 = SPoint3(t->getVertex(1)->x(), t->getVertex(1)->y(),
-                                t->getVertex(1)->z());      
+                                t->getVertex(1)->z());
       _gfct[count].v3 = SPoint3(t->getVertex(2)->x(), t->getVertex(2)->y(),
-                                t->getVertex(2)->z());      
-      _gfct[count].gf = *it;  
-      _gfct[count].tri = t;  
+                                t->getVertex(2)->z());
+      _gfct[count].gf = *it;
+      _gfct[count].tri = t;
       Octree_Insert(&_gfct[count], oct);
-      count ++;
+      count++;
     }
   }
   nbT = count;
   Octree_Arrange(oct);
 
   printStuff();
-
 }
 
 bool GFaceCompound::checkTopology() const
 {
-  
   if (_mapping == RBF) return true; 
 
   //fixme tristan
@@ -1856,12 +1821,13 @@ bool GFaceCompound::checkTopology() const
     Msg::Warning("Wrong topology: Genus=%d, Nb boundaries=%d, AR=%g", G, Nb, H/D);
     if (_allowPartition){
       Msg::Info("-----------------------------------------------------------");
-      Msg::Info("--- Split surface %d in %d parts with Multilevel Mesh partitioner", tag(), nbSplit);
+      Msg::Info("--- Split surface %d in %d parts with Multilevel Mesh partitioner",
+                tag(), nbSplit);
     }
     else{
-      Msg::Error("For remeshing your geometry, you should enable the automatic remeshing algorithm.");
-      Msg::Error("Add 'Mesh.RemeshAlgorithm=1;' in your geo file or through the Fltk window (Options > Mesh > General)");
-      Msg::Exit(0);
+      Msg::Fatal("For remeshing your geometry, you should enable the automatic "
+                 "remeshing algorithm. Add 'Mesh.RemeshAlgorithm=1;' in your "
+                 "geo file or through the Fltk window (Options > Mesh > General)");
     }
   }
   else if (G == 0 && AR > AR_MAX){
@@ -1870,25 +1836,28 @@ bool GFaceCompound::checkTopology() const
     if (_allowPartition == 1){
       nbSplit = -2;
       Msg::Info("-----------------------------------------------------------");
-      Msg::Info("--- Split surface %d in 2 parts with Laplacian Mesh partitioner", tag());
+      Msg::Info("--- Split surface %d in 2 parts with Laplacian Mesh partitioner", 
+                tag());
     }
     else if (_allowPartition == 2){
       nbSplit = 2;
       Msg::Info("-----------------------------------------------------------");
-      Msg::Info("--- Split surface %d in %d parts with Multilevel Mesh partitioner", tag(), nbSplit);
+      Msg::Info("--- Split surface %d in %d parts with Multilevel Mesh partitioner",
+                tag(), nbSplit);
     }
     else if (_allowPartition == 0){
-      Msg::Warning("The geometrical aspect ratio of your geometry is quite high.");
-      Msg::Warning("You should enable partitioning of the mesh by activating the automatic remeshin algorithm.");
-      Msg::Warning("Add 'Mesh.RemeshAlgorithm=1;' in your geo file or through the Fltk window (Options > Mesh > General)");
+      Msg::Warning("The geometrical aspect ratio of your geometry is quite high. "
+                   "You should enable partitioning of the mesh by activating the "
+                   "automatic remeshin algorithm. Add 'Mesh.RemeshAlgorithm=1;' "
+                   "in your geo file or through the Fltk window (Options > Mesh > "
+                   "General)");
     }
   }
   else{
     Msg::Debug("Correct topology: Genus=%d and Nb boundaries=%d, AR=%g", G, Nb, H/D);
   }
-
+  
   return correctTopo;
-
 }
 
 double GFaceCompound::checkAspectRatio() const
@@ -1949,14 +1918,13 @@ double GFaceCompound::checkAspectRatio() const
   }
   
   return AR;
-
 }
 
 void GFaceCompound::coherencePatches() const
 {
-
   if (_mapping == RBF) return;
-  Msg::Info("Re-orient all %d compound patches normals coherently", _compound.size());
+  Msg::Info("Re-orient all %d compound patches normals coherently",
+            _compound.size());
 
   std::map<MEdge, std::set<MElement*>, Less_Edge > edge2elems;
   std::vector<MElement*> allElems;
@@ -1967,7 +1935,8 @@ void GFaceCompound::coherencePatches() const
       allElems.push_back(t);
       for (int j = 0; j <  t->getNumEdges(); j++){
 	MEdge me = t->getEdge(j);
-	std::map<MEdge, std::set<MElement*, std::less<MElement*> >, Less_Edge >::iterator it = edge2elems.find(me);
+	std::map<MEdge, std::set<MElement*, std::less<MElement*> >, 
+          Less_Edge >::iterator it = edge2elems.find(me);
 	if (it == edge2elems.end()) {
 	  std::set<MElement*, std::less<MElement*> > mySet;
 	  mySet.insert(t);
@@ -1993,9 +1962,11 @@ void GFaceCompound::coherencePatches() const
         for (int j = 0; j <  t->getNumEdges(); j++){
           MEdge me = t->getEdge(j);
           t->getEdgeInfo(me, iE,si);
-          std::map<MEdge, std::set<MElement*>, Less_Edge >::iterator it = edge2elems.find(me);
+          std::map<MEdge, std::set<MElement*>, Less_Edge >::iterator it = 
+            edge2elems.find(me);
           std::set<MElement*, std::less<MElement*> > mySet = it->second;
-          for(std::set<MElement*, std::less<MElement*> >::iterator itt = mySet.begin(); itt != mySet.end(); itt++){
+          for(std::set<MElement*, std::less<MElement*> >::iterator itt = mySet.begin();
+              itt != mySet.end(); itt++){
             if (*itt != t){
               (*itt)->getEdgeInfo(me,iE2,si2);
               if(si == si2)  (*itt)->revert();
@@ -2017,7 +1988,8 @@ void GFaceCompound::coherenceNormals()
     MElement *t =  getMeshElement(i);
     for (int j = 0; j <  t->getNumEdges(); j++){
       MEdge me = t->getEdge(j);
-      std::map<MEdge, std::set<MElement*, std::less<MElement*> >, Less_Edge >::iterator it = edge2elems.find(me);
+      std::map<MEdge, std::set<MElement*, std::less<MElement*> >,
+        Less_Edge >::iterator it = edge2elems.find(me);
       if (it == edge2elems.end()) {
         std::set<MElement*, std::less<MElement*> > mySet;
         mySet.insert(t);
@@ -2042,9 +2014,11 @@ void GFaceCompound::coherenceNormals()
         for (int j = 0; j <  t->getNumEdges(); j++){
           MEdge me = t->getEdge(j);
           t->getEdgeInfo(me, iE,si);
-          std::map<MEdge, std::set<MElement*>, Less_Edge >::iterator it = edge2elems.find(me);
+          std::map<MEdge, std::set<MElement*>, Less_Edge >::iterator it = 
+            edge2elems.find(me);
           std::set<MElement*, std::less<MElement*> > mySet = it->second;
-          for(std::set<MElement*, std::less<MElement*> >::iterator itt = mySet.begin(); itt != mySet.end(); itt++){
+          for(std::set<MElement*, std::less<MElement*> >::iterator itt = mySet.begin();
+              itt != mySet.end(); itt++){
             if (*itt != t){
               (*itt)->getEdgeInfo(me,iE2,si2);
               if(si == si2)  (*itt)->revert();
@@ -2069,7 +2043,6 @@ void GFaceCompound::buildAllNodes() const
       }
     }
   }
-
 }
 
 int GFaceCompound::genusGeom() const
@@ -2123,15 +2096,14 @@ void GFaceCompound::printStuff(int iNewton) const
   //FILE * xyzc = fopen(name6,"w");
   //FILE * uvm = fopen(name7,"w");
 
-
-  //fprintf(uva,"View \"\"{\n");
-  fprintf(uvx,"View \"\"{\n");
-  fprintf(uvy,"View \"\"{\n");
-  fprintf(uvz,"View \"\"{\n");
-  fprintf(xyzu,"View \"\"{\n");
-  fprintf(xyzv,"View \"\"{\n");
-  //fprintf(xyzc,"View \"\"{\n");
-  //fprintf(uvm,"View \"\"{\n");
+  //fprintf(uva, "View \"\"{\n");
+  fprintf(uvx, "View \"\"{\n");
+  fprintf(uvy, "View \"\"{\n");
+  fprintf(uvz, "View \"\"{\n");
+  fprintf(xyzu, "View \"\"{\n");
+  fprintf(xyzv, "View \"\"{\n");
+  //fprintf(xyzc, "View \"\"{\n");
+  //fprintf(uvm, "View \"\"{\n");
 
   for( ; it != _compound.end() ; ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
@@ -2142,12 +2114,13 @@ void GFaceCompound::printStuff(int iNewton) const
         coordinates.find(t->getVertex(1));
       std::map<MVertex*,SPoint3>::const_iterator it2 = 
         coordinates.find(t->getVertex(2));
-      fprintf(xyzv,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+      fprintf(xyzv, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
               t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
               t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
               t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
               it0->second.y(),it1->second.y(),it2->second.y());
-      fprintf(xyzu,"ST(%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E){%22.15E,%22.15E,%22.15E};\n",
+      fprintf(xyzu, "ST(%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,"
+              "%22.15E,%22.15E){%22.15E,%22.15E,%22.15E};\n",
               t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
               t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
               t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
@@ -2171,17 +2144,23 @@ void GFaceCompound::printStuff(int iNewton) const
       double a_2D = fabs(triangle_area(q0, q1, q2));
       double area = (a_3D/a_2D); //*(a_3D/a_2D);
 
-      // Pair<SVector3, SVector3> der = this->firstDer(SPoint2( it0->second.x(), it0->second.y()));
+      // Pair<SVector3, SVector3> der = this->firstDer(SPoint2(it0->second.x(),
+      //                                                       it0->second.y()));
       // double metric0e = dot(der.first(), der.first());
-      // double metric0f = dot(der.second()*(1./norm(der.second())), der.first()*(1./norm(der.first())));
+      // double metric0f = dot(der.second()*(1./norm(der.second())),
+      //                       der.first()*(1./norm(der.first())));
       // double metric0g = dot(der.second(), der.second());
-      // Pair<SVector3, SVector3> der1 = this->firstDer(SPoint2( it1->second.x(), it1->second.y()));
+      // Pair<SVector3, SVector3> der1 = this->firstDer(SPoint2(it1->second.x(),
+      //                                                        it1->second.y()));
       // double metric1e = dot(der1.first(), der1.first());
-      // double metric1f = dot(der1.second()*(1/norm(der1.second())), der1.first()*(1./norm(der1.first())));
+      // double metric1f = dot(der1.second()*(1/norm(der1.second())), 
+      //                       der1.first()*(1./norm(der1.first())));
       // double metric1g = dot(der1.second(), der1.second());
-      // Pair<SVector3, SVector3> der2 = this->firstDer(SPoint2( it2->second.x(), it2->second.y()));
+      // Pair<SVector3, SVector3> der2 = this->firstDer(SPoint2(it2->second.x(), 
+      //                                                        it2->second.y()));
       // double metric2e = dot(der2.first(),  der2.first());
-      // double metric2f = dot(der2.second()*(1./norm(der2.second())), der2.first()*(1./norm(der2.first())));
+      // double metric2f = dot(der2.second()*(1./norm(der2.second())),
+      //                       der2.first()*(1./norm(der2.first())));
       // double metric2g = dot(der2.second(), der2.second());
       
       // double mat0[2][2], eig0[2];
@@ -2201,29 +2180,30 @@ void GFaceCompound::printStuff(int iNewton) const
       // double disp1 = sqrt(.5*(eig1[0]*eig1[0]+ (eig1[1]*eig1[1])));
       // double disp2 = sqrt(.5*(eig2[0]*eig2[0]+ (eig2[1]*eig2[1])));
       // double mdisp = .333*(disp0+disp1+disp2);
-       // fprintf(uva,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+       // fprintf(uva, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
       //         it0->second.x(), it0->second.y(), 0.0,
       //         it1->second.x(), it1->second.y(), 0.0,
       //         it2->second.x(), it2->second.y(), 0.0,
       //         area, area, area);   
 
-      // fprintf(uvm,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+      // fprintf(uvm, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
       //         it0->second.x(), it0->second.y(), 0.0,
       //         it1->second.x(), it1->second.y(), 0.0,
       //         it2->second.x(), it2->second.y(), 0.0, 
       // 	      mdisp, mdisp, mdisp);    
       
-      fprintf(uvx,"ST(%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E){%22.15E,%22.15E,%22.15E};\n",
+      fprintf(uvx, "ST(%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,"
+              "%22.15E,%22.15E){%22.15E,%22.15E,%22.15E};\n",
               it0->second.x(), it0->second.y(), 0.0,
               it1->second.x(), it1->second.y(), 0.0,
               it2->second.x(), it2->second.y(), 0.0,
               t->getVertex(0)->x(), t->getVertex(1)->x(), t->getVertex(2)->x());
-      fprintf(uvy,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+      fprintf(uvy, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
               it0->second.x(), it0->second.y(), 0.0,
               it1->second.x(), it1->second.y(), 0.0,
               it2->second.x(), it2->second.y(), 0.0,
               t->getVertex(0)->y(), t->getVertex(1)->y(), t->getVertex(2)->y());
-      fprintf(uvz,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+      fprintf(uvz, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
               it0->second.x(), it0->second.y(), 0.0,
               it1->second.x(), it1->second.y(), 0.0,
               it2->second.x(), it2->second.y(), 0.0,
@@ -2250,21 +2230,3 @@ void GFaceCompound::printStuff(int iNewton) const
 
 #endif
 
-void replaceMeshCompound(GFace *gf, std::list<GEdge*> &edges)
-{
-  std::list<GEdge*> e = gf->edges();
-  //Replace edges by their compounds
-  std::set<GEdge*> mySet;
-  std::list<GEdge*>::iterator it = e.begin();
-  while(it != e.end()){
-    if((*it)->getCompound()){
-      mySet.insert((*it)->getCompound());
-    }
-    else{ 
-      mySet.insert(*it);
-    }
-    ++it;
-  }
-  edges.clear();
-  edges.insert(edges.begin(), mySet.begin(), mySet.end());
-}

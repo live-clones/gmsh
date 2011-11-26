@@ -78,7 +78,7 @@ void GEdgeCompound::orderEdges()
     else tempv.erase(it2);
   }
 
- //find the first GEdge and erase it from the list edges
+  //find the first GEdge and erase it from the list edges
   GEdge *firstEdge;
   if (tempv.size() == 2){   // non periodic
     firstEdge = (tempv.begin())->second;
@@ -256,3 +256,22 @@ SVector3 GEdgeCompound::firstDer(double par) const
   getLocalParameter(par,iEdge,tLoc);
   return _compound[iEdge]->firstDer(tLoc);
 } 
+
+void replaceMeshCompound(GFace *gf, std::list<GEdge*> &edges)
+{
+  std::list<GEdge*> e = gf->edges();
+  // replace edges by their compounds
+  std::set<GEdge*> mySet;
+  std::list<GEdge*>::iterator it = e.begin();
+  while(it != e.end()){
+    if((*it)->getCompound()){
+      mySet.insert((*it)->getCompound());
+    }
+    else{ 
+      mySet.insert(*it);
+    }
+    ++it;
+  }
+  edges.clear();
+  edges.insert(edges.begin(), mySet.begin(), mySet.end());
+}

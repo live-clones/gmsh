@@ -41,7 +41,6 @@ GEdge *getOCCEdgeByNativePtr(GModel *model, TopoDS_Edge toFind)
   return 0;
 }
 
-
 OCCEdge::OCCEdge(GModel *model, TopoDS_Edge edge, int num, GVertex *v1, GVertex *v2)
   : GEdge(model, num, v1, v2), c(edge), trimmed(0)
 {
@@ -295,8 +294,8 @@ void OCCEdge::writeGEO(FILE *fp)
 // in gluing operations for example
 void OCCEdge::replaceEndingPointsInternals(GVertex *g0, GVertex *g1)
 {
-  TopoDS_Vertex aV1  = *((TopoDS_Vertex*)v0->getNativePtr());
-  TopoDS_Vertex aV2  = *((TopoDS_Vertex*)v1->getNativePtr());
+  TopoDS_Vertex aV1 = *((TopoDS_Vertex*)v0->getNativePtr());
+  TopoDS_Vertex aV2 = *((TopoDS_Vertex*)v1->getNativePtr());
   TopoDS_Vertex aVR1 = *((TopoDS_Vertex*)g0->getNativePtr());
   TopoDS_Vertex aVR2 = *((TopoDS_Vertex*)g1->getNativePtr());
 
@@ -304,37 +303,32 @@ void OCCEdge::replaceEndingPointsInternals(GVertex *g0, GVertex *g1)
   //	 v0,v1,g0,g1,v0->tag(),v1->tag(),g0->tag(),g1->tag(),tag());
   
   Standard_Boolean bIsDE = BRep_Tool::Degenerated(c);
-  //
+
   TopoDS_Edge aEx = c;
   aEx.Orientation(TopAbs_FORWARD);
 
   Standard_Real t1=s0;
   Standard_Real t2=s1;
-  //
+
   aVR1.Orientation(TopAbs_FORWARD);
   aVR2.Orientation(TopAbs_REVERSED);
-  //
+
   if (bIsDE) {
     Standard_Real aTol;
     BRep_Builder aBB;
     TopoDS_Edge E;
     TopAbs_Orientation anOrE;
-    //
-    anOrE=c.Orientation();
-    aTol=BRep_Tool::Tolerance(c);
-    //
-    E=aEx;
+    anOrE = c.Orientation();
+    aTol = BRep_Tool::Tolerance(c);
+    E = aEx;
     E.EmptyCopy();
-    //
-    aBB.Add  (E, aVR1);
-    aBB.Add  (E, aVR2);
+    aBB.Add(E, aVR1);
+    aBB.Add(E, aVR2);
     aBB.Range(E, t1, t2);
     aBB.Degenerated(E, Standard_True);
     aBB.UpdateEdge(E, aTol);
-    //
     _replacement=E;
   }
-  //
   else {
     BOPTools_Tools::MakeSplitEdge(aEx, aVR1, t1, aVR2, t2, _replacement); 
   }
@@ -345,7 +339,6 @@ void OCCEdge::replaceEndingPointsInternals(GVertex *g0, GVertex *g1)
   //build the reverse curve
   c_rev = c;
   c_rev.Reverse();
-  
 }
 
 #endif

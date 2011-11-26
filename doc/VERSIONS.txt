@@ -1,12 +1,13 @@
-2.6.0 (): new quadrilateral meshing algoroithms (Blossom and DelQuad);
-new tensor field visualization modes (eigenvectors, ellipsoid, etc.);
-added support for interpolation schemes in .msh file; added support
-for MED3 format; rescale viewport around visible entities (shift+1:1
-in GUI); unified post-processing field export; new experimental
-stereo+camera visualization mode; experimental BAMG & MMG3D support
-for anisotropic mesh generation; new OCC cut&merge algorithm imported
-from Salome; new ability to connect extruded meshes to tetrahedral
-grids using pyramids; Abaqus (INP) mesh export; various bug fixes and
+2.6.0 (): new quadrilateral meshing algorithms (Blossom and DelQuad);
+new solver module based on ONELAB project; new tensor field
+visualization modes (eigenvectors, ellipsoid, etc.); added support for
+interpolation schemes in .msh file; added support for MED3 format;
+rescale viewport around visible entities (shift+1:1 in GUI); unified
+post-processing field export; new experimental stereo+camera
+visualization mode; experimental BAMG & MMG3D support for anisotropic
+mesh generation; new OCC cut&merge algorithm imported from Salome; new
+ability to connect extruded meshes to tetrahedral grids using
+pyramids; Abaqus (INP) mesh export; various bug fixes and
 improvements.
 
 2.5.0 (Oct 15, 2010): new compound geometrical entities (for remeshing

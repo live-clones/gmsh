@@ -71,11 +71,9 @@ ACISFace::ACISFace(GModel *m, FACE *f, int num)
   vmin = _v.start_pt();
   vmax = _v.end_pt();
 
-
   if ( surf.closed_u() || surf.closed_v() ) {
     printf("%d %g %g -- %g %g\n",tag(),umin,umax,vmin,vmax);
   }
-
 
   _periodic[0] = surf.periodic_u();
   _periodic[1] = surf.periodic_v();
@@ -97,7 +95,6 @@ Range<double> ACISFace::parBounds(int i) const
 
 SVector3 ACISFace::normal(const SPoint2 &param) const
 {
-
   SURFACE *Surf = _f->geometry();
   const surface &surf = Surf->equation();
 
@@ -112,10 +109,11 @@ Pair<SVector3,SVector3> ACISFace::firstDer(const SPoint2 &param) const
   SPAposition pos;
   SPAvector first_derivs[2];
   surf.eval (SPApar_pos(param.x(),param.y()), pos,first_derivs);
-  return Pair<SVector3,SVector3> (
-				  SVector3(first_derivs[0].component(0),first_derivs[0].component(1),first_derivs[0].component(2)),
-				  SVector3(first_derivs[1].component(0),first_derivs[1].component(1),first_derivs[1].component(2))
-				  );
+  return Pair<SVector3,SVector3> 
+    (SVector3(first_derivs[0].component(0), first_derivs[0].component(1), 
+              first_derivs[0].component(2)),
+     SVector3(first_derivs[1].component(0), first_derivs[1].component(1),
+              first_derivs[1].component(2)));
 }
 
 void ACISFace::secondDer(const SPoint2 &param,
@@ -153,12 +151,8 @@ SPoint2 ACISFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
   SURFACE *Surf = _f->geometry();
   SPAposition pt(qp.x(),qp.y(),qp.z());
   SPApar_pos ppt = Surf->equation().param(pt);
-   
-  SPoint2 pt2(ppt.u,ppt.v);	// 200306
-
+  SPoint2 pt2(ppt.u,ppt.v);
   GPoint sp = point(ppt.u,ppt.v);
-  //  printf("%g %g %g vs %g %g %g\n",qp.x(),qp.y(),qp.z(),sp.x(),sp.y(),sp.z());
-
   return pt2;
 }
 
@@ -203,7 +197,6 @@ double ACISFace::period(int dir) const {
     return _f->geometry()->equation().param_period_v();
 }
 
-
 bool ACISFace::buildSTLTriangulation(bool force)
 {
   if(stl_triangles.size()){
@@ -230,6 +223,5 @@ GFace *getACISFaceByNativePtr(GModel *model, FACE *f)
   }
   return 0;
 }
-
 
 #endif

@@ -30,7 +30,6 @@ static void computeMeshMetricsForBamg(GFace *gf, int numV,
                                       double *mm11, double *mm12, double *mm22,
                                       int iter)
 {
-
   //  char name[245];
   //  sprintf(name,"bgmBamg-%d-%d.pos",gf->tag(),iter);
   //  if (iter < 2){
@@ -67,7 +66,6 @@ static void computeMeshMetricsForBamg(GFace *gf, int numV,
 
 static void meshGFaceBamg_(GFace *gf, int iter, bool initialMesh)
 {
-
   std::set<MVertex*> all;
   std::map<int,MVertex*> recover;
   for (unsigned int i = 0; i < gf->triangles.size(); i++){
@@ -215,8 +213,8 @@ void meshGFaceBamg(GFace *gf)
 
 void meshGFaceBamg(GFace *gf)
 {
-  Msg::Error("Gmsh msust be compiled with the Bidimensional Anisotropic Mesh "
-             "Generator (Bamg) in order to support that option");
+  Msg::Error("This version of Gmsh is not compiled with Bidimensional "
+             "Anisotropic Mesh Generator (BAMG) support");
 }
 
 #endif

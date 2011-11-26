@@ -37,4 +37,6 @@ class GEdgeCompound : public GEdge {
   std::vector<GEdge*>  getCompounds() const { return _compound; }
 };
 
+void replaceMeshCompound(GFace*, std::list<GEdge*>&);
+
 #endif

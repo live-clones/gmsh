@@ -4,7 +4,6 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "GModelFactory.h"
-
 #include "ListUtils.h"
 #include "Context.h"
 #include "GVertex.h"
@@ -14,7 +13,6 @@
 #include "gmshRegion.h"
 #include "MLine.h"
 #include "GModel.h"
-
 
 GVertex *GeoFactory::addVertex(GModel *gm, double x, double y, double z, double lc)
 {
@@ -79,9 +77,11 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
     List_T *iListl = List_Create(nl, nl, sizeof(int));
     if (nl > 1) {
       const GEdge &e1 = *edges[i][1];
-      if (e0.getEndVertex() != e1.getBeginVertex() && e0.getEndVertex() != e1.getEndVertex()) {
+      if (e0.getEndVertex() != e1.getBeginVertex() && 
+          e0.getEndVertex() != e1.getEndVertex()) {
         frontV = e0.getEndVertex();
-        if (e0.getBeginVertex() != e1.getBeginVertex() && e0.getBeginVertex() != e1.getEndVertex()) {
+        if (e0.getBeginVertex() != e1.getBeginVertex() &&
+            e0.getBeginVertex() != e1.getEndVertex()) {
           Msg::Warning("Edges 0 and 1 not consecutive in line loop %d", i);
           //return NULL;
         }
@@ -183,7 +183,6 @@ GRegion* GeoFactory::addVolume (GModel *gm, std::vector<std::vector<GFace *> > f
   return gr;
 }
 
-//---------------------------------------------------------------------------------
 #if defined(HAVE_OCC)
 #include "OCCIncludes.h"
 #include "GModelIO_OCC.h"
@@ -214,7 +213,6 @@ GRegion* GeoFactory::addVolume (GModel *gm, std::vector<std::vector<GFace *> > f
 #include <TColgp_HArray1OfPnt.hxx>
 #include <TColStd_HArray1OfReal.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
-
 
 GVertex *OCCFactory::addVertex(GModel *gm, double x, double y, double z, double lc)
 {

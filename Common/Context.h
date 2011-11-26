@@ -55,8 +55,6 @@ struct contextGeometryOptions {
   int matchGeomAndMesh;
 };
 
-
-
 class CTX {
  private:
   static CTX *_instance;

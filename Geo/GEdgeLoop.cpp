@@ -101,15 +101,13 @@ int GEdgeLoop::count(GEdge* ge) const
 
 GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire)
 {
-
-
-  // Sometimes OCC puts a nasty degenerated edge in the middle of the wire ...
-  // pushing it to front fixes the problem as it concerns gmsh 
-
+  // Sometimes OCC puts a nasty degenerated edge in the middle of the
+  // wire ...  pushing it to front fixes the problem as it concerns
+  // gmsh
   std::list<GEdge*> wire;
   std::vector<GEdge*> degenerated;
   GEdge *degeneratedToInsert = 0;
-  for (std::list<GEdge*>::const_iterator it = cwire.begin(); it != cwire.end() ; ++it){ // TEST
+  for (std::list<GEdge*>::const_iterator it = cwire.begin(); it != cwire.end(); ++it){
     GEdge *ed = *it;
     if (ed->degenerate(0))degenerated.push_back(ed);
     else wire.push_back(ed);
@@ -129,25 +127,24 @@ GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire)
   GEdgeSigned *prevOne = 0;
   GEdgeSigned ges(0,0);
 
-  //  printf("go !!!\n");
   while(wire.size()){
     if (prevOne && degeneratedToInsert && 
 	degeneratedToInsert->getBeginVertex () == prevOne->getEndVertex()){
       ges = GEdgeSigned(1,degeneratedToInsert);
       degeneratedToInsert = 0;
-      //      printf("second degenerated edge inserted\n");
+      // printf("second degenerated edge inserted\n");
     }
     else ges = nextOne(prevOne, wire);
     if(ges.getSign() == 0){ // oops
       Msg::Error("Something wrong in edge loop of size=%d, no sign !", wire.size());
       for (std::list<GEdge* >::iterator it = wire.begin(); it != wire.end(); it++){
-	printf("GEdge=%d begin=%d end =%d \n", (*it)->tag(), (*it)->getBeginVertex()->tag(), (*it)->getEndVertex()->tag()  );
+        Msg::Error("GEdge=%d begin=%d end =%d", (*it)->tag(), 
+                   (*it)->getBeginVertex()->tag(), (*it)->getEndVertex()->tag());
       }
       break;
     }
     prevOne = &ges;
-    //        ges.print();
+    // ges.print();
     loop.push_back(ges);
   }
 }
-

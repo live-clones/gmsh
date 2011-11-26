@@ -1,5 +1,12 @@
-#ifndef _RBF_H
-#define _RBF_H
+// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+//
+// Contributed by FIXME
+
+#ifndef _RBF_H_
+#define _RBF_H_
 
 #include <math.h>
 #include <vector>
@@ -8,10 +15,10 @@
 #include "SVector3.h"
 #include "MVertex.h"
 #include "Context.h"
+
 #if defined(HAVE_ANN)
 class ANNkd_tree;
 #endif
-
 
 class Sphere{
  public:
@@ -21,7 +28,6 @@ class Sphere{
 };
 
 class GRbf {
-
   std::map<MVertex*, int> _mapV;
   std::map<MVertex*, int> _mapAllV;
   std::map<int, std::vector<int> > nodesInSphere;
@@ -70,8 +76,10 @@ class GRbf {
   void buildOctree(double radius);
   void buildXYZkdtree();
 
-  // Sets up the surface generation problem as suggested by Beatson et al. Introduction of 2 extra points per node. The
-  // function values at the nodes on the surface are set to 0 while the function values inside are set to -1 and outside to 1.
+  // Sets up the surface generation problem as suggested by Beatson et
+  // al. Introduction of 2 extra points per node. The function values
+  // at the nodes on the surface are set to 0 while the function
+  // values inside are set to -1 and outside to 1.
   void setup_level_set(const fullMatrix<double> &cntrs,
 		       const fullMatrix<double> &normals,
 		       fullMatrix<double> &level_set_nodes, 
@@ -81,20 +89,22 @@ class GRbf {
   // This is to avoid the introduction of removable singularities at r=0.
   double evalRadialFnDer (int p, double dx, double dy, double dz, double ep);
 	
-	
   // Generates the RBF collocation matrix for data in d-dimensions, associated with the
   //(p)th derivative of the radial function w.r.t. the (q)th variable
   fullMatrix<double> generateRbfMat(int p,
 				    const fullMatrix<double> &nodes1,
 				    const fullMatrix<double> &nodes2);
   
-  // Computes the interpolation(p==0) or the derivative (p!=0) operator(mxn) (n:number of centers, m: number of evaluation nodes)
+  // Computes the interpolation(p==0) or the derivative (p!=0)
+  // operator(mxn) (n:number of centers, m: number of evaluation
+  // nodes)
   void RbfOp(int p, // (p)th derivatives
 	     const fullMatrix<double> &cntrs,
 	     const fullMatrix<double> &nodes, 
 	     fullMatrix<double> &D);
 
-  // Computes the interpolant(p==0) or the derivative (p!=0) of the function values entered and evaluates it at the new nodes
+  // Computes the interpolant(p==0) or the derivative (p!=0) of the
+  // function values entered and evaluates it at the new nodes
   void evalRbfDer(int p, // (p)th derivatives
 		  const fullMatrix<double> &cntrs,
 		  const fullMatrix<double> &nodes,
@@ -133,25 +143,23 @@ class GRbf {
 				     fullMatrix<double> &D);
   
   // Calculates the curvature of a surface at centers
-
   void curvatureRBF(const fullMatrix<double> &cntrs,
 		    fullMatrix<double> &curvature);
-
   void computeCurvature(const fullMatrix<double> &cntrs, 
 			std::map<MVertex*, double>&rbf_curv);
-
   void computeLocalCurvature(const fullMatrix<double> &cntrs, 
 		       std::map<MVertex*, double>&rbf_curv);
 
-  //Finds the U,V,S (in the 0-level set) that are the 'num_neighbours' closest to u_eval and v_eval.
-  //Thus in total, we're working with '3*num_neighbours' nodes
-  //Say that the vector 'index' gives us the indices of the closest points
- bool UVStoXYZ(const double u_eval, const double v_eval,
-	       double &XX, double &YY, double &ZZ,
-	       SVector3 &dXdu, SVector3& dxdv, int num_neighbours=15);
-
- void solveHarmonicMap(fullMatrix<double> Oper, std::vector<MVertex*> ordered, 
-		       std::vector<double> coords, std::map<MVertex*, SPoint3> &rbf_param);
+  //Finds the U,V,S (in the 0-level set) that are the 'num_neighbours'
+  //closest to u_eval and v_eval.  Thus in total, we're working with
+  //'3*num_neighbours' nodes Say that the vector 'index' gives us the
+  //indices of the closest points
+  bool UVStoXYZ(const double u_eval, const double v_eval,
+                double &XX, double &YY, double &ZZ,
+                SVector3 &dXdu, SVector3& dxdv, int num_neighbours=15);
+  
+  void solveHarmonicMap(fullMatrix<double> Oper, std::vector<MVertex*> ordered, 
+                        std::vector<double> coords, std::map<MVertex*, SPoint3> &rbf_param);
 
  inline const fullMatrix<double> getUV() {return UV;};
  inline const fullMatrix<double> getXYZ() {return centers;};

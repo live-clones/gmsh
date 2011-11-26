@@ -35,7 +35,6 @@ GEdge *getACISEdgeByNativePtr(GModel *model, EDGE * toFind)
   return 0;
 }
 
-
 ACISEdge::ACISEdge(GModel *model, EDGE* edge, int num, GVertex *v1, GVertex *v2)
   : GEdge(model, num, v1, v2), _e(edge)
 {
@@ -49,8 +48,6 @@ ACISEdge::ACISEdge(GModel *model, EDGE* edge, int num, GVertex *v1, GVertex *v2)
     //    s1 += _cur->equation().param_period()/2;
   }
   Msg::Info("ACIS Edge %d is %s goes from %g to %g",tag(),getTypeString().c_str(),s0,s1);
-
-
 }
 
 Range<double> ACISEdge::parBounds(int i) const
@@ -68,10 +65,10 @@ SPoint2 ACISEdge::reparamOnFace(const GFace *face, double epar, int dir) const
   return pt2;
 }
 
-GPoint ACISEdge::closestPoint(const SPoint3 &qp, double &param) const{
+GPoint ACISEdge::closestPoint(const SPoint3 &qp, double &param) const
+{
   throw;
 }
-
 
 // True if the edge is a seam for the given face
 bool ACISEdge::isSeam(const GFace *face) const
@@ -84,7 +81,8 @@ bool ACISEdge::isSeam(const GFace *face) const
            !(((FACE*)face->getNativePtr())->geometry()->equation().periodic_v()))
   {
      SPAinterval cur_rang = _cur->equation().param_range();
-     SPAinterval sur_rang_u = ((FACE*)face->getNativePtr())->geometry()->equation().param_range_u();
+     SPAinterval sur_rang_u = 
+       ((FACE*)face->getNativePtr())->geometry()->equation().param_range_u();
      SPAposition p1, p2;
      p1 = _cur->equation().eval_position(cur_rang.start_pt());
      p2 = _cur->equation().eval_position(cur_rang.end_pt());
@@ -102,7 +100,8 @@ bool ACISEdge::isSeam(const GFace *face) const
             (((FACE*)face->getNativePtr())->geometry()->equation().periodic_v()))
   {
      SPAinterval cur_rang = _cur->equation().param_range();
-     SPAinterval sur_rang_v = ((FACE*)face->getNativePtr())->geometry()->equation().param_range_v();
+     SPAinterval sur_rang_v =
+       ((FACE*)face->getNativePtr())->geometry()->equation().param_range_v();
      SPAposition p1, p2;
      p1 = _cur->equation().eval_position(cur_rang.start_pt());
      p2 = _cur->equation().eval_position(cur_rang.end_pt());
@@ -120,8 +119,10 @@ bool ACISEdge::isSeam(const GFace *face) const
            (((FACE*)face->getNativePtr())->geometry()->equation().periodic_v()))
   {
      SPAinterval cur_rang = _cur->equation().param_range();
-     SPAinterval sur_rang_u = ((FACE*)face->getNativePtr())->geometry()->equation().param_range_u();
-     SPAinterval sur_rang_v = ((FACE*)face->getNativePtr())->geometry()->equation().param_range_v();
+     SPAinterval sur_rang_u =
+       ((FACE*)face->getNativePtr())->geometry()->equation().param_range_u();
+     SPAinterval sur_rang_v =
+       ((FACE*)face->getNativePtr())->geometry()->equation().param_range_v();
      SPAposition p1, p2;
      p1 = _cur->equation().eval_position(cur_rang.start_pt());
      p2 = _cur->equation().eval_position(cur_rang.end_pt());
@@ -139,10 +140,10 @@ bool ACISEdge::isSeam(const GFace *face) const
   }
 }
 
-bool ACISEdge::degenerate(int) const{
+bool ACISEdge::degenerate(int) const
+{
   return _e->length() == 0.0;
 }
-
 
 GPoint ACISEdge::point(double par) const
 {

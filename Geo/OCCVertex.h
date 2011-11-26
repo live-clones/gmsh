@@ -32,6 +32,7 @@ class OCCVertex : public GVertex {
   virtual SPoint2 reparamOnFace(const GFace *gf, int) const;
   TopoDS_Vertex getShape() { return v; }
 };
+
 GVertex *getOCCVertexByNativePtr(GModel *model, TopoDS_Vertex toFind);
 
 #endif

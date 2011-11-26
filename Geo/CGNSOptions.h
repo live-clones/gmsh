@@ -11,18 +11,15 @@
 class CGNSOptions
 {
  public:
-  // Types
   enum CGNSLocationType {
     LocVertex = 0,
     LocFace = 1
   };
 
-  // Data
   std::string baseName;
   std::string zoneName;
   std::string interfaceName;
   std::string patchName;
-
   int gridConnectivityLocation;         // Location of connectivity(values
                                         // CGNSLocationType)
   int bocoLocation;                     // Location of BC (values
@@ -37,15 +34,10 @@ class CGNSOptions
   bool writeUserDef;                    // T - write user-defined elements for
                                         //     element types unsupported by CGNS
 
-//--Constructor
-
   CGNSOptions()
   {
     setDefaults();
   }
-
-//--Default values
-
   void setDefaults()
   {
     baseName = "Base_1";

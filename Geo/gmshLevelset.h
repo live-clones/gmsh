@@ -15,6 +15,7 @@
 #include <stdlib.h> // for abs()
 #include <vector>
 #include "fullMatrix.h"
+#include "GModel.h"
 #include "MVertex.h"
 #include "GmshConfig.h"
 #include "mathEvaluator.h"
@@ -254,7 +255,6 @@ public:
   int type() const { return UNKNOWN; }
 };
 
-class GModel;
 class gLevelsetDistGeom: public gLevelsetPrimitive
 {
   GModel *_model;

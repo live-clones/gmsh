@@ -21,10 +21,8 @@
 class Cell;
 class BdInfo;
 
-
 class CellComplex
 {
-
  private:
 
   GModel* _model;
@@ -136,7 +134,6 @@ class CellComplex
   // experimental
   int saveComplex(std::string filename);
   int loadComplex(std::string filename);
-
 };
 
 #endif
