@@ -391,7 +391,8 @@ static bool recoverEdge(BDS_Mesh *m, GEdge *ge,
   return true;
 }
 
-void BDS2GMSH ( BDS_Mesh *m, GFace *gf, std::map<BDS_Point*, MVertex*> &recoverMap){ 
+void BDS2GMSH(BDS_Mesh *m, GFace *gf, std::map<BDS_Point*, MVertex*> &recoverMap)
+{
   {
     std::set<BDS_Point*,PointLessThan>::iterator itp = m->points.begin();
     while (itp != m->points.end()){
@@ -438,14 +439,18 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 		   bool debug = true,
 		   std::list<GEdge*> *replacement_edges = 0);
 
-static void addOrRemove ( MVertex *v1, MVertex *v2, std::set<MEdge,Less_Edge> & bedges){
+static void addOrRemove(MVertex *v1, MVertex *v2, std::set<MEdge,Less_Edge> & bedges)
+{
   MEdge e(v1,v2);
   std::set<MEdge,Less_Edge>::iterator it = bedges.find(e);
   if (it == bedges.end())bedges.insert(e);
   else bedges.erase(it);
 }
 
-void filterOverlappingElements (int dim, std::vector<MElement*> &e, std::vector<MElement*> &eout,  std::vector<MElement*> &einter){
+void filterOverlappingElements(int dim, std::vector<MElement*> &e,
+                               std::vector<MElement*> &eout,
+                               std::vector<MElement*> &einter)
+{
   eout.clear();
   MElementOctree octree (e);
   for (int i=0;i<e.size();++i){
@@ -476,8 +481,8 @@ void filterOverlappingElements (int dim, std::vector<MElement*> &e, std::vector<
   }
 }
 
-void modifyInitialMeshForTakingIntoAccountBoundaryLayers  (GFace *gf){
-
+void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
+{
   BoundaryLayerColumns *_columns = buidAdditionalPoints2D (gf, M_PI/6.);
 
   if (!_columns)return;
@@ -637,7 +642,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 		   bool debug,
 		   std::list<GEdge*> *replacement_edges)
 {
-
   BDS_GeomEntity CLASS_F(1, 2);
   BDS_GeomEntity CLASS_EXTERIOR(1, 3);
   std::map<BDS_Point*, MVertex*> recoverMap;
@@ -844,7 +848,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
         sstream << " " << itr->ge->tag();
       Msg::Warning(":-( There are %d intersections in the 1D mesh (curves%s)",
                    edgesNotRecovered.size(), sstream.str().c_str());
-      if (repairSelfIntersecting1dMesh) Msg::Warning("8-| Gmsh splits those edges and tries again");
+      if (repairSelfIntersecting1dMesh) 
+        Msg::Warning("8-| Gmsh splits those edges and tries again");
     
       if(debug){
         char name[245];
@@ -877,7 +882,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       delete m;
       if(RECUR_ITER < 10 && facesToRemesh.size() == 0)
         return meshGenerator
-          (gf, RECUR_ITER + 1, repairSelfIntersecting1dMesh, onlyInitialMesh, debug,replacement_edges);
+          (gf, RECUR_ITER + 1, repairSelfIntersecting1dMesh, onlyInitialMesh,
+           debug, replacement_edges);
       return false;
     }
 
@@ -1786,8 +1792,6 @@ void meshGFace::operator() (GFace *gf)
 
   const char *algo = "Unknown";
 
-
-
   switch(CTX::instance()->mesh.algo2d){
   case ALGO_2D_MESHADAPT : algo = "MeshAdapt"; break;
   case ALGO_2D_FRONTAL : algo = "Frontal"; break;
@@ -1803,7 +1807,6 @@ void meshGFace::operator() (GFace *gf)
   if (!algoDelaunay2D(gf)){
     algo = "MeshAdapt";
   }
-
 
   Msg::Info("Meshing surface %d (%s, %s)", gf->tag(), gf->getTypeString().c_str(), algo);
 
@@ -1889,8 +1892,7 @@ void partitionAndRemesh(GFaceCompound *gf)
 {
 #if defined(HAVE_SOLVER) && (defined(HAVE_CHACO) || defined(HAVE_METIS))
 
-  //Partition the mesh and createTopology for new faces
-  //-----------------------------------------------------
+  // Partition the mesh and createTopology for new faces
   double tbegin = Cpu();
   std::list<GFace*> cFaces = gf->getCompounds();
   std::vector<MElement *> elements;
@@ -1920,8 +1922,7 @@ void partitionAndRemesh(GFaceCompound *gf)
             NF, tmult - tbegin);
   gf->model()->writeMSH("multiscalePARTS.msh", 2.2, false, true);
  
-  //Remesh new faces (Compound Lines and Compound Surfaces)
-  //-----------------------------------------------------
+  // Remesh new faces (Compound Lines and Compound Surfaces)
   Msg::Info("*** Starting parametrize compounds:");
   double t0 = Cpu();
 
@@ -1940,7 +1941,7 @@ void partitionAndRemesh(GFaceCompound *gf)
     gec->parametrize();
   }
 
-  //Parametrize Compound surfaces
+  // Parametrize Compound surfaces
   std::set<MVertex*> allNod; 
   std::list<GEdge*> U0;
   for (int i=0; i < NF; i++){
@@ -1974,7 +1975,7 @@ void partitionAndRemesh(GFaceCompound *gf)
 
   Msg::Info("*** Starting Mesh of surface %d ...", gf->tag());
 
-  //lloydAlgorithm
+  // lloydAlgorithm
   for (int i=0; i < NF; i++){
     GFace *gfc =  gf->model()->getFaceByTag(numf + NF + i );
     meshGFace mgf;
@@ -2002,7 +2003,7 @@ void partitionAndRemesh(GFaceCompound *gf)
  
   }
 
-  //Removing discrete Vertices - Edges - Faces
+  // Removing discrete Vertices - Edges - Faces
   int NV = gf->model()->getMaxElementaryNumber(0) - numv + 1;
   for (int i=0; i < NV; i++){
     GVertex *pv = gf->model()->getVertexByTag(numv+i);
@@ -2021,14 +2022,12 @@ void partitionAndRemesh(GFaceCompound *gf)
     gf->model()->remove(gfc);
   }
 
-  //Put new mesh in a new discreteFace
-  //-----------------------------------------------------
+  // Put new mesh in a new discreteFace
   for(std::set<MVertex*>::iterator it = allNod.begin(); it != allNod.end(); ++it){
     gf->mesh_vertices.push_back(*it);
   }
 
-  //Remove mesh_vertices that belong to l_edges
-  //-----------------------------------------------------
+  // Remove mesh_vertices that belong to l_edges
   std::list<GEdge*> l_edges = gf->edges();
   for(std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); it++){
     std::vector<MVertex*> edge_vertices = (*it)->mesh_vertices;
@@ -2102,7 +2101,6 @@ void orientMeshGFace::operator()(GFace *gf)
   // * it failed with OpenCASCADE geometries, where surface orientions
   //   do not seem to be consistent with the orientation of the
   //   bounding edges
-
 
   // first, try to find an element with one vertex categorized on the
   // surface and for which we have valid surface parametric

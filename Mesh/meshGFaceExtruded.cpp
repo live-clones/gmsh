@@ -97,8 +97,8 @@ static void extrudeMesh(GEdge *from, GFace *to,
   int tri_quad_flag = 0;
   bool quadToTri_valid = IsValidQuadToTriLateral(to, &tri_quad_flag, &detectQuadToTriLateral);
   if(detectQuadToTriLateral && !quadToTri_valid)
-    Msg::Error("In MeshGFaceExtrudedSurface::extrudeMesh(), Mesh of QuadToTri Lateral surface %d "
-               "likely has errors.", to->tag());
+    Msg::Error("In MeshGFaceExtrudedSurface::extrudeMesh(), Mesh of QuadToTri Lateral "
+               "surface %d likely has errors.", to->tag());
 
   // create elements (note that it would be faster to access the
   // *interior* nodes by direct indexing, but it's just simpler to
@@ -186,11 +186,11 @@ static void copyMesh(GFace *from, GFace *to,
   bool quadToTri_valid = IsValidQuadToTriTop(to, &quadToTri, &detectQuadToTriTop);
   if(detectQuadToTriTop){
     if(!quadToTri_valid)
-      Msg::Error("In MeshGFaceExtrudedSurface::copyMesh(), Mesh of QuadToTri top surface %d "
-                 "likely has errors.", to->tag());
+      Msg::Error("In MeshGFaceExtrudedSurface::copyMesh(), Mesh of QuadToTri top "
+                 "surface %d likely has errors.", to->tag());
     if(!MeshQuadToTriTopSurface(from, to, pos))
-      Msg::Error("In MeshExtrudedSurface()::copyMesh(), mesh of QuadToTri top surface %d failed.",
-                 to->tag() );
+      Msg::Error("In MeshExtrudedSurface()::copyMesh(), mesh of QuadToTri top "
+                 "surface %d failed.", to->tag() );
     return;
   } 
 

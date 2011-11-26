@@ -102,9 +102,8 @@ class FieldManager : public std::map<int, Field*> {
   void setBackgroundMesh(int iView);
 };
 
-// Boundary Layer Field
-// specific field that allow to build boundary layers
-// is used both for anisotropic meshing and BL extrusion
+// Boundary Layer Field (used both for anisotropic meshing and BL
+// extrusion)
 
 #if defined(HAVE_ANN)
 class AttractorField;// : public Field;

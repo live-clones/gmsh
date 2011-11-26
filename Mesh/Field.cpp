@@ -423,7 +423,8 @@ class LonLatField : public Field
     stereoRadius = 6371e3;
     
     options["FromStereo"] = new FieldOptionInt
-      (fromStereo, "if = 1, the mesh is in stereographic coordinates. xi = 2Rx/(R+z),  eta = 2Ry/(R+z)");
+      (fromStereo, "if = 1, the mesh is in stereographic coordinates. "
+       "xi = 2Rx/(R+z),  eta = 2Ry/(R+z)");
     options["RadiusStereo"] = new FieldOptionDouble
       (stereoRadius, "radius of the sphere of the stereograpic coordinates");
   }
@@ -552,7 +553,6 @@ class CylinderField : public Field
     dz -= adx * za;
     
     return ((dx*dx + dy*dy + dz*dz < R*R) && fabs(adx) < 1) ? v_in : v_out;
-    
   }
 };
 
@@ -1375,9 +1375,11 @@ class AttractorAnisoCurveField : public Field {
       (n_nodes_by_edge, "Number of nodes used to discretized each curve",
        &update_needed);
     options["dMin"] = new FieldOptionDouble
-      (dMin, "Minimum distance, bellow this distance from the curves, prescribe the minimum mesh sizes.");
+      (dMin, "Minimum distance, bellow this distance from the curves, "
+       "prescribe the minimum mesh sizes.");
     options["dMax"] = new FieldOptionDouble
-      (dMax, "Maxmium distance, above this distance from the curves, prescribe the maximum mesh sizes.");
+      (dMax, "Maxmium distance, above this distance from the curves, prescribe "
+       "the maximum mesh sizes.");
     options["lMinTangent"] = new FieldOptionDouble
       (lMinTangent, "Minimum mesh size in the direction tangeant to the closest curve.");
     options["lMaxTangent"] = new FieldOptionDouble
@@ -1407,7 +1409,8 @@ class AttractorAnisoCurveField : public Field {
            "is replaced by NNodesByEdge equidistant nodes and the distance from those "
            "nodes is computed.)";
   }
-  void update() {
+  void update()
+  {
     if(zeronodes) {
       annDeallocPts(zeronodes);
       delete kdtree;
@@ -1463,10 +1466,13 @@ class AttractorAnisoCurveField : public Field {
     double xyz[3] = { x, y, z };
     kdtree->annkSearch(xyz, 1, index, dist);
     double d = sqrt(dist[0]);
-    double lTg = d < dMin ? lMinTangent : d > dMax ? lMaxTangent : lMinTangent + (lMaxTangent - lMinTangent) * (d - dMin) / (dMax - dMin);
-    double lN = d < dMin ? lMinNormal : d > dMax ? lMaxNormal : lMinNormal + (lMaxNormal - lMinNormal) * (d - dMin) / (dMax - dMin);
+    double lTg = d < dMin ? lMinTangent : d > dMax ? lMaxTangent : 
+      lMinTangent + (lMaxTangent - lMinTangent) * (d - dMin) / (dMax - dMin);
+    double lN = d < dMin ? lMinNormal : d > dMax ? lMaxNormal :
+      lMinNormal + (lMaxNormal - lMinNormal) * (d - dMin) / (dMax - dMin);
     SVector3 t = tg[index[0]];
-    SVector3 n0 = crossprod(t, fabs(t(0)) > fabs(t(1)) ? SVector3(0,1,0) : SVector3(1,0,0));
+    SVector3 n0 = crossprod(t, fabs(t(0)) > fabs(t(1)) ? SVector3(0,1,0) :
+                            SVector3(1,0,0));
     SVector3 n1 = crossprod(t, n0);
     metr = SMetric3(1/lTg/lTg, 1/lN/lN, 1/lN/lN, t, n0, n1);
   }
@@ -1493,7 +1499,8 @@ class AttractorField : public Field
   Field *_xField, *_yField, *_zField;
   int n_nodes_by_edge;  
  public:
-  AttractorField(int dim, int tag, int nbe) : kdtree(0), zeronodes(0), n_nodes_by_edge(nbe)
+  AttractorField(int dim, int tag, int nbe)
+    : kdtree(0), zeronodes(0), n_nodes_by_edge(nbe)
   {
     index = new ANNidx[1];
     dist = new ANNdist[1];
@@ -1520,9 +1527,12 @@ class AttractorField : public Field
        "is still experimental. It might (read: will probably) give wrong results "
        "for complex surfaces)", &update_needed);
     _xFieldId = _yFieldId = _zFieldId = -1;
-    options["FieldX"] = new FieldOptionInt(_xFieldId, "Id of the field to use as x coordinate.", &update_needed);
-    options["FieldY"] = new FieldOptionInt(_yFieldId, "Id of the field to use as y coordinate.", &update_needed);
-    options["FieldZ"] = new FieldOptionInt(_zFieldId, "Id of the field to use as z coordinate.", &update_needed);
+    options["FieldX"] = new FieldOptionInt
+      (_xFieldId, "Id of the field to use as x coordinate.", &update_needed);
+    options["FieldY"] = new FieldOptionInt
+      (_yFieldId, "Id of the field to use as y coordinate.", &update_needed);
+    options["FieldZ"] = new FieldOptionInt
+      (_zFieldId, "Id of the field to use as z coordinate.", &update_needed);
   }
   ~AttractorField()
   {
@@ -1542,12 +1552,12 @@ class AttractorField : public Field
       "is replaced by NNodesByEdge equidistant nodes and the distance from those "
       "nodes is computed.";
   }
-  void getCoord(double x, double y, double z, double &cx, double &cy, double &cz, GEntity *ge = NULL) {
+  void getCoord(double x, double y, double z, double &cx, double &cy, double &cz,
+                GEntity *ge = NULL) {
     cx = _xField ? (*_xField)(x, y, z, ge) : x;
     cy = _yField ? (*_yField)(x, y, z, ge) : y;
     cz = _zField ? (*_zField)(x, y, z, ge) : z;
   }
-
   std::pair<AttractorInfo,SPoint3> getAttractorInfo() const 
   {
     return std::make_pair(_infos[index[0]], SPoint3(zeronodes[index[0]][0],
@@ -1576,13 +1586,15 @@ class AttractorField : public Field
           it != nodes_id.end(); ++it) {
         Vertex *v = FindPoint(*it);
         if(v) {
-          getCoord(v->Pos.X, v->Pos.Y, v->Pos.Z, zeronodes[k][0], zeronodes[k][1], zeronodes[k][2]);
+          getCoord(v->Pos.X, v->Pos.Y, v->Pos.Z, zeronodes[k][0],
+                   zeronodes[k][1], zeronodes[k][2]);
 	  _infos[k++] = AttractorInfo(*it,0,0,0);
         }
         else {
           GVertex *gv = GModel::current()->getVertexByTag(*it);
           if(gv) {
-            getCoord(gv->x(), gv->y(), gv->z(), zeronodes[k][0], zeronodes[k][1], zeronodes[k][2], gv);
+            getCoord(gv->x(), gv->y(), gv->z(), zeronodes[k][0],
+                     zeronodes[k][1], zeronodes[k][2], gv);
 	    _infos[k++] = AttractorInfo(*it,0,0,0);
           }
         }
@@ -1595,7 +1607,8 @@ class AttractorField : public Field
           for(int i = 1; i < n_nodes_by_edge -1 ; i++) {
             double u = (double)i / (n_nodes_by_edge - 1);
             Vertex V = InterpolateCurve(c, u, 0);
-            getCoord(V.Pos.X, V.Pos.Y, V.Pos.Z, zeronodes[k][0], zeronodes[k][1], zeronodes[k][2]);
+            getCoord(V.Pos.X, V.Pos.Y, V.Pos.Z, zeronodes[k][0],
+                     zeronodes[k][1], zeronodes[k][2]);
 	    _infos[k++] = AttractorInfo(*it,1,u,0);
           }
         }
@@ -1606,7 +1619,8 @@ class AttractorField : public Field
               Range<double> b = e->parBounds(0);
               double t = b.low() + u * (b.high() - b.low());
               GPoint gp = e->point(t);
-              getCoord(gp.x(), gp.y(), gp.z(), zeronodes[k][0], zeronodes[k][1], zeronodes[k][2], e);
+              getCoord(gp.x(), gp.y(), gp.z(), zeronodes[k][0],
+                       zeronodes[k][1], zeronodes[k][2], e);
 	      _infos[k++] = AttractorInfo(*it,1,u,0);
             }
           }
@@ -1624,7 +1638,8 @@ class AttractorField : public Field
               double u = (double)i / (n_nodes_by_edge - 1);
               double v = (double)j / (n_nodes_by_edge - 1);
               Vertex V = InterpolateSurface(s, u, v, 0, 0);
-              getCoord(V.Pos.X, V.Pos.Y, V.Pos.Z, zeronodes[k][0], zeronodes[k][1], zeronodes[k][2]);
+              getCoord(V.Pos.X, V.Pos.Y, V.Pos.Z, zeronodes[k][0],
+                       zeronodes[k][1], zeronodes[k][2]);
 	      _infos[k++] = AttractorInfo(*it,2,u,v);
             }
           }
@@ -1641,7 +1656,8 @@ class AttractorField : public Field
                 double t1 = b1.low() + u * (b1.high() - b1.low());
                 double t2 = b2.low() + v * (b2.high() - b2.low());
                 GPoint gp = f->point(t1, t2);
-                getCoord(gp.x(), gp.y(), gp.z(), zeronodes[k][0], zeronodes[k][1], zeronodes[k][2], f);
+                getCoord(gp.x(), gp.y(), gp.z(), zeronodes[k][0], 
+                         zeronodes[k][1], zeronodes[k][2], f);
 		_infos[k++] = AttractorInfo(*it,2,u,v);
               }
             }
@@ -1676,9 +1692,11 @@ BoundaryLayerField :: BoundaryLayerField()
   options["NodesList"] = new FieldOptionList
     (nodes_id, "Indices of nodes in the geometric model", &update_needed);
   options["EdgesList"] = new FieldOptionList
-    (edges_id, "Indices of curves in the geometric model for which a boundary layer is needed", &update_needed);
+    (edges_id, "Indices of curves in the geometric model for which a boundary "
+     "layer is needed", &update_needed);
   options["FacesList"] = new FieldOptionList
-    (faces_id, "Indices of faces in the geometric model for which a boundary layer is needed", &update_needed);
+    (faces_id, "Indices of faces in the geometric model for which a boundary "
+     "layer is needed", &update_needed);
   //  options["IField"] = new FieldOptionInt
   //    (iField, "Index of the field that contains the distance function");
   options["hwall_n"] = new FieldOptionDouble
@@ -1714,12 +1732,15 @@ double BoundaryLayerField :: operator() (double x, double y, double z, GEntity *
   return std::min (hfar,lc);
 }
 
-void BoundaryLayerField :: operator() (AttractorField *cc, double dist, double x, double y, double z, SMetric3 &metr, GEntity *ge)
+void BoundaryLayerField :: operator() (AttractorField *cc, double dist,
+                                       double x, double y, double z, 
+                                       SMetric3 &metr, GEntity *ge)
 {
   // dist = hwall -> lc = hwall * ratio
   // dist = hwall (1+ratio) -> lc = hwall ratio ^ 2
   // dist = hwall (1+ratio+ratio^2) -> lc = hwall ratio ^ 3
-  // dist = hwall (1+ratio+ratio^2+...+ratio^{m-1}) = (ratio^{m} - 1)/(ratio-1) -> lc = hwall ratio ^ m
+  // dist = hwall (1+ratio+ratio^2+...+ratio^{m-1}) = (ratio^{m} - 1)/(ratio-1) 
+  // -> lc = hwall ratio ^ m
   // -> find m
   // dist/hwall = (ratio^{m} - 1)/(ratio-1)
   // (dist/hwall)*(ratio-1) + 1 = ratio^{m}
@@ -1845,15 +1866,12 @@ void BoundaryLayerField :: operator() (AttractorField *cc, double dist, double x
       t1 = crossprod(t3,t2);	  
     }	
   }
-  metr  = SMetric3(1./(L1*L1), 
-		   1./(L2*L2),
-		   1./(L3*L3),
-		   t1,t2,t3);
+  metr  = SMetric3(1./(L1*L1), 1./(L2*L2), 1./(L3*L3), t1, t2, t3);
 }
 
-void BoundaryLayerField :: operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge)
+void BoundaryLayerField :: operator() (double x, double y, double z, 
+                                       SMetric3 &metr, GEntity *ge)
 {
-
   if (update_needed){
     for(std::list<int>::iterator it = nodes_id.begin();
 	it != nodes_id.end(); ++it) {
