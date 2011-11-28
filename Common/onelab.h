@@ -43,8 +43,9 @@ namespace onelab{
     // numbers to force their relative ordering (such numbers could be
     // automatically hidden in a GUI).
     std::string _name;
-    // optional help strings (the short help can serve as a better way
-    // to display the parameter in a GUI)
+    // help strings (the short help can serve as a better way to
+    // display the parameter in a GUI). Should allow richer encoding
+    // (UTF? HTML?)
     std::string _shortHelp, _help;
     // client code(s) that use this parameter
     std::set<std::string> _clients;
@@ -52,6 +53,9 @@ namespace onelab{
     bool _changed;
     // should the parameter be visible in the interface
     bool _visible;
+  protected:
+    // optional additional attributes
+    std::map<std::string, std::string> _attributes;
   public:
     parameter(const std::string &name="", const std::string &shortHelp="", 
               const std::string &help="")
@@ -129,23 +133,20 @@ namespace onelab{
   // to make the interface nicer.
   class number : public parameter{
   private:
-    double _value, _defaultValue, _min, _max, _step;
+    double _value, _min, _max, _step;
     std::vector<double> _choices;
   public:
-    number(const std::string &name="", double defaultValue=0.,
+    number(const std::string &name="", double value=0.,
            const std::string &shortHelp="", const std::string &help="") 
-      : parameter(name, shortHelp, help), _value(defaultValue), 
-        _defaultValue(defaultValue), _min(-maxNumber()), _max(maxNumber()), 
-        _step(0.) {}
+      : parameter(name, shortHelp, help), _value(value), 
+        _min(-maxNumber()), _max(maxNumber()), _step(0.) {}
     void setValue(double value){ _value = value; }
-    void setDefaultValue(double value){ _defaultValue = value; }
     void setMin(double min){ _min = min; }
     void setMax(double max){ _max = max; }
     void setStep(double step){ _step = step; }
     void setChoices(std::vector<double> &choices){ _choices = choices; }
     std::string getType() const { return "number"; }
     double getValue() const { return _value; }
-    double getDefaultValue() const { return _defaultValue; }
     double getMin() const { return _min; }
     double getMax() const { return _max; }
     double getStep() const { return _step; }
@@ -156,8 +157,6 @@ namespace onelab{
         setValue(p.getValue());
         setChanged(true);
       }
-      if(p.getDefaultValue() && p.getDefaultValue() != getDefaultValue())
-        setDefaultValue(p.getDefaultValue());
       if(p.getMin() != -maxNumber())
         setMin(p.getMin());
       if(p.getMax() != maxNumber())
@@ -169,8 +168,8 @@ namespace onelab{
     {
       std::ostringstream sstream;
       sstream << parameter::toChar() << charSep() << _value << charSep() 
-              << _defaultValue << charSep() << _min << charSep() << _max 
-              << charSep() << _step << charSep() << _choices.size() << charSep();
+              << _min << charSep() << _max << charSep() << _step << charSep()
+              << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << _choices[i] << charSep();
       sstream << getClients().size() << charSep();
@@ -188,7 +187,6 @@ namespace onelab{
       setHelp(getNextToken(msg, pos));
       setVisible(atoi(getNextToken(msg, pos).c_str()));
       setValue(atof(getNextToken(msg, pos).c_str()));
-      setDefaultValue(atof(getNextToken(msg, pos).c_str()));
       setMin(atof(getNextToken(msg, pos).c_str()));
       setMax(atof(getNextToken(msg, pos).c_str()));
       setStep(atof(getNextToken(msg, pos).c_str()));
@@ -198,23 +196,26 @@ namespace onelab{
     }
   };
 
-  // The string class.
+  // The string class. A string has a mutable "type": we do not derive
+  // specialized classes, because the type should be changeable at
+  // runtime (e.g. from client-dependent function to onelab-function
+  // to table of values)
   class string : public parameter{
   private:
     std::string _value;
-    std::string _defaultValue;
     std::vector<std::string> _choices;
+    // FIXME add a "type" to interpret the string: file name,
+    // comma-separated values for a list, hostname, table of numbers,
+    // client-dependent mathematical expression ("3 sin(X[])"),
+    // onlab-expression (through mathex?), ...
   public:
-    string(const std::string &name="", const std::string &defaultValue="", 
+    string(const std::string &name="", const std::string &value="", 
            const std::string &shortHelp="", const std::string &help="") 
-      : parameter(name, shortHelp, help), _value(defaultValue), 
-        _defaultValue(defaultValue) {}
+      : parameter(name, shortHelp, help), _value(value) {}
     void setValue(const std::string &value){ _value = value; }
-    void setDefaultValue(const std::string &value){ _defaultValue = value; }
     void setChoices(const std::vector<std::string> &choices){ _choices = choices; }
     std::string getType() const { return "string"; }
     const std::string &getValue() const { return _value; }
-    const std::string &getDefaultValue() const { return _defaultValue; }
     const std::vector<std::string> &getChoices() const { return _choices; }
     void update(const string &p)
     {
@@ -222,8 +223,6 @@ namespace onelab{
         setValue(p.getValue());
         setChanged(true);
       }
-      if(p.getDefaultValue().size() && p.getDefaultValue() != getDefaultValue())
-        setDefaultValue(p.getDefaultValue());
       if(p.getChoices().size())
         setChoices(p.getChoices());
     }
@@ -231,7 +230,7 @@ namespace onelab{
     {
       std::ostringstream sstream;
       sstream << parameter::toChar() << charSep() << sanitize(_value) << charSep()
-              << sanitize(_defaultValue) << charSep() << _choices.size() << charSep();
+              << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << sanitize(_choices[i]) << charSep();
       sstream << getClients().size() << charSep();
@@ -249,27 +248,26 @@ namespace onelab{
       setHelp(getNextToken(msg, pos));
       setVisible(atoi(getNextToken(msg, pos).c_str()));
       setValue(getNextToken(msg, pos));
-      setDefaultValue(getNextToken(msg, pos));
       _choices.resize(atoi(getNextToken(msg, pos).c_str()));
       for(unsigned int i = 0; i < _choices.size(); i++)
         _choices[i] = getNextToken(msg, pos);
     }
   };
 
-  // The region class. A region can be any kind of geometrical entity.
+  // The region class. A region can be any kind of geometrical entity,
+  // represented as identifiers of physical regions. Operations on
+  // regions will include union, intersection, etc.
   class region : public parameter{
   private:
-    std::string _value, _defaultValue;
+    std::string _value; // FIXME: change this into std::set<std::string>
     std::vector<std::string> _choices;
   public:
-    region(const std::string &name="", const std::string &defaultValue="",
+    region(const std::string &name="", const std::string &value="",
            const std::string &shortHelp="", const std::string &help="") 
-      : parameter(name, shortHelp, help), _value(defaultValue), 
-        _defaultValue(defaultValue) {}
+      : parameter(name, shortHelp, help), _value(value) {}
     void setValue(const std::string &value){ _value = value; }
     std::string getType() const { return "region"; }
     const std::string &getValue() const { return _value; }
-    const std::string &getDefaultValue() const { return _defaultValue; }
     void update(const region &p)
     {
       if(p.getValue() != getValue()){
@@ -281,7 +279,7 @@ namespace onelab{
     {
       std::ostringstream sstream;
       sstream << parameter::toChar() << charSep() << _value << charSep() 
-              << _defaultValue << charSep() << _choices.size() << charSep();
+              << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << _choices[i] << charSep();
       sstream << getClients().size() << charSep();
@@ -293,19 +291,20 @@ namespace onelab{
   };
 
   // The (possibly piece-wise defined on regions) function
-  // class. Currently functions are entirely client-dependent: they
-  // are just represented internally as strings. Again, we might want
-  // to specialize in the future to make the interface more refined.
+  // class. Functions are entirely client-dependent: they are just
+  // represented internally as onelab strings, defined on onelab
+  // regions.
   class function : public parameter{
   private:
-    std::string _value, _defaultValue;
+    // Change this to onelab::string
+    std::string _value;
+    // Change this into std::map<onelab::region, onelab::string> 
     std::map<std::string, std::string> _pieceWiseValues;
     std::vector<std::string> _choices;
   public:
-    function(const std::string &name="", const std::string &defaultValue="",
+    function(const std::string &name="", const std::string &value="",
              const std::string &shortHelp="", const std::string &help="") 
-      : parameter(name, shortHelp, help), _value(defaultValue), 
-        _defaultValue(defaultValue) {}
+      : parameter(name, shortHelp, help), _value(value) {}
     void setValue(const std::string &value, const std::string &region="")
     {
       if(region.empty())
@@ -328,7 +327,6 @@ namespace onelab{
     {
       return _pieceWiseValues; 
     }
-    const std::string &getDefaultValue() const { return _defaultValue; }
     void update(const function &p)
     {
       if(p.getValue() != getValue()){
@@ -340,7 +338,6 @@ namespace onelab{
     {
       std::ostringstream sstream;
       sstream << parameter::toChar() << charSep() << sanitize(_value) << charSep()
-              << sanitize(_defaultValue) << charSep() 
               << _pieceWiseValues.size() << charSep();
         for(std::map<std::string, std::string>::const_iterator it =
               _pieceWiseValues.begin(); it != _pieceWiseValues.end(); it++)
