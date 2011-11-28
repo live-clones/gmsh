@@ -47,7 +47,7 @@ namespace onelab{
     // display the parameter in a GUI). Should allow richer encoding
     // (UTF? HTML?)
     std::string _shortHelp, _help;
-    // client code(s) that use this parameter
+    // clients (computing steps) that use this parameter
     std::set<std::string> _clients;
     // flag to check if the parameter has been changed since the last run
     bool _changed;
@@ -66,6 +66,10 @@ namespace onelab{
     void setHelp(const std::string &help){ _help = help; }
     void setChanged(bool changed){ _changed = changed; }
     void setVisible(bool visible){ _visible = visible; }
+    void setAttribute(const std::string &key, const std::string &value)
+    {
+      _attributes[key] = value;
+    }
     void setClients(std::set<std::string> &clients){ _clients = clients; }
     void addClient(const std::string &client){ _clients.insert(client); }
     void addClients(std::set<std::string> &clients)
@@ -82,6 +86,12 @@ namespace onelab{
     const std::string &getHelp() const { return _help; }
     bool getChanged() const { return _changed; }
     bool getVisible() const { return _visible; }
+    std::string getAttribute(const std::string &key)
+    {
+      std::map<std::string, std::string>::iterator it = _attributes.find(key);
+      if(it != _attributes.end()) return it->second;
+      return "";
+    }
     const std::set<std::string> &getClients() const { return _clients; }
     static char charSep(){ return '|' /* '\0' */; }
     static double maxNumber(){ return 1e200; }
@@ -96,8 +106,13 @@ namespace onelab{
     {
       std::ostringstream sstream;
       sstream << getType() << charSep() << sanitize(getName()) << charSep() 
-              << sanitize(getShortHelp()) << charSep() << sanitize(getHelp())
-              << charSep() << getVisible() ? 1 : 0;
+              << sanitize(getShortHelp()) << charSep() 
+              << sanitize(getHelp()) << charSep() 
+              << (getVisible() ? 1 : 0) << charSep()
+              << _attributes.size() << charSep();
+      for(std::map<std::string, std::string>::iterator it = _attributes.begin();
+          it != _attributes.end(); it++)
+        sstream << it->first << charSep() << it->second << charSep();
       return sstream.str();
     }
     virtual void fromChar(const std::string &msg){}
@@ -167,7 +182,7 @@ namespace onelab{
     std::string toChar()
     {
       std::ostringstream sstream;
-      sstream << parameter::toChar() << charSep() << _value << charSep() 
+      sstream << parameter::toChar() << _value << charSep() 
               << _min << charSep() << _max << charSep() << _step << charSep()
               << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
@@ -186,6 +201,11 @@ namespace onelab{
       setShortHelp(getNextToken(msg, pos));
       setHelp(getNextToken(msg, pos));
       setVisible(atoi(getNextToken(msg, pos).c_str()));
+      int numAttributes = atoi(getNextToken(msg, pos).c_str());
+      for(int i = 0; i < numAttributes; i++){
+        std::string key(getNextToken(msg, pos));
+        setAttribute(key, getNextToken(msg, pos));
+      }
       setValue(atof(getNextToken(msg, pos).c_str()));
       setMin(atof(getNextToken(msg, pos).c_str()));
       setMax(atof(getNextToken(msg, pos).c_str()));
@@ -229,7 +249,7 @@ namespace onelab{
     std::string toChar()
     {
       std::ostringstream sstream;
-      sstream << parameter::toChar() << charSep() << sanitize(_value) << charSep()
+      sstream << parameter::toChar() << sanitize(_value) << charSep()
               << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << sanitize(_choices[i]) << charSep();
@@ -247,6 +267,11 @@ namespace onelab{
       setShortHelp(getNextToken(msg, pos));
       setHelp(getNextToken(msg, pos));
       setVisible(atoi(getNextToken(msg, pos).c_str()));
+      int numAttributes = atoi(getNextToken(msg, pos).c_str());
+      for(int i = 0; i < numAttributes; i++){
+        std::string key(getNextToken(msg, pos));
+        setAttribute(key, getNextToken(msg, pos));
+      }
       setValue(getNextToken(msg, pos));
       _choices.resize(atoi(getNextToken(msg, pos).c_str()));
       for(unsigned int i = 0; i < _choices.size(); i++)
@@ -278,7 +303,7 @@ namespace onelab{
     std::string toChar()
     {
       std::ostringstream sstream;
-      sstream << parameter::toChar() << charSep() << _value << charSep() 
+      sstream << parameter::toChar() << _value << charSep() 
               << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << _choices[i] << charSep();
@@ -337,7 +362,7 @@ namespace onelab{
     std::string toChar()
     {
       std::ostringstream sstream;
-      sstream << parameter::toChar() << charSep() << sanitize(_value) << charSep()
+      sstream << parameter::toChar() << sanitize(_value) << charSep()
               << _pieceWiseValues.size() << charSep();
         for(std::map<std::string, std::string>::const_iterator it =
               _pieceWiseValues.begin(); it != _pieceWiseValues.end(); it++)
