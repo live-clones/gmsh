@@ -630,13 +630,13 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
   if(CTX::instance()->mesh.saveTri && poly){
     for (int i = 0; i < getNumChildren() ; i++){
        MElement *t = getChild(i);
-       t->writeMSH(fp, version, binary, num, elementary, physical, 0, 0, 0, ghosts);
+       t->writeMSH(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
     }
     return;
   }
   else if(CTX::instance()->mesh.saveTri && polyl){
     MLine *l = new MLine(getVertex(0), getVertex(1));
-    l->writeMSH(fp, version, binary, num, elementary, physical, 0, 0, 0, ghosts);
+    l->writeMSH(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
     delete l;
     return;
   }

@@ -617,6 +617,9 @@ static void writeElementMSH(FILE *fp, GModel *model, T *ele, bool saveAll,
   }
 
   model->setMeshElementIndex(ele, num); // should really be a multimap...
+
+  if(CTX::instance()->mesh.saveTri && ele->getNumChildren())
+    num += ele->getNumChildren() - 1;
 }
 
 template<class T>

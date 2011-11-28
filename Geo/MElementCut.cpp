@@ -732,7 +732,10 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
           elements[2][reg].push_back(tri);
         }
         else if(mf.getNumVertices() == 4){
-          MQuadrangle *quad = new MQuadrangle(mf.getVertex(0), mf.getVertex(1), mf.getVertex(2), mf.getVertex(3));
+          MQuadrangle *quad = new MQuadrangle(vertexMap[mf.getVertex(0)->getNum()],
+                                              vertexMap[mf.getVertex(1)->getNum()],
+                                              vertexMap[mf.getVertex(2)->getNum()],
+                                              vertexMap[mf.getVertex(3)->getNum()]);
           elements[3][reg].push_back(quad);
         }
         if(physTag)  assignLsPhysical(GM, reg, 2, physicals, physTag, gLsTag);
@@ -1375,13 +1378,10 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
         if(primS > 1)
           verticesLs(k, vi->getIndex()) = (*ls)(vi->x(), vi->y(), vi->z());
       }
-      else{
+      else
         verticesLs(0, vi->getIndex()) = (*ls)(vi->x(), vi->y(), vi->z());
-	//printf("xy = (%g,%g) val= %g(%g) ind=%d\n",vi->x(), vi->y(),  verticesLs(0, vi->getIndex()),-vi->x()+0.41, vi->getIndex() );
-      }
     }
   }
-  //exit(1);
 
   int numEle = gm->getNumMeshElements() + gm->getNumMeshParentElements(); //element number increment
   for(unsigned int i = 0; i < gmEntities.size(); i++) {
