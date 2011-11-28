@@ -45,7 +45,7 @@ class cartesianBox {
   // stored a node tag (used for global numbering of the nodes across
   // the grid levels)
   typename std::map<int, std::pair<scalar, int> > _nodalValues;
-  // level of the box (coarset box has highest level; finest box has
+  // level of the box (coarsest box has highest level; finest box has
   // level==1)
   int _level;
   // pointer to a finer (refined by 2) level box, if any
@@ -171,6 +171,25 @@ class cartesianBox {
           }
         }
   }
+  /* double getValueContainingPoint(double x, double y, double z) const */
+  /* { */
+  /*   double val; */
+  /*   int t = getCellContainingPoint(x, y,z); */
+  /*   std::vector<scalar> values; */
+  /*   getNodalValuesForCell(t, values); */
+  /*   printf("values size =%d \n", values.size()); */
+
+  /*   SVector3 DP (x - _X, y - _Y, z - _Z); */
+  /*   double xi = dot(DP, _xiAxis); */
+  /*   double eta = dot(DP, _etaAxis); */
+  /*   double zeta = dot(DP, _zetaAxis);  */
+   
+  /*   double xi_e = xi-values[0]; */
+  /*   double eta_e = xi-_dxi/2; */
+  /*   double zeta_e = xi-_dxi/2; */
+     
+  /*   return val; */
+  /* } */
   int getCellContainingPoint(double x, double y, double z) const
   {
     // P = P_0 + xi * _vdx + eta * _vdy + zeta *vdz

@@ -1017,10 +1017,10 @@ bool GFace::buildSTLTriangulation(bool force)
       stl_vertices.clear();
       stl_triangles.clear();
     }
-    else
+    else{
       return true;
+    }
   }
-
   // Build a simple triangulation for surfaces which we know are not
   // trimmed
   if(geomType() == ParametricSurface || geomType() == ProjectionFace){

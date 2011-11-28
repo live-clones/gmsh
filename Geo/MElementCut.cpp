@@ -689,19 +689,19 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
   }
 
   //create level set interface (pt in 1D, line in 2D or face in 3D)
-  if (splitElem && copy->getDim()==2){
-    //printf("*** SPLITELEM \n");
-    for(int k = 0; k < copy->getNumEdges(); k++){
-      MEdge me  = copy->getEdge(k);
+  if (splitElem && e->getDim()==2){
+    for(int k = 0; k < e->getNumEdges(); k++){
+      MEdge me  = e->getEdge(k);
       MVertex *v0 = me.getVertex(0);
       MVertex *v1 = me.getVertex(1);
+      MVertex *v0N = vertexMap[v0->getNum()];
+      MVertex *v1N = vertexMap[v1->getNum()];
       double val0 = verticesLs(0, v0->getIndex())-eps; 
       double val1 = verticesLs(0, v1->getIndex())-eps; 
-      //printf("splitedge v0= (%g,%g) v1= (%g,%g) val0= %g(%d) val1= %g(%d) nums (%d %d)\n", v0->x(), v0->y(), v1->x(), v1->y(), 
-      //      val0, val1, v0->getIndex(), v1->getIndex(), v0->getNum(), v1->getNum());
+      //printf("splitedge v0= (%g,%g) v1= (%g,%g) val0= %g(%d) val1= %g(%d) nums (%d %d)\n", v0->x(), v0->y(), v1->x(), v1->y(), val0, v0->getIndex(),  val1, v1->getIndex(), vertexMap[v0->getNum()]->getIndex(), vertexMap[v1->getNum()]->getIndex());
       if ( (val0*val1 > 0.0 && val0 < 0.0 ) ) { 
 	//printf("split edge \n");
-        MLine *lin = new MLine(v0, v1); 
+        MLine *lin = new MLine(v0N, v1N); 
         getPhysicalTag(-1, gePhysicals, newPhysTags[1]);
         int c = elements[1].count(gLsTag);
         int reg = getBorderTag(gLsTag, c, newElemTags[1][0], borderElemTags[0]);
@@ -711,9 +711,9 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
       }
     }
   }
-  else if (splitElem && copy->getDim()==3){
-    for(int k = 0; k < copy->getNumFaces(); k++){
-      MFace mf  = copy->getFace(k);
+  else if (splitElem && e->getDim()==3){
+    for(int k = 0; k < e->getNumFaces(); k++){
+      MFace mf  = e->getFace(k);
       bool sameSign = true;
       double val0 = verticesLs(0,  mf.getVertex(0)->getIndex());
       for (int j= 1; j< mf.getNumVertices(); j++){
@@ -726,7 +726,9 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
         int reg = getBorderTag(gLsTag, c, newElemTags[2][0], borderElemTags[1]);
         int physTag = (!gePhysicals.size()) ? 0 : getBorderTag(gLsTag, c, newPhysTags[2][0], borderPhysTags[1]);
         if(mf.getNumVertices() == 3){
-          MTriangle *tri = new MTriangle(mf.getVertex(0), mf.getVertex(1), mf.getVertex(2));
+          MTriangle *tri = new MTriangle(vertexMap[mf.getVertex(0)->getNum()],
+					 vertexMap[mf.getVertex(1)->getNum()], 
+					 vertexMap[mf.getVertex(2)->getNum()]); 
           elements[2][reg].push_back(tri);
         }
         else if(mf.getNumVertices() == 4){

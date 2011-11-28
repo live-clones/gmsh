@@ -200,16 +200,16 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   distances.reserve(totNumNodes);
   pt2Vertex.reserve(totNumNodes);
 
-    std::map<MVertex*,double> _distanceE_map;
-    std::map<MVertex*,int> _isInYarn_map;
-    std::vector<int> index;
-    std::vector<double> distancesE;
-    std::vector<int> isInYarn;
-    std::vector<SPoint3> closePts;
-    std::vector<double> distances2;
-    std::vector<double> distancesE2;
-    std::vector<int> isInYarn2;
-    std::vector<SPoint3> closePts2;
+  std::map<MVertex*,double> _distanceE_map;
+  std::map<MVertex*,int> _isInYarn_map;
+  std::vector<int> index;
+  std::vector<double> distancesE;
+  std::vector<int> isInYarn;
+  std::vector<SPoint3> closePts;
+  std::vector<double> distances2;
+  std::vector<double> distancesE2;
+  std::vector<int> isInYarn2;
+  std::vector<SPoint3> closePts2;
 
   for (int i = 0; i < totNumNodes; i++) {
     distances.push_back(1.e22);

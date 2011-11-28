@@ -1093,7 +1093,7 @@ MElement *MElement::copy(std::map<int, MVertex*> &vertexMap,
   if(getNumChildren() == 0) {
     for(int i = 0; i < getNumVertices(); i++) {
       MVertex *v = getVertex(i);
-      int numV = v->getIndex();
+      int numV = v->getNum(); //Index();
       if(vertexMap.count(numV))
         vmv.push_back(vertexMap[numV]);
       else {
@@ -1107,7 +1107,7 @@ MElement *MElement::copy(std::map<int, MVertex*> &vertexMap,
     for(int i = 0; i < getNumChildren(); i++) {
       for(int j = 0; j < getChild(i)->getNumVertices(); j++) {
         MVertex *v = getChild(i)->getVertex(j);
-        int numV = v->getIndex();
+        int numV = v->getNum(); //Index();
         if(vertexMap.count(numV))
           vmv.push_back(vertexMap[numV]);
         else {

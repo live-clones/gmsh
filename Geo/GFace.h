@@ -254,7 +254,7 @@ class GFace : public GEntity
   void setCompound(GFaceCompound *gfc) { compound = gfc; }
   GFaceCompound *getCompound() const { return compound; }
 
-  // add points (and optionalluy normals) in vectors so that two
+  // add points (and optionally normals) in vectors so that two
   // points are at most maxDist apart
   bool fillPointCloud(double maxDist, std::vector<SPoint3> *points,
                       std::vector<SVector3> *normals=0);
