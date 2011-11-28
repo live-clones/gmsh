@@ -7,9 +7,10 @@
 //   Gaetan Bricteux
 //
 
-#include "gmshLevelset.h"
 #include <queue>
 #include <stack>
+#include <math.h>
+#include "gmshLevelset.h"
 #include "fullMatrix.h"
 #include "GModel.h"
 #include "MElement.h"
@@ -737,7 +738,7 @@ double gLevelsetDistGeom::operator() (const double x, const double y, const doub
 	    SPoint3 p3(v3->x(),v3->y(),v3->z());
 	    signedDistancesPointsTriangle(iDistances, iClosePts, nodes, p1, p2, p3);
 	  }
-	  if (std::fabs(iDistances[0]) < std::fabs(dist)) dist = iDistances[0];
+	  if (fabs(iDistances[0]) < fabs(dist)) dist = iDistances[0];
       }
     }
     else{
