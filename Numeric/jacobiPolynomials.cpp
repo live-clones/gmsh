@@ -32,7 +32,6 @@ void JacobiPolynomials::f(double u, double *val) const {
 
 }
 
-void JacobiPolynomials::f(fullMatrix<double> &coord, fullMatrix<double> &val) const {}
 
 void JacobiPolynomials::df(double u, double *val) const {
 
@@ -52,5 +51,3 @@ void JacobiPolynomials::df(double u, double *val) const {
     val[i] = (g1 * tmp[i] + g0 * tmp[i-1])/g2;
   }
 }
-
-void JacobiPolynomials::df(fullMatrix<double> &coord, fullMatrix<double> &val) const {}
