@@ -8,6 +8,7 @@ set(SRC
     fullMatrix.cpp
     polynomialBasis.cpp
     JacobianBasis.cpp
+    BergotBasis.cpp
     jacobiPolynomials.cpp
     legendrePolynomials.cpp
   GaussIntegration.cpp
