@@ -9,6 +9,7 @@ set(SRC
     polynomialBasis.cpp
     JacobianBasis.cpp
     jacobiPolynomials.cpp
+    legendrePolynomials.cpp
   GaussIntegration.cpp
     GaussQuadratureLin.cpp
     GaussQuadratureTri.cpp
