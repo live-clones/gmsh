@@ -8,6 +8,7 @@ set(SRC
     fullMatrix.cpp
     polynomialBasis.cpp
     JacobianBasis.cpp
+    jacobiPolynomials.cpp
   GaussIntegration.cpp
     GaussQuadratureLin.cpp
     GaussQuadratureTri.cpp
