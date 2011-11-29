@@ -106,6 +106,61 @@ void removeParentCellsWithChildren(cartesianBox<double> *box)
   removeParentCellsWithChildren(box->getChildBox());
 }
 
+void computeLevelset(GModel *gm, cartesianBox<double> &box)
+{
+  // tolerance for desambiguation
+  const double tol = box.getLC() * 1.e-12;
+  std::vector<SPoint3> nodes;
+  std::vector<int> indices;
+  for (cartesianBox<double>::valIter it = box.nodalValuesBegin(); 
+       it != box.nodalValuesEnd(); ++it){
+    nodes.push_back(box.getNodeCoordinates(it->first));
+    indices.push_back(it->first);
+  }
+  Msg::Info("  %d nodes in the grid at level %d", (int)nodes.size(), box.getLevel());
+  std::vector<double> dist, localdist;
+  std::vector<SPoint3> dummy;
+  for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++){
+   if((*fit)->geomType() == GEntity::DiscreteSurface){
+      for(unsigned int k = 0; k < (*fit)->getNumMeshElements(); k++){ 
+	  std::vector<double> iDistances;
+	  std::vector<SPoint3> iClosePts;
+          std::vector<double> iDistancesE;
+	  MElement *e = (*fit)->getMeshElement(k);
+	  if(e->getType() == TYPE_TRI){
+	    MVertex *v1 = e->getVertex(0);
+	    MVertex *v2 = e->getVertex(1);
+	    MVertex *v3 = e->getVertex(2);
+	    SPoint3 p1(v1->x(),v1->y(),v1->z());
+	    SPoint3 p2(v2->x(),v2->y(),v2->z());
+	    SPoint3 p3(v3->x(),v3->y(),v3->z());
+	    signedDistancesPointsTriangle(localdist, dummy, nodes, p1, p2, p3);
+	  }
+	  if(dist.empty()) 
+	    dist = localdist;
+	  else{ 
+	    for (unsigned int j = 0; j < localdist.size(); j++){
+	      dist[j] = (fabs(dist[j]) < fabs(localdist[j])) ? dist[j] : localdist[j];
+	    }
+	  }
+      }
+    }
+    else{
+      printf(" CAD surface \n");
+      //look in utils_api_demos maincartesian
+      // for (GModel::fiter fit = _model->firstFace(); fit != _model->lastFace(); fit++){
+      // for (int i = 0; i < (*fit)->stl_triangles.size(); i += 3){
+    }
+  }
+
+  for (unsigned int j = 0; j < dist.size(); j++)
+    box.setNodalValue(indices[j], dist[j]);
+
+  if(box.getChildBox()) computeLevelset(gm, *box.getChildBox());
+}
+
+
+
 
 inline double det3(double d11, double d12, double d13, double d21, double d22, double d23, double d31, double d32, double d33) {
   return d11 * (d22 * d33 - d23 * d32) - d21 * (d12 * d33 - d13 * d32) + d31 * (d12 * d23 - d13 * d22);
@@ -588,77 +643,71 @@ double gLevelsetMathEval::operator() (const double x, const double y, const doub
     return 1.;
 }
 
-gLevelsetDistGeom::gLevelsetDistGeom(std::string name, int tag) : gLevelsetPrimitive(tag) {
-  //_model = new GModel();
-  //_model->load(name);
- 
+gLevelsetDistGeom::gLevelsetDistGeom(std::string geomBox, std::string name, int tag) : gLevelsetPrimitive(tag) {
+  
+  GModel *gmg = new GModel();
+  gmg->load(geomBox+std::string(".msh"));
   GModel *gm = new GModel();
   gm->load(name);
-
-  double lx = 0.1, ly = 0.1, lz = 0.1;
-  double rmax = 0.05;
+  
+  double lx = 0.5, ly = 0.5, lz = 0.5;
   int levels = 3;
   int refineCurvedSurfaces = 0;
 
+  double rmax = 0.1;
   double sampling = std::min(rmax, std::min(lx, std::min(ly, lz)));
-  double rtube = std::max(lx, std::max(ly, lz)) * 2.;
-
-  std::vector<SPoint3> points;
-  std::vector<SPoint3> refinePoints;
+  double rtube = std::max(lx, std::max(ly, lz))*2; //0.5; // * 2.;
 
   Msg::Info("Filling coarse point cloud on surfaces");
+  std::vector<SPoint3> points;
+  std::vector<SPoint3> refinePoints;
+  for(GModel::viter vit = gmg->firstVertex(); vit != gmg->lastVertex(); vit++){
+    for(unsigned int k = 0; k < (*vit)->getNumMeshVertices(); k++){ 
+      MVertex  *v = (*vit)->getMeshVertex(k);
+       SPoint3 p(v->x(), v->y(), v->z());
+      points.push_back(p);
+    }
+  }
+  for (GModel::eiter eit = gmg->firstEdge(); eit != gmg->lastEdge(); eit++){
+    for(unsigned int k = 0; k < (*eit)->getNumMeshVertices(); k++){ 
+      MVertex  *ve = (*eit)->getMeshVertex(k);
+      SPoint3 pe(ve->x(), ve->y(), ve->z());
+      points.push_back(pe);
+    }
+  }
 
+  //FOR DISCRETE GEOMETRIES
+  for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++){
+    for(unsigned int k = 0; k < (*fit)->getNumMeshVertices(); k++){ 
+      MVertex  *vf = (*fit)->getMeshVertex(k);
+      SPoint3 pf(vf->x(), vf->y(), vf->z());
+      points.push_back(pf);
+    }
+    for(unsigned int k = 0; k < (*fit)->getNumMeshElements(); k++){ 
+      MElement *e =  (*fit)->getMeshElement(k);
+      if (e->getType() == TYPE_TRI){
+	MVertex *v1 = e->getVertex(0);
+	MVertex *v2 = e->getVertex(1);
+	MVertex *v3 = e->getVertex(2);
+	SPoint3 cg( (v1->x()+v2->x()+v3->x())/3.,
+		    (v1->y()+v2->y()+v3->y())/3.,
+		    (v1->z()+v2->z()+v3->z())/3.);
+	refinePoints.push_back(cg);
+      }
+    }
+  }
   //FOR CAD
-  for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++)
-     (*fit)->fillPointCloud(sampling, &points);
+  //for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++)
+  //   (*fit)->fillPointCloud(sampling, &points);
 
-  //FOR STL
-  // for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++){
-  //   for(unsigned int k = 0; k < (*fit)->getNumMeshElements(); k++){ 
-  //     MElement *e = (*fit)->getMeshElement(k);
-  //     if(e->getType() == TYPE_TRI){
-  // 	MVertex *v1 = e->getVertex(0);
-  // 	MVertex *v2 = e->getVertex(1);
-  // 	MVertex *v3 = e->getVertex(2);
-  // 	SPoint3 p1(v1->x(), v1->y(), v1->z());
-  // 	SPoint3 p2(v2->x(), v2->y(), v2->z());
-  // 	SPoint3 p3(v3->x(), v3->y(), v3->z());
-  // 	points.push_back(p1);
-  // 	points.push_back(p2);
-  // 	points.push_back(p3);
-  // 	// std::vector<SPoint3>::iterator it1 = std::find(points.begin(), points.end(), p1);
-  // 	// if(it1 != points.end())  points.push_back(p1);
-  // 	// std::vector<SPoint3>::iterator it2 = std::find(points.begin(), points.end(), p2);
-  // 	// if(it2 != points.end())  points.push_back(p2);
-  // 	// std::vector<SPoint3>::iterator it3 = std::find(points.begin(), points.end(),p3);
-  // 	// if(it3 != points.end())  points.push_back(p3);
-  //     }
-  //   }
-  // }
- Msg::Info("  %d points in the surface cloud", (int)points.size());
- if (points.size() == 0) {Msg::Fatal("No points on surfaces \n"); };
-
-
-  // if(levels > 1){
-  //   double s = sampling / pow(2., levels - 1);
-  //   Msg::Info("Filling refined point cloud on curves and curved surfaces");
-  //   for (GModel::eiter eit = gm->firstEdge(); eit != gm->lastEdge(); eit++)
-  //     fillPointCloud(*eit, s, refinePoints);
-
-  //   // FIXME: refine this by computing e.g. "mean" curvature
-  //   if(refineCurvedSurfaces){
-  //     for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++)
-  //       if((*fit)->geomType() != GEntity::Plane)
-  //         (*fit)->fillPointCloud(2 * s, &refinePoints);
-  //   }
-  //   Msg::Info("  %d points in the refined cloud", (int)refinePoints.size());
-  // }
+  Msg::Info("  %d points in the surface cloud", (int)points.size());
+  if (points.size() == 0) {Msg::Fatal("No points on surfaces \n"); };
 
   SBoundingBox3d bb;
   for(unsigned int i = 0; i < points.size(); i++) bb += points[i]; 
   for(unsigned int i = 0; i < refinePoints.size(); i++) bb += refinePoints[i]; 
-  bb.scale(1.21, 1.21, 1.21);
-  SVector3 range = bb.max() - bb.min();   
+  //bb.scale(1.01, 1.01, 1.01);
+  SVector3 range = bb.max() - bb.min(); 
   int NX = range.x() / lx; 
   int NY = range.y() / ly; 
   int NZ = range.z() / lz; 
@@ -671,85 +720,89 @@ gLevelsetDistGeom::gLevelsetDistGeom(std::string name, int tag) : gLevelsetPrimi
             bb.max().x(), bb.max().y(), bb.max().z());
   Msg::Info("  Nx=%d Ny=%d Nz=%d", NX, NY, NZ);
   
-  cartesianBox<double> box(bb.min().x(), bb.min().y(), bb.min().z(), 
-                           SVector3(range.x(), 0, 0),
-                           SVector3(0, range.y(), 0),
-                           SVector3(0, 0, range.z()),
-                           NX, NY, NZ, levels);
+  _box = new cartesianBox<double>(bb.min().x(), bb.min().y(), bb.min().z(), 
+				 SVector3(range.x(), 0, 0),
+				 SVector3(0, range.y(), 0),
+				 SVector3(0, 0, range.z()),
+				 NX, NY, NZ, levels);
+  Msg::Info("Inserting the active cells in the cartesian grid");
+  for (int i = 0; i < NX; i++)
+    for (int j = 0; j < NY; j++)
+      for (int k = 0; k < NZ; k++)
+        _box->insertActiveCell(_box->getCellIndex(i, j, k));
 
-  Msg::Info("Inserting active cells in the cartesian grid");
-  Msg::Info("  level %d", box.getLevel());
-  for (unsigned int i = 0; i < points.size(); i++)
-    insertActiveCells(points[i].x(), points[i].y(), points[i].z(), rmax, box);
-
-  cartesianBox<double> *parent = &box, *child;
+  cartesianBox<double> *parent = _box, *child;
   while((child = parent->getChildBox())){
-    Msg::Info("  level %d", child->getLevel());
+    Msg::Info("  level %d ", child->getLevel());
     for(unsigned int i = 0; i < refinePoints.size(); i++)
       insertActiveCells(refinePoints[i].x(), refinePoints[i].y(), refinePoints[i].z(), 
-                        rtube / pow(2., (levels - child->getLevel())), *child);
+                         rtube / pow(2., (levels - child->getLevel())), *child);
     parent = child;
   }
 
-  // remove child cells that do not entirely fill parent cell or for
-  // which there is no parent neighbor; then remove parent cells that
-  // have children
-  Msg::Info("Removing cells to match X-FEM mesh topology constraints");
-  removeBadChildCells(&box);
-  removeParentCellsWithChildren(&box);
+  Msg::Info("Removing cells to match mesh topology constraints");
+  removeBadChildCells(_box);
+  removeParentCellsWithChildren(_box);
 
-  // we generate duplicate nodes at this point so we can easily access
-  // cell values at each level; we will clean up by renumbering after
-  // filtering
   Msg::Info("Initializing nodal values in the cartesian grid");
-  box.createNodalValues();
+  _box->createNodalValues();
 
   Msg::Info("Computing levelset on the cartesian grid");  
-  //computeLevelset(gm, box);
+  computeLevelset(gm, *_box);
 
+  double dist = _box->getValueContainingPoint(0, 0, 0);
   Msg::Info("Renumbering mesh vertices across levels");
-  box.renumberNodes();
+  _box->renumberNodes();
   
-  bool decomposeInSimplex = false;
-  box.writeMSH("yeah.msh", decomposeInSimplex);
-  exit(1);
+  double dist2 = _box->getValueContainingPoint(0, 0, 0);
+  printf("dist =%g dist2=%g \n", dist, dist2);
+  _box->writeMSH("yeah.msh", false);
 
+  delete gm;
+  delete gmg;
+ 
 }
 
 double gLevelsetDistGeom::operator() (const double x, const double y, const double z) const {
 
-  std::vector<SPoint3> nodes;
-  nodes.push_back(SPoint3(x,y,z));
-  double dist = 1.e22;
- 
-  for (GModel::fiter fit = _model->firstFace(); fit != _model->lastFace(); fit++){
-    if((*fit)->geomType() == GEntity::DiscreteSurface){
-      for(unsigned int k = 0; k < (*fit)->getNumMeshElements(); k++){ 
-	  std::vector<double> iDistances;
-	  std::vector<SPoint3> iClosePts;
-          std::vector<double> iDistancesE;
-	  MElement *e = (*fit)->getMeshElement(k);
-	  if(e->getType() == TYPE_TRI){
-	    MVertex *v1 = e->getVertex(0);
-	    MVertex *v2 = e->getVertex(1);
-	    MVertex *v3 = e->getVertex(2);
-	    SPoint3 p1(v1->x(), v1->y(), v1->z());
-	    SPoint3 p2(v2->x(), v2->y(), v2->z());
-	    SPoint3 p3(v3->x(),v3->y(),v3->z());
-	    signedDistancesPointsTriangle(iDistances, iClosePts, nodes, p1, p2, p3);
-	  }
-	  if (fabs(iDistances[0]) < fabs(dist)) dist = iDistances[0];
-      }
-    }
-    else{
-      printf(" CAD surface \n");
-      //look in utils_api_demos maincartesian
-      // for (GModel::fiter fit = _model->firstFace(); fit != _model->lastFace(); fit++){
-      // for (int i = 0; i < (*fit)->stl_triangles.size(); i += 3){
-    }
-  }
-  double ana =  sqrt((y*y)+(z*z))-0.5;
-  printf("xyz = %g %g %g dist = %g (%g)\n",x, y, z, -dist, ana );
+  double dist = _box->getValueContainingPoint(x,y,z);
+
+  //double ana =  sqrt((y*y)+(z*z))-0.5;
+  //printf("xyz = %g %g %g dist = %g (%g)\n",x, y, z, -dist, ana );
+  //exit(1);
+
+  // std::vector<SPoint3> nodes;
+  // nodes.push_back(SPoint3(x,y,z));
+  
+  // for (GModel::fiter fit = _model->firstFace(); fit != _model->lastFace(); fit++){
+  //   if((*fit)->geomType() == GEntity::DiscreteSurface){
+  //     for(unsigned int k = 0; k < (*fit)->getNumMeshElements(); k++){ 
+  // 	  std::vector<double> iDistances;
+  // 	  std::vector<SPoint3> iClosePts;
+  //         std::vector<double> iDistancesE;
+  // 	  MElement *e = (*fit)->getMeshElement(k);
+  // 	  if(e->getType() == TYPE_TRI){
+  // 	    MVertex *v1 = e->getVertex(0);
+  // 	    MVertex *v2 = e->getVertex(1);
+  // 	    MVertex *v3 = e->getVertex(2);
+  // 	    SPoint3 p1(v1->x(), v1->y(), v1->z());
+  // 	    SPoint3 p2(v2->x(), v2->y(), v2->z());
+  // 	    SPoint3 p3(v3->x(),v3->y(),v3->z());
+  // 	    signedDistancesPointsTriangle(iDistances, iClosePts, nodes, p1, p2, p3);
+  // 	  }
+  // 	  if (fabs(iDistances[0]) < fabs(dist)) dist = iDistances[0];
+  //     }
+  //   }
+  //   else{
+  //     printf(" CAD surface \n");
+  //     //look in utils_api_demos maincartesian
+  //     // for (GModel::fiter fit = _model->firstFace(); fit != _model->lastFace(); fit++){
+  //     // for (int i = 0; i < (*fit)->stl_triangles.size(); i += 3){
+  //   }
+  // }
+
+  // double ana =  sqrt((y*y)+(z*z))-0.5;
+  // printf("xyz = %g %g %g dist = %g (%g)\n",x, y, z, -dist, ana );
   //exit(1);
 
   return dist;

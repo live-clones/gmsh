@@ -19,6 +19,7 @@
 #include "MVertex.h"
 #include "GmshConfig.h"
 #include "mathEvaluator.h"
+#include "cartesian.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -257,10 +258,10 @@ public:
 
 class gLevelsetDistGeom: public gLevelsetPrimitive
 {
-  GModel *_model;
+  cartesianBox<double> *_box;
 public:
-  gLevelsetDistGeom(std::string f, int tag=1);
-  ~gLevelsetDistGeom(){ if (_model) delete _model; }
+  gLevelsetDistGeom(std::string g, std::string f, int tag=1);
+  ~gLevelsetDistGeom(){if (_box) delete _box; }
   double operator () (const double x, const double y, const double z) const;
   int type() const { return UNKNOWN; }
 };
