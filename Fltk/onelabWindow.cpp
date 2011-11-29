@@ -296,6 +296,7 @@ static std::string getMshFileName(onelab::client *c)
         name = GetDefaultFileName(CTX::instance()->mesh.fileFormat);
     }
     onelab::string o("Gmsh/MshFileName", name, "Mesh name");
+    o.setKind("file");
     c->set(o);
     return name;
   }
@@ -571,6 +572,11 @@ void onelabWindow::rebuildTree()
   std::vector<onelab::string> strings;
   onelab::server::instance()->get(strings);
   for(unsigned int i = 0; i < strings.size(); i++){
+
+    if(strings[i].getKind() == "file"){
+      printf("got file string\n");
+    }
+
     Fl_Tree_Item *n = _tree->add(strings[i].getName().c_str());
     n->labelsize(FL_NORMAL_SIZE + 2);
     std::string label = strings[i].getShortHelp();

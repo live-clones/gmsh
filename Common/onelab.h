@@ -216,31 +216,36 @@ namespace onelab{
     }
   };
 
-  // The string class. A string has a mutable "type": we do not derive
-  // specialized classes, because the type should be changeable at
-  // runtime (e.g. from client-dependent function to onelab-function
-  // to table of values)
+  // The string class. A string has a mutable "kind": we do not derive
+  // specialized classes, because the kind should be changeable at
+  // runtime (e.g. from client-dependent mathematical expression to to
+  // table of values). Possible kinds: generic, filename, hostname,
+  // client-dependent mathematical expression, comma-separated list of
+  // values, matlab matrix, onelab mathematical expression (through
+  // mathex?), ...
   class string : public parameter{
   private:
-    std::string _value;
+    std::string _value, _kind;
     std::vector<std::string> _choices;
-    // FIXME add a "type" to interpret the string: file name,
-    // comma-separated values for a list, hostname, table of numbers,
-    // client-dependent mathematical expression ("3 sin(X[])"),
-    // onlab-expression (through mathex?), ...
   public:
     string(const std::string &name="", const std::string &value="", 
            const std::string &shortHelp="", const std::string &help="") 
-      : parameter(name, shortHelp, help), _value(value) {}
+      : parameter(name, shortHelp, help), _value(value), _kind("generic") {}
     void setValue(const std::string &value){ _value = value; }
+    void setKind(const std::string &kind){ _kind = kind; }
     void setChoices(const std::vector<std::string> &choices){ _choices = choices; }
     std::string getType() const { return "string"; }
     const std::string &getValue() const { return _value; }
+    const std::string &getKind() const { return _kind; }
     const std::vector<std::string> &getChoices() const { return _choices; }
     void update(const string &p)
     {
       if(p.getValue() != getValue()){
         setValue(p.getValue());
+        setChanged(true);
+      }
+      if(p.getKind() != getKind()){
+        setKind(p.getKind());
         setChanged(true);
       }
       if(p.getChoices().size())
@@ -250,6 +255,7 @@ namespace onelab{
     {
       std::ostringstream sstream;
       sstream << parameter::toChar() << sanitize(_value) << charSep()
+              << sanitize(_kind) << charSep()
               << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << sanitize(_choices[i]) << charSep();
@@ -273,6 +279,7 @@ namespace onelab{
         setAttribute(key, getNextToken(msg, pos));
       }
       setValue(getNextToken(msg, pos));
+      setKind(getNextToken(msg, pos));
       _choices.resize(atoi(getNextToken(msg, pos).c_str()));
       for(unsigned int i = 0; i < _choices.size(); i++)
         _choices[i] = getNextToken(msg, pos);
@@ -284,7 +291,7 @@ namespace onelab{
   // regions will include union, intersection, etc.
   class region : public parameter{
   private:
-    std::string _value; // FIXME: change this into std::set<std::string>
+    std::string _value; // TODO: change this into std::set<std::string>
     std::vector<std::string> _choices;
   public:
     region(const std::string &name="", const std::string &value="",
@@ -321,9 +328,9 @@ namespace onelab{
   // regions.
   class function : public parameter{
   private:
-    // Change this to onelab::string
+    // TODO: change this to onelab::string
     std::string _value;
-    // Change this into std::map<onelab::region, onelab::string> 
+    // TODO: change this into std::map<onelab::region, onelab::string> 
     std::map<std::string, std::string> _pieceWiseValues;
     std::vector<std::string> _choices;
   public:
