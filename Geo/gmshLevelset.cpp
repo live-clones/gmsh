@@ -134,7 +134,8 @@ void computeLevelset(GModel *gm, cartesianBox<double> &box)
 	    SPoint3 p1(v1->x(),v1->y(),v1->z());
 	    SPoint3 p2(v2->x(),v2->y(),v2->z());
 	    SPoint3 p3(v3->x(),v3->y(),v3->z());
-	    signedDistancesPointsTriangle(localdist, dummy, nodes, p1, p2, p3);
+	    //sign plus if in the direction of the normal
+	    signedDistancesPointsTriangle(localdist, dummy, nodes, p2, p1, p3);
 	  }
 	  if(dist.empty()) 
 	    dist = localdist;
@@ -750,12 +751,9 @@ gLevelsetDistGeom::gLevelsetDistGeom(std::string geomBox, std::string name, int 
   Msg::Info("Computing levelset on the cartesian grid");  
   computeLevelset(gm, *_box);
 
-  double dist = _box->getValueContainingPoint(0, 0, 0);
   Msg::Info("Renumbering mesh vertices across levels");
   _box->renumberNodes();
   
-  double dist2 = _box->getValueContainingPoint(0, 0, 0);
-  printf("dist =%g dist2=%g \n", dist, dist2);
   _box->writeMSH("yeah.msh", false);
 
   delete gm;
@@ -766,45 +764,6 @@ gLevelsetDistGeom::gLevelsetDistGeom(std::string geomBox, std::string name, int 
 double gLevelsetDistGeom::operator() (const double x, const double y, const double z) const {
 
   double dist = _box->getValueContainingPoint(x,y,z);
-
-  //double ana =  sqrt((y*y)+(z*z))-0.5;
-  //printf("xyz = %g %g %g dist = %g (%g)\n",x, y, z, -dist, ana );
-  //exit(1);
-
-  // std::vector<SPoint3> nodes;
-  // nodes.push_back(SPoint3(x,y,z));
-  
-  // for (GModel::fiter fit = _model->firstFace(); fit != _model->lastFace(); fit++){
-  //   if((*fit)->geomType() == GEntity::DiscreteSurface){
-  //     for(unsigned int k = 0; k < (*fit)->getNumMeshElements(); k++){ 
-  // 	  std::vector<double> iDistances;
-  // 	  std::vector<SPoint3> iClosePts;
-  //         std::vector<double> iDistancesE;
-  // 	  MElement *e = (*fit)->getMeshElement(k);
-  // 	  if(e->getType() == TYPE_TRI){
-  // 	    MVertex *v1 = e->getVertex(0);
-  // 	    MVertex *v2 = e->getVertex(1);
-  // 	    MVertex *v3 = e->getVertex(2);
-  // 	    SPoint3 p1(v1->x(), v1->y(), v1->z());
-  // 	    SPoint3 p2(v2->x(), v2->y(), v2->z());
-  // 	    SPoint3 p3(v3->x(),v3->y(),v3->z());
-  // 	    signedDistancesPointsTriangle(iDistances, iClosePts, nodes, p1, p2, p3);
-  // 	  }
-  // 	  if (fabs(iDistances[0]) < fabs(dist)) dist = iDistances[0];
-  //     }
-  //   }
-  //   else{
-  //     printf(" CAD surface \n");
-  //     //look in utils_api_demos maincartesian
-  //     // for (GModel::fiter fit = _model->firstFace(); fit != _model->lastFace(); fit++){
-  //     // for (int i = 0; i < (*fit)->stl_triangles.size(); i += 3){
-  //   }
-  // }
-
-  // double ana =  sqrt((y*y)+(z*z))-0.5;
-  // printf("xyz = %g %g %g dist = %g (%g)\n",x, y, z, -dist, ana );
-  //exit(1);
-
   return dist;
 }
 
