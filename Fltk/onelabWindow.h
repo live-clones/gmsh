@@ -21,7 +21,6 @@ class onelabWindow{
   Fl_Window *_win;
   Fl_Tree *_tree;
   Fl_Button *_butt[2];
-  Fl_Input *_model;
   Fl_Menu_Button *_gear;
   std::vector<Fl_Widget*> _treeWidgets;
   std::string _title;
@@ -37,8 +36,6 @@ class onelabWindow{
   void deactivate(){ _butt[0]->deactivate(); _butt[1]->deactivate(); }
   void show(){ _win->show(); }
   int shown(){ return _win->shown(); }
-  std::string getModelName(){ return _model->value(); }
-  void setModelName(const std::string &name){ _model->value(name.c_str()); }
   std::string getModelExtension(){ return _modelExtension; }
   void setModelExtension(const std::string &ext){ _modelExtension = ext; }
   int meshAuto(){ return _gear->menu()[1].value(); }

@@ -302,39 +302,46 @@ static std::string getMshFileName(onelab::client *c)
   }
 }
 
+static std::string getModelName(onelab::client *c)
+{
+  std::vector<onelab::string> ps;
+  c->get(ps, c->getName() + "/1ModelName");
+  if(ps.size()){
+    return ps[0].getValue();
+  }
+  else{
+    std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
+    std::string ext = FlGui::instance()->onelab->getModelExtension();
+    std::string name(split[0] + split[1] + ext);
+    onelab::string o(c->getName() + "/1ModelName", name, "Model name");
+    o.setKind("file");
+    c->set(o);
+    return name;
+  }
+}
+
 void onelab_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
   std::string action((const char*)data);
 
-  if(action == "edit model"){
-    std::string prog = FixWindowsPath(CTX::instance()->editor);
-    std::string file = FixWindowsPath(FlGui::instance()->onelab->getModelName());
-    SystemCall(ReplaceSubString("%s", file, prog));
-    return;
-  }
-
   if(action == "reset"){
+    // clear everything except model names
+    std::vector<onelab::string> modelNames;
+    for(onelab::server::citer it = onelab::server::instance()->firstClient();
+      it != onelab::server::instance()->lastClient(); it++){
+      onelab::client *c = it->second;
+      std::vector<onelab::string> ps;
+      c->get(ps, c->getName() + "/1ModelName");
+      if(ps.size()) modelNames.push_back(ps[0]);
+    }
     onelab::server::instance()->clear();
     if(onelab::server::instance()->findClient("Gmsh") != 
        onelab::server::instance()->lastClient())
       geometry_reload_cb(0, 0);
+    for(unsigned int i = 0; i < modelNames.size(); i++)
+      onelab::server::instance()->set(modelNames[i]);
     action = "initial check";
-  }
-
-  std::string ext = FlGui::instance()->onelab->getModelExtension();
-
-  if(action == "choose model"){
-    std::string pattern = "*";
-    pattern += ext;
-    if(fileChooser(FILE_CHOOSER_SINGLE, "Choose", pattern.c_str()))
-      FlGui::instance()->onelab->setModelName(fileChooserGetName(1));
-    action = "check";
-  }
-
-  if(FlGui::instance()->onelab->getModelName().empty()){
-    std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
-    FlGui::instance()->onelab->setModelName(split[0] + split[1] + ext);
   }
 
   FlGui::instance()->onelab->deactivate();
@@ -388,7 +395,7 @@ void onelab_cb(Fl_Widget *w, void *data)
        c->getName() == "Listen" || // unknown client connecting through "-listen"
        c->getName() == "GmshRemote") // distant post-processing Gmsh client
       continue;
-    std::string what = FlGui::instance()->onelab->getModelName();
+    std::string what = getModelName(c);
     if(action == "initial check" || action == "check"){
       c->run(what);
     }
@@ -445,6 +452,23 @@ static void onelab_input_choice_cb(Fl_Widget *w, void *data)
   }
 }
 
+static void onelab_input_choice_file_chooser_cb(Fl_Widget *w, void *data)
+{
+  Fl_Input_Choice *but = (Fl_Input_Choice*)w->parent();
+  if(fileChooser(FILE_CHOOSER_SINGLE, "Choose", "")){
+    but->value(fileChooserGetName(1).c_str());
+    but->do_callback(but, data);
+  }
+}
+
+static void onelab_input_choice_file_edit_cb(Fl_Widget *w, void *data)
+{
+  Fl_Input_Choice *but = (Fl_Input_Choice*)w->parent();
+  std::string prog = FixWindowsPath(CTX::instance()->editor);
+  std::string file = FixWindowsPath(but->value());
+  SystemCall(ReplaceSubString("%s", file, prog));
+}
+
 static void onelab_choose_executable_cb(Fl_Widget *w, void *data)
 {
   onelab::localNetworkClient *c = (onelab::localNetworkClient*)data;
@@ -477,16 +501,7 @@ onelabWindow::onelabWindow(int deltaFontSize)
     (width, height, CTX::instance()->nonModalWindows ? true : false, "ONELAB");
   _win->box(GMSH_WINDOW_BOX);
 
-  _model = new Fl_Input(WB, WB, width - 2*WB - BB/3, BH);
-  _model->align(FL_ALIGN_RIGHT);
-  _model->callback(onelab_cb, (void*)"check");
-  _model->when(FL_WHEN_RELEASE|FL_WHEN_ENTER_KEY);
-
-  Fl_Menu_Button *menu = new Fl_Menu_Button(width - WB - BB/3, WB, BB/3, BH);
-  menu->add("Choose new model", 0, onelab_cb, (void*)"choose model");
-  menu->add("Edit model",  0, onelab_cb, (void*)"edit model");
-
-  _tree = new Fl_Tree(WB, WB+BH, width - 2 * WB, height - 3 * WB - 2 * BH);
+  _tree = new Fl_Tree(WB, WB, width - 2 * WB, height - 3 * WB - BH);
   _tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
   _tree->showroot(0);
 
@@ -537,7 +552,7 @@ void onelabWindow::rebuildTree()
   onelab::server::instance()->get(numbers);
   for(unsigned int i = 0; i < numbers.size(); i++){
     Fl_Tree_Item *n = _tree->add(numbers[i].getName().c_str());
-    n->labelsize(FL_NORMAL_SIZE + 2);
+    n->labelsize(FL_NORMAL_SIZE + 3);
     std::string label = numbers[i].getShortHelp();
     if(label.empty()) label = getShortName(numbers[i].getName());
     _tree->begin();
@@ -572,13 +587,8 @@ void onelabWindow::rebuildTree()
   std::vector<onelab::string> strings;
   onelab::server::instance()->get(strings);
   for(unsigned int i = 0; i < strings.size(); i++){
-
-    if(strings[i].getKind() == "file"){
-      printf("got file string\n");
-    }
-
     Fl_Tree_Item *n = _tree->add(strings[i].getName().c_str());
-    n->labelsize(FL_NORMAL_SIZE + 2);
+    n->labelsize(FL_NORMAL_SIZE + 3);
     std::string label = strings[i].getShortHelp();
     if(label.empty()) label = getShortName(strings[i].getName());
     _tree->begin();
@@ -587,6 +597,12 @@ void onelabWindow::rebuildTree()
     but->copy_label(label.c_str());
     for(unsigned int j = 0; j < strings[i].getChoices().size(); j++)
       but->add(strings[i].getChoices()[j].c_str());
+    if(strings[i].getKind() == "file"){
+      but->menubutton()->add
+        ("Choose...", 0, onelab_input_choice_file_chooser_cb, (void*)n);
+      but->menubutton()->add
+        ("Edit...", 0, onelab_input_choice_file_edit_cb, (void*)n);
+    }
     but->value(strings[i].getValue().c_str());
     but->align(FL_ALIGN_RIGHT);
     but->callback(onelab_input_choice_cb, (void*)n);
