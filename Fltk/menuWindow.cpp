@@ -2156,34 +2156,29 @@ static void view_remove_other_cb(Fl_Widget *w, void *data)
 static void view_remove_all_cb(Fl_Widget *w, void *data)
 {
   if(PView::list.empty()) return;
-  while(PView::list.size()) delete PView::list[0];
-  FlGui::instance()->updateViews();
-  drawContext::global()->draw();
-}
-
-static void view_remove_visible_cb(Fl_Widget *w, void *data)
-{
-  if(PView::list.empty()) return;
-  for(int i = PView::list.size() - 1; i >= 0; i--)
-    if(opt_view_visible(i, GMSH_GET, 0)) delete PView::list[i];
-  FlGui::instance()->updateViews();
-  drawContext::global()->draw();
-}
-
-static void view_remove_invisible_cb(Fl_Widget *w, void *data)
-{
-  if(PView::list.empty()) return;
-  for(int i = PView::list.size() - 1; i >= 0; i--)
-    if(!opt_view_visible(i, GMSH_GET, 0)) delete PView::list[i];
-  FlGui::instance()->updateViews();
-  drawContext::global()->draw();
-}
-
-static void view_remove_empty_cb(Fl_Widget *w, void *data)
-{
-  if(PView::list.empty()) return;
-  for(int i = PView::list.size() - 1; i >= 0; i--)
-    if(PView::list[i]->getData()->empty()) delete PView::list[i];
+  int mode = (intptr_t)data;
+  if(mode == -1){ // remove all
+    if(PView::list.empty()) return;
+    while(PView::list.size()) delete PView::list[0];
+  }
+  else if(mode == -2){ // remove all visible
+    for(int i = PView::list.size() - 1; i >= 0; i--)
+      if(opt_view_visible(i, GMSH_GET, 0)) delete PView::list[i];
+  }
+  else if(mode == -3){ // remove all invisible
+    for(int i = PView::list.size() - 1; i >= 0; i--)
+      if(!opt_view_visible(i, GMSH_GET, 0)) delete PView::list[i];
+  }
+  else if(mode == -4){ // remove all empty
+    for(int i = PView::list.size() - 1; i >= 0; i--)
+      if(PView::list[i]->getData()->empty()) delete PView::list[i];
+  }
+  else if(mode >=0 && mode < (int)PView::list.size()){ // remove by name
+    std::string name = PView::list[mode]->getData()->getName();
+    for(int i = PView::list.size() - 1; i >= 0; i--)
+      if(PView::list[i]->getData()->getName() == name) delete PView::list[i];
+  }
+  
   FlGui::instance()->updateViews();
   drawContext::global()->draw();
 }
@@ -2292,10 +2287,16 @@ static void view_combine_time_by_name_cb(Fl_Widget *w, void *data)
 
 static void view_all_visible_cb(Fl_Widget *w, void *data)
 {
+  int mode = (intptr_t)data;
+  std::string name;
+  if(mode >= 0) name = PView::list[mode]->getData()->getName();
   for(unsigned int i = 0; i < PView::list.size(); i++)
     opt_view_visible(i, GMSH_SET | GMSH_GUI, 
-                     (intptr_t)data < 0 ? !opt_view_visible(i, GMSH_GET, 0) :
-                     (intptr_t)data > 0 ? 1 : 0);
+                     (mode == -1) ? 1 :
+                     (mode == -2) ? 0 :
+                     (mode == -3) ? !opt_view_visible(i, GMSH_GET, 0) :
+                     (name == PView::list[i]->getData()->getName()) ? 1 : 
+                     0);
   drawContext::global()->draw();
 }
 
@@ -2918,12 +2919,14 @@ void menuWindow::setContext(contextItem *menu_asked, int flag)
         p[j]->add("Remove/Other Views", 0, 
                   (Fl_Callback *) view_remove_other_cb, (void *)nb, 0);
         p[j]->add("Remove/Visible Views", 0, 
-                  (Fl_Callback *) view_remove_visible_cb, (void *)nb, 0);
+                  (Fl_Callback *) view_remove_all_cb, (void *)-2, 0);
         p[j]->add("Remove/Invisible Views", 0, 
-                  (Fl_Callback *) view_remove_invisible_cb, (void *)nb, 0);
+                  (Fl_Callback *) view_remove_all_cb, (void *)-3, 0);
         p[j]->add("Remove/Empty Views", 0, 
-                  (Fl_Callback *) view_remove_empty_cb, (void *)nb, 0);
+                  (Fl_Callback *) view_remove_all_cb, (void *)-4, 0);
         p[j]->add("Remove/All Views", 0, 
+                  (Fl_Callback *) view_remove_all_cb, (void *)-1, 0);
+        p[j]->add("Remove/By Name", 0, 
                   (Fl_Callback *) view_remove_all_cb, (void *)nb, 0);
         p[j]->add("Alias/View without Options", 0, 
                   (Fl_Callback *) view_alias_cb, (void *)nb, 0);
@@ -2942,11 +2945,13 @@ void menuWindow::setContext(contextItem *menu_asked, int flag)
         p[j]->add("Combine Time Steps/By View Name", 0, 
                  (Fl_Callback *) view_combine_time_by_name_cb, (void *)nb, 0);
         p[j]->add("Set Visibility/All On", 0, 
-                  (Fl_Callback *) view_all_visible_cb, (void *)1, 0);
-        p[j]->add("Set Visibility/All Off", 0, 
-                  (Fl_Callback *) view_all_visible_cb, (void *)0, 0);
-        p[j]->add("Set Visibility/Invert", 0, 
                   (Fl_Callback *) view_all_visible_cb, (void *)-1, 0);
+        p[j]->add("Set Visibility/All Off", 0, 
+                  (Fl_Callback *) view_all_visible_cb, (void *)-2, 0);
+        p[j]->add("Set Visibility/Invert", 0, 
+                  (Fl_Callback *) view_all_visible_cb, (void *)-3, 0);
+        p[j]->add("Set Visibility/By name", 0, 
+                  (Fl_Callback *) view_all_visible_cb, (void *)nb, 0);
         p[j]->add("Apply As Background Mesh", 0, 
                   (Fl_Callback *) view_applybgmesh_cb, (void *)nb, 0);
         p[j]->add("Save As...", 0, 

@@ -1207,7 +1207,7 @@ std::string opt_view_name(OPT_ARGS_STR)
     FlGui::instance()->options->view.input[0]->value(data->getName().c_str());
   }
 #endif
-  return data->getName().c_str();
+  return data->getName();
 #else
   return "";
 #endif
