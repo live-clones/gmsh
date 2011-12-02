@@ -162,7 +162,7 @@ namespace onelab{
     number(const std::string &name="", double value=0.,
            const std::string &shortHelp="", const std::string &help="") 
       : parameter(name, shortHelp, help), _value(value), 
-        _min(-maxNumber()), _max(maxNumber()), _step(1.) {}
+        _min(-maxNumber()), _max(maxNumber()), _step(0.) {}
     void setValue(double value){ _value = value; }
     void setMin(double min){ _min = min; }
     void setMax(double max){ _max = max; }
@@ -180,20 +180,13 @@ namespace onelab{
         setValue(p.getValue());
         setChanged(true);
       }
-      if(p.getMin() != -maxNumber())
-        setMin(p.getMin());
-      if(p.getMax() != maxNumber())
-        setMax(p.getMax());
-      if(p.getStep() != 1.)
-        setStep(p.getStep());
-      if(p.getChoices().size())
-        setChoices(p.getChoices());
-      if(p.getShortHelp().size())
-        setShortHelp(p.getShortHelp());
-      if(p.getHelp().size())
-        setHelp(p.getHelp());
-      if(p.getAttributes().size())
-        setAttributes(p.getAttributes());
+      setMin(p.getMin());
+      setMax(p.getMax());
+      setStep(p.getStep());
+      setChoices(p.getChoices());
+      setShortHelp(p.getShortHelp());
+      setHelp(p.getHelp());
+      setAttributes(p.getAttributes());
     }
     std::string toChar()
     {
@@ -264,14 +257,10 @@ namespace onelab{
         setKind(p.getKind());
         setChanged(true);
       }
-      if(p.getChoices().size())
-        setChoices(p.getChoices());
-      if(p.getShortHelp().size())
-        setShortHelp(p.getShortHelp());
-      if(p.getHelp().size())
-        setHelp(p.getHelp());
-      if(p.getAttributes().size())
-        setAttributes(p.getAttributes());
+      setChoices(p.getChoices());
+      setShortHelp(p.getShortHelp());
+      setHelp(p.getHelp());
+      setAttributes(p.getAttributes());
     }
     std::string toChar()
     {
