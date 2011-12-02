@@ -29,7 +29,6 @@ int RenumberMesh(GModel *const model, meshPartitionOptions &options);
 int PartitionMeshFace(std::list<GFace*> &cFaces, meshPartitionOptions &options);
 int PartitionMeshElements(std::vector<MElement*> &elements, 
                           meshPartitionOptions &options);
-bool PartitionZeroGenus(std::list<GFace*> &cFaces, int &nbParts);
 int CreatePartitionBoundaries(GModel *model, bool createGhostCells);
 
 void splitBoundaryEdges(GModel *model,
