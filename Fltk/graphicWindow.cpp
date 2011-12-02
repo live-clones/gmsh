@@ -354,13 +354,13 @@ void status_play_manual(int time, int incr)
     else if(incr > 0) {
       if((view_in_cycle += incr) >= (int)PView::list.size())
         view_in_cycle = 0;
-      for(int i = 0; i < (int)PView::list.size(); i += incr)
+      for(int i = 0; i < (int)PView::list.size(); i++)
         opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
     }
     else {
       if((view_in_cycle += incr) < 0)
         view_in_cycle = PView::list.size() - 1;
-      for(int i = PView::list.size() - 1; i >= 0; i += incr)
+      for(int i = PView::list.size() - 1; i >= 0; i--)
         opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
     }
   }
