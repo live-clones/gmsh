@@ -32,7 +32,7 @@ class inputRange : public Fl_Group {
       _input->maximum(_max);
     }
     if(_step){
-      tmp << ":" << _step;
+      if(_step != 1.) tmp << ":" << _step;
       _input->step(_step);
     }
     _range->value(tmp.str().c_str());
@@ -96,7 +96,7 @@ class inputRange : public Fl_Group {
   }
  public:
   inputRange(int x, int y, int w, int h, double max_number, const char *l=0) 
-    : Fl_Group(x,y,w,h,l), _min(-max_number), _max(max_number), _step(0),
+    : Fl_Group(x,y,w,h,l), _min(-max_number), _max(max_number), _step(1.),
       _max_number(max_number)
   {
     int dot_w = FL_NORMAL_SIZE - 2, loop_w = FL_NORMAL_SIZE + 6;

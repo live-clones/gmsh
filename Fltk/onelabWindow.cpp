@@ -320,6 +320,31 @@ static std::string getModelName(onelab::client *c)
   }
 }
 
+static bool shouldRecompute()
+{
+  bool recompute = false;
+  std::vector<onelab::number> numbers;
+  onelab::server::instance()->get(numbers);
+  for(unsigned int i = 0; i < numbers.size(); i++){
+    if(numbers[i].getAttribute("loop") == "true"){
+      if(numbers[i].getMax() != onelab::parameter::maxNumber() &&
+         numbers[i].getValue() < numbers[i].getMax() && 
+         numbers[i].getStep()){
+        numbers[i].setValue(numbers[i].getValue() + numbers[i].getStep());
+        onelab::server::instance()->set(numbers[i]);
+        Msg::Info("Recomputing with %s=%g", numbers[i].getName().c_str(),
+                  numbers[i].getValue());
+        recompute = true;
+      }
+    }
+  }
+
+  if(recompute)
+    FlGui::instance()->onelab->rebuildTree();
+  
+  return recompute;
+}
+
 void onelab_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
@@ -346,6 +371,8 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   FlGui::instance()->onelab->deactivate();
   
+ recompute:
+
   // the Gmsh client is special: it always gets executed first. (The
   // meta-model will allow more flexibility: but in the simple GUI we
   // can assume this)
@@ -411,10 +438,11 @@ void onelab_cb(Fl_Widget *w, void *data)
     }
   }
 
-  FlGui::instance()->onelab->activate();
-
   printf("Gmsh ONELAB db:\n%s\n", onelab::server::instance()->toChar().c_str());
 
+  if(action == "compute" && shouldRecompute()) goto recompute;
+
+  FlGui::instance()->onelab->activate();
   FlGui::instance()->onelab->rebuildTree();
   FlGui::instance()->onelab->show();
 }
@@ -551,7 +579,7 @@ static std::string getShortName(const std::string &name)
 
 void onelabWindow::rebuildTree()
 {
-  int width = (3*IW)/2;
+  int width = (int)(1.4*IW);
 
   _tree->clear();
   _tree->sortorder(FL_TREE_SORT_ASCENDING);

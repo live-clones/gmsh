@@ -162,7 +162,7 @@ namespace onelab{
     number(const std::string &name="", double value=0.,
            const std::string &shortHelp="", const std::string &help="") 
       : parameter(name, shortHelp, help), _value(value), 
-        _min(-maxNumber()), _max(maxNumber()), _step(0.) {}
+        _min(-maxNumber()), _max(maxNumber()), _step(1.) {}
     void setValue(double value){ _value = value; }
     void setMin(double min){ _min = min; }
     void setMax(double max){ _max = max; }
@@ -184,7 +184,7 @@ namespace onelab{
         setMin(p.getMin());
       if(p.getMax() != maxNumber())
         setMax(p.getMax());
-      if(p.getStep())
+      if(p.getStep() != 1.)
         setStep(p.getStep());
       if(p.getChoices().size())
         setChoices(p.getChoices());
