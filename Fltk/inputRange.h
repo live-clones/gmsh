@@ -18,50 +18,94 @@ class inputRange : public Fl_Group {
   Fl_Input *_range;
   Fl_Toggle_Button *_range_butt, *_loop_butt;
   double _min, _max, _step, _max_number;
+  std::vector<double> _choices;
   void _values2string()
   {
-    // construct range string from min/max/step
     std::ostringstream tmp;
-    if(_min != -_max_number){
-      tmp << _min;
-      _input->minimum(_min);
+    if(_choices.size()){
+      // construct range string using choices
+      for(unsigned int i = 0; i < _choices.size(); i++){
+        if(i) tmp << ", ";
+        tmp << _choices[i];
+      }
+      if(_choices.size() > 1){
+        _input->minimum(_choices[0]);
+        _input->maximum(_choices[_choices.size() - 1]);
+        _input->step(_choices[1] - _choices[0]);
+      }
+      _step = 0.;
     }
-    tmp << ":";
-    if(_max != _max_number){
-      tmp << _max;
-      _input->maximum(_max);
-    }
-    if(_step){
+    else{
+      // construct range string from min/max/step
+      if(_min != -_max_number){
+        tmp << _min;
+        _input->minimum(_min);
+      }
+      tmp << ":";
+      if(_max != _max_number){
+        tmp << _max;
+        _input->maximum(_max);
+      }
+      if(_step == 0.) _step = 1.;
       if(_step != 1.) tmp << ":" << _step;
       _input->step(_step);
+      _choices.clear();
     }
     _range->value(tmp.str().c_str());
   }
   void _string2values()
   {
-    // parse range string and affect min/max/step
-    std::string str(_range->value()), min, max, step;
-    std::string::size_type first = 0, last;
-    last = str.find_first_of(':', first);
-    min = str.substr(first, last - first);
-    if(last != std::string::npos){
-      first = last + 1;
-      last = str.find_first_of(':', first);
-      max = str.substr(first, last - first);
-      if(last != std::string::npos)
-        step = str.substr(last + 1, str.size());
+    std::string str(_range->value());
+    if(str.find_first_of(',') != std::string::npos){
+      // parse list of values
+      std::string::size_type first = 0;
+      while(1){
+        std::string::size_type last = str.find_first_of(',', first);
+        std::string val = str.substr(first, last - first);
+        _choices.push_back(atof(val.c_str()));
+        if(last == std::string::npos) 
+          break;
+        else
+          first = last + 1;
+      }
+      if(_choices.size() > 1){
+        _input->minimum(_choices[0]);
+        _input->maximum(_choices[_choices.size() - 1]);
+        _input->step(_choices[1] - _choices[0]);
+      }
+      _step = 0.;
     }
-    if(min.size()){
-      _min = atof(min.c_str());
-      _input->minimum(_min);
-    }
-    if(max.size()){
-      _max = atof(max.c_str());
-      _input->maximum(_max);
-    }
-    if(step.size()){
-      _step = atof(step.c_str());
+    else{
+      // parse min/max/step
+      std::string min, max, step;
+      std::string::size_type first = 0;
+      std::string::size_type last = str.find_first_of(':', first);
+      min = str.substr(first, last - first);
+      if(last != std::string::npos){
+        first = last + 1;
+        last = str.find_first_of(':', first);
+        max = str.substr(first, last - first);
+        if(last != std::string::npos)
+          step = str.substr(last + 1, str.size());
+      }
+      if(min.size()){
+        _min = atof(min.c_str());
+        _input->minimum(_min);
+      }
+      else
+        _min = -_max_number;
+      if(max.size()){
+        _max = atof(max.c_str());
+        _input->maximum(_max);
+      }
+      else
+        _max = _max_number;
+      if(step.size())
+        _step = atof(step.c_str());
+      else
+        _step = 1.;
       _input->step(_step);
+      _choices.clear();
     }
   }
   void _show_range()
@@ -126,6 +170,8 @@ class inputRange : public Fl_Group {
   }
   double value() { return _input->value(); }
   void value(double val) { _input->value(val); }
+  void choices(const std::vector<double> &val) { _choices = val; _values2string(); }
+  std::vector<double> choices() { return _choices; }
   void minimum(double val) { _min = val; _values2string(); }
   double minimum() { return _min; }
   void maximum(double val) { _max = val; _values2string(); }
