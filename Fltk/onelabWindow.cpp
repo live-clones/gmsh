@@ -360,6 +360,7 @@ static bool shouldRecompute()
             Msg::Info("Recomputing with new choice %s=%g", 
                       numbers[i].getName().c_str(), numbers[i].getValue());
             recompute = true;
+            break;
           }
         }
       }
