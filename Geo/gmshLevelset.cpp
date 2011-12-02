@@ -626,6 +626,31 @@ double gLevelsetQuadric::operator()(const double x, const double y, const double
         + 2. * A[1][2] * y * z + A[2][2] * z * z + B[0] * x + B[1] * y + B[2] * z + C);
 }
 
+// gLevelsetPopcorn::gLevelsetPopcorn(int tag) : gLevelsetPrimitive(tag) {
+// }
+
+// double gLevelsetPopcorn::operator() (const double x, const double y, const double z) const {
+//   double r0 = 0.25;
+//   double r = sqrt((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5));
+//   double  val = r - r0;
+//   for (int k = 0; k< 5; k++){
+//     double xk = r0/sqrt(5)*(2.*cos(2*k*pi/5));
+//     double yk = r0/sqrt(5)*(2.*sin(2*k*pi/5));
+//     double zk = 1.0;
+//     val +=  -4.*exp(((x-0.5-xk)*(x-0.5-xk)+(y-0.5-yk)*(y-0.5-yk)+(z-0.5-zk)*(z-0.5-zk))/0.01);
+//     }
+//   for (int k = 0; k< 5; k++){
+//     xk = r0/sqrt(5)*(2*cos(2*((k-5)-1)*pi/5));
+//     yk = r0/sqrt(5)*(2*sin(2*((k-5)-1)*pi/5));
+//     zk = 1.0;
+//     val += 4.*exp(((x-0.5-xk)*(x-0.5-xk)+(y-0.5-yk)*(y-0.5-yk)+(z-0.5-zk)*(z-0.5-zk))/0.01);
+//   }
+//   val  += -4.*exp(((x-0.5-xk)*(x-0.5-xk)+(y-0.5-yk)*(y-0.5-yk)+(z-0.5-zk)*(z-0.5-zk))/0.01);
+//   val  += -4.*math.exp(((x-0.5)**2+(y-0.5)**2+(z-0.5+r0)**2)/0.01);
+//   return val;
+// }
+
+
 gLevelsetMathEval::gLevelsetMathEval(std::string f, int tag) : gLevelsetPrimitive(tag) {
     std::vector<std::string> expressions(1, f);
     std::vector<std::string> variables(3);
@@ -657,7 +682,7 @@ gLevelsetDistGeom::gLevelsetDistGeom(std::string geomBox, std::string name, int 
 
   double rmax = 0.1;
   double sampling = std::min(rmax, std::min(lx, std::min(ly, lz)));
-  double rtube = std::max(lx, std::max(ly, lz))*2; //0.5; // * 2.;
+  double rtube = std::max(lx, std::max(ly, lz))*2.;
 
   Msg::Info("Filling coarse point cloud on surfaces");
   std::vector<SPoint3> points;

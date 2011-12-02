@@ -1244,7 +1244,7 @@ void GModel::makeDiscreteRegionsSimplyConnected()
     
     std::vector<std::vector<MElement*> > conRegions;
     int nbRegions = connectedVolumes(allElements, conRegions);
-    remove(*itR);
+    if (nbRegions > 1) remove(*itR);
 
     for(int ire  = 0; ire < nbRegions; ire++){
       int numR = (nbRegions == 1) ? (*itR)->tag() : getMaxElementaryNumber(3) + 1;
@@ -1303,7 +1303,7 @@ void GModel::makeDiscreteFacesSimplyConnected()
     
     std::vector<std::vector<MElement*> > conFaces;
     int nbFaces = connectedSurfaces(allElements, conFaces);
-    remove(*itF);
+    if (nbFaces > 1) remove(*itF);
 
     for(int ifa  = 0; ifa < nbFaces; ifa++){
       int numF = (nbFaces == 1) ? (*itF)->tag() : getMaxElementaryNumber(2) + 1;

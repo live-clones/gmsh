@@ -475,8 +475,7 @@ GPoint discreteEdge::point(double par) const
 
 SVector3 discreteEdge::firstDer(double par) const
 {
-  
-  double tLoc;
+   double tLoc;
   int iEdge;
   getLocalParameter(par, iEdge, tLoc);
 

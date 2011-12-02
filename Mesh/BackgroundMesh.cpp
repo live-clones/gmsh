@@ -56,7 +56,7 @@ SMetric3 buildMetricTangentToCurve (SVector3 &t, double curvature, double &lambd
   lambda =  ((2 * M_PI) /( fabs(curvature) *  CTX::instance()->mesh.minCircPoints ) );
 
   SMetric3 curvMetric (1./(lambda*lambda),1.e-10,1.e-10,t,b,c);
-    //SMetric3 curvMetric (1./(lambda*lambda));
+  //SMetric3 curvMetric (1./(lambda*lambda));
   return curvMetric;
 }
 
@@ -233,7 +233,7 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
   case 1:
     {
       GEdge *ged = (GEdge *)ge;
-      Crv = ged->curvature(U)*2;
+      Crv = ged->curvature(U); //*2 WHY A FACTOR 2
       Crv = std::max(Crv, max_surf_curvature(ged, U));
       //Crv = max_surf_curvature(ged, U);      
     }
