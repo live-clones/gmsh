@@ -158,12 +158,14 @@ class inputRange : public Fl_Group {
 
     _range_butt = new Fl_Toggle_Button(x + input_w, y, dot_w, h, ":");
     _range_butt->callback(_range_butt_cb, this);
+    _range_butt->tooltip("Show range");
 
     _loop_butt = new Fl_Toggle_Button(x + input_w + dot_w, y, loop_w, h);
     _loop_butt->label("@-1gmsh_rotate");
     _loop_butt->selection_color(FL_GREEN);
     _loop_butt->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
     _loop_butt->callback(_loop_butt_cb, this);
+    _loop_butt->tooltip("Loop over range when computing");
 
     end(); // close the group
     resizable(_input);
