@@ -7,10 +7,10 @@
 #include "GmshMessage.h"
 #include "onelab.h"
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
-#include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Input_Choice.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Box.H>
+#include "inputRange.h"
 #include "Context.h"
 #include "GModel.h"
 #include "GmshDefines.h"
@@ -406,6 +406,9 @@ void onelab_cb(Fl_Widget *w, void *data)
       if(ps.size()) what += " " + ps[0].getValue();
       c->run(what);
     }
+    else if(action == "kill"){
+      c->kill();
+    }
   }
 
   FlGui::instance()->onelab->activate();
@@ -423,19 +426,25 @@ static void onelab_check_button_cb(Fl_Widget *w, void *data)
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers, name);
   if(numbers.size()){
-    numbers[0].setValue(((Fl_Check_Button*)w)->value());
+    Fl_Check_Button *o = (Fl_Check_Button*)w;
+    numbers[0].setValue(o->value());
     onelab::server::instance()->set(numbers[0]);
   }
 }
 
-static void onelab_value_input_cb(Fl_Widget *w, void *data)
+static void onelab_input_range_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
   std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers, name);
   if(numbers.size()){
-    numbers[0].setValue(((Fl_Value_Input*)w)->value());
+    inputRange *o = (inputRange*)w;
+    numbers[0].setValue(o->value());
+    numbers[0].setMin(o->minimum());
+    numbers[0].setMax(o->maximum());
+    numbers[0].setStep(o->step());
+    numbers[0].setAttribute("loop", o->loop() ? "true" : "false");
     onelab::server::instance()->set(numbers[0]);
   }
 }
@@ -447,7 +456,8 @@ static void onelab_input_choice_cb(Fl_Widget *w, void *data)
   std::vector<onelab::string> strings;
   onelab::server::instance()->get(strings, name);
   if(strings.size()){
-    strings[0].setValue(((Fl_Input_Choice*)w)->value());
+    Fl_Input_Choice *o = (Fl_Input_Choice*)w;
+    strings[0].setValue(o->value());
     onelab::server::instance()->set(strings[0]);
   }
 }
@@ -494,7 +504,7 @@ onelabWindow::onelabWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int width = 25 * FL_NORMAL_SIZE;
+  int width = 28 * FL_NORMAL_SIZE;
   int height = 15 * BH + 3 * WB;
   
   _win = new paletteWindow
@@ -541,6 +551,8 @@ static std::string getShortName(const std::string &name)
 
 void onelabWindow::rebuildTree()
 {
+  int width = (3*IW)/2;
+
   _tree->clear();
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
   _tree->selectmode(FL_TREE_SELECT_NONE);
@@ -552,13 +564,13 @@ void onelabWindow::rebuildTree()
   onelab::server::instance()->get(numbers);
   for(unsigned int i = 0; i < numbers.size(); i++){
     Fl_Tree_Item *n = _tree->add(numbers[i].getName().c_str());
-    n->labelsize(FL_NORMAL_SIZE + 3);
+    n->labelsize(FL_NORMAL_SIZE + 5);
     std::string label = numbers[i].getShortHelp();
     if(label.empty()) label = getShortName(numbers[i].getName());
     _tree->begin();
     if(numbers[i].getChoices().size() == 2 &&
        numbers[i].getChoices()[0] == 0 && numbers[i].getChoices()[1] == 1){
-      Fl_Check_Button *but = new Fl_Check_Button(1,1,IW,1);
+      Fl_Check_Button *but = new Fl_Check_Button(1, 1, width, 1);
       _treeWidgets.push_back(but);
       but->copy_label(label.c_str());
       but->value(numbers[i].getValue());
@@ -566,18 +578,17 @@ void onelabWindow::rebuildTree()
       n->widget(but);
     }
     else{
-      Fl_Value_Input *but = new Fl_Value_Input(1,1,IW,1);
+      inputRange *but = new inputRange
+        (1, 1, width, 1, onelab::parameter::maxNumber());
       _treeWidgets.push_back(but);
       but->copy_label(label.c_str());
       but->value(numbers[i].getValue());
-      if(numbers[i].getMin() != -1.e200)
-        but->minimum(numbers[i].getMin());
-      if(numbers[i].getMax() != 1.e200)
-        but->maximum(numbers[i].getMax());
-      if(numbers[i].getStep())
-        but->step(numbers[i].getStep());
+      but->minimum(numbers[i].getMin());
+      but->maximum(numbers[i].getMax());
+      but->step(numbers[i].getStep());
+      but->loop(numbers[i].getAttribute("loop") == "true");
       but->align(FL_ALIGN_RIGHT);
-      but->callback(onelab_value_input_cb, (void*)n);
+      but->callback(onelab_input_range_cb, (void*)n);
       but->when(FL_WHEN_RELEASE|FL_WHEN_ENTER_KEY);
       n->widget(but);
     }
@@ -588,11 +599,11 @@ void onelabWindow::rebuildTree()
   onelab::server::instance()->get(strings);
   for(unsigned int i = 0; i < strings.size(); i++){
     Fl_Tree_Item *n = _tree->add(strings[i].getName().c_str());
-    n->labelsize(FL_NORMAL_SIZE + 3);
+    n->labelsize(FL_NORMAL_SIZE + 5);
     std::string label = strings[i].getShortHelp();
     if(label.empty()) label = getShortName(strings[i].getName());
     _tree->begin();
-    Fl_Input_Choice *but = new Fl_Input_Choice(1,1,IW,1);
+    Fl_Input_Choice *but = new Fl_Input_Choice(1, 1, width, 1);
     _treeWidgets.push_back(but);
     but->copy_label(label.c_str());
     for(unsigned int j = 0; j < strings[i].getChoices().size(); j++)
@@ -614,7 +625,7 @@ void onelabWindow::rebuildTree()
   for(Fl_Tree_Item *n = _tree->first(); n; n = n->next()){
     if(n->has_children()){
       _tree->begin();
-      Fl_Box *but = new Fl_Box(1,1,IW,1);
+      Fl_Box *but = new Fl_Box(1, 1, width, 1);
       but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
       _treeWidgets.push_back(but);
       but->copy_label(getShortName(n->label()).c_str());
@@ -645,6 +656,20 @@ void onelabWindow::rebuildSolverList()
     _title += " " + c->getName();
   }
   _win->label(_title.c_str());
+}
+
+void onelabWindow::activate()
+{
+  _butt[0]->label("Compute");
+  _butt[0]->callback(onelab_cb, (void*)"compute");
+  _butt[1]->activate(); 
+}
+
+void onelabWindow::deactivate()
+{
+  _butt[0]->label("Kill");
+  _butt[0]->callback(onelab_cb, (void*)"kill");
+  _butt[1]->deactivate();
 }
 
 void onelabWindow::addSolver(const std::string &name, const std::string &commandLine,

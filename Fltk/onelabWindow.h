@@ -32,8 +32,8 @@ class onelabWindow{
   void rebuildSolverList();
   void rebuildTree();
   void redrawTree(){ _tree->redraw(); }
-  void activate(){ _butt[0]->activate(); _butt[1]->activate(); }
-  void deactivate(){ _butt[0]->deactivate(); _butt[1]->deactivate(); }
+  void activate();
+  void deactivate();
   void show(){ _win->show(); }
   int shown(){ return _win->shown(); }
   std::string getModelExtension(){ return _modelExtension; }

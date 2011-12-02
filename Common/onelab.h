@@ -70,6 +70,10 @@ namespace onelab{
     {
       _attributes[key] = value;
     }
+    void setAttributes(const std::map<std::string, std::string> &attributes)
+    {
+      _attributes = attributes; 
+    }
     void setClients(std::set<std::string> &clients){ _clients = clients; }
     void addClient(const std::string &client){ _clients.insert(client); }
     void addClients(std::set<std::string> &clients)
@@ -91,6 +95,10 @@ namespace onelab{
       std::map<std::string, std::string>::iterator it = _attributes.find(key);
       if(it != _attributes.end()) return it->second;
       return "";
+    }
+    const std::map<std::string, std::string> &getAttributes() const 
+    {
+      return _attributes; 
     }
     const std::set<std::string> &getClients() const { return _clients; }
     static char charSep(){ return '|' /* '\0' */; }
@@ -159,13 +167,13 @@ namespace onelab{
     void setMin(double min){ _min = min; }
     void setMax(double max){ _max = max; }
     void setStep(double step){ _step = step; }
-    void setChoices(std::vector<double> &choices){ _choices = choices; }
+    void setChoices(const std::vector<double> &choices){ _choices = choices; }
     std::string getType() const { return "number"; }
     double getValue() const { return _value; }
     double getMin() const { return _min; }
     double getMax() const { return _max; }
     double getStep() const { return _step; }
-    const std::vector<double> &getChoices(){ return _choices; }
+    const std::vector<double> &getChoices() const { return _choices; }
     void update(const number &p)
     {
       if(p.getValue() != getValue()){
@@ -176,8 +184,16 @@ namespace onelab{
         setMin(p.getMin());
       if(p.getMax() != maxNumber())
         setMax(p.getMax());
-      if(p.getStep() != getStep())
+      if(p.getStep())
         setStep(p.getStep());
+      if(p.getChoices().size())
+        setChoices(p.getChoices());
+      if(p.getShortHelp().size())
+        setShortHelp(p.getShortHelp());
+      if(p.getHelp().size())
+        setHelp(p.getHelp());
+      if(p.getAttributes().size())
+        setAttributes(p.getAttributes());
     }
     std::string toChar()
     {
@@ -250,6 +266,12 @@ namespace onelab{
       }
       if(p.getChoices().size())
         setChoices(p.getChoices());
+      if(p.getShortHelp().size())
+        setShortHelp(p.getShortHelp());
+      if(p.getHelp().size())
+        setHelp(p.getHelp());
+      if(p.getAttributes().size())
+        setAttributes(p.getAttributes());
     }
     std::string toChar()
     {
