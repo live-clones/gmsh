@@ -40,18 +40,19 @@ namespace onelab{
   private:
     // the name of the parameter, including its '/'-separated path in
     // the parameter hierarchy. Parameters or subpaths can start with
-    // numbers to force their relative ordering (such numbers could be
-    // automatically hidden in a GUI).
+    // numbers to force their relative ordering (such numbers are
+    // automatically hidden in the interface).
     std::string _name;
-    // help strings (the short help can serve as a better way to
-    // display the parameter in a GUI). Should allow richer encoding
-    // (UTF? HTML?)
+    // help strings (the short serves as a better way to display the
+    // parameter in the interface). Should allow richer encoding (UTF?
+    // HTML?)
     std::string _shortHelp, _help;
     // clients (computing steps) that use this parameter
     std::set<std::string> _clients;
-    // flag to check if the parameter has been changed since the last run
+    // flag to check if the parameter has been changed since the last
+    // run()
     bool _changed;
-    // should the parameter be visible in the interface
+    // should the parameter be visible in the interface?
     bool _visible;
   protected:
     // optional additional attributes
@@ -90,7 +91,7 @@ namespace onelab{
     const std::string &getHelp() const { return _help; }
     bool getChanged() const { return _changed; }
     bool getVisible() const { return _visible; }
-    std::string getAttribute (const std::string &key) const
+    std::string getAttribute(const std::string &key) const
     {
       std::map<std::string, std::string>::const_iterator it = _attributes.find(key);
       if(it != _attributes.end()) return it->second;
@@ -103,7 +104,7 @@ namespace onelab{
     const std::set<std::string> &getClients() const { return _clients; }
     static char charSep() { return '|' /* '\0' */; }
     static double maxNumber() { return 1e200; }
-    std::string sanitize (const std::string &in) const
+    std::string sanitize(const std::string &in) const
     {
       std::string out(in);
       for(unsigned int i = 0; i < in.size(); i++)
@@ -113,7 +114,8 @@ namespace onelab{
     virtual std::string toChar() const
     {
       std::ostringstream sstream;
-      sstream << getType() << charSep() << sanitize(getName()) << charSep() 
+      sstream << getType() << charSep() 
+              << sanitize(getName()) << charSep() 
               << sanitize(getShortHelp()) << charSep() 
               << sanitize(getHelp()) << charSep() 
               << (getVisible() ? 1 : 0) << charSep()
@@ -121,9 +123,32 @@ namespace onelab{
       for(std::map<std::string, std::string>::const_iterator it = _attributes.begin();
           it != _attributes.end(); it++)
         sstream << it->first << charSep() << it->second << charSep();
+      sstream << getClients().size() << charSep();
+      for(std::set<std::string>::const_iterator it = getClients().begin();
+          it != getClients().end(); it++)
+        sstream << *it << charSep();
       return sstream.str();
     }
-    virtual void fromChar(const std::string &msg){}
+    virtual std::string::size_type fromChar(const std::string &msg)
+    {
+      std::string::size_type pos = 0;
+      if(getNextToken(msg, pos) != getType()) return 0;
+      setName(getNextToken(msg, pos));
+      setShortHelp(getNextToken(msg, pos));
+      setHelp(getNextToken(msg, pos));
+      setVisible(atoi(getNextToken(msg, pos).c_str()));
+      int numAttributes = atoi(getNextToken(msg, pos).c_str());
+      for(int i = 0; i < numAttributes; i++){
+        std::string key(getNextToken(msg, pos));
+        setAttribute(key, getNextToken(msg, pos));
+      }
+      int numClients = atoi(getNextToken(msg, pos).c_str());
+      for(int i = 0; i < numClients; i++){
+        std::string client(getNextToken(msg, pos));
+        addClient(client);
+      }
+      return pos;
+    }
     static std::string getNextToken(const std::string &msg, 
                                     std::string::size_type &first)
     {
@@ -176,7 +201,10 @@ namespace onelab{
     const std::vector<double> &getChoices() const { return _choices; }
     void update(const number &p)
     {
-      addClients(p.getClients());
+      addClients(p.getClients()); // complete the list
+      setShortHelp(p.getShortHelp());
+      setHelp(p.getHelp());
+      setAttributes(p.getAttributes());
       if(p.getValue() != getValue()){
         setValue(p.getValue());
         setChanged(true);
@@ -185,9 +213,6 @@ namespace onelab{
       setMax(p.getMax());
       setStep(p.getStep());
       setChoices(p.getChoices());
-      setShortHelp(p.getShortHelp());
-      setHelp(p.getHelp());
-      setAttributes(p.getAttributes());
     }
     std::string toChar() const
     {
@@ -197,25 +222,12 @@ namespace onelab{
               << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << _choices[i] << charSep();
-      sstream << getClients().size() << charSep();
-      for(std::set<std::string>::const_iterator it = getClients().begin();
-          it != getClients().end(); it++)
-        sstream << *it << charSep();
       return sstream.str();
     }
-    void fromChar(const std::string &msg)
+    std::string::size_type fromChar(const std::string &msg)
     {
-      std::string::size_type pos = 0;
-      if(getNextToken(msg, pos) != getType()) return;
-      setName(getNextToken(msg, pos));
-      setShortHelp(getNextToken(msg, pos));
-      setHelp(getNextToken(msg, pos));
-      setVisible(atoi(getNextToken(msg, pos).c_str()));
-      int numAttributes = atoi(getNextToken(msg, pos).c_str());
-      for(int i = 0; i < numAttributes; i++){
-        std::string key(getNextToken(msg, pos));
-        setAttribute(key, getNextToken(msg, pos));
-      }
+      std::string::size_type pos = parameter::fromChar(msg);
+      if(!pos) return 0;
       setValue(atof(getNextToken(msg, pos).c_str()));
       setMin(atof(getNextToken(msg, pos).c_str()));
       setMax(atof(getNextToken(msg, pos).c_str()));
@@ -223,13 +235,14 @@ namespace onelab{
       _choices.resize(atoi(getNextToken(msg, pos).c_str()));
       for(unsigned int i = 0; i < _choices.size(); i++)
         _choices[i] = atof(getNextToken(msg, pos).c_str());
+      return pos;
     }
   };
 
   // The string class. A string has a mutable "kind": we do not derive
   // specialized classes, because the kind should be changeable at
-  // runtime (e.g. from client-dependent mathematical expression to to
-  // table of values). Possible kinds: generic, filename, hostname,
+  // runtime (e.g. from a client-dependent mathematical expression to
+  // a table of values). Possible kinds: generic, filename, hostname,
   // client-dependent mathematical expression, comma-separated list of
   // values, matlab matrix, onelab mathematical expression (through
   // mathex?), ...
@@ -251,6 +264,9 @@ namespace onelab{
     void update(const string &p)
     {
       addClients(p.getClients());
+      setShortHelp(p.getShortHelp());
+      setHelp(p.getHelp());
+      setAttributes(p.getAttributes());
       if(p.getValue() != getValue()){
         setValue(p.getValue());
         setChanged(true);
@@ -260,9 +276,6 @@ namespace onelab{
         setChanged(true);
       }
       setChoices(p.getChoices());
-      setShortHelp(p.getShortHelp());
-      setHelp(p.getHelp());
-      setAttributes(p.getAttributes());
     }
     std::string toChar() const
     {
@@ -272,30 +285,18 @@ namespace onelab{
               << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << sanitize(_choices[i]) << charSep();
-      sstream << getClients().size() << charSep();
-      for(std::set<std::string>::const_iterator it = getClients().begin();
-          it != getClients().end(); it++)
-        sstream << *it << charSep();
       return sstream.str();
     }
-    void fromChar(const std::string &msg)
+    std::string::size_type fromChar(const std::string &msg)
     {
-      std::string::size_type pos = 0;
-      if(getNextToken(msg, pos) != getType()) return;
-      setName(getNextToken(msg, pos));
-      setShortHelp(getNextToken(msg, pos));
-      setHelp(getNextToken(msg, pos));
-      setVisible(atoi(getNextToken(msg, pos).c_str()));
-      int numAttributes = atoi(getNextToken(msg, pos).c_str());
-      for(int i = 0; i < numAttributes; i++){
-        std::string key(getNextToken(msg, pos));
-        setAttribute(key, getNextToken(msg, pos));
-      }
+      std::string::size_type pos = parameter::fromChar(msg);
+      if(!pos) return 0;
       setValue(getNextToken(msg, pos));
       setKind(getNextToken(msg, pos));
       _choices.resize(atoi(getNextToken(msg, pos).c_str()));
       for(unsigned int i = 0; i < _choices.size(); i++)
         _choices[i] = getNextToken(msg, pos);
+      return pos;
     }
   };
 
@@ -316,6 +317,9 @@ namespace onelab{
     void update(const region &p)
     {
       addClients(p.getClients());
+      setShortHelp(p.getShortHelp());
+      setHelp(p.getHelp());
+      setAttributes(p.getAttributes());
       if(p.getValue() != getValue()){
         setValue(p.getValue());
         setChanged(true);
@@ -328,10 +332,6 @@ namespace onelab{
               << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << _choices[i] << charSep();
-      sstream << getClients().size() << charSep();
-      for(std::set<std::string>::const_iterator it = getClients().begin();
-          it != getClients().end(); it++)
-        sstream << *it << charSep();
       return sstream.str();
     }
   };
@@ -376,6 +376,9 @@ namespace onelab{
     void update(const function &p)
     {
       addClients(p.getClients());
+      setShortHelp(p.getShortHelp());
+      setHelp(p.getHelp());
+      setAttributes(p.getAttributes());
       if(p.getValue() != getValue()){
         setValue(p.getValue());
         setChanged(true);
@@ -386,17 +389,13 @@ namespace onelab{
       std::ostringstream sstream;
       sstream << parameter::toChar() << sanitize(_value) << charSep()
               << _pieceWiseValues.size() << charSep();
-        for(std::map<std::string, std::string>::const_iterator it =
-              _pieceWiseValues.begin(); it != _pieceWiseValues.end(); it++)
-          sstream << sanitize(it->first) << charSep() 
-                  << sanitize(it->second) << charSep();
+      for(std::map<std::string, std::string>::const_iterator it =
+            _pieceWiseValues.begin(); it != _pieceWiseValues.end(); it++)
+        sstream << sanitize(it->first) << charSep() 
+                << sanitize(it->second) << charSep();
       sstream << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << sanitize(_choices[i]) << charSep();
-      sstream << getClients().size() << charSep();
-      for(std::set<std::string>::const_iterator it = getClients().begin();
-          it != getClients().end(); it++)
-        sstream << *it << charSep();
       return sstream.str();
     }
   };
@@ -525,7 +524,8 @@ namespace onelab{
   };
 
   // The onelab client: a class that communicates with the onelab
-  // server. Each client should be derived from this one.
+  // server. Each client should be derived from this one. A client can
+  // be understood as "one simulation step in a complex computation".
   class client{
   protected:
     // the name of the client
