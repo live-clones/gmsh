@@ -90,9 +90,9 @@ namespace onelab{
     const std::string &getHelp() const { return _help; }
     bool getChanged() const { return _changed; }
     bool getVisible() const { return _visible; }
-    std::string getAttribute(const std::string &key)
+    std::string getAttribute (const std::string &key) const
     {
-      std::map<std::string, std::string>::iterator it = _attributes.find(key);
+      std::map<std::string, std::string>::const_iterator it = _attributes.find(key);
       if(it != _attributes.end()) return it->second;
       return "";
     }
@@ -101,16 +101,16 @@ namespace onelab{
       return _attributes; 
     }
     const std::set<std::string> &getClients() const { return _clients; }
-    static char charSep(){ return '|' /* '\0' */; }
-    static double maxNumber(){ return 1e200; }
-    std::string sanitize(const std::string &in)
+    static char charSep() { return '|' /* '\0' */; }
+    static double maxNumber() { return 1e200; }
+    std::string sanitize (const std::string &in) const
     {
       std::string out(in);
       for(unsigned int i = 0; i < in.size(); i++)
         if(out[i] == charSep()) out[i] = ' ';
       return out;
     }
-    virtual std::string toChar()
+    virtual std::string toChar() const
     {
       std::ostringstream sstream;
       sstream << getType() << charSep() << sanitize(getName()) << charSep() 
@@ -118,7 +118,7 @@ namespace onelab{
               << sanitize(getHelp()) << charSep() 
               << (getVisible() ? 1 : 0) << charSep()
               << _attributes.size() << charSep();
-      for(std::map<std::string, std::string>::iterator it = _attributes.begin();
+      for(std::map<std::string, std::string>::const_iterator it = _attributes.begin();
           it != _attributes.end(); it++)
         sstream << it->first << charSep() << it->second << charSep();
       return sstream.str();
@@ -189,7 +189,7 @@ namespace onelab{
       setHelp(p.getHelp());
       setAttributes(p.getAttributes());
     }
-    std::string toChar()
+    std::string toChar() const
     {
       std::ostringstream sstream;
       sstream << parameter::toChar() << _value << charSep() 
@@ -198,7 +198,7 @@ namespace onelab{
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << _choices[i] << charSep();
       sstream << getClients().size() << charSep();
-      for(std::set<std::string>::iterator it = getClients().begin();
+      for(std::set<std::string>::const_iterator it = getClients().begin();
           it != getClients().end(); it++)
         sstream << *it << charSep();
       return sstream.str();
@@ -264,7 +264,7 @@ namespace onelab{
       setHelp(p.getHelp());
       setAttributes(p.getAttributes());
     }
-    std::string toChar()
+    std::string toChar() const
     {
       std::ostringstream sstream;
       sstream << parameter::toChar() << sanitize(_value) << charSep()
@@ -273,7 +273,7 @@ namespace onelab{
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << sanitize(_choices[i]) << charSep();
       sstream << getClients().size() << charSep();
-      for(std::set<std::string>::iterator it = getClients().begin();
+      for(std::set<std::string>::const_iterator it = getClients().begin();
           it != getClients().end(); it++)
         sstream << *it << charSep();
       return sstream.str();
@@ -321,7 +321,7 @@ namespace onelab{
         setChanged(true);
       }
     }
-    std::string toChar()
+    std::string toChar() const
     {
       std::ostringstream sstream;
       sstream << parameter::toChar() << _value << charSep() 
@@ -329,7 +329,7 @@ namespace onelab{
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << _choices[i] << charSep();
       sstream << getClients().size() << charSep();
-      for(std::set<std::string>::iterator it = getClients().begin();
+      for(std::set<std::string>::const_iterator it = getClients().begin();
           it != getClients().end(); it++)
         sstream << *it << charSep();
       return sstream.str();
@@ -381,7 +381,7 @@ namespace onelab{
         setChanged(true);
       }
     }
-    std::string toChar()
+    std::string toChar() const
     {
       std::ostringstream sstream;
       sstream << parameter::toChar() << sanitize(_value) << charSep()
@@ -394,7 +394,7 @@ namespace onelab{
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << sanitize(_choices[i]) << charSep();
       sstream << getClients().size() << charSep();
-      for(std::set<std::string>::iterator it = getClients().begin();
+      for(std::set<std::string>::const_iterator it = getClients().begin();
           it != getClients().end(); it++)
         sstream << *it << charSep();
       return sstream.str();
@@ -447,7 +447,7 @@ namespace onelab{
       }
       return true;
     }
-    void _getAllParameters(std::set<parameter*> &ps)
+    void _getAllParameters(std::set<parameter*> &ps) const
     {
       ps.insert(_numbers.begin(), _numbers.end());
       ps.insert(_strings.begin(), _strings.end());
@@ -513,12 +513,12 @@ namespace onelab{
     }
     // print the parameter space (optinally only print those
     // parameters that depend on the given client)
-    std::string toChar(const std::string &client="")
+    std::string toChar(const std::string &client="") const
     {
       std::string s;
       std::set<parameter*> ps;
       _getAllParameters(ps);
-      for(std::set<parameter*>::iterator it = ps.begin(); it != ps.end(); it++)
+      for(std::set<parameter*>::const_iterator it = ps.begin(); it != ps.end(); it++)
         if(client.empty() || (*it)->hasClient(client)) s += (*it)->toChar() + "\n";
       return s;
     }
