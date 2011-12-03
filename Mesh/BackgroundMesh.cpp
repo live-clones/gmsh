@@ -233,7 +233,7 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
   case 1:
     {
       GEdge *ged = (GEdge *)ge;
-      Crv = ged->curvature(U); //*2 WHY A FACTOR 2
+      Crv = ged->curvature(U);
       Crv = std::max(Crv, max_surf_curvature(ged, U));
       //Crv = max_surf_curvature(ged, U);      
     }
@@ -368,8 +368,14 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
   if(fields->background_field > 0){
     Field *f = fields->get(fields->background_field);
     if(f){
-      if (!f->isotropic())
+      if (!f->isotropic()){
         (*f)(X, Y, Z, l4,ge);
+	/*
+	if (ge->tag() == 3){
+	  printf("X = %12.5E , l4 = %12.5E %12.5E %12.5E l2 = %12.5E\n",X,l4(0,0),l4(1,1),l4(0,1),l2);
+	}
+	*/
+      }
       else{
 	double L = (*f)(X, Y, Z, ge);
         l4 = SMetric3(1/(L*L));

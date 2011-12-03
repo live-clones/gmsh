@@ -263,10 +263,11 @@ void refineMeshMMG(GRegion *gr)
   gmsh2MMG (gr, mmg, sol,mmg2gmsh);
   
   for (int ITER=0;ITER<2;ITER++){
-    int opt[9] = {1,0,64,0,0,(Msg::GetVerbosity() > 3) ? 335 : 3333,0,0,0};
+    int opt[9] = {1,0,64,0,0,(Msg::GetVerbosity() > 3) ? 2222222222222 : 222222222222222,0,0,0};
     Msg::Debug("-------- GMSH LAUNCHES MMG3D ---------------");
     mmg3d::MMG_mmg3dlib(opt,mmg,sol); 
     Msg::Debug("-------- MG3D TERMINATED -------------------");
+    // Here we should interact with BGM
     updateSizes(gr,mmg, sol);
   }  
   char test[] = "test.mesh";  

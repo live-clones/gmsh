@@ -693,6 +693,92 @@ static int  _countCommon(std::vector<MElement*> &a, std::vector<MElement*> &b) {
   return count;
 }
 
+// see paper from Bunin
+//Guy Bunin (2006) Non-Local Topological Cleanup ,15th International Meshing Roundtable.
+static int _defectRemovalBunin(GFace *gf)
+{
+  v2t_cont adj;
+  buildVertexToElement(gf->triangles,adj);
+  buildVertexToElement(gf->quadrangles,adj);
+  v2t_cont :: iterator it = adj.begin();
+}
+
+static int _splitFlatQuads(GFace *gf, double minQual)
+{
+  // if a vertex is adjacent to one only quad
+  // and if thet quad is badly shaped, we split this
+  // quad
+  v2t_cont adj;
+  buildVertexToElement(gf->triangles,adj);
+  buildVertexToElement(gf->quadrangles,adj);
+  v2t_cont :: iterator it = adj.begin();
+
+  std::vector<MQuadrangle*> added_quadrangles;
+  std::set<MElement*> deleted_quadrangles;
+  while (it != adj.end()) {
+    bool skip=false;
+    double surfaceRef=0;
+    // split that guy if too bad
+    if(it->second.size()==1 && it->first->onWhat()->dim() == 1) {
+      const std::vector<MElement*> &lt = it->second;
+      MElement *e = lt[0];
+      if (e->getNumVertices() == 4 && e->etaShapeMeasure() < minQual){
+	int k=0;
+	while(1){
+	  if (e->getVertex(k) == it->first){
+	    break;
+	  }
+	  k++;
+	  if (k >= e->getNumVertices()) return -1;
+	}
+	MVertex *v1 = e->getVertex((k+0)%4);
+	MVertex *v3 = e->getVertex((k+1)%4);
+	MVertex *v2 = e->getVertex((k+2)%4);
+	MVertex *v4 = e->getVertex((k+3)%4);
+	SPoint2 pv1,pv2,pv3,pv4,pb1,pb2,pb3,pb4;
+	reparamMeshEdgeOnFace (v1,v3,gf,pv1,pv3);
+	reparamMeshEdgeOnFace (v1,v4,gf,pv1,pv4);
+	reparamMeshEdgeOnFace (v1,v2,gf,pv1,pv2);
+	pb1 = pv1 * (2./3.) + pv2 * (1./3.); 
+	pb2 = pv1 * (1./3.) + pv2 * (2./3.); 
+	pb3 = pv1 * (1./3.) + pv2 * (1./3.) + pv3 * (1./3.); 
+	pb4 = pv1 * (1./3.) + pv2 * (1./3.) + pv4 * (1./3.); 
+	GPoint gb1 = gf->point(pb1);
+	GPoint gb2 = gf->point(pb2);
+	GPoint gb3 = gf->point(pb3);
+	GPoint gb4 = gf->point(pb4);
+	MFaceVertex *b1 = new MFaceVertex ( gb1.x(),gb1.y(),gb1.z(),gf,gb1.u(), gb1.v());
+	MFaceVertex *b2 = new MFaceVertex ( gb2.x(),gb2.y(),gb2.z(),gf,gb2.u(), gb2.v());
+	MFaceVertex *b3 = new MFaceVertex ( gb3.x(),gb3.y(),gb3.z(),gf,gb3.u(), gb3.v());
+	MFaceVertex *b4 = new MFaceVertex ( gb4.x(),gb4.y(),gb4.z(),gf,gb4.u(), gb4.v());
+	deleted_quadrangles.insert(e);
+	added_quadrangles.push_back(new MQuadrangle(v1,v3,b3,b1));
+	added_quadrangles.push_back(new MQuadrangle(v3,v2,b2,b3));
+	added_quadrangles.push_back(new MQuadrangle(v2,v4,b4,b2));
+	added_quadrangles.push_back(new MQuadrangle(v4,v1,b1,b4));
+	added_quadrangles.push_back(new MQuadrangle(b1,b3,b2,b4));
+	gf->mesh_vertices.push_back(b1);
+	gf->mesh_vertices.push_back(b2);
+	gf->mesh_vertices.push_back(b3);
+	gf->mesh_vertices.push_back(b4);
+      }
+    }
+    ++it;
+  }
+  for (int i=0;i<gf->quadrangles.size();i++){
+    if (deleted_quadrangles.find(gf->quadrangles[i]) == deleted_quadrangles.end()){
+      added_quadrangles.push_back(gf->quadrangles[i]);
+    }
+    else {
+      delete gf->quadrangles[i];
+    }
+  }
+  gf->quadrangles = added_quadrangles;
+  Msg::Debug("%i flat quads removed",deleted_quadrangles.size());
+  //Msg::Info("%i flat quads removed",deleted_quadrangles.size());
+ return deleted_quadrangles.size();
+}
+
 static int _removeDiamonds(GFace *gf)
 {
   v2t_cont adj;
@@ -1039,7 +1125,7 @@ int  _edgeSwapQuadsForBetterQuality ( GFace *gf ) {
 
       double worst_quality_old = std::min(e1->etaShapeMeasure(),e2->etaShapeMeasure());
 
-      if (worst_quality_old < .1 && (
+      if (worst_quality_old < .3 && (
 	  deleted.find(e1) == deleted.end() ||
 	  deleted.find(e2) == deleted.end())){
 	MVertex *v12,*v11,*v22,*v21;
@@ -1071,7 +1157,7 @@ int  _edgeSwapQuadsForBetterQuality ( GFace *gf ) {
 	  created.push_back(q2A);
 	  delete q1B;
 	  delete q2B;
-	  //	  printf("edge swap performed\n");
+	  printf("edge swap performed -- 1\n");
 	  COUNT++;
 	}
 	else if (0.8*worst_quality_B > worst_quality_old && 0.8*worst_quality_B > worst_quality_A){
@@ -1081,7 +1167,7 @@ int  _edgeSwapQuadsForBetterQuality ( GFace *gf ) {
 	  created.push_back(q2B);
 	  delete q1A;
 	  delete q2A;
-	  //	  printf("edge swap performed\n");
+	  printf("edge swap performed -- 2\n");
 	  COUNT++;
 	}
 	else {
@@ -1108,7 +1194,7 @@ int  _edgeSwapQuadsForBetterQuality ( GFace *gf ) {
 }
 
 static int  edgeSwapQuadsForBetterQuality ( GFace *gf ) {
-  return 0;
+  //    return 0;
   int COUNT = 0;
   while(1){
     int k = _edgeSwapQuadsForBetterQuality (gf);
@@ -1116,13 +1202,84 @@ static int  edgeSwapQuadsForBetterQuality ( GFace *gf ) {
     if (!k || COUNT > 10)break;
   }
   Msg::Debug("%i swap quads performed",COUNT);
+  return COUNT;
+}
+
+static std::vector<MVertex*> computeBoundingPoints (const std::vector<MElement*> &lt,MVertex *v = 0){
+
+  // get boundary edges
+  std::set<MEdge,Less_Edge> edges;
+  for (int i=0;i<lt.size();i++){
+    for (int j=0;j<lt[i]->getNumEdges();j++){
+      std::set<MEdge,Less_Edge>::iterator it = edges.find(lt[i]->getEdge(j));
+      if (it == edges.end())
+	edges.insert(lt[i]->getEdge(j));
+      else
+	edges.erase(it);
+    }
+  }
+  std::set<MEdge,Less_Edge>::iterator it = edges.begin();
+  std::list<MEdge> border;
+  bool closed = true;
+  for ( ; it != edges.end() ; ++it){
+    if (it->getVertex(0) == v || it->getVertex(1) == v){
+      closed = false;
+    } 
+    else {
+      border.push_back(*it);
+    }
+  }
+  // we got all boundary edges
+  std::list<MVertex *> oriented;  
+  {
+    std::list<MEdge>::iterator itsz = border.begin();
+    border.erase (itsz);
+    oriented.push_back(itsz->getVertex(0));
+    oriented.push_back(itsz->getVertex(1));
+  }
+  while (border.size()){
+    std::list<MVertex*>::iterator itb = oriented.begin();
+    std::list<MVertex*>::iterator ite = oriented.end(); ite--;    
+    std::list<MEdge>::iterator itx = border.begin();
+    for (  ; itx != border.end() ; ++itx){
+      MVertex *a  = itx->getVertex(0);
+      MVertex *b  = itx->getVertex(1);
+      if (a == *itb){
+	oriented.push_front(b);
+	break;
+      }
+      if (b == *itb){
+	oriented.push_front(a);
+	break;
+      }
+      if (a == *ite){
+	oriented.push_back(b);
+	break;
+      }
+      if (b == *ite){
+	oriented.push_back(a);
+	break;
+      }
+    }
+    if (itx == border.end())Msg::Error ("error in quadrilateralization");
+    border.erase (itx);
+  }
+  std::vector<MVertex*> result;
+  result.insert(result.begin(),oriented.begin(),oriented.end());
+  return result;
 }
 
 
-
 int postProcessExtraEdges (GFace *gf, std::vector<std::pair<MElement*,MElement*> > &toProcess){
+  
+  // some pairs of elements that should be recombined are not neighbor elements (see our paper)
+  // so we recombine them in another way (adding a new node)
+  
+  
+  printf("%d extra edges to be processed\n",toProcess.size());
 
-  /*
+  //  return 1;
+
   v2t_cont adj;
   buildVertexToElement(gf->triangles, adj);
   buildVertexToElement(gf->quadrangles, adj);
@@ -1141,78 +1298,105 @@ int postProcessExtraEdges (GFace *gf, std::vector<std::pair<MElement*,MElement*>
 	break;
       }
     }
+    printf("extra edge %d common vertex %p\n",i,common);
     if (common){
-
       deleted.insert(t1);
       deleted.insert(t2);
       v2t_cont :: iterator it = adj.find(common);
       if(it != adj.end()){
-	SPoint2 p;
-	bool success = reparamMeshVertexOnFace(it->first,gf, p);
-	MFaceVertex *newVertex = new MVertex (it->first->x(),
-					      it->first->y(),
-					      it->first->z(),
-					      gf,
-					      p.x(),
-					      p.y());
-	int start1,start2;
-	int orientation1, orientation2;
-	for (int k=0;k<3;k++){
-	  if (t1->getVertex(k) == it->first)start1 = k;
-	  if (t2->getVertex(k) == it->first)start2 = k;
+	const std::vector<MElement*> &lt = it->second;
+	// simply swap one edge
+	printf("%d elements surrounding the common vertex\n",lt.size());
+	if (lt.size() == 3){
+	  std::vector<MVertex*> VERTS  = computeBoundingPoints (lt,common);
+	  if (VERTS.size() != 5)return -1;
+	  gf->quadrangles.push_back(new MQuadrangle(VERTS[0],VERTS[1],VERTS[2],common));
+	  gf->quadrangles.push_back(new MQuadrangle(VERTS[2],VERTS[3],VERTS[4],common));
+	  deleted.insert(lt[0]);
+	  deleted.insert(lt[1]);
+	  deleted.insert(lt[2]);
 	}
-	MQuadrangle *q1;
-	if (orientation1)
-	  q1 = new MQuadrangle(newVertex,
-			       t1->getVertex(start1),
-			       t1->getVertex((start1+1)%3),
-			       t1->getVertex((start1+2)%3));
-	else
-	  q1 = new MQuadrangle(newVertex,
-			       t1->getVertex((start1+2)%3),
-			       t1->getVertex((start1+1)%3),
-			       t1->getVertex(start1));
-
-	MQuadrangle *q2;
-	if (orientation2)
-	  q2 = new MQuadrangle(newVertex,
-			       t2->getVertex(start2),
-			       t2->getVertex((start2+1)%3),
-			       t2->getVertex((start2+2)%3));
-	else
-	  q2 = new MQuadrangle(newVertex,
-			       t2->getVertex((start2+2)%3),
-			       t2->getVertex((start2+1)%3),
-			       t2->getVertex(start2));
-
-
-	MQuadrangle *q2 = new MQuadrangle();
-	std::vector<MElement*> newAdj;
-	newAdj.push_back(q1);
-	newAdj.push_back(q2);
-	for (int k=0;k<it->second.size();k++){
-	  if (it->second[k]->getNumVertices() == 4)
-	    newAdj.push_back(it->second[k]);
+	// create a new vertex
+	else {
+	  SPoint2 p;
+	  bool success = reparamMeshVertexOnFace(it->first,gf, p);
+	  MFaceVertex *newVertex = new MFaceVertex (it->first->x(),
+						    it->first->y(),
+						    it->first->z(),
+						    gf,
+						    p.x(),
+						    p.y());
+	  int start1,start2;
+	  int orientation1, orientation2;
+	  for (int k=0;k<3;k++){
+	    if (t1->getVertex(k) == it->first)start1 = k;
+	    if (t2->getVertex(k) == it->first)start2 = k;
+	  }
+	  MQuadrangle *q1;
+	  if (orientation1)
+	    q1 = new MQuadrangle(newVertex,
+				 t1->getVertex(start1),
+				 t1->getVertex((start1+1)%3),
+				 t1->getVertex((start1+2)%3));
+	  else
+	    q1 = new MQuadrangle(newVertex,
+				 t1->getVertex((start1+2)%3),
+				 t1->getVertex((start1+1)%3),
+				 t1->getVertex(start1));
+	  
+	  MQuadrangle *q2;
+	  if (orientation2)
+	    q2 = new MQuadrangle(newVertex,
+				 t2->getVertex(start2),
+				 t2->getVertex((start2+1)%3),
+				 t2->getVertex((start2+2)%3));
+	  else
+	    q2 = new MQuadrangle(newVertex,
+				 t2->getVertex((start2+2)%3),
+				 t2->getVertex((start2+1)%3),
+				 t2->getVertex(start2));
+	  
+	  
+	  std::vector<MElement*> newAdj;
+	  newAdj.push_back(q1);
+	  newAdj.push_back(q2);
+	  for (int k=0;k<it->second.size();k++){
+	    if (it->second[k]->getNumVertices() == 4)
+	      newAdj.push_back(it->second[k]);
+	  }
+	  gf->quadrangles.push_back(q1);
+	  gf->quadrangles.push_back(q2);
+	  _relocateVertex(gf,newVertex,newAdj);
 	}
-	gf->quadrangles.insert(q1);
-	gf->quadrangles.insert(q2);
-	_relocateVertex(gf,newVertex,newAdj);
       }
     }
   }
 
-  std::vector<MTriangle*>remained;
-  for(unsigned int i = 0; i < gf->triangles.size(); i++){
-    if(deleted.find(gf->triangles[i]) == deleted.end()){
-      remained.push_back(gf->triangles[i]);
+  {
+    std::vector<MTriangle*>remained;
+    for(unsigned int i = 0; i < gf->triangles.size(); i++){
+      if(deleted.find(gf->triangles[i]) == deleted.end()){
+	remained.push_back(gf->triangles[i]);
+      }
+      else {
+	delete gf->triangles[i];
+      }
     }
-    else {
-      delete gf->triangles[i];
-    }
+    gf->triangles = remained;
   }
-  gf->triangles = remained;
-  */
-	return 0;
+  {
+    std::vector<MQuadrangle*>remained;
+    for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
+      if(deleted.find(gf->quadrangles[i]) == deleted.end()){
+	remained.push_back(gf->quadrangles[i]);
+      }
+      else {
+	delete gf->quadrangles[i];
+      }
+    }
+    gf->quadrangles = remained;
+  }
+  return 0;
 }
 
 bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
@@ -1648,6 +1832,7 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 
   std::sort(pairs.begin(),pairs.end());
   std::set<MElement*> touched;
+  std::vector<std::pair<MElement*,MElement*> > toProcess;
 
   if(CTX::instance()->mesh.algoRecombine == 1){
 #if defined(HAVE_BLOSSOM)
@@ -1689,7 +1874,7 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 	if (pairs[i].n2->onWhat()->dim() < 2)NB++;
 	if (pairs[i].n3->onWhat()->dim() < 2)NB++;
 	if (pairs[i].n4->onWhat()->dim() < 2)NB++;
-	if (elen[i] >  gf->meshAttributes.recombineAngle && NB > 2) {elen[i] = 1000;}
+	if (elen[i] >  gf->meshAttributes.recombineAngle && NB > 2) {elen[i] = 1000;} 
       }
 
       if (cubicGraph){
@@ -1770,11 +1955,10 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
       }
       else{
 	// TEST
-	std::vector<std::pair<MElement*,MElement*> > toProcess;
 	for (int k=0;k<elist[0];k++){
 	  int i1 = elist[1+3*k],i2 = elist[1+3*k+1],an=elist[1+3*k+2];
 	  // FIXME !!
-	  if (an == 100000 || an == 1000){
+	  if (an == 100000 /*|| an == 1000*/){
 	    toProcess.push_back(std::make_pair(n2t[i1],n2t[i2]));
 	    Msg::Debug("Extra edge found in blossom algorithm, optimization will be required");
 	  }
@@ -1816,8 +2000,10 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 	  Msg::Debug("Perfect Match Succeeded in Quadrangulation (%g sec)",matzeit);
 	else
 	  Msg::Info(" :-) Perfect Match Succeeded in Quadrangulation after Splits (%g sec)",matzeit);
+
       }
     }
+
 #else
     Msg::Warning("Gmsh should be compiled with the Blossom IV code and CONCORDE in order to allow the Blossom optimization");
 #endif
@@ -1867,6 +2053,8 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
     }
   }
   gf->triangles = triangles2;
+  
+  if (toProcess.size()) postProcessExtraEdges (gf,toProcess);
   return success;
 }
 
@@ -1901,14 +2089,16 @@ void recombineIntoQuads(GFace *gf,
         char NAME[256];
 
         while(1){
+	  int w = _splitFlatQuads(gf, .3);
+          if(w && saveAll){ sprintf(NAME,"iter%dSF.msh",COUNT++); gf->model()->writeMSH(NAME);}
           int x = removeTwoQuadsNodes(gf);
           if(x && saveAll){ sprintf(NAME,"iter%dTQ.msh",COUNT++); gf->model()->writeMSH(NAME);}
           int y = removeDiamonds(gf);
           if(y && saveAll){ sprintf(NAME,"iter%dD.msh",COUNT++); gf->model()->writeMSH(NAME); }
           laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
-          int z = 0; //edgeSwapQuadsForBetterQuality(gf);
+          int z = edgeSwapQuadsForBetterQuality(gf);
           if(z && saveAll){ sprintf(NAME,"iter%dS.msh",COUNT++); gf->model()->writeMSH(NAME); }
-          if (!(x+y+z)) break;
+          if (!(w+x+y+z)) break;
         }
       }
       edgeSwapQuadsForBetterQuality(gf);

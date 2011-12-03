@@ -44,5 +44,7 @@ EndFor
 
 Plane Surface (20) = {10,11:(10+K)};
 
+Recombine Surface {20};
+
 //Physical Surface (30) = {20};
 

@@ -20,6 +20,7 @@
 #include "GmshConfig.h"
 #include "mathEvaluator.h"
 #include "cartesian.h"
+#include "simpleFunction.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -46,7 +47,7 @@
 #define INTER     14
 #define CRACK     15
 
-class gLevelset
+class gLevelset : public simpleFunction<double>
 {
 protected:
   static const short insideDomain = -1; // negative values of the levelset are inside the domain.

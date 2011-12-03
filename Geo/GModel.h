@@ -17,6 +17,7 @@
 #include "GRegion.h"
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
+#include "simpleFunction.h"
 
 class FM_Internals;
 class GEO_Internals;
@@ -361,6 +362,26 @@ class GModel
 
   // mesh the model
   int mesh(int dimension);
+
+  // adapt the mesh anisotropically using a metric that is computed from a function f(x,y,z). 
+  // One can either 
+  //   For all algorithms
+  //           parameters[1] = lcmin (default : in global gmsh options CTX::instance()->mesh.lcMin) 
+  //           parameters[2] = lcmax (default : in global gmsh options CTX::instance()->mesh.lcMax) 
+  //           parameters[3] = nb iterations
+  //    1) Assume that the function is a levelset -> adapt using Coupez technique (technique = 1)
+  //           parameters[0] = thickness of the interface (mandatory)
+  //    2) Assume that the function is a physical quantity -> adapt using the Hessain (technique = 2)
+  //           parameters[0] = N, the final number of elements
+  //    3) A variant of 1) by P. Frey
+  //           parameters[0] = thickness of the interface (mandatory)
+  // The algorithm first generate a mesh if no one is available 
+
+  // In this first attempt, only the highest dimensional mesh is adapted, which is ok if
+  // we assume that boundaries are already adapted.
+  // This should be fixed.
+  
+  int adaptMesh (int technique, simpleFunction<double> *f, std::vector<double> parameters);
 
   // make the mesh a high order mesh at order N
   // linear is 1 if the high order points are not placed on the geometry of the model 

@@ -67,6 +67,11 @@ static double F_Lc_aniso(GEdge *ge, double t)
 
   double lSquared = dot(der, lc_here, der);
 
+  /*
+  if (ge->tag() == 3){
+    printf("%12.5E %12.5E\n",p.x(),1./sqrt(lSquared));
+  }
+  */
   //  der.normalize();
   //  printf("in the function %g n %g %g\n", sqrt(lSquared),der.x(),der.y());
 

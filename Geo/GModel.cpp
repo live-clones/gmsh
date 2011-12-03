@@ -40,6 +40,9 @@
 #include "meshGFaceOptimize.h"
 #include "meshPartition.h"
 #include "HighOrder.h"
+#include "meshMetric.h"
+#include "meshGRegionMMG3D.h"
+#include "meshGFaceBamg.h"
 #endif
 
 std::vector<GModel*> GModel::list;
@@ -508,6 +511,81 @@ int GModel::mesh(int dimension)
 #else
   Msg::Error("Mesh module not compiled");
   return false;
+#endif
+}
+
+
+int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<double> parameters)
+{
+#if defined(HAVE_MESH)
+  mesh(getDim());
+  meshMetric *mm; 
+
+  
+  int ITER = 0;
+  while(1){
+    std::vector<MElement*> elements;
+
+    if (getDim() == 2){
+      for (fiter fit = firstFace(); fit != lastFace(); ++fit){
+	if ((*fit)->quadrangles.size())return -1;
+	for (int i=0;i<(*fit)->triangles.size();i++){
+	  elements.push_back((*fit)->triangles[i]);
+	}
+      }
+    }
+    else if (getDim() == 3){
+      for (riter rit = firstRegion(); rit != lastRegion(); ++rit){
+	if ((*rit)->hexahedra.size())return -1;
+	for (int i=0;i<(*rit)->tetrahedra.size();i++){
+	  elements.push_back((*rit)->tetrahedra[i]);
+	}
+      }
+    }
+
+    if (elements.size() == 0)return -1;
+
+    double lcmin = parameters.size() >=3 ? parameters[1] : CTX::instance()->mesh.lcMin;
+    double lcmax = parameters.size() >=3 ? parameters[2] : CTX::instance()->mesh.lcMax;
+    int niter = parameters.size() >=4 ? (int) parameters[3] : 3;
+
+    switch(technique){
+    case 1 : 
+      mm = new meshMetric (elements, f, meshMetric::LEVELSET,lcmin,lcmax,parameters[0], 0);
+      break;
+    case 2 :
+      mm = new meshMetric (elements, f, meshMetric::HESSIAN,lcmin,lcmax,0, parameters[0]);
+      break;
+    case 3 :
+      mm = new meshMetric (elements, f, meshMetric::FREY,lcmin,lcmax,parameters[0], 0);
+      break;
+    default : Msg::Error("Unknown Adaptive Strategy");return -1;
+    }
+    // the background mesh is the mesh metric
+    mm->setAsBackgroundMesh (this);
+    if (getDim() == 2){
+      for (fiter fit = firstFace(); fit != lastFace(); ++fit){
+	meshGFaceBamg(*fit);
+	if(_octree)delete _octree;
+	_octree = 0;
+      }
+    }
+    else if (getDim() == 3){
+      for (riter rit = firstRegion(); rit != lastRegion(); ++rit){
+	refineMeshMMG(*rit);
+	if(_octree)delete _octree;
+	_octree = 0;
+      }
+    }
+    delete mm;
+    if (++ITER > niter)break;
+
+  }
+    
+  return 0;
+#else
+  Msg::Error("Mesh module not compiled");
+  return -1;
 #endif
 }
 
