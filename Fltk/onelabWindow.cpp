@@ -165,12 +165,12 @@ bool onelab::localNetworkClient::run(const std::string &what)
         if(type == "number"){
           onelab::number p;
           p.fromChar(message);
-          set(p, false);
+          set(p);
         }
         else if(type == "string"){
           onelab::string p;
           p.fromChar(message);
-          set(p, false);
+          set(p);
         }
         else
           Msg::Error("FIXME not done for this parameter type");
