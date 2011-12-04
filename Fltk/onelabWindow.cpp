@@ -6,7 +6,9 @@
 #include <FL/Fl.H>
 #include "GmshMessage.h"
 #include "onelab.h"
+
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
+
 #include <FL/Fl_Input_Choice.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Box.H>
@@ -591,7 +593,7 @@ onelabWindow::onelabWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int width = 28 * FL_NORMAL_SIZE;
+  int width = 29 * FL_NORMAL_SIZE;
   int height = 15 * BH + 3 * WB;
   
   _win = new paletteWindow
@@ -606,6 +608,7 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _butt[0]->callback(onelab_cb, (void*)"compute");
   _butt[1] = new Fl_Button(width - 2*WB - 2*BB, height - WB - BH, BB, BH, "Check");
   _butt[1]->callback(onelab_cb, (void*)"check");
+
   _gear = new Fl_Menu_Button
     (_butt[1]->x() - WB - BB/2, _butt[1]->y(), BB/2, BH, "@-1gmsh_gear");
   _gear->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
@@ -643,6 +646,7 @@ void onelabWindow::rebuildTree()
   _tree->clear();
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
   _tree->selectmode(FL_TREE_SELECT_NONE);
+
   for(unsigned int i = 0; i < _treeWidgets.size(); i++)
     Fl::delete_widget(_treeWidgets[i]);
   _treeWidgets.clear();
@@ -677,7 +681,7 @@ void onelabWindow::rebuildTree()
       but->loop(numbers[i].getAttribute("loop"));
       but->align(FL_ALIGN_RIGHT);
       but->callback(onelab_input_range_cb, (void*)n);
-      but->when(FL_WHEN_RELEASE|FL_WHEN_ENTER_KEY);
+      but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
       n->widget(but);
     }
     _tree->end();
@@ -705,7 +709,7 @@ void onelabWindow::rebuildTree()
     but->value(strings[i].getValue().c_str());
     but->align(FL_ALIGN_RIGHT);
     but->callback(onelab_input_choice_cb, (void*)n);
-    but->when(FL_WHEN_RELEASE|FL_WHEN_ENTER_KEY);
+    but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
     n->widget(but);
     _tree->end();
   }
