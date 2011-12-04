@@ -4,7 +4,6 @@
 #include "GEntity.h"
 #include "GModel.h"
 #include "gmshLevelset.h"
-//#include "function.h"
 
 static void increaseStencil(MVertex *v, v2t_cont &adj, std::vector<MElement*> &lt){
   std::set<MElement*> stencil;
