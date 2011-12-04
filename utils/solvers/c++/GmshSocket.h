@@ -28,6 +28,7 @@
 #define _GMSH_SOCKET_H_
 
 //#include "GmshConfig.h"
+#include <string>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -82,7 +83,7 @@ class GmshSocket{
   // the socket descriptor
   int _sock;
   // the socket name
-  const char *_sockname;
+  std::string _sockname;
   // send some data over the socket
   void _SendData(const void *buffer, int bytes)
   {
@@ -132,7 +133,7 @@ class GmshSocket{
 #endif
   }
  public:
-  GmshSocket() : _sock(0), _sockname(0)
+  GmshSocket() : _sock(0)
   {
 #if defined(WIN32) && !defined(__CYGWIN__)
     WSADATA wsaData;
@@ -245,7 +246,6 @@ class GmshClient : public GmshSocket {
     // slight delay to make sure that the socket is bound by the
     // server before we attempt to connect to it
     _Sleep(100);
-
     if(strstr(sockname, "/") || strstr(sockname, "\\") || !strstr(sockname, ":")){
 #if !defined(WIN32) || defined(__CYGWIN__)
       // UNIX socket (testing ":" is not enough with Windows paths)
@@ -288,8 +288,9 @@ class GmshClient : public GmshSocket {
       memcpy((char *)&addr_in.sin_addr.s_addr, (char *)server->h_addr, server->h_length);
       addr_in.sin_port = htons(portno);
       for(int tries = 0; tries < 5; tries++) {
-        if(connect(_sock, (struct sockaddr *)&addr_in, sizeof(addr_in)) >= 0)
+        if(connect(_sock, (struct sockaddr *)&addr_in, sizeof(addr_in)) >= 0){
           return _sock;
+	}
         _Sleep(100);
       }
     }
@@ -323,33 +324,36 @@ class GmshServer : public GmshSocket{
     if(!sockname) throw "Invalid (null) socket name";
     _sockname = sockname;
     int tmpsock;
-    if(strstr(_sockname, "/") || strstr(_sockname, "\\") || !strstr(_sockname, ":")){
+    if(strstr(_sockname.c_str(), "/") || strstr(_sockname.c_str(), "\\") ||
+       !strstr(_sockname.c_str(), ":")){
       // UNIX socket (testing ":" is not enough with Windows paths)
       _portno = -1;
 #if !defined(WIN32) || defined(__CYGWIN__)
       // delete the file if it already exists
-      unlink(_sockname);
+      unlink(_sockname.c_str());
       // create a socket
       tmpsock = socket(PF_UNIX, SOCK_STREAM, 0);
       if(tmpsock < 0) throw "Couldn't create socket";
       // bind the socket to its name
       struct sockaddr_un addr_un;
       memset((char *) &addr_un, 0, sizeof(addr_un));
-      strcpy(addr_un.sun_path, _sockname);
+      strcpy(addr_un.sun_path, _sockname.c_str());
       addr_un.sun_family = AF_UNIX;
       if(bind(tmpsock, (struct sockaddr *)&addr_un, sizeof(addr_un)) < 0){
         CloseSocket(tmpsock);
         throw "Couldn't bind socket to name";
       }
       // change permissions on the socket name in case it has to be rm'd later
-      chmod(_sockname, 0666);
+      chmod(_sockname.c_str(), 0666);
 #else
       throw "Unix sockets not available on Windows";
 #endif
     }
     else{
-      // TCP/IP socket
-      const char *port = strstr(_sockname, ":");
+      // TCP/IP socket: valid names are either explicit ("hostname:12345")
+      // or implicit ("hostname:", "hostname: ", "hostname:0") in which case
+      // the system attributes at random an available port
+      const char *port = strstr(_sockname.c_str(), ":");
       _portno = atoi(port + 1);
       // create a socket
       tmpsock = socket(AF_INET, SOCK_STREAM, 0);
@@ -364,15 +368,30 @@ class GmshServer : public GmshSocket{
       memset((char *) &addr_in, 0, sizeof(addr_in));
       addr_in.sin_family = AF_INET;
       addr_in.sin_addr.s_addr = INADDR_ANY;
-      addr_in.sin_port = htons(_portno);
+      addr_in.sin_port = htons(_portno); // random assign if _portno == 0
       if(bind(tmpsock, (struct sockaddr *)&addr_in, sizeof(addr_in)) < 0){
         CloseSocket(tmpsock);
         throw "Couldn't bind socket to name";
       }
+      if(!_portno){ // retrieve name if randomly assigned port
+        socklen_t addrlen = sizeof(addr_in);
+        int rc = getsockname(tmpsock, (struct sockaddr *)&addr_in, &addrlen);
+        _portno = ntohs(addr_in.sin_port);
+	int pos = _sockname.find(':'); // remove trailing ' ' or '0'
+        char tmp[256];
+	sprintf(tmp, "%s:%d", _sockname.substr(0, pos).c_str(), _portno);
+        _sockname.assign(tmp);
+      }
     }
 
     if(command && strlen(command)){
-      SystemCall(command); // start the solver
+      // we assume that the command line always ends with the socket name
+      std::string cmd(command);
+      cmd += " " + _sockname;
+#if !defined(WIN32)
+      cmd += " &";
+#endif
+      SystemCall(cmd.c_str()); // start the solver
     }
     else{
       timeout = 0.; // no command launched: don't set a timeout
@@ -420,7 +439,7 @@ class GmshServer : public GmshSocket{
   {
 #if !defined(WIN32) || defined(__CYGWIN__)
     if(_portno < 0)
-      unlink(_sockname);
+      unlink(_sockname.c_str());
 #endif
     ShutdownSocket(_sock);
     CloseSocket(_sock);

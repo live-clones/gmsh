@@ -201,7 +201,6 @@ Mesh commands
 Solver module
 
 * Solver options::              
-* Solver example::              
 
 Post-processing module
 
@@ -3034,63 +3033,33 @@ as well as the way meshes are displayed in the GUI, is given in
 @cindex Solver, module
 @cindex Module, Solver
 
-External solvers can be interfaced with Gmsh using a simple
-client-server model.
-
-To add a new solver in the solver module, you need to specify its name
-(@code{Solver.Name0}, @code{Solver.Name1}, etc.) and the path to the
-executable (@code{Solver.Executable0}, @code{Solver.Executable1}, etc.);
-see @ref{Solver options list}).
+External solvers can driven by Gmsh through the ONELAB
+@url{http://www.onelab.info} interface. To add a new solver in the
+solver module, you need to specify its name (@code{Solver.Name0},
+@code{Solver.Name1}, etc.) and the path to the executable
+(@code{Solver.Executable0}, @code{Solver.Executable1}, etc.); see
+@ref{Solver options list}).
 
 The client-server API for the solver interface is defined in the
-@file{onelab.h} header: see @ref{Solver example}, for an example of how
-to interface a C++ solver.
+@file{onelab.h} header. See the sources of GetDP
+(@url{http://geuz.org/getdp}, for an example on how to use the ONELAB
+programming interface.
 
 @menu
 * Solver options::              
-* Solver example::              
 @end menu
 
 @c -------------------------------------------------------------------------
 @c Solver options
 @c -------------------------------------------------------------------------
 
-@node Solver options, Solver example, Solver module, Solver module
+@node Solver options,  , Solver module, Solver module
 @section Solver options
 
 @cindex Solver commands
 @cindex Options, geometry
 
 The list of all the solver options is given in @ref{Solver options list}.
-
-@c -------------------------------------------------------------------------
-@c Solver example
-@c -------------------------------------------------------------------------
-
-@node Solver example,  , Solver options, Solver module
-@section Solver example
-
-@cindex Solver example
-@cindex Example, solver
-
-Here is a small example of how to interface a C++ solver with Gmsh. The
-following listing reproduces the @file{utils/solvers/c++/solver.cpp} file
-from the Gmsh source distribution.
-
-@sp 1
-
-@verbatiminclude ../../utils/solvers/c++/solver.cpp
-
-@sp 1
-
-To define the above solver as the second external solver in Gmsh, you then
-need to define the following options (either merge them in your Gmsh option
-file, or use the @code{-option} command-line option---see @ref{Command-line
-options}):
-
-@sp 1
-
-@verbatiminclude ../../utils/solvers/c++/solver.opt
 
 @c =========================================================================
 @c Post-processing module
@@ -5357,24 +5326,9 @@ output file just load the mesh file back using `File->Open'.
 @enumerate
 @item How do I integrate my own solver with Gmsh?
 
-If you want to simply launch a program from within Gmsh, just edit the
-options to define your solver commands (e.g. Solver.Name0,
-Solver.Executable0, etc.), and set the ClientServer option to zero
-(e.g. Solver.ClientServer0 = 0).
-
-If you want your solver to interact with Gmsh (for error messages,
-option definitions, post-processing, etc.), you will need to link your
-solver with the GmshClient routines and add the appropriate function
-calls inside your program. You will of course also need to define your
-solver commands in an option file, but this time you should set the
-ClientServer variable to 1 (e.g. Solver.ClientServer = 1). C, C++,
-Perl and Python solver examples are available in the source
-distribution in the @file{utils/solvers} directory.
-
-@item On Windows, Gmsh does not seem to find the solver executable. What's wrong?
-
-The solver executable (for example, `getdp.exe') has to be in your
-path. If it is not specify its location in the `Command' field.
+Gmsh uses the ONELAB interface (@url{http://www.onelab.info}) to
+interact with external solvers. Have a look at the GetDP finite element
+solver (@url{http://geuz.org/getdp}) to see how this is done.
 
 @item Can I launch Gmsh from my solver (instead of launching my solver from Gmsh) in order to monitor a solution?
 
