@@ -121,6 +121,29 @@ class inputRange : public Fl_Group {
       _range->hide();
     }
   }
+  void _set_loop_value(const std::string &val)
+  {
+    if(val == "1"){
+      _loop_butt->label("1");
+      _loop_butt->selection_color(FL_GREEN);
+      _loop_butt->value(1);
+    }
+    else if(val == "2"){
+      _loop_butt->label("2");
+      _loop_butt->selection_color(FL_BLUE);
+      _loop_butt->value(1);
+    }
+    else if(val == "3"){
+      _loop_butt->label("3");
+      _loop_butt->selection_color(FL_RED);
+      _loop_butt->value(1);
+    }
+    else{
+      _loop_butt->label("@-1gmsh_rotate");
+      _loop_butt->selection_color(_loop_butt->color());
+      _loop_butt->value(0);
+    }
+  }
   static void _input_cb(Fl_Widget *w, void *data)
   {
     ((inputRange*)data)->do_callback();
@@ -136,6 +159,15 @@ class inputRange : public Fl_Group {
   }
   static void _loop_butt_cb(Fl_Widget *w, void *data)
   {
+    Fl_Toggle_Button *b = (Fl_Toggle_Button*)w;
+    if(std::string(b->label()) == "1")
+      ((inputRange*)data)->_set_loop_value("2");
+    else if(std::string(b->label()) == "2")
+      ((inputRange*)data)->_set_loop_value("3");
+    else if(std::string(b->label()) == "3")
+      ((inputRange*)data)->_set_loop_value("0");
+    else
+      ((inputRange*)data)->_set_loop_value("1");
     ((inputRange*)data)->do_callback(); 
   }
  public:
@@ -162,7 +194,6 @@ class inputRange : public Fl_Group {
 
     _loop_butt = new Fl_Toggle_Button(x + input_w + dot_w, y, loop_w, h);
     _loop_butt->label("@-1gmsh_rotate");
-    _loop_butt->selection_color(FL_GREEN);
     _loop_butt->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
     _loop_butt->callback(_loop_butt_cb, this);
     _loop_butt->tooltip("Loop over range when computing");
@@ -180,6 +211,13 @@ class inputRange : public Fl_Group {
   double maximum() { return _max; }
   void step(double val) { _step = val; _values2string(); }
   double step() { return _step; }
-  void loop(int val) { _loop_butt->value(val); }
-  int loop() { return _loop_butt->value(); }
+  void loop(const std::string &val) 
+  {
+    _set_loop_value(val);
+  }
+  std::string loop()
+  { 
+    if(!_loop_butt->value()) return "0";
+    else return _loop_butt->label();
+  }
 };

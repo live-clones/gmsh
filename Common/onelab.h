@@ -21,6 +21,8 @@
 // WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
+// 
+// Please report all bugs and problems to <gmsh@geuz.org>.
 
 #ifndef _ONELAB_H_
 #define _ONELAB_H_

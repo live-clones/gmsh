@@ -320,13 +320,13 @@ static std::string getModelName(onelab::client *c)
   }
 }
 
-static void initCompute()
+static void initializeLoop(std::string level)
 {
   bool changed = false;
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers);
   for(unsigned int i = 0; i < numbers.size(); i++){
-    if(numbers[i].getAttribute("loop") == "true"){
+    if(numbers[i].getAttribute("loop") == level){
       if(numbers[i].getChoices().size() > 1){
         numbers[i].setValue(numbers[i].getChoices()[0]);
         onelab::server::instance()->set(numbers[i]);
@@ -344,13 +344,14 @@ static void initCompute()
     FlGui::instance()->onelab->rebuildTree();
 }
 
-static bool shouldRecompute()
+static bool incrementLoop(std::string level)
 {
-  bool recompute = false;
+  bool recompute = false, loop = false;
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers);
   for(unsigned int i = 0; i < numbers.size(); i++){
-    if(numbers[i].getAttribute("loop") == "true"){
+    if(numbers[i].getAttribute("loop") == level){
+      loop = true;
       if(numbers[i].getChoices().size() > 1){
         std::vector<double> choices(numbers[i].getChoices());
         for(unsigned int j = 0; j < choices.size() - 1; j++){
@@ -376,10 +377,28 @@ static bool shouldRecompute()
     }
   }
 
-  if(recompute)
+  if(loop && !recompute) // end of this loop level
+    initializeLoop(level);
+
+  if(loop)
     FlGui::instance()->onelab->rebuildTree();
   
   return recompute;
+}
+
+static void initializeLoop()
+{
+  initializeLoop("1");
+  initializeLoop("2");
+  initializeLoop("3");
+}
+
+static bool incrementLoop()
+{
+  if(incrementLoop("3"))      return true;
+  else if(incrementLoop("2")) return true;
+  else if(incrementLoop("1")) return true;
+  return false;
 }
 
 void onelab_cb(Fl_Widget *w, void *data)
@@ -408,7 +427,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   FlGui::instance()->onelab->deactivate();
 
-  if(action == "compute") initCompute();
+  if(action == "compute") initializeLoop();
 
   do{ // enter computation loop
 
@@ -479,7 +498,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 
     printf("Gmsh ONELAB db:\n%s\n", onelab::server::instance()->toChar().c_str());
 
-  } while(action == "compute" && shouldRecompute());
+  } while(action == "compute" && incrementLoop());
 
   FlGui::instance()->onelab->activate();
   FlGui::instance()->onelab->rebuildTree();
@@ -512,7 +531,7 @@ static void onelab_input_range_cb(Fl_Widget *w, void *data)
     numbers[0].setMax(o->maximum());
     numbers[0].setStep(o->step());
     numbers[0].setChoices(o->choices());
-    numbers[0].setAttribute("loop", o->loop() ? "true" : "false");
+    numbers[0].setAttribute("loop", o->loop());
     onelab::server::instance()->set(numbers[0]);
   }
 }
@@ -655,7 +674,7 @@ void onelabWindow::rebuildTree()
       but->maximum(numbers[i].getMax());
       but->step(numbers[i].getStep());
       but->choices(numbers[i].getChoices());
-      but->loop(numbers[i].getAttribute("loop") == "true");
+      but->loop(numbers[i].getAttribute("loop"));
       but->align(FL_ALIGN_RIGHT);
       but->callback(onelab_input_range_cb, (void*)n);
       but->when(FL_WHEN_RELEASE|FL_WHEN_ENTER_KEY);
