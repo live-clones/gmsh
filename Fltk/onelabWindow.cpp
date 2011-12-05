@@ -342,8 +342,12 @@ static void initializeLoop(std::string level)
       }
     }
   }
-  if(changed)
+  if(changed){
+    // force this to make sure that we remesh, even if a mesh exists
+    // and we did not actually change a Gmsh parameter
+    onelab::server::instance()->setChanged(true, "Gmsh");
     FlGui::instance()->onelab->rebuildTree();
+  }
 }
 
 static bool incrementLoop(std::string level)
@@ -355,6 +359,9 @@ static bool incrementLoop(std::string level)
     if(numbers[i].getAttribute("loop") == level){
       loop = true;
       if(numbers[i].getChoices().size() > 1){
+        // FIXME should store loopVariable attribute in the parameter
+        // -- the following test will loop forever if 2 values are
+        // identical in the list of choices
         std::vector<double> choices(numbers[i].getChoices());
         for(unsigned int j = 0; j < choices.size() - 1; j++){
           if(numbers[i].getValue() == choices[j]){
@@ -440,7 +447,14 @@ void onelab_cb(Fl_Widget *w, void *data)
     if(it != onelab::server::instance()->lastClient()){
       onelab::client *c = it->second;
       std::string mshFileName = getMshFileName(c);
-      static std::string modelName = GModel::current()->getName();
+      static std::string modelName = "";
+      if(modelName.empty()){
+        // first pass is special to prevent model reload, as well as
+        // remeshing if a mesh file already exists on disk
+        modelName = GModel::current()->getName();
+        if(!StatFile(mshFileName))
+          onelab::server::instance()->setChanged(false, "Gmsh");
+      }
       if(action == "check"){
         if(onelab::server::instance()->getChanged("Gmsh") ||
            modelName != GModel::current()->getName()){
