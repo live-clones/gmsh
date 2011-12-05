@@ -310,6 +310,7 @@ class MTriangleN : public MTriangle {
   }
   virtual int getTypeForMSH() const
   {
+    if(_order == 1 && _vs.size() == 0) return MSH_TRI_3;
     if(_order == 2 && _vs.size() == 3) return MSH_TRI_6;
     if(_order == 3 && _vs.size() == 6) return MSH_TRI_9;
     if(_order == 3 && _vs.size() == 7) return MSH_TRI_10;

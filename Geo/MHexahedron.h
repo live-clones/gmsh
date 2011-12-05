@@ -567,6 +567,9 @@ class MHexahedronN : public MHexahedron {
   virtual int getTypeForMSH() const
   {
     // (p+1)^3
+    if(_order == 1 && _vs.size() + 8 == 8)   return MSH_HEX_8;
+    if(_order == 2 && _vs.size() + 8 == 20)  return MSH_HEX_20;
+    if(_order == 2 && _vs.size() + 8 == 27)  return MSH_HEX_27;
     if(_order == 3 && _vs.size() + 8 == 64 ) return MSH_HEX_64;
     if(_order == 4 && _vs.size() + 8 == 125) return MSH_HEX_125;
     if(_order == 5 && _vs.size() + 8 == 216) return MSH_HEX_216;

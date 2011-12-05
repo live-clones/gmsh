@@ -385,6 +385,7 @@ class MQuadrangleN : public MQuadrangle {
   }
   virtual int getTypeForMSH() const
   {
+    if(_order==1 && _vs.size() + 4 == 4) return MSH_QUA_4;
     if(_order==2 && _vs.size() + 4 == 8) return MSH_QUA_8;
     if(_order==2 && _vs.size() + 4 == 9) return MSH_QUA_9;
     if(_order==3 && _vs.size() + 4 == 12) return MSH_QUA_12;

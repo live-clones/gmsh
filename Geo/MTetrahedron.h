@@ -367,6 +367,8 @@ class MTetrahedronN : public MTetrahedron {
   virtual int getTypeForMSH() const
   {
     // (p+1)*(p+2)*(p+3)/6
+    if(_order == 1 && _vs.size() + 4 == 4)  return MSH_TET_4;
+    if(_order == 2 && _vs.size() + 4 == 10) return MSH_TET_10;
     if(_order == 3 && _vs.size() + 4 == 20) return MSH_TET_20;
     if(_order == 4 && _vs.size() + 4 == 34) return MSH_TET_34;
     if(_order == 4 && _vs.size() + 4 == 35) return MSH_TET_35;
