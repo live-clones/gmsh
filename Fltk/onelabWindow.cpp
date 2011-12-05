@@ -627,7 +627,7 @@ onelabWindow::onelabWindow(int deltaFontSize)
     (_butt[1]->x() - WB - BB/2, _butt[1]->y(), BB/2, BH, "@-1gmsh_gear");
   _gear->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   _gear->add("Reset database", 0, onelab_cb, (void*)"reset");
-  _gear->add("Mesh automatically", 0, 0, 0, FL_MENU_TOGGLE);
+  _gear->add("Remesh automatically", 0, 0, 0, FL_MENU_TOGGLE);
   ((Fl_Menu_Item*)_gear->menu())[1].set();
   
   Fl_Box *resbox = new Fl_Box(WB, height - BH - 3 * WB, WB, WB);
