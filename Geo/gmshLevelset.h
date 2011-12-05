@@ -98,7 +98,7 @@ public:
 
 // ----------------------------------------------------------------------------------------------------------
 // PRIMITIVES
-class gLevelsetPrimitive : public gLevelset
+class gLevelsetPrimitive : public gLevelset  
 {
 public:
   gLevelsetPrimitive() : gLevelset() {}

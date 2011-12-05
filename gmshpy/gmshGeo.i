@@ -36,6 +36,7 @@
   #include "SPoint2.h"
   #include "SBoundingBox3d.h"
   #include "Curvature.h"
+  #include "simpleFunction.h"
 %}
 
 namespace std {
@@ -82,4 +83,5 @@ namespace std {
 %include "SBoundingBox3d.h"
 %include "Curvature.h"
 %include "gmshLevelset.h"
+%include "simpleFunction.h"
 
