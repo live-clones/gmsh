@@ -8,7 +8,6 @@
 #include "GmshConfig.h"
 #include "GModel.h"
 #include "Distance.h"
-#include "simpleFunction.h"
 #include "distanceTerm.h"
 #include "Context.h"
 #include "Numeric.h"
@@ -19,6 +18,8 @@
 #include "orthogonalTerm.h"
 #include "laplaceTerm.h"
 #include "crossConfTerm.h"
+
+template <class scalar> class simpleFunction;
 
 StringXNumber DistanceOptions_Number[] = {
   {GMSH_FULLRC, "PhysPoint", NULL, 0.},

@@ -10,9 +10,9 @@
 #include <string>
 #include "SVector3.h"
 #include "dofManager.h"
-#include "simpleFunction.h"
 #include "functionSpace.h"
 
+template <class scalar> class simpleFunction;
 class GModel;
 class PView;
 class groupOfElements;

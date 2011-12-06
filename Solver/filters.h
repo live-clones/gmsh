@@ -11,11 +11,11 @@
 #ifndef _FILTERS_H_
 #define _FILTERS_H_
 
-#include "simpleFunction.h"
 #include "dofManager.h"
 #include "GModel.h"
 #include "groupOfElements.h"
 #include "gmshLevelset.h"
+template <class scalar> class simpleFunction;
 
 class FilterNodeEnriched
 {

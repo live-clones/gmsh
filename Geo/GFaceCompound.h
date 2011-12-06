@@ -11,7 +11,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GFace.h"
-#include "simpleFunction.h"
+template <class scalar> class simpleFunction;
 
 #if defined(HAVE_SOLVER)
 

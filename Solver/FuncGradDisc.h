@@ -11,11 +11,11 @@
 #ifndef _FUNCGRADDISC_H_
 #define _FUNCGRADDISC_H_
 
-#include "simpleFunction.h"
 #include "gmshLevelset.h"
 #include "MVertex.h"
 #include "GModel.h"
-//#include "gLevelSetMesh.cpp"
+
+template <class scalar> class simpleFunction;
 
 
 class FuncGradDisc :  public  simpleFunctionOnElement<double> {

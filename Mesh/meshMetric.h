@@ -4,7 +4,7 @@
 #include "STensor3.h"
 #include "Field.h"
 #include "meshGFaceOptimize.h"
-#include "simpleFunction.h"
+template <class scalar> class simpleFunction;
 class MVertex;
 class gLevelset;
 
