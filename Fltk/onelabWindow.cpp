@@ -342,12 +342,11 @@ static void initializeLoop(std::string level)
       }
     }
   }
-  if(changed){
-    // force this to make sure that we remesh, even if a mesh exists
-    // and we did not actually change a Gmsh parameter
+
+  // force this to make sure that we remesh, even if a mesh exists and
+  // we did not actually change a Gmsh parameter
+  if(changed)
     onelab::server::instance()->setChanged(true, "Gmsh");
-    FlGui::instance()->onelab->rebuildTree();
-  }
 }
 
 static bool incrementLoop(std::string level)
@@ -389,9 +388,6 @@ static bool incrementLoop(std::string level)
   if(loop && !recompute) // end of this loop level
     initializeLoop(level);
 
-  if(loop)
-    FlGui::instance()->onelab->rebuildTree();
-  
   return recompute;
 }
 
@@ -400,14 +396,22 @@ static void initializeLoop()
   initializeLoop("1");
   initializeLoop("2");
   initializeLoop("3");
+
+  if(onelab::server::instance()->getChanged())
+    FlGui::instance()->onelab->rebuildTree();
 }
 
 static bool incrementLoop()
 {
-  if(incrementLoop("3"))      return true;
-  else if(incrementLoop("2")) return true;
-  else if(incrementLoop("1")) return true;
-  return false;
+  bool ret = false;
+  if(incrementLoop("3"))      ret = true;
+  else if(incrementLoop("2")) ret = true;
+  else if(incrementLoop("1")) ret = true;
+
+  if(onelab::server::instance()->getChanged())
+    FlGui::instance()->onelab->rebuildTree();
+  
+  return ret;
 }
 
 void onelab_cb(Fl_Widget *w, void *data)
@@ -474,6 +478,7 @@ void onelab_cb(Fl_Widget *w, void *data)
           geometry_reload_cb(0, 0);
           if(FlGui::instance()->onelab->meshAuto()){
             mesh_3d_cb(0, 0);
+            // FIXME: check if meshing succeeded
             CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
           }
         }
@@ -481,6 +486,7 @@ void onelab_cb(Fl_Widget *w, void *data)
           // mesh+save if the mesh file does not exist
           if(FlGui::instance()->onelab->meshAuto()){
             mesh_3d_cb(0, 0);
+            // FIXME: check if meshing succeeded
             CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
           }
         }
@@ -512,12 +518,13 @@ void onelab_cb(Fl_Widget *w, void *data)
       }
     }
 
+    FlGui::instance()->onelab->rebuildTree();
+
     printf("Gmsh ONELAB db:\n%s\n", onelab::server::instance()->toChar().c_str());
 
   } while(action == "compute" && incrementLoop());
 
   FlGui::instance()->onelab->activate();
-  FlGui::instance()->onelab->rebuildTree();
   FlGui::instance()->onelab->show();
 }
 
