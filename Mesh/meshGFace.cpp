@@ -1123,6 +1123,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       bowyerWatson(gf);
     else {
       bowyerWatson(gf);
+      printf("in bamg *** \n");
       meshGFaceBamg(gf);
     }
     laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
@@ -1722,8 +1723,10 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     else if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY ||
             CTX::instance()->mesh.algo2d == ALGO_2D_AUTO)
       bowyerWatson(gf);
-    else 
+    else {
+      printf("in bamg \n");
       meshGFaceBamg(gf);
+    }
     laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
   }
   

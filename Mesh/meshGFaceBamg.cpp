@@ -194,12 +194,12 @@ void meshGFaceBamg(GFace *gf)
   int nT = gf->triangles.size();
   //  meshGFaceBamg_ ( gf , 0, true);
   for (int i = 1; i < 14; i++){
-    //    char name[245];
-    //    sprintf(name,"hop%d.msh",i);
-    //    GModel::current()->writeMSH(name);
+    //char name[245];
+    //sprintf(name,"hop%d.msh",i);
+    //GModel::current()->writeMSH(name);
     meshGFaceBamg_(gf, i, false);
-    //    sprintf(name,"hap%d.msh",i);
-    //    GModel::current()->writeMSH(name);
+    //sprintf(name,"hap%d.msh",i);
+    //GModel::current()->writeMSH(name);
     
     int nTnow = gf->triangles.size();
     if (fabs((double)(nTnow - nT)) < 0.01 * nT) break;

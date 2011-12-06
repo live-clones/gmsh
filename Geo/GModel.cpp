@@ -33,6 +33,7 @@
 #include "MVertexPositionSet.h"
 #include "OpenFile.h"
 #include "CreateFile.h"
+#include "Options.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"
@@ -518,10 +519,10 @@ int GModel::mesh(int dimension)
 int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<double> parameters)
 {
 #if defined(HAVE_MESH)
-  mesh(getDim());
-  meshMetric *mm; 
 
-  
+  if (getNumMeshElements() == 0) mesh(getDim());
+  meshMetric *mm; 
+ 
   int ITER = 0;
   while(1){
     std::vector<MElement*> elements;
@@ -565,23 +566,27 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
     mm->setAsBackgroundMesh (this);
     if (getDim() == 2){
       for (fiter fit = firstFace(); fit != lastFace(); ++fit){
-	meshGFaceBamg(*fit);
-	if(_octree)delete _octree;
+	if((*fit)->geomType() != GEntity::DiscreteSurface){
+	  opt_mesh_lc_from_points(0, GMSH_SET, 0);
+	  meshGFaceBamg(*fit);
+	  laplaceSmoothing(*fit,CTX::instance()->mesh.nbSmoothing);
+	}
+	if(_octree) delete _octree;
 	_octree = 0;
       }
     }
     else if (getDim() == 3){
       for (riter rit = firstRegion(); rit != lastRegion(); ++rit){
 	refineMeshMMG(*rit);
-	if(_octree)delete _octree;
+	if(_octree) delete _octree;
 	_octree = 0;
       }
     }
     delete mm;
-    if (++ITER > niter)break;
+    if (++ITER > niter) break;
 
   }
-    
+
   return 0;
 #else
   Msg::Error("Mesh module not compiled");

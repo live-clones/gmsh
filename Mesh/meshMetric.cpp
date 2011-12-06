@@ -110,7 +110,7 @@ void meshMetric::computeMetric(std::vector<MElement*> &e){
   v2t_cont adj;
   buildVertexToElement (e,adj);
 
-  printf("%d elements are considered\n",e.size());
+  printf("%d elements are considered in the metric \n",e.size());
 
   computeValues(adj);
   computeHessian(adj);
