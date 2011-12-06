@@ -520,8 +520,6 @@ void onelab_cb(Fl_Widget *w, void *data)
 
     FlGui::instance()->onelab->rebuildTree();
 
-    printf("Gmsh ONELAB db:\n%s\n", onelab::server::instance()->toChar().c_str());
-
   } while(action == "compute" && incrementLoop());
 
   FlGui::instance()->onelab->activate();
@@ -610,6 +608,11 @@ static void onelab_remove_solver_cb(Fl_Widget *w, void *data)
   FlGui::instance()->onelab->removeSolver(c->getName());
 }
 
+static void onelab_dump_cb(Fl_Widget *w, void *data)
+{
+  printf("ONELAB dump:\n%s\n", onelab::server::instance()->toChar().c_str());
+}
+
 onelabWindow::onelabWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
@@ -634,9 +637,11 @@ onelabWindow::onelabWindow(int deltaFontSize)
     (_butt[1]->x() - WB - BB/2, _butt[1]->y(), BB/2, BH, "@-1gmsh_gear");
   _gear->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   _gear->add("Reset database", 0, onelab_cb, (void*)"reset");
+  _gear->add("Print database", 0, onelab_dump_cb);
   _gear->add("Remesh automatically", 0, 0, 0, FL_MENU_TOGGLE);
-  ((Fl_Menu_Item*)_gear->menu())[1].set();
-  
+  ((Fl_Menu_Item*)_gear->menu())[2].set();
+  _gearFrozenMenuSize = _gear->menu()->size();
+
   Fl_Box *resbox = new Fl_Box(WB, height - BH - 3 * WB, WB, WB);
   _win->resizable(resbox);
   _win->size_range(2 * BB + BB / 2 + 4 * WB, 2 * BH + 3 * WB);
@@ -753,9 +758,9 @@ void onelabWindow::rebuildTree()
 
 void onelabWindow::rebuildSolverList()
 {
-  for(int i = _gear->menu()->size(); i >= 2; i--){
+  for(int i = _gear->menu()->size(); i >= _gearFrozenMenuSize - 1; i--)
     _gear->remove(i);
-  }
+
   _title = "ONELAB";
   for(onelab::server::citer it = onelab::server::instance()->firstClient();
       it != onelab::server::instance()->lastClient(); it++){

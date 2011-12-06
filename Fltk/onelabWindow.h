@@ -22,6 +22,7 @@ class onelabWindow{
   Fl_Tree *_tree;
   Fl_Button *_butt[2];
   Fl_Menu_Button *_gear;
+  int _gearFrozenMenuSize;
   std::vector<Fl_Widget*> _treeWidgets;
   std::string _title;
   std::string _modelExtension;
