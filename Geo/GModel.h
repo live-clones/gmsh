@@ -17,7 +17,7 @@
 #include "GRegion.h"
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
-#include "simpleFunction.h"
+template <class scalar> class simpleFunction;
 
 class FM_Internals;
 class GEO_Internals;
