@@ -642,9 +642,11 @@ onelabWindow::onelabWindow(int deltaFontSize)
   ((Fl_Menu_Item*)_gear->menu())[2].set();
   _gearFrozenMenuSize = _gear->menu()->size();
 
-  Fl_Box *resbox = new Fl_Box(WB, height - BH - 3 * WB, WB, WB);
+  Fl_Box *resbox = new Fl_Box(WB, WB, 
+                              width - 2 * BB - BB / 2 - 4 * WB,
+                              height - 3 * WB - BH);
   _win->resizable(resbox);
-  _win->size_range(2 * BB + BB / 2 + 4 * WB, 2 * BH + 3 * WB);
+  _win->size_range(2 * BB + BB / 2 + 4 * WB + 1, 2 * BH + 3 * WB);
 
   _win->position
     (CTX::instance()->solverPosition[0], CTX::instance()->solverPosition[1]);
@@ -668,7 +670,7 @@ static std::string getShortName(const std::string &name)
 
 void onelabWindow::rebuildTree()
 {
-  int width = (int)(1.4*IW);
+  int width = (int)(0.5 * _tree->w());
 
   _tree->clear();
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
