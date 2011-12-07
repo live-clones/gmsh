@@ -568,6 +568,7 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
       for (fiter fit = firstFace(); fit != lastFace(); ++fit){
 	if((*fit)->geomType() != GEntity::DiscreteSurface){
 	  opt_mesh_lc_from_points(0, GMSH_SET, 0);
+
 	  meshGFaceBamg(*fit);
 	  laplaceSmoothing(*fit,CTX::instance()->mesh.nbSmoothing);
 	}

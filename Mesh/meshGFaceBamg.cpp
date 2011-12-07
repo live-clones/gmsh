@@ -27,8 +27,7 @@ Mesh2 *Bamg(Mesh2 *Thh, double * args,double *mm11,double *mm12,double *mm22, bo
 
 static void computeMeshMetricsForBamg(GFace *gf, int numV,
                                       Vertex2 *bamgVertices,  
-                                      double *mm11, double *mm12, double *mm22,
-                                      int iter)
+                                      double *mm11, double *mm12, double *mm22)
 {
   //  char name[245];
   //  sprintf(name,"bgmBamg-%d-%d.pos",gf->tag(),iter);
@@ -64,8 +63,9 @@ static void computeMeshMetricsForBamg(GFace *gf, int numV,
   }
 }
 
-static void meshGFaceBamg_(GFace *gf, int iter, bool initialMesh)
-{
+
+void meshGFaceBamg(GFace *gf){
+
   std::set<MVertex*> all;
   std::map<int,MVertex*> recover;
   for (unsigned int i = 0; i < gf->triangles.size(); i++){
@@ -134,30 +134,48 @@ static void meshGFaceBamg_(GFace *gf, int iter, bool initialMesh)
       bamgBoundary[count++].lab = count;
     }
   }
-  Mesh2 bamgMesh ( all.size(), gf->triangles.size(), numEdges,
-		   bamgVertices, bamgTriangles, bamgBoundary);
-  double *mm11 = new double[all.size()];
-  double *mm12 = new double[all.size()];
-  double *mm22 = new double[all.size()];
-  double args[256];
-  for (int i=0;i<256;i++)args[i] = -1.1e100;
-  args[16] = CTX::instance()->mesh.anisoMax;
-  args[ 7] = CTX::instance()->mesh.smoothRatio;
-  computeMeshMetricsForBamg (gf,all.size(),bamgVertices,mm11,mm12,mm22,iter);
 
+  Mesh2 *bamgMesh = new Mesh2 ( all.size(), gf->triangles.size(), numEdges,
+				bamgVertices, bamgTriangles, bamgBoundary);
+
+  //*************** refine loop here 
   Mesh2 *refinedBamgMesh = 0;
-  try{
-    refinedBamgMesh = Bamg(&bamgMesh, args, mm11, mm12, mm22, initialMesh);
-    Msg::Info("bamg succeeded %d vertices %d triangles",
-              refinedBamgMesh->nv, refinedBamgMesh->nt);
+  int iterMax = 11;
+  for (int  k= 0; k < iterMax; k++){
+    
+    int nbVert = bamgMesh->nv;// all.size();
+    
+    double *mm11 = new double[nbVert];
+    double *mm12 = new double[nbVert];
+    double *mm22 = new double[nbVert];
+    double args[256];
+    for (int i=0;i<256;i++)args[i] = -1.1e100;
+    args[16] = CTX::instance()->mesh.anisoMax;
+    args[ 7] = CTX::instance()->mesh.smoothRatio;
+    computeMeshMetricsForBamg (gf, nbVert, bamgMesh->vertices , mm11,mm12,mm22); //bamgVertices
+    
+    try{
+      refinedBamgMesh = Bamg(bamgMesh, args, mm11, mm12, mm22, false);
+      Msg::Info("bamg succeeded %d vertices %d triangles",
+		refinedBamgMesh->nv, refinedBamgMesh->nt);
+    }
+    catch(...){
+      Msg::Error("bamg failed");
+      return;
+    }
+    delete [] mm11;
+    delete [] mm12;
+    delete [] mm22;
+    
+    int nT    = bamgMesh->nt;
+    int nTnow = refinedBamgMesh->nt;
+
+    delete bamgMesh;
+    bamgMesh = refinedBamgMesh;
+    if (fabs((double)(nTnow - nT)) < 0.01 * nT) break;
   }
-  catch(...){
-    Msg::Error("bamg failed");
-    return;
-  }
-  delete [] mm11;
-  delete [] mm12;
-  delete [] mm22;
+ //*************** end for loop refine
+
   std::map<int,MVertex*> yetAnother;
   for (int i = 0; i < refinedBamgMesh->nv; i++){
     Vertex2 &v = refinedBamgMesh->vertices[i];
@@ -187,26 +205,6 @@ static void meshGFaceBamg_(GFace *gf, int iter, bool initialMesh)
   }
   
   if (refinedBamgMesh) delete refinedBamgMesh;
-}
-
-void meshGFaceBamg(GFace *gf)
-{
-  int nT = gf->triangles.size();
-  //  meshGFaceBamg_ ( gf , 0, true);
-  for (int i = 1; i < 14; i++){
-    //char name[245];
-    //sprintf(name,"hop%d.msh",i);
-    //GModel::current()->writeMSH(name);
-    meshGFaceBamg_(gf, i, false);
-    //sprintf(name,"hap%d.msh",i);
-    //GModel::current()->writeMSH(name);
-    
-    int nTnow = gf->triangles.size();
-    if (fabs((double)(nTnow - nT)) < 0.01 * nT) break;
-    nT = nTnow;
-  }
-  //  lloydAlgorithm lloyd (20);
-  //  lloyd(gf);
 }
 
 #else
