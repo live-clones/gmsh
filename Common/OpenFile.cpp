@@ -188,7 +188,10 @@ int ParseFile(std::string fileName, bool close, bool warnIfMissing)
     }
   }
 
-  if(close) fclose(gmsh_yyin);
+  if(close){
+    gmsh_yyflush();
+    fclose(gmsh_yyin);
+  }
 
   gmsh_yyname = old_yyname;
   gmsh_yyin = old_yyin;
