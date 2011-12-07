@@ -179,11 +179,11 @@ bool PViewDataGModel::finalize(bool computeMinMax, const std::string &interpolat
               if(_type == ElementData){
                 // data is constant per element: force the interpolation matrix
                 fullMatrix<double> coef(1, 1);
-                coef(0, 0) = 1.0;
-                fullMatrix<double> mono(3, 1);
-                mono(0, 0) = 0;
-                mono(0, 1) = 0;
-                mono(0, 2) = 0;
+                coef(0, 0) = 1.;
+                fullMatrix<double> mono(1, 3);
+                mono(0, 0) = 0.;
+                mono(0, 1) = 0.;
+                mono(0, 2) = 0.;
                 setInterpolationMatrices(types[i], coef, mono,
                                          fs->coefficients, fs->monomials);
               }
