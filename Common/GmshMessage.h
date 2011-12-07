@@ -76,6 +76,7 @@ class Msg {
   static double &Timer(std::string str){ return _timers[str]; }
   static void PrintTimers();
   static void ResetErrorCounter(){ _warningCount = 0; _errorCount = 0; }
+  static int GetErrorCount(){ return _errorCount; }
   static void PrintErrorCounter(const char *title);
   static double GetValue(const char *text, double defaultval);
   static std::string GetString(const char *text, std::string defaultval);

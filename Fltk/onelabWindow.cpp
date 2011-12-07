@@ -414,6 +414,19 @@ static bool incrementLoop()
   return ret;
 }
 
+static bool stopOnError(const std::string &client)
+{
+  if(Msg::GetErrorCount() > 0 && !CTX::instance()->expertMode){
+    Msg::ResetErrorCounter();
+    std::string msg
+      (client + " reported an error: do you really want to continue?\n\n"
+       "(To disable this warning in the future, select `Enable expert mode'\n"
+       "in the option dialog.");
+    if(Msg::GetAnswer(msg.c_str(), 1, "Stop", "Continue") == 0) return true;
+  }
+  return false;
+}
+
 void onelab_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
@@ -441,6 +454,8 @@ void onelab_cb(Fl_Widget *w, void *data)
   FlGui::instance()->onelab->deactivate();
 
   if(action == "compute") initializeLoop();
+
+  bool stop = false;
 
   do{ // enter computation loop
 
@@ -478,7 +493,6 @@ void onelab_cb(Fl_Widget *w, void *data)
           geometry_reload_cb(0, 0);
           if(FlGui::instance()->onelab->meshAuto()){
             mesh_3d_cb(0, 0);
-            // FIXME: check if meshing succeeded
             CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
           }
         }
@@ -486,13 +500,14 @@ void onelab_cb(Fl_Widget *w, void *data)
           // mesh+save if the mesh file does not exist
           if(FlGui::instance()->onelab->meshAuto()){
             mesh_3d_cb(0, 0);
-            // FIXME: check if meshing succeeded
             CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
           }
         }
         onelab::server::instance()->setChanged(false, "Gmsh");
       }
     }
+    stop = stopOnError("Gmsh");
+    if(stop) break;
     
     // Iterate over all other clients
     for(onelab::server::citer it = onelab::server::instance()->firstClient();
@@ -516,11 +531,14 @@ void onelab_cb(Fl_Widget *w, void *data)
       else if(action == "kill"){
         c->kill();
       }
+      
+      stop = stopOnError(c->getName());
+      if(stop) break;
     }
 
     FlGui::instance()->onelab->rebuildTree();
 
-  } while(action == "compute" && incrementLoop());
+  } while(action == "compute" && incrementLoop() && !stop);
 
   FlGui::instance()->onelab->activate();
   FlGui::instance()->onelab->show();
