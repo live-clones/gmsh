@@ -1066,8 +1066,11 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
       it != T::all.end(); it++)
     (*it)->visible = false;
   
-  if(!plug || tol != 0.)
-    T::error(fabs(maxVal - minVal), tol);
+  if(!plug || tol != 0.){
+    double avg = fabs(maxVal - minVal);
+    if(tol < 0) avg = 1.; // force visibility to the smallest subdivision
+    T::error(avg, tol);
+  }
   
   if(plug)
     plug->assignSpecificVisibility();
