@@ -164,8 +164,9 @@ bool PViewDataGModel::finalize(bool computeMinMax, const std::string &interpolat
       }
     }
     
-    // if we don't have interpolation matrices for a given element type,
-    // assume isoparametric elements
+    // if we don't have interpolation matrices for a given element
+    // type, assume isoparametric elements (except for ElementData,
+    // for which we know the interpolation: it's constant)
     int types[] = {TYPE_PNT, TYPE_LIN, TYPE_TRI, TYPE_QUA, TYPE_TET, TYPE_HEX,
                    TYPE_PRI, TYPE_PYR, TYPE_POLYG, TYPE_POLYH};
     for(int i = 0; i < sizeof(types) / sizeof(types[0]); i++){
@@ -174,9 +175,22 @@ bool PViewDataGModel::finalize(bool computeMinMax, const std::string &interpolat
         if(e){
           const polynomialBasis *fs = e->getFunctionSpace();
           if(fs){
-            if(e->getPolynomialOrder() > 1)
-              setInterpolationMatrices(types[i], fs->coefficients, fs->monomials,
-                                       fs->coefficients, fs->monomials);
+            if(e->getPolynomialOrder() > 1){
+              if(_type == ElementData){
+                // data is constant per element: force the interpolation matrix
+                fullMatrix<double> coef(1, 1);
+                coef(0, 0) = 1.0;
+                fullMatrix<double> mono(3, 1);
+                mono(0, 0) = 0;
+                mono(0, 1) = 0;
+                mono(0, 2) = 0;
+                setInterpolationMatrices(types[i], coef, mono,
+                                         fs->coefficients, fs->monomials);
+              }
+              else
+                setInterpolationMatrices(types[i], fs->coefficients, fs->monomials,
+                                         fs->coefficients, fs->monomials);
+            }
             else
               setInterpolationMatrices(types[i], fs->coefficients, fs->monomials);
           }
