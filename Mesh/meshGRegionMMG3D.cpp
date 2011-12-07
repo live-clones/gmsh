@@ -107,7 +107,7 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
     }
   }
 
-  printf("%d vertices %d on faces\n", (int) allVertices.size(), (int) LCS.size());
+  //printf("%d vertices %d on faces\n", (int) allVertices.size(), (int) LCS.size());
   
   int k=1;
   int count = 1;//sol->offset;
@@ -263,15 +263,16 @@ void refineMeshMMG(GRegion *gr)
   gmsh2MMG (gr, mmg, sol,mmg2gmsh);
   
   for (int ITER=0;ITER<2;ITER++){
-    int opt[9] = {1,0,64,0,0,(Msg::GetVerbosity() > 3) ? 222222222 : 222222222,0,0,0};
+    int verb_mmg = (Msg::GetVerbosity() > 9) ? -1 : 0;
+    int opt[9] = {1,0,64,0,0,0, verb_mmg , 0,0};
     Msg::Debug("-------- GMSH LAUNCHES MMG3D ---------------");
     mmg3d::MMG_mmg3dlib(opt,mmg,sol); 
     Msg::Debug("-------- MG3D TERMINATED -------------------");
     // Here we should interact with BGM
     updateSizes(gr,mmg, sol);
   }  
-  char test[] = "test.mesh";  
-  MMG_saveMesh(mmg, test);
+  //char test[] = "test.mesh";  
+  //MMG_saveMesh(mmg, test);
 
   gr->deleteVertexArrays();
   for (int i=0;i<gr->tetrahedra.size();++i)delete gr->tetrahedra[i];

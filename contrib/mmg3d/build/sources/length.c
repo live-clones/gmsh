@@ -203,6 +203,8 @@ int MMG_prilen(pMesh mesh,pSol sol) {
       /*    /if ( dep < 0 )  break;*/
   }
 
+  if(mesh->info.imprim < 0) {
+
   fprintf(stdout,"\n  -- RESULTING EDGE LENGTHS  %d\n",navg);
   fprintf(stdout,"     AVERAGE LENGTH         %12.4f\n",lavg / (double)navg);
   fprintf(stdout,"     SMALLEST EDGE LENGTH   %12.4f   %6d %6d\n",
@@ -214,7 +216,6 @@ int MMG_prilen(pMesh mesh,pSol sol) {
     fprintf(stdout,"   %6.2f < L <%5.2f  %8d   %5.2f %%  \n",
       bd[3],bd[6],hl[4]+hl[5]+hl[6],100.*(hl[4]+hl[5]+hl[6])/(double)navg);
 
-  if ( abs(mesh->info.imprim) > 4 ) {
     fprintf(stdout,"\n     HISTOGRAMM\n");
     if ( hl[1] )
       fprintf(stdout,"     0.00 < L < 0.20  %8d   %5.2f %%  \n",
@@ -229,6 +230,7 @@ int MMG_prilen(pMesh mesh,pSol sol) {
         fprintf(stdout,"     5.   < L         %8d   %5.2f %%  \n",
 	        hl[9],100.*(hl[9]/(float)navg));
     }
+  
   }
 
   return(1);

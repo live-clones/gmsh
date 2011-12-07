@@ -95,7 +95,7 @@ int MMG_optra4(pMesh mesh,pSol sol) {
     }
     
     //if(!mesh->info.nomove && it<2) MMG_optlap(mesh,sol);
-    if ( mesh->info.imprim && nw+ns+nm )
+    if ( mesh->info.imprim < -10 && nw+ns+nm )
       fprintf(stdout,"     %8d IMPROVED  %8d SWAPPED  %8d MOVED\n",nw,ns,nm);     
     }
   //while ( (ns && ((ns > 0.005*mesh->ne /*&& nwold > nw*/) || it < 5)) && ++it < maxtou );

@@ -677,7 +677,7 @@ ds[ityp]++;
   }
   while ( k && *alert == 0 );
 
-  if(mesh->info.imprim<0) { 
+  if(mesh->info.imprim < -10) { 
 	
     for (k=0; k<=7; k++)
       if ( cs[k] )

@@ -256,9 +256,11 @@ int MMG_mmg3dlib(int opt[9],MMG_pMesh mesh,MMG_pSol sol) {
   short		imprim;
   int k,iadr,i,jj,kk,ii,im;
   double	lambda[3],v[3][3],*mold,*m;
-  fprintf(stdout,"  -- MMG3d, Release %s (%s) \n",M_VER,M_REL);
-  fprintf(stdout,"     Copyright (c) LJLL/IMB, 2010\n");
-  fprintf(stdout,"    %s\n",COMPIL);
+  fprintf(stdout,"  %s \n", M_STR);
+  fprintf(stdout,"  -- START MMG3d \n") ;
+  if (opt[6] < 0) fprintf(stdout,"  -- MMG3d, Release %s (%s) \n",M_VER,M_REL);
+  if (opt[6] < -10) fprintf(stdout,"     Copyright (c) LJLL/IMB, 2010\n");
+  if (opt[6] < -10) fprintf(stdout,"    %s\n",COMPIL);
   
   
   signal(SIGABRT,MMG_excfun);
@@ -284,8 +286,8 @@ int MMG_mmg3dlib(int opt[9],MMG_pMesh mesh,MMG_pSol sol) {
   info->noswap   = opt[3];
   info->nomove   = opt[5];
   info->noinsert = opt[4];
-	info->rn2      = opt[7];//3;
-	info->rn       = opt[8];//500;
+  info->rn2      = opt[7];//3;
+  info->rn       = opt[8];//500;
   alert          = 0;
   info->dt       = 1.;
   info->bdry     = 0;
@@ -309,7 +311,7 @@ int MMG_mmg3dlib(int opt[9],MMG_pMesh mesh,MMG_pSol sol) {
   if ( !MMG_setfunc(sol->offset) ) return(1);
   if ( !MMG_scaleMesh(mesh,sol) )  return(1);
   TIM_chrono(OFF,&MMG_ctim[1]);
-  if ( imprim )
+  if ( imprim < -10)
     fprintf(stdout,"  -- DATA READING COMPLETED.     %.2f sec.\n",
             TIM_gttime(MMG_ctim[1]));
 
@@ -320,15 +322,17 @@ int MMG_mmg3dlib(int opt[9],MMG_pMesh mesh,MMG_pSol sol) {
   }
   if(MMG_imprim < 0) MMG_outquacubic(mesh,sol);
 
-  fprintf(stdout,"\n  %s\n   MODULE MMG3D-LJLL/IMB : %s (%s)  %s\n  %s\n",
-          M_STR,M_VER,M_REL,sol->offset == 1 ? "ISO" : "ANISO",M_STR);
-  fprintf(stdout,"  MAXIMUM NUMBER OF POINTS    (NPMAX) : %8d\n",mesh->npmax);
-  fprintf(stdout,"  MAXIMUM NUMBER OF TRIANGLES (NTMAX) : %8d\n",mesh->ntmax);
-  fprintf(stdout,"  MAXIMUM NUMBER OF ELEMENTS  (NEMAX) : %8d\n",mesh->nemax);
+  if (info->imprim  < -10){
+    fprintf(stdout,"\n  %s\n   MODULE MMG3D-LJLL/IMB : %s (%s)  %s\n  \n",
+	    M_STR,M_VER,M_REL,sol->offset == 1 ? "ISO" : "ANISO");
+    fprintf(stdout,"  MAXIMUM NUMBER OF POINTS    (NPMAX) : %8d\n",mesh->npmax);
+    fprintf(stdout,"  MAXIMUM NUMBER OF TRIANGLES (NTMAX) : %8d\n",mesh->ntmax);
+    fprintf(stdout,"  MAXIMUM NUMBER OF ELEMENTS  (NEMAX) : %8d\n",mesh->nemax);
+  }
 
   /* mesh analysis */
   TIM_chrono(ON,&MMG_ctim[2]);
-  if ( MMG_imprim )   fprintf(stdout,"\n  -- PHASE 1 : ANALYSIS\n");
+  if ( MMG_imprim < 0 )   fprintf(stdout,"\n  -- PHASE 1 : ANALYSIS\n");
   if ( !MMG_hashTetra(mesh) )    return(1);
   if ( !MMG_markBdry(mesh) )     return(1);
   if (abs(mesh->info.option)==10) {
@@ -343,7 +347,7 @@ int MMG_mmg3dlib(int opt[9],MMG_pMesh mesh,MMG_pSol sol) {
     im = 0;
     
   TIM_chrono(OFF,&MMG_ctim[2]);
-  if ( MMG_imprim )
+  if ( MMG_imprim < 0 )
     fprintf(stdout,"  -- PHASE 1 COMPLETED.     %.2f sec.\n",
             TIM_gttime(MMG_ctim[2]));
   if ( info->ddebug )  MMG_chkmsh(mesh,1,1);
@@ -374,7 +378,7 @@ int MMG_mmg3dlib(int opt[9],MMG_pMesh mesh,MMG_pSol sol) {
   /* mesh optimization */
   if ( info->option ) {
     TIM_chrono(ON,&MMG_ctim[3]);
-    if ( MMG_imprim )   fprintf(stdout,"\n  -- PHASE 2 : UNIT MESH\n");
+    if ( MMG_imprim < 0 )   fprintf(stdout,"\n  -- PHASE 2 : UNIT MESH\n");
     if ( abs(info->option) == 9 ) {  
       if(!MMG_mmg3d9(mesh,sol,&alert)) {
         if ( !MMG_unscaleMesh(mesh,sol) )  return(1);
@@ -415,7 +419,7 @@ int MMG_mmg3dlib(int opt[9],MMG_pMesh mesh,MMG_pSol sol) {
     }
       
     TIM_chrono(OFF,&MMG_ctim[3]);
-    if ( MMG_imprim )
+    if ( MMG_imprim < 0 )
       fprintf(stdout,"  -- PHASE 2 COMPLETED.     %.2f sec.\n",
               TIM_gttime(MMG_ctim[3]));
   }
@@ -442,7 +446,7 @@ int MMG_mmg3dlib(int opt[9],MMG_pMesh mesh,MMG_pSol sol) {
     /* renumbering end */   
 #endif
     TIM_chrono(ON,&MMG_ctim[4]);
-    if ( MMG_imprim )  fprintf(stdout,"\n  -- PHASE 3 : OPTIMIZATION\n");
+    if ( MMG_imprim < 0)  fprintf(stdout,"\n  -- PHASE 3 : OPTIMIZATION\n");
     if ( !alert )  {
       if ( info->option == 9 ) { 
          MMG_optra4(mesh,sol); 
@@ -453,7 +457,7 @@ int MMG_mmg3dlib(int opt[9],MMG_pMesh mesh,MMG_pSol sol) {
     
     if ( info->ddebug )  MMG_chkmsh(mesh,1,1);
     TIM_chrono(OFF,&MMG_ctim[4]);
-    if ( MMG_imprim )
+    if ( MMG_imprim <  0)
       fprintf(stdout,"  -- PHASE 3 COMPLETED.     %.2f sec.\n",
               TIM_gttime(MMG_ctim[4]));
   }
@@ -465,7 +469,7 @@ int MMG_mmg3dlib(int opt[9],MMG_pMesh mesh,MMG_pSol sol) {
     MMG_prilen(mesh,sol);
     MMG_ratio(mesh,sol,NULL);
   }
-  fprintf(stdout,"\n  %s\n   END OF MODULE MMG3D \n  %s\n",M_STR,M_STR);
+  fprintf(stdout,"  -- END MMG3D \n");
   if ( alert )
     fprintf(stdout,"\n  ## WARNING: INCOMPLETE MESH  %d , %d\n",
             mesh->np,mesh->ne);

@@ -358,7 +358,7 @@ int MMG_optra9(pMesh mesh,pSol sol) {
     nm = MMG_optlen(mesh,sol,declic,base);  
 //    if(abs(mesh->info.option)!=9 || !mesh->disp) if(it<2) MMG_optlap(mesh,sol);
     
-    if ( mesh->info.imprim && nw+ns+nm )
+    if ( mesh->info.imprim< -4 && nw+ns+nm )
       fprintf(stdout,"     %8d IMPROVED  %8d SWAPPED  %8d MOVED\n",nw,ns,nm);
   }
   while ( ns+nm/*(ns && (ns > 0.005*mesh->ne || it < 5))*/ && ++it < maxtou );

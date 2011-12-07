@@ -209,7 +209,7 @@ int MMG_ratio(pMesh mesh, pSol sol,char* firaoame) {
   
   }
 
-  if ( abs(mesh->info.imprim) > 7 ) {
+  if ( mesh->info.imprim  < 0 ) {
 
     /*ratio prescribed*/
 
@@ -353,17 +353,23 @@ int MMG_ratio(pMesh mesh, pSol sol,char* firaoame) {
   if(inm) fclose(inm);
   
   /* print histo ratio obtained*/
-  fprintf(stdout,"\n  -- ANISOTROPIC RATIO OBTAINED   %d\n",rapnum);
-  fprintf(stdout,"      AVERAGE RATIO       %12.4f\n",rapavg / rapnum);
-  fprintf(stdout,"     SMALLEST RATIO       %12.4f\n",rapmin);  
-  if (rapmax < 1.e4) {
-    fprintf(stdout,"      LARGEST RATIO       %12.4f\n",rapmax);     
-  } else {
-	fprintf(stdout,"      LARGEST RATIO       %12.4e\n",rapmax);     
+  if (mesh->info.imprim == 0){
+    fprintf(stdout,"        ANISOTROPIC RATIO (MEAN = %6.2g, MAX = %6.2g, MIN = %6.2f)\n",rapavg / rapnum, rapmax, rapmin);
   }
-  pt = &mesh->tetra[iel];
-  fprintf(stdout,"           ELEMENT   %d (%d)   %d %d %d %d\n",
-	  iel,ielreal,pt->v[0],pt->v[1],pt->v[2],pt->v[3]);
+  else if (mesh->info.imprim < 0){
+    fprintf(stdout,"\n  -- ANISOTROPIC RATIO OBTAINED   %d\n",rapnum);
+    fprintf(stdout,"      AVERAGE RATIO       %12.4f\n",rapavg / rapnum);
+    fprintf(stdout,"     SMALLEST RATIO       %12.4f\n",rapmin);  
+    if (rapmax < 1.e4) {
+      fprintf(stdout,"      LARGEST RATIO       %12.4f\n",rapmax);     
+    } else {
+      fprintf(stdout,"      LARGEST RATIO       %12.4e\n",rapmax);     
+    }
+    pt = &mesh->tetra[iel];
+
+    fprintf(stdout,"           ELEMENT   %d (%d)   %d %d %d %d\n",
+	    iel,ielreal,pt->v[0],pt->v[1],pt->v[2],pt->v[3]);
+  }
 
   if ( abs(mesh->info.imprim) < 5 )  return;
 
