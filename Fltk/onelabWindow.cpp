@@ -435,7 +435,7 @@ void onelab_cb(Fl_Widget *w, void *data)
       geometry_reload_cb(0, 0);
     for(unsigned int i = 0; i < modelNames.size(); i++)
       onelab::server::instance()->set(modelNames[i]);
-    action = "initial check";
+    action = "check";
   }
 
   FlGui::instance()->onelab->deactivate();
@@ -503,7 +503,7 @@ void onelab_cb(Fl_Widget *w, void *data)
          c->getName() == "GmshRemote") // distant post-processing Gmsh client
         continue;
       std::string what = getModelName(c);
-      if(action == "initial check" || action == "check"){
+      if(action == "check"){
         c->run(what);
       }
       else if(action == "compute"){
@@ -829,7 +829,7 @@ void solver_cb(Fl_Widget *w, void *data)
   std::string exe = opt_solver_executable(num, GMSH_GET, "");
   FlGui::instance()->onelab->addSolver(name, exe, num);
 
-  onelab_cb(0, (void*)"initial check");
+  onelab_cb(0, (void*)"check");
 }
 
 #else
