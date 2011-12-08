@@ -413,14 +413,20 @@ namespace onelab{
     // set a parameter in the parameter space; if it already exists,
     // update it (adding new clients if necessary). This needs to be
     // locked to avoid race conditions when several clients try to set
-    // a parameter at the same time
-    template <class T> bool _set(T &p, std::set<T*, parameterLessThan> &ps)
+    // a parameter at the same time.
+    template <class T> bool _set(const T &p, const std::string &client,
+                                 std::set<T*, parameterLessThan> &ps)
     {
-      typename std::set<T*, parameterLessThan>::iterator it = ps.find(&p);
-      if(it != ps.end())
+      typename std::set<T*, parameterLessThan>::iterator it = ps.find((T*)&p);
+      if(it != ps.end()){
         (*it)->update(p);
-      else
-        ps.insert(new T(p));
+        if(client.size()) (*it)->addClient(client);
+      }
+      else{
+        T* newp = new T(p);
+        if(client.size()) newp->addClient(client);
+        ps.insert(newp);
+      }
       return true;
     }
     // get the parameter matching the given name, or all the
@@ -469,10 +475,14 @@ namespace onelab{
       _regions.clear();
       _functions.clear();
     }
-    bool set(number &p){ return _set(p, _numbers); }
-    bool set(string &p){ return _set(p, _strings); }
-    bool set(region &p){ return _set(p, _regions); }
-    bool set(function &p){ return _set(p, _functions); }
+    bool set(const number &p,
+             const std::string &client=""){ return _set(p, client, _numbers); }
+    bool set(const string &p,
+             const std::string &client=""){ return _set(p, client, _strings); }
+    bool set(const region &p,
+             const std::string &client=""){ return _set(p, client, _regions); }
+    bool set(const function &p,
+             const std::string &client=""){ return _set(p, client, _functions); }
     bool get(std::vector<number> &ps, const std::string &name="", 
              const std::string &client=""){ return _get(ps, name, client, _numbers); }
     bool get(std::vector<string> &ps, const std::string &name="",
@@ -482,7 +492,7 @@ namespace onelab{
     bool get(std::vector<function> &ps, const std::string &name="",
              const std::string &client=""){ return _get(ps, name, client, _functions); }
     // check if at least one parameter depends on the given client
-    bool hasClient(const std::string &client)
+    bool hasClient(const std::string &client) const
     {
       std::set<parameter*> ps;
       _getAllParameters(ps);
@@ -492,7 +502,7 @@ namespace onelab{
     }
     // check if some parameters have changed (optionnally only check
     // the parameters that depend on a given client)
-    bool getChanged(const std::string &client="")
+    bool getChanged(const std::string &client="") const
     {
       std::set<parameter*> ps;
       _getAllParameters(ps);
@@ -554,10 +564,10 @@ namespace onelab{
     virtual void sendMergeFileRequest(const std::string &msg){}
     virtual void sendParseStringRequest(const std::string &msg){}
     virtual void sendVertexArray(const std::string &msg){}
-    virtual bool set(number &p) = 0;
-    virtual bool set(string &p) = 0;
-    virtual bool set(region &p) = 0;
-    virtual bool set(function &p) = 0;
+    virtual bool set(const number &p) = 0;
+    virtual bool set(const string &p) = 0;
+    virtual bool set(const region &p) = 0;
+    virtual bool set(const function &p) = 0;
     virtual bool get(std::vector<number> &ps, const std::string &name="") = 0;
     virtual bool get(std::vector<string> &ps, const std::string &name="") = 0;
     virtual bool get(std::vector<region> &ps, const std::string &name="") = 0;
@@ -585,7 +595,10 @@ namespace onelab{
       return _server;
     }
     void clear(){ _parameterSpace.clear(); }
-    template <class T> bool set(T &p){ return _parameterSpace.set(p); }
+    template <class T> bool set(const T &p, const std::string &client="")
+    {
+      return _parameterSpace.set(p, client); 
+    }
     template <class T> bool get(std::vector<T> &ps, const std::string &name="",
                                 const std::string &client="")
     {
@@ -621,10 +634,9 @@ namespace onelab{
   private:
     // the pointer to the server
     server *_server;
-    template <class T> bool _set(T &p)
+    template <class T> bool _set(const T &p)
     {
-      p.addClient(_name);
-      _server->set(p);
+      _server->set(p, _name);
       return true;
     }
     template <class T> bool _get(std::vector<T> &ps,
@@ -640,10 +652,10 @@ namespace onelab{
       _server->registerClient(this);
     }
     virtual ~localClient(){}
-    virtual bool set(number &p){ return _set(p); }
-    virtual bool set(string &p){ return _set(p); }
-    virtual bool set(function &p){ return _set(p); }
-    virtual bool set(region &p){ return _set(p); }
+    virtual bool set(const number &p){ return _set(p); }
+    virtual bool set(const string &p){ return _set(p); }
+    virtual bool set(const function &p){ return _set(p); }
+    virtual bool set(const region &p){ return _set(p); }
     virtual bool get(std::vector<number> &ps,
                      const std::string &name=""){ return _get(ps, name); }
     virtual bool get(std::vector<string> &ps,
@@ -688,10 +700,9 @@ namespace onelab{
     std::string _serverAddress;
     // underlying GmshClient
     GmshClient *_gmshClient;
-    template <class T> bool _set(T &p)
+    template <class T> bool _set(const T &p)
     {
       if(!_gmshClient) return false;
-      p.addClient(_name);
       std::string msg = p.toChar();
       _gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER, msg.size(), &msg[0]);
       return true;
@@ -702,7 +713,6 @@ namespace onelab{
       ps.clear();
       if(!_gmshClient) return false;
       T p(name);
-      p.addClient(_name);
       std::string msg = p.toChar();
       _gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER_QUERY, msg.size(), &msg[0]);
       while(1){
@@ -767,10 +777,10 @@ namespace onelab{
     }
     GmshClient *getGmshClient(){ return _gmshClient; }
     virtual bool isNetworkClient(){ return true; }
-    virtual bool set(number &p){ return _set(p); }
-    virtual bool set(string &p){ return _set(p); }
-    virtual bool set(function &p){ return _set(p); }
-    virtual bool set(region &p){ return _set(p); }
+    virtual bool set(const number &p){ return _set(p); }
+    virtual bool set(const string &p){ return _set(p); }
+    virtual bool set(const function &p){ return _set(p); }
+    virtual bool set(const region &p){ return _set(p); }
     virtual bool get(std::vector<number> &ps, 
                      const std::string &name=""){ return _get(ps, name); }
     virtual bool get(std::vector<string> &ps,
