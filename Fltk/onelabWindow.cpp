@@ -421,7 +421,7 @@ static bool stopOnError(const std::string &client)
     std::string msg
       (client + " reported an error: do you really want to continue?\n\n"
        "(To disable this warning in the future, select `Enable expert mode'\n"
-       "in the option dialog.");
+       "in the option dialog.)");
     if(Msg::GetAnswer(msg.c_str(), 1, "Stop", "Continue") == 0) return true;
   }
   return false;
