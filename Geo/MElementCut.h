@@ -159,14 +159,13 @@ class MPolyhedron : public MElement {
   virtual MElement *getChild(int i) const { return _parts[i]; }
   virtual bool ownsParent() const { return _owner; }
   virtual int getNumVerticesForMSH() {return _parts.size() * 4;}
-  virtual int *getVerticesIdForMSH()
+  virtual void getVerticesIdForMSH(std::vector<int> &verts)
   {
     int n = getNumVerticesForMSH();
-    int *verts = new int [n];
+    verts.resize(n);
     for(unsigned int i = 0; i < _parts.size(); i++)
       for(int j = 0; j < 4; j++)
         verts[i * 4 + j] = _parts[i]->getVertex(j)->getIndex();
-    return verts;
   }
 };
 
@@ -296,14 +295,13 @@ class MPolygon : public MElement {
   virtual bool isInside(double u, double v, double w);
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual int getNumVerticesForMSH() {return _parts.size() * 3;}
-  virtual int *getVerticesIdForMSH()
+  virtual void getVerticesIdForMSH(std::vector<int> &verts)
   {
     int n = getNumVerticesForMSH();
-    int *verts = new int[n];
+    verts.resize(n);
     for(unsigned int i = 0; i < _parts.size(); i++)
       for(int j = 0; j < 3; j++)
         verts[i * 3 + j] = _parts[i]->getVertex(j)->getIndex();
-    return verts;
   }
 };
 

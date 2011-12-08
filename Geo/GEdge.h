@@ -202,9 +202,8 @@ class GEdge : public GEntity {
     ExtrudeParams *extrude;
   } meshAttributes ;
 
-  typedef enum {PENDING, DONE, FAILED} meshGenerationStatus;
   struct {
-    mutable meshGenerationStatus status;
+    mutable GEntity::MeshGenerationStatus status;
   } meshStatistics;
   
   std::vector<MLine*> lines;

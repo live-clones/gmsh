@@ -334,7 +334,7 @@ class MElement
   // 'name' != 0
   static int getInfoMSH(const int typeMSH, const char **const name=0);
   virtual int getNumVerticesForMSH() { return getNumVertices(); }
-  virtual int *getVerticesIdForMSH();
+  virtual void getVerticesIdForMSH(std::vector<int> &verts);
 
   // copy element and parent if any, vertexMap contains the new vertices
   virtual MElement *copy(std::map<int, MVertex*> &vertexMap,

@@ -690,7 +690,8 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
 
   if(physical < 0) revert();
 
-  int *verts = getVerticesIdForMSH();
+  std::vector<int> verts;
+  getVerticesIdForMSH(verts);
 
   if(!binary){
     for(int i = 0; i < n; i++)
@@ -698,12 +699,10 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
     fprintf(fp, "\n");
   }
   else{
-    fwrite(verts, sizeof(int), n, fp);
+    fwrite(&verts[0], sizeof(int), n, fp);
   }
 
   if(physical < 0) revert();
-
-  delete [] verts;
 }
 
 void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
@@ -1072,13 +1071,12 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   }
 }
 
-int *MElement::getVerticesIdForMSH()
+void MElement::getVerticesIdForMSH(std::vector<int> &verts)
 {
   int n = getNumVerticesForMSH();
-  int *verts = new int[n];
+  verts.resize(n);
   for(int i = 0; i < n; i++)
     verts[i] = getVertex(i)->getIndex();
-  return verts;
 }
 
 MElement *MElement::copy(std::map<int, MVertex*> &vertexMap,

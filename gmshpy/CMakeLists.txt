@@ -1,4 +1,9 @@
-set (SWIG_MODULES
+# Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
+#
+# See the LICENSE.txt file for license information. Please report all
+# bugs and problems to <gmsh@geuz.org>.
+
+set(SWIG_MODULES
   gmshCommon
   gmshGeo
   gmshNumeric
@@ -15,7 +20,6 @@ MACRO(SWIG_GET_WRAPPER_DEPENDENCIES swigFile genWrapper language DEST_VARIABLE)
   IF("${swig_getdeps_extra_flags}" STREQUAL "NOTFOUND")
     SET(swig_getdeps_extra_flags "")
   ENDIF("${swig_getdeps_extra_flags}" STREQUAL "NOTFOUND")
-
   IF(NOT swig_getdeps_outdir)
     SET(swig_getdeps_outdir ${CMAKE_CURRENT_BINARY_DIR})
   ENDIF(NOT swig_getdeps_outdir)
@@ -58,28 +62,31 @@ ENDMACRO(SWIG_GET_WRAPPER_DEPENDENCIES)
 
 option(ENABLE_PYTHON_LIB_API "Export all C header files needed to build the python library" OFF)
 if(ENABLE_PYTHON_LIB_API)
-  set(GMSH_API ${GMSH_API} Geo/Curvature.h Mesh/Generator.h Mesh/highOrderTools.h Mesh/meshGFaceLloyd.h Numeric/DivideAndConquer.h Post/PViewFactory.h Solver/linearSystemPETSc.h Fltk/FlGui.h Solver/functionSpace.h Solver/STensor43.h Solver/sparsityPattern.h Solver/SElement.h Solver/groupOfElements.h PARENT_SCOPE)
+  set(GMSH_API ${GMSH_API} Geo/Curvature.h Mesh/Generator.h Mesh/highOrderTools.h
+      Mesh/meshGFaceLloyd.h Numeric/DivideAndConquer.h Post/PViewFactory.h
+      Solver/linearSystemPETSc.h Fltk/FlGui.h Solver/functionSpace.h
+      Solver/STensor43.h Solver/sparsityPattern.h Solver/SElement.h
+      Solver/groupOfElements.h PARENT_SCOPE)
 endif(ENABLE_PYTHON_LIB_API)
 
-if(HAVE_SWIG)
-  include(${SWIG_USE_FILE})
-  include_directories(${PYTHON_INCLUDE_DIR})
+include(${SWIG_USE_FILE})
+include_directories(${PYTHON_INCLUDE_DIR})
 
-  foreach(module ${SWIG_MODULES})
-    set_source_files_properties(${module}.i PROPERTIES CPLUSPLUS ON)
+foreach(module ${SWIG_MODULES})
+  set_source_files_properties(${module}.i PROPERTIES CPLUSPLUS ON)
 
-    # code backported from CMake git version, see CMake bug 4147
-    SWIG_GET_WRAPPER_DEPENDENCIES(${CMAKE_CURRENT_SOURCE_DIR}/\${module}.i ${CMAKE_CURRENT_BINARY_DIR}/${module}PYTHON_wrap.cxx python swig_extra_dependencies)
-    LIST(APPEND SWIG_MODULE_${module}_EXTRA_DEPS ${swig_extra_dependencies})
+  # code backported from CMake git version, see CMake bug 4147
+  swig_get_wrapper_dependencies(${CMAKE_CURRENT_SOURCE_DIR}/\${module}.i 
+    ${CMAKE_CURRENT_BINARY_DIR}/${module}PYTHON_wrap.cxx python swig_extra_dependencies)
+  list(APPEND SWIG_MODULE_${module}_EXTRA_DEPS ${swig_extra_dependencies})
+  swig_add_module(${module} python ${module}.i)
+  swig_link_libraries(${module} ${PYTHON_LIBRARIES} shared)
+  set(GMSH_PYTHON_MODULES_INCLUDE_CODE 
+      "${GMSH_PYTHON_MODULES_INCLUDE_CODE}from ${module} import *\n")
+  list(APPEND GMSHPY_DEPENDS "_${module}")
+endforeach(module)
 
-    swig_add_module(${module} python ${module}.i)
-    swig_link_libraries(${module} ${PYTHON_LIBRARIES} shared)
-    SET(GMSH_PYTHON_MODULES_INCLUDE_CODE 
-        "${GMSH_PYTHON_MODULES_INCLUDE_CODE}from ${module} import *\n")
-    list(APPEND GMSHPY_DEPENDS "_${module}")
-  endforeach(module)
-  add_custom_target("_gmshpy" DEPENDS ${GMSHPY_DEPENDS})
+add_custom_target("_gmshpy" DEPENDS ${GMSHPY_DEPENDS})
 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/__init__.py.in 
-                 ${CMAKE_CURRENT_BINARY_DIR}/__init__.py)
-endif(HAVE_SWIG)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/__init__.py.in 
+               ${CMAKE_CURRENT_BINARY_DIR}/__init__.py)

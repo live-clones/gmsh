@@ -98,6 +98,11 @@ void List_Add(List_T * liste, void *data)
   memcpy(&liste->array[(liste->n - 1) * liste->size], data, liste->size);
 }
 
+void List_Add(List_T *liste, int data)
+{
+  List_Add(liste, &data);
+}
+
 int List_Nbr(List_T * liste)
 {
   return (liste) ? liste->n : 0;

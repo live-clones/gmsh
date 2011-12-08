@@ -290,9 +290,8 @@ class GFace : public GEntity
     // edge loops
   } meshAttributes ;
 
-  typedef enum {PENDING, DONE, FAILED} meshGenerationStatus;
   struct {
-    mutable meshGenerationStatus status;
+    mutable GEntity::MeshGenerationStatus status;
     double worst_element_shape, best_element_shape, average_element_shape;
     double smallest_edge_length, longest_edge_length, efficiency_index;
     int nbEdge, nbTriangle;

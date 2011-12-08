@@ -306,7 +306,7 @@ class MTetrahedron10 : public MTetrahedron {
  */
 
 class MTetrahedronN : public MTetrahedron {
-  const static std::vector<int> &_getReverseIndices(int order);
+  static const std::vector<int> &_getReverseIndices(int order);
  protected:
   std::vector<MVertex *> _vs;
   const char _order;
