@@ -9,9 +9,9 @@
 
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
 
-#include <FL/Fl_Input_Choice.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Box.H>
+#include <FL/Fl_Input_Choice.H>
 #include "inputRange.h"
 #include "Context.h"
 #include "GModel.h"
@@ -23,6 +23,7 @@
 #include "CreateFile.h"
 #include "drawContext.h"
 #include "PView.h"
+#include "PViewOptions.h"
 #include "FlGui.h"
 #include "paletteWindow.h"
 #include "menuWindow.h"
@@ -225,6 +226,7 @@ bool onelab::localNetworkClient::run(const std::string &what)
     case GmshSocket::GMSH_MERGE_FILE:
       {
         int n = PView::list.size();
+        for(int i = 0; i < n; i++) PView::list[i]->getOptions()->visible = 0;
         MergeFile(message);
         drawContext::global()->draw();
         if(n != (int)PView::list.size()) 
@@ -745,14 +747,22 @@ void onelabWindow::rebuildTree()
     Fl_Input_Choice *but = new Fl_Input_Choice(1, 1, width, 1);
     _treeWidgets.push_back(but);
     but->copy_label(label.c_str());
-    for(unsigned int j = 0; j < strings[i].getChoices().size(); j++)
-      but->add(strings[i].getChoices()[j].c_str());
-    if(strings[i].getKind() == "file"){
-      but->menubutton()->add
-        ("Choose...", 0, onelab_input_choice_file_chooser_cb, (void*)n);
-      but->menubutton()->add
-        ("Edit...", 0, onelab_input_choice_file_edit_cb, (void*)n);
+    std::vector<Fl_Menu_Item> menu;
+    for(unsigned int j = 0; j < strings[i].getChoices().size(); j++){
+      Fl_Menu_Item it = {strings[i].getChoices()[j].c_str(), 0, 0, 0, 
+                         (strings[i].getKind() == "file" && 
+                          j == strings[i].getChoices().size() - 1) ? FL_MENU_DIVIDER : 0};
+      menu.push_back(it);
     }
+    if(strings[i].getKind() == "file"){
+      Fl_Menu_Item it = {"Choose...", 0, onelab_input_choice_file_chooser_cb, (void*)n};
+      menu.push_back(it);
+      Fl_Menu_Item it2 = {"Edit...", 0, onelab_input_choice_file_edit_cb, (void*)n};
+      menu.push_back(it2);
+    }
+    Fl_Menu_Item it = {0};
+    menu.push_back(it);
+    but->menubutton()->copy(&menu[0]);
     but->value(strings[i].getValue().c_str());
     but->align(FL_ALIGN_RIGHT);
     but->callback(onelab_input_choice_cb, (void*)n);
