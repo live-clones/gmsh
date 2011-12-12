@@ -110,6 +110,22 @@ static void gmsh_gear(Fl_Color c)
   fl_line_style(FL_SOLID);
 }
 
+static void gmsh_graph_x(Fl_Color c)
+{
+  fl_color(c);
+  fl_begin_line(); vv(-0.8,0.8); vv(0.8,0.8); fl_end_line();
+  fl_begin_polygon(); vv(0.8,0.8); vv(0.2,1.1); vv(0.2,0.5); fl_end_polygon();
+  fl_begin_line(); vv(-0.8,0.3); vv(-0.2,-0.2); vv(0.3,0.1); vv(0.8,-0.4); fl_end_line();
+}
+
+static void gmsh_graph_y(Fl_Color c)
+{
+  fl_color(c);
+  fl_begin_line(); vv(-0.8,-0.8); vv(-0.8,0.8); fl_end_line();
+  fl_begin_polygon(); vv(-0.8,-1.1); vv(-1.1, -0.5); vv(-0.5, -0.5); fl_end_polygon();
+  fl_begin_line(); vv(-0.8,0.3); vv(-0.2,-0.2); vv(0.3,0.1); vv(0.8,-0.4); fl_end_line();
+}
+
 #undef vv
 #undef bl
 #undef el
@@ -487,6 +503,8 @@ graphicWindow::graphicWindow(bool main, int numTiles)
     fl_add_symbol("gmsh_models", gmsh_models, 1);
     fl_add_symbol("gmsh_clscale", gmsh_clscale, 1);
     fl_add_symbol("gmsh_gear", gmsh_gear, 1);
+    fl_add_symbol("gmsh_graph_x", gmsh_graph_x, 1);
+    fl_add_symbol("gmsh_graph_y", gmsh_graph_y, 1);
     first = false;
   }
   

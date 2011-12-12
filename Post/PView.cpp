@@ -86,17 +86,15 @@ PView::PView(std::string xname, std::string yname,
   _init();
   PViewDataList *data = new PViewDataList();
   for(unsigned int i = 0; i < y.size(); i++){
-    double d;
     if(x.size() == y.size()){
       data->SP.push_back(x[i]);
     }
     else{
-      d = y.size() > 1 ? (double)i / (double)(y.size() - 1) : 0.;
+      double d = y.size() > 1 ? (double)i / (double)(y.size() - 1) : 0.;
       data->SP.push_back(d);
     }
-    d = 0.;
-    data->SP.push_back(d);
-    data->SP.push_back(d);
+    data->SP.push_back(0.);
+    data->SP.push_back(0.);
     data->SP.push_back(y[i]);
     data->NbSP++;
   }
