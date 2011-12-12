@@ -574,7 +574,7 @@ static int getBorderTag(int lsTag, int count, int &maxTag, std::map<int, int> &b
 {
   if(borderTags.count(lsTag))
     return borderTags[lsTag];
-  if(count) {
+  if(count || lsTag < 0) {
     int tag = ++maxTag;
     borderTags[lsTag] = tag;
     return tag;
@@ -689,56 +689,102 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
   }
 
   //create level set interface (pt in 1D, line in 2D or face in 3D)
-  if (splitElem && e->getDim()==2){
+  if(splitElem && e->getDim() == 2){
     for(int k = 0; k < e->getNumEdges(); k++){
       MEdge me  = e->getEdge(k);
       MVertex *v0 = me.getVertex(0);
       MVertex *v1 = me.getVertex(1);
       MVertex *v0N = vertexMap[v0->getNum()];
       MVertex *v1N = vertexMap[v1->getNum()];
-      double val0 = verticesLs(0, v0->getIndex())-eps; 
-      double val1 = verticesLs(0, v1->getIndex())-eps; 
+      double val0 = verticesLs(0, v0->getIndex()) - eps;
+      double val1 = verticesLs(0, v1->getIndex()) - eps;
       //printf("splitedge v0= (%g,%g) v1= (%g,%g) val0= %g(%d) val1= %g(%d) nums (%d %d)\n", v0->x(), v0->y(), v1->x(), v1->y(), val0, v0->getIndex(),  val1, v1->getIndex(), vertexMap[v0->getNum()]->getIndex(), vertexMap[v1->getNum()]->getIndex());
-      if ( (val0*val1 > 0.0 && val0 < 0.0 ) ) { 
-	//printf("split edge \n");
-        MLine *lin = new MLine(v0N, v1N); 
+      if(val0*val1 > 0.0 && val0 < 0.0) {
         getPhysicalTag(-1, gePhysicals, newPhysTags[1]);
         int c = elements[1].count(gLsTag);
         int reg = getBorderTag(gLsTag, c, newElemTags[1][0], borderElemTags[0]);
-        int physTag = (!gePhysicals.size()) ? 0 : getBorderTag(gLsTag, c, newPhysTags[1][0], borderPhysTags[0]);
-        elements[1][reg].push_back(lin);
-        if(physTag) assignLsPhysical(GM, reg, 1, physicals, physTag, gLsTag);
+        int physTag = (!gePhysicals.size()) ? 0 :
+                      getBorderTag(gLsTag, c, newPhysTags[1][0], borderPhysTags[0]);
+        int i;
+        for(i = elements[1][reg].size() - 1; i >= 0; i--){
+          MElement *el = elements[1][reg][i];
+          if((el->getVertex(0) == v0N && el->getVertex(1) == v1N) ||
+             (el->getVertex(0) == v1N && el->getVertex(1) == v0N))
+            break;
+        }
+        if(i < 0){
+          MLine *lin = new MLine(v0N, v1N);
+          elements[1][reg].push_back(lin);
+          if(physTag) assignLsPhysical(GM, reg, 1, physicals, physTag, gLsTag);
+        }
+        else{
+          MElement *el = elements[1][reg][i];
+          elements[1][reg].erase(elements[1][reg].begin() + i);
+          delete el;
+        }
       }
     }
   }
-  else if (splitElem && e->getDim()==3){
+  else if(splitElem && e->getDim() == 3){
     for(int k = 0; k < e->getNumFaces(); k++){
-      MFace mf  = e->getFace(k);
+      MFace mf = e->getFace(k);
       bool sameSign = true;
-      double val0 = verticesLs(0,  mf.getVertex(0)->getIndex());
-      for (int j= 1; j< mf.getNumVertices(); j++){
-        double valj = verticesLs(0,  mf.getVertex(j)->getIndex());
+      double val0 = verticesLs(0, mf.getVertex(0)->getIndex()) - eps;
+      for (int j = 1; j < mf.getNumVertices(); j++){
+        double valj = verticesLs(0, mf.getVertex(j)->getIndex()) - eps;
         if (val0*valj < 0.0){ sameSign = false; break;}
       }
-      if (sameSign && val0 < 0.0) {
+      if(sameSign && val0 < 0.0) {
         getPhysicalTag(-1, gePhysicals, newPhysTags[2]);
-        int c = elements[2].count(gLsTag) + elements[3].count(gLsTag) + elements[8].count(gLsTag);
+        int c = elements[2].count(gLsTag) + elements[3].count(gLsTag) +
+                elements[8].count(gLsTag);
         int reg = getBorderTag(gLsTag, c, newElemTags[2][0], borderElemTags[1]);
-        int physTag = (!gePhysicals.size()) ? 0 : getBorderTag(gLsTag, c, newPhysTags[2][0], borderPhysTags[1]);
+        int physTag = (!gePhysicals.size()) ? 0 :
+                      getBorderTag(gLsTag, c, newPhysTags[2][0], borderPhysTags[1]);
         if(mf.getNumVertices() == 3){
-          MTriangle *tri = new MTriangle(vertexMap[mf.getVertex(0)->getNum()],
-					 vertexMap[mf.getVertex(1)->getNum()], 
-					 vertexMap[mf.getVertex(2)->getNum()]); 
-          elements[2][reg].push_back(tri);
+          MFace f1 = MFace(vertexMap[mf.getVertex(0)->getNum()],
+                           vertexMap[mf.getVertex(1)->getNum()], 
+                           vertexMap[mf.getVertex(2)->getNum()]);
+          int i = elements[2][reg].size() - 1;
+          for(; i >= 0; i--){
+            MElement *el = elements[2][reg][i];
+            MFace f2 = MFace(el->getVertex(0), el->getVertex(1), el->getVertex(2));
+            if(f1 == f2) break;
+          }
+          if(i < 0){
+            MTriangle *tri = new MTriangle(f1.getVertex(0), f1.getVertex(1), f1.getVertex(2)); 
+            elements[2][reg].push_back(tri);
+          }
+          else{
+            MElement *el = elements[2][reg][i];
+            elements[2][reg].erase(elements[2][reg].begin() + i);
+            delete el;
+          }
         }
         else if(mf.getNumVertices() == 4){
-          MQuadrangle *quad = new MQuadrangle(vertexMap[mf.getVertex(0)->getNum()],
-                                              vertexMap[mf.getVertex(1)->getNum()],
-                                              vertexMap[mf.getVertex(2)->getNum()],
-                                              vertexMap[mf.getVertex(3)->getNum()]);
-          elements[3][reg].push_back(quad);
+          MFace f1 = MFace(vertexMap[mf.getVertex(0)->getNum()],
+                           vertexMap[mf.getVertex(1)->getNum()], 
+                           vertexMap[mf.getVertex(2)->getNum()],
+                           vertexMap[mf.getVertex(3)->getNum()]);
+          int i;
+          for(i = elements[3][reg].size() - 1; i >= 0; i--){
+            MElement *el = elements[3][reg][i];
+            MFace f2 = MFace(el->getVertex(0), el->getVertex(1),
+                             el->getVertex(2), el->getVertex(3));
+            if(f1 == f2) break;
+          }
+          if(i < 0){
+            MQuadrangle *quad = new MQuadrangle(f1.getVertex(0), f1.getVertex(1),
+                                                f1.getVertex(2), f1.getVertex(2));
+            elements[3][reg].push_back(quad);
+          }
+          else{
+            MElement *el = elements[3][reg][i];
+            elements[3][reg].erase(elements[3][reg].begin() + i);
+            delete el;
+          }
         }
-        if(physTag)  assignLsPhysical(GM, reg, 2, physicals, physTag, gLsTag);
+        if(physTag) assignLsPhysical(GM, reg, 2, physicals, physTag, gLsTag);
       }    
     }
   }
@@ -1026,7 +1072,8 @@ static void elementCutMesh(MElement *e, std::vector<gLevelset *> &RPN,
         int c = elements[2].count(lsTag) + elements[3].count(lsTag) + elements[8].count(lsTag);
         // the surfaces are cut before the volumes!
         int reg = getBorderTag(lsTag, c, newElemTags[2][0], borderElemTags[1]);
-        int physTag = (!gePhysicals.size()) ? 0 : getBorderTag(lsTag, c, newPhysTags[2][0], borderPhysTags[1]);
+        int physTag = (!gePhysicals.size()) ? 0 :
+                      getBorderTag(lsTag, c, newPhysTags[2][0], borderPhysTags[1]);
         elements[2][reg].push_back(tri);
         if(physTag)
           assignLsPhysical(GM, reg, 2, physicals, physTag, lsTag);
@@ -1239,7 +1286,8 @@ static void elementCutMesh(MElement *e, std::vector<gLevelset *> &RPN,
         int c = elements[1].count(lsTag);
         // the lines are cut before the surfaces!
         int reg = getBorderTag(lsTag, c, newElemTags[1][0], borderElemTags[0]);
-        int physTag = (!gePhysicals.size()) ? 0 : getBorderTag(lsTag, c, newPhysTags[1][0], borderPhysTags[0]);
+        int physTag = (!gePhysicals.size()) ? 0 :
+                      getBorderTag(lsTag, c, newPhysTags[1][0], borderPhysTags[0]);
         elements[1][reg].push_back(lin);
         if(physTag)
           assignLsPhysical(GM, reg, 1, physicals, physTag, lsTag);
@@ -1371,6 +1419,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   for(unsigned int i = 0; i < gmEntities.size(); i++) {
     for(unsigned int j = 0; j < gmEntities[i]->getNumMeshVertices(); j++) {
       MVertex *vi = gmEntities[i]->getMeshVertex(j);
+      if(vi->getIndex() < 0) continue;
       if(cutElem){
         int k = 0;
         for(; k < primS; k++)
@@ -1461,6 +1510,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
       }
       for(unsigned int j = 0; j < lsLineRegs.size(); j++){
         int nLR = lsLineRegs[j];
+        bool havePhys = physicals[1][nLR].size();
         while(1){
           std::vector<MElement*> conLines; 
           conLines.push_back(elements[1][nLR][0]);
@@ -1484,8 +1534,10 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
           }
           if(!elements[1][nLR].empty()){
             int newReg = ++newElemTags[1][0];
-            int newPhys = ++newPhysTags[1][0];
-            assignLsPhysical(gm, newReg, 1, physicals, newPhys, lines[lines.size() - 1]->lsTag());
+            int newPhys = (!havePhys) ? 0 : ++newPhysTags[1][0];
+            if(newPhys)
+              assignLsPhysical(gm, newReg, 1, physicals, newPhys,
+                               lines[lines.size() - 1]->lsTag());
             for(int k = 0; k < conLines.size(); k++)
               elements[1][newReg].push_back(conLines[k]);
           }

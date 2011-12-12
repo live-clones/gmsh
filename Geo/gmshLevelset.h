@@ -127,8 +127,11 @@ protected:
   double xc, yc, zc, r;
 public:
   gLevelsetSphere (const double &x, const double &y, const double &z, const double &R, int tag=1) : gLevelsetPrimitive(tag), xc(x), yc(y), zc(z), r(R) {}
-  virtual double operator () (const double x, const double y, const double z) const
-    {return (sqrt((xc - x) * (xc - x) + (yc - y) * (yc - y) + (zc - z) * (zc - z)) - abs(r)) * r / abs(r);}
+  virtual double operator () (const double x, const double y, const double z) const{
+    if(r >= 0.)
+      return sqrt((xc - x) * (xc - x) + (yc - y) * (yc - y) + (zc - z) * (zc - z)) - r;
+    return (- r - sqrt((xc - x) * (xc - x) + (yc - y) * (yc - y) + (zc - z) * (zc - z)));
+  }
   int type() const {return SPHERE;}
 };
 

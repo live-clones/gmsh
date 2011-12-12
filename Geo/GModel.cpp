@@ -1889,7 +1889,6 @@ GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem, bool saveTri)
 
   GModel *cutGM = buildCutMesh(this, ls, elements, vertexMap, physicals, cutElem);
 
-
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
     cutGM->_storeElementsInEntities(elements[i]);
   cutGM->_associateEntityWithMeshVertices();
@@ -1905,7 +1904,6 @@ GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem, bool saveTri)
           cutGM->setPhysicalName(it2->second, i, it2->first);
     }
   }
-
 
   Msg::Info("Mesh cutting completed (%g s)", Cpu() - t1);
 

@@ -277,8 +277,8 @@ void refineMeshMMG(GRegion *gr)
   gr->deleteVertexArrays();
   for (int i=0;i<gr->tetrahedra.size();++i)delete gr->tetrahedra[i];
   gr->tetrahedra.clear();
-  // for (int i=0;i<gr->mesh_vertices.size();++i)delete gr->mesh_vertices[i];
-  // gr->mesh_vertices.clear();
+  for (int i=0;i<gr->mesh_vertices.size();++i)delete gr->mesh_vertices[i];
+  gr->mesh_vertices.clear();
   
   MMG2gmsh(gr, mmg, mmg2gmsh);
   freeMMG(mmg, sol);
