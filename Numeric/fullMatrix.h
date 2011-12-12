@@ -46,6 +46,19 @@ class fullVector
   inline const scalar * getDataPtr() const { return _data; }
   inline scalar operator () (int i)  const { return _data[i]; }
   inline scalar & operator () (int i)      { return _data[i]; }
+  // copy
+  fullVector<scalar>& operator= (const fullVector<scalar> &other)
+  {
+    if (this != &other) {
+      if ((!resize(other.size(), false) && _r > 2*other.size())) {
+        if (_data) delete[] _data;
+        _r = other.size();
+        _data = new scalar[_r];
+      }
+      setAll(other);
+    }
+    return *this;
+  }
   // set
   inline void set(int r, scalar v){
     #ifdef _DEBUG
@@ -63,14 +76,20 @@ class fullVector
     for(int i = 0; i < _r; ++i) n += _data[i] * _data[i];
     return sqrt(n);
   }
-  bool resize(int r)
+  bool resize(int r, bool resetValue = true)
   {
-    if (_r < r) {
-      if (_data) delete[] _data;
+    if (_r < r || !_own_data) {
+      if (_own_data && _data) delete[] _data;
       _r = r;
       _data = new scalar[_r];
+      _own_data = true;
+      if(resetValue)
+        setAll(0.);
       return true;
     }
+    _r = r;
+    if(resetValue)
+      setAll(0.);
     return false;
   }
   void setAsProxy(const fullVector<scalar> &original, int r_start, int r)
@@ -224,19 +243,17 @@ class fullMatrix
   bool resize(int r, int c, bool resetValue = true) // data will be owned (same as constructor)
   {
     if ((r * c > _r * _c) || !_own_data) {
+      if (_own_data && _data) delete[] _data;
       _r = r;
       _c = c;
-      if (_own_data && _data) delete[] _data;
       _data = new scalar[_r * _c];
       _own_data = true;
       if(resetValue)
         setAll(0.);
       return true;
     }
-    else {
-      _r = r;
-      _c = c;
-    }
+    _r = r;
+    _c = c;
     if(resetValue)
       setAll(0.);
     return false; // no reallocation
