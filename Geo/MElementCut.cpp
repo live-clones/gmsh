@@ -995,6 +995,7 @@ static void elementCutMesh(MElement *e, std::vector<gLevelset *> &RPN,
         if(poly[1].size()) {
           int n = (e->getParent() && poly[0].size() == 0) ? e->getNum() : ++numEle;
           p2 = new MPolyhedron(poly[1], n, ePart, own, parent);
+          getPhysicalTag(1, gePhysicals, newPhysTags[3]);
           elements[9][elementary].push_back(p2);
           assignPhysicals(GM, gePhysicals, elementary, 3, physicals, newPhysTags[3], 1);
         }
@@ -1208,6 +1209,7 @@ static void elementCutMesh(MElement *e, std::vector<gLevelset *> &RPN,
             p2 = new MPolygonBorder(poly[1], n, ePart, own, parent,
                                     copy->getDomain(0), copy->getDomain(1));
           else p2 = new MPolygon(poly[1], n, ePart, own, parent);
+          getPhysicalTag(1, gePhysicals, newPhysTags[2]);
           elements[8][elementary].push_back(p2);
           assignPhysicals(GM, gePhysicals, elementary, 2, physicals, newPhysTags[2], 1);
           for(int i = 0; i < 2; i++)
