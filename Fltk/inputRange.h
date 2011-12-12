@@ -60,6 +60,7 @@ class inputRange : public Fl_Group {
     if(str.find_first_of(',') != std::string::npos){
       // parse list of values
       std::string::size_type first = 0;
+      _choices.clear();
       while(1){
         std::string::size_type last = str.find_first_of(',', first);
         std::string val = str.substr(first, last - first);
