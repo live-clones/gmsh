@@ -256,8 +256,8 @@ int MMG_mmg3dlib(int opt[9],MMG_pMesh mesh,MMG_pSol sol) {
   short		imprim;
   int k,iadr,i,jj,kk,ii,im;
   double	lambda[3],v[3][3],*mold,*m;
-  fprintf(stdout,"  %s \n", M_STR);
-  fprintf(stdout,"  -- START MMG3d \n") ;
+  //fprintf(stdout,"  %s \n", M_STR);
+  fprintf(stdout,"  -- START MMG3d (%d ELEMS)\n", mesh->ne) ;
   if (opt[6] < 0) fprintf(stdout,"  -- MMG3d, Release %s (%s) \n",M_VER,M_REL);
   if (opt[6] < -10) fprintf(stdout,"     Copyright (c) LJLL/IMB, 2010\n");
   if (opt[6] < -10) fprintf(stdout,"    %s\n",COMPIL);
@@ -469,7 +469,7 @@ int MMG_mmg3dlib(int opt[9],MMG_pMesh mesh,MMG_pSol sol) {
     MMG_prilen(mesh,sol);
     MMG_ratio(mesh,sol,NULL);
   }
-  fprintf(stdout,"  -- END MMG3D \n");
+  fprintf(stdout,"  -- END MMG3D (%d ELEMS)\n", mesh->ne);
   if ( alert )
     fprintf(stdout,"\n  ## WARNING: INCOMPLETE MESH  %d , %d\n",
             mesh->np,mesh->ne);
@@ -487,7 +487,6 @@ int MMG_mmg3dlib(int opt[9],MMG_pMesh mesh,MMG_pSol sol) {
     fprintf(stdout,"     NUMBER OF GIVEN ELEMENTS   %8d\n",mesh->nefixe);
     fprintf(stdout,"     TOTAL NUMBER OF VERTICES   %8d\n",mesh->np);
     fprintf(stdout,"     TOTAL NUMBER OF TRIANGLES  %8d\n",mesh->nt);
-    fprintf(stdout,"     TOTAL NUMBER OF ELEMENTS   %8d\n",mesh->ne);
   }
 
   if ( MMG_imprim )  fprintf(stdout,"  -- SAVING COMPLETED\n");

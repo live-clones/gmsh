@@ -22,14 +22,12 @@ static void increaseStencil(MVertex *v, v2t_cont &adj, std::vector<MElement*> &l
   lt.insert(lt.begin(),stencil.begin(),stencil.end());
 }
 
-meshMetric::meshMetric ( std::vector<MElement*> &elements, simpleFunction<double> *fct,  meshMetric::MetricComputationTechnique technique, 
-			 double lcmin, double lcmax,
-			 double E, double eps)
+meshMetric::meshMetric ( std::vector<MElement*> &elements, simpleFunction<double> *fct,  meshMetric::MetricComputationTechnique technique, double lcmin, double lcmax, double E, double eps)
   : _technique(technique), _epsilon(eps), _E(E), _fct(fct), hmax(lcmax),hmin(lcmin) 
 {
   _dim = elements[0]->getDim();
   computeMetric(elements);
-  printMetric("toto.pos");
+  //printMetric("toto.pos");
 }
 
 
@@ -110,7 +108,7 @@ void meshMetric::computeMetric(std::vector<MElement*> &e){
   v2t_cont adj;
   buildVertexToElement (e,adj);
 
-  printf("%d elements are considered in the metric \n",e.size());
+  //printf("%d elements are considered in the metric \n",e.size());
 
   computeValues(adj);
   computeHessian(adj);
@@ -118,6 +116,7 @@ void meshMetric::computeMetric(std::vector<MElement*> &e){
   v2t_cont :: iterator it = adj.begin();
   while (it != adj.end()) {
      MVertex *ver = it->first;
+     double dist = fabs(vals[ver]);
   
      SMetric3 H;
      SVector3 gradudx = dgrads[0][ver];
@@ -134,48 +133,60 @@ void meshMetric::computeMetric(std::vector<MElement*> &e){
      if (_technique == meshMetric::HESSIAN){
       H.setMat(hessian);
     }
-    else if (_technique == meshMetric::FREY){
-      SVector3 gr = grads[ver];
-      fullMatrix<double> hfrey(hessian);
-      hfrey(0,0) +=  gr(0)*gr(0)/(hmin*hmin);
-      hfrey(1,1) +=  gr(1)*gr(1)/(hmin*hmin);
-      hfrey(2,2) +=  gr(2)*gr(2)/(hmin*hmin);
-      hfrey(1,0) +=  gr(1)*gr(0)/(hmin*hmin);
-      hfrey(2,0) +=  gr(2)*gr(0)/(hmin*hmin);
-      hfrey(2,1) +=  gr(2)*gr(1)/(hmin*hmin);
-      hfrey(0,1) = hfrey(1,0) ;
-      hfrey(0,2) = hfrey(2,0);
-      hfrey(1,2) = hfrey(2,1); 
+     //See paper Ducrot and Frey: 
+     //Anisotropic levelset adaptation for accurate interface capturing,
+     //ijnmf, 2010
+     else if (_technique == meshMetric::FREY ){
+       SVector3 gr = grads[ver];
+       fullMatrix<double> hfrey(3,3);
+       hfrey(0,0) = 1./(hmax*hmax);
+       hfrey(1,1) = 1./(hmax*hmax);
+       hfrey(2,2) = 1./(hmax*hmax);
+       double divEps = 1./0.01;
+       double norm = gr(0)*gr(0)+gr(1)*gr(1)+gr(2)*gr(2);
+       if (dist < _E && norm != 0.0){
+	 double h = hmin*(hmax/hmin-1)*dist/_E + hmin;
+	 double C = 1./(h*h) -1./(hmax*hmax);
+	 hfrey(0,0) += C*gr(0)*gr(0)/(norm) + hessian(0,0)*divEps; //metric intersection ???
+	 hfrey(1,1) += C*gr(1)*gr(1)/(norm) + hessian(1,1)*divEps;
+	 hfrey(2,2) += C*gr(2)*gr(2)/(norm) + hessian(2,2)*divEps;
+	 hfrey(1,0) = hfrey(0,1) = C*gr(1)*gr(0)/(norm) + hessian(1,0)*divEps;
+	 hfrey(2,0) = hfrey(0,2) = C*gr(2)*gr(0)/(norm) + hessian(2,0)*divEps;
+	 hfrey(2,1) = hfrey(1,2) = C*gr(2)*gr(1)/(norm) + hessian(2,1)*divEps;
+       }
       H.setMat(hfrey);
-    }
-    else if (_technique == meshMetric::LEVELSET){
-      double dist = fabs(vals[ver]);
+     }
+     //See paper Hachem and Coupez: 
+     //Finite element solution to handle complex heat and fluid flows in 
+     //industrial furnaces using the immersed volume technique, ijnmf, 2010
+     else if (_technique == meshMetric::LEVELSET ){
       SVector3 gr = grads[ver];
-      fullMatrix<double> hcoupez(3,3);
-      hcoupez(0,0) = 1./(hmax*hmax);
-      hcoupez(1,1) = 1./(hmax*hmax);
-      hcoupez(2,2) = 1./(hmax*hmax);
-      double norm = sqrt(gr(0)*gr(0)+gr(1)*gr(1)+gr(2)*gr(2));
+      fullMatrix<double> hlevelset(3,3);
+      hlevelset(0,0) = 1./(hmax*hmax);
+      hlevelset(1,1) = 1./(hmax*hmax);
+      hlevelset(2,2) = 1./(hmax*hmax);
+      double norm = gr(0)*gr(0)+gr(1)*gr(1)+gr(2)*gr(2);
       if (dist < _E && norm != 0.0){
-	double C = 1./(hmin*hmin) -1./(hmax*hmax);
-	hcoupez(0,0) += C*gr(0)*gr(0)/norm ;
-	hcoupez(1,1) += C*gr(1)*gr(1)/norm ;
-	hcoupez(2,2) += C*gr(2)*gr(2)/norm ;
-	hcoupez(1,0) = hcoupez(0,1) = C*gr(1)*gr(0)/norm;
-	hcoupez(2,0) = hcoupez(0,2) = C*gr(2)*gr(0)/norm;
-	hcoupez(2,1) = hcoupez(1,2) = C*gr(2)*gr(1)/norm;
+	double h = hmin*(hmax/hmin-1)*dist/_E + hmin;
+	double C = 1./(h*h) -1./(hmax*hmax);
+	hlevelset(0,0) += C*gr(0)*gr(0)/norm ; 
+	hlevelset(1,1) += C*gr(1)*gr(1)/norm ; 
+	hlevelset(2,2) += C*gr(2)*gr(2)/norm ; 
+	hlevelset(1,0) = hlevelset(0,1) = C*gr(1)*gr(0)/norm ; 
+	hlevelset(2,0) = hlevelset(0,2) = C*gr(2)*gr(0)/norm ; 
+	hlevelset(2,1) = hlevelset(1,2) = C*gr(2)*gr(1)/norm ; 
       }
-      else if (dist > _E && dist < 2.*_E  && norm != 0.0){
-	double hmid = (hmax-hmin)/(1.*_E)*dist+(2.*hmin-1.*hmax);
-	double C = 1./(hmid*hmid) -1./(hmax*hmax);
-	hcoupez(0,0) += C*gr(0)*gr(0)/norm ;
-	hcoupez(1,1) += C*gr(1)*gr(1)/norm ;
-	hcoupez(2,2) += C*gr(2)*gr(2)/norm ;
-	hcoupez(1,0) = hcoupez(0,1) = C*gr(1)*gr(0)/norm;
-	hcoupez(2,0) = hcoupez(0,2) = C*gr(2)*gr(0)/norm;
-	hcoupez(2,1) = hcoupez(1,2) = C*gr(2)*gr(1)/norm;
-      }
-      H.setMat(hcoupez);
+      // else if (dist > _E && dist < 2.*_E  && norm != 0.0){
+      // 	double hmid = (hmax-hmin)/(1.*_E)*dist+(2.*hmin-1.*hmax);
+      // 	double C = 1./(hmid*hmid) -1./(hmax*hmax);
+      // 	hlevelset(0,0) += C*gr(0)*gr(0)/norm ; 
+      // 	hlevelset(1,1) += C*gr(1)*gr(1)/norm ; 
+      // 	hlevelset(2,2) += C*gr(2)*gr(2)/norm ; 
+      // 	hlevelset(1,0) = hlevelset(0,1) = C*gr(1)*gr(0)/norm ; 
+      // 	hlevelset(2,0) = hlevelset(0,2) = C*gr(2)*gr(0)/norm ; 
+      // 	hlevelset(2,1) = hlevelset(1,2) = C*gr(2)*gr(1)/norm ; 
+      // }
+      H.setMat(hlevelset);
     }
 
     fullMatrix<double> V(3,3);
@@ -196,6 +207,22 @@ void meshMetric::computeMetric(std::vector<MElement*> &e){
     SVector3 t3 (V(0,2),V(1,2),V(2,2));
   
     SMetric3 metric(lambda1,lambda2,lambda3,t1,t2,t3);
+
+    // if  (_technique == meshMetric::FREY && dist < _E) {
+    //   SMetric3 Hess;
+    //   fullMatrix<double> hessianFrey(hessian);
+    //   hessianFrey.scale(1./0.1);
+    //   Hess.setMat(hessianFrey);
+    //   fullMatrix<double> Vh(3,3);
+    //   fullVector<double> Sh(3);
+    //   Hess.eig(Vh,Sh);
+    //   lambda1 = std::min(std::max(fabs(Sh(0))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin));
+    //   lambda2 = std::min(std::max(fabs(Sh(1))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin));
+    //   lambda3 = (_dim == 3) ? std::min(std::max(fabs(Sh(2))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin)) : 1.;
+    //   SMetric3 inter = intersection(metric, Hess);
+    //   metric = inter;
+    // }
+
     _hessian[ver] = hessian;
     _nodalMetrics[ver] = metric;
     _nodalSizes[ver] = std::min(std::min(1/sqrt(lambda1),1/sqrt(lambda2)),1/sqrt(lambda3));
@@ -230,11 +257,10 @@ void meshMetric::computeMetric(std::vector<MElement*> &e){
   //smoothMetric (sol);
   //curvatureContributionToMetric();
 
+
   putOnNewView();
 
 }
-
-
 
 double meshMetric::operator() (double x, double y, double z, GEntity *ge){
   GModel *gm = _nodalMetrics.begin()->first->onWhat()->model();
@@ -318,7 +344,6 @@ double meshMetric::getLaplacian (MVertex *v){
   double laplace = h(0,0)+h(1,1)+h(2,2);
   return laplace; 
 }
-
 
 /*void dgMeshMetric::curvatureContributionToMetric (){
   std::map<MVertex*,SMetric3>::iterator it = _nodalMetrics.begin();

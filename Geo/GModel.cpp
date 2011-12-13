@@ -524,7 +524,10 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
   meshMetric *mm; 
  
   int ITER = 0;
+  int nbElemsOld = 0;
+  int nbElems;
   while(1){
+    Msg::Info("-- adaptMesh ITER =%d ", ITER);
     std::vector<MElement*> elements;
 
     if (getDim() == 2){
@@ -544,7 +547,8 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
       }
     }
 
-    if (elements.size() == 0)return -1;
+    nbElems = elements.size();
+    if (nbElems == 0)return -1;
 
     double lcmin = parameters.size() >=3 ? parameters[1] : CTX::instance()->mesh.lcMin;
     double lcmax = parameters.size() >=3 ? parameters[2] : CTX::instance()->mesh.lcMax;
@@ -558,7 +562,7 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
       mm = new meshMetric (elements, f, meshMetric::HESSIAN,lcmin,lcmax,0, parameters[0]);
       break;
     case 3 :
-      mm = new meshMetric (elements, f, meshMetric::FREY,lcmin,lcmax,parameters[0], 0);
+      mm = new meshMetric (elements, f, meshMetric::FREY,lcmin,lcmax,parameters[0], 0.01);
       break;
     default : Msg::Error("Unknown Adaptive Strategy");return -1;
     }
@@ -567,10 +571,8 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
     if (getDim() == 2){
       for (fiter fit = firstFace(); fit != lastFace(); ++fit){
 	if((*fit)->geomType() != GEntity::DiscreteSurface){
-	  opt_mesh_lc_from_points(0, GMSH_SET, 0);
-
 	  meshGFaceBamg(*fit);
-	  laplaceSmoothing(*fit,CTX::instance()->mesh.nbSmoothing);
+	  //laplaceSmoothing(*fit,CTX::instance()->mesh.nbSmoothing);
 	}
 	if(_octree) delete _octree;
 	_octree = 0;
@@ -584,7 +586,10 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
       }
     }
     delete mm;
-    if (++ITER > niter) break;
+    if (++ITER >= niter) break;
+    if (fabs((double)(nbElems - nbElemsOld)) < 0.01 * nbElemsOld) break;
+
+    nbElemsOld = nbElems;
 
   }
 

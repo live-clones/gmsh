@@ -414,10 +414,11 @@ Mesh2 *Bamg(Mesh2 *Thh, double * args,double *mm11,double *mm12,double *mm22, bo
     oTh = msh2bamg(*Thh,cutoffradian,nbdfv,ndfv,nbdfe,ndfe,reqedges,reqedges.N());
   }
   else */
-   oTh = msh2bamg(*Thh,cutoffradian,reqedges,reqedges.N());
+
+  oTh = msh2bamg(*Thh,cutoffradian,reqedges,reqedges.N());
   Triangles &Th(*oTh);
 
-  //  printf("COUCOUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU\n");
+  // printf("COUCOUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU\n");
   //  Th.Write("toto.mesh",bamg::Triangles::AutoMesh);  
 
 
@@ -537,7 +538,7 @@ Mesh2 *Bamg(Mesh2 *Thh, double * args,double *mm11,double *mm12,double *mm22, bo
   
   Triangles* nTh = 0;
   
-   //   Th.Write("toto.msh",bamg::Triangles::AutoMesh);
+  // Th.Write("toto.msh",bamg::Triangles::AutoMesh);
 
   if (initialMesh){
     nTh= new Triangles(nbsx,Th.Gh);     
@@ -546,7 +547,7 @@ Mesh2 *Bamg(Mesh2 *Thh, double * args,double *mm11,double *mm12,double *mm22, bo
     nTh= new Triangles(nbsx,Th,KeepBackVertices); // Adaption is here
   }
 
-  //  nTh->Write("tata.mesh",bamg::Triangles::AutoMesh);  
+  //nTh->Write("tata.mesh",bamg::Triangles::AutoMesh);  
 
 
   if (split)
@@ -568,6 +569,7 @@ Mesh2 *Bamg(Mesh2 *Thh, double * args,double *mm11,double *mm12,double *mm22, bo
   for (int iv=0;iv < Th.nbv;iv++)
     Th[iv].m = M;
 
+  //nTh->Write("bamg.mesh",bamg::Triangles::AutoMesh); 
   Mesh2 * g=  bamg2msh(nTh,true);
 
   delete nTh;

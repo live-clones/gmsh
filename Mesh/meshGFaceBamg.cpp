@@ -25,6 +25,7 @@ long verbosity = 0;
 #include "Mesh2.h"
 Mesh2 *Bamg(Mesh2 *Thh, double * args,double *mm11,double *mm12,double *mm22, bool);
 
+
 static void computeMeshMetricsForBamg(GFace *gf, int numV,
                                       Vertex2 *bamgVertices,  
                                       double *mm11, double *mm12, double *mm22)
@@ -120,30 +121,30 @@ void meshGFaceBamg(GFace *gf){
   std::list<GEdge*> edges = gf->edges();
   int numEdges = 0;
   for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); ++it){
-    numEdges += (*it)->lines.size();
+      numEdges += (*it)->lines.size();
   }
-
   Seg *bamgBoundary = new Seg[numEdges];
 
   int count = 0;
   for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); ++it){
     for (unsigned int i = 0; i < (*it)->lines.size(); ++i){
       int nodes [2] = {(*it)->lines[i]->getVertex(0)->getIndex(),
-		       (*it)->lines[i]->getVertex(1)->getIndex()};      
+   		       (*it)->lines[i]->getVertex(1)->getIndex()};      
       bamgBoundary[count].init (bamgVertices, nodes, (*it)->tag());
       bamgBoundary[count++].lab = count;
     }
   }
 
+  // Seg *bamgBoundary = NULL;
+  // numEdges = 0; 
   Mesh2 *bamgMesh = new Mesh2 ( all.size(), gf->triangles.size(), numEdges,
 				bamgVertices, bamgTriangles, bamgBoundary);
 
-  //*************** refine loop here 
   Mesh2 *refinedBamgMesh = 0;
   int iterMax = 11;
   for (int  k= 0; k < iterMax; k++){
     
-    int nbVert = bamgMesh->nv;// all.size();
+    int nbVert = bamgMesh->nv;
     
     double *mm11 = new double[nbVert];
     double *mm12 = new double[nbVert];
@@ -152,7 +153,8 @@ void meshGFaceBamg(GFace *gf){
     for (int i=0;i<256;i++)args[i] = -1.1e100;
     args[16] = CTX::instance()->mesh.anisoMax;
     args[ 7] = CTX::instance()->mesh.smoothRatio;
-    computeMeshMetricsForBamg (gf, nbVert, bamgMesh->vertices , mm11,mm12,mm22); //bamgVertices
+    //args[ 21] = 90.0;//cutoffrad = 90 degree
+    computeMeshMetricsForBamg (gf, nbVert, bamgMesh->vertices , mm11,mm12,mm22); 
     
     try{
       refinedBamgMesh = Bamg(bamgMesh, args, mm11, mm12, mm22, false);
@@ -174,8 +176,7 @@ void meshGFaceBamg(GFace *gf){
     bamgMesh = refinedBamgMesh;
     if (fabs((double)(nTnow - nT)) < 0.01 * nT) break;
   }
- //*************** end for loop refine
-
+  
   std::map<int,MVertex*> yetAnother;
   for (int i = 0; i < refinedBamgMesh->nv; i++){
     Vertex2 &v = refinedBamgMesh->vertices[i];
@@ -203,6 +204,23 @@ void meshGFaceBamg(GFace *gf){
 					  yetAnother[(*refinedBamgMesh)(v2)],
 					  yetAnother[(*refinedBamgMesh)(v3)]));    
   }
+
+  //EMI PRINT TRIS
+  // FILE * fi = fopen("TRIS.pos","w");
+  // fprintf(fi, "View \"\"{\n");
+  // for( int i =0; i< gf->triangles.size(); i++){
+  //     MTriangle *t = gf->triangles[i];
+  //     fprintf(fi, "ST(%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,"
+  //             "%22.15E,%22.15E){%22.15E,%22.15E,%22.15E};\n",
+  //             t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
+  //             t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
+  //             t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
+  //             1., 1., 1.);
+  // }
+  // fprintf(fi,"};\n");
+  // fclose(fi);
+  //END EMI PRINT TRIS
+
   
   if (refinedBamgMesh) delete refinedBamgMesh;
 }

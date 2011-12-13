@@ -262,7 +262,10 @@ void refineMeshMMG(GRegion *gr)
   std::map<int,MVertex*> mmg2gmsh;
   gmsh2MMG (gr, mmg, sol,mmg2gmsh);
   
-  for (int ITER=0;ITER<2;ITER++){
+  int iterMax = 11;
+  for (int ITER=0;ITER<iterMax;ITER++){
+    int nT =  mmg->ne; 
+
     int verb_mmg = (Msg::GetVerbosity() > 9) ? -1 : 0;
     int opt[9] = {1,0,64,0,0,0, verb_mmg , 0,0};
     Msg::Debug("-------- GMSH LAUNCHES MMG3D ---------------");
@@ -270,9 +273,13 @@ void refineMeshMMG(GRegion *gr)
     Msg::Debug("-------- MG3D TERMINATED -------------------");
     // Here we should interact with BGM
     updateSizes(gr,mmg, sol);
+
+    int nTnow  = mmg->ne; 
+    if (fabs((double)(nTnow - nT)) < 0.05 * nT) break;
   }  
-  //char test[] = "test.mesh";  
-  //MMG_saveMesh(mmg, test);
+
+  char test[] = "test.mesh";  
+  MMG_saveMesh(mmg, test);
 
   gr->deleteVertexArrays();
   for (int i=0;i<gr->tetrahedra.size();++i)delete gr->tetrahedra[i];

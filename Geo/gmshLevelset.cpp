@@ -626,30 +626,36 @@ double gLevelsetQuadric::operator()(const double x, const double y, const double
         + 2. * A[1][2] * y * z + A[2][2] * z * z + B[0] * x + B[1] * y + B[2] * z + C);
 }
 
-// gLevelsetPopcorn::gLevelsetPopcorn(int tag) : gLevelsetPrimitive(tag) {
-// }
+gLevelsetPopcorn::gLevelsetPopcorn(double _xc, double _yc, double _zc, double _r0, double _A, double _sigma, int tag) : gLevelsetPrimitive(tag) {
+  A = _A;
+  sigma = _sigma;
+  r0 = _r0;
+  xc = _xc; 
+  yc = _yc;
+  zc = _zc;
+}
 
-// double gLevelsetPopcorn::operator() (const double x, const double y, const double z) const {
-//   double r0 = 0.25;
-//   double r = sqrt((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5));
-//   double  val = r - r0;
-//   for (int k = 0; k< 5; k++){
-//     double xk = r0/sqrt(5)*(2.*cos(2*k*pi/5));
-//     double yk = r0/sqrt(5)*(2.*sin(2*k*pi/5));
-//     double zk = 1.0;
-//     val +=  -4.*exp(((x-0.5-xk)*(x-0.5-xk)+(y-0.5-yk)*(y-0.5-yk)+(z-0.5-zk)*(z-0.5-zk))/0.01);
-//     }
-//   for (int k = 0; k< 5; k++){
-//     xk = r0/sqrt(5)*(2*cos(2*((k-5)-1)*pi/5));
-//     yk = r0/sqrt(5)*(2*sin(2*((k-5)-1)*pi/5));
-//     zk = 1.0;
-//     val += 4.*exp(((x-0.5-xk)*(x-0.5-xk)+(y-0.5-yk)*(y-0.5-yk)+(z-0.5-zk)*(z-0.5-zk))/0.01);
-//   }
-//   val  += -4.*exp(((x-0.5-xk)*(x-0.5-xk)+(y-0.5-yk)*(y-0.5-yk)+(z-0.5-zk)*(z-0.5-zk))/0.01);
-//   val  += -4.*math.exp(((x-0.5)**2+(y-0.5)**2+(z-0.5+r0)**2)/0.01);
-//   return val;
-// }
-
+double gLevelsetPopcorn::operator() (const double x, const double y, const double z) const {
+  double s2 = (sigma)*(sigma);
+  double r = sqrt((x-xc)*(x-xc)+(y-yc)*(y-yc)+(z-zc)*(z-zc));
+  //printf("z=%g zc=%g r=%g \n", z, zc, r);
+  double  val = r - r0;
+  for (int k = 0; k< 5; k++){
+    double xk = r0/sqrt(5.0)*(2.*cos(2*k*M_PI/5.0));
+    double yk = r0/sqrt(5.0)*(2.*sin(2*k*M_PI/5.0));
+    double zk = r0/sqrt(5.0);
+    val -=  A*exp(-((x-xc-xk)*(x-xc-xk)+(y-yc-yk)*(y-yc-yk)+(z-zc-zk)*(z-zc-zk))/s2);
+  }
+  for (int k = 5; k< 10; k++){
+    double xk = r0/sqrt(5.0)*(2.*cos((2.*(k-5.)-1.)*M_PI/5.0));
+    double yk = r0/sqrt(5.0)*(2.*sin((2.*(k-5.)-1.)*M_PI/5.0));
+    double zk = -r0/sqrt(5.0);
+    val -= A*exp(-((x-xc-xk)*(x-xc-xk)+(y-yc-yk)*(y-yc-yk)+(z-zc-zk)*(z-zc-zk))/s2);
+  }
+  val  -= A*exp(-((x-xc)*(x-xc)+(y-yc)*(y-yc)+(z-zc-r0)*(z-zc-r0))/s2);
+  val  -= A*exp(-((x-xc)*(x-xc)+(y-yc)*(y-yc)+(z-zc+r0)*(z-zc+r0))/s2);
+  return val;
+}
 
 gLevelsetMathEval::gLevelsetMathEval(std::string f, int tag) : gLevelsetPrimitive(tag) {
     std::vector<std::string> expressions(1, f);

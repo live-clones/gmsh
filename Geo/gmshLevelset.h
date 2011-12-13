@@ -250,6 +250,19 @@ public:
   int type() const {return QUADRIC;}
 };
 
+class gLevelsetPopcorn: public gLevelsetPrimitive
+{
+  double A;
+  double sigma;
+  double r0;
+  double xc, yc, zc;
+public:
+  gLevelsetPopcorn(double xc, double yc, double zc, double r0, double A, double sigma, int tag=1);
+  ~gLevelsetPopcorn(){}
+  double operator () (const double x, const double y, const double z) const;
+  int type() const { return UNKNOWN; }
+};
+
 class gLevelsetMathEval: public gLevelsetPrimitive
 {
   mathEvaluator *_expr;
