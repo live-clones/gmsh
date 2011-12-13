@@ -117,13 +117,15 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
             y[0].push_back(vy);
           }
           else if(opt->type == PViewOptions::Plot2DSpace){
-            // store offset to origin + distance to first point
+            // compute curvilinear coordinate
             if(x.empty()){
               p0 = SPoint3(xyz[0], xyz[1], xyz[2]);
               x.push_back(ComputeScalarRep(3, xyz));
             }
             else{
-              x.push_back(x[0] + p0.distance(SPoint3(xyz[0], xyz[1], xyz[2])));
+              SPoint3 p1(xyz[0], xyz[1], xyz[2]);
+              x.push_back(x.back() + p0.distance(p1));
+              p0 = p1;
             }
             y[0].push_back(vy);
           }

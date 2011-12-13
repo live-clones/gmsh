@@ -35,19 +35,31 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
   std::vector<double> x, y;
 
   if(name == "Gamma2D"){
-    for(int i = 0; i < 100; i++) y.push_back(FlGui::instance()->stats->quality[0][i]);
+    for(int i = 0; i < 100; i++){
+      x.push_back((double)i / 99);
+      y.push_back(FlGui::instance()->stats->quality[0][i]);
+    }
     new PView("Gamma", "# Elements", x, y);
   }
   else if(name == "Eta2D"){
-    for(int i = 0; i < 100; i++) y.push_back(FlGui::instance()->stats->quality[1][i]);
+    for(int i = 0; i < 100; i++){
+      x.push_back((double)i / 99);
+      y.push_back(FlGui::instance()->stats->quality[1][i]);
+    }
     new PView("Eta", "# Elements", x, y);
   }
   else if(name == "Rho2D"){
-    for(int i = 0; i < 100; i++) y.push_back(FlGui::instance()->stats->quality[2][i]);
+    for(int i = 0; i < 100; i++){
+      x.push_back((double)i / 99);
+      y.push_back(FlGui::instance()->stats->quality[2][i]);
+    }
     new PView("Rho", "# Elements", x, y);
   }
   else if(name == "Disto2D"){
-    for(int i = 0; i < 100; i++) y.push_back(FlGui::instance()->stats->quality[3][i]);
+    for(int i = 0; i < 100; i++){
+      x.push_back((double)i / 99);
+      y.push_back(FlGui::instance()->stats->quality[3][i]);
+    }
     new PView("Disto", "# Elements", x, y);
   }
   else{
