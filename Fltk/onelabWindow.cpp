@@ -164,8 +164,8 @@ bool onelab::localNetworkClient::run(const std::string &what)
       break;
     case GmshSocket::GMSH_PARAMETER:
       {
-        std::string type, name;
-        onelab::parameter::getTypeAndNameFromChar(message, type, name);
+        std::string version, type, name;
+        onelab::parameter::getInfoFromChar(message, version, type, name);
         if(type == "number"){
           onelab::number p;
           p.fromChar(message);
@@ -182,8 +182,8 @@ bool onelab::localNetworkClient::run(const std::string &what)
       break;
     case GmshSocket::GMSH_PARAMETER_QUERY:
       {
-        std::string type, name, reply;
-        onelab::parameter::getTypeAndNameFromChar(message, type, name);
+        std::string version, type, name, reply;
+        onelab::parameter::getInfoFromChar(message, version, type, name);
         if(type == "number"){
           std::vector<onelab::number> par;
           get(par, name);

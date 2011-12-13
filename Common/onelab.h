@@ -113,10 +113,11 @@ namespace onelab{
         if(out[i] == charSep()) out[i] = ' ';
       return out;
     }
+    std::string getOnelabVersion() const { return "1.0"; }
     virtual std::string toChar() const
     {
       std::ostringstream sstream;
-      sstream << getType() << charSep() 
+      sstream << getOnelabVersion() << charSep() << getType() << charSep() 
               << sanitize(getName()) << charSep() 
               << sanitize(getShortHelp()) << charSep() 
               << sanitize(getHelp()) << charSep() 
@@ -134,6 +135,7 @@ namespace onelab{
     virtual std::string::size_type fromChar(const std::string &msg)
     {
       std::string::size_type pos = 0;
+      if(getNextToken(msg, pos) != getOnelabVersion()) return 0;
       if(getNextToken(msg, pos) != getType()) return 0;
       setName(getNextToken(msg, pos));
       setShortHelp(getNextToken(msg, pos));
@@ -159,10 +161,11 @@ namespace onelab{
       first = (last == std::string::npos) ? last : last + 1;
       return next;
     }
-    static void getTypeAndNameFromChar(const std::string &msg, std::string &type, 
-                                       std::string &name)
+    static void getInfoFromChar(const std::string &msg, std::string &version, 
+                                std::string &type, std::string &name)
     {
       std::string::size_type first = 0;
+      version = getNextToken(msg, first);
       type = getNextToken(msg, first);
       name = getNextToken(msg, first);
     }
