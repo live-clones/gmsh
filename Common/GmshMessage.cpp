@@ -620,15 +620,18 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
       o.setMin(fopt["Min"][0]); o.setMax(fopt["Max"][0]);
     }
     else if(fopt.count("Min")){
-      o.setMin(fopt["Min"][0]); o.setMax(1.e200);
+      o.setMin(fopt["Min"][0]); o.setMax(onelab::parameter::maxNumber());
     }
     else if(fopt.count("Max")){
-      o.setMax(fopt["Max"][0]); o.setMin(-1.e200);
+      o.setMax(fopt["Max"][0]); o.setMin(-onelab::parameter::maxNumber());
     }
     if(fopt.count("Step")) o.setStep(fopt["Step"][0]);
     if(fopt.count("Choices")) o.setChoices(fopt["Choices"]);
     if(copt.count("Help")) o.setHelp(copt["Help"][0]);
     if(copt.count("ShortHelp")) o.setShortHelp(copt["ShortHelp"][0]);
+    if(copt.count("Loop")) o.setAttribute("Loop", copt["Loop"][0]);
+    if(copt.count("GraphX")) o.setAttribute("GraphX", copt["GraphX"][0]);
+    if(copt.count("GraphY")) o.setAttribute("GraphY", copt["GraphY"][0]);
     _onelabClient->set(o);
   }
 }
