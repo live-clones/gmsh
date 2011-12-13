@@ -158,7 +158,6 @@ Knots			return tNurbsKnots;
 
 Length                  return tLength;
 Line                    return tLine;
-Loop                    return tLoop;
 Log                     return tLog;
 Log10                   return tLog10;
 Layers                  return tLayers;

@@ -113,7 +113,7 @@ fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
 %token tUsing tPlugin tDegenerated
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset
-%token tLoop tRecombine tSmoother tSplit tDelete tCoherence tIntersect
+%token tRecombine tSmoother tSplit tDelete tCoherence tIntersect
 %token tLayers tHole tAlias tAliasWithOptions
 %token tQuadTriDbl tQuadTriSngl tRecombLaterals tTransfQuadTri
 %token tText2D tText3D tInterpolationScheme  tTime tCombine
@@ -1350,7 +1350,7 @@ Shape :
       $$.Type = MSH_SEGM_NURBS;
       $$.Num = num;
     }
-  | tLine tLoop '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tLine tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
       if(FindEdgeLoop(num)){
@@ -1364,6 +1364,7 @@ Shape :
 	List_Delete(temp);
       }
       List_Delete($7);
+      Free($2);
       $$.Type = MSH_SEGM_LOOP;
       $$.Num = num;
     }
@@ -1534,7 +1535,7 @@ Shape :
       $$.Type = 0;
       $$.Num = num;
     }
-  | tSurface tLoop '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tSurface tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
       if(FindSurfaceLoop(num)){
@@ -1547,6 +1548,7 @@ Shape :
 	List_Delete(temp);
       }
       List_Delete($7);
+      Free($2);
       $$.Type = MSH_SURF_LOOP;
       $$.Num = num;
     }
