@@ -26,6 +26,7 @@ class onelabWindow{
   std::vector<Fl_Widget*> _treeWidgets;
   std::string _title;
   std::string _modelExtension;
+  bool _stop;
  public:
   onelabWindow(int deltaFontSize=0);
   int x(){ return _win->x(); }
@@ -34,7 +35,7 @@ class onelabWindow{
   void rebuildTree();
   void redrawTree(){ _tree->redraw(); }
   void activate();
-  void deactivate();
+  void deactivate(const std::string &how);
   void show(){ _win->show(); }
   int shown(){ return _win->shown(); }
   std::string getModelExtension(){ return _modelExtension; }
@@ -49,6 +50,8 @@ class onelabWindow{
   void addSolver(const std::string &name, const std::string &commandLine,
                  int index);
   void removeSolver(const std::string &name);
+  void checkForErrors(const std::string &client);
+  bool stop(){ return _stop; }
 };
 
 void onelab_cb(Fl_Widget *w, void *data);

@@ -410,19 +410,6 @@ static bool incrementLoop()
   return ret;
 }
 
-static bool stopOnError(const std::string &client)
-{
-  if(Msg::GetErrorCount() > 0 && !CTX::instance()->expertMode){
-    Msg::ResetErrorCounter();
-    std::string msg
-      (client + " reported an error: do you really want to continue?\n\n"
-       "(To disable this warning in the future, select `Enable expert mode'\n"
-       "in the option dialog.)");
-    if(Msg::GetAnswer(msg.c_str(), 1, "Stop", "Continue") == 0) return true;
-  }
-  return false;
-}
-
 static std::vector<double> getRange(onelab::number &p)
 {
   std::vector<double> v;
@@ -505,6 +492,11 @@ void onelab_cb(Fl_Widget *w, void *data)
   if(!data) return;
   std::string action((const char*)data);
 
+  if(action == "stop"){
+    FlGui::instance()->onelab->deactivate("kill");
+    return;
+  }
+
   if(action == "reset"){
     // clear everything except model names
     std::vector<onelab::string> modelNames;
@@ -524,11 +516,9 @@ void onelab_cb(Fl_Widget *w, void *data)
     action = "check";
   }
 
-  FlGui::instance()->onelab->deactivate();
+  FlGui::instance()->onelab->deactivate("stop");
 
   if(action == "compute") initializeLoop();
-
-  bool stop = false;
 
   do{ // enter computation loop
 
@@ -579,8 +569,9 @@ void onelab_cb(Fl_Widget *w, void *data)
         onelab::server::instance()->setChanged(false, "Gmsh");
       }
     }
-    stop = stopOnError("Gmsh");
-    if(stop) break;
+
+    FlGui::instance()->onelab->checkForErrors("Gmsh");
+    if(FlGui::instance()->onelab->stop()) break;
     
     // Iterate over all other clients
     for(onelab::server::citer it = onelab::server::instance()->firstClient();
@@ -605,14 +596,15 @@ void onelab_cb(Fl_Widget *w, void *data)
         c->kill();
       }
       
-      stop = stopOnError(c->getName());
-      if(stop) break;
+      FlGui::instance()->onelab->checkForErrors(c->getName());
+      if(FlGui::instance()->onelab->stop()) break;
     }
 
     updateOnelabGraphs();
     FlGui::instance()->onelab->rebuildTree();
 
-  } while(action == "compute" && incrementLoop() && !stop);
+  } while(!FlGui::instance()->onelab->stop() && action == "compute" && 
+          incrementLoop());
 
   FlGui::instance()->onelab->activate();
   FlGui::instance()->onelab->show();
@@ -708,7 +700,7 @@ static void onelab_dump_cb(Fl_Widget *w, void *data)
   printf("ONELAB dump:\n%s\n", onelab::server::instance()->toChar().c_str());
 }
 
-onelabWindow::onelabWindow(int deltaFontSize)
+onelabWindow::onelabWindow(int deltaFontSize) : _stop(false)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
@@ -869,17 +861,32 @@ void onelabWindow::rebuildSolverList()
   _win->label(_title.c_str());
 }
 
+void onelabWindow::checkForErrors(const std::string &client)
+{
+  if(Msg::GetErrorCount() > 0 && !CTX::instance()->expertMode){
+    Msg::ResetErrorCounter();
+    std::string msg
+      (client + " reported an error: do you really want to continue?\n\n"
+       "(To disable this warning in the future, select `Enable expert mode'\n"
+       "in the option dialog.)");
+    if(Msg::GetAnswer(msg.c_str(), 1, "Stop", "Continue") == 0)
+      _stop = true;
+  }
+}
+
 void onelabWindow::activate()
 {
+  _stop = false;
   _butt[0]->label("Compute");
   _butt[0]->callback(onelab_cb, (void*)"compute");
   _butt[1]->activate(); 
 }
 
-void onelabWindow::deactivate()
+void onelabWindow::deactivate(const std::string &how)
 {
-  _butt[0]->label("Kill");
-  _butt[0]->callback(onelab_cb, (void*)"kill");
+  _stop = (how == "stop") ? false : true;
+  _butt[0]->label((how == "stop") ?  "Stop" : "Kill");
+  _butt[0]->callback(onelab_cb, (how == "stop") ? (void*)"stop" : (void*)"kill");
   _butt[1]->deactivate();
 }
 
