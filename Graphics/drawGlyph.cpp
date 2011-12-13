@@ -15,6 +15,7 @@
 void drawContext::drawString(const std::string &s, const std::string &font_name,
                              int font_enum, int font_size, int align)
 {
+  if(s.empty()) return;
   if(CTX::instance()->printing && !CTX::instance()->print.text) return;
 
   GLboolean valid;
