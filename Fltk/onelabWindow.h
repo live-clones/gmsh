@@ -26,6 +26,7 @@ class onelabWindow{
   std::vector<Fl_Widget*> _treeWidgets;
   std::string _title;
   std::string _modelExtension;
+  int _deltaFontSize;
   bool _stop;
  public:
   onelabWindow(int deltaFontSize=0);

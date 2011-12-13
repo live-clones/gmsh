@@ -281,7 +281,7 @@ FlGui::FlGui(int argc, char **argv) : _openedThroughMacFinder(false)
   meshContext = new meshContextWindow(CTX::instance()->deltaFontSize);
   about = new aboutWindow();
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
-  onelab = new onelabWindow();
+  onelab = new onelabWindow(CTX::instance()->deltaFontSize);
 #endif
 
   // init solver plugin stuff

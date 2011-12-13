@@ -324,7 +324,7 @@ static void initializeLoop(std::string level)
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers);
   for(unsigned int i = 0; i < numbers.size(); i++){
-    if(numbers[i].getAttribute("loop") == level){
+    if(numbers[i].getAttribute("Loop") == level){
       if(numbers[i].getChoices().size() > 1){
         numbers[i].setValue(numbers[i].getChoices()[0]);
         onelab::server::instance()->set(numbers[i]);
@@ -351,7 +351,7 @@ static bool incrementLoop(std::string level)
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers);
   for(unsigned int i = 0; i < numbers.size(); i++){
-    if(numbers[i].getAttribute("loop") == level){
+    if(numbers[i].getAttribute("Loop") == level){
       loop = true;
       if(numbers[i].getChoices().size() > 1){
         // FIXME should store loopVariable attribute in the parameter
@@ -454,11 +454,11 @@ static void updateOnelabGraph(std::string num)
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers);
   for(unsigned int i = 0; i < numbers.size(); i++){
-    if(numbers[i].getAttribute("graph_x") == num){
+    if(numbers[i].getAttribute("GraphX") == num){
       x = getRange(numbers[i]);
       xName = getShortName(numbers[i].getName(), numbers[i].getShortHelp());
     }
-    if(numbers[i].getAttribute("graph_y") == num){
+    if(numbers[i].getAttribute("GraphY") == num){
       y = getRange(numbers[i]);
       yName = getShortName(numbers[i].getName(), numbers[i].getShortHelp());
     }
@@ -570,7 +570,8 @@ void onelab_cb(Fl_Widget *w, void *data)
       }
     }
 
-    FlGui::instance()->onelab->checkForErrors("Gmsh");
+    if(action == "compute")
+      FlGui::instance()->onelab->checkForErrors("Gmsh");
     if(FlGui::instance()->onelab->stop()) break;
     
     // Iterate over all other clients
@@ -596,7 +597,8 @@ void onelab_cb(Fl_Widget *w, void *data)
         c->kill();
       }
       
-      FlGui::instance()->onelab->checkForErrors(c->getName());
+      if(action == "compute")
+        FlGui::instance()->onelab->checkForErrors(c->getName());
       if(FlGui::instance()->onelab->stop()) break;
     }
 
@@ -636,9 +638,9 @@ static void onelab_input_range_cb(Fl_Widget *w, void *data)
     numbers[0].setMax(o->maximum());
     numbers[0].setStep(o->step());
     numbers[0].setChoices(o->choices());
-    numbers[0].setAttribute("loop", o->loop());
-    numbers[0].setAttribute("graph_x", o->graph_x());
-    numbers[0].setAttribute("graph_y", o->graph_y());
+    numbers[0].setAttribute("Loop", o->loop());
+    numbers[0].setAttribute("GraphX", o->graph_x());
+    numbers[0].setAttribute("GraphY", o->graph_y());
     onelab::server::instance()->set(numbers[0]);
     updateOnelabGraphs();
   }
@@ -700,9 +702,10 @@ static void onelab_dump_cb(Fl_Widget *w, void *data)
   printf("ONELAB dump:\n%s\n", onelab::server::instance()->toChar().c_str());
 }
 
-onelabWindow::onelabWindow(int deltaFontSize) : _stop(false)
+onelabWindow::onelabWindow(int deltaFontSize)
+  : _deltaFontSize(deltaFontSize), _stop(false)
 {
-  FL_NORMAL_SIZE -= deltaFontSize;
+  FL_NORMAL_SIZE -= _deltaFontSize;
 
   int width = 29 * FL_NORMAL_SIZE;
   int height = 15 * BH + 3 * WB;
@@ -739,11 +742,13 @@ onelabWindow::onelabWindow(int deltaFontSize) : _stop(false)
     (CTX::instance()->solverPosition[0], CTX::instance()->solverPosition[1]);
   _win->end();
 
-  FL_NORMAL_SIZE += deltaFontSize;
+  FL_NORMAL_SIZE += _deltaFontSize;
 }
 
 void onelabWindow::rebuildTree()
 {
+  FL_NORMAL_SIZE -= _deltaFontSize;
+
   int width = (int)(0.5 * _tree->w());
 
   _tree->clear();
@@ -780,9 +785,9 @@ void onelabWindow::rebuildTree()
       but->maximum(numbers[i].getMax());
       but->step(numbers[i].getStep());
       but->choices(numbers[i].getChoices());
-      but->loop(numbers[i].getAttribute("loop"));
-      but->graph_x(numbers[i].getAttribute("graph_x"));
-      but->graph_y(numbers[i].getAttribute("graph_y"));
+      but->loop(numbers[i].getAttribute("Loop"));
+      but->graph_x(numbers[i].getAttribute("GraphX"));
+      but->graph_y(numbers[i].getAttribute("GraphY"));
       but->align(FL_ALIGN_RIGHT);
       but->callback(onelab_input_range_cb, (void*)n);
       but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
@@ -838,6 +843,8 @@ void onelabWindow::rebuildTree()
   }
   
   _tree->redraw();
+
+  FL_NORMAL_SIZE += _deltaFontSize;
 }
 
 void onelabWindow::rebuildSolverList()
