@@ -143,24 +143,10 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
   if(x.empty()) return false;
 
   if(space){
-    bool monotone = true;
+    xmin = xmax = x[0];
     for(unsigned int i = 1; i < x.size(); i++){
-      if(x[i] < x[i - 1]){
-        monotone = false;
-        break;
-      }
-    }
-    if(opt->type == PViewOptions::Plot2D || monotone){ // use the "coordinate"
-      xmin = xmax = x[0];
-      for(unsigned int i = 1; i < x.size(); i++){
-        xmin = std::min(xmin, x[i]);
-        xmax = std::max(xmax, x[i]);
-      }
-    }
-    else{ // just use an index
-      for(unsigned int i = 0; i < x.size(); i++) x[i] = i;
-      xmin = 0;
-      xmax = x.size() - 1;
+      xmin = std::min(xmin, x[i]);
+      xmax = std::max(xmax, x[i]);
     }
   }
   else{
@@ -228,7 +214,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     sprintf(label, "%s", data->getName().c_str());
   glRasterPos2d(xleft, ytop + font_h + tic);
   ctx->drawStringCenter(label);
-  
+
   // x label
   sprintf(label, "%s", opt->axesLabel[0].c_str());
   glRasterPos2d(xleft + width / 2, ytop - height - 2 * font_h - 2 * tic);
