@@ -138,23 +138,33 @@ void meshMetric::computeMetric(std::vector<MElement*> &e){
      //ijnmf, 2010
      else if (_technique == meshMetric::FREY ){
        SVector3 gr = grads[ver];
-       fullMatrix<double> hfrey(3,3);
-       hfrey(0,0) = 1./(hmax*hmax);
-       hfrey(1,1) = 1./(hmax*hmax);
-       hfrey(2,2) = 1./(hmax*hmax);
+       SMetric3 hfrey(1./(hmax*hmax));
        double divEps = 1./0.01;
        double norm = gr(0)*gr(0)+gr(1)*gr(1)+gr(2)*gr(2);
        if (dist < _E && norm != 0.0){
 	 double h = hmin*(hmax/hmin-1)*dist/_E + hmin;
 	 double C = 1./(h*h) -1./(hmax*hmax);
-	 hfrey(0,0) += C*gr(0)*gr(0)/(norm) + hessian(0,0)*divEps; //metric intersection ???
-	 hfrey(1,1) += C*gr(1)*gr(1)/(norm) + hessian(1,1)*divEps;
-	 hfrey(2,2) += C*gr(2)*gr(2)/(norm) + hessian(2,2)*divEps;
-	 hfrey(1,0) = hfrey(0,1) = C*gr(1)*gr(0)/(norm) + hessian(1,0)*divEps;
-	 hfrey(2,0) = hfrey(0,2) = C*gr(2)*gr(0)/(norm) + hessian(2,0)*divEps;
-	 hfrey(2,1) = hfrey(1,2) = C*gr(2)*gr(1)/(norm) + hessian(2,1)*divEps;
+	 /*	 hfrey(0,0) += C*gr(0)*gr(0)/(norm) + hessian(0,0)*divEps; //metric intersection ???
+		 hfrey(1,1) += C*gr(1)*gr(1)/(norm) + hessian(1,1)*divEps;
+		 hfrey(2,2) += C*gr(2)*gr(2)/(norm) + hessian(2,2)*divEps;
+		 hfrey(1,0) = hfrey(0,1) = C*gr(1)*gr(0)/(norm) + hessian(1,0)*divEps;
+		 hfrey(2,0) = hfrey(0,2) = C*gr(2)*gr(0)/(norm) + hessian(2,0)*divEps;
+		 hfrey(2,1) = hfrey(1,2) = C*gr(2)*gr(1)/(norm) + hessian(2,1)*divEps;
+	 */
+	 hfrey(0,0) += C*gr(0)*gr(0)/(norm) ;
+	 hfrey(1,1) += C*gr(1)*gr(1)/(norm) ;
+	 hfrey(2,2) += C*gr(2)*gr(2)/(norm) ;
+	 hfrey(1,0) = C*gr(1)*gr(0)/(norm) ;
+	 hfrey(2,0) = C*gr(2)*gr(0)/(norm) ;
+	 hfrey(2,1) = C*gr(2)*gr(1)/(norm) ;	 	 
        }
-      H.setMat(hfrey);
+       SMetric3 sss; sss.setMat(hessian);
+       sss *= divEps;
+       sss(0,0) += 1/(hmax*hmax);
+       sss(1,1) += 1/(hmax*hmax);
+       sss(2,2) += 1/(hmax*hmax);
+
+       H = intersection(sss,hfrey);
      }
      //See paper Hachem and Coupez: 
      //Finite element solution to handle complex heat and fluid flows in 
@@ -196,7 +206,7 @@ void meshMetric::computeMetric(std::vector<MElement*> &e){
     double lambda1 = S(0);
     double lambda2 = S(1); 
     double lambda3 = (_dim == 3)? S(2) : 1.; 
-    if (_technique != meshMetric::LEVELSET){
+    if (_technique == meshMetric::HESSIAN || (dist < _E && _technique == meshMetric::FREY)){
       lambda1 = std::min(std::max(fabs(S(0))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin));
       lambda2 = std::min(std::max(fabs(S(1))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin));
       lambda3 = (_dim == 3) ? std::min(std::max(fabs(S(2))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin)) : 1.;
