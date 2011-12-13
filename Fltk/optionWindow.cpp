@@ -2632,6 +2632,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"3D", 0, 0, 0},
         {"2D space", 0, 0, 0},
         {"2D time", 0, 0, 0},
+        {"2D", 0, 0, 0},
         {0}
       };
       view.choice[13] = new Fl_Choice

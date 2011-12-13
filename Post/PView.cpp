@@ -85,14 +85,8 @@ PView::PView(std::string xname, std::string yname,
 {
   _init();
   PViewDataList *data = new PViewDataList();
-  for(unsigned int i = 0; i < y.size(); i++){
-    if(x.size() == y.size()){
-      data->SP.push_back(x[i]);
-    }
-    else{
-      double d = y.size() > 1 ? (double)i / (double)(y.size() - 1) : 0.;
-      data->SP.push_back(d);
-    }
+  for(unsigned int i = 0; i < std::min(x.size(), y.size()); i++){
+    data->SP.push_back(x[i]);
     data->SP.push_back(0.);
     data->SP.push_back(0.);
     data->SP.push_back(y[i]);
@@ -103,7 +97,7 @@ PView::PView(std::string xname, std::string yname,
   data->finalize();
   _data = data;
   _options = new PViewOptions(PViewOptions::reference);
-  _options->type = PViewOptions::Plot2DSpace;
+  _options->type = PViewOptions::Plot2D;
   _options->axes = 2;
   _options->axesLabel[0] = xname;
 }

@@ -57,7 +57,8 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
   if(data->hasMultipleMeshes()) return false; // cannot handle multi-mesh
 
   int numy = 0;
-  if(opt->type == PViewOptions::Plot2DSpace){
+  if(opt->type == PViewOptions::Plot2D || 
+     opt->type == PViewOptions::Plot2DSpace){
     numy = 1;
   }
   else if(opt->type == PViewOptions::Plot2DTime){
@@ -76,7 +77,8 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
   if(!numy) return false;
   y.resize(numy);
 
-  bool space = (opt->type == PViewOptions::Plot2DSpace);
+  bool space = (opt->type == PViewOptions::Plot2D || 
+                opt->type == PViewOptions::Plot2DSpace);
 
   SPoint3 p0(0., 0., 0.);
 
@@ -109,7 +111,12 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
           for(int k = 0; k < numComp; k++)
             data->getValue(ts, ent, ele, reorder[j], k, val[k]);
           double vy = ComputeScalarRep(numComp, val);
-          if(space){
+
+          if(opt->type == PViewOptions::Plot2D){
+            x.push_back(xyz[0]);
+            y[0].push_back(vy);
+          }
+          else if(opt->type == PViewOptions::Plot2DSpace){
             // store offset to origin + distance to first point
             if(x.empty()){
               p0 = SPoint3(xyz[0], xyz[1], xyz[2]);
@@ -124,6 +131,7 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
             if(!numy) x.push_back(data->getTime(ts));
             y[numy].push_back(vy);
           }
+
         }
       }
       numy++;
@@ -140,7 +148,7 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
         break;
       }
     }
-    if(monotone){ // use the "coordinate"
+    if(opt->type == PViewOptions::Plot2D || monotone){ // use the "coordinate"
       xmin = xmax = x[0];
       for(unsigned int i = 1; i < x.size(); i++){
         xmin = std::min(xmin, x[i]);
@@ -200,7 +208,8 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   glEnd();
 
   // y label
-  if(opt->type == PViewOptions::Plot2DSpace){
+  if(opt->type == PViewOptions::Plot2D ||
+     opt->type == PViewOptions::Plot2DSpace){
     int nt = data->getNumTimeSteps();
     if((opt->showTime == 1 && nt > 1) || opt->showTime == 2){
       char tmp[256];

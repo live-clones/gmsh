@@ -18,7 +18,8 @@ class PViewOptions {
   enum PlotType {
     Plot3D = 1,
     Plot2DSpace = 2,
-    Plot2DTime = 3
+    Plot2DTime = 3,
+    Plot2D = 4
   };
   enum IntervalsType {
     Iso = 1,

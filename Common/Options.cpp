@@ -6343,7 +6343,7 @@ double opt_view_type(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->type = (int)val;
-    if(opt->type < 1 || opt->type > 3)
+    if(opt->type < 1 || opt->type > 4)
       opt->type = 1;
     if(view) view->setChanged(true);
   }

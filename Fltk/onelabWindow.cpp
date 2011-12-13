@@ -476,11 +476,11 @@ static void updateOnelabGraph(std::string num)
       yName = getShortName(numbers[i].getName(), numbers[i].getShortHelp());
     }
   }
-  if(x.size() != y.size()){
-    x.clear(); xName.clear();
+  if(x.empty()){
+    xName.clear();
     for(unsigned int i = 0; i < y.size(); i++) x.push_back(i);
   }
-  if(y.size()){
+  if(x.size() && y.size()){
     PView *v = new PView(xName, yName, x, y);
     v->getData()->setFileName("ONELAB" + num);
     v->getOptions()->intervalsType = PViewOptions::Discrete;
