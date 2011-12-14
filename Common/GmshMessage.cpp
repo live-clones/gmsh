@@ -611,29 +611,32 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(ps.size()){ // use value from server
     val[0] = ps[0].getValue();
   }
-  else{ // send value to server
-    onelab::number o(name, val[0]);
-    if(fopt.count("Range") && fopt["Range"].size() == 2){
-      o.setMin(fopt["Range"][0]); o.setMax(fopt["Range"][1]);
-    }
-    else if(fopt.count("Min") && fopt.count("Max")){
-      o.setMin(fopt["Min"][0]); o.setMax(fopt["Max"][0]);
-    }
-    else if(fopt.count("Min")){
-      o.setMin(fopt["Min"][0]); o.setMax(onelab::parameter::maxNumber());
-    }
-    else if(fopt.count("Max")){
-      o.setMax(fopt["Max"][0]); o.setMin(-onelab::parameter::maxNumber());
-    }
-    if(fopt.count("Step")) o.setStep(fopt["Step"][0]);
-    if(fopt.count("Choices")) o.setChoices(fopt["Choices"]);
-    if(copt.count("Help")) o.setHelp(copt["Help"][0]);
-    if(copt.count("ShortHelp")) o.setShortHelp(copt["ShortHelp"][0]);
-    if(copt.count("Loop")) o.setAttribute("Loop", copt["Loop"][0]);
-    if(copt.count("GraphX")) o.setAttribute("GraphX", copt["GraphX"][0]);
-    if(copt.count("GraphY")) o.setAttribute("GraphY", copt["GraphY"][0]);
-    _onelabClient->set(o);
+  else{
+    ps.resize(1);
+    ps[0].setName(name);
+    ps[0].setValue(val[0]);
   }
+  // send updated parameter to server
+  if(fopt.count("Range") && fopt["Range"].size() == 2){
+    ps[0].setMin(fopt["Range"][0]); ps[0].setMax(fopt["Range"][1]);
+  }
+  else if(fopt.count("Min") && fopt.count("Max")){
+    ps[0].setMin(fopt["Min"][0]); ps[0].setMax(fopt["Max"][0]);
+  }
+  else if(fopt.count("Min")){
+    ps[0].setMin(fopt["Min"][0]); ps[0].setMax(onelab::parameter::maxNumber());
+  }
+  else if(fopt.count("Max")){
+    ps[0].setMax(fopt["Max"][0]); ps[0].setMin(-onelab::parameter::maxNumber());
+  }
+  if(fopt.count("Step")) ps[0].setStep(fopt["Step"][0]);
+  if(fopt.count("Choices")) ps[0].setChoices(fopt["Choices"]);
+  if(copt.count("Help")) ps[0].setHelp(copt["Help"][0]);
+  if(copt.count("ShortHelp")) ps[0].setShortHelp(copt["ShortHelp"][0]);
+  if(copt.count("Loop")) ps[0].setAttribute("Loop", copt["Loop"][0]);
+  if(copt.count("GraphX")) ps[0].setAttribute("GraphX", copt["GraphX"][0]);
+  if(copt.count("GraphY")) ps[0].setAttribute("GraphY", copt["GraphY"][0]);
+  _onelabClient->set(ps[0]);
 }
 
 void Msg::FinalizeOnelab()
