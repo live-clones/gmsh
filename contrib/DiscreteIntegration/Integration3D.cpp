@@ -9,7 +9,7 @@
 #include "polynomialBasis.h"
 #include "GmshDefines.h" 
 
-#define ZERO_LS_TOL  1.e-3
+#define ZERO_LS_TOL  1.e-9
 #define EQUALITY_TOL 1.e-15
 
 // cross product
