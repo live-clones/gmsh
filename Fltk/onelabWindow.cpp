@@ -699,7 +699,10 @@ static void onelab_remove_solver_cb(Fl_Widget *w, void *data)
 
 static void onelab_dump_cb(Fl_Widget *w, void *data)
 {
-  printf("ONELAB dump:\n%s\n", onelab::server::instance()->toChar().c_str());
+  std::string db = onelab::server::instance()->toChar();
+  for(unsigned int i = 0; i < db.size(); i++)
+    if(db[i] == onelab::parameter::charSep()) db[i] = '|';
+  printf("ONELAB dump:\n%s\n", db.c_str());
 }
 
 onelabWindow::onelabWindow(int deltaFontSize)

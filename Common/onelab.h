@@ -104,7 +104,7 @@ namespace onelab{
       return _attributes; 
     }
     const std::set<std::string> &getClients() const { return _clients; }
-    static char charSep() { return '|' /* '\0' */; }
+    static char charSep() { return '\0'; }
     static double maxNumber() { return 1e200; }
     std::string sanitize(const std::string &in) const
     {
