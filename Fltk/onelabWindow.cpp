@@ -492,11 +492,6 @@ void onelab_cb(Fl_Widget *w, void *data)
   if(!data) return;
   std::string action((const char*)data);
 
-  if(action == "stop"){
-    FlGui::instance()->onelab->deactivate("kill");
-    return;
-  }
-
   if(action == "reset"){
     // clear everything except model names
     std::vector<onelab::string> modelNames;
@@ -593,9 +588,6 @@ void onelab_cb(Fl_Widget *w, void *data)
         if(ps.size()) what += " " + ps[0].getValue();
         c->run(what);
       }
-      else if(action == "kill"){
-        c->kill();
-      }
       
       if(action == "compute")
         FlGui::instance()->onelab->checkForErrors(c->getName());
@@ -608,8 +600,33 @@ void onelab_cb(Fl_Widget *w, void *data)
   } while(!FlGui::instance()->onelab->stop() && action == "compute" && 
           incrementLoop());
 
+  FlGui::instance()->onelab->stop(false);
   FlGui::instance()->onelab->activate();
   FlGui::instance()->onelab->show();
+}
+
+void onelab_stop_cb(Fl_Widget *w, void *data)
+{
+  if(!data) return;
+  std::string action((const char*)data);
+
+  FlGui::instance()->onelab->stop(true);
+
+  if(action == "stop"){
+    FlGui::instance()->onelab->deactivate("kill");
+    return;
+  }
+
+  // Iterate over all other clients
+  for(onelab::server::citer it = onelab::server::instance()->firstClient();
+      it != onelab::server::instance()->lastClient(); it++){
+    onelab::client *c = it->second;
+    if(c->getName() == "Gmsh" || // local Gmsh client
+       c->getName() == "Listen" || // unknown client connecting through "-listen"
+       c->getName() == "GmshRemote") // distant post-processing Gmsh client
+      continue;
+    c->kill();
+  }
 }
 
 static void onelab_check_button_cb(Fl_Widget *w, void *data)
@@ -886,7 +903,6 @@ void onelabWindow::checkForErrors(const std::string &client)
 
 void onelabWindow::activate()
 {
-  _stop = false;
   _butt[0]->label("Compute");
   _butt[0]->callback(onelab_cb, (void*)"compute");
   _butt[1]->activate(); 
@@ -894,9 +910,8 @@ void onelabWindow::activate()
 
 void onelabWindow::deactivate(const std::string &how)
 {
-  _stop = (how == "stop") ? false : true;
-  _butt[0]->label((how == "stop") ?  "Stop" : "Kill");
-  _butt[0]->callback(onelab_cb, (how == "stop") ? (void*)"stop" : (void*)"kill");
+  _butt[0]->label(how == "stop" ?  "Stop" : "Kill");
+  _butt[0]->callback(onelab_stop_cb, (how == "stop") ? (void*)"stop" : (void*)"kill");
   _butt[1]->deactivate();
 }
 

@@ -53,6 +53,7 @@ class onelabWindow{
   void removeSolver(const std::string &name);
   void checkForErrors(const std::string &client);
   bool stop(){ return _stop; }
+  void stop(bool val){ _stop = val; }
 };
 
 void onelab_cb(Fl_Widget *w, void *data);
