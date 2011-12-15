@@ -530,7 +530,6 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
 
   if (meshAll){
   
-    meshMetric *bgm = 0;
     FieldManager *fields = getFields();
     fields->reset();
     while(1){
@@ -545,10 +544,8 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
       if (++ITER >= niter)  break;
       if (ITER > 5 && fabs((double)(nbElems - nbElemsOld)) < 0.005 * nbElemsOld) break;
 	
-      //if(bgm) delete bgm ; //do not do this since we have already deleted the field
-      bgm = new meshMetric(this, technique, f, parameters);
       int id = fields->newId();
-      (*fields)[id] = bgm;
+      (*fields)[id] = new meshMetric(this, technique, f, parameters);;
       fields->background_field = id;
             
       std::for_each(firstEdge(), lastEdge(), deMeshGEdge());
@@ -558,7 +555,6 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
       nbElemsOld = nbElems;
       
     }
-    //if (bgm) delete bgm;
   }
 
   else{
