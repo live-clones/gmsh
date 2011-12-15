@@ -100,7 +100,6 @@ class FieldManager : public std::map<int, Field*> {
   int boundaryLayer_field;
   // compatibility with -bgm
   void setBackgroundMesh(int iView);
-  inline void printField(){ for(std::map<int, Field *>::iterator it = begin(); it != end(); it++) printf("id=%d %d\n", it->first);};
 };
 
 // Boundary Layer Field (used both for anisotropic meshing and BL

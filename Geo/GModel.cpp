@@ -550,8 +550,7 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
       int id = fields->newId();
       (*fields)[id] = bgm;
       fields->background_field = id;
-      fields->printField();
-      
+            
       std::for_each(firstEdge(), lastEdge(), deMeshGEdge());
       std::for_each(firstFace(), lastFace(), deMeshGFace());
       std::for_each(firstRegion(), lastRegion(), deMeshGRegion());
