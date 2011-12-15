@@ -76,7 +76,7 @@ void meshGFaceBamg(GFace *gf){
   Vertex2 *bamgVertices = new Vertex2[all.size()];
   int index = 0;
   for(std::set<MVertex*>::iterator it = all.begin(); it!=all.end(); ++it){
-    if ((*it)->onWhat()->dim() < 2){
+    if ((*it)->onWhat()->dim() <= 1){
       SPoint2 p;
       bool success = reparamMeshVertexOnFace(*it, gf, p);
       bamgVertices[index][0] = p.x();
@@ -123,8 +123,8 @@ void meshGFaceBamg(GFace *gf){
   for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); ++it){
       numEdges += (*it)->lines.size();
   }
-  Seg *bamgBoundary = new Seg[numEdges];
 
+  Seg *bamgBoundary = new Seg[numEdges];
   int count = 0;
   for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); ++it){
     for (unsigned int i = 0; i < (*it)->lines.size(); ++i){

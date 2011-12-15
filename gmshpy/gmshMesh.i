@@ -12,6 +12,7 @@
   #include "meshPartitionOptions.h"
   #include "Levy3D.h"
   #include "meshPartition.h"
+  #include "meshMetric.h"
 %}
 
 %include "GmshConfig.h"
@@ -22,3 +23,4 @@
 %include "meshPartitionOptions.h"
 %include "Levy3D.h"
 %include "meshPartition.h"
+%include "meshMetric.h"

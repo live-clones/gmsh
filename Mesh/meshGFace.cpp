@@ -1123,7 +1123,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       bowyerWatson(gf);
     else {
       bowyerWatson(gf);
-      printf("in bamg *** \n");
       meshGFaceBamg(gf);
     }
     laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);

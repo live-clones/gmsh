@@ -353,7 +353,7 @@ int MMG_ratio(pMesh mesh, pSol sol,char* firaoame) {
   if(inm) fclose(inm);
   
   /* print histo ratio obtained*/
-  if (mesh->info.imprim == 0){
+  if (mesh->info.imprim < 0){
     fprintf(stdout,"        ANISOTROPIC RATIO (MEAN = %6.2g, MAX = %6.2g, MIN = %6.2f)\n",rapavg / rapnum, rapmax, rapmin);
   }
   else if (mesh->info.imprim < 0){

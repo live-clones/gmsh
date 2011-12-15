@@ -271,6 +271,8 @@ void refineMeshMMG(GRegion *gr)
     Msg::Debug("-------- GMSH LAUNCHES MMG3D ---------------");
     mmg3d::MMG_mmg3dlib(opt,mmg,sol); 
     Msg::Debug("-------- MG3D TERMINATED -------------------");
+    Msg::Info("MMG3D succeeded %d vertices %d tetrahedra",
+	      mmg->np, mmg->ne);
     // Here we should interact with BGM
     updateSizes(gr,mmg, sol);
 
@@ -278,8 +280,8 @@ void refineMeshMMG(GRegion *gr)
     if (fabs((double)(nTnow - nT)) < 0.05 * nT) break;
   }  
 
-  char test[] = "test.mesh";  
-  MMG_saveMesh(mmg, test);
+  //char test[] = "test.mesh";  
+  //MMG_saveMesh(mmg, test);
 
   gr->deleteVertexArrays();
   for (int i=0;i<gr->tetrahedra.size();++i)delete gr->tetrahedra[i];

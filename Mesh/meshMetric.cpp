@@ -4,6 +4,7 @@
 #include "GEntity.h"
 #include "GModel.h"
 #include "gmshLevelset.h"
+#include "MElementOctree.h"
 
 static void increaseStencil(MVertex *v, v2t_cont &adj, std::vector<MElement*> &lt){
   std::set<MElement*> stencil;
@@ -22,14 +23,47 @@ static void increaseStencil(MVertex *v, v2t_cont &adj, std::vector<MElement*> &l
   lt.insert(lt.begin(),stencil.begin(),stencil.end());
 }
 
-meshMetric::meshMetric ( std::vector<MElement*> &elements, simpleFunction<double> *fct,  meshMetric::MetricComputationTechnique technique, double lcmin, double lcmax, double E, double eps)
-  : _technique(technique), _epsilon(eps), _E(E), _fct(fct), hmax(lcmax),hmin(lcmin) 
-{
-  _dim = elements[0]->getDim();
-  computeMetric(elements);
-  //printMetric("toto.pos");
-}
+meshMetric::meshMetric(GModel *gm, int technique, simpleFunction<double> *fct, std::vector<double> parameters): _fct(fct){
 
+  _dim  = gm->getDim();
+  std::map<int, MVertex*> vertexMap;
+  std::map<MElement*, MElement*> newP;
+  std::map<MElement*, MElement*> newD;
+
+  if (_dim == 2){
+    for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); ++fit){
+      for (int i=0;i<(*fit)->getNumMeshElements();i++){
+  	MElement *e = (*fit)->getMeshElement(i);
+  	MElement *copy = e->copy(vertexMap, newP, newD);
+  	_elements.push_back(copy);
+      }
+    }
+  }
+  else if (_dim == 3){
+    for (GModel::riter rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit){
+      for (int i=0;i<(*rit)->getNumMeshElements();i++){
+  	MElement *e = (*rit)->getMeshElement(i);
+  	MElement *copy = e->copy(vertexMap, newP, newD);
+  	_elements.push_back(copy);
+      }
+    }
+  }
+
+  _octree = new MElementOctree(_elements); 
+  hmin = parameters.size() >=3 ? parameters[1] : CTX::instance()->mesh.lcMin;
+  hmax = parameters.size() >=3 ? parameters[2] : CTX::instance()->mesh.lcMax;
+  
+  _E = parameters[0];
+  _epsilon = parameters[0];
+  _technique =  (MetricComputationTechnique)technique;
+ 
+  computeMetric();
+  //printMetric("toto.pos");
+
+}
+meshMetric::~meshMetric(){
+  if (_octree) delete _octree;
+}
 
 void meshMetric::computeValues( v2t_cont adj){
 
@@ -51,12 +85,12 @@ void meshMetric::computeHessian( v2t_cont adj){
     while (it != adj.end()) {
       std::vector<MElement*> lt = it->second;      
       MVertex *ver = it->first;
-      while (lt.size() < 7) increaseStencil(ver,adj,lt);
-      if ( ver->onWhat()->dim() < _dim ){
-	while (lt.size() < 12){
-	  increaseStencil(ver,adj,lt);
-	}
-      }
+      while (lt.size() < 10) increaseStencil(ver,adj,lt);
+      // if ( ver->onWhat()->dim() < _dim ){
+      // 	while (lt.size() < 12){
+      // 	  increaseStencil(ver,adj,lt);
+      // 	}
+      // }
       
       fullMatrix<double> A  (lt.size(),DIM);
       fullMatrix<double> AT (DIM,lt.size());
@@ -103,12 +137,12 @@ void meshMetric::computeHessian( v2t_cont adj){
   }
    
 }
-void meshMetric::computeMetric(std::vector<MElement*> &e){
+void meshMetric::computeMetric(){
   
   v2t_cont adj;
-  buildVertexToElement (e,adj);
+  buildVertexToElement (_elements,adj);
 
-  //printf("%d elements are considered in the metric \n",e.size());
+  printf("%d elements are considered in the meshMetric \n",_elements.size());
 
   computeValues(adj);
   computeHessian(adj);
@@ -142,7 +176,7 @@ void meshMetric::computeMetric(std::vector<MElement*> &e){
        double divEps = 1./0.01;
        double norm = gr(0)*gr(0)+gr(1)*gr(1)+gr(2)*gr(2);
        if (dist < _E && norm != 0.0){
-	 double h = hmin*(hmax/hmin-1)*dist/_E + hmin;
+	 double h = hmin*(hmax/hmin-1.0)*dist/_E + hmin;
 	 double C = 1./(h*h) -1./(hmax*hmax);
 	 /*	 hfrey(0,0) += C*gr(0)*gr(0)/(norm) + hessian(0,0)*divEps; //metric intersection ???
 		 hfrey(1,1) += C*gr(1)*gr(1)/(norm) + hessian(1,1)*divEps;
@@ -154,16 +188,15 @@ void meshMetric::computeMetric(std::vector<MElement*> &e){
 	 hfrey(0,0) += C*gr(0)*gr(0)/(norm) ;
 	 hfrey(1,1) += C*gr(1)*gr(1)/(norm) ;
 	 hfrey(2,2) += C*gr(2)*gr(2)/(norm) ;
-	 hfrey(1,0) = C*gr(1)*gr(0)/(norm) ;
-	 hfrey(2,0) = C*gr(2)*gr(0)/(norm) ;
-	 hfrey(2,1) = C*gr(2)*gr(1)/(norm) ;	 	 
+	 hfrey(1,0) = hfrey(0,1) = C*gr(1)*gr(0)/(norm) ;
+	 hfrey(2,0) = hfrey(0,2) = C*gr(2)*gr(0)/(norm) ;
+	 hfrey(2,1) = hfrey(1,2) = C*gr(2)*gr(1)/(norm) ;	 	 
        }
        SMetric3 sss; sss.setMat(hessian);
        sss *= divEps;
        sss(0,0) += 1/(hmax*hmax);
        sss(1,1) += 1/(hmax*hmax);
        sss(2,2) += 1/(hmax*hmax);
-
        H = intersection(sss,hfrey);
      }
      //See paper Hachem and Coupez: 
@@ -171,7 +204,7 @@ void meshMetric::computeMetric(std::vector<MElement*> &e){
      //industrial furnaces using the immersed volume technique, ijnmf, 2010
      else if (_technique == meshMetric::LEVELSET ){
       SVector3 gr = grads[ver];
-      fullMatrix<double> hlevelset(3,3);
+      fullMatrix<double> hlevelset(3,3); 
       hlevelset(0,0) = 1./(hmax*hmax);
       hlevelset(1,1) = 1./(hmax*hmax);
       hlevelset(2,2) = 1./(hmax*hmax);
@@ -273,12 +306,10 @@ void meshMetric::computeMetric(std::vector<MElement*> &e){
 }
 
 double meshMetric::operator() (double x, double y, double z, GEntity *ge){
-  GModel *gm = _nodalMetrics.begin()->first->onWhat()->model();
-  SPoint3 xyz(x,y,z),uvw;
-
+  SPoint3 xyz(x,y,z), uvw;
   double initialTol = MElement::getTolerance();
   MElement::setTolerance(1.e-4); 
-  MElement *e = gm->getMeshElementByCoord(xyz,_dim);    
+  MElement *e = _octree->find(x, y, z, _dim);  
   MElement::setTolerance(initialTol);
   if (e){
     e->xyz2uvw(xyz,uvw);
@@ -295,13 +326,11 @@ double meshMetric::operator() (double x, double y, double z, GEntity *ge){
 
 void meshMetric::operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge){
   metr = SMetric3(1.e-22);
-  GModel *gm = _nodalMetrics.begin()->first->onWhat()->model();
-  SPoint3 xyz(x,y,z),uvw;
+  SPoint3 xyz(x,y,z), uvw;
   double initialTol = MElement::getTolerance();
   MElement::setTolerance(1.e-4); 
-  MElement *e = gm->getMeshElementByCoord(xyz,_dim);    
+  MElement *e = _octree->find(x, y, z, _dim);   
   MElement::setTolerance(initialTol);
-
 
   if (e){
     e->xyz2uvw(xyz,uvw);
@@ -320,7 +349,6 @@ void meshMetric::operator() (double x, double y, double z, SMetric3 &metr, GEnti
   }
 }
 
-// FIXME !!!!!!!!! 2 be fixed !!!
 void meshMetric::setAsBackgroundMesh (GModel *gm){
   FieldManager *fields = gm->getFields();
   int id = fields->newId();

@@ -340,6 +340,7 @@ class MElement
   virtual MElement *copy(std::map<int, MVertex*> &vertexMap,
                          std::map<MElement*, MElement*> &newParents,
                          std::map<MElement*, MElement*> &newDomains);
+
 };
 
 class MElementFactory{

@@ -34,6 +34,9 @@
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "Options.h"
+#include "meshGEdge.h"
+#include "meshGFace.h"
+#include "meshGRegion.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"
@@ -516,81 +519,105 @@ int GModel::mesh(int dimension)
 }
 
 
-int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<double> parameters)
+int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<double> parameters, bool meshAll)
 {
 #if defined(HAVE_MESH)
 
-  if (getNumMeshElements() == 0) mesh(getDim());
-  meshMetric *mm; 
- 
   int ITER = 0;
   int nbElemsOld = 0;
   int nbElems;
-  while(1){
-    Msg::Info("-- adaptMesh ITER =%d ", ITER);
-    std::vector<MElement*> elements;
+  int niter = parameters.size() >=4 ? (int) parameters[3] : 3;
 
-    if (getDim() == 2){
-      for (fiter fit = firstFace(); fit != lastFace(); ++fit){
-	if ((*fit)->quadrangles.size())return -1;
-	for (int i=0;i<(*fit)->triangles.size();i++){
-	  elements.push_back((*fit)->triangles[i]);
+  if (meshAll){
+  
+    meshMetric *bgm = 0;
+    FieldManager *fields = getFields();
+    fields->reset();
+    while(1){
+      Msg::Info("-- adaptMesh (allDim) ITER =%d ", ITER);
+
+      opt_mesh_algo2d(0, GMSH_SET, 7.0); //bamg
+      opt_mesh_algo3d(0, GMSH_SET, 7.0); //mmg3d
+      GenerateMesh(this, getDim());
+      nbElems = getNumMeshElements();
+
+      if (fields) fields->deleteField(1);
+      if (++ITER >= niter)  break;
+      if (ITER > 5 && fabs((double)(nbElems - nbElemsOld)) < 0.005 * nbElemsOld) break;
+	
+      //if(bgm) delete bgm ; //do not do this since we have already deleted the field
+      bgm = new meshMetric(this, technique, f, parameters);
+      int id = fields->newId();
+      (*fields)[id] = bgm;
+      fields->background_field = id;
+      fields->printField();
+      
+      std::for_each(firstEdge(), lastEdge(), deMeshGEdge());
+      std::for_each(firstFace(), lastFace(), deMeshGFace());
+      std::for_each(firstRegion(), lastRegion(), deMeshGRegion());
+
+      nbElemsOld = nbElems;
+      
+    }
+    //if (bgm) delete bgm;
+  }
+
+  else{
+
+    if (getNumMeshElements() == 0) mesh(getDim());
+    meshMetric *mm; 
+
+    while(1) {
+      Msg::Info("-- adaptMesh ITER =%d ", ITER);
+      std::vector<MElement*> elements;
+
+      if (getDim() == 2){
+	for (fiter fit = firstFace(); fit != lastFace(); ++fit){
+	  if ((*fit)->quadrangles.size())return -1;
+	  for (int i=0;i<(*fit)->triangles.size();i++){
+	    elements.push_back((*fit)->triangles[i]);
+	  }
 	}
       }
-    }
-    else if (getDim() == 3){
-      for (riter rit = firstRegion(); rit != lastRegion(); ++rit){
-	if ((*rit)->hexahedra.size())return -1;
-	for (int i=0;i<(*rit)->tetrahedra.size();i++){
-	  elements.push_back((*rit)->tetrahedra[i]);
+      else if (getDim() == 3){
+	for (riter rit = firstRegion(); rit != lastRegion(); ++rit){
+	  if ((*rit)->hexahedra.size())return -1;
+	  for (int i=0;i<(*rit)->tetrahedra.size();i++){
+	    elements.push_back((*rit)->tetrahedra[i]);
+	  }
 	}
       }
-    }
 
-    nbElems = elements.size();
-    if (nbElems == 0)return -1;
+      nbElems = elements.size();
+      if (nbElems == 0)return -1;
 
-    double lcmin = parameters.size() >=3 ? parameters[1] : CTX::instance()->mesh.lcMin;
-    double lcmax = parameters.size() >=3 ? parameters[2] : CTX::instance()->mesh.lcMax;
-    int niter = parameters.size() >=4 ? (int) parameters[3] : 3;
+      mm = new meshMetric(this, technique, f, parameters);
+      mm->setAsBackgroundMesh (this);
 
-    switch(technique){
-    case 1 : 
-      mm = new meshMetric (elements, f, meshMetric::LEVELSET,lcmin,lcmax,parameters[0], 0);
-      break;
-    case 2 :
-      mm = new meshMetric (elements, f, meshMetric::HESSIAN,lcmin,lcmax,0, parameters[0]);
-      break;
-    case 3 :
-      mm = new meshMetric (elements, f, meshMetric::FREY,lcmin,lcmax,parameters[0], 0.01);
-      break;
-    default : Msg::Error("Unknown Adaptive Strategy");return -1;
-    }
-    // the background mesh is the mesh metric
-    mm->setAsBackgroundMesh (this);
-    if (getDim() == 2){
-      for (fiter fit = firstFace(); fit != lastFace(); ++fit){
-	if((*fit)->geomType() != GEntity::DiscreteSurface){
-	  meshGFaceBamg(*fit);
-	  //laplaceSmoothing(*fit,CTX::instance()->mesh.nbSmoothing);
+      if (getDim() == 2){
+	for (fiter fit = firstFace(); fit != lastFace(); ++fit){
+	  if((*fit)->geomType() != GEntity::DiscreteSurface){
+	    meshGFaceBamg(*fit);
+	    laplaceSmoothing(*fit,CTX::instance()->mesh.nbSmoothing);
+	  }
+	  if(_octree) delete _octree;
+	  _octree = 0;
 	}
-	if(_octree) delete _octree;
-	_octree = 0;
       }
-    }
-    else if (getDim() == 3){
-      for (riter rit = firstRegion(); rit != lastRegion(); ++rit){
-	refineMeshMMG(*rit);
-	if(_octree) delete _octree;
-	_octree = 0;
+      else if (getDim() == 3){
+	for (riter rit = firstRegion(); rit != lastRegion(); ++rit){
+	  refineMeshMMG(*rit);
+	  if(_octree) delete _octree;
+	  _octree = 0;
+	}
       }
+      delete mm;
+      if (++ITER >= niter) break;
+      if (fabs((double)(nbElems - nbElemsOld)) < 0.01 * nbElemsOld) break;
+
+      nbElemsOld = nbElems;
+
     }
-    delete mm;
-    if (++ITER >= niter) break;
-    if (fabs((double)(nbElems - nbElemsOld)) < 0.01 * nbElemsOld) break;
-
-    nbElemsOld = nbElems;
-
   }
 
   return 0;

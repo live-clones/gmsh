@@ -155,14 +155,14 @@ MMG_nvoltot=0;
       if ( dd < 5 || dd < 0.05*nd )   break;
       else if ( it > 12 && nd >= na )  break;
     }
-    if ( na + nd > 0 && abs(mesh->info.imprim) > 2 )
+    if ( na + nd > 0 && mesh->info.imprim )
       fprintf(stdout,"     %8d INSERTED   %8d REMOVED   %8d FILTERED\n",
               na,nd,nf);
     }
     while ( na+nd > 0 && ++it < maxtou );
 
 
-  if ( nna+nnd && abs(mesh->info.imprim) < 3 ) {
+  if ( nna+nnd && mesh->info.imprim ) {
     fprintf(stdout,"     %7d INSERTED  %7d REMOVED  %7d FILTERED\n",nna,nnd,nf);
   }
 

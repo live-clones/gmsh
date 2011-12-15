@@ -1095,7 +1095,7 @@ MElement *MElement::copy(std::map<int, MVertex*> &vertexMap,
       if(vertexMap.count(numV))
         vmv.push_back(vertexMap[numV]);
       else {
-        MVertex *mv = new MVertex(v->x(), v->y(), v->z(), 0, numV);
+        MVertex *mv = new MVertex(v->x(), v->y(), v->z(), 0, numV); 
         vmv.push_back(mv);
         vertexMap[numV] = mv;
       }
