@@ -597,7 +597,7 @@ void onelab_cb(Fl_Widget *w, void *data)
     updateOnelabGraphs();
     FlGui::instance()->onelab->rebuildTree();
 
-  } while(!FlGui::instance()->onelab->stop() && action == "compute" && 
+  } while(action == "compute" && !FlGui::instance()->onelab->stop() && 
           incrementLoop());
 
   FlGui::instance()->onelab->stop(false);
@@ -614,18 +614,11 @@ void onelab_stop_cb(Fl_Widget *w, void *data)
 
   if(action == "stop"){
     FlGui::instance()->onelab->deactivate("kill");
-    return;
   }
-
-  // Iterate over all other clients
-  for(onelab::server::citer it = onelab::server::instance()->firstClient();
-      it != onelab::server::instance()->lastClient(); it++){
-    onelab::client *c = it->second;
-    if(c->getName() == "Gmsh" || // local Gmsh client
-       c->getName() == "Listen" || // unknown client connecting through "-listen"
-       c->getName() == "GmshRemote") // distant post-processing Gmsh client
-      continue;
-    c->kill();
+  else{
+    for(onelab::server::citer it = onelab::server::instance()->firstClient();
+        it != onelab::server::instance()->lastClient(); it++)
+      it->second->kill();
   }
 }
 
@@ -910,8 +903,14 @@ void onelabWindow::activate()
 
 void onelabWindow::deactivate(const std::string &how)
 {
-  _butt[0]->label(how == "stop" ?  "Stop" : "Kill");
-  _butt[0]->callback(onelab_stop_cb, (how == "stop") ? (void*)"stop" : (void*)"kill");
+  if(how == "stop"){
+    _butt[0]->label("Stop");
+    _butt[0]->callback(onelab_stop_cb, (void*)"stop");
+  }
+  else{
+    _butt[0]->label("Kill");
+    _butt[0]->callback(onelab_stop_cb, (void*)"kill");
+  }
   _butt[1]->deactivate();
 }
 
