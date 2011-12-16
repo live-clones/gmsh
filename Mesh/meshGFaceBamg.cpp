@@ -67,16 +67,45 @@ static void computeMeshMetricsForBamg(GFace *gf, int numV,
 
 void meshGFaceBamg(GFace *gf){
 
+ //printf("meshGFaceBamg face=%d \n",gf->tag());
+ 
+ //Replace edges by their compounds
+  std::list<GEdge*> edges = gf->edges();
+  std::set<GEdge*> mySet;
+  std::list<GEdge*>::iterator it = edges.begin();
+  while(it != edges.end()){
+    if((*it)->getCompound()){
+      GEdge *gec = (GEdge*)(*it)->getCompound();
+      mySet.insert(gec);
+    }
+    else{ 
+      mySet.insert(*it);
+    }
+    ++it;
+  }
+  edges.clear();
+  edges.insert(edges.begin(), mySet.begin(), mySet.end());
+
+  std::set<MVertex*> bcVertex;
+  for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
+    for (unsigned int i = 0; i < (*it)->lines.size(); i++){
+      bcVertex.insert((*it)->lines[i]->getVertex(0));
+      bcVertex.insert((*it)->lines[i]->getVertex(1));
+    }
+  }
+
   std::set<MVertex*> all;
   std::map<int,MVertex*> recover;
   for (unsigned int i = 0; i < gf->triangles.size(); i++){
     for (unsigned int j = 0; j < 3; j++) 
       all.insert(gf->triangles[i]->getVertex(j));
   }
+  printf("all.size=%d \n", all.size());
   Vertex2 *bamgVertices = new Vertex2[all.size()];
   int index = 0;
-  for(std::set<MVertex*>::iterator it = all.begin(); it!=all.end(); ++it){
-    if ((*it)->onWhat()->dim() <= 1){
+  //for(std::set<MVertex*>::iterator it = all.begin(); it!=all.end(); ++it){
+  // if ((*it)->onWhat()->dim() <= 1){  
+  for(std::set<MVertex*>::iterator it = bcVertex.begin(); it!=bcVertex.end(); ++it){
       SPoint2 p;
       bool success = reparamMeshVertexOnFace(*it, gf, p);
       bamgVertices[index][0] = p.x();
@@ -85,7 +114,8 @@ void meshGFaceBamg(GFace *gf){
       recover[index] = *it;
       (*it)->setIndex(index++);
     }
-  }
+  //}
+
   int nbFixedVertices = index;
   for(std::set<MVertex*>::iterator it = all.begin(); it!=all.end(); ++it){
     // FIXME : SEAMS should have to be taken into account here !!!
@@ -118,7 +148,7 @@ void meshGFaceBamg(GFace *gf){
     }
     bamgTriangles[i].init(bamgVertices, nodes, gf->tag());
   }
-  std::list<GEdge*> edges = gf->edges();
+  //std::list<GEdge*> edges = gf->edges();
   int numEdges = 0;
   for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); ++it){
       numEdges += (*it)->lines.size();

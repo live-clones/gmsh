@@ -117,7 +117,7 @@ void computeLevelset(GModel *gm, cartesianBox<double> &box)
     nodes.push_back(box.getNodeCoordinates(it->first));
     indices.push_back(it->first);
   }
-  Msg::Info("  %d nodes in the grid at level %d", (int)nodes.size(), box.getLevel());
+  //Msg::Info("  %d nodes in the grid at level %d", (int)nodes.size(), box.getLevel());
   std::vector<double> dist, localdist;
   std::vector<SPoint3> dummy;
   for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++){
@@ -690,7 +690,7 @@ gLevelsetDistGeom::gLevelsetDistGeom(std::string geomBox, std::string name, int 
   double sampling = std::min(rmax, std::min(lx, std::min(ly, lz)));
   double rtube = std::max(lx, std::max(ly, lz))*2.;
 
-  Msg::Info("Filling coarse point cloud on surfaces");
+  //FILLING POINTS FROM GEOMBOX
   std::vector<SPoint3> points;
   std::vector<SPoint3> refinePoints;
   for(GModel::viter vit = gmg->firstVertex(); vit != gmg->lastVertex(); vit++){
@@ -708,7 +708,7 @@ gLevelsetDistGeom::gLevelsetDistGeom(std::string geomBox, std::string name, int 
     }
   }
 
-  //FOR DISCRETE GEOMETRIES
+  //FILLING POINTS FROM STL
   for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++){
     for(unsigned int k = 0; k < (*fit)->getNumMeshVertices(); k++){ 
       MVertex  *vf = (*fit)->getMeshVertex(k);
@@ -732,7 +732,6 @@ gLevelsetDistGeom::gLevelsetDistGeom(std::string geomBox, std::string name, int 
   //for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++)
   //   (*fit)->fillPointCloud(sampling, &points);
 
-  Msg::Info("  %d points in the surface cloud", (int)points.size());
   if (points.size() == 0) {Msg::Fatal("No points on surfaces \n"); };
 
   SBoundingBox3d bb;
@@ -747,42 +746,41 @@ gLevelsetDistGeom::gLevelsetDistGeom(std::string geomBox, std::string name, int 
   if(NY < 2) NY = 2;
   if(NZ < 2) NZ = 2;
 
-  Msg::Info("  bounding box min: %g %g %g -- max: %g %g %g",
-            bb.min().x(), bb.min().y(), bb.min().z(),
-            bb.max().x(), bb.max().y(), bb.max().z());
-  Msg::Info("  Nx=%d Ny=%d Nz=%d", NX, NY, NZ);
+  // Msg::Info("  bounding box min: %g %g %g -- max: %g %g %g",
+  //           bb.min().x(), bb.min().y(), bb.min().z(),
+  //           bb.max().x(), bb.max().y(), bb.max().z());
+  // Msg::Info("  Nx=%d Ny=%d Nz=%d", NX, NY, NZ);
   
   _box = new cartesianBox<double>(bb.min().x(), bb.min().y(), bb.min().z(), 
 				 SVector3(range.x(), 0, 0),
 				 SVector3(0, range.y(), 0),
 				 SVector3(0, 0, range.z()),
 				 NX, NY, NZ, levels);
-  Msg::Info("Inserting the active cells in the cartesian grid");
-  for (int i = 0; i < NX; i++)
+   for (int i = 0; i < NX; i++)
     for (int j = 0; j < NY; j++)
       for (int k = 0; k < NZ; k++)
         _box->insertActiveCell(_box->getCellIndex(i, j, k));
 
   cartesianBox<double> *parent = _box, *child;
   while((child = parent->getChildBox())){
-    Msg::Info("  level %d ", child->getLevel());
+    //Msg::Info("  level %d ", child->getLevel());
     for(unsigned int i = 0; i < refinePoints.size(); i++)
       insertActiveCells(refinePoints[i].x(), refinePoints[i].y(), refinePoints[i].z(), 
                          rtube / pow(2., (levels - child->getLevel())), *child);
     parent = child;
   }
 
-  Msg::Info("Removing cells to match mesh topology constraints");
+  //Msg::Info("Removing cells to match mesh topology constraints");
   removeBadChildCells(_box);
   removeParentCellsWithChildren(_box);
 
-  Msg::Info("Initializing nodal values in the cartesian grid");
+  //Msg::Info("Initializing nodal values in the cartesian grid");
   _box->createNodalValues();
 
-  Msg::Info("Computing levelset on the cartesian grid");  
+  //Msg::Info("Computing levelset on the cartesian grid");  
   computeLevelset(gm, *_box);
 
-  Msg::Info("Renumbering mesh vertices across levels");
+  //Msg::Info("Renumbering mesh vertices across levels");
   _box->renumberNodes();
   
   _box->writeMSH("yeah.msh", false);
