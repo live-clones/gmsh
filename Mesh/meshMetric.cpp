@@ -62,7 +62,7 @@ meshMetric::meshMetric(GModel *gm, int technique, simpleFunction<double> *fct, s
 
 }
 meshMetric::~meshMetric(){
-  if (_octree) delete _octree;
+  //if (_octree) delete _octree;
 }
 
 void meshMetric::computeValues( v2t_cont adj){

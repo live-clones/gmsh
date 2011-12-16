@@ -537,10 +537,12 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
 
       opt_mesh_algo2d(0, GMSH_SET, 7.0); //bamg
       opt_mesh_algo3d(0, GMSH_SET, 7.0); //mmg3d
+      opt_mesh_lc_from_points(0, GMSH_SET, 0.0); //do not mesh lines with lc
       GenerateMesh(this, getDim());
       nbElems = getNumMeshElements();
 
-      if (fields) fields->deleteField(1);
+      //if (fields) fields->deleteField(1);
+      fields->reset();
       if (++ITER >= niter)  break;
       if (ITER > 5 && fabs((double)(nbElems - nbElemsOld)) < 0.005 * nbElemsOld) break;
 	
@@ -555,6 +557,7 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
       nbElemsOld = nbElems;
       
     }
+    fields->reset();
   }
 
   else{
