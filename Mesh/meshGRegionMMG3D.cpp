@@ -74,9 +74,9 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
     mmg->nt += (*it)->triangles.size();
   }
   
-  mmg->npmax = sol->npmax = 1000000;
-  mmg->ntmax = 700000;
-  mmg->nemax = 7000000;
+  mmg->npmax = sol->npmax = 100000;
+  mmg->ntmax = 70000;
+  mmg->nemax = 700000;
 
   mmg->point = (MMG_pPoint)calloc(mmg->npmax+1,sizeof(MMG_Point));
   mmg->tetra = (MMG_pTetra)calloc(mmg->nemax+1,sizeof(MMG_Tetra));
@@ -245,6 +245,7 @@ static void freeMMG(MMG_pMesh mmgMesh, MMG_pSol mmgSol)
   //  free(mmgMesh->disp->alpha);
   //  free(mmgMesh->disp->mv);
   free(mmgMesh->disp);
+  free(mmgMesh->adja);
   free(mmgMesh->tria);
   free(mmgMesh->tetra);
   free(mmgMesh);
