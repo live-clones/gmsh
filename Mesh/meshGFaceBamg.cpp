@@ -67,8 +67,6 @@ static void computeMeshMetricsForBamg(GFace *gf, int numV,
 
 void meshGFaceBamg(GFace *gf){
 
- //printf("meshGFaceBamg face=%d \n",gf->tag());
- 
  //Replace edges by their compounds
   std::list<GEdge*> edges = gf->edges();
   std::set<GEdge*> mySet;
@@ -94,14 +92,16 @@ void meshGFaceBamg(GFace *gf){
     }
   }
 
+  //fill mesh data fo bamg (bamgVertices, bamgTriangles, bamgBoundary)
   std::set<MVertex*> all;
   std::map<int,MVertex*> recover;
   for (unsigned int i = 0; i < gf->triangles.size(); i++){
     for (unsigned int j = 0; j < 3; j++) 
       all.insert(gf->triangles[i]->getVertex(j));
   }
-  printf("all.size=%d \n", all.size());
-  Vertex2 *bamgVertices = new Vertex2[all.size()];
+
+  
+  Vertex2 *bamgVertices = new Vertex2[bcVertex.size()+all.size()]; //all.size()];
   int index = 0;
   //for(std::set<MVertex*>::iterator it = all.begin(); it!=all.end(); ++it){
   // if ((*it)->onWhat()->dim() <= 1){  
@@ -113,12 +113,12 @@ void meshGFaceBamg(GFace *gf){
       bamgVertices[index].lab = index;
       recover[index] = *it;
       (*it)->setIndex(index++);
-    }
-  //}
+    //}
+  }
 
-  int nbFixedVertices = index;
-  for(std::set<MVertex*>::iterator it = all.begin(); it!=all.end(); ++it){
-    // FIXME : SEAMS should have to be taken into account here !!!
+int nbFixedVertices = index;
+ for(std::set<MVertex*>::iterator it = all.begin(); it!=all.end(); ++it){
+   // FIXME : SEAMS should have to be taken into account here !!!
     if ((*it)->onWhat()->dim() >= 2){
       SPoint2 p;
       bool success = reparamMeshVertexOnFace(*it, gf, p);
@@ -127,7 +127,7 @@ void meshGFaceBamg(GFace *gf){
       recover[index] = *it;
       (*it)->setIndex(index++);
     }
-  }
+ }
 
   Triangle2 *bamgTriangles = new Triangle2[gf->triangles.size()];
   for (unsigned int i = 0; i < gf->triangles.size(); i++){    
@@ -148,7 +148,6 @@ void meshGFaceBamg(GFace *gf){
     }
     bamgTriangles[i].init(bamgVertices, nodes, gf->tag());
   }
-  //std::list<GEdge*> edges = gf->edges();
   int numEdges = 0;
   for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); ++it){
       numEdges += (*it)->lines.size();
