@@ -3801,7 +3801,7 @@ int *outp;
     int i, c, len = 0;
     edge *e;
     FILE* fp;
-
+    int KOUNT=0;
     double szeit;
 
     szeit = CCutil_zeit();
@@ -3823,7 +3823,7 @@ int *outp;
     //    printf(" %i nodes, %i edges ", G->nnodes, c);
     //    fprintf (fp, "%i %i\n", G->nnodes, c);
     outp[0] = c;
-    int KOUNT=0;
+
     for (i = 0; i < G->nnodes; i++) {
         e = PEDGE(G->nodelist[i].matched_edge);
 	if (i == e->orig_nod2 || e->x == HALF) {
