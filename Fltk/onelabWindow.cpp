@@ -32,9 +32,9 @@
 #include "onelab.h"
 #include "onelabWindow.h"
 
-// This file contains the Gmsh/FLTK specific parts of the ONELAB
+// This file contains the Gmsh/FLTK specific parts of the OneLab
 // interface. You'll need to reimplement this if you plan to build
-// a different ONELAB server.
+// a different OneLab server.
 
 class onelabGmshServer : public GmshServer{
  private:
@@ -438,11 +438,11 @@ static std::string getShortName(const std::string &name, const std::string &ok="
   return s;
 }
 
-static void updateOnelabGraph(std::string num)
+static void updateOnelabGraph(int num)
 {
   bool changed = false;
   for(unsigned int i = 0; i < PView::list.size(); i++){
-    if(PView::list[i]->getData()->getFileName() == "ONELAB" + num){
+    if(PView::list[i]->getData()->getFileName() == "OneLab" + num){
       delete PView::list[i];
       changed = true;
       break;
@@ -454,11 +454,13 @@ static void updateOnelabGraph(std::string num)
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers);
   for(unsigned int i = 0; i < numbers.size(); i++){
-    if(numbers[i].getAttribute("GraphX") == num){
+    std::string v = numbers[i].getAttribute("Graph");
+    v.resize(8, '0');
+    if(v[2 * num] == '1'){
       x = getRange(numbers[i]);
       xName = getShortName(numbers[i].getName(), numbers[i].getShortHelp());
     }
-    if(numbers[i].getAttribute("GraphY") == num){
+    if(v[2 * num + 1] == '1'){
       y = getRange(numbers[i]);
       yName = getShortName(numbers[i].getName(), numbers[i].getShortHelp());
     }
@@ -469,7 +471,7 @@ static void updateOnelabGraph(std::string num)
   }
   if(x.size() && y.size()){
     PView *v = new PView(xName, yName, x, y);
-    v->getData()->setFileName("ONELAB" + num);
+    v->getData()->setFileName("OneLab" + num);
     v->getOptions()->intervalsType = PViewOptions::Discrete;
     changed = true;
   }
@@ -482,9 +484,10 @@ static void updateOnelabGraph(std::string num)
 
 static void updateOnelabGraphs()
 {
-  updateOnelabGraph("1");
-  updateOnelabGraph("2");
-  updateOnelabGraph("3");
+  updateOnelabGraph(0);
+  updateOnelabGraph(1);
+  updateOnelabGraph(2);
+  updateOnelabGraph(3);
 }
 
 void onelab_cb(Fl_Widget *w, void *data)
@@ -649,8 +652,7 @@ static void onelab_input_range_cb(Fl_Widget *w, void *data)
     numbers[0].setStep(o->step());
     numbers[0].setChoices(o->choices());
     numbers[0].setAttribute("Loop", o->loop());
-    numbers[0].setAttribute("GraphX", o->graph_x());
-    numbers[0].setAttribute("GraphY", o->graph_y());
+    numbers[0].setAttribute("Graph", o->graph());
     onelab::server::instance()->set(numbers[0]);
     updateOnelabGraphs();
   }
@@ -712,7 +714,7 @@ static void onelab_dump_cb(Fl_Widget *w, void *data)
   std::string db = onelab::server::instance()->toChar();
   for(unsigned int i = 0; i < db.size(); i++)
     if(db[i] == onelab::parameter::charSep()) db[i] = '|';
-  printf("ONELAB dump:\n%s\n", db.c_str());
+  printf("OneLab dump:\n%s\n", db.c_str());
 }
 
 onelabWindow::onelabWindow(int deltaFontSize)
@@ -724,7 +726,7 @@ onelabWindow::onelabWindow(int deltaFontSize)
   int height = 15 * BH + 3 * WB;
   
   _win = new paletteWindow
-    (width, height, CTX::instance()->nonModalWindows ? true : false, "ONELAB");
+    (width, height, CTX::instance()->nonModalWindows ? true : false, "OneLab");
   _win->box(GMSH_WINDOW_BOX);
 
   _tree = new Fl_Tree(WB, WB, width - 2 * WB, height - 3 * WB - BH);
@@ -799,8 +801,7 @@ void onelabWindow::rebuildTree()
       but->step(numbers[i].getStep());
       but->choices(numbers[i].getChoices());
       but->loop(numbers[i].getAttribute("Loop"));
-      but->graph_x(numbers[i].getAttribute("GraphX"));
-      but->graph_y(numbers[i].getAttribute("GraphY"));
+      but->graph(numbers[i].getAttribute("Graph"));
       but->align(FL_ALIGN_RIGHT);
       but->callback(onelab_input_range_cb, (void*)n);
       but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
@@ -865,7 +866,7 @@ void onelabWindow::rebuildSolverList()
   for(int i = _gear->menu()->size(); i >= _gearFrozenMenuSize - 1; i--)
     _gear->remove(i);
 
-  _title = "ONELAB";
+  _title = "OneLab -";
   for(onelab::server::citer it = onelab::server::instance()->firstClient();
       it != onelab::server::instance()->lastClient(); it++){
     onelab::client *c = it->second;
@@ -946,9 +947,13 @@ void solver_cb(Fl_Widget *w, void *data)
 {
   int num = (intptr_t)data;
 
-  std::string name = opt_solver_name(num, GMSH_GET, "");
-  std::string exe = opt_solver_executable(num, GMSH_GET, "");
-  FlGui::instance()->onelab->addSolver(name, exe, num);
+  if(num >= 0){
+    std::string name = opt_solver_name(num, GMSH_GET, "");
+    std::string exe = opt_solver_executable(num, GMSH_GET, "");
+    FlGui::instance()->onelab->addSolver(name, exe, num);
+  }
+  else
+    FlGui::instance()->onelab->rebuildSolverList();
 
   onelab_cb(0, (void*)"check");
 }
