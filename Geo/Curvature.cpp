@@ -64,7 +64,7 @@ void Curvature::retrieveCompounds()
   std::vector<GEntity*> entities;
   _model->getEntities(entities);
   
-  for(int ie = 0; ie < entities.size(); ++ie) {
+  for(unsigned ie = 0; ie < entities.size(); ++ie) {
     
     if(entities[ie]->geomType() == GEntity::CompoundSurface) {
       GFaceCompound* compound = dynamic_cast<GFaceCompound*>(entities[ie]);
@@ -87,9 +87,9 @@ void Curvature::retrieveCompounds()
 // initialization of the map and renumbering of the selected entities
 void Curvature::initializeMap()
 {
-  for (int i = 0; i< _ptFinalEntityList.size(); ++i){
+  for (unsigned i = 0; i< _ptFinalEntityList.size(); ++i){
     GFace* face = _ptFinalEntityList[i];
-    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++){
+    for (unsigned iElem = 0; iElem < face->getNumMeshElements(); iElem++){
       MElement *e = face->getMeshElement(iElem);
       const int E = e->getNum();
       _ElementToInt[E] = 1;
@@ -132,7 +132,7 @@ void Curvature::computeVertexNormals()
   _VertexArea.resize(_ElementToInt.size() );
   _VertexNormal.resize(_VertexToInt.size());
 
-  for (int i = 0; i < _ptFinalEntityList.size(); ++i){
+  for (unsigned i = 0; i < _ptFinalEntityList.size(); ++i){
     // face is a pointer to one surface of the group "FinalEntityList"
     GFace* face = _ptFinalEntityList[i];
 
@@ -191,12 +191,12 @@ void Curvature::curvatureTensor()
 
   _CurveTensor.resize(_VertexToInt.size());
 
-  for (int i = 0; i< _ptFinalEntityList.size(); ++i){
+  for (unsigned i = 0; i< _ptFinalEntityList.size(); ++i){
     // face is a pointer to one surface of the group "FinalEntityList"
     GFace* face = _ptFinalEntityList[i]; 
 
     //Loop over the element all the element of the "myTag"-surface
-    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++){
+    for (unsigned iElem = 0; iElem < face->getNumMeshElements(); iElem++){
       MElement *e = face->getMeshElement(iElem);  //Pointer to one element
       const int E = _ElementToInt[e->getNum()]; //The NEW tag of the corresponding element
 
@@ -344,12 +344,12 @@ void Curvature::computeRusinkiewiczNormals()
   _TriangleArea.resize(_ElementToInt.size() );
   _VertexNormal.resize(_VertexToInt.size());
 
-  for (int i = 0; i< _ptFinalEntityList.size(); ++i){
+  for (unsigned i = 0; i< _ptFinalEntityList.size(); ++i){
     // face is a pointer to one surface of the group "FinalEntityList"
     GFace* face = _ptFinalEntityList[i];
 
     //Loop over the element all the element of the "myTag"-surface
-    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++){
+    for (unsigned iElem = 0; iElem < face->getNumMeshElements(); iElem++){
       // Pointer to one element
       MElement *e = face->getMeshElement(iElem);
       const int E = _ElementToInt[e->getNum()];
@@ -400,13 +400,13 @@ void Curvature::computePointareas()
   _pointareas.resize(_VertexToInt.size());
   _cornerareas.resize(_ElementToInt.size());
 
-  for (int i = 0; i< _ptFinalEntityList.size(); ++i)
+  for (unsigned i = 0; i< _ptFinalEntityList.size(); ++i)
   {
     //face is a pointer to one surface of the group "FinalEntityList"
     GFace* face = _ptFinalEntityList[i]; 
 
     //Loop over the element all the element of the "myTag"-surface
-    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++){
+    for (unsigned iElem = 0; iElem < face->getNumMeshElements(); iElem++){
       MElement *E = face->getMeshElement(iElem);  //Pointer to one element
       // The NEW tag of the corresponding element
       const int EIdx = _ElementToInt[E->getNum()];
@@ -616,7 +616,7 @@ void Curvature::computeCurvature_Rusinkiewicz(int isMax)
     GFace* face = _ptFinalEntityList[i];
 
     //Loop over the element all the element of the "myTag"-surface
-    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++){
+    for (unsigned iElem = 0; iElem < face->getNumMeshElements(); iElem++){
       MElement *E = face->getMeshElement(iElem); // Pointer to one element
 
       MVertex* A = E->getVertex(0); // Pointers to vertices of triangle
@@ -634,7 +634,7 @@ void Curvature::computeCurvature_Rusinkiewicz(int isMax)
     }
   }
 
-  for (int ivertex = 0; ivertex < _VertexToInt.size(); ++ivertex){
+  for (unsigned ivertex = 0; ivertex < _VertexToInt.size(); ++ivertex){
     _pdir1[ivertex] = crossprod(_pdir1[ivertex], _VertexNormal[ivertex]);
     _pdir1[ivertex].normalize();
     _pdir2[ivertex] = crossprod(_VertexNormal[ivertex], _pdir1[ivertex]);
@@ -768,9 +768,9 @@ void Curvature::computeCurvature_RBF()
   
   // fill set of MVertex
   std::set<MVertex*> allNodes;
-  for (int i = 0; i< _ptFinalEntityList.size(); ++i)  {
+  for (unsigned i = 0; i< _ptFinalEntityList.size(); ++i)  {
     GFaceCompound* face = (GFaceCompound*)_ptFinalEntityList[i];
-    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++) {
+    for (unsigned iElem = 0; iElem < face->getNumMeshElements(); iElem++) {
       MElement *e = face->getMeshElement(iElem);
       for(int j = 0; j < e->getNumVertices(); j++){
         allNodes.insert(e->getVertex(j));
@@ -974,10 +974,10 @@ void Curvature::writeToPosFile( const std::string & filename)
   
   int idxelem = 0;
 
-  for (int i = 0; i< _ptFinalEntityList.size(); ++i) {
+  for (unsigned i = 0; i< _ptFinalEntityList.size(); ++i) {
     GFace* face = _ptFinalEntityList[i]; 
 
-    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++){
+    for (unsigned iElem = 0; iElem < face->getNumMeshElements(); iElem++){
       MElement *e = face->getMeshElement(iElem);  
       const int E = _ElementToInt[e->getNum()]; 
       //std::cout << "We are now looking at element Nr: " << E << std::endl;
@@ -1047,7 +1047,7 @@ void Curvature::writeToVtkFile( const std::string & filename)
   std::vector<VtkPoint> coord;
   coord.resize(npoints);
 
-  for (int i = 0; i< _ptFinalEntityList.size(); ++i){
+  for (unsigned i = 0; i< _ptFinalEntityList.size(); ++i){
     GFace* face = _ptFinalEntityList[i];
 
     for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++){
@@ -1092,7 +1092,7 @@ void Curvature::writeToVtkFile( const std::string & filename)
   outfile << std::endl << "CELLS " << _ElementToInt.size() << " " 
           << 4*_ElementToInt.size() << std::endl;
 
-  for (int i = 0; i< _ptFinalEntityList.size(); ++i){
+  for (unsigned i = 0; i< _ptFinalEntityList.size(); ++i){
     GFace* face = _ptFinalEntityList[i];
 
     for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++){
@@ -1139,12 +1139,12 @@ void Curvature::writeDirectionsToPosFile( const std::string & filename)
   outfile.open(filename.c_str());
   outfile << "View \"Curvature_DirMax \"{" << std::endl;
 
-  for (int i = 0; i< _ptFinalEntityList.size(); ++i){
+  for (unsigned i = 0; i< _ptFinalEntityList.size(); ++i){
     //face is a pointer to one surface of the group "FinalEntityList"
     GFace* face = _ptFinalEntityList[i];
 
     //Loop over the element all the element of the "myTag"-surface
-    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++){
+    for (unsigned iElem = 0; iElem < face->getNumMeshElements(); iElem++){
       MElement *e = face->getMeshElement(iElem);  //Pointer to one element
       const int E = _ElementToInt[e->getNum()]; //The NEW tag of the corresponding element
       
@@ -1183,7 +1183,7 @@ void Curvature::writeDirectionsToPosFile( const std::string & filename)
   for (int i = 0; i< _ptFinalEntityList.size(); ++i){
     GFace* face = _ptFinalEntityList[i];
     
-    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++){
+    for (unsigned iElem = 0; iElem < face->getNumMeshElements(); iElem++){
       MElement *e = face->getMeshElement(iElem); //Pointer to one element
       const int E = _ElementToInt[e->getNum()]; //The NEW tag of the corresponding element
       

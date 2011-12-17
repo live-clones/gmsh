@@ -317,6 +317,7 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
     new PView("Jmin", "ElementData", _m, data);
     Msg::Info("Done computation J_min, J_max (%fs)", Cpu()-t);
   }
+  return 0;
 }
 
 void GMSH_AnalyseCurvedMeshPlugin::checkValidity(int toDo)

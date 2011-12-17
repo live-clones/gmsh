@@ -47,12 +47,13 @@ int BergotBasis::size() const {
 void BergotBasis::f(double u, double v, double w, double* val) const {
 
   double uhat = (w == 1.) ? 1 : u/(1.-w);
-  double uFcts[order+1];
-  legendre->f(uhat,uFcts);
+  
+  std::vector<double> uFcts(order+1);
+  legendre->f(uhat,&(uFcts[0]));
 
   double vhat = (w == 1.) ? 1 : v/(1.-w);
-  double vFcts[order+1];
-  legendre->f(vhat,vFcts);
+  std::vector<double> vFcts(order+1);
+  legendre->f(vhat,&(vFcts[0]));
 
   double what = 2.*w - 1.;
   std::map<int,double* > wFcts;
@@ -88,17 +89,17 @@ void BergotBasis::f(double u, double v, double w, double* val) const {
 }
 
 void BergotBasis::df(double u, double v, double w, double grads[][3]) const {
-  double uFcts[order+1];
-  legendre->f(u,uFcts);
-  
-  double uGrads[order+1];
-  legendre->df(u,uGrads);
+  std::vector<double> uFcts(order+1);
+  legendre->f(u,&(uFcts[0]));
 
-  double vFcts[order+1];
-  legendre->f(v,vFcts);
+  std::vector<double> uGrads(order+1);  
+  legendre->df(u,&(uGrads[0]));
 
-  double vGrads[order+1];
-  legendre->df(v,vGrads);
+  std::vector<double> vFcts(order+1);  
+  legendre->f(v,&(vFcts[0]));
+
+ std::vector<double> vGrads(order+1);
+  legendre->df(v,&(vGrads[0]));
 
 
   std::map<int,double* > wFcts;

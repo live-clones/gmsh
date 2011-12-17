@@ -19,8 +19,8 @@ void LegendrePolynomials::f(double u, double *val) const {
 }
 
 void LegendrePolynomials::df(double u, double *val) const {
-  double tmp[n+1];
-  f(u,tmp);
+  std::vector<double> tmp(n+1);
+  f(u,&(tmp[0]));
 
   val[0] = 0;  
   double g2 = (1.-u*u);

@@ -572,7 +572,7 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
       if (getDim() == 2){
 	for (fiter fit = firstFace(); fit != lastFace(); ++fit){
 	  if ((*fit)->quadrangles.size())return -1;
-	  for (int i=0;i<(*fit)->triangles.size();i++){
+	  for (unsigned i=0;i<(*fit)->triangles.size();i++){
 	    elements.push_back((*fit)->triangles[i]);
 	  }
 	}
@@ -580,7 +580,7 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
       else if (getDim() == 3){
 	for (riter rit = firstRegion(); rit != lastRegion(); ++rit){
 	  if ((*rit)->hexahedra.size())return -1;
-	  for (int i=0;i<(*rit)->tetrahedra.size();i++){
+	  for (unsigned i=0;i<(*rit)->tetrahedra.size();i++){
 	    elements.push_back((*rit)->tetrahedra[i]);
 	  }
 	}
@@ -1741,7 +1741,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
     //EMI RBF fix
     if (ignoreHoles && nbBounds > 0){
       int index = 0;
-      int boundSize = 0;
+      unsigned boundSize = 0;
       for (int ib = 0; ib < nbBounds; ib++){
 	if (boundaries[ib].size() > boundSize){
 	  boundSize = boundaries[ib].size() ;
@@ -1754,7 +1754,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
     }
 
     // create new discrete edges
-    for (int ib = 0; ib < boundaries.size(); ib++){
+    for (unsigned ib = 0; ib < boundaries.size(); ib++){
       int numE = getMaxElementaryNumber(1) + 1;
       discreteEdge *e = new discreteEdge(this, numE, 0, 0);
       add(e);

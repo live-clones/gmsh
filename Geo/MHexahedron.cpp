@@ -173,7 +173,7 @@ static void _myGetFaceRep(MHexahedron *hex, int num, double *x, double *y, doubl
   int iVertex4 = hex->faces_hexa(iFace,3);
 
   SPoint3 pnt1, pnt2, pnt3;
-  double J1[3][3], J2[3][3], J3[3][3];
+ // double J1[3][3], J2[3][3], J3[3][3];
 
   /*
     0
