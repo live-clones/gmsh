@@ -9,12 +9,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <strings.h>
+//#include <string>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <assert.h>
 #include <time.h>
 #undef CC_ZEIT_TIMES
