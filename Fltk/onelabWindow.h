@@ -35,13 +35,13 @@ class onelabWindow{
   void rebuildSolverList();
   void rebuildTree();
   void redrawTree(){ _tree->redraw(); }
-  void activate();
-  void deactivate(const std::string &how);
+  void setButtonMode(const std::string &mode);
   void show(){ _win->show(); }
   int shown(){ return _win->shown(); }
   std::string getModelExtension(){ return _modelExtension; }
   void setModelExtension(const std::string &ext){ _modelExtension = ext; }
   int meshAuto(){ return _gear->menu()[2].value(); }
+  int hideNewViews(){ return _gear->menu()[3].value(); }
   std::string getPath(Fl_Tree_Item *item)
   {
     char path[1024];

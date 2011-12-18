@@ -607,18 +607,16 @@ namespace onelab{
     {
       return _parameterSpace.get(ps, name, client); 
     }
-    bool registerClient(client *c)
-    {
-      _clients[c->getName()] = c;
-      c->setId(_clients.size());
-      return true;
-    }
     typedef std::map<std::string, client*>::iterator citer;
     citer firstClient(){ return _clients.begin(); }
     citer lastClient(){ return _clients.end(); }
     citer findClient(const std::string &name){ return _clients.find(name); }
-    citer removeClient(const std::string &name){ _clients.erase(name); }
-    int getNumClients(){ return _clients.size(); }
+    void registerClient(client *c)
+    {
+      _clients[c->getName()] = c;
+      c->setId(_clients.size());
+    }
+    void unregisterClient(client *c){ _clients.erase(c->getName()); }
     void setChanged(bool changed, const std::string &client="")
     {
       _parameterSpace.setChanged(changed, client);
@@ -635,24 +633,21 @@ namespace onelab{
     
   class localClient : public client{
   private:
-    // the pointer to the server
-    server *_server;
     template <class T> bool _set(const T &p)
     {
-      _server->set(p, _name);
+      server::instance()->set(p, _name);
       return true;
     }
     template <class T> bool _get(std::vector<T> &ps,
                                  const std::string &name="")
     {
-      _server->get(ps, name, _name);
+      server::instance()->get(ps, name, _name);
       return true;
     }
   public:
     localClient(const std::string &name) : client(name)
     {
-      _server = server::instance();
-      _server->registerClient(this);
+      server::instance()->registerClient(this);
     }
     virtual ~localClient(){}
     virtual bool set(const number &p){ return _set(p); }
