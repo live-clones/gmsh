@@ -23,8 +23,7 @@
 
 // Philippose - 14.02.2009
 // Modifications for creating a DLL in Windows
-//#ifdef WIN32
-#if 0 // for GMSH
+#if 0 // GMSH #ifdef WIN32
    #ifdef NGLIB_EXPORTS || nglib_EXPORTS
       #define DLL_HEADER   __declspec(dllexport)
    #else
