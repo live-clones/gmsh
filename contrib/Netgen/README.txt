@@ -1,18 +1,14 @@
 
-This directory contains a (very) slightly modified version of Joachim
-Sch\"oberl's NETGEN mesh generator:
+This directory contains the Joachim Sch\"oberl's NETGEN mesh
+generator:
 
-- only (part of the) the libsrc directory was kept from the original
-  distribution
+- the libsrc and nglib directories are unmodified copies taken from 
+  svn co https://netgen-mesher.svn.sourceforge.net/svnroot/netgen-mesher
+  (SVN rev. 469)
 
-- some of the makefiles were changed
+- the nglib_gmsh.cpp file replaces the original nglib/nglib.cpp file
 
-- parts of interface/nglib.cpp were #ifdef'd to remove the dependency
-  towards netgen's CAD engine
-
-All the changes are marked with "MODIFIED FOR GMSH" in the source code
-
-See COPYING.LIB for license information
+See the LICENSE file for license information
 
 **************************************************************
 
