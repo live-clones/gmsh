@@ -2,7 +2,7 @@
 #define FILE_MYSTDLIB
 
 #ifndef WIN32
-#include <config.h>
+//GMSH #include <config.h>
 #endif
 
 

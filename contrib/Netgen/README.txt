@@ -9,6 +9,7 @@ The libsrc and nglib directories are unmodified copies taken from
      nglib/nglib.h
      libsrc/interface/nginterface.h
      libsrc/interface/mydefs.hpp
+* removed #include <config.h> from libsrc/includes/mystdlib.h
 * nglib_gmsh.cpp reimplements parts of nglib/nglib.cpp
 
 See the LICENSE file for license information.
