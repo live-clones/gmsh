@@ -2354,7 +2354,7 @@ static Fl_Menu_Item bar_table[] = {
     {"&Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
     {"&Clipping",        FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
     {"&Manipulator",     FL_CTRL+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0},
-    {"&Solvers",         0, (Fl_Callback *)solver_cb, (void*)(-1), FL_MENU_DIVIDER},
+    {"&OneLab",          0, (Fl_Callback *)solver_cb, (void*)(-1), FL_MENU_DIVIDER},
     {"S&tatistics",      FL_CTRL+'i', (Fl_Callback *)statistics_cb, 0},
     {"M&essage Console", FL_CTRL+'l', (Fl_Callback *)message_cb, 0},
     {0},
