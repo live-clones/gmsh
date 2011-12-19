@@ -535,9 +535,9 @@ if(HAVE_MESH)
   if(ENABLE_NETGEN)
     add_subdirectory(contrib/Netgen)
     include_directories(contrib/Netgen contrib/Netgen/libsrc/include 
-                        contrib/Netgen/libsrc/interface)
+                        contrib/Netgen/nglib)
     set_config_option(HAVE_NETGEN "Netgen")
-    add_definitions(-DNO_PARALLEL_THREADS)
+    add_definitions(-DNO_PARALLEL_THREADS -DNOTCL)
   endif(ENABLE_NETGEN)
 
   if(ENABLE_BAMG)

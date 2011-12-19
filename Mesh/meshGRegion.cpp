@@ -585,15 +585,14 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 #if defined(HAVE_NETGEN)
 
 namespace nglib {
-#include "nglib.h"
-#include "nglib_addon.h"
+#include "nglib_gmsh.h"
 }
 using namespace nglib;
 
 Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
                               std::vector<MVertex*> &numberedV)
 {
-  NgAddOn_Init();
+  Ng_Init();
   Ng_Mesh *ngmesh = Ng_NewMesh();
 
   std::set<MVertex*> allBoundingVertices;
@@ -880,7 +879,7 @@ void meshGRegion::operator() (GRegion *gr)
     meshNormalsPointOutOfTheRegion(gr);
     std::vector<MVertex*> numberedV;
     Ng_Mesh *ngmesh = buildNetgenStructure(gr, false, numberedV);
-    NgAddOn_GenerateVolumeMesh(ngmesh, CTX::instance()->mesh.lcMax);
+    Ng_GenerateVolumeMesh(ngmesh, CTX::instance()->mesh.lcMax);
     TransferVolumeMesh(gr, ngmesh, numberedV);
     Ng_DeleteMesh(ngmesh);
     Ng_Exit();
@@ -910,7 +909,7 @@ void optimizeMeshGRegionNetgen::operator() (GRegion *gr)
   deMeshGRegion dem;
   dem(gr);
   // optimize mesh
-  NgAddOn_OptimizeVolumeMesh(ngmesh, CTX::instance()->mesh.lcMax);
+  Ng_OptimizeVolumeMesh(ngmesh, CTX::instance()->mesh.lcMax);
   TransferVolumeMesh(gr, ngmesh, numberedV);
   Ng_DeleteMesh(ngmesh);
   Ng_Exit();
