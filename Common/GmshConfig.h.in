@@ -38,6 +38,7 @@
 #cmakedefine HAVE_NETGEN
 #cmakedefine HAVE_NO_INTPTR_T
 #cmakedefine HAVE_NO_SOCKLEN_T
+#cmakedefine HAVE_NO_STDINT_H
 #cmakedefine HAVE_NO_VSNPRINTF
 #cmakedefine HAVE_OCC
 #cmakedefine HAVE_OPENGL
@@ -47,8 +48,8 @@
 #cmakedefine HAVE_PLUGINS
 #cmakedefine HAVE_POST
 #cmakedefine HAVE_QT
-#cmakedefine HAVE_SLEPC
 #cmakedefine HAVE_SALOME
+#cmakedefine HAVE_SLEPC
 #cmakedefine HAVE_SOLVER
 #cmakedefine HAVE_TAUCS
 #cmakedefine HAVE_TETGEN

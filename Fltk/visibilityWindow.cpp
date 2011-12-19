@@ -4,6 +4,9 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "GmshConfig.h"
+#if !defined(HAVE_NO_STDINT_H)
+#include <stdint.h>
+#endif
 #if defined(HAVE_NO_INTPTR_T)
 typedef unsigned long intptr_t;
 #endif
