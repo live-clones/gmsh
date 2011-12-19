@@ -22,11 +22,32 @@ static void increaseStencil(MVertex *v, v2t_cont &adj, std::vector<MElement*> &l
   lt.clear();
   lt.insert(lt.begin(),stencil.begin(),stencil.end());
 }
+meshMetric::meshMetric(std::vector<MElement*> elements, int technique, simpleFunction<double> *fct, std::vector<double> parameters): _fct(fct){
+
+  _dim  = elements[0]->getDim();
+  std::map<MElement*, MElement*> newP;
+  std::map<MElement*, MElement*> newD;
+
+  for (int i=0;i<elements.size();i++){
+      MElement *e = elements[i];
+      MElement *copy = e->copy(_vertexMap, newP, newD);
+      _elements.push_back(copy);
+    }
+
+  _octree = new MElementOctree(_elements); 
+  hmin = parameters.size() >=3 ? parameters[1] : CTX::instance()->mesh.lcMin;
+  hmax = parameters.size() >=3 ? parameters[2] : CTX::instance()->mesh.lcMax;
+  
+  _E = parameters[0];
+  _epsilon = parameters[0];
+  _technique =  (MetricComputationTechnique)technique;
+ 
+  computeMetric();
+}
 
 meshMetric::meshMetric(GModel *gm, int technique, simpleFunction<double> *fct, std::vector<double> parameters): _fct(fct){
 
   _dim  = gm->getDim();
-  std::map<int, MVertex*> vertexMap;
   std::map<MElement*, MElement*> newP;
   std::map<MElement*, MElement*> newD;
 
@@ -34,7 +55,7 @@ meshMetric::meshMetric(GModel *gm, int technique, simpleFunction<double> *fct, s
     for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); ++fit){
       for (int i=0;i<(*fit)->getNumMeshElements();i++){
   	MElement *e = (*fit)->getMeshElement(i);
-  	MElement *copy = e->copy(vertexMap, newP, newD);
+  	MElement *copy = e->copy(_vertexMap, newP, newD);
   	_elements.push_back(copy);
       }
     }
@@ -43,7 +64,7 @@ meshMetric::meshMetric(GModel *gm, int technique, simpleFunction<double> *fct, s
     for (GModel::riter rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit){
       for (int i=0;i<(*rit)->getNumMeshElements();i++){
   	MElement *e = (*rit)->getMeshElement(i);
-  	MElement *copy = e->copy(vertexMap, newP, newD);
+  	MElement *copy = e->copy(_vertexMap, newP, newD);
   	_elements.push_back(copy);
       }
     }
@@ -58,7 +79,9 @@ meshMetric::meshMetric(GModel *gm, int technique, simpleFunction<double> *fct, s
   _technique =  (MetricComputationTechnique)technique;
  
   computeMetric();
+  //printf("computing metric \n");
   //printMetric("toto.pos");
+  //exit(1);
 
 }
 meshMetric::~meshMetric(){
@@ -85,7 +108,7 @@ void meshMetric::computeHessian( v2t_cont adj){
     while (it != adj.end()) {
       std::vector<MElement*> lt = it->second;      
       MVertex *ver = it->first;
-      while (lt.size() < 10) increaseStencil(ver,adj,lt);
+      while (lt.size() < 12) increaseStencil(ver,adj,lt); //<7
       // if ( ver->onWhat()->dim() < _dim ){
       // 	while (lt.size() < 12){
       // 	  increaseStencil(ver,adj,lt);
@@ -133,7 +156,7 @@ void meshMetric::computeHessian( v2t_cont adj){
 	dgrads[ITER-1][ver] = SVector3(result(1),result(2),_dim==2? 0.0:result(3));
       ++it;
     }
-    if (_technique != meshMetric::HESSIAN)break;
+    if (_technique == meshMetric::LEVELSET) break;
   }
    
 }
@@ -142,7 +165,7 @@ void meshMetric::computeMetric(){
   v2t_cont adj;
   buildVertexToElement (_elements,adj);
 
-  //printf("%d elements are considered in the meshMetric \n",_elements.size());
+  //printf("%d elements are considered in the meshMetric \n",(int)_elements.size());
 
   computeValues(adj);
   computeHessian(adj);
@@ -251,21 +274,6 @@ void meshMetric::computeMetric(){
   
     SMetric3 metric(lambda1,lambda2,lambda3,t1,t2,t3);
 
-    // if  (_technique == meshMetric::FREY && dist < _E) {
-    //   SMetric3 Hess;
-    //   fullMatrix<double> hessianFrey(hessian);
-    //   hessianFrey.scale(1./0.1);
-    //   Hess.setMat(hessianFrey);
-    //   fullMatrix<double> Vh(3,3);
-    //   fullVector<double> Sh(3);
-    //   Hess.eig(Vh,Sh);
-    //   lambda1 = std::min(std::max(fabs(Sh(0))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin));
-    //   lambda2 = std::min(std::max(fabs(Sh(1))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin));
-    //   lambda3 = (_dim == 3) ? std::min(std::max(fabs(Sh(2))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin)) : 1.;
-    //   SMetric3 inter = intersection(metric, Hess);
-    //   metric = inter;
-    // }
-
     _hessian[ver] = hessian;
     _nodalMetrics[ver] = metric;
     _nodalSizes[ver] = std::min(std::min(1/sqrt(lambda1),1/sqrt(lambda2)),1/sqrt(lambda3));
@@ -300,12 +308,11 @@ void meshMetric::computeMetric(){
   //smoothMetric (sol);
   //curvatureContributionToMetric();
 
-
   putOnNewView();
 
 }
 
-double meshMetric::operator() (double x, double y, double z, GEntity *ge){
+double meshMetric::operator() (double x, double y, double z, GEntity *ge) {
   SPoint3 xyz(x,y,z), uvw;
   double initialTol = MElement::getTolerance();
   MElement::setTolerance(1.e-4); 
@@ -324,7 +331,7 @@ double meshMetric::operator() (double x, double y, double z, GEntity *ge){
   return 1.e22;
 }
 
-void meshMetric::operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge){
+void meshMetric::operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge) {
   metr = SMetric3(1.e-22);
   SPoint3 xyz(x,y,z), uvw;
   double initialTol = MElement::getTolerance();
@@ -360,30 +367,35 @@ void meshMetric::printMetric(const char* n) const{
 
   FILE *f = fopen (n,"w");
   fprintf(f,"View \"\"{\n");
-  std::map<MVertex*,SMetric3>::const_iterator it= _nodalMetrics.begin();
+
   //std::map<MVertex*,fullMatrix<double> >::const_iterator it = _hessian.begin(); 
+  std::map<MVertex*,SMetric3>::const_iterator it= _nodalMetrics.begin();
   for (; it != _nodalMetrics.end(); ++it){
     //for (; it != _hessian.end(); ++it){
-    fprintf(f,"TP(%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g,%g};\n",
-	    it->first->x(),it->first->y(),it->first->z(),
-	    it->second(0,0),it->second(0,1),it->second(0,2),
-	    it->second(1,0),it->second(1,1),it->second(1,2),
-	    it->second(2,0),it->second(2,1),it->second(2,2)
-	    );
+      MVertex *v =  it->first;
+      // double lapl =  getLaplacian(v);
+      // fprintf(f, "SP(%g,%g,%g){%g};\n",  it->first->x(),it->first->y(),it->first->z(),lapl);
+      fprintf(f,"TP(%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g,%g};\n",
+      	    it->first->x(),it->first->y(),it->first->z(),
+      	    it->second(0,0),it->second(0,1),it->second(0,2),
+      	    it->second(1,0),it->second(1,1),it->second(1,2),
+      	    it->second(2,0),it->second(2,1),it->second(2,2)
+      	    );
+
   } 
   fprintf(f,"};\n");
   fclose (f);    
 }
 
-double meshMetric::getLaplacian (MVertex *v){
-
-  std::map<MVertex*, fullMatrix<double> >::iterator it = _hessian.find(v);
+double meshMetric::getLaplacian (MVertex *v) {
+  MVertex *vNew = _vertexMap[v->getNum()];
+  std::map<MVertex*, fullMatrix<double> >::const_iterator it = _hessian.find(vNew);
   fullMatrix<double> h = it->second;
   double laplace = h(0,0)+h(1,1)+h(2,2);
   return laplace; 
 }
 
-/*void dgMeshMetric::curvatureContributionToMetric (){
+/*void meshMetric::curvatureContributionToMetric (){
   std::map<MVertex*,SMetric3>::iterator it = _nodalMetrics.begin();
   std::map<MVertex*,double>::iterator its = _nodalSizes.begin();
   for (; it != _nodalMetrics.end(); ++it,++its){
@@ -405,7 +417,7 @@ double meshMetric::getLaplacian (MVertex *v){
   }*/
 
 /*
-  void dgMeshMetric::smoothMetric (dgDofContainer *sol){
+  void meshMetric::smoothMetric (dgDofContainer *sol){
   return;
   dgGroupCollection *groups = sol->getGroups();
   std::set<MEdge,Less_Edge> edges;

@@ -569,7 +569,7 @@ Mesh2 *Bamg(Mesh2 *Thh, double * args,double *mm11,double *mm12,double *mm22, bo
   for (int iv=0;iv < Th.nbv;iv++)
     Th[iv].m = M;
 
-  nTh->Write("bamg.mesh",bamg::Triangles::AutoMesh); 
+  //nTh->Write("bamg.mesh",bamg::Triangles::AutoMesh); 
   Mesh2 * g=  bamg2msh(nTh,true);
 
   delete nTh;

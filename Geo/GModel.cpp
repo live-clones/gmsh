@@ -541,7 +541,8 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
       GenerateMesh(this, getDim());
       nbElems = getNumMeshElements();
 
-      //if (fields) fields->deleteField(1);
+      writeMSH("meshAdapt.msh");
+
       fields->reset();
       if (++ITER >= niter)  break;
       if (ITER > 5 && fabs((double)(nbElems - nbElemsOld)) < 0.005 * nbElemsOld) break;
@@ -549,6 +550,7 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
       int id = fields->newId();
       (*fields)[id] = new meshMetric(this, technique, f, parameters);;
       fields->background_field = id;
+   
             
       std::for_each(firstEdge(), lastEdge(), deMeshGEdge());
       std::for_each(firstFace(), lastFace(), deMeshGFace());

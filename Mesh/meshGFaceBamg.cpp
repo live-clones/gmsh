@@ -17,6 +17,7 @@
 #include <list>
 #include <map>
 #include "BackgroundMesh.h"
+#include "meshGFaceDelaunayInsertion.h"
 
 #if defined(HAVE_BAMG)
 
@@ -71,8 +72,10 @@ void meshGFaceBamg(GFace *gf){
   std::list<GEdge*> edges = gf->edges();
   std::set<GEdge*> mySet;
   std::list<GEdge*>::iterator it = edges.begin();
+  bool hasCompounds = false;
   while(it != edges.end()){
     if((*it)->getCompound()){
+      hasCompounds = true;
       GEdge *gec = (GEdge*)(*it)->getCompound();
       mySet.insert(gec);
     }
@@ -89,6 +92,12 @@ void meshGFaceBamg(GFace *gf){
       bcVertex.insert((*it)->lines[i]->getVertex(0));
       bcVertex.insert((*it)->lines[i]->getVertex(1));
     }
+  }
+  //if has compound edges use a frontal mesher to remesh compound surface
+  if (hasCompounds){
+    printf("tris compound = %d \n",  gf->triangles.size());
+    bowyerWatsonFrontal(gf);
+    printf("after tris compound = %d \n",  gf->triangles.size());
   }
 
   //fill mesh data fo bamg (bamgVertices, bamgTriangles, bamgBoundary)
@@ -230,23 +239,6 @@ void meshGFaceBamg(GFace *gf){
 					  yetAnother[(*refinedBamgMesh)(v2)],
 					  yetAnother[(*refinedBamgMesh)(v3)]));    
   }
-
-  //EMI PRINT TRIS
-  // FILE * fi = fopen("TRIS.pos","w");
-  // fprintf(fi, "View \"\"{\n");
-  // for( int i =0; i< gf->triangles.size(); i++){
-  //     MTriangle *t = gf->triangles[i];
-  //     fprintf(fi, "ST(%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,"
-  //             "%22.15E,%22.15E){%22.15E,%22.15E,%22.15E};\n",
-  //             t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
-  //             t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
-  //             t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
-  //             1., 1., 1.);
-  // }
-  // fprintf(fi,"};\n");
-  // fclose(fi);
-  //END EMI PRINT TRIS
-
   
   if (refinedBamgMesh) delete refinedBamgMesh;
 }
