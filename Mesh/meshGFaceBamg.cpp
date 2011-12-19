@@ -67,7 +67,7 @@ static void computeMeshMetricsForBamg(GFace *gf, int numV,
 
 void meshGFaceBamg(GFace *gf){
 
- //Replace edges by their compounds
+  //Replace edges by their compounds
   std::list<GEdge*> edges = gf->edges();
   std::set<GEdge*> mySet;
   std::list<GEdge*>::iterator it = edges.begin();
@@ -83,7 +83,6 @@ void meshGFaceBamg(GFace *gf){
   }
   edges.clear();
   edges.insert(edges.begin(), mySet.begin(), mySet.end());
-
   std::set<MVertex*> bcVertex;
   for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
     for (unsigned int i = 0; i < (*it)->lines.size(); i++){
@@ -100,25 +99,25 @@ void meshGFaceBamg(GFace *gf){
       all.insert(gf->triangles[i]->getVertex(j));
   }
 
-  
-  Vertex2 *bamgVertices = new Vertex2[bcVertex.size()+all.size()]; //all.size()];
+  //FIXME EMI: how should we define bamgVertices when we have remeshed compound edges not with lines not belonging to triangles of the compound face
+  int numVertices  = all.size()+bcVertex.size();
+  Vertex2 *bamgVertices = new Vertex2[numVertices]; 
   int index = 0;
-  //for(std::set<MVertex*>::iterator it = all.begin(); it!=all.end(); ++it){
-  // if ((*it)->onWhat()->dim() <= 1){  
+  // for(std::set<MVertex*>::iterator it = all.begin(); it!=all.end(); ++it){
+  //  if ((*it)->onWhat()->dim() <= 1){  
   for(std::set<MVertex*>::iterator it = bcVertex.begin(); it!=bcVertex.end(); ++it){
-      SPoint2 p;
-      bool success = reparamMeshVertexOnFace(*it, gf, p);
-      bamgVertices[index][0] = p.x();
-      bamgVertices[index][1] = p.y();
-      bamgVertices[index].lab = index;
-      recover[index] = *it;
-      (*it)->setIndex(index++);
-    //}
+    SPoint2 p;
+    bool success = reparamMeshVertexOnFace(*it, gf, p);
+    bamgVertices[index][0] = p.x();
+    bamgVertices[index][1] = p.y();
+    bamgVertices[index].lab = index;
+    recover[index] = *it;
+    (*it)->setIndex(index++);
+   //}
   }
-
-int nbFixedVertices = index;
- for(std::set<MVertex*>::iterator it = all.begin(); it!=all.end(); ++it){
-   // FIXME : SEAMS should have to be taken into account here !!!
+  int  nbFixedVertices = index;
+  for(std::set<MVertex*>::iterator it = all.begin(); it!=all.end(); ++it){
+    //FIXME : SEAMS should have to be taken into account here !!!
     if ((*it)->onWhat()->dim() >= 2){
       SPoint2 p;
       bool success = reparamMeshVertexOnFace(*it, gf, p);
@@ -127,8 +126,7 @@ int nbFixedVertices = index;
       recover[index] = *it;
       (*it)->setIndex(index++);
     }
- }
-
+  }
   Triangle2 *bamgTriangles = new Triangle2[gf->triangles.size()];
   for (unsigned int i = 0; i < gf->triangles.size(); i++){    
     int nodes [3] = {gf->triangles[i]->getVertex(0)->getIndex(),
@@ -148,6 +146,7 @@ int nbFixedVertices = index;
     }
     bamgTriangles[i].init(bamgVertices, nodes, gf->tag());
   }
+  
   int numEdges = 0;
   for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); ++it){
       numEdges += (*it)->lines.size();
@@ -163,11 +162,9 @@ int nbFixedVertices = index;
       bamgBoundary[count++].lab = count;
     }
   }
-
-  // Seg *bamgBoundary = NULL;
-  // numEdges = 0; 
-  Mesh2 *bamgMesh = new Mesh2 ( all.size(), gf->triangles.size(), numEdges,
-				bamgVertices, bamgTriangles, bamgBoundary);
+ 
+  Mesh2 *bamgMesh = new Mesh2 (all.size(), gf->triangles.size(), numEdges,
+			       bamgVertices, bamgTriangles, bamgBoundary);
 
   Mesh2 *refinedBamgMesh = 0;
   int iterMax = 11;
