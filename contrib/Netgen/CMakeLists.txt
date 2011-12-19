@@ -29,7 +29,7 @@ set(SRC
     ${mes}/improve2gen.cpp ${mes}/meshing2.cpp ${mes}/meshing3.cpp
     ${mes}/localh.cpp ${mes}/delaunay.cpp ${mes}/topology.cpp 
     ${mes}/clusters.cpp ${mes}/tetrarls.cpp ${mes}/triarls.cpp 
-    ${mes}/quadrls.cpp ${mes}/meshfunc.cpp ${mes}/meshfunc2d.cpp
+    ${mes}/quadrls.cpp ${mes}/meshfunc.cpp 
     ${mes}/refine.cpp ${mes}/bisect.cpp ${mes}/boundarylayer.cpp 
     ${mes}/specials.cpp ${mes}/msghandler.cpp ${mes}/pyramidrls.cpp
     ${mes}/pyramid2rls.cpp ${mes}/prism2rls.cpp ${mes}/curvedelems.cpp
