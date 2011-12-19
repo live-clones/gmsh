@@ -5,9 +5,7 @@
 
 #include "GmshConfig.h"
 #if defined(HAVE_NO_INTPTR_T)
-typedef unsigned intptr_t;
-#else
-#include <stdint.h>
+typedef unsigned long intptr_t;
 #endif
 #include <string>
 #include <sstream>
