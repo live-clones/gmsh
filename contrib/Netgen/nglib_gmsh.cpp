@@ -348,7 +348,7 @@ namespace netgen
 {
    char geomfilename[255];
 
-   DLL_HEADER void MyError (const char * ch)
+   void MyError (const char * ch)
    {
      (*myerr) << ch;
    }
@@ -357,7 +357,7 @@ namespace netgen
 
 
    //Destination for messages, errors, ...
-   DLL_HEADER void Ng_PrintDest(const char * s)
+   void Ng_PrintDest(const char * s)
    {
       (*mycout) << s << flush;
    }
@@ -365,7 +365,7 @@ namespace netgen
 
 
 
-   DLL_HEADER double GetTime ()
+   double GetTime ()
    {
       return 0;
    }
