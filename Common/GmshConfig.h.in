@@ -36,6 +36,7 @@
 #cmakedefine HAVE_MPI
 #cmakedefine HAVE_NATIVE_FILE_CHOOSER
 #cmakedefine HAVE_NETGEN
+#cmakedefine HAVE_NO_INTPTR_T
 #cmakedefine HAVE_NO_SOCKLEN_T
 #cmakedefine HAVE_NO_VSNPRINTF
 #cmakedefine HAVE_OCC

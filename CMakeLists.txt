@@ -820,6 +820,11 @@ if(NOT SOCKLEN_T_SIZE)
 endif(NOT SOCKLEN_T_SIZE)
 set(CMAKE_EXTRA_INCLUDE_FILES)
 
+check_type_size(intptr_t INTPTR_T_SIZE)
+if(NOT INTPTR_T_SIZE)
+  set_config_option(HAVE_NO_INTPTR_T "NoIntptrT")
+endif(NOT INTPTR_T_SIZE)
+
 check_include_file(dlfcn.h DLFCN_H)
 if(DLFCN_H)
   set_config_option(HAVE_DLOPEN "Dlopen")

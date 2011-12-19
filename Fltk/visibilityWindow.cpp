@@ -3,11 +3,16 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include "GmshConfig.h"
+#if defined(HAVE_NO_INTPTR_T)
+typedef unsigned intptr_t;
+#else
+#include <stdint.h>
+#endif
 #include <string>
 #include <sstream>
 #include <map>
 #include <vector>
-#include <stdint.h>
 #include <string.h>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Box.H>
