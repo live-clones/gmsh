@@ -496,6 +496,55 @@ static void updateOnelabGraphs()
   updateOnelabGraph(3);
 }
 
+static void runGmshClient(const std::string &action)
+{
+  onelab::server::citer it = onelab::server::instance()->findClient("Gmsh");
+  if(it == onelab::server::instance()->lastClient()) return;
+
+  onelab::client *c = it->second;
+  std::string mshFileName = getMshFileName(c);
+  static std::string modelName = "";
+  if(modelName.empty()){
+    // first pass is special to prevent model reload, as well as
+    // remeshing if a mesh file already exists on disk
+    modelName = GModel::current()->getName();
+    if(!StatFile(mshFileName))
+      onelab::server::instance()->setChanged(false, "Gmsh");
+  }
+
+  if(action == "check"){
+    if(onelab::server::instance()->getChanged("Gmsh") ||
+       modelName != GModel::current()->getName()){
+      // reload geometry if Gmsh parameters have been modified or if
+      // the model name has changed
+      modelName = GModel::current()->getName();
+      geometry_reload_cb(0, 0);
+    }
+  }
+  else if(action == "compute"){
+    if(onelab::server::instance()->getChanged("Gmsh") ||
+       modelName != GModel::current()->getName()){
+      // reload the geometry, mesh it and save the mesh if Gmsh
+      // parameters have been modified or if the model name has
+      // changed
+      modelName = GModel::current()->getName();
+      geometry_reload_cb(0, 0);
+      if(FlGui::instance()->onelab->meshAuto()){
+        mesh_3d_cb(0, 0);
+        CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
+      }
+    }
+    else if(StatFile(mshFileName)){
+      // mesh+save if the mesh file does not exist
+      if(FlGui::instance()->onelab->meshAuto()){
+        mesh_3d_cb(0, 0);
+        CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
+      }
+    }
+    onelab::server::instance()->setChanged(false, "Gmsh");
+  }
+}
+
 void onelab_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
@@ -517,9 +566,15 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   if(action == "dump"){
     std::string db = onelab::server::instance()->toChar();
-    for(unsigned int i = 0; i < db.size(); i++)
+    Msg::Direct("OneLab database dump:");
+    int start = 0;
+    for(unsigned int i = 0; i < db.size(); i++){
       if(db[i] == onelab::parameter::charSep()) db[i] = '|';
-    printf("OneLab dump:\n%s\n", db.c_str());
+      if(db[i] == '\n'){
+        Msg::Direct("%s", db.substr(start, i - start).c_str());
+        start = i + 1;
+      }
+    }
     return;
   }
 
@@ -549,58 +604,15 @@ void onelab_cb(Fl_Widget *w, void *data)
   do{ // enter computation loop
 
     // the Gmsh client is special: it always gets executed first. (The
-    // meta-model will allow more flexibility: but in the simple GUI we
-    // can assume this)
-    onelab::server::citer it = onelab::server::instance()->findClient("Gmsh");
-    if(it != onelab::server::instance()->lastClient()){
-      onelab::client *c = it->second;
-      std::string mshFileName = getMshFileName(c);
-      static std::string modelName = "";
-      if(modelName.empty()){
-        // first pass is special to prevent model reload, as well as
-        // remeshing if a mesh file already exists on disk
-        modelName = GModel::current()->getName();
-        if(!StatFile(mshFileName))
-          onelab::server::instance()->setChanged(false, "Gmsh");
-      }
-      if(action == "check"){
-        if(onelab::server::instance()->getChanged("Gmsh") ||
-           modelName != GModel::current()->getName()){
-          // reload geometry if Gmsh parameters have been modified or if
-          // the model name has changed
-          modelName = GModel::current()->getName();
-          geometry_reload_cb(0, 0);
-        }
-      }
-      else if(action == "compute"){
-        if(onelab::server::instance()->getChanged("Gmsh") ||
-           modelName != GModel::current()->getName()){
-          // reload the geometry, mesh it and save the mesh if Gmsh
-          // parameters have been modified or if the model name has
-          // changed
-          modelName = GModel::current()->getName();
-          geometry_reload_cb(0, 0);
-          if(FlGui::instance()->onelab->meshAuto()){
-            mesh_3d_cb(0, 0);
-            CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
-          }
-        }
-        else if(StatFile(mshFileName)){
-          // mesh+save if the mesh file does not exist
-          if(FlGui::instance()->onelab->meshAuto()){
-            mesh_3d_cb(0, 0);
-            CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
-          }
-        }
-        onelab::server::instance()->setChanged(false, "Gmsh");
-      }
-    }
+    // meta-model will allow more flexibility: but in the simple GUI
+    // we can assume this)
+    runGmshClient(action);
 
     if(action == "compute")
       FlGui::instance()->onelab->checkForErrors("Gmsh");
     if(FlGui::instance()->onelab->stop()) break;
     
-    // Iterate over all other clients
+    // iterate over all other clients
     for(onelab::server::citer it = onelab::server::instance()->firstClient();
         it != onelab::server::instance()->lastClient(); it++){
       onelab::client *c = it->second;
