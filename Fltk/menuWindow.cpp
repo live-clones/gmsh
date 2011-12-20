@@ -91,40 +91,43 @@ static void file_new_cb(Fl_Widget *w, void *data)
 
 static const char *input_formats =
   "All Files" TT "*.*" NN
-  "Gmsh Geometry" TT "*.geo" NN
-  "Gmsh Mesh" TT "*.msh" NN
-  "Gmsh Post-processing View" TT "*.pos" NN
+  "Geometry - Gmsh GEO" TT "*.geo" NN
 #if defined(HAVE_ACIS)
-  "ACIS Model" TT "*.sat" NN
+  "Geometry - ACIS" TT "*.sat" NN
 #endif
 #if defined(HAVE_OCC)
-  "BRep Model" TT "*.brep" NN
-  "IGES Model" TT "*.{igs,iges}" NN
-  "STEP Model" TT "*.{stp,step}" NN
+  "Geometry - OpenCASCADE BRep" TT "*.brep" NN
+  "Geometry - OpenCASCADE IGES" TT "*.{igs,iges}" NN
+  "Geometry - OpenCASCADE STEP" TT "*.{stp,step}" NN
 #endif
-  "Diffpack 3D Mesh" TT "*.diff" NN
-  "I-deas Universal Mesh" TT "*.unv" NN
+  "Mesh - Gmsh MSH" TT "*.msh" NN
+  "Mesh - Diffpack 3D" TT "*.diff" NN
+  "Mesh - I-deas Universal" TT "*.unv" NN
 #if defined(HAVE_MED)
-  "MED File" TT "*.{med,mmed,rmed}" NN
+  "Mesh - MED" TT "*.{med,mmed}" NN
 #endif
-  "Medit INRIA Mesh" TT "*.mesh" NN
-  "Nastran Bulk Data File" TT "*.{bdf,nas}" NN
-  "Plot3D Structured Mesh" TT "*.p3d" NN
-  "STL Surface Mesh" TT "*.stl" NN
-  "VTK Mesh" TT "*.vtk" NN
-  "VRML Surface Mesh" TT "*.{wrl,vrml}" NN
-  "PLY2 Surface Mesh" TT "*.ply2" NN
-  "BMP" TT "*.bmp" NN
+  "Mesh - INRIA Medit" TT "*.mesh" NN
+  "Mesh - Nastran Bulk Data File" TT "*.{bdf,nas}" NN
+  "Mesh - Plot3D Structured Mesh" TT "*.p3d" NN
+  "Mesh - STL Surface" TT "*.stl" NN
+  "Mesh - VTK" TT "*.vtk" NN
+  "Mesh - VRML Surface" TT "*.{wrl,vrml}" NN
+  "Mesh - PLY2 Surface" TT "*.ply2" NN
+  "Post-processing - Gmsh POS" TT "*.pos" NN
+#if defined(HAVE_MED)
+  "Post-processing - MED" TT "*.{rmed}" NN
+#endif
+  "Image - BMP" TT "*.bmp" NN
 #if defined(HAVE_LIBJPEG)
-  "JPEG" TT "*.{jpg,jpeg}" NN
+  "Image - JPEG" TT "*.{jpg,jpeg}" NN
 #endif
-  "PBM" TT "*.pbm" NN
-  "PGM" TT "*.pgm" NN
+  "Image - PBM" TT "*.pbm" NN
+  "Image - PGM" TT "*.pgm" NN
 #if defined(HAVE_LIBPNG)
-  "PNG" TT "*.png" NN
+  "Image - PNG" TT "*.png" NN
 #endif
-  "PNM" TT "*.pnm" NN
-  "PPM" TT "*.ppm" NN;
+  "Image - PNM" TT "*.pnm" NN
+  "Image - PPM" TT "*.ppm" NN;
 
 static void file_open_cb(Fl_Widget *w, void *data)
 {
@@ -368,7 +371,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
     {"Mesh - STL Surface" TT "*.stl", _save_stl},
     {"Mesh - VRML Surface" TT "*.wrl", _save_vrml},
     {"Mesh - VTK" TT "*.vtk", _save_vtk},
-    {"Mesh - PLY2" TT "*.ply2", _save_ply2},
+    {"Mesh - PLY2 Surface" TT "*.ply2", _save_ply2},
     {"Post-processing - Gmsh POS" TT "*.pos", _save_view_pos},
 #if defined(HAVE_MED)
     {"Post-processing - MED" TT "*.rmed", _save_view_med},
