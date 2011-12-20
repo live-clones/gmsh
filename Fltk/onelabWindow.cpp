@@ -941,12 +941,18 @@ void onelabWindow::rebuildSolverList()
       exes.push_back(opt_solver_executable(i, GMSH_GET, ""));
     }
   }
-  for(unsigned int i = 0; i < names.size(); i++){
-    onelab::server::citer it = onelab::server::instance()->findClient(names[i]);
-    if(it != onelab::server::instance()->lastClient())
-      it->second->setIndex(i);
-    opt_solver_name(i, GMSH_SET, names[i]);
-    opt_solver_executable(i, GMSH_SET, exes[i]);
+  for(int i = 0; i < 5; i++){
+    if(i < names.size()){
+      onelab::server::citer it = onelab::server::instance()->findClient(names[i]);
+      if(it != onelab::server::instance()->lastClient())
+        it->second->setIndex(i);
+      opt_solver_name(i, GMSH_SET, names[i]);
+      opt_solver_executable(i, GMSH_SET, exes[i]);
+    }
+    else{
+      opt_solver_name(i, GMSH_SET, "");
+      opt_solver_executable(i, GMSH_SET, "");
+    }
   }
   FlGui::instance()->menu->setContext(menu_solver, 0);
 }
