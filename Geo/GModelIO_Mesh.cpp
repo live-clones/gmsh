@@ -1093,7 +1093,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
             }
           }
         }
-        delete data;
+        delete [] data;
       }
     }
   }
