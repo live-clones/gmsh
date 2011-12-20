@@ -125,11 +125,12 @@ namespace onelab{
               << _attributes.size() << charSep();
       for(std::map<std::string, std::string>::const_iterator it = _attributes.begin();
           it != _attributes.end(); it++)
-        sstream << it->first << charSep() << it->second << charSep();
+        sstream << sanitize(it->first) << charSep() 
+                << sanitize(it->second) << charSep();
       sstream << getClients().size() << charSep();
       for(std::set<std::string>::const_iterator it = getClients().begin();
           it != getClients().end(); it++)
-        sstream << *it << charSep();
+        sstream << sanitize(*it) << charSep();
       return sstream.str();
     }
     virtual std::string::size_type fromChar(const std::string &msg)
@@ -336,7 +337,7 @@ namespace onelab{
       sstream << parameter::toChar() << _value << charSep() 
               << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
-        sstream << _choices[i] << charSep();
+        sstream << sanitize(_choices[i]) << charSep();
       return sstream.str();
     }
   };
@@ -347,9 +348,7 @@ namespace onelab{
   // regions.
   class function : public parameter{
   private:
-    // TODO: change this to onelab::string
     std::string _value;
-    // TODO: change this into std::map<onelab::region, onelab::string> 
     std::map<std::string, std::string> _pieceWiseValues;
     std::vector<std::string> _choices;
   public:
