@@ -74,8 +74,8 @@ class Field {
   virtual const char *getName() = 0;
 #if defined(HAVE_POST)
   void putOnView(PView * view, int comp = -1);
-  void putOnNewView();
 #endif
+  void putOnNewView();
   virtual std::string getDescription(){ return ""; }
 };
 
@@ -106,13 +106,15 @@ class FieldManager : public std::map<int, Field*> {
 // extrusion)
 
 #if defined(HAVE_ANN)
-class AttractorField;// : public Field;
+class AttractorField;
 
 class BoundaryLayerField : public Field {
+ private:
   std::list<AttractorField *> _att_fields;
   std::list<int> nodes_id, edges_id, faces_id;
-  void operator() (AttractorField *cc, double dist, double x, double y, double z, SMetric3 &metr, GEntity *ge);
-public:
+  void operator() (AttractorField *cc, double dist, double x, double y, double z,
+                   SMetric3 &metr, GEntity *ge);
+ public:
   double hwall_n,hwall_t,ratio,hfar,thickness; 
   double current_distance;
   SPoint3 _closest_point;

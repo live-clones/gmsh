@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include "GmshConfig.h"
 #include "GModel.h"
 #include "meshGEdge.h"
 #include "GEdge.h"
@@ -251,14 +252,16 @@ static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
 
 void meshGEdge::operator() (GEdge *ge) 
 {  
-
+#if defined(HAVE_ANN)
   FieldManager *fields = ge->model()->getFields();
   BoundaryLayerField *blf = 0;
   if(fields->background_field > 0){
     Field *bl_field = fields->get(fields->background_field);
     blf = dynamic_cast<BoundaryLayerField*> (bl_field);
   }
-
+#else
+  bool blf = false;
+#endif
 
   ge->model()->setCurrentMeshEntity(ge);
 

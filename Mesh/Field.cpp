@@ -1674,15 +1674,17 @@ class AttractorField : public Field
   }
 };
 
-const char *BoundaryLayerField ::getName()
+const char *BoundaryLayerField::getName()
 {
   return "BoundaryLayer";
 }
-std::string BoundaryLayerField :: getDescription()
+
+std::string BoundaryLayerField::getDescription()
 {
   return "hwall * ratio^(dist/hwall)";
 }
-BoundaryLayerField :: BoundaryLayerField()
+
+BoundaryLayerField::BoundaryLayerField()
 {
   hwall_n = .1;
   hwall_t = .5;
@@ -1711,7 +1713,7 @@ BoundaryLayerField :: BoundaryLayerField()
     (thickness, "Maximal thickness of the boundary layer");
 }
 
-double BoundaryLayerField :: operator() (double x, double y, double z, GEntity *ge)
+double BoundaryLayerField::operator() (double x, double y, double z, GEntity *ge)
 {
   double dist = 1.e22;
   AttractorField *cc;
@@ -1732,9 +1734,9 @@ double BoundaryLayerField :: operator() (double x, double y, double z, GEntity *
   return std::min (hfar,lc);
 }
 
-void BoundaryLayerField :: operator() (AttractorField *cc, double dist,
-                                       double x, double y, double z, 
-                                       SMetric3 &metr, GEntity *ge)
+void BoundaryLayerField::operator() (AttractorField *cc, double dist,
+                                     double x, double y, double z, 
+                                     SMetric3 &metr, GEntity *ge)
 {
   // dist = hwall -> lc = hwall * ratio
   // dist = hwall (1+ratio) -> lc = hwall ratio ^ 2
@@ -1869,8 +1871,8 @@ void BoundaryLayerField :: operator() (AttractorField *cc, double dist,
   metr  = SMetric3(1./(L1*L1), 1./(L2*L2), 1./(L3*L3), t1, t2, t3);
 }
 
-void BoundaryLayerField :: operator() (double x, double y, double z, 
-                                       SMetric3 &metr, GEntity *ge)
+void BoundaryLayerField::operator() (double x, double y, double z, 
+                                     SMetric3 &metr, GEntity *ge)
 {
   if (update_needed){
     for(std::list<int>::iterator it = nodes_id.begin();
@@ -1964,9 +1966,9 @@ FieldManager::~FieldManager()
     delete it->second;
 }
 
-#if defined(HAVE_POST)
 void Field::putOnNewView()
 {
+#if defined(HAVE_POST)
   if(GModel::current()->getMeshStatus() < 1){
     Msg::Error("No mesh available to create the view: please mesh your model!");
     return;
@@ -1984,8 +1986,10 @@ void Field::putOnNewView()
   oss << "Field " << id;
   PView *view = new PView(oss.str(), "NodeData", GModel::current(), d);
   view->setChanged(true);
+#endif
 }
 
+#if defined(HAVE_POST)
 void Field::putOnView(PView *view, int comp)
 {
   PViewData *data = view->getData();

@@ -96,8 +96,11 @@ void buildMeshMetric(GFace *gf, double *uv, SMetric3 &m, double metric[3])
   metric[2] = res[1][1];
 } 
 
-BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf, double _treshold) {
-
+BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf, double _treshold)
+{
+#if !defined(HAVE_ANN)
+  return 0;
+#else
   FieldManager *fields = gf->model()->getFields();
   if(fields->boundaryLayer_field <= 0){
     return 0;
@@ -106,7 +109,6 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf, double _treshold) {
   BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField*> (bl_field);
   
   if (!blf)return 0;
-  
 
   BoundaryLayerColumns * _columns = new BoundaryLayerColumns;
 
@@ -387,6 +389,7 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf, double _treshold) {
   // END OF DEBUG STUFF
 
   return _columns;
+#endif
 }
 
 

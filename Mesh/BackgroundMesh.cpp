@@ -9,6 +9,7 @@
 #include "Context.h"
 #include "GVertex.h"
 #include "GEdge.h"
+#include "GEdgeCompound.h"
 #include "GFace.h"
 #include "GFaceCompound.h"
 #include "GModel.h"
