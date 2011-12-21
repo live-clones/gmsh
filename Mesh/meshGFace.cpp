@@ -433,11 +433,6 @@ void BDS2GMSH(BDS_Mesh *m, GFace *gf, std::map<BDS_Point*, MVertex*> &recoverMap
   }
 }
 
-bool meshGenerator(GFace *gf, int RECUR_ITER, 
-		   bool repairSelfIntersecting1dMesh,
-		   bool onlyInitialMesh,
-		   bool debug = true,
-		   std::list<GEdge*> *replacement_edges = 0);
 
 static void addOrRemove(MVertex *v1, MVertex *v2, std::set<MEdge,Less_Edge> & bedges)
 {

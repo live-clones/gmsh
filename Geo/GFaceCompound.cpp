@@ -607,8 +607,8 @@ bool GFaceCompound::parametrize() const
   if(oct) return paramOK; 
   if(trivial()) return paramOK;
 
-  // if (_mapping != RBF)
-  //   coordinates.clear(); 
+  if (_mapping != RBF)
+    coordinates.clear(); 
   
   computeNormals();  
 
@@ -1681,7 +1681,7 @@ void GFaceCompound::getTriangle(double u, double v,
   //   }
   // }
   
-  *lt = (GFaceCompoundTriangle*)Octree_Search(uv, oct); 
+  *lt = (GFaceCompoundTriangle*)Octree_Search(uv, oct);
 
   // if(!(*lt)) {
   //     for(int i=0;i<nbT;i++){

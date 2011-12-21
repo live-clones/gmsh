@@ -54,5 +54,10 @@ int MeshExtrudedSurface(GFace *gf, std::set<std::pair<MVertex*, MVertex*> >
                         *constrainedEdges=0);
 void partitionAndRemesh(GFaceCompound *gf);
 bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge*> &edges);
+bool meshGenerator(GFace *gf, int RECUR_ITER, 
+		   bool repairSelfIntersecting1dMesh,
+		   bool onlyInitialMesh,
+		   bool debug = true,
+		   std::list<GEdge*> *replacement_edges = 0);
 
 #endif

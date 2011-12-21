@@ -419,8 +419,7 @@ Mesh2 *Bamg(Mesh2 *Thh, double * args,double *mm11,double *mm12,double *mm22, bo
   Triangles &Th(*oTh);
 
   // printf("COUCOUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU\n");
-  //  Th.Write("toto.mesh",bamg::Triangles::AutoMesh);  
-
+  //Th.Write("toto.mesh",bamg::Triangles::AutoMesh);  
 
   bool mtx=true;
   KN_<double> m11(mm11,Thh->nv);

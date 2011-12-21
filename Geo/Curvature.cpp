@@ -963,9 +963,9 @@ void Curvature::buildEdgeList()
     NbEdges += _VertexToEdgeList[i].size();
   }
 
-  std::cout << "Euler formula:" << std::endl;
-  std::cout << "Edges + 2 =        " << NbEdges + 2 << std::endl;
-  std::cout << "Elements + Nodes = " << _VertexToInt.size() + _ElementToInt.size() << std::endl;
+  //std::cout << "Euler formula:" << std::endl;
+  //std::cout << "Edges + 2 =        " << NbEdges + 2 << std::endl;
+  //std::cout << "Elements + Nodes = " << _VertexToInt.size() + _ElementToInt.size() << std::endl;
 
 }
 
