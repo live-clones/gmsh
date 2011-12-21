@@ -8,6 +8,7 @@ template <class scalar> class simpleFunction;
 class MVertex;
 class gLevelset;
 class MElementOctree;
+class STensor3;
 
 /**Anisotropic mesh size field based on a metric */
 class meshMetric: public Field {
@@ -29,7 +30,7 @@ class meshMetric: public Field {
 
   std::map<MVertex*,SMetric3> _nodalMetrics;
   std::map<MVertex*,double> _nodalSizes, _detMetric;
-  std::map<MVertex*,fullMatrix<double> > _hessian;
+  std::map<MVertex*,SMetric3 > _hessian;
  public:
   meshMetric(std::vector<MElement*> elements,  int technique, 
 	     simpleFunction<double> *fct, std::vector<double> parameters);

@@ -134,6 +134,7 @@ void meshGFaceBamg(GFace *gf){
   }
  
   std::vector<MElement*> myParamElems;
+  std::vector<MVertex*> newVert;
   Triangle2 *bamgTriangles = new Triangle2[gf->triangles.size()];
   for (unsigned int i = 0; i < gf->triangles.size(); i++){    
     int nodes [3] = {gf->triangles[i]->getVertex(0)->getIndex(),
@@ -149,6 +150,9 @@ void meshGFaceBamg(GFace *gf){
       MVertex *vv1 = new MVertex(u1,v1,0.0); 
       MVertex *vv2 = new MVertex(u2,v2,0.0); 
       MVertex *vv3 = new MVertex(u3,v3,0.0);
+      newVert.push_back(vv1);
+      newVert.push_back(vv2);
+      newVert.push_back(vv3);
       MTriangle *tri = new MTriangle(vv1,vv2,vv3, i);
       myParamElems.push_back(tri);
     }
@@ -209,7 +213,7 @@ void meshGFaceBamg(GFace *gf){
   }
   
   Mesh2 *refinedBamgMesh = 0;
-  int iterMax = 1;
+  int iterMax = 11;
   for (int  k= 0; k < iterMax; k++){
     
     int nbVert = bamgMesh->nv;
@@ -303,9 +307,12 @@ void meshGFaceBamg(GFace *gf){
 					  yetAnother[(*refinedBamgMesh)(v3)]));    
   }
   
+  //delete pointers
   if (refinedBamgMesh) delete refinedBamgMesh;
   if ( _octree) delete  _octree;
   for(std::vector<MElement*>::iterator it = myParamElems.begin(); it != myParamElems.end(); it++)
+        delete *it;
+  for(std::vector<MVertex*>::iterator it = newVert.begin(); it != newVert.end(); it++)
         delete *it;
 }
 

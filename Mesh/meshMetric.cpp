@@ -150,8 +150,13 @@ void meshMetric::computeHessian( v2t_cont adj){
       AT.mult(A,ATA);
       AT.mult(b,ATb);
       ATA.luSolve(ATb,result);
-      if (ITER == 0)
-	grads[ver] = SVector3(result(1),result(2),_dim==2 ? 0.0:result(3));
+      if (ITER == 0){
+	double gr1 = result(1);
+	double gr2 = result(2);
+	double gr3 = (_dim==2) ? 0.0:result(3); 
+	double norm = sqrt(gr1*gr1+gr2*gr2+gr3*gr3);
+	grads[ver] = SVector3(gr1/norm,gr2/norm,gr3/norm);
+      }
       else
 	dgrads[ITER-1][ver] = SVector3(result(1),result(2),_dim==2? 0.0:result(3));
       ++it;
@@ -179,58 +184,19 @@ void meshMetric::computeMetric(){
      SVector3 gradudx = dgrads[0][ver];
      SVector3 gradudy = dgrads[1][ver];
      SVector3 gradudz = dgrads[2][ver];
-     fullMatrix<double> hessian(3,3);
+     SMetric3 hessian;
      hessian(0,0) = gradudx(0);
      hessian(1,1) = gradudy(1);
      hessian(2,2) = gradudz(2);
      hessian(1,0) = hessian(0,1) = 0.5 * (gradudx(1) +gradudy(0));
      hessian(2,0) = hessian(0,2) = 0.5 * (gradudx(2) +gradudz(0));
      hessian(2,1) = hessian(1,2) = 0.5 * (gradudy(2) +gradudz(1));
-
      if (_technique == meshMetric::HESSIAN){
-      H.setMat(hessian);
+      H = hessian;
     }
-     //See paper Ducrot and Frey: 
-     //Anisotropic levelset adaptation for accurate interface capturing,
-     //ijnmf, 2010
-     else if (_technique == meshMetric::FREY ){
-       SVector3 gr = grads[ver];
-       SMetric3 hfrey(1./(hmax*hmax));
-       double divEps = 1./0.01;
-       double norm = gr(0)*gr(0)+gr(1)*gr(1)+gr(2)*gr(2);
-       if (dist < _E && norm != 0.0){
-	 double h = hmin*(hmax/hmin-1.0)*dist/_E + hmin;
-	 double C = 1./(h*h) -1./(hmax*hmax);
-	 /*	 hfrey(0,0) += C*gr(0)*gr(0)/(norm) + hessian(0,0)*divEps; //metric intersection ???
-		 hfrey(1,1) += C*gr(1)*gr(1)/(norm) + hessian(1,1)*divEps;
-		 hfrey(2,2) += C*gr(2)*gr(2)/(norm) + hessian(2,2)*divEps;
-		 hfrey(1,0) = hfrey(0,1) = C*gr(1)*gr(0)/(norm) + hessian(1,0)*divEps;
-		 hfrey(2,0) = hfrey(0,2) = C*gr(2)*gr(0)/(norm) + hessian(2,0)*divEps;
-		 hfrey(2,1) = hfrey(1,2) = C*gr(2)*gr(1)/(norm) + hessian(2,1)*divEps;
-	 */
-	 hfrey(0,0) += C*gr(0)*gr(0)/(norm) ;
-	 hfrey(1,1) += C*gr(1)*gr(1)/(norm) ;
-	 hfrey(2,2) += C*gr(2)*gr(2)/(norm) ;
-	 hfrey(1,0) = hfrey(0,1) = C*gr(1)*gr(0)/(norm) ;
-	 hfrey(2,0) = hfrey(0,2) = C*gr(2)*gr(0)/(norm) ;
-	 hfrey(2,1) = hfrey(1,2) = C*gr(2)*gr(1)/(norm) ;	 	 
-       }
-       SMetric3 sss; sss.setMat(hessian);
-       sss *= divEps;
-       sss(0,0) += 1/(hmax*hmax);
-       sss(1,1) += 1/(hmax*hmax);
-       sss(2,2) += 1/(hmax*hmax);
-       H = intersection(sss,hfrey);
-     }
-     //See paper Hachem and Coupez: 
-     //Finite element solution to handle complex heat and fluid flows in 
-     //industrial furnaces using the immersed volume technique, ijnmf, 2010
      else if (_technique == meshMetric::LEVELSET ){
       SVector3 gr = grads[ver];
-      fullMatrix<double> hlevelset(3,3); 
-      hlevelset(0,0) = 1./(hmax*hmax);
-      hlevelset(1,1) = 1./(hmax*hmax);
-      hlevelset(2,2) = 1./(hmax*hmax);
+      SMetric3 hlevelset(1./(hmax*hmax));
       double norm = gr(0)*gr(0)+gr(1)*gr(1)+gr(2)*gr(2);
       if (dist < _E && norm != 0.0){
 	double h = hmin*(hmax/hmin-1)*dist/_E + hmin;
@@ -252,17 +218,73 @@ void meshMetric::computeMetric(){
       // 	hlevelset(2,0) = hlevelset(0,2) = C*gr(2)*gr(0)/norm ; 
       // 	hlevelset(2,1) = hlevelset(1,2) = C*gr(2)*gr(1)/norm ; 
       // }
-      H.setMat(hlevelset);
+      H = hlevelset;
     }
+     //See paper Ducrot and Frey: 
+     //Anisotropic levelset adaptation for accurate interface capturing,
+     //ijnmf, 2010
+     else if (_technique == meshMetric::FREY ){
+       SVector3 gr = grads[ver];
+       SMetric3 hfrey(1./(hmax*hmax));
+       double kappa = hessian(0,0)+hessian(1,1)+hessian(2,2);
+       double Np = 15.0;
+       double epsGeom = 4.0*3.14*3.14/(kappa*Np);
+       double norm = gr(0)*gr(0)+gr(1)*gr(1)+gr(2)*gr(2);
+       if (dist < _E && norm != 0.0){
+	 double h = hmin*(hmax/hmin-1.0)*dist/_E + hmin;
+	 double C = 1./(h*h) -1./(hmax*hmax);
+	 hfrey(0,0) += C*gr(0)*gr(0)/(norm) + hessian(0,0)/epsGeom;
+	 hfrey(1,1) += C*gr(1)*gr(1)/(norm) + hessian(1,1)/epsGeom;
+	 hfrey(2,2) += C*gr(2)*gr(2)/(norm) + hessian(2,2)/epsGeom;
+	 hfrey(1,0) = hfrey(0,1) = C*gr(1)*gr(0)/(norm) + hessian(1,0)/epsGeom;
+	 hfrey(2,0) = hfrey(0,2) = C*gr(2)*gr(0)/(norm) + hessian(2,0)/epsGeom;
+	 hfrey(2,1) = hfrey(1,2) = C*gr(2)*gr(1)/(norm) + hessian(2,1)/epsGeom;
+	 // hfrey(0,0) += C*gr(0)*gr(0)/norm;
+	 // hfrey(1,1) += C*gr(1)*gr(1)/norm; 
+	 // hfrey(2,2) += C*gr(2)*gr(2)/norm; 
+	 // hfrey(1,0) = hfrey(0,1) = gr(1)*gr(0)/(norm) ;
+	 // hfrey(2,0) = hfrey(0,2) = gr(2)*gr(0)/(norm) ;
+	 // hfrey(2,1) = hfrey(1,2) = gr(2)*gr(1)/(norm) ;
+       }
+       // SMetric3 sss=hessian;
+       // sss *= divEps;
+       // sss(0,0) += 1/(hmax*hmax);
+       // sss(1,1) += 1/(hmax*hmax);
+       // sss(2,2) += 1/(hmax*hmax);
+       // H = intersection(sss,hfrey);
+       // if (dist < _E) H = intersection(sss,hfrey);
+       // else H = hfrey;
+       H = hfrey;
+     }
+     //See paper Hachem and Coupez: 
+     //Finite element solution to handle complex heat and fluid flows in 
+     //industrial furnaces using the immersed volume technique, ijnmf, 2010
 
     fullMatrix<double> V(3,3);
     fullVector<double> S(3);
     H.eig(V,S);
-  
-    double lambda1 = S(0);
-    double lambda2 = S(1); 
-    double lambda3 = (_dim == 3)? S(2) : 1.; 
-    if (_technique == meshMetric::HESSIAN || (dist < _E && _technique == meshMetric::FREY)){
+
+    double lambda1, lambda2, lambda3;
+    // if (dist < _E && _technique == meshMetric::FREY){
+    //   fullMatrix<double> Vhess(3,3);
+    //   fullVector<double> Shess(3);
+    //   hessian.eig(Vhess,Shess);
+    //   double h = hmin*(hmax/hmin-1)*dist/_E + hmin;
+    //   double lam1 = Shess(0);
+    //   double lam2 = Shess(1); 
+    //   double lam3 = (_dim == 3)? Shess(2) : 1.;
+    //   lambda1 = lam1;
+    //   lambda2 = lam2/lambda1;
+    //   lambda3 = (_dim == 3)? lam3/lambda1: 1.0;
+    // }
+    // else{
+      lambda1 = S(0);
+      lambda2 = S(1); 
+      lambda3 = (_dim == 3)? S(2) : 1.; 
+   //}
+
+    if (_technique == meshMetric::HESSIAN || (dist < _E && _technique == meshMetric::LEVELSET) 
+	|| (dist < _E && _technique == meshMetric::FREY)){
       lambda1 = std::min(std::max(fabs(S(0))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin));
       lambda2 = std::min(std::max(fabs(S(1))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin));
       lambda3 = (_dim == 3) ? std::min(std::max(fabs(S(2))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin)) : 1.;
@@ -368,7 +390,7 @@ void meshMetric::printMetric(const char* n) const{
   FILE *f = fopen (n,"w");
   fprintf(f,"View \"\"{\n");
 
-  //std::map<MVertex*,fullMatrix<double> >::const_iterator it = _hessian.begin(); 
+  //std::map<MVertex*,SMetric3 >::const_iterator it = _hessian.begin(); 
   std::map<MVertex*,SMetric3>::const_iterator it= _nodalMetrics.begin();
   for (; it != _nodalMetrics.end(); ++it){
     //for (; it != _hessian.end(); ++it){
@@ -389,10 +411,9 @@ void meshMetric::printMetric(const char* n) const{
 
 double meshMetric::getLaplacian (MVertex *v) {
   MVertex *vNew = _vertexMap[v->getNum()];
-  std::map<MVertex*, fullMatrix<double> >::const_iterator it = _hessian.find(vNew);
-  fullMatrix<double> h = it->second;
-  double laplace = h(0,0)+h(1,1)+h(2,2);
-  return laplace; 
+  std::map<MVertex*, SMetric3 >::const_iterator it = _hessian.find(vNew);
+  SMetric3 h = it->second;
+  return h(0,0)+h(1,1)+h(2,2); 
 }
 
 /*void meshMetric::curvatureContributionToMetric (){
