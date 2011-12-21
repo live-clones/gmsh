@@ -226,13 +226,13 @@ void meshMetric::computeMetric(){
      else if (_technique == meshMetric::FREY ){
        SVector3 gr = grads[ver];
        SMetric3 hfrey(1./(hmax*hmax));
-       double kappa = hessian(0,0)+hessian(1,1)+hessian(2,2);
-       double Np = 15.0;
-       double epsGeom = 4.0*3.14*3.14/(kappa*Np);
        double norm = gr(0)*gr(0)+gr(1)*gr(1)+gr(2)*gr(2);
        if (dist < _E && norm != 0.0){
 	 double h = hmin*(hmax/hmin-1.0)*dist/_E + hmin;
 	 double C = 1./(h*h) -1./(hmax*hmax);
+	 double kappa = hessian(0,0)+hessian(1,1)+hessian(2,2);
+	 double Np = 15.0;
+	 double epsGeom = 4.0*3.14*3.14/(kappa*Np);
 	 hfrey(0,0) += C*gr(0)*gr(0)/(norm) + hessian(0,0)/epsGeom;
 	 hfrey(1,1) += C*gr(1)*gr(1)/(norm) + hessian(1,1)/epsGeom;
 	 hfrey(2,2) += C*gr(2)*gr(2)/(norm) + hessian(2,2)/epsGeom;
