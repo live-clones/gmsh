@@ -180,7 +180,7 @@ void meshGFaceBamg(GFace *gf){
   Mesh2 *bamgMesh = new Mesh2 (all.size(), gf->triangles.size(), numEdges,
 			       bamgVertices, bamgTriangles, bamgBoundary);
 
-  MElementOctree *_octree ;
+  MElementOctree *_octree = NULL;
   if (hasCompounds){
     _octree = new MElementOctree(myParamElems);
     // //EMI PRINT TRIS
