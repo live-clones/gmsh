@@ -155,6 +155,7 @@ void meshMetric::computeHessian( v2t_cont adj){
 	double gr2 = result(2);
 	double gr3 = (_dim==2) ? 0.0:result(3); 
 	double norm = sqrt(gr1*gr1+gr2*gr2+gr3*gr3);
+	if (norm == 0.0 || _technique == meshMetric::HESSIAN) norm = 1.0;
 	grads[ver] = SVector3(gr1/norm,gr2/norm,gr3/norm);
       }
       else
