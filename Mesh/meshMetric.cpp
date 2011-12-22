@@ -286,8 +286,7 @@ void meshMetric::computeMetric(){
       lambda3 = (_dim == 3)? S(2) : 1.; 
    //}
 
-    if (_technique == meshMetric::HESSIAN || (dist < _E && _technique == meshMetric::LEVELSET) 
-	|| (dist < _E && _technique == meshMetric::FREY)){
+    if (_technique == meshMetric::HESSIAN || (dist < _E && _technique == meshMetric::FREY)){
       lambda1 = std::min(std::max(fabs(S(0))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin));
       lambda2 = std::min(std::max(fabs(S(1))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin));
       lambda3 = (_dim == 3) ? std::min(std::max(fabs(S(2))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin)) : 1.;

@@ -588,8 +588,7 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
 	}
       }
 
-      nbElems = elements.size();
-      if (nbElems == 0)return -1;
+      if (elements.size() == 0)return -1;
  
       fields->reset();
       int id = fields->newId();
@@ -614,6 +613,7 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
 	}
       }
      
+      nbElems = getNumMeshElements();
       if (++ITER >= niter) break;
       if (fabs((double)(nbElems - nbElemsOld)) < 0.01 * nbElemsOld) break;
 
