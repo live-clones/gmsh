@@ -971,7 +971,7 @@ double lpcvt::total_area(){
   double total;
   SPoint2 p1,p2,p3;
   voronoi_vertex v1,v2,v3;
-  std::list<voronoi_element>::iterator it;
+  std::vector<voronoi_element>::iterator it;
   total = 0.0;
   for(it=clipped.begin();it!=clipped.end();it++){
     v1 = it->get_v1();
@@ -988,7 +988,7 @@ double lpcvt::total_area(){
 void lpcvt::print_voronoi1(){
   SPoint2 p1,p2,p3;
   voronoi_vertex v1,v2,v3;
-  std::list<voronoi_element>::iterator it;
+  std::vector<voronoi_element>::iterator it;
   std::ofstream file("voronoi1.pos");
   file << "View \"test\" {\n";
   for(it=clipped.begin();it!=clipped.end();it++){
@@ -1066,7 +1066,7 @@ void lpcvt::compute_parameters(GFace* gf,int p){
   SPoint2 p1,p2,p3;
   voronoi_vertex v1,v2,v3;
   metric m;
-  std::list<voronoi_element>::iterator it;
+  std::vector<voronoi_element>::iterator it;
 	
   k = 1.0;	
   for(it=clipped.begin();it!=clipped.end();it++){
@@ -1143,7 +1143,7 @@ void lpcvt::eval(DocRecord& triangulator,std::vector<SVector3>& gradients,double
   SVector3 grad1,grad2;
   SVector3 normal;
   voronoi_vertex v1,v2,v3;
-  std::list<voronoi_element>::iterator it;
+  std::vector<voronoi_element>::iterator it;
 	
   for(i=0;i<gradients.size();i++){
     gradients[i] = SVector3(0.0,0.0,0.0);
@@ -1207,7 +1207,7 @@ void lpcvt::eval(DocRecord& triangulator,std::vector<SVector3>& gradients,double
 
 void lpcvt::swap(){
   voronoi_vertex vertex;
-  std::list<voronoi_element>::iterator it;
+  std::vector<voronoi_element>::iterator it;
   for(it=clipped.begin();it!=clipped.end();it++){
 	if(J(it->get_v1().get_point(),it->get_v2().get_point(),it->get_v3().get_point())<0.0){
       vertex = it->get_v3();

@@ -6,7 +6,7 @@
 #ifndef _OCTREE_H_
 #define _OCTREE_H_
 
-#include <list>
+#include <vector>
 #include "OctreeInternals.h"
 
 Octree* Octree_Create(int maxElements, // max. num of elts allowed in an octant
@@ -20,6 +20,6 @@ void Octree_Delete(Octree *);
 void Octree_Insert(void *, Octree *);
 void Octree_Arrange(Octree *);
 void *Octree_Search(double *, Octree *);
-void Octree_SearchAll(double *, Octree *, std::list<void *> *);
+void Octree_SearchAll(double *, Octree *, std::vector<void *> *);
 
 #endif

@@ -6,7 +6,7 @@
 #ifndef _OCTREE_INTERNALS_H_
 #define _OCTREE_INTERNALS_H_
 
-#include <list>
+#include <vector>
 
 // file of function prototypes and macro constants 
 typedef void (*BBFunction)(void *, double*, double*);
@@ -30,7 +30,7 @@ struct bucket {
   int numElements; // number of elements contained by bucket 
   int precision;   // the level of precision of the bucket 
   ELink lhead; // list of elements in bucket, if NULL -> no elements 
-  std::list<void *> listBB; // list of elements in bucket by Bounding Box       
+  std::vector<void *> listBB; // list of elements in bucket by Bounding Box       
   struct bucket *next; // link to ragged digit extensions to bucket array 
   struct bucket *parent; // link to the parent bucket 
 };
@@ -44,7 +44,7 @@ struct global {
   double origin[3];   // smallest x,y, z of model's bounding box  
   double size[3];    // size in x, y, z of model bounding box 
   void * ptrToPrevElement;      
-  std::list<void *> listAllElements;
+  std::vector<void *> listAllElements;
 };
 typedef struct global globalInfo;
 
@@ -76,6 +76,6 @@ int xyzInElementBB(double *xyz, void *region, BBFunction BBElement);
 void insertOneBB(void *, double *, double *, octantBucket *);
 void *searchAllElements(octantBucket *_buckets_head, double *_pt, 
                         globalInfo *_globalPara, BBFunction BBElement, 
-                        InEleFunction xyzInElement, std::list<void *> *_elements);
+                        InEleFunction xyzInElement, std::vector<void *> *_elements);
 
 #endif

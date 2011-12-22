@@ -85,7 +85,9 @@ meshMetric::meshMetric(GModel *gm, int technique, simpleFunction<double> *fct, s
 
 }
 meshMetric::~meshMetric(){
-  //if (_octree) delete _octree;
+  if (_octree) delete _octree;
+  for (int i=0; i< _elements.size(); i++)
+   delete _elements[i];
 }
 
 void meshMetric::computeValues( v2t_cont adj){
@@ -108,7 +110,7 @@ void meshMetric::computeHessian( v2t_cont adj){
     while (it != adj.end()) {
       std::vector<MElement*> lt = it->second;      
       MVertex *ver = it->first;
-      while (lt.size() < 12) increaseStencil(ver,adj,lt); //<7
+      while (lt.size() < 9) increaseStencil(ver,adj,lt); //<7
       // if ( ver->onWhat()->dim() < _dim ){
       // 	while (lt.size() < 12){
       // 	  increaseStencil(ver,adj,lt);
@@ -331,8 +333,7 @@ void meshMetric::computeMetric(){
   //smoothMetric (sol);
   //curvatureContributionToMetric();
 
-  //putOnNewView();
-
+ 
 }
 
 double meshMetric::operator() (double x, double y, double z, GEntity *ge) {
@@ -379,31 +380,25 @@ void meshMetric::operator() (double x, double y, double z, SMetric3 &metr, GEnti
   }
 }
 
-void meshMetric::setAsBackgroundMesh (GModel *gm){
-  FieldManager *fields = gm->getFields();
-  int id = fields->newId();
-  (*fields)[id] = new meshMetric(*this);
-  fields->background_field = id;
-}
-
 void meshMetric::printMetric(const char* n) const{
 
   FILE *f = fopen (n,"w");
   fprintf(f,"View \"\"{\n");
 
-  //std::map<MVertex*,SMetric3 >::const_iterator it = _hessian.begin(); 
-  std::map<MVertex*,SMetric3>::const_iterator it= _nodalMetrics.begin();
-  for (; it != _nodalMetrics.end(); ++it){
-    //for (; it != _hessian.end(); ++it){
+  std::map<MVertex*,SMetric3 >::const_iterator it = _hessian.begin(); 
+  //std::map<MVertex*,SMetric3>::const_iterator it= _nodalMetrics.begin();
+  //for (; it != _nodalMetrics.end(); ++it){
+    for (; it != _hessian.end(); ++it){
       MVertex *v =  it->first;
-      // double lapl =  getLaplacian(v);
-      // fprintf(f, "SP(%g,%g,%g){%g};\n",  it->first->x(),it->first->y(),it->first->z(),lapl);
-      fprintf(f,"TP(%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g,%g};\n",
-      	    it->first->x(),it->first->y(),it->first->z(),
-      	    it->second(0,0),it->second(0,1),it->second(0,2),
-      	    it->second(1,0),it->second(1,1),it->second(1,2),
-      	    it->second(2,0),it->second(2,1),it->second(2,2)
-      	    );
+      SMetric3 h = it->second;
+      double lapl = h(0,0)+h(1,1)+h(2,2); 
+       fprintf(f, "SP(%g,%g,%g){%g};\n",  it->first->x(),it->first->y(),it->first->z(),lapl);
+      // fprintf(f,"TP(%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g,%g};\n",
+      // 	    it->first->x(),it->first->y(),it->first->z(),
+      // 	    it->second(0,0),it->second(0,1),it->second(0,2),
+      // 	    it->second(1,0),it->second(1,1),it->second(1,2),
+      // 	    it->second(2,0),it->second(2,1),it->second(2,2)
+      // 	    );
 
   } 
   fprintf(f,"};\n");

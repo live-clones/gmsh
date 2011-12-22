@@ -41,8 +41,7 @@ class meshMetric: public Field {
   void computeMetric() ;
   void computeValues( v2t_cont adj);
   void computeHessian( v2t_cont adj);
-  void setAsBackgroundMesh (GModel *gm);
-
+ 
   double getLaplacian (MVertex *v);
   virtual bool isotropic () const {return false;}
   virtual const char *getName()

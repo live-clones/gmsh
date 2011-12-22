@@ -34,7 +34,7 @@ class smoothing{
 
 class lpcvt{
  private :
-  std::list<voronoi_element> clipped;
+  std::vector<voronoi_element> clipped;
   std::queue<int> fifo;
   std::vector<segment_list> borders;
   std::vector<double> angles;

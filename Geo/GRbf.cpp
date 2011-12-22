@@ -211,12 +211,12 @@ void GRbf::buildOctree(double radius)
   Octree_Arrange(oct);
 
   for (int i= 0; i< nbNodes; i++){
-    std::list<void*> l;
+    std::vector<void*> l;
     double P[3] = {centers(i,0),centers(i,1), centers(i,2)};
     Octree_SearchAll(P, oct, &l);
     nodesInSphere[i].push_back(i);
     if (l.size() == 1) printf("*** WARNING: Found only %d sphere ! \n", (int)l.size());
-    for (std::list<void*>::iterator it = l.begin(); it != l.end(); it++) {
+    for (std::vector<void*>::iterator it = l.begin(); it != l.end(); it++) {
       Sphere *sph = (Sphere*) *it;
       std::vector<int> &pts = nodesInSphere[i];
       if (sph->index != i)  nodesInSphere[i].push_back(sph->index);

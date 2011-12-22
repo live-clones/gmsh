@@ -5,7 +5,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <list>
+#include <vector>
 #include "Octree.h"
 
 Octree* Octree_Create(int maxElements, double origin[3], double size[3],   
@@ -69,7 +69,8 @@ void Octree_Insert(void *element, Octree *myOctree)
 void Octree_Arrange(Octree *myOctree)
 {
   if(!myOctree) return;
-  std::list<void *>::iterator iter;
+  //std::list<void *>::iterator iter;
+  std::vector<void *>::iterator iter;
   double minPt[3], maxPt[3];
   for(iter = myOctree->info->listAllElements.begin(); iter!= 
       myOctree->info->listAllElements.end(); iter++) {
@@ -86,7 +87,7 @@ void *Octree_Search(double *pt, Octree *myOctree)
                        myOctree->function_BB, myOctree->function_inElement);
 }
 
-void Octree_SearchAll(double *pt, Octree *myOctree, std::list<void*> *output)
+void Octree_SearchAll(double *pt, Octree *myOctree, std::vector<void*> *output)
 {
   if(!myOctree) return;
   searchAllElements(myOctree->root, pt, myOctree->info, myOctree->function_BB,

@@ -523,51 +523,49 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
 {
 #if defined(HAVE_MESH)
 
-  int ITER = 0;
-  int nbElemsOld = 0;
+  if (getNumMeshElements() == 0) mesh(getDim());
+  int nbElemsOld = getNumMeshElements();
   int nbElems;
   int niter = parameters.size() >=4 ? (int) parameters[3] : 3;
 
+  FieldManager *fields = getFields();
+  fields->reset();
+
+  int ITER = 0;
   if (meshAll){
-  
-    FieldManager *fields = getFields();
-    fields->reset();
+
     while(1){
       Msg::Info("-- adaptMesh (allDim) ITER =%d ", ITER);
 
+      fields->reset();
+      int id = fields->newId();
+      (*fields)[id] = new meshMetric(this, technique, f, parameters);;
+      fields->background_field = id;    
+
+      opt_mesh_lc_integration_precision(0, GMSH_SET, 1.e-4);
       opt_mesh_algo2d(0, GMSH_SET, 7.0); //bamg
       opt_mesh_algo3d(0, GMSH_SET, 7.0); //mmg3d
       opt_mesh_lc_from_points(0, GMSH_SET, 0.0); //do not mesh lines with lc
-      GenerateMesh(this, getDim());
-      nbElems = getNumMeshElements();
 
-      writeMSH("meshAdapt.msh");
-
-      fields->reset();
-      if (++ITER >= niter)  break;
-      if (ITER > 5 && fabs((double)(nbElems - nbElemsOld)) < 0.01 * nbElemsOld) break;
-	
-      int id = fields->newId();
-      (*fields)[id] = new meshMetric(this, technique, f, parameters);;
-      fields->background_field = id;
-   
-            
       std::for_each(firstEdge(), lastEdge(), deMeshGEdge());
       std::for_each(firstFace(), lastFace(), deMeshGFace());
       std::for_each(firstRegion(), lastRegion(), deMeshGRegion());
 
-      nbElemsOld = nbElems;
-      
+      GenerateMesh(this, getDim());
+      nbElems = getNumMeshElements();
+
+      char name[256];
+      sprintf(name, "meshAdapt-%d.msh", ITER);
+      writeMSH(name);
+      //exit(1);
+            
+      if (ITER++ >= niter)  break;
+      if (ITER > 5 && fabs((double)(nbElems - nbElemsOld)) < 0.0 * nbElemsOld) break;
+	   
+      nbElemsOld = nbElems;  
     }
-    fields->reset();
   }
-
   else{
-
-    if (getNumMeshElements() == 0) mesh(getDim());
-    //meshMetric *mm; 
-    FieldManager *fields = getFields();
-    fields->reset();
 
     while(1) {
       Msg::Info("-- adaptMesh ITER =%d ", ITER);
@@ -592,13 +590,11 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
 
       nbElems = elements.size();
       if (nbElems == 0)return -1;
-
  
+      fields->reset();
       int id = fields->newId();
-      (*fields)[id] = new meshMetric(this, technique, f, parameters);;
+      (*fields)[id] = new meshMetric(this, technique, f, parameters);
       fields->background_field = id;
-      //mm = new meshMetric(this, technique, f, parameters);
-      //mm->setAsBackgroundMesh (this);
 
       if (getDim() == 2){
 	for (fiter fit = firstFace(); fit != lastFace(); ++fit){
@@ -617,15 +613,15 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
 	  _octree = 0;
 	}
       }
-      fields->reset();
-      //delete mm;
+     
       if (++ITER >= niter) break;
       if (fabs((double)(nbElems - nbElemsOld)) < 0.01 * nbElemsOld) break;
 
       nbElemsOld = nbElems;
-
     }
   }
+
+  fields->reset();
 
   return 0;
 #else

@@ -283,7 +283,7 @@ void *searchElement(octantBucket *_buckets_head, double *_pt, globalInfo *_globa
   int flag;
   octantBucket *ptrBucket;
   ELink ptr1;  
-  std::list<void*>::iterator iter;
+  std::vector<void*>::iterator iter;
   void * ptrToEle = _globalPara->ptrToPrevElement;
 
   if (ptrToEle) {
@@ -369,7 +369,8 @@ void insertOneBB(void* _region, double *_minPt, double *_maxPt, octantBucket *_b
       ptr = ptr->next;
     }
 
-    _bucket->listBB.insert(_bucket->listBB.end(),_region);      
+    //_bucket->listBB.insert(_bucket->listBB.end(),_region); 
+    _bucket->listBB.push_back(_region);      
     return;
   }
         
@@ -380,11 +381,11 @@ void insertOneBB(void* _region, double *_minPt, double *_maxPt, octantBucket *_b
 
 void *searchAllElements(octantBucket *_buckets_head, double *_pt, globalInfo *_globalPara,
                         BBFunction BBElement, InEleFunction xyzInElement, 
-                        std::list<void*> *_elements)
+                        std::vector<void*> *_elements)
 {
   int flag, flag1;
   octantBucket *ptrBucket;
-  std::list<void*>::iterator iter;
+  std::vector<void*>::iterator iter;
 
   ptrBucket = findElementBucket(_buckets_head, _pt);
   if (ptrBucket == NULL) {

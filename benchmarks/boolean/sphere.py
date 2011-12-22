@@ -1,11 +1,13 @@
-options = gmshOptions()
-options:initOptions()
-options:numberSet('Mesh', 0, 'CharacteristicLengthFactor', 0.9);
+from dgpy import *
+from gmshpy import *
 
-R = 1.0;
+GmshSetOption('Mesh', 'CharacteristicLengthFactor', 0.9)
+
+R = 0.3;
 myModel = GModel();
-myModel:addSphere(0,0,0,R);
+myModel.addSphere(0.5,0.5,0.5,R);
 
-myModel:setAsCurrent();
+myModel.setAsCurrent();
 
---myModel:mesh(2);
+myModel.mesh(2);
+myModel.save("sphere.stl");

@@ -126,10 +126,10 @@ MElementOctree::~MElementOctree()
 std::vector<MElement *> MElementOctree::findAll(double x, double y, double z, int dim)
 {
   double P[3] = {x, y, z};
-  std::list<void*> v;
+  std::vector<void*> v;
   std::vector<MElement*> e;
   Octree_SearchAll(P, _octree,&v);
-  for (std::list<void*>::iterator it = v.begin();
+  for (std::vector<void*>::iterator it = v.begin();
        it != v.end(); ++it){
     MElement *el = (MElement*) *it;
     if (dim == -1 || el->getDim() == dim)e.push_back(el);
@@ -143,10 +143,10 @@ MElement *MElementOctree::find(double x, double y, double z, int dim, bool stric
   MElement *e = (MElement*)Octree_Search(P, _octree);
   if (e && (dim == -1 || e->getDim() == dim))
     return e;
-  std::list<void*> l;
+  std::vector<void*> l;
   if (e && e->getDim() != dim) {
     Octree_SearchAll(P, _octree, &l);
-    for (std::list<void*>::iterator it = l.begin(); it != l.end(); it++) {
+    for (std::vector<void*>::iterator it = l.begin(); it != l.end(); it++) {
       MElement *el = (MElement*) *it;
       if (el->getDim() == dim) {
         return el;
