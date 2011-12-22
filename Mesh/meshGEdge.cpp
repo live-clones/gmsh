@@ -19,8 +19,64 @@
 
 typedef struct {
   int Num;
-  double t, lc, p;
+  // t is the local coordinate of the point
+  // lc is x'(t)/h((x(t))
+  // p is the value of the primitive
+  // xp is the norm of the tangent vector
+  double t, lc, p, xp;
 } IntPoint;
+
+
+static double smoothPrimitive (GEdge *ge,
+			       double alpha,
+			       std::vector<IntPoint> &Points)
+{
+  for (int i=0; i< Points.size(); i++){
+    IntPoint &pt = Points[i];
+    SVector3 der = ge->firstDer(pt.t);
+    pt.xp = der.norm();
+  }
+  int ITER = 0;
+  while (1){
+    int count1 = 0;
+    int count2 = 0;
+
+    // use a gauss-seidel iteration
+    // iterate forward and then backward
+    // convergence is usually very fast.
+    for (int i=1; i< Points.size(); i++){
+      double hprime;
+      hprime =  ((Points[i].xp/Points[i].lc) - (Points[i-1].xp/Points[i-1].lc))/(Points[i].t - Points[i-1].t);
+      if (hprime * Points[i].xp > alpha*1.01){
+	double hnew = Points[i-1].xp / Points[i-1].lc + (Points[i].t - Points[i-1].t) * alpha / Points[i].xp;
+	Points[i].lc = Points[i].xp / hnew;
+	count1 ++;
+      }
+    }
+
+    for (int i=Points.size()-1; i>0 ; i--){
+      double hprime;
+      hprime =  ((Points[i].xp/Points[i].lc) - (Points[i-1].xp/Points[i-1].lc))/(Points[i].t - Points[i-1].t);
+      if (-hprime * Points[i].xp > alpha*1.01){
+      	double hnew = Points[i].xp / Points[i].lc + (Points[i].t - Points[i-1].t) * alpha / Points[i-1].xp;
+      	Points[i-1].lc = Points[i-1].xp / hnew;
+      	count2 ++;
+      }
+    }
+
+    
+    ++ITER;
+    if (ITER > 1000){printf("OUUUUUH\n");break;}
+    if (!(count1+count2))break;
+  }
+  // recompute the primitive
+  for (int i=1; i< Points.size(); i++){
+    IntPoint &pt2 = Points[i];
+    IntPoint &pt1 = Points[i-1];
+    pt2.p = pt1.p + (pt2.t-pt1.t)*0.5*(pt2.lc+pt1.lc);
+  }
+  return Points[Points.size()-1].p;
+}
 
 static double F_Lc(GEdge *ge, double t)
 {
@@ -39,13 +95,13 @@ static double F_Lc(GEdge *ge, double t)
     lc_here = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z()); 
  
   SVector3 der = ge->firstDer(t);
-  //const double d = norm(der);
-  //return d / lc_here; 
+  const double d = norm(der);
+  return d / lc_here; 
 
-  SMetric3 metric(1. / (lc_here * lc_here));
-  double lSquared = dot(der, metric, der);
+  //  SMetric3 metric(1. / (lc_here * lc_here));
+  //  double lSquared = dot(der, metric, der);
 
-  return sqrt(lSquared);
+  //  return sqrt(lSquared);
 }
 
 static double F_Lc_aniso(GEdge *ge, double t)
@@ -245,7 +301,7 @@ static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
   FILE *f = fopen(name, "w");
   for (unsigned int i = 0; i < Points.size(); i++){
     const IntPoint &P = Points[i];
-    fprintf(f, "%g %g %g\n", P.t, 1./P.lc, P.p);
+    fprintf(f, "%g %g %g %g\n", P.t, 1./P.lc, P.p,P.lc);
   }
   fclose(f);
 }
@@ -330,11 +386,18 @@ void meshGEdge::operator() (GEdge *ge)
     if (CTX::instance()->mesh.algo2d == ALGO_2D_BAMG || blf
         /* FIXME || CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL_QUAD */) {
       a = Integration(ge, t_begin, t_end, F_Lc_aniso, Points,
-                      CTX::instance()->mesh.lcIntegrationPrecision);
+      			      CTX::instance()->mesh.lcIntegrationPrecision);
+      //      printFandPrimitive(ge->tag()+10000, Points);
     }
     else
       a = Integration(ge, t_begin, t_end, F_Lc, Points,
                       CTX::instance()->mesh.lcIntegrationPrecision);
+    
+    // FIXME JF : MAYBE WE SHOULD NOT ALWAYS SMOOTH THE 1D MESH SIZE FIELD ??
+    printFandPrimitive(ge->tag(), Points);
+    a =  smoothPrimitive (ge,CTX::instance()->mesh.smoothRatio*CTX::instance()->mesh.smoothRatio,Points);
+    printFandPrimitive(ge->tag()+10000, Points);
+    
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }
 
