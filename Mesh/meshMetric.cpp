@@ -79,7 +79,7 @@ meshMetric::meshMetric(GModel *gm, int technique, simpleFunction<double> *fct, s
   _technique =  (MetricComputationTechnique)technique;
  
   computeMetric();
-  //printf("computing metric \n");
+
   //printMetric("toto.pos");
   //exit(1);
 
