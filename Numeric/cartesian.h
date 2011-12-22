@@ -226,21 +226,31 @@ class cartesianBox {
     SPoint3 p7 = getNodeCoordinates(it7->first);
     SPoint3 p8 = getNodeCoordinates(it8->first);
 
-    MVertex v1(p1.x(), p1.y(), p1.z());
-    MVertex v2(p2.x(), p2.y(), p2.z());
-    MVertex v3(p3.x(), p3.y(), p3.z());
-    MVertex v4(p4.x(), p4.y(), p4.z());
-    MVertex v5(p5.x(), p5.y(), p5.z());
-    MVertex v6(p6.x(), p6.y(), p6.z());
-    MVertex v7(p7.x(), p7.y(), p7.z());
-    MVertex v8(p8.x(), p8.y(), p8.z());
+    MVertex *v1 = new MVertex(p1.x(), p1.y(), p1.z());
+    MVertex *v2 = new MVertex(p2.x(), p2.y(), p2.z());
+    MVertex *v3 = new MVertex(p3.x(), p3.y(), p3.z());
+    MVertex *v4 = new MVertex(p4.x(), p4.y(), p4.z());
+    MVertex *v5 = new MVertex(p5.x(), p5.y(), p5.z());
+    MVertex *v6 = new MVertex(p6.x(), p6.y(), p6.z());
+    MVertex *v7 = new MVertex(p7.x(), p7.y(), p7.z());
+    MVertex *v8 = new MVertex(p8.x(), p8.y(), p8.z());
 
-    MHexahedron newElem(&v1, &v2, &v3, &v4, &v5, &v6, &v7, &v8);
+    MHexahedron *newElem = new MHexahedron(v1, v2, v3, v4, v5, v6, v7, v8);
     double uvw[3];
     double xyz[3] = {x,y,z};
-    newElem.xyz2uvw(xyz, uvw);
+    newElem->xyz2uvw(xyz, uvw);
     //printf("uvw =%g %g %g \n", uvw[0],uvw[1],uvw[2]);
-    double val = newElem.interpolate(vals, uvw[0], uvw[1], uvw[2]);
+    double val = newElem->interpolate(vals, uvw[0], uvw[1], uvw[2]);
+    
+    delete newElem;
+    delete v1;
+    delete v2;
+    delete v3;
+    delete v4;
+    delete v5;
+    delete v6;
+    delete v7;
+    delete v8;
 
     return val;
   }

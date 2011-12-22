@@ -74,14 +74,14 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
     mmg->nt += (*it)->triangles.size();
   }
   
-  mmg->npmax = sol->npmax = 100000;
-  mmg->ntmax = 70000;
-  mmg->nemax = 700000;
+  mmg->npmax = sol->npmax = 1000000;
+  mmg->ntmax = 700000;
+  mmg->nemax = 7000000;
 
   mmg->point = (MMG_pPoint)calloc(mmg->npmax+1,sizeof(MMG_Point));
   mmg->tetra = (MMG_pTetra)calloc(mmg->nemax+1,sizeof(MMG_Tetra));
   mmg->tria  = (MMG_pTria) calloc(mmg->ntmax+1,sizeof(MMG_Tria));
-  mmg->disp  = (MMG_pDispl)calloc(mmg->npmax+1,sizeof(MMG_Displ));
+  //mmg->disp  = (MMG_pDispl)calloc(mmg->npmax+1,sizeof(MMG_Displ));
   mmg->adja = (int*)calloc(4*mmg->nemax+5,sizeof(int));
 
   sol->offset = 6;
@@ -181,7 +181,7 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
       k++;
     }
   } 
-  mmg->disp = 0;
+  //mmg->disp = 0;
   
 }
 
@@ -242,17 +242,15 @@ static void updateSizes(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol)
 static void freeMMG(MMG_pMesh mmgMesh, MMG_pSol mmgSol)
 {
   free(mmgMesh->point);
-  //  free(mmgMesh->disp->alpha);
-  //  free(mmgMesh->disp->mv);
-  free(mmgMesh->disp);
+  //free(mmgMesh->disp);
   free(mmgMesh->adja);
   free(mmgMesh->tria);
   free(mmgMesh->tetra);
   free(mmgMesh);
-  if ( mmgSol->npfixe ){  
+  //if ( mmgSol->npfixe ){  
     free(mmgSol->met);
     free(mmgSol->metold);
-  }
+  //}
   free(mmgSol);
 }
 

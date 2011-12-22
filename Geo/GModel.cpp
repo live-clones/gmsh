@@ -545,7 +545,7 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
 
       fields->reset();
       if (++ITER >= niter)  break;
-      if (ITER > 5 && fabs((double)(nbElems - nbElemsOld)) < 0.005 * nbElemsOld) break;
+      if (ITER > 5 && fabs((double)(nbElems - nbElemsOld)) < 0.01 * nbElemsOld) break;
 	
       int id = fields->newId();
       (*fields)[id] = new meshMetric(this, technique, f, parameters);;
@@ -565,7 +565,9 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
   else{
 
     if (getNumMeshElements() == 0) mesh(getDim());
-    meshMetric *mm; 
+    //meshMetric *mm; 
+    FieldManager *fields = getFields();
+    fields->reset();
 
     while(1) {
       Msg::Info("-- adaptMesh ITER =%d ", ITER);
@@ -591,8 +593,12 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
       nbElems = elements.size();
       if (nbElems == 0)return -1;
 
-      mm = new meshMetric(this, technique, f, parameters);
-      mm->setAsBackgroundMesh (this);
+ 
+      int id = fields->newId();
+      (*fields)[id] = new meshMetric(this, technique, f, parameters);;
+      fields->background_field = id;
+      //mm = new meshMetric(this, technique, f, parameters);
+      //mm->setAsBackgroundMesh (this);
 
       if (getDim() == 2){
 	for (fiter fit = firstFace(); fit != lastFace(); ++fit){
@@ -611,7 +617,8 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
 	  _octree = 0;
 	}
       }
-      delete mm;
+      fields->reset();
+      //delete mm;
       if (++ITER >= niter) break;
       if (fabs((double)(nbElems - nbElemsOld)) < 0.01 * nbElemsOld) break;
 

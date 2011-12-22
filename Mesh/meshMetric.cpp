@@ -331,7 +331,7 @@ void meshMetric::computeMetric(){
   //smoothMetric (sol);
   //curvatureContributionToMetric();
 
-  putOnNewView();
+  //putOnNewView();
 
 }
 
