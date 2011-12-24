@@ -557,7 +557,6 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<doub
       char name[256];
       sprintf(name, "meshAdapt-%d.msh", ITER);
       writeMSH(name);
-      //exit(1);
             
       if (ITER++ >= niter)  break;
       if (ITER > 5 && fabs((double)(nbElems - nbElemsOld)) < 0.0 * nbElemsOld) break;
