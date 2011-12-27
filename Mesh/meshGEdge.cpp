@@ -299,6 +299,7 @@ static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
   char name[256];
   sprintf(name, "line%d.dat", tag);
   FILE *f = fopen(name, "w");
+  if(!f) return;
   for (unsigned int i = 0; i < Points.size(); i++){
     const IntPoint &P = Points[i];
     fprintf(f, "%g %g %g %g\n", P.t, 1./P.lc, P.p,P.lc);
@@ -394,9 +395,9 @@ void meshGEdge::operator() (GEdge *ge)
                       CTX::instance()->mesh.lcIntegrationPrecision);
     
     // FIXME JF : MAYBE WE SHOULD NOT ALWAYS SMOOTH THE 1D MESH SIZE FIELD ??
-    printFandPrimitive(ge->tag(), Points);
+    //printFandPrimitive(ge->tag(), Points);
     a =  smoothPrimitive (ge,CTX::instance()->mesh.smoothRatio*CTX::instance()->mesh.smoothRatio,Points);
-    printFandPrimitive(ge->tag()+10000, Points);
+    //printFandPrimitive(ge->tag()+10000, Points);
     
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }

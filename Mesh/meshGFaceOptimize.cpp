@@ -257,19 +257,21 @@ void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
   std::sort(edges_detected.begin(), edges_detected.end());
 }
 
-void parametricCoordinates(MElement *t, GFace *gf, double u[4], double v[4], MVertex *close = 0)
+void parametricCoordinates(MElement *t, GFace *gf, double u[4], double v[4],
+                           MVertex *close = 0)
 {
   for(int j = 0; j < t->getNumVertices(); j++){
     MVertex *ver = t->getVertex(j);
     SPoint2 param, dummy;
-    if (!close)reparamMeshVertexOnFace(ver, gf, param);
+    if (!close) reparamMeshVertexOnFace(ver, gf, param);
     else reparamMeshEdgeOnFace(ver, close, gf, param, dummy);
     u[j] = param[0];
     v[j] = param[1];
   }
 }
 
-double surfaceFaceUV(MElement *t,GFace *gf){
+double surfaceFaceUV(MElement *t,GFace *gf)
+{
   double u[4],v[4];
   parametricCoordinates(t,gf,u,v);
   if (t->getNumVertices() == 3)
@@ -480,7 +482,8 @@ static int _removeTwoQuadsNodes(GFace *gf)
   return vtouched.size();
 }
 
-int removeTwoQuadsNodes(GFace *gf){
+int removeTwoQuadsNodes(GFace *gf)
+{
   int nbRemove = 0;
   while(1){
     int x = _removeTwoQuadsNodes(gf);
@@ -490,7 +493,6 @@ int removeTwoQuadsNodes(GFace *gf){
   Msg::Debug("%i two-quadrangles vertices removed",nbRemove);
   return nbRemove;
 }
-
 
 static bool _isItAGoodIdeaToCollapseThatVertex (GFace *gf,
 						std::vector<MElement*> &e1,
@@ -1009,15 +1011,16 @@ static void _relocateVertexConstrained (GFace *gf,
   }
 }
 
-static void _relocateVertex (GFace *gf,
-			     MVertex *ver,
-			     const std::vector<MElement*> &lt){
-  
-  double R; SPoint3 c; bool isSphere = gf->isSphere(R,c);
-  if( ver->onWhat()->dim() == 2){
+static void _relocateVertex(GFace *gf, MVertex *ver,
+                            const std::vector<MElement*> &lt)
+{
+  double R; 
+  SPoint3 c;
+  bool isSphere = gf->isSphere(R, c);
 
+  if(ver->onWhat()->dim() == 2){
     MFaceVertex *fv = dynamic_cast<MFaceVertex*>(ver);
-    if (fv->bl_data)return;
+    if(fv->bl_data) return;
 
     double initu,initv;
     ver->getParameter(0, initu);
@@ -1080,9 +1083,9 @@ void laplaceSmoothing(GFace *gf, int niter)
   buildVertexToElement(gf->triangles, adj);
   buildVertexToElement(gf->quadrangles, adj);
   for(int i = 0; i < niter; i++){
-    v2t_cont :: iterator it = adj.begin();
+    v2t_cont::iterator it = adj.begin();
     while (it != adj.end()){
-      _relocateVertex(gf,it->first,it->second);
+      _relocateVertex(gf, it->first, it->second);
       ++it;
     }
   }
@@ -1094,17 +1097,16 @@ void laplaceSmoothingConstrained(GFace *gf)
   buildVertexToElement(gf->triangles, adj);
   buildVertexToElement(gf->quadrangles, adj);
   for(int i = 0; i < 5; i++){
-    v2t_cont :: iterator it = adj.begin();
+    v2t_cont::iterator it = adj.begin();
     while (it != adj.end()){
-      _relocateVertexConstrained(gf,it->first,it->second);
+      _relocateVertexConstrained(gf, it->first, it->second);
       ++it;
     }
   }
 }
 
-
-
-int  _edgeSwapQuadsForBetterQuality ( GFace *gf ) {
+int _edgeSwapQuadsForBetterQuality(GFace *gf)
+{
   e2t_cont adj;
   //  buildEdgeToElement(gf->triangles, adj);
   buildEdgeToElement(gf->quadrangles, adj);
@@ -2114,7 +2116,7 @@ void recombineIntoQuads(GFace *gf,
   _recombineIntoQuads(gf, 0);
   if(haveParam) laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing);
   _recombineIntoQuads(gf, 0);
-  if(haveParam)  laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing);
+  if(haveParam) laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing);
 
   if (saveAll) gf->model()->writeMSH("after.msh");
 

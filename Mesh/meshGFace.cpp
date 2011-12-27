@@ -1099,10 +1099,10 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   gf->meshStatistics.status = GFace::DONE;
 
   // fill the small gmsh structures
-  BDS2GMSH ( m, gf, recoverMap);
+  BDS2GMSH(m, gf, recoverMap);
 
   // BOUNDARY LAYER
-  if (!onlyInitialMesh)modifyInitialMeshForTakingIntoAccountBoundaryLayers  (gf);
+  if (!onlyInitialMesh) modifyInitialMeshForTakingIntoAccountBoundaryLayers(gf);
     
   // the delaunay algo is based directly on internal gmsh structures
   // BDS mesh is passed in order not to recompute local coordinates of
@@ -1120,7 +1120,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       bowyerWatson(gf);
       meshGFaceBamg(gf);
     }
-    laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
+    laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing);
   }
 
   if(debug){

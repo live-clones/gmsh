@@ -45,11 +45,11 @@ namespace onelab{
     // numbers to force their relative ordering (such numbers are
     // automatically hidden in the interface).
     std::string _name;
-    // help strings (the short serves as a better way to display the
-    // parameter in the interface). Should allow richer encoding (UTF?
-    // HTML?)
+    // help strings (if provided, the short help serves as a better
+    // way to display the parameter in the interface). Richer encoding
+    // (UTF? HTML?) might be used in the future.
     std::string _shortHelp, _help;
-    // clients (computing steps) that use this parameter
+    // clients that use this parameter
     std::set<std::string> _clients;
     // flag to check if the parameter has been changed since the last
     // run()
@@ -106,6 +106,15 @@ namespace onelab{
     const std::set<std::string> &getClients() const { return _clients; }
     static char charSep() { return '\0'; }
     static double maxNumber() { return 1e200; }
+    static std::string version() { return "1.0"; }
+    static std::string getNextToken(const std::string &msg, 
+                                    std::string::size_type &first)
+    {
+      std::string::size_type last = msg.find_first_of(charSep(), first);
+      std::string next = msg.substr(first, last - first);
+      first = (last == std::string::npos) ? last : last + 1;
+      return next;
+    }
     std::string sanitize(const std::string &in) const
     {
       std::string out(in);
@@ -113,11 +122,10 @@ namespace onelab{
         if(out[i] == charSep()) out[i] = ' ';
       return out;
     }
-    std::string getOnelabVersion() const { return "1.0"; }
     virtual std::string toChar() const
     {
       std::ostringstream sstream;
-      sstream << getOnelabVersion() << charSep() << getType() << charSep() 
+      sstream << version() << charSep() << getType() << charSep() 
               << sanitize(getName()) << charSep() 
               << sanitize(getShortHelp()) << charSep() 
               << sanitize(getHelp()) << charSep() 
@@ -136,7 +144,7 @@ namespace onelab{
     virtual std::string::size_type fromChar(const std::string &msg)
     {
       std::string::size_type pos = 0;
-      if(getNextToken(msg, pos) != getOnelabVersion()) return 0;
+      if(getNextToken(msg, pos) != version()) return 0;
       if(getNextToken(msg, pos) != getType()) return 0;
       setName(getNextToken(msg, pos));
       setShortHelp(getNextToken(msg, pos));
@@ -153,14 +161,6 @@ namespace onelab{
         addClient(client);
       }
       return pos;
-    }
-    static std::string getNextToken(const std::string &msg, 
-                                    std::string::size_type &first)
-    {
-      std::string::size_type last = msg.find_first_of(charSep(), first);
-      std::string next = msg.substr(first, last - first);
-      first = (last == std::string::npos) ? last : last + 1;
-      return next;
     }
     static void getInfoFromChar(const std::string &msg, std::string &version, 
                                 std::string &type, std::string &name)
@@ -183,8 +183,8 @@ namespace onelab{
   // The number class. Numbers are stored internally as double
   // precision real numbers. Currently all more complicated types
   // (complex numbers, vectors, etc.) are supposed to be encapsulated
-  // in functions. We will probably add more base types in the future
-  // to make the interface nicer.
+  // in functions. We might add more base types in the future to make
+  // the interface more expressive.
   class number : public parameter{
   private:
     double _value, _min, _max, _step;
@@ -524,7 +524,7 @@ namespace onelab{
         if(client.empty() || (*it)->hasClient(client))
           (*it)->setChanged(changed);
     }
-    // print the parameter space (optinally only print those
+    // serialize the parameter space (optinally only serialize those
     // parameters that depend on the given client)
     std::string toChar(const std::string &client="") const
     {
@@ -546,7 +546,7 @@ namespace onelab{
     std::string _name;
     // the id of the client, used to create a unique socket for this client
     int _id;
-    // the index of the client in an external solver list (if any)
+    // the index of the client in an external client list (if any)
     int _index;
   public:
     client(const std::string &name) : _name(name), _id(0), _index(-1){}
