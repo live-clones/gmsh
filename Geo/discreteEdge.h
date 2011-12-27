@@ -19,12 +19,14 @@ class discreteEdge : public GEdge {
  public:
   discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1);
   virtual ~discreteEdge() {}
-  bool getLocalParameter(const double &t, int &iEdge, double &tLoc) const;
   virtual GeomType geomType() const { return DiscreteCurve; }
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
   virtual double curvature(double par) const;
+  virtual bool haveParametrization(){ return !_pars.empty(); }
   virtual Range<double> parBounds(int) const;
+
+  bool getLocalParameter(const double &t, int &iEdge, double &tLoc) const;
   void parametrize(std::map<GFace*, std::map<MVertex*, MVertex*, 
                    std::less<MVertex*> > > &face2Verts, 
                    std::map<GRegion*, std::map<MVertex*, MVertex*,

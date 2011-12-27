@@ -295,6 +295,7 @@ static void getAllParameters(MVertex *v, GFace *gf, std::vector<SPoint2> &params
   }
   else if(v->onWhat()->dim() == 1){
     GEdge *ge = (GEdge*)v->onWhat();
+    if(!ge->haveParametrization()) return;
     double UU;
     v->getParameter(0, UU);
     if (UU == 0.0)

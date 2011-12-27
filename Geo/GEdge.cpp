@@ -305,7 +305,8 @@ const double GOLDEN2 = 2 - GOLDEN;
 // x1 and x3 are the current bounds; the minimum is between them.
 // x2 is the center point, which is closer to x1 than to x3
 
-double goldenSectionSearch(const GEdge *ge, const SPoint3 &q, double x1, double x2, double x3, double tau)
+double goldenSectionSearch(const GEdge *ge, const SPoint3 &q, double x1, 
+                           double x2, double x3, double tau)
 { 
   // Create a new possible center in the area between x2 and x3, closer to x2
   double x4 = x2 + GOLDEN2 * (x3 - x2);
@@ -328,7 +329,6 @@ double goldenSectionSearch(const GEdge *ge, const SPoint3 &q, double x1, double 
 
 GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
 {
-
   //  printf("looking for closest point in curve %d to point %g %g\n",tag(),q.x(),q.y());
   
   const int nbSamples = 100;
@@ -434,9 +434,9 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z,
   return false;
 }
 
-void GEdge::replaceEndingPoints (GVertex *replOfv0, GVertex *replOfv1)
+void GEdge::replaceEndingPoints(GVertex *replOfv0, GVertex *replOfv1)
 {
-  replaceEndingPointsInternals (replOfv0, replOfv1);
+  replaceEndingPointsInternals(replOfv0, replOfv1);
   if (replOfv0 != v0){
     v0->delEdge(this);
     replOfv0->addEdge(this);
@@ -448,4 +448,3 @@ void GEdge::replaceEndingPoints (GVertex *replOfv0, GVertex *replOfv1)
     v1 = replOfv1;
   }  
 }
-

@@ -77,7 +77,7 @@ class GEdge : public GEntity {
 
   // get the point for the given parameter location
   virtual GPoint point(double p) const = 0;
-  
+
   // true if the edge contains the given parameter
   virtual bool containsParam(double pt) const;
 
@@ -180,16 +180,6 @@ class GEdge : public GEntity {
 
   // gluing
   void replaceEndingPoints(GVertex *, GVertex *);
-
-  //get bounds
-  inline double getLowBound() const {  
-    Range<double> bounds = parBounds(0);
-    return bounds.low();
-  }
-  inline double getHighBound() const {  
-    Range<double> bounds = parBounds(0);
-    return bounds.high();
-  }
 
   struct {
     char Method;

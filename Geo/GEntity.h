@@ -222,6 +222,9 @@ class GEntity {
   // true if there are parametric degeneracies in the "dim" direction.
   virtual bool degenerate(int dim) const { return false; }
 
+  // does the entity have a parametrization?
+  virtual bool haveParametrization(){ return true; }
+
   // parametric bounds of the entity in the "i" direction.
   virtual Range<double> parBounds(int i) const { return Range<double>(0., 0.); }
 

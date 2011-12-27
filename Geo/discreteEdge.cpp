@@ -47,7 +47,7 @@ void discreteEdge::orderMLines()
   std::vector<MLine*> _m;
   std::list<MLine*> segments;
 
-  //store all lines in a list : segments
+  // store all lines in a list : segments
   for (unsigned int i = 0; i < lines.size(); i++){
     segments.push_back(lines[i]);
   }
@@ -65,7 +65,7 @@ void discreteEdge::orderMLines()
     else boundv.erase(it2);
   }
 
-  //find the first MLine and erase it from the list segments
+  // find the first MLine and erase it from the list segments
   MLine *firstLine;
   if (boundv.size() == 2){   // non periodic
     firstLine = (boundv.begin())->second;
@@ -86,7 +86,7 @@ void discreteEdge::orderMLines()
                tag(), boundv.size());
   }
 
-  //loop over all segments to order segments and store it in the list _m
+  // loop over all segments to order segments and store it in the list _m
   _m.push_back(firstLine);
   _orientation.push_back(1);
   MVertex *first = _m[0]->getVertex(0);
@@ -257,7 +257,6 @@ void discreteEdge::setBoundVertices()
 
   v0->addEdge(this);
   v1->addEdge(this);
-
 }
 
 /*
@@ -312,7 +311,7 @@ void discreteEdge::parametrize(std::map<GFace*, std::map<MVertex*, MVertex*,
    for(std::list<GFace*>::iterator iFace = l_faces.begin(); 
        iFace != l_faces.end(); ++iFace){
 
-     //for each face find correspondane face2Vertex
+     // for each face find correspondane face2Vertex
      std::map<GFace*, std::map<MVertex*, MVertex*, 
        std::less<MVertex*> > >::iterator itmap = face2Vert.find(*iFace);
      if (itmap == face2Vert.end()) {
@@ -326,7 +325,7 @@ void discreteEdge::parametrize(std::map<GFace*, std::map<MVertex*, MVertex*,
        itmap->second = mapVert;
      }
 
-     //do the same for regions
+     // do the same for regions
      for ( int j = 0; j < (*iFace)->numRegions(); j++){
        GRegion *r = (*iFace)->getRegion(j);
        std::map<GRegion*,  std::map<MVertex*, MVertex*, 
@@ -399,7 +398,7 @@ void discreteEdge::computeNormals () const
 bool discreteEdge::getLocalParameter(const double &t, int &iLine,
                                      double &tLoc) const
 {
-
+  if(_pars.empty()) return false;
   for (iLine = 0; iLine < (int)lines.size(); iLine++){
     double tmin = _pars[iLine];
     double tmax = _pars[iLine+1];
@@ -416,7 +415,7 @@ GPoint discreteEdge::point(double par) const
 {
   double tLoc;
   int iEdge;
-  if(!getLocalParameter(par,iEdge,tLoc)) return GPoint();
+  if(!getLocalParameter(par, iEdge, tLoc)) return GPoint();
 
   double x, y, z;
   MVertex *vB = lines[iEdge]->getVertex(0);
@@ -475,9 +474,9 @@ GPoint discreteEdge::point(double par) const
 
 SVector3 discreteEdge::firstDer(double par) const
 {
-   double tLoc;
+  double tLoc;
   int iEdge;
-  getLocalParameter(par, iEdge, tLoc);
+  if(!getLocalParameter(par, iEdge, tLoc)) return SVector3();
 
   MVertex *vB = lines[iEdge]->getVertex(0);
   MVertex *vE = lines[iEdge]->getVertex(1);
@@ -492,10 +491,11 @@ SVector3 discreteEdge::firstDer(double par) const
   return der;
 }
 
-double discreteEdge::curvature(double par) const{
+double discreteEdge::curvature(double par) const
+{
   double tLoc;
   int iEdge;
-  if(!getLocalParameter(par,iEdge,tLoc)) return MAX_LC;
+  if(!getLocalParameter(par, iEdge, tLoc)) return MAX_LC;
 
   double c0, c1;
   Curvature& curvature  = Curvature::getInstance();
@@ -521,5 +521,6 @@ Range<double> discreteEdge::parBounds(int i) const
 void discreteEdge::writeGEO(FILE *fp)
 {
   if (getBeginVertex() && getEndVertex())
-    fprintf(fp, "Discrete Line(%d) = {%d,%d};\n",tag(), getBeginVertex()->tag(), getEndVertex()->tag());  
+    fprintf(fp, "Discrete Line(%d) = {%d,%d};\n", tag(), 
+            getBeginVertex()->tag(), getEndVertex()->tag());  
 }

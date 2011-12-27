@@ -518,8 +518,8 @@ int GModel::mesh(int dimension)
 #endif
 }
 
-
-int GModel::adaptMesh(int technique, simpleFunction<double> *f, std::vector<double> parameters, bool meshAll)
+int GModel::adaptMesh(int technique, simpleFunction<double> *f, 
+                      std::vector<double> parameters, bool meshAll)
 {
 #if defined(HAVE_MESH)
 
@@ -1472,7 +1472,6 @@ void GModel::createTopologyFromMesh(int ignoreHoles)
   double t1 = Cpu();
 
   removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
-
   makeDiscreteRegionsSimplyConnected();
   makeDiscreteFacesSimplyConnected();
 
@@ -1484,13 +1483,13 @@ void GModel::createTopologyFromMesh(int ignoreHoles)
   createTopologyFromRegions(discRegions);
  
   // create topology for all discrete faces
-   std::vector<discreteFace*> discFaces;
-   for(fiter it = firstFace(); it != lastFace(); it++)
-     if((*it)->geomType() == GEntity::DiscreteSurface)
-       discFaces.push_back((discreteFace*) *it);
-   createTopologyFromFaces(discFaces, ignoreHoles);
-
-  //create old format (necessary for boundary layers)
+  std::vector<discreteFace*> discFaces;
+  for(fiter it = firstFace(); it != lastFace(); it++)
+    if((*it)->geomType() == GEntity::DiscreteSurface)
+      discFaces.push_back((discreteFace*) *it);
+  createTopologyFromFaces(discFaces, ignoreHoles);
+  
+  //create old format (necessary e.g. for old-style extruded boundary layers)
   exportDiscreteGEOInternals();
  
   double t2 = Cpu();
@@ -1723,7 +1722,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
         for (unsigned int i = 0; i < (*itE)->getNumMeshElements(); i++){
           MEdge me = (*itE)->getMeshElement(i)->getEdge(0);
           std::set<MEdge, Less_Edge >::iterator itset = myEdges.find(me);
-          myEdges.erase(itset);
+          if (itset != myEdges.end()) myEdges.erase(itset);
         }
         for (std::vector<int>::iterator itFace = tagFaces.begin(); 
              itFace != tagFaces.end(); itFace++) {
@@ -1754,7 +1753,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
       }
       std::vector<std::vector<MEdge> > new_boundaries;
       new_boundaries.push_back(boundaries[index]);
-      boundaries =  new_boundaries;
+      boundaries = new_boundaries;
     }
 
     // create new discrete edges
@@ -1835,9 +1834,6 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
   //    edgeLoops.push_back(el);
   //  }
 
-  Msg::Debug("Done creating topology for edges...");
-
-
   // we need to recreate all mesh elements because some mesh vertices
   // might have been changed during the parametrization process
   // (MVertices became MEdgeVertices)
@@ -1911,7 +1907,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
     gr->pyramids = newPyramids;
   }
 
-  Msg::Debug("Done creating topology from edges");
+  Msg::Debug("Done creating topology for edges");
 }
 
 GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem, bool saveTri)

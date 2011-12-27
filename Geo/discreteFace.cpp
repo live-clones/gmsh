@@ -144,8 +144,8 @@ void discreteFace::writeGEO(FILE *fp)
   int count = 0;
   for (std::list<GEdge*>::iterator it = l_edges.begin();
        it != l_edges.end() ;++it){
-    if (count == 0)fprintf(fp, "%d",(*it)->tag());    
-    else fprintf(fp, ",%d",(*it)->tag());    
+    if (count == 0) fprintf(fp, "%d", (*it)->tag());    
+    else fprintf(fp, ",%d", (*it)->tag());    
     count ++;
   }
   fprintf(fp, "};\n");    
