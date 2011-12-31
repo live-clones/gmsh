@@ -31,7 +31,10 @@ typedef unsigned long intptr_t;
 #include "Context.h"
 #include "graphicWindow.h"
 #include "openglWindow.h"
+
+#if defined(HAVE_ONELAB)
 #include "onelab.h"
+#endif
 
 extern StringXColor GeneralOptions_Color[] ;
 extern StringXColor GeometryOptions_Color[] ;
@@ -515,6 +518,7 @@ static void solver_options_ok_cb(Fl_Widget *w, void *data)
   optionWindow *o = FlGui::instance()->options;
   o->activate((const char*)data);
 
+#if defined(HAVE_ONELAB)
   int old_listen = (int)opt_solver_listen(0, GMSH_GET, o->solver.butt[0]->value());
   opt_solver_listen(0, GMSH_SET, o->solver.butt[0]->value());
   if(!old_listen && o->solver.butt[0]->value()){
@@ -526,6 +530,7 @@ static void solver_options_ok_cb(Fl_Widget *w, void *data)
     else
       it->second->run("");
   }
+#endif
 
   opt_solver_socket_name(0, GMSH_SET, o->solver.input[0]->value());
   opt_solver_timeout(0, GMSH_SET, o->solver.value[0]->value());

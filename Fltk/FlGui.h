@@ -63,9 +63,7 @@ class FlGui{
   geometryContextWindow *geoContext;
   meshContextWindow *meshContext;
   aboutWindow *about;
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
   onelabWindow *onelab;
-#endif
  public:
   FlGui(int argc, char **argv);
   ~FlGui(){}

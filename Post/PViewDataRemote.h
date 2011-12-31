@@ -9,10 +9,10 @@
 #include <vector>
 #include <string>
 #include "GmshMessage.h"
-#include "onelab.h"
 #include "GmshSocket.h"
 #include "PViewData.h"
 #include "SBoundingBox3d.h"
+#include "onelab.h"
 
 // The container for a remote dataset (does not contain any actual
 // data)

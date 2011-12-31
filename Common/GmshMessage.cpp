@@ -10,12 +10,15 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GmshSocket.h"
-#include "onelab.h"
 #include "Gmsh.h"
 #include "GModel.h"
 #include "Options.h"
 #include "Context.h"
 #include "OS.h"
+
+#if defined(HAVE_ONELAB)
+#include "onelab.h"
+#endif
 
 #if defined(HAVE_MPI)
 #include <mpi.h>
@@ -47,8 +50,10 @@ GmshMessage *Msg::_callback = 0;
 std::string Msg::_commandLine;
 std::string Msg::_launchDate;
 GmshClient *Msg::_client = 0;
+#if defined(HAVE_ONELAB)
 onelab::client *Msg::_onelabClient = 0;
 onelab::server *onelab::server::_server = 0;
+#endif
 
 #if defined(HAVE_NO_VSNPRINTF)
 static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
@@ -579,6 +584,7 @@ int Msg::GetAnswer(const char *question, int defaultval, const char *zero,
 
 void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
 {
+#if defined(HAVE_ONELAB)
   if(_onelabClient) delete _onelabClient;
   if (sockname.empty())
     _onelabClient = new onelab::localClient(name);
@@ -587,6 +593,7 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
     _onelabClient = c;
     _client = c->getGmshClient();
   }
+#endif
 }
 
 void Msg::ExchangeOnelabParameter(const std::string &key,
@@ -594,6 +601,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
                                   std::map<std::string, std::vector<double> > &fopt,
                                   std::map<std::string, std::vector<std::string> > &copt)
 {
+#if defined(HAVE_ONELAB)
   if(!_onelabClient || val.empty()) return;
 
   std::string name(key);
@@ -638,15 +646,18 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(copt.count("Loop")) ps[0].setAttribute("Loop", copt["Loop"][0]);
   if(copt.count("Graph")) ps[0].setAttribute("Graph", copt["Graph"][0]);
   _onelabClient->set(ps[0]);
+#endif
 }
 
 void Msg::FinalizeOnelab()
 {
+#if defined(HAVE_ONELAB)
   if(_onelabClient){
     delete _onelabClient;
     _onelabClient = 0;
     _client = 0;
   }
+#endif
 }
 
 void Msg::Barrier()

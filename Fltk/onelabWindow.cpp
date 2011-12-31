@@ -4,15 +4,15 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <FL/Fl.H>
-#include <FL/fl_ask.H>
+#include "GmshConfig.h"
 #include "GmshMessage.h"
-#include "onelab.h"
 
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
+#if defined(HAVE_ONELAB) && (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
 
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Input_Choice.H>
+#include <FL/fl_ask.H>
 #include "inputRange.h"
 #include "Context.h"
 #include "GModel.h"
@@ -1019,21 +1019,9 @@ void solver_cb(Fl_Widget *w, void *data)
 
 #else
 
-bool onelab::localNetworkClient::run(const std::string &what)
-{
-  Msg::Error("The solver interface requires FLTK 1.3");
-  return false;
-}
-
-bool onelab::localNetworkClient::kill()
-{
-  Msg::Error("The solver interface requires FLTK 1.3");
-  return false;
-}
-
 void solver_cb(Fl_Widget *w, void *data)
 {
-  Msg::Error("The solver interface requires FLTK 1.3");
+  Msg::Error("The solver interface requires OneLab and FLTK 1.3");
 }
 
 #endif

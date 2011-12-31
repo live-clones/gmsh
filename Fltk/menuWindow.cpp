@@ -172,6 +172,7 @@ static void file_clear_cb(Fl_Widget *w, void *data)
 
 static void file_remote_cb(Fl_Widget *w, void *data)
 {
+#if defined(HAVE_ONELAB)
   onelab::localNetworkClient *c;
   onelab::server::citer it = onelab::server::instance()->findClient("GmshRemote");
   if(it == onelab::server::instance()->lastClient()){
@@ -215,6 +216,7 @@ static void file_remote_cb(Fl_Widget *w, void *data)
       server->SendString(GmshSocket::GMSH_SPEED_TEST, "Speed test");
     }
   }
+#endif
 }
 
 static void file_window_cb(Fl_Widget *w, void *data)
@@ -2330,12 +2332,14 @@ static Fl_Menu_Item bar_table[] = {
     {"M&erge...",   FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)file_merge_cb, 0},
     {"Watch Pattern...",    0, (Fl_Callback *)file_watch_cb, 0},
     {"&Clear",      0, (Fl_Callback *)file_clear_cb, 0, FL_MENU_DIVIDER},
+#if defined(HAVE_ONELAB)
     {"Remote", 0, 0, 0, FL_MENU_DIVIDER | FL_SUBMENU},
       {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
       {"Merge...",  0, (Fl_Callback *)file_remote_cb, (void*)"merge"},
       {"Clear",     0, (Fl_Callback *)file_remote_cb, (void*)"clear"},
       {"Stop",      0, (Fl_Callback *)file_remote_cb, (void*)"stop"},
       {0},
+#endif
     {"New Window", 0, (Fl_Callback *)file_window_cb, (void*)"new"},
     {"Split Window", 0, 0, 0, FL_MENU_DIVIDER | FL_SUBMENU},
       {"Horizontally", 0, (Fl_Callback *)file_window_cb, (void*)"split_h"},
@@ -2357,7 +2361,9 @@ static Fl_Menu_Item bar_table[] = {
     {"&Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
     {"&Clipping",        FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
     {"&Manipulator",     FL_CTRL+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0},
+#if defined(HAVE_ONELAB)
     {"&OneLab",          0, (Fl_Callback *)solver_cb, (void*)(-1), FL_MENU_DIVIDER},
+#endif
     {"S&tatistics",      FL_CTRL+'i', (Fl_Callback *)statistics_cb, 0},
     {"M&essage Console", FL_CTRL+'l', (Fl_Callback *)message_cb, 0},
     {0},
@@ -2420,7 +2426,9 @@ static Fl_Menu_Item sysbar_table[] = {
     {"Visibility",      FL_META+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
     {"Clipping",        FL_META+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
     {"Manipulator",     FL_META+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0},
+#if defined(HAVE_ONELAB)
     {"OneLab",          0, (Fl_Callback *)solver_cb, (void*)(-1), FL_MENU_DIVIDER},
+#endif
     {"Statistics",      FL_META+'i', (Fl_Callback *)statistics_cb, 0},
     {"Message Console", FL_META+'l', (Fl_Callback *)message_cb, 0},
     {0},

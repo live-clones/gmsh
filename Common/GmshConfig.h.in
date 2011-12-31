@@ -41,6 +41,7 @@
 #cmakedefine HAVE_NO_STDINT_H
 #cmakedefine HAVE_NO_VSNPRINTF
 #cmakedefine HAVE_OCC
+#cmakedefine HAVE_ONELAB
 #cmakedefine HAVE_OPENGL
 #cmakedefine HAVE_OSMESA
 #cmakedefine HAVE_PARSER

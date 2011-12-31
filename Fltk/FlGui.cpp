@@ -285,7 +285,7 @@ FlGui::FlGui(int argc, char **argv) : _openedThroughMacFinder(false)
   geoContext = new geometryContextWindow(CTX::instance()->deltaFontSize);
   meshContext = new meshContextWindow(CTX::instance()->deltaFontSize);
   about = new aboutWindow();
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
+#if defined(HAVE_ONELAB) && (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
   onelab = new onelabWindow(CTX::instance()->deltaFontSize);
 #endif
 
@@ -821,7 +821,7 @@ void FlGui::storeCurrentWindowsInfo()
   CTX::instance()->manipPosition[1] = manip->win->y();
   CTX::instance()->ctxPosition[0] = geoContext->win->x();
   CTX::instance()->ctxPosition[1] = meshContext->win->y();
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
+#if defined(HAVE_ONELAB) && (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
   CTX::instance()->solverPosition[0] = onelab->x();
   CTX::instance()->solverPosition[1] = onelab->y();
 #endif
@@ -901,7 +901,7 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->geoContext->win->show();
     if(FlGui::instance()->meshContext->win->shown())
       FlGui::instance()->meshContext->win->show();
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
+#if defined(HAVE_ONELAB) && (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
     if(FlGui::instance()->onelab->shown())
       FlGui::instance()->onelab->show();
 #endif

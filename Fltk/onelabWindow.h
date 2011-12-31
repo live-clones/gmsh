@@ -6,15 +6,16 @@
 #ifndef _ONELAB_WINDOW_H_
 #define _ONELAB_WINDOW_H_
 
-#include "onelab.h"
+#include "GmshConfig.h"
 #include <FL/Fl.H>
 
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
+#if defined(HAVE_ONELAB) && (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
 #include <vector>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Tree.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Input.H>
+#include "onelab.h"
 
 class onelabWindow{
  private:

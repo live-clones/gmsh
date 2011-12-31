@@ -4,19 +4,20 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <sstream>
+#include "GmshConfig.h"
 #include "GmshMessage.h"
+
+#if defined(HAVE_ONELAB) && defined(HAVE_POST)
+
 #include "GmshSocket.h"
 #include "OpenFile.h"
 #include "OS.h"
 #include "VertexArray.h"
 #include "GmshRemote.h"
-
-#if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewOptions.h"
 #include "PViewData.h"
 #include "PViewDataRemote.h"
-#endif
 
 #if defined(HAVE_MPI)
 #include <mpi.h>
@@ -31,7 +32,6 @@
 
 static void computeAndSendVertexArrays(GmshClient *client, bool compute=true)
 {
-#if defined(HAVE_POST)
   for(unsigned int i = 0; i < PView::list.size(); i++){
     PView *p = PView::list[i];
     if(compute) p->fillVertexArrays();
@@ -56,10 +56,9 @@ static void computeAndSendVertexArrays(GmshClient *client, bool compute=true)
       }
     }
   }
-#endif
 }
 
-#if defined(HAVE_POST) && defined(HAVE_MPI)
+#if defined(HAVE_MPI)
 // This version sends VArrays using MPI
 static void computeAndSendVertexArrays()
 {
@@ -133,7 +132,7 @@ static void addToVertexArrays(int length, const char* bytes, int swap)
 
 static void gatherAndSendVertexArrays(GmshClient* client, bool swap)
 {
-#if defined(HAVE_POST) && defined(HAVE_MPI)
+#if defined(HAVE_MPI)
   int rank = Msg::GetCommRank();
   int nbDaemon = Msg::GetCommSize();
   // tell every node to start computing
@@ -290,3 +289,12 @@ int GmshRemote()
 
   return 0;
 }
+
+#else
+
+int GmshRemote()
+{
+  Msg::Error("GmshRemote requires Post and OneLab modules");
+}
+
+#endif

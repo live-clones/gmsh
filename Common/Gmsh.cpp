@@ -16,8 +16,11 @@
 #include "CommandLine.h"
 #include "OS.h"
 #include "Context.h"
-#include "onelab.h"
 #include "robustPredicates.h"
+
+#if defined(HAVE_ONELAB)
+#include "onelab.h"
+#endif
 
 #if defined(HAVE_MESH)
 #include "Generator.h"
@@ -251,10 +254,12 @@ int GmshFLTK(int argc, char **argv)
   }
 
   // listen to external solvers
+#if defined(HAVE_ONELAB)
   if(CTX::instance()->solver.listen){
     onelab::localNetworkClient *c = new onelab::localNetworkClient("Listen", "");
     c->run("");
   }
+#endif
 
   // loop
   return FlGui::instance()->run();
