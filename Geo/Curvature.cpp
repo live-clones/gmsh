@@ -885,6 +885,7 @@ void Curvature::computeCurvature(GModel* model, typeOfCurvature typ)
   double t1 = Cpu();
   Msg::StatusBar(2, true, "(C) Done Computing Curvature (%g s)", t1-t0);
 
+  writeToMshFile("curvature.msh");
   writeToPosFile("curvature.pos");
   writeToVtkFile("curvature.vtk");
 
@@ -1432,6 +1433,85 @@ double Curvature::getAtVertex(const MVertex *v) const {
   }
   return _VertexCurve[it->second];
 }
+
+//========================================================================================================
+
+void Curvature::writeToMshFile(const std::string &filename)
+{
+  std::ofstream outfile;
+  outfile.precision(18);
+  outfile.open(filename.c_str());
+
+  /// Write the values of curvature
+  outfile << "$MeshFormat"    << std::endl;
+  outfile << "2.1 0 8"        << std::endl;
+  outfile << "$EndMeshFormat" << std::endl;
+  outfile << "$NodeData" << std::endl;
+  outfile << "1" << std::endl;                 // One string tag
+  outfile << "\"Curvature\"" << std::endl;     // The name of the view
+  outfile << "1"             << std::endl;     // One real tag
+  outfile << "0.0"           << std::endl;     // The time value
+  outfile << "3"             << std::endl;     // Three integer tags
+  outfile << "0"             << std::endl;     // The time step (time steps always start at 0)
+  outfile << "1"             << std::endl;     // 1-component (scalar) field
+  outfile << _VertexToInt.size() << std::endl; // How many associated nodal values
+
+  std::map<int,int>::const_iterator vertex_iterator;
+  for(vertex_iterator = _VertexToInt.begin(); vertex_iterator != _VertexToInt.end(); ++vertex_iterator)
+  {
+    outfile << vertex_iterator->first << " " << _VertexCurve[vertex_iterator->second] << std::endl;
+  }
+
+  outfile << "$EndNodeData" << std::endl;
+
+
+  /// Write the values of curvature direction - principal direction 1
+  outfile << "$NodeData" << std::endl;
+  outfile << "1" << std::endl;                 // One string tag
+  outfile << "\"Principal curvature direction 1\"" << std::endl;     // The name of the view
+  outfile << "1"             << std::endl;     // One real tag
+  outfile << "0.0"           << std::endl;     // The time value
+  outfile << "3"             << std::endl;     // Three integer tags
+  outfile << "0"             << std::endl;     // The time step (time steps always start at 0)
+  outfile << "3"             << std::endl;     // 3-component (vector) field
+  outfile << _VertexToInt.size() << std::endl; // How many associated nodal values
+
+  for(vertex_iterator = _VertexToInt.begin(); vertex_iterator != _VertexToInt.end(); ++vertex_iterator)
+  {
+    outfile << vertex_iterator->first << " " << _pdir1[vertex_iterator->second].x() << " "
+                                             << _pdir1[vertex_iterator->second].y() << " "
+                                             << _pdir1[vertex_iterator->second].z() << std::endl;
+  }
+
+  outfile << "$EndNodeData" << std::endl;
+
+
+  /// Write the values of curvature direction - principal direction 1
+  outfile << "$NodeData" << std::endl;
+  outfile << "1" << std::endl;                 // One string tag
+  outfile << "\"Principal curvature direction 2\"" << std::endl;     // The name of the view
+  outfile << "1"             << std::endl;     // One real tag
+  outfile << "0.0"           << std::endl;     // The time value
+  outfile << "3"             << std::endl;     // Three integer tags
+  outfile << "0"             << std::endl;     // The time step (time steps always start at 0)
+  outfile << "3"             << std::endl;     // 3-component (vector) field
+  outfile << _VertexToInt.size() << std::endl; // How many associated nodal values
+
+  for(vertex_iterator = _VertexToInt.begin(); vertex_iterator != _VertexToInt.end(); ++vertex_iterator)
+  {
+    outfile << vertex_iterator->first << " " << _pdir2[vertex_iterator->second].x() << " "
+                                             << _pdir2[vertex_iterator->second].y() << " "
+                                             << _pdir2[vertex_iterator->second].z() << std::endl;
+  }
+
+  outfile << "$EndNodeData" << std::endl;
+
+  outfile.close();
+
+
+}
+
+//========================================================================================================
 
 void Curvature::writeToPosFile( const std::string & filename)
 {

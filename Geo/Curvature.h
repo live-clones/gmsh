@@ -64,7 +64,7 @@ private:
     //Averaged vertex normals
     std::vector<SVector3> _VertexNormal;
 
-    // Vector of principal dircections
+    // Vector of principal directions
     std::vector<SVector3> _pdir1;
     std::vector<SVector3> _pdir2;
 
@@ -212,6 +212,8 @@ public:
   void triangleNodalValuesAndDirections(MTriangle* triangle, SVector3* dMax, SVector3* dMin, double* cMax, double* cMin, int isAbs=0);
 
   void edgeNodalValues(MLine* edge, double& c0, double& c1, int isAbs=0);
+
+  void writeToMshFile( const std::string & filename);
 
   void writeToPosFile( const std::string & filename);
 
