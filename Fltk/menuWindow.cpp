@@ -54,6 +54,9 @@ typedef unsigned long intptr_t;
 #include "Generator.h"
 #include "HighOrder.h"
 #include "Field.h"
+#if defined(HAVE_ONELAB)
+#include "onelab.h"
+#endif
 
 static void file_new_cb(Fl_Widget *w, void *data)
 {

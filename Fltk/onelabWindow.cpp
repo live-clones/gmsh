@@ -7,6 +7,10 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 
+#if defined(HAVE_ONELAB)
+#include "onelab.h"
+#endif
+
 #if defined(HAVE_ONELAB) && (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
 
 #include <FL/Fl_Check_Button.H>
@@ -30,7 +34,6 @@
 #include "paletteWindow.h"
 #include "menuWindow.h"
 #include "fileDialogs.h"
-#include "onelab.h"
 #include "onelabWindow.h"
 
 // This file contains the Gmsh/FLTK specific parts of the OneLab
@@ -1019,6 +1022,20 @@ void solver_cb(Fl_Widget *w, void *data)
 }
 
 #else
+
+#if defined(HAVE_ONELAB)
+bool onelab::localNetworkClient::run(const std::string &what)
+{
+  Msg::Error("The solver interface requires OneLab and FLTK 1.3");
+  return false;
+}
+
+bool onelab::localNetworkClient::kill()
+{
+  Msg::Error("The solver interface requires OneLab and FLTK 1.3");
+  return false;
+}
+#endif
 
 void solver_cb(Fl_Widget *w, void *data)
 {
