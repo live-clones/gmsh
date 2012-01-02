@@ -444,7 +444,7 @@ static std::string getShortName(const std::string &name, const std::string &ok="
   return s;
 }
 
-static void updateOnelabGraph(int num)
+static bool updateOnelabGraph(int num)
 {
   bool changed = false;
   for(unsigned int i = 0; i < PView::list.size(); i++){
@@ -482,18 +482,19 @@ static void updateOnelabGraph(int num)
     changed = true;
   }
   
-  if(changed){
+  if(changed)
     FlGui::instance()->updateViews();
-    drawContext::global()->draw();
-  }
+  return changed;
 }
 
 static void updateOnelabGraphs()
 {
-  updateOnelabGraph(0);
-  updateOnelabGraph(1);
-  updateOnelabGraph(2);
-  updateOnelabGraph(3);
+  bool redraw0 = updateOnelabGraph(0);
+  bool redraw1 = updateOnelabGraph(1);
+  bool redraw2 = updateOnelabGraph(2);
+  bool redraw3 = updateOnelabGraph(3);
+  if(redraw0 || redraw1 || redraw2 || redraw3)
+    drawContext::global()->draw();
 }
 
 static void runGmshClient(const std::string &action)
