@@ -3041,9 +3041,10 @@ solver module, you need to specify its name (@code{Solver.Name0},
 @ref{Solver options list}).
 
 The client-server API for the solver interface is defined in the
-@file{onelab.h} header. See the sources of GetDP
-(@url{http://geuz.org/getdp}, for an example on how to use the ONELAB
-programming interface.
+@file{onelab.h} header. See @file{utils/solvers/c++/solver.cpp} for a
+simple example on how to use the ONELAB programming interface. See the
+sources of GetDP (@url{http://geuz.org/getdp} for a more comprehensive
+example.
 
 @menu
 * Solver options::              

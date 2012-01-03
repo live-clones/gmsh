@@ -722,7 +722,10 @@ static void onelab_choose_executable_cb(Fl_Widget *w, void *data)
 #if defined(WIN32)
   pattern += ".exe";
 #endif
-  if(fileChooser(FILE_CHOOSER_SINGLE, "Choose executable", pattern.c_str())){
+  const char *old = 0;
+  if(!c->getCommandLine().empty()) old = c->getCommandLine().c_str();
+
+  if(fileChooser(FILE_CHOOSER_SINGLE, "Choose executable", pattern.c_str(), old)){
     std::string exe = fileChooserGetName(1);
     c->setCommandLine(exe);
     if(c->getIndex() >= 0 && c->getIndex() < 5)
