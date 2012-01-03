@@ -757,7 +757,7 @@ if(ENABLE_OCC)
   list(LENGTH OCC_LIBS NUM_OCC_LIBS)
   if(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
     find_path(OCC_INC "BRep_Tool.hxx" PATHS ENV CASROOT PATH_SUFFIXES inc 
-              include opencascade)
+              include include/oce opencascade)
     if(OCC_INC)
       set_config_option(HAVE_OCC "OpenCascade")
       list(APPEND EXTERNAL_LIBRARIES ${OCC_LIBS})

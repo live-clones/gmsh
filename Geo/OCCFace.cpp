@@ -338,9 +338,10 @@ bool OCCFace::buildSTLTriangulation(bool force)
   BRepBndLib::Add(s, aBox);
   BRepMesh_FastDiscret aMesher(0.1, 0.5, aBox, Standard_False, Standard_False, 
                                Standard_True, Standard_False);
+#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 5)
   aMesher.Add(s);
-#if !((OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 5))
-  aMesher.Process(s);
+#else
+  aMesher.Perform(s);
 #endif
 
   TopLoc_Location loc;
