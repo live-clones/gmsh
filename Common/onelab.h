@@ -110,6 +110,7 @@ namespace onelab{
     static std::string getNextToken(const std::string &msg, 
                                     std::string::size_type &first)
     {
+      if(first == std::string::npos) return "";
       std::string::size_type last = msg.find_first_of(charSep(), first);
       std::string next = msg.substr(first, last - first);
       first = (last == std::string::npos) ? last : last + 1;
