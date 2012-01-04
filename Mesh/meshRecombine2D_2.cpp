@@ -18,7 +18,8 @@
 #include "OpenFile.h"//pas propre
 #include "Field.h"
 #include "OS.h"
-#define HORIZ2 2
+#define HORIZ2 1
+#define SMOOTH 0
 
 double **Rec2d_vertex::_Vvalues = NULL;
 double **Rec2d_vertex::_Vbenefs = NULL;
@@ -31,20 +32,23 @@ int Recombine2D::ra = 0;
 
 /*
   a faire :
-  - modifier gain des edges
   - fonction retournant qualite
   - verifier la qualite
   - action supplementaire (faire classe de base)
   - Faire un super conteneur pour les actions
   - pourquoi infini
+  - pourquoi premier pas meilleur
   - implementer field
-  - si qu1, ajouter (Comment gŽrer)
-  - limiter sequence
+  ~ limiter sequence
 */
 
 Recombine2D::Recombine2D(GFace *gf)
 : _horizon(0), _gf(gf), _benef(.0), _applied(true)
-{ 
+{
+  //GModel::current()->createTopologyFromMesh(1);
+  int popopo = 0;
+  
+  TrianglesUnion::clear();
   Msg::Warning("[meshRecombine2D] Alignement computation ok uniquely for xy or yz plane mesh !");
   
   // be able to compute geometrical angle at corners
@@ -65,11 +69,15 @@ Recombine2D::Recombine2D(GFace *gf)
   // Find all Vertices and edges
   std::map<MVertex*, std::list<MTriangle*> > mapVert;
   std::map<MEdge, std::list<MTriangle*>, Less_Edge> mapEdge;
+  std::map<MVertex*, std::list<MEdge> > mapVtoE;
   for (unsigned int i = 0; i < gf->triangles.size(); i++) {
     MTriangle *t = gf->triangles[i];
     for (int j = 0; j < 3; j++) {
       mapVert[t->getVertex(j)].push_back(t);
       mapEdge[t->getEdge(j)].push_back(t);
+      for (int k = 0; k < 3; k++) {
+        mapVtoE[t->getVertex(j)].push_back(t->getEdge(k));
+      }
     }
   }
   
@@ -81,7 +89,13 @@ Recombine2D::Recombine2D(GFace *gf)
   for (; itvert != mapVert.end(); itvert++) {
     if (itvert->second.size() == 4 && itvert->first->onWhat()->dim() == 2)
       fourTri.push_back(itvert);
-    Rec2d_vertex *n = new Rec2d_vertex(itvert->first, itvert->second, mapCornerVert);
+    std::list<MEdge>::iterator itti = mapVtoE[itvert->first].begin();
+    bool ab = false;
+    for (; itti != mapVtoE[itvert->first].end(); ++itti) {
+      if (mapEdge[*itti].size() == 1) ab = true;
+    }
+    if (ab) ++popopo;
+    Rec2d_vertex *n = new Rec2d_vertex(itvert->first, itvert->second, mapCornerVert, ab);
     itV2N = mapV2N.insert(itV2N, std::make_pair(itvert->first,n));
     TrianglesUnion::_NumVert++;
     TrianglesUnion::_ValVert += n->getReward();
@@ -168,8 +182,8 @@ Recombine2D::Recombine2D(GFace *gf)
   TrianglesUnion::addRec();
   //_setQuads.sort(lessTriUnion());
   
-  laplaceSmoothing(_gf,10);
-  
+  if (SMOOTH) laplaceSmoothing(_gf,10);
+  Msg::Error("%d", popopo);
   _recombine(true);
   _applied = false;
 }
@@ -181,12 +195,13 @@ void Recombine2D::_recombine(bool a)
   
   int i = 0;
   std::list<TrianglesUnion*> vectTu;
+  TrianglesUnion::addRec();
   
   while (!_setQuads.empty() && i < 2000) {
     TrianglesUnion *tu;
-  laplaceSmoothing(_gf,1);
-    if (/*true ||*/ _lastQuad.empty()) {
-      if (vectTu.size() < 2)
+  if (SMOOTH) laplaceSmoothing(_gf,1);
+    if (_lastQuad.empty()) {
+      if (/*true ||*/ vectTu.size() < 2 || i % 1 == 0)
         tu = *std::max_element(_setQuads.begin(), _setQuads.end(), lessTriUnion());
       else {
         vectTu.pop_front();
@@ -197,7 +212,7 @@ void Recombine2D::_recombine(bool a)
       vectTu.insert(vectTu.begin(), tu);
       
             Msg::Info("------------------ %d", _setQuads.size());
-      _lookAhead2(vectTu, HORIZ2);
+      _lookAhead(vectTu, HORIZ2);
     }
     else {
       tu = *_lastQuad.begin();
@@ -224,7 +239,7 @@ void Recombine2D::_recombine(bool a)
     tu->select();
     _quads.push_back(tu->createQuad());
     _removeImpossible(tu);
-    { // draw Mesh
+    if (i % 5 == 0) { // draw Mesh
       Msg::Info("Expected return %lf", tu->getReturn());
       _applied = false;
       apply(true);
@@ -359,7 +374,7 @@ void Recombine2D::_lookAhead(std::list<TrianglesUnion*> &candidate, int horiz)
     if (/*true ||*/ best /*|| (((int)(Cpu()*100) - t) % 5 == 0 && newt)*/) { // draw mesh
       newt = false;
       apply(false);
-  laplaceSmoothing(_gf,1);
+  if (SMOOTH) laplaceSmoothing(_gf,1);
       CTX::instance()->mesh.changed = (ENT_ALL);
       FlGui::instance()->check();
       drawContext::global()->draw();
@@ -455,31 +470,39 @@ void Recombine2D::_lookAhead2(std::list<TrianglesUnion*> &candidate, int horiz)
   int num=0;
   
   while (current > 0) {
+        //Msg::Info(" ");
     bool best = false;
-    // set first acceptable action for each step
+    // add max of actions in sequence
     while (current < horiz && vecIt[current-1] != la.end()) {
       vecIt[current] = vecIt[current-1];
+      //vecIt[current].print();
       while (++vecIt[current] != lastLayer[currentLayer]
+             && vecIt[current] != la.end()
              && (*vecIt[current])->isIn(setTri)         );
-      vecIt[current].print(); lastLayer[currentLayer].print();
-      if (vecIt[current] != lastLayer[currentLayer]) {
+      if (vecIt[current] != lastLayer[currentLayer] && vecIt[current] == la.end())
+        {Msg::Error("Ca a foirŽ mec");Msg::Error(" ");}
+      if (vecIt[current] != lastLayer[currentLayer] && vecIt[current] != la.end()) {
         (*vecIt[current])->addTri(setTri);
         (*vecIt[current])->addInfluence(numbers, values, modifiedVert);
+        if (currentLayer < maxLayer) {
+          if (current == numLayer[currentLayer])
+            lastLayer[currentLayer] = --la.end();
+          _addNeighbors(horiz, vecIt, current, &la);
+          if (current == numLayer[currentLayer])
+            ++lastLayer[currentLayer];
+          lastLayer[currentLayer+1] = la.end();
+        }
         ++current;
       }
       else {
-        Msg::Info("in else");
+        //Msg::Info("in else");
         if (!haveSequence) {
           ++maxLayer;
-          list_actions::iterator it = --la.end();
-          //it.print();
-          //la.sizes();
+          --lastLayer[currentLayer];
           for (int i = numLayer[currentLayer]; i < current; ++i) {
             _addNeighbors(horiz, vecIt, i, &la);
           }
-          //la.sizes();
-          lastLayer[currentLayer] = ++it;
-          //it.print();
+          ++lastLayer[currentLayer];
           ++currentLayer;
           lastLayer[currentLayer] = la.end();
           numLayer[currentLayer] = current;
@@ -488,30 +511,28 @@ void Recombine2D::_lookAhead2(std::list<TrianglesUnion*> &candidate, int horiz)
           /*for (int i = numLayer[currentLayer]; i < current; ++i) {
             _addNeighbors(horiz, vecIt, i, &la);
           }*/
+          //Msg::Error("++layer'");
           ++currentLayer;
           lastLayer[currentLayer] = la.end();
           numLayer[currentLayer] = current;
         }
-        else
+        else{
+          //Msg::Error("++current : %d/%d", current, horiz);
+          //if(lastLayer[currentLayer] != la.end())
+          //Msg::Error(" ");
           ++current;
-        
-        
-        /*if (!haveSequence)
-          ++maxLayer;
-        if (currentLayer < maxLayer) {
-          for (int i = numLayer[currentLayer]; i < current; ++i) {
-            _addNeighbors(horiz, vecIt, i, &la);
-          }
-          ++currentLayer;
-          lastLayer[currentLayer] = la.end();
-          numLayer[currentLayer] = current;
         }
-        else
-          ++current;*/
       }
     }
     haveSequence = true;
-    Msg::Info("maxLayer %d, current %d", maxLayer, current);
+    //Msg::Info("maxLayer %d, current %d", maxLayer, current);
+    
+/*Msg::Info("LAYER %d - num{%d,%d} - last :", currentLayer, numLayer[0], numLayer[1]);
+lastLayer[0].print();
+lastLayer[1].print();
+Msg::Info("current %d - iterator : ", current-1);
+vecIt[current-1].print();
+Msg::Info(" ");*/
 
     { // color
       for (int i = 1; i < current &&  vecIt[i] != la.end(); ++i) {
@@ -552,6 +573,14 @@ void Recombine2D::_lookAhead2(std::list<TrianglesUnion*> &candidate, int horiz)
           }
         }
       }
+      else { //color
+        TrianglesUnion *tu = *vecIt[0];
+        unsigned int col;
+        col = CTX::instance()->packColor(190, 130, 0, 255);
+        for (int j = 0; j < tu->getNumTriangles(); ++j) {
+          tu->getTriangle(j)->setCol(col);
+        }
+      }
     }
     else { //color
       TrianglesUnion *tu = *vecIt[0];
@@ -562,7 +591,7 @@ void Recombine2D::_lookAhead2(std::list<TrianglesUnion*> &candidate, int horiz)
       }
     }
     
-    if (true || best /*|| (((int)(Cpu()*100) - t) % 5 == 0 && newt)*/) { // draw mesh
+    if (/*true ||*/ best /*|| (((int)(Cpu()*100) - t) % 5 == 0 && newt)*/) { // draw mesh
       //newt = false;
       apply(false);
       CTX::instance()->mesh.changed = (ENT_ALL);
@@ -575,7 +604,7 @@ void Recombine2D::_lookAhead2(std::list<TrianglesUnion*> &candidate, int horiz)
       double t = Cpu();
       while (Cpu() - t < .0001);
       //if (i % 1 == 0)
-      if (/*false && best &&*/ !Msg::GetAnswer("Continue ?", 1, "no", "yes"))
+      if (false && best && !Msg::GetAnswer("Continue ?", 1, "no", "yes"))
         Msg::Info("I continue anyway :p");
       best = false;
     }
@@ -595,28 +624,39 @@ void Recombine2D::_lookAhead2(std::list<TrianglesUnion*> &candidate, int horiz)
       }
     }
     
-    if (vecIt[current-1] != lastLayer[currentLayer] ||
-        --current - 1 >= numLayer[currentLayer] ||
-        --currentLayer >= 0                           ) {
-      bool lessLayer = false;
+    if (vecIt[current-1] != la.end() || --current > 0) {
       do {
+        while (current-1 < numLayer[currentLayer])
+          --currentLayer;
         (*vecIt[current-1])->removeTri(setTri);
         (*vecIt[current-1])->removeInfluence(numbers, values, modifiedVert);
-        Msg::Info("current %d, currentLayer %d", current, currentLayer);
+        //Msg::Info(" - current %d, currentLayer %d", current, currentLayer);
         if (currentLayer < maxLayer) {
           _removeNeighbors(horiz, current - 1, &la);
-          lastLayer[currentLayer+1] = la.end();
           if (current-1 == numLayer[currentLayer])
             lastLayer[currentLayer] = la.end();
+          else
+            lastLayer[currentLayer+1] = la.end();
         }
-        while (++vecIt[current-1] != lastLayer[currentLayer]
-               && (*vecIt[current-1])->isIn(setTri)         );
-        Msg::Info("b %d, %d - %d, %d", vecIt[current-1] == lastLayer[currentLayer], current, numLayer[currentLayer], currentLayer);
-      } while (vecIt[current-1] == lastLayer[currentLayer] &&
-               (--current - 1 >= numLayer[currentLayer] ||
-                --currentLayer >= 0                       )  );
-        Msg::Info("current %d, currentLayer %d", current, currentLayer);
-      if (current > 0 && currentLayer >= 0) {
+        while (++vecIt[current-1] != la.end() && (*vecIt[current-1])->isIn(setTri)) {
+          //Msg::Info(" - - curent %d & layer %d & numLayer %d", current, currentLayer, numLayer[currentLayer]);
+          //vecIt[current-1].print(); lastLayer[currentLayer].print();
+          if (vecIt[current-1] == lastLayer[currentLayer]) {
+            //Msg::Warning("++layer");
+            ++currentLayer;
+            numLayer[currentLayer] = current - 1;
+          }
+        }
+        if (currentLayer < maxLayer && vecIt[current-1] == lastLayer[currentLayer]) {
+          //Msg::Warning("++ layer");
+          //vecIt[current-1].print(); lastLayer[currentLayer].print();
+          ++currentLayer;
+          numLayer[currentLayer] = current - 1;
+        }
+        //Msg::Info("b %d, %d - %d, %d", vecIt[current-1] == lastLayer[currentLayer], current-2, numLayer[currentLayer], currentLayer);
+      } while (vecIt[current-1] == la.end() && --current > 0);
+        //Msg::Info("current %d, currentLayer %d", current, currentLayer);
+      if (current > 0) {
         (*vecIt[current-1])->addTri(setTri);
         (*vecIt[current-1])->addInfluence(numbers, values, modifiedVert);
         if (currentLayer < maxLayer) {
@@ -629,9 +669,17 @@ void Recombine2D::_lookAhead2(std::list<TrianglesUnion*> &candidate, int horiz)
         }
       }
     }
+/*    if (current > 0) {
+Msg::Info("layer %d - num{%d,%d} - last :", currentLayer, numLayer[0], numLayer[1]);
+lastLayer[0].print();
+lastLayer[1].print();
+Msg::Info("current %d - iterator : ", current-1);
+vecIt[current-1].print();
+Msg::Info(" ");
+}*/
   }
   
-  { // color
+  /*{ // color
     for (int i = 1; i < bestSequence.size(); ++i) {
       TrianglesUnion *tu = bestSequence[i].first;
       unsigned int col = CTX::instance()->packColor(50, 200, 0, 255);
@@ -639,7 +687,7 @@ void Recombine2D::_lookAhead2(std::list<TrianglesUnion*> &candidate, int horiz)
         tu->getTriangle(j)->setCol(col);
       }
     }
-  }
+  }*/
 
   candidate.clear();
   for (int i = 0; i < bestSequence.size(); ++i) {
@@ -655,6 +703,7 @@ void Recombine2D::_getIncompatibles(const TrianglesUnion *tu, setTriUnion &set)
       it = _possibleActions.find(tu->getTriangle(i));
       if (it == _possibleActions.end()) {
         Msg::Error("[Rec2D] error no triangle !, stopping with partially filled set");
+        Msg::Error(" ");
       }
       _lessActions.insert(*it);
     }
@@ -853,14 +902,15 @@ int Recombine2D::apply(bool a)
 {
   //Msg::Info("(%d, %d, %d)", _quads.size(), _gf->triangles.size(), _isolated.size());
   if (a) {
-    std::vector<MTriangle*> triangles2;
-    for (int i = 0; i < _gf->triangles.size(); i++) {
-      if (_isolated.find(_gf->triangles[i]) != _isolated.end())
-        delete _gf->triangles[i];
-      else
-        triangles2.push_back(_gf->triangles[i]);
-    }
-    _gf->triangles = triangles2;
+    _gf->triangles.clear();
+    //std::vector<MTriangle*> triangles2;
+    //for (int i = 0; i < _gf->triangles.size(); i++) {
+    //  if (_isolated.find(_gf->triangles[i]) != _isolated.end())
+    //    delete _gf->triangles[i];
+    //  else
+    //    triangles2.push_back(_gf->triangles[i]);
+    //}
+    //_gf->triangles = triangles2;
     _gf->quadrangles = _quads;
     _isolated.clear();
   }
@@ -943,10 +993,11 @@ void Recombine2D::_removeImpossible(TrianglesUnion *tu)
 
 Rec2d_vertex::Rec2d_vertex(MVertex *v,
                            std::list<MTriangle*> &setTri,
-                           std::map<MVertex*, std::set<GEdge*> > &mapVert)
+                           std::map<MVertex*, std::set<GEdge*> > &mapVert, bool a)
 : _numEl(setTri.size()), _angle(.0)
 {
   _onWhat = v->onWhat()->dim() - 1;
+  if (a) _onWhat = 1;
   
   if (_onWhat < 0) {
     std::map<MVertex*, std::set<GEdge*> >::iterator it = mapVert.find(v);
@@ -1141,6 +1192,7 @@ TrianglesUnion::TrianglesUnion(GFace *gf,
     double length = _computeEdgeLength(gf, vert, u, v, 0);
     double a = .0;
     _boundEdgeValue += length / sumlc * (a + (2-a)*_computeAlignment(*ite2, t, mapEdge));
+    _boundEdgeValue = 1;
   }
   _boundEdgeValue /= 2.;
   _numboundEdge = 2;

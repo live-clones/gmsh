@@ -336,7 +336,7 @@ class Rec2d_vertex {
   
   public :
     Rec2d_vertex(MVertex *, std::list<MTriangle*> &,
-                 std::map<MVertex*, std::set<GEdge*> > &);
+                 std::map<MVertex*, std::set<GEdge*> > &, bool);
     
     inline void changeNumEl(int c) {_numEl += c;}
     double getReward();
@@ -407,6 +407,9 @@ class TrianglesUnion {
       return _ValEdge/_NumEdge * _ValVert/_NumVert * _ValVert/_NumVert;
     }
   
+    static void clear() {_NumEdge = 0; _NumVert = 0;
+      _ValEdge = .0, _ValVert = .0;}
+
   private:  
     double _computeEdgeLength(GFace*, MVertex**, double *u, double *v,
                               int numIntermedPoint= 1);
