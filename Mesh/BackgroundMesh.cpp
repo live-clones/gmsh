@@ -719,44 +719,42 @@ void backgroundMesh::updateSizes(GFace *_gf)
   }
 }
 
-double backgroundMesh::operator() (double u, double v, double w) const
+double backgroundMesh::operator() (double x, double y, double z) const
 {
-  double uv[3] = {u, v, w};
-  double uv2[3];
-  //  return 1.0;
-  MElement *e = _octree->find(u, v, w, 2, true);
+  double xyz[3] = {x, y, z};
+  double uv[3];
+  MElement *e = _octree->find(x, y, z, 2, true);
   if (!e) {
-    Msg::Error("cannot find %g %g", u, v);
+    Msg::Error("cannot find %g %g %g", x, y, z);
 	return -1000.0;//0.4;
   }
-  e->xyz2uvw(uv, uv2);
+  e->xyz2uvw(xyz, uv);
   std::map<MVertex*,double>::const_iterator itv1 = _sizes.find(e->getVertex(0));
   std::map<MVertex*,double>::const_iterator itv2 = _sizes.find(e->getVertex(1));
   std::map<MVertex*,double>::const_iterator itv3 = _sizes.find(e->getVertex(2));
-  return itv1->second * (1-uv2[0]-uv2[1]) + itv2->second * uv2[0] + itv3->second * uv2[1];
+  return itv1->second * (1-uv[0]-uv[1]) + itv2->second * uv[0] + itv3->second * uv[1];
 }
 
-double backgroundMesh::getAngle(double u, double v, double w) const
+double backgroundMesh::getAngle(double x, double y, double z) const
 {
-  double uv[3] = {u, v, w};
-  double uv2[3];
-  //  return 1.0;
-  MElement *e = _octree->find(u, v, w, 2, true);
+  double xyz[3] = {x, y, z};
+  double uv[3];
+  MElement *e = _octree->find(x, y, z, 2, true);
   if (!e) {
-    Msg::Error("cannot find %g %g", u, v);
+    Msg::Error("cannot find %g %g %g", x, y, z);
     return 0.0;
   }
-  e->xyz2uvw(uv, uv2);
+  e->xyz2uvw(xyz, uv);
   std::map<MVertex*,double>::const_iterator itv1 = _angles.find(e->getVertex(0));
   std::map<MVertex*,double>::const_iterator itv2 = _angles.find(e->getVertex(1));
   std::map<MVertex*,double>::const_iterator itv3 = _angles.find(e->getVertex(2));
 
-  double cos4 = cos (4*itv1->second) * (1-uv2[0]-uv2[1]) + 
-    cos (4*itv2->second) * uv2[0] + 
-    cos (4*itv3->second) * uv2[1] ;
-  double sin4 = sin (4*itv1->second) * (1-uv2[0]-uv2[1]) + 
-    sin (4*itv2->second) * uv2[0] + 
-    sin (4*itv3->second) * uv2[1] ;
+  double cos4 = cos (4*itv1->second) * (1-uv[0]-uv[1]) + 
+    cos (4*itv2->second) * uv[0] + 
+    cos (4*itv3->second) * uv[1] ;
+  double sin4 = sin (4*itv1->second) * (1-uv[0]-uv[1]) + 
+    sin (4*itv2->second) * uv[0] + 
+    sin (4*itv3->second) * uv[1] ;
   double angle = atan2(sin4,cos4)/4.0;
   crossField2d::normalizeAngle (angle);
 

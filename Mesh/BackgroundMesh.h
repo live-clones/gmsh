@@ -54,8 +54,8 @@ class backgroundMesh : public simpleFunction<double>
   void propagate1dMesh(GFace *);
   void propagatecrossField(GFace *);
   void updateSizes(GFace *);
-  double operator () (double u, double v, double w) const;
-  double getAngle(double u, double v, double w) const ; 
+  double operator () (double x, double y, double z) const; // returns mesh size
+  double getAngle(double x, double y, double z) const ; 
   void print(const std::string &filename, GFace *gf, 
               const std::map<MVertex*, double>&) const;
   void print(const std::string &filename, GFace *gf, int choice = 0) const
