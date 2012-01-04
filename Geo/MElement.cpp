@@ -624,21 +624,28 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
   int par = (parentNum) ? 1 : 0;
   int dom = (dom1Num) ? 2 : 0;
   bool poly = (type == MSH_POLYG_ || type == MSH_POLYH_ || type == MSH_POLYG_B);
-  bool polyl  = (type == MSH_LIN_B || type == MSH_LIN_C);
 
   // if polygon loop over children (triangles and tets)
-  if(CTX::instance()->mesh.saveTri && poly){
-    for (int i = 0; i < getNumChildren() ; i++){
-       MElement *t = getChild(i);
-       t->writeMSH(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
+  if(CTX::instance()->mesh.saveTri){
+    if(poly){
+      for (int i = 0; i < getNumChildren() ; i++){
+         MElement *t = getChild(i);
+         t->writeMSH(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
+      }
+      return;
     }
-    return;
-  }
-  else if(CTX::instance()->mesh.saveTri && polyl){
-    MLine *l = new MLine(getVertex(0), getVertex(1));
-    l->writeMSH(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
-    delete l;
-    return;
+    if(type == MSH_LIN_B || type == MSH_LIN_C){
+      MLine *l = new MLine(getVertex(0), getVertex(1));
+      l->writeMSH(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
+      delete l;
+      return;
+    }
+    if(type == MSH_TRI_B){
+      MTriangle *t = new MTriangle(getVertex(0), getVertex(1), getVertex(2));
+      t->writeMSH(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
+      delete t;
+      return;
+    }
   }
 
   if(!binary){
