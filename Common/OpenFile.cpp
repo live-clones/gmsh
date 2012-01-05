@@ -45,25 +45,25 @@
 static void FinishUpBoundingBox()
 {
   double range[3];
-  for(int i = 0; i < 3; i++) 
+  for(int i = 0; i < 3; i++)
     range[i] = CTX::instance()->max[i] - CTX::instance()->min[i];
 
-  if(range[0] < CTX::instance()->geom.tolerance && 
-     range[1] < CTX::instance()->geom.tolerance && 
+  if(range[0] < CTX::instance()->geom.tolerance &&
+     range[1] < CTX::instance()->geom.tolerance &&
      range[2] < CTX::instance()->geom.tolerance) {
     CTX::instance()->min[0] -= 1.; CTX::instance()->min[1] -= 1.;
     CTX::instance()->max[0] += 1.; CTX::instance()->max[1] += 1.;
   }
-  else if(range[0] < CTX::instance()->geom.tolerance && 
+  else if(range[0] < CTX::instance()->geom.tolerance &&
           range[1] < CTX::instance()->geom.tolerance) {
     CTX::instance()->min[0] -= range[2]; CTX::instance()->min[1] -= range[2];
     CTX::instance()->max[0] += range[2]; CTX::instance()->max[1] += range[2];
   }
-  else if(range[0] < CTX::instance()->geom.tolerance && 
+  else if(range[0] < CTX::instance()->geom.tolerance &&
           range[2] < CTX::instance()->geom.tolerance) {
     CTX::instance()->min[0] -= range[1]; CTX::instance()->max[0] += range[1];
   }
-  else if(range[1] < CTX::instance()->geom.tolerance && 
+  else if(range[1] < CTX::instance()->geom.tolerance &&
           range[2] < CTX::instance()->geom.tolerance) {
     CTX::instance()->min[1] -= range[0]; CTX::instance()->max[1] += range[0];
   }
@@ -78,7 +78,7 @@ static void FinishUpBoundingBox()
 }
 
 void SetBoundingBox(double xmin, double xmax,
-                    double ymin, double ymax, 
+                    double ymin, double ymax,
                     double zmin, double zmax)
 {
   CTX::instance()->min[0] = xmin; CTX::instance()->max[0] = xmax;
@@ -86,9 +86,9 @@ void SetBoundingBox(double xmin, double xmax,
   CTX::instance()->min[2] = zmin; CTX::instance()->max[2] = zmax;
   FinishUpBoundingBox();
   CTX::instance()->lc = sqrt(SQU(CTX::instance()->max[0] - CTX::instance()->min[0]) +
-                             SQU(CTX::instance()->max[1] - CTX::instance()->min[1]) + 
+                             SQU(CTX::instance()->max[1] - CTX::instance()->min[1]) +
                              SQU(CTX::instance()->max[2] - CTX::instance()->min[2]));
-  for(int i = 0; i < 3; i++) 
+  for(int i = 0; i < 3; i++)
     CTX::instance()->cg[i] = 0.5 * (CTX::instance()->min[i] + CTX::instance()->max[i]);
 }
 
@@ -97,7 +97,7 @@ void SetBoundingBox(bool aroundVisible)
   if(CTX::instance()->forcedBBox) return;
 
   SBoundingBox3d bb = GModel::current()->bounds(aroundVisible);
-  
+
 #if defined(HAVE_POST)
   if(bb.empty()) {
     for(unsigned int i = 0; i < PView::list.size(); i++)
@@ -106,20 +106,20 @@ void SetBoundingBox(bool aroundVisible)
           bb += PView::list[i]->getData()->getBoundingBox();
   }
 #endif
-  
+
   if(bb.empty()){
     bb += SPoint3(-1., -1., -1.);
     bb += SPoint3(1., 1., 1.);
   }
-  
+
   CTX::instance()->min[0] = bb.min().x(); CTX::instance()->max[0] = bb.max().x();
   CTX::instance()->min[1] = bb.min().y(); CTX::instance()->max[1] = bb.max().y();
   CTX::instance()->min[2] = bb.min().z(); CTX::instance()->max[2] = bb.max().z();
   FinishUpBoundingBox();
   CTX::instance()->lc = sqrt(SQU(CTX::instance()->max[0] - CTX::instance()->min[0]) +
-                             SQU(CTX::instance()->max[1] - CTX::instance()->min[1]) + 
+                             SQU(CTX::instance()->max[1] - CTX::instance()->min[1]) +
                              SQU(CTX::instance()->max[2] - CTX::instance()->min[2]));
-  for(int i = 0; i < 3; i++) 
+  for(int i = 0; i < 3; i++)
     CTX::instance()->cg[i] = 0.5 * (CTX::instance()->min[i] + CTX::instance()->max[i]);
 }
 
@@ -140,7 +140,7 @@ void AddToTemporaryBoundingBox(double x, double y, double z)
   temp_bb += SPoint3(x, y, z);
   if(temp_bb.empty()) return;
   CTX::instance()->lc = sqrt(SQU(temp_bb.max().x() - temp_bb.min().x()) +
-                             SQU(temp_bb.max().y() - temp_bb.min().y()) + 
+                             SQU(temp_bb.max().y() - temp_bb.min().y()) +
                              SQU(temp_bb.max().z() - temp_bb.min().z()));
   if(CTX::instance()->lc == 0) CTX::instance()->lc = 1.;
   // to get correct cg during interactive point creation
@@ -258,7 +258,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
             << "Do you want to uncompress it?";
     if(Msg::GetAnswer(sstream.str().c_str(), 0, "Cancel", "Uncompress")){
       if(SystemCall(std::string("gunzip -c ") + fileName + " > " + noExt))
-        Msg::Error("Failed to uncompress `%s': check directory permissions", 
+        Msg::Error("Failed to uncompress `%s': check directory permissions",
                    fileName.c_str());
       GModel::current()->setFileName(noExt);
       return MergeFile(noExt);
@@ -268,7 +268,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
   // force reading msh file even if wrong extension if the header
   // matches
   // if(!strncmp(header, "$MeshFormat", 11)) ext = "";
-  
+
   CTX::instance()->geom.draw = 0; // don't try to draw the model while reading
 
 #if defined(HAVE_POST)
@@ -354,7 +354,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
   }
   else {
     CTX::instance()->geom.draw = 1;
-    if(!strncmp(header, "$PTS", 4) || !strncmp(header, "$NO", 3) || 
+    if(!strncmp(header, "$PTS", 4) || !strncmp(header, "$NO", 3) ||
        !strncmp(header, "$PARA", 5) || !strncmp(header, "$ELM", 4) ||
        !strncmp(header, "$MeshFormat", 11) || !strncmp(header, "$Comments", 9)) {
       // mesh matcher
@@ -362,11 +362,10 @@ int MergeFile(std::string fileName, bool warnIfMissing)
         GModel* tmp2 = GModel::current();
         GModel* tmp = new GModel();
         tmp->readMSH(fileName);
-        if(GeomMeshMatcher::instance()->match(tmp2, tmp))
-          fileName = "out.msh";
+        GeomMeshMatcher::instance()->match(tmp2, tmp);
         delete tmp;
-      }
-      status = GModel::current()->readMSH(fileName);
+      } else
+	status = GModel::current()->readMSH(fileName);
 #if defined(HAVE_POST)
       if(status > 1) status = PView::readMSH(fileName);
 #endif
@@ -378,7 +377,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
 #endif
     }
 #if defined(HAVE_POST)
-    else if(!strncmp(header, "$PostFormat", 11) || 
+    else if(!strncmp(header, "$PostFormat", 11) ||
             !strncmp(header, "$View", 5)) {
       status = PView::readPOS(fileName);
     }
@@ -477,7 +476,7 @@ void OpenProject(std::string fileName)
 
   // temporary hack until we fill the current GModel on the fly during
   // parsing
-  ResetTemporaryBoundingBox(); 
+  ResetTemporaryBoundingBox();
 
   // merge the file
   if(MergeFile(fileName)) {
