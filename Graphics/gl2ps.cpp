@@ -1,6 +1,6 @@
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
- * Copyright (C) 1999-2009 C. Geuzaine
+ * Copyright (C) 1999-2011 C. Geuzaine
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of either:
@@ -20,8 +20,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library in the file named "COPYING.LGPL";
- * if not, write to the Free Software Foundation, Inc., 675 Mass Ave,
- * Cambridge, MA 02139, USA.
+ * if not, write to the Free Software Foundation, Inc., 51 Franklin
+ * Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * You should have received a copy of the GL2PS License with this
  * library in the file named "COPYING.GL2PS"; if not, I will be glad
@@ -305,10 +305,12 @@ static void *gl2psMalloc(size_t size)
 
 static void *gl2psRealloc(void *ptr, size_t size)
 {
+  void *orig = ptr;
   if(!size) return NULL;
-  ptr = realloc(ptr, size);
+  ptr = realloc(orig, size);
   if(!ptr){
     gl2psMsg(GL2PS_ERROR, "Couldn't reallocate requested memory");
+    free(orig);
     return NULL;
   }
   return ptr;
@@ -320,12 +322,12 @@ static void gl2psFree(void *ptr)
   free(ptr);
 }
 
-static size_t gl2psWriteBigEndian(unsigned long data, size_t bytes)
+static int gl2psWriteBigEndian(unsigned long data, int bytes)
 {
-  size_t i;
-  size_t size = sizeof(unsigned long);
+  int i;
+  int size = sizeof(unsigned long);
   for(i = 1; i <= bytes; ++i){
-    fputc(0xff & (data >> (size-i) * 8), gl2ps->stream);
+    fputc(0xff & (data >> (size - i) * 8), gl2ps->stream);
   }
   return bytes;
 }
@@ -392,10 +394,10 @@ static void *gl2psReallocCompress(unsigned int srcsize)
   return gl2ps->compress->start;
 }
 
-static size_t gl2psWriteBigEndianCompress(unsigned long data, size_t bytes)
+static int gl2psWriteBigEndianCompress(unsigned long data, int bytes)
 {
-  size_t i;
-  size_t size = sizeof(unsigned long);
+  int i;
+  int size = sizeof(unsigned long);
   for(i = 1; i <= bytes; ++i){
     *gl2ps->compress->src = (Bytef)(0xff & (data >> (size-i) * 8));
     ++gl2ps->compress->src;
@@ -1359,7 +1361,7 @@ static void gl2psDivideQuad(GL2PSprimitive *quad,
   (*t2)->verts[0] = quad->verts[0];
   (*t2)->verts[1] = quad->verts[2];
   (*t2)->verts[2] = quad->verts[3];
-  (*t2)->boundary = ((quad->boundary & 4) ? 2 : 0) | ((quad->boundary & 4) ? 2 : 0);
+  (*t2)->boundary = ((quad->boundary & 4) ? 2 : 0) | ((quad->boundary & 8) ? 4 : 0);
 }
 
 static int gl2psCompareDepth(const void *a, const void *b)
@@ -3202,7 +3204,7 @@ static void gl2psPrintTeXHeader(void)
   int i;
 
   if(gl2ps->filename && strlen(gl2ps->filename) < 256){
-    for(i = strlen(gl2ps->filename)-1; i >= 0; i--){
+    for(i = (int)strlen(gl2ps->filename) - 1; i >= 0; i--){
       if(gl2ps->filename[i] == '.'){
         strncpy(name, gl2ps->filename, i);
         name[i] = '\0';
@@ -3411,7 +3413,7 @@ static void gl2psPutPDFText(GL2PSstring *text, int cnt, GLfloat x, GLfloat y)
        cnt, text->fontsize, x, y, text->str);
   }
   else{
-    rad = (GLfloat)M_PI * text->angle / 180.0F;
+    rad = (GLfloat)(M_PI * text->angle / 180.0F);
     srad = (GLfloat)sin(rad);
     crad = (GLfloat)cos(rad);
     gl2ps->streamlength += gl2psPrintf
@@ -4172,8 +4174,7 @@ static int gl2psPrintPDFGSObject(void)
 /* Put vertex' edge flag (8bit) and coordinates (32bit) in shader stream */
 
 static int gl2psPrintPDFShaderStreamDataCoord(GL2PSvertex *vertex,
-                                              size_t (*action)(unsigned long data,
-                                                               size_t size),
+                                              int (*action)(unsigned long data, int size),
                                               GLfloat dx, GLfloat dy,
                                               GLfloat xmin, GLfloat ymin)
 {
@@ -4219,8 +4220,7 @@ static int gl2psPrintPDFShaderStreamDataCoord(GL2PSvertex *vertex,
 /* Put vertex' rgb value (8bit for every component) in shader stream */
 
 static int gl2psPrintPDFShaderStreamDataRGB(GL2PSvertex *vertex,
-                                            size_t (*action)(unsigned long data,
-                                                             size_t size))
+                                            int (*action)(unsigned long data, int size))
 {
   int offs = 0;
   unsigned long imap;
@@ -4244,8 +4244,7 @@ static int gl2psPrintPDFShaderStreamDataRGB(GL2PSvertex *vertex,
 /* Put vertex' alpha (8/16bit) in shader stream */
 
 static int gl2psPrintPDFShaderStreamDataAlpha(GL2PSvertex *vertex,
-                                              size_t (*action)(unsigned long data,
-                                                               size_t size),
+                                              int (*action)(unsigned long data, int size),
                                               int sigbyte)
 {
   int offs = 0;
@@ -4272,8 +4271,7 @@ static int gl2psPrintPDFShaderStreamDataAlpha(GL2PSvertex *vertex,
 static int gl2psPrintPDFShaderStreamData(GL2PStriangle *triangle,
                                          GLfloat dx, GLfloat dy,
                                          GLfloat xmin, GLfloat ymin,
-                                         size_t (*action)(unsigned long data,
-                                                          size_t size),
+                                         int (*action)(unsigned long data, int size),
                                          int gray)
 {
   int i, offs = 0;
@@ -4491,8 +4489,7 @@ static int gl2psPrintPDFShaderSimpleExtGS(int obj, GLfloat alpha)
 /* Similar groups of functions for pixmaps and text */
 
 static int gl2psPrintPDFPixmapStreamData(GL2PSimage *im,
-                                         size_t (*action)(unsigned long data,
-                                                          size_t size),
+                                         int (*action)(unsigned long data, int size),
                                          int gray)
 {
   int x, y, shift;
