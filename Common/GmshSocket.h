@@ -73,6 +73,8 @@ class GmshSocket{
     GMSH_VERTEX_ARRAY    = 22,
     GMSH_PARAMETER       = 23,
     GMSH_PARAMETER_QUERY = 24,
+    GMSH_PARAM_QUERY_ALL = 25,
+    GMSH_PARAM_QUERY_END = 26,
     GMSH_SPEED_TEST      = 30,
     GMSH_OPTION_1        = 100,
     GMSH_OPTION_2        = 101,
@@ -391,7 +393,7 @@ class GmshServer : public GmshSocket{
 #if !defined(WIN32)
       cmd += " &";
 #endif
-      SystemCall(cmd.c_str()); // start the solver
+      SystemCall(cmd.c_str()); // starts the solver
     }
     else{
       timeout = 0.; // no command launched: don't set a timeout

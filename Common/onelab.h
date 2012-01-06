@@ -581,7 +581,7 @@ namespace onelab{
   // and interacts with onelab clients.
   class server{
   private:
-    // the unique server
+    // the unique server (singleton behaviour due to the "static" specifier)
     static server *_server;
     // the address of the server
     std::string _address;
@@ -610,6 +610,7 @@ namespace onelab{
     typedef std::map<std::string, client*>::iterator citer;
     citer firstClient(){ return _clients.begin(); }
     citer lastClient(){ return _clients.end(); }
+    int nbClients() { return _clients.size(); };
     citer findClient(const std::string &name){ return _clients.find(name); }
     void registerClient(client *c)
     {
@@ -712,7 +713,11 @@ namespace onelab{
       if(!_gmshClient) return false;
       T p(name);
       std::string msg = p.toChar();
-      _gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER_QUERY, msg.size(), &msg[0]);
+      if (name.size())
+	_gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER_QUERY, msg.size(), &msg[0]);
+      else //get all parameters
+	_gmshClient->SendMessage(GmshSocket::GMSH_PARAM_QUERY_ALL, msg.size(), &msg[0]);
+
       while(1){
         // stop if we have no communications for 10 secs
         int ret = _gmshClient->Select(10, 0);
@@ -740,8 +745,17 @@ namespace onelab{
           ps.push_back(p);
           return true;
         }
+        if(type == GmshSocket::GMSH_PARAM_QUERY_ALL){
+          T p;
+          p.fromChar(msg);
+          ps.push_back(p);
+          // do NOT return until all parameters have been downloaded
+        }
+        else if(type == GmshSocket::GMSH_PARAM_QUERY_END){
+          return true;
+        }
         else if(type == GmshSocket::GMSH_INFO){
-          // parameter not found
+          // parameter not found or all aparameters have been sent
           return true;
         }
         else{
