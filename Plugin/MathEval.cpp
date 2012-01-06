@@ -185,7 +185,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   int timeBeg = (timeStep < 0) ? firstNonEmptyStep : timeStep;
   int timeEnd = (timeStep < 0) ? -timeStep : timeStep + 1;
   for(int ent = 0; ent < data1->getNumEntities(timeBeg); ent++){
-    if (region>0 && ent!=region) continue;
+    if (region>0 && (ent+1)!=region) continue;
     for(int ele = 0; ele < data1->getNumElements(timeBeg, ent); ele++){
       if(data1->skipElement(timeBeg, ent, ele)) continue;
       int numNodes = data1->getNumNodes(timeBeg, ent, ele);
