@@ -186,6 +186,7 @@ bool onelab::localNetworkClient::run(const std::string &what)
       break;
     case GmshSocket::GMSH_PARAMETER_QUERY:
       {
+	std::cout << "FHF Message=" << message << std::endl;
         std::string version, type, name, reply;
         onelab::parameter::getInfoFromChar(message, version, type, name);
         if(type == "number"){
@@ -207,6 +208,33 @@ bool onelab::localNetworkClient::run(const std::string &what)
           reply = "Parameter '" + name + "' not found";
           server->SendMessage(GmshSocket::GMSH_INFO, reply.size(), &reply[0]);
         }
+      }
+      break;
+    case GmshSocket::GMSH_PARAM_QUERY_ALL:
+      {
+        std::string version, type, name, reply;
+        onelab::parameter::getInfoFromChar(message, version, type, name);
+	if(type == "number"){
+	  std::vector<onelab::number> numbers;
+	  get(numbers, "");
+	  for(std::vector<onelab::number>::iterator it = numbers.begin(); it != numbers.end(); it++){
+	    reply = (*it).toChar();
+	    server->SendMessage(GmshSocket::GMSH_PARAM_QUERY_ALL, reply.size(), &reply[0]);
+	  }
+	  server->SendMessage(GmshSocket::GMSH_PARAM_QUERY_END, reply.size(), &reply[0]);
+	}
+	else if(type == "string"){
+	  std::vector<onelab::string> strings;
+	  get(strings, "");
+	  for(std::vector<onelab::string>::iterator it = strings.begin(); it != strings.end(); it++){
+	    reply = (*it).toChar();
+	    server->SendMessage(GmshSocket::GMSH_PARAM_QUERY_ALL, reply.size(), &reply[0]);
+	  }
+	  reply = "ONELAB: Downloaded strings.";
+	  server->SendMessage(GmshSocket::GMSH_PARAM_QUERY_END, reply.size(), &reply[0]);
+	}
+        else
+          Msg::Fatal("FIXME query not done for this parameter type: %s", message.c_str());
       }
       break;
     case GmshSocket::GMSH_PROGRESS:
@@ -626,14 +654,21 @@ void onelab_cb(Fl_Widget *w, void *data)
         continue;
       std::string what = getModelName(c);
       if(action == "check"){
-        c->run(what);
+	if(c->getName() == "GetDP")
+	  c->run(what);
+	else
+	  c->run(what+" -a "); // option -a pour 'analyse only'
       }
       else if(action == "compute"){
-        // get command line from the server
-        std::vector<onelab::string> ps;
-        onelab::server::instance()->get(ps, c->getName() + "/9Compute");
-        if(ps.size()) what += " " + ps[0].getValue();
-        c->run(what);
+	if(c->getName() == "GetDP"){
+	  // get command line from the server
+	  std::vector<onelab::string> ps;
+	  onelab::server::instance()->get(ps, c->getName() + "/9Compute");
+	  if(ps.size()) what += " " + ps[0].getValue();
+	  c->run(what);
+	}
+	else
+	  c->run(what);
       }
       
       if(action == "compute")
