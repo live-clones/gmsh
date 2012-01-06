@@ -181,12 +181,11 @@ bool onelab::localNetworkClient::run(const std::string &what)
           set(p);
         }
         else
-          Msg::Error("FIXME not done for this parameter type");
+          Msg::Error("FIXME not done for this parameter type: %s", type.c_str());
       }
       break;
     case GmshSocket::GMSH_PARAMETER_QUERY:
       {
-	std::cout << "FHF Message=" << message << std::endl;
         std::string version, type, name, reply;
         onelab::parameter::getInfoFromChar(message, version, type, name);
         if(type == "number"){
@@ -216,25 +215,28 @@ bool onelab::localNetworkClient::run(const std::string &what)
         onelab::parameter::getInfoFromChar(message, version, type, name);
 	if(type == "number"){
 	  std::vector<onelab::number> numbers;
-	  get(numbers, "");
-	  for(std::vector<onelab::number>::iterator it = numbers.begin(); it != numbers.end(); it++){
+	  get(numbers);
+	  for(std::vector<onelab::number>::iterator it = numbers.begin(); 
+              it != numbers.end(); it++){
 	    reply = (*it).toChar();
 	    server->SendMessage(GmshSocket::GMSH_PARAM_QUERY_ALL, reply.size(), &reply[0]);
 	  }
+	  reply = "OneLab: sent all numbers";
 	  server->SendMessage(GmshSocket::GMSH_PARAM_QUERY_END, reply.size(), &reply[0]);
 	}
 	else if(type == "string"){
 	  std::vector<onelab::string> strings;
-	  get(strings, "");
-	  for(std::vector<onelab::string>::iterator it = strings.begin(); it != strings.end(); it++){
+	  get(strings);
+	  for(std::vector<onelab::string>::iterator it = strings.begin();
+              it != strings.end(); it++){
 	    reply = (*it).toChar();
 	    server->SendMessage(GmshSocket::GMSH_PARAM_QUERY_ALL, reply.size(), &reply[0]);
 	  }
-	  reply = "ONELAB: Downloaded strings.";
+	  reply = "OneLab: sent all strings";
 	  server->SendMessage(GmshSocket::GMSH_PARAM_QUERY_END, reply.size(), &reply[0]);
 	}
         else
-          Msg::Fatal("FIXME query not done for this parameter type: %s", message.c_str());
+          Msg::Error("FIXME query not done for this parameter type: %s", type.c_str());
       }
       break;
     case GmshSocket::GMSH_PROGRESS:
@@ -653,11 +655,15 @@ void onelab_cb(Fl_Widget *w, void *data)
          c->getName() == "GmshRemote") // distant post-processing Gmsh client
         continue;
       std::string what = getModelName(c);
+
+      // FIXME this should be uniformized (probably just be setting a onelab
+      // variable to "check" or "compute", and letting the client decide what to
+      // do)
       if(action == "check"){
 	if(c->getName() == "GetDP")
 	  c->run(what);
 	else
-	  c->run(what+" -a "); // option -a pour 'analyse only'
+	  c->run(what + " -a "); // '-a' for 'analyse only'
       }
       else if(action == "compute"){
 	if(c->getName() == "GetDP"){

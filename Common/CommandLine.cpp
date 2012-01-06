@@ -149,7 +149,6 @@ void GetOptions(int argc, char *argv[])
           Msg::InitializeOnelab("GmshOnelab", argv[i++]);
         else
           Msg::Fatal("Missing string");
-        //CTX::instance()->batch = -4;
       }
       else if(!strcmp(argv[i] + 1, "socket")) {
         i++;        

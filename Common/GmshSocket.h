@@ -393,7 +393,7 @@ class GmshServer : public GmshSocket{
 #if !defined(WIN32)
       cmd += " &";
 #endif
-      SystemCall(cmd.c_str()); // starts the solver
+      SystemCall(cmd.c_str()); // start the solver
     }
     else{
       timeout = 0.; // no command launched: don't set a timeout

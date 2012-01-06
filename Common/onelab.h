@@ -610,7 +610,7 @@ namespace onelab{
     typedef std::map<std::string, client*>::iterator citer;
     citer firstClient(){ return _clients.begin(); }
     citer lastClient(){ return _clients.end(); }
-    int nbClients() { return _clients.size(); };
+    int getNumClients() { return _clients.size(); };
     citer findClient(const std::string &name){ return _clients.find(name); }
     void registerClient(client *c)
     {
