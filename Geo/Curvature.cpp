@@ -1487,7 +1487,8 @@ void Curvature::writeToMshFile(const std::string &filename)
     lc = 2.0*M_PI/( fabs(_VertexCurve[vertex_iterator->second]) * CTX::instance()->mesh.minCircPoints );
     lc = std::max(lc, CTX::instance()->mesh.lcMin);
     lc = std::min(lc, CTX::instance()->mesh.lcMax);
-    outfile << vertex_iterator->first << " " << 1.0/(lc*lc) << std::endl;
+    //outfile << vertex_iterator->first << " " << 1.0/(lc*lc) << std::endl;
+    outfile << vertex_iterator->first << " " << lc << std::endl;
   }
 
   outfile << "$EndNodeData" << std::endl;
@@ -1724,7 +1725,8 @@ void Curvature::writeToVtkFile( const std::string & filename)
     lc = 2.0*M_PI / ( fabs(_VertexCurve[iv]) * CTX::instance()->mesh.minCircPoints );
     lc = std::max(lc, CTX::instance()->mesh.lcMin);
     lc = std::min(lc, CTX::instance()->mesh.lcMax);
-    outfile << 1.0/(lc*lc) << std::endl;
+    //outfile << 1.0/(lc*lc) << std::endl;
+    outfile << lc << std::endl;
   }
 
   outfile << "VECTORS CurvatureDir1 float" << std::endl;
