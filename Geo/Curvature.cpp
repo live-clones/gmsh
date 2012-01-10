@@ -1211,9 +1211,9 @@ void Curvature::computeCurvature_Rusinkiewicz(int isMax)
       _VertexCurve[ivertex] = std::max(fabs(_curv1[ivertex]), fabs(_curv2[ivertex]));
     }
     else{
-      _VertexCurve[ivertex] = (_curv1[ivertex]+_curv2[ivertex])*0.5; //Mean curvature
+    //  _VertexCurve[ivertex] = (_curv1[ivertex]+_curv2[ivertex])*0.5; //Mean curvature
     //_VertexCurve[ivertex] = std::abs(_curv1[ivertex]) + std::abs(_curv2[ivertex]);
-    //_VertexCurve[ivertex] = std::abs( _curv1[ivertex]*_curv2[ivertex] ); //Gaussian
+    _VertexCurve[ivertex] = _curv1[ivertex]*_curv2[ivertex]; //Gaussian
     //_VertexCurve[ivertex] = std::abs(_VertexCurve[ivertex]);
     }
 
@@ -1465,6 +1465,33 @@ void Curvature::writeToMshFile(const std::string &filename)
   outfile << "$EndNodeData" << std::endl;
 
 
+  /// Write the values of characteristic length
+
+  double lc;
+
+  outfile << "$MeshFormat"    << std::endl;
+  outfile << "2.1 0 8"        << std::endl;
+  outfile << "$EndMeshFormat" << std::endl;
+  outfile << "$NodeData" << std::endl;
+  outfile << "1" << std::endl;                 // One string tag
+  outfile << "\"Characteristic mesh length\"" << std::endl;     // The name of the view
+  outfile << "1"             << std::endl;     // One real tag
+  outfile << "0.0"           << std::endl;     // The time value
+  outfile << "3"             << std::endl;     // Three integer tags
+  outfile << "0"             << std::endl;     // The time step (time steps always start at 0)
+  outfile << "1"             << std::endl;     // 1-component (scalar) field
+  outfile << _VertexToInt.size() << std::endl; // How many associated nodal values
+
+  for(vertex_iterator = _VertexToInt.begin(); vertex_iterator != _VertexToInt.end(); ++vertex_iterator)
+  {
+    lc = 2.0*M_PI/( fabs(_VertexCurve[vertex_iterator->second]) * CTX::instance()->mesh.minCircPoints );
+    lc = std::max(lc, CTX::instance()->mesh.lcMin);
+    lc = std::min(lc, CTX::instance()->mesh.lcMax);
+    outfile << vertex_iterator->first << " " << 1.0/(lc*lc) << std::endl;
+  }
+
+  outfile << "$EndNodeData" << std::endl;
+
   /// Write the values of curvature direction - principal direction 1
   outfile << "$NodeData" << std::endl;
   outfile << "1" << std::endl;                 // One string tag
@@ -1679,7 +1706,7 @@ void Curvature::writeToVtkFile( const std::string & filename)
   /// Write the curvature values as vtk 'point data'
 
   outfile << std::endl << "POINT_DATA " << npoints << std::endl;
-  outfile << "SCALARS curvature float 1" << std::endl;
+  outfile << "SCALARS Curvature float 1" << std::endl;
   outfile << "LOOKUP_TABLE default" << std::endl;
 
   for (int iv = 0; iv < npoints; ++iv)
@@ -1687,8 +1714,32 @@ void Curvature::writeToVtkFile( const std::string & filename)
     outfile << _VertexCurve[iv] << std::endl;
   }
 
-  outfile.close();
+  outfile << "SCALARS CharacteristicMeshLength float 1" << std::endl;
+  outfile << "LOOKUP_TABLE default" << std::endl;
 
+  double lc;
+
+  for (int iv = 0; iv < npoints; ++iv)
+  {
+    lc = 2.0*M_PI / ( fabs(_VertexCurve[iv]) * CTX::instance()->mesh.minCircPoints );
+    lc = std::max(lc, CTX::instance()->mesh.lcMin);
+    lc = std::min(lc, CTX::instance()->mesh.lcMax);
+    outfile << 1.0/(lc*lc) << std::endl;
+  }
+
+  outfile << "VECTORS CurvatureDir1 float" << std::endl;
+  for (int iv = 0; iv < npoints; ++iv)
+  {
+    outfile << _pdir1[iv].x() << " " << _pdir1[iv].y() << " " << _pdir1[iv].z() << std::endl;
+  }
+
+  outfile << "VECTORS CurvatureDir2 float" << std::endl;
+  for (int iv = 0; iv < npoints; ++iv)
+  {
+    outfile << _pdir2[iv].x() << " " << _pdir2[iv].y() << " " << _pdir2[iv].z() << std::endl;
+  }
+
+  outfile.close();
 
 }
 
