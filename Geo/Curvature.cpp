@@ -1211,9 +1211,9 @@ void Curvature::computeCurvature_Rusinkiewicz(int isMax)
       _VertexCurve[ivertex] = std::max(fabs(_curv1[ivertex]), fabs(_curv2[ivertex]));
     }
     else{
-    //  _VertexCurve[ivertex] = (_curv1[ivertex]+_curv2[ivertex])*0.5; //Mean curvature
+     _VertexCurve[ivertex] = (_curv1[ivertex]+_curv2[ivertex])*0.5; //Mean curvature
     //_VertexCurve[ivertex] = std::abs(_curv1[ivertex]) + std::abs(_curv2[ivertex]);
-    _VertexCurve[ivertex] = _curv1[ivertex]*_curv2[ivertex]; //Gaussian
+    //_VertexCurve[ivertex] = _curv1[ivertex]*_curv2[ivertex]; //Gaussian
     //_VertexCurve[ivertex] = std::abs(_VertexCurve[ivertex]);
     }
 
