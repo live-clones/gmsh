@@ -181,7 +181,7 @@ bool onelab::localNetworkClient::run(const std::string &what)
           set(p);
         }
         else
-          Msg::Error("FIXME not done for this parameter type: %s", type.c_str());
+          Msg::Error("FIXME not done for this parameter types: %s", type.c_str());
       }
       break;
     case GmshSocket::GMSH_PARAMETER_QUERY:
@@ -199,7 +199,7 @@ bool onelab::localNetworkClient::run(const std::string &what)
           if(par.size() == 1) reply = par[0].toChar();
         }
         else
-          Msg::Error("FIXME query not done for this parameter type");
+          Msg::Fatal("FIXME query not done for this parameter type");
         if(reply.size()){
           server->SendMessage(GmshSocket::GMSH_PARAMETER, reply.size(), &reply[0]);
         }
@@ -660,7 +660,7 @@ void onelab_cb(Fl_Widget *w, void *data)
       // variable to "check" or "compute", and letting the client decide what to
       // do)
       if(action == "check"){
-	if(c->getName() == "GetDP")
+	if(c->getName() == "GetDP") // client name as defined in getdp/Common/Message.cpp::InitializeOnelab()
 	  c->run(what);
 	else
 	  c->run(what + " -a "); // '-a' for 'analyse only'
