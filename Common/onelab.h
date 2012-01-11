@@ -495,6 +495,9 @@ namespace onelab{
     bool get(std::vector<function> &ps, const std::string &name="",
              const std::string &client=""){ return _get(ps, name, client, _functions); }
     // check if at least one parameter depends on the given client
+    int NumParam(){
+      return _numbers.size() + _strings.size() + _regions.size() + _functions.size();
+    }
     bool hasClient(const std::string &client) const
     {
       std::set<parameter*> ps;
@@ -629,7 +632,8 @@ namespace onelab{
     std::string toChar(const std::string &client="")
     {
       return _parameterSpace.toChar(client); 
-    }
+    }    
+    int NumParam(){ return _parameterSpace.NumParam();}
   };
     
   class localClient : public client{
