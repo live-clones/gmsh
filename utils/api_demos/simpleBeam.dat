@@ -1,0 +1,5 @@
+ElasticDomain 7 100.e9 0.3
+EdgeDisplacement 8 0 0
+EdgeDisplacement 8 1 0
+EdgeDisplacement 8 2 0
+EdgeForce 9 100e6 0 0
