@@ -321,7 +321,7 @@ void status_options_cb(Fl_Widget *w, void *data)
 
 static int stop_anim = 0, view_in_cycle = -1;
 
-void status_play_manual(int time, int incr)
+void status_play_manual(int time, int incr, bool redraw)
 {
   // avoid firing this routine recursively (can happen e.g when
   // keeping the finger down on the arrow key: if the system generates
@@ -371,7 +371,7 @@ void status_play_manual(int time, int incr)
         opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
     }
   }
-  drawContext::global()->draw();
+  if(redraw) drawContext::global()->draw();
   busy = false;
 }
 

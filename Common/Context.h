@@ -219,13 +219,13 @@ class CTX {
   }solver;
   // print options 
   struct{
-    int fileFormat, epsQuality, epsBackground, epsCompress, epsPS3Shading;
+    int fileFormat, epsQuality, epsCompress, epsPS3Shading;
     int epsOcclusionCulling, epsBestRoot;
     double epsLineWidthFactor, epsPointSizeFactor;
     int jpegQuality, jpegSmoothing, geoLabels, text, texAsEquation;
     int gifDither, gifSort, gifInterlace, gifTransparent;
     int posElementary, posElement, posGamma, posEta, posRho, posDisto;
-    int compositeWindows, deleteTmpFiles;
+    int compositeWindows, deleteTmpFiles, background;
   } print;
   // color options
   struct{

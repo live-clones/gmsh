@@ -158,7 +158,7 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
 }
 #endif
 
-void CreateOutputFile(std::string fileName, int format)
+void CreateOutputFile(std::string fileName, int format, bool redraw)
 {
   if(fileName.empty())
     fileName = GetDefaultFileName(format);
@@ -166,17 +166,15 @@ void CreateOutputFile(std::string fileName, int format)
   int oldFormat = CTX::instance()->print.fileFormat;
   CTX::instance()->print.fileFormat = format;
   CTX::instance()->printing = 1;
+  bool error = false;
 
-  if(format != FORMAT_AUTO) 
+  if(redraw) 
     Msg::StatusBar(2, true, "Writing '%s'...", fileName.c_str());
-
-  bool printEndMessage = true;
 
   switch (format) {
 
   case FORMAT_AUTO:
-    CreateOutputFile(fileName, GuessFileFormatFromFileName(fileName));
-    printEndMessage = false;
+    CreateOutputFile(fileName, GuessFileFormatFromFileName(fileName), false);
     break;
     
   case FORMAT_OPT:
@@ -310,16 +308,11 @@ void CreateOutputFile(std::string fileName, int format)
       FILE *fp = fopen(fileName.c_str(), "wb");
       if(!fp){
         Msg::Error("Unable to open file '%s'", fileName.c_str());
+        error = true;
         break;
       }
 
-      int oldGradient = CTX::instance()->bgGradient;
-      if(format == FORMAT_GIF && CTX::instance()->print.gifTransparent)
-        CTX::instance()->bgGradient = 0;
-
       PixelBuffer *buffer = GetCompositePixelBuffer(GL_RGB, GL_UNSIGNED_BYTE);
-
-      CTX::instance()->bgGradient = oldGradient;
 
       if(format == FORMAT_PPM)
         create_ppm(fp, buffer);
@@ -330,10 +323,7 @@ void CreateOutputFile(std::string fileName, int format)
                    CTX::instance()->print.gifDither,
                    CTX::instance()->print.gifSort,
                    CTX::instance()->print.gifInterlace,
-                   CTX::instance()->print.gifTransparent,
-                   CTX::instance()->unpackRed(CTX::instance()->color.bg),
-                   CTX::instance()->unpackGreen(CTX::instance()->color.bg), 
-                   CTX::instance()->unpackBlue(CTX::instance()->color.bg));
+                   CTX::instance()->print.gifTransparent);
       else if(format == FORMAT_JPEG)
         create_jpeg(fp, buffer, CTX::instance()->print.jpegQuality, 
                     CTX::instance()->print.jpegSmoothing);
@@ -355,6 +345,7 @@ void CreateOutputFile(std::string fileName, int format)
       FILE *fp = fopen(fileName.c_str(), "wb");
       if(!fp){
         Msg::Error("Unable to open file '%s'", fileName.c_str());
+        error = true;
         break;
       }
       std::string base = SplitFileName(fileName)[1];
@@ -362,9 +353,6 @@ void CreateOutputFile(std::string fileName, int format)
       GLint height = FlGui::instance()->getCurrentOpenglWindow()->h();
       GLint viewport[4] = {0, 0, width, height};
 
-      int oldGradient = CTX::instance()->bgGradient;
-      if(!CTX::instance()->print.epsBackground) CTX::instance()->bgGradient = 0;
-      
       PixelBuffer buffer(width, height, GL_RGB, GL_FLOAT);
       
       if(CTX::instance()->print.epsQuality == 0)
@@ -383,7 +371,7 @@ void CreateOutputFile(std::string fileName, int format)
         GL2PS_SIMPLE_LINE_OFFSET | GL2PS_SILENT |
         (CTX::instance()->print.epsOcclusionCulling ? GL2PS_OCCLUSION_CULL : 0) |
         (CTX::instance()->print.epsBestRoot ? GL2PS_BEST_ROOT : 0) |
-        (CTX::instance()->print.epsBackground ? GL2PS_DRAW_BACKGROUND : 0) |
+        (CTX::instance()->print.background ? GL2PS_DRAW_BACKGROUND : 0) |
         (CTX::instance()->print.epsCompress ? GL2PS_COMPRESS : 0) |
         (CTX::instance()->print.epsPS3Shading ? 0 : GL2PS_NO_PS3_SHADING);
 
@@ -417,7 +405,6 @@ void CreateOutputFile(std::string fileName, int format)
         res = gl2psEndPage();
       }
 
-      CTX::instance()->bgGradient = oldGradient;
       fclose(fp);
     }
     break;
@@ -429,6 +416,7 @@ void CreateOutputFile(std::string fileName, int format)
       FILE *fp = fopen(fileName.c_str(), "w");
       if(!fp){
         Msg::Error("Unable to open file '%s'", fileName.c_str());
+        error = true;
         break;
       }
       std::string base = SplitFileName(fileName)[1];
@@ -460,6 +448,7 @@ void CreateOutputFile(std::string fileName, int format)
       FILE *fp = fopen(parFileName.c_str(), "w");
       if(!fp){
         Msg::Error("Unable to open file '%s'", parFileName.c_str());
+        error = true;
         break;
       }
       int numViews = (int)opt_post_nb_views(0, GMSH_GET, 0), numSteps = 0;
@@ -475,10 +464,11 @@ void CreateOutputFile(std::string fileName, int format)
         sprintf(tmp, ".gmsh-%06d.ppm", (int)frames.size());
         frames.push_back(tmp);
       }
-      status_play_manual(!CTX::instance()->post.animCycle, 0);
+      status_play_manual(!CTX::instance()->post.animCycle, 0, false);
       for(unsigned int i = 0; i < frames.size(); i++){
-        CreateOutputFile(CTX::instance()->homeDir + frames[i], FORMAT_PPM);
-        status_play_manual(!CTX::instance()->post.animCycle, CTX::instance()->post.animStep);
+        CreateOutputFile(CTX::instance()->homeDir + frames[i], FORMAT_PPM, false);
+        status_play_manual(!CTX::instance()->post.animCycle, 
+                           CTX::instance()->post.animStep, false);
       }
       int repeat = (int)(CTX::instance()->post.animDelay * 24);
       if(repeat < 1) repeat = 1;
@@ -505,8 +495,9 @@ void CreateOutputFile(std::string fileName, int format)
       try{
         mpeg_encode_main(2, args);
       }
-      catch (const char *error){
-        Msg::Error("mpeg_encode: %s", error);
+      catch (const char *msg){
+        Msg::Error("%s", msg);
+        error = true;
       }
       if(opt_print_delete_tmp_files(0, GMSH_GET, 0)){
         UnlinkFile(parFileName);
@@ -520,17 +511,18 @@ void CreateOutputFile(std::string fileName, int format)
 #endif
 
   default:
-    Msg::Error("Unknown output file format %d", format);
-    printEndMessage = false;
+    Msg::Error("Unknown output file format");
+    error = true;
     break;
   }
-
-  if(printEndMessage) Msg::StatusBar(2, true, "Done writing '%s'", fileName.c_str());
 
   CTX::instance()->print.fileFormat = oldFormat;
   CTX::instance()->printing = 0;
 
+  if(redraw && !error)
+    Msg::StatusBar(2, true, "Done writing '%s'", fileName.c_str());
+  
 #if defined(HAVE_OPENGL)
-  drawContext::global()->draw();
+  if(redraw) drawContext::global()->draw();
 #endif
 }

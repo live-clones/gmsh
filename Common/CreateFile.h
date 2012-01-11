@@ -10,6 +10,6 @@
 
 int GuessFileFormatFromFileName(std::string fileName);
 std::string GetDefaultFileName(int format);
-void CreateOutputFile(std::string fileName, int format);
+void CreateOutputFile(std::string fileName, int format, bool redraw=true);
 
 #endif

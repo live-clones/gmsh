@@ -496,8 +496,9 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
 		    (GLdouble)wpick, (GLdouble)hpick, (GLint *)viewport);
 
     // draw background if not in selection mode
-    if(render_mode != GMSH_SELECT && (CTX::instance()->bgGradient || 
-				      CTX::instance()->bgImageFileName.size())){
+    if(render_mode != GMSH_SELECT && 
+       (CTX::instance()->bgGradient || CTX::instance()->bgImageFileName.size()) &&
+       (!CTX::instance()->printing || CTX::instance()->print.background)){
       glDisable(GL_DEPTH_TEST);
       glPushMatrix();
       glLoadIdentity();

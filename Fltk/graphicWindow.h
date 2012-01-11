@@ -47,7 +47,7 @@ class graphicWindow{
 
 void status_xyz1p_cb(Fl_Widget *w, void *data);
 void status_options_cb(Fl_Widget *w, void *data);
-void status_play_manual(int time, int incr);
+void status_play_manual(int time, int incr, bool redraw=true);
 void message_cb(Fl_Widget *w, void *data);
 
 #endif

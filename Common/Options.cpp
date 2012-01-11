@@ -7746,13 +7746,6 @@ double opt_print_eps_best_root(OPT_ARGS_NUM)
   return CTX::instance()->print.epsBestRoot;
 }
 
-double opt_print_eps_background(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->print.epsBackground = (int)val;
-  return CTX::instance()->print.epsBackground;
-}
-
 double opt_print_eps_line_width_factor(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -7856,6 +7849,13 @@ double opt_print_gif_transparent(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->print.gifTransparent = (int)val;
   return CTX::instance()->print.gifTransparent;
+}
+
+double opt_print_background(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.background = (int)val;
+  return CTX::instance()->print.background;
 }
 
 double opt_print_text(OPT_ARGS_NUM)

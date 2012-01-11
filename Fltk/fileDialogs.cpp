@@ -183,14 +183,14 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
 {
   struct _genericBitmapFileDialog{
     Fl_Window *window;
-    Fl_Check_Button *b[2];
+    Fl_Check_Button *b[3];
     Fl_Button *ok, *cancel;
   };
   static _genericBitmapFileDialog *dialog = NULL;
 
   if(!dialog){
     dialog = new _genericBitmapFileDialog;
-    int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 4 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
@@ -198,8 +198,11 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
       (WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
     dialog->b[0]->type(FL_TOGGLE_BUTTON);
     dialog->b[1] = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Composite all window tiles"); y += BH;
+      (WB, y, 2 * BB + WB, BH, "Print background"); y += BH;
     dialog->b[1]->type(FL_TOGGLE_BUTTON);
+    dialog->b[2] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Composite all window tiles"); y += BH;
+    dialog->b[2]->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->end();
@@ -208,7 +211,8 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
   
   dialog->window->label(title);
   dialog->b[0]->value(CTX::instance()->print.text);
-  dialog->b[1]->value(CTX::instance()->print.compositeWindows);
+  dialog->b[1]->value(CTX::instance()->print.background);
+  dialog->b[2]->value(CTX::instance()->print.compositeWindows);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -218,7 +222,8 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
       if (!o) break;
       if (o == dialog->ok) {
         opt_print_text(0, GMSH_SET | GMSH_GUI, (int)dialog->b[0]->value());
-        opt_print_composite_windows(0, GMSH_SET | GMSH_GUI, (int)dialog->b[1]->value());
+        opt_print_background(0, GMSH_SET | GMSH_GUI, (int)dialog->b[1]->value());
+        opt_print_composite_windows(0, GMSH_SET | GMSH_GUI, (int)dialog->b[2]->value());
         CreateOutputFile(name, format);
         dialog->window->hide();
         return 1;
@@ -288,14 +293,14 @@ int jpegFileDialog(const char *name)
   struct _jpegFileDialog{
     Fl_Window *window;
     Fl_Value_Slider *s[2];
-    Fl_Check_Button *b[2];
+    Fl_Check_Button *b[3];
     Fl_Button *ok, *cancel;
   };
   static _jpegFileDialog *dialog = NULL;
 
   if(!dialog){
     dialog = new _jpegFileDialog;
-    int h = 3 * WB + 5 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 6 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "JPEG Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
@@ -315,8 +320,11 @@ int jpegFileDialog(const char *name)
       (WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
     dialog->b[0]->type(FL_TOGGLE_BUTTON);
     dialog->b[1] = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Composite all window tiles"); y += BH;
+      (WB, y, 2 * BB + WB, BH, "Print background"); y += BH;
     dialog->b[1]->type(FL_TOGGLE_BUTTON);
+    dialog->b[2] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Composite all window tiles"); y += BH;
+    dialog->b[2]->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->end();
@@ -326,7 +334,8 @@ int jpegFileDialog(const char *name)
   dialog->s[0]->value(CTX::instance()->print.jpegQuality);
   dialog->s[1]->value(CTX::instance()->print.jpegSmoothing);
   dialog->b[0]->value(CTX::instance()->print.text);
-  dialog->b[1]->value(CTX::instance()->print.compositeWindows);
+  dialog->b[1]->value(CTX::instance()->print.background);
+  dialog->b[2]->value(CTX::instance()->print.compositeWindows);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -338,7 +347,8 @@ int jpegFileDialog(const char *name)
         opt_print_jpeg_quality(0, GMSH_SET | GMSH_GUI, (int)dialog->s[0]->value());
         opt_print_jpeg_smoothing(0, GMSH_SET | GMSH_GUI, (int)dialog->s[1]->value());
         opt_print_text(0, GMSH_SET | GMSH_GUI, (int)dialog->b[0]->value());
-        opt_print_composite_windows(0, GMSH_SET | GMSH_GUI, (int)dialog->b[1]->value());
+        opt_print_background(0, GMSH_SET | GMSH_GUI, (int)dialog->b[1]->value());
+        opt_print_composite_windows(0, GMSH_SET | GMSH_GUI, (int)dialog->b[2]->value());
         CreateOutputFile(name, FORMAT_JPEG);
         dialog->window->hide();
         return 1;
@@ -359,7 +369,7 @@ int mpegFileDialog(const char *name)
   struct _mpegFileDialog{
     Fl_Window *window;
     Fl_Round_Button *b[2];
-    Fl_Check_Button *c[2];
+    Fl_Check_Button *c[3];
     Fl_Value_Input *v[2];
     Fl_Button *ok, *cancel;
   };
@@ -367,7 +377,7 @@ int mpegFileDialog(const char *name)
 
   if(!dialog){
     dialog = new _mpegFileDialog;
-    int h = 3 * WB + 7 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 8 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "MPEG Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
@@ -397,12 +407,16 @@ int mpegFileDialog(const char *name)
     dialog->v[1]->align(FL_ALIGN_RIGHT);
     
     dialog->c[0] = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Composite all window tiles"); y += BH;
+      (WB, y, 2 * BB + WB, BH, "Print background"); y += BH;
     dialog->c[0]->type(FL_TOGGLE_BUTTON);
 
     dialog->c[1] = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Delete temporary files"); y += BH;
+      (WB, y, 2 * BB + WB, BH, "Composite all window tiles"); y += BH;
     dialog->c[1]->type(FL_TOGGLE_BUTTON);
+
+    dialog->c[2] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Delete temporary files"); y += BH;
+    dialog->c[2]->type(FL_TOGGLE_BUTTON);
 
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
@@ -414,8 +428,9 @@ int mpegFileDialog(const char *name)
   dialog->b[1]->value(CTX::instance()->post.animCycle);
   dialog->v[0]->value(CTX::instance()->post.animDelay);
   dialog->v[1]->value(CTX::instance()->post.animStep);
-  dialog->c[0]->value(CTX::instance()->print.compositeWindows);
-  dialog->c[1]->value(CTX::instance()->print.deleteTmpFiles);
+  dialog->c[0]->value(CTX::instance()->print.background);
+  dialog->c[1]->value(CTX::instance()->print.compositeWindows);
+  dialog->c[2]->value(CTX::instance()->print.deleteTmpFiles);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -427,8 +442,9 @@ int mpegFileDialog(const char *name)
         opt_post_anim_cycle(0, GMSH_SET | GMSH_GUI, (int)dialog->b[1]->value());
         opt_post_anim_delay(0, GMSH_SET | GMSH_GUI, dialog->v[0]->value());
         opt_post_anim_step(0, GMSH_SET | GMSH_GUI, (int)dialog->v[1]->value());
-        opt_print_composite_windows(0, GMSH_SET | GMSH_GUI, (int)dialog->c[0]->value());
-        opt_print_delete_tmp_files(0, GMSH_SET | GMSH_GUI, (int)dialog->c[1]->value());
+        opt_print_background(0, GMSH_SET | GMSH_GUI, (int)dialog->c[0]->value());
+        opt_print_composite_windows(0, GMSH_SET | GMSH_GUI, (int)dialog->c[1]->value());
+        opt_print_delete_tmp_files(0, GMSH_SET | GMSH_GUI, (int)dialog->c[2]->value());
         CreateOutputFile(name, FORMAT_MPEG);
         dialog->window->hide();
         return 1;
@@ -448,14 +464,14 @@ int gifFileDialog(const char *name)
 {
   struct _gifFileDialog{
     Fl_Window *window;
-    Fl_Check_Button *b[6];
+    Fl_Check_Button *b[7];
     Fl_Button *ok, *cancel;
   };
   static _gifFileDialog *dialog = NULL;
 
   if(!dialog){
     dialog = new _gifFileDialog;
-    int h = 3 * WB + 7 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 8 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "GIF Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
@@ -470,8 +486,10 @@ int gifFileDialog(const char *name)
     dialog->b[4] = new Fl_Check_Button
       (WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
     dialog->b[5] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Print background"); y += BH;
+    dialog->b[6] = new Fl_Check_Button
       (WB, y, 2 * BB + WB, BH, "Composite all window tiles"); y += BH;
-    for(int i = 0; i < 6; i++){
+    for(int i = 0; i < 7; i++){
       dialog->b[i]->type(FL_TOGGLE_BUTTON);
     }
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
@@ -485,7 +503,8 @@ int gifFileDialog(const char *name)
   dialog->b[2]->value(CTX::instance()->print.gifSort);
   dialog->b[3]->value(CTX::instance()->print.gifTransparent);
   dialog->b[4]->value(CTX::instance()->print.text);
-  dialog->b[5]->value(CTX::instance()->print.compositeWindows);
+  dialog->b[5]->value(CTX::instance()->print.background);
+  dialog->b[6]->value(CTX::instance()->print.compositeWindows);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -499,7 +518,8 @@ int gifFileDialog(const char *name)
         opt_print_gif_sort(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value());
         opt_print_gif_transparent(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value());
         opt_print_text(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value());
-        opt_print_composite_windows(0, GMSH_SET | GMSH_GUI, dialog->b[5]->value());
+        opt_print_background(0, GMSH_SET | GMSH_GUI, dialog->b[5]->value());
+        opt_print_composite_windows(0, GMSH_SET | GMSH_GUI, dialog->b[6]->value());
         CreateOutputFile(name, FORMAT_GIF);
         dialog->window->hide();
         return 1;
@@ -581,15 +601,15 @@ int gl2psFileDialog(const char *name, const char *title, int format)
     dialog->b[0] = new Fl_Check_Button
       (WB, y, 2 * BB + WB, BH, "Compress"); y += BH;
     dialog->b[1] = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Print background"); y += BH;
-    dialog->b[2] = new Fl_Check_Button
       (WB, y, 2 * BB + WB, BH, "Remove hidden primitives"); y += BH;
-    dialog->b[3] = new Fl_Check_Button
+    dialog->b[2] = new Fl_Check_Button
       (WB, y, 2 * BB + WB, BH, "Optimize BSP tree"); y += BH;
-    dialog->b[4] = new Fl_Check_Button
+    dialog->b[3] = new Fl_Check_Button
       (WB, y, 2 * BB + WB, BH, "Use level 3 shading"); y += BH;
-    dialog->b[5] = new Fl_Check_Button
+    dialog->b[4] = new Fl_Check_Button
       (WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
+    dialog->b[5] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Print background"); y += BH;
     for(int i = 0; i < 6; i++){
       dialog->b[i]->type(FL_TOGGLE_BUTTON);
     }
@@ -602,11 +622,11 @@ int gl2psFileDialog(const char *name, const char *title, int format)
   dialog->window->label(title);
   dialog->c->value(CTX::instance()->print.epsQuality);
   dialog->b[0]->value(CTX::instance()->print.epsCompress);
-  dialog->b[1]->value(CTX::instance()->print.epsBackground);
-  dialog->b[2]->value(CTX::instance()->print.epsOcclusionCulling);
-  dialog->b[3]->value(CTX::instance()->print.epsBestRoot);
-  dialog->b[4]->value(CTX::instance()->print.epsPS3Shading);
-  dialog->b[5]->value(CTX::instance()->print.text);
+  dialog->b[1]->value(CTX::instance()->print.epsOcclusionCulling);
+  dialog->b[2]->value(CTX::instance()->print.epsBestRoot);
+  dialog->b[3]->value(CTX::instance()->print.epsPS3Shading);
+  dialog->b[4]->value(CTX::instance()->print.text);
+  dialog->b[5]->value(CTX::instance()->print.background);
 
   activate_gl2ps_choices(format, CTX::instance()->print.epsQuality, dialog->b);
 
@@ -624,11 +644,11 @@ int gl2psFileDialog(const char *name, const char *title, int format)
       if (o == dialog->ok) {
         opt_print_eps_quality(0, GMSH_SET | GMSH_GUI, dialog->c->value());
         opt_print_eps_compress(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value());
-        opt_print_eps_background(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value());
-        opt_print_eps_occlusion_culling(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value());
-        opt_print_eps_best_root(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value());
-        opt_print_eps_ps3shading(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value());
-        opt_print_text(0, GMSH_SET | GMSH_GUI, dialog->b[5]->value());
+        opt_print_eps_occlusion_culling(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value());
+        opt_print_eps_best_root(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value());
+        opt_print_eps_ps3shading(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value());
+        opt_print_text(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value());
+        opt_print_background(0, GMSH_SET | GMSH_GUI, dialog->b[5]->value());
         CreateOutputFile(name, format);
         dialog->window->hide();
         return 1;

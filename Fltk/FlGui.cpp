@@ -194,6 +194,12 @@ FlGui::FlGui(int argc, char **argv) : _openedThroughMacFinder(false)
   if(CTX::instance()->display.size())
     Fl::display(CTX::instance()->display.c_str());
 
+#if 0 // dark scheme... not bad, but needs work
+  Fl::background(60, 60, 60);
+  Fl::background2(120, 120, 120);
+  Fl::foreground(200, 200, 200);
+#endif
+
   // add global shortcuts
   Fl::add_handler(globalShortcut);
 

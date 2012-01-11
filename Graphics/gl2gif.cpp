@@ -1147,7 +1147,7 @@ static void GIFEncode(FILE * fp,
 
 void create_gif(FILE * outfile, PixelBuffer *buffer,
                 int dither, int sort, int interlace,
-                int transparency, int bg_r, int bg_g, int bg_b)
+                int transparency)
 {
 
   int i, j, k, transparent, rows, cols;
@@ -1438,9 +1438,9 @@ void create_gif(FILE * outfile, PixelBuffer *buffer,
   static_cht = ppm_colorhisttocolorhash(chv, static_nbcolors);
   ppm_freecolorhist(chv);
 
-  /* figure out the transparent colour index */
+  /* figure out the transparent colour index, assuming the background is white */
   if(transparency) {
-    PPM_ASSIGN(transcolor, bg_r, bg_g, bg_b);
+    PPM_ASSIGN(transcolor, 255, 255, 255);
     transparent = ppm_lookupcolor(static_cht, &transcolor);
     if(transparent == -1)
       transparent = closestcolor(transcolor);

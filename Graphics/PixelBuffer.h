@@ -96,6 +96,8 @@ class PixelBuffer{
   void fill(int offscreen)
   {
     if(!offscreen){
+      // workaround double buffering issues by redrawing twice
+      drawContext::global()->drawCurrentOpenglWindow(true);
       drawContext::global()->drawCurrentOpenglWindow(true);
       glFinish();
       glPixelStorei(GL_PACK_ALIGNMENT, 1);
