@@ -5153,6 +5153,7 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
   if(FlGui::available() && (action & GMSH_GUI)){
     FlGui::instance()->options->mesh.choice[4]->value
       (CTX::instance()->mesh.colorCarousel);
+    drawContext::global()->resetFontTextures();
   }
 #endif
   return CTX::instance()->mesh.colorCarousel;
@@ -7943,6 +7944,7 @@ unsigned int opt_general_color_text(OPT_ARGS_COL)
     CTX::instance()->color.text = val;
 #if defined(HAVE_FLTK)
   CCC(CTX::instance()->color.text, FlGui::instance()->options->general.color[3]);
+  drawContext::global()->resetFontTextures();
 #endif
   return CTX::instance()->color.text;
 }
@@ -7953,6 +7955,7 @@ unsigned int opt_general_color_axes(OPT_ARGS_COL)
     CTX::instance()->color.axes = val;
 #if defined(HAVE_FLTK)
   CCC(CTX::instance()->color.axes, FlGui::instance()->options->general.color[4]);
+  drawContext::global()->resetFontTextures();
 #endif
   return CTX::instance()->color.axes;
 }
@@ -7963,6 +7966,7 @@ unsigned int opt_general_color_small_axes(OPT_ARGS_COL)
     CTX::instance()->color.smallAxes = val;
 #if defined(HAVE_FLTK)
   CCC(CTX::instance()->color.smallAxes, FlGui::instance()->options->general.color[5]);
+  drawContext::global()->resetFontTextures();
 #endif
   return CTX::instance()->color.smallAxes;
 }
@@ -8507,6 +8511,7 @@ unsigned int opt_view_color_text2d(OPT_ARGS_COL)
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
     CCC(opt->color.text2d, FlGui::instance()->options->view.color[10]);
+    drawContext::global()->resetFontTextures();
   }
 #endif
   return opt->color.text2d;
@@ -8525,6 +8530,7 @@ unsigned int opt_view_color_text3d(OPT_ARGS_COL)
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
     CCC(opt->color.text3d, FlGui::instance()->options->view.color[11]);
+    drawContext::global()->resetFontTextures();
   }
 #endif
   return opt->color.text3d;
@@ -8543,6 +8549,7 @@ unsigned int opt_view_color_axes(OPT_ARGS_COL)
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
     CCC(opt->color.axes, FlGui::instance()->options->view.color[12]);
+    drawContext::global()->resetFontTextures();
   }
 #endif
   return opt->color.axes;

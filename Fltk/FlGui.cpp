@@ -180,6 +180,12 @@ class drawContextFltk : public drawContextGlobal{
   {
     gl_draw(str);
   }
+  void resetFontTextures()
+  {
+#if defined(__APPLE__) && (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
+    gl_texture_pile_height(1); // force font texture recomputation
+#endif
+  }
 };
 
 static int globalShortcut(int event)

@@ -97,6 +97,7 @@ class drawContextGlobal {
   virtual int getStringHeight(){ return 12; }
   virtual int getStringDescent(){ return 3; }
   virtual void drawString(const char *str){}
+  virtual void resetFontTextures(){}
 };
 
 class drawContext {
