@@ -4,6 +4,7 @@
 # bugs and problems to <gmsh@geuz.org>.
 
 set(SRC
+CenterlineField.cpp
   Generator.cpp
   Field.cpp
     meshGEdge.cpp 

@@ -12,6 +12,11 @@
 #include "GmshConfig.h"
 #include "STensor3.h"
 
+#include <fstream>
+#include <string>
+#include <string.h>
+#include <sstream>
+
 #if defined(HAVE_POST)
 #include "PView.h"
 #endif
@@ -127,5 +132,22 @@ class BoundaryLayerField : public Field {
   virtual void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0);
 };
 #endif
+
+class FieldOptionString : public FieldOption
+{
+ public:
+  std::string & val;
+  virtual FieldOptionType getType(){ return FIELD_OPTION_STRING; }
+  FieldOptionString(std::string &_val, std::string _help, bool *_status=0)
+    : FieldOption(_help, _status), val(_val) {}
+  std::string &string() { modified(); return val; }
+  const std::string &string() const { return val; }
+  void getTextRepresentation(std::string &v_str)
+  {
+    std::ostringstream sstream;
+    sstream << "\"" << val << "\"";
+    v_str = sstream.str();
+  }
+};
 
 #endif

@@ -23,6 +23,7 @@
 #include "Numeric.h"
 #include "mathEvaluator.h"
 #include "BackgroundMesh.h"
+#include "CenterlineField.h"
 
 #if defined(HAVE_POST)
 #include "OctreePost.h"
@@ -88,23 +89,6 @@ class FieldOptionList : public FieldOption
       sstream << *it;
     }
     sstream << "}";
-    v_str = sstream.str();
-  }
-};
-
-class FieldOptionString : public FieldOption
-{
- public:
-  std::string & val;
-  virtual FieldOptionType getType(){ return FIELD_OPTION_STRING; }
-  FieldOptionString(std::string &_val, std::string _help, bool *_status=0)
-    : FieldOption(_help, _status), val(_val) {}
-  std::string &string() { modified(); return val; }
-  const std::string &string() const { return val; }
-  void getTextRepresentation(std::string &v_str)
-  {
-    std::ostringstream sstream;
-    sstream << "\"" << val << "\"";
     v_str = sstream.str();
   }
 };
@@ -1931,6 +1915,7 @@ FieldManager::FieldManager()
   map_type_name["Threshold"] = new FieldFactoryT<ThresholdField>();
 #if defined(HAVE_ANN)
   map_type_name["BoundaryLayer"] = new FieldFactoryT<BoundaryLayerField>();
+  map_type_name["Centerline"] = new FieldFactoryT<Centerline>();
 #endif
   map_type_name["Box"] = new FieldFactoryT<BoxField>();
   map_type_name["Cylinder"] = new FieldFactoryT<CylinderField>();
