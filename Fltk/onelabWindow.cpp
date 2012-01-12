@@ -655,7 +655,9 @@ void onelab_cb(Fl_Widget *w, void *data)
          c->getName() == "GmshRemote") // distant post-processing Gmsh client
         continue;
       std::string what = getModelName(c);
-
+      //onelab::string o(c->getName() + "/action", action);
+      //o.setVisible(false);
+      //onelab::server::instance()->set(o);
       // FIXME this should be uniformized (probably just be setting a onelab
       // variable to "check" or "compute", and letting the client decide what to
       // do)
@@ -1055,6 +1057,7 @@ void solver_cb(Fl_Widget *w, void *data)
   int num = (intptr_t)data;
 
   if(num >= 0){
+    // FIXME: unregister any non-local clients from the onelab::server
     std::string name = opt_solver_name(num, GMSH_GET, "");
     std::string exe = opt_solver_executable(num, GMSH_GET, "");
     FlGui::instance()->onelab->addSolver(name, exe, num);

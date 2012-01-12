@@ -312,15 +312,18 @@ namespace onelab{
   // regions will include union, intersection, etc.
   class region : public parameter{
   private:
-    std::string _value; // TODO: change this into std::set<std::string>
-    std::vector<std::string> _choices;
+    std::set<std::string> _value;
+    std::vector<std::set<std::string> > _choices;
+    // optional geometrical dimension 
+    int _dimension;
   public:
-    region(const std::string &name="", const std::string &value="",
+    region(const std::string &name="",
+           const std::set<std::string> &value = std::set<std::string>(),
            const std::string &shortHelp="", const std::string &help="") 
       : parameter(name, shortHelp, help), _value(value) {}
-    void setValue(const std::string &value){ _value = value; }
+    void setValue(const std::set<std::string> &value){ _value = value; }
     std::string getType() const { return "region"; }
-    const std::string &getValue() const { return _value; }
+    const std::set<std::string> &getValue() const { return _value; }
     void update(const region &p)
     {
       addClients(p.getClients());
@@ -334,12 +337,15 @@ namespace onelab{
     }
     std::string toChar() const
     {
+      /*
       std::ostringstream sstream;
       sstream << parameter::toChar() << _value << charSep() 
               << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << sanitize(_choices[i]) << charSep();
       return sstream.str();
+      */
+      return "";
     }
   };
 
