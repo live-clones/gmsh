@@ -254,7 +254,7 @@ int GmshFLTK(int argc, char **argv)
 #if defined(HAVE_ONELAB)
   if(CTX::instance()->solver.listen){
     onelab::localNetworkClient *c = new onelab::localNetworkClient("Listen", "");
-    c->run("");
+    c->run();
   }
 #endif
 

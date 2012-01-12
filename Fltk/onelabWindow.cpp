@@ -83,7 +83,7 @@ class onelabGmshServer : public GmshServer{
   }
 };
 
-bool onelab::localNetworkClient::run(const std::string &what)
+bool onelab::localNetworkClient::run()
 {
  new_connection:
   _pid = 0;
@@ -109,7 +109,17 @@ bool onelab::localNetworkClient::run(const std::string &what)
 
   std::string command = FixWindowsPath(_commandLine);
   if(command.size()){
-    command += " " + what + " " + _socketSwitch + " ";
+    // FIXME hack for getdp: this should be removed
+    std::vector<onelab::string> ps;
+    get(ps, getName() + "/1ModelName");
+    if(ps.size()) command += " " + ps[0].getValue();
+    get(ps, getName() + "/Action");
+    if(ps.size() && ps[0].getValue() == "compute"){
+      get(ps, getName() + "/9Compute");
+      if(ps.size()) command += " " + ps[0].getValue();
+    }
+    // end hack for getdp
+    command += " " + _socketSwitch + " ";
   }
   else{
     Msg::Info("Listening on socket '%s'", sockname.c_str());
@@ -181,7 +191,7 @@ bool onelab::localNetworkClient::run(const std::string &what)
           set(p);
         }
         else
-          Msg::Error("FIXME not done for this parameter types: %s", type.c_str());
+          Msg::Error("FIXME not done for this parameter type: %s", type.c_str());
       }
       break;
     case GmshSocket::GMSH_PARAMETER_QUERY:
@@ -199,7 +209,7 @@ bool onelab::localNetworkClient::run(const std::string &what)
           if(par.size() == 1) reply = par[0].toChar();
         }
         else
-          Msg::Fatal("FIXME query not done for this parameter type");
+          Msg::Error("FIXME not done for this parameter type: %s", type.c_str());
         if(reply.size()){
           server->SendMessage(GmshSocket::GMSH_PARAMETER, reply.size(), &reply[0]);
         }
@@ -339,21 +349,19 @@ static std::string getMshFileName(onelab::client *c)
   }
 }
 
-static std::string getModelName(onelab::client *c)
+static void guessModelName(onelab::client *c)
 {
   std::vector<onelab::string> ps;
   c->get(ps, c->getName() + "/1ModelName");
-  if(ps.size()){
-    return ps[0].getValue();
-  }
-  else{
+  if(ps.empty()){
     std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
-    std::string ext = FlGui::instance()->onelab->getModelExtension();
+    std::string ext = "";
+    onelab::server::instance()->get(ps, c->getName() + "/FileExtension");
+    if(ps.size()) ext = ps[0].getValue();
     std::string name(split[0] + split[1] + ext);
     onelab::string o(c->getName() + "/1ModelName", name, "Model name");
     o.setKind("file");
     c->set(o);
-    return name;
   }
 }
 
@@ -463,20 +471,6 @@ static std::vector<double> getRange(onelab::number &p)
   return v;
 }
 
-static std::string getShortName(const std::string &name, const std::string &ok="") 
-{
-  if(ok.size()) return ok;
-  std::string s = name;
-  // remove path
-  std::string::size_type last = name.find_last_of('/');
-  if(last != std::string::npos)
-    s = name.substr(last + 1);
-  // remove starting numbers
-  while(s.size() && s[0] >= '0' && s[0] <= '9')
-    s = s.substr(1);
-  return s;
-}
-
 static bool updateOnelabGraph(int num)
 {
   bool changed = false;
@@ -497,11 +491,11 @@ static bool updateOnelabGraph(int num)
     v.resize(8, '0');
     if(v[2 * num] == '1'){
       x = getRange(numbers[i]);
-      xName = getShortName(numbers[i].getName(), numbers[i].getShortHelp());
+      xName = numbers[i].getShortName();
     }
     if(v[2 * num + 1] == '1'){
       y = getRange(numbers[i]);
-      yName = getShortName(numbers[i].getName(), numbers[i].getShortHelp());
+      yName = numbers[i].getShortName();
     }
   }
   if(x.empty()){
@@ -532,6 +526,7 @@ static void updateOnelabGraphs()
 
 static void runGmshClient(const std::string &action)
 {
+  if(action == "initialize") return;
   onelab::server::citer it = onelab::server::instance()->findClient("Gmsh");
   if(it == onelab::server::instance()->lastClient()) return;
 
@@ -646,7 +641,7 @@ void onelab_cb(Fl_Widget *w, void *data)
       FlGui::instance()->onelab->checkForErrors("Gmsh");
     if(FlGui::instance()->onelab->stop()) break;
     
-    // iterate over all other clients
+    // iterate over all other clients (there should narmally only be one)
     for(onelab::server::citer it = onelab::server::instance()->firstClient();
         it != onelab::server::instance()->lastClient(); it++){
       onelab::client *c = it->second;
@@ -654,31 +649,11 @@ void onelab_cb(Fl_Widget *w, void *data)
          c->getName() == "Listen" || // unknown client connecting through "-listen"
          c->getName() == "GmshRemote") // distant post-processing Gmsh client
         continue;
-      std::string what = getModelName(c);
-      //onelab::string o(c->getName() + "/action", action);
-      //o.setVisible(false);
-      //onelab::server::instance()->set(o);
-      // FIXME this should be uniformized (probably just be setting a onelab
-      // variable to "check" or "compute", and letting the client decide what to
-      // do)
-      if(action == "check"){
-	if(c->getName() == "GetDP") // client name as defined in getdp/Common/Message.cpp::InitializeOnelab()
-	  c->run(what);
-	else
-	  c->run(what + " -a "); // '-a' for 'analyse only'
-      }
-      else if(action == "compute"){
-	if(c->getName() == "GetDP"){
-	  // get command line from the server
-	  std::vector<onelab::string> ps;
-	  onelab::server::instance()->get(ps, c->getName() + "/9Compute");
-	  if(ps.size()) what += " " + ps[0].getValue();
-	  c->run(what);
-	}
-	else
-	  c->run(what);
-      }
-      
+      if(action != "initialize") guessModelName(c);
+      onelab::string o(c->getName() + "/Action", action);
+      o.setVisible(false);
+      onelab::server::instance()->set(o);
+      c->run();
       if(action == "compute")
         FlGui::instance()->onelab->checkForErrors(c->getName());
       if(FlGui::instance()->onelab->stop()) break;
@@ -859,7 +834,7 @@ void onelabWindow::rebuildTree()
   for(unsigned int i = 0; i < numbers.size(); i++){
     Fl_Tree_Item *n = _tree->add(numbers[i].getName().c_str());
     n->labelsize(FL_NORMAL_SIZE + 5);
-    std::string label = getShortName(numbers[i].getName(), numbers[i].getShortHelp());
+    std::string label = numbers[i].getShortName();
     _tree->begin();
     if(numbers[i].getChoices().size() == 2 &&
        numbers[i].getChoices()[0] == 0 && numbers[i].getChoices()[1] == 1){
@@ -895,7 +870,7 @@ void onelabWindow::rebuildTree()
   for(unsigned int i = 0; i < strings.size(); i++){
     Fl_Tree_Item *n = _tree->add(strings[i].getName().c_str());
     n->labelsize(FL_NORMAL_SIZE + 5);
-    std::string label = getShortName(strings[i].getName(), strings[i].getShortHelp());
+    std::string label = strings[i].getShortName();
     _tree->begin();
     Fl_Input_Choice *but = new Fl_Input_Choice(1, 1, width, 1);
     _treeWidgets.push_back(but);
@@ -930,7 +905,8 @@ void onelabWindow::rebuildTree()
       Fl_Box *but = new Fl_Box(1, 1, width, 1);
       but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
       _treeWidgets.push_back(but);
-      but->copy_label(getShortName(n->label()).c_str());
+      onelab::string o(n->label());
+      but->copy_label(o.getShortName().c_str());
       n->widget(but);
       _tree->end();
     }
@@ -1029,8 +1005,6 @@ void onelabWindow::addSolver(const std::string &name, const std::string &command
     opt_solver_name(index, GMSH_SET, name);
     if(commandLine.empty())
       onelab_choose_executable_cb(0, (void *)c);
-    if(name == "GetDP")
-      setModelExtension(".pro");
   }
   FlGui::instance()->onelab->rebuildSolverList();
 }
@@ -1057,10 +1031,18 @@ void solver_cb(Fl_Widget *w, void *data)
   int num = (intptr_t)data;
 
   if(num >= 0){
-    // FIXME: unregister any non-local clients from the onelab::server
+    // unregister all non-local clients
+    for(onelab::server::citer it = onelab::server::instance()->firstClient(); 
+        it != onelab::server::instance()->lastClient(); it++){
+      onelab::client *c = it->second;
+      if(c->isNetworkClient())
+        onelab::server::instance()->unregisterClient(c);
+    }
+    // register new client
     std::string name = opt_solver_name(num, GMSH_GET, "");
     std::string exe = opt_solver_executable(num, GMSH_GET, "");
     FlGui::instance()->onelab->addSolver(name, exe, num);
+    onelab_cb(0, (void*)"initialize");
   }
   else
     FlGui::instance()->onelab->rebuildSolverList();
@@ -1071,7 +1053,8 @@ void solver_cb(Fl_Widget *w, void *data)
 #else
 
 #if defined(HAVE_ONELAB)
-bool onelab::localNetworkClient::run(const std::string &what)
+
+bool onelab::localNetworkClient::run()
 {
   Msg::Error("The solver interface requires OneLab and FLTK 1.3");
   return false;

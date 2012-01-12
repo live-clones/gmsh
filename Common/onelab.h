@@ -91,6 +91,19 @@ namespace onelab{
     const std::string &getName() const { return _name; }
     const std::string &getShortHelp() const { return _shortHelp; }
     const std::string &getHelp() const { return _help; }
+    std::string getShortName() const
+    {
+      if(_shortHelp.size()) return _shortHelp;
+      std::string s = _name;
+      // remove path
+      std::string::size_type last = _name.find_last_of('/');
+      if(last != std::string::npos)
+        s = _name.substr(last + 1);
+      // remove starting numbers
+      while(s.size() && s[0] >= '0' && s[0] <= '9')
+        s = s.substr(1);
+      return s;
+    }
     bool getChanged() const { return _changed; }
     bool getVisible() const { return _visible; }
     std::string getAttribute(const std::string &key) const
@@ -567,7 +580,7 @@ namespace onelab{
     int getId(){ return _id; }
     void setIndex(int index){ _index = index; }
     int getIndex(){ return _index; }
-    virtual bool run(const std::string &what){ return false; }
+    virtual bool run(){ return false; }
     virtual bool isNetworkClient(){ return false; }
     virtual bool kill(){ return false; }
     virtual void sendInfo(const std::string &msg){ std::cout << msg << std::endl; }
@@ -700,7 +713,7 @@ namespace onelab{
     void setPid(int pid){ _pid = pid; }
     GmshServer *getGmshServer(){ return _gmshServer; }
     void setGmshServer(GmshServer *server){ _gmshServer = server; }
-    virtual bool run(const std::string &what);
+    virtual bool run();
     virtual bool kill();
   };
 

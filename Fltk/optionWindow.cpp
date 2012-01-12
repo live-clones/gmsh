@@ -525,10 +525,10 @@ static void solver_options_ok_cb(Fl_Widget *w, void *data)
     onelab::server::citer it = onelab::server::instance()->findClient("Listen");
     if(it == onelab::server::instance()->lastClient()){
       onelab::localNetworkClient *c = new onelab::localNetworkClient("Listen", "");
-      c->run("");
+      c->run();
     }
     else
-      it->second->run("");
+      it->second->run();
   }
 #endif
 

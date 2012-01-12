@@ -26,7 +26,6 @@ class onelabWindow{
   int _gearFrozenMenuSize;
   std::vector<Fl_Widget*> _treeWidgets;
   std::string _title;
-  std::string _modelExtension;
   int _deltaFontSize;
   bool _stop;
  public:
@@ -39,8 +38,6 @@ class onelabWindow{
   void setButtonMode(const std::string &mode);
   void show(){ _win->show(); }
   int shown(){ return _win->shown(); }
-  std::string getModelExtension(){ return _modelExtension; }
-  void setModelExtension(const std::string &ext){ _modelExtension = ext; }
   int meshAuto(){ return _gear->menu()[2].value(); }
   int hideNewViews(){ return _gear->menu()[3].value(); }
   std::string getPath(Fl_Tree_Item *item)

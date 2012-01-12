@@ -197,7 +197,7 @@ static void file_remote_cb(Fl_Widget *w, void *data)
       return;
     }
     c->setCommandLine(connectionChooser());
-    if(c->getCommandLine().size()) c->run("");
+    if(c->getCommandLine().size()) c->run();
   }
   else{
     if(!server){
