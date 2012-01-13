@@ -118,11 +118,15 @@ bool onelab::localNetworkClient::run()
       std::string action = (ps.empty() ? "" : ps[0].getValue());
       get(ps, getName() + "/1ModelName");
       std::string modelName = (ps.empty() ? "" : ps[0].getValue());
+      get(ps, getName() + "/9InitializeCommand");
+      std::string initializeCommand = (ps.empty() ? "" : ps[0].getValue());
       get(ps, getName() + "/9CheckCommand");
       std::string checkCommand = (ps.empty() ? "" : ps[0].getValue());
       get(ps, getName() + "/9ComputeCommand");
       std::string computeCommand = (ps.empty() ? "" : ps[0].getValue());
-      if(action == "check")
+      if(action == "initialize")
+        command += " " + modelName + " " + initializeCommand;
+      else if(action == "check")
         command += " " + modelName + " " + checkCommand;
       else if(action == "compute")
         command += " " + modelName + " " + computeCommand;
