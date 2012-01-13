@@ -659,15 +659,17 @@ void onelab_cb(Fl_Widget *w, void *data)
       if(FlGui::instance()->onelab->stop()) break;
     }
 
-    updateOnelabGraphs();
-    FlGui::instance()->onelab->rebuildTree();
+    if(action != "initialize"){
+      updateOnelabGraphs();
+      FlGui::instance()->onelab->rebuildTree();
+    }
 
   } while(action == "compute" && !FlGui::instance()->onelab->stop() && 
           incrementLoop());
 
   FlGui::instance()->onelab->stop(false);
   FlGui::instance()->onelab->setButtonMode("compute");
-  FlGui::instance()->onelab->show();
+  if(action != "initialize") FlGui::instance()->onelab->show();
 }
 
 static void onelab_check_button_cb(Fl_Widget *w, void *data)
@@ -832,6 +834,7 @@ void onelabWindow::rebuildTree()
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers);
   for(unsigned int i = 0; i < numbers.size(); i++){
+    if(!numbers[i].getVisible()) continue;
     Fl_Tree_Item *n = _tree->add(numbers[i].getName().c_str());
     n->labelsize(FL_NORMAL_SIZE + 5);
     std::string label = numbers[i].getShortName();
@@ -868,6 +871,7 @@ void onelabWindow::rebuildTree()
   std::vector<onelab::string> strings;
   onelab::server::instance()->get(strings);
   for(unsigned int i = 0; i < strings.size(); i++){
+    if(!strings[i].getVisible()) continue;
     Fl_Tree_Item *n = _tree->add(strings[i].getName().c_str());
     n->labelsize(FL_NORMAL_SIZE + 5);
     std::string label = strings[i].getShortName();
@@ -1065,6 +1069,7 @@ bool onelab::localNetworkClient::kill()
   Msg::Error("The solver interface requires OneLab and FLTK 1.3");
   return false;
 }
+
 #endif
 
 void solver_cb(Fl_Widget *w, void *data)
