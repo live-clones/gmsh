@@ -908,11 +908,13 @@ class MathEvalExpressionAniso
   mathEvaluator *_f[6];
   std::set<int> _fields[6];
  public:
-  MathEvalExpressionAniso() {
-    for (int i=0;i<6;i++)_f[i]=0; 
+  MathEvalExpressionAniso()
+  {
+    for(int i = 0; i < 6; i++) _f[i] = 0; 
   }
-  ~MathEvalExpressionAniso(){ 
-    for (int i=0;i<6;i++)if(_f[i]) delete _f[i]; 
+  ~MathEvalExpressionAniso()
+  { 
+    for(int i = 0; i < 6; i++) if(_f[i]) delete _f[i];
   }
   bool set_function(int iFunction, const std::string &f)
   {
@@ -955,8 +957,9 @@ class MathEvalExpressionAniso
   void evaluate (double x, double y, double z, SMetric3 &metr)
   {
     const int index[6][2] = {{0,0},{1,1},{2,2},{0,1},{0,2},{1,2}};
-    for (int iFunction = 0;iFunction<6;iFunction++){
-      if(!_f[iFunction]) metr(index[iFunction][0],index[iFunction][1]) =  MAX_LC;
+    for (int iFunction = 0; iFunction < 6; iFunction++){
+      if(!_f[iFunction])
+        metr(index[iFunction][0], index[iFunction][1]) = MAX_LC;
       else{
 	std::vector<double> values(3 + _fields[iFunction].size()), res(1);
 	values[0] = x;
@@ -1015,7 +1018,7 @@ class MathEvalFieldAniso : public Field
   MathEvalExpressionAniso expr;
   std::string f[6];
  public:
-  virtual bool isotropic () const {return false;}
+  virtual bool isotropic () const { return false; }
   MathEvalFieldAniso()
   {
     options["m11"] = new FieldOptionString
@@ -1047,21 +1050,21 @@ class MathEvalFieldAniso : public Field
       }
       update_needed = false;
     }
-    expr.evaluate(x, y, z,metr);
+    expr.evaluate(x, y, z, metr);
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     if(update_needed) {
-      for (int i=0;i<6;i++){
-	if(!expr.set_function(i,f[i]))
+      for (int i = 0; i < 6; i++){
+	if(!expr.set_function(i, f[i]))
 	  Msg::Error("Field %i: Invalid matheval expression \"%s\"",
 		     this->id, f[i].c_str());
       }
       update_needed = false;
     }
     SMetric3 metr; 
-    expr.evaluate(x, y, z,metr);
-    return metr(0,0);
+    expr.evaluate(x, y, z, metr);
+    return metr(0, 0);
   }
   const char *getName()
   {
@@ -1123,45 +1126,13 @@ class ParametricField : public Field
 };
 
 #if defined(HAVE_POST)
+
 class PostViewField : public Field
 {
   OctreePost *octree;
- public:
   int view_index;
   bool crop_negative_values;
-  double operator() (double x, double y, double z, GEntity *ge=0)
-  {
-    // we should maybe test the unique view num instead, but that
-    // would be slower
-    if(view_index < 0 || view_index >= (int)PView::list.size())
-      return MAX_LC;
-    PView *v = PView::list[view_index];
-    if(v->getData()->hasModel(GModel::current())){
-      Msg::Error("Cannot use view based on current model for background mesh");
-      Msg::Error("Use a list-based view (.pos file) instead?");
-      return MAX_LC;
-    }
-    if(update_needed){
-      if(octree) delete octree;
-      octree = new OctreePost(v);
-      update_needed = false;
-    }
-    double l = 0.;
-    // use large tolerance (in element reference coordinates) to
-    // maximize chance of finding an element
-    if(!octree->searchScalarWithTol(x, y, z, &l, 0, 0, 1.))
-      Msg::Info("No element found containing point (%g,%g,%g)", x, y, z);
-    if(l <= 0 && crop_negative_values) return MAX_LC;
-    return l;
-  }
-  const char *getName()
-  {
-    return "PostView";
-  }
-  std::string getDescription()
-  {
-    return "Evaluate the post processing view IView.";
-  }
+ public:
   PostViewField()
   {
     octree = 0;
@@ -1177,7 +1148,75 @@ class PostViewField : public Field
   {
     if(octree) delete octree;
   }
+  PView *getView() const
+  {
+    // we should maybe test the unique view num instead, but that
+    // would be slower
+    if(view_index < 0 || view_index >= (int)PView::list.size()){
+      Msg::Error("View[%d] does not exist", view_index);
+      return 0;
+    }
+    PView *v = PView::list[view_index];
+    if(v->getData()->hasModel(GModel::current())){
+      Msg::Error("Cannot use view based on current mesh for background mesh: you might"
+                 " want to use a list-based view (.pos file) instead");
+      return 0;
+    }
+  }
+  virtual bool isotropic () const 
+  {
+    PView *v = getView();
+    if(v && v->getData()->getNumTensors()) return false;
+    return true;
+  }
+  double operator() (double x, double y, double z, GEntity *ge=0)
+  {
+    PView *v = getView();
+    if(!v) return MAX_LC;
+    if(update_needed){
+      if(octree) delete octree;
+      octree = new OctreePost(v);
+      update_needed = false;
+    }
+    double l = 0.;
+    // use large tolerance (in element reference coordinates) to
+    // maximize chance of finding an element
+    if(!octree->searchScalarWithTol(x, y, z, &l, 0, 0, 1.))
+      Msg::Info("No scalar element found containing point (%g,%g,%g)", x, y, z);
+    if(l <= 0 && crop_negative_values) return MAX_LC;
+    return l;
+  }
+  void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0)
+  {
+    PView *v = getView();
+    if(!v) return;
+    if(update_needed){
+      if(octree) delete octree;
+      octree = new OctreePost(v);
+      update_needed = false;
+    }
+    double l[9];
+    if(!octree->searchTensor(x, y, z, l, 0)){
+      Msg::Info("No tensor element found containing point (%g,%g,%g)", x, y, z);
+      return;
+    }
+    metr(0, 0) = l[0];
+    metr(1, 0) = l[3];
+    metr(1, 1) = l[4];
+    metr(2, 0) = l[6];
+    metr(2, 1) = l[7];
+    metr(2, 2) = l[8];
+  }
+  const char *getName()
+  {
+    return "PostView";
+  }
+  std::string getDescription()
+  {
+    return "Evaluate the post processing view IView.";
+  }
 };
+
 #endif
 
 class MinAnisoField : public Field

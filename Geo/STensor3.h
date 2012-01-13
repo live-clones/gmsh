@@ -92,7 +92,7 @@ class SMetric3 {
   {
     return _val[getIndex(i, j)];
   }
-  SMetric3 invert () const
+  SMetric3 invert() const
   {
     fullMatrix<double> m(3, 3);
     getMat(m);
@@ -101,7 +101,7 @@ class SMetric3 {
     ithis.setMat(m);
     return ithis;
   }
-  double determinant () const
+  double determinant() const
   {
     fullMatrix<double> m(3,3);
     getMat(m);
@@ -185,7 +185,6 @@ SMetric3 interpolation (const SMetric3 &m1,
                         const double w);
 
 // concrete class for general 3x3 matrix
-
 class STensor3 {
  protected:
   // 00 01 02 10 11 12 20 21 22
@@ -237,7 +236,7 @@ class STensor3 {
   {
     return _val[i];
   }
-  STensor3 invert () const
+  STensor3 invert() const
   {
     fullMatrix<double> m(3, 3);
     getMat(m);
@@ -246,7 +245,6 @@ class STensor3 {
     ithis.setMat(m);
     return ithis;
   }
-
   STensor3 operator + (const STensor3 &other) const
   {
     STensor3 res(*this);
