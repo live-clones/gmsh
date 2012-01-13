@@ -118,15 +118,11 @@ bool onelab::localNetworkClient::run()
       std::string action = (ps.empty() ? "" : ps[0].getValue());
       get(ps, getName() + "/1ModelName");
       std::string modelName = (ps.empty() ? "" : ps[0].getValue());
-      get(ps, getName() + "/9InitializeCommand");
-      std::string initializeCommand = (ps.empty() ? "" : ps[0].getValue());
       get(ps, getName() + "/9CheckCommand");
       std::string checkCommand = (ps.empty() ? "" : ps[0].getValue());
       get(ps, getName() + "/9ComputeCommand");
       std::string computeCommand = (ps.empty() ? "" : ps[0].getValue());
-      if(action == "initialize")
-        command += " " + modelName + " " + initializeCommand;
-      else if(action == "check")
+      if(action == "check")
         command += " " + modelName + " " + checkCommand;
       else if(action == "compute")
         command += " " + modelName + " " + computeCommand;
@@ -1021,15 +1017,31 @@ void onelabWindow::rebuildSolverList()
 void onelabWindow::addSolver(const std::string &name, const std::string &commandLine,
                              int index)
 {
-  onelab::server::citer it = onelab::server::instance()->findClient(name);
-  if(it == onelab::server::instance()->lastClient()){
-    onelab::localNetworkClient *c = new onelab::localNetworkClient(name, commandLine);
-    c->setIndex(index);
-    opt_solver_name(index, GMSH_SET, name);
-    if(commandLine.empty())
-      onelab_choose_executable_cb(0, (void *)c);
+  if(onelab::server::instance()->findClient(name) != 
+     onelab::server::instance()->lastClient()) return; // solver already exists
+
+  // unregister the other non-local clients so we keep only the new one
+  std::vector<onelab::client*> networkClients;
+  for(onelab::server::citer it = onelab::server::instance()->firstClient(); 
+      it != onelab::server::instance()->lastClient(); it++)
+    if(it->second->isNetworkClient())
+      networkClients.push_back(it->second);
+  for(unsigned int i = 0; i < networkClients.size(); i++){
+    onelab::server::instance()->unregisterClient(networkClients[i]);
+    delete networkClients[i];
   }
+
+  // create and register the new client
+  onelab::localNetworkClient *c = new onelab::localNetworkClient(name, commandLine);
+  c->setIndex(index);
+  opt_solver_name(index, GMSH_SET, name);
+  if(commandLine.empty())
+    onelab_choose_executable_cb(0, (void *)c);
+
   FlGui::instance()->onelab->rebuildSolverList();
+
+  // initialize the client
+  onelab_cb(0, (void*)"initialize");
 }
 
 void onelabWindow::removeSolver(const std::string &name)
@@ -1054,18 +1066,9 @@ void solver_cb(Fl_Widget *w, void *data)
   int num = (intptr_t)data;
 
   if(num >= 0){
-    // unregister all non-local clients
-    for(onelab::server::citer it = onelab::server::instance()->firstClient(); 
-        it != onelab::server::instance()->lastClient(); it++){
-      onelab::client *c = it->second;
-      if(c->isNetworkClient())
-        onelab::server::instance()->unregisterClient(c);
-    }
-    // register new client
     std::string name = opt_solver_name(num, GMSH_GET, "");
     std::string exe = opt_solver_executable(num, GMSH_GET, "");
     FlGui::instance()->onelab->addSolver(name, exe, num);
-    onelab_cb(0, (void*)"initialize");
   }
   else
     FlGui::instance()->onelab->rebuildSolverList();
