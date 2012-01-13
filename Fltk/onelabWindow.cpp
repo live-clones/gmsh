@@ -109,16 +109,25 @@ bool onelab::localNetworkClient::run()
 
   std::string command = FixWindowsPath(_commandLine);
   if(command.size()){
-    // FIXME hack for getdp: this should be removed
-    std::vector<onelab::string> ps;
-    get(ps, getName() + "/1ModelName");
-    if(ps.size()) command += " " + ps[0].getValue();
-    get(ps, getName() + "/Action");
-    if(ps.size() && ps[0].getValue() == "compute"){
-      get(ps, getName() + "/9Compute");
-      if(ps.size()) command += " " + ps[0].getValue();
+    // complete the command line if "UseCommandLine" is set in the database
+    std::vector<onelab::number> n;
+    get(n, getName() + "/UseCommandLine");
+    if(n.size() && n[0].getValue()){
+      std::vector<onelab::string> ps;
+      get(ps, getName() + "/Action");
+      std::string action = (ps.empty() ? "" : ps[0].getValue());
+      get(ps, getName() + "/1ModelName");
+      std::string modelName = (ps.empty() ? "" : ps[0].getValue());
+      get(ps, getName() + "/9CheckCommand");
+      std::string checkCommand = (ps.empty() ? "" : ps[0].getValue());
+      get(ps, getName() + "/9ComputeCommand");
+      std::string computeCommand = (ps.empty() ? "" : ps[0].getValue());
+      if(action == "check")
+        command += " " + modelName + " " + checkCommand;
+      else if(action == "compute")
+        command += " " + modelName + " " + computeCommand;
     }
-    // end hack for getdp
+    // append "-onelab" command
     command += " " + _socketSwitch + " ";
   }
   else{
