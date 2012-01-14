@@ -80,7 +80,7 @@ meshMetric::meshMetric(GModel *gm, int technique, simpleFunction<double> *fct, s
  
   computeMetric();
 
-  //printMetric("toto.pos");
+  printMetric("toto.pos");
   //exit(1);
 
 }
@@ -332,7 +332,6 @@ void meshMetric::computeMetric(){
   //smoothMetric (sol);
   //curvatureContributionToMetric();
 
- 
 }
 
 double meshMetric::operator() (double x, double y, double z, GEntity *ge) {

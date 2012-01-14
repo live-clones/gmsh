@@ -12,12 +12,17 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <fstream>
+#include <sstream>
 #include "GModel.h"
 #include "MElement.h"
 #include "MVertex.h"
 #include "MLine.h"
 #include "GEntity.h"
 #include "Field.h"
+#include "Os.h"
+
+
 
 #if defined(HAVE_ANN)
 #include <ANN/ANN.h>
@@ -37,14 +42,9 @@ Centerline::Centerline(): kdtree(0), nodes(0){
 
   index = new ANNidx[1];
   dist = new ANNdist[1];
-  update_needed = false;
 
-  options["FileName"] = new FieldOptionString (fileName, "File Name for the centerlines");
+  options["FileName"] = new FieldOptionString (fileName, "File name for the centerlines",  &update_needed);
   fileName = "centerlines.vtk";//default
-  //TODO get fileName from file 
-
-  importFile(fileName);
-  buildKdTree();
 
 }
 
@@ -130,6 +130,17 @@ void Centerline::buildKdTree(){
 }
 
 double Centerline::operator() (double x, double y, double z, GEntity *ge){
+
+  if (update_needed){
+    std::ifstream input;
+    input.open(fileName.c_str());
+  
+    if(StatFile(fileName)) Msg::Fatal("Centerline file '%s' does not exist", fileName.c_str());
+   
+    importFile(fileName);
+    buildKdTree();
+    update_needed = false;
+  }
 
   double xyz[3] = {x,y,z };
   int num_neighbours = 1;

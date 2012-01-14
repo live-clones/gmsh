@@ -396,7 +396,7 @@ void meshGEdge::operator() (GEdge *ge)
     
     // FIXME JF : MAYBE WE SHOULD NOT ALWAYS SMOOTH THE 1D MESH SIZE FIELD ??
     //printFandPrimitive(ge->tag(), Points);
-    a =  smoothPrimitive (ge,CTX::instance()->mesh.smoothRatio*CTX::instance()->mesh.smoothRatio,Points);
+    // a =  smoothPrimitive (ge,CTX::instance()->mesh.smoothRatio*CTX::instance()->mesh.smoothRatio,Points);
     //printFandPrimitive(ge->tag()+10000, Points);
     
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));

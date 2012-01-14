@@ -46,8 +46,8 @@ class Centerline : public Field{
   virtual std::string getDescription()
   {
     return "The value of this field is the distance to the centerline.\n\n"
-" You should specify a fileName that contains the centerline.\n"
-" The centerline of a surface can be obtained using the open source software vmtk\n\n"
+" You should specify a fileName that contains the centerline."
+" The centerline of a surface can be obtained with the open source software vmtk (http://www.vmtk.org/)"
 " using the following script:\n\n"
 "vmtk vmtkcenterlines -seedselector openprofiles -ifile mysurface.stl -ofile centerlines.vtp --pipe vmtksurfacewriter -ifile centerlines.vtp -ofile centerlines.vtk\n";
   }

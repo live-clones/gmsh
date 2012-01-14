@@ -559,7 +559,7 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f,
       writeMSH(name);
             
       if (ITER++ >= niter)  break;
-      if (ITER > 5 && fabs((double)(nbElems - nbElemsOld)) < 0.0 * nbElemsOld) break;
+      if (ITER > 3 && fabs((double)(nbElems - nbElemsOld)) < 0.01 * nbElemsOld) break;
 	   
       nbElemsOld = nbElems;  
     }
