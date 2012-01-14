@@ -14,15 +14,13 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include "OS.h"
 #include "GModel.h"
 #include "MElement.h"
 #include "MVertex.h"
 #include "MLine.h"
 #include "GEntity.h"
 #include "Field.h"
-#include "Os.h"
-
-
 
 #if defined(HAVE_ANN)
 #include <ANN/ANN.h>

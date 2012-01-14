@@ -1159,7 +1159,7 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf)
 	  created.push_back(q2A);
 	  delete q1B;
 	  delete q2B;
-	  printf("edge swap performed -- 1\n");
+	  //printf("edge swap performed -- 1\n");
 	  COUNT++;
 	}
 	else if (0.8*worst_quality_B > worst_quality_old && 0.8*worst_quality_B > worst_quality_A){
@@ -1169,7 +1169,7 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf)
 	  created.push_back(q2B);
 	  delete q1A;
 	  delete q2A;
-	  printf("edge swap performed -- 2\n");
+	  //printf("edge swap performed -- 2\n");
 	  COUNT++;
 	}
 	else {
