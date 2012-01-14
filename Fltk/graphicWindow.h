@@ -20,6 +20,7 @@ class graphicWindow{
  private:
   std::string _title;
   int _savedMessageHeight;
+  bool _autoScrollMessages;
  public:
   Fl_Window *win;
   Fl_Tile *tile;
@@ -33,6 +34,8 @@ class graphicWindow{
   graphicWindow(bool main=true, int numTiles=1);
   ~graphicWindow();
   void setTitle(std::string str);
+  void setAutoScroll(bool val){ _autoScrollMessages = val; }
+  bool getAutoScroll(){ return _autoScrollMessages; }
   void split(openglWindow *g, char how);
   void setAnimButtons(int mode);
   void checkAnimButtons();

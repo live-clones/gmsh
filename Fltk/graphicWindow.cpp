@@ -2,7 +2,7 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
- 
+
 #include <string.h>
 #include <FL/fl_draw.H>
 #include <FL/fl_ask.H>
@@ -149,7 +149,7 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
       if(Fl::event_state(FL_ALT)){
         if(i != 0){
           drawContext *ctx0 = gls[0]->getDrawContext();
-          ctx->setQuaternion(ctx0->quaternion[0], ctx0->quaternion[1], 
+          ctx->setQuaternion(ctx0->quaternion[0], ctx0->quaternion[1],
                              ctx0->quaternion[2], ctx0->quaternion[3]);
         }
       }
@@ -190,7 +190,7 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
 	ctx->setQuaternionFromEulerAngles();
       }
     }
-    else if(!strcmp(str, "z")){ 
+    else if(!strcmp(str, "z")){
       // set Z-axis pointing out or into (shift) the screen
       if (CTX::instance()->camera) {
 	ctx->camera.alongZ();}
@@ -259,7 +259,7 @@ void status_options_cb(Fl_Widget *w, void *data)
   }
   else if(!strcmp(str, "p")){ // toggle projection mode
     if(!Fl::event_state(FL_SHIFT)){
-      opt_general_orthographic(0, GMSH_SET | GMSH_GUI, 
+      opt_general_orthographic(0, GMSH_SET | GMSH_GUI,
                                !opt_general_orthographic(0, GMSH_GET, 0));
     }
     else{
@@ -434,7 +434,7 @@ static void remove_graphic_window_cb(Fl_Widget *w, void *data)
     else
       graph2.push_back(FlGui::instance()->graph[i]);
   }
-  if(deleteMe){  
+  if(deleteMe){
     openglWindow::setLastHandled(0);
     FlGui::instance()->graph = graph2;
     delete deleteMe;
@@ -447,23 +447,44 @@ void message_cb(Fl_Widget *w, void *data)
     (FlGui::instance()->getCurrentOpenglWindow()->parent());
   if(g->browser->h())
     g->hideMessages();
-  else 
+  else
     g->showMessages();
   FlGui::check();
 }
 
-static void message_event_cb(Fl_Widget *w, void *data)
+static void message_menu_scroll_cb(Fl_Widget *w, void *data)
+{
+  graphicWindow *g = (graphicWindow*)data;
+  g->setAutoScroll(!g->getAutoScroll());
+}
+
+static void message_menu_clear_cb(Fl_Widget *w, void *data)
+{
+  graphicWindow *g = (graphicWindow*)data;
+  g->clearMessages();
+}
+
+static void message_menu_save_cb(Fl_Widget *w, void *data)
+{
+  graphicWindow *g = (graphicWindow*)data;
+  if(fileChooser(FILE_CHOOSER_CREATE, "Save Messages", ""))
+    g->saveMessages(fileChooserGetName(1).c_str());
+}
+
+static void message_browser_cb(Fl_Widget *w, void *data)
 {
   graphicWindow *g = (graphicWindow*)data;
 
   if(Fl::event_button() == 3 || Fl::event_state(FL_CTRL) || Fl::event_clicks()){
-    int a = Msg::GetAnswer("Clear or save messages?", 0, 
-                           "Cancel", "Save", "Clear");
-    if(a == 1){
-      if(fileChooser(FILE_CHOOSER_CREATE, "Save", ""))
-        g->saveMessages(fileChooserGetName(1).c_str());
-    }
-    else if(a == 2) g->clearMessages();
+    Fl_Menu_Item rclick_menu[] = {
+      { g->getAutoScroll() ? "Disable Auto-Scrolling" : "Enable Auto-Scrolling", 0,
+        message_menu_scroll_cb, g },
+      { "Clear Messages",   0, message_menu_clear_cb, g },
+      { "Save Messages...", 0, message_menu_save_cb, g },
+      { 0 }
+    };
+    const Fl_Menu_Item *m = rclick_menu->popup(Fl::event_x(), Fl::event_y(), 0, 0, 0);
+    if(m) m->do_callback(0, m->user_data());
   }
   else
     g->copySelectedMessagesToClipboard();
@@ -480,7 +501,7 @@ class dummyBox : public Fl_Box {
   dummyBox(int x, int y, int w, int h, const char *l=0) : Fl_Box(x, y, w, h, l) {}
 };
 
-graphicWindow::graphicWindow(bool main, int numTiles)
+graphicWindow::graphicWindow(bool main, int numTiles) : _autoScrollMessages(true)
 {
   static bool first = true;
   if(first){
@@ -497,7 +518,7 @@ graphicWindow::graphicWindow(bool main, int numTiles)
     fl_add_symbol("gmsh_graph", gmsh_graph, 1);
     first = false;
   }
-  
+
   int sh = 2 * FL_NORMAL_SIZE - 4; // status bar height
   int sw = FL_NORMAL_SIZE + 3; // status button width
   int width = CTX::instance()->glSize[0];
@@ -519,7 +540,7 @@ graphicWindow::graphicWindow(bool main, int numTiles)
     mheight = 10;
     glheight = CTX::instance()->glSize[1] - 10;
   }
-  
+
   // the graphic window should be a "normal" window (neither modal nor
   // non-modal)
   if(main){
@@ -534,10 +555,10 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   // bottom button bar
   bottom = new Fl_Box(0, glheight + mheight, width, sh);
   bottom->box(FL_FLAT_BOX);
-  
+
   int x = 2;
   int sht = sh - 4; // leave a 2 pixel border at the bottom
-  
+
   butt[5] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_models");
   butt[5]->callback(status_options_cb, (void *)"model");
   butt[5]->tooltip("Select active model");
@@ -545,78 +566,78 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   butt[0] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "X");
   butt[0]->callback(status_xyz1p_cb, (void *)"x");
   butt[0]->tooltip("Set +X or -X view (Alt+x or Alt+Shift+x)");
-  x += sw;  
+  x += sw;
   butt[1] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "Y");
   butt[1]->callback(status_xyz1p_cb, (void *)"y");
   butt[1]->tooltip("Set +Y or -Y view (Alt+y or Alt+Shift+y)");
-  x += sw;  
+  x += sw;
   butt[2] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "Z");
   butt[2]->callback(status_xyz1p_cb, (void *)"z");
   butt[2]->tooltip("Set +Z or -Z view (Alt+z or Alt+Shift+z)");
-  x += sw;  
+  x += sw;
   butt[4] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_rotate");
   butt[4]->callback(status_xyz1p_cb, (void *)"r");
   butt[4]->tooltip("Rotate +90 or -90 (Shift) degrees, or sync rotations (Alt)");
-  x += sw;  
+  x += sw;
   butt[3] = new Fl_Button(x, glheight + mheight + 2, 2 * FL_NORMAL_SIZE, sht, "1:1");
   butt[3]->callback(status_xyz1p_cb, (void *)"1:1");
   butt[3]->tooltip("Set unit scale, sync scale between viewports (Alt), "
                    "or reset bounding box around visible entities (Shift)");
-  x += 2 * FL_NORMAL_SIZE;  
+  x += 2 * FL_NORMAL_SIZE;
   butt[8] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_ortho");
   butt[8]->callback(status_options_cb, (void *)"p");
   butt[8]->tooltip("Toggle projection mode (Alt+o or Alt+Shift+o)");
-  x += sw;  
+  x += sw;
   butt[12] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "M");
   butt[12]->callback(status_options_cb, (void *)"M");
   butt[12]->tooltip("Toggle mesh visibility (Alt+m)");
-  x += sw;  
+  x += sw;
   butt[13] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_clscale");
   butt[13]->callback(status_options_cb, (void *)"clscale");
   butt[13]->tooltip("Change mesh element size factor");
-  x += sw;  
+  x += sw;
   butt[9] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "S");
   butt[9]->callback(status_options_cb, (void *)"S");
   butt[9]->tooltip("Toggle mouse selection ON/OFF (Escape)");
-  x += sw;  
+  x += sw;
   butt[6] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_rewind");
   butt[6]->callback(status_rewind_cb);
   butt[6]->tooltip("Rewind animation");
   butt[6]->deactivate();
-  x += sw;  
+  x += sw;
   butt[10] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_back");
   butt[10]->callback(status_stepbackward_cb);
   butt[10]->tooltip("Step backward");
   butt[10]->deactivate();
-  x += sw;  
+  x += sw;
   butt[7] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_play");
   butt[7]->callback(status_play_cb);
   butt[7]->tooltip("Play/pause animation");
   butt[7]->deactivate();
-  x += sw;  
+  x += sw;
   butt[11] = new Fl_Button(x, glheight + mheight + 2, sw, sht, "@-1gmsh_forward");
   butt[11]->callback(status_stepforward_cb);
   butt[11]->tooltip("Step forward");
   butt[11]->deactivate();
   x += sw;
-  
+
   for(int i = 0; i < 14; i++) {
     butt[i]->box(FL_FLAT_BOX);
     butt[i]->selection_color(FL_WHITE);
     butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   }
-  
+
   x += 2;
   int wleft = (width - x) / 3 - 1;
   int wright = (width - x) - (width - x) / 3 - 1;
-  
+
   label[0] = new Fl_Box(x, glheight + mheight + 2, wleft, sht);
   label[1] = new Fl_Box(x + (width - x) / 3, glheight + mheight + 2, wright, sht);
   for(int i = 0; i < 2; i++) {
     label[i]->box(FL_THIN_DOWN_BOX);
     label[i]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   }
-  
+
   // dummy resizable box
   dummyBox *resbox = new dummyBox(x, 0, width - x, glheight);
   win->resizable(resbox);
@@ -661,7 +682,7 @@ graphicWindow::graphicWindow(bool main, int numTiles)
 
   int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
   if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
-  if(CTX::instance()->stereo) { 
+  if(CTX::instance()->stereo) {
     mode |= FL_DOUBLE;
     mode |= FL_STEREO;
   }
@@ -672,7 +693,7 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   browser->textfont(FL_COURIER);
   browser->textsize(FL_NORMAL_SIZE - 1);
   browser->type(FL_MULTI_BROWSER);
-  browser->callback(message_event_cb, this);
+  browser->callback(message_browser_cb, this);
   browser->has_scrollbar(Fl_Browser_::VERTICAL);
 
   tile->end();
@@ -727,20 +748,20 @@ void graphicWindow::split(openglWindow *g, char how)
     int y1 = g->y();
     int w1 = (how == 'h') ? g->w() / 2 : g->w();
     int h1 = (how == 'h') ? g->h() : g->h() / 2;
-    
+
     int x2 = (how == 'h') ? (g->x() + w1) : g->x();
     int y2 = (how == 'h') ? g->y() : (g->y() + h1);
     int w2 = (how == 'h') ? (g->w() - w1) : g->w();
     int h2 = (how == 'h') ? g->h() : (g->h() - h1);
-    
+
     openglWindow *g2 = new openglWindow(0, 0, w2, h2);
     g2->end();
     g2->mode(g->mode());
-    
+
     gl.push_back(g2);
     tile->add(g2);
     g2->show();
-    
+
     g->resize(x1, y1, w1, h1);
     g2->resize(x2, y2, w2, h2);
   }
@@ -806,7 +827,8 @@ void graphicWindow::showMessages()
     if(height > maxh) height = maxh / 2;
     resizeMessages(height - browser->h());
   }
-  browser->bottomline(browser->size());
+  if(_autoScrollMessages)
+    browser->bottomline(browser->size());
 }
 
 void graphicWindow::hideMessages()
@@ -818,7 +840,7 @@ void graphicWindow::hideMessages()
 void graphicWindow::addMessage(const char *msg)
 {
   browser->add(msg, 0);
-  if(win->shown() && browser->h() >= 10)
+  if(_autoScrollMessages && win->shown() && browser->h() >= 10)
     browser->bottomline(browser->size());
 }
 
