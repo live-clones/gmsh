@@ -21,7 +21,7 @@
 // WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
-// 
+//
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #ifndef _GMSH_SOCKET_H_
@@ -61,7 +61,7 @@ class GmshSocket{
   // that 65535: if we receive a type > 65535 we assume that we
   // receive data from a machine with a different byte ordering, and
   // we swap the bytes in the payload)
-  enum MessageType{ 
+  enum MessageType{
     GMSH_START           = 1,
     GMSH_STOP            = 2,
     GMSH_INFO            = 10,
@@ -73,6 +73,8 @@ class GmshSocket{
     GMSH_VERTEX_ARRAY    = 22,
     GMSH_PARAMETER       = 23,
     GMSH_PARAMETER_QUERY = 24,
+    GMSH_PARAM_QUERY_ALL = 25,
+    GMSH_PARAM_QUERY_END = 26,
     GMSH_SPEED_TEST      = 30,
     GMSH_OPTION_1        = 100,
     GMSH_OPTION_2        = 101,
@@ -91,7 +93,7 @@ class GmshSocket{
     int sofar = 0;
     int remaining = bytes;
     do {
-      int len = send(_sock, buf + sofar, remaining, 0); 
+      int len = send(_sock, buf + sofar, remaining, 0);
       sofar += len;
       remaining -= len;
     } while(remaining > 0);
@@ -193,7 +195,7 @@ class GmshSocket{
     *swap = 0;
     if(_ReceiveData(type, sizeof(int))){
       if(*type < 0) return 0;
-      if(*type > 65535){ 
+      if(*type > 65535){
         // the data comes from a machine with different endianness and
         // we must swap the bytes
         *swap = 1;
@@ -403,7 +405,7 @@ class GmshServer : public GmshSocket{
       CloseSocket(tmpsock);
       throw "Socket listen failed";
     }
-    
+
     // wait until we get data
     int ret = NonBlockingWait(tmpsock, 0.5, timeout);
     if(ret){
@@ -445,6 +447,6 @@ class GmshServer : public GmshSocket{
     CloseSocket(_sock);
     return 0;
   }
-};  
+};
 
 #endif
