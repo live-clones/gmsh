@@ -586,7 +586,7 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient) delete _onelabClient;
-  if (sockname.empty())
+  if(sockname.empty())
     _onelabClient = new onelab::localClient(name);
   else{
     onelab::remoteNetworkClient *c = new onelab::remoteNetworkClient(name, sockname);

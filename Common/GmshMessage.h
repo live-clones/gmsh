@@ -80,13 +80,13 @@ class Msg {
   static void PrintErrorCounter(const char *title);
   static double GetValue(const char *text, double defaultval);
   static std::string GetString(const char *text, std::string defaultval);
-  static int GetAnswer(const char *question, int defaultval, const char *zero, 
+  static int GetAnswer(const char *question, int defaultval, const char *zero,
                        const char *one, const char *two=0);
   static void InitializeOnelab(const std::string &name, const std::string &sockname="");
   static GmshClient *GetGmshClient(){ return _client; }
   static void FinalizeOnelab();
   static bool UseOnelab(){ return _onelabClient ? true : false; }
-  static void ExchangeOnelabParameter(const std::string &key, 
+  static void ExchangeOnelabParameter(const std::string &key,
                                       std::vector<double> &val,
                                       std::map<std::string, std::vector<double> > &fopt,
                                       std::map<std::string, std::vector<std::string> > &copt);
