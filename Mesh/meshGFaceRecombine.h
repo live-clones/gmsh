@@ -19,11 +19,15 @@ class Rec2DEdge;
 class Rec2DVertex;
 class Rec2DAction;
 
-typedef std::set<Rec2DAction*/*, lessRec2DAction*/> setofRec2DAction;
+typedef std::list<Rec2DAction*> setofRec2DAction;
 typedef std::map<MVertex*, Rec2DVertex*> mapofVertices;
 typedef std::map<MEdge, Rec2DEdge*, Less_Edge> mapofEdges;
 typedef std::map<MElement*, std::set<Rec2DAction*> > mapofElementActions;
 typedef std::map<MQuadrangle*, std::set<MElement*> > mapofAdjacencies;
+
+struct lessRec2DAction {
+  bool operator()(Rec2DAction*, Rec2DAction*) const;
+};
 
 class Recombine2D {
   private :
@@ -40,6 +44,9 @@ class Recombine2D {
     std::vector<Rec2DAction*> _obsoleteAction;
     static Recombine2D *_current;
     
+      std::vector<MTriangle*> _tri;
+      std::vector<MQuadrangle*> _quad; 
+    
   public :
     static bool bo;
     
@@ -47,6 +54,7 @@ class Recombine2D {
     Recombine2D(GModel*);
     ~Recombine2D();
     
+    bool recombine();
     void apply(bool){return;}
     
     static inline double edgeReward(double adimLength, double alignment)
@@ -57,11 +65,36 @@ class Recombine2D {
                                         int numVert, double valVert );
     static Rec2DEdge* getREdge(MEdge);
     static Rec2DVertex* getRVertex(MVertex*);
+    static void remove(MEdge);
+    static void remove(MVertex*);
     static inline GFace* getGFace() {return _current->_gf;}
     static inline void addObsleteAction(Rec2DAction *a) {
       _current->_obsoleteAction.push_back(a);
+    } // correct ?
+    static inline void addNumEdge(int a) {_current->_numEdge += a;}
+    static inline void addNumVert(int a) {_current->_numVert += a;}
+    static inline void addValEdge(double a) {_current->_valEdge += a;}
+    static inline void addValVert(double a) {_current->_valVert += a;}
+    
+    static void remove(MTriangle*);
+    static void add(MQuadrangle*);
+    
+    static inline void addVert2Par(Rec2DVertex *rv, int a)
+      {_current->_parities[a].insert(rv);}
+    static void associateParity(int pOld, int pNew);
+    static inline int highPar() {
+      std::map<int, std::set<Rec2DVertex*> >::iterator it;
+      it = _current->_parities.end();
+      --it;
+      return it->first;
     }
-    //static inline int* getPtrNumChange() {return &_numChange;}
+    
+  private :
+    bool _isAllQuad(Rec2DAction *action);
+    void _choose(Rec2DAction*);
+    void _removeIncompatible(Rec2DAction*);
+    void _removeReference(Rec2DAction*);
+    void _getNeighbours(Rec2DAction*, std::set<Rec2DAction*>&);
 };
 
 class Rec2DAction {
@@ -73,10 +106,26 @@ class Rec2DAction {
     double _globValIfExecuted;
     
   public :
-    inline int getVectPosition() {return _position;}
+    bool operator<(Rec2DAction&);
+    inline int getVectPosition() const {return _position;}
     inline void setVectPosition(int p) {_position = p;}
-    //virtual double getReward() = 0;
+    
+    virtual int getNum() = 0;
+    virtual double getReward() {
+      if (_lastUpdate < Recombine2D::getNumChange())
+        _computeGlobVal();
+      return _globValIfExecuted - Recombine2D::getGlobalValue(0, .0, 0, .0);
+    }
     virtual bool isObsolete() = 0;
+    virtual void getTriangles(std::set<MTriangle*>&) = 0;
+    virtual MTriangle* getTriangle(int) = 0;
+    virtual void apply() = 0;
+    virtual void getParities(int*) = 0;
+    virtual Rec2DVertex* getRVertex(int) = 0;
+    virtual void color(int, int, int) = 0;
+  
+  protected :
+    MQuadrangle* _createQuad(std::vector<Rec2DEdge*>&) const;
   
   private :
     virtual void _computeGlobVal() = 0;
@@ -90,9 +139,20 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     
   public :
     Rec2DTwoTri2Quad(Rec2DEdge*, std::list<MTriangle*>&);
-    //double getReward();
     bool isObsolete();
-  
+    void getTriangles(std::set<MTriangle*> &tri) {
+      tri.insert(_triangles[0]);
+      tri.insert(_triangles[1]);
+    }
+    MTriangle* getTriangle(int a) {
+      return _triangles[a];
+    }
+    void apply();
+    void getParities(int*);
+    Rec2DVertex* getRVertex(int i) {return _vertices[i];}
+    void color(int, int, int);
+    
+    int getNum() {return 1;}
   private :
     void _computeGlobVal();
 };
@@ -105,9 +165,22 @@ class Rec2DFourTri2Quad : public Rec2DAction {
     
   public :
     Rec2DFourTri2Quad(Rec2DVertex*, std::list<MTriangle*>&);
-    //double getReward();
     bool isObsolete();
-  
+    void getTriangles(std::set<MTriangle*> &tri) {
+      tri.insert(_triangles[0]);
+      tri.insert(_triangles[1]);
+      tri.insert(_triangles[2]);
+      tri.insert(_triangles[3]);
+    }
+    MTriangle* getTriangle(int a) {
+      return _triangles[a];
+    }
+    void apply();
+    void getParities(int*);
+    Rec2DVertex* getRVertex(int i) {return _vertices[i];}
+    void color(int, int, int);
+    
+    int getNum() {return 2;}
   private :
     void _computeGlobVal();
 };
@@ -122,15 +195,33 @@ class Rec2DCollapseTri : public Rec2DAction {
   public :
     Rec2DCollapseTri(Rec2DVertex*, std::list<MTriangle*>&);
     Rec2DCollapseTri(Rec2DEdge*, std::list<MTriangle*>&);
-    //double getReward();
+    double getReward() {
+      return std::max(_globValIfExecuted, _globValIfExecuted2)
+                    - Recombine2D::getGlobalValue(0, .0, 0, .0);
+    }
     bool isObsolete();
-  
+    void getTriangles(std::set<MTriangle*> &tri) {
+      tri.insert(_triangles[0]);
+      tri.insert(_triangles[1]);
+      if (_triangles[2]) {
+        tri.insert(_triangles[2]);
+        tri.insert(_triangles[3]);
+      }
+    }
+    MTriangle* getTriangle(int a) {
+      return _triangles[a];
+    }
+    void apply();
+    void getParities(int*);
+    Rec2DVertex* getRVertex(int i) {return _vertices[i];}
+    void color(int, int, int);
+    
+    int getNum() {return 3;}
   private :
     void _computeGlobVal();
     void _qualCavity(double &valVert, double &valEdge, int &numEdge,
                      std::map<Rec2DVertex*, int> &vertices,
                      Rec2DVertex *imposedVert = NULL                );
-    
 };
 
 class Rec2DListAction {
@@ -158,13 +249,17 @@ class Rec2DVertex {
                 std::map<MVertex*, std::set<GEdge*> >);
     Rec2DVertex(double u, double v);
     
-    void add(Rec2DEdge *re) {_edges.push_back(re);}
-    void setOnBoundary() {if (_onWhat > 0) _onWhat = -1;
-      static bool a=1; if(a){Msg::Error("FIXME boundary");a=0;}}
-    bool getIsOnBoundary() {return _onWhat < 1;}
+    inline void add(Rec2DEdge *re) {_edges.push_back(re);}
+    void remove(Rec2DEdge*);
+    inline void setOnBoundary() {if (_onWhat > 0) _onWhat = 0;
+      static bool a=1; if(a){Msg::Warning("FIXME boundary");a=0;}}
+    inline bool getIsOnBoundary() {return _onWhat < 1;}
     double getQual(int numEdge = -1);
     inline int getParity() {return _parity;}
-    inline void setParity(int p) {_parity = p;}
+    inline void setParity(int p) {
+      _parity = p;
+      Recombine2D::addVert2Par(this, p);
+    }
     inline MVertex* getMVertex() {return _v;}
     void getxyz(double *xyz) {
       xyz[0] = _v->x(); xyz[1] = _v->y(); xyz[2] = _v->z();}
@@ -206,6 +301,3 @@ class Rec2DEdge {
 };
 
 #endif
-
-//idee : lors du parcours de larbre avec un horizon : copier les Rec2dVertex et les Rec2DEdge.
-//idee : faire carrément : arrete d'un triangle = 0, arrete d'un quad = 1/2
