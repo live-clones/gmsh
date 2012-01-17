@@ -752,44 +752,44 @@ gLevelsetDistGeom::gLevelsetDistGeom(std::string box, std::string geom, int tag)
   if(NY < 2) NY = 2;
   if(NZ < 2) NZ = 2;
 
-  // Msg::Info("  bounding box min: %g %g %g -- max: %g %g %g",
-  //           bb.min().x(), bb.min().y(), bb.min().z(),
-  //           bb.max().x(), bb.max().y(), bb.max().z());
-  // Msg::Info("  Nx=%d Ny=%d Nz=%d", NX, NY, NZ);
+  Msg::Info("  bounding box min: %g %g %g -- max: %g %g %g",
+            bb.min().x(), bb.min().y(), bb.min().z(),
+            bb.max().x(), bb.max().y(), bb.max().z());
+  Msg::Info("  Nx=%d Ny=%d Nz=%d", NX, NY, NZ);
   
-  // _box = new cartesianBox<double>(bb.min().x(), bb.min().y(), bb.min().z(), 
-  // 				 SVector3(range.x(), 0, 0),
-  // 				 SVector3(0, range.y(), 0),
-  // 				 SVector3(0, 0, range.z()),
-  // 				 NX, NY, NZ, levels);
-  //  for (int i = 0; i < NX; i++)
-  //   for (int j = 0; j < NY; j++)
-  //     for (int k = 0; k < NZ; k++)
-  //       _box->insertActiveCell(_box->getCellIndex(i, j, k));
+  _box = new cartesianBox<double>(bb.min().x(), bb.min().y(), bb.min().z(), 
+  				 SVector3(range.x(), 0, 0),
+  				 SVector3(0, range.y(), 0),
+  				 SVector3(0, 0, range.z()),
+  				 NX, NY, NZ, levels);
+   for (int i = 0; i < NX; i++)
+    for (int j = 0; j < NY; j++)
+      for (int k = 0; k < NZ; k++)
+        _box->insertActiveCell(_box->getCellIndex(i, j, k));
 
-  // cartesianBox<double> *parent = _box, *child;
-  // while((child = parent->getChildBox())){
-  //   //Msg::Info("  level %d ", child->getLevel());
-  //   for(unsigned int i = 0; i < refinePoints.size(); i++)
-  //     insertActiveCells(refinePoints[i].x(), refinePoints[i].y(), refinePoints[i].z(), 
-  //                        rtube / pow(2., (levels - child->getLevel())), *child);
-  //   parent = child;
-  // }
+  cartesianBox<double> *parent = _box, *child;
+  while((child = parent->getChildBox())){
+    //Msg::Info("  level %d ", child->getLevel());
+    for(unsigned int i = 0; i < refinePoints.size(); i++)
+      insertActiveCells(refinePoints[i].x(), refinePoints[i].y(), refinePoints[i].z(), 
+                         rtube / pow(2., (levels - child->getLevel())), *child);
+    parent = child;
+  }
 
-  // //Msg::Info("Removing cells to match mesh topology constraints");
-  // removeBadChildCells(_box);
-  // removeParentCellsWithChildren(_box);
+  //Msg::Info("Removing cells to match mesh topology constraints");
+  removeBadChildCells(_box);
+  removeParentCellsWithChildren(_box);
 
-  // //Msg::Info("Initializing nodal values in the cartesian grid");
-  // _box->createNodalValues();
+  //Msg::Info("Initializing nodal values in the cartesian grid");
+  _box->createNodalValues();
 
-  // //Msg::Info("Computing levelset on the cartesian grid");  
-  // computeLevelset(gm, *_box);
+  //Msg::Info("Computing levelset on the cartesian grid");  
+  computeLevelset(gm, *_box);
 
-  // //Msg::Info("Renumbering mesh vertices across levels");
-  // _box->renumberNodes();
+  //Msg::Info("Renumbering mesh vertices across levels");
+  _box->renumberNodes();
   
-  // _box->writeMSH("yeah.msh", false);
+  _box->writeMSH("yeah.msh", false);
 
   
 }
