@@ -688,14 +688,11 @@ gLevelsetDistGeom::gLevelsetDistGeom(std::string box, std::string geom, int tag)
   modelGeom->load(geom);
   
   //EMI FIXME THIS
-  double lx = 0.5, ly = 0.5, lz = 0.5;
   int levels = 3;
   int refineCurvedSurfaces = 0;
-
-  double rmax = 0.1;
-  double sampling = std::min(rmax, std::min(lx, std::min(ly, lz)));
-  double rtube = std::max(lx, std::max(ly, lz))*2.;
-
+  // double rmax = 0.1;
+  // double sampling = std::min(rmax, std::min(lx, std::min(ly, lz)));
+ 
   //FILLING POINTS FROM GEOMBOX
   std::vector<SPoint3> points;
   std::vector<SPoint3> refinePoints;
@@ -745,18 +742,21 @@ gLevelsetDistGeom::gLevelsetDistGeom(std::string box, std::string geom, int tag)
   for(unsigned int i = 0; i < refinePoints.size(); i++) bb += refinePoints[i]; 
   //bb.scale(1.01, 1.01, 1.01);
   SVector3 range = bb.max() - bb.min(); 
-  int NX = range.x() / lx; 
-  int NY = range.y() / ly; 
-  int NZ = range.z() / lz; 
+  double minLength = std::min( range.x(), std::min(range.y(), range.z()));
+  double hmin = minLength / 5;
+  int NX = range.x() / hmin; 
+  int NY = range.y() / hmin; 
+  int NZ = range.z() / hmin; 
   if(NX < 2) NX = 2;
   if(NY < 2) NY = 2;
   if(NZ < 2) NZ = 2;
+  double rtube = 2.*hmin; //std::max(lx, std::max(ly, lz))*2.;
 
   Msg::Info("  bounding box min: %g %g %g -- max: %g %g %g",
             bb.min().x(), bb.min().y(), bb.min().z(),
             bb.max().x(), bb.max().y(), bb.max().z());
   Msg::Info("  Nx=%d Ny=%d Nz=%d", NX, NY, NZ);
-  
+
   _box = new cartesianBox<double>(bb.min().x(), bb.min().y(), bb.min().z(), 
   				 SVector3(range.x(), 0, 0),
   				 SVector3(0, range.y(), 0),
@@ -791,12 +791,11 @@ gLevelsetDistGeom::gLevelsetDistGeom(std::string box, std::string geom, int tag)
   
   _box->writeMSH("yeah.msh", false);
 
-  
 }
 
 double gLevelsetDistGeom::operator() (const double x, const double y, const double z) const {
 
-  double dist = 0.0 ; //_box->getValueContainingPoint(x,y,z);
+  double dist = _box->getValueContainingPoint(x,y,z);
   return dist;
 }
 
