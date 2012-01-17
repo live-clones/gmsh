@@ -95,7 +95,7 @@ class VisPhysical : public Vis {
   char _visible;
   std::vector<GEntity*> _list;
  public:
-  VisPhysical(int tag, int dim, std::vector<GEntity*> list, std::string &name) 
+  VisPhysical(int tag, int dim, std::vector<GEntity*> list, std::string &name)
     : Vis(name), _tag(tag), _dim(dim), _visible(1), _list(list)  {}
   ~VisPhysical(){}
   int getTag() const { return _tag; }
@@ -134,7 +134,7 @@ class VisPartition : public Vis {
     m->getEntities(entities);
     for(unsigned int i = 0; i < entities.size(); i++)
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
-        if(entities[i]->getMeshElement(j)->getPartition() == _tag) 
+        if(entities[i]->getMeshElement(j)->getPartition() == _tag)
           entities[i]->getMeshElement(j)->setVisibility(val);
   }
 };
@@ -178,11 +178,11 @@ class VisibilityList { // singleton
   {
     std::map<int, std::string> oldLabels;
 #if defined(HAVE_PARSER)
-    for(std::map<std::string, std::vector<double> >::iterator it = gmsh_yysymbols.begin();
+    for(std::map<std::string, gmsh_yysymbol>::iterator it = gmsh_yysymbols.begin();
         it != gmsh_yysymbols.end(); ++it)
       if(it->first.size())
-        for(unsigned int i = 0; i < it->second.size(); i++)
-          oldLabels[(int)it->second[i]] = std::string("(") + it->first + ")";
+        for(unsigned int i = 0; i < it->second.value.size(); i++)
+          oldLabels[(int)it->second.value[i]] = std::string("(") + it->first + ")";
 #endif
     for(unsigned int i = 0; i < _entities.size(); i++)
       delete _entities[i];
@@ -232,7 +232,7 @@ class VisibilityList { // singleton
   char getVisibility(int n){ return _entities[n]->getVisibility(); }
   // set the visibility information for the nth entity in the list
   void setVisibility(int n, char val, bool recursive=false)
-  { 
+  {
     _entities[n]->setVisibility(val, recursive);
   }
   // set all entities to be invisible
@@ -258,8 +258,8 @@ class VisibilityList { // singleton
   std::string getBrowserLine(int n)
   {
     std::ostringstream sstream;
-    sstream << "\t" << _entities[n]->getType() 
-            << "\t" << _entities[n]->getTag() 
+    sstream << "\t" << _entities[n]->getType()
+            << "\t" << _entities[n]->getTag()
             << "\t" << _entities[n]->getName();
     return sstream.str();
   }
@@ -290,7 +290,7 @@ static void _rebuild_list_browser()
     if(VisibilityList::instance()->getVisibility(i))
       FlGui::instance()->visibility->browser->select(i + 1);
   }
-  
+
   // activate/deactivate delete button
   if(type == VisibilityList::PhysicalEntities)
     FlGui::instance()->visibility->push[0]->activate();
@@ -417,7 +417,7 @@ class listBrowser : public Fl_Browser{
           select(i + 1);
         return 1;
       }
-      else if(Fl::test_shortcut(FL_Enter) || 
+      else if(Fl::test_shortcut(FL_Enter) ||
               Fl::test_shortcut(FL_KP_Enter)){
         visibility_browser_apply_cb(NULL, NULL);
         return 1;
@@ -483,7 +483,7 @@ static void _add_region(GRegion *gr, Fl_Tree *tree, std::string path)
 }
 
 static void _add_physical_group(int dim, int num, std::vector<GEntity*> &ge,
-                                std::map<int, std::string> &oldLabels, 
+                                std::map<int, std::string> &oldLabels,
                                 Fl_Tree *tree, std::string path)
 {
   if(ge.empty()) return;
@@ -582,11 +582,11 @@ static void _rebuild_tree_browser(bool force)
     m->getPhysicalGroups(groups);
     std::map<int, std::string> oldLabels;
 #if defined(HAVE_PARSER)
-    for(std::map<std::string, std::vector<double> >::iterator it = gmsh_yysymbols.begin();
+    for(std::map<std::string, gmsh_yysymbol>::iterator it = gmsh_yysymbols.begin();
         it != gmsh_yysymbols.end(); ++it)
       if(it->first.size())
-        for(unsigned int i = 0; i < it->second.size(); i++)
-          oldLabels[(int)it->second[i]] = std::string("(") + it->first + ")";
+        for(unsigned int i = 0; i < it->second.value.size(); i++)
+          oldLabels[(int)it->second.value[i]] = std::string("(") + it->first + ")";
 #endif
     for(int i = 3; i >= 0; i--)
       for(std::map<int, std::vector<GEntity*> >::iterator it = groups[i].begin();
@@ -715,7 +715,7 @@ void visibility_cb(Fl_Widget *w, void *data)
 
 static void visibility_save_cb(Fl_Widget *w, void *data)
 {
-  Msg::StatusBar(2, true, "Appending visibility info to '%s'...", 
+  Msg::StatusBar(2, true, "Appending visibility info to '%s'...",
                  GModel::current()->getFileName().c_str());
   // get the whole visibility information in geo format
   std::vector<int> state[4][2];
@@ -724,13 +724,13 @@ static void visibility_save_cb(Fl_Widget *w, void *data)
     (*it)->getVisibility() ?
       state[0][1].push_back((*it)->tag()) : state[0][0].push_back((*it)->tag());
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
-    (*it)->getVisibility() ? 
+    (*it)->getVisibility() ?
       state[1][1].push_back((*it)->tag()) : state[1][0].push_back((*it)->tag());
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
-    (*it)->getVisibility() ? 
+    (*it)->getVisibility() ?
       state[2][1].push_back((*it)->tag()) : state[2][0].push_back((*it)->tag());
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
-    (*it)->getVisibility() ? 
+    (*it)->getVisibility() ?
       state[3][1].push_back((*it)->tag()) : state[3][0].push_back((*it)->tag());
   char tmp[256];
   const char *labels[4] = {"Point", "Line", "Surface", "Volume"};
@@ -820,19 +820,19 @@ static void _set_visibility_by_number(int what, int num, char val, bool recursiv
   case 7: // physical line
     for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
       for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
-        if (all || std::abs((*it)->physicals[i]) == num) 
+        if (all || std::abs((*it)->physicals[i]) == num)
           (*it)->setVisibility(val, recursive);
     break;
   case 8: // physical surface
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
       for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
-        if (all || std::abs((*it)->physicals[i]) == num) 
+        if (all || std::abs((*it)->physicals[i]) == num)
           (*it)->setVisibility(val, recursive);
     break;
   case 9: // physical volume
     for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
       for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
-        if (all || std::abs((*it)->physicals[i]) == num) 
+        if (all || std::abs((*it)->physicals[i]) == num)
           (*it)->setVisibility(val, recursive);
     break;
   }
@@ -856,7 +856,7 @@ static void _apply_visibility(char mode, bool physical,
   }
 
   if(mode == 2) mode = 1;
-  
+
   if(CTX::instance()->pickElements){
     for(unsigned int i = 0; i < elements.size(); i++)
       elements[i]->setVisibility(mode);
@@ -917,7 +917,7 @@ static void visibility_number_cb(Fl_Widget *w, void *data)
 
   int num = (!strcmp(str, "all") || !strcmp(str, "*")) ? -1 : atoi(str);
   bool recursive = FlGui::instance()->visibility->butt[0]->value() ? true : false;
-  
+
   _set_visibility_by_number(what, num, val, recursive);
 
   int pos = FlGui::instance()->visibility->browser->position();
@@ -999,7 +999,7 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
     for(int i = 1; i <= 5; i++) // elements, points, lines, surfaces, volumes
       _set_visibility_by_number(i, -1, 1, false);
     CTX::instance()->mesh.changed = ENT_ALL;
-    drawContext::global()->draw();  
+    drawContext::global()->draw();
     return;
   }
   else
@@ -1012,10 +1012,10 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
   std::vector<MElement*> elements;
 
   while(1) {
-    if(what == ENT_ALL) 
+    if(what == ENT_ALL)
       CTX::instance()->mesh.changed = ENT_ALL;
     drawContext::global()->draw();
-    Msg::StatusBar(3, false, "Select %s\n[Press %s'q' to abort]", 
+    Msg::StatusBar(3, false, "Select %s\n[Press %s'q' to abort]",
                    str.c_str(), mode ? "" : "'u' to undo or ");
 
     char ib = FlGui::instance()->selectEntity(what);
@@ -1038,7 +1038,7 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
 
   CTX::instance()->mesh.changed = ENT_ALL;
   CTX::instance()->pickElements = 0;
-  drawContext::global()->draw();  
+  drawContext::global()->draw();
   Msg::StatusBar(3, false, "");
 }
 
@@ -1047,7 +1047,7 @@ static void visibility_per_window_cb(Fl_Widget *w, void *data)
   std::string what = (const char*)data;
   if(what == "item"){
     drawContext *ctx = FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
-    for(unsigned int i = 0; 
+    for(unsigned int i = 0;
         i < (unsigned int)FlGui::instance()->visibility->per_window->size(); i++){
       if(i < GModel::list.size()){
         GModel *m = GModel::list[i];
@@ -1130,13 +1130,13 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     {
       Fl_Group *gg = new Fl_Group
         (2 * WB, 2 * WB + 2 * BH, brw, height - 6 * WB - 4 * BH);
-      
+
       browser = new listBrowser
         (2 * WB, 2 * WB + 2 * BH, brw, height - 6 * WB - 4 * BH);
       browser->type(FL_MULTI_BROWSER);
       browser->textsize(FL_NORMAL_SIZE - 1);
       browser->column_widths(cols);
-      
+
       gg->end();
       Fl_Group::current()->resizable(gg);
     }
@@ -1331,7 +1331,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     bb[18] = new Fl_Button
       (ll + IW + WB, 2 * WB + 2 * BH, 2 * BH, 11 * BH, "Show\nAll");
     bb[18]->callback(visibility_interactive_cb, (void *)"show all");
-    
+
     g->end();
   }
   {
@@ -1346,7 +1346,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     Fl_Button *b1 = new Fl_Button
       (width - 1 * BB - 2 * WB, height - 2 * BH - 3 * WB, BB, BH, "Reset all");
     b1->callback(visibility_per_window_cb, (void*)"reset_all");
- 
+
     g->resizable(per_window);
     g->end();
   }
@@ -1388,7 +1388,7 @@ void visibilityWindow::updatePerWindow(bool force)
 
   gl = FlGui::instance()->getCurrentOpenglWindow();
   drawContext *ctx = gl->getDrawContext();
- 
+
   per_window->clear();
   int line = 1;
 

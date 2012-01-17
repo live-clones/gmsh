@@ -1328,6 +1328,7 @@ List of expressions are also widely used, and are defined as:
   @var{expression} : @var{expression} |
   @var{expression} : @var{expression} : @var{expression} |
   @var{string} [ ] |
+  List [ @var{string} ] |
   @var{string} [ @{ @var{expression-list} @} ] |
   Point @{ @var{expression} @} |
   @var{transform} |
@@ -1342,15 +1343,16 @@ containing the range of numbers comprised between two
 @w{@var{expression}s}, with a unit incrementation step. The third case
 also permits to create a list containing the range of numbers comprised
 between two @w{@var{expression}s}, but with a positive or negative
-incrementation step equal to the third @var{expression}. The fourth case
-permits to reference an expression list.  The fifth case permits to
-reference an expression sublist (whose elements are those corresponding
-to the indices provided by the @var{expression-list}).  The next two
-cases permit to retrieve the indices of entities created through
-geometrical transformations and extrusions (see @ref{Transformations},
-and @ref{Extrusions}). The last two cases permit to retrieve the
-coordinates of a given geometry point (@pxref{Points}), or to retrieve
-the id numbers of all points, lines, surfaces or volumes in the model.
+incrementation step equal to the third @var{expression}. The fourth and
+fifth cases permit to reference an expression list.  The sixth case
+permits to reference an expression sublist (whose elements are those
+corresponding to the indices provided by the @var{expression-list}).
+The next two cases permit to retrieve the indices of entities created
+through geometrical transformations and extrusions (see
+@ref{Transformations}, and @ref{Extrusions}). The last two cases permit
+to retrieve the coordinates of a given geometry point (@pxref{Points}),
+or to retrieve the id numbers of all points, lines, surfaces or volumes
+in the model.
 
 To see the practical use of such expressions, have a look at the first
 couple of examples in @ref{Tutorial}. Note that, in order to lighten the
@@ -1814,17 +1816,15 @@ compatibility purposes, the behavior of @code{newl}, @code{news},
 @code{Geometry.OldNewReg} option (@pxref{Geometry options list}).}.
 @end ftable
 
-@item @var{string} [ ] = @{ @};
-Creates a new expression list identifier @code{@var{string}[]} with an
+@item @var{string} = @{ @};
+Creates a new expression list identifier @code{@var{string}} with an
 empty list.
 
-@item @var{string} [ ] = @{ @var{expression-list} @};
-Creates a new expression list identifier @code{@var{string}[]} with the
+@item @var{string} = @{ @var{expression-list} @};
+Creates a new expression list identifier @code{@var{string}} with the
 list @var{expression-list}, or affects @var{expression-list} to an
-existing expression list identifier. (Remember the remark we made when
-we defined @w{@var{expression-list}s}: the braces enclosing an
-@var{expression-list} are optional if the list only contains a single
-item.)
+existing expression list identifier. The following syntax is also
+allowed: @code{@var{string}[] = @{ @var{expression-list} @};}
 
 @item @var{string} [ @{ @var{expression-list} @} ] = @{ @var{expression-list} @};
 Affects each item in the right hand side @var{expression-list} to the
@@ -1832,37 +1832,24 @@ elements (indexed by the left hand side @var{expression-list}) of an
 existing expression list identifier. The two @w{@var{expression-list}s} must
 contain the same number of items. 
 
-@item @var{real-option} = @var{expression};
-Affects @var{expression} to a real option.
+@item @var{string} += @var{expression};
+Adds and affects @var{expression} to an existing expression identifier.
 
-@item @var{char-option} = @var{char-expression};
-Affects @var{char-expression} to a character option.
+@item @var{string} -= @var{expression};
+Subtracts and affects @var{expression} to an existing expression identifier.
 
-@item @var{color-option} = @var{color-expression};
-Affects @var{color-expression} to a color option.
+@item @var{string} *= @var{expression};
+Multiplies and affects @var{expression} to an existing expression identifier.
 
-@item @var{string} | @var{real-option} += @var{expression};
-Adds and affects @var{expression} to an existing expression identifier or to
-a real option.
+@item @var{string} /= @var{expression};
+Divides and affects @var{expression} to an existing expression identifier.
 
-@item @var{string} | @var{real-option} -= @var{expression};
-Subtracts and affects @var{expression} to an existing expression identifier
-or to a real option.
-
-@item @var{string} | @var{real-option} *= @var{expression};
-Multiplies and affects @var{expression} to an existing expression identifier
-or to a real option.
-
-@item @var{string} | @var{real-option} /= @var{expression};
-Divides and affects @var{expression} to an existing expression identifier
-or to a real option.
-
-@item @var{string} [ ] += @{ @var{expression-list} @};
+@item @var{string} += @{ @var{expression-list} @};
 Appends @var{expression-list} to an existing expression list or creates
-a new expression list with @var{expression-list}).
+a new expression list with @var{expression-list}.
 
-@item @var{string} [ ] -= @{ @var{expression-list} @};
-Removes the items in @var{expression-list} from the existing expression.
+@item @var{string} -= @{ @var{expression-list} @};
+Removes the items in @var{expression-list} from the existing expression list.
 
 @item @var{string} [ @{ @var{expression-list} @} ] += @{ @var{expression-list} @};
 Adds and affects, item per item, the right hand side @var{expression-list}
@@ -1879,6 +1866,31 @@ Multiplies and affects, item per item, the right hand side
 @item @var{string} [ @{ @var{expression-list} @} ] /= @{ @var{expression-list} @};
 Divides and affects, item per item, the right hand side
 @var{expression-list} to an existing expression list identifier.
+
+@item @var{string} = @var{char-expression};
+Creates a new character expression identifier @code{@var{string}} with a
+given @var{char-expression}.
+
+@item @var{real-option} = @var{expression};
+Affects @var{expression} to a real option.
+
+@item @var{char-option} = @var{char-expression};
+Affects @var{char-expression} to a character option.
+
+@item @var{color-option} = @var{color-expression};
+Affects @var{color-expression} to a color option.
+
+@item @var{real-option} += @var{expression};
+Adds and affects @var{expression} to a real option.
+
+@item @var{real-option} -= @var{expression};
+Subtracts and affects @var{expression} to a real option.
+
+@item @var{real-option} *= @var{expression};
+Multiplies and affects @var{expression} to a real option.
+
+@item @var{real-option} /= @var{expression};
+Divides and affects @var{expression} to a real option.
 
 @item Exit;
 Aborts the current script.

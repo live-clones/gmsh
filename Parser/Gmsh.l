@@ -158,6 +158,7 @@ Knots			return tNurbsKnots;
 
 Length                  return tLength;
 Line                    return tLine;
+List                    return tList;
 Log                     return tLog;
 Log10                   return tLog10;
 Layers                  return tLayers;
@@ -258,7 +259,7 @@ void parsestring(char endchar)
 {
   int c;
   char tmp[1024];
-  
+
   // Note that we keep special characters (end-of-line \n, tabs \t,
   // etc.) "as is" in the output string: see yyinput() above
   int i = 0;
