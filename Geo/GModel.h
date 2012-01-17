@@ -364,7 +364,7 @@ class GModel
   // mesh the model
   int mesh(int dimension);
 
-  // adapt the mesh anisotropically using a metric that is computed from a function f(x,y,z). 
+  // adapt the mesh anisotropically using a metric that is computed from a scalar function f(x,y,z). 
   // One can either 
   //   For all algorithms
   //           parameters[1] = lcmin (default : in global gmsh options CTX::instance()->mesh.lcMin) 

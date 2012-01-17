@@ -723,7 +723,7 @@ double backgroundMesh::operator() (double u, double v, double w) const
   double uv2[3];
   MElement *e = _octree->find(u, v, w, 2, true);
   if (!e) {
-    Msg::Error("cannot find %g %g %g", u, v, w);
+    Msg::Error("BGM octree: cannot find %g %g %g", u, v, w);
     return -1000.0;//0.4;
   }
   e->xyz2uvw(uv, uv2);
@@ -739,7 +739,7 @@ double backgroundMesh::getAngle(double u, double v, double w) const
   double uv2[3];
   MElement *e = _octree->find(u, v, w, 2, true);
   if (!e) {
-    Msg::Error("cannot find %g %g %g", u, v, w);
+    Msg::Error("BGM octree : cannot find %g %g %g", u, v, w);
     return 0.0;
   }
   e->xyz2uvw(uv, uv2);

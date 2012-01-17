@@ -46,6 +46,7 @@
 #define UNION     13
 #define INTER     14
 #define CRACK     15
+#define DISK     16
 
 class gLevelset : public simpleFunction<double>
 {
@@ -143,6 +144,7 @@ public:
   // define the plane _a*x+_b*y+_c*z+_d, with outward normal (a,b,c)
   gLevelsetPlane (const double _a, const double _b, const double _c, const double _d, int tag=1) : gLevelsetPrimitive(tag), a(_a), b(_b), c(_c), d(_d) {}
   // define the plane passing through the point pt and with outward normal norm
+  gLevelsetPlane (const std::vector<double> &pt, const std::vector<double> &norm, int tag=1);
   gLevelsetPlane (const double *pt, const double *norm, int tag=1);
   // define the plane passing through the 3 points pt1,pt2,pt3 and with outward normal (pt1,pt2)x(pt1,pt3)
   gLevelsetPlane (const double *pt1, const double *pt2, const double *pt3, int tag=1);
@@ -154,6 +156,8 @@ public:
     {return a * x + b * y + c * z + d;} 
   int type() const {return PLANE;}
 };
+
+
 
 class gLevelsetPoints : public gLevelsetPrimitive
 {
@@ -276,9 +280,14 @@ public:
 class gLevelsetDistGeom: public gLevelsetPrimitive
 {
   cartesianBox<double> *_box;
+  GModel *modelBox, *modelGeom;
 public:
   gLevelsetDistGeom(std::string g, std::string f, int tag=1);
-  ~gLevelsetDistGeom(){if (_box) delete _box; }
+  ~gLevelsetDistGeom(){
+    delete modelBox;
+    delete modelGeom;
+    if (_box) delete _box;
+  }
   double operator () (const double x, const double y, const double z) const;
   int type() const { return UNKNOWN; }
 };
@@ -404,18 +413,20 @@ public:
 class gLevelsetCrack : public gLevelsetTools
 {
 public:
-  gLevelsetCrack (std::vector<gLevelset *> p) {
+  gLevelsetCrack (std::vector<gLevelset *> p, bool delC=false) {
     if (p.size() != 2)
       printf("Error : gLevelsetCrack needs 2 levelsets\n");
     children.push_back(p[0]);
     children.push_back(new gLevelsetReverse(p[0]));
     if(p[1]) children.push_back(p[1]);
+    _delChildren = delC;
   }
   double choose (double d1, double d2) const {
     return (d1 > d2) ? d1 : d2; // greater of d1 and d2
   }
   int type2() const {return CRACK;}
 };
+
 
 // --------------------------------------------------------------------------------------------------------------
 // IMPROVED LEVELSET
@@ -476,6 +487,7 @@ public:
   // tags of the faces are : exterior face :             tag+0
   //                         plane face including pt :   tag+1
   //                         plane face opposite to pt : tag+2
+  gLevelsetCylinder (const std::vector<double> &pt, const std::vector<double> &dir, const double &R, const double &H, int tag=1);
   gLevelsetCylinder (const double *pt, const double *dir, const double &R, const double &H, int tag=1);
   // create a cylinder : pt is the point in the middle of the cylinder base,
   //                     dir is the direction of the cylinder axis,
@@ -529,5 +541,32 @@ public:
   int type() const {return CONROD;}
 };
 
+/* class gLevelsetDisk : public gLevelsetTools */
+/* { */
+/* public: */
+/*    // define the disk of given radius centered at a point pt and with outward normal norm */
+/*   gLevelsetDisk (std::vector<double> pt, std::vector<double> dir, const double R, bool delC=false) { */
+/*     double *ptP, *normP; */
+/*     ptP[0] = pt[0]; ptP[1] = pt[1]; ptP[2] = pt[2];  */
+/*     normP[0] = dir[0];normP[1] = dir[1]; normP[2] = dir[2];  */
+/*     gLevelsetPlane *plane = new gLevelsetPlane(ptP, normP); */
+/*     children.push_back(plane);  */
+/*     children.push_back(new gLevelsetReverse(plane)); */
+/*     double H = 4.*R; */
+/*     double *ptC, *normC; */
+/*     double val = sqrt(dir[0]*dir[0]+dir[1]*dir[1]+dir[2]*dir[2]); */
+/*     normC[0] = dir[0]/val; normC[1] = dir[1]/val; normC[2] = dir[2]/val; */
+/*     ptC[0] = pt[0]-2.*R*normC[0]; */
+/*     ptC[1] = pt[1]-2.*R*normC[1]; */
+/*     ptC[2] = pt[2]-2.*R*normC[2]; */
+/*     gLevelsetCylinder *cyl = new gLevelsetCylinder(ptC, normC, R, H); */
+/*     children.push_back(cyl); */
+/*     _delChildren = delC; */
+/*   } */
+/*   double choose (double d1, double d2) const { */
+/*     return (d1 > d2) ? d1 : d2; // greater of d1 and d2 */
+/*   } */
+/*   int type2() const {return DISK;} */
+/* }; */
 
 #endif
