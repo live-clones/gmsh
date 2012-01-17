@@ -784,7 +784,7 @@ gLevelsetDistGeom::gLevelsetDistGeom(std::string box, std::string geom, int tag)
   _box->createNodalValues();
 
   //Msg::Info("Computing levelset on the cartesian grid");  
-  computeLevelset(gm, *_box);
+  computeLevelset(modelGeom, *_box);
 
   //Msg::Info("Renumbering mesh vertices across levels");
   _box->renumberNodes();
