@@ -11,6 +11,8 @@
 
 #include <vector>
 #include <map>
+#include <set>
+#include <list>
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -25,6 +27,129 @@
 #if defined(HAVE_ANN)
 #include <ANN/ANN.h>
 
+#include <algorithm>
+
+void erase(std::vector<MLine*>& lines, MLine* l) {
+  std::vector<MLine*>::iterator it = std::remove(lines.begin(), lines.end(), l);
+  lines.erase(it, lines.end());
+}
+double computeLength(std::vector<MLine*> lines){
+
+  double length= 0.0;
+  for (int i = 0; i< lines.size(); i++){
+    length += lines[i]->getInnerRadius(); 
+  }
+  return length;
+}
+
+void orderMLines(std::vector<MLine*> &lines) { //, std::set<MVertex*> & junctions, MVertex *vB, MVertex *vE){
+
+  std::vector<MLine*> _m;
+  std::list<MLine*> segments;
+  std::map<MVertex*, MLine*> boundv;
+  std::vector<int> _orientation;
+
+  // store all lines in a list : segments
+  for (unsigned int i = 0; i < lines.size(); i++){
+    segments.push_back(lines[i]);
+  }
+
+  // find a lonely MLine
+  for (std::list<MLine*>::iterator it = segments.begin(); 
+       it != segments.end(); ++it){
+    MVertex *vL = (*it)->getVertex(0);
+    MVertex *vR = (*it)->getVertex(1);
+    std::map<MVertex*,MLine*>::iterator it1 = boundv.find(vL);
+    if (it1 == boundv.end()) boundv.insert(std::make_pair(vL,*it));
+    else  boundv.erase(it1);
+    std::map<MVertex*,MLine*>::iterator it2 = boundv.find(vR);
+    if (it2 == boundv.end()) boundv.insert(std::make_pair(vR,*it));
+    else boundv.erase(it2);
+  }
+
+  // find the first MLine and erase it from the list segments
+  MLine *firstLine;
+  if (boundv.size() == 2){   // non periodic
+    firstLine = (boundv.begin())->second;
+    for (std::list<MLine*>::iterator it = segments.begin(); 
+         it != segments.end(); ++it){
+      if (*it == firstLine){
+        segments.erase(it);
+        break;
+      }
+    }
+  }
+  else if (boundv.size() == 0){ // periodic
+    firstLine = *(segments.begin());
+    segments.erase(segments.begin());
+  }
+  else{
+    Msg::Error("line is wrong (it has %d end points)", 
+               boundv.size());
+  }
+
+  // loop over all segments to order segments and store it in the list _m
+  _m.push_back(firstLine);
+  _orientation.push_back(1);
+  MVertex *first = _m[0]->getVertex(0);
+  MVertex *last = _m[0]->getVertex(1);
+  while (first != last){
+    if (segments.empty())break;
+    bool found = false;
+    for (std::list<MLine*>::iterator it = segments.begin(); 
+         it != segments.end(); ++it){
+      MLine *e = *it;
+      if (e->getVertex(0) == last){
+        _m.push_back(e);
+        segments.erase(it);
+        _orientation.push_back(1);
+        last = e->getVertex(1);
+        found = true;
+        break;
+      }
+      else if (e->getVertex(1) == last){
+        _m.push_back(e);
+        segments.erase(it);
+        _orientation.push_back(0);
+        last = e->getVertex(0);
+        found = true;
+        break;
+      }
+    }
+    if (!found  && _orientation[0]==1){ //reverse orientation of first Line
+      if (_m.size() == 1 ){
+        MVertex *temp = first;
+        first = last;
+        last = temp;
+        _orientation[0] = 0;
+      }
+      else {
+        Msg::Error("lines is wrong");
+        return;
+      }
+    }
+  }
+
+  //lines is now a list of ordered MLines
+  lines = _m;
+  
+  //special case reverse orientation
+  if (lines.size() < 2) return;
+  if (_orientation[0] && lines[0]->getVertex(1) != lines[1]->getVertex(1)
+      && lines[0]->getVertex(1) != lines[1]->getVertex(0)){
+    for (unsigned int i = 0; i < lines.size(); i++) 
+      _orientation[i] = !_orientation[i];
+  }
+
+  // if (junctions.find(lines[0]->getVertex(0)) != junctions.end()) vB =  lines[0]->getVertex(0);
+  // else if (junctions.find(lines[0]->getVertex(1)) != junctions.end()) vB =  lines[0]->getVertex(1);
+  // else printf("no vB junc found %d %d \n", lines[0]->getVertex(0)->getNum(), lines[0]->getVertex(1)->getNum());
+  // if (junctions.find(lines[lines.size()-1]->getVertex(0)) != junctions.end()) vE =  lines[lines.size()-1]->getVertex(0);
+  // else if (junctions.find(lines[lines.size()-1]->getVertex(1)) != junctions.end()) vE =  lines[lines.size()-1]->getVertex(1);	
+  // else printf("no vE junc found %d %d \n", lines[0]->getVertex(0)->getNum(), lines[0]->getVertex(1)->getNum());
+  // printf("in order vB= %d =%d \n", vB->getNum(), vE->getNum());
+}
+
 Centerline::Centerline(std::string fileName): kdtree(0), nodes(0){
 
   index = new ANNidx[1];
@@ -33,7 +158,6 @@ Centerline::Centerline(std::string fileName): kdtree(0), nodes(0){
 
   importFile(fileName);
   buildKdTree();
-
 
 }
 Centerline::Centerline(): kdtree(0), nodes(0){
@@ -64,44 +188,158 @@ void Centerline::importFile(std::string fileName){
   
   std::vector<GEntity*> entities ;
   mod->getEntities(entities) ; 
-    
+   
+  int maxN = 0.0;
   for(unsigned int i = 0; i < entities.size(); i++){
      if( entities[i]->dim() == 1){
      for(unsigned int ele = 0; ele < entities[i]->getNumMeshElements(); ele++){ 
        MLine *l = (MLine*) entities[i]->getMeshElement(ele);
        MVertex *v0 = l->getVertex(0);
        MVertex *v1 = l->getVertex(1);
-       std::map<MVertex*, int>::iterator it0 = color.find(v0);
-       std::map<MVertex*, int>::iterator it1 = color.find(v1);
-       if (it0 == color.end() || it1 == color.end()) lines.push_back(l);
-       if (it0 == color.end()) color.insert(std::make_pair(v0, entities[i]->tag()));
-       if (it1 == color.end()) color.insert(std::make_pair(v1, entities[i]->tag()));
+       std::map<MVertex*, int>::iterator it0 = colorp.find(v0);
+       std::map<MVertex*, int>::iterator it1 = colorp.find(v1);
+       if (it0 == colorp.end() || it1 == colorp.end()){
+	 lines.push_back(l);
+	 colorl.insert(std::make_pair(l, entities[i]->tag()));
+	 maxN = std::max(maxN, entities[i]->tag());
+       }
+       if (it0 == colorp.end()) colorp.insert(std::make_pair(v0, entities[i]->tag()));
+       if (it1 == colorp.end()) colorp.insert(std::make_pair(v1, entities[i]->tag()));
      }
    }
  }
+
+  //splitEdges
+  splitEdges(maxN);
+
   current->setAsCurrent();
 
 }
+
+void Centerline::splitEdges(int maxN){
+
+  //sort colored lines and create edges
+  std::vector<std::vector<MLine*> > color_edges;
+  color_edges.resize(maxN);
+  std::multiset<MVertex*> allV;
+  std::map<MLine*, int>::iterator itl = colorl.begin();
+  while (itl != colorl.end()){
+    int color = itl->second;
+    MLine* l = itl->first;
+    allV.insert(l->getVertex(0));
+    allV.insert(l->getVertex(1));
+    color_edges[color-1].push_back(l);
+    itl++;
+  }
+
+  //detect junctions
+  std::multiset<MVertex*>::iterator it = allV.begin();
+  for ( ; it != allV.end(); ++it){
+    if (allV.count(*it) != 2) {
+      junctions.insert(*it);
+    }
+  }
+   
+  //split edges
+  int tag = 0;
+  for(unsigned int i = 0; i < color_edges.size(); ++i){
+    std::vector<MLine*> lines = color_edges[i];
+    while (!lines.empty()) {
+      std::vector<MLine*> myLines;
+      std::vector<MLine*>::iterator itl = lines.begin();
+      MVertex *vB = (*itl)->getVertex(0);
+      MVertex *vE = (*itl)->getVertex(1);
+      myLines.push_back(*itl);
+      erase(lines, *itl); 
+      itl = lines.begin();
+      while ( !( junctions.find(vE) != junctions.end() &&
+		 junctions.find(vB) != junctions.end()) ) {
+  	MVertex *v1 = (*itl)->getVertex(0);
+  	MVertex *v2 = (*itl)->getVertex(1);
+      	if (v1 == vE){
+    	  myLines.push_back(*itl);
+  	  erase(lines, *itl);
+	  itl = lines.begin();
+  	  vE = v2;
+  	}
+  	else if ( v2 == vE){
+    	  myLines.push_back(*itl);
+  	  erase(lines, *itl);
+	  itl = lines.begin();
+  	  vE = v1;
+  	}
+  	else if ( v1 == vB){
+    	  myLines.push_back(*itl);
+  	  erase(lines, *itl);
+	  itl = lines.begin();
+  	  vB = v2;
+  	}
+  	else if ( v2 == vB){
+   	  myLines.push_back(*itl);
+	  erase(lines, *itl);
+	  itl = lines.begin();
+  	  vB = v1;
+  	}
+	else itl++;
+      }
+      if (vB == vE) { Msg::Error("Begin and end points branch are the same \n");break;}
+      orderMLines(myLines); //, junctions, vBB, vEE);
+      std::vector<Branch> children;
+      Branch newBranch ={ tag++, myLines, computeLength(myLines), vB, vE, children};
+      //printf("VB = %d %d \n", vB->getNum(), vE->getNum());
+      edges.push_back(newBranch) ;
+    }
+  }
+  
+  //create new edges
+  printf("edges =%d new =%d \n", color_edges.size(), edges.size());
+
+  //create children
+  for(unsigned int i = 0; i < edges.size(); ++i) {
+    MVertex *vE = edges[i].vE;
+    std::vector<Branch> myChildren;
+    for (std::vector<Branch>::iterator it = edges.begin(); it != edges.end(); ++it){
+      Branch myBranch = *it;
+      if (myBranch.vB == vE) myChildren.push_back(myBranch);
+    }
+    edges[i].children = myChildren;
+  }
+
+  //print info
+  // for(unsigned int i = 0; i < edges.size(); ++i) {
+  //   printf("EDGE =%d  tag=%d length = %g childs = %d \n", i, edges[i].tag, edges[i].length, edges[i].children.size());
+  //    for(unsigned int j = 0; j < edges[i].children.size(); ++j) {
+  //      printf("children (%d) =%d \n", edges[i].children.size(),  edges[i].children[j].tag);
+  //    }
+  // }
+
+  // std::set<MVertex*>::iterator itj = junctions.begin();
+  // for ( ; itj != junctions.end(); ++itj){
+  //   MVertex *v = *itj;
+  //   printf("JUNC = %d \n", v->getNum());
+  // }
+
+}
+
 void Centerline::buildKdTree(){
 
   FILE * f = fopen("myPOINTS.pos","w");
   fprintf(f, "View \"\"{\n");
 
-  int nbPL = 10;
+  int nbPL = 3;  //10 points per line
   int nbNodes  = (lines.size()+1) + (nbPL*lines.size());
 
   nodes = annAllocPts(nbNodes, 3);
   int ind = 0;
-  std::map<MVertex*,int >::iterator itmap = color.begin();
-  while (itmap != color.end()){
-     MVertex *v = itmap->first;
+  std::map<MVertex*, int>::iterator itp = colorp.begin();
+  while (itp != colorp.end()){
+     MVertex *v = itp->first;
      nodes[ind][0] = v->x(); 
      nodes[ind][1] = v->y(); 
      nodes[ind][2] = v->z(); 
-     itmap++; ind++;
+     itp++; ind++;
   }
-  //10 points per line
- for(unsigned int k = 0; k < lines.size(); ++k){
+  for(unsigned int k = 0; k < lines.size(); ++k){ 
    MVertex *v0 = lines[k]->getVertex(0);
    MVertex *v1 = lines[k]->getVertex(1);
    SVector3 P0(v0->x(),v0->y(), v0->z());
@@ -155,22 +393,70 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
 
 void Centerline::printSplit() const{
 
-  FILE * f = fopen("centerlineSPLIT.pos","w");
+  FILE * f = fopen("mySPLIT.pos","w");
   fprintf(f, "View \"\"{\n");
 
-  for(unsigned int i = 0; i < lines.size(); ++i){
-      MLine *l = lines[i];
-      std::map<MVertex*,int>::const_iterator it0 = 
-        color.find(l->getVertex(0));
-      std::map<MVertex*,int>::const_iterator it1 = 
-        color.find(l->getVertex(1));
+ //  for(unsigned int i = 0; i < lines.size(); ++i){
+ //    MLine *l = lines[i];
+ //    std::map<MLine*,int>::const_iterator itc =  colorl.find(l);
+ //    std::map<MVertex*,int>::const_iterator it0 = 
+ //      colorp.find(l->getVertex(0));
+ //    std::map<MVertex*,int>::const_iterator it1 = 
+ //      colorp.find(l->getVertex(1));
+ //    fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
+ // 	    l->getVertex(0)->x(), l->getVertex(0)->y(), l->getVertex(0)->z(),
+ // 	    l->getVertex(1)->x(), l->getVertex(1)->y(), l->getVertex(1)->z(),
+ // 	    (double)itc->second,(double)itc->second);
+ //  }
+ //  std::map<MVertex*,int>::const_iterator itp = colorp.begin();
+ //  while (itp != colorp.end()){
+ //    MVertex *v =  itp->first;
+ //    fprintf(f, "SP(%g,%g,%g){%g};\n",
+ // 	    v->x(),  v->y(), v->z(),
+ // 	    0.0);
+ //    itp++;
+ // }
+ 
+  for(unsigned int i = 0; i < edges.size(); ++i){
+    std::vector<MLine*> lines = edges[i].lines;
+    for(unsigned int k = 0; k < lines.size(); ++k){
+      MLine *l = lines[k];
       fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
-              l->getVertex(0)->x(), l->getVertex(0)->y(), l->getVertex(0)->z(),
-              l->getVertex(1)->x(), l->getVertex(1)->y(), l->getVertex(1)->z(),
-  	      (double)it0->second,(double)it1->second);
-   }
+	      l->getVertex(0)->x(), l->getVertex(0)->y(), l->getVertex(0)->z(),
+	      l->getVertex(1)->x(), l->getVertex(1)->y(), l->getVertex(1)->z(),
+	      (double)i, (double)i);
+    }
+  }
+
   fprintf(f,"};\n");
   fclose(f);
+
+  FILE * f2 = fopen("myCOLORS.pos","w");
+  fprintf(f2, "View \"\"{\n");
+   std::map<MVertex*, int>::const_iterator itp = colorp.begin();
+   while (itp != colorp.end()){
+     MVertex *v =  itp->first;
+     fprintf(f2, "SP(%g,%g,%g){%g};\n",
+  	    v->x(),  v->y(), v->z(),
+  	     (double)v->getNum());
+     itp++; 
+  }
+  fprintf(f2,"};\n");
+  fclose(f2);
+
+  FILE * f3 = fopen("myJUNCTIONS.pos","w");
+  fprintf(f3, "View \"\"{\n");
+   std::set<MVertex*>::const_iterator itj = junctions.begin();
+   while (itj != junctions.end()){
+     MVertex *v =  *itj;
+     fprintf(f3, "SP(%g,%g,%g){%g};\n",
+	     v->x(),  v->y(), v->z(),
+	     (double)v->getNum());
+     itj++; 
+  }
+  fprintf(f3,"};\n");
+  fclose(f3);
+ 
  
 }
 

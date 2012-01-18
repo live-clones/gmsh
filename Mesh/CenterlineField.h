@@ -11,6 +11,7 @@
 
 #include <vector>
 #include <map>
+#include <set>
 #include <string>
 #include "Field.h"
 class GModel;
@@ -21,6 +22,15 @@ class GEntity;
 #if defined(HAVE_ANN)
 #include <ANN/ANN.h>
 class ANNkd_tree;
+
+struct Branch{
+  int tag;
+  std::vector<MLine*> lines;
+  double length;
+  MVertex *vB;
+  MVertex *vE;
+  std::vector<Branch> children;
+};
 
 class Centerline : public Field{
 
@@ -37,6 +47,7 @@ class Centerline : public Field{
   ~Centerline();
 
   void importFile(std::string fileName);
+  void splitEdges(int maxN);
 
   virtual bool isotropic () const {return false;}
   virtual const char *getName()
@@ -58,7 +69,11 @@ class Centerline : public Field{
   void buildKdTree();
 
   std::vector<MLine*> lines;
-  std::map<MVertex*,int> color;
+  std::vector<Branch> edges;
+  std::map<MVertex*,int> colorp;
+  std::map<MLine*,int> colorl;
+
+  std::set<MVertex*> junctions;
 
 };
 #endif
