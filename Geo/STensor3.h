@@ -283,7 +283,7 @@ class STensor3 {
   }
   double trace() const
   {
-    return ((_val[0]+_val[4]+_val[8])/3.);
+    return ((_val[0]+_val[4]+_val[8]));
   }
 
   double dotprod() const
