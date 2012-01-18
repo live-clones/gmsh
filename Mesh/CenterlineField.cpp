@@ -185,10 +185,11 @@ void Centerline::importFile(std::string fileName){
   mod = new GModel();
   mod->readVTK(fileName.c_str());
   mod->removeDuplicateMeshVertices(1.e-8);
-  
   std::vector<GEntity*> entities ;
-  mod->getEntities(entities) ; 
-   
+  mod->getEntities(entities) ;
+
+  current->setAsCurrent();
+    
   int maxN = 0.0;
   for(unsigned int i = 0; i < entities.size(); i++){
      if( entities[i]->dim() == 1){
@@ -209,14 +210,13 @@ void Centerline::importFile(std::string fileName){
    }
  }
 
-  //splitEdges
-  splitEdges(maxN);
+  createBranches(maxN);
 
-  current->setAsCurrent();
-
+ 
 }
 
-void Centerline::splitEdges(int maxN){
+
+void Centerline::createBranches(int maxN){
 
   //sort colored lines and create edges
   std::vector<std::vector<MLine*> > color_edges;
@@ -283,15 +283,13 @@ void Centerline::splitEdges(int maxN){
 	else itl++;
       }
       if (vB == vE) { Msg::Error("Begin and end points branch are the same \n");break;}
-      orderMLines(myLines); //, junctions, vBB, vEE);
+      orderMLines(myLines); 
       std::vector<Branch> children;
-      Branch newBranch ={ tag++, myLines, computeLength(myLines), vB, vE, children};
+      Branch newBranch ={ tag++, myLines, computeLength(myLines), vB, vE, children, 1.e6, 0.0};
       //printf("VB = %d %d \n", vB->getNum(), vE->getNum());
       edges.push_back(newBranch) ;
     }
   }
-  
-  //create new edges
   printf("edges =%d new =%d \n", color_edges.size(), edges.size());
 
   //create children
@@ -304,6 +302,10 @@ void Centerline::splitEdges(int maxN){
     }
     edges[i].children = myChildren;
   }
+
+  //compute radius
+  distanceToLines();
+  computeRadii();
 
   //print info
   // for(unsigned int i = 0; i < edges.size(); ++i) {
@@ -321,6 +323,69 @@ void Centerline::splitEdges(int maxN){
 
 }
 
+void Centerline::distanceToLines(){
+
+  std::vector<SPoint3> pts;
+  std::set<SPoint3> pts_set;
+  std::vector<double> distances;
+  std::vector<double> distancesE;
+  std::vector<SPoint3> closePts;
+
+  GModel *current = GModel::current();
+  std::vector<GEntity*> _entities ;
+  current->getEntities(_entities) ; 
+  for(unsigned int i = 0; i < _entities.size(); i++){
+    if( _entities[i]->dim() != 2) continue;
+    for(unsigned int j = 0; j < _entities[i]->getNumMeshElements(); j++){ 
+       MElement *e = _entities[i]->getMeshElement(j);
+       for (int k = 0; k < e->getNumVertices(); k++){
+	 MVertex *v = e->getVertex(k);
+	 pts_set.insert(SPoint3(v->x(), v->y(),v->z()));
+       }
+    }
+  }
+  std::set<SPoint3>::iterator its =  pts_set.begin();
+  for (; its != pts_set.end(); its++){
+    pts.push_back(*its);
+  } 
+  if (pts.size() == 0) {Msg::Error("Centerline needs a GModel with a surface \n"); exit(1);}
+ 
+  for(unsigned int i = 0; i < lines.size(); i++){
+    std::vector<double> iDistances;
+    std::vector<SPoint3> iClosePts;
+    std::vector<double> iDistancesE;
+    MLine *l = lines[i];
+    MVertex *v1 = l->getVertex(0);
+    MVertex *v2 = l->getVertex(1);
+    SPoint3 p1(v1->x(), v1->y(), v1->z());
+    SPoint3 p2(v2->x(), v2->y(), v2->z());
+    signedDistancesPointsLine(iDistances, iClosePts, pts, p1,p2);
+
+    double minRad = std::abs(iDistances[0]);
+    for (unsigned int kk = 1; kk< pts.size(); kk++) {
+      if (std::abs(iDistances[kk]) < minRad)
+	minRad = std::abs(iDistances[kk]);
+    }
+    radiusl.insert(std::make_pair(lines[i], minRad)); 
+  }
+     
+}
+void Centerline::computeRadii(){
+
+  for(unsigned int i = 0; i < edges.size(); ++i) {
+    std::vector<MLine*> lines = edges[i].lines;
+    for(unsigned int j = 0; j < lines.size(); ++j) {
+      MLine *l = lines[j];
+      std::map<MLine*,double>::iterator itr = radiusl.find(l);
+      if (itr != radiusl.end()){
+	edges[i].minRad = std::min(itr->second, edges[i].minRad);
+	edges[i].maxRad = std::min(itr->second, edges[i].maxRad);
+      }
+      else printf("ARGG line not found \n");
+    }    
+  }
+
+}
 void Centerline::buildKdTree(){
 
   FILE * f = fopen("myPOINTS.pos","w");
@@ -388,6 +453,7 @@ double Centerline::operator() (double x, double y, double z, GEntity *ge){
 }
 
 void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge){
+  Msg::Error("This anisotropic operator of CenterlineField is not implemnted yet ");
   return;
 }
 
@@ -395,28 +461,6 @@ void Centerline::printSplit() const{
 
   FILE * f = fopen("mySPLIT.pos","w");
   fprintf(f, "View \"\"{\n");
-
- //  for(unsigned int i = 0; i < lines.size(); ++i){
- //    MLine *l = lines[i];
- //    std::map<MLine*,int>::const_iterator itc =  colorl.find(l);
- //    std::map<MVertex*,int>::const_iterator it0 = 
- //      colorp.find(l->getVertex(0));
- //    std::map<MVertex*,int>::const_iterator it1 = 
- //      colorp.find(l->getVertex(1));
- //    fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
- // 	    l->getVertex(0)->x(), l->getVertex(0)->y(), l->getVertex(0)->z(),
- // 	    l->getVertex(1)->x(), l->getVertex(1)->y(), l->getVertex(1)->z(),
- // 	    (double)itc->second,(double)itc->second);
- //  }
- //  std::map<MVertex*,int>::const_iterator itp = colorp.begin();
- //  while (itp != colorp.end()){
- //    MVertex *v =  itp->first;
- //    fprintf(f, "SP(%g,%g,%g){%g};\n",
- // 	    v->x(),  v->y(), v->z(),
- // 	    0.0);
- //    itp++;
- // }
- 
   for(unsigned int i = 0; i < edges.size(); ++i){
     std::vector<MLine*> lines = edges[i].lines;
     for(unsigned int k = 0; k < lines.size(); ++k){
@@ -427,7 +471,6 @@ void Centerline::printSplit() const{
 	      (double)i, (double)i);
     }
   }
-
   fprintf(f,"};\n");
   fclose(f);
 
@@ -456,7 +499,19 @@ void Centerline::printSplit() const{
   }
   fprintf(f3,"};\n");
   fclose(f3);
- 
+
+  FILE * f4 = fopen("myRADII.pos","w");
+  fprintf(f4, "View \"\"{\n");
+  for(unsigned int i = 0; i < lines.size(); ++i){
+    MLine *l = lines[i];
+    std::map<MLine*,double>::const_iterator itc =  radiusl.find(l);
+    fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
+ 	    l->getVertex(0)->x(), l->getVertex(0)->y(), l->getVertex(0)->z(),
+ 	    l->getVertex(1)->x(), l->getVertex(1)->y(), l->getVertex(1)->z(),
+ 	    itc->second,itc->second);
+  }
+  fprintf(f4,"};\n");
+  fclose(f4);
  
 }
 

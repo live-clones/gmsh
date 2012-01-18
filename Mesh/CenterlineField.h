@@ -23,6 +23,7 @@ class GEntity;
 #include <ANN/ANN.h>
 class ANNkd_tree;
 
+// A branch of a 1D tree
 struct Branch{
   int tag;
   std::vector<MLine*> lines;
@@ -30,10 +31,20 @@ struct Branch{
   MVertex *vB;
   MVertex *vE;
   std::vector<Branch> children;
+  double minRad;
+  double maxRad;
 };
+
+// This class takes as input A 1D mesh which is the centerline
+// of a tubular 2D surface mesh
+// It computes a mesh size field function of the distance to the centerlines
+// and a cross field that is the direction of the centerline 
+// It splits the tubular structure in many mesh partitions
+// along planes perpendicuar to the centerlines 
 
 class Centerline : public Field{
 
+ protected: 
   ANNkd_tree *kdtree; 
   ANNpointArray nodes;
   ANNidxArray index;
@@ -41,13 +52,22 @@ class Centerline : public Field{
   GModel *mod;
   std::string fileName;
 
+  //all (unique) lines of centerlines
+  std::vector<MLine*> lines;
+  //the stuctured tree of the centerlines
+  std::vector<Branch> edges;
+  //the radius of the surface mesh at a given line
+  std::map<MLine*,double> radiusl;
+  //the junctions of the tree
+  std::set<MVertex*> junctions;
+  //some colors (int) for all points and lines
+  std::map<MVertex*,int> colorp;
+  std::map<MLine*,int> colorl;
+
  public:
   Centerline(std::string fileName);
   Centerline();
   ~Centerline();
-
-  void importFile(std::string fileName);
-  void splitEdges(int maxN);
 
   virtual bool isotropic () const {return false;}
   virtual const char *getName()
@@ -62,18 +82,35 @@ class Centerline : public Field{
 " using the following script:\n\n"
 "vmtk vmtkcenterlines -seedselector openprofiles -ifile mysurface.stl -ofile centerlines.vtp --pipe vmtksurfacewriter -ifile centerlines.vtp -ofile centerlines.vtk\n";
   }
+
+  //isotropic operator for mesh size field function of distance to centerline
   double operator() (double x, double y, double z, GEntity *ge=0);
+  //anisotropic operator
   void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0);
 
-  void printSplit() const;
+  //import the 1D mesh of the centerlines (in vtk format)
+  //and fill the vector of lines
+  void importFile(std::string fileName);
+
+  //refine the 1D mesh to have many points on the 1D centerlines 
+  //for annKDTree distance computations
   void buildKdTree();
 
-  std::vector<MLine*> lines;
-  std::vector<Branch> edges;
-  std::map<MVertex*,int> colorp;
-  std::map<MLine*,int> colorl;
+  //Creates the branch structure (topology, connectivity) from the 
+  //vector of lines
+  void createBranches(int maxN);
 
-  std::set<MVertex*> junctions;
+  //Computes for the Branches the min and maxRadius of the tubular structure
+  //this function needs teh current GModel
+  void computeRadii();
+
+  //Computes for each MLine the minRadius
+  void distanceToLines();
+  
+  //Print for debugging
+  void printSplit() const;
+ 
+
 
 };
 #endif
