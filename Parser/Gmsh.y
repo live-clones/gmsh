@@ -3649,9 +3649,9 @@ Coherence :
 //  H O M O L O G Y
 
 HomologyCommand :
-tHomology { $$ = (char*)"Generators"; }
-| tCohomology { $$ = (char*)"DualGenerators"; }
-;
+    tHomology { $$ = (char*)"Generators"; }
+  | tCohomology { $$ = (char*)"DualGenerators"; }
+ ;
 
 Homology :
     HomologyCommand tEND
@@ -3687,7 +3687,7 @@ Homology :
       List_Delete($3);
       List_Delete($5);
     }
-;
+ ;
 
 //  G E N E R A L
 
