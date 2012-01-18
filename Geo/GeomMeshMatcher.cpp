@@ -155,7 +155,7 @@ GeomMeshMatcher::matchVertices(GModel* m1, GModel *m2, bool& ok)
     //m2->add(*vert);
 
   Msg::Info("Vertices matched : %i / %i (%i)\n", num_matched_vertices, num_total_vertices, num_mesh_vertices);
-  if(num_matched_vertices != num_total_vertices) ok = false;
+  //if(num_matched_vertices != num_total_vertices) ok = false;
   return (coresp_v);
 }
 
@@ -225,16 +225,17 @@ GeomMeshMatcher::matchEdges(GModel* m1, GModel* m2,
     choice->setTag(((GEdge*) *entity1)->tag());
 
     // This reverses the edge if it's not parametrized in the right direction
+/*
     if (choice->getBeginVertex() == findMatching<GVertex*>(*coresp_v,v2) &&
         choice->getEndVertex() == findMatching<GVertex*>(*coresp_v,v1)) {
       Msg::Info("Wrong parametrization direction, reversing.");
       choice->reverse();
     }
-
-    for (unsigned int v = 0; v < ((GEdge*) choice)->getNumMeshVertices(); v++) {
+*/
+    /*for (unsigned int v = 0; v < ((GEdge*) choice)->getNumMeshVertices(); v++) {
       if (((GEdge*) choice)->getMeshVertex(v)->onWhat()->dim() > 0)
 	((GEdge*) choice)->getMeshVertex(v)->setEntity((GEdge*) *entity1);
-    }
+    }*/
     num_matched_edges++;
   }
 
@@ -301,10 +302,10 @@ GeomMeshMatcher:: matchFaces(GModel* m1, GModel* m2,
     coresp_f->push_back(Pair<GFace*,GFace*>((GFace*) *entity1 ,
                                              choice));
     choice->setTag(((GFace*) *entity1)->tag());
-    for (unsigned int v = 0; v < ((GFace*) choice)->getNumMeshVertices(); v++) {
+    /*for (unsigned int v = 0; v < ((GFace*) choice)->getNumMeshVertices(); v++) {
       if(((GFace*) choice)->getMeshVertex(v)->onWhat()->dim() > 1)
 	((GFace*) choice)->getMeshVertex(v)->setEntity((GFace*) *entity1);
-    }
+    }*/
 
     num_matched_faces++;
   }
@@ -400,10 +401,10 @@ GeomMeshMatcher::matchRegions(GModel* m1, GModel* m2,
                                              choice));
        choice->setTag(((GRegion*) *entity1)->tag());
 
-    for (unsigned int v = 0; v < ((GRegion*) choice)->getNumMeshVertices(); v++) {
-      if ( ((GRegion*) choice)->getMeshVertex(v)->onWhat()->dim() > 2)
-	((GRegion*) choice)->getMeshVertex(v)->setEntity((GRegion*) *entity1);
-    }
+    //for (unsigned int v = 0; v < ((GRegion*) choice)->getNumMeshVertices(); v++) {
+    //  if ( ((GRegion*) choice)->getMeshVertex(v)->onWhat()->dim() > 2)
+    //    ((GRegion*) choice)->getMeshVertex(v)->setEntity((GRegion*) *entity1);
+    //}
        num_matched_regions++;
     }
   }
@@ -597,6 +598,7 @@ int GeomMeshMatcher::forceTomatch(GModel *geom, GModel *mesh, const double TOL)
 
 static void copy_vertices (GVertex *to, GVertex *from, std::map<MVertex*,MVertex*> &_mesh_to_geom){
   if (from) {
+    to->deleteMesh();
     for (int i=0;i<from->mesh_vertices.size();i++){
       MVertex *v_from = from->mesh_vertices[i];
       MVertex *v_to = new MVertex (v_from->x(),v_from->y(),v_from->z(), to);
@@ -614,19 +616,25 @@ static void copy_vertices (GRegion *to, GRegion *from, std::map<MVertex*,MVertex
   }
 }
 static void copy_vertices (GEdge *to, GEdge *from, std::map<MVertex*,MVertex*> &_mesh_to_geom){
+  to->deleteMesh();
   for (int i=0;i<from->mesh_vertices.size();i++){
     MVertex *v_from = from->mesh_vertices[i];
-    double t = to->parFromPoint ( SPoint3(v_from->x(),v_from->y(),v_from->z() ) );
+    double t;
+    GPoint gp = to->closestPoint(SPoint3(v_from->x(),v_from->y(),v_from->z()), t );
     MEdgeVertex *v_to = new MEdgeVertex (v_from->x(),v_from->y(),v_from->z(), to, t );
     to->mesh_vertices.push_back(v_to);
     _mesh_to_geom[v_from] = v_to;
   }
 }
 static void copy_vertices (GFace *to, GFace *from, std::map<MVertex*,MVertex*> &_mesh_to_geom){
+  printf("Starting Face %d, with %d vertices\n", to->tag(),  from->mesh_vertices.size());
   for (int i=0;i<from->mesh_vertices.size();i++){
     MVertex *v_from = from->mesh_vertices[i];
-    SPoint2 uv = to->parFromPoint ( SPoint3(v_from->x(),v_from->y(),v_from->z() ) );
-    MFaceVertex *v_to = new MFaceVertex (v_from->x(),v_from->y(),v_from->z(), to, uv.x(),uv.y() );
+    double uv[2];
+    GPoint gp = to->closestPoint ( SPoint3(v_from->x(),v_from->y(),v_from->z()), uv );
+    printf("Original point %f %f %f\n", v_from->x(), v_from->y(), v_from->z());
+    printf("New point %f %f %f\n", gp.x(), gp.y(), gp.z());
+    MFaceVertex *v_to = new MFaceVertex (v_from->x(),v_from->y(),v_from->z(), to, uv[0],uv[1] );
     to->mesh_vertices.push_back(v_to);
     _mesh_to_geom[v_from] = v_to;
   }
@@ -635,12 +643,14 @@ static void copy_vertices (GFace *to, GFace *from, std::map<MVertex*,MVertex*> &
 template <class ELEMENT>
 static void copy_elements (std::vector<ELEMENT*> &to, std::vector<ELEMENT*> &from, std::map<MVertex*,MVertex*> &_mesh_to_geom){
   MElementFactory toto;
-  for (int i=0;i < to.size();i++){
+  to.clear();
+  for (int i=0;i < from.size();i++){
     ELEMENT *e = from[i];
     std::vector<MVertex*> nodes;
-    for(int j=0;j<e->getNumVertices();j++)
+    for(int j=0;j<e->getNumVertices();j++) {
       nodes.push_back(_mesh_to_geom[e->getVertex(j)]);
-    to.push_back( (ELEMENT*)(toto.create(e->getType(), nodes) ));
+    }
+    to.push_back( (ELEMENT*)(toto.create(e->getTypeForMSH(), nodes) ));
   }
 }
 
@@ -693,7 +703,6 @@ int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
         //std::vector<Pair<GRegion*, GRegion*> >* coresp_r =
         matchRegions(geom, mesh, coresp_f,ok);
         if (ok) {
-          //mesh->writeMSH("out.msh",2.0,false,true);
 	  std::map<MVertex*,MVertex*> _mesh_to_geom;
 	  copy_vertices(geom, mesh, _mesh_to_geom);
 	  copy_elements(geom, mesh, _mesh_to_geom);

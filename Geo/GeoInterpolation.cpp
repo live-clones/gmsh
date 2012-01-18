@@ -295,6 +295,9 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
   switch (c->Typ) {
 
   case MSH_SEGM_LINE:
+#if defined(QUASINEWTON)
+    printf("MSH_SEGM_LINE\n");
+#endif
     N = List_Nbr(c->Control_Points);
     i = (int)((double)(N - 1) * u);
     while(i >= N - 1)
@@ -415,6 +418,10 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
     break;
 
   case MSH_SEGM_DISCRETE:
+#if defined(QUASINEWTON)
+    printf("MSH_SEGM_DISCRETE\n");
+#endif
+
     Msg::Debug("Cannot interpolate discrete curve");
     break;
 
@@ -448,6 +455,9 @@ static Vertex TransfiniteQua(Vertex c1, Vertex c2, Vertex c3, Vertex c4,
                      s1.Pos.Y, s2.Pos.Y, s3.Pos.Y, s4.Pos.Y, u, v);
   V.Pos.Z = TRAN_QUA(c1.Pos.Z, c2.Pos.Z, c3.Pos.Z, c4.Pos.Z,
                      s1.Pos.Z, s2.Pos.Z, s3.Pos.Z, s4.Pos.Z, u, v);
+  //printf("TRANQUA %f %f %f %f %f %f %f %f\n", c1.Pos.Z, c2.Pos.Z, c3.Pos.Z, c4.Pos.Z,
+  //                   s1.Pos.Z, s2.Pos.Z, s3.Pos.Z, s4.Pos.Z);
+  //printf("V.Pos.Z %f\n", V.Pos.Z);
   return (V);
 }
 
@@ -592,6 +602,17 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
     V[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * v, 0);
     V[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - u), 0);
     V[3] = InterpolateCurve(C[3], C[3]->ubeg + (C[3]->uend - C[3]->ubeg) * (1. - v), 0);
+#if defined(QUASINEWTON)
+    printf("----- u %f v %f\n", u, v);
+    printf("S[0] %f %f %f\n", S[0]->Pos.X, S[0]->Pos.Y,S[0]->Pos.Z);
+    printf("S[1] %f %f %f\n", S[1]->Pos.X, S[1]->Pos.Y,S[1]->Pos.Z);
+    printf("S[2] %f %f %f\n", S[2]->Pos.X, S[2]->Pos.Y,S[2]->Pos.Z);
+    printf("S[3] %f %f %f\n", S[3]->Pos.X, S[3]->Pos.Y,S[3]->Pos.Z);
+    printf("V[0] %f %f %f\n", V[0].Pos.X, V[0].Pos.Y,V[0].Pos.Z);
+    printf("V[1] %f %f %f\n", V[1].Pos.X, V[1].Pos.Y,V[1].Pos.Z);
+    printf("V[2] %f %f %f\n", V[2].Pos.X, V[2].Pos.Y,V[2].Pos.Z);
+    printf("V[3] %f %f %f\n", V[3].Pos.X, V[3].Pos.Y,V[3].Pos.Z);
+#endif
     T = TransfiniteQua(V[0], V[1], V[2], V[3], *S[0], *S[1], *S[2], *S[3], u, v);
     if(isSphere) TransfiniteSph(*S[0], *O, &T);
   }

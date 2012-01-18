@@ -22,7 +22,26 @@
 #include "meshGFaceOptimize.h"
 #include "meshGFaceLloyd.h"
 
+#if defined(HAVE_BFGS)
+#include "stdafx.h"
+#include "optimization.h"
+#endif
+
 #define SQU(a)      ((a)*(a))
+
+class data_wrapper{
+ private:
+  const GFace* gf;
+  SPoint3 point;
+ public:
+  data_wrapper() {gf = NULL; point = SPoint3();}
+  ~data_wrapper() {}
+  const GFace* get_face() {return gf;}
+  void set_face(const GFace* face) {gf = face;}
+  SPoint3 get_point() {return point;}
+  void set_point(SPoint3 _point) {point = SPoint3(_point);}
+};
+
 
 GFace::GFace(GModel *model, int tag)
   : GEntity(model, tag), r1(0), r2(0), compound(0), va_geom_triangles(0)
@@ -906,11 +925,113 @@ SPoint2 GFace::parFromPoint(const SPoint3 &p, bool onSurface) const
   return SPoint2(U, V);
 }
 
+#if defined(QUASINEWTON)
+// Callback function for BFGS
+void bfgs_callback(const alglib::real_1d_array& x, double& func, alglib::real_1d_array& grad, void* ptr) {
+  data_wrapper* w = static_cast<data_wrapper*>(ptr);
+  SPoint3 p = w->get_point();
+  const GFace* gf = w->get_face();
+
+  // Value of the objective
+  GPoint pnt = gf->point(x[0], x[1]);
+  SPoint3 spnt(pnt.x(), pnt.y(), pnt.z());
+  func = p.distance(spnt);
+  //printf("func : %f\n", func);
+
+  // Value of the gradient
+  std::vector<double> values(2);
+  Pair<SVector3, SVector3> der = gf->firstDer(SPoint2(x[0], x[1]));
+  grad[0] = -2./(2.0*func) * (der.left().x() + der.left().y() + der.left().z());
+  grad[1] = -2./(2.0*func) * (der.right().x() + der.right().y() + der.right().z());
+  //printf("Gradients %f %f\n", grad[0], grad[1]);
+}
+#endif
+
 GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[2]) const
 {
+#if defined(QUASINEWTON)
+
+  //
+  // Creating the optimisation problem
+  //
+  alglib::ae_int_t dim = 2;
+  alglib::ae_int_t corr = 2; // Num of corrections in the scheme in [3,7] 
+  alglib::minlbfgsstate state;
+  alglib::real_1d_array x; // = "[0.5,0.5]";
+  std::vector<double> initial_conditions(dim);
+
+  double min_dist = 1e18;
+  double min_u = 0.5;
+  double min_v = 0.5;
+
+  Range<double> uu = parBounds(0);
+  Range<double> vv = parBounds(1);
+
+  double initial_guesses = 1000.0;
+  for(double u = uu.low(); u<=uu.high(); u+=(uu.high()-uu.low())/initial_guesses) {
+    printf("%f\n", u);
+    for(double v = vv.low(); v<=vv.high(); v+=(vv.high()-vv.low())/initial_guesses) {
+      GPoint pnt = point(u, v);
+      printf("(point) : %f %f %f\n", pnt.x(), pnt.y(), pnt.z());
+      SPoint3 spnt(pnt.x(), pnt.y(), pnt.z());
+      double dist = queryPoint.distance(spnt);
+      if (dist < min_dist) {
+	printf("min_dist %f\n", dist);
+	min_dist = dist;
+	min_u = u;
+	min_v = v;
+	GPoint pnt = point(min_u, min_v);
+      }
+    }
+  }
+
+  initial_conditions[0] = min_u;
+  initial_conditions[1] = min_v;
+
+  printf("Initial conditions : %f %f\n", min_u, min_v);
+  GPoint pnt = point(min_u, min_v);
+  printf("Initial conditions (point) : %f %f %f\n", pnt.x(), pnt.y(), pnt.z());
+
+  x.setcontent(dim, &initial_conditions[0]);
+
+
+
+
+  minlbfgscreate(2, corr, x, state);
+
+  //
+  // Defining the stopping criterion
+  //
+  double epsg = 0.0;
+  double epsf = 0.0;
+  double epsx = 0.0;
+  alglib::ae_int_t maxits = 500;
+
+  minlbfgssetcond(state,epsg,epsf,epsx,maxits);
+
+  //
+  // Solving the problem
+  //
+
+  data_wrapper w;
+  w.set_point(queryPoint);
+  w.set_face(this);
+
+  minlbfgsoptimize(state,bfgs_callback,NULL,&w);
+
+  //
+  // Getting the results
+  //
+  alglib::minlbfgsreport rep;
+
+  minlbfgsresults(state,x,rep);
+
+  return point(x[0],x[1]);
+#else
   Msg::Error("Closest point not implemented for this type of surface");
   SPoint2 p = parFromPoint(queryPoint, false);
   return point(p);
+#endif
 }
 
 bool GFace::containsParam(const SPoint2 &pt) const

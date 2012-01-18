@@ -362,7 +362,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
         GModel* tmp2 = GModel::current();
         GModel* tmp = new GModel();
         tmp->readMSH(fileName);
-        GeomMeshMatcher::instance()->match(tmp2, tmp);
+        status = GeomMeshMatcher::instance()->match(tmp2, tmp);
         delete tmp;
       } else
 	status = GModel::current()->readMSH(fileName);
