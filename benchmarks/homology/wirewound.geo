@@ -236,11 +236,9 @@ Physical Volume(7) = {711, 429, 315, 427, 313, 423, 314, 431, 1};
 Physical Surface(8) = {688, 704, 700, 706, 694, 702, 655, 677};
 
 
-Mesh 3;
+Homology {{3},{}};
 
-HomGen("wirewound.msh") = {{3},{}};
-
-HomGen("wirewound.msh") = {{3},{5}};
-//HomCut("wirewound.msh") = {{3},{}};
+Homology {{3},{5}};
+//Cohomology {{3},{}};
 
 
