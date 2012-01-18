@@ -97,6 +97,7 @@ BoundingBox             return tBoundingBox;
 Ceil                    return tCeil;
 Circle                  return tCircle;
 Coherence               return tCoherence;
+Cohomology              return tCohomology;
 Combine                 return tCombine;
 Cosh                    return tCosh;
 Cos                     return tCos;
@@ -143,10 +144,7 @@ GMSH_PATCH_VERSION      return tGMSH_PATCH_VERSION;
 
 Hide                    return tHide;
 Hole                    return tHole;
-HomRank                 return tHomRank;
-HomGen                  return tHomGen;
-HomCut                  return tHomCut;
-HomSeq                  return tHomSeq;
+Homology                return tHomology;
 Hypot                   return tHypot;
 
 In                      return tIn;

@@ -1,10 +1,9 @@
-
-/* A Bison parser, made by GNU Bison 2.4.1.  */
+/* A Bison parser, made by GNU Bison 2.4.3.  */
 
 /* Skeleton interface for Bison's Yacc-like parsers in C
    
-      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
+      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
+   2009, 2010 Free Software Foundation, Inc.
    
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -156,26 +155,24 @@
      tGetValue = 372,
      tGetEnv = 373,
      tGetString = 374,
-     tGMSH_MAJOR_VERSION = 375,
-     tGMSH_MINOR_VERSION = 376,
-     tGMSH_PATCH_VERSION = 377,
-     tHomRank = 378,
-     tHomGen = 379,
-     tHomCut = 380,
-     tHomSeq = 381,
-     tAFFECTDIVIDE = 382,
-     tAFFECTTIMES = 383,
-     tAFFECTMINUS = 384,
-     tAFFECTPLUS = 385,
-     tOR = 386,
-     tAND = 387,
-     tNOTEQUAL = 388,
-     tEQUAL = 389,
-     tGREATEROREQUAL = 390,
-     tLESSOREQUAL = 391,
-     UNARYPREC = 392,
-     tMINUSMINUS = 393,
-     tPLUSPLUS = 394
+     tHomology = 375,
+     tCohomology = 376,
+     tGMSH_MAJOR_VERSION = 377,
+     tGMSH_MINOR_VERSION = 378,
+     tGMSH_PATCH_VERSION = 379,
+     tAFFECTDIVIDE = 380,
+     tAFFECTTIMES = 381,
+     tAFFECTMINUS = 382,
+     tAFFECTPLUS = 383,
+     tOR = 384,
+     tAND = 385,
+     tNOTEQUAL = 386,
+     tEQUAL = 387,
+     tGREATEROREQUAL = 388,
+     tLESSOREQUAL = 389,
+     UNARYPREC = 390,
+     tMINUSMINUS = 391,
+     tPLUSPLUS = 392
    };
 #endif
 
@@ -185,8 +182,8 @@
 typedef union YYSTYPE
 {
 
-/* Line 1676 of yacc.c  */
-#line 91 "Gmsh.y"
+/* Line 1685 of yacc.c  */
+#line 87 "Gmsh.y"
 
   char *c;
   int i;
@@ -198,8 +195,8 @@ typedef union YYSTYPE
 
 
 
-/* Line 1676 of yacc.c  */
-#line 203 "Gmsh.tab.hpp"
+/* Line 1685 of yacc.c  */
+#line 200 "Gmsh.tab.hpp"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

@@ -188,7 +188,7 @@ static void file_remote_cb(Fl_Widget *w, void *data)
   else
     c = (onelab::localNetworkClient*)it->second;
   GmshServer *server = c->getGmshServer();
-  
+
   std::string str((const char*)data);
 
   if(str == "start"){
@@ -341,7 +341,7 @@ static int _save_auto(const char *name)
   case FORMAT_SVG  : return _save_svg(name);
   case FORMAT_YUV  : return _save_yuv(name);
   default :
-    CreateOutputFile(name, FORMAT_AUTO); 
+    CreateOutputFile(name, FORMAT_AUTO);
     return 1;
   }
 }
@@ -421,7 +421,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
     std::string name = fileChooserGetName(1);
     if(CTX::instance()->confirmOverwrite) {
       if(!StatFile(name))
-        if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
+        if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
                       "Cancel", "Replace", 0, name.c_str()))
           goto test;
     }
@@ -458,7 +458,7 @@ static void file_rename_cb(Fl_Widget *w, void *data)
     std::string name = fileChooserGetName(1);
     if(CTX::instance()->confirmOverwrite) {
       if(!StatFile(name))
-        if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
+        if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
                       "Cancel", "Replace", 0, name.c_str()))
           goto test;
     }
@@ -485,7 +485,7 @@ void file_watch_cb(Fl_Widget *w, void *data)
     (GModel::current()->getFileName(), CTX::instance()->watchFilePattern);
   std::string directory = SplitFileName(pattern)[0];
   if(directory.empty()) directory = "./";
-  
+
   dirent **files = 0;
   int num = fl_filename_list(directory.c_str(), &files, fl_numericsort);
   if(num <= 0) return;
@@ -498,9 +498,9 @@ void file_watch_cb(Fl_Widget *w, void *data)
   }
   if(files) free((void*)files);
 
-  Msg::Info("%d match%s for pattern '%s'", (int)matches.size(), 
+  Msg::Info("%d match%s for pattern '%s'", (int)matches.size(),
             (matches.size() > 1) ? "es" : "", pattern.c_str());
-  
+
   std::set<std::string> allFiles;
   for(unsigned int i = 0; i < GModel::list.size(); i++)
     allFiles.insert(GetFileNameWithoutPath(GModel::list[i]->getFileName()));
@@ -525,10 +525,10 @@ static void help_short_cb(Fl_Widget *w, void *data)
   Msg::Direct(" ");
   Msg::Direct("Keyboard shortcuts:");
   Msg::Direct(" ");
-  Msg::Direct("  Left arrow    Go to previous time step"); 
-  Msg::Direct("  Right arrow   Go to next time step"); 
-  Msg::Direct("  Up arrow      Make previous view visible"); 
-  Msg::Direct("  Down arrow    Make next view visible"); 
+  Msg::Direct("  Left arrow    Go to previous time step");
+  Msg::Direct("  Right arrow   Go to next time step");
+  Msg::Direct("  Up arrow      Make previous view visible");
+  Msg::Direct("  Down arrow    Make next view visible");
   Msg::Direct(" ");
   Msg::Direct("  <             Go back to previous context");
   Msg::Direct("  >             Go forward to next context");
@@ -546,54 +546,54 @@ static void help_short_cb(Fl_Widget *w, void *data)
   Msg::Direct("  Shift+a       Bring all windows to front");
   Msg::Direct("  Shift+g       Show geometry options");
   Msg::Direct("  Shift+m       Show mesh options");
-  Msg::Direct("  Shift+o       Show general options"); 
+  Msg::Direct("  Shift+o       Show general options");
   Msg::Direct("  Shift+p       Show post-processing options");
-  Msg::Direct("  Shift+s       Show solver options"); 
+  Msg::Direct("  Shift+s       Show solver options");
   Msg::Direct("  Shift+u       Show post-processing view plugins");
   Msg::Direct("  Shift+w       Show post-processing view options");
   Msg::Direct("  Shift+Escape  Enable full mouse selection");
   Msg::Direct(" ");
-  Msg::Direct("  " CC("i") "        Show statistics window"); 
+  Msg::Direct("  " CC("i") "        Show statistics window");
   Msg::Direct("  " CC("l") "        Show message console");
 #if defined(__APPLE__)
-  Msg::Direct("  " CC("m") "        Minimize window"); 
+  Msg::Direct("  " CC("m") "        Minimize window");
 #endif
-  Msg::Direct("  " CC("n") "        Create new project file"); 
-  Msg::Direct("  " CC("o") "        Open project file"); 
+  Msg::Direct("  " CC("n") "        Create new project file");
+  Msg::Direct("  " CC("o") "        Open project file");
   Msg::Direct("  " CC("q") "        Quit");
   Msg::Direct("  " CC("r") "        Rename project file");
   Msg::Direct("  " CC("s") "        Save file as");
   Msg::Direct(" ");
   Msg::Direct("  Shift+" CC("c") "  Show clipping plane window");
-  Msg::Direct("  Shift+" CC("m") "  Show manipulator window"); 
-  Msg::Direct("  Shift+" CC("n") "  Show option window"); 
-  Msg::Direct("  Shift+" CC("o") "  Merge file(s)"); 
+  Msg::Direct("  Shift+" CC("m") "  Show manipulator window");
+  Msg::Direct("  Shift+" CC("n") "  Show option window");
+  Msg::Direct("  Shift+" CC("o") "  Merge file(s)");
   Msg::Direct("  Shift+" CC("s") "  Save mesh in default format");
   Msg::Direct("  Shift+" CC("u") "  Show plugin window");
   Msg::Direct("  Shift+" CC("v") "  Show visibility window");
   Msg::Direct(" ");
-  Msg::Direct("  Alt+a         Loop through axes modes"); 
+  Msg::Direct("  Alt+a         Loop through axes modes");
   Msg::Direct("  Alt+b         Hide/show bounding boxes");
   Msg::Direct("  Alt+c         Loop through predefined color schemes");
   Msg::Direct("  Alt+e         Hide/Show element outlines for visible post-pro views");
-  Msg::Direct("  Alt+f         Change redraw mode (fast/full)"); 
-  Msg::Direct("  Alt+h         Hide/show all post-processing views"); 
+  Msg::Direct("  Alt+f         Change redraw mode (fast/full)");
+  Msg::Direct("  Alt+h         Hide/show all post-processing views");
   Msg::Direct("  Alt+i         Hide/show all post-processing view scales");
   Msg::Direct("  Alt+l         Hide/show geometry lines");
   Msg::Direct("  Alt+m         Toggle visibility of all mesh entities");
   Msg::Direct("  Alt+n         Hide/show all post-processing view annotations");
   Msg::Direct("  Alt+o         Change projection mode (orthographic/perspective)");
   Msg::Direct("  Alt+p         Hide/show geometry points");
-  Msg::Direct("  Alt+r         Loop through range modes for visible post-pro views"); 
+  Msg::Direct("  Alt+r         Loop through range modes for visible post-pro views");
   Msg::Direct("  Alt+s         Hide/show geometry surfaces");
-  Msg::Direct("  Alt+t         Loop through interval modes for visible post-pro views"); 
+  Msg::Direct("  Alt+t         Loop through interval modes for visible post-pro views");
   Msg::Direct("  Alt+v         Hide/show geometry volumes");
   Msg::Direct("  Alt+w         Enable/disable all lighting");
-  Msg::Direct("  Alt+x         Set X view"); 
-  Msg::Direct("  Alt+y         Set Y view"); 
-  Msg::Direct("  Alt+z         Set Z view"); 
+  Msg::Direct("  Alt+x         Set X view");
+  Msg::Direct("  Alt+y         Set Y view");
+  Msg::Direct("  Alt+z         Set Z view");
   Msg::Direct(" ");
-  Msg::Direct("  Alt+Shift+a   Hide/show small axes"); 
+  Msg::Direct("  Alt+Shift+a   Hide/show small axes");
   Msg::Direct("  Alt+Shift+b   Hide/show mesh volume faces");
   Msg::Direct("  Alt+Shift+d   Hide/show mesh surface faces");
   Msg::Direct("  Alt+Shift+l   Hide/show mesh lines");
@@ -602,9 +602,9 @@ static void help_short_cb(Fl_Widget *w, void *data)
   Msg::Direct("  Alt+Shift+s   Hide/show mesh surface edges");
   Msg::Direct("  Alt+Shift+v   Hide/show mesh volume edges");
   Msg::Direct("  Alt+Shift+w   Reverse all mesh normals");
-  Msg::Direct("  Alt+Shift+x   Set -X view"); 
-  Msg::Direct("  Alt+Shift+y   Set -Y view"); 
-  Msg::Direct("  Alt+Shift+z   Set -Z view"); 
+  Msg::Direct("  Alt+Shift+x   Set -X view");
+  Msg::Direct("  Alt+Shift+y   Set -Y view");
+  Msg::Direct("  Alt+Shift+z   Set -Z view");
   Msg::Direct(" ");
   FlGui::instance()->showMessages();
 }
@@ -621,17 +621,17 @@ static void help_mouse_cb(Fl_Widget *w, void *data)
   Msg::Direct("                      - Resize a lasso zoom or a lasso (un)selection");
   Msg::Direct("  Left button         - Rotate");
   Msg::Direct("                      - Select an entity");
-  Msg::Direct("                      - Accept a lasso zoom or a lasso selection"); 
-  Msg::Direct("  Ctrl+Left button    Start a lasso zoom or a lasso (un)selection"); 
+  Msg::Direct("                      - Accept a lasso zoom or a lasso selection");
+  Msg::Direct("  Ctrl+Left button    Start a lasso zoom or a lasso (un)selection");
   Msg::Direct("  Middle button       - Zoom");
   Msg::Direct("                      - Unselect an entity");
   Msg::Direct("                      - Accept a lasso zoom or a lasso unselection");
-  Msg::Direct("  Ctrl+Middle button  Orthogonalize display"); 
+  Msg::Direct("  Ctrl+Middle button  Orthogonalize display");
   Msg::Direct("  Right button        - Pan");
   Msg::Direct("                      - Cancel a lasso zoom or a lasso (un)selection");
   Msg::Direct("                      - Pop-up menu on post-processing view button");
-  Msg::Direct("  Ctrl+Right button   Reset to default viewpoint");   
-  Msg::Direct(" ");   
+  Msg::Direct("  Ctrl+Right button   Reset to default viewpoint");
+  Msg::Direct(" ");
   Msg::Direct("  For a 2 button mouse, Middle button = Shift+Left button");
   Msg::Direct("  For a 1 button mouse, Middle button = Shift+Left button, "
               "Right button = Alt+Left button");
@@ -1025,7 +1025,7 @@ static void add_new_surface_volume(int mode)
           Msg::StatusBar(3, false, "Select volume boundary\n"
                          "[Press 'u' to undo last selection or 'q' to abort]");
       }
-      
+
       char ib = FlGui::instance()->selectEntity(type);
       if(ib == 'q') {
         GModel::current()->setSelection(0);
@@ -1102,11 +1102,11 @@ static void add_new_surface_volume(int mode)
               }
             }
             if(ib == 'l') {
-              int size = (type == ENT_LINE) ? 
+              int size = (type == ENT_LINE) ?
                 FlGui::instance()->selectedEdges.size() :
                 FlGui::instance()->selectedFaces.size();
               for(int i=0;i<size;i++){
-                int num = (type == ENT_LINE) ? 
+                int num = (type == ENT_LINE) ?
                   FlGui::instance()->selectedEdges[i]->tag() :
                   FlGui::instance()->selectedFaces[i]->tag();
                 if(select_contour(type, num, List1)) {
@@ -1127,9 +1127,9 @@ static void add_new_surface_volume(int mode)
           List_Unique(List2,fcmp_absint);
           if(List_Nbr(List2)) {
             switch (mode) {
-            case 0: add_surf("Plane Surface", List2, 
+            case 0: add_surf("Plane Surface", List2,
                              GModel::current()->getFileName()); break;
-            case 1: add_surf("Ruled Surface", List2, 
+            case 1: add_surf("Ruled Surface", List2,
                              GModel::current()->getFileName()); break;
             case 2: add_vol(List2, GModel::current()->getFileName()); break;
             }
@@ -1216,7 +1216,7 @@ static void split_selection()
     }
     for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
       int tag = FlGui::instance()->selectedVertices[i]->tag();
-      int index = List_ISearchSeq(List1, &tag, fcmp_int); 
+      int index = List_ISearchSeq(List1, &tag, fcmp_int);
       if(index < 0) List_Add(List1, &tag);
       FlGui::instance()->selectedVertices[i]->setSelection(1);
     }
@@ -1262,7 +1262,7 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
   }
 
   drawContext::global()->draw();
-    
+
   List_T *List1 = List_Create(5, 5, sizeof(int));
   while(1) {
     if(!List_Nbr(List1))
@@ -1272,7 +1272,7 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
       Msg::StatusBar(3, false, "Select %s\n"
                      "[Press 'e' to end selection, 'u' to undo last selection "
                      "or 'q' to abort]", str);
-    
+
     char ib = FlGui::instance()->selectEntity(type);
     if(ib == 'l') {
       // we don't use List_Insert in order to keep the original
@@ -1280,7 +1280,7 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
       // expected)
       int tag;
       switch (type) {
-      case ENT_POINT: 
+      case ENT_POINT:
         for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
           FlGui::instance()->selectedVertices[i]->setSelection(1);
           tag = FlGui::instance()->selectedVertices[i]->tag();
@@ -1324,7 +1324,7 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
       case ENT_POINT:
         for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
           tag = FlGui::instance()->selectedVertices[i]->tag();
-          index = List_ISearchSeq(List1, &tag, fcmp_int); 
+          index = List_ISearchSeq(List1, &tag, fcmp_int);
           if(index >= 0) List_PSuppress(List1, index);
           FlGui::instance()->selectedVertices[i]->setSelection(0);
         }
@@ -1332,7 +1332,7 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
       case ENT_LINE:
         for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
           tag = FlGui::instance()->selectedEdges[i]->tag();
-          index = List_ISearchSeq(List1, &tag, fcmp_int); 
+          index = List_ISearchSeq(List1, &tag, fcmp_int);
           if(index >= 0) List_PSuppress(List1, index);
           FlGui::instance()->selectedEdges[i]->setSelection(0);
         }
@@ -1340,7 +1340,7 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
       case ENT_SURFACE:
         for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
           tag = FlGui::instance()->selectedFaces[i]->tag();
-          index = List_ISearchSeq(List1, &tag, fcmp_int); 
+          index = List_ISearchSeq(List1, &tag, fcmp_int);
           if(index >= 0) List_PSuppress(List1, index);
           FlGui::instance()->selectedFaces[i]->setSelection(0);
         }
@@ -1348,7 +1348,7 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
       case ENT_VOLUME:
         for(unsigned int i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
           tag = FlGui::instance()->selectedRegions[i]->tag();
-          index = List_ISearchSeq(List1, &tag, fcmp_int); 
+          index = List_ISearchSeq(List1, &tag, fcmp_int);
           if(index >= 0) List_PSuppress(List1, index);
           FlGui::instance()->selectedRegions[i]->setSelection(0);
         }
@@ -1439,7 +1439,7 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
           add_physical(what, List1, GModel::current()->getFileName());
           break;
         case 8:
-          add_charlength(List1, GModel::current()->getFileName(), 
+          add_charlength(List1, GModel::current()->getFileName(),
                          FlGui::instance()->meshContext->input[0]->value());
           break;
         case 9:
@@ -1469,7 +1469,7 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
 
   Msg::StatusBar(3, false, "");
 }
-  
+
 static void geometry_elementary_add_translate_cb(Fl_Widget *w, void *data)
 {
   if(!data){
@@ -1703,7 +1703,7 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
       if(CTX::instance()->pickElements){
         for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++){
           if(FlGui::instance()->selectedElements[i]->getVisibility() != 2){
-            FlGui::instance()->selectedElements[i]->setVisibility(2); 
+            FlGui::instance()->selectedElements[i]->setVisibility(2);
             ele.push_back(FlGui::instance()->selectedElements[i]);
           }
         }
@@ -1711,13 +1711,13 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
       else{
         for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
           if(FlGui::instance()->selectedEdges[i]->getSelection() != 1){
-            FlGui::instance()->selectedEdges[i]->setSelection(1); 
+            FlGui::instance()->selectedEdges[i]->setSelection(1);
             ent.push_back(FlGui::instance()->selectedEdges[i]);
           }
         }
         for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
           if(FlGui::instance()->selectedFaces[i]->getSelection() != 1){
-            FlGui::instance()->selectedFaces[i]->setSelection(1); 
+            FlGui::instance()->selectedFaces[i]->setSelection(1);
             ent.push_back(FlGui::instance()->selectedFaces[i]);
           }
         }
@@ -1800,10 +1800,10 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
         int type = ele->getTypeForMSH();
         const char *name;
         MElement::getInfoMSH(type, &name);
-        Msg::Direct("  Type: %d ('%s')", type, name); 
+        Msg::Direct("  Type: %d ('%s')", type, name);
         Msg::Direct("  Dimension: %d", ele->getDim());
-        Msg::Direct("  Order: %d", ele->getPolynomialOrder()); 
-        Msg::Direct("  Partition: %d", ele->getPartition()); 
+        Msg::Direct("  Order: %d", ele->getPolynomialOrder());
+        Msg::Direct("  Partition: %d", ele->getPartition());
         char tmp1[32], tmp2[512];
         sprintf(tmp2, "  Vertices:");
         for(int i = 0; i < ele->getNumVertices(); i++){
@@ -1844,13 +1844,13 @@ static void mesh_degree_cb(Fl_Widget *w, void *data)
 {
   int degree = (intptr_t)data;
   if(degree == 2)
-    SetOrderN(GModel::current(), 2, CTX::instance()->mesh.secondOrderLinear, 
+    SetOrderN(GModel::current(), 2, CTX::instance()->mesh.secondOrderLinear,
               CTX::instance()->mesh.secondOrderIncomplete);
   else if (degree == 1)
     SetOrder1(GModel::current());
   else // For now, use the same options as for second order meshes
-    SetOrderN(GModel::current(), degree, 
-	      CTX::instance()->mesh.secondOrderLinear, 
+    SetOrderN(GModel::current(), degree,
+	      CTX::instance()->mesh.secondOrderLinear,
               CTX::instance()->mesh.secondOrderIncomplete);
   CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();
@@ -2034,7 +2034,7 @@ static void add_transfinite_embedded(int dim, bool embed)
             case 2:
               if(embed && p.size())
                 add_embedded("Point", p, GModel::current()->getFileName());
-              else if(!embed && 
+              else if(!embed &&
                       (p.size() == 0 + 1 || p.size() == 3 + 1 || p.size() == 4 + 1))
                 add_trsfsurf(p, GModel::current()->getFileName(),
                              FlGui::instance()->meshContext->choice[1]->text());
@@ -2194,7 +2194,7 @@ static void view_remove_all_cb(Fl_Widget *w, void *data)
     for(int i = PView::list.size() - 1; i >= 0; i--)
       if(PView::list[i]->getData()->getName() == name) delete PView::list[i];
   }
-  
+
   FlGui::instance()->updateViews();
   drawContext::global()->draw();
 }
@@ -2219,7 +2219,7 @@ static void view_save_cb(Fl_Widget *w, void *data)
 
   PView *view = PView::list[(intptr_t)data];
  test:
-  if(fileChooser(FILE_CHOOSER_CREATE, "Save As", formats, 
+  if(fileChooser(FILE_CHOOSER_CREATE, "Save As", formats,
                  view->getData()->getFileName().c_str())){
     std::string name = fileChooserGetName(1);
     if(CTX::instance()->confirmOverwrite) {
@@ -2307,11 +2307,11 @@ static void view_all_visible_cb(Fl_Widget *w, void *data)
   std::string name;
   if(mode >= 0) name = PView::list[mode]->getData()->getName();
   for(unsigned int i = 0; i < PView::list.size(); i++)
-    opt_view_visible(i, GMSH_SET | GMSH_GUI, 
+    opt_view_visible(i, GMSH_SET | GMSH_GUI,
                      (mode == -1) ? 1 :
                      (mode == -2) ? 0 :
                      (mode == -3) ? !opt_view_visible(i, GMSH_GET, 0) :
-                     (name == PView::list[i]->getData()->getName()) ? 1 : 
+                     (name == PView::list[i]->getData()->getName()) ? 1 :
                      0);
   drawContext::global()->draw();
 }
@@ -2474,10 +2474,10 @@ contextItem menu_geometry[] = {
   {"0Geometry"} ,
   {"Elementary entities", (Fl_Callback *)geometry_elementary_cb} ,
   {"Physical groups",     (Fl_Callback *)geometry_physical_cb} ,
-  {"Edit",                (Fl_Callback *)geometry_edit_cb} , 
-  {"Reload",              (Fl_Callback *)geometry_reload_cb} , 
+  {"Edit",                (Fl_Callback *)geometry_edit_cb} ,
+  {"Reload",              (Fl_Callback *)geometry_reload_cb} ,
   {""}
-};  
+};
   contextItem menu_geometry_elementary[] = {
     {"0Geometry>Elementary"} ,
     {"Add",       (Fl_Callback *)geometry_elementary_add_cb} ,
@@ -2489,8 +2489,8 @@ contextItem menu_geometry[] = {
     {"Symmetry",  (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)0} ,
     {"Extrude",   (Fl_Callback *)geometry_elementary_extrude_cb, (void*)0} ,
     {"Coherence", (Fl_Callback *)geometry_elementary_coherence_cb} ,
-    {""} 
-  };  
+    {""}
+  };
     contextItem menu_geometry_elementary_add[] = {
       {"0Geometry>Elementary>Add"} ,
       {"New",       (Fl_Callback *)geometry_elementary_add_new_cb, (void*)0} ,
@@ -2498,8 +2498,8 @@ contextItem menu_geometry[] = {
       {"Rotate",    (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)0} ,
       {"Scale",     (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)0} ,
       {"Symmetry",  (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)0} ,
-      {""} 
-    };  
+      {""}
+    };
       contextItem menu_geometry_elementary_add_new[] = {
         {"0Geometry>Elementary>Add>New"} ,
         {"Parameter",     (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Parameter"} ,
@@ -2512,48 +2512,48 @@ contextItem menu_geometry[] = {
         {"Plane surface", (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Plane Surface"} ,
         {"Ruled surface", (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Ruled Surface"} ,
         {"Volume",        (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Volume"} ,
-        {""} 
-      };  
+        {""}
+      };
       contextItem menu_geometry_elementary_add_translate[] = {
         {"0Geometry>Elementary>Add>Translate"} ,
-        {"Point",   (Fl_Callback *)geometry_elementary_add_translate_cb, (void*)"Point"} ,  
-        {"Line",    (Fl_Callback *)geometry_elementary_add_translate_cb, (void*)"Line"} ,         
+        {"Point",   (Fl_Callback *)geometry_elementary_add_translate_cb, (void*)"Point"} ,
+        {"Line",    (Fl_Callback *)geometry_elementary_add_translate_cb, (void*)"Line"} ,
         {"Surface", (Fl_Callback *)geometry_elementary_add_translate_cb, (void*)"Surface"} ,
-        {"Volume",  (Fl_Callback *)geometry_elementary_add_translate_cb, (void*)"Volume"} , 
-        {""} 
-      };  
+        {"Volume",  (Fl_Callback *)geometry_elementary_add_translate_cb, (void*)"Volume"} ,
+        {""}
+      };
       contextItem menu_geometry_elementary_add_rotate[] = {
         {"0Geometry>Elementary>Add>Rotate"} ,
-        {"Point",   (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)"Point"} ,  
-        {"Line",    (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)"Line"} ,    
+        {"Point",   (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)"Point"} ,
+        {"Line",    (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)"Line"} ,
         {"Surface", (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)"Surface"} ,
-        {"Volume",  (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)"Volume"} , 
-        {""} 
-      };  
+        {"Volume",  (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)"Volume"} ,
+        {""}
+      };
       contextItem menu_geometry_elementary_add_scale[] = {
         {"0Geometry>Elementary>Add>Scale"} ,
-        {"Point",   (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)"Point"} ,  
-        {"Line",    (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)"Line"} ,     
+        {"Point",   (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)"Point"} ,
+        {"Line",    (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)"Line"} ,
         {"Surface", (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)"Surface"} ,
-        {"Volume",  (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)"Volume"} , 
-        {""} 
-      };  
+        {"Volume",  (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)"Volume"} ,
+        {""}
+      };
       contextItem menu_geometry_elementary_add_symmetry[] = {
         {"0Geometry>Elementary>Add>Symmetry"} ,
-        {"Point",   (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Point"} ,  
-        {"Line",    (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Line"} ,          
+        {"Point",   (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Point"} ,
+        {"Line",    (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Line"} ,
         {"Surface", (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Surface"} ,
-        {"Volume",  (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Volume"} , 
-        {""} 
-      };  
+        {"Volume",  (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Volume"} ,
+        {""}
+      };
     contextItem menu_geometry_elementary_delete[] = {
       {"0Geometry>Elementary>Delete"} ,
       {"Point",   (Fl_Callback *)geometry_elementary_delete_cb, (void*)"Point"} ,
       {"Line",    (Fl_Callback *)geometry_elementary_delete_cb, (void*)"Line"} ,
       {"Surface", (Fl_Callback *)geometry_elementary_delete_cb, (void*)"Surface"} ,
       {"Volume",  (Fl_Callback *)geometry_elementary_delete_cb, (void*)"Volume"} ,
-      {""} 
-    };  
+      {""}
+    };
     contextItem menu_geometry_elementary_split[] = {
       {"0Geometry>Elementary>Split"},
         {"Line",(Fl_Callback *)geometry_elementary_split_cb,(void*)"Line"},
@@ -2561,126 +2561,126 @@ contextItem menu_geometry[] = {
     };
     contextItem menu_geometry_elementary_translate[] = {
       {"0Geometry>Elementary>Translate"} ,
-      {"Point",   (Fl_Callback *)geometry_elementary_translate_cb, (void*)"Point"} ,  
-      {"Line",    (Fl_Callback *)geometry_elementary_translate_cb, (void*)"Line"} ,       
+      {"Point",   (Fl_Callback *)geometry_elementary_translate_cb, (void*)"Point"} ,
+      {"Line",    (Fl_Callback *)geometry_elementary_translate_cb, (void*)"Line"} ,
       {"Surface", (Fl_Callback *)geometry_elementary_translate_cb, (void*)"Surface"} ,
-      {"Volume",  (Fl_Callback *)geometry_elementary_translate_cb, (void*)"Volume"} , 
-      {""} 
-    };  
+      {"Volume",  (Fl_Callback *)geometry_elementary_translate_cb, (void*)"Volume"} ,
+      {""}
+    };
     contextItem menu_geometry_elementary_rotate[] = {
       {"0Geometry>Elementary>Rotate"} ,
-      {"Point",   (Fl_Callback *)geometry_elementary_rotate_cb, (void*)"Point"} ,  
-      {"Line",    (Fl_Callback *)geometry_elementary_rotate_cb, (void*)"Line"} ,          
+      {"Point",   (Fl_Callback *)geometry_elementary_rotate_cb, (void*)"Point"} ,
+      {"Line",    (Fl_Callback *)geometry_elementary_rotate_cb, (void*)"Line"} ,
       {"Surface", (Fl_Callback *)geometry_elementary_rotate_cb, (void*)"Surface"} ,
-      {"Volume",  (Fl_Callback *)geometry_elementary_rotate_cb, (void*)"Volume"} , 
-      {""} 
-    };  
+      {"Volume",  (Fl_Callback *)geometry_elementary_rotate_cb, (void*)"Volume"} ,
+      {""}
+    };
     contextItem menu_geometry_elementary_scale[] = {
       {"0Geometry>Elementary>Scale"} ,
-      {"Point",   (Fl_Callback *)geometry_elementary_scale_cb, (void*)"Point"} ,  
-      {"Line",    (Fl_Callback *)geometry_elementary_scale_cb, (void*)"Line"} ,   
+      {"Point",   (Fl_Callback *)geometry_elementary_scale_cb, (void*)"Point"} ,
+      {"Line",    (Fl_Callback *)geometry_elementary_scale_cb, (void*)"Line"} ,
       {"Surface", (Fl_Callback *)geometry_elementary_scale_cb, (void*)"Surface"} ,
-      {"Volume",  (Fl_Callback *)geometry_elementary_scale_cb, (void*)"Volume"} , 
-      {""} 
-    };  
+      {"Volume",  (Fl_Callback *)geometry_elementary_scale_cb, (void*)"Volume"} ,
+      {""}
+    };
     contextItem menu_geometry_elementary_symmetry[] = {
       {"0Geometry>Elementary>Symmetry"} ,
-      {"Point",   (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)"Point"} ,  
-      {"Line",    (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)"Line"} ,        
+      {"Point",   (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)"Point"} ,
+      {"Line",    (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)"Line"} ,
       {"Surface", (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)"Surface"} ,
-      {"Volume",  (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)"Volume"} , 
-      {""} 
-    };  
+      {"Volume",  (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)"Volume"} ,
+      {""}
+    };
     contextItem menu_geometry_elementary_extrude[] = {
       {"0Geometry>Elementary>Extrude"} ,
       {"Translate", (Fl_Callback *)geometry_elementary_extrude_translate_cb, (void*)0} ,
       {"Rotate",    (Fl_Callback *)geometry_elementary_extrude_rotate_cb, (void*)0} ,
-      {""} 
-    };  
+      {""}
+    };
       contextItem menu_geometry_elementary_extrude_translate[] = {
         {"0Geometry>Elementary>Extrude>Translate"} ,
         {"Point",   (Fl_Callback *)geometry_elementary_extrude_translate_cb, (void*)"Point"} ,
         {"Line",    (Fl_Callback *)geometry_elementary_extrude_translate_cb, (void*)"Line"} ,
         {"Surface", (Fl_Callback *)geometry_elementary_extrude_translate_cb, (void*)"Surface"} ,
-        {""} 
-      };  
+        {""}
+      };
       contextItem menu_geometry_elementary_extrude_rotate[] = {
         {"0Geometry>Elementary>Extrude>Rotate"} ,
         {"Point",   (Fl_Callback *)geometry_elementary_extrude_rotate_cb, (void*)"Point"} ,
         {"Line",    (Fl_Callback *)geometry_elementary_extrude_rotate_cb, (void*)"Line"} ,
         {"Surface", (Fl_Callback *)geometry_elementary_extrude_rotate_cb, (void*)"Surface"} ,
-        {""} 
-      };  
+        {""}
+      };
   contextItem menu_geometry_physical[] = {
     {"0Geometry>Physical"} ,
     {"Add",    (Fl_Callback *)geometry_physical_add_cb, (void*)0} ,
-    {""} 
-  };  
+    {""}
+  };
     contextItem menu_geometry_physical_add[] = {
       {"0Geometry>Physical>Add"} ,
       {"Point",   (Fl_Callback *)geometry_physical_add_cb, (void*)"Point" } ,
       {"Line",    (Fl_Callback *)geometry_physical_add_cb, (void*)"Line" } ,
       {"Surface", (Fl_Callback *)geometry_physical_add_cb, (void*)"Surface" } ,
       {"Volume",  (Fl_Callback *)geometry_physical_add_cb, (void*)"Volume" } ,
-      {""} 
-    };  
+      {""}
+    };
 
 contextItem menu_mesh[] = {
   {"1Mesh"} ,
   {"Define",       (Fl_Callback *)mesh_define_cb} ,
   {"1D",           (Fl_Callback *)mesh_1d_cb} ,
-  {"2D",           (Fl_Callback *)mesh_2d_cb} , 
-  {"3D",           (Fl_Callback *)mesh_3d_cb} , 
-  {"Optimize 3D",  (Fl_Callback *)mesh_optimize_cb} , 
+  {"2D",           (Fl_Callback *)mesh_2d_cb} ,
+  {"3D",           (Fl_Callback *)mesh_3d_cb} ,
+  {"Optimize 3D",  (Fl_Callback *)mesh_optimize_cb} ,
 #if defined(HAVE_NETGEN)
-  {"Optimize 3D (Netgen)", (Fl_Callback *)mesh_optimize_netgen_cb} , 
+  {"Optimize 3D (Netgen)", (Fl_Callback *)mesh_optimize_netgen_cb} ,
 #endif
-  {"Set order",    (Fl_Callback *)mesh_change_order_cb} , 
-  {"Inspect",      (Fl_Callback *)mesh_inspect_cb} , 
+  {"Set order",    (Fl_Callback *)mesh_change_order_cb} ,
+  {"Inspect",      (Fl_Callback *)mesh_inspect_cb} ,
   {"Refine by splitting", (Fl_Callback *)mesh_refine_cb} ,
 #if defined(HAVE_METIS) || defined(HAVE_CHACO)
   {"Partition",    (Fl_Callback *)mesh_partition_cb} ,
 #endif
-  {"Reclassify 2D", (Fl_Callback *)mesh_classify_cb} , 
+  {"Reclassify 2D", (Fl_Callback *)mesh_classify_cb} ,
 #if defined(HAVE_FOURIER_MODEL)
-  {"Reparameterize 2D", (Fl_Callback *)mesh_parameterize_cb} , 
+  {"Reparameterize 2D", (Fl_Callback *)mesh_parameterize_cb} ,
 #endif
-  {"Delete",       (Fl_Callback *)mesh_delete_cb} , 
+  {"Delete",       (Fl_Callback *)mesh_delete_cb} ,
   {"Save",         (Fl_Callback *)mesh_save_cb} ,
-  {""} 
-};  
+  {""}
+};
   contextItem menu_mesh_define[] = {
     {"1Mesh>Define"} ,
     {"Size fields",  (Fl_Callback *)field_cb},
     {"Element size at points", (Fl_Callback *)mesh_define_length_cb  } ,
     {"Embedded points", (Fl_Callback *)mesh_define_embedded_cb, (void*)"point" } ,
     {"Recombine",   (Fl_Callback *)mesh_define_recombine_cb  } ,
-    {"Transfinite", (Fl_Callback *)mesh_define_transfinite_cb  } , 
-    {"Compound",    (Fl_Callback *)mesh_define_compound_cb  } , 
-    {""} 
-  };  
+    {"Transfinite", (Fl_Callback *)mesh_define_transfinite_cb  } ,
+    {"Compound",    (Fl_Callback *)mesh_define_compound_cb  } ,
+    {""}
+  };
     contextItem menu_mesh_define_transfinite[] = {
       {"1Mesh>Define>Transfinite"} ,
       {"Line",    (Fl_Callback *)mesh_define_transfinite_line_cb} ,
       {"Surface", (Fl_Callback *)mesh_define_transfinite_surface_cb} ,
-      {"Volume",  (Fl_Callback *)mesh_define_transfinite_volume_cb} , 
-      {""} 
-    };  
+      {"Volume",  (Fl_Callback *)mesh_define_transfinite_volume_cb} ,
+      {""}
+    };
     contextItem menu_mesh_define_compound[] = {
       {"1Mesh>Define>Compound"} ,
       {"Line",    (Fl_Callback *)mesh_define_compound_entity_cb, (void*)"Line"} ,
       {"Surface", (Fl_Callback *)mesh_define_compound_entity_cb, (void*)"Surface"} ,
-      {"Volume",  (Fl_Callback *)mesh_define_compound_entity_cb, (void*)"Volume"} , 
-      {""} 
-    };  
+      {"Volume",  (Fl_Callback *)mesh_define_compound_entity_cb, (void*)"Volume"} ,
+      {""}
+    };
   contextItem menu_mesh_delete[] = {
     {"1Mesh>Edit>Delete"} ,
     {"Elements", (Fl_Callback *)mesh_delete_parts_cb, (void*)"elements"} ,
     {"Lines",    (Fl_Callback *)mesh_delete_parts_cb, (void*)"lines"} ,
     {"Surfaces", (Fl_Callback *)mesh_delete_parts_cb, (void*)"surfaces"} ,
     {"Volumes",  (Fl_Callback *)mesh_delete_parts_cb, (void*)"volumes"} ,
-    {""} 
-  };  
+    {""}
+  };
   contextItem menu_mesh_degree[] = {
     {"1Mesh>Set order"} ,
     {"1",  (Fl_Callback *)mesh_degree_cb, (void*)1},
@@ -2688,8 +2688,8 @@ contextItem menu_mesh[] = {
     {"3",  (Fl_Callback *)mesh_degree_cb, (void*)3},
     {"4",  (Fl_Callback *)mesh_degree_cb, (void*)4},
     {"5",  (Fl_Callback *)mesh_degree_cb, (void*)5},
-    {""} 
-  };  
+    {""}
+  };
 
 contextItem menu_solver[] = {
   {"2Solver"} ,
@@ -2698,12 +2698,12 @@ contextItem menu_solver[] = {
   {"Solver 2", (Fl_Callback *)solver_cb , (void*)2} ,
   {"Solver 3", (Fl_Callback *)solver_cb , (void*)3} ,
   {"Solver 4", (Fl_Callback *)solver_cb , (void*)4} ,
-  {""} 
+  {""}
 };
 
 contextItem menu_post[] = {
   {"3Post-processing"} ,
-  {""} 
+  {""}
 };
 
 menuWindow::menuWindow()
@@ -2782,14 +2782,14 @@ menuWindow::menuWindow()
 
   // create an empty scroll area that will get populated dynamically
   // in set_context()
-  scroll = new Fl_Scroll(0, _MH, width, NB_BUTT_SCROLL * BH); 
+  scroll = new Fl_Scroll(0, _MH, width, NB_BUTT_SCROLL * BH);
   scroll->type(Fl_Scroll::VERTICAL);
   scroll->end();
 
   win->size(width, _MH);
-  win->position(CTX::instance()->menuPosition[0], 
+  win->position(CTX::instance()->menuPosition[0],
                 CTX::instance()->menuPosition[1]);
-  
+
   win->end();
 }
 
@@ -2907,7 +2907,7 @@ void menuWindow::setContext(contextItem *menu_asked, int flag)
     for(nb = 0; nb < (int)PView::list.size(); nb++) {
       PViewData *data = PView::list[nb]->getData();
       PViewOptions *opt = PView::list[nb]->getOptions();
-      
+
       Fl_Light_Button *b1 = new Fl_Light_Button(0, _MH + nb * BH, width - popw, BH);
       b1->callback(view_toggle_cb, (void *)nb);
       b1->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
@@ -2917,72 +2917,72 @@ void menuWindow::setContext(contextItem *menu_asked, int flag)
       strcpy(tmp2, data->getFileName().c_str());
       b1->tooltip(tmp2);
       label2.push_back(tmp2);
-      
+
       char *tmp = new char[32];
       sprintf(tmp, "[%d]@#-1>", nb);
       Fl_Button *b2 = new Fl_Button(width - popw, _MH + nb * BH, popw, BH, tmp);
       label.push_back(tmp);
       b2->align(FL_ALIGN_RIGHT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
       b2->tooltip("Show view option menu (Shift+w)");
-  
+
       popupButton *p[2];
       p[0] = new popupButton(width - popw, _MH + nb * BH, popw, BH);
       p[0]->type(Fl_Menu_Button::POPUP123);
       p[1] = new popupButton(0, _MH + nb * BH, width - popw, BH);
       p[1]->type(Fl_Menu_Button::POPUP3);
-  
+
       for(int j = 0; j < 2; j++) {
-        p[j]->add("Reload/View", 'r', 
+        p[j]->add("Reload/View", 'r',
                   (Fl_Callback *) view_reload_cb, (void *)nb, 0);
-        p[j]->add("Reload/Visible Views", 0, 
+        p[j]->add("Reload/Visible Views", 0,
                   (Fl_Callback *) view_reload_visible_cb, (void *)nb, 0);
-        p[j]->add("Reload/All Views", 0, 
+        p[j]->add("Reload/All Views", 0,
                   (Fl_Callback *) view_reload_all_cb, (void *)nb, 0);
-        p[j]->add("Remove/View", FL_Delete, 
+        p[j]->add("Remove/View", FL_Delete,
                   (Fl_Callback *) view_remove_cb, (void *)nb, 0);
-        p[j]->add("Remove/Other Views", 0, 
+        p[j]->add("Remove/Other Views", 0,
                   (Fl_Callback *) view_remove_other_cb, (void *)nb, 0);
-        p[j]->add("Remove/Visible Views", 0, 
+        p[j]->add("Remove/Visible Views", 0,
                   (Fl_Callback *) view_remove_all_cb, (void *)-2, 0);
-        p[j]->add("Remove/Invisible Views", 0, 
+        p[j]->add("Remove/Invisible Views", 0,
                   (Fl_Callback *) view_remove_all_cb, (void *)-3, 0);
-        p[j]->add("Remove/Empty Views", 0, 
+        p[j]->add("Remove/Empty Views", 0,
                   (Fl_Callback *) view_remove_all_cb, (void *)-4, 0);
-        p[j]->add("Remove/All Views", 0, 
+        p[j]->add("Remove/All Views", 0,
                   (Fl_Callback *) view_remove_all_cb, (void *)-1, 0);
-        p[j]->add("Remove/By Name", 0, 
+        p[j]->add("Remove/By Name", 0,
                   (Fl_Callback *) view_remove_all_cb, (void *)nb, 0);
-        p[j]->add("Alias/View without Options", 0, 
+        p[j]->add("Alias/View without Options", 0,
                   (Fl_Callback *) view_alias_cb, (void *)nb, 0);
-        p[j]->add("Alias/View with Options", 0, 
+        p[j]->add("Alias/View with Options", 0,
                   (Fl_Callback *) view_alias_with_options_cb, (void *)nb, 0);
-        p[j]->add("Combine Elements/From Visible Views", 0, 
+        p[j]->add("Combine Elements/From Visible Views", 0,
                   (Fl_Callback *) view_combine_space_visible_cb, (void *)nb, 0);
-        p[j]->add("Combine Elements/From All Views", 0, 
+        p[j]->add("Combine Elements/From All Views", 0,
                   (Fl_Callback *) view_combine_space_all_cb, (void *)nb, 0);
-        p[j]->add("Combine Elements/By View Name", 0, 
+        p[j]->add("Combine Elements/By View Name", 0,
                   (Fl_Callback *) view_combine_space_by_name_cb, (void *)nb, 0);
-        p[j]->add("Combine Time Steps/From Visible Views", 0, 
+        p[j]->add("Combine Time Steps/From Visible Views", 0,
                   (Fl_Callback *) view_combine_time_visible_cb, (void *)nb, 0);
-        p[j]->add("Combine Time Steps/From All Views", 0, 
+        p[j]->add("Combine Time Steps/From All Views", 0,
                   (Fl_Callback *) view_combine_time_all_cb, (void *)nb, 0);
-        p[j]->add("Combine Time Steps/By View Name", 0, 
+        p[j]->add("Combine Time Steps/By View Name", 0,
                  (Fl_Callback *) view_combine_time_by_name_cb, (void *)nb, 0);
-        p[j]->add("Set Visibility/All On", 0, 
+        p[j]->add("Set Visibility/All On", 0,
                   (Fl_Callback *) view_all_visible_cb, (void *)-1, 0);
-        p[j]->add("Set Visibility/All Off", 0, 
+        p[j]->add("Set Visibility/All Off", 0,
                   (Fl_Callback *) view_all_visible_cb, (void *)-2, 0);
-        p[j]->add("Set Visibility/Invert", 0, 
+        p[j]->add("Set Visibility/Invert", 0,
                   (Fl_Callback *) view_all_visible_cb, (void *)-3, 0);
-        p[j]->add("Set Visibility/By name", 0, 
+        p[j]->add("Set Visibility/By name", 0,
                   (Fl_Callback *) view_all_visible_cb, (void *)nb, 0);
-        p[j]->add("Apply As Background Mesh", 0, 
+        p[j]->add("Apply As Background Mesh", 0,
                   (Fl_Callback *) view_applybgmesh_cb, (void *)nb, 0);
-        p[j]->add("Save As...", 0, 
+        p[j]->add("Save As...", 0,
                   (Fl_Callback *) view_save_cb, (void *)nb, FL_MENU_DIVIDER);
-        p[j]->add("Options", 'o', 
+        p[j]->add("Options", 'o',
                   (Fl_Callback *) view_options_cb, (void *)nb, 0);
-        p[j]->add("Plugins", 'p', 
+        p[j]->add("Plugins", 'p',
                   (Fl_Callback *) plugin_cb, (void *)nb, 0);
       }
 

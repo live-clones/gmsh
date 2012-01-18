@@ -51,10 +51,6 @@
 #include "drawContext.h"
 #endif
 
-#if defined(HAVE_KBIPACK)
-#include "Homology.h"
-#endif
-
 // Global parser variables
 std::string gmsh_yyname;
 int gmsh_yyerrorstate = 0;
@@ -120,15 +116,15 @@ fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
 %token tField tReturn tCall tFunction tShow tHide tGetValue tGetEnv tGetString
+%token tHomology tCohomology
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
-%token tHomRank tHomGen tHomCut tHomSeq
 
 %type <d> FExpr FExpr_Single
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
 %type <i> NumericAffectation NumericIncrement PhysicalId
 %type <i> TransfiniteArrangement RecombineAngle
 %type <u> ColorExpr
-%type <c> StringExpr StringExprVar SendToFile
+%type <c> StringExpr StringExprVar SendToFile HomologyCommand
 %type <l> FExpr_Multi ListOfDouble ListOfDoubleOrAll RecursiveListOfDouble
 %type <l> RecursiveListOfListOfDouble
 %type <l> ListOfColor RecursiveListOfColor
@@ -3650,138 +3646,46 @@ Coherence :
     }
 ;
 
-
 //  H O M O L O G Y
 
-Homology :
+HomologyCommand :
+tHomology { $$ = (char*)"Generators"; }
+| tCohomology { $$ = (char*)"DualGenerators"; }
+;
 
-    tHomRank '(' StringExprVar ')' tAFFECT '{' ListOfDouble ',' ListOfDouble '}' tEND
+Homology :
+    HomologyCommand tEND
     {
-      List_T *temp = ListOfDouble2ListOfInt($7);
-      std::vector<int> domain;
-      for (int i = 0; i < List_Nbr(temp); i++){
-        int item = 0;
-        List_Read(temp, i, &item);
-        domain.push_back(item);
-      }
-      List_Delete($7);
-      List_Delete(temp);
-      List_T *temp2 = ListOfDouble2ListOfInt($9);
-      std::vector<int> subdomain;
-      for (int i = 0; i < List_Nbr(temp2); i++){
-        int item = 0;
-        List_Read(temp2, i, &item);
-        subdomain.push_back(item);
-      }
-      List_Delete($9);
-      List_Delete(temp2);
-      std::string fileName = "";
-      fileName = $3;
-      if(!fileName.empty()) fileName = FixRelativePath(gmsh_yyname, $3);
-#if defined(HAVE_KBIPACK)
-      Homology* homology = new Homology(GModel::current(), domain, subdomain);
-      homology->setFileName(fileName);
-      homology->computeRanks();
-      delete homology;
-#else
-      yymsg(0, "Gmsh needs to be configured with option Kbipack to use homology computation");
-#endif
+      std::vector<int> domain, subdomain;
+      GModel::current()->addHomologyRequest($1, domain, subdomain);
     }
-  | tHomGen '(' StringExprVar ')' tAFFECT '{' ListOfDouble ',' ListOfDouble '}' tEND
+  | HomologyCommand '{' ListOfDouble '}' tEND
     {
-      List_T *temp = ListOfDouble2ListOfInt($7);
-      std::vector<int> domain;
-      for (int i = 0; i < List_Nbr(temp); i++){
-        int item = 0;
-        List_Read(temp, i, &item);
-        domain.push_back(item);
+      std::vector<int> domain, subdomain;
+      for(int i = 0; i < List_Nbr($3); i++){
+        double d;
+        List_Read($3, i, &d);
+        domain.push_back((int)d);
       }
-      List_Delete($7);
-      List_Delete(temp);
-      List_T *temp2 = ListOfDouble2ListOfInt($9);
-      std::vector<int> subdomain;
-      for (int i = 0; i < List_Nbr(temp2); i++){
-        int item = 0;
-        List_Read(temp2, i, &item);
-        subdomain.push_back(item);
-      }
-      List_Delete($9);
-      List_Delete(temp2);
-      std::string fileName = "";
-      fileName = $3;
-      if(!fileName.empty()) fileName = FixRelativePath(gmsh_yyname, $3);
-#if defined(HAVE_KBIPACK)
-      Homology* homology = new Homology(GModel::current(), domain, subdomain);
-      homology->setFileName(fileName);
-      homology->findGenerators();
-      delete homology;
-#else
-      yymsg(0, "Gmsh needs to be configured with option Kbipack to use homology computation");
-#endif
+      GModel::current()->addHomologyRequest($1, domain, subdomain);
+      List_Delete($3);
     }
-  | tHomCut '(' StringExprVar ')' tAFFECT '{' ListOfDouble ',' ListOfDouble '}' tEND
+  | HomologyCommand '{' ListOfDouble ',' ListOfDouble '}' tEND
     {
-      List_T *temp = ListOfDouble2ListOfInt($7);
-      std::vector<int> domain;
-      for (int i = 0; i < List_Nbr(temp); i++){
-        int item = 0;
-        List_Read(temp, i, &item);
-        domain.push_back(item);
+      std::vector<int> domain, subdomain;
+      for(int i = 0; i < List_Nbr($3); i++){
+        double d;
+        List_Read($3, i, &d);
+        domain.push_back((int)d);
       }
-      List_Delete($7);
-      List_Delete(temp);
-      List_T *temp2 = ListOfDouble2ListOfInt($9);
-      std::vector<int> subdomain;
-      for (int i = 0; i < List_Nbr(temp2); i++){
-        int item = 0;
-        List_Read(temp2, i, &item);
-        subdomain.push_back(item);
+      for(int i = 0; i < List_Nbr($5); i++){
+        double d;
+        List_Read($5, i, &d);
+        subdomain.push_back((int)d);
       }
-      List_Delete($9);
-      List_Delete(temp2);
-      std::string fileName = "";
-      fileName = $3;
-      if(!fileName.empty()) fileName = FixRelativePath(gmsh_yyname, $3);
-#if defined(HAVE_KBIPACK)
-      Homology* homology = new Homology(GModel::current(), domain, subdomain);
-      homology->setFileName(fileName);
-      homology->findDualGenerators();
-      delete homology;
-#else
-      yymsg(0, "Gmsh needs to be configured with option Kbipack to use homology computation");
-#endif
-    }
-  | tHomSeq '(' StringExprVar ')' tAFFECT '{' ListOfDouble ',' ListOfDouble '}' tEND
-    {
-      List_T *temp = ListOfDouble2ListOfInt($7);
-      std::vector<int> domain;
-      for (int i = 0; i < List_Nbr(temp); i++){
-        int item = 0;
-        List_Read(temp, i, &item);
-        domain.push_back(item);
-      }
-      List_Delete($7);
-      List_Delete(temp);
-      List_T *temp2 = ListOfDouble2ListOfInt($9);
-      std::vector<int> subdomain;
-      for (int i = 0; i < List_Nbr(temp2); i++){
-        int item = 0;
-        List_Read(temp2, i, &item);
-        subdomain.push_back(item);
-      }
-      List_Delete($9);
-      List_Delete(temp2);
-      std::string fileName = "";
-      fileName = $3;
-      if(!fileName.empty()) fileName = FixRelativePath(gmsh_yyname, $3);
-#if defined(HAVE_KBIPACK)
-      Homology* homology = new Homology(GModel::current(), domain, subdomain);
-      homology->setFileName(fileName);
-      homology->findHomSequence();
-      delete homology;
-#else
-      yymsg(0, "Gmsh needs to be configured with option Kbipack to use homology computation");
-#endif
+      GModel::current()->addHomologyRequest($1, domain, subdomain);
+      List_Delete($3);
+      List_Delete($5);
     }
 ;
 

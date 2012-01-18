@@ -47,7 +47,7 @@ static MVertex* isEquivalentTo(std::multimap<MVertex*, MVertex*> &m, MVertex *v)
   return res;
 }
 
-static void buildASetOfEquivalentMeshVertices(GFace *gf, 
+static void buildASetOfEquivalentMeshVertices(GFace *gf,
                                               std::multimap<MVertex*, MVertex *> &equivalent,
                                               std::map<GVertex*, MVertex*> &bm)
 {
@@ -94,12 +94,12 @@ static void buildASetOfEquivalentMeshVertices(GFace *gf,
   }
 }
 
-struct geomThresholdVertexEquivalence 
+struct geomThresholdVertexEquivalence
 {
   // Initial MVertex associated to one given MVertex
   std::map<GVertex*, MVertex*> backward_map;
   // initiate the forward and backward maps
-  geomThresholdVertexEquivalence(GModel *g);  
+  geomThresholdVertexEquivalence(GModel *g);
   // restores the initial state
   ~geomThresholdVertexEquivalence ();
 };
@@ -109,9 +109,9 @@ geomThresholdVertexEquivalence::geomThresholdVertexEquivalence(GModel *g)
   std::multimap<MVertex*, MVertex*> equivalenceMap;
   for (GModel::fiter it = g->firstFace(); it != g->lastFace(); ++it)
     buildASetOfEquivalentMeshVertices(*it, equivalenceMap, backward_map);
-  // build the structure that identifiate geometrically equivalent 
+  // build the structure that identifiate geometrically equivalent
   // mesh vertices.
-  for (std::map<GVertex*, MVertex*>::iterator it = backward_map.begin(); 
+  for (std::map<GVertex*, MVertex*>::iterator it = backward_map.begin();
        it != backward_map.end(); ++it){
     GVertex *g = it->first;
     MVertex *v = it->second;
@@ -127,23 +127,23 @@ geomThresholdVertexEquivalence::geomThresholdVertexEquivalence(GModel *g)
           MLine *l = (*ite)->lines[i];
           MVertex *v1 = l->getVertex(0);
           MVertex *v2 = l->getVertex(1);
-          if (v1 == v && v2 != other){  
-            delete l;       
+          if (v1 == v && v2 != other){
+            delete l;
             l = new MLine(other,v2);
             newl.push_back(l);
-          }       
-          else if (v1 != other && v2 == v){     
-            delete l;       
+          }
+          else if (v1 != other && v2 == v){
+            delete l;
             l = new MLine(v1,other);
             newl.push_back(l);
-          }       
-          else if (v1 != v && v2 != v)  
-            newl.push_back(l);    
-          else 
+          }
+          else if (v1 != v && v2 != v)
+            newl.push_back(l);
+          else
             delete l;
         }
         (*ite)->lines = newl;
-      }       
+      }
     }
   }
 }
@@ -161,29 +161,29 @@ geomThresholdVertexEquivalence::~geomThresholdVertexEquivalence()
 }
 
 template<class T>
-static void GetQualityMeasure(std::vector<T*> &ele, 
-                              double &gamma, double &gammaMin, double &gammaMax, 
-                              double &eta, double &etaMin, double &etaMax, 
+static void GetQualityMeasure(std::vector<T*> &ele,
+                              double &gamma, double &gammaMin, double &gammaMax,
+                              double &eta, double &etaMin, double &etaMax,
                               double &rho, double &rhoMin, double &rhoMax,
                               double &disto, double &distoMin, double &distoMax,
                               double quality[4][100])
 {
   for(unsigned int i = 0; i < ele.size(); i++){
     double g = ele[i]->gammaShapeMeasure();
-    gamma += g; 
-    gammaMin = std::min(gammaMin, g); 
+    gamma += g;
+    gammaMin = std::min(gammaMin, g);
     gammaMax = std::max(gammaMax, g);
     double e = ele[i]->etaShapeMeasure();
-    eta += e; 
-    etaMin = std::min(etaMin, e); 
+    eta += e;
+    etaMin = std::min(etaMin, e);
     etaMax = std::max(etaMax, e);
     double r = ele[i]->rhoShapeMeasure();
-    rho += r; 
-    rhoMin = std::min(rhoMin, r); 
+    rho += r;
+    rhoMin = std::min(rhoMin, r);
     rhoMax = std::max(rhoMax, r);
     double d = ele[i]->distoShapeMeasure();
-    disto += d; 
-    distoMin = std::min(distoMin, d); 
+    disto += d;
+    distoMin = std::min(distoMin, d);
     distoMax = std::max(distoMax, d);
     for(int j = 0; j < 100; j++){
       if(g > j / 100. && g <= (j + 1) / 100.) quality[0][j]++;
@@ -209,18 +209,18 @@ void GetStatistics(double stat[50], double quality[4][100])
 
   std::map<int, std::vector<GEntity*> > physicals[4];
   m->getPhysicalGroups(physicals);
-  stat[45] = physicals[0].size() + physicals[1].size() + 
+  stat[45] = physicals[0].size() + physicals[1].size() +
     physicals[2].size() + physicals[3].size();
-  
+
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
     stat[4] += (*it)->mesh_vertices.size();
-  
+
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
     stat[5] += (*it)->mesh_vertices.size();
     stat[7] += (*it)->triangles.size();
     stat[8] += (*it)->quadrangles.size();
   }
-  
+
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
     stat[6] += (*it)->mesh_vertices.size();
     stat[9] += (*it)->tetrahedra.size();
@@ -228,11 +228,11 @@ void GetStatistics(double stat[50], double quality[4][100])
     stat[11] += (*it)->prisms.size();
     stat[12] += (*it)->pyramids.size();
   }
-  
+
   stat[13] = CTX::instance()->meshTimer[0];
   stat[14] = CTX::instance()->meshTimer[1];
   stat[15] = CTX::instance()->meshTimer[2];
-  
+
   if(quality){
     for(int i = 0; i < 3; i++)
       for(int j = 0; j < 100; j++)
@@ -245,7 +245,7 @@ void GetStatistics(double stat[50], double quality[4][100])
     if (m->firstRegion() == m->lastRegion()){
       for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
         GetQualityMeasure((*it)->quadrangles, gamma, gammaMin, gammaMax,
-                          eta, etaMin, etaMax, rho, rhoMin, rhoMax, 
+                          eta, etaMin, etaMax, rho, rhoMin, rhoMax,
                           disto, distoMin, distoMax, quality);
         GetQualityMeasure((*it)->triangles, gamma, gammaMin, gammaMax,
                           eta, etaMin, etaMax, rho, rhoMin, rhoMax,
@@ -256,7 +256,7 @@ void GetStatistics(double stat[50], double quality[4][100])
     else{
       for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
         GetQualityMeasure((*it)->tetrahedra, gamma, gammaMin, gammaMax,
-                          eta, etaMin, etaMax, rho, rhoMin, rhoMax, 
+                          eta, etaMin, etaMax, rho, rhoMin, rhoMax,
                           disto, distoMin, distoMax, quality);
         GetQualityMeasure((*it)->hexahedra, gamma, gammaMin, gammaMax,
                           eta, etaMin, etaMax, rho, rhoMin, rhoMax,
@@ -312,7 +312,7 @@ static bool TooManyElements(GModel *m, int dim)
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it)
     sumAllLc += (*it)->prescribedMeshSizeAtVertex() * CTX::instance()->mesh.lcFactor;
   sumAllLc /= (double)m->getNumVertices();
-  if(!sumAllLc || pow(CTX::instance()->lc / sumAllLc, dim) > 1.e10) 
+  if(!sumAllLc || pow(CTX::instance()->lc / sumAllLc, dim) > 1.e10)
     return !Msg::GetAnswer
       ("Your choice of mesh element sizes will likely produce a very\n"
        "large mesh. Do you really want to continue?\n\n"
@@ -405,7 +405,7 @@ static void PrintMesh2dStatistics(GModel *m)
     e_avg += (*it)->meshStatistics.efficiency_index;//* (*it)->meshStatistics.nbEdge;
     e_long = std::max((*it)->meshStatistics.longest_edge_length, e_long);
     e_short = std::min((*it)->meshStatistics.smallest_edge_length, e_short);
-    if ((*it)->meshStatistics.status == GFace::FAILED || 
+    if ((*it)->meshStatistics.status == GFace::FAILED ||
         (*it)->meshStatistics.status == GFace::PENDING) nUnmeshed++;
     nTotT += (*it)->meshStatistics.nbTriangle;
     nTotE += (*it)->meshStatistics.nbEdge;
@@ -446,7 +446,7 @@ static void Mesh2D(GModel *m)
         cf.insert(*it);
       else
         f.insert(*it);
-    
+
     int nIter = 0;
     while(1){
       int nbPending = 0;
@@ -466,7 +466,7 @@ static void Mesh2D(GModel *m)
       }
       if(!nbPending) break;
       if(nIter++ > 10) break;
-    }    
+    }
   }
 
 
@@ -487,7 +487,7 @@ static void Mesh2D(GModel *m)
     /*
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
       GFace *gf = *it;
-      if(gf->geomType() == GEntity::DiscreteSurface) continue; 
+      if(gf->geomType() == GEntity::DiscreteSurface) continue;
       if(gf->geomType() == GEntity::CompoundSurface) {
         GFaceCompound *gfc = (GFaceCompound*) gf;
         if(gfc->getNbSplit() != 0) continue;
@@ -508,7 +508,7 @@ static void Mesh2D(GModel *m)
   PrintMesh2dStatistics(m);
 }
 
-static void FindConnectedRegions(std::vector<GRegion*> &delaunay, 
+static void FindConnectedRegions(std::vector<GRegion*> &delaunay,
                                  std::vector<std::vector<GRegion*> > &connected)
 {
   // FIXME: need to split region vector into connected components here!
@@ -587,7 +587,7 @@ void RecombineMesh(GModel *m)
 {
   Msg::StatusBar(2, true, "Recombining 2D mesh...");
   double t1 = Cpu();
-  
+
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
     GFace *gf = *it;
     recombineIntoQuads(gf);
@@ -642,7 +642,7 @@ void GenerateMesh(GModel *m, int ask)
 
   // Optimize quality of 3D tet mesh
   if(m->getMeshStatus() == 3){
-    for(int i = 0; i < std::max(CTX::instance()->mesh.optimize, 
+    for(int i = 0; i < std::max(CTX::instance()->mesh.optimize,
                                 CTX::instance()->mesh.optimizeNetgen); i++){
       if(CTX::instance()->mesh.optimize > i) OptimizeMesh(m);
       if(CTX::instance()->mesh.optimizeNetgen > i) OptimizeMeshNetgen(m);
@@ -650,14 +650,17 @@ void GenerateMesh(GModel *m, int ask)
   }
 
   // Subdivide into quads or hexas
-  if(m->getMeshStatus() == 2 && CTX::instance()->mesh.algoSubdivide == 1) 
+  if(m->getMeshStatus() == 2 && CTX::instance()->mesh.algoSubdivide == 1)
     RefineMesh(m, CTX::instance()->mesh.secondOrderLinear, true);
-  else if(m->getMeshStatus() == 3 && CTX::instance()->mesh.algoSubdivide == 2) 
+  else if(m->getMeshStatus() == 3 && CTX::instance()->mesh.algoSubdivide == 2)
     RefineMesh(m, CTX::instance()->mesh.secondOrderLinear, false, true);
-  
+
+  // Compute homology if necessary
+  if(!Msg::GetErrorCount()) m->computeHomology();
+
   // Create high order elements
-  if(m->getMeshStatus() && CTX::instance()->mesh.order > 1) 
-    SetOrderN(m, CTX::instance()->mesh.order, CTX::instance()->mesh.secondOrderLinear, 
+  if(m->getMeshStatus() && CTX::instance()->mesh.order > 1)
+    SetOrderN(m, CTX::instance()->mesh.order, CTX::instance()->mesh.secondOrderLinear,
               CTX::instance()->mesh.secondOrderIncomplete);
 
   Msg::Info("%d vertices %d elements",
