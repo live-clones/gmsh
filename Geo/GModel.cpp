@@ -2735,11 +2735,13 @@ void GModel::computeHomology()
     std::pair<std::multimap<dpair, std::string>::iterator,
               std::multimap<dpair, std::string>::iterator> itp =
       _homologyRequests.equal_range(*it);
-    Homology* homology = new Homology(this, itp.first->first.first, itp.first->first.second);
+    Homology* homology = new Homology(this, itp.first->first.first,
+                                      itp.first->first.second);
     CellComplex *cellcomplex = homology->createCellComplex();
     if(cellcomplex->getSize(0)){
-      for(std::multimap<dpair, std::string>::iterator itt = itp.first; itt != itp.second; itt++){
-        // make sure to restore cell complex to non-reduced state if we are reuing it
+      for(std::multimap<dpair, std::string>::iterator itt = itp.first;
+          itt != itp.second; itt++){
+        // restore cell complex to non-reduced state if we are reusing it
         if(itt != itp.first) cellcomplex->restoreComplex();
         std::string type = itt->second;
         if(type == "Generators")
