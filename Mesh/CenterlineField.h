@@ -101,12 +101,19 @@ class Centerline : public Field{
   void createBranches(int maxN);
 
   //Computes for the Branches the min and maxRadius of the tubular structure
-  //this function needs teh current GModel
+  //this function needs the current GModel
   void computeRadii();
 
   //Computes for each MLine the minRadius
   void distanceToLines();
-  
+
+  // Cut the mesh in different parts of small aspect ratio
+  void splitMesh();
+
+  // Cut the tubular structure with a disk
+  // perpendicular to the tubular structure
+  void cutByDisk(SPoint3 pt, SVector3 dir, double rad);
+
   //Print for debugging
   void printSplit() const;
  

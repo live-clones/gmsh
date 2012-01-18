@@ -186,10 +186,9 @@ void Centerline::importFile(std::string fileName){
   mod->readVTK(fileName.c_str());
   mod->removeDuplicateMeshVertices(1.e-8);
   std::vector<GEntity*> entities ;
-  mod->getEntities(entities) ;
+  mod->getEntities(entities) ;  
+  current->setAsCurrent();  
 
-  current->setAsCurrent();
-    
   int maxN = 0.0;
   for(unsigned int i = 0; i < entities.size(); i++){
      if( entities[i]->dim() == 1){
@@ -239,16 +238,24 @@ void Centerline::createBranches(int maxN){
       junctions.insert(*it);
     }
   }
+  // printf("junctions =%d \n", junctions.size());
+  // std::set<MVertex*>::iterator itt = junctions.begin();
+  // for ( ; itt != junctions.end(); ++itt){
+  //   MVertex *v = *itt;
+  //   printf("JUNC = %d \n", v->getNum());
+  // }
    
   //split edges
   int tag = 0;
   for(unsigned int i = 0; i < color_edges.size(); ++i){
     std::vector<MLine*> lines = color_edges[i];
+    //printf("EDGE %d line = %d \n", lines.size());
     while (!lines.empty()) {
       std::vector<MLine*> myLines;
       std::vector<MLine*>::iterator itl = lines.begin();
       MVertex *vB = (*itl)->getVertex(0);
       MVertex *vE = (*itl)->getVertex(1);
+      //printf("VB =%d vE = %d \n", vB->getNum(), vE->getNum());
       myLines.push_back(*itl);
       erase(lines, *itl); 
       itl = lines.begin();
@@ -256,25 +263,28 @@ void Centerline::createBranches(int maxN){
 		 junctions.find(vB) != junctions.end()) ) {
   	MVertex *v1 = (*itl)->getVertex(0);
   	MVertex *v2 = (*itl)->getVertex(1);
-      	if (v1 == vE){
+	//printf("line %d, VB = %d vE = %d v1=%d v2=%d \n", (*itl)->getNum(), vB->getNum(), vE->getNum(), v1->getNum(), v2->getNum());
+	bool goVE = (junctions.find(vE) == junctions.end()) ? true : false ;
+	bool goVB = (junctions.find(vB) == junctions.end()) ? true : false;
+      	if (v1 == vE && goVE){
     	  myLines.push_back(*itl);
   	  erase(lines, *itl);
 	  itl = lines.begin();
   	  vE = v2;
   	}
-  	else if ( v2 == vE){
+  	else if ( v2 == vE && goVE){
     	  myLines.push_back(*itl);
   	  erase(lines, *itl);
 	  itl = lines.begin();
   	  vE = v1;
   	}
-  	else if ( v1 == vB){
+  	else if ( v1 == vB && goVB){
     	  myLines.push_back(*itl);
   	  erase(lines, *itl);
 	  itl = lines.begin();
   	  vB = v2;
   	}
-  	else if ( v2 == vB){
+  	else if ( v2 == vB && goVB){
    	  myLines.push_back(*itl);
 	  erase(lines, *itl);
 	  itl = lines.begin();
@@ -286,11 +296,11 @@ void Centerline::createBranches(int maxN){
       orderMLines(myLines); 
       std::vector<Branch> children;
       Branch newBranch ={ tag++, myLines, computeLength(myLines), vB, vE, children, 1.e6, 0.0};
-      //printf("VB = %d %d \n", vB->getNum(), vE->getNum());
+      //printf("branch = %d VB = %d VE %d \n", myLines.size(), vB->getNum(), vE->getNum());
       edges.push_back(newBranch) ;
     }
   }
-  printf("edges =%d new =%d \n", color_edges.size(), edges.size());
+  printf("in/outlets =%d branches =%d \n", color_edges.size(), edges.size());
 
   //create children
   for(unsigned int i = 0; i < edges.size(); ++i) {
@@ -314,7 +324,6 @@ void Centerline::createBranches(int maxN){
   //      printf("children (%d) =%d \n", edges[i].children.size(),  edges[i].children[j].tag);
   //    }
   // }
-
   // std::set<MVertex*>::iterator itj = junctions.begin();
   // for ( ; itj != junctions.end(); ++itj){
   //   MVertex *v = *itj;
@@ -324,6 +333,10 @@ void Centerline::createBranches(int maxN){
 }
 
 void Centerline::distanceToLines(){
+  Msg::Info("Centerline: computing distance to lines ");
+
+  //EMI TO DO DO THIS WITH ANN !
+  //MUCH FASTER
 
   std::vector<SPoint3> pts;
   std::set<SPoint3> pts_set;
@@ -427,6 +440,38 @@ void Centerline::buildKdTree(){
  }
  fprintf(f,"};\n");
   fclose(f);
+
+}
+
+void Centerline::splitMesh(){
+
+ for(unsigned int i = 0; i < edges.size(); ++i){
+   std::vector<MLine*> lines = edges[i].lines;
+   MVertex *v1 = edges[i].vE;
+   MVertex *v2;
+   SPoint3 pt(v1->x(), v1->y(), v1->z());
+   if (lines[0]->getVertex(0) == v1) v2 = lines[0]->getVertex(1);
+   else if (lines[0]->getVertex(1) == v1) v2 = lines[0]->getVertex(0);
+   else if (lines.back()->getVertex(0) == v1) v2 = lines.back()->getVertex(1);
+   else if (lines.back()->getVertex(1) == v1) v2 = lines.back()->getVertex(0);
+   SVector3 dir(v2->x()-v1->x(),v2->y()-v1->y(),v2->z()-v1->z());
+   if(edges[i].children.size() > 0.0){
+     cutByDisk(pt, dir, edges[i].maxRad);
+   }
+ }
+
+}
+
+void Centerline::cutByDisk(SPoint3 pt, SVector3 norm, double rad){
+  
+  printf("Cutting disk centered at pt  %g %g %g dir %g %g %g \n", pt.x(), pt.y(), pt.z(), norm.x(), norm.y(), norm.z());
+  double a = norm.x();
+  double b = norm.y();
+  double c = norm.z();
+  double d = -a * pt[0] - b * pt[1] - c * pt[2];
+  printf("PLane = %g %g %g %g \n", a, b, c, d);
+  exit(1);
+  return;
 
 }
 
