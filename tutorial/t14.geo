@@ -9,10 +9,9 @@
 // Homology computation in Gmsh finds representative chains of
 // (relative) homology spaces using a mesh of a model. Those
 // representatives generate the (relative) homology spaces of the
-// model. Alternatively, Gmsh can only look for the ranks of the
-// (relative) homology spaces, the Betti numbers of the model.
+// model.
 
-// The generators chains are stored in a given .msh-file as physical
+// The generator chains are stored in a given .msh-file as physical
 // groups, whose mesh elements are oriented such that their
 // coefficients are 1 in the generator chain.
 
@@ -65,12 +64,12 @@ Physical Surface(75) = bnd[];
 // the four terminals.
 Homology {{1}, {70, 71, 72, 73}};
 
+// Find the corresponding thick cuts
+Cohomology {{1}, {70, 71, 72, 73}};
+
 // Find the corresponding thin cuts, generators of relative homology
 // spaces modulo the non-terminal domain surface.
 Homology {{1}, {75}};
-
-// Find the corresponding thick cuts.
-Cohomology {{1}, {70, 71, 72, 73}};
 
 // More examples:
 //  Homology {1};
