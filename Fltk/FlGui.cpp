@@ -84,7 +84,7 @@ class drawContextFltk : public drawContextGlobal{
     FlGui::instance()->check();
   }
   int getFontIndex(const char *fontname)
-  { 
+  {
     if(fontname){
       for(int i = 0; i < NUM_FONTS; i++)
         if(!strcmp(menu_font_names[i].label(), fontname))
@@ -225,7 +225,7 @@ FlGui::FlGui(int argc, char **argv) : _openedThroughMacFinder(false)
 
   // load default system icons (for file browser)
   Fl_File_Icon::load_system_icons();
-  
+
   // add callback to respond to Mac Finder
 #if defined(__APPLE__)
   fl_open_callback(OpenProjectMacFinder);
@@ -345,11 +345,11 @@ int FlGui::run()
   // merging any files (e.g. if we build the geometry with python and
   // create the gui from the python script)
   SetBoundingBox();
- 
+
   // draw the scene
   drawContext::global()->draw();
 
-  return Fl::run(); 
+  return Fl::run();
 }
 
 int FlGui::testGlobalShortcuts(int event)
@@ -468,7 +468,7 @@ int FlGui::testGlobalShortcuts(int event)
       status = 1;
     }
   }
-  else if(Fl::test_shortcut(FL_SHIFT + 'a')) { 
+  else if(Fl::test_shortcut(FL_SHIFT + 'a')) {
     window_cb(0, (void*)"front");
     status = 1;
   }
@@ -548,7 +548,7 @@ int FlGui::testGlobalShortcuts(int event)
       (0, GMSH_SET | GMSH_GUI, !opt_mesh_reverse_all_normals(0, GMSH_GET, 0));
     status = 2;
   }
-  else if(Fl::test_shortcut(FL_ALT + 'x') || 
+  else if(Fl::test_shortcut(FL_ALT + 'x') ||
           Fl::test_shortcut(FL_ALT + FL_SHIFT + 'x')) {
     status_xyz1p_cb(0, (void *)"x");
     status = 1;
@@ -678,7 +678,7 @@ int FlGui::testGlobalShortcuts(int event)
   else if(testArrowShortcuts()) {
     status = 1;
   }
-  
+
   if(status == 2){
     drawContext::global()->draw();
     return 1;
@@ -795,7 +795,7 @@ void FlGui::setStatus(const char *msg, int num)
     gl->screenMessage[0] = std::string(msg);
     if(i)
       gl->screenMessage[0].resize(i - 1);
-    if(i < n) 
+    if(i < n)
       gl->screenMessage[1] = std::string(&msg[i]);
     else
       gl->screenMessage[1].clear();
@@ -810,9 +810,8 @@ void FlGui::storeCurrentWindowsInfo()
   CTX::instance()->glPosition[0] = graph[0]->win->x();
   CTX::instance()->glPosition[1] = graph[0]->win->y();
   CTX::instance()->glSize[0] = graph[0]->win->w();
-  CTX::instance()->glSize[1] = (graph[0]->win->h() - graph[0]->bottom->h() -
-                                graph[0]->browser->h());
-  CTX::instance()->msgSize = graph[0]->browser->h();
+  CTX::instance()->glSize[1] = (graph[0]->win->h() - graph[0]->bottom->h());
+  CTX::instance()->msgSize = graph[0]->getMessageHeight();
   CTX::instance()->optPosition[0] = options->win->x();
   CTX::instance()->optPosition[1] = options->win->y();
   CTX::instance()->pluginPosition[0] = plugins->win->x();
@@ -842,8 +841,8 @@ void FlGui::storeCurrentWindowsInfo()
 }
 
 void FlGui::callForSolverPlugin(int dim)
-{ 
-  GMSH_SolverPlugin *sp = PluginManager::instance()->findSolverPlugin();   
+{
+  GMSH_SolverPlugin *sp = PluginManager::instance()->findSolverPlugin();
   if(sp) sp->popupPropertiesForPhysicalEntity(dim);
 }
 
@@ -903,7 +902,7 @@ void window_cb(Fl_Widget *w, void *data)
     // the order is important!
     for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
       FlGui::instance()->graph[i]->win->show();
-    if(FlGui::instance()->options->win->shown()) 
+    if(FlGui::instance()->options->win->shown())
       FlGui::instance()->options->win->show();
     if(FlGui::instance()->plugins->win->shown())
       FlGui::instance()->plugins->win->show();

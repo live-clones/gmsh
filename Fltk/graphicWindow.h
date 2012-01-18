@@ -36,6 +36,7 @@ class graphicWindow{
   void setTitle(std::string str);
   void setAutoScroll(bool val){ _autoScrollMessages = val; }
   bool getAutoScroll(){ return _autoScrollMessages; }
+  int getMessageHeight();
   void split(openglWindow *g, char how);
   void setAnimButtons(int mode);
   void checkAnimButtons();

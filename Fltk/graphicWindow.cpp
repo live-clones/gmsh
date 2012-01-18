@@ -522,23 +522,15 @@ graphicWindow::graphicWindow(bool main, int numTiles) : _autoScrollMessages(true
   int sh = 2 * FL_NORMAL_SIZE - 4; // status bar height
   int sw = FL_NORMAL_SIZE + 3; // status button width
   int width = CTX::instance()->glSize[0];
-  int mheight = CTX::instance()->msgSize;
-  int glheight = CTX::instance()->glSize[1];
+  int mheight = 10; // dummy (nonzero)
+  int glheight = CTX::instance()->glSize[1] - mheight;
   int height = glheight + mheight + sh;
 
   // make sure height < screen height
   if(height > Fl::h()){
     height = Fl::h();
-    mheight = 50;
     glheight = height - mheight - sh;
-    CTX::instance()->msgSize = mheight;
     CTX::instance()->glSize[1] = glheight;
-  }
-
-  // no tile should be zero during tile creation
-  if(CTX::instance()->msgSize <= 0){
-    mheight = 10;
-    glheight = CTX::instance()->glSize[1] - 10;
   }
 
   // the graphic window should be a "normal" window (neither modal nor
@@ -820,9 +812,9 @@ void graphicWindow::resizeMessages(int dh)
 void graphicWindow::showMessages()
 {
   if(!win->shown()) return;
-  if(browser->h() < 10){
+  if(browser->h() < 5){
     int height = _savedMessageHeight;
-    if(height < 1) height = 50;
+    if(height < 5) height = 50;
     int maxh = win->h() - bottom->h();
     if(height > maxh) height = maxh / 2;
     resizeMessages(height - browser->h());
@@ -835,6 +827,12 @@ void graphicWindow::hideMessages()
 {
   _savedMessageHeight = browser->h();
   resizeMessages(-browser->h());
+}
+
+int graphicWindow::getMessageHeight()
+{
+  if(!browser->h()) return _savedMessageHeight;
+  return browser->h();
 }
 
 void graphicWindow::addMessage(const char *msg)
