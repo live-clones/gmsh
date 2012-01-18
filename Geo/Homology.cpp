@@ -9,6 +9,7 @@
 
 #if defined(HAVE_POST)
 #include "PView.h"
+#include "PViewOptions.h"
 #endif
 
 #if defined(HAVE_KBIPACK)
@@ -515,21 +516,6 @@ int Chain::createPGroup()
   physicalInfo[physicalNum] = getName();
   physicalMap[entityNum] = physicalInfo;
 
-  // hide mesh
-  /*opt_mesh_points(0, GMSH_SET, 0);
-  opt_mesh_lines(0, GMSH_SET, 0);
-  opt_mesh_triangles(0, GMSH_SET, 0);
-  opt_mesh_quadrangles(0, GMSH_SET, 0);
-  opt_mesh_tetrahedra(0, GMSH_SET, 0);
-  opt_mesh_hexahedra(0, GMSH_SET, 0);
-  opt_mesh_prisms(0, GMSH_SET, 0);
-  opt_mesh_pyramids(0, GMSH_SET, 0);*/
-
-  // show post-processing normals, tangents and element boundaries
-  //opt_view_normals(0, GMSH_SET, 20);
-  //opt_view_tangents(0, GMSH_SET, 20);
-  //opt_view_show_element(0, GMSH_SET, 1);
-
   if(!data.empty()){
     this->getCellComplex()->getModel()->storeChain(getDim(),
 						   entityMap, physicalMap);
@@ -537,8 +523,14 @@ int Chain::createPGroup()
 							getDim(), physicalNum);
 #if defined(HAVE_POST)
     // create PView for instant visualization
-    new PView(getName(), "ElementData", this->getCellComplex()->getModel(),
-	      data, 0, 1);
+    PView* view = new PView(getName(), "ElementData",
+                            this->getCellComplex()->getModel(), data, 0, 1);
+    // the user should be interested about the orientations
+    int size = 30;
+    PViewOptions* opt = view->getOptions();
+    if(opt->tangents == 0) opt->tangents = size;
+    if(opt->normals == 0) opt->normals = size;
+    view->setOptions(opt);
 #endif
   }
 

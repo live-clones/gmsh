@@ -1,8 +1,8 @@
 // Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
-// 
+//
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
-// 
+//
 // Contributed by Matti Pellikka <matti.pellikka@tut.fi>.
 
 #ifndef _HOMOLOGY_H_
@@ -31,7 +31,7 @@ class Chain;
 class Homology
 {
  private:
-  
+
   // the Gmsh model for homology computation
   GModel* _model;
 
@@ -41,7 +41,7 @@ class Homology
   std::vector<int> _subdomain;
   // corresponding geometrical entities
   std::vector<GEntity*> _domainEntities;
-  std::vector<GEntity*> _subdomainEntities;  
+  std::vector<GEntity*> _subdomainEntities;
 
   // use cell combining
   bool _combine;
@@ -55,20 +55,20 @@ class Homology
 
   // file name to store the results
   std::string _fileName;
- 
+
   std::map<int, Chain*> _basisChains;
 
  public:
-  
+
   Homology(GModel* model, std::vector<int> physicalDomain,
-	   std::vector<int> physicalSubdomain, 
+	   std::vector<int> physicalSubdomain,
 	   bool combine=true, bool omit=true, bool smoothen=true);
   ~Homology();
-  
+
   // create a cell complex from a mesh in geometrical entities of Gmsh
   CellComplex* createCellComplex(std::vector<GEntity*>& domainEntities,
 				 std::vector<GEntity*>& subdomainEntities);
-  CellComplex* createCellComplex() { 
+  CellComplex* createCellComplex() {
     return createCellComplex(_domainEntities, _subdomainEntities); }
 
   void setFileName(std::string fileName) { _fileName = fileName; }
@@ -79,12 +79,12 @@ class Homology
 
   // experimental
   void findHomSequence() {}
-  void computeRanks() {}  
-   
+  void computeRanks() {}
+
   // create a string describing the generator
   std::string getDomainString(const std::vector<int>& domain,
 			      const std::vector<int>& subdomain);
-  
+
   // write the generators to a file
   bool writeGeneratorsMSH(bool binary=false);
   // store dim-dimensional cells of cellComplex as a physical group
@@ -98,7 +98,7 @@ class Homology
 // A class representing a chain.
 // Used to store generators of the homology spaces and visualize them in Gmsh.
 class Chain {
-  
+
  private:
   // cells and their coefficients in this chain
   std::map< Cell*, int, Less_Cell > _cells;
@@ -108,12 +108,12 @@ class Chain {
   int _num;
   // cell complex this chain belongs to
   CellComplex* _cellComplex;
-   
+
   // torsion coefficient
   int _torsion;
-  
+
   int _dim;
-  
+
  public:
   Chain(std::map<Cell*, int, Less_Cell>& chain,
         CellComplex* cellComplex, int num,
@@ -126,29 +126,29 @@ class Chain {
   int getTorsion() const { return _torsion; }
   int getDim() const { return _dim; }
   CellComplex* getCellComplex() const { return _cellComplex; }
-  void getCells(std::map<Cell*, int, Less_Cell> cells) const { 
+  void getCells(std::map<Cell*, int, Less_Cell> cells) const {
     cells = _cells; }
-  
+
   // erase cells from the chain with zero coefficient
   void eraseNullCells();
-  
-  // number of cells in this chain 
+
+  // number of cells in this chain
   int getSize() const { return _cells.size();}
-  
+
   // get/set chain name
   std::string getName() const { return _name; }
   void setName(std::string name) { _name=name; }
   // get/set physical group number
   int getNum() const { return _num; }
   void setNum(int num) { _num=num; }
-  
+
   // append this chain to a MSH ASCII file as $ElementData
   // for debugging only
   int writeChainMSH(const std::string &name);
 
   // create a Gmsh physical group from this chain.
   int createPGroup();
-  
+
 };
 
 #endif

@@ -85,7 +85,7 @@ void CellComplex::insertCell(Cell* cell)
   _newcells.push_back(cell);
   std::pair<citer, bool> insertInfo = _cells[cell->getDim()].insert(cell);
   if(!insertInfo.second){
-    Msg::Warning("Cell not inserted");
+    Msg::Debug("Cell not inserted");
     Cell* oldCell = (*insertInfo.first);
     cell->printCell();
     oldCell->printCell();
@@ -246,8 +246,8 @@ int CellComplex::coreduction(int dim, bool omit,
 
 int CellComplex::reduceComplex(bool docombine, bool omit)
 {
-  Msg::Info("Cell Complex reduction:");
-  Msg::Info(" %d volumes, %d faces, %d edges and %d vertices",
+  Msg::Debug("Cell Complex reduction:");
+  Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",
             getSize(3), getSize(2), getSize(1), getSize(0));
 
   int count = 0;
@@ -277,7 +277,7 @@ int CellComplex::reduceComplex(bool docombine, bool omit)
     }
   }
 
-  Msg::Info(" %d volumes, %d faces, %d edges and %d vertices",
+  Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",
             getSize(3), getSize(2), getSize(1), getSize(0));
 
   if(docombine) combine(3);
@@ -286,7 +286,7 @@ int CellComplex::reduceComplex(bool docombine, bool omit)
   reduction(1, false, empty);
   if(docombine) combine(1);
 
-  Msg::Info(" %d volumes, %d faces, %d edges and %d vertices",
+  Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",
             getSize(3), getSize(2), getSize(1), getSize(0));
 
   return 0;
@@ -306,8 +306,8 @@ void CellComplex::removeSubdomain()
 
 int CellComplex::coreduceComplex(bool docombine, bool omit)
 {
-  Msg::Info("Cell Complex coreduction:");
-  Msg::Info(" %d volumes, %d faces, %d edges and %d vertices",
+  Msg::Debug("Cell Complex coreduction:");
+  Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",
             getSize(3), getSize(2), getSize(1), getSize(0));
 
   int count = 0;
@@ -342,7 +342,7 @@ int CellComplex::coreduceComplex(bool docombine, bool omit)
     }
   }
 
-  Msg::Info(" %d volumes, %d faces, %d edges and %d vertices",
+  Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",
             getSize(3), getSize(2), getSize(1), getSize(0));
 
   if(docombine) cocombine(0);
@@ -353,7 +353,7 @@ int CellComplex::coreduceComplex(bool docombine, bool omit)
   coreduction(3, false, empty);
   coherent();
 
-  Msg::Info(" %d volumes, %d faces, %d edges and %d vertices",
+  Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",
             getSize(3), getSize(2), getSize(1), getSize(0));
 
   return 0;
@@ -361,9 +361,9 @@ int CellComplex::coreduceComplex(bool docombine, bool omit)
 
 int CellComplex::combine(int dim)
 {
-  //Msg::Info("Cell complex before combining:");
-  //Msg::Info(" %d volumes, %d faces, %d edges and %d vertices",
-  //          getSize(3), getSize(2), getSize(1), getSize(0));
+  Msg::Debug("Cell complex before combining:");
+  Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",
+             getSize(3), getSize(2), getSize(1), getSize(0));
   if(dim < 1 || dim > 3) return 0;
 
   std::queue<Cell*> Q;
@@ -410,9 +410,9 @@ int CellComplex::combine(int dim)
     }
   }
 
-  //Msg::Info("Cell complex after combining:");
-  //Msg::Info(" %d volumes, %d faces, %d edges and %d vertices",
-  //          getSize(3), getSize(2), getSize(1), getSize(0));
+  Msg::Debug("Cell complex after combining:");
+  Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",
+             getSize(3), getSize(2), getSize(1), getSize(0));
 
   return count;
 }
@@ -420,9 +420,9 @@ int CellComplex::combine(int dim)
 
 int CellComplex::cocombine(int dim)
 {
-  //Msg::Info("Cell complex before cocombining:");
-  //Msg::Info(" %d volumes, %d faces, %d edges and %d vertices",
-  //          getSize(3), getSize(2), getSize(1), getSize(0));
+  Msg::Debug("Cell complex before cocombining:");
+  Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",
+             getSize(3), getSize(2), getSize(1), getSize(0));
 
   if(dim < 0 || dim > 2) return 0;
 
@@ -472,9 +472,9 @@ int CellComplex::cocombine(int dim)
     }
   }
 
-  //Msg::Info("Cell complex after cocombining:");
-  //Msg::Info(" %d volumes, %d faces, %d edges and %d vertices",
-  //          getSize(3), getSize(2), getSize(1), getSize(0));
+  Msg::Debug("Cell complex after cocombining:");
+  Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",
+             getSize(3), getSize(2), getSize(1), getSize(0));
 
   return count;
 }
@@ -493,12 +493,12 @@ bool CellComplex::coherent()
         int ori = (*it).second;
         citer cit = _cells[bdCell->getDim()].find(bdCell);
         if(cit == lastCell(bdCell->getDim())){
-          Msg::Warning("Boundary cell not in cell complex! Boundary removed");
+          Msg::Debug("Boundary cell not in cell complex! Boundary removed");
           cell->removeBoundaryCell(bdCell, false);
           coherent = false;
         }
         if(!bdCell->hasCoboundary(cell)){
-          Msg::Warning("Incoherent boundary/coboundary pair! Fixed");
+          Msg::Debug("Incoherent boundary/coboundary pair! Fixed");
 	  bdCell->addCoboundaryCell(ori, cell, false);
           coherent = false;
         }
@@ -512,12 +512,12 @@ bool CellComplex::coherent()
         int ori = (*it).second;
         citer cit = _cells[cbdCell->getDim()].find(cbdCell);
         if(cit == lastCell(cbdCell->getDim())){
-          Msg::Warning("Coboundary cell not in cell complex! Coboundary removed");
+          Msg::Debug("Coboundary cell not in cell complex! Coboundary removed");
           cell->removeCoboundaryCell(cbdCell, false);
           coherent = false;
         }
         if(!cbdCell->hasBoundary(cell)){
-          Msg::Warning("Incoherent coboundary/boundary pair! Fixed");
+          Msg::Debug("Incoherent coboundary/boundary pair! Fixed");
 	  cbdCell->addBoundaryCell(ori, cell, false);
           coherent = false;
         }

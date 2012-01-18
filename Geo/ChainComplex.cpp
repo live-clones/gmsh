@@ -78,7 +78,7 @@ ChainComplex::ChainComplex(CellComplex* cellComplex, int domain)
 		 || bdCell->getIndex() < 1
                  || cell->getIndex() > (int)gmp_matrix_cols( _HMatrix[dim])
 		 || cell->getIndex() < 1){
-                Msg::Warning("Index out of bound! HMatrix: %d", dim);
+                Msg::Debug("Index out of bound! HMatrix: %d", dim);
               }
               else{
                 gmp_matrix_get_elem(elem, bdCell->getIndex(),
