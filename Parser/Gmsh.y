@@ -3677,6 +3677,7 @@ Homology :
       List_Delete(temp2);
       std::string fileName = "";
       fileName = $3;
+      if(!fileName.empty()) fileName = FixRelativePath(gmsh_yyname, $3);
 #if defined(HAVE_KBIPACK)
       Homology* homology = new Homology(GModel::current(), domain, subdomain);
       homology->setFileName(fileName);
@@ -3708,6 +3709,7 @@ Homology :
       List_Delete(temp2);
       std::string fileName = "";
       fileName = $3;
+      if(!fileName.empty()) fileName = FixRelativePath(gmsh_yyname, $3);
 #if defined(HAVE_KBIPACK)
       Homology* homology = new Homology(GModel::current(), domain, subdomain);
       homology->setFileName(fileName);
@@ -3739,6 +3741,7 @@ Homology :
       List_Delete(temp2);
       std::string fileName = "";
       fileName = $3;
+      if(!fileName.empty()) fileName = FixRelativePath(gmsh_yyname, $3);
 #if defined(HAVE_KBIPACK)
       Homology* homology = new Homology(GModel::current(), domain, subdomain);
       homology->setFileName(fileName);
@@ -3770,6 +3773,7 @@ Homology :
       List_Delete(temp2);
       std::string fileName = "";
       fileName = $3;
+      if(!fileName.empty()) fileName = FixRelativePath(gmsh_yyname, $3);
 #if defined(HAVE_KBIPACK)
       Homology* homology = new Homology(GModel::current(), domain, subdomain);
       homology->setFileName(fileName);

@@ -240,8 +240,9 @@ class dofManager : public dofManagerBase{
         dataVec tmp(val);
         val = it->second.shift;
         for (unsigned i = 0; i < (it->second).linear.size(); i++){
+          /* gcc: warning: variable ‘itu’ set but not used
           std::map<Dof, int>::const_iterator itu = unknown.find
-            (((it->second).linear[i]).first);
+            (((it->second).linear[i]).first);*/
           getDofValue(((it->second).linear[i]).first, tmp);
           dofTraits<T>::gemm(val, ((it->second).linear[i]).second, tmp, 1, 1);
         }
