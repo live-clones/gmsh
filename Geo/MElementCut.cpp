@@ -537,7 +537,8 @@ static void assignLsPhysical(GModel *GM, int reg, int dim,
   if(!physicals[dim][reg].count(physTag)){
     std::stringstream strs;
     strs << lsTag;
-    physicals[dim][reg][physTag] = "levelset_" + strs.str();
+    std::string sdim = (dim == 2) ? "S" : "L";
+    physicals[dim][reg][physTag] = "levelset_" + sdim + strs.str();
     if(physTag != lsTag)
       Msg::Info("Levelset %d -> physical %d", lsTag, physTag);
   }
@@ -1070,11 +1071,18 @@ static void elementCutMesh(MElement *e, std::vector<gLevelset *> &RPN,
         }
         else tri = new MTriangle(mv[0], mv[1], mv[2], ++numEle, ePart);
         int lsTag = triangles[i]->lsTag();
-        int c = elements[2].count(lsTag) + elements[3].count(lsTag) + elements[8].count(lsTag);
+        int cR = elements[2].count(lsTag) + elements[3].count(lsTag) + elements[8].count(lsTag);
+        int cP = 0;
+        for(std::map<int, std::map<int, std::string> >::iterator it = physicals[2].begin();
+            it != physicals[2].end(); it++)
+          for(std::map<int, std::string>::iterator it2 = it->second.begin();
+              it2 != it->second.end(); it2++)
+            if(it2->first == lsTag)
+              {cP = 1; break;}
         // the surfaces are cut before the volumes!
-        int reg = getBorderTag(lsTag, c, newElemTags[2][0], borderElemTags[1]);
+        int reg = getBorderTag(lsTag, cR, newElemTags[2][0], borderElemTags[1]);
         int physTag = (!gePhysicals.size()) ? 0 :
-                      getBorderTag(lsTag, c, newPhysTags[2][0], borderPhysTags[1]);
+                      getBorderTag(lsTag, cP, newPhysTags[2][0], borderPhysTags[1]);
         elements[2][reg].push_back(tri);
         if(physTag)
           assignLsPhysical(GM, reg, 2, physicals, physTag, lsTag);
@@ -1285,11 +1293,18 @@ static void elementCutMesh(MElement *e, std::vector<gLevelset *> &RPN,
         }
         else lin = new MLine(mv[0], mv[1], ++numEle, ePart);
         int lsTag = lines[i]->lsTag();
-        int c = elements[1].count(lsTag);
+        int cR = elements[1].count(lsTag);
+        int cP = 0;
+        for(std::map<int, std::map<int, std::string> >::iterator it = physicals[1].begin();
+            it != physicals[2].end(); it++)
+          for(std::map<int, std::string>::iterator it2 = it->second.begin();
+              it2 != it->second.end(); it2++)
+            if(it2->first == lsTag)
+              {cP = 1; break;}
         // the lines are cut before the surfaces!
-        int reg = getBorderTag(lsTag, c, newElemTags[1][0], borderElemTags[0]);
+        int reg = getBorderTag(lsTag, cR, newElemTags[1][0], borderElemTags[0]);
         int physTag = (!gePhysicals.size()) ? 0 :
-                      getBorderTag(lsTag, c, newPhysTags[1][0], borderPhysTags[0]);
+                      getBorderTag(lsTag, cP, newPhysTags[1][0], borderPhysTags[0]);
         elements[1][reg].push_back(lin);
         if(physTag)
           assignLsPhysical(GM, reg, 1, physicals, physTag, lsTag);
@@ -1501,7 +1516,8 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
     }
 
     // Create elementary and physical for non connected border lines
-    if(borders[0].size() > nbBorders && gmEntities[i]->dim() == 2){
+    if(borders[0].size() > nbBorders && gmEntities[i]->dim() == 2 &&
+       i == gm->getNumVertices() + gm->getNumEdges() + gm->getNumFaces() - 1){
       int k = 0;
       for (std::map<int, std::vector<MElement*> >::iterator it = elements[1].begin();
            it != elements[1].end(); it++){
