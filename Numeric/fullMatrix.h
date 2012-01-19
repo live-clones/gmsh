@@ -84,12 +84,12 @@ class fullVector
       _data = new scalar[_r];
       _own_data = true;
       if(resetValue)
-        setAll(0.);
+        setAll(scalar());
       return true;
     }
     _r = r;
     if(resetValue)
-      setAll(0.);
+      setAll(scalar());
     return false;
   }
   void setAsProxy(const fullVector<scalar> &original, int r_start, int r)

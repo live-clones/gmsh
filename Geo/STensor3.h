@@ -245,6 +245,15 @@ class STensor3 {
     ithis.setMat(m);
     return ithis;
   }
+  STensor3 transpose () const
+  {
+    STensor3 ithis;
+    for (int i = 0; i < 3; i++)
+      for (int j = 0; j < 3; j++)
+        ithis(i,j) = (*this)(j,i);
+    return ithis;
+  }
+
   STensor3 operator + (const STensor3 &other) const
   {
     STensor3 res(*this);
