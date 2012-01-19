@@ -963,6 +963,22 @@ void GModel::deleteMeshPartitions()
   meshPartitions.clear();
 }
 
+void GModel::storeChain(int dim,
+                        std::map<int, std::vector<MElement*> > &entityMap,
+                        std::map<int, std::map<int, std::string> > &physicalMap)
+{
+  // create new discrete entities that have no associated MVertices
+  _storeElementsInEntities(entityMap);
+   // give them physical tags
+  _storePhysicalTagsInEntities(dim, physicalMap);
+  // For some weird reason, mesh element color by elementary/physical
+  // entity causes crashes when drawing mesh elements of the new discrete
+  // entities
+  // (somehow related to MVertex.onWhat() as MVertices are unaware of the
+  //  new discrete entities)
+  CTX::instance()->mesh.colorCarousel = 0; // color by element type
+}
+
 template<class T>
 static void _addElements(std::vector<T*> &dst, const std::vector<MElement*> &src)
 {

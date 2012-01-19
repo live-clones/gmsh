@@ -464,22 +464,9 @@ class GModel
                               std::vector<int> &partition);
 
   // store mesh elements of a chain in a new elementary and physical entity
-  void storeChain(int dim, std::map<int, std::vector<MElement*> > &entityMap,
-                  std::map<int, std::map<int, std::string> > &physicalMap)
-  {
-    _storeElementsInEntities(entityMap);
-    _storePhysicalTagsInEntities(dim, physicalMap);
-    _associateEntityWithMeshVertices();
-  }
-  void storeChain(std::vector<MVertex*> &vertices, int dim,
+  void storeChain(int dim,
                   std::map<int, std::vector<MElement*> > &entityMap,
-                  std::map<int, std::map<int, std::string> > &physicalMap)
-  {
-    _storeVerticesInEntities(vertices);
-    _storeElementsInEntities(entityMap);
-    _storePhysicalTagsInEntities(dim, physicalMap);
-    _associateEntityWithMeshVertices();
-  }
+                  std::map<int, std::map<int, std::string> > &physicalMap);
 
   // request homology computation
   void addHomologyRequest(const std::string &type, std::vector<int> &domain,

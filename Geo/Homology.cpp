@@ -499,6 +499,7 @@ int Chain::createPGroup()
     int coeff = (*cit).second;
     std::vector<MVertex*> v;
     cell->getMeshVertices(v);
+
     MElement* e = factory.create(cell->getTypeMSH(), v);
     if(cell->getDim() > 0 && coeff < 0) e->revert(); // flip orientation
     elements.push_back(e);
@@ -532,14 +533,13 @@ int Chain::createPGroup()
   physicalMap[entityNum] = physicalInfo;
 
   if(!data.empty()){
-    this->getCellComplex()->getModel()->storeChain(getDim(),
-						   entityMap, physicalMap);
-    this->getCellComplex()->getModel()->setPhysicalName(getName(),
-                                                        getDim(), physicalNum);
+    GModel* m = this->getCellComplex()->getModel();
+    m->storeChain(getDim(), entityMap, physicalMap);
+    m->setPhysicalName(getName(), getDim(), physicalNum);
+
 #if defined(HAVE_POST)
     // create PView for instant visualization
-    PView* view = new PView(getName(), "ElementData",
-                            this->getCellComplex()->getModel(), data, 0, 1);
+    PView* view = new PView(getName(), "ElementData", m, data, 0, 1);
     // the user should be interested about the orientations
     int size = 30;
     PViewOptions* opt = view->getOptions();
