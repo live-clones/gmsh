@@ -969,14 +969,7 @@ void GModel::storeChain(int dim,
 {
   // create new discrete entities that have no associated MVertices
   _storeElementsInEntities(entityMap);
-   // give them physical tags
   _storePhysicalTagsInEntities(dim, physicalMap);
-  // For some weird reason, mesh element color by elementary/physical
-  // entity causes crashes when drawing mesh elements of the new discrete
-  // entities
-  // (somehow related to MVertex.onWhat() as MVertices are unaware of the
-  //  new discrete entities)
-  CTX::instance()->mesh.colorCarousel = 0; // color by element type
 }
 
 template<class T>
@@ -1111,6 +1104,23 @@ void GModel::_storeVerticesInEntities(std::vector<MVertex*> &vertices)
       }
     }
   }
+}
+
+void GModel::_pruneMeshVertexAssociations()
+{
+  std::vector<GEntity*> entities;
+  std::vector<MVertex*> vertices;
+  getEntities(entities);
+  for(unsigned int i = 0; i < entities.size(); i++) {
+    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++) {
+      MVertex* v = entities[i]->mesh_vertices[j];
+      v->setEntity(0);
+      vertices.push_back(v);
+    }
+    entities[i]->mesh_vertices.clear();
+  }
+  _associateEntityWithMeshVertices();
+  _storeVerticesInEntities(vertices);
 }
 
 void GModel::checkMeshCoherence(double tolerance)
@@ -2752,7 +2762,7 @@ void GModel::computeHomology()
               std::multimap<dpair, std::string>::iterator> itp =
       _homologyRequests.equal_range(*it);
     Homology* homology = new Homology(this, itp.first->first.first,
-                                      itp.first->first.second);
+                                      itp.first->first.second, false);
     CellComplex *cellcomplex = homology->createCellComplex();
     if(cellcomplex->getSize(0)){
       for(std::multimap<dpair, std::string>::iterator itt = itp.first;
@@ -2767,6 +2777,7 @@ void GModel::computeHomology()
         else
           Msg::Error("Unknown type of homology computation: %s", type.c_str());
       }
+      _pruneMeshVertexAssociations();
     }
     delete cellcomplex;
     delete homology;

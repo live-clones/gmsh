@@ -50,6 +50,9 @@ class Homology
   // use chain smoothning
   bool _smoothen;
 
+  // save chains of 0 and highest dimension
+  bool _save0N;
+
   int _maxdomain;
   int _maxnum;
 
@@ -61,7 +64,7 @@ class Homology
  public:
 
   Homology(GModel* model, std::vector<int> physicalDomain,
-	   std::vector<int> physicalSubdomain,
+	   std::vector<int> physicalSubdomain, bool save0N=false,
 	   bool combine=true, bool omit=true, bool smoothen=true);
   ~Homology();
 

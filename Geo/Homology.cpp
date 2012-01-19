@@ -15,10 +15,10 @@
 #if defined(HAVE_KBIPACK)
 
 Homology::Homology(GModel* model, std::vector<int> physicalDomain,
-		   std::vector<int> physicalSubdomain,
+		   std::vector<int> physicalSubdomain, bool save0N,
 		   bool combine, bool omit, bool smoothen) :
   _model(model), _domain(physicalDomain), _subdomain(physicalSubdomain),
-  _combine(combine), _omit(omit), _smoothen(smoothen)
+  _save0N(save0N), _combine(combine), _omit(omit), _smoothen(smoothen)
 {
   _fileName = "";
 
@@ -137,6 +137,8 @@ void Homology::findGenerators(CellComplex* cellComplex)
   t2 = Cpu();
   Msg::StatusBar(2, true, "Done computing homology spaces (%g s)", t2 - t1);
 
+  int dim = cellComplex->getDim();
+
   int HRank[4];
   for(int j = 0; j < 4; j++){
     HRank[j] = 0;
@@ -165,7 +167,7 @@ void Homology::findGenerators(CellComplex* cellComplex)
       // FIXME: Cell* and CellComplex* pointers should not outlive
       // the objects, don't store Chains containing them for now
       //_basisChains[chain->createPGroup()] = chain;
-      chain->createPGroup();
+      if(!_save0N && (j != 0 && j != dim)) chain->createPGroup();
       delete chain;
     }
   }
@@ -246,7 +248,7 @@ void Homology::findDualGenerators(CellComplex* cellComplex)
       // FIXME: Cell* and CellComplex* pointers should not outlive
       // the objects, don't store Chains containing them for now
       //_basisChains[chain->createPGroup()] = chain;
-      chain->createPGroup();
+      if(!_save0N && (j != 0 && j != dim)) chain->createPGroup();
       delete chain;
     }
   }
@@ -266,114 +268,6 @@ void Homology::findDualGenerators(CellComplex* cellComplex)
 		 HRank[0], HRank[1], HRank[2], HRank[3]);
 }
 
-/*void Homology::findHomSequence(){
-  CellComplex* cellComplex = createCellComplex(_domainEntities,
-					       _subdomainEntities);
-  Msg::StatusBar(2, true, "Reducing cell complex...");
-
-  double t1 = Cpu();
-  cellComplex->reduceComplex();
-  double t2 = Cpu();
-
-  Msg::StatusBar(2, true, "Done reducing cell complex (%g s)", t2 - t1);
-  Msg::Info("%d volumes, %d faces, %d edges and %d vertices",
-            cellComplex->getSize(3), cellComplex->getSize(2),
-	    cellComplex->getSize(1), cellComplex->getSize(0));
-
-  Msg::StatusBar(2, true, "Computing homology spaces...");
-  t1 = Cpu();
-
-  ChainComplex* subcomplex = new ChainComplex(cellComplex, 2);
-  ChainComplex* complex = new ChainComplex(cellComplex, 1);
-  ChainComplex* relcomplex = new ChainComplex(cellComplex, 0);
-
-  subcomplex->computeHomology();
-  complex->computeHomology();
-  relcomplex->computeHomology();
-
-  t2 = Cpu();
-  Msg::StatusBar(2, true, "Done compuring homology spaces (%g s)", t2 - t1);
-
-  Msg::StatusBar(2, true, "Computing homology sequence...");
-  HomologySequence* seq = new HomologySequence(subcomplex,
-					       complex, relcomplex);
-  t1 = Cpu();
-  Msg::StatusBar(2, true, "Done computing homology sequence (%g s)", t1 - t2);
-
-  for(int task = 0; task < 3; task++){
-    ChainComplex* chains;
-
-    std::string domainString = "";
-    std::vector<int> empty;
-    if(task == 0) {
-      chains = subcomplex;
-      domainString = getDomainString(_subdomain, empty);
-    }
-    else if(task == 1) {
-      chains = complex;
-      domainString = getDomainString(_domain, empty);
-    }
-    else{
-      chains = relcomplex;
-      domainString = getDomainString(_domain, _subdomain);
-    }
-
-    int HRank[4];
-    for(int j = 0; j < 4; j++){
-      HRank[j] = 0;
-      std::string dimension = "";
-      convert(j, dimension);
-      for(int i = 1; i <= chains->getBasisSize(j, 3); i++){
-
-	std::string generator = "";
-	convert(i, generator);
-
-	std::string name = "H" + dimension + domainString + generator;
-	std::map<Cell*, int, Less_Cell> protoChain;
-	chains->getBasisChain(protoChain, i, j, 3, true);
-	Chain* chain = new Chain(protoChain, cellComplex, _model, name,
-				 chains->getTorsion(j,i));
-	if(chain->getSize() == 0) {
-	  delete chain;
-	  continue;
-	}
-	HRank[j] = HRank[j] + 1;
-	if(chain->getTorsion() != 1){
-	  Msg::Warning("H%d %d has torsion coefficient %d!",
-		       j, i, chain->getTorsion());
-	}
-	_generators.push_back(chain->createPGroup());
-	delete chain;
-      }
-
-    }
-    if(task == 0){
-      Msg::Info("Ranks of relative homology spaces:");
-    }
-    if(task == 1){
-      Msg::Info("Ranks of absolute homology spaces:");
-    }
-    if(task == 2){
-      Msg::Info("Ranks of absolute homology spaces of relative subdomain:");
-    }
-    Msg::Info("H0 = %d", HRank[0]);
-    Msg::Info("H1 = %d", HRank[1]);
-    Msg::Info("H2 = %d", HRank[2]);
-    Msg::Info("H3 = %d", HRank[3]);
-
-    Msg::StatusBar(2, false, "H0: %d, H1: %d, H2: %d, H3: %d",
-		   HRank[0], HRank[1], HRank[2], HRank[3]);
-  }
-
-  delete subcomplex;
-  delete complex;
-  delete relcomplex;
-
-  if(_fileName != "") writeGeneratorsMSH();
-  delete cellComplex;
-  delete seq;
-}
-*/
 std::string Homology::getDomainString(const std::vector<int>& domain,
 				      const std::vector<int>& subdomain)
 {
