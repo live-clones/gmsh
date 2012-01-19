@@ -105,7 +105,8 @@ CellComplex* Homology::createCellComplex(std::vector<GEntity*>& domainEntities,
 
 Homology::~Homology()
 {
-
+  for(std::map<int, Chain*>::iterator it = _basisChains.begin();
+      it != _basisChains.end(); it++) delete it->second;
 }
 
 void Homology::findGenerators(CellComplex* cellComplex)
@@ -161,7 +162,11 @@ void Homology::findGenerators(CellComplex* cellComplex)
 	Msg::Warning("H%d %d has torsion coefficient %d!",
 		     j, i, chain->getTorsion());
       }
-      _basisChains[chain->createPGroup()] = chain;
+      // FIXME: Cell* and CellComplex* pointers should not outlive
+      // the objects, don't store Chains containing them for now
+      //_basisChains[chain->createPGroup()] = chain;
+      chain->createPGroup();
+      delete chain;
     }
   }
 
@@ -238,7 +243,11 @@ void Homology::findDualGenerators(CellComplex* cellComplex)
 	Msg::Warning("H%d* %d has torsion coefficient %d!",
 		     dim-j, i, chain->getTorsion());
       }
-      _basisChains[chain->createPGroup()] = chain;
+      // FIXME: Cell* and CellComplex* pointers should not outlive
+      // the objects, don't store Chains containing them for now
+      //_basisChains[chain->createPGroup()] = chain;
+      chain->createPGroup();
+      delete chain;
     }
   }
 
@@ -491,10 +500,16 @@ int Chain::createPGroup()
     std::vector<MVertex*> v;
     cell->getMeshVertices(v);
     MElement* e = factory.create(cell->getTypeMSH(), v);
-
-
     if(cell->getDim() > 0 && coeff < 0) e->revert(); // flip orientation
-    for(int i = 0; i < abs(coeff); i++) elements.push_back(e);
+    elements.push_back(e);
+
+    // if cell coefficient is other than -1 or 1, add multiple
+    // identical MElements to the physical group
+    for(int i = 1; i < abs(coeff); i++) {
+      MElement* ecopy = factory.create(cell->getTypeMSH(), v);
+      if(cell->getDim() > 0 && coeff < 0) ecopy->revert();
+      elements.push_back(ecopy);
+    }
 
     std::vector<double> coeffs (1,abs(coeff));
     data[e->getNum()] = coeffs;
@@ -520,7 +535,7 @@ int Chain::createPGroup()
     this->getCellComplex()->getModel()->storeChain(getDim(),
 						   entityMap, physicalMap);
     this->getCellComplex()->getModel()->setPhysicalName(getName(),
-							getDim(), physicalNum);
+                                                        getDim(), physicalNum);
 #if defined(HAVE_POST)
     // create PView for instant visualization
     PView* view = new PView(getName(), "ElementData",
