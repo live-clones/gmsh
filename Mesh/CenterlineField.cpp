@@ -23,6 +23,8 @@
 #include "MLine.h"
 #include "GEntity.h"
 #include "Field.h"
+#include "GFace.h"
+#include "Integration3D.h"
 
 #if defined(HAVE_ANN)
 #include <ANN/ANN.h>
@@ -181,12 +183,17 @@ Centerline::~Centerline(){
 void Centerline::importFile(std::string fileName){
 
   GModel *current = GModel::current();
+  std::vector<GEntity*> entities ;
+  current->getEntities(entities) ; 
+  for(unsigned int i = 0; i < entities.size(); i++){
+    if(entities[i]->dim() == 2) surfaces.push_back((GFace*)entities[i]);
+  }
+  entities.clear();
 
   mod = new GModel();
   mod->readVTK(fileName.c_str());
   mod->removeDuplicateMeshVertices(1.e-8);
-  std::vector<GEntity*> entities ;
-  mod->getEntities(entities) ;  
+  mod->getEntities(entities);  
   current->setAsCurrent();  
 
   int maxN = 0.0;
@@ -344,17 +351,13 @@ void Centerline::distanceToLines(){
   std::vector<double> distancesE;
   std::vector<SPoint3> closePts;
 
-  GModel *current = GModel::current();
-  std::vector<GEntity*> _entities ;
-  current->getEntities(_entities) ; 
-  for(unsigned int i = 0; i < _entities.size(); i++){
-    if( _entities[i]->dim() != 2) continue;
-    for(unsigned int j = 0; j < _entities[i]->getNumMeshElements(); j++){ 
-       MElement *e = _entities[i]->getMeshElement(j);
-       for (int k = 0; k < e->getNumVertices(); k++){
-	 MVertex *v = e->getVertex(k);
-	 pts_set.insert(SPoint3(v->x(), v->y(),v->z()));
-       }
+  for(unsigned int i = 0; i < surfaces.size(); i++){ 
+    for(int j = 0; j < surfaces[i]->getNumMeshElements(); j++){ 
+      MElement *e = surfaces[i]->getMeshElement(j);
+      for (int k = 0; k < e->getNumVertices(); k++){
+	MVertex *v = e->getVertex(k);
+	pts_set.insert(SPoint3(v->x(), v->y(),v->z()));
+      }
     }
   }
   std::set<SPoint3>::iterator its =  pts_set.begin();
@@ -392,7 +395,7 @@ void Centerline::computeRadii(){
       std::map<MLine*,double>::iterator itr = radiusl.find(l);
       if (itr != radiusl.end()){
 	edges[i].minRad = std::min(itr->second, edges[i].minRad);
-	edges[i].maxRad = std::min(itr->second, edges[i].maxRad);
+	edges[i].maxRad = std::max(itr->second, edges[i].maxRad);
       }
       else printf("ARGG line not found \n");
     }    
@@ -445,6 +448,8 @@ void Centerline::buildKdTree(){
 
 void Centerline::splitMesh(){
 
+  Msg::Info("Splitting surface mesh with centerline field ");
+
  for(unsigned int i = 0; i < edges.size(); ++i){
    std::vector<MLine*> lines = edges[i].lines;
    MVertex *v1 = edges[i].vE;
@@ -456,7 +461,7 @@ void Centerline::splitMesh(){
    else if (lines.back()->getVertex(1) == v1) v2 = lines.back()->getVertex(0);
    SVector3 dir(v2->x()-v1->x(),v2->y()-v1->y(),v2->z()-v1->z());
    if(edges[i].children.size() > 0.0){
-     cutByDisk(pt, dir, edges[i].maxRad);
+     cutByDisk(pt, dir, 1.2*edges[i].maxRad);
    }
  }
 
@@ -469,8 +474,70 @@ void Centerline::cutByDisk(SPoint3 pt, SVector3 norm, double rad){
   double b = norm.y();
   double c = norm.z();
   double d = -a * pt[0] - b * pt[1] - c * pt[2];
-  printf("PLane = %g %g %g %g \n", a, b, c, d);
-  exit(1);
+  printf("Plane = %g %g %g %g \n", a, b, c, d);
+  //ls = a * x + b * y + c * z + d;
+
+  //variables for using the cutting tools
+  std::vector<DI_Line *> lines;
+  std::vector<DI_Triangle *> triangles;
+  std::vector<DI_Quad *> quads;
+  DI_Point::Container cp;//cut points
+  std::vector<DI_IntegrationPoint *> ipV;//integration points vol
+  std::vector<DI_IntegrationPoint *> ipS;//integration points surf
+  bool isCut = false;
+  int integOrder = 1;
+  int recur = 0;
+  gLevelset *GLS = new gLevelsetPlane(0., 0., 0., 0.);
+  std::vector<gLevelset *> RPN;
+  RPN.push_back(GLS);
+
+  //loop over all surface mesh elements
+  for(unsigned int i = 0; i < surfaces.size(); i++){ 
+    for(int j = 0; j < surfaces[i]->getNumMeshElements(); j++){ 
+      MElement *e = surfaces[i]->getMeshElement(j);
+      if (e->getNumVertices() != 3){
+  	Msg::Error("Centerline split only implemented for tri meshes so far ..."); 
+  	exit(1);
+      }
+      int nbV = e->getNumVertices();
+
+      double **nodeLs= new double*[nbV];
+      DI_Triangle T(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
+  		    e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
+  		    e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z());
+      SPoint3 cg(0.333*(e->getVertex(0)->x()+e->getVertex(1)->x()+e->getVertex(2)->x()), 
+  		 0.333*(e->getVertex(0)->y()+e->getVertex(1)->y()+e->getVertex(2)->y()),
+  		 0.333*(e->getVertex(0)->z()+e->getVertex(1)->z()+e->getVertex(2)->z()));
+      T.setPolynomialOrder(1);
+      double x0 = e->getVertex(0)->x(), y0= e->getVertex(0)->y(), z0=e->getVertex(0)->z();
+      double val0 = a * x0 + b * y0 + c * z0 + d;
+      double sign0 = val0;
+      bool zeroElem = false;
+      nodeLs[0] = new double[1];//one ls value
+      nodeLs[0][0]= val0;
+      for(int i=1;i<nbV;i++){
+	double x = e->getVertex(i)->x(), y= e->getVertex(i)->y(), z=e->getVertex(i)->z();
+  	double val = a * x + b * y + c * z + d;
+    	double sign = sign0*val;
+  	if (sign < 0.0 && !zeroElem) zeroElem = true;
+  	nodeLs[i] = new double[1];//one ls value
+	nodeLs[i][0]= val;
+      }
+      if (zeroElem){
+  	double radius = sqrt((cg.x()-pt.x())*(cg.x()-pt.x())+(cg.y()-pt.y())*(cg.y()-pt.y())+(cg.z()-pt.z())*(cg.z()-pt.z()));
+  	if (radius <  rad){
+      	  isCut = T.cut(RPN, ipV, ipS, cp, integOrder, integOrder, integOrder,
+      			quads, triangles, lines, recur, nodeLs);
+  	}
+      }
+      else triangles.push_back(&T);
+
+      for(int i=0;i<nbV;i++) delete nodeLs[i];
+      delete []nodeLs;
+    }
+  }
+
+  printf("split mesh done \n");
   return;
 
 }

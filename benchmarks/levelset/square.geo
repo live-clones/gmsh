@@ -9,7 +9,7 @@
 
 Mesh.Algorithm=1;
 Mesh.CharacteristicLengthFactor=1.5;
-Mesh.ElementOrder=2;
+Mesh.ElementOrder=1;
 
 lc=0.1;
 Point(1) = {0.1, 0.1, 0.1}; //,lc};

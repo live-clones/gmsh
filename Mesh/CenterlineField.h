@@ -15,6 +15,7 @@
 #include <string>
 #include "Field.h"
 class GModel;
+class GFace;
 class MLine;
 class MVertex;
 class GEntity;
@@ -63,6 +64,9 @@ class Centerline : public Field{
   //some colors (int) for all points and lines
   std::map<MVertex*,int> colorp;
   std::map<MLine*,int> colorl;
+
+  //the tubular surface mesh
+  std::vector<GFace*> surfaces; 
 
  public:
   Centerline(std::string fileName);
