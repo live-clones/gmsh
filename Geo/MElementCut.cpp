@@ -1296,7 +1296,7 @@ static void elementCutMesh(MElement *e, std::vector<gLevelset *> &RPN,
         int cR = elements[1].count(lsTag);
         int cP = 0;
         for(std::map<int, std::map<int, std::string> >::iterator it = physicals[1].begin();
-            it != physicals[2].end(); it++)
+            it != physicals[1].end(); it++)
           for(std::map<int, std::string>::iterator it2 = it->second.begin();
               it2 != it->second.end(); it2++)
             if(it2->first == lsTag)
