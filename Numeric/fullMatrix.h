@@ -29,7 +29,7 @@ class fullVector
   fullVector(int r) : _r(r),_own_data(1)
   {
     _data = new scalar[_r];
-    setAll(0.);
+    setAll(scalar(0.));
   }
   fullVector(const fullVector<scalar> &other) : _r(other._r),_own_data(1)
   {
@@ -84,12 +84,12 @@ class fullVector
       _data = new scalar[_r];
       _own_data = true;
       if(resetValue)
-        setAll(scalar());
+        setAll(scalar(0.));
       return true;
     }
     _r = r;
     if(resetValue)
-      setAll(scalar());
+      setAll(scalar(0.));
     return false;
   }
   void setAsProxy(const fullVector<scalar> &original, int r_start, int r)
@@ -108,8 +108,8 @@ class fullVector
   }
   inline void scale(const scalar s)
   {
-    if(s == 0.)
-      for(int i = 0; i < _r; ++i) _data[i] = 0.;
+    if(s == scalar(0.))
+      for(int i = 0; i < _r; ++i) _data[i] = scalar(0.);
     else if (s == -1.)
       for(int i = 0; i < _r; ++i) _data[i] = -_data[i];
     else
@@ -191,12 +191,12 @@ class fullMatrix
   {
     _data = new scalar[_r * _c];
     _own_data = true;
-    setAll(0.);
+    setAll(scalar(0.));
   }
   fullMatrix(int r, int c, double *data)
     : _r(r), _c(c), _data(data), _own_data(false)
   {
-    setAll(0.);
+    setAll(scalar(0.));
   }
   fullMatrix(const fullMatrix<scalar> &other) : _r(other._r), _c(other._c)
   {
@@ -249,13 +249,13 @@ class fullMatrix
       _data = new scalar[_r * _c];
       _own_data = true;
       if(resetValue)
-        setAll(0.);
+        setAll(scalar(0.));
       return true;
     }
     _r = r;
     _c = c;
     if(resetValue)
-      setAll(0.);
+      setAll(scalar(0.));
     return false; // no reallocation
   }
   void setAsProxy(const fullMatrix<scalar> &original)
@@ -328,7 +328,7 @@ class fullMatrix
   }
   void mult_naive(const fullMatrix<scalar> &b, fullMatrix<scalar> &c) const
   {
-    c.scale(0.);
+    c.scale(scalar(0.));
     for(int i = 0; i < _r; i++)
       for(int j = 0; j < b.size2(); j++)
         for(int k = 0; k < _c; k++)
@@ -384,7 +384,7 @@ class fullMatrix
 #if !defined(HAVE_BLAS)
   {
     if(s == 0.) // this is not really correct nan*0 (or inf*0) is expected to give nan
-      for(int i = 0; i < _r * _c; ++i) _data[i] = 0.;
+      for(int i = 0; i < _r * _c; ++i) _data[i] = scalar(0.);
     else
       for(int i = 0; i < _r * _c; ++i) _data[i] *= s;
   }
@@ -409,7 +409,7 @@ class fullMatrix
   void mult(const fullVector<scalar> &x, fullVector<scalar> &y) const
 #if !defined(HAVE_BLAS)
   {
-    y.scale(0.);
+    y.scale(scalar(0.));
     for(int i = 0; i < _r; i++)
       for(int j = 0; j < _c; j++)
         y._data[i] += (*this)(i, j) * x(j);
@@ -495,7 +495,7 @@ class fullMatrix
 #if !defined(HAVE_LAPACK)
   {
     Msg::Error("Determinant computation requires LAPACK");
-    return 0.;
+    return scalar(0.);
   }
 #endif
   ;
