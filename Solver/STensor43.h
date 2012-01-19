@@ -31,10 +31,13 @@ class STensor43 {
       for (int j = 0; j < 3; j++)
         for (int k = 0; k < 3; k++)
           for (int l = 0; l < 3; l++)
+         {
+	     _val[getIndex(i, j, k, l)]= 0.;
             if ((i==k)&&(j==l))
-              _val[getIndex(i, j, k, l)]=v;
-            else
-              _val[getIndex(i, j, k, l)]=0.0;
+              _val[getIndex(i, j, k, l)]+=0.5*v;
+            if ((i==l)&&(j==k))
+              _val[getIndex(i, j, k, l)]+=0.5*v;
+	 }
   }
   inline double &operator()(int i, int j,int k, int l)
   {
