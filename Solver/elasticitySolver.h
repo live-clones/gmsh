@@ -93,6 +93,7 @@ class elasticitySolver
   virtual void setMesh(const std::string &meshFileName);
   void solve();
   void postSolve();
+  void exportKb();
   void getSolutionOnElement(MElement *el, fullMatrix<double> &sol);
   virtual PView *buildDisplacementView(const std::string postFileName);
   virtual PView *buildStressesView(const std::string postFileName);

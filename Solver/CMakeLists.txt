@@ -10,15 +10,15 @@ set(SRC
   dofManager.cpp
   groupOfElements.cpp
   elasticityTerm.cpp
-  elasticitySolver.cpp
+elasticitySolver.cpp
   SElement.cpp
   eigenSolver.cpp
   multiscaleLaplace.cpp
-  functionSpace.cpp
+functionSpace.cpp
   filters.cpp
   sparsityPattern.cpp
   STensor43.cpp
-  terms.cpp
+terms.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 

@@ -69,6 +69,67 @@ class STensor43 {
     return *this;
   }*/
   void print(const char *) const;
+
+ STensor43 transpose (int n, int m) const
+  {
+    STensor43 ithis;
+    if ((n==0 && m==1) || (n==1 && m==0))
+    {
+      for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+          for (int k = 0; k < 3; k++)
+            for (int l = 0; l < 3; l++)
+              ithis(i,j,k,l) = (*this)(j,i,k,l);
+      return ithis;
+    }
+    if ((n==0 && m==2) || (n==2 && m==0))
+    {
+      for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+          for (int k = 0; k < 3; k++)
+            for (int l = 0; l < 3; l++)
+              ithis(i,j,k,l) = (*this)(k,j,i,l);
+      return ithis;
+    }
+    if ((n==0 && m==3) || (n==3 && m==0))
+    {
+      for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+          for (int k = 0; k < 3; k++)
+            for (int l = 0; l < 3; l++)
+              ithis(i,j,k,l) = (*this)(l,j,k,i);
+      return ithis;
+    }
+    if ((n==1 && m==2) || (n==2 && m==1))
+    {
+      for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+          for (int k = 0; k < 3; k++)
+            for (int l = 0; l < 3; l++)
+              ithis(i,j,k,l) = (*this)(i,k,j,l);
+      return ithis;
+    }
+    if ((n==1 && m==3) || (n==3 && m==1))
+    {
+      for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+          for (int k = 0; k < 3; k++)
+            for (int l = 0; l < 3; l++)
+              ithis(i,j,k,l) = (*this)(i,l,k,j);
+      return ithis;
+    }
+    if ((n==2 && m==3) || (n==3 && m==2))
+    {
+      for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+          for (int k = 0; k < 3; k++)
+            for (int l = 0; l < 3; l++)
+              ithis(i,j,k,l) = (*this)(i,j,l,k);
+      return ithis;
+    }
+    return ithis+=(*this);
+  }
+
 };
 
 // tensor product
