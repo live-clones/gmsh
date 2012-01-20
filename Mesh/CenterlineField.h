@@ -14,11 +14,13 @@
 #include <set>
 #include <string>
 #include "Field.h"
+#include "MEdge.h"
 class GModel;
 class GFace;
 class MLine;
 class MVertex;
 class GEntity;
+class MTriangle;   
 
 #if defined(HAVE_ANN)
 #include <ANN/ANN.h>
@@ -66,7 +68,9 @@ class Centerline : public Field{
   std::map<MLine*,int> colorl;
 
   //the tubular surface mesh
-  std::vector<GFace*> surfaces; 
+  std::vector<MTriangle*> triangles;
+  //the lines cut of the tubular mesh by planes
+  std::set<MEdge,Less_Edge> theCut;
 
  public:
   Centerline(std::string fileName);
@@ -116,7 +120,7 @@ class Centerline : public Field{
 
   // Cut the tubular structure with a disk
   // perpendicular to the tubular structure
-  void cutByDisk(SPoint3 pt, SVector3 dir, double rad);
+  void cutByDisk(SVector3 &pt, SVector3 &dir, double &maxRad);
 
   //Print for debugging
   void printSplit() const;

@@ -324,13 +324,13 @@ class DI_Element
   void getCuttingPoints (const DI_Element *e, const std::vector<gLevelset *> &RPNi,
                          std::vector<DI_CuttingPoint*> &cp) const;
   // return the ith point
-  virtual DI_Point* pt(int i) const {return (i < nbVert()) ? &(pts_[i]) : &(mid_[i - nbVert()]);}
+  DI_Point* pt(int i) const {return (i < nbVert()) ? &(pts_[i]) : &(mid_[i - nbVert()]);}
   // return the ith middle point
   inline DI_Point* mid(int i) const {return mid_ ? &(mid_[i]) : NULL;}
   // return the coordinates of the ith point
-  virtual double x(int i) const {return pt(i)->x();}
-  virtual double y(int i) const {return pt(i)->y();}
-  virtual double z(int i) const {return pt(i)->z();}
+  double x(int i) const {return pt(i)->x(); }
+  double y(int i) const {return pt(i)->y();}
+  double z(int i) const {return pt(i)->z();}
   // return the last levelset value of the ith point
   virtual double ls(int i) const {return pt(i)->ls();}
   // return the jth levelset value of the ith point
