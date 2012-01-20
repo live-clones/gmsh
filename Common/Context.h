@@ -78,7 +78,7 @@ class CTX {
   int sessionSave, optionsSave;
   // ask confirmation when overwriting files?
   int confirmOverwrite;
-  // forced display host:0.0 under X11 
+  // forced display host:0.0 under X11
   std::string display;
   // FLTK theme
   std::string guiTheme;
@@ -103,7 +103,7 @@ class CTX {
   // batch mode (-4: lua session, -3: server daemon, -2: check coherence, -1: write
   // geo, 0: full gfx, 1: 1D mesh, 2: 2D mesh, 3: 3D mesh, 4: adapt
   // mesh, 5: refine mesh)
-  int batch; 
+  int batch;
   // batch operations to apply after meshing (1: partition mesh)
   int batchAfterMesh;
   // initial menu (0: automatic, 1: geom, 2: mesh, 3: solver, 4: post)
@@ -132,7 +132,7 @@ class CTX {
   // double buffer/antialias/stereo graphics?
   int db, antialiasing, stereo, camera;
   double eye_sep_ratio,focallength_ratio,camera_aperture;
-  // orthogonal projection? 
+  // orthogonal projection?
   int ortho;
   // draw the bounding boxes and the rot center?
   int drawBBox, drawRotationCenter;
@@ -144,7 +144,7 @@ class CTX {
   int axes, axesAutoPosition, axesTics[3], axesMikado;
   double axesPosition[6];
   std::string axesLabel[3], axesFormat[3];
-  // simple dynamic lock (should be a mutex) 
+  // simple dynamic lock (should be a mutex)
   int lock;
   // enable alpha blending?
   int alpha;
@@ -195,29 +195,29 @@ class CTX {
   // temporary storage of rotation, translation, scale (until the GUI
   // is ready)
   double tmpRotation[3], tmpTranslation[3], tmpScale[3], tmpQuaternion[4];
-  // geometry options 
+  // geometry options
   contextGeometryOptions geom;
-  // mesh options 
+  // mesh options
   contextMeshOptions mesh;
-  // FIXME: putting these in the mesh struct (where they belong) causes 
+  // FIXME: putting these in the mesh struct (where they belong) causes
   // an LNK1179 error ("duplicate COMDAT") with MSVC...
   meshPartitionOptions partitionOptions;
   CGNSOptions cgnsOptions;
-  // post processing options 
+  // post processing options
   struct{
     int draw, link, horizontalScales;
     int smooth, animCycle, animStep, combineTime, combineRemoveOrig;
     int fileFormat, plugins;
     double animDelay;
   }post;
-  // solver options 
+  // solver options
   struct{
     int plugins, listen;
     double timeout;
     std::string socketName;
-    std::string name[5], commandLine[5];
+    std::string name[5], executable[5], hostname[5];
   }solver;
-  // print options 
+  // print options
   struct{
     int fileFormat, epsQuality, epsCompress, epsPS3Shading;
     int epsOcclusionCulling, epsBestRoot;
@@ -253,7 +253,7 @@ class CTX {
   int unpackGreen(unsigned int X);
   int unpackBlue(unsigned int X);
   int unpackAlpha(unsigned int X);
-  
+
 };
 
 #endif

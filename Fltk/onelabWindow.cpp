@@ -533,6 +533,13 @@ static void updateOnelabGraphs()
     drawContext::global()->draw();
 }
 
+static void importPhysicalGroups(GModel *m)
+{
+  std::map<int, std::vector<GEntity*> > groups[4];
+  m->getPhysicalGroups(groups);
+
+}
+
 static void runGmshClient(const std::string &action)
 {
   if(action == "initialize") return;
@@ -557,6 +564,7 @@ static void runGmshClient(const std::string &action)
       // the model name has changed
       modelName = GModel::current()->getName();
       geometry_reload_cb(0, 0);
+      importPhysicalGroups(GModel::current());
     }
   }
   else if(action == "compute"){
@@ -567,6 +575,7 @@ static void runGmshClient(const std::string &action)
       // changed
       modelName = GModel::current()->getName();
       geometry_reload_cb(0, 0);
+      importPhysicalGroups(GModel::current());
       if(FlGui::instance()->onelab->meshAuto()){
         mesh_3d_cb(0, 0);
         CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
@@ -588,9 +597,24 @@ void onelab_cb(Fl_Widget *w, void *data)
   if(!data) return;
   std::string action((const char*)data);
 
+  if(action == "refresh"){
+    static int recurse = false;
+    if(recurse) return;
+    recurse = true;
+    updateOnelabGraphs();
+    FlGui::instance()->onelab->rebuildTree();
+    recurse = false;
+    return;
+  }
+
   if(action == "stop"){
     FlGui::instance()->onelab->stop(true);
     FlGui::instance()->onelab->setButtonMode("kill");
+    for(onelab::server::citer it = onelab::server::instance()->firstClient();
+        it != onelab::server::instance()->lastClient(); it++){
+      onelab::string o(it->second->getName() + "/Action", "stop");
+      onelab::server::instance()->set(o);
+    }
     return;
   }
 
@@ -954,17 +978,20 @@ void onelabWindow::setButtonMode(const std::string &mode)
   if(mode == "compute"){
     _butt[0]->label("Compute");
     _butt[0]->callback(onelab_cb, (void*)"compute");
-    _butt[1]->activate();
+    _butt[1]->label("Check");
+    _butt[1]->callback(onelab_cb, (void*)"check");
   }
   else if(mode == "stop"){
     _butt[0]->label("Stop");
     _butt[0]->callback(onelab_cb, (void*)"stop");
-    _butt[1]->deactivate();
+    _butt[1]->label("Refresh");
+    _butt[1]->callback(onelab_cb, (void*)"refresh");
   }
   else{
     _butt[0]->label("Kill");
     _butt[0]->callback(onelab_cb, (void*)"kill");
-    _butt[1]->deactivate();
+    _butt[1]->label("Refresh");
+    _butt[1]->callback(onelab_cb, (void*)"refresh");
   }
 }
 

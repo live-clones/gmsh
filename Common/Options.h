@@ -22,7 +22,7 @@
 #define OPT_ARGS_STR   int num, int action, std::string val
 #define OPT_ARGS_NUM   int num, int action, double val
 #define OPT_ARGS_COL   int num, int action, unsigned int val
- 
+
 // STRINGS
 
 std::string opt_general_axes_label0(OPT_ARGS_STR);
@@ -63,6 +63,12 @@ std::string opt_solver_executable1(OPT_ARGS_STR);
 std::string opt_solver_executable2(OPT_ARGS_STR);
 std::string opt_solver_executable3(OPT_ARGS_STR);
 std::string opt_solver_executable4(OPT_ARGS_STR);
+std::string opt_solver_hostname(OPT_ARGS_STR);
+std::string opt_solver_hostname0(OPT_ARGS_STR);
+std::string opt_solver_hostname1(OPT_ARGS_STR);
+std::string opt_solver_hostname2(OPT_ARGS_STR);
+std::string opt_solver_hostname3(OPT_ARGS_STR);
+std::string opt_solver_hostname4(OPT_ARGS_STR);
 std::string opt_view_name(OPT_ARGS_STR);
 std::string opt_view_format(OPT_ARGS_STR);
 std::string opt_view_filename(OPT_ARGS_STR);
@@ -609,7 +615,7 @@ unsigned int opt_general_color_small_axes(OPT_ARGS_COL);
 unsigned int opt_general_color_ambient_light(OPT_ARGS_COL);
 unsigned int opt_general_color_diffuse_light(OPT_ARGS_COL);
 unsigned int opt_general_color_specular_light(OPT_ARGS_COL);
-unsigned int opt_geometry_color_points(OPT_ARGS_COL); 
+unsigned int opt_geometry_color_points(OPT_ARGS_COL);
 unsigned int opt_geometry_color_lines(OPT_ARGS_COL);
 unsigned int opt_geometry_color_surfaces(OPT_ARGS_COL);
 unsigned int opt_geometry_color_volumes(OPT_ARGS_COL);
@@ -620,9 +626,9 @@ unsigned int opt_geometry_color_highlight2(OPT_ARGS_COL);
 unsigned int opt_geometry_color_tangents(OPT_ARGS_COL);
 unsigned int opt_geometry_color_normals(OPT_ARGS_COL);
 unsigned int opt_geometry_color_projection(OPT_ARGS_COL);
-unsigned int opt_mesh_color_points(OPT_ARGS_COL); 
-unsigned int opt_mesh_color_points_sup(OPT_ARGS_COL); 
-unsigned int opt_mesh_color_lines(OPT_ARGS_COL); 
+unsigned int opt_mesh_color_points(OPT_ARGS_COL);
+unsigned int opt_mesh_color_points_sup(OPT_ARGS_COL);
+unsigned int opt_mesh_color_lines(OPT_ARGS_COL);
 unsigned int opt_mesh_color_triangles(OPT_ARGS_COL);
 unsigned int opt_mesh_color_quadrangles(OPT_ARGS_COL);
 unsigned int opt_mesh_color_tetrahedra(OPT_ARGS_COL);
@@ -668,7 +674,7 @@ unsigned int opt_view_color_axes(OPT_ARGS_COL);
 // Data structures and global functions
 
 typedef struct {
-  const char *str ; 
+  const char *str ;
   int int1, int2, int3, int4 ;
 } StringX4Int;
 
@@ -705,11 +711,11 @@ void ReInitOptions(int num);
 void PrintOptions(int num, int level, int diff, int help, const char *filename);
 void PrintOptionsDoc();
 
-bool StringOption(int action, const char *category, int num, 
+bool StringOption(int action, const char *category, int num,
                   const char *name, std::string &val);
-bool NumberOption(int action, const char *category, int num, 
+bool NumberOption(int action, const char *category, int num,
                   const char *name, double &val);
-bool ColorOption(int action, const char *category, int num, 
+bool ColorOption(int action, const char *category, int num,
                  const char *name, unsigned int &val);
 
 GmshColorTable *GetColorTable(int num);
