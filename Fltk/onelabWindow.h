@@ -35,7 +35,7 @@ class onelabWindow{
   void rebuildSolverList();
   void rebuildTree();
   void redrawTree(){ _tree->redraw(); }
-  void setButtonMode(const std::string &mode);
+  void setButtonMode(const std::string &butt0, const std::string &butt1);
   void show(){ _win->show(); }
   int shown(){ return _win->shown(); }
   int meshAuto(){ return _gear->menu()[2].value(); }

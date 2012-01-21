@@ -598,7 +598,7 @@ void onelab_cb(Fl_Widget *w, void *data)
   std::string action((const char*)data);
 
   if(action == "refresh"){
-    static int recurse = false;
+    static bool recurse = false;
     if(recurse) return;
     recurse = true;
     updateOnelabGraphs();
@@ -609,7 +609,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   if(action == "stop"){
     FlGui::instance()->onelab->stop(true);
-    FlGui::instance()->onelab->setButtonMode("kill");
+    FlGui::instance()->onelab->setButtonMode("", "kill");
     for(onelab::server::citer it = onelab::server::instance()->firstClient();
         it != onelab::server::instance()->lastClient(); it++){
       onelab::string o(it->second->getName() + "/Action", "stop");
@@ -665,11 +665,14 @@ void onelab_cb(Fl_Widget *w, void *data)
     action = "check";
   }
 
-  FlGui::instance()->onelab->setButtonMode("stop");
+  if(action == "compute")
+    FlGui::instance()->onelab->setButtonMode("refresh", "stop");
+  else
+    FlGui::instance()->onelab->setButtonMode("", "stop");
 
   if(action == "compute") initializeLoop();
 
-  do{ // enter computation loop
+  do{ // enter loop
 
     // the Gmsh client is special: it always gets executed first. (The
     // meta-model will allow more flexibility: but in the simple GUI
@@ -707,7 +710,7 @@ void onelab_cb(Fl_Widget *w, void *data)
           incrementLoop());
 
   FlGui::instance()->onelab->stop(false);
-  FlGui::instance()->onelab->setButtonMode("compute");
+  FlGui::instance()->onelab->setButtonMode("check", "compute");
   if(action != "initialize") FlGui::instance()->onelab->show();
 }
 
@@ -827,13 +830,13 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
   _tree->showroot(0);
 
-  _butt[0] = new Fl_Button(width - WB - BB, height - WB - BH, BB, BH, "Compute");
-  _butt[0]->callback(onelab_cb, (void*)"compute");
-  _butt[1] = new Fl_Button(width - 2*WB - 2*BB, height - WB - BH, BB, BH, "Check");
-  _butt[1]->callback(onelab_cb, (void*)"check");
+  _butt[0] = new Fl_Button(width - 2*WB - 2*BB, height - WB - BH, BB, BH, "Check");
+  _butt[0]->callback(onelab_cb, (void*)"check");
+  _butt[1] = new Fl_Button(width - WB - BB, height - WB - BH, BB, BH, "Compute");
+  _butt[1]->callback(onelab_cb, (void*)"compute");
 
   _gear = new Fl_Menu_Button
-    (_butt[1]->x() - WB - BB/2, _butt[1]->y(), BB/2, BH, "@-1gmsh_gear");
+    (_butt[0]->x() - WB - BB/2, _butt[0]->y(), BB/2, BH, "@-1gmsh_gear");
   _gear->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   _gear->add("Reset database", 0, onelab_cb, (void*)"reset");
   _gear->add("_Print database", 0, onelab_cb, (void*)"dump");
@@ -973,25 +976,39 @@ void onelabWindow::checkForErrors(const std::string &client)
   }
 }
 
-void onelabWindow::setButtonMode(const std::string &mode)
+void onelabWindow::setButtonMode(const std::string &butt0, const std::string &butt1)
 {
-  if(mode == "compute"){
-    _butt[0]->label("Compute");
-    _butt[0]->callback(onelab_cb, (void*)"compute");
-    _butt[1]->label("Check");
-    _butt[1]->callback(onelab_cb, (void*)"check");
+  if(butt0 == "check"){
+    _butt[0]->activate();
+    _butt[0]->label("Check");
+    _butt[0]->callback(onelab_cb, (void*)"check");
   }
-  else if(mode == "stop"){
-    _butt[0]->label("Stop");
-    _butt[0]->callback(onelab_cb, (void*)"stop");
-    _butt[1]->label("Refresh");
-    _butt[1]->callback(onelab_cb, (void*)"refresh");
+  else if(butt0 == "refresh"){
+    _butt[0]->activate();
+    _butt[0]->label("Refresh");
+    _butt[0]->callback(onelab_cb, (void*)"refresh");
   }
   else{
-    _butt[0]->label("Kill");
-    _butt[0]->callback(onelab_cb, (void*)"kill");
-    _butt[1]->label("Refresh");
-    _butt[1]->callback(onelab_cb, (void*)"refresh");
+    _butt[0]->deactivate();
+  }
+
+  if(butt1 == "compute"){
+    _butt[1]->activate();
+    _butt[1]->label("Compute");
+    _butt[1]->callback(onelab_cb, (void*)"compute");
+  }
+  else if(butt1 == "stop"){
+    _butt[1]->activate();
+    _butt[1]->label("Stop");
+    _butt[1]->callback(onelab_cb, (void*)"stop");
+  }
+  else if(butt1 == "kill"){
+    _butt[1]->activate();
+    _butt[1]->label("Kill");
+    _butt[1]->callback(onelab_cb, (void*)"kill");
+  }
+  else{
+    _butt[1]->deactivate();
   }
 }
 
