@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -654,7 +654,7 @@ void GetOptions(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "help") || !strcmp(argv[i] + 1, "-help")) {
         fprintf(stderr, "Gmsh, a 3D mesh generator with pre- and post-processing facilities\n");
-        fprintf(stderr, "Copyright (C) 1997-2011 Christophe Geuzaine and Jean-Francois Remacle\n");
+        fprintf(stderr, "Copyright (C) 1997-2012 Christophe Geuzaine and Jean-Francois Remacle\n");
         PrintUsage(argv[0]);
         Msg::Exit(0);
       }

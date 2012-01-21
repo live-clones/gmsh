@@ -13,7 +13,7 @@ Trevor S. Strickler hereby transfers copyright of QuadTri files to
 Christophe Geuzaine and J.-F. Remacle with the understanding that 
 his contribution shall be cited appropriately.
 
-All reused or original Gmsh code is Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
+All reused or original Gmsh code is Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
 Gmsh is available at: www.geuz.org/gmsh
 
 For Gmsh license information, see the LICENSE.txt file for license information. Please report all

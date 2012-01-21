@@ -1,4 +1,4 @@
-// OneLab - Copyright (C) 2011 ULg-UCL
+// OneLab - Copyright (C) 2011-2012 ULg-UCL
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -21,7 +21,7 @@
 // WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
-// 
+//
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #ifndef _ONELAB_H_
@@ -60,7 +60,7 @@ namespace onelab{
     // optional additional attributes
     std::map<std::string, std::string> _attributes;
   public:
-    parameter(const std::string &name="", const std::string &shortHelp="", 
+    parameter(const std::string &name="", const std::string &shortHelp="",
               const std::string &help="")
       : _name(name), _shortHelp(shortHelp), _help(help), _changed(true),
         _visible(true) {}
@@ -75,13 +75,13 @@ namespace onelab{
     }
     void setAttributes(const std::map<std::string, std::string> &attributes)
     {
-      _attributes = attributes; 
+      _attributes = attributes;
     }
     void setClients(const std::set<std::string> &clients){ _clients = clients; }
     void addClient(const std::string &client){ _clients.insert(client); }
     void addClients(const std::set<std::string> &clients)
-    { 
-      _clients.insert(clients.begin(), clients.end()); 
+    {
+      _clients.insert(clients.begin(), clients.end());
     }
     bool hasClient(const std::string &client)
     {
@@ -112,15 +112,15 @@ namespace onelab{
       if(it != _attributes.end()) return it->second;
       return "";
     }
-    const std::map<std::string, std::string> &getAttributes() const 
+    const std::map<std::string, std::string> &getAttributes() const
     {
-      return _attributes; 
+      return _attributes;
     }
     const std::set<std::string> &getClients() const { return _clients; }
     static char charSep() { return '\0'; }
     static double maxNumber() { return 1e200; }
     static std::string version() { return "1.0"; }
-    static std::string getNextToken(const std::string &msg, 
+    static std::string getNextToken(const std::string &msg,
                                     std::string::size_type &first)
     {
       if(first == std::string::npos) return "";
@@ -139,15 +139,15 @@ namespace onelab{
     virtual std::string toChar() const
     {
       std::ostringstream sstream;
-      sstream << version() << charSep() << getType() << charSep() 
-              << sanitize(getName()) << charSep() 
-              << sanitize(getShortHelp()) << charSep() 
-              << sanitize(getHelp()) << charSep() 
+      sstream << version() << charSep() << getType() << charSep()
+              << sanitize(getName()) << charSep()
+              << sanitize(getShortHelp()) << charSep()
+              << sanitize(getHelp()) << charSep()
               << (getVisible() ? 1 : 0) << charSep()
               << _attributes.size() << charSep();
       for(std::map<std::string, std::string>::const_iterator it = _attributes.begin();
           it != _attributes.end(); it++)
-        sstream << sanitize(it->first) << charSep() 
+        sstream << sanitize(it->first) << charSep()
                 << sanitize(it->second) << charSep();
       sstream << getClients().size() << charSep();
       for(std::set<std::string>::const_iterator it = getClients().begin();
@@ -176,7 +176,7 @@ namespace onelab{
       }
       return pos;
     }
-    static void getInfoFromChar(const std::string &msg, std::string &version, 
+    static void getInfoFromChar(const std::string &msg, std::string &version,
                                 std::string &type, std::string &name)
     {
       std::string::size_type first = 0;
@@ -185,7 +185,7 @@ namespace onelab{
       name = getNextToken(msg, first);
     }
   };
-  
+
   class parameterLessThan{
   public:
     bool operator()(const parameter *p1, const parameter *p2) const
@@ -205,8 +205,8 @@ namespace onelab{
     std::vector<double> _choices;
   public:
     number(const std::string &name="", double value=0.,
-           const std::string &shortHelp="", const std::string &help="") 
-      : parameter(name, shortHelp, help), _value(value), 
+           const std::string &shortHelp="", const std::string &help="")
+      : parameter(name, shortHelp, help), _value(value),
         _min(-maxNumber()), _max(maxNumber()), _step(0.) {}
     void setValue(double value){ _value = value; }
     void setMin(double min){ _min = min; }
@@ -237,7 +237,7 @@ namespace onelab{
     std::string toChar() const
     {
       std::ostringstream sstream;
-      sstream << parameter::toChar() << _value << charSep() 
+      sstream << parameter::toChar() << _value << charSep()
               << _min << charSep() << _max << charSep() << _step << charSep()
               << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
@@ -271,8 +271,8 @@ namespace onelab{
     std::string _value, _kind;
     std::vector<std::string> _choices;
   public:
-    string(const std::string &name="", const std::string &value="", 
-           const std::string &shortHelp="", const std::string &help="") 
+    string(const std::string &name="", const std::string &value="",
+           const std::string &shortHelp="", const std::string &help="")
       : parameter(name, shortHelp, help), _value(value), _kind("generic") {}
     void setValue(const std::string &value){ _value = value; }
     void setKind(const std::string &kind){ _kind = kind; }
@@ -327,12 +327,12 @@ namespace onelab{
   private:
     std::set<std::string> _value;
     std::vector<std::set<std::string> > _choices;
-    // optional geometrical dimension 
+    // optional geometrical dimension
     int _dimension;
   public:
     region(const std::string &name="",
            const std::set<std::string> &value = std::set<std::string>(),
-           const std::string &shortHelp="", const std::string &help="") 
+           const std::string &shortHelp="", const std::string &help="")
       : parameter(name, shortHelp, help), _value(value) {}
     void setValue(const std::set<std::string> &value){ _value = value; }
     std::string getType() const { return "region"; }
@@ -352,7 +352,7 @@ namespace onelab{
     {
       /*
       std::ostringstream sstream;
-      sstream << parameter::toChar() << _value << charSep() 
+      sstream << parameter::toChar() << _value << charSep()
               << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << sanitize(_choices[i]) << charSep();
@@ -373,7 +373,7 @@ namespace onelab{
     std::vector<std::string> _choices;
   public:
     function(const std::string &name="", const std::string &value="",
-             const std::string &shortHelp="", const std::string &help="") 
+             const std::string &shortHelp="", const std::string &help="")
       : parameter(name, shortHelp, help), _value(value) {}
     void setValue(const std::string &value, const std::string &region="")
     {
@@ -391,11 +391,11 @@ namespace onelab{
         if(it != _pieceWiseValues.end()) return it->second;
         return "";
       }
-      else return _value; 
+      else return _value;
     }
-    const std::map<std::string, std::string> &getPieceWiseValues() const 
+    const std::map<std::string, std::string> &getPieceWiseValues() const
     {
-      return _pieceWiseValues; 
+      return _pieceWiseValues;
     }
     void update(const function &p)
     {
@@ -415,7 +415,7 @@ namespace onelab{
               << _pieceWiseValues.size() << charSep();
       for(std::map<std::string, std::string>::const_iterator it =
             _pieceWiseValues.begin(); it != _pieceWiseValues.end(); it++)
-        sstream << sanitize(it->first) << charSep() 
+        sstream << sanitize(it->first) << charSep()
                 << sanitize(it->second) << charSep();
       sstream << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
@@ -505,7 +505,7 @@ namespace onelab{
              const std::string &client=""){ return _set(p, client, _regions); }
     bool set(const function &p,
              const std::string &client=""){ return _set(p, client, _functions); }
-    bool get(std::vector<number> &ps, const std::string &name="", 
+    bool get(std::vector<number> &ps, const std::string &name="",
              const std::string &client=""){ return _get(ps, name, client, _numbers); }
     bool get(std::vector<string> &ps, const std::string &name="",
              const std::string &client=""){ return _get(ps, name, client, _strings); }
@@ -623,12 +623,12 @@ namespace onelab{
     void clear(){ _parameterSpace.clear(); }
     template <class T> bool set(const T &p, const std::string &client="")
     {
-      return _parameterSpace.set(p, client); 
+      return _parameterSpace.set(p, client);
     }
     template <class T> bool get(std::vector<T> &ps, const std::string &name="",
                                 const std::string &client="")
     {
-      return _parameterSpace.get(ps, name, client); 
+      return _parameterSpace.get(ps, name, client);
     }
     typedef std::map<std::string, client*>::iterator citer;
     citer firstClient(){ return _clients.begin(); }
@@ -651,11 +651,11 @@ namespace onelab{
     }
     std::string toChar(const std::string &client="")
     {
-      return _parameterSpace.toChar(client); 
-    }    
+      return _parameterSpace.toChar(client);
+    }
     unsigned int getNumParameters(){ return _parameterSpace.getNumParameters(); }
   };
-    
+
   class localClient : public client{
   private:
     template <class T> bool _set(const T &p)
@@ -730,7 +730,7 @@ namespace onelab{
       _gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER, msg.size(), &msg[0]);
       return true;
     }
-    template <class T> bool _get(std::vector<T> &ps, 
+    template <class T> bool _get(std::vector<T> &ps,
                                  const std::string &name="")
     {
       ps.clear();
@@ -817,37 +817,37 @@ namespace onelab{
     virtual bool set(const string &p){ return _set(p); }
     virtual bool set(const function &p){ return _set(p); }
     virtual bool set(const region &p){ return _set(p); }
-    virtual bool get(std::vector<number> &ps, 
+    virtual bool get(std::vector<number> &ps,
                      const std::string &name=""){ return _get(ps, name); }
     virtual bool get(std::vector<string> &ps,
                      const std::string &name=""){ return _get(ps, name); }
-    virtual bool get(std::vector<function> &ps, 
+    virtual bool get(std::vector<function> &ps,
                      const std::string &name=""){ return _get(ps, name); }
     virtual bool get(std::vector<region> &ps,
                      const std::string &name=""){ return _get(ps, name); }
     void sendInfo(const std::string &msg)
     {
-      if(_gmshClient) _gmshClient->Info(msg.c_str()); 
+      if(_gmshClient) _gmshClient->Info(msg.c_str());
     }
     void sendWarning(const std::string &msg)
     {
-      if(_gmshClient) _gmshClient->Warning(msg.c_str()); 
+      if(_gmshClient) _gmshClient->Warning(msg.c_str());
     }
     void sendError(const std::string &msg)
     {
-      if(_gmshClient) _gmshClient->Error(msg.c_str()); 
+      if(_gmshClient) _gmshClient->Error(msg.c_str());
     }
     void sendProgress(const std::string &msg)
     {
-      if(_gmshClient) _gmshClient->Progress(msg.c_str()); 
+      if(_gmshClient) _gmshClient->Progress(msg.c_str());
     }
     void sendMergeFileRequest(const std::string &msg)
     {
-      if(_gmshClient) _gmshClient->MergeFile(msg.c_str()); 
+      if(_gmshClient) _gmshClient->MergeFile(msg.c_str());
     }
     void sendParseStringRequest(const std::string &msg)
     {
-      if(_gmshClient) _gmshClient->ParseString(msg.c_str()); 
+      if(_gmshClient) _gmshClient->ParseString(msg.c_str());
     }
   };
 

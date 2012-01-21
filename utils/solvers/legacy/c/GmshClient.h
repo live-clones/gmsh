@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
+ * Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
