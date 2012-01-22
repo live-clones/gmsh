@@ -25,6 +25,8 @@
 #include "GEntity.h"
 #include "Field.h"
 #include "GFace.h"
+#include "discreteEdge.h"
+#include "discreteFace.h"
 
 #if defined(HAVE_ANN)
 #include <ANN/ANN.h>
@@ -194,6 +196,26 @@ void orderMLines(std::vector<MLine*> &lines, MVertex *vB, MVertex *vE){
   // printf("in order vB= %d =%d \n", vB->getNum(), vE->getNum());
 }
 
+static void recurConnectByMEdge(const MEdge &e,
+				std::multimap<MEdge, MTriangle*, Less_Edge> &e2e,
+				std::set<MTriangle*> &group,
+				std::set<MEdge, Less_Edge> &touched, 
+				std::set<MEdge, Less_Edge> &theCut)
+{
+  if (touched.find(e) != touched.end()) return;
+  touched.insert(e);
+  for (std::multimap <MEdge, MTriangle*, Less_Edge>::iterator it = e2e.lower_bound(e);
+       it != e2e.upper_bound(e); ++it){
+    group.insert(it->second);
+    for (int i = 0; i < it->second->getNumEdges(); ++i){
+      MEdge me = it->second->getEdge(i);
+      if (theCut.find(me) != theCut.end()){ touched.insert(me); break; }
+      recurConnectByMEdge(me, e2e, group, touched, theCut);
+    }
+  }
+}
+
+
 void cutTriangle(MTriangle *tri, 
 		 std::map<MEdge,MVertex*,Less_Edge> &cutEdges, 
 		 std::set<MVertex*> &cutVertices,
@@ -310,7 +332,7 @@ Centerline::~Centerline(){
 
 void Centerline::importFile(std::string fileName){
 
-  GModel *current = GModel::current();
+  current = GModel::current();
   std::vector<GEntity*> entities ;
   current->getEntities(entities) ; 
   for(unsigned int i = 0; i < entities.size(); i++){
@@ -445,7 +467,7 @@ void Centerline::createBranches(int maxN){
       edges.push_back(newBranch) ;
     }
   }
-  printf("in/outlets =%d branches =%d \n", color_edges.size(), edges.size());
+  printf("in/outlets =%d branches =%d \n", (int)color_edges.size(), (int)edges.size());
   
   //create children
   for(unsigned int i = 0; i < edges.size(); ++i) {
@@ -619,10 +641,81 @@ void Centerline::buildKdTree(){
 
 }
 
+void Centerline::createFaces(std::vector<std::vector<MTriangle*> > &faces){
+ 
+  std::multimap<MEdge, MTriangle*, Less_Edge> e2e;
+  for(unsigned int i = 0; i < triangles.size(); ++i){
+    for(int j = 0; j < 3; j++){
+      e2e.insert(std::make_pair(triangles[i]->getEdge(j), triangles[i]));
+    }
+  }
+  int iGroup = 0;
+  while(!e2e.empty()){
+    std::set<MTriangle*> group;
+    std::set<MEdge, Less_Edge> touched;
+    recurConnectByMEdge(e2e.begin()->first, e2e, group, touched, theCut);
+    std::vector<MTriangle*> temp;
+    temp.insert(temp.begin(), group.begin(), group.end());
+    faces.push_back(temp);
+    for(std::set<MEdge, Less_Edge>::iterator it = touched.begin();
+        it != touched.end(); ++it)
+      e2e.erase(*it);
+  }
+  printf("%d faces created \n", faces.size());
+
+  // int numBef = current->getMaxElementaryNumber(2) + 1;
+  // for(unsigned int i = 0; i < faces.size(); ++i){
+  //   int numF = current->getMaxElementaryNumber(2) + 1;
+  //   discreteFace *f = new discreteFace(current, numF);
+  //   current->add(f);
+  //   discFaces.push_back(f);
+  //   std::set<MVertex*> myVertices;
+  //   std::vector<MTriangle*> myFace = faces[i];
+  //   for(int j= 0; j< myFace.size(); j++){
+  //     MTriangle *t = myFace[j];
+  //     f->triangles.push_back(t);
+  //     for (int k= 0; k< 3; k++){
+  //     MVertex *v = t->getVertex(k);
+  //     std::set<MVertex*>::iterator it = theCutV.find(v);
+  //     if (it != theCutV.end()) myVertices.insert(v);
+  //     }
+  //   }
+  //   f->mesh_vertices.insert(f->mesh_vertices.begin(),
+  // 			    myVertices.begin(), myVertices.end());
+  // }
+
+  // printf("%d discrete Faces (bef =%d) (after =%d)\n", numAfter-numBef, numBef-1, numAfter-1);
+
+}
+
+void Centerline::createEdge(std::set<MEdge,Less_Edge> &newCut){
+
+  int numE = current->getMaxElementaryNumber(1) + 1;
+  printf("create discrete edge %d \n", numE);
+  discreteEdge *e = new discreteEdge(current, numE, 0, 0);
+  current->add(e);
+  discEdges.push_back(e);
+  std::set<MVertex*> allV;
+  std::set<MEdge,Less_Edge> ::iterator itcut = newCut.begin();
+  for (; itcut != newCut.end(); itcut++){
+    MVertex *v0 = itcut->getVertex(0);
+    MVertex *v1 = itcut->getVertex(1);
+    e->lines.push_back(new MLine(v0, v1));
+    allV.insert(v0);
+    allV.insert(v1);
+    v0->setEntity(e);
+    v1->setEntity(e);
+  }
+  e->mesh_vertices.insert(e->mesh_vertices.begin(), allV.begin(), allV.end());
+  theCutV.insert(allV.begin(), allV.end());
+  
+}
+
 void Centerline::splitMesh(){
 
   Msg::Info("Splitting surface mesh (%d tris) with centerline field ", triangles.size());
 
+  //splitMesh
   for(unsigned int i = 0; i < edges.size(); i++){
     printf("*** branch =%d \n", i);
     std::vector<MLine*> lines = edges[i].lines;
@@ -640,6 +733,12 @@ void Centerline::splitMesh(){
     }
  }
 
+  //create discreteFaces
+  std::vector<std::vector<MTriangle*> > faces;
+  createFaces(faces);
+  //createTopologyFromFace(faces);
+
+  //print myCUT.pos
   FILE * f2 = fopen("myCUT.pos","w");
   fprintf(f2, "View \"\"{\n");
   std::set<MEdge,Less_Edge>::iterator itp =  theCut.begin();
@@ -659,12 +758,25 @@ void Centerline::splitMesh(){
   //             t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
   //             1.0,1.0,1.0);
   // }
+ for (int i= 0; i< faces.size(); i++){
+   std::vector<MTriangle*> tris = faces[i];
+   for (int j= 0; j< tris.size(); j++){
+     MTriangle *t = tris[j];
+     fprintf(f2, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+              t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
+              t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
+              t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
+	     (double)i,  (double)i,  (double)i);
+  }
+ }
   fprintf(f2,"};\n");
   fclose(f2);
 
   Msg::Info("Splitting mesh by centerlines done ");
 
 }
+
+
 
 void Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
    
@@ -718,13 +830,14 @@ void Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
     }
     if (isClosed(newCut)) {
       printf("closed cut \n");
+      createEdge(newCut);
       triangles = newTris;
       theCut.insert(newCut.begin(),newCut.end());
       //if (step > 1) printf("YOUPIIIIIIIIIIIIIIIIIIIIIII \n");
       break;
     }
     else {
-      if (step ==9) printf("no closed cut %d \n", newCut.size());
+      if (step ==9) printf("no closed cut %d \n", (int)newCut.size());
       step++;
       // // triangles = newTris;
       // // theCut.insert(newCut.begin(),newCut.end());

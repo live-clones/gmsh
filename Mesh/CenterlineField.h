@@ -21,6 +21,8 @@ class MLine;
 class MVertex;
 class GEntity;
 class MTriangle;   
+class discreteEdge;
+class discreteFace;
 
 #if defined(HAVE_ANN)
 #include <ANN/ANN.h>
@@ -48,6 +50,7 @@ struct Branch{
 class Centerline : public Field{
 
  protected: 
+  GModel *current;
   ANNkd_tree *kdtree; 
   ANNpointArray nodes;
   ANNidxArray index;
@@ -71,6 +74,11 @@ class Centerline : public Field{
   std::vector<MTriangle*> triangles;
   //the lines cut of the tubular mesh by planes
   std::set<MEdge,Less_Edge> theCut;
+  std::set<MVertex*> theCutV;
+
+  //discrete edes and faces created by the cut
+  std::vector<discreteEdge*> discEdges;
+  std::vector<discreteFace*> discFaces;
 
  public:
   Centerline(std::string fileName);
@@ -121,6 +129,10 @@ class Centerline : public Field{
   // Cut the tubular structure with a disk
   // perpendicular to the tubular structure
   void cutByDisk(SVector3 &pt, SVector3 &dir, double &maxRad);
+
+  //create discrete Edge
+  void createEdge(std::set<MEdge,Less_Edge> &newCut);
+  void createFaces(std::vector<std::vector<MTriangle*> > &faces);
 
   //Print for debugging
   void printSplit() const;
