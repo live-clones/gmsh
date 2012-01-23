@@ -37,6 +37,20 @@ class STensor43 {
             else
               _val[getIndex(i, j, k, l)]=0.0;
   }
+  inline void symmetricIdentity(const double v = 1.0)
+  {
+    for (int i = 0; i < 3; i++)
+      for (int j = 0; j < 3; j++)
+        for (int k = 0; k < 3; k++)
+          for (int l = 0; l < 3; l++)
+          {
+            _val[getIndex(i, j, k, l)]= 0.;
+            if ((i==k)&&(j==l))
+              _val[getIndex(i, j, k, l)]+=0.5*v;
+            if ((i==l)&&(j==k))
+              _val[getIndex(i, j, k, l)]+=0.5*v;
+          }
+  }
   inline double &operator()(int i, int j,int k, int l)
   {
     return _val[getIndex(i, j, k, l)];
@@ -253,9 +267,5 @@ inline double operator*( const STensor43 &m , const STensor43 &t)
           val+=m(i,j,k,l)*t(l,k,j,i);
   return val;
 }
-
-
-
-
 #endif
 
