@@ -1,12 +1,13 @@
+
 #ifndef _STENSOR43_H_
 #define _STENSOR43_H_
 
-#include "STensor3.h"
+#include "STensor33.h"
 #include "fullMatrix.h"
 #include "Numeric.h"
 
 
-// concrete class for general 3x3 matrix
+// concrete class for general 3rd-order tensor in three-dimensional space
 
 class STensor43 {
  protected:
@@ -31,13 +32,10 @@ class STensor43 {
       for (int j = 0; j < 3; j++)
         for (int k = 0; k < 3; k++)
           for (int l = 0; l < 3; l++)
-         {
-	     _val[getIndex(i, j, k, l)]= 0.;
             if ((i==k)&&(j==l))
-              _val[getIndex(i, j, k, l)]+=0.5*v;
-            if ((i==l)&&(j==k))
-              _val[getIndex(i, j, k, l)]+=0.5*v;
-	 }
+              _val[getIndex(i, j, k, l)]=v;
+            else
+              _val[getIndex(i, j, k, l)]=0.0;
   }
   inline double &operator()(int i, int j,int k, int l)
   {
@@ -63,14 +61,7 @@ class STensor43 {
     for (int i = 0; i < 81; i++) _val[i] *= other;
     return *this;
   }
-/*  STensor43& operator *= (const STensor43 &other)
-  {
-// to be implemented
-    return *this;
-  }*/
-  void print(const char *) const;
-
- STensor43 transpose (int n, int m) const
+  STensor43 transpose (int n, int m) const
   {
     STensor43 ithis;
     if ((n==0 && m==1) || (n==1 && m==0))
@@ -129,7 +120,12 @@ class STensor43 {
     }
     return ithis+=(*this);
   }
-
+/*  STensor43& operator *= (const STensor43 &other)
+  {
+// to be implemented
+    return *this;
+  }*/
+  void print(const char *) const;
 };
 
 // tensor product
@@ -140,6 +136,23 @@ inline void tensprod(const STensor3 &a, const STensor3 &b, STensor43 &c)
         for (int k = 0; k < 3; k++)
           for (int l = 0; l < 3; l++)
             c(i,j,k,l)=a(i,j)*b(k,l);
+}
+
+inline void tensprod(const SVector3 &a, const STensor33 &b, STensor43 &c)
+{
+    for (int i = 0; i < 3; i++)
+      for (int j = 0; j < 3; j++)
+        for (int k = 0; k < 3; k++)
+          for (int l = 0; l < 3; l++)
+            c(i,j,k,l)=a(i)*b(j,k,l);
+}
+inline void tensprod(const STensor33 &a, const SVector3 &b, STensor43 &c)
+{
+    for (int i = 0; i < 3; i++)
+      for (int j = 0; j < 3; j++)
+        for (int k = 0; k < 3; k++)
+          for (int l = 0; l < 3; l++)
+            c(i,j,k,l)=a(i,j,k)*b(l);
 }
 
 inline double dot(const STensor43 &a, const STensor43 &b)
@@ -153,17 +166,38 @@ inline double dot(const STensor43 &a, const STensor43 &b)
   return prod;
 }
 
+// full contracted product
 inline STensor43 operator*(const STensor43 &t, double m)
 {
   STensor43 val(t);
   val *= m;
   return val;
 }
-
 inline STensor43 operator*(double m,const STensor43 &t)
 {
   STensor43 val(t);
   val *= m;
+  return val;
+}
+
+inline STensor33 operator*(const STensor43 &t, const SVector3 &m)
+{
+  STensor33 val(0.);
+  for (int i = 0; i < 3; i++)
+    for (int j = 0; j < 3; j++)
+      for (int k = 0; k < 3; k++)
+        for (int l = 0; l < 3; l++)
+          val(i,j,k)+=t(i,j,k,l)*m(l);
+  return val;
+}
+inline STensor33 operator*( const SVector3 &m , const STensor43 &t)
+{
+  STensor33 val(0.);
+  for (int i = 0; i < 3; i++)
+    for (int j = 0; j < 3; j++)
+      for (int k = 0; k < 3; k++)
+        for (int l = 0; l < 3; l++)
+          val(j,k,l)+=m(i)*t(i,j,k,l);
   return val;
 }
 
@@ -174,10 +208,9 @@ inline STensor3 operator*(const STensor43 &t, const STensor3 &m)
     for (int j = 0; j < 3; j++)
       for (int k = 0; k < 3; k++)
         for (int l = 0; l < 3; l++)
-          val(i,j)+=t(i,j,k,l)*m(k,l);
+          val(i,j)+=t(i,j,k,l)*m(l,k);
   return val;
 }
-
 inline STensor3 operator*( const STensor3 &m , const STensor43 &t)
 {
   STensor3 val(0.);
@@ -185,10 +218,44 @@ inline STensor3 operator*( const STensor3 &m , const STensor43 &t)
     for (int j = 0; j < 3; j++)
       for (int k = 0; k < 3; k++)
         for (int l = 0; l < 3; l++)
-          val(k,l)+=t(i,j,k,l)*m(i,j);
+          val(k,l)+=m(j,i)*t(i,j,k,l);
+  return val;
+}
+
+inline SVector3 operator*(const STensor43 &t, const STensor33 &m)
+{
+  SVector3 val(0.);
+  for (int i = 0; i < 3; i++)
+    for (int j = 0; j < 3; j++)
+      for (int k = 0; k < 3; k++)
+        for (int l = 0; l < 3; l++)
+          val(i)+=t(i,j,k,l)*m(l,k,j);
+  return val;
+}
+inline SVector3 operator*( const STensor33 &m , const STensor43 &t)
+{
+  SVector3 val(0.);
+  for (int i = 0; i < 3; i++)
+    for (int j = 0; j < 3; j++)
+      for (int k = 0; k < 3; k++)
+        for (int l = 0; l < 3; l++)
+          val(l)+=m(k,j,i)*t(i,j,k,l);
+  return val;
+}
+
+inline double operator*( const STensor43 &m , const STensor43 &t)
+{
+  double val(0.);
+  for (int i = 0; i < 3; i++)
+    for (int j = 0; j < 3; j++)
+      for (int k = 0; k < 3; k++)
+        for (int l = 0; l < 3; l++)
+          val+=m(i,j,k,l)*t(l,k,j,i);
   return val;
 }
 
 
 
+
 #endif
+
