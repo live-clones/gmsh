@@ -592,6 +592,23 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
     onelab::remoteNetworkClient *c = new onelab::remoteNetworkClient(name, sockname);
     _onelabClient = c;
     _client = c->getGmshClient();
+
+    onelab::string o(name + "/FileExtension", ".geo");
+    //o.setVisible(false);
+    _onelabClient->set(o);
+    onelab::string o3(name + "/9CheckCommand", "-");
+    //o3.setVisible(false);
+    _onelabClient->set(o3);
+    onelab::string o4(name + "/9ComputeCommand", "-3");
+    //o4.setVisible(false);
+    _onelabClient->set(o4);
+    std::vector<onelab::string> ps;
+    _onelabClient->get(ps, name + "/Action");
+    if(ps.size()){
+      Info("Performing OneLab '%s'", ps[0].getValue().c_str());
+      if(ps[0].getValue() == "initialize") Exit(0);
+    }
+
   }
 #endif
 }
