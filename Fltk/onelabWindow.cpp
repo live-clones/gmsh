@@ -542,12 +542,13 @@ static void importPhysicalGroups(GModel *m)
 
 static void runGmshClient(const std::string &action)
 {
-  if(action == "initialize") return;
   onelab::server::citer it = onelab::server::instance()->findClient("Gmsh");
   if(it == onelab::server::instance()->lastClient()) return;
 
   onelab::client *c = it->second;
   std::string mshFileName = getMshFileName(c);
+  if(action == "initialize") return;
+
   static std::string modelName = "";
   if(modelName.empty()){
     // first pass is special to prevent model reload, as well as
