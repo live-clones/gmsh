@@ -30,5 +30,5 @@ Volume(1) = {1};
 Mesh.RecombineAll=1;
 Mesh.RecombinationAlgorithm=1;
 
-Physical Surface(1) = {s : s + #ss[]-1};
-Physical Volume(1) = 1;
+//Physical Surface(1) = {s : s + #ss[]-1};
+//Physical Volume(1) = 1;

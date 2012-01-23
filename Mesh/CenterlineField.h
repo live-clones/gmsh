@@ -50,12 +50,13 @@ struct Branch{
 class Centerline : public Field{
 
  protected: 
-  GModel *current;
+  GModel *current; //current GModel
+  GModel *mod; //centerline GModel
+  GModel *split; //split GModel
   ANNkd_tree *kdtree; 
   ANNpointArray nodes;
   ANNidxArray index;
   ANNdistArray dist;
-  GModel *mod;
   std::string fileName;
 
   //all (unique) lines of centerlines
@@ -130,9 +131,8 @@ class Centerline : public Field{
   // perpendicular to the tubular structure
   void cutByDisk(SVector3 &pt, SVector3 &dir, double &maxRad);
 
-  //create discrete Edge
-  void createEdge(std::set<MEdge,Less_Edge> &newCut);
-  void createFaces(std::vector<std::vector<MTriangle*> > &faces);
+  //create discrete faces
+  void createFaces();
 
   //Print for debugging
   void printSplit() const;

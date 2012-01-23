@@ -21,10 +21,10 @@ discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
   meshStatistics.status = GFace::DONE;
 }
 
-void discreteFace::setBoundEdges(std::vector<int> tagEdges)
+void discreteFace::setBoundEdges(GModel *gm, std::vector<int> tagEdges)
 {
   for (std::vector<int>::iterator it = tagEdges.begin(); it != tagEdges.end(); it++){
-    GEdge *ge = GModel::current()->getEdgeByTag(*it);
+    GEdge *ge = gm->getEdgeByTag(*it);
     l_edges.push_back(ge);
     l_dirs.push_back(1);
     ge->addFace(this);

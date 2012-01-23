@@ -493,7 +493,7 @@ static void recur_cut_elements_ (multiscaleLaplaceLevel * root,
 	  cutVertices.find (root->elements[i]->getVertex(1)) != cutVertices.end())
         theCut.insert(MEdge(root->elements[i]->getVertex(0),root->elements[i]->getVertex(1)));
       if (cutVertices.find (root->elements[i]->getVertex(0)) != cutVertices.end() &&
-	  cutVertices.find (root->elements[i]->getVertex(1)) != cutVertices.end())
+	  cutVertices.find (root->elements[i]->getVertex(2)) != cutVertices.end())
         theCut.insert(MEdge(root->elements[i]->getVertex(0),root->elements[i]->getVertex(2)));
       if (cutVertices.find (root->elements[i]->getVertex(2)) != cutVertices.end() &&
 	  cutVertices.find (root->elements[i]->getVertex(1)) != cutVertices.end())
@@ -910,8 +910,8 @@ multiscaleLaplace::multiscaleLaplace (std::vector<MElement *> &elements,
  
   //Split the mesh in left and right
   //or Cut the mesh in left and right
-  //splitElems(elements); 
-  cutElems(elements);
+  splitElems(elements); 
+  //cutElems(elements);
 
 }
 
