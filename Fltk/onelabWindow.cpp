@@ -273,12 +273,16 @@ bool onelab::localNetworkClient::run()
     case GmshSocket::GMSH_MERGE_FILE:
       {
         int n = PView::list.size();
-        for(int i = 0; i < n; i++)
-          PView::list[i]->getOptions()->visible = 0;
+        for(int i = 0; i < n; i++){
+          if(PView::list[i]->getData()->getFileName().substr(0, 6) != "OneLab")
+            PView::list[i]->getOptions()->visible = 0;
+        }
         MergeFile(message);
         if(FlGui::instance()->onelab->hideNewViews()){
-          for(int i = n; i < PView::list.size(); i++)
-            PView::list[i]->getOptions()->visible = 0;
+          for(int i = n; i < PView::list.size(); i++){
+            if(PView::list[i]->getData()->getFileName().substr(0, 6) != "OneLab")
+              PView::list[i]->getOptions()->visible = 0;
+          }
         }
         drawContext::global()->draw();
         if(n != (int)PView::list.size())
@@ -925,7 +929,8 @@ void onelabWindow::rebuildTree()
     but->copy_label(label.c_str());
     std::vector<Fl_Menu_Item> menu;
     for(unsigned int j = 0; j < strings[i].getChoices().size(); j++){
-      Fl_Menu_Item it = {strings[i].getChoices()[j].c_str(), 0, 0, 0,
+      // FIXME memory leak : change the way we construct the menu
+      Fl_Menu_Item it = {strdup(strings[i].getChoices()[j].c_str()), 0, 0, 0,
                          (strings[i].getKind() == "file" &&
                           j == strings[i].getChoices().size() - 1) ? FL_MENU_DIVIDER : 0};
       menu.push_back(it);
