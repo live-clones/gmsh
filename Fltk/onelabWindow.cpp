@@ -603,12 +603,10 @@ void onelab_cb(Fl_Widget *w, void *data)
   std::string action((const char*)data);
 
   if(action == "refresh"){
-    static bool recurse = false;
-    if(recurse) return;
-    recurse = true;
+    FlGui::instance()->onelab->setButtonMode("", "stop");
     updateOnelabGraphs();
     FlGui::instance()->onelab->rebuildTree();
-    recurse = false;
+    FlGui::instance()->onelab->setButtonMode("refresh", "stop");
     return;
   }
 
