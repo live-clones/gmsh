@@ -614,6 +614,7 @@ void onelab_cb(Fl_Widget *w, void *data)
     for(onelab::server::citer it = onelab::server::instance()->firstClient();
         it != onelab::server::instance()->lastClient(); it++){
       onelab::string o(it->second->getName() + "/Action", "stop");
+      o.setVisible(false);
       onelab::server::instance()->set(o);
     }
     return;
