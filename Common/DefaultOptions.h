@@ -621,7 +621,7 @@ StringXNumber GeneralOptions_Number[] = {
 
   { F|O, "VectorType" , opt_general_vector_type , 4 ,
     "Default vector display type (for normals, etc.)" },
-  { F|O, "Verbosity" , opt_general_verbosity , 4. ,
+  { F|O, "Verbosity" , opt_general_verbosity , 5. ,
     "Level of information printed during processing (0=no information)" },
   { F|S, "VisibilityPositionX" , opt_general_visibility_position0 , 650. ,
     "Horizontal position (in pixels) of the upper left corner of the visibility "
