@@ -37,7 +37,8 @@ class STensor43 {
             else
               _val[getIndex(i, j, k, l)]=0.0;
   }
-  inline void symmetricIdentity(const double v = 1.0)
+  // Symmetric identity tensor
+  STensor43(const double vik, const double vil)
   {
     for (int i = 0; i < 3; i++)
       for (int j = 0; j < 3; j++)
@@ -46,9 +47,9 @@ class STensor43 {
           {
             _val[getIndex(i, j, k, l)]= 0.;
             if ((i==k)&&(j==l))
-              _val[getIndex(i, j, k, l)]+=0.5*v;
+              _val[getIndex(i, j, k, l)]+=0.5*vik;
             if ((i==l)&&(j==k))
-              _val[getIndex(i, j, k, l)]+=0.5*v;
+              _val[getIndex(i, j, k, l)]+=0.5*vil;
           }
   }
   inline double &operator()(int i, int j,int k, int l)
