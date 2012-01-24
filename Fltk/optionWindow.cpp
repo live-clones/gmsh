@@ -137,7 +137,7 @@ static void view_color_cb(Fl_Widget *w, void *data)
   uchar b = CTX::instance()->unpackBlue
     (fct(FlGui::instance()->options->view.index, GMSH_GET, 0));
   if(fl_color_chooser("Color Chooser", r, g, b))
-    fct(FlGui::instance()->options->view.index, 
+    fct(FlGui::instance()->options->view.index,
         GMSH_SET | GMSH_GUI, CTX::instance()->packColor(r, g, b, 255));
   drawContext::global()->draw();
 }
@@ -237,7 +237,7 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
       x = o->general.value[2]->value();
       y = o->general.value[3]->value();
       z = o->general.value[4]->value();
-      o->general.sphere->setValue(x, y, z);    
+      o->general.sphere->setValue(x, y, z);
     }
     else if(!strcmp(name, "light_sphere")){
       double x, y, z;
@@ -261,7 +261,7 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   double sessionrc = opt_general_session_save(0, GMSH_GET, 0);
   opt_general_session_save(0, GMSH_SET, o->general.butt[8]->value());
   if(sessionrc && !opt_general_session_save(0, GMSH_GET, 0))
-    PrintOptions(0, GMSH_SESSIONRC, 1, 1, 
+    PrintOptions(0, GMSH_SESSIONRC, 1, 1,
                  (CTX::instance()->homeDir + CTX::instance()->sessionFileName).c_str());
   opt_general_options_save(0, GMSH_SET, o->general.butt[9]->value());
   opt_general_expert_mode(0, GMSH_SET, o->general.butt[10]->value());
@@ -272,7 +272,7 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_polygon_offset_always(0, GMSH_SET, o->general.butt[4]->value());
   opt_general_axes_mikado(0, GMSH_SET, o->general.butt[16]->value());
 
-  opt_general_shine_exponent(0, GMSH_SET, o->general.value[0]->value());  
+  opt_general_shine_exponent(0, GMSH_SET, o->general.value[0]->value());
   opt_general_shine(0, GMSH_SET, o->general.value[1]->value());
   opt_general_light00(0, GMSH_SET, o->general.value[2]->value());
   opt_general_light01(0, GMSH_SET, o->general.value[3]->value());
@@ -322,8 +322,8 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_eye_sep_ratio(0, GMSH_SET, o->general.value[29]->value());
   opt_general_focallength_ratio(0, GMSH_SET, o->general.value[30]->value());
   opt_general_camera_aperture(0, GMSH_SET, o->general.value[31]->value());
-  opt_general_camera_mode(0, GMSH_SET, o->general.butt[18]->value()); 
-  if(opt_general_stereo_mode(0, GMSH_GET, 0) != o->general.butt[17]->value()) {  
+  opt_general_camera_mode(0, GMSH_SET, o->general.butt[18]->value());
+  if(opt_general_stereo_mode(0, GMSH_GET, 0) != o->general.butt[17]->value()) {
     opt_general_stereo_mode(0, GMSH_SET, o->general.butt[17]->value());
     // beginning of test to re-allocate gl for stereo: inspired from
     // "split" method
@@ -390,6 +390,8 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_occ_sew_faces(0, GMSH_SET, o->geo.butt[13]->value());
   opt_geometry_light_two_side(0, GMSH_SET, o->geo.butt[14]->value());
   opt_geometry_occ_connect_faces(0, GMSH_SET, o->geo.butt[15]->value());
+  int old_hide_compound = (int)opt_geometry_hide_compounds(0, GMSH_GET, 0);
+  opt_geometry_hide_compounds(0, GMSH_SET, o->geo.butt[17]->value());
 
   opt_geometry_normals(0, GMSH_SET, o->geo.value[0]->value());
   opt_geometry_tangents(0, GMSH_SET, o->geo.value[1]->value());
@@ -416,7 +418,13 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_line_type(0, GMSH_SET, o->geo.choice[1]->value());
   opt_geometry_surface_type(0, GMSH_SET, o->geo.choice[2]->value());
   opt_geometry_transform(0, GMSH_SET, o->geo.choice[3]->value());
-  
+
+  if(old_hide_compound != (int)opt_geometry_hide_compounds(0, GMSH_GET, 0)){
+    GModel::current()->setCompoundVisibility();
+    FlGui::instance()->resetVisibility();
+    CTX::instance()->mesh.changed = ENT_ALL;
+  }
+
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
   drawContext::global()->draw();
@@ -482,16 +490,16 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
 
   opt_mesh_point_type(0, GMSH_SET, o->mesh.choice[0]->value());
   opt_mesh_algo2d(0, GMSH_SET,
-                  (o->mesh.choice[2]->value() == 1) ? ALGO_2D_MESHADAPT : 
+                  (o->mesh.choice[2]->value() == 1) ? ALGO_2D_MESHADAPT :
                   (o->mesh.choice[2]->value() == 2) ? ALGO_2D_DELAUNAY :
-                  (o->mesh.choice[2]->value() == 3) ? ALGO_2D_FRONTAL : 
-                  (o->mesh.choice[2]->value() == 4) ? ALGO_2D_FRONTAL_QUAD : 
+                  (o->mesh.choice[2]->value() == 3) ? ALGO_2D_FRONTAL :
+                  (o->mesh.choice[2]->value() == 4) ? ALGO_2D_FRONTAL_QUAD :
                   ALGO_2D_AUTO);
   opt_mesh_algo3d(0, GMSH_SET,
-                  (o->mesh.choice[3]->value() == 0) ? ALGO_3D_DELAUNAY : 
-                  (o->mesh.choice[3]->value() == 2) ? ALGO_3D_FRONTAL_DEL : 
-                  (o->mesh.choice[3]->value() == 3) ? ALGO_3D_FRONTAL_HEX : 
-                  (o->mesh.choice[3]->value() == 4) ? ALGO_3D_MMG3D : 
+                  (o->mesh.choice[3]->value() == 0) ? ALGO_3D_DELAUNAY :
+                  (o->mesh.choice[3]->value() == 2) ? ALGO_3D_FRONTAL_DEL :
+                  (o->mesh.choice[3]->value() == 3) ? ALGO_3D_FRONTAL_HEX :
+                  (o->mesh.choice[3]->value() == 4) ? ALGO_3D_MMG3D :
                   ALGO_3D_FRONTAL);
   opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
   opt_mesh_recombine_all(0, GMSH_SET, o->mesh.butt[21]->value());
@@ -619,7 +627,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       }
     }
   }
-  
+
   int force = 0, links = (int)opt_post_link(0, GMSH_GET, 0);
 
   // get the old values for the current view
@@ -756,11 +764,11 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       val = o->view.choice[0]->value() + 1;
       if(force || (val != intervals_type))
         opt_view_intervals_type(i, GMSH_SET, val);
-      
+
       val = o->view.choice[5]->value();
       if(force || (val != point_type))
         opt_view_point_type(i, GMSH_SET, val);
-      
+
       val = o->view.choice[6]->value();
       if(force || (val != line_type))
         opt_view_line_type(i, GMSH_SET, val);
@@ -776,7 +784,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       val = o->view.choice[4]->value() + 1;
       if(force || (val != tensor_type))
         opt_view_tensor_type(i, GMSH_SET, val);
-      
+
       val = o->view.choice[7]->value() + 1;
       if(force || (val != range_type))
         opt_view_range_type(i, GMSH_SET, val);
@@ -805,9 +813,9 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       if(force || (val != type))
         opt_view_type(i, GMSH_SET, val);
 
-      val = 
+      val =
         (o->view.choice[14]->value() == 1) ? 1 :
-        (o->view.choice[14]->value() == 2) ? 3 : 
+        (o->view.choice[14]->value() == 2) ? 3 :
         (o->view.choice[14]->value() == 3) ? 9 : 0;
       if(force || (val != force_num_components))
         opt_view_force_num_components(i, GMSH_SET, val);
@@ -927,7 +935,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
         opt_view_use_stipple(i, GMSH_SET, val);
 
       // view_values
-      
+
       val = o->view.value[0]->value();
       if(force || (val != normals))
         opt_view_normals(i, GMSH_SET, val);
@@ -1063,7 +1071,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       val = o->view.value[22]->value();
       if(force || (val != size0))
         opt_view_size0(i, GMSH_SET, val);
-      
+
       val = o->view.value[23]->value();
       if(force || (val != size1))
         opt_view_size1(i, GMSH_SET, val);
@@ -1317,7 +1325,7 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[6]->callback(general_options_ok_cb);
 
       general.butt[2] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 4 * BH, BW, BH, 
+        (L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
          "Draw simplified model during user interaction");
       general.butt[2]->tooltip("(Alt+f)");
       general.butt[2]->type(FL_TOGGLE_BUTTON);
@@ -1339,7 +1347,7 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[12]->callback(general_options_ok_cb);
 
       general.butt[5] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 8 * BH, BW, BH, 
+        (L + 2 * WB, 2 * WB + 8 * BH, BW, BH,
          "Use trackball rotation instead of Euler angles");
       general.butt[5]->type(FL_TOGGLE_BUTTON);
       general.butt[5]->callback(general_options_ok_cb);
@@ -1467,7 +1475,7 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + 2 * WB + 2*IW/3, 2 * WB + 3 * BH, IW/3, BH, "Axes format");
       general.input[5]->align(FL_ALIGN_RIGHT);
       general.input[5]->callback(general_options_ok_cb);
-      
+
       general.input[6] = new Fl_Input
         (L + 2 * WB, 2 * WB + 4 * BH, IW/3, BH);
       general.input[6]->callback(general_options_ok_cb);
@@ -1484,7 +1492,7 @@ optionWindow::optionWindow(int deltaFontSize)
          "Set position and size of axes automatically");
       general.butt[0]->type(FL_TOGGLE_BUTTON);
       general.butt[0]->callback(general_options_ok_cb, (void*)"general_axes_auto");
-      
+
       general.value[20] = new Fl_Value_Input
         (L + 2 * WB, 2 * WB + 6 * BH, IW / 3, BH);
       general.value[20]->callback(general_options_ok_cb);
@@ -1598,7 +1606,7 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[7]->step(0.1);
       general.value[7]->align(FL_ALIGN_RIGHT);
       general.value[7]->callback(general_options_ok_cb);
-      
+
       static Fl_Menu_Item menu_genvectype[] = {
         {"Line", 0, 0, 0},
         {"Arrow", 0, 0, 0},
@@ -1767,7 +1775,7 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[30]->step(.1);
       general.value[30]->align(FL_ALIGN_RIGHT);
       general.value[30]->callback(general_options_ok_cb);
-  
+
       general.value[31] = new Fl_Value_Input
         (L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Camera Aperture (degrees)");
       general.value[31]->minimum(10.);
@@ -1775,7 +1783,7 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[31]->step(1);
       general.value[31]->align(FL_ALIGN_RIGHT);
       general.value[31]->callback(general_options_ok_cb);
-   
+
       o->end();
 
     }
@@ -1857,7 +1865,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[0]->tooltip("(Alt+p)");
       geo.butt[0]->type(FL_TOGGLE_BUTTON);
       geo.butt[0]->callback(geometry_options_ok_cb);
-      
+
       geo.butt[1] = new Fl_Check_Button
         (L + 2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Lines");
       geo.butt[1]->tooltip("(Alt+l)");
@@ -1914,13 +1922,18 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.value[1]->when(FL_WHEN_RELEASE);
       geo.value[1]->callback(geometry_options_ok_cb);
 
+      geo.butt[17] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Hide entities making up coumpounds");
+      geo.butt[17]->type(FL_TOGGLE_BUTTON);
+      geo.butt[17]->callback(geometry_options_ok_cb);
+
       o->end();
     }
     {
       Fl_Group *o = new Fl_Group
         (L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Transfo");
       o->hide();
-      
+
       static Fl_Menu_Item menu_transform[] = {
         {"None", 0, 0, 0},
         {"Scaling", 0, 0, 0},
@@ -2001,7 +2014,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.choice[1] = new Fl_Choice
         (L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Line display");
       geo.choice[1]->menu(menu_line_display);
-      geo.choice[1]->align(FL_ALIGN_RIGHT);     
+      geo.choice[1]->align(FL_ALIGN_RIGHT);
       geo.choice[1]->callback(geometry_options_ok_cb);
 
       geo.value[4] = new Fl_Value_Input
@@ -2031,7 +2044,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.choice[2] = new Fl_Choice
         (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Surface display");
       geo.choice[2]->menu(menu_surface_display);
-      geo.choice[2]->align(FL_ALIGN_RIGHT);     
+      geo.choice[2]->align(FL_ALIGN_RIGHT);
       geo.choice[2]->callback(geometry_options_ok_cb);
       geo.choice[2]->tooltip("(Alt+d)");
 
@@ -2245,7 +2258,7 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Optimize high order 2D planar meshes (experimental)");
       mesh.butt[3]->type(FL_TOGGLE_BUTTON);
       mesh.butt[3]->callback(mesh_options_ok_cb);
-      
+
       mesh.butt[25] = new Fl_Check_Button
         (L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Try to remove 4 triangles nodes (experimental)");
       mesh.butt[25]->type(FL_TOGGLE_BUTTON);
@@ -2554,11 +2567,11 @@ optionWindow::optionWindow(int deltaFontSize)
         solver.value[0]->callback(solver_options_ok_cb);
 
         solver.butt[0] = new Fl_Check_Button
-          (L + 2 * WB, 2 * WB + 3 * BH, BW, BH, 
+          (L + 2 * WB, 2 * WB + 3 * BH, BW, BH,
            "Always listen to incoming connection requests");
         solver.butt[0]->type(FL_TOGGLE_BUTTON);
         solver.butt[0]->callback(solver_options_ok_cb);
-        
+
         o->end();
       }
     }
@@ -2691,7 +2704,7 @@ optionWindow::optionWindow(int deltaFontSize)
          "Format");
       view.input[1]->align(FL_ALIGN_RIGHT);
       view.input[1]->callback(view_options_ok_cb);
-      
+
       static Fl_Menu_Item menu_iso[] = {
         {"Iso-values", 0, 0, 0},
         {"Continuous map", 0, 0, 0},
@@ -2841,7 +2854,7 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + 2 * WB + 2*IW/3, 2 * WB + 3 * BH, IW/3, BH, "Axes format");
       view.input[9]->align(FL_ALIGN_RIGHT);
       view.input[9]->callback(view_options_ok_cb);
-      
+
       view.input[10] = new Fl_Input
         (L + 2 * WB, 2 * WB + 4 * BH, IW/3, BH);
       view.input[10]->callback(view_options_ok_cb);
@@ -2852,12 +2865,12 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + 2 * WB + 2*IW/3, 2 * WB + 4 * BH, IW/3, BH, "Axes labels");
       view.input[12]->align(FL_ALIGN_RIGHT);
       view.input[12]->callback(view_options_ok_cb);
-      
+
       view.butt[25] = new Fl_Check_Button
         (L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Position 3D axes automatically");
       view.butt[25]->type(FL_TOGGLE_BUTTON);
       view.butt[25]->callback(view_options_ok_cb, (void*)"view_axes_auto_3d");
-      
+
       view.value[13] = new Fl_Value_Input
         (L + 2 * WB, 2 * WB + 6 * BH, IW / 3, BH);
       view.value[13]->callback(view_options_ok_cb);
@@ -2884,7 +2897,7 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Position 2D axes/value scale automatically");
       view.butt[7]->type(FL_TOGGLE_BUTTON);
       view.butt[7]->callback(view_options_ok_cb, (void*)"view_axes_auto_2d");
-      
+
       view.value[20] = new Fl_Value_Input
         (L + 2 * WB, 2 * WB + 9 * BH, IW / 2, BH);
       view.value[20]->minimum(-2000);
@@ -2982,7 +2995,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[6]->align(FL_ALIGN_RIGHT);
       view.value[6]->when(FL_WHEN_RELEASE);
       view.value[6]->callback(view_options_ok_cb);
-      
+
       static Fl_Menu_Item menu_boundary[] = {
         {"None", 0, 0, 0},
         {"Dimension - 1", 0, 0, 0},
@@ -3267,7 +3280,7 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + width - (int)(1.15*BB) - 2 * WB, 2 * WB + 10 * BH, (int)(1.15*BB), BH);
       view.choice[15]->menu(menu_glyph_center);
       view.choice[15]->callback(view_options_ok_cb);
-      
+
       static Fl_Menu_Item menu_tensor[] = {
         {"Von-Mises", 0, 0, 0},
         {"Maximum eigen value", 0, 0, 0},
@@ -3375,7 +3388,7 @@ void optionWindow::showGroup(int num, bool showWindow)
   case 3: win->label("Options - Mesh"); mesh.group->show(); break;
   case 4: win->label("Options - Solver"); solver.group->show(); break;
   case 5: win->label("Options - Post-pro"); post.group->show(); break;
-  default: 
+  default:
     {
       updateViewGroup(num - 6);
       static char str[128];
@@ -3625,7 +3638,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_color_text3d(index, GMSH_GUI, 0);
   opt_view_color_axes(index, GMSH_GUI, 0);
 
-  view.colorbar->update(data->getName().c_str(), data->getMin(), 
+  view.colorbar->update(data->getName().c_str(), data->getMin(),
                         data->getMax(), &opt->colorTable, &v->getChanged());
 }
 

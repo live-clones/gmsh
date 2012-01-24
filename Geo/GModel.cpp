@@ -1838,7 +1838,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
       (*it)->setBoundEdges(this, bcEdges);
     }
   }
-  
+
   Msg::Debug("Done creating topology from faces");
 
   Msg::Debug("Creating topology for %d edges...", discEdges.size());
@@ -2785,4 +2785,49 @@ void GModel::computeHomology()
 #else
   Msg::Error("Homology computation requires KBIPACK");
 #endif
+}
+
+void GModel::setCompoundVisibility()
+{
+  // force visibility status of compound entities
+
+  for(eiter eit = firstEdge(); eit != lastEdge(); eit++){
+    GEdge *ge = *eit;
+    if (ge->getCompound()){
+      if(CTX::instance()->geom.hideCompounds) {
+        // use visibility info of compound edge if this edge belongs to it
+        ge->setVisibility(0, true);
+        bool val2 = ge->getCompound()->getVisibility();
+        if(ge->getCompound()->getBeginVertex())
+          ge->getCompound()->getBeginVertex()->setVisibility(val2);
+        if(ge->getCompound()->getEndVertex())
+          ge->getCompound()->getEndVertex()->setVisibility(val2);
+      }
+      else {
+        ge->setVisibility(1, true);
+      }
+    }
+  }
+
+  for(fiter fit = firstFace(); fit != lastFace(); fit++){
+    GFace *gf = *fit;
+    if (gf->getCompound()){
+      if(CTX::instance()->geom.hideCompounds) {
+        gf->setVisibility(0, true);
+        std::list<GEdge*> edgesComp = gf->getCompound()->edges();
+        bool val2 = gf->getCompound()->getVisibility();
+        // show edges of the compound surface
+        for (std::list<GEdge*>::iterator it = edgesComp.begin(); it != edgesComp.end(); ++it) {
+          if((*it)->getCompound())
+            (*it)->getCompound()->setVisibility(val2, true);
+          else
+            (*it)->setVisibility(val2, true);
+        }
+      }
+      else {
+        gf->setVisibility(1, true);
+      }
+    }
+  }
+
 }

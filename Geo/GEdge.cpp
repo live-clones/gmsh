@@ -10,7 +10,6 @@
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "GEdge.h"
-#include "GEdgeCompound.h"
 #include "GFace.h"
 #include "MLine.h"
 #include "GaussLegendre1D.h"
@@ -163,21 +162,10 @@ SOrientedBoundingBox GEdge::getOBB()
 
 void GEdge::setVisibility(char val, bool recursive)
 {
-  if (getCompound() && CTX::instance()->geom.hideCompounds) {
-    // use visibility info of compound edge if this edge belongs to it
-    GEntity::setVisibility(0);
-    if(v0) v0->setVisibility(0);
-    if(v1) v1->setVisibility(0);
-    bool val2 = getCompound()->getVisibility();
-    if(getCompound()->v0) getCompound()->v0->setVisibility(val2);
-    if(getCompound()->v1) getCompound()->v1->setVisibility(val2);
-  }
-  else {
-    GEntity::setVisibility(val);
-    if(recursive){
-      if(v0) v0->setVisibility(val);
-      if(v1) v1->setVisibility(val);
-    }
+  GEntity::setVisibility(val);
+  if(recursive){
+    if(v0) v0->setVisibility(val);
+    if(v1) v1->setVisibility(val);
   }
 }
 

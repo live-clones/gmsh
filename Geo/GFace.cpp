@@ -9,8 +9,6 @@
 #include "GModel.h"
 #include "GFace.h"
 #include "GEdge.h"
-#include "GFaceCompound.h"
-#include "GEdgeCompound.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MElementCut.h"
@@ -263,26 +261,10 @@ std::list<GVertex*> GFace::vertices() const
 
 void GFace::setVisibility(char val, bool recursive)
 {
-  if (getCompound() && CTX::instance()->geom.hideCompounds) {
-    GEntity::setVisibility(0);
+  GEntity::setVisibility(val);
+  if(recursive){
     for (std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it)
-      (*it)->setVisibility(0, true);
-    std::list<GEdge*> edgesComp = getCompound()->edges();
-    bool val2 = getCompound()->getVisibility();
-    //show edges of the compound surface
-    for (std::list<GEdge*>::iterator it = edgesComp.begin(); it != edgesComp.end(); ++it) {
-      if((*it)->getCompound())
-        (*it)->getCompound()->setVisibility(val2, true);
-      else
-        (*it)->setVisibility(val2, true);
-    }
-  }
-  else {
-    GEntity::setVisibility(val);
-    if(recursive){
-      for (std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it)
-        (*it)->setVisibility(val, recursive);
-    }
+      (*it)->setVisibility(val, recursive);
   }
 }
 

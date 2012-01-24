@@ -183,6 +183,9 @@ class GModel
   char getVisibility(){ return _visible; }
   void setVisibility(char val){ _visible = val; }
 
+  // set the visibility of compound entities
+  void setCompoundVisibility();
+
   // get the number of entities in this model
   int getNumRegions() const { return regions.size(); }
   int getNumFaces() const { return faces.size(); }
