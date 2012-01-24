@@ -34,7 +34,7 @@ static MElement *_getOneElementOfGivenType(GModel *m, int type)
       if((*it)->points.size()) return (*it)->points[0];
     }
     break;
-  case TYPE_LIN: 
+  case TYPE_LIN:
     for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
       if((*it)->lines.size()) return (*it)->lines[0];
     }
@@ -126,15 +126,15 @@ bool PViewDataGModel::finalize(bool computeMinMax, const std::string &interpolat
   if(!haveInterpolationMatrices()){
 
     GModel *model = _steps[0]->getModel();
-    
+
     // if an interpolation scheme is explicitly provided, use it
     if(interpolationScheme.size()){
       interpolationMatrices m = _interpolationSchemes[interpolationScheme];
       if(m.size())
-        Msg::Info("Setting interpolation matrices from scheme '%s'", 
+        Msg::Info("Setting interpolation matrices from scheme '%s'",
                   interpolationScheme.c_str());
       else
-        Msg::Error("Could not find interpolation scheme '%s'", 
+        Msg::Error("Could not find interpolation scheme '%s'",
                    interpolationScheme.c_str());
       for(interpolationMatrices::iterator it = m.begin(); it != m.end(); it++){
         if(it->second.size() == 2){
@@ -163,7 +163,7 @@ bool PViewDataGModel::finalize(bool computeMinMax, const std::string &interpolat
                      (int)it->second.size(), interpolationScheme.c_str());
       }
     }
-    
+
     // if we don't have interpolation matrices for a given element
     // type, assume isoparametric elements (except for ElementData,
     // for which we know the interpolation: it's constant)
@@ -199,7 +199,7 @@ bool PViewDataGModel::finalize(bool computeMinMax, const std::string &interpolat
     }
 
   }
-  
+
   return PViewData::finalize();
 }
 
@@ -249,7 +249,7 @@ double PViewDataGModel::getMin(int step, bool onlyVisible, int forceNumComponent
         if(skipElement(step, ent, ele, onlyVisible)) continue;
         for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
           double val;
-          getScalarValue(step, ent, ele, nod, val, 
+          getScalarValue(step, ent, ele, nod, val,
                          forceNumComponents, componentMap);
           vmin = std::min(vmin, val);
         }
@@ -275,7 +275,7 @@ double PViewDataGModel::getMax(int step, bool onlyVisible, int forceNumComponent
         if(skipElement(step, ent, ele, onlyVisible)) continue;
         for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
           double val;
-          getScalarValue(step, ent, ele, nod, val, 
+          getScalarValue(step, ent, ele, nod, val,
                          forceNumComponents, componentMap);
           vmax = std::max(vmax, val);
         }
@@ -439,6 +439,11 @@ int PViewDataGModel::getNumElements(int step, int ent)
   if(step < 0) return _steps[0]->getEntity(ent)->getNumMeshElements();
   if(ent < 0) return _steps[step]->getModel()->getNumMeshElements();
   return _steps[step]->getEntity(ent)->getNumMeshElements();
+}
+
+GEntity *PViewDataGModel::getEntity(int step, int ent)
+{
+  return _steps[step]->getEntity(ent);
 }
 
 MElement *PViewDataGModel::getElement(int step, int ent, int element)
@@ -638,7 +643,7 @@ void PViewDataGModel::smooth()
     GModel *m = _steps[step]->getModel();
     int numComp = _steps[step]->getNumComponents();
     _steps2.push_back(new stepData<double>(m, numComp, _steps[step]->getFileName(),
-                                           _steps[step]->getFileIndex(), 
+                                           _steps[step]->getFileIndex(),
                                            _steps[step]->getTime()));
     std::map<int, int> nodeConnect;
     for(int ent = 0; ent < getNumEntities(step); ent++){
@@ -768,11 +773,6 @@ bool PViewDataGModel::hasModel(GModel *model, int step)
     return false;
   }
   return (model == _steps[step]->getModel());
-}
-
-GEntity *PViewDataGModel::getEntity(int step, int ent)
-{
-  return _steps[step]->getEntity(ent);
 }
 
 bool PViewDataGModel::getValueByIndex(int step, int dataIndex, int nod, int comp, double &val)

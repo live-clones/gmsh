@@ -46,9 +46,9 @@ class stepData{
   // a set of all "partitions" encountered in the data
   std::set<int> _partitions;
  public:
-  stepData(GModel *model, int numComp, std::string fileName="", int fileIndex=-1, 
+  stepData(GModel *model, int numComp, std::string fileName="", int fileIndex=-1,
            double time=0., double min=VAL_INF, double max=-VAL_INF)
-    : _model(model), _fileName(fileName), _fileIndex(fileIndex), _time(time), 
+    : _model(model), _fileName(fileName), _fileIndex(fileIndex), _time(time),
       _min(min), _max(max), _numComp(numComp), _data(0)
   {
     _model->getEntities(_entities);
@@ -108,7 +108,7 @@ class stepData{
     return _data->size();
   }
   void resizeData(int n)
-  {  
+  {
     if(!_data) _data = new std::vector<real*>(n, (real*)0);
     if(n > (int)_data->size()) _data->resize(n, (real*)0);
   }
@@ -220,17 +220,14 @@ class PViewDataGModel : public PViewData {
   bool hasMultipleMeshes();
   bool hasModel(GModel *model, int step=-1);
   bool useGaussPoints(){ return _type == GaussPointData; }
+  GModel* getModel(int step){ return _steps[step]->getModel(); }
+  GEntity *getEntity(int step, int ent);
+  MElement *getElement(int step, int entity, int element);
 
   // get the data type
   DataType getType(){ return _type; }
-  // direct access to GModel entities
-  GEntity *getEntity(int step, int ent);
   // direct access to value by index
   bool getValueByIndex(int step, int dataIndex, int node, int comp, double &val);
-  // get underlying model
-  GModel* getModel(int step){ return _steps[step]->getModel(); }
-  // get MElement
-  MElement *getElement(int step, int entity, int element);
 
   // Add some data "on the fly" (data is stored in a map, indexed by
   // node or element number depending on the type of dataset)
@@ -238,8 +235,8 @@ class PViewDataGModel : public PViewData {
                int step, double time, int partition, int numComp);
 
   // I/O routines
-  bool readMSH(std::string fileName, int fileIndex, FILE *fp, bool binary, 
-               bool swap, int step, double time, int partition, 
+  bool readMSH(std::string fileName, int fileIndex, FILE *fp, bool binary,
+               bool swap, int step, double time, int partition,
                int numComp, int numNodes, const std::string &interpolationScheme);
   bool writeMSH(std::string fileName, bool binary=false, bool savemesh=true);
   bool readMED(std::string fileName, int fileIndex);

@@ -27,7 +27,7 @@ PViewData::~PViewData()
 }
 
 bool PViewData::finalize(bool computeMinMax, const std::string &interpolationScheme)
-{ 
+{
   _dirty = false;
   return true;
 }
@@ -95,13 +95,25 @@ void PViewData::setValue(int step, int ent, int ele, int nod, int comp, double v
   Msg::Error("Cannot change field value in this view");
 }
 
+GModel *PViewData::getModel(int step)
+{
+  Msg::Error("Cannot get entity from this view");
+  return 0;
+}
+
+GEntity *PViewData::getEntity(int step, int ent)
+{
+  Msg::Error("Cannot get entity from this view");
+  return 0;
+}
+
 MElement *PViewData::getElement(int step, int ent, int ele)
 {
   Msg::Error("Cannot get element from this view");
-  return NULL;
+  return 0;
 }
 
-void PViewData::setInterpolationMatrices(int type, 
+void PViewData::setInterpolationMatrices(int type,
                                          const fullMatrix<double> &coefVal,
                                          const fullMatrix<double> &expVal)
 {
@@ -110,9 +122,9 @@ void PViewData::setInterpolationMatrices(int type,
   _interpolation[type].push_back(new fullMatrix<double>(expVal));
 }
 
-void PViewData::setInterpolationMatrices(int type, 
+void PViewData::setInterpolationMatrices(int type,
                                          const fullMatrix<double> &coefVal,
-                                         const fullMatrix<double> &expVal, 
+                                         const fullMatrix<double> &expVal,
                                          const fullMatrix<double> &coefGeo,
                                          const fullMatrix<double> &expGeo)
 {
@@ -133,8 +145,8 @@ int PViewData::getInterpolationMatrices(int type, std::vector<fullMatrix<double>
 }
 
 bool PViewData::haveInterpolationMatrices(int type)
-{ 
-  if(!type) 
+{
+  if(!type)
     return !_interpolation.empty();
   else
     return _interpolation.count(type) ? true : false;
@@ -164,39 +176,39 @@ void PViewData::smooth()
 }
 
 bool PViewData::combineTime(nameData &nd)
-{ 
+{
   Msg::Error("Combine time is not implemented for this type of data");
-  return false; 
+  return false;
 }
 
 bool PViewData::combineSpace(nameData &nd)
-{ 
+{
   Msg::Error("Combine space is not implemented for this type of data");
-  return false; 
+  return false;
 }
 
-bool PViewData::searchScalar(double x, double y, double z, double *values, 
+bool PViewData::searchScalar(double x, double y, double z, double *values,
                              int step, double *size)
 {
   if(!_octree) _octree = new OctreePost(this);
   return _octree->searchScalar(x, y, z, values, step, size);
 }
 
-bool PViewData::searchScalarWithTol(double x, double y, double z, double *values, 
+bool PViewData::searchScalarWithTol(double x, double y, double z, double *values,
                                     int step, double *size, double tol)
 {
   if(!_octree) _octree = new OctreePost(this);
   return _octree->searchScalarWithTol(x, y, z, values, step, size, tol);
 }
 
-bool PViewData::searchVector(double x, double y, double z, double *values, 
+bool PViewData::searchVector(double x, double y, double z, double *values,
                              int step, double *size)
 {
   if(!_octree) _octree = new OctreePost(this);
   return _octree->searchVector(x, y, z, values, step, size);
 }
 
-bool PViewData::searchTensor(double x, double y, double z, double *values, 
+bool PViewData::searchTensor(double x, double y, double z, double *values,
                              int step, double *size)
 {
   if(!_octree) _octree = new OctreePost(this);

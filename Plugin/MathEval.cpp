@@ -8,6 +8,7 @@
 #include "MathEval.h"
 #include "mathEvaluator.h"
 #include "OctreePost.h"
+#include "GEntity.h"
 
 StringXNumber MathEvalOptions_Number[] = {
   {GMSH_FULLRC, "TimeStep", NULL, -1.},
@@ -96,10 +97,10 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   int otherTimeStep = (int)MathEvalOptions_Number[2].def;
   int iOtherView = (int)MathEvalOptions_Number[3].def;
   int forceInterpolation = (int)MathEvalOptions_Number[4].def;
-  int region = (int)MathEvalOptions_Number[5].def;
+  int physicalRegion = (int)MathEvalOptions_Number[5].def;
   std::vector<std::string> expr(9);
   for(int i = 0; i < 9; i++) expr[i] = MathEvalOptions_String[i].def;
-  
+
   PView *v1 = getView(iView, view);
   if(!v1) return view;
   PViewData *data1 = getPossiblyAdaptiveData(v1);
@@ -143,7 +144,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   }
 
   int numComp2;
-  if(expr[3].size() || expr[4].size() || expr[5].size() || 
+  if(expr[3].size() || expr[4].size() || expr[5].size() ||
      expr[6].size() || expr[7].size() || expr[8].size()){
     numComp2 = 9;
     for(int i = 0; i < 9; i++)
@@ -159,7 +160,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   }
   expr.resize(numComp2);
 
-  const char *names[] = 
+  const char *names[] =
     { "x", "y", "z", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8",
       "w0", "w1", "w2", "w3", "w4", "w5", "w6", "w7", "w8", "w9" };
   unsigned int numVariables = sizeof(names) / sizeof(names[0]);
@@ -168,7 +169,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   mathEvaluator f(expr, variables);
   if(expr.empty()) return view;
   std::vector<double> values(numVariables), res(numComp2);
-          
+
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
 
@@ -185,7 +186,16 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   int timeBeg = (timeStep < 0) ? firstNonEmptyStep : timeStep;
   int timeEnd = (timeStep < 0) ? -timeStep : timeStep + 1;
   for(int ent = 0; ent < data1->getNumEntities(timeBeg); ent++){
-    if (region>0 && (ent+1)!=region) continue;
+    bool ok = (physicalRegion <= 0);
+    if(physicalRegion > 0){
+      GEntity *ge = data1->getEntity(timeBeg, ent);
+      if(ge){
+        std::vector<int>::iterator it = std::find
+          (ge->physicals.begin(), ge->physicals.end(), physicalRegion);
+        ok = (it != ge->physicals.end());
+      }
+    }
+    if(!ok) continue;
     for(int ele = 0; ele < data1->getNumElements(timeBeg, ent); ele++){
       if(data1->skipElement(timeBeg, ent, ele)) continue;
       int numNodes = data1->getNumNodes(timeBeg, ent, ele);
@@ -198,9 +208,9 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
       std::vector<double> x(numNodes), y(numNodes), z(numNodes);
       for(int nod = 0; nod < numNodes; nod++)
         data1->getNode(timeBeg, ent, ele, nod, x[nod], y[nod], z[nod]);
-      for(int nod = 0; nod < numNodes; nod++) out->push_back(x[nod]); 
-      for(int nod = 0; nod < numNodes; nod++) out->push_back(y[nod]); 
-      for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]); 
+      for(int nod = 0; nod < numNodes; nod++) out->push_back(x[nod]);
+      for(int nod = 0; nod < numNodes; nod++) out->push_back(y[nod]);
+      for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]);
       for(int step = timeBeg; step < timeEnd; step++){
 	if(!data1->hasTimeStep(step)) continue;
         int step2 = (otherTimeStep < 0) ? step : otherTimeStep;
@@ -228,7 +238,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
       }
     }
   }
-  
+
   if(timeStep < 0){
     for(int i = firstNonEmptyStep; i < data1->getNumTimeSteps(); i++) {
       if(!data1->hasTimeStep(i)) continue;
@@ -237,7 +247,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   }
   else
     data2->Time.push_back(data1->getTime(timeStep));
-        
+
   data2->setName(data1->getName() + "_MathEval");
   data2->setFileName(data1->getName() + "_MathEval.pos");
   data2->finalize();

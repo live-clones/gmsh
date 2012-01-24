@@ -77,7 +77,7 @@ class PViewData {
   virtual double getTime(int step){ return 0.; }
 
   // get/set min/max for given step (global over all steps if step=-1)
-  virtual double getMin(int step=-1, bool onlyVisible=false, 
+  virtual double getMin(int step=-1, bool onlyVisible=false,
                         int forceNumComponents=0, int componentMap[9]=0) = 0;
   virtual double getMax(int step=-1, bool onlyVisible=false,
                         int forceNumComponents=0, int componentMap[9]=0) = 0;
@@ -121,7 +121,7 @@ class PViewData {
   // get/set the coordinates and tag of the nod-th node from the
   // ele-th element in the ent-th entity (if the node has a tag,
   // getNode returns it)
-  virtual int getNode(int step, int ent, int ele, int nod, 
+  virtual int getNode(int step, int ent, int ele, int nod,
                       double &x, double &y, double &z){ return 0; }
   virtual void setNode(int step, int ent, int ele, int nod,
                        double x, double y, double z);
@@ -162,9 +162,9 @@ class PViewData {
   virtual int getNumStrings3D(){ return 0; }
 
   // return the i-th 2D/3D string in the view
-  virtual void getString2D(int i, int step, std::string &str, 
+  virtual void getString2D(int i, int step, std::string &str,
                            double &x, double &y, double &style){}
-  virtual void getString3D(int i, int step, std::string &str, 
+  virtual void getString3D(int i, int step, std::string &str,
                            double &x, double &y, double &z, double &style){}
 
   // change the orientation of the ele-th element
@@ -195,13 +195,13 @@ class PViewData {
   adaptiveData *getAdaptiveData(){ return _adaptive; }
 
   // set/get the interpolation matrices for elements with type "type"
-  void setInterpolationMatrices(int type, 
+  void setInterpolationMatrices(int type,
                                 const fullMatrix<double> &coefVal,
                                 const fullMatrix<double> &expVal);
-  void setInterpolationMatrices(int type, 
+  void setInterpolationMatrices(int type,
                                 const fullMatrix<double> &coefVal,
                                 const fullMatrix<double> &expVal,
-                                const fullMatrix<double> &coefGeo, 
+                                const fullMatrix<double> &coefGeo,
                                 const fullMatrix<double> &expGeo);
   int getInterpolationMatrices(int type, std::vector<fullMatrix<double>*> &p);
   bool haveInterpolationMatrices(int type=0);
@@ -217,10 +217,16 @@ class PViewData {
   // combine time steps or elements from multiple datasets
   virtual bool combineTime(nameData &nd);
   virtual bool combineSpace(nameData &nd);
-  
+
   // ask to fill vertex arrays remotely
   virtual bool isRemote(){ return false; }
   virtual int fillRemoteVertexArrays(std::string &options){ return 0; }
+
+  // get GModel (if view supports it)
+  virtual GModel *getModel(int step);
+
+  // get GEntity (if view supports it)
+  virtual GEntity *getEntity(int step, int entity);
 
   // get MElement (if view supports it)
   virtual MElement *getElement(int step, int entity, int element);
@@ -230,13 +236,13 @@ class PViewData {
   // post element. If several time steps are present, they are all
   // interpolated unless time step is set to a different value than
   // -1.
-  bool searchScalar(double x, double y, double z, double *values, 
+  bool searchScalar(double x, double y, double z, double *values,
                     int step=-1, double *size=0);
-  bool searchScalarWithTol(double x, double y, double z, double *values, 
+  bool searchScalarWithTol(double x, double y, double z, double *values,
                            int step=-1, double *size=0, double tol=1.e-2);
-  bool searchVector(double x, double y, double z, double *values, 
+  bool searchVector(double x, double y, double z, double *values,
                     int step=-1, double *size=0);
-  bool searchTensor(double x, double y, double z, double *values, 
+  bool searchTensor(double x, double y, double z, double *values,
                     int step=-1, double *size=0);
 
   // I/O routines
