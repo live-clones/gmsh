@@ -157,7 +157,7 @@ bool onelab::localNetworkClient::run()
     if(_pid < 0 || (command.empty() && !CTX::instance()->solver.listen))
       break;
 
-    int stop = server->NonBlockingWait(sock, 0.1, 0.);
+    int stop = server->NonBlockingWait(sock, 0.001, 0.);
 
     if(stop || _pid < 0 || (command.empty() && !CTX::instance()->solver.listen))
       break;
@@ -878,6 +878,9 @@ void onelabWindow::rebuildTree()
   for(unsigned int i = 0; i < _treeWidgets.size(); i++)
     Fl::delete_widget(_treeWidgets[i]);
   _treeWidgets.clear();
+  for(unsigned int i = 0; i < _treeStrings.size(); i++)
+    delete _treeStrings[i];
+  _treeStrings.clear();
 
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers);
@@ -929,10 +932,12 @@ void onelabWindow::rebuildTree()
     but->copy_label(label.c_str());
     std::vector<Fl_Menu_Item> menu;
     for(unsigned int j = 0; j < strings[i].getChoices().size(); j++){
-      // FIXME memory leak : change the way we construct the menu
-      Fl_Menu_Item it = {strdup(strings[i].getChoices()[j].c_str()), 0, 0, 0,
-                         (strings[i].getKind() == "file" &&
-                          j == strings[i].getChoices().size() - 1) ? FL_MENU_DIVIDER : 0};
+      // need to manually manage the label strings
+      char *str = strdup(strings[i].getChoices()[j].c_str());
+      _treeStrings.push_back(str);
+      bool divider = (strings[i].getKind() == "file" &&
+                      j == strings[i].getChoices().size() - 1);
+      Fl_Menu_Item it = {str, 0, 0, 0, divider ? FL_MENU_DIVIDER : 0};
       menu.push_back(it);
     }
     if(strings[i].getKind() == "file"){
@@ -1003,19 +1008,23 @@ void onelabWindow::setButtonMode(const std::string &butt0, const std::string &bu
     _butt[1]->activate();
     _butt[1]->label("Compute");
     _butt[1]->callback(onelab_cb, (void*)"compute");
+    _gear->activate();
   }
   else if(butt1 == "stop"){
     _butt[1]->activate();
     _butt[1]->label("Stop");
     _butt[1]->callback(onelab_cb, (void*)"stop");
+    _gear->deactivate();
   }
   else if(butt1 == "kill"){
     _butt[1]->activate();
     _butt[1]->label("Kill");
     _butt[1]->callback(onelab_cb, (void*)"kill");
+    _gear->deactivate();
   }
   else{
     _butt[1]->deactivate();
+    _gear->deactivate();
   }
 }
 

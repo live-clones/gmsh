@@ -25,6 +25,7 @@ class onelabWindow{
   Fl_Menu_Button *_gear;
   int _gearFrozenMenuSize;
   std::vector<Fl_Widget*> _treeWidgets;
+  std::vector<char*> _treeStrings;
   std::string _title;
   int _deltaFontSize;
   bool _stop;
