@@ -41,7 +41,7 @@ CTX::CTX()
   bgmFileName = "";
   createAppendMeshStatReport = 0;
   lc = 1.;
-  min[0] = min[1] = min[2] = max[2] = 0.; 
+  min[0] = min[1] = min[2] = max[2] = 0.;
   max[0] = max[1] = 1.; // for nice view when adding point in new model
   cg[0] = cg[1] = cg[2] = 0.;
   polygonOffset = 0;
@@ -54,7 +54,7 @@ CTX::CTX()
   post.draw = 1;
   post.combineTime = 0; // try to combineTime views at startup
   lock = 0; // very primitive locking
-    
+
 #if defined(HAVE_FLTK)
   glFontEnum = FL_HELVETICA;
 #else
@@ -62,7 +62,6 @@ CTX::CTX()
 #endif
   forcedBBox = 0;
   hideUnselected = 0;
-  showCompounds = 0;
   numWindows = numTiles = 1;
   deltaFontSize = 0;
   recentFiles.resize(5);

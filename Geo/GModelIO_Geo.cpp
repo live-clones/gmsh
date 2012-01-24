@@ -145,9 +145,9 @@ int GModel::importGEOInternals()
           }
           e = new GEdgeCompound(this, c->Num, comp);
           add(e);
-          if (!CTX::instance()->showCompounds)
+          if(CTX::instance()->geom.hideCompounds)
             for (std::vector<GEdge*>::iterator it = comp.begin(); it != comp.end(); ++it)
-              (*it)->setVisibility(0,true);
+              (*it)->setVisibility(0, true);
         }
         else if(!e && c->beg && c->end){
           e = new gmshEdge(this, c,
@@ -202,9 +202,9 @@ int GModel::importGEOInternals()
         f->meshAttributes.Method = s->Method;
         f->meshAttributes.extrude = s->Extrude;
         add(f);
-        if (!CTX::instance()->showCompounds)
+        if (CTX::instance()->geom.hideCompounds)
           for (std::list<GFace*>::iterator it = comp.begin(); it != comp.end(); ++it)
-            (*it)->setVisibility(0,true);
+            (*it)->setVisibility(0, true);
         if(s->EmbeddedCurves){
           for(int i = 0; i < List_Nbr(s->EmbeddedCurves); i++){
             Curve *c;

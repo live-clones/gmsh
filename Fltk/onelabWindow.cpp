@@ -533,11 +533,11 @@ static void updateOnelabGraphs()
     drawContext::global()->draw();
 }
 
-static void importPhysicalGroups(GModel *m)
+static void importPhysicalGroups(onelab::client *c, GModel *m)
 {
   std::map<int, std::vector<GEntity*> > groups[4];
   m->getPhysicalGroups(groups);
-
+  // create "read-only" onelab groups
 }
 
 static void runGmshClient(const std::string &action)
@@ -565,7 +565,7 @@ static void runGmshClient(const std::string &action)
       // the model name has changed
       modelName = GModel::current()->getName();
       geometry_reload_cb(0, 0);
-      importPhysicalGroups(GModel::current());
+      importPhysicalGroups(c, GModel::current());
     }
   }
   else if(action == "compute"){
@@ -576,7 +576,7 @@ static void runGmshClient(const std::string &action)
       // changed
       modelName = GModel::current()->getName();
       geometry_reload_cb(0, 0);
-      importPhysicalGroups(GModel::current());
+      importPhysicalGroups(c, GModel::current());
       if(FlGui::instance()->onelab->meshAuto()){
         mesh_3d_cb(0, 0);
         CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);

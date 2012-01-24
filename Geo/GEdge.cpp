@@ -79,9 +79,9 @@ MElement *const *GEdge::getStartElementType(int type) const
 }
 
 MElement *GEdge::getMeshElement(unsigned int index)
-{ 
+{
   if(index < lines.size())
-    return lines[index]; 
+    return lines[index];
   return 0;
 }
 
@@ -140,7 +140,7 @@ SOrientedBoundingBox GEdge::getOBB()
       SPoint3 pt2(getEndVertex()->x(), getEndVertex()->y(), getEndVertex()->z());
       vertices.push_back(pt1);
       vertices.push_back(pt2);
-    } 
+    }
     else if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve){
       Range<double> tr = this->parBounds(0);
       // N can be choosen arbitrarily, but 10 points seems reasonable
@@ -151,7 +151,7 @@ SOrientedBoundingBox GEdge::getOBB()
         SPoint3 pt(p.x(), p.y(), p.z());
         vertices.push_back(pt);
       }
-    } 
+    }
     else {
       SPoint3 dummy(0, 0, 0);
       vertices.push_back(dummy);
@@ -163,15 +163,16 @@ SOrientedBoundingBox GEdge::getOBB()
 
 void GEdge::setVisibility(char val, bool recursive)
 {
-  if (getCompound() && !CTX::instance()->showCompounds) {
-    // use visibility info of compound edge if this edge belongs to it 
+  if (getCompound() && CTX::instance()->geom.hideCompounds) {
+    // use visibility info of compound edge if this edge belongs to it
     GEntity::setVisibility(0);
     if(v0) v0->setVisibility(0);
     if(v1) v1->setVisibility(0);
     bool val2 = getCompound()->getVisibility();
     if(getCompound()->v0) getCompound()->v0->setVisibility(val2);
     if(getCompound()->v1) getCompound()->v1->setVisibility(val2);
-  } else {
+  }
+  else {
     GEntity::setVisibility(val);
     if(recursive){
       if(v0) v0->setVisibility(val);
@@ -192,7 +193,7 @@ void GEdge::writeGEO(FILE *fp)
   if(!getBeginVertex() || !getEndVertex() || geomType() == DiscreteCurve) return;
 
   if(geomType() == Line){
-    fprintf(fp, "Line(%d) = {%d, %d};\n", 
+    fprintf(fp, "Line(%d) = {%d, %d};\n",
             tag(), getBeginVertex()->tag(), getEndVertex()->tag());
   }
   else{
@@ -205,7 +206,7 @@ void GEdge::writeGEO(FILE *fp)
     for(int i = 1; i < N; i++){
       double u = umin + (double)i / N * (umax - umin);
       GPoint p = point(u);
-      fprintf(fp, "Point(p%d + %d) = {%.16g, %.16g, %.16g};\n", 
+      fprintf(fp, "Point(p%d + %d) = {%.16g, %.16g, %.16g};\n",
               tag(), i, p.x(), p.y(), p.z());
     }
     fprintf(fp, "Spline(%d) = {%d", tag(), getBeginVertex()->tag());
@@ -215,7 +216,7 @@ void GEdge::writeGEO(FILE *fp)
   }
 
   if(meshAttributes.Method == MESH_TRANSFINITE){
-    fprintf(fp, "Transfinite Line {%d} = %d", 
+    fprintf(fp, "Transfinite Line {%d} = %d",
             tag() * (meshAttributes.typeTransfinite > 0 ? 1 : -1),
             meshAttributes.nbPointsTransfinite);
     if(meshAttributes.typeTransfinite){
@@ -267,11 +268,11 @@ double GEdge::curvature(double par) const
 {
   SVector3 d1 = firstDer(par);
   SVector3 d2 = secondDer(par);
-  
+
   double one_over_norm = 1. / norm(d1);
 
   SVector3 cross_prod = crossprod(d1,d2);
-  
+
   return ( norm(cross_prod) * one_over_norm * one_over_norm * one_over_norm );
 }
 
@@ -292,35 +293,35 @@ double GEdge::length(const double &u0, const double &u1, const int nbQuadPoints)
 
 /*
   consider a curve x(t) and a point y
-  
-  use a golden section algorithm that minimizes 
 
-  min_t \|x(t)-y\|   
+  use a golden section algorithm that minimizes
+
+  min_t \|x(t)-y\|
 
 */
 
 const double GOLDEN  = (1. + sqrt(5.)) / 2.;
 const double GOLDEN2 = 2 - GOLDEN;
- 
+
 // x1 and x3 are the current bounds; the minimum is between them.
 // x2 is the center point, which is closer to x1 than to x3
 
-double goldenSectionSearch(const GEdge *ge, const SPoint3 &q, double x1, 
+double goldenSectionSearch(const GEdge *ge, const SPoint3 &q, double x1,
                            double x2, double x3, double tau)
-{ 
+{
   // Create a new possible center in the area between x2 and x3, closer to x2
   double x4 = x2 + GOLDEN2 * (x3 - x2);
-  
+
   // Evaluate termination criterion
   if (fabs(x3 - x1) < tau * (fabs(x2) + fabs(x4)))
     return (x3 + x1) / 2;
-  
+
   const SVector3 dp4 = q - ge->position(x4);
   const SVector3 dp2 = q - ge->position(x2);
-  
+
   const double d4 = dp4.norm();
   const double d2 = dp2.norm();
-  
+
   if (d4 < d2)
     return goldenSectionSearch(ge, q, x2, x4, x3, tau);
   else
@@ -330,13 +331,13 @@ double goldenSectionSearch(const GEdge *ge, const SPoint3 &q, double x1,
 GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
 {
   //  printf("looking for closest point in curve %d to point %g %g\n",tag(),q.x(),q.y());
-  
+
   const int nbSamples = 100;
-  
+
   double tolerance = 1.e-12;
 
   Range<double> interval = parBounds(0);
-  
+
   double tMin = std::min(interval.high(), interval.low());
   double tMax = std::max(interval.high(), interval.low());
 
@@ -352,7 +353,7 @@ GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
       DMIN = D;
     }
   }
-  
+
   //  printf("parameter %g as an initial guess (dist = %g)\n",topt,DMIN);
 
   if (topt == tMin)
@@ -366,7 +367,7 @@ GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
   const double D = dp.norm();
 
   //  printf("after golden section parameter %g  (dist = %g)\n",t,D);
-  
+
   return point(t);
 }
 
@@ -377,7 +378,7 @@ double GEdge::parFromPoint(const SPoint3 &P) const
   return t;
 }
 
-bool GEdge::XYZToU(const double X, const double Y, const double Z, 
+bool GEdge::XYZToU(const double X, const double Y, const double Z,
                    double &u, const double relax) const
 {
   const int MaxIter = 25;
@@ -391,12 +392,12 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z,
   double uMax = uu.high();
 
   SVector3 Q(X, Y, Z), P;
-  
+
   double init[NumInitGuess];
-  
-  for (int i = 0; i < NumInitGuess; i++) 
+
+  for (int i = 0; i < NumInitGuess; i++)
     init[i] = uMin + (uMax - uMin) / (NumInitGuess - 1) * i;
-  
+
   for(int i = 0; i < NumInitGuess; i++){
     u = init[i];
     double uNew = u;
@@ -405,30 +406,30 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z,
 
     SVector3 dPQ = P - Q;
     err2 = dPQ.norm();
-    
-    if (err2 < 1.e-8 * CTX::instance()->lc) return true;    
-    
+
+    if (err2 < 1.e-8 * CTX::instance()->lc) return true;
+
     while(iter++ < MaxIter && err2 > 1e-8 * CTX::instance()->lc) {
       SVector3 der = firstDer(u);
       uNew = u - relax * dot(dPQ,der) / dot(der,der);
       uNew = std::min(uMax,std::max(uMin,uNew));
       P = position(uNew);
-      
+
       dPQ = P - Q;
       err2 = dPQ.norm();
       err = fabs(uNew - u);
       u = uNew;
-    } 
-  
+    }
+
     if (err2 < 1e-8 * CTX::instance()->lc) return true;
   }
-  
+
   if(relax > 1.e-2) {
-    //    Msg::Info("point %g %g %g on edge %d : Relaxation factor = %g", 
+    //    Msg::Info("point %g %g %g on edge %d : Relaxation factor = %g",
     //              Q.x(), Q.y(), Q.z(), 0.75 * relax);
     return XYZToU(Q.x(), Q.y(), Q.z(), u, 0.75 * relax);
   }
-  
+
   //  Msg::Error("Could not converge reparametrisation of point (%e,%e,%e) on edge %d",
   //             Q.x(), Q.y(), Q.z(), tag());
   return false;
@@ -446,5 +447,5 @@ void GEdge::replaceEndingPoints(GVertex *replOfv0, GVertex *replOfv1)
     v1->delEdge(this);
     replOfv1->addEdge(this);
     v1 = replOfv1;
-  }  
+  }
 }

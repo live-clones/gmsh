@@ -7,8 +7,6 @@
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "GModel.h"
-#include "GFaceCompound.h"
-#include "GEdgeCompound.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -62,7 +60,7 @@ static unsigned int getColorByElement(MElement *ele)
   else if(CTX::instance()->mesh.colorCarousel == 3){ // by partition
     return CTX::instance()->color.mesh.carousel[abs(ele->getPartition() % 20)];
   }
-  else{ 
+  else{
     // by elementary or physical entity (this is not perfect (since
     // e.g. a triangle can have no vertices categorized on a surface),
     // but it's the best we can do "fast" since we don't store the
@@ -78,9 +76,9 @@ static unsigned int getColorByElement(MElement *ele)
 
 static double evalClipPlane(int clip, double x, double y, double z)
 {
-  return CTX::instance()->clipPlane[clip][0] * x + 
-    CTX::instance()->clipPlane[clip][1] * y + 
-    CTX::instance()->clipPlane[clip][2] * z + 
+  return CTX::instance()->clipPlane[clip][0] * x +
+    CTX::instance()->clipPlane[clip][1] * y +
+    CTX::instance()->clipPlane[clip][2] * z +
     CTX::instance()->clipPlane[clip][3];
 }
 
@@ -109,12 +107,12 @@ bool isElementVisible(MElement *ele)
       q = ele->etaShapeMeasure();
     else
       q = ele->gammaShapeMeasure();
-    if(q < CTX::instance()->mesh.qualityInf || 
+    if(q < CTX::instance()->mesh.qualityInf ||
        q > CTX::instance()->mesh.qualitySup) return false;
   }
   if(CTX::instance()->mesh.radiusSup) {
     double r = ele->maxEdge();
-    if(r < CTX::instance()->mesh.radiusInf || 
+    if(r < CTX::instance()->mesh.radiusInf ||
        r > CTX::instance()->mesh.radiusSup) return false;
   }
   if(CTX::instance()->clipWholeElements){
@@ -125,7 +123,7 @@ bool isElementVisible(MElement *ele)
         }
         else{
           double d = intersectClipPlane(clip, ele);
-          if(ele->getDim() == 3 && 
+          if(ele->getDim() == 3 &&
              CTX::instance()->clipOnlyDrawIntersectingVolume && d){
             hidden = true;
             break;
@@ -189,7 +187,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
     MElement *ele = elements[i];
 
     if(!isElementVisible(ele) || ele->getDim() < 1) continue;
-    
+
     unsigned int c = getColorByElement(ele);
     unsigned int col[4] = {c, c, c, c};
 
@@ -253,15 +251,8 @@ class initMeshGEdge {
  public:
   void operator () (GEdge *e)
   {
-    if(!e->getVisibility()) {
-      if(e->getCompound()) {
-        if(!e->getCompound()->getVisibility()) return;
-      } 
-      else
-        return;
-    }
-      
     e->deleteVertexArrays();
+    if(!e->getVisibility()) return;
     e->setAllElementsVisible(CTX::instance()->mesh.lines &&
                              areAllElementsVisible(e->lines));
 
@@ -290,7 +281,7 @@ class initMeshGFace {
   {
     int num = 0;
     if(CTX::instance()->mesh.surfacesEdges){
-      num += (3 * f->triangles.size() + 4 * f->quadrangles.size() + 
+      num += (3 * f->triangles.size() + 4 * f->quadrangles.size() +
               4 * f->polygons.size()) / 2;
       if(CTX::instance()->mesh.explode != 1.) num *= 2;
       if(_curved) num *= 2;
@@ -310,16 +301,10 @@ class initMeshGFace {
  public:
   void operator () (GFace *f)
   {
-    if(!f->getVisibility()) {
-      if(f->getCompound()) {
-        if(!f->getCompound()->getVisibility()) return;
-      } else
-        return;
-    }
-
     f->deleteVertexArrays();
+    if(!f->getVisibility()) return;
     f->setAllElementsVisible
-      (CTX::instance()->mesh.triangles && areAllElementsVisible(f->triangles) && 
+      (CTX::instance()->mesh.triangles && areAllElementsVisible(f->triangles) &&
        CTX::instance()->mesh.quadrangles && areAllElementsVisible(f->quadrangles));
 
     bool edg = CTX::instance()->mesh.surfacesEdges;
@@ -343,7 +328,7 @@ class initMeshGRegion {
   bool _curved;
   int _estimateIfClipped(int num)
   {
-    if(CTX::instance()->clipWholeElements && 
+    if(CTX::instance()->clipWholeElements &&
        CTX::instance()->clipOnlyDrawIntersectingVolume){
       for(int clip = 0; clip < 6; clip++){
         if(CTX::instance()->mesh.clip & (1 << clip))
@@ -385,10 +370,9 @@ class initMeshGRegion {
   }
  public:
   void operator () (GRegion *r)
-  {  
-    if(!r->getVisibility()) return;
-
+  {
     r->deleteVertexArrays();
+    if(!r->getVisibility()) return;
     r->setAllElementsVisible
       (CTX::instance()->mesh.tetrahedra && areAllElementsVisible(r->tetrahedra) &&
        CTX::instance()->mesh.hexahedra && areAllElementsVisible(r->hexahedra) &&
@@ -398,7 +382,7 @@ class initMeshGRegion {
     bool edg = CTX::instance()->mesh.volumesEdges;
     bool fac = CTX::instance()->mesh.volumesFaces;
     if(edg || fac){
-      _curved = (areSomeElementsCurved(r->tetrahedra) || 
+      _curved = (areSomeElementsCurved(r->tetrahedra) ||
                  areSomeElementsCurved(r->hexahedra) ||
                  areSomeElementsCurved(r->prisms) ||
                  areSomeElementsCurved(r->pyramids));
@@ -425,7 +409,7 @@ void GModel::fillVertexArrays()
 
   if(status >= 1 && CTX::instance()->mesh.changed & ENT_LINE)
     std::for_each(firstEdge(), lastEdge(), initMeshGEdge());
-  
+
   if(status >= 2 && CTX::instance()->mesh.changed & ENT_SURFACE){
     if(normals) delete normals;
     normals = new smooth_normals(CTX::instance()->mesh.angleSmoothNormals);
@@ -433,7 +417,7 @@ void GModel::fillVertexArrays()
       std::for_each(firstFace(), lastFace(), initSmoothNormalsGFace());
     std::for_each(firstFace(), lastFace(), initMeshGFace());
   }
-  
+
   if(status >= 3 && CTX::instance()->mesh.changed & ENT_VOLUME)
     std::for_each(firstRegion(), lastRegion(), initMeshGRegion());
 }

@@ -3646,6 +3646,21 @@ double opt_geometry_auto_coherence(OPT_ARGS_NUM)
   return CTX::instance()->geom.autoCoherence;
 }
 
+double opt_geometry_hide_compounds(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    if(CTX::instance()->geom.hideCompounds != val)
+      CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE);
+    CTX::instance()->geom.hideCompounds = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  //  if(FlGui::available() && (action & GMSH_GUI))
+  //  FlGui::instance()->options->geo.butt[10]->value
+  //    (CTX::instance()->geom.hideCompounds);
+#endif
+  return CTX::instance()->geom.hideCompounds;
+}
+
 double opt_geometry_highlight_orphans(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

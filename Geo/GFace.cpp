@@ -263,7 +263,7 @@ std::list<GVertex*> GFace::vertices() const
 
 void GFace::setVisibility(char val, bool recursive)
 {
-  if (getCompound() && !CTX::instance()->showCompounds) {
+  if (getCompound() && CTX::instance()->geom.hideCompounds) {
     GEntity::setVisibility(0);
     for (std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it)
       (*it)->setVisibility(0, true);
@@ -276,7 +276,8 @@ void GFace::setVisibility(char val, bool recursive)
       else
         (*it)->setVisibility(val2, true);
     }
-  } else {
+  }
+  else {
     GEntity::setVisibility(val);
     if(recursive){
       for (std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it)
@@ -955,7 +956,7 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[
   // Creating the optimisation problem
   //
   alglib::ae_int_t dim = 2;
-  alglib::ae_int_t corr = 2; // Num of corrections in the scheme in [3,7] 
+  alglib::ae_int_t corr = 2; // Num of corrections in the scheme in [3,7]
   alglib::minlbfgsstate state;
   alglib::real_1d_array x; // = "[0.5,0.5]";
   std::vector<double> initial_conditions(dim);
