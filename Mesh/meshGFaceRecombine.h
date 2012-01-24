@@ -15,14 +15,6 @@
 //#include "GModel.h"
 //#include "MEdge.h"
 
-#define REC2D_EDGE_BASE 1
-#define REC2D_EDGE_QUAD 1
-#define REC2D_ALIGNMENT .5
-#define REC2D_WAIT_TIME .05
-#define REC2D_NUM_ACTIO 1000
-// #define REC2D_SMOOTH
- #define REC2D_DRAW
-
 class Rec2DVertex;
 class Rec2DEdge;
 class Rec2DElement;
@@ -60,6 +52,7 @@ class Recombine2D {
     double _geomAngle(MVertex*,
                       std::vector<GEdge*>&,
                       std::vector<MElement*>&);
+    //bool _remainAllQuad(Rec2DAction *action);
 };
 
 class Rec2DData {
@@ -118,6 +111,7 @@ class Rec2DData {
     static void removeParity(Rec2DVertex*, int);
     static inline void addParity(Rec2DVertex *rv, int p)
       {_current->_parities[p].push_back(rv);}
+    static void associateParity(int pOld, int pNew);
     
     static inline void addVert(int num, double val) {
       _current->_numVert += num;
@@ -144,7 +138,8 @@ class Rec2DAction {
     bool operator<(Rec2DAction&);
     virtual double getReward();
     virtual void color(int, int, int) = 0;
-    virtual void apply() = 0;
+    virtual void apply(std::vector<Rec2DVertex*> &newPar) = 0;
+    virtual bool isObsolete() = 0;
     
   private :
     virtual void _computeGlobVal() = 0;
@@ -161,7 +156,9 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     ~Rec2DTwoTri2Quad();
     
     virtual void color(int, int, int);
-    virtual void apply();
+    virtual void apply(std::vector<Rec2DVertex*> &newPar);
+    virtual bool isObsolete();
+    static bool isObsolete(int*);
     
   private :
     virtual void _computeGlobVal();
@@ -211,8 +208,7 @@ class Rec2DVertex {
     const double _angle;
     std::vector<Rec2DEdge*> _edges;
     std::vector<Rec2DElement*> _elements;
-    int _onWhat, _parity, _lastMove;
-    // _onWhat={-1:corner,0:edge,1:face,(2:volume)}
+    int _onWhat, _parity, _lastMove; // _onWhat={-1:corner,0:edge,1:face}
     SPoint2 _param;
     bool _isMesh;
     
@@ -234,6 +230,7 @@ class Rec2DVertex {
     bool setBoundaryParity(int p0, int p1);
     inline int getParity() const {return _parity;}
     void setParity(int);
+    void setParityWD(int pOld, int pNew);
     inline int getNumElements() const {return _elements.size();}
     inline MVertex* getMVertex() const {return _v;}
     
