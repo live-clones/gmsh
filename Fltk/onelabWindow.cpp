@@ -877,7 +877,7 @@ void onelabWindow::rebuildTree()
     Fl::delete_widget(_treeWidgets[i]);
   _treeWidgets.clear();
   for(unsigned int i = 0; i < _treeStrings.size(); i++)
-    delete _treeStrings[i];
+    free(_treeStrings[i]);
   _treeStrings.clear();
 
   std::vector<onelab::number> numbers;
