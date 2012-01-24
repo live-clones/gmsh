@@ -5,6 +5,7 @@ Mesh.RemeshAlgorithm=1;
 Mesh.RemeshParametrization=1;//(0) harmonic (1) conformal
 Mesh.RecombinationAlgorithm=1;
 //Mesh.RecombineAll=1;
+Geometry.HideCompounds = 0;
 
 // merge reclassified STL
 Merge "mobilette-class.msh";
