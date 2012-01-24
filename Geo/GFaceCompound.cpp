@@ -582,8 +582,8 @@ void GFaceCompound::one2OneMap() const
     bool badCavity = closedCavity(v,vTri) ? checkCavity(vTri, vCoord) : false;
      
     if(badCavity){
-      Msg::Debug("Wrong cavity around vertex %d (onwhat=%d).",
-		 v->getNum(),  v->onWhat()->dim());
+      Msg::Debug("Wrong cavity around vertex %d .",
+		 v->getNum());
       Msg::Debug("--> Place vertex at center of gravity of %d-Polygon kernel." ,
 		 vTri.size());
       
@@ -638,6 +638,10 @@ bool GFaceCompound::parametrize() const
     Msg::Debug("Parametrizing surface %d with 'conformal map'", tag());
     fillNeumannBCS();
     bool hasOverlap = parametrize_conformal_spectral();
+    if (hasOverlap || !checkOrientation(0) ){
+      Msg::Warning("!!! Overlap or Flipping: parametrization switched to 'FE conformal' map");
+      hasOverlap = parametrize_conformal(0, NULL, NULL);
+    }
     if (hasOverlap || !checkOrientation(0) ){
       printStuff(33);
       Msg::Warning("$$$ Overlap or Flipping: parametrization switched to 'harmonic' map");
@@ -1798,9 +1802,6 @@ void GFaceCompound::buildOct() const
 bool GFaceCompound::checkTopology() const
 {
   if (_mapping == RBF) return true; 
-
-  //fixme tristan
-  //return true;
 	
   bool correctTopo = true;
   if(allNodes.empty()) buildAllNodes();
@@ -1832,7 +1833,7 @@ bool GFaceCompound::checkTopology() const
   }
   else if (G == 0 && AR > AR_MAX){
     correctTopo = false;
-    Msg::Warning("Wrong topology: Genus=%d, Nb boundaries=%d, AR=%d", G, Nb, AR);
+    Msg::Warning("Wrong topology: Genus=%d, Nb boundaries=%d, AR=%d ", G, Nb, AR);
     if (_allowPartition == 1){
       nbSplit = -2;
       Msg::Info("-----------------------------------------------------------");
@@ -1862,8 +1863,6 @@ bool GFaceCompound::checkTopology() const
 
 double GFaceCompound::checkAspectRatio() const
 {
-  //if ((*(_compound.begin()))->geomType() != GEntity::DiscreteSurface)
-  //  return true;
 
   if(allNodes.empty()) buildAllNodes();
   
@@ -1898,19 +1897,13 @@ double GFaceCompound::checkAspectRatio() const
   
   std::list<GEdge*>::const_iterator it0 = _U0.begin();
   double tot_length = 0;
-  for( ; it0 != _U0.end(); ++it0 ){
-    for(unsigned int i = 0; i < (*it0)->lines.size(); i++ ){
-      MVertex *v0 = (*it0)->lines[i]->getVertex(0);
-      MVertex *v1 = (*it0)->lines[i]->getVertex(1);    
-      const double length = sqrt((v0->x() - v1->x()) * (v0->x() - v1->x()) + 
-                                 (v0->y() - v1->y()) * (v0->y() - v1->y()) +
-                                 (v0->z() - v1->z()) * (v0->z() - v1->z()));
-      tot_length += length;
-    }
-  }
-  double AR = 2*3.14*area3D/(tot_length*tot_length);
+  for( ; it0 != _U0.end(); ++it0 )
+    for(unsigned int i = 0; i < (*it0)->lines.size(); i++ )
+      tot_length += (*it0)->lines[i]->getInnerRadius(); 
   
-  if (areaMin > 0 && areaMin < limit && nb > 2) {
+  double AR = M_PI*area3D/(tot_length*tot_length);
+  
+  if (areaMin > 0 && areaMin < limit && nb > 3) {
     Msg::Warning("Too small triangles in mapping (a_2D=%g)", areaMin);
   }
   else {

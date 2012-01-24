@@ -27,6 +27,10 @@
 #include "GFace.h"
 #include "discreteEdge.h"
 #include "discreteFace.h"
+#include "GEdgeCompound.h"
+#include "GFaceCompound.h"
+#include "meshGFace.h"
+#include "meshGEdge.h"
 
 #if defined(HAVE_ANN)
 #include <ANN/ANN.h>
@@ -644,6 +648,144 @@ void Centerline::buildKdTree(){
 
 }
 
+void Centerline::remeshSplitMesh(){
+
+  // Remesh new faces (Compound Lines and Compound Surfaces)
+  Msg::Info("*** Starting parametrize compounds:");
+  double t0 = Cpu();
+
+  //Parametrize Compound Lines
+  int NE = split->getMaxElementaryNumber(1);
+  for (int i=0; i < NE; i++){
+    std::vector<GEdge*>e_compound;
+    GEdge *pe = split->getEdgeByTag(i+1);//split edge
+    e_compound.push_back(pe);
+    int num_gec = NE+i+1;
+    Msg::Info("Parametrize Compound Line (%d) = %d discrete edge", 
+              num_gec, pe->tag());
+    GEdgeCompound *gec = new GEdgeCompound(split, num_gec, e_compound);
+    split->add(gec);
+    gec->parametrize();
+  }
+
+  // Parametrize Compound surfaces
+  std::set<MVertex*> allNod; 
+  std::list<GEdge*> U0;
+  int NF = split->getMaxElementaryNumber(2);
+  for (int i=0; i < NF; i++){
+    std::list<GFace*> f_compound;
+    GFace *pf =  split->getFaceByTag(i+1);//split face 
+    f_compound.push_back(pf);  
+    int num_gfc = NF+i+1;   
+    Msg::Info("Parametrize Compound Surface (%d) = %d discrete face",
+              num_gfc, pf->tag());
+    GFaceCompound::typeOfMapping typ = GFaceCompound::CONFORMAL;
+    GFaceCompound *gfc = new GFaceCompound(split, num_gfc, f_compound, U0,
+					   typ, 0);
+    int recombine = 0;//EMI TODO RECUPERER LE RECOMBINE
+    gfc->meshAttributes.recombine = recombine;
+    split->add(gfc);
+    gfc->parametrize();
+  }
+  double t1 = Cpu();
+  Msg::Info("*** Parametrize compounds done (%g s)", t1-t0);
+ 
+  //set centerline field
+  FieldManager *fields = split->getFields();
+  fields->reset();
+  int id = fields->newId();
+  (*fields)[id] = this;
+  fields->background_field = id;
+
+  Msg::Info("*** Starting meshing 1D edges ...:");
+  for (int i = 0; i < NE; i++){
+    GEdge *gec = split->getEdgeByTag(NE+i+1);
+    meshGEdge mge;
+    mge(gec);
+  }
+  double t2 = Cpu();
+  Msg::Info("*** Meshing 1D edges done (%gs)", t2-t1);
+
+  Msg::Info("*** Starting mesh of surface ");
+  for (int i=0; i < NF; i++){
+    GFace *gfc =  split->getFaceByTag(NF+i+1);
+    meshGFace mgf;
+    mgf(gfc);
+  }
+
+  // // Removing discrete Vertices - Edges - Faces
+  // int NV = split->getMaxElementaryNumber(0) - numv + 1;
+  // for (int i=0; i < NV; i++){
+  //   GVertex *pv = gf->model()->getVertexByTag(numv+i);
+  //   gf->model()->remove(pv);
+  // }
+  // for (int i=0; i < NE; i++){
+  //   GEdge *gec = split->getEdgeByTag(nume+NE+i);
+  //   GEdge *pe = split->getEdgeByTag(nume+i);
+  //   gf->model()->remove(pe); 
+  //   gf->model()->remove(gec);
+  // }
+  // for (int i=0; i < NF; i++){
+  //   GFace *gfc = split->getFaceByTag(numf+NF+i);
+  //   GFace *pf  = split->getFaceByTag(numf+i);
+  //   gf->model()->remove(pf); 
+  //   gf->model()->remove(gfc);
+  // }
+
+  // // Put new mesh in a new discreteFace
+  // for(std::set<MVertex*>::iterator it = allNod.begin(); it != allNod.end(); ++it){
+  //   gf->mesh_vertices.push_back(*it);
+  // }
+
+  // // Remove mesh_vertices that belong to l_edges
+  // std::list<GEdge*> l_edges = gf->edges();
+  // for(std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); it++){
+  //   std::vector<MVertex*> edge_vertices = (*it)->mesh_vertices;
+  //   std::vector<MVertex*>::const_iterator itv = edge_vertices.begin();
+  //   for(; itv != edge_vertices.end(); itv++){
+  //     std::vector<MVertex*>::iterator itve = std::find
+  //       (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), *itv);
+  //     if (itve != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itve);
+  //   }
+  //   MVertex *vB = (*it)->getBeginVertex()->mesh_vertices[0];
+  //   std::vector<MVertex*>::iterator itvB = std::find
+  //     (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vB);
+  //   if (itvB != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvB);
+  //   MVertex *vE = (*it)->getEndVertex()->mesh_vertices[0];
+  //   std::vector<MVertex*>::iterator itvE = std::find
+  //     (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vE);
+  //   if (itvE != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvE);
+
+  //   //if l_edge is a compond
+  //   if((*it)->getCompound()){
+  //     GEdgeCompound *gec = (*it)->getCompound();
+  //     std::vector<MVertex*> edge_vertices = gec->mesh_vertices;
+  //     std::vector<MVertex*>::const_iterator itv = edge_vertices.begin();
+  //     for(; itv != edge_vertices.end(); itv++){
+  //       std::vector<MVertex*>::iterator itve = std::find
+  //         (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), *itv);
+  //       if (itve != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itve);
+  //     }
+  //     MVertex *vB = (*it)->getBeginVertex()->mesh_vertices[0];
+  //     std::vector<MVertex*>::iterator itvB = std::find
+  //       (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vB);
+  //     if (itvB != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvB);
+  //     MVertex *vE = (*it)->getEndVertex()->mesh_vertices[0];
+  //     std::vector<MVertex*>::iterator itvE = std::find
+  //       (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vE);
+  //     if (itvE != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvE);
+  //   }
+  // }
+
+  // double t3 = Cpu();
+  // Msg::Info("*** Mesh of surface %d done by assembly %d remeshed faces (%g s)",
+  //           gf->tag(), NF, t3-t2);
+  // Msg::Info("-----------------------------------------------------------");
+ 
+  // gf->coherenceNormals();
+  // gf->meshStatistics.status = GFace::DONE; 
+
+}
 void Centerline::createFaces(){
  
   std::vector<std::vector<MTriangle*> > faces;
@@ -715,10 +857,7 @@ void Centerline::createFaces(){
   			    myVertices.begin(), myVertices.end());
   }
 
-  // printf("%d discrete Faces (bef =%d) (after =%d)\n", numAfter-numBef, numBef-1, numAfter-1);
-
 }
-
 
 void Centerline::splitMesh(){
 
@@ -733,7 +872,7 @@ void Centerline::splitMesh(){
     double AR = L/R;
     printf("*** branch =%d \n", i, AR);
     if( AR > 8.){
-      int nbSplit = (int)ceil(AR/4);
+      int nbSplit = (int)ceil(AR/3.5);
       double li  = L/nbSplit;
       double lc = 0.0;
       for (int j= 0; j < lines.size(); j++){
@@ -771,6 +910,10 @@ void Centerline::splitMesh(){
   Msg::Info("Writing splitted mesh 'myPARTS.msh'");
   split->writeMSH("myPARTS.msh", 2.2, false, true);
 
+  //remesh splitted mesh
+  remeshSplitMesh();
+  split->writeMSH("myMESH.msh", 2.2, false, true);
+
   //print 
   // FILE * f2 = fopen("myCUTLINES.pos","w");
   // fprintf(f2, "View \"\"{\n");
@@ -801,7 +944,7 @@ void Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
   double d = -a * PT.x() - b * PT.y() - c * PT.z();
   printf("cut disk (R=%g)= %g %g %g %g \n", maxRad, a, b, c, d);
  
-  const double EPS = 0.005;
+  const double EPS = 0.007;
   std::set<MEdge,Less_Edge> allEdges;
   for(unsigned int i = 0; i < triangles.size(); i++){ 
     for ( unsigned int j= 0; j <  3; j++)
@@ -809,7 +952,7 @@ void Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
   }
   bool closedCut = false;
   int step = 0;
-  while (!closedCut && step < 10){
+  while (!closedCut && step < 20){
     double rad = 1.3*maxRad+0.15*step*maxRad;
     std::map<MEdge,MVertex*,Less_Edge> cutEdges;
     std::set<MVertex*> cutVertices;
@@ -850,7 +993,7 @@ void Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
       break;
     }
     else {
-      if (step ==9) {printf("no closed cut %d \n", (int)newCut.size()); };
+      if (step ==19) {printf("no closed cut %d \n", (int)newCut.size()); };
       step++;
       // // triangles = newTris;
       // // theCut.insert(newCut.begin(),newCut.end());

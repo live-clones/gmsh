@@ -1958,7 +1958,6 @@ void partitionAndRemesh(GFaceCompound *gf)
 
   double t1 = Cpu();
   Msg::Info("*** Parametrize compounds done (%g s)", t1-t0);
-
   Msg::Info("*** Starting meshing 1D edges ...:");
   for (int i = 0; i < NE; i++){
     GEdge *gec = gf->model()->getEdgeByTag(nume + NE + i);
@@ -1970,7 +1969,6 @@ void partitionAndRemesh(GFaceCompound *gf)
 
   Msg::Info("*** Starting Mesh of surface %d ...", gf->tag());
 
-  // lloydAlgorithm
   for (int i=0; i < NF; i++){
     GFace *gfc =  gf->model()->getFaceByTag(numf + NF + i );
     meshGFace mgf;

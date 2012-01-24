@@ -133,6 +133,7 @@ class Centerline : public Field{
 
   //create discrete faces
   void createFaces();
+  void remeshSplitMesh();
 
   //Print for debugging
   void printSplit() const;
