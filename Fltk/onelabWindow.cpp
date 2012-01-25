@@ -152,7 +152,7 @@ bool onelab::localNetworkClient::run()
     if(_pid < 0 || (command.empty() && !CTX::instance()->solver.listen))
       break;
 
-    int stop = server->NonBlockingWait(sock, 0., 0.);
+    int stop = server->NonBlockingWait(sock, 0.001, 0.);
 
     if(stop || _pid < 0 || (command.empty() && !CTX::instance()->solver.listen))
       break;
@@ -267,6 +267,7 @@ bool onelab::localNetworkClient::run()
       break;
     case GmshSocket::GMSH_MERGE_FILE:
       {
+        if(!FlGui::instance()->onelab->mergeAuto()) break;
         int n = PView::list.size();
         for(int i = 0; i < n; i++){
           if(PView::list[i]->getData()->getFileName().substr(0, 6) != "OneLab")
@@ -840,9 +841,11 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _gear->add("Reset database", 0, onelab_cb, (void*)"reset");
   _gear->add("_Print database", 0, onelab_cb, (void*)"dump");
   _gear->add("Remesh automatically", 0, 0, 0, FL_MENU_TOGGLE);
+  _gear->add("Merge results automatically", 0, 0, 0, FL_MENU_TOGGLE);
   _gear->add("_Hide new views", 0, 0, 0, FL_MENU_TOGGLE);
   ((Fl_Menu_Item*)_gear->menu())[2].set();
-  ((Fl_Menu_Item*)_gear->menu())[3].clear();
+  ((Fl_Menu_Item*)_gear->menu())[3].set();
+  ((Fl_Menu_Item*)_gear->menu())[4].clear();
   _gearFrozenMenuSize = _gear->menu()->size();
 
   Fl_Box *resbox = new Fl_Box(WB, WB,
@@ -1001,23 +1004,27 @@ void onelabWindow::setButtonMode(const std::string &butt0, const std::string &bu
     _butt[1]->activate();
     _butt[1]->label("Compute");
     _butt[1]->callback(onelab_cb, (void*)"compute");
-    _gear->activate();
+    for(int i = 0; i < _gear->menu()->size(); i++)
+      ((Fl_Menu_Item*)_gear->menu())[i].activate();
   }
   else if(butt1 == "stop"){
     _butt[1]->activate();
     _butt[1]->label("Stop");
     _butt[1]->callback(onelab_cb, (void*)"stop");
-    _gear->deactivate();
+    for(int i = 0; i < _gear->menu()->size(); i++)
+      if(i < 1 || i > 4) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
   }
   else if(butt1 == "kill"){
     _butt[1]->activate();
     _butt[1]->label("Kill");
     _butt[1]->callback(onelab_cb, (void*)"kill");
-    _gear->deactivate();
+    for(int i = 0; i < _gear->menu()->size(); i++)
+      if(i < 1 || i > 4) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
   }
   else{
     _butt[1]->deactivate();
-    _gear->deactivate();
+    for(int i = 0; i < _gear->menu()->size(); i++)
+      if(i < 1 || i > 4) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
   }
 }
 

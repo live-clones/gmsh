@@ -40,7 +40,8 @@ class onelabWindow{
   void show(){ _win->show(); }
   int shown(){ return _win->shown(); }
   int meshAuto(){ return _gear->menu()[2].value(); }
-  int hideNewViews(){ return _gear->menu()[3].value(); }
+  int mergeAuto(){ return _gear->menu()[3].value(); }
+  int hideNewViews(){ return _gear->menu()[4].value(); }
   std::string getPath(Fl_Tree_Item *item)
   {
     char path[1024];
