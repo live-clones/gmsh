@@ -10,6 +10,7 @@
 #include "GModel.h"
 #include "GModelFactory.h"
 #include "GFaceCompound.h"
+#include "GEdgeCompound.h"
 #include "MPoint.h"
 #include "MLine.h"
 #include "MTriangle.h"
