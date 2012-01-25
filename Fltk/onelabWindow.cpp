@@ -481,8 +481,11 @@ static std::vector<double> getRange(onelab::number &p)
 static bool updateOnelabGraph(int num)
 {
   bool changed = false;
+  std::stringstream snum;
+  snum << num;
+
   for(unsigned int i = 0; i < PView::list.size(); i++){
-    if(PView::list[i]->getData()->getFileName() == "OneLab" + num){
+    if(PView::list[i]->getData()->getFileName() == "OneLab" + snum.str()){
       delete PView::list[i];
       changed = true;
       break;
@@ -511,7 +514,7 @@ static bool updateOnelabGraph(int num)
   }
   if(x.size() && y.size()){
     PView *v = new PView(xName, yName, x, y);
-    v->getData()->setFileName("OneLab" + num);
+    v->getData()->setFileName("OneLab" + snum.str());
     v->getOptions()->intervalsType = PViewOptions::Discrete;
     changed = true;
   }
