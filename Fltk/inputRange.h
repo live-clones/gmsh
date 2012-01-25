@@ -7,15 +7,24 @@
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Menu_Button.H>
 
+class inputValue : public Fl_Value_Input
+{
+ public:
+  inputValue(int x, int y, int w, int h, const char *l=0) :
+    Fl_Value_Input(x, y, w, h, l) {}
+  virtual int format(char *buffer){ return sprintf(buffer, "%g", value()); }
+};
+
 class inputRange : public Fl_Group {
  private:
-  Fl_Value_Input *_input;
+  inputValue *_input;
   Fl_Input *_range;
   Fl_Toggle_Button *_range_butt, *_loop_butt;
   Fl_Button *_graph_butt;
@@ -24,6 +33,14 @@ class inputRange : public Fl_Group {
   double _min, _max, _step, _max_number;
   std::vector<double> _choices;
   bool _do_callback_on_values;
+  double _fixStep(double step)
+  {
+    // workaround annoying behaviour of Fl_Value_Input: if step is a nonzero
+    // integer, one can only enter integer values in the widget; se we force
+    // nonzero steps to be noninteger
+    if(step && step - floor(step) <= 0) step *= (1. - 1e-16);
+    return step;
+  }
   void _values2string()
   {
     std::ostringstream tmp;
@@ -36,7 +53,7 @@ class inputRange : public Fl_Group {
       if(_choices.size() > 1){
         _input->minimum(_choices[0]);
         _input->maximum(_choices[_choices.size() - 1]);
-        _input->step(_choices[1] - _choices[0]);
+        _input->step(_fixStep(_choices[1] - _choices[0]));
       }
       _step = 0.;
     }
@@ -53,7 +70,7 @@ class inputRange : public Fl_Group {
       }
       if(_step == 0.) _step = 1.;
       if(_step != 1.) tmp << ":" << _step;
-      _input->step(_step);
+      _input->step(_fixStep(_step));
       _choices.clear();
     }
     _range->value(tmp.str().c_str());
@@ -77,7 +94,7 @@ class inputRange : public Fl_Group {
       if(_choices.size() > 1){
         _input->minimum(_choices[0]);
         _input->maximum(_choices[_choices.size() - 1]);
-        _input->step(_choices[1] - _choices[0]);
+        _input->step(_fixStep(_choices[1] - _choices[0]));
       }
       _step = 0.;
     }
@@ -110,7 +127,7 @@ class inputRange : public Fl_Group {
         _step = atof(step.c_str());
       else
         _step = 1.;
-      _input->step(_step);
+      _input->step(_fixStep(_step));
       _choices.clear();
     }
   }
@@ -240,7 +257,7 @@ class inputRange : public Fl_Group {
     int input_w = w - dot_w - loop_w - graph_w;
     int range_w = input_w / 2;
 
-    _input = new Fl_Value_Input(x, y, input_w, h);
+    _input = new inputValue(x, y, input_w, h);
     _input->callback(_input_cb, this);
     _input->when(FL_WHEN_ENTER_KEY|FL_WHEN_RELEASE);
 
@@ -262,7 +279,7 @@ class inputRange : public Fl_Group {
     _graph_butt = new Fl_Button(x + input_w + dot_w + loop_w, y, graph_w, h);
     _graph_butt->label("@-1gmsh_graph");
     _graph_butt->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
-    _graph_butt->tooltip("Draw range on X-Y graph");
+    _graph_butt->tooltip("Draw range on X-Y graph(s)");
 
     _graph_menu = new Fl_Menu_Button(x + input_w + dot_w + loop_w, y, graph_w, h);
     _graph_menu->type(Fl_Menu_Button::POPUP123);
@@ -274,7 +291,7 @@ class inputRange : public Fl_Group {
     _graph_menu->add("Graph 3/Y ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
     _graph_menu->add("Graph 4/X ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
     _graph_menu->add("Graph 4/Y ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Reset", 0, _graph_menu_reset_cb, this);
+    _graph_menu->add("None", 0, _graph_menu_reset_cb, this);
 
     end(); // close the group
     resizable(_input);
