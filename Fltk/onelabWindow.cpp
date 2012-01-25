@@ -60,9 +60,17 @@ class onelabGmshServer : public GmshServer{
       // check if there is data (call select with a zero timeout to
       // return immediately, i.e., do polling)
       int ret = Select(0, 0, socket);
-      if(ret == 0){
-        // nothing available: wait at most waitint seconds, and in the
-        // meantime respond to FLTK events
+      if(ret == 0){ // nothing available
+        // if asked, refresh the onelab GUI
+        std::vector<onelab::string> ps;
+        onelab::server::instance()->get(ps, "Gmsh/Action");
+        if(ps.size() && ps[0].getValue() == "refresh"){
+          ps[0].setVisible(false);
+          ps[0].setValue("");
+          onelab::server::instance()->set(ps[0]);
+          onelab_cb(0, (void*)"refresh");
+        }
+        // wait at most waitint seconds and respond to FLTK events
         FlGui::instance()->wait(waitint);
       }
       else if(ret > 0){
@@ -372,7 +380,7 @@ static void guessModelName(onelab::client *c)
   }
 }
 
-static void initializeLoop(std::string level)
+static void initializeLoop(const std::string &level)
 {
   bool changed = false;
   std::vector<onelab::number> numbers;
@@ -399,7 +407,7 @@ static void initializeLoop(std::string level)
     onelab::server::instance()->setChanged(true, "Gmsh");
 }
 
-static bool incrementLoop(std::string level)
+static bool incrementLoop(const std::string &level)
 {
   bool recompute = false, loop = false;
   std::vector<onelab::number> numbers;
@@ -478,20 +486,19 @@ static std::vector<double> getRange(onelab::number &p)
   return v;
 }
 
-static bool updateOnelabGraph(int num)
+static bool updateOnelabGraph(const std::string &snum)
 {
   bool changed = false;
-  std::stringstream snum;
-  snum << num;
 
   for(unsigned int i = 0; i < PView::list.size(); i++){
-    if(PView::list[i]->getData()->getFileName() == "OneLab" + snum.str()){
+    if(PView::list[i]->getData()->getFileName() == "OneLab" + snum){
       delete PView::list[i];
       changed = true;
       break;
     }
   }
 
+  int num = atoi(snum.c_str());
   std::vector<double> x, y;
   std::string xName, yName;
   std::vector<onelab::number> numbers;
@@ -514,7 +521,7 @@ static bool updateOnelabGraph(int num)
   }
   if(x.size() && y.size()){
     PView *v = new PView(xName, yName, x, y);
-    v->getData()->setFileName("OneLab" + snum.str());
+    v->getData()->setFileName("OneLab" + snum);
     v->getOptions()->intervalsType = PViewOptions::Discrete;
     changed = true;
   }
@@ -525,10 +532,10 @@ static bool updateOnelabGraph(int num)
 
 static void updateOnelabGraphs()
 {
-  bool redraw0 = updateOnelabGraph(0);
-  bool redraw1 = updateOnelabGraph(1);
-  bool redraw2 = updateOnelabGraph(2);
-  bool redraw3 = updateOnelabGraph(3);
+  bool redraw0 = updateOnelabGraph("0");
+  bool redraw1 = updateOnelabGraph("1");
+  bool redraw2 = updateOnelabGraph("2");
+  bool redraw3 = updateOnelabGraph("3");
   if(redraw0 || redraw1 || redraw2 || redraw3)
     drawContext::global()->draw();
 }
@@ -599,10 +606,8 @@ void onelab_cb(Fl_Widget *w, void *data)
   std::string action((const char*)data);
 
   if(action == "refresh"){
-    FlGui::instance()->onelab->setButtonMode("", "stop");
     updateOnelabGraphs();
     FlGui::instance()->onelab->rebuildTree();
-    FlGui::instance()->onelab->setButtonMode("refresh", "stop");
     return;
   }
 
@@ -665,10 +670,7 @@ void onelab_cb(Fl_Widget *w, void *data)
     action = "check";
   }
 
-  if(action == "compute")
-    FlGui::instance()->onelab->setButtonMode("refresh", "stop");
-  else
-    FlGui::instance()->onelab->setButtonMode("", "stop");
+  FlGui::instance()->onelab->setButtonMode("", "stop");
 
   if(action == "compute") initializeLoop();
 
@@ -993,11 +995,6 @@ void onelabWindow::setButtonMode(const std::string &butt0, const std::string &bu
     _butt[0]->activate();
     _butt[0]->label("Check");
     _butt[0]->callback(onelab_cb, (void*)"check");
-  }
-  else if(butt0 == "refresh"){
-    _butt[0]->activate();
-    _butt[0]->label("Refresh");
-    _butt[0]->callback(onelab_cb, (void*)"refresh");
   }
   else{
     _butt[0]->deactivate();
