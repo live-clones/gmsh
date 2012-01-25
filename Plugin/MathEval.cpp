@@ -9,6 +9,7 @@
 #include "mathEvaluator.h"
 #include "OctreePost.h"
 #include "GEntity.h"
+#include <algorithm>
 
 StringXNumber MathEvalOptions_Number[] = {
   {GMSH_FULLRC, "TimeStep", NULL, -1.},
