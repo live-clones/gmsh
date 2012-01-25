@@ -23,6 +23,7 @@ class inputRange : public Fl_Group {
   std::string _loop_val, _graph_val;
   double _min, _max, _step, _max_number;
   std::vector<double> _choices;
+  bool _do_callback_on_values;
   void _values2string()
   {
     std::ostringstream tmp;
@@ -68,7 +69,7 @@ class inputRange : public Fl_Group {
         std::string::size_type last = str.find_first_of(',', first);
         std::string val = str.substr(first, last - first);
         _choices.push_back(atof(val.c_str()));
-        if(last == std::string::npos) 
+        if(last == std::string::npos)
           break;
         else
           first = last + 1;
@@ -157,7 +158,7 @@ class inputRange : public Fl_Group {
     _graph_val.resize(8, '0');
     if(update_menu){
       int index[8] = {1, 2, 5, 6, 9, 10, 13, 14};
-      for(int i = 0; i < 8; i++){    
+      for(int i = 0; i < 8; i++){
         if(_graph_val[i] == '1')
           ((Fl_Menu_Item*)_graph_menu->menu())[index[i]].set();
         else
@@ -179,18 +180,20 @@ class inputRange : public Fl_Group {
   static void _input_cb(Fl_Widget *w, void *data)
   {
     inputRange *b = (inputRange*)data;
+    b->doCallbackOnValues(true);
     b->do_callback();
   }
   static void _range_cb(Fl_Widget *w, void *data)
   {
     inputRange *b = (inputRange*)data;
     b->_string2values();
+    b->doCallbackOnValues(true);
     b->do_callback();
   }
   static void _range_butt_cb(Fl_Widget *w, void *data)
   {
     inputRange *b = (inputRange*)data;
-    b->_show_range(); 
+    b->_show_range();
   }
   static void _loop_butt_cb(Fl_Widget *w, void *data)
   {
@@ -199,7 +202,8 @@ class inputRange : public Fl_Group {
     else if(b->_loop_val == "2") b->_set_loop_value("3");
     else if(b->_loop_val == "3") b->_set_loop_value("0");
     else                         b->_set_loop_value("1");
-    b->do_callback(); 
+    b->doCallbackOnValues(false);
+    b->do_callback();
   }
   static void _graph_menu_cb(Fl_Widget *w, void *data)
   {
@@ -215,18 +219,20 @@ class inputRange : public Fl_Group {
     v[6] = b->_graph_menu->menu()[13].value() ? '1' : '0';
     v[7] = b->_graph_menu->menu()[14].value() ? '1' : '0';
     b->_set_graph_value(v, false);
+    b->doCallbackOnValues(false);
     b->do_callback();
   }
   static void _graph_menu_reset_cb(Fl_Widget *w, void *data)
   {
     inputRange *b = (inputRange*)data;
     b->_set_graph_value("00000000");
+    b->doCallbackOnValues(false);
     b->do_callback();
   }
  public:
-  inputRange(int x, int y, int w, int h, double max_number, const char *l=0) 
+  inputRange(int x, int y, int w, int h, double max_number, const char *l=0)
     : Fl_Group(x,y,w,h,l), _min(-max_number), _max(max_number), _step(1.),
-      _max_number(max_number)
+      _max_number(max_number), _do_callback_on_values(true)
   {
     _graph_val.resize(8, '0');
 
@@ -237,7 +243,7 @@ class inputRange : public Fl_Group {
     _input = new Fl_Value_Input(x, y, input_w, h);
     _input->callback(_input_cb, this);
     _input->when(FL_WHEN_ENTER_KEY|FL_WHEN_RELEASE);
-    
+
     _range = new Fl_Input(x + input_w - range_w, y, range_w, h);
     _range->callback(_range_cb, this);
     _range->when(FL_WHEN_ENTER_KEY|FL_WHEN_RELEASE);
@@ -273,6 +279,8 @@ class inputRange : public Fl_Group {
     end(); // close the group
     resizable(_input);
   }
+  bool doCallbackOnValues(){ return _do_callback_on_values; }
+  void doCallbackOnValues(bool val){ _do_callback_on_values = val; }
   double value() { return _input->value(); }
   void value(double val) { _input->value(val); }
   void choices(const std::vector<double> &val) { _choices = val; _values2string(); }

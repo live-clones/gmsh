@@ -157,7 +157,7 @@ bool onelab::localNetworkClient::run()
     if(_pid < 0 || (command.empty() && !CTX::instance()->solver.listen))
       break;
 
-    int stop = server->NonBlockingWait(sock, 0.001, 0.);
+    int stop = server->NonBlockingWait(sock, 0., 0.);
 
     if(stop || _pid < 0 || (command.empty() && !CTX::instance()->solver.listen))
       break;
@@ -739,11 +739,14 @@ static void onelab_input_range_cb(Fl_Widget *w, void *data)
   onelab::server::instance()->get(numbers, name);
   if(numbers.size()){
     inputRange *o = (inputRange*)w;
-    numbers[0].setValue(o->value());
-    numbers[0].setMin(o->minimum());
-    numbers[0].setMax(o->maximum());
-    numbers[0].setStep(o->step());
-    numbers[0].setChoices(o->choices());
+    if(o->doCallbackOnValues()){
+      numbers[0].setValue(o->value());
+      numbers[0].setMin(o->minimum());
+      numbers[0].setMax(o->maximum());
+      numbers[0].setStep(o->step());
+      numbers[0].setChoices(o->choices());
+    }
+    o->doCallbackOnValues(true);
     numbers[0].setAttribute("Loop", o->loop());
     numbers[0].setAttribute("Graph", o->graph());
     onelab::server::instance()->set(numbers[0]);
