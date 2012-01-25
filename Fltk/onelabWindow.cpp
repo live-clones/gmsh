@@ -44,27 +44,22 @@ class onelabGmshServer : public GmshServer{
  private:
   onelab::localNetworkClient *_client;
  public:
-  onelabGmshServer(onelab::localNetworkClient *client) : GmshServer(), _client(client) {}
-  ~onelabGmshServer() {}
-  int SystemCall(const char *str)
-  {
-    return ::SystemCall(str);
-  }
+  onelabGmshServer(onelab::localNetworkClient *client)
+    : GmshServer(), _client(client) {}
+  ~onelabGmshServer(){}
+  int SystemCall(const char *str){ return ::SystemCall(str); }
   int NonBlockingWait(int socket, double waitint, double timeout)
   {
     double start = GetTimeInSeconds();
     while(1){
       if(timeout > 0 && GetTimeInSeconds() - start > timeout)
         return 2; // timout
-
-      if(_client->getPid() < 0 ||
-         (_client->getCommandLine().empty() &&  !CTX::instance()->solver.listen))
+      if(_client->getPid() < 0 || (_client->getCommandLine().empty() &&
+                                   !CTX::instance()->solver.listen))
         return 1; // process has been killed or we stopped listening
-
       // check if there is data (call select with a zero timeout to
       // return immediately, i.e., do polling)
       int ret = Select(0, 0, socket);
-
       if(ret == 0){
         // nothing available: wait at most waitint seconds, and in the
         // meantime respond to FLTK events
@@ -309,8 +304,6 @@ bool onelab::localNetworkClient::run()
       Msg::Warning("Received unknown message type (%d)", type);
       break;
     }
-
-    FlGui::instance()->check();
   }
 
   _gmshServer = 0;
@@ -522,8 +515,7 @@ static bool updateOnelabGraph(int num)
     changed = true;
   }
 
-  if(changed)
-    FlGui::instance()->updateViews();
+  if(changed) FlGui::instance()->updateViews();
   return changed;
 }
 
