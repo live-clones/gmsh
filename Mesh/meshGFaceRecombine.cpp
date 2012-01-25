@@ -10,18 +10,18 @@
 #define REC2D_EDGE_BASE 1
 #define REC2D_EDGE_QUAD 1
 #define REC2D_ALIGNMENT .5
-#define REC2D_WAIT_TIME .05
+#define REC2D_WAIT_TIME .01
 #define REC2D_NUM_ACTIO 1000
 
 // #define REC2D_SMOOTH
  #define REC2D_DRAW
 
 #include "meshGFaceRecombine.h"
-//#include "MElement.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
-//#include "meshGFaceOptimize.h"
-
+#ifdef REC2D_SMOOTH
+  #include "meshGFaceOptimize.h"
+#endif
 #ifdef REC2D_DRAW
   #include "drawContext.h"
   #include "FlGui.h"
@@ -205,15 +205,15 @@ bool Recombine2D::recombine()
 {
   Rec2DAction *nextAction;
   while (nextAction = Rec2DData::getBestAction()) {
+#ifdef REC2D_DRAW
     FlGui::instance()->check();
     double time = Cpu();
-#ifdef REC2D_DRAW
     nextAction->color(0, 0, 200);
     CTX::instance()->mesh.changed = (ENT_ALL);
     drawContext::global()->draw();
 #endif
     
-    if (nextAction->isObsolete()) {
+    if (!_remainAllQuad(nextAction)) {
       nextAction->color(190, 0, 0);
       delete nextAction;
       continue;
@@ -233,6 +233,10 @@ bool Recombine2D::recombine()
     
     delete nextAction;
   }
+  
+#ifdef REC2D_SMOOTH
+    laplaceSmoothing(_gf,100);
+#endif
   return 1;
 }
 
@@ -294,6 +298,159 @@ double Recombine2D::_geomAngle(MVertex *v,
   return angle2;
 }
 
+bool Recombine2D::_remainAllQuad(Rec2DAction *action)
+{
+  if (action->isAssumedObsolete()) {
+    static int a = -1;
+    if (++a < 1)
+      Msg::Error("[Recombine2D] obsolete action (allQuad)");
+    return false;
+  }
+  Rec2DData::clearAssumedParities();
+  
+  int p[4];
+  action->getAssumedParities(p);
+  
+  if (!p[0] && !p[1] && !p[2] && !p[3]) {
+    Msg::Info("is isolated");
+    return true;
+  }
+  
+  int min = Rec2DData::getNewParity(), index;
+  for (int i = 0; i < 4; ++i) {
+    if (p[i] && min > p[i]) {
+      min = p[i];
+      index = i;
+    }
+  }
+  
+  if (p[0] && !p[1] && !p[2] && !p[3]) {
+    Msg::Info("is isolated");
+    static int a = -1;
+    if (++a < 1) Msg::Warning("FIXME isoleted should be check ? Think not");
+    return true;
+  }
+  
+  //Msg::Info("Passsed through there, [%d %d %d %d] -> min %d", p[0], p[1], p[2], p[3], min);
+  
+  std::set<Rec2DElement*> neighbours;
+  std::vector<Rec2DVertex*> touched;
+  
+  for (int i = 0; i < 4; i += 2) {
+    static int a = -1;
+    if (++a < 1) Msg::Info("FIXME depend de l'action");
+    int par;
+    if ((index/2) * 2 == i)
+      par = min;
+    else
+      par = otherParity(min);
+    for (int j = 0; j < 2; ++j) {
+      if (!p[i+j]) {
+        Rec2DVertex *v = action->getVertex(i+j);
+        v->setAssumedParity(par);
+        v->getTriangles(neighbours);
+      }
+      else if (p[i+j] != par) {
+          Msg::Info("oui a %d, %d", p[i+j], par);
+        Rec2DData::associateAssumedParity(p[i+j], par, touched);
+      }
+    }
+  }
+  
+  for (unsigned int i = 0; i < touched.size(); ++i) {
+    touched[i]->getTriangles(neighbours);
+  }
+  touched.clear();
+  
+  while (neighbours.size() > 0) {
+    //Msg::Info("num neigh %d", neighbours.size());
+    
+    std::set<Rec2DElement*>::iterator itTri = neighbours.begin();
+    
+    int p[3];
+    (*itTri)->getAssumedParities(p);
+  //Msg::Info("tri %d [%d %d %d]", (*itel)->getNum(), p[0], p[1], p[2]);
+    
+    bool hasIdentical = false;
+    for (int i = 0; i < 3; ++i) {
+      if (p[i] && p[i] == p[(i+1)%3]) hasIdentical = true;
+    }
+    if (!hasIdentical) {
+      neighbours.erase(itTri);
+      continue;
+    }
+    if (p[0] == p[1] && p[0] == p[2]) {
+      Msg::Info("3 identical par");
+      Rec2DData::revertAssumedParities();
+      return false;
+    }
+  //Msg::Info("has identical");
+    
+    bool hasAction = false;
+    std::map<Rec2DVertex*, std::vector<int> > suggestions;
+    for (int i = 0; i < (*itTri)->getNumActions(); ++i) {
+      if ((*itTri)->getAction(i)->whatWouldYouDo(suggestions))
+        hasAction = true;
+    }
+    if (!hasAction) {
+      //Msg::Info("No action %d", (*itTri)->getNum());
+      Rec2DData::revertAssumedParities();
+      return false;
+    }
+  //Msg::Info("suggest %d", suggestions.size());
+    
+    std::map<Rec2DVertex*, std::vector<int> >::iterator itSug;
+    itSug = suggestions.begin();
+    for (; itSug != suggestions.end(); ++itSug) {
+      int par = itSug->second.front();
+      bool onlyOnePar = true;
+      for (unsigned int i = 1; i < itSug->second.size(); ++i) {
+        if (itSug->second[i] != par) {
+          onlyOnePar = false;
+          break;
+        }
+      }
+      
+      if (onlyOnePar) {
+        Rec2DVertex *v = itSug->first;
+        int oldPar = v->getAssumedParity();
+        
+        //Msg::Info("a %d, %d", par, oldPar);
+        if (!oldPar) {
+        //Msg::Info("b");
+          v->setAssumedParity(par);
+          v->getTriangles(neighbours);
+        }
+        else if ((par/2)*2 != (oldPar/2)*2) {
+        //Msg::Info("c");
+          Msg::Info("oui b %d, %d", oldPar, par);
+          if (oldPar < par) {
+            int a = oldPar;
+            oldPar = par;
+            par = a;
+          }
+          Rec2DData::associateAssumedParity(oldPar, par, touched);
+          for (unsigned int i = 0; i < touched.size(); ++i) {
+            touched[i]->getTriangles(neighbours);  
+          }
+          touched.clear();
+        }
+        else if (par%2 != oldPar%2) {
+          Msg::Error("SHOULD NOT HAPPEN");
+          Msg::Info("not all quad");
+          Rec2DData::revertAssumedParities();
+          return false;
+        }
+        else
+          Msg::Error("SHOULD NOT HAPPEN 2");
+      }
+    }
+    neighbours.erase(itTri);
+  }
+  //Msg::Info("all quad");
+  return true;
+}
+
 
 /**  Rec2DData  **/
 /*****************/
@@ -346,7 +503,10 @@ void Rec2DData::remove(Rec2DEdge *re)
     }
     else
       ++i;
-  }*/
+  }
+  if (!b)
+    Msg::Error("[Rec2DData] No edge");
+  */
   _current->_edges.erase(re);
 }
 
@@ -369,7 +529,10 @@ void Rec2DData::remove(Rec2DElement *rel)
     }
     else
       ++i;
-  }*/
+  }
+  if (!b)
+    Msg::Error("[Rec2DData] No element");
+  */
   _current->_elements.erase(rel);
 #ifdef REC2D_DRAW
   MTriangle *t = rel->getMTriangle();
@@ -471,10 +634,16 @@ void Rec2DData::removeParity(Rec2DVertex *rv, int p)
     else
       ++i;
   }
+  if (!b)
+    Msg::Error("[Rec2DData] No vertex");
 }
 
 void Rec2DData::associateParity(int pOld, int pNew)
 {
+  if (pOld/2 == pNew/2) {
+    Msg::Error("[Rec2DData] Do you want to make a mess of parities ?");
+    return;
+  }
   if (_current->_parities.find(pNew) == _current->_parities.end()) {
     Msg::Warning("[Rec2DData] That's strange, isn't it ?");
     static int a = -1;
@@ -482,29 +651,151 @@ void Rec2DData::associateParity(int pOld, int pNew)
       Msg::Warning("[Rec2DData] AND LOOK AT ME WHEN I TALK TO YOU !");
   }
   std::map<int, std::vector<Rec2DVertex*> >::iterator it;
+  std::vector<Rec2DVertex*> *vect, *vectNew;
   
-  it = _current->_parities.find(pOld);
-  if (it == _current->_parities.end()) {
-    static int a = -1;
-    if (++a == 0)
-      Msg::Error("[Rec2DData] You are mistaken, I'll never talk to you again !");
+  {
+    it = _current->_parities.find(pOld);
+    if (it == _current->_parities.end()) {
+      static int a = -1;
+      if (++a == 0)
+        Msg::Error("[Rec2DData] You are mistaken, I'll never talk to you again !");
+      return;
+    }
+    vect = &it->second;
+    for (unsigned int i = 0; i < vect->size(); ++i)
+      vect->at(i)->setParityWD(pOld, pNew);
+    vectNew = &_current->_parities[pNew];
+    vectNew->insert(vectNew->end(), vect->begin(), vect->end());
+    _current->_parities.erase(it);
   }
-  std::vector<Rec2DVertex*> *vect = &it->second;
-  for (unsigned int i = 0; i < vect->size(); ++i)
-    vect->at(i)->setParityWD(pOld, pNew);
-  //_current->_parities[pNew].push_back(vect->begin(), vect->end());
-  _current->_parities.erase(pOld);
   
   pOld = otherParity(pOld);
   pNew = otherParity(pNew);
-  it = _current->_parities.find(pOld);
-  if (it == _current->_parities.end())
+  {
+    it = _current->_parities.find(pOld);
+    if (it == _current->_parities.end()) {
+      Msg::Warning("[Rec2DData] What ?");
+      return;
+    }
+    vect = &it->second;
+    for (unsigned int i = 0; i < vect->size(); ++i)
+      vect->at(i)->setParityWD(pOld, pNew);
+    vectNew = &_current->_parities[pNew];
+    vectNew->insert(vectNew->end(), vect->begin(), vect->end());
+    _current->_parities.erase(it);
+  }
+}
+
+void Rec2DData::removeAssumedParity(Rec2DVertex *rv, int p)
+{
+  std::map<int, std::vector<Rec2DVertex*> >::iterator it;
+  it = _current->_assumedParities.find(p);
+  if (it == _current->_assumedParities.end()) {
+    Msg::Error("[Rec2DData] Don't have assumed parity %d", p);
     return;
-  vect = &it->second;
-  for (unsigned int i = 0; i < vect->size(); ++i)
-    vect->at(i)->setParityWD(pOld, pNew);
-  //_current->_parities[pNew].push_back(vect->begin(), vect->end());
-  _current->_parities.erase(pOld);
+  }
+  bool b = false;
+  std::vector<Rec2DVertex*> *vect = &it->second;
+  unsigned int i = 0;
+  while (i < vect->size()) {
+    if (vect->at(i) == rv) {
+      vect->at(i) = vect->back();
+      vect->pop_back();
+      if (b)
+        Msg::Error("[Rec2DData] Two or more times same vertex");
+      b = true;
+    }
+    else
+      ++i;
+  }
+  if (!b)
+    Msg::Error("[Rec2DData] No vertex");
+}
+
+void Rec2DData::saveAssumedParity(Rec2DVertex *rv, int p)
+{
+  static int a = -1;
+  if (++a < 1)
+    Msg::Warning("FIXME Do you have cleared _oldParity ?");
+  std::map<Rec2DVertex*, int>::iterator it;
+  it = _current->_oldParity.find(rv);
+  if (it == _current->_oldParity.end())
+    _current->_oldParity[rv] = p;
+}
+
+void Rec2DData::associateAssumedParity(int pOld, int pNew,
+                                       std::vector<Rec2DVertex*> &touched)
+{
+  if (pOld/2 == pNew/2) {
+    Msg::Error("[Rec2DData] Do you want to make a mess of assumed parities ?");
+    return;
+  }
+  if (_current->_assumedParities.find(pNew) == _current->_assumedParities.end()) {
+    Msg::Warning("[Rec2DData] That's strange, isn't it ?");
+  }
+  std::map<int, std::vector<Rec2DVertex*> >::iterator it;
+  std::vector<Rec2DVertex*> *vect, *vectNew;
+  
+  {
+    it = _current->_parities.find(pOld);
+    if (it == _current->_parities.end()) {
+      Msg::Error("[Rec2DData] But, this parity doesn't exist !");
+      return;
+    }
+    vect = &it->second;
+    for (unsigned int i = 0; i < vect->size(); ++i) {
+      if (vect->at(i)->setAssumedParity(pNew))
+        touched.push_back(vect->at(i));
+    }
+    
+    it = _current->_assumedParities.find(pOld);
+    if (it != _current->_assumedParities.end()) {
+      vect = &it->second;
+      for (unsigned int i = 0; i < vect->size(); ++i) {
+        vect->at(i)->setAssumedParityWD(pOld, pNew);
+        touched.push_back(vect->at(i));
+      }
+      vectNew = &_current->_assumedParities[pNew];
+      vectNew->insert(vectNew->end(), vect->begin(), vect->end());
+      _current->_assumedParities.erase(it);
+    }
+  }
+  
+  pOld = otherParity(pOld);
+  pNew = otherParity(pNew);
+  {
+    it = _current->_parities.find(pOld);
+    if (it == _current->_parities.end()) {
+      Msg::Warning("[Rec2DData] What ?");
+      return;
+    }
+    vect = &it->second;
+    for (unsigned int i = 0; i < vect->size(); ++i) {
+      if (vect->at(i)->setAssumedParity(pNew))
+        touched.push_back(vect->at(i));
+    }
+    
+    it = _current->_assumedParities.find(pOld);
+    if (it != _current->_assumedParities.end()) {
+      vect = &it->second;
+      for (unsigned int i = 0; i < vect->size(); ++i) {
+        vect->at(i)->setAssumedParityWD(pOld, pNew);
+        touched.push_back(vect->at(i));
+      }
+      vectNew = &_current->_assumedParities[pNew];
+      vectNew->insert(vectNew->end(), vect->begin(), vect->end());
+      _current->_assumedParities.erase(it);
+    }
+  }
+}
+
+void Rec2DData::revertAssumedParities()
+{
+  std::map<Rec2DVertex*, int>::iterator it;
+  it = _current->_oldParity.begin();
+  for (; it != _current->_oldParity.end(); ++it) {
+    it->first->revertAssumedParity(it->second);
+  }
 }
 
 double Rec2DData::getGlobalValue()
@@ -582,9 +873,9 @@ Rec2DTwoTri2Quad::Rec2DTwoTri2Quad(Rec2DElement *el0, Rec2DElement *el1)
 Rec2DTwoTri2Quad::~Rec2DTwoTri2Quad()
 {
   if (_triangles[0])
-    _triangles[0]->removeT(this);
+    _triangles[0]->remove(this);
   if (_triangles[1])
-    _triangles[1]->removeT(this);
+    _triangles[1]->remove(this);
   Rec2DData::remove(this);
 }
 
@@ -604,9 +895,11 @@ void Rec2DTwoTri2Quad::_computeGlobVal()
 
 void Rec2DTwoTri2Quad::color(int a, int b, int c)
 {
+#ifdef REC2D_DRAW
   unsigned int col = CTX::instance()->packColor(a, b, c, 255);
   _triangles[0]->getMElement()->setCol(col);
   _triangles[1]->getMElement()->setCol(col);
+#endif
 }
 
 void Rec2DTwoTri2Quad::apply(std::vector<Rec2DVertex*> &newPar)
@@ -646,8 +939,8 @@ void Rec2DTwoTri2Quad::apply(std::vector<Rec2DVertex*> &newPar)
     }
   }
   
-  _triangles[0]->removeT(this);
-  _triangles[1]->removeT(this);
+  _triangles[0]->remove(this);
+  _triangles[1]->remove(this);
   
   std::vector<Rec2DAction*> actions;
   _triangles[0]->getUniqueActions(actions);
@@ -675,6 +968,16 @@ bool Rec2DTwoTri2Quad::isObsolete()
   return Rec2DTwoTri2Quad::isObsolete(p);
 }
 
+bool Rec2DTwoTri2Quad::isAssumedObsolete()
+{
+  int p[4];
+  p[0] = _vertices[0]->getAssumedParity();
+  p[1] = _vertices[1]->getAssumedParity();
+  p[2] = _vertices[2]->getAssumedParity();
+  p[3] = _vertices[3]->getAssumedParity();
+  return Rec2DTwoTri2Quad::isObsolete(p);
+}
+
 bool Rec2DTwoTri2Quad::isObsolete(int *p)
 {
   if (p[0] && p[0]/2 == p[1]/2 && p[0]%2 != p[1]%2 ||
@@ -683,6 +986,53 @@ bool Rec2DTwoTri2Quad::isObsolete(int *p)
       p[1] && (p[1] == p[2] || p[1] == p[3])         )
     return true;
   return false;
+}
+
+void Rec2DTwoTri2Quad::getAssumedParities(int *par)
+{
+  par[0] = _vertices[0]->getAssumedParity();
+  par[1] = _vertices[1]->getAssumedParity();
+  par[2] = _vertices[2]->getAssumedParity();
+  par[3] = _vertices[3]->getAssumedParity();
+}
+
+bool Rec2DTwoTri2Quad::whatWouldYouDo
+  (std::map<Rec2DVertex*, std::vector<int> > &suggestions)
+{
+  int p[4];
+  p[0] = _vertices[0]->getAssumedParity();
+  p[1] = _vertices[1]->getAssumedParity();
+  p[2] = _vertices[2]->getAssumedParity();
+  p[3] = _vertices[3]->getAssumedParity();
+  
+  if (Rec2DTwoTri2Quad::isObsolete(p)) {
+    return false;
+  }
+  
+  int min = 100, index = -1;
+  for (int i = 0; i < 4; ++i) {
+    if (p[i] && min > p[i]) {
+      min = p[i];
+      index = i;
+    }
+  }
+  if (index == -1) {
+    Msg::Error("[Rec2DTwoTri2Quad] No parities ! That's not acceptable !");
+    return false;
+  }
+  
+  for (int i = 0; i < 4; i += 2) {
+    int par;
+    if ((index/2)*2 == i)
+      par = min;
+    else
+      par = otherParity(min);
+    for (int j = 0; j < 2; ++j) {
+      if (p[i+j] != par)
+        suggestions[_vertices[i+j]].push_back(par);
+    }
+  }
+  return true;
 }
 
 
@@ -817,7 +1167,8 @@ Rec2DVertex* Rec2DEdge::getOtherVertex(Rec2DVertex *rv) const
 /**  Rec2DVertex  **/
 /*******************/
 Rec2DVertex::Rec2DVertex(MVertex *v, bool toSave)
-: _v(v), _angle(4*M_PI), _onWhat(1), _parity(0), _lastMove(-1), _isMesh(toSave)
+: _v(v), _angle(4*M_PI), _onWhat(1), _parity(0), _assumedParity(0),
+  _lastMove(-1), _isMesh(toSave)
 {
   reparamMeshVertexOnFace(_v, Recombine2D::getGFace(), _param);
   if (_isMesh) {
@@ -827,7 +1178,8 @@ Rec2DVertex::Rec2DVertex(MVertex *v, bool toSave)
 }
 
 Rec2DVertex::Rec2DVertex(Rec2DVertex *rv, double ang)
-: _v(rv->_v), _angle(ang), _onWhat(-1), _parity(0), _lastMove(-1), _isMesh(true)
+: _v(rv->_v), _angle(ang), _onWhat(-1), _parity(0), _assumedParity(0),
+  _lastMove(-1), _isMesh(true)
 {
   _edges = rv->_edges;
   _elements = rv->_elements;
@@ -842,6 +1194,10 @@ Rec2DVertex::Rec2DVertex(Rec2DVertex *rv, double ang)
 
 Rec2DVertex::~Rec2DVertex()
 {
+  if (_parity)
+    Rec2DData::removeParity(this, _parity);
+  if (_assumedParity)
+    Rec2DData::removeAssumedParity(this, _assumedParity);
   Rec2DData::remove(this);
   Rec2DData::addVert(-1, -getQual());
 }
@@ -948,6 +1304,7 @@ void Rec2DVertex::setParity(int p)
     Rec2DData::removeParity(this, _parity);
   }
   _parity = p;
+  _assumedParity = 0;
   Rec2DData::addParity(this, _parity);
 }
 
@@ -959,6 +1316,65 @@ void Rec2DVertex::setParityWD(int pOld, int pNew)
   if (pOld != _parity)
     Msg::Error("[Rec2DVertex] Old parity was not correct");
   _parity = pNew;
+  _assumedParity = 0;
+}
+
+int Rec2DVertex::getAssumedParity() const
+{
+  if (_assumedParity)
+    return _assumedParity;
+  return _parity;
+}
+
+bool Rec2DVertex::setAssumedParity(int p)
+{
+  if (p == _assumedParity) {
+    Msg::Warning("[Rec2DVertex] Already have this assumed parity");
+    return false;
+  }
+  if (p == _parity) {
+    Msg::Warning("[Rec2DVertex] Parity already this value (%d, %d) -> %d",
+                 _parity, _assumedParity, p);
+    return false;
+  }
+  Rec2DData::saveAssumedParity(this, _assumedParity);
+  if (_assumedParity) {
+    Rec2DData::removeAssumedParity(this, _assumedParity);
+  }
+  _assumedParity = p;
+  Rec2DData::addAssumedParity(this, _assumedParity);
+  return true;
+}
+
+void Rec2DVertex::setAssumedParityWD(int pOld, int pNew)
+{
+  static int a = -1;
+  if (++a < 1)
+    Msg::Warning("FIXME puis-je rendre fonction utilisable uniquement par recdata ?");
+  if (pOld != _assumedParity)
+    Msg::Error("[Rec2DVertex] Old assumed parity was not correct");
+  Rec2DData::saveAssumedParity(this, _assumedParity);
+  _assumedParity = pNew;
+}
+
+void Rec2DVertex::revertAssumedParity(int p)
+{
+  if (p == _parity) {
+    if (_assumedParity) {
+      Rec2DData::removeAssumedParity(this, _assumedParity);
+      _assumedParity = 0;
+    }
+  }
+  else
+    _assumedParity = p;
+}
+
+void Rec2DVertex::getTriangles(std::set<Rec2DElement*> &tri)
+{
+  for (unsigned int i = 0; i < _elements.size(); ++i) {
+    if (_elements[i]->isTri())
+      tri.insert(_elements[i]);
+  }
 }
 
 double Rec2DVertex::getQual(int numEl) const
@@ -995,7 +1411,7 @@ double Rec2DVertex::getGain(int n) const
   
   if (_elements.size() == 0)
     return 11 - fabs(2./M_PI * _angle/(_elements.size() + n) - 1.);
-    
+  
   if (_elements.size() + n == 0)
     return fabs(2./M_PI * _angle/_elements.size() - 1.) - 11;
   
@@ -1167,7 +1583,7 @@ void Rec2DElement::add(Rec2DAction *ra)
   _actions.push_back(ra);
 }
 
-void Rec2DElement::removeT(Rec2DAction *ra)
+void Rec2DElement::remove(Rec2DAction *ra)
 {
   unsigned int i = 0;
   while (i < _actions.size()) {
@@ -1209,6 +1625,24 @@ void Rec2DElement::removeNeighbour(Rec2DEdge *re, Rec2DElement *rel)
   Msg::Error("[Rec2DElement] Edge not found");
 }
 
+
+void Rec2DElement::getAssumedParities(int *p) const
+{
+  if (_numEdge == 4) {
+    Msg::Error("[Rec2DElement] Not implemented for quad");
+  }
+  Rec2DVertex *v[3];
+  v[0] = _edges[0]->getVertex(0);
+  v[1] = _edges[0]->getVertex(1);
+  if (_edges[1]->getVertex(0) == v[0] ||
+      _edges[1]->getVertex(0) == v[1]   )
+    v[2] = _edges[1]->getVertex(1);
+  else
+    v[2] = _edges[1]->getVertex(0);
+  p[0] = v[0]->getAssumedParity();
+  p[1] = v[1]->getAssumedParity();
+  p[2] = v[2]->getAssumedParity();
+}
 
 void Rec2DElement::getMoreEdges(std::vector<Rec2DEdge*> &edges) const
 {

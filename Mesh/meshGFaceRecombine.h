@@ -52,7 +52,7 @@ class Recombine2D {
     double _geomAngle(MVertex*,
                       std::vector<GEdge*>&,
                       std::vector<MElement*>&);
-    //bool _remainAllQuad(Rec2DAction *action);
+    bool _remainAllQuad(Rec2DAction *action);
 };
 
 class Rec2DData {
@@ -67,6 +67,8 @@ class Rec2DData {
     
     std::list<Rec2DAction*> _actions;
     std::map<int, std::vector<Rec2DVertex*> > _parities;
+    std::map<int, std::vector<Rec2DVertex*> > _assumedParities;
+    std::map<Rec2DVertex*, int> _oldParity;
     
   public :
     Rec2DData(int numTri, int numQuad);
@@ -109,9 +111,19 @@ class Rec2DData {
     
     static int getNewParity();
     static void removeParity(Rec2DVertex*, int);
-    static inline void addParity(Rec2DVertex *rv, int p)
-      {_current->_parities[p].push_back(rv);}
+    static inline void addParity(Rec2DVertex *rv, int p) {
+      _current->_parities[p].push_back(rv);
+    }
     static void associateParity(int pOld, int pNew);
+    static void removeAssumedParity(Rec2DVertex*, int);
+    static inline void addAssumedParity(Rec2DVertex *rv, int p) {
+      _current->_assumedParities[p].push_back(rv);
+    }
+    static void saveAssumedParity(Rec2DVertex*, int);
+    static void associateAssumedParity(int pOld, int pNew,
+                                       std::vector<Rec2DVertex*>&);
+    static inline void clearAssumedParities() {_current->_oldParity.clear();}
+    static void revertAssumedParities();
     
     static inline void addVert(int num, double val) {
       _current->_numVert += num;
@@ -135,11 +147,16 @@ class Rec2DAction {
     
   public :
     virtual inline ~Rec2DAction() {Rec2DData::remove(this);}
+    
     bool operator<(Rec2DAction&);
     virtual double getReward();
     virtual void color(int, int, int) = 0;
     virtual void apply(std::vector<Rec2DVertex*> &newPar) = 0;
     virtual bool isObsolete() = 0;
+    virtual bool isAssumedObsolete() = 0;
+    virtual void getAssumedParities(int*) = 0;
+    virtual bool whatWouldYouDo(std::map<Rec2DVertex*, std::vector<int> >&) = 0;
+    virtual Rec2DVertex* getVertex(int) = 0;
     
   private :
     virtual void _computeGlobVal() = 0;
@@ -158,7 +175,11 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     virtual void color(int, int, int);
     virtual void apply(std::vector<Rec2DVertex*> &newPar);
     virtual bool isObsolete();
+    virtual bool isAssumedObsolete();
     static bool isObsolete(int*);
+    virtual void getAssumedParities(int*);
+    virtual bool whatWouldYouDo(std::map<Rec2DVertex*, std::vector<int> >&);
+    virtual inline Rec2DVertex* getVertex(int i) {return _vertices[i];} //-
     
   private :
     virtual void _computeGlobVal();
@@ -208,7 +229,8 @@ class Rec2DVertex {
     const double _angle;
     std::vector<Rec2DEdge*> _edges;
     std::vector<Rec2DElement*> _elements;
-    int _onWhat, _parity, _lastMove; // _onWhat={-1:corner,0:edge,1:face}
+    int _lastMove, _onWhat; // _onWhat={-1:corner,0:edge,1:face}
+    int _parity, _assumedParity;
     SPoint2 _param;
     bool _isMesh;
     
@@ -228,10 +250,17 @@ class Rec2DVertex {
     inline void setOnBoundary() {if (_onWhat > 0) _onWhat = 0;}
     inline bool getOnBoundary() const {return _onWhat < 1;}
     bool setBoundaryParity(int p0, int p1);
+    
     inline int getParity() const {return _parity;}
     void setParity(int);
     void setParityWD(int pOld, int pNew);
+    int getAssumedParity() const;
+    bool setAssumedParity(int);
+    void setAssumedParityWD(int pOld, int pNew);
+    void revertAssumedParity(int);
+    
     inline int getNumElements() const {return _elements.size();}
+    void getTriangles(std::set<Rec2DElement*>&);
     inline MVertex* getMVertex() const {return _v;}
     
     inline int getLastMove() const {return _lastMove;}
@@ -272,10 +301,12 @@ class Rec2DElement {
     Rec2DElement(Rec2DEdge**);
     ~Rec2DElement();
     
+    bool inline isTri() {return _numEdge == 3;}
+    bool inline isQuad() {return _numEdge == 4;}
     void add(Rec2DEdge*);
     bool has(Rec2DEdge*) const;
     void add(Rec2DAction*);
-    void removeT(Rec2DAction*);
+    void remove(Rec2DAction*);
     void addNeighbour(Rec2DEdge*, Rec2DElement*);
     void removeNeighbour(Rec2DEdge*, Rec2DElement*);
     inline MElement* getMElement() const {return _mEl;}
@@ -299,6 +330,9 @@ class Rec2DElement {
     }
 #endif
     
+    inline int getNumActions() const {return _actions.size();}
+    inline Rec2DAction* getAction(int i) const {return _actions[i];}
+    void getAssumedParities(int*) const;
     void getMoreEdges(std::vector<Rec2DEdge*>&) const;
     void getVertices(std::vector<Rec2DVertex*>&) const;
     void getUniqueActions(std::vector<Rec2DAction*>&) const;
