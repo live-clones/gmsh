@@ -1016,6 +1016,24 @@ Affectation :
       Free($6);
       List_Delete($9);
     }
+  | tField '[' FExpr ']' '.' tSTRING tEND
+    {
+#if defined(HAVE_MESH)
+      Field *field = GModel::current()->getFields()->get((int)$3);
+      if(field){
+        FieldCallback *callback = field->callbacks[$6];
+        if(callback) {
+          callback->run();
+        }
+        else
+          yymsg(0, "Unknown callback '%s' in field %i of type '%s'",
+              $6, (int)$3, field->getName());
+      }
+      else
+	yymsg(0, "No field with id %i", (int)$3);
+#endif
+      Free($6);
+    }
 
   // Plugins
 

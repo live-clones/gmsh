@@ -821,19 +821,31 @@ void PrintOptionsDoc()
     std::string field_description=f->getDescription();
     Sanitize_String_Texi(field_description);
     fprintf(file,"%s@*\n",field_description.c_str());
-    fprintf(file, "Options:@*\n");
-    fprintf(file, "@table @code\n");
-    for(std::map<std::string, FieldOption*>::iterator it2 = f->options.begin();
-        it2 != f->options.end(); it2++){
-      fprintf(file, "@item %s\n", it2->first.c_str());
-      std::string val;
-      it2->second->getTextRepresentation(val);
-      Sanitize_String_Texi(val);
-      fprintf(file, "%s@*\ntype: %s@*\ndefault value: @code{%s}\n",
-              it2->second->getDescription().c_str(),
-              it2->second->getTypeName().c_str(), val.c_str());
+    if (!f->options.empty()) {
+      fprintf(file, "Options:@*\n");
+      fprintf(file, "@table @code\n");
+      for(std::map<std::string, FieldOption*>::iterator it2 = f->options.begin();
+          it2 != f->options.end(); it2++){
+        fprintf(file, "@item %s\n", it2->first.c_str());
+        std::string val;
+        it2->second->getTextRepresentation(val);
+        Sanitize_String_Texi(val);
+        fprintf(file, "%s@*\ntype: %s@*\ndefault value: @code{%s}\n",
+            it2->second->getDescription().c_str(),
+            it2->second->getTypeName().c_str(), val.c_str());
+      }
+      fprintf(file, "@end table\n\n");
     }
-    fprintf(file, "@end table\n\n");
+    if (!f->callbacks.empty()) {
+      fprintf(file, "Actions:@*\n");
+      fprintf(file, "@table @code\n");
+      for(std::map<std::string, FieldCallback*>::iterator it2 = f->callbacks.begin();
+          it2 != f->callbacks.end(); it2++){
+        fprintf(file, "@item %s\n", it2->first.c_str());
+        fprintf(file, "%s@*\n", it2->second->getDescription().c_str());
+      }
+      fprintf(file, "@end table\n\n");
+    }
   }
   fprintf(file, "@end ftable\n");
   fclose(file);

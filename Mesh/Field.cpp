@@ -35,6 +35,15 @@
 #include "ANN/ANN.h"
 #endif
 
+Field::~Field() {
+  for(std::map<std::string, FieldOption*>::iterator it = options.begin(); it != options.end(); ++it) {
+    delete it->second;
+  }
+  for(std::map<std::string, FieldCallback*>::iterator it = callbacks.begin(); it != callbacks.end(); ++it) {
+    delete it->second;
+  }
+}
+
 class FieldOptionDouble : public FieldOption
 {
  public:

@@ -33,6 +33,16 @@ typedef enum {
   FIELD_OPTION_LIST 
 } FieldOptionType;
 
+class FieldCallback {
+  private:
+    std::string _help;
+  public:
+  virtual void run() = 0;
+  FieldCallback(const std::string help){ _help = help;}
+  virtual ~FieldCallback(){};
+  virtual std::string getDescription(){ return _help; }
+};
+
 class FieldOption {
  private:
   std::string _help;
@@ -67,9 +77,10 @@ class FieldOption {
 class Field {
  public:
   Field() {}
-  virtual ~Field() {}
+  virtual ~Field();
   int id;
   std::map<std::string, FieldOption *> options;
+  std::map<std::string, FieldCallback*> callbacks;
   virtual bool isotropic () const { return true; }
   // isotropic
   virtual double operator() (double x, double y, double z, GEntity *ge=0) = 0;

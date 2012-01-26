@@ -80,6 +80,12 @@ static void field_put_on_view_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+static void field_callback_cb(Fl_Widget *w, void *data)
+{
+  FieldCallback *cb = (FieldCallback*) data;
+  cb->run();
+}
+
 static void field_select_file_cb(Fl_Widget *w, void *data)
 {
   Fl_Input *input = (Fl_Input*)data;
@@ -351,7 +357,8 @@ void fieldWindow::editField(Field *f)
 
   std::string help = f->getDescription();
   ConvertToHTML(help);
-  help += std::string("<p><center><b>Options</b></center>");
+  if (! f->options.empty())
+    help += std::string("<p><center><b>Options</b></center>");
   for(std::map<std::string, FieldOption*>::iterator it = f->options.begin(); 
       it != f->options.end(); it++){
     Fl_Widget *input;
@@ -388,6 +395,17 @@ void fieldWindow::editField(Field *f)
       break;
     }
     options_widget.push_back(input);
+    yy += BH;
+  }
+  if (! f->callbacks.empty())
+    help += std::string("<p><center><b>Actions</b></center>");
+  for(std::map<std::string, FieldCallback*>::iterator it = f->callbacks.begin(); 
+      it != f->callbacks.end(); it++){
+    Fl_Widget *btn;
+    help += std::string("<p><b>") + it->first + "</b>: ";
+    help += it->second->getDescription();
+    btn = new Fl_Button(xx, yy, IW, BH, it->first.c_str());
+    btn->callback(field_callback_cb, it->second);
     yy += BH;
   }
   help_display->value(help.c_str());
