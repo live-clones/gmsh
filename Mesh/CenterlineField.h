@@ -49,6 +49,19 @@ struct Branch{
 
 class Centerline : public Field{
 
+  class cutAction : public FieldCallback{
+  private:
+    Centerline *myField;
+  public:
+    cutAction(Centerline *field, std::string help):FieldCallback(help) {
+      myField = field;
+    }
+    void run(){
+      printf("calling action cutMesh \n");
+      myField->cutMesh();
+    }
+  };
+
  protected: 
   GModel *current; //current GModel
   GModel *mod; //centerline GModel
@@ -58,6 +71,7 @@ class Centerline : public Field{
   ANNidxArray index;
   ANNdistArray dist;
   std::string fileName;
+  double recombine;
 
   //all (unique) lines of centerlines
   std::vector<MLine*> lines;
@@ -125,7 +139,7 @@ class Centerline : public Field{
   void distanceToLines();
 
   // Cut the mesh in different parts of small aspect ratio
-  void splitMesh();
+  void cutMesh();
 
   // Cut the tubular structure with a disk
   // perpendicular to the tubular structure

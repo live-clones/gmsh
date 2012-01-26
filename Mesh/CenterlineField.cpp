@@ -309,13 +309,17 @@ void cutTriangle(MTriangle *tri,
 }
 
 Centerline::Centerline(std::string fileName): kdtree(0), nodes(0){
+  
+  recombine = CTX::instance()->mesh.recombineAll;
 
   index = new ANNidx[1];
   dist = new ANNdist[1];
-  update_needed = false;
 
+  printf("cetreline filename =%s \n", fileName.c_str());
   importFile(fileName);
   buildKdTree();
+
+  update_needed = false;
 
 }
 Centerline::Centerline(): kdtree(0), nodes(0){
@@ -323,9 +327,13 @@ Centerline::Centerline(): kdtree(0), nodes(0){
   index = new ANNidx[1];
   dist = new ANNdist[1];
 
-  options["FileName"] = new FieldOptionString (fileName, "File name for the centerlines",  &update_needed);
+  recombine = CTX::instance()->mesh.recombineAll;
   fileName = "centerlines.vtk";//default
 
+  options["FileName"] = new FieldOptionString (fileName, "File name for the centerlines", &update_needed);
+  callbacks["cutMesh"] = new cutAction(this, "Cut the initial mesh in different mesh partitions using the centerlines \n"); 
+    //callbacks["test"] = new FieldCallbackGeneric<MathEvalField>(this, MathEvalField::myFunc, "description")
+ 
 }
 
 Centerline::~Centerline(){
@@ -344,6 +352,7 @@ void Centerline::importFile(std::string fileName){
   current->getEntities(entities) ; 
   for(unsigned int i = 0; i < entities.size(); i++){
     if(entities[i]->dim() != 2) continue; 
+    recombine = std::max(recombine, (double)(((GFace*)entities[i])->meshAttributes.recombine));
     for(int j = 0; j < entities[i]->getNumMeshElements(); j++){ 
       MElement *e = entities[i]->getMeshElement(j);
       if (e->getType() != TYPE_TRI){
@@ -682,7 +691,6 @@ void Centerline::remeshSplitMesh(){
     GFaceCompound::typeOfMapping typ = GFaceCompound::CONFORMAL;
     GFaceCompound *gfc = new GFaceCompound(split, num_gfc, f_compound, U0,
 					   typ, 0);
-    int recombine = 0;//EMI TODO RECUPERER LE RECOMBINE
     gfc->meshAttributes.recombine = recombine;
     split->add(gfc);
     gfc->parametrize();
@@ -818,23 +826,6 @@ void Centerline::createFaces(){
   }
   printf("%d faces created \n", faces.size());
 
-  // FILE * f3 = fopen("myCUT.pos","w");
-  // fprintf(f3, "View \"\"{\n");
-  // for (int i= 0; i< faces.size(); i++){
-  //   std::vector<MTriangle*> tris = faces[i];
-  //   for (int j= 0; j< tris.size(); j++){
-  //     MTriangle *t = tris[j];
-  //     fprintf(f3, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
-  // 	      t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
-  // 	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
-  // 	      t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
-  // 	      (double)i,  (double)i,  (double)i);
-  //   }
-  // }
-  // fprintf(f3,"};\n");
-  // fclose(f3);
-
-
   //create discFaces
   int numBef = split->getMaxElementaryNumber(2) + 1;
   for(unsigned int i = 0; i < faces.size(); ++i){
@@ -859,9 +850,19 @@ void Centerline::createFaces(){
 
 }
 
-void Centerline::splitMesh(){
-
-  Msg::Info("Splitting surface mesh (%d tris) with centerline field ", triangles.size());
+void Centerline::cutMesh(){
+ 
+  if (update_needed){
+    std::ifstream input;
+    input.open(fileName.c_str());
+    if(StatFile(fileName)) Msg::Fatal("Centerline file '%s' does not exist", fileName.c_str());
+    importFile(fileName);
+    buildKdTree();
+    printf("fileName =%s , recombine =%g \n", fileName.c_str(), recombine);
+    update_needed = false;
+  }
+  
+  Msg::Info("Splitting surface mesh (%d tris) with centerline %s ", triangles.size(), fileName.c_str());
   split = new GModel(); 
 
   //splitMesh
@@ -912,6 +913,7 @@ void Centerline::splitMesh(){
 
   //remesh splitted mesh
   remeshSplitMesh();
+  Msg::Info("Writing new mesh 'myMESH.msh'");
   split->writeMSH("myMESH.msh", 2.2, false, true);
 
   //print 
@@ -928,6 +930,7 @@ void Centerline::splitMesh(){
   // }
   // fprintf(f2,"};\n");
   // fclose(f2);
+
 
   Msg::Info("Splitting mesh by centerlines done ");
   exit(1);
@@ -1024,11 +1027,11 @@ double Centerline::operator() (double x, double y, double z, GEntity *ge){
   if (update_needed){
     std::ifstream input;
     input.open(fileName.c_str());
-  
     if(StatFile(fileName)) Msg::Fatal("Centerline file '%s' does not exist", fileName.c_str());
-   
     importFile(fileName);
     buildKdTree();
+    printf("fileName =%s , recombine =%g \n", fileName.c_str(),  recombine);
+    exit(1);
     update_needed = false;
   }
 
@@ -1063,31 +1066,18 @@ void Centerline::printSplit() const{
   fprintf(f,"};\n");
   fclose(f);
 
-  FILE * f2 = fopen("myCOLORS.pos","w");
-  fprintf(f2, "View \"\"{\n");
-   std::map<MVertex*, int>::const_iterator itp = colorp.begin();
-   while (itp != colorp.end()){
-     MVertex *v =  itp->first;
-     fprintf(f2, "SP(%g,%g,%g){%g};\n",
-  	    v->x(),  v->y(), v->z(),
-  	     (double)v->getNum());
-     itp++; 
-  }
-  fprintf(f2,"};\n");
-  fclose(f2);
-
-  FILE * f3 = fopen("myJUNCTIONS.pos","w");
-  fprintf(f3, "View \"\"{\n");
-   std::set<MVertex*>::const_iterator itj = junctions.begin();
-   while (itj != junctions.end()){
-     MVertex *v =  *itj;
-     fprintf(f3, "SP(%g,%g,%g){%g};\n",
-	     v->x(),  v->y(), v->z(),
-	     (double)v->getNum());
-     itj++; 
-  }
-  fprintf(f3,"};\n");
-  fclose(f3);
+  // FILE * f3 = fopen("myJUNCTIONS.pos","w");
+  // fprintf(f3, "View \"\"{\n");
+  //  std::set<MVertex*>::const_iterator itj = junctions.begin();
+  //  while (itj != junctions.end()){
+  //    MVertex *v =  *itj;
+  //    fprintf(f3, "SP(%g,%g,%g){%g};\n",
+  // 	     v->x(),  v->y(), v->z(),
+  // 	     (double)v->getNum());
+  //    itj++; 
+  // }
+  // fprintf(f3,"};\n");
+  // fclose(f3);
 
   FILE * f4 = fopen("myRADII.pos","w");
   fprintf(f4, "View \"\"{\n");

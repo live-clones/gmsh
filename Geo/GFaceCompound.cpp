@@ -549,8 +549,7 @@ bool GFaceCompound::checkOrientation(int iter) const
     return checkOrientation(iter+1);
   }
   else if (oriented && iter < iterMax){
-    Msg::Info("Parametrization is bijective (no flips)");
-    //printStuff(); 
+    Msg::Debug("Parametrization is bijective (no flips)");
   }
 
   return oriented;
@@ -640,6 +639,7 @@ bool GFaceCompound::parametrize() const
     bool hasOverlap = parametrize_conformal_spectral();
     if (hasOverlap || !checkOrientation(0) ){
       Msg::Warning("!!! Overlap or Flipping: parametrization switched to 'FE conformal' map");
+      printStuff(22);
       hasOverlap = parametrize_conformal(0, NULL, NULL);
     }
     if (hasOverlap || !checkOrientation(0) ){
@@ -1197,10 +1197,9 @@ bool GFaceCompound::parametrize_conformal_spectral() const
   
   // mettre max NC contraintes par bord
   int NB = _ordered.size();
-  int NC = std::min(70,NB);
+  int NC = std::min(60,NB);
   int jump = (int) NB/NC;
   int nbLoop = (int) NB/jump ;
-
   for (int i = 0; i< nbLoop; i++){
     MVertex *v1 = _ordered[i*jump];
     myAssembler.assemble(v1, 0, 1, v1, 0, 1,  1.0);
@@ -1344,8 +1343,8 @@ bool GFaceCompound::parametrize_conformal(int iter, MVertex *v1, MVertex *v2) co
   // check for overlap and compute new mapping with new pinned
   // vertices
   std::vector<MVertex *> vert;
-  bool hasOverlap = checkOverlap(vert);
-  if (hasOverlap && iter < 3){
+  bool hasOverlap = checkOverlap(vert);;
+  if ( hasOverlap && iter < 3){
     Msg::Info("Loop FE conformal iter (%d) v1=%d v2=%d", iter, 
               vert[0]->getNum(), vert[1]->getNum());
     printStuff(100+iter);

@@ -18,6 +18,7 @@
 #include "OS.h"
 #include "StringUtils.h"
 #include "GeomMeshMatcher.h"
+#include "Field.h"
 
 #if defined(HAVE_PARSER)
 #include "Parser.h"
@@ -414,7 +415,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
   if(!status) Msg::Error("Error loading '%s'", fileName.c_str());
   Msg::StatusBar(2, true, "Done reading '%s'", fileName.c_str());
 
-  // merge the associated option file if there is one
+   // merge the associated option file if there is one
   if(!StatFile(fileName + ".opt"))
     MergeFile(fileName + ".opt");
 
