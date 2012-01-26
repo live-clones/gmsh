@@ -7,13 +7,10 @@
 //   Amaury Johnen (a.johnen@ulg.ac.be)
 //
 
-#define REC2D_EDGE_BASE 1
-#define REC2D_EDGE_QUAD 1
-#define REC2D_ALIGNMENT .5
 #define REC2D_WAIT_TIME .01
 #define REC2D_NUM_ACTIO 1000
 
-// #define REC2D_SMOOTH
+ #define REC2D_SMOOTH
  #define REC2D_DRAW
 
 #include "meshGFaceRecombine.h"
@@ -44,6 +41,7 @@ int otherParity(int a) {
 /*******************/
 Recombine2D::Recombine2D(GFace *gf) : _gf(gf)
 {
+    laplaceSmoothing(_gf,100);
   if (Recombine2D::_current != NULL) {
     Msg::Warning("[Recombine2D] An instance already in execution");
     return;
@@ -234,9 +232,12 @@ bool Recombine2D::recombine()
     delete nextAction;
   }
   
+  _data->printState();
 #ifdef REC2D_SMOOTH
     laplaceSmoothing(_gf,100);
 #endif
+    CTX::instance()->mesh.changed = (ENT_ALL);
+    drawContext::global()->draw();
   return 1;
 }
 
@@ -350,10 +351,8 @@ bool Recombine2D::_remainAllQuad(Rec2DAction *action)
         v->setAssumedParity(par);
         v->getTriangles(neighbours);
       }
-      else if (p[i+j] != par) {
-          Msg::Info("oui a %d, %d", p[i+j], par);
+      else if (p[i+j] != par)
         Rec2DData::associateAssumedParity(p[i+j], par, touched);
-      }
     }
   }
   
@@ -369,7 +368,7 @@ bool Recombine2D::_remainAllQuad(Rec2DAction *action)
     
     int p[3];
     (*itTri)->getAssumedParities(p);
-  //Msg::Info("tri %d [%d %d %d]", (*itel)->getNum(), p[0], p[1], p[2]);
+    //Msg::Info("tri %d [%d %d %d]", (*itel)->getNum(), p[0], p[1], p[2]);
     
     bool hasIdentical = false;
     for (int i = 0; i < 3; ++i) {
@@ -384,7 +383,7 @@ bool Recombine2D::_remainAllQuad(Rec2DAction *action)
       Rec2DData::revertAssumedParities();
       return false;
     }
-  //Msg::Info("has identical");
+    //Msg::Info("has identical");
     
     bool hasAction = false;
     std::map<Rec2DVertex*, std::vector<int> > suggestions;
@@ -397,7 +396,7 @@ bool Recombine2D::_remainAllQuad(Rec2DAction *action)
       Rec2DData::revertAssumedParities();
       return false;
     }
-  //Msg::Info("suggest %d", suggestions.size());
+    //Msg::Info("suggest %d", suggestions.size());
     
     std::map<Rec2DVertex*, std::vector<int> >::iterator itSug;
     itSug = suggestions.begin();
@@ -423,7 +422,6 @@ bool Recombine2D::_remainAllQuad(Rec2DAction *action)
         }
         else if ((par/2)*2 != (oldPar/2)*2) {
         //Msg::Info("c");
-          Msg::Info("oui b %d, %d", oldPar, par);
           if (oldPar < par) {
             int a = oldPar;
             oldPar = par;
@@ -441,8 +439,6 @@ bool Recombine2D::_remainAllQuad(Rec2DAction *action)
           Rec2DData::revertAssumedParities();
           return false;
         }
-        else
-          Msg::Error("SHOULD NOT HAPPEN 2");
       }
     }
     neighbours.erase(itTri);
@@ -513,6 +509,9 @@ void Rec2DData::remove(Rec2DEdge *re)
 void Rec2DData::remove(Rec2DVertex *rv)
 {
   _current->_vertices.erase(rv);
+  static int a = -1;
+  if (++a < 1)
+    Msg::Warning("FIXME Verifier element supprimŽ");
 }
 
 void Rec2DData::remove(Rec2DElement *rel)
@@ -588,19 +587,17 @@ void Rec2DData::printState()
   iter_re ite;
   long double valEdge = .0;
   for (ite = firstEdge(); ite != lastEdge(); ++ite) {
-    valEdge += (*ite)->getQual();
+    valEdge += (long double)(*ite)->getQual();
   }
-  Msg::Info("valEdge : %g >< %g", valEdge, _valEdge);
+  Msg::Info("valEdge : %g >< %g", (double)valEdge, _valEdge);
   iter_rv itv;
   long double valVert = .0;
   for (itv = firstVertex(); itv != lastVertex(); ++itv) {
-    valVert += (*itv)->getQual();
+    valVert += (long double)(*itv)->getQual();
     if ((*itv)->getParity() == -1 || (*itv)->getParity() == 1)
       Msg::Error("parity %d, I'm very angry", (*itv)->getParity());
   }
-  Msg::Info("valVert : %g >< %g", valVert, _valVert);
-  Msg::Info("        : %g", valVert);
-  Msg::Info("        : %g", _valVert);
+  Msg::Info("valVert : %g >< %g", (double)valVert, _valVert);
 }
 
 int Rec2DData::getNewParity()
@@ -635,7 +632,7 @@ void Rec2DData::removeParity(Rec2DVertex *rv, int p)
       ++i;
   }
   if (!b)
-    Msg::Error("[Rec2DData] No vertex");
+    Msg::Error("[Rec2DData] No vertex 1");
 }
 
 void Rec2DData::associateParity(int pOld, int pNew)
@@ -709,7 +706,7 @@ void Rec2DData::removeAssumedParity(Rec2DVertex *rv, int p)
       ++i;
   }
   if (!b)
-    Msg::Error("[Rec2DData] No vertex");
+    Msg::Error("[Rec2DData] No vertex 2");
 }
 
 void Rec2DData::saveAssumedParity(Rec2DVertex *rv, int p)
@@ -1039,7 +1036,8 @@ bool Rec2DTwoTri2Quad::whatWouldYouDo
 /**  Rec2DEdge  **/
 /*****************/
 Rec2DEdge::Rec2DEdge(Rec2DVertex *rv0, Rec2DVertex *rv1)
-: _rv0(rv0), _rv1(rv1), _weight(REC2D_EDGE_BASE), _boundary(-1), _lastUpdate(-2)
+: _rv0(rv0), _rv1(rv1), _boundary(-1), _lastUpdate(-2),
+  _weight(REC2D_EDGE_BASE+2*REC2D_EDGE_QUAD)
 {
   _rv0->add(this);
   _rv1->add(this);
@@ -1076,21 +1074,17 @@ double Rec2DEdge::getQual()
   return _qual;
 }
 
-double Rec2DEdge::addNeighbour()
+void Rec2DEdge::_addWeight(double val)
 {
-  if (++_boundary > 1)
-    Msg::Error("[Rec2DEdge] Too much boundary element");
-}
-
-double Rec2DEdge::addQuadNeighbour()
-{
-  _weight += REC2D_EDGE_QUAD;
+  _weight += val;
   if (_weight > REC2D_EDGE_BASE + 2*REC2D_EDGE_QUAD)
-    Msg::Error("[Rec2DEdge] Weight too higher : %d (%d max)",
+    Msg::Error("[Rec2DEdge] Weight too high : %d (%d max)",
                _weight, REC2D_EDGE_BASE + 2*REC2D_EDGE_QUAD  );
-  Rec2DData::addEdge(REC2D_EDGE_QUAD, REC2D_EDGE_QUAD*getQual());
+  if (_weight < REC2D_EDGE_BASE)
+    Msg::Error("[Rec2DEdge] Weight too low : %d (%d min)",
+               _weight, REC2D_EDGE_BASE                   );
+  Rec2DData::addEdge(val, val*getQual());
 }
-
 
 Rec2DElement* Rec2DEdge::getSingleElement(Rec2DEdge *re)
 {
@@ -1198,8 +1192,10 @@ Rec2DVertex::~Rec2DVertex()
     Rec2DData::removeParity(this, _parity);
   if (_assumedParity)
     Rec2DData::removeAssumedParity(this, _assumedParity);
-  Rec2DData::remove(this);
-  Rec2DData::addVert(-1, -getQual());
+  if (_isMesh) {
+    Rec2DData::remove(this);
+    Rec2DData::addVert(-1, -getQual());
+  }
 }
 
 void Rec2DVertex::initStaticTable()
@@ -1297,6 +1293,19 @@ bool Rec2DVertex::_recursiveBoundParity(Rec2DVertex *prevRV, int p0, int p1)
   return false;
 }
 
+void Rec2DVertex::setOnBoundary()
+{
+  if (_onWhat > 0) {
+    if (_isMesh) {
+      Rec2DData::addValVert(-getQual());
+      _onWhat = 0;
+      Rec2DData::addValVert(getQual());
+    }
+    else
+      _onWhat = 0;
+  }
+}
+
 void Rec2DVertex::setParity(int p)
 {
   if (_parity) {
@@ -1304,7 +1313,10 @@ void Rec2DVertex::setParity(int p)
     Rec2DData::removeParity(this, _parity);
   }
   _parity = p;
-  _assumedParity = 0;
+  if (_assumedParity) {
+    Rec2DData::removeAssumedParity(this, _assumedParity);
+    _assumedParity = 0;
+  }
   Rec2DData::addParity(this, _parity);
 }
 
@@ -1316,7 +1328,10 @@ void Rec2DVertex::setParityWD(int pOld, int pNew)
   if (pOld != _parity)
     Msg::Error("[Rec2DVertex] Old parity was not correct");
   _parity = pNew;
-  _assumedParity = 0;
+  if (_assumedParity) {
+    Rec2DData::removeAssumedParity(this, _assumedParity);
+    _assumedParity = 0;
+  }
 }
 
 int Rec2DVertex::getAssumedParity() const
@@ -1329,7 +1344,7 @@ int Rec2DVertex::getAssumedParity() const
 bool Rec2DVertex::setAssumedParity(int p)
 {
   if (p == _assumedParity) {
-    Msg::Warning("[Rec2DVertex] Already have this assumed parity");
+    //Msg::Warning("[Rec2DVertex] Already have this assumed parity");
     return false;
   }
   if (p == _parity) {
@@ -1365,8 +1380,13 @@ void Rec2DVertex::revertAssumedParity(int p)
       _assumedParity = 0;
     }
   }
-  else
+  else {
+    if (_assumedParity) {
+      Rec2DData::removeAssumedParity(this, _assumedParity);
+    }
     _assumedParity = p;
+    Rec2DData::addAssumedParity(this, _assumedParity);
+  }
 }
 
 void Rec2DVertex::getTriangles(std::set<Rec2DElement*> &tri)
@@ -1479,7 +1499,9 @@ void Rec2DVertex::remove(Rec2DElement *rel)
 {
   unsigned int i = 0;
   while (i < _elements.size()) {
-    if (_elements[i] == rel) {
+    if (_elements[i] == rel) {      
+      if (_isMesh)
+        Rec2DData::addValVert(getGain(-1));
       _elements[i] = _elements.back();
       _elements.pop_back();
       return;
@@ -1514,6 +1536,7 @@ Rec2DElement::Rec2DElement(Rec2DEdge **edges) : _mEl(NULL), _numEdge(4)
 {
   for (int i = 0; i < 4; ++i) {
     _edges[i] = edges[i];
+    _edges[i]->addHasQuad();
     _elements[i] = Rec2DEdge::getSingleElement(edges[i]);
     if (_elements[i])
       _elements[i]->addNeighbour(_edges[i], this);
@@ -1531,6 +1554,10 @@ Rec2DElement::~Rec2DElement()
   if (_actions.size())
     Msg::Error("[Rec2DElement] I didn't want to be deleted :'(");
   for (int i = 0; i < _numEdge; ++i) {
+    if (_numEdge == 3)
+      _edges[i]->remHasTri();
+    else
+      _edges[i]->remHasQuad();
     if (_elements[i])
       _elements[i]->removeNeighbour(_edges[i], this);
   }
@@ -1558,9 +1585,10 @@ void Rec2DElement::add(Rec2DEdge *re)
   if (i == _numEdge)
     Msg::Error("[Rec2DElement] Already %d edges, can't add anymore", _numEdge);
   
-  if (_numEdge == 4)
-    re->addQuadNeighbour();
-  re->addNeighbour();
+  if (_numEdge == 3)
+    re->addHasTri();
+  else
+    re->addHasQuad();
 }
 
 bool Rec2DElement::has(Rec2DEdge *re) const

@@ -10,6 +10,10 @@
 #ifndef _MESH_GFACE_RECOMBINE_H_
 #define _MESH_GFACE_RECOMBINE_H_
 
+#define REC2D_EDGE_BASE 2
+#define REC2D_EDGE_QUAD 1
+#define REC2D_ALIGNMENT .5
+
 #include "GFace.h"
 #include "BackgroundMesh.h"
 //#include "GModel.h"
@@ -190,29 +194,31 @@ class Rec2DEdge {
     Rec2DVertex *_rv0, *_rv1;
     double _qual;
     int _lastUpdate, _weight;
-    int _boundary;
+    int _boundary; // pourrait faire sans !
     
   public :
     Rec2DEdge(Rec2DVertex*, Rec2DVertex*);
     ~Rec2DEdge();
     
     double getQual();
-    double addNeighbour();
-    double addQuadNeighbour();
     
+    inline double addHasTri() {_addWeight(-REC2D_EDGE_QUAD); ++_boundary;}
+    inline double remHasTri() {_addWeight(REC2D_EDGE_QUAD); --_boundary;}
+    inline double addHasQuad() {++_boundary;}
+    inline double remHasQuad() {--_boundary;}
     inline bool isOnBoundary() const {return !_boundary;}
-    inline Rec2DVertex* getVertex(int i) const {if (i) return _rv1; return _rv0;}
     
+    inline Rec2DVertex* getVertex(int i) const {if (i) return _rv1; return _rv0;}
+    Rec2DVertex* getOtherVertex(Rec2DVertex*) const;
     static Rec2DElement* getSingleElement(Rec2DEdge*);
     
     void swap(Rec2DVertex *oldRV, Rec2DVertex *newRV);
-    
-    Rec2DVertex* getOtherVertex(Rec2DVertex*) const;
     
   private :
     void _computeQual();
     double _straightAdimLength() const;
     double _straightAlignment() const;
+    void _addWeight(double);
 };
 
 struct AngleData {
@@ -247,7 +253,7 @@ class Rec2DVertex {
     static void getCommonElements(Rec2DVertex*, Rec2DVertex*,
                                   std::vector<Rec2DElement*>&);
     
-    inline void setOnBoundary() {if (_onWhat > 0) _onWhat = 0;}
+    inline void setOnBoundary();
     inline bool getOnBoundary() const {return _onWhat < 1;}
     bool setBoundaryParity(int p0, int p1);
     
