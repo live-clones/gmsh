@@ -52,6 +52,7 @@ class Homology
 
   // save chains of 0 and highest dimension
   bool _save0N;
+  bool _saveOrig;
 
   int _maxdomain;
   int _maxnum;
@@ -64,7 +65,8 @@ class Homology
  public:
 
   Homology(GModel* model, std::vector<int> physicalDomain,
-	   std::vector<int> physicalSubdomain, bool save0N=false,
+	   std::vector<int> physicalSubdomain,
+           bool save0N=false, bool saveOrig=true,
 	   bool combine=true, bool omit=true, bool smoothen=true);
   ~Homology();
 

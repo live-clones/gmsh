@@ -10,8 +10,9 @@
 
 CellComplex::CellComplex(GModel* model,
 			 std::vector<MElement*>& domainElements,
-			 std::vector<MElement*>& subdomainElements) :
-  _model(model), _dim(0), _simplicial(true), _saveorig(true)
+			 std::vector<MElement*>& subdomainElements,
+                         bool saveOriginalComplex) :
+  _model(model), _dim(0), _simplicial(true), _saveorig(saveOriginalComplex)
 {
 
   _insertCells(subdomainElements, 1);
@@ -20,7 +21,7 @@ CellComplex::CellComplex(GModel* model,
   int num = 0;
   for(int dim = 0; dim < 4; dim++){
     if(getSize(dim) != 0) _dim = dim;
-    _ocells[dim] = _cells[dim];
+    if(_saveorig) _ocells[dim] = _cells[dim];
     for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
       Cell* cell = *cit;
       cell->setNum(++num);
@@ -71,9 +72,17 @@ bool CellComplex::_insertCells(std::vector<MElement*>& elements,
 CellComplex::~CellComplex()
 {
   for(int i = 0; i < 4; i++){
-    for(citer cit = _ocells[i].begin(); cit != _ocells[i].end(); cit++){
-      Cell* cell = *cit;
-      delete cell;
+    if(_saveorig) {
+      for(citer cit = _ocells[i].begin(); cit != _ocells[i].end(); cit++){
+        Cell* cell = *cit;
+        delete cell;
+      }
+    }
+    else {
+      for(citer cit = _cells[i].begin(); cit != _cells[i].end(); cit++){
+        Cell* cell = *cit;
+        delete cell;
+      }
     }
   }
   for(unsigned int i = 0; i < _newcells.size(); i++) delete _newcells.at(i);
@@ -94,7 +103,7 @@ void CellComplex::insertCell(Cell* cell)
 
 void CellComplex::removeCell(Cell* cell, bool other)
 {
-  if(!hasCell(cell)) return;
+  //if(!hasCell(cell)) return;
   std::map<Cell*, short int, Less_Cell > coboundary;
   cell->getCoboundary(coboundary);
   std::map<Cell*, short int, Less_Cell > boundary;
@@ -120,7 +129,8 @@ void CellComplex::removeCell(Cell* cell, bool other)
     bdCell->removeCoboundaryCell(cell, false);
     }*/
 
-  _cells[cell->getDim()].erase(cell);
+  int erased = _cells[cell->getDim()].erase(cell);
+  if(!erased) Msg::Debug("Tried to remove a cell from the cell complex \n");
   if(!_saveorig && !cell->isCombined()) _removedcells.push_back(cell);
 }
 

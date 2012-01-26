@@ -15,10 +15,12 @@
 #if defined(HAVE_KBIPACK)
 
 Homology::Homology(GModel* model, std::vector<int> physicalDomain,
-		   std::vector<int> physicalSubdomain, bool save0N,
+		   std::vector<int> physicalSubdomain,
+                   bool save0N, bool saveOrig,
 		   bool combine, bool omit, bool smoothen) :
   _model(model), _domain(physicalDomain), _subdomain(physicalSubdomain),
-  _save0N(save0N), _combine(combine), _omit(omit), _smoothen(smoothen)
+  _save0N(save0N), _saveOrig(saveOrig),
+  _combine(combine), _omit(omit), _smoothen(smoothen)
 {
   _fileName = "";
 
@@ -90,7 +92,8 @@ CellComplex* Homology::createCellComplex(std::vector<GEntity*>& domainEntities,
 
   CellComplex* cellComplex =  new CellComplex(_model,
 					      domainElements,
-					      subdomainElements);
+					      subdomainElements,
+                                              _saveOrig);
 
   if(cellComplex->getSize(0) == 0){
     Msg::Error("Cell Complex is empty: check the domain and the mesh");
