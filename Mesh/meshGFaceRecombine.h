@@ -50,13 +50,13 @@ class Recombine2D {
     static inline GFace* getGFace() {return _current->_gf;}
     static inline int getNumChange() {return _current->_numChange;}
     static inline backgroundMesh* bgm() {return _current->_bgm;}
-    //recombine : if _current==this ok !
     
   private :
     double _geomAngle(MVertex*,
                       std::vector<GEdge*>&,
                       std::vector<MElement*>&);
     bool _remainAllQuad(Rec2DAction *action);
+    bool _remainAllQuad(std::set<Rec2DElement*>&);
 };
 
 class Rec2DData {
@@ -70,12 +70,13 @@ class Rec2DData {
     std::set<Rec2DElement*> _elements;
     
     std::list<Rec2DAction*> _actions;
+    
     std::map<int, std::vector<Rec2DVertex*> > _parities;
     std::map<int, std::vector<Rec2DVertex*> > _assumedParities;
     std::map<Rec2DVertex*, int> _oldParity;
     
   public :
-    Rec2DData(int numTri, int numQuad);
+    Rec2DData();
     ~Rec2DData();
     
     void printState();
@@ -87,6 +88,15 @@ class Rec2DData {
     static double getGlobalValue();
     static double getGlobalValue(int numEdge, double valEdge,
                                  int numVert, double valVert );
+    static inline void addVert(int num, double val) {
+      _current->_numVert += num;
+      _current->_valVert += val;
+    }
+    static inline void addValVert(double val) {_current->_valVert += val;}
+    static inline void addEdge(int num, double val) {
+      _current->_numEdge += num;
+      _current->_valEdge += val;
+    }
     
     static Rec2DAction* getBestAction();
     
@@ -128,16 +138,6 @@ class Rec2DData {
                                        std::vector<Rec2DVertex*>&);
     static inline void clearAssumedParities() {_current->_oldParity.clear();}
     static void revertAssumedParities();
-    
-    static inline void addVert(int num, double val) {
-      _current->_numVert += num;
-      _current->_valVert += val;
-    }
-    static inline void addValVert(double val) {_current->_valVert += val;}
-    static inline void addEdge(int num, double val) {
-      _current->_numEdge += num;
-      _current->_valEdge += val;
-    }
 };
 
 struct lessRec2DAction {
@@ -248,10 +248,8 @@ class Rec2DVertex {
     Rec2DVertex(Rec2DVertex*, double angle);
     ~Rec2DVertex();
     
-    static void initStaticTable();
-    static Rec2DEdge* getCommonEdge(Rec2DVertex*, Rec2DVertex*);
-    static void getCommonElements(Rec2DVertex*, Rec2DVertex*,
-                                  std::vector<Rec2DElement*>&);
+    double getQual(int numEl = -1) const;
+    double getGain(int) const;
     
     inline void setOnBoundary();
     inline bool getOnBoundary() const {return _onWhat < 1;}
@@ -278,9 +276,6 @@ class Rec2DVertex {
     inline double u() const {return _param[0];}
     inline double v() const {return _param[1];}
     
-    double getQual(int numEl = -1) const;
-    double getGain(int) const;
-    
     void add(Rec2DEdge*);
     bool has(Rec2DEdge*) const;
     void remove(Rec2DEdge*);
@@ -288,6 +283,11 @@ class Rec2DVertex {
     void add(Rec2DElement*);
     bool has(Rec2DElement*) const;
     void remove(Rec2DElement*);
+    
+    static void initStaticTable();
+    static Rec2DEdge* getCommonEdge(Rec2DVertex*, Rec2DVertex*);
+    static void getCommonElements(Rec2DVertex*, Rec2DVertex*,
+                                  std::vector<Rec2DElement*>&);
     
   private :
     bool _recursiveBoundParity(Rec2DVertex *prev, int p0, int p1);
@@ -309,12 +309,14 @@ class Rec2DElement {
     
     bool inline isTri() {return _numEdge == 3;}
     bool inline isQuad() {return _numEdge == 4;}
+    
     void add(Rec2DEdge*);
     bool has(Rec2DEdge*) const;
     void add(Rec2DAction*);
     void remove(Rec2DAction*);
     void addNeighbour(Rec2DEdge*, Rec2DElement*);
     void removeNeighbour(Rec2DEdge*, Rec2DElement*);
+    
     inline MElement* getMElement() const {return _mEl;}
 #ifdef REC2D_DRAW
     MTriangle* getMTriangle() {
@@ -338,13 +340,12 @@ class Rec2DElement {
     
     inline int getNumActions() const {return _actions.size();}
     inline Rec2DAction* getAction(int i) const {return _actions[i];}
+    void getUniqueActions(std::vector<Rec2DAction*>&) const;
     void getAssumedParities(int*) const;
     void getMoreEdges(std::vector<Rec2DEdge*>&) const;
     void getVertices(std::vector<Rec2DVertex*>&) const;
-    void getUniqueActions(std::vector<Rec2DAction*>&) const;
-    static Rec2DEdge* getCommonEdge(Rec2DElement*, Rec2DElement*);
-    
     Rec2DVertex* getOtherVertex(Rec2DVertex*, Rec2DVertex*) const;
+    static Rec2DEdge* getCommonEdge(Rec2DElement*, Rec2DElement*);
     
   private :
     MQuadrangle* _createQuad() const;

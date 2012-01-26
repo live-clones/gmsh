@@ -10,7 +10,7 @@
 #define REC2D_WAIT_TIME .01
 #define REC2D_NUM_ACTIO 1000
 
- #define REC2D_SMOOTH
+// #define REC2D_SMOOTH
  #define REC2D_DRAW
 
 #include "meshGFaceRecombine.h"
@@ -41,7 +41,6 @@ int otherParity(int a) {
 /*******************/
 Recombine2D::Recombine2D(GFace *gf) : _gf(gf)
 {
-    laplaceSmoothing(_gf,100);
   if (Recombine2D::_current != NULL) {
     Msg::Warning("[Recombine2D] An instance already in execution");
     return;
@@ -50,14 +49,9 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf)
   
   backgroundMesh::set(_gf);
   _bgm = backgroundMesh::current();
-  _data = new Rec2DData(gf->triangles.size(), gf->quadrangles.size());
+  _data = new Rec2DData();
   Rec2DVertex::initStaticTable();
   _numChange = 0;
-  
-#ifdef REC2D_DRAW
-  //_data->_tri = _gf->triangles;
-  //_data->_quad = _gf->quadrangles;
-#endif
   
   // Be able to compute geometrical angle at corners
   std::map<MVertex*, AngleData> mapCornerVert;
@@ -220,6 +214,8 @@ bool Recombine2D::recombine()
     std::vector<Rec2DVertex*> newPar;
     nextAction->apply(newPar);
     
+    // forall v in newPar : check obsoletes action;
+    
 #ifdef REC2D_DRAW
     _gf->triangles = _data->_tri;
     _gf->quadrangles = _data->_quad;
@@ -312,8 +308,9 @@ bool Recombine2D::_remainAllQuad(Rec2DAction *action)
   int p[4];
   action->getAssumedParities(p);
   
-  if (!p[0] && !p[1] && !p[2] && !p[3]) {
-    Msg::Info("is isolated");
+  if (p[0] && !p[1] && !p[2] && !p[3]) {
+    static int a = -1;
+    if (++a < 1) Msg::Warning("FIXME isoleted should be check ? Think not");
     return true;
   }
   
@@ -325,21 +322,12 @@ bool Recombine2D::_remainAllQuad(Rec2DAction *action)
     }
   }
   
-  if (p[0] && !p[1] && !p[2] && !p[3]) {
-    Msg::Info("is isolated");
-    static int a = -1;
-    if (++a < 1) Msg::Warning("FIXME isoleted should be check ? Think not");
-    return true;
-  }
-  
-  //Msg::Info("Passsed through there, [%d %d %d %d] -> min %d", p[0], p[1], p[2], p[3], min);
-  
   std::set<Rec2DElement*> neighbours;
   std::vector<Rec2DVertex*> touched;
   
   for (int i = 0; i < 4; i += 2) {
     static int a = -1;
-    if (++a < 1) Msg::Info("FIXME depend de l'action");
+    if (++a < 1) Msg::Warning("FIXME depend de l'action");
     int par;
     if ((index/2) * 2 == i)
       par = min;
@@ -356,34 +344,35 @@ bool Recombine2D::_remainAllQuad(Rec2DAction *action)
     }
   }
   
-  for (unsigned int i = 0; i < touched.size(); ++i) {
+  for (unsigned int i = 0; i < touched.size(); ++i)
     touched[i]->getTriangles(neighbours);
-  }
   touched.clear();
   
-  while (neighbours.size() > 0) {
-    //Msg::Info("num neigh %d", neighbours.size());
-    
-    std::set<Rec2DElement*>::iterator itTri = neighbours.begin();
+  return _remainAllQuad(neighbours);
+}
+
+bool Recombine2D::_remainAllQuad(std::set<Rec2DElement*> &elem)
+{
+  std::vector<Rec2DVertex*> touched;
+  
+  while (elem.size() > 0) {
+    std::set<Rec2DElement*>::iterator itTri = elem.begin();
     
     int p[3];
     (*itTri)->getAssumedParities(p);
-    //Msg::Info("tri %d [%d %d %d]", (*itel)->getNum(), p[0], p[1], p[2]);
     
     bool hasIdentical = false;
     for (int i = 0; i < 3; ++i) {
       if (p[i] && p[i] == p[(i+1)%3]) hasIdentical = true;
     }
     if (!hasIdentical) {
-      neighbours.erase(itTri);
+      elem.erase(itTri);
       continue;
     }
     if (p[0] == p[1] && p[0] == p[2]) {
-      Msg::Info("3 identical par");
       Rec2DData::revertAssumedParities();
       return false;
     }
-    //Msg::Info("has identical");
     
     bool hasAction = false;
     std::map<Rec2DVertex*, std::vector<int> > suggestions;
@@ -392,11 +381,9 @@ bool Recombine2D::_remainAllQuad(Rec2DAction *action)
         hasAction = true;
     }
     if (!hasAction) {
-      //Msg::Info("No action %d", (*itTri)->getNum());
       Rec2DData::revertAssumedParities();
       return false;
     }
-    //Msg::Info("suggest %d", suggestions.size());
     
     std::map<Rec2DVertex*, std::vector<int> >::iterator itSug;
     itSug = suggestions.begin();
@@ -414,14 +401,11 @@ bool Recombine2D::_remainAllQuad(Rec2DAction *action)
         Rec2DVertex *v = itSug->first;
         int oldPar = v->getAssumedParity();
         
-        //Msg::Info("a %d, %d", par, oldPar);
         if (!oldPar) {
-        //Msg::Info("b");
           v->setAssumedParity(par);
-          v->getTriangles(neighbours);
+          v->getTriangles(elem);
         }
         else if ((par/2)*2 != (oldPar/2)*2) {
-        //Msg::Info("c");
           if (oldPar < par) {
             int a = oldPar;
             oldPar = par;
@@ -429,28 +413,26 @@ bool Recombine2D::_remainAllQuad(Rec2DAction *action)
           }
           Rec2DData::associateAssumedParity(oldPar, par, touched);
           for (unsigned int i = 0; i < touched.size(); ++i) {
-            touched[i]->getTriangles(neighbours);  
+            touched[i]->getTriangles(elem);  
           }
           touched.clear();
         }
         else if (par%2 != oldPar%2) {
           Msg::Error("SHOULD NOT HAPPEN");
-          Msg::Info("not all quad");
           Rec2DData::revertAssumedParities();
           return false;
         }
       }
     }
-    neighbours.erase(itTri);
+    elem.erase(itTri);
   }
-  //Msg::Info("all quad");
   return true;
 }
 
 
 /**  Rec2DData  **/
 /*****************/
-Rec2DData::Rec2DData(int numTri, int numQuad)
+Rec2DData::Rec2DData()
 {
   if (Rec2DData::_current != NULL) {
     Msg::Error("[Rec2DData] An instance in execution");
@@ -459,10 +441,6 @@ Rec2DData::Rec2DData(int numTri, int numQuad)
   Rec2DData::_current = this;
   _numEdge = _numVert = 0;
   _valEdge = _valVert = .0;
-  
-  //_elements.reserve((int) (numTri + numQuad) * 1.1);
-  //_edges.reserve((int) (numTri * 1.8 + numQuad * 2.4));
-  //_vertices.reserve((int) (numTri * .6 + numQuad * 1.2));
 }
 
 Rec2DData::~Rec2DData()
@@ -543,7 +521,7 @@ void Rec2DData::remove(Rec2DElement *rel)
         return;
       }
     }
-    Msg::Info("[Rec2DData] Didn't erased mtriangle :(");
+    Msg::Warning("[Rec2DData] Didn't erased mtriangle :(");
   }
   MQuadrangle *q = rel->getMQuadrangle();
   if (q) {
@@ -554,7 +532,7 @@ void Rec2DData::remove(Rec2DElement *rel)
         return;
       }
     }
-    Msg::Info("[Rec2DData] Didn't erased mquadrangle :(");
+    Msg::Warning("[Rec2DData] Didn't erased mquadrangle :(");
   }
 #endif
 }
@@ -671,7 +649,7 @@ void Rec2DData::associateParity(int pOld, int pNew)
   {
     it = _current->_parities.find(pOld);
     if (it == _current->_parities.end()) {
-      Msg::Warning("[Rec2DData] What ?");
+      Msg::Error("[Rec2DData] What ?");
       return;
     }
     vect = &it->second;
@@ -763,7 +741,7 @@ void Rec2DData::associateAssumedParity(int pOld, int pNew,
   {
     it = _current->_parities.find(pOld);
     if (it == _current->_parities.end()) {
-      Msg::Warning("[Rec2DData] What ?");
+      Msg::Error("[Rec2DData] What ?");
       return;
     }
     vect = &it->second;
@@ -823,7 +801,6 @@ bool lessRec2DAction::operator()(Rec2DAction *ra1, Rec2DAction *ra2) const
 {
   return *ra1 < *ra2;
 }
-
 
 bool Rec2DAction::operator<(Rec2DAction &other)
 {
@@ -952,7 +929,6 @@ void Rec2DTwoTri2Quad::apply(std::vector<Rec2DVertex*> &newPar)
   delete _edges[4];
   
   /*new Rec2DCollapse(*/new Rec2DElement(_edges)/*)*/;
-  
 }
 
 bool Rec2DTwoTri2Quad::isObsolete()
@@ -1231,7 +1207,7 @@ Rec2DEdge* Rec2DVertex::getCommonEdge(Rec2DVertex *rv0, Rec2DVertex *rv1)
     if (rv1->has(rv0->_edges[i]))
       return rv0->_edges[i];
   }
-  //Msg::Warning("[Rec2DVertex] didn't find edge, returning NULL");
+  Msg::Warning("[Rec2DVertex] didn't find edge, returning NULL");
   return NULL;
 }
 
@@ -1443,7 +1419,7 @@ void Rec2DVertex::add(Rec2DEdge *re)
 {
   for (unsigned int i = 0; i < _edges.size(); ++i) {
     if (_edges[i] == re) {
-      Msg::Warning("[Rec2DVertex] Edge was already there");
+      Msg::Error("[Rec2DVertex] Edge was already there");
       return;
     }
   }
@@ -1470,14 +1446,14 @@ void Rec2DVertex::remove(Rec2DEdge *re)
     }
     ++i;
   }
-  Msg::Warning("[Rec2DVertex] Didn't removed edge, didn't have it");
+  Msg::Error("[Rec2DVertex] Didn't removed edge, didn't have it");
 }
 
 void Rec2DVertex::add(Rec2DElement *rel)
 {
   for (unsigned int i = 0; i < _elements.size(); ++i) {
     if (_elements[i] == rel) {
-      Msg::Warning("[Rec2DVertex] Element was already there");
+      Msg::Error("[Rec2DVertex] Element was already there");
       return;
     }
   }
@@ -1508,7 +1484,7 @@ void Rec2DVertex::remove(Rec2DElement *rel)
     }
     ++i;
   }
-  Msg::Warning("[Rec2DVertex] Didn't removed element, didn't have it");
+  Msg::Error("[Rec2DVertex] Didn't removed element, didn't have it");
 }
 
 
@@ -1574,7 +1550,7 @@ void Rec2DElement::add(Rec2DEdge *re)
   int i;
   for (i = 0; i < _numEdge; ++i) {
     if (_edges[i] == re) {
-      Msg::Warning("[Rec2DElement] Edge was already there");
+      Msg::Error("[Rec2DElement] Edge was already there");
       return;
     }
     if (_edges[i] == NULL) {
@@ -1604,7 +1580,7 @@ void Rec2DElement::add(Rec2DAction *ra)
 {
   for (unsigned int i = 0; i < _actions.size(); ++i) {
     if (_actions[i] == ra) {
-      Msg::Warning("[Rec2DElement] Action was already there");
+      Msg::Error("[Rec2DElement] Action was already there");
       return;
     }
   }
@@ -1622,7 +1598,7 @@ void Rec2DElement::remove(Rec2DAction *ra)
     }
     ++i;
   }
-  Msg::Warning("[Rec2DElement] Didn't removed action, didn't have it");
+  Msg::Error("[Rec2DElement] Didn't removed action, didn't have it");
 }
 
 void Rec2DElement::addNeighbour(Rec2DEdge *re, Rec2DElement *rel)
