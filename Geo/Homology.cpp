@@ -433,7 +433,10 @@ int Chain::createPGroup()
 
 #if defined(HAVE_POST)
     // create PView for instant visualization
-    PView* view = new PView(getName(), "ElementData", m, data, 0, 1);
+    std::string pnum = "";
+    convert(physicalNum, pnum);
+    std::string postname = pnum + ": " + getName();
+    PView* view = new PView(postname, "ElementData", m, data, 0, 1);
     // the user should be interested about the orientations
     int size = 30;
     PViewOptions* opt = view->getOptions();
