@@ -25,14 +25,14 @@ class GMSH_HomologyComputationPlugin : public GMSH_PostPlugin
   std::string getName() const { return "Homology"; }
   std::string getShortHelp() const
   {
-    return "Compute relative homology groups";
+    return "Compute relative (co)homology spaces";
   }
   std::string getHelp() const;
   std::string getAuthor() const { return "M. Pellikka"; }
   int getNbOptions() const;
-  StringXNumber *getOption(int iopt);  
+  StringXNumber *getOption(int iopt);
   int getNbOptionsStr() const;
-  StringXString *getOptionStr(int iopt);  
+  StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
 };
 

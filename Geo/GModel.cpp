@@ -2774,10 +2774,10 @@ void GModel::computeHomology()
         // restore cell complex to non-reduced state if we are reusing it
         if(itt != itp.first) cellcomplex->restoreComplex();
         std::string type = itt->second;
-        if(type == "Generators")
-          homology->findGenerators(cellcomplex);
-        else if(type == "DualGenerators" || type == "Cuts")
-          homology->findDualGenerators(cellcomplex);
+        if(type == "Homology")
+          homology->findHomologyBasis(cellcomplex);
+        else if(type == "Cohomology")
+          homology->findCohomologyBasis(cellcomplex);
         else
           Msg::Error("Unknown type of homology computation: %s", type.c_str());
       }

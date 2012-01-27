@@ -19,9 +19,8 @@ StringXNumber HomologyComputationOptions_Number[] = {
   {GMSH_FULLRC, "PhysicalGroupForDomain2", NULL, 0.},
   {GMSH_FULLRC, "PhysicalGroupForSubdomain1", NULL, 0.},
   {GMSH_FULLRC, "PhysicalGroupForSubdomain2", NULL, 0.},
-  {GMSH_FULLRC, "ComputeGenerators", NULL, 1.},
-  {GMSH_FULLRC, "ComputeCuts", NULL, 0.},
-  //{GMSH_FULLRC, "ComputeRanks", NULL, 0.},
+  {GMSH_FULLRC, "CompututeHomology", NULL, 1.},
+  {GMSH_FULLRC, "ComputeCohomology", NULL, 0.},
 };
 
 StringXString HomologyComputationOptions_String[] = {
@@ -38,15 +37,15 @@ extern "C"
 
 std::string GMSH_HomologyComputationPlugin::getHelp() const
 {
-  return "Plugin(Homology) computes ranks and generators of "
-    "(relative) homology spaces and their thick cuts.\n\n"
-    
+  return "Plugin(Homology) computes ranks and basis elements "
+    "of (relative) homology and cohomology spaces.\n\n"
+
     "Define physical groups in order to specify the computation "
     "domain and the relative subdomain. Otherwise the whole mesh "
     "is the domain and the relative subdomain is empty. \n\n"
-    
-    "Plugin(Homology) creates new views, one for each generator found. "
-    "The resulting generator chains together with the mesh are saved to "
+
+    "Plugin(Homology) creates new views, one for each basis element. "
+    "The resulting basis chains together with the mesh are saved to "
     "the file given.";
 }
 
@@ -73,10 +72,10 @@ StringXString *GMSH_HomologyComputationPlugin::getOptionStr(int iopt)
 PView *GMSH_HomologyComputationPlugin::execute(PView *v)
 {
   std::string fileName = HomologyComputationOptions_String[0].def;
-  
+
   std::vector<int> domain;
   std::vector<int> subdomain;
-  
+
   int d1 = (int)HomologyComputationOptions_Number[0].def;
   int d2 = (int)HomologyComputationOptions_Number[1].def;
   if(d1 > 0) domain.push_back(d1);
@@ -87,26 +86,22 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   if(d2 > 0) subdomain.push_back(d2);
 
 
-  int gens = (int)HomologyComputationOptions_Number[4].def;
-  int cuts = (int)HomologyComputationOptions_Number[5].def;
-  //int rank = (int)HomologyComputationOptions_Number[6].def;  
+  int hom = (int)HomologyComputationOptions_Number[4].def;
+  int coh = (int)HomologyComputationOptions_Number[5].def;
 
   GModel *m = GModel::current();
-  
+
   Homology* homology = new Homology(m, domain, subdomain);
   homology->setFileName(fileName);
   CellComplex* cc = homology->createCellComplex();
-  if(gens != 0){
-    homology->findGenerators(cc);
+  if(hom != 0){
+    homology->findHomologyBasis(cc);
   }
-  if(cuts != 0){
+  if(coh != 0){
     cc->restoreComplex();
-    homology->findDualGenerators(cc);
+    homology->findCohomologyBasis(cc);
   }
-  /*if(rank != 0){
-    homology->computeRanks();
-    }*/
-  
+
   delete cc;
   delete homology;
 

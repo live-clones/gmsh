@@ -3667,8 +3667,8 @@ Coherence :
 //  H O M O L O G Y
 
 HomologyCommand :
-    tHomology { $$ = (char*)"Generators"; }
-  | tCohomology { $$ = (char*)"DualGenerators"; }
+    tHomology { $$ = (char*)"Homology"; }
+  | tCohomology { $$ = (char*)"Cohomology"; }
  ;
 
 Homology :

@@ -14,6 +14,14 @@
 
 #if defined(HAVE_KBIPACK)
 
+template <class TTypeA, class TTypeB>
+  bool convert(const TTypeA& input, TTypeB& output ){
+  std::stringstream stream;
+  stream << input;
+  stream >> output;
+  return stream.good();
+}
+
 Homology::Homology(GModel* model, std::vector<int> physicalDomain,
 		   std::vector<int> physicalSubdomain,
                    bool save0N, bool saveOrig,
@@ -61,8 +69,6 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain,
       }
     }
   }
-  _maxdomain = 0;
-  _maxnum = 0;
 }
 
 CellComplex* Homology::createCellComplex(std::vector<GEntity*>& domainEntities,
@@ -106,13 +112,17 @@ CellComplex* Homology::createCellComplex(std::vector<GEntity*>& domainEntities,
   return cellComplex;
 }
 
-Homology::~Homology()
+CellComplex* Homology::createCellComplex()
 {
-  for(std::map<int, Chain*>::iterator it = _basisChains.begin();
-      it != _basisChains.end(); it++) delete it->second;
+  return createCellComplex(_domainEntities, _subdomainEntities);
 }
 
-void Homology::findGenerators(CellComplex* cellComplex)
+Homology::~Homology()
+{
+
+}
+
+void Homology::findHomologyBasis(CellComplex* cellComplex)
 {
   bool ownComplex = false;
   if(cellComplex==NULL){
@@ -120,7 +130,7 @@ void Homology::findGenerators(CellComplex* cellComplex)
 				    _subdomainEntities);
     ownComplex = true;
   }
-  std::string domainString = getDomainString(_domain, _subdomain);
+  std::string domainString = _getDomainString(_domain, _subdomain);
 
   Msg::StatusBar(2, true, "Reducing cell complex...");
 
@@ -133,12 +143,12 @@ void Homology::findGenerators(CellComplex* cellComplex)
             cellComplex->getSize(3), cellComplex->getSize(2),
 	    cellComplex->getSize(1), cellComplex->getSize(0));
 
-  Msg::StatusBar(2, true, "Computing homology spaces...");
+  Msg::StatusBar(2, true, "Computing homology space basis ...");
   t1 = Cpu();
-  ChainComplex chains = ChainComplex(cellComplex);
-  chains.computeHomology();
+  ChainComplex chainComplex = ChainComplex(cellComplex);
+  chainComplex.computeHomology();
   t2 = Cpu();
-  Msg::StatusBar(2, true, "Done computing homology spaces (%g s)", t2 - t1);
+  Msg::StatusBar(2, true, "Done computing homology space basis (%g s)", t2 - t1);
 
   int dim = cellComplex->getDim();
 
@@ -147,50 +157,42 @@ void Homology::findGenerators(CellComplex* cellComplex)
     HRank[j] = 0;
     std::string dimension = "";
     convert(j, dimension);
-    for(int i = 1; i <= chains.getBasisSize(j, 3); i++){
+    for(int i = 1; i <= chainComplex.getBasisSize(j, 3); i++){
 
       std::string generator = "";
       convert(i, generator);
 
       std::string name = "H" + dimension + domainString + generator;
-      std::map<Cell*, int, Less_Cell> protoChain;
-      chains.getBasisChain(protoChain, i, j, 3, _smoothen);
-      Chain* chain = new Chain(protoChain, cellComplex, ++_maxdomain, name,
-			       chains.getTorsion(j,i));
-      if(chain->getSize() == 0) {
-	delete chain;
-	_maxdomain--;
-	continue;
+      std::map<Cell*, int, Less_Cell> chain;
+      chainComplex.getBasisChain(chain, i, j, 3, _smoothen);
+      int torsion = chainComplex.getTorsion(j,i);
+      if(_eraseNullCells(chain)) {
+        if(!_save0N && (j != 0 && j != dim)) _createPhysicalGroup(chain, name);
+        HRank[j] = HRank[j] + 1;
+        if(torsion != 1){
+          Msg::Warning("H%d %d has torsion coefficient %d!",
+                       j, i, torsion);
+        }
       }
-      HRank[j] = HRank[j] + 1;
-      if(chain->getTorsion() != 1){
-	Msg::Warning("H%d %d has torsion coefficient %d!",
-		     j, i, chain->getTorsion());
-      }
-      // FIXME: Cell* and CellComplex* pointers should not outlive
-      // the objects, don't store Chains containing them for now
-      //_basisChains[chain->createPGroup()] = chain;
-      if(!_save0N && (j != 0 && j != dim)) chain->createPGroup();
-      delete chain;
     }
   }
 
-  if(_fileName != "") writeGeneratorsMSH();
+  if(_fileName != "") writeBasisMSH();
 
   if(ownComplex) delete cellComplex;
 
-  Msg::Info("Ranks of homology spaces for primal cell complex:");
+  Msg::Info("Ranks of homology spaces:");
   Msg::Info("H0 = %d", HRank[0]);
   Msg::Info("H1 = %d", HRank[1]);
   Msg::Info("H2 = %d", HRank[2]);
   Msg::Info("H3 = %d", HRank[3]);
-  if(omitted != 0) Msg::Info("The computation of generators in the highest dimension was omitted");
+  if(omitted != 0) Msg::Info("The computation of basis elements in the highest dimension was omitted");
 
   Msg::StatusBar(2, false, "H0: %d, H1: %d, H2: %d, H3: %d",
 		 HRank[0], HRank[1], HRank[2], HRank[3]);
 }
 
-void Homology::findDualGenerators(CellComplex* cellComplex)
+void Homology::findCohomologyBasis(CellComplex* cellComplex)
 {
   bool ownComplex = false;
   if(cellComplex==NULL){
@@ -210,13 +212,13 @@ void Homology::findDualGenerators(CellComplex* cellComplex)
             cellComplex->getSize(3), cellComplex->getSize(2),
 	    cellComplex->getSize(1), cellComplex->getSize(0));
 
-  Msg::StatusBar(2, true, "Computing homology spaces...");
+  Msg::StatusBar(2, true, "Computing cohomology space basis ...");
   t1 = Cpu();
-  ChainComplex chains = ChainComplex(cellComplex);
-  chains.transposeHMatrices();
-  chains.computeHomology(true);
+  ChainComplex chainComplex = ChainComplex(cellComplex);
+  chainComplex.transposeHMatrices();
+  chainComplex.computeHomology(true);
   t2 = Cpu();
-  Msg::StatusBar(2, true, "Done computing homology spaces (%g s)", t2- t1);
+  Msg::StatusBar(2, true, "Done computing cohomology space basis (%g s)", t2- t1);
 
   int dim = cellComplex->getDim();
 
@@ -224,55 +226,45 @@ void Homology::findDualGenerators(CellComplex* cellComplex)
   for(int i = 0; i < 4; i++) HRank[i] = 0;
   for(int j = 3; j > -1; j--){
     std::string dimension = "";
-    convert(dim-j, dimension);
+    convert(j, dimension);
 
-    for(int i = 1; i <= chains.getBasisSize(j, 3); i++){
+    for(int i = 1; i <= chainComplex.getBasisSize(j, 3); i++){
 
       std::string generator = "";
       convert(i, generator);
 
       std::string name = "H" + dimension + "*" +
-	getDomainString(_domain, _subdomain) + generator;
-      std::map<Cell*, int, Less_Cell> protoChain;
-      chains.getBasisChain(protoChain, i, j, 3, _smoothen);
-      Chain* chain = new Chain(protoChain, cellComplex, ++_maxdomain, name,
-			       chains.getTorsion(j,i));
-      if(chain->getSize() == 0) {
-	delete chain;
-	--_maxdomain;
-	continue;
+	_getDomainString(_domain, _subdomain) + generator;
+      std::map<Cell*, int, Less_Cell> chain;
+      chainComplex.getBasisChain(chain, i, j, 3, _smoothen);
+      int torsion = chainComplex.getTorsion(j,i);
+      if(_eraseNullCells(chain)) {
+        if(!_save0N && (j != 0 && j != dim)) _createPhysicalGroup(chain, name);
+        HRank[j] = HRank[j] + 1;
+        if(torsion != 1){
+          Msg::Warning("H%d* %d has torsion coefficient %d!", j, i, torsion);
+        }
       }
-
-      HRank[dim-j] = HRank[dim-j] + 1;
-      if(chain->getTorsion() != 1){
-	Msg::Warning("H%d* %d has torsion coefficient %d!",
-		     dim-j, i, chain->getTorsion());
-      }
-      // FIXME: Cell* and CellComplex* pointers should not outlive
-      // the objects, don't store Chains containing them for now
-      //_basisChains[chain->createPGroup()] = chain;
-      if(!_save0N && (j != 0 && j != dim)) chain->createPGroup();
-      delete chain;
     }
   }
 
-  if(_fileName != "") writeGeneratorsMSH();
+  if(_fileName != "") writeBasisMSH();
 
   if(ownComplex) delete cellComplex;
 
-  Msg::Info("Ranks of homology spaces for the dual cell complex:");
+  Msg::Info("Ranks of cohomology spaces:");
   Msg::Info("H0* = %d", HRank[0]);
   Msg::Info("H1* = %d", HRank[1]);
   Msg::Info("H2* = %d", HRank[2]);
   Msg::Info("H3* = %d", HRank[3]);
-  if(omitted != 0) Msg::Info("The computation of %d highest dimension dual generators was omitted", omitted);
+  if(omitted != 0) Msg::Info("The computation of basis elements in the highest dimension was omitted");
 
   Msg::StatusBar(2, false, "H0*: %d, H1*: %d, H2*: %d, H3*: %d",
 		 HRank[0], HRank[1], HRank[2], HRank[3]);
 }
 
-std::string Homology::getDomainString(const std::vector<int>& domain,
-				      const std::vector<int>& subdomain)
+std::string Homology::_getDomainString(const std::vector<int>& domain,
+                                       const std::vector<int>& subdomain)
 {
   std::string domainString = "({";
   if(domain.empty()) domainString += "0";
@@ -304,7 +296,86 @@ std::string Homology::getDomainString(const std::vector<int>& domain,
   return domainString;
 }
 
-bool Homology::writeGeneratorsMSH(bool binary)
+int Homology::_eraseNullCells(std::map<Cell*, int, Less_Cell>& chain)
+{
+  std::vector<Cell*> toRemove;
+  for(citer cit = chain.begin(); cit != chain.end(); cit++){
+    if(cit->second == 0) toRemove.push_back(cit->first);
+  }
+  for(unsigned int i = 0; i < toRemove.size(); i++) chain.erase(toRemove[i]);
+  return chain.size();
+}
+
+void Homology::_createPhysicalGroup(std::map<Cell*, int, Less_Cell>& chain, std::string name)
+{
+  std::vector<MElement*> elements;
+  std::map<int, std::vector<double> > data;
+  MElementFactory factory;
+  int dim = 0;
+
+  typedef std::map<Cell*, int, Less_Cell>::iterator citer;
+  for(citer cit = chain.begin(); cit != chain.end(); cit++){
+    Cell* cell = cit->first;
+    int coeff = cit->second;
+    if(coeff == 0) continue;
+
+    std::vector<MVertex*> v;
+    cell->getMeshVertices(v);
+    dim = cell->getDim();
+
+    MElement* e = factory.create(cell->getTypeMSH(), v);
+    if(cell->getDim() > 0 && coeff < 0) e->revert(); // flip orientation
+    elements.push_back(e);
+
+    // if cell coefficient is other than -1 or 1, add multiple
+    // identical MElements to the physical group
+    for(int i = 1; i < abs(coeff); i++) {
+      MElement* ecopy = factory.create(cell->getTypeMSH(), v);
+      if(cell->getDim() > 0 && coeff < 0) ecopy->revert();
+      elements.push_back(ecopy);
+    }
+
+    std::vector<double> coeffs (1,abs(coeff));
+    data[e->getNum()] = coeffs;
+  }
+
+  GModel* m = this->getModel();
+  int max[4];
+  for(int i = 0; i < 4; i++)
+    max[i] = m->getMaxElementaryNumber(i);
+  int entityNum = *std::max_element(max,max+4) + 1;
+  for(int i = 0; i < 4; i++)
+    max[i] = m->getMaxPhysicalNumber(i);
+  int physicalNum = *std::max_element(max,max+4) + 1;
+
+  std::map<int, std::vector<MElement*> > entityMap;
+  entityMap[entityNum] = elements;
+  std::map<int, std::map<int, std::string> > physicalMap;
+  std::map<int, std::string> physicalInfo;
+  physicalInfo[physicalNum] = name;
+  physicalMap[entityNum] = physicalInfo;
+
+  if(!data.empty()){
+    m->storeChain(dim, entityMap, physicalMap);
+    m->setPhysicalName(name, dim, physicalNum);
+
+#if defined(HAVE_POST)
+    // create PView for instant visualization
+    std::string pnum = "";
+    convert(physicalNum, pnum);
+    std::string postname = pnum + ": " + name;
+    PView* view = new PView(postname, "ElementData", m, data, 0, 1);
+    // the user should be interested about the orientations
+    int size = 30;
+    PViewOptions* opt = view->getOptions();
+    if(opt->tangents == 0) opt->tangents = size;
+    if(opt->normals == 0) opt->normals = size;
+    view->setOptions(opt);
+#endif
+  }
+}
+
+bool Homology::writeBasisMSH(bool binary)
 {
   if(_fileName.empty()) return false;
   if(!_model->writeMSH(_fileName, 2.0, binary)) return false;
@@ -349,132 +420,6 @@ void Homology::storeCells(CellComplex* cellComplex, int dim)
 
   _model->storeChain(dim, entityMap, physicalMap);
   _model->setPhysicalName("Cell Complex", dim, physicalNum);
-}
-
-int Chain::writeChainMSH(const std::string &name)
-{
-  if(getSize() == 0) return 1;
-
-  FILE *fp = fopen(name.c_str(), "a");
-  if(!fp){
-    Msg::Error("Unable to open file '%s'", name.c_str());
-    return 0;
-  }
-
-  fprintf(fp, "\n$ElementData\n");
-
-  fprintf(fp, "1 \n");
-  fprintf(fp, "\"%s\" \n", getName().c_str());
-  fprintf(fp, "1 \n");
-  fprintf(fp, "0.0 \n");
-  fprintf(fp, "4 \n");
-  fprintf(fp, "0 \n");
-  fprintf(fp, "1 \n");
-  fprintf(fp, "%d \n", getSize());
-  fprintf(fp, "0 \n");
-
-  for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
-    Cell* cell = (*cit).first;
-    int coeff = (*cit).second;
-    fprintf(fp, "%d %d \n", cell->getIndex(), coeff );
-  }
-
-  fprintf(fp, "$EndElementData\n");
-  fclose(fp);
-
-  return 1;
-}
-
-int Chain::createPGroup()
-{
-  std::vector<MElement*> elements;
-  std::map<int, std::vector<double> > data;
-  MElementFactory factory;
-
-  for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
-    Cell* cell = (*cit).first;
-    int coeff = (*cit).second;
-    std::vector<MVertex*> v;
-    cell->getMeshVertices(v);
-
-    MElement* e = factory.create(cell->getTypeMSH(), v);
-    if(cell->getDim() > 0 && coeff < 0) e->revert(); // flip orientation
-    elements.push_back(e);
-
-    // if cell coefficient is other than -1 or 1, add multiple
-    // identical MElements to the physical group
-    for(int i = 1; i < abs(coeff); i++) {
-      MElement* ecopy = factory.create(cell->getTypeMSH(), v);
-      if(cell->getDim() > 0 && coeff < 0) ecopy->revert();
-      elements.push_back(ecopy);
-    }
-
-    std::vector<double> coeffs (1,abs(coeff));
-    data[e->getNum()] = coeffs;
-  }
-
-  int max[4];
-  for(int i = 0; i < 4; i++)
-    max[i] = this->getCellComplex()->getModel()->getMaxElementaryNumber(i);
-  int entityNum = *std::max_element(max,max+4) + 1;
-  for(int i = 0; i < 4; i++)
-    max[i] = this->getCellComplex()->getModel()->getMaxPhysicalNumber(i);
-  int physicalNum = *std::max_element(max,max+4) + 1;
-  setNum(physicalNum);
-
-  std::map<int, std::vector<MElement*> > entityMap;
-  entityMap[entityNum] = elements;
-  std::map<int, std::map<int, std::string> > physicalMap;
-  std::map<int, std::string> physicalInfo;
-  physicalInfo[physicalNum] = getName();
-  physicalMap[entityNum] = physicalInfo;
-
-  if(!data.empty()){
-    GModel* m = this->getCellComplex()->getModel();
-    m->storeChain(getDim(), entityMap, physicalMap);
-    m->setPhysicalName(getName(), getDim(), physicalNum);
-
-#if defined(HAVE_POST)
-    // create PView for instant visualization
-    std::string pnum = "";
-    convert(physicalNum, pnum);
-    std::string postname = pnum + ": " + getName();
-    PView* view = new PView(postname, "ElementData", m, data, 0, 1);
-    // the user should be interested about the orientations
-    int size = 30;
-    PViewOptions* opt = view->getOptions();
-    if(opt->tangents == 0) opt->tangents = size;
-    if(opt->normals == 0) opt->normals = size;
-    view->setOptions(opt);
-#endif
-  }
-
-  return physicalNum;
-}
-
-
-Chain::Chain(std::map<Cell*, int, Less_Cell>& chain,
-	     CellComplex* cellComplex, int num,
-	     std::string name, int torsion)
-{
-  _cells = chain;
-  if(!_cells.empty()) _dim = firstCell()->first->getDim();
-  else _dim = 0;
-  _name = name;
-  _num = num;
-  _cellComplex = cellComplex;
-  _torsion = torsion;
-  eraseNullCells();
-}
-
-void Chain::eraseNullCells()
-{
-  std::vector<Cell*> toRemove;
-  for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
-    if(cit->second == 0) toRemove.push_back(cit->first);
-  }
-  for(unsigned int i = 0; i < toRemove.size(); i++) _cells.erase(toRemove[i]);
-  return;
 }
 
 #endif
