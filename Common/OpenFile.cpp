@@ -395,20 +395,11 @@ int MergeFile(std::string fileName, bool warnIfMissing)
 
 #if defined(HAVE_FLTK) && defined(HAVE_POST)
   if(FlGui::available()){
-    bool newViews = numViewsBefore != (int)PView::list.size();
-    if(newViews){
-      // go directly to the first non-empty step
-      for(unsigned int i = 0; i < PView::list.size(); i++){
-        for(int j = 0; j < (int)opt_view_nb_timestep(i, GMSH_GET, 0); j++){
-          int step = (int)opt_view_timestep(i, GMSH_GET, 0);
-          if(PView::list[i]->getData()->hasTimeStep(step))
-            break;
-          else
-            opt_view_timestep(i, GMSH_SET | GMSH_GUI, step + 1);
-        }
-      }
-    }
-    FlGui::instance()->updateViews(newViews);
+    // go directly to the first non-empty step
+    for(unsigned int i = numViewsBefore; i < PView::list.size(); i++)
+      opt_view_timestep(i, GMSH_SET | GMSH_GUI,
+                        PView::list[i]->getData()->getFirstNonEmptyTimeStep());
+    FlGui::instance()->updateViews(numViewsBefore != (int)PView::list.size());
   }
 #endif
 
