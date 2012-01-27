@@ -35,6 +35,22 @@
 #include "ANN/ANN.h"
 #endif
 
+template<class t>
+class FieldCallbackGeneric : public FieldCallback {
+  t * _field;
+  void (t::*_callback)();
+  public :
+  void run()
+  {
+    (_field->*_callback)();
+  }
+  FieldCallbackGeneric( t *field, void (t::*callback)(), const std::string description) : FieldCallback(description)
+  {
+    _field = field;
+    _callback = callback;
+  }
+};
+
 Field::~Field()
 {
   for(std::map<std::string, FieldOption*>::iterator it = options.begin();
@@ -1019,13 +1035,15 @@ class MathEvalField : public Field
     }
   };
  public:
+  void myAction(){
+    printf("doing sthg \n");
+  }
   MathEvalField()
   {
     options["F"] = new FieldOptionString
       (f, "Mathematical function to evaluate.", &update_needed);
     f = "F2 + Sin(z)";
-    callbacks["test"] = new testAction(this, "description blabla \n"); 
-    //callbacks["test"] = new FieldCallbackGeneric<MathEvalField>(this, MathEvalField::myFunc, "description")
+    callbacks["test"] = new FieldCallbackGeneric<MathEvalField>(this, &MathEvalField::myAction, "description blabla"); 
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
@@ -1036,9 +1054,6 @@ class MathEvalField : public Field
       update_needed = false;
     }
     return expr.evaluate(x, y, z);
-  }
-  void myAction(){
-    printf("doing sthg \n");
   }
   const char *getName()
   {
