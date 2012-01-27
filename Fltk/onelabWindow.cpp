@@ -277,13 +277,18 @@ bool onelab::localNetworkClient::run()
       {
         if(!FlGui::instance()->onelab->mergeAuto()) break;
         int n = PView::list.size();
-        for(int i = 0; i < n; i++){
-          if(PView::list[i]->getData()->getFileName().substr(0, 6) != "OneLab")
-            PView::list[i]->getOptions()->visible = 0;
-        }
         MergeFile(message);
         if(FlGui::instance()->onelab->hideNewViews()){
-          for(int i = n; i < PView::list.size(); i++){
+          // hide everything except the onelab X-Y graphs
+          for(int i = 0; i < PView::list.size(); i++){
+            if(PView::list[i]->getData()->getFileName().substr(0, 6) != "OneLab")
+              PView::list[i]->getOptions()->visible = 0;
+          }
+        }
+        else if(n != PView::list.size()){
+          // if we created new views, assume we only want to see those (and the
+          // onelab X-Y graphs)
+          for(int i = 0; i < n; i++){
             if(PView::list[i]->getData()->getFileName().substr(0, 6) != "OneLab")
               PView::list[i]->getOptions()->visible = 0;
           }
@@ -782,6 +787,14 @@ static void onelab_input_choice_file_edit_cb(Fl_Widget *w, void *data)
   SystemCall(ReplaceSubString("%s", file, prog));
 }
 
+static void onelab_input_choice_file_merge_cb(Fl_Widget *w, void *data)
+{
+  Fl_Input_Choice *but = (Fl_Input_Choice*)w->parent();
+  std::string file = FixWindowsPath(but->value());
+  MergeFile(file);
+  drawContext::global()->draw();
+}
+
 static void onelab_choose_executable_cb(Fl_Widget *w, void *data)
 {
   onelab::localNetworkClient *c = (onelab::localNetworkClient*)data;
@@ -946,6 +959,10 @@ void onelabWindow::rebuildTree()
       menu.push_back(it);
       Fl_Menu_Item it2 = {"Edit...", 0, onelab_input_choice_file_edit_cb, (void*)n};
       menu.push_back(it2);
+      if(GuessFileFormatFromFileName(strings[i].getValue()) >= 0){
+        Fl_Menu_Item it3 = {"Merge...", 0, onelab_input_choice_file_merge_cb, (void*)n};
+        menu.push_back(it3);
+      }
     }
     Fl_Menu_Item it = {0};
     menu.push_back(it);
