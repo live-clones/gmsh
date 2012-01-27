@@ -2749,6 +2749,8 @@ void GModel::addHomologyRequest(const std::string &type, std::vector<int> &domai
 
 void GModel::computeHomology()
 {
+  if(_homologyRequests.empty()) return;
+
 #if defined(HAVE_KBIPACK)
   // find unique domain/subdomain requests
   typedef std::pair<std::vector<int>, std::vector<int> > dpair;
