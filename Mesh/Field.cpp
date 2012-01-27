@@ -1216,6 +1216,7 @@ class PostViewField : public Field
                  " want to use a list-based view (.pos file) instead");
       return 0;
     }
+    return v;
   }
   virtual bool isotropic () const
   {
