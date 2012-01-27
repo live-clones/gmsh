@@ -35,13 +35,14 @@
 #include "ANN/ANN.h"
 #endif
 
-Field::~Field() {
-  for(std::map<std::string, FieldOption*>::iterator it = options.begin(); it != options.end(); ++it) {
+Field::~Field()
+{
+  for(std::map<std::string, FieldOption*>::iterator it = options.begin();
+      it != options.end(); ++it)
     delete it->second;
-  }
-  for(std::map<std::string, FieldCallback*>::iterator it = callbacks.begin(); it != callbacks.end(); ++it) {
+  for(std::map<std::string, FieldCallback*>::iterator it = callbacks.begin();
+      it != callbacks.end(); ++it)
     delete it->second;
-  }
 }
 
 void FieldManager::reset()
@@ -127,7 +128,7 @@ class StructuredField : public Field
     text_format = false;
     options["TextFormat"] = new FieldOptionBool
       (text_format, "True for ASCII input files, false for binary files (4 bite "
-       "signed integers for n, double precision floating points for v, D and O)", 
+       "signed integers for n, double precision floating points for v, D and O)",
        &update_needed);
     data = 0;
   }
@@ -331,7 +332,7 @@ class LonLatField : public Field
       (iField, "Index of the field to evaluate.");
     fromStereo = 0;
     stereoRadius = 6371e3;
-    
+
     options["FromStereo"] = new FieldOptionInt
       (fromStereo, "if = 1, the mesh is in stereographic coordinates. "
        "xi = 2Rx/(R+z),  eta = 2Ry/(R+z)");
@@ -388,14 +389,14 @@ class BoxField : public Field
     options["ZMin"] = new FieldOptionDouble
       (z_min, "Minimum Z coordinate of the box");
     options["ZMax"] = new FieldOptionDouble
-      (z_max, "Maximum Z coordinate of the box");    
+      (z_max, "Maximum Z coordinate of the box");
   }
   const char *getName()
   {
     return "Box";
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
-  {    
+  {
     return (x <= x_max && x >= x_min && y <= y_max && y >= y_min && z <= z_max
             && z >= z_min) ? v_in : v_out;
   }
@@ -407,7 +408,7 @@ class CylinderField : public Field
   double xc,yc,zc;
   double xa,ya,za;
   double R;
-  
+
  public:
   std::string getDescription()
   {
@@ -421,7 +422,7 @@ class CylinderField : public Field
   {
     v_in = v_out = xc = yc = zc = xa = ya = R = 0;
     za = 1.;
-    
+
     options["VIn"] = new FieldOptionDouble
       (v_in, "Value inside the cylinder");
     options["VOut"] = new FieldOptionDouble
@@ -434,7 +435,7 @@ class CylinderField : public Field
     options["ZCenter"] = new FieldOptionDouble
       (zc, "Z coordinate of the cylinder center");
 
-    
+
     options["XAxis"] = new FieldOptionDouble
       (xa, "X component of the cylinder axis");
     options["YAxis"] = new FieldOptionDouble
@@ -443,26 +444,121 @@ class CylinderField : public Field
       (za, "Z component of the cylinder axis");
 
     options["Radius"] = new FieldOptionDouble
-      (R,"Radius");    
-    
+      (R,"Radius");
+
   }
   const char *getName()
   {
     return "Cylinder";
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
-  {    
+  {
     double dx = x-xc;
     double dy = y-yc;
     double dz = z-zc;
-    
+
     double adx = (xa * dx + ya * dy + za * dz)/(xa*xa + ya*ya + za*za);
-    
+
     dx -= adx * xa;
     dy -= adx * ya;
     dz -= adx * za;
-    
+
     return ((dx*dx + dy*dy + dz*dz < R*R) && fabs(adx) < 1) ? v_in : v_out;
+  }
+};
+
+class FrustumField : public Field
+{
+  double x1,y1,z1;
+  double x2,y2,z2;
+  double r1i,r1o,r2i,r2o;
+  double v1i,v1o,v2i,v2o;
+
+ public:
+  std::string getDescription()
+  {
+    return "This field is an extended cylinder with inner (i) and outer (o) radiuses"
+      "on both endpoints (1 and 2). Length scale is bilinearly interpolated between"
+      "these locations (inner and outer radiuses, endpoints 1 and 2)"
+      "The field values for a point P are given by :"
+      "  u = P1P.P1P2/||P1P2|| "
+      "  r = || P1P - u*P1P2 || "
+      "  Ri = (1-u)*R1i + u*R2i "
+      "  Ro = (1-u)*R1o + u*R2o "
+      "  v = (r-Ri)/(Ro-Ri)"
+      "  lc = (1-v)*( (1-u)*v1i + u*v2i ) + v*( (1-u)*v1o + u*v2o )"
+      "    where (u,v) in [0,1]x[0,1]";
+  }
+  FrustumField()
+  {
+    x1 = y1 = z1 = 0.;
+    x2 = y2 = 0.;
+    z1 = 1.;
+    r1i = r2i = 0.;
+    r1o = r2o = 1.;
+    v1i = v2i = 0.1;
+    v1o = v2o = 1.;
+
+    options["X1"] = new FieldOptionDouble
+      (x1, "X coordinate of endpoint 1");
+    options["Y1"] = new FieldOptionDouble
+      (y1, "Y coordinate of endpoint 1");
+    options["Z1"] = new FieldOptionDouble
+      (z1, "Z coordinate of endpoint 1");
+    options["X2"] = new FieldOptionDouble
+      (x2, "X coordinate of endpoint 2");
+    options["Y2"] = new FieldOptionDouble
+      (y2, "Y coordinate of endpoint 2");
+    options["Z2"] = new FieldOptionDouble
+      (z2, "Z coordinate of endpoint 2");
+
+    options["R1_inner"] = new FieldOptionDouble
+      (r1i, "Inner radius of Frustum at endpoint 1");
+    options["R1_outer"] = new FieldOptionDouble
+      (r1o, "Outer radius of Frustum at endpoint 1");
+    options["R2_inner"] = new FieldOptionDouble
+      (r2i, "Inner radius of Frustum at endpoint 2");
+    options["R2_outer"] = new FieldOptionDouble
+      (r2o, "Outer radius of Frustum at endpoint 2");
+
+    options["V1_inner"] = new FieldOptionDouble
+      (v1i, "Element size at point 1, inner radius");
+    options["V1_outer"] = new FieldOptionDouble
+      (v1o, "Element size at point 1, outer radius");
+    options["V2_inner"] = new FieldOptionDouble
+      (v2i, "Element size at point 2, inner radius");
+    options["V2_outer"] = new FieldOptionDouble
+      (v2o, "Element size at point 2, outer radius");
+
+  }
+  const char *getName()
+  {
+    return "Frustum";
+  }
+  double operator() (double x, double y, double z, GEntity *ge=0)
+  {
+    double dx = x-x1;
+    double dy = y-y1;
+    double dz = z-z1;
+    double x12 = x2-x1;
+    double y12 = y2-y1;
+    double z12 = z2-z1;
+    double l12 = sqrt( x12*x12 + y12*y12 + z12*z12 );
+
+    double l = (dx*x12 + dy*y12 + dz*z12)/l12 ;
+    double r = sqrt( dx*dx+dy*dy+dz*dz - l*l );
+
+    double u = l/l12 ;  // u varies between 0 (P1) and 1 (P2)
+    double ri = (1-u)*r1i + u*r2i ;
+    double ro = (1-u)*r1o + u*r2o ;
+    double v = (r-ri)/(ro-ri) ;  // v varies between 0 (inner) and 1 (outer)
+
+    double lc = MAX_LC ;
+    if( u>=0 && u<=1 && v>=0 && v<=1 ){
+      lc = (1-v)*( (1-u)*v1i + u*v2i ) + v*( (1-u)*v1o + u*v2o );
+    }
+    return lc;
+
   }
 };
 
@@ -636,7 +732,7 @@ class CurvatureField : public Field
     grad_norm(*field, x, y - delta / 2, z, grad[3]);
     grad_norm(*field, x, y, z + delta / 2, grad[4]);
     grad_norm(*field, x, y, z - delta / 2, grad[5]);
-    return (grad[0][0] - grad[1][0] + grad[2][1] - 
+    return (grad[0][0] - grad[1][0] + grad[2][1] -
             grad[3][1] + grad[4][2] - grad[5][2]) / delta;
   }
 };
@@ -791,8 +887,8 @@ class MathEvalExpression
     }
     std::vector<std::string> expressions(1), variables(3 + _fields.size());
     expressions[0] = f;
-    variables[0] = "x"; 
-    variables[1] = "y"; 
+    variables[0] = "x";
+    variables[1] = "y";
     variables[2] = "z";
     i = 3;
     for(std::set<int>::iterator it = _fields.begin(); it != _fields.end(); it++){
@@ -821,7 +917,7 @@ class MathEvalExpression
       Field *field = GModel::current()->getFields()->get(*it);
       values[i++] = field ? (*field)(x, y, z) : MAX_LC;
     }
-    if(_f->eval(values, res)) 
+    if(_f->eval(values, res))
       return res[0];
     else
       return MAX_LC;
@@ -836,10 +932,10 @@ class MathEvalExpressionAniso
  public:
   MathEvalExpressionAniso()
   {
-    for(int i = 0; i < 6; i++) _f[i] = 0; 
+    for(int i = 0; i < 6; i++) _f[i] = 0;
   }
   ~MathEvalExpressionAniso()
-  { 
+  {
     for(int i = 0; i < 6; i++) if(_f[i]) delete _f[i];
   }
   bool set_function(int iFunction, const std::string &f)
@@ -861,11 +957,11 @@ class MathEvalExpressionAniso
     }
     std::vector<std::string> expressions(1), variables(3 + _fields[iFunction].size());
     expressions[0] = f;
-    variables[0] = "x"; 
-    variables[1] = "y"; 
+    variables[0] = "x";
+    variables[1] = "y";
     variables[2] = "z";
     i = 3;
-    for(std::set<int>::iterator it = _fields[iFunction].begin(); 
+    for(std::set<int>::iterator it = _fields[iFunction].begin();
         it != _fields[iFunction].end(); it++){
       std::ostringstream sstream;
       sstream << "F" << *it;
@@ -892,20 +988,20 @@ class MathEvalExpressionAniso
 	values[1] = y;
 	values[2] = z;
 	int i = 3;
-	for(std::set<int>::iterator it = _fields[iFunction].begin(); 
+	for(std::set<int>::iterator it = _fields[iFunction].begin();
             it != _fields[iFunction].end(); it++){
 	  Field *field = GModel::current()->getFields()->get(*it);
 	  values[i++] = field ? (*field)(x, y, z) : MAX_LC;
 	}
-	if(_f[iFunction]->eval(values, res)) 
+	if(_f[iFunction]->eval(values, res))
 	  metr(index[iFunction][0],index[iFunction][1]) =  res[0];
 	else
 	  metr(index[iFunction][0],index[iFunction][1]) = MAX_LC;
       }
     }
   }
-};  
-  
+};
+
 class MathEvalField : public Field
 {
   MathEvalExpression expr;
@@ -1005,7 +1101,7 @@ class MathEvalFieldAniso : public Field
       }
       update_needed = false;
     }
-    SMetric3 metr; 
+    SMetric3 metr;
     expr.evaluate(x, y, z, metr);
     return metr(0, 0);
   }
@@ -1106,7 +1202,7 @@ class PostViewField : public Field
       return 0;
     }
   }
-  virtual bool isotropic () const 
+  virtual bool isotropic () const
   {
     PView *v = getView();
     if(v && v->getData()->getNumTensors()) return false;
@@ -1306,7 +1402,7 @@ class RestrictField : public Field
 
 #if defined(HAVE_ANN)
 struct AttractorInfo{
-  AttractorInfo (int a=0, int b=0, double c=0, double d=0) 
+  AttractorInfo (int a=0, int b=0, double c=0, double d=0)
     : ent(a),dim(b),u(c),v(d) {
   }
   int ent,dim;
@@ -1320,7 +1416,7 @@ class AttractorAnisoCurveField : public Field {
   ANNdistArray dist;
   std::list<int> edges_id;
   double dMin, dMax, lMinTangent, lMaxTangent, lMinNormal, lMaxNormal;
-  int n_nodes_by_edge;  
+  int n_nodes_by_edge;
   std::vector<SVector3> tg;
   public:
   AttractorAnisoCurveField() : kdtree(0), zeronodes(0)
@@ -1432,7 +1528,7 @@ class AttractorAnisoCurveField : public Field {
     double xyz[3] = { x, y, z };
     kdtree->annkSearch(xyz, 1, index, dist);
     double d = sqrt(dist[0]);
-    double lTg = d < dMin ? lMinTangent : d > dMax ? lMaxTangent : 
+    double lTg = d < dMin ? lMinTangent : d > dMax ? lMaxTangent :
       lMinTangent + (lMaxTangent - lMinTangent) * (d - dMin) / (dMax - dMin);
     double lN = d < dMin ? lMinNormal : d > dMax ? lMaxNormal :
       lMinNormal + (lMaxNormal - lMinNormal) * (d - dMin) / (dMax - dMin);
@@ -1463,7 +1559,7 @@ class AttractorField : public Field
   std::vector<AttractorInfo> _infos;
   int _xFieldId, _yFieldId, _zFieldId;
   Field *_xField, *_yField, *_zField;
-  int n_nodes_by_edge;  
+  int n_nodes_by_edge;
  public:
   AttractorField(int dim, int tag, int nbe)
     : kdtree(0), zeronodes(0), n_nodes_by_edge(nbe)
@@ -1524,7 +1620,7 @@ class AttractorField : public Field
     cy = _yField ? (*_yField)(x, y, z, ge) : y;
     cz = _zField ? (*_zField)(x, y, z, ge) : z;
   }
-  std::pair<AttractorInfo,SPoint3> getAttractorInfo() const 
+  std::pair<AttractorInfo,SPoint3> getAttractorInfo() const
   {
     return std::make_pair(_infos[index[0]], SPoint3(zeronodes[index[0]][0],
                                                     zeronodes[index[0]][1],
@@ -1541,7 +1637,7 @@ class AttractorField : public Field
         annDeallocPts(zeronodes);
         delete kdtree;
       }
-      int totpoints = nodes_id.size() + (n_nodes_by_edge-2) * edges_id.size() + 
+      int totpoints = nodes_id.size() + (n_nodes_by_edge-2) * edges_id.size() +
         n_nodes_by_edge * n_nodes_by_edge * faces_id.size();
       if(totpoints){
         zeronodes = annAllocPts(totpoints, 3);
@@ -1568,7 +1664,7 @@ class AttractorField : public Field
       for(std::list<int>::iterator it = edges_id.begin();
           it != edges_id.end(); ++it) {
         Curve *c = FindCurve(*it);
-	GEdge *e = GModel::current()->getEdgeByTag(*it);	
+	GEdge *e = GModel::current()->getEdgeByTag(*it);
         if(c && !e) {
           for(int i = 1; i < n_nodes_by_edge -1 ; i++) {
             double u = (double)i / (n_nodes_by_edge - 1);
@@ -1622,7 +1718,7 @@ class AttractorField : public Field
                 double t1 = b1.low() + u * (b1.high() - b1.low());
                 double t2 = b2.low() + v * (b2.high() - b2.low());
                 GPoint gp = f->point(t1, t2);
-                getCoord(gp.x(), gp.y(), gp.z(), zeronodes[k][0], 
+                getCoord(gp.x(), gp.y(), gp.z(), zeronodes[k][0],
                          zeronodes[k][1], zeronodes[k][2], f);
 		_infos[k++] = AttractorInfo(*it,2,u,v);
               }
@@ -1655,8 +1751,8 @@ BoundaryLayerField::BoundaryLayerField()
   hwall_n = .1;
   hwall_t = .5;
   hfar = 1;
-  ratio = 1.1;    
-  thickness = 1.e-2;    
+  ratio = 1.1;
+  thickness = 1.e-2;
   options["NodesList"] = new FieldOptionList
     (nodes_id, "Indices of nodes in the geometric model", &update_needed);
   options["EdgesList"] = new FieldOptionList
@@ -1701,27 +1797,27 @@ double BoundaryLayerField::operator() (double x, double y, double z, GEntity *ge
 }
 
 void BoundaryLayerField::operator() (AttractorField *cc, double dist,
-                                     double x, double y, double z, 
+                                     double x, double y, double z,
                                      SMetric3 &metr, GEntity *ge)
 {
   // dist = hwall -> lc = hwall * ratio
   // dist = hwall (1+ratio) -> lc = hwall ratio ^ 2
   // dist = hwall (1+ratio+ratio^2) -> lc = hwall ratio ^ 3
-  // dist = hwall (1+ratio+ratio^2+...+ratio^{m-1}) = (ratio^{m} - 1)/(ratio-1) 
+  // dist = hwall (1+ratio+ratio^2+...+ratio^{m-1}) = (ratio^{m} - 1)/(ratio-1)
   // -> lc = hwall ratio ^ m
   // -> find m
   // dist/hwall = (ratio^{m} - 1)/(ratio-1)
   // (dist/hwall)*(ratio-1) + 1 = ratio^{m}
-  // lc =  dist*(ratio-1) + hwall 
+  // lc =  dist*(ratio-1) + hwall
 
   const double ll1   = dist*(ratio-1) + hwall_n;
   double lc_n  = std::min(ll1,hfar);
   const double ll2   = dist*(ratio-1) + hwall_t;
   double lc_t  = std::min(lc_n*CTX::instance()->mesh.anisoMax, std::min(ll2,hfar));
-  
+
   SVector3 t1,t2,t3;
   double L1,L2,L3;
-  
+
   std::pair<AttractorInfo,SPoint3> pp = cc->getAttractorInfo();
   if (pp.first.dim ==0){
     L1 = lc_n;
@@ -1747,7 +1843,7 @@ void BoundaryLayerField::operator() (AttractorField *cc, double dist,
   }
   else if (pp.first.dim ==1){
     GEdge *e = GModel::current()->getEdgeByTag(pp.first.ent);
-    
+
     // the tangent size at this point is the size of the
     // 1D mesh at this point !
     // hack : use curvature
@@ -1759,8 +1855,8 @@ void BoundaryLayerField::operator() (AttractorField *cc, double dist,
       double lc_tb  = std::min(lc_n*CTX::instance()->mesh.anisoMax, std::min(ll2b,hfar));
       lc_t = std::min(lc_t,lc_tb);
       }
-      */      
-    
+      */
+
     if (dist < hwall_t){
       L1 = lc_t;
       L2 = lc_n;
@@ -1793,12 +1889,12 @@ void BoundaryLayerField::operator() (AttractorField *cc, double dist,
       t2.normalize();
       t3 = crossprod(t1,t2);
       t3.normalize();
-      t1 = crossprod(t3,t2);	  
+      t1 = crossprod(t3,t2);
     }
   }
   else {
     GFace *gf = GModel::current()->getFaceByTag(pp.first.ent);
-    
+
     if (dist < hwall_t){
       L1 = lc_n;
       L2 = lc_t;
@@ -1831,13 +1927,13 @@ void BoundaryLayerField::operator() (AttractorField *cc, double dist,
       t2.normalize();
       t3 = crossprod(t1,t2);
       t3.normalize();
-      t1 = crossprod(t3,t2);	  
-    }	
+      t1 = crossprod(t3,t2);
+    }
   }
   metr  = SMetric3(1./(L1*L1), 1./(L2*L2), 1./(L3*L3), t1, t2, t3);
 }
 
-void BoundaryLayerField::operator() (double x, double y, double z, 
+void BoundaryLayerField::operator() (double x, double y, double z,
                                      SMetric3 &metr, GEntity *ge)
 {
   if (update_needed){
@@ -1866,7 +1962,7 @@ void BoundaryLayerField::operator() (double x, double y, double z,
     SPoint3 CLOSEST= (*it)->getAttractorInfo().second;
 
     SMetric3 localMetric;
-    (*this)(*it, cdist,x, y, z, localMetric, ge);      
+    (*this)(*it, cdist,x, y, z, localMetric, ge);
     hop.push_back(localMetric);
     //v = intersection(v,localMetric);
     if (cdist < current_distance){
@@ -1901,6 +1997,7 @@ FieldManager::FieldManager()
 #endif
   map_type_name["Box"] = new FieldFactoryT<BoxField>();
   map_type_name["Cylinder"] = new FieldFactoryT<CylinderField>();
+  map_type_name["Frustum"] = new FieldFactoryT<FrustumField>();
   map_type_name["LonLat"] = new FieldFactoryT<LonLatField>();
 #if defined(HAVE_POST)
   map_type_name["PostView"] = new FieldFactoryT<PostViewField>();
@@ -1928,7 +2025,7 @@ FieldManager::FieldManager()
 
 FieldManager::~FieldManager()
 {
-  for(std::map<std::string, FieldFactory*>::iterator it = map_type_name.begin(); 
+  for(std::map<std::string, FieldFactory*>::iterator it = map_type_name.begin();
       it != map_type_name.end(); it++)
     delete it->second;
 }
