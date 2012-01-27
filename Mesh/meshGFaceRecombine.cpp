@@ -237,6 +237,50 @@ bool Recombine2D::recombine()
   return 1;
 }
 
+bool Recombine2D::recombine()
+{
+  Rec2DAction *nextAction;
+  while (nextAction = Rec2DData::getBestAction()) {
+#ifdef REC2D_DRAW
+    FlGui::instance()->check();
+    double time = Cpu();
+    nextAction->color(0, 0, 200);
+    CTX::instance()->mesh.changed = (ENT_ALL);
+    drawContext::global()->draw();
+#endif
+    
+    if (!_remainAllQuad(nextAction)) {
+      nextAction->color(190, 0, 0);
+      delete nextAction;
+      continue;
+    }
+    ++_numChange;
+    std::vector<Rec2DVertex*> newPar;
+    nextAction->apply(newPar);
+    
+    // forall v in newPar : check obsoletes action;
+    
+#ifdef REC2D_DRAW
+    _gf->triangles = _data->_tri;
+    _gf->quadrangles = _data->_quad;
+    CTX::instance()->mesh.changed = (ENT_ALL);
+    drawContext::global()->draw();
+    while (Cpu()-time < REC2D_WAIT_TIME)
+      FlGui::instance()->check();
+#endif
+    
+    delete nextAction;
+  }
+  
+  _data->printState();
+#ifdef REC2D_SMOOTH
+    laplaceSmoothing(_gf,100);
+#endif
+    CTX::instance()->mesh.changed = (ENT_ALL);
+    drawContext::global()->draw();
+  return 1;
+}
+
 double Recombine2D::_geomAngle(MVertex *v,
                                std::vector<GEdge*> &gEdge,
                                std::vector<MElement*> &elem) //*
@@ -877,6 +921,61 @@ void Rec2DTwoTri2Quad::color(int a, int b, int c)
 }
 
 void Rec2DTwoTri2Quad::apply(std::vector<Rec2DVertex*> &newPar)
+{
+  if (isObsolete()) {
+    Msg::Error("[Rec2DTwoTri2Quad] No way ! I won't apply ! Find someone else...");
+    return;
+  }
+  
+  int min = Rec2DData::getNewParity(), index = -1;
+  for (int i = 0; i < 4; ++i) {
+    if (_vertices[i]->getParity() && min > _vertices[i]->getParity()) {
+      min = _vertices[i]->getParity();
+      index = i;
+    }
+  }
+  if (index == -1) {
+    _vertices[0]->setParity(min);
+    _vertices[1]->setParity(min);
+    _vertices[2]->setParity(min+1);
+    _vertices[3]->setParity(min+1);
+  }
+  else {
+    for (int i = 0; i < 4; i += 2) {
+      int par;
+      if ((index/2) * 2 == i)
+        par = min;
+      else
+        par = otherParity(min);
+      for (int j = 0; j < 2; ++j) {
+        if (!_vertices[i+j]->getParity())
+          _vertices[i+j]->setParity(par);
+        else if (_vertices[i+j]->getParity() != par &&
+                 _vertices[i+j]->getParity() != otherParity(par))
+          Rec2DData::associateParity(_vertices[i+j]->getParity(), par);
+      }
+    }
+  }
+  
+  _triangles[0]->remove(this);
+  _triangles[1]->remove(this);
+  
+  std::vector<Rec2DAction*> actions;
+  _triangles[0]->getUniqueActions(actions);
+  _triangles[1]->getUniqueActions(actions);
+  for (unsigned int i = 0; i < actions.size(); ++i)
+    delete actions[i];
+  
+  delete _triangles[0];
+  delete _triangles[1];
+  _triangles[0] = NULL;
+  _triangles[1] = NULL;
+  delete _edges[4];
+  
+  /*new Rec2DCollapse(*/new Rec2DElement(_edges)/*)*/;
+}
+
+void Rec2DTwoTri2Quad::choose()
 {
   if (isObsolete()) {
     Msg::Error("[Rec2DTwoTri2Quad] No way ! I won't apply ! Find someone else...");
@@ -1744,4 +1843,31 @@ MQuadrangle* Rec2DElement::_createQuad() const
   return new MQuadrangle(v1, v2, v3, v4);
 }
 
+
+/**  Rec2DNode  **/
+/*****************/
+Rec2DNode::Rec2DNode(Rec2DNode *father, Rec2DEction *ra, double &bestEndGlobVal)
+: _father(father), _ra(ra), _son0(NULL), _son1(NULL), _son2(NULL),
+  _globalValue(.0), _bestEndGlobVal(.0)
+{
+  int parities[4];
+  _ra.choose(parities);
+  
+  double 2;
+  int k = 0;
+  Rec2DElement *rel = Recombine2D::nextTreeActions(_ra);
+  for (int i = 0; i < rel->getNumActions(); ++i) {
+    if (!rel->getAction(i)->is'Obsolete'()) {
+      son[k] = new Rec2DNode(this, rel->getAction(i), endGlobValSon);
+      _bestEndGlobVal = max(_bestEndGlobVal, endGlobValSon);
+      ++k;
+    }
+  }
+  
+  if (k == 0) {
+    Rec2DData::addEndNode(this);
+  }
+  bestEndGlobVal = _bestEndGlobVal;
+  _ra.revert(parities);
+}
 

@@ -46,6 +46,7 @@ class Recombine2D {
     ~Recombine2D();
     
     bool recombine();
+    bool developTree();
     
     static inline GFace* getGFace() {return _current->_gf;}
     static inline int getNumChange() {return _current->_numChange;}
@@ -349,6 +350,17 @@ class Rec2DElement {
     
   private :
     MQuadrangle* _createQuad() const;
+};
+
+class Rec2DNode {
+  private :
+    Rec2DNode *_father;
+    Rec2DNode *_son0, *_son1, *_son2;
+    Rec2DAction *_ra;
+    double _globalValue, _bestEndGlobVal;
+    
+  public :
+    Rec2DNode(Rec2DAction*);
 };
 
 #endif
