@@ -593,14 +593,16 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
     _onelabClient = c;
     _client = c->getGmshClient();
 
+    onelab::number o5(name + "/UseCommandLine",1);
+    o5.setVisible(false);
     onelab::string o(name + "/FileExtension", ".geo");
-    //o.setVisible(false);
+    o.setVisible(false);
     _onelabClient->set(o);
     onelab::string o3(name + "/9CheckCommand", "-");
-    //o3.setVisible(false);
+    o3.setVisible(false);
     _onelabClient->set(o3);
     onelab::string o4(name + "/9ComputeCommand", "-3");
-    //o4.setVisible(false);
+    o4.setVisible(false);
     _onelabClient->set(o4);
     std::vector<onelab::string> ps;
     _onelabClient->get(ps, name + "/Action");
