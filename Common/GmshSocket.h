@@ -409,7 +409,7 @@ class GmshServer : public GmshSocket{
     }
 
     // wait until we get data
-    int ret = NonBlockingWait(tmpsock, 0.5, timeout);
+    int ret = NonBlockingWait(tmpsock, 0.001, timeout);
     if(ret){
       CloseSocket(tmpsock);
       if(ret == 2){
