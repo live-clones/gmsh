@@ -233,6 +233,7 @@ namespace onelab{
       setMax(p.getMax());
       setStep(p.getStep());
       setChoices(p.getChoices());
+      setVisible(p.getVisible());// FIXME Why not?
     }
     std::string toChar() const
     {
@@ -296,6 +297,7 @@ namespace onelab{
         setChanged(true);
       }
       setChoices(p.getChoices());
+      setVisible(p.getVisible());// FIXME Why not?
     }
     std::string toChar() const
     {
