@@ -14,7 +14,7 @@ CellComplex::CellComplex(GModel* model,
                          bool saveOriginalComplex) :
   _model(model), _dim(0), _simplicial(true), _saveorig(saveOriginalComplex)
 {
-
+  _deleteCount = 0;
   _insertCells(subdomainElements, 1);
   _insertCells(domainElements, 0);
 
@@ -76,22 +76,31 @@ CellComplex::~CellComplex()
       for(citer cit = _ocells[i].begin(); cit != _ocells[i].end(); cit++){
         Cell* cell = *cit;
         delete cell;
+        _deleteCount++;
       }
     }
     else {
       for(citer cit = _cells[i].begin(); cit != _cells[i].end(); cit++){
         Cell* cell = *cit;
         delete cell;
+        _deleteCount++;
       }
     }
   }
-  for(unsigned int i = 0; i < _newcells.size(); i++) delete _newcells.at(i);
-  for(unsigned int i = 0; i < _removedcells.size(); i++) delete _removedcells.at(i);
+  for(unsigned int i = 0; i < _newcells.size(); i++) {
+    delete _newcells.at(i);
+    _deleteCount++;
+  }
+  for(unsigned int i = 0; i < _removedcells.size(); i++) {
+    delete _removedcells.at(i);
+    _deleteCount++;
+  }
+  Msg::Debug("Total number of cells created: %d", _deleteCount);
 }
 
 void CellComplex::insertCell(Cell* cell)
 {
-  _newcells.push_back(cell);
+  if(_saveorig) _newcells.push_back(cell);
   std::pair<citer, bool> insertInfo = _cells[cell->getDim()].insert(cell);
   if(!insertInfo.second){
     Msg::Debug("Cell not inserted");
@@ -103,35 +112,26 @@ void CellComplex::insertCell(Cell* cell)
 
 void CellComplex::removeCell(Cell* cell, bool other)
 {
-  //if(!hasCell(cell)) return;
   std::map<Cell*, short int, Less_Cell > coboundary;
   cell->getCoboundary(coboundary);
   std::map<Cell*, short int, Less_Cell > boundary;
   cell->getBoundary(boundary);
 
-  for( std::map<Cell*, short int, Less_Cell>::iterator it = coboundary.begin(); it != coboundary.end(); it++){
+  for(std::map<Cell*, short int, Less_Cell>::iterator it =
+        coboundary.begin(); it != coboundary.end(); it++){
     Cell* cbdCell = (*it).first;
     cbdCell->removeBoundaryCell(cell, other);
   }
 
-  for( std::map<Cell*, short int, Less_Cell>::iterator it = boundary.begin(); it != boundary.end(); it++){
+  for(std::map<Cell*, short int, Less_Cell>::iterator it =
+        boundary.begin(); it != boundary.end(); it++){
     Cell* bdCell = (*it).first;
     bdCell->removeCoboundaryCell(cell, other);
   }
 
-  /* for(Cell::biter it = cell->firstCoboundary(); it != cell->lastCoboundary(); it++){
-    Cell* cbdCell = (*it).first;
-    cbdCell->removeBoundaryCell(cell, false);
-  }
-
-  for(Cell::biter it = cell->firstBoundary(); it != cell->lastBoundary(); it++){
-    Cell* bdCell = (*it).first;
-    bdCell->removeCoboundaryCell(cell, false);
-    }*/
-
   int erased = _cells[cell->getDim()].erase(cell);
   if(!erased) Msg::Debug("Tried to remove a cell from the cell complex \n");
-  if(!_saveorig && !cell->isCombined()) _removedcells.push_back(cell);
+  if(!_saveorig) _removedcells.push_back(cell);
 }
 
 void CellComplex::enqueueCells(std::map<Cell*, short int, Less_Cell>& cells,
@@ -362,7 +362,6 @@ int CellComplex::coreduceComplex(bool docombine, bool omit)
   if(docombine) cocombine(2);
   coreduction(3, false, empty);
   coherent();
-
   Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",
             getSize(3), getSize(2), getSize(1), getSize(0));
 
@@ -573,11 +572,15 @@ bool CellComplex::restoreComplex()
     for(unsigned int i = 0; i < _newcells.size(); i++){
       Cell* cell = _newcells.at(i);
       delete cell;
+      _deleteCount++;
     }
     _newcells.clear();
     return true;
   }
-  else return false;
+  else {
+    Msg::Error("Cannot restore cell complex");
+    return false;
+  }
 }
 
 void CellComplex::printComplex(int dim)

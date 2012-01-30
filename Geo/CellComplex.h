@@ -42,6 +42,8 @@ class CellComplex
   int _dim;
   bool _saveorig;
 
+  int _deleteCount;
+
   // for constructor
   bool _insertCells(std::vector<MElement*>& elements,  int domain);
 

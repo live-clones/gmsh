@@ -2764,7 +2764,8 @@ void GModel::computeHomology()
     std::pair<std::multimap<dpair, std::string>::iterator,
               std::multimap<dpair, std::string>::iterator> itp =
       _homologyRequests.equal_range(*it);
-    bool prepareToRestore = (itp.first != itp.second);
+    bool prepareToRestore = (itp.first != --itp.second);
+    itp.second++;
     Homology* homology = new Homology(this, itp.first->first.first,
                                       itp.first->first.second, false, prepareToRestore);
     CellComplex *cellcomplex = homology->createCellComplex();
