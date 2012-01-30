@@ -86,6 +86,83 @@ class onelabGmshServer : public GmshServer{
   }
 };
 
+static void mergePostProcessingFile(const std::string &fileName)
+{
+  if(!FlGui::instance()->onelab->mergeAuto()) return;
+
+  int n = PView::list.size();
+  // store old step values
+  std::vector<int> steps(n, 0);
+  if(FlGui::instance()->onelab->showLastStep()){
+    for(int i = 0; i < PView::list.size(); i++)
+      steps[i] = (int)opt_view_nb_timestep(i, GMSH_GET, 0);
+  }
+
+  // check if there is a mesh in the file
+  FILE *fp = fopen(fileName.c_str(), "rb");
+  if(!fp){
+    Msg::Warning("Unable to open file '%s'", fileName.c_str());
+    return;
+  }
+  char header[256];
+  if(!fgets(header, sizeof(header), fp)) return;
+  bool haveMesh = false;
+  if(!strncmp(header, "$MeshFormat", 11)){
+    while(!feof(fp) && fgets(header, sizeof(header), fp)){
+      if(!strncmp(header, "$Nodes", 6)){
+        haveMesh = true;
+        break;
+      }
+      else if(!strncmp(header, "$NodeData", 9) ||
+              !strncmp(header, "$ElementData", 12) ||
+              !strncmp(header, "$ElementNodeData", 16)){
+        break;
+      }
+    }
+  }
+  fclose(fp);
+
+  // if there is a mesh, create a new model to store it (don't merge elements in
+  // the current mesh!)
+  GModel *old = GModel::current();
+  if(haveMesh){
+    GModel *m = new GModel();
+    GModel::setCurrent(m);
+    m->setVisibility(false);
+  }
+  MergeFile(fileName);
+  GModel::setCurrent(old);
+
+  // hide everything except the onelab X-Y graphs
+  if(FlGui::instance()->onelab->hideNewViews()){
+    for(int i = 0; i < PView::list.size(); i++){
+      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "OneLab")
+        PView::list[i]->getOptions()->visible = 0;
+    }
+  }
+  else if(n != PView::list.size()){
+    // if we created new views, assume we only want to see those (and the
+    // onelab X-Y graphs)
+    for(int i = 0; i < n; i++){
+      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "OneLab")
+        PView::list[i]->getOptions()->visible = 0;
+    }
+  }
+
+  // if we added steps, go to the last one
+  if(FlGui::instance()->onelab->showLastStep()){
+    for(int i = 0; i < PView::list.size(); i++){
+      int step = (int)opt_view_nb_timestep(i, GMSH_GET, 0);
+      if(step > steps[i])
+        opt_view_timestep(i, GMSH_SET|GMSH_GUI, step - 1);
+    }
+  }
+
+  drawContext::global()->draw();
+  if(n != (int)PView::list.size())
+    FlGui::instance()->menu->setContext(menu_post, 0);
+}
+
 bool onelab::localNetworkClient::run()
 {
  new_connection:
@@ -274,29 +351,7 @@ bool onelab::localNetworkClient::run()
       Msg::Direct(1, "%-8.8s: %s", _name.c_str(), message.c_str());
       break;
     case GmshSocket::GMSH_MERGE_FILE:
-      {
-        if(!FlGui::instance()->onelab->mergeAuto()) break;
-        int n = PView::list.size();
-        MergeFile(message);
-        if(FlGui::instance()->onelab->hideNewViews()){
-          // hide everything except the onelab X-Y graphs
-          for(int i = 0; i < PView::list.size(); i++){
-            if(PView::list[i]->getData()->getFileName().substr(0, 6) != "OneLab")
-              PView::list[i]->getOptions()->visible = 0;
-          }
-        }
-        else if(n != PView::list.size()){
-          // if we created new views, assume we only want to see those (and the
-          // onelab X-Y graphs)
-          for(int i = 0; i < n; i++){
-            if(PView::list[i]->getData()->getFileName().substr(0, 6) != "OneLab")
-              PView::list[i]->getOptions()->visible = 0;
-          }
-        }
-        drawContext::global()->draw();
-        if(n != (int)PView::list.size())
-          FlGui::instance()->menu->setContext(menu_post, 0);
-      }
+      mergePostProcessingFile(message);
       break;
     case GmshSocket::GMSH_PARSE_STRING:
       ParseString(message);
@@ -860,10 +915,12 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _gear->add("_Print database", 0, onelab_cb, (void*)"dump");
   _gear->add("Remesh automatically", 0, 0, 0, FL_MENU_TOGGLE);
   _gear->add("Merge results automatically", 0, 0, 0, FL_MENU_TOGGLE);
-  _gear->add("_Hide new views", 0, 0, 0, FL_MENU_TOGGLE);
+  _gear->add("Hide new views", 0, 0, 0, FL_MENU_TOGGLE);
+  _gear->add("_Always show last step", 0, 0, 0, FL_MENU_TOGGLE);
   ((Fl_Menu_Item*)_gear->menu())[2].set();
   ((Fl_Menu_Item*)_gear->menu())[3].set();
   ((Fl_Menu_Item*)_gear->menu())[4].clear();
+  ((Fl_Menu_Item*)_gear->menu())[5].set();
   _gearFrozenMenuSize = _gear->menu()->size();
 
   Fl_Box *resbox = new Fl_Box(WB, WB,
@@ -1029,19 +1086,19 @@ void onelabWindow::setButtonMode(const std::string &butt0, const std::string &bu
     _butt[1]->label("Stop");
     _butt[1]->callback(onelab_cb, (void*)"stop");
     for(int i = 0; i < _gear->menu()->size(); i++)
-      if(i < 1 || i > 4) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
+      if(i < 1 || i > 5) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
   }
   else if(butt1 == "kill"){
     _butt[1]->activate();
     _butt[1]->label("Kill");
     _butt[1]->callback(onelab_cb, (void*)"kill");
     for(int i = 0; i < _gear->menu()->size(); i++)
-      if(i < 1 || i > 4) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
+      if(i < 1 || i > 5) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
   }
   else{
     _butt[1]->deactivate();
     for(int i = 0; i < _gear->menu()->size(); i++)
-      if(i < 1 || i > 4) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
+      if(i < 1 || i > 5) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
   }
 }
 

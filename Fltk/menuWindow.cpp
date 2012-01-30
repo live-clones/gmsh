@@ -3007,6 +3007,11 @@ void menuWindow::setContext(contextItem *menu_asked, int flag)
     }
   }
 
+  /* scroll to the end of the list
+  int hh = (nb - NB_BUTT_SCROLL) * BH;
+  if(hh > 0) scroll->scroll_to(0, hh);
+  */
+
   scroll->redraw();
 
   if(nb <= NB_BUTT_SCROLL)
