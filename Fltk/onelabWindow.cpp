@@ -151,6 +151,7 @@ static void mergePostProcessingFile(const std::string &fileName)
 
   // if we added steps, go to the last one
   if(FlGui::instance()->onelab->showLastStep()){
+    steps.resize(PView::list.size(), 0);
     for(int i = 0; i < PView::list.size(); i++){
       int step = (int)opt_view_nb_timestep(i, GMSH_GET, 0);
       if(step > steps[i])
