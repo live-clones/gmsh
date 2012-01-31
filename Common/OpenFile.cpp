@@ -148,6 +148,8 @@ void AddToTemporaryBoundingBox(double x, double y, double z)
   for(int i = 0; i < 3; i++) CTX::instance()->cg[i] = temp_bb.center()[i];
 }
 
+static std::vector<FILE*> openedFiles;
+
 int ParseFile(std::string fileName, bool close, bool warnIfMissing)
 {
 #if !defined(HAVE_PARSER)
@@ -192,6 +194,9 @@ int ParseFile(std::string fileName, bool close, bool warnIfMissing)
   if(close){
     gmsh_yyflush();
     fclose(gmsh_yyin);
+  }
+  else{
+    openedFiles.push_back(gmsh_yyin);
   }
 
   gmsh_yyname = old_yyname;
@@ -424,6 +429,14 @@ void ClearProject()
 #endif
   for(int i = GModel::list.size() - 1; i >= 0; i--)
     delete GModel::list[i];
+
+  // close the files that might have been left open by ParseFile
+  if(openedFiles.size()){
+    for(unsigned int i = 0; i < openedFiles.size(); i++)
+      fclose(openedFiles[i]);
+    openedFiles.clear();
+  }
+
   new GModel();
   GModel::current()->setFileName(CTX::instance()->defaultFileName);
   GModel::current()->setName("");
@@ -482,6 +495,14 @@ void OpenProject(std::string fileName)
       FlGui::instance()->menu->fillRecentHistoryMenu();
 #endif
   }
+
+  // close the files that might have been left open by ParseFile
+  if(openedFiles.size()){
+    for(unsigned int i = 0; i < openedFiles.size(); i++)
+      fclose(openedFiles[i]);
+    openedFiles.clear();
+  }
+
   CTX::instance()->lock = 0;
 
 #if defined(HAVE_FLTK)

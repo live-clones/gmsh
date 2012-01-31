@@ -2453,14 +2453,15 @@ Command :
     {
       if(!strcmp($1, "Include")){
         std::string tmp = FixRelativePath(gmsh_yyname, $2);
-	// Warning: we *don't* close included files (to allow user
-	// functions in these files). If you need to include many many
-	// files and don't have functions in the files, use "Merge"
-	// instead: some OSes limit the number of files a process can
-	// open simultaneously. The right solution would be of course
-	// to modify FunctionManager to reopen the files instead of
-	// using the FILE pointer, but hey, I'm lazy...
 	Msg::StatusBar(2, true, "Reading '%s'...", tmp.c_str());
+	// Warning: we explicitly ask ParseFile not to fclose() the included
+        // file, in order to allow user functions definitions in these files.
+        // The files will be closed in the next time OpenFile terminates. If
+        // you need to include many many files and don't have functions in
+        // the files, use "Merge" instead of "Include", as some OSes limit
+        // the number of files a process can open simultaneously. (A better
+        // solution would be to modify FunctionManager to reopen the files
+        // instead of using the FILE pointer...)
 	ParseFile(tmp, false, true);
 	SetBoundingBox();
 	Msg::StatusBar(2, true, "Done reading '%s'", tmp.c_str());
