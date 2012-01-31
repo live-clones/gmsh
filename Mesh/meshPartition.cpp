@@ -1188,7 +1188,7 @@ static void addGhostCells(GEntity *ge,
   }
 }
 
-int CreatePartitionBoundaries(GModel *model, bool createGhostCells)
+int CreatePartitionBoundaries(GModel *model, bool createGhostCells, bool createAllDims)
 {
   unsigned numElem[5];
   const int meshDim = model->getNumMeshElements(numElem);
@@ -1225,14 +1225,14 @@ int CreatePartitionBoundaries(GModel *model, bool createGhostCells)
   
   // create partition edges
   if (meshDim > 1){
-    if (meshDim == 2){
+    if (meshDim == 2 || createAllDims){
       for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it){
         fillit_(edgeToElement, (*it)->triangles.begin(), (*it)->triangles.end());
         fillit_(edgeToElement, (*it)->quadrangles.begin(), (*it)->quadrangles.end());
         fillit_(edgeToElement, (*it)->polygons.begin(), (*it)->polygons.end());
       }
     }
-    else if (meshDim == 3){
+    if (meshDim == 3){
       for(GModel::riter it = model->firstRegion(); it != model->lastRegion(); ++it){
         fillit_(edgeToElement, (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
         fillit_(edgeToElement, (*it)->hexahedra.begin(), (*it)->hexahedra.end());
@@ -1258,14 +1258,14 @@ int CreatePartitionBoundaries(GModel *model, bool createGhostCells)
 
   // create partition vertices
   if (meshDim > 1){
-    if (meshDim == 2){
+    if (meshDim == 2 || createAllDims){
       for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it){
         fillit_(vertexToElement, (*it)->triangles.begin(), (*it)->triangles.end());
         fillit_(vertexToElement, (*it)->quadrangles.begin(), (*it)->quadrangles.end());
         fillit_(vertexToElement, (*it)->polygons.begin(), (*it)->polygons.end());
       }
     }
-    else if (meshDim == 3){
+    if (meshDim == 3){
       for(GModel::riter it = model->firstRegion(); it != model->lastRegion(); ++it){
         fillit_(vertexToElement, (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
         fillit_(vertexToElement, (*it)->hexahedra.begin(), (*it)->hexahedra.end());
@@ -1292,11 +1292,11 @@ int CreatePartitionBoundaries(GModel *model, bool createGhostCells)
   if(createGhostCells){
     std::multimap<MElement*, short> &ghosts(model->getGhostCells());
     ghosts.clear();
-    if(meshDim == 2)
+    if(meshDim == 2 || createAllDims)
       for(std::set<partitionEdge*, Less_partitionEdge>::iterator it = pedges.begin();
           it != pedges.end(); it++)
         addGhostCells(*it, vertexToElement, ghosts);
-    else if(meshDim == 3)
+    if(meshDim == 3)
       for(std::set<partitionFace*, Less_partitionFace>::iterator it = pfaces.begin();
           it != pfaces.end(); it++)
         addGhostCells(*it, vertexToElement, ghosts);

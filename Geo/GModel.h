@@ -403,7 +403,7 @@ class GModel
   int refineMesh(int linear);
 
   // create partition boundaries
-  void createPartitionBoundaries(int createGhostCells);
+  void createPartitionBoundaries(int createGhostCells, int createAllDims = 0);
 
   // fill the vertex arrays, given the current option and data
   void fillVertexArrays();
