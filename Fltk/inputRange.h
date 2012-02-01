@@ -38,7 +38,7 @@ class inputRange : public Fl_Group {
     // workaround annoying behaviour of Fl_Value_Input: if step is a nonzero
     // integer, one can only enter integer values in the widget; se we force
     // nonzero steps to be noninteger
-    if(step && step - floor(step) <= 0) step *= (1. - 1e-16);
+    if(step && step - floor(step) <= 0) step *= (1. - 1e-7);
     return step;
   }
   void _values2string()
