@@ -249,7 +249,7 @@ class GmshClient : public GmshSocket {
   {
     // slight delay to make sure that the socket is bound by the
     // server before we attempt to connect to it
-    _Sleep(100);
+    _Sleep(10);
     if(strstr(sockname, "/") || strstr(sockname, "\\") || !strstr(sockname, ":")){
 #if !defined(WIN32) || defined(__CYGWIN__)
       // UNIX socket (testing ":" is not enough with Windows paths)
