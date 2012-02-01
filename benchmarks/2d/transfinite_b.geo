@@ -16,4 +16,4 @@ Transfinite Line {4} = 20 Using Progression 1./1.2;
 Transfinite Line {3,2} = 10 Using Progression 1;
 Transfinite Line {5} = 19 Using Progression 1;
 Transfinite Surface {7} = {3,6,4,2} Alternated;
-//Recombine Surface {7};
+Recombine Surface {7};

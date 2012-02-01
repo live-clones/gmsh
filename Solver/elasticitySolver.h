@@ -57,7 +57,7 @@ struct neumannBC  : public BoundaryCondition
 // an elastic solver ...
 class elasticitySolver
 {
- protected:
+ public:
   GModel *pModel;
   int _dim, _tag;
   dofManager<double> *pAssembler;

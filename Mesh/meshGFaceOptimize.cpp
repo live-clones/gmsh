@@ -798,7 +798,6 @@ static int _removeDiamonds(GFace *gf)
     touched.insert(gf->triangles[i]->getVertex(2));
   }
 
-
   for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
     MQuadrangle *q = gf->quadrangles[i];
     MVertex *v1 = q->getVertex(0);
@@ -836,7 +835,7 @@ static int _removeDiamonds(GFace *gf)
 	deleted.insert(v1);
 	diamonds.insert(q);
       }
-      else if (v2->onWhat()->dim() == 2 &&
+      else if (0 && v2->onWhat()->dim() == 2 &&
 	       v4->onWhat()->dim() == 2 &&
 	       v1->onWhat()->dim() == 2 &&
 	       v3->onWhat()->dim() == 2 &&
@@ -908,9 +907,11 @@ static int _removeDiamonds(GFace *gf)
       mesh_vertices2.push_back(gf->mesh_vertices[i]);
     }
     else {
-      delete gf->mesh_vertices[i];
+      // FIXME : GMSH SOMETIMES CRASHES IF DELETED ....
+      //      delete gf->mesh_vertices[i];
     }
   }
+
   gf->mesh_vertices = mesh_vertices2;
 
   return diamonds.size();
@@ -1109,7 +1110,7 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf)
 {
   e2t_cont adj;
   //  buildEdgeToElement(gf->triangles, adj);
-  buildEdgeToElement(gf->quadrangles, adj);
+  buildEdgeToElement(gf, adj);
 
   std::vector<MQuadrangle*>created;
   std::set<MElement*>deleted;
@@ -1196,7 +1197,7 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf)
 }
 
 static int  edgeSwapQuadsForBetterQuality ( GFace *gf ) {
-  //    return 0;
+  //  return 0;
   int COUNT = 0;
   while(1){
     int k = _edgeSwapQuadsForBetterQuality (gf);

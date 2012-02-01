@@ -271,13 +271,14 @@ double MElement::getJacobian(double u, double v, double w, double jac[3][3])
   double gsf[1256][3];
   getGradShapeFunctions(u, v, w, gsf);
   for (int i = 0; i < getNumShapeFunctions(); i++) {
-    const MVertex *v = getShapeFunctionNode(i);
+    const MVertex *ver = getShapeFunctionNode(i);
     double* gg = gsf[i];
-    for (int j = 0; j < 3; j++) {
-      jac[j][0] += v->x() * gg[j];
-      jac[j][1] += v->y() * gg[j];
-      jac[j][2] += v->z() * gg[j];
+    for (int j = 0; j < getDim(); j++) {
+      jac[j][0] += ver->x() * gg[j];
+      jac[j][1] += ver->y() * gg[j];
+      jac[j][2] += ver->z() * gg[j];
     }
+    //    printf("GSF (%d,%g %g) = %g %g \n",i,u,v,gg[0],gg[1]); 
   }
   return _computeDeterminantAndRegularize(this, jac);
 }

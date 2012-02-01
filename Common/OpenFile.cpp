@@ -366,7 +366,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
       // mesh matcher
       if(CTX::instance()->geom.matchGeomAndMesh && !GModel::current()->empty()) {
         GModel* tmp2 = GModel::current();
-        GModel* tmp = new GModel();
+        GModel* tmp = new GModel();	
         tmp->readMSH(fileName);
         status = GeomMeshMatcher::instance()->match(tmp2, tmp);
         delete tmp;

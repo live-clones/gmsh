@@ -380,7 +380,7 @@ void elasticitySolver::assemble(linearSystem<double> *lsys)
   }
   // Neumann conditions
   GaussQuadrature Integ_Boundary(GaussQuadrature::Val);
-  std::cout <<  "Neumann BC"<< std::endl;
+
   for (unsigned int i = 0; i < allNeumann.size(); i++)
   {
     LoadTerm<SVector3> Lterm(*LagSpace,*allNeumann[i]._f);

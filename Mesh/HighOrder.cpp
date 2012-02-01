@@ -41,7 +41,28 @@ static void myresid(int N, GEdge *ge, double *u, fullVector<double> &r)
   for (int i = 0; i < N - 2; i++) r(i) = L[i + 1] - L[i];
 }
 
-static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N, 
+static bool computeEquidistantParameters1(GEdge *ge, double u0, double uN, int N, 
+                                         double *u, double underRelax)
+{
+  GPoint p0 = ge->point(u0);
+  GPoint p1 = ge->point(uN);
+  double du = 1. / (N - 1);
+  u[0] = u0;
+  //  printf("starting with %g %g %g\n",p0.x(),p0.y(),u0);
+  //  printf("ending   with %g %g %g\n",p1.x(),p1.y(),uN);
+  for (int i = 1; i < N; i++){
+    SPoint3 pi (p0.x() + i * du * (p1.x()-p0.x()),
+		p0.y() + i * du * (p1.y()-p0.y()),
+		p0.z() + i * du * (p1.z()-p0.z()));
+    double t;
+    GPoint gp = ge->closestPoint(pi, t);		
+    u[i] = gp.u();
+    //    printf("going to %g %g u %g\n",pi.x(),pi.y(),gp.u());
+  }  
+  return true;
+}
+
+static bool computeEquidistantParameters0(GEdge *ge, double u0, double uN, int N, 
                                          double *u, double underRelax)
 {
   const double PRECISION = 1.e-6;
@@ -100,6 +121,15 @@ static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N,
   }
   return false;
 }
+// 1 = geodesics
+static int method_for_computing_intermediary_points = 0;
+static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N, 
+                                         double *u, double underRelax){
+  if (method_for_computing_intermediary_points == 0) // use linear abscissa
+    return computeEquidistantParameters0(ge,u0,uN,N,u,underRelax);
+  else if (method_for_computing_intermediary_points == 1) // use projection
+    return computeEquidistantParameters1(ge,u0,uN,N,u,underRelax);  
+}
 
 static double mylength(GFace *gf, int i, double *u, double *v)
 {
@@ -113,7 +143,31 @@ static void myresid(int N, GFace *gf, double *u, double *v, fullVector<double> &
   for (int i = 0; i < N - 2; i++) r(i) = L[i + 1] - L[i];
 }
 
-static bool computeEquidistantParameters(GFace *gf, double u0, double uN, 
+static bool computeEquidistantParameters1(GFace *gf, double u0, double uN, 
+					  double v0, double vN, int N,
+					  double *u, double *v){
+  //  printf("coucou\n");
+  GPoint p0 = gf->point(u0,v0);
+  GPoint p1 = gf->point(uN,vN);
+  double du = 1. / (N - 1);
+  u[0] = u0;
+  u[0] = u0;
+  v[0] = v0;
+  //  printf("starting with %g %g %g\n",p0.x(),p0.y(),u0);
+  //  printf("ending   with %g %g %g\n",p1.x(),p1.y(),uN);
+  for (int i = 1; i < N; i++){
+    SPoint3 pi (p0.x() + i * du * (p1.x()-p0.x()),
+		p0.y() + i * du * (p1.y()-p0.y()),
+		p0.z() + i * du * (p1.z()-p0.z()));
+    SPoint2 t;
+    GPoint gp = gf->closestPoint(pi, t);		
+    u[i] = gp.u();
+    v[i] = gp.v();
+  }  
+  return true;
+}
+
+static bool computeEquidistantParameters0(GFace *gf, double u0, double uN, 
                                          double v0, double vN, int N,
                                          double *u, double *v)
 {
@@ -191,6 +245,16 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
   return false;
 }
 
+static bool computeEquidistantParameters(GFace *gf, double u0, double uN, 
+                                         double v0, double vN, int N,
+                                         double *u, double *v){
+  if (method_for_computing_intermediary_points == 0) // use linear abscissa
+    return computeEquidistantParameters0(gf,u0,uN,v0,vN,N,u,v);
+  else if (method_for_computing_intermediary_points == 1) // use projection
+    return computeEquidistantParameters1(gf,u0,uN,v0,vN,N,u,v);
+}
+
+
 static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
                             edgeContainer &edgeVertices, bool linear,
                             int nPts = 1, highOrderSmoother *displ2D = 0,
@@ -236,6 +300,9 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
                "for edge %d-%d parametrized with %g %g on GEdge %d linear %d",
                relax, US[1], v0->getNum(), v1->getNum(),u0,u1,ge->tag(), linear);
         }
+	else{
+	  Msg::Error("Cannot reparam a mesh Vertex in high order meshing");
+	}
       }
       for(int j = 0; j < nPts; j++){
         const double t = (double)(j + 1)/(nPts + 1);
@@ -247,12 +314,13 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
 			 v0->getNum(), v1->getNum());
           // we don't have a (valid) parameter on the curve
           SPoint3 pc = edge.interpolate(t);
-          v = new MVertex(pc.x(), pc.y(), pc.z(), ge);
+          v = new MVertex(pc.x(), pc.y(), pc.z(), ge);	  
         }
         else {          
-          GPoint pc = ge->point(US[u0<u1? j + 1 : nPts - 1 - (j + 1)]);
-          v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, 
-                              US[u0 < u1 ? j + 1 : nPts - 1 - (j + 1)]);
+	  int count = u0<u1? j + 1 : nPts + 1  - (j + 1);
+	  GPoint pc = ge->point(US[count]);
+          v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge,pc.u()); 
+	  //	  printf("Edge %d(%g) %d(%g) new vertex %g %g at %g\n",v0->getNum(),u0,v1->getNum(),u1,v->x(),v->y(), US[count]);
           if (displ2D || displ3D){
             SPoint3 pc2 = edge.interpolate(t);          
             if(displ2D) displ2D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));

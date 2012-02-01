@@ -188,9 +188,7 @@ double mesh_functional_distorsion(MElement *t, double u, double v)
   double v2[3] = {mat[1][0], mat[1][1], mat[1][2]};
   double normal1[3];
   prodve(v1, v2, normal1);
-  double nn = sqrt(normal1[0]*normal1[0] + 
-                   normal1[1]*normal1[1] + 
-                   normal1[2]*normal1[2]);
+  double nn = norm3(normal1);
   
   // compute uncurved element jacobian d_u x and d_v x
   
@@ -200,14 +198,19 @@ double mesh_functional_distorsion(MElement *t, double u, double v)
   double normal[3];
   prodve(v1b, v2b, normal);
   
+  //  printf("%g %g %g -- %g %g %g - %g\n",mat[0][0], mat[0][1], mat[0][2],mat[1][0], mat[1][1], mat[1][2],nn);
+
   double sign = 1.0;
   prosca(normal1, normal, &sign);
-  double det = norm3(normal) * (sign > 0 ? 1. : -1.) / nn;  
+  //  double det = (norm3(normal) / nn)  * (sign > 0 ? 1. : -1.);  
 
   //  printf("%g %g : %g : %g n1 (%g,%g,%g)\n",u,v,sign,det, normal1[0], normal1[1], normal1[2]);
-  //  printf("n (%g,%g,%g)\n", normal[0], normal[1], normal[2]);
+  //  for (int i=0;i<t->getNumVertices();i++){
+  //    printf("COORD (%d) = %g %g %g\n",i,t->getVertex(i)->x(),t->getVertex(i)->y(),t->getVertex(i)->z());
+  //  }
+  //  printf("n (%g,%g,%g)\n", normal1[0], normal1[1], normal1[2]);
   
-  return det;
+  return sign/(nn*nn);
 }
 
 static double MINQ (double a, double b, double c){
@@ -324,9 +327,9 @@ double mesh_functional_distorsion_pN(MElement *t)
   fullVector<double> Bi( jac->matrixLag2Bez.size1() );
   jac->matrixLag2Bez.mult(Ji,Bi);   
 
-  //  for (int i=0;i<jac->points.size1();i++){
-  //    printf("J(%d) = %12.5E\n",i,Bi(i));
-  //  }
+  //    for (int i=0;i<jac->points.size1();i++){
+  //      printf("J(%d) = %12.5E B(%d) = %12.5E\n",i,Ji(i),i,Bi(i));
+  //    }
 
   /*   
   if (t->getType() == TYPE_QUA){

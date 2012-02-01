@@ -735,6 +735,17 @@ double backgroundMesh::operator() (double u, double v, double w) const
 
 double backgroundMesh::getAngle(double u, double v, double w) const
 {
+
+  // HACK FOR LEWIS 
+  // h = 1+30(y-x^2)^2  + (1-x)^2
+  //  double x = u;
+  //  double y = v;
+  //  double dhdx = 30 * 2 * (y-x*x) * (-2*x) - 2 * (1-x); 
+  //  double dhdy = 30 * 2 * (y-x*x); 
+  //  double angles = atan2(y,x*x);
+  //  crossField2d::normalizeAngle (angles);
+  //  return angles;
+
   double uv[3] = {u, v, w};
   double uv2[3];
   MElement *e = _octree->find(u, v, w, 2, true);
@@ -776,6 +787,15 @@ void backgroundMesh::print(const std::string &filename, GFace *gf,
               v1->x(),v1->y(),v1->z(),
               v2->x(),v2->y(),v2->z(),
               v3->x(),v3->y(),v3->z(),itv1->second,itv2->second,itv3->second);
+      /*
+      fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
+              v1->x(),v1->y(),v1->z(),
+              v2->x(),v2->y(),v2->z(),
+              v3->x(),v3->y(),v3->z(),
+	      getAngle(v1->x(),v1->y(),v1->z()),
+	      getAngle(v2->x(),v2->y(),v2->z()),
+	      getAngle(v3->x(),v3->y(),v3->z()));
+      */
     }
     else {
       /*

@@ -908,7 +908,7 @@ SPoint2 GFace::parFromPoint(const SPoint3 &p, bool onSurface) const
   return SPoint2(U, V);
 }
 
-#if defined(QUASINEWTON)
+#if defined(HAVE_BFGS)
 // Callback function for BFGS
 void bfgs_callback(const alglib::real_1d_array& x, double& func, alglib::real_1d_array& grad, void* ptr) {
   data_wrapper* w = static_cast<data_wrapper*>(ptr);
@@ -917,26 +917,29 @@ void bfgs_callback(const alglib::real_1d_array& x, double& func, alglib::real_1d
 
   // Value of the objective
   GPoint pnt = gf->point(x[0], x[1]);
-  SPoint3 spnt(pnt.x(), pnt.y(), pnt.z());
-  func = p.distance(spnt);
+  func = 0.5 * 
+    ( p.x() - pnt.x() ) * ( p.x() - pnt.x() ) +
+    ( p.y() - pnt.y() ) * ( p.y() - pnt.y() ) +
+    ( p.z() - pnt.z() ) * ( p.z() - pnt.z() ) ;
   //printf("func : %f\n", func);
 
   // Value of the gradient
-  std::vector<double> values(2);
   Pair<SVector3, SVector3> der = gf->firstDer(SPoint2(x[0], x[1]));
-  grad[0] = -2./(2.0*func) * (der.left().x() + der.left().y() + der.left().z());
-  grad[1] = -2./(2.0*func) * (der.right().x() + der.right().y() + der.right().z());
-  //printf("Gradients %f %f\n", grad[0], grad[1]);
+  grad[0] = -(p.x() - pnt.x()) * der.left().x()  - (p.y() - pnt.y()) * der.left().y()  - (p.z() - pnt.z()) * der.left().z(); 
+  grad[1] = -(p.x() - pnt.x()) * der.right().x() - (p.y() - pnt.y()) * der.right().y() - (p.z() - pnt.z()) * der.right().z(); 
+  //  printf("func %22.15E Gradients %22.15E %22.15E der %g %g %g\n",func, grad[0], grad[1],der.left().x(),der.left().y(),der.left().z());
 }
 #endif
 
 GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[2]) const
 {
-#if defined(QUASINEWTON)
-
+#if defined(HAVE_BFGS)
   //
   // Creating the optimisation problem
   //
+
+  //  printf("STARTING OPTIMIZATION\n");
+
   alglib::ae_int_t dim = 2;
   alglib::ae_int_t corr = 2; // Num of corrections in the scheme in [3,7]
   alglib::minlbfgsstate state;
@@ -950,16 +953,21 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[
   Range<double> uu = parBounds(0);
   Range<double> vv = parBounds(1);
 
-  double initial_guesses = 1000.0;
-  for(double u = uu.low(); u<=uu.high(); u+=(uu.high()-uu.low())/initial_guesses) {
-    printf("%f\n", u);
-    for(double v = vv.low(); v<=vv.high(); v+=(vv.high()-vv.low())/initial_guesses) {
+  //  FILE *F = fopen ("hop.pos","w");
+  //  fprintf(F,"View \" \" {\n");
+  //  fprintf(F,"SP(%g,%g,%g) {%g};\n",queryPoint.x(),queryPoint.y(),queryPoint.z(),0.0);
+  double initial_guesses = 10.0;
+  for(double u = uu.low(); u<=uu.high()+1.e-5; u+=(uu.high()-uu.low())/initial_guesses) {
+    //    printf("%f\n", u);
+    for(double v = vv.low(); v<=vv.high()+1.e-5; v+=(vv.high()-vv.low())/initial_guesses) {
       GPoint pnt = point(u, v);
-      printf("(point) : %f %f %f\n", pnt.x(), pnt.y(), pnt.z());
       SPoint3 spnt(pnt.x(), pnt.y(), pnt.z());
       double dist = queryPoint.distance(spnt);
+      //      fprintf(F,"SP(%g,%g,%g) {%g};\n",pnt.x(), pnt.y(), pnt.z(),dist);
+      //      printf("lmocal (%12.5E %12.5E) (point) : %12.5E %12.5E %12.5E (query) : %12.5E %12.5E %12.5E DSIT %12.5E\n",u,v, pnt.x(), pnt.y(), pnt.z(),queryPoint.x(),queryPoint.y(),queryPoint.z(),
+      //	     dist);
       if (dist < min_dist) {
-	printf("min_dist %f\n", dist);
+	//	printf("min_dist %f\n", dist);
 	min_dist = dist;
 	min_u = u;
 	min_v = v;
@@ -967,25 +975,27 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[
       }
     }
   }
-
+  //  fprintf(F,"};\n");
+  //  fclose(F);
+  //  getchar();
   initial_conditions[0] = min_u;
   initial_conditions[1] = min_v;
 
-  printf("Initial conditions : %f %f\n", min_u, min_v);
+  //  printf("Initial conditions : %f %f %12.5E\n", min_u, min_v,min_dist);
   GPoint pnt = point(min_u, min_v);
-  printf("Initial conditions (point) : %f %f %f\n", pnt.x(), pnt.y(), pnt.z());
+  //    printf("Initial conditions (point) : %f %f %f local (%g %g) Looking for %f %f %f DIST = %12.5E\n", 
+  //  	 pnt.x(), pnt.y(), pnt.z(),min_u,min_v,
+  //  	 queryPoint.x(),queryPoint.y(),queryPoint.z(),
+  //  	 min_dist);
 
   x.setcontent(dim, &initial_conditions[0]);
-
-
-
 
   minlbfgscreate(2, corr, x, state);
 
   //
   // Defining the stopping criterion
   //
-  double epsg = 0.0;
+  double epsg = 1.e-12;
   double epsf = 0.0;
   double epsx = 0.0;
   alglib::ae_int_t maxits = 500;
@@ -1009,7 +1019,25 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[
 
   minlbfgsresults(state,x,rep);
 
-  return point(x[0],x[1]);
+  GPoint pntF = point(x[0], x[1]);
+  if (rep.terminationtype != 4){
+    //    printf("Initial conditions (point) : %f %f %f local (%g %g) Looking for %f %f %f DIST = %12.5E at the end (%f %f) %f %f %f\n", 
+    //  	 pnt.x(), pnt.y(), pnt.z(),min_u,min_v,
+    //  	 queryPoint.x(),queryPoint.y(),queryPoint.z(),
+    //  	 min_dist,x[0],x[1],pntF.x(), pntF.y(), pntF.z());
+    //    double DDD = 
+    //      ( queryPoint.x() - pntF.x()) * ( queryPoint.x() - pntF.x()) +
+    //      ( queryPoint.y() - pntF.y()) * ( queryPoint.y() - pntF.y()) +
+    //      ( queryPoint.z() - pntF.z()) * ( queryPoint.z() - pntF.z());
+    //    if (sqrt(DDD) > 1.e-4)
+      /*
+      printf("Initial conditions (point) : %f %f %f local (%g %g) Looking for %f %f %f DIST = %12.5E at the end (%f %f) %f %f %f termination %d\n", 
+	     pnt.x(), pnt.y(), pnt.z(),min_u,min_v,
+	     queryPoint.x(),queryPoint.y(),queryPoint.z(),
+	     min_dist,x[0],x[1],pntF.x(), pntF.y(), pntF.z(),rep.terminationtype);      
+      */
+  }
+  return pntF;
 #else
   Msg::Error("Closest point not implemented for this type of surface");
   SPoint2 p = parFromPoint(queryPoint, false);

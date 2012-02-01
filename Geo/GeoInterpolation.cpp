@@ -295,8 +295,8 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
   switch (c->Typ) {
 
   case MSH_SEGM_LINE:
-#if defined(QUASINEWTON)
-    printf("MSH_SEGM_LINE\n");
+#if defined(HAVE_BFGS)
+    //    printf("MSH_SEGM_LINE\n");
 #endif
     N = List_Nbr(c->Control_Points);
     i = (int)((double)(N - 1) * u);
@@ -418,8 +418,8 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
     break;
 
   case MSH_SEGM_DISCRETE:
-#if defined(QUASINEWTON)
-    printf("MSH_SEGM_DISCRETE\n");
+#if defined(HAVE_BFGS)
+    //    printf("MSH_SEGM_DISCRETE\n");
 #endif
 
     Msg::Debug("Cannot interpolate discrete curve");
@@ -463,8 +463,40 @@ static Vertex TransfiniteQua(Vertex c1, Vertex c2, Vertex c3, Vertex c4,
 
 // Interpolation transfinie sur un triangle : TRAN_QUA avec s1=s4=c4
 // f(u,v) = u c2 (v) + (1-v) c1(u) + v c3(u) - u(1-v) s2 - uv s3
+//           
+//            s3(1,1)
+//              +
+//            / |
+//      c3  /   |       
+//        /     |  c2
+//      /       |
+//    /   c1    |
+//   +----------+
+//  s1(0,0)     s2(1,0)
+
+// u = v = 0     -----> x = c1(0) = s1 --> OK  
+// u = 1 ; v = 0 -----> x = c2(0) + c1(1) - s2 =  s2 --> OK  
+// u = 1 ; v = 1 -----> x = c2(1) + c3(1) - s3 =  s3 --> OK  
+// v = 0 --> u s2 + c1(u) - u s2 --> x = c1(u) --> OK
+// u = 1 --> c2(v) + (1-v) s2 + v s3 -(1-v) s2  - v s3 --> x = c2(v) --> OK
+// u = 0 --> (1-v) s1 + v s1 = s1 !!! not terrible (singular)
+
+// Transfinite approximation on a triangle
+
+// f(u,v) = (1-u) (c1(u-v) + c3(1-v)     - s1) +
+//          (u-v) (c2(v)   + c1(u)       - s2) +
+//            v   (c3(1-u) + c2(1-u+v)   - s3) 
+// 
+// u = v = 0 --> f(0,0) = s1 + s1 - s1     = s1 
+// u = v = 1 --> f(1,1) = s3 + s3 - s3     = s3 
+// u = 1 ; v = 0 --> f(1,1) = s2 + s2 - s2 = s2 
+// v = 0 --> (1-u)c1(u) + u c1(u) = c1(u) --> COOL
+
 
 #define TRAN_TRI(c1,c2,c3,s1,s2,s3,u,v) u*c2+(1.-v)*c1+v*c3-(u*(1.-v)*s2+u*v*s3);
+
+#define TRAN_TRIB(c1,c1b,c2,c2b,c3,c3b,s1,s2,s3,u,v) (1.-u)*(c1+c3b-s1)+(u-v)*(c2+c1b-s2)+v*(c3+c2b-s3);
+
 
 static Vertex TransfiniteTri(Vertex c1, Vertex c2, Vertex c3,
                              Vertex s1, Vertex s2, Vertex s3, double u, double v)
@@ -480,6 +512,23 @@ static Vertex TransfiniteTri(Vertex c1, Vertex c2, Vertex c3,
                      s1.Pos.Z, s2.Pos.Z, s3.Pos.Z, u, v);
   return V;
 }
+static Vertex TransfiniteTriB(Vertex c1, Vertex c1b, Vertex c2,
+			      Vertex c2b, Vertex c3, Vertex c3b,
+			      Vertex s1, Vertex s2, Vertex s3, 
+			      double u, double v)
+{
+  Vertex V;
+  V.lc = TRAN_TRIB(c1.lc,c1b.lc, c2.lc,c2b.lc, c3.lc, c3b.lc, s1.lc, s2.lc, s3.lc, u, v);
+  V.w = TRAN_TRIB(c1.w, c1b.w, c2.w,c2b.w, c3.w,c3b.w, s1.w, s2.w, s3.w, u, v);
+  V.Pos.X = TRAN_TRIB(c1.Pos.X, c1b.Pos.X,c2.Pos.X, c2b.Pos.X,c3.Pos.X,c3b.Pos.X,
+                     s1.Pos.X, s2.Pos.X, s3.Pos.X, u, v);
+  V.Pos.Y = TRAN_TRIB(c1.Pos.Y, c1b.Pos.Y,c2.Pos.Y, c2b.Pos.Y,c3.Pos.Y,c3b.Pos.Y,
+                     s1.Pos.Y, s2.Pos.Y, s3.Pos.Y, u, v);
+  V.Pos.Z = TRAN_TRIB(c1.Pos.Z, c1b.Pos.Z,c2.Pos.Z, c2b.Pos.Z,c3.Pos.Z,c3b.Pos.Z,
+                     s1.Pos.Z, s2.Pos.Z, s3.Pos.Z, u, v);
+  return V;
+}
+
 
 static void TransfiniteSph(Vertex S, Vertex center, Vertex *T)
 {
@@ -592,7 +641,7 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
     }
   }
   
-  Vertex *S[4], V[4], T;
+  Vertex *S[4], V[4],VB[3], T;
   if(s->Typ == MSH_SURF_REGL && List_Nbr(s->Generatrices) >= 4){
     S[0] = C[0]->beg;
     S[1] = C[1]->beg;
@@ -602,8 +651,9 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
     V[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * v, 0);
     V[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - u), 0);
     V[3] = InterpolateCurve(C[3], C[3]->ubeg + (C[3]->uend - C[3]->ubeg) * (1. - v), 0);
-#if defined(QUASINEWTON)
-    printf("----- u %f v %f\n", u, v);
+    /*
+#if defined(HAVE_BFGS)
+    printf("----- u %f v %f %g %g\n", u, v,C[1]->ubeg,C[1]->uend);
     printf("S[0] %f %f %f\n", S[0]->Pos.X, S[0]->Pos.Y,S[0]->Pos.Z);
     printf("S[1] %f %f %f\n", S[1]->Pos.X, S[1]->Pos.Y,S[1]->Pos.Z);
     printf("S[2] %f %f %f\n", S[2]->Pos.X, S[2]->Pos.Y,S[2]->Pos.Z);
@@ -613,6 +663,7 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
     printf("V[2] %f %f %f\n", V[2].Pos.X, V[2].Pos.Y,V[2].Pos.Z);
     printf("V[3] %f %f %f\n", V[3].Pos.X, V[3].Pos.Y,V[3].Pos.Z);
 #endif
+    */
     T = TransfiniteQua(V[0], V[1], V[2], V[3], *S[0], *S[1], *S[2], *S[3], u, v);
     if(isSphere) TransfiniteSph(*S[0], *O, &T);
   }
@@ -620,11 +671,23 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
     S[0] = C[0]->beg;
     S[1] = C[1]->beg;
     S[2] = C[2]->beg;
+    /*
     V[0] = InterpolateCurve(C[0], C[0]->ubeg + (C[0]->uend - C[0]->ubeg) * u, 0);
     V[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * v, 0);
     V[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - u), 0);
     T = TransfiniteTri(V[0], V[1], V[2], *S[0], *S[1], *S[2], u, v);
-    if(isSphere) TransfiniteSph(*S[0], *O, &T);
+    */
+    V[0] = InterpolateCurve(C[0], C[0]->ubeg + (C[0]->uend - C[0]->ubeg) * (u-v), 0);
+    V[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * v, 0);
+    V[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - u), 0);
+    VB[0] = InterpolateCurve(C[0], C[0]->ubeg + (C[0]->uend - C[0]->ubeg) * u, 0);
+    VB[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * (1-u+v), 0);
+    VB[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - v), 0);
+    T = TransfiniteTriB(V[0],VB[0], V[1],VB[1], V[2],VB[2], *S[0], *S[1], *S[2], u, v);
+    
+    if(isSphere) {
+      TransfiniteSph(*S[0], *O, &T);
+    }
   }
 
   return T;

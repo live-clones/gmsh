@@ -999,6 +999,70 @@ void optimalPointFrontal (GFace *gf,
 }
 
 
+void optimalPointFrontalB (GFace *gf, 
+			   MTri3* worst, 
+			   int active_edge,
+			   std::vector<double> &Us,
+			   std::vector<double> &Vs,
+			   std::vector<double> &vSizes,
+			   std::vector<double> &vSizesBGM,			  
+			   double newPoint[2],
+			   double metric[3]){
+  double center[2],r2;
+  MTriangle *base = worst->tri();
+  circUV(base, Us, Vs, center, gf);
+  double pa[2] = {(Us[base->getVertex(0)->getIndex()] + 
+		   Us[base->getVertex(1)->getIndex()] + 
+		   Us[base->getVertex(2)->getIndex()]) / 3.,
+		  (Vs[base->getVertex(0)->getIndex()] + 
+		   Vs[base->getVertex(1)->getIndex()] + 
+		   Vs[base->getVertex(2)->getIndex()]) / 3.};
+  buildMetric(gf, pa, metric);
+  circumCenterMetric(worst->tri(), metric, Us, Vs, center, r2); 
+  // compute the middle point of the edge
+  int ip1 = active_edge - 1 < 0 ? 2 : active_edge - 1;
+  int ip2 = active_edge;
+
+  double P[2] =  {Us[base->getVertex(ip1)->getIndex()],  
+		  Vs[base->getVertex(ip1)->getIndex()]};
+  double Q[2] =  {Us[base->getVertex(ip2)->getIndex()], 
+		  Vs[base->getVertex(ip2)->getIndex()]};
+  double midpoint[2] = {0.5 * (P[0] + Q[0]), 0.5 * (P[1] + Q[1])};
+      
+  // now we have the edge center and the center of the circumcircle, 
+  // we try to find a point that would produce a perfect triangle while
+  // connecting the 2 points of the active edge
+  
+  double dir[2] = {center[0] - midpoint[0], center[1] - midpoint[1]};
+  double norm = sqrt(dir[0] * dir[0] + dir[1] * dir[1]);
+  dir[0] /= norm;
+  dir[1] /= norm;
+  const double RATIO = sqrt(dir[0] * dir[0] * metric[0] +
+			    2 * dir[1] * dir[0] * metric[1] +
+			    dir[1] * dir[1] * metric[2]);    
+  
+  const double p = 0.5 * lengthMetric(P, Q, metric); // / RATIO;
+  const double q = lengthMetric(center, midpoint, metric);
+  const double rhoM1 = 0.5 * 
+    (vSizes[base->getVertex(ip1)->getIndex()] + 
+     vSizes[base->getVertex(ip2)->getIndex()] ) / sqrt(3.);// * RATIO;
+  const double rhoM2 = 0.5 * 
+    (vSizesBGM[base->getVertex(ip1)->getIndex()] + 
+     vSizesBGM[base->getVertex(ip2)->getIndex()] ) / sqrt(3.);// * RATIO;
+  const double rhoM  = Extend1dMeshIn2dSurfaces() ? std::min(rhoM1, rhoM2) : rhoM2;
+  
+  const double rhoM_hat = std::min(std::max(rhoM, p), (p * p + q * q) / (2 * q));
+  const double d = (rhoM_hat + sqrt (rhoM_hat * rhoM_hat - p * p)) / RATIO;
+  
+  //  printf("(%g %g) (%g %g) %g %g %g %g %g %g\n",P[0],P[1],Q[0],Q[1],RATIO,p,q,rhoM,rhoM_hat,d);
+
+
+  newPoint[0] = midpoint[0] + d * dir[0]; 
+  newPoint[1] = midpoint[1] + d * dir[1];
+}
+
+
+
 void bowyerWatsonFrontal(GFace *gf)
 {
   std::set<MTri3*,compareTri3Ptr> AllTris;

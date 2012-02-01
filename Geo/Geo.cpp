@@ -3259,7 +3259,7 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2])
       p = InterpolateSurface(s, x(0), x(1), 0, 0);
       uv[0] = x(0);
       uv[1] = x(1);
-      if (ITER > 0)
+      if (ITER >= 0)
         Msg::Info("ProjectPoint (%g,%g,%g) On Surface %d converged after %d iterations",
                   p.Pos.X, p.Pos.Y, p.Pos.Z, s->Num, ITER);
       return true;

@@ -217,9 +217,11 @@ GPoint gmshFace::point(double par1, double par2) const
   }
 }
 
-#if not defined(QUASINEWTON)
 GPoint gmshFace::closestPoint(const SPoint3 & qp, const double initialGuess[2]) const
 {
+#if defined(HAVE_BFGS)
+  return GFace::closestPoint(qp, initialGuess);
+#endif
   if (s->Typ == MSH_SURF_PLAN && !s->geometry){
     double XP = qp.x();
     double YP = qp.y();
@@ -258,7 +260,6 @@ GPoint gmshFace::closestPoint(const SPoint3 & qp, const double initialGuess[2]) 
     return GPoint(-1.e22, -1.e22, -1.e22, 0, u);
   return GPoint(v.Pos.X, v.Pos.Y, v.Pos.Z, this, u);
 }
-#endif
 
 SPoint2 gmshFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
 {

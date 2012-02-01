@@ -270,11 +270,11 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar,int dir) const
     }
     else if (C[2]->Num == c->Num) {
       U = 1-(epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg) ;
-      V = 1;
+      V = U;
     }
     else if (C[2]->Num == -c->Num) {
       U = 1-(C[2]->uend - epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg) ;
-      V = 1;
+      V = U;
     }
     else{
       Msg::Info("Reparameterizing edge %d on face %d", c->Num, s->Num);

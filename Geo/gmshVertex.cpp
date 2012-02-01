@@ -39,7 +39,10 @@ GEntity::GeomType gmshVertex::geomType() const
 
 SPoint2 gmshVertex::reparamOnFace(const GFace *face, int dir) const
 {
+
   Surface *s = (Surface*)face->getNativePtr();
+
+  //  printf("coucou HERE I AM %d\n",s->Typ);
 
   if(s->geometry){
     // It is not always right if it is periodic.
@@ -89,6 +92,40 @@ SPoint2 gmshVertex::reparamOnFace(const GFace *face, int dir) const
       Msg::Info("Reparameterizing point %d on face %d", v->Num, s->Num);
       return GVertex::reparamOnFace(face, dir);
     }
+    return SPoint2(U, V);
+  }
+  else if(s->Typ ==  MSH_SURF_TRIC){
+    //    printf("coucou HERE I AM TRIC\n");
+    Curve *C[3];
+    for(int i = 0; i < 3; i++)
+      List_Read(s->Generatrices, i, &C[i]);
+
+    double U, V;    
+    if ((C[0]->beg == v && C[2]->beg == v) ||
+        (C[0]->end == v && C[2]->beg == v) ||
+        (C[0]->beg == v && C[2]->end == v) ||
+        (C[0]->end == v && C[2]->end == v)){
+      U = V = 0;
+    }
+    else if ((C[0]->beg == v && C[1]->beg == v) ||
+             (C[0]->end == v && C[1]->beg == v) ||
+             (C[0]->beg == v && C[1]->end == v) ||
+             (C[0]->end == v && C[1]->end == v)){
+      U = 1;
+      V = 0;
+    }
+    else if ((C[2]->beg == v && C[1]->beg == v) ||
+             (C[2]->end == v && C[1]->beg == v) ||
+             (C[2]->beg == v && C[1]->end == v) ||
+             (C[2]->end == v && C[1]->end == v)){
+      U = 1;
+      V = 1;
+    }
+    else{
+      Msg::Info("Reparameterizing point %d on face %d", v->Num, s->Num);
+      return GVertex::reparamOnFace(face, dir);
+    }
+    //    printf("coucou1 %g %g\n",U,V);
     return SPoint2(U, V);
   }
   else{

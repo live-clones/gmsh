@@ -132,7 +132,7 @@ GeomMeshMatcher::matchVertices(GModel* m1, GModel *m2, bool& ok)
     }
 
     if (best_score != DBL_MAX) {
-      Msg::Info("Vertices %i (geom) and %i (mesh) match.\n",
+      Msg::Info("Model Vertex %i (geom) and %i (mesh) match",
                 (*entity1)->tag(),
                 best_candidate_ge->tag());
 
@@ -154,7 +154,7 @@ GeomMeshMatcher::matchVertices(GModel* m1, GModel *m2, bool& ok)
   //vert++)
     //m2->add(*vert);
 
-  Msg::Info("Vertices matched : %i / %i (%i)\n", num_matched_vertices, num_total_vertices, num_mesh_vertices);
+  Msg::Info("Vertices matched : %i / %i (%i)", num_matched_vertices, num_total_vertices, num_mesh_vertices);
   //if(num_matched_vertices != num_total_vertices) ok = false;
   return (coresp_v);
 }
@@ -570,7 +570,7 @@ int GeomMeshMatcher::forceTomatch(GModel *geom, GModel *mesh, const double TOL)
       }
     }
   }
-  printf("creating faces\n");
+  //  printf("creating faces\n");
   for (GModel::fiter it = mesh->firstFace(); it != mesh->lastFace(); ++it){
     for (int i=0;i<(*it)->triangles.size();i++){
       MVertex *v1 = geom->getMeshVertexByTag((*it)->triangles[i]->getVertex(0)->getNum());
@@ -608,6 +608,7 @@ static void copy_vertices (GVertex *to, GVertex *from, std::map<MVertex*,MVertex
   }
 }
 static void copy_vertices (GRegion *to, GRegion *from, std::map<MVertex*,MVertex*> &_mesh_to_geom){
+  to->deleteMesh();
   for (int i=0;i<from->mesh_vertices.size();i++){
     MVertex *v_from = from->mesh_vertices[i];
     MVertex *v_to = new MVertex (v_from->x(),v_from->y(),v_from->z(), to);
@@ -621,23 +622,30 @@ static void copy_vertices (GEdge *to, GEdge *from, std::map<MVertex*,MVertex*> &
     MVertex *v_from = from->mesh_vertices[i];
     double t;
     GPoint gp = to->closestPoint(SPoint3(v_from->x(),v_from->y(),v_from->z()), t );
-    MEdgeVertex *v_to = new MEdgeVertex (v_from->x(),v_from->y(),v_from->z(), to, t );
+    MEdgeVertex *v_to = new MEdgeVertex (gp.x(),gp.y(),gp.z(), to, gp.u() );
     to->mesh_vertices.push_back(v_to);
     _mesh_to_geom[v_from] = v_to;
   }
+  //  printf("Ending Edge %d %d vertices to match\n",from->tag(),from->mesh_vertices.size());
 }
-static void copy_vertices (GFace *to, GFace *from, std::map<MVertex*,MVertex*> &_mesh_to_geom){
-  printf("Starting Face %d, with %d vertices\n", to->tag(),  from->mesh_vertices.size());
-  for (int i=0;i<from->mesh_vertices.size();i++){
-    MVertex *v_from = from->mesh_vertices[i];
+static void copy_vertices (GFace *geom, GFace *mesh, std::map<MVertex*,MVertex*> &_mesh_to_geom){
+  //  printf("Starting Face %d, with %d vertices\n", geom->tag(),  mesh->mesh_vertices.size());
+  for (int i=0;i<mesh->mesh_vertices.size();i++){
+    MVertex *v_from = mesh->mesh_vertices[i];
     double uv[2];
-    GPoint gp = to->closestPoint ( SPoint3(v_from->x(),v_from->y(),v_from->z()), uv );
-    printf("Original point %f %f %f\n", v_from->x(), v_from->y(), v_from->z());
-    printf("New point %f %f %f\n", gp.x(), gp.y(), gp.z());
-    MFaceVertex *v_to = new MFaceVertex (v_from->x(),v_from->y(),v_from->z(), to, uv[0],uv[1] );
-    to->mesh_vertices.push_back(v_to);
+    GPoint gp = geom->closestPoint ( SPoint3(v_from->x(),v_from->y(),v_from->z()), uv );
+    //    printf("Original point %f %f %f\n", v_from->x(), v_from->y(), v_from->z());
+    //    printf("New point %f %f %f\n", gp.x(), gp.y(), gp.z());
+    double DDD = ( v_from->x() - gp.x()) * ( v_from->x() - gp.x()) +
+      ( v_from->y() - gp.y()) * ( v_from->y() - gp.y()) +
+      ( v_from->z() - gp.z()) * ( v_from->z() - gp.z()) ;
+    if (sqrt(DDD) > 1.e-3)Msg::Error("Impossible to match one point Original point %f %f %f New point %f %f %f",
+				     v_from->x(), v_from->y(), v_from->z(),gp.x(), gp.y(), gp.z());
+    MFaceVertex *v_to = new MFaceVertex (v_from->x(),v_from->y(),v_from->z(), geom, gp.u(),gp.v() );
+    geom->mesh_vertices.push_back(v_to);
     _mesh_to_geom[v_from] = v_to;
   }
+  //  printf("Ending Face %d %d vertices to match\n",geom->tag(),geom->mesh_vertices.size());
 }
 
 template <class ELEMENT>
@@ -669,7 +677,7 @@ void copy_vertices (GModel *geom, GModel *mesh, std::map<MVertex*,MVertex*> &_me
 void copy_elements (GModel *geom, GModel *mesh, std::map<MVertex*,MVertex*> &_mesh_to_geom){
   // copy all elements
   for (GModel::viter vit = geom->firstVertex() ; vit != geom->lastVertex(); ++vit)
-    copy_elements<MPoint>((*vit)->points,mesh->getVertexByTag((*vit)->tag())->points,_mesh_to_geom);
+    if (mesh->getVertexByTag((*vit)->tag())) copy_elements<MPoint>((*vit)->points,mesh->getVertexByTag((*vit)->tag())->points,_mesh_to_geom);
   for (GModel::eiter eit = geom->firstEdge() ; eit != geom->lastEdge(); ++eit)
     copy_elements<MLine>((*eit)->lines,mesh->getEdgeByTag((*eit)->tag())->lines,_mesh_to_geom);
   for (GModel::fiter fit = geom->firstFace() ; fit != geom->lastFace(); ++fit) {
@@ -688,6 +696,7 @@ void copy_elements (GModel *geom, GModel *mesh, std::map<MVertex*,MVertex*> &_me
 int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
 {
   mesh->createTopologyFromMesh();
+  GModel::setCurrent(geom);
   bool ok = true;
   // This will match VERTICES
   std::vector<Pair<GVertex*, GVertex*> > *coresp_v = matchVertices(geom, mesh,ok);
