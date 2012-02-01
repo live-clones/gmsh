@@ -943,6 +943,10 @@ void onelabWindow::rebuildTree()
 
   int width = (int)(0.5 * _tree->w());
 
+  std::vector<std::string> closed;
+  for (Fl_Tree_Item *n = _tree->first(); n; n = n->next())
+    if(n->is_close()) closed.push_back(getPath(n));
+
   _tree->clear();
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
   _tree->selectmode(FL_TREE_SELECT_NONE);
@@ -1045,6 +1049,9 @@ void onelabWindow::rebuildTree()
       _tree->end();
     }
   }
+
+  for(unsigned int i = 0; i < closed.size(); i++)
+    _tree->close(closed[i].c_str());
 
   _tree->redraw();
 
