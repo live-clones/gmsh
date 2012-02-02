@@ -201,7 +201,7 @@ static int cmpij(INDEX_TYPE ai, INDEX_TYPE aj, INDEX_TYPE bi, INDEX_TYPE bj)
 }
 
 template <class scalar>
-static void _sort2_xkws(unsigned long n, double arr[], INDEX_TYPE ai[], INDEX_TYPE aj[])
+static void _sort2_xkws(unsigned long n, scalar arr[], INDEX_TYPE ai[], INDEX_TYPE aj[])
 {
   unsigned long i, ir = n, j, k, l = 1;
   int *istack, jstack = 0;
@@ -310,7 +310,7 @@ void sortColumns_(int NbLines, int nnz, INDEX_TYPE *ptr, INDEX_TYPE *jptr,
       if (_position == 0) break;
     }
   }
-  _sort2_xkws<double>(nnz, a, ptr, ai);
+  _sort2_xkws<scalar>(nnz, a, ptr, ai);
   jptr[0] = 0;
   for(int i = 1; i <= NbLines; i++){
     jptr[i] = jptr[i - 1] + count[i - 1];
