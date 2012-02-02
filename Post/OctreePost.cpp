@@ -208,7 +208,7 @@ static void addListOfStuff(Octree *o, std::vector<double> &l, int nbelm)
 
 // OctreePost implementation
 
-OctreePost::~OctreePost() 
+OctreePost::~OctreePost()
 {
   Octree_Delete(_SL); Octree_Delete(_VL); Octree_Delete(_TL);
   Octree_Delete(_ST); Octree_Delete(_VT); Octree_Delete(_TT);
@@ -219,19 +219,19 @@ OctreePost::~OctreePost()
   Octree_Delete(_SY); Octree_Delete(_VY); Octree_Delete(_TY);
 }
 
-OctreePost::OctreePost(PView *v) 
+OctreePost::OctreePost(PView *v)
 {
   _create(v->getData(true)); // use adaptive data if available
 }
 
-OctreePost::OctreePost(PViewData *data) 
+OctreePost::OctreePost(PViewData *data)
 {
   _create(data);
 }
 
 void OctreePost::_create(PViewData *data)
 {
-  _SL = _VL = _TL = _ST = _VT = _TT = _SQ = _VQ = _TQ = 0; 
+  _SL = _VL = _TL = _ST = _VT = _TT = _SQ = _VQ = _TQ = 0;
   _SS = _VS = _TS = _SH = _VH = _TH = _SI = _VI = _TI = 0;
   _SY = _VY = _TY = 0;
   _theViewDataList = 0;
@@ -263,7 +263,7 @@ void OctreePost::_create(PViewData *data)
                       bbmax.y() - bbmin.y(),
                       bbmax.z() - bbmin.z()};
     const int maxElePerBucket = 100; // memory vs. speed trade-off
-    
+
     _SL = Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
     addListOfStuff(_SL, l->SL, 6 + 2 * l->getNumTimeSteps());
     Octree_Arrange(_SL);
@@ -273,7 +273,7 @@ void OctreePost::_create(PViewData *data)
     _TL = Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
     addListOfStuff(_TL, l->TL, 6 + 18 * l->getNumTimeSteps());
     Octree_Arrange(_TL);
-    
+
     _ST = Octree_Create(maxElePerBucket, min, size, triBB, triCentroid, triInEle);
     addListOfStuff(_ST, l->ST, 9 + 3 * l->getNumTimeSteps());
     Octree_Arrange(_ST);
@@ -283,7 +283,7 @@ void OctreePost::_create(PViewData *data)
     _TT = Octree_Create(maxElePerBucket, min, size, triBB, triCentroid, triInEle);
     addListOfStuff(_TT, l->TT, 9 + 27 * l->getNumTimeSteps());
     Octree_Arrange(_TT);
-    
+
     _SQ = Octree_Create(maxElePerBucket, min, size, quaBB, quaCentroid, quaInEle);
     addListOfStuff(_SQ, l->SQ, 12 + 4 * l->getNumTimeSteps());
     Octree_Arrange(_SQ);
@@ -293,7 +293,7 @@ void OctreePost::_create(PViewData *data)
     _TQ = Octree_Create(maxElePerBucket, min, size, quaBB, quaCentroid, quaInEle);
     addListOfStuff(_TQ, l->TQ, 12 + 36 * l->getNumTimeSteps());
     Octree_Arrange(_TQ);
-    
+
     _SS = Octree_Create(maxElePerBucket, min, size, tetBB, tetCentroid, tetInEle);
     addListOfStuff(_SS, l->SS, 12 + 4 * l->getNumTimeSteps());
     Octree_Arrange(_SS);
@@ -303,7 +303,7 @@ void OctreePost::_create(PViewData *data)
     _TS = Octree_Create(maxElePerBucket, min, size, tetBB, tetCentroid, tetInEle);
     addListOfStuff(_TS, l->TS, 12 + 36 * l->getNumTimeSteps());
     Octree_Arrange(_TS);
-    
+
     _SH = Octree_Create(maxElePerBucket, min, size, hexBB, hexCentroid, hexInEle);
     addListOfStuff(_SH, l->SH, 24 + 8 * l->getNumTimeSteps());
     Octree_Arrange(_SH);
@@ -313,7 +313,7 @@ void OctreePost::_create(PViewData *data)
     _TH = Octree_Create(maxElePerBucket, min, size, hexBB, hexCentroid, hexInEle);
     addListOfStuff(_TH, l->TH, 24 + 72 * l->getNumTimeSteps());
     Octree_Arrange(_TH);
-    
+
     _SI = Octree_Create(maxElePerBucket, min, size, priBB, priCentroid, priInEle);
     addListOfStuff(_SI, l->SI, 18 + 6 * l->getNumTimeSteps());
     Octree_Arrange(_SI);
@@ -323,7 +323,7 @@ void OctreePost::_create(PViewData *data)
     _TI = Octree_Create(maxElePerBucket, min, size, priBB, priCentroid, priInEle);
     addListOfStuff(_TI, l->TI, 18 + 54 * l->getNumTimeSteps());
     Octree_Arrange(_TI);
-    
+
     _SY = Octree_Create(maxElePerBucket, min, size, pyrBB, pyrCentroid, pyrInEle);
     addListOfStuff(_SY, l->SY, 15 + 5 * l->getNumTimeSteps());
     Octree_Arrange(_SY);
@@ -336,7 +336,7 @@ void OctreePost::_create(PViewData *data)
   }
 }
 
-bool OctreePost::_getValue(void *in, int dim, int nbNod, int nbComp, 
+bool OctreePost::_getValue(void *in, int dim, int nbNod, int nbComp,
                            double P[3], int step, double *values,
                            double *elementSize)
 {
@@ -352,12 +352,12 @@ bool OctreePost::_getValue(void *in, int dim, int nbNod, int nbComp,
   if(step < 0){
     for(int i = 0; i < _theViewDataList->getNumTimeSteps(); i++)
       for(int j = 0; j < nbComp; j++)
-        values[nbComp * i + j] = e->interpolate(&V[nbNod * nbComp * i + j], 
+        values[nbComp * i + j] = e->interpolate(&V[nbNod * nbComp * i + j],
                                                 U[0], U[1], U[2], nbComp);
   }
   else{
     for(int j = 0; j < nbComp; j++)
-      values[j] = e->interpolate(&V[nbNod * nbComp * step + j], 
+      values[j] = e->interpolate(&V[nbNod * nbComp * step + j],
                                  U[0], U[1], U[2], nbComp);
   }
 
@@ -365,7 +365,7 @@ bool OctreePost::_getValue(void *in, int dim, int nbNod, int nbComp,
 
   delete e;
   return true;
-} 
+}
 
 bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
                            double *values, double *elementSize)
@@ -383,7 +383,7 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
   else
     for(int i = 0; i < e->getNumVertices(); i++)
       dataIndex[i] = e->getNum();
-    
+
   double U[3];
   e->xyz2uvw(P, U);
 
@@ -393,7 +393,7 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
     if(timestep < 0 || step == timestep){
       for(int nod = 0; nod < e->getNumVertices(); nod++){
         for(int comp = 0; comp < nbComp; comp++)
-          _theViewDataGModel->getValueByIndex(step, dataIndex[nod], nod, comp, 
+          _theViewDataGModel->getValueByIndex(step, dataIndex[nod], nod, comp,
                                               nodeval[nod * nbComp + comp]);
       }
       for(int comp = 0; comp < nbComp; comp++){
@@ -405,12 +405,12 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
       }
     }
   }
-  
+
   if(elementSize) *elementSize = e->maxEdge();
   return true;
-} 
+}
 
-bool OctreePost::searchScalar(double x, double y, double z, double *values, 
+bool OctreePost::searchScalar(double x, double y, double z, double *values,
                               int step, double *size)
 {
   double P[3] = {x, y, z};
@@ -420,7 +420,7 @@ bool OctreePost::searchScalar(double x, double y, double z, double *values,
     if(_theViewDataList) numSteps = _theViewDataList->getNumTimeSteps();
     else if(_theViewDataGModel) numSteps = _theViewDataGModel->getNumTimeSteps();
     for(int i = 0; i < numSteps; i++){
-      values[i] = 0.0; 
+      values[i] = 0.0;
     }
   }
   else
@@ -442,11 +442,11 @@ bool OctreePost::searchScalar(double x, double y, double z, double *values,
       if(_getValue(m->getMeshElementByCoord(pt), 1, P, step, values, size)) return true;
     }
   }
-  
+
   return false;
 }
 
-bool OctreePost::searchScalarWithTol(double x, double y, double z, double *values, 
+bool OctreePost::searchScalarWithTol(double x, double y, double z, double *values,
                                      int step, double *size, double tol)
 {
   bool a = searchScalar(x, y, z, values, step, size);
@@ -458,11 +458,11 @@ bool OctreePost::searchScalarWithTol(double x, double y, double z, double *value
     a = searchScalar(x, y, z, values, step, size);
     element::setTolerance(oldtol1);
     MElement::setTolerance(oldtol2);
-  }    
+  }
   return a;
 }
 
-bool OctreePost::searchVector(double x, double y, double z, double *values, 
+bool OctreePost::searchVector(double x, double y, double z, double *values,
                               int step, double *size)
 {
   double P[3] = {x, y, z};
@@ -472,7 +472,7 @@ bool OctreePost::searchVector(double x, double y, double z, double *values,
     if(_theViewDataList) numSteps = _theViewDataList->getNumTimeSteps();
     else if(_theViewDataGModel) numSteps = _theViewDataGModel->getNumTimeSteps();
     for(int i = 0; i < 3 * numSteps; i++)
-      values[i] = 0.0; 
+      values[i] = 0.0;
   }
   else
     for(int i = 0; i < 3; i++)
@@ -494,11 +494,11 @@ bool OctreePost::searchVector(double x, double y, double z, double *values,
       if(_getValue(m->getMeshElementByCoord(pt), 3, P, step, values, size)) return true;
     }
   }
-  
+
   return false;
 }
 
-bool OctreePost::searchTensor(double x, double y, double z, double *values, 
+bool OctreePost::searchTensor(double x, double y, double z, double *values,
                               int step, double *size)
 {
   double P[3] = {x, y, z};
@@ -508,7 +508,7 @@ bool OctreePost::searchTensor(double x, double y, double z, double *values,
     if(_theViewDataList) numSteps = _theViewDataList->getNumTimeSteps();
     else if(_theViewDataGModel) numSteps = _theViewDataGModel->getNumTimeSteps();
     for(int i = 0; i < 9 * numSteps; i++)
-      values[i] = 0.0; 
+      values[i] = 0.0;
   }
   else
     for(int i = 0; i < 9; i++)
@@ -530,6 +530,22 @@ bool OctreePost::searchTensor(double x, double y, double z, double *values,
       if(_getValue(m->getMeshElementByCoord(pt), 9, P, step, values, size)) return true;
     }
   }
-  
+
   return false;
+}
+
+bool OctreePost::searchTensorWithTol(double x, double y, double z, double *values,
+                                     int step, double *size, double tol)
+{
+  bool a = searchTensor(x, y, z, values, step, size);
+  if(!a && tol != 0.){
+    double oldtol1 = element::getTolerance();
+    double oldtol2 = MElement::getTolerance();
+    element::setTolerance(tol);
+    MElement::setTolerance(tol);
+    a = searchTensor(x, y, z, values, step, size);
+    element::setTolerance(oldtol1);
+    MElement::setTolerance(oldtol2);
+  }
+  return a;
 }

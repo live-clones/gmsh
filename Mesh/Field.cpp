@@ -1043,7 +1043,7 @@ class MathEvalField : public Field
     options["F"] = new FieldOptionString
       (f, "Mathematical function to evaluate.", &update_needed);
     f = "F2 + Sin(z)";
-    callbacks["test"] = new FieldCallbackGeneric<MathEvalField>(this, &MathEvalField::myAction, "description blabla"); 
+    callbacks["test"] = new FieldCallbackGeneric<MathEvalField>(this, &MathEvalField::myAction, "description blabla");
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
@@ -1234,8 +1234,8 @@ class PostViewField : public Field
       update_needed = false;
     }
     double l = 0.;
-    // use large tolerance (in element reference coordinates) to
-    // maximize chance of finding an element
+    // use large tolerance (in element reference coordinates) to maximize chance
+    // of finding an element
     if(!octree->searchScalarWithTol(x, y, z, &l, 0, 0, 1.))
       Msg::Info("No scalar element found containing point (%g,%g,%g)", x, y, z);
     if(l <= 0 && crop_negative_values) return MAX_LC;
@@ -1251,13 +1251,18 @@ class PostViewField : public Field
       update_needed = false;
     }
     double l[9];
-    if(!octree->searchTensor(x, y, z, l, 0)){
+    // use large tolerance (in element reference coordinates) to maximize chance
+    // of finding an element
+    if(!octree->searchTensorWithTol(x, y, z, l, 0, 0, 1.)){
       Msg::Info("No tensor element found containing point (%g,%g,%g)", x, y, z);
       return;
     }
     metr(0, 0) = l[0];
+    metr(0, 1) = l[1];
+    metr(0, 2) = l[2];
     metr(1, 0) = l[3];
     metr(1, 1) = l[4];
+    metr(1, 2) = l[5];
     metr(2, 0) = l[6];
     metr(2, 1) = l[7];
     metr(2, 2) = l[8];
