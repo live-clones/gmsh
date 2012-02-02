@@ -63,7 +63,7 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
     new PView("Disto", "# Elements", x, y);
   }
   else{
-    
+
     std::vector<GEntity*> entities_;
     GModel::current()->getEntities(entities_);
     std::map<int, std::vector<double> > d;
@@ -81,7 +81,7 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
 	  d[e->getNum()].push_back(e->distoShapeMeasure());
       }
     }
-    
+
     name.resize(name.size() - 2);
     new PView(name, "ElementData", GModel::current(), d);
   }
@@ -130,7 +130,7 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
       value[num++] = new Fl_Output(2 * WB, 2 * WB + 11 * BH, IW, BH, "Time for 2D mesh");
       value[num++] = new Fl_Output(2 * WB, 2 * WB + 12 * BH, IW, BH, "Time for 3D mesh");
 
-      value[num] = new Fl_Output(2 * WB, 2 * WB + 13 * BH, IW, BH, "Gamma"); 
+      value[num] = new Fl_Output(2 * WB, 2 * WB + 13 * BH, IW, BH, "Gamma");
       value[num]->tooltip("~ inscribed_radius / circumscribed_radius"); num++;
       value[num] = new Fl_Output(2 * WB, 2 * WB + 14 * BH, IW, BH, "Eta");
       value[num]->tooltip("~ volume^(2/3) / sum_edge_length^2"); num++;
@@ -190,7 +190,7 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
       (width - BB - WB, height - BH - WB, BB, BH, "Update");
     o->callback(statistics_update_cb);
   }
-  
+
   win->position(CTX::instance()->statPosition[0], CTX::instance()->statPosition[1]);
   win->end();
 
@@ -199,7 +199,7 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
 
 void statisticsWindow::compute(bool elementQuality)
 {
-#if 1
+#if 0
   {
     // MINIMUM ANGLES
     double minAngle = 120.0;
@@ -238,7 +238,7 @@ void statisticsWindow::compute(bool elementQuality)
 	}
 	for(unsigned int k = 0; k < e->getNumVertices(); k++){
 	  MVertex *v = e->getVertex(k);
-	  if (v->onWhat()->dim() < 2) continue; 
+	  if (v->onWhat()->dim() < 2) continue;
 	  std::map<MVertex*, int >::iterator it = vert2Deg.find(v);
 	  if (it == vert2Deg.end()) {
 	    vert2Deg.insert(std::make_pair(v,1));
@@ -294,13 +294,13 @@ void statisticsWindow::compute(bool elementQuality)
       }
       double tau = exp ((1./edges.size()) * sum);
       printf("N edges = %d tau = %g\n",(int)edges.size(),tau);
-      
+
       double ibegin = 2./(2*nbS);
       double inext = 2./nbS;
       for (int i= 0; i< qualE.size(); i++){
 	fprintf(fp, "0 0 0 0 %g 0 0 %g \n", ibegin+i*inext , (double)qualE[i]/nbEdges);
       }
-      
+
     }
     fclose(fp);
   }
@@ -319,7 +319,7 @@ void statisticsWindow::compute(bool elementQuality)
 	}
 	for(unsigned int k = 0; k < e->getNumVertices(); k++){
 	  MVertex *v = e->getVertex(k);
-	  if (v->onWhat()->dim() < 2) continue; 
+	  if (v->onWhat()->dim() < 2) continue;
 	  std::map<MVertex*, int >::iterator it = vert2Deg.find(v);
 	  if (it == vert2Deg.end()){
 	    vert2Deg.insert(std::make_pair(v,1));
@@ -380,7 +380,7 @@ void statisticsWindow::compute(bool elementQuality)
     fclose(fp);
   }
 #endif
-  
+
   int num = 0;
   static double s[50];
   static char label[50][256];
@@ -465,12 +465,12 @@ void statisticsWindow::compute(bool elementQuality)
 
 void statisticsWindow::show()
 {
-  if(!win->shown()) 
+  if(!win->shown())
     compute(false);
 
   for(int i = 0; i < 3; i++)
     group[i]->hide();
-  
+
   if(GModel::current()->getMeshStatus(true) > 0)
     group[1]->show();
   else if(PView::list.size())
