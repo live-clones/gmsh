@@ -312,4 +312,6 @@ class inputRange : public Fl_Group {
   std::string loop(){ return _loop_val; }
   void graph(const std::string &val){ _set_graph_value(val); }
   std::string graph(){ return _graph_val; }
+  void color(int col){ _input->color(col); }
+  int color(){ return _input->color(); }
 };

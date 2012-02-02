@@ -664,6 +664,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(copt.count("ShortHelp")) ps[0].setShortHelp(copt["ShortHelp"][0]);
   if(copt.count("Loop")) ps[0].setAttribute("Loop", copt["Loop"][0]);
   if(copt.count("Graph")) ps[0].setAttribute("Graph", copt["Graph"][0]);
+  if(copt.count("Hightlight")) ps[0].setAttribute("Highlight", copt["Hightlight"][0]);
   _onelabClient->set(ps[0]);
 #endif
 }

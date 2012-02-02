@@ -967,7 +967,8 @@ void onelabWindow::rebuildTree()
     std::string label = numbers[i].getShortName();
     _tree->begin();
     if(numbers[i].getChoices().size() == 2 &&
-       numbers[i].getChoices()[0] == 0 && numbers[i].getChoices()[1] == 1){
+       numbers[i].getChoices()[0] == 0 &&
+       numbers[i].getChoices()[1] == 1){
       Fl_Check_Button *but = new Fl_Check_Button(1, 1, width, 1);
       _treeWidgets.push_back(but);
       but->copy_label(label.c_str());
@@ -987,6 +988,8 @@ void onelabWindow::rebuildTree()
       but->choices(numbers[i].getChoices());
       but->loop(numbers[i].getAttribute("Loop"));
       but->graph(numbers[i].getAttribute("Graph"));
+      if(numbers[i].getAttribute("Highlight").size())
+        but->color(FL_YELLOW);
       but->align(FL_ALIGN_RIGHT);
       but->callback(onelab_input_range_cb, (void*)n);
       but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
@@ -1030,6 +1033,8 @@ void onelabWindow::rebuildTree()
     menu.push_back(it);
     but->menubutton()->copy(&menu[0]);
     but->value(strings[i].getValue().c_str());
+    if(strings[i].getAttribute("Highlight").size())
+      but->color(FL_YELLOW);
     but->align(FL_ALIGN_RIGHT);
     but->callback(onelab_input_choice_cb, (void*)n);
     but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
