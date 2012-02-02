@@ -54,7 +54,7 @@ int GModel::exportDiscreteGEOInternals()
   for(viter it = firstVertex(); it != lastVertex(); it++){
     Vertex *v = Create_Vertex((*it)->tag(), (*it)->x(), (*it)->y(), (*it)->z(),
                               (*it)->prescribedMeshSizeAtVertex(), 1.0);
-    Tree_Add(GModel::current()->getGEOInternals()->Points, &v);
+    Tree_Add(this->getGEOInternals()->Points, &v);
   }
 
   for(eiter it = firstEdge(); it != lastEdge(); it++){
@@ -79,7 +79,7 @@ int GModel::exportDiscreteGEOInternals()
         }
       }
       End_Curve(c);
-      Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
+      Tree_Add(this->getGEOInternals()->Curves, &c);
       CreateReversedCurve(c);
     }
   }
@@ -99,7 +99,7 @@ int GModel::exportDiscreteGEOInternals()
           }
         }
       }
-      Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
+      Tree_Add(this->getGEOInternals()->Surfaces, &s);
     }
   }
 

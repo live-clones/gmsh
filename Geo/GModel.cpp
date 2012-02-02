@@ -1519,6 +1519,8 @@ void GModel::createTopologyFromMesh(int ignoreHoles)
     if((*it)->geomType() == GEntity::DiscreteSurface)
       discFaces.push_back((discreteFace*) *it);
   createTopologyFromFaces(discFaces, ignoreHoles);
+  
+  printf("goind to export GEO internals \n");
 
   //create old format (necessary e.g. for old-style extruded boundary layers)
   exportDiscreteGEOInternals();

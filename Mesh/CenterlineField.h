@@ -49,19 +49,6 @@ struct Branch{
 
 class Centerline : public Field{
 
-  class cutAction : public FieldCallback{
-  private:
-    Centerline *myField;
-  public:
-    cutAction(Centerline *field, std::string help):FieldCallback(help) {
-      myField = field;
-    }
-    void run(){
-      printf("calling action cutMesh \n");
-      myField->cutMesh();
-    }
-  };
-
  protected: 
   GModel *current; //current GModel
   GModel *mod; //centerline GModel
@@ -85,6 +72,7 @@ class Centerline : public Field{
   std::map<MVertex*,int> colorp;
   std::map<MLine*,int> colorl;
 
+  std::vector<GFace*> currentGFC;
   //the tubular surface mesh
   std::vector<MTriangle*> triangles;
   //the lines cut of the tubular mesh by planes

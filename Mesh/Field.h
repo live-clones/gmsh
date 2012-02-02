@@ -245,5 +245,20 @@ class FieldOptionBool : public FieldOption
   }
 };
 
+template<class t>
+class FieldCallbackGeneric : public FieldCallback {
+  t * _field;
+  void (t::*_callback)();
+  public :
+  void run()
+  {
+    (_field->*_callback)();
+  }
+  FieldCallbackGeneric( t *field, void (t::*callback)(), const std::string description) : FieldCallback(description)
+  {
+    _field = field;
+    _callback = callback;
+  }
+};
 
 #endif

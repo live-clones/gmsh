@@ -35,21 +35,6 @@
 #include "ANN/ANN.h"
 #endif
 
-template<class t>
-class FieldCallbackGeneric : public FieldCallback {
-  t * _field;
-  void (t::*_callback)();
-  public :
-  void run()
-  {
-    (_field->*_callback)();
-  }
-  FieldCallbackGeneric( t *field, void (t::*callback)(), const std::string description) : FieldCallback(description)
-  {
-    _field = field;
-    _callback = callback;
-  }
-};
 
 Field::~Field()
 {
@@ -1022,18 +1007,7 @@ class MathEvalField : public Field
 {
   MathEvalExpression expr;
   std::string f;
-  class testAction : public FieldCallback{
-  private:
-    MathEvalField *myField;
-  public:
-    testAction(MathEvalField *field, std::string help):FieldCallback(help) {
-      myField = field;
-    }
-    void run(){
-      myField->myAction();
-      printf("calling action matheval \n");
-    }
-  };
+
  public:
   void myAction(){
     printf("doing sthg \n");

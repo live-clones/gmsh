@@ -31,6 +31,7 @@
 #include "GFaceCompound.h"
 #include "meshGFace.h"
 #include "meshGEdge.h"
+#include "MQuadrangle.h"
 
 #if defined(HAVE_ANN)
 #include <ANN/ANN.h>
@@ -315,7 +316,7 @@ Centerline::Centerline(std::string fileName): kdtree(0), nodes(0){
   index = new ANNidx[1];
   dist = new ANNdist[1];
 
-  printf("cetreline filename =%s \n", fileName.c_str());
+  printf("centerline filename =%s \n", fileName.c_str());
   importFile(fileName);
   buildKdTree();
 
@@ -331,14 +332,19 @@ Centerline::Centerline(): kdtree(0), nodes(0){
   fileName = "centerlines.vtk";//default
 
   options["FileName"] = new FieldOptionString (fileName, "File name for the centerlines", &update_needed);
-  callbacks["cutMesh"] = new cutAction(this, "Cut the initial mesh in different mesh partitions using the centerlines \n"); 
-    //callbacks["test"] = new FieldCallbackGeneric<MathEvalField>(this, MathEvalField::myFunc, "description")
+  callbacks["cutMesh"] = new FieldCallbackGeneric<Centerline>(this, &Centerline::cutMesh, "Cut the initial mesh in different mesh partitions using the centerlines \n");
  
 }
 
 Centerline::~Centerline(){
+  printf("mod=%p \n", mod);
+  printf("split=%p \n", split);
+  printf("current=%p \n", current);
+  printf("delete mod \n");
   if (mod) delete mod;
+  printf("delete split \n");
   if (split) delete split;
+   printf("delete anns stuff \n");
   if(kdtree) delete kdtree;
   if(nodes) annDeallocPts(nodes);
   delete[]index;
@@ -352,17 +358,19 @@ void Centerline::importFile(std::string fileName){
   current->getEntities(entities) ; 
   for(unsigned int i = 0; i < entities.size(); i++){
     if(entities[i]->dim() != 2) continue; 
-    recombine = std::max(recombine, (double)(((GFace*)entities[i])->meshAttributes.recombine));
+    GFace *gf = ((GFace*)entities[i]);
+    recombine = std::max(recombine, (double)(gf->meshAttributes.recombine));    
     for(int j = 0; j < entities[i]->getNumMeshElements(); j++){ 
       MElement *e = entities[i]->getMeshElement(j);
       if (e->getType() != TYPE_TRI){
-  	Msg::Error("Centerline split only implemented for tri meshes so far ..."); 
-  	exit(1);
+    	Msg::Error("Centerline split only implemented for tri meshes so far ..."); 
+    	exit(1);
       }
       else{
-	triangles.push_back((MTriangle*)e);
+    	triangles.push_back((MTriangle*)e);
       }	
     }
+
   }
   entities.clear();
 
@@ -659,12 +667,23 @@ void Centerline::buildKdTree(){
 
 void Centerline::remeshSplitMesh(){
 
+  int NV = split->getMaxElementaryNumber(0);
+  int NE = split->getMaxElementaryNumber(1);
+  int NF = split->getMaxElementaryNumber(2);
+
+  std::set<MVertex*> allNod; 
+  std::list<GEdge*> U0;
+  printf("face =%d \n",  split->getMaxElementaryNumber(2));
+  discreteFace *mySplitMesh = new discreteFace(split, 2*NF+1);
+  split->add(mySplitMesh);
+  printf("face after =%d \n",  split->getMaxElementaryNumber(2));
+
   // Remesh new faces (Compound Lines and Compound Surfaces)
   Msg::Info("*** Starting parametrize compounds:");
   double t0 = Cpu();
 
   //Parametrize Compound Lines
-  int NE = split->getMaxElementaryNumber(1);
+  printf("NF =%d NE=%d NV=%d \n", split->getMaxElementaryNumber(2), NE, NV);
   for (int i=0; i < NE; i++){
     std::vector<GEdge*>e_compound;
     GEdge *pe = split->getEdgeByTag(i+1);//split edge
@@ -678,9 +697,6 @@ void Centerline::remeshSplitMesh(){
   }
 
   // Parametrize Compound surfaces
-  std::set<MVertex*> allNod; 
-  std::list<GEdge*> U0;
-  int NF = split->getMaxElementaryNumber(2);
   for (int i=0; i < NF; i++){
     std::list<GFace*> f_compound;
     GFace *pf =  split->getFaceByTag(i+1);//split face 
@@ -719,79 +735,52 @@ void Centerline::remeshSplitMesh(){
     GFace *gfc =  split->getFaceByTag(NF+i+1);
     meshGFace mgf;
     mgf(gfc);
+    for(unsigned int j = 0; j < gfc->triangles.size(); ++j){
+      MTriangle *t = gfc->triangles[j];
+      std::vector<MVertex *> v(3);
+      for(int k = 0; k < 3; k++){
+        v[k] = t->getVertex(k);
+        allNod.insert(v[k]);
+      }
+      mySplitMesh->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+    }
+    for(unsigned int j = 0; j < gfc->quadrangles.size(); ++j){
+      MQuadrangle *q = gfc->quadrangles[j];
+      std::vector<MVertex *> v(4);
+      for(int k = 0; k < 4; k++){
+        v[k] = q->getVertex(k);
+        allNod.insert(v[k]);
+      }
+      mySplitMesh->quadrangles.push_back(new MQuadrangle(v[0], v[1], v[2], v[3]));
+    }
   }
 
-  // // Removing discrete Vertices - Edges - Faces
-  // int NV = split->getMaxElementaryNumber(0) - numv + 1;
-  // for (int i=0; i < NV; i++){
-  //   GVertex *pv = gf->model()->getVertexByTag(numv+i);
-  //   gf->model()->remove(pv);
-  // }
-  // for (int i=0; i < NE; i++){
-  //   GEdge *gec = split->getEdgeByTag(nume+NE+i);
-  //   GEdge *pe = split->getEdgeByTag(nume+i);
-  //   gf->model()->remove(pe); 
-  //   gf->model()->remove(gec);
-  // }
-  // for (int i=0; i < NF; i++){
-  //   GFace *gfc = split->getFaceByTag(numf+NF+i);
-  //   GFace *pf  = split->getFaceByTag(numf+i);
-  //   gf->model()->remove(pf); 
-  //   gf->model()->remove(gfc);
-  // }
+  // Removing discrete Vertices - Edges - Faces
+  printf("NV=%d NE=%d NF=%d \n", NV, NE, NF);
+  for (int i=0; i < NV; i++){
+    GVertex *gv = split->getVertexByTag(i+1);
+    split->remove(gv);
+  }
+  for (int i=0; i < NE; i++){
+    GEdge *ge = split->getEdgeByTag(i+1);
+    GEdge *gec = split->getEdgeByTag(NE+i+1);
+    split->remove(ge); 
+    split->remove(gec);
+  }
+  for (int i=0; i < NF; i++){
+    GFace *gf  = split->getFaceByTag(i+1);
+    GFace *gfc = split->getFaceByTag(NF+i+1);
+    split->remove(gf); 
+    split->remove(gfc);
+  }
 
-  // // Put new mesh in a new discreteFace
-  // for(std::set<MVertex*>::iterator it = allNod.begin(); it != allNod.end(); ++it){
-  //   gf->mesh_vertices.push_back(*it);
-  // }
+  //Put new mesh in a new discreteFace
+  for(std::set<MVertex*>::iterator it = allNod.begin(); it != allNod.end(); ++it){
+    mySplitMesh->mesh_vertices.push_back(*it);
+  }
+  split->createTopologyFromMesh();
 
-  // // Remove mesh_vertices that belong to l_edges
-  // std::list<GEdge*> l_edges = gf->edges();
-  // for(std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); it++){
-  //   std::vector<MVertex*> edge_vertices = (*it)->mesh_vertices;
-  //   std::vector<MVertex*>::const_iterator itv = edge_vertices.begin();
-  //   for(; itv != edge_vertices.end(); itv++){
-  //     std::vector<MVertex*>::iterator itve = std::find
-  //       (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), *itv);
-  //     if (itve != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itve);
-  //   }
-  //   MVertex *vB = (*it)->getBeginVertex()->mesh_vertices[0];
-  //   std::vector<MVertex*>::iterator itvB = std::find
-  //     (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vB);
-  //   if (itvB != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvB);
-  //   MVertex *vE = (*it)->getEndVertex()->mesh_vertices[0];
-  //   std::vector<MVertex*>::iterator itvE = std::find
-  //     (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vE);
-  //   if (itvE != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvE);
-
-  //   //if l_edge is a compond
-  //   if((*it)->getCompound()){
-  //     GEdgeCompound *gec = (*it)->getCompound();
-  //     std::vector<MVertex*> edge_vertices = gec->mesh_vertices;
-  //     std::vector<MVertex*>::const_iterator itv = edge_vertices.begin();
-  //     for(; itv != edge_vertices.end(); itv++){
-  //       std::vector<MVertex*>::iterator itve = std::find
-  //         (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), *itv);
-  //       if (itve != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itve);
-  //     }
-  //     MVertex *vB = (*it)->getBeginVertex()->mesh_vertices[0];
-  //     std::vector<MVertex*>::iterator itvB = std::find
-  //       (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vB);
-  //     if (itvB != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvB);
-  //     MVertex *vE = (*it)->getEndVertex()->mesh_vertices[0];
-  //     std::vector<MVertex*>::iterator itvE = std::find
-  //       (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vE);
-  //     if (itvE != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvE);
-  //   }
-  // }
-
-  // double t3 = Cpu();
-  // Msg::Info("*** Mesh of surface %d done by assembly %d remeshed faces (%g s)",
-  //           gf->tag(), NF, t3-t2);
-  // Msg::Info("-----------------------------------------------------------");
- 
-  // gf->coherenceNormals();
-  // gf->meshStatistics.status = GFace::DONE; 
+  mySplitMesh->meshStatistics.status = GFace::DONE; 
 
 }
 void Centerline::createFaces(){
@@ -831,7 +820,7 @@ void Centerline::createFaces(){
   for(unsigned int i = 0; i < faces.size(); ++i){
     int numF = split->getMaxElementaryNumber(2) + 1;
     printf("creating discrete face %d \n", numF);
-    discreteFace *f = new discreteFace(current, numF);
+    discreteFace *f = new discreteFace(split, numF);
     split->add(f);
     discFaces.push_back(f);
     std::set<MVertex*> myVertices;
@@ -861,10 +850,22 @@ void Centerline::cutMesh(){
     printf("fileName =%s , recombine =%g \n", fileName.c_str(), recombine);
     update_needed = false;
   }
-  
+
+  // std::vector<GFace*> currentFaces =  current->bindingsGetFaces();
+  // for (int i=0; i< currentFaces.size(); i++){
+  //   printf("gf =%d \n", currentFaces[i]->tag());
+  //   if(currentFaces[i]->geomType() == GEntity::CompoundSurface) {
+  //     std::list<GFace*> cFaces = ((GFaceCompound*)currentFaces[i])->getCompounds();
+  //     for (std::list<GFace*>::iterator it = cFaces.begin(); it!= cFaces.end(); it++) {
+  //   	printf("comp  = %d\n", (*it)->tag());
+  //     }
+  //     if (cFaces.size() > 0) currentGFC.push_back(currentFaces[i]);
+  //   }
+  // }
+
   Msg::Info("Splitting surface mesh (%d tris) with centerline %s ", triangles.size(), fileName.c_str());
   split = new GModel(); 
-
+ 
   //splitMesh
   for(unsigned int i = 0; i < edges.size(); i++){
     std::vector<MLine*> lines = edges[i].lines;
@@ -933,11 +934,12 @@ void Centerline::cutMesh(){
 
 
   Msg::Info("Splitting mesh by centerlines done ");
-  exit(1);
+  printf("mod=%p \n", mod);
+  printf("split=%p \n", split);
+  printf("current=%p \n", current);
+  //exit(1);
 
 }
-
-
 
 void Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
    
