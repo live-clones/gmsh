@@ -1034,7 +1034,7 @@ void onelabWindow::rebuildTree()
     but->menubutton()->copy(&menu[0]);
     but->value(strings[i].getValue().c_str());
     if(strings[i].getAttribute("Highlight").size())
-      but->color(FL_YELLOW);
+      but->input()->color(FL_YELLOW);
     but->align(FL_ALIGN_RIGHT);
     but->callback(onelab_input_choice_cb, (void*)n);
     but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
