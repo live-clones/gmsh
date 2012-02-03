@@ -590,9 +590,9 @@ static bool updateOnelabGraph(const std::string &snum)
     }
     else{
       view = new PView(xName, yName, x, y);
+      view->getData()->setFileName("OneLab" + snum);
       view->getOptions()->intervalsType = PViewOptions::Discrete;
     }
-    view->getData()->setFileName("OneLab" + snum);
     changed = true;
   }
   else if(view){
@@ -923,7 +923,7 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _butt[1]->callback(onelab_cb, (void*)"compute");
 
   _gear = new Fl_Menu_Button
-    (_butt[0]->x() - WB - BB/2, _butt[0]->y(), BB/2, BH, "@gmsh_gear");
+    (_butt[0]->x() - WB - BB/2, _butt[0]->y(), BB/2, BH, "@-1gmsh_gear");
   _gear->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   _gear->add("Reset database", 0, onelab_cb, (void*)"reset");
   _gear->add("_Print database", 0, onelab_cb, (void*)"dump");
