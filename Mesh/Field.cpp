@@ -1267,7 +1267,8 @@ class MinAnisoField : public Field
   {
     return "Take the intersection of a list of possibly anisotropic fields.";
   }
-  virtual void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0){
+  virtual void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0)
+  {
     SMetric3 v (1./MAX_LC);
     for(std::list<int>::iterator it = idlist.begin(); it != idlist.end(); it++) {
       Field *f = (GModel::current()->getFields()->get(*it));
@@ -1290,9 +1291,24 @@ class MinAnisoField : public Field
     double v = MAX_LC;
     for(std::list<int>::iterator it = idlist.begin(); it != idlist.end(); it++) {
       Field *f = (GModel::current()->getFields()->get(*it));
-      if(f && *it != id) v = std::min(v, (*f) (x, y, z, ge));
+      SMetric3 m;
+      if(f && *it != id){
+        if (!f->isotropic()){
+          (*f)(x, y, z, m, ge);
+        }
+	else {
+          double L = (*f)(x, y, z, ge);
+          for (int i = 0; i < 3; i++)
+            m(i,i) = 1. / (L*L);
+	}
+      }
+      metr = intersection(metr, m);
     }
-    return v;
+    fullMatrix<double> V(3,3);
+    fullVector<double> S(3);
+    metr.eig(V, S, 1);
+    double val = sqrt(1./S(2)); //S(2) is largest eigenvalue
+    return std::min(v, val);
   }
   const char *getName()
   {
