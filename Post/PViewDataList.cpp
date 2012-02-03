@@ -11,18 +11,56 @@
 #include "SmoothData.h"
 #include "Context.h"
 
-PViewDataList::PViewDataList(bool isAdapted)
-  : PViewData(), NbTimeStep(0), Min(VAL_INF), Max(-VAL_INF), Time(0),
-    NbSP(0), NbVP(0), NbTP(0), SP(0), VP(0), TP(0),
-    NbSL(0), NbVL(0), NbTL(0), NbST(0), NbVT(0), NbTT(0),
-    NbSQ(0), NbVQ(0), NbTQ(0), NbSS(0), NbVS(0), NbTS(0),
-    NbSH(0), NbVH(0), NbTH(0), NbSI(0), NbVI(0), NbTI(0), 
-    NbSY(0), NbVY(0), NbTY(0), NbT2(0), NbT3(0),
-    _lastElement(-1), _lastDimension(-1), _lastNumNodes(-1), 
-    _lastNumComponents(-1), _lastNumValues(-1), _lastNumEdges(-1),
-    _lastType(-1), _lastXYZ(0), _lastVal(0), _isAdapted(isAdapted)
+void PViewDataList::_init(bool isAdapted)
 {
+  NbTimeStep = 0;
+  Min = VAL_INF;
+  Max = -VAL_INF;
+  NbSP = NbVP = NbTP = 0;
+  NbSL = NbVL = NbTL = 0;
+  NbST = NbVT = NbTT = 0;
+  NbSQ = NbVQ = NbTQ = 0;
+  NbSS = NbVS = NbTS = 0;
+  NbSH = NbVH = NbTH = 0;
+  NbSI = NbVI = NbTI = 0;
+  NbSY = NbVY = NbTY = 0;
+  NbT2 = NbT3 = 0;
+  _lastElement = _lastDimension = _lastNumNodes = -1;
+  _lastNumComponents = _lastNumValues = _lastNumEdges = -1;
+  _lastType = -1;
+  _lastXYZ = _lastVal = 0;
+  _isAdapted = isAdapted;
   for(int i = 0; i < 24; i++) _index[i] = 0;
+}
+
+PViewDataList::PViewDataList(bool isAdapted) : PViewData()
+{
+  _init(isAdapted);
+}
+
+PViewDataList::PViewDataList(const std::string &xname, const std::string &yname,
+                             std::vector<double> &x, std::vector<double> &y)
+  : PViewData()
+{
+  _init(false);
+  setXY(xname, yname, x, y);
+}
+
+void PViewDataList::setXY(const std::string &xname, const std::string &yname,
+                          std::vector<double> &x, std::vector<double> &y)
+{
+  NbSP = 0;
+  SP.clear();
+  for(unsigned int i = 0; i < std::min(x.size(), y.size()); i++){
+    SP.push_back(x[i]);
+    SP.push_back(0.);
+    SP.push_back(0.);
+    SP.push_back(y[i]);
+    NbSP++;
+  }
+  setName(yname);
+  setFileName(yname + ".pos");
+  finalize();
 }
 
 bool PViewDataList::finalize(bool computeMinMax, const std::string &interpolationScheme)
@@ -30,7 +68,7 @@ bool PViewDataList::finalize(bool computeMinMax, const std::string &interpolatio
   BBox.reset();
   Min = VAL_INF;
   Max = -VAL_INF;
- 
+
   // finalize text strings first, to get the max value of NbTimeStep
   // for strings-only views (strings are designed to degrade
   // gracefully when some have fewer time steps than others). If there
@@ -64,8 +102,8 @@ bool PViewDataList::finalize(bool computeMinMax, const std::string &interpolatio
   }
 
   // compute starting element indices
-  int nb[24] = {NbSP, NbVP, NbTP,  NbSL, NbVL, NbTL,  NbST, NbVT, NbTT, 
-                NbSQ, NbVQ, NbTQ,  NbSS, NbVS, NbTS,  NbSH, NbVH, NbTH, 
+  int nb[24] = {NbSP, NbVP, NbTP,  NbSL, NbVL, NbTL,  NbST, NbVT, NbTT,
+                NbSQ, NbVQ, NbTQ,  NbSS, NbVS, NbTS,  NbSH, NbVH, NbTH,
                 NbSI, NbVI, NbTI,  NbSY, NbVY, NbTY};
   for(int i = 0; i < 24; i++){
     _index[i] = 0;
@@ -79,18 +117,18 @@ bool PViewDataList::finalize(bool computeMinMax, const std::string &interpolatio
 }
 
 int PViewDataList::getNumScalars(int step)
-{ 
-  return NbSP + NbSL + NbST + NbSQ + NbSS + NbSH + NbSI + NbSY; 
+{
+  return NbSP + NbSL + NbST + NbSQ + NbSS + NbSH + NbSI + NbSY;
 }
 
 int PViewDataList::getNumVectors(int step)
 {
-  return NbVP + NbVL + NbVT + NbVQ + NbVS + NbVH + NbVI + NbVY; 
+  return NbVP + NbVL + NbVT + NbVQ + NbVS + NbVH + NbVI + NbVY;
 }
 
 int PViewDataList::getNumTensors(int step)
-{ 
-  return NbTP + NbTL + NbTT + NbTQ + NbTS + NbTH + NbTI + NbTY; 
+{
+  return NbTP + NbTL + NbTT + NbTQ + NbTS + NbTH + NbTI + NbTY;
 }
 
 int PViewDataList::getNumElements(int step, int ent)
@@ -115,7 +153,7 @@ double PViewDataList::getMin(int step, bool onlyVisible, int forceNumComponents,
       for(int ele = 0; ele < getNumElements(step, ent); ele++){
         for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
           double val;
-          getScalarValue(step, ent, ele, nod, val, 
+          getScalarValue(step, ent, ele, nod, val,
                          forceNumComponents, componentMap);
           vmin = std::min(vmin, val);
         }
@@ -139,7 +177,7 @@ double PViewDataList::getMax(int step, bool onlyVisible, int forceNumComponents,
       for(int ele = 0; ele < getNumElements(step, ent); ele++){
         for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
           double val;
-          getScalarValue(step, ent, ele, nod, val, 
+          getScalarValue(step, ent, ele, nod, val,
                          forceNumComponents, componentMap);
           vmax = std::max(vmax, val);
         }
@@ -166,7 +204,7 @@ void PViewDataList::_stat(std::vector<double> &D, std::vector<char> &C, int nb)
     int nbtime = 0;
     for(int j = 0; j < (int)(end - beg); j++)
       if(c[j] == '\0') nbtime++;
-    if(nbtime > NbTimeStep) 
+    if(nbtime > NbTimeStep)
       NbTimeStep = nbtime;
   }
   if(nb == 5){
@@ -179,7 +217,7 @@ void PViewDataList::_stat(std::vector<double> &list, int nbcomp, int nbelm,
                           int nbnod, int type)
 {
   // compute statistics for element lists
-  if(!nbelm) return;  
+  if(!nbelm) return;
 
   int nbval = nbcomp * nbnod;
 
@@ -191,7 +229,7 @@ void PViewDataList::_stat(std::vector<double> &list, int nbcomp, int nbelm,
     if(nim)
       nbval = nbcomp * im[0]->size1();
   }
-  
+
   int nb = list.size() / nbelm;
   for(unsigned int i = 0; i < list.size(); i += nb){
     int N = nb - 3 * nbnod;
@@ -218,7 +256,7 @@ void PViewDataList::_stat(std::vector<double> &list, int nbcomp, int nbelm,
       // if some elts have less steps, reduce the total number!
       NbTimeStep = N / nbval;
     }
-    
+
     // update min/max
     for(int j = 0; j < N; j += nbcomp) {
       double l0 = ComputeScalarRep(nbcomp, &V[j]);
@@ -320,7 +358,7 @@ int PViewDataList::getNode(int step, int ent, int ele, int nod,
   return 0;
 }
 
-void PViewDataList::setNode(int step, int ent, int ele, int nod, 
+void PViewDataList::setNode(int step, int ent, int ele, int nod,
                             double x, double y, double z)
 {
   if(step) return;
@@ -353,7 +391,7 @@ void PViewDataList::getValue(int step, int ent, int ele, int nod, int comp, doub
 {
   if(ele != _lastElement) _setLast(ele);
   if(step >= NbTimeStep) step = 0;
-  val = _lastVal[step * _lastNumNodes  * _lastNumComponents + 
+  val = _lastVal[step * _lastNumNodes  * _lastNumComponents +
                  nod * _lastNumComponents +
                  comp];
 }
@@ -362,7 +400,7 @@ void PViewDataList::setValue(int step, int ent, int ele, int nod, int comp, doub
 {
   if(ele != _lastElement) _setLast(ele);
   if(step >= NbTimeStep) step = 0;
-  _lastVal[step * _lastNumNodes  * _lastNumComponents + 
+  _lastVal[step * _lastNumNodes  * _lastNumComponents +
            nod * _lastNumComponents +
            comp] = val;
 }
@@ -379,7 +417,7 @@ int PViewDataList::getType(int step, int ent, int ele)
   return _lastType;
 }
 
-void PViewDataList::_getString(int dim, int i, int step, std::string &str, 
+void PViewDataList::_getString(int dim, int i, int step, std::string &str,
                                double &x, double &y, double &z, double &style)
 {
   // 3D: T3D is a list of double: x,y,z,style,index,x,y,z,style,index,...
@@ -419,7 +457,7 @@ void PViewDataList::_getString(int dim, int i, int step, std::string &str,
     else
       nbchar = tc.size() - index;
   }
-  
+
   char *c = &tc[index];
   int k = 0, l = 0;
   while(k < nbchar && l != step) {
@@ -432,14 +470,14 @@ void PViewDataList::_getString(int dim, int i, int step, std::string &str,
     str = std::string(c);
 }
 
-void PViewDataList::getString2D(int i, int step, std::string &str, 
+void PViewDataList::getString2D(int i, int step, std::string &str,
                                 double &x, double &y, double &style)
 {
   double z;
   _getString(2, i, step, str, x, y, z, style);
 }
 
-void PViewDataList::getString3D(int i, int step, std::string &str, 
+void PViewDataList::getString3D(int i, int step, std::string &str,
                                 double &x, double &y, double &z, double &style)
 {
   _getString(3, i, step, str, x, y, z, style);
@@ -465,12 +503,12 @@ void PViewDataList::revertElement(int step, int ent, int ele)
     _lastXYZ[_lastNumNodes + i] = XYZ[2 * _lastNumNodes - i - 1];
     _lastXYZ[2 * _lastNumNodes + i] = XYZ[3 * _lastNumNodes - i - 1];
   }
-  
+
   for(int step = 0; step < getNumTimeSteps(); step++)
     for(int i = 0; i < _lastNumNodes; i++)
       for(int k = 0; k < _lastNumComponents; k++)
-        _lastVal[_lastNumComponents * _lastNumNodes * step + 
-                 _lastNumComponents * i + k] = 
+        _lastVal[_lastNumComponents * _lastNumNodes * step +
+                 _lastNumComponents * i + k] =
           V[_lastNumComponents * _lastNumNodes * step +
             _lastNumComponents * (_lastNumNodes - i - 1) + k];
 }
@@ -509,8 +547,8 @@ static void smoothList(std::vector<double> &list, int nbList, int nbTimeStep,
     double *v = &list[i + 3 * nbVert];
     for(int j = 0; j < nbVert; j++) {
       if(data.get(x[j], y[j], z[j], nbTimeStep * nbComp, vals)){
-        for(int ts = 0; ts < nbTimeStep; ts++) 
-          for(int k = 0; k < nbComp; k++) 
+        for(int ts = 0; ts < nbTimeStep; ts++)
+          for(int k = 0; k < nbComp; k++)
             v[nbVert * nbComp * ts + nbComp * j + k] = vals[nbComp * ts + k];
       }
     }
@@ -565,7 +603,7 @@ bool PViewDataList::combineSpace(nameData &nd)
     }
 
     // copy interpolation marices
-    for(std::map<int, std::vector<fullMatrix<double>*> >::iterator it = 
+    for(std::map<int, std::vector<fullMatrix<double>*> >::iterator it =
           l->_interpolation.begin(); it != l->_interpolation.end(); it++)
       if(_interpolation[it->first].empty())
         for(unsigned int i = 0; i < it->second.size(); i++)
@@ -591,12 +629,12 @@ bool PViewDataList::combineSpace(nameData &nd)
       T2D.push_back(l->T2D[i + 1]);
       T2D.push_back(l->T2D[i + 2]);
       T2D.push_back(T2C.size());
-      double beg = l->T2D[i + 3]; 
+      double beg = l->T2D[i + 3];
       double end;
       if(i > l->T2D.size() - 8)
         end = l->T2C.size();
       else
-        end = l->T2D[i + 3 + 4]; 
+        end = l->T2D[i + 3 + 4];
       char *c = &l->T2C[(int)beg];
       for(int j = 0; j < (int)(end - beg); j++)
         T2C.push_back(c[j]);
@@ -605,15 +643,15 @@ bool PViewDataList::combineSpace(nameData &nd)
     for(unsigned int i = 0; i < l->T3D.size(); i += 5){
       T3D.push_back(l->T3D[i]);
       T3D.push_back(l->T3D[i + 1]);
-      T3D.push_back(l->T3D[i + 2]); 
-      T3D.push_back(l->T3D[i + 3]); 
+      T3D.push_back(l->T3D[i + 2]);
+      T3D.push_back(l->T3D[i + 3]);
       T3D.push_back(T3C.size());
-      double beg = l->T3D[i + 4]; 
+      double beg = l->T3D[i + 4];
       double end;
       if(i > l->T3D.size() - 10)
         end = l->T3C.size();
       else
-        end = l->T3D[i + 4 + 5]; 
+        end = l->T3D[i + 4 + 5];
       char *c = &l->T3C[(int)beg];
       for(int j = 0; j < (int)(end-beg); j++)
         T3C.push_back(c[j]);
@@ -651,7 +689,7 @@ bool PViewDataList::combineTime(nameData &nd)
 
   int *nbe = 0, *nbe2 = 0, nbn, nbn2, nbc, nbc2;
   std::vector<double> *list = 0, *list2 = 0;
-  
+
   // use the first data set as the reference
   for(int i = 0; i < 24; i++){
     _getRawData(i, &list, &nbe, &nbc, &nbn);
@@ -660,12 +698,12 @@ bool PViewDataList::combineTime(nameData &nd)
   }
   NbT2 = data[0]->NbT2;
   NbT3 = data[0]->NbT3;
-  for(std::map<int, std::vector<fullMatrix<double>*> >::iterator it = 
+  for(std::map<int, std::vector<fullMatrix<double>*> >::iterator it =
         data[0]->_interpolation.begin(); it != data[0]->_interpolation.end(); it++)
     if(_interpolation[it->first].empty())
       for(unsigned int i = 0; i < it->second.size(); i++)
         _interpolation[it->first].push_back(new fullMatrix<double>(*it->second[i]));
-  
+
   // merge values for all element types
   for(int i = 0; i < 24; i++){
     _getRawData(i, &list, &nbe, &nbc, &nbn);
@@ -674,7 +712,7 @@ bool PViewDataList::combineTime(nameData &nd)
         data[k]->_getRawData(i, &list2, &nbe2, &nbc2, &nbn2);
         if(*nbe && *nbe == *nbe2){
           int nb2 = list2->size() / *nbe2;
-          if(!k){ 
+          if(!k){
             // copy coordinates of elm j (we are always here as
             // expected, since the ref view is the first one)
             for(int l = 0; l < 3 * nbn2; l++)
@@ -693,7 +731,7 @@ bool PViewDataList::combineTime(nameData &nd)
     for(unsigned int k = 0; k < data.size(); k++){
       if(NbT2 == data[k]->NbT2){
         if(!k){
-          // copy coordinates 
+          // copy coordinates
           T2D.push_back(data[k]->T2D[j * 4]);
           T2D.push_back(data[k]->T2D[j * 4 + 1]);
           T2D.push_back(data[k]->T2D[j * 4 + 2]);
@@ -719,7 +757,7 @@ bool PViewDataList::combineTime(nameData &nd)
     for(unsigned int k = 0; k < data.size(); k++){
       if(NbT3 == data[k]->NbT3){
         if(!k){
-          // copy coordinates 
+          // copy coordinates
           T3D.push_back(data[k]->T3D[j * 5]);
           T3D.push_back(data[k]->T3D[j * 5 + 1]);
           T3D.push_back(data[k]->T3D[j * 5 + 2]);
@@ -740,11 +778,11 @@ bool PViewDataList::combineTime(nameData &nd)
       }
     }
   }
-  
+
   // create the time data
   for(unsigned int i = 0; i < data.size(); i++)
     dVecMerge(data[i]->Time, Time);
-  
+
   // if all the time values are the same, it probably means that the
   // original views didn't have any time data: then we'll just use
   // time step values
@@ -776,7 +814,7 @@ bool PViewDataList::combineTime(nameData &nd)
   return finalize();
 }
 
-int PViewDataList::_getRawData(int idxtype, std::vector<double> **l, int **ne, 
+int PViewDataList::_getRawData(int idxtype, std::vector<double> **l, int **ne,
                                 int *nc, int *nn)
 {
   int type = 0;

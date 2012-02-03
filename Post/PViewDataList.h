@@ -15,7 +15,7 @@
 // The container for list-based datasets (for which all elements are
 // discontinuous).
 class PViewDataList : public PViewData {
- public: 
+ public:
   // FIXME: all these members will be made private once the plugins
   // have been rewritten
   int NbTimeStep;
@@ -41,23 +41,26 @@ class PViewDataList : public PViewData {
   std::vector<double> SY, VY, TY; // pyramids
   int NbT2, NbT3;
   std::vector<double> T2D, T3D; // 2D and 3D text strings
-  std::vector<char> T2C, T3C; 
+  std::vector<char> T2C, T3C;
  private:
   int _index[24];
   int _lastElement, _lastDimension;
   int _lastNumNodes, _lastNumComponents, _lastNumValues, _lastNumEdges, _lastType;
   double *_lastXYZ, *_lastVal;
   bool _isAdapted;
+  void _init(bool isAdapted);
   void _stat(std::vector<double> &D, std::vector<char> &C, int nb);
   void _stat(std::vector<double> &list, int nbcomp, int nbelm, int nbnod, int type);
   void _setLast(int ele);
   void _setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg, int type,
                 std::vector<double> &list, int nblist);
-  void _getString(int dim, int i, int timestep, std::string &str, 
+  void _getString(int dim, int i, int timestep, std::string &str,
                   double &x, double &y, double &z, double &style);
   int _getRawData(int idxtype, std::vector<double> **l, int **ne, int *nc, int *nn);
  public:
   PViewDataList(bool isAdapted=false);
+  PViewDataList(const std::string &xname, const std::string &yname,
+                std::vector<double> &x, std::vector<double> &y);
   ~PViewDataList(){}
   bool isAdapted(){ return _isAdapted; }
   bool finalize(bool computeMinMax=true, const std::string &interpolationScheme="");
@@ -97,14 +100,16 @@ class PViewDataList : public PViewData {
   int getType(int step, int ent, int ele);
   int getNumStrings2D(){ return NbT2; }
   int getNumStrings3D(){ return NbT3; }
-  void getString2D(int i, int step, std::string &str, 
+  void getString2D(int i, int step, std::string &str,
                    double &x, double &y, double &style);
-  void getString3D(int i, int step, std::string &str, 
+  void getString3D(int i, int step, std::string &str,
                    double &x, double &y, double &z, double &style);
   void revertElement(int step, int ent, int ele);
   void smooth();
   bool combineTime(nameData &nd);
   bool combineSpace(nameData &nd);
+  void setXY(const std::string &xname, const std::string &yname,
+             std::vector<double> &x, std::vector<double> &y);
 
   // specific to list-based data sets
   void setOrder2(int type);

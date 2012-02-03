@@ -48,7 +48,7 @@ class PView{
   // construct a new view, alias of the view "ref"
   PView(PView *ref, bool copyOptions=true);
   // construct a new list-based view from a simple 2D dataset
-  PView(std::string xname, std::string yname,
+  PView(const std::string &xname, const std::string &yname,
         std::vector<double> &x, std::vector<double> &y);
   // construct a new mesh-based view from a bunch of data
   PView(std::string name, std::string type, GModel *model,

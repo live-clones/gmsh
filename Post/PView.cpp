@@ -80,22 +80,11 @@ PView::PView(PView *ref, bool copyOptions)
                             _options->targetError);
 }
 
-PView::PView(std::string xname, std::string yname,
+PView::PView(const std::string &xname, const std::string &yname,
              std::vector<double> &x, std::vector<double> &y)
 {
   _init();
-  PViewDataList *data = new PViewDataList();
-  for(unsigned int i = 0; i < std::min(x.size(), y.size()); i++){
-    data->SP.push_back(x[i]);
-    data->SP.push_back(0.);
-    data->SP.push_back(0.);
-    data->SP.push_back(y[i]);
-    data->NbSP++;
-  }
-  data->setName(yname);
-  data->setFileName(yname + ".pos");
-  data->finalize();
-  _data = data;
+  _data = new PViewDataList(xname, yname, x, y);
   _options = new PViewOptions(PViewOptions::reference);
   _options->type = PViewOptions::Plot2D;
   _options->axes = 2;

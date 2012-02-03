@@ -218,6 +218,10 @@ class PViewData {
   virtual bool combineTime(nameData &nd);
   virtual bool combineSpace(nameData &nd);
 
+  // set simple X-Y data
+  virtual void setXY(const std::string &xname, const std::string &yname,
+                     std::vector<double> &x, std::vector<double> &y){}
+
   // ask to fill vertex arrays remotely
   virtual bool isRemote(){ return false; }
   virtual int fillRemoteVertexArrays(std::string &options){ return 0; }

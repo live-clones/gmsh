@@ -551,10 +551,11 @@ static bool updateOnelabGraph(const std::string &snum)
 {
   bool changed = false;
 
+  PView *view = 0;
+
   for(unsigned int i = 0; i < PView::list.size(); i++){
     if(PView::list[i]->getData()->getFileName() == "OneLab" + snum){
-      delete PView::list[i];
-      changed = true;
+      view = PView::list[i];
       break;
     }
   }
@@ -581,9 +582,19 @@ static bool updateOnelabGraph(const std::string &snum)
     for(unsigned int i = 0; i < y.size(); i++) x.push_back(i);
   }
   if(x.size() && y.size()){
-    PView *v = new PView(xName, yName, x, y);
-    v->getData()->setFileName("OneLab" + snum);
-    v->getOptions()->intervalsType = PViewOptions::Discrete;
+    if(view){
+      view->getData()->setXY(xName, yName, x, y);
+      view->setChanged(true);
+    }
+    else{
+      view = new PView(xName, yName, x, y);
+      view->getOptions()->intervalsType = PViewOptions::Discrete;
+    }
+    view->getData()->setFileName("OneLab" + snum);
+    changed = true;
+  }
+  else if(view){
+    delete view;
     changed = true;
   }
 
