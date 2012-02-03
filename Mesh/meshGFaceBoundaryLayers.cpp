@@ -102,10 +102,10 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf, double _treshold)
   return 0;
 #else
   FieldManager *fields = gf->model()->getFields();
-  if(fields->boundaryLayer_field <= 0){
+  if(fields->getBoundaryLayerField() <= 0){
     return 0;
   }
-  Field *bl_field = fields->get(fields->boundaryLayer_field);
+  Field *bl_field = fields->get(fields->getBoundaryLayerField());
   BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField*> (bl_field);
   
   if (!blf)return 0;

@@ -312,8 +312,8 @@ void meshGEdge::operator() (GEdge *ge)
 #if defined(HAVE_ANN)
   FieldManager *fields = ge->model()->getFields();
   BoundaryLayerField *blf = 0;
-  if(fields->background_field > 0){
-    Field *bl_field = fields->get(fields->background_field);
+  if(fields->getBackgroundField() > 0){
+    Field *bl_field = fields->get(fields->getBackgroundField());
     blf = dynamic_cast<BoundaryLayerField*> (bl_field);
   }
 #else

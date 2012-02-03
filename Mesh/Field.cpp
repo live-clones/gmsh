@@ -2031,8 +2031,8 @@ FieldManager::FieldManager()
   map_type_name["AttractorAnisoCurve"] = new FieldFactoryT<AttractorAnisoCurveField>();
 #endif
   map_type_name["MaxEigenHessian"] = new FieldFactoryT<MaxEigenHessianField>();
-  background_field = -1;
-  boundaryLayer_field = -1;
+  _background_field = -1;
+  _boundaryLayer_field = -1;
 }
 
 FieldManager::~FieldManager()
@@ -2040,6 +2040,13 @@ FieldManager::~FieldManager()
   for(std::map<std::string, FieldFactory*>::iterator it = map_type_name.begin();
       it != map_type_name.end(); it++)
     delete it->second;
+}
+
+void FieldManager::setBackgroundField(Field* BGF)
+{
+  int id = newId();
+  (*this)[id] = BGF;
+  _background_field = id;
 }
 
 void Field::putOnNewView()
@@ -2096,5 +2103,5 @@ void FieldManager::setBackgroundMesh(int iView)
   Field *f = newField(id, "PostView");
   f->options["IView"]->numericalValue(iView);
   (*this)[id] = f;
-  background_field = id;
+  _background_field = id;
 }

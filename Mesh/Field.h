@@ -103,6 +103,9 @@ class FieldFactory {
 };
 
 class FieldManager : public std::map<int, Field*> {
+ private:
+  int _background_field;
+  int _boundaryLayer_field;
  public:
   std::map<std::string, FieldFactory*> map_type_name;
   void reset();
@@ -113,10 +116,14 @@ class FieldManager : public std::map<int, Field*> {
   int maxId();
   FieldManager();
   ~FieldManager();
-  int background_field;
-  int boundaryLayer_field;
   // compatibility with -bgm
   void setBackgroundMesh(int iView);
+  // set and get background field
+  void setBackgroundField(Field* BGF);
+  inline void setBackgroundFieldId(int id){_background_field = id;};
+  inline void setBoundaryLayerFieldId(int id){_boundaryLayer_field = id;};
+  inline int getBackgroundField(){return _background_field;}
+  inline int getBoundaryLayerField(){return _boundaryLayer_field;}
 };
 
 // Boundary Layer Field (used both for anisotropic meshing and BL

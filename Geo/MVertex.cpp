@@ -181,6 +181,7 @@ void MVertex::writeMESH(FILE *fp, double scalingFactor)
           _ge ? _ge->tag() : 0);
 }
 
+
 static void double_to_char8(double val, char *str)
 {
   if(val >= 1.e6)

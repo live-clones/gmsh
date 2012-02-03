@@ -220,7 +220,7 @@ void fieldWindow::loadFieldList()
     i_entry++;
     Field *field = it->second;
     std::ostringstream sstream;
-    if(it->first == fields.background_field)
+    if(it->first == fields.getBackgroundField())
       sstream << "@b";
     sstream << it->first << " " << field->getName();
     browser->add(sstream.str().c_str(), field);
@@ -281,11 +281,11 @@ void fieldWindow::saveFieldOptions()
   }
   int is_bg_field = background_btn->value();
   FieldManager &fields = *GModel::current()->getFields();
-  if(is_bg_field && fields.background_field != f->id){
+  if(is_bg_field && fields.getBackgroundField() != f->id){
     set_background_field(f->id, GModel::current()->getFileName());
     loadFieldList();
   }
-  if(!is_bg_field && fields.background_field == f->id){
+  if(!is_bg_field && fields.getBackgroundField() == f->id){
     set_background_field(-1, GModel::current()->getFileName());
     loadFieldList();
   }
@@ -326,7 +326,7 @@ void fieldWindow::loadFieldOptions()
     (*input)->clear_changed();
     input++;
   }
-  background_btn->value(GModel::current()->getFields()->background_field == f->id);
+  background_btn->value(GModel::current()->getFields()->getBackgroundField() == f->id);
 }
 
 void fieldWindow::editField(Field *f)

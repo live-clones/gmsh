@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <set>
+#include <map>
 #include "SPoint2.h"
 #include "SPoint3.h"
 #include "MVertexBoundaryLayerData.h"
@@ -89,6 +90,7 @@ class MVertex{
   // get/set the index
   inline int getIndex() const { return _index; }
   inline void setIndex(int index) { _index = index; }
+
 
   // get/set ith parameter
   virtual bool getParameter(int i, double &par) const { par = 0.; return false; }

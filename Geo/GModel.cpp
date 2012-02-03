@@ -544,9 +544,10 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f,
       Msg::Info("-- adaptMesh (allDim) ITER =%d ", ITER);
 
       fields->reset();
-      int id = fields->newId();
-      (*fields)[id] = new meshMetric(this, technique, f, parameters);;
-      fields->background_field = id;
+      fields->setBackgroundField(new meshMetric(this, technique, f, parameters));
+      // int id = fields->newId();
+      // (*fields)[id] = new meshMetric(this, technique, f, parameters);
+      // fields->background_field = id;
 
       opt_mesh_lc_integration_precision(0, GMSH_SET, 1.e-4);
       opt_mesh_algo2d(0, GMSH_SET, 7.0); //bamg
@@ -596,9 +597,10 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f,
       if (elements.size() == 0)return -1;
 
       fields->reset();
-      int id = fields->newId();
-      (*fields)[id] = new meshMetric(this, technique, f, parameters);
-      fields->background_field = id;
+      fields->setBackgroundField(new meshMetric(this, technique, f, parameters));
+      // int id = fields->newId();
+      // (*fields)[id] = new meshMetric(this, technique, f, parameters);
+      // fields->background_field = id;
 
       if (getDim() == 2){
 	for (fiter fit = firstFace(); fit != lastFace(); ++fit){
@@ -1550,8 +1552,6 @@ void GModel::createTopologyFromMesh(int ignoreHoles)
       discFaces.push_back((discreteFace*) *it);
   createTopologyFromFaces(discFaces, ignoreHoles);
   
-  printf("goind to export GEO internals \n");
-
   //create old format (necessary e.g. for old-style extruded boundary layers)
   exportDiscreteGEOInternals();
 

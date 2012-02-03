@@ -274,8 +274,7 @@ void statisticsWindow::compute(bool elementQuality)
     std::vector<int> qualE;
     int nbS = 50;
     qualE.resize(nbS);
-    if(fields->background_field > 0){
-      printf("found field \n");
+    if(fields.getBackgroundField() > 0){
       std::set<MEdge, Less_Edge>::iterator it = edges.begin();
       double sum = 0;
       for (; it !=edges.end();++it){
@@ -346,14 +345,14 @@ void statisticsWindow::compute(bool elementQuality)
     if (nbElems > 0) printf("Stats degree vertices: dMin=%d , dMax=%d, d4=%g \n",
 			    dMin, dMax, (double)d4/nbElems);
     FieldManager *fields = GModel::current()->getFields();
-    Field *f = fields->get(fields->background_field);
+    Field *f = fields->get(fields.getBackgroundField());
     int nbEdges = edges.size();
     system("rm qualEdges.txt");
     FILE *fp = fopen("qualEdges.txt", "w");
     std::vector<int> qualE;
     int nbS = 50;
     qualE.resize(nbS);
-    if(fields->background_field > 0){
+    if(fields.getBackgroundField() > 0){
       std::set<MEdge, Less_Edge>::iterator it = edges.begin();
       double sum = 0;
       for (; it !=edges.end();++it){

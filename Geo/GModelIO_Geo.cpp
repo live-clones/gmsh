@@ -408,8 +408,8 @@ int GModel::writeGEO(const std::string &name, bool printLabels)
                   writePhysicalGroupGEO(fp, i, printLabels, labels, physicalNames));
 
   std::for_each(getFields()->begin(), getFields()->end(), writeFieldGEO(fp));
-  if(getFields()->background_field > 0)
-    fprintf(fp, "Background Field = %i;\n", getFields()->background_field);
+  if(getFields()->getBackgroundField() > 0)
+    fprintf(fp, "Background Field = %i;\n", getFields()->getBackgroundField());
 
   if(fp) fclose(fp);
   return 1;

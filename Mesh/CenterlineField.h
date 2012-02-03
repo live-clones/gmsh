@@ -15,6 +15,7 @@
 #include <string>
 #include "Field.h"
 #include "MEdge.h"
+#include "meshGFaceDelaunayInsertion.h"
 class GModel;
 class GFace;
 class MLine;
@@ -23,6 +24,7 @@ class GEntity;
 class MTriangle;   
 class discreteEdge;
 class discreteFace;
+class MElement;
 
 #if defined(HAVE_ANN)
 #include <ANN/ANN.h>
@@ -59,6 +61,8 @@ class Centerline : public Field{
   ANNdistArray dist;
   std::string fileName;
   double recombine;
+  int NF, NV, NE;
+  bool is_cut;
 
   //all (unique) lines of centerlines
   std::vector<MLine*> lines;
@@ -72,9 +76,9 @@ class Centerline : public Field{
   std::map<MVertex*,int> colorp;
   std::map<MLine*,int> colorl;
 
-  std::vector<GFace*> currentGFC;
   //the tubular surface mesh
   std::vector<MTriangle*> triangles;
+  
   //the lines cut of the tubular mesh by planes
   std::set<MEdge,Less_Edge> theCut;
   std::set<MVertex*> theCutV;
@@ -101,6 +105,8 @@ class Centerline : public Field{
 " using the following script:\n\n"
 "vmtk vmtkcenterlines -seedselector openprofiles -ifile mysurface.stl -ofile centerlines.vtp --pipe vmtksurfacewriter -ifile centerlines.vtp -ofile centerlines.vtk\n";
   }
+  
+  void cleanMesh();
 
   //isotropic operator for mesh size field function of distance to centerline
   double operator() (double x, double y, double z, GEntity *ge=0);
@@ -135,7 +141,7 @@ class Centerline : public Field{
 
   //create discrete faces
   void createFaces();
-  void remeshSplitMesh();
+  void createSplitCompounds();
 
   //Print for debugging
   void printSplit() const;

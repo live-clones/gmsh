@@ -32,6 +32,7 @@
 #include "meshGFace.h"
 #include "meshGEdge.h"
 #include "MQuadrangle.h"
+#include "MElement.h"
 
 #if defined(HAVE_ANN)
 #include <ANN/ANN.h>
@@ -235,78 +236,82 @@ void cutTriangle(MTriangle *tri,
     std::map<MEdge,MVertex*,Less_Edge> :: iterator it = cutEdges.find(ed);
     if (it != cutEdges.end()){
       c[j] = it->second;
+      
     }
   }
+  MVertex *old_v0  = tri->getVertex(0);
+  MVertex *old_v1  = tri->getVertex(1);
+  MVertex *old_v2  = tri->getVertex(2);
   if (c[0] && c[1]){
-    newTris.push_back(new MTriangle (c[0],tri->getVertex(1),c[1]));
-    newTris.push_back(new MTriangle (tri->getVertex(0),c[0],tri->getVertex(2)));
-    newTris.push_back(new MTriangle (tri->getVertex(2),c[0],c[1]));
+    newTris.push_back(new MTriangle (c[0],old_v1,c[1]));
+    newTris.push_back(new MTriangle (old_v0,c[0],old_v2));
+    newTris.push_back(new MTriangle (old_v2,c[0],c[1]));
     newCut.insert(MEdge(c[0],c[1]));
   }
   else if (c[0] && c[2]){
-    newTris.push_back(new MTriangle (tri->getVertex(0),c[0],c[2]));
-    newTris.push_back(new MTriangle (c[0],tri->getVertex(1),tri->getVertex(2)));
-    newTris.push_back(new MTriangle (tri->getVertex(2),c[2],c[0]));
+    newTris.push_back(new MTriangle (old_v0,c[0],c[2]));
+    newTris.push_back(new MTriangle (c[0],old_v1,old_v2));
+    newTris.push_back(new MTriangle (old_v2,c[2],c[0]));
     newCut.insert(MEdge(c[0],c[2]));
   }
   else if (c[1] && c[2]){
-    newTris.push_back(new MTriangle (tri->getVertex(2),c[2],c[1]));
-    newTris.push_back(new MTriangle (tri->getVertex(0),tri->getVertex(1),c[2]));
-    newTris.push_back(new MTriangle (c[2],tri->getVertex(1),c[1]));
+    newTris.push_back(new MTriangle (old_v2,c[2],c[1]));
+    newTris.push_back(new MTriangle (old_v0,old_v1,c[2]));
+    newTris.push_back(new MTriangle (c[2],old_v1,c[1]));
     newCut.insert(MEdge(c[1],c[2]));
   }
   else if (c[0]){
-    newTris.push_back(new MTriangle (tri->getVertex(0),c[0],tri->getVertex(2)));
-    newTris.push_back(new MTriangle (tri->getVertex(2),c[0],tri->getVertex(1)));
-    if (cutVertices.find (tri->getVertex(0)) != cutVertices.end()){
-      newCut.insert(MEdge(c[0],tri->getVertex(0)));
+    newTris.push_back(new MTriangle (old_v0,c[0],old_v2));
+    newTris.push_back(new MTriangle (old_v2,c[0],old_v1));
+    if (cutVertices.find (old_v0) != cutVertices.end()){
+      newCut.insert(MEdge(c[0],old_v0));
     }
-    else if (cutVertices.find (tri->getVertex(1)) != cutVertices.end()) {
-      newCut.insert(MEdge(c[0],tri->getVertex(1)));
+    else if (cutVertices.find (old_v1) != cutVertices.end()) {
+      newCut.insert(MEdge(c[0],old_v1));
     }
-    else if (cutVertices.find (tri->getVertex(2)) != cutVertices.end()){
-      newCut.insert(MEdge(c[0],tri->getVertex(2)));
+    else if (cutVertices.find (old_v2) != cutVertices.end()){
+      newCut.insert(MEdge(c[0],old_v2));
     }
   }
   else if (c[1]){
-    newTris.push_back(new MTriangle (tri->getVertex(1),c[1],tri->getVertex(0)));
-    newTris.push_back(new MTriangle (tri->getVertex(0),c[1],tri->getVertex(2)));
-    if (cutVertices.find (tri->getVertex(0)) != cutVertices.end()){
-      newCut.insert(MEdge(c[1],tri->getVertex(0)));
+    newTris.push_back(new MTriangle (old_v1,c[1],old_v0));
+    newTris.push_back(new MTriangle (old_v0,c[1],old_v2));
+    if (cutVertices.find (old_v0) != cutVertices.end()){
+      newCut.insert(MEdge(c[1],old_v0));
     }
-    else if (cutVertices.find (tri->getVertex(1)) != cutVertices.end()) {
-      newCut.insert(MEdge(tri->getVertex(1), c[1]));
+    else if (cutVertices.find (old_v1) != cutVertices.end()) {
+      newCut.insert(MEdge(old_v1, c[1]));
     }
-    else if (cutVertices.find (tri->getVertex(2)) != cutVertices.end()){
-      newCut.insert(MEdge(c[1],tri->getVertex(2)));
+    else if (cutVertices.find (old_v2) != cutVertices.end()){
+      newCut.insert(MEdge(c[1],old_v2));
     }
   }
   else if (c[2]){
-      newTris.push_back(new MTriangle (tri->getVertex(0),tri->getVertex(1), c[2]));
-      newTris.push_back(new MTriangle (tri->getVertex(1),tri->getVertex(2), c[2]));
-    if (cutVertices.find (tri->getVertex(0)) != cutVertices.end()){
-      newCut.insert(MEdge(c[2],tri->getVertex(0)));
+      newTris.push_back(new MTriangle (old_v0,old_v1, c[2]));
+      newTris.push_back(new MTriangle (old_v1,old_v2, c[2]));
+    if (cutVertices.find (old_v0) != cutVertices.end()){
+      newCut.insert(MEdge(c[2],old_v0));
     }
-    else if (cutVertices.find (tri->getVertex(1)) != cutVertices.end()) {
-      newCut.insert(MEdge(c[2], tri->getVertex(1)));
+    else if (cutVertices.find (old_v1) != cutVertices.end()) {
+      newCut.insert(MEdge(c[2], old_v1));
     }
-    else if (cutVertices.find (tri->getVertex(2)) != cutVertices.end()){
-      newCut.insert(MEdge(c[2], tri->getVertex(2)));
+    else if (cutVertices.find (old_v2) != cutVertices.end()){
+      newCut.insert(MEdge(c[2], old_v2));
     }
   }
   else {
     newTris.push_back(tri);
-    if (cutVertices.find (tri->getVertex(0)) != cutVertices.end() &&
-	cutVertices.find (tri->getVertex(1)) != cutVertices.end())
-      newCut.insert(MEdge(tri->getVertex(0),tri->getVertex(1)));
-    else if (cutVertices.find (tri->getVertex(1)) != cutVertices.end() &&
-	cutVertices.find (tri->getVertex(2)) != cutVertices.end())
-      newCut.insert(MEdge(tri->getVertex(1),tri->getVertex(2)));
-    else if (cutVertices.find (tri->getVertex(2)) != cutVertices.end() &&
-	cutVertices.find (tri->getVertex(0)) != cutVertices.end())
-      newCut.insert(MEdge(tri->getVertex(2),tri->getVertex(0)));
+    //newTris.push_back(new MTriangle (old_v0, old_v1,old_v2));
+    if (cutVertices.find (old_v0) != cutVertices.end() &&
+	cutVertices.find (old_v1) != cutVertices.end())
+      newCut.insert(MEdge(old_v0,old_v1));
+    else if (cutVertices.find (old_v1) != cutVertices.end() &&
+	cutVertices.find (old_v2) != cutVertices.end())
+      newCut.insert(MEdge(old_v1,old_v2));
+    else if (cutVertices.find (old_v2) != cutVertices.end() &&
+	cutVertices.find (old_v0) != cutVertices.end())
+      newCut.insert(MEdge(old_v2,old_v0));
   }
-
 }
 
 Centerline::Centerline(std::string fileName): kdtree(0), nodes(0){
@@ -321,6 +326,7 @@ Centerline::Centerline(std::string fileName): kdtree(0), nodes(0){
   buildKdTree();
 
   update_needed = false;
+  is_cut = false;
 
 }
 Centerline::Centerline(): kdtree(0), nodes(0){
@@ -333,18 +339,13 @@ Centerline::Centerline(): kdtree(0), nodes(0){
 
   options["FileName"] = new FieldOptionString (fileName, "File name for the centerlines", &update_needed);
   callbacks["cutMesh"] = new FieldCallbackGeneric<Centerline>(this, &Centerline::cutMesh, "Cut the initial mesh in different mesh partitions using the centerlines \n");
+
+  is_cut = false;
  
 }
 
 Centerline::~Centerline(){
-  printf("mod=%p \n", mod);
-  printf("split=%p \n", split);
-  printf("current=%p \n", current);
-  printf("delete mod \n");
   if (mod) delete mod;
-  printf("delete split \n");
-  if (split) delete split;
-   printf("delete anns stuff \n");
   if(kdtree) delete kdtree;
   if(nodes) annDeallocPts(nodes);
   delete[]index;
@@ -354,54 +355,49 @@ Centerline::~Centerline(){
 void Centerline::importFile(std::string fileName){
 
   current = GModel::current();
-  std::vector<GEntity*> entities ;
-  current->getEntities(entities) ; 
-  for(unsigned int i = 0; i < entities.size(); i++){
-    if(entities[i]->dim() != 2) continue; 
-    GFace *gf = ((GFace*)entities[i]);
-    recombine = std::max(recombine, (double)(gf->meshAttributes.recombine));    
-    for(int j = 0; j < entities[i]->getNumMeshElements(); j++){ 
-      MElement *e = entities[i]->getMeshElement(j);
-      if (e->getType() != TYPE_TRI){
-    	Msg::Error("Centerline split only implemented for tri meshes so far ..."); 
-    	exit(1);
-      }
-      else{
-    	triangles.push_back((MTriangle*)e);
-      }	
+  std::vector<GFace*> currentFaces = current->bindingsGetFaces();
+  for (int i = 0; i < currentFaces.size(); i++){
+    GFace *gf = currentFaces[i];
+    if (gf->geomType() == GEntity::DiscreteSurface){
+	for(unsigned int j = 0; j < gf->triangles.size(); j++)
+	  triangles.push_back(gf->triangles[j]);
+	gf->triangles.clear();
+	gf->deleteVertexArrays();
+	current->remove(gf);
     }
-
   }
-  entities.clear();
 
+  if(triangles.empty()){
+    Msg::Error("Current GModel has no triangles ..."); 
+    exit(1);
+  }
+    
   mod = new GModel();
   mod->readVTK(fileName.c_str());
   mod->removeDuplicateMeshVertices(1.e-8);
-  mod->getEntities(entities);  
   current->setAsCurrent();  
 
   int maxN = 0.0;
-  for(unsigned int i = 0; i < entities.size(); i++){
-     if( entities[i]->dim() == 1){
-     for(unsigned int ele = 0; ele < entities[i]->getNumMeshElements(); ele++){ 
-       MLine *l = (MLine*) entities[i]->getMeshElement(ele);
-       MVertex *v0 = l->getVertex(0);
-       MVertex *v1 = l->getVertex(1);
-       std::map<MVertex*, int>::iterator it0 = colorp.find(v0);
-       std::map<MVertex*, int>::iterator it1 = colorp.find(v1);
-       if (it0 == colorp.end() || it1 == colorp.end()){
-	 lines.push_back(l);
-	 colorl.insert(std::make_pair(l, entities[i]->tag()));
-	 maxN = std::max(maxN, entities[i]->tag());
+  std::vector<GEdge*> modEdges = mod->bindingsGetEdges();
+ for (int i = 0; i < modEdges.size(); i++){
+    GEdge *ge = modEdges[i];
+    for(unsigned int j = 0; j < ge->lines.size(); j++){
+      MLine *l = ge->lines[j];
+      MVertex *v0 = l->getVertex(0);
+      MVertex *v1 = l->getVertex(1);
+      std::map<MVertex*, int>::iterator it0 = colorp.find(v0);
+      std::map<MVertex*, int>::iterator it1 = colorp.find(v1);
+      if (it0 == colorp.end() || it1 == colorp.end()){
+	lines.push_back(l);
+	colorl.insert(std::make_pair(l, ge->tag()));
+	maxN = std::max(maxN, ge->tag());
        }
-       if (it0 == colorp.end()) colorp.insert(std::make_pair(v0, entities[i]->tag()));
-       if (it1 == colorp.end()) colorp.insert(std::make_pair(v1, entities[i]->tag()));
-     }
-   }
+      if (it0 == colorp.end()) colorp.insert(std::make_pair(v0, ge->tag()));
+      if (it1 == colorp.end()) colorp.insert(std::make_pair(v1, ge->tag()));
+    }
  }
 
   createBranches(maxN);
-
  
 }
 
@@ -535,7 +531,6 @@ void Centerline::distanceToLines(){
   std::set<MVertex*> allVS; 
   for(int j = 0; j < triangles.size(); j++)
     for(int k = 0; k<3; k++) allVS.insert(triangles[j]->getVertex(k));
-  
   int nbSNodes = allVS.size();
   nodesR = annAllocPts(nbSNodes, 3);
   int ind = 0;
@@ -548,7 +543,7 @@ void Centerline::distanceToLines(){
     itp++; ind++;
   }
   kdtreeR = new ANNkd_tree(nodesR, nbSNodes, 3);
-
+  
   for(unsigned int i = 0; i < lines.size(); i++){
     MLine *l = lines[i];
     MVertex *v1 = l->getVertex(0);
@@ -665,76 +660,100 @@ void Centerline::buildKdTree(){
 
 }
 
-void Centerline::remeshSplitMesh(){
+void Centerline::createSplitCompounds(){
 
-  int NV = split->getMaxElementaryNumber(0);
-  int NE = split->getMaxElementaryNumber(1);
-  int NF = split->getMaxElementaryNumber(2);
-
-  std::set<MVertex*> allNod; 
-  std::list<GEdge*> U0;
-  printf("face =%d \n",  split->getMaxElementaryNumber(2));
-  discreteFace *mySplitMesh = new discreteFace(split, 2*NF+1);
-  split->add(mySplitMesh);
-  printf("face after =%d \n",  split->getMaxElementaryNumber(2));
+  NV = current->getMaxElementaryNumber(0);
+  NE = current->getMaxElementaryNumber(1);
+  NF = current->getMaxElementaryNumber(2);
 
   // Remesh new faces (Compound Lines and Compound Surfaces)
   Msg::Info("*** Starting parametrize compounds:");
   double t0 = Cpu();
 
   //Parametrize Compound Lines
-  printf("NF =%d NE=%d NV=%d \n", split->getMaxElementaryNumber(2), NE, NV);
   for (int i=0; i < NE; i++){
     std::vector<GEdge*>e_compound;
-    GEdge *pe = split->getEdgeByTag(i+1);//split edge
+    GEdge *pe = current->getEdgeByTag(i+1);//current edge
     e_compound.push_back(pe);
     int num_gec = NE+i+1;
     Msg::Info("Parametrize Compound Line (%d) = %d discrete edge", 
               num_gec, pe->tag());
-    GEdgeCompound *gec = new GEdgeCompound(split, num_gec, e_compound);
-    split->add(gec);
-    gec->parametrize();
+    GEdgeCompound *gec = new GEdgeCompound(current, num_gec, e_compound);
+    current->add(gec);
+    //gec->parametrize();
   }
 
   // Parametrize Compound surfaces
+  std::list<GEdge*> U0;
   for (int i=0; i < NF; i++){
     std::list<GFace*> f_compound;
-    GFace *pf =  split->getFaceByTag(i+1);//split face 
+    GFace *pf =  current->getFaceByTag(i+1);//current face 
     f_compound.push_back(pf);  
     int num_gfc = NF+i+1;   
     Msg::Info("Parametrize Compound Surface (%d) = %d discrete face",
               num_gfc, pf->tag());
     GFaceCompound::typeOfMapping typ = GFaceCompound::CONFORMAL;
-    GFaceCompound *gfc = new GFaceCompound(split, num_gfc, f_compound, U0,
+    GFaceCompound *gfc = new GFaceCompound(current, num_gfc, f_compound, U0,
 					   typ, 0);
     gfc->meshAttributes.recombine = recombine;
-    split->add(gfc);
-    gfc->parametrize();
+    current->add(gfc);
+    //gfc->parametrize();
   }
-  double t1 = Cpu();
-  Msg::Info("*** Parametrize compounds done (%g s)", t1-t0);
- 
+
+}
+
+void Centerline::cleanMesh(){
+
+  if (!is_cut) return;
+
+  std::set<MVertex*> allNod; 
+  std::list<GEdge*> U0;
+  discreteFace *mySplitMesh = new discreteFace(current, 2*NF+1);
+  current->add(mySplitMesh);
+
   //set centerline field
-  FieldManager *fields = split->getFields();
-  fields->reset();
-  int id = fields->newId();
-  (*fields)[id] = this;
-  fields->background_field = id;
+  // FieldManager *fields = current->getFields();
+  // fields->reset();
+  // field->setBackgroundField(this); 
+  // Msg::Info("*** Starting meshing 1D edges ...:");
+  // printf("NE=%d \n", NE);
+  // for (int i = 0; i < NE; i++){
+  //   printf("getting %d \n", NE+i+1);
+  //   GEdge *gec = current->getEdgeByTag(NE+i+1);
+  //   printf("edge (%p) =%d lines =%d \n", gec, gec->tag(), gec->lines.size());
+  //   meshGEdge mge;
+  //   mge(gec);
+  // }
+  // double t2 = Cpu();
+  // Msg::Info("*** Meshing 1D edges done (%gs)", t2-t1);
 
-  Msg::Info("*** Starting meshing 1D edges ...:");
-  for (int i = 0; i < NE; i++){
-    GEdge *gec = split->getEdgeByTag(NE+i+1);
-    meshGEdge mge;
-    mge(gec);
-  }
-  double t2 = Cpu();
-  Msg::Info("*** Meshing 1D edges done (%gs)", t2-t1);
+  // Msg::Info("*** Starting mesh of surface ");
+  // for (int i=0; i < NF; i++){
+  //   GFace *gfc =  current->getFaceByTag(NF+i+1);
+  //   meshGFace mgf;
+  //   mgf(gfc);
+  //   for(unsigned int j = 0; j < gfc->triangles.size(); ++j){
+  //     MTriangle *t = gfc->triangles[j];
+  //     std::vector<MVertex *> v(3);
+  //     for(int k = 0; k < 3; k++){
+  //       v[k] = t->getVertex(k);
+  //       allNod.insert(v[k]);
+  //     }
+  //     mySplitMesh->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+  //   }
+  //   for(unsigned int j = 0; j < gfc->quadrangles.size(); ++j){
+  //     MQuadrangle *q = gfc->quadrangles[j];
+  //     std::vector<MVertex *> v(4);
+  //     for(int k = 0; k < 4; k++){
+  //       v[k] = q->getVertex(k);
+  //       allNod.insert(v[k]);
+  //     }
+  //     mySplitMesh->quadrangles.push_back(new MQuadrangle(v[0], v[1], v[2], v[3]));
+  //   }
+  // }
 
-  Msg::Info("*** Starting mesh of surface ");
   for (int i=0; i < NF; i++){
-    GFace *gfc =  split->getFaceByTag(NF+i+1);
-    meshGFace mgf;
-    mgf(gfc);
+    GFace *gfc =  current->getFaceByTag(NF+i+1);
     for(unsigned int j = 0; j < gfc->triangles.size(); ++j){
       MTriangle *t = gfc->triangles[j];
       std::vector<MVertex *> v(3);
@@ -755,30 +774,30 @@ void Centerline::remeshSplitMesh(){
     }
   }
 
-  // Removing discrete Vertices - Edges - Faces
+  //Removing discrete Vertices - Edges - Faces
   printf("NV=%d NE=%d NF=%d \n", NV, NE, NF);
   for (int i=0; i < NV; i++){
-    GVertex *gv = split->getVertexByTag(i+1);
-    split->remove(gv);
+    GVertex *gv = current->getVertexByTag(i+1);
+    current->remove(gv);
   }
   for (int i=0; i < NE; i++){
-    GEdge *ge = split->getEdgeByTag(i+1);
-    GEdge *gec = split->getEdgeByTag(NE+i+1);
-    split->remove(ge); 
-    split->remove(gec);
+    GEdge *ge = current->getEdgeByTag(i+1);
+    GEdge *gec = current->getEdgeByTag(NE+i+1);
+    current->remove(ge); 
+    current->remove(gec);
   }
   for (int i=0; i < NF; i++){
-    GFace *gf  = split->getFaceByTag(i+1);
-    GFace *gfc = split->getFaceByTag(NF+i+1);
-    split->remove(gf); 
-    split->remove(gfc);
+    GFace *gf  = current->getFaceByTag(i+1);
+    GFace *gfc = current->getFaceByTag(NF+i+1);
+    current->remove(gf); 
+    current->remove(gfc);
   }
 
   //Put new mesh in a new discreteFace
   for(std::set<MVertex*>::iterator it = allNod.begin(); it != allNod.end(); ++it){
     mySplitMesh->mesh_vertices.push_back(*it);
   }
-  split->createTopologyFromMesh();
+  current->createTopologyFromMesh();
 
   mySplitMesh->meshStatistics.status = GFace::DONE; 
 
@@ -788,11 +807,9 @@ void Centerline::createFaces(){
   std::vector<std::vector<MTriangle*> > faces;
 
   std::multimap<MEdge, MTriangle*, Less_Edge> e2e;
-  for(unsigned int i = 0; i < triangles.size(); ++i){
-    for(int j = 0; j < 3; j++){
+  for(unsigned int i = 0; i < triangles.size(); ++i)
+    for(int j = 0; j < 3; j++)
       e2e.insert(std::make_pair(triangles[i]->getEdge(j), triangles[i]));
-    }
-  }
   int iGroup = 0;
   while(!e2e.empty()){
     std::set<MTriangle*> group;
@@ -816,12 +833,12 @@ void Centerline::createFaces(){
   printf("%d faces created \n", faces.size());
 
   //create discFaces
-  int numBef = split->getMaxElementaryNumber(2) + 1;
+  int numBef = current->getMaxElementaryNumber(2) + 1;
   for(unsigned int i = 0; i < faces.size(); ++i){
-    int numF = split->getMaxElementaryNumber(2) + 1;
+    int numF = current->getMaxElementaryNumber(2) + 1;
     printf("creating discrete face %d \n", numF);
-    discreteFace *f = new discreteFace(split, numF);
-    split->add(f);
+    discreteFace *f = new discreteFace(current, numF);
+    current->add(f);
     discFaces.push_back(f);
     std::set<MVertex*> myVertices;
     std::vector<MTriangle*> myFace = faces[i];
@@ -840,14 +857,15 @@ void Centerline::createFaces(){
 }
 
 void Centerline::cutMesh(){
- 
+  
+  is_cut = true;
+
   if (update_needed){
     std::ifstream input;
     input.open(fileName.c_str());
     if(StatFile(fileName)) Msg::Fatal("Centerline file '%s' does not exist", fileName.c_str());
     importFile(fileName);
     buildKdTree();
-    printf("fileName =%s , recombine =%g \n", fileName.c_str(), recombine);
     update_needed = false;
   }
 
@@ -864,7 +882,6 @@ void Centerline::cutMesh(){
   // }
 
   Msg::Info("Splitting surface mesh (%d tris) with centerline %s ", triangles.size(), fileName.c_str());
-  split = new GModel(); 
  
   //splitMesh
   for(unsigned int i = 0; i < edges.size(); i++){
@@ -906,38 +923,16 @@ void Centerline::cutMesh(){
 
   //create discreteFaces
   createFaces();
-  split->createTopologyFromFaces(discFaces);
+  current->createTopologyFromFaces(discFaces);
 
   //write
   Msg::Info("Writing splitted mesh 'myPARTS.msh'");
-  split->writeMSH("myPARTS.msh", 2.2, false, true);
+  current->writeMSH("myPARTS.msh", 2.2, false, true);
 
-  //remesh splitted mesh
-  remeshSplitMesh();
-  Msg::Info("Writing new mesh 'myMESH.msh'");
-  split->writeMSH("myMESH.msh", 2.2, false, true);
-
-  //print 
-  // FILE * f2 = fopen("myCUTLINES.pos","w");
-  // fprintf(f2, "View \"\"{\n");
-  // std::set<MEdge,Less_Edge>::iterator itp =  theCut.begin();
-  //  while (itp != theCut.end()){
-  //    MEdge l = *itp;
-  //    fprintf(f2, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
-  //             l.getVertex(0)->x(), l.getVertex(0)->y(), l.getVertex(0)->z(),
-  //             l.getVertex(1)->x(), l.getVertex(1)->y(), l.getVertex(1)->z(),
-  //             1.0,1.0);
-  //    itp++; 
-  // }
-  // fprintf(f2,"};\n");
-  // fclose(f2);
-
+  //create compounds
+  createSplitCompounds();
 
   Msg::Info("Splitting mesh by centerlines done ");
-  printf("mod=%p \n", mod);
-  printf("split=%p \n", split);
-  printf("current=%p \n", current);
-  //exit(1);
 
 }
 
@@ -951,10 +946,9 @@ void Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
  
   const double EPS = 0.007;
   std::set<MEdge,Less_Edge> allEdges;
-  for(unsigned int i = 0; i < triangles.size(); i++){ 
+  for(unsigned int i = 0; i < triangles.size(); i++) 
     for ( unsigned int j= 0; j <  3; j++)
       allEdges.insert(triangles[i]->getEdge(j)); 
-  }
   bool closedCut = false;
   int step = 0;
   while (!closedCut && step < 20){
@@ -1020,33 +1014,35 @@ void Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
     }
   }
 
+  
+
   return;
 
 }
 
 double Centerline::operator() (double x, double y, double z, GEntity *ge){
 
-  if (update_needed){
-    std::ifstream input;
-    input.open(fileName.c_str());
-    if(StatFile(fileName)) Msg::Fatal("Centerline file '%s' does not exist", fileName.c_str());
-    importFile(fileName);
-    buildKdTree();
-    printf("fileName =%s , recombine =%g \n", fileName.c_str(),  recombine);
-    exit(1);
-    update_needed = false;
-  }
+   if (update_needed){
+     std::ifstream input;
+     input.open(fileName.c_str());
+     if(StatFile(fileName)) Msg::Fatal("Centerline file '%s' does not exist", fileName.c_str());
+     importFile(fileName);
+     buildKdTree();
+     update_needed = false;
+   }
 
-  double xyz[3] = {x,y,z };
-  int num_neighbours = 1;
-  kdtree->annkSearch(xyz, num_neighbours, index, dist);
-  double d = sqrt(dist[0]);
-  double lc = 2*M_PI*d/30.0; //30 mesh elements along circle
-  return lc;
+   double xyz[3] = {x,y,z };
+   int num_neighbours = 1;
+   kdtree->annkSearch(xyz, num_neighbours, index, dist);
+   double d = sqrt(dist[0]);
+   double lc = 2*M_PI*d/30.0; //30 mesh elements along circle
+   return lc;
 
 }
 
 void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge){
+  printf("in operator xyz centerline BADDD \n");
+
   Msg::Error("This anisotropic operator of CenterlineField is not implemnted yet ");
   return;
 }
@@ -1086,7 +1082,7 @@ void Centerline::printSplit() const{
   for(unsigned int i = 0; i < lines.size(); ++i){
     MLine *l = lines[i];
     std::map<MLine*,double>::const_iterator itc =  radiusl.find(l);
-    fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
+    fprintf(f4, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
  	    l->getVertex(0)->x(), l->getVertex(0)->y(), l->getVertex(0)->z(),
  	    l->getVertex(1)->x(), l->getVertex(1)->y(), l->getVertex(1)->z(),
  	    itc->second,itc->second);

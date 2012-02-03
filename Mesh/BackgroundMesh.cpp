@@ -319,8 +319,8 @@ double BGM_MeshSize(GEntity *ge, double U, double V,
   // lc from fields
   double l4 = MAX_LC;
   FieldManager *fields = ge->model()->getFields();
-  if(fields->background_field > 0){
-    Field *f = fields->get(fields->background_field);
+  if(fields->getBackgroundField() > 0){
+    Field *f = fields->get(fields->getBackgroundField());
     if(f) l4 = (*f)(X, Y, Z, ge);
   }
   
@@ -365,8 +365,8 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
   // lc from fields
   SMetric3 l4(1./(MAX_LC*MAX_LC));
   FieldManager *fields = ge->model()->getFields();
-  if(fields->background_field > 0){
-    Field *f = fields->get(fields->background_field);
+  if(fields->getBackgroundField() > 0){
+    Field *f = fields->get(fields->getBackgroundField());
     if(f){
       if (!f->isotropic()){
         (*f)(X, Y, Z, l4,ge);

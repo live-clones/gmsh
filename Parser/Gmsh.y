@@ -931,9 +931,9 @@ Affectation :
     {
 #if defined(HAVE_MESH)
       if(!strcmp($1,"Background"))
-	GModel::current()->getFields()->background_field = (int)$4;
+	GModel::current()->getFields()->setBackgroundFieldId((int)$4);
       else if(!strcmp($1,"BoundaryLayer"))
-	GModel::current()->getFields()->boundaryLayer_field = (int)$4;
+	GModel::current()->getFields()->setBoundaryLayerFieldId((int)$4);
       else
 	yymsg(0, "Unknown command %s Field", $1);
 #endif

@@ -13,6 +13,7 @@
   #include "Levy3D.h"
   #include "meshPartition.h"
   #include "meshMetric.h"
+  #include "Field.h"
   #include "CenterlineField.h"
 %}
 
@@ -30,4 +31,5 @@ namespace std {
 %include "Levy3D.h"
 %include "meshPartition.h"
 %include "meshMetric.h"
+%include "Field.h"
 %include "CenterlineField.h"

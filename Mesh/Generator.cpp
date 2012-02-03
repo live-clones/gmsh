@@ -28,6 +28,8 @@
 #include "HighOrder.h"
 #include "Generator.h"
 #include "meshGFaceLloyd.h"
+#include "CenterlineField.h"
+#include "Field.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -500,6 +502,15 @@ static void Mesh2D(GModel *m)
 #endif
 
   // collapseSmallEdges(*m);
+  
+  //For centerline field, clean the cut parts
+  Centerline *center = 0;
+  FieldManager *fields = GModel::current()->getFields();
+  if (fields->getBackgroundField() > 0 ){
+    Field *myField = fields->get(fields->getBackgroundField());
+    center = dynamic_cast<Centerline*> (myField);
+  } 
+  if (center) center->cleanMesh();
 
   double t2 = Cpu();
   CTX::instance()->meshTimer[1] = t2 - t1;
