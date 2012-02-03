@@ -1288,6 +1288,7 @@ class MinAnisoField : public Field
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
+    SMetric3 metr (1./MAX_LC);
     double v = MAX_LC;
     for(std::list<int>::iterator it = idlist.begin(); it != idlist.end(); it++) {
       Field *f = (GModel::current()->getFields()->get(*it));
