@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include <sstream>
+#include <stack>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -1263,10 +1264,39 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
   return num;
 }
 
+
 static void recurConnectMElementsByMFace(const MFace &f,
                                          std::multimap<MFace, MElement*, Less_Face> &e2f,
                                          std::set<MElement*> &group,
-                                         std::set<MFace, Less_Face> &touched)
+                                         std::set<MFace, Less_Face> &touched,
+					 int recur_level)
+{
+  // this is very slow...
+  std::stack<MFace> _stack;
+  _stack.push(f);
+  
+  while(!_stack.empty()){
+    MFace ff = _stack.top();
+    _stack.pop();
+    if (touched.find(ff) == touched.end()){
+      touched.insert(ff);
+      for (std::multimap<MFace, MElement*, Less_Face>::iterator it = e2f.lower_bound(ff);
+	   it != e2f.upper_bound(ff); ++it){
+	group.insert(it->second);	
+	for (int i = 0; i < it->second->getNumFaces(); ++i){
+	  _stack.push(it->second->getFace(i));
+	}
+      }
+    }
+  }
+  printf("group pf %d elements found\n",group.size());
+}
+
+static void recurConnectMElementsByMFaceOld(const MFace &f,
+                                         std::multimap<MFace, MElement*, Less_Face> &e2f,
+                                         std::set<MElement*> &group,
+                                         std::set<MFace, Less_Face> &touched,
+					 int recur_level)
 {
   if (touched.find(f) != touched.end()) return;
   touched.insert(f);
@@ -1274,7 +1304,7 @@ static void recurConnectMElementsByMFace(const MFace &f,
        it != e2f.upper_bound(f); ++it){
     group.insert(it->second);
     for (int i = 0; i < it->second->getNumFaces(); ++i){
-      recurConnectMElementsByMFace(it->second->getFace(i), e2f, group, touched);
+      recurConnectMElementsByMFace(it->second->getFace(i), e2f, group, touched, recur_level+1);
     }
   }
 }
@@ -1291,7 +1321,7 @@ static int connectedVolumes(std::vector<MElement*> &elements,
   while(!e2f.empty()){
     std::set<MElement*> group;
     std::set<MFace, Less_Face> touched;
-    recurConnectMElementsByMFace(e2f.begin()->first, e2f, group, touched);
+    recurConnectMElementsByMFace(e2f.begin()->first, e2f, group, touched, 0);
     std::vector<MElement*> temp;
     temp.insert(temp.begin(), group.begin(), group.end());
     regs.push_back(temp);

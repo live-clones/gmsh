@@ -998,6 +998,7 @@ void optimalPointFrontal (GFace *gf,
   newPoint[1] = midpoint[1] + d * dir[1];
 }
 
+/// 
 
 void optimalPointFrontalB (GFace *gf, 
 			   MTri3* worst, 

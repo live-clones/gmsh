@@ -618,6 +618,10 @@ static void copy_vertices (GRegion *to, GRegion *from, std::map<MVertex*,MVertex
 }
 static void copy_vertices (GEdge *to, GEdge *from, std::map<MVertex*,MVertex*> &_mesh_to_geom){
   to->deleteMesh();
+  if (!from){
+    Msg::Warning("Edge %d in the mesh do not match any edge of the model",to->tag());
+    return;
+  }
   for (int i=0;i<from->mesh_vertices.size();i++){
     MVertex *v_from = from->mesh_vertices[i];
     double t;
@@ -639,8 +643,10 @@ static void copy_vertices (GFace *geom, GFace *mesh, std::map<MVertex*,MVertex*>
     double DDD = ( v_from->x() - gp.x()) * ( v_from->x() - gp.x()) +
       ( v_from->y() - gp.y()) * ( v_from->y() - gp.y()) +
       ( v_from->z() - gp.z()) * ( v_from->z() - gp.z()) ;
-    if (sqrt(DDD) > 1.e-3)Msg::Error("Impossible to match one point Original point %f %f %f New point %f %f %f",
+    if (sqrt(DDD) > 1.e-1)Msg::Error("Impossible to match one point Original point %f %f %f New point %f %f %f",
 				     v_from->x(), v_from->y(), v_from->z(),gp.x(), gp.y(), gp.z());
+    else if (sqrt(DDD) > 1.e-3)Msg::Warning("One mesh vertex %f %f %f of GFace %d \n is difficult to match : closest point %f %f %f",
+						 v_from->x(), v_from->y(), v_from->z(),geom->tag(),gp.x(), gp.y(), gp.z());
     MFaceVertex *v_to = new MFaceVertex (v_from->x(),v_from->y(),v_from->z(), geom, gp.u(),gp.v() );
     geom->mesh_vertices.push_back(v_to);
     _mesh_to_geom[v_from] = v_to;
@@ -649,7 +655,9 @@ static void copy_vertices (GFace *geom, GFace *mesh, std::map<MVertex*,MVertex*>
 }
 
 template <class ELEMENT>
-static void copy_elements (std::vector<ELEMENT*> &to, std::vector<ELEMENT*> &from, std::map<MVertex*,MVertex*> &_mesh_to_geom){
+static void copy_elements (std::vector<ELEMENT*> &to, 
+			   std::vector<ELEMENT*> &from, 
+			   std::map<MVertex*,MVertex*> &_mesh_to_geom){
   MElementFactory toto;
   to.clear();
   for (int i=0;i < from.size();i++){
@@ -663,26 +671,35 @@ static void copy_elements (std::vector<ELEMENT*> &to, std::vector<ELEMENT*> &fro
 }
 
 
-void copy_vertices (GModel *geom, GModel *mesh, std::map<MVertex*,MVertex*> &_mesh_to_geom){
+void copy_vertices (GModel *geom, GModel *mesh, std::map<MVertex*,MVertex*> &_mesh_to_geom,
+		    std::vector<Pair<GVertex*, GVertex*> > *coresp_v,
+		    std::vector<Pair<GEdge*, GEdge*> > *coresp_e,
+		    std::vector<Pair<GFace*, GFace*> > *coresp_f){
+  
   // copy all elements
-  for (GModel::viter vit = geom->firstVertex() ; vit != geom->lastVertex(); ++vit)
-    copy_vertices(*vit,mesh->getVertexByTag((*vit)->tag()),_mesh_to_geom);
-  for (GModel::eiter eit = geom->firstEdge() ; eit != geom->lastEdge(); ++eit)
-    copy_vertices(*eit,mesh->getEdgeByTag((*eit)->tag()),_mesh_to_geom);
-  for (GModel::fiter fit = geom->firstFace() ; fit != geom->lastFace(); ++fit)
-    copy_vertices(*fit,mesh->getFaceByTag((*fit)->tag()),_mesh_to_geom);
+  for (int i=0;i<coresp_v->size();++i)
+    copy_vertices((*coresp_v)[i].first(),(*coresp_v)[i].second(),_mesh_to_geom);
+  for (int i=0;i<coresp_e->size();++i)
+    copy_vertices((*coresp_e)[i].first(),(*coresp_e)[i].second(),_mesh_to_geom);
+  for (int i=0;i<coresp_f->size();++i)
+    copy_vertices((*coresp_f)[i].first(),(*coresp_f)[i].second(),_mesh_to_geom);
   for (GModel::riter rit = geom->firstRegion() ; rit != geom->lastRegion(); ++rit)
     copy_vertices(*rit,mesh->getRegionByTag((*rit)->tag()),_mesh_to_geom);
 }
-void copy_elements (GModel *geom, GModel *mesh, std::map<MVertex*,MVertex*> &_mesh_to_geom){
+void copy_elements (GModel *geom, GModel *mesh, std::map<MVertex*,MVertex*> &_mesh_to_geom,
+		    std::vector<Pair<GVertex*, GVertex*> > *coresp_v,
+		    std::vector<Pair<GEdge*, GEdge*> > *coresp_e,
+		    std::vector<Pair<GFace*, GFace*> > *coresp_f){
   // copy all elements
-  for (GModel::viter vit = geom->firstVertex() ; vit != geom->lastVertex(); ++vit)
-    if (mesh->getVertexByTag((*vit)->tag())) copy_elements<MPoint>((*vit)->points,mesh->getVertexByTag((*vit)->tag())->points,_mesh_to_geom);
-  for (GModel::eiter eit = geom->firstEdge() ; eit != geom->lastEdge(); ++eit)
-    copy_elements<MLine>((*eit)->lines,mesh->getEdgeByTag((*eit)->tag())->lines,_mesh_to_geom);
-  for (GModel::fiter fit = geom->firstFace() ; fit != geom->lastFace(); ++fit) {
-    copy_elements<MTriangle>((*fit)->triangles,mesh->getFaceByTag((*fit)->tag())->triangles,_mesh_to_geom);
-    copy_elements<MQuadrangle>((*fit)->quadrangles,mesh->getFaceByTag((*fit)->tag())->quadrangles,_mesh_to_geom);
+  for (int i=0;i<coresp_v->size();++i)
+    copy_elements<MPoint>((*coresp_v)[i].first()->points,(*coresp_v)[i].second()->points,_mesh_to_geom);
+
+  for (int i=0;i<coresp_e->size();++i)
+    copy_elements<MLine>((*coresp_e)[i].first()->lines,(*coresp_e)[i].second()->lines,_mesh_to_geom);
+  
+  for (int i=0;i<coresp_f->size();++i){
+    copy_elements<MTriangle>((*coresp_f)[i].first()->triangles,(*coresp_f)[i].second()->triangles,_mesh_to_geom);
+    copy_elements<MQuadrangle>((*coresp_f)[i].first()->quadrangles,(*coresp_f)[i].second()->quadrangles,_mesh_to_geom);
   }
   for (GModel::riter rit = geom->firstRegion() ; rit != geom->lastRegion(); ++rit) {
     copy_elements<MTetrahedron>((*rit)->tetrahedra,mesh->getRegionByTag((*rit)->tag())->tetrahedra,_mesh_to_geom);
@@ -713,8 +730,8 @@ int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
         matchRegions(geom, mesh, coresp_f,ok);
         if (ok) {
 	  std::map<MVertex*,MVertex*> _mesh_to_geom;
-	  copy_vertices(geom, mesh, _mesh_to_geom);
-	  copy_elements(geom, mesh, _mesh_to_geom);
+	  copy_vertices(geom, mesh, _mesh_to_geom,coresp_v,coresp_e,coresp_f);
+	  copy_elements(geom, mesh, _mesh_to_geom,coresp_v,coresp_e,coresp_f);
           return 1;
         } else {
           Msg::Error("Could not match every region !");
