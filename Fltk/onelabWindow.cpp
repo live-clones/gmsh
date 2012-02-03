@@ -958,6 +958,8 @@ void onelabWindow::rebuildTree()
     free(_treeStrings[i]);
   _treeStrings.clear();
 
+  FlGui::check(); // necessary e.g. on windows to avoid "ghosting"
+
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers);
   for(unsigned int i = 0; i < numbers.size(); i++){
