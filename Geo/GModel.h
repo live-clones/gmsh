@@ -476,7 +476,15 @@ class GModel
   void storeChain(int dim,
                   std::map<int, std::vector<MElement*> > &entityMap,
                   std::map<int, std::map<int, std::string> > &physicalMap);
-
+  void storeChain(std::vector<MVertex*> &vertices, int dim,
+	          std::map<int, std::vector<MElement*> > &entityMap,
+	          std::map<int, std::map<int, std::string> > &physicalMap)
+  {
+    _storeVerticesInEntities(vertices);
+    _storeElementsInEntities(entityMap);
+    _storePhysicalTagsInEntities(dim, physicalMap);
+    _associateEntityWithMeshVertices();
+  }
   // request homology computation
   void addHomologyRequest(const std::string &type, std::vector<int> &domain,
                           std::vector<int> &subdomain);

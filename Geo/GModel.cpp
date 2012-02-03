@@ -979,7 +979,7 @@ static void _addElements(std::vector<T*> &dst, const std::vector<MElement*> &src
   for(unsigned int i = 0; i < src.size(); i++) dst.push_back((T*)src[i]);
 }
 
-void GModel::_storeElementsInEntities(std::map<int, std::vector<MElement*> > &map)
+void GModel::_storeElementsInEntities(std::map< int, std::vector<MElement* > >& map)
 {
   std::map<int, std::vector<MElement*> >::const_iterator it = map.begin();
   for(; it != map.end(); ++it){

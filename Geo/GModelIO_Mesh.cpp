@@ -159,6 +159,7 @@ static MElement *createElementMSH(GModel *m, int num, int typeMSH, int physical,
 
   int dim = e->getDim();
   if(physical && (!physicals[dim].count(reg) || !physicals[dim][reg].count(physical)))
+//  if(/*physical && */(!physicals[dim].count(reg) || !physicals[dim][reg].count(physical)))
     physicals[dim][reg][physical] = "unnamed";
 
   if(part) m->getMeshPartitions().insert(part);
@@ -169,7 +170,7 @@ static bool getElementsByNum(int elemNum[], std::map<int, std::vector<MElement*>
                              bool erase, MElement *elems[], int nbElem = 1)
 {
   int i = 0;
-  std::map<int, std::vector<MElement*> >::iterator it = elements.begin();
+  std::map<int, std::vector<MElement*> >::iterator it = elements.begin();  
   for(; it != elements.end(); ++it) {
     std::vector<MElement*>::iterator itE = it->second.begin();
     for(; itE != it->second.end(); itE++) {
