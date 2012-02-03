@@ -18,6 +18,7 @@ functionSpace.cpp
   filters.cpp
   sparsityPattern.cpp
   STensor43.cpp
+  STensor33.cpp
 terms.cpp
 )
 
