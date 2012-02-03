@@ -775,7 +775,6 @@ void Centerline::cleanMesh(){
   }
 
   //Removing discrete Vertices - Edges - Faces
-  printf("NV=%d NE=%d NF=%d \n", NV, NE, NF);
   for (int i=0; i < NV; i++){
     GVertex *gv = current->getVertexByTag(i+1);
     current->remove(gv);
@@ -836,7 +835,6 @@ void Centerline::createFaces(){
   int numBef = current->getMaxElementaryNumber(2) + 1;
   for(unsigned int i = 0; i < faces.size(); ++i){
     int numF = current->getMaxElementaryNumber(2) + 1;
-    printf("creating discrete face %d \n", numF);
     discreteFace *f = new discreteFace(current, numF);
     current->add(f);
     discFaces.push_back(f);
