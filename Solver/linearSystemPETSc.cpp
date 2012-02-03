@@ -86,6 +86,16 @@ void linearSystemPETScBlockDouble::getFromRightHandSide(int row, fullMatrix<doub
   }
 }
 
+void linearSystemPETScBlockDouble::addToSolution(int row, const fullMatrix<double> &val)
+{
+  for (int ii = 0; ii < _blockSize; ii++) {
+    PetscInt i = row * _blockSize + ii;
+    PetscScalar v = val(ii, 0);
+    VecSetValues(_x, 1, &i, &v, ADD_VALUES);
+  }
+}
+
+
 void linearSystemPETScBlockDouble::getFromSolution(int row, fullMatrix<double> &val) const
 {
   for (int i = 0; i < _blockSize; i++) {
@@ -235,6 +245,16 @@ void linearSystemPETScBlockDouble::zeroRightHandSide()
     VecZeroEntries(_b);
   }
 }
+
+void linearSystemPETScBlockDouble::zeroSolution()
+{
+  if (_isAllocated) {
+    VecAssemblyBegin(_x);
+    VecAssemblyEnd(_x);
+    VecZeroEntries(_x);
+  }
+}
+
 
 linearSystemPETScBlockDouble::linearSystemPETScBlockDouble()
 {

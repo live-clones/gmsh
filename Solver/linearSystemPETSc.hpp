@@ -214,6 +214,14 @@ void linearSystemPETSc<scalar>::addToMatrix(int row, int col, const scalar &val)
 }
 
 template <class scalar>
+void linearSystemPETSc<scalar>::addToSolution(int row, const scalar &val)
+{
+  PetscInt i = row;
+  PetscScalar s = val;
+  _try(VecSetValues(_x, 1, &i, &s, ADD_VALUES));
+}
+
+template <class scalar>
 void linearSystemPETSc<scalar>::getFromSolution(int row, scalar &val) const
 {
 #if defined(PETSC_USE_COMPLEX)
@@ -246,6 +254,17 @@ void linearSystemPETSc<scalar>::zeroRightHandSide()
     _try(VecZeroEntries(_b));
   }
 }
+
+template <class scalar>
+void linearSystemPETSc<scalar>::zeroSolution()
+{
+  if (_isAllocated) {
+    _try(VecAssemblyBegin(_x));
+    _try(VecAssemblyEnd(_x));
+    _try(VecZeroEntries(_x));
+  }
+}
+
 
 template <class scalar>
 int linearSystemPETSc<scalar>::systemSolve()

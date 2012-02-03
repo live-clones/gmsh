@@ -67,6 +67,12 @@ class linearSystemGmm : public linearSystem<scalar> {
   {
     val = (*_b)[row];
   }
+
+  virtual void addToSolution(int row, const scalar &val)
+  {
+    if(val != 0.0) (*_x)[row] += val;
+  }
+
   virtual void getFromSolution(int row, scalar &val) const
   {
     val = (*_x)[row];
@@ -79,6 +85,11 @@ class linearSystemGmm : public linearSystem<scalar> {
   {
     for(unsigned int i = 0; i < _b->size(); i++) (*_b)[i] = 0.;
   }
+  virtual void zeroSolution()
+  {
+    for(unsigned int i = 0; i < _x->size(); i++) (*_x)[i] = 0.;
+  }
+
   virtual double normInfRightHandSide() const {
     double nor = 0.;
     double temp;
@@ -120,9 +131,11 @@ class linearSystemGmm : public linearSystem<scalar> {
   virtual void getFromMatrix(int row, int col, scalar &val) const {}
   virtual void addToRightHandSide(int row, const scalar &val) {}
   virtual void getFromRightHandSide(int row, scalar &val) const {}
+  virtual void addToSolution(int row, const scalar &val) {}
   virtual void getFromSolution(int row, scalar &val) const {}
   virtual void zeroMatrix() {}
   virtual void zeroRightHandSide() {}
+  virtual void zeroSolution() {}
   virtual int systemSolve() { return 0; }
   virtual double normInfRightHandSide() const { return 0.; }
   void setPrec(double p){}

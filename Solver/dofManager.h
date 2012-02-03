@@ -169,6 +169,17 @@ class dofManager : public dofManagerBase{
     }
     return false;
   }
+  
+  inline bool isAnUnknown(Dof key) const
+  {
+    if(ghostValue.find(key) == ghostValue.end())
+    {
+      if(unknown.find(key) != unknown.end())
+        return true;
+    }
+    return false;
+  }
+
   inline bool isFixed(long int ent, int type) const
   {
     return isFixed(Dof(ent, type));
@@ -210,6 +221,21 @@ class dofManager : public dofManagerBase{
     Vals.resize(originalSize + ndofs);
     for (int i = 0; i < ndofs; ++i) getDofValue(keys[i], Vals[originalSize+i]);
   }
+  
+  inline bool getAnUnknown(Dof key,  dataVec &val) const
+  {
+    if(ghostValue.find(key) == ghostValue.end())
+    {
+      std::map<Dof, int>::const_iterator it = unknown.find(key);
+      if (it != unknown.end())
+      {
+        _current->getFromSolution(it->second, val);
+        return true;
+      }
+    }
+    return false;
+  }
+  
   virtual inline void getDofValue(Dof key,  dataVec &val) const
   {
     {

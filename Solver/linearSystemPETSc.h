@@ -68,9 +68,11 @@ class linearSystemPETSc : public linearSystem<scalar> {
   virtual void getFromRightHandSide(int row, scalar &val) const;
   virtual double normInfRightHandSide() const;
   virtual void addToMatrix(int row, int col, const scalar &val);
+  virtual void addToSolution(int row, const scalar &val);
   virtual void getFromSolution(int row, scalar &val) const;
   virtual void zeroMatrix();
   virtual void zeroRightHandSide();
+  virtual void zeroSolution();
   virtual int systemSolve();
   Mat &getMatrix(){ return _a; }
   std::vector<scalar> getData();
@@ -89,6 +91,7 @@ class linearSystemPETScBlockDouble : public linearSystem<fullMatrix<double> > {
   void _kspCreate();
   virtual void addToMatrix(int row, int col, const fullMatrix<double> &val);
   virtual void addToRightHandSide(int row, const fullMatrix<double> &val);
+  virtual void addToSolution(int row,  const fullMatrix<double> &val);
   virtual void getFromMatrix(int row, int col, fullMatrix<double> &val ) const;
   virtual void getFromRightHandSide(int row, fullMatrix<double> &val) const;
   virtual void getFromSolution(int row, fullMatrix<double> &val) const;
@@ -99,6 +102,7 @@ class linearSystemPETScBlockDouble : public linearSystem<fullMatrix<double> > {
   void clear();
   void zeroMatrix();
   void zeroRightHandSide();
+  void zeroSolution();
   double normInfRightHandSide() const;
   void insertInSparsityPattern (int i, int j);
   linearSystemPETScBlockDouble();
@@ -119,10 +123,12 @@ class linearSystemPETSc : public linearSystem<scalar> {
   virtual void addToMatrix(int row, int col, const scalar &val) {}
   virtual void getFromMatrix(int row, int col, scalar &val) const {}
   virtual void addToRightHandSide(int row, const scalar &val) {}
+  virtual void addToSolution(int row, const scalar &val) {}
   virtual void getFromRightHandSide(int row, scalar &val) const {}
   virtual void getFromSolution(int row, scalar &val) const {}
   virtual void zeroMatrix() {}
   virtual void zeroRightHandSide() {}
+  virtual void zeroSolution() {}
   virtual int systemSolve() { return 0; }
   virtual double normInfRightHandSide() const{return 0;}
 };

@@ -125,6 +125,10 @@ class linearSystemCSR : public linearSystem<scalar> {
   {
     if(val != 0.0) (*_b)[row] += val;
   }
+  virtual void addToSolution(int row, const scalar &val)
+  {
+    if(val != 0.0) (*_x)[row] += val;
+  }
   virtual void getFromRightHandSide(int row, scalar &val) const
   {
     val = (*_b)[row];
@@ -145,6 +149,12 @@ class linearSystemCSR : public linearSystem<scalar> {
     if (!_b) return;
     for(unsigned int i = 0; i < _b->size(); i++) (*_b)[i] = 0.;
   }
+  virtual void zeroSolution()
+  {
+    if (!_x) return;
+    for(unsigned int i = 0; i < _x->size(); i++) (*_x)[i] = 0.;
+  }
+
   virtual double normInfRightHandSide() const
   {
     double nor = 0.;

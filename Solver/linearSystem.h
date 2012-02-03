@@ -20,6 +20,7 @@ class linearSystemBase {
   virtual void clear() = 0;
   virtual void zeroMatrix() = 0;
   virtual void zeroRightHandSide() = 0;
+  virtual void zeroSolution() = 0;
   virtual int systemSolve() = 0;
   void setParameter (std::string key, std::string value);
   virtual void insertInSparsityPattern(int _row, int _col){};
@@ -36,6 +37,7 @@ class linearSystem : public linearSystemBase {
   virtual void addToRightHandSide(int _row, const scalar &val) = 0;
   virtual void getFromRightHandSide(int _row, scalar &val) const = 0;
   virtual void getFromSolution(int _row, scalar &val) const = 0;
+  virtual void addToSolution(int _row, const scalar &val) = 0;
 };
 
 #endif

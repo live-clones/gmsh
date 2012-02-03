@@ -54,6 +54,10 @@ class linearSystemFull : public linearSystem<scalar> {
   {
     if(val != 0.0) (*_b)(row) += val;
   }
+  virtual void addToSolution(int row, const scalar &val)
+  {
+    if(val != 0.0) (*_x)(row) += val;
+  }
   virtual void getFromRightHandSide(int row, scalar &val) const
   {
     val = (*_b)(row);
@@ -69,6 +73,10 @@ class linearSystemFull : public linearSystem<scalar> {
   virtual void zeroRightHandSide()
   {
     _b->setAll(0.);
+  }
+  virtual void zeroSolution()
+  {
+    _x->setAll(0.);
   }
   virtual double normInfRightHandSide() const{
     double nor = 0.;
