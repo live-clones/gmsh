@@ -233,6 +233,7 @@ namespace onelab{
       setMax(p.getMax());
       setStep(p.getStep());
       setChoices(p.getChoices());
+      setVisible(p.getVisible());// FIXME Why not?
     }
     std::string toChar() const
     {
@@ -296,6 +297,7 @@ namespace onelab{
         setChanged(true);
       }
       setChoices(p.getChoices());
+      setVisible(p.getVisible());// FIXME Why not?
     }
     std::string toChar() const
     {
@@ -743,8 +745,8 @@ namespace onelab{
 	_gmshClient->SendMessage(GmshSocket::GMSH_PARAM_QUERY_ALL, msg.size(), &msg[0]);
 
       while(1){
-        // stop if we have no communications for 10 secs
-        int ret = _gmshClient->Select(10, 0);
+        // stop if we have no communications for 5 minutes
+        int ret = _gmshClient->Select(500, 0);
         if(!ret){
           _gmshClient->Info("Timout: aborting remote get");
           return false;

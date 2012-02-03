@@ -87,16 +87,18 @@ class GmshSocket{
   // the socket name
   std::string _sockname;
   // send some data over the socket
-  void _SendData(const void *buffer, int bytes)
+  int _SendData(const void *buffer, int bytes)
   {
     const char *buf = (const char *)buffer;
     int sofar = 0;
     int remaining = bytes;
     do {
       int len = send(_sock, buf + sofar, remaining, 0);
+      if(len < 0) return -1; // error
       sofar += len;
       remaining -= len;
     } while(remaining > 0);
+    return bytes;
   }
   // receive some data over the socket
   int _ReceiveData(void *buffer, int bytes)
@@ -245,9 +247,6 @@ class GmshClient : public GmshSocket {
   ~GmshClient(){}
   int Connect(const char *sockname)
   {
-    // slight delay to make sure that the socket is bound by the
-    // server before we attempt to connect to it
-    _Sleep(100);
     if(strstr(sockname, "/") || strstr(sockname, "\\") || !strstr(sockname, ":")){
 #if !defined(WIN32) || defined(__CYGWIN__)
       // UNIX socket (testing ":" is not enough with Windows paths)
@@ -407,7 +406,7 @@ class GmshServer : public GmshSocket{
     }
 
     // wait until we get data
-    int ret = NonBlockingWait(tmpsock, 0.5, timeout);
+    int ret = NonBlockingWait(tmpsock, 0.001, timeout);
     if(ret){
       CloseSocket(tmpsock);
       if(ret == 2){

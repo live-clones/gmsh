@@ -96,18 +96,27 @@ static void gmsh_clscale(Fl_Color c)
 static void gmsh_gear(Fl_Color c)
 {
   fl_color(c);
-  fl_line_style(FL_SOLID, 2);
-  fl_begin_line(); fl_arc(0.0, 0.0, 0.5, 0.0, 360.0); fl_end_line();
-  for(int i = 0; i < 8; i++){
-    fl_rotate(i * 360./8.);
-    fl_begin_complex_polygon();
-    fl_vertex(0.5, -0.13);
-    fl_vertex(1.0, -0.13);
-    fl_vertex(1.0, 0.13);
-    fl_vertex(0.5, 0.13);
-    fl_end_complex_polygon();
-  }
+  double w = 0.12;
+  double h1 = 0.5;
+#if defined(WIN32)
+  double h2 = 1.0;
+#else
+  double h2 = 1.05;
+#endif
+  fl_line_style(FL_SOLID, 3);
+  fl_begin_line();
+  fl_circle(0, 0, 0.5);
+  fl_end_line();
   fl_line_style(FL_SOLID);
+  for(int i = 0; i < 8; i++){
+    fl_rotate(45);
+    fl_begin_polygon();
+    fl_vertex(h1, -w);
+    fl_vertex(h2, -w);
+    fl_vertex(h2, w);
+    fl_vertex(h1, w);
+    fl_end_polygon();
+  }
 }
 
 static void gmsh_graph(Fl_Color c)

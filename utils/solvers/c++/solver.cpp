@@ -8,7 +8,7 @@
 // 2) Add it to Gmsh:
 //   - launch Gmsh and open Tools->OneLab
 //   - In the gear menu, select "Add new client"
-//   - Enter "My Solver" as client name, then choose the exe in the dialog
+//   - Enter a client name of your choice, then choose this exe in the dialog
 
 int main(int argc, char **argv)
 {

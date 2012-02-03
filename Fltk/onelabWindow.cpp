@@ -910,7 +910,7 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _butt[1]->callback(onelab_cb, (void*)"compute");
 
   _gear = new Fl_Menu_Button
-    (_butt[0]->x() - WB - BB/2, _butt[0]->y(), BB/2, BH, "@-1gmsh_gear");
+    (_butt[0]->x() - WB - BB/2, _butt[0]->y(), BB/2, BH, "@gmsh_gear");
   _gear->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   _gear->add("Reset database", 0, onelab_cb, (void*)"reset");
   _gear->add("_Print database", 0, onelab_cb, (void*)"dump");
@@ -975,6 +975,8 @@ void onelabWindow::rebuildTree()
       but->value(numbers[i].getValue());
       but->callback(onelab_check_button_cb, (void*)n);
       n->widget(but);
+      if(numbers[i].getAttribute("Highlight").size())
+        n->labelbgcolor(FL_YELLOW);
     }
     else{
       inputRange *but = new inputRange
