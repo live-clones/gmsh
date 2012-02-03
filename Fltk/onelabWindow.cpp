@@ -583,7 +583,9 @@ static bool updateOnelabGraph(const std::string &snum)
   }
   if(x.size() && y.size()){
     if(view){
-      view->getData()->setXY(xName, yName, x, y);
+      view->getData()->setXY(x, y);
+      view->getData()->setName(yName);
+      view->getOptions()->axesLabel[0] = xName;
       view->setChanged(true);
     }
     else{

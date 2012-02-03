@@ -11,43 +11,21 @@
 #include "SmoothData.h"
 #include "Context.h"
 
-void PViewDataList::_init(bool isAdapted)
+PViewDataList::PViewDataList(bool isAdapted)
+  : PViewData(), NbTimeStep(0), Min(VAL_INF), Max(-VAL_INF),
+    NbSP(0), NbVP(0), NbTP(0), NbSL(0), NbVL(0), NbTL(0),
+    NbST(0), NbVT(0), NbTT(0), NbSQ(0), NbVQ(0), NbTQ(0),
+    NbSS(0), NbVS(0), NbTS(0), NbSH(0), NbVH(0), NbTH(0),
+    NbSI(0), NbVI(0), NbTI(0), NbSY(0), NbVY(0), NbTY(0),
+    NbT2(0), NbT3(0), _lastElement(-1), _lastDimension(-1),
+    _lastNumNodes(-1), _lastNumComponents(-1), _lastNumValues(-1),
+    _lastNumEdges(-1), _lastType(-1), _lastXYZ(0), _lastVal(0),
+    _isAdapted(isAdapted)
 {
-  NbTimeStep = 0;
-  Min = VAL_INF;
-  Max = -VAL_INF;
-  NbSP = NbVP = NbTP = 0;
-  NbSL = NbVL = NbTL = 0;
-  NbST = NbVT = NbTT = 0;
-  NbSQ = NbVQ = NbTQ = 0;
-  NbSS = NbVS = NbTS = 0;
-  NbSH = NbVH = NbTH = 0;
-  NbSI = NbVI = NbTI = 0;
-  NbSY = NbVY = NbTY = 0;
-  NbT2 = NbT3 = 0;
-  _lastElement = _lastDimension = _lastNumNodes = -1;
-  _lastNumComponents = _lastNumValues = _lastNumEdges = -1;
-  _lastType = -1;
-  _lastXYZ = _lastVal = 0;
-  _isAdapted = isAdapted;
   for(int i = 0; i < 24; i++) _index[i] = 0;
 }
 
-PViewDataList::PViewDataList(bool isAdapted) : PViewData()
-{
-  _init(isAdapted);
-}
-
-PViewDataList::PViewDataList(const std::string &xname, const std::string &yname,
-                             std::vector<double> &x, std::vector<double> &y)
-  : PViewData()
-{
-  _init(false);
-  setXY(xname, yname, x, y);
-}
-
-void PViewDataList::setXY(const std::string &xname, const std::string &yname,
-                          std::vector<double> &x, std::vector<double> &y)
+void PViewDataList::setXY(std::vector<double> &x, std::vector<double> &y)
 {
   NbSP = 0;
   SP.clear();
@@ -58,8 +36,6 @@ void PViewDataList::setXY(const std::string &xname, const std::string &yname,
     SP.push_back(y[i]);
     NbSP++;
   }
-  setName(yname);
-  setFileName(yname + ".pos");
   finalize();
 }
 

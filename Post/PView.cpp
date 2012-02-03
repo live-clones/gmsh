@@ -84,7 +84,10 @@ PView::PView(const std::string &xname, const std::string &yname,
              std::vector<double> &x, std::vector<double> &y)
 {
   _init();
-  _data = new PViewDataList(xname, yname, x, y);
+  _data = new PViewDataList();
+  _data->setXY(x, y);
+  _data->setName(yname);
+  _data->setFileName(yname + ".pos");
   _options = new PViewOptions(PViewOptions::reference);
   _options->type = PViewOptions::Plot2D;
   _options->axes = 2;

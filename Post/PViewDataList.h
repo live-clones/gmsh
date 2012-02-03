@@ -48,7 +48,6 @@ class PViewDataList : public PViewData {
   int _lastNumNodes, _lastNumComponents, _lastNumValues, _lastNumEdges, _lastType;
   double *_lastXYZ, *_lastVal;
   bool _isAdapted;
-  void _init(bool isAdapted);
   void _stat(std::vector<double> &D, std::vector<char> &C, int nb);
   void _stat(std::vector<double> &list, int nbcomp, int nbelm, int nbnod, int type);
   void _setLast(int ele);
@@ -59,8 +58,6 @@ class PViewDataList : public PViewData {
   int _getRawData(int idxtype, std::vector<double> **l, int **ne, int *nc, int *nn);
  public:
   PViewDataList(bool isAdapted=false);
-  PViewDataList(const std::string &xname, const std::string &yname,
-                std::vector<double> &x, std::vector<double> &y);
   ~PViewDataList(){}
   bool isAdapted(){ return _isAdapted; }
   bool finalize(bool computeMinMax=true, const std::string &interpolationScheme="");
@@ -108,8 +105,7 @@ class PViewDataList : public PViewData {
   void smooth();
   bool combineTime(nameData &nd);
   bool combineSpace(nameData &nd);
-  void setXY(const std::string &xname, const std::string &yname,
-             std::vector<double> &x, std::vector<double> &y);
+  void setXY(std::vector<double> &x, std::vector<double> &y);
 
   // specific to list-based data sets
   void setOrder2(int type);
