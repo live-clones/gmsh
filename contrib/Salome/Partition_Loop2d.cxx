@@ -476,7 +476,11 @@ static TopoDS_Edge MakeDegenAndSelect(const TopoDS_Edge& CE,
     if ( ! CV.IsSame( TopExp::FirstVertex( E , Standard_True )))
       continue;
     NE = E;
+#if defined(WIN32) // fix for OCE on win32
+    dUmin = dU + (dU+1e-12);
+#else
     dUmin = dU + Epsilon(dU);
+#endif
     U2 = USeq(i);
   }
 
