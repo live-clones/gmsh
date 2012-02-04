@@ -185,7 +185,8 @@ int SystemCall(std::string command)
   suInfo.cb = sizeof(suInfo);
   Msg::Info("Calling '%s'", command.c_str());
   CreateProcess(NULL, (char*)command.c_str(), NULL, NULL, FALSE,
-                NORMAL_PRIORITY_CLASS, NULL, NULL, &suInfo, &prInfo);
+                NORMAL_PRIORITY_CLASS|DETACHED_PROCESS, NULL, NULL,
+		&suInfo, &prInfo);
   return 0;
 #else
   if(!system(NULL)) {
