@@ -195,6 +195,8 @@ int SystemCall(const std::string &command, bool blocking)
     CloseHandle(prInfo.hThread);
   }
   else{
+    // DETACHED_PROCESS removes the console (useful if the program to launch is
+    // a console-mode exe)
     CreateProcess(NULL, (char*)command.c_str(), NULL, NULL, FALSE,
                   NORMAL_PRIORITY_CLASS|DETACHED_PROCESS, NULL, NULL,
                   &suInfo, &prInfo);
