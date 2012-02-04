@@ -87,9 +87,9 @@ class GFaceCompound : public GFace {
   bool parametrize_conformal(int iter, MVertex *v1, MVertex *v2) const;
   bool parametrize_conformal_spectral() const;
   void compute_distance() const;
-  bool checkOrientation(int iter) const;
+  bool checkOrientation(int iter, bool moveBoundaries=false) const;
   bool checkOverlap(std::vector<MVertex *> &vert) const;
-  void one2OneMap() const;
+  void one2OneMap(bool moveBoundaries=false) const;
   double checkAspectRatio() const;
   void computeNormals () const;
   void getBoundingEdges();

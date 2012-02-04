@@ -222,7 +222,34 @@ static void computeCGKernelPolygon(std::map<MVertex*,SPoint3> &coordinates,
   }
 
 }
-
+static SPoint3  myNeighVert(std::map<MVertex*,SPoint3> &coordinates,
+			    std::vector<MElement*> &vTri)
+{
+  std::set<MVertex*> vN;
+  vN.clear();
+  for(unsigned int i = 0; i  < vTri.size() ; i++) {
+    MTriangle *t = (MTriangle*) vTri[i];
+    for(int iV = 0; iV < 3; iV++) {
+      MVertex *v = t->getVertex(iV);
+      if (v->onWhat()->dim() < 2) vN.insert(v);
+    }
+  }
+  if (vN.size()!=3) {
+    printf("ARGG more than 3 points on line =%d \n", vN.size());
+    exit(1);
+  }
+  
+  double ucg = 0.0;
+  double vcg = 0.0;
+  std::set<MVertex*>::iterator it = vN.begin();
+  for (; it!= vN.end(); it++){
+    SPoint3 vsp = coordinates[*it];
+    ucg += vsp.x();
+    vcg += vsp.y();
+  }
+  ucg/=3.0;  vcg/=3.0;  
+  return SPoint3(ucg,vcg, 0.0);
+}
 static void myPolygon(std::vector<MElement*> &vTri, std::vector<MVertex*> &vPoly)
 {
   std::vector<MEdge> ePoly;
@@ -266,7 +293,7 @@ bool checkCavity(std::vector<MElement*> &vTri, std::map<MVertex*, SPoint2> &vCoo
   bool badCavity = false;
   
   unsigned int nbV = vTri.size();
-  double a_old = 0, a_new;
+  double a_old = 0.0, a_new;
   for(unsigned int i = 0; i < nbV; ++i){
     MTriangle *t = (MTriangle*) vTri[i];
     SPoint2 v1 = vCoord[t->getVertex(0)];
@@ -278,7 +305,7 @@ bool checkCavity(std::vector<MElement*> &vTri, std::map<MVertex*, SPoint2> &vCoo
     a_new = robustPredicates::orient2d(p1, p2, p3);
     if(i == 0) a_old=a_new;
     if(a_new*a_old < 0.)   badCavity = true;
-    a_old = a_new;
+    //a_old = a_new;
   }
   
   return badCavity;
@@ -510,7 +537,7 @@ bool GFaceCompound::checkOverlap(std::vector<MVertex *> &vert) const
 
 // check if the discrete harmonic map is correct by checking that all
 // the mapped triangles have the same normal orientation
-bool GFaceCompound::checkOrientation(int iter) const
+bool GFaceCompound::checkOrientation(int iter, bool moveBoundaries) const
 {
   std::list<GFace*>::const_iterator it = _compound.begin();
   double a_old = 0.0, a_new=0.0;
@@ -543,10 +570,10 @@ bool GFaceCompound::checkOrientation(int iter) const
 
   int iterMax = 15;
   if(!oriented && iter < iterMax){
-    //if (iter == 0) Msg::Warning("--- Flipping : applying cavity checks.");
+    if (iter == 0) Msg::Debug("--- Flipping : applying cavity checks.");
     Msg::Debug("--- Cavity Check - iter %d -",iter);
-    one2OneMap();
-    return checkOrientation(iter+1);
+    one2OneMap(moveBoundaries);
+    return checkOrientation(iter+1, moveBoundaries);
   }
   else if (oriented && iter < iterMax){
     Msg::Debug("Parametrization is bijective (no flips)");
@@ -555,7 +582,7 @@ bool GFaceCompound::checkOrientation(int iter) const
   return oriented;
 }
 
-void GFaceCompound::one2OneMap() const
+void GFaceCompound::one2OneMap(bool moveBoundaries) const
 {
 #if defined(HAVE_MESH)
   if(adjv.size() == 0){
@@ -578,21 +605,20 @@ void GFaceCompound::one2OneMap() const
         vCoord[vk] =  getCoordinates(vk);
       }
     }
-    bool badCavity = closedCavity(v,vTri) ? checkCavity(vTri, vCoord) : false;
-     
-    if(badCavity){
-      Msg::Debug("Wrong cavity around vertex %d .",
-		 v->getNum());
-      Msg::Debug("--> Place vertex at center of gravity of %d-Polygon kernel." ,
-		 vTri.size());
-      
+    bool badCavity = checkCavity(vTri, vCoord);
+    bool innerCavity = closedCavity(v,vTri);
+
+    if(!moveBoundaries && badCavity && innerCavity ){
       double u_cg, v_cg;
       std::vector<MVertex*> cavV;
       myPolygon(vTri, cavV);
       computeCGKernelPolygon(coordinates, cavV, u_cg, v_cg);
-      SPoint3 p_cg(u_cg,v_cg,0);
+      SPoint3 p_cg(u_cg,v_cg,0.0);
       coordinates[v] = p_cg;
-
+    }
+    else if (moveBoundaries && badCavity && !innerCavity){
+      SPoint3 p_cg = myNeighVert(coordinates, vTri);
+      coordinates[v] = p_cg;
     }
   }
 #endif
@@ -637,12 +663,13 @@ bool GFaceCompound::parametrize() const
     Msg::Debug("Parametrizing surface %d with 'conformal map'", tag());
     fillNeumannBCS();
     bool hasOverlap = parametrize_conformal_spectral();
-    if (hasOverlap || !checkOrientation(0) ){
+    printStuff(11);
+    if (hasOverlap || !checkOrientation(0, true) ){
       Msg::Warning("!!! Overlap or Flipping: parametrization switched to 'FE conformal' map");
       printStuff(22);
       hasOverlap = parametrize_conformal(0, NULL, NULL);
     }
-    if (hasOverlap || !checkOrientation(0) ){
+    if (hasOverlap || !checkOrientation(0, true) ){
       printStuff(33);
       Msg::Warning("$$$ Overlap or Flipping: parametrization switched to 'harmonic' map");
       parametrize(ITERU,HARMONIC); 

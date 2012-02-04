@@ -504,6 +504,8 @@ void Centerline::createBranches(int maxN){
   distanceToLines();
   computeRadii();
 
+  printSplit();
+
   //print info
   // for(unsigned int i = 0; i < edges.size(); ++i) {
   //   printf("EDGE =%d  tag=%d length = %g childs = %d \n", i, edges[i].tag, edges[i].length, edges[i].children.size());
@@ -950,7 +952,7 @@ void Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
   bool closedCut = false;
   int step = 0;
   while (!closedCut && step < 20){
-    double rad = 1.3*maxRad+0.15*step*maxRad;
+    double rad = 1.3*maxRad+0.1*step*maxRad;
     std::map<MEdge,MVertex*,Less_Edge> cutEdges;
     std::set<MVertex*> cutVertices;
     std::vector<MTriangle*> newTris; 
