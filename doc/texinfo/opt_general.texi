@@ -986,7 +986,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.Verbosity
 Level of information printed during processing (0=no information)@*
-Default value: @code{4}@*
+Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.VisibilityPositionX

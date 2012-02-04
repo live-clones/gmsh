@@ -84,6 +84,10 @@ Options:@*
 Indices of curves in the geometric model for which a boundary layer is needed@*
 type: list@*
 default value: @code{@{@}}
+@item FacesList
+Indices of faces in the geometric model for which a boundary layer is needed@*
+type: list@*
+default value: @code{@{@}}
 @item NodesList
 Indices of nodes in the geometric model@*
 type: list@*
@@ -152,6 +156,28 @@ type: float@*
 default value: @code{0}
 @end table
 
+@item Centerline
+The value of this field is the distance to the centerline.@*
+@*
+ You should specify a fileName that contains the centerline. The centerline of a surface can be obtained with the open source software vmtk (http://www.vmtk.org/) using the following script:@*
+@*
+vmtk vmtkcenterlines -seedselector openprofiles -ifile mysurface.stl -ofile centerlines.vtp --pipe vmtksurfacewriter -ifile centerlines.vtp -ofile centerlines.vtk@*
+@*
+Options:@*
+@table @code
+@item FileName
+File name for the centerlines@*
+type: string@*
+default value: @code{"centerlines.vtk"}
+@end table
+
+Actions:@*
+@table @code
+@item cutMesh
+Cut the initial mesh in different mesh partitions using the centerlines 
+@*
+@end table
+
 @item Curvature
 Compute the curvature of Field[IField]:@*
 @*
@@ -212,6 +238,68 @@ default value: @code{1}
 Z coordinate of the cylinder center@*
 type: float@*
 default value: @code{0}
+@end table
+
+@item Frustum
+This field is an extended cylinder with inner (i) and outer (o) radiuseson both endpoints (1 and 2). Length scale is bilinearly interpolated betweenthese locations (inner and outer radiuses, endpoints 1 and 2)The field values for a point P are given by :  u = P1P.P1P2/||P1P2||   r = || P1P - u*P1P2 ||   Ri = (1-u)*R1i + u*R2i   Ro = (1-u)*R1o + u*R2o   v = (r-Ri)/(Ro-Ri)  lc = (1-v)*( (1-u)*v1i + u*v2i ) + v*( (1-u)*v1o + u*v2o )    where (u,v) in [0,1]x[0,1]@*
+Options:@*
+@table @code
+@item R1_inner
+Inner radius of Frustum at endpoint 1@*
+type: float@*
+default value: @code{0}
+@item R1_outer
+Outer radius of Frustum at endpoint 1@*
+type: float@*
+default value: @code{1}
+@item R2_inner
+Inner radius of Frustum at endpoint 2@*
+type: float@*
+default value: @code{0}
+@item R2_outer
+Outer radius of Frustum at endpoint 2@*
+type: float@*
+default value: @code{1}
+@item V1_inner
+Element size at point 1, inner radius@*
+type: float@*
+default value: @code{0.1}
+@item V1_outer
+Element size at point 1, outer radius@*
+type: float@*
+default value: @code{1}
+@item V2_inner
+Element size at point 2, inner radius@*
+type: float@*
+default value: @code{0.1}
+@item V2_outer
+Element size at point 2, outer radius@*
+type: float@*
+default value: @code{1}
+@item X1
+X coordinate of endpoint 1@*
+type: float@*
+default value: @code{0}
+@item X2
+X coordinate of endpoint 2@*
+type: float@*
+default value: @code{0}
+@item Y1
+Y coordinate of endpoint 1@*
+type: float@*
+default value: @code{0}
+@item Y2
+Y coordinate of endpoint 2@*
+type: float@*
+default value: @code{0}
+@item Z1
+Z coordinate of endpoint 1@*
+type: float@*
+default value: @code{1}
+@item Z2
+Z coordinate of endpoint 2@*
+type: float@*
+default value: @code{5.98152627002258e-154}
 @end table
 
 @item Gradient
@@ -282,6 +370,12 @@ Options:@*
 Mathematical function to evaluate.@*
 type: string@*
 default value: @code{"F2 + Sin(z)"}
+@end table
+
+Actions:@*
+@table @code
+@item test
+description blabla@*
 @end table
 
 @item MathEvalAniso

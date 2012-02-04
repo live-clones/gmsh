@@ -29,6 +29,31 @@ System command to launch solver 4@*
 Default value: @code{""}@*
 Saved in: @code{General.SessionFileName}
 
+@item Solver.Hostname0
+Hostname where to launch solver 0@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.Hostname1
+Hostname where to launch solver 1@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.Hostname2
+Hostname where to launch solver 2@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.Hostname3
+Hostname where to launch solver 3@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.Hostname4
+Hostname where to launch solver 4@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
 @item Solver.Name0
 Name of solver 0@*
 Default value: @code{"GetDP"}@*

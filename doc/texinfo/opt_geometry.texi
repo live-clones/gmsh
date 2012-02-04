@@ -34,6 +34,11 @@ Number of control points for splines created during extrusion@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.HideCompounds
+Hide entities that make up compound entities?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.HighlightOrphans
 Highlight orphan entities (lines connected to a single surface, etc.)?@*
 Default value: @code{0}@*

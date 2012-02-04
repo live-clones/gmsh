@@ -1977,8 +1977,11 @@ appended to the path of the current file.
 @item Sleep @var{expression};
 Suspends the execution of Gmsh during @var{expression} seconds.
 
-@item System @var{char-expression};
-Executes a system call.
+@item SystemCall @var{char-expression};
+Executes a (blocking) system call.
+
+@item NonBlockingSystemCall @var{char-expression};
+Executes a (non-blocking) system call.
 
 @item SetName @var{char-expression};
 Changes the name of the current model.

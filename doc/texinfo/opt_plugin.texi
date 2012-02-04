@@ -4,6 +4,46 @@
 @c
 
 @ftable @code
+@item Plugin(AnalyseCurvedMesh)
+Plugin(AnalyseCurvedMesh) check the jacobian of all elements of dimension 'Dim' or the greater model dimension if 'Dim' is either <0 or >3.
+
+ Analysis : 0 do nothing
+          +1 find invalid elements (*)
+          +2 compute J_min and J_max of all elements and print some statistics
+
+Effect (for *) : 0 do nothing
+                +1 print a list of invalid elements
+                +2 print some statistics
+                +4 hide valid elements (for GUI)
+
+MaxDepth = {0,1,...}
+         0 : only sample the jacobian
+         1 : compute Bezier coefficients
+        2+ : execute a maximum of 1+ subdivision(s)
+
+JacBreak = [0,1[ : if a value of the jacobian <= 'JacBreak' is found, the element is said to be invalid
+
+BezBreak = [0,JacBreak[ : if all Bezier coefficients are > 'BezBreak', the element is said to be valid
+
+Tolerance = R+ , << 1 : tolerance (relatively to J_min and J_max) used during the computation of J_min and J_max
+Numeric options:
+@table @code
+@item Dim
+Default value: @code{-1}
+@item Analysis
+Default value: @code{2}
+@item Effect (1)
+Default value: @code{6}
+@item JacBreak (1)
+Default value: @code{0}
+@item BezBreak (1)
+Default value: @code{0}
+@item MaxDepth (1,2)
+Default value: @code{20}
+@item Tolerance (2)
+Default value: @code{0.001}
+@end table
+
 @item Plugin(Annotate)
 Plugin(Annotate) adds the text string `Text', in font `Font' and size `FontSize', in the view `View'. The string is aligned according to `Align'.
 
@@ -481,11 +521,11 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Homology)
-Plugin(Homology) computes ranks and generators of (relative) homology spaces and their thick cuts.
+Plugin(Homology) computes ranks and basis elements of (relative) homology and cohomology spaces.
 
 Define physical groups in order to specify the computation domain and the relative subdomain. Otherwise the whole mesh is the domain and the relative subdomain is empty. 
 
-Plugin(Homology) creates new views, one for each generator found. The resulting generator chains together with the mesh are saved to the file given.
+Plugin(Homology) creates new views, one for each basis element. The resulting basis chains together with the mesh are saved to the file given.
 String options:
 @table @code
 @item Filename
@@ -501,9 +541,9 @@ Default value: @code{0}
 Default value: @code{0}
 @item PhysicalGroupForSubdomain2
 Default value: @code{0}
-@item ComputeGenerators
+@item CompututeHomology
 Default value: @code{1}
-@item ComputeCuts
+@item ComputeCohomology
 Default value: @code{0}
 @end table
 
@@ -606,6 +646,8 @@ If `TimeStep' < 0, the plugin extracts data from all the time steps in the view.
 
 If `View' < 0, the plugin is run on the current view.
 
+Plugin(MathEval) creates one new view.If `PhysicalRegion' < 0, the plugin is runon all physical regions.
+
 Plugin(MathEval) creates one new view.
 String options:
 @table @code
@@ -640,6 +682,8 @@ Default value: @code{-1}
 Default value: @code{-1}
 @item ForceInterpolation
 Default value: @code{0}
+@item PhysicalRegion
+Default value: @code{-1}
 @end table
 
 @item Plugin(MinMax)
@@ -647,11 +691,15 @@ Plugin(MinMax) computes the min/max of a view.
 
 If `View' < 0, the plugin is run on the current view.
 
+If `OverTime' = 1, calculates the min-max over space AND time
+
 Plugin(MinMax) creates two new views.
 Numeric options:
 @table @code
 @item View
 Default value: @code{-1}
+@item OverTime
+Default value: @code{0}
 @end table
 
 @item Plugin(ModifyComponent)
@@ -871,6 +919,25 @@ Default value: @code{1}
 @item Tensor
 Default value: @code{1}
 @item View
+Default value: @code{-1}
+@end table
+
+@item Plugin(Scal2Vec)
+Plugin(Scal2Vec) converts the scalar fields of 'View X', 'View Y' and/or 'View Z' into a vectorial field. The new view 'Name NewView' contains it.
+
+If the value of 'View X', 'View Y' or 'View Z' is -1, the value of the vectorial field in the corresponding direction is 0.
+String options:
+@table @code
+@item Name NewView
+Default value: @code{"NewView"}
+@end table
+Numeric options:
+@table @code
+@item View X
+Default value: @code{-1}
+@item View Y
+Default value: @code{-1}
+@item View Z
 Default value: @code{-1}
 @end table
 
