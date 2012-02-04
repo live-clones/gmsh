@@ -141,7 +141,7 @@ std::string GetHostName()
   return std::string(host);
 }
 
-int UnlinkFile(std::string fileName)
+int UnlinkFile(const std::string &fileName)
 {
 #if !defined(WIN32) || defined(__CYGWIN__)
   return unlink(fileName.c_str());
@@ -150,7 +150,7 @@ int UnlinkFile(std::string fileName)
 #endif
 }
 
-int StatFile(std::string fileName)
+int StatFile(const std::string &fileName)
 {
 #if !defined(WIN32) || defined(__CYGWIN__)
   struct stat buf;
@@ -176,7 +176,7 @@ int KillProcess(int pid)
   return 1;
 }
 
-int SystemCall(std::string command)
+int SystemCall(const std::string &command, bool blocking)
 {
 #if defined(WIN32)
   STARTUPINFO suInfo;
@@ -184,17 +184,30 @@ int SystemCall(std::string command)
   memset(&suInfo, 0, sizeof(suInfo));
   suInfo.cb = sizeof(suInfo);
   Msg::Info("Calling '%s'", command.c_str());
-  CreateProcess(NULL, (char*)command.c_str(), NULL, NULL, FALSE,
-                NORMAL_PRIORITY_CLASS|DETACHED_PROCESS, NULL, NULL,
-		&suInfo, &prInfo);
+  if(blocking){
+    CreateProcess(NULL, (char*)command.c_str(), NULL, NULL, FALSE,
+                  NORMAL_PRIORITY_CLASS, NULL, NULL,
+                  &suInfo, &prInfo);
+    // wait until child process exits.
+    WaitForSingleObject(prInfo.hProcess, INFINITE);
+    // close process and thread handles.
+    CloseHandle(prInfo.hProcess);
+    CloseHandle(prInfo.hThread);
+  }
+  else{
+    CreateProcess(NULL, (char*)command.c_str(), NULL, NULL, FALSE,
+                  NORMAL_PRIORITY_CLASS|DETACHED_PROCESS, NULL, NULL,
+                  &suInfo, &prInfo);
+  }
   return 0;
 #else
   if(!system(NULL)) {
     Msg::Error("Could not find /bin/sh: aborting system call");
     return 1;
   }
-  Msg::Info("Calling '%s'", command.c_str());
-  return system(command.c_str());
+  std::string cmd(command);
+  if(!blocking) cmd += " &";
+  Msg::Info("Calling '%s'", cmd.c_str());
+  return system(cmd.c_str());
 #endif
 }
-

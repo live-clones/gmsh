@@ -83,7 +83,7 @@ StringXString GeneralOptions_String[] = {
 #elif defined(__APPLE__)
     "open -t %s" ,
 #else
-    "sensible-editor '%s' &" ,
+    "sensible-editor '%s'" ,
 #endif
     "System command to launch a text editor" },
   { F|S, "TmpFileName" , opt_general_tmp_filename , ".gmsh-tmp" ,
@@ -95,7 +95,7 @@ StringXString GeneralOptions_String[] = {
 #elif defined(__APPLE__)
     "open %s" ,
 #else
-    "sensible-browser %s &" ,
+    "sensible-browser %s" ,
 #endif
     "System command to launch a web browser" },
 

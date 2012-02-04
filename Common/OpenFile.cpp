@@ -263,7 +263,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
     sstream << "File '"<< fileName << "' is in gzip format.\n\n"
             << "Do you want to uncompress it?";
     if(Msg::GetAnswer(sstream.str().c_str(), 0, "Cancel", "Uncompress")){
-      if(SystemCall(std::string("gunzip -c ") + fileName + " > " + noExt))
+      if(SystemCall(std::string("gunzip -c ") + fileName + " > " + noExt, true))
         Msg::Error("Failed to uncompress `%s': check directory permissions",
                    fileName.c_str());
       GModel::current()->setFileName(noExt);
@@ -366,7 +366,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
       // mesh matcher
       if(CTX::instance()->geom.matchGeomAndMesh && !GModel::current()->empty()) {
         GModel* tmp2 = GModel::current();
-        GModel* tmp = new GModel();	
+        GModel* tmp = new GModel();
         tmp->readMSH(fileName);
         status = GeomMeshMatcher::instance()->match(tmp2, tmp);
         delete tmp;

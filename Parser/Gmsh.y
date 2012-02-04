@@ -2484,8 +2484,10 @@ Command :
         std::string tmp = FixRelativePath(gmsh_yyname, $2);
 	MergeFile(tmp, true);
       }
-      else if(!strcmp($1, "System"))
+      else if(!strcmp($1, "NonBlockingSystemCall"))
 	SystemCall($2);
+      else if(!strcmp($1, "System") || !strcmp($1, "SystemCall"))
+	SystemCall($2, true);
       else if(!strcmp($1, "SetName"))
 	GModel::current()->setName($2);
       else

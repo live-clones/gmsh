@@ -66,9 +66,9 @@ static void replaceCommaByDot(const std::string name)
 {
   char myCommand[1000], myCommand2[1000];
   sprintf(myCommand, "sed 's/,/./g' %s > temp.txt", name.c_str());
-  SystemCall(myCommand);
+  SystemCall(myCommand, true);
   sprintf(myCommand2, "mv temp.txt %s ", name.c_str());
-  SystemCall(myCommand2);
+  SystemCall(myCommand2, true);
 }
 
 static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
@@ -170,7 +170,7 @@ static bool getElementsByNum(int elemNum[], std::map<int, std::vector<MElement*>
                              bool erase, MElement *elems[], int nbElem = 1)
 {
   int i = 0;
-  std::map<int, std::vector<MElement*> >::iterator it = elements.begin();  
+  std::map<int, std::vector<MElement*> >::iterator it = elements.begin();
   for(; it != elements.end(); ++it) {
     std::vector<MElement*>::iterator itE = it->second.begin();
     for(; itE != it->second.end(); itE++) {
@@ -1692,7 +1692,7 @@ int GModel::readUNV(const std::string &name)
 	  if(!CTX::instance()->mesh.switchElementTags) {
             if(sscanf(buffer, "%d %d %d %d %d %d", &num, &type, &elementary, &physical,
                       &color, &numNodes) != 6) break;
-	  } 
+	  }
           else {
             if(sscanf(buffer, "%d %d %d %d %d %d", &num, &type, &physical, &elementary,
                       &color, &numNodes) != 6) break;
@@ -2168,7 +2168,7 @@ int GModel::writeMAIL(const std::string &name, bool saveAll, double scalingFacto
       }
     }
   }
-  
+
   // TODO write edges (with signs)
   for(fiter it = firstFace(); it != lastFace(); ++it){
     if(saveAll || (*it)->physicals.size()){
@@ -2194,7 +2194,7 @@ int GModel::readGEOM(const std::string &name)
   }
 
   int numNodes, numElements, dummy;
-  if(fscanf(fp, "%d %d %d", &numNodes, &numElements, &dummy) != 3) 
+  if(fscanf(fp, "%d %d %d", &numNodes, &numElements, &dummy) != 3)
     return 0;
 
   if(!numNodes || !numElements){
@@ -2896,7 +2896,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   if(fscanf(fp, "%s %s", buffer, buffer2) != 2) return 0;
 
   bool unstructured = false;
-  if(!strcmp(buffer, "DATASET") && !strcmp(buffer2, "UNSTRUCTURED_GRID")) 
+  if(!strcmp(buffer, "DATASET") && !strcmp(buffer2, "UNSTRUCTURED_GRID"))
     unstructured = true;
 
   if((strcmp(buffer, "DATASET") &&  strcmp(buffer2, "UNSTRUCTURED_GRID")) ||
@@ -3087,13 +3087,13 @@ int GModel::readDIFF(const std::string &name)
   std::map<int, std::map<int, std::string> > physicals[4];
   std::map<int, MVertex*> vertexMap;
   std::vector<MVertex*> vertexVector;
- 
+
   {
     while(strstr(str, "Number of space dim. =") == NULL){
       if(!fgets(str, sizeof(str), fp) || feof(fp))
         break;
     }
-    
+
     int dim;
     if(sscanf(str, "%*s %*s %*s %*s %*s %d", &dim) != 1) return 0;
     Msg::Info("dimension %d", dim);
@@ -3128,9 +3128,9 @@ int GModel::readDIFF(const std::string &name)
 
     bool several_subdomains;
     if(!fgets(str, sizeof(str), fp) || feof(fp)) return 0;
-    if(!strncmp(&str[2], "Only one material", 17) || 
+    if(!strncmp(&str[2], "Only one material", 17) ||
        !strncmp(&str[2], "Only one subdomain", 18)){
-      if(!strncmp(&str[37], "dpTRUE", 6) || !strncmp(&str[37], "true", 4) || 
+      if(!strncmp(&str[37], "dpTRUE", 6) || !strncmp(&str[37], "true", 4) ||
          !strncmp(&str[36], "dpTRUE", 6) || !strncmp(&str[36], "true", 4)){
         several_subdomains = false;
       }
@@ -3139,7 +3139,7 @@ int GModel::readDIFF(const std::string &name)
       }
       Msg::Info("several_subdomains %x %s", several_subdomains, str);
     }
-    
+
     int nbi;
     std::vector<int> bi;
     if(!fgets(str, sizeof(str), fp) || feof(fp)) return 0;
@@ -3163,7 +3163,7 @@ int GModel::readDIFF(const std::string &name)
       if(sscanf(str, format_read_bi.c_str(), &bi[i]) != 1) return 0;
       Msg::Info("bi[%d]=%d", i, bi[i]);
     }
-    
+
     while(str[0] != '#'){
       if(!fgets(str, sizeof(str), fp) || feof(fp))
         break;
@@ -3179,7 +3179,7 @@ int GModel::readDIFF(const std::string &name)
       if(!fgets(str, sizeof(str), fp)) return 0;
       double xyz[3];
       int tmp;
-      if(sscanf(str, "%d ( %lf , %lf , %lf ) [%d]", &num, 
+      if(sscanf(str, "%d ( %lf , %lf , %lf ) [%d]", &num,
                 &xyz[0], &xyz[1], &xyz[2], &tmp) != 5) return 0;
       elementary[i].resize(tmp + 1);
       elementary[i][0] = tmp;
@@ -3189,16 +3189,16 @@ int GModel::readDIFF(const std::string &name)
         Msg::Warning("Skipping duplicate vertex %d", num);
       else
         vertexMap[num] = new MVertex(xyz[0], xyz[1], xyz[2], 0, num);
-      if(numVertices > 100000) 
+      if(numVertices > 100000)
         Msg::ProgressMeter(i + 1, numVertices, "Reading nodes");
       // If the vertex numbering is dense, tranfer the map into a
       // vector to speed up element creation
-      if((int)vertexMap.size() == numVertices && 
+      if((int)vertexMap.size() == numVertices &&
          ((minVertex == 1 && maxVertex == numVertices) ||
           (minVertex == 0 && maxVertex == numVertices - 1))){
         Msg::Info("Vertex numbering is dense");
         vertexVector.resize(vertexMap.size() + 1);
-        if(minVertex == 1) 
+        if(minVertex == 1)
           vertexVector[0] = 0;
         else
           vertexVector[numVertices] = 0;
@@ -3207,7 +3207,7 @@ int GModel::readDIFF(const std::string &name)
           vertexVector[it->first] = it->second;
         vertexMap.clear();
       }
-      Msg::Info("%d ( %lf , %lf , %lf ) [%d]",i, xyz[0], xyz[1], xyz[2], 
+      Msg::Info("%d ( %lf , %lf , %lf ) [%d]",i, xyz[0], xyz[1], xyz[2],
                 elementary[i][0]);
       std::string format_read_bi = "%*d ( %*lf , %*lf , %*lf ) [%*d]";
       for(int j = 0; j < elementary[i][0]; j++){
@@ -3243,31 +3243,31 @@ int GModel::readDIFF(const std::string &name)
       eleType = std::string(eleTypec);
       int k2; // local number for the element
       int NoVertices; // number of vertices per element
-      if(eleType == "ElmT3n2D"){ 
+      if(eleType == "ElmT3n2D"){
         NoVertices = 3;
         static int map[3] = {0, 1, 2}; // identical to gmsh
         mapping=std::vector<int>(map, map + sizeof(map) / sizeof(int));
         type = MSH_TRI_3;
       }
-      else if(eleType == "ElmT6n2D"){ 
+      else if(eleType == "ElmT6n2D"){
         NoVertices = 6;
         static int map[6] = {0, 1, 2, 3, 4, 5}; // identical to gmsh
         mapping = std::vector<int>(map, map + sizeof(map) / sizeof(int));
         type = MSH_TRI_6;
       }
-      else if(eleType == "ElmB4n2D"){ 
+      else if(eleType == "ElmB4n2D"){
         NoVertices = 4;
         static int map[4] = {0, 1, 3, 2}; // local numbering
         mapping = std::vector<int>(map, map + sizeof(map) / sizeof(int));
         type = MSH_QUA_4;
       }
-      else if(eleType == "ElmB8n2D"){ 
+      else if(eleType == "ElmB8n2D"){
         NoVertices = 8;
         static int map[8] = {0, 1, 3, 2, 4, 6, 7, 5}; // local numbering
         mapping = std::vector<int>(map, map + sizeof(map) / sizeof(int));
         type = MSH_QUA_8;
       }
-      else if(eleType == "ElmB9n2D"){ 
+      else if(eleType == "ElmB9n2D"){
         NoVertices = 9;
         static int map[9] = {0, 4, 1, 7, 8, 5, 3, 6, 2}; // local numbering
         mapping = std::vector<int>(map, map + sizeof(map) / sizeof(int));
@@ -3278,8 +3278,8 @@ int GModel::readDIFF(const std::string &name)
         static int map[4] = {0, 1, 2, 3}; // identical to gmsh
         mapping = std::vector<int>(map, map + sizeof(map) / sizeof(int));
         type = MSH_TET_4;
-      } 
-      else if(eleType == "ElmT10n3D"){ 
+      }
+      else if(eleType == "ElmT10n3D"){
         NoVertices = 10;
         static int map[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}; // local numbering
         mapping = std::vector<int>(map, map + sizeof(map) / sizeof(int));
@@ -3290,21 +3290,21 @@ int GModel::readDIFF(const std::string &name)
         static int map[8] = {4, 5, 0, 1, 7, 6, 3, 2};
         mapping = std::vector<int>(map, map + sizeof(map) / sizeof(int));
         type = MSH_HEX_8;
-      } 
+      }
       else if(eleType == "ElmB20n3D"){
         NoVertices = 20;
-        static int map[20] = {4, 5, 0, 1, 7, 6, 3, 2, 16, 8, 19, 13, 15, 12, 
+        static int map[20] = {4, 5, 0, 1, 7, 6, 3, 2, 16, 8, 19, 13, 15, 12,
                               14, 17, 18, 9, 11};
         mapping = std::vector<int>(map, map + sizeof(map) / sizeof(int));
         type = MSH_HEX_20;
-      } 
+      }
       else if(eleType == "ElmB27n3D"){
         NoVertices = 27;
-        static int map[27] = {4, 16, 5, 10, 21, 12, 0, 8, 1, 17, 25, 18, 22, 
+        static int map[27] = {4, 16, 5, 10, 21, 12, 0, 8, 1, 17, 25, 18, 22,
                               26, 23, 9, 20, 11, 7, 19, 6, 15, 24, 14, 3, 13, 2};
         mapping = std::vector<int>(map, map + sizeof(map) / sizeof(int));
         type = MSH_HEX_27;
-      } 
+      }
       else{
         return 0;
       }
@@ -3313,7 +3313,7 @@ int GModel::readDIFF(const std::string &name)
         if(format_read_vertices[format_read_vertices.size()-2] != '*') {
           format_read_vertices[format_read_vertices.size()-1] = '*';
           format_read_vertices += "d %d";
-        } 
+        }
         else
           format_read_vertices += " %d";
         k2 = mapping[k];
@@ -3325,21 +3325,21 @@ int GModel::readDIFF(const std::string &name)
         indices[j] = ElementsNodes[i - 1][j];
       std::vector<MVertex*> vertices;
       if(vertexVector.size()){
-        if(!getVertices(numVerticesPerElement, indices, vertexVector, vertices)) 
+        if(!getVertices(numVerticesPerElement, indices, vertexVector, vertices))
           return 0;
       }
       else{
-        if(!getVertices(numVerticesPerElement, indices, vertexMap, vertices)) 
+        if(!getVertices(numVerticesPerElement, indices, vertexMap, vertices))
           return 0;
       }
-      createElementMSH(this, num, type, physical, elementary[i-1][1], partition, 
-                       vertices, elements, physicals); 
+      createElementMSH(this, num, type, physical, elementary[i-1][1], partition,
+                       vertices, elements, physicals);
       // trouble if elementary[i-1][0]>1 nodal post-processing needed ?
-      if(numElements > 100000) 
+      if(numElements > 100000)
         Msg::ProgressMeter(i + 1, numElements, "Reading elements");
     }
   }
-  
+
   // store the elements in their associated elementary entity. If the
   // entity does not exist, create a new (discrete) one.
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
@@ -3375,7 +3375,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
-  
+
   if(noPhysicalGroups()) saveAll = true;
 
   // get the number of vertices and index the vertices in a continuous
@@ -3421,7 +3421,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
     if(entities[i]->physicals.size() || saveAll)
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
         dim = std::max(dim, entities[i]->getMeshElement(j)->getDim());
-  
+
   // loop over all elements we need to save
   int numElements = 0, maxNumNodesPerElement = 0;
   for(unsigned int i = 0; i < entities.size(); i++){
@@ -3449,7 +3449,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   for(std::list<int>::iterator it = boundaryIndicators.begin();
       it != boundaryIndicators.end(); it++)
     fprintf(fp, " %d", *it);
-  
+
   fprintf(fp, "\n\n\n");
   fprintf(fp,"  Nodal coordinates and nodal boundary indicators,\n");
   fprintf(fp,"  the columns contain:\n");
@@ -3458,7 +3458,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   fprintf(fp,"   - no of boundary indicators that are set (ON)\n");
   fprintf(fp,"   - the boundary indicators that are set (ON) if any.\n");
   fprintf(fp,"#\n");
-  
+
   // write mesh vertices
   for(unsigned int i = 0; i < entities.size(); i++){
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
@@ -3473,7 +3473,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
       }
     }
   }
-  
+
   fprintf(fp, "\n");
   fprintf(fp, "\n");
   fprintf(fp,     "  Element types and connectivity\n");
@@ -3496,7 +3496,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
     }
   }
   fprintf(fp, "\n");
-  
+
   fclose(fp);
   return 1;
 }
@@ -3511,7 +3511,7 @@ static void writeElementsINP(FILE *fp, GEntity *ge, std::vector<T*> &elements,
       int np = (saveAll ? 1 : ge->physicals.size());
       for(int p = 0; p < np; p++){
         int part = (saveAll ? ge->tag() : ge->physicals[p]);
-        const char *str = (ge->dim() == 3) ? "VOLUME" : (ge->dim() == 2) ? 
+        const char *str = (ge->dim() == 3) ? "VOLUME" : (ge->dim() == 2) ?
           "SURFACE" : (ge->dim() == 1) ? "CURVE" : "POINT";
         fprintf(fp, "*Element, type=%s, ELSET=%s%d\n", typ, str, part);
         for(unsigned int i = 0; i < elements.size(); i++)

@@ -47,7 +47,7 @@ class onelabGmshServer : public GmshServer{
   onelabGmshServer(onelab::localNetworkClient *client)
     : GmshServer(), _client(client) {}
   ~onelabGmshServer(){}
-  int SystemCall(const char *str){ return ::SystemCall(str); }
+  int NonBlockingSystemCall(const char *str){ return SystemCall(str); }
   int NonBlockingWait(int socket, double waitint, double timeout)
   {
     double start = GetTimeInSeconds();

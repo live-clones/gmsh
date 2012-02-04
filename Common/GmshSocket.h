@@ -318,7 +318,7 @@ class GmshServer : public GmshSocket{
  public:
   GmshServer() : GmshSocket(), _portno(-1) {}
   virtual ~GmshServer(){}
-  virtual int SystemCall(const char *str) = 0;
+  virtual int NonBlockingSystemCall(const char *str) = 0;
   virtual int NonBlockingWait(int socket, double waitint, double timeout) = 0;
   int Start(const char *command, const char *sockname, double timeout)
   {
@@ -389,10 +389,7 @@ class GmshServer : public GmshSocket{
       // we assume that the command line always ends with the socket name
       std::string cmd(command);
       cmd += " " + _sockname;
-#if !defined(WIN32)
-      cmd += " &";
-#endif
-      SystemCall(cmd.c_str()); // start the solver
+      NonBlockingSystemCall(cmd.c_str()); // start the solver
     }
     else{
       timeout = 0.; // no command launched: don't set a timeout

@@ -16,9 +16,9 @@ double Cpu();
 long GetMemoryUsage();
 int GetProcessId();
 std::string GetHostName();
-int UnlinkFile(std::string fileName);
-int StatFile(std::string fileName);
+int UnlinkFile(const std::string &fileName);
+int StatFile(const std::string &fileName);
 int KillProcess(int pid);
-int SystemCall(std::string command);
+int SystemCall(const std::string &command, bool blocking=false);
 
 #endif
