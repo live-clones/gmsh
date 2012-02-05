@@ -16,7 +16,7 @@ Effect (for *) : 0 do nothing
                 +2 print some statistics
                 +4 hide valid elements (for GUI)
 
-MaxDepth = {0,1,...}
+MaxDepth = 0,1,...
          0 : only sample the jacobian
          1 : compute Bezier coefficients
         2+ : execute a maximum of 1+ subdivision(s)
