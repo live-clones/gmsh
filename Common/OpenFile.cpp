@@ -358,6 +358,11 @@ int MergeFile(std::string fileName, bool warnIfMissing)
   else if(ext == ".geom" || ext == ".GEOM"){
     status = GModel::current()->readGEOM(fileName);
   }
+#if defined(HAVE_LIBCGNS)
+  else if(ext == ".cgns" || ext == ".CGNS"){
+    status = GModel::current()->readCGNS(fileName);
+  }
+#endif
   else {
     CTX::instance()->geom.draw = 1;
     if(!strncmp(header, "$PTS", 4) || !strncmp(header, "$NO", 3) ||

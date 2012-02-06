@@ -17,6 +17,7 @@
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Hold_Browser.H>
+#include <FL/Fl_Input_Choice.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Double_Window.H>
@@ -410,4 +411,99 @@ std::string patternChooser()
     _patternChooser->browser->callback(pattern_select_cb);
   }
   return _patternChooser->run();
+}
+
+
+class cgnsImportDialog {
+ private:
+  std::string _prefix, _label, _commandLabel, _defaultCommand, _okLabel;
+ public:
+  Fl_Double_Window *window;
+  Fl_Return_Button *ok;
+  Fl_Input_Choice *input_choice;
+ public:
+  cgnsImportDialog()
+  {
+    _prefix = "cgns";
+    int h = 3 * WB + 2 * BH, w = 3 * BB + 2 * WB;
+    window = new Fl_Double_Window(w, h);
+    window->set_modal();
+    window->label("CGNS import");
+    
+    input_choice = new Fl_Input_Choice(WB + 2 * BB, WB, 1*BB, BH, "Import mesh as order");
+
+    ok = new Fl_Return_Button(w - WB - BB, h - WB - BH, BB, BH, "Import");
+  }
+
+  void save(Fl_Preferences &prefs)
+  {
+    prefs.set((_prefix + "PositionX").c_str(), window->x());
+    prefs.set((_prefix + "PositionY").c_str(), window->y());
+    prefs.set((_prefix + "Width").c_str(), window->w());
+    prefs.set((_prefix + "Height").c_str(), window->h());
+  }
+  int run()
+  {
+    Fl_Preferences prefs(Fl_Preferences::USER, "fltk.org", "gmsh");
+    int x = 100, y = 100, h = 3 * WB + 2 * BH, w = 3 * BB + 2 * WB;
+    prefs.get((_prefix + "PositionX").c_str(), x, x);
+    prefs.get((_prefix + "PositionY").c_str(), y, y);
+    prefs.get((_prefix + "Width").c_str(), w, w);
+    prefs.get((_prefix + "Height").c_str(), h, h);
+    window->resize(x, y, w, h);
+
+    int order_max = CTX::instance()->mesh.cgnsImportOrder;
+    int order = 1;
+    input_choice->clear();
+    char text[5];
+    while (order < 5 && order <= order_max && order_max < 10 && order_max > 0) {
+      sprintf(text, "%i", order);
+      input_choice->add(text);
+      order*=2;
+    }
+    input_choice->value(0);
+
+    window->show();
+    while(window->shown()){
+      Fl::wait();
+      for (;;) {
+        Fl_Widget* o = Fl::readqueue();
+        if (!o) break;
+        if (o == ok) {
+	  const char* str = input_choice->value();
+	  int order = 1;
+	  if (strcmp("2", str) == 0)
+	    order = 2;
+	  else if (strcmp("4", str) == 0)
+	    order = 4;
+	  //else if (strcmp("8", str) == 0)
+	  //  order = 8;
+          save(prefs);
+          window->hide();
+          return order;
+        }
+        if (o == window){
+          save(prefs);
+          window->hide();
+          return 1;
+        }
+      }
+    }
+    return 1;
+  }
+};
+
+
+static cgnsImportDialog* _cgnsImport = 0;
+/*static void pattern_select_cb(Fl_Widget* w, void *data)
+{
+  _cgnsImport->input_choice->value("1");
+}
+*/
+int cgnsImport() 
+{
+  if (!_cgnsImport) {
+    _cgnsImport = new cgnsImportDialog();
+  }
+  return _cgnsImport->run();
 }

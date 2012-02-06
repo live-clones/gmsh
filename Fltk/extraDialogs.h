@@ -16,4 +16,6 @@ int modelChooser();
 std::string connectionChooser();
 std::string patternChooser();
 
+int cgnsImport();
+
 #endif

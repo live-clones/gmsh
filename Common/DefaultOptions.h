@@ -786,6 +786,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Binary" , opt_mesh_binary , 0. ,
     "Write mesh files in binary format (if possible)" },
 
+  { F|O, "CgnsImportOrder" , opt_mesh_cgns_import_order , 1. ,
+   "Enable the creation of high-order mesh from CGNS structured meshes."
+   "(1, 2, 4, 8, ...)" },
   { F|O, "ChacoArchitecture" , opt_mesh_partition_chaco_architecture, 1. ,
     "(Adv. Chaco): Parallel architecture topology (0=hypercube, 1-3=mesh "
     "dimensions)" },

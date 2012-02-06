@@ -38,6 +38,7 @@ struct contextMeshOptions {
   int switchElementTags;
   int highOrderNoMetric;
   int multiplePasses;
+  int cgnsImportOrder;
 };
 
 struct contextGeometryOptions {
