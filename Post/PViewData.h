@@ -255,6 +255,8 @@ class PViewData {
                         bool append=false);
   virtual bool writeMSH(std::string fileName, bool binary=false, bool savemesh=true);
   virtual bool writeMED(std::string fileName);
+  virtual bool toVector(std::vector<std::vector<double> > &vec);
+  virtual bool fromVector(const std::vector<std::vector<double> > &vec);
 };
 
 class nameData{

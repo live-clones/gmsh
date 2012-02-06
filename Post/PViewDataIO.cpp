@@ -41,7 +41,7 @@ bool PViewData::writeSTL(std::string fileName)
         fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
         fprintf(fp, "  outer loop\n");
         fprintf(fp, "    vertex %g %g %g\n", x[0], y[0], z[0]);
-        fprintf(fp, "    vertex %g %g %g\n", x[1], y[1], z[1]); 
+        fprintf(fp, "    vertex %g %g %g\n", x[1], y[1], z[1]);
         fprintf(fp, "    vertex %g %g %g\n", x[2], y[2], z[2]);
         fprintf(fp, "  endloop\n");
         fprintf(fp, "endfacet\n");
@@ -65,7 +65,7 @@ bool PViewData::writeSTL(std::string fileName)
     }
   }
   fprintf(fp, "endsolid Created by Gmsh\n");
-  
+
   fclose(fp);
   return true;
 }
@@ -78,16 +78,16 @@ bool PViewData::writeTXT(std::string fileName)
     return false;
   }
 
-  for(int step = 0; step < getNumTimeSteps(); step++){  
+  for(int step = 0; step < getNumTimeSteps(); step++){
     for(int ent = 0; ent < getNumEntities(step); ent++){
       for(int ele = 0; ele < getNumElements(step, ent); ele++){
         if(skipElement(step, ent, ele)) continue;
         for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
           double x, y, z;
           getNode(step, ent, ele, nod, x, y, z);
-          fprintf(fp, "%d %.16g %d %d %.16g %.16g %.16g ", step, getTime(step), 
+          fprintf(fp, "%d %.16g %d %d %.16g %.16g %.16g ", step, getTime(step),
                   ent, ele, x, y, z);
-          for(int comp = 0; comp < getNumComponents(step, ent, ele); comp++){   
+          for(int comp = 0; comp < getNumComponents(step, ent, ele); comp++){
             double val;
             getValue(step, ent, ele, nod, comp, val);
             fprintf(fp, "%.16g ", val);
@@ -103,7 +103,7 @@ bool PViewData::writeTXT(std::string fileName)
 }
 
 bool PViewData::writePOS(std::string fileName, bool binary, bool parsed, bool append)
-{ 
+{
   if(_adaptive){
     Msg::Warning("Writing adapted dataset (will only export current time step)");
     return _adaptive->getData()->writePOS(fileName, binary, parsed, append);
@@ -125,7 +125,7 @@ bool PViewData::writePOS(std::string fileName, bool binary, bool parsed, bool ap
 
   fprintf(fp, "View \"%s\" {\n", getName().c_str());
 
-  int firstNonEmptyStep = getFirstNonEmptyTimeStep();  
+  int firstNonEmptyStep = getFirstNonEmptyTimeStep();
   for(int ent = 0; ent < getNumEntities(firstNonEmptyStep); ent++){
     for(int ele = 0; ele < getNumElements(firstNonEmptyStep, ent); ele++){
       if(skipElement(firstNonEmptyStep, ent, ele)) continue;
@@ -155,7 +155,7 @@ bool PViewData::writePOS(std::string fileName, bool binary, bool parsed, bool ap
         for(int step = 0; step < getNumTimeSteps(); step++){
           if(hasTimeStep(step)){
             for(int nod = 0; nod < numNod; nod++){
-              for(int comp = 0; comp < numComp; comp++){   
+              for(int comp = 0; comp < numComp; comp++){
                 double val;
                 getValue(step, ent, ele, nod, comp, val);
                 if(first){ fprintf(fp, "){%.16g", val); first = false; }
@@ -170,18 +170,73 @@ bool PViewData::writePOS(std::string fileName, bool binary, bool parsed, bool ap
   }
 
   fprintf(fp, "};\n");
-  
-  return true; 
+
+  return true;
 }
 
 bool PViewData::writeMSH(std::string fileName, bool binary, bool savemesh)
-{ 
+{
   Msg::Error("MSH export not implemented for this view type");
-  return false; 
+  return false;
 }
 
 bool PViewData::writeMED(std::string fileName)
 {
   Msg::Error("MED export onnly available for mesh-based post-processing views");
-  return false; 
+  return false;
+}
+
+bool PViewData::toVector(std::vector<std::vector<double> > &vec)
+{
+  vec.resize(getNumTimeSteps());
+  for(int step = 0; step < getNumTimeSteps(); step++){
+    vec[step].clear();
+    for(int ent = 0; ent < getNumEntities(step); ent++){
+      for(int ele = 0; ele < getNumElements(step, ent); ele++){
+        if(skipElement(step, ent, ele)) continue;
+        for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
+          for(int comp = 0; comp < getNumComponents(step, ent, ele); comp++){
+            double val;
+            getValue(step, ent, ele, nod, comp, val);
+            vec[step].push_back(val);
+          }
+        }
+      }
+    }
+  }
+  return true;
+}
+
+bool PViewData::fromVector(const std::vector<std::vector<double> > &vec)
+{
+  if(vec.size() != getNumTimeSteps()){
+    Msg::Error("Incompatible number of steps in vector (%d) and view (%d)",
+               (int)vec.size(), getNumTimeSteps());
+    return false;
+  }
+
+  for(int step = 0; step < getNumTimeSteps(); step++){
+    int i = 0;
+    for(int ent = 0; ent < getNumEntities(step); ent++){
+      for(int ele = 0; ele < getNumElements(step, ent); ele++){
+        if(skipElement(step, ent, ele)) continue;
+        for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
+          double x, y, z;
+          int tag = getNode(step, ent, ele, nod, x, y, z);
+          if(tag) continue; // node has already been modified
+          tagNode(step, ent, ele, nod, 1);
+          for(int comp = 0; comp < getNumComponents(step, ent, ele); comp++){
+            if(i < vec[step].size()){
+              setValue(step, ent, ele, nod, comp, vec[step][i++]);
+            }
+            else{
+              Msg::Error("Bad index (%d) in vector (%d)", i, (int)vec[step].size());
+              return false;
+            }
+          }
+        }
+      }
+    }
+  }
+  return true;
 }
