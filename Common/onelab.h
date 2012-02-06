@@ -40,15 +40,17 @@ namespace onelab{
   // The base parameter class.
   class parameter{
   private:
-    // the name of the parameter, including its '/'-separated path in
-    // the parameter hierarchy. Parameters or subpaths can start with
-    // numbers to force their relative ordering (such numbers are
-    // automatically hidden in the interface).
+    // the name of the parameter, including its '/'-separated path in the
+    // parameter hierarchy. Parameters or subpaths can start with numbers to
+    // force their relative ordering (such numbers are automatically hidden in
+    // the interface).
     std::string _name;
-    // help strings (if provided, the short help serves as a better
-    // way to display the parameter in the interface). Richer encoding
-    // (UTF? HTML?) might be used in the future.
-    std::string _shortHelp, _help;
+    // the parameter label: if provided it serves as a better way to display the
+    // parameter in the interface (richer encoding (UTF? HTML?) might be used in
+    // the future)
+    std::string _label;
+    // a help string (richer encoding (UTF? HTML?) might be used in the future)
+    std::string _help;
     // clients that use this parameter
     std::set<std::string> _clients;
     // flag to check if the parameter has been changed since the last
@@ -60,12 +62,13 @@ namespace onelab{
     // optional additional attributes
     std::map<std::string, std::string> _attributes;
   public:
-    parameter(const std::string &name="", const std::string &shortHelp="",
+    parameter(const std::string &name="", const std::string &label="",
               const std::string &help="")
-      : _name(name), _shortHelp(shortHelp), _help(help), _changed(true),
+      : _name(name), _label(label), _help(help), _changed(true),
         _visible(true) {}
     void setName(const std::string &name){ _name = name; }
-    void setShortHelp(const std::string &shortHelp){ _shortHelp = shortHelp; }
+    void setLabel(const std::string &label){ _label = label; }
+    void setShortHelp(const std::string &label){ _label = label; } // deprecated
     void setHelp(const std::string &help){ _help = help; }
     void setChanged(bool changed){ _changed = changed; }
     void setVisible(bool visible){ _visible = visible; }
@@ -89,11 +92,12 @@ namespace onelab{
     }
     virtual std::string getType() const = 0;
     const std::string &getName() const { return _name; }
-    const std::string &getShortHelp() const { return _shortHelp; }
+    const std::string &getLabel() const { return _label; }
+    const std::string &getShortHelp() const { return _label; } // deprecated
     const std::string &getHelp() const { return _help; }
     std::string getShortName() const
     {
-      if(_shortHelp.size()) return _shortHelp;
+      if(_label.size()) return _label;
       std::string s = _name;
       // remove path
       std::string::size_type last = _name.find_last_of('/');
@@ -141,7 +145,7 @@ namespace onelab{
       std::ostringstream sstream;
       sstream << version() << charSep() << getType() << charSep()
               << sanitize(getName()) << charSep()
-              << sanitize(getShortHelp()) << charSep()
+              << sanitize(getLabel()) << charSep()
               << sanitize(getHelp()) << charSep()
               << (getVisible() ? 1 : 0) << charSep()
               << _attributes.size() << charSep();
@@ -161,7 +165,7 @@ namespace onelab{
       if(getNextToken(msg, pos) != version()) return 0;
       if(getNextToken(msg, pos) != getType()) return 0;
       setName(getNextToken(msg, pos));
-      setShortHelp(getNextToken(msg, pos));
+      setLabel(getNextToken(msg, pos));
       setHelp(getNextToken(msg, pos));
       setVisible(atoi(getNextToken(msg, pos).c_str()));
       int numAttributes = atoi(getNextToken(msg, pos).c_str());
@@ -205,8 +209,8 @@ namespace onelab{
     std::vector<double> _choices;
   public:
     number(const std::string &name="", double value=0.,
-           const std::string &shortHelp="", const std::string &help="")
-      : parameter(name, shortHelp, help), _value(value),
+           const std::string &label="", const std::string &help="")
+      : parameter(name, label, help), _value(value),
         _min(-maxNumber()), _max(maxNumber()), _step(0.) {}
     void setValue(double value){ _value = value; }
     void setMin(double min){ _min = min; }
@@ -222,8 +226,9 @@ namespace onelab{
     void update(const number &p)
     {
       addClients(p.getClients()); // complete the list
-      setShortHelp(p.getShortHelp());
+      setLabel(p.getLabel());
       setHelp(p.getHelp());
+      setVisible(p.getVisible());
       setAttributes(p.getAttributes());
       if(p.getValue() != getValue()){
         setValue(p.getValue());
@@ -233,7 +238,6 @@ namespace onelab{
       setMax(p.getMax());
       setStep(p.getStep());
       setChoices(p.getChoices());
-      setVisible(p.getVisible());// FIXME Why not?
     }
     std::string toChar() const
     {
@@ -273,8 +277,8 @@ namespace onelab{
     std::vector<std::string> _choices;
   public:
     string(const std::string &name="", const std::string &value="",
-           const std::string &shortHelp="", const std::string &help="")
-      : parameter(name, shortHelp, help), _value(value), _kind("generic") {}
+           const std::string &label="", const std::string &help="")
+      : parameter(name, label, help), _value(value), _kind("generic") {}
     void setValue(const std::string &value){ _value = value; }
     void setKind(const std::string &kind){ _kind = kind; }
     void setChoices(const std::vector<std::string> &choices){ _choices = choices; }
@@ -285,8 +289,9 @@ namespace onelab{
     void update(const string &p)
     {
       addClients(p.getClients());
-      setShortHelp(p.getShortHelp());
+      setLabel(p.getLabel());
       setHelp(p.getHelp());
+      setVisible(p.getVisible());
       setAttributes(p.getAttributes());
       if(p.getValue() != getValue()){
         setValue(p.getValue());
@@ -297,7 +302,6 @@ namespace onelab{
         setChanged(true);
       }
       setChoices(p.getChoices());
-      setVisible(p.getVisible());// FIXME Why not?
     }
     std::string toChar() const
     {
@@ -334,15 +338,15 @@ namespace onelab{
   public:
     region(const std::string &name="",
            const std::set<std::string> &value = std::set<std::string>(),
-           const std::string &shortHelp="", const std::string &help="")
-      : parameter(name, shortHelp, help), _value(value) {}
+           const std::string &label="", const std::string &help="")
+      : parameter(name, label, help), _value(value) {}
     void setValue(const std::set<std::string> &value){ _value = value; }
     std::string getType() const { return "region"; }
     const std::set<std::string> &getValue() const { return _value; }
     void update(const region &p)
     {
       addClients(p.getClients());
-      setShortHelp(p.getShortHelp());
+      setLabel(p.getLabel());
       setHelp(p.getHelp());
       setAttributes(p.getAttributes());
       if(p.getValue() != getValue()){
@@ -375,8 +379,8 @@ namespace onelab{
     std::vector<std::string> _choices;
   public:
     function(const std::string &name="", const std::string &value="",
-             const std::string &shortHelp="", const std::string &help="")
-      : parameter(name, shortHelp, help), _value(value) {}
+             const std::string &label="", const std::string &help="")
+      : parameter(name, label, help), _value(value) {}
     void setValue(const std::string &value, const std::string &region="")
     {
       if(region.empty())
@@ -402,7 +406,7 @@ namespace onelab{
     void update(const function &p)
     {
       addClients(p.getClients());
-      setShortHelp(p.getShortHelp());
+      setLabel(p.getLabel());
       setHelp(p.getHelp());
       setAttributes(p.getAttributes());
       if(p.getValue() != getValue()){

@@ -660,8 +660,10 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   }
   if(fopt.count("Step")) ps[0].setStep(fopt["Step"][0]);
   if(fopt.count("Choices")) ps[0].setChoices(fopt["Choices"]);
+  if(fopt.count("Visible")) ps[0].setVisible(fopt["Visible"][0] ? true : false);
   if(copt.count("Help")) ps[0].setHelp(copt["Help"][0]);
-  if(copt.count("ShortHelp")) ps[0].setShortHelp(copt["ShortHelp"][0]);
+  if(copt.count("Label")) ps[0].setLabel(copt["Label"][0]);
+  if(copt.count("ShortHelp")) ps[0].setLabel(copt["ShortHelp"][0]);
   if(copt.count("Loop")) ps[0].setAttribute("Loop", copt["Loop"][0]);
   if(copt.count("Graph")) ps[0].setAttribute("Graph", copt["Graph"][0]);
   if(copt.count("Hightlight")) ps[0].setAttribute("Highlight", copt["Hightlight"][0]);
