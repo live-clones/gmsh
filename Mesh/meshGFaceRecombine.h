@@ -19,6 +19,7 @@
 //#include "GModel.h"
 //#include "MEdge.h"
 
+class Rec2DNode;
 class Rec2DVertex;
 class Rec2DEdge;
 class Rec2DElement;
@@ -47,6 +48,7 @@ class Recombine2D {
     
     bool recombine();
     bool developTree();
+    static void nextTreeActions(Rec2DAction*, std::vector<Rec2DAction*>&);
     
     static inline GFace* getGFace() {return _current->_gf;}
     static inline int getNumChange() {return _current->_numChange;}
@@ -68,9 +70,10 @@ class Rec2DData {
     
     std::set<Rec2DEdge*> _edges;
     std::set<Rec2DVertex*> _vertices;
-    std::set<Rec2DElement*> _elements;
+    std::set<Rec2DElement*> _elements, _hiddenElements;
     
     std::list<Rec2DAction*> _actions;
+    std::list<Rec2DNode*> _endNodes;
     
     std::map<int, std::vector<Rec2DVertex*> > _parities;
     std::map<int, std::vector<Rec2DVertex*> > _assumedParities;
@@ -86,6 +89,8 @@ class Rec2DData {
     std::vector<MQuadrangle*> _quad;
 #endif
     
+    static double getNumEndNode() {return _current->_endNodes.size();}
+    
     static double getGlobalValue();
     static double getGlobalValue(int numEdge, double valEdge,
                                  int numVert, double valVert );
@@ -100,6 +105,7 @@ class Rec2DData {
     }
     
     static Rec2DAction* getBestAction();
+    static Rec2DAction* getBestNonHiddenAction();
     
     typedef std::set<Rec2DEdge*>::iterator iter_re;
     typedef std::set<Rec2DVertex*>::iterator iter_rv;
@@ -123,6 +129,21 @@ class Rec2DData {
     static void remove(Rec2DVertex*);
     static void remove(Rec2DElement*);
     static void remove(Rec2DAction*);
+    
+    static inline void addEndNode(Rec2DNode *rn) {
+      _current->_endNodes.push_back(rn);
+    }
+    static inline void sortEndNode() {
+      /*_current->_endNodes.sort(lessRec2DNode());*/
+    }
+    static inline void drawEndNode(int num);
+    static inline void addHidden(Rec2DElement *rel) {
+      _current->_hiddenElements.insert(rel);
+    }
+    static inline void remHidden(Rec2DElement *rel) {
+      _current->_hiddenElements.erase(rel);
+    }
+    static bool isOutOfDate(Rec2DAction*);
     
     static int getNewParity();
     static void removeParity(Rec2DVertex*, int);
@@ -162,6 +183,9 @@ class Rec2DAction {
     virtual void getAssumedParities(int*) = 0;
     virtual bool whatWouldYouDo(std::map<Rec2DVertex*, std::vector<int> >&) = 0;
     virtual Rec2DVertex* getVertex(int) = 0;
+    virtual void choose(Rec2DElement*&) = 0;
+    virtual void unChoose(Rec2DElement*) = 0;
+    virtual void getElements(std::vector<Rec2DElement*>&) = 0;
     
   private :
     virtual void _computeGlobVal() = 0;
@@ -185,6 +209,9 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     virtual void getAssumedParities(int*);
     virtual bool whatWouldYouDo(std::map<Rec2DVertex*, std::vector<int> >&);
     virtual inline Rec2DVertex* getVertex(int i) {return _vertices[i];} //-
+    virtual void choose(Rec2DElement*&);
+    virtual void unChoose(Rec2DElement*);
+    virtual void getElements(std::vector<Rec2DElement*>&);
     
   private :
     virtual void _computeGlobVal();
@@ -200,6 +227,8 @@ class Rec2DEdge {
   public :
     Rec2DEdge(Rec2DVertex*, Rec2DVertex*);
     ~Rec2DEdge();
+    void hide();
+    void reveal();
     
     double getQual();
     
@@ -257,7 +286,7 @@ class Rec2DVertex {
     bool setBoundaryParity(int p0, int p1);
     
     inline int getParity() const {return _parity;}
-    void setParity(int);
+    void setParity(int, bool tree = false);
     void setParityWD(int pOld, int pNew);
     int getAssumedParity() const;
     bool setAssumedParity(int);
@@ -305,8 +334,10 @@ class Rec2DElement {
   public :
     Rec2DElement(MTriangle*);
     Rec2DElement(MQuadrangle*);
-    Rec2DElement(Rec2DEdge**);
+    Rec2DElement(Rec2DEdge**, bool tree = false);
     ~Rec2DElement();
+    void hide();
+    void reveal();
     
     bool inline isTri() {return _numEdge == 3;}
     bool inline isQuad() {return _numEdge == 4;}
@@ -352,15 +383,19 @@ class Rec2DElement {
     MQuadrangle* _createQuad() const;
 };
 
+/*struct lessRec2DNode {
+  bool operator()(Rec2DNode*, Rec2DNode*) const;
+};
+*/
 class Rec2DNode {
   private :
     Rec2DNode *_father;
-    Rec2DNode *_son0, *_son1, *_son2;
+    Rec2DNode *_son[3];
     Rec2DAction *_ra;
     double _globalValue, _bestEndGlobVal;
     
   public :
-    Rec2DNode(Rec2DAction*);
+    Rec2DNode(Rec2DNode *father, Rec2DAction*, double &bestEndGlobVal);
 };
 
 #endif
