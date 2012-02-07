@@ -1,0 +1,156 @@
+<project name="GMSH wrapping sample" default="help" basedir=".">
+
+    <!-- ////////////////////////////////////////////////////////////// -->
+    <!--                      Global properties                         -->
+    <!-- ////////////////////////////////////////////////////////////// -->
+
+    <!-- Build year -->
+    <tstamp>
+        <format property="year" pattern="yyyy" />
+    </tstamp>
+
+    <!-- ////////////////////////////////////////////////////////////// -->
+    <!--                  System-specific properties                    -->
+    <!-- ////////////////////////////////////////////////////////////// -->
+
+    <!-- System architecture -->
+    <condition property="arch" value="32b">
+        <or>
+            <os arch="x86" />
+            <os arch="i386" />
+            <os arch="i486" />
+            <os arch="i586" />
+        </or>
+    </condition>
+    <condition property="arch" value="64b">
+        <or>
+            <os arch="x86_64" />
+            <os arch="i686" />
+            <os arch="amd64" />
+        </or>
+    </condition>
+
+    <!-- Operating system -->
+    <condition property="platform" value="linux${arch}">
+        <os name="Linux" />
+    </condition>
+    <condition property="platform" value="win32b">
+        <os family="Windows" />
+    </condition>
+    <condition property="platform" value="osx64b">
+        <os name="Mac OS X" />
+    </condition>
+
+    <!-- Native environment variable name -->
+    <condition property="jni.system.var" value="LD_LIBRARY_PATH">
+        <os name="Linux" />
+    </condition>
+    <condition property="jni.system.var" value="PATH">
+        <os family="Windows" />
+    </condition>
+    <condition property="jni.system.var" value="DYLD_LIBRARY_PATH">
+        <os name="Mac OS X" />
+    </condition>
+
+    <!-- ////////////////////////////////////////////////////////////// -->
+    <!--                          Classpath                             -->
+    <!-- ////////////////////////////////////////////////////////////// -->
+
+
+    <!-- Run classpath -->
+    <path id="run.class.path">
+
+        <!-- Generated JAR files -->
+        <fileset dir="${basedir}">
+            <include name="Sample.jar" />
+            <include name="WrapGmsh.jar" />
+        </fileset>
+
+    </path>
+
+    <!-- Main classes -->
+    <property name="sample1.main" value="com.artenum.sample.EssaiGmsh_v1" />
+    <property name="sample2.main" value="com.artenum.sample.EssaiGmsh_v2" />
+
+    <!-- ////////////////////////////////////////////////////////////// -->
+    <!--                       Ant build message                        -->
+    <!-- ////////////////////////////////////////////////////////////// -->
+
+    <echo message="//////////////////////////////////////////////////////////////" />
+    <echo message="                     GMSH wrapping sample                     " />
+    <echo message="                       Version 0.0.1                          " />
+    <echo message="                                                              " />
+    <echo message="//////////////////////////////////////////////////////////////" />
+    <echo message="              Developed by Artenum SARL 2011-${year}          " />
+    <echo message="                    http://www.artenum.com                    " />
+    <echo message="//////////////////////////////////////////////////////////////" />
+    <echo message="" />
+    <echo message="System information:" />
+    <echo message="" />
+    <echo message="Architecture:     ${os.arch}" />
+    <echo message="Operating system: ${os.name}" />
+    <echo message="Java version:     ${java.version}" />
+
+    <!-- ////////////////////////////////////////////////////////////// -->
+    <!--                       Ant help message                         -->
+    <!-- ////////////////////////////////////////////////////////////// -->
+
+    <target name="help" description="Display the main targets available">
+        <echo message="//////////////////////////////////////////////////////////////" />
+        <echo message="Ant tasks available:" />
+        <echo message=" " />
+        <echo message=" - clean         : remove all Ant-generated files" />
+        <echo message=" " />
+        <echo message=" - sample1       : executes the GMSH wrapping sample code nr 1" />
+        <echo message=" - sample2       : executes the GMSH wrapping sample code nr 2" />
+    </target>
+
+    <!-- ////////////////////////////////////////////////////////////// -->
+    <!--                    Cleaning Ant files                          -->
+    <!-- ////////////////////////////////////////////////////////////// -->
+
+    <target name="clean" description="Clean Ant-generated files">
+        <echo message="//////////////////////////////////////////////////////////////" />
+        <echo message="                 Cleaning Ant-generated files" />
+        <echo message="//////////////////////////////////////////////////////////////" />
+        <echo message="" />
+ 	<delete file="device_with_booms.msh" />
+ 	<delete file="meshtest.msh" />
+ 	<delete file="test.geo" />
+
+
+    </target>
+
+    <!-- ////////////////////////////////////////////////////////////// -->
+    <!--                      Sample codes execution                    -->
+    <!-- ////////////////////////////////////////////////////////////// -->
+
+    <!-- Execute the application -->
+    <target name="sample1" description="Execute the sample 1">
+        <echo message="##############################################################" />
+	<echo message="                    Executing sample1" />
+	<echo message="##############################################################" />
+	<echo message="" />
+	<java classname="${sample1.main}" fork="true">
+	      <env key="${jni.system.var}" value=".." />
+	      <classpath refid="run.class.path" />
+	      <jvmarg value="-Xmx512M" />
+	      <jvmarg value="-Xms100M" />
+	</java>
+    </target>
+
+    <!-- Execute the application -->
+    <target name="sample2" description="Execute the sample 2">
+        <echo message="##############################################################" />
+	<echo message="                    Executing sample2" />
+	<echo message="##############################################################" />
+	<echo message="" />
+	<java classname="${sample2.main}" fork="true">
+	      <env key="${jni.system.var}" value=".." />
+	      <classpath refid="run.class.path" />
+	      <jvmarg value="-Xmx512M" />
+	      <jvmarg value="-Xms100M" />
+	</java>
+    </target>
+
+</project>
