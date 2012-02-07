@@ -241,10 +241,10 @@ class MTetrahedron10 : public MTetrahedron {
     v.resize(6);
     MTetrahedron::_getFaceVertices(num, v);
     static const int f[4][3] = {
-      {0, 1, 2},
-      {0, 3, 5},
-      {2, 3, 4},
-      {1, 4, 5}
+      {2, 1, 0},
+      {0, 5, 3},
+      {3, 4, 2},
+      {5, 1, 4}
     };
     v[3] = _vs[f[num][0]];
     v[4] = _vs[f[num][1]];
