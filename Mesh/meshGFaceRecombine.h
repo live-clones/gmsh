@@ -18,6 +18,7 @@
 #include "BackgroundMesh.h"
 //#include "GModel.h"
 //#include "MEdge.h"
+#include "MQuadrangle.h"
 
 class Rec2DNode;
 class Rec2DVertex;
@@ -25,6 +26,15 @@ class Rec2DEdge;
 class Rec2DElement;
 class Rec2DAction;
 class Rec2DData;
+struct lessRec2DNode {
+  bool operator()(Rec2DNode*, Rec2DNode*) const;
+};
+struct greaterRec2DNode {
+  bool operator()(Rec2DNode*, Rec2DNode*) const;
+};
+struct moreRec2DNode {
+  bool operator()(Rec2DNode*, Rec2DNode*) const;
+};
 
 //typedef std::list<Rec2DAction*> setofRec2DAction;
 //typedef std::map<MVertex*, Rec2DVertex*> mapofVertices;
@@ -53,6 +63,7 @@ class Recombine2D {
     static inline GFace* getGFace() {return _current->_gf;}
     static inline int getNumChange() {return _current->_numChange;}
     static inline backgroundMesh* bgm() {return _current->_bgm;}
+    static void add(MQuadrangle *q) {_current->_gf->quadrangles.push_back(q);}
     
   private :
     double _geomAngle(MVertex*,
@@ -65,7 +76,7 @@ class Recombine2D {
 class Rec2DData {
   private :
     int _numEdge, _numVert;
-    double _valEdge, _valVert;
+    long double _valEdge, _valVert;
     static Rec2DData *_current;
     
     std::set<Rec2DEdge*> _edges;
@@ -73,7 +84,7 @@ class Rec2DData {
     std::set<Rec2DElement*> _elements, _hiddenElements;
     
     std::list<Rec2DAction*> _actions;
-    std::list<Rec2DNode*> _endNodes;
+    std::vector<Rec2DNode*> _endNodes;
     
     std::map<int, std::vector<Rec2DVertex*> > _parities;
     std::map<int, std::vector<Rec2DVertex*> > _assumedParities;
@@ -89,19 +100,22 @@ class Rec2DData {
     std::vector<MQuadrangle*> _quad;
 #endif
     
-    static double getNumEndNode() {return _current->_endNodes.size();}
+    static int getNumEndNode() {return _current->_endNodes.size();}
+    static int getNumElement() {return _current->_elements.size();}
     
     static double getGlobalValue();
     static double getGlobalValue(int numEdge, double valEdge,
                                  int numVert, double valVert );
     static inline void addVert(int num, double val) {
       _current->_numVert += num;
-      _current->_valVert += val;
+      _current->_valVert += (long double)val;
     }
-    static inline void addValVert(double val) {_current->_valVert += val;}
+    static inline void addValVert(double val) {
+      _current->_valVert += (long double)val;
+    }
     static inline void addEdge(int num, double val) {
       _current->_numEdge += num;
-      _current->_valEdge += val;
+      _current->_valEdge += (long double)val;
     }
     
     static Rec2DAction* getBestAction();
@@ -133,9 +147,7 @@ class Rec2DData {
     static inline void addEndNode(Rec2DNode *rn) {
       _current->_endNodes.push_back(rn);
     }
-    static inline void sortEndNode() {
-      /*_current->_endNodes.sort(lessRec2DNode());*/
-    }
+    static void sortEndNode();
     static inline void drawEndNode(int num);
     static inline void addHidden(Rec2DElement *rel) {
       _current->_hiddenElements.insert(rel);
@@ -185,7 +197,9 @@ class Rec2DAction {
     virtual Rec2DVertex* getVertex(int) = 0;
     virtual void choose(Rec2DElement*&) = 0;
     virtual void unChoose(Rec2DElement*) = 0;
+    virtual inline int getNumElement() = 0;
     virtual void getElements(std::vector<Rec2DElement*>&) = 0;
+    virtual int getNum() = 0;
     
   private :
     virtual void _computeGlobVal() = 0;
@@ -211,7 +225,9 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     virtual inline Rec2DVertex* getVertex(int i) {return _vertices[i];} //-
     virtual void choose(Rec2DElement*&);
     virtual void unChoose(Rec2DElement*);
+    virtual inline int getNumElement() {return 2;}
     virtual void getElements(std::vector<Rec2DElement*>&);
+    virtual int getNum();
     
   private :
     virtual void _computeGlobVal();
@@ -383,19 +399,24 @@ class Rec2DElement {
     MQuadrangle* _createQuad() const;
 };
 
-/*struct lessRec2DNode {
-  bool operator()(Rec2DNode*, Rec2DNode*) const;
-};
-*/
+
 class Rec2DNode {
   private :
     Rec2DNode *_father;
     Rec2DNode *_son[3];
     Rec2DAction *_ra;
     double _globalValue, _bestEndGlobVal;
+    int _remainingTri;
     
   public :
     Rec2DNode(Rec2DNode *father, Rec2DAction*, double &bestEndGlobVal);
+    
+    bool operator<(Rec2DNode&);
+    inline Rec2DNode* getFather() {return _father;}
+    inline int getNum() {return _ra->getNum();}
+    inline Rec2DAction* getAction() {return _ra;}
+    inline double getGlobVal() {return _globalValue;}
+    inline int getNumTri() {return _remainingTri;}
 };
 
 #endif

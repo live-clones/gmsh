@@ -16,6 +16,7 @@
 #include "meshGFaceRecombine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
+#include "PView.h"
 #ifdef REC2D_SMOOTH
   #include "meshGFaceOptimize.h"
 #endif
@@ -802,14 +803,14 @@ void Rec2DData::revertAssumedParities()
 double Rec2DData::getGlobalValue()
 {
   double a = (_current->_valVert) / (_current->_numVert);
-  return a * (_current->_valEdge) / (_current->_numEdge);
+  return a *a* (_current->_valEdge) / (_current->_numEdge);
 }
 
 double Rec2DData::getGlobalValue(int numEdge, double valEdge,
                                    int numVert, double valVert)
 {
   double a = (_current->_valVert + valVert) / (_current->_numVert + numVert);
-  return a * (_current->_valEdge + valEdge) / (_current->_numEdge + numEdge);
+  return a *a* (_current->_valEdge + valEdge) / (_current->_numEdge + numEdge);
 }
 
 Rec2DAction* Rec2DData::getBestAction()
@@ -847,16 +848,26 @@ bool Rec2DData::isOutOfDate(Rec2DAction *ra)
 
 void Rec2DData::drawEndNode(int num)
 {
-  /*std::list<Rec2DNode*>::iterator it = _endNodes.begin();
-  for (int i = 0; i < num && it != _endNodes.end(); ++i, ++it) {
+  for (unsigned int i = 0; i < num && i < _current->_endNodes.size(); ++i) {
     std::map<int, std::vector<double> > data;
-    Rec2DNode *currentNode = *it;
-    
-    for (unsigned int i = 0; i < invalids.size(); ++i)
-      computeMinMax(&invalids[i], 1, &data);
-    
+    Rec2DNode *currentNode = _current->_endNodes[i];
+    Msg::Info("%d -> %g", i+1, currentNode->getGlobVal());
+    while (currentNode && currentNode->getAction()) {
+      /*Msg::Info("%d",currentNode);
+      Msg::Info("%d",currentNode->getAction());
+      Msg::Info(" ",currentNode);*/
+      data[currentNode->getNum()].push_back(currentNode->getGlobVal());
+      currentNode = currentNode->getFather();
+    }
+    new PView("Jmin_bad", "ElementData", Recombine2D::getGFace()->model(), data);
   }
-  new PView("Jmin_bad", "ElementData", _m, data);*/
+}
+
+void Rec2DData::sortEndNode()
+{
+  Msg::Info("sort %g", (*_current->_endNodes.begin())->getGlobVal());
+  std::sort(_current->_endNodes.begin(), _current->_endNodes.end(), moreRec2DNode());
+  Msg::Info("sort %g", (*_current->_endNodes.begin())->getGlobVal());
 }
 
 /**  Rec2DAction  **/
@@ -1096,6 +1107,17 @@ void Rec2DTwoTri2Quad::getElements(std::vector<Rec2DElement*> &elem)
   elem.push_back(_triangles[0]);
   elem.push_back(_triangles[1]);
 }
+
+int Rec2DTwoTri2Quad::getNum()
+{
+  MQuadrangle *quad = new MQuadrangle(_vertices[0]->getMVertex(),
+                                      _vertices[2]->getMVertex(),
+                                      _vertices[1]->getMVertex(),
+                                      _vertices[3]->getMVertex());
+  Recombine2D::add(quad);
+  return quad->getNum();
+}
+
 
 /**  Rec2DEdge  **/
 /*****************/
@@ -1888,20 +1910,37 @@ MQuadrangle* Rec2DElement::_createQuad() const
 
 /**  Rec2DNode  **/
 /*****************/
-/*bool lessRec2DNode::operator()(Rec2DNode *rn1, Rec2DNode *rn2) const
+bool lessRec2DNode::operator()(Rec2DNode *rn1, Rec2DNode *rn2) const
 {
   return *rn1 < *rn2;
 }
 
- */Rec2DNode::Rec2DNode(Rec2DNode *father, Rec2DAction *ra, double &bestEndGlobVal)
+bool greaterRec2DNode::operator()(Rec2DNode *rn1, Rec2DNode *rn2) const
+{
+  return *rn2 < *rn1;
+}
+
+bool moreRec2DNode::operator()(Rec2DNode *rn1, Rec2DNode *rn2) const
+{
+  if (rn1->getNumTri() == rn2->getNumTri())
+    return *rn2 < *rn1;
+  return rn1->getNumTri() < rn2->getNumTri();
+}
+
+Rec2DNode::Rec2DNode(Rec2DNode *father, Rec2DAction *ra, double &bestEndGlobVal)
 : _father(father), _ra(ra), _globalValue(.0), _bestEndGlobVal(.0)
 {
   _son[0] = NULL;
   _son[1] = NULL;
   _son[2] = NULL;
   Rec2DElement *newElement;
-  if (_ra)
+  if (_ra) {
     _ra->choose(newElement);
+    _remainingTri = father->getNumTri() - _ra->getNumElement();
+  }
+  else
+    _remainingTri = Rec2DData::getNumElement();
+  
   
   _globalValue = Rec2DData::getGlobalValue();
   
@@ -1923,5 +1962,10 @@ MQuadrangle* Rec2DElement::_createQuad() const
   
   if (_ra)
     _ra->unChoose(newElement);
+}
+
+bool Rec2DNode::operator<(Rec2DNode &other)
+{
+  return _globalValue < other._globalValue;
 }
 
