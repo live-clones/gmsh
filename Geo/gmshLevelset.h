@@ -267,6 +267,22 @@ public:
   int type() const { return UNKNOWN; }
 };
 
+// creates the 2D (-approximate- signed distance !) level set
+// corresponding to the "shamrock-like" iso-zero from 
+// Dobrzynski and Frey, "Anisotropic delaunay mesh adaptation for unsteady simulations",
+// 17th International Meshing Rountable (2008)(177–194)
+class gLevelsetShamrock: public gLevelsetPrimitive
+{
+  double xmid, ymid, zmid,a,b;
+  int c;
+  std::vector<double> iso_x,iso_y;
+public:
+  gLevelsetShamrock(double xmid, double ymid, double zmid, double a, double b, int c=3, int tag=1);
+  ~gLevelsetShamrock(){}
+  double operator () (const double x, const double y, const double z) const;
+  int type() const { return UNKNOWN; }
+};
+
 class gLevelsetMathEval: public gLevelsetPrimitive
 {
   mathEvaluator *_expr;

@@ -524,15 +524,13 @@ int GModel::mesh(int dimension)
 #endif
 }
 
-int GModel::adaptMesh(int technique, simpleFunction<double> *f,
-                      std::vector<double> parameters, bool meshAll)
+int GModel::adaptMesh(std::vector<int> technique, std::vector<simpleFunction<double>* > f, std::vector<std::vector<double> > parameters, int niter, bool meshAll)
 {
 #if defined(HAVE_MESH)
 
   if (getNumMeshElements() == 0) mesh(getDim());
   int nbElemsOld = getNumMeshElements();
   int nbElems;
-  int niter = parameters.size() >=4 ? (int) parameters[3] : 3;
 
   FieldManager *fields = getFields();
   fields->reset();
@@ -544,7 +542,11 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f,
       Msg::Info("-- adaptMesh (allDim) ITER =%d ", ITER);
 
       fields->reset();
-      fields->setBackgroundField(new meshMetric(this, technique, f, parameters));
+      meshMetric *metric = new meshMetric(this);
+      for (int imetric=0;imetric<technique.size();imetric++){;
+        metric->addMetric(technique[imetric], f[imetric], parameters[imetric]);
+      }
+      fields->setBackgroundField(metric);
       // int id = fields->newId();
       // (*fields)[id] = new meshMetric(this, technique, f, parameters);
       // fields->background_field = id;
@@ -564,6 +566,7 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f,
       char name[256];
       sprintf(name, "meshAdapt-%d.msh", ITER);
       writeMSH(name);
+//      metric->exportInfo(name);
 
       if (ITER++ >= niter)  break;
       if (ITER > 3 && fabs((double)(nbElems - nbElemsOld)) < 0.01 * nbElemsOld) break;
@@ -597,7 +600,11 @@ int GModel::adaptMesh(int technique, simpleFunction<double> *f,
       if (elements.size() == 0)return -1;
 
       fields->reset();
-      fields->setBackgroundField(new meshMetric(this, technique, f, parameters));
+      meshMetric *metric = new meshMetric(this);
+      for (int imetric=0;imetric<technique.size();imetric++){;
+        metric->addMetric(technique[imetric], f[imetric], parameters[imetric]);
+      }
+      fields->setBackgroundField(metric);
       // int id = fields->newId();
       // (*fields)[id] = new meshMetric(this, technique, f, parameters);
       // fields->background_field = id;

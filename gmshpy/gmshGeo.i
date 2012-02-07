@@ -36,6 +36,7 @@
   #include "SPoint2.h"
   #include "SBoundingBox3d.h"
   #include "Curvature.h"
+  #include "simpleFunction.h"
 %}
 
 namespace std {
@@ -54,6 +55,12 @@ namespace std {
 }
 
 %include "GmshConfig.h"
+%include "simpleFunction.h"
+%template(simpleFunctionDouble) simpleFunction<double>;
+%include std_vector.i
+namespace std {
+ %template(simpleFunctionDoubleVector) vector<simpleFunction<double>*, std::allocator<simpleFunction<double>*> >;
+}
 
 %include "GModel.h"
 %include "GPoint.h"  
@@ -82,4 +89,5 @@ namespace std {
 %include "SBoundingBox3d.h"
 %include "Curvature.h"
 %include "gmshLevelset.h"
+
 

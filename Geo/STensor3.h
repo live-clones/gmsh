@@ -163,8 +163,11 @@ inline double dot(const SVector3 &a, const SMetric3 &m, const SVector3 &b)
     b.z() * ( m(0,2) * a.x() + m(1,2) * a.y() + m(2,2) * a.z() ) ;
 }
 
+// preserve orientation of m1
 SMetric3 intersection_conserveM1 (const SMetric3 &m1,
 				  const SMetric3 &m2);
+// preserve orientation of the most anisotropic metric
+SMetric3 intersection_conserve_mostaniso (const SMetric3 &m1, const SMetric3 &m2);
 // compute the largest inscribed ellipsoid...
 SMetric3 intersection (const SMetric3 &m1,
                        const SMetric3 &m2);

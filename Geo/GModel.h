@@ -376,23 +376,32 @@ class GModel
   // mesh the model
   int mesh(int dimension);
 
-  // adapt the mesh anisotropically using a metric that is computed from a scalar function f(x,y,z).
-  // One can either
+  // adapt the mesh anisotropically using metrics that are computed from a set of functions f(x,y,z). 
   //   For all algorithms
   //           parameters[1] = lcmin (default : in global gmsh options CTX::instance()->mesh.lcMin)
   //           parameters[2] = lcmax (default : in global gmsh options CTX::instance()->mesh.lcMax)
-  //           parameters[3] = nb iterations
+  //   niter is the maximum number of iterations 
+  //   Available algorithms: 
   //    1) Assume that the function is a levelset -> adapt using Coupez technique (technique = 1)
   //           parameters[0] = thickness of the interface (mandatory)
   //    2) Assume that the function is a physical quantity -> adapt using the Hessain (technique = 2)
   //           parameters[0] = N, the final number of elements
   //    3) A variant of 1) by P. Frey (= Coupez + takes curvature function into account)
   //           parameters[0] = thickness of the interface (mandatory)
-  // The algorithm first generate a mesh if no one is available
+  //           parameters[3] = the required minimum number of elements to represent a circle - used for curvature-based metric (default: = 15)
+  //    4) A variant (3), direct implementation in the metric eigendirections, assuming a level set (ls):
+  //        - hmin is imposed in the ls gradient,
+  //        - hmax is imposed in the two eigendirections of the ls hessian that are (almost ?) tangent to the iso-zero plane
+  //          + the latter eigenvalues (1/hmax^2) are modified if necessary to capture the iso-zero curvature
+  //           parameters[0] = thickness of the interface in the positive ls direction (mandatory)
+  //           parameters[4] = thickness of the interface in the negative ls direction (=parameters[0] if not specified)
+  //           parameters[3] = the required minimum number of elements to represent a circle - used for curvature-based metric (default: = 15)
+  // The algorithm first generate a mesh if no one is available 
+
   // In this first attempt, only the highest dimensional mesh is adapted, which is ok if
   // we assume that boundaries are already adapted.
   // This should be fixed.
-  int adaptMesh (int technique, simpleFunction<double> *f, std::vector<double> parameters, bool meshAll=false);
+  int adaptMesh(std::vector<int> technique, std::vector<simpleFunction<double>*> f, std::vector<std::vector<double> > parameters, int niter, bool meshAll=false);
 
   // make the mesh a high order mesh at order N
   // linear is 1 if the high order points are not placed on the geometry of the model

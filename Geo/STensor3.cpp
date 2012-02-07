@@ -49,6 +49,29 @@ SMetric3 intersection_conserveM1 (const SMetric3 &m1, const SMetric3 &m2)
   return iv;
 }
 
+// preserve orientation of the most anisotropic metric !!!
+SMetric3 intersection_conserve_mostaniso (const SMetric3 &m1, const SMetric3 &m2)
+{
+  fullMatrix<double> V1(3,3);
+  fullVector<double> S1(3);
+  m1.eig(V1,S1,true);
+  double lambda1_min = std::min(std::min(fabs(S1(0)),fabs(S1(1))),fabs(S1(2)));
+  double lambda1_max = std::max(std::max(fabs(S1(0)),fabs(S1(1))),fabs(S1(2)));
+  fullMatrix<double> V2(3,3);
+  fullVector<double> S2(3);
+  m2.eig(V2,S2,true);
+  double lambda2_min = std::min(std::min(fabs(S2(0)),fabs(S2(1))),fabs(S2(2)));
+  double lambda2_max = std::max(std::max(fabs(S2(0)),fabs(S2(1))),fabs(S2(2)));
+
+  double ratio1 = lambda1_min/lambda1_max;
+  double ratio2 = lambda2_min/lambda2_max;
+
+  if (ratio1<ratio2)
+    return intersection_conserveM1(m1,m2);
+  else
+    return intersection_conserveM1(m2,m1);
+}
+
 // (1-t) * m1 + t * m2
 SMetric3 interpolation (const SMetric3 &m1, 
                                const SMetric3 &m2, 

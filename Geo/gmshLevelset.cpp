@@ -631,6 +631,62 @@ double gLevelsetQuadric::operator()(const double x, const double y, const double
         + 2. * A[1][2] * y * z + A[2][2] * z * z + B[0] * x + B[1] * y + B[2] * z + C);
 }
 
+gLevelsetShamrock::gLevelsetShamrock(double _xmid, double _ymid, double _zmid, double _a, double _b, int _c, int tag) : gLevelsetPrimitive(tag), xmid(_xmid), ymid(_ymid), zmid(_zmid), a(_a), b(_b), c(_c) {
+  // creating the iso-zero
+  double angle = 0.;
+  double r;
+  while (angle<=2.*M_PI){
+    r = a+b*sin(c*angle);
+    iso_x.push_back(r*sin(angle)+xmid);
+    iso_y.push_back(r*cos(angle)+xmid);
+
+    angle += 2.*M_PI/1000.;
+  }
+}
+
+double gLevelsetShamrock::operator() (const double x, const double y, const double z) const {
+  // computing distance to pre-defined (sampled) iso-zero
+  double dx,dy,xi,yi,d;
+  dx = x-iso_x[0];
+  dy = y-iso_y[0];
+  double distance = sqrt(dx*dx+dy*dy);
+  std::vector<double>::const_iterator itx = iso_x.begin();
+  std::vector<double>::const_iterator itxen = iso_x.end();
+  std::vector<double>::const_iterator ity = iso_y.begin();
+  std::vector<double>::const_iterator itminx = iso_x.begin();
+  std::vector<double>::const_iterator itminy = iso_y.begin();
+  itx++;ity++;
+  for (;itx!=itxen;itx++,ity++){
+    xi = *itx;
+    yi = *ity;
+    dx = x-xi;
+    dy = y-yi;
+    d = sqrt(dx*dx+dy*dy);
+    if (distance>d){
+      distance = d;
+      itminx = itx;
+      itminy = ity;
+    }
+  }
+  // still need to find the LS sign... using vectorial prod with tangent vector
+  // if not, the LS gradient is discontinuous on iso-zero... oups !
+  SVector3 t,p;
+  p(0) = (*itminx) - x;
+  p(1) = (*itminy) - y;
+  if (itminx==(itxen-1)){
+    t(0) = iso_x[0] - (*itminx);
+    t(1) = iso_y[0] - (*itminy);
+  }
+  else{
+    t(0) = (*(itminx+1)) - (*itminx);
+    t(1) = (*(itminy+1)) - (*itminy);
+  }
+  double vectprod = (p(0)*t(1) - p(1)*t(0));
+  double sign = (vectprod < 0.) ? -1. : 1.;
+
+  return (sign*distance);
+}
+
 gLevelsetPopcorn::gLevelsetPopcorn(double _xc, double _yc, double _zc, double _r0, double _A, double _sigma, int tag) : gLevelsetPrimitive(tag) {
   A = _A;
   sigma = _sigma;
