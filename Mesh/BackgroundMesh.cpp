@@ -174,7 +174,7 @@ static SMetric3 metric_based_on_surface_curvature(const GFace *gf, double u, dou
 
 static SMetric3 metric_based_on_surface_curvature(const GEdge *ge, double u)
 {
-  SMetric3 mesh_size(1.e-05);
+  SMetric3 mesh_size(1.e-12);
   std::list<GFace *> faces = ge->faces();
   std::list<GFace *>::iterator it = faces.begin();
   int count = 0;
@@ -192,6 +192,7 @@ static SMetric3 metric_based_on_surface_curvature(const GEdge *ge, double u)
   double Crv = ge->curvature(u);
   double lambda =  ((2 * M_PI) /( fabs(Crv) *  CTX::instance()->mesh.minCircPoints ) );
   SMetric3 curvMetric (1./(lambda*lambda));
+  
   return intersection(mesh_size,curvMetric);
 }
 

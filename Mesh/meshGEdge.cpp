@@ -31,11 +31,8 @@ static double smoothPrimitive (GEdge *ge,
 			       double alpha,
 			       std::vector<IntPoint> &Points)
 {
-  for (int i=0; i< Points.size(); i++){
-    IntPoint &pt = Points[i];
-    SVector3 der = ge->firstDer(pt.t);
-    pt.xp = der.norm();
-  }
+  //  printf("alpha = %g\n",alpha);
+
   int ITER = 0;
   while (1){
     int count1 = 0;
@@ -45,28 +42,34 @@ static double smoothPrimitive (GEdge *ge,
     // iterate forward and then backward
     // convergence is usually very fast.
     for (int i=1; i< Points.size(); i++){
-      double hprime;
-      hprime =  ((Points[i].xp/Points[i].lc) - (Points[i-1].xp/Points[i-1].lc))/(Points[i].t - Points[i-1].t);
-      if (hprime * Points[i].xp > alpha*1.01){
-	double hnew = Points[i-1].xp / Points[i-1].lc + (Points[i].t - Points[i-1].t) * alpha / Points[i].xp;
+      double dh = (Points[i].xp/Points[i].lc - Points[i-1].xp/Points[i-1].lc);
+      double dt = Points[i].t - Points[i-1].t;
+      double dhdt =  dh/dt;      
+      if (dhdt / Points[i].xp > (alpha - 1.)*1.01){
+	double hnew = Points[i-1].xp / Points[i-1].lc + dt * (alpha-1) * Points[i].xp;
 	Points[i].lc = Points[i].xp / hnew;
 	count1 ++;
       }
     }
-
+    
     for (int i=Points.size()-1; i>0 ; i--){
-      double hprime;
-      hprime =  ((Points[i].xp/Points[i].lc) - (Points[i-1].xp/Points[i-1].lc))/(Points[i].t - Points[i-1].t);
-      if (-hprime * Points[i].xp > alpha*1.01){
-      	double hnew = Points[i].xp / Points[i].lc + (Points[i].t - Points[i-1].t) * alpha / Points[i-1].xp;
+      double dh = (Points[i-1].xp/Points[i-1].lc - Points[i].xp/Points[i].lc);
+      double dt = fabs(Points[i-1].t - Points[i].t);
+      double dhdt =  dh/dt;      
+      if (dhdt / Points[i-1].xp > (alpha-1.)*1.01){
+      	double hnew = Points[i].xp / Points[i].lc + dt * (alpha-1) * Points[i].xp;
       	Points[i-1].lc = Points[i-1].xp / hnew;
       	count2 ++;
+	//	dh = (Points[i-1].xp/Points[i-1].lc - Points[i].xp/Points[i].lc);
+	//	dt = fabs(Points[i-1].t - Points[i].t);
+	//	dhdt =  dh/dt;      
+	//	printf("dhdt / Points[i-1].xp
       }
     }
-
+    
     
     ++ITER;
-    if (ITER > 1000){printf("OUUUUUH\n");break;}
+    if (ITER > 2000){break;}
     if (!(count1+count2))break;
   }
   // recompute the primitive
@@ -226,7 +229,7 @@ static void RecursiveIntegration(GEdge *ge, IntPoint *from, IntPoint *to,
   double val3 = trapezoidal(&P, to);
   double err = fabs(val1 - val2 - val3);
 
-  if(((err < Prec) && (*depth > 1)) || (*depth > 25)) {
+  if(((err < Prec) && (*depth > 3)) || (*depth > 25)) {
     p1=Points.back();
     P.p = p1.p + val2;
     Points.push_back(P);
@@ -300,9 +303,11 @@ static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
   sprintf(name, "line%d.dat", tag);
   FILE *f = fopen(name, "w");
   if(!f) return;
+  double l = 0;
   for (unsigned int i = 0; i < Points.size(); i++){
     const IntPoint &P = Points[i];
-    fprintf(f, "%g %g %g %g\n", P.t, 1./P.lc, P.p,P.lc);
+    if (i) l +=(P.t - Points[i-1].t)*P.xp;
+    fprintf(f, "%g %g %g %g %g\n", P.t, P.xp/P.lc, P.p,P.lc, l);
   }
   fclose(f);
 }
@@ -313,7 +318,7 @@ void meshGEdge::operator() (GEdge *ge)
   FieldManager *fields = ge->model()->getFields();
   BoundaryLayerField *blf = 0;
   if(fields->getBackgroundField() > 0){
-    Field *bl_field = fields->get(fields->getBackgroundField());
+    Field *bl_field = fields->get(fields->getBoundaryLayerField());
     blf = dynamic_cast<BoundaryLayerField*> (bl_field);
   }
 #else
@@ -395,8 +400,13 @@ void meshGEdge::operator() (GEdge *ge)
                       CTX::instance()->mesh.lcIntegrationPrecision);
     
     // FIXME JF : MAYBE WE SHOULD NOT ALWAYS SMOOTH THE 1D MESH SIZE FIELD ??
+    for (int i=0; i< Points.size(); i++){
+      IntPoint &pt = Points[i];
+      SVector3 der = ge->firstDer(pt.t);
+      pt.xp = der.norm();
+    }
     //printFandPrimitive(ge->tag(), Points);
-    // a =  smoothPrimitive (ge,CTX::instance()->mesh.smoothRatio*CTX::instance()->mesh.smoothRatio,Points);
+    a =  smoothPrimitive (ge,/*CTX::instance()->mesh.smoothRatio*/CTX::instance()->mesh.smoothRatio,Points);
     //    printf(" coucou %g\n",a);
     //printFandPrimitive(ge->tag()+10000, Points);
     

@@ -1281,7 +1281,7 @@ class MinAnisoField : public Field
 	else{
 	  (*f) (x, y, z, ff, ge);
 	}
-	v = intersection(v,ff);
+	v = intersection_conserve_mostaniso(v,ff);
       }
     }
     metr = v;

@@ -736,7 +736,7 @@ static Vertex InterpolateExtrudedSurface(Surface *s, double u, double v)
 Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
 {
   if(derivee == 1) {
-    double eps = 1.e-6;
+    double eps = 1.e-8;
     Vertex D[4];
     if(u_v == 1) {
       if(u - eps < 0.0) {

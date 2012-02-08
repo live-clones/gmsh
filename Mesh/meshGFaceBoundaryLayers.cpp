@@ -241,9 +241,9 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf, double _treshold)
 	  }
 	  else if (angle >= _treshold){	  
 	    int fanSize = angle /  _treshold;
-	    printf("ONE FAN HAS BEEN CREATED : %d %d %d %d ANGLE = %g | %g %g %g %g\n",e1.getVertex(0)->getNum(),
-		   e1.getVertex(1)->getNum(),e2.getVertex(0)->getNum(),e2.getVertex(1)->getNum(),
-		   angle/M_PI*180,N1[SIDE].x(),N1[SIDE].y(),N2[SIDE].x(),N2[SIDE].y());
+	    //	    printf("ONE FAN HAS BEEN CREATED : %d %d %d %d ANGLE = %g | %g %g %g %g\n",e1.getVertex(0)->getNum(),
+	    //		   e1.getVertex(1)->getNum(),e2.getVertex(0)->getNum(),e2.getVertex(1)->getNum(),
+	    //		   angle/M_PI*180,N1[SIDE].x(),N1[SIDE].y(),N2[SIDE].x(),N2[SIDE].y());
 	    // if the angle is greater than PI, than reverse the sense
 	    double alpha1 = atan2(N1[SIDE].y(),N1[SIDE].x());
 	    double alpha2 = atan2(N2[SIDE].y(),N2[SIDE].x());

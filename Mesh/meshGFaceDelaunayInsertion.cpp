@@ -1129,7 +1129,8 @@ void bowyerWatsonFrontal(GFace *gf)
 //   sprintf(name,"frontal%d-param.pos", gf->tag());
 //   _printTris (name, AllTris, Us, Vs,true);
   transferDataStructure(gf, AllTris, Us, Vs); 
-  quadsToTriangles(gf,10000);
+  // in case of boundary layer meshing 
+  //  quadsToTriangles(gf,10000);
 } 
 
 void optimalPointFrontalQuad (GFace *gf, 
