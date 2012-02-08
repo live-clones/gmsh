@@ -276,6 +276,15 @@ class fullMatrix
     _own_data = false;
     _data = original._data + c_start * _r;
   }
+  void setAsProxy(double *data, int r, int c)
+  {
+    if(_data && _own_data)
+      delete [] _data;
+    _c = c;
+    _r = r;
+    _own_data = false;
+    _data = data;
+  }
   fullMatrix<scalar> & operator = (const fullMatrix<scalar> &other)
   {
     copy(other);
