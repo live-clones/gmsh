@@ -157,7 +157,7 @@ GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire)
   }
   
   while (!wire.empty()){
-    printf("wire.size = %d\n",wire.size());
+    //    printf("wire.size = %d\n",wire.size());
     loopTheLoop(wire,loop,&degeneratedToInsert);
     //    break;
   }
