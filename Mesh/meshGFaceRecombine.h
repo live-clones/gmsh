@@ -184,6 +184,7 @@ class Rec2DAction {
     int _lastUpdate;
     
   public :
+    Rec2DAction();
     virtual inline ~Rec2DAction() {Rec2DData::remove(this);}
     
     bool operator<(Rec2DAction&);
@@ -197,7 +198,7 @@ class Rec2DAction {
     virtual Rec2DVertex* getVertex(int) = 0;
     virtual void choose(Rec2DElement*&) = 0;
     virtual void unChoose(Rec2DElement*) = 0;
-    virtual inline int getNumElement() = 0;
+    virtual int getNumElement() = 0;
     virtual void getElements(std::vector<Rec2DElement*>&) = 0;
     virtual int getNum() = 0;
     

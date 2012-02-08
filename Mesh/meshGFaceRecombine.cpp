@@ -95,7 +95,7 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf)
       }
       for (int j = 0; j < 3; ++j) {
         Rec2DEdge *re;
-        if ( (re = Rec2DVertex::getCommonEdge(rv[j], rv[(j+1)%3])) == NULL)
+        if ( !(re = Rec2DVertex::getCommonEdge(rv[j], rv[(j+1)%3])) )
           re = new Rec2DEdge(rv[j], rv[(j+1)%3]);
         rel->add(re); //up data
       }
@@ -124,7 +124,7 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf)
       }
       for (int j = 0; j < 4; ++j) {
         Rec2DEdge *re;
-        if ( (re = Rec2DVertex::getCommonEdge(rv[i], rv[(i+1)%3])) == NULL) {
+        if ( !(re = Rec2DVertex::getCommonEdge(rv[i], rv[(i+1)%3])) ) {
           re = new Rec2DEdge(rv[i], rv[(i+1)%3]);
           rv[i]->add(re);
           rv[(i+1)%3]->add(re);
@@ -209,6 +209,8 @@ bool Recombine2D::recombine()
     if (!_remainAllQuad(nextAction)) {
       nextAction->color(190, 0, 0);
       delete nextAction;
+      while (Cpu()-time < REC2D_WAIT_TIME)
+        FlGui::instance()->check();
       continue;
     }
     ++_numChange;
@@ -335,7 +337,7 @@ bool Recombine2D::_remainAllQuad(Rec2DAction *action)
   int p[4];
   action->getAssumedParities(p);
   
-  if (p[0] && !p[1] && !p[2] && !p[3]) {
+  if (!p[0] && !p[1] && !p[2] && !p[3]) {
     static int a = -1;
     if (++a < 1) Msg::Warning("FIXME isoleted should be check ? Think not");
     return true;
@@ -853,9 +855,7 @@ void Rec2DData::drawEndNode(int num)
     Rec2DNode *currentNode = _current->_endNodes[i];
     Msg::Info("%d -> %g", i+1, currentNode->getGlobVal());
     while (currentNode && currentNode->getAction()) {
-      /*Msg::Info("%d",currentNode);
-      Msg::Info("%d",currentNode->getAction());
-      Msg::Info(" ",currentNode);*/
+      Msg::Info("%g", currentNode->getGlobVal());
       data[currentNode->getNum()].push_back(currentNode->getGlobVal());
       currentNode = currentNode->getFather();
     }
@@ -875,6 +875,11 @@ void Rec2DData::sortEndNode()
 bool lessRec2DAction::operator()(Rec2DAction *ra1, Rec2DAction *ra2) const
 {
   return *ra1 < *ra2;
+}
+
+Rec2DAction::Rec2DAction()
+: _lastUpdate(Recombine2D::getNumChange()-1), _globValIfExecuted(.0)
+{
 }
 
 bool Rec2DAction::operator<(Rec2DAction &other)
@@ -1271,6 +1276,8 @@ Rec2DVertex::Rec2DVertex(MVertex *v, bool toSave)
     Rec2DData::add(this);
     Rec2DData::addVert(1, getQual());
   }
+  if (_v)
+    _v->setIndex(_parity);
 }
 
 Rec2DVertex::Rec2DVertex(Rec2DVertex *rv, double ang)
@@ -1286,6 +1293,8 @@ Rec2DVertex::Rec2DVertex(Rec2DVertex *rv, double ang)
   Rec2DData::add(this);
   Rec2DData::addVert(1, getQual());
   delete rv;
+  if (_v)
+    _v->setIndex(_parity);
 }
 
 Rec2DVertex::~Rec2DVertex()
@@ -1333,7 +1342,7 @@ Rec2DEdge* Rec2DVertex::getCommonEdge(Rec2DVertex *rv0, Rec2DVertex *rv1)
     if (rv1->has(rv0->_edges[i]))
       return rv0->_edges[i];
   }
-  Msg::Warning("[Rec2DVertex] didn't find edge, returning NULL");
+  //Msg::Warning("[Rec2DVertex] didn't find edge, returning NULL");
   return NULL;
 }
 
@@ -1420,6 +1429,8 @@ void Rec2DVertex::setParity(int p, bool tree)
     _assumedParity = 0;
   }
   Rec2DData::addParity(this, _parity);
+  if (_v)
+    _v->setIndex(_parity);
 }
 
 void Rec2DVertex::setParityWD(int pOld, int pNew)
@@ -1434,6 +1445,8 @@ void Rec2DVertex::setParityWD(int pOld, int pNew)
     Rec2DData::removeAssumedParity(this, _assumedParity);
     _assumedParity = 0;
   }
+  if (_v)
+    _v->setIndex(_parity);
 }
 
 int Rec2DVertex::getAssumedParity() const
@@ -1460,6 +1473,8 @@ bool Rec2DVertex::setAssumedParity(int p)
   }
   _assumedParity = p;
   Rec2DData::addAssumedParity(this, _assumedParity);
+  if (_v)
+    _v->setIndex(_assumedParity);
   return true;
 }
 
