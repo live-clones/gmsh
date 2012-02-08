@@ -1,10 +1,11 @@
+Mesh.SmoothRatio=21.5;
 lc = 0.1;
 
 a = 1.0;
 b = 1.0;
 h = 1.0;
 
-refine = 0.0000001;
+refine = 0.00001;
 
 Point(1) = {0, 0, 0, lc*refine};
 Point(2) = {a, 0, 0, lc} ;
