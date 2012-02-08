@@ -67,98 +67,62 @@ template <class T> T findMatching(std::vector<Pair<T,T> >& matching, T& entity)
 
 
 // Private
+
+// ------------------------------------------------------------[ Matching vertices ]
+
 std::vector<Pair<GVertex*,GVertex*> >*
 GeomMeshMatcher::matchVertices(GModel* m1, GModel *m2, bool& ok)
 {
   // Vector that will be returned.
   std::vector<Pair<GVertex*,GVertex*> >* coresp_v = new std::vector<Pair<GVertex*,
                                                                GVertex*> >;
-
-  // Building two vectors with the models' entities.
-  std::vector<GEntity*> m1_entities;
-  m1->getEntities(m1_entities);
-  std::vector<GEntity*> m2_entities;
-  m2->getEntities(m2_entities);
-
   int num_matched_vertices = 0;
-  int num_total_vertices = 0;
-  int num_mesh_vertices = 0;
-
-  int counter1 = 0;
+  int num_total_vertices = m1->getNumVertices();
 
   std::vector<GVertex*> vertices;
 
-  for (std::vector<GEntity*>::iterator entity1 = m1_entities.begin();
-       entity1 != m1_entities.end();
-       entity1++)
-  {
-    // If the entity isn't a vertex, don't bother.
-    if ((*entity1)->dim() != 0) continue;
-    num_total_vertices++;
-    GVertex* v1 = (GVertex*) *entity1;
+  for(GModel::viter vit = m1->firstVertex(); vit != m1->lastVertex(); vit++)   {
+
+    GVertex* v1 = (GVertex*) *vit;
 
     // FIXME: need a *much* better way to fix the tolerance...
     double tol = 10e-8;
-    int counter2 = 0;
 
     discreteVertex* best_candidate;
     GEntity* best_candidate_ge = 0;
     double best_score = DBL_MAX;
 
-    for (std::vector<GEntity*>::iterator entity2 = m2_entities.begin();
-         entity2 != m2_entities.end();
-         entity2++)
-    {
-      if ((*entity2)->dim() != 0) continue;
-      num_mesh_vertices++;
-      for (unsigned int ed = 0;
-           ed < ((discreteVertex*) *entity2)->getNumMeshElements();
-           ed++)
-      {
-        discreteVertex* v2 = (discreteVertex*) *entity2;
+    for(GModel::viter vit2 = m2->firstVertex(); vit2 != m2->lastVertex(); vit2++) {
 
-        // We match the vertices if their coordinates are the same under the
-        // specified tolerance.
-                                double score = std::max(fabs(v1->x() - v2->x()),
-                             std::max(fabs(v1->y() - v2->y()),
-                                  fabs(v1->z() - v2->z())));
-        if (score < tol && score < best_score) {
-          best_candidate = v2;
-          best_candidate_ge = (*entity2);
-          best_score = score;
-        }
+      discreteVertex* v2 = (discreteVertex*) *vit2;
+
+      // We match the vertices if their coordinates are the same under the
+      // specified tolerance.
+      double score = std::max(fabs(v1->x() - v2->x()),
+			      std::max(fabs(v1->y() - v2->y()),
+				       fabs(v1->z() - v2->z())));
+      if (score < tol && score < best_score) {
+	best_candidate = v2;
+	best_candidate_ge = (*vit2);
+	best_score = score;
       }
-      counter2++;
     }
 
     if (best_score != DBL_MAX) {
-      Msg::Info("Model Vertex %i (geom) and %i (mesh) match",
-                (*entity1)->tag(),
+      Msg::Debug("Model Vertex %i (geom) and %i (mesh) match",
+                v1->tag(),
                 best_candidate_ge->tag());
 
-      coresp_v->push_back(Pair<GVertex*,GVertex*>((GVertex*) *entity1,
-                                                  (GVertex*) best_candidate_ge));
-      ((GVertex*) best_candidate_ge)->setTag(((GVertex*) *entity1)->tag());
-      //m2->remove((GVertex*) best_candidate_ge);
-      //vertices.push_back((GVertex*) best_candidate_ge);
-      for (unsigned int v = 0; v < ((GVertex*) best_candidate_ge)->getNumMeshVertices(); v++) {
-	((GVertex*) best_candidate_ge)->getMeshVertex(v)->setEntity((GVertex*) *entity1);
-      }
+      coresp_v->push_back(Pair<GVertex*,GVertex*>(v1, best_candidate));
       num_matched_vertices++;
     }
-    counter1++;
   }
 
-  //for (std::vector<GVertex*>::iterator vert = vertices.begin();
-  //vert != vertices.end();
-  //vert++)
-    //m2->add(*vert);
-
-  Msg::Info("Vertices matched : %i / %i (%i)", num_matched_vertices, num_total_vertices, num_mesh_vertices);
-  //if(num_matched_vertices != num_total_vertices) ok = false;
+  Msg::Info("Matched %i vertices out of %i.", num_matched_vertices, num_total_vertices);
   return (coresp_v);
 }
 
+// ------------------------------------------------------------[ Matching edges ]
 
 std::vector<Pair<GEdge*,GEdge*> >*
 GeomMeshMatcher::matchEdges(GModel* m1, GModel* m2,
@@ -171,27 +135,49 @@ GeomMeshMatcher::matchEdges(GModel* m1, GModel* m2,
   // Vector that will be returned.
   std::vector<Pair<GEdge*,GEdge*> >* coresp_e = new std::vector<Pair<GEdge*,GEdge*> >;
 
-  // Building two vectors with the models' entities.
-  std::vector<GEntity*> m1_entities;
-  m1->getEntities(m1_entities);
-  std::vector<GEntity*> m2_entities;
-  m2->getEntities(m2_entities);
+  std::vector<GEdge*> closed_curves;
 
-  for (std::vector<GEntity*>::iterator entity1 = m1_entities.begin();
-       entity1 != m1_entities.end();
-       entity1++)
-  {
-    if ((*entity1)->dim() != 1) continue;
+  for(GModel::eiter eit = m1->firstEdge(); eit != m1->lastEdge(); eit++)   {
+
     num_total_edges++;
 
-    GVertex* v1 = ((GEdge*)(*entity1))->getBeginVertex();
-    GVertex* v2 = ((GEdge*)(*entity1))->getEndVertex();
+    GEdge* e1 = (GEdge*) *eit;
+
+    GVertex* v1 = e1->getBeginVertex();
+    GVertex* v2 = e1->getEndVertex();
 
     std::vector<GEdge*> common_edges;
     std::vector<std::list<GEdge*> > lists;
-    lists.push_back((findMatching<GVertex*>(*coresp_v,v1))->edges());
-    lists.push_back((findMatching<GVertex*>(*coresp_v,v2))->edges());
-    getIntersection<GEdge*>(common_edges, lists);
+    
+    if (v1 == v2) {
+      Msg::Debug("Found a closed curve");
+      closed_curves.push_back(e1);
+      
+      for (GModel::eiter eit2 = m2->firstEdge(); eit2 != m2->lastEdge(); eit2++) {
+	GEdge* e2 = (GEdge*)*eit2;
+	GVertex* v3 = e2->getBeginVertex();
+	GVertex* v4 = e2->getEndVertex();	
+	if (v3 == v4) {
+	  Msg::Debug("Found a loop (%i) in the mesh %i %i", e2->tag(), v3->tag(), v3->tag());
+	  common_edges.push_back(e2);
+	}
+	
+      }
+    } else {
+      //if (coresp_v->count(vfindMatching<GVertex*>(*coresp_v,v1)1) > 0 && coresp_v->count(v2) > 0) {
+      bool ok1 = false;
+      bool ok2 = false;
+      if (findMatching<GVertex*>(*coresp_v,v1) != 0) {
+	ok1 = true;
+	lists.push_back((findMatching<GVertex*>(*coresp_v,v1))->edges());
+      }
+      if (findMatching<GVertex*>(*coresp_v,v2) != 0) {
+	ok2 = true;
+	lists.push_back((findMatching<GVertex*>(*coresp_v,v2))->edges());
+      }
+      if (ok1 && ok2)
+	getIntersection<GEdge*>(common_edges, lists); 
+    }
 
     GEdge* choice = 0;
     if (common_edges.size() == 0) continue;
@@ -202,7 +188,7 @@ GeomMeshMatcher::matchEdges(GModel* m1, GModel* m2,
       // us use those bounding boxes !
       // So, first step is to build an array of points taken on the geo entity
       // Then, compute the minimal bounding box
-      SOrientedBoundingBox geo_obb = ((GEdge*)(*entity1))->getOBB();
+      SOrientedBoundingBox geo_obb = e1->getOBB();
 
       double best_score = DBL_MAX;
       // Next, let's iterate over the mesh entities.
@@ -217,34 +203,22 @@ GeomMeshMatcher::matchEdges(GModel* m1, GModel* m2,
         }
       }
     }
-    Msg::Info("Edges %i (geom) and %i (mesh) match.",
-              ((GEdge*)*entity1)->tag(),
+    Msg::Debug("Edges %i (geom) and %i (mesh) match.",
+              e1->tag(),
               choice->tag());
-    coresp_e->push_back(Pair<GEdge*,GEdge*>((GEdge*) *entity1 ,
-                                             choice));
-    choice->setTag(((GEdge*) *entity1)->tag());
+    coresp_e->push_back(Pair<GEdge*,GEdge*>(e1, choice));
+    //choice->setTag(e1->tag());
 
-    // This reverses the edge if it's not parametrized in the right direction
-/*
-    if (choice->getBeginVertex() == findMatching<GVertex*>(*coresp_v,v2) &&
-        choice->getEndVertex() == findMatching<GVertex*>(*coresp_v,v1)) {
-      Msg::Info("Wrong parametrization direction, reversing.");
-      choice->reverse();
-    }
-*/
-    /*for (unsigned int v = 0; v < ((GEdge*) choice)->getNumMeshVertices(); v++) {
-      if (((GEdge*) choice)->getMeshVertex(v)->onWhat()->dim() > 0)
-	((GEdge*) choice)->getMeshVertex(v)->setEntity((GEdge*) *entity1);
-    }*/
     num_matched_edges++;
   }
 
-  Msg::Info("Edges matched : %i / %i", num_matched_edges, num_total_edges);
+  Msg::Info("Matched %i edges out of %i.", num_matched_edges, num_total_edges);
   if(num_matched_edges != num_total_edges) ok = false;
   return (coresp_e);
 }
 
-//-----------------------------------------------------------------------------
+// ------------------------------------------------------------[ Matching faces ]
+
 
 std::vector<Pair<GFace*,GFace*> >*
 GeomMeshMatcher:: matchFaces(GModel* m1, GModel* m2,
@@ -255,23 +229,19 @@ GeomMeshMatcher:: matchFaces(GModel* m1, GModel* m2,
 
   std::vector<Pair<GFace*,GFace*> >* coresp_f = new std::vector<Pair<GFace*,GFace*> >;
 
-  std::vector<GEntity*> m1_entities;
-  m1->getEntities(m1_entities);
-  std::vector<GEntity*> m2_entities;
-  m2->getEntities(m2_entities);
+  for(GModel::fiter fit = m1->firstFace(); fit != m1->lastFace(); fit++)   {
 
-  for (std::vector<GEntity*>::iterator entity1 = m1_entities.begin();
-       entity1 != m1_entities.end();
-       entity1++)
-  {
-    if ((*entity1)->dim() != 2) continue;
+    GFace* f1 = (GFace*) *fit;
     num_total_faces++;
-
+    
     std::vector<std::list<GFace*> > lists;
-    std::list<GEdge*> boundary_edges = ((GEdge*)(*entity1))->edges();
+
+    std::list<GEdge*> boundary_edges = f1->edges();
     for (std::list<GEdge*>::iterator boundary_edge = boundary_edges.begin();
          boundary_edge != boundary_edges.end(); boundary_edge++) {
-      lists.push_back(findMatching<GEdge*>(*coresp_e,*boundary_edge)->faces());
+      //      if (boundary_edge->getBeginVertex() == boundary_edge->getEndVertex() && 
+      if (!(*boundary_edge)->isSeam(f1))
+	lists.push_back(findMatching<GEdge*>(*coresp_e,*boundary_edge)->faces());
     }
     std::vector<GFace*> common_faces;
     getIntersection<GFace*>(common_faces, lists);
@@ -281,9 +251,8 @@ GeomMeshMatcher:: matchFaces(GModel* m1, GModel* m2,
     } else if (common_faces.size() > 1) {
 
       // Then, compute the minimal bounding box
-      SOrientedBoundingBox geo_obb = ((GFace*)(*entity1))->getOBB();
+      SOrientedBoundingBox geo_obb = f1->getOBB();
 
-      //GFace* choice = 0;
       double best_score = DBL_MAX;
       // Next, let's iterate over the mesh entities.
       for (std::vector<GFace*>::iterator candidate = common_faces.begin();
@@ -299,23 +268,23 @@ GeomMeshMatcher:: matchFaces(GModel* m1, GModel* m2,
         }
     }
 
-    coresp_f->push_back(Pair<GFace*,GFace*>((GFace*) *entity1 ,
-                                             choice));
-    choice->setTag(((GFace*) *entity1)->tag());
-    /*for (unsigned int v = 0; v < ((GFace*) choice)->getNumMeshVertices(); v++) {
-      if(((GFace*) choice)->getMeshVertex(v)->onWhat()->dim() > 1)
-	((GFace*) choice)->getMeshVertex(v)->setEntity((GFace*) *entity1);
-    }*/
+    Msg::Debug("Faces %i (geom) and %i (mesh) match.",
+              f1->tag(),
+              choice->tag());
 
+    coresp_f->push_back(Pair<GFace*,GFace*>(f1 ,
+                                             choice));
+    choice->setTag(f1->tag());
     num_matched_faces++;
   }
 
-  Msg::Info("Faces matched : %i / %i", num_matched_faces, num_total_faces);
-  if(num_matched_faces != num_total_faces) ok = false;
+  Msg::Info("Matched %i faces out of %i.", num_matched_faces, num_total_faces);
 
   return coresp_f;
 
 }
+
+// ------------------------------------------------------------[ Matching regions ]  
 
 std::vector<Pair<GRegion*,GRegion*> >*
 GeomMeshMatcher::matchRegions(GModel* m1, GModel* m2,
@@ -415,6 +384,7 @@ GeomMeshMatcher::matchRegions(GModel* m1, GModel* m2,
 
 }
 
+
 // Public
 GeomMeshMatcher* GeomMeshMatcher::instance()
 {
@@ -500,7 +470,6 @@ static GPoint getGFace (MVertex *v1, GModel *gm, const double TOL){
   //  printf("getting point %g %g (%g %g) on faces best score is %12.5E\n",v1->x(),v1->y(),gpBest.x(),gpBest.y(),bestScore);
   return gpBest;
 }
-
 
 int GeomMeshMatcher::forceTomatch(GModel *geom, GModel *mesh, const double TOL)
 {
@@ -616,12 +585,26 @@ static void copy_vertices (GRegion *to, GRegion *from, std::map<MVertex*,MVertex
     _mesh_to_geom[v_from] = v_to;
   }
 }
-static void copy_vertices (GEdge *to, GEdge *from, std::map<MVertex*,MVertex*> &_mesh_to_geom){
+static void copy_vertices (GEdge* to, GEdge* from, std::map<MVertex*,MVertex*> &_mesh_to_geom){
   to->deleteMesh();
   if (!from){
     Msg::Warning("Edge %d in the mesh do not match any edge of the model",to->tag());
     return;
   }
+  if (!to){
+    Msg::Warning("Edge %d in the geometry do not match any edge of the mesh",from->tag());
+    return;
+  }
+
+  if (from->getBeginVertex() == from->getEndVertex()) {
+    MVertex *v_from = from->getBeginVertex()->mesh_vertices[0];
+    double t;
+    GPoint gp = to->closestPoint(SPoint3(v_from->x(),v_from->y(),v_from->z()), t );
+    MEdgeVertex *v_to = new MEdgeVertex (gp.x(),gp.y(),gp.z(), to, gp.u() );
+    to->mesh_vertices.push_back(v_to);
+    _mesh_to_geom[v_from] = v_to;    
+  }
+
   for (int i=0;i<from->mesh_vertices.size();i++){
     MVertex *v_from = from->mesh_vertices[i];
     double t;
@@ -629,6 +612,9 @@ static void copy_vertices (GEdge *to, GEdge *from, std::map<MVertex*,MVertex*> &
     MEdgeVertex *v_to = new MEdgeVertex (gp.x(),gp.y(),gp.z(), to, gp.u() );
     to->mesh_vertices.push_back(v_to);
     _mesh_to_geom[v_from] = v_to;
+    if (v_from->getNum() == 3646) {
+      printf("FOUND IT!!\n");
+    }
   }
   //  printf("Ending Edge %d %d vertices to match\n",from->tag(),from->mesh_vertices.size());
 }
@@ -649,6 +635,9 @@ static void copy_vertices (GFace *geom, GFace *mesh, std::map<MVertex*,MVertex*>
 						 v_from->x(), v_from->y(), v_from->z(),geom->tag(),gp.x(), gp.y(), gp.z());
     MFaceVertex *v_to = new MFaceVertex (v_from->x(),v_from->y(),v_from->z(), geom, gp.u(),gp.v() );
     geom->mesh_vertices.push_back(v_to);
+    //SPoint2 param;
+    //reparamMeshVertexOnFace(v_to, to, param, true);
+    //printf("PARAMS : %g %g\n", param.x(), param.y());
     _mesh_to_geom[v_from] = v_to;
   }
   //  printf("Ending Face %d %d vertices to match\n",geom->tag(),geom->mesh_vertices.size());
@@ -665,6 +654,9 @@ static void copy_elements (std::vector<ELEMENT*> &to,
     std::vector<MVertex*> nodes;
     for(int j=0;j<e->getNumVertices();j++) {
       nodes.push_back(_mesh_to_geom[e->getVertex(j)]);
+      if (_mesh_to_geom[e->getVertex(j)] == 0) {
+	printf("Error vertex %i\n", e->getVertex(j)->getNum());
+      }
     }
     to.push_back( (ELEMENT*)(toto.create(e->getTypeForMSH(), nodes) ));
   }
@@ -683,20 +675,21 @@ void copy_vertices (GModel *geom, GModel *mesh, std::map<MVertex*,MVertex*> &_me
     copy_vertices((*coresp_e)[i].first(),(*coresp_e)[i].second(),_mesh_to_geom);
   for (int i=0;i<coresp_f->size();++i)
     copy_vertices((*coresp_f)[i].first(),(*coresp_f)[i].second(),_mesh_to_geom);
-  for (GModel::riter rit = geom->firstRegion() ; rit != geom->lastRegion(); ++rit)
-    copy_vertices(*rit,mesh->getRegionByTag((*rit)->tag()),_mesh_to_geom);
+  for (GModel::riter rit = geom->firstRegion() ; rit != geom->lastRegion(); rit++)
+  copy_vertices(*rit,mesh->getRegionByTag((*rit)->tag()),_mesh_to_geom);
 }
 void copy_elements (GModel *geom, GModel *mesh, std::map<MVertex*,MVertex*> &_mesh_to_geom,
 		    std::vector<Pair<GVertex*, GVertex*> > *coresp_v,
 		    std::vector<Pair<GEdge*, GEdge*> > *coresp_e,
 		    std::vector<Pair<GFace*, GFace*> > *coresp_f){
   // copy all elements
+
   for (int i=0;i<coresp_v->size();++i)
     copy_elements<MPoint>((*coresp_v)[i].first()->points,(*coresp_v)[i].second()->points,_mesh_to_geom);
 
   for (int i=0;i<coresp_e->size();++i)
     copy_elements<MLine>((*coresp_e)[i].first()->lines,(*coresp_e)[i].second()->lines,_mesh_to_geom);
-  
+   
   for (int i=0;i<coresp_f->size();++i){
     copy_elements<MTriangle>((*coresp_f)[i].first()->triangles,(*coresp_f)[i].second()->triangles,_mesh_to_geom);
     copy_elements<MQuadrangle>((*coresp_f)[i].first()->quadrangles,(*coresp_f)[i].second()->quadrangles,_mesh_to_geom);
@@ -706,48 +699,33 @@ void copy_elements (GModel *geom, GModel *mesh, std::map<MVertex*,MVertex*> &_me
     copy_elements<MHexahedron>((*rit)->hexahedra,mesh->getRegionByTag((*rit)->tag())->hexahedra,_mesh_to_geom);
     copy_elements<MPrism>((*rit)->prisms,mesh->getRegionByTag((*rit)->tag())->prisms,_mesh_to_geom);
     copy_elements<MPyramid>((*rit)->pyramids,mesh->getRegionByTag((*rit)->tag())->pyramids,_mesh_to_geom);
-  }
+    }
 }
-
 
 int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
 {
   mesh->createTopologyFromMesh();
   GModel::setCurrent(geom);
+
   bool ok = true;
+
   // This will match VERTICES
   std::vector<Pair<GVertex*, GVertex*> > *coresp_v = matchVertices(geom, mesh,ok);
-  ok = true;
-  if (ok) {
-    // This will match EDGES
-    std::vector<Pair<GEdge*, GEdge*> > *coresp_e = matchEdges(geom, mesh, coresp_v,ok);
-    if (ok) {
-      // This will match SURFACES
-      std::vector<Pair<GFace*, GFace*> > *coresp_f = matchFaces(geom, mesh, coresp_e,ok);
-      if (ok) {
-        // This will match REGIONS
-        //std::vector<Pair<GRegion*, GRegion*> >* coresp_r =
-        matchRegions(geom, mesh, coresp_f,ok);
-        if (ok) {
-	  std::map<MVertex*,MVertex*> _mesh_to_geom;
-	  copy_vertices(geom, mesh, _mesh_to_geom,coresp_v,coresp_e,coresp_f);
-	  copy_elements(geom, mesh, _mesh_to_geom,coresp_v,coresp_e,coresp_f);
-          return 1;
-        } else {
-          Msg::Error("Could not match every region !");
-          return 0;
-        }
-      } else {
-        Msg::Error("Could not match every surface !");
-        return 0;
-      }
-    } else {
-      Msg::Error("Could not match every edge !");
-      return 0;
-    }
-  } else {
-    Msg::Error("Could not match every vertex !");
-    return 0;
-  }
+
+  // This will match EDGES
+  std::vector<Pair<GEdge*, GEdge*> > *coresp_e = matchEdges(geom, mesh, coresp_v,ok);
+
+  // This will match SURFACES
+  std::vector<Pair<GFace*, GFace*> > *coresp_f = matchFaces(geom, mesh, coresp_e,ok);
+  matchRegions(geom, mesh, coresp_f,ok);
+  
+  std::map<MVertex*,MVertex*> _mesh_to_geom;
+  copy_vertices(geom, mesh, _mesh_to_geom,coresp_v,coresp_e,coresp_f);
+  copy_elements(geom, mesh, _mesh_to_geom,coresp_v,coresp_e,coresp_f);
+
+  geom->writeMSH("testing.msh", 2.2, false, true);
+
+  return 1;
+
   return 0;
 }
