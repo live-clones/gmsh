@@ -30,13 +30,13 @@ void gmshEdge::resetMeshAttributes()
 }
 
 Range<double> gmshEdge::parBounds(int i) const
-{ 
+{
  return Range<double>(c->ubeg, c->uend);
 }
 
 GPoint gmshEdge::point(double par) const
 {
-  
+
   Vertex a = InterpolateCurve(c, par, 0);
   return GPoint(a.Pos.X, a.Pos.Y, a.Pos.Z, this, par);
 }
@@ -49,7 +49,7 @@ SVector3 gmshEdge::firstDer(double par) const
 
 SVector3 gmshEdge::secondDer(double par) const
 {
- 
+
   Vertex a = InterpolateCurve(c, par, 2);
   return SVector3(a.Pos.X, a.Pos.Y, a.Pos.Z);
 }
@@ -58,16 +58,16 @@ GEntity::GeomType gmshEdge::geomType() const
 {
   switch (c->Typ){
   case MSH_SEGM_LINE : return Line;
-  case MSH_SEGM_CIRC :  
+  case MSH_SEGM_CIRC :
   case MSH_SEGM_CIRC_INV : return Circle;
   case MSH_SEGM_ELLI:
   case MSH_SEGM_ELLI_INV: return Ellipse;
   case MSH_SEGM_BSPLN:
-  case MSH_SEGM_BEZIER: 
+  case MSH_SEGM_BEZIER:
   case MSH_SEGM_NURBS:
-  case MSH_SEGM_SPLN: return Nurb; 
-  case MSH_SEGM_BND_LAYER: return BoundaryLayerCurve; 
-  case MSH_SEGM_DISCRETE: return DiscreteCurve; 
+  case MSH_SEGM_SPLN: return Nurb;
+  case MSH_SEGM_BND_LAYER: return BoundaryLayerCurve;
+  case MSH_SEGM_DISCRETE: return DiscreteCurve;
   default : return Unknown;
   }
 }
@@ -84,7 +84,7 @@ std::string gmshEdge::getAdditionalInfoString()
       sstream << v->Num;
     }
     sstream << "}";
-    return sstream.str();    
+    return sstream.str();
   }
   else
     return GEdge::getAdditionalInfoString();
@@ -126,7 +126,7 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar,int dir) const
         Vertex *v[3];
         List_Read(c->Control_Points, 0, &v[1]);
         List_Read(c->Control_Points, 1, &v[2]);
-        SPoint2 p = v[1]->pntOnGeometry + 
+        SPoint2 p = v[1]->pntOnGeometry +
           (v[2]->pntOnGeometry - v[1]->pntOnGeometry) * epar;
         return p;
       }
@@ -146,9 +146,9 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar,int dir) const
         Vertex *v[4];
         for(int j = 0; j < 4; j ++ ){
           int k = iCurve - (periodic ? 1 : 2) + j;
-          if(k < 0) 
+          if(k < 0)
             k = periodic ? k + NbControlPoints - 1 : 0;
-          if(k >= NbControlPoints) 
+          if(k >= NbControlPoints)
             k = periodic ? k - NbControlPoints + 1: NbControlPoints - 1;
           List_Read(c->Control_Points, k, &v[j]);
         }
@@ -200,7 +200,7 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar,int dir) const
       return SPoint2();
     }
   }
-  
+
 
   if(s->Typ ==  MSH_SURF_REGL){
     Curve *C[4];
@@ -251,7 +251,13 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar,int dir) const
     for(int i = 0; i < 3; i++)
       List_Read(s->Generatrices, i, &C[i]);
 
-    double U, V;    
+    // FIXME: workaround for exact extrutions
+    bool hack = false;
+    if(CTX::instance()->geom.exactExtrusion && s->Extrude &&
+       s->Extrude->geo.Mode == EXTRUDED_ENTITY && s->Typ != MSH_SURF_PLAN)
+      hack = true;
+
+    double U, V;
     if (C[0]->Num == c->Num) {
       U = (epar - C[0]->ubeg) / (C[0]->uend - C[0]->ubeg) ;
       V = 0;
@@ -270,11 +276,11 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar,int dir) const
     }
     else if (C[2]->Num == c->Num) {
       U = 1-(epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg) ;
-      V = U;
+      V = hack ? 1 : U;
     }
     else if (C[2]->Num == -c->Num) {
       U = 1-(C[2]->uend - epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg) ;
-      V = U;
+      V = hack ? 1 : U;
     }
     else{
       Msg::Info("Reparameterizing edge %d on face %d", c->Num, s->Num);
@@ -352,7 +358,7 @@ void gmshEdge::writeGEO(FILE *fp)
   fprintf(fp, "};\n");
 
   if(meshAttributes.Method == MESH_TRANSFINITE){
-    fprintf(fp, "Transfinite Line {%d} = %d", 
+    fprintf(fp, "Transfinite Line {%d} = %d",
             tag() * (meshAttributes.typeTransfinite > 0 ? 1 : -1),
             meshAttributes.nbPointsTransfinite);
     if(meshAttributes.typeTransfinite){
