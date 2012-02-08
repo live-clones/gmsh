@@ -28,8 +28,8 @@ bool PView::readPOS(std::string fileName, int fileIndex)
     while(str[0] != '$'){
       if(!fgets(str, sizeof(str), fp) || feof(fp))
         break;
-    } 
-    
+    }
+
     if(feof(fp))
       break;
 
@@ -105,7 +105,7 @@ bool PView::readMSH(std::string fileName, int fileIndex)
       if(!fgets(str, sizeof(str), fp) || feof(fp))
         break;
     }
-    
+
     if(feof(fp))
       break;
 
@@ -170,9 +170,9 @@ bool PView::readMSH(std::string fileName, int fileIndex)
         if(sscanf(str, "%d", &numTags) != 1) return false;
         for(int i = 0; i < numTags; i++){
           if(!fgets(str, sizeof(str), fp)) return false;
-          if(i == 0) 
+          if(i == 0)
             viewName = ExtractDoubleQuotedString(str, sizeof(str));
-          else if(i == 1) 
+          else if(i == 1)
             interpolationScheme = ExtractDoubleQuotedString(str, sizeof(str));
         }
         // double tags
@@ -186,7 +186,7 @@ bool PView::readMSH(std::string fileName, int fileIndex)
           }
         }
         // integer tags
-        int timeStep = 0, numComp = 0, numEnt = 0, partition = -1;
+        int timeStep = 0, numComp = 0, numEnt = 0, partition = 0;
         if(!fgets(str, sizeof(str), fp)) return false;
         if(sscanf(str, "%d", &numTags) != 1) return false;
         for(int i = 0; i < numTags; i++){
@@ -210,7 +210,7 @@ bool PView::readMSH(std::string fileName, int fileIndex)
         if(p) d = dynamic_cast<PViewDataGModel*>(p->getData());
         bool create = d ? false : true;
         if(create) d = new PViewDataGModel(type);
-        if(!d->readMSH(fileName, fileIndex, fp, binary, swap, timeStep, 
+        if(!d->readMSH(fileName, fileIndex, fp, binary, swap, timeStep,
                        time, partition, numComp, numEnt, interpolationScheme)){
           Msg::Error("Could not read data in msh file");
           if(create) delete d;
@@ -224,7 +224,7 @@ bool PView::readMSH(std::string fileName, int fileIndex)
         }
       }
     }
-    
+
     do {
       if(!fgets(str, sizeof(str), fp) || feof(fp))
         break;
@@ -252,7 +252,7 @@ bool PView::readMED(std::string fileName, int fileIndex)
     Msg::Error("Unable to open file '%s'", fileName.c_str());
     return false;
   }
-  
+
 #if (MED_MAJOR_NUM == 3)
   med_int numFields = MEDnField(fid);
 #else
@@ -291,7 +291,7 @@ bool PView::readMED(std::string fileName, int fileIndex)
 
 bool PView::readMED(std::string fileName, int fileIndex)
 {
-  Msg::Error("Gmsh must be compiled with MED support to read '%s'", 
+  Msg::Error("Gmsh must be compiled with MED support to read '%s'",
              fileName.c_str());
   return false;
 }
@@ -301,7 +301,7 @@ bool PView::readMED(std::string fileName, int fileIndex)
 bool PView::write(std::string fileName, int format, bool append)
 {
   Msg::StatusBar(2, true, "Writing '%s'...", fileName.c_str());
-  
+
   bool ret;
   switch(format){
   case 0: ret = _data->writePOS(fileName, false, false, append); break; // ASCII
@@ -311,7 +311,7 @@ bool PView::write(std::string fileName, int format, bool append)
   case 4: ret = _data->writeTXT(fileName); break;
   case 5: ret = _data->writeMSH(fileName, CTX::instance()->mesh.binary); break;
   case 6: ret = _data->writeMED(fileName); break;
-  case 10: 
+  case 10:
     {
       std::string ext = SplitFileName(fileName)[2];
       if(ext == ".pos")
@@ -320,7 +320,7 @@ bool PView::write(std::string fileName, int format, bool append)
         ret = _data->writeSTL(fileName);
       else if(ext == ".msh")
         ret = _data->writeMSH(fileName, CTX::instance()->mesh.binary);
-      else if(ext == ".med") 
+      else if(ext == ".med")
         ret = _data->writeMED(fileName);
       else
         ret = _data->writeTXT(fileName);
@@ -328,7 +328,7 @@ bool PView::write(std::string fileName, int format, bool append)
     }
   default: ret = false; Msg::Error("Unknown view format %d", format); break;
   }
-  
+
   if(ret) Msg::StatusBar(2, true, "Done writing '%s'", fileName.c_str());
   return ret;
 }
