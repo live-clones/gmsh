@@ -375,7 +375,8 @@ int MergeFile(std::string fileName, bool warnIfMissing)
         tmp->readMSH(fileName);
         status = GeomMeshMatcher::instance()->match(tmp2, tmp);
         delete tmp;
-      } else
+      }
+      else
 	status = GModel::current()->readMSH(fileName);
 #if defined(HAVE_POST)
       if(status > 1) status = PView::readMSH(fileName);
