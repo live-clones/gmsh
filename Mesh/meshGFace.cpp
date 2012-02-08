@@ -621,7 +621,7 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 
   deMeshGFace kil_;
   kil_(gf);
-  meshGenerator(gf, 0, 0, true , true, &hop);
+  meshGenerator(gf, 0, 0, true , false, &hop);
 
   gf->quadrangles = blQuads;
   gf->triangles.insert(gf->triangles.begin(),blTris.begin(),blTris.end());
