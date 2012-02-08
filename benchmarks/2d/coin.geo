@@ -11,7 +11,7 @@ Point(2) = {a, 0, 0, lc} ;
 Point(3) = {0, b, 0, lc} ;
 Point(4) = {a, -h, 0, lc} ;
 Point(5) = {-h, b, 0, lc} ;
-Point(6) = {-h, -h, 0, lc*refine} ;
+Point(6) = {-h, -h, 0, lc} ;
 
 Line(1) = {1,3} ;
 Line(2) = {3,5} ;
