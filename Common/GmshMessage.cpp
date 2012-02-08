@@ -595,6 +595,7 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
 
     onelab::number o5(name + "/UseCommandLine",1);
     o5.setVisible(false);
+    _onelabClient->set(o5);
     onelab::string o(name + "/FileExtension", ".geo");
     o.setVisible(false);
     _onelabClient->set(o);
@@ -658,7 +659,15 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   else if(fopt.count("Max")){
     ps[0].setMax(fopt["Max"][0]); ps[0].setMin(-onelab::parameter::maxNumber());
   }
-  if(fopt.count("Step")) ps[0].setStep(fopt["Step"][0]);
+  //if(fopt.count("Step")) ps[0].setStep(fopt["Step"][0]);
+  if(fopt.count("Step")) {
+    int Step=fopt["Step"][0];
+    if (Step<=0) {
+      Step=1;
+      Error("Non positive Step for parameter '%s', set to 1", ps[0].getName().c_str());
+    }
+    ps[0].setStep(Step);
+  }
   if(fopt.count("Choices")) ps[0].setChoices(fopt["Choices"]);
   if(fopt.count("Visible")) ps[0].setVisible(fopt["Visible"][0] ? true : false);
   if(copt.count("Help")) ps[0].setHelp(copt["Help"][0]);
