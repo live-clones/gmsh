@@ -1035,16 +1035,60 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    //double lc = operator()(x,y,z,ge);
    //metr = SMetric3(1./(lc*lc));
 
-   // double xyz[3] = {x,y,z };
-   // ANNidxArray index2 = = new ANNidx[1];
-   // ANNdistArray dist2 =  new ANNdist[1];
-   // int num_neighbours = 2;
-   // kdtree->annkSearch(xyz, num_neighbours, index2, dist2);
-   // double d = sqrt(dist2[0]);
-   // MVertex *v = vertices[ind2s[i]];  
+   double xyz[3] = {x,y,z };
+   ANNidxArray index2 = new ANNidx[2];
+   ANNdistArray dist2 = new ANNdist[2];
+   int num_neighbours = 2;
+   kdtree->annkSearch(xyz, num_neighbours, index2, dist2);
+   double d = sqrt(dist2[0]);
+   double lc = 2*M_PI*d/nbPoints; 
+   SVector3  p0(nodes[index2[0]][0], nodes[index2[0]][1], nodes[index2[0]][2]);
+   SVector3  p1(nodes[index2[1]][0], nodes[index2[1]][1], nodes[index2[1]][2]);
+   SVector3 dir = p1-p0;
+   dir.normalize();
+   SVector3 dir1, dir2;
+   if (dir[1]!=0.0 && dir[2]!=0.0){
+     dir1 = SVector3(1.0, 0.0, -dir[0]/dir[2]);
+     dir2 = SVector3 (dir[0]/dir[2], -(dir[0]*dir[0]+dir[2]*dir[2])/(dir[1]*dir[2]), 1.0);
+   }
+   else if (dir[0]!=0.0 && dir[2]!=0.0){
+     dir1 = SVector3(-dir[1]/dir[0], 1.0, 0.0);
+     dir2 = SVector3(1.0, dir[1]/dir[0], -(dir[1]*dir[1]+dir[0]*dir[0])/(dir[0]*dir[2]));
+   }
+   else if (dir[0]!=0.0 && dir[1]!=0.0){
+     dir1 = SVector3(0.0, -dir[2]/dir[1], 1.0);
+     dir2 = SVector3(-(dir[1]*dir[1]+dir[2]*dir[2])/(dir[0]*dir[1]), 1.0, dir[2]/dir[1]);
+   }
+   else if (dir[0]==0.0 && dir[1]==0.0){
+     dir1 = SVector3(0.0, 1.0, 0.0);
+     dir2 = SVector3(1.0, 0.0, 0.0);
+   }
+   else if (dir[1]==0.0 && dir[2]==0.0){
+     dir1 = SVector3(0.0, 1.0, 0.0);
+     dir2 = SVector3(0.0, 0.0, 1.0);
+   }
+   else if (dir[0]==0.0 && dir[2]==0.0){
+     dir1 = SVector3(1.0, 0.0, 0.0);
+     dir2 = SVector3(0.0, 0.0, 1.0);
+   }
+   else {printf("ARGHH EMI DO STHG \n"); exit(1);}
+   // printf("XYZ =%g %g %g r=%g dir0 = %g %g %g dir1 = %g %g %g dir2 =%g %g %g\n", 
+   // 	  x,y,z,d, dir[0], dir[1], dir[2], dir1[0], dir1[1], dir1[2],  dir2[0], dir2[1], dir2[2] );
+   // printf("0x1 =%g 1x2=%g 2x1=%g \n", dot(dir, dir1), dot(dir1,dir2), dot(dir2,dir));
+   dir1.normalize();
+   dir2.normalize();
+   
+   //dir = SVector3(1.0, 0.0, 0.0);
+   //dir1 = SVector3(0.0, 1.0, 0.0);
+   //dir2 = SVector3(0.0, 0.0, 1.0);
+   
+   double lcA = 4.*lc;
+   double lam1 = 1./(lcA*lcA);
+   double lam2 = 1./(lc*lc);
+   metr = SMetric3(lam1,lam2,lam2, dir, dir1, dir2);
 
-   // delete[]index2;
-   // delete[]dist2; 
+   delete[]index2;
+   delete[]dist2; 
 
    return;
 }

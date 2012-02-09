@@ -30,6 +30,7 @@
 #include "meshGFaceLloyd.h"
 #include "CenterlineField.h"
 #include "Field.h"
+#include "Options.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"

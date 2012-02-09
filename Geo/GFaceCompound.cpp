@@ -1183,11 +1183,11 @@ bool GFaceCompound::parametrize_conformal_spectral() const
     myAssembler.numberVertex(v, 0, 2);
   }
   
-  for(std::set<MVertex *>::iterator itv = fillNodes.begin(); itv !=fillNodes.end() ; ++itv){
-    MVertex *v = *itv;
-    myAssembler.numberVertex(v, 0, 1);
-    myAssembler.numberVertex(v, 0, 2);
-  }
+  // for(std::set<MVertex *>::iterator itv = fillNodes.begin(); itv !=fillNodes.end() ; ++itv){
+  //   MVertex *v = *itv;
+  //   myAssembler.numberVertex(v, 0, 1);
+  //   myAssembler.numberVertex(v, 0, 2);
+  // }
   
   laplaceTerm laplace1(model(), 1, ONE);
   laplaceTerm laplace2(model(), 2, ONE);
@@ -1220,13 +1220,13 @@ bool GFaceCompound::parametrize_conformal_spectral() const
       myAssembler.assemble(v, 0, 2, v, 0, 2,  epsilon);
     }
   }
-  for(std::set<MVertex *>::iterator itv = fillNodes.begin(); itv !=fillNodes.end() ; ++itv){
-    MVertex *v = *itv;
-    if (std::find(_ordered.begin(), _ordered.end(), v) == _ordered.end() ){
-      myAssembler.assemble(v, 0, 1, v, 0, 1,  epsilon);
-      myAssembler.assemble(v, 0, 2, v, 0, 2,  epsilon);
-    }
-  }
+  // for(std::set<MVertex *>::iterator itv = fillNodes.begin(); itv !=fillNodes.end() ; ++itv){
+  //   MVertex *v = *itv;
+  //   if (std::find(_ordered.begin(), _ordered.end(), v) == _ordered.end() ){
+  //     myAssembler.assemble(v, 0, 1, v, 0, 1,  epsilon);
+  //     myAssembler.assemble(v, 0, 2, v, 0, 2,  epsilon);
+  //   }
+  // }
   
   myAssembler.setCurrentMatrix("B");
   
@@ -1249,7 +1249,7 @@ bool GFaceCompound::parametrize_conformal_spectral() const
   // FIXME: force non-hermitian. For some reason (roundoff errors?)
   // on some machines and for some meshes slepc complains about bad IP
   // norm otherwise
-  eigenSolver eig(&myAssembler, "B" , "A", true);
+  eigenSolver eig(&myAssembler, "B" , "A", false);
   bool converged = eig.solve(1, "largest");
     
   if(converged) {
