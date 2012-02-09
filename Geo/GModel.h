@@ -396,6 +396,7 @@ class GModel
   //           parameters[0] = thickness of the interface in the positive ls direction (mandatory)
   //           parameters[4] = thickness of the interface in the negative ls direction (=parameters[0] if not specified)
   //           parameters[3] = the required minimum number of elements to represent a circle - used for curvature-based metric (default: = 15)
+  //    5) Same as 4, except that the transition in band E uses linear interpolation of h, instead of linear interpolation of metric
   // The algorithm first generate a mesh if no one is available 
 
   // In this first attempt, only the highest dimensional mesh is adapted, which is ok if

@@ -73,6 +73,7 @@ void meshMetric::addMetric(int technique, simpleFunction<double> *fct, std::vect
 
   _E = parameters[0];
   _E_moins = (parameters.size() >= 5) ? parameters[4] : -parameters[0];
+  if (_E_moins>0.) _E_moins *= -1.;
   _epsilon = parameters[0];
   _technique =  (MetricComputationTechnique)technique;
   _Np = (parameters.size() >= 4) ? parameters[3] : 15.;
@@ -342,7 +343,7 @@ void meshMetric::computeMetric(){
       // else H = hfrey;
       H = hfrey;
     }
-    else if (_technique == meshMetric::EIGENDIRECTIONS ){
+    else if ((_technique == meshMetric::EIGENDIRECTIONS )||(_technique == meshMetric::EIGENDIRECTIONS_LINEARINTERP_H )){
       double metric_value_hmax = 1./hmax/hmax;
       SVector3 gr = grads[ver];
       double norm = gr.normalize();
@@ -369,12 +370,16 @@ void meshMetric::computeMetric(){
         eigenvals_curvature.push_back(fabs(lambda_hessian(2))*un_sur_epsilon);
         // metric distance-based eigenvalue, in gradient direction
         double metric_value_hmin = 1./hmin/hmin;
-        // 1/ linear interpolation between  h_min and h_max...
-        //double h_dist = hmin + ((hmax-hmin)/_E)*dist;// the charcteristic element size in the normal direction - linear interp between hmin and hmax
-        //eigenval_direction = 1./h_dist/h_dist;
-        // 2/ ... or linear interpolation between 1/h_min^2 and 1/h_max^2
-        double maximum_distance = (signed_dist>0.) ? _E : fabs(_E_moins);
-        double eigenval_direction = metric_value_hmin + ((metric_value_hmax-metric_value_hmin)/maximum_distance)*dist;
+        double eigenval_direction;
+        if (_technique==meshMetric::EIGENDIRECTIONS_LINEARINTERP_H){
+          double h_dist = hmin + ((hmax-hmin)/_E)*dist;// the charcteristic element size in the normal direction - linear interp between hmin and hmax
+          eigenval_direction = 1./h_dist/h_dist;
+        }
+        else if(_technique==meshMetric::EIGENDIRECTIONS){
+          // ... or linear interpolation between 1/h_min^2 and 1/h_max^2
+          double maximum_distance = (signed_dist>0.) ? _E : fabs(_E_moins);
+          eigenval_direction = metric_value_hmin + ((metric_value_hmax-metric_value_hmin)/maximum_distance)*dist;
+        }
 
         // now, consider only three eigenvectors (i.e. (grad(LS), u1, u2) with u1 and u2 orthogonal vectors in the tangent plane to the LS)
         // and imposing directly eigenvalues and directions, instead of intersecting the two metrics based on direction and curvature
@@ -413,7 +418,7 @@ void meshMetric::computeMetric(){
       it++;	
     }
 
-    if (_technique != meshMetric::EIGENDIRECTIONS ){
+    if (_technique != meshMetric::EIGENDIRECTIONS && _technique!=meshMetric::EIGENDIRECTIONS_LINEARINTERP_H){
 
       //See paper Hachem and Coupez: 
       //Finite element solution to handle complex heat and fluid flows in 

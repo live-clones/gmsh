@@ -548,7 +548,7 @@ int GModel::adaptMesh(std::vector<int> technique, std::vector<simpleFunction<dou
 
       fields->reset();
       meshMetric *metric = new meshMetric(this);
-      for (int imetric=0;imetric<technique.size();imetric++){;
+      for (int imetric=0;imetric<technique.size();imetric++){
         metric->addMetric(technique[imetric], f[imetric], parameters[imetric]);
       }
       fields->setBackgroundField(metric);
@@ -561,9 +561,9 @@ int GModel::adaptMesh(std::vector<int> technique, std::vector<simpleFunction<dou
       opt_mesh_algo3d(0, GMSH_SET, 7.0); //mmg3d
       opt_mesh_lc_from_points(0, GMSH_SET, 0.0); //do not mesh lines with lc
 
-      std::for_each(firstEdge(), lastEdge(), deMeshGEdge());
-      std::for_each(firstFace(), lastFace(), deMeshGFace());
       std::for_each(firstRegion(), lastRegion(), deMeshGRegion());
+      std::for_each(firstFace(), lastFace(), deMeshGFace());
+      std::for_each(firstEdge(), lastEdge(), deMeshGEdge());
 
       GenerateMesh(this, getDim());
       nbElems = getNumMeshElements();
@@ -571,7 +571,7 @@ int GModel::adaptMesh(std::vector<int> technique, std::vector<simpleFunction<dou
       char name[256];
       sprintf(name, "meshAdapt-%d.msh", ITER);
       writeMSH(name);
-//      metric->exportInfo(name);
+      //metric->exportInfo(name);
 
       if (ITER++ >= niter)  break;
       if (ITER > 3 && fabs((double)(nbElems - nbElemsOld)) < 0.01 * nbElemsOld) break;
@@ -586,27 +586,27 @@ int GModel::adaptMesh(std::vector<int> technique, std::vector<simpleFunction<dou
       std::vector<MElement*> elements;
 
       if (getDim() == 2){
-	for (fiter fit = firstFace(); fit != lastFace(); ++fit){
-	  if ((*fit)->quadrangles.size())return -1;
-	  for (unsigned i=0;i<(*fit)->triangles.size();i++){
-	    elements.push_back((*fit)->triangles[i]);
-	  }
-	}
+        for (fiter fit = firstFace(); fit != lastFace(); ++fit){
+          if ((*fit)->quadrangles.size())return -1;
+          for (unsigned i=0;i<(*fit)->triangles.size();i++){
+            elements.push_back((*fit)->triangles[i]);
+          }
+        }
       }
       else if (getDim() == 3){
-	for (riter rit = firstRegion(); rit != lastRegion(); ++rit){
-	  if ((*rit)->hexahedra.size())return -1;
-	  for (unsigned i=0;i<(*rit)->tetrahedra.size();i++){
-	    elements.push_back((*rit)->tetrahedra[i]);
-	  }
-	}
+        for (riter rit = firstRegion(); rit != lastRegion(); ++rit){
+          if ((*rit)->hexahedra.size())return -1;
+          for (unsigned i=0;i<(*rit)->tetrahedra.size();i++){
+            elements.push_back((*rit)->tetrahedra[i]);
+          }
+        }
       }
 
       if (elements.size() == 0)return -1;
 
       fields->reset();
       meshMetric *metric = new meshMetric(this);
-      for (int imetric=0;imetric<technique.size();imetric++){;
+      for (int imetric=0;imetric<technique.size();imetric++){
         metric->addMetric(technique[imetric], f[imetric], parameters[imetric]);
       }
       fields->setBackgroundField(metric);
@@ -615,21 +615,21 @@ int GModel::adaptMesh(std::vector<int> technique, std::vector<simpleFunction<dou
       // fields->background_field = id;
 
       if (getDim() == 2){
-	for (fiter fit = firstFace(); fit != lastFace(); ++fit){
-	  if((*fit)->geomType() != GEntity::DiscreteSurface){
-	    meshGFaceBamg(*fit);
-	    laplaceSmoothing(*fit,CTX::instance()->mesh.nbSmoothing);
-	  }
-	  if(_octree) delete _octree;
-	  _octree = 0;
-	}
+        for (fiter fit = firstFace(); fit != lastFace(); ++fit){
+          if((*fit)->geomType() != GEntity::DiscreteSurface){
+            meshGFaceBamg(*fit);
+            laplaceSmoothing(*fit,CTX::instance()->mesh.nbSmoothing);
+          }
+          if(_octree) delete _octree;
+          _octree = 0;
+        }
       }
       else if (getDim() == 3){
-	for (riter rit = firstRegion(); rit != lastRegion(); ++rit){
-	  refineMeshMMG(*rit);
-	  if(_octree) delete _octree;
-	  _octree = 0;
-	}
+        for (riter rit = firstRegion(); rit != lastRegion(); ++rit){
+          refineMeshMMG(*rit);
+          if(_octree) delete _octree;
+          _octree = 0;
+        }
       }
 
       nbElems = getNumMeshElements();
