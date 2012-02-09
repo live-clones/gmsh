@@ -1035,15 +1035,16 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    //double lc = operator()(x,y,z,ge);
    //metr = SMetric3(1./(lc*lc));
 
-   double xyz[3] = {x,y,z };
-   ANNidxArray index2 = = new ANNidx[1];
-   ANNdistArray dist2 =  new ANNdist[1];
-   int num_neighbours = 2;
-   kdtree->annkSearch(xyz, num_neighbours, index2, dist2);
-   double d = sqrt(dist2[0]);  
+   // double xyz[3] = {x,y,z };
+   // ANNidxArray index2 = = new ANNidx[1];
+   // ANNdistArray dist2 =  new ANNdist[1];
+   // int num_neighbours = 2;
+   // kdtree->annkSearch(xyz, num_neighbours, index2, dist2);
+   // double d = sqrt(dist2[0]);
+   // MVertex *v = vertices[ind2s[i]];  
 
-   delete[]index2;
-   delete[]dist2; 
+   // delete[]index2;
+   // delete[]dist2; 
 
    return;
 }
