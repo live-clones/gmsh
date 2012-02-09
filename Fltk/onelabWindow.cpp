@@ -131,6 +131,7 @@ static void mergePostProcessingFile(const std::string &fileName)
   }
   MergeFile(fileName);
   GModel::setCurrent(old);
+  old->setVisibility(1);
 
   // hide everything except the onelab X-Y graphs
   if(FlGui::instance()->onelab->hideNewViews()){
