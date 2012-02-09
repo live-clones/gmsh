@@ -65,7 +65,12 @@ GModel::GModel(std::string name)
 {
   partitionSize[0] = 0; partitionSize[1] = 0;
 
+  // hide all other models
+  for(unsigned int i = 0; i < GModel::list.size(); i++)
+    GModel::list[i]->setVisibility(0);
+
   list.push_back(this);
+
   // at the moment we always create (at least an empty) GEO model
   _createGEOInternals();
 
@@ -1283,7 +1288,7 @@ static void recurConnectMElementsByMFace(const MFace &f,
   // this is very slow...
   std::stack<MFace> _stack;
   _stack.push(f);
-  
+
   while(!_stack.empty()){
     MFace ff = _stack.top();
     _stack.pop();
@@ -1291,7 +1296,7 @@ static void recurConnectMElementsByMFace(const MFace &f,
       touched.insert(ff);
       for (std::multimap<MFace, MElement*, Less_Face>::iterator it = e2f.lower_bound(ff);
 	   it != e2f.upper_bound(ff); ++it){
-	group.insert(it->second);	
+	group.insert(it->second);
 	for (int i = 0; i < it->second->getNumFaces(); ++i){
 	  _stack.push(it->second->getFace(i));
 	}
@@ -1558,7 +1563,7 @@ void GModel::createTopologyFromMesh(int ignoreHoles)
     if((*it)->geomType() == GEntity::DiscreteSurface)
       discFaces.push_back((discreteFace*) *it);
   createTopologyFromFaces(discFaces, ignoreHoles);
-  
+
   //create old format (necessary e.g. for old-style extruded boundary layers)
   exportDiscreteGEOInternals();
 

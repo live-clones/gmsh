@@ -77,7 +77,7 @@ static void drawNormals(drawContext *ctx, std::vector<T*> &elements)
     for(int j = 0; j < 3; j++)
       n[j] *= CTX::instance()->mesh.normals * ctx->pixel_equiv_x / ctx->s[j];
     SPoint3 pc = ele->barycenter();
-    ctx->drawVector(CTX::instance()->vectorType, 0, pc.x(), pc.y(), pc.z(), 
+    ctx->drawVector(CTX::instance()->vectorType, 0, pc.x(), pc.y(), pc.z(),
                     n[0], n[1], n[2], CTX::instance()->mesh.light);
   }
 }
@@ -93,12 +93,12 @@ static void drawTangents(drawContext *ctx, std::vector<T*> &elements)
     for(int j = 0; j < 3; j++)
       t[j] *= CTX::instance()->mesh.tangents * ctx->pixel_equiv_x / ctx->s[j];
     SPoint3 pc = ele->barycenter();
-    ctx->drawVector(CTX::instance()->vectorType, 0, pc.x(), pc.y(), pc.z(), 
+    ctx->drawVector(CTX::instance()->vectorType, 0, pc.x(), pc.y(), pc.z(),
                     t[0], t[1], t[2], CTX::instance()->mesh.light);
   }
 }
 
-static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v, 
+static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
                             int partition=-1)
 {
   if(!v->getVisibility()) return;
@@ -121,19 +121,19 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
   else
     sprintf(str, "%d", v->getNum());
 
-  if(CTX::instance()->mesh.colorCarousel == 0 || 
-     CTX::instance()->mesh.volumesFaces || 
+  if(CTX::instance()->mesh.colorCarousel == 0 ||
+     CTX::instance()->mesh.volumesFaces ||
      CTX::instance()->mesh.surfacesFaces){ // by element type
     if(v->getPolynomialOrder() > 1)
       glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
     else
-      glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);   
+      glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);
   }
   else{
     unsigned int col = getColorByEntity(e);
     glColor4ubv((GLubyte *) & col);
   }
-  double offset = (0.5 * CTX::instance()->mesh.pointSize + 
+  double offset = (0.5 * CTX::instance()->mesh.pointSize +
                    0.1 * CTX::instance()->glFontSize) * ctx->pixel_equiv_x;
   glRasterPos3d(v->x() + offset / ctx->s[0],
                 v->y() + offset / ctx->s[1],
@@ -146,7 +146,7 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
   //if(e->dim() == 2) {
   //  if(e->cast2Edge()->getCompound()) {
   //    if(e->cast2Edge()->getCompound()
-  //    
+  //
    // }
   //}
   if(CTX::instance()->mesh.points) {
@@ -155,7 +155,7 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
         MVertex *v = e->mesh_vertices[i];
         if(!v->getVisibility()) continue;
         if(CTX::instance()->mesh.colorCarousel == 0 ||
-           CTX::instance()->mesh.volumesFaces || 
+           CTX::instance()->mesh.volumesFaces ||
            CTX::instance()->mesh.surfacesFaces){ // by element type
           if(v->getPolynomialOrder() > 1)
             glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
@@ -166,7 +166,7 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
           unsigned int col = getColorByEntity(e);
           glColor4ubv((GLubyte *) & col);
         }
-        ctx->drawSphere(CTX::instance()->mesh.pointSize, v->x(), v->y(), v->z(), 
+        ctx->drawSphere(CTX::instance()->mesh.pointSize, v->x(), v->y(), v->z(),
                         CTX::instance()->mesh.light);
       }
     }
@@ -176,12 +176,12 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
         MVertex *v = e->mesh_vertices[i];
         if(!v->getVisibility()) continue;
         if(CTX::instance()->mesh.colorCarousel == 0 ||
-           CTX::instance()->mesh.volumesFaces || 
+           CTX::instance()->mesh.volumesFaces ||
            CTX::instance()->mesh.surfacesFaces){ // by element type
           if(v->getPolynomialOrder() > 1)
             glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
           else
-            glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);     
+            glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);
         }
         else{
           unsigned int col = getColorByEntity(e);
@@ -201,7 +201,7 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
 }
 
 template<class T>
-static void drawVerticesPerElement(drawContext *ctx, GEntity *e, 
+static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
                                    std::vector<T*> &elements)
 {
   for(unsigned int i = 0; i < elements.size(); i++){
@@ -213,12 +213,12 @@ static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
       if(isElementVisible(ele) && v->getVisibility()){
         if(CTX::instance()->mesh.points) {
           if(CTX::instance()->mesh.colorCarousel == 0 ||
-             CTX::instance()->mesh.volumesFaces || 
+             CTX::instance()->mesh.volumesFaces ||
              CTX::instance()->mesh.surfacesFaces){ // by element type
             if(v->getPolynomialOrder() > 1)
               glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
             else
-              glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);   
+              glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);
           }
           else{
             unsigned int col = getColorByEntity(e);
@@ -267,7 +267,7 @@ static void drawBarycentricDual(std::vector<T*> &elements)
         glVertex3d(pc.x(), pc.y(), pc.z());
         glVertex3d(p.x(), p.y(), p.z());
         for(int k = 0; k < f.getNumVertices(); k++){
-          MEdge e(f.getVertex(k), (k == f.getNumVertices() - 1) ? 
+          MEdge e(f.getVertex(k), (k == f.getNumVertices() - 1) ?
                   f.getVertex(0) : f.getVertex(k + 1));
           SPoint3 pe = e.barycenter();
           glVertex3d(p.x(), p.y(), p.z());
@@ -303,7 +303,7 @@ static void drawVoronoiDual(std::vector<T*> &elements)
                       pc.y() - e.getVertex(0)->y(),
                       pc.z() - e.getVertex(0)->z());
         double alpha = dot(pcp1,p2p1) / dot(p2p1,p2p1);
-        SPoint3 p((1 - alpha)*e.getVertex(0)->x() + alpha * e.getVertex(1)->x(), 
+        SPoint3 p((1 - alpha)*e.getVertex(0)->x() + alpha * e.getVertex(1)->x(),
                   (1 - alpha)*e.getVertex(0)->y() + alpha * e.getVertex(1)->y(),
                   (1 - alpha)*e.getVertex(0)->z() + alpha * e.getVertex(1)->z());
         glVertex3d(pc.x(), pc.y(), pc.z());
@@ -317,7 +317,7 @@ static void drawVoronoiDual(std::vector<T*> &elements)
         glVertex3d(pc.x(), pc.y(), pc.z());
         glVertex3d(p.x(), p.y(), p.z());
         for(int k = 0; k < f.getNumVertices(); k++){
-          MEdge e(f.getVertex(k), (k == f.getNumVertices() - 1) ? 
+          MEdge e(f.getVertex(k), (k == f.getNumVertices() - 1) ?
                   f.getVertex(0) : f.getVertex(k + 1));
           SPoint3 pe = e.barycenter();
           glVertex3d(p.x(), p.y(), p.z());
@@ -333,14 +333,14 @@ static void drawVoronoiDual(std::vector<T*> &elements)
 
 // Routine for drawing the vertex arrays
 
-static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va, GLint type, 
+static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va, GLint type,
                        bool useNormalArray, int forceColor=0, unsigned int color=0)
 {
   if(!va || !va->getNumVertices()) return;
 
   // If we want to be enable picking of individual elements we need to
   // draw each one separately
-  bool select = (ctx->render_mode == drawContext::GMSH_SELECT && 
+  bool select = (ctx->render_mode == drawContext::GMSH_SELECT &&
                  CTX::instance()->pickElements && e->model() == GModel::current());
   if(select) {
     if(va->getNumElementPointers() == va->getNumVertices()){
@@ -373,8 +373,8 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va, GLint type
     glDisableClientState(GL_COLOR_ARRAY);
     glColor4ubv((GLubyte *) & color);
   }
-  else if(CTX::instance()->pickElements || 
-          (!e->getSelection() && (CTX::instance()->mesh.colorCarousel == 0 || 
+  else if(CTX::instance()->pickElements ||
+          (!e->getSelection() && (CTX::instance()->mesh.colorCarousel == 0 ||
                                   CTX::instance()->mesh.colorCarousel == 3))){
     glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
     glEnableClientState(GL_COLOR_ARRAY);
@@ -384,15 +384,15 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va, GLint type
     color = getColorByEntity(e);
     glColor4ubv((GLubyte *) & color);
   }
-  
+
   if(va->getNumVerticesPerElement() > 2 && CTX::instance()->polygonOffset)
     glEnable(GL_POLYGON_OFFSET_FILL);
-  
+
   glDrawArrays(type, 0, va->getNumVertices());
-  
+
   glDisable(GL_POLYGON_OFFSET_FILL);
   glDisable(GL_LIGHTING);
-  
+
   glDisableClientState(GL_VERTEX_ARRAY);
   glDisableClientState(GL_NORMAL_ARRAY);
   glDisableClientState(GL_COLOR_ARRAY);
@@ -406,10 +406,10 @@ class drawMeshGVertex {
  public:
   drawMeshGVertex(drawContext *ctx) : _ctx(ctx){}
   void operator () (GVertex *v)
-  { 
+  {
     if(!v->getVisibility()) return;
-    
-    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 
+
+    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    v->model() == GModel::current());
     if(select) {
       glPushName(0);
@@ -434,16 +434,17 @@ class drawMeshGEdge {
  public:
   drawMeshGEdge(drawContext *ctx) : _ctx(ctx){}
   void operator () (GEdge *e)
-  {  
+  {
     if(!e->getVisibility()) {
       if(e->getCompound()) {
         if(!e->getCompound()->getVisibility()) return;
-      } else
+      }
+      else
         return;
     }
 
-    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 
-                   e->model() == GModel::current());    
+    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
+                   e->model() == GModel::current());
     if(select) {
       glPushName(1);
       glPushName(e->tag());
@@ -480,11 +481,12 @@ class drawMeshGFace {
  public:
   drawMeshGFace(drawContext *ctx) : _ctx(ctx){}
   void operator () (GFace *f)
-  {  
+  {
     if(!f->getVisibility()) {
       if(f->getCompound()) {
         if(!f->getCompound()->getVisibility()) return;
-      } else
+      }
+      else
         return;
     }
 
@@ -495,19 +497,19 @@ class drawMeshGFace {
       glPushName(f->tag());
     }
 
-    drawArrays(_ctx, f, f->va_lines, GL_LINES, 
-               CTX::instance()->mesh.light && CTX::instance()->mesh.lightLines, 
+    drawArrays(_ctx, f, f->va_lines, GL_LINES,
+               CTX::instance()->mesh.light && CTX::instance()->mesh.lightLines,
                CTX::instance()->mesh.surfacesFaces, CTX::instance()->color.mesh.line);
     drawArrays(_ctx, f, f->va_triangles, GL_TRIANGLES, CTX::instance()->mesh.light);
 
     if(CTX::instance()->mesh.surfacesNum) {
       if(CTX::instance()->mesh.triangles)
-        drawElementLabels(_ctx, f, f->triangles, CTX::instance()->mesh.surfacesFaces, 
+        drawElementLabels(_ctx, f, f->triangles, CTX::instance()->mesh.surfacesFaces,
                           CTX::instance()->color.mesh.line);
       if(CTX::instance()->mesh.quadrangles)
-        drawElementLabels(_ctx, f, f->quadrangles, CTX::instance()->mesh.surfacesFaces, 
+        drawElementLabels(_ctx, f, f->quadrangles, CTX::instance()->mesh.surfacesFaces,
                           CTX::instance()->color.mesh.line);
-      drawElementLabels(_ctx, f, f->polygons, CTX::instance()->mesh.surfacesFaces, 
+      drawElementLabels(_ctx, f, f->polygons, CTX::instance()->mesh.surfacesFaces,
                         CTX::instance()->color.mesh.line);
     }
 
@@ -515,9 +517,9 @@ class drawMeshGFace {
       if(f->getAllElementsVisible())
         drawVerticesPerEntity(_ctx, f);
       else{
-        if(CTX::instance()->mesh.triangles) 
+        if(CTX::instance()->mesh.triangles)
           drawVerticesPerElement(_ctx, f, f->triangles);
-        if(CTX::instance()->mesh.quadrangles) 
+        if(CTX::instance()->mesh.quadrangles)
           drawVerticesPerElement(_ctx, f, f->quadrangles);
         drawVerticesPerElement(_ctx, f, f->polygons);
       }
@@ -553,35 +555,35 @@ class drawMeshGRegion {
  public:
   drawMeshGRegion(drawContext *ctx) : _ctx(ctx){}
   void operator () (GRegion *r)
-  {  
+  {
     if(!r->getVisibility()) return;
 
-    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 
+    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    r->model() == GModel::current());
     if(select) {
       glPushName(3);
       glPushName(r->tag());
     }
 
-    drawArrays(_ctx, r, r->va_lines, GL_LINES, CTX::instance()->mesh.light && 
+    drawArrays(_ctx, r, r->va_lines, GL_LINES, CTX::instance()->mesh.light &&
                CTX::instance()->mesh.lightLines, CTX::instance()->mesh.volumesFaces,
                CTX::instance()->color.mesh.line);
     drawArrays(_ctx, r, r->va_triangles, GL_TRIANGLES, CTX::instance()->mesh.light);
-    
+
     if(CTX::instance()->mesh.volumesNum) {
-      if(CTX::instance()->mesh.tetrahedra) 
-        drawElementLabels(_ctx, r, r->tetrahedra, CTX::instance()->mesh.volumesFaces || 
-                          CTX::instance()->mesh.surfacesFaces, 
-                          CTX::instance()->color.mesh.line);
-      if(CTX::instance()->mesh.hexahedra) 
-        drawElementLabels(_ctx, r, r->hexahedra, CTX::instance()->mesh.volumesFaces || 
-                          CTX::instance()->mesh.surfacesFaces, 
-                          CTX::instance()->color.mesh.line);
-      if(CTX::instance()->mesh.prisms) 
-        drawElementLabels(_ctx, r, r->prisms, CTX::instance()->mesh.volumesFaces || 
+      if(CTX::instance()->mesh.tetrahedra)
+        drawElementLabels(_ctx, r, r->tetrahedra, CTX::instance()->mesh.volumesFaces ||
                           CTX::instance()->mesh.surfacesFaces,
                           CTX::instance()->color.mesh.line);
-      if(CTX::instance()->mesh.pyramids) 
+      if(CTX::instance()->mesh.hexahedra)
+        drawElementLabels(_ctx, r, r->hexahedra, CTX::instance()->mesh.volumesFaces ||
+                          CTX::instance()->mesh.surfacesFaces,
+                          CTX::instance()->color.mesh.line);
+      if(CTX::instance()->mesh.prisms)
+        drawElementLabels(_ctx, r, r->prisms, CTX::instance()->mesh.volumesFaces ||
+                          CTX::instance()->mesh.surfacesFaces,
+                          CTX::instance()->color.mesh.line);
+      if(CTX::instance()->mesh.pyramids)
         drawElementLabels(_ctx, r, r->pyramids, CTX::instance()->mesh.volumesFaces ||
                           CTX::instance()->mesh.surfacesFaces,
                           CTX::instance()->color.mesh.line);
@@ -654,23 +656,23 @@ void drawContext::drawMesh()
         if(PView::list[j]->getData()->hasModel(GModel::list[i]))
           PView::list[j]->setChanged(true);
   }
-  
+
   glPointSize((float)CTX::instance()->mesh.pointSize);
-  gl2psPointSize((float)(CTX::instance()->mesh.pointSize * 
+  gl2psPointSize((float)(CTX::instance()->mesh.pointSize *
                          CTX::instance()->print.epsPointSizeFactor));
 
   glLineWidth((float)CTX::instance()->mesh.lineWidth);
   gl2psLineWidth((float)(CTX::instance()->mesh.lineWidth *
                          CTX::instance()->print.epsLineWidthFactor));
-  
+
   if(CTX::instance()->mesh.lightTwoSide)
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
   else
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
-  
+
   if(!CTX::instance()->clipWholeElements){
     for(int i = 0; i < 6; i++)
-      if(CTX::instance()->mesh.clip & (1 << i)) 
+      if(CTX::instance()->mesh.clip & (1 << i))
         glEnable((GLenum)(GL_CLIP_PLANE0 + i));
       else
         glDisable((GLenum)(GL_CLIP_PLANE0 + i));
@@ -694,7 +696,7 @@ void drawContext::drawMesh()
         std::for_each(m->firstRegion(), m->lastRegion(), drawMeshGRegion(this));
     }
   }
-  
+
   CTX::instance()->mesh.changed = 0;
 
   for(int i = 0; i < 6; i++)

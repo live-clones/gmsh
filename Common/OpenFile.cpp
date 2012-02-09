@@ -477,7 +477,6 @@ void OpenProject(std::string fileName)
   else{
     // if the current model is not empty make it invisible, clear the
     // parser variables and add a new model
-    GModel::current()->setVisibility(0);
 #if defined(HAVE_PARSER)
     gmsh_yysymbols.clear();
 #endif

@@ -127,7 +127,6 @@ static void mergePostProcessingFile(const std::string &fileName)
   GModel *old = GModel::current();
   if(haveMesh){
     GModel *m = new GModel();
-    m->setVisibility(0);
     GModel::setCurrent(m);
   }
   MergeFile(fileName);
