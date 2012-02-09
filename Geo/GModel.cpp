@@ -66,9 +66,10 @@ GModel::GModel(std::string name)
   partitionSize[0] = 0; partitionSize[1] = 0;
 
   // hide all other models
-  for(unsigned int i = 0; i < GModel::list.size(); i++)
-    GModel::list[i]->setVisibility(0);
+  for(unsigned int i = 0; i < list.size(); i++)
+    list[i]->setVisibility(0);
 
+  // push new one into the list
   list.push_back(this);
 
   // at the moment we always create (at least an empty) GEO model
