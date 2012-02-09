@@ -16,6 +16,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <iostream>
 #include "OS.h"
 #include "GModel.h"
 #include "MElement.h"
@@ -324,6 +325,7 @@ Centerline::Centerline(std::string fileName): kdtree(0), nodes(0){
   printf("centerline filename =%s \n", fileName.c_str());
   importFile(fileName);
   buildKdTree();
+  nbPoints = 25;
 
   update_needed = false;
   is_cut = false;
@@ -336,12 +338,13 @@ Centerline::Centerline(): kdtree(0), nodes(0){
 
   recombine = CTX::instance()->mesh.recombineAll;
   fileName = "centerlines.vtk";//default
+  nbPoints = 25;
 
   options["FileName"] = new FieldOptionString (fileName, "File name for the centerlines", &update_needed);
+  options["nbPoints"] = new FieldOptionInt(nbPoints, "Number of mesh elements in a circle");
   callbacks["cutMesh"] = new FieldCallbackGeneric<Centerline>(this, &Centerline::cutMesh, "Cut the initial mesh in different mesh partitions using the centerlines \n");
-
   is_cut = false;
- 
+
 }
 
 Centerline::~Centerline(){
@@ -373,7 +376,7 @@ void Centerline::importFile(std::string fileName){
   }
     
   mod = new GModel();
-  mod->readVTK(fileName.c_str());
+  mod->load(fileName);
   mod->removeDuplicateMeshVertices(1.e-8);
   current->setAsCurrent();  
 
@@ -624,7 +627,8 @@ void Centerline::buildKdTree(){
   fprintf(f, "View \"\"{\n");
 
   int nbPL = 3;  //10 points per line
-  int nbNodes  = (lines.size()+1) + (nbPL*lines.size());
+  //int nbNodes  = (lines.size()+1) + (nbPL*lines.size());
+  int nbNodes  = (colorp.size()) + (nbPL*lines.size());
 
   nodes = annAllocPts(nbNodes, 3);
   int ind = 0;
@@ -684,7 +688,7 @@ void Centerline::createSplitCompounds(){
     current->add(gec);
     //gec->parametrize();
   }
-
+ 
   // Parametrize Compound surfaces
   std::list<GEdge*> U0;
   for (int i=0; i < NF; i++){
@@ -698,70 +702,47 @@ void Centerline::createSplitCompounds(){
     GFaceCompound *gfc = new GFaceCompound(current, num_gfc, f_compound, U0,
 					   typ, 0);
     gfc->meshAttributes.recombine = recombine;
+    gfc->addPhysicalEntity(i+1);
     current->add(gfc);
     //gfc->parametrize();
+    // for(unsigned int j = 0; j < pf->triangles.size(); ++j){
+    //   MTriangle *t = pf->triangles[j];
+    //   for(int k = 0; k < 3; k++){
+    // 	MVertex *v = t->getVertex(k);
+    // 	v->setEntity(pf);
+    //   }
+    //}
   }
 
 }
 
 void Centerline::cleanMesh(){
 
+  for (int i=0; i < NF; i++){
+    std::ostringstream oss;
+    oss << "new" << NF+i+1 ;
+    std::string name = oss.str();
+    current->setPhysicalName(name, 2, i+1);
+  }
+  Msg::Info("Writing new splitted mesh mySPLITMESH.msh");
+  current->writeMSH("mySPLITMESH.msh", 2.2, false, false);
+
   if (!is_cut) return;
 
   std::set<MVertex*> allNod; 
   std::list<GEdge*> U0;
-  discreteFace *mySplitMesh = new discreteFace(current, 2*NF+1);
+  discreteFace * mySplitMesh; 
+
+  mySplitMesh= new discreteFace(current, 2*NF+1);
   current->add(mySplitMesh);
-
-  //set centerline field
-  // FieldManager *fields = current->getFields();
-  // fields->reset();
-  // field->setBackgroundField(this); 
-  // Msg::Info("*** Starting meshing 1D edges ...:");
-  // printf("NE=%d \n", NE);
-  // for (int i = 0; i < NE; i++){
-  //   printf("getting %d \n", NE+i+1);
-  //   GEdge *gec = current->getEdgeByTag(NE+i+1);
-  //   printf("edge (%p) =%d lines =%d \n", gec, gec->tag(), gec->lines.size());
-  //   meshGEdge mge;
-  //   mge(gec);
-  // }
-  // double t2 = Cpu();
-  // Msg::Info("*** Meshing 1D edges done (%gs)", t2-t1);
-
-  // Msg::Info("*** Starting mesh of surface ");
-  // for (int i=0; i < NF; i++){
-  //   GFace *gfc =  current->getFaceByTag(NF+i+1);
-  //   meshGFace mgf;
-  //   mgf(gfc);
-  //   for(unsigned int j = 0; j < gfc->triangles.size(); ++j){
-  //     MTriangle *t = gfc->triangles[j];
-  //     std::vector<MVertex *> v(3);
-  //     for(int k = 0; k < 3; k++){
-  //       v[k] = t->getVertex(k);
-  //       allNod.insert(v[k]);
-  //     }
-  //     mySplitMesh->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
-  //   }
-  //   for(unsigned int j = 0; j < gfc->quadrangles.size(); ++j){
-  //     MQuadrangle *q = gfc->quadrangles[j];
-  //     std::vector<MVertex *> v(4);
-  //     for(int k = 0; k < 4; k++){
-  //       v[k] = q->getVertex(k);
-  //       allNod.insert(v[k]);
-  //     }
-  //     mySplitMesh->quadrangles.push_back(new MQuadrangle(v[0], v[1], v[2], v[3]));
-  //   }
-  // }
-
   for (int i=0; i < NF; i++){
     GFace *gfc =  current->getFaceByTag(NF+i+1);
     for(unsigned int j = 0; j < gfc->triangles.size(); ++j){
       MTriangle *t = gfc->triangles[j];
       std::vector<MVertex *> v(3);
       for(int k = 0; k < 3; k++){
-        v[k] = t->getVertex(k);
-        allNod.insert(v[k]);
+	v[k] = t->getVertex(k);
+	allNod.insert(v[k]);
       }
       mySplitMesh->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
     }
@@ -769,13 +750,13 @@ void Centerline::cleanMesh(){
       MQuadrangle *q = gfc->quadrangles[j];
       std::vector<MVertex *> v(4);
       for(int k = 0; k < 4; k++){
-        v[k] = q->getVertex(k);
-        allNod.insert(v[k]);
+	v[k] = q->getVertex(k);
+	allNod.insert(v[k]);
       }
       mySplitMesh->quadrangles.push_back(new MQuadrangle(v[0], v[1], v[2], v[3]));
     }
   }
-
+  
   //Removing discrete Vertices - Edges - Faces
   for (int i=0; i < NV; i++){
     GVertex *gv = current->getVertexByTag(i+1);
@@ -793,15 +774,13 @@ void Centerline::cleanMesh(){
     current->remove(gf); 
     current->remove(gfc);
   }
-
+  
   //Put new mesh in a new discreteFace
-  for(std::set<MVertex*>::iterator it = allNod.begin(); it != allNod.end(); ++it){
+  for(std::set<MVertex*>::iterator it = allNod.begin(); it != allNod.end(); ++it)
     mySplitMesh->mesh_vertices.push_back(*it);
-  }
-  current->createTopologyFromMesh();
-
   mySplitMesh->meshStatistics.status = GFace::DONE; 
-
+  current->createTopologyFromMesh();
+  
 }
 void Centerline::createFaces(){
  
@@ -831,7 +810,7 @@ void Centerline::createFaces(){
         it != touched.end(); ++it)
       e2e.erase(*it);
   }
-  printf("%d faces created \n", faces.size());
+  printf("%d faces created \n", (int)faces.size());
 
   //create discFaces
   int numBef = current->getMaxElementaryNumber(2) + 1;
@@ -848,6 +827,7 @@ void Centerline::createFaces(){
       for (int k= 0; k< 3; k++){
 	MVertex *v = t->getVertex(k);
 	myVertices.insert(v);
+	v->setEntity(f);
       }
     }
     f->mesh_vertices.insert(f->mesh_vertices.begin(),
@@ -887,11 +867,11 @@ void Centerline::cutMesh(){
   for(unsigned int i = 0; i < edges.size(); i++){
     std::vector<MLine*> lines = edges[i].lines;
     double L = edges[i].length;
-    double R = edges[i].maxRad;
+    double R = edges[i].minRad;
     double AR = L/R;
     printf("*** branch =%d \n", i, AR);
-    if( AR > 8.){
-      int nbSplit = (int)ceil(AR/3.5);
+    if( AR > 4.5){
+      int nbSplit = (int)ceil(AR/4.0);
       double li  = L/nbSplit;
       double lc = 0.0;
       for (int j= 0; j < lines.size(); j++){
@@ -951,8 +931,8 @@ void Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
       allEdges.insert(triangles[i]->getEdge(j)); 
   bool closedCut = false;
   int step = 0;
-  while (!closedCut && step < 20){
-    double rad = 1.3*maxRad+0.1*step*maxRad;
+  while (!closedCut && step < 10){
+    double rad = 1.2*maxRad+0.1*step*maxRad;
     std::map<MEdge,MVertex*,Less_Edge> cutEdges;
     std::set<MVertex*> cutVertices;
     std::vector<MTriangle*> newTris; 
@@ -1035,16 +1015,37 @@ double Centerline::operator() (double x, double y, double z, GEntity *ge){
    int num_neighbours = 1;
    kdtree->annkSearch(xyz, num_neighbours, index, dist);
    double d = sqrt(dist[0]);
-   double lc = 2*M_PI*d/30.0; //30 mesh elements along circle
+   double lc = 2*M_PI*d/nbPoints; 
    return lc;
 
 }
 
 void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge){
-  printf("in operator xyz centerline BADDD \n");
 
-  Msg::Error("This anisotropic operator of CenterlineField is not implemnted yet ");
-  return;
+  //printf("in operator metric  xyz centerline \n");
+   if (update_needed){
+     std::ifstream input;
+     input.open(fileName.c_str());
+     if(StatFile(fileName)) Msg::Fatal("Centerline file '%s' does not exist", fileName.c_str());
+     importFile(fileName);
+     buildKdTree();
+     update_needed = false;
+   }
+   
+   //double lc = operator()(x,y,z,ge);
+   //metr = SMetric3(1./(lc*lc));
+
+   double xyz[3] = {x,y,z };
+   ANNidxArray index2 = = new ANNidx[1];
+   ANNdistArray dist2 =  new ANNdist[1];
+   int num_neighbours = 2;
+   kdtree->annkSearch(xyz, num_neighbours, index2, dist2);
+   double d = sqrt(dist2[0]);  
+
+   delete[]index2;
+   delete[]dist2; 
+
+   return;
 }
 
 void Centerline::printSplit() const{

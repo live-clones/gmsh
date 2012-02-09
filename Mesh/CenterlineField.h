@@ -60,6 +60,7 @@ class Centerline : public Field{
   ANNidxArray index;
   ANNdistArray dist;
   std::string fileName;
+  int nbPoints;
   double recombine;
   int NF, NV, NE;
   bool is_cut;

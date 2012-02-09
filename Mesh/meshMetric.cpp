@@ -192,7 +192,7 @@ void meshMetric::computeHessian( v2t_cont adj){
     while (it != adj.end()) {
       std::vector<MElement*> lt = it->second;      
       MVertex *ver = it->first;
-      while (lt.size() < 9) increaseStencil(ver,adj,lt); //<7
+      while (lt.size() < 11) increaseStencil(ver,adj,lt); //<7
       // if ( ver->onWhat()->dim() < _dim ){
       // 	while (lt.size() < 12){
       // 	  increaseStencil(ver,adj,lt);

@@ -234,10 +234,10 @@ static SPoint3  myNeighVert(std::map<MVertex*,SPoint3> &coordinates,
       if (v->onWhat()->dim() < 2) vN.insert(v);
     }
   }
-  if (vN.size()!=3) {
-    printf("ARGG more than 3 points on line =%d \n", vN.size());
-    exit(1);
-  }
+  // if (vN.size()!=3) {
+  //   printf("ARGG more than 3 points on line =%d \n", vN.size());
+  //   exit(1);
+  // }
   
   double ucg = 0.0;
   double vcg = 0.0;
@@ -446,7 +446,7 @@ void GFaceCompound::fillNeumannBCS() const
     if (fillTris.size() > 0){
       char name[256];
       std::list<GFace*>::const_iterator itf = _compound.begin();
-      sprintf(name, "fillTris-%d.pos", (*itf)->tag());
+      sprintf(name, "fillTris-%d.pos", tag());
       FILE * ftri = fopen(name,"w");
       fprintf(ftri,"View \"\"{\n");
       for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); 
@@ -570,13 +570,13 @@ bool GFaceCompound::checkOrientation(int iter, bool moveBoundaries) const
 
   int iterMax = 15;
   if(!oriented && iter < iterMax){
-    if (iter == 0) Msg::Debug("--- Flipping : applying cavity checks.");
+    if (iter == 0) Msg::Info("--- Flipping : applying cavity checks.");
     Msg::Debug("--- Cavity Check - iter %d -",iter);
     one2OneMap(moveBoundaries);
     return checkOrientation(iter+1, moveBoundaries);
   }
-  else if (oriented && iter < iterMax){
-    Msg::Debug("Parametrization is bijective (no flips)");
+  else if (iter > 0 && iter < iterMax){
+    Msg::Info("--- Flipping : no more flips (%d iter)", iter);
   }
 
   return oriented;
@@ -662,19 +662,27 @@ bool GFaceCompound::parametrize() const
   else if (_mapping == CONFORMAL){
     Msg::Debug("Parametrizing surface %d with 'conformal map'", tag());
     fillNeumannBCS();
-    bool hasOverlap = parametrize_conformal_spectral();
+    std::vector<MVertex *> vert;
+    bool oriented, hasOverlap;
+    hasOverlap = parametrize_conformal_spectral();
     printStuff(11);
-    if (hasOverlap || !checkOrientation(0, true) ){
-      Msg::Warning("!!! Overlap or Flipping: parametrization switched to 'FE conformal' map");
-      printStuff(22);
-      hasOverlap = parametrize_conformal(0, NULL, NULL);
-    }
-    if (hasOverlap || !checkOrientation(0, true) ){
+    if (hasOverlap) oriented =  checkOrientation(0);
+    else oriented = checkOrientation(0, true);
+    printStuff(22);
+    hasOverlap = checkOverlap(vert);
+    if ( !oriented  || hasOverlap ){
+      Msg::Warning("!!! parametrization switched to 'FE conformal' map");
+      parametrize_conformal(0, NULL, NULL);
       printStuff(33);
-      Msg::Warning("$$$ Overlap or Flipping: parametrization switched to 'harmonic' map");
+      checkOrientation(0, true);
+      printStuff(44);
+    }  
+    if (!checkOrientation(0) || checkOverlap(vert)){
+      printStuff(55);
+      Msg::Warning("$$$ parametrization switched to 'harmonic' map");
       parametrize(ITERU,HARMONIC); 
       parametrize(ITERV,HARMONIC);
-    }
+    } 
   }
   // Radial-Basis Function parametrization
   else if (_mapping == RBF){    
@@ -708,7 +716,7 @@ bool GFaceCompound::parametrize() const
  
   if (_mapping != RBF){
     if (!checkOrientation(0)){
-      Msg::Info("### Flipping: parametrization switched to convex combination map");
+      Msg::Info("### parametrization switched to convex combination map");
       coordinates.clear(); 
       Octree_Delete(oct);
       fillNeumannBCS();
@@ -1185,7 +1193,7 @@ bool GFaceCompound::parametrize_conformal_spectral() const
   laplaceTerm laplace2(model(), 2, ONE);
   crossConfTerm cross12(model(), 1, 2, ONE);
   crossConfTerm cross21(model(), 2, 1, MONE);
-  std::list<GFace*>::const_iterator it = _compound.begin(); 
+  std::list<GFace*>::const_iterator it = _compound.begin();
   for( ; it != _compound.end() ; ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       SElement se((*it)->triangles[i]);
@@ -1204,7 +1212,7 @@ bool GFaceCompound::parametrize_conformal_spectral() const
     cross21.addToMatrix(myAssembler, &se);
   }
   
-  double epsilon = 1.e-7;
+  double epsilon = 1.e-6;
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
     MVertex *v = *itv;
     if (std::find(_ordered.begin(), _ordered.end(), v) == _ordered.end() ){
@@ -1241,7 +1249,7 @@ bool GFaceCompound::parametrize_conformal_spectral() const
   // FIXME: force non-hermitian. For some reason (roundoff errors?)
   // on some machines and for some meshes slepc complains about bad IP
   // norm otherwise
-  eigenSolver eig(&myAssembler, "B" , "A", false);
+  eigenSolver eig(&myAssembler, "B" , "A", true);
   bool converged = eig.solve(1, "largest");
     
   if(converged) {
@@ -1270,15 +1278,8 @@ bool GFaceCompound::parametrize_conformal_spectral() const
     return parametrize_conformal(0,NULL,NULL);  
   }
 
-  std::vector<MVertex *> vert;
-  bool hasOverlap = checkOverlap(vert);
-  if (hasOverlap){
-    Msg::Warning("!!! Overlap: parametrization switched to 'FE conformal' map");
-    printStuff(3);
-    return hasOverlap = parametrize_conformal(0, vert[0], vert[1]);
-  }
-  
-  return hasOverlap;
+  std::vector<MVertex *> vert;  
+  return checkOverlap(vert);;
 #endif
 }
 
@@ -1370,7 +1371,7 @@ bool GFaceCompound::parametrize_conformal(int iter, MVertex *v1, MVertex *v2) co
   // check for overlap and compute new mapping with new pinned
   // vertices
   std::vector<MVertex *> vert;
-  bool hasOverlap = checkOverlap(vert);;
+  bool hasOverlap = checkOverlap(vert);
   if ( hasOverlap && iter < 3){
     Msg::Info("Loop FE conformal iter (%d) v1=%d v2=%d", iter, 
               vert[0]->getNum(), vert[1]->getNum());
@@ -1873,11 +1874,11 @@ bool GFaceCompound::checkTopology() const
                 tag(), nbSplit);
     }
     else if (_allowPartition == 0){
-      Msg::Warning("The geometrical aspect ratio of your geometry is quite high. "
-                   "You should enable partitioning of the mesh by activating the "
-                   "automatic remeshin algorithm. Add 'Mesh.RemeshAlgorithm=1;' "
-                   "in your geo file or through the Fltk window (Options > Mesh > "
-                   "General)");
+      Msg::Warning("The geometrical aspect ratio of your geometry is quite high.\n "
+                   "You should enable partitioning of the mesh by activating the\n"
+                   "automatic remeshing algorithm. Add 'Mesh.RemeshAlgorithm=1;'\n "
+                   "in your geo file or through the Fltk window (Options > Mesh >\n "
+                   "General) \n");
     }
   }
   else{
@@ -2096,13 +2097,13 @@ void GFaceCompound::printStuff(int iNewton) const
   char name0[256], name1[256], name2[256], name3[256];
   char name4[256], name5[256], name6[256];
   char name7[256];
-  sprintf(name0, "UVAREA-%d.pos", (*it)->tag());
-  sprintf(name1, "UVX-%d_%d.pos", (*it)->tag(), iNewton);
-  sprintf(name2, "UVY-%d_%d.pos", (*it)->tag(), iNewton);
-  sprintf(name3, "UVZ-%d_%d.pos", (*it)->tag(), iNewton); 
-  sprintf(name4, "XYZU-%d_%d.pos", (*it)->tag(), iNewton);
-  sprintf(name5, "XYZV-%d_%d.pos", (*it)->tag(), iNewton);
-  sprintf(name6, "XYZC-%d.pos", (*it)->tag());
+  sprintf(name0, "UVAREA-%d.pos", tag()); //(*it)->tag()
+  sprintf(name1, "UVX-%d_%d.pos", tag(), iNewton);
+  sprintf(name2, "UVY-%d_%d.pos", tag(), iNewton);
+  sprintf(name3, "UVZ-%d_%d.pos", tag(), iNewton); 
+  sprintf(name4, "XYZU-%d_%d.pos", tag(), iNewton);
+  sprintf(name5, "XYZV-%d_%d.pos", tag(), iNewton);
+  sprintf(name6, "XYZC-%d.pos", tag());
 
   sprintf(name7, "UVM-%d.pos", (*it)->tag());
 

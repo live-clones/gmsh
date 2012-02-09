@@ -384,7 +384,7 @@ class GModel
   //   Available algorithms: 
   //    1) Assume that the function is a levelset -> adapt using Coupez technique (technique = 1)
   //           parameters[0] = thickness of the interface (mandatory)
-  //    2) Assume that the function is a physical quantity -> adapt using the Hessain (technique = 2)
+  //    2) Assume that the function is a physical quantity -> adapt using the Hessian (technique = 2)
   //           parameters[0] = N, the final number of elements
   //    3) A variant of 1) by P. Frey (= Coupez + takes curvature function into account)
   //           parameters[0] = thickness of the interface (mandatory)

@@ -1739,7 +1739,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
   for (std::vector<discreteFace*>::iterator it = discFaces.begin();
        it != discFaces.end(); it++)
     (*it)->findEdges(map_edges);
-
+  
   // return if no boundary edges (torus, sphere, ...)
   if (map_edges.empty()) return;
 
