@@ -87,6 +87,7 @@ class linearSystemPETScBlockDouble : public linearSystem<fullMatrix<double> > {
   Vec _b, _x;
   KSP _ksp;
   int _blockSize, _localRowStart, _localRowEnd, _globalSize, _localSize;
+  bool _sequential;
   public:
   void _kspCreate();
   virtual void addToMatrix(int row, int col, const fullMatrix<double> &val);
@@ -105,7 +106,7 @@ class linearSystemPETScBlockDouble : public linearSystem<fullMatrix<double> > {
   void zeroSolution();
   double normInfRightHandSide() const;
   void insertInSparsityPattern (int i, int j);
-  linearSystemPETScBlockDouble();
+  linearSystemPETScBlockDouble(bool sequential = false);
 };
 
 #else

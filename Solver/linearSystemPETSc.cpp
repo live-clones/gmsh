@@ -16,7 +16,7 @@ template class linearSystemPETSc<std::complex<double> >;
 
 
 void linearSystemPETScBlockDouble::_kspCreate() {
-  KSPCreate(PETSC_COMM_WORLD, &_ksp);
+  KSPCreate(_sequential ? PETSC_COMM_SELF : PETSC_COMM_WORLD, &_ksp);
   if (this->_parameters.count("petscPrefix"))
     KSPAppendOptionsPrefix(_ksp, this->_parameters["petscPrefix"].c_str());
   KSPSetFromOptions(_ksp);
@@ -112,15 +112,16 @@ void linearSystemPETScBlockDouble::getFromSolution(int row, fullMatrix<double> &
 
 void linearSystemPETScBlockDouble::allocate(int nbRows)
 {
+  MPI_Comm comm = _sequential ? PETSC_COMM_SELF: PETSC_COMM_WORLD;
   if (this->_parameters.count("petscOptions"))
     PetscOptionsInsertString(this->_parameters["petscOptions"].c_str());
   _blockSize = strtol (_parameters["blockSize"].c_str(), NULL, 10);
   if (_blockSize == 0)
     Msg::Error ("'blockSize' parameters must be set for linearSystemPETScBlock");
   clear();
-  MatCreate(PETSC_COMM_WORLD, &_a);
+  MatCreate(comm, &_a);
   MatSetSizes(_a,nbRows * _blockSize, nbRows * _blockSize, PETSC_DETERMINE, PETSC_DETERMINE);
-  if (Msg::GetCommSize() > 1) {
+  if (Msg::GetCommSize() > 1 && !_sequential) {
     MatSetType(_a, MATMPIBAIJ);
   } else {
     MatSetType(_a, MATSEQBAIJ);
@@ -136,7 +137,7 @@ void linearSystemPETScBlockDouble::allocate(int nbRows)
   _localRowEnd /= _blockSize;
   // override the default options with the ones from the option
   // database (if any)
-  VecCreate(PETSC_COMM_WORLD, &_x);
+  VecCreate(comm, &_x);
   VecSetSizes(_x, nbRows * _blockSize, PETSC_DETERMINE);
   // override the default options with the ones from the option
   // database (if any)
@@ -256,11 +257,12 @@ void linearSystemPETScBlockDouble::zeroSolution()
 }
 
 
-linearSystemPETScBlockDouble::linearSystemPETScBlockDouble()
+linearSystemPETScBlockDouble::linearSystemPETScBlockDouble(bool sequential)
 {
   _entriesPreAllocated = false;
   _isAllocated = false;
   _kspAllocated = false;
+  _sequential = sequential;
 }
 
 double linearSystemPETScBlockDouble::normInfRightHandSide() const
