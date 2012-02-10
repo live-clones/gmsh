@@ -392,18 +392,22 @@ int FlGui::testGlobalShortcuts(int event)
   }
   else if(Fl::test_shortcut('g')) {
     mod_geometry_cb(0, 0);
+    Fl::focus(menu->scroll);
     status = 1;
   }
   else if(Fl::test_shortcut('m')) {
     mod_mesh_cb(0, 0);
+    Fl::focus(menu->scroll);
     status = 1;
   }
   else if(Fl::test_shortcut('s')) {
     mod_solver_cb(0, 0);
+    Fl::focus(menu->scroll);
     status = 1;
   }
   else if(Fl::test_shortcut('p')) {
     mod_post_cb(0, 0);
+    Fl::focus(menu->scroll);
     status = 1;
   }
   else if(Fl::test_shortcut('<')) {
