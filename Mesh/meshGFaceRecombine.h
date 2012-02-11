@@ -26,6 +26,13 @@ class Rec2DEdge;
 class Rec2DElement;
 class Rec2DAction;
 class Rec2DData;
+struct lessRec2DAction {
+  bool operator()(Rec2DAction*, Rec2DAction*) const;
+};
+struct greaterRec2DAction {
+  bool operator()(Rec2DAction*, Rec2DAction*) const;
+};
+
 struct lessRec2DNode {
   bool operator()(Rec2DNode*, Rec2DNode*) const;
 };
@@ -118,6 +125,8 @@ class Rec2DData {
       _current->_valEdge += (long double)val;
     }
     
+    static inline int getNumEdge() {return _current->_numEdge;}
+    static inline double getValEdge() {return (double)_current->_valEdge;}
     static Rec2DAction* getBestAction();
     static Rec2DAction* getBestNonHiddenAction();
     
@@ -174,10 +183,6 @@ class Rec2DData {
     static void revertAssumedParities();
 };
 
-struct lessRec2DAction {
-  bool operator()(Rec2DAction*, Rec2DAction*) const;
-};
-
 class Rec2DAction {
   protected :
     double _globValIfExecuted;
@@ -200,7 +205,7 @@ class Rec2DAction {
     virtual void unChoose(Rec2DElement*) = 0;
     virtual int getNumElement() = 0;
     virtual void getElements(std::vector<Rec2DElement*>&) = 0;
-    virtual int getNum() = 0;
+    virtual int getNum(double shiftx, double shifty) = 0;
     
   private :
     virtual void _computeGlobVal() = 0;
@@ -228,7 +233,7 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     virtual void unChoose(Rec2DElement*);
     virtual inline int getNumElement() {return 2;}
     virtual void getElements(std::vector<Rec2DElement*>&);
-    virtual int getNum();
+    virtual int getNum(double shiftx, double shifty);
     
   private :
     virtual void _computeGlobVal();
@@ -248,6 +253,7 @@ class Rec2DEdge {
     void reveal();
     
     double getQual();
+    double getVal();
     
     inline double addHasTri() {_addWeight(-REC2D_EDGE_QUAD); ++_boundary;}
     inline double remHasTri() {_addWeight(REC2D_EDGE_QUAD); --_boundary;}
@@ -265,7 +271,7 @@ class Rec2DEdge {
     void _computeQual();
     double _straightAdimLength() const;
     double _straightAlignment() const;
-    void _addWeight(double);
+    void _addWeight(int);
 };
 
 struct AngleData {
@@ -400,7 +406,6 @@ class Rec2DElement {
     MQuadrangle* _createQuad() const;
 };
 
-
 class Rec2DNode {
   private :
     Rec2DNode *_father;
@@ -414,7 +419,7 @@ class Rec2DNode {
     
     bool operator<(Rec2DNode&);
     inline Rec2DNode* getFather() {return _father;}
-    inline int getNum() {return _ra->getNum();}
+    //inline int getNum() {return _ra->getNum();}
     inline Rec2DAction* getAction() {return _ra;}
     inline double getGlobVal() {return _globalValue;}
     inline int getNumTri() {return _remainingTri;}
