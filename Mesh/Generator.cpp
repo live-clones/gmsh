@@ -504,6 +504,7 @@ static void Mesh2D(GModel *m)
 
   // collapseSmallEdges(*m);
   
+#if defined(HAVE_ANN)
   //For centerline field, clean the cut parts
   Centerline *center = 0;
   FieldManager *fields = GModel::current()->getFields();
@@ -512,7 +513,8 @@ static void Mesh2D(GModel *m)
     center = dynamic_cast<Centerline*> (myField);
   } 
   if (center) center->cleanMesh();
-
+#endif
+  
   double t2 = Cpu();
   CTX::instance()->meshTimer[1] = t2 - t1;
   Msg::StatusBar(2, true, "Done meshing 2D (%g s)", CTX::instance()->meshTimer[1]);

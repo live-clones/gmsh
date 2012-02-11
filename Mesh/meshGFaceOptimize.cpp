@@ -1279,7 +1279,7 @@ int postProcessExtraEdges (GFace *gf, std::vector<std::pair<MElement*,MElement*>
   // so we recombine them in another way (adding a new node)
   
   
-  printf("%d extra edges to be processed\n",toProcess.size());
+  printf("%d extra edges to be processed\n",(int)toProcess.size());
 
   //  return 1;
 
@@ -1309,7 +1309,7 @@ int postProcessExtraEdges (GFace *gf, std::vector<std::pair<MElement*,MElement*>
       if(it != adj.end()){
 	const std::vector<MElement*> &lt = it->second;
 	// simply swap one edge
-	printf("%d elements surrounding the common vertex\n",lt.size());
+	printf("%d elements surrounding the common vertex\n",(int)lt.size());
 	if (lt.size() == 3){
 	  std::vector<MVertex*> VERTS  = computeBoundingPoints (lt,common);
 	  if (VERTS.size() != 5)return -1;

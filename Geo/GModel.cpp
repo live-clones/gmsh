@@ -1304,7 +1304,7 @@ static void recurConnectMElementsByMFace(const MFace &f,
       }
     }
   }
-  printf("group pf %d elements found\n",group.size());
+  printf("group pf %d elements found\n",(int)group.size());
 }
 
 static void recurConnectMElementsByMFaceOld(const MFace &f,
