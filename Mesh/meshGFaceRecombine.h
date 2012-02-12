@@ -29,14 +29,14 @@ class Rec2DData;
 struct lessRec2DAction {
   bool operator()(Rec2DAction*, Rec2DAction*) const;
 };
-struct greaterRec2DAction {
+struct gterRec2DAction {
   bool operator()(Rec2DAction*, Rec2DAction*) const;
 };
 
 struct lessRec2DNode {
   bool operator()(Rec2DNode*, Rec2DNode*) const;
 };
-struct greaterRec2DNode {
+struct gterRec2DNode {
   bool operator()(Rec2DNode*, Rec2DNode*) const;
 };
 struct moreRec2DNode {
@@ -44,11 +44,6 @@ struct moreRec2DNode {
 };
 
 //typedef std::list<Rec2DAction*> setofRec2DAction;
-//typedef std::map<MVertex*, Rec2DVertex*> mapofVertices;
-//typedef std::map<MEdge, Rec2DEdge*, Less_Edge> mapofEdges;
-//typedef std::map<MElement*, Rec2DElement*> mapofElements;
-//typedef std::map<MElement*, std::set<Rec2DAction*> > mapofElementActions;
-//typedef std::map<MQuadrangle*, std::set<MElement*> > mapofAdjacencies;
 
 class Recombine2D {
   private :
@@ -127,6 +122,8 @@ class Rec2DData {
     
     static inline int getNumEdge() {return _current->_numEdge;}
     static inline double getValEdge() {return (double)_current->_valEdge;}
+    static inline int getNumVert() {return _current->_numVert;}
+    static inline double getValVert() {return (double)_current->_valVert;}
     static Rec2DAction* getBestAction();
     static Rec2DAction* getBestNonHiddenAction();
     
@@ -288,6 +285,7 @@ class Rec2DVertex {
     const double _angle;
     std::vector<Rec2DEdge*> _edges;
     std::vector<Rec2DElement*> _elements;
+    double _sumQualAngle;
     int _lastMove, _onWhat; // _onWhat={-1:corner,0:edge,1:face}
     int _parity, _assumedParity;
     SPoint2 _param;
@@ -303,6 +301,8 @@ class Rec2DVertex {
     
     double getQual(int numEl = -1) const;
     double getGain(int) const;
+    void initQualAngle();
+    inline double getQualAngle() {return _sumQualAngle/_elements.size();}
     
     inline void setOnBoundary();
     inline bool getOnBoundary() const {return _onWhat < 1;}
@@ -333,7 +333,7 @@ class Rec2DVertex {
     bool has(Rec2DEdge*) const;
     void remove(Rec2DEdge*);
     
-    void add(Rec2DElement*);
+    void add(Rec2DElement*, bool b = true);
     bool has(Rec2DElement*) const;
     void remove(Rec2DElement*);
     
@@ -344,6 +344,7 @@ class Rec2DVertex {
     
   private :
     bool _recursiveBoundParity(Rec2DVertex *prev, int p0, int p1);
+    inline double _angle2Qual(double ang) {return 1. - fabs(ang*2/M_PI - 1.);}
 };
 
 class Rec2DElement {
@@ -392,6 +393,8 @@ class Rec2DElement {
       return NULL;
     }
 #endif
+    
+    double getAngle(Rec2DVertex*);
     
     inline int getNumActions() const {return _actions.size();}
     inline Rec2DAction* getAction(int i) const {return _actions[i];}

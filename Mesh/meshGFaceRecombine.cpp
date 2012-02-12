@@ -50,11 +50,19 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf)
   }
   Recombine2D::_current = this;
   
+  Rec2DVertex::initStaticTable();
   backgroundMesh::set(_gf);
   _bgm = backgroundMesh::current();
   _data = new Rec2DData();
-  Rec2DVertex::initStaticTable();
   _numChange = 0;
+  
+  static int po = -1;
+  if (po < 1)
+    Msg::Warning("FIXME Why {mesh 2} then {mesh 0} then {mesh 2} imply not corner vertices");
+  
+  static int pi = -1;
+  if (pi < 1)
+    Msg::Warning("FIXME Why more vertices after first mesh generation");
   
   // Be able to compute geometrical angle at corners
   std::map<MVertex*, AngleData> mapCornerVert;
@@ -76,6 +84,10 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf)
     // triangles
     for (unsigned int i = 0; i < gf->triangles.size(); ++i) {
       MTriangle *t = gf->triangles[i];
+      //Msg::Info("[%d %d %d]", t->getVertex(0)->getNum(), t->getVertex(1)->getNum(), t->getVertex(2)->getNum());
+      t->setVolumePositive();
+      static int tia = -1;
+      if (++tia < 1) Msg::Warning("FIXME Sometimes negative volume");
       Rec2DElement *rel = new Rec2DElement(t);
       Rec2DVertex *rv[3];
       for (int j = 0; j < 3; ++j) {
@@ -93,18 +105,19 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf)
           rv[j] = new Rec2DVertex(v);
           mapVert[v] = rv[j];
         }
-        rv[j]->add(rel); //up data
+        rv[j]->add(rel, false); //up data
       }
       for (int j = 0; j < 3; ++j) {
         Rec2DEdge *re;
         if ( !(re = Rec2DVertex::getCommonEdge(rv[j], rv[(j+1)%3])) )
           re = new Rec2DEdge(rv[j], rv[(j+1)%3]);
-        rel->add(re); //up data
+        rel->add(re);
       }
     }
     // quadrangles
     for (unsigned int i = 0; i < gf->quadrangles.size(); ++i) {
       MQuadrangle *q = gf->quadrangles[i];
+      q->setVolumePositive();
       Rec2DElement *rel = new Rec2DElement(q);
       Rec2DVertex *rv[4];
       for (int j = 0; j < 4; ++j) {
@@ -122,15 +135,12 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf)
           rv[j] = new Rec2DVertex(v);
           mapVert[v] = rv[j];
         }
-        rv[j]->add(rel);
+        rv[j]->add(rel, false);
       }
       for (int j = 0; j < 4; ++j) {
         Rec2DEdge *re;
-        if ( !(re = Rec2DVertex::getCommonEdge(rv[i], rv[(i+1)%3])) ) {
+        if ( !(re = Rec2DVertex::getCommonEdge(rv[i], rv[(i+1)%3])) )
           re = new Rec2DEdge(rv[i], rv[(i+1)%3]);
-          rv[i]->add(re);
-          rv[(i+1)%3]->add(re);
-        }
         rel->add(re);
       }
     }
@@ -169,11 +179,12 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf)
       }
     }
   }
-  // set parity on boundary, create 'Rec2DFourTri2Quad'
+  // set parity on boundary, create the 'Rec2DFourTri2Quad', add quality of angle at vertices
   {
     Rec2DData::iter_rv it = Rec2DData::firstVertex();
     for (; it != Rec2DData::lastVertex(); ++it) {
       Rec2DVertex *rv = *it;
+      rv->initQualAngle();
       if (rv->getOnBoundary()) {
         if (!rv->getParity()) {
           int base = Rec2DData::getNewParity();
@@ -233,6 +244,10 @@ bool Recombine2D::recombine()
     delete nextAction;
   }
   
+  //Rec2DData::iter_rv it = Rec2DData::firstVertex();
+  //for (; it != Rec2DData::lastVertex(); ++it) {
+  //  Msg::Info("%d -> %g", (*it)->getMVertex()->getNum(), (*it)->getQualAngle());
+  //}
   _data->printState();
 #ifdef REC2D_SMOOTH
     laplaceSmoothing(_gf,100);
@@ -311,17 +326,18 @@ double Recombine2D::_geomAngle(MVertex *v,
   double angle2 = 2. * M_PI - angle1;
   
   double angleMesh = .0;
-  std::vector<MElement*>::iterator it2 = elem.begin();
-  for (; it2 != elem.end(); ++it2) {
-    MElement *el = *it2;
+  for (unsigned int i = 0; i < elem.size(); ++i) {
+    MElement *el = elem[i];
     int k = 0, numV = el->getNumVertices();
     while (el->getVertex(k) != v && k < numV) ++k;
     if (k == numV) {
       Msg::Error("[Recombine2D] Wrong element, returning pi/2");
       return M_PI / 2.;
     }
-    angleMesh += angle3Vertices(el->getVertex((k+1) % numV), v,
-                                el->getVertex((k+2) % numV)    );
+    if (el->getNumVertices() > 3)
+      Msg::Warning("[Recombine2D] angle3Vertices() ok for triangle... but not for other");
+    angleMesh += angle3Vertices(el->getVertex((k+numV-1) % numV), v,
+                                el->getVertex((k+1) % numV)    );
   }
   
   if (angleMesh < M_PI)
@@ -810,14 +826,14 @@ void Rec2DData::revertAssumedParities()
 double Rec2DData::getGlobalValue()
 {
   double a = (_current->_valVert) / (_current->_numVert);
-  return a *a* (_current->_valEdge) / (_current->_numEdge);
+  return a * (_current->_valEdge) / (_current->_numEdge);
 }
 
 double Rec2DData::getGlobalValue(int numEdge, double valEdge,
                                    int numVert, double valVert)
 {
   double a = (_current->_valVert + valVert) / (_current->_numVert + numVert);
-  return a *a* (_current->_valEdge + valEdge) / (_current->_numEdge + numEdge);
+  return a * (_current->_valEdge + valEdge) / (_current->_numEdge + numEdge);
 }
 
 Rec2DAction* Rec2DData::getBestAction()
@@ -830,7 +846,7 @@ Rec2DAction* Rec2DData::getBestAction()
 
 Rec2DAction* Rec2DData::getBestNonHiddenAction()
 {
-  _current->_actions.sort(greaterRec2DAction());
+  _current->_actions.sort(gterRec2DAction());
   std::list<Rec2DAction*>::iterator it = _current->_actions.begin();
   while (it != _current->_actions.end() && Rec2DData::isOutOfDate(*it)) ++it;
   if (it == _current->_actions.end())
@@ -891,7 +907,7 @@ bool lessRec2DAction::operator()(Rec2DAction *ra1, Rec2DAction *ra2) const
   return *ra1 < *ra2;
 }
 
-bool greaterRec2DAction::operator()(Rec2DAction *ra1, Rec2DAction *ra2) const
+bool gterRec2DAction::operator()(Rec2DAction *ra1, Rec2DAction *ra2) const
 {
   return *ra2 < *ra1;
 }
@@ -929,6 +945,16 @@ Rec2DTwoTri2Quad::Rec2DTwoTri2Quad(Rec2DElement *el0, Rec2DElement *el1)
   for (unsigned int i = 0; i < edges.size(); ++i) {
     if (edges[i] != _edges[4])
       _edges[++k] = edges[i];
+  }
+  if (edges[1] == _edges[4]) {
+    Rec2DEdge *re = _edges[0];
+    _edges[0] = _edges[1];
+    _edges[1] = re;
+  }
+  if (edges[4] == _edges[4]) {
+    Rec2DEdge *re = _edges[2];
+    _edges[2] = _edges[3];
+    _edges[3] = re;
   }
   if (k > 3)
     Msg::Error("[Rec2DTwoTri2Quad] too much edges");
@@ -1194,8 +1220,6 @@ void Rec2DEdge::reveal()
   //_rv0->add(this);
   //_rv1->add(this);
   //Rec2DData::remove(this);
-  static int a = 0;
-  static double b = .0;
   Rec2DData::addEdge(_weight, getVal());
 }
 
@@ -1318,7 +1342,7 @@ Rec2DVertex* Rec2DEdge::getOtherVertex(Rec2DVertex *rv) const
 /*******************/
 Rec2DVertex::Rec2DVertex(MVertex *v, bool toSave)
 : _v(v), _angle(4*M_PI), _onWhat(1), _parity(0), _assumedParity(0),
-  _lastMove(-1), _isMesh(toSave)
+  _lastMove(-1), _isMesh(toSave), _sumQualAngle(.0)
 {
   reparamMeshVertexOnFace(_v, Recombine2D::getGFace(), _param);
   if (_isMesh) {
@@ -1331,7 +1355,7 @@ Rec2DVertex::Rec2DVertex(MVertex *v, bool toSave)
 
 Rec2DVertex::Rec2DVertex(Rec2DVertex *rv, double ang)
 : _v(rv->_v), _angle(ang), _onWhat(-1), _parity(0), _assumedParity(0),
-  _lastMove(-1), _isMesh(true)
+  _lastMove(-1), _isMesh(true), _sumQualAngle(.0)
 {
   _edges = rv->_edges;
   _elements = rv->_elements;
@@ -1354,7 +1378,10 @@ Rec2DVertex::~Rec2DVertex()
     Rec2DData::removeAssumedParity(this, _assumedParity);
   if (_isMesh) {
     Rec2DData::remove(this);
-    Rec2DData::addVert(-1, -getQual());
+    if  (_elements.empty())
+      Rec2DData::addVert(-2, -getQual());
+    else
+      Rec2DData::addVert(-2, -getQual() - _sumQualAngle/_elements.size());
   }
 }
 
@@ -1383,6 +1410,19 @@ void Rec2DVertex::initStaticTable()
     for (int i = 0; i < nF-1; ++i)
       _gains[1][i] = _qualVSnum[1][i+1] - _qualVSnum[1][i];
   }
+}
+
+void Rec2DVertex::initQualAngle()
+{
+  if (_sumQualAngle != .0) {
+    Msg::Error("[Rec2DVertex] Mmmh... Sorry, I won't do that !");
+    return;
+  }
+  for (unsigned int i = 0; i < _elements.size(); ++i)
+    _sumQualAngle += _angle2Qual(_elements[i]->getAngle(this));
+  Rec2DData::addVert(1, _sumQualAngle/_elements.size());
+  //if (_v->getNum() < 5)
+  //  Msg::Info("ini %d %g", _v->getNum(), _sumQualAngle/_elements.size());
 }
 
 Rec2DEdge* Rec2DVertex::getCommonEdge(Rec2DVertex *rv0, Rec2DVertex *rv1)
@@ -1639,7 +1679,7 @@ void Rec2DVertex::remove(Rec2DEdge *re)
   Msg::Error("[Rec2DVertex] Didn't removed edge, didn't have it");
 }
 
-void Rec2DVertex::add(Rec2DElement *rel)
+void Rec2DVertex::add(Rec2DElement *rel, bool compQualAngle)
 {
   for (unsigned int i = 0; i < _elements.size(); ++i) {
     if (_elements[i] == rel) {
@@ -1647,9 +1687,19 @@ void Rec2DVertex::add(Rec2DElement *rel)
       return;
     }
   }
-  if (_isMesh)
-    Rec2DData::addValVert(getGain(1));
+  if (_isMesh) {
+    if (compQualAngle && !_elements.empty())
+      Rec2DData::addValVert(getGain(1) - _sumQualAngle/_elements.size());
+    else
+      Rec2DData::addValVert(getGain(1));
+    if (compQualAngle)
+      _sumQualAngle += _angle2Qual(rel->getAngle(this));
+  }
   _elements.push_back(rel);
+  if (_isMesh && compQualAngle)
+    Rec2DData::addValVert(_sumQualAngle/_elements.size());
+  //if (_v->getNum() < 5)
+  //  Msg::Info("add %d %g", _v->getNum(), _sumQualAngle/_elements.size());
 }
 
 bool Rec2DVertex::has(Rec2DElement *rel) const
@@ -1665,11 +1715,16 @@ void Rec2DVertex::remove(Rec2DElement *rel)
 {
   unsigned int i = 0;
   while (i < _elements.size()) {
-    if (_elements[i] == rel) {      
+    if (_elements[i] == rel) {
       if (_isMesh)
-        Rec2DData::addValVert(getGain(-1));
+        Rec2DData::addValVert(getGain(-1) - _sumQualAngle/_elements.size());
+      _sumQualAngle -= _angle2Qual(_elements[i]->getAngle(this));
       _elements[i] = _elements.back();
       _elements.pop_back();
+      if (_isMesh && !_elements.empty())
+        Rec2DData::addValVert(_sumQualAngle/_elements.size());
+      //if (_v->getNum() < 5)
+      //  Msg::Info("rmv %d %g", _v->getNum(), _sumQualAngle/_elements.size());
       return;
     }
     ++i;
@@ -1857,6 +1912,34 @@ void Rec2DElement::removeNeighbour(Rec2DEdge *re, Rec2DElement *rel)
 }
 
 
+double Rec2DElement::getAngle(Rec2DVertex *rv)
+{
+  std::vector<Rec2DVertex*> vert;
+  getVertices(vert);
+  int index = -1;
+  
+  for (int i = 0; i < _numEdge; ++i) {
+    if (vert[i] == rv) {
+      index = i;
+      break;
+    }
+  }
+  if (index == -1) {
+    Msg::Error("[Rec2DElement] I don't have your vertex...");
+    return -1.;
+  }
+  int i0 = (index+_numEdge-1)%_numEdge;
+  int i2 = (index+1)%_numEdge;
+  double ang =  atan2(vert[i2]->v() - rv->v(), vert[i2]->u() - rv->u())
+                - atan2(vert[i0]->v() - rv->v(), vert[i0]->u() - rv->u());
+  if (ang < 0.)
+    return ang + 2*M_PI;
+  if (ang >= 2*M_PI)
+    return ang - 2*M_PI;
+  return ang;
+}
+
+
 void Rec2DElement::getAssumedParities(int *p) const
 {
   if (_numEdge == 4) {
@@ -1892,7 +1975,15 @@ void Rec2DElement::getVertices(std::vector<Rec2DVertex*> &verts) const
       if (verts[k] == verts[j])
         b = false;
     }
-    if (b) ++k;
+    if (b) {
+      // make sure they are well ordered (edges are ordered)
+      if (k == 2 && _edges[i/2]->getVertex((i+1)%2) == verts[0]) {
+        Rec2DVertex *rv = verts[0];
+        verts[0] = verts[1];
+        verts[1] = rv;
+      }
+      ++k;
+    }
     ++i;
   }
 }
@@ -1979,7 +2070,7 @@ bool lessRec2DNode::operator()(Rec2DNode *rn1, Rec2DNode *rn2) const
   return *rn1 < *rn2;
 }
 
-bool greaterRec2DNode::operator()(Rec2DNode *rn1, Rec2DNode *rn2) const
+bool gterRec2DNode::operator()(Rec2DNode *rn1, Rec2DNode *rn2) const
 {
   return *rn2 < *rn1;
 }
