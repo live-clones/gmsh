@@ -152,8 +152,8 @@ class Centerline : public Field{
 class Centerline : public Field{
 
  public:
-  Centerline(std::string fileName);
-  Centerline();
+  Centerline(std::string fileName){ Msg::Error("Gmsh has to be compiled with ANN support to use CenterlineFields");}
+  Centerline(){ Msg::Error("Gmsh has to be compiled with ANN support to use CenterlineFields");}
   ~Centerline();
 
   virtual bool isotropic () const {return false;}
