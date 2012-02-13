@@ -26,10 +26,6 @@ class discreteEdge;
 class discreteFace;
 class MElement;
 
-#if defined(HAVE_ANN)
-#include <ANN/ANN.h>
-class ANNkd_tree;
-
 // A branch of a 1D tree
 struct Branch{
   int tag;
@@ -41,6 +37,10 @@ struct Branch{
   double minRad;
   double maxRad;
 };
+
+#if defined(HAVE_ANN)
+#include <ANN/ANN.h>
+class ANNkd_tree;
 
 // This class takes as input A 1D mesh which is the centerline
 // of a tubular 2D surface mesh
@@ -147,9 +147,38 @@ class Centerline : public Field{
   //Print for debugging
   void printSplit() const;
  
-
-
 };
+#else
+class Centerline : public Field{
+
+ public:
+  Centerline(std::string fileName);
+  Centerline();
+  ~Centerline();
+
+  virtual bool isotropic () const {return false;}
+  virtual const char *getName()
+  {
+    return "centerline Field";
+  }
+  virtual std::string getDescription()
+  {
+    return "The value of this field is the distance to the centerline.\n\n"
+" You should specify a fileName that contains the centerline."
+" The centerline of a surface can be obtained with the open source software vmtk (http://www.vmtk.org/)"
+" using the following script:\n\n"
+"vmtk vmtkcenterlines -seedselector openprofiles -ifile mysurface.stl -ofile centerlines.vtp --pipe vmtksurfacewriter -ifile centerlines.vtp -ofile centerlines.vtk\n";
+  }
+  
+  void cleanMesh();
+
+  //isotropic operator for mesh size field function of distance to centerline
+  double operator() (double x, double y, double z, GEntity *ge=0);
+  //anisotropic operator
+  void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0);
+
+}
+
 #endif
 
 #endif
