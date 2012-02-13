@@ -49,6 +49,11 @@ class STensor33 {
     for (int i = 0; i < 27; i++) _val[i] += other._val[i];
     return *this;
   }
+  STensor33& operator -= (const STensor33 &other)
+  {
+    for (int i = 0; i < 27; i++) _val[i] -= other._val[i];
+    return *this;
+  }
   STensor33& operator *= (const double &other)
   {
     for (int i = 0; i < 27; i++) _val[i] *= other;
