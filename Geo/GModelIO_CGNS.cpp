@@ -501,6 +501,13 @@ int GModel::readCGNS(const std::string &name)
   // Compute the maximum multigrid level
   int max_order = 8;
 
+  // Creating MVertex
+  std::map<int, MVertex*> vertexMap;
+  int minVertex = 1;
+  int maxVertex = 0;
+  int vnum = 1;
+
+
   for (int index_zone = 1; index_zone <= nZones; index_zone++) {
     Msg::Debug("Reading zone to compute MG level %i.", index_zone);
 
@@ -552,6 +559,8 @@ int GModel::readCGNS(const std::string &name)
   // Read the zones
   for (int index_zone = 1; index_zone <= nZones; index_zone++) {
     Msg::Debug("Reading zone %i.", index_zone);
+
+    int offset = vnum;
 
     ZoneType_t zoneType;
     cg_zone_type(index_file, index_base, index_zone, &zoneType);
@@ -632,23 +641,17 @@ int GModel::readCGNS(const std::string &name)
 	  break;
       }
     }
-    
-    // Creating MVertex
-    std::map<int, MVertex*> vertexMap;
-    int minVertex = 1;
-    int maxVertex = 0;
-    int num = 1;
 
     for (int iNode = 0; iNode < nnodesZone; iNode++) {
-      MVertex* mv = new MVertex(nodes[iNode][0], nodes[iNode][1], nodes[iNode][2], 0, num);
-      minVertex = std::min(minVertex, num);
-      maxVertex = std::max(maxVertex, num);
-      vertexMap[num] = mv;
-      num ++;
+      MVertex* mv = new MVertex(nodes[iNode][0], nodes[iNode][1], nodes[iNode][2], 0, vnum);
+      minVertex = std::min(minVertex, vnum);
+      maxVertex = std::max(maxVertex, vnum);
+      vertexMap[vnum] = mv;
+      vnum ++;
     }
 
     // Creating elements
-    num = 1;
+    int num = 1;
 
     int type = 5;
     if (order == 2)
@@ -658,6 +661,7 @@ int GModel::readCGNS(const std::string &name)
     //else if (order == 8)
     //  type = 97;
 
+    int num_elements = 0;
     int elementary = index_zone;
     int partition = 0;
     for (int i = 0; i < zoneSizes[3]; i+=order) {
@@ -669,25 +673,16 @@ int GModel::readCGNS(const std::string &name)
 	  getIndices(i, j, k, ind_i, ind_j, ind_k, order);
 
 	  for (int v = 0; v < ind_i.size(); v++) {
-	    vertices.push_back(vertexMap[1+to1D(ind_i[v], ind_j[v], ind_k[v],   irmax[0], irmax[1], irmax[2])]);
+	    vertices.push_back(vertexMap[offset+to1D(ind_i[v], ind_j[v], ind_k[v],   irmax[0], irmax[1], irmax[2])]);
 	  }
-
-	  /*
-	  vertices.push_back(vertexMap[to1D(i,   j,   k,   irmax[0], irmax[1], irmax[2])]);
-	  vertices.push_back(vertexMap[to1D(i+1, j,   k,   irmax[0], irmax[1], irmax[2])]);
-	  vertices.push_back(vertexMap[to1D(i+1, j+1, k,   irmax[0], irmax[1], irmax[2])]);
-	  vertices.push_back(vertexMap[to1D(i,   j+1, k,   irmax[0], irmax[1], irmax[2])]);
-	  vertices.push_back(vertexMap[to1D(i,   j,   k+1, irmax[0], irmax[1], irmax[2])]);
-	  vertices.push_back(vertexMap[to1D(i+1, j,   k+1, irmax[0], irmax[1], irmax[2])]);
-	  vertices.push_back(vertexMap[to1D(i+1, j+1, k+1, irmax[0], irmax[1], irmax[2])]);
-	  vertices.push_back(vertexMap[to1D(i,   j+1, k+1, irmax[0], irmax[1], irmax[2])]);
-	  */
 	  MElement* e = createElementMSH(this, num, type, elementary,
 					 partition, vertices, elements);
+	  num_elements++;
 	  num++;
 	}
       }
     }
+  }
 
   // store the elements in their associated elementary entity. If the
   // entity does not exist, create a new (discrete) one.
@@ -700,8 +695,8 @@ int GModel::readCGNS(const std::string &name)
   // store the vertices in their associated geometrical entity
   _storeVerticesInEntities(vertexMap);
 
-
-  }
+  // store the vertices in their associate
+  removeDuplicateMeshVertices(1e-8);
 
   if ( cg_close (index_file) ) {
     Msg::Error("Couldnt close the file !");
