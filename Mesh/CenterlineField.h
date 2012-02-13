@@ -177,7 +177,7 @@ class Centerline : public Field{
   //anisotropic operator
   void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0);
 
-}
+};
 
 #endif
 
