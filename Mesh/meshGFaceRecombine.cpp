@@ -19,6 +19,7 @@
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "PView.h"
+#include "meshGFace.h"
 #ifdef REC2D_SMOOTH
   #include "meshGFaceOptimize.h"
 #endif
@@ -50,6 +51,8 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf)
   }
   Recombine2D::_current = this;
   
+  orientMeshGFace orienter;
+  orienter(_gf);
   Rec2DVertex::initStaticTable();
   backgroundMesh::set(_gf);
   _bgm = backgroundMesh::current();
@@ -57,12 +60,16 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf)
   _numChange = 0;
   
   static int po = -1;
-  if (po < 1)
+  if (++po < 1)
     Msg::Warning("FIXME Why {mesh 2} then {mesh 0} then {mesh 2} imply not corner vertices");
   
   static int pi = -1;
-  if (pi < 1)
+  if (++pi < 1)
     Msg::Warning("FIXME Why more vertices after first mesh generation");
+  
+  static int pu = -1;
+  if (++pu < 1)
+    Msg::Error("FIXME QualAngle et application action...");
   
   // Be able to compute geometrical angle at corners
   std::map<MVertex*, AngleData> mapCornerVert;
@@ -84,7 +91,6 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf)
     // triangles
     for (unsigned int i = 0; i < gf->triangles.size(); ++i) {
       MTriangle *t = gf->triangles[i];
-      //Msg::Info("[%d %d %d]", t->getVertex(0)->getNum(), t->getVertex(1)->getNum(), t->getVertex(2)->getNum());
       t->setVolumePositive();
       static int tia = -1;
       if (++tia < 1) Msg::Warning("FIXME Sometimes negative volume");
@@ -105,7 +111,7 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf)
           rv[j] = new Rec2DVertex(v);
           mapVert[v] = rv[j];
         }
-        rv[j]->add(rel, false); //up data
+        rv[j]->add(rel, false);
       }
       for (int j = 0; j < 3; ++j) {
         Rec2DEdge *re;
@@ -244,10 +250,6 @@ bool Recombine2D::recombine()
     delete nextAction;
   }
   
-  //Rec2DData::iter_rv it = Rec2DData::firstVertex();
-  //for (; it != Rec2DData::lastVertex(); ++it) {
-  //  Msg::Info("%d -> %g", (*it)->getMVertex()->getNum(), (*it)->getQualAngle());
-  //}
   _data->printState();
 #ifdef REC2D_SMOOTH
     laplaceSmoothing(_gf,100);
@@ -980,11 +982,13 @@ Rec2DTwoTri2Quad::~Rec2DTwoTri2Quad()
 
 void Rec2DTwoTri2Quad::_computeGlobVal()
 {
-  double valEdge = - REC2D_EDGE_BASE * _edges[4]->getQual();
+  double valEdge = -REC2D_EDGE_BASE * _edges[4]->getQual();
   for (int i = 0; i < 4; ++i)
     valEdge += REC2D_EDGE_QUAD * _edges[i]->getQual();
   
   double valVert = _vertices[0]->getGain(-1) + _vertices[1]->getGain(-1);
+  valVert += _vertices[0]->getGainMerge(_triangles[0], _triangles[1]);
+  valVert += _vertices[1]->getGainMerge(_triangles[0], _triangles[1]);
   
   _globValIfExecuted =
     Rec2DData::getGlobalValue(4*REC2D_EDGE_QUAD - REC2D_EDGE_BASE,
@@ -1421,8 +1425,6 @@ void Rec2DVertex::initQualAngle()
   for (unsigned int i = 0; i < _elements.size(); ++i)
     _sumQualAngle += _angle2Qual(_elements[i]->getAngle(this));
   Rec2DData::addVert(1, _sumQualAngle/_elements.size());
-  //if (_v->getNum() < 5)
-  //  Msg::Info("ini %d %g", _v->getNum(), _sumQualAngle/_elements.size());
 }
 
 Rec2DEdge* Rec2DVertex::getCommonEdge(Rec2DVertex *rv0, Rec2DVertex *rv1)
@@ -1645,6 +1647,17 @@ double Rec2DVertex::getGain(int n) const
          - fabs(2./M_PI * _angle/(_elements.size() + n) - 1.);
 }
 
+double Rec2DVertex::getGainMerge(Rec2DElement *rel1, Rec2DElement *rel2)
+{
+  double diffQualAngle;
+  diffQualAngle = _angle2Qual(rel1->getAngle(this) + rel2->getAngle(this));
+  diffQualAngle -= _angle2Qual(rel1->getAngle(this));
+  diffQualAngle -= _angle2Qual(rel2->getAngle(this));
+  
+  return (_sumQualAngle + diffQualAngle) / (_elements.size() - 1)
+         - _sumQualAngle / _elements.size();
+}
+
 void Rec2DVertex::add(Rec2DEdge *re)
 {
   for (unsigned int i = 0; i < _edges.size(); ++i) {
@@ -1698,8 +1711,6 @@ void Rec2DVertex::add(Rec2DElement *rel, bool compQualAngle)
   _elements.push_back(rel);
   if (_isMesh && compQualAngle)
     Rec2DData::addValVert(_sumQualAngle/_elements.size());
-  //if (_v->getNum() < 5)
-  //  Msg::Info("add %d %g", _v->getNum(), _sumQualAngle/_elements.size());
 }
 
 bool Rec2DVertex::has(Rec2DElement *rel) const
@@ -1723,8 +1734,6 @@ void Rec2DVertex::remove(Rec2DElement *rel)
       _elements.pop_back();
       if (_isMesh && !_elements.empty())
         Rec2DData::addValVert(_sumQualAngle/_elements.size());
-      //if (_v->getNum() < 5)
-      //  Msg::Info("rmv %d %g", _v->getNum(), _sumQualAngle/_elements.size());
       return;
     }
     ++i;
@@ -1932,6 +1941,8 @@ double Rec2DElement::getAngle(Rec2DVertex *rv)
   int i2 = (index+1)%_numEdge;
   double ang =  atan2(vert[i2]->v() - rv->v(), vert[i2]->u() - rv->u())
                 - atan2(vert[i0]->v() - rv->v(), vert[i0]->u() - rv->u());
+  static int a = -1;
+  if (++a < 1) Msg::Warning("FIXME use real angle instead of parametric angle");
   if (ang < 0.)
     return ang + 2*M_PI;
   if (ang >= 2*M_PI)

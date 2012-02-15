@@ -43,8 +43,6 @@ struct moreRec2DNode {
   bool operator()(Rec2DNode*, Rec2DNode*) const;
 };
 
-//typedef std::list<Rec2DAction*> setofRec2DAction;
-
 class Recombine2D {
   private :
     GFace *_gf;
@@ -303,6 +301,7 @@ class Rec2DVertex {
     double getGain(int) const;
     void initQualAngle();
     inline double getQualAngle() {return _sumQualAngle/_elements.size();}
+    double getGainMerge(Rec2DElement*, Rec2DElement*);
     
     inline void setOnBoundary();
     inline bool getOnBoundary() const {return _onWhat < 1;}
