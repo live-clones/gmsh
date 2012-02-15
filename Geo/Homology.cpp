@@ -313,6 +313,9 @@ void Homology::_createPhysicalGroup(std::map<Cell*, int, Less_Cell>& chain, std:
   MElementFactory factory;
   int dim = 0;
 
+  std::map<Cell*, int, Less_Cell> chain2;
+  std::string name2 = name + "i";
+
   typedef std::map<Cell*, int, Less_Cell>::iterator citer;
   for(citer cit = chain.begin(); cit != chain.end(); cit++){
     Cell* cell = cit->first;
@@ -335,8 +338,15 @@ void Homology::_createPhysicalGroup(std::map<Cell*, int, Less_Cell>& chain, std:
       elements.push_back(ecopy);
     }
 
+    //std::vector<double> coeffs (1,1);
     std::vector<double> coeffs (1,abs(coeff));
     data[e->getNum()] = coeffs;
+
+    /*if(abs(coeff) > 1) {
+      if(coeff < 0) chain2[cell] = coeff+1;
+      else chain2[cell] = coeff-1;
+      }*/
+
   }
 
   GModel* m = this->getModel();
@@ -373,6 +383,7 @@ void Homology::_createPhysicalGroup(std::map<Cell*, int, Less_Cell>& chain, std:
     view->setOptions(opt);
 #endif
   }
+  //if(!chain2.empty()) _createPhysicalGroup(chain2, name2);
 }
 
 bool Homology::writeBasisMSH(bool binary)

@@ -19,11 +19,17 @@ public:
   bool operator()(const Cell* c1, const Cell* c2) const;
 };
 
+class Less_VertexNumIndex {
+public:
+  bool operator()(const std::pair<MVertex*, int> v1,
+                  const std::pair<MVertex*, int> v2) const;
+};
+
 // Class to save cell boundary orientation information
 class BdInfo {
  private:
-  short int _ori;
-  short int _origOri;
+  signed char _ori;
+  signed char _origOri;
 
  public:
   BdInfo(int ori) { _ori = ori; _origOri = 0; }
@@ -41,15 +47,13 @@ class BdInfo {
 class Cell {
 
  protected:
+
   static int _globalNum;
 
   int _num;
-  // mutable index for each cell (used to create boundary operator matrices)
-  int _index;
+  char _domain;
 
-  int _domain;
-
-  // whether this cell a combinded cell of elemetary cells
+  // whether this cell a combinded cell of elementary cells
   bool _combined;
   // for some algorithms to omit this cell
   bool _immune;
@@ -60,15 +64,16 @@ class Cell {
 
  private:
 
-  int _dim;
-  // sorted vertices of this cell (used for ordering of the cells)
+  char _dim;
   std::vector<MVertex*> _v;
+  // sorted vertices of this cell (used for ordering of the cells)
+  std::vector<char> _si;
+
+  inline void _sortVertexIndices();
 
  public:
 
-  Cell(int dim, std::vector<MVertex*>& v);
- Cell() : _num(0), _dim(0), _index(0), _domain(0), _combined(false),  _immune(false) {}
-
+  Cell() {}
   Cell(MElement* element, int domain);
   Cell(Cell* parent, int i);
 
@@ -77,26 +82,21 @@ class Cell {
   void setNum(int num) { _num = num; };
   int getTypeMSH() const;
   virtual int getDim() const { return _dim; }
-  bool inSubdomain() const { if(_domain != 0) return true; else return false; }
+  bool inSubdomain() const { return _domain ? true : false; }
   void getMeshVertices(std::vector<MVertex*>& v) const { v = _v; }
 
-  int getIndex() const { return _index; };
-  void setIndex(int index) { _index = index; };
   void setImmune(bool immune) { _immune = immune; };
   bool getImmune() const { return _immune; };
 
   int getNumSortedVertices() const { return _v.size(); }
-  int getSortedVertex(int vertex) const { return _v.at(vertex)->getNum(); }
+  inline int getSortedVertex(int vertex) const;
   int getNumVertices() const { return _v.size(); }
-  int getVertex(int vertex) const { return _v.at(vertex)->getNum(); }
   MVertex* getMeshVertex(int vertex) const { return _v.at(vertex); }
-  void clearSortedVertices() { _v.clear(); }
 
   void findBdElement(int i, std::vector<MVertex*>& vertices) const;
   int getNumBdElements() const;
-  int findBdCellOrientation(Cell* cell) const;
+  int findBdCellOrientation(Cell* cell, int i) const;
 
-  void revertGlobalNum() { _globalNum--; }
   void increaseGlobalNum() { _globalNum++; }
 
   // restores the cell information to its original state before reduction

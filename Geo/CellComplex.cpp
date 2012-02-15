@@ -37,11 +37,13 @@ bool CellComplex::_insertCells(std::vector<MElement*>& elements,
   for(unsigned int i=0; i < elements.size(); i++){
     MElement* element = elements.at(i);
     int type = element->getType();
-    if(type != TYPE_PNT && type != TYPE_LIN &&
-       type != TYPE_TRI && type != TYPE_TET) {
+    if(type == TYPE_PYR || type == TYPE_PRI ||
+       type == TYPE_POLYG || type == TYPE_POLYH) {
       Msg::Error("Mesh element type %d not implemented in homology solver", type);
       return false;
     }
+    if(type == TYPE_QUA || type == TYPE_HEX)
+      _simplicial = false;
     Cell* cell = new Cell(element, domain);
     bool insert = _cells[cell->getDim()].insert(cell).second;
     if(!insert) delete cell;
@@ -50,8 +52,7 @@ bool CellComplex::_insertCells(std::vector<MElement*>& elements,
   for (int dim = 3; dim > 0; dim--){
     for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
       Cell* cell = *cit;
-      int numBdElements = cell->getNumBdElements();
-      for(int i = 0; i < numBdElements; i++){
+      for(int i = 0; i < cell->getNumBdElements(); i++){
 	Cell* newCell = new Cell(cell, i);
 	std::pair<citer, bool> insert =
 	  _cells[newCell->getDim()].insert(newCell);
@@ -60,7 +61,7 @@ bool CellComplex::_insertCells(std::vector<MElement*>& elements,
 	  newCell = *(insert.first);
 	}
 	if(domain == 0) {
-	  int ori = cell->findBdCellOrientation(newCell);
+	  int ori = cell->findBdCellOrientation(newCell, i);
 	  cell->addBoundaryCell( ori, newCell, true);
 	}
       }
