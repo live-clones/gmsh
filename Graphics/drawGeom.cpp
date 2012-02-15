@@ -23,16 +23,16 @@ class drawGVertex {
     if(!v->getVisibility()) return;
     if(v->geomType() == GEntity::BoundaryLayerPoint) return;
 
-    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 
+    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    v->model() == GModel::current());
     if(select) {
       glPushName(0);
       glPushName(v->tag());
     }
-    
+
     if(v->getSelection()) {
       glPointSize((float)CTX::instance()->geom.selectedPointSize);
-      gl2psPointSize((float)(CTX::instance()->geom.selectedPointSize * 
+      gl2psPointSize((float)(CTX::instance()->geom.selectedPointSize *
                              CTX::instance()->print.epsPointSizeFactor));
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.selection);
     }
@@ -42,7 +42,7 @@ class drawGVertex {
                              CTX::instance()->print.epsPointSizeFactor));
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.point);
     }
-    
+
     if(CTX::instance()->geom.highlightOrphans){
       std::list<GEdge*> edges = v->edges();
       if(edges.size() == 0)
@@ -57,10 +57,10 @@ class drawGVertex {
     if(CTX::instance()->geom.points) {
       if(CTX::instance()->geom.pointType > 0) {
         if(v->getSelection())
-          _ctx->drawSphere(CTX::instance()->geom.selectedPointSize, x, y, z, 
+          _ctx->drawSphere(CTX::instance()->geom.selectedPointSize, x, y, z,
                            CTX::instance()->geom.light);
         else
-          _ctx->drawSphere(CTX::instance()->geom.pointSize, x, y, z, 
+          _ctx->drawSphere(CTX::instance()->geom.pointSize, x, y, z,
                            CTX::instance()->geom.light);
       }
       else {
@@ -73,14 +73,14 @@ class drawGVertex {
     if(CTX::instance()->geom.pointsNum) {
       char Num[100];
       sprintf(Num, "%d", v->tag());
-      double offset = (0.5 * CTX::instance()->geom.pointSize + 
+      double offset = (0.5 * CTX::instance()->geom.pointSize +
                        0.1 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
       glRasterPos3d(x + offset / _ctx->s[0],
                     y + offset / _ctx->s[1],
                     z + offset / _ctx->s[2]);
       _ctx->drawString(Num);
     }
-    
+
     if(select) {
       glPopName();
       glPopName();
@@ -99,28 +99,28 @@ class drawGEdge {
     if(e->geomType() == GEntity::DiscreteCurve) return;
     if(e->geomType() == GEntity::PartitionCurve) return;
     if(e->geomType() == GEntity::BoundaryLayerCurve) return;
-    //    if(e->geomType() == GEntity::CompoundCurve) return; 
-    
-    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 
+    //    if(e->geomType() == GEntity::CompoundCurve) return;
+
+    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    e->model() == GModel::current());
     if(select) {
       glPushName(1);
       glPushName(e->tag());
     }
-    
+
     if(e->getSelection()) {
       glLineWidth((float)CTX::instance()->geom.selectedLineWidth);
-      gl2psLineWidth((float)(CTX::instance()->geom.selectedLineWidth * 
+      gl2psLineWidth((float)(CTX::instance()->geom.selectedLineWidth *
                              CTX::instance()->print.epsLineWidthFactor));
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.selection);
     }
     else {
       glLineWidth((float)CTX::instance()->geom.lineWidth);
-      gl2psLineWidth((float)(CTX::instance()->geom.lineWidth * 
+      gl2psLineWidth((float)(CTX::instance()->geom.lineWidth *
                              CTX::instance()->print.epsLineWidthFactor));
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.line);
     }
-    
+
     if(CTX::instance()->geom.highlightOrphans){
       std::list<GFace*> faces = e->faces();
       if(faces.size() == 0)
@@ -132,7 +132,7 @@ class drawGEdge {
     Range<double> t_bounds = e->parBounds(0);
     double t_min = t_bounds.low();
     double t_max = t_bounds.high();
-    
+
     if(CTX::instance()->geom.lines) {
       int N = e->minimumDrawSegments() + 1;
       if(CTX::instance()->geom.lineType > 0) {
@@ -146,8 +146,8 @@ class drawGEdge {
           double z[2] = {p1.z(), p2.z()};
           _ctx->transform(x[0], y[0], z[0]);
           _ctx->transform(x[1], y[1], z[1]);
-          _ctx->drawCylinder(e->getSelection() ? CTX::instance()->geom.selectedLineWidth : 
-                             CTX::instance()->geom.lineWidth, x, y, z, 
+          _ctx->drawCylinder(e->getSelection() ? CTX::instance()->geom.selectedLineWidth :
+                             CTX::instance()->geom.lineWidth, x, y, z,
                              CTX::instance()->geom.light);
         }
       }
@@ -163,12 +163,12 @@ class drawGEdge {
         glEnd();
       }
     }
-    
+
     if(CTX::instance()->geom.linesNum) {
       GPoint p = e->point(t_min + 0.5 * (t_max - t_min));
       char Num[100];
       sprintf(Num, "%d", e->tag());
-      double offset = (0.5 * CTX::instance()->geom.lineWidth + 
+      double offset = (0.5 * CTX::instance()->geom.lineWidth +
                        0.1 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
       double x = p.x(), y = p.y(), z = p.z();
       _ctx->transform(x, y, z);
@@ -177,7 +177,7 @@ class drawGEdge {
                     z + offset / _ctx->s[2]);
       _ctx->drawString(Num);
     }
-    
+
     if(CTX::instance()->geom.tangents) {
       double t = t_min + 0.5 * (t_max - t_min);
       GPoint p = e->point(t);
@@ -203,7 +203,7 @@ class drawGEdge {
 class drawGFace {
  private:
   drawContext *_ctx;
-  void _drawVertexArray(VertexArray *va, bool useNormalArray, int forceColor=0, 
+  void _drawVertexArray(VertexArray *va, bool useNormalArray, int forceColor=0,
                         unsigned int color=0)
   {
     if(!va || !va->getNumVertices()) return;
@@ -244,8 +244,12 @@ class drawGFace {
 
     Range<double> ubounds = f->parBounds(0);
     Range<double> vbounds = f->parBounds(1);
-    const double uav = 0.5 * (ubounds.high() + ubounds.low());
-    const double vav = 0.5 * (vbounds.high() + vbounds.low());
+    bool tri = (f->geomType() == GEntity::RuledSurface && f->edges().size() == 3);
+    double c = tri ? 0.75 : 0.5;
+    double uav = c * (ubounds.high() + ubounds.low());
+    double vav = (1-c) * (vbounds.high() + vbounds.low());
+    double u2 = 0.5 * (ubounds.high() + ubounds.low());
+    double v2 = 0.5 * (vbounds.high() + vbounds.low());
 
     if(CTX::instance()->geom.surfaces){
       if(CTX::instance()->geom.surfaceType > 0 && f->va_geom_triangles){
@@ -253,22 +257,27 @@ class drawGFace {
         if (f->getSelection() || (f->getCompound() && f->getCompound()->getSelection()))
           selected = true;
         _drawVertexArray
-          (f->va_geom_triangles, CTX::instance()->geom.light, 
-           (f->geomType() == GEntity::ProjectionFace) ? true : selected, 
-           (f->geomType() == GEntity::ProjectionFace) ? 
-           CTX::instance()->color.geom.projection : 
+          (f->va_geom_triangles, CTX::instance()->geom.light,
+           (f->geomType() == GEntity::ProjectionFace) ? true : selected,
+           (f->geomType() == GEntity::ProjectionFace) ?
+           CTX::instance()->color.geom.projection :
            CTX::instance()->color.geom.selection);
       }
       else{
         glEnable(GL_LINE_STIPPLE);
         glLineStipple(1, 0x1F1F);
         gl2psEnable(GL2PS_LINE_STIPPLE);
-        int N = 20;
         const double ud = (ubounds.high() - ubounds.low());
         const double vd = (vbounds.high() - vbounds.low());
+        int N = 20;
+        GPoint p;
         glBegin(GL_LINE_STRIP);
         for(int i = 0; i < N; i++) {
-          GPoint p = f->point(ubounds.low() + ud * (double)i / (double)(N - 1), vav);
+          if(tri)
+            p = f->point(u2 + u2 * (double)i / (double)(N - 1),
+                         vbounds.low() + v2 * (double)i / (double)(N - 1));
+          else
+            p = f->point(ubounds.low() + ud * (double)i / (double)(N - 1), vav);
           double x = p.x(), y = p.y(), z = p.z();
           _ctx->transform(x, y, z);
           glVertex3d(x, y, z);
@@ -276,12 +285,17 @@ class drawGFace {
         glEnd();
         glBegin(GL_LINE_STRIP);
         for(int i = 0; i < N; i++) {
-          GPoint p = f->point(uav, vbounds.low() + vd * (double)i / (double)(N - 1));
+          if(tri)
+            p = f->point(u2 + u2 * (double)i / (double)(N - 1),
+                         v2 - v2 * (double)i / (double)(N - 1));
+          else
+            p = f->point(uav, vbounds.low() + vd * (double)i / (double)(N - 1));
           double x = p.x(), y = p.y(), z = p.z();
           _ctx->transform(x, y, z);
           glVertex3d(x, y, z);
         }
         glEnd();
+
         glDisable(GL_LINE_STIPPLE);
         gl2psDisable(GL2PS_LINE_STIPPLE);
       }
@@ -299,7 +313,7 @@ class drawGFace {
                     z + offset / _ctx->s[2]);
       _ctx->drawString(Num);
     }
-    
+
     if(CTX::instance()->geom.normals) {
       GPoint p = f->point(uav, vav);
       SVector3 n = f->normal(SPoint2(uav, vav));
@@ -327,7 +341,7 @@ class drawGFace {
       if (f->getSelection() || (f->getCompound() && f->getCompound()->getSelection()))
           selected = true;
       if(CTX::instance()->geom.surfaceType > 0 && f->va_geom_triangles){
-        _drawVertexArray(f->va_geom_triangles, CTX::instance()->geom.light, 
+        _drawVertexArray(f->va_geom_triangles, CTX::instance()->geom.light,
                          f->getSelection(), CTX::instance()->color.geom.selection);
       }
       else{
@@ -347,7 +361,7 @@ class drawGFace {
     }
 
     if(f->cross.size() < 2) return;
-                          
+
     if(CTX::instance()->geom.surfacesNum) {
       char Num[100];
       sprintf(Num, "%d", f->tag());
@@ -378,7 +392,7 @@ class drawGFace {
                        CTX::instance()->geom.light);
     }
   }
-  
+
   void _drawCompoundGFace(GFace *f, bool visible = false, bool selected = false)
   {
     GFaceCompound *fc = (GFaceCompound*) f;
@@ -387,7 +401,7 @@ class drawGFace {
       if ((*it)->geomType() == GEntity::DiscreteSurface) continue;
       if ((*it)->geomType() == GEntity::PartitionSurface) continue;
       if ((*it)->geomType() == GEntity::BoundaryLayerSurface) continue;
-        
+
       if((*it)->geomType() == GEntity::CompoundSurface)
         _drawCompoundGFace((*it));
       else if ((*it)->geomType() == GEntity::Plane)
@@ -396,7 +410,7 @@ class drawGFace {
         _drawParametricGFace((*it));
     }
   }
- 
+
  public :
   drawGFace(drawContext *ctx) : _ctx(ctx) {}
   void operator () (GFace *f)
@@ -406,13 +420,13 @@ class drawGFace {
     if(f->geomType() == GEntity::PartitionSurface) return;
     if(f->geomType() == GEntity::BoundaryLayerSurface) return;
 
-    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 
+    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    f->model() == GModel::current());
     if(select) {
       glPushName(2);
       glPushName(f->tag());
     }
-    
+
     if(f->getSelection()) {
       glLineWidth((float)(CTX::instance()->geom.selectedLineWidth / 2.));
       gl2psLineWidth((float)(CTX::instance()->geom.selectedLineWidth / 2. *
@@ -421,7 +435,7 @@ class drawGFace {
     }
     else {
       glLineWidth((float)(CTX::instance()->geom.lineWidth / 2.));
-      gl2psLineWidth((float)(CTX::instance()->geom.lineWidth / 2. * 
+      gl2psLineWidth((float)(CTX::instance()->geom.lineWidth / 2. *
                              CTX::instance()->print.epsLineWidthFactor));
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.surface);
     }
@@ -449,19 +463,19 @@ class drawGRegion {
   {
     if(!r->getVisibility()) return;
     //    if(r->geomType() == GEntity::DiscreteVolume) return;
-    
-    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 
+
+    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    r->model() == GModel::current());
     if(select) {
       glPushName(3);
       glPushName(r->tag());
     }
-    
+
     if(r->getSelection())
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.selection);
     else
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.volume);
-    
+
     SPoint3 p = r->bounds().center();
     const double size = 8.;
 
@@ -481,7 +495,7 @@ class drawGRegion {
                     z + offset / _ctx->s[2]);
       _ctx->drawString(Num);
     }
-    
+
     if(select) {
       glPopName();
       glPopName();
@@ -497,9 +511,9 @@ void drawContext::drawGeom()
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
   else
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
-  
+
   for(int i = 0; i < 6; i++)
-    if(CTX::instance()->geom.clip & (1 << i)) 
+    if(CTX::instance()->geom.clip & (1 << i))
       glEnable((GLenum)(GL_CLIP_PLANE0 + i));
     else
       glDisable((GLenum)(GL_CLIP_PLANE0 + i));
@@ -509,7 +523,7 @@ void drawContext::drawGeom()
     if(m->getVisibility() && isVisible(m)){
       if(CTX::instance()->geom.points || CTX::instance()->geom.pointsNum)
         std::for_each(m->firstVertex(), m->lastVertex(), drawGVertex(this));
-      if(CTX::instance()->geom.lines || CTX::instance()->geom.linesNum || 
+      if(CTX::instance()->geom.lines || CTX::instance()->geom.linesNum ||
          CTX::instance()->geom.tangents)
         std::for_each(m->firstEdge(), m->lastEdge(), drawGEdge(this));
       if(CTX::instance()->geom.surfaces || CTX::instance()->geom.surfacesNum ||
@@ -520,7 +534,7 @@ void drawContext::drawGeom()
         std::for_each(m->firstRegion(), m->lastRegion(), drawGRegion(this));
     }
   }
-  
+
   for(int i = 0; i < 6; i++)
     glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 }

@@ -17,7 +17,7 @@ static Vertex InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
 {
   Vertex V;
   int i, j;
-  double vec[4], T[4];  
+  double vec[4], T[4];
 
   V.Pos.X = V.Pos.Y = V.Pos.Z = 0.0;
   V.lc = (1 - t) * v[1]->lc + t * v[2]->lc;
@@ -137,7 +137,7 @@ SPoint2 InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
 }
 
 // Uniform BSplines
-static Vertex InterpolateUBS(Curve *Curve, double u, int derivee) 
+static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
 {
   bool periodic = (Curve->end == Curve->beg);
   int NbControlPoints = List_Nbr(Curve->Control_Points);
@@ -163,7 +163,7 @@ static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
     V.Pos.Y = pt.y();
     V.Pos.Z = pt.z();
     return V;
-  } 
+  }
   else
     return InterpolateCubicSpline(v, t, Curve->mat, derivee, t1, t2);
 }
@@ -240,7 +240,7 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
     }
     return InterpolateCurve(C0, C0->ubeg + (C0->uend - C0->ubeg) * (1. - u), derivee);
   }
-  
+
   Vertex V;
 
   if(derivee==1) {
@@ -262,7 +262,7 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
       V.u = u;
       break;
     }
-    return V;  
+    return V;
   }
 
   if(derivee==2) {
@@ -284,7 +284,7 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
       V.u = u;
       break;
     }
-    return V;  
+    return V;
   }
 
   int N, i;
@@ -421,7 +421,6 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
 #if defined(HAVE_BFGS)
     //    printf("MSH_SEGM_DISCRETE\n");
 #endif
-
     Msg::Debug("Cannot interpolate discrete curve");
     break;
 
@@ -463,20 +462,20 @@ static Vertex TransfiniteQua(Vertex c1, Vertex c2, Vertex c3, Vertex c4,
 
 // Interpolation transfinie sur un triangle : TRAN_QUA avec s1=s4=c4
 // f(u,v) = u c2 (v) + (1-v) c1(u) + v c3(u) - u(1-v) s2 - uv s3
-//           
+//
 //            s3(1,1)
 //              +
 //            / |
-//      c3  /   |       
+//      c3  /   |
 //        /     |  c2
 //      /       |
 //    /   c1    |
 //   +----------+
 //  s1(0,0)     s2(1,0)
 
-// u = v = 0     -----> x = c1(0) = s1 --> OK  
-// u = 1 ; v = 0 -----> x = c2(0) + c1(1) - s2 =  s2 --> OK  
-// u = 1 ; v = 1 -----> x = c2(1) + c3(1) - s3 =  s3 --> OK  
+// u = v = 0     -----> x = c1(0) = s1 --> OK
+// u = 1 ; v = 0 -----> x = c2(0) + c1(1) - s2 =  s2 --> OK
+// u = 1 ; v = 1 -----> x = c2(1) + c3(1) - s3 =  s3 --> OK
 // v = 0 --> u s2 + c1(u) - u s2 --> x = c1(u) --> OK
 // u = 1 --> c2(v) + (1-v) s2 + v s3 -(1-v) s2  - v s3 --> x = c2(v) --> OK
 // u = 0 --> (1-v) s1 + v s1 = s1 !!! not terrible (singular)
@@ -485,18 +484,16 @@ static Vertex TransfiniteQua(Vertex c1, Vertex c2, Vertex c3, Vertex c4,
 
 // f(u,v) = (1-u) (c1(u-v) + c3(1-v)     - s1) +
 //          (u-v) (c2(v)   + c1(u)       - s2) +
-//            v   (c3(1-u) + c2(1-u+v)   - s3) 
-// 
-// u = v = 0 --> f(0,0) = s1 + s1 - s1     = s1 
-// u = v = 1 --> f(1,1) = s3 + s3 - s3     = s3 
-// u = 1 ; v = 0 --> f(1,1) = s2 + s2 - s2 = s2 
+//            v   (c3(1-u) + c2(1-u+v)   - s3)
+//
+// u = v = 0 --> f(0,0) = s1 + s1 - s1     = s1
+// u = v = 1 --> f(1,1) = s3 + s3 - s3     = s3
+// u = 1 ; v = 0 --> f(1,1) = s2 + s2 - s2 = s2
 // v = 0 --> (1-u)c1(u) + u c1(u) = c1(u) --> COOL
-
 
 #define TRAN_TRI(c1,c2,c3,s1,s2,s3,u,v) u*c2+(1.-v)*c1+v*c3-(u*(1.-v)*s2+u*v*s3);
 
 #define TRAN_TRIB(c1,c1b,c2,c2b,c3,c3b,s1,s2,s3,u,v) (1.-u)*(c1+c3b-s1)+(u-v)*(c2+c1b-s2)+v*(c3+c2b-s3);
-
 
 static Vertex TransfiniteTri(Vertex c1, Vertex c2, Vertex c3,
                              Vertex s1, Vertex s2, Vertex s3, double u, double v)
@@ -512,9 +509,10 @@ static Vertex TransfiniteTri(Vertex c1, Vertex c2, Vertex c3,
                      s1.Pos.Z, s2.Pos.Z, s3.Pos.Z, u, v);
   return V;
 }
+
 static Vertex TransfiniteTriB(Vertex c1, Vertex c1b, Vertex c2,
 			      Vertex c2b, Vertex c3, Vertex c3b,
-			      Vertex s1, Vertex s2, Vertex s3, 
+			      Vertex s1, Vertex s2, Vertex s3,
 			      double u, double v)
 {
   Vertex V;
@@ -528,7 +526,6 @@ static Vertex TransfiniteTriB(Vertex c1, Vertex c1b, Vertex c2,
                      s1.Pos.Z, s2.Pos.Z, s3.Pos.Z, u, v);
   return V;
 }
-
 
 static void TransfiniteSph(Vertex S, Vertex center, Vertex *T)
 {
@@ -599,7 +596,7 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
 
   for(int i = 0; i < std::min(List_Nbr(s->Generatrices), 4); i++)
     List_Read(s->Generatrices, i, &C[i]);
-  
+
   Vertex *O = 0;
   bool isSphere = true;
 
@@ -640,7 +637,7 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
         isSphere = false;
     }
   }
-  
+
   Vertex *S[4], V[4],VB[3], T;
   if(s->Typ == MSH_SURF_REGL && List_Nbr(s->Generatrices) >= 4){
     S[0] = C[0]->beg;
@@ -684,7 +681,7 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
     VB[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * (1-u+v), 0);
     VB[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - v), 0);
     T = TransfiniteTriB(V[0],VB[0], V[1],VB[1], V[2],VB[2], *S[0], *S[1], *S[2], u, v);
-    
+
     if(isSphere) {
       TransfiniteSph(*S[0], *O, &T);
     }
@@ -712,9 +709,9 @@ static Vertex InterpolateExtrudedSurface(Surface *s, double u, double v)
     Msg::Error("Unknown curve in extruded surface");
     return T;
   }
-  
+
   switch(num){
-  case 0: 
+  case 0:
     T = InterpolateCurve(c, c->ubeg + (c->uend - c->ubeg) * u, 0);
     s->Extrude->Extrude(v, T.Pos.X, T.Pos.Y, T.Pos.Z);
     return T;
@@ -809,13 +806,13 @@ Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
   // exact surfaces of revolution. This WILL fail if the surface is
   // transformed after the extrusion: in that case set the
   // exactExtrusion option to 0 to use the normal code path
-  if(CTX::instance()->geom.exactExtrusion && s->Extrude && 
+  if(CTX::instance()->geom.exactExtrusion && s->Extrude &&
      s->Extrude->geo.Mode == EXTRUDED_ENTITY && s->Typ != MSH_SURF_PLAN)
     return InterpolateExtrudedSurface(s, u, v);
 
   switch (s->Typ) {
   case MSH_SURF_REGL:
-  case MSH_SURF_TRIC: 
+  case MSH_SURF_TRIC:
     return InterpolateRuledSurface(s, u, v);
   case MSH_SURF_PLAN:
     Msg::Error("Should never interpolate plane surface in InterpolateSurface()");
