@@ -150,8 +150,7 @@ class MPrism : public MElement {
     return true;
   }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
- private:
-  int edges_prism(const int edge, const int vert) const
+  static int edges_prism(const int edge, const int vert)
   {
     static const int e[9][2] = {
       {0, 1},
@@ -166,7 +165,7 @@ class MPrism : public MElement {
     };
     return e[edge][vert];
   }
-  int faces_prism(const int face, const int vert) const
+  static int faces_prism(const int face, const int vert)
   {
     static const int f[5][4] = {
       {0, 2, 1, -1},

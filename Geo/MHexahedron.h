@@ -146,7 +146,7 @@ class MHexahedron : public MElement {
     return true;
   }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
-  static int edges_hexa(const int edge, const int vert) 
+  static int edges_hexa(const int edge, const int vert)
   {
     static const int e[12][2] = {
       {0, 1},
@@ -164,7 +164,7 @@ class MHexahedron : public MElement {
     };
     return e[edge][vert];
   }
-  static int faces_hexa(const int face, const int vert) 
+  static int faces_hexa(const int face, const int vert)
   {
     static const int f[6][4] = {
       {0, 3, 2, 1},
@@ -483,14 +483,14 @@ class MHexahedron27 : public MHexahedron {
  *    N = 0RDER - 1
  *    8 := 8 --> 8 + N
  *    9 := 8 + N + 1 --> 8 +  2 * N
- *    : 
+ *    :
  *   19 := 8 + 11 * N + 1 --> 8 +  12 * N
  *   20 := 8 + 12 * N + 1 --> 8 +  12 * N + N^2
  *   21 := 8 + 12 * N + N^2 --> 8 +  12 * N + 2 * N^2
- *    : 
+ *    :
  *   25 := 8 + 12 * N + 5 * N^2 + 1 --> 8 +  12 * N + 6 * N^2
  *   26 := 8 + 12 * N + 6 * N^2 + 1 --> 8 +  12 * N + 6 * N^2 + N^3
- * 
+ *
  */
 
 
@@ -518,18 +518,18 @@ class MHexahedronN : public MHexahedron {
   virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
   virtual int getNumEdgeVertices() const { return 12 * (_order - 1); }
   virtual int getNumFaceVertices() const { return 6 * (_order - 1)*(_order - 1); }
-  virtual int getNumVolumeVertices() const 
-  { 
+  virtual int getNumVolumeVertices() const
+  {
     switch(getTypeForMSH()){
-    case MSH_HEX_27 : 
-    case MSH_HEX_64 : 
-    case MSH_HEX_125 : 
-    case MSH_HEX_216 : 
-    case MSH_HEX_343 : 
-    case MSH_HEX_512 : 
-    case MSH_HEX_729 : 
-    case MSH_HEX_1000 : 
-      return (_order - 1) * (_order - 1) * (_order - 1); 
+    case MSH_HEX_27 :
+    case MSH_HEX_64 :
+    case MSH_HEX_125 :
+    case MSH_HEX_216 :
+    case MSH_HEX_343 :
+    case MSH_HEX_512 :
+    case MSH_HEX_729 :
+    case MSH_HEX_1000 :
+      return (_order - 1) * (_order - 1) * (_order - 1);
     default:
       return 0;
     }
@@ -556,7 +556,7 @@ class MHexahedronN : public MHexahedron {
     };
     int count = 4;
     for (int i = 0; i < 4; i++){
-      for (int j = 0; j < _order - 1; j++) v[count++] = _vs[(_order-1)*f[num][i]+j];      
+      for (int j = 0; j < _order - 1; j++) v[count++] = _vs[(_order-1)*f[num][i]+j];
     }
     for (int i = 0; i < (_order + 1) * (_order + 1); i++){
       int N = _order - 1;

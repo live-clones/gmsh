@@ -149,8 +149,7 @@ class MTetrahedron : public MElement {
   }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual SPoint3 circumcenter();
- private:
-  int edges_tetra(const int edge, const int vert) const
+  static int edges_tetra(const int edge, const int vert)
   {
     static const int e[6][2] = {
       {0, 1},
@@ -162,7 +161,7 @@ class MTetrahedron : public MElement {
     };
     return e[edge][vert];
   }
-  int faces_tetra(const int face, const int vert) const
+  static int faces_tetra(const int face, const int vert)
   {
     static const int f[4][3] = {
       {0, 2, 1},

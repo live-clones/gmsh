@@ -148,8 +148,7 @@ void projectInMeanPlane(double *xn, double *yn);
   // criterion.
   virtual double getInnerRadius();
   virtual double getOuterRadius();
- private:
-  int edges_quad(const int edge, const int vert) const
+  static int edges_quad(const int edge, const int vert)
   {
     static const int e[4][2] = {
       {0, 1},

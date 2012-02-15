@@ -184,8 +184,7 @@ class MPyramid : public MElement {
       return false;
     return true;
   }
- private:
-  int edges_pyramid(const int edge, const int vert) const
+  static int edges_pyramid(const int edge, const int vert)
   {
     static const int e[8][2] = {
       {0, 1},
@@ -199,7 +198,7 @@ class MPyramid : public MElement {
     };
     return e[edge][vert];
   }
-  int faces_pyramid(const int face, const int vert) const
+  static int faces_pyramid(const int face, const int vert)
   {
     // only triangular faces
     static const int f[4][3] = {
