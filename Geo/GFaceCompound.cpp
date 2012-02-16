@@ -41,6 +41,7 @@
 #include "GRbf.h"
 #include "Curvature.h"
 #include "MPoint.h"
+#include "Numeric.h"
 
 static void fixEdgeToValue(GEdge *ed, double value, dofManager<double> &myAssembler)
 {
@@ -210,7 +211,7 @@ static void computeCGKernelPolygon(std::map<MVertex*,SPoint3> &coordinates,
     vcg/=nbFinal;
   }
   else{
-    Msg::Debug("----> No Kernel for polygon: place point at CG polygon");
+    //Msg::Debug("----> No Kernel for polygon: place point at CG polygon");
     //place at CG polygon
     for(std::vector<MVertex*>::iterator it = cavV.begin() ; it != cavV.end() ; ++it){
       SPoint3 vsp = coordinates[*it];
@@ -644,10 +645,13 @@ bool GFaceCompound::parametrize() const
     
   // Laplace parametrization
   if (_mapping == HARMONIC){
-    Msg::Debug("Parametrizing surface %d with 'harmonic map'", tag()); 
+    Msg::Info("Parametrizing surface %d with 'harmonic map'", tag()); 
     fillNeumannBCS();
     parametrize(ITERU,HARMONIC); 
     parametrize(ITERV,HARMONIC);
+    printStuff(111);
+    checkOrientation(0, true);
+    printStuff(222);
   }
   // Multiscale Laplace parametrization
   else if (_mapping == MULTISCALE){
@@ -660,7 +664,7 @@ bool GFaceCompound::parametrize() const
   }
   // Conformal map parametrization
   else if (_mapping == CONFORMAL){
-    Msg::Debug("Parametrizing surface %d with 'conformal map'", tag());
+    Msg::Info("Parametrizing surface %d with 'conformal map'", tag());
     fillNeumannBCS();
     std::vector<MVertex *> vert;
     bool oriented, hasOverlap;
@@ -971,6 +975,7 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   
   getBoundingEdges();
   _type = UNITCIRCLE;
+  //_type = MEANPLANE;
  
   nbSplit = 0;
   fillTris.clear();
@@ -1095,6 +1100,30 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
       if(step == ITERU) myAssembler.fixVertex(v, 0, 1, cos(theta));
       else if(step == ITERV) myAssembler.fixVertex(v, 0, 1, sin(theta));    
     }
+  }
+  else if (_type == MEANPLANE){
+
+  std::vector<SPoint3> points, pointsProj, pointsUV;
+  SPoint3 ptCG(0.0, 0.0, 0.0);
+  for(unsigned int i = 0; i < _ordered.size(); i++){
+      MVertex *v = _ordered[i];
+      points.push_back(SPoint3(v->x(), v->y(), v->z()));
+      ptCG[0] += v->x();
+      ptCG[1] += v->y();
+      ptCG[2] += v->z();
+    }
+    ptCG /= points.size();
+    mean_plane meanPlane;
+    computeMeanPlaneSimple(points, meanPlane);
+    projectPointsToPlane(points, pointsProj, meanPlane);
+    transformPointsIntoOrthoBasis(pointsProj, pointsUV, ptCG, meanPlane);
+
+    for(unsigned int i = 0; i < pointsUV.size(); i++){
+      MVertex *v = _ordered[i];
+      if(step == ITERU) myAssembler.fixVertex(v, 0, 1, pointsUV[i][0]);
+      else if(step == ITERV) myAssembler.fixVertex(v, 0, 1, pointsUV[i][1]);    
+    }
+
   }
   else{
     Msg::Error("Unknown type of parametrization");

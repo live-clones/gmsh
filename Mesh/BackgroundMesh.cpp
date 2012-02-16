@@ -246,17 +246,13 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
     }
     break;
   }
-  
   double lc = Crv > 0 ? 2 * M_PI / Crv / CTX::instance()->mesh.minCircPoints : MAX_LC;
   return lc;
 }
 
 static SMetric3 LC_MVertex_CURV_ANISO(GEntity *ge, double U, double V)
 {
-  //std::cout << "I'm in LC_MVertex_CURV_ANISO" << std::endl;
-  //std::cout << "The dimension of the entity is: "<< ge->dim() << std::endl;
   switch(ge->dim()){
-  //std::cout << "The dimension of the entity is: "<< ge->dim() << std::endl;
   case 0: return metric_based_on_surface_curvature((const GVertex *)ge);
   case 1: return metric_based_on_surface_curvature((const GEdge *)ge, U);
   case 2: return metric_based_on_surface_curvature((const GFace *)ge, U, V);
@@ -397,7 +393,7 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
   
   SMetric3 LC(1./(lc*lc));
   SMetric3 m = intersection(intersection (l4, LC),l3);
-  //  printf("%g %g %g %g %g %g\n",m(0,0),m(1,1),m(2,2),m(0,1),m(0,2),m(1,2));
+  //printf("%g %g %g %g %g %g\n",m(0,0),m(1,1),m(2,2),m(0,1),m(0,2),m(1,2));
   return m;
   //  return lc * CTX::instance()->mesh.lcFactor;
 }

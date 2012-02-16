@@ -698,20 +698,14 @@ void Centerline::createSplitCompounds(){
     int num_gfc = NF+i+1;   
     Msg::Info("Parametrize Compound Surface (%d) = %d discrete face",
               num_gfc, pf->tag());
-    GFaceCompound::typeOfMapping typ = GFaceCompound::CONFORMAL;
+    //GFaceCompound::typeOfMapping typ = GFaceCompound::HARMONIC; 
+    GFaceCompound::typeOfMapping typ = GFaceCompound::CONFORMAL; 
     GFaceCompound *gfc = new GFaceCompound(current, num_gfc, f_compound, U0,
 					   typ, 0);
     gfc->meshAttributes.recombine = recombine;
     gfc->addPhysicalEntity(i+1);
     current->add(gfc);
-    //gfc->parametrize();
-    // for(unsigned int j = 0; j < pf->triangles.size(); ++j){
-    //   MTriangle *t = pf->triangles[j];
-    //   for(int k = 0; k < 3; k++){
-    // 	MVertex *v = t->getVertex(k);
-    // 	v->setEntity(pf);
-    //   }
-    //}
+
   }
 
 }
@@ -867,7 +861,7 @@ void Centerline::cutMesh(){
   for(unsigned int i = 0; i < edges.size(); i++){
     std::vector<MLine*> lines = edges[i].lines;
     double L = edges[i].length;
-    double R = edges[i].minRad;
+    double R = 0.5*(edges[i].minRad+edges[i].maxRad);
     double AR = L/R;
     printf("*** branch =%d \n", i, AR);
     if( AR > 4.5){
@@ -1044,48 +1038,14 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    double lc = 2*M_PI*d/nbPoints; 
    SVector3  p0(nodes[index2[0]][0], nodes[index2[0]][1], nodes[index2[0]][2]);
    SVector3  p1(nodes[index2[1]][0], nodes[index2[1]][1], nodes[index2[1]][2]);
-   SVector3 dir = p1-p0;
-   dir.normalize();
+   SVector3 dir0 = p1-p0;
    SVector3 dir1, dir2;
-   if (dir[1]!=0.0 && dir[2]!=0.0){
-     dir1 = SVector3(1.0, 0.0, -dir[0]/dir[2]);
-     dir2 = SVector3 (dir[0]/dir[2], -(dir[0]*dir[0]+dir[2]*dir[2])/(dir[1]*dir[2]), 1.0);
-   }
-   else if (dir[0]!=0.0 && dir[2]!=0.0){
-     dir1 = SVector3(-dir[1]/dir[0], 1.0, 0.0);
-     dir2 = SVector3(1.0, dir[1]/dir[0], -(dir[1]*dir[1]+dir[0]*dir[0])/(dir[0]*dir[2]));
-   }
-   else if (dir[0]!=0.0 && dir[1]!=0.0){
-     dir1 = SVector3(0.0, -dir[2]/dir[1], 1.0);
-     dir2 = SVector3(-(dir[1]*dir[1]+dir[2]*dir[2])/(dir[0]*dir[1]), 1.0, dir[2]/dir[1]);
-   }
-   else if (dir[0]==0.0 && dir[1]==0.0){
-     dir1 = SVector3(0.0, 1.0, 0.0);
-     dir2 = SVector3(1.0, 0.0, 0.0);
-   }
-   else if (dir[1]==0.0 && dir[2]==0.0){
-     dir1 = SVector3(0.0, 1.0, 0.0);
-     dir2 = SVector3(0.0, 0.0, 1.0);
-   }
-   else if (dir[0]==0.0 && dir[2]==0.0){
-     dir1 = SVector3(1.0, 0.0, 0.0);
-     dir2 = SVector3(0.0, 0.0, 1.0);
-   }
-   else {printf("ARGHH EMI DO STHG \n"); exit(1);}
-   // printf("XYZ =%g %g %g r=%g dir0 = %g %g %g dir1 = %g %g %g dir2 =%g %g %g\n", 
-   // 	  x,y,z,d, dir[0], dir[1], dir[2], dir1[0], dir1[1], dir1[2],  dir2[0], dir2[1], dir2[2] );
-   // printf("0x1 =%g 1x2=%g 2x1=%g \n", dot(dir, dir1), dot(dir1,dir2), dot(dir2,dir));
-   dir1.normalize();
-   dir2.normalize();
-   
-   //dir = SVector3(1.0, 0.0, 0.0);
-   //dir1 = SVector3(0.0, 1.0, 0.0);
-   //dir2 = SVector3(0.0, 0.0, 1.0);
+   buildOrthoBasis(dir0,dir1,dir2);
    
    double lcA = 4.*lc;
    double lam1 = 1./(lcA*lcA);
    double lam2 = 1./(lc*lc);
-   metr = SMetric3(lam1,lam2,lam2, dir, dir1, dir2);
+   metr = SMetric3(lam1,lam2,lam2, dir0, dir1, dir2);
 
    delete[]index2;
    delete[]dist2; 

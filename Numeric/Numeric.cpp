@@ -1226,3 +1226,132 @@ int intersection_segments(SPoint3 &p1, SPoint3 &p2,
 	    x[1] >= 0.0 && x[1] <= 1.);
   }
 }
+
+void computeMeanPlaneSimple(const std::vector<SPoint3> &points, mean_plane &meanPlane)
+{
+
+  double xm = 0., ym = 0., zm = 0.;
+  int ndata = points.size();
+  int na = 3;
+  for(int i = 0; i < ndata; i++) {
+    xm += points[i].x();
+    ym += points[i].y();
+    zm += points[i].z();
+  }
+  xm /= (double)ndata;
+  ym /= (double)ndata;
+  zm /= (double)ndata;
+
+  fullMatrix<double> U(ndata, na), V(na, na);
+  fullVector<double> sigma(na);
+  for(int i = 0; i < ndata; i++) {
+    U(i, 0) = points[i].x() - xm;
+    U(i, 1) = points[i].y() - ym;
+    U(i, 2) = points[i].z() - zm;
+  }
+  U.svd(V, sigma);
+  double res[4], svd[3];
+  svd[0] = sigma(0);
+  svd[1] = sigma(1);
+  svd[2] = sigma(2);
+  int min;
+  if(fabs(svd[0]) < fabs(svd[1]) && fabs(svd[0]) < fabs(svd[2]))
+    min = 0;
+  else if(fabs(svd[1]) < fabs(svd[0]) && fabs(svd[1]) < fabs(svd[2]))
+    min = 1;
+  else
+    min = 2;
+  res[0] = V(0, min);
+  res[1] = V(1, min);
+  res[2] = V(2, min);
+  norme(res);
+
+  double ex[3], t1[3], t2[3];
+
+  ex[0] = ex[1] = ex[2] = 0.0;
+  if(res[0] == 0.)
+    ex[0] = 1.0;
+  else if(res[1] == 0.)
+    ex[1] = 1.0;
+  else
+    ex[2] = 1.0;
+
+  prodve(res, ex, t1);
+  norme(t1);
+  prodve(t1, res, t2);
+  norme(t2);
+
+  res[3] = (xm * res[0] + ym * res[1] + zm * res[2]);
+
+  for(int i = 0; i < 3; i++)
+    meanPlane.plan[0][i] = t1[i];
+  for(int i = 0; i < 3; i++)
+    meanPlane.plan[1][i] = t2[i];
+  for(int i = 0; i < 3; i++)
+    meanPlane.plan[2][i] = res[i];
+
+  meanPlane.a = res[0];
+  meanPlane.b = res[1];
+  meanPlane.c = res[2];
+  meanPlane.d = -res[3];//BUG HERE 
+
+  meanPlane.x = meanPlane.y = meanPlane.z = 0.;
+  if(fabs(meanPlane.a) >= fabs(meanPlane.b) &&
+     fabs(meanPlane.a) >= fabs(meanPlane.c) ){
+    meanPlane.x = meanPlane.d / meanPlane.a;
+  }
+  else if(fabs(meanPlane.b) >= fabs(meanPlane.a) &&
+          fabs(meanPlane.b) >= fabs(meanPlane.c)){
+    meanPlane.y = meanPlane.d / meanPlane.b;
+  }
+  else{
+    meanPlane.z = meanPlane.d / meanPlane.c;
+  }
+
+  }
+
+void projectPointToPlane(const SPoint3 &pt, SPoint3 &ptProj, const mean_plane &meanPlane)
+{
+
+  double u  = pt.x();
+  double v  = pt.y();
+  double w  = pt.z();
+  double a = meanPlane.a;
+  double b = meanPlane.b;
+  double c = meanPlane.c;
+  double d = meanPlane.d;
+  double t0 = -(a*u+b*v+c*w+d)/(a*a+b*b+c*c);
+
+  ptProj[0] =  u + a*t0;
+  ptProj[1] =  v + b*t0;
+  ptProj[2] =  w + c*t0;
+  
+}
+
+void projectPointsToPlane(const std::vector<SPoint3> &pts, std::vector<SPoint3> &ptsProj, const mean_plane &meanPlane)
+{
+
+  ptsProj.resize(pts.size());
+  for (int i= 0; i< pts.size(); i++){
+    projectPointToPlane(pts[i],ptsProj[i], meanPlane); 
+  }
+
+}
+
+void transformPointsIntoOrthoBasis(const std::vector<SPoint3> &ptsProj,  std::vector<SPoint3> &pointsUV, 
+				   const SPoint3 &ptCG, const mean_plane &meanPlane)
+{
+
+  pointsUV.resize(ptsProj.size());
+  SVector3 normal(meanPlane.a, meanPlane.b, meanPlane.c);
+  SVector3 tangent, binormal;
+  buildOrthoBasis(normal, tangent, binormal);
+
+  for (int i= 0; i< ptsProj.size(); i++){
+    SVector3 pp(ptsProj[i][0]-ptCG[0],ptsProj[i][1]-ptCG[1],ptsProj[i][2]-ptCG[2]) ;
+    pointsUV[i][0] = dot(pp, tangent); 
+    pointsUV[i][1] = dot(pp, binormal); 
+    pointsUV[i][2] = dot(pp, normal); 
+  }
+  
+}

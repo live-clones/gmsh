@@ -9,6 +9,7 @@
 #include "SPoint3.h"
 #include <string>
 #include <stdio.h>
+#include "GmshMessage.h"
 
 // concrete class for vector of size 3
 class SVector3 {
@@ -71,6 +72,7 @@ class SVector3 {
 
   // Needed to allow the initialization of a SPoint3 from a SPoint3, a distance and a direction
   SPoint3 point() const{return P;}
+
 };
 
 inline double dot(const SVector3 &a, const SVector3 &b)
@@ -101,5 +103,61 @@ inline SVector3 operator+(const SVector3 &a,const SVector3 &b)
 
 inline SVector3 operator-(const SVector3 &a,const SVector3 &b)
 { return SVector3(a[0] - b[0], a[1] - b[1], a[2] - b[2]); }
+
+inline void buildOrthoBasis_naive(SVector3 &dir, SVector3 &dir1, SVector3 &dir2)
+{
+  dir.normalize();
+  if (dir[1]!=0.0 && dir[2]!=0.0){
+     dir1 = SVector3(1.0, 0.0, -dir[0]/dir[2]);
+     dir2 = SVector3 (dir[0]/dir[2], -(dir[0]*dir[0]+dir[2]*dir[2])/(dir[1]*dir[2]), 1.0);
+   }
+   else if (dir[0]!=0.0 && dir[2]!=0.0){
+     dir1 = SVector3(-dir[1]/dir[0], 1.0, 0.0);
+     dir2 = SVector3(1.0, dir[1]/dir[0], -(dir[1]*dir[1]+dir[0]*dir[0])/(dir[0]*dir[2]));
+   }
+   else if (dir[0]!=0.0 && dir[1]!=0.0){
+     dir1 = SVector3(0.0, -dir[2]/dir[1], 1.0);
+     dir2 = SVector3(-(dir[1]*dir[1]+dir[2]*dir[2])/(dir[0]*dir[1]), 1.0, dir[2]/dir[1]);
+   }
+   else if (dir[0]==0.0 && dir[1]==0.0){
+     dir1 = SVector3(0.0, 1.0, 0.0);
+     dir2 = SVector3(1.0, 0.0, 0.0);
+   }
+   else if (dir[1]==0.0 && dir[2]==0.0){
+     dir1 = SVector3(0.0, 1.0, 0.0);
+     dir2 = SVector3(0.0, 0.0, 1.0);
+   }
+   else if (dir[0]==0.0 && dir[2]==0.0){
+     dir1 = SVector3(1.0, 0.0, 0.0);
+     dir2 = SVector3(0.0, 0.0, 1.0);
+   }
+   else{
+       Msg::Error("Problem with computing orthoBasis");
+       Msg::Exit(1);
+   }
+   // printf("XYZ =%g %g %g r=%g dir0 = %g %g %g dir1 = %g %g %g dir2 =%g %g %g\n", 
+   // 	  x,y,z,d, dir[0], dir[1], dir[2], dir1[0], dir1[1], dir1[2],  dir2[0], dir2[1], dir2[2] );
+   // printf("0x1 =%g 1x2=%g 2x1=%g \n", dot(dir, dir1), dot(dir1,dir2), dot(dir2,dir));
+   dir1.normalize();
+   dir2.normalize();
+}
+
+inline void buildOrthoBasis(SVector3 &normal, SVector3 &tangent, SVector3 &binormal)
+{
+  //pick any Unit-Vector that's not parallel to normal:
+  normal.normalize();
+  if (normal[0] > normal[1] )
+    tangent = SVector3(0.0, 1.0, 0.0);
+  else
+    tangent = SVector3(1.0, 0.0, 0.0);
+
+  //build a binormal from tangent and normal:
+  binormal = crossprod(tangent, normal);
+  binormal.normalize();
+  
+  //and correct the tangent from the binormal and the normal.
+  tangent = crossprod(normal, binormal);
+  tangent.normalize();
+}
 
 #endif

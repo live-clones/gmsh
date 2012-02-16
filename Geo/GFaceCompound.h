@@ -57,7 +57,7 @@ class GFaceCompound : public GFace {
  public:
   typedef enum {ITERU=0,ITERV=1,ITERD=2} iterationStep;
   typedef enum {HARMONIC=1,CONFORMAL=2, CONVEXCOMBINATION=3, MULTISCALE=4, RBF=5} typeOfMapping;
-  typedef enum {UNITCIRCLE, SQUARE} typeOfIsomorphism;
+  typedef enum {UNITCIRCLE, MEANPLANE} typeOfIsomorphism;
   void computeNormals(std::map<MVertex*, SVector3> &normals) const;
  protected:
   mutable std::set<MVertex *> ov;
@@ -134,6 +134,7 @@ class GFaceCompound : public GFace {
   mutable int nbSplit;
   int getNbSplit() const { return nbSplit; }
   int allowPartition() const{ return _allowPartition; }
+  void setType(typeOfIsomorphism type){ _type=type;}
  private:
   typeOfIsomorphism _type;
   mutable typeOfMapping _mapping;
@@ -147,7 +148,7 @@ class GFaceCompound : public GFace {
  public:
   typedef enum {ITERU=0,ITERV=1,ITERD=2} iterationStep;
   typedef enum {HARMONIC=1,CONFORMAL=2, CONVEXCOMBINATION=3, MULTISCALE=4, RBF=5} typeOfMapping;
-  typedef enum {UNITCIRCLE, SQUARE} typeOfIsomorphism;
+  typedef enum {UNITCIRCLE, MEANPLANE} typeOfIsomorphism;
  GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 	       std::list<GEdge*> &U0, typeOfMapping typ = HARMONIC, int allowPartition=1)
     : GFace(m, tag)

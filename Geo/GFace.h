@@ -16,6 +16,7 @@
 #include "SPoint2.h"
 #include "SVector3.h"
 #include "Pair.h"
+#include "Numeric.h"
 
 class MElement;
 class MTriangle;
@@ -23,13 +24,6 @@ class MQuadrangle;
 class MPolygon;
 class ExtrudeParams;
 class GFaceCompound;
-
-struct mean_plane
-{
-  double plan[3][3];
-  double a, b, c, d;
-  double x, y, z;
-};
 
 struct surface_params
 {

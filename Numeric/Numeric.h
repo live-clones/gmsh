@@ -15,6 +15,13 @@
 #define myhypot(a,b) (sqrt((a)*(a)+(b)*(b)))
 #define sign(x)      (((x)>=0)?1:-1)
 
+struct mean_plane
+{
+  double plan[3][3];
+  double a, b, c, d;
+  double x, y, z;
+};
+
 double myatan2(double a, double b);
 double myasin(double a);
 double myacos(double a);
@@ -127,5 +134,12 @@ void signedDistancesPointsEllipseLine (std::vector<double>&distances,
 int intersection_segments (SPoint3 &p1, SPoint3 &p2,
 			   SPoint3 &q1, SPoint3 &q2, 
 			   double x[2]);
+
+//tools for projection onto plane
+void computeMeanPlaneSimple(const std::vector<SPoint3> &points, mean_plane &meanPlane); 
+void projectPointToPlane(const SPoint3 &pt, SPoint3 &ptProj, const mean_plane &meanPlane);
+void projectPointsToPlane(const std::vector<SPoint3> &pts, std::vector<SPoint3> &ptsProj, const mean_plane &meanPlane);
+void transformPointsIntoOrthoBasis(const std::vector<SPoint3> &ptsProj,  std::vector<SPoint3> &pointsUV, 
+				   const SPoint3 &ptCG, const mean_plane &meanPlane);
 
 #endif
