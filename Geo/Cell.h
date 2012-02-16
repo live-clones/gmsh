@@ -19,12 +19,6 @@ public:
   bool operator()(const Cell* c1, const Cell* c2) const;
 };
 
-class Less_VertexNumIndex {
-public:
-  bool operator()(const std::pair<MVertex*, int> v1,
-                  const std::pair<MVertex*, int> v2) const;
-};
-
 // Class to save cell boundary orientation information
 class BdInfo {
  private:

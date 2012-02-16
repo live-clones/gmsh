@@ -29,12 +29,6 @@ bool Less_Cell::operator()(const Cell* c1, const Cell* c2) const
   return false;
 }
 
-bool Less_VertexNumIndex::operator()(const std::pair<MVertex*, int> v1,
-                                     const std::pair<MVertex*, int> v2) const
-{
-  return (v1.first->getNum() < v2.first->getNum());
-}
-
 int Cell::_globalNum = 0;
 
 Cell::Cell(MElement* element, int domain)
@@ -65,15 +59,14 @@ Cell::Cell(Cell* parent, int i)
 
 void Cell::_sortVertexIndices()
 {
-  std::vector< std::pair<MVertex*, int> > si;
+  std::map<MVertex*, int, MVertexLessThanNum> si;
 
   for(unsigned int i = 0; i < _v.size(); i++)
-    si.push_back( std::make_pair(_v[i], i) );
+    si[_v[i]] = i;
 
-  std::sort(si.begin(), si.end(), Less_VertexNumIndex());
-
-  for(unsigned int i = 0; i < si.size(); i++)
-    _si.push_back(si[i].second);
+  std::map<MVertex*, int, MVertexLessThanNum>::iterator it;
+  for(it = si.begin(); it != si.end(); it++)
+    _si.push_back(it->second);
 }
 
 inline int Cell::getSortedVertex(int vertex) const
