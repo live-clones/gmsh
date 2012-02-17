@@ -2163,6 +2163,7 @@ void recombineIntoQuads(GFace *gf,
 	  if (z) printf("%d swops !!\n",z);
           if(z && saveAll){ sprintf(NAME,"iter%dS.msh",COUNT++); gf->model()->writeMSH(NAME); }
           if (!(w+x+y+z)) break;
+	  if (COUNT == 10)break;
         }
       }
       edgeSwapQuadsForBetterQuality(gf);
