@@ -98,7 +98,6 @@ Curvature& Curvature::getInstance()
    {
      if ( (*face_iter)->geomType() == GEntity::CompoundSurface )
      {
-
        GFaceCompound* compound = dynamic_cast<GFaceCompound*>(*face_iter);
        std::list<GFace*> tempcompounds = compound->getCompounds();
        std::list<GFace*>::iterator surfIterator;
@@ -972,12 +971,20 @@ void Curvature::buildEdgeList()
 
 //========================================================================================================
 
+
 void Curvature::smoothCurvatureField(const int NbIter)
 {
   if ( _VertexToEdgeList.size() == 0 ) { buildEdgeList(); }
 
   std::vector<double> smoothedCurvature;
   smoothedCurvature.resize( _VertexToInt.size() );
+
+
+  // Smoothed curvature directions
+  std::vector<SVector3> smoothedDir1;
+  std::vector<SVector3> smoothedDir2;
+  smoothedDir1.resize(_VertexToInt.size());
+  smoothedDir2.resize(_VertexToInt.size());
 
   _NbNeighbour.resize(_VertexToInt.size());
   for(int i = 0; i < _VertexToInt.size(); ++i)
@@ -993,6 +1000,8 @@ void Curvature::smoothCurvatureField(const int NbIter)
     for(int i = 0; i < smoothedCurvature.size(); ++i)
     {
       smoothedCurvature[i] = 0.0;
+      smoothedDir1[i] = SVector3();
+      smoothedDir2[i] = SVector3();
     }
 
     std::list<MeshEdgeInfo>::const_iterator edgeIterator;
@@ -1002,14 +1011,19 @@ void Curvature::smoothCurvatureField(const int NbIter)
     {
       for(edgeIterator = _VertexToEdgeList[i].begin(); edgeIterator != _VertexToEdgeList[i].end(); ++edgeIterator)
       {
-        const int N0 = (*edgeIterator).StartV;
-        const int N1 = (*edgeIterator).EndV;
 
-        const int V0 = _VertexToInt[N0];
-        const int V1 = _VertexToInt[N1];
+        const int V0 = (*edgeIterator).StartV;
+        const int V1 = (*edgeIterator).EndV;
 
         smoothedCurvature[V0] += _VertexCurve[V1];
         smoothedCurvature[V1] += _VertexCurve[V0];
+
+        smoothedDir1[V0] += _pdir1[V1];
+        smoothedDir1[V1] += _pdir1[V0];
+
+        smoothedDir2[V0] += _pdir2[V1];
+        smoothedDir2[V1] += _pdir2[V0];
+
         _NbNeighbour[V0]++;
         _NbNeighbour[V1]++;
       }
@@ -1021,10 +1035,13 @@ void Curvature::smoothCurvatureField(const int NbIter)
     for(int i = 0; i < _VertexCurve.size(); ++i)
     {
       _VertexCurve[i] = Lambda*_VertexCurve[i] + (1-Lambda)*smoothedCurvature[i] / _NbNeighbour[i];
+      _pdir1[i] = Lambda * _pdir1[i] + (1.-Lambda)/_NbNeighbour[i] * smoothedDir1[i];
+      _pdir2[i] = Lambda * _pdir2[i] + (1.-Lambda)/_NbNeighbour[i] * smoothedDir2[i];
     }
   }
 
 }
+
 
 //========================================================================================================
 
@@ -1211,10 +1228,9 @@ void Curvature::computeCurvature_Rusinkiewicz(int isMax)
       _VertexCurve[ivertex] = std::max(fabs(_curv1[ivertex]), fabs(_curv2[ivertex]));
     }
     else{
-     _VertexCurve[ivertex] = (_curv1[ivertex]+_curv2[ivertex])*0.5; //Mean curvature
-    //_VertexCurve[ivertex] = std::abs(_curv1[ivertex]) + std::abs(_curv2[ivertex]);
+    //_VertexCurve[ivertex] = (_curv1[ivertex]+_curv2[ivertex])*0.5; //Mean curvature
     //_VertexCurve[ivertex] = _curv1[ivertex]*_curv2[ivertex]; //Gaussian
-    //_VertexCurve[ivertex] = std::abs(_VertexCurve[ivertex]);
+    _VertexCurve[ivertex] = _curv1[ivertex]; //Maximal Curvature
     }
 
   }
@@ -1442,13 +1458,13 @@ void Curvature::writeToMshFile(const std::string &filename)
   outfile.precision(18);
   outfile.open(filename.c_str());
 
-  /// Write the values of curvature
+  /// Write the values of curvature 1 (max)
   outfile << "$MeshFormat"    << std::endl;
   outfile << "2.1 0 8"        << std::endl;
   outfile << "$EndMeshFormat" << std::endl;
   outfile << "$NodeData" << std::endl;
   outfile << "1" << std::endl;                 // One string tag
-  outfile << "\"Curvature\"" << std::endl;     // The name of the view
+  outfile << "\"Curvature 1 (max)\"" << std::endl;     // The name of the view
   outfile << "1"             << std::endl;     // One real tag
   outfile << "0.0"           << std::endl;     // The time value
   outfile << "3"             << std::endl;     // Three integer tags
@@ -1459,7 +1475,30 @@ void Curvature::writeToMshFile(const std::string &filename)
   std::map<int,int>::const_iterator vertex_iterator;
   for(vertex_iterator = _VertexToInt.begin(); vertex_iterator != _VertexToInt.end(); ++vertex_iterator)
   {
-    outfile << vertex_iterator->first << " " << _VertexCurve[vertex_iterator->second] << std::endl;
+    outfile << vertex_iterator->first << " " << _curv1[vertex_iterator->second] << std::endl;
+  }
+
+  outfile << "$EndNodeData" << std::endl;
+
+
+  /// Write the values of curvature 2 (min)
+  outfile << "$MeshFormat"    << std::endl;
+  outfile << "2.1 0 8"        << std::endl;
+  outfile << "$EndMeshFormat" << std::endl;
+  outfile << "$NodeData" << std::endl;
+  outfile << "1" << std::endl;                 // One string tag
+  outfile << "\"Curvature 2 (min)\"" << std::endl;     // The name of the view
+  outfile << "1"             << std::endl;     // One real tag
+  outfile << "0.0"           << std::endl;     // The time value
+  outfile << "3"             << std::endl;     // Three integer tags
+  outfile << "0"             << std::endl;     // The time step (time steps always start at 0)
+  outfile << "1"             << std::endl;     // 1-component (scalar) field
+  outfile << _VertexToInt.size() << std::endl; // How many associated nodal values
+
+
+  for(vertex_iterator = _VertexToInt.begin(); vertex_iterator != _VertexToInt.end(); ++vertex_iterator)
+  {
+    outfile << vertex_iterator->first << " " << _curv2[vertex_iterator->second] << std::endl;
   }
 
   outfile << "$EndNodeData" << std::endl;
@@ -1514,7 +1553,7 @@ void Curvature::writeToMshFile(const std::string &filename)
   outfile << "$EndNodeData" << std::endl;
 
 
-  /// Write the values of curvature direction - principal direction 1
+  /// Write the values of curvature direction - principal direction 2
   outfile << "$NodeData" << std::endl;
   outfile << "1" << std::endl;                 // One string tag
   outfile << "\"Principal curvature direction 2\"" << std::endl;     // The name of the view
