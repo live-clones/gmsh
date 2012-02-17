@@ -385,11 +385,14 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_auto_coherence(0, GMSH_SET, o->geo.butt[8]->value());
   opt_geometry_light(0, GMSH_SET, o->geo.butt[9]->value());
   opt_geometry_highlight_orphans(0, GMSH_SET, o->geo.butt[10]->value());
+
   opt_geometry_occ_fix_degenerated(0, GMSH_SET, o->geo.butt[16]->value());
+  opt_geometry_occ_fix_small_edges(0, GMSH_SET, o->geo.butt[11]->value());
   opt_geometry_occ_fix_small_faces(0, GMSH_SET, o->geo.butt[12]->value());
   opt_geometry_occ_sew_faces(0, GMSH_SET, o->geo.butt[13]->value());
-  opt_geometry_light_two_side(0, GMSH_SET, o->geo.butt[14]->value());
   opt_geometry_occ_connect_faces(0, GMSH_SET, o->geo.butt[15]->value());
+
+  opt_geometry_light_two_side(0, GMSH_SET, o->geo.butt[14]->value());
   int old_hide_compound = (int)opt_geometry_hide_compounds(0, GMSH_GET, 0);
   opt_geometry_hide_compounds(0, GMSH_SET, o->geo.butt[17]->value());
 

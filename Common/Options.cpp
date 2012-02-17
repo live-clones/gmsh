@@ -3943,7 +3943,7 @@ double opt_geometry_occ_fix_degenerated(OPT_ARGS_NUM)
       (CTX::instance()->geom.occFixDegenerated);
   }
 #endif
-  return CTX::instance()->geom.occFixSmallEdges;
+  return CTX::instance()->geom.occFixDegenerated;
 }
 
 double opt_geometry_occ_fix_small_edges(OPT_ARGS_NUM)
@@ -5144,12 +5144,12 @@ double opt_mesh_hom_no_metric(OPT_ARGS_NUM)
 double opt_mesh_cgns_import_order(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    int value = (int)val; 
+    int value = (int)val;
     double order = val;
     while(order >= 2.0) {
       order = order / 2.0;
     }
-    
+
     if (order != 1.0)
       value = 1;
     CTX::instance()->mesh.cgnsImportOrder = value;
