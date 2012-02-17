@@ -13,11 +13,19 @@
 #include "SElement.h"
 #include "fullMatrix.h"
 
+struct elasticityDataAtGaussPoint 
+{  
+  std::vector< fullMatrix<double> > gradSF;
+  std::vector<double> u,v,w,weight;  
+};
+
 class elasticityTerm : public femTerm<double> {
  protected:
   double _E, _nu;
   int _iFieldR, _iFieldC;
   SVector3 _volumeForce;
+  mutable std::map<int,elasticityDataAtGaussPoint> _data;
+  void createData (MElement*) const;    
  public:
   void setFieldC(int i){_iFieldC = i;}
   void setFieldR(int i){_iFieldR = i;}

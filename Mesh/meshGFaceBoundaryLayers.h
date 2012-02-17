@@ -164,7 +164,7 @@ public:
 };
 
 
-BoundaryLayerColumns * buidAdditionalPoints2D (GFace *gf,  double _angle) ;
+BoundaryLayerColumns * buidAdditionalPoints2D (GFace *gf) ;
 void buildMeshMetric(GFace *gf, double *uv, SMetric3 &m, double metric[3]);
 
 

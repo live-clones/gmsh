@@ -7,6 +7,7 @@
 #define _CONTEXT_H_
 
 #include <vector>
+#include <map>
 #include <string>
 #include "CGNSOptions.h"
 #include "meshPartitionOptions.h"
@@ -39,6 +40,7 @@ struct contextMeshOptions {
   int highOrderNoMetric;
   int multiplePasses;
   int cgnsImportOrder;
+  std::map<int,int> algo2d_per_face;
 };
 
 struct contextGeometryOptions {

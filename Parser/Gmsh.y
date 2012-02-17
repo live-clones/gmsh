@@ -109,7 +109,7 @@ fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
 %token tUsing tPlugin tDegenerated
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset
-%token tRecombine tSmoother tSplit tDelete tCoherence tIntersect
+%token tRecombine tSmoother tSplit tDelete tCoherence tIntersect tMeshAlgorithm
 %token tLayers tHole tAlias tAliasWithOptions
 %token tQuadTriDbl tQuadTriSngl tRecombLaterals tTransfQuadTri
 %token tText2D tText3D tInterpolationScheme  tTime tCombine
@@ -3424,6 +3424,15 @@ Transfinite :
         List_Delete($2);
       }
     }
+  | tMeshAlgorithm tSurface ListOfDouble FExpr tEND
+    {
+      for(int i = 0; i < List_Nbr($3); i++){
+	double d;
+	List_Read($3, i, &d);
+	CTX::instance()->mesh.algo2d_per_face[(int)d] = (int)$4;
+      }
+    }
+
   | tRecombine tSurface ListOfDoubleOrAll RecombineAngle tEND
     {
       if(!$3){

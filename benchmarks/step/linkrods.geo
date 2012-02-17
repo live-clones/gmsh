@@ -1,5 +1,5 @@
 
-//Mesh.CharacteristicLengthFactor=.4;
+Mesh.CharacteristicLengthFactor=.2;
 
 //Mesh.CharacteristicLengthFromCurvature=1; //-clcurv
 Mesh.CharacteristicLengthMin = 0.25; //-clmin
@@ -11,4 +11,4 @@ Mesh.MinimumCirclePoints=15; //default=7
 
 Merge "linkrods.step";
 
-Characteristic Length {5} = 0.001;
+//Characteristic Length {5} = 0.001;

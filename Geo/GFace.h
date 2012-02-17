@@ -284,6 +284,9 @@ class GFace : public GEntity
     // edge loops
   } meshAttributes ;
 
+  int getMeshingAlgo () const;
+  void setMeshingAlgo (int) ;
+
   struct {
     mutable GEntity::MeshGenerationStatus status;
     double worst_element_shape, best_element_shape, average_element_shape;

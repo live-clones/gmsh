@@ -63,6 +63,16 @@ GFace::~GFace()
   deleteMesh();
 }
 
+int GFace::getMeshingAlgo () const {
+  std::map<int,int>::iterator it = CTX::instance()->mesh.algo2d_per_face.find(tag());
+  return it == CTX::instance()->mesh.algo2d_per_face.end() ?
+    CTX::instance()->mesh.algo2d : it->second ;
+}
+
+void GFace::setMeshingAlgo (int algo) {
+  CTX::instance()->mesh.algo2d_per_face[tag()] = algo;
+}
+
 void GFace::delFreeEdge(GEdge *e)
 {
   // delete the edge from the edge list and the orientation list

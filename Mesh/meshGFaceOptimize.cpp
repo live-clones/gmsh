@@ -39,6 +39,45 @@ extern "C" int perfect_match
  double *totalzeit) ;
 #endif
 
+static int diff2 (MElement *q1, MElement *q2){
+  std::set<MVertex*> s;
+  for (int i=0;i<4;i++)s.insert(q1->getVertex(i));
+  for (int i=0;i<4;i++)if(s.find(q2->getVertex(i)) == s.end())return 1;
+  return 0;
+}
+static void SANITY_(GFace *gf,int count){
+  // SANITY TEST 
+  for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
+    for(unsigned int j = i+1; j < gf->quadrangles.size(); j++){
+      MQuadrangle *e1 = gf->quadrangles[i];
+      MQuadrangle *e2 = gf->quadrangles[j];
+      if (!diff2(e1,e2)){
+	e1->writeMSH(stdout);
+	e2->writeMSH(stdout);
+	Msg::Fatal("You found a BUG(%d) in the quad optimization routines of Gmsh Line %d of FILE %s",count,__LINE__,__FILE__);
+      }
+    }
+  }
+}
+
+static int SANITY_(GFace *gf,MQuadrangle *q1, MQuadrangle *q2, int count){
+  // SANITY TEST 
+  for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
+    MQuadrangle *e1 = gf->quadrangles[i];
+    MQuadrangle *e2 = q1;
+    if (!diff2(e1,e2)){
+      return 0;
+    }
+    e2 = q2;
+    if (!diff2(e1,e2)){
+      return 0;
+    }
+  }
+  return 1;
+}
+
+
+
 edge_angle::edge_angle(MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2)
   : v1(_v1), v2(_v2)
 {
@@ -450,6 +489,12 @@ static int _removeTwoQuadsNodes(GFace *gf)
 	    v4 = q2->getVertex(i);
 	    break;
 	  }
+	}
+	if (!v4){
+	  Msg::Error("BUG DISCOVERED IN _removeTwoQuadsNodes ,%p,%p,%p",v1,v2,v3);
+	  q1->writePOS(stdout,true,false,false,false,false,false);
+	  q2->writePOS(stdout,true,false,false,false,false,false);
+	  return 0;
 	}
 	gf->quadrangles.push_back(new MQuadrangle(v1,v2,v3,v4));
 	vtouched.insert(it->first);
@@ -1106,6 +1151,7 @@ void laplaceSmoothingConstrained(GFace *gf)
   }
 }
 
+
 int _edgeSwapQuadsForBetterQuality(GFace *gf)
 {
   e2t_cont adj;
@@ -1128,10 +1174,19 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf)
 
       double worst_quality_old = std::min(e1->etaShapeMeasure(),e2->etaShapeMeasure());
 
+      /*
+      if (!diff2(e1,e2)){
+	e1->writeMSH(stdout);
+	e2->writeMSH(stdout);
+	SANITY_(gf,3);
+	Msg::Fatal("You found a BUG in the quad optimization routines of Gmsh Line %d of FILE %s (%p %p)",__LINE__,__FILE__,e1,e2);
+      }
+      */
+
       if (worst_quality_old < .3 && (
 	  deleted.find(e1) == deleted.end() ||
 	  deleted.find(e2) == deleted.end())){
-	MVertex *v12,*v11,*v22,*v21;
+	MVertex *v12=0,*v11=0,*v22=0,*v21=0;
 	for (int i=0;i<4;i++){
 	  MEdge ed = e1->getEdge(i);
 	  if (ed.getVertex(0) == v1 && ed.getVertex(1) != v2)v11 = ed.getVertex(1);
@@ -1144,6 +1199,10 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf)
 	  if (ed.getVertex(0) == v2 && ed.getVertex(1) != v1)v22 = ed.getVertex(1);
 	  if (ed.getVertex(1) == v2 && ed.getVertex(0) != v1)v22 = ed.getVertex(0);
 	}
+	if (!v11 || !v12 || !v21 || !v22){
+	  Msg::Error("You found a BUG in the quad optimization routines of Gmsh Line %d of FILE %s",__LINE__,__FILE__);
+	  return 0;
+	} 
 
 	MQuadrangle *q1A = new MQuadrangle (v11,v22,v2,v12);
 	MQuadrangle *q2A = new MQuadrangle (v22,v11,v1,v21);
@@ -1153,7 +1212,7 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf)
 	double worst_quality_B = std::min(q1B->etaShapeMeasure(),q2B->etaShapeMeasure());
 	//	printf("worst_quality_old = %g worst_quality_A = %g worst_quality_B = %g\n",worst_quality_old,worst_quality_A,worst_quality_B);
 
-	if (0.8*worst_quality_A > worst_quality_old && 0.8*worst_quality_A > worst_quality_B){
+	if (0.8*worst_quality_A > worst_quality_old && 0.8*worst_quality_A > worst_quality_B && SANITY_(gf,q1A,q2A,12121)){
 	  deleted.insert(e1);
 	  deleted.insert(e2);
 	  created.push_back(q1A);
@@ -1163,7 +1222,7 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf)
 	  //printf("edge swap performed -- 1\n");
 	  COUNT++;
 	}
-	else if (0.8*worst_quality_B > worst_quality_old && 0.8*worst_quality_B > worst_quality_A){
+	else if (0.8*worst_quality_B > worst_quality_old && 0.8*worst_quality_B > worst_quality_A && SANITY_(gf,q1B,q2B,12121)){
 	  deleted.insert(e1);
 	  deleted.insert(e2);
 	  created.push_back(q1B);
@@ -1197,7 +1256,6 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf)
 }
 
 static int  edgeSwapQuadsForBetterQuality ( GFace *gf ) {
-  //  return 0;
   int COUNT = 0;
   while(1){
     int k = _edgeSwapQuadsForBetterQuality (gf);
@@ -1840,6 +1898,7 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
   if(CTX::instance()->mesh.algoRecombine == 1){
 #if defined(HAVE_BLOSSOM)
     int ncount = gf->triangles.size();
+    //    printf("COUCOU %d\n",ncount);
     if (ncount % 2 == 0) {
       int ecount =  cubicGraph ? pairs.size() + makeGraphPeriodic.size() : pairs.size();
       Msg::Info("Blossom: %d internal %d closed",(int)pairs.size(), (int)makeGraphPeriodic.size());
@@ -2093,6 +2152,7 @@ void recombineIntoQuads(GFace *gf,
 
         while(1){
 	  int w = _splitFlatQuads(gf, .3);
+	  //	  printf("%d flat quads splittttouilled\n",w);
           if(w && saveAll){ sprintf(NAME,"iter%dSF.msh",COUNT++); gf->model()->writeMSH(NAME);}
           int x = removeTwoQuadsNodes(gf);
           if(x && saveAll){ sprintf(NAME,"iter%dTQ.msh",COUNT++); gf->model()->writeMSH(NAME);}
@@ -2100,6 +2160,7 @@ void recombineIntoQuads(GFace *gf,
           if(y && saveAll){ sprintf(NAME,"iter%dD.msh",COUNT++); gf->model()->writeMSH(NAME); }
           laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
           int z = edgeSwapQuadsForBetterQuality(gf);
+	  if (z) printf("%d swops !!\n",z);
           if(z && saveAll){ sprintf(NAME,"iter%dS.msh",COUNT++); gf->model()->writeMSH(NAME); }
           if (!(w+x+y+z)) break;
         }

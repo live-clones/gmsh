@@ -42,6 +42,72 @@ double MTetrahedron::getCircumRadius()
 #endif
 }
 
+double MTetrahedron10::distoShapeMeasure () {  
+
+  // the fastest available algo for computing scaled jacobians for 
+  // quadratic tetrahedron 
+  const int nbNodT = 10;
+  const int nbBezT = 20;
+  static int done = 0;
+  static fullMatrix<double> gsf[nbBezT];
+  const bezierBasis *jac_basis = getJacobianFuncSpace()->bezier;  
+  if (!done){    
+    double gs[nbNodT][3];
+    for (int i=0;i<jac_basis->points.size1();i++){
+      const double u = jac_basis->points(i,0);
+      const double v = jac_basis->points(i,1);
+      const double w = jac_basis->points(i,2);      
+      getGradShapeFunctions(u,v,w,gs);
+      fullMatrix<double> a (nbNodT,3);
+      for (int j=0;j < nbNodT;j++){
+	a(j,0) = gs[j][0];
+	a(j,1) = gs[j][1];
+	a(j,2) = gs[j][2];
+      }
+      gsf[i]= a;
+    }
+    done=1; 
+  }
+  
+  double x[nbNodT];for (int i=0;i<nbNodT;i++)x[i] = getVertex(i)->x();
+  double y[nbNodT];for (int i=0;i<nbNodT;i++)y[i] = getVertex(i)->y();
+  double z[nbNodT];for (int i=0;i<nbNodT;i++)z[i] = getVertex(i)->z();
+
+  SVector3 v1 (x[1] - x[0],y[1] - y[0],z[1] - z[0]);
+  SVector3 v2 (x[2] - x[0],y[2] - y[0],z[2] - z[0]);
+  SVector3 v3 (x[3] - x[0],y[3] - y[0],z[3] - z[0]);
+
+  // take absolute value for quite complex reasons
+  // straight sided element may be WRONG while curved
+  // one is OK
+  const double ss = fabs(1./dot(crossprod(v1,v2),v3));
+  
+  double jac[3][3];
+  static fullVector<double>Ji(nbBezT);
+  for (int i=0;i < nbBezT;i++){
+    jac[0][0] = jac[0][1] = jac[0][2] = 0.;
+    jac[1][0] = jac[1][1] = jac[1][2] = 0.;
+    jac[2][0] = jac[2][1] = jac[2][2] = 0.;
+    fullMatrix<double> &g = gsf[i]; 
+    for (int j = 0; j < nbNodT; j++) {
+      for (int k = 0; k < 3; k++) {
+	const double gg = g(j, k);
+	jac[k][0] += x[j] * gg;
+	jac[k][1] += y[j] * gg;
+	jac[k][2] += z[j] * gg;
+      }
+    }
+    const double dJ = jac[0][0] * jac[1][1] * jac[2][2] + jac[0][2] * jac[1][0] * jac[2][1] +
+      jac[0][1] * jac[1][2] * jac[2][0] - jac[0][2] * jac[1][1] * jac[2][0] -
+      jac[0][0] * jac[1][2] * jac[2][1] - jac[0][1] * jac[1][0] * jac[2][2];
+    Ji(i) = dJ * ss;    
+  }    
+  static fullVector<double> Bi( nbBezT );
+  jac_basis->matrixLag2Bez.mult(Ji,Bi);
+  //  printf("%22.15E\n",*std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size()));
+  return *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
+}
+
 double MTetrahedron::distoShapeMeasure()
 {
 #if defined(HAVE_MESH)

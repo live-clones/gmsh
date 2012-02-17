@@ -18,6 +18,8 @@
 #include "Context.h"
 #include "MLine.h"
 #include "MQuadrangle.h"
+#include "Field.h"
+#include "GModel.h"
 
 double LIMIT_ = 0.5 * sqrt(2.0) * 1;
 
@@ -856,6 +858,15 @@ void bowyerWatson(GFace *gf)
                    vSizesBGM, vMetricsBGM, AllTris);
     }
   }    
+  {
+    FieldManager *fields = gf->model()->getFields();
+    BoundaryLayerField *blf = 0;
+    if(fields->getBackgroundField() > 0){
+      Field *bl_field = fields->get(fields->getBoundaryLayerField());
+      blf = dynamic_cast<BoundaryLayerField*> (bl_field);
+      if (blf && !blf->iRecombine)quadsToTriangles(gf,10000);
+    }
+  }
   transferDataStructure(gf, AllTris, Us, Vs); 
 }
 
@@ -998,7 +1009,18 @@ void optimalPointFrontal (GFace *gf,
   newPoint[1] = midpoint[1] + d * dir[1];
 }
 
-/// 
+/*
+            x
+            |       
+            |       
+            | d =  3^{1/2}/2 h       
+            |       
+            |          
+      ------p------->   n
+            h
+ 
+   x point of the plane
+*/
 
 void optimalPointFrontalB (GFace *gf, 
 			   MTri3* worst, 
@@ -1130,7 +1152,15 @@ void bowyerWatsonFrontal(GFace *gf)
 //   _printTris (name, AllTris, Us, Vs,true);
   transferDataStructure(gf, AllTris, Us, Vs); 
   // in case of boundary layer meshing 
-  //  quadsToTriangles(gf,10000);
+  {
+    FieldManager *fields = gf->model()->getFields();
+    BoundaryLayerField *blf = 0;
+    if(fields->getBackgroundField() > 0){
+      Field *bl_field = fields->get(fields->getBoundaryLayerField());
+      blf = dynamic_cast<BoundaryLayerField*> (bl_field);
+      if (blf && !blf->iRecombine)quadsToTriangles(gf,10000);
+    }
+  }
 } 
 
 void optimalPointFrontalQuad (GFace *gf, 
@@ -1350,11 +1380,20 @@ void buildBackGroundMesh (GFace *gf) {
 
   if (!backgroundMesh::current()) {
     std::vector<MTriangle*> TR;
+    //    std::vector<MQuadrangle*> QR;
     for(int i=0;i<gf->triangles.size();i++){
       TR.push_back(new MTriangle(gf->triangles[i]->getVertex(0),
 				 gf->triangles[i]->getVertex(1),
 				 gf->triangles[i]->getVertex(2)));
     }
+    /*
+    for(int i=0;i<gf->quadrangles.size();i++){
+      QR.push_back(new MQuadrangle(gf->quadrangles[i]->getVertex(0),
+				   gf->quadrangles[i]->getVertex(1),
+				   gf->quadrangles[i]->getVertex(2),
+				   gf->quadrangles[i]->getVertex(3)));
+    }
+    */
     // avoid computing curvatures on the fly : only on the 
     // BGM computes once curvatures at each node
     //  Disable curvature control
@@ -1376,6 +1415,7 @@ void buildBackGroundMesh (GFace *gf) {
       backgroundMesh::current()->print(name,gf,1);
     }
     gf->triangles = TR;
+    //    gf->quadrangles = QR;
   }  
   //  printf("end build bak mesh\n");
 
@@ -1388,8 +1428,6 @@ void bowyerWatsonFrontalLayers(GFace *gf, bool quad)
   std::set<MTri3*,compareTri3Ptr> ActiveTris;
   std::vector<double> vSizes, vSizesBGM, Us, Vs;
   std::vector<SMetric3> vMetricsBGM;
-
-  buildBackGroundMesh (gf);
 
   if (quad){
     LIMIT_ = sqrt(2.) * .99;

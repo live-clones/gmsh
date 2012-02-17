@@ -1765,6 +1765,8 @@ BoundaryLayerField::BoundaryLayerField()
   hfar = 1;
   ratio = 1.1;
   thickness = 1.e-2;
+  fan_angle = 30;
+  iRecombine = 0;
   options["NodesList"] = new FieldOptionList
     (nodes_id, "Indices of nodes in the geometric model", &update_needed);
   options["EdgesList"] = new FieldOptionList
@@ -1773,10 +1775,12 @@ BoundaryLayerField::BoundaryLayerField()
   options["FacesList"] = new FieldOptionList
     (faces_id, "Indices of faces in the geometric model for which a boundary "
      "layer is needed", &update_needed);
-  //  options["IField"] = new FieldOptionInt
-  //    (iField, "Index of the field that contains the distance function");
+  options["Quads"] = new FieldOptionInt
+    (iRecombine, "Generate recombined elements in the boundary layer");
   options["hwall_n"] = new FieldOptionDouble
     (hwall_n, "Mesh Size Normal to the The Wall");
+  options["fan_angle"] = new FieldOptionDouble
+    (fan_angle, "Threshold angle for creating a mesh fan in the boundary layer");
   options["hwall_t"] = new FieldOptionDouble
     (hwall_t, "Mesh Size Tangent to the Wall");
   options["ratio"] = new FieldOptionDouble

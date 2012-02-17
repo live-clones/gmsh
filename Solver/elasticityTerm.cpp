@@ -9,31 +9,52 @@
 // The SElement (Solver element) that has been sent to the function
 // contains 2 enrichments, that can enrich both shape and test functions   
 
+void elasticityTerm::createData(MElement *e) const
+{
+  if (_data.find(e->getTypeForMSH()) != _data.end())return;  
+  elasticityDataAtGaussPoint d;
+  int nbSF = e->getNumShapeFunctions();
+  int integrationOrder = 2 * (e->getPolynomialOrder() - 1) ;
+  int npts;
+  IntPt *GP;
+  double gs[100][3];
+  e->getIntegrationPoints(integrationOrder, &npts, &GP);
+  for (int i=0;i<npts;i++){
+    fullMatrix<double> a(nbSF,3);
+    const double u = GP[i].pt[0];
+    const double v = GP[i].pt[1];
+    const double w = GP[i].pt[2];
+    const double weight = GP[i].weight;
+    e->getGradShapeFunctions(u,v,w,gs);
+    for (int j=0;j < nbSF;j++){
+      a(j,0) = gs[j][0];
+      a(j,1) = gs[j][1];
+      a(j,2) = gs[j][2];
+    }
+    d.gradSF.push_back(a);
+    d.u.push_back(u);
+    d.v.push_back(v);
+    d.w.push_back(w);
+    d.weight.push_back(weight);
+  }
+  printf("coucou creation of a data for %d with %d points\n",e->getTypeForMSH(),npts);
+  _data[e->getTypeForMSH()] = d;
+}
+
 void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
 {
   MElement *e = se->getMeshElement();
-  int nbSF = e->getNumShapeFunctions();
-  int integrationOrder = 3 * (e->getPolynomialOrder() - 1) ;
-  int npts;
-  IntPt *GP;
-  double jac[3][3];
-  double invjac[3][3];
-  double Grads[100][3];
-  double GradsT[100][3];
-  e->getIntegrationPoints(integrationOrder, &npts, &GP);
+  createData(e);
 
+  int nbSF = e->getNumShapeFunctions();
+  elasticityDataAtGaussPoint &d = _data[e->getTypeForMSH()];
+  int npts = d.u.size();
   m.setAll(0.);
 
   double FACT = _E / (1 + _nu);
   double C11 = FACT * (1 - _nu) / (1 - 2 * _nu);
   double C12 = FACT * _nu / (1 - 2 * _nu);
   double C44 = (C11 - C12) / 2;
-  // FIXME : PLANE STRESS !!! 
-  //FACT = _E / (1-_nu*_nu); 
-  //C11  = FACT; 
-  //C12  = _nu * FACT; 
-  //C44 = (1.-_nu)*.5*FACT;
-  
   const double C[6][6] =
     { {C11, C12, C12,    0,   0,   0},
       {C12, C11, C12,    0,   0,   0},
@@ -50,14 +71,25 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
     for (int j = 0; j < 6; j++)
       H(i, j) = C[i][j];
 
+  double jac[3][3],invjac[3][3],Grads[100][3];
   for (int i = 0; i < npts; i++){
-    const double u = GP[i].pt[0];
-    const double v = GP[i].pt[1];
-    const double w = GP[i].pt[2];
-    const double weight = GP[i].weight;
-    const double detJ = e->getJacobian(u, v, w, jac);
+    const double u = d.u[i];
+    const double v = d.v[i];
+    const double w = d.w[i];
+    const double weight = d.weight[i];
+    const fullMatrix<double> &grads = d.gradSF[i];
+    const double detJ = e->getJacobian(grads, jac);
     inv3x3(jac, invjac);
-    se->gradNodalShapeFunctions(u, v, w, invjac,Grads);
+
+    for (int j = 0; j < nbSF; j++){
+      Grads[j][0] = invjac[0][0] * grads(j,0) + invjac[0][1] * grads(j,1) +
+	invjac[0][2] * grads(j,2);
+      Grads[j][1] = invjac[1][0] * grads(j,0) + invjac[1][1] * grads(j,1) +
+	invjac[1][2] * grads(j,2);
+      Grads[j][2] = invjac[2][0] * grads(j,0) + invjac[2][1] * grads(j,1) +
+	invjac[2][2] * grads(j,2);
+    }
+    
 
     B.setAll(0.);
     BT.setAll(0.);
@@ -66,7 +98,7 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
       //      printf("coucou\n");
       for (int j = 0; j < nbSF; j++){
         BT(j, 0) = B(0, j) = Grads[j][0];
-        BT(j, 3) = B(3, j) = Grads[j][1];
+	BT(j, 3) = B(3, j) = Grads[j][1];
         BT(j, 5) = B(5, j) = Grads[j][2];
 
         BT(j + nbSF, 1) = B(1, j + nbSF) = Grads[j][1];
@@ -79,6 +111,7 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
       }
     }
     else{
+      /*
       se->gradNodalTestFunctions (u, v, w, invjac,GradsT);
       for (int j = 0; j < nbSF; j++){
         BT(j, 0) = Grads[j][0]; B(0, j) = GradsT[j][0];
@@ -93,6 +126,7 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
         BT(j + 2 * nbSF, 4) = Grads[j][1]; B(4, j + 2 * nbSF) = GradsT[j][1];
         BT(j + 2 * nbSF, 5) = Grads[j][0]; B(5, j + 2 * nbSF) = GradsT[j][0];
       }
+      */
     }
 
     BTH.setAll(0.);

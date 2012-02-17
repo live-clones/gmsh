@@ -299,14 +299,14 @@ static bool algoDelaunay2D(GFace *gf)
   if(!noSeam(gf))
     return false;
 
-  if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY ||
-     CTX::instance()->mesh.algo2d == ALGO_2D_BAMG ||
-     CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL ||
-     CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL_QUAD ||
-     CTX::instance()->mesh.algo2d == ALGO_2D_BAMG)
+  if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
+     gf->getMeshingAlgo() == ALGO_2D_BAMG ||
+     gf->getMeshingAlgo() == ALGO_2D_FRONTAL ||
+     gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
+     gf->getMeshingAlgo() == ALGO_2D_BAMG)
     return true;
 
-  if(CTX::instance()->mesh.algo2d == ALGO_2D_AUTO && gf->geomType() == GEntity::Plane)
+  if(gf->getMeshingAlgo() == ALGO_2D_AUTO && gf->geomType() == GEntity::Plane)
     return true;
 
   return false;
@@ -478,7 +478,7 @@ void filterOverlappingElements(int dim, std::vector<MElement*> &e,
 
 void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 {
-  BoundaryLayerColumns *_columns = buidAdditionalPoints2D (gf, M_PI/6.);
+  BoundaryLayerColumns *_columns = buidAdditionalPoints2D (gf);
 
   if (!_columns)return;
 
@@ -1102,19 +1102,22 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   BDS2GMSH(m, gf, recoverMap);
 
   // BOUNDARY LAYER
-  if (!onlyInitialMesh) modifyInitialMeshForTakingIntoAccountBoundaryLayers(gf);
+  if (!onlyInitialMesh) {
+    if (gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) buildBackGroundMesh (gf);    
+    modifyInitialMeshForTakingIntoAccountBoundaryLayers(gf);
+  }
 
   // the delaunay algo is based directly on internal gmsh structures
   // BDS mesh is passed in order not to recompute local coordinates of
   // vertices
   if(algoDelaunay2D(gf) && !onlyInitialMesh){
-    if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
+    if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL)
       bowyerWatsonFrontal(gf);
-    else if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL_QUAD){
+    else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD){
       bowyerWatsonFrontalLayers(gf,true);
     }
-    else if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY ||
-            CTX::instance()->mesh.algo2d == ALGO_2D_AUTO)
+    else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
+            gf->getMeshingAlgo() == ALGO_2D_AUTO)
       bowyerWatson(gf);
     else {
       bowyerWatson(gf);
@@ -1710,12 +1713,12 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   }
 
   if(algoDelaunay2D(gf)){
-    if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
+    if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL)
       bowyerWatsonFrontal(gf);
-    else if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL_QUAD)
+    else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD)
       bowyerWatsonFrontalLayers(gf,true);
-    else if(CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY ||
-            CTX::instance()->mesh.algo2d == ALGO_2D_AUTO)
+    else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
+            gf->getMeshingAlgo() == ALGO_2D_AUTO)
       bowyerWatson(gf);
     else
       meshGFaceBamg(gf);
@@ -1787,7 +1790,7 @@ void meshGFace::operator() (GFace *gf)
 
   const char *algo = "Unknown";
 
-  switch(CTX::instance()->mesh.algo2d){
+  switch(gf->getMeshingAlgo()){
   case ALGO_2D_MESHADAPT : algo = "MeshAdapt"; break;
   case ALGO_2D_FRONTAL : algo = "Frontal"; break;
   case ALGO_2D_FRONTAL_QUAD : algo = "Frontal Quad"; break;

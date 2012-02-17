@@ -666,8 +666,10 @@ bool GFaceCompound::parametrize() const
   else if (_mapping == CONFORMAL){
     Msg::Info("Parametrizing surface %d with 'conformal map'", tag());
     fillNeumannBCS();
+    //    bool hasOverlap = parametrize_conformal_spectral();
     std::vector<MVertex *> vert;
     bool oriented, hasOverlap;
+    //hasOverlap = parametrize_conformal(0,NULL,NULL);
     hasOverlap = parametrize_conformal_spectral();
     printStuff(11);
     if (hasOverlap) oriented =  checkOrientation(0);
@@ -686,6 +688,7 @@ bool GFaceCompound::parametrize() const
       Msg::Warning("$$$ parametrization switched to 'harmonic' map");
       parametrize(ITERU,HARMONIC); 
       parametrize(ITERV,HARMONIC);
+      printStuff(66);
     } 
   }
   // Radial-Basis Function parametrization
@@ -778,11 +781,13 @@ void GFaceCompound::getBoundingEdges()
     for(std::list<std::list<GEdge*> >::iterator it = _interior_loops.begin();
         it != _interior_loops.end(); it++){
       double size = getSizeBB(*it);
+      printf("size(%d) = %g\n",(*(it->begin()))->tag(),size);
       if (size > maxSize) {
 	_U0 = *it;
 	maxSize = size;
       }
     }
+    printf("maxSize(%d) = %g\n",tag(),maxSize);
   }
 }
 
@@ -1279,6 +1284,7 @@ bool GFaceCompound::parametrize_conformal_spectral() const
   // on some machines and for some meshes slepc complains about bad IP
   // norm otherwise
   eigenSolver eig(&myAssembler, "B" , "A", false);
+
   bool converged = eig.solve(1, "largest");
     
   if(converged) {

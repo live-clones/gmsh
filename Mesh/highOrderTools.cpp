@@ -546,8 +546,10 @@ double highOrderTools::apply_incremental_displacement (double max_incr,
 {
 #ifdef HAVE_PETSC
   // assume that the mesh is OK, yet already curved
+  //linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
   linearSystemPETSc<double> *lsys = new  linearSystemPETSc<double>;    
   lsys->setParameter("petscOptions","-pc_type ilu");
+  lsys->setParameter("petscOptions","-ksp_monitor");
 
   dofManager<double> myAssembler(lsys);
   elasticityMixedTerm El_mixed (0, 1.0, .333, _tag);
@@ -574,6 +576,8 @@ double highOrderTools::apply_incremental_displacement (double max_incr,
       }
     }
   }
+
+  printf("coucou1\n");
 
   for (std::set<MVertex*>::iterator it = _vertices.begin(); it != _vertices.end(); ++it){
     MVertex *vert = *it;
@@ -605,16 +609,23 @@ double highOrderTools::apply_incremental_displacement (double max_incr,
     }
   }
 
+  printf("coucou2\n");
+
   //+++++++++ Assembly  & Solve ++++++++++++++++++++++++++++++++++++
   if (myAssembler.sizeOfR()){
     // assembly of the elasticity term on the
+    clock_t t1 = clock();
     for (unsigned int i = 0; i < v.size(); i++){
       SElement se(v[i]);
       if (mixed)El_mixed.addToMatrix(myAssembler, &se);
       else El.addToMatrix(myAssembler, &se);
     }
+    clock_t t2 = clock();
     // solve the system
+    printf("coucou3 %12.5E\n",(double)(t2-t1)/CLOCKS_PER_SEC);
     lsys->systemSolve();
+    clock_t t3 = clock();
+    printf("coucou4 %12.5E\n",(double)(t3-t2)/CLOCKS_PER_SEC);
   }
 
   //+++++++++ Move vertices @ maximum ++++++++++++++++++++++++++++++++++++
@@ -637,6 +648,8 @@ double highOrderTools::apply_incremental_displacement (double max_incr,
 
   (*_vertices.begin())->onWhat()->model()->writeMSH(meshName);
 
+  printf("coucou5\n");
+
   double percentage = max_incr * 100.;
   while(1){
     std::vector<MElement*> disto;
@@ -656,6 +669,7 @@ double highOrderTools::apply_incremental_displacement (double max_incr,
     }
     else break;
   }
+  printf("coucou6\n");
 
   delete lsys;
   return percentage;
@@ -680,7 +694,7 @@ void highOrderTools::ensureMinimumDistorsion(std::vector<MElement*> &all,
 }
 
 double highOrderTools::applySmoothingTo (std::vector<MElement*> &all, 
-    double threshold, bool mixed)
+					 double threshold, bool mixed)
 {
   int ITER = 0;
   double minD, FACT = 1.0;
@@ -691,6 +705,8 @@ double highOrderTools::applySmoothingTo (std::vector<MElement*> &all,
   // apply the displacement
 
   _gm->writeMSH("straightSided.msh");
+
+  printf("argh\n");
 
   char sm[] = "sm.msh";
   double percentage_of_what_is_left = apply_incremental_displacement (1., all, mixed, -100000000, sm, all);

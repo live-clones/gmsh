@@ -139,9 +139,10 @@ class BoundaryLayerField : public Field {
   void operator() (AttractorField *cc, double dist, double x, double y, double z,
                    SMetric3 &metr, GEntity *ge);
  public:
-  double hwall_n,hwall_t,ratio,hfar,thickness; 
+  double hwall_n,hwall_t,ratio,hfar,thickness,fan_angle; 
   double current_distance;
   SPoint3 _closest_point;
+  int iRecombine;
   AttractorField *current_closest;
   virtual bool isotropic () const {return false;}
   virtual const char *getName();
