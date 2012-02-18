@@ -1,4 +1,7 @@
-
+// Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
 
 #include "meshMetric.h"
 #include "meshGFaceOptimize.h"
@@ -48,7 +51,7 @@ meshMetric::meshMetric(GModel *gm){
       }
     }
   }
-  _octree = new MElementOctree(_elements); 
+  _octree = new MElementOctree(_elements);
 }
 
 meshMetric::meshMetric(std::vector<MElement*> elements){
@@ -62,7 +65,7 @@ meshMetric::meshMetric(std::vector<MElement*> elements){
     _elements.push_back(copy);
   }
 
-  _octree = new MElementOctree(_elements); 
+  _octree = new MElementOctree(_elements);
 }
 
 void meshMetric::addMetric(int technique, simpleFunction<double> *fct, std::vector<double> parameters){
@@ -174,23 +177,23 @@ meshMetric::~meshMetric(){
 
 void meshMetric::computeValues( v2t_cont adj){
 
-  v2t_cont :: iterator it = adj.begin(); 
+  v2t_cont :: iterator it = adj.begin();
   while (it != adj.end()) {
-    std::vector<MElement*> lt = it->second;      
+    std::vector<MElement*> lt = it->second;
     MVertex *ver = it->first;
     vals[ver]= (*_fct)(ver->x(),ver->y(),ver->z());
     it++;
   }
 }
 
-// u = a + b(x-x_0) + c(y-y_0) + d(z-z_0) 
+// u = a + b(x-x_0) + c(y-y_0) + d(z-z_0)
 void meshMetric::computeHessian( v2t_cont adj){
 
   int DIM = _dim + 1;
-  for (int ITER=0;ITER<DIM;ITER++){  
+  for (int ITER=0;ITER<DIM;ITER++){
     v2t_cont :: iterator it = adj.begin();
     while (it != adj.end()) {
-      std::vector<MElement*> lt = it->second;      
+      std::vector<MElement*> lt = it->second;
       MVertex *ver = it->first;
       while (lt.size() < 11) increaseStencil(ver,adj,lt); //<7
       // if ( ver->onWhat()->dim() < _dim ){
@@ -209,9 +212,9 @@ void meshMetric::computeHessian( v2t_cont adj){
       for(int i = 0; i < lt.size(); i++) {
         MElement *e = lt[i];
         int npts; IntPt *pts;
-        SPoint3 p;      
+        SPoint3 p;
         e->getIntegrationPoints(0,&npts,&pts);
-        if (ITER == 0){ 
+        if (ITER == 0){
           SPoint3 p;
           e->pnt(pts[0].pt[0],pts[0].pt[1],pts[0].pt[2],p);
           b(i) = (*_fct)(p.x(),p.y(),p.z());
@@ -237,7 +240,7 @@ void meshMetric::computeHessian( v2t_cont adj){
       if (ITER == 0){
         double gr1 = result(1);
         double gr2 = result(2);
-        double gr3 = (_dim==2) ? 0.0:result(3); 
+        double gr3 = (_dim==2) ? 0.0:result(3);
         double norm = sqrt(gr1*gr1+gr2*gr2+gr3*gr3);
         if (norm == 0.0 || _technique == meshMetric::HESSIAN) norm = 1.0;
         grads[ver] = SVector3(gr1/norm,gr2/norm,gr3/norm);
@@ -289,26 +292,26 @@ void meshMetric::computeMetric(){
       if (dist < _E && norm != 0.0){
         double h = hmin*(hmax/hmin-1)*dist/_E + hmin;
         double C = 1./(h*h) -1./(hmax*hmax);
-        hlevelset(0,0) += C*gr(0)*gr(0)/norm ; 
-        hlevelset(1,1) += C*gr(1)*gr(1)/norm ; 
-        hlevelset(2,2) += C*gr(2)*gr(2)/norm ; 
-        hlevelset(1,0) = hlevelset(0,1) = C*gr(1)*gr(0)/norm ; 
-        hlevelset(2,0) = hlevelset(0,2) = C*gr(2)*gr(0)/norm ; 
-        hlevelset(2,1) = hlevelset(1,2) = C*gr(2)*gr(1)/norm ; 
+        hlevelset(0,0) += C*gr(0)*gr(0)/norm ;
+        hlevelset(1,1) += C*gr(1)*gr(1)/norm ;
+        hlevelset(2,2) += C*gr(2)*gr(2)/norm ;
+        hlevelset(1,0) = hlevelset(0,1) = C*gr(1)*gr(0)/norm ;
+        hlevelset(2,0) = hlevelset(0,2) = C*gr(2)*gr(0)/norm ;
+        hlevelset(2,1) = hlevelset(1,2) = C*gr(2)*gr(1)/norm ;
       }
       // else if (dist > _E && dist < 2.*_E  && norm != 0.0){
       // 	double hmid = (hmax-hmin)/(1.*_E)*dist+(2.*hmin-1.*hmax);
       // 	double C = 1./(hmid*hmid) -1./(hmax*hmax);
-      // 	hlevelset(0,0) += C*gr(0)*gr(0)/norm ; 
-      // 	hlevelset(1,1) += C*gr(1)*gr(1)/norm ; 
-      // 	hlevelset(2,2) += C*gr(2)*gr(2)/norm ; 
-      // 	hlevelset(1,0) = hlevelset(0,1) = C*gr(1)*gr(0)/norm ; 
-      // 	hlevelset(2,0) = hlevelset(0,2) = C*gr(2)*gr(0)/norm ; 
-      // 	hlevelset(2,1) = hlevelset(1,2) = C*gr(2)*gr(1)/norm ; 
+      // 	hlevelset(0,0) += C*gr(0)*gr(0)/norm ;
+      // 	hlevelset(1,1) += C*gr(1)*gr(1)/norm ;
+      // 	hlevelset(2,2) += C*gr(2)*gr(2)/norm ;
+      // 	hlevelset(1,0) = hlevelset(0,1) = C*gr(1)*gr(0)/norm ;
+      // 	hlevelset(2,0) = hlevelset(0,2) = C*gr(2)*gr(0)/norm ;
+      // 	hlevelset(2,1) = hlevelset(1,2) = C*gr(2)*gr(1)/norm ;
       // }
       H = hlevelset;
     }
-    //See paper Ducrot and Frey: 
+    //See paper Ducrot and Frey:
     //Anisotropic levelset adaptation for accurate interface capturing,
     //ijnmf, 2010
     else if (_technique == meshMetric::FREY ){
@@ -327,8 +330,8 @@ void meshMetric::computeMetric(){
         hfrey(2,0) = hfrey(0,2) = C*gr(2)*gr(0)/(norm) + hessian(2,0)/epsGeom;
         hfrey(2,1) = hfrey(1,2) = C*gr(2)*gr(1)/(norm) + hessian(2,1)/epsGeom;
         // hfrey(0,0) += C*gr(0)*gr(0)/norm;
-        // hfrey(1,1) += C*gr(1)*gr(1)/norm; 
-        // hfrey(2,2) += C*gr(2)*gr(2)/norm; 
+        // hfrey(1,1) += C*gr(1)*gr(1)/norm;
+        // hfrey(2,2) += C*gr(2)*gr(2)/norm;
         // hfrey(1,0) = hfrey(0,1) = gr(1)*gr(0)/(norm) ;
         // hfrey(2,0) = hfrey(0,2) = gr(2)*gr(0)/(norm) ;
         // hfrey(2,1) = hfrey(1,2) = gr(2)*gr(1)/(norm) ;
@@ -350,7 +353,7 @@ void meshMetric::computeMetric(){
       SMetric3 metric;
 
       if (signed_dist < _E && signed_dist > _E_moins && norm != 0.0){
-        // first, compute the eigenvectors of the hessian, for a curvature-based metric 
+        // first, compute the eigenvectors of the hessian, for a curvature-based metric
         fullMatrix<double> eigvec_hessian(3,3);
         fullVector<double> lambda_hessian(3);
         hessian.eig(eigvec_hessian,lambda_hessian);
@@ -359,11 +362,11 @@ void meshMetric::computeMetric(){
         ti.push_back(SVector3(eigvec_hessian(0,1),eigvec_hessian(1,1),eigvec_hessian(2,1)));
         ti.push_back(SVector3(eigvec_hessian(0,2),eigvec_hessian(1,2),eigvec_hessian(2,2)));
 
-        // compute the required characteristic length relative to the curvature and the distance to iso 
+        // compute the required characteristic length relative to the curvature and the distance to iso
         double maxkappa = std::max(std::max(fabs(lambda_hessian(0)),fabs(lambda_hessian(1))),fabs(lambda_hessian(2)));
         // epsilon is set such that the characteristic element size in the tangent direction is h = 2pi R_min/_Np = sqrt(1/metric_maxmax) = sqrt(epsilon/kappa_max)
         double un_sur_epsilon = maxkappa/((2.*3.14/_Np)*(2.*3.14/_Np));
-        // metric curvature-based eigenvalues 
+        // metric curvature-based eigenvalues
         std::vector<double> eigenvals_curvature;
         eigenvals_curvature.push_back(fabs(lambda_hessian(0))*un_sur_epsilon);
         eigenvals_curvature.push_back(fabs(lambda_hessian(1))*un_sur_epsilon);
@@ -394,7 +397,7 @@ void meshMetric::computeMetric(){
         for (int i=0;i<3;i++)
           if (i!=grad_index) ti_index.push_back(i);
 //        std::cout << "gr tgr t1 t2 dots_tgr_gr_t1_t2 (" << gr(0) << "," << gr(1) << "," << gr(2) << ") (" <<  ti[grad_index](0) << "," << ti[grad_index](1) << "," << ti[grad_index](2) << ") (" <<  ti[ti_index[0]](0) << "," << ti[ti_index[0]](1) << "," << ti[ti_index[0]](2) << ") (" <<  ti[ti_index[1]](0) << "," << ti[ti_index[1]](1) << "," << ti[ti_index[1]](2) << ") " << fabs(dot(ti[grad_index],gr)) << " " << (dot(ti[grad_index],ti[ti_index[0]])) << " " << (dot(ti[grad_index],ti[ti_index[1]])) << std::endl;
-        
+
         // finally, creating the metric
         std::vector<double> eigenvals;
         eigenvals.push_back(std::min(std::max(eigenval_direction,metric_value_hmax),metric_value_hmin));// in gradient direction
@@ -415,13 +418,13 @@ void meshMetric::computeMetric(){
       setOfMetrics[metricNumber].insert(std::make_pair(ver,metric));
       setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(metric.determinant())));
 
-      it++;	
+      it++;
     }
 
     if (_technique != meshMetric::EIGENDIRECTIONS && _technique!=meshMetric::EIGENDIRECTIONS_LINEARINTERP_H){
 
-      //See paper Hachem and Coupez: 
-      //Finite element solution to handle complex heat and fluid flows in 
+      //See paper Hachem and Coupez:
+      //Finite element solution to handle complex heat and fluid flows in
       //industrial furnaces using the immersed volume technique, ijnmf, 2010
 
       fullMatrix<double> V(3,3);
@@ -435,7 +438,7 @@ void meshMetric::computeMetric(){
       //   hessian.eig(Vhess,Shess);
       //   double h = hmin*(hmax/hmin-1)*dist/_E + hmin;
       //   double lam1 = Shess(0);
-      //   double lam2 = Shess(1); 
+      //   double lam2 = Shess(1);
       //   double lam3 = (_dim == 3)? Shess(2) : 1.;
       //   lambda1 = lam1;
       //   lambda2 = lam2/lambda1;
@@ -443,8 +446,8 @@ void meshMetric::computeMetric(){
       // }
       // else{
       lambda1 = S(0);
-      lambda2 = S(1); 
-      lambda3 = (_dim == 3)? S(2) : 1.; 
+      lambda2 = S(1);
+      lambda3 = (_dim == 3)? S(2) : 1.;
       //}
 
       if (_technique == meshMetric::HESSIAN || (dist < _E && _technique == meshMetric::FREY)){
@@ -464,7 +467,7 @@ void meshMetric::computeMetric(){
       setOfMetrics[metricNumber].insert(std::make_pair(ver,metric));
       setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(metric.determinant())));
 
-      it++;	
+      it++;
     }
   }
 
@@ -504,8 +507,8 @@ double meshMetric::operator() (double x, double y, double z, GEntity *ge) {
   }
   SPoint3 xyz(x,y,z), uvw;
   double initialTol = MElement::getTolerance();
-  MElement::setTolerance(1.e-4); 
-  MElement *e = _octree->find(x, y, z, _dim);  
+  MElement::setTolerance(1.e-4);
+  MElement *e = _octree->find(x, y, z, _dim);
   MElement::setTolerance(initialTol);
   if (e){
     e->xyz2uvw(xyz,uvw);
@@ -515,7 +518,7 @@ double meshMetric::operator() (double x, double y, double z, GEntity *ge) {
     }
     double value = e->interpolate(val,uvw[0],uvw[1],uvw[2]);
     delete [] val;
-    return value;    
+    return value;
   }
   return 1.e22;
 }
@@ -529,8 +532,8 @@ void meshMetric::operator() (double x, double y, double z, SMetric3 &metr, GEnti
   metr = SMetric3(1.e-22);
   SPoint3 xyz(x,y,z), uvw;
   double initialTol = MElement::getTolerance();
-  MElement::setTolerance(1.e-4); 
-  MElement *e = _octree->find(x, y, z, _dim);   
+  MElement::setTolerance(1.e-4);
+  MElement *e = _octree->find(x, y, z, _dim);
   MElement::setTolerance(initialTol);
 
   if (e){
@@ -560,13 +563,13 @@ void meshMetric::printMetric(const char* n){
   FILE *f = fopen (n,"w");
   fprintf(f,"View \"\"{\n");
 
-  //std::map<MVertex*,SMetric3 >::const_iterator it = _hessian.begin(); 
+  //std::map<MVertex*,SMetric3 >::const_iterator it = _hessian.begin();
   std::map<MVertex*,SMetric3>::const_iterator it= _nodalMetrics.begin();
   //for (; it != _nodalMetrics.end(); ++it){
   for (; it != _hessian.end(); ++it){
     MVertex *v =  it->first;
     SMetric3 h = it->second;
-    double lapl = h(0,0)+h(1,1)+h(2,2); 
+    double lapl = h(0,0)+h(1,1)+h(2,2);
     //fprintf(f, "SP(%g,%g,%g){%g};\n",  it->first->x(),it->first->y(),it->first->z(),lapl);
     fprintf(f,"TP(%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g,%g};\n",
         it->first->x(),it->first->y(),it->first->z(),
@@ -575,16 +578,16 @@ void meshMetric::printMetric(const char* n){
         h(2,0),h(2,1),h(2,2)
         );
 
-  } 
+  }
   fprintf(f,"};\n");
-  fclose (f);    
+  fclose (f);
 }
 
 double meshMetric::getLaplacian (MVertex *v) {
   MVertex *vNew = _vertexMap[v->getNum()];
   std::map<MVertex*, SMetric3 >::const_iterator it = _hessian.find(vNew);
   SMetric3 h = it->second;
-  return h(0,0)+h(1,1)+h(2,2); 
+  return h(0,0)+h(1,1)+h(2,2);
 }
 
 /*void meshMetric::curvatureContributionToMetric (){
@@ -597,14 +600,14 @@ double meshMetric::getLaplacian (MVertex *v) {
   SMetric3 curvMetric = max_edge_curvature_metric((GVertex*)v->onWhat(),l);
   it->second = intersection(it->second,curvMetric);
   its->second = std::min(l,its->second);
-  } 
+  }
   else if (v->onWhat()->dim() == 1){
   double u,l;
   v->getParameter(0,u);
   SMetric3 curvMetric = max_edge_curvature_metric((GEdge*)v->onWhat(),u,l);
   it->second = intersection(it->second,curvMetric);
   its->second = std::min(l,its->second);
-  } 
+  }
   }
   }*/
 

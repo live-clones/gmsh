@@ -1,5 +1,5 @@
 // Interface to the Netgen meshing kernel for Gmsh. This file replaces
-// the original nglib.cpp file from the Netgen distribution
+// the original nglib.cpp file from the Netgen distribution.
 
 #include <GmshMessage.h>
 #include <linalg.hpp>
@@ -24,11 +24,11 @@ namespace nglib
     int index;
     char txt[1024];
   public:
-    mystreambuf() : index(0) {} 
+    mystreambuf() : index(0) {}
     int sync()
-    { 
+    {
       txt[index] = '\0';
-      if(!index || (index == 1 && (txt[0] == '.' || txt[0] == '+' || 
+      if(!index || (index == 1 && (txt[0] == '.' || txt[0] == '+' ||
                                    txt[0] == ' ' || txt[0] == '*'))){
         // ignore these messages
       }
@@ -38,8 +38,8 @@ namespace nglib
         else
           Msg::Info(txt);
       }
-      index = 0; 
-      return 0; 
+      index = 0;
+      return 0;
     }
     int overflow(int ch)
     {
@@ -53,7 +53,7 @@ namespace nglib
           index++;
         }
       }
-      return 0; 
+      return 0;
     }
   };
 
@@ -85,11 +85,11 @@ namespace nglib
    // Create a new netgen mesh object
   Ng_Mesh * Ng_NewMesh ()
   {
-    Mesh * mesh = new Mesh;  
+    Mesh * mesh = new Mesh;
     mesh->AddFaceDescriptor (FaceDescriptor (1, 1, 0, 1));
     return (Ng_Mesh*)(void*)mesh;
   }
-  
+
   // Delete an existing netgen mesh object
   void Ng_DeleteMesh (Ng_Mesh * mesh)
   {
@@ -97,10 +97,10 @@ namespace nglib
       {
         // Delete the Mesh structures
         ((Mesh*)mesh)->DeleteMesh();
-        
+
         // Now delete the Mesh class itself
         delete (Mesh*)mesh;
-        
+
         // Set the Ng_Mesh pointer to NULL
         mesh = NULL;
       }
@@ -112,7 +112,7 @@ namespace nglib
     Mesh * m = (Mesh*)mesh;
     m->AddPoint (Point3d (x[0], x[1], x[2]));
   }
-  
+
   // Manually add a surface element of a given type to an existing mesh object
   void Ng_AddSurfaceElement (Ng_Mesh * mesh, Ng_Surface_Element_Type et,
                              int * pi)
@@ -125,7 +125,7 @@ namespace nglib
     el.PNum(3) = pi[2];
     m->AddSurfaceElement (el);
   }
-  
+
   // Manually add a volume element of a given type to an existing mesh object
   void Ng_AddVolumeElement (Ng_Mesh * mesh, Ng_Volume_Element_Type et,
                             int * pi)
@@ -139,19 +139,19 @@ namespace nglib
     el.PNum(4) = pi[3];
     m->AddVolumeElement (el);
   }
-  
+
   // Obtain the number of points in the mesh
   int Ng_GetNP (Ng_Mesh * mesh)
   {
     return ((Mesh*)mesh) -> GetNP();
   }
-  
+
   // Obtain the number of volume elements in the mesh
   int Ng_GetNE (Ng_Mesh * mesh)
   {
     return ((Mesh*)mesh) -> GetNE();
   }
-  
+
   //  Return point coordinates of a given point index in the mesh
   void Ng_GetPoint (Ng_Mesh * mesh, int num, double * x)
   {
@@ -160,7 +160,7 @@ namespace nglib
     x[1] = p.Y();
     x[2] = p.Z();
   }
-  
+
   // Return the volume element at a given index "pi"
   Ng_Volume_Element_Type
   Ng_GetVolumeElement (Ng_Mesh * mesh, int num, int * pi)
@@ -180,24 +180,24 @@ namespace nglib
       }
     return et;
   }
-  
+
   // Generates volume mesh from an existing surface mesh
   Ng_Result Ng_GenerateVolumeMesh (Ng_Mesh * mesh, Ng_Meshing_Parameters * mp)
   {
     Mesh * m = (Mesh*)mesh;
-    
+
     // Philippose - 30/08/2009
-    // Do not locally re-define "mparam" here... "mparam" is a global 
-    // object 
+    // Do not locally re-define "mparam" here... "mparam" is a global
+    // object
     //MeshingParameters mparam;
     mp->Transfer_Parameters();
-    
+
     m->CalcLocalH(mparam.grading);
-    
+
     MeshVolume (mparam, *m);
     RemoveIllegalElements (*m);
     OptimizeVolume (mparam, *m);
-    
+
     return NG_OK;
   }
 
@@ -205,11 +205,11 @@ namespace nglib
   Ng_Result Ng_GenerateVolumeMesh (Ng_Mesh * mesh, double maxh)
   {
     Mesh *m = (Mesh*)mesh;
-    
+
     MeshingParameters mparam;
     mparam.uselocalh = 1;
     mparam.maxh = maxh;
-    
+
     try{
       m->CalcLocalH(mparam.grading);
       MeshVolume(mparam, *m);
@@ -226,11 +226,11 @@ namespace nglib
   Ng_Result Ng_OptimizeVolumeMesh(Ng_Mesh *mesh, double maxh)
   {
     Mesh *m = (Mesh*)mesh;
-    
+
     MeshingParameters mparam;
     mparam.uselocalh = 1;
     mparam.maxh = maxh;
-    
+
     try{
       m->CalcLocalH(mparam.grading);
       //MeshVolume(mparam, *m);
@@ -242,39 +242,39 @@ namespace nglib
     }
     return NG_OK;
   }
-  
+
   // ------------------ Begin - Meshing Parameters related functions ------------------
   // Constructor for the local nglib meshing parameters class
   Ng_Meshing_Parameters :: Ng_Meshing_Parameters()
   {
     uselocalh = 1;
-    
+
     maxh = 1000;
     minh = 0.0;
-    
+
     fineness = 0.5;
     grading = 0.3;
-    
+
     elementsperedge = 2.0;
     elementspercurve = 2.0;
-    
+
     closeedgeenable = 0;
     closeedgefact = 2.0;
-    
+
     second_order = 0;
     quad_dominated = 0;
-    
+
     meshsize_filename = 0;
-    
+
     optsurfmeshenable = 1;
     optvolmeshenable = 1;
-    
+
     optsteps_2d = 3;
     optsteps_3d = 3;
-    
+
     invert_tets = 0;
     invert_trigs = 0;
-    
+
     check_overlap = 1;
     check_overlapping_boundary = 1;
   }
@@ -283,68 +283,68 @@ namespace nglib
   void Ng_Meshing_Parameters :: Reset_Parameters()
   {
     uselocalh = 1;
-    
+
     maxh = 1000;
     minh = 0;
-    
+
     fineness = 0.5;
     grading = 0.3;
-    
+
     elementsperedge = 2.0;
     elementspercurve = 2.0;
-    
+
     closeedgeenable = 0;
     closeedgefact = 2.0;
-    
+
     second_order = 0;
     quad_dominated = 0;
-    
+
     meshsize_filename = 0;
-    
+
     optsurfmeshenable = 1;
     optvolmeshenable = 1;
-    
+
     optsteps_2d = 3;
     optsteps_3d = 3;
-    
+
     invert_tets = 0;
     invert_trigs = 0;
-    
+
     check_overlap = 1;
     check_overlapping_boundary = 1;
   }
 
-  // 
+  //
   void Ng_Meshing_Parameters :: Transfer_Parameters()
   {
     mparam.uselocalh = uselocalh;
-    
+
     mparam.maxh = maxh;
     mparam.minh = minh;
-    
+
     mparam.grading = grading;
     mparam.curvaturesafety = elementspercurve;
     mparam.segmentsperedge = elementsperedge;
-    
+
     mparam.secondorder = second_order;
     mparam.quad = quad_dominated;
-    
+
     mparam.meshsizefilename = meshsize_filename;
-    
+
     mparam.optsteps2d = optsteps_2d;
     mparam.optsteps3d = optsteps_3d;
-    
+
     mparam.inverttets = invert_tets;
     mparam.inverttrigs = invert_trigs;
-    
+
     mparam.checkoverlap = check_overlap;
     mparam.checkoverlappingboundary = check_overlapping_boundary;
   }
-  
+
 } // End of namespace nglib
 
 // compatibility functions:
-namespace netgen 
+namespace netgen
 {
    char geomfilename[255];
 
@@ -391,7 +391,7 @@ namespace netgen
 
    void Render()
    {
-      ; 
+      ;
    }
 } // End of namespace netgen
 

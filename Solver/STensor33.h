@@ -1,10 +1,18 @@
+// Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+//
+// Contributor(s):
+//   Eric Bechet
+//
+
 #ifndef _STENSOR33_H_
 #define _STENSOR33_H_
 
 #include "STensor3.h"
 #include "fullMatrix.h"
 #include "Numeric.h"
-
 
 // concrete class for general 3rd-order tensor in three-dimensional space
 
@@ -184,7 +192,4 @@ inline double operator*(const STensor33 &m, const STensor33 &t)
   return val;
 }
 
-
-
 #endif
-

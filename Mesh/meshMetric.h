@@ -1,10 +1,17 @@
+// Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+
 #ifndef _MESH_METRIC_H_
 #define _MESH_METRIC_H_
+
 #include <map>
 #include <algorithm>
 #include "STensor3.h"
 #include "Field.h"
 #include "meshGFaceOptimize.h"
+
 template <class scalar> class simpleFunction;
 class MVertex;
 class gLevelset;
@@ -38,10 +45,10 @@ class meshMetric: public Field {
   nodalMetricTensor _nodalMetrics,_hessian;
   nodalField _nodalSizes, _detMetric;
 
-  std::map<int,nodalMetricTensor> setOfMetrics;  
-  std::map<int,nodalField> setOfSizes;  
-  std::map<int,nodalField> setOfDetMetric;  
-  
+  std::map<int,nodalMetricTensor> setOfMetrics;
+  std::map<int,nodalField> setOfSizes;
+  std::map<int,nodalField> setOfDetMetric;
+
  public:
   meshMetric(std::vector<MElement*> elements);
   meshMetric(GModel *gm);
@@ -49,9 +56,9 @@ class meshMetric: public Field {
   ~meshMetric();
 
   // compute a new metric and add it to the set of metrics
-  // parameters[1] = lcmin (default : in global gmsh options CTX::instance()->mesh.lcMin) 
-  // parameters[2] = lcmax (default : in global gmsh options CTX::instance()->mesh.lcMax) 
-  // Available algorithms ("techniques"): 
+  // parameters[1] = lcmin (default : in global gmsh options CTX::instance()->mesh.lcMin)
+  // parameters[2] = lcmax (default : in global gmsh options CTX::instance()->mesh.lcMax)
+  // Available algorithms ("techniques"):
   // 1: fct is a LS, metric based on Coupez technique
   //    parameters[0] = thickness of the interface (mandatory)
   // 2: metric based on the hessian of fct
@@ -73,7 +80,7 @@ class meshMetric: public Field {
   void computeMetric() ;
   void computeValues( v2t_cont adj);
   void computeHessian( v2t_cont adj);
- 
+
   double getLaplacian (MVertex *v);
   virtual bool isotropic () const {return false;}
   virtual const char *getName()
@@ -88,9 +95,10 @@ class meshMetric: public Field {
   // get metric at point(x,y,z)  (previously computes intersection of metrics if not done yet)
   virtual double operator() (double x, double y, double z, GEntity *ge=0) ;
   virtual void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0);
-  
+
   void printMetric(const char* n);
   // export pos files of fct, fct gradients (fct is the lattest fct passed to meshMetric !!) and resulting metric (intersection of all computed metrics)
   void exportInfo(const char *fileendname);
 };
+
 #endif

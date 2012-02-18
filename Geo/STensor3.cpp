@@ -1,3 +1,8 @@
+// Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+
 // compute the largest inscribed ellipsoid...
 #include "STensor3.h"
 
@@ -73,8 +78,8 @@ SMetric3 intersection_conserve_mostaniso (const SMetric3 &m1, const SMetric3 &m2
 }
 
 // (1-t) * m1 + t * m2
-SMetric3 interpolation (const SMetric3 &m1, 
-                               const SMetric3 &m2, 
+SMetric3 interpolation (const SMetric3 &m1,
+                               const SMetric3 &m2,
                                const double t)
 {
   SMetric3 im1 = m1.invert();
@@ -85,9 +90,9 @@ SMetric3 interpolation (const SMetric3 &m1,
   return im1.invert();
 }
 
-SMetric3 interpolation (const SMetric3 &m1, 
-                        const SMetric3 &m2, 
-                        const SMetric3 &m3, 
+SMetric3 interpolation (const SMetric3 &m1,
+                        const SMetric3 &m2,
+                        const SMetric3 &m3,
                         const double u,
                         const double v)
 {
@@ -102,10 +107,10 @@ SMetric3 interpolation (const SMetric3 &m1,
   return im1.invert();
 }
 
-SMetric3 interpolation (const SMetric3 &m1, 
-                        const SMetric3 &m2, 
-                        const SMetric3 &m3,  
-                        const SMetric3 &m4, 
+SMetric3 interpolation (const SMetric3 &m1,
+                        const SMetric3 &m2,
+                        const SMetric3 &m3,
+                        const SMetric3 &m4,
                         const double u,
                         const double v,
                         const double w)

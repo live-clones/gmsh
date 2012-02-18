@@ -1,8 +1,13 @@
+// Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+
 #include "GaussIntegration.h"
 #include "GmshDefines.h"
 
-static void pts2fullMatrix(int npts, IntPt *pts, fullMatrix<double> &pMatrix, 
-                           fullMatrix<double> &wMatrix) 
+static void pts2fullMatrix(int npts, IntPt *pts, fullMatrix<double> &pMatrix,
+                           fullMatrix<double> &wMatrix)
 {
   pMatrix.resize(npts,3);
   wMatrix.resize(npts,1);
@@ -20,7 +25,7 @@ void gaussIntegration::getTriangle(int order, fullMatrix<double> &pts,
   pts2fullMatrix(getNGQTPts(order),getGQTPts(order),pts,weights);
 }
 
-void gaussIntegration::getLine(int order, fullMatrix<double> &pts, 
+void gaussIntegration::getLine(int order, fullMatrix<double> &pts,
                                fullMatrix<double> &weights)
 {
   pts2fullMatrix(getNGQLPts(order),getGQLPts(order),pts,weights);

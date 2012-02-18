@@ -1,8 +1,13 @@
+// Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+
 // code to generate this file (using alglib) :
 #if 0
 //alglib
 #include "ap.h"
-#include "gq.h" 
+#include "gq.h"
 int main(int argc, char **argv)
 {
   int maxA = 4;
