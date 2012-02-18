@@ -1,7 +1,7 @@
-/********************************************************************* 
+/*********************************************************************
  *
  *  Gmsh tutorial 13
- * 
+ *
  *  Remeshing STL with compounds
  *
  *********************************************************************/
@@ -47,4 +47,5 @@ Field[1].F = "2*Sin((x+y)/5) + 3";
 Background Field = 1;
 
 Mesh.RemeshAlgorithm = 1; // (0) no split (1) automatic (2) automatic only with metis
-Mesh.RemeshParametrization = 1; // (0) harmonic (1) conformal 
+Mesh.RemeshParametrization = 1; // (0) harmonic (1) conformal
+Geometry.HideCompounds = 0; // don't hide the compound entities
