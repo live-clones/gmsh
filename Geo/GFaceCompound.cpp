@@ -650,26 +650,15 @@ bool GFaceCompound::parametrize() const
     parametrize(ITERU,HARMONIC); 
     parametrize(ITERV,HARMONIC);
     printStuff(111);
-    checkOrientation(0, true);
+    if (_type == MEANPLANE) checkOrientation(0, true);
     printStuff(222);
-  }
-  // Multiscale Laplace parametrization
-  else if (_mapping == MULTISCALE){
-    std::vector<MElement*> _elements;
-    for(std::list<GFace*>::const_iterator itt = _compound.begin(); 
-        itt != _compound.end(); ++itt)
-      for(unsigned int i = 0; i < (*itt)->triangles.size(); ++i)
-        _elements.push_back((*itt)->triangles[i]);
-    multiscaleLaplace multiLaplace(_elements, coordinates); 
   }
   // Conformal map parametrization
   else if (_mapping == CONFORMAL){
     Msg::Info("Parametrizing surface %d with 'conformal map'", tag());
     fillNeumannBCS();
-    //    bool hasOverlap = parametrize_conformal_spectral();
     std::vector<MVertex *> vert;
     bool oriented, hasOverlap;
-    //hasOverlap = parametrize_conformal(0,NULL,NULL);
     hasOverlap = parametrize_conformal_spectral();
     printStuff(11);
     if (hasOverlap) oriented =  checkOrientation(0);
@@ -781,13 +770,11 @@ void GFaceCompound::getBoundingEdges()
     for(std::list<std::list<GEdge*> >::iterator it = _interior_loops.begin();
         it != _interior_loops.end(); it++){
       double size = getSizeBB(*it);
-      printf("size(%d) = %g\n",(*(it->begin()))->tag(),size);
       if (size > maxSize) {
 	_U0 = *it;
 	maxSize = size;
       }
     }
-    printf("maxSize(%d) = %g\n",tag(),maxSize);
   }
 }
 
@@ -980,7 +967,10 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   
   getBoundingEdges();
   _type = UNITCIRCLE;
-  //_type = MEANPLANE;
+  if (_mapping == HARMONICPLANE){
+    _mapping = HARMONIC;
+    _type = MEANPLANE;
+  }
  
   nbSplit = 0;
   fillTris.clear();

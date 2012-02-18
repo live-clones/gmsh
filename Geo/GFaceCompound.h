@@ -56,7 +56,7 @@ class GRbf;
 class GFaceCompound : public GFace {
  public:
   typedef enum {ITERU=0,ITERV=1,ITERD=2} iterationStep;
-  typedef enum {HARMONIC=1,CONFORMAL=2, CONVEXCOMBINATION=3, MULTISCALE=4, RBF=5} typeOfMapping;
+  typedef enum {HARMONIC=1,CONFORMAL=2, RBF=3, HARMONICPLANE=4, CONVEXCOMBINATION=5} typeOfMapping;
   typedef enum {UNITCIRCLE, MEANPLANE} typeOfIsomorphism;
   void computeNormals(std::map<MVertex*, SVector3> &normals) const;
  protected:
@@ -147,7 +147,7 @@ template<class scalar> class linearSystem;
 class GFaceCompound : public GFace {
  public:
   typedef enum {ITERU=0,ITERV=1,ITERD=2} iterationStep;
-  typedef enum {HARMONIC=1,CONFORMAL=2, CONVEXCOMBINATION=3, MULTISCALE=4, RBF=5} typeOfMapping;
+  typedef enum {HARMONIC=1,CONFORMAL=2, RBF=3, HARMONICPLANE=4, CONVEXCOMBINATION=5} typeOfMapping;
   typedef enum {UNITCIRCLE, MEANPLANE} typeOfIsomorphism;
  GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 	       std::list<GEdge*> &U0, typeOfMapping typ = HARMONIC, int allowPartition=1)
@@ -165,7 +165,6 @@ class GFaceCompound : public GFace {
                          SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const{}
   virtual SPoint2 getCoordinates(MVertex *v) const { return SPoint2(); }
   void parametrize() const {}
-  int getNbSplit() const { return 0; }
 };
 
 #endif

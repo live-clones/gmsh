@@ -190,9 +190,12 @@ int GModel::importGEOInternals()
           }
         }
         int param = CTX::instance()->mesh.remeshParam;
-        GFaceCompound::typeOfMapping typ = GFaceCompound::HARMONIC;
-        if (param == 1) typ =  GFaceCompound::CONFORMAL;
-        if (param == 2) typ =  GFaceCompound::RBF;
+	 GFaceCompound::typeOfMapping typ = GFaceCompound::HARMONIC;
+	 if (param == 1) typ =  GFaceCompound::CONFORMAL;
+	 if (param == 2) typ =  GFaceCompound::RBF;
+	 if (param == 3) typ =  GFaceCompound::HARMONICPLANE;
+	if (param == 4) typ =  GFaceCompound::CONVEXCOMBINATION;
+
         int algo = CTX::instance()->mesh.remeshAlgo;
         f = new GFaceCompound(this, s->Num, comp, U0, typ, algo);
 

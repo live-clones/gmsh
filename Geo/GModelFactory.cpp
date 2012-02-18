@@ -13,6 +13,7 @@
 #include "gmshRegion.h"
 #include "MLine.h"
 #include "GModel.h"
+#include "Numeric.h"
 
 GVertex *GeoFactory::addVertex(GModel *gm, double x, double y, double z, double lc)
 {
@@ -872,8 +873,6 @@ GFace *OCCFactory::addFace(GModel *gm, std::vector<GEdge *> edges,
   return gm->_occ_internals->addFaceToModel(gm, TopoDS::Face(aResult));
 }
 
-extern void computeMeanPlane(const std::vector<SPoint3> &points, mean_plane &meanPlane);
-
 GFace *OCCFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> > wires)
 {
 
@@ -892,7 +891,7 @@ GFace *OCCFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
   }
 
   mean_plane meanPlane;
-  computeMeanPlane(points, meanPlane);
+  computeMeanPlaneSimple(points, meanPlane);
 
   gp_Pln aPlane (meanPlane.a,meanPlane.b,meanPlane.c,meanPlane.d);
   BRepBuilderAPI_MakeFace aGenerator (aPlane);
