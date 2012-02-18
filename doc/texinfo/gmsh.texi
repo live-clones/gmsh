@@ -21,8 +21,8 @@
 @c =========================================================================
 @c %**start of header
 @setfilename gmsh.info
-@set GMSH-VERSION 2.5
-@set COPYRIGHT @copyright{} 1997-2009 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@set GMSH-VERSION 2.6
+@set COPYRIGHT @copyright{} 1997-2012 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @settitle Gmsh @value{GMSH-VERSION}
 @footnotestyle separate
 @setchapternewpage odd
@@ -540,7 +540,7 @@ small but powerful GUI.
 @node and what Gmsh is not so good at, Bug reports, What Gmsh is pretty good at, Overview
 @section @dots{} and what Gmsh is not so good at
 
-As of version 2.5, here are some known weaknesses of Gmsh:
+As of version 2.6, here are some known weaknesses of Gmsh:
 
 @itemize @bullet
 @item
@@ -2647,7 +2647,7 @@ algorithm should be tried. For very large meshes of plane surfaces the
 ``Delaunay'' algorithm is the fastest.
 
 The ``Automatic'' algorithm tries to select the best algorithm
-automatically for each surface in the model. As of Gmsh 2.5, the
+automatically for each surface in the model. As of Gmsh 2.6, the
 ``Automatic'' algorithm selects ``Delaunay'' for plane surfaces and
 ``MeshAdapt'' for all other surfaces.
 
@@ -2785,7 +2785,7 @@ transfinite and extruded grids: see @ref{Structured grids}).
 @item
 Second, if @code{Mesh.CharacteristicLengthFromCurvature} is set (it is
 not by default), the mesh will be adapted with respect to the curvature
-of the geometrical entities. Warning: as of Gmsh 2.5 this feature is
+of the geometrical entities. Warning: as of Gmsh 2.6 this feature is
 still (very) experimental. @c FIXME
 @item
 Finally, you can specify general mesh size ``fields''. Various fields
