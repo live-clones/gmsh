@@ -1072,17 +1072,26 @@ public class EssaiGmsh_v1 {
         f15 = gFact.addPlanarFace(m, edges15);
         f16 = gFact.addPlanarFace(m, edges16);
         f17 = gFact.addPlanarFace(m, edges17);
-        f18 = gFact.addIncurvedFace(m, edges18);
+	final FaceVector ruledFace1=gFact.addRuledFaces(m, edges18);
+        f18 = ruledFace1.get(0);
         
         // creation of faces of curved tetrahedron
-        f19 = gFact.addIncurvedFace(m, edges19);
-        f20 = gFact.addIncurvedFace(m, edges20);
-        f21 = gFact.addIncurvedFace(m, edges21);
-        f22 = gFact.addIncurvedFace(m, edges22);
-        f23 = gFact.addIncurvedFace(m, edges23);
-        f24 = gFact.addIncurvedFace(m, edges24);
-        f25 = gFact.addIncurvedFace(m, edges25);
-        f26 = gFact.addIncurvedFace(m, edges26);
+	final FaceVector ruledFace2=gFact.addRuledFaces(m, edges19);
+	final FaceVector ruledFace3=gFact.addRuledFaces(m, edges20);
+	final FaceVector ruledFace4=gFact.addRuledFaces(m, edges21);
+	final FaceVector ruledFace5=gFact.addRuledFaces(m, edges22);
+	final FaceVector ruledFace6=gFact.addRuledFaces(m, edges23);
+	final FaceVector ruledFace7=gFact.addRuledFaces(m, edges24);
+	final FaceVector ruledFace8=gFact.addRuledFaces(m, edges25);
+	final FaceVector ruledFace9=gFact.addRuledFaces(m, edges26);
+        f19 = ruledFace2.get(0);
+        f20 = ruledFace3.get(0);
+        f21 = ruledFace4.get(0);
+        f22 = ruledFace5.get(0);
+        f23 = ruledFace6.get(0);
+        f24 = ruledFace7.get(0);
+        f25 = ruledFace8.get(0);
+        f26 = ruledFace9.get(0);
         
         // //definition of physical for faces
         

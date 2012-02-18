@@ -17,7 +17,7 @@
 GVertex *GeoFactory::addVertex(GModel *gm, double x, double y, double z, double lc)
 {
   int num =  gm->getMaxElementaryNumber(0) + 1;
-  
+
   x *= CTX::instance()->geom.scalingFactor;
   y *= CTX::instance()->geom.scalingFactor;
   z *= CTX::instance()->geom.scalingFactor;
@@ -28,7 +28,7 @@ GVertex *GeoFactory::addVertex(GModel *gm, double x, double y, double z, double 
   Tree_Add(GModel::current()->getGEOInternals()->Points, &p);
   p->Typ = MSH_POINT;
   p->Num = num;
-  
+
   GVertex *v = new gmshVertex(gm, p);
   gm->add(v);
 
@@ -43,7 +43,7 @@ GEdge *GeoFactory::addLine(GModel *gm, GVertex *start, GVertex *end)
   int tagEnd = end->tag();
   List_Add(iList, &tagBeg);
   List_Add(iList, &tagEnd);
- 
+
   Curve *c = Create_Curve(num, MSH_SEGM_LINE, 1, iList, NULL,
 			  -1, -1, 0., 1.);
   Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
@@ -59,64 +59,36 @@ GEdge *GeoFactory::addLine(GModel *gm, GVertex *start, GVertex *end)
 }
 
 GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> > edges)
-{ 
-  // create line loops 
-  // FIXME: having non-ordered lines in the loop triggers a warning; we should 
-  // eventually return an error, but createTopolpgyFromMesh() does not currently 
-  // sort edges in loops; once it does, we can be stricter here.
+{
+  //create line loops
   std::vector<EdgeLoop *> vecLoops;
   int nLoops = edges.size();
-  for (int i = 0; i< nLoops; i++){
+  for (int i=0; i< nLoops; i++){
     int numl = gm->getMaxElementaryNumber(1) + i;
     while (FindEdgeLoop(numl)){
       numl++;
+      if (!FindEdgeLoop(numl)) break;
     }
-    int nl = (int)edges[i].size();
-    const GEdge &e0 = *edges[i][0];
-    const GVertex *frontV = e0.getBeginVertex();
+    int nl=(int)edges[i].size();
     List_T *iListl = List_Create(nl, nl, sizeof(int));
-    if (nl > 1) {
-      const GEdge &e1 = *edges[i][1];
-      if (e0.getEndVertex() != e1.getBeginVertex() && 
-          e0.getEndVertex() != e1.getEndVertex()) {
-        frontV = e0.getEndVertex();
-        if (e0.getBeginVertex() != e1.getBeginVertex() &&
-            e0.getBeginVertex() != e1.getEndVertex()) {
-          Msg::Warning("Edges 0 and 1 not consecutive in line loop %d", i);
-          //return NULL;
-        }
-      }
-    }
-    const GVertex *firstV = frontV;
-    for (int j = 0; j < nl; j++){
-      const GEdge &e = *edges[i][j];
-      int numEdge = e.tag();
-      if (frontV == e.getBeginVertex()) {
-        frontV = e.getEndVertex();
-      } 
-      else if (frontV == e.getEndVertex()){
-        frontV = e.getBeginVertex();
-        numEdge = -numEdge;
-      }
-      else {
-        Msg::Warning("Edge %d out of order in line loop %d", j, i);
-        //List_Delete(iListl);
-        //return NULL;
-      }
+    for(int j = 0; j < nl; j++){
+      int numEdge = edges[i][j]->tag();
       List_Add(iListl, &numEdge);
     }
-    if (firstV != frontV) {
-      Msg::Warning("Unordered line loop %d", i);
-      //List_Delete(iListl);
-      //return NULL;
-    }
+    int type=ENT_LINE;
+
+    select_contour(type, edges[i][0]->tag(), iListl);
+
+    sortEdgesInLoop(numl, iListl);
     EdgeLoop *l = Create_EdgeLoop(numl, iListl);
     vecLoops.push_back(l);
     Tree_Add(GModel::current()->getGEOInternals()->EdgeLoops, &l);
     l->Num = numl;
+
+
     List_Delete(iListl);
   }
- 
+
   //create plane surfaces
   int numf = gm->getMaxElementaryNumber(2) + 1;
   Surface *s = Create_Surface(numf, MSH_SURF_PLAN);
@@ -131,7 +103,7 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
   s->Typ= MSH_SURF_PLAN;
   s->Num = numf;
   List_Delete(iList);
- 
+
   //gmsh surface
   GFace *gf = new gmshFace(gm,s);
   gm->add(gf);
@@ -161,7 +133,7 @@ GRegion* GeoFactory::addVolume (GModel *gm, std::vector<std::vector<GFace *> > f
     Tree_Add(GModel::current()->getGEOInternals()->SurfaceLoops, &l);
     List_Delete(iListl);
   }
-  
+
   //volume
   int numv = gm->getMaxElementaryNumber(3) + 1;
   Volume *v = Create_Volume(numv, MSH_VOLUME);
@@ -175,12 +147,93 @@ GRegion* GeoFactory::addVolume (GModel *gm, std::vector<std::vector<GFace *> > f
   Tree_Add(GModel::current()->getGEOInternals()->Volumes, &v);
   v->Typ = MSH_VOLUME;
   v->Num = numv;
-  
+
   //gmsh volume
   GRegion *gr = new gmshRegion(gm,v);
   gm->add(gr);
-  
+
   return gr;
+}
+
+GEdge* GeoFactory::addCircleArc(GModel *gm,GVertex *begin, GVertex *center, GVertex *end)
+{
+  int num =  gm->getMaxElementaryNumber(1) + 1;
+  List_T *iList = List_Create(2, 2, sizeof(int));
+  int tagBeg = begin->tag();
+  int tagMiddle = center->tag();
+  int tagEnd = end->tag();
+  List_Add(iList, &tagBeg);
+  List_Add(iList, &tagMiddle);
+  List_Add(iList, &tagEnd);
+
+  Curve *c = Create_Curve(num, MSH_SEGM_CIRC, 1, iList, NULL,
+			  -1, -1, 0., 1.);
+  Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
+  CreateReversedCurve(c);
+  List_Delete(iList);
+  c->Typ = MSH_SEGM_CIRC;
+  c->Num = num;
+
+  GEdge *e = new gmshEdge(gm, c, begin, end);
+  gm->add(e);
+
+  return e;
+}
+
+std::vector<GFace *> GeoFactory::addRuledFaces(GModel *gm,
+                                               std::vector<std::vector<GEdge *> > edges)
+{
+  //create line loops
+  std::vector<EdgeLoop *> vecLoops;
+  int nLoops = edges.size();
+  for (int i=0; i< nLoops; i++){
+    int numl = gm->getMaxElementaryNumber(1) + i;
+    while (FindEdgeLoop(numl)){
+      numl++;
+      if (!FindEdgeLoop(numl)) break;
+    }
+    int nl=(int)edges[i].size();
+    List_T *iListl = List_Create(nl, nl, sizeof(int));
+    for(int j = 0; j < nl; j++){
+      int numEdge = edges[i][j]->tag();
+      List_Add(iListl, &numEdge);
+    }
+    int type=ENT_LINE;
+    if(select_contour(type, edges[0][0]->tag(), iListl))
+    {
+        sortEdgesInLoop(numl, iListl);
+        EdgeLoop *l = Create_EdgeLoop(numl, iListl);
+        vecLoops.push_back(l);
+        Tree_Add(GModel::current()->getGEOInternals()->EdgeLoops, &l);
+        l->Num = numl;
+    }
+
+    List_Delete(iListl);
+  }
+
+  //create plane surfaces
+  int numf = gm->getMaxElementaryNumber(2) + 1;
+  Surface *s = Create_Surface(numf, MSH_SURF_TRIC);
+  List_T *iList = List_Create(nLoops, nLoops, sizeof(int));
+  for (unsigned int i=0; i< vecLoops.size(); i++){
+    int numl = vecLoops[i]->Num;
+    List_Add(iList, &numl);
+  }
+  setSurfaceGeneratrices(s, iList);
+  End_Surface(s);
+  Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
+  s->Typ= MSH_SURF_TRIC;
+  s->Num = numf;
+  List_Delete(iList);
+
+  //gmsh surface
+  GFace *gf = new gmshFace(gm,s);
+  gm->add(gf);
+
+  std::vector<GFace*> faces;
+  faces.push_back(gf);
+
+  return faces;
 }
 
 #if defined(HAVE_OCC)
@@ -223,7 +276,7 @@ GVertex *OCCFactory::addVertex(GModel *gm, double x, double y, double z, double 
   aPnt = gp_Pnt(x, y, z);
   BRepBuilderAPI_MakeVertex mkVertex(aPnt);
   TopoDS_Vertex occv = mkVertex.Vertex();
-  
+
   return gm->_occ_internals->addVertexToModel(gm, occv);
 }
 
@@ -236,24 +289,24 @@ GEdge *OCCFactory::addLine(GModel *gm, GVertex *start, GVertex *end)
   OCCVertex *occv2 = dynamic_cast<OCCVertex*>(end);
   TopoDS_Edge occEdge;
   if (occv1 && occv2){
-     occEdge = BRepBuilderAPI_MakeEdge(occv1->getShape(), 
+     occEdge = BRepBuilderAPI_MakeEdge(occv1->getShape(),
 				       occv2->getShape()).Edge();
   }
   else{
     gp_Pnt p1(start->x(),start->y(),start->z());
     gp_Pnt p2(end->x(),end->y(),end->z());
     TopoDS_Edge occEdge = BRepBuilderAPI_MakeEdge(p1, p2).Edge();
-  }  
+  }
   return gm->_occ_internals->addEdgeToModel(gm,occEdge);
 }
 
 GEdge *OCCFactory::addCircleArc(GModel *gm, const arcCreationMethod &method,
-                                GVertex *start, GVertex *end, 
+                                GVertex *start, GVertex *end,
                                 const SPoint3 &aPoint)
 {
   if (!gm->_occ_internals)
     gm->_occ_internals = new OCC_Internals;
-  
+
   gp_Pnt aP1(start->x(), start->y(), start->z());
   gp_Pnt aP2(aPoint.x(), aPoint.y(), aPoint.z());
   gp_Pnt aP3(end->x(), end->y(), end->z());
@@ -265,9 +318,9 @@ GEdge *OCCFactory::addCircleArc(GModel *gm, const arcCreationMethod &method,
   if (method == GModelFactory::THREE_POINTS){
     GC_MakeArcOfCircle arc(aP1, aP2, aP3);
     if (occv1 && occv2)
-      occEdge = BRepBuilderAPI_MakeEdge(arc,occv1->getShape(), 
-                                        occv2->getShape()).Edge();    
-    else 
+      occEdge = BRepBuilderAPI_MakeEdge(arc,occv1->getShape(),
+                                        occv2->getShape()).Edge();
+    else
       occEdge = BRepBuilderAPI_MakeEdge(arc).Edge();
   }
   else if (method == GModelFactory::CENTER_START_END){
@@ -280,15 +333,15 @@ GEdge *OCCFactory::addCircleArc(GModel *gm, const arcCreationMethod &method,
     Handle(Geom_TrimmedCurve) arc = new Geom_TrimmedCurve(C, Alpha1, Alpha2, false);
     if (occv1 && occv2)
       occEdge = BRepBuilderAPI_MakeEdge(arc, occv1->getShape(),
-                                        occv2->getShape()).Edge();    
-    else 
+                                        occv2->getShape()).Edge();
+    else
       occEdge = BRepBuilderAPI_MakeEdge(arc).Edge();
   }
   return gm->_occ_internals->addEdgeToModel(gm,occEdge);
 }
 
 GEdge *OCCFactory::addSpline(GModel *gm, const splineType &type,
-                             GVertex *start, GVertex *end, 
+                             GVertex *start, GVertex *end,
 			     std::vector<std::vector<double> > points)
 {
   if (!gm->_occ_internals)
@@ -302,43 +355,43 @@ GEdge *OCCFactory::addSpline(GModel *gm, const splineType &type,
   int nbControlPoints = points.size();
   TColgp_Array1OfPnt ctrlPoints(1, nbControlPoints + 2);
   int index = 1;
-  ctrlPoints.SetValue(index++, gp_Pnt(start->x(), start->y(), start->z()));  
+  ctrlPoints.SetValue(index++, gp_Pnt(start->x(), start->y(), start->z()));
   for (int i = 0; i < nbControlPoints; i++) {
     gp_Pnt aP(points[i][0],points[i][1],points[i][2]);
     ctrlPoints.SetValue(index++, aP);
   }
-  ctrlPoints.SetValue(index++, gp_Pnt(end->x(), end->y(), end->z()));  
+  ctrlPoints.SetValue(index++, gp_Pnt(end->x(), end->y(), end->z()));
   if (type == BEZIER) {
     Handle(Geom_BezierCurve) Bez = new Geom_BezierCurve(ctrlPoints);
     if (occv1 && occv2)
-      occEdge = BRepBuilderAPI_MakeEdge(Bez,occv1->getShape(),occv2->getShape()).Edge();    
+      occEdge = BRepBuilderAPI_MakeEdge(Bez,occv1->getShape(),occv2->getShape()).Edge();
     else
       occEdge = BRepBuilderAPI_MakeEdge(Bez).Edge();
-  } 
+  }
   return gm->_occ_internals->addEdgeToModel(gm, occEdge);
 }
 
 
 GEdge *OCCFactory::addNURBS(GModel *gm, GVertex *start, GVertex *end,
-			    std::vector<std::vector<double> > points, 
+			    std::vector<std::vector<double> > points,
 			    std::vector<double> knots,
-			    std::vector<double> weights, 
+			    std::vector<double> weights,
 			    std::vector<int> mult)
 {
-  try{ 
+  try{
   if (!gm->_occ_internals)
     gm->_occ_internals = new OCC_Internals;
-  
+
   OCCVertex *occv1 = dynamic_cast<OCCVertex*>(start);
   OCCVertex *occv2 = dynamic_cast<OCCVertex*>(end);
-  
+
   int nbControlPoints = points.size() + 2;
   TColgp_Array1OfPnt  ctrlPoints(1, nbControlPoints);
-  
+
   TColStd_Array1OfReal _knots(1, knots.size());
   TColStd_Array1OfReal _weights(1, weights.size());
   TColStd_Array1OfInteger  _mult(1, mult.size());
-  
+
   for (unsigned i = 0; i < knots.size(); i++) {
     _knots.SetValue(i+1, knots[i]);
   }
@@ -347,27 +400,27 @@ GEdge *OCCFactory::addNURBS(GModel *gm, GVertex *start, GVertex *end,
   }
   int totKnots = 0;
   for (unsigned i = 0; i < mult.size(); i++) {
-    _mult.SetValue(i+1, mult[i]);   
+    _mult.SetValue(i+1, mult[i]);
     totKnots += mult[i];
   }
 
   const int degree = totKnots - nbControlPoints - 1;
   Msg::Debug("creation of a nurbs of degree %d with %d control points",
 	     degree,nbControlPoints);
-  
+
   int index = 1;
-  ctrlPoints.SetValue(index++, gp_Pnt(start->x(), start->y(), start->z()));  
+  ctrlPoints.SetValue(index++, gp_Pnt(start->x(), start->y(), start->z()));
   for (unsigned i = 0; i < points.size(); i++) {
     gp_Pnt aP(points[i][0],points[i][1],points[i][2]);
     ctrlPoints.SetValue(index++, aP);
   }
-  ctrlPoints.SetValue(index++, gp_Pnt(end->x(), end->y(), end->z()));  
+  ctrlPoints.SetValue(index++, gp_Pnt(end->x(), end->y(), end->z()));
   Handle(Geom_BSplineCurve) NURBS = new Geom_BSplineCurve
     (ctrlPoints, _weights, _knots, _mult, degree, false);
   TopoDS_Edge occEdge;
   if (occv1 && occv2)
     occEdge = BRepBuilderAPI_MakeEdge(NURBS, occv1->getShape(),
-                                      occv2->getShape()).Edge();    
+                                      occv2->getShape()).Edge();
   else
     occEdge = BRepBuilderAPI_MakeEdge(NURBS).Edge();
   return gm->_occ_internals->addEdgeToModel(gm, occEdge);
@@ -379,20 +432,20 @@ GEdge *OCCFactory::addNURBS(GModel *gm, GVertex *start, GVertex *end,
 }
 
 /*
-GEdge *OCCFactory::addBezierSurface(GModel *gm, 
+GEdge *OCCFactory::addBezierSurface(GModel *gm,
 				    std::vector<GEdge *> & wires, // four edges indeed
 				    std::vector<std::vector<double> > points)
 {
 
   TColgp_Array2OfPnt ctrlPoints(1, nbControlPoints + 2);
   int index = 1;
-  ctrlPoints.SetValue(index++, gp_Pnt(start->x(), start->y(), start->z()));  
+  ctrlPoints.SetValue(index++, gp_Pnt(start->x(), start->y(), start->z()));
   for (int i = 0; i < nbControlPoints; i++) {
     gp_Pnt aP(points[i][0],points[i][1],points[i][2]);
     ctrlPoints.SetValue(index++, aP);
   }
- 
-  
+
+
   BRepBuilderAPI_MakeFace aGenerator (aBezierSurface);
   BRepBuilderAPI_MakeWire wire_maker;
   for (unsigned j = 0; j < wires.size(); j++) {
@@ -410,7 +463,7 @@ GEdge *OCCFactory::addBezierSurface(GModel *gm,
 }
 */
 GEntity *OCCFactory::revolve(GModel *gm, GEntity* base,
-                             std::vector<double> p1, 
+                             std::vector<double> p1,
                              std::vector<double> p2, double angle)
 {
   if (!gm->_occ_internals)
@@ -425,7 +478,7 @@ GEntity *OCCFactory::revolve(GModel *gm, GEntity* base,
 
   gp_Dir direction(x2 - x1, y2 - y1, z2 - z1);
   gp_Ax1 axisOfRevolution(gp_Pnt(x1, y1, z1), direction);
-  BRepPrimAPI_MakeRevol MR(*(TopoDS_Shape*)base->getNativePtr(), 
+  BRepPrimAPI_MakeRevol MR(*(TopoDS_Shape*)base->getNativePtr(),
                            axisOfRevolution, angle, Standard_False);
   GEntity *ret = 0;
   if (base->cast2Vertex()){
@@ -459,7 +512,7 @@ GEntity *OCCFactory::extrude(GModel *gm, GEntity* base,
   gp_Vec direction(gp_Pnt(x1, y1, z1), gp_Pnt(x2, y2, z2));
   gp_Ax1 axisOfRevolution(gp_Pnt(x1, y1, z1), direction);
 
-  BRepPrimAPI_MakePrism MP(*(TopoDS_Shape*)base->getNativePtr(), direction, 
+  BRepPrimAPI_MakePrism MP(*(TopoDS_Shape*)base->getNativePtr(), direction,
                            Standard_False);
   GEntity *ret = 0;
   if (base->cast2Vertex()){
@@ -468,11 +521,11 @@ GEntity *OCCFactory::extrude(GModel *gm, GEntity* base,
   }
   if (base->cast2Edge()){
     TopoDS_Face result = TopoDS::Face(MP.Shape());
-    ret = gm->_occ_internals->addFaceToModel(gm, result);    
+    ret = gm->_occ_internals->addFaceToModel(gm, result);
   }
   if (base->cast2Face()){
     TopoDS_Solid result = TopoDS::Solid(MP.Shape());
-    ret = gm->_occ_internals->addRegionToModel(gm, result);    
+    ret = gm->_occ_internals->addRegionToModel(gm, result);
   }
   return ret;
 }
@@ -482,12 +535,12 @@ GEntity *OCCFactory::addSphere(GModel *gm, double xc, double yc, double zc, doub
   if (!gm->_occ_internals)
     gm->_occ_internals = new OCC_Internals;
 
-  gp_Pnt aP(xc, yc, zc);  
+  gp_Pnt aP(xc, yc, zc);
   TopoDS_Shape shape = BRepPrimAPI_MakeSphere(aP, radius).Shape();
   gm->_occ_internals->buildShapeFromLists(shape);
   gm->destroy();
   gm->_occ_internals->buildLists();
-  gm->_occ_internals->buildGModel(gm);  
+  gm->_occ_internals->buildGModel(gm);
   return getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
 }
 
@@ -511,7 +564,7 @@ GEntity *OCCFactory::addCylinder(GModel *gm, std::vector<double> p1,
   const double z2 = p2[2];
 
   gp_Pnt aP(x1, y1, z1);
-  const double H = sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + 
+  const double H = sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) +
                         (z2 - z1) * (z2 - z1));
   gp_Vec aV((x2 - x1) / H, (y2 - y1) / H, (z2 - z1) / H);
   gp_Ax2 anAxes(aP, aV);
@@ -529,8 +582,8 @@ GEntity *OCCFactory::addCylinder(GModel *gm, std::vector<double> p1,
   return getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
 }
 
-GEntity *OCCFactory::addTorus(GModel *gm, std::vector<double> p1, 
-                              std::vector<double> p2, double radius1, 
+GEntity *OCCFactory::addTorus(GModel *gm, std::vector<double> p1,
+                              std::vector<double> p2, double radius1,
                               double radius2)
 {
   if (!gm->_occ_internals)
@@ -544,7 +597,7 @@ GEntity *OCCFactory::addTorus(GModel *gm, std::vector<double> p1,
   const double z2 = p2[2];
   gp_Pnt aP(x1, y1, z1);
   const double H = sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) +
-                        (z2 - z1) * (z2 - z1)); 
+                        (z2 - z1) * (z2 - z1));
   gp_Vec aV((x2 - x1) / H, (y2 - y1) / H, (z2 - z1) / H);
   gp_Ax2 anAxes(aP, aV);
   BRepPrimAPI_MakeTorus MC(anAxes, radius1, radius2);
@@ -561,8 +614,8 @@ GEntity *OCCFactory::addTorus(GModel *gm, std::vector<double> p1,
   return getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
 }
 
-GEntity *OCCFactory::addCone(GModel *gm,  std::vector<double> p1, 
-                             std::vector<double> p2, double radius1, 
+GEntity *OCCFactory::addCone(GModel *gm,  std::vector<double> p1,
+                             std::vector<double> p2, double radius1,
                              double radius2)
 {
   if (!gm->_occ_internals)
@@ -577,7 +630,7 @@ GEntity *OCCFactory::addCone(GModel *gm,  std::vector<double> p1,
 
   gp_Pnt aP(x1, y1, z1);
   const double H = sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) +
-                        (z2 - z1) * (z2 - z1)); 
+                        (z2 - z1) * (z2 - z1));
   gp_Vec aV((x2 - x1) / H, (y2 - y1) / H, (z2 - z1) / H);
   gp_Ax2 anAxes(aP, aV);
   BRepPrimAPI_MakeCone MC(anAxes, radius1, radius2, H);
@@ -590,11 +643,11 @@ GEntity *OCCFactory::addCone(GModel *gm,  std::vector<double> p1,
   gm->_occ_internals->buildShapeFromLists(shape);
   gm->destroy();
   gm->_occ_internals->buildLists();
-  gm->_occ_internals->buildGModel(gm);  
+  gm->_occ_internals->buildGModel(gm);
   return getOCCRegionByNativePtr(gm,TopoDS::Solid(shape));
 }
 
-GEntity *OCCFactory::addBlock(GModel *gm, std::vector<double> p1, 
+GEntity *OCCFactory::addBlock(GModel *gm, std::vector<double> p1,
                               std::vector<double> p2)
 {
   if (!gm->_occ_internals)
@@ -619,12 +672,12 @@ GEntity *OCCFactory::addBlock(GModel *gm, std::vector<double> p1,
 GModel *OCCFactory::computeBooleanUnion(GModel* obj, GModel* tool,
                                         int createNewModel)
 {
-  try{ 
+  try{
     OCC_Internals *occ_obj = obj->getOCCInternals();
     OCC_Internals *occ_tool = tool->getOCCInternals();
-    
+
     if (!occ_obj || !occ_tool) return NULL;
-    
+
     if (createNewModel){
       GModel *temp = new GModel;
       temp->_occ_internals = new OCC_Internals;
@@ -640,19 +693,19 @@ GModel *OCCFactory::computeBooleanUnion(GModel* obj, GModel* tool,
   catch(Standard_Failure &err){
     Msg::Error("%s", err.GetMessageString());
   }
-    
+
   return obj;
 }
 
-GModel *OCCFactory::computeBooleanDifference(GModel* obj, GModel* tool, 
+GModel *OCCFactory::computeBooleanDifference(GModel* obj, GModel* tool,
                                              int createNewModel)
 {
   try{
     OCC_Internals *occ_obj = obj->getOCCInternals();
     OCC_Internals *occ_tool = tool->getOCCInternals();
-    
+
     if (!occ_obj || !occ_tool) return NULL;
-    
+
     if (createNewModel){
       GModel *temp = new GModel;
       temp->_occ_internals = new OCC_Internals;
@@ -677,9 +730,9 @@ GModel *OCCFactory::computeBooleanIntersection(GModel* obj, GModel* tool,
   try{
     OCC_Internals *occ_obj = obj->getOCCInternals();
     OCC_Internals *occ_tool = tool->getOCCInternals();
-    
+
     if (!occ_obj || !occ_tool) return NULL;
-    
+
     if (createNewModel){
       GModel *temp = new GModel;
       temp->_occ_internals = new OCC_Internals;
@@ -712,7 +765,7 @@ void OCCFactory::fillet(GModel *gm, std::vector<int> edges, double radius)
     gm->_occ_internals->fillet(edgesToFillet, radius);
     gm->destroy();
     gm->_occ_internals->buildLists();
-    gm->_occ_internals->buildGModel(gm);  
+    gm->_occ_internals->buildGModel(gm);
   }
   catch(Standard_Failure &err){
     Msg::Error("%s", err.GetMessageString());
@@ -730,18 +783,18 @@ void OCCFactory::translate(GModel *gm, std::vector<double> dx, int addToTheModel
   else gm->_occ_internals->buildShapeFromLists(temp);
   gm->destroy();
   gm->_occ_internals->buildLists();
-  gm->_occ_internals->buildGModel(gm);    
+  gm->_occ_internals->buildGModel(gm);
 }
 
 void OCCFactory::rotate(GModel *gm, std::vector<double> p1, std::vector<double> p2,
                         double angle, int addToTheModel)
 {
-  const double x1 = p1[0]; 
-  const double y1 = p1[1]; 
-  const double z1 = p1[2]; 
-  const double x2 = p2[0]; 
-  const double y2 = p2[1]; 
-  const double z2 = p2[2]; 
+  const double x1 = p1[0];
+  const double y1 = p1[1];
+  const double z1 = p1[2];
+  const double x2 = p2[0];
+  const double y2 = p2[1];
+  const double z2 = p2[2];
 
   if (!gm->_occ_internals)
     gm->_occ_internals = new OCC_Internals;
@@ -758,10 +811,10 @@ void OCCFactory::rotate(GModel *gm, std::vector<double> p1, std::vector<double> 
   else gm->_occ_internals->buildShapeFromLists(temp);
   gm->destroy();
   gm->_occ_internals->buildLists();
-  gm->_occ_internals->buildGModel(gm);    
+  gm->_occ_internals->buildGModel(gm);
 }
 
-std::vector<GFace *> OCCFactory::addRuledFaces(GModel *gm, 
+std::vector<GFace *> OCCFactory::addRuledFaces(GModel *gm,
 					      std::vector< std::vector<GEdge *> > wires)
 {
   std::vector<GFace*> faces;
@@ -780,11 +833,11 @@ std::vector<GFace *> OCCFactory::addRuledFaces(GModel *gm,
     }
     aGenerator.AddWire (wire_maker.Wire());
   }
-  
-  aGenerator.CheckCompatibility (Standard_False);  
+
+  aGenerator.CheckCompatibility (Standard_False);
 
   aGenerator.Build();
-  
+
   TopoDS_Shape aResult = aGenerator.Shape();
 
   TopExp_Explorer exp2;
@@ -796,7 +849,7 @@ std::vector<GFace *> OCCFactory::addRuledFaces(GModel *gm,
   return faces;
 }
 
-GFace *OCCFactory::addFace(GModel *gm, std::vector<GEdge *> edges, 
+GFace *OCCFactory::addFace(GModel *gm, std::vector<GEdge *> edges,
                            std::vector< std::vector<double > > points)
 {
   BRepOffsetAPI_MakeFilling aGenerator;
@@ -814,7 +867,7 @@ GFace *OCCFactory::addFace(GModel *gm, std::vector<GEdge *> edges,
   }
 
   aGenerator.Build();
-  
+
   TopoDS_Shape aResult = aGenerator.Shape();
   return gm->_occ_internals->addFaceToModel(gm, TopoDS::Face(aResult));
 }
@@ -837,7 +890,7 @@ GFace *OCCFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
   for ( ; it != verts.end(); ++it){
     points.push_back(SPoint3((*it)->x(), (*it)->y(), (*it)->z()));
   }
- 
+
   mean_plane meanPlane;
   computeMeanPlane(points, meanPlane);
 
@@ -876,7 +929,7 @@ GEntity *OCCFactory::addPipe(GModel *gm, GEntity *base, std::vector<GEdge *> wir
     }
   }
   TopoDS_Wire myWire = wire_maker.Wire();
-  
+
   GEntity *ret = 0;
   if (base->cast2Vertex()){
     OCCVertex *occv = dynamic_cast<OCCVertex*>(base);

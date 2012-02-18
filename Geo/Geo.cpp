@@ -3688,3 +3688,31 @@ void GEO_Internals::reset_physicals()
   List_Action(PhysicalGroups, Free_PhysicalGroup); 
   List_Reset(PhysicalGroups);
 }
+
+int select_contour(int type, int num, List_T * List)
+{
+  int k = 0;
+
+  switch (type) {
+  case ENT_LINE:
+    k = allEdgesLinked(num, List);
+    for(int i = 0; i < List_Nbr(List); i++) {
+      int ip;
+      List_Read(List, i, &ip);
+      GEdge *ge = GModel::current()->getEdgeByTag(abs(ip));
+      if(ge) ge->setSelection(1);
+    }
+    break;
+  case ENT_SURFACE:
+    k = allFacesLinked(num, List);
+    for(int i = 0; i < List_Nbr(List); i++) {
+      int ip;
+      List_Read(List, i, &ip);
+      GFace *gf = GModel::current()->getFaceByTag(abs(ip));
+      if(gf) gf->setSelection(1);
+    }
+    break;
+  }
+
+  return k;
+}

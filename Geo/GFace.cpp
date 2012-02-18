@@ -63,13 +63,15 @@ GFace::~GFace()
   deleteMesh();
 }
 
-int GFace::getMeshingAlgo () const {
+int GFace::getMeshingAlgo () const
+{
   std::map<int,int>::iterator it = CTX::instance()->mesh.algo2d_per_face.find(tag());
   return it == CTX::instance()->mesh.algo2d_per_face.end() ?
     CTX::instance()->mesh.algo2d : it->second ;
 }
 
-void GFace::setMeshingAlgo (int algo) {
+void GFace::setMeshingAlgo (int algo)
+{
   CTX::instance()->mesh.algo2d_per_face[tag()] = algo;
 }
 
@@ -927,7 +929,7 @@ void bfgs_callback(const alglib::real_1d_array& x, double& func, alglib::real_1d
 
   // Value of the objective
   GPoint pnt = gf->point(x[0], x[1]);
-  func = 0.5 * 
+  func = 0.5 *
     ( p.x() - pnt.x() ) * ( p.x() - pnt.x() ) +
     ( p.y() - pnt.y() ) * ( p.y() - pnt.y() ) +
     ( p.z() - pnt.z() ) * ( p.z() - pnt.z() ) ;
@@ -935,8 +937,8 @@ void bfgs_callback(const alglib::real_1d_array& x, double& func, alglib::real_1d
 
   // Value of the gradient
   Pair<SVector3, SVector3> der = gf->firstDer(SPoint2(x[0], x[1]));
-  grad[0] = -(p.x() - pnt.x()) * der.left().x()  - (p.y() - pnt.y()) * der.left().y()  - (p.z() - pnt.z()) * der.left().z(); 
-  grad[1] = -(p.x() - pnt.x()) * der.right().x() - (p.y() - pnt.y()) * der.right().y() - (p.z() - pnt.z()) * der.right().z(); 
+  grad[0] = -(p.x() - pnt.x()) * der.left().x()  - (p.y() - pnt.y()) * der.left().y()  - (p.z() - pnt.z()) * der.left().z();
+  grad[1] = -(p.x() - pnt.x()) * der.right().x() - (p.y() - pnt.y()) * der.right().y() - (p.z() - pnt.z()) * der.right().z();
   //  printf("func %22.15E Gradients %22.15E %22.15E der %g %g %g\n",func, grad[0], grad[1],der.left().x(),der.left().y(),der.left().z());
 }
 #endif
@@ -993,7 +995,7 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[
 
   //  printf("Initial conditions : %f %f %12.5E\n", min_u, min_v,min_dist);
   GPoint pnt = point(min_u, min_v);
-  //    printf("Initial conditions (point) : %f %f %f local (%g %g) Looking for %f %f %f DIST = %12.5E\n", 
+  //    printf("Initial conditions (point) : %f %f %f local (%g %g) Looking for %f %f %f DIST = %12.5E\n",
   //  	 pnt.x(), pnt.y(), pnt.z(),min_u,min_v,
   //  	 queryPoint.x(),queryPoint.y(),queryPoint.z(),
   //  	 min_dist);
@@ -1031,20 +1033,20 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[
 
   GPoint pntF = point(x[0], x[1]);
   if (rep.terminationtype != 4){
-    //    printf("Initial conditions (point) : %f %f %f local (%g %g) Looking for %f %f %f DIST = %12.5E at the end (%f %f) %f %f %f\n", 
+    //    printf("Initial conditions (point) : %f %f %f local (%g %g) Looking for %f %f %f DIST = %12.5E at the end (%f %f) %f %f %f\n",
     //  	 pnt.x(), pnt.y(), pnt.z(),min_u,min_v,
     //  	 queryPoint.x(),queryPoint.y(),queryPoint.z(),
     //  	 min_dist,x[0],x[1],pntF.x(), pntF.y(), pntF.z());
-    //    double DDD = 
+    //    double DDD =
     //      ( queryPoint.x() - pntF.x()) * ( queryPoint.x() - pntF.x()) +
     //      ( queryPoint.y() - pntF.y()) * ( queryPoint.y() - pntF.y()) +
     //      ( queryPoint.z() - pntF.z()) * ( queryPoint.z() - pntF.z());
     //    if (sqrt(DDD) > 1.e-4)
       /*
-      printf("Initial conditions (point) : %f %f %f local (%g %g) Looking for %f %f %f DIST = %12.5E at the end (%f %f) %f %f %f termination %d\n", 
+      printf("Initial conditions (point) : %f %f %f local (%g %g) Looking for %f %f %f DIST = %12.5E at the end (%f %f) %f %f %f termination %d\n",
 	     pnt.x(), pnt.y(), pnt.z(),min_u,min_v,
 	     queryPoint.x(),queryPoint.y(),queryPoint.z(),
-	     min_dist,x[0],x[1],pntF.x(), pntF.y(), pntF.z(),rep.terminationtype);      
+	     min_dist,x[0],x[1],pntF.x(), pntF.y(), pntF.z(),rep.terminationtype);
       */
   }
   return pntF;

@@ -14,6 +14,7 @@
 #include "TreeUtils.h"
 #include "SPoint2.h"
 #include "ExtrudeParams.h"
+#include "findLinks.h"
 
 #define MSH_POINT              100
 #define MSH_POINT_BND_LAYER    101
@@ -314,5 +315,6 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops);
 void setVolumeSurfaces(Volume *v, List_T *loops);
 void setSurfaceEmbeddedPoints(Surface *s, List_T *points);
 void setSurfaceEmbeddedCurves(Surface *s, List_T *curves);
+int select_contour(int type, int num, List_T * List);
 
 #endif

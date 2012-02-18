@@ -2082,6 +2082,13 @@ GEdge *GModel::addCircleArcCenter(double x, double y, double z, GVertex *start,
   return 0;
 }
 
+GEdge *GModel::addCircleArcCenter(GVertex *start, GVertex *center, GVertex *end)
+{
+  if(_factory)
+    return _factory->addCircleArc(this, start, center, end);
+  return 0;
+}
+
 GEdge *GModel::addCircleArc3Points(double x, double y, double z, GVertex *start,
                                    GVertex *end)
 {
