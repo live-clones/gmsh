@@ -39,6 +39,11 @@ Write mesh files in binary format (if possible)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.CgnsImportOrder
+Enable the creation of high-order mesh from CGNS structured meshes.(1, 2, 4, 8, ...)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.ChacoArchitecture
 (Adv. Chaco): Parallel architecture topology (0=hypercube, 1-3=mesh dimensions)@*
 Default value: @code{1}@*

@@ -92,6 +92,14 @@ default value: @code{@{@}}
 Indices of nodes in the geometric model@*
 type: list@*
 default value: @code{@{@}}
+@item Quads
+Generate recombined elements in the boundary layer@*
+type: integer@*
+default value: @code{0}
+@item fan_angle
+Threshold angle for creating a mesh fan in the boundary layer@*
+type: float@*
+default value: @code{30}
 @item hfar
 Element size far from the wall@*
 type: float@*
@@ -169,6 +177,10 @@ Options:@*
 File name for the centerlines@*
 type: string@*
 default value: @code{"centerlines.vtk"}
+@item nbPoints
+Number of mesh elements in a circle@*
+type: integer@*
+default value: @code{25}
 @end table
 
 Actions:@*
