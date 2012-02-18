@@ -106,11 +106,11 @@ int med2mshElementType(med_geometrie_element med)
 int med2mshNodeIndex(med_geometrie_element med, int k)
 {
   switch(med) {
-  case MED_POINT1: 
+  case MED_POINT1:
   case MED_SEG2:
-  case MED_SEG3: 
+  case MED_SEG3:
   case MED_TRIA3:
-  case MED_TRIA6: 
+  case MED_TRIA6:
   case MED_QUAD4:
   case MED_QUAD8:
 #if (MED_MAJOR_NUM == 3)
@@ -173,13 +173,13 @@ int GModel::readMED(const std::string &name)
   med_int v[3], vf[3];
   MEDversionDonner(&v[0], &v[1], &v[2]);
   MEDversionLire(fid, &vf[0], &vf[1], &vf[2]);
-  Msg::Info("Reading MED file V%d.%d.%d using MED library V%d.%d.%d", 
+  Msg::Info("Reading MED file V%d.%d.%d using MED library V%d.%d.%d",
             vf[0], vf[1], vf[2], v[0], v[1], v[2]);
   if(vf[0] < 2 || (vf[0] == 2 && vf[1] < 2)){
     Msg::Error("Cannot read MED file older than V2.2");
     return 0;
   }
-  
+
   std::vector<std::string> meshNames;
   for(int i = 0; i < MEDnMaa(fid); i++){
     char meshName[MED_TAILLE_NOM + 1], meshDesc[MED_TAILLE_DESC + 1];
@@ -230,7 +230,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
-  
+
   int numMeshes = MEDnMaa(fid);
   if(meshIndex >= numMeshes){
     Msg::Info("Could not find mesh %d in MED file", meshIndex);
@@ -261,7 +261,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
   // e.g. meshName_step%d). This way we could also handle multi-mesh
   // time sequences in MED3.
   if(nStep > 1)
-    Msg::Error("Discarding %d last meshes in multi-step MED mesh", nStep - 1);
+    Msg::Warning("Discarding %d last meshes in multi-step MED mesh", nStep - 1);
 
   setName(meshName);
   if(meshType == MED_NON_STRUCTURE){
@@ -276,9 +276,9 @@ int GModel::readMED(const std::string &name, int meshIndex)
 
   // read nodes
 #if (MED_MAJOR_NUM == 3)
-  med_bool changeOfCoord, geoTransform;  
+  med_bool changeOfCoord, geoTransform;
   med_int numNodes = MEDmeshnEntity(fid, meshName, MED_NO_DT, MED_NO_IT, MED_NODE,
-                                    MED_NO_GEOTYPE, MED_COORDINATE, MED_NO_CMODE, 
+                                    MED_NO_GEOTYPE, MED_COORDINATE, MED_NO_CMODE,
                                     &changeOfCoord, &geoTransform);
 #else
   med_int numNodes = MEDnEntMaa(fid, meshName, MED_COOR, MED_NOEUD, MED_NONE,
@@ -310,7 +310,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
 
   std::vector<med_int> nodeTags(numNodes);
 #if (MED_MAJOR_NUM == 3)
-  if(MEDmeshEntityNumberRd(fid, meshName, MED_NO_DT, MED_NO_IT, MED_NODE, 
+  if(MEDmeshEntityNumberRd(fid, meshName, MED_NO_DT, MED_NO_IT, MED_NODE,
                            MED_NO_GEOTYPE, &nodeTags[0]) < 0)
 #else
   if(MEDnumLire(fid, meshName, &nodeTags[0], numNodes, MED_NOEUD, MED_NONE) < 0)
@@ -318,8 +318,8 @@ int GModel::readMED(const std::string &name, int meshIndex)
     nodeTags.clear();
 
   for(int i = 0; i < numNodes; i++)
-    verts[i] = new MVertex(coord[spaceDim * i], 
-                           (spaceDim > 1) ? coord[spaceDim * i + 1] : 0., 
+    verts[i] = new MVertex(coord[spaceDim * i],
+                           (spaceDim > 1) ? coord[spaceDim * i + 1] : 0.,
                            (spaceDim > 2) ? coord[spaceDim * i + 2] : 0.,
                            0, nodeTags.empty() ? 0 : nodeTags[i]);
 
@@ -329,7 +329,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
     if(type == MED_NONE) continue;
 #if (MED_MAJOR_NUM == 3)
     med_bool changeOfCoord;
-    med_bool geoTransform;  
+    med_bool geoTransform;
     med_int numEle = MEDmeshnEntity(fid, meshName, MED_NO_DT, MED_NO_IT, MED_CELL,
                                     type, MED_CONNECTIVITY, MED_NODAL, &changeOfCoord,
                                     &geoTransform);
@@ -361,7 +361,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
     }
     std::vector<med_int> eleTags(numEle);
 #if (MED_MAJOR_NUM == 3)
-    if(MEDmeshEntityNumberRd(fid, meshName, MED_NO_DT, MED_NO_IT, MED_CELL, 
+    if(MEDmeshEntityNumberRd(fid, meshName, MED_NO_DT, MED_NO_IT, MED_CELL,
                              type, &eleTags[0]) < 0)
 #else
     if(MEDnumLire(fid, meshName, &eleTags[0], numEle, MED_MAILLE, type) < 0)
@@ -369,7 +369,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
       eleTags.clear();
     std::map<int, std::vector<MElement*> > elements;
     MElementFactory factory;
-    for(int j = 0; j < numEle; j++){    
+    for(int j = 0; j < numEle; j++){
       std::vector<MVertex*> v(numNodPerEle);
       for(int k = 0; k < numNodPerEle; k++)
         v[k] = verts[conn[numNodPerEle * j + med2mshNodeIndex(type, k)] - 1];
@@ -407,7 +407,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
     med_int familyNum;
 #if (MED_MAJOR_NUM == 3)
     if(vf[0] == 2){ // MED2 file
-      if(MEDfamily23Info(fid, meshName, i + 1, familyName, &attribId[0], 
+      if(MEDfamily23Info(fid, meshName, i + 1, familyName, &attribId[0],
                          &attribVal[0], &attribDes[0], &familyNum,
                          &groupNames[0]) < 0){
         Msg::Error("Could not read info for MED2 family %d", i + 1);
@@ -422,7 +422,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
       }
     }
 #else
-    if(MEDfamInfo(fid, meshName, i + 1, familyName, &familyNum, &attribId[0], 
+    if(MEDfamInfo(fid, meshName, i + 1, familyName, &familyNum, &attribId[0],
                   &attribVal[0], &attribDes[0], &numAttrib, &groupNames[0],
                   &numGroups) < 0){
       Msg::Error("Could not read info for MED family %d", i + 1);
@@ -435,7 +435,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
     else if((ge = getFaceByTag(-familyNum))){}
     else if((ge = getEdgeByTag(-familyNum))){}
     else ge = getVertexByTag(-familyNum);
-    if(ge){      
+    if(ge){
       elementaryNames[std::pair<int, int>(ge->dim(), -familyNum)] = familyName;
       if(numGroups > 0){
         for(int j = 0; j < numGroups; j++){
@@ -459,13 +459,13 @@ int GModel::readMED(const std::string &name, int meshIndex)
     Msg::Error("Unable to close file '%s'", (char*)name.c_str());
     return 0;
   }
-  
+
   return postpro ? 2 : 1;
 }
 
 template<class T>
 static void fillElementsMED(med_int family, std::vector<T*> &elements,
-                            std::vector<med_int> &conn, std::vector<med_int> &fam, 
+                            std::vector<med_int> &conn, std::vector<med_int> &fam,
                             med_geometrie_element &type)
 {
   type = MED_NONE;
@@ -483,7 +483,7 @@ static void fillElementsMED(med_int family, std::vector<T*> &elements,
   }
 }
 
-static void writeElementsMED(med_idt &fid, char *meshName, std::vector<med_int> &conn, 
+static void writeElementsMED(med_idt &fid, char *meshName, std::vector<med_int> &conn,
                              std::vector<med_int> &fam, med_geometrie_element type)
 {
   if(fam.empty()) return;
@@ -523,13 +523,13 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
   if(MEDmeshCr(fid, meshName, 3, 3, MED_UNSTRUCTURED_MESH, "Mesh created with Gmsh",
                dtUnit, MED_SORT_DTIT, MED_CARTESIAN, axisName, axisUnit) < 0){
 #else
-  if(MEDmaaCr(fid, meshName, 3, MED_NON_STRUCTURE, 
+  if(MEDmaaCr(fid, meshName, 3, MED_NON_STRUCTURE,
               (char*)"Mesh created with Gmsh") < 0){
 #endif
     Msg::Error("Could not create MED mesh");
     return 0;
   }
-  
+
   // if there are no physicals we save all the elements
   if(noPhysicalGroups()) saveAll = true;
 
@@ -577,11 +577,11 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
           groupName.resize((j + 1) * MED_TAILLE_LNOM, ' ');
         }
 #if (MED_MAJOR_NUM == 3)
-        if(MEDfamilyCr(fid, meshName, familyName.c_str(), 
+        if(MEDfamilyCr(fid, meshName, familyName.c_str(),
                        (med_int)num, (med_int)entities[i]->physicals.size(),
                        groupName.c_str()) < 0)
 #else
-        if(MEDfamCr(fid, meshName, (char*)familyName.c_str(), 
+        if(MEDfamCr(fid, meshName, (char*)familyName.c_str(),
                     (med_int)num, 0, 0, 0, 0, (char*)groupName.c_str(),
                     (med_int)entities[i]->physicals.size()) < 0)
 #endif
@@ -611,15 +611,15 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
     }
 #if (MED_MAJOR_NUM == 3)
     if(MEDmeshNodeWr(fid, meshName, MED_NO_DT, MED_NO_IT, 0., MED_FULL_INTERLACE,
-                     (med_int)fam.size(), &coord[0], MED_FALSE, "", MED_FALSE, 0, 
+                     (med_int)fam.size(), &coord[0], MED_FALSE, "", MED_FALSE, 0,
                      MED_TRUE, &fam[0]) < 0)
 #else
-    char coordName[3 * MED_TAILLE_PNOM + 1] = 
+    char coordName[3 * MED_TAILLE_PNOM + 1] =
       "x               y               z               ";
-    char coordUnit[3 * MED_TAILLE_PNOM + 1] = 
+    char coordUnit[3 * MED_TAILLE_PNOM + 1] =
       "unknown         unknown         unknown         ";
-    if(MEDnoeudsEcr(fid, meshName, (med_int)3, &coord[0], MED_FULL_INTERLACE, 
-                    MED_CART, coordName, coordUnit, 0, MED_FAUX, 0, MED_FAUX, 
+    if(MEDnoeudsEcr(fid, meshName, (med_int)3, &coord[0], MED_FULL_INTERLACE,
+                    MED_CART, coordName, coordUnit, 0, MED_FAUX, 0, MED_FAUX,
                     &fam[0], (med_int)fam.size()) < 0)
 #endif
       Msg::Error("Could not write nodes");
@@ -685,12 +685,12 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
       writeElementsMED(fid, meshName, conn, fam, typ);
     }
   }
-  
+
   if(MEDfermer(fid) < 0){
     Msg::Error("Unable to close file '%s'", (char*)name.c_str());
     return 0;
   }
-  
+
   return 1;
 }
 
