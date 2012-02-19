@@ -47,25 +47,7 @@ static int diff2 (MElement *q1, MElement *q2)
   return 0;
 }
 
-static void SANITY_(GFace *gf,int count)
-{
-  // SANITY TEST
-  for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
-    for(unsigned int j = i+1; j < gf->quadrangles.size(); j++){
-      MQuadrangle *e1 = gf->quadrangles[i];
-      MQuadrangle *e2 = gf->quadrangles[j];
-      if (!diff2(e1,e2)){
-	e1->writeMSH(stdout);
-	e2->writeMSH(stdout);
-	Msg::Fatal("You found a BUG(%d) in the quad optimization routines of Gmsh Line %d of FILE %s",count,__LINE__,__FILE__);
-      }
-    }
-  }
-}
-
-static int SANITY_(GFace *gf,MQuadrangle *q1, MQuadrangle *q2, int count)
-{
-  // SANITY TEST
+static int SANITY_(GFace *gf,MQuadrangle *q1, MQuadrangle *q2, int count){
   for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
     MQuadrangle *e1 = gf->quadrangles[i];
     MQuadrangle *e2 = q1;
@@ -311,15 +293,22 @@ void parametricCoordinates(MElement *t, GFace *gf, double u[4], double v[4],
   }
 }
 
-double surfaceFaceUV(MElement *t,GFace *gf)
+double surfaceFaceUV(MElement *t,GFace *gf, bool *concave = 0)
 {
   double u[4],v[4];
   parametricCoordinates(t,gf,u,v);
   if (t->getNumVertices() == 3)
     return 0.5*fabs((u[1]-u[0])*(v[2]-v[0])-(u[2]-u[0])*(v[1]-v[0]));
-  else
-    return 0.5*fabs((u[1]-u[0])*(v[2]-v[0])-(u[2]-u[0])*(v[1]-v[0])) +
-           0.5*fabs((u[3]-u[2])*(v[0]-v[2])-(u[0]-u[2])*(v[3]-v[2])) ;
+  else {
+    const double a1 = 
+      0.5*fabs((u[1]-u[0])*(v[2]-v[0])-(u[2]-u[0])*(v[1]-v[0])) +
+      0.5*fabs((u[3]-u[2])*(v[0]-v[2])-(u[0]-u[2])*(v[3]-v[2])) ;
+    const double a2 = 
+      0.5*fabs((u[2]-u[1])*(v[3]-v[1])-(u[3]-u[1])*(v[2]-v[1])) +
+      0.5*fabs((u[0]-u[3])*(v[1]-v[3])-(u[1]-u[3])*(v[0]-v[3])) ;
+    if (concave) *concave = fabs(a2-a1) > 1.e-10*(a2 + a1);
+    return std::min(a2,a1);
+  }
 }
 
 double surfaceTriangleUV(MVertex *v1, MVertex *v2, MVertex *v3,
@@ -768,7 +757,7 @@ static int _splitFlatQuads(GFace *gf, double minQual)
     bool skip=false;
     double surfaceRef=0;
     // split that guy if too bad
-    if(it->second.size()==1 && it->first->onWhat()->dim() == 1) {
+    if(it->second.size()==1 && it->first->onWhat()->dim() < 2) {
       const std::vector<MElement*> &lt = it->second;
       MElement *e = lt[0];
       if (e->getNumVertices() == 4 && e->etaShapeMeasure() < minQual){
@@ -1214,7 +1203,16 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf)
 	double worst_quality_B = std::min(q1B->etaShapeMeasure(),q2B->etaShapeMeasure());
 	//	printf("worst_quality_old = %g worst_quality_A = %g worst_quality_B = %g\n",worst_quality_old,worst_quality_A,worst_quality_B);
 
-	if (0.8*worst_quality_A > worst_quality_old && 0.8*worst_quality_A > worst_quality_B && SANITY_(gf,q1A,q2A,12121)){
+	bool c1,c2,ca1,ca2,cb1,cb2;
+	double old_surface = surfaceFaceUV(e1,gf) + surfaceFaceUV(e2,gf) ;
+	double new_surface_A = surfaceFaceUV(q1A,gf,&ca1) + surfaceFaceUV(q2A,gf,&ca2) ;
+	double new_surface_B = surfaceFaceUV(q1B,gf,&cb1) + surfaceFaceUV(q2B,gf,&cb2) ;	
+
+	if (!ca1 && !ca2 && 
+	    old_surface >= new_surface_A && 
+	    0.8*worst_quality_A > worst_quality_old && 
+	    0.8*worst_quality_A > worst_quality_B && 
+	    SANITY_(gf,q1A,q2A,12121)){
 	  deleted.insert(e1);
 	  deleted.insert(e2);
 	  created.push_back(q1A);
@@ -1224,7 +1222,11 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf)
 	  //printf("edge swap performed -- 1\n");
 	  COUNT++;
 	}
-	else if (0.8*worst_quality_B > worst_quality_old && 0.8*worst_quality_B > worst_quality_A && SANITY_(gf,q1B,q2B,12121)){
+	else if (!cb1 && !cb2 && 
+		 old_surface >= new_surface_B  &&
+		 0.8*worst_quality_B > worst_quality_old && 
+		 0.8*worst_quality_B > worst_quality_A && 
+		 SANITY_(gf,q1B,q2B,12121)){
 	  deleted.insert(e1);
 	  deleted.insert(e2);
 	  created.push_back(q1B);
@@ -2147,7 +2149,7 @@ void recombineIntoQuads(GFace *gf,
     if(topologicalOpti){
       if(haveParam){
         if (saveAll) gf->model()->writeMSH("smoothed.msh");
-        int COUNT = 0;
+        int COUNT = 0, ITER=0;
         char NAME[256];
 
         while(1){
@@ -2160,10 +2162,10 @@ void recombineIntoQuads(GFace *gf,
           if(y && saveAll){ sprintf(NAME,"iter%dD.msh",COUNT++); gf->model()->writeMSH(NAME); }
           laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
           int z = edgeSwapQuadsForBetterQuality(gf);
-	  if (z) printf("%d swops !!\n",z);
+	  //	  if (z) printf("%d swops !!\n",z);
           if(z && saveAll){ sprintf(NAME,"iter%dS.msh",COUNT++); gf->model()->writeMSH(NAME); }
           if (!(w+x+y+z)) break;
-	  if (COUNT == 10)break;
+	  if (ITER++ >= 14)break;
         }
       }
       edgeSwapQuadsForBetterQuality(gf);
