@@ -39,14 +39,17 @@ extern "C" int perfect_match
  double *totalzeit) ;
 #endif
 
-static int diff2 (MElement *q1, MElement *q2){
+static int diff2 (MElement *q1, MElement *q2)
+{
   std::set<MVertex*> s;
   for (int i=0;i<4;i++)s.insert(q1->getVertex(i));
   for (int i=0;i<4;i++)if(s.find(q2->getVertex(i)) == s.end())return 1;
   return 0;
 }
-static void SANITY_(GFace *gf,int count){
-  // SANITY TEST 
+
+static void SANITY_(GFace *gf,int count)
+{
+  // SANITY TEST
   for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
     for(unsigned int j = i+1; j < gf->quadrangles.size(); j++){
       MQuadrangle *e1 = gf->quadrangles[i];
@@ -60,8 +63,9 @@ static void SANITY_(GFace *gf,int count){
   }
 }
 
-static int SANITY_(GFace *gf,MQuadrangle *q1, MQuadrangle *q2, int count){
-  // SANITY TEST 
+static int SANITY_(GFace *gf,MQuadrangle *q1, MQuadrangle *q2, int count)
+{
+  // SANITY TEST
   for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
     MQuadrangle *e1 = gf->quadrangles[i];
     MQuadrangle *e2 = q1;
@@ -75,8 +79,6 @@ static int SANITY_(GFace *gf,MQuadrangle *q1, MQuadrangle *q2, int count){
   }
   return 1;
 }
-
-
 
 edge_angle::edge_angle(MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2)
   : v1(_v1), v2(_v2)
@@ -786,10 +788,10 @@ static int _splitFlatQuads(GFace *gf, double minQual)
 	reparamMeshEdgeOnFace (v1,v3,gf,pv1,pv3);
 	reparamMeshEdgeOnFace (v1,v4,gf,pv1,pv4);
 	reparamMeshEdgeOnFace (v1,v2,gf,pv1,pv2);
-	pb1 = pv1 * (2./3.) + pv2 * (1./3.); 
-	pb2 = pv1 * (1./3.) + pv2 * (2./3.); 
-	pb3 = pv1 * (1./3.) + pv2 * (1./3.) + pv3 * (1./3.); 
-	pb4 = pv1 * (1./3.) + pv2 * (1./3.) + pv4 * (1./3.); 
+	pb1 = pv1 * (2./3.) + pv2 * (1./3.);
+	pb2 = pv1 * (1./3.) + pv2 * (2./3.);
+	pb3 = pv1 * (1./3.) + pv2 * (1./3.) + pv3 * (1./3.);
+	pb4 = pv1 * (1./3.) + pv2 * (1./3.) + pv4 * (1./3.);
 	GPoint gb1 = gf->point(pb1);
 	GPoint gb2 = gf->point(pb2);
 	GPoint gb3 = gf->point(pb3);
@@ -1060,7 +1062,7 @@ static void _relocateVertexConstrained (GFace *gf,
 static void _relocateVertex(GFace *gf, MVertex *ver,
                             const std::vector<MElement*> &lt)
 {
-  double R; 
+  double R;
   SPoint3 c;
   bool isSphere = gf->isSphere(R, c);
 
@@ -1109,7 +1111,7 @@ static void _relocateVertex(GFace *gf, MVertex *ver,
 	factor *= 0.5;
       }
 
-      if (success){ 
+      if (success){
 	ver->setParameter(0, newp.x());
 	ver->setParameter(1, newp.y());
 	GPoint pt = gf->point(newp);
@@ -1202,7 +1204,7 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf)
 	if (!v11 || !v12 || !v21 || !v22){
 	  Msg::Error("You found a BUG in the quad optimization routines of Gmsh Line %d of FILE %s",__LINE__,__FILE__);
 	  return 0;
-	} 
+	}
 
 	MQuadrangle *q1A = new MQuadrangle (v11,v22,v2,v12);
 	MQuadrangle *q2A = new MQuadrangle (v22,v11,v1,v21);
@@ -1285,13 +1287,13 @@ static std::vector<MVertex*> computeBoundingPoints (const std::vector<MElement*>
   for ( ; it != edges.end() ; ++it){
     if (it->getVertex(0) == v || it->getVertex(1) == v){
       closed = false;
-    } 
+    }
     else {
       border.push_back(*it);
     }
   }
   // we got all boundary edges
-  std::list<MVertex *> oriented;  
+  std::list<MVertex *> oriented;
   {
     std::list<MEdge>::iterator itsz = border.begin();
     border.erase (itsz);
@@ -1300,7 +1302,7 @@ static std::vector<MVertex*> computeBoundingPoints (const std::vector<MElement*>
   }
   while (border.size()){
     std::list<MVertex*>::iterator itb = oriented.begin();
-    std::list<MVertex*>::iterator ite = oriented.end(); ite--;    
+    std::list<MVertex*>::iterator ite = oriented.end(); ite--;
     std::list<MEdge>::iterator itx = border.begin();
     for (  ; itx != border.end() ; ++itx){
       MVertex *a  = itx->getVertex(0);
@@ -1332,11 +1334,11 @@ static std::vector<MVertex*> computeBoundingPoints (const std::vector<MElement*>
 
 
 int postProcessExtraEdges (GFace *gf, std::vector<std::pair<MElement*,MElement*> > &toProcess){
-  
+
   // some pairs of elements that should be recombined are not neighbor elements (see our paper)
   // so we recombine them in another way (adding a new node)
-  
-  
+
+
   printf("%d extra edges to be processed\n",(int)toProcess.size());
 
   //  return 1;
@@ -1404,7 +1406,7 @@ int postProcessExtraEdges (GFace *gf, std::vector<std::pair<MElement*,MElement*>
 				 t1->getVertex((start1+2)%3),
 				 t1->getVertex((start1+1)%3),
 				 t1->getVertex(start1));
-	  
+
 	  MQuadrangle *q2;
 	  if (orientation2)
 	    q2 = new MQuadrangle(newVertex,
@@ -1416,8 +1418,8 @@ int postProcessExtraEdges (GFace *gf, std::vector<std::pair<MElement*,MElement*>
 				 t2->getVertex((start2+2)%3),
 				 t2->getVertex((start2+1)%3),
 				 t2->getVertex(start2));
-	  
-	  
+
+
 	  std::vector<MElement*> newAdj;
 	  newAdj.push_back(q1);
 	  newAdj.push_back(q2);
@@ -1740,11 +1742,10 @@ bool buildVertexCavity(MTri3 *t, int iLocalVertex, MVertex **v1,
   }
 }
 
-
-
 // split one triangle into 3 triangles then apply edge swop (or not)
 // will do better (faster) soon, just to test
-void _triangleSplit (GFace *gf, MElement *t, bool swop = false) {
+void _triangleSplit (GFace *gf, MElement *t, bool swop = false)
+{
   MVertex *v1 = t->getVertex(0);
   MVertex *v2 = t->getVertex(1);
   MVertex *v3 = t->getVertex(2);
@@ -1775,7 +1776,6 @@ void _triangleSplit (GFace *gf, MElement *t, bool swop = false) {
   gf->triangles.push_back(t3);
   gf->mesh_vertices.push_back(fv);
 }
-
 
 struct RecombineTriangle
 {
@@ -1862,7 +1862,7 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 
   std::vector<RecombineTriangle> pairs;
   std::map<MVertex*,std::pair<MElement*,MElement*> > makeGraphPeriodic;
-  
+
   for(e2t_cont::iterator it = adj.begin(); it!= adj.end(); ++it){
     if(it->second.second &&
         it->second.first->getNumVertices() == 3 &&
@@ -1936,7 +1936,7 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 	if (pairs[i].n2->onWhat()->dim() < 2)NB++;
 	if (pairs[i].n3->onWhat()->dim() < 2)NB++;
 	if (pairs[i].n4->onWhat()->dim() < 2)NB++;
-	if (elen[i] >  gf->meshAttributes.recombineAngle && NB > 2) {elen[i] = 1000;} 
+	if (elen[i] >  gf->meshAttributes.recombineAngle && NB > 2) {elen[i] = 1000;}
       }
 
       if (cubicGraph){
@@ -2070,7 +2070,7 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
     Msg::Warning("Gmsh should be compiled with the Blossom IV code and CONCORDE in order to allow the Blossom optimization");
 #endif
   }
-  
+
   std::vector<RecombineTriangle>::iterator itp = pairs.begin();
   while(itp != pairs.end()){
     // recombine if difference between max quad angle and right
@@ -2115,7 +2115,7 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
     }
   }
   gf->triangles = triangles2;
-  
+
   if (toProcess.size()) postProcessExtraEdges (gf,toProcess);
   return success;
 }
@@ -2257,7 +2257,8 @@ Temporary::Temporary(){}
 
 Temporary::~Temporary(){}
 
-SVector3 Temporary::compute_gradient(MElement*element){
+SVector3 Temporary::compute_gradient(MElement*element)
+{
   double x1,y1,z1;
   double x2,y2,z2;
   double x3,y3,z3;
@@ -2280,19 +2281,22 @@ SVector3 Temporary::compute_gradient(MElement*element){
   return SVector3(0.0,1.0,0.0);
 }
 
-void Temporary::select_weights(double new_w1,double new_w2,double new_w3){
+void Temporary::select_weights(double new_w1,double new_w2,double new_w3)
+{
   w1 = new_w1;
   w2 = new_w2;
   w3 = new_w3;
 }
 
-double Temporary::compute_total_cost(double f1,double f2){
+double Temporary::compute_total_cost(double f1,double f2)
+{
   double cost;
   cost = w1*f1 + w2*f2 + w3*f1*f2;
   return cost;
 }
 
-SVector3 Temporary::compute_normal(MElement*element){
+SVector3 Temporary::compute_normal(MElement*element)
+{
   double x1,y1,z1;
   double x2,y2,z2;
   double x3,y3,z3;
@@ -2319,7 +2323,8 @@ SVector3 Temporary::compute_normal(MElement*element){
   return SVector3(normal.x()/length,normal.y()/length,normal.z()/length);
 }
 
-SVector3 Temporary::compute_other_vector(MElement*element){
+SVector3 Temporary::compute_other_vector(MElement*element)
+{
   int number;
   double length;
   SVector3 normal;
@@ -2333,7 +2338,8 @@ SVector3 Temporary::compute_other_vector(MElement*element){
   return SVector3(other_vector.x()/length,other_vector.y()/length,other_vector.z()/length);
 }
 
-double Temporary::compute_alignment(const MEdge&_edge, MElement*element1, MElement*element2){
+double Temporary::compute_alignment(const MEdge&_edge, MElement*element1, MElement*element2)
+{
   int number;
   double scalar_productA,scalar_productB;
   double alignment;
@@ -2400,5 +2406,3 @@ void Temporary::quadrilaterize(std::string file_name,double _w1,double _w2,doubl
 	_recombineIntoQuads(face,1,1);
   }
 }
-
-

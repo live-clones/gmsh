@@ -11,32 +11,20 @@
 #include "MEdge.h"
 #include "meshGFaceBoundaryLayers.h"
 #include "Field.h"
-/*
-             |
-             |   /
-    +--------x /
-              \
-                \
-                  \
 
-*/
-
-
-SVector3 interiorNormal (SPoint2 p1, SPoint2 p2, SPoint2 p3){
-
+SVector3 interiorNormal (SPoint2 p1, SPoint2 p2, SPoint2 p3)
+{
   SVector3 ez (0,0,1);
   SVector3 d (p1.x()-p2.x(),p1.y()-p2.y(),0);
   SVector3 h (p3.x()-0.5*(p2.x()+p1.x()),p3.y()-0.5*(p2.y()+p1.y()),0);
   SVector3 n = crossprod(d,ez);
   n.normalize();
-  //  printf("%g %g\n",n.x(),n.y());
   if (dot(n,h) > 0)return n;
   return n*(-1.);
-
 }
 
-double computeAngle (GFace *gf, const MEdge &e1, const MEdge &e2, SVector3 &n1, SVector3 &n2){
-
+double computeAngle (GFace *gf, const MEdge &e1, const MEdge &e2, SVector3 &n1, SVector3 &n2)
+{
   double cosa = dot(n1,n2);
   SPoint2 p0,p1,p2;
   MVertex *v11 = e1.getVertex(0);
@@ -72,7 +60,8 @@ double computeAngle (GFace *gf, const MEdge &e1, const MEdge &e2, SVector3 &n1, 
   double a = atan2 (n.z(),cosa);
   a = sign > 0 ? fabs(a) : -fabs(a);
 
-  //  printf("a = %12.5e cos %12.5E sin %12.5E %g %g vs %g %g\n",a,cosa,n.z(),n1.x(),n1.y(),n2.x(),n2.y());
+  //  printf("a = %12.5e cos %12.5E sin %12.5E %g %g vs %g %g\n",
+  //         a,cosa,n.z(),n1.x(),n1.y(),n2.x(),n2.y());
   return a;
 }
 
@@ -172,8 +161,9 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf)
     std::vector<MVertex*> _connections;
     std::vector<SVector3> _dirs;
     double LL;
-    for ( std::multimap<MVertex*,MVertex*> :: iterator itm  = _columns->_non_manifold_edges.lower_bound(*it);
-	  itm != _columns->_non_manifold_edges.upper_bound(*it); ++itm)
+    for (std::multimap<MVertex*,MVertex*>::iterator itm =
+           _columns->_non_manifold_edges.lower_bound(*it);
+         itm != _columns->_non_manifold_edges.upper_bound(*it); ++itm)
       _connections.push_back (itm->second);
     //    printf("point %d %d edegs connected\n",(*it)->getNum(),_connections.size());
     // Trailing edge : 3 edges incident to a vertex
@@ -182,12 +172,15 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf)
       MEdge e2 (*it,_connections[1]);
       MEdge e3 (*it,_connections[2]);
       std::vector<SVector3> N1,N2,N3;
-      for ( std::multimap<MEdge,SVector3,Less_Edge> :: iterator itm  = _columns->_normals.lower_bound(e1);
-	    itm != _columns->_normals.upper_bound(e1); ++itm) N1.push_back(itm->second);
-      for ( std::multimap<MEdge,SVector3,Less_Edge> :: iterator itm  = _columns->_normals.lower_bound(e2);
-	    itm != _columns->_normals.upper_bound(e2); ++itm) N2.push_back(itm->second);
-      for ( std::multimap<MEdge,SVector3,Less_Edge> :: iterator itm  = _columns->_normals.lower_bound(e3);
-	    itm != _columns->_normals.upper_bound(e3); ++itm) N3.push_back(itm->second);
+      for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
+             _columns->_normals.lower_bound(e1);
+           itm != _columns->_normals.upper_bound(e1); ++itm) N1.push_back(itm->second);
+      for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
+             _columns->_normals.lower_bound(e2);
+           itm != _columns->_normals.upper_bound(e2); ++itm) N2.push_back(itm->second);
+      for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
+             _columns->_normals.lower_bound(e3);
+           itm != _columns->_normals.upper_bound(e3); ++itm) N3.push_back(itm->second);
 
       SVector3 x1,x2;
       if (N1.size() == 2){
@@ -231,9 +224,11 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf)
       MEdge e2 (*it,_connections[1]);
       LL = 0.5 * (e1.length() + e2.length());
       std::vector<SVector3> N1,N2;
-      for ( std::multimap<MEdge,SVector3,Less_Edge> :: iterator itm  = _columns->_normals.lower_bound(e1);
+      for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
+             _columns->_normals.lower_bound(e1);
 	    itm != _columns->_normals.upper_bound(e1); ++itm) N1.push_back(itm->second);
-      for ( std::multimap<MEdge,SVector3,Less_Edge> :: iterator itm  = _columns->_normals.lower_bound(e2);
+      for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
+             _columns->_normals.lower_bound(e2);
 	    itm != _columns->_normals.upper_bound(e2); ++itm) N2.push_back(itm->second);
       double LL;
       if (N1.size() == N2.size()){
@@ -300,7 +295,6 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf)
     for (int DIR=0;DIR<_dirs.size();DIR++){
       SPoint2 p;
       SVector3 n = _dirs[DIR];
-
 
       // < ------------------------------- > //
       //   N = X(p0+ e n) - X(p0)            //
@@ -400,7 +394,7 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf)
 #endif
 }
 
-
-void BoundaryLayerColumns::filterPoints() {
+void BoundaryLayerColumns::filterPoints()
+{
   std::map<MVertex*,MVertex*> tooclose;
 }
