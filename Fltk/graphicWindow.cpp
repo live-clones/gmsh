@@ -695,8 +695,9 @@ graphicWindow::graphicWindow(bool main, int numTiles) : _autoScrollMessages(true
   browser->textsize(FL_NORMAL_SIZE - 1);
   browser->type(FL_MULTI_BROWSER);
   browser->callback(message_browser_cb, this);
-  browser->has_scrollbar(Fl_Browser_::VERTICAL);
-
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
+  browser->scrollbar_size(10); // thinner scrollbars
+#endif
   tile->end();
 
   // resize the tile to match the prescribed sizes
