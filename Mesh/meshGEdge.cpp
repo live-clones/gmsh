@@ -20,12 +20,11 @@
 typedef struct {
   int Num;
   // t is the local coordinate of the point
-  // lc is x'(t)/h((x(t))
+  // lc is x'(t)/h(x(t))
   // p is the value of the primitive
   // xp is the norm of the tangent vector
   double t, lc, p, xp;
 } IntPoint;
-
 
 static double smoothPrimitive(GEdge *ge, double alpha,
                               std::vector<IntPoint> &Points)
@@ -119,7 +118,7 @@ static double F_Transfinite(GEdge *ge, double t_)
 {
   double length = ge->length();
   if(length == 0.0){
-    Msg::Error("Zero-length curve in transfinite mesh");
+    Msg::Error("Zero-length curve %d in transfinite mesh", ge->tag());
     return 1.;
   }
 
@@ -352,8 +351,8 @@ void meshGEdge::operator() (GEdge *ge)
   double a;
   int N;
   if(length == 0. && CTX::instance()->mesh.toleranceEdgeLength == 0.){
-    Msg::Error("Curve %d has a zero length", ge->tag());
-    a = 0;
+    Msg::Warning("Curve %d has a zero length", ge->tag());
+    a = 0.;
     N = 1;
   }
   else if(ge->degenerate(0)){
