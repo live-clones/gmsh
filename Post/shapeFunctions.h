@@ -13,20 +13,52 @@
 
 class element{
 protected:
+  bool _ownData;
   double *_x, *_y, *_z;
   static double ONE, ZERO;
 public:
-  element(double *x, double *y, double *z) : _x(x), _y(y), _z(z) {}
+  element(double *x, double *y, double *z, int numNodes=0)
+  {
+    if(!numNodes){
+      _ownData = false;
+      _x = x; _y = y; _z = z;
+    }
+    else{
+      _ownData = true;
+      _x = new double[numNodes];
+      _y = new double[numNodes];
+      _z = new double[numNodes];
+      for(int i = 0; i < numNodes; i++){
+        _x[i] = x[i];
+        _y[i] = y[i];
+        _z[i] = z[i];
+      }
+    }
+  }
+  virtual ~element()
+  {
+    if(_ownData){
+      delete [] _x;
+      delete [] _y;
+      delete [] _z;
+    }
+  }
+  virtual void getXYZ(int num, double &x, double &y, double &z)
+  {
+    if(num < 0 || num >= getNumNodes()) return;
+    x = _x[num];
+    y = _y[num];
+    z = _z[num];
+  }
   static void setTolerance (const double tol){ ONE = 1. + tol; ZERO = -tol; }
   static double getTolerance () { return -ZERO; }
-  virtual ~element(){}
   virtual int getDimension() = 0;
   virtual int getNumNodes() = 0;
   virtual void getNode(int num, double &u, double &v, double &w) = 0;
   virtual int getNumEdges() = 0;
   virtual void getEdge(int num, int &start, int &end) = 0;
   virtual int getNumGaussPoints() = 0;
-  virtual void getGaussPoint(int num, double &u, double &v, double &w, double &weight) = 0; 
+  virtual void getGaussPoint(int num, double &u, double &v, double &w, double &weight) = 0;
   virtual void getShapeFunction(int num, double u, double v, double w, double &s) = 0;
   virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]) = 0;
   double getJacobian(double u, double v, double w, double jac[3][3])
@@ -58,7 +90,7 @@ public:
         a[0]= _x[1] - _x[0]; a[1]= _y[1] - _y[0]; a[2]= _z[1] - _z[0];
         b[0]= _x[2] - _x[0]; b[1]= _y[2] - _y[0]; b[2]= _z[2] - _z[0];
         prodve(a, b, c);
-        jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2]; 
+        jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2];
       }
       return sqrt(SQU(jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0]) +
                   SQU(jac[0][2] * jac[1][0] - jac[0][0] * jac[1][2]) +
@@ -70,7 +102,7 @@ public:
       }
       {
         double a[3], b[3], c[3];
-        a[0]= _x[1] - _x[0]; a[1]= _y[1] - _y[0]; a[2]= _z[1] - _z[0];  
+        a[0]= _x[1] - _x[0]; a[1]= _y[1] - _y[0]; a[2]= _z[1] - _z[0];
         if((fabs(a[0]) >= fabs(a[1]) && fabs(a[0]) >= fabs(a[2])) ||
            (fabs(a[1]) >= fabs(a[0]) && fabs(a[1]) >= fabs(a[2]))) {
           b[0] = a[1]; b[1] = -a[0]; b[2] = 0.;
@@ -79,8 +111,8 @@ public:
           b[0] = 0.; b[1] = a[2]; b[2] = -a[1];
         }
         prodve(a, b, c);
-        jac[1][0] = b[0]; jac[1][1] = b[1]; jac[1][2] = b[2]; 
-        jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2]; 
+        jac[1][0] = b[0]; jac[1][1] = b[1]; jac[1][2] = b[2];
+        jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2];
       }
       return sqrt(SQU(jac[0][0])+SQU(jac[0][1])+SQU(jac[0][2]));
     default:
@@ -165,7 +197,7 @@ public:
     double sum = 0, sumabs = 0.;
     for(int i = 0; i < getNumNodes(); i++){
       sum += val[i];
-      sumabs += fabs(val[i]);           
+      sumabs += fabs(val[i]);
     }
     double res = 0.;
     if(sumabs)
@@ -191,11 +223,11 @@ public:
 
     int iter = 1, maxiter = 20;
     double error = 1., tol = 1.e-6;
-    
+
     while (error > tol && iter < maxiter){
       double jac[3][3];
       if(!getJacobian(uvw[0], uvw[1], uvw[2], jac)) break;
-        
+
       double xn = 0., yn = 0., zn = 0.;
       for (int i = 0; i < getNumNodes(); i++) {
         double s;
@@ -206,14 +238,14 @@ public:
       }
       double inv[3][3];
       inv3x3(jac, inv);
-      
+
       double un = uvw[0] +
         inv[0][0] * (xyz[0] - xn) + inv[1][0] * (xyz[1] - yn) + inv[2][0] * (xyz[2] - zn);
       double vn = uvw[1] +
         inv[0][1] * (xyz[0] - xn) + inv[1][1] * (xyz[1] - yn) + inv[2][1] * (xyz[2] - zn) ;
       double wn = uvw[2] +
         inv[0][2] * (xyz[0] - xn) + inv[1][2] * (xyz[1] - yn) + inv[2][2] * (xyz[2] - zn) ;
-      
+
       error = sqrt(SQU(un - uvw[0]) + SQU(vn - uvw[1]) + SQU(wn - uvw[2]));
       uvw[0] = un;
       uvw[1] = vn;
@@ -238,7 +270,7 @@ public:
 
 class point : public element{
 public:
-  point(double *x, double *y, double *z) : element(x, y, z) {}
+  point(double *x, double *y, double *z, int numNodes=0) : element(x, y, z, numNodes) {}
   inline int getDimension(){ return 0; }
   inline int getNumNodes(){ return 1; }
   void getNode(int num, double &u, double &v, double &w)
@@ -256,14 +288,14 @@ public:
     u = v = w = 0.;
     weight = 1.;
   }
-  void getShapeFunction(int num, double u, double v, double w, double &s) 
+  void getShapeFunction(int num, double u, double v, double w, double &s)
   {
     switch(num) {
     case 0  : s = 1.; break;
     default : s = 0.; break;
     }
   }
-  void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
+  void getGradShapeFunction(int num, double u, double v, double w, double s[3])
   {
     s[0] = s[1] = s[2] = 0.;
   }
@@ -279,7 +311,7 @@ public:
 
 class line : public element{
 public:
-  line(double *x, double *y, double *z) : element(x, y, z) {}
+  line(double *x, double *y, double *z, int numNodes=0) : element(x, y, z, numNodes) {}
   inline int getDimension(){ return 1; }
   inline int getNumNodes(){ return 2; }
   void getNode(int num, double &u, double &v, double &w)
@@ -303,7 +335,7 @@ public:
     u = v = w = 0.;
     weight = 2.;
   }
-  void getShapeFunction(int num, double u, double v, double w, double &s) 
+  void getShapeFunction(int num, double u, double v, double w, double &s)
   {
     switch(num) {
     case 0  : s = 0.5 * (1.-u); break;
@@ -311,7 +343,7 @@ public:
     default : s = 0.; break;
     }
   }
-  void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
+  void getGradShapeFunction(int num, double u, double v, double w, double s[3])
   {
     switch(num) {
     case 0  : s[0] = -0.5; s[1] = 0.; s[2] = 0.; break;
@@ -333,14 +365,14 @@ public:
   int isInside(double u, double v, double w)
   {
     if(u < -ONE || u > ONE)
-      return 0; 
+      return 0;
     return 1;
   }
 };
 
 class triangle : public element{
 public:
-  triangle(double *x, double *y, double *z) : element(x, y, z) {}
+  triangle(double *x, double *y, double *z, int numNodes=0) : element(x, y, z, numNodes) {}
   inline int getDimension(){ return 2; }
   inline int getNumNodes(){ return 3; }
   void getNode(int num, double &u, double &v, double &w)
@@ -375,7 +407,7 @@ public:
     w = 0.;
     weight = p3[num];
   }
-  void getShapeFunction(int num, double u, double v, double w, double &s) 
+  void getShapeFunction(int num, double u, double v, double w, double &s)
   {
     switch(num){
     case 0  : s = 1.-u-v; break;
@@ -384,7 +416,7 @@ public:
     default : s = 0.; break;
     }
   }
-  void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
+  void getGradShapeFunction(int num, double u, double v, double w, double s[3])
   {
     switch(num) {
     case 0  : s[0] = -1.; s[1] = -1.; s[2] =  0.; break;
@@ -407,7 +439,7 @@ public:
     prosca(n, v, &d);
     return d;
   }
-#if 0 // faster, but only valid for triangles in the z=0 plane 
+#if 0 // faster, but only valid for triangles in the z=0 plane
   void xyz2uvw(double xyz[3], double uvw[3])
   {
     double mat[2][2], b[2];
@@ -424,14 +456,14 @@ public:
   int isInside(double u, double v, double w)
   {
     if(u < ZERO || v < ZERO || u > (ONE - v))
-      return 0; 
+      return 0;
     return 1;
   }
 };
 
 class quadrangle : public element{
 public:
-  quadrangle(double *x, double *y, double *z) : element(x, y, z) {}
+  quadrangle(double *x, double *y, double *z, int numNodes=0) : element(x, y, z, numNodes) {}
   inline int getDimension(){ return 2; }
   inline int getNumNodes(){ return 4; }
   void getNode(int num, double &u, double &v, double &w)
@@ -468,7 +500,7 @@ public:
     w = 0.;
     weight = p4[num];
   }
-  void getShapeFunction(int num, double u, double v, double w, double &s) 
+  void getShapeFunction(int num, double u, double v, double w, double &s)
   {
     switch(num) {
     case 0  : s = 0.25 * (1.-u) * (1.-v); break;
@@ -478,7 +510,7 @@ public:
     default : s = 0.; break;
     }
   }
-  void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
+  void getGradShapeFunction(int num, double u, double v, double w, double s[3])
   {
     switch(num) {
     case 0  : s[0] = -0.25 * (1.-v); s[1] = -0.25 * (1.-u); s[2] = 0.; break;
@@ -512,7 +544,7 @@ public:
 
 class tetrahedron : public element{
 public:
-  tetrahedron(double *x, double *y, double *z) : element(x, y, z) {}
+  tetrahedron(double *x, double *y, double *z, int numNodes=0) : element(x, y, z, numNodes) {}
   inline int getDimension(){ return 3; }
   inline int getNumNodes(){ return 4; }
   void getNode(int num, double &u, double &v, double &w)
@@ -551,7 +583,7 @@ public:
     w = w4[num];
     weight = p4[num];
   }
-  void getShapeFunction(int num, double u, double v, double w, double &s) 
+  void getShapeFunction(int num, double u, double v, double w, double &s)
   {
     switch(num) {
     case 0  : s = 1.-u-v-w; break;
@@ -561,7 +593,7 @@ public:
     default : s = 0.; break;
     }
   }
-  void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
+  void getGradShapeFunction(int num, double u, double v, double w, double s[3])
   {
     switch(num) {
     case 0  : s[0] = -1.; s[1] = -1.; s[2] = -1.; break;
@@ -599,7 +631,7 @@ public:
 
 class hexahedron : public element{
 public:
-  hexahedron(double *x, double *y, double *z) : element(x, y, z) {}
+  hexahedron(double *x, double *y, double *z, int numNodes=0) : element(x, y, z, numNodes) {}
   inline int getDimension(){ return 3; }
   inline int getNumNodes(){ return 8; }
   void getNode(int num, double &u, double &v, double &w)
@@ -640,9 +672,9 @@ public:
   {
     double u6[6] = { 0.40824826,  0.40824826, -0.40824826,
                     -0.40824826, -0.81649658,  0.81649658};
-    double v6[6] = { 0.70710678, -0.70710678,  0.70710678, 
+    double v6[6] = { 0.70710678, -0.70710678,  0.70710678,
                     -0.70710678,  0.,  0.};
-    double w6[6] = {-0.57735027, -0.57735027,  0.57735027,  
+    double w6[6] = {-0.57735027, -0.57735027,  0.57735027,
                    0.57735027, -0.57735027,  0.57735027};
     double p6[6] = { 1.3333333333,  1.3333333333,  1.3333333333,
                      1.3333333333,  1.3333333333,  1.3333333333};
@@ -652,7 +684,7 @@ public:
     w = w6[num];
     weight = p6[num];
   }
-  void getShapeFunction(int num, double u, double v, double w, double &s) 
+  void getShapeFunction(int num, double u, double v, double w, double &s)
   {
     switch(num) {
     case 0  : s = (1.-u) * (1.-v) * (1.-w) * 0.125; break;
@@ -666,7 +698,7 @@ public:
     default : s = 0.; break;
     }
   }
-  void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
+  void getGradShapeFunction(int num, double u, double v, double w, double s[3])
   {
     switch(num) {
     case 0  : s[0] = -0.125 * (1.-v) * (1.-w);
@@ -706,7 +738,7 @@ public:
 
 class prism : public element{
 public:
-  prism(double *x, double *y, double *z) : element(x, y, z) {}
+  prism(double *x, double *y, double *z, int numNodes=0) : element(x, y, z, numNodes) {}
   inline int getDimension(){ return 3; }
   inline int getNumNodes(){ return 6; }
   void getNode(int num, double &u, double &v, double &w)
@@ -740,7 +772,7 @@ public:
   inline int getNumGaussPoints(){ return 6; }
   void getGaussPoint(int num, double &u, double &v, double &w, double &weight)
   {
-    double u6[6] = {0.166666666666666, 0.333333333333333, 0.166666666666666, 
+    double u6[6] = {0.166666666666666, 0.333333333333333, 0.166666666666666,
                    0.166666666666666, 0.333333333333333, 0.166666666666666};
     double v6[6] = {0.166666666666666, 0.166666666666666, 0.333333333333333,
                    0.166666666666666, 0.166666666666666, 0.333333333333333};
@@ -754,7 +786,7 @@ public:
     w = w6[num];
     weight = p6[num];
   }
-  void getShapeFunction(int num, double u, double v, double w, double &s) 
+  void getShapeFunction(int num, double u, double v, double w, double &s)
   {
     switch(num) {
     case 0  : s = (1.-u-v) * (1.-w) * 0.5; break;
@@ -766,25 +798,25 @@ public:
     default : s = 0.; break;
     }
   }
-  void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
+  void getGradShapeFunction(int num, double u, double v, double w, double s[3])
   {
     switch(num) {
-    case 0  : s[0] = -0.5 * (1.-w)   ; 
+    case 0  : s[0] = -0.5 * (1.-w)   ;
               s[1] = -0.5 * (1.-w)   ;
               s[2] = -0.5 * (1.-u-v) ; break ;
-    case 1  : s[0] =  0.5 * (1.-w)   ; 
+    case 1  : s[0] =  0.5 * (1.-w)   ;
               s[1] =  0.             ;
               s[2] = -0.5 * u        ; break ;
-    case 2  : s[0] =  0.             ; 
+    case 2  : s[0] =  0.             ;
               s[1] =  0.5 * (1.-w)   ;
               s[2] = -0.5 * v        ; break ;
-    case 3  : s[0] = -0.5 * (1.+w)   ; 
+    case 3  : s[0] = -0.5 * (1.+w)   ;
               s[1] = -0.5 * (1.+w)   ;
               s[2] =  0.5 * (1.-u-v) ; break ;
-    case 4  : s[0] =  0.5 * (1.+w)   ; 
+    case 4  : s[0] =  0.5 * (1.+w)   ;
               s[1] =  0.             ;
               s[2] =  0.5 * u        ; break ;
-    case 5  : s[0] =  0.             ; 
+    case 5  : s[0] =  0.             ;
               s[1] =  0.5 * (1.+w)   ;
               s[2] =  0.5 * v        ; break ;
     default : s[0] = s[1] = s[2] = 0.; break;
@@ -800,7 +832,7 @@ public:
 
 class pyramid : public element{
 public:
-  pyramid(double *x, double *y, double *z) : element(x, y, z) {}
+  pyramid(double *x, double *y, double *z, int numNodes=0) : element(x, y, z, numNodes) {}
   inline int getDimension(){ return 3; }
   inline int getNumNodes(){ return 5; }
   void getNode(int num, double &u, double &v, double &w)
@@ -854,7 +886,7 @@ public:
     w = w8[num];
     weight = p8[num];
   }
-  void getShapeFunction(int num, double u, double v, double w, double &s) 
+  void getShapeFunction(int num, double u, double v, double w, double &s)
   {
     double r;
 
@@ -869,23 +901,23 @@ public:
     default : s = 0. ; break;
     }
   }
-  void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
+  void getGradShapeFunction(int num, double u, double v, double w, double s[3])
   {
     if(w == 1. && num != 4) {
       switch(num) {
-      case 0 : s[0] = -0.25 ; 
+      case 0 : s[0] = -0.25 ;
                s[1] = -0.25 ;
                s[2] = -0.25 ; break ;
-      case 1 : s[0] =  0.25 ; 
+      case 1 : s[0] =  0.25 ;
                s[1] = -0.25 ;
                s[2] = -0.25 ; break ;
-      case 2 : s[0] =  0.25 ; 
+      case 2 : s[0] =  0.25 ;
                s[1] =  0.25 ;
                s[2] = -0.25 ; break ;
-      case 3 : s[0] = -0.25 ; 
+      case 3 : s[0] = -0.25 ;
                s[1] =  0.25 ;
                s[2] = -0.25 ; break ;
-      case 4 : s[0] =  0. ; 
+      case 4 : s[0] =  0. ;
                s[1] =  0. ;
                s[2] =  1. ; break ;
       default : s[0] = s[1] = s[2] = 0.; break;
@@ -905,7 +937,7 @@ public:
       case 3  : s[0] = 0.25 * ( -(1.+v) - v*w/(1.-w) ) ;
                 s[1] = 0.25 * (  (1.-u) - u*w/(1.-w) ) ;
                 s[2] = 0.25 * ( -1.     - u*v/(1.-w) - u*v*w/SQU(1.-w) ) ; break ;
-      case 4  : s[0] = 0. ; 
+      case 4  : s[0] = 0. ;
                 s[1] = 0. ;
                 s[2] = 1. ; break ;
       default : s[0] = s[1] = s[2] = 0.; break;
@@ -923,19 +955,21 @@ public:
 
 class elementFactory{
  public:
-  element* create(int numNodes, int dimension, double *x, double *y, double *z){
+  element* create(int numNodes, int dimension, double *x, double *y, double *z,
+                  bool copy=false)
+  {
     switch(dimension){
-    case 0: return new point(x, y, z);
-    case 1: return new line(x, y, z);
-    case 2: 
-      if(numNodes == 4) return new quadrangle(x, y, z);
-      else return new triangle(x, y, z);
+    case 0: return new point(x, y, z, copy ? numNodes : 0);
+    case 1: return new line(x, y, z, copy ? numNodes : 0);
+    case 2:
+      if(numNodes == 4) return new quadrangle(x, y, z, copy ? numNodes : 0);
+      else return new triangle(x, y, z, copy);
     case 3:
-      if(numNodes == 8) return new hexahedron(x, y, z);
-      else if(numNodes == 6) return new prism(x, y, z);
-      else if(numNodes == 5) return new pyramid(x, y, z);
-      else return new tetrahedron(x, y, z);
-    default: 
+      if(numNodes == 8) return new hexahedron(x, y, z, copy ? numNodes : 0);
+      else if(numNodes == 6) return new prism(x, y, z, copy ? numNodes : 0);
+      else if(numNodes == 5) return new pyramid(x, y, z, copy ? numNodes : 0);
+      else return new tetrahedron(x, y, z, copy ? numNodes : 0);
+    default:
       Msg::Error("Unknown type of element in factory");
       return NULL;
     }
