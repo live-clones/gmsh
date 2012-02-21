@@ -136,6 +136,7 @@
 	      <classpath refid="run.class.path" />
 	      <jvmarg value="-Xmx512M" />
 	      <jvmarg value="-Xms100M" />
+	      <jvmarg value="-Xss100M" />
 	</java>
     </target>
 
@@ -150,6 +151,7 @@
 	      <classpath refid="run.class.path" />
 	      <jvmarg value="-Xmx512M" />
 	      <jvmarg value="-Xms100M" />
+	      <jvmarg value="-Xss100M" />
 	</java>
     </target>
 

@@ -51,6 +51,10 @@ public class EssaiGmsh_v2 {
         
         // write .msh file which contains informations about mesh in GModel m.
         m1.writeMSH("t5.msh");
+
+	// free memory
+	m1.deleteMesh();
+        m1.delete();
         
         WrapGmsh.GmshFinalize();
         
