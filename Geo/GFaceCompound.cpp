@@ -951,9 +951,10 @@ void GFaceCompound::computeALoop(std::set<GEdge*> &_unique, std::list<GEdge*> &l
 
 GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 			     std::list<GEdge*> &U0, typeOfMapping mpg, 
-                             int allowPartition)
+                             int allowPartition,
+			     linearSystem<double>* lsys)
   : GFace(m, tag), _compound(compound),  oct(0), _U0(U0), 
-    _mapping(mpg), _allowPartition(allowPartition)
+    _mapping(mpg), _allowPartition(allowPartition), _lsys(lsys)
 {
   ONE = new simpleFunction<double>(1.0);
   MONE = new simpleFunction<double>(-1.0);
@@ -982,6 +983,7 @@ GFaceCompound::~GFaceCompound()
     Octree_Delete(oct);
     delete [] _gfct;
   }
+  if (_lsys)delete _lsys;
   delete ONE;
   delete MONE;
 }
@@ -1073,20 +1075,23 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
 
 void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
 {  
-  linearSystem<double> *_lsys = 0;
+  linearSystem<double> *lsys = 0;
+  if (_lsys) lsys = _lsys;
+  else{
 #if defined(HAVE_PETSC) && !defined(HAVE_TAUCS)
-  _lsys = new linearSystemPETSc<double>;
+  lsys = new linearSystemPETSc<double>;
 #elif defined(HAVE_GMM) && !defined(HAVE_TAUCS)
   linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
-  _lsysb->setGmres(1);
-  _lsys = _lsysb;
+  lsysb->setGmres(1);
+  lsys = _lsysb;
 #elif defined(HAVE_TAUCS) 
-  _lsys = new linearSystemCSRTaucs<double>;
+  lsys = new linearSystemCSRTaucs<double>;
 #else
-  _lsys = new linearSystemFull<double>;
+  lsys = new linearSystemFull<double>;
 #endif
+  }
 
-  dofManager<double> myAssembler(_lsys);
+  dofManager<double> myAssembler(lsys);
 
   if(_type == UNITCIRCLE){
     for(unsigned int i = 0; i < _ordered.size(); i++){
@@ -1168,7 +1173,7 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
 
   double t2 = Cpu();
   Msg::Debug("Assembly done in %8.3f seconds", t2 - t1);
-  _lsys->systemSolve();
+  lsys->systemSolve();
   Msg::Debug("System solved");
 
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
@@ -1186,7 +1191,10 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
     }
   }
 
-  delete _lsys;
+  if (_lsys) 
+    lsys->clear();
+  else
+    delete lsys;
 }
 
 bool GFaceCompound::parametrize_conformal_spectral() const
@@ -1310,20 +1318,21 @@ bool GFaceCompound::parametrize_conformal_spectral() const
 
 bool GFaceCompound::parametrize_conformal(int iter, MVertex *v1, MVertex *v2) const
 {
-  linearSystem<double> *_lsys = 0;
+
+  linearSystem<double> *lsys = 0;
 #if defined(HAVE_PETSC) && !defined(HAVE_TAUCS)
-  _lsys = new linearSystemPETSc<double>;
+  lsys = new linearSystemPETSc<double>;
 #elif defined(HAVE_GMM) && !defined(HAVE_TAUCS)
-  linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
-  _lsysb->setGmres(1);
-  _lsys = _lsysb;
+  linearSystemGmm<double> *lsysb = new linearSystemGmm<double>;
+  lsysb->setGmres(1);
+  lsys = _lsysb;
 #elif defined(HAVE_TAUCS) 
-  _lsys = new linearSystemCSRTaucs<double>;
+  lsys = new linearSystemCSRTaucs<double>;
 #else
-  _lsys = new linearSystemFull<double>;
+  lsys = new linearSystemFull<double>;
 #endif
 
-  dofManager<double> myAssembler(_lsys);
+  dofManager<double> myAssembler(lsys);
 
   if(!v1) v1 = _ordered[0];
   if(!v2) v2 = _ordered[(int)ceil((double)_ordered.size()/2.)];
@@ -1379,7 +1388,7 @@ bool GFaceCompound::parametrize_conformal(int iter, MVertex *v1, MVertex *v2) co
   }
  
   Msg::Debug("Assembly done");
-  _lsys->systemSolve();
+  lsys->systemSolve();
   Msg::Debug("System solved");
 
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); 
@@ -1391,7 +1400,7 @@ bool GFaceCompound::parametrize_conformal(int iter, MVertex *v1, MVertex *v2) co
     coordinates[v] = SPoint3(value1,value2,0.0);
   }
 
-  delete _lsys; 
+  delete lsys; 
 
   // check for overlap and compute new mapping with new pinned
   // vertices

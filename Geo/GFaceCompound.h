@@ -81,6 +81,7 @@ class GFaceCompound : public GFace {
   mutable std::vector<MVertex*> _ordered;
   mutable std::vector<double> _coords;
   mutable std::map<MVertex*, int> _mapV;
+  linearSystem <double> *_lsys;
   void buildOct() const ;
   void buildAllNodes() const; 
   void parametrize(iterationStep, typeOfMapping) const;
@@ -109,7 +110,9 @@ class GFaceCompound : public GFace {
  
  public: 
   GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
-		std::list<GEdge*> &U0, typeOfMapping typ = HARMONIC, int allowPartition=1);
+		std::list<GEdge*> &U0, typeOfMapping typ = HARMONIC, 
+		int allowPartition=1, 
+		linearSystem<double>* lsys =0);
   virtual ~GFaceCompound();
   Range<double> parBounds(int i) const 
   { return trivial() ? (*(_compound.begin()))->parBounds(i) : Range<double>(-1, 1); }
@@ -150,7 +153,9 @@ class GFaceCompound : public GFace {
   typedef enum {HARMONIC=1,CONFORMAL=2, RBF=3, HARMONICPLANE=4, CONVEXCOMBINATION=5} typeOfMapping;
   typedef enum {UNITCIRCLE, MEANPLANE} typeOfIsomorphism;
  GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
-	       std::list<GEdge*> &U0, typeOfMapping typ = HARMONIC, int allowPartition=1)
+	       std::list<GEdge*> &U0, typeOfMapping typ = HARMONIC, 
+	       int allowPartition=1, 
+	       linearSystem<double>* lsys =0)
     : GFace(m, tag)
   {
     Msg::Error("Gmsh has to be compiled with solver support to use GFaceCompounds");
