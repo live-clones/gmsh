@@ -46,6 +46,10 @@ namespace alglib
 /////////////////////////////////////////////////////////////////////////
 namespace alglib_impl
 {
+
+
+
+
 static void tsort_tagsortfastirec(/* Real    */ ae_vector* a,
      /* Integer */ ae_vector* b,
      /* Real    */ ae_vector* bufa,
@@ -65,8 +69,6 @@ static void tsort_tagsortfastrec(/* Real    */ ae_vector* a,
      ae_int_t i1,
      ae_int_t i2,
      ae_state *_state);
-
-
 
 
 
@@ -140,7 +142,6 @@ static double xblas_xfastpow(double r, ae_int_t n, ae_state *_state);
 
 static double linmin_ftol = 0.001;
 static double linmin_xtol = 100*ae_machineepsilon;
-static double linmin_gtol = 0.3;
 static ae_int_t linmin_maxfev = 20;
 static double linmin_stpmin = 1.0E-50;
 static double linmin_defstpmax = 1.0E+50;
@@ -159,6 +160,8 @@ static void linmin_mcstep(double* stx,
      double stmax,
      ae_int_t* info,
      ae_state *_state);
+
+
 
 
 static ae_int_t ftbase_ftbaseplanentrysize = 8;
@@ -248,6 +251,1419 @@ static void ftbase_reffht(/* Real    */ ae_vector* a,
 
 
 
+ae_int_t getrdfserializationcode(ae_state *_state)
+{
+    ae_int_t result;
+
+
+    result = 1;
+    return result;
+}
+
+
+ae_int_t getkdtreeserializationcode(ae_state *_state)
+{
+    ae_int_t result;
+
+
+    result = 2;
+    return result;
+}
+
+
+ae_int_t getmlpserializationcode(ae_state *_state)
+{
+    ae_int_t result;
+
+
+    result = 3;
+    return result;
+}
+
+
+
+
+/*************************************************************************
+This  function  generates  1-dimensional  general  interpolation task with
+moderate Lipshitz constant (close to 1.0)
+
+If N=1 then suborutine generates only one point at the middle of [A,B]
+
+  -- ALGLIB --
+     Copyright 02.12.2009 by Bochkanov Sergey
+*************************************************************************/
+void taskgenint1d(double a,
+     double b,
+     ae_int_t n,
+     /* Real    */ ae_vector* x,
+     /* Real    */ ae_vector* y,
+     ae_state *_state)
+{
+    ae_int_t i;
+    double h;
+
+    ae_vector_clear(x);
+    ae_vector_clear(y);
+
+    ae_assert(n>=1, "TaskGenInterpolationEqdist1D: N<1!", _state);
+    ae_vector_set_length(x, n, _state);
+    ae_vector_set_length(y, n, _state);
+    if( n>1 )
+    {
+        x->ptr.p_double[0] = a;
+        y->ptr.p_double[0] = 2*ae_randomreal(_state)-1;
+        h = (b-a)/(n-1);
+        for(i=1; i<=n-1; i++)
+        {
+            if( i!=n-1 )
+            {
+                x->ptr.p_double[i] = a+(i+0.2*(2*ae_randomreal(_state)-1))*h;
+            }
+            else
+            {
+                x->ptr.p_double[i] = b;
+            }
+            y->ptr.p_double[i] = y->ptr.p_double[i-1]+(2*ae_randomreal(_state)-1)*(x->ptr.p_double[i]-x->ptr.p_double[i-1]);
+        }
+    }
+    else
+    {
+        x->ptr.p_double[0] = 0.5*(a+b);
+        y->ptr.p_double[0] = 2*ae_randomreal(_state)-1;
+    }
+}
+
+
+/*************************************************************************
+This function generates  1-dimensional equidistant interpolation task with
+moderate Lipshitz constant (close to 1.0)
+
+If N=1 then suborutine generates only one point at the middle of [A,B]
+
+  -- ALGLIB --
+     Copyright 02.12.2009 by Bochkanov Sergey
+*************************************************************************/
+void taskgenint1dequidist(double a,
+     double b,
+     ae_int_t n,
+     /* Real    */ ae_vector* x,
+     /* Real    */ ae_vector* y,
+     ae_state *_state)
+{
+    ae_int_t i;
+    double h;
+
+    ae_vector_clear(x);
+    ae_vector_clear(y);
+
+    ae_assert(n>=1, "TaskGenInterpolationEqdist1D: N<1!", _state);
+    ae_vector_set_length(x, n, _state);
+    ae_vector_set_length(y, n, _state);
+    if( n>1 )
+    {
+        x->ptr.p_double[0] = a;
+        y->ptr.p_double[0] = 2*ae_randomreal(_state)-1;
+        h = (b-a)/(n-1);
+        for(i=1; i<=n-1; i++)
+        {
+            x->ptr.p_double[i] = a+i*h;
+            y->ptr.p_double[i] = y->ptr.p_double[i-1]+(2*ae_randomreal(_state)-1)*h;
+        }
+    }
+    else
+    {
+        x->ptr.p_double[0] = 0.5*(a+b);
+        y->ptr.p_double[0] = 2*ae_randomreal(_state)-1;
+    }
+}
+
+
+/*************************************************************************
+This function generates  1-dimensional Chebyshev-1 interpolation task with
+moderate Lipshitz constant (close to 1.0)
+
+If N=1 then suborutine generates only one point at the middle of [A,B]
+
+  -- ALGLIB --
+     Copyright 02.12.2009 by Bochkanov Sergey
+*************************************************************************/
+void taskgenint1dcheb1(double a,
+     double b,
+     ae_int_t n,
+     /* Real    */ ae_vector* x,
+     /* Real    */ ae_vector* y,
+     ae_state *_state)
+{
+    ae_int_t i;
+
+    ae_vector_clear(x);
+    ae_vector_clear(y);
+
+    ae_assert(n>=1, "TaskGenInterpolation1DCheb1: N<1!", _state);
+    ae_vector_set_length(x, n, _state);
+    ae_vector_set_length(y, n, _state);
+    if( n>1 )
+    {
+        for(i=0; i<=n-1; i++)
+        {
+            x->ptr.p_double[i] = 0.5*(b+a)+0.5*(b-a)*ae_cos(ae_pi*(2*i+1)/(2*n), _state);
+            if( i==0 )
+            {
+                y->ptr.p_double[i] = 2*ae_randomreal(_state)-1;
+            }
+            else
+            {
+                y->ptr.p_double[i] = y->ptr.p_double[i-1]+(2*ae_randomreal(_state)-1)*(x->ptr.p_double[i]-x->ptr.p_double[i-1]);
+            }
+        }
+    }
+    else
+    {
+        x->ptr.p_double[0] = 0.5*(a+b);
+        y->ptr.p_double[0] = 2*ae_randomreal(_state)-1;
+    }
+}
+
+
+/*************************************************************************
+This function generates  1-dimensional Chebyshev-2 interpolation task with
+moderate Lipshitz constant (close to 1.0)
+
+If N=1 then suborutine generates only one point at the middle of [A,B]
+
+  -- ALGLIB --
+     Copyright 02.12.2009 by Bochkanov Sergey
+*************************************************************************/
+void taskgenint1dcheb2(double a,
+     double b,
+     ae_int_t n,
+     /* Real    */ ae_vector* x,
+     /* Real    */ ae_vector* y,
+     ae_state *_state)
+{
+    ae_int_t i;
+
+    ae_vector_clear(x);
+    ae_vector_clear(y);
+
+    ae_assert(n>=1, "TaskGenInterpolation1DCheb2: N<1!", _state);
+    ae_vector_set_length(x, n, _state);
+    ae_vector_set_length(y, n, _state);
+    if( n>1 )
+    {
+        for(i=0; i<=n-1; i++)
+        {
+            x->ptr.p_double[i] = 0.5*(b+a)+0.5*(b-a)*ae_cos(ae_pi*i/(n-1), _state);
+            if( i==0 )
+            {
+                y->ptr.p_double[i] = 2*ae_randomreal(_state)-1;
+            }
+            else
+            {
+                y->ptr.p_double[i] = y->ptr.p_double[i-1]+(2*ae_randomreal(_state)-1)*(x->ptr.p_double[i]-x->ptr.p_double[i-1]);
+            }
+        }
+    }
+    else
+    {
+        x->ptr.p_double[0] = 0.5*(a+b);
+        y->ptr.p_double[0] = 2*ae_randomreal(_state)-1;
+    }
+}
+
+
+/*************************************************************************
+This function checks that all values from X[] are distinct. It does more
+than just usual floating point comparison:
+* first, it calculates max(X) and min(X)
+* second, it maps X[] from [min,max] to [1,2]
+* only at this stage actual comparison is done
+
+The meaning of such check is to ensure that all values are "distinct enough"
+and will not cause interpolation subroutine to fail.
+
+NOTE:
+    X[] must be sorted by ascending (subroutine ASSERT's it)
+
+  -- ALGLIB --
+     Copyright 02.12.2009 by Bochkanov Sergey
+*************************************************************************/
+ae_bool aredistinct(/* Real    */ ae_vector* x,
+     ae_int_t n,
+     ae_state *_state)
+{
+    double a;
+    double b;
+    ae_int_t i;
+    ae_bool nonsorted;
+    ae_bool result;
+
+
+    ae_assert(n>=1, "APSERVAreDistinct: internal error (N<1)", _state);
+    if( n==1 )
+    {
+        
+        /*
+         * everything is alright, it is up to caller to decide whether it
+         * can interpolate something with just one point
+         */
+        result = ae_true;
+        return result;
+    }
+    a = x->ptr.p_double[0];
+    b = x->ptr.p_double[0];
+    nonsorted = ae_false;
+    for(i=1; i<=n-1; i++)
+    {
+        a = ae_minreal(a, x->ptr.p_double[i], _state);
+        b = ae_maxreal(b, x->ptr.p_double[i], _state);
+        nonsorted = nonsorted||ae_fp_greater_eq(x->ptr.p_double[i-1],x->ptr.p_double[i]);
+    }
+    ae_assert(!nonsorted, "APSERVAreDistinct: internal error (not sorted)", _state);
+    for(i=1; i<=n-1; i++)
+    {
+        if( ae_fp_eq((x->ptr.p_double[i]-a)/(b-a)+1,(x->ptr.p_double[i-1]-a)/(b-a)+1) )
+        {
+            result = ae_false;
+            return result;
+        }
+    }
+    result = ae_true;
+    return result;
+}
+
+
+/*************************************************************************
+If Length(X)<N, resizes X
+
+  -- ALGLIB --
+     Copyright 20.03.2009 by Bochkanov Sergey
+*************************************************************************/
+void bvectorsetlengthatleast(/* Boolean */ ae_vector* x,
+     ae_int_t n,
+     ae_state *_state)
+{
+
+
+    if( x->cnt<n )
+    {
+        ae_vector_set_length(x, n, _state);
+    }
+}
+
+
+/*************************************************************************
+If Length(X)<N, resizes X
+
+  -- ALGLIB --
+     Copyright 20.03.2009 by Bochkanov Sergey
+*************************************************************************/
+void ivectorsetlengthatleast(/* Integer */ ae_vector* x,
+     ae_int_t n,
+     ae_state *_state)
+{
+
+
+    if( x->cnt<n )
+    {
+        ae_vector_set_length(x, n, _state);
+    }
+}
+
+
+/*************************************************************************
+If Length(X)<N, resizes X
+
+  -- ALGLIB --
+     Copyright 20.03.2009 by Bochkanov Sergey
+*************************************************************************/
+void rvectorsetlengthatleast(/* Real    */ ae_vector* x,
+     ae_int_t n,
+     ae_state *_state)
+{
+
+
+    if( x->cnt<n )
+    {
+        ae_vector_set_length(x, n, _state);
+    }
+}
+
+
+/*************************************************************************
+If Cols(X)<N or Rows(X)<M, resizes X
+
+  -- ALGLIB --
+     Copyright 20.03.2009 by Bochkanov Sergey
+*************************************************************************/
+void rmatrixsetlengthatleast(/* Real    */ ae_matrix* x,
+     ae_int_t m,
+     ae_int_t n,
+     ae_state *_state)
+{
+
+
+    if( x->rows<m||x->cols<n )
+    {
+        ae_matrix_set_length(x, m, n, _state);
+    }
+}
+
+
+/*************************************************************************
+Resizes X and:
+* preserves old contents of X
+* fills new elements by zeros
+
+  -- ALGLIB --
+     Copyright 20.03.2009 by Bochkanov Sergey
+*************************************************************************/
+void rmatrixresize(/* Real    */ ae_matrix* x,
+     ae_int_t m,
+     ae_int_t n,
+     ae_state *_state)
+{
+    ae_frame _frame_block;
+    ae_matrix oldx;
+    ae_int_t i;
+    ae_int_t j;
+    ae_int_t m2;
+    ae_int_t n2;
+
+    ae_frame_make(_state, &_frame_block);
+    ae_matrix_init(&oldx, 0, 0, DT_REAL, _state, ae_true);
+
+    m2 = x->rows;
+    n2 = x->cols;
+    ae_swap_matrices(x, &oldx);
+    ae_matrix_set_length(x, m, n, _state);
+    for(i=0; i<=m-1; i++)
+    {
+        for(j=0; j<=n-1; j++)
+        {
+            if( i<m2&&j<n2 )
+            {
+                x->ptr.pp_double[i][j] = oldx.ptr.pp_double[i][j];
+            }
+            else
+            {
+                x->ptr.pp_double[i][j] = 0.0;
+            }
+        }
+    }
+    ae_frame_leave(_state);
+}
+
+
+/*************************************************************************
+This function checks that all values from X[] are finite
+
+  -- ALGLIB --
+     Copyright 18.06.2010 by Bochkanov Sergey
+*************************************************************************/
+ae_bool isfinitevector(/* Real    */ ae_vector* x,
+     ae_int_t n,
+     ae_state *_state)
+{
+    ae_int_t i;
+    ae_bool result;
+
+
+    ae_assert(n>=0, "APSERVIsFiniteVector: internal error (N<0)", _state);
+    for(i=0; i<=n-1; i++)
+    {
+        if( !ae_isfinite(x->ptr.p_double[i], _state) )
+        {
+            result = ae_false;
+            return result;
+        }
+    }
+    result = ae_true;
+    return result;
+}
+
+
+/*************************************************************************
+This function checks that all values from X[] are finite
+
+  -- ALGLIB --
+     Copyright 18.06.2010 by Bochkanov Sergey
+*************************************************************************/
+ae_bool isfinitecvector(/* Complex */ ae_vector* z,
+     ae_int_t n,
+     ae_state *_state)
+{
+    ae_int_t i;
+    ae_bool result;
+
+
+    ae_assert(n>=0, "APSERVIsFiniteCVector: internal error (N<0)", _state);
+    for(i=0; i<=n-1; i++)
+    {
+        if( !ae_isfinite(z->ptr.p_complex[i].x, _state)||!ae_isfinite(z->ptr.p_complex[i].y, _state) )
+        {
+            result = ae_false;
+            return result;
+        }
+    }
+    result = ae_true;
+    return result;
+}
+
+
+/*************************************************************************
+This function checks that all values from X[0..M-1,0..N-1] are finite
+
+  -- ALGLIB --
+     Copyright 18.06.2010 by Bochkanov Sergey
+*************************************************************************/
+ae_bool apservisfinitematrix(/* Real    */ ae_matrix* x,
+     ae_int_t m,
+     ae_int_t n,
+     ae_state *_state)
+{
+    ae_int_t i;
+    ae_int_t j;
+    ae_bool result;
+
+
+    ae_assert(n>=0, "APSERVIsFiniteMatrix: internal error (N<0)", _state);
+    ae_assert(m>=0, "APSERVIsFiniteMatrix: internal error (M<0)", _state);
+    for(i=0; i<=m-1; i++)
+    {
+        for(j=0; j<=n-1; j++)
+        {
+            if( !ae_isfinite(x->ptr.pp_double[i][j], _state) )
+            {
+                result = ae_false;
+                return result;
+            }
+        }
+    }
+    result = ae_true;
+    return result;
+}
+
+
+/*************************************************************************
+This function checks that all values from X[0..M-1,0..N-1] are finite
+
+  -- ALGLIB --
+     Copyright 18.06.2010 by Bochkanov Sergey
+*************************************************************************/
+ae_bool apservisfinitecmatrix(/* Complex */ ae_matrix* x,
+     ae_int_t m,
+     ae_int_t n,
+     ae_state *_state)
+{
+    ae_int_t i;
+    ae_int_t j;
+    ae_bool result;
+
+
+    ae_assert(n>=0, "APSERVIsFiniteCMatrix: internal error (N<0)", _state);
+    ae_assert(m>=0, "APSERVIsFiniteCMatrix: internal error (M<0)", _state);
+    for(i=0; i<=m-1; i++)
+    {
+        for(j=0; j<=n-1; j++)
+        {
+            if( !ae_isfinite(x->ptr.pp_complex[i][j].x, _state)||!ae_isfinite(x->ptr.pp_complex[i][j].y, _state) )
+            {
+                result = ae_false;
+                return result;
+            }
+        }
+    }
+    result = ae_true;
+    return result;
+}
+
+
+/*************************************************************************
+This function checks that all values from upper/lower triangle of
+X[0..N-1,0..N-1] are finite
+
+  -- ALGLIB --
+     Copyright 18.06.2010 by Bochkanov Sergey
+*************************************************************************/
+ae_bool isfinitertrmatrix(/* Real    */ ae_matrix* x,
+     ae_int_t n,
+     ae_bool isupper,
+     ae_state *_state)
+{
+    ae_int_t i;
+    ae_int_t j1;
+    ae_int_t j2;
+    ae_int_t j;
+    ae_bool result;
+
+
+    ae_assert(n>=0, "APSERVIsFiniteRTRMatrix: internal error (N<0)", _state);
+    for(i=0; i<=n-1; i++)
+    {
+        if( isupper )
+        {
+            j1 = i;
+            j2 = n-1;
+        }
+        else
+        {
+            j1 = 0;
+            j2 = i;
+        }
+        for(j=j1; j<=j2; j++)
+        {
+            if( !ae_isfinite(x->ptr.pp_double[i][j], _state) )
+            {
+                result = ae_false;
+                return result;
+            }
+        }
+    }
+    result = ae_true;
+    return result;
+}
+
+
+/*************************************************************************
+This function checks that all values from upper/lower triangle of
+X[0..N-1,0..N-1] are finite
+
+  -- ALGLIB --
+     Copyright 18.06.2010 by Bochkanov Sergey
+*************************************************************************/
+ae_bool apservisfinitectrmatrix(/* Complex */ ae_matrix* x,
+     ae_int_t n,
+     ae_bool isupper,
+     ae_state *_state)
+{
+    ae_int_t i;
+    ae_int_t j1;
+    ae_int_t j2;
+    ae_int_t j;
+    ae_bool result;
+
+
+    ae_assert(n>=0, "APSERVIsFiniteCTRMatrix: internal error (N<0)", _state);
+    for(i=0; i<=n-1; i++)
+    {
+        if( isupper )
+        {
+            j1 = i;
+            j2 = n-1;
+        }
+        else
+        {
+            j1 = 0;
+            j2 = i;
+        }
+        for(j=j1; j<=j2; j++)
+        {
+            if( !ae_isfinite(x->ptr.pp_complex[i][j].x, _state)||!ae_isfinite(x->ptr.pp_complex[i][j].y, _state) )
+            {
+                result = ae_false;
+                return result;
+            }
+        }
+    }
+    result = ae_true;
+    return result;
+}
+
+
+/*************************************************************************
+This function checks that all values from X[0..M-1,0..N-1] are  finite  or
+NaN's.
+
+  -- ALGLIB --
+     Copyright 18.06.2010 by Bochkanov Sergey
+*************************************************************************/
+ae_bool apservisfiniteornanmatrix(/* Real    */ ae_matrix* x,
+     ae_int_t m,
+     ae_int_t n,
+     ae_state *_state)
+{
+    ae_int_t i;
+    ae_int_t j;
+    ae_bool result;
+
+
+    ae_assert(n>=0, "APSERVIsFiniteOrNaNMatrix: internal error (N<0)", _state);
+    ae_assert(m>=0, "APSERVIsFiniteOrNaNMatrix: internal error (M<0)", _state);
+    for(i=0; i<=m-1; i++)
+    {
+        for(j=0; j<=n-1; j++)
+        {
+            if( !(ae_isfinite(x->ptr.pp_double[i][j], _state)||ae_isnan(x->ptr.pp_double[i][j], _state)) )
+            {
+                result = ae_false;
+                return result;
+            }
+        }
+    }
+    result = ae_true;
+    return result;
+}
+
+
+/*************************************************************************
+Safe sqrt(x^2+y^2)
+
+  -- ALGLIB --
+     Copyright by Bochkanov Sergey
+*************************************************************************/
+double safepythag2(double x, double y, ae_state *_state)
+{
+    double w;
+    double xabs;
+    double yabs;
+    double z;
+    double result;
+
+
+    xabs = ae_fabs(x, _state);
+    yabs = ae_fabs(y, _state);
+    w = ae_maxreal(xabs, yabs, _state);
+    z = ae_minreal(xabs, yabs, _state);
+    if( ae_fp_eq(z,0) )
+    {
+        result = w;
+    }
+    else
+    {
+        result = w*ae_sqrt(1+ae_sqr(z/w, _state), _state);
+    }
+    return result;
+}
+
+
+/*************************************************************************
+Safe sqrt(x^2+y^2)
+
+  -- ALGLIB --
+     Copyright by Bochkanov Sergey
+*************************************************************************/
+double safepythag3(double x, double y, double z, ae_state *_state)
+{
+    double w;
+    double result;
+
+
+    w = ae_maxreal(ae_fabs(x, _state), ae_maxreal(ae_fabs(y, _state), ae_fabs(z, _state), _state), _state);
+    if( ae_fp_eq(w,0) )
+    {
+        result = 0;
+        return result;
+    }
+    x = x/w;
+    y = y/w;
+    z = z/w;
+    result = w*ae_sqrt(ae_sqr(x, _state)+ae_sqr(y, _state)+ae_sqr(z, _state), _state);
+    return result;
+}
+
+
+/*************************************************************************
+Safe division.
+
+This function attempts to calculate R=X/Y without overflow.
+
+It returns:
+* +1, if abs(X/Y)>=MaxRealNumber or undefined - overflow-like situation
+      (no overlfow is generated, R is either NAN, PosINF, NegINF)
+*  0, if MinRealNumber<abs(X/Y)<MaxRealNumber or X=0, Y<>0
+      (R contains result, may be zero)
+* -1, if 0<abs(X/Y)<MinRealNumber - underflow-like situation
+      (R contains zero; it corresponds to underflow)
+
+No overflow is generated in any case.
+
+  -- ALGLIB --
+     Copyright by Bochkanov Sergey
+*************************************************************************/
+ae_int_t saferdiv(double x, double y, double* r, ae_state *_state)
+{
+    ae_int_t result;
+
+    *r = 0;
+
+    
+    /*
+     * Two special cases:
+     * * Y=0
+     * * X=0 and Y<>0
+     */
+    if( ae_fp_eq(y,0) )
+    {
+        result = 1;
+        if( ae_fp_eq(x,0) )
+        {
+            *r = _state->v_nan;
+        }
+        if( ae_fp_greater(x,0) )
+        {
+            *r = _state->v_posinf;
+        }
+        if( ae_fp_less(x,0) )
+        {
+            *r = _state->v_neginf;
+        }
+        return result;
+    }
+    if( ae_fp_eq(x,0) )
+    {
+        *r = 0;
+        result = 0;
+        return result;
+    }
+    
+    /*
+     * make Y>0
+     */
+    if( ae_fp_less(y,0) )
+    {
+        x = -x;
+        y = -y;
+    }
+    
+    /*
+     *
+     */
+    if( ae_fp_greater_eq(y,1) )
+    {
+        *r = x/y;
+        if( ae_fp_less_eq(ae_fabs(*r, _state),ae_minrealnumber) )
+        {
+            result = -1;
+            *r = 0;
+        }
+        else
+        {
+            result = 0;
+        }
+    }
+    else
+    {
+        if( ae_fp_greater_eq(ae_fabs(x, _state),ae_maxrealnumber*y) )
+        {
+            if( ae_fp_greater(x,0) )
+            {
+                *r = _state->v_posinf;
+            }
+            else
+            {
+                *r = _state->v_neginf;
+            }
+            result = 1;
+        }
+        else
+        {
+            *r = x/y;
+            result = 0;
+        }
+    }
+    return result;
+}
+
+
+/*************************************************************************
+This function calculates "safe" min(X/Y,V) for positive finite X, Y, V.
+No overflow is generated in any case.
+
+  -- ALGLIB --
+     Copyright by Bochkanov Sergey
+*************************************************************************/
+double safeminposrv(double x, double y, double v, ae_state *_state)
+{
+    double r;
+    double result;
+
+
+    if( ae_fp_greater_eq(y,1) )
+    {
+        
+        /*
+         * Y>=1, we can safely divide by Y
+         */
+        r = x/y;
+        result = v;
+        if( ae_fp_greater(v,r) )
+        {
+            result = r;
+        }
+        else
+        {
+            result = v;
+        }
+    }
+    else
+    {
+        
+        /*
+         * Y<1, we can safely multiply by Y
+         */
+        if( ae_fp_less(x,v*y) )
+        {
+            result = x/y;
+        }
+        else
+        {
+            result = v;
+        }
+    }
+    return result;
+}
+
+
+/*************************************************************************
+This function makes periodic mapping of X to [A,B].
+
+It accepts X, A, B (A>B). It returns T which lies in  [A,B] and integer K,
+such that X = T + K*(B-A).
+
+NOTES:
+* K is represented as real value, although actually it is integer
+* T is guaranteed to be in [A,B]
+* T replaces X
+
+  -- ALGLIB --
+     Copyright by Bochkanov Sergey
+*************************************************************************/
+void apperiodicmap(double* x,
+     double a,
+     double b,
+     double* k,
+     ae_state *_state)
+{
+
+    *k = 0;
+
+    ae_assert(ae_fp_less(a,b), "APPeriodicMap: internal error!", _state);
+    *k = ae_ifloor((*x-a)/(b-a), _state);
+    *x = *x-*k*(b-a);
+    while(ae_fp_less(*x,a))
+    {
+        *x = *x+(b-a);
+        *k = *k-1;
+    }
+    while(ae_fp_greater(*x,b))
+    {
+        *x = *x-(b-a);
+        *k = *k+1;
+    }
+    *x = ae_maxreal(*x, a, _state);
+    *x = ae_minreal(*x, b, _state);
+}
+
+
+/*************************************************************************
+'bounds' value: maps X to [B1,B2]
+
+  -- ALGLIB --
+     Copyright 20.03.2009 by Bochkanov Sergey
+*************************************************************************/
+double boundval(double x, double b1, double b2, ae_state *_state)
+{
+    double result;
+
+
+    if( ae_fp_less_eq(x,b1) )
+    {
+        result = b1;
+        return result;
+    }
+    if( ae_fp_greater_eq(x,b2) )
+    {
+        result = b2;
+        return result;
+    }
+    result = x;
+    return result;
+}
+
+
+/*************************************************************************
+Allocation of serializer: complex value
+*************************************************************************/
+void alloccomplex(ae_serializer* s, ae_complex v, ae_state *_state)
+{
+
+
+    ae_serializer_alloc_entry(s);
+    ae_serializer_alloc_entry(s);
+}
+
+
+/*************************************************************************
+Serialization: complex value
+*************************************************************************/
+void serializecomplex(ae_serializer* s, ae_complex v, ae_state *_state)
+{
+
+
+    ae_serializer_serialize_double(s, v.x, _state);
+    ae_serializer_serialize_double(s, v.y, _state);
+}
+
+
+/*************************************************************************
+Unserialization: complex value
+*************************************************************************/
+ae_complex unserializecomplex(ae_serializer* s, ae_state *_state)
+{
+    ae_complex result;
+
+
+    ae_serializer_unserialize_double(s, &result.x, _state);
+    ae_serializer_unserialize_double(s, &result.y, _state);
+    return result;
+}
+
+
+/*************************************************************************
+Allocation of serializer: real array
+*************************************************************************/
+void allocrealarray(ae_serializer* s,
+     /* Real    */ ae_vector* v,
+     ae_int_t n,
+     ae_state *_state)
+{
+    ae_int_t i;
+
+
+    if( n<0 )
+    {
+        n = v->cnt;
+    }
+    ae_serializer_alloc_entry(s);
+    for(i=0; i<=n-1; i++)
+    {
+        ae_serializer_alloc_entry(s);
+    }
+}
+
+
+/*************************************************************************
+Serialization: complex value
+*************************************************************************/
+void serializerealarray(ae_serializer* s,
+     /* Real    */ ae_vector* v,
+     ae_int_t n,
+     ae_state *_state)
+{
+    ae_int_t i;
+
+
+    if( n<0 )
+    {
+        n = v->cnt;
+    }
+    ae_serializer_serialize_int(s, n, _state);
+    for(i=0; i<=n-1; i++)
+    {
+        ae_serializer_serialize_double(s, v->ptr.p_double[i], _state);
+    }
+}
+
+
+/*************************************************************************
+Unserialization: complex value
+*************************************************************************/
+void unserializerealarray(ae_serializer* s,
+     /* Real    */ ae_vector* v,
+     ae_state *_state)
+{
+    ae_int_t n;
+    ae_int_t i;
+    double t;
+
+    ae_vector_clear(v);
+
+    ae_serializer_unserialize_int(s, &n, _state);
+    if( n==0 )
+    {
+        return;
+    }
+    ae_vector_set_length(v, n, _state);
+    for(i=0; i<=n-1; i++)
+    {
+        ae_serializer_unserialize_double(s, &t, _state);
+        v->ptr.p_double[i] = t;
+    }
+}
+
+
+/*************************************************************************
+Allocation of serializer: Integer array
+*************************************************************************/
+void allocintegerarray(ae_serializer* s,
+     /* Integer */ ae_vector* v,
+     ae_int_t n,
+     ae_state *_state)
+{
+    ae_int_t i;
+
+
+    if( n<0 )
+    {
+        n = v->cnt;
+    }
+    ae_serializer_alloc_entry(s);
+    for(i=0; i<=n-1; i++)
+    {
+        ae_serializer_alloc_entry(s);
+    }
+}
+
+
+/*************************************************************************
+Serialization: Integer array
+*************************************************************************/
+void serializeintegerarray(ae_serializer* s,
+     /* Integer */ ae_vector* v,
+     ae_int_t n,
+     ae_state *_state)
+{
+    ae_int_t i;
+
+
+    if( n<0 )
+    {
+        n = v->cnt;
+    }
+    ae_serializer_serialize_int(s, n, _state);
+    for(i=0; i<=n-1; i++)
+    {
+        ae_serializer_serialize_int(s, v->ptr.p_int[i], _state);
+    }
+}
+
+
+/*************************************************************************
+Unserialization: complex value
+*************************************************************************/
+void unserializeintegerarray(ae_serializer* s,
+     /* Integer */ ae_vector* v,
+     ae_state *_state)
+{
+    ae_int_t n;
+    ae_int_t i;
+    ae_int_t t;
+
+    ae_vector_clear(v);
+
+    ae_serializer_unserialize_int(s, &n, _state);
+    if( n==0 )
+    {
+        return;
+    }
+    ae_vector_set_length(v, n, _state);
+    for(i=0; i<=n-1; i++)
+    {
+        ae_serializer_unserialize_int(s, &t, _state);
+        v->ptr.p_int[i] = t;
+    }
+}
+
+
+/*************************************************************************
+Allocation of serializer: real matrix
+*************************************************************************/
+void allocrealmatrix(ae_serializer* s,
+     /* Real    */ ae_matrix* v,
+     ae_int_t n0,
+     ae_int_t n1,
+     ae_state *_state)
+{
+    ae_int_t i;
+    ae_int_t j;
+
+
+    if( n0<0 )
+    {
+        n0 = v->rows;
+    }
+    if( n1<0 )
+    {
+        n1 = v->cols;
+    }
+    ae_serializer_alloc_entry(s);
+    ae_serializer_alloc_entry(s);
+    for(i=0; i<=n0-1; i++)
+    {
+        for(j=0; j<=n1-1; j++)
+        {
+            ae_serializer_alloc_entry(s);
+        }
+    }
+}
+
+
+/*************************************************************************
+Serialization: complex value
+*************************************************************************/
+void serializerealmatrix(ae_serializer* s,
+     /* Real    */ ae_matrix* v,
+     ae_int_t n0,
+     ae_int_t n1,
+     ae_state *_state)
+{
+    ae_int_t i;
+    ae_int_t j;
+
+
+    if( n0<0 )
+    {
+        n0 = v->rows;
+    }
+    if( n1<0 )
+    {
+        n1 = v->cols;
+    }
+    ae_serializer_serialize_int(s, n0, _state);
+    ae_serializer_serialize_int(s, n1, _state);
+    for(i=0; i<=n0-1; i++)
+    {
+        for(j=0; j<=n1-1; j++)
+        {
+            ae_serializer_serialize_double(s, v->ptr.pp_double[i][j], _state);
+        }
+    }
+}
+
+
+/*************************************************************************
+Unserialization: complex value
+*************************************************************************/
+void unserializerealmatrix(ae_serializer* s,
+     /* Real    */ ae_matrix* v,
+     ae_state *_state)
+{
+    ae_int_t i;
+    ae_int_t j;
+    ae_int_t n0;
+    ae_int_t n1;
+    double t;
+
+    ae_matrix_clear(v);
+
+    ae_serializer_unserialize_int(s, &n0, _state);
+    ae_serializer_unserialize_int(s, &n1, _state);
+    if( n0==0||n1==0 )
+    {
+        return;
+    }
+    ae_matrix_set_length(v, n0, n1, _state);
+    for(i=0; i<=n0-1; i++)
+    {
+        for(j=0; j<=n1-1; j++)
+        {
+            ae_serializer_unserialize_double(s, &t, _state);
+            v->ptr.pp_double[i][j] = t;
+        }
+    }
+}
+
+
+/*************************************************************************
+Copy integer array
+*************************************************************************/
+void copyintegerarray(/* Integer */ ae_vector* src,
+     /* Integer */ ae_vector* dst,
+     ae_state *_state)
+{
+    ae_int_t i;
+
+    ae_vector_clear(dst);
+
+    if( src->cnt>0 )
+    {
+        ae_vector_set_length(dst, src->cnt, _state);
+        for(i=0; i<=src->cnt-1; i++)
+        {
+            dst->ptr.p_int[i] = src->ptr.p_int[i];
+        }
+    }
+}
+
+
+/*************************************************************************
+Copy real array
+*************************************************************************/
+void copyrealarray(/* Real    */ ae_vector* src,
+     /* Real    */ ae_vector* dst,
+     ae_state *_state)
+{
+    ae_int_t i;
+
+    ae_vector_clear(dst);
+
+    if( src->cnt>0 )
+    {
+        ae_vector_set_length(dst, src->cnt, _state);
+        for(i=0; i<=src->cnt-1; i++)
+        {
+            dst->ptr.p_double[i] = src->ptr.p_double[i];
+        }
+    }
+}
+
+
+/*************************************************************************
+Copy real matrix
+*************************************************************************/
+void copyrealmatrix(/* Real    */ ae_matrix* src,
+     /* Real    */ ae_matrix* dst,
+     ae_state *_state)
+{
+    ae_int_t i;
+    ae_int_t j;
+
+    ae_matrix_clear(dst);
+
+    if( src->rows>0&&src->cols>0 )
+    {
+        ae_matrix_set_length(dst, src->rows, src->cols, _state);
+        for(i=0; i<=src->rows-1; i++)
+        {
+            for(j=0; j<=src->cols-1; j++)
+            {
+                dst->ptr.pp_double[i][j] = src->ptr.pp_double[i][j];
+            }
+        }
+    }
+}
+
+
+/*************************************************************************
+This function searches integer array. Elements in this array are actually
+records, each NRec elements wide. Each record has unique header - NHeader
+integer values, which identify it. Records are lexicographically sorted by
+header.
+
+Records are identified by their index, not offset (offset = NRec*index).
+
+This function searches A (records with indices [I0,I1)) for a record with
+header B. It returns index of this record (not offset!), or -1 on failure.
+
+  -- ALGLIB --
+     Copyright 28.03.2011 by Bochkanov Sergey
+*************************************************************************/
+ae_int_t recsearch(/* Integer */ ae_vector* a,
+     ae_int_t nrec,
+     ae_int_t nheader,
+     ae_int_t i0,
+     ae_int_t i1,
+     /* Integer */ ae_vector* b,
+     ae_state *_state)
+{
+    ae_int_t mididx;
+    ae_int_t cflag;
+    ae_int_t k;
+    ae_int_t offs;
+    ae_int_t result;
+
+
+    result = -1;
+    for(;;)
+    {
+        if( i0>=i1 )
+        {
+            break;
+        }
+        mididx = (i0+i1)/2;
+        offs = nrec*mididx;
+        cflag = 0;
+        for(k=0; k<=nheader-1; k++)
+        {
+            if( a->ptr.p_int[offs+k]<b->ptr.p_int[k] )
+            {
+                cflag = -1;
+                break;
+            }
+            if( a->ptr.p_int[offs+k]>b->ptr.p_int[k] )
+            {
+                cflag = 1;
+                break;
+            }
+        }
+        if( cflag==0 )
+        {
+            result = mididx;
+            return result;
+        }
+        if( cflag<0 )
+        {
+            i0 = mididx+1;
+        }
+        else
+        {
+            i1 = mididx;
+        }
+    }
+    return result;
+}
+
+
+ae_bool _apbuffers_init(apbuffers* p, ae_state *_state, ae_bool make_automatic)
+{
+    if( !ae_vector_init(&p->ia0, 0, DT_INT, _state, make_automatic) )
+        return ae_false;
+    if( !ae_vector_init(&p->ia1, 0, DT_INT, _state, make_automatic) )
+        return ae_false;
+    if( !ae_vector_init(&p->ia2, 0, DT_INT, _state, make_automatic) )
+        return ae_false;
+    if( !ae_vector_init(&p->ia3, 0, DT_INT, _state, make_automatic) )
+        return ae_false;
+    if( !ae_vector_init(&p->ra0, 0, DT_REAL, _state, make_automatic) )
+        return ae_false;
+    if( !ae_vector_init(&p->ra1, 0, DT_REAL, _state, make_automatic) )
+        return ae_false;
+    if( !ae_vector_init(&p->ra2, 0, DT_REAL, _state, make_automatic) )
+        return ae_false;
+    if( !ae_vector_init(&p->ra3, 0, DT_REAL, _state, make_automatic) )
+        return ae_false;
+    return ae_true;
+}
+
+
+ae_bool _apbuffers_init_copy(apbuffers* dst, apbuffers* src, ae_state *_state, ae_bool make_automatic)
+{
+    if( !ae_vector_init_copy(&dst->ia0, &src->ia0, _state, make_automatic) )
+        return ae_false;
+    if( !ae_vector_init_copy(&dst->ia1, &src->ia1, _state, make_automatic) )
+        return ae_false;
+    if( !ae_vector_init_copy(&dst->ia2, &src->ia2, _state, make_automatic) )
+        return ae_false;
+    if( !ae_vector_init_copy(&dst->ia3, &src->ia3, _state, make_automatic) )
+        return ae_false;
+    if( !ae_vector_init_copy(&dst->ra0, &src->ra0, _state, make_automatic) )
+        return ae_false;
+    if( !ae_vector_init_copy(&dst->ra1, &src->ra1, _state, make_automatic) )
+        return ae_false;
+    if( !ae_vector_init_copy(&dst->ra2, &src->ra2, _state, make_automatic) )
+        return ae_false;
+    if( !ae_vector_init_copy(&dst->ra3, &src->ra3, _state, make_automatic) )
+        return ae_false;
+    return ae_true;
+}
+
+
+void _apbuffers_clear(apbuffers* p)
+{
+    ae_vector_clear(&p->ia0);
+    ae_vector_clear(&p->ia1);
+    ae_vector_clear(&p->ia2);
+    ae_vector_clear(&p->ia3);
+    ae_vector_clear(&p->ra0);
+    ae_vector_clear(&p->ra1);
+    ae_vector_clear(&p->ra2);
+    ae_vector_clear(&p->ra3);
+}
+
+
+
+
 /*************************************************************************
 This function sorts array of real keys by ascending.
 
@@ -284,23 +1700,43 @@ void tagsort(/* Real    */ ae_vector* a,
      ae_state *_state)
 {
     ae_frame _frame_block;
+    apbuffers buf;
+
+    ae_frame_make(_state, &_frame_block);
+    ae_vector_clear(p1);
+    ae_vector_clear(p2);
+    _apbuffers_init(&buf, _state, ae_true);
+
+    tagsortbuf(a, n, p1, p2, &buf, _state);
+    ae_frame_leave(_state);
+}
+
+
+/*************************************************************************
+Buffered variant of TagSort, which accepts preallocated output arrays as
+well as special structure for buffered allocations. If arrays are too
+short, they are reallocated. If they are large enough, no memory
+allocation is done.
+
+It is intended to be used in the performance-critical parts of code, where
+additional allocations can lead to severe performance degradation
+
+  -- ALGLIB --
+     Copyright 14.05.2008 by Bochkanov Sergey
+*************************************************************************/
+void tagsortbuf(/* Real    */ ae_vector* a,
+     ae_int_t n,
+     /* Integer */ ae_vector* p1,
+     /* Integer */ ae_vector* p2,
+     apbuffers* buf,
+     ae_state *_state)
+{
     ae_int_t i;
-    ae_vector pv;
-    ae_vector vp;
-    ae_vector bufa;
-    ae_vector bufb;
     ae_int_t lv;
     ae_int_t lp;
     ae_int_t rv;
     ae_int_t rp;
 
-    ae_frame_make(_state, &_frame_block);
-    ae_vector_clear(p1);
-    ae_vector_clear(p2);
-    ae_vector_init(&pv, 0, DT_INT, _state, ae_true);
-    ae_vector_init(&vp, 0, DT_INT, _state, ae_true);
-    ae_vector_init(&bufa, 0, DT_REAL, _state, ae_true);
-    ae_vector_init(&bufb, 0, DT_INT, _state, ae_true);
 
     
     /*
@@ -308,23 +1744,21 @@ void tagsort(/* Real    */ ae_vector* a,
      */
     if( n<=0 )
     {
-        ae_frame_leave(_state);
         return;
     }
     if( n==1 )
     {
-        ae_vector_set_length(p1, 0+1, _state);
-        ae_vector_set_length(p2, 0+1, _state);
+        ivectorsetlengthatleast(p1, 1, _state);
+        ivectorsetlengthatleast(p2, 1, _state);
         p1->ptr.p_int[0] = 0;
         p2->ptr.p_int[0] = 0;
-        ae_frame_leave(_state);
         return;
     }
     
     /*
      * General case, N>1: prepare permutations table P1
      */
-    ae_vector_set_length(p1, n-1+1, _state);
+    ivectorsetlengthatleast(p1, n, _state);
     for(i=0; i<=n-1; i++)
     {
         p1->ptr.p_int[i] = i;
@@ -333,29 +1767,29 @@ void tagsort(/* Real    */ ae_vector* a,
     /*
      * General case, N>1: sort, update P1
      */
-    ae_vector_set_length(&bufa, n, _state);
-    ae_vector_set_length(&bufb, n, _state);
-    tagsortfasti(a, p1, &bufa, &bufb, n, _state);
+    rvectorsetlengthatleast(&buf->ra0, n, _state);
+    ivectorsetlengthatleast(&buf->ia0, n, _state);
+    tagsortfasti(a, p1, &buf->ra0, &buf->ia0, n, _state);
     
     /*
      * General case, N>1: fill permutations table P2
      *
      * To fill P2 we maintain two arrays:
-     * * PV, Position(Value). PV[i] contains position of I-th key at the moment
-     * * VP, Value(Position). VP[i] contains key which has position I at the moment
+     * * PV (Buf.IA0), Position(Value). PV[i] contains position of I-th key at the moment
+     * * VP (Buf.IA1), Value(Position). VP[i] contains key which has position I at the moment
      *
      * At each step we making permutation of two items:
      *   Left, which is given by position/value pair LP/LV
      *   and Right, which is given by RP/RV
      * and updating PV[] and VP[] correspondingly.
      */
-    ae_vector_set_length(&pv, n-1+1, _state);
-    ae_vector_set_length(&vp, n-1+1, _state);
-    ae_vector_set_length(p2, n-1+1, _state);
+    ivectorsetlengthatleast(&buf->ia0, n, _state);
+    ivectorsetlengthatleast(&buf->ia1, n, _state);
+    ivectorsetlengthatleast(p2, n, _state);
     for(i=0; i<=n-1; i++)
     {
-        pv.ptr.p_int[i] = i;
-        vp.ptr.p_int[i] = i;
+        buf->ia0.ptr.p_int[i] = i;
+        buf->ia1.ptr.p_int[i] = i;
     }
     for(i=0; i<=n-1; i++)
     {
@@ -364,9 +1798,9 @@ void tagsort(/* Real    */ ae_vector* a,
          * calculate LP, LV, RP, RV
          */
         lp = i;
-        lv = vp.ptr.p_int[lp];
+        lv = buf->ia1.ptr.p_int[lp];
         rv = p1->ptr.p_int[i];
-        rp = pv.ptr.p_int[rv];
+        rp = buf->ia0.ptr.p_int[rv];
         
         /*
          * Fill P2
@@ -376,12 +1810,11 @@ void tagsort(/* Real    */ ae_vector* a,
         /*
          * update PV and VP
          */
-        vp.ptr.p_int[lp] = rv;
-        vp.ptr.p_int[rp] = lv;
-        pv.ptr.p_int[lv] = rp;
-        pv.ptr.p_int[rv] = lp;
+        buf->ia1.ptr.p_int[lp] = rv;
+        buf->ia1.ptr.p_int[rp] = lv;
+        buf->ia0.ptr.p_int[lv] = rp;
+        buf->ia0.ptr.p_int[rv] = lp;
     }
-    ae_frame_leave(_state);
 }
 
 
@@ -1428,880 +2861,6 @@ static void tsort_tagsortfastrec(/* Real    */ ae_vector* a,
      */
     tsort_tagsortfastrec(a, bufa, i1, i1+cntless-1, _state);
     tsort_tagsortfastrec(a, bufa, i1+cntless+cnteq, i2, _state);
-}
-
-
-
-
-/*************************************************************************
-This  function  generates  1-dimensional  general  interpolation task with
-moderate Lipshitz constant (close to 1.0)
-
-If N=1 then suborutine generates only one point at the middle of [A,B]
-
-  -- ALGLIB --
-     Copyright 02.12.2009 by Bochkanov Sergey
-*************************************************************************/
-void taskgenint1d(double a,
-     double b,
-     ae_int_t n,
-     /* Real    */ ae_vector* x,
-     /* Real    */ ae_vector* y,
-     ae_state *_state)
-{
-    ae_int_t i;
-    double h;
-
-    ae_vector_clear(x);
-    ae_vector_clear(y);
-
-    ae_assert(n>=1, "TaskGenInterpolationEqdist1D: N<1!", _state);
-    ae_vector_set_length(x, n, _state);
-    ae_vector_set_length(y, n, _state);
-    if( n>1 )
-    {
-        x->ptr.p_double[0] = a;
-        y->ptr.p_double[0] = 2*ae_randomreal(_state)-1;
-        h = (b-a)/(n-1);
-        for(i=1; i<=n-1; i++)
-        {
-            if( i!=n-1 )
-            {
-                x->ptr.p_double[i] = a+(i+0.2*(2*ae_randomreal(_state)-1))*h;
-            }
-            else
-            {
-                x->ptr.p_double[i] = b;
-            }
-            y->ptr.p_double[i] = y->ptr.p_double[i-1]+(2*ae_randomreal(_state)-1)*(x->ptr.p_double[i]-x->ptr.p_double[i-1]);
-        }
-    }
-    else
-    {
-        x->ptr.p_double[0] = 0.5*(a+b);
-        y->ptr.p_double[0] = 2*ae_randomreal(_state)-1;
-    }
-}
-
-
-/*************************************************************************
-This function generates  1-dimensional equidistant interpolation task with
-moderate Lipshitz constant (close to 1.0)
-
-If N=1 then suborutine generates only one point at the middle of [A,B]
-
-  -- ALGLIB --
-     Copyright 02.12.2009 by Bochkanov Sergey
-*************************************************************************/
-void taskgenint1dequidist(double a,
-     double b,
-     ae_int_t n,
-     /* Real    */ ae_vector* x,
-     /* Real    */ ae_vector* y,
-     ae_state *_state)
-{
-    ae_int_t i;
-    double h;
-
-    ae_vector_clear(x);
-    ae_vector_clear(y);
-
-    ae_assert(n>=1, "TaskGenInterpolationEqdist1D: N<1!", _state);
-    ae_vector_set_length(x, n, _state);
-    ae_vector_set_length(y, n, _state);
-    if( n>1 )
-    {
-        x->ptr.p_double[0] = a;
-        y->ptr.p_double[0] = 2*ae_randomreal(_state)-1;
-        h = (b-a)/(n-1);
-        for(i=1; i<=n-1; i++)
-        {
-            x->ptr.p_double[i] = a+i*h;
-            y->ptr.p_double[i] = y->ptr.p_double[i-1]+(2*ae_randomreal(_state)-1)*h;
-        }
-    }
-    else
-    {
-        x->ptr.p_double[0] = 0.5*(a+b);
-        y->ptr.p_double[0] = 2*ae_randomreal(_state)-1;
-    }
-}
-
-
-/*************************************************************************
-This function generates  1-dimensional Chebyshev-1 interpolation task with
-moderate Lipshitz constant (close to 1.0)
-
-If N=1 then suborutine generates only one point at the middle of [A,B]
-
-  -- ALGLIB --
-     Copyright 02.12.2009 by Bochkanov Sergey
-*************************************************************************/
-void taskgenint1dcheb1(double a,
-     double b,
-     ae_int_t n,
-     /* Real    */ ae_vector* x,
-     /* Real    */ ae_vector* y,
-     ae_state *_state)
-{
-    ae_int_t i;
-
-    ae_vector_clear(x);
-    ae_vector_clear(y);
-
-    ae_assert(n>=1, "TaskGenInterpolation1DCheb1: N<1!", _state);
-    ae_vector_set_length(x, n, _state);
-    ae_vector_set_length(y, n, _state);
-    if( n>1 )
-    {
-        for(i=0; i<=n-1; i++)
-        {
-            x->ptr.p_double[i] = 0.5*(b+a)+0.5*(b-a)*ae_cos(ae_pi*(2*i+1)/(2*n), _state);
-            if( i==0 )
-            {
-                y->ptr.p_double[i] = 2*ae_randomreal(_state)-1;
-            }
-            else
-            {
-                y->ptr.p_double[i] = y->ptr.p_double[i-1]+(2*ae_randomreal(_state)-1)*(x->ptr.p_double[i]-x->ptr.p_double[i-1]);
-            }
-        }
-    }
-    else
-    {
-        x->ptr.p_double[0] = 0.5*(a+b);
-        y->ptr.p_double[0] = 2*ae_randomreal(_state)-1;
-    }
-}
-
-
-/*************************************************************************
-This function generates  1-dimensional Chebyshev-2 interpolation task with
-moderate Lipshitz constant (close to 1.0)
-
-If N=1 then suborutine generates only one point at the middle of [A,B]
-
-  -- ALGLIB --
-     Copyright 02.12.2009 by Bochkanov Sergey
-*************************************************************************/
-void taskgenint1dcheb2(double a,
-     double b,
-     ae_int_t n,
-     /* Real    */ ae_vector* x,
-     /* Real    */ ae_vector* y,
-     ae_state *_state)
-{
-    ae_int_t i;
-
-    ae_vector_clear(x);
-    ae_vector_clear(y);
-
-    ae_assert(n>=1, "TaskGenInterpolation1DCheb2: N<1!", _state);
-    ae_vector_set_length(x, n, _state);
-    ae_vector_set_length(y, n, _state);
-    if( n>1 )
-    {
-        for(i=0; i<=n-1; i++)
-        {
-            x->ptr.p_double[i] = 0.5*(b+a)+0.5*(b-a)*ae_cos(ae_pi*i/(n-1), _state);
-            if( i==0 )
-            {
-                y->ptr.p_double[i] = 2*ae_randomreal(_state)-1;
-            }
-            else
-            {
-                y->ptr.p_double[i] = y->ptr.p_double[i-1]+(2*ae_randomreal(_state)-1)*(x->ptr.p_double[i]-x->ptr.p_double[i-1]);
-            }
-        }
-    }
-    else
-    {
-        x->ptr.p_double[0] = 0.5*(a+b);
-        y->ptr.p_double[0] = 2*ae_randomreal(_state)-1;
-    }
-}
-
-
-/*************************************************************************
-This function checks that all values from X[] are distinct. It does more
-than just usual floating point comparison:
-* first, it calculates max(X) and min(X)
-* second, it maps X[] from [min,max] to [1,2]
-* only at this stage actual comparison is done
-
-The meaning of such check is to ensure that all values are "distinct enough"
-and will not cause interpolation subroutine to fail.
-
-NOTE:
-    X[] must be sorted by ascending (subroutine ASSERT's it)
-
-  -- ALGLIB --
-     Copyright 02.12.2009 by Bochkanov Sergey
-*************************************************************************/
-ae_bool aredistinct(/* Real    */ ae_vector* x,
-     ae_int_t n,
-     ae_state *_state)
-{
-    double a;
-    double b;
-    ae_int_t i;
-    ae_bool nonsorted;
-    ae_bool result;
-
-
-    ae_assert(n>=1, "APSERVAreDistinct: internal error (N<1)", _state);
-    if( n==1 )
-    {
-        
-        /*
-         * everything is alright, it is up to caller to decide whether it
-         * can interpolate something with just one point
-         */
-        result = ae_true;
-        return result;
-    }
-    a = x->ptr.p_double[0];
-    b = x->ptr.p_double[0];
-    nonsorted = ae_false;
-    for(i=1; i<=n-1; i++)
-    {
-        a = ae_minreal(a, x->ptr.p_double[i], _state);
-        b = ae_maxreal(b, x->ptr.p_double[i], _state);
-        nonsorted = nonsorted||ae_fp_greater_eq(x->ptr.p_double[i-1],x->ptr.p_double[i]);
-    }
-    ae_assert(!nonsorted, "APSERVAreDistinct: internal error (not sorted)", _state);
-    for(i=1; i<=n-1; i++)
-    {
-        if( ae_fp_eq((x->ptr.p_double[i]-a)/(b-a)+1,(x->ptr.p_double[i-1]-a)/(b-a)+1) )
-        {
-            result = ae_false;
-            return result;
-        }
-    }
-    result = ae_true;
-    return result;
-}
-
-
-/*************************************************************************
-If Length(X)<N, resizes X
-
-  -- ALGLIB --
-     Copyright 20.03.2009 by Bochkanov Sergey
-*************************************************************************/
-void bvectorsetlengthatleast(/* Boolean */ ae_vector* x,
-     ae_int_t n,
-     ae_state *_state)
-{
-
-
-    if( x->cnt<n )
-    {
-        ae_vector_set_length(x, n, _state);
-    }
-}
-
-
-/*************************************************************************
-If Length(X)<N, resizes X
-
-  -- ALGLIB --
-     Copyright 20.03.2009 by Bochkanov Sergey
-*************************************************************************/
-void rvectorsetlengthatleast(/* Real    */ ae_vector* x,
-     ae_int_t n,
-     ae_state *_state)
-{
-
-
-    if( x->cnt<n )
-    {
-        ae_vector_set_length(x, n, _state);
-    }
-}
-
-
-/*************************************************************************
-If Cols(X)<N or Rows(X)<M, resizes X
-
-  -- ALGLIB --
-     Copyright 20.03.2009 by Bochkanov Sergey
-*************************************************************************/
-void rmatrixsetlengthatleast(/* Real    */ ae_matrix* x,
-     ae_int_t m,
-     ae_int_t n,
-     ae_state *_state)
-{
-
-
-    if( x->rows<m||x->cols<n )
-    {
-        ae_matrix_set_length(x, m, n, _state);
-    }
-}
-
-
-/*************************************************************************
-This function checks that all values from X[] are finite
-
-  -- ALGLIB --
-     Copyright 18.06.2010 by Bochkanov Sergey
-*************************************************************************/
-ae_bool isfinitevector(/* Real    */ ae_vector* x,
-     ae_int_t n,
-     ae_state *_state)
-{
-    ae_int_t i;
-    ae_bool result;
-
-
-    ae_assert(n>=0, "APSERVIsFiniteVector: internal error (N<0)", _state);
-    for(i=0; i<=n-1; i++)
-    {
-        if( !ae_isfinite(x->ptr.p_double[i], _state) )
-        {
-            result = ae_false;
-            return result;
-        }
-    }
-    result = ae_true;
-    return result;
-}
-
-
-/*************************************************************************
-This function checks that all values from X[] are finite
-
-  -- ALGLIB --
-     Copyright 18.06.2010 by Bochkanov Sergey
-*************************************************************************/
-ae_bool isfinitecvector(/* Complex */ ae_vector* z,
-     ae_int_t n,
-     ae_state *_state)
-{
-    ae_int_t i;
-    ae_bool result;
-
-
-    ae_assert(n>=0, "APSERVIsFiniteCVector: internal error (N<0)", _state);
-    for(i=0; i<=n-1; i++)
-    {
-        if( !ae_isfinite(z->ptr.p_complex[i].x, _state)||!ae_isfinite(z->ptr.p_complex[i].y, _state) )
-        {
-            result = ae_false;
-            return result;
-        }
-    }
-    result = ae_true;
-    return result;
-}
-
-
-/*************************************************************************
-This function checks that all values from X[0..M-1,0..N-1] are finite
-
-  -- ALGLIB --
-     Copyright 18.06.2010 by Bochkanov Sergey
-*************************************************************************/
-ae_bool apservisfinitematrix(/* Real    */ ae_matrix* x,
-     ae_int_t m,
-     ae_int_t n,
-     ae_state *_state)
-{
-    ae_int_t i;
-    ae_int_t j;
-    ae_bool result;
-
-
-    ae_assert(n>=0, "APSERVIsFiniteMatrix: internal error (N<0)", _state);
-    ae_assert(m>=0, "APSERVIsFiniteMatrix: internal error (M<0)", _state);
-    for(i=0; i<=m-1; i++)
-    {
-        for(j=0; j<=n-1; j++)
-        {
-            if( !ae_isfinite(x->ptr.pp_double[i][j], _state) )
-            {
-                result = ae_false;
-                return result;
-            }
-        }
-    }
-    result = ae_true;
-    return result;
-}
-
-
-/*************************************************************************
-This function checks that all values from X[0..M-1,0..N-1] are finite
-
-  -- ALGLIB --
-     Copyright 18.06.2010 by Bochkanov Sergey
-*************************************************************************/
-ae_bool apservisfinitecmatrix(/* Complex */ ae_matrix* x,
-     ae_int_t m,
-     ae_int_t n,
-     ae_state *_state)
-{
-    ae_int_t i;
-    ae_int_t j;
-    ae_bool result;
-
-
-    ae_assert(n>=0, "APSERVIsFiniteCMatrix: internal error (N<0)", _state);
-    ae_assert(m>=0, "APSERVIsFiniteCMatrix: internal error (M<0)", _state);
-    for(i=0; i<=m-1; i++)
-    {
-        for(j=0; j<=n-1; j++)
-        {
-            if( !ae_isfinite(x->ptr.pp_complex[i][j].x, _state)||!ae_isfinite(x->ptr.pp_complex[i][j].y, _state) )
-            {
-                result = ae_false;
-                return result;
-            }
-        }
-    }
-    result = ae_true;
-    return result;
-}
-
-
-/*************************************************************************
-This function checks that all values from upper/lower triangle of
-X[0..N-1,0..N-1] are finite
-
-  -- ALGLIB --
-     Copyright 18.06.2010 by Bochkanov Sergey
-*************************************************************************/
-ae_bool isfinitertrmatrix(/* Real    */ ae_matrix* x,
-     ae_int_t n,
-     ae_bool isupper,
-     ae_state *_state)
-{
-    ae_int_t i;
-    ae_int_t j1;
-    ae_int_t j2;
-    ae_int_t j;
-    ae_bool result;
-
-
-    ae_assert(n>=0, "APSERVIsFiniteRTRMatrix: internal error (N<0)", _state);
-    for(i=0; i<=n-1; i++)
-    {
-        if( isupper )
-        {
-            j1 = i;
-            j2 = n-1;
-        }
-        else
-        {
-            j1 = 0;
-            j2 = i;
-        }
-        for(j=j1; j<=j2; j++)
-        {
-            if( !ae_isfinite(x->ptr.pp_double[i][j], _state) )
-            {
-                result = ae_false;
-                return result;
-            }
-        }
-    }
-    result = ae_true;
-    return result;
-}
-
-
-/*************************************************************************
-This function checks that all values from upper/lower triangle of
-X[0..N-1,0..N-1] are finite
-
-  -- ALGLIB --
-     Copyright 18.06.2010 by Bochkanov Sergey
-*************************************************************************/
-ae_bool apservisfinitectrmatrix(/* Complex */ ae_matrix* x,
-     ae_int_t n,
-     ae_bool isupper,
-     ae_state *_state)
-{
-    ae_int_t i;
-    ae_int_t j1;
-    ae_int_t j2;
-    ae_int_t j;
-    ae_bool result;
-
-
-    ae_assert(n>=0, "APSERVIsFiniteCTRMatrix: internal error (N<0)", _state);
-    for(i=0; i<=n-1; i++)
-    {
-        if( isupper )
-        {
-            j1 = i;
-            j2 = n-1;
-        }
-        else
-        {
-            j1 = 0;
-            j2 = i;
-        }
-        for(j=j1; j<=j2; j++)
-        {
-            if( !ae_isfinite(x->ptr.pp_complex[i][j].x, _state)||!ae_isfinite(x->ptr.pp_complex[i][j].y, _state) )
-            {
-                result = ae_false;
-                return result;
-            }
-        }
-    }
-    result = ae_true;
-    return result;
-}
-
-
-/*************************************************************************
-This function checks that all values from X[0..M-1,0..N-1] are  finite  or
-NaN's.
-
-  -- ALGLIB --
-     Copyright 18.06.2010 by Bochkanov Sergey
-*************************************************************************/
-ae_bool apservisfiniteornanmatrix(/* Real    */ ae_matrix* x,
-     ae_int_t m,
-     ae_int_t n,
-     ae_state *_state)
-{
-    ae_int_t i;
-    ae_int_t j;
-    ae_bool result;
-
-
-    ae_assert(n>=0, "APSERVIsFiniteOrNaNMatrix: internal error (N<0)", _state);
-    ae_assert(m>=0, "APSERVIsFiniteOrNaNMatrix: internal error (M<0)", _state);
-    for(i=0; i<=m-1; i++)
-    {
-        for(j=0; j<=n-1; j++)
-        {
-            if( !(ae_isfinite(x->ptr.pp_double[i][j], _state)||ae_isnan(x->ptr.pp_double[i][j], _state)) )
-            {
-                result = ae_false;
-                return result;
-            }
-        }
-    }
-    result = ae_true;
-    return result;
-}
-
-
-/*************************************************************************
-Safe sqrt(x^2+y^2)
-
-  -- ALGLIB --
-     Copyright by Bochkanov Sergey
-*************************************************************************/
-double safepythag2(double x, double y, ae_state *_state)
-{
-    double w;
-    double xabs;
-    double yabs;
-    double z;
-    double result;
-
-
-    xabs = ae_fabs(x, _state);
-    yabs = ae_fabs(y, _state);
-    w = ae_maxreal(xabs, yabs, _state);
-    z = ae_minreal(xabs, yabs, _state);
-    if( ae_fp_eq(z,0) )
-    {
-        result = w;
-    }
-    else
-    {
-        result = w*ae_sqrt(1+ae_sqr(z/w, _state), _state);
-    }
-    return result;
-}
-
-
-/*************************************************************************
-Safe sqrt(x^2+y^2)
-
-  -- ALGLIB --
-     Copyright by Bochkanov Sergey
-*************************************************************************/
-double safepythag3(double x, double y, double z, ae_state *_state)
-{
-    double w;
-    double result;
-
-
-    w = ae_maxreal(ae_fabs(x, _state), ae_maxreal(ae_fabs(y, _state), ae_fabs(z, _state), _state), _state);
-    if( ae_fp_eq(w,0) )
-    {
-        result = 0;
-        return result;
-    }
-    x = x/w;
-    y = y/w;
-    z = z/w;
-    result = w*ae_sqrt(ae_sqr(x, _state)+ae_sqr(y, _state)+ae_sqr(z, _state), _state);
-    return result;
-}
-
-
-/*************************************************************************
-Safe division.
-
-This function attempts to calculate R=X/Y without overflow.
-
-It returns:
-* +1, if abs(X/Y)>=MaxRealNumber or undefined - overflow-like situation
-      (no overlfow is generated, R is either NAN, PosINF, NegINF)
-*  0, if MinRealNumber<abs(X/Y)<MaxRealNumber or X=0, Y<>0
-      (R contains result, may be zero)
-* -1, if 0<abs(X/Y)<MinRealNumber - underflow-like situation
-      (R contains zero; it corresponds to underflow)
-
-No overflow is generated in any case.
-
-  -- ALGLIB --
-     Copyright by Bochkanov Sergey
-*************************************************************************/
-ae_int_t saferdiv(double x, double y, double* r, ae_state *_state)
-{
-    ae_int_t result;
-
-    *r = 0;
-
-    
-    /*
-     * Two special cases:
-     * * Y=0
-     * * X=0 and Y<>0
-     */
-    if( ae_fp_eq(y,0) )
-    {
-        result = 1;
-        if( ae_fp_eq(x,0) )
-        {
-            *r = _state->v_nan;
-        }
-        if( ae_fp_greater(x,0) )
-        {
-            *r = _state->v_posinf;
-        }
-        if( ae_fp_less(x,0) )
-        {
-            *r = _state->v_neginf;
-        }
-        return result;
-    }
-    if( ae_fp_eq(x,0) )
-    {
-        *r = 0;
-        result = 0;
-        return result;
-    }
-    
-    /*
-     * make Y>0
-     */
-    if( ae_fp_less(y,0) )
-    {
-        x = -x;
-        y = -y;
-    }
-    
-    /*
-     *
-     */
-    if( ae_fp_greater_eq(y,1) )
-    {
-        *r = x/y;
-        if( ae_fp_less_eq(ae_fabs(*r, _state),ae_minrealnumber) )
-        {
-            result = -1;
-            *r = 0;
-        }
-        else
-        {
-            result = 0;
-        }
-    }
-    else
-    {
-        if( ae_fp_greater_eq(ae_fabs(x, _state),ae_maxrealnumber*y) )
-        {
-            if( ae_fp_greater(x,0) )
-            {
-                *r = _state->v_posinf;
-            }
-            else
-            {
-                *r = _state->v_neginf;
-            }
-            result = 1;
-        }
-        else
-        {
-            *r = x/y;
-            result = 0;
-        }
-    }
-    return result;
-}
-
-
-/*************************************************************************
-This function calculates "safe" min(X/Y,V) for positive finite X, Y, V.
-No overflow is generated in any case.
-
-  -- ALGLIB --
-     Copyright by Bochkanov Sergey
-*************************************************************************/
-double safeminposrv(double x, double y, double v, ae_state *_state)
-{
-    double r;
-    double result;
-
-
-    if( ae_fp_greater_eq(y,1) )
-    {
-        
-        /*
-         * Y>=1, we can safely divide by Y
-         */
-        r = x/y;
-        result = v;
-        if( ae_fp_greater(v,r) )
-        {
-            result = r;
-        }
-        else
-        {
-            result = v;
-        }
-    }
-    else
-    {
-        
-        /*
-         * Y<1, we can safely multiply by Y
-         */
-        if( ae_fp_less(x,v*y) )
-        {
-            result = x/y;
-        }
-        else
-        {
-            result = v;
-        }
-    }
-    return result;
-}
-
-
-/*************************************************************************
-This function makes periodic mapping of X to [A,B].
-
-It accepts X, A, B (A>B). It returns T which lies in  [A,B] and integer K,
-such that X = T + K*(B-A).
-
-NOTES:
-* K is represented as real value, although actually it is integer
-* T is guaranteed to be in [A,B]
-* T replaces X
-
-  -- ALGLIB --
-     Copyright by Bochkanov Sergey
-*************************************************************************/
-void apperiodicmap(double* x,
-     double a,
-     double b,
-     double* k,
-     ae_state *_state)
-{
-
-    *k = 0;
-
-    ae_assert(ae_fp_less(a,b), "APPeriodicMap: internal error!", _state);
-    *k = ae_ifloor((*x-a)/(b-a), _state);
-    *x = *x-*k*(b-a);
-    while(ae_fp_less(*x,a))
-    {
-        *x = *x+(b-a);
-        *k = *k-1;
-    }
-    while(ae_fp_greater(*x,b))
-    {
-        *x = *x-(b-a);
-        *k = *k+1;
-    }
-    *x = ae_maxreal(*x, a, _state);
-    *x = ae_minreal(*x, b, _state);
-}
-
-
-/*************************************************************************
-'bounds' value: maps X to [B1,B2]
-
-  -- ALGLIB --
-     Copyright 20.03.2009 by Bochkanov Sergey
-*************************************************************************/
-double boundval(double x, double b1, double b2, ae_state *_state)
-{
-    double result;
-
-
-    if( ae_fp_less_eq(x,b1) )
-    {
-        result = b1;
-        return result;
-    }
-    if( ae_fp_greater_eq(x,b2) )
-    {
-        result = b2;
-        return result;
-    }
-    result = x;
-    return result;
-}
-
-
-ae_bool _apbuffers_init(apbuffers* p, ae_state *_state, ae_bool make_automatic)
-{
-    if( !ae_vector_init(&p->ia1, 0, DT_INT, _state, make_automatic) )
-        return ae_false;
-    if( !ae_vector_init(&p->ia2, 0, DT_INT, _state, make_automatic) )
-        return ae_false;
-    if( !ae_vector_init(&p->ra1, 0, DT_REAL, _state, make_automatic) )
-        return ae_false;
-    if( !ae_vector_init(&p->ra2, 0, DT_REAL, _state, make_automatic) )
-        return ae_false;
-    return ae_true;
-}
-
-
-ae_bool _apbuffers_init_copy(apbuffers* dst, apbuffers* src, ae_state *_state, ae_bool make_automatic)
-{
-    if( !ae_vector_init_copy(&dst->ia1, &src->ia1, _state, make_automatic) )
-        return ae_false;
-    if( !ae_vector_init_copy(&dst->ia2, &src->ia2, _state, make_automatic) )
-        return ae_false;
-    if( !ae_vector_init_copy(&dst->ra1, &src->ra1, _state, make_automatic) )
-        return ae_false;
-    if( !ae_vector_init_copy(&dst->ra2, &src->ra2, _state, make_automatic) )
-        return ae_false;
-    return ae_true;
-}
-
-
-void _apbuffers_clear(apbuffers* p)
-{
-    ae_vector_clear(&p->ia1);
-    ae_vector_clear(&p->ia2);
-    ae_vector_clear(&p->ra1);
-    ae_vector_clear(&p->ra2);
 }
 
 
@@ -7911,6 +8470,22 @@ IF  NO  STEP  CAN BE FOUND  WHICH  SATISFIES  BOTH  CONDITIONS,  THEN  THE
 ALGORITHM  USUALLY STOPS  WHEN  ROUNDING ERRORS  PREVENT FURTHER PROGRESS.
 IN THIS CASE STP ONLY SATISFIES THE SUFFICIENT DECREASE CONDITION.
 
+
+:::::::::::::IMPORTANT NOTES:::::::::::::
+
+NOTE 1:
+
+This routine  guarantees that it will stop at the last point where function
+value was calculated. It won't make several additional function evaluations
+after finding good point. So if you store function evaluations requested by
+this routine, you can be sure that last one is the point where we've stopped.
+
+NOTE 2:
+
+when 0<StpMax<StpMin, algorithm will terminate with INFO=5 and Stp=0.0
+:::::::::::::::::::::::::::::::::::::::::
+
+
 PARAMETERS DESCRIPRION
 
 STAGE IS ZERO ON FIRST CALL, ZERO ON FINAL EXIT
@@ -7978,6 +8553,7 @@ void mcsrch(ae_int_t n,
      /* Real    */ ae_vector* s,
      double* stp,
      double stpmax,
+     double gtol,
      ae_int_t* info,
      ae_int_t* nfev,
      /* Real    */ ae_vector* wa,
@@ -8034,7 +8610,13 @@ void mcsrch(ae_int_t n,
             /*
              *     CHECK THE INPUT PARAMETERS FOR ERRORS.
              */
-            if( ((((((n<=0||ae_fp_less_eq(*stp,0))||ae_fp_less(linmin_ftol,0))||ae_fp_less(linmin_gtol,zero))||ae_fp_less(linmin_xtol,zero))||ae_fp_less(linmin_stpmin,zero))||ae_fp_less(stpmax,linmin_stpmin))||linmin_maxfev<=0 )
+            if( ae_fp_less(stpmax,linmin_stpmin)&&ae_fp_greater(stpmax,0) )
+            {
+                *info = 5;
+                *stp = 0.0;
+                return;
+            }
+            if( ((((((n<=0||ae_fp_less_eq(*stp,0))||ae_fp_less(linmin_ftol,0))||ae_fp_less(gtol,zero))||ae_fp_less(linmin_xtol,zero))||ae_fp_less(linmin_stpmin,zero))||ae_fp_less(stpmax,linmin_stpmin))||linmin_maxfev<=0 )
             {
                 *stage = 0;
                 return;
@@ -8179,7 +8761,7 @@ void mcsrch(ae_int_t n,
             {
                 *info = 2;
             }
-            if( ae_fp_less_eq(*f,state->ftest1)&&ae_fp_less_eq(ae_fabs(state->dg, _state),-linmin_gtol*state->dginit) )
+            if( ae_fp_less_eq(*f,state->ftest1)&&ae_fp_less_eq(ae_fabs(state->dg, _state),-gtol*state->dginit) )
             {
                 *info = 1;
             }
@@ -8197,7 +8779,7 @@ void mcsrch(ae_int_t n,
              *        IN THE FIRST STAGE WE SEEK A STEP FOR WHICH THE MODIFIED
              *        FUNCTION HAS A NONPOSITIVE VALUE AND NONNEGATIVE DERIVATIVE.
              */
-            if( (state->stage1&&ae_fp_less_eq(*f,state->ftest1))&&ae_fp_greater_eq(state->dg,ae_minreal(linmin_ftol, linmin_gtol, _state)*state->dginit) )
+            if( (state->stage1&&ae_fp_less_eq(*f,state->ftest1))&&ae_fp_greater_eq(state->dg,ae_minreal(linmin_ftol, gtol, _state)*state->dginit) )
             {
                 state->stage1 = ae_false;
             }
@@ -8955,6 +9537,62 @@ void _armijostate_clear(armijostate* p)
     ae_vector_clear(&p->xbase);
     ae_vector_clear(&p->s);
     _rcommstate_clear(&p->rstate);
+}
+
+
+
+
+/*************************************************************************
+This subroutine is used to prepare threshold value which will be used for
+trimming of the target function (see comments on TrimFunction() for more
+information).
+
+This function accepts only one parameter: function value at the starting
+point. It returns threshold which will be used for trimming.
+
+  -- ALGLIB --
+     Copyright 10.05.2011 by Bochkanov Sergey
+*************************************************************************/
+void trimprepare(double f, double* threshold, ae_state *_state)
+{
+
+    *threshold = 0;
+
+    *threshold = 10*(ae_fabs(f, _state)+1);
+}
+
+
+/*************************************************************************
+This subroutine is used to "trim" target function, i.e. to do following
+transformation:
+
+                   { {F,G}          if F<Threshold
+    {F_tr, G_tr} = {
+                   { {Threshold, 0} if F>=Threshold
+                   
+Such transformation allows us to  solve  problems  with  singularities  by
+redefining function in such way that it becomes bounded from above.
+
+  -- ALGLIB --
+     Copyright 10.05.2011 by Bochkanov Sergey
+*************************************************************************/
+void trimfunction(double* f,
+     /* Real    */ ae_vector* g,
+     ae_int_t n,
+     double threshold,
+     ae_state *_state)
+{
+    ae_int_t i;
+
+
+    if( ae_fp_greater_eq(*f,threshold) )
+    {
+        *f = threshold;
+        for(i=0; i<=n-1; i++)
+        {
+            g->ptr.p_double[i] = 0.0;
+        }
+    }
 }
 
 

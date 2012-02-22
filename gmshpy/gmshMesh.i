@@ -4,26 +4,16 @@
 
 %{
   #include "GmshConfig.h"
-
   #include "Generator.h"
   #include "highOrderTools.h"
   #include "meshGFaceLloyd.h"
   #include "meshGFaceOptimize.h"
   #include "meshPartitionOptions.h"
-  #include "Levy3D.h"
-  #include "meshPartition.h"
-  #include "meshMetric.h"
-  #include "Field.h"
-  #include "CenterlineField.h"
-  #include "Voronoi3D.h"
   #include "simple3D.h"
+  #include "Voronoi3D.h"
+  #include "Levy3D.h"
   #include "periodical.h"
 %}
-
-%include std_vector.i
-namespace std {
- %template(DoubleVector) vector<double, std::allocator<double> >;
-}
 
 %include "GmshConfig.h"
 %include "Generator.h"
@@ -31,11 +21,8 @@ namespace std {
 %include "meshGFaceLloyd.h"
 %include "meshGFaceOptimize.h"
 %include "meshPartitionOptions.h"
-%include "Levy3D.h"
-%include "meshPartition.h"
-%include "meshMetric.h"
-%include "Field.h"
-%include "CenterlineField.h"
-%include "Voronoi3D.h"
 %include "simple3D.h"
+%include "Voronoi3D.h"
+%include "Levy3D.h"
 %include "periodical.h"
+

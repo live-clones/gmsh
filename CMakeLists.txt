@@ -21,6 +21,8 @@ option(ENABLE_ANN "Enable ANN to compute Approximate Nearest Neighbors" ON)
 option(ENABLE_APP_BUNDLE "Create .app bundle on Mac when installing" ON)
 option(ENABLE_BAMG "Enable Bamg mesh generator" ON)
 option(ENABLE_BFGS "Enable BFGS" ON)
+option(ENABLE_RTREE "Enable RTREE" ON)
+option(ENABLE_Voro3D "Enable Voro3D" ON)
 option(ENABLE_BLAS_LAPACK "Use BLAS and Lapack for linear algebra" ON)
 option(ENABLE_BLOSSOM "Enable Blossom algo (based on MATCH and concorde97)" ON)
 option(ENABLE_CGNS "Enable CGNS mesh export" OFF)
@@ -89,7 +91,7 @@ set(GMSH_API
     Geo/SOrientedBoundingBox.h Geo/CellComplex.h Geo/ChainComplex.h Geo/Cell.h
     Geo/Homology.h Geo/partitionEdge.h Geo/CGNSOptions.h Geo/gmshLevelset.h
   Mesh/meshGEdge.h Mesh/meshGFace.h Mesh/meshGFaceOptimize.h Mesh/meshPartition.h
-    Mesh/meshGFaceDelaunayInsertion.h Mesh/Levy3D.h Mesh/meshPartitionOptions.h
+    Mesh/meshGFaceDelaunayInsertion.h Mesh/simple3D.h Mesh/meshPartitionOptions.h Mesh/Voronoi3D.h Mesh/Levy3D.h Mesh/periodical.h
   Numeric/mathEvaluator.h
   Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h Solver/elasticityTerm.h
     Solver/crossConfTerm.h Solver/orthogonalTerm.h
@@ -482,6 +484,18 @@ if(ENABLE_BFGS)
   include_directories(contrib/lbfgs)
   set_config_option(HAVE_BFGS "Bfgs")
 endif(ENABLE_BFGS)
+
+if(ENABLE_RTREE)
+  add_subdirectory(contrib/rtree)
+  include_directories(contrib/rtree)
+  set_config_option(HAVE_RTREE "RTree")
+endif(ENABLE_RTREE)
+
+if(ENABLE_Voro3D)
+  add_subdirectory(contrib/voro++)
+  include_directories(contrib/voro++/src)
+  set_config_option(HAVE_Voro3D "Voro3D")
+endif(ENABLE_Voro3D)
 
 if(ENABLE_DINTEGRATION)
   add_subdirectory(contrib/DiscreteIntegration)

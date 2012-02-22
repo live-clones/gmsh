@@ -31,7 +31,10 @@ CenterlineField.cpp
     multiscalePartition.cpp
     QuadTriUtils.cpp
       QuadTriExtruded2D.cpp QuadTriExtruded3D.cpp QuadTriTransfinite3D.cpp
+    simple3D.cpp
+    Voronoi3D.cpp
     Levy3D.cpp
+    periodical.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
