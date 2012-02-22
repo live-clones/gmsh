@@ -171,7 +171,7 @@ void meshMetric::exportInfo(const char * fileendname){
 
 meshMetric::~meshMetric(){
   if (_octree) delete _octree;
-  for (int i=0; i< _elements.size(); i++)
+  for (unsigned int i = 0; i < _elements.size(); i++)
     delete _elements[i];
 }
 

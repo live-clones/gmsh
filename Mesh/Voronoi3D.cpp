@@ -3,15 +3,19 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include "voro++.hh"
 #include "Voronoi3D.h"
 #include "GModel.h"
 #include "MElement.h"
 #include "meshGRegion.h"
 #include <fstream>
 #include "Levy3D.h"
+#if defined(HAVE_Voro3D)
+#include "voro++.hh"
+#endif
 
+#if defined(HAVE_Voro3D)
 using namespace voro;
+#endif
 
 /*********class clip*********/
 
@@ -72,6 +76,7 @@ void clip::execute(GRegion* gr){
 }
 
 void clip::execute(std::vector<SPoint3>& vertices,std::vector<VoronoiElement>& clipped){
+#if defined(HAVE_Voro3D)
   int i;
   int j;
   int start;
@@ -265,6 +270,9 @@ void clip::execute(std::vector<SPoint3>& vertices,std::vector<VoronoiElement>& c
   //printf("%f %f\n",volume1,volume2);
 	
   for(i=0;i<pointers.size();i++) delete pointers[i];
+#else
+  Msg::Error("Gmsh needs to be compiled with Voro3D to use clip");
+#endif
 }
 
 double clip::min(double a,double b){
