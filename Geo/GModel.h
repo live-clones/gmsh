@@ -38,6 +38,10 @@ class GModel
  private:
   friend class OCCFactory;
   std::multimap<std::pair<std::vector<int>, std::vector<int> >, std::string> _homologyRequests;
+  std::set<GRegion*, GEntityLessThan> _chainRegions;
+  std::set<GFace*, GEntityLessThan> _chainFaces;
+  std::set<GEdge*, GEntityLessThan> _chainEdges;
+  std::set<GVertex*, GEntityLessThan> _chainVertices;
 
  protected:
   // the name of the model
@@ -376,12 +380,12 @@ class GModel
   // mesh the model
   int mesh(int dimension);
 
-  // adapt the mesh anisotropically using metrics that are computed from a set of functions f(x,y,z). 
+  // adapt the mesh anisotropically using metrics that are computed from a set of functions f(x,y,z).
   //   For all algorithms
   //           parameters[1] = lcmin (default : in global gmsh options CTX::instance()->mesh.lcMin)
   //           parameters[2] = lcmax (default : in global gmsh options CTX::instance()->mesh.lcMax)
-  //   niter is the maximum number of iterations 
-  //   Available algorithms: 
+  //   niter is the maximum number of iterations
+  //   Available algorithms:
   //    1) Assume that the function is a levelset -> adapt using Coupez technique (technique = 1)
   //           parameters[0] = thickness of the interface (mandatory)
   //    2) Assume that the function is a physical quantity -> adapt using the Hessian (technique = 2)
@@ -397,7 +401,7 @@ class GModel
   //           parameters[4] = thickness of the interface in the negative ls direction (=parameters[0] if not specified)
   //           parameters[3] = the required minimum number of elements to represent a circle - used for curvature-based metric (default: = 15)
   //    5) Same as 4, except that the transition in band E uses linear interpolation of h, instead of linear interpolation of metric
-  // The algorithm first generate a mesh if no one is available 
+  // The algorithm first generate a mesh if no one is available
 
   // In this first attempt, only the highest dimensional mesh is adapted, which is ok if
   // we assume that boundaries are already adapted.
@@ -487,15 +491,7 @@ class GModel
   void storeChain(int dim,
                   std::map<int, std::vector<MElement*> > &entityMap,
                   std::map<int, std::map<int, std::string> > &physicalMap);
-  void storeChain(std::vector<MVertex*> &vertices, int dim,
-	          std::map<int, std::vector<MElement*> > &entityMap,
-	          std::map<int, std::map<int, std::string> > &physicalMap)
-  {
-    _storeVerticesInEntities(vertices);
-    _storeElementsInEntities(entityMap);
-    _storePhysicalTagsInEntities(dim, physicalMap);
-    _associateEntityWithMeshVertices();
-  }
+
   // request homology computation
   void addHomologyRequest(const std::string &type, std::vector<int> &domain,
                           std::vector<int> &subdomain);

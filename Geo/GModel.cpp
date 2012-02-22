@@ -984,9 +984,15 @@ void GModel::storeChain(int dim,
                         std::map<int, std::vector<MElement*> > &entityMap,
                         std::map<int, std::map<int, std::string> > &physicalMap)
 {
-  // create new discrete entities that have no associated MVertices
   _storeElementsInEntities(entityMap);
   _storePhysicalTagsInEntities(dim, physicalMap);
+  std::map<int, std::vector<MElement*> >::iterator it;
+  for(it = entityMap.begin(); it != entityMap.end(); it++) {
+    if(dim == 0) _chainVertices.insert(getVertexByTag(it->first));
+    else if(dim == 1) _chainEdges.insert(getEdgeByTag(it->first));
+    else if(dim == 2) _chainFaces.insert(getFaceByTag(it->first));
+    else if(dim == 3) _chainRegions.insert(getRegionByTag(it->first));
+  }
 }
 
 template<class T>
@@ -1057,11 +1063,11 @@ void GModel::_storeElementsInEntities(std::map< int, std::vector<MElement* > >& 
 }
 
 template<class T>
-static void _associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &elements)
+static void _associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &elements, bool force=false)
 {
   for(unsigned int i = 0; i < elements.size(); i++){
     for(int j = 0; j < elements[i]->getNumVertices(); j++){
-      if (!elements[i]->getVertex(j)->onWhat() ||
+      if (force || !elements[i]->getVertex(j)->onWhat() ||
 	  elements[i]->getVertex(j)->onWhat()->dim() > ge->dim())
 	elements[i]->getVertex(j)->setEntity(ge);
     }
@@ -1137,6 +1143,25 @@ void GModel::_pruneMeshVertexAssociations()
     entities[i]->mesh_vertices.clear();
   }
   _associateEntityWithMeshVertices();
+  // associate mesh vertices primarily with chain entities
+  for(riter it = _chainRegions.begin(); it != _chainRegions.end(); ++it){
+    _associateEntityWithElementVertices(*it, (*it)->tetrahedra, true);
+    _associateEntityWithElementVertices(*it, (*it)->hexahedra, true);
+    _associateEntityWithElementVertices(*it, (*it)->prisms, true);
+    _associateEntityWithElementVertices(*it, (*it)->pyramids, true);
+    _associateEntityWithElementVertices(*it, (*it)->polyhedra, true);
+  }
+  for(fiter it = _chainFaces.begin(); it != _chainFaces.end(); ++it){
+    _associateEntityWithElementVertices(*it, (*it)->triangles, true);
+    _associateEntityWithElementVertices(*it, (*it)->quadrangles, true);
+    _associateEntityWithElementVertices(*it, (*it)->polygons, true);
+  }
+  for(eiter it = _chainEdges.begin(); it != _chainEdges.end(); ++it){
+    _associateEntityWithElementVertices(*it, (*it)->lines, true);
+  }
+  for(viter it = _chainVertices.begin(); it != _chainVertices.end(); ++it){
+    _associateEntityWithElementVertices(*it, (*it)->points, true);
+  }
   _storeVerticesInEntities(vertices);
 }
 
@@ -1739,7 +1764,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
   for (std::vector<discreteFace*>::iterator it = discFaces.begin();
        it != discFaces.end(); it++)
     (*it)->findEdges(map_edges);
-  
+
   // return if no boundary edges (torus, sphere, ...)
   if (map_edges.empty()) return;
 

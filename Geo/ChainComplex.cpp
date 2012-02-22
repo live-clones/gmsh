@@ -441,12 +441,8 @@ gmp_matrix* ChainComplex::getBasis(int dim, int basis)
 void ChainComplex::getBasisChain(std::map<Cell*, int, Less_Cell>& chain,
 				 int num, int dim, int basis, bool deform)
 {
-  gmp_matrix* basisMatrix;
-  if(basis == 0) basisMatrix = getBasis(dim, 0);
-  else if(basis == 1) basisMatrix = getBasis(dim, 1);
-  else if(basis == 2) basisMatrix = getBasis(dim, 2);
-  else if(basis == 3) basisMatrix = getBasis(dim, 3);
-  else return;
+  if(basis < 0 || basis > 3) return;
+  gmp_matrix* basisMatrix = getBasis(dim, basis);
 
   chain.clear();
   if(dim < 0 || dim > 4) return;
@@ -473,8 +469,8 @@ void ChainComplex::getBasisChain(std::map<Cell*, int, Less_Cell>& chain,
       std::map<Cell*, int, Less_Cell > subCells;
       cell->getCells(subCells);
       for(Cell::citer it = subCells.begin(); it != subCells.end(); it++){
-	Cell* subCell = (*it).first;
-	int coeff = (*it).second;
+	Cell* subCell = it->first;
+	int coeff = it->second;
 	chain[subCell] = coeff*elemi*torsion;
       }
     }

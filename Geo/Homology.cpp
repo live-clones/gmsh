@@ -130,7 +130,6 @@ void Homology::findHomologyBasis(CellComplex* cellComplex)
 				    _subdomainEntities);
     ownComplex = true;
   }
-  std::string domainString = _getDomainString(_domain, _subdomain);
 
   Msg::StatusBar(2, true, "Reducing cell complex...");
 
@@ -151,7 +150,7 @@ void Homology::findHomologyBasis(CellComplex* cellComplex)
   Msg::StatusBar(2, true, "Done computing homology space basis (%g s)", t2 - t1);
 
   int dim = cellComplex->getDim();
-
+  std::string domain = _getDomainString(_domain, _subdomain);
   int HRank[4];
   for(int j = 0; j < 4; j++){
     HRank[j] = 0;
@@ -162,7 +161,7 @@ void Homology::findHomologyBasis(CellComplex* cellComplex)
       std::string generator = "";
       convert(i, generator);
 
-      std::string name = "H" + dimension + domainString + generator;
+      std::string name = "H" + dimension + domain + generator;
       std::map<Cell*, int, Less_Cell> chain;
       chainComplex.getBasisChain(chain, i, j, 3, _smoothen);
       int torsion = chainComplex.getTorsion(j,i);
@@ -181,7 +180,7 @@ void Homology::findHomologyBasis(CellComplex* cellComplex)
 
   if(ownComplex) delete cellComplex;
 
-  Msg::Info("Ranks of homology spaces:");
+  Msg::Info("Ranks of domain %shomology spaces:", domain.c_str());
   Msg::Info("H0 = %d", HRank[0]);
   Msg::Info("H1 = %d", HRank[1]);
   Msg::Info("H2 = %d", HRank[2]);
@@ -221,7 +220,7 @@ void Homology::findCohomologyBasis(CellComplex* cellComplex)
   Msg::StatusBar(2, true, "Done computing cohomology space basis (%g s)", t2- t1);
 
   int dim = cellComplex->getDim();
-
+  std::string domain = _getDomainString(_domain, _subdomain);
   int HRank[4];
   for(int i = 0; i < 4; i++) HRank[i] = 0;
   for(int j = 3; j > -1; j--){
@@ -234,7 +233,7 @@ void Homology::findCohomologyBasis(CellComplex* cellComplex)
       convert(i, generator);
 
       std::string name = "H" + dimension + "*" +
-	_getDomainString(_domain, _subdomain) + generator;
+	domain + generator;
       std::map<Cell*, int, Less_Cell> chain;
       chainComplex.getBasisChain(chain, i, j, 3, _smoothen);
       int torsion = chainComplex.getTorsion(j,i);
@@ -252,7 +251,7 @@ void Homology::findCohomologyBasis(CellComplex* cellComplex)
 
   if(ownComplex) delete cellComplex;
 
-  Msg::Info("Ranks of cohomology spaces:");
+  Msg::Info("Ranks of domain %scohomology spaces:", domain.c_str());
   Msg::Info("H0* = %d", HRank[0]);
   Msg::Info("H1* = %d", HRank[1]);
   Msg::Info("H2* = %d", HRank[2]);
@@ -313,9 +312,6 @@ void Homology::_createPhysicalGroup(std::map<Cell*, int, Less_Cell>& chain, std:
   MElementFactory factory;
   int dim = 0;
 
-  std::map<Cell*, int, Less_Cell> chain2;
-  std::string name2 = name + "i";
-
   typedef std::map<Cell*, int, Less_Cell>::iterator citer;
   for(citer cit = chain.begin(); cit != chain.end(); cit++){
     Cell* cell = cit->first;
@@ -338,15 +334,8 @@ void Homology::_createPhysicalGroup(std::map<Cell*, int, Less_Cell>& chain, std:
       elements.push_back(ecopy);
     }
 
-    //std::vector<double> coeffs (1,1);
     std::vector<double> coeffs (1,abs(coeff));
     data[e->getNum()] = coeffs;
-
-    /*if(abs(coeff) > 1) {
-      if(coeff < 0) chain2[cell] = coeff+1;
-      else chain2[cell] = coeff-1;
-      }*/
-
   }
 
   GModel* m = this->getModel();
@@ -383,7 +372,6 @@ void Homology::_createPhysicalGroup(std::map<Cell*, int, Less_Cell>& chain, std:
     view->setOptions(opt);
 #endif
   }
-  //if(!chain2.empty()) _createPhysicalGroup(chain2, name2);
 }
 
 bool Homology::writeBasisMSH(bool binary)

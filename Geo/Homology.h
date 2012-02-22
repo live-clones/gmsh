@@ -52,7 +52,7 @@ class Homology
 
   // create a string describing the generator
   std::string _getDomainString(const std::vector<int>& domain,
-			      const std::vector<int>& subdomain);
+                               const std::vector<int>& subdomain);
 
   // remove cells with coefficient 0
   int _eraseNullCells(std::map<Cell*, int, Less_Cell>& chain);
