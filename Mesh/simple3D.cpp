@@ -9,9 +9,7 @@
 #include "MElementOctree.h"
 #include "meshGRegion.h"
 #include <queue>
-#if defined(HAVE_RTREE)
 #include "rtree.h"
-#endif
 #include <fstream>
 
 #define k1 0.7 //k1*h is the minimal distance between two nodes
@@ -327,7 +325,6 @@ void Filler::treat_model(){
 }
 
 void Filler::treat_region(GRegion* gr){
-#if defined(HAVE_RTREE)
   int i,j;
   int count;
   bool ok;
@@ -436,9 +433,6 @@ void Filler::treat_region(GRegion* gr){
   for(i=0;i<garbage.size();i++) delete garbage[i];
   for(i=0;i<new_vertices.size();i++) delete new_vertices[i];
   new_vertices.clear();
-#else
-  Msg::Error("Gmsh needs to be compiled with rtree to use Filler::treat_region");
-#endif
 }
 
 Metric Filler::get_metric(double x,double y,double z){

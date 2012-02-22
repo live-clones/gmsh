@@ -3,19 +3,15 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include "voro++.hh"
 #include "periodical.h"
 #include "GModel.h"
 #include "meshGRegion.h"
 #include <fstream>
 #include <algorithm>
 #include "MElement.h"
-#if defined(HAVE_Voro3D)
-#include "voro++.hh"
-#endif
 
-#if defined(HAVE_Voro3D)
 using namespace voro;
-#endif
 
 /*********class voroMetal3D*********/
 
@@ -62,7 +58,6 @@ void voroMetal3D::execute(GRegion* gr){
 }
 
 void voroMetal3D::execute(std::vector<SPoint3>& vertices){
-#if defined(HAVE_Voro3D)
   int i;
   int j;
   int start;
@@ -149,9 +144,6 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices){
   file << "};\n";
   	
   for(i=0;i<pointers.size();i++) delete pointers[i];
-#else
-  Msg::Error("Gmsh needs to be compiled with Voro3D to use voroMetal3D");
-#endif
 }
 
 void voroMetal3D::print_segment(SPoint3 p1,SPoint3 p2,std::ofstream& file){
