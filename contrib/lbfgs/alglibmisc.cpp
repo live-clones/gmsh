@@ -405,87 +405,6 @@ kdtree::~kdtree()
 {
 }
 
-
-/*************************************************************************
-This function serializes data structure to string.
-
-Important properties of s_out:
-* it contains alphanumeric characters, dots, underscores, minus signs
-* these symbols are grouped into words, which are separated by spaces
-  and Windows-style (CR+LF) newlines
-* although  serializer  uses  spaces and CR+LF as separators, you can 
-  replace any separator character by arbitrary combination of spaces,
-  tabs, Windows or Unix newlines. It allows flexible reformatting  of
-  the  string  in  case you want to include it into text or XML file. 
-  But you should not insert separators into the middle of the "words"
-  nor you should change case of letters.
-* s_out can be freely moved between 32-bit and 64-bit systems, little
-  and big endian machines, and so on. You can serialize structure  on
-  32-bit machine and unserialize it on 64-bit one (or vice versa), or
-  serialize  it  on  SPARC  and  unserialize  on  x86.  You  can also 
-  serialize  it  in  C++ version of ALGLIB and unserialize in C# one, 
-  and vice versa.
-*************************************************************************/
-void kdtreeserialize(kdtree &obj, std::string &s_out)
-{
-    alglib_impl::ae_state state;
-    alglib_impl::ae_serializer serializer;
-    alglib_impl::ae_int_t ssize;
-
-    alglib_impl::ae_state_init(&state);
-    try
-    {
-        alglib_impl::ae_serializer_init(&serializer);
-        alglib_impl::ae_serializer_alloc_start(&serializer);
-        alglib_impl::kdtreealloc(&serializer, obj.c_ptr(), &state);
-        ssize = alglib_impl::ae_serializer_get_alloc_size(&serializer);
-        s_out.clear();
-        s_out.reserve((size_t)(ssize+1));
-        alglib_impl::ae_serializer_sstart_str(&serializer, &s_out);
-        alglib_impl::kdtreeserialize(&serializer, obj.c_ptr(), &state);
-        alglib_impl::ae_serializer_stop(&serializer);
-        if( s_out.length()>(size_t)ssize )
-            throw ap_error("ALGLIB: serialization integrity error");
-        alglib_impl::ae_serializer_clear(&serializer);
-        alglib_impl::ae_state_clear(&state);
-    }
-    catch(alglib_impl::ae_error_type)
-    {
-        throw ap_error(state.error_msg);
-    }
-    catch(...)
-    {
-        throw;
-    }
-}
-/*************************************************************************
-This function unserializes data structure from string.
-*************************************************************************/
-void kdtreeunserialize(std::string &s_in, kdtree &obj)
-{
-    alglib_impl::ae_state state;
-    alglib_impl::ae_serializer serializer;
-
-    alglib_impl::ae_state_init(&state);
-    try
-    {
-        alglib_impl::ae_serializer_init(&serializer);
-        alglib_impl::ae_serializer_ustart_str(&serializer, &s_in);
-        alglib_impl::kdtreeunserialize(&serializer, obj.c_ptr(), &state);
-        alglib_impl::ae_serializer_stop(&serializer);
-        alglib_impl::ae_serializer_clear(&serializer);
-        alglib_impl::ae_state_clear(&state);
-    }
-    catch(alglib_impl::ae_error_type)
-    {
-        throw ap_error(state.error_msg);
-    }
-    catch(...)
-    {
-        throw;
-    }
-}
-
 /*************************************************************************
 KD-tree creation
 
@@ -1376,7 +1295,6 @@ static ae_int_t hqrnd_hqrndintegerbase(hqrndstate* state,
 
 
 static ae_int_t nearestneighbor_splitnodesize = 6;
-static ae_int_t nearestneighbor_kdtreefirstversion = 0;
 static void nearestneighbor_kdtreesplit(kdtree* kdt,
      ae_int_t i1,
      ae_int_t i2,
@@ -1396,20 +1314,6 @@ static void nearestneighbor_kdtreequerynnrec(kdtree* kdt,
      ae_state *_state);
 static void nearestneighbor_kdtreeinitbox(kdtree* kdt,
      /* Real    */ ae_vector* x,
-     ae_state *_state);
-static void nearestneighbor_kdtreeallocdatasetindependent(kdtree* kdt,
-     ae_int_t nx,
-     ae_int_t ny,
-     ae_state *_state);
-static void nearestneighbor_kdtreeallocdatasetdependent(kdtree* kdt,
-     ae_int_t n,
-     ae_int_t nx,
-     ae_int_t ny,
-     ae_state *_state);
-static void nearestneighbor_kdtreealloctemporaries(kdtree* kdt,
-     ae_int_t n,
-     ae_int_t nx,
-     ae_int_t ny,
      ae_state *_state);
 
 
@@ -1821,12 +1725,13 @@ void kdtreebuildtagged(/* Real    */ ae_matrix* xy,
     kdt->nx = nx;
     kdt->ny = ny;
     kdt->normtype = normtype;
-    
-    /*
-     * Allocate
-     */
-    nearestneighbor_kdtreeallocdatasetindependent(kdt, nx, ny, _state);
-    nearestneighbor_kdtreeallocdatasetdependent(kdt, n, nx, ny, _state);
+    kdt->distmatrixtype = 0;
+    ae_matrix_set_length(&kdt->xy, n, 2*nx+ny, _state);
+    ae_vector_set_length(&kdt->tags, n, _state);
+    ae_vector_set_length(&kdt->idx, n, _state);
+    ae_vector_set_length(&kdt->r, n, _state);
+    ae_vector_set_length(&kdt->x, nx, _state);
+    ae_vector_set_length(&kdt->buf, ae_maxint(n, nx, _state), _state);
     
     /*
      * Initial fill
@@ -1841,6 +1746,10 @@ void kdtreebuildtagged(/* Real    */ ae_matrix* xy,
     /*
      * Determine bounding box
      */
+    ae_vector_set_length(&kdt->boxmin, nx, _state);
+    ae_vector_set_length(&kdt->boxmax, nx, _state);
+    ae_vector_set_length(&kdt->curboxmin, nx, _state);
+    ae_vector_set_length(&kdt->curboxmax, nx, _state);
     ae_v_move(&kdt->boxmin.ptr.p_double[0], 1, &kdt->xy.ptr.pp_double[0][0], 1, ae_v_len(0,nx-1));
     ae_v_move(&kdt->boxmax.ptr.p_double[0], 1, &kdt->xy.ptr.pp_double[0][0], 1, ae_v_len(0,nx-1));
     for(i=1; i<=n-1; i++)
@@ -2427,111 +2336,6 @@ void kdtreequeryresultsdistancesi(kdtree* kdt,
     ae_vector_clear(r);
 
     kdtreequeryresultsdistances(kdt, r, _state);
-}
-
-
-/*************************************************************************
-Serializer: allocation
-
-  -- ALGLIB --
-     Copyright 14.03.2011 by Bochkanov Sergey
-*************************************************************************/
-void kdtreealloc(ae_serializer* s, kdtree* tree, ae_state *_state)
-{
-
-
-    
-    /*
-     * Header
-     */
-    ae_serializer_alloc_entry(s);
-    ae_serializer_alloc_entry(s);
-    
-    /*
-     * Data
-     */
-    ae_serializer_alloc_entry(s);
-    ae_serializer_alloc_entry(s);
-    ae_serializer_alloc_entry(s);
-    ae_serializer_alloc_entry(s);
-    allocrealmatrix(s, &tree->xy, -1, -1, _state);
-    allocintegerarray(s, &tree->tags, -1, _state);
-    allocrealarray(s, &tree->boxmin, -1, _state);
-    allocrealarray(s, &tree->boxmax, -1, _state);
-    allocintegerarray(s, &tree->nodes, -1, _state);
-    allocrealarray(s, &tree->splits, -1, _state);
-}
-
-
-/*************************************************************************
-Serializer: serialization
-
-  -- ALGLIB --
-     Copyright 14.03.2011 by Bochkanov Sergey
-*************************************************************************/
-void kdtreeserialize(ae_serializer* s, kdtree* tree, ae_state *_state)
-{
-
-
-    
-    /*
-     * Header
-     */
-    ae_serializer_serialize_int(s, getkdtreeserializationcode(_state), _state);
-    ae_serializer_serialize_int(s, nearestneighbor_kdtreefirstversion, _state);
-    
-    /*
-     * Data
-     */
-    ae_serializer_serialize_int(s, tree->n, _state);
-    ae_serializer_serialize_int(s, tree->nx, _state);
-    ae_serializer_serialize_int(s, tree->ny, _state);
-    ae_serializer_serialize_int(s, tree->normtype, _state);
-    serializerealmatrix(s, &tree->xy, -1, -1, _state);
-    serializeintegerarray(s, &tree->tags, -1, _state);
-    serializerealarray(s, &tree->boxmin, -1, _state);
-    serializerealarray(s, &tree->boxmax, -1, _state);
-    serializeintegerarray(s, &tree->nodes, -1, _state);
-    serializerealarray(s, &tree->splits, -1, _state);
-}
-
-
-/*************************************************************************
-Serializer: unserialization
-
-  -- ALGLIB --
-     Copyright 14.03.2011 by Bochkanov Sergey
-*************************************************************************/
-void kdtreeunserialize(ae_serializer* s, kdtree* tree, ae_state *_state)
-{
-    ae_int_t i0;
-    ae_int_t i1;
-
-    _kdtree_clear(tree);
-
-    
-    /*
-     * check correctness of header
-     */
-    ae_serializer_unserialize_int(s, &i0, _state);
-    ae_assert(i0==getkdtreeserializationcode(_state), "KDTreeUnserialize: stream header corrupted", _state);
-    ae_serializer_unserialize_int(s, &i1, _state);
-    ae_assert(i1==nearestneighbor_kdtreefirstversion, "KDTreeUnserialize: stream header corrupted", _state);
-    
-    /*
-     * Unserialize data
-     */
-    ae_serializer_unserialize_int(s, &tree->n, _state);
-    ae_serializer_unserialize_int(s, &tree->nx, _state);
-    ae_serializer_unserialize_int(s, &tree->ny, _state);
-    ae_serializer_unserialize_int(s, &tree->normtype, _state);
-    unserializerealmatrix(s, &tree->xy, _state);
-    unserializeintegerarray(s, &tree->tags, _state);
-    unserializerealarray(s, &tree->boxmin, _state);
-    unserializerealarray(s, &tree->boxmax, _state);
-    unserializeintegerarray(s, &tree->nodes, _state);
-    unserializerealarray(s, &tree->splits, _state);
-    nearestneighbor_kdtreealloctemporaries(tree, tree->n, tree->nx, tree->ny, _state);
 }
 
 
@@ -3185,86 +2989,6 @@ static void nearestneighbor_kdtreeinitbox(kdtree* kdt,
 }
 
 
-/*************************************************************************
-This function allocates all dataset-independent array  fields  of  KDTree,
-i.e.  such  array  fields  that  their dimensions do not depend on dataset
-size.
-
-This function do not sets KDT.NX or KDT.NY - it just allocates arrays
-
-  -- ALGLIB --
-     Copyright 14.03.2011 by Bochkanov Sergey
-*************************************************************************/
-static void nearestneighbor_kdtreeallocdatasetindependent(kdtree* kdt,
-     ae_int_t nx,
-     ae_int_t ny,
-     ae_state *_state)
-{
-
-
-    ae_vector_set_length(&kdt->x, nx, _state);
-    ae_vector_set_length(&kdt->boxmin, nx, _state);
-    ae_vector_set_length(&kdt->boxmax, nx, _state);
-    ae_vector_set_length(&kdt->curboxmin, nx, _state);
-    ae_vector_set_length(&kdt->curboxmax, nx, _state);
-}
-
-
-/*************************************************************************
-This function allocates all dataset-dependent array fields of KDTree, i.e.
-such array fields that their dimensions depend on dataset size.
-
-This function do not sets KDT.N, KDT.NX or KDT.NY -
-it just allocates arrays.
-
-  -- ALGLIB --
-     Copyright 14.03.2011 by Bochkanov Sergey
-*************************************************************************/
-static void nearestneighbor_kdtreeallocdatasetdependent(kdtree* kdt,
-     ae_int_t n,
-     ae_int_t nx,
-     ae_int_t ny,
-     ae_state *_state)
-{
-
-
-    ae_matrix_set_length(&kdt->xy, n, 2*nx+ny, _state);
-    ae_vector_set_length(&kdt->tags, n, _state);
-    ae_vector_set_length(&kdt->idx, n, _state);
-    ae_vector_set_length(&kdt->r, n, _state);
-    ae_vector_set_length(&kdt->x, nx, _state);
-    ae_vector_set_length(&kdt->buf, ae_maxint(n, nx, _state), _state);
-    ae_vector_set_length(&kdt->nodes, nearestneighbor_splitnodesize*2*n, _state);
-    ae_vector_set_length(&kdt->splits, 2*n, _state);
-}
-
-
-/*************************************************************************
-This function allocates temporaries.
-
-This function do not sets KDT.N, KDT.NX or KDT.NY -
-it just allocates arrays.
-
-  -- ALGLIB --
-     Copyright 14.03.2011 by Bochkanov Sergey
-*************************************************************************/
-static void nearestneighbor_kdtreealloctemporaries(kdtree* kdt,
-     ae_int_t n,
-     ae_int_t nx,
-     ae_int_t ny,
-     ae_state *_state)
-{
-
-
-    ae_vector_set_length(&kdt->x, nx, _state);
-    ae_vector_set_length(&kdt->idx, n, _state);
-    ae_vector_set_length(&kdt->r, n, _state);
-    ae_vector_set_length(&kdt->buf, ae_maxint(n, nx, _state), _state);
-    ae_vector_set_length(&kdt->curboxmin, nx, _state);
-    ae_vector_set_length(&kdt->curboxmax, nx, _state);
-}
-
-
 ae_bool _kdtree_init(kdtree* p, ae_state *_state, ae_bool make_automatic)
 {
     if( !ae_matrix_init(&p->xy, 0, 0, DT_REAL, _state, make_automatic) )
@@ -3274,6 +2998,10 @@ ae_bool _kdtree_init(kdtree* p, ae_state *_state, ae_bool make_automatic)
     if( !ae_vector_init(&p->boxmin, 0, DT_REAL, _state, make_automatic) )
         return ae_false;
     if( !ae_vector_init(&p->boxmax, 0, DT_REAL, _state, make_automatic) )
+        return ae_false;
+    if( !ae_vector_init(&p->curboxmin, 0, DT_REAL, _state, make_automatic) )
+        return ae_false;
+    if( !ae_vector_init(&p->curboxmax, 0, DT_REAL, _state, make_automatic) )
         return ae_false;
     if( !ae_vector_init(&p->nodes, 0, DT_INT, _state, make_automatic) )
         return ae_false;
@@ -3287,10 +3015,6 @@ ae_bool _kdtree_init(kdtree* p, ae_state *_state, ae_bool make_automatic)
         return ae_false;
     if( !ae_vector_init(&p->buf, 0, DT_REAL, _state, make_automatic) )
         return ae_false;
-    if( !ae_vector_init(&p->curboxmin, 0, DT_REAL, _state, make_automatic) )
-        return ae_false;
-    if( !ae_vector_init(&p->curboxmax, 0, DT_REAL, _state, make_automatic) )
-        return ae_false;
     return ae_true;
 }
 
@@ -3301,6 +3025,7 @@ ae_bool _kdtree_init_copy(kdtree* dst, kdtree* src, ae_state *_state, ae_bool ma
     dst->nx = src->nx;
     dst->ny = src->ny;
     dst->normtype = src->normtype;
+    dst->distmatrixtype = src->distmatrixtype;
     if( !ae_matrix_init_copy(&dst->xy, &src->xy, _state, make_automatic) )
         return ae_false;
     if( !ae_vector_init_copy(&dst->tags, &src->tags, _state, make_automatic) )
@@ -3309,6 +3034,11 @@ ae_bool _kdtree_init_copy(kdtree* dst, kdtree* src, ae_state *_state, ae_bool ma
         return ae_false;
     if( !ae_vector_init_copy(&dst->boxmax, &src->boxmax, _state, make_automatic) )
         return ae_false;
+    if( !ae_vector_init_copy(&dst->curboxmin, &src->curboxmin, _state, make_automatic) )
+        return ae_false;
+    if( !ae_vector_init_copy(&dst->curboxmax, &src->curboxmax, _state, make_automatic) )
+        return ae_false;
+    dst->curdist = src->curdist;
     if( !ae_vector_init_copy(&dst->nodes, &src->nodes, _state, make_automatic) )
         return ae_false;
     if( !ae_vector_init_copy(&dst->splits, &src->splits, _state, make_automatic) )
@@ -3326,11 +3056,6 @@ ae_bool _kdtree_init_copy(kdtree* dst, kdtree* src, ae_state *_state, ae_bool ma
         return ae_false;
     if( !ae_vector_init_copy(&dst->buf, &src->buf, _state, make_automatic) )
         return ae_false;
-    if( !ae_vector_init_copy(&dst->curboxmin, &src->curboxmin, _state, make_automatic) )
-        return ae_false;
-    if( !ae_vector_init_copy(&dst->curboxmax, &src->curboxmax, _state, make_automatic) )
-        return ae_false;
-    dst->curdist = src->curdist;
     dst->debugcounter = src->debugcounter;
     return ae_true;
 }
@@ -3342,14 +3067,14 @@ void _kdtree_clear(kdtree* p)
     ae_vector_clear(&p->tags);
     ae_vector_clear(&p->boxmin);
     ae_vector_clear(&p->boxmax);
+    ae_vector_clear(&p->curboxmin);
+    ae_vector_clear(&p->curboxmax);
     ae_vector_clear(&p->nodes);
     ae_vector_clear(&p->splits);
     ae_vector_clear(&p->x);
     ae_vector_clear(&p->idx);
     ae_vector_clear(&p->r);
     ae_vector_clear(&p->buf);
-    ae_vector_clear(&p->curboxmin);
-    ae_vector_clear(&p->curboxmax);
 }
 
 

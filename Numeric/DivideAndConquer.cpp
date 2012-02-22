@@ -864,7 +864,6 @@ void DocRecord::setPoints(fullMatrix<double> *p)
   }
 } 
 
-
 void DocRecord::recur_tag_triangles(int iTriangle, std::set<int>& taggedTriangles,
                                     std::map<std::pair<void*, void*>,
                                     std::pair<int,int> > &edgesToTriangles)
@@ -931,7 +930,8 @@ std::set<int> DocRecord::tagInterior(double x, double y)
   return taggedTriangles;
 }
 
-void DocRecord::concave(double x,double y,GFace* gf){
+void DocRecord::concave(double x,double y,GFace* gf)
+{
   int i;
   int index1;
   int index2;
@@ -976,7 +976,8 @@ void DocRecord::concave(double x,double y,GFace* gf){
   }
 }
 
-bool DocRecord::contain(int index1,int index2,int index3){
+bool DocRecord::contain(int index1,int index2,int index3)
+{
   int i;
   void* dataA;
   void* dataB;
@@ -995,20 +996,23 @@ bool DocRecord::contain(int index1,int index2,int index3){
   return 0;
 }
 
-void DocRecord::add(int index1,int index2){
+void DocRecord::add(int index1,int index2)
+{
   void* data;
   data = points[index2].data;
   points[index1].vicinity.push_back(data);
 }
 
-void DocRecord::initialize(){
+void DocRecord::initialize()
+{
   int i;
   for(i = 0; i < numPoints; i++){
     points[i].flag = 0;
   }
 }
 
-bool DocRecord::remove_point(int index){
+bool DocRecord::remove_point(int index)
+{
   if(points[index].flag == 0){
     points[index].flag = 1;
     return 1;
@@ -1016,7 +1020,8 @@ bool DocRecord::remove_point(int index){
   else return 0;
 }
 
-void DocRecord::remove_all(){
+void DocRecord::remove_all()
+{
   int i;
   int index;
   int numPoints2;
@@ -1044,7 +1049,8 @@ void DocRecord::remove_all(){
   numPoints = numPoints2;
 }
 
-void DocRecord::add_point(double x,double y,GFace*face){
+void DocRecord::add_point(double x,double y,GFace*face)
+{
   PointRecord point;
   point.where.h = x;
   point.where.v = y; 
@@ -1053,7 +1059,8 @@ void DocRecord::add_point(double x,double y,GFace*face){
   numPoints = numPoints + 1;
 }
 
-void DocRecord::build_edges(){
+void DocRecord::build_edges()
+{
   int i;
   int j;
   int num;
@@ -1072,11 +1079,13 @@ void DocRecord::build_edges(){
   }
 }
 
-void DocRecord::clear_edges(){
+void DocRecord::clear_edges()
+{
   mesh_edges.clear();
 }
 
-bool DocRecord::delaunay_conformity(GFace* gf){
+bool DocRecord::delaunay_conformity(GFace* gf)
+{
   int i;
   bool flag;
   GEdge* edge;
@@ -1098,6 +1107,5 @@ bool DocRecord::delaunay_conformity(GFace* gf){
       if(!flag) return false;
     }
   }
-  return 1;
+  return true;
 }
-	

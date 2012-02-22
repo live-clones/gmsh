@@ -22,8 +22,6 @@
 #include "Context.h"
 #include "GFaceCompound.h"
 #include "meshGRegionMMG3D.h"
-#include "simple3D.h"
-#include "Levy3D.h"
 
 #if defined(HAVE_ANN)
 #include "ANN/ANN.h"
@@ -279,7 +277,7 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
 
   in.mesh_dim = 3;
   in.firstnumber = 1;
-  in.numberofpoints = allBoundingVertices.size() + Filler::get_nbr_new_vertices() + LpSmoother::get_nbr_interior_vertices();
+  in.numberofpoints = allBoundingVertices.size();
   in.pointlist = new REAL[in.numberofpoints * 3];
   in.pointmarkerlist = NULL;
 
@@ -294,24 +292,6 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
     ++itv;
   }
   
-  for(int i=0;i<Filler::get_nbr_new_vertices();i++){
-    MVertex* v;
-	v = Filler::get_new_vertex(i);
-	in.pointlist[(I - 1) * 3 + 0] = v->x();
-	in.pointlist[(I - 1) * 3 + 1] = v->y();
-	in.pointlist[(I - 1) * 3 + 2] = v->z();
-	I++;
-  }
-	
-  for(int i=0;i<LpSmoother::get_nbr_interior_vertices();i++){
-    MVertex* v;
-	v = LpSmoother::get_interior_vertex(i);
-	in.pointlist[(I - 1) * 3 + 0] = v->x();
-	in.pointlist[(I - 1) * 3 + 1] = v->y();
-	in.pointlist[(I - 1) * 3 + 2] = v->z();
-	I++;
-  }	
-	
   int nbFace = 0;
   std::list<GFace*> faces = gr->faces();
   std::list<GFace*>::iterator it = faces.begin();
@@ -598,7 +578,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
  else if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D)
    refineMeshMMG(gr);
  else
-   if(Filler::get_nbr_new_vertices()==0 && LpSmoother::get_nbr_interior_vertices()==0) insertVerticesInRegion(gr);
+   insertVerticesInRegion(gr);
 #endif
 }
 

@@ -15,9 +15,6 @@
   #include "meshMetric.h"
   #include "Field.h"
   #include "CenterlineField.h"
-  #include "Voronoi3D.h"
-  #include "simple3D.h"
-  #include "periodical.h"
 %}
 
 %include std_vector.i
@@ -36,6 +33,3 @@ namespace std {
 %include "meshMetric.h"
 %include "Field.h"
 %include "CenterlineField.h"
-%include "Voronoi3D.h"
-%include "simple3D.h"
-%include "periodical.h"

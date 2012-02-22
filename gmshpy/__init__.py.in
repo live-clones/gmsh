@@ -1,5 +1,0 @@
-# set Ctrl-C to default signal (terminates immediately)
-import signal
-signal.signal(signal.SIGINT, signal.SIG_DFL)
-${GMSH_PYTHON_MODULES_INCLUDE_CODE}
-GmshInitialize()
