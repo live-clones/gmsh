@@ -208,8 +208,13 @@ int SystemCall(const std::string &command, bool blocking)
     return 1;
   }
   std::string cmd(command);
-  if(!blocking) cmd += " &";
-  Msg::Info("Calling '%s'", cmd.c_str());
+  int pos;
+  if(!blocking) cmd.append(" &");
+  if((pos=cmd.find("incomp_ssh")) != std::string::npos){
+    cmd.assign(cmd.substr(pos+7));
+    cmd.append(" '");
+  }
+  Msg::Info("Calling <%s>", cmd.c_str());
   return system(cmd.c_str());
 #endif
 }
