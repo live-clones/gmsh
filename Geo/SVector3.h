@@ -146,18 +146,22 @@ inline void buildOrthoBasis(SVector3 &normal, SVector3 &tangent, SVector3 &binor
 {
   //pick any Unit-Vector that's not parallel to normal:
   normal.normalize();
-  if (normal[0] > normal[1] )
+  if (fabs(normal[0]) > fabs(normal[1]) )
     tangent = SVector3(0.0, 1.0, 0.0);
   else
     tangent = SVector3(1.0, 0.0, 0.0);
 
   //build a binormal from tangent and normal:
   binormal = crossprod(tangent, normal);
-  binormal.normalize();
+  double t1 = binormal.normalize();
   
   //and correct the tangent from the binormal and the normal.
   tangent = crossprod(normal, binormal);
-  tangent.normalize();
+  double t2 = tangent.normalize();
+  
+  if (t1 == 0.0 || t2 == 0.0) 
+    buildOrthoBasis_naive(normal, tangent, binormal);
+
 }
 
 #endif

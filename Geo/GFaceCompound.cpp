@@ -1103,26 +1103,36 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
   }
   else if (_type == MEANPLANE){
 
+    FILE * f3 = fopen("PTS.pos","w");
+   fprintf(f3, "View \"\"{\n");
   std::vector<SPoint3> points, pointsProj, pointsUV;
   SPoint3 ptCG(0.0, 0.0, 0.0);
   for(unsigned int i = 0; i < _ordered.size(); i++){
       MVertex *v = _ordered[i];
       points.push_back(SPoint3(v->x(), v->y(), v->z()));
+      fprintf(f3, "SP(%g,%g,%g){%g};\n",
+	      v->x(),  v->y(), v->z(),
+	      (double)v->getNum());
       ptCG[0] += v->x();
       ptCG[1] += v->y();
       ptCG[2] += v->z();
     }
-    ptCG /= points.size();
-    mean_plane meanPlane;
-    computeMeanPlaneSimple(points, meanPlane);
-    projectPointsToPlane(points, pointsProj, meanPlane);
-    transformPointsIntoOrthoBasis(pointsProj, pointsUV, ptCG, meanPlane);
 
-    for(unsigned int i = 0; i < pointsUV.size(); i++){
-      MVertex *v = _ordered[i];
-      if(step == ITERU) myAssembler.fixVertex(v, 0, 1, pointsUV[i][0]);
-      else if(step == ITERV) myAssembler.fixVertex(v, 0, 1, pointsUV[i][1]);    
-    }
+  fprintf(f3,"};\n");
+  fclose(f3);
+  
+  ptCG /= points.size();
+  mean_plane meanPlane;
+  computeMeanPlaneSimple(points, meanPlane);
+  projectPointsToPlane(points, pointsProj, meanPlane);
+  transformPointsIntoOrthoBasis(pointsProj, pointsUV, ptCG, meanPlane);
+
+  for(unsigned int i = 0; i < pointsUV.size(); i++){
+    MVertex *v = _ordered[i];
+    if(step == ITERU) myAssembler.fixVertex(v, 0, 1, pointsUV[i][0]);
+    else if(step == ITERV) myAssembler.fixVertex(v, 0, 1, pointsUV[i][1]);    
+  }
+
 
   }
   else{
