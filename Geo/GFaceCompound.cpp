@@ -1081,9 +1081,9 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
 #if defined(HAVE_PETSC) && !defined(HAVE_TAUCS)
   lsys = new linearSystemPETSc<double>;
 #elif defined(HAVE_GMM) && !defined(HAVE_TAUCS)
-  linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
+  linearSystemGmm<double> *lsysb = new linearSystemGmm<double>;
   lsysb->setGmres(1);
-  lsys = _lsysb;
+  lsys = lsysb;
 #elif defined(HAVE_TAUCS) 
   lsys = new linearSystemCSRTaucs<double>;
 #else
@@ -1335,7 +1335,7 @@ bool GFaceCompound::parametrize_conformal(int iter, MVertex *v1, MVertex *v2) co
 #elif defined(HAVE_GMM) && !defined(HAVE_TAUCS)
   linearSystemGmm<double> *lsysb = new linearSystemGmm<double>;
   lsysb->setGmres(1);
-  lsys = _lsysb;
+  lsys = lsysb;
 #elif defined(HAVE_TAUCS) 
   lsys = new linearSystemCSRTaucs<double>;
 #else
