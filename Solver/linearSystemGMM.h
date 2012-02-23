@@ -94,8 +94,8 @@ class linearSystemGmm : public linearSystem<scalar> {
     double nor = 0.;
     double temp;
     for(unsigned int i=0;i<_b->size();i++){
-      temp = (*_b)[i];
-      if(temp<0) temp = -temp;
+      temp = abs((*_b)[i]); // this is valid also for complex
+      //if(temp<0) temp = -temp;
       if(nor<temp) nor=temp;
     }
     return nor;
