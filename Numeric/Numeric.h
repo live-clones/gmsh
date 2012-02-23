@@ -69,6 +69,9 @@ void normal3points(double x0, double y0, double z0,
                    double x1, double y1, double z1,
                    double x2, double y2, double z2,
                    double n[3]);
+void normal2points(double x0, double y0, double z0,
+                   double x1, double y1, double z1,
+                   double n[3]);
 int sys2x2(double mat[2][2], double b[2], double res[2]);
 int sys3x3(double mat[3][3], double b[3], double res[3], double *det);
 int sys3x3_with_tol(double mat[3][3], double b[3], double res[3], double *det);
@@ -88,7 +91,7 @@ void circumCenterXYZ(double *p1, double *p2, double *p3, double *res, double *uv
 // operate a transformation on the 4 points of a Quad in 3D, to have an equivalent Quad in 2D
 void planarQuad_xyz2xy(double *x, double *y, double *z, double *xn, double *yn);
 // compute the radius of the circle that is tangent to the 3 edges defined by 4 points
-// edge_1=(x0,y0)->(x1,y1); edge_2=(x1,y1)->(x2,y2); edge_3=(x2,y2)->(x3,y3) 
+// edge_1=(x0,y0)->(x1,y1); edge_2=(x1,y1)->(x2,y2); edge_3=(x2,y2)->(x3,y3)
 double computeInnerRadiusForQuad(double *x, double *y, int i);
 char float2char(float f);
 float char2float(char c);
@@ -132,14 +135,14 @@ void signedDistancesPointsEllipseLine (std::vector<double>&distances,
                                        const SPoint3 &p1, const SPoint3 &p2);
 
 int intersection_segments (SPoint3 &p1, SPoint3 &p2,
-			   SPoint3 &q1, SPoint3 &q2, 
+			   SPoint3 &q1, SPoint3 &q2,
 			   double x[2]);
 
 //tools for projection onto plane
-void computeMeanPlaneSimple(const std::vector<SPoint3> &points, mean_plane &meanPlane); 
+void computeMeanPlaneSimple(const std::vector<SPoint3> &points, mean_plane &meanPlane);
 void projectPointToPlane(const SPoint3 &pt, SPoint3 &ptProj, const mean_plane &meanPlane);
 void projectPointsToPlane(const std::vector<SPoint3> &pts, std::vector<SPoint3> &ptsProj, const mean_plane &meanPlane);
-void transformPointsIntoOrthoBasis(const std::vector<SPoint3> &ptsProj,  std::vector<SPoint3> &pointsUV, 
+void transformPointsIntoOrthoBasis(const std::vector<SPoint3> &ptsProj,  std::vector<SPoint3> &pointsUV,
 				   const SPoint3 &ptCG, const mean_plane &meanPlane);
 
 #endif

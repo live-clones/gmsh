@@ -67,6 +67,24 @@ void normal3points(double x0, double y0, double z0,
   norme(n);
 }
 
+void normal2points(double x0, double y0, double z0,
+                   double x1, double y1, double z1,
+                   double n[3])
+{
+  // this computes one of the normals to the edge
+  double t[3] = {x1 - x0, y1 - y0, z1 - z0};
+  double ex[3] = {0., 0., 0.};
+  if(t[0] == 0.)
+    ex[0] = 1.;
+  else if(t[1] == 0.)
+    ex[1] = 1.;
+  else
+    ex[2] = 1.;
+  prodve(t, ex, n);
+  norme(n);
+}
+
+
 int sys2x2(double mat[2][2], double b[2], double res[2])
 {
   double det, ud, norm;
@@ -108,10 +126,10 @@ double trace3x3(double mat[3][3])
 
 double trace2 (double mat[3][3])
 {
-  double a00 =  mat[0][0] * mat[0][0] + mat[1][0] * mat[0][1] + mat[2][0] * mat[0][2]; 
-  double a11 =  mat[1][0] * mat[0][1] + mat[1][1] * mat[1][1] + mat[1][2] * mat[2][1]; 
+  double a00 =  mat[0][0] * mat[0][0] + mat[1][0] * mat[0][1] + mat[2][0] * mat[0][2];
+  double a11 =  mat[1][0] * mat[0][1] + mat[1][1] * mat[1][1] + mat[1][2] * mat[2][1];
   double a22 =  mat[2][0] * mat[0][2] + mat[2][1] * mat[1][2] + mat[2][2] * mat[2][2];
-  
+
   return a00 + a11 + a22;
 }
 
@@ -179,7 +197,7 @@ double det2x3(double mat[2][3])
   double v1[3] = {mat[0][0], mat[0][1], mat[0][2]};
   double v2[3] = {mat[1][0], mat[1][1], mat[1][2]};
   double n[3];
-  
+
   prodve(v1, v2, n);
   return norm3(n);
 }
@@ -267,23 +285,23 @@ double angle_plan(double V[3], double P1[3], double P2[3], double n[3])
 double triangle_area(double p0[3], double p1[3], double p2[3])
 {
   double a[3], b[3], c[3];
-  
+
   a[0] = p2[0] - p1[0];
   a[1] = p2[1] - p1[1];
   a[2] = p2[2] - p1[2];
-  
+
   b[0] = p0[0] - p1[0];
   b[1] = p0[1] - p1[1];
   b[2] = p0[2] - p1[2];
-  
+
   prodve(a, b, c);
   return 0.5 * sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
 }
 
 double triangle_area2d(double p0[2], double p1[2], double p2[2])
 {
-  const double c =  
-    (p2[0] - p1[0])*(p0[1] - p1[1]) - 
+  const double c =
+    (p2[0] - p1[0])*(p0[1] - p1[1]) -
     (p2[1] - p1[1])*(p0[0] - p1[0]);
 
   return 0.5 * sqrt(c*c);
@@ -335,7 +353,7 @@ void circumCenterXYZ(double *p1, double *p2, double *p3, double *res, double *uv
     double rhs[2] = {resP[0] - p1P[0], resP[1] - p1P[1]};
     sys2x2(mat, rhs, uv);
   }
-  
+
   res[0] = p1[0] + resP[0] * vx[0] + resP[1] * vy[0];
   res[1] = p1[1] + resP[0] * vx[1] + resP[1] * vy[1];
   res[2] = p1[2] + resP[0] * vx[2] + resP[1] * vy[2];
@@ -346,18 +364,18 @@ void planarQuad_xyz2xy(double *x, double *y, double *z, double *xn, double *yn)
   double v1[3] = {x[1] - x[0], y[1] - y[0], z[1] - z[0]};
   double v2[3] = {x[2] - x[0], y[2] - y[0], z[2] - z[0]};
   double v3[3] = {x[3] - x[0], y[3] - y[0], z[3] - z[0]};
-  
+
   double vx[3] = {x[1] - x[0], y[1] - y[0], z[1] - z[0]};
   double vy[3] = {x[2] - x[0], y[2] - y[0], z[2] - z[0]};
   double vz[3]; prodve(vx, vy, vz); prodve(vz, vx, vy);
-  
+
   norme(vx); norme(vy); norme(vz);
-  
+
   double p1P[2] = {0.0, 0.0};
   double p2P[2]; prosca(v1, vx, &p2P[0]); prosca(v1, vy, &p2P[1]);
   double p3P[2]; prosca(v2, vx, &p3P[0]); prosca(v2, vy, &p3P[1]);
   double p4P[2]; prosca(v3, vx, &p4P[0]); prosca(v3, vy, &p4P[1]);
-  
+
   xn[0] = p1P[0];
   xn[1] = p2P[0];
   xn[2] = p3P[0];
@@ -370,35 +388,35 @@ void planarQuad_xyz2xy(double *x, double *y, double *z, double *xn, double *yn)
 
 double computeInnerRadiusForQuad(double *x, double *y, int i)
 {
-  // parameters of the equations of the 3 edges   
+  // parameters of the equations of the 3 edges
   double a1 = y[(4+i)%4]-y[(5+i)%4];
   double a2 = y[(5+i)%4]-y[(6+i)%4];
   double a3 = y[(6+i)%4]-y[(7+i)%4];
-  
+
   double b1 = x[(5+i)%4]-x[(4+i)%4];
   double b2 = x[(6+i)%4]-x[(5+i)%4];
   double b3 = x[(7+i)%4]-x[(6+i)%4];
-  
+
   double c1 = y[(5+i)%4]*x[(4+i)%4]-y[(4+i)%4]*x[(5+i)%4];
   double c2 = y[(6+i)%4]*x[(5+i)%4]-y[(5+i)%4]*x[(6+i)%4];
   double c3 = y[(7+i)%4]*x[(6+i)%4]-y[(6+i)%4]*x[(7+i)%4];
-  
+
   // length of the 3 edges
   double l1 = sqrt(a1*a1+b1*b1);
   double l2 = sqrt(a2*a2+b2*b2);
   double l3 = sqrt(a3*a3+b3*b3);
-  
+
   // parameters of the 2 bisectors
   double a12 = a1/l1-a2/l2;
   double a23 = a2/l2-a3/l3;
-  
+
   double b12 = b1/l1-b2/l2;
   double b23 = b2/l2-b3/l3;
-  
+
   double c12 = c1/l1-c2/l2;
   double c23 = c2/l2-c3/l3;
-  
-  // compute the coordinates of the center of the incircle, 
+
+  // compute the coordinates of the center of the incircle,
   // that is the point where the 2 bisectors meet
   double x_s = (c12*b23-c23*b12)/(a23*b12-a12*b23);
   double y_s = 0.;
@@ -408,10 +426,10 @@ double computeInnerRadiusForQuad(double *x, double *y, int i)
   else {
     y_s = -a23/b23*x_s-c23/b23;
   }
-  
-  // finally get the radius of the circle 
+
+  // finally get the radius of the circle
   double r = (a1*x_s+b1*y_s+c1)/l1;
-  
+
   return r;
 }
 
@@ -477,12 +495,12 @@ double ComputeScalarRep(int numComp, double *val)
 }
 
 void eigenvalue2x2(double mat[2][2], double v[2])
-{ 
+{
 
   double a=1;
   double b=-(mat[0][0]+mat[1][1]);
   double c= (mat[0][0]*mat[1][1])-(mat[0][1]*mat[1][0]);
-  
+
   double det = b*b-4.*a*c;
 
   v[0] = (-b+sqrt(det))/(2*a);
@@ -491,7 +509,7 @@ void eigenvalue2x2(double mat[2][2], double v[2])
 }
 
 void eigenvalue(double mat[3][3], double v[3])
-{            
+{
   // characteristic polynomial of T : find v root of
   // v^3 - I1 v^2 + I2 T - I3 = 0
   // I1 : first invariant , trace(T)
@@ -503,12 +521,12 @@ void eigenvalue(double mat[3][3], double v[3])
   c[2] = - trace3x3(mat);
   c[1] = 0.5 * (c[2] * c[2] - trace2(mat));
   c[0] = - det3x3(mat);
-  
+
   // printf("%g %g %g\n", mat[0][0], mat[0][1], mat[0][2]);
   // printf("%g %g %g\n", mat[1][0], mat[1][1], mat[1][2]);
   // printf("%g %g %g\n", mat[2][0], mat[2][1], mat[2][2]);
   // printf("%g x^3 + %g x^2 + %g x + %g = 0\n", c[3], c[2], c[1], c[0]);
-  
+
   double imag[3];
   FindCubicRoots(c, v, imag);
   eigsort(v);
@@ -529,7 +547,7 @@ void FindCubicRoots(const double coef[4], double real[3], double imag[3])
   b /= a;
   c /= a;
   d /= a;
-  
+
   double q = (3.0*c - (b*b))/9.0;
   double r = -(27.0*d) + b*(9.0*c - 2.0*(b*b));
   r /= 54.0;
@@ -554,7 +572,7 @@ void FindCubicRoots(const double coef[4], double real[3], double imag[3])
 
   // The remaining options are all real
   imag[1] = imag[2] = 0.0;
-  
+
   double r13;
   if (discrim == 0){ // All roots real, at least two are equal.
     r13 = ((r < 0) ? -pow(-r,(1.0/3.0)) : pow(r,(1.0/3.0)));
@@ -578,7 +596,7 @@ void eigsort(double d[3])
 {
   int k, j, i;
   double p;
-  
+
   for (i=0; i<3; i++) {
     p=d[k=i];
     for (j=i+1;j<3;j++)
@@ -633,13 +651,13 @@ bool newton_fd(void (*func)(fullVector<double> &, fullVector<double> &, void *),
   const int MAXIT = 50;
   const double EPS = 1.e-4;
   const int N = x.size();
-  
+
   fullMatrix<double> J(N, N);
   fullVector<double> f(N), feps(N), dx(N);
-  
+
   for (int iter = 0; iter < MAXIT; iter++){
      func(x, f, data);
-     
+
      bool isZero = false;
      for (int k=0; k<N; k++) {
          if (f(k) == 0. ) isZero = true;
@@ -658,16 +676,16 @@ bool newton_fd(void (*func)(fullVector<double> &, fullVector<double> &, void *),
       }
       x(j) -= h;
     }
-    
+
     if (N == 1)
       dx(0) = f(0) / J(0, 0);
     else
       J.luSolve(f, dx);
-    
+
     for (int i = 0; i < N; i++)
       x(i) -= relax * dx(i);
 
-    if(dx.norm() < tolx) return true; 
+    if(dx.norm() < tolx) return true;
   }
   return false;
 }
@@ -679,9 +697,9 @@ f(x+a*d) = f(x) + f'(x) (
 
 */
 
-void gmshLineSearch(double (*func)(fullVector<double> &, void *), void* data, 
-                    fullVector<double> &x, fullVector<double> &p,  
-                    fullVector<double> &g, double &f, 
+void gmshLineSearch(double (*func)(fullVector<double> &, void *), void* data,
+                    fullVector<double> &x, fullVector<double> &p,
+                    fullVector<double> &g, double &f,
                     double stpmax, int &check)
 {
   int i;
@@ -692,7 +710,7 @@ void gmshLineSearch(double (*func)(fullVector<double> &, void *), void* data,
 
   fullVector<double> xold(x);
   const double fold = (*func)(xold, data);
-  
+
   check=0;
   int n = x.size();
   double norm = p.norm();
@@ -707,8 +725,8 @@ void gmshLineSearch(double (*func)(fullVector<double> &, void *), void* data,
   /*
   for (int j=0;j<100;j++){
     double sx = (double)j/99;
-    for (i=0;i<n;i++) x(i)=xold(i)+10*sx*p(i);    
-    double jzede = (*func)(x,data); 
+    for (i=0;i<n;i++) x(i)=xold(i)+10*sx*p(i);
+    double jzede = (*func)(x,data);
   }
   */
 
@@ -723,7 +741,7 @@ void gmshLineSearch(double (*func)(fullVector<double> &, void *), void* data,
       //      printf("ALERT : alam %g alamin %g\n",alam,alamin);
       check = 1;
       return;
-    } 
+    }
     else if (f <= fold + ALF * alam * slope) return;
     else {
       if (alam == 1.0)
@@ -756,7 +774,7 @@ double minimize_grad_fd(double (*func)(fullVector<double> &, void *),
   const int MAXIT = 3;
   const double EPS = 1.e-4;
   const int N = x.size();
-  
+
   fullVector<double> grad(N);
   fullVector<double> dir(N);
   double f, feps, finit;
@@ -786,14 +804,14 @@ double minimize_grad_fd(double (*func)(fullVector<double> &, void *),
     // printf("Line search done x = (%g %g) f = %g\n",x(0),x(1),f);
     if (check == 1) break;
   }
-  
+
   return f;
 }
 
 /*
 P(p) = p1 + t1 xi + t2 eta
 
-t1 = (p2-p1) ; t2 = (p3-p1) ; 
+t1 = (p2-p1) ; t2 = (p3-p1) ;
 
 (P(p) - p) = d n
 
@@ -807,11 +825,11 @@ t1 xi + t2 eta + d n = p - p1
 distance to segment
 
    P(p) = p1 + t (p2-p1)
-   
+
    (p - P(p)) * (p2-p1) = 0
    (p - p1 - t (p2-p1) ) * (p2-p1) = 0
    - t ||p2-p1||^2 + (p-p1)(p2-p1) = 0
-   
+
    t = (p-p1)*(p2-p1)/||p2-p1||^2
 */
 
@@ -827,7 +845,7 @@ void signedDistancesPointsTriangle(std::vector<double> &distances,
   SVector3 t3 = p3 - p2;
   SVector3 n = crossprod(t1, t2);
   n.normalize();
-	
+
   double mat[3][3] = {{t1.x(), t2.x(), -n.x()},
                       {t1.y(), t2.y(), -n.y()},
                       {t1.z(), t2.z(), -n.z()}};
@@ -870,18 +888,18 @@ void signedDistancesPointsTriangle(std::vector<double> &distances,
       bool found = false;
       SPoint3 closePt;
       if (t12 >= 0 && t12 <= 1.){
-        d = sign * std::min(fabs(d), p.distance(p1 + (p2 - p1) * t12));  
+        d = sign * std::min(fabs(d), p.distance(p1 + (p2 - p1) * t12));
         closePt = p1 + (p2 - p1) * t12;
         found = true;
       }
       if (t13 >= 0 && t13 <= 1.){
         if (p.distance(p1 + (p3 - p1) * t13) < fabs(d)) closePt = p1 + (p3 - p1) * t13;
-        d = sign * std::min(fabs(d), p.distance(p1 + (p3 - p1) * t13));      
+        d = sign * std::min(fabs(d), p.distance(p1 + (p3 - p1) * t13));
         found = true;
-      }      
+      }
       if (t23 >= 0 && t23 <= 1.){
         if (p.distance(p2 + (p3 - p2) * t23) < fabs(d)) closePt = p2 + (p3 - p2) * t23;
-        d = sign * std::min(fabs(d), p.distance(p2 + (p3 - p2) * t23));      
+        d = sign * std::min(fabs(d), p.distance(p2 + (p3 - p2) * t23));
         found = true;
       }
       if (p.distance(p1) < fabs(d)){
@@ -901,10 +919,10 @@ void signedDistancesPointsTriangle(std::vector<double> &distances,
       distances[i] = d;
       closePts[i] = closePt;
     }
-  }                                        
+  }
 }
 
-void signedDistancePointLine(const SPoint3 &p1, const SPoint3 &p2, const SPoint3 &p, 
+void signedDistancePointLine(const SPoint3 &p1, const SPoint3 &p2, const SPoint3 &p,
                              double &d, SPoint3 &closePt)
 {
   SVector3 t1 = p2 - p1;
@@ -914,7 +932,7 @@ void signedDistancePointLine(const SPoint3 &p1, const SPoint3 &p2, const SPoint3
   d = 1.e10;
   bool found = false;
   if (t12 >= 0 && t12 <= 1.){
-    d =  std::min(fabs(d), p.distance(p1 + (p2 - p1) * t12)); 
+    d =  std::min(fabs(d), p.distance(p1 + (p2 - p1) * t12));
     closePt = p1 + (p2 - p1) * t12;
     found = true;
   }
@@ -1000,7 +1018,7 @@ void changeReferential(const int direction,const SPoint3 &p,const SPoint3 &close
 }
 
 int computeDistanceRatio(const double &y, const double &yp, const double &x,
-                         const double &xp, double *distance, const double &r1, 
+                         const double &xp, double *distance, const double &r1,
                          const double &r2)
 {
   double b;
@@ -1138,7 +1156,7 @@ void signedDistancesPointsEllipseLine(std::vector<double>&distances,
     SPoint3 closePt;
     const SPoint3 &p = pts[i];
     signedDistancePointLine(p1,p2,p,d,closePt);
-    
+
     distances[i] = d;
     closePts[i] = closePt;
     int direction=0;
@@ -1198,18 +1216,18 @@ void signedDistancesPointsEllipseLine(std::vector<double>&distances,
 }
 
 int intersection_segments(SPoint3 &p1, SPoint3 &p2,
-                          SPoint3 &q1, SPoint3 &q2, 
+                          SPoint3 &q1, SPoint3 &q2,
                           double x[2])
 {
-  double xp_max = std::max(p1.x(), p2.x()); 
-  double yp_max = std::max(p1.y(), p2.y()); 
-  double xq_max = std::max(q1.x(), q2.x()); 
-  double yq_max = std::max(q1.y(), q2.y()); 
+  double xp_max = std::max(p1.x(), p2.x());
+  double yp_max = std::max(p1.y(), p2.y());
+  double xq_max = std::max(q1.x(), q2.x());
+  double yq_max = std::max(q1.y(), q2.y());
 
-  double xp_min = std::min(p1.x(), p2.x()); 
-  double yp_min = std::min(p1.y(), p2.y()); 
-  double xq_min = std::min(q1.x(), q2.x()); 
-  double yq_min = std::min(q1.y(), q2.y()); 
+  double xp_min = std::min(p1.x(), p2.x());
+  double yp_min = std::min(p1.y(), p2.y());
+  double xq_min = std::min(q1.x(), q2.x());
+  double yq_min = std::min(q1.y(), q2.y());
   if (yq_min > yp_max || xq_min >  xp_max ||
       yq_max < yp_min || xq_max <  xp_min){
     return 0;
@@ -1293,7 +1311,7 @@ void computeMeanPlaneSimple(const std::vector<SPoint3> &points, mean_plane &mean
   meanPlane.a = res[0];
   meanPlane.b = res[1];
   meanPlane.c = res[2];
-  meanPlane.d = -res[3];//BUG HERE 
+  meanPlane.d = -res[3];//BUG HERE
 
   meanPlane.x = meanPlane.y = meanPlane.z = 0.;
   if(fabs(meanPlane.a) >= fabs(meanPlane.b) &&
@@ -1325,7 +1343,7 @@ void projectPointToPlane(const SPoint3 &pt, SPoint3 &ptProj, const mean_plane &m
   ptProj[0] =  u + a*t0;
   ptProj[1] =  v + b*t0;
   ptProj[2] =  w + c*t0;
-  
+
 }
 
 void projectPointsToPlane(const std::vector<SPoint3> &pts, std::vector<SPoint3> &ptsProj, const mean_plane &meanPlane)
@@ -1333,12 +1351,12 @@ void projectPointsToPlane(const std::vector<SPoint3> &pts, std::vector<SPoint3> 
 
   ptsProj.resize(pts.size());
   for (int i= 0; i< pts.size(); i++){
-    projectPointToPlane(pts[i],ptsProj[i], meanPlane); 
+    projectPointToPlane(pts[i],ptsProj[i], meanPlane);
   }
 
 }
 
-void transformPointsIntoOrthoBasis(const std::vector<SPoint3> &ptsProj,  std::vector<SPoint3> &pointsUV, 
+void transformPointsIntoOrthoBasis(const std::vector<SPoint3> &ptsProj,  std::vector<SPoint3> &pointsUV,
 				   const SPoint3 &ptCG, const mean_plane &meanPlane)
 {
 
@@ -1349,9 +1367,9 @@ void transformPointsIntoOrthoBasis(const std::vector<SPoint3> &ptsProj,  std::ve
 
   for (int i= 0; i< ptsProj.size(); i++){
     SVector3 pp(ptsProj[i][0]-ptCG[0],ptsProj[i][1]-ptCG[1],ptsProj[i][2]-ptCG[2]) ;
-    pointsUV[i][0] = dot(pp, tangent); 
-    pointsUV[i][1] = dot(pp, binormal); 
-    pointsUV[i][2] = dot(pp, normal); 
+    pointsUV[i][0] = dot(pp, tangent);
+    pointsUV[i][1] = dot(pp, binormal);
+    pointsUV[i][2] = dot(pp, normal);
   }
-  
+
 }
