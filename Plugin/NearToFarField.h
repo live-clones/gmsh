@@ -7,6 +7,11 @@
 #define _NEARTOFARFIELD_H_
 
 #include "Plugin.h"
+#include "shapeFunctions.h"
+#include "Numeric.h"
+#include "PViewOptions.h"
+#include "MElement.h"
+#include "GModel.h"
 
 extern "C"
 {
@@ -24,12 +29,12 @@ class GMSH_NearToFarFieldPlugin : public GMSH_PostPlugin
   }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber* getOption(int iopt);  
+  StringXNumber* getOption(int iopt);
   PView *execute(PView *);
- 
-  static double getFarField(PViewData *eData, PViewData *hData, double k0, double r_far, double theta, double phi) ;
-  static void CartesianToSpherical(int numSteps, double theta, double phi, double **Fc, double **Fsp) ;
-    
-};
+
+  static double getFarField(std::vector<element*> allElems,
+                            std::vector<std::vector<double> >js, std::vector<std::vector<double> >ms,
+                            double k0, double r_far, double theta, double phi);
+ };
 
 #endif
