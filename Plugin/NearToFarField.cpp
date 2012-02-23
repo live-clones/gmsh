@@ -62,14 +62,22 @@ double GMSH_NearToFarFieldPlugin::getFarField(std::vector<element*> allElems,
   double Z0 = 120 * M_PI ; // free-space impedance
 
   int numComps = 3, numSteps = 2 ;
-  std::vector<std::vector<double> > N(numSteps,numComps), Ns(numSteps,numComps) ;
-  std::vector<std::vector<double> > L(numSteps,numComps), Ls(numSteps,numComps) ;
+  std::vector<std::vector<double> > N  ;
+  std::vector<std::vector<double> > Ns ;
+  std::vector<std::vector<double> > L  ;
+  std::vector<std::vector<double> > Ls ;
+
+  N.resize(numSteps); Ns.resize(numSteps);
+  L.resize(numSteps); Ls.resize(numSteps);
+  for (int step=0; step<numSteps;step++){
+    N[step].resize(numComps); Ns[step].resize(numComps);
+    L[step].resize(numComps); Ls[step].resize(numComps);
+  }
 
   int i = 0 ;
   for(unsigned int ele = 0; ele < allElems.size(); ele++){
     element* e = allElems[ele] ;
     int numNodes = e->getNumNodes() ;
-    int numEdges = e->getNumEdges() ;
 
     std::vector<double > valN0(numNodes*numComps),valN1(numNodes*numComps), valL0(numNodes*numComps), valL1(numNodes*numComps) ;
 
@@ -241,9 +249,18 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
   double theta, dTheta =   M_PI/_NbThe ;
   double ffmax = 0.0 ;
 
-  std::vector<std::vector<double> > allPhi(_NbPhi+1,_NbThe+1) ;
-  std::vector<std::vector<double> > allThe(_NbPhi+1,_NbThe+1) ;
-  std::vector<std::vector<double> > farF(_NbPhi+1,_NbThe+1) ;
+  std::vector<std::vector<double> > allPhi ;
+  std::vector<std::vector<double> > allThe ;
+  std::vector<std::vector<double> > farF ;
+
+  allPhi.resize(_NbPhi+1);
+  allThe.resize(_NbPhi+1);
+  farF.resize(_NbPhi+1);
+  for (int i = 0; i<=_NbPhi; i++){
+    allPhi[i].resize(_NbThe+1);
+    allThe[i].resize(_NbThe+1);
+    farF[i].resize(_NbThe+1);
+  }
 
   for (int i = 0; i <= _NbPhi; i++){
     phi = i*dPhi ;
