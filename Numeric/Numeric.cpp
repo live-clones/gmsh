@@ -257,18 +257,18 @@ double angle_02pi(double A3)
   return A3;
 }
 
-double angle_plan(double V[3], double P1[3], double P2[3], double n[3])
+double angle_plan(double v[3], double p1[3], double p2[3], double n[3])
 {
   double PA[3], PB[3], angplan;
   double cosc, sinc, c[3];
 
-  PA[0] = P1[0] - V[0];
-  PA[1] = P1[1] - V[1];
-  PA[2] = P1[2] - V[2];
+  PA[0] = p1[0] - v[0];
+  PA[1] = p1[1] - v[1];
+  PA[2] = p1[2] - v[2];
 
-  PB[0] = P2[0] - V[0];
-  PB[1] = P2[1] - V[1];
-  PB[2] = P2[2] - V[2];
+  PB[0] = p2[0] - v[0];
+  PB[1] = p2[1] - v[1];
+  PB[2] = p2[2] - v[2];
 
   norme(PA);
   norme(PB);
