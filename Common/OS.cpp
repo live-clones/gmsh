@@ -209,7 +209,7 @@ int SystemCall(const std::string &command, bool blocking)
   }
   std::string cmd(command);
   if(!blocking) cmd += " &";
-  Msg::Info("Calling <%s>", cmd.c_str());
+  Msg::Info("Calling '%s'", cmd.c_str());
   return system(cmd.c_str());
 #endif
 }

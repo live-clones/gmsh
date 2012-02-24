@@ -54,7 +54,7 @@ class onelabGmshServer : public GmshServer{
     while(1){
       if(timeout > 0 && GetTimeInSeconds() - start > timeout)
         return 2; // timout
-      if(_client->getPid() < 0 || (_client->getCommandLine().empty() &&
+      if(_client->getPid() < 0 || (_client->getExecutable().empty() &&
                                    !CTX::instance()->solver.listen))
         return 1; // process has been killed or we stopped listening
       // check if there is data (call select with a zero timeout to
@@ -188,7 +188,7 @@ bool onelab::localNetworkClient::run()
     sockname = tmp.str();
   }
 
-  std::string command = FixWindowsPath(_commandLine);
+  std::string command = FixWindowsPath(_executable);
   if(command.size()){
     // complete the command line if "UseCommandLine" is set in the database
     std::vector<onelab::number> n;
@@ -716,6 +716,7 @@ void onelab_cb(Fl_Widget *w, void *data)
         start = i + 1;
       }
     }
+    FlGui::instance()->showMessages();
     return;
   }
 
@@ -872,11 +873,11 @@ static void onelab_choose_executable_cb(Fl_Widget *w, void *data)
   pattern += ".exe";
 #endif
   const char *old = 0;
-  if(!c->getCommandLine().empty()) old = c->getCommandLine().c_str();
+  if(!c->getExecutable().empty()) old = c->getExecutable().c_str();
 
   if(fileChooser(FILE_CHOOSER_SINGLE, "Choose executable", pattern.c_str(), old)){
     std::string exe = fileChooserGetName(1);
-    c->setCommandLine(exe);
+    c->setExecutable(exe);
     if(c->getIndex() >= 0 && c->getIndex() < 5)
       opt_solver_executable(c->getIndex(), GMSH_SET, exe);
   }
@@ -894,7 +895,7 @@ static void onelab_add_solver_cb(Fl_Widget *w, void *data)
     if(opt_solver_name(i, GMSH_GET, "").empty()){
       const char *name = fl_input("Client name:", "");
       if(name){
-        FlGui::instance()->onelab->addSolver(name, "", i);
+        FlGui::instance()->onelab->addSolver(name, "", "", i);
       }
       return;
     }
@@ -1155,11 +1156,12 @@ void onelabWindow::rebuildSolverList()
   _win->label(_title.c_str());
 
   // update Gmsh solver menu
-  std::vector<std::string> names, exes;
+  std::vector<std::string> names, exes, hosts;
   for(int i = 0; i < 5; i++){
     if(opt_solver_name(i, GMSH_GET, "").size()){
       names.push_back(opt_solver_name(i, GMSH_GET, ""));
       exes.push_back(opt_solver_executable(i, GMSH_GET, ""));
+      hosts.push_back(opt_solver_remote_login(i, GMSH_GET, ""));
     }
   }
   for(int i = 0; i < 5; i++){
@@ -1169,17 +1171,19 @@ void onelabWindow::rebuildSolverList()
         it->second->setIndex(i);
       opt_solver_name(i, GMSH_SET, names[i]);
       opt_solver_executable(i, GMSH_SET, exes[i]);
+      opt_solver_remote_login(i, GMSH_SET, hosts[i]);
     }
     else{
       opt_solver_name(i, GMSH_SET, "");
       opt_solver_executable(i, GMSH_SET, "");
+      opt_solver_remote_login(i, GMSH_SET, "");
     }
   }
   FlGui::instance()->menu->setContext(menu_solver, 0);
 }
 
-void onelabWindow::addSolver(const std::string &name, const std::string &commandLine,
-                             int index)
+void onelabWindow::addSolver(const std::string &name, const std::string &executable,
+                             const std::string &remoteLogin, int index)
 {
   if(onelab::server::instance()->findClient(name) !=
      onelab::server::instance()->lastClient()) return; // solver already exists
@@ -1196,11 +1200,13 @@ void onelabWindow::addSolver(const std::string &name, const std::string &command
   }
 
   // create and register the new client
-  onelab::localNetworkClient *c = new onelab::localNetworkClient(name, commandLine);
+  onelab::localNetworkClient *c = new onelab::localNetworkClient(name, executable,
+                                                                 remoteLogin);
   c->setIndex(index);
   opt_solver_name(index, GMSH_SET, name);
-  if(commandLine.empty())
+  if(executable.empty())
     onelab_choose_executable_cb(0, (void *)c);
+  opt_solver_remote_login(index, GMSH_SET, remoteLogin);
 
   FlGui::instance()->onelab->rebuildSolverList();
 
@@ -1218,6 +1224,7 @@ void onelabWindow::removeSolver(const std::string &name)
       if(c->getIndex() >= 0 && c->getIndex() < 5){
         opt_solver_name(c->getIndex(), GMSH_SET, "");
         opt_solver_executable(c->getIndex(), GMSH_SET, "");
+        opt_solver_remote_login(c->getIndex(), GMSH_SET, "");
       }
       delete c;
     }
@@ -1232,7 +1239,8 @@ void solver_cb(Fl_Widget *w, void *data)
   if(num >= 0){
     std::string name = opt_solver_name(num, GMSH_GET, "");
     std::string exe = opt_solver_executable(num, GMSH_GET, "");
-    FlGui::instance()->onelab->addSolver(name, exe, num);
+    std::string host = opt_solver_remote_login(num, GMSH_GET, "");
+    FlGui::instance()->onelab->addSolver(name, exe, host, num);
   }
   else
     FlGui::instance()->onelab->rebuildSolverList();

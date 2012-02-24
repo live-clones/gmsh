@@ -196,8 +196,8 @@ static void file_remote_cb(Fl_Widget *w, void *data)
       Msg::Error("Cannot start: remote Gmsh is already running");
       return;
     }
-    c->setCommandLine(connectionChooser());
-    if(c->getCommandLine().size()) c->run();
+    c->setExecutable(connectionChooser());
+    if(c->getExecutable().size()) c->run();
   }
   else{
     if(!server){

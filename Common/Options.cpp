@@ -1184,36 +1184,36 @@ std::string opt_solver_executable4(OPT_ARGS_STR)
   return opt_solver_executable(4, action, val);
 }
 
-std::string opt_solver_hostname(OPT_ARGS_STR)
+std::string opt_solver_remote_login(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    CTX::instance()->solver.hostname[num] = val;
-  return CTX::instance()->solver.hostname[num];
+    CTX::instance()->solver.remoteLogin[num] = val;
+  return CTX::instance()->solver.remoteLogin[num];
 }
 
-std::string opt_solver_hostname0(OPT_ARGS_STR)
+std::string opt_solver_remote_login0(OPT_ARGS_STR)
 {
-  return opt_solver_hostname(0, action, val);
+  return opt_solver_remote_login(0, action, val);
 }
 
-std::string opt_solver_hostname1(OPT_ARGS_STR)
+std::string opt_solver_remote_login1(OPT_ARGS_STR)
 {
-  return opt_solver_hostname(1, action, val);
+  return opt_solver_remote_login(1, action, val);
 }
 
-std::string opt_solver_hostname2(OPT_ARGS_STR)
+std::string opt_solver_remote_login2(OPT_ARGS_STR)
 {
-  return opt_solver_hostname(2, action, val);
+  return opt_solver_remote_login(2, action, val);
 }
 
-std::string opt_solver_hostname3(OPT_ARGS_STR)
+std::string opt_solver_remote_login3(OPT_ARGS_STR)
 {
-  return opt_solver_hostname(3, action, val);
+  return opt_solver_remote_login(3, action, val);
 }
 
-std::string opt_solver_hostname4(OPT_ARGS_STR)
+std::string opt_solver_remote_login4(OPT_ARGS_STR)
 {
-  return opt_solver_hostname(4, action, val);
+  return opt_solver_remote_login(4, action, val);
 }
 
 #if defined(HAVE_FLTK)

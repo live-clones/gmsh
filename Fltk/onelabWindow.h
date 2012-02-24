@@ -48,8 +48,8 @@ class onelabWindow{
     _tree->item_pathname(path, 1024, item);
     return std::string(path);
   }
-  void addSolver(const std::string &name, const std::string &commandLine,
-                 int index);
+  void addSolver(const std::string &name, const std::string &exe,
+                 const std::string &hostName, int index);
   void removeSolver(const std::string &name);
   void checkForErrors(const std::string &client);
   bool stop(){ return _stop; }

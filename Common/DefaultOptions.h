@@ -125,17 +125,6 @@ StringXString SolverOptions_String[] = {
   { F|S, "Executable4" , opt_solver_executable4 , "" ,
     "System command to launch solver 4" },
 
-  { F|S, "Hostname0" , opt_solver_hostname0 , "",
-    "Hostname where to launch solver 0" },
-  { F|S, "Hostname1" , opt_solver_hostname1 , "" ,
-    "Hostname where to launch solver 1" },
-  { F|S, "Hostname2" , opt_solver_hostname2 , "" ,
-    "Hostname where to launch solver 2" },
-  { F|S, "Hostname3" , opt_solver_hostname3 , "" ,
-    "Hostname where to launch solver 3" },
-  { F|S, "Hostname4" , opt_solver_hostname4 , "" ,
-    "Hostname where to launch solver 4" },
-
   { F|S, "Name0" , opt_solver_name0 , "GetDP" ,
     "Name of solver 0" },
   { F|S, "Name1" , opt_solver_name1 , "" ,
@@ -146,6 +135,17 @@ StringXString SolverOptions_String[] = {
     "Name of solver 3" },
   { F|S, "Name4" , opt_solver_name4 , "" ,
     "Name of solver 4" },
+
+  { F|S, "RemoteLogin0" , opt_solver_remote_login0 , "",
+    "Command to login to a remote host to launch solver 0" },
+  { F|S, "RemoteLogin1" , opt_solver_remote_login1 , "" ,
+    "Command to login to a remote host to launch solver 1" },
+  { F|S, "RemoteLogin2" , opt_solver_remote_login2 , "" ,
+    "Command to login to a remote host to launch solver 2" },
+  { F|S, "RemoteLogin3" , opt_solver_remote_login3 , "" ,
+    "Command to login to a remote host to launch solver 3" },
+  { F|S, "RemoteLogin4" , opt_solver_remote_login4 , "" ,
+    "Command to login to a remote host to launch solver 4" },
 
   { F|O, "SocketName" , opt_solver_socket_name ,
 #if defined(WIN32) && !defined(__CYGWIN__)

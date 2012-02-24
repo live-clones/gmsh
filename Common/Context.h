@@ -217,7 +217,7 @@ class CTX {
     int plugins, listen;
     double timeout;
     std::string socketName;
-    std::string name[5], executable[5], hostname[5];
+    std::string name[5], executable[5], remoteLogin[5];
   }solver;
   // print options
   struct{

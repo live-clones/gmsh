@@ -700,22 +700,27 @@ namespace onelab{
 
   class localNetworkClient : public localClient{
   private:
-    // command line to launch the remote network client
-    std::string _commandLine;
+    // executable of the client (including filesystem path, if necessary)
+    std::string _executable;
+    // command to login to a remote host (if necessary)
+    std::string _remoteLogin;
     // command line option to specify socket
     std::string _socketSwitch;
-    // pid of the remote network client
+    // pid of the remote network client while it is running (-1 otherwise)
     int _pid;
     // underlying GmshServer
     GmshServer *_gmshServer;
   public:
-    localNetworkClient(const std::string &name, const std::string &commandLine)
-      : localClient(name), _commandLine(commandLine), _socketSwitch("-onelab"),
-        _pid(-1), _gmshServer(0) {}
+    localNetworkClient(const std::string &name, const std::string &executable,
+                       const std::string &remoteLogin="")
+      : localClient(name), _executable(executable), _remoteLogin(remoteLogin),
+        _socketSwitch("-onelab"), _pid(-1), _gmshServer(0) {}
     virtual ~localNetworkClient(){}
     virtual bool isNetworkClient(){ return true; }
-    const std::string &getCommandLine(){ return _commandLine; }
-    void setCommandLine(const std::string &s){ _commandLine = s; }
+    const std::string &getExecutable(){ return _executable; }
+    void setExecutable(const std::string &s){ _executable = s; }
+    const std::string &getRemoteLogin(){ return _remoteLogin; }
+    void setRemoteLogin(const std::string &s){ _remoteLogin = s; }
     const std::string &getSocketSwitch(){ return _socketSwitch; }
     void setSocketSwitch(const std::string &s){ _socketSwitch = s; }
     int getPid(){ return _pid; }
