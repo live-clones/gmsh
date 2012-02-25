@@ -187,6 +187,32 @@ class FilterDofComponent : public FilterDof
   }
 };
 
+// return true if the Dof is in a filled set
+class FilterDofSet : public FilterDof
+{
+ protected:
+  std::set<Dof> _dofset;
+ public:
+  FilterDofSet() : FilterDof(){}
+  virtual ~FilterDofSet(){}
+  virtual bool operator()(Dof key)
+  {
+    std::set<Dof>::iterator itR = _dofset.find(key);
+    if(itR == _dofset.end()){
+      return false;
+    }
+    return true;
+  }
+  virtual void addDof(Dof key)
+  {
+    _dofset.insert(key);
+  }
+  virtual void addDof(std::vector<Dof> &R)
+  {
+    for(int i=0;i<R.size();i++)
+      this->addDof(R[i]);
+  }
+};
 
 template<class Assembler> void FixNodalDofs(FunctionSpaceBase &space, MElement *e, Assembler &assembler,
                                             simpleFunction<typename Assembler::dataVec> &fct,
@@ -214,7 +240,7 @@ template<class Assembler> void FixNodalDofs(FunctionSpaceBase &space, MElement *
 }
 
 template<class Iterator, class Assembler> void FixNodalDofs(FunctionSpaceBase &space, Iterator itbegin,
-                                                            Iterator itend, Assembler &assembler, 
+                                                            Iterator itend, Assembler &assembler,
                                                             simpleFunction<typename Assembler::dataVec> &fct,
                                                             FilterDof &filter)
 {
