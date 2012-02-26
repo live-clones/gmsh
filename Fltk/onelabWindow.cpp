@@ -918,6 +918,8 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
   _tree->showroot(0);
 
+  _itemWidth = (int)(0.5 * _tree->w());
+
   _butt[0] = new Fl_Button(width - 2*WB - 2*BB, height - WB - BH, BB, BH, "Check");
   _butt[0]->callback(onelab_cb, (void*)"check");
   _butt[1] = new Fl_Button(width - WB - BB, height - WB - BH, BB, BH, "Compute");
@@ -951,11 +953,91 @@ onelabWindow::onelabWindow(int deltaFontSize)
   FL_NORMAL_SIZE += _deltaFontSize;
 }
 
+void onelabWindow::_addParameter(onelab::number &p)
+{
+  Fl_Tree_Item *n = _tree->add(p.getName().c_str());
+  n->labelsize(FL_NORMAL_SIZE + 5);
+  std::string label = p.getShortName();
+  _tree->begin();
+  if(p.getChoices().size() == 2 && p.getChoices()[0] == 0 && p.getChoices()[1] == 1){
+    Fl_Check_Button *but = new Fl_Check_Button(1, 1, _itemWidth, 1);
+    _treeWidgets.push_back(but);
+    but->copy_label(label.c_str());
+    but->value(p.getValue());
+    but->callback(onelab_check_button_cb, (void*)n);
+    n->widget(but);
+    if(p.getAttribute("Highlight").size())
+      n->labelbgcolor(FL_YELLOW);
+  }
+  else{
+    inputRange *but = new inputRange
+      (1, 1, _itemWidth, 1, onelab::parameter::maxNumber());
+    _treeWidgets.push_back(but);
+    but->copy_label(label.c_str());
+    but->value(p.getValue());
+    but->minimum(p.getMin());
+    but->maximum(p.getMax());
+    but->step(p.getStep());
+    but->choices(p.getChoices());
+    but->loop(p.getAttribute("Loop"));
+    but->graph(p.getAttribute("Graph"));
+    if(p.getAttribute("Highlight").size())
+      but->color(FL_YELLOW);
+    but->align(FL_ALIGN_RIGHT);
+    but->callback(onelab_input_range_cb, (void*)n);
+    but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+    n->widget(but);
+  }
+  _tree->end();
+}
+
+void onelabWindow::_addParameter(onelab::string &p)
+{
+  Fl_Tree_Item *n = _tree->add(p.getName().c_str());
+  n->labelsize(FL_NORMAL_SIZE + 5);
+  std::string label = p.getShortName();
+  _tree->begin();
+  Fl_Input_Choice *but = new Fl_Input_Choice(1, 1, _itemWidth, 1);
+  _treeWidgets.push_back(but);
+  but->copy_label(label.c_str());
+  std::vector<Fl_Menu_Item> menu;
+  for(unsigned int j = 0; j < p.getChoices().size(); j++){
+    // need to manually manage the label strings
+    char *str = strdup(p.getChoices()[j].c_str());
+    _treeStrings.push_back(str);
+    bool divider = (p.getKind() == "file" &&
+                    j == p.getChoices().size() - 1);
+    Fl_Menu_Item it = {str, 0, 0, 0, divider ? FL_MENU_DIVIDER : 0};
+    menu.push_back(it);
+  }
+  if(p.getKind() == "file"){
+    Fl_Menu_Item it = {"Choose...", 0, onelab_input_choice_file_chooser_cb, (void*)n};
+    menu.push_back(it);
+    Fl_Menu_Item it2 = {"Edit...", 0, onelab_input_choice_file_edit_cb, (void*)n};
+    menu.push_back(it2);
+    if(GuessFileFormatFromFileName(p.getValue()) >= 0){
+      Fl_Menu_Item it3 = {"Merge...", 0, onelab_input_choice_file_merge_cb, (void*)n};
+      menu.push_back(it3);
+    }
+  }
+  Fl_Menu_Item it = {0};
+  menu.push_back(it);
+  but->menubutton()->copy(&menu[0]);
+  but->value(p.getValue().c_str());
+  if(p.getAttribute("Highlight").size())
+    but->input()->color(FL_YELLOW);
+  but->align(FL_ALIGN_RIGHT);
+  but->callback(onelab_input_choice_cb, (void*)n);
+  but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+  n->widget(but);
+  _tree->end();
+}
+
 void onelabWindow::rebuildTree()
 {
   FL_NORMAL_SIZE -= _deltaFontSize;
 
-  int width = (int)(0.5 * _tree->w());
+  _itemWidth = (int)(0.5 * _tree->w());
 
   std::vector<std::string> closed;
   for (Fl_Tree_Item *n = _tree->first(); n; n = n->next())
@@ -976,92 +1058,20 @@ void onelabWindow::rebuildTree()
   onelab::server::instance()->get(numbers);
   for(unsigned int i = 0; i < numbers.size(); i++){
     if(!numbers[i].getVisible()) continue;
-    Fl_Tree_Item *n = _tree->add(numbers[i].getName().c_str());
-    n->labelsize(FL_NORMAL_SIZE + 5);
-    std::string label = numbers[i].getShortName();
-    _tree->begin();
-    if(numbers[i].getChoices().size() == 2 &&
-       numbers[i].getChoices()[0] == 0 &&
-       numbers[i].getChoices()[1] == 1){
-      Fl_Check_Button *but = new Fl_Check_Button(1, 1, width, 1);
-      _treeWidgets.push_back(but);
-      but->copy_label(label.c_str());
-      but->value(numbers[i].getValue());
-      but->callback(onelab_check_button_cb, (void*)n);
-      n->widget(but);
-      if(numbers[i].getAttribute("Highlight").size())
-        n->labelbgcolor(FL_YELLOW);
-    }
-    else{
-      inputRange *but = new inputRange
-        (1, 1, width, 1, onelab::parameter::maxNumber());
-      _treeWidgets.push_back(but);
-      but->copy_label(label.c_str());
-      but->value(numbers[i].getValue());
-      but->minimum(numbers[i].getMin());
-      but->maximum(numbers[i].getMax());
-      but->step(numbers[i].getStep());
-      but->choices(numbers[i].getChoices());
-      but->loop(numbers[i].getAttribute("Loop"));
-      but->graph(numbers[i].getAttribute("Graph"));
-      if(numbers[i].getAttribute("Highlight").size())
-        but->color(FL_YELLOW);
-      but->align(FL_ALIGN_RIGHT);
-      but->callback(onelab_input_range_cb, (void*)n);
-      but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-      n->widget(but);
-    }
-    _tree->end();
+    _addParameter(numbers[i]);
   }
 
   std::vector<onelab::string> strings;
   onelab::server::instance()->get(strings);
   for(unsigned int i = 0; i < strings.size(); i++){
     if(!strings[i].getVisible()) continue;
-    Fl_Tree_Item *n = _tree->add(strings[i].getName().c_str());
-    n->labelsize(FL_NORMAL_SIZE + 5);
-    std::string label = strings[i].getShortName();
-    _tree->begin();
-    Fl_Input_Choice *but = new Fl_Input_Choice(1, 1, width, 1);
-    _treeWidgets.push_back(but);
-    but->copy_label(label.c_str());
-    std::vector<Fl_Menu_Item> menu;
-    for(unsigned int j = 0; j < strings[i].getChoices().size(); j++){
-      // need to manually manage the label strings
-      char *str = strdup(strings[i].getChoices()[j].c_str());
-      _treeStrings.push_back(str);
-      bool divider = (strings[i].getKind() == "file" &&
-                      j == strings[i].getChoices().size() - 1);
-      Fl_Menu_Item it = {str, 0, 0, 0, divider ? FL_MENU_DIVIDER : 0};
-      menu.push_back(it);
-    }
-    if(strings[i].getKind() == "file"){
-      Fl_Menu_Item it = {"Choose...", 0, onelab_input_choice_file_chooser_cb, (void*)n};
-      menu.push_back(it);
-      Fl_Menu_Item it2 = {"Edit...", 0, onelab_input_choice_file_edit_cb, (void*)n};
-      menu.push_back(it2);
-      if(GuessFileFormatFromFileName(strings[i].getValue()) >= 0){
-        Fl_Menu_Item it3 = {"Merge...", 0, onelab_input_choice_file_merge_cb, (void*)n};
-        menu.push_back(it3);
-      }
-    }
-    Fl_Menu_Item it = {0};
-    menu.push_back(it);
-    but->menubutton()->copy(&menu[0]);
-    but->value(strings[i].getValue().c_str());
-    if(strings[i].getAttribute("Highlight").size())
-      but->input()->color(FL_YELLOW);
-    but->align(FL_ALIGN_RIGHT);
-    but->callback(onelab_input_choice_cb, (void*)n);
-    but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-    n->widget(but);
-    _tree->end();
+    _addParameter(strings[i]);
   }
 
   for(Fl_Tree_Item *n = _tree->first(); n; n = n->next()){
     if(n->has_children()){
       _tree->begin();
-      Fl_Box *but = new Fl_Box(1, 1, width, 1);
+      Fl_Box *but = new Fl_Box(1, 1, _itemWidth, 1);
       but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
       _treeWidgets.push_back(but);
       onelab::string o(n->label());
@@ -1234,8 +1244,9 @@ void onelabWindow::removeSolver(const std::string &name)
 
 void solver_cb(Fl_Widget *w, void *data)
 {
-  int num = (intptr_t)data;
+  Msg::ResetErrorCounter();
 
+  int num = (intptr_t)data;
   if(num >= 0){
     std::string name = opt_solver_name(num, GMSH_GET, "");
     std::string exe = opt_solver_executable(num, GMSH_GET, "");

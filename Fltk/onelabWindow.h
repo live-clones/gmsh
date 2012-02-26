@@ -29,6 +29,9 @@ class onelabWindow{
   std::string _title;
   int _deltaFontSize;
   bool _stop;
+  int _itemWidth;
+  void _addParameter(onelab::number &p);
+  void _addParameter(onelab::string &p);
  public:
   onelabWindow(int deltaFontSize=0);
   int x(){ return _win->x(); }
