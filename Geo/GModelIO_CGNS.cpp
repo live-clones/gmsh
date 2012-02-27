@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 //
-// GModelIO_CGNS.cpp - Copyright (C) 2008 S. Guzik, C. Geuzaine, J.-F. Remacle
+// GModelIO_CGNS.cpp - Copyright (C) 2008-2012 S. Guzik, B. Gorissen, C. Geuzaine, J.-F. Remacle
 
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -788,6 +788,15 @@ int GModel::readCGNS(const std::string &name)
       int transform[3];
       cg_1to1_read(index_file, index_base, index_zone,index_section,
 		   ConnectionName, DonorName, range, donor_range, transform);
+      
+      // Do not ignore periodic boundaries when creating elements later on.
+      float RotationCenter[3];
+      float RotationAngle[3];
+      float Translation[3];
+      if (cg_1to1_periodic_read(index_file, index_base, index_zone, index_section,
+				RotationCenter, RotationAngle, Translation) != CG_NODE_NOT_FOUND)
+	continue;
+
       // Checking on which face it is
       int face = 0;
       if (range[0] == range[3]) {
@@ -812,6 +821,8 @@ int GModel::readCGNS(const std::string &name)
 
       forbidden[face].push_back(range_int);
     }
+
+    
 
 
     for(int face = 0; face < 6; face++) {
@@ -871,27 +882,6 @@ int GModel::readCGNS(const std::string &name)
 	break;
       }
       
-      /**/
-
-	  /*
-	if (forbidden[face][ff][3]-1 > imin)
-	  imin = forbidden[face][ff][3]-1;
-	if (forbidden[face][ff][0]-1 < imax)
-	  imax = forbidden[face][ff][0]-1;
-
-	if (forbidden[face][ff][4]-1 > jmin)
-	  jmin = forbidden[face][ff][4]-1;
-	if (forbidden[face][ff][1]-1 < jmax)
-	  jmax = forbidden[face][ff][1]-1;
-
-	if (forbidden[face][ff][5]-1 > kmin)
-	  kmin = forbidden[face][ff][5]-1;
-	if (forbidden[face][ff][2]-1 < kmax)
-	  kmax = forbidden[face][ff][2]-1;
-      }
-
-	     printf("Range : %i-> %i   %i->%i   %i->%i\n", imin, imax, jmin, jmax, kmin, kmax);
-	*/
       GRegion* gr = getRegionByTag(elementary_region);
       elementary_face++;
       num = 1;
@@ -903,9 +893,10 @@ int GModel::readCGNS(const std::string &name)
 	    bool ok = true;
 	    for (int ff=0; ff < forbidden[face].size(); ff++) {
 	      int* lim = forbidden[face][ff];
-	      if ((i >= fmin(lim[0], lim[3])-1 && i <= fmax(lim[0], lim[3])-2) || igrow == 0) {
-		if ((j >= fmin(lim[1], lim[4])-1 && j <= fmax(lim[1],lim[4])-2) || jgrow == 0) {
-		  if ((k >= fmin(lim[2], lim[5])-1 && k <= fmax(lim[2], lim[5])-2) || kgrow == 0) {
+
+	      if ((i >= fmin(lim[0], lim[3])-1 && i <= fmax(lim[0], lim[3])) || (igrow == 0 && i == lim[0]-1) ) {
+		if ((j >= fmin(lim[1], lim[4])-1 && j <= fmax(lim[1],lim[4])) || (jgrow == 0 && j == lim[1]-1) ) {
+		  if ((k >= fmin(lim[2], lim[5])-1 && k <= fmax(lim[2], lim[5])) || (kgrow == 0 && k == lim[2]-1) ) {
 		    ok = false;
 		  }
 		}
@@ -935,15 +926,10 @@ int GModel::readCGNS(const std::string &name)
       if (gf)
 	gf->addRegion(gr);
 
-      for (int ff = 0; ff < forbidden[face].size(); ff++) {
+      for (int ff = 0; ff < forbidden[face].size(); ff++)
 	  delete[] forbidden[face][ff];
-      }
-
-     }
+    }
   }
-
-  // store the vertices in their associate
-  
 
   // store the elements in their associated elementary entity. If the
   // entity does not exist, create a new (discrete) one.
