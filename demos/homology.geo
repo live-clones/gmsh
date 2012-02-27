@@ -1,20 +1,15 @@
 /********************************************************************* 
  *
- *  Gmsh tutorial 10
+ *  Gmsh tutorial 
  *
- *  Homology computation
+ *  Homology and cohomology computation
  *
  *********************************************************************/
  
 // Homology computation in Gmsh finds representative chains of
-// (relative) homology spaces using a mesh of a model. Those
-// representatives generate the (relative) homology spaces of the
-// model. Alternatively, Gmsh can only look for the ranks of the
-// (relative) homology spaces, the Betti numbers of the model.
-
-// The generators chains are stored in a given .msh-file as physical
-// groups, whose mesh elements are oriented such that their
-// coefficients are 1 in the generator chain.
+// (relative) (co)homology space bases using a mesh of a model. 
+// The representative basis chains are stored in the mesh as 
+// physical groups of Gmsh, one for each chain. 
 
 // Create an example geometry
 
@@ -134,27 +129,40 @@ Physical Surface(74) = {46, 18, 20, 52, 22, 50, 24, 48, 66, 63, 60, 58, 56, 54};
 Physical Surface(75) = {46, 63, 66, 52, 50, 48, 54, 60, 58, 56};
 
 
-// Create a mesh of the model
-Mesh 3;
+// Find bases for relative homology spaces of 
+// the domain modulo the four terminals.
+Homology {{69}, {70, 71, 72, 73}};
 
-// Find generators of relative homology spaces of the domain modulo the 
-// four terminals.
-// Save the generator chains to t10_hom.msh.
-HomGen("t10_hom.msh") = {{69}, {70, 71, 72, 73}};
+// Find homology space bases isomorphic to the previous bases: 
+// homology spaces modulo the non-terminal domain surface,
+// a.k.a the thin cuts.
+Homology {{69}, {75}};
 
-// Find the corresponding thin cuts, 
-// generators of relative homology spaces modulo the 
-// non-terminal domain surface.
-// Save the cut chains to t10_hom.msh.
-HomGen("t10_hom.msh") = {{69}, {75}};
-
-// Find the corresponding thick cuts.
-// Save the cut chains to t10_hom.msh.
-HomCut("t10_hom.msh") = {{69}, {70, 71, 72, 73}};
+// Find cohomology space bases isomorphic to the previous bases: 
+// cohomology spaces of the domain modulo the four terminals,
+// a.k.a the thick cuts.
+Cohomology {{69}, {70, 71, 72, 73}};
 
 // More examples (uncomment):
-//  HomGen("t10_hom.msh") = {{69}, {}}; 
-//  HomGen("t10_hom.msh") = {{}, {}};
-//  HomGen("t10_hom.msh") = {{69}, {74}}; 
-//  HomGen("t10_hom.msh") = {{}, {74}}; 
+//  Homology = {{69}, {}}; 
+//  Homology {{69}, {74}}; 
+//  Homology {{74}, {70, 71, 72, 73}}; 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
