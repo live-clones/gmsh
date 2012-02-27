@@ -613,8 +613,11 @@ void RecombineMesh(GModel *m)
   Msg::StatusBar(2, true, "Done recombining 2D mesh (%g s)", t2 - t1);
 }
 
+//#include <google/profiler.h>
+
 void GenerateMesh(GModel *m, int ask)
 {
+  //  ProfilerStart("gmsh.prof");
   if(CTX::instance()->lock) {
     Msg::Info("I'm busy! Ask me that later...");
     return;
@@ -684,4 +687,5 @@ void GenerateMesh(GModel *m, int ask)
 
   CTX::instance()->lock = 0;
   CTX::instance()->mesh.changed = ENT_ALL;
+  //  ProfilerStop();
 }

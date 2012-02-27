@@ -108,3 +108,4 @@ ll = newll;
 Line Loop(ll) = { l1[{1:n}], l2[{1:n}], l3[{1:n}], l4[{1:n}], l5[{1:n}], l6[{1:n}], 
                   l7[{1:n}], -l[{1:n+1}], -links, -rechts, aussen};
 Plane Surface(news) = ll;
+Recombine Surface {10, 21, 32, 43, 54, 65, 76, 87, 98, 109, 116};

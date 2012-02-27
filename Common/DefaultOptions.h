@@ -785,6 +785,8 @@ StringXNumber MeshOptions_Number[] = {
     "Field format for Nastran BDF files (0=free, 1=small, 2=large)" },
   { F|O, "Binary" , opt_mesh_binary , 0. ,
     "Write mesh files in binary format (if possible)" },
+  { F|O, "Bunin" , opt_mesh_bunin , 0. ,
+    "Apply Bunin optimization on quad meshes (the parameter is the maximal size of a cavity that may be remeshed)" },
 
   { F|O, "CgnsImportOrder" , opt_mesh_cgns_import_order , 1. ,
    "Enable the creation of high-order mesh from CGNS structured meshes."

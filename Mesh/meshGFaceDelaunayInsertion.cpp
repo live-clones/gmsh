@@ -371,6 +371,30 @@ void connectTris(ITER beg, ITER end)
   }
 }
 
+template <class ITER>
+void connectQuas(ITER beg, ITER end)
+{
+  std::set<edgeXquad> conn;
+  while (beg != end){
+    for (int i = 0; i < 4; i++){
+      edgeXquad fxt(*beg, i);
+      std::set<edgeXquad>::iterator found = conn.find(fxt);
+      if (found == conn.end())
+	conn.insert(fxt);
+      else if (found->t1 != *beg){
+	found->t1->setNeigh(found->i1, *beg);
+	(*beg)->setNeigh(i, found->t1);
+      }
+    }
+    ++beg;
+  }
+}
+
+void connectQuads(std::vector<MQua4*> &l)
+{
+  connectQuas(l.begin(), l.end());
+}
+
 void connectTriangles(std::list<MTri3*> &l)
 {
   connectTris(l.begin(), l.end());

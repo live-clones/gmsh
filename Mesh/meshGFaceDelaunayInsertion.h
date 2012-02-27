@@ -7,6 +7,7 @@
 #define _MESH_GFACE_DELAUNAY_INSERTIONFACE_H_
 
 #include "MTriangle.h"
+#include "MQuadrangle.h"
 #include "STensor3.h"
 #include <list>
 #include <set>
@@ -80,6 +81,48 @@ class MTri3
   }
 };
 
+/*        2
+  3 +------------+ 2
+    |            |
+    |            |
+  3 |            | 1
+    |            |
+    |            |
+    +------------+
+  0       0        1 
+	  
+   We require that quads are oriented
+   We'd like to walk into the quad mesh and 
+   create sheets
+   
+   We start from a given quad and one edge
+   We give a path as an array of int's
+   If path[i] == 1 --> 
+      
+ */
+
+class MQua4
+{
+ protected :
+  MQuadrangle *base;
+  MQua4 *neigh[4];
+ public :
+ MQua4(MQuadrangle *q) : base(q) {
+    neigh[0] = neigh[1] = neigh[2] = neigh[3] = NULL;}
+  inline MQuadrangle *qua() const { return base; }
+  inline void  setNeigh(int iN , MQua4 *n) { neigh[iN] = n; }
+  inline MQua4 *getNeigh(int iN ) const { return neigh[iN]; }
+  inline int getEdge(MVertex *v1, MVertex *v2){
+    for (int i=0;i<4;i++){
+      MEdge e = base->getEdge(i);
+      if (e.getVertex(0) == v1 && e.getVertex(1) == v2)return i;
+      if (e.getVertex(0) == v2 && e.getVertex(1) == v1)return i;      
+    }
+    return -1;
+  }
+};
+
+
 class compareTri3Ptr
 {
  public:
@@ -91,6 +134,7 @@ class compareTri3Ptr
   }
 };
 
+void connectQuads(std::vector<MQua4*> &);
 void connectTriangles(std::list<MTri3*> &);
 void connectTriangles(std::vector<MTri3*> &);
 void connectTriangles(std::set<MTri3*,compareTri3Ptr> &AllTris);
@@ -118,5 +162,26 @@ struct edgeXface
     return false;
   }
 };
+
+struct edgeXquad
+{
+  MVertex *v[2];
+  MQua4 * t1;
+  int i1;
+  edgeXquad(MQua4 *_t, int iFac) : t1(_t), i1(iFac)
+  {
+    v[0] = t1->qua()->getVertex(iFac);
+    v[1] = t1->qua()->getVertex((iFac+1)%4);
+    std::sort(v, v + 2);
+  }
+  inline bool operator < ( const edgeXquad &other) const
+  {
+    if(v[0] < other.v[0]) return true;
+    if(v[0] > other.v[0]) return false;
+    if(v[1] < other.v[1]) return true;
+    return false;
+  }
+};
+
 
 #endif

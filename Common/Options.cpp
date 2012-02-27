@@ -4883,6 +4883,13 @@ double opt_mesh_binary(OPT_ARGS_NUM)
   return CTX::instance()->mesh.binary;
 }
 
+double opt_mesh_bunin(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.bunin = (int)val;
+  return CTX::instance()->mesh.bunin;
+}
+
 double opt_mesh_bdf_field_format(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
