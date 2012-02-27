@@ -1749,10 +1749,11 @@ void deMeshGFace::operator() (GFace *gf)
 }
 
 // for debugging, change value from -1 to -100;
-int debugSurface = -1; //-1;
+int debugSurface = -100; //-1;
 
 void meshGFace::operator() (GFace *gf)
 {
+  
   gf->model()->setCurrentMeshEntity(gf);
 
   if(debugSurface >= 0 && gf->tag() != debugSurface){

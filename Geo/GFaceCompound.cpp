@@ -683,7 +683,6 @@ bool GFaceCompound::parametrize() const
   // Radial-Basis Function parametrization
   else if (_mapping == RBF){    
     Msg::Debug("Parametrizing surface %d with 'RBF' ", tag());
-    double t1 = Cpu();
     int variableEps = 0;
     int radFunInd = 1; // 1 MQ RBF , 0 GA
     double sizeBox = getSizeH();
@@ -695,17 +694,8 @@ bool GFaceCompound::parametrize() const
     //_rbf->RbfLapSurface_local_CPM(true, _rbf->getXYZ(), _rbf->getN(), Oper);
     _rbf->RbfLapSurface_global_CPM_high_2(_rbf->getXYZ(), _rbf->getN(), Oper);
     //_rbf->RbfLapSurface_local_CPM(false, _rbf->getXYZ(), _rbf->getN(),  Oper);
-    //_rbf->RbfLapSurface_global_projection(_rbf->getXYZ(), _rbf->getN(), Oper);
-    //_rbf->RbfLapSurface_local_projection(_rbf->getXYZ(), _rbf->getN(), Oper, true);
-  
+
     _rbf->solveHarmonicMap(Oper, _ordered, _coords, coordinates);
-
-    //_rbf->computeCurvature(coordinates);
-    //printStuff();
-    //exit(1);
-
-    double t2 = Cpu();
-    printf("param RBF in %g sec \n", t2-t1);
   }
 
   buildOct();  
@@ -749,6 +739,23 @@ void GFaceCompound::getBoundingEdges()
     for( ; it != _U0.end() ; ++it){
       l_edges.push_back(*it);
       (*it)->addFace(this);
+    }
+    if (_V0.size() && _U1.size() && _V1.size()){
+      it = _V0.begin();
+      for( ; it != _V0.end() ; ++it){
+	l_edges.push_back(*it);
+	(*it)->addFace(this);
+      }
+      it = _U1.begin();
+      for( ; it != _U1.end() ; ++it){
+	l_edges.push_back(*it);
+	(*it)->addFace(this);
+      }
+      it = _V1.begin();
+      for( ; it != _V1.end() ; ++it){
+	l_edges.push_back(*it);
+	(*it)->addFace(this);
+      }
     }
     std::list<GEdge*> loop;
     computeALoop(_unique, loop);
@@ -976,6 +983,39 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   nbSplit = 0;
   fillTris.clear();
 }
+GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
+	       std::list<GEdge*> &U0, std::list<GEdge*> &V0,
+	       std::list<GEdge*> &U1, std::list<GEdge*> &V1,
+	       typeOfMapping mpg, 
+	       int allowPartition, 
+	      linearSystem<double>* lsys)
+  : GFace(m, tag), _compound(compound),  oct(0), 
+    _U0(U0), _V0(V0), _U1(U1), _V1(V1),
+    _mapping(mpg), _allowPartition(allowPartition), _lsys(lsys)
+{
+  ONE = new simpleFunction<double>(1.0);
+  MONE = new simpleFunction<double>(-1.0);
+
+  for(std::list<GFace*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
+    if(!(*it)){
+      Msg::Error("Incorrect face in compound surface %d\n", tag);
+      Msg::Exit(1);
+    }
+  }
+
+  getBoundingEdges();
+  _type = UNITCIRCLE;
+  if (_mapping == HARMONICPLANE){
+    _mapping = HARMONIC;
+    _type = MEANPLANE;
+  }
+  else if(_mapping == HARMONIC && _U0.size() && _V0.size() && _U1.size() && _V1.size()) {
+    _type = SQUARE;
+  }
+
+  nbSplit = 0;
+  fillTris.clear();
+}
 
 GFaceCompound::~GFaceCompound()
 {
@@ -1101,39 +1141,50 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
       else if(step == ITERV) myAssembler.fixVertex(v, 0, 1, sin(theta));    
     }
   }
+  else if(_type == SQUARE){
+    if(step == ITERU){
+      std::list<GEdge*>::const_iterator it = _U0.begin();
+      for( ; it != _U0.end(); ++it){
+	fixEdgeToValue(*it, 0.0, myAssembler);
+      }
+      it = _U1.begin();
+      for( ; it != _U1.end(); ++it){
+	fixEdgeToValue(*it, 1.0, myAssembler);
+      }
+    }
+    else if(step == ITERV){
+      std::list<GEdge*>::const_iterator it = _V0.begin();
+      for( ; it != _V0.end(); ++it){
+	fixEdgeToValue(*it, 0.0, myAssembler);
+      }
+      it = _V1.begin();
+      for( ; it != _V1.end(); ++it){
+	fixEdgeToValue(*it, 1.0, myAssembler);
+      }
+    }
+  }
   else if (_type == MEANPLANE){
-
-    FILE * f3 = fopen("PTS.pos","w");
-   fprintf(f3, "View \"\"{\n");
-  std::vector<SPoint3> points, pointsProj, pointsUV;
-  SPoint3 ptCG(0.0, 0.0, 0.0);
-  for(unsigned int i = 0; i < _ordered.size(); i++){
+    std::vector<SPoint3> points, pointsProj, pointsUV;
+    SPoint3 ptCG(0.0, 0.0, 0.0);
+    for(unsigned int i = 0; i < _ordered.size(); i++){
       MVertex *v = _ordered[i];
       points.push_back(SPoint3(v->x(), v->y(), v->z()));
-      fprintf(f3, "SP(%g,%g,%g){%g};\n",
-	      v->x(),  v->y(), v->z(),
-	      (double)v->getNum());
       ptCG[0] += v->x();
       ptCG[1] += v->y();
       ptCG[2] += v->z();
     }
 
-  fprintf(f3,"};\n");
-  fclose(f3);
-  
-  ptCG /= points.size();
-  mean_plane meanPlane;
-  computeMeanPlaneSimple(points, meanPlane);
-  projectPointsToPlane(points, pointsProj, meanPlane);
-  transformPointsIntoOrthoBasis(pointsProj, pointsUV, ptCG, meanPlane);
+    ptCG /= points.size();
+    mean_plane meanPlane;
+    computeMeanPlaneSimple(points, meanPlane);
+    projectPointsToPlane(points, pointsProj, meanPlane);
+    transformPointsIntoOrthoBasis(pointsProj, pointsUV, ptCG, meanPlane);
 
-  for(unsigned int i = 0; i < pointsUV.size(); i++){
-    MVertex *v = _ordered[i];
-    if(step == ITERU) myAssembler.fixVertex(v, 0, 1, pointsUV[i][0]);
-    else if(step == ITERV) myAssembler.fixVertex(v, 0, 1, pointsUV[i][1]);    
-  }
-
-
+    for(unsigned int i = 0; i < pointsUV.size(); i++){
+      MVertex *v = _ordered[i];
+      if(step == ITERU) myAssembler.fixVertex(v, 0, 1, pointsUV[i][0]);
+      else if(step == ITERV) myAssembler.fixVertex(v, 0, 1, pointsUV[i][1]);    
+    }
   }
   else{
     Msg::Error("Unknown type of parametrization");

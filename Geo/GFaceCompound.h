@@ -57,7 +57,7 @@ class GFaceCompound : public GFace {
  public:
   typedef enum {ITERU=0,ITERV=1,ITERD=2} iterationStep;
   typedef enum {HARMONIC=1,CONFORMAL=2, RBF=3, HARMONICPLANE=4, CONVEXCOMBINATION=5} typeOfMapping;
-  typedef enum {UNITCIRCLE, MEANPLANE} typeOfIsomorphism;
+  typedef enum {UNITCIRCLE, MEANPLANE, SQUARE} typeOfIsomorphism;
   void computeNormals(std::map<MVertex*, SVector3> &normals) const;
  protected:
   mutable std::set<MVertex *> ov;
@@ -65,7 +65,7 @@ class GFaceCompound : public GFace {
   simpleFunction<double> *ONE;
   simpleFunction<double> *MONE;
   std::list<GFace*> _compound;
-  std::list<GEdge*> _U0;
+  std::list<GEdge*> _U0, _V0, _U1, _V1;
   std::list<std::list<GEdge*> > _interior_loops;
   mutable int nbT;
   mutable GFaceCompoundTriangle *_gfct;
@@ -113,6 +113,12 @@ class GFaceCompound : public GFace {
 		std::list<GEdge*> &U0, typeOfMapping typ = HARMONIC, 
 		int allowPartition=1, 
 		linearSystem<double>* lsys =0);
+ GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
+	       std::list<GEdge*> &U0, std::list<GEdge*> &V0,
+	       std::list<GEdge*> &U1, std::list<GEdge*> &V1,
+	       typeOfMapping typ = HARMONIC, 
+	       int allowPartition=1, 
+	       linearSystem<double>* lsys =0);
   virtual ~GFaceCompound();
   Range<double> parBounds(int i) const 
   { return trivial() ? (*(_compound.begin()))->parBounds(i) : Range<double>(-1, 1); }
@@ -151,9 +157,19 @@ class GFaceCompound : public GFace {
  public:
   typedef enum {ITERU=0,ITERV=1,ITERD=2} iterationStep;
   typedef enum {HARMONIC=1,CONFORMAL=2, RBF=3, HARMONICPLANE=4, CONVEXCOMBINATION=5} typeOfMapping;
-  typedef enum {UNITCIRCLE, MEANPLANE} typeOfIsomorphism;
+  typedef enum {UNITCIRCLE, MEANPLANE, SQUARE} typeOfIsomorphism;
  GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 	       std::list<GEdge*> &U0, typeOfMapping typ = HARMONIC, 
+	       int allowPartition=1, 
+	       linearSystem<double>* lsys =0)
+    : GFace(m, tag)
+  {
+    Msg::Error("Gmsh has to be compiled with solver support to use GFaceCompounds");
+  }
+ GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
+	       std::list<GEdge*> &U0, std::list<GEdge*> &V0,
+	       std::list<GEdge*> &U1, std::list<GEdge*> &V1,
+	       typeOfMapping typ = HARMONIC, 
 	       int allowPartition=1, 
 	       linearSystem<double>* lsys =0)
     : GFace(m, tag)
