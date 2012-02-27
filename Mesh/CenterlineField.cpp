@@ -34,7 +34,7 @@
 #include "meshGEdge.h"
 #include "MQuadrangle.h"
 #include "MElement.h"
-
+#include "Context.h"
 #if defined(HAVE_ANN)
 #include <ANN/ANN.h>
 
