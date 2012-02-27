@@ -87,7 +87,7 @@ CTX::CTX()
     color.mesh.carousel[i] = 0;
 }
 
-CTX *CTX::_instance = 0;
+CTX *CTX::_instance = NULL;
 
 CTX *CTX::instance()
 {
