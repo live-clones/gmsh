@@ -582,6 +582,15 @@ int Msg::GetAnswer(const char *question, int defaultval, const char *zero,
     return atoi(ret);
 }
 
+bool Msg::UseOnelab()
+{
+#if defined(HAVE_ONELAB)
+  return _onelabClient ? true : false;
+#else
+  return false;
+#endif
+}
+
 void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
 {
 #if defined(HAVE_ONELAB)

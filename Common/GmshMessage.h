@@ -85,7 +85,7 @@ class Msg {
   static void InitializeOnelab(const std::string &name, const std::string &sockname="");
   static GmshClient *GetGmshClient(){ return _client; }
   static void FinalizeOnelab();
-  static bool UseOnelab(){ return _onelabClient ? true : false; }
+  static bool UseOnelab();
   static void ExchangeOnelabParameter(const std::string &key,
                                       std::vector<double> &val,
                                       std::map<std::string, std::vector<double> > &fopt,
