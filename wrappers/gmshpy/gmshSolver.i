@@ -7,16 +7,18 @@
 
 %{
   #include "GmshConfig.h"
+#if defined(HAVE_SOLVER)
   #include "dofManager.h"
   #include "elasticitySolver.h"
   #include "linearSystem.h"
   #include "linearSystemCSR.h"
   #include "linearSystemFull.h"
   #include "linearSystemPETSc.h"
+#endif
 %}
 
 %include "GmshConfig.h"
-
+#if defined(HAVE_SOLVER)
 %include "dofManager.h"
 %template(dofManagerDouble) dofManager<double>;
 %include "elasticitySolver.h"
@@ -28,7 +30,8 @@
 %template(linearSystemTAUCSDouble) linearSystemCSRTaucs<double>;
 %include "linearSystemFull.h"
 %template(linearSystemFullDouble) linearSystemFull<double> ;
-#ifdef HAVE_PETSC
+#if defined(HAVE_PETSC)
 %include "linearSystemPETSc.h"
 %template(linearSystemPETScDouble) linearSystemPETSc<double>;
+#endif
 #endif
