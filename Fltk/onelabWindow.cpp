@@ -1256,7 +1256,8 @@ void solver_cb(Fl_Widget *w, void *data)
   else
     FlGui::instance()->onelab->rebuildSolverList();
 
-  onelab_cb(0, (void*)"check");
+  if(FlGui::instance()->onelab->getButtonMode() == "Compute")
+    onelab_cb(0, (void*)"check");
 }
 
 #else

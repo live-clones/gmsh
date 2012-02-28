@@ -1103,7 +1103,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   // BOUNDARY LAYER
   if (!onlyInitialMesh) {
-    if (gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) buildBackGroundMesh (gf);    
+    if (gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) buildBackGroundMesh (gf);
     modifyInitialMeshForTakingIntoAccountBoundaryLayers(gf);
   }
 
@@ -1749,11 +1749,11 @@ void deMeshGFace::operator() (GFace *gf)
 }
 
 // for debugging, change value from -1 to -100;
-int debugSurface = -100; //-1;
+int debugSurface = -1; //-1;
 
 void meshGFace::operator() (GFace *gf)
 {
-  
+
   gf->model()->setCurrentMeshEntity(gf);
 
   if(debugSurface >= 0 && gf->tag() != debugSurface){
