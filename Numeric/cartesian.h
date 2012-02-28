@@ -28,15 +28,15 @@
 //
 //   Nodal values and active hexahedral cells are stored and
 //   referenced by a linear index (i + N * j)
-//   
+//
 //   The (i,j) cell has nodes (i,j), (i+1,j), (i+1,j+1) and (i,j+1)
 template <class scalar>
 class cartesianBox {
  private:
   // number of subdivisions along the xi-, eta- and zeta-axis
-  int _Nxi, _Neta, _Nzeta;  
+  int _Nxi, _Neta, _Nzeta;
   // origin of the grid and spacing along xi, eta and zeta
-  double _X, _Y, _Z, _dxi, _deta, _dzeta;
+  double _X0, _Y0, _Z0, _dxi, _deta, _dzeta;
   // xi-, eta- and zeta-axis directions
   SVector3 _xiAxis, _etaAxis, _zetaAxis;
   // set of active cells; the value stored for cell (i,j,k) is the
@@ -95,7 +95,7 @@ class cartesianBox {
                 std::abs(getNodeTag(getNodeIndex(i, j + 1, k + 1))));
       }
       else{
-        int idx[6][4] = { 
+        int idx[6][4] = {
           {getNodeIndex(i, j + 1, k),     getNodeIndex(i, j + 1, k + 1),
            getNodeIndex(i + 1, j, k + 1), getNodeIndex(i + 1, j + 1, k + 1)},
           {getNodeIndex(i, j + 1, k),     getNodeIndex(i + 1, j + 1, k + 1),
@@ -127,11 +127,11 @@ class cartesianBox {
     if(_childBox) _childBox->_printValues(f);
   }
  public:
-  cartesianBox(double X, double Y, double Z, 
-               const SVector3 &dxi, const SVector3 &deta, const SVector3 &dzeta, 
+  cartesianBox(double X0, double Y0, double Z0,
+               const SVector3 &dxi, const SVector3 &deta, const SVector3 &dzeta,
                int Nxi, int Neta, int Nzeta, int level=1)
-    : _X(X), _Y(Y), _Z(Z), 
-      _dxi(norm(dxi)), _deta(norm(deta)), _dzeta(norm(dzeta)), 
+    : _X0(X0), _Y0(Y0), _Z0(Z0),
+      _dxi(norm(dxi)), _deta(norm(deta)), _dzeta(norm(dzeta)),
       _xiAxis(dxi), _etaAxis(deta), _zetaAxis(dzeta),
       _Nxi(Nxi), _Neta(Neta), _Nzeta(Nzeta), _level(level), _childBox(0)
   {
@@ -139,7 +139,7 @@ class cartesianBox {
     _etaAxis.normalize();
     _zetaAxis.normalize();
     if(level > 1)
-      _childBox = new cartesianBox<scalar>(X, Y, Z, dxi, deta, dzeta,
+      _childBox = new cartesianBox<scalar>(X0, Y0, Z0, dxi, deta, dzeta,
                                            2 * Nxi, 2 * Neta, 2 * Nzeta,
                                            level - 1);
   }
@@ -167,16 +167,16 @@ class cartesianBox {
           if(it != _nodalValues.end())
             values.push_back(it->second.first);
           else{
-            Msg::Error("Could not find value i,j,k=%d,%d,%d for cell %d", 
+            Msg::Error("Could not find value i,j,k=%d,%d,%d for cell %d",
                        i + I, j + J, k + K, t);
             values.push_back(0.);
           }
         }
   }
-  double getValueContainingPoint(double x, double y, double z) 
+  double getValueContainingPoint(double x, double y, double z)
   {
 
-    SVector3 DP (x - _X, y - _Y, z - _Z);
+    SVector3 DP (x - _X0, y - _Y0, z - _Z0);
     double xa = dot(DP, _xiAxis);
     double ya = dot(DP, _etaAxis);
     double za = dot(DP, _zetaAxis);
@@ -241,7 +241,7 @@ class cartesianBox {
     newElem->xyz2uvw(xyz, uvw);
     //printf("uvw =%g %g %g \n", uvw[0],uvw[1],uvw[2]);
     double val = newElem->interpolate(vals, uvw[0], uvw[1], uvw[2]);
-    
+
     delete newElem;
     delete v1;
     delete v2;
@@ -258,10 +258,10 @@ class cartesianBox {
   {
     // P = P_0 + xi * _vdx + eta * _vdy + zeta *vdz
     // DP = P-P_0 * _vdx = xi
-    SVector3 DP (x - _X, y - _Y, z - _Z);
+    SVector3 DP (x - _X0, y - _Y0, z - _Z0);
     double xi = dot(DP, _xiAxis);
     double eta = dot(DP, _etaAxis);
-    double zeta = dot(DP, _zetaAxis);    
+    double zeta = dot(DP, _zetaAxis);
     int i = xi / _dxi * _Nxi;
     int j = eta / _deta * _Neta;
     int k = zeta / _dzeta * _Nzeta;
@@ -278,19 +278,19 @@ class cartesianBox {
     const double eta = j * _deta / _Neta;
     const double zeta = k * _dzeta / _Nzeta;
     SVector3 D = xi * _xiAxis + eta * _etaAxis + zeta * _zetaAxis;
-    return SPoint3(_X + D.x(), _Y + D.y(), _Z + D.z());
+    return SPoint3(_X0 + D.x(), _Y0 + D.y(), _Z0 + D.z());
   }
   void insertActiveCell(int t){ _activeCells.insert(t); }
   void eraseActiveCell(int t){ _activeCells.erase(t); }
   bool activeCellExists(int t)
   {
-    return (_activeCells.find(t) != _activeCells.end()); 
+    return (_activeCells.find(t) != _activeCells.end());
   }
-  int getCellIndex(int i, int j, int k) const 
+  int getCellIndex(int i, int j, int k) const
   {
     return i + _Nxi * j + _Nxi *_Neta * k;
   }
-  int getNodeIndex(int i, int j, int k) const 
+  int getNodeIndex(int i, int j, int k) const
   {
     return i + (_Nxi+1) * j + (_Nxi+1) * (_Neta+1) * k;
   }
@@ -300,7 +300,7 @@ class cartesianBox {
     if(it != _nodalValues.end()) return it->second.second;
     else return 0;
   }
-  void getCellIJK(int index, int &i, int &j, int &k) const 
+  void getCellIJK(int index, int &i, int &j, int &k) const
   {
     k = index / (_Nxi * _Neta);
     j = (index - k * (_Nxi * _Neta)) / _Nxi;
@@ -321,7 +321,7 @@ class cartesianBox {
       for (int I = 0; I < 2; I++)
         for (int J = 0; J < 2; J++)
           for (int K = 0; K < 2; K++)
-            _nodalValues[getNodeIndex(i + I, j + J, k + K)] = 
+            _nodalValues[getNodeIndex(i + I, j + J, k + K)] =
               std::pair<scalar, int>(0., 0);
     }
     if(_childBox) _childBox->createNodalValues();
@@ -344,7 +344,7 @@ class cartesianBox {
     }
     if(_childBox) _childBox->renumberNodes(num, this);
   }
-  void writeMSH(const std::string &fileName, bool simplex=false, 
+  void writeMSH(const std::string &fileName, bool simplex=false,
                 bool writeNodalValues=true)
   {
     FILE *f = fopen(fileName.c_str(), "w");
@@ -353,7 +353,7 @@ class cartesianBox {
       return;
     }
     int numNodes = _getNumNodes(), numElements = _getNumElements(simplex);
-    Msg::Info("Writing '%s' (%d nodes, %d elements)", fileName.c_str(), 
+    Msg::Info("Writing '%s' (%d nodes, %d elements)", fileName.c_str(),
               numNodes, numElements);
     fprintf(f, "$MeshFormat\n2.1 0 8\n$EndMeshFormat\n");
     fprintf(f, "$Nodes\n%d\n", numNodes);
@@ -361,7 +361,7 @@ class cartesianBox {
     fprintf(f, "$EndNodes\n");
     fprintf(f,"$Elements\n%d\n", numElements);
     _printElements(f, simplex);
-    fprintf(f,"$EndElements\n");    
+    fprintf(f,"$EndElements\n");
     if(writeNodalValues){
       fprintf(f,"$NodeData\n1\n\"distance\"\n1\n0.0\n3\n0\n1\n%d\n", numNodes);
       _printValues(f);
