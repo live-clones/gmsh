@@ -623,10 +623,12 @@ if(ENABLE_MED OR ENABLE_CGNS)
       endif(MED_LIB)
     endif(ENABLE_MED)    
     if(ENABLE_CGNS)
-      find_library(CGNS_LIB cgns)
+      find_library(CGNS_LIB cgns PATHS ENV CGNS_ROOT PATH_SUFFIXES lib)
+      find_path(CGNS_INC "cgnslib.h" PATHS ENV CGNS_ROOT PATH_SUFFIXES include)
       if(CGNS_LIB)
         set_config_option(HAVE_LIBCGNS "Cgns")
         list(APPEND EXTERNAL_LIBRARIES ${CGNS_LIB})
+        list(APPEND EXTERNAL_INCLUDES ${CGNS_INC})
       endif(CGNS_LIB)
     endif(ENABLE_CGNS)    
     if(MED_LIB OR CGNS_LIB)
@@ -799,7 +801,7 @@ if(ENABLE_OCC)
   list(LENGTH OCC_LIBS_REQUIRED NUM_OCC_LIBS_REQUIRED)
   set(OCC_LIBS)
   foreach(OCC ${OCC_LIBS_REQUIRED})
-    find_library(OCC_LIB ${OCC} PATHS ENV CASROOT PATH_SUFFIXES lib 
+    find_library(OCC_LIB ${OCC} HINTS ENV CASROOT PATH_SUFFIXES lib 
                  ${OCC_SYS_NAME}/lib ${OCC_SYS_NAME}/vc8/lib)
     if(OCC_LIB)
       list(APPEND OCC_LIBS ${OCC_LIB})
@@ -1279,4 +1281,4 @@ message("Run 'ccmake ${CMAKE_CURRENT_SOURCE_DIR}' to fine-tune the configuration
 message("")
 
 mark_as_advanced(BISON FLEX GMP_LIB GMSH_EXTRA_VERSION HDF5_LIB MAKEINFO 
-                 MED_LIB OCC_INC SZ_LIB TAUCS_LIB ACIS_LIB TEXI2PDF)
+                 MED_LIB OCC_INC CGNS_INC SZ_LIB TAUCS_LIB ACIS_LIB TEXI2PDF)
