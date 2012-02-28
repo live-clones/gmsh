@@ -1143,6 +1143,13 @@ void onelabWindow::setButtonMode(const std::string &butt0, const std::string &bu
   }
 }
 
+bool onelabWindow::isBusy()
+{
+  std::string s(_butt[1]->label());
+  if(s == "Compute") return false;
+  return true;
+}
+
 void onelabWindow::rebuildSolverList()
 {
   // update OneLab window title and gear menu
@@ -1256,7 +1263,9 @@ void solver_cb(Fl_Widget *w, void *data)
   else
     FlGui::instance()->onelab->rebuildSolverList();
 
-  if(FlGui::instance()->onelab->getButtonMode() == "Compute")
+  if(FlGui::instance()->onelab->isBusy())
+    FlGui::instance()->onelab->show();
+  else
     onelab_cb(0, (void*)"check");
 }
 
