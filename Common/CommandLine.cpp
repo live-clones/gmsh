@@ -664,7 +664,7 @@ void GetOptions(int argc, char *argv[])
         PrintUsage(argv[0]);
         Msg::Exit(0);
       }
-      else if(!strcmp(argv[i] + 1, "v")) {
+      else if(!strcmp(argv[i] + 1, "v") || !strcmp(argv[i] + 1, "verbose")) {
         i++;
         if(argv[i])
           Msg::SetVerbosity(atoi(argv[i++]));
