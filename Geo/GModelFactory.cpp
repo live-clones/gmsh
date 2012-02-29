@@ -26,7 +26,7 @@ GVertex *GeoFactory::addVertex(GModel *gm, double x, double y, double z, double 
   if(lc == 0.) lc = MAX_LC; // no mesh size given at the point
   Vertex *p;
   p = Create_Vertex(num, x, y, z, lc, 1.0);
-  Tree_Add(GModel::current()->getGEOInternals()->Points, &p);
+  Tree_Add(gm->getGEOInternals()->Points, &p);
   p->Typ = MSH_POINT;
   p->Num = num;
 
@@ -47,7 +47,7 @@ GEdge *GeoFactory::addLine(GModel *gm, GVertex *start, GVertex *end)
 
   Curve *c = Create_Curve(num, MSH_SEGM_LINE, 1, iList, NULL,
 			  -1, -1, 0., 1.);
-  Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
+  Tree_Add(gm->getGEOInternals()->Curves, &c);
   CreateReversedCurve(c);
   List_Delete(iList);
   c->Typ = MSH_SEGM_LINE;
@@ -61,49 +61,83 @@ GEdge *GeoFactory::addLine(GModel *gm, GVertex *start, GVertex *end)
 
 GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> > edges)
 {
-  //create line loops
-  std::vector<EdgeLoop *> vecLoops;
+  
+   //create line loops
   int nLoops = edges.size();
+  std::vector<EdgeLoop *> vecLoops;
   for (int i=0; i< nLoops; i++){
-    int numl = gm->getMaxElementaryNumber(1) + i;
-    while (FindEdgeLoop(numl)){
-      numl++;
-      if (!FindEdgeLoop(numl)) break;
-    }
-    int nl=(int)edges[i].size();
-    List_T *iListl = List_Create(nl, nl, sizeof(int));
-    for(int j = 0; j < nl; j++){
-      int numEdge = edges[i][j]->tag();
-      List_Add(iListl, &numEdge);
-    }
-    int type=ENT_LINE;
+    int ne=(int)edges[i].size();
+    List_T *temp = List_Create(ne, ne, sizeof(int));
+    for(int j = 0; j < ne; j++){
+      GEdge *ge = edges[i][j];
+      int numEdge = ge->tag();
+      //create curve
+      Curve *c = FindCurve(numEdge);
+      if(!c){
+	GVertex *gvb = ge->getBeginVertex();
+	GVertex *gve = ge->getEndVertex();
+	Vertex *vertb = FindPoint((int)fabs(gvb->tag()));
+	Vertex *verte = FindPoint((int)fabs(gve->tag()));
+	if (!vertb){
+	  vertb = Create_Vertex(gvb->tag(), gvb->x(), gvb->y(), gvb->z(),
+				gvb->prescribedMeshSizeAtVertex(), 1.0);
+	  Tree_Add(gm->getGEOInternals()->Points, &vertb);
+	 }
+	if (!verte){
+	  verte = Create_Vertex(gve->tag(), gve->x(), gve->y(), gve->z(),
+				gve->prescribedMeshSizeAtVertex(), 1.0);
+	  Tree_Add(gm->getGEOInternals()->Points, &verte);
+	}
 
-    select_contour(type, edges[i][0]->tag(), iListl);
+	List_T *temp = List_Create(2, 2, sizeof(int));
+	List_Add(temp, &vertb);
+	List_Add(temp, &verte);
 
-    sortEdgesInLoop(numl, iListl);
-    EdgeLoop *l = Create_EdgeLoop(numl, iListl);
+	if (ge->geomType() == GEntity::Line){
+	  printf("creating line \n");
+	  c = Create_Curve(numEdge, MSH_SEGM_LINE, 1, temp, NULL, -1, -1, 0., 1.);
+	}
+	else if (ge->geomType() == GEntity::DiscreteCurve){
+	  printf("creating discrete line \n");
+	  c = Create_Curve(numEdge, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0., 1.);
+	}
+	else {
+	  printf("type not implemented \n"); exit(1);
+	}
+	c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
+	List_Add(c->Control_Points, &vertb);
+	List_Add(c->Control_Points, &verte);
+	c->beg = vertb;
+	c->end = verte;
+	End_Curve(c);
+
+	Tree_Add(gm->getGEOInternals()->Curves, &c);
+	CreateReversedCurve(c);
+	List_Delete(temp);
+      }
+       List_Add(temp, &numEdge);
+    }  
+
+    int num  = gm->getMaxElementaryNumber(2)+1+i;
+    if(FindEdgeLoop(num)) num++; 
+    sortEdgesInLoop(num, temp);
+    EdgeLoop *l = Create_EdgeLoop(num, temp);
     vecLoops.push_back(l);
-    Tree_Add(GModel::current()->getGEOInternals()->EdgeLoops, &l);
-    l->Num = numl;
-
-
-    List_Delete(iListl);
-  }
-
-  //create plane surfaces
-  int numf = gm->getMaxElementaryNumber(2) + 1;
+    Tree_Add(gm->getGEOInternals()->EdgeLoops, &l);
+    List_Delete(temp);  
+  } 
+ 
+  int numf  = gm->getMaxElementaryNumber(2)+1;
   Surface *s = Create_Surface(numf, MSH_SURF_PLAN);
-  List_T *iList = List_Create(nLoops, nLoops, sizeof(int));
-  for (unsigned int i=0; i< vecLoops.size(); i++){
+  List_T *temp = List_Create(nLoops, nLoops, sizeof(int));
+  for (unsigned int i=0; i< nLoops; i++){
     int numl = vecLoops[i]->Num;
-    List_Add(iList, &numl);
+    List_Add(temp, &numl);
   }
-  setSurfaceGeneratrices(s, iList);
+  setSurfaceGeneratrices(s, temp);
+  List_Delete(temp);
   End_Surface(s);
-  Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
-  s->Typ= MSH_SURF_PLAN;
-  s->Num = numf;
-  List_Delete(iList);
+  Tree_Add(gm->getGEOInternals()->Surfaces, &s);
 
   //gmsh surface
   GFace *gf = new gmshFace(gm,s);
@@ -131,7 +165,7 @@ GRegion* GeoFactory::addVolume (GModel *gm, std::vector<std::vector<GFace *> > f
     }
     SurfaceLoop *l = Create_SurfaceLoop(numfl, iListl);
     vecLoops.push_back(l);
-    Tree_Add(GModel::current()->getGEOInternals()->SurfaceLoops, &l);
+    Tree_Add(gm->getGEOInternals()->SurfaceLoops, &l);
     List_Delete(iListl);
   }
 
@@ -145,7 +179,7 @@ GRegion* GeoFactory::addVolume (GModel *gm, std::vector<std::vector<GFace *> > f
   }
   setVolumeSurfaces(v, iList);
   List_Delete(iList);
-  Tree_Add(GModel::current()->getGEOInternals()->Volumes, &v);
+  Tree_Add(gm->getGEOInternals()->Volumes, &v);
   v->Typ = MSH_VOLUME;
   v->Num = numv;
 
@@ -169,7 +203,7 @@ GEdge* GeoFactory::addCircleArc(GModel *gm,GVertex *begin, GVertex *center, GVer
 
   Curve *c = Create_Curve(num, MSH_SEGM_CIRC, 1, iList, NULL,
 			  -1, -1, 0., 1.);
-  Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
+  Tree_Add(gm->getGEOInternals()->Curves, &c);
   CreateReversedCurve(c);
   List_Delete(iList);
   c->Typ = MSH_SEGM_CIRC;
@@ -200,12 +234,12 @@ std::vector<GFace *> GeoFactory::addRuledFaces(GModel *gm,
       List_Add(iListl, &numEdge);
     }
     int type=ENT_LINE;
-    if(select_contour(type, edges[0][0]->tag(), iListl))
+    if(select_contour(type, edges[i][0]->tag(), iListl))
     {
         sortEdgesInLoop(numl, iListl);
         EdgeLoop *l = Create_EdgeLoop(numl, iListl);
         vecLoops.push_back(l);
-        Tree_Add(GModel::current()->getGEOInternals()->EdgeLoops, &l);
+        Tree_Add(gm->getGEOInternals()->EdgeLoops, &l);
         l->Num = numl;
     }
 
@@ -222,7 +256,7 @@ std::vector<GFace *> GeoFactory::addRuledFaces(GModel *gm,
   }
   setSurfaceGeneratrices(s, iList);
   End_Surface(s);
-  Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
+  Tree_Add(gm->getGEOInternals()->Surfaces, &s);
   s->Typ= MSH_SURF_TRIC;
   s->Num = numf;
   List_Delete(iList);

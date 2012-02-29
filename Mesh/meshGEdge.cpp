@@ -344,8 +344,9 @@ void meshGEdge::operator() (GEdge *ge)
   ge->setLength(length);
   Points.clear();
 
-  if(length < CTX::instance()->mesh.toleranceEdgeLength)
+  if(length < CTX::instance()->mesh.toleranceEdgeLength){
     ge->setTooSmall(true);
+  }
 
   // Integrate detJ/lc du
   double a;

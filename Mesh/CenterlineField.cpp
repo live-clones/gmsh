@@ -329,6 +329,7 @@ Centerline::Centerline(std::string fileName): kdtree(0), nodes(0){
 
   update_needed = false;
   is_cut = false;
+  is_closed = false;
 
 }
 Centerline::Centerline(): kdtree(0), nodes(0){
@@ -342,8 +343,10 @@ Centerline::Centerline(): kdtree(0), nodes(0){
 
   options["FileName"] = new FieldOptionString (fileName, "File name for the centerlines", &update_needed);
   options["nbPoints"] = new FieldOptionInt(nbPoints, "Number of mesh elements in a circle");
+  callbacks["closeVolume"] = new FieldCallbackGeneric<Centerline>(this, &Centerline::closeVolume, "Create In/Outlet planar faces \n");
   callbacks["cutMesh"] = new FieldCallbackGeneric<Centerline>(this, &Centerline::cutMesh, "Cut the initial mesh in different mesh partitions using the centerlines \n");
   is_cut = false;
+  is_closed = false;
 
 }
 
@@ -490,7 +493,7 @@ void Centerline::createBranches(int maxN){
       edges.push_back(newBranch) ;
     }
   }
-  printf("in/outlets =%d branches =%d \n", (int)color_edges.size(), (int)edges.size());
+  printf("in/outlets =%d branches =%d \n", (int)color_edges.size()+1, (int)edges.size());
   
   //create children
   for(unsigned int i = 0; i < edges.size(); ++i) {
@@ -504,7 +507,7 @@ void Centerline::createBranches(int maxN){
   }
 
   //compute radius
-  distanceToLines();
+  distanceToSurface();
   computeRadii();
 
   printSplit();
@@ -524,10 +527,10 @@ void Centerline::createBranches(int maxN){
 
 }
 
-void Centerline::distanceToLines(){
-  Msg::Info("Centerline: computing distance to lines ");
+void Centerline::distanceToSurface(){
+  Msg::Info("Centerline: computing distance to surface mesh ");
 
-  //SOLUTION 1: REVERSE ANN TREE (SURFACE POINTS IN TREE)
+  //COMPUTE WITH REVERSE ANN TREE (SURFACE POINTS IN TREE)
   ANNkd_tree *kdtreeR; 
   ANNpointArray nodesR;
   ANNidxArray indexR = new ANNidx[1];
@@ -562,47 +565,6 @@ void Centerline::distanceToLines(){
   annDeallocPts(nodesR);
   delete[]indexR;
   delete[]distR;
-  
-  // //SOLUTION 2: DISTANCE TO LINES (QUITE SLOW)
-  // std::vector<SPoint3> pts;
-  // std::set<SPoint3> pts_set;
-  // std::vector<double> distances;
-  // std::vector<double> distancesE;
-  // std::vector<SPoint3> closePts;
-
-  // for(unsigned int i = 0; i < surfaces.size(); i++){ 
-  //   for(int j = 0; j < surfaces[i]->getNumMeshElements(); j++){ 
-  //     MElement *e = surfaces[i]->getMeshElement(j);
-  //     for (int k = 0; k < e->getNumVertices(); k++){
-  // 	MVertex *v = e->getVertex(k);
-  // 	pts_set.insert(SPoint3(v->x(), v->y(),v->z()));
-  //     }
-  //   }
-  // }
-  // std::set<SPoint3>::iterator its =  pts_set.begin();
-  // for (; its != pts_set.end(); its++){
-  //   pts.push_back(*its);
-  // } 
-  // if (pts.size() == 0) {Msg::Error("Centerline needs a GModel with a surface \n"); exit(1);}
- 
-  // for(unsigned int i = 0; i < lines.size(); i++){
-  //   std::vector<double> iDistances;
-  //   std::vector<SPoint3> iClosePts;
-  //   std::vector<double> iDistancesE;
-  //   MLine *l = lines[i];
-  //   MVertex *v1 = l->getVertex(0);
-  //   MVertex *v2 = l->getVertex(1);
-  //   SPoint3 p1(v1->x(), v1->y(), v1->z());
-  //   SPoint3 p2(v2->x(), v2->y(), v2->z());
-  //   signedDistancesPointsLine(iDistances, iClosePts, pts, p1,p2);
-
-  //   double minRad = std::abs(iDistances[0]);
-  //   for (unsigned int kk = 1; kk< pts.size(); kk++) {
-  //     if (std::abs(iDistances[kk]) < minRad)
-  // 	minRad = std::abs(iDistances[kk]);
-  //   }
-  //   radiusl.insert(std::make_pair(lines[i], minRad)); 
-  // }
      
 }
 void Centerline::computeRadii(){
@@ -774,6 +736,7 @@ void Centerline::cleanMesh(){
     mySplitMesh->mesh_vertices.push_back(*it);
   mySplitMesh->meshStatistics.status = GFace::DONE; 
   current->createTopologyFromMesh();
+
   
 }
 void Centerline::createFaces(){
@@ -830,6 +793,42 @@ void Centerline::createFaces(){
 
 }
 
+void Centerline::createInOutFaces(){
+
+  //identify the boundary edges by looping over all discreteFaces
+  std::vector<GEdge*> boundEdges;
+  int nbFaces = current->getMaxElementaryNumber(2);
+  for (int i= 0; i< nbFaces; i++){
+    GFace *gf = current->getFaceByTag(i+1);
+    std::list<GEdge*> l_edges = gf->edges();
+    for(std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); it++){
+      std::vector<GEdge*>::iterator ite = std::find(boundEdges.begin(), boundEdges.end(), *it);
+      if (ite != boundEdges.end()) boundEdges.erase(ite);
+      else boundEdges.push_back(*it);
+    }
+  }
+  printf("boundEdges size =%d \n", boundEdges.size());
+
+  //create the inlet and outlet planar face
+  current->setFactory("Gmsh");
+  for (int i = 0; i<  boundEdges.size(); i++){
+    std::vector<std::vector<GEdge *> > myEdges;
+    std::vector<GEdge *> myEdge;
+    myEdge.push_back(boundEdges[i]);
+    myEdges.push_back(myEdge);
+    GFace *newFace = current->addPlanarFace(myEdges); 
+  }  
+
+}
+
+void Centerline::closeVolume(){
+
+  is_closed = true;
+  //printf("calling closed volume \n");
+  //exit(1);
+
+}
+
 void Centerline::cutMesh(){
   
   is_cut = true;
@@ -861,11 +860,11 @@ void Centerline::cutMesh(){
   for(unsigned int i = 0; i < edges.size(); i++){
     std::vector<MLine*> lines = edges[i].lines;
     double L = edges[i].length;
-    double R = 0.5*(edges[i].minRad+edges[i].maxRad);
+    double R = edges[i].minRad; //0.5*(edges[i].minRad+edges[i].maxRad);
     double AR = L/R;
-    printf("*** branch =%d \n", i, AR);
+    printf("*** branch =%d AR=%g \n", i, AR);
     if( AR > 4.5){
-      int nbSplit = (int)ceil(AR/4.0);
+      int nbSplit = (int)ceil(AR/3.0);
       double li  = L/nbSplit;
       double lc = 0.0;
       for (int j= 0; j < lines.size(); j++){
@@ -898,6 +897,8 @@ void Centerline::cutMesh(){
   //create discreteFaces
   createFaces();
   current->createTopologyFromFaces(discFaces);
+  current->exportDiscreteGEOInternals();
+  if (is_closed) createInOutFaces();
 
   //write
   Msg::Info("Writing splitted mesh 'myPARTS.msh'");
@@ -966,7 +967,7 @@ void Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
       break;
     }
     else {
-      if (step ==19) {printf("no closed cut %d \n", (int)newCut.size()); };
+      if (step == 9) {printf("no closed cut %d \n", (int)newCut.size()); };
       step++;
       // // triangles = newTris;
       // // theCut.insert(newCut.begin(),newCut.end());

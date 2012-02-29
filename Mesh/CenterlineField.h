@@ -64,6 +64,7 @@ class Centerline : public Field{
   double recombine;
   int NF, NV, NE;
   bool is_cut;
+  bool is_closed;
 
   //all (unique) lines of centerlines
   std::vector<MLine*> lines;
@@ -131,10 +132,13 @@ class Centerline : public Field{
   void computeRadii();
 
   //Computes for each MLine the minRadius
-  void distanceToLines();
+  void distanceToSurface();
 
   // Cut the mesh in different parts of small aspect ratio
   void cutMesh();
+
+  //Create In and Outlet Planar Faces
+  void closeVolume();
 
   // Cut the tubular structure with a disk
   // perpendicular to the tubular structure
@@ -142,6 +146,7 @@ class Centerline : public Field{
 
   //create discrete faces
   void createFaces();
+  void createInOutFaces();
   void createSplitCompounds();
 
   //Print for debugging
