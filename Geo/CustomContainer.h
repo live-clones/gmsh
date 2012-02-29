@@ -10,6 +10,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <cstddef>
 
 #include "GmshMessage.h"
 
@@ -269,7 +270,7 @@ class FaceAllocator
   struct Face8
   {
     T faces[8];
-    void set_pool_prev(void *const p) 
+    void set_pool_prev(void *const p)
     {
       *reinterpret_cast<void**>(faces) = p;
     }
@@ -286,7 +287,7 @@ class FaceAllocator
   struct Face16
   {
     T faces[16];
-    void set_pool_prev(void *const p) 
+    void set_pool_prev(void *const p)
     {
       *reinterpret_cast<void**>(faces) = p;
     }
@@ -490,7 +491,7 @@ class FaceAllocator
   static ptrdiff_t offset6;
   static ptrdiff_t offset8;
   static ptrdiff_t offset16;
-  
+
 };
 
 // Definitions for static data members of class FaceAllocator
