@@ -71,7 +71,7 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
     for(int j = 0; j < ne; j++){
       GEdge *ge = edges[i][j];
       int numEdge = ge->tag();
-      //create curve
+      //create curve if it does not exist
       Curve *c = FindCurve(numEdge);
       if(!c){
 	GVertex *gvb = ge->getBeginVertex();
@@ -118,8 +118,11 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
        List_Add(temp, &numEdge);
     }  
 
-    int num  = gm->getMaxElementaryNumber(2)+1+i;
-    if(FindEdgeLoop(num)) num++; 
+    int num = gm->getMaxElementaryNumber(2) + 1+i;
+    while (FindSurfaceLoop(num)){
+      num++;
+      if (!FindSurfaceLoop(num)) break;
+    }
     sortEdgesInLoop(num, temp);
     EdgeLoop *l = Create_EdgeLoop(num, temp);
     vecLoops.push_back(l);
@@ -127,6 +130,7 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
     List_Delete(temp);  
   } 
  
+  //create surface
   int numf  = gm->getMaxElementaryNumber(2)+1;
   Surface *s = Create_Surface(numf, MSH_SURF_PLAN);
   List_T *temp = List_Create(nLoops, nLoops, sizeof(int));
@@ -148,37 +152,39 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
 
 GRegion* GeoFactory::addVolume (GModel *gm, std::vector<std::vector<GFace *> > faces)
 {
-  //surface loop
-  std::vector<SurfaceLoop *> vecLoops;
+  printf("add volume \n");
+
+  //create surface loop
   int nLoops = faces.size();
+  std::vector<SurfaceLoop *> vecLoops;
   for (int i=0; i< nLoops; i++){
+    int nl=(int)faces[i].size();
+    List_T *temp = List_Create(nl, nl, sizeof(int));
+    for(int j = 0; j < nl; j++){
+      int numFace = faces[i][j]->tag();
+      List_Add(temp, &numFace);
+    }
     int numfl = gm->getMaxElementaryNumber(2) + 1;
     while (FindSurfaceLoop(numfl)){
       numfl++;
       if (!FindSurfaceLoop(numfl)) break;
     }
-    int nl=(int)faces[i].size();
-    List_T *iListl = List_Create(nl, nl, sizeof(int));
-    for(int j = 0; j < nl; j++){
-      int numFace = faces[i][j]->tag();
-      List_Add(iListl, &numFace);
-    }
-    SurfaceLoop *l = Create_SurfaceLoop(numfl, iListl);
+    SurfaceLoop *l = Create_SurfaceLoop(numfl, temp);
     vecLoops.push_back(l);
     Tree_Add(gm->getGEOInternals()->SurfaceLoops, &l);
-    List_Delete(iListl);
+    List_Delete(temp);
   }
 
-  //volume
+  //create volume
   int numv = gm->getMaxElementaryNumber(3) + 1;
   Volume *v = Create_Volume(numv, MSH_VOLUME);
-  List_T *iList = List_Create(nLoops, nLoops, sizeof(int));
+  List_T *temp = List_Create(nLoops, nLoops, sizeof(int));
   for (unsigned int i = 0; i < vecLoops.size(); i++){
     int numl = vecLoops[i]->Num;
-    List_Add(iList, &numl);
+    List_Add(temp, &numl);
   }
-  setVolumeSurfaces(v, iList);
-  List_Delete(iList);
+  setVolumeSurfaces(v, temp);
+  List_Delete(temp);
   Tree_Add(gm->getGEOInternals()->Volumes, &v);
   v->Typ = MSH_VOLUME;
   v->Num = numv;
@@ -228,22 +234,21 @@ std::vector<GFace *> GeoFactory::addRuledFaces(GModel *gm,
       if (!FindEdgeLoop(numl)) break;
     }
     int nl=(int)edges[i].size();
-    List_T *iListl = List_Create(nl, nl, sizeof(int));
+    List_T *temp = List_Create(nl, nl, sizeof(int));
     for(int j = 0; j < nl; j++){
       int numEdge = edges[i][j]->tag();
-      List_Add(iListl, &numEdge);
+      List_Add(temp, &numEdge);
     }
     int type=ENT_LINE;
-    if(select_contour(type, edges[i][0]->tag(), iListl))
+    if(select_contour(type, edges[i][0]->tag(), temp))
     {
-        sortEdgesInLoop(numl, iListl);
-        EdgeLoop *l = Create_EdgeLoop(numl, iListl);
+        sortEdgesInLoop(numl, temp);
+        EdgeLoop *l = Create_EdgeLoop(numl, temp);
         vecLoops.push_back(l);
         Tree_Add(gm->getGEOInternals()->EdgeLoops, &l);
         l->Num = numl;
     }
-
-    List_Delete(iListl);
+    List_Delete(temp);
   }
 
   //create plane surfaces

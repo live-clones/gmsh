@@ -106,7 +106,10 @@ void GFace::delFreeEdge(GEdge *e)
 
 void GFace::deleteMesh()
 {
-  for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
+  for(unsigned int i = 0; i < mesh_vertices.size(); i++) {
+    printf("delete mesh i=%d num =%d \n", i, mesh_vertices[i]->getNum());
+    delete mesh_vertices[i];
+  }
   mesh_vertices.clear();
   transfinite_vertices.clear();
   for(unsigned int i = 0; i < triangles.size(); i++) delete triangles[i];

@@ -55,14 +55,14 @@ class Centerline : public Field{
   GModel *current; //current GModel
   GModel *mod; //centerline GModel
   GModel *split; //split GModel
-  ANNkd_tree *kdtree; 
-  ANNpointArray nodes;
+  ANNkd_tree *kdtree, *kdtreeR; 
+  ANNpointArray nodes, nodesR;
   ANNidxArray index;
   ANNdistArray dist;
   std::string fileName;
   int nbPoints;
   double recombine;
-  int NF, NV, NE;
+  int NF, NV, NE, NR;
   bool is_cut;
   bool is_closed;
 
@@ -147,6 +147,7 @@ class Centerline : public Field{
   //create discrete faces
   void createFaces();
   void createInOutFaces();
+  void createClosedVolume();
   void createSplitCompounds();
 
   //Print for debugging

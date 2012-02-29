@@ -53,6 +53,48 @@ double computeLength(std::vector<MLine*> lines){
   return length;
 }
 
+void removeBoundVertices(GFace *gf){
+  // Remove mesh_vertices that belong to l_edges
+  std::list<GEdge*> l_edges = gf->edges();
+  for(std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); it++){
+    std::vector<MVertex*> edge_vertices = (*it)->mesh_vertices;
+    std::vector<MVertex*>::const_iterator itv = edge_vertices.begin();
+    for(; itv != edge_vertices.end(); itv++){
+      std::vector<MVertex*>::iterator itve = std::find
+        (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), *itv);
+      if (itve != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itve);
+    }
+    MVertex *vB = (*it)->getBeginVertex()->mesh_vertices[0];
+    std::vector<MVertex*>::iterator itvB = std::find
+      (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vB);
+    if (itvB != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvB);
+    MVertex *vE = (*it)->getEndVertex()->mesh_vertices[0];
+    std::vector<MVertex*>::iterator itvE = std::find
+      (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vE);
+    if (itvE != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvE);
+
+    //if l_edge is a compond
+    if((*it)->getCompound()){
+      GEdgeCompound *gec = (*it)->getCompound();
+      std::vector<MVertex*> edge_vertices = gec->mesh_vertices;
+      std::vector<MVertex*>::const_iterator itv = edge_vertices.begin();
+      for(; itv != edge_vertices.end(); itv++){
+        std::vector<MVertex*>::iterator itve = std::find
+          (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), *itv);
+        if (itve != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itve);
+      }
+      MVertex *vB = (*it)->getBeginVertex()->mesh_vertices[0];
+      std::vector<MVertex*>::iterator itvB = std::find
+        (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vB);
+      if (itvB != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvB);
+      MVertex *vE = (*it)->getEndVertex()->mesh_vertices[0];
+      std::vector<MVertex*>::iterator itvE = std::find
+        (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vE);
+      if (itvE != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvE);
+    }
+  }
+
+}
 bool isClosed(std::set<MEdge, Less_Edge> &theCut){
 
   std::multiset<MVertex*> boundV;
@@ -315,7 +357,7 @@ void cutTriangle(MTriangle *tri,
   }
 }
 
-Centerline::Centerline(std::string fileName): kdtree(0), nodes(0){
+Centerline::Centerline(std::string fileName): kdtree(0), kdtreeR(0), nodes(0), nodesR(0){
   
   recombine = CTX::instance()->mesh.recombineAll;
 
@@ -332,7 +374,7 @@ Centerline::Centerline(std::string fileName): kdtree(0), nodes(0){
   is_closed = false;
 
 }
-Centerline::Centerline(): kdtree(0), nodes(0){
+Centerline::Centerline(): kdtree(0), kdtreeR(0), nodes(0), nodesR(0){
 
   index = new ANNidx[1];
   dist = new ANNdist[1];
@@ -353,7 +395,9 @@ Centerline::Centerline(): kdtree(0), nodes(0){
 Centerline::~Centerline(){
   if (mod) delete mod;
   if(kdtree) delete kdtree;
+  if(kdtreeR) delete kdtreeR;
   if(nodes) annDeallocPts(nodes);
+  if(nodesR) annDeallocPts(nodesR);
   delete[]index;
   delete[]dist;
 }
@@ -364,13 +408,15 @@ void Centerline::importFile(std::string fileName){
   std::vector<GFace*> currentFaces = current->bindingsGetFaces();
   for (int i = 0; i < currentFaces.size(); i++){
     GFace *gf = currentFaces[i];
-    if (gf->geomType() == GEntity::DiscreteSurface){
-	for(unsigned int j = 0; j < gf->triangles.size(); j++)
-	  triangles.push_back(gf->triangles[j]);
-	gf->triangles.clear();
-	gf->deleteVertexArrays();
-	current->remove(gf);
-    }
+     if (gf->geomType() == GEntity::DiscreteSurface){
+     	for(unsigned int j = 0; j < gf->triangles.size(); j++)
+     	  triangles.push_back(gf->triangles[j]);
+	if (is_cut){
+	  gf->triangles.clear();
+	  gf->deleteVertexArrays();
+	  current->remove(gf);
+	}
+     }
   }
 
   if(triangles.empty()){
@@ -431,24 +477,16 @@ void Centerline::createBranches(int maxN){
       junctions.insert(*it);
     }
   }
-  // printf("junctions =%d \n", junctions.size());
-  // std::set<MVertex*>::iterator itt = junctions.begin();
-  // for ( ; itt != junctions.end(); ++itt){
-  //   MVertex *v = *itt;
-  //   printf("JUNC = %d \n", v->getNum());
-  // }
    
   //split edges
   int tag = 0;
   for(unsigned int i = 0; i < color_edges.size(); ++i){
     std::vector<MLine*> lines = color_edges[i];
-    //printf("EDGE %d line = %d \n", lines.size());
     while (!lines.empty()) {
       std::vector<MLine*> myLines;
       std::vector<MLine*>::iterator itl = lines.begin();
       MVertex *vB = (*itl)->getVertex(0);
       MVertex *vE = (*itl)->getVertex(1);
-      //printf("VB =%d vE = %d \n", vB->getNum(), vE->getNum());
       myLines.push_back(*itl);
       erase(lines, *itl); 
       itl = lines.begin();
@@ -456,7 +494,6 @@ void Centerline::createBranches(int maxN){
 		 junctions.find(vB) != junctions.end()) ) {
   	MVertex *v1 = (*itl)->getVertex(0);
   	MVertex *v2 = (*itl)->getVertex(1);
-	//printf("line %d, VB = %d vE = %d v1=%d v2=%d \n", (*itl)->getNum(), vB->getNum(), vE->getNum(), v1->getNum(), v2->getNum());
 	bool goVE = (junctions.find(vE) == junctions.end()) ? true : false ;
 	bool goVB = (junctions.find(vB) == junctions.end()) ? true : false;
       	if (v1 == vE && goVE){
@@ -489,7 +526,6 @@ void Centerline::createBranches(int maxN){
       orderMLines(myLines, vB, vE); 
       std::vector<Branch> children;
       Branch newBranch ={ tag++, myLines, computeLength(myLines), vB, vE, children, 1.e6, 0.0};
-      //printf("branch = %d VB = %d VE %d \n", myLines.size(), vB->getNum(), vE->getNum());
       edges.push_back(newBranch) ;
     }
   }
@@ -510,20 +546,8 @@ void Centerline::createBranches(int maxN){
   distanceToSurface();
   computeRadii();
 
+  //print for debug
   printSplit();
-
-  //print info
-  // for(unsigned int i = 0; i < edges.size(); ++i) {
-  //   printf("EDGE =%d  tag=%d length = %g childs = %d \n", i, edges[i].tag, edges[i].length, edges[i].children.size());
-  //    for(unsigned int j = 0; j < edges[i].children.size(); ++j) {
-  //      printf("children (%d) =%d \n", edges[i].children.size(),  edges[i].children[j].tag);
-  //    }
-  // }
-  // std::set<MVertex*>::iterator itj = junctions.begin();
-  // for ( ; itj != junctions.end(); ++itj){
-  //   MVertex *v = *itj;
-  //   printf("JUNC = %d \n", v->getNum());
-  // }
 
 }
 
@@ -531,11 +555,6 @@ void Centerline::distanceToSurface(){
   Msg::Info("Centerline: computing distance to surface mesh ");
 
   //COMPUTE WITH REVERSE ANN TREE (SURFACE POINTS IN TREE)
-  ANNkd_tree *kdtreeR; 
-  ANNpointArray nodesR;
-  ANNidxArray indexR = new ANNidx[1];
-  ANNdistArray distR = new ANNdist[1];
-
   std::set<MVertex*> allVS; 
   for(int j = 0; j < triangles.size(); j++)
     for(int k = 0; k<3; k++) allVS.insert(triangles[j]->getVertex(k));
@@ -557,14 +576,10 @@ void Centerline::distanceToSurface(){
     MVertex *v1 = l->getVertex(0);
     MVertex *v2 = l->getVertex(1);
     double midp[3] = {0.5*(v1->x()+v2->x()), 0.5*(v1->y()+v1->y()),0.5*(v1->z()+v2->z())};
-    kdtreeR->annkSearch(midp, 1, indexR, distR);
-    double minRad = sqrt(distR[0]);
+    kdtreeR->annkSearch(midp, 1, index, dist);
+    double minRad = sqrt(dist[0]);
     radiusl.insert(std::make_pair(lines[i], minRad)); 
   }
-  delete kdtreeR;
-  annDeallocPts(nodesR);
-  delete[]indexR;
-  delete[]distR;
      
 }
 void Centerline::computeRadii(){
@@ -633,6 +648,7 @@ void Centerline::createSplitCompounds(){
   NV = current->getMaxElementaryNumber(0);
   NE = current->getMaxElementaryNumber(1);
   NF = current->getMaxElementaryNumber(2);
+  NR = current->getMaxElementaryNumber(3);
 
   // Remesh new faces (Compound Lines and Compound Surfaces)
   Msg::Info("*** Starting parametrize compounds:");
@@ -665,14 +681,23 @@ void Centerline::createSplitCompounds(){
     GFaceCompound *gfc = new GFaceCompound(current, num_gfc, f_compound, U0,
 					   typ, 0);
     gfc->meshAttributes.recombine = recombine;
-    gfc->addPhysicalEntity(i+1);
+    if (i < discFaces.size()){
+      gfc->addPhysicalEntity(100);
+      current->setPhysicalName("newsurf", 2, 100);
+    }
+    else{
+      gfc->addPhysicalEntity(200);
+      current->setPhysicalName("in/out", 2, 200);
+    }
     current->add(gfc);
-
   }
 
 }
 
 void Centerline::cleanMesh(){
+
+  return; 
+  if (!is_cut) return;
 
   for (int i=0; i < NF; i++){
     std::ostringstream oss;
@@ -683,15 +708,16 @@ void Centerline::cleanMesh(){
   Msg::Info("Writing new splitted mesh mySPLITMESH.msh");
   current->writeMSH("mySPLITMESH.msh", 2.2, false, false);
 
-  if (!is_cut) return;
-
   std::set<MVertex*> allNod; 
-  std::list<GEdge*> U0;
   discreteFace * mySplitMesh; 
+  std::vector<std::set<MVertex*> > inOutNod;
+  std::vector<discreteFace* > inOutMesh;
 
   mySplitMesh= new discreteFace(current, 2*NF+1);
+  mySplitMesh->addPhysicalEntity(2*NF+1);
+  current->setPhysicalName("surface mesh", 2, 2*NF+1);
   current->add(mySplitMesh);
-  for (int i=0; i < NF; i++){
+  for (int i=0; i < discFaces.size(); i++){
     GFace *gfc =  current->getFaceByTag(NF+i+1);
     for(unsigned int j = 0; j < gfc->triangles.size(); ++j){
       MTriangle *t = gfc->triangles[j];
@@ -712,6 +738,33 @@ void Centerline::cleanMesh(){
       mySplitMesh->quadrangles.push_back(new MQuadrangle(v[0], v[1], v[2], v[3]));
     }
   }
+
+ //  int nbInOut = NF - discFaces.size();
+ //  inOutMesh.resize(nbInOut);
+ //  inOutNod.resize(nbInOut);
+ //  for (int i=0; i < nbInOut; i++){
+ //    inOutMesh[i]= new discreteFace(current, 2*NF+2+i);
+ //    current->add(inOutMesh[i]);
+ //    GFace *gfc =  current->getFaceByTag(NF+discFaces.size()+i+1);
+ //    for(unsigned int j = 0; j < gfc->triangles.size(); ++j){
+ //      MTriangle *t = gfc->triangles[j];
+ //      std::vector<MVertex *> v(3);
+ //      for(int k = 0; k < 3; k++){
+ // 	v[k] = t->getVertex(k);
+ // 	inOutNod[i].insert(v[k]);
+ //      }
+ //      inOutMesh[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+ //    }
+ //    for(unsigned int j = 0; j < gfc->quadrangles.size(); ++j){
+ //      MQuadrangle *q = gfc->quadrangles[j];
+ //      std::vector<MVertex *> v(4);
+ //      for(int k = 0; k < 4; k++){
+ // 	v[k] = q->getVertex(k);
+ // 	inOutNod[i].insert(v[k]);
+ //      }
+ //       inOutMesh[i]->quadrangles.push_back(new MQuadrangle(v[0], v[1], v[2], v[3]));
+ //    }
+ // }
   
   //Removing discrete Vertices - Edges - Faces
   for (int i=0; i < NV; i++){
@@ -726,17 +779,30 @@ void Centerline::cleanMesh(){
   }
   for (int i=0; i < NF; i++){
     GFace *gf  = current->getFaceByTag(i+1);
-    GFace *gfc = current->getFaceByTag(NF+i+1);
-    current->remove(gf); 
-    current->remove(gfc);
+    current->remove(gf);
   }
-  
+  for (int i=0; i < discFaces.size(); i++){
+    GFace *gfc = current->getFaceByTag(NF+i+1);
+    current->remove(gfc); 
+  }
+   
   //Put new mesh in a new discreteFace
-  for(std::set<MVertex*>::iterator it = allNod.begin(); it != allNod.end(); ++it)
-    mySplitMesh->mesh_vertices.push_back(*it);
-  mySplitMesh->meshStatistics.status = GFace::DONE; 
-  current->createTopologyFromMesh();
+ for(std::set<MVertex*>::iterator it = allNod.begin(); it != allNod.end(); ++it)
+   mySplitMesh->mesh_vertices.push_back(*it);
 
+ removeBoundVertices(mySplitMesh);
+ mySplitMesh->meshStatistics.status = GFace::DONE; 
+
+ // for (int i = 0; i< nbInOut; i++){
+ //   for(std::set<MVertex*>::iterator it = inOutNod[i].begin(); it != inOutNod[i].end(); ++it){
+ //     printf("mesh vertex =%d \n", (*it)->getNum());
+ //     inOutMesh[i]->mesh_vertices.push_back(*it);
+ //   }
+ //   printf("inOutMesh[%d]->mesh vertices =%d \n",  inOutMesh[i]->tag(), inOutMesh[i]->mesh_vertices.size());
+ //   inOutMesh[i]->meshStatistics.status = GFace::DONE; 
+ // }
+
+ current->createTopologyFromMesh();
   
 }
 void Centerline::createFaces(){
@@ -811,13 +877,35 @@ void Centerline::createInOutFaces(){
 
   //create the inlet and outlet planar face
   current->setFactory("Gmsh");
+  //std::vector<std::vector<GFace *> > myFaceLoops;
+  //std::vector<GFace *> myFaces;
   for (int i = 0; i<  boundEdges.size(); i++){
-    std::vector<std::vector<GEdge *> > myEdges;
-    std::vector<GEdge *> myEdge;
-    myEdge.push_back(boundEdges[i]);
-    myEdges.push_back(myEdge);
-    GFace *newFace = current->addPlanarFace(myEdges); 
+    std::vector<std::vector<GEdge *> > myEdgeLoops;
+    std::vector<GEdge *> myEdges;
+    myEdges.push_back(boundEdges[i]);
+    myEdgeLoops.push_back(myEdges);
+    GFace *newFace = current->addPlanarFace(myEdgeLoops); 
+    //myFaces.push_back(newFace);
   }  
+  
+  //for (int i= 0; i< discFaces.size(); i++)
+  //  myFaces.push_back((GFace*)discFaces[i]);
+  //myFaceLoops.push_back(myFaces);
+  //GRegion *reg = current->addVolume(myFaceLoops);
+
+}
+void Centerline::createClosedVolume(){
+
+  std::vector<std::vector<GFace *> > myFaceLoops;
+  std::vector<GFace *> myFaces;
+  for (int i = 0; i < NF; i++){
+    GFace * gf = current->getFaceByTag(NF+i+1);
+    myFaces.push_back(gf);
+  }
+  myFaceLoops.push_back(myFaces);
+  GRegion *reg = current->addVolume(myFaceLoops);
+  reg->addPhysicalEntity(reg->tag());
+  current->setPhysicalName("newvol", 3, reg->tag());
 
 }
 
@@ -906,6 +994,7 @@ void Centerline::cutMesh(){
 
   //create compounds
   createSplitCompounds();
+  if (is_closed) createClosedVolume();
 
   Msg::Info("Splitting mesh by centerlines done ");
 
@@ -967,7 +1056,7 @@ void Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
       break;
     }
     else {
-      if (step == 9) {printf("no closed cut %d \n", (int)newCut.size()); };
+      //if (step == 9) {printf("no closed cut %d \n", (int)newCut.size()); };
       step++;
       // // triangles = newTris;
       // // theCut.insert(newCut.begin(),newCut.end());
@@ -1005,8 +1094,23 @@ double Centerline::operator() (double x, double y, double z, GEntity *ge){
      buildKdTree();
      update_needed = false;
    }
+   
+   double xyz[3] = {x,y,z};
 
-   double xyz[3] = {x,y,z };
+   bool isCompound = (ge->dim() == 2 && ge->geomType() == GEntity::CompoundSurface) ? true: false;
+   std::list<GFace*> cFaces; 
+   if (isCompound) cFaces = ((GFaceCompound*)ge)->getCompounds();
+   
+   //take xyz = closest point on boundary in case we are on the planar in/out faces
+   if ( ge->dim() == 3 || (ge->dim() == 2 && ge->geomType() == GEntity::Plane) ||
+	(isCompound && (*cFaces.begin())->geomType() == GEntity::Plane) ){
+     int num_neighbours = 1;
+     kdtreeR->annkSearch(xyz, num_neighbours, index, dist);
+     xyz[0] = nodesR[index[0]][0]; 
+     xyz[1] = nodesR[index[0]][1];
+     xyz[2] = nodesR[index[0]][2];
+   }
+
    int num_neighbours = 1;
    kdtree->annkSearch(xyz, num_neighbours, index, dist);
    double d = sqrt(dist[0]);
