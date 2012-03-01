@@ -487,7 +487,7 @@ void Centerline::createBranches(int maxN){
       edges.push_back(newBranch) ;
     }
   }
-  printf("in/outlets =%d branches =%d \n", (int)color_edges.size()+1, (int)edges.size());
+  printf("*** Centerline in/outlets =%d branches =%d \n", (int)color_edges.size()+1, (int)edges.size());
   
   //create children
   for(unsigned int i = 0; i < edges.size(); ++i) {
@@ -861,7 +861,7 @@ void Centerline::cutMesh(){
     double L = edges[i].length;
     double D = (edges[i].minRad+edges[i].maxRad);
     double AR = L/D;
-    printf("*** branch =%d AR=%g \n", i, AR);
+    printf("*** Centerline branch %d (AR=%d) \n", i, (int)round(AR));
     if( AR > 4.0){
       int nbSplit = (int)round(AR/3.);
       double li  = L/nbSplit;
@@ -873,7 +873,7 @@ void Centerline::cutMesh(){
 	  MVertex *v2 = lines[j]->getVertex(1);
 	  SVector3 pt(v1->x(), v1->y(), v1->z());
 	  SVector3 dir(v2->x()-v1->x(),v2->y()-v1->y(),v2->z()-v1->z());
-	  printf("-> cut length (AR=%g) nbSplit=%d\n", AR, nbSplit);
+	  printf("->> cut length %d split \n",  nbSplit);
 	  cutByDisk(pt, dir, edges[i].maxRad);
 	  nbSplit--;
 	  lc = 0.0;

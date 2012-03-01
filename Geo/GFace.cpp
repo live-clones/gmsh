@@ -370,7 +370,7 @@ void GFace::computeMeanPlane()
   }
 
   if(colinear){
-    Msg::Info("Adding edge points to compute mean plane of face %d", tag());
+    Msg::Debug("Adding edge points (%d) to compute mean plane of face %d", pts.size(), tag());
     std::list<GEdge*> edg = edges();
     for(std::list<GEdge*>::const_iterator ite = edg.begin(); ite != edg.end(); ite++){
       const GEdge *e = *ite;
