@@ -873,7 +873,7 @@ void Centerline::cutMesh(){
 	  MVertex *v2 = lines[j]->getVertex(1);
 	  SVector3 pt(v1->x(), v1->y(), v1->z());
 	  SVector3 dir(v2->x()-v1->x(),v2->y()-v1->y(),v2->z()-v1->z());
-	  printf("-> cut length (AR=%g) split %d\n", AR, nbSplit);
+	  printf("-> cut length (AR=%g) nbSplit=%d\n", AR, nbSplit);
 	  cutByDisk(pt, dir, edges[i].maxRad);
 	  nbSplit--;
 	  lc = 0.0;
@@ -916,7 +916,7 @@ void Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
   double b = NORM.y();
   double c = NORM.z();
   double d = -a * PT.x() - b * PT.y() - c * PT.z();
-  printf("cut disk (R=%g)= %g %g %g %g \n", maxRad, a, b, c, d);
+  //printf("cut disk (R=%g)= %g %g %g %g \n", maxRad, a, b, c, d);
  
   const double EPS = 0.007;
   std::set<MEdge,Less_Edge> allEdges;
