@@ -286,9 +286,9 @@ bool fullMatrix<double>::luSolve(const fullVector<double> &rhs, fullVector<doubl
   delete [] ipiv;
   if(info == 0) return true;
   if(info > 0)
-    Msg::Error("U(%d,%d)=0 in LU decomposition", info, info);
+    Msg::Debug("U(%d,%d)=0 in LU decomposition", info, info);
   else
-    Msg::Error("Wrong %d-th argument in LU decomposition", -info);
+    Msg::Debug("Wrong %d-th argument in LU decomposition", -info);
   return false;
 }
 

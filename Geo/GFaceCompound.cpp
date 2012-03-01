@@ -645,13 +645,13 @@ bool GFaceCompound::parametrize() const
     
   // Laplace parametrization
   if (_mapping == HARMONIC){
-    Msg::Info("Parametrizing surface %d with 'zut harmonic map'", tag()); 
+    Msg::Info("Parametrizing surface %d with harmonic map'", tag()); 
     fillNeumannBCS();
     parametrize(ITERU,HARMONIC); 
     parametrize(ITERV,HARMONIC);
-	//parametrize(ITERU,CONVEXCOMBINATION); 
-	//    parametrize(ITERV,CONVEXCOMBINATION);
     printStuff(111);
+    //parametrize(ITERU,CONVEXCOMBINATION); 
+    //parametrize(ITERV,CONVEXCOMBINATION);
     if (_type == MEANPLANE) checkOrientation(0, true);
     printStuff(222);
   }
@@ -662,24 +662,18 @@ bool GFaceCompound::parametrize() const
     std::vector<MVertex *> vert;
     bool oriented, hasOverlap;
     hasOverlap = parametrize_conformal_spectral();
-    printStuff(11);
     if (hasOverlap) oriented =  checkOrientation(0);
     else oriented = checkOrientation(0, true);
-    printStuff(22);
     hasOverlap = checkOverlap(vert);
     if ( !oriented  || hasOverlap ){
       Msg::Warning("!!! parametrization switched to 'FE conformal' map");
       parametrize_conformal(0, NULL, NULL);
-      printStuff(33);
       checkOrientation(0, true);
-      printStuff(44);
     }  
     if (!checkOrientation(0) || checkOverlap(vert)){
-      printStuff(55);
       Msg::Warning("$$$ parametrization switched to 'harmonic' map");
       parametrize(ITERU,HARMONIC); 
       parametrize(ITERV,HARMONIC);
-      printStuff(66);
     } 
   }
   // Radial-Basis Function parametrization
@@ -713,12 +707,6 @@ bool GFaceCompound::parametrize() const
       checkOrientation(0);
       buildOct();
     }
-  }
-
-  double AR = checkAspectRatio();
-  if (floor(AR)  > AR_MAX){
-    Msg::Warning("Geometrical aspect ratio is high AR=%d ", (int)AR);
-    paramOK = true; //false;
   }
 
   return paramOK;
@@ -790,85 +778,28 @@ void GFaceCompound::getBoundingEdges()
 double GFaceCompound::getSizeH() const
 {
   SBoundingBox3d bb;
-  std::vector<SPoint3> vertices;
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); 
       itv != allNodes.end() ; ++itv){
     SPoint3 pt((*itv)->x(),(*itv)->y(), (*itv)->z());
-    vertices.push_back(pt);
     bb +=pt;
   }
+ 
   double H = norm(SVector3(bb.max(), bb.min()));
-
-  //SOrientedBoundingBox obbox =  SOrientedBoundingBox::buildOBB(vertices);
-  //double H = obbox.getMaxSize(); 
  
   return H;
 }
 
 double GFaceCompound::getSizeBB(const std::list<GEdge* > &elist) const
 {
-  //SOrientedBoundingBox obboxD = obb_boundEdges(elist);
-  //double D = obboxD.getMaxSize();
 
-  SBoundingBox3d bboxD = boundEdges(elist);
+  SBoundingBox3d bboxD;
+  std::list<GEdge*>::const_iterator it = elist.begin();
+  for(; it != elist.end(); it++){
+    bboxD += (*it)->bounds();
+  }
   double D = norm(SVector3(bboxD.max(), bboxD.min()));
 
   return D;
-}
-
-SBoundingBox3d GFaceCompound::boundEdges(const std::list<GEdge* > &elist) const
-{
-  SBoundingBox3d res;
-  std::list<GEdge*>::const_iterator it = elist.begin();
-  for(; it != elist.end(); it++)
-    res += (*it)->bounds();
-
-  return res;
-}
-
-SOrientedBoundingBox GFaceCompound::obb_boundEdges(const std::list<GEdge* > &elist) const
-{
-  SOrientedBoundingBox res;
-  std::vector<SPoint3> vertices;
-
-  std::list<GEdge*>::const_iterator it = elist.begin();
-  for(; it != elist.end(); it++) {
-   
-    if((*it)->getNumMeshVertices() > 0) {
-      int N = (*it)->getNumMeshVertices();
-      for (int i = 0; i < N; i++) {
-	MVertex* mv = (*it)->getMeshVertex(i);
-	vertices.push_back(mv->point());
-      }
-      // Don't forget to add the first and last vertices...
-      SPoint3 pt1((*it)->getBeginVertex()->x(),
-		  (*it)->getBeginVertex()->y(), (*it)->getBeginVertex()->z());
-      SPoint3 pt2((*it)->getEndVertex()->x(), (*it)->getEndVertex()->y(),
-		  (*it)->getEndVertex()->z());
-      vertices.push_back(pt1);
-      vertices.push_back(pt2);
-    } 
-    else if((*it)->geomType() != DiscreteCurve && (*it)->geomType() !=
-	    BoundaryLayerCurve){
-      Range<double> tr = (*it)->parBounds(0);
-      // N can be choosen arbitrarily, but 10 points seems reasonable
-      int N = 10;
-      for (int i = 0; i < N; i++) {
-	double t = tr.low() + (double)i / (double)(N - 1) * (tr.high() -
-							     tr.low());
-	GPoint p = (*it)->point(t);
-	SPoint3 pt(p.x(), p.y(), p.z());
-	vertices.push_back(pt);
-      }
-    } 
-    else {
-      SPoint3 dummy(0, 0, 0);
-      vertices.push_back(dummy);
-    }
-
-  }
-  res = SOrientedBoundingBox::buildOBB(vertices);
-  return res;
 }
 
 void GFaceCompound::getUniqueEdges(std::set<GEdge*> &_unique) 
@@ -1937,7 +1868,7 @@ bool GFaceCompound::checkTopology() const
   double D = H; 
   if (_interior_loops.size() > 0)    D =  getSizeBB(_U0); 
   int AR1 = (int) checkAspectRatio();
-  int AR2 = (int) ceil(H/D);
+  int AR2 = (int) round(H/D);
   int AR = std::max(AR1, AR2);
 
   if (G != 0 || Nb < 1){
@@ -1957,7 +1888,7 @@ bool GFaceCompound::checkTopology() const
   }
   else if (G == 0 && AR > AR_MAX){
     correctTopo = false;
-    Msg::Warning("Wrong topology: Genus=%d, Nb boundaries=%d, AR=%d ", G, Nb, AR);
+    Msg::Warning("Wrong topology: Aspect ratio is too high AR=%d (AR1=%d AR2=%d)", AR, AR1, AR2);
     if (_allowPartition == 1){
       nbSplit = -2;
       Msg::Info("-----------------------------------------------------------");
@@ -1971,11 +1902,11 @@ bool GFaceCompound::checkTopology() const
                 tag(), nbSplit);
     }
     else if (_allowPartition == 0){
-      Msg::Warning("The geometrical aspect ratio of your geometry is quite high.\n "
+      Msg::Debug("The geometrical aspect ratio of your geometry is quite high.\n "
                    "You should enable partitioning of the mesh by activating the\n"
                    "automatic remeshing algorithm. Add 'Mesh.RemeshAlgorithm=1;'\n "
                    "in your geo file or through the Fltk window (Options > Mesh >\n "
-                   "General) \n");
+                   "General)");
     }
   }
   else{
@@ -2020,10 +1951,10 @@ double GFaceCompound::checkAspectRatio() const
   }
   
   std::list<GEdge*>::const_iterator it0 = _U0.begin();
-  double tot_length = 0;
+  double tot_length = 0.0;
   for( ; it0 != _U0.end(); ++it0 )
     for(unsigned int i = 0; i < (*it0)->lines.size(); i++ )
-      tot_length += (*it0)->lines[i]->getInnerRadius(); 
+      tot_length += (*it0)->lines[i]->getLength(); 
   
   double AR = M_PI*area3D/(tot_length*tot_length);
   

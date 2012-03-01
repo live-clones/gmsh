@@ -164,7 +164,6 @@ int GModel::importGEOInternals()
         if(!c->Visible) e->setVisibility(0);
         if(c->Color.type) e->setColor(c->Color.mesh);
         if(c->degenerated) {
-	  printf("setting edge too small c-degenerated \n");
           e->setTooSmall(true);
         }
       }

@@ -146,7 +146,6 @@ class Centerline : public Field{
 
   //create discrete faces
   void createFaces();
-  void createInOutFaces();
   void createClosedVolume();
   void createSplitCompounds();
 

@@ -11,6 +11,7 @@
 #include "gmshEdge.h"
 #include "gmshFace.h"
 #include "gmshRegion.h"
+#include "GEdgeCompound.h"
 #include "MLine.h"
 #include "GModel.h"
 #include "Numeric.h"
@@ -94,12 +95,16 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
 	List_Add(temp, &verte);
 
 	if (ge->geomType() == GEntity::Line){
-	  printf("creating line \n");
 	  c = Create_Curve(numEdge, MSH_SEGM_LINE, 1, temp, NULL, -1, -1, 0., 1.);
 	}
 	else if (ge->geomType() == GEntity::DiscreteCurve){
-	  printf("creating discrete line \n");
 	  c = Create_Curve(numEdge, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0., 1.);
+	}
+	else if(ge->geomType() == GEntity::CompoundCurve){
+	  c = Create_Curve(numEdge, MSH_SEGM_COMPOUND, 1, NULL, NULL, -1, -1, 0., 1.);
+	  std::vector<GEdge*> gec = ((GEdgeCompound*)ge)->getCompounds();
+	  for(int i = 0; i < gec.size(); i++)
+	    c->compound.push_back(gec[i]->tag());
 	}
 	else {
 	  printf("type not implemented \n"); exit(1);
@@ -152,7 +157,6 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
 
 GRegion* GeoFactory::addVolume (GModel *gm, std::vector<std::vector<GFace *> > faces)
 {
-  printf("add volume \n");
 
   //create surface loop
   int nLoops = faces.size();

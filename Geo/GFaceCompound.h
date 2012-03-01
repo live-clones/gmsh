@@ -103,8 +103,6 @@ class GFaceCompound : public GFace {
   bool trivial() const;
   double getSizeH() const;
   double getSizeBB(const std::list<GEdge* > &elist) const;
-  SBoundingBox3d boundEdges(const std::list<GEdge* > &elist) const;
-  SOrientedBoundingBox obb_boundEdges(const std::list<GEdge* > &elist) const;
   void fillNeumannBCS() const;
   /* double sumAngles(std::vector<MVertex*> ordered) const; */
  

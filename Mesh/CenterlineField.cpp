@@ -48,53 +48,11 @@ double computeLength(std::vector<MLine*> lines){
 
   double length= 0.0;
   for (int i = 0; i< lines.size(); i++){
-    length += lines[i]->getInnerRadius(); 
+    length += lines[i]->getLength(); 
   }
   return length;
 }
 
-void removeBoundVertices(GFace *gf){
-  // Remove mesh_vertices that belong to l_edges
-  std::list<GEdge*> l_edges = gf->edges();
-  for(std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); it++){
-    std::vector<MVertex*> edge_vertices = (*it)->mesh_vertices;
-    std::vector<MVertex*>::const_iterator itv = edge_vertices.begin();
-    for(; itv != edge_vertices.end(); itv++){
-      std::vector<MVertex*>::iterator itve = std::find
-        (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), *itv);
-      if (itve != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itve);
-    }
-    MVertex *vB = (*it)->getBeginVertex()->mesh_vertices[0];
-    std::vector<MVertex*>::iterator itvB = std::find
-      (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vB);
-    if (itvB != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvB);
-    MVertex *vE = (*it)->getEndVertex()->mesh_vertices[0];
-    std::vector<MVertex*>::iterator itvE = std::find
-      (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vE);
-    if (itvE != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvE);
-
-    //if l_edge is a compond
-    if((*it)->getCompound()){
-      GEdgeCompound *gec = (*it)->getCompound();
-      std::vector<MVertex*> edge_vertices = gec->mesh_vertices;
-      std::vector<MVertex*>::const_iterator itv = edge_vertices.begin();
-      for(; itv != edge_vertices.end(); itv++){
-        std::vector<MVertex*>::iterator itve = std::find
-          (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), *itv);
-        if (itve != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itve);
-      }
-      MVertex *vB = (*it)->getBeginVertex()->mesh_vertices[0];
-      std::vector<MVertex*>::iterator itvB = std::find
-        (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vB);
-      if (itvB != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvB);
-      MVertex *vE = (*it)->getEndVertex()->mesh_vertices[0];
-      std::vector<MVertex*>::iterator itvE = std::find
-        (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vE);
-      if (itvE != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvE);
-    }
-  }
-
-}
 bool isClosed(std::set<MEdge, Less_Edge> &theCut){
 
   std::multiset<MVertex*> boundV;
@@ -645,6 +603,7 @@ void Centerline::buildKdTree(){
 
 void Centerline::createSplitCompounds(){
 
+  //number of discrete vertices, edges, faces and regions for cut mesh
   NV = current->getMaxElementaryNumber(0);
   NE = current->getMaxElementaryNumber(1);
   NF = current->getMaxElementaryNumber(2);
@@ -664,7 +623,6 @@ void Centerline::createSplitCompounds(){
               num_gec, pe->tag());
     GEdgeCompound *gec = new GEdgeCompound(current, num_gec, e_compound);
     current->add(gec);
-    //gec->parametrize();
   }
  
   // Parametrize Compound surfaces
@@ -676,19 +634,13 @@ void Centerline::createSplitCompounds(){
     int num_gfc = NF+i+1;   
     Msg::Info("Parametrize Compound Surface (%d) = %d discrete face",
               num_gfc, pf->tag());
-    //GFaceCompound::typeOfMapping typ = GFaceCompound::HARMONIC; 
-    GFaceCompound::typeOfMapping typ = GFaceCompound::CONFORMAL; 
+    GFaceCompound::typeOfMapping typ = GFaceCompound::HARMONICPLANE; 
+    //GFaceCompound::typeOfMapping typ = GFaceCompound::CONFORMAL; 
     GFaceCompound *gfc = new GFaceCompound(current, num_gfc, f_compound, U0,
 					   typ, 0);
     gfc->meshAttributes.recombine = recombine;
-    if (i < discFaces.size()){
-      gfc->addPhysicalEntity(100);
-      current->setPhysicalName("newsurf", 2, 100);
-    }
-    else{
-      gfc->addPhysicalEntity(200);
-      current->setPhysicalName("in/out", 2, 200);
-    }
+    gfc->addPhysicalEntity(100);
+    current->setPhysicalName("newsurf", 2, 100);
     current->add(gfc);
   }
 
@@ -696,8 +648,11 @@ void Centerline::createSplitCompounds(){
 
 void Centerline::cleanMesh(){
 
-  return; 
-  if (!is_cut) return;
+
+  return;  // does not work yet !
+  ////////////////////////////////
+
+  if (!is_cut || !is_closed) return;
 
   for (int i=0; i < NF; i++){
     std::ostringstream oss;
@@ -738,33 +693,6 @@ void Centerline::cleanMesh(){
       mySplitMesh->quadrangles.push_back(new MQuadrangle(v[0], v[1], v[2], v[3]));
     }
   }
-
- //  int nbInOut = NF - discFaces.size();
- //  inOutMesh.resize(nbInOut);
- //  inOutNod.resize(nbInOut);
- //  for (int i=0; i < nbInOut; i++){
- //    inOutMesh[i]= new discreteFace(current, 2*NF+2+i);
- //    current->add(inOutMesh[i]);
- //    GFace *gfc =  current->getFaceByTag(NF+discFaces.size()+i+1);
- //    for(unsigned int j = 0; j < gfc->triangles.size(); ++j){
- //      MTriangle *t = gfc->triangles[j];
- //      std::vector<MVertex *> v(3);
- //      for(int k = 0; k < 3; k++){
- // 	v[k] = t->getVertex(k);
- // 	inOutNod[i].insert(v[k]);
- //      }
- //      inOutMesh[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
- //    }
- //    for(unsigned int j = 0; j < gfc->quadrangles.size(); ++j){
- //      MQuadrangle *q = gfc->quadrangles[j];
- //      std::vector<MVertex *> v(4);
- //      for(int k = 0; k < 4; k++){
- // 	v[k] = q->getVertex(k);
- // 	inOutNod[i].insert(v[k]);
- //      }
- //       inOutMesh[i]->quadrangles.push_back(new MQuadrangle(v[0], v[1], v[2], v[3]));
- //    }
- // }
   
   //Removing discrete Vertices - Edges - Faces
   for (int i=0; i < NV; i++){
@@ -789,18 +717,7 @@ void Centerline::cleanMesh(){
   //Put new mesh in a new discreteFace
  for(std::set<MVertex*>::iterator it = allNod.begin(); it != allNod.end(); ++it)
    mySplitMesh->mesh_vertices.push_back(*it);
-
- removeBoundVertices(mySplitMesh);
  mySplitMesh->meshStatistics.status = GFace::DONE; 
-
- // for (int i = 0; i< nbInOut; i++){
- //   for(std::set<MVertex*>::iterator it = inOutNod[i].begin(); it != inOutNod[i].end(); ++it){
- //     printf("mesh vertex =%d \n", (*it)->getNum());
- //     inOutMesh[i]->mesh_vertices.push_back(*it);
- //   }
- //   printf("inOutMesh[%d]->mesh vertices =%d \n",  inOutMesh[i]->tag(), inOutMesh[i]->mesh_vertices.size());
- //   inOutMesh[i]->meshStatistics.status = GFace::DONE; 
- // }
 
  current->createTopologyFromMesh();
   
@@ -833,7 +750,7 @@ void Centerline::createFaces(){
         it != touched.end(); ++it)
       e2e.erase(*it);
   }
-  printf("%d faces created \n", (int)faces.size());
+  Msg::Info("Centerline action (cutMesh) has cut surface mesh in %d faces ", (int)faces.size());
 
   //create discFaces
   int numBef = current->getMaxElementaryNumber(2) + 1;
@@ -859,12 +776,11 @@ void Centerline::createFaces(){
 
 }
 
-void Centerline::createInOutFaces(){
+void Centerline::createClosedVolume(){
 
   //identify the boundary edges by looping over all discreteFaces
   std::vector<GEdge*> boundEdges;
-  int nbFaces = current->getMaxElementaryNumber(2);
-  for (int i= 0; i< nbFaces; i++){
+  for (int i= 0; i< NF; i++){
     GFace *gf = current->getFaceByTag(i+1);
     std::list<GEdge*> l_edges = gf->edges();
     for(std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); it++){
@@ -873,39 +789,34 @@ void Centerline::createInOutFaces(){
       else boundEdges.push_back(*it);
     }
   }
-  printf("boundEdges size =%d \n", boundEdges.size());
-
-  //create the inlet and outlet planar face
+  //printf("boundEdges size =%d \n", boundEdges.size());
   current->setFactory("Gmsh");
-  //std::vector<std::vector<GFace *> > myFaceLoops;
-  //std::vector<GFace *> myFaces;
+  std::vector<std::vector<GFace *> > myFaceLoops;
+  std::vector<GFace *> myFaces;
   for (int i = 0; i<  boundEdges.size(); i++){
     std::vector<std::vector<GEdge *> > myEdgeLoops;
     std::vector<GEdge *> myEdges;
-    myEdges.push_back(boundEdges[i]);
+    GEdge * gec = current->getEdgeByTag(NE+boundEdges[i]->tag());
+    myEdges.push_back(gec);
     myEdgeLoops.push_back(myEdges);
     GFace *newFace = current->addPlanarFace(myEdgeLoops); 
-    //myFaces.push_back(newFace);
+    newFace->addPhysicalEntity(200);
+    current->setPhysicalName("in/out", 2, 200);
+    myFaces.push_back(newFace);
   }  
-  
-  //for (int i= 0; i< discFaces.size(); i++)
-  //  myFaces.push_back((GFace*)discFaces[i]);
-  //myFaceLoops.push_back(myFaces);
-  //GRegion *reg = current->addVolume(myFaceLoops);
 
-}
-void Centerline::createClosedVolume(){
-
-  std::vector<std::vector<GFace *> > myFaceLoops;
-  std::vector<GFace *> myFaces;
+ Msg::Info("Centerline action (closeVolume) has created %d in/out planar faces ", (int)boundEdges.size());
+ 
   for (int i = 0; i < NF; i++){
     GFace * gf = current->getFaceByTag(NF+i+1);
-    myFaces.push_back(gf);
+     myFaces.push_back(gf);
   }
   myFaceLoops.push_back(myFaces);
   GRegion *reg = current->addVolume(myFaceLoops);
   reg->addPhysicalEntity(reg->tag());
   current->setPhysicalName("newvol", 3, reg->tag());
+
+  Msg::Info("Centerline action (closeVolume) has created volume %d ", reg->tag());
 
 }
 
@@ -948,15 +859,15 @@ void Centerline::cutMesh(){
   for(unsigned int i = 0; i < edges.size(); i++){
     std::vector<MLine*> lines = edges[i].lines;
     double L = edges[i].length;
-    double R = edges[i].minRad; //0.5*(edges[i].minRad+edges[i].maxRad);
-    double AR = L/R;
+    double D = (edges[i].minRad+edges[i].maxRad);
+    double AR = L/D;
     printf("*** branch =%d AR=%g \n", i, AR);
-    if( AR > 4.5){
-      int nbSplit = (int)ceil(AR/3.0);
+    if( AR > 4.0){
+      int nbSplit = (int)round(AR/3.);
       double li  = L/nbSplit;
       double lc = 0.0;
       for (int j= 0; j < lines.size(); j++){
-	lc += lines[j]->getInnerRadius();
+	lc += lines[j]->getLength();
 	if (lc > li && nbSplit > 1) {
 	  MVertex *v1 = lines[j]->getVertex(0);
 	  MVertex *v2 = lines[j]->getVertex(1);
@@ -969,10 +880,10 @@ void Centerline::cutMesh(){
 	}
       }
     }
-    if(edges[i].children.size() > 0.0 && AR > 1.5){
+    if(edges[i].children.size() > 0.0 && AR > 1.0){
       MVertex *v1 = lines[lines.size()-1]->getVertex(1);//end vertex
       MVertex *v2;
-      if(L/R < 2.0) v2 = lines[0]->getVertex(0);
+      if(AR < 1.5) v2 = lines[0]->getVertex(0);
       else if (lines.size() > 4) v2 = lines[lines.size()-4]->getVertex(0);
       else v2 = lines[lines.size()-1]->getVertex(0);
       SVector3 pt(v1->x(), v1->y(), v1->z());
@@ -986,11 +897,10 @@ void Centerline::cutMesh(){
   createFaces();
   current->createTopologyFromFaces(discFaces);
   current->exportDiscreteGEOInternals();
-  if (is_closed) createInOutFaces();
-
+ 
   //write
   Msg::Info("Writing splitted mesh 'myPARTS.msh'");
-  current->writeMSH("myPARTS.msh", 2.2, false, true);
+  current->writeMSH("myPARTS.msh", 2.2, false, false);
 
   //create compounds
   createSplitCompounds();

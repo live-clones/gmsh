@@ -60,3 +60,8 @@ double MLine::getInnerRadius()
 {
   return _v[0]->distance(_v[1]) * .5;
 }
+
+double MLine::getLength()
+{
+  return _v[0]->distance(_v[1]);
+}

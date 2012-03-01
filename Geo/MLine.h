@@ -37,7 +37,8 @@ class MLine : public MElement {
   virtual int getDim() const { return 1; }
   virtual int getNumVertices() const { return 2; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
-  virtual double getInnerRadius(); // length of segment line
+  virtual double getInnerRadius(); // half-length of segment line
+  virtual double getLength(); // length of segment line
   virtual void getVertexInfo(const MVertex * vertex, int &ithVertex) const
   {
     ithVertex = _v[0] == vertex ? 0 : 1;

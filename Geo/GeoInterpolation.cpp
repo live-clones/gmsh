@@ -418,10 +418,11 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
     break;
 
   case MSH_SEGM_DISCRETE:
-#if defined(HAVE_BFGS)
-    //    printf("MSH_SEGM_DISCRETE\n");
-#endif
     Msg::Debug("Cannot interpolate discrete curve");
+    break;
+
+  case MSH_SEGM_COMPOUND:
+    Msg::Debug("Cannot interpolate compound curve");
     break;
 
   default:

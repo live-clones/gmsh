@@ -1137,10 +1137,8 @@ void optimalPointFrontalB (GFace *gf,
     newPoint[1] = uvt(1);
     return;
   }
-    printf("--- NOT CONVERGED ----------\n");
+  //printf("--- NOT CONVERGED ----------\n");
 }
-
-
 
 void bowyerWatsonFrontal(GFace *gf)
 {
