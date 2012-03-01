@@ -645,10 +645,12 @@ bool GFaceCompound::parametrize() const
     
   // Laplace parametrization
   if (_mapping == HARMONIC){
-    Msg::Info("Parametrizing surface %d with 'harmonic map'", tag()); 
+    Msg::Info("Parametrizing surface %d with 'zut harmonic map'", tag()); 
     fillNeumannBCS();
     parametrize(ITERU,HARMONIC); 
     parametrize(ITERV,HARMONIC);
+	//parametrize(ITERU,CONVEXCOMBINATION); 
+	//    parametrize(ITERV,CONVEXCOMBINATION);
     printStuff(111);
     if (_type == MEANPLANE) checkOrientation(0, true);
     printStuff(222);

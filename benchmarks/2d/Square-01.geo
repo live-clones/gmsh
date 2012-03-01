@@ -1,8 +1,8 @@
 fact = 100;
 lc = .1 * fact;       
-Point(1) = {0.0,0.0,0,lc};       
+Point(1) = {0.0,0.0,0,lc*.000001};       
 Point(2) = {1* fact,0.0,0,lc};       
-Point(3) = {1* fact,1* fact,0,lc};       
+Point(3) = {1* fact,1* fact,0,lc*.00000001};       
 Point(4) = {0,1* fact,0,lc};       
 Line(1) = {3,2};       
 Line(2) = {2,1};       

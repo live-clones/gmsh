@@ -680,9 +680,8 @@ void _printTris(char *name, std::set<MTri3*, compareTri3Ptr> &AllTris,
 
 static MTri3* search4Triangle (MTri3 *t, double pt[2], 
 			       std::vector<double> &Us, std::vector<double> &Vs,
-			       std::set<MTri3*,compareTri3Ptr> &AllTris) {
+			       std::set<MTri3*,compareTri3Ptr> &AllTris, double uv[2]) {
   
-  double uv[2];
   bool inside = invMapUV(t->tri(), pt, Us, Vs, uv, 1.e-8);    
   if (inside) return t;
   SPoint3 q1(pt[0],pt[1],0);
@@ -706,7 +705,7 @@ static MTri3* search4Triangle (MTri3 *t, double pt[2],
     if (inside) {return t;}
     if (ITER++ > AllTris.size())break;
   }
-
+  return 0;
   for(std::set<MTri3*,compareTri3Ptr>::iterator itx =  AllTris.begin(); itx != AllTris.end();++itx){
     if (!(*itx)->isDeleted()){
       inside = invMapUV((*itx)->tri(), pt, Us, Vs, uv, 1.e-8);    
@@ -740,7 +739,7 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
   MTri3 *ptin = 0;
   bool inside = false;
   double uv[2];
-  // FIXME !!!
+  // FIXME !!! ----> FIXED (JFR)
   if (MTri3::radiusNorm == 2){
     inside = invMapUV(worst->tri(), center, Us, Vs, uv, 1.e-8);    
     if (inside)ptin = worst;
@@ -753,14 +752,20 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
       if (inside)ptin = worst->getNeigh(1);
     }
     if (!inside && worst->getNeigh(2)){
-    inside |= invMapUV(worst->getNeigh(2)->tri(), center, Us, Vs, uv, 1.e-8);
-    if (inside)ptin = worst->getNeigh(2);
+      inside |= invMapUV(worst->getNeigh(2)->tri(), center, Us, Vs, uv, 1.e-8);
+      if (inside)ptin = worst->getNeigh(2);
+    }
+    if (!inside){
+      ptin =  search4Triangle (worst, center, Us, Vs, AllTris,uv);
+      if (ptin)inside = true;
     }
   }
   else {
-    ptin =  search4Triangle (worst, center, Us, Vs, AllTris);
+    ptin =  search4Triangle (worst, center, Us, Vs, AllTris,uv);
+    //    if (!ptin){
+      //      printf("strange : %g %g seems to be out of the domain for face %d\n",center[0],center[1],gf->tag());
+    //    }
     if (ptin)inside = true;
-    //    if (!ptin)printf("strange : %g %g seems to be out of the domain for face %d\n",center[0],center[1],gf->tag());
   }
 
   //  if (!ptin)ptin = worst;
@@ -971,7 +976,7 @@ static double lengthMetric(const double p[2], const double q[2],
      
 */
 
-void optimalPointFrontal (GFace *gf, 
+double optimalPointFrontal (GFace *gf, 
 			  MTri3* worst, 
 			  int active_edge,
 			  std::vector<double> &Us,
@@ -994,6 +999,7 @@ void optimalPointFrontal (GFace *gf,
   // compute the middle point of the edge
   int ip1 = active_edge - 1 < 0 ? 2 : active_edge - 1;
   int ip2 = active_edge;
+  int ip3 = (active_edge+1)%3;
 
   double P[2] =  {Us[base->getVertex(ip1)->getIndex()],  
 		  Vs[base->getVertex(ip1)->getIndex()]};
@@ -1013,8 +1019,9 @@ void optimalPointFrontal (GFace *gf,
 			    2 * dir[1] * dir[0] * metric[1] +
 			    dir[1] * dir[1] * metric[2]);    
   
-  const double p = 0.5 * lengthMetric(P, Q, metric); // / RATIO;
-  const double q = lengthMetric(center, midpoint, metric);
+  //  const double p = 0.5 * lengthMetric(P, Q, metric); // / RATIO;
+  //  const double q = lengthMetric(center, midpoint, metric);
+  /*
   const double rhoM1 = 0.5 * 
     (vSizes[base->getVertex(ip1)->getIndex()] + 
      vSizes[base->getVertex(ip2)->getIndex()] ) / sqrt(3.);// * RATIO;
@@ -1022,15 +1029,29 @@ void optimalPointFrontal (GFace *gf,
     (vSizesBGM[base->getVertex(ip1)->getIndex()] + 
      vSizesBGM[base->getVertex(ip2)->getIndex()] ) / sqrt(3.);// * RATIO;
   const double rhoM  = Extend1dMeshIn2dSurfaces() ? std::min(rhoM1, rhoM2) : rhoM2;
+  */
   
-  const double rhoM_hat = std::min(std::max(rhoM, p), (p * p + q * q) / (2 * q));
-  const double d = (rhoM_hat + sqrt (rhoM_hat * rhoM_hat - p * p)) / RATIO;
+  //  const double rhoM_hat = std::min(std::max(rhoM, p), (p * p + q * q) / (2 * q));
+  //  double d = (rhoM_hat + sqrt (rhoM_hat * rhoM_hat - p * p)) / RATIO;
   
+  //const double d = 100./RATIO;
   //  printf("(%g %g) (%g %g) %g %g %g %g %g %g\n",P[0],P[1],Q[0],Q[1],RATIO,p,q,rhoM,rhoM_hat,d);
-
+  //  printf("size %12.5E\n",vSizesBGM[base->getVertex(ip1)->getIndex()]);
+  const double rhoM1 = 0.5*
+    (vSizes[base->getVertex(ip1)->getIndex()] + 
+     vSizes[base->getVertex(ip2)->getIndex()] ) ;// * RATIO;
+  const double rhoM2 = 0.5* 
+    (vSizesBGM[base->getVertex(ip1)->getIndex()] + 
+     vSizesBGM[base->getVertex(ip2)->getIndex()] ) ;// * RATIO;
+  const double rhoM  = Extend1dMeshIn2dSurfaces() ? std::min(rhoM1,rhoM2) : rhoM2;
+  const double rhoM_hat = rhoM;
+  const double d = rhoM_hat * sqrt(3)*0.5/RATIO;
+  
+  //  printf("%12.5E %12.5E\n",d,RATIO);
 
   newPoint[0] = midpoint[0] + d * dir[0]; 
   newPoint[1] = midpoint[1] + d * dir[1];
+  return d * RATIO;
 }
 
 /*
@@ -1044,7 +1065,34 @@ void optimalPointFrontal (GFace *gf,
             h
  
    x point of the plane
+
+   h being some kind of average between the size field
+   and the edge length
 */
+
+struct intersectCurveSurfaceData 
+{
+  GFace *gf;
+  SVector3 &n1,&n2;
+  SVector3 &middle;
+  double d;
+  intersectCurveSurfaceData (GFace *_gf, SVector3 & _n1, SVector3 & _n2, SVector3 & _middle, double &_d)
+    : gf(_gf),n1(_n1),n2(_n2),middle(_middle),d(_d)
+  { }
+};
+
+static void intersectCircleSurface(fullVector<double> &uvt, 
+				   fullVector<double> &res, void *_data){
+  intersectCurveSurfaceData *data = (intersectCurveSurfaceData*)_data;
+  GPoint gp = data->gf->point(uvt(0),uvt(1));
+  SVector3 dir = (data->n1*cos(uvt(2))+data->n2*sin(uvt(2)))*data->d;
+  SVector3 pp = data->middle + dir;
+  res(0) = gp.x() - pp.x();
+  res(1) = gp.y() - pp.y();
+  res(2) = gp.z() - pp.z();
+  //  printf("f(%g %g %g) = %12.5E %12.5E %12.5E \n",uvt(0),uvt(1),uvt(2),res(0),res(1),res(2));
+}
+
 
 void optimalPointFrontalB (GFace *gf, 
 			   MTri3* worst, 
@@ -1055,57 +1103,41 @@ void optimalPointFrontalB (GFace *gf,
 			   std::vector<double> &vSizesBGM,			  
 			   double newPoint[2],
 			   double metric[3]){
-  double center[2],r2;
-  MTriangle *base = worst->tri();
-  circUV(base, Us, Vs, center, gf);
-  double pa[2] = {(Us[base->getVertex(0)->getIndex()] + 
-		   Us[base->getVertex(1)->getIndex()] + 
-		   Us[base->getVertex(2)->getIndex()]) / 3.,
-		  (Vs[base->getVertex(0)->getIndex()] + 
-		   Vs[base->getVertex(1)->getIndex()] + 
-		   Vs[base->getVertex(2)->getIndex()]) / 3.};
-  buildMetric(gf, pa, metric);
-  circumCenterMetric(worst->tri(), metric, Us, Vs, center, r2); 
-  // compute the middle point of the edge
+  // as a starting point, let us use the "fast algo"
+  double d = optimalPointFrontal (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
   int ip1 = active_edge - 1 < 0 ? 2 : active_edge - 1;
   int ip2 = active_edge;
-
-  double P[2] =  {Us[base->getVertex(ip1)->getIndex()],  
-		  Vs[base->getVertex(ip1)->getIndex()]};
-  double Q[2] =  {Us[base->getVertex(ip2)->getIndex()], 
-		  Vs[base->getVertex(ip2)->getIndex()]};
-  double midpoint[2] = {0.5 * (P[0] + Q[0]), 0.5 * (P[1] + Q[1])};
-      
-  // now we have the edge center and the center of the circumcircle, 
-  // we try to find a point that would produce a perfect triangle while
-  // connecting the 2 points of the active edge
-  
-  double dir[2] = {center[0] - midpoint[0], center[1] - midpoint[1]};
-  double norm = sqrt(dir[0] * dir[0] + dir[1] * dir[1]);
-  dir[0] /= norm;
-  dir[1] /= norm;
-  const double RATIO = sqrt(dir[0] * dir[0] * metric[0] +
-			    2 * dir[1] * dir[0] * metric[1] +
-			    dir[1] * dir[1] * metric[2]);    
-  
-  const double p = 0.5 * lengthMetric(P, Q, metric); // / RATIO;
-  const double q = lengthMetric(center, midpoint, metric);
-  const double rhoM1 = 0.5 * 
-    (vSizes[base->getVertex(ip1)->getIndex()] + 
-     vSizes[base->getVertex(ip2)->getIndex()] ) / sqrt(3.);// * RATIO;
-  const double rhoM2 = 0.5 * 
-    (vSizesBGM[base->getVertex(ip1)->getIndex()] + 
-     vSizesBGM[base->getVertex(ip2)->getIndex()] ) / sqrt(3.);// * RATIO;
-  const double rhoM  = Extend1dMeshIn2dSurfaces() ? std::min(rhoM1, rhoM2) : rhoM2;
-  
-  const double rhoM_hat = std::min(std::max(rhoM, p), (p * p + q * q) / (2 * q));
-  const double d = (rhoM_hat + sqrt (rhoM_hat * rhoM_hat - p * p)) / RATIO;
-  
-  //  printf("(%g %g) (%g %g) %g %g %g %g %g %g\n",P[0],P[1],Q[0],Q[1],RATIO,p,q,rhoM,rhoM_hat,d);
-
-
-  newPoint[0] = midpoint[0] + d * dir[0]; 
-  newPoint[1] = midpoint[1] + d * dir[1];
+  MVertex *v1 = worst->tri()->getVertex(ip1);
+  MVertex *v2 = worst->tri()->getVertex(ip2);
+  MTriangle *t = worst->tri();
+  double p1[3] = {t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z()};
+  double p2[3] = {t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z()};
+  double p3[3] = {t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z()};
+  double c[3];
+  circumCenterXYZ(p1, p2, p3, c);
+  SVector3 middle ((v1->x()+v2->x())*.5,(v1->y()+v2->y())*.5,(v1->z()+v2->z())*.5);
+  SVector3 center(c[0],c[1],c[2]);
+  SVector3 v1v2 (v2->x()-v1->x(),v2->y()-v1->y(),v2->z()-v1->z());
+  SVector3 n1 = center - middle;
+  SVector3 n2 = crossprod(v1v2,n1);
+  n1.normalize();
+  n2.normalize();
+  // we look for a point that is 
+  // P = d * (n1 cos(t) + n2 sin(t)) that is on the surface
+  // so we have to find t, starting with t = 0
+  fullVector<double> uvt(3);
+  uvt(0) = newPoint[0];
+  uvt(1) = newPoint[1];
+  uvt(2) = 0.0;
+  intersectCurveSurfaceData data (gf,n1,n2,middle,d);
+  //printf("----------------------------\n");
+  if(newton_fd(intersectCircleSurface, uvt, &data)){
+    //    printf("--- CONVERGED -- %12.5E -----------\n",d);
+    newPoint[0] = uvt(0);
+    newPoint[1] = uvt(1);
+    return;
+  }
+    printf("--- NOT CONVERGED ----------\n");
 }
 
 
@@ -1156,7 +1188,7 @@ void bowyerWatsonFrontal(GFace *gf)
         Msg::Debug("%7d points created -- Worst tri radius is %8.3f",
                    vSizes.size(), worst->getRadius());
       double newPoint[2], metric[3];
-      optimalPointFrontal (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
+      optimalPointFrontalB (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
       insertAPoint(gf, AllTris.end(), newPoint, metric, Us, Vs, vSizes,
                    vSizesBGM, vMetricsBGM, AllTris, &ActiveTris, worst);
     } 
@@ -1522,7 +1554,7 @@ void bowyerWatsonFrontalLayers(GFace *gf, bool quad)
 	// compute the middle point of the edge
 	double newPoint[2],metric[3]={1,0,1};
 	if (quad)optimalPointFrontalQuad (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
-	else optimalPointFrontal (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
+	else optimalPointFrontalB (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
 	
 	
 	//	printf("start INSERT A POINT %g %g \n",newPoint[0],newPoint[1]);

@@ -1155,7 +1155,7 @@ struct  quadBlob {
 			 v3,p3,
 			 e3_0, +1,
 			 q);
-      //      printBlob(iter+10000);
+            printBlob(iter+10000);
       updateQuadCavity (gf,adj,quads,q);
       quads.clear();
       quads.insert(quads.begin(),q.begin(),q.end());
@@ -1233,7 +1233,7 @@ struct  quadBlob {
 			 q);
 
 
-      //      printBlob(iter+10000);
+            printBlob(iter+110000);
       updateQuadCavity (gf,adj,quads,q);
       quads.clear();
       quads.insert(quads.begin(),q.begin(),q.end());
@@ -1377,7 +1377,7 @@ struct  quadBlob {
 
       // YES
 
-      //      printBlob(iter+10000);
+            printBlob(iter+9910000);
       updateQuadCavity (gf,adj,quads,q);
       quads.clear();
       quads.insert(quads.begin(),q.begin(),q.end());
@@ -1737,7 +1737,10 @@ void bfgs_callback_vertex_relocation (const alglib::real_1d_array& x, double& fu
 static void _relocateVertexOpti(GFace *gf, MVertex *ver,
 				const std::vector<MElement*> &lt)
 {
+  // DOES NOT WORK AT ALL !!!
+  return;
   if(ver->onWhat()->dim() != 2)return;
+  printf("heyhey\n");
   //  printf ("optimizing vertex position with BFGS\n");
   // we optimize the local coordinates of the node
   alglib::ae_int_t dim = 2;
@@ -1769,10 +1772,11 @@ static void _relocateVertexOpti(GFace *gf, MVertex *ver,
     minq = std::min(q,minq);
   }
   if (minq < 0.01)data.set_(U,V);
-
+  else printf("OKIDOKI\n");
   //  if (rep.terminationtype != 4){
   //    data.set_(U,V);
   //  }
+  printf("heyhey -- end\n");
 }
 #endif
 
@@ -1783,58 +1787,63 @@ static void _relocateVertex(GFace *gf, MVertex *ver,
   SPoint3 c;
   bool isSphere = gf->isSphere(R, c);
 
-  if(ver->onWhat()->dim() == 2){
-    MFaceVertex *fv = dynamic_cast<MFaceVertex*>(ver);
-    if(fv->bl_data) return;
+  if(ver->onWhat()->dim() != 2) return;
+  MFaceVertex *fv = dynamic_cast<MFaceVertex*>(ver);
+  if(fv->bl_data) return;
 
-    double initu,initv;
-    ver->getParameter(0, initu);
-    ver->getParameter(1, initv);
-    double cu = 0, cv = 0;
-    double XX=0,YY=0,ZZ=0;
-    double pu[4], pv[4];
-    double fact  = 0.0;
-    for(unsigned int i = 0; i < lt.size(); i++){
-      parametricCoordinates(lt[i], gf, pu, pv, ver);
-      cu += (pu[0] + pu[1] + pu[2]);
-      cv += (pv[0] + pv[1] + pv[2]);
-      XX += lt[i]->getVertex(0)->x()+lt[i]->getVertex(1)->x()+lt[i]->getVertex(2)->x();
-      YY += lt[i]->getVertex(0)->y()+lt[i]->getVertex(1)->y()+lt[i]->getVertex(2)->y();
-      ZZ += lt[i]->getVertex(0)->z()+lt[i]->getVertex(1)->z()+lt[i]->getVertex(2)->z();
-      if(lt[i]->getNumVertices() == 4){
-	cu += pu[3];
-	cv += pv[3];
-	XX += lt[i]->getVertex(3)->x();
-	YY += lt[i]->getVertex(3)->y();
-	ZZ += lt[i]->getVertex(3)->z();
-      }
-      fact += lt[i]->getNumVertices();
+  double initu,initv;
+  ver->getParameter(0, initu);
+  ver->getParameter(1, initv);
+  double cu = 0, cv = 0;
+  double XX=0,YY=0,ZZ=0;
+  double pu[4], pv[4];
+  double fact  = 0.0;
+  for(unsigned int i = 0; i < lt.size(); i++){
+    parametricCoordinates(lt[i], gf, pu, pv, ver);
+    double XCG=0,YCG=0,ZCG=0;
+    for (int j=0;j<lt[i]->getNumVertices();j++){
+      XCG += lt[i]->getVertex(j)->x();
+      YCG += lt[i]->getVertex(j)->y();
+      ZCG += lt[i]->getVertex(j)->z();
     }
-    SPoint2 newp ;
-    if(fact != 0.0){
-      SPoint2 before(initu,initv);
-      SPoint2 after(cu / fact,cv / fact);
-      if (isSphere){
-	GPoint gp = gf->closestPoint(SPoint3(XX/fact, YY/fact, ZZ/fact), after);
-	after = SPoint2(gp.u(),gp.v());
-      }
-      bool success = _isItAGoodIdeaToMoveThatVertex (gf,  lt, ver,before,after);
+    XX += XCG;
+    YY += YCG;
+    ZZ += ZCG;
 
-      if (success){
-	ver->setParameter(0, after.x());
-	ver->setParameter(1, after.y());
-	GPoint pt = gf->point(after);
-	if(pt.succeeded()){
-	  ver->x() = pt.x();
-	  ver->y() = pt.y();
-	  ver->z() = pt.z();
-	}
+    //    double D = 1./sqrt((XCG-ver->x())*(XCG-ver->x()) +
+    //		    (YCG-ver->y())*(YCG-ver->y()) +
+    //		    (ZCG-ver->z())*(ZCG-ver->z()) );
+    double D = 1.0;
+    for (int j=0;j<lt[i]->getNumVertices();j++){
+      cu += pu[j]*D;
+      cv += pv[j]*D;
+    }
+    fact += lt[i]->getNumVertices() * D;
+  }
+  SPoint2 newp ;
+  if(fact != 0.0){
+    SPoint2 before(initu,initv);
+    SPoint2 after(cu / fact,cv / fact);
+    if (isSphere){
+      GPoint gp = gf->closestPoint(SPoint3(XX/fact, YY/fact, ZZ/fact), after);
+      after = SPoint2(gp.u(),gp.v());
+    }
+    bool success = _isItAGoodIdeaToMoveThatVertex (gf,  lt, ver,before,after);
+    
+    if (success){
+      ver->setParameter(0, after.x());
+      ver->setParameter(1, after.y());
+      GPoint pt = gf->point(after);
+      if(pt.succeeded()){
+	ver->x() = pt.x();
+	ver->y() = pt.y();
+	ver->z() = pt.z();
       }
-      else{
+    }
+    else{
 #if defined(HAVE_BFGS)
-	_relocateVertexOpti(gf, ver, lt);
+            _relocateVertexOpti(gf, ver, lt);
 #endif
-      }
     }
   }
 }
