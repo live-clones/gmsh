@@ -565,7 +565,7 @@ int GModel::readCGNS(const std::string &name)
   cg_nbases(index_file, &nBases);
   Msg::Debug("Found %i base(s).", nBases);
   if (nBases > 1) {
-    Msg::Warning("Found %i bases in the file, but only the first one will be generated.", nBases);
+    Msg::Warning("Found %i bases in the file, but only the first one will be used to build mesh.", nBases);
   }
   int index_base = 1;
 
@@ -781,6 +781,9 @@ int GModel::readCGNS(const std::string &name)
     cg_n1to1(index_file, index_base, index_zone, &nconnectivity);
     Msg::Debug("Found %i connectivity zones.", nconnectivity);
     for (int index_section = 1; index_section <= nconnectivity; index_section++) {
+
+      printf("ping\n");
+
       char ConnectionName[30];
       char DonorName[30];
       cgsize_t range[6];
@@ -789,13 +792,6 @@ int GModel::readCGNS(const std::string &name)
       cg_1to1_read(index_file, index_base, index_zone,index_section,
 		   ConnectionName, DonorName, range, donor_range, transform);
       
-      // Do not ignore periodic boundaries when creating elements later on.
-      float RotationCenter[3];
-      float RotationAngle[3];
-      float Translation[3];
-      if (cg_1to1_periodic_read(index_file, index_base, index_zone, index_section,
-				RotationCenter, RotationAngle, Translation) != CG_NODE_NOT_FOUND)
-	continue;
 
       // Checking on which face it is
       int face = 0;
@@ -815,11 +811,28 @@ int GModel::readCGNS(const std::string &name)
 	else
 	  face = 1;	
       }
-      int* range_int = new int[6];
-      for (int r = 0; r < 6; r++)
-	range_int[r] = (int)range[r];
 
+      printf("Face %i\n", face);
+
+      int* range_int = new int[6];
+
+      // Do not ignore periodic boundaries when creating elements later on.
+      float RotationCenter[3];
+      float RotationAngle[3];
+      float Translation[3];
+      if (cg_1to1_periodic_read(index_file, index_base, index_zone, index_section,
+				RotationCenter, RotationAngle, Translation) != CG_NODE_NOT_FOUND) {
+	continue;
+      }
+
+      
+      for (int r = 0; r < 6; r++) {	
+	range_int[r] = (int)range[r];
+	printf("%i ", range_int[r]);
+      }
       forbidden[face].push_back(range_int);
+
+      printf("\npong\n");
     }
 
     
@@ -894,13 +907,15 @@ int GModel::readCGNS(const std::string &name)
 	    for (int ff=0; ff < forbidden[face].size(); ff++) {
 	      int* lim = forbidden[face][ff];
 
-	      if ((i >= fmin(lim[0], lim[3])-1 && i <= fmax(lim[0], lim[3])) || (igrow == 0 && i == lim[0]-1) ) {
-		if ((j >= fmin(lim[1], lim[4])-1 && j <= fmax(lim[1],lim[4])) || (jgrow == 0 && j == lim[1]-1) ) {
-		  if ((k >= fmin(lim[2], lim[5])-1 && k <= fmax(lim[2], lim[5])) || (kgrow == 0 && k == lim[2]-1) ) {
+	      if ((i >= fmin(lim[0], lim[3])-1 && i < fmax(lim[0], lim[3])-1) || (igrow == 0) ) {
+		if ((j >= fmin(lim[1], lim[4])-1 && j < fmax(lim[1],lim[4])-1) || (jgrow == 0) ) {
+		  if ((k >= fmin(lim[2], lim[5])-1 && k < fmax(lim[2], lim[5])-1) || (kgrow == 0) ) {
 		    ok = false;
 		  }
 		}
 	      }
+	      //if (!ok) continue;
+
 	    }
 	    if (!ok) continue;
 
