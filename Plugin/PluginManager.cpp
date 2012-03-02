@@ -48,6 +48,7 @@
 #include "Probe.h"
 #include "GSHHS.h"
 #include "HomologyComputation.h"
+#include "HomologyPostProcessing.h"
 #include "ExtractEdges.h"
 #include "FieldFromAmplitudePhase.h"
 #include "Bubbles.h"
@@ -245,6 +246,8 @@ void PluginManager::registerDefaultPlugins()
 #if defined(HAVE_KBIPACK)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Homology", GMSH_RegisterHomologyComputationPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("HomologyPost", GMSH_RegisterHomologyPostProcessingPlugin()));
 #endif
 #if defined(HAVE_SOLVER)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>

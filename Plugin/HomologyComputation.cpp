@@ -6,6 +6,9 @@
 // Contributed by Matti Pellikka <matti.pellikka@tut.fi>.
 
 #include <stdlib.h>
+#include <string>
+#include <iostream>
+#include <sstream>
 #include "Gmsh.h"
 #include "GmshConfig.h"
 #include "GModel.h"
@@ -15,15 +18,14 @@
 #if defined(HAVE_KBIPACK)
 
 StringXNumber HomologyComputationOptions_Number[] = {
-  {GMSH_FULLRC, "PhysicalGroupForDomain1", NULL, 0.},
-  {GMSH_FULLRC, "PhysicalGroupForDomain2", NULL, 0.},
-  {GMSH_FULLRC, "PhysicalGroupForSubdomain1", NULL, 0.},
-  {GMSH_FULLRC, "PhysicalGroupForSubdomain2", NULL, 0.},
-  {GMSH_FULLRC, "CompututeHomology", NULL, 1.},
-  {GMSH_FULLRC, "ComputeCohomology", NULL, 0.},
+  {GMSH_FULLRC, "ComputeHomology", NULL, 1.},
+  {GMSH_FULLRC, "ComputeCohomology", NULL, 0.}
 };
 
 StringXString HomologyComputationOptions_String[] = {
+  {GMSH_FULLRC, "DomainPhysicalGroups", NULL, ""},
+  {GMSH_FULLRC, "SubdomainPhysicalGroups", NULL, ""},
+  {GMSH_FULLRC, "DimensionOfChainsToSave", NULL, "1, 2"},
   {GMSH_FULLRC, "Filename", NULL, "homology.msh"}
 };
 
@@ -37,16 +39,16 @@ extern "C"
 
 std::string GMSH_HomologyComputationPlugin::getHelp() const
 {
-  return "Plugin(Homology) computes ranks and basis elements "
-    "of (relative) homology and cohomology spaces.\n\n"
+  return "Plugin(HomologyComputation) computes representative chains "
+    "of basis elements of (relative) homology and cohomology spaces.\n\n"
 
     "Define physical groups in order to specify the computation "
     "domain and the relative subdomain. Otherwise the whole mesh "
     "is the domain and the relative subdomain is empty. \n\n"
 
-    "Plugin(Homology) creates new views, one for each basis element. "
-    "The resulting basis chains together with the mesh are saved to "
-    "the file given.";
+    "Plugin(HomologyComputation) creates new views, one for each "
+    "basis element. The resulting basis chains of desired dimension "
+    "together with the mesh are saved to the given file.";
 }
 
 int GMSH_HomologyComputationPlugin::getNbOptions() const
@@ -69,27 +71,42 @@ StringXString *GMSH_HomologyComputationPlugin::getOptionStr(int iopt)
   return &HomologyComputationOptions_String[iopt];
 }
 
+bool GMSH_HomologyComputationPlugin::parseStringOpt
+(int stringOpt, std::vector<int>& intList)
+{
+  std::string list = HomologyComputationOptions_String[stringOpt].def;
+  intList.clear();
+
+  int n;
+  char a;
+  std::istringstream ss(list);
+  while(ss >> n){
+    intList.push_back(n);
+    if(ss >> a){
+      if(a != ',') {
+        Msg::Error("Unexpected character \'%c\' while parsing \'%s\'", a,
+                   HomologyComputationOptions_String[stringOpt].str);
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 PView *GMSH_HomologyComputationPlugin::execute(PView *v)
 {
-  std::string fileName = HomologyComputationOptions_String[0].def;
+  std::string fileName = HomologyComputationOptions_String[3].def;
+  int hom = (int)HomologyComputationOptions_Number[0].def;
+  int coh = (int)HomologyComputationOptions_Number[1].def;
 
   std::vector<int> domain;
   std::vector<int> subdomain;
+  std::vector<int> dimsave;
+  if(!parseStringOpt(0, domain)) return 0;
+  if(!parseStringOpt(1, subdomain)) return 0;
+  if(!parseStringOpt(2, dimsave)) return 0;
 
-  int d1 = (int)HomologyComputationOptions_Number[0].def;
-  int d2 = (int)HomologyComputationOptions_Number[1].def;
-  if(d1 > 0) domain.push_back(d1);
-  if(d2 > 0) domain.push_back(d2);
-  d1 = (int)HomologyComputationOptions_Number[2].def;
-  d2 = (int)HomologyComputationOptions_Number[3].def;
-  if(d1 > 0) subdomain.push_back(d1);
-  if(d2 > 0) subdomain.push_back(d2);
-
-
-  int hom = (int)HomologyComputationOptions_Number[4].def;
-  int coh = (int)HomologyComputationOptions_Number[5].def;
-
-  GModel *m = GModel::current();
+  GModel* m = GModel::current();
 
   Homology* homology = new Homology(m, domain, subdomain);
   homology->setFileName(fileName);
@@ -100,6 +117,10 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   if(coh != 0){
     cc->restoreComplex();
     homology->findCohomologyBasis(cc);
+  }
+  for(unsigned int i = 0; i < dimsave.size(); i++) {
+    int dim = dimsave.at(i);
+    if(dim > -1 && dim < 4) homology->addChainsToModel(dim);
   }
 
   delete cc;

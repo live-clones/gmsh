@@ -5,27 +5,28 @@
 //
 // Contributed by Matti Pellikka <matti.pellikka@tut.fi>.
 
-#ifndef _HOMOLOGY_COMPUTATION_H_
-#define _HOMOLOGY_COMPUTATION_H_
+#ifndef _HOMOLOGY_POST_PROCESSING_H_
+#define _HOMOLOGY_POST_PROCESSING_H_
 
 #include <string>
 #include "Plugin.h"
+#include "Chain.h"
 
 #if defined(HAVE_KBIPACK)
 
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterHomologyComputationPlugin();
+  GMSH_Plugin *GMSH_RegisterHomologyPostProcessingPlugin();
 }
 
-class GMSH_HomologyComputationPlugin : public GMSH_PostPlugin
+class GMSH_HomologyPostProcessingPlugin : public GMSH_PostPlugin
 {
  public:
-  GMSH_HomologyComputationPlugin(){}
-  std::string getName() const { return "HomologyComputation"; }
+  GMSH_HomologyPostProcessingPlugin(){}
+  std::string getName() const { return "HomologyPostProcessing"; }
   std::string getShortHelp() const
   {
-    return "Compute relative (co)homology spaces";
+    return "Post-process (co)homology space bases";
   }
   std::string getHelp() const;
   std::string getAuthor() const { return "M. Pellikka"; }
@@ -35,6 +36,12 @@ class GMSH_HomologyComputationPlugin : public GMSH_PostPlugin
   StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
   bool parseStringOpt(int stringOpt, std::vector<int>& intList);
+  void createChains(int dim, GModel* m,
+                    const std::vector<GEntity*>& chainEntities,
+                    const std::vector<std::string>& chainNames,
+                    std::vector<Chain<int> >& chains);
+  bool invertIntegerMatrix(std::vector<int>& matrix);
+  int detIntegerMatrix(std::vector<int>& matrix);
 };
 
 #endif

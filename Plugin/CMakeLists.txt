@@ -22,7 +22,7 @@ set(SRC
   Annotate.cpp Remove.cpp
   Probe.cpp MinMax.cpp
   HarmonicToTime.cpp ModulusPhase.cpp
-  HomologyComputation.cpp
+  HomologyComputation.cpp HomologyPostProcessing.cpp
   Distance.cpp ExtractEdges.cpp NearestNeighbor.cpp
   AnalyseCurvedMesh.cpp 
   FieldFromAmplitudePhase.cpp
