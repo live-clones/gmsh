@@ -327,6 +327,8 @@
          { "Tan",     tan },
          { "tanh",    tanh },
          { "Tanh",    tanh },
+         { "atanh",   atanh },
+         { "Atanh",   atanh },
          { "trunc",   trunc }, // added
          { "Trunc",   trunc },
          { "floor",   floor }, // largest integer not grather than x
