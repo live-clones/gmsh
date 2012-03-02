@@ -40,7 +40,7 @@ set(SRC
     MLine.cpp MTriangle.cpp MQuadrangle.cpp MTetrahedron.cpp
     MHexahedron.cpp MPrism.cpp MPyramid.cpp MElementCut.cpp
   MZone.cpp MZoneBoundary.cpp
-  Cell.cpp CellComplex.cpp ChainComplex.cpp Homology.cpp
+  Cell.cpp CellComplex.cpp ChainComplex.cpp Homology.cpp Chain.cpp
   Curvature.cpp
   MVertexBoundaryLayerData.cpp
 )

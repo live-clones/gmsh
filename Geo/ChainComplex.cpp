@@ -470,8 +470,9 @@ void ChainComplex::getBasisChain(std::map<Cell*, int, Less_Cell>& chain,
       cell->getCells(subCells);
       for(Cell::citer it = subCells.begin(); it != subCells.end(); it++){
 	Cell* subCell = it->first;
-	int coeff = it->second;
-	chain[subCell] = coeff*elemi*torsion;
+	int coeff = it->second*elemi*torsion;
+        if(coeff == 0) continue;
+	chain[subCell] = coeff;
       }
     }
   }

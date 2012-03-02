@@ -11,6 +11,7 @@
 #include <sstream>
 #include "CellComplex.h"
 #include "ChainComplex.h"
+#include "Chain.h"
 #include "OS.h"
 #include "GModel.h"
 #include "Options.h"
@@ -40,13 +41,14 @@ class Homology
   // use chain smoothning
   bool _smoothen;
 
-  // save chains of 0 and highest dimension
-  bool _save0N;
   // save original cell complex
   bool _saveOrig;
 
   // file name to store the results
   std::string _fileName;
+
+  // resulting chains
+  std::vector<Chain<int>*> _chains;
 
   typedef std::map<Cell*, int, Less_Cell>::iterator citer;
 
@@ -54,17 +56,16 @@ class Homology
   std::string _getDomainString(const std::vector<int>& domain,
                                const std::vector<int>& subdomain);
 
-  // remove cells with coefficient 0
-  int _eraseNullCells(std::map<Cell*, int, Less_Cell>& chain);
+  // create and store a chain from homology solver result
+  void _createChain(std::map<Cell*, int, Less_Cell>& preChain,
+                    std::string name);
 
-  // create a Gmsh physical group from a chain
-  void _createPhysicalGroup(std::map<Cell*, int, Less_Cell>& chain, std::string name);
 
  public:
 
   Homology(GModel* model, std::vector<int> physicalDomain,
 	   std::vector<int> physicalSubdomain,
-           bool save0N=false, bool saveOrig=true,
+           bool saveOrig=true,
 	   bool combine=true, bool omit=true, bool smoothen=true);
   ~Homology();
 
@@ -79,6 +80,11 @@ class Homology
   // find the generators/dual generarators  of homology spaces,
   void findHomologyBasis(CellComplex* cellComplex=NULL);
   void findCohomologyBasis(CellComplex* cellComplex=NULL);
+
+  // add chains to Gmsh model
+  // dim: only add dim-chains if dim != -1
+  // post: create a post-processing view
+  void addChainsToModel(int dim=-1, bool post=true);
 
   // write the generators to a file
   bool writeBasisMSH(bool binary=false);

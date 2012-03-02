@@ -29,6 +29,14 @@ bool Less_Cell::operator()(const Cell* c1, const Cell* c2) const
   return false;
 }
 
+bool equalVertices(const std::vector<MVertex*>& v1,
+                   const std::vector<MVertex*>& v2) {
+  if(v1.size() != v2.size()) return false;
+  for(unsigned int i = 0; i < v1.size(); i++)
+    if(v1[i]->getNum() !=  v2[i]->getNum()) return false;
+  return true;
+}
+
 int Cell::_globalNum = 0;
 
 Cell::Cell(MElement* element, int domain)
@@ -154,6 +162,25 @@ int Cell::getNumBdElements() const
 
 int Cell::findBdCellOrientation(Cell* cell, int i) const
 {
+  /*std::vector<MVertex*> v1;
+  std::vector<MVertex*> v2;
+  this->findBdElement(i, v1);
+  cell->getMeshVertices(v2);
+
+  int perm = 1;
+  if(equalVertices(v1, v2)) return perm;
+  while(std::next_permutation(v2.begin(), v2.end(), MVertexLessThanNum())) {
+    perm *= -1;
+    if(equalVertices(v1, v2)) return perm;
+  }
+  cell->getMeshVertices(v2);
+  perm = 1;
+  while(std::prev_permutation(v2.begin(), v2.end(), MVertexLessThanNum())) {
+    perm *= -1;
+    if(equalVertices(v1, v2)) return perm;
+  }
+  return 0;*/
+
   std::vector<MVertex*> v;
   cell->getMeshVertices(v);
   switch (_dim) {
