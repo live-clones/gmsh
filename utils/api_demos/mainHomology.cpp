@@ -32,11 +32,8 @@ int main(int argc, char **argv)
   // initialize
   Homology* homology = new Homology(m, domain, subdomain);
 
-  // save all resulting chains to a file as physical groups
-  homology->setFileName("homology.msh");
-
   // construct cell complex of the meshed domain
-  CellComplex *cc = homology->createCellComplex();
+  CellComplex* cc = homology->createCellComplex();
 
   // find homology basis elements
   homology->findHomologyBasis(cc);
@@ -46,6 +43,13 @@ int main(int argc, char **argv)
 
   // find cohomology basis elements
   homology->findCohomologyBasis(cc);
+
+  // add 1 and 2 dimensional result chains to model
+  homology->addChainsToModel(1);
+  homology->addChainsToModel(2);
+
+  // write mesh with (co)homology computation result chains
+  m->writeMSh("model_hom.msh");
 
   delete cc;
   delete homology;
