@@ -49,7 +49,7 @@ int main(int argc, char **argv)
   homology->addChainsToModel(2);
 
   // write mesh with (co)homology computation result chains
-  m->writeMSh("model_hom.msh");
+  m->writeMSH("model_hom.msh");
 
   delete cc;
   delete homology;
