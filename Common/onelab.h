@@ -338,17 +338,33 @@ namespace onelab{
   class region : public parameter{
   private:
     std::set<std::string> _value;
-    std::vector<std::set<std::string> > _choices;
     // optional geometrical dimension
     int _dimension;
+    std::vector<std::set<std::string> > _choices;
   public:
     region(const std::string &name="",
            const std::set<std::string> &value = std::set<std::string>(),
            const std::string &label="", const std::string &help="")
       : parameter(name, label, help), _value(value) {}
+    region(const std::string &name, const std::string &value,
+           const std::string &label="", const std::string &help="")
+      : parameter(name, label, help)
+    {
+      if(value.size()) _value.insert(value);
+    }
     void setValue(const std::set<std::string> &value){ _value = value; }
+    void setDimension(int dim){ _dimension = dim; }
+    void setChoices(const std::vector<std::set<std::string> > &choices)
+    {
+      _choices = choices;
+    }
     std::string getType() const { return "region"; }
     const std::set<std::string> &getValue() const { return _value; }
+    int getDimension() const { return _dimension; }
+    const std::vector<std::set<std::string> > &getChoices() const
+    {
+      return _choices;
+    }
     void update(const region &p)
     {
       addClients(p.getClients());
@@ -359,18 +375,41 @@ namespace onelab{
         setValue(p.getValue());
         setChanged(true);
       }
+      setDimension(p.getDimension());
+      setChoices(p.getChoices());
     }
     std::string toChar() const
     {
-      /*
       std::ostringstream sstream;
-      sstream << parameter::toChar() << _value << charSep()
-              << _choices.size() << charSep();
-      for(unsigned int i = 0; i < _choices.size(); i++)
-        sstream << sanitize(_choices[i]) << charSep();
+      sstream << parameter::toChar() << _value.size() << charSep();
+      for(std::set<std::string>::const_iterator it = _value.begin();
+          it != _value.end(); it++)
+        sstream << sanitize(*it) << charSep();
+      sstream << _dimension << charSep();
+      sstream << _choices.size() << charSep();
+      for(unsigned int i = 0; i < _choices.size(); i++){
+        sstream << _choices[i].size() << charSep();
+        for(std::set<std::string>::const_iterator it = _choices[i].begin();
+            it != _choices[i].end(); it++)
+          sstream << sanitize(*it) << charSep();
+      }
       return sstream.str();
-      */
-      return "";
+    }
+    std::string::size_type fromChar(const std::string &msg)
+    {
+      std::string::size_type pos = parameter::fromChar(msg);
+      if(!pos) return 0;
+      int n = atoi(getNextToken(msg, pos).c_str());
+      for(int i = 0; i < n; i++)
+        _value.insert(getNextToken(msg, pos));
+      setDimension(atoi(getNextToken(msg, pos).c_str()));
+      _choices.resize(atoi(getNextToken(msg, pos).c_str()));
+      for(unsigned int i = 0; i < _choices.size(); i++){
+        n = atoi(getNextToken(msg, pos).c_str());
+        for(int i = 0; i < n; i++)
+          _choices[i].insert(getNextToken(msg, pos));
+      }
+      return pos;
     }
   };
 
@@ -379,34 +418,32 @@ namespace onelab{
   // strings, defined on onelab regions.
   class function : public parameter{
   private:
-    std::string _value;
-    std::map<std::string, std::string> _pieceWiseValues;
-    std::vector<std::string> _choices;
+    std::map<std::string, std::string> _value;
+    std::vector<std::map<std::string, std::string> > _choices;
   public:
-    function(const std::string &name="", const std::string &value="",
+    function(const std::string &name="") : parameter(name, "", "") {}
+    function(const std::string &name, const std::map<std::string, std::string> &value,
              const std::string &label="", const std::string &help="")
       : parameter(name, label, help), _value(value) {}
-    void setValue(const std::string &value, const std::string &region="")
+    void setValue(const std::map<std::string, std::string> &value)
     {
-      if(region.empty())
-        _value = value;
-      else
-        _pieceWiseValues[region] = value;
+      _value = value;
+    }
+    void setChoices(const std::vector<std::map<std::string, std::string> > &choices)
+    {
+      _choices = choices;
     }
     std::string getType() const { return "function"; }
-    const std::string getValue(const std::string &region="") const
+    const std::map<std::string, std::string> &getValue() const { return _value; }
+    const std::string getValue(const std::string &region) const
     {
-      if(region.size()){
-        std::map<std::string, std::string>::const_iterator it =
-          _pieceWiseValues.find(region);
-        if(it != _pieceWiseValues.end()) return it->second;
-        return "";
-      }
-      else return _value;
+      std::map<std::string, std::string>::const_iterator it = _value.find(region);
+      if(it != _value.end()) return it->second;
+      return "";
     }
-    const std::map<std::string, std::string> &getPieceWiseValues() const
+    const std::vector<std::map<std::string, std::string> > &getChoices() const
     {
-      return _pieceWiseValues;
+      return _choices;
     }
     void update(const function &p)
     {
@@ -418,20 +455,11 @@ namespace onelab{
         setValue(p.getValue());
         setChanged(true);
       }
+      setChoices(p.getChoices());
     }
     std::string toChar() const
     {
-      std::ostringstream sstream;
-      sstream << parameter::toChar() << sanitize(_value) << charSep()
-              << _pieceWiseValues.size() << charSep();
-      for(std::map<std::string, std::string>::const_iterator it =
-            _pieceWiseValues.begin(); it != _pieceWiseValues.end(); it++)
-        sstream << sanitize(it->first) << charSep()
-                << sanitize(it->second) << charSep();
-      sstream << _choices.size() << charSep();
-      for(unsigned int i = 0; i < _choices.size(); i++)
-        sstream << sanitize(_choices[i]) << charSep();
-      return sstream.str();
+      return "";
     }
   };
 
