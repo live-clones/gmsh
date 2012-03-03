@@ -168,6 +168,17 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
 
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
+  glColor4f(0.5, 0.5, 0.5, 0.5);
+  glBegin(GL_QUADS);
+  glVertex2d(xleft, ytop);
+  glVertex2d(xleft + width, ytop);
+  glVertex2d(xleft + width, ytop - height);
+  glVertex2d(xleft, ytop - height);
+  glEnd();
+  glDisable(GL_BLEND);
+
   if(!opt->axes) return;
 
   // total font height
@@ -467,14 +478,7 @@ void drawContext::drawGraph2d()
   for(unsigned int i = 0; i < graphs.size(); i++){
     PView *p = graphs[i];
     PViewOptions *opt = graphs[i]->getOptions();
-    if(!opt->autoPosition){
-      double x = opt->position[0], y = opt->position[1];
-      int center = fix2dCoordinates(&x, &y);
-      drawGraph(this, p, x - (center & 1 ? opt->size[0] / 2. : 0),
-                y + (center & 2 ? opt->size[1] / 2. : 0),
-                opt->size[0], opt->size[1]);
-    }
-    else{
+    if(opt->autoPosition == 1){ // automatic
       double winw = viewport[2] - viewport[0];
       double winh = viewport[3] - viewport[1];
       if(graphs.size() == 1){
@@ -499,11 +503,33 @@ void drawContext::drawGraph2d()
         double w = fracw * winw / 2. - xsep;
         double h = frach * winh / 2. - ysep;
         double x = viewport[0] + (1 - fracw) / 3. * winw;
-        if(i == 1 || i == 3) x += (w + xsep + (1-fracw)/3. * winw);
+        if(i == 1 || i == 3) x += (w + xsep + (1 - fracw) / 3. * winw);
         double y = viewport[1] + (1 - frach) / 3. * winh;
         if(i == 2 || i == 3) y += (h + ysep + (1 - frach) / 3. * winh);
         drawGraph(this, p, x + 0.95 * xsep, viewport[3] - (y + 0.4 * ysep), w, h);
       }
+    }
+    else if(opt->autoPosition >= 2 && opt->autoPosition <= 5){
+      // top left (2), top right (3), bottom left (4), bottom right (5)
+      double winw = viewport[2] - viewport[0];
+      double winh = viewport[3] - viewport[1];
+      double fracw = 0.85, frach = 0.85;
+      double w = fracw * winw / 2. - xsep;
+      double h = frach * winh / 2. - ysep;
+      double x = viewport[0] + (1 - fracw) / 3. * winw;
+      if(opt->autoPosition == 3 || opt->autoPosition == 5)
+        x += (w + xsep + (1 - fracw) / 3. * winw);
+      double y = viewport[1] + (1 - frach) / 3. * winh;
+      if(opt->autoPosition == 4 || opt->autoPosition == 5)
+        y += (h + ysep + (1 - frach) / 3. * winh);
+      drawGraph(this, p, x + 0.95 * xsep, viewport[3] - (y + 0.4 * ysep), w, h);
+    }
+    else{ // manual
+      double x = opt->position[0], y = opt->position[1];
+      int center = fix2dCoordinates(&x, &y);
+      drawGraph(this, p, x - (center & 1 ? opt->size[0] / 2. : 0),
+                y + (center & 2 ? opt->size[1] / 2. : 0),
+                opt->size[0], opt->size[1]);
     }
   }
 }

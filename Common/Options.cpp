@@ -6445,10 +6445,12 @@ double opt_view_auto_position(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->autoPosition = (int)val;
+    if(opt->autoPosition < 0 || opt->autoPosition > 5)
+      opt->autoPosition = 0;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.butt[7]->value(opt->autoPosition);
+    FlGui::instance()->options->view.choice[16]->value(opt->autoPosition);
     FlGui::instance()->options->activate("view_axes_auto_2d");
   }
 #endif

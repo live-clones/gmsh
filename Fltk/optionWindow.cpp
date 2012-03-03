@@ -96,6 +96,16 @@ static Fl_Menu_Item menu_axes_mode[] = {
   {0}
 };
 
+static Fl_Menu_Item menu_position[] = {
+  {"Manual",       0, 0, 0},
+  {"Automatic",    0, 0, 0},
+  {"Top left",     0, 0, 0},
+  {"Top right",    0, 0, 0},
+  {"Bottom left",  0, 0, 0},
+  {"Bottom right", 0, 0, 0},
+  {0}
+};
+
 Fl_Menu_Item menu_font_names[] = {
   {"Times-Roman",           0, 0, (void*)FL_TIMES},
   {"Times-Bold",            0, 0, (void*)FL_TIMES_BOLD},
@@ -827,6 +837,10 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       if(force || (val != center_glyphs))
         opt_view_center_glyphs(i, GMSH_SET, val);
 
+      val = o->view.choice[16]->value();
+      if(force || (val != auto_position))
+        opt_view_auto_position(i, GMSH_SET, val);
+
       // view_butts
 
       val = o->view.butt[0]->value();
@@ -852,10 +866,6 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       val = o->view.butt[3]->value();
       if(force || (val != mikado))
         opt_view_axes_mikado(i, GMSH_SET, val);
-
-      val = o->view.butt[7]->value();
-      if(force || (val != auto_position))
-        opt_view_auto_position(i, GMSH_SET, val);
 
       val = o->view.butt[25]->value();
       if(force || (val != axes_auto_position))
@@ -2896,10 +2906,11 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[18]->align(FL_ALIGN_RIGHT);
       view.value[18]->callback(view_options_ok_cb);
 
-      view.butt[7] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Position 2D axes/value scale automatically");
-      view.butt[7]->type(FL_TOGGLE_BUTTON);
-      view.butt[7]->callback(view_options_ok_cb, (void*)"view_axes_auto_2d");
+      view.choice[16] = new Fl_Choice
+        (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "2D axes/value scale position");
+      view.choice[16]->menu(menu_position);
+      view.choice[16]->align(FL_ALIGN_RIGHT);
+      view.choice[16]->callback(view_options_ok_cb, (void*)"view_axes_auto_2d");
 
       view.value[20] = new Fl_Value_Input
         (L + 2 * WB, 2 * WB + 9 * BH, IW / 2, BH);
@@ -3876,7 +3887,7 @@ void optionWindow::activate(const char *what)
     }
   }
   else if(!strcmp(what, "view_axes_auto_2d")){
-    if(view.butt[7]->value()){
+    if(view.choice[16]->value()){
       view.value[20]->deactivate();
       view.value[21]->deactivate();
       view.value[22]->deactivate();

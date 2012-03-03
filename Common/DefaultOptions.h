@@ -1127,7 +1127,8 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "ArrowSizeMin" , opt_view_arrow_size_min , 0. ,
     "Minimum display size of arrows (in pixels)" },
   { F|O, "AutoPosition" , opt_view_auto_position , 1. ,
-    "Position the scale or 2D plot automatically" },
+    "Position the scale or 2D plot automatically (0: manual, 1: automatic, 2: top left, "
+    "3: top right, 4: bottom left, 5: bottom right)" },
   { F|O, "Axes" , opt_view_axes , 0 ,
     "Axes (0=none, 1=simple axes, 2=box, 3=full grid, 4=open grid, 5=ruler)" },
   { F|O, "AxesMikado" , opt_view_axes_mikado , 0. ,
