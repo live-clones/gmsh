@@ -1,3 +1,4 @@
+#include <cstring>
 #include "Gmsh.h"
 #include "elasticitySolver.h"
 #include "PView.h"
@@ -16,7 +17,7 @@ void InitializeOnelab(std::string sockName, std::string modelName) {
   loader->get(ps,"Elasticity/9Compute"); // ??
   ps.resize(1);
   ps[0].setName("Elasticity/9Compute");
-  ps[0].setValue("-solve -pos");  
+  ps[0].setValue("-solve -pos");
   choices.push_back("-solve -pos");
   choices.push_back("-pos");
   choices.push_back("-solve");
@@ -24,7 +25,7 @@ void InitializeOnelab(std::string sockName, std::string modelName) {
   loader->set(ps[0]);
   ps.resize(1);
   ps[0].setName("Elasticity/1ModelName");
-  ps[0].setValue(modelName);  
+  ps[0].setValue(modelName);
   loader->set(ps[0]);
 }
 /*
@@ -78,23 +79,23 @@ void WhatToDoNow(int argc, char *argv[], int &solve, std::string &modelName)
   solve = 1;
   std::string sockName = "";
   while (i < argc) {
-    
+
     if (argv[i][0] == '-') {
-      if (!strcmp(argv[i]+1, "solve") || 
+      if (!strcmp(argv[i]+1, "solve") ||
                !strcmp(argv[i]+1, "-solve")) {
 	solve = 1;
 	i++;
       }
-      else if (!strcmp(argv[i]+1, "pos") || 
+      else if (!strcmp(argv[i]+1, "pos") ||
                !strcmp(argv[i]+1, "-pos")) {
 	i++;
       }
       // else if (!strcmp(argv[i]+1, "onelab")) {
       // 	i++;
-      // 	if (i<argc && argv[i][0]!='-') { 
+      // 	if (i<argc && argv[i][0]!='-') {
       // 	  printf("INITIALIZING SOCKET %s\n",argv[i]);
       // 	  sockName=argv[i];
-      // 	  InitializeOnelab(sockName,modelName); i++; 
+      // 	  InitializeOnelab(sockName,modelName); i++;
       // 	}
       // 	else {
       // 	  printf("Error : Missing address of onelab server");
@@ -110,12 +111,12 @@ void WhatToDoNow(int argc, char *argv[], int &solve, std::string &modelName)
 	Info(0, argv[0]);
       }
 
-      else if (!strcmp(argv[i]+1, "version") || 
+      else if (!strcmp(argv[i]+1, "version") ||
 	       !strcmp(argv[i]+1, "-version")) {
 	i++;
 	Info(1, argv[0]);
       }
-      else if (!strcmp(argv[i]+1, "info") || 
+      else if (!strcmp(argv[i]+1, "info") ||
                !strcmp(argv[i]+1, "-info")) {
 	i++;
         Info(2, argv[0]);
@@ -133,11 +134,11 @@ void WhatToDoNow(int argc, char *argv[], int &solve, std::string &modelName)
 int main (int argc, char* argv[]){
   char* a[10];
   char name[245];
-  a[0] = name; 
+  a[0] = name;
   GmshInitialize(1, a);
   GmshSetOption("General","Terminal",1.);
-  
-  //  for (int i=0;i<argc;i++)printf("%s\n",argv[i]);  
+
+  //  for (int i=0;i<argc;i++)printf("%s\n",argv[i]);
 
   printf("Welcome to the Simple Elasticity Program For Onelab\n");
 
@@ -149,9 +150,9 @@ int main (int argc, char* argv[]){
   elasticitySolver mySolver (1000);
   mySolver.setMesh(std::string(pn+".msh").c_str());
   mySolver.readInputFile(std::string(pn+".dat").c_str());
-  
+
   if (solve){
-    mySolver.solve(); 
+    mySolver.solve();
     PView *pvm = mySolver.buildVonMisesView("vonMises");
     PView *pv = mySolver.buildDisplacementView("displacement");
     //    pv->getData()->writeMSH("disp.msh", false, false);
@@ -161,10 +162,10 @@ int main (int argc, char* argv[]){
   }
 
   return 0;
-  
+
   // solve the problem
 
-        
+
   // stop gmsh
-  
+
 }

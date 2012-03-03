@@ -36,7 +36,7 @@ int main(int argc, char **argv)
   homology->setFileName("homology.msh");
 
   // construct cell complex of the meshed domain
-  CellComplex cc = homology->createCellComplex();
+  CellComplex *cc = homology->createCellComplex();
 
   // find homology basis elements
   homology->findHomologyBasis(cc);

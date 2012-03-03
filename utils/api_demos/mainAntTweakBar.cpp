@@ -3,6 +3,7 @@
 // and libAntTweakBar
 //
 
+#include <cstring>
 #if defined(__APPLE__)
 #  include <GLUT/glut.h>
 #else
@@ -31,8 +32,8 @@ class drawContextTw : public drawContextGlobal{
   int getStringDescent(){ return 6; }
   void drawString(const char *str)
   {
-    for (int i = 0; i < strlen(str); i++) 
-      glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, str[i]); 
+    for (int i = 0; i < strlen(str); i++)
+      glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, str[i]);
   }
 };
 
@@ -44,7 +45,7 @@ void display()
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
   drawContext::global()->draw();
   TwDraw();
-  glutSwapBuffers(); 
+  glutSwapBuffers();
   glutPostRedisplay();
 }
 
@@ -64,7 +65,7 @@ void keyboard(unsigned char key, int x, int y)
   case '1': GModel::current()->mesh(1); break;
   case '2': GModel::current()->mesh(2); break;
   case '3': GModel::current()->mesh(3); break;
-  case 'f': 
+  case 'f':
     if(fullScreen){ glutReshapeWindow(oldw, oldh); }
     else{ oldw = ctx->viewport[2]; oldh = ctx->viewport[3]; glutFullScreen(); }
     fullScreen = !fullScreen;
@@ -75,7 +76,7 @@ void keyboard(unsigned char key, int x, int y)
 void mouseMotion(int x, int y)
 {
   if(TwEventMouseMotionGLUT(x, y)) return;
-  int w = ctx->viewport[2]; 
+  int w = ctx->viewport[2];
   int h = ctx->viewport[3];
 
   mousePosition currPos;
@@ -125,7 +126,7 @@ void mousePassiveMotion(int x, int y)
     else if(faces.size()) ge = faces[0];
     else if(regions.size()) ge = regions[0];
     MElement *me = elements.size() ? elements[0] : 0;
-    printf("%s %s\n", ge ? ge->getInfoString().c_str() : "", 
+    printf("%s %s\n", ge ? ge->getInfoString().c_str() : "",
            me ? me->getInfoString().c_str() : "");
   }
 }
@@ -215,7 +216,7 @@ int main(int argc, char **argv)
   GmshSetOption("View", "IntervalsType", 1.);
   GmshSetOption("View", "AdaptVisualizationGrid", 1.);
   GmshSetOption("View", "TargetError", 0.00001);
-  GmshSetOption("View", "MaxRecursionLevel", 3.); 
+  GmshSetOption("View", "MaxRecursionLevel", 3.);
 
   for(int i = 1; i < argc; i++) GmshMergeFile(argv[i]);
 
@@ -244,12 +245,12 @@ int main(int argc, char **argv)
   TwBar *bar = TwNewBar("Options");
   TwDefine("Options size='200 400' color='50 50 50' alpha=128");
   {
-    TwEnumVal axesEV[6] = { {0, "None"}, {1, "Simple axes"}, {2, "Box"}, 
+    TwEnumVal axesEV[6] = { {0, "None"}, {1, "Simple axes"}, {2, "Box"},
                             {3, "Full grid"}, {4, "Open grid"}, {5, "Ruler"} };
     TwType axesType = TwDefineEnum("AxesType", axesEV, 6);
-    TwAddVarCB(bar, "Axes", axesType, SetInt32CB, GetInt32CB, 
+    TwAddVarCB(bar, "Axes", axesType, SetInt32CB, GetInt32CB,
                (void*)"General.Axes", "group='General' help='Change axes.' ");
-    TwAddVarCB(bar, "LightDir", TW_TYPE_DIR3D, SetLightDirCB, GetLightDirCB, 
+    TwAddVarCB(bar, "LightDir", TW_TYPE_DIR3D, SetLightDirCB, GetLightDirCB,
                0, "group='General' label='Light direction' close help='Change "
                "light direction.' ");
     {
@@ -264,36 +265,36 @@ int main(int argc, char **argv)
     TwDefine("Options/General close ");
   }
   {
-    TwAddVarCB(bar, "Points", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, 
+    TwAddVarCB(bar, "Points", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB,
                (void*)"Geometry.Points", "group='Geometry' help='Draw points.' ");
-    TwAddVarCB(bar, "Lines", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, 
+    TwAddVarCB(bar, "Lines", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB,
                (void*)"Geometry.Lines", "group='Geometry' help='Draw lines.' ");
     TwAddVarCB(bar, "Surfaces", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB,
                (void*)"Geometry.Surfaces", "group='Geometry' help='Draw surfaces.' ");
-    TwAddVarCB(bar, "Volumes", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, 
+    TwAddVarCB(bar, "Volumes", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB,
                (void*)"Geometry.Volumes", "group='Geometry' help='Draw volumes.' ");
   }
   {
-    TwAddVarCB(bar, "Vertices", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, 
+    TwAddVarCB(bar, "Vertices", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB,
                (void*)"Mesh.Points", "group='Mesh' help='Draw mesh vertices.' ");
-    TwAddVarCB(bar, "MeshLines", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, 
+    TwAddVarCB(bar, "MeshLines", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB,
                (void*)"Mesh.Lines", "group='Mesh' label='Lines' help='Draw line mesh.' ");
-    TwAddVarCB(bar, "SurfaceEdges", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, 
+    TwAddVarCB(bar, "SurfaceEdges", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB,
                (void*)"Mesh.SurfaceEdges", "group='Mesh' label='Surface edges' "
                "help='Draw surface mesh edges.' ");
-    TwAddVarCB(bar, "SurfaceFaces", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, 
+    TwAddVarCB(bar, "SurfaceFaces", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB,
                (void*)"Mesh.SurfaceFaces", "group='Mesh' label='Surface faces' "
                "help='Draw surface mesh faces.' ");
-    TwAddVarCB(bar, "VolumeEdges", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, 
+    TwAddVarCB(bar, "VolumeEdges", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB,
                (void*)"Mesh.VolumeEdges", "group='Mesh' label='Volume edges' "
                "help='Draw volume mesh edges.' ");
-    TwAddVarCB(bar, "VolumeFaces", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, 
+    TwAddVarCB(bar, "VolumeFaces", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB,
                (void*)"Mesh.VolumeFaces", "group='Mesh' label='Volume faces' "
                "help='Draw volume mesh faces.' ");
     TwAddVarCB(bar, "Explode", TW_TYPE_DOUBLE, SetDoubleCB, GetDoubleCB,
                (void*)"Mesh.Explode", "group='Mesh' label='Explode factor' "
                "min=0 max=1 step=0.01 help='Explode mesh.' ");
-    TwAddVarCB(bar, "SizeFactor", TW_TYPE_DOUBLE, SetDoubleCB, GetDoubleCB, 
+    TwAddVarCB(bar, "SizeFactor", TW_TYPE_DOUBLE, SetDoubleCB, GetDoubleCB,
                (void*)"Mesh.CharacteristicLengthFactor", "group='Mesh' "
                "label='Element size factor' min=0.01 max=100 step=0.01 ");
   }

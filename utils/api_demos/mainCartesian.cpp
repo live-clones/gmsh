@@ -12,8 +12,8 @@
 #include "GmshMessage.h"
 #include "cartesian.h"
 
-void insertActiveCells(double x, double y, double z, double rmax,
-                       cartesianBox<double> &box)
+static void insertActiveCells(double x, double y, double z, double rmax,
+                              cartesianBox<double> &box)
 {
   int id1 = box.getCellContainingPoint(x - rmax, y - rmax, z - rmax);
   int id2 = box.getCellContainingPoint(x + rmax, y + rmax, z + rmax);
@@ -27,13 +27,13 @@ void insertActiveCells(double x, double y, double z, double rmax,
         box.insertActiveCell(box.getCellIndex(i, j, k));
 }
 
-void computeLevelset(GModel *gm, cartesianBox<double> &box)
+static void computeLevelset(GModel *gm, cartesianBox<double> &box)
 {
   // tolerance for desambiguation
   const double tol = box.getLC() * 1.e-12;
   std::vector<SPoint3> nodes;
   std::vector<int> indices;
-  for (cartesianBox<double>::valIter it = box.nodalValuesBegin(); 
+  for (cartesianBox<double>::valIter it = box.nodalValuesBegin();
        it != box.nodalValuesEnd(); ++it){
     nodes.push_back(box.getNodeCoordinates(it->first));
     indices.push_back(it->first);
@@ -49,7 +49,7 @@ void computeLevelset(GModel *gm, cartesianBox<double> &box)
       GPoint p1 = (*fit)->point((*fit)->stl_vertices[i1]);
       GPoint p2 = (*fit)->point((*fit)->stl_vertices[i2]);
       GPoint p3 = (*fit)->point((*fit)->stl_vertices[i3]);
-      SPoint2 p = ((*fit)->stl_vertices[i1] + (*fit)->stl_vertices[i2] + 
+      SPoint2 p = ((*fit)->stl_vertices[i1] + (*fit)->stl_vertices[i2] +
                    (*fit)->stl_vertices[i3]) * 0.33333333;
       SVector3 N = (*fit)->normal(p);
       SPoint3 P1(p1.x(), p1.y(), p1.z());
@@ -60,15 +60,15 @@ void computeLevelset(GModel *gm, cartesianBox<double> &box)
 	signedDistancesPointsTriangle(localdist, dummy, nodes, P1, P2, P3);
       else
 	signedDistancesPointsTriangle(localdist, dummy, nodes, P2, P1, P3);
-      if(dist.empty()) 
+      if(dist.empty())
         dist = localdist;
-      else{ 
+      else{
         for (unsigned int j = 0; j < localdist.size(); j++){
           // FIXME: if there is an ambiguity assume we are inside (to
           // avoid holes in the structure). This is definitely just a
           // hack, as it could create pockets of matter outside the
           // structure...
-          if(dist[j] * localdist[j] < 0 && 
+          if(dist[j] * localdist[j] < 0 &&
              fabs(fabs(dist[j]) - fabs(localdist[j])) < tol){
             dist[j] = std::max(dist[j], localdist[j]);
           }
@@ -85,7 +85,7 @@ void computeLevelset(GModel *gm, cartesianBox<double> &box)
   if(box.getChildBox()) computeLevelset(gm, *box.getChildBox());
 }
 
-void fillPointCloud(GEdge *ge, double sampling, std::vector<SPoint3> &points)
+static void fillPointCloud(GEdge *ge, double sampling, std::vector<SPoint3> &points)
 {
   Range<double> t_bounds = ge->parBounds(0);
   double t_min = t_bounds.low();
@@ -99,7 +99,7 @@ void fillPointCloud(GEdge *ge, double sampling, std::vector<SPoint3> &points)
   }
 }
 
-int removeBadChildCells(cartesianBox<double> *parent)
+static int removeBadChildCells(cartesianBox<double> *parent)
 {
   cartesianBox<double> *child = parent->getChildBox();
   if(!child) return 0;
@@ -125,7 +125,7 @@ int removeBadChildCells(cartesianBox<double> *parent)
           if(exist[ii]) atLeastOne = true;
           if(!exist[ii]) butNotAll = true;
         }
-        if(atLeastOne && 
+        if(atLeastOne &&
            (butNotAll ||
             (i != 0 && !parent->activeCellExists(parent->getCellIndex(i - 1, j, k))) ||
             (i != I - 1 && !parent->activeCellExists(parent->getCellIndex(i + 1, j, k))) ||
@@ -138,7 +138,7 @@ int removeBadChildCells(cartesianBox<double> *parent)
   return removeBadChildCells(child);
 }
 
-void removeParentCellsWithChildren(cartesianBox<double> *box)
+static void removeParentCellsWithChildren(cartesianBox<double> *box)
 {
   if(!box->getChildBox()) return;
   for(int i = 0; i < box->getNxi(); i++)
@@ -160,11 +160,11 @@ void removeParentCellsWithChildren(cartesianBox<double> *box)
   removeParentCellsWithChildren(box->getChildBox());
 }
 
-void removeOutsideCells(cartesianBox<double> *box)
+static void removeOutsideCells(cartesianBox<double> *box)
 {
   if(!box) return;
   int nbErased = 0;
-  for(cartesianBox<double>::cellIter it = box->activeCellsBegin(); 
+  for(cartesianBox<double>::cellIter it = box->activeCellsBegin();
       it != box->activeCellsEnd();){
     std::vector<double> vals;
     box->getNodalValuesForCell(*it, vals);
@@ -172,7 +172,7 @@ void removeOutsideCells(cartesianBox<double> *box)
     double lsmin = *std::min_element(vals.begin(), vals.end());
     double change_sign = lsmax * lsmin;
     double epsilon = 1.e-10;
-    if(change_sign > 0 && lsmax < -epsilon) { 
+    if(change_sign > 0 && lsmax < -epsilon) {
       box->eraseActiveCell(*(it++));
       nbErased++;
     }
@@ -214,7 +214,7 @@ int main(int argc,char *argv[])
   double rtube = std::max(lx, std::max(ly, lz)) * 2.;
 
   GModel *gm = GModel::current();
-  
+
   std::vector<SPoint3> points;
   Msg::Info("Filling coarse point cloud on surfaces");
   for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++)
@@ -238,13 +238,13 @@ int main(int argc,char *argv[])
   }
 
   SBoundingBox3d bb;
-  for(unsigned int i = 0; i < points.size(); i++) bb += points[i]; 
-  for(unsigned int i = 0; i < refinePoints.size(); i++) bb += refinePoints[i]; 
+  for(unsigned int i = 0; i < points.size(); i++) bb += points[i];
+  for(unsigned int i = 0; i < refinePoints.size(); i++) bb += refinePoints[i];
   bb.scale(1.21, 1.21, 1.21);
-  SVector3 range = bb.max() - bb.min();   
-  int NX = range.x() / lx; 
-  int NY = range.y() / ly; 
-  int NZ = range.z() / lz; 
+  SVector3 range = bb.max() - bb.min();
+  int NX = range.x() / lx;
+  int NY = range.y() / ly;
+  int NZ = range.z() / lz;
   if(NX < 2) NX = 2;
   if(NY < 2) NY = 2;
   if(NZ < 2) NZ = 2;
@@ -253,8 +253,8 @@ int main(int argc,char *argv[])
             bb.min().x(), bb.min().y(), bb.min().z(),
             bb.max().x(), bb.max().y(), bb.max().z());
   Msg::Info("  Nx=%d Ny=%d Nz=%d", NX, NY, NZ);
-  
-  cartesianBox<double> box(bb.min().x(), bb.min().y(), bb.min().z(), 
+
+  cartesianBox<double> box(bb.min().x(), bb.min().y(), bb.min().z(),
                            SVector3(range.x(), 0, 0),
                            SVector3(0, range.y(), 0),
                            SVector3(0, 0, range.z()),
@@ -269,7 +269,7 @@ int main(int argc,char *argv[])
   while((child = parent->getChildBox())){
     Msg::Info("  level %d", child->getLevel());
     for(unsigned int i = 0; i < refinePoints.size(); i++)
-      insertActiveCells(refinePoints[i].x(), refinePoints[i].y(), refinePoints[i].z(), 
+      insertActiveCells(refinePoints[i].x(), refinePoints[i].y(), refinePoints[i].z(),
                         rtube / pow(2., (levels - child->getLevel())), *child);
     parent = child;
   }
@@ -287,7 +287,7 @@ int main(int argc,char *argv[])
   Msg::Info("Initializing nodal values in the cartesian grid");
   box.createNodalValues();
 
-  Msg::Info("Computing levelset on the cartesian grid");  
+  Msg::Info("Computing levelset on the cartesian grid");
   computeLevelset(gm, box);
 
   Msg::Info("Removing cells outside the structure");
@@ -295,7 +295,7 @@ int main(int argc,char *argv[])
 
   Msg::Info("Renumbering mesh vertices across levels");
   box.renumberNodes();
-  
+
   bool decomposeInSimplex = false;
   box.writeMSH("yeah.msh", decomposeInSimplex);
 
