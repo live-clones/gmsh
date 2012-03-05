@@ -458,15 +458,9 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
           metisOptions[2] = 1;
           metisOptions[3] = options.refine_algorithm;
           metisOptions[4] = 0;
-          printf("Tolerance for Constraints:[");
           for(int u=0;u<options.ncon;u++){
            ubvec[u]=1.03;
-           if(options.tolerance[u]%options.num_partitions>0){
-             //ubvec[u] = (float) ceil((float)options.tolerance[u]/options.num_partitions)/((float)options.tolerance[u]/options.num_partitions);
-           }
-           printf(" %f", ubvec[u]);
           }
-          printf("] \n");
           graph.fillWithMultipleWeights(options.ncon,options.getWeightMap());
           if (options.num_partitions > 1) {
             METIS_mCPartGraphKway

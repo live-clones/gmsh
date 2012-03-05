@@ -194,7 +194,7 @@ class Graph
     int localElNum=0;
     for(eIt=element.begin();eIt !=element.end();eIt++){
       for(int i=0; i<ncon; i++){
-        vwgts[localElNum*ncon+i]=weightMap[(*eIt)->getNum()][i];
+        vwgts[localElNum*ncon+i]=weightMap[(*eIt)->getNum()][i+1];
       }
       for(int j=xadj[localElNum];j<xadj[localElNum+1];j++){
         adjwgts[j]+=weightMap[(*eIt)->getNum()][0];
