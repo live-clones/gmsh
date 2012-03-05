@@ -203,8 +203,8 @@ int CellComplex::reduction(int dim, bool omit,
     citer cit = firstCell(dim-1);
     while(cit != lastCell(dim-1)){
       Cell* cell = *cit;
-      if( cell->getCoboundarySize() == 1
-	  && inSameDomain(cell, cell->firstCoboundary()->first)){
+      if(cell->getCoboundarySize() == 1 &&
+         inSameDomain(cell, cell->firstCoboundary()->first)){
 	cit++;
 	if(dim == getDim() && omit){
 	  omittedCells.push_back(cell->firstCoboundary()->first);
@@ -576,6 +576,9 @@ bool CellComplex::restoreComplex()
       _deleteCount++;
     }
     _newcells.clear();
+    Msg::Info("Restored Cell Complex:");
+    Msg::Info(" %d volumes, %d faces, %d edges and %d vertices",
+               getSize(3), getSize(2), getSize(1), getSize(0));
     return true;
   }
   else {

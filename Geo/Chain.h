@@ -278,13 +278,13 @@ void Chain<C>::addMeshElement(MElement* e, C coeff)
 template <class C>
 void Chain<C>::addElemChain(const ElemChain& c, C coeff)
 {
+  if(coeff == 0) return;
   if(_dim != -1 && _dim != c.getDim()) {
-    Msg::Error("Cannot add %d-elementrary chain to %d-chain",
+    Msg::Error("Cannot add elementrary d%-chain to %d-chain",
                c.getDim(), _dim);
     return;
   }
   if(_dim == -1) _dim = c.getDim();
-  if(coeff == 0) return;
   std::pair<ecit, bool> ii = _elemChains.insert( std::make_pair(c, coeff) );
   if(!ii.second) {
     ii.first->second += coeff*c.compareOrientation(ii.first->first);
@@ -310,7 +310,7 @@ Chain<C>& Chain<C>::operator*=(const C& coeff)
     for(ecit it = _elemChains.begin(); it != _elemChains.end(); it++)
       it->second *= coeff;
   return *this;
-  }
+}
 
 template <class C>
 void Chain<C>::addToModel(GModel* m, bool post) const

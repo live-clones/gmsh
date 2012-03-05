@@ -134,7 +134,8 @@ class Cell {
     return size; }
 
   // get the (orig: original) cell boundary
-  void getBoundary(std::map<Cell*, short int, Less_Cell >& boundary, bool orig=false){
+  void getBoundary(std::map<Cell*, short int, Less_Cell>& boundary,
+                   bool orig=false){
     boundary.clear();
     for(biter it = firstBoundary(); it != lastBoundary(); it++){
       Cell* cell = it->first;
@@ -142,7 +143,8 @@ class Cell {
       if(orig && it->second.geto() != 0) boundary[cell] = it->second.geto();
     }
   }
-  void getCoboundary(std::map<Cell*, short int, Less_Cell >& coboundary, bool orig = false){
+  void getCoboundary(std::map<Cell*, short int, Less_Cell>& coboundary,
+                     bool orig=false){
     coboundary.clear();
     for(biter it = firstCoboundary(); it != lastCoboundary(); it++){
       Cell* cell = it->first;
@@ -182,13 +184,13 @@ class Cell {
 
   // tools for combined cells
   bool isCombined() const { return _combined; }
-  virtual void getCells( std::map< Cell*, int, Less_Cell >& cells) {
+
+  typedef std::map<Cell*, int, Less_Cell>::iterator citer;
+  virtual void getCells(std::map<Cell*, int, Less_Cell>& cells) {
     cells.clear();
     cells[this] = 1;
-    return;
   }
-  virtual int getNumCells() const {return 1;}
-  typedef std::map<Cell*, int, Less_Cell>::iterator citer;
+  virtual int getNumCells() const { return 1; }
 
   bool operator==(const Cell& c2) const {
     return (this->getNum() == c2.getNum());
