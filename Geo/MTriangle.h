@@ -58,6 +58,7 @@ class MTriangle : public MElement {
   virtual double angleShapeMeasure();
   virtual int getNumVertices() const { return 3; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
+  virtual void setVertex(int num,  MVertex *v){_v[num]=v;}
   virtual void xyz2uvw(double xyz[3], double uvw[3]);
   virtual MVertex *getOtherVertex(MVertex *v1, MVertex *v2)
   {
