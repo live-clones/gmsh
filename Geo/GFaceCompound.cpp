@@ -642,16 +642,21 @@ bool GFaceCompound::parametrize() const
   
   bool success = orderVertices(_U0, _ordered, _coords);
   if(!success) {Msg::Error("Could not order vertices on boundary");exit(1);}
-    
+  
+  // Convex parametrization
+  if (_mapping == CONVEXCOMBINATION){
+    Msg::Info("Parametrizing surface %d with 'convex map'", tag()); 
+    fillNeumannBCS();
+    parametrize(ITERU,CONVEXCOMBINATION); 
+    parametrize(ITERV,CONVEXCOMBINATION);
+  }  
   // Laplace parametrization
-  if (_mapping == HARMONIC){
-    Msg::Info("Parametrizing surface %d with harmonic map'", tag()); 
+  else if (_mapping == HARMONIC){
+    Msg::Info("Parametrizing surface %d with 'harmonic map'", tag()); 
     fillNeumannBCS();
     parametrize(ITERU,HARMONIC); 
     parametrize(ITERV,HARMONIC);
     printStuff(111);
-    //parametrize(ITERU,CONVEXCOMBINATION); 
-    //parametrize(ITERV,CONVEXCOMBINATION);
     if (_type == MEANPLANE) checkOrientation(0, true);
     printStuff(222);
   }

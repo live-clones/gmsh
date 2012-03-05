@@ -1132,7 +1132,7 @@ void optimalPointFrontalB (GFace *gf,
   intersectCurveSurfaceData data (gf,n1,n2,middle,d);
   //printf("----------------------------\n");
   if(newton_fd(intersectCircleSurface, uvt, &data)){
-    //    printf("--- CONVERGED -- %12.5E -----------\n",d);
+    //printf("--- CONVERGED -- %12.5E -----------\n",d);
     newPoint[0] = uvt(0);
     newPoint[1] = uvt(1);
     return;
