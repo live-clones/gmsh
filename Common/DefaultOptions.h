@@ -1128,7 +1128,7 @@ StringXNumber ViewOptions_Number[] = {
     "Minimum display size of arrows (in pixels)" },
   { F|O, "AutoPosition" , opt_view_auto_position , 1. ,
     "Position the scale or 2D plot automatically (0: manual, 1: automatic, 2: top left, "
-    "3: top right, 4: bottom left, 5: bottom right)" },
+    "3: top right, 4: bottom left, 5: bottom right, 6: top, 7: bottom, 8: left, 9: right)" },
   { F|O, "Axes" , opt_view_axes , 0 ,
     "Axes (0=none, 1=simple axes, 2=box, 3=full grid, 4=open grid, 5=ruler)" },
   { F|O, "AxesMikado" , opt_view_axes_mikado , 0. ,
@@ -1662,6 +1662,9 @@ StringXColor ViewOptions_Color[] = {
   { F|O, "Text2D" , opt_view_color_text2d , ELECOL, "2D text color" },
   { F|O, "Text3D" , opt_view_color_text3d , ELECOL, "3D text color" },
   { F|O, "Axes" , opt_view_color_axes , ELECOL, "Axes color" },
+  { F|O, "Background2D" , opt_view_color_background2d ,
+    {255, 255, 255, 160}, {255, 255, 255, 160}, {255, 255, 255, 160},
+    "Bacground color for 2D plots" },
   { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , 0 }
 } ;
 

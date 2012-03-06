@@ -6445,7 +6445,7 @@ double opt_view_auto_position(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->autoPosition = (int)val;
-    if(opt->autoPosition < 0 || opt->autoPosition > 5)
+    if(opt->autoPosition < 0 || opt->autoPosition > 9)
       opt->autoPosition = 0;
   }
 #if defined(HAVE_FLTK)
@@ -8635,6 +8635,25 @@ unsigned int opt_view_color_axes(OPT_ARGS_COL)
   }
 #endif
   return opt->color.axes;
+#else
+  return 0;
+#endif
+}
+
+unsigned int opt_view_color_background2d(OPT_ARGS_COL)
+{
+#if defined(HAVE_POST)
+  GET_VIEW(0);
+  if(action & GMSH_SET) {
+    opt->color.background2d = val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)){
+    CCC(opt->color.background2d, FlGui::instance()->options->view.color[13]);
+    drawContext::global()->resetFontTextures();
+  }
+#endif
+  return opt->color.background2d;
 #else
   return 0;
 #endif

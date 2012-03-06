@@ -673,6 +673,7 @@ unsigned int opt_view_color_normals(OPT_ARGS_COL);
 unsigned int opt_view_color_text2d(OPT_ARGS_COL);
 unsigned int opt_view_color_text3d(OPT_ARGS_COL);
 unsigned int opt_view_color_axes(OPT_ARGS_COL);
+unsigned int opt_view_color_background2d(OPT_ARGS_COL);
 
 // Data structures and global functions
 

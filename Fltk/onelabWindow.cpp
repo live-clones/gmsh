@@ -652,6 +652,7 @@ static void runGmshClient(const std::string &action)
     // first pass is special to prevent model reload, as well as
     // remeshing if a mesh file already exists on disk
     modelName = GModel::current()->getName();
+    importPhysicalGroups(c, GModel::current());
     if(!StatFile(mshFileName))
       onelab::server::instance()->setChanged(false, "Gmsh");
   }
@@ -663,6 +664,7 @@ static void runGmshClient(const std::string &action)
       // the model name has changed
       modelName = GModel::current()->getName();
       geometry_reload_cb(0, 0);
+      importPhysicalGroups(c, GModel::current());
     }
   }
   else if(action == "compute"){
@@ -673,6 +675,7 @@ static void runGmshClient(const std::string &action)
       // changed
       modelName = GModel::current()->getName();
       geometry_reload_cb(0, 0);
+      importPhysicalGroups(c, GModel::current());
       if(FlGui::instance()->onelab->meshAuto()){
         mesh_3d_cb(0, 0);
         CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
@@ -687,8 +690,6 @@ static void runGmshClient(const std::string &action)
     }
     onelab::server::instance()->setChanged(false, "Gmsh");
   }
-
-  importPhysicalGroups(c, GModel::current());
 }
 
 void onelab_cb(Fl_Widget *w, void *data)

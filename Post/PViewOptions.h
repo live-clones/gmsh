@@ -100,7 +100,7 @@ class PViewOptions {
     unsigned int point, line, triangle, quadrangle;
     unsigned int tetrahedron, hexahedron, prism, pyramid;
     unsigned int tangents, normals;
-    unsigned int text2d, text3d, axes;
+    unsigned int text2d, text3d, axes, background2d;
   } color;
  public:
   // static reference container that contains default values
@@ -112,11 +112,11 @@ class PViewOptions {
   double getScaleValue(int iso, int numIso, double min, double max);
   // return an integer in [0, numIso - 1] corresponding to the
   // floating point value val in [min, max]
-  int getScaleIndex(double val, int numIso, double min, double max, 
+  int getScaleIndex(double val, int numIso, double min, double max,
                     bool forceLinear=false);
   // get color for val in [min, max] (only use numColors if > 0
   // instead of all available colors)
-  unsigned int getColor(double val, double min, double max, 
+  unsigned int getColor(double val, double min, double max,
                         bool forceLinear=false, int numColors=-1);
   // get i-th color amongst nb (i in [0, nb - 1])
   unsigned int getColor(int i, int nb);

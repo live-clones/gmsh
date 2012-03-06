@@ -103,6 +103,10 @@ static Fl_Menu_Item menu_position[] = {
   {"Top right",    0, 0, 0},
   {"Bottom left",  0, 0, 0},
   {"Bottom right", 0, 0, 0},
+  {"Top",          0, 0, 0},
+  {"Bottom",       0, 0, 0},
+  {"Left",         0, 0, 0},
+  {"Right",        0, 0, 0},
   {0}
 };
 
