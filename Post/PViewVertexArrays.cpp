@@ -34,6 +34,29 @@ static void saturate(int nb, double **val, double vmin, double vmax,
   }
 }
 
+static double saturateVector(double *val, int numComp2, double *val2, double min, double max) {
+  double v = ComputeScalarRep(numComp2, val2);  // v >= 0
+  if (v < min && v > 1e-15) {
+    double f = min / v;
+    for (int iComp = 0; iComp < numComp2; ++iComp)
+      val2[iComp] *= f;
+    val[0] *= f;
+    val[1] *= f;
+    val[2] *= f;
+    return min;
+  }
+  if (v > max && v > 1e-15) {
+    double f = max / v;
+    for (int iComp = 0; iComp < numComp2; ++iComp)
+      val2[iComp] *= f;
+    val[0] *= f;
+    val[1] *= f;
+    val[2] *= f;
+    return max;
+  }
+  return v;
+}
+
 static SVector3 normal3(double **xyz, int i0=0, int i1=1, int i2=2)
 {
   SVector3 t1(xyz[i1][0] - xyz[i0][0],
@@ -973,7 +996,7 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
 
   if(opt->glyphLocation == PViewOptions::Vertex){
     for(int i = 0; i < numNodes; i++){
-      double v2 = ComputeScalarRep(numComp2, val2[i]);
+      double v2 = opt->saturateValues ? saturateVector(val[i], numComp2, val2[i], opt->externalMin, opt->externalMax) : ComputeScalarRep(numComp2, val2[i]);
       if(v2 >= opt->externalMin && v2 <= opt->externalMax){
         unsigned int color = opt->getColor(v2, opt->externalMin, opt->externalMax, false,
                                            (opt->intervalsType == PViewOptions::Discrete) ?
@@ -1005,7 +1028,7 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
 
     // need tolerance since we compare computed results (the average)
     // instead of the raw data used to compute bounds
-    double v2 = ComputeScalarRep(numComp2, d2);
+    double v2 = opt->saturateValues ? saturateVector(d, numComp2, d2, opt->externalMin, opt->externalMax) : ComputeScalarRep(numComp2, d2);
     if(v2 >= opt->externalMin * (1. - 1.e-15) &&
        v2 <= opt->externalMax * (1. + 1.e-15)){
       unsigned int color = opt->getColor(v2, opt->externalMin, opt->externalMax, false,
