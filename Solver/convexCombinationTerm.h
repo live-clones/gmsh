@@ -42,30 +42,31 @@ class convexCombinationTerm : public femTerm<double> {
     MElement *e = se->getMeshElement();
     m.setAll(0.);
     const int nbSF = e->getNumShapeFunctions();
-    const double _diff = 1.0;
     for (int j = 0; j < nbSF; j++){
+      MVertex *vj = e->getShapeFunctionNode(j);
+      double diag = 0.0;
       for (int k = 0; k < nbSF; k++){
-        m(j, k) = -1. * _diff;
+	MVertex *vk = e->getShapeFunctionNode(k);
+	MVertex *vl = NULL;
+	SVector3 a, b;
+	double tan = 0.0;
+	if ( k!=j && 3-j-k >= 0 && 3-j-k <=2) {
+	  vl = e->getShapeFunctionNode(3-j-k);
+	  a = SVector3(vk->x()-vj->x(),vk->y()-vj->y(),vk->z()-vj->z());
+	  b = SVector3(vl->x()-vj->x(),vl->y()-vj->y(),vl->z()-vj->z());
+	  double angle = myacos(dot(a,b)/(norm(a)*norm(b)));
+	  tan = sin(angle*0.5)/cos(angle*0.5); 
+	}
+	double length  = vj->distance(vk);
+	m(j, k) = -tan/length;
+	//m(j, k) = -1; 
       }
-      m(j, j) = (nbSF - 1) * _diff;
+      for (int k = 0; k < nbSF; k++){
+	if (k != j) diag += (-m(j,k));
+      }
+      m(j, j) = diag;
     }
   }
-
-//diag matrix
-/*   virtual void elementMatrix(SElement *se, fullMatrix<double> &m) const */
-/*   { */
-
-/*     MElement *e = se->getMeshElement(); */
-/*     m.setAll(0.); */
-/*     const int nbSF = e->getNumShapeFunctions(); */
-/*     for (int j = 0; j < nbSF; j++){ */
-/*       for (int k = 0; k < nbSF; k++)  m(j,k) = 0.0; */
-/*       MVertex *v = e->getShapeFunctionNode(j); */
-/*       if( v->onWhat()->dim() < 2) m(j,j) = (nbSF - 1) ; */
-/*       else m(j,j) = 0.0; */
-/*     } */
-/*   } */
-
 
 };
 

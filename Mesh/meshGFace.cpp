@@ -1952,7 +1952,7 @@ void partitionAndRemesh(GFaceCompound *gf)
               num_gfc, pf->tag());
 
     GFaceCompound *gfc = new GFaceCompound(gf->model(), num_gfc, f_compound, U0,
-                                            gf->getTypeOfMapping());
+					   gf->getTypeOfCompound());
 
     gfc->meshAttributes.recombine = gf->meshAttributes.recombine;
     gf->model()->add(gfc);

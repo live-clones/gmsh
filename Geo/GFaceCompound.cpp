@@ -644,11 +644,12 @@ bool GFaceCompound::parametrize() const
   if(!success) {Msg::Error("Could not order vertices on boundary");exit(1);}
   
   // Convex parametrization
-  if (_mapping == CONVEXCOMBINATION){
+  if (_mapping == CONVEX){
     Msg::Info("Parametrizing surface %d with 'convex map'", tag()); 
     fillNeumannBCS();
-    parametrize(ITERU,CONVEXCOMBINATION); 
-    parametrize(ITERV,CONVEXCOMBINATION);
+    parametrize(ITERU,CONVEX); 
+    parametrize(ITERV,CONVEX);
+    printStuff(111);
   }  
   // Laplace parametrization
   else if (_mapping == HARMONIC){
@@ -707,8 +708,8 @@ bool GFaceCompound::parametrize() const
       coordinates.clear(); 
       Octree_Delete(oct);
       fillNeumannBCS();
-      parametrize(ITERU,CONVEXCOMBINATION);
-      parametrize(ITERV,CONVEXCOMBINATION);
+      parametrize(ITERU,CONVEX);
+      parametrize(ITERV,CONVEX);
       checkOrientation(0);
       buildOct();
     }
@@ -895,11 +896,11 @@ void GFaceCompound::computeALoop(std::set<GEdge*> &_unique, std::list<GEdge*> &l
 }
 
 GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
-			     std::list<GEdge*> &U0, typeOfMapping mpg, 
+			     std::list<GEdge*> &U0, typeOfCompound toc, 
                              int allowPartition,
 			     linearSystem<double>* lsys)
   : GFace(m, tag), _compound(compound),  oct(0), _U0(U0), 
-    _mapping(mpg), _allowPartition(allowPartition), _lsys(lsys)
+    _toc(toc), _allowPartition(allowPartition), _lsys(lsys)
 {
   ONE = new simpleFunction<double>(1.0);
   MONE = new simpleFunction<double>(-1.0);
@@ -912,9 +913,16 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   }
   
   getBoundingEdges();
+
+  _mapping = HARMONIC;
   _type = UNITCIRCLE;
-  if (_mapping == HARMONICPLANE){
-    _mapping = HARMONIC;
+  if (toc == HARMONIC_CIRCLE) _mapping = HARMONIC;
+  else if(toc == CONFORMAL)   _mapping = CONFORMAL;
+  else if(toc == RBF)         _mapping = RBF;
+  else if (toc == HARMONIC_PLANE) _type = MEANPLANE;
+  else if (toc == CONVEX_CIRCLE)  _mapping = CONVEX;
+  else if (toc == CONVEX_PLANE){
+    _mapping = CONVEX;
     _type = MEANPLANE;
   }
  
@@ -922,14 +930,14 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   fillTris.clear();
 }
 GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
-	       std::list<GEdge*> &U0, std::list<GEdge*> &V0,
-	       std::list<GEdge*> &U1, std::list<GEdge*> &V1,
-	       typeOfMapping mpg, 
-	       int allowPartition, 
-	      linearSystem<double>* lsys)
+			     std::list<GEdge*> &U0, std::list<GEdge*> &V0,
+			     std::list<GEdge*> &U1, std::list<GEdge*> &V1,
+			     typeOfCompound toc, 
+			     int allowPartition, 
+			     linearSystem<double>* lsys)
   : GFace(m, tag), _compound(compound),  oct(0), 
     _U0(U0), _V0(V0), _U1(U1), _V1(V1),
-    _mapping(mpg), _allowPartition(allowPartition), _lsys(lsys)
+    _toc(toc), _allowPartition(allowPartition), _lsys(lsys)
 {
   ONE = new simpleFunction<double>(1.0);
   MONE = new simpleFunction<double>(-1.0);
@@ -942,12 +950,19 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   }
 
   getBoundingEdges();
+
+  _mapping = HARMONIC;
   _type = UNITCIRCLE;
-  if (_mapping == HARMONICPLANE){
-    _mapping = HARMONIC;
+  if (toc == HARMONIC_CIRCLE) _mapping = HARMONIC;
+  else if(toc == CONFORMAL)   _mapping = CONFORMAL;
+  else if(toc == RBF)         _mapping = RBF;
+  else if (toc == HARMONIC_PLANE) _type = MEANPLANE;
+  else if (toc == CONVEX_CIRCLE)  _mapping = CONVEX;
+  else if (toc == CONVEX_PLANE){
+    _mapping = CONVEX;
     _type = MEANPLANE;
   }
-  else if(_mapping == HARMONIC && _U0.size() && _V0.size() && _U1.size() && _V1.size()) {
+  else if(toc == HARMONIC_SQUARE && _U0.size() && _V0.size() && _U1.size() && _V1.size()) {
     _type = SQUARE;
   }
 
@@ -1053,20 +1068,34 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
 
 void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
 {  
+
   linearSystem<double> *lsys = 0;
   if (_lsys) lsys = _lsys;
   else{
-#if defined(HAVE_PETSC) && !defined(HAVE_TAUCS)
+    if (tom==HARMONIC){
+#if defined(HAVE_TAUCS) 
+  lsys = new linearSystemCSRTaucs<double>;
+#elif defined(HAVE_PETSC) && !defined(HAVE_TAUCS) 
   lsys = new linearSystemPETSc<double>;
 #elif defined(HAVE_GMM) && !defined(HAVE_TAUCS)
   linearSystemGmm<double> *lsysb = new linearSystemGmm<double>;
   lsysb->setGmres(1);
   lsys = lsysb;
-#elif defined(HAVE_TAUCS) 
-  lsys = new linearSystemCSRTaucs<double>;
 #else
   lsys = new linearSystemFull<double>;
 #endif
+    }
+    else if (tom==CONVEX){
+#if defined(HAVE_PETSC) 
+  lsys = new linearSystemPETSc<double>;
+#elif (defined(HAVE_GMM) 
+  linearSystemGmm<double> *lsysb = new linearSystemGmm<double>;
+  lsysb->setGmres(1);
+  lsys = lsysb;
+#else
+  lsys = new linearSystemFull<double>;
+#endif
+    }
   }
 
   dofManager<double> myAssembler(lsys);
@@ -1154,9 +1183,9 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
   femTerm<double> *mapping;
   if (tom == HARMONIC)
     mapping = new laplaceTerm(0, 1, ONE);
-  else 
+  else
     mapping = new convexCombinationTerm(0, 1, ONE);
-  
+
   it = _compound.begin();
   for( ; it != _compound.end() ; ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){

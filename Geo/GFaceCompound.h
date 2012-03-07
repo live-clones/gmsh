@@ -26,17 +26,14 @@ template <class scalar> class simpleFunction;
 /*
 A GFaceCompound is a model face that is the compound of model faces.
 
-The user selects 4 corners to the compound, which are mmapped to
-points (0,0), (1,0), (1,1) and (0,1) of the compound parametric plane.
-
 It is assumed that all the faces of the compound have been meshed
-first. We use this discretization to solve 2 elliptic problems on the
-compound. Those 2 problems enables to compute the parametric
+first. We use this discretization to solve elliptic problems on the
+compound. Those problems enable to compute the parametric
 coordinates of the mesh points. The parametrization of the compound
 consist in a triangulation in the (u,v) space with parameter values at
 nodes.
 
-The compound can therefore be re-meshed using any surface mesh
+The compound can therefore be (re)-meshed using any surface mesh
 generator of gmsh!
 */
 
@@ -56,7 +53,9 @@ class GRbf;
 class GFaceCompound : public GFace {
  public:
   typedef enum {ITERU=0,ITERV=1,ITERD=2} iterationStep;
-  typedef enum {HARMONIC=1,CONFORMAL=2, RBF=3, HARMONICPLANE=4, CONVEXCOMBINATION=5} typeOfMapping;
+  typedef enum {HARMONIC_CIRCLE=0, CONFORMAL_SPECTRAL=1, RADIAL_BASIS=2, HARMONIC_PLANE=3, 
+	       CONVEX_CIRCLE=4,CONVEX_PLANE=5, HARMONIC_SQUARE=6} typeOfCompound;
+  typedef enum {HARMONIC=0,CONFORMAL=1, RBF=2, CONVEX=3} typeOfMapping;
   typedef enum {UNITCIRCLE, MEANPLANE, SQUARE} typeOfIsomorphism;
   void computeNormals(std::map<MVertex*, SVector3> &normals) const;
  protected:
@@ -108,20 +107,20 @@ class GFaceCompound : public GFace {
  
  public: 
   GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
-		std::list<GEdge*> &U0, typeOfMapping typ = HARMONIC, 
+		std::list<GEdge*> &U0, typeOfCompound typ = HARMONIC_CIRCLE,
 		int allowPartition=1, 
 		linearSystem<double>* lsys =0);
  GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 	       std::list<GEdge*> &U0, std::list<GEdge*> &V0,
 	       std::list<GEdge*> &U1, std::list<GEdge*> &V1,
-	       typeOfMapping typ = HARMONIC, 
+	       typeOfCompound typ = HARMONIC_CIRCLE,
 	       int allowPartition=1, 
 	       linearSystem<double>* lsys =0);
   virtual ~GFaceCompound();
   Range<double> parBounds(int i) const 
   { return trivial() ? (*(_compound.begin()))->parBounds(i) : Range<double>(-1, 1); }
   virtual GPoint point(double par1, double par2) const; 
-  typeOfMapping getTypeOfMapping() { return _mapping;}
+  typeOfCompound getTypeOfCompound() { return _toc;}
   SPoint2 parFromPoint(const SPoint3 &p, bool onSurface=true) const;
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &, SVector3 *, SVector3 *, SVector3 *) const; 
@@ -143,18 +142,22 @@ class GFaceCompound : public GFace {
   int allowPartition() const{ return _allowPartition; }
   void setType(typeOfIsomorphism type){ _type=type;}
  private:
-  typeOfIsomorphism _type;
+  mutable typeOfCompound _toc;
   mutable typeOfMapping _mapping;
+  typeOfIsomorphism _type;
   int _allowPartition;
 };
 
 #else
 
+//define empty class ifndef HAVE_SOLVER
 template<class scalar> class linearSystem;
 class GFaceCompound : public GFace {
  public:
   typedef enum {ITERU=0,ITERV=1,ITERD=2} iterationStep;
-  typedef enum {HARMONIC=1,CONFORMAL=2, RBF=3, HARMONICPLANE=4, CONVEXCOMBINATION=5} typeOfMapping;
+  typedef enum {HARMONIC_CIRCLE=0, CONFORMAL_SPECTRAL=1, RADIAL_BASIS=2, HARMONIC_PLANE=3, 
+	       CONVEX_CIRCLE=4,CONVEX_PLANE=5, HARMONIC_SQUARE=6} typeOfCompound;
+  typedef enum {HARMONIC=0,CONFORMAL=1, RBF=2, CONVEX=3} typeOfMapping;
   typedef enum {UNITCIRCLE, MEANPLANE, SQUARE} typeOfIsomorphism;
  GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 	       std::list<GEdge*> &U0, typeOfMapping typ = HARMONIC, 
@@ -167,7 +170,7 @@ class GFaceCompound : public GFace {
  GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 	       std::list<GEdge*> &U0, std::list<GEdge*> &V0,
 	       std::list<GEdge*> &U1, std::list<GEdge*> &V1,
-	       typeOfMapping typ = HARMONIC, 
+	       typeOfCompound typ = HARMONIC_CIRCLE, 
 	       int allowPartition=1, 
 	       linearSystem<double>* lsys =0)
     : GFace(m, tag)

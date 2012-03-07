@@ -998,7 +998,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "RemeshAlgorithm" , opt_mesh_remesh_algo , 0 ,
     "Remeshing algorithm (0=no split, 1=automatic, 2=automatic only with metis)" },
   { F|O, "RemeshParametrization" , opt_mesh_remesh_param , 0 ,
-    "Remsh Parametrization (0=harmonic, 1=conformal, 2=rbf harmonic, 3=harmonicplane, 4=convex)" },
+    "Remeshing using discrete parametrization (0=harmonic_circle, 1=conformal, 2=rbf, 3=harmonic_plane, 4=convex_circle, 5=convex_plane, 6=harmonic square" },
 
   { F|O, "RefineSteps" , opt_mesh_refine_steps , 10 ,
     "Number of refinement steps in the MeshAdapt-based 2D algorithms" },
