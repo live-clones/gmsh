@@ -1088,7 +1088,7 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
     else if (tom==CONVEX){
 #if defined(HAVE_PETSC) 
   lsys = new linearSystemPETSc<double>;
-#elif (defined(HAVE_GMM) 
+#elif defined(HAVE_GMM) 
   linearSystemGmm<double> *lsysb = new linearSystemGmm<double>;
   lsysb->setGmres(1);
   lsys = lsysb;
