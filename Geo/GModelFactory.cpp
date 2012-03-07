@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <stdlib.h>
 #include "GModelFactory.h"
 #include "ListUtils.h"
 #include "Context.h"
@@ -62,7 +63,7 @@ GEdge *GeoFactory::addLine(GModel *gm, GVertex *start, GVertex *end)
 
 GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> > edges)
 {
-  
+
    //create line loops
   int nLoops = edges.size();
   std::vector<EdgeLoop *> vecLoops;
@@ -77,8 +78,8 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
       if(!c){
 	GVertex *gvb = ge->getBeginVertex();
 	GVertex *gve = ge->getEndVertex();
-	Vertex *vertb = FindPoint((int)fabs(gvb->tag()));
-	Vertex *verte = FindPoint((int)fabs(gve->tag()));
+	Vertex *vertb = FindPoint(abs(gvb->tag()));
+	Vertex *verte = FindPoint(abs(gve->tag()));
 	if (!vertb){
 	  vertb = Create_Vertex(gvb->tag(), gvb->x(), gvb->y(), gvb->z(),
 				gvb->prescribedMeshSizeAtVertex(), 1.0);
@@ -121,7 +122,7 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
 	List_Delete(temp);
       }
        List_Add(temp, &numEdge);
-    }  
+    }
 
     int num = gm->getMaxElementaryNumber(2) + 1+i;
     while (FindSurfaceLoop(num)){
@@ -132,9 +133,9 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
     EdgeLoop *l = Create_EdgeLoop(num, temp);
     vecLoops.push_back(l);
     Tree_Add(gm->getGEOInternals()->EdgeLoops, &l);
-    List_Delete(temp);  
-  } 
- 
+    List_Delete(temp);
+  }
+
   //create surface
   int numf  = gm->getMaxElementaryNumber(2)+1;
   Surface *s = Create_Surface(numf, MSH_SURF_PLAN);
