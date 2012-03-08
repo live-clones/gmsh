@@ -217,7 +217,7 @@ bool Recombine2D::recombine()
     FlGui::instance()->check();
     double time = Cpu();
     nextAction->color(0, 0, 200);
-    CTX::instance()->mesh.changed = (ENT_ALL);
+    CTX::instance()->mesh.changed = ENT_ALL;
     drawContext::global()->draw();
 #endif
     
@@ -239,7 +239,7 @@ bool Recombine2D::recombine()
 #ifdef REC2D_DRAW
     _gf->triangles = _data->_tri;
     _gf->quadrangles = _data->_quad;
-    CTX::instance()->mesh.changed = (ENT_ALL);
+    CTX::instance()->mesh.changed = ENT_ALL;
     drawContext::global()->draw();
     while (Cpu()-time < REC2D_WAIT_TIME)
       FlGui::instance()->check();
@@ -252,13 +252,14 @@ bool Recombine2D::recombine()
 #ifdef REC2D_SMOOTH
     laplaceSmoothing(_gf,100);
 #endif
-    CTX::instance()->mesh.changed = (ENT_ALL);
+    CTX::instance()->mesh.changed = ENT_ALL;
     drawContext::global()->draw();
   return 1;
 }
 
 bool Recombine2D::recombine(int depth)
 {
+  Rec2DData::clearChanges(); 
   double bestGlobalQuality;
   Rec2DNode *root = new Rec2DNode(NULL, NULL, bestGlobalQuality, depth);
   Rec2DNode *currentNode = root->selectBestNode();
@@ -314,6 +315,14 @@ void Recombine2D::nextTreeActions(std::vector<Rec2DAction*> &actions,
       break;
   }
   rel->getActions(actions);
+}
+
+void Recombine2D::drawState(double shiftx, double shifty)
+{
+  _data->drawTriangles(shiftx, shifty);
+  _data->drawChanges(shiftx, shifty);
+  CTX::instance()->mesh.changed = ENT_ALL;
+  drawContext::global()->draw();
 }
 
 double Recombine2D::_geomAngle(MVertex *v,
@@ -689,6 +698,15 @@ bool Rec2DData::revertDataChange(Rec2DDataChange *rdc)
   return true;
 }
 
+void Rec2DData::clearChanges()
+{
+  for (int i = (int) _current->_changes.size() - 1; i > -1; --i) {
+    _current->_changes[i]->revert();
+    delete _current->_changes[i];
+  }
+  _current->_changes.clear();
+}
+
 void Rec2DData::removeParity(Rec2DVertex *rv, int p)
 {
   std::map<int, std::vector<Rec2DVertex*> >::iterator it;
@@ -894,6 +912,25 @@ Rec2DAction* Rec2DData::getBestAction()
   return *std::max_element(_current->_actions.begin(),
                            _current->_actions.end(), lessRec2DAction());
 }
+void Rec2DData::drawTriangles(double shiftx, double shifty)
+{
+  iter_rel it = firstElement();
+  for (; it != lastElement(); ++it) {
+    if ((*it)->isTri())
+      (*it)->createElement(shiftx, shifty);
+  }
+}
+
+void Rec2DData::drawChanges(double shiftx, double shifty)
+{
+  std::map<int, std::vector<double> > data;
+  int k = 0;
+  for (unsigned int i = 0; i < _changes.size(); ++i) {
+    data[_changes[i]->getAction()->getNum(shiftx, shifty)].push_back(++k);
+  }
+  new PView("Changes", "ElementData", Recombine2D::getGFace()->model(), data);
+}
+
 void Rec2DData::drawEndNode(int num)
 {
   double dx = .0, dy = .0;
@@ -1157,7 +1194,8 @@ void Rec2DTwoTri2Quad::apply(std::vector<Rec2DVertex*> &newPar)
 }
 
 void Rec2DTwoTri2Quad::apply(Rec2DDataChange *rdc)
-{  
+{
+  rdc->setAction(this);
   std::vector<Rec2DAction*> actions;
   _triangles[0]->getUniqueActions(actions);
   _triangles[1]->getUniqueActions(actions);
@@ -2145,6 +2183,30 @@ Rec2DVertex* Rec2DElement::getOtherVertex(Rec2DVertex *rv1, Rec2DVertex *rv2) co
   }
   Msg::Error("[Rec2DElement] I should not be here... Why this happen to me ?");
   return NULL;
+}
+
+void Rec2DElement::createElement(double shiftx, double shifty) const
+{
+  if (_numEdge != 3) {
+    Msg::Error("[Rec2DElement] Need definition");
+  }
+  static int a = 0;
+  
+  std::vector<Rec2DVertex*> v;
+  getVertices(v);
+  
+  MVertex *v0 = new MVertex(v[0]->getMVertex()->x() + shiftx,
+                            v[0]->getMVertex()->y() + shifty,
+                            v[0]->getMVertex()->z()          );
+  MVertex *v1 = new MVertex(v[1]->getMVertex()->x() + shiftx,
+                            v[1]->getMVertex()->y() + shifty,
+                            v[1]->getMVertex()->z()          );
+  MVertex *v2 = new MVertex(v[2]->getMVertex()->x() + shiftx,
+                            v[2]->getMVertex()->y() + shifty,
+                            v[2]->getMVertex()->z()          );
+  
+  MTriangle *tri = new MTriangle(v0, v1, v2);
+  Recombine2D::add(tri);
 }
 
 MQuadrangle* Rec2DElement::_createQuad() const

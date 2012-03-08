@@ -67,12 +67,14 @@ class Recombine2D {
                                 std::vector<Rec2DElement*> &neighbours);
     
     inline void setStrategy(int s) {_strategy = s;}
+    void drawState(double shiftx, double shifty);
     
     static inline GFace* getGFace() {return _current->_gf;}
     static inline int getNumChange() {return _current->_numChange;}
     static inline void incNumChange() {++_current->_numChange;}
     static inline backgroundMesh* bgm() {return _current->_bgm;}
     static void add(MQuadrangle *q) {_current->_gf->quadrangles.push_back(q);}
+    static void add(MTriangle *t) {_current->_gf->triangles.push_back(t);}
     
   private :
     double _geomAngle(MVertex*,
@@ -105,6 +107,8 @@ class Rec2DData {
     ~Rec2DData();
     
     void printState();
+    void drawTriangles(double shiftx, double shifty);
+    void drawChanges(double shiftx, double shifty);
 #ifdef REC2D_DRAW
     std::vector<MTriangle*> _tri;
     std::vector<MQuadrangle*> _quad;
@@ -116,6 +120,8 @@ class Rec2DData {
     static inline int getNumElement() {return _current->_elements.size();}
     static Rec2DDataChange* getNewDataChange();
     static bool revertDataChange(Rec2DDataChange*);
+    static void clearChanges();
+    static int getNumChanges() {return _current->_changes.size();}
     
     static double getGlobalQuality();
     static double getGlobalQuality(int numEdge, double valEdge,
@@ -193,6 +199,8 @@ class Rec2DDataChange {
     std::vector<Rec2DAction*> _hiddenAction, _newAction;
     std::vector<std::pair<Rec2DVertex*, SPoint2> > _oldCoordinate;
     
+    Rec2DAction *_ra;
+    
   public :
     void hide(Rec2DEdge*);
     void hide(Rec2DElement*);
@@ -201,6 +209,9 @@ class Rec2DDataChange {
     void append(Rec2DElement*);
     
     void revert();
+    
+    void setAction(Rec2DAction *action) {_ra = action;}
+    Rec2DAction* getAction() {return _ra;}
 };
 
 class Rec2DAction {
@@ -389,7 +400,7 @@ class Rec2DElement {
   public :
     Rec2DElement(MTriangle*, Rec2DEdge**, Rec2DVertex **rv = NULL);
     Rec2DElement(MQuadrangle*, Rec2DEdge**, Rec2DVertex **rv = NULL);
-    ~Rec2DElement() {hide();}
+    ~Rec2DElement() { hide();}
     void hide();
     void reveal();
     
@@ -423,6 +434,7 @@ class Rec2DElement {
       return NULL;
     }
 #endif
+    void createElement(double shiftx, double shifty) const;
     
     double getAngle(Rec2DVertex*);
     
