@@ -223,8 +223,8 @@ static void computeCGKernelPolygon(std::map<MVertex*,SPoint3> &coordinates,
   }
 
 }
-static SPoint3  myNeighVert(std::map<MVertex*,SPoint3> &coordinates,
-			    std::vector<MElement*> &vTri)
+static SPoint3 myNeighVert(MVertex *vCav, std::map<MVertex*,SPoint3> &coordinates,
+			   std::vector<MElement*> &vTri)
 {
   std::set<MVertex*> vN;
   vN.clear();
@@ -232,13 +232,14 @@ static SPoint3  myNeighVert(std::map<MVertex*,SPoint3> &coordinates,
     MTriangle *t = (MTriangle*) vTri[i];
     for(int iV = 0; iV < 3; iV++) {
       MVertex *v = t->getVertex(iV);
+      //if (v != vCav && v->onWhat()->dim() < 2) vN.insert(v);
       if (v->onWhat()->dim() < 2) vN.insert(v);
     }
   }
-  // if (vN.size()!=3) {
-  //   printf("ARGG more than 3 points on line =%d \n", vN.size());
-  //   exit(1);
-  // }
+  if (vN.size()!=3){
+     SPoint3 vsp = coordinates[vCav];
+     return SPoint3(vsp.x(), vsp.y(), 0.0);
+   }
   
   double ucg = 0.0;
   double vcg = 0.0;
@@ -248,8 +249,35 @@ static SPoint3  myNeighVert(std::map<MVertex*,SPoint3> &coordinates,
     ucg += vsp.x();
     vcg += vsp.y();
   }
-  ucg/=3.0;  vcg/=3.0;  
+  ucg/=3.0;  vcg/=3.0;
   return SPoint3(ucg,vcg, 0.0);
+
+  // std::set<MVertex*>::iterator it = vN.begin();
+  // MVertex *v1 = *it; it++;
+  // MVertex *v2 = *it; 
+  // SPoint3 uv0 = coordinates[vCav];
+  // SPoint3 uv1 = coordinates[v1];
+  // SPoint3 uv2 = coordinates[v2];
+  // SVector3 P0 (uv0.x(),uv0.y(), uv0.z());
+  // SVector3 P1 (uv1.x(),uv1.y(), uv1.z());
+  // SVector3 P2 (uv2.x(),uv2.y(), uv2.z());
+  // SVector3 a = P1-P0;
+  // SVector3 b = P2-P0; 
+  // double a_para = dot(a,b)/norm(b);
+  // double a_perp = norm(crossprod(a,b))/norm(b);
+  // double theta = myacos(a_para/norm(a));
+  // SVector3 P3,P1b; 
+  // if (theta > 0.5*M_PI){
+  //   P3= P0 + (a_para/norm(b))*b;
+  //   P1b = P1 + 1.1*(P3-P1); 
+  // }
+  // else{
+  //   P3= P0 + 0.5*(P2-P0);
+  //   P1b = P1 + 1.1*(P3-P1);
+  // }
+  // SPoint3 uv1_new(P1b.x(),P1b.y(),P1b.z());
+  // return uv1_new;
+  
 }
 static void myPolygon(std::vector<MElement*> &vTri, std::vector<MVertex*> &vPoly)
 {
@@ -295,6 +323,7 @@ bool checkCavity(std::vector<MElement*> &vTri, std::map<MVertex*, SPoint2> &vCoo
   
   unsigned int nbV = vTri.size();
   double a_old = 0.0, a_new;
+  double nnew, nold;
   for(unsigned int i = 0; i < nbV; ++i){
     MTriangle *t = (MTriangle*) vTri[i];
     SPoint2 v1 = vCoord[t->getVertex(0)];
@@ -305,8 +334,9 @@ bool checkCavity(std::vector<MElement*> &vTri, std::map<MVertex*, SPoint2> &vCoo
     double p3[2] = {v3[0],v3[1]};
     a_new = robustPredicates::orient2d(p1, p2, p3);
     if(i == 0) a_old=a_new;
-    if(a_new*a_old < 0.)   badCavity = true;
-    //a_old = a_new;
+    if (a_new != 0.0) nnew = a_new/std::abs(a_new);
+    if (a_old != 0.0) nold = a_old/std::abs(a_old);
+    if(nnew*nold < 0.)   badCavity = true;
   }
   
   return badCavity;
@@ -544,6 +574,7 @@ bool GFaceCompound::checkOrientation(int iter, bool moveBoundaries) const
   double a_old = 0.0, a_new=0.0;
   bool oriented = true;
   int count = 0;
+  double nTot = 0.0;
   for( ; it != _compound.end(); ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *t = (*it)->triangles[i];
@@ -555,10 +586,11 @@ bool GFaceCompound::checkOrientation(int iter, bool moveBoundaries) const
       double p2[2] = {v3[0],v3[1]};
       a_new = robustPredicates::orient2d(p0, p1, p2);
       if(count == 0) a_old=a_new;
-      double nnew = 1.0, nold = 1.0;
-      if (a_new != 0.0) nnew = std::abs(a_new);
-      if (a_old != 0.0) nold = std::abs(a_old);
-      if(a_new/nnew*a_old/nold < 0.0){
+      double nnew = 0.0, nold = 0.0;
+      if (a_new != 0.0) nnew = a_new/std::abs(a_new);
+      if (a_old != 0.0) nold = a_old/std::abs(a_old);
+      nTot += nnew;
+      if(nnew*nold < 0.0){
         oriented = false;
         break;
       }
@@ -571,9 +603,19 @@ bool GFaceCompound::checkOrientation(int iter, bool moveBoundaries) const
 
   int iterMax = 15;
   if(!oriented && iter < iterMax){
-    if (iter == 0) Msg::Info("--- Flipping : applying cavity checks.");
-    Msg::Debug("--- Cavity Check - iter %d -",iter);
-    one2OneMap(moveBoundaries);
+    if (moveBoundaries){
+      if (iter ==0) Msg::Info("--- Flipping : moving boundaries.");
+      Msg::Info("--- Moving Boundary - iter %d -",iter);
+      convexBoundary(nTot/fabs(nTot));
+      one2OneMap(false);
+      one2OneMap(true);
+      printStuff(iter);
+    }
+    else if (!moveBoundaries){
+      if (iter ==0) Msg::Info("--- Flipping : applying cavity checks.");
+      Msg::Debug("--- Cavity Check - iter %d -",iter);
+      one2OneMap(moveBoundaries);
+    }
     return checkOrientation(iter+1, moveBoundaries);
   }
   else if (iter > 0 && iter < iterMax){
@@ -581,6 +623,125 @@ bool GFaceCompound::checkOrientation(int iter, bool moveBoundaries) const
   }
 
   return oriented;
+
+}
+void GFaceCompound::convexBoundary(double nTot) const
+{
+#if defined(HAVE_MESH)
+  if(adjv.size() == 0){
+    std::vector<MTriangle*> allTri;
+    std::list<GFace*>::const_iterator it = _compound.begin();
+    for( ; it != _compound.end(); ++it){
+      allTri.insert(allTri.end(), (*it)->triangles.begin(), (*it)->triangles.end() );
+    }
+    buildVertexToTriangle(allTri, adjv);
+  }
+  
+  //find normal of ordered loop
+  MVertex *v0 = _ordered[0];
+  MVertex *v1 = _ordered[1];
+  MVertex *v2;
+  v2t_cont :: iterator it0 = adjv.find (v0);
+  std::vector<MElement*> vTri0 = it0->second;
+  MElement *myTri;
+  for (unsigned int j = 0; j < vTri0.size(); j++){
+    MVertex *vt0  = vTri0[j]->getVertex(0);
+    MVertex *vt1  = vTri0[j]->getVertex(1);
+    MVertex *vt2  = vTri0[j]->getVertex(2);
+    bool found0 = (vt0==v0 || vt1 ==v0 || vt2 ==v0) ? true: false;
+    bool found1 = (vt0==v1 || vt1 ==v1 || vt2 ==v1) ? true: false;
+    if (found0 && found1) { myTri = vTri0[j];	break; }
+  }
+  for (unsigned int j = 0; j < 3; j++){
+    MVertex *vj = myTri->getVertex(j);
+    if (vj!=v0 && vj!=v1) { v2 = vj; break;}
+  }
+  bool inverted = false;
+  SPoint3 c0 = coordinates[myTri->getVertex(0)];
+  SPoint3 c1 = coordinates[myTri->getVertex(1)];
+  SPoint3 c2 = coordinates[myTri->getVertex(2)];
+  double p0[2] = {c0[0],c0[1]};
+  double p1[2] = {c1[0],c1[1]};
+  double p2[2] = {c2[0],c2[1]};
+  double normTri = robustPredicates::orient2d(p0,p1,p2);
+  if (nTot*normTri < 0) inverted = true;
+  double s = 1.0;
+  if (inverted) s = -1.0 ; 
+  SPoint3 uv0 = coordinates[v0];
+  SPoint3 uv1 = coordinates[v1];
+  SPoint3 uv2 = coordinates[v2];
+  SVector3 P0 (uv0.x(),uv0.y(), 0.0);
+  SVector3 P1 (uv1.x(),uv1.y(), 0.0);
+  SVector3 P2 (uv2.x(),uv2.y(), 0.0); 
+  double myN = s*crossprod(P1-P0,P2-P1).z();
+  SVector3 N (0,0,myN/fabs(myN)); 
+  
+  //start loop
+  int nbPos = 0;
+  int nbNeg = 0;
+  for(int i = 0; i < _ordered.size(); i++){
+
+    MVertex *v0 = _ordered[i];
+    MVertex *v1, *v2;
+    if (i == _ordered.size()-2){
+      v1 = _ordered[i+1]; 
+      v2 = _ordered[0]; 
+    }				 
+    else if (i == _ordered.size()-1){
+      v1= _ordered[0];
+      v2= _ordered[1];
+    }
+    else{
+      v1 = _ordered[i+1];
+      v2 = _ordered[i+2];
+    }
+
+    SPoint3 uv0 = coordinates[v0];
+    SPoint3 uv1 = coordinates[v1];
+    SPoint3 uv2 = coordinates[v2];
+    SVector3 P0 (uv0.x(),uv0.y(), uv0.z());
+    SVector3 P1 (uv1.x(),uv1.y(), uv1.z());
+    SVector3 P2 (uv2.x(),uv2.y(), uv2.z());
+
+    SVector3 dir1 = P1-P0;
+    SVector3 dir2 = P2-P1; 
+    double rot = dot(N, crossprod(dir1,dir2));
+    
+    if (rot < -1.e-4){
+      SVector3 a = P1-P0;
+      SVector3 b = P2-P0; 
+      double a_para = dot(a,b)/norm(b);
+      double a_perp = norm(crossprod(a,b))/norm(b);
+      double theta = myacos(a_para/norm(a));
+      SVector3 P3,P1b; 
+      if (theta > 0.5*M_PI){
+	P3= P0 + (a_para/norm(b))*b;
+        P1b = P1 + 1.7*(P3-P1); 
+      }
+      else{
+	P3= P0 + 0.5*(P2-P0);
+        P1b = P1 + 1.6*(P3-P1);
+      }
+      SPoint3 uv1_new(P1b.x(),P1b.y(),P1b.z());
+      coordinates[v1] = uv1_new;
+    }
+  }
+
+  // FILE * f2 = fopen("myBC.pos","w");
+  // fprintf(f2, "View \"\"{\n");
+  // for (int i = 0; i< _ordered.size()-1; i++){
+  //   SPoint3 uv0 = coordinates[_ordered[i]];
+  //   SPoint3 uv1 = coordinates[_ordered[i+1]];
+  //   fprintf(f2, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
+  // 	    uv0.x(),uv0.y(), uv0.z(),
+  // 	    uv1.x(),uv1.y(), uv1.z(),
+  // 	    (double)i, (double)i+1);
+  // }
+  // fprintf(f2,"};\n");
+  // fclose(f2);  
+  
+
+#endif
 }
 
 void GFaceCompound::one2OneMap(bool moveBoundaries) const
@@ -618,7 +779,7 @@ void GFaceCompound::one2OneMap(bool moveBoundaries) const
       coordinates[v] = p_cg;
     }
     else if (moveBoundaries && badCavity && !innerCavity){
-      SPoint3 p_cg = myNeighVert(coordinates, vTri);
+      SPoint3 p_cg = myNeighVert(v, coordinates, vTri);
       coordinates[v] = p_cg;
     }
   }
@@ -649,7 +810,17 @@ bool GFaceCompound::parametrize() const
     fillNeumannBCS();
     parametrize(ITERU,CONVEX); 
     parametrize(ITERV,CONVEX);
-    printStuff(111);
+    printStuff(11);
+    if (_type==MEANPLANE){
+      checkOrientation(0, true);
+      // printStuff(22);
+      // _type = ALREADYFIXED;
+      // parametrize(ITERU,CONVEX); 
+      // parametrize(ITERV,CONVEX);
+      // checkOrientation(0, true);
+      // printStuff(33);
+    }
+    printStuff(44);
   }  
   // Laplace parametrization
   else if (_mapping == HARMONIC){
@@ -704,7 +875,9 @@ bool GFaceCompound::parametrize() const
  
   if (_mapping != RBF){
     if (!checkOrientation(0)){
-      Msg::Info("### parametrization switched to convex combination map");
+      Msg::Info("### parametrization switched to 'convex map' onto circle");
+      printStuff(33);
+      _type = UNITCIRCLE;
       coordinates.clear(); 
       Octree_Delete(oct);
       fillNeumannBCS();
@@ -917,8 +1090,8 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   _mapping = HARMONIC;
   _type = UNITCIRCLE;
   if (toc == HARMONIC_CIRCLE) _mapping = HARMONIC;
-  else if(toc == CONFORMAL)   _mapping = CONFORMAL;
-  else if(toc == RBF)         _mapping = RBF;
+  else if(toc == CONFORMAL_SPECTRAL)   _mapping = CONFORMAL;
+  else if(toc == RADIAL_BASIS)         _mapping = RBF;
   else if (toc == HARMONIC_PLANE) _type = MEANPLANE;
   else if (toc == CONVEX_CIRCLE)  _mapping = CONVEX;
   else if (toc == CONVEX_PLANE){
@@ -954,8 +1127,8 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   _mapping = HARMONIC;
   _type = UNITCIRCLE;
   if (toc == HARMONIC_CIRCLE) _mapping = HARMONIC;
-  else if(toc == CONFORMAL)   _mapping = CONFORMAL;
-  else if(toc == RBF)         _mapping = RBF;
+  else if(toc == CONFORMAL_SPECTRAL)   _mapping = CONFORMAL;
+  else if(toc == RADIAL_BASIS)         _mapping = RBF;
   else if (toc == HARMONIC_PLANE) _type = MEANPLANE;
   else if (toc == CONVEX_CIRCLE)  _mapping = CONVEX;
   else if (toc == CONVEX_PLANE){
@@ -1153,6 +1326,15 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
       else if(step == ITERV) myAssembler.fixVertex(v, 0, 1, pointsUV[i][1]);    
     }
   }
+  else if (_type == ALREADYFIXED){
+    printf("already fixed boundaries \n");
+    for(unsigned int i = 0; i < _ordered.size(); i++){
+      MVertex *v = _ordered[i];
+      SPoint3 uv = coordinates[v];
+      if(step == ITERU) myAssembler.fixVertex(v, 0, 1, uv[0]);
+      else if(step == ITERV) myAssembler.fixVertex(v, 0, 1, uv[1]);   
+    }
+  }
   else{
     Msg::Error("Unknown type of parametrization");
     return;
@@ -1243,11 +1425,11 @@ bool GFaceCompound::parametrize_conformal_spectral() const
     myAssembler.numberVertex(v, 0, 2);
   }
   
-  // for(std::set<MVertex *>::iterator itv = fillNodes.begin(); itv !=fillNodes.end() ; ++itv){
-  //   MVertex *v = *itv;
-  //   myAssembler.numberVertex(v, 0, 1);
-  //   myAssembler.numberVertex(v, 0, 2);
-  // }
+  for(std::set<MVertex *>::iterator itv = fillNodes.begin(); itv !=fillNodes.end() ; ++itv){
+    MVertex *v = *itv;
+    myAssembler.numberVertex(v, 0, 1);
+    myAssembler.numberVertex(v, 0, 2);
+  }
   
   laplaceTerm laplace1(model(), 1, ONE);
   laplaceTerm laplace2(model(), 2, ONE);
@@ -1280,13 +1462,13 @@ bool GFaceCompound::parametrize_conformal_spectral() const
       myAssembler.assemble(v, 0, 2, v, 0, 2,  epsilon);
     }
   }
-  // for(std::set<MVertex *>::iterator itv = fillNodes.begin(); itv !=fillNodes.end() ; ++itv){
-  //   MVertex *v = *itv;
-  //   if (std::find(_ordered.begin(), _ordered.end(), v) == _ordered.end() ){
-  //     myAssembler.assemble(v, 0, 1, v, 0, 1,  epsilon);
-  //     myAssembler.assemble(v, 0, 2, v, 0, 2,  epsilon);
-  //   }
-  // }
+  for(std::set<MVertex *>::iterator itv = fillNodes.begin(); itv !=fillNodes.end() ; ++itv){
+    MVertex *v = *itv;
+    if (std::find(_ordered.begin(), _ordered.end(), v) == _ordered.end() ){
+      myAssembler.assemble(v, 0, 1, v, 0, 1,  epsilon);
+      myAssembler.assemble(v, 0, 2, v, 0, 2,  epsilon);
+    }
+  }
   
   myAssembler.setCurrentMatrix("B");
   

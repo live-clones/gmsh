@@ -56,7 +56,7 @@ class GFaceCompound : public GFace {
   typedef enum {HARMONIC_CIRCLE=0, CONFORMAL_SPECTRAL=1, RADIAL_BASIS=2, HARMONIC_PLANE=3, 
 	       CONVEX_CIRCLE=4,CONVEX_PLANE=5, HARMONIC_SQUARE=6} typeOfCompound;
   typedef enum {HARMONIC=0,CONFORMAL=1, RBF=2, CONVEX=3} typeOfMapping;
-  typedef enum {UNITCIRCLE, MEANPLANE, SQUARE} typeOfIsomorphism;
+  typedef enum {UNITCIRCLE, MEANPLANE, SQUARE, ALREADYFIXED} typeOfIsomorphism;
   void computeNormals(std::map<MVertex*, SVector3> &normals) const;
  protected:
   mutable std::set<MVertex *> ov;
@@ -90,6 +90,7 @@ class GFaceCompound : public GFace {
   bool checkOrientation(int iter, bool moveBoundaries=false) const;
   bool checkOverlap(std::vector<MVertex *> &vert) const;
   void one2OneMap(bool moveBoundaries=false) const;
+  void convexBoundary(double nTot) const;
   double checkAspectRatio() const;
   void computeNormals () const;
   void getBoundingEdges();
@@ -144,7 +145,7 @@ class GFaceCompound : public GFace {
  private:
   mutable typeOfCompound _toc;
   mutable typeOfMapping _mapping;
-  typeOfIsomorphism _type;
+  mutable typeOfIsomorphism _type;
   int _allowPartition;
 };
 
@@ -158,7 +159,7 @@ class GFaceCompound : public GFace {
   typedef enum {HARMONIC_CIRCLE=0, CONFORMAL_SPECTRAL=1, RADIAL_BASIS=2, HARMONIC_PLANE=3, 
 	       CONVEX_CIRCLE=4,CONVEX_PLANE=5, HARMONIC_SQUARE=6} typeOfCompound;
   typedef enum {HARMONIC=0,CONFORMAL=1, RBF=2, CONVEX=3} typeOfMapping;
-  typedef enum {UNITCIRCLE, MEANPLANE, SQUARE} typeOfIsomorphism;
+  typedef enum {UNITCIRCLE, MEANPLANE, SQUARE, ALREADYFIXED} typeOfIsomorphism;
  GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 	       std::list<GEdge*> &U0, typeOfMapping typ = HARMONIC, 
 	       int allowPartition=1, 
