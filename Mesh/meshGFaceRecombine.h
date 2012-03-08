@@ -109,6 +109,8 @@ class Rec2DData {
     std::vector<MTriangle*> _tri;
     std::vector<MQuadrangle*> _quad;
 #endif
+
+    static int getNumChange() {return _current->_changes.size();}
     
     static inline int getNumEndNode() {return _current->_endNodes.size();}
     static inline int getNumElement() {return _current->_elements.size();}
@@ -459,7 +461,7 @@ class Rec2DNode {
     void rmvSon(Rec2DNode*);
     void develop(int depth, double &bestEndGlobQual);
     inline bool hasSon() {return _son[0];}
-    bool hasAction();
+    bool makeChanges();
     
     bool operator<(Rec2DNode&);
     inline Rec2DNode* getFather() {return _father;}
