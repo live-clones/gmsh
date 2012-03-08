@@ -46,7 +46,7 @@ void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
   	std::set<MTetrahedron*>  oneTet;
   	oneTet.insert(ele);
   	node2Tet.insert(std::make_pair(v, oneTet));
-      } 
+      }
       else{
   	std::set<MTetrahedron*>  allTets = itmap->second;
   	allTets.insert(allTets.begin(), ele);
@@ -60,7 +60,7 @@ void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
   	std::vector<MTetrahedron*>  oneTet;
   	oneTet.push_back(ele);
   	face2Tet.insert(std::make_pair(f, oneTet));
-      } 
+      }
       else{
   	std::vector<MTetrahedron*>  allTets = itmap->second;
   	allTets.insert(allTets.begin(), ele);
@@ -92,7 +92,7 @@ void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
       SPoint3 pc = poleTet->circumcenter();
       //double nx,ny,nz;
       // SVector3 vN = snorm->get(v->x(), v->y(), v->z(), nx,ny,nz);
-      // SVector3 pcv(pc.x()-nx, pc.y()-ny,pc.z()-nz); 
+      // SVector3 pcv(pc.x()-nx, pc.y()-ny,pc.z()-nz);
       // printf("nx=%g ny=%g nz=%g dot=%g \n",  nx,ny,nz, dot(vN, pcv));
       // if ( dot(vN, pcv) > 0.0 )
       double x[3] = {pc.x(), pc.y(), pc.z()};
@@ -106,7 +106,7 @@ void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
 	//}
     //}
   }
-  fprintf(outfile,"};\n");  
+  fprintf(outfile,"};\n");
   fclose(outfile);
 
   //print scalar lines
@@ -126,11 +126,11 @@ void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
 	      pc1.x(), pc1.y(), pc1.z(), pc2.x(), pc2.y(), pc2.z(),
 	      allTets[0]->getCircumRadius(),allTets[1]->getCircumRadius());
    }
-  fprintf(outfile2,"};\n");  
+  fprintf(outfile2,"};\n");
   fclose(outfile2);
 
 }
-//------------------------------------------------------------------------
+
 void skeletonFromVoronoi(GRegion *gr, std::set<SPoint3> &voronoiPoles)
 {
 
@@ -151,7 +151,7 @@ void skeletonFromVoronoi(GRegion *gr, std::set<SPoint3> &voronoiPoles)
     if( (*itf)->tag() !=1 ) {
       Dmax = std::max(Dmax,norm(dd));
       seeds.insert(bbox.center());
-    }     
+    }
   }
   printf("Dmax =%g \n", Dmax);
 
@@ -167,7 +167,7 @@ void skeletonFromVoronoi(GRegion *gr, std::set<SPoint3> &voronoiPoles)
     ele->xyz2uvw(x, uvw);
 
     std::set<SPoint3>::const_iterator it2 = voronoiPoles.find(pc);
-  
+
     if(ele->isInside(uvw[0], uvw[1], uvw[2]) &&
        it2 != voronoiPoles.end()){
       double radius =  ele->getCircumRadius();
@@ -178,11 +178,12 @@ void skeletonFromVoronoi(GRegion *gr, std::set<SPoint3> &voronoiPoles)
       }
    }
   }
-  fprintf(outfile,"};\n");  
+  fprintf(outfile,"};\n");
   fclose(outfile);
 
   printf("Ann computation of neighbours and writing edges\n");
- #if defined(HAVE_ANN)
+
+#if defined(HAVE_ANN)
   FILE *outfile2;
   outfile2 = fopen("skeletonEdges.pos", "w");
   fprintf(outfile2, "View \"skeleton edges\" {\n");
@@ -225,7 +226,7 @@ void skeletonFromVoronoi(GRegion *gr, std::set<SPoint3> &voronoiPoles)
 	  beginPt.x(), beginPt.y(), beginPt.z(),
 	  endPt.x(), endPt.y(), endPt.z(),
 	  color, color);
- 
+
    std::set<SPoint3>::iterator itse=seeds.find(endPt);
    std::set<SPoint3>::iterator its=candidates.find(endPt);
    if(itse != seeds.end()){
@@ -237,7 +238,7 @@ void skeletonFromVoronoi(GRegion *gr, std::set<SPoint3> &voronoiPoles)
      color=color*2.;
    }
    else   beginPt=endPt;
- 
+
    if(its != candidates.end()) candidates.erase(its);
 
   delete _kdtree;
@@ -246,20 +247,18 @@ void skeletonFromVoronoi(GRegion *gr, std::set<SPoint3> &voronoiPoles)
   delete [] _dist;
   }
 
-  fprintf(outfile2,"};\n");  
+  fprintf(outfile2,"};\n");
   fclose(outfile2);
 #endif
-
 }
-//------------------------------------------------------------------------
 
 void getAllBoundingVertices(GRegion *gr, std::set<MVertex*> &allBoundingVertices)
 {
   std::list<GFace*> faces = gr->faces();
   std::list<GFace*>::iterator it = faces.begin();
-  
+
   while (it != faces.end()){
-    GFace *gf = (*it);      
+    GFace *gf = (*it);
     for(unsigned int i = 0; i < gf->triangles.size(); i++){
       MTriangle *t = gf->triangles[i];
       for(int k = 0; k < 3; k++)
@@ -269,7 +268,7 @@ void getAllBoundingVertices(GRegion *gr, std::set<MVertex*> &allBoundingVertices
     ++it;
   }
 }
-//------------------------------------------------------------------------
+
 #if defined(HAVE_TETGEN)
 #include "tetgen.h"
 void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numberedV)
@@ -279,7 +278,8 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
 
   in.mesh_dim = 3;
   in.firstnumber = 1;
-  in.numberofpoints = allBoundingVertices.size() + Filler::get_nbr_new_vertices() + LpSmoother::get_nbr_interior_vertices();
+  in.numberofpoints = allBoundingVertices.size() + Filler::get_nbr_new_vertices() +
+    LpSmoother::get_nbr_interior_vertices();
   in.pointlist = new REAL[in.numberofpoints * 3];
   in.pointmarkerlist = NULL;
 
@@ -293,7 +293,7 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
     numberedV.push_back(*itv);
     ++itv;
   }
-  
+
   for(int i=0;i<Filler::get_nbr_new_vertices();i++){
     MVertex* v;
 	v = Filler::get_new_vertex(i);
@@ -302,7 +302,7 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
 	in.pointlist[(I - 1) * 3 + 2] = v->z();
 	I++;
   }
-	
+
   for(int i=0;i<LpSmoother::get_nbr_interior_vertices();i++){
     MVertex* v;
 	v = LpSmoother::get_interior_vertex(i);
@@ -310,8 +310,8 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
 	in.pointlist[(I - 1) * 3 + 1] = v->y();
 	in.pointlist[(I - 1) * 3 + 2] = v->z();
 	I++;
-  }	
-	
+  }
+
   int nbFace = 0;
   std::list<GFace*> faces = gr->faces();
   std::list<GFace*>::iterator it = faces.begin();
@@ -347,10 +347,10 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
       ++I;
     }
     ++it;
-  }   
+  }
 }
 
-void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out, 
+void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
                         std::vector<MVertex*> &numberedV)
 {
   // improvement has to be done here : tetgen splits some of the
@@ -361,11 +361,11 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
   for(int i = numberedV.size(); i < out.numberofpoints; i++){
     MVertex *v = new MVertex(out.pointlist[i * 3 + 0],
                              out.pointlist[i * 3 + 1],
-                             out.pointlist[i * 3 + 2], gr); 
+                             out.pointlist[i * 3 + 2], gr);
     gr->mesh_vertices.push_back(v);
     numberedV.push_back(v);
   }
- 
+
   Msg::Info("%d points %d edges and %d faces in the final mesh",
             out.numberofpoints, out.numberofedges, out.numberoftrifaces);
 
@@ -374,7 +374,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
   gr->model()->destroyMeshCaches();
   std::list<GFace*> faces = gr->faces();
   for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
-    GFace *gf = (*it); 
+    GFace *gf = (*it);
     for(unsigned int i = 0; i < gf->triangles.size(); i++)
       delete gf->triangles[i];
     gf->triangles.clear();
@@ -389,7 +389,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
     //implement here the 1D mesh ...
   }
 
-  bool needParam = (CTX::instance()->mesh.order > 1 && 
+  bool needParam = (CTX::instance()->mesh.order > 1 &&
                     CTX::instance()->mesh.secondOrderExperimental);
   // re-create the triangular meshes FIXME: this can lead to hanging
   // nodes for non manifold geometries (single surface connected to
@@ -404,7 +404,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
     double guess[2] = {0, 0};
     if (needParam) {
       int Count = 0;
-      for(int j = 0; j < 3; j++){   
+      for(int j = 0; j < 3; j++){
 	if(!v[j]->onWhat()){
 	  Msg::Error("Uncategorized vertex %d", v[j]->getNum());
 	}
@@ -440,8 +440,8 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 	guess[1] /= Count;
       }
     }
-    
-    for(int j = 0; j < 3; j++){   
+
+    for(int j = 0; j < 3; j++){
       if(v[j]->onWhat()->dim() == 3){
         v[j]->onWhat()->mesh_vertices.erase
           (std::find(v[j]->onWhat()->mesh_vertices.begin(),
@@ -458,7 +458,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
           }
           else{
             v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf);
-            Msg::Warning("The point was not projected back to the surface (%g %g %g)", 
+            Msg::Warning("The point was not projected back to the surface (%g %g %g)",
                          v[j]->x(), v[j]->y(), v[j]->z());
           }
         }
@@ -473,7 +473,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
       }
     }
     MTriangle *t = new MTriangle(v[0], v[1], v[2]);
-    gf->triangles.push_back(t);   
+    gf->triangles.push_back(t);
   }
 
   for(int i = 0; i < out.numberoftetrahedra; i++){
@@ -487,7 +487,6 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 }
 #endif
 
-//------------------------------------------------------------------------
 void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 {
   if(regions.empty()) return;
@@ -521,17 +520,17 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
     std::vector<MVertex*> numberedV;
     char opts[128];
     buildTetgenStructure(gr, in, numberedV);
-    //if (Msg::GetVerbosity() == 20) sprintf(opts, "peVvS0"); 
+    //if (Msg::GetVerbosity() == 20) sprintf(opts, "peVvS0");
     if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_DEL ||
        CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_HEX ||
-       CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D || 
+       CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D ||
        CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL_QUAD ||
        CTX::instance()->mesh.algo2d == ALGO_2D_BAMG){
-      sprintf(opts, "pY",  (Msg::GetVerbosity() < 3) ? 'Q': 
+      sprintf(opts, "pY",  (Msg::GetVerbosity() < 3) ? 'Q':
 	      (Msg::GetVerbosity() > 6) ? 'V': '\0');
     }
     else {
-      sprintf(opts, "pe%c",  (Msg::GetVerbosity() < 3) ? 'Q': 
+      sprintf(opts, "pe%c",  (Msg::GetVerbosity() < 3) ? 'Q':
       	      (Msg::GetVerbosity() > 6) ? 'V': '\0');
     }
     try{
@@ -554,7 +553,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
             MVertex *v3 = numberedV[out.trifacelist[i * 3 + 2] - 1];
             int surf = out.trifacemarkerlist[i];
             fprintf(fp, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
-                    v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z(), 
+                    v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z(),
                     v3->x(), v3->y(), v3->z(), surf, surf, surf);
           }
           fprintf(fp, "};\n");
@@ -598,7 +597,8 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
  else if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D)
    refineMeshMMG(gr);
  else
-   if(Filler::get_nbr_new_vertices()==0 && LpSmoother::get_nbr_interior_vertices()==0) insertVerticesInRegion(gr);
+   if(!Filler::get_nbr_new_vertices() && !LpSmoother::get_nbr_interior_vertices())
+     insertVerticesInRegion(gr);
 #endif
 }
 
@@ -617,7 +617,7 @@ Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
 
   std::set<MVertex*> allBoundingVertices;
   getAllBoundingVertices(gr, allBoundingVertices);
-  
+
   std::set<MVertex*>::iterator itv = allBoundingVertices.begin();
   int I = 1;
   while(itv != allBoundingVertices.end()){
@@ -655,7 +655,7 @@ Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
     }
     ++it;
   }
-  
+
   if(importVolumeMesh){
     for(unsigned int i = 0; i< gr->tetrahedra.size(); i++){
       MTetrahedron *t = gr->tetrahedra[i];
@@ -669,15 +669,15 @@ Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
       Ng_AddVolumeElement(ngmesh, NG_TET, tmp);
     }
   }
-  
+
   return ngmesh;
 }
 
-void TransferVolumeMesh(GRegion *gr, Ng_Mesh *ngmesh, 
+void TransferVolumeMesh(GRegion *gr, Ng_Mesh *ngmesh,
                         std::vector<MVertex*> &numberedV)
 {
   // Gets total number of vertices of Netgen's mesh
-  int nbv = Ng_GetNP(ngmesh);  
+  int nbv = Ng_GetNP(ngmesh);
   if(!nbv) return;
 
   int nbpts = numberedV.size();
@@ -690,10 +690,10 @@ void TransferVolumeMesh(GRegion *gr, Ng_Mesh *ngmesh,
     numberedV.push_back(v);
     gr->mesh_vertices.push_back(v);
   }
-  
+
   // Get total number of simplices of Netgen's mesh
   int nbe = Ng_GetNE(ngmesh);
-  
+
   // Create new volume simplices
   for(int i = 0; i < nbe; i++){
     int tmp[4];
@@ -703,7 +703,7 @@ void TransferVolumeMesh(GRegion *gr, Ng_Mesh *ngmesh,
                                        numberedV[tmp[2] - 1],
                                        numberedV[tmp[3] - 1]);
     gr->tetrahedra.push_back(t);
-  }  
+  }
 }
 
 #endif
@@ -714,7 +714,7 @@ void deMeshGRegion::operator() (GRegion *gr)
   gr->deleteMesh();
 }
 
-int intersect_line_triangle(double X[3], double Y[3], double Z[3] , 
+int intersect_line_triangle(double X[3], double Y[3], double Z[3] ,
                             double P[3], double N[3])
 {
   double mat[3][3], det;
@@ -740,14 +740,14 @@ int intersect_line_triangle(double X[3], double Y[3], double Z[3] ,
   if(!sys3x3_with_tol(mat, b, res, &det))
     return 0;
 
-  if(res[0] >= eps_prec && res[0] <= 1.0 - eps_prec && 
-     res[1] >= eps_prec && res[1] <= 1.0 - eps_prec && 
+  if(res[0] >= eps_prec && res[0] <= 1.0 - eps_prec &&
+     res[1] >= eps_prec && res[1] <= 1.0 - eps_prec &&
      1 - res[0] - res[1] >= eps_prec && 1 - res[0] - res[1] <= 1.0 - eps_prec){
     // the line clearly intersects the triangle
     return (res[2] > 0) ? 1 : 0;
   }
-  else if(res[0] < -eps_prec || res[0] > 1.0 + eps_prec || 
-          res[1] < -eps_prec || res[1] > 1.0 + eps_prec || 
+  else if(res[0] < -eps_prec || res[0] > 1.0 + eps_prec ||
+          res[1] < -eps_prec || res[1] > 1.0 + eps_prec ||
           1 - res[0] - res[1] < -eps_prec || 1 - res[0] - res[1] > 1.0 + eps_prec){
     // the line clearly does NOT intersect the triangle
     return 0;
@@ -774,16 +774,16 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
 
   double rrr[6];
   setRand(rrr);
-                   
+
   while(it != faces.end()){
-    GFace *gf = (*it); 
+    GFace *gf = (*it);
     int nb_intersect = 0;
     for(unsigned int i = 0; i < gf->triangles.size(); i++){
       MTriangle *t = gf->triangles[i];
       double X[3] = {t->getVertex(0)->x(), t->getVertex(1)->x(), t->getVertex(2)->x()};
       double Y[3] = {t->getVertex(0)->y(), t->getVertex(1)->y(), t->getVertex(2)->y()};
       double Z[3] = {t->getVertex(0)->z(), t->getVertex(1)->z(), t->getVertex(2)->z()};
-      double P[3] = {(X[0] + X[1] + X[2]) / 3., 
+      double P[3] = {(X[0] + X[1] + X[2]) / 3.,
                      (Y[0] + Y[1] + Y[2]) / 3.,
                      (Z[0] + Z[1] + Z[2]) / 3.};
       double v1[3] = {X[0] - X[1], Y[0] - Y[1], Z[0] - Z[1]};
@@ -803,7 +803,7 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
         for(unsigned int i_b = 0; i_b < gf_b->triangles.size(); i_b++){
           MTriangle *t_b = gf_b->triangles[i_b];
           if(t_b != t){
-            double X_b[3] = {t_b->getVertex(0)->x(), t_b->getVertex(1)->x(), 
+            double X_b[3] = {t_b->getVertex(0)->x(), t_b->getVertex(1)->x(),
                              t_b->getVertex(2)->x()};
             double Y_b[3] = {t_b->getVertex(0)->y(), t_b->getVertex(1)->y(),
                              t_b->getVertex(2)->y()};
@@ -818,13 +818,13 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
       Msg::Info("Region %d Face %d, %d intersect", gr->tag(), gf->tag(), nb_intersect);
       if(nb_intersect >= 0) break; // negative value means intersection is not "robust"
     }
-    
+
     if(nb_intersect < 0){
       setRand(rrr);
     }
     else{
-      if(nb_intersect % 2 == 1){ 
-        // odd nb of intersections: the normal points inside the region 
+      if(nb_intersect % 2 == 1){
+        // odd nb of intersections: the normal points inside the region
         for(unsigned int i = 0; i < gf->triangles.size(); i++){
           gf->triangles[i]->revert();
         }
@@ -843,7 +843,7 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
 }
 
 void meshGRegion::operator() (GRegion *gr)
-{ 
+{
   gr->model()->setCurrentMeshEntity(gr);
 
   if(gr->geomType() == GEntity::DiscreteVolume) return;
@@ -858,7 +858,7 @@ void meshGRegion::operator() (GRegion *gr)
   dem(gr);
 
   if(MeshTransfiniteVolume(gr)) return;
-  
+
   std::list<GFace*> faces = gr->faces();
 
   // sanity check
@@ -876,7 +876,7 @@ void meshGRegion::operator() (GRegion *gr)
     while(it != faces.end()){
       if((*it)->getCompound())
         mySet.insert((*it)->getCompound());
-      else 
+      else
         mySet.insert(*it);
       ++it;
     }
@@ -907,12 +907,12 @@ void meshGRegion::operator() (GRegion *gr)
   }
 }
 
-void optimizeMeshGRegionNetgen::operator() (GRegion *gr) 
-{  
+void optimizeMeshGRegionNetgen::operator() (GRegion *gr)
+{
   gr->model()->setCurrentMeshEntity(gr);
 
   if(gr->geomType() == GEntity::DiscreteVolume) return;
-  
+
   // don't optimize transfinite or extruded meshes
   if(gr->meshAttributes.Method == MESH_TRANSFINITE) return;
   ExtrudeParams *ep = gr->meshAttributes.extrude;
@@ -936,23 +936,23 @@ void optimizeMeshGRegionNetgen::operator() (GRegion *gr)
 #endif
 }
 
-void optimizeMeshGRegionGmsh::operator() (GRegion *gr) 
-{  
+void optimizeMeshGRegionGmsh::operator() (GRegion *gr)
+{
   gr->model()->setCurrentMeshEntity(gr);
 
   if(gr->geomType() == GEntity::DiscreteVolume) return;
-  
+
   // don't optimize extruded meshes
   if(gr->meshAttributes.Method == MESH_TRANSFINITE) return;
   ExtrudeParams *ep = gr->meshAttributes.extrude;
   if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) return;
-  
+
   Msg::Info("Optimizing volume %d", gr->tag());
-  optimizeMesh(gr, QMTET_2);  
+  optimizeMesh(gr, QMTET_2);
 }
 
 bool buildFaceSearchStructure(GModel *model, fs_cont &search)
-{  
+{
   search.clear();
 
   std::set<GFace*> faces_to_consider;
@@ -961,10 +961,10 @@ bool buildFaceSearchStructure(GModel *model, fs_cont &search)
     std::list <GFace *> _faces = (*rit)->faces();
     faces_to_consider.insert( _faces.begin(),_faces.end());
     rit++;
-  }    
+  }
 
   std::set<GFace*>::iterator fit = faces_to_consider.begin();
-  while(fit != faces_to_consider.end()){    
+  while(fit != faces_to_consider.end()){
     for(unsigned int i = 0; i < (*fit)->triangles.size(); i++){
       MVertex *p1 = (*fit)->triangles[i]->getVertex(0);
       MVertex *p2 = (*fit)->triangles[i]->getVertex(1);
@@ -979,16 +979,16 @@ bool buildFaceSearchStructure(GModel *model, fs_cont &search)
 }
 
 bool buildEdgeSearchStructure(GModel *model, es_cont &search)
-{  
+{
   search.clear();
 
   GModel::eiter eit = model->firstEdge();
-  while(eit != model->lastEdge()){    
+  while(eit != model->lastEdge()){
     for(unsigned int i = 0; i < (*eit)->lines.size(); i++){
       MVertex *p1 = (*eit)->lines[i]->getVertex(0);
       MVertex *p2 = (*eit)->lines[i]->getVertex(1);
       MVertex *p = std::min(p1, p2);
-      search.insert(std::pair<MVertex*, std::pair<MLine*, GEdge*> > 
+      search.insert(std::pair<MVertex*, std::pair<MLine*, GEdge*> >
                     (p, std::pair<MLine*, GEdge*>((*eit)->lines[i], *eit)));
     }
     ++eit;
@@ -996,11 +996,11 @@ bool buildEdgeSearchStructure(GModel *model, es_cont &search)
   return true;
 }
 
-GFace *findInFaceSearchStructure(MVertex *p1, MVertex *p2, MVertex *p3, 
+GFace *findInFaceSearchStructure(MVertex *p1, MVertex *p2, MVertex *p3,
                                  const fs_cont &search)
 {
   MVertex *p = std::min(p1, std::min(p2, p3));
-  
+
   for(fs_cont::const_iterator it = search.lower_bound(p);
       it != search.upper_bound(p);
       ++it){
@@ -1008,7 +1008,7 @@ GFace *findInFaceSearchStructure(MVertex *p1, MVertex *p2, MVertex *p3,
     GFace *gf= it->second.second;
     if((t->getVertex(0) == p1 || t->getVertex(0) == p2 || t->getVertex(0) == p3) &&
        (t->getVertex(1) == p1 || t->getVertex(1) == p2 || t->getVertex(1) == p3) &&
-       (t->getVertex(2) == p1 || t->getVertex(2) == p2 || t->getVertex(2) == p3)) 
+       (t->getVertex(2) == p1 || t->getVertex(2) == p2 || t->getVertex(2) == p3))
       return gf;
   }
   return 0;
@@ -1017,14 +1017,14 @@ GFace *findInFaceSearchStructure(MVertex *p1, MVertex *p2, MVertex *p3,
 GEdge *findInEdgeSearchStructure(MVertex *p1, MVertex *p2, const es_cont &search)
 {
   MVertex *p = std::min(p1, p2);
-  
+
   for(es_cont::const_iterator it = search.lower_bound(p);
       it != search.upper_bound(p);
       ++it){
     MLine *l = it->second.first;
     GEdge *ge = it->second.second;
     if((l->getVertex(0) == p1 || l->getVertex(0) == p2) &&
-       (l->getVertex(1) == p1 || l->getVertex(1) == p2)) 
+       (l->getVertex(1) == p1 || l->getVertex(1) == p2))
       return ge;
   }
   return 0;

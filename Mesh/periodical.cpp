@@ -9,13 +9,13 @@
 #include <fstream>
 #include <algorithm>
 #include "MElement.h"
-#if defined(HAVE_Voro3D) 
+#if defined(HAVE_VORO3D)
 #include "voro++.hh"
-#endif 
+#endif
 
-#if defined(HAVE_Voro3D)
+#if defined(HAVE_VORO3D)
 using namespace voro;
-#endif 
+#endif
 
 /*********definitions*********/
 
@@ -24,16 +24,16 @@ class geo_cell{
   std::vector<std::pair<int,int> > lines;
   std::vector<std::vector<int> > line_loops;
   std::vector<std::vector<int> > orientations;
-	
+
   std::vector<int> points2;
   std::vector<int> lines2;
   std::vector<int> line_loops2;
   std::vector<int> faces2;
   int face_loops2;
-	
+
   geo_cell();
   ~geo_cell();
-	
+
   int search_line(std::pair<int,int>);
 };
 
@@ -45,12 +45,12 @@ geo_cell::~geo_cell(){}
 
 int geo_cell::search_line(std::pair<int,int> line){
   int i;
-	
+
   for(i=0;i<lines.size();i++){
     if(lines[i].first==line.first && lines[i].second==line.second) return i;
 	if(lines[i].first==line.second && lines[i].second==line.first) return i;
   }
-	   
+
   return -1;
 }
 
@@ -82,7 +82,7 @@ void voroMetal3D::execute(GRegion* gr){
   std::vector<SPoint3> vertices2;
   std::set<MVertex*> vertices;
   std::set<MVertex*>::iterator it;
-	
+
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
 	for(j=0;j<element->getNumVertices();j++){
@@ -90,16 +90,17 @@ void voroMetal3D::execute(GRegion* gr){
 	  vertices.insert(vertex);
 	}
   }
-	
+
   for(it=vertices.begin();it!=vertices.end();it++){
     vertices2.push_back(SPoint3((*it)->x(),(*it)->y(),(*it)->z()));
   }
-	
-  execute(vertices2);	
+
+  execute(vertices2);
 }
 
-void voroMetal3D::execute(std::vector<SPoint3>& vertices){
-#if defined(HAVE_Voro3D) 
+void voroMetal3D::execute(std::vector<SPoint3>& vertices)
+{
+#if defined(HAVE_VORO3D)
   int i;
   int j;
   int k;
@@ -126,7 +127,7 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices){
   std::vector<int> temp;
   std::vector<int> temp2;
   geo_cell obj;
-	
+
   min_x = 1000000000.0;
   max_x = -1000000000.0;
   min_y = 1000000000.0;
@@ -144,7 +145,7 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices){
 
   delta = 0.2*(max_x - min_x);
   container cont(min_x-delta,max_x+delta,min_y-delta,max_y+delta,min_z-delta,max_z+delta,6,6,6,true,true,true,vertices.size());
-	
+
   for(i=0;i<vertices.size();i++){
     cont.put(i,vertices[i].x(),vertices[i].y(),vertices[i].z());
   }
@@ -158,25 +159,25 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices){
 	*pointer = cell;
 	pointers.push_back(pointer);
 	generators.push_back(SPoint3(x,y,z));
-  }while(loop.inc());	
+  }while(loop.inc());
 
   initialize_counter();
-	
+
   std::ofstream file("cells.pos");
   file << "View \"test\" {\n";
   std::ofstream file2("cells.geo");
   file2 << "c = 1.0;\n";
   for(i=0;i<pointers.size();i++){
 	obj = geo_cell();
-	
+
 	faces.clear();
 	voronoi_vertices.clear();
 	pointers[i]->face_vertices(faces);
 	pointers[i]->vertices(generators[i].x(),generators[i].y(),generators[i].z(),voronoi_vertices);
-	
-	obj.line_loops.resize(pointers[i]->number_of_faces()); 
-	obj.orientations.resize(pointers[i]->number_of_faces()); 
-	  
+
+	obj.line_loops.resize(pointers[i]->number_of_faces());
+	obj.orientations.resize(pointers[i]->number_of_faces());
+
 	face_number = 0;
 	end = 0;
     while(end<faces.size()){
@@ -198,17 +199,17 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices){
 		y2 = voronoi_vertices[3*index2+1];
 		z2 = voronoi_vertices[3*index2+2];
 		print_segment(SPoint3(x1,y1,z1),SPoint3(x2,y2,z2),file);
-		
+
 		val = obj.search_line(std::pair<int,int>(index1,index2));
 		if(val==-1){
 		  obj.lines.push_back(std::pair<int,int>(index1,index2));
 		  obj.line_loops[face_number].push_back(obj.lines.size()-1);
 		  val = obj.lines.size()-1;
 		}
-		else{ 
+		else{
 		  obj.line_loops[face_number].push_back(val);
 		}
-		  
+
 		last = obj.line_loops[face_number].size()-1;
 		if(last==0){
 	      obj.orientations[face_number].push_back(0);
@@ -227,13 +228,13 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices){
 		}
 		else{
 		  obj.orientations[face_number][last-1] = 1;
-		  obj.orientations[face_number].push_back(1);			  
+		  obj.orientations[face_number].push_back(1);
 		}
 	  }
-		
+
 	  face_number++;
 	}
-	  
+
 	for(j=0;j<voronoi_vertices.size()/3;j++){
 	  print_geo_point(get_counter(),voronoi_vertices[3*j],voronoi_vertices[3*j+1],voronoi_vertices[3*j+2],file2);
 	  obj.points2.push_back(get_counter());
@@ -266,22 +267,22 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices){
 
 	print_geo_face_loop(get_counter(),obj.faces2,file2);
 	obj.face_loops2 = get_counter();
-	increase_counter();  
+	increase_counter();
 
 	print_geo_volume(get_counter(),obj.face_loops2,file2);
 	increase_counter();
   }
   file << "};\n";
-  	
+
   for(i=0;i<pointers.size();i++) delete pointers[i];
 #endif
 }
 
 void voroMetal3D::print_segment(SPoint3 p1,SPoint3 p2,std::ofstream& file){
-  file << "SL (" 
+  file << "SL ("
   << p1.x() << ", " << p1.y() << ", " << p1.z() << ", "
-  << p2.x() << ", " << p2.y() << ", " << p2.z() 
-  << "){10, 20};\n";	
+  << p2.x() << ", " << p2.y() << ", " << p2.z()
+  << "){10, 20};\n";
 }
 
 void voroMetal3D::initialize_counter(){
@@ -322,27 +323,27 @@ void voroMetal3D::print_geo_volume(int index1,int index2,std::ofstream& file){
 
 void voroMetal3D::print_geo_line_loop(int index,std::vector<int>& indices,std::vector<int>& orientations,std::ofstream& file){
   int i;
-	
+
   file << "Line Loop(" << index << ")={";
-	
+
   for(i=0;i<indices.size();i++){
 	if(orientations[i]==1) file << "-";
     file << indices[i];
 	if(i<indices.size()-1) file << ",";
   }
-	
+
   file << "};\n";
 }
 
 void voroMetal3D::print_geo_face_loop(int index,std::vector<int>& indices,std::ofstream& file){
   int i;
-	
+
   file << "Surface Loop(" << index << ")={";
-	
+
   for(i=0;i<indices.size();i++){
     file << indices[i];
 	if(i<indices.size()-1) file << ",";
   }
-	
+
   file << "};\n";
 }

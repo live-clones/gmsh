@@ -9,13 +9,13 @@
 #include "meshGRegion.h"
 #include <fstream>
 #include "Levy3D.h"
-#if defined(HAVE_Voro3D) 
-#include "voro++.hh" 
-#endif 
- 
-#if defined(HAVE_Voro3D) 
+#if defined(HAVE_VORO3D)
+#include "voro++.hh"
+#endif
+
+#if defined(HAVE_VORO3D)
 using namespace voro;
-#endif 
+#endif
 
 /*********class clip*********/
 
@@ -46,7 +46,7 @@ void clip::execute(GRegion* gr){
   std::set<MVertex*> vertices;
   std::set<MVertex*>::iterator it;
   std::vector<VoronoiElement> clipped;
-	
+
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
 	for(j=0;j<element->getNumVertices();j++){
@@ -54,14 +54,14 @@ void clip::execute(GRegion* gr){
 	  vertices.insert(vertex);
 	}
   }
-	
+
   for(it=vertices.begin();it!=vertices.end();it++){
     vertices2.push_back(SPoint3((*it)->x(),(*it)->y(),(*it)->z()));
   }
-	
+
   execute(vertices2,clipped);
-  printf("%d\n",clipped.size());	
-	
+  printf("%d\n",clipped.size());
+
   std::ofstream file("cells.pos");
   file << "View \"test\" {\n";
   for(i=0;i<clipped.size();i++){
@@ -75,8 +75,9 @@ void clip::execute(GRegion* gr){
   file << "};\n";
 }
 
-void clip::execute(std::vector<SPoint3>& vertices,std::vector<VoronoiElement>& clipped){
-#if defined(HAVE_Voro3D)
+void clip::execute(std::vector<SPoint3>& vertices,std::vector<VoronoiElement>& clipped)
+{
+#if defined(HAVE_VORO3D)
   int i;
   int j;
   int start;
@@ -110,7 +111,7 @@ void clip::execute(std::vector<SPoint3>& vertices,std::vector<VoronoiElement>& c
   std::vector<int> IDs2;
   std::vector<int> neighbors;
   std::vector<std::vector<std::vector<int> > > bisectors;
-	
+
   min_x = 1000000000.0;
   max_x = -1000000000.0;
   min_y = 1000000000.0;
@@ -129,7 +130,7 @@ void clip::execute(std::vector<SPoint3>& vertices,std::vector<VoronoiElement>& c
   delta = 0.2*(max_x - min_x);
   container cont(min_x-delta,max_x+delta,min_y-delta,max_y+delta,min_z-delta,max_z+delta,6,6,6,false,false,false,vertices.size());
   volume1 = (max_x-min_x+2.0*delta)*(max_y-min_y+2.0*delta)*(max_z-min_z+2.0*delta);
-	
+
   for(i=0;i<vertices.size();i++){
     cont.put(i,vertices[i].x(),vertices[i].y(),vertices[i].z());
   }
@@ -149,8 +150,8 @@ void clip::execute(std::vector<SPoint3>& vertices,std::vector<VoronoiElement>& c
 	IDs[pid] = count;
 	IDs2.push_back(pid);
 	count++;
-  }while(loop.inc());	
-	
+  }while(loop.inc());
+
   bisectors.resize(pointers.size());
   for(i=0;i<pointers.size();i++){
     faces.clear();
@@ -180,7 +181,7 @@ void clip::execute(std::vector<SPoint3>& vertices,std::vector<VoronoiElement>& c
       //printf("%d %d %d %d %d %d\n",i,IDs2[i],bisectors[i][j][0],bisectors[i][j][1],bisectors[i][j][2],bisectors[i][j][3]);
 	}
   }
-	
+
   for(i=0;i<pointers.size();i++){
 	faces.clear();
 	voronoi_vertices.clear();
@@ -237,7 +238,7 @@ void clip::execute(std::vector<SPoint3>& vertices,std::vector<VoronoiElement>& c
 	  }
 	}
   }
-  
+
   volume2 = 0.0;
   for(i=0;i<clipped.size();i++){
     if(clipped[i].get_v2().get_category()==1){
@@ -268,7 +269,7 @@ void clip::execute(std::vector<SPoint3>& vertices,std::vector<VoronoiElement>& c
 	volume2 = volume2 + fabs(clipped[i].get_jacobian())/6.0;
   }
   //printf("%f %f\n",volume1,volume2);
-	
+
   for(i=0;i<pointers.size();i++) delete pointers[i];
 #endif
 }
@@ -298,8 +299,8 @@ int clip::category(int a,int b,int c,int d)
 }
 
 void clip::print_segment(SPoint3 p1,SPoint3 p2,std::ofstream& file){
-  file << "SL (" 
+  file << "SL ("
   << p1.x() << ", " << p1.y() << ", " << p1.z() << ", "
-  << p2.x() << ", " << p2.y() << ", " << p2.z() 
-  << "){10, 20};\n";	
+  << p2.x() << ", " << p2.y() << ", " << p2.z()
+  << "){10, 20};\n";
 }

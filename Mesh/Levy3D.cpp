@@ -6,16 +6,9 @@
 // Contributor(s):
 //   Tristan Carrier
 
+#include <algorithm>
+#include <time.h>
 #include "GmshConfig.h"
-
-#if defined(HAVE_BFGS)
-
-#include "ap.h"
-#include "alglibinternal.h"
-#include "alglibmisc.h"
-#include "linalg.h"
-#include "optimization.h"
-
 #include "Levy3D.h"
 #include "polynomialBasis.h"
 #include "GModel.h"
@@ -23,8 +16,14 @@
 #include "MElementOctree.h"
 #include "meshGRegion.h"
 #include "Voronoi3D.h"
-#include "time.h"
-#include <algorithm>
+
+#if defined(HAVE_BFGS)
+#include "ap.h"
+#include "alglibinternal.h"
+#include "alglibmisc.h"
+#include "linalg.h"
+#include "optimization.h"
+#endif
 
 /*********definitions*********/
 
@@ -108,7 +107,10 @@ bool inside_domain(MElementOctree* octree,double x,double y,double z){
   else return 0;
 }
 
-void call_back(const alglib::real_1d_array& x,double& func,alglib::real_1d_array& grad,void* ptr){
+#if defined(HAVE_BFGS)
+void call_back(const alglib::real_1d_array& x,double& func,
+               alglib::real_1d_array& grad,void* ptr)
+{
   int i;
   int p;
   int dimension;
@@ -187,6 +189,7 @@ void call_back(const alglib::real_1d_array& x,double& func,alglib::real_1d_array
     w->set_initial_energy(energy);
   }
 }
+#endif
 
 /*********class VoronoiVertex*********/
 
@@ -1465,7 +1468,9 @@ void LpSmoother::improve_model(){
   }
 }
 
-void LpSmoother::improve_region(GRegion* gr){
+void LpSmoother::improve_region(GRegion* gr)
+{
+#if defined(HAVE_BFGS)
   int i;
   int offset;
   double epsg;
@@ -1618,6 +1623,7 @@ void LpSmoother::improve_region(GRegion* gr){
   for(i=0;i<interior_vertices.size();i++) delete interior_vertices[i];
   interior_vertices.clear();
   delete octree;
+#endif
 }
 
 double LpSmoother::get_size(double x,double y,double z){
@@ -1636,4 +1642,3 @@ MVertex* LpSmoother::get_interior_vertex(int i){
 
 std::vector<MVertex*> LpSmoother::interior_vertices;
 
-#endif
