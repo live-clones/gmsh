@@ -46,6 +46,10 @@ class MPoint : public MElement {
   {
     u = v = w = 0.;
   }
+  virtual SPoint3 barycenterUVW()
+  {
+    return SPoint3(0., 0., 0.);
+  }
   virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
   {
     s[0] = 1.;

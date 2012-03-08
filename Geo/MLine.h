@@ -88,6 +88,10 @@ class MLine : public MElement {
     default: u =  0.; break;
     }
   }
+  virtual SPoint3 barycenterUVW()
+  {
+    return SPoint3(0, 0, 0);
+  }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 };
 

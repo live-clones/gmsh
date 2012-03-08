@@ -137,6 +137,10 @@ class MHexahedron : public MElement {
     default: u =  0.; v =  0.; w =  0.; break;
     }
   }
+  virtual SPoint3 barycenterUVW()
+  {
+    return SPoint3(0., 0., 0.);
+  }
   virtual bool isInside(double u, double v, double w)
   {
     double tol = _isInsideTolerance;

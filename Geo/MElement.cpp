@@ -158,6 +158,23 @@ SPoint3 MElement::barycenter()
   return p;
 }
 
+SPoint3 MElement::barycenterUVW()
+{
+  SPoint3 p(0., 0., 0.);
+  int n = getNumVertices();
+  for(int i = 0; i < n; i++) {
+    double x, y, z;
+    getNode(i, x, y, z);
+    p[0] += x;
+    p[1] += y;
+    p[2] += z;
+  }
+  p[0] /= (double)n;
+  p[1] /= (double)n;
+  p[2] /= (double)n;
+  return p;
+}
+
 double MElement::getVolume()
 {
   int npts;
