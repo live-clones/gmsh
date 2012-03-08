@@ -30,10 +30,14 @@ namespace alglib_impl
 {
 typedef struct
 {
+    ae_vector ia0;
     ae_vector ia1;
     ae_vector ia2;
+    ae_vector ia3;
+    ae_vector ra0;
     ae_vector ra1;
     ae_vector ra2;
+    ae_vector ra3;
 } apbuffers;
 typedef struct
 {
@@ -107,43 +111,9 @@ namespace alglib
 /////////////////////////////////////////////////////////////////////////
 namespace alglib_impl
 {
-void tagsort(/* Real    */ ae_vector* a,
-     ae_int_t n,
-     /* Integer */ ae_vector* p1,
-     /* Integer */ ae_vector* p2,
-     ae_state *_state);
-void tagsortfasti(/* Real    */ ae_vector* a,
-     /* Integer */ ae_vector* b,
-     /* Real    */ ae_vector* bufa,
-     /* Integer */ ae_vector* bufb,
-     ae_int_t n,
-     ae_state *_state);
-void tagsortfastr(/* Real    */ ae_vector* a,
-     /* Real    */ ae_vector* b,
-     /* Real    */ ae_vector* bufa,
-     /* Real    */ ae_vector* bufb,
-     ae_int_t n,
-     ae_state *_state);
-void tagsortfast(/* Real    */ ae_vector* a,
-     /* Real    */ ae_vector* bufa,
-     ae_int_t n,
-     ae_state *_state);
-void tagheappushi(/* Real    */ ae_vector* a,
-     /* Integer */ ae_vector* b,
-     ae_int_t* n,
-     double va,
-     ae_int_t vb,
-     ae_state *_state);
-void tagheapreplacetopi(/* Real    */ ae_vector* a,
-     /* Integer */ ae_vector* b,
-     ae_int_t n,
-     double va,
-     ae_int_t vb,
-     ae_state *_state);
-void tagheappopi(/* Real    */ ae_vector* a,
-     /* Integer */ ae_vector* b,
-     ae_int_t* n,
-     ae_state *_state);
+ae_int_t getrdfserializationcode(ae_state *_state);
+ae_int_t getkdtreeserializationcode(ae_state *_state);
+ae_int_t getmlpserializationcode(ae_state *_state);
 void taskgenint1d(double a,
      double b,
      ae_int_t n,
@@ -174,10 +144,17 @@ ae_bool aredistinct(/* Real    */ ae_vector* x,
 void bvectorsetlengthatleast(/* Boolean */ ae_vector* x,
      ae_int_t n,
      ae_state *_state);
+void ivectorsetlengthatleast(/* Integer */ ae_vector* x,
+     ae_int_t n,
+     ae_state *_state);
 void rvectorsetlengthatleast(/* Real    */ ae_vector* x,
      ae_int_t n,
      ae_state *_state);
 void rmatrixsetlengthatleast(/* Real    */ ae_matrix* x,
+     ae_int_t m,
+     ae_int_t n,
+     ae_state *_state);
+void rmatrixresize(/* Real    */ ae_matrix* x,
      ae_int_t m,
      ae_int_t n,
      ae_state *_state);
@@ -217,9 +194,106 @@ void apperiodicmap(double* x,
      double* k,
      ae_state *_state);
 double boundval(double x, double b1, double b2, ae_state *_state);
+void alloccomplex(ae_serializer* s, ae_complex v, ae_state *_state);
+void serializecomplex(ae_serializer* s, ae_complex v, ae_state *_state);
+ae_complex unserializecomplex(ae_serializer* s, ae_state *_state);
+void allocrealarray(ae_serializer* s,
+     /* Real    */ ae_vector* v,
+     ae_int_t n,
+     ae_state *_state);
+void serializerealarray(ae_serializer* s,
+     /* Real    */ ae_vector* v,
+     ae_int_t n,
+     ae_state *_state);
+void unserializerealarray(ae_serializer* s,
+     /* Real    */ ae_vector* v,
+     ae_state *_state);
+void allocintegerarray(ae_serializer* s,
+     /* Integer */ ae_vector* v,
+     ae_int_t n,
+     ae_state *_state);
+void serializeintegerarray(ae_serializer* s,
+     /* Integer */ ae_vector* v,
+     ae_int_t n,
+     ae_state *_state);
+void unserializeintegerarray(ae_serializer* s,
+     /* Integer */ ae_vector* v,
+     ae_state *_state);
+void allocrealmatrix(ae_serializer* s,
+     /* Real    */ ae_matrix* v,
+     ae_int_t n0,
+     ae_int_t n1,
+     ae_state *_state);
+void serializerealmatrix(ae_serializer* s,
+     /* Real    */ ae_matrix* v,
+     ae_int_t n0,
+     ae_int_t n1,
+     ae_state *_state);
+void unserializerealmatrix(ae_serializer* s,
+     /* Real    */ ae_matrix* v,
+     ae_state *_state);
+void copyintegerarray(/* Integer */ ae_vector* src,
+     /* Integer */ ae_vector* dst,
+     ae_state *_state);
+void copyrealarray(/* Real    */ ae_vector* src,
+     /* Real    */ ae_vector* dst,
+     ae_state *_state);
+void copyrealmatrix(/* Real    */ ae_matrix* src,
+     /* Real    */ ae_matrix* dst,
+     ae_state *_state);
+ae_int_t recsearch(/* Integer */ ae_vector* a,
+     ae_int_t nrec,
+     ae_int_t nheader,
+     ae_int_t i0,
+     ae_int_t i1,
+     /* Integer */ ae_vector* b,
+     ae_state *_state);
 ae_bool _apbuffers_init(apbuffers* p, ae_state *_state, ae_bool make_automatic);
 ae_bool _apbuffers_init_copy(apbuffers* dst, apbuffers* src, ae_state *_state, ae_bool make_automatic);
 void _apbuffers_clear(apbuffers* p);
+void tagsort(/* Real    */ ae_vector* a,
+     ae_int_t n,
+     /* Integer */ ae_vector* p1,
+     /* Integer */ ae_vector* p2,
+     ae_state *_state);
+void tagsortbuf(/* Real    */ ae_vector* a,
+     ae_int_t n,
+     /* Integer */ ae_vector* p1,
+     /* Integer */ ae_vector* p2,
+     apbuffers* buf,
+     ae_state *_state);
+void tagsortfasti(/* Real    */ ae_vector* a,
+     /* Integer */ ae_vector* b,
+     /* Real    */ ae_vector* bufa,
+     /* Integer */ ae_vector* bufb,
+     ae_int_t n,
+     ae_state *_state);
+void tagsortfastr(/* Real    */ ae_vector* a,
+     /* Real    */ ae_vector* b,
+     /* Real    */ ae_vector* bufa,
+     /* Real    */ ae_vector* bufb,
+     ae_int_t n,
+     ae_state *_state);
+void tagsortfast(/* Real    */ ae_vector* a,
+     /* Real    */ ae_vector* bufa,
+     ae_int_t n,
+     ae_state *_state);
+void tagheappushi(/* Real    */ ae_vector* a,
+     /* Integer */ ae_vector* b,
+     ae_int_t* n,
+     double va,
+     ae_int_t vb,
+     ae_state *_state);
+void tagheapreplacetopi(/* Real    */ ae_vector* a,
+     /* Integer */ ae_vector* b,
+     ae_int_t n,
+     double va,
+     ae_int_t vb,
+     ae_state *_state);
+void tagheappopi(/* Real    */ ae_vector* a,
+     /* Integer */ ae_vector* b,
+     ae_int_t* n,
+     ae_state *_state);
 void rankx(/* Real    */ ae_vector* x,
      ae_int_t n,
      apbuffers* buf,
@@ -643,6 +717,7 @@ void mcsrch(ae_int_t n,
      /* Real    */ ae_vector* s,
      double* stp,
      double stpmax,
+     double gtol,
      ae_int_t* info,
      ae_int_t* nfev,
      /* Real    */ ae_vector* wa,
@@ -670,6 +745,12 @@ void _linminstate_clear(linminstate* p);
 ae_bool _armijostate_init(armijostate* p, ae_state *_state, ae_bool make_automatic);
 ae_bool _armijostate_init_copy(armijostate* dst, armijostate* src, ae_state *_state, ae_bool make_automatic);
 void _armijostate_clear(armijostate* p);
+void trimprepare(double f, double* threshold, ae_state *_state);
+void trimfunction(double* f,
+     /* Real    */ ae_vector* g,
+     ae_int_t n,
+     double threshold,
+     ae_state *_state);
 void ftbasegeneratecomplexfftplan(ae_int_t n,
      ftplan* plan,
      ae_state *_state);

@@ -10,9 +10,12 @@
 #include <list>
 #include "fullMatrix.h"
 #include "GRegion.h"
-class MElementOctree;
-
-/*********class VoronoiVertex*********/
+#include "MElementOctree.h"
+#include "ap.h"
+#include "alglibinternal.h"
+#include "alglibmisc.h"
+#include "linalg.h"
+#include "optimization.h"
 
 class VoronoiVertex{
  private:
@@ -24,7 +27,7 @@ class VoronoiVertex{
   int index4;
   SVector3 normal1;
   SVector3 normal2;
-  double rho;
+  double h;
  public:
   VoronoiVertex();
   ~VoronoiVertex();
@@ -36,7 +39,7 @@ class VoronoiVertex{
   int get_index4();
   SVector3 get_normal1();
   SVector3 get_normal2();
-  double get_rho();
+  double get_h();
   void set_point(SPoint3);
   void set_category(int);
   void set_index1(int);
@@ -45,38 +48,34 @@ class VoronoiVertex{
   void set_index4(int);
   void set_normal1(SVector3);
   void set_normal2(SVector3);
-  void set_rho(double);
+  void set_h(double);
 };
 
-/*********class Metric*********/
-
-class Metric{
+class Tensor{
  private:
-  double m11,m12,m13,m21,m22,m23,m31,m32,m33;
+  double t11,t12,t13,t21,t22,t23,t31,t32,t33;
  public:
-  Metric();
-  ~Metric();
-  void set_m11(double);
-  void set_m12(double);
-  void set_m13(double);
-  void set_m21(double);
-  void set_m22(double);
-  void set_m23(double);
-  void set_m31(double);
-  void set_m32(double);
-  void set_m33(double);
-  double get_m11();	
-  double get_m12();	
-  double get_m13();	
-  double get_m21();
-  double get_m22();
-  double get_m23();
-  double get_m31();
-  double get_m32();
-  double get_m33();
+  Tensor();
+  ~Tensor();
+  void set_t11(double);
+  void set_t12(double);
+  void set_t13(double);
+  void set_t21(double);
+  void set_t22(double);
+  void set_t23(double);
+  void set_t31(double);
+  void set_t32(double);
+  void set_t33(double);
+  double get_t11();	
+  double get_t12();	
+  double get_t13();	
+  double get_t21();
+  double get_t22();
+  double get_t23();
+  double get_t31();
+  double get_t32();
+  double get_t33();
 };
-
-/*********class VoronoiElement*********/
 
 class VoronoiElement{
  private:
@@ -85,10 +84,10 @@ class VoronoiElement{
   VoronoiVertex v3;
   VoronoiVertex v4;
   double jacobian;
-  double drho_dx;
-  double drho_dy;
-  double drho_dz;
-  Metric m;
+  double dh_dx;
+  double dh_dy;
+  double dh_dz;
+  Tensor t;
  public:
   VoronoiElement();
   ~VoronoiElement();
@@ -97,92 +96,34 @@ class VoronoiElement{
   VoronoiVertex get_v3();
   VoronoiVertex get_v4();
   double get_jacobian();
-  double get_drho_dx();
-  double get_drho_dy();
-  double get_drho_dz();
-  Metric get_metric();
+  double get_dh_dx();
+  double get_dh_dy();
+  double get_dh_dz();
+  Tensor get_tensor();
   void set_v1(VoronoiVertex);
   void set_v2(VoronoiVertex);
   void set_v3(VoronoiVertex);
   void set_v4(VoronoiVertex);
-  void set_metric(Metric);
-  double get_rho(double,double,double);
-  void deriv_rho();
+  void set_tensor(Tensor);
+  double get_h(double,double,double);
+  void deriv_h();
   void compute_jacobian();
   double T(double,double,double,double,double,double,double);
-  double h_to_rho(double,int);
   void swap();
+  double get_quality();
 };
-
-/*********class LpCVT*********/
-
-class LpCVT{
- private:
-  std::list<VoronoiElement> clipped;
-  fullMatrix<double> gauss_points;
-  fullMatrix<double> gauss_weights;
-  int gauss_num;
- public:
-  LpCVT();
-  ~LpCVT();
-  void swap();
-  void compute_parameters(int);
-  void get_gauss();
-  double F(VoronoiElement,int);
-  SVector3 simple(VoronoiElement,int);
-  SVector3 dF_dC1(VoronoiElement,int);
-  SVector3 dF_dC2(VoronoiElement,int);
-  SVector3 dF_dC3(VoronoiElement,int);
-  double f(SPoint3,SPoint3,Metric,int);
-  double df_dx(SPoint3,SPoint3,Metric,int);
-  double df_dy(SPoint3,SPoint3,Metric,int);
-  double df_dz(SPoint3,SPoint3,Metric,int);
-  SVector3 bisectors3(SVector3,SPoint3,SPoint3,SPoint3,SPoint3,SPoint3);
-  SVector3 bisectors2(SVector3,SPoint3,SPoint3,SPoint3,SPoint3,SVector3);
-  SVector3 bisectors1(SVector3,SPoint3,SPoint3,SPoint3,SVector3,SVector3);
-  void clear();
-};
-
-/*********class LpSmoother*********/
 
 class LpSmoother{
  private:
   int max_iter;
   int norm;
+  static std::vector<MVertex*> interior_vertices;
  public:
   LpSmoother(int,int);
   ~LpSmoother();
   void improve_model();
   void improve_region(GRegion*);
+  double get_size(double,double,double);
+  static int get_nbr_interior_vertices();
+  static MVertex* get_interior_vertex(int);
 };
-
-/*********class Wrap*********/
-
-class Wrap{
- private:
-  int p;
-  int dimension;
-  int iteration;
-  int max_iteration;
-  double initial_energy;
-  MElementOctree* octree;
- public:
-  Wrap();
-  ~Wrap();
-  int get_p();
-  int get_dimension();
-  int get_iteration();
-  int get_max_iteration();
-  double get_initial_energy();
-  MElementOctree* get_octree();
-  void set_p(int);
-  void set_dimension(int);
-  void set_iteration(int);
-  void set_max_iteration(int);
-  void set_initial_energy(double);
-  void set_octree(MElementOctree*);
-};
-
-/*********functions*********/
-
-bool inside_domain(MElementOctree*,double,double,double);

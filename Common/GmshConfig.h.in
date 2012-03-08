@@ -54,6 +54,8 @@
 #cmakedefine HAVE_SOLVER
 #cmakedefine HAVE_TAUCS
 #cmakedefine HAVE_TETGEN
+#cmakedefine HAVE_RTREE
+#cmakedefine HAVE_Voro3D
 
 #define GMSH_CONFIG_OPTIONS "${GMSH_CONFIG_OPTIONS}"
 
