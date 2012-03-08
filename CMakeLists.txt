@@ -493,17 +493,6 @@ if(ENABLE_BFGS)
   set_config_option(HAVE_BFGS "Bfgs")
 endif(ENABLE_BFGS)
 
-if(ENABLE_RTREE)
-  include_directories(contrib/rtree)
-  set_config_option(HAVE_RTREE "RTree")
-endif(ENABLE_RTREE)
-
-if(ENABLE_VORO3D)
-  add_subdirectory(contrib/voro++)
-  include_directories(contrib/voro++/src)
-  set_config_option(HAVE_VORO3D "Voro3D")
-endif(ENABLE_VORO3D)
-
 if(ENABLE_DINTEGRATION)
   add_subdirectory(contrib/DiscreteIntegration)
   include_directories(contrib/DiscreteIntegration)
@@ -559,6 +548,17 @@ if(HAVE_MESH OR HAVE_SOLVER)
 endif(HAVE_MESH OR HAVE_SOLVER)
 
 if(HAVE_MESH)
+  if(ENABLE_RTREE)
+    include_directories(contrib/rtree)
+    set_config_option(HAVE_RTREE "RTree")
+  endif(ENABLE_RTREE)
+
+  if(ENABLE_VORO3D)
+    add_subdirectory(contrib/voro++)
+    include_directories(contrib/voro++/src)
+    set_config_option(HAVE_VORO3D "Voro3D")
+  endif(ENABLE_VORO3D)
+
   if(ENABLE_BLOSSOM)
     add_subdirectory(contrib/blossom)
     include_directories(contrib/blossom/MATCH contrib/blossom/concorde97
