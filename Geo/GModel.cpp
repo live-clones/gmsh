@@ -2066,9 +2066,9 @@ void GModel::save(std::string fileName)
   GModel::setCurrent(temp);
 }
 
-GFaceCompound* GModel::addCompoundFace(std::vector<GFace*> faces, int param, int typeS)
+GFace* GModel::addCompoundFace(std::vector<GFace*> faces, int param, int typeS)
 {
-
+#if defined(HAVE_SOLVER)
   int num =  getMaxElementaryNumber(2) + 1;
 
   std::list<GFace*> comp(faces.begin(), faces.end());
@@ -2085,9 +2085,10 @@ GFaceCompound* GModel::addCompoundFace(std::vector<GFace*> faces, int param, int
   GFaceCompound *gfc = new GFaceCompound(this, num, comp, U0, typ, typeS);
 
   add(gfc);
-
   return gfc;
-
+#else
+  return 0;
+#endif
 }
 
 GVertex *GModel::addVertex(double x, double y, double z, double lc)

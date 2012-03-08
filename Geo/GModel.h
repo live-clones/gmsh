@@ -436,7 +436,6 @@ class GModel
   void setFactory(std::string name);
 
   // create brep geometry entities using the factory
-  GFaceCompound *addCompoundFace(std::vector<GFace*> faces, int typeP, int typeS);
   GVertex *addVertex(double x, double y, double z, double lc);
   GEdge *addLine(GVertex *v1, GVertex *v2);
   GEdge *addCircleArcCenter(double x, double y, double z, GVertex *start, GVertex *end);
@@ -456,6 +455,7 @@ class GModel
   void addRuledFaces(std::vector<std::vector<GEdge *> > edges);
   GFace *addFace(std::vector<GEdge *> edges, std::vector< std::vector<double > > points);
   GFace *addPlanarFace(std::vector<std::vector<GEdge *> > edges);
+  GFace *addCompoundFace(std::vector<GFace*> faces, int typeP, int typeS);
   GRegion *addVolume(std::vector<std::vector<GFace*> > faces);
 
   // create solid geometry primitives using the factory
