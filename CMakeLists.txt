@@ -986,6 +986,7 @@ set(GMSH_EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} CACHE
 
 # group sources for easier navigation in IDEs
 foreach(DIR ${GMSH_DIRS})
+  string(REGEX REPLACE "\\+" "\\\\+" DIR ${DIR})
   source_group(${DIR} REGULAR_EXPRESSION ${DIR}/.*)
 endforeach(DIR)
 
