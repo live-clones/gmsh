@@ -494,7 +494,6 @@ if(ENABLE_BFGS)
 endif(ENABLE_BFGS)
 
 if(ENABLE_RTREE)
-  add_subdirectory(contrib/rtree)
   include_directories(contrib/rtree)
   set_config_option(HAVE_RTREE "RTree")
 endif(ENABLE_RTREE)

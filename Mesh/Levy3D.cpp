@@ -10,6 +10,12 @@
 
 #if defined(HAVE_BFGS)
 
+#include "ap.h"
+#include "alglibinternal.h"
+#include "alglibmisc.h"
+#include "linalg.h"
+#include "optimization.h"
+
 #include "Levy3D.h"
 #include "polynomialBasis.h"
 #include "GModel.h"
@@ -121,7 +127,7 @@ void call_back(const alglib::real_1d_array& x,double& func,alglib::real_1d_array
   std::vector<SPoint3> bank;
   std::vector<int> movability;
   std::vector<SVector3> gradients;
-  
+
   w = static_cast<Wrap*>(ptr);
   p = w->get_p();
   dimension = w->get_dimension();
@@ -133,14 +139,14 @@ void call_back(const alglib::real_1d_array& x,double& func,alglib::real_1d_array
   octree = w->get_octree();
   error1 = 0;
   error2 = 0;
-  
+
   bank.resize(size);
   movability.resize(size);
   for(i=0;i<size;i++){
     bank[i] = w->get_bank(i);
     movability[i] = w->get_movability(i);
   }
-	
+
   for(i=0;i<dimension/3;i++){
     bank[i+offset] = SPoint3(x[i],x[i+(dimension/3)],x[i+(2*dimension/3)]);
 	flag = inside_domain(octree,x[i],x[i+(dimension/3)],x[i+(2*dimension/3)]);
@@ -149,12 +155,12 @@ void call_back(const alglib::real_1d_array& x,double& func,alglib::real_1d_array
 	  printf("Vertices outside domain.\n");
 	}
   }
-	
+
   if(iteration>max_iteration){
     error2 = 1;
 	printf("Maximum number of iterations reached.\n");
   }
-	
+
   if(!error1 && !error2){
     gradients.resize(dimension/3);
     obj.get_gauss();
@@ -172,7 +178,7 @@ void call_back(const alglib::real_1d_array& x,double& func,alglib::real_1d_array
 	  grad[i] = 0.0;
 	}
   }
-	
+
   if(initial_energy>0.0 && !error1 && !error2){
     printf("%d %.9f\n",iteration,100.0*(initial_energy-energy)/initial_energy);
 	w->set_iteration(iteration+1);
@@ -190,7 +196,7 @@ VoronoiVertex::VoronoiVertex(){
   index3 = -1;
   index4 = -1;
   normal1 = SVector3(0.0,0.0,0.0);
-  normal2 = SVector3(0.0,0.0,0.0);	
+  normal2 = SVector3(0.0,0.0,0.0);
 }
 
 VoronoiVertex::~VoronoiVertex(){}
@@ -278,7 +284,7 @@ Tensor::Tensor(){
   t23 = 0.0;
   t31 = 0.0;
   t32 = 0.0;
-  t33 = 1.0;	
+  t33 = 1.0;
 }
 
 Tensor::~Tensor(){}
@@ -423,7 +429,7 @@ double VoronoiElement::get_h(double u,double v,double w){
   double h3;
   double h4;
   double h;
-	
+
   h1 = v1.get_h();
   h2 = v2.get_h();
   h3 = v3.get_h();
@@ -464,7 +470,7 @@ void VoronoiElement::deriv_h(){
   SPoint3 p2;
   SPoint3 p3;
   SPoint3 p4;
-	 
+
   p1 = v1.get_point();
   p2 = v2.get_point();
   p3 = v3.get_point();
@@ -509,7 +515,7 @@ void VoronoiElement::deriv_h(){
   du_dz = b31/jacobian2;
   dv_dz = b32/jacobian2;
   dw_dz = b33/jacobian2;
-	
+
   h1 = v1.get_h();
   h2 = v2.get_h();
   h3 = v3.get_h();
@@ -517,7 +523,7 @@ void VoronoiElement::deriv_h(){
   dh_du = h2-h1;
   dh_dv = h3-h1;
   dh_dw = h4-h1;
-  
+
   dh_dx = dh_du*du_dx + dh_dv*dv_dx + dh_dw*dw_dx;
   dh_dy = dh_du*du_dy + dh_dv*dv_dy + dh_dw*dw_dy;
   dh_dz = dh_du*du_dz + dh_dv*dv_dz + dh_dw*dw_dz;
@@ -532,7 +538,7 @@ void VoronoiElement::compute_jacobian(){
   SPoint3 p2;
   SPoint3 p3;
   SPoint3 p4;
-	
+
   p1 = v1.get_point();
   p2 = v2.get_point();
   p3 = v3.get_point();
@@ -576,22 +582,22 @@ double VoronoiElement::get_quality(){
   double quality;
   double min_l,max_l;
   double l[6];
-	
+
   l[0] = v1.get_point().distance(v2.get_point());
   l[1] = v1.get_point().distance(v3.get_point());
   l[2] = v1.get_point().distance(v4.get_point());
   l[3] = v2.get_point().distance(v3.get_point());
   l[4] = v2.get_point().distance(v4.get_point());
   l[5] = v3.get_point().distance(v4.get_point());
-	
+
   min_l = 1000000.0;
   max_l = -1000000.0;
-	
+
   for(i=0;i<6;i++){
     min_l = std::min(min_l,l[i]);
 	max_l = std::max(max_l,l[i]);
   }
-	
+
   quality = min_l/max_l;
   return quality;
 }
@@ -700,36 +706,36 @@ void LpCVT::verification(std::vector<SPoint3>& bank,std::vector<int>& movability
   double front,back;
   double e;
   std::vector<SVector3> gradients;
- 
+
   gradients.resize(bank.size()-offset);
   e = 0.0001;
   srand(time(NULL));
   index = rand()%(bank.size()-offset) + offset;
-	
+
   bank[index] = SPoint3(bank[index].x()+e,bank[index].y(),bank[index].z());
   eval(bank,movability,offset,gradients,right,p);
   bank[index] = SPoint3(bank[index].x()-e,bank[index].y(),bank[index].z());
-	
+
   bank[index] = SPoint3(bank[index].x()-e,bank[index].y(),bank[index].z());
   eval(bank,movability,offset,gradients,left,p);
   bank[index] = SPoint3(bank[index].x()+e,bank[index].y(),bank[index].z());
-	
+
   bank[index] = SPoint3(bank[index].x(),bank[index].y()+e,bank[index].z());
   eval(bank,movability,offset,gradients,up,p);
   bank[index] = SPoint3(bank[index].x(),bank[index].y()-e,bank[index].z());
-	
+
   bank[index] = SPoint3(bank[index].x(),bank[index].y()-e,bank[index].z());
   eval(bank,movability,offset,gradients,down,p);
   bank[index] = SPoint3(bank[index].x(),bank[index].y()+e,bank[index].z());
-	
+
   bank[index] = SPoint3(bank[index].x(),bank[index].y(),bank[index].z()+e);
   eval(bank,movability,offset,gradients,front,p);
   bank[index] = SPoint3(bank[index].x(),bank[index].y(),bank[index].z()-e);
-	
+
   bank[index] = SPoint3(bank[index].x(),bank[index].y(),bank[index].z()-e);
   eval(bank,movability,offset,gradients,back,p);
   bank[index] = SPoint3(bank[index].x(),bank[index].y(),bank[index].z()+e);
-	
+
   eval(bank,movability,offset,gradients,energy,p);
 
   printf("...%f  %f  %f\n",gradients[index-offset].x(),gradients[index-offset].y(),gradients[index-offset].z());
@@ -745,18 +751,18 @@ void LpCVT::eval(std::vector<SPoint3>& bank,std::vector<int>& movability,int off
   double e;
   SVector3 grad1,grad2,grad3;
   clip approx;
-	
+
   for(i=0;i<gradients.size();i++){
     gradients[i] = SVector3(0.0,0.0,0.0);
   }
   energy = 0.0;
   e = 0.000001;
-	
+
   clipped.clear();
   approx.execute(bank,clipped);
   swap();
   compute_parameters();
-	
+
   for(i=0;i<clipped.size();i++){
 	if(clipped[i].get_quality()<e) continue;
     energy = energy + F(clipped[i],p);
@@ -823,12 +829,12 @@ void LpCVT::compute_parameters(){
   double h1,h2,h3,h4;
   Tensor t;
   VoronoiVertex v1,v2,v3,v4;
-	
+
   for(i=0;i<clipped.size();i++){
     v1 = clipped[i].get_v1();
 	v2 = clipped[i].get_v2();
 	v3 = clipped[i].get_v3();
-	v4 = clipped[i].get_v4(); 
+	v4 = clipped[i].get_v4();
 	h1 = get_size(clipped[i].get_v1().get_point().x(),clipped[i].get_v1().get_point().y(),clipped[i].get_v1().get_point().z());
 	h2 = get_size(clipped[i].get_v2().get_point().x(),clipped[i].get_v2().get_point().y(),clipped[i].get_v2().get_point().z());
 	h3 = get_size(clipped[i].get_v3().get_point().x(),clipped[i].get_v3().get_point().y(),clipped[i].get_v3().get_point().z());
@@ -858,19 +864,19 @@ Tensor LpCVT::get_tensor(double x,double y,double z){
 
   angle = atan2(z,x);
   t = Tensor();
-	
+
   t.set_t11(1.0);
   t.set_t12(0.0);
   t.set_t13(0.0);
-  
+
   t.set_t21(0.0);
   t.set_t22(1.0);
   t.set_t23(0.0);
-  
+
   t.set_t31(0.0);
   t.set_t32(0.0);
   t.set_t33(1.0);
-	
+
   return t;
 }
 
@@ -887,7 +893,7 @@ double LpCVT::get_drho_dx(double x,double y,double z,int p){
   less1 = h_to_rho(get_size(x-e,y,z),p);
   plus1 = h_to_rho(get_size(x+e,y,z),p);
   plus2 = h_to_rho(get_size(x+2.0*e,y,z),p);
-	
+
   val = (less2 - 8.0*less1 + 8.0*plus1 - plus2)/(12.0*e);
   return val;
 }
@@ -899,13 +905,13 @@ double LpCVT::get_drho_dy(double x,double y,double z,int p){
   double plus1;
   double plus2;
   double val;
-	
+
   e = 0.000001;
   less2 = h_to_rho(get_size(x,y-2.0*e,z),p);
   less1 = h_to_rho(get_size(x,y-e,z),p);
   plus1 = h_to_rho(get_size(x,y+e,z),p);
   plus2 = h_to_rho(get_size(x,y+2.0*e,z),p);
-	
+
   val = (less2 - 8.0*less1 + 8.0*plus1 - plus2)/(12.0*e);
   return val;
 }
@@ -917,15 +923,15 @@ double LpCVT::get_drho_dz(double x,double y,double z,int p){
   double plus1;
   double plus2;
   double val;
-	
+
   e = 0.000001;
   less2 = h_to_rho(get_size(x,y,z-2.0*e),p);
   less1 = h_to_rho(get_size(x,y,z-e),p);
   plus1 = h_to_rho(get_size(x,y,z+e),p);
   plus2 = h_to_rho(get_size(x,y,z+2.0*e),p);
-	
+
   val = (less2 - 8.0*less1 + 8.0*plus1 - plus2)/(12.0*e);
-  return val;	
+  return val;
 }
 
 double LpCVT::h_to_rho(double h,int p){
@@ -935,9 +941,9 @@ double LpCVT::h_to_rho(double h,int p){
 }
 
 void LpCVT::swap(){
-  int i;	
+  int i;
   for(i=0;i<clipped.size();i++){
-    clipped[i].swap();		
+    clipped[i].swap();
   }
 }
 
@@ -958,7 +964,7 @@ double LpCVT::F(VoronoiElement element,int p){
   SPoint3 point,generator,C1,C2,C3;
   VoronoiVertex v1,v2,v3,v4;
   Tensor t;
-	
+
   v1 = element.get_v1();
   v2 = element.get_v2();
   v3 = element.get_v3();
@@ -969,7 +975,7 @@ double LpCVT::F(VoronoiElement element,int p){
   C3 = v4.get_point();
   energy = 0.0;
   t = element.get_tensor();
-	
+
   for(i=0;i<gauss_num;i++){
     u = gauss_points(i,0);
 	v = gauss_points(i,1);
@@ -997,7 +1003,7 @@ SVector3 LpCVT::simple(VoronoiElement element,int p){
   SPoint3 point,generator,C1,C2,C3;
   VoronoiVertex v1,v2,v3,v4;
   Tensor t;
-	
+
   v1 = element.get_v1();
   v2 = element.get_v2();
   v3 = element.get_v3();
@@ -1011,7 +1017,7 @@ SVector3 LpCVT::simple(VoronoiElement element,int p){
   comp_z = 0.0;
   jacobian = element.get_jacobian();
   t = element.get_tensor();
-	
+
   for(i=0;i<gauss_num;i++){
     u = gauss_points(i,0);
 	v = gauss_points(i,1);
@@ -1046,7 +1052,7 @@ SVector3 LpCVT::dF_dC1(VoronoiElement element,int p){
   SPoint3 point,generator,C1,C2,C3;
   VoronoiVertex v1,v2,v3,v4;
   Tensor t;
-	
+
   v1 = element.get_v1();
   v2 = element.get_v2();
   v3 = element.get_v3();
@@ -1063,7 +1069,7 @@ SVector3 LpCVT::dF_dC1(VoronoiElement element,int p){
   gx = generator.x();
   gy = generator.y();
   gz = generator.z();
-	
+
   for(i=0;i<gauss_num;i++){
     u = gauss_points(i,0);
 	v = gauss_points(i,1);
@@ -1087,7 +1093,7 @@ SVector3 LpCVT::dF_dC1(VoronoiElement element,int p){
 	comp_z = comp_z + weight*rho*df_dz(point,generator,t,p)*u*jacobian;
 	comp_z = comp_z + weight*rho*distance*((C2.x()-gx)*(C3.y()-gy) - (C3.x()-gx)*(C2.y()-gy));
 	comp_z = comp_z + weight*drho_dz*u*distance*jacobian;
-  }		
+  }
   return SVector3(comp_x,comp_y,comp_z);
 }
 
@@ -1105,7 +1111,7 @@ SVector3 LpCVT::dF_dC2(VoronoiElement element,int p){
   SPoint3 point,generator,C1,C2,C3;
   VoronoiVertex v1,v2,v3,v4;
   Tensor t;
-	
+
   v1 = element.get_v1();
   v2 = element.get_v2();
   v3 = element.get_v3();
@@ -1122,7 +1128,7 @@ SVector3 LpCVT::dF_dC2(VoronoiElement element,int p){
   gx = generator.x();
   gy = generator.y();
   gz = generator.z();
-	
+
   for(i=0;i<gauss_num;i++){
     u = gauss_points(i,0);
 	v = gauss_points(i,1);
@@ -1146,7 +1152,7 @@ SVector3 LpCVT::dF_dC2(VoronoiElement element,int p){
 	comp_z = comp_z + weight*rho*df_dz(point,generator,t,p)*v*jacobian;
 	comp_z = comp_z + weight*rho*distance*((C3.x()-gx)*(C1.y()-gy) - (C1.x()-gx)*(C3.y()-gy));
 	comp_z = comp_z + weight*drho_dz*v*distance*jacobian;
-  }		
+  }
   return SVector3(comp_x,comp_y,comp_z);
 }
 
@@ -1164,7 +1170,7 @@ SVector3 LpCVT::dF_dC3(VoronoiElement element,int p){
   SPoint3 point,generator,C1,C2,C3;
   VoronoiVertex v1,v2,v3,v4;
   Tensor t;
-	
+
   v1 = element.get_v1();
   v2 = element.get_v2();
   v3 = element.get_v3();
@@ -1181,7 +1187,7 @@ SVector3 LpCVT::dF_dC3(VoronoiElement element,int p){
   gx = generator.x();
   gy = generator.y();
   gz = generator.z();
-	
+
   for(i=0;i<gauss_num;i++){
     u = gauss_points(i,0);
 	v = gauss_points(i,1);
@@ -1205,7 +1211,7 @@ SVector3 LpCVT::dF_dC3(VoronoiElement element,int p){
 	comp_z = comp_z + weight*rho*df_dz(point,generator,t,p)*w*jacobian;
 	comp_z = comp_z + weight*rho*distance*((C1.x()-gx)*(C2.y()-gy) - (C2.x()-gx)*(C1.y()-gy));
 	comp_z = comp_z + weight*drho_dz*w*distance*jacobian;
-  }		
+  }
   return SVector3(comp_x,comp_y,comp_z);
 }
 
@@ -1217,7 +1223,7 @@ double LpCVT::f(SPoint3 p1,SPoint3 p2,Tensor t,int p){
   double t31,t32,t33;
   double val1,val2,val3;
   double val;
-	
+
   x1 = p1.x();
   y1 = p1.y();
   z1 = p1.z();
@@ -1232,7 +1238,7 @@ double LpCVT::f(SPoint3 p1,SPoint3 p2,Tensor t,int p){
   t23 = t.get_t23();
   t31 = t.get_t31();
   t32 = t.get_t32();
-  t33 = t.get_t33();	
+  t33 = t.get_t33();
   val1 = t11*x1 + t12*y1 + t13*z1 - t11*x2 - t12*y2 - t13*z2;
   val2 = t21*x1 + t22*y1 + t23*z1 - t21*x2 - t22*y2 - t23*z2;
   val3 = t31*x1 + t32*y1 + t33*z1 - t31*x2 - t32*y2 - t33*z2;
@@ -1248,7 +1254,7 @@ double LpCVT::df_dx(SPoint3 p1,SPoint3 p2,Tensor t,int p){
   double t31,t32,t33;
   double val1,val2,val3;
   double val;
-	
+
   x1 = p1.x();
   y1 = p1.y();
   z1 = p1.z();
@@ -1263,7 +1269,7 @@ double LpCVT::df_dx(SPoint3 p1,SPoint3 p2,Tensor t,int p){
   t23 = t.get_t23();
   t31 = t.get_t31();
   t32 = t.get_t32();
-  t33 = t.get_t33();	
+  t33 = t.get_t33();
   val1 = t11*x1 + t12*y1 + t13*z1 - t11*x2 - t12*y2 - t13*z2;
   val2 = t21*x1 + t22*y1 + t23*z1 - t21*x2 - t22*y2 - t23*z2;
   val3 = t31*x1 + t32*y1 + t33*z1 - t31*x2 - t32*y2 - t33*z2;
@@ -1279,7 +1285,7 @@ double LpCVT::df_dy(SPoint3 p1,SPoint3 p2,Tensor t,int p){
   double t31,t32,t33;
   double val1,val2,val3;
   double val;
-	
+
   x1 = p1.x();
   y1 = p1.y();
   z1 = p1.z();
@@ -1294,7 +1300,7 @@ double LpCVT::df_dy(SPoint3 p1,SPoint3 p2,Tensor t,int p){
   t23 = t.get_t23();
   t31 = t.get_t31();
   t32 = t.get_t32();
-  t33 = t.get_t33();	
+  t33 = t.get_t33();
   val1 = t11*x1 + t12*y1 + t13*z1 - t11*x2 - t12*y2 - t13*z2;
   val2 = t21*x1 + t22*y1 + t23*z1 - t21*x2 - t22*y2 - t23*z2;
   val3 = t31*x1 + t32*y1 + t33*z1 - t31*x2 - t32*y2 - t33*z2;
@@ -1310,7 +1316,7 @@ double LpCVT::df_dz(SPoint3 p1,SPoint3 p2,Tensor t,int p){
   double t31,t32,t33;
   double val1,val2,val3;
   double val;
-	
+
   x1 = p1.x();
   y1 = p1.y();
   z1 = p1.z();
@@ -1325,7 +1331,7 @@ double LpCVT::df_dz(SPoint3 p1,SPoint3 p2,Tensor t,int p){
   t23 = t.get_t23();
   t31 = t.get_t31();
   t32 = t.get_t32();
-  t33 = t.get_t33();	
+  t33 = t.get_t33();
   val1 = t11*x1 + t12*y1 + t13*z1 - t11*x2 - t12*y2 - t13*z2;
   val2 = t21*x1 + t22*y1 + t23*z1 - t21*x2 - t22*y2 - t23*z2;
   val3 = t31*x1 + t32*y1 + t33*z1 - t31*x2 - t32*y2 - t33*z2;
@@ -1339,13 +1345,13 @@ SVector3 LpCVT::bisectors3(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SPoint3
   fullMatrix<double> M(3,3);
   fullMatrix<double> _dIdC(1,3);
   fullMatrix<double> _val(1,3);
-  A(0,0) = x1.x() - x0.x(); 
+  A(0,0) = x1.x() - x0.x();
   A(0,1) = x1.y() - x0.y();
   A(0,2) = x1.z() - x0.z();
-  A(1,0) = x2.x() - x0.x(); 
+  A(1,0) = x2.x() - x0.x();
   A(1,1) = x2.y() - x0.y();
   A(1,2) = x2.z() - x0.z();
-  A(2,0) = x3.x() - x0.x(); 
+  A(2,0) = x3.x() - x0.x();
   A(2,1) = x3.y() - x0.y();
   A(2,2) = x3.z() - x0.z();
   A.invertInPlace();
@@ -1363,7 +1369,7 @@ SVector3 LpCVT::bisectors3(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SPoint3
   _dIdC(0,1) = dIdC.y();
   _dIdC(0,2) = dIdC.z();
   _dIdC.mult_naive(M,_val);
-  return SVector3(_val(0,0),_val(0,1),_val(0,2));	
+  return SVector3(_val(0,0),_val(0,1),_val(0,2));
 }
 
 SVector3 LpCVT::bisectors2(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SPoint3 x2,SVector3 normal1){
@@ -1372,13 +1378,13 @@ SVector3 LpCVT::bisectors2(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SPoint3
   fullMatrix<double> M(3,3);
   fullMatrix<double> _dIdC(1,3);
   fullMatrix<double> _val(1,3);
-  A(0,0) = x1.x() - x0.x(); 
+  A(0,0) = x1.x() - x0.x();
   A(0,1) = x1.y() - x0.y();
   A(0,2) = x1.z() - x0.z();
-  A(1,0) = x2.x() - x0.x(); 
+  A(1,0) = x2.x() - x0.x();
   A(1,1) = x2.y() - x0.y();
   A(1,2) = x2.z() - x0.z();
-  A(2,0) = normal1.x(); 
+  A(2,0) = normal1.x();
   A(2,1) = normal1.y();
   A(2,2) = normal1.z();
   A.invertInPlace();
@@ -1396,7 +1402,7 @@ SVector3 LpCVT::bisectors2(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SPoint3
   _dIdC(0,1) = dIdC.y();
   _dIdC(0,2) = dIdC.z();
   _dIdC.mult_naive(M,_val);
-  return SVector3(_val(0,0),_val(0,1),_val(0,2));	
+  return SVector3(_val(0,0),_val(0,1),_val(0,2));
 }
 
 SVector3 LpCVT::bisectors1(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SVector3 normal1,SVector3 normal2){
@@ -1405,13 +1411,13 @@ SVector3 LpCVT::bisectors1(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SVector
   fullMatrix<double> M(3,3);
   fullMatrix<double> _dIdC(1,3);
   fullMatrix<double> _val(1,3);
-  A(0,0) = x1.x() - x0.x(); 
+  A(0,0) = x1.x() - x0.x();
   A(0,1) = x1.y() - x0.y();
   A(0,2) = x1.z() - x0.z();
-  A(1,0) = normal1.x(); 
+  A(1,0) = normal1.x();
   A(1,1) = normal1.y();
   A(1,2) = normal1.z();
-  A(2,0) = normal2.x(); 
+  A(2,0) = normal2.x();
   A(2,1) = normal2.y();
   A(2,2) = normal2.z();
   A.invertInPlace();
@@ -1429,7 +1435,7 @@ SVector3 LpCVT::bisectors1(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SVector
   _dIdC(0,1) = dIdC.y();
   _dIdC(0,2) = dIdC.z();
   _dIdC.mult_naive(M,_val);
-  return SVector3(_val(0,0),_val(0,1),_val(0,2));	
+  return SVector3(_val(0,0),_val(0,1),_val(0,2));
 }
 
 void LpCVT::clear(){
@@ -1449,7 +1455,7 @@ void LpSmoother::improve_model(){
   GRegion* gr;
   GModel* model = GModel::current();
   GModel::riter it;
-	
+
   for(it=model->firstRegion();it!=model->lastRegion();it++)
   {
     gr = *it;
@@ -1486,8 +1492,8 @@ void LpSmoother::improve_region(GRegion* gr){
   alglib::real_1d_array x;
   alglib::real_1d_array alglib_scales;
 
-  octree = new MElementOctree(gr->model());	
-	
+  octree = new MElementOctree(gr->model());
+
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
 	v1 = element->getVertex(0);
@@ -1500,7 +1506,7 @@ void LpSmoother::improve_region(GRegion* gr){
 	  unmovable2.insert(v3);
 	  unmovable2.insert(v4);
 	}
-  }	
+  }
 
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
@@ -1520,7 +1526,7 @@ void LpSmoother::improve_region(GRegion* gr){
 	if(unmovable2.find(v4)==unmovable2.end()){
       movable2.insert(v4);
 	}
-  }		
+  }
 
   for(it=unmovable2.begin();it!=unmovable2.end();it++){
     unmovable.push_back(*it);
@@ -1531,18 +1537,18 @@ void LpSmoother::improve_region(GRegion* gr){
   }
 
   offset = unmovable.size();
-		
+
   for(i=0;i<unmovable.size();i++){
 	point = SPoint3(unmovable[i]->x(),unmovable[i]->y(),unmovable[i]->z());
 	bank.push_back(point);
 	movability.push_back(0);
   }
-	
+
   for(i=0;i<movable.size();i++){
     point = SPoint3(movable[i]->x(),movable[i]->y(),movable[i]->z());
 	bank.push_back(point);
 	movability.push_back(1);
-  }	
+  }
 
   w = Wrap();
   w.set_p(norm);
@@ -1556,7 +1562,7 @@ void LpSmoother::improve_region(GRegion* gr){
   for(i=0;i<bank.size();i++) w.set_bank(bank[i],i);
   for(i=0;i<bank.size();i++) w.set_movability(movability[i],i);
 
-  //if((bank.size()-offset)>1){	
+  //if((bank.size()-offset)>1){
     //LpCVT obj;
     //obj.get_gauss();
     //obj.verification(bank,movability,offset,6);
@@ -1566,7 +1572,7 @@ void LpSmoother::improve_region(GRegion* gr){
   epsf = 0;
   epsx = 0;
   maxits = max_iter;
-  
+
   double initial_conditions[3*(bank.size()-offset)];
   double scales[3*(bank.size()-offset)];
   factor = 2.0;
@@ -1581,7 +1587,7 @@ void LpSmoother::improve_region(GRegion* gr){
   x.setcontent(3*(bank.size()-offset),initial_conditions);
   alglib_scales.setcontent(3*(bank.size()-offset),scales);
 
-  if((bank.size()-offset)>1){	
+  if((bank.size()-offset)>1){
     minlbfgscreate(3*(bank.size()-offset),4,x,state);
 	minlbfgssetscale(state,alglib_scales);
 	minlbfgssetprecscale(state);
@@ -1600,15 +1606,15 @@ void LpSmoother::improve_region(GRegion* gr){
 	  vertex = new MVertex(unmovable[i]->x(),unmovable[i]->y(),unmovable[i]->z(),gr,0);
 	  interior_vertices.push_back(vertex);
 	}
-  }	
-		
+  }
+
   deleter(gr);
   std::vector<GRegion*> regions;
   regions.push_back(gr);
   meshGRegion mesher(regions); //?
   mesher(gr); //?
   MeshDelaunayVolume(regions);
-  
+
   for(i=0;i<interior_vertices.size();i++) delete interior_vertices[i];
   interior_vertices.clear();
   delete octree;
@@ -1621,7 +1627,7 @@ double LpSmoother::get_size(double x,double y,double z){
 int LpSmoother::get_nbr_interior_vertices(){
   return interior_vertices.size();
 }
- 
+
 MVertex* LpSmoother::get_interior_vertex(int i){
   return interior_vertices[i];
 }

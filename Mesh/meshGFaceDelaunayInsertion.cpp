@@ -887,15 +887,17 @@ void bowyerWatson(GFace *gf)
                    vSizesBGM, vMetricsBGM, AllTris);
     }
   }
+#if defined(HAVE_ANN)
   {
     FieldManager *fields = gf->model()->getFields();
     BoundaryLayerField *blf = 0;
     if(fields->getBackgroundField() > 0){
       Field *bl_field = fields->get(fields->getBoundaryLayerField());
       blf = dynamic_cast<BoundaryLayerField*> (bl_field);
-      if (blf && !blf->iRecombine)quadsToTriangles(gf,10000);
+      if (blf && !blf->iRecombine) quadsToTriangles(gf,10000);
     }
   }
+#endif
   transferDataStructure(gf, AllTris, Us, Vs);
 }
 
@@ -1206,6 +1208,7 @@ void bowyerWatsonFrontal(GFace *gf)
 //   _printTris (name, AllTris, Us, Vs,true);
   transferDataStructure(gf, AllTris, Us, Vs);
   // in case of boundary layer meshing
+#if defined(HAVE_ANN)
   {
     FieldManager *fields = gf->model()->getFields();
     BoundaryLayerField *blf = 0;
@@ -1215,6 +1218,7 @@ void bowyerWatsonFrontal(GFace *gf)
       if (blf && !blf->iRecombine)quadsToTriangles(gf,10000);
     }
   }
+#endif
 }
 
 void optimalPointFrontalQuad (GFace *gf,

@@ -5,15 +5,10 @@
 
 #ifndef _MESH_GFACE_LLOYD_H_
 #define _MESH_GFACE_LLOYD_H_
+
+#include <queue>
 #include "fullMatrix.h"
 #include "DivideAndConquer.h"
-#include <queue>
-#include "ap.h"
-#include "alglibinternal.h"
-#include "alglibmisc.h"
-#include "linalg.h"
-#include "optimization.h"
-#include "MElementOctree.h"
 
 class GFace;
 

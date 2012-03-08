@@ -6,16 +6,14 @@
 // Contributor(s):
 //   Tristan Carrier
 
-#include "SVector3.h"
+#ifndef _LEVY3D_H_
+#define _LEVY3D_H_
+
 #include <list>
+#include "SVector3.h"
 #include "fullMatrix.h"
 #include "GRegion.h"
 #include "MElementOctree.h"
-#include "ap.h"
-#include "alglibinternal.h"
-#include "alglibmisc.h"
-#include "linalg.h"
-#include "optimization.h"
 
 class VoronoiVertex{
  private:
@@ -66,9 +64,9 @@ class Tensor{
   void set_t31(double);
   void set_t32(double);
   void set_t33(double);
-  double get_t11();	
-  double get_t12();	
-  double get_t13();	
+  double get_t11();
+  double get_t12();
+  double get_t13();
   double get_t21();
   double get_t22();
   double get_t23();
@@ -127,3 +125,5 @@ class LpSmoother{
   static int get_nbr_interior_vertices();
   static MVertex* get_interior_vertex(int);
 };
+
+#endif
