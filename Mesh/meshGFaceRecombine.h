@@ -61,13 +61,14 @@ class Recombine2D {
     ~Recombine2D();
     
     bool recombine();
-    bool recombine(int depth);
+    double recombine(int depth);
     bool developTree();
     static void nextTreeActions(std::vector<Rec2DAction*>&,
                                 std::vector<Rec2DElement*> &neighbours);
     
     inline void setStrategy(int s) {_strategy = s;}
     void drawState(double shiftx, double shifty);
+    void printState();
     
     static inline GFace* getGFace() {return _current->_gf;}
     static inline int getNumChange() {return _current->_numChange;}
@@ -107,6 +108,7 @@ class Rec2DData {
     ~Rec2DData();
     
     void printState();
+    void printActions();
     void drawTriangles(double shiftx, double shifty);
     void drawChanges(double shiftx, double shifty);
 #ifdef REC2D_DRAW
@@ -226,7 +228,7 @@ class Rec2DAction {
     virtual void reveal() = 0;
     
     bool operator<(Rec2DAction&);
-    virtual double getReward();
+    double getReward();
     virtual void color(int, int, int) = 0;
     virtual void apply(std::vector<Rec2DVertex*> &newPar) = 0;
     virtual void apply(Rec2DDataChange*) = 0;
@@ -240,9 +242,11 @@ class Rec2DAction {
     virtual void getNeighbourElements(std::vector<Rec2DElement*>&) = 0;
     virtual int getNum(double shiftx, double shifty) = 0;
     virtual Rec2DElement* getRandomElement() = 0;
+    virtual void printCoord() = 0;
     
   private :
     virtual void _computeGlobQual() = 0;
+    virtual void _computeGlobQual2() = 0;
 };
 
 class Rec2DTwoTri2Quad : public Rec2DAction {
@@ -260,11 +264,13 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     virtual void color(int, int, int);
     virtual void apply(std::vector<Rec2DVertex*> &newPar);
     virtual void apply(Rec2DDataChange*);
+    
     virtual bool isObsolete();
     virtual bool isAssumedObsolete();
     static bool isObsolete(int*);
     virtual void getAssumedParities(int*);
     virtual bool whatWouldYouDo(std::map<Rec2DVertex*, std::vector<int> >&);
+    
     virtual inline Rec2DVertex* getVertex(int i) {return _vertices[i];} //-
     virtual inline int getNumElement() {return 2;}
     virtual void getElements(std::vector<Rec2DElement*>&);
@@ -272,8 +278,11 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     virtual int getNum(double shiftx, double shifty);
     virtual Rec2DElement* getRandomElement();
     
+    virtual void printCoord();
+    
   private :
     virtual void _computeGlobQual();
+    virtual void _computeGlobQual2();
 };
 
 class Rec2DEdge {
@@ -290,7 +299,7 @@ class Rec2DEdge {
     void reveal();
     
     double getQual();
-    double getVal();
+    double getWeightedQual();
     
     inline double addHasTri() {_addWeight(-REC2D_EDGE_QUAD); ++_boundary;}
     inline double remHasTri() {_addWeight(REC2D_EDGE_QUAD); --_boundary;}
@@ -400,7 +409,7 @@ class Rec2DElement {
   public :
     Rec2DElement(MTriangle*, Rec2DEdge**, Rec2DVertex **rv = NULL);
     Rec2DElement(MQuadrangle*, Rec2DEdge**, Rec2DVertex **rv = NULL);
-    ~Rec2DElement() { hide();}
+    ~Rec2DElement() {hide();}
     void hide();
     void reveal();
     
