@@ -78,6 +78,7 @@ class FunctionSpace : public FunctionSpaceBase
   virtual void gradf(MElement *ele, double u, double v, double w, std::vector<GradType> &grads) = 0;
   virtual void gradfuvw(MElement *ele, double u, double v, double w, std::vector<GradType> &grads) {} // should return to pure virtual once all is done.
   virtual void hessfuvw(MElement *ele, double u, double v, double w, std::vector<HessType> &hess) = 0;
+  virtual void hessf(MElement *ele, double u, double v, double w,std::vector<HessType> &hess) {} //need to high order fem
   virtual int getNumKeys(MElement *ele) = 0; // if one needs the number of dofs
   virtual void getKeys(MElement *ele, std::vector<Dof> &keys) = 0;
 };
