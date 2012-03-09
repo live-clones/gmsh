@@ -130,7 +130,7 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
     graphicWindow *g = FlGui::instance()->graph[0];
     for(unsigned int i = 1; i < FlGui::instance()->graph.size(); i++){
       for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++){
-        if(FlGui::instance()->graph[i]->gl[j] == 
+        if(FlGui::instance()->graph[i]->gl[j] ==
            FlGui::instance()->getCurrentOpenglWindow()){
           g = FlGui::instance()->graph[i];
           break;
@@ -149,7 +149,7 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
     }
     buffer = new PixelBuffer(ww, hh, format, type);
     for(unsigned int i = 0; i < g->gl.size(); i++){
-      buffer->copyPixels(g->gl[i]->x(), hh - g->gl[i]->h() - g->gl[i]->y(), 
+      buffer->copyPixels(g->gl[i]->x(), hh - g->gl[i]->h() - g->gl[i]->y(),
                          buffers[i]);
       delete buffers[i];
     }
@@ -168,7 +168,7 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
   CTX::instance()->printing = 1;
   bool error = false;
 
-  if(redraw) 
+  if(redraw)
     Msg::StatusBar(2, true, "Writing '%s'...", fileName.c_str());
 
   switch (format) {
@@ -176,24 +176,29 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
   case FORMAT_AUTO:
     CreateOutputFile(fileName, GuessFileFormatFromFileName(fileName), false);
     break;
-    
+
   case FORMAT_OPT:
     PrintOptions(0, GMSH_FULLRC, 1, 1, fileName.c_str());
     break;
 
   case FORMAT_MSH:
-    if(GModel::current()->getMeshPartitions().size() && 
-       CTX::instance()->mesh.mshFilePartitioned){
+    if(GModel::current()->getMeshPartitions().size() &&
+       CTX::instance()->mesh.mshFilePartitioned == 1)
       GModel::current()->writePartitionedMSH
         (fileName, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
          CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor);
-    }
-    else{
+    else if(GModel::current()->getMeshPartitions().size() &&
+            CTX::instance()->mesh.mshFilePartitioned == 2)
+      GModel::current()->writeMSH
+        (fileName, CTX::instance()->mesh.mshFileVersion,
+         CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
+         CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor,
+         0, -1000);
+    else
       GModel::current()->writeMSH
         (fileName, CTX::instance()->mesh.mshFileVersion,
          CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
          CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor);
-    }
     break;
 
   case FORMAT_STL:
@@ -226,7 +231,7 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
 
   case FORMAT_MESH:
     GModel::current()->writeMESH
-      (fileName, CTX::instance()->mesh.saveElementTagType, 
+      (fileName, CTX::instance()->mesh.saveElementTagType,
        CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
@@ -237,20 +242,20 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
 
   case FORMAT_IR3:
     GModel::current()->writeIR3
-      (fileName, CTX::instance()->mesh.saveElementTagType, 
+      (fileName, CTX::instance()->mesh.saveElementTagType,
        CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_BDF:
     GModel::current()->writeBDF
-      (fileName, CTX::instance()->mesh.bdfFieldFormat, 
+      (fileName, CTX::instance()->mesh.bdfFieldFormat,
        CTX::instance()->mesh.saveElementTagType, CTX::instance()->mesh.saveAll,
        CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_DIFF:
     GModel::current()->writeDIFF
-      (fileName, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll, 
+      (fileName, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
        CTX::instance()->mesh.scalingFactor);
     break;
 
@@ -266,7 +271,7 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
 
   case FORMAT_CGNS:
     GModel::current()->writeCGNS
-      (fileName, CTX::instance()->mesh.zoneDefinition, CTX::instance()->cgnsOptions, 
+      (fileName, CTX::instance()->mesh.zoneDefinition, CTX::instance()->cgnsOptions,
        CTX::instance()->mesh.scalingFactor);
     break;
 
@@ -277,7 +282,7 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
 
   case FORMAT_POS:
     GModel::current()->writePOS
-      (fileName, CTX::instance()->print.posElementary, 
+      (fileName, CTX::instance()->print.posElementary,
        CTX::instance()->print.posElement, CTX::instance()->print.posGamma,
        CTX::instance()->print.posEta, CTX::instance()->print.posRho,
        CTX::instance()->print.posDisto, CTX::instance()->mesh.saveAll,
@@ -299,7 +304,7 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
 #if defined(HAVE_FLTK)
   case FORMAT_PPM:
   case FORMAT_YUV:
-  case FORMAT_GIF:  
+  case FORMAT_GIF:
   case FORMAT_JPEG:
   case FORMAT_PNG:
     {
@@ -319,13 +324,13 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
       else if(format == FORMAT_YUV)
         create_yuv(fp, buffer);
       else if(format == FORMAT_GIF)
-        create_gif(fp, buffer, 
+        create_gif(fp, buffer,
                    CTX::instance()->print.gifDither,
                    CTX::instance()->print.gifSort,
                    CTX::instance()->print.gifInterlace,
                    CTX::instance()->print.gifTransparent);
       else if(format == FORMAT_JPEG)
-        create_jpeg(fp, buffer, CTX::instance()->print.jpegQuality, 
+        create_jpeg(fp, buffer, CTX::instance()->print.jpegQuality,
                     CTX::instance()->print.jpegSmoothing);
       else
         create_png(fp, buffer, 100);
@@ -354,18 +359,18 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
       GLint viewport[4] = {0, 0, width, height};
 
       PixelBuffer buffer(width, height, GL_RGB, GL_FLOAT);
-      
+
       if(CTX::instance()->print.epsQuality == 0)
         buffer.fill(CTX::instance()->batch);
-      
-      int psformat = 
+
+      int psformat =
         (format == FORMAT_PDF) ? GL2PS_PDF :
         (format == FORMAT_PS) ? GL2PS_PS :
         (format == FORMAT_SVG) ? GL2PS_SVG :
         GL2PS_EPS;
-      int pssort = 
+      int pssort =
         (CTX::instance()->print.epsQuality == 3) ? GL2PS_NO_SORT :
-        (CTX::instance()->print.epsQuality == 2) ? GL2PS_BSP_SORT : 
+        (CTX::instance()->print.epsQuality == 2) ? GL2PS_BSP_SORT :
         GL2PS_SIMPLE_SORT;
       int psoptions =
         GL2PS_SIMPLE_LINE_OFFSET | GL2PS_SILENT |
@@ -379,8 +384,8 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
       int res = GL2PS_OVERFLOW;
       while(res == GL2PS_OVERFLOW) {
         buffsize += 2048 * 2048;
-        gl2psBeginPage(base.c_str(), "Gmsh", viewport, 
-                       psformat, pssort, psoptions, GL_RGBA, 0, NULL, 
+        gl2psBeginPage(base.c_str(), "Gmsh", viewport,
+                       psformat, pssort, psoptions, GL_RGBA, 0, NULL,
                        15, 20, 10, buffsize, fp, base.c_str());
         if(CTX::instance()->print.epsQuality == 0){
           double modelview[16], projection[16];
@@ -428,7 +433,7 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
       while(res == GL2PS_OVERFLOW) {
         buffsize += 2048 * 2048;
         gl2psBeginPage(base.c_str(), "Gmsh", viewport,
-                       GL2PS_TEX, GL2PS_NO_SORT, GL2PS_NONE, GL_RGBA, 0, NULL, 
+                       GL2PS_TEX, GL2PS_NO_SORT, GL2PS_NONE, GL_RGBA, 0, NULL,
                        0, 0, 0, buffsize, fp, base.c_str());
         PixelBuffer buffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
         int oldtext = CTX::instance()->print.text;
@@ -458,7 +463,7 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
                               (int)opt_view_nb_non_empty_timestep(i, GMSH_GET, 0));
       }
       std::vector<std::string> frames;
-      for(int i = 0; i < (CTX::instance()->post.animCycle ? numViews : numSteps); 
+      for(int i = 0; i < (CTX::instance()->post.animCycle ? numViews : numSteps);
           i += CTX::instance()->post.animStep){
         char tmp[256];
         sprintf(tmp, ".gmsh-%06d.ppm", (int)frames.size());
@@ -467,7 +472,7 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
       status_play_manual(!CTX::instance()->post.animCycle, 0, false);
       for(unsigned int i = 0; i < frames.size(); i++){
         CreateOutputFile(CTX::instance()->homeDir + frames[i], FORMAT_PPM, false);
-        status_play_manual(!CTX::instance()->post.animCycle, 
+        status_play_manual(!CTX::instance()->post.animCycle,
                            CTX::instance()->post.animStep, false);
       }
       int repeat = (int)(CTX::instance()->post.animDelay * 24);
@@ -481,7 +486,7 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
               "PSEARCH_ALG EXHAUSTIVE\nBSEARCH_ALG CROSS2\n"
               "IQSCALE 1\nPQSCALE 1\nBQSCALE 25\nREFERENCE_FRAME DECODED\n"
               "OUTPUT %s\nINPUT_CONVERT *\nINPUT_DIR %s\nINPUT\n",
-              pattern.c_str(), repeat, fileName.c_str(), 
+              pattern.c_str(), repeat, fileName.c_str(),
               CTX::instance()->homeDir.c_str());
       for(unsigned int i = 0; i < frames.size(); i++){
         fprintf(fp, "%s", frames[i].c_str());
@@ -521,7 +526,7 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
 
   if(redraw && !error)
     Msg::StatusBar(2, true, "Done writing '%s'", fileName.c_str());
-  
+
 #if defined(HAVE_OPENGL)
   if(redraw) drawContext::global()->draw();
 #endif

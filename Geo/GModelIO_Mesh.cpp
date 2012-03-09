@@ -629,6 +629,29 @@ static void writeElementsMSH(FILE *fp, GModel *model, std::vector<T*> &ele,
                              bool binary, int &num, int elementary,
                              std::vector<int> &physicals)
 {
+  // Hack to save each partition as a separate physical entity
+  if(saveSinglePartition < 0){
+    if(ele.empty()) return;
+    int offset = -saveSinglePartition;
+    int maxPhysical = model->getMaxPhysicalNumber(ele[0]->getDim());
+    for(unsigned int i = 0; i < ele.size(); i++){
+      std::vector<int> newPhysicals;
+      int newElementary = elementary;
+      if(elementary > 0){ // classical entity
+        newElementary = elementary * offset + ele[i]->getPartition();
+        for(unsigned int j = 0; j < physicals.size(); j++)
+          newPhysicals.push_back(physicals[j] * offset + ele[i]->getPartition());
+      }
+      else if(elementary < 0){ // partition boundary
+        newPhysicals.push_back((maxPhysical - elementary) * offset);
+      }
+      ele[i]->setPartition(0);
+      writeElementMSH(fp, model, ele[i], saveAll, version, binary, num,
+                      newElementary, newPhysicals);
+    }
+    return;
+  }
+
   for(unsigned int i = 0; i < ele.size(); i++){
     if(saveSinglePartition && ele[i]->getPartition() != saveSinglePartition)
       continue;
@@ -638,7 +661,6 @@ static void writeElementsMSH(FILE *fp, GModel *model, std::vector<T*> &ele,
     MElement *parent = ele[i]->getParent();
     if(parent)
       parentNum = model->getMeshElementIndex(parent);
-
     writeElementMSH(fp, model, ele[i], saveAll, version, binary, num,
                     elementary, physicals, parentNum);
   }
@@ -647,7 +669,10 @@ static void writeElementsMSH(FILE *fp, GModel *model, std::vector<T*> &ele,
 static int getNumElementsMSH(GEntity *ge, bool saveAll, int saveSinglePartition)
 {
   int n = 0, p = saveAll ? 1 : ge->physicals.size();
-  if(!saveSinglePartition)
+
+  if(saveSinglePartition < 0 && ge->tag() < 0) p = 1; // partition boundary
+
+  if(saveSinglePartition <= 0)
     n = p * ge->getNumMeshElements();
   else
     for(unsigned int i = 0; i < ge->getNumMeshElements(); i++)

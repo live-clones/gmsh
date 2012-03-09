@@ -910,7 +910,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 2.2 ,
     "Version of the MSH file format to use" },
   { F|O, "MshFilePartitioned" , opt_mesh_msh_file_partitioned , 0. ,
-    "Split MSH file by mesh partition" },
+    "Split MSH file by mesh partition (0: no, 1: yes, 2: create physicals by partition)" },
   { F|O, "MultiplePassesMeshes" , opt_mesh_multiple_passes , 0. ,
     "Do a first simple mesh and use it for complex background meshes (curvatures...)" },
 

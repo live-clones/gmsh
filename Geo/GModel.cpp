@@ -920,7 +920,7 @@ int GModel::indexMeshVertices(bool all, int singlePartition)
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
         MElement *e = entities[i]->getMeshElement(j);
         for(int k = 0; k < e->getNumVertices(); k++){
-          if(!singlePartition || e->getPartition() == singlePartition)
+          if(singlePartition <= 0 || e->getPartition() == singlePartition)
             e->getVertex(k)->setIndex(0);
           else if(e->getVertex(k)->getIndex() == -1)
             e->getVertex(k)->setIndex(-2);
