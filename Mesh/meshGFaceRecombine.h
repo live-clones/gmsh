@@ -219,6 +219,8 @@ class Rec2DDataChange {
 class Rec2DAction {
   protected :
     double _globQualIfExecuted;
+    double _globQualIfExecuted2;
+    double _globQualIfExecuted3;
     int _lastUpdate;
     
   public :
@@ -246,7 +248,6 @@ class Rec2DAction {
     
   private :
     virtual void _computeGlobQual() = 0;
-    virtual void _computeGlobQual2() = 0;
 };
 
 class Rec2DTwoTri2Quad : public Rec2DAction {
@@ -282,7 +283,6 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     
   private :
     virtual void _computeGlobQual();
-    virtual void _computeGlobQual2();
 };
 
 class Rec2DEdge {

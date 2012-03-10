@@ -260,12 +260,6 @@ double Recombine2D::recombine(int depth)
 {
   Rec2DData::clearChanges();
   double bestGlobalQuality;
-  _data->printActions();
-  Rec2DNode *root1 = new Rec2DNode(NULL, NULL, bestGlobalQuality, depth);
-  _data->printActions();
-  Rec2DNode *root2 = new Rec2DNode(NULL, NULL, bestGlobalQuality, depth);
-  _data->printActions();
-  _data->printState();
   Rec2DNode *root = new Rec2DNode(NULL, NULL, bestGlobalQuality, depth);
   Rec2DNode *currentNode = root->selectBestNode();
   
@@ -1054,7 +1048,7 @@ bool gterRec2DAction::operator()(Rec2DAction *ra1, Rec2DAction *ra2) const
 }
 
 Rec2DAction::Rec2DAction()
-: _lastUpdate(Recombine2D::getNumChange()-1), _globQualIfExecuted(.0)
+: _lastUpdate(Recombine2D::getNumChange()-1), _globQualIfExecuted(.0), _globQualIfExecuted2(.0), _globQualIfExecuted3(.0)
 {
 }
 
@@ -1068,33 +1062,6 @@ double Rec2DAction::getReward()
 {
   if (_lastUpdate < Recombine2D::getNumChange())
     _computeGlobQual();
-  
-  static const Rec2DAction *ra = this;
-  double doub = _globQualIfExecuted;
-  static double a = .0;
-  static const double b = doub;
-  static int k = -1;
-  static int num = -3;
-  if (k == -1) {
-    ++k;
-    Msg::Error("========== Im %d =========", this);
-  }
-  if (ra == this) {
-    if (a == doub) {
-      ++k;
-      Msg::Warning("same reward :) num %d", k);
-    }
-    else {
-      Msg::Warning("reward changed %g -> %g (first %g)", a, doub, b);
-      a = doub;
-      printCoord();
-      _computeGlobQual2();
-    }
-    if (_lastUpdate != num) {
-      Msg::Info("__ %d __ %d __", _lastUpdate, Recombine2D::getNumChange());
-      num = _lastUpdate;
-    }
-  }
   
   return _globQualIfExecuted/* - Rec2DData::getGlobalQuality()*/;
 }
@@ -1164,16 +1131,8 @@ void Rec2DTwoTri2Quad::reveal()
 
 void Rec2DTwoTri2Quad::_computeGlobQual()
 {
-  /*static const Rec2DAction *ra = this;
-  double doub = _globQualIfExecuted;
-  static double a = .0;
-  static const double b = doub;
-  static int k = -1;
-  static int num = -3;
-  if (k == -1) {
-    ++k;
-    Msg::Error("========== And me %d =========", this);
-  }*/
+  static const Rec2DAction *ra = this;
+  
   double valEdge = -REC2D_EDGE_BASE * _edges[4]->getQual();
   for (int i = 0; i < 4; ++i)
     valEdge += REC2D_EDGE_QUAD * _edges[i]->getQual();
@@ -1185,32 +1144,11 @@ void Rec2DTwoTri2Quad::_computeGlobQual()
   _globQualIfExecuted =
     Rec2DData::getGlobalQuality(4*REC2D_EDGE_QUAD - REC2D_EDGE_BASE,
                                 valEdge, 0, valVert                 );
+  
   _lastUpdate = Recombine2D::getNumChange();
-  
-  /*if (ra == this) {
-    Msg::Info("       %d %g %g", 4*REC2D_EDGE_QUAD - REC2D_EDGE_BASE, valEdge, valVert);
-  }*/
-}
-
-void Rec2DTwoTri2Quad::_computeGlobQual2()
-{
-  Msg::Info("%g %g %g %g %g %g %g", -REC2D_EDGE_BASE * _edges[4]->getQual(),
-                                    REC2D_EDGE_QUAD * _edges[0]->getQual(),
-                                    REC2D_EDGE_QUAD * _edges[1]->getQual(),
-                                    REC2D_EDGE_QUAD * _edges[2]->getQual(),
-                                    REC2D_EDGE_QUAD * _edges[3]->getQual(),
-                                    _vertices[0]->getGainMerge(_triangles[0], _triangles[1]),
-                                    _vertices[1]->getGainMerge(_triangles[0], _triangles[1]) );
-  double valEdge = -REC2D_EDGE_BASE * _edges[4]->getQual();
-  for (int i = 0; i < 4; ++i)
-    valEdge += REC2D_EDGE_QUAD * _edges[i]->getQual();
-  
-  double valVert;
-  valVert += _vertices[0]->getGainMerge(_triangles[0], _triangles[1]);
-  valVert += _vertices[1]->getGainMerge(_triangles[0], _triangles[1]);
-  Msg::Info("%d %g %g", 4*REC2D_EDGE_QUAD - REC2D_EDGE_BASE, valEdge, valVert);
-  Msg::Info("%g", Rec2DData::getGlobalQuality(4*REC2D_EDGE_QUAD - REC2D_EDGE_BASE,
-                              valEdge, 0, valVert                 ));
+  if (ra == this) { 
+ 	  Msg::Info("       %d %g %g", 4*REC2D_EDGE_QUAD - REC2D_EDGE_BASE, valEdge, valVert); 
+ 	}
 }
 
 void Rec2DTwoTri2Quad::color(int a, int b, int c)
