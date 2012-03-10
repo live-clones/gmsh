@@ -34,8 +34,7 @@ public:
                      std::map<MVertex*, SPoint3> &allCoordinates);
   void cutElems   (std::vector<MElement *> &elements);
   void splitElems (std::vector<MElement *> &elements);
-  typedef enum {HARMONIC=1,CONFORMAL=2, CONVEXCOMBINATION=3} typeOfMapping;
-
+ 
   multiscaleLaplaceLevel* root;
   void fillCoordinates (multiscaleLaplaceLevel & level,
                         std::map<MVertex*, SPoint3> &allCoordinates,
@@ -44,8 +43,7 @@ public:
   void parametrize (multiscaleLaplaceLevel &);
   void parametrize_method (multiscaleLaplaceLevel & level,
                            std::set<MVertex*> &allNodes,
-                           std::map<MVertex*,SPoint2> &solution,
-                           typeOfMapping tom);
+                           std::map<MVertex*,SPoint2> &solution);
 
 
 };

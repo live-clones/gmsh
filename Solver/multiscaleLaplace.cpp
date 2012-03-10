@@ -15,6 +15,7 @@
 #include "laplaceTerm.h"
 #include "convexCombinationTerm.h"
 #include "linearSystemCSR.h"
+#include "linearSystemPETSc.h"
 #include "robustPredicates.h"
 #include "meshGFaceOptimize.h"
 #include "GFaceCompound.h"
@@ -832,47 +833,7 @@ static void one2OneMap(std::vector<MElement *> &elements, std::map<MVertex*,SPoi
   return;
 
 }
-//--------------------------------------------------------------
-static bool checkOrientation(std::vector<MElement *> &elements,
-                             std::map<MVertex*,SPoint2> &solution, int iter) {
 
-  double a_old = 0, a_new;
-  bool oriented = true;
-  int count = 0;
-  for(unsigned int i = 0; i < elements.size(); ++i){
-    MElement *t = elements[i];
-    SPoint2 v1 = solution[t->getVertex(0)];
-    SPoint2 v2 = solution[t->getVertex(1)];
-    SPoint2 v3 = solution[t->getVertex(2)];
-    double p0[2] = {v1[0],v1[1]};
-    double p1[2] = {v2[0],v2[1]};
-    double p2[2] = {v3[0],v3[1]};
-    a_new = robustPredicates::orient2d(p0, p1, p2);
-    if(count == 0) a_old=a_new;
-    if(a_new*a_old < 0.){
-      oriented = false;
-      break;
-    }
-    else{
-      a_old = a_new;
-    }
-    count++;
-  }
-
-  int iterMax = 1;
-  if(!oriented && iter < iterMax){
-    if (iter == 0) Msg::Debug("Parametrization is NOT 1 to 1 : applying cavity checks.");
-    Msg::Debug("Cavity Check - iter %d -",iter);
-    one2OneMap(elements, solution);
-    return checkOrientation(elements, solution, iter+1);
-  }
-  else if (iter < iterMax){
-    Msg::Debug("Parametrization is 1 to 1 :-)");
-  }
-
-  return oriented;
-
-}
 //--------------------------------------------------------------
 
 multiscaleLaplace::multiscaleLaplace (std::vector<MElement *> &elements,
@@ -962,11 +923,7 @@ void multiscaleLaplace::parametrize(multiscaleLaplaceLevel & level){
 
   //Parametrize level
   std::map<MVertex*,SPoint2> solution;
-  parametrize_method(level, allNodes, solution, HARMONIC);
-  if (!checkOrientation(level.elements, solution, 0)){
-    Msg::Debug("Parametrization switched to convex combination");
-    parametrize_method(level, allNodes, solution, CONVEXCOMBINATION);
-  }
+  parametrize_method(level, allNodes, solution);
 
   //Compute the bbox of the parametric space
   SBoundingBox3d bbox;
@@ -983,7 +940,7 @@ void multiscaleLaplace::parametrize(multiscaleLaplaceLevel & level){
     MElement *e = level.elements[i];
     std::vector<SPoint2> localCoord;
     double local_size = localSize(e,solution);
-    if (local_size < 1.e-5*global_size) //1.e-6
+    if (local_size < 1.e-6*global_size) 
       tooSmall.push_back(e);
     else  goodSize.push_back(e);
   }
@@ -1041,28 +998,6 @@ void multiscaleLaplace::parametrize(multiscaleLaplaceLevel & level){
   keepConnected(goodSize, tooSmall);
   regions.clear();
   connectedRegions (tooSmall,regions);
-
-  //ensure that small elements are circular patches
-  // for (int i=0;i< regions.size() ; i++){
-  //   SPoint2 c = cents[i];
-  //   double rad = rads[i];
-  //   for (std::vector<MElement*>::iterator it = regions[i].begin(); it != regions[i].end(); ++it){
-  //     MElement *e = *it;
-  //     SPoint2 p0 = solution[e->getVertex(0)];
-  //     SPoint2 p1 = solution[e->getVertex(1)];
-  //     SPoint2 p2 = solution[e->getVertex(2)];
-  //     SPoint2 ec = (.3*(p0.x()+p1.x()+p2.x()), .3*(p0.y()+p1.y()+p2.y()));
-  //     double dist = sqrt((ec.x()-c.x())*(ec.x()-c.x()) + (ec.y()-c.y())*(ec.y()-c.y()));
-  //     std::vector<MElement*>::iterator itp;
-  //     if (dist > 0.5*rad ) {
-  // 	goodSize.push_back(e);
-  // 	itp = it;
-  // 	it++;
-  // 	regions[i].erase(itp);
-  //     }
-  //   }
-  // keepConnected(regions[i], goodSize);
- //}
 
   level.elements.clear();
   level.elements = goodSize;
@@ -1132,13 +1067,12 @@ void multiscaleLaplace::parametrize(multiscaleLaplaceLevel & level){
 
 void multiscaleLaplace::parametrize_method (multiscaleLaplaceLevel & level,
                                             std::set<MVertex*> &allNodes,
-                                            std::map<MVertex*,SPoint2> &solution,
-                                            typeOfMapping tom)
+                                            std::map<MVertex*,SPoint2> &solution)
 {
 
   linearSystem<double> *_lsys;
-#if defined(HAVE_TAUCS)
-  _lsys = new linearSystemCSRTaucs<double>;
+#if defined(HAVE_PETSC)
+  _lsys =  new linearSystemPETSc<double>;
 #elif defined(HAVE_GMM)
   linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
   _lsysb->setGmres(1);
@@ -1167,12 +1101,7 @@ void multiscaleLaplace::parametrize_method (multiscaleLaplaceLevel & level,
 
     // assemble
     femTerm<double> *mapping;
-    if (tom == HARMONIC){
-      mapping = new laplaceTerm(0, 1, &ONE);
-    }
-    else if (tom == CONVEXCOMBINATION){
-      mapping = new convexCombinationTerm(0, 1, &ONE);
-    }
+    mapping = new convexCombinationTerm(0, 1, &ONE);
 
     for(unsigned int i = 0; i < level.elements.size(); ++i){
       MElement *e = level.elements[i];

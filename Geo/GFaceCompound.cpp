@@ -829,7 +829,7 @@ bool GFaceCompound::parametrize() const
     fillNeumannBCS();
     parametrize(ITERU,HARMONIC); 
     parametrize(ITERV,HARMONIC);
-    printStuff(111);
+    printStuff(111); 
     if (_type == MEANPLANE) checkOrientation(0, true);
     printStuff(222);
   }
@@ -2074,9 +2074,6 @@ void GFaceCompound::buildOct() const
 bool GFaceCompound::checkTopology() const
 {
   if (_mapping == RBF) return true; 
-
-  //fixme tristan
-  //return true;
 	
   bool correctTopo = true;
   if(allNodes.empty()) buildAllNodes();
@@ -2498,9 +2495,9 @@ void GFaceCompound::printStuff(int iNewton) const
 
 // useful for mesh generators ----------------------------------------
 // Intersection of a circle and a plane
-
 GPoint GFaceCompound::intersectionWithCircle (const SVector3 &n1, const SVector3 &n2, const SVector3 &p, const double &d, double uv[2]) const
 {
+  
   SVector3 n = crossprod(n1,n2);  
   n.normalize();
   for (int i=-1;i<nbT;i++){
