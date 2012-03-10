@@ -11,6 +11,7 @@
 #include "GmshDefines.h"
 #include "GFaceCompound.h"
 #include "GEdgeCompound.h"
+#include "intersectCurveSurface.h"
 
 #if defined(HAVE_SOLVER)
 
@@ -2493,6 +2494,106 @@ void GFaceCompound::printStuff(int iNewton) const
   // fclose(xyzc);
   // fprintf(uvm,"};\n");
   // fclose(uvm);
+}
+
+// useful for mesh generators ----------------------------------------
+// Intersection of a circle and a plane
+
+GPoint GFaceCompound::intersectionWithCircle (const SVector3 &n1, const SVector3 &n2, const SVector3 &p, const double &d, double uv[2]) const
+{
+  SVector3 n = crossprod(n1,n2);  
+  n.normalize();
+  for (int i=-1;i<nbT;i++){
+    GFaceCompoundTriangle *ct;
+    double U,V;
+    if (i == -1) getTriangle(uv[0],uv[1], &ct, U,V);
+    else ct = &_gfct[i];
+    if (!ct) continue;
+    // we have two planes, defined with n1,n2 and t1,t2
+    // we have then a direction m = (n1 x n2) x (t1 x t2) 
+    // and a point p that defines a straight line
+    // the point is situated in the half plane defined
+    // by direction n1 and point p (exclude the one on the
+    // other side)
+
+    SVector3 t1  = ct->v2 - ct->v1;
+    SVector3 t2  = ct->v3 - ct->v1;
+
+    // let us first compute point q to be the intersection
+    // of the plane of the triangle with the line L = p + t n1
+    // Compute w = t1 x t2 = (a,b,c) and write a point of the plabe as
+    // X(x,y,z) = ax + by + cz - (v1_x a + v1_y b + v1_z * c) = 0
+    // Then
+    // a (p_x + t n1_x) + a (p_y + t n1_y) + c (p_z + t n1_z) - (v1_x a + v1_y b + v1_z * c) = 0
+    // gives t
+    
+    SVector3 w = crossprod(t1,t2);
+    double t = dot(ct->v1-p,w)/dot(n1,w); 
+    SVector3 q = p + n1*t;
+    
+    // consider the line that intersects both planes in its
+    // parametric form
+    // X(x,y,z) = q + t m
+    // We have now to intersect that line with the sphere
+    // (x-p_x)^2 + (y-p_y)^2 + (z-p_z)^2 = d^2
+    // Inserting the parametric form of the line into the sphere gives
+    // (t m_x + q_x - p_x)^2 + (t m_y + q_y - p_y)^2  + (t m_z + q_z - p_z)^2  = d^2
+    //  t^2 (m_x^2 + m_y^2 + m_z^2) + 2 t (m_x (q_x - p_x) + m_y (q_y - p_z) + m_z (q_z - p_z)) + ((q_x - p_x)^2 + (q_y - p_y)^2 + (q_z - p_z)^2 - d^2) = 0
+    // t^2 m^2 + 2 t (m . (q-p)) + ((q-p)^2 - d^2) = 0
+    // Let us call ta and tb the two roots 
+    // they correspond to two points s_1 = q + ta m and s_2 = q + tb m
+    // we choose the one that corresponds to (s_i - p) . n1 > 0
+    SVector3 m = crossprod(w,n);
+    const double a = dot(m,m);
+    const double b = 2*dot(m,q-p);
+    const double c = dot(q-p,q-p) - d*d;
+    const double delta = b*b-4*a*c;    
+
+    if (delta >= 0){
+      const double ta = (-b + sqrt(delta)) / (2.*a);
+      const double tb = (-b - sqrt(delta)) / (2.*a);
+      SVector3 s1 = q + m * ta;
+      SVector3 s2 = q + m * tb;
+      SVector3 s;
+      if (dot(s1-p,n1) > 0){
+	s = s1;
+      }
+      else if (dot(s2-p,n1) > 0){
+	s = s2;
+      }
+      else continue;
+
+      // we have now to look if the point is inside the triangle
+      // s = v1 + u t1 + v t2
+      // we know the system has a solution because s is in the plane
+      // defined by v1 and v2 we solve then
+      // (s - v1) . t1 = u t1^2    + v t2 . t1
+      // (s - v1) . t2 = u t1 . t2 + v t2^2
+      
+      double mat[2][2], b[2],uv[2];
+      mat[0][0] = dot(t1,t1);
+      mat[1][1] = dot(t2,t2);
+      mat[0][1] = mat[1][0] = dot(t1,t2);
+      b[0] = dot(s-ct->v1,t1) ;
+      b[1] = dot(s-ct->v1,t2) ;
+      sys2x2(mat,b,uv);      
+      // check now if the point is inside the triangle 
+      if (uv[0] >= -1.e-6 && uv[1] >= -1.e-6 && 
+	  1.-uv[0]-uv[1] >= -1.e-6 ) {
+	SVector3 pp = 
+	  ct->p1 * ( 1.-uv[0]-uv[1] ) + 
+	  ct->p2 *uv[0] + 
+	  ct->p3 *uv[1] ;
+	//	GPoint ttt = point(pp.x(),pp.y()); 
+	//	printf("%g %g %g vs %g %g %g\n",ttt.x(),ttt.y(),ttt.z(),s.x(),s.y(),s.z());
+	//	printf("%d/%d\n",i,nbT);
+	return GPoint(s.x(),s.y(),s.z(),this,pp);
+      }
+    }
+  }
+  GPoint pp(0);
+  pp.setNoSuccess();
+  return pp;
 }
 
 #endif

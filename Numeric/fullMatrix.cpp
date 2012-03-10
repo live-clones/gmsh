@@ -285,10 +285,10 @@ bool fullMatrix<double>::luSolve(const fullVector<double> &rhs, fullVector<doubl
   F77NAME(dgesv)(&N, &nrhs, _data, &lda, ipiv, result._data, &ldb, &info);
   delete [] ipiv;
   if(info == 0) return true;
-  if(info > 0)
-    Msg::Debug("U(%d,%d)=0 in LU decomposition", info, info);
-  else
-    Msg::Debug("Wrong %d-th argument in LU decomposition", -info);
+  //  if(info > 0)
+  //    Msg::Error("U(%d,%d)=0 in LU decomposition", info, info);
+  //  else
+  //    Msg::Error("Wrong %d-th argument in LU decomposition", -info);
   return false;
 }
 

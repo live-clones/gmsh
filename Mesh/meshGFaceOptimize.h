@@ -97,7 +97,6 @@ void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
 void recombineIntoQuads(GFace *gf, 
 			bool topologicalOpti   = true, 
 			bool nodeRepositioning = true);
-void recombineIntoQuadsIterative(GFace *gf);
 void quadsToTriangles(GFace *gf, double minqual);
 
 struct swapquad{

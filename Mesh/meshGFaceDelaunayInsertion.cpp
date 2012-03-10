@@ -20,6 +20,8 @@
 #include "MQuadrangle.h"
 #include "Field.h"
 #include "GModel.h"
+#include "GFaceCompound.h"
+#include "intersectCurveSurface.h"
 
 double LIMIT_ = 0.5 * sqrt(2.0) * 1;
 
@@ -268,8 +270,6 @@ MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric, const std::vector<double
     {base->getVertex(1)->x(), base->getVertex(1)->y(), base->getVertex(1)->z()};
   double pc[3] =
     {base->getVertex(2)->x(), base->getVertex(2)->y(), base->getVertex(2)->z()};
-
-  // compute the circumradius of the triangle
 
   if (!metric){
     if (radiusNorm == 2){
@@ -1072,30 +1072,6 @@ double optimalPointFrontal (GFace *gf,
    and the edge length
 */
 
-struct intersectCurveSurfaceData
-{
-  GFace *gf;
-  SVector3 &n1,&n2;
-  SVector3 &middle;
-  double d;
-  intersectCurveSurfaceData (GFace *_gf, SVector3 & _n1, SVector3 & _n2, SVector3 & _middle, double &_d)
-    : gf(_gf),n1(_n1),n2(_n2),middle(_middle),d(_d)
-  { }
-};
-
-static void intersectCircleSurface(fullVector<double> &uvt,
-				   fullVector<double> &res, void *_data){
-  intersectCurveSurfaceData *data = (intersectCurveSurfaceData*)_data;
-  GPoint gp = data->gf->point(uvt(0),uvt(1));
-  SVector3 dir = (data->n1*cos(uvt(2))+data->n2*sin(uvt(2)))*data->d;
-  SVector3 pp = data->middle + dir;
-  res(0) = gp.x() - pp.x();
-  res(1) = gp.y() - pp.y();
-  res(2) = gp.z() - pp.z();
-  //  printf("f(%g %g %g) = %12.5E %12.5E %12.5E \n",uvt(0),uvt(1),uvt(2),res(0),res(1),res(2));
-}
-
-
 void optimalPointFrontalB (GFace *gf,
 			   MTri3* worst,
 			   int active_edge,
@@ -1105,6 +1081,7 @@ void optimalPointFrontalB (GFace *gf,
 			   std::vector<double> &vSizesBGM,
 			   double newPoint[2],
 			   double metric[3]){
+  static int missed = 1;
   // as a starting point, let us use the "fast algo"
   double d = optimalPointFrontal (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
   int ip1 = active_edge - 1 < 0 ? 2 : active_edge - 1;
@@ -1127,19 +1104,31 @@ void optimalPointFrontalB (GFace *gf,
   // we look for a point that is
   // P = d * (n1 cos(t) + n2 sin(t)) that is on the surface
   // so we have to find t, starting with t = 0
-  fullVector<double> uvt(3);
-  uvt(0) = newPoint[0];
-  uvt(1) = newPoint[1];
-  uvt(2) = 0.0;
-  intersectCurveSurfaceData data (gf,n1,n2,middle,d);
-  //printf("----------------------------\n");
-  if(newton_fd(intersectCircleSurface, uvt, &data)){
-    //printf("--- CONVERGED -- %12.5E -----------\n",d);
-    newPoint[0] = uvt(0);
-    newPoint[1] = uvt(1);
-    return;
+
+  if (gf->geomType() == GEntity::CompoundSurface){
+    GFaceCompound *gfc = dynamic_cast<GFaceCompound*> (gf);
+    if (gfc){
+      GPoint gp = gfc->intersectionWithCircle(n1,n2,middle,d,newPoint);
+      if (gp.succeeded()){
+	newPoint[0] = gp.u();
+	newPoint[1] = gp.v();
+	return ;
+      }
+    }
   }
-  //printf("--- NOT CONVERGED ----------\n");
+
+  double uvt[3] = {newPoint[0],newPoint[1],0.0};
+  curveFunctorCircle cc (n1,n2,middle,d);
+  surfaceFunctorGFace ss (gf);
+
+  if (intersectCurveSurface (cc,ss,uvt,d*1.e-8)){
+    newPoint[0] = uvt[0];
+    newPoint[1] = uvt[1];
+  }
+  else {
+    Msg::Debug("--- Non optimal point found -----------");
+  }
+  //    fclose(f);
 }
 
 void bowyerWatsonFrontal(GFace *gf)
@@ -1168,13 +1157,13 @@ void bowyerWatsonFrontal(GFace *gf)
 
   // insert points
   while (1){
-    /*
-        if(ITER % 1== 0){
+    
+    /*        if(ITER % 100== 0){
           char name[245];
           sprintf(name,"delfr2d%d-ITER%d.pos",gf->tag(),ITER);
-          _printTris (name, AllTris, Us,Vs,false);
-          sprintf(name,"delfr2dA%d-ITER%d.pos",gf->tag(),ITER);
-          _printTris (name, ActiveTris, Us,Vs,false);
+          _printTris (name, AllTris, Us,Vs,true);
+	  //          sprintf(name,"delfr2dA%d-ITER%d.pos",gf->tag(),ITER);
+	  //          _printTris (name, ActiveTris, Us,Vs,false);
         }
     */
     if (!ActiveTris.size())break;

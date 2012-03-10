@@ -142,6 +142,8 @@ class GFaceCompound : public GFace {
   int getNbSplit() const { return nbSplit; }
   int allowPartition() const{ return _allowPartition; }
   void setType(typeOfIsomorphism type){ _type=type;}
+  // useful for mesh generators ----------------------------------------
+  GPoint intersectionWithCircle (const SVector3 &n1, const SVector3 &n2, const SVector3 &p, const double &d, double uv[2]) const;
  private:
   mutable typeOfCompound _toc;
   mutable typeOfMapping _mapping;

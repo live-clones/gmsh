@@ -4,6 +4,7 @@
 # bugs and problems to <gmsh@geuz.org>.
 
 set(SRC
+  intersectCurveSurface.cpp
   GEntity.cpp STensor3.cpp
     GVertex.cpp GEdge.cpp GFace.cpp GRegion.cpp
     GEdgeLoop.cpp GEdgeCompound.cpp GFaceCompound.cpp

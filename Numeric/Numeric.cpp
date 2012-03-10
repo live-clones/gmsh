@@ -680,7 +680,8 @@ bool newton_fd(void (*func)(fullVector<double> &, fullVector<double> &, void *),
     if (N == 1)
       dx(0) = f(0) / J(0, 0);
     else
-      J.luSolve(f, dx);
+      if (!J.luSolve(f, dx))
+	return false;
 
     for (int i = 0; i < N; i++)
       x(i) -= relax * dx(i);

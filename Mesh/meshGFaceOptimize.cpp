@@ -860,6 +860,7 @@ void  createRegularMesh (GFace *gf,
   // create quads
   for (int i=0;i<=N;i++){
     for (int j=0;j<=M;j++){
+      //MQuadrangle *qnew = new MQuadrangle (tab[j][i],tab[j+1][i],tab[j+1][i+1],tab[j][i+1]);
       MQuadrangle *qnew = new MQuadrangle (tab[j][i],tab[j][i+1],tab[j+1][i+1],tab[j+1][i]);
       //      printf("%p %p %p %p\n",tab[j][i],tab[j][i+1],tab[j+1][i+1],tab[j+1][i]);
       q.push_back(qnew);
@@ -1011,7 +1012,11 @@ struct  quadBlob {
       int topo_convex_region = 1;
       for (int i=0; i<bnodes.size();i++){
 	MVertex *v = bnodes[i];
-	//	if (v->onWhat()->dim() != 2)return 0;
+	// do not do anything in boundary layers !!!
+	if (v->onWhat()->dim() == 2){
+	  MFaceVertex *fv = dynamic_cast<MFaceVertex*>(v);
+	  if(fv && fv->bl_data) return 0;
+	}
 	//if (v->onWhat()->dim() == 2){
 	  int topo_angle = topologicalAngle(v);
 	  if (topo_angle < 0){
@@ -3004,29 +3009,6 @@ void quadsToTriangles(GFace *gf, double minqual)
     }
   }
   gf->quadrangles = qds;
-}
-
-void recombineIntoQuadsIterative(GFace *gf)
-{
-  recombineIntoQuads(gf);
-  //  quadsToTriangles(gf, 1. - gf->meshAttributes.recombineAngle/90. );
-  return;
-  int COUNT = 0;
-  while (1){
-    quadsToTriangles(gf,-10000);
-    {char NAME[245];sprintf(NAME,"iterT%d.msh",COUNT); gf->model()->writeMSH(NAME);}
-    std::set<MTri3*,compareTri3Ptr> AllTris;
-    std::vector<double> vSizes, vSizesBGM, Us, Vs;
-    std::vector<SMetric3> vMetricsBGM;
-    //    buildMeshGenerationDataStructures
-    //      (gf, AllTris, vSizes, vSizesBGM, vMetricsBGM, Us, Vs);
-    //    int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, Us, Vs, vSizes, vSizesBGM);
-    //    transferDataStructure(gf, AllTris, Us, Vs);
-    {char NAME[245];sprintf(NAME,"iterTD%d.msh",COUNT); gf->model()->writeMSH(NAME);}
-    recombineIntoQuads(gf,false,true);
-    {char NAME[245];sprintf(NAME,"iter%d.msh",COUNT++); gf->model()->writeMSH(NAME);}
-    if (COUNT == 5)break;
-  }
 }
 
 double Temporary::w1,Temporary::w2,Temporary::w3;

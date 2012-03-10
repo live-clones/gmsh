@@ -521,7 +521,7 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 
 	  //avoid convergent errors
 	  if (dv2.length() < 0.5 * dv.length())break;
-	  blQuads.push_back(new MQuadrangle(v11,v12,v22,v21));
+	  blQuads.push_back(new MQuadrangle(v11,v21,v22,v12));
 	  fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
 		  v11->x(),v11->y(),v11->z(),
 		  v12->x(),v12->y(),v12->z(),
@@ -1141,7 +1141,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
      !CTX::instance()->mesh.optimizeLloyd && !onlyInitialMesh)
-    recombineIntoQuadsIterative(gf);
+    recombineIntoQuads(gf);
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
                        gf->meshStatistics.average_element_shape,
