@@ -1663,7 +1663,7 @@ StringXColor ViewOptions_Color[] = {
   { F|O, "Text3D" , opt_view_color_text3d , ELECOL, "3D text color" },
   { F|O, "Axes" , opt_view_color_axes , ELECOL, "Axes color" },
   { F|O, "Background2D" , opt_view_color_background2d ,
-    {255, 255, 255, 160}, {255, 255, 255, 160}, {255, 255, 255, 160},
+    {255, 255, 255, 200}, {255, 255, 255, 200}, {255, 255, 255, 200},
     "Bacground color for 2D plots" },
   { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , 0 }
 } ;
