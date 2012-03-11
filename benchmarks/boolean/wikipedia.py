@@ -28,11 +28,15 @@ myModel2.computeBooleanUnion(myTool3);
 
 myModel.computeBooleanDifference(myModel2);
 
+myModel2.setVisibility(0);
 myModel.setAsCurrent();
+myModel.setVisibility(1);
+
+GmshSetOption("Mesh", "CharacteristicLengthFactor", 0.4);
 
 #myModel.mesh(3);
 #myModel.save("wikipedia.msh");
-myModel.save("wikipedia.brep");
+#myModel.save("wikipedia.brep");
 
 FlGui.instance();
 FlGui.run();
