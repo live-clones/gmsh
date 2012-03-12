@@ -174,11 +174,35 @@ static SMetric3 metric_based_on_surface_curvature(const GFace *gf, double u, dou
 
 static SMetric3 metric_based_on_surface_curvature(const GEdge *ge, double u)
 {
-  SMetric3 mesh_size(1.e-12);
-  std::list<GFace *> faces = ge->faces();
-  std::list<GFace *>::iterator it = faces.begin();
-  int count = 0;
-  while(it != faces.end()){
+  const GEdgeCompound* ptrCompoundEdge = dynamic_cast<const GEdgeCompound*>(ge);
+  if (ptrCompoundEdge)
+  {
+      double cmax, cmin;
+      SVector3 dirMax,dirMin;
+      cmax = ptrCompoundEdge->curvatures(u,&dirMax, &dirMin, &cmax,&cmin);
+      if (cmin == 0)cmin =1.e-5;
+      if (cmax == 0)cmax =1.e-5;
+      double lambda2 =  ((2 * M_PI) /( fabs(cmax) *  CTX::instance()->mesh.minCircPoints ) );
+      double lambda1 =  ((2 * M_PI) /( fabs(cmin) *  CTX::instance()->mesh.minCircPoints ) );
+      SVector3 Z = crossprod(dirMax,dirMin);
+
+      lambda1 = std::max(lambda1, CTX::instance()->mesh.lcMin);
+      lambda2 = std::max(lambda2, CTX::instance()->mesh.lcMin);
+      lambda1 = std::min(lambda1, CTX::instance()->mesh.lcMax);
+      lambda2 = std::min(lambda2, CTX::instance()->mesh.lcMax);
+
+      SMetric3 curvMetric (1./(lambda1*lambda1),1./(lambda2*lambda2),1.e-5,dirMin, dirMax, Z );
+      return curvMetric;
+  }
+
+  else
+  {
+    SMetric3 mesh_size(1.e-12);
+    std::list<GFace *> faces = ge->faces();
+    std::list<GFace *>::iterator it = faces.begin();
+    int count = 0;
+    while(it != faces.end())
+    {
     if (((*it)->geomType() != GEntity::CompoundSurface) &&
         ((*it)->geomType() != GEntity::DiscreteSurface)){
       SPoint2 par = ge->reparamOnFace((*it), u, 1);
@@ -193,42 +217,8 @@ static SMetric3 metric_based_on_surface_curvature(const GEdge *ge, double u)
   double lambda =  ((2 * M_PI) /( fabs(Crv) *  CTX::instance()->mesh.minCircPoints ) );
   SMetric3 curvMetric (1./(lambda*lambda));
   
-  return intersection(mesh_size,curvMetric);
-}
-
-static SMetric3 metric_based_on_surface_curvature_ES(const GEdge *ge, double u)
-{
-    // If the curve is a compound curve, find the corresponding discrete curve. Then loop over all
-    // neighboring (discrete) surfaces and compute the metric as the intersection of the surface metrics
-
-    SMetric3 mesh_size(1.e-12);
-    int iDiscEdge;
-    double tLoc;
-    if (ge->geomType() == GEntity::CompoundCurve)
-    {
-        const GEdgeCompound* ptrEdgeCompound = dynamic_cast<const GEdgeCompound*>(ge);
-        ptrEdgeCompound->getLocalParameter(u, iDiscEdge, tLoc);
-        std::vector <GEdge*> DiscreteEdge = ptrEdgeCompound->getCompounds(); //vector of pointers to GEdge
-        GEdge* ptrDiscEdge = DiscreteEdge[iDiscEdge]; //Single pointer to GEdge
-
-        std::list<GFace *> faces = ptrDiscEdge->faces();
-        std::list<GFace *>::iterator it = faces.begin();
-        int count = 0;
-        while(it != faces.end())
-        {
-
-//            SMetric3 m = metric_based_on_surface_curvature(*it, u, v); //This doesn't work!!!!
-            SPoint2 par = ge->reparamOnFace((*it), u, 1);
-            SMetric3 m = metric_based_on_surface_curvature (*it, par.x(), par.y());
-            if (!count) mesh_size = m;
-            else mesh_size = intersection(mesh_size, m);
-            count++;
-
-          ++it;
-        }
-    }
-
-    return mesh_size;
+  return intersection_conserve_mostaniso(mesh_size,curvMetric);
+  }
 }
 
 static SMetric3 metric_based_on_surface_curvature(const GVertex *gv)
@@ -239,76 +229,26 @@ static SMetric3 metric_based_on_surface_curvature(const GVertex *gv)
        ite != l_edges.end(); ++ite){
     GEdge *_myGEdge = *ite;
     Range<double> bounds = _myGEdge->parBounds(0);
-    if (gv == _myGEdge->getBeginVertex())
-      mesh_size = intersection
-        (mesh_size,
-         metric_based_on_surface_curvature(_myGEdge, bounds.low()));
-    else
-      mesh_size = intersection
-        (mesh_size, 
-         metric_based_on_surface_curvature(_myGEdge, bounds.high()));
+
+    // ES: Added extra if condition to use the code below only with compund curves
+    // This is because we want to call the function
+    // metric_based_on_surface_curvature(const GEdge *ge, double u) for the case when
+    // ge is a compound edge
+    if (_myGEdge->geomType() == GEntity::CompoundCurve)
+    {
+        if (gv == _myGEdge->getBeginVertex())
+          mesh_size = intersection
+            (mesh_size,
+             metric_based_on_surface_curvature(_myGEdge, bounds.low()));
+        else
+          mesh_size = intersection
+            (mesh_size,
+             metric_based_on_surface_curvature(_myGEdge, bounds.high()));
+    }
+
   }
   return mesh_size;
 }
-
-static SMetric3 metric_based_on_surface_curvature_ES(const GVertex *gv)
-{
-  SMetric3 mesh_size(1.e-5);
-  std::list <GFace*>::const_iterator itf;
-
-  int iDiscEdge;
-  double tLoc;
-
-  std::list<GEdge*> l_edges = gv->edges();
-  std::list<GFace*> l_faces;
-  for (std::list<GEdge*>::const_iterator ite = l_edges.begin(); ite != l_edges.end(); ++ite)
-  {
-      if ((*ite)->geomType() == GEntity::CompoundCurve)
-      {
-          const GEdgeCompound* ptrEdgeCompound = dynamic_cast<const GEdgeCompound*>(*ite);
-          Range<double> bounds = (*ite)->parBounds(0);
-
-          if (gv == (*ite)->getBeginVertex())
-          {
-              ptrEdgeCompound->getLocalParameter(bounds.low(), iDiscEdge, tLoc);
-          }
-          else
-          {
-              ptrEdgeCompound->getLocalParameter(bounds.high(), iDiscEdge, tLoc);
-          }
-
-          std::vector <GEdge*> DiscreteEdge = ptrEdgeCompound->getCompounds(); //vector of pointers to GEdge
-          GEdge* ptrDiscEdge = DiscreteEdge[iDiscEdge]; //Single pointer to GEdge
-
-
-        std::list<GFace *> neighFaces =  ptrDiscEdge->faces();
-        for (itf = neighFaces.begin(); itf != neighFaces.end(); ++itf)
-        {
-            l_faces.push_back(*itf);
-        }
-      }
-  }
-
-  l_faces.sort();
-  l_faces.unique();
-
-  itf = l_faces.begin();
-  int count = 0;
-  while(itf != l_faces.end())
-  {
-      SPoint2 par = gv->reparamOnFace((*itf), 1);
-      SMetric3 m = metric_based_on_surface_curvature (*itf, par.x(), par.y());
-      if (!count) mesh_size = m;
-      else mesh_size = intersection(mesh_size, m);
-      count++;
-
-    ++itf;
-  }
-
-  return mesh_size;
-}
-
-
 
 // the mesh vertex is classified on a model vertex.  we compute the
 // maximum of the curvature of model faces surrounding this point if

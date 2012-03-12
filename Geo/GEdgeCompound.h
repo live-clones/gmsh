@@ -32,6 +32,8 @@ class GEdgeCompound : public GEdge {
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return 0; }
   virtual double curvature(double t) const;
+  virtual double curvatures(const double par, SVector3 *dirMax, SVector3 *dirMin,
+   double *curvMax, double *curvMin) const;
   virtual int minimumMeshSegments() const;
   virtual int minimumDrawSegments() const;
   std::vector<GEdge*>  getCompounds() const { return _compound; }

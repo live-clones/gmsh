@@ -20,6 +20,7 @@
 #include "Geo.h"
 #include "OS.h"
 #include "Curvature.h"
+#include "GEdgeCompound.h"
 
 discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
   : GEdge(model, num, _v0, _v1)
@@ -511,6 +512,18 @@ double discreteEdge::curvature(double par) const
   //printf("curv edge =%g \n", cv);
   return cv;
 
+}
+
+double discreteEdge::curvatures(const double par, SVector3 *dirMax, SVector3 *dirMin,
+                                double *curvMax, double *curvMin) const
+{
+  if (getCompound()){
+    return getCompound()->curvatures(par, dirMax, dirMin, curvMax, curvMin);
+  }
+  else{
+    Msg::Error("Cannot evaluate curvatures and curvature directions on discrete edge");
+    return false;
+  }
 }
 
 Range<double> discreteEdge::parBounds(int i) const

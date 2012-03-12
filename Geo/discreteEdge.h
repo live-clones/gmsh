@@ -23,6 +23,7 @@ class discreteEdge : public GEdge {
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
   virtual double curvature(double par) const;
+  virtual double curvatures(const double par, SVector3 *dirMax, SVector3 *dirMin, double *curvMax, double *curvMin) const;
   virtual bool haveParametrization(){ return !_pars.empty(); }
   virtual Range<double> parBounds(int) const;
 

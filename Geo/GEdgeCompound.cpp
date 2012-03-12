@@ -10,7 +10,9 @@
 #include <stdlib.h>
 #include "GmshConfig.h"
 #include "GEdgeCompound.h"
+#include "discreteEdge.h"
 #include "Numeric.h"
+#include "Curvature.h"
 
 GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound, 
                              std::vector<int> &orientation)
@@ -239,6 +241,51 @@ double GEdgeCompound::curvature(double par) const
   getLocalParameter(par,iEdge,tLoc);
 
   return _compound[iEdge]->curvature(tLoc);
+}
+
+double GEdgeCompound::curvatures(const double par, SVector3 *dirMax, SVector3 *dirMin,
+                                 double *curvMax, double *curvMin) const
+{
+    double tLoc = -1.0;
+    int iEdge;
+    getLocalParameter(par,iEdge,tLoc);
+
+    if( _compound[iEdge]->geomType() == GEntity::DiscreteCurve)
+    {
+    Curvature& curvature = Curvature::getInstance();
+    if( !Curvature::valueAlreadyComputed() )
+        {
+            Msg::Info("Need to compute discrete curvature for anisotropic remesh (in GFace)");
+            Curvature::typeOfCurvature type = Curvature::RUSIN; //RBF
+            curvature.computeCurvature(model(), type);
+        }
+    double tLocMLine;
+    int iMLine;
+    discreteEdge* ptrEdge = dynamic_cast<discreteEdge*>(_compound[iEdge]);
+    ptrEdge->getLocalParameter(tLoc, iMLine, tLocMLine);
+
+    //vector of MLines
+    MLine* mline = ptrEdge->lines[iMLine];
+
+    double cMin[2];
+    double cMax[2];
+    SVector3 dMin[2];
+    SVector3 dMax[2];
+    curvature.edgeNodalValuesAndDirections(mline, dMax, dMin, cMax, cMin, 0);
+
+    *dirMax = (1-tLocMLine)*dMax[0] + tLocMLine*dMax[1];
+    *dirMin = (1-tLocMLine)*dMin[0] + tLocMLine*dMin[1];
+    *curvMax = (1-tLocMLine)*cMax[0] + tLocMLine*cMax[1];
+    *curvMin = (1-tLocMLine)*cMin[0] + tLocMLine*cMin[1];
+
+    return *curvMax;
+
+    }
+    else
+    {
+        Msg::Error("Case of CAD Geometry, don't know what to do here...");
+    }
+    return 0.0;
 }
 
 GPoint GEdgeCompound::point(double par) const
