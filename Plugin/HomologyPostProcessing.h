@@ -36,10 +36,6 @@ class GMSH_HomologyPostProcessingPlugin : public GMSH_PostPlugin
   StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
   bool parseStringOpt(int stringOpt, std::vector<int>& intList);
-  void createChains(int dim, GModel* m,
-                    const std::vector<GEntity*>& chainEntities,
-                    const std::vector<std::string>& chainNames,
-                    std::vector<Chain<int> >& chains);
   bool invertIntegerMatrix(std::vector<int>& matrix);
   int detIntegerMatrix(std::vector<int>& matrix);
 };

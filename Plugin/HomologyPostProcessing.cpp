@@ -18,7 +18,6 @@
 #if defined(HAVE_KBIPACK)
 
 StringXNumber HomologyPostProcessingOptions_Number[] = {
-  {GMSH_FULLRC, "DimensionOfChains", NULL, 1},
   {GMSH_FULLRC, "ApplyBoundaryOperatorToResults", NULL, 0}
 };
 
@@ -92,23 +91,6 @@ bool GMSH_HomologyPostProcessingPlugin::parseStringOpt
   return true;
 }
 
-void GMSH_HomologyPostProcessingPlugin::createChains
-(int dim, GModel* m,
- const std::vector<GEntity*>& chainEntities,
- const std::vector<std::string>& chainNames,
- std::vector<Chain<int> >& chains)
-{
-  for(unsigned int i = 0; i < chainEntities.size(); i++) {
-    GEntity* e = chainEntities.at(i);
-    Chain<int> chain;
-    for(unsigned int j = 0; j < e->getNumMeshElements(); j++) {
-      chain.addMeshElement(e->getMeshElement(j));
-    }
-    chains.push_back(chain);
-    chains.at(i).setName(chainNames.at(i));
-  }
-}
-
 int GMSH_HomologyPostProcessingPlugin::detIntegerMatrix
 (std::vector<int>& matrix)
 {
@@ -145,13 +127,7 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   std::string opString2 = HomologyPostProcessingOptions_String[2].def;
   std::string cname = HomologyPostProcessingOptions_String[4].def;
   std::string traceString = HomologyPostProcessingOptions_String[3].def;
-  int dim = (int)HomologyPostProcessingOptions_Number[0].def;
-  int bd = (int)HomologyPostProcessingOptions_Number[1].def;
-
-  if(dim < 0 || dim > 3) {
-    Msg::Error("Invalid cell dimension %d", dim);
-    return 0;
-  }
+  int bd = (int)HomologyPostProcessingOptions_Number[0].def;
 
   GModel* m = GModel::current();
 
@@ -227,52 +203,20 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   std::vector<int> tracePhysicals;
   if(!parseStringOpt(3, tracePhysicals)) return 0;
 
-  std::vector<GEntity*> basisEntities;
-  std::vector<GEntity*> basisEntities2;
-  std::map<int, std::vector<GEntity*> > groups[4];
-  m->getPhysicalGroups(groups);
-  std::map<int, std::vector<GEntity*> >::iterator it;
-
-  std::vector<std::string> curBasisNames;
-  for(unsigned int i = 0; i < basisPhysicals.size(); i++){
-    curBasisNames.push_back(m->getPhysicalName(dim, basisPhysicals.at(i)));
-    it = groups[dim].find(basisPhysicals.at(i));
-    if(it != groups[dim].end()){
-      std::vector<GEntity*> physicalGroup = it->second;
-      for(unsigned int k = 0; k < physicalGroup.size(); k++){
-        basisEntities.push_back(physicalGroup.at(k));
-        break;
-      }
-    }
-    else {
-      Msg::Error("%d-dimensional physical group %d does not exist",
-                 dim, basisPhysicals.at(i));
-      return 0;
-    }
-  }
-  std::vector<std::string> curBasisNames2;
-  for(unsigned int i = 0; i < basisPhysicals2.size(); i++){
-    curBasisNames2.push_back(m->getPhysicalName(dim, basisPhysicals2.at(i)));
-    it = groups[dim].find(basisPhysicals2.at(i));
-    if(it != groups[dim].end()){
-      std::vector<GEntity*> physicalGroup = it->second;
-      for(unsigned int k = 0; k < physicalGroup.size(); k++){
-        basisEntities2.push_back(physicalGroup.at(k));
-        break;
-      }
-    }
-    else {
-      Msg::Error("%d-dimensional physical group %d does not exist",
-                 dim, basisPhysicals2.at(i));
-      return 0;
-    }
-  }
-
   std::vector<Chain<int> > curBasis;
-  createChains(dim, m, basisEntities, curBasisNames, curBasis);
-  std::vector<Chain<int> > curBasis2;
-  createChains(dim, m, basisEntities2, curBasisNames2, curBasis2);
+  for(unsigned int i = 0; i < basisPhysicals.size(); i++){
+    curBasis.push_back(Chain<int>(m, basisPhysicals.at(i)));
+  }
+  if(curBasis.empty()) {
+    Msg::Error("No operated chains given");
+    return 0;
+  }
+  int dim = curBasis.at(0).getDim();
 
+  std::vector<Chain<int> > curBasis2;
+  for(unsigned int i = 0; i < basisPhysicals2.size(); i++){
+    curBasis2.push_back(Chain<int>(m, basisPhysicals2.at(i)));
+  }
 
   if(!curBasis2.empty()) {
     rows = curBasis2.size();
@@ -295,6 +239,9 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   if(!curBasis2.empty()) {
     Msg::Info("Computing new basis %d-chains such that the incidence matrix of %d-chain bases %s and %s is the indentity matrix",
               dim, dim, opString1.c_str(), opString2.c_str());
+    int det = detIntegerMatrix(matrix);
+    if(det != 1 && det != -1)
+      Msg::Warning("Incidence matrix is not unimodular (det = %d)", det);
     if(!invertIntegerMatrix(matrix)) return 0;
     for(int i = 0; i < rows; i++)
       for(int j = 0; j < cols; j++)
@@ -305,7 +252,7 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
     if(rows == cols) {
       int det = detIntegerMatrix(matrix);
       if(det != 1 && det != -1)
-      Msg::Warning("Transformation matrix is not unimodular (det = %d)", det);
+        Msg::Warning("Transformation matrix is not unimodular (det = %d)", det);
     }
     for(int i = 0; i < rows; i++)
       for(int j = 0; j < cols; j++)
@@ -322,27 +269,8 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   if(!tracePhysicals.empty()) {
     Msg::Info("Taking trace of result %d-chains to domain %s",
               dim, traceString.c_str());
-    std::vector<GEntity*> traceEntities;
-    for(unsigned int i = 0; i < tracePhysicals.size(); i++){
-      bool found = false;
-      for(int j = 0; j < 4; j++){
-        it = groups[j].find(tracePhysicals.at(i));
-        if(it != groups[j].end()){
-          found = true;
-          std::vector<GEntity*> physicalGroup = it->second;
-          for(unsigned int k = 0; k < physicalGroup.size(); k++){
-            traceEntities.push_back(physicalGroup.at(k));
-          }
-        }
-      }
-      if(!found) {
-        Msg::Error("Physical group %d does not exist",
-                   tracePhysicals.at(i));
-        return 0;
-      }
-    }
     for(unsigned int i = 0; i < newBasis.size(); i++)
-      newBasis.at(i) = newBasis.at(i).getTrace(traceEntities);
+      newBasis.at(i) = newBasis.at(i).getTrace(m, tracePhysicals);
     ElemChain::clearVertexCache();
   }
 

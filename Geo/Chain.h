@@ -171,34 +171,100 @@ template <class C>
 class Chain : public VectorSpaceCat<Chain<C>, C>
 {
 private:
+  // Dimension of the chain
   int _dim;
+  // Elementary chains and their coefficients in the chain
   std::map<ElemChain, C> _elemChains;
+  // A name for the chain
   std::string _name;
 
 public:
+  // Elementary chain iterators
   typedef typename std::map<ElemChain, C>::iterator ecit;
   typedef typename std::map<ElemChain, C>::const_iterator cecit;
 
+  // Create zero chain
   Chain() : _dim(-1), _name("") {}
+
+  // Create chain from Gmsh model physical group
+  // (all mesh elements in the physical group are treated as
+  //  elementary chains with coefficient 1)
+  Chain(GModel* m, int physicalGroup);
+
+  // Get/set the chain name
   std::string getName() const { return _name; }
   void setName(std::string name) { _name = name; }
+
+  // Get chain dimension
   int getDim() const { return _dim; }
+
+  // True if a zero element of a chain space
   bool isZero() const { return _elemChains.empty(); }
+
+  // Iterators to elementrary chains in the chain
   cecit firstElemChain() const { return _elemChains.begin(); }
   cecit lastElemChain() const { return _elemChains.end(); }
 
+  // Add mesh element or elementary chain with given coefficient to the chain
   void addMeshElement(MElement* e, C coeff=1);
   void addElemChain(const ElemChain& c, C coeff=1);
 
+  // Vector space operations for chains (these two induce the rest)
   Chain<C>& operator+=(const Chain<C>& chain);
   Chain<C>& operator*=(const C& coeff);
 
+  // Get elementary chain coefficient the chain
   C getCoefficient(const ElemChain& c2) const;
-  Chain<C> getBoundary() const;
-  Chain<C> getTrace(const std::vector<GEntity*>& subdomain) const;
 
+  // Get mesh element (or its indicated face, edge, or vertex)
+  // coefficient in the chain, interpreted as a elementary chain
+  C getCoefficient(MElement* e, int subElement=-1) const;
+
+  // Get the boundary chain of this chain
+  Chain<C> getBoundary() const;
+
+  // Get a chain which contains elementary chains that are
+  // fully in the given physical group
+  Chain<C> getTrace(GModel* m, int physicalGroup) const;
+  Chain<C> getTrace(GModel* m, const std::vector<int>& physicalGroups) const;
+
+  // Add chain to Gmsh model as a physical group,
+  // elementary chains are turned into mesh elements with
+  // orientation and multiplicity given by elementary chain coefficient
+  // (and create a post-processing view)
   void addToModel(GModel* m, bool post=true) const;
 };
+
+template <class C>
+Chain<C>::Chain(GModel* m, int physicalGroup)
+{
+  std::vector<GEntity*> entities;
+  std::map<int, std::vector<GEntity*> > groups[4];
+  m->getPhysicalGroups(groups);
+  std::map<int, std::vector<GEntity*> >::iterator it;
+
+  for(int j = 0; j < 4; j++){
+    it = groups[j].find(physicalGroup);
+    if(it != groups[j].end()){
+      _dim = j;
+      std::vector<GEntity*> physicalGroup = it->second;
+      for(unsigned int k = 0; k < physicalGroup.size(); k++){
+        entities.push_back(physicalGroup.at(k));
+      }
+    }
+  }
+  if(entities.empty()) {
+    Msg::Error("Physical group %d does not exist", physicalGroup);
+  }
+  for(unsigned int i = 0; i < entities.size(); i++) {
+    GEntity* e = entities.at(i);
+    for(unsigned int j = 0; j < e->getNumMeshElements(); j++) {
+      this->addMeshElement(e->getMeshElement(j));
+    }
+    this->setName(m->getPhysicalName(this->getDim(),
+                                     physicalGroup));
+  }
+}
 
 template <class C>
 C Chain<C>::getCoefficient(const ElemChain& c2) const
@@ -207,6 +273,37 @@ C Chain<C>::getCoefficient(const ElemChain& c2) const
   if(it != _elemChains.end())
     return it->second*c2.compareOrientation(it->first);
   else return 0;
+}
+
+template <class C>
+C Chain<C>::getCoefficient(MElement* e, int subElement) const
+{
+  if(this->getDim() == e->getDim()) {
+    ElemChain ec(e);
+    return this->getCoefficient(ec);
+  }
+  if(subElement == -1) return 0;
+  std::vector<MVertex*> v;
+  if(this->getDim() == 0) {
+    if(subElement >= e->getNumVertices()) return 0;
+    v = std::vector<MVertex*>(1, e->getVertex(subElement));
+  }
+  else if(this->getDim() == 1) {
+    if(subElement >= e->getNumEdges()) return 0;
+    e->getEdgeVertices(subElement, v);
+    v.resize(2);
+  }
+  else if(this->getDim() == 2) {
+    if(subElement >= e->getNumFaces()) return 0;
+    e->getFaceVertices(subElement, v);
+    if(e->getType() == TYPE_TET ||
+       (e->getType() == TYPE_PRI && subElement < 4) ||
+       (e->getType() == TYPE_PYR && subElement < 2))
+      v.resize(3);
+    else v.resize(4);
+  }
+  ElemChain ec(this->getDim(), v);
+  return this->getCoefficient(ec);
 }
 
 template <class C>
@@ -252,20 +349,50 @@ Chain<C> Chain<C>::getBoundary() const
 }
 
 template <class C>
-Chain<C> Chain<C>::getTrace(const std::vector<GEntity*>& subdomain) const
+Chain<C> Chain<C>::getTrace(GModel* m, int physicalGroup) const
+{
+  std::vector<int> groups(1, physicalGroup);
+  return this->getTrace(m, groups);
+}
+
+template <class C>
+Chain<C> Chain<C>::getTrace(GModel* m,
+                            const std::vector<int>& physicalGroups) const
 {
   Chain<C> result;
-  for(cecit it = _elemChains.begin(); it != _elemChains.end(); it++) {
+  std::map<int, std::vector<GEntity*> > groups[4];
+  m->getPhysicalGroups(groups);
+  std::map<int, std::vector<GEntity*> >::iterator it;
+  std::vector<GEntity*> entities;
+  for(unsigned int i = 0; i < physicalGroups.size(); i++){
+    bool found = false;
+    for(int j = 0; j < 4; j++){
+      it = groups[j].find(physicalGroups.at(i));
+      if(it != groups[j].end()){
+        found = true;
+        std::vector<GEntity*> physicalGroup = it->second;
+        for(unsigned int k = 0; k < physicalGroup.size(); k++){
+          entities.push_back(physicalGroup.at(k));
+        }
+      }
+    }
+    if(!found) {
+      Msg::Error("Physical group %d does not exist",
+                 physicalGroups.at(i));
+    }
+    if(entities.empty()) return result;
+    for(cecit it = _elemChains.begin(); it != _elemChains.end(); it++) {
     bool inDomain = false;
-    for(unsigned int i = 0; i < subdomain.size(); i++) {
-      if(it->first.inEntity(subdomain.at(i))) {
+    for(unsigned int i = 0; i < entities.size(); i++) {
+      if(it->first.inEntity(entities.at(i))) {
         inDomain = true;
         break;
       }
     }
     if(inDomain) result.addElemChain(it->first, it->second);
+    }
+    return result;
   }
-  return result;
 }
 
 template <class C>
