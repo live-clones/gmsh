@@ -224,9 +224,10 @@ public:
   Chain<C> getBoundary() const;
 
   // Get a chain which contains elementary chains that are
-  // fully in the given physical group
+  // fully in the given physical group or elementary entities
   Chain<C> getTrace(GModel* m, int physicalGroup) const;
   Chain<C> getTrace(GModel* m, const std::vector<int>& physicalGroups) const;
+  Chain<C> getTrace(const std::vector<GEntity*>& entities) const;
 
   // Add chain to Gmsh model as a physical group,
   // elementary chains are turned into mesh elements with
@@ -359,7 +360,6 @@ template <class C>
 Chain<C> Chain<C>::getTrace(GModel* m,
                             const std::vector<int>& physicalGroups) const
 {
-  Chain<C> result;
   std::map<int, std::vector<GEntity*> > groups[4];
   m->getPhysicalGroups(groups);
   std::map<int, std::vector<GEntity*> >::iterator it;
@@ -380,8 +380,16 @@ Chain<C> Chain<C>::getTrace(GModel* m,
       Msg::Error("Physical group %d does not exist",
                  physicalGroups.at(i));
     }
-    if(entities.empty()) return result;
-    for(cecit it = _elemChains.begin(); it != _elemChains.end(); it++) {
+  }
+  if(entities.empty()) return Chain<C>();
+  return getTrace(entities);
+}
+
+template <class C>
+Chain<C> Chain<C>::getTrace(const std::vector<GEntity*>& entities) const
+{
+  Chain<C> result;
+  for(cecit it = _elemChains.begin(); it != _elemChains.end(); it++) {
     bool inDomain = false;
     for(unsigned int i = 0; i < entities.size(); i++) {
       if(it->first.inEntity(entities.at(i))) {
@@ -390,9 +398,8 @@ Chain<C> Chain<C>::getTrace(GModel* m,
       }
     }
     if(inDomain) result.addElemChain(it->first, it->second);
-    }
-    return result;
   }
+  return result;
 }
 
 template <class C>
