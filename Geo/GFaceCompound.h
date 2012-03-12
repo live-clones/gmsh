@@ -89,7 +89,7 @@ class GFaceCompound : public GFace {
   void compute_distance() const;
   bool checkOrientation(int iter, bool moveBoundaries=false) const;
   bool checkOverlap(std::vector<MVertex *> &vert) const;
-  void one2OneMap(bool moveBoundaries=false) const;
+  bool one2OneMap() const;
   void convexBoundary(double nTot) const;
   double checkAspectRatio() const;
   void computeNormals () const;
