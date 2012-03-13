@@ -2081,6 +2081,7 @@ GFace* GModel::addCompoundFace(std::vector<GFace*> faces, int param, int typeS)
   if (param == 4) typ =  GFaceCompound::CONVEX_CIRCLE;
   if (param == 5) typ =  GFaceCompound::CONVEX_PLANE;
   if (param == 6) typ =  GFaceCompound::HARMONIC_SQUARE;
+  if (param == 7) typ =  GFaceCompound::CONFORMAL_FE;
 
   GFaceCompound *gfc = new GFaceCompound(this, num, comp, U0, typ, typeS);
 

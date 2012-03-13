@@ -54,9 +54,9 @@ class GFaceCompound : public GFace {
  public:
   typedef enum {ITERU=0,ITERV=1,ITERD=2} iterationStep;
   typedef enum {HARMONIC_CIRCLE=0, CONFORMAL_SPECTRAL=1, RADIAL_BASIS=2, HARMONIC_PLANE=3, 
-	       CONVEX_CIRCLE=4,CONVEX_PLANE=5, HARMONIC_SQUARE=6} typeOfCompound;
+		CONVEX_CIRCLE=4,CONVEX_PLANE=5, HARMONIC_SQUARE=6, CONFORMAL_FE=7} typeOfCompound;
   typedef enum {HARMONIC=0,CONFORMAL=1, RBF=2, CONVEX=3} typeOfMapping;
-  typedef enum {UNITCIRCLE, MEANPLANE, SQUARE, ALREADYFIXED} typeOfIsomorphism;
+  typedef enum {UNITCIRCLE, MEANPLANE, SQUARE, ALREADYFIXED,SPECTRAL, FE} typeOfIsomorphism;
   void computeNormals(std::map<MVertex*, SVector3> &normals) const;
  protected:
   mutable std::set<MVertex *> ov;
@@ -159,9 +159,9 @@ class GFaceCompound : public GFace {
  public:
   typedef enum {ITERU=0,ITERV=1,ITERD=2} iterationStep;
   typedef enum {HARMONIC_CIRCLE=0, CONFORMAL_SPECTRAL=1, RADIAL_BASIS=2, HARMONIC_PLANE=3, 
-	       CONVEX_CIRCLE=4,CONVEX_PLANE=5, HARMONIC_SQUARE=6} typeOfCompound;
+		CONVEX_CIRCLE=4,CONVEX_PLANE=5, HARMONIC_SQUARE=6, CONFORMAL_FE=7} typeOfCompound;
   typedef enum {HARMONIC=0,CONFORMAL=1, RBF=2, CONVEX=3} typeOfMapping;
-  typedef enum {UNITCIRCLE, MEANPLANE, SQUARE, ALREADYFIXED} typeOfIsomorphism;
+  typedef enum {UNITCIRCLE, MEANPLANE, SQUARE, ALREADYFIXED,SPECTRAL, FE} typeOfIsomorphism;
  GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 	       std::list<GEdge*> &U0, typeOfMapping typ = HARMONIC, 
 	       int allowPartition=1, 

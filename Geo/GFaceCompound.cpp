@@ -922,22 +922,26 @@ bool GFaceCompound::parametrize() const
   }
   // Conformal map parametrization
   else if (_mapping == CONFORMAL){
-    Msg::Info("Parametrizing surface %d with 'conformal map'", tag());
+   
     fillNeumannBCS();
     std::vector<MVertex *> vert;
     bool oriented, hasOverlap;
-    hasOverlap = parametrize_conformal_spectral();
-    printStuff(55); 
+    if (_type == SPECTRAL){
+      Msg::Info("Parametrizing surface %d with 'spectral conformal map'", tag());
+      hasOverlap = parametrize_conformal_spectral();
+    }
+    else if (_type == FE){
+      Msg::Info("Parametrizing surface %d with 'FE conformal map'", tag());
+      parametrize_conformal(0, NULL, NULL);
+    }
     oriented =  checkOrientation(0);
-    printStuff(66);
     if (!oriented)  oriented = checkOrientation(0, true);
-    printStuff(77); 
-    if ( !oriented  || checkOverlap(vert) ){
+    if (_type==SPECTRAL &&  (!oriented  || checkOverlap(vert)) ){
       Msg::Warning("!!! parametrization switched to 'FE conformal' map");
       parametrize_conformal(0, NULL, NULL);
-      checkOrientation(0, true);
+      oriented = checkOrientation(0, true);
     }  
-    if (!checkOrientation(0) || checkOverlap(vert)){
+    if (!oriented || checkOverlap(vert)){
       Msg::Warning("$$$ parametrization switched to 'harmonic' map");
       parametrize(ITERU,HARMONIC); 
       parametrize(ITERV,HARMONIC);
@@ -1177,17 +1181,26 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   
   getBoundingEdges();
 
+
   _mapping = HARMONIC;
   _type = UNITCIRCLE;
-  if (toc == HARMONIC_CIRCLE) _mapping = HARMONIC;
-  else if(toc == CONFORMAL_SPECTRAL)   _mapping = CONFORMAL;
-  else if(toc == RADIAL_BASIS)         _mapping = RBF;
+  if(toc == RADIAL_BASIS)   _mapping = RBF;
   else if (toc == HARMONIC_PLANE) _type = MEANPLANE;
   else if (toc == CONVEX_CIRCLE)  _mapping = CONVEX;
   else if (toc == CONVEX_PLANE){
     _mapping = CONVEX;
     _type = MEANPLANE;
   }
+  else if(toc == CONFORMAL_SPECTRAL) {
+    _mapping = CONFORMAL;
+    _type = SPECTRAL;
+  }
+  else if(toc == CONFORMAL_FE) {
+    _mapping = CONFORMAL;
+    _type = FE;
+  }
+ 
+
  
   nbSplit = 0;
   fillTris.clear();
@@ -1216,14 +1229,20 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 
   _mapping = HARMONIC;
   _type = UNITCIRCLE;
-  if (toc == HARMONIC_CIRCLE) _mapping = HARMONIC;
-  else if(toc == CONFORMAL_SPECTRAL)   _mapping = CONFORMAL;
-  else if(toc == RADIAL_BASIS)         _mapping = RBF;
+  if(toc == RADIAL_BASIS)   _mapping = RBF;
   else if (toc == HARMONIC_PLANE) _type = MEANPLANE;
   else if (toc == CONVEX_CIRCLE)  _mapping = CONVEX;
   else if (toc == CONVEX_PLANE){
     _mapping = CONVEX;
     _type = MEANPLANE;
+  }
+  if(toc == CONFORMAL_SPECTRAL) {
+    _mapping = CONFORMAL;
+    _type = SPECTRAL;
+  }
+  else if(toc == CONFORMAL_FE) {
+    _mapping = CONFORMAL;
+    _type = FE;
   }
   else if(toc == HARMONIC_SQUARE && _U0.size() && _V0.size() && _U1.size() && _V1.size()) {
     _type = SQUARE;
@@ -1564,7 +1583,7 @@ bool GFaceCompound::parametrize_conformal_spectral() const
   
   // mettre max NC contraintes par bord
   int NB = _ordered.size();
-  int NC = std::min(60,NB);
+  int NC = std::min(30,NB);
   int jump = (int) NB/NC;
   int nbLoop = (int) NB/jump ;
   for (int i = 0; i< nbLoop; i++){
