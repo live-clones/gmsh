@@ -740,7 +740,7 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
   bool inside = false;
   double uv[2];
   // FIXME !!! ----> FIXED (JFR)
-  if (MTri3::radiusNorm == 2){
+  if (0 && MTri3::radiusNorm == 2){
     inside = invMapUV(worst->tri(), center, Us, Vs, uv, 1.e-8);
     if (inside)ptin = worst;
     if (!inside && worst->getNeigh(0)){
@@ -778,7 +778,7 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
     MVertex *v = new MFaceVertex(p.x(), p.y(), p.z(), gf, center[0], center[1]);
     v->setIndex(Us.size());
     double lc1,lc;
-    if (backgroundMesh::current()){
+    if (0 && backgroundMesh::current()){
       lc1 = lc =
 	backgroundMesh::current()->operator()(center[0], center[1], 0.0);
     }
@@ -1022,7 +1022,6 @@ double optimalPointFrontal (GFace *gf,
 			    dir[1] * dir[1] * metric[2]);
 
   //  const double p = 0.5 * lengthMetric(P, Q, metric); // / RATIO;
-  //  const double q = lengthMetric(center, midpoint, metric);
   /*
   const double rhoM1 = 0.5 *
     (vSizes[base->getVertex(ip1)->getIndex()] +
@@ -1047,13 +1046,19 @@ double optimalPointFrontal (GFace *gf,
      vSizesBGM[base->getVertex(ip2)->getIndex()] ) ;// * RATIO;
   const double rhoM  = Extend1dMeshIn2dSurfaces() ? std::min(rhoM1,rhoM2) : rhoM2;
   const double rhoM_hat = rhoM;
-  const double d = rhoM_hat * sqrt(3.)*0.5/RATIO;
+
+  const double q = lengthMetric(center, midpoint, metric);
+
+  const double d = rhoM_hat * sqrt(3.)*0.5;
 
   //  printf("%12.5E %12.5E\n",d,RATIO);
 
-  newPoint[0] = midpoint[0] + d * dir[0];
-  newPoint[1] = midpoint[1] + d * dir[1];
-  return d * RATIO;
+  //  const double L = d ;
+  const double L = d > q ? q : d;
+
+  newPoint[0] = midpoint[0] + L * dir[0]/RATIO;
+  newPoint[1] = midpoint[1] + L * dir[1]/RATIO;
+  return L;// > q ? d : q;
 }
 
 /*
@@ -1081,7 +1086,6 @@ void optimalPointFrontalB (GFace *gf,
 			   std::vector<double> &vSizesBGM,
 			   double newPoint[2],
 			   double metric[3]){
-  static int missed = 1;
   // as a starting point, let us use the "fast algo"
   double d = optimalPointFrontal (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
   int ip1 = active_edge - 1 < 0 ? 2 : active_edge - 1;

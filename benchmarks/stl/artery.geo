@@ -9,4 +9,8 @@ Merge "artery.stl";
 CreateTopology;
 
 Compound Surface(100)={1};
+Compound Line(1001)={1};
+Compound Line(1002)={2};
+Compound Line(1003)={3};
+
 Physical Surface(101)={100};
