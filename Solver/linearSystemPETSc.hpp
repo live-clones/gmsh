@@ -16,7 +16,7 @@ static void  _try(int ierr)
 template <class scalar>
 void linearSystemPETSc<scalar>::_kspCreate()
 {
-  _try(KSPCreate(PETSC_COMM_WORLD, &_ksp));
+  _try(KSPCreate(_comm, &_ksp));
   PC pc;
   _try(KSPGetPC(_ksp, &pc));
   // set some default options
@@ -34,8 +34,9 @@ void linearSystemPETSc<scalar>::_kspCreate()
 }
 
 template <class scalar>
-linearSystemPETSc<scalar>::linearSystemPETSc()
+linearSystemPETSc<scalar>::linearSystemPETSc(MPI_Comm com)
 {
+  _comm = com;
   _isAllocated = false;
   _blockSize = 0;
   _kspAllocated = false;
@@ -103,7 +104,7 @@ template <class scalar>
 void linearSystemPETSc<scalar>::allocate(int nbRows)
 {
   clear();
-  _try(MatCreate(PETSC_COMM_WORLD, &_a));
+  _try(MatCreate(_comm, &_a));
   _try(MatSetSizes(_a, nbRows, nbRows, PETSC_DETERMINE, PETSC_DETERMINE));
   // override the default options with the ones from the option
   // database (if any)
@@ -117,7 +118,7 @@ void linearSystemPETSc<scalar>::allocate(int nbRows)
   _localSize = _localRowEnd - _localRowStart;
   _try(MatGetSize(_a, &_globalSize, &nbColumns));
   // preallocation option must be set after other options
-  _try(VecCreate(PETSC_COMM_WORLD, &_x));
+  _try(VecCreate(_comm, &_x));
   _try(VecSetSizes(_x, nbRows, PETSC_DETERMINE));
   // override the default options with the ones from the option
   // database (if any)

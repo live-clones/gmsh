@@ -46,6 +46,7 @@
 template <class scalar>
 class linearSystemPETSc : public linearSystem<scalar> {
   protected:
+  MPI_Comm _comm;
   int _blockSize; // for block Matrix
   bool _isAllocated, _kspAllocated, _entriesPreAllocated;
   Mat _a;
@@ -55,7 +56,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
   sparsityPattern _sparsity;
   void _kspCreate();
  public:
-  linearSystemPETSc();
+  linearSystemPETSc(MPI_Comm com = PETSC_COMM_WORLD);
   virtual ~linearSystemPETSc();
   void insertInSparsityPattern (int i, int j);
   virtual bool isAllocated() const { return _isAllocated; }
