@@ -74,8 +74,10 @@ class Recombine2D {
     static inline int getNumChange() {return _current->_numChange;}
     static inline void incNumChange() {++_current->_numChange;}
     static inline backgroundMesh* bgm() {return _current->_bgm;}
-    static void add(MQuadrangle *q) {_current->_gf->quadrangles.push_back(q);}
-    static void add(MTriangle *t) {_current->_gf->triangles.push_back(t);}
+    static void add(MQuadrangle *q);
+    static void add(MTriangle *t);
+    
+    static void clearChanges();
     
   private :
     double _geomAngle(MVertex*,
@@ -109,6 +111,7 @@ class Rec2DData {
     
     void printState();
     void printActions();
+    void sortActions() {_actions.sort(lessRec2DAction());}
     void drawTriangles(double shiftx, double shifty);
     void drawChanges(double shiftx, double shifty);
 #ifdef REC2D_DRAW
@@ -145,6 +148,7 @@ class Rec2DData {
     static inline int getNumVert() {return _current->_numVert;}
     static inline double getValVert() {return (double)_current->_valVert;}
     static Rec2DAction* getBestAction();
+    static Rec2DAction* getRandomAction();
     static inline bool hasAction() {return !_current->_actions.empty();}
     
     typedef std::set<Rec2DEdge*>::iterator iter_re;
@@ -181,7 +185,7 @@ class Rec2DData {
     static inline void addParity(Rec2DVertex *rv, int p) {
       _current->_parities[p].push_back(rv);
     }
-    static void associateParity(int pOld, int pNew);
+    static void associateParity(int pOld, int pNew, Rec2DDataChange *rdc = NULL);
     static void removeAssumedParity(Rec2DVertex*, int);
     static inline void addAssumedParity(Rec2DVertex *rv, int p) {
       _current->_assumedParities[p].push_back(rv);
@@ -191,6 +195,8 @@ class Rec2DData {
                                        std::vector<Rec2DVertex*>&);
     static inline void clearAssumedParities() {_current->_oldParity.clear();}
     static void revertAssumedParities();
+    
+    static void checkAngle();
 };
 
 class Rec2DDataChange {
@@ -200,15 +206,21 @@ class Rec2DDataChange {
     std::vector<Rec2DElement*> _hiddenElement, _newElement;
     std::vector<Rec2DAction*> _hiddenAction, _newAction;
     std::vector<std::pair<Rec2DVertex*, SPoint2> > _oldCoordinate;
+    std::vector<std::pair<Rec2DVertex*, int> > _oldParity;
     
     Rec2DAction *_ra;
     
   public :
     void hide(Rec2DEdge*);
     void hide(Rec2DElement*);
+    void hide(Rec2DAction*);
     void hide(std::vector<Rec2DAction*>);
     
     void append(Rec2DElement*);
+    
+    void changeParity(Rec2DVertex*, int);
+    void saveParity(std::vector<Rec2DVertex*>&);
+    void checkObsoleteActions();
     
     void revert();
     
@@ -219,8 +231,6 @@ class Rec2DDataChange {
 class Rec2DAction {
   protected :
     double _globQualIfExecuted;
-    double _globQualIfExecuted2;
-    double _globQualIfExecuted3;
     int _lastUpdate;
     
   public :
@@ -245,6 +255,7 @@ class Rec2DAction {
     virtual int getNum(double shiftx, double shifty) = 0;
     virtual Rec2DElement* getRandomElement() = 0;
     virtual void printCoord() = 0;
+    virtual void print() = 0;
     
   private :
     virtual void _computeGlobQual() = 0;
@@ -280,9 +291,11 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     virtual Rec2DElement* getRandomElement();
     
     virtual void printCoord();
+    virtual void print();
     
   private :
     virtual void _computeGlobQual();
+    void _doWhatYouHaveToDoWithParity(Rec2DDataChange*);
 };
 
 class Rec2DEdge {
@@ -349,8 +362,10 @@ class Rec2DVertex {
     void hide();
     void reveal();
     
+    void printGainMerge(Rec2DElement *rel1, Rec2DElement *rel2);
+    inline double getAngle() const {return _angle;}
     inline double getQual() const {return getQualDegree() + getQualAngle();}
-    inline double getQualAngle() const {return _sumQualAngle/_elements.size();}
+    inline double getQualAngle() const {return _sumQualAngle/(double)_elements.size();}
     double getQualDegree(int numEl = -1) const;
     double getGainDegree(int) const;
     double getGainMerge(Rec2DElement*, Rec2DElement*);
@@ -388,6 +403,8 @@ class Rec2DVertex {
     bool has(Rec2DElement*) const;
     void rmv(Rec2DElement*);
     
+    void getUniqueActions(std::vector<Rec2DAction*>&) const;
+    
     static void initStaticTable();
     static Rec2DEdge* getCommonEdge(Rec2DVertex*, Rec2DVertex*);
     static void getCommonElements(Rec2DVertex*, Rec2DVertex*,
@@ -395,7 +412,7 @@ class Rec2DVertex {
     
   private :
     bool _recursiveBoundParity(Rec2DVertex *prev, int p0, int p1);
-    inline double _angle2Qual(double ang) {return 1. - fabs(ang*2/M_PI - 1.);}
+    inline double _angle2Qual(double ang) {return 1. - fabs(ang*2./M_PI - 1.);}
 };
 
 class Rec2DElement {
@@ -446,6 +463,7 @@ class Rec2DElement {
     void createElement(double shiftx, double shifty) const;
     
     double getAngle(Rec2DVertex*);
+    void printAngles();
     
     inline int getNumActions() const {return _actions.size();}
     inline Rec2DAction* getAction(int i) const {return _actions[i];}
@@ -457,6 +475,8 @@ class Rec2DElement {
     void getMoreNeighbours(std::vector<Rec2DElement*>&) const;
     Rec2DVertex* getOtherVertex(Rec2DVertex*, Rec2DVertex*) const;
     static Rec2DEdge* getCommonEdge(Rec2DElement*, Rec2DElement*);
+    
+    inline int getNum() const {return _mEl->getNum();}
     
   private :
     MQuadrangle* _createQuad() const;
