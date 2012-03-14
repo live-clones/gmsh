@@ -7,7 +7,7 @@
 //   Amaury Johnen (a.johnen@ulg.ac.be)
 //
 
-#define REC2D_WAIT_TIME .05
+#define REC2D_WAIT_TIME .01
 #define REC2D_NUM_ACTIO 1000
 
 // #define REC2D_SMOOTH
@@ -154,7 +154,6 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf), _strategy(0), _numChange(0)
       double angle = _geomAngle(it->first,
                                 it->second._gEdges,
                                 it->second._mElements);
-      Msg::Info("ang %g", angle);
       new Rec2DVertex(it->second._rv, angle);
     }
   }
@@ -259,58 +258,47 @@ bool Recombine2D::recombine()
 
 double Recombine2D::recombine(int depth)
 {
-  Rec2DData::checkAngle();
-  //return .0;
   Rec2DData::clearChanges();
   double bestGlobalQuality;
-  _data->sortActions();
-  _data->printActions();
-  _numChange++;
-  _data->printActions();
-  //Rec2DNode *root = new Rec2DNode(NULL, NULL, bestGlobalQuality, depth);
-  //_data->printActions();
-  
-  /*Rec2DNode *root = new Rec2DNode(NULL, NULL, bestGlobalQuality, depth);
+  Rec2DNode *root = new Rec2DNode(NULL, NULL, bestGlobalQuality, depth);
   Rec2DNode *currentNode = root->selectBestNode();
   
   double time = Cpu();
   //int num = 20, i = 0;
   //double dx = .0, dy = .0;
   
-  int k = 0;
-  while (currentNode && ++k < 90) {
-    _data->printActions();
+  while (currentNode) {
     FlGui::instance()->check();
-#if 0 //def REC2D_DRAW // draw state at origin
-    //_gf->triangles = _data->_tri;
-    //_gf->quadrangles = _data->_quad;
+#ifdef REC2D_DRAW // draw state at origin
+    _gf->triangles = _data->_tri;
+    _gf->quadrangles = _data->_quad;
     CTX::instance()->mesh.changed = ENT_ALL;
     drawContext::global()->draw();
     while (Cpu()-time < REC2D_WAIT_TIME)
       FlGui::instance()->check();
     time = Cpu();
 #endif
-//#ifdef REC2D_DRAW
-//    if ( !((i+1) % ((int)std::sqrt(num)+1)) ) {
-//      dx = .0;
-//      dy -= 1.1;
-//    }
-//    else
-//      dx += 1.1;
-//    drawState(dx, dy);
-//    CTX::instance()->mesh.changed = ENT_ALL;
-//    drawContext::global()->draw();
-//    while (Cpu()-time < REC2D_WAIT_TIME)
-//      FlGui::instance()->check();
-//    ++i;
-//    time = Cpu();
-//#endif
+#if 0//def REC2D_DRAW // draw all states
+    if ( !((i+1) % ((int)std::sqrt(num)+1)) ) {
+      dx = .0;
+      dy -= 1.1;
+    }
+    else
+      dx += 1.1;
+    drawState(dx, dy);
+    CTX::instance()->mesh.changed = ENT_ALL;
+    drawContext::global()->draw();
+    while (Cpu()-time < REC2D_WAIT_TIME)
+      FlGui::instance()->check();
+    ++i;
+    time = Cpu();
+#endif
     currentNode->develop(depth, bestGlobalQuality);
     currentNode = currentNode->selectBestNode();
   }
   
   return Rec2DData::getGlobalQuality();
-  //_data->printState();*/
+  //_data->printState();
 }
 
 void Recombine2D::clearChanges()
@@ -786,19 +774,6 @@ void Rec2DData::printActions()
   }
   new PView("Jmin_bad", "ElementData", Recombine2D::getGFace()->model(), data);
   Msg::Info(" ");
-  _actions.front()->print();
-  it = _actions.end();
-  (*(--it))->print();
-  (*(--it))->print();
-  (*(--it))->print();
-}
-
-void Rec2DData::checkAngle()
-{
-  iter_rel it = firstElement();
-  for (; it != lastElement(); ++it) {
-    (*it)->printAngles();
-  }
 }
 
 int Rec2DData::getNewParity()
@@ -1571,38 +1546,8 @@ int Rec2DTwoTri2Quad::getNum(double shiftx, double shifty)
   return quad->getNum();
 }
 
-void Rec2DTwoTri2Quad::print()
-{
-  Msg::Info("Printing Action %d (%d,%d)...", this, _triangles[0]->getNum(), _triangles[1]->getNum());
-  Msg::Info("edge0 %g", _edges[0]->getQual());
-  Msg::Info("edge1 %g", _edges[1]->getQual());
-  Msg::Info("edge2 %g", _edges[2]->getQual());
-  Msg::Info("edge3 %g", _edges[3]->getQual());
-  Msg::Info("edge4 %g", _edges[4]->getQual());
-  Msg::Info("angles %g - %g", _vertices[0]->getAngle(), _vertices[1]->getAngle());
-  Msg::Info("merge0 %g", _vertices[0]->getGainMerge(_triangles[0], _triangles[1]));
-  Msg::Info("merge1 %g", _vertices[1]->getGainMerge(_triangles[0], _triangles[1]));
-  _vertices[0]->printGainMerge(_triangles[0], _triangles[1]);
-  _vertices[1]->printGainMerge(_triangles[0], _triangles[1]);
-}
-
-void Rec2DTwoTri2Quad::printCoord()
-{
-  Msg::Info("(%g %g) (%g %g) (%g %g) (%g %g) %d %d", _vertices[0]->u(),
-                                                     _vertices[0]->v(),
-                                                     _vertices[1]->u(),
-                                                     _vertices[1]->v(),
-                                                     _vertices[2]->u(),
-                                                     _vertices[2]->v(),
-                                                     _vertices[3]->u(),
-                                                     _vertices[3]->v(),
-                                                     _vertices[0]->getNumElements(),
-                                                     _vertices[1]->getNumElements() );
-}
-
 Rec2DElement* Rec2DTwoTri2Quad::getRandomElement()
 {
-  return _triangles[0];
   return _triangles[rand() % 2];
 }
 
@@ -2074,23 +2019,6 @@ double Rec2DVertex::getGainMerge(Rec2DElement *rel1, Rec2DElement *rel2)
          + getGainDegree(-1);
 }
 
-void Rec2DVertex::printGainMerge(Rec2DElement *rel1, Rec2DElement *rel2)
-{
-  double qualAngle = _sumQualAngle;
-  Msg::Info("qualAngle %g", getQualAngle());
-  Msg::Info("sumAngle %g", qualAngle);
-  Msg::Info("- %g (ang %g)", _angle2Qual(rel1->getAngle(this)), rel1->getAngle(this));
-  Msg::Info("- %g (ang %g)", _angle2Qual(rel2->getAngle(this)), rel2->getAngle(this));
-  Msg::Info("+ %g (ang %g)", _angle2Qual(rel1->getAngle(this) + rel2->getAngle(this)), rel1->getAngle(this) + rel2->getAngle(this));
-  qualAngle -= _angle2Qual(rel1->getAngle(this));
-  qualAngle -= _angle2Qual(rel2->getAngle(this));
-  qualAngle += _angle2Qual(rel1->getAngle(this) + rel2->getAngle(this));
-  Msg::Info("= %g", qualAngle);
-  Msg::Info("gainDegree %g", getGainDegree(-1));
-  Msg::Info("return %g", qualAngle / (double)(_elements.size()-1) - getQualAngle()
-         + getGainDegree(-1));
-}
-
 void Rec2DVertex::add(Rec2DEdge *re)
 {
   for (unsigned int i = 0; i < _edges.size(); ++i) {
@@ -2391,8 +2319,6 @@ double Rec2DElement::getAngle(Rec2DVertex *rv)
   
   int i1 = (index+_numEdge-1)%_numEdge;
   int i0 = (index+1)%_numEdge;
-  Msg::Info("atan2 %g %g (%g %g | %g %g | %g %g)", atan2(vert[i0]->v() - rv->v(), vert[i0]->u() - rv->u()), atan2(vert[i1]->v() - rv->v(), vert[i1]->u() - rv->u()),
-            vert[i1]->u(), vert[i1]->v(), rv->u(), rv->v(), vert[i0]->u(), vert[i0]->v());
   double ang =  atan2(vert[i0]->v() - rv->v(), vert[i0]->u() - rv->u())
                 - atan2(vert[i1]->v() - rv->v(), vert[i1]->u() - rv->u());
   
@@ -2402,18 +2328,6 @@ double Rec2DElement::getAngle(Rec2DVertex *rv)
   if (ang < .0)
     return ang + 2.*M_PI;
   return ang;
-}
-
-void Rec2DElement::printAngles()
-{
-  std::vector<Rec2DVertex*> vert;
-  getVertices(vert);
-  Msg::Info("ELEMENT %d (%g %g | %g %g | %g %g)", getNum(),
-            vert[0]->u(), vert[0]->v(), vert[1]->u(), vert[1]->v(), vert[2]->u(), vert[2]->v());
-  
-  for (int i = 0; i < _numEdge; ++i) {
-    Msg::Info("%g", getAngle(vert[i]));
-  }
 }
 
 void Rec2DElement::getAssumedParities(int *p) const

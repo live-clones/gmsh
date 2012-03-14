@@ -195,8 +195,6 @@ class Rec2DData {
                                        std::vector<Rec2DVertex*>&);
     static inline void clearAssumedParities() {_current->_oldParity.clear();}
     static void revertAssumedParities();
-    
-    static void checkAngle();
 };
 
 class Rec2DDataChange {
@@ -254,8 +252,6 @@ class Rec2DAction {
     virtual void getNeighbourElements(std::vector<Rec2DElement*>&) = 0;
     virtual int getNum(double shiftx, double shifty) = 0;
     virtual Rec2DElement* getRandomElement() = 0;
-    virtual void printCoord() = 0;
-    virtual void print() = 0;
     
   private :
     virtual void _computeGlobQual() = 0;
@@ -289,9 +285,6 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     virtual void getNeighbourElements(std::vector<Rec2DElement*>&);
     virtual int getNum(double shiftx, double shifty);
     virtual Rec2DElement* getRandomElement();
-    
-    virtual void printCoord();
-    virtual void print();
     
   private :
     virtual void _computeGlobQual();
@@ -362,7 +355,6 @@ class Rec2DVertex {
     void hide();
     void reveal();
     
-    void printGainMerge(Rec2DElement *rel1, Rec2DElement *rel2);
     inline double getAngle() const {return _angle;}
     inline double getQual() const {return getQualDegree() + getQualAngle();}
     inline double getQualAngle() const {return _sumQualAngle/(double)_elements.size();}
@@ -463,7 +455,6 @@ class Rec2DElement {
     void createElement(double shiftx, double shifty) const;
     
     double getAngle(Rec2DVertex*);
-    void printAngles();
     
     inline int getNumActions() const {return _actions.size();}
     inline Rec2DAction* getAction(int i) const {return _actions[i];}
