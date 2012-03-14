@@ -1,4 +1,3 @@
-from dgpy import *
 from gmshpy import *
 
 GmshSetOption('Mesh', 'CharacteristicLengthFactor', 0.9)

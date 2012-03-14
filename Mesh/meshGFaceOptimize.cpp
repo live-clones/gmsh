@@ -1834,7 +1834,7 @@ static void _relocateVertex(GFace *gf, MVertex *ver,
       after = SPoint2(gp.u(),gp.v());
     }
     bool success = _isItAGoodIdeaToMoveThatVertex (gf,  lt, ver,before,after);
-    
+
     if (success){
       ver->setParameter(0, after.x());
       ver->setParameter(1, after.y());
