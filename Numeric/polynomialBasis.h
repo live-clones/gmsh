@@ -96,6 +96,10 @@ class polynomialBasis
   inline int getNumShapeFunctions() const {return coefficients.size1();}
   // for a given face/edge, with both a sign and a rotation, give an
   // ordered list of nodes on this face/edge
+  inline int getClosureType(int id) const
+  {
+    return closures[id].type;
+  }
   inline const std::vector<int> &getClosure(int id) const
   {
     return closures[id];

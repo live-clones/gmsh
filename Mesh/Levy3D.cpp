@@ -67,7 +67,7 @@ class LpCVT{
  private:
   std::vector<VoronoiElement> clipped;
   fullMatrix<double> gauss_points;
-  fullMatrix<double> gauss_weights;
+  fullVector<double> gauss_weights;
   int gauss_num;
  public:
   LpCVT();
@@ -987,7 +987,7 @@ double LpCVT::F(VoronoiElement element,int p){
 	y = element.T(u,v,w,generator.y(),C1.y(),C2.y(),C3.y());
 	z = element.T(u,v,w,generator.z(),C1.z(),C2.z(),C3.z());
 	point = SPoint3(x,y,z);
-	weight = gauss_weights(i,0);
+	weight = gauss_weights(i);
 	rho = h_to_rho(element.get_h(u,v,w),p); //h_to_rho(get_size(x,y,z),p);
 	energy = energy + weight*rho*f(generator,point,t,p);
   }
@@ -1029,7 +1029,7 @@ SVector3 LpCVT::simple(VoronoiElement element,int p){
 	y = element.T(u,v,w,generator.y(),C1.y(),C2.y(),C3.y());
 	z = element.T(u,v,w,generator.z(),C1.z(),C2.z(),C3.z());
 	point = SPoint3(x,y,z);
-	weight = gauss_weights(i,0);
+	weight = gauss_weights(i);
 	rho = h_to_rho(element.get_h(u,v,w),p); //h_to_rho(get_size(x,y,z),p);
 	comp_x = comp_x + weight*rho*df_dx(generator,point,t,p);
 	comp_y = comp_y + weight*rho*df_dy(generator,point,t,p);
@@ -1081,7 +1081,7 @@ SVector3 LpCVT::dF_dC1(VoronoiElement element,int p){
 	y = element.T(u,v,w,gy,C1.y(),C2.y(),C3.y());
 	z = element.T(u,v,w,gz,C1.z(),C2.z(),C3.z());
 	point = SPoint3(x,y,z);
-	weight = gauss_weights(i,0);
+	weight = gauss_weights(i);
 	rho = h_to_rho(element.get_h(u,v,w),p); //h_to_rho(get_size(x,y,z),p);
 	drho_dx = (-p-3)*pow_int(1.0/element.get_h(u,v,w),p+4)*element.get_dh_dx(); //get_drho_dx(x,y,z,p);
 	drho_dy = (-p-3)*pow_int(1.0/element.get_h(u,v,w),p+4)*element.get_dh_dy(); //get_drho_dy(x,y,z,p);
@@ -1140,7 +1140,7 @@ SVector3 LpCVT::dF_dC2(VoronoiElement element,int p){
 	y = element.T(u,v,w,generator.y(),C1.y(),C2.y(),C3.y());
 	z = element.T(u,v,w,generator.z(),C1.z(),C2.z(),C3.z());
 	point = SPoint3(x,y,z);
-	weight = gauss_weights(i,0);
+	weight = gauss_weights(i);
 	rho = h_to_rho(element.get_h(u,v,w),p); //h_to_rho(get_size(x,y,z),p);
 	drho_dx = (-p-3)*pow_int(1.0/element.get_h(u,v,w),p+4)*element.get_dh_dx(); //get_drho_dx(x,y,z,p);
 	drho_dy = (-p-3)*pow_int(1.0/element.get_h(u,v,w),p+4)*element.get_dh_dy(); //get_drho_dy(x,y,z,p);
@@ -1199,7 +1199,7 @@ SVector3 LpCVT::dF_dC3(VoronoiElement element,int p){
 	y = element.T(u,v,w,gy,C1.y(),C2.y(),C3.y());
 	z = element.T(u,v,w,gz,C1.z(),C2.z(),C3.z());
 	point = SPoint3(x,y,z);
-	weight = gauss_weights(i,0);
+	weight = gauss_weights(i);
 	rho = h_to_rho(element.get_h(u,v,w),p); //h_to_rho(get_size(x,y,z),p);
 	drho_dx = (-p-3)*pow_int(1.0/element.get_h(u,v,w),p+4)*element.get_dh_dx(); //get_drho_dx(x,y,z,p);
 	drho_dy = (-p-3)*pow_int(1.0/element.get_h(u,v,w),p+4)*element.get_dh_dy(); //get_drho_dy(x,y,z,p);

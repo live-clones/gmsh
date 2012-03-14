@@ -37,19 +37,19 @@ IntPt *getGQHPts(int order);
 class gaussIntegration {
   public:
   static void get(int elementType, int order, fullMatrix<double> &pts,
-                  fullMatrix<double> &weights);
+                  fullVector<double> &weights);
   static void getTriangle(int order, fullMatrix<double> &pts,
-                          fullMatrix<double> &weights);
+                          fullVector<double> &weights);
   static void getLine(int order, fullMatrix<double> &pts,
-                      fullMatrix<double> &weights);
+                      fullVector<double> &weights);
   static void getQuad(int order, fullMatrix<double> &pts,
-                      fullMatrix<double> &weights);
+                      fullVector<double> &weights);
   static void getTetrahedron(int order, fullMatrix<double> &pts,
-                             fullMatrix<double> &weights);
+                             fullVector<double> &weights);
   static void getHexahedron(int order, fullMatrix<double> &pts, 
-                            fullMatrix<double> &weights);
+                            fullVector<double> &weights);
   static void getPrism(int order, fullMatrix<double> &pts,
-                       fullMatrix<double> &weights);
+                       fullVector<double> &weights);
 };
 
 #endif

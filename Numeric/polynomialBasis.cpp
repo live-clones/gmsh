@@ -1247,6 +1247,7 @@ static void getFaceClosurePrism(int iFace, int iSign, int iRotate,
   bool isTriangle = iFace<2;
   int nNodes = isTriangle ? (order+1)*(order+2)/2 : (order+1)*(order+1);
   closure.clear();
+  if (isTriangle && iRotate > 2) return;
   closure.resize(nNodes);
   if (order==0) {
     closure[0] = 0;
@@ -1301,6 +1302,8 @@ static void generateFaceClosurePrismFull(polynomialBasis::clCont &closureFull,
   for (unsigned int i = 0; i < closure.size(); i++) {
     std::vector<int> &clFull = closureFull[i];
     std::vector<int> &cl = closure[i];
+    if (cl.size() == 0)
+      continue;
     clFull.resize(6, -1);
     int &ref = cl.size() == 3 ? ref3 : (cl[0] / 3 + cl[1] / 3) % 2 ? ref4b : ref4a;
     if (ref == -1)
