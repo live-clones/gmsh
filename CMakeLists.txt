@@ -100,7 +100,7 @@ set(GMSH_API
   Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h Solver/elasticityTerm.h
     Solver/crossConfTerm.h Solver/orthogonalTerm.h
     Solver/linearSystem.h Solver/linearSystemGMM.h Solver/linearSystemCSR.h 
-    Solver/linearSystemFull.h Solver/elasticitySolver.h
+    Solver/linearSystemFull.h Solver/elasticitySolver.h Solver/sparsityPattern.h 
   Post/PView.h Post/PViewData.h Plugin/PluginManager.h Post/OctreePost.h
   Graphics/drawContext.h
   contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h 
