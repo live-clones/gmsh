@@ -170,6 +170,7 @@ bool PViewData::writePOS(std::string fileName, bool binary, bool parsed, bool ap
   }
 
   fprintf(fp, "};\n");
+  fclose(fp);
 
   return true;
 }
