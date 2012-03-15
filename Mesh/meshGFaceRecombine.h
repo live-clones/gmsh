@@ -62,6 +62,7 @@ class Recombine2D {
     bool recombine();
     double recombine(int depth);
     bool developTree();
+    int getNumTri() const;
     static void nextTreeActions(std::vector<Rec2DAction*>&,
                                 const std::vector<Rec2DElement*> &neighbours);
     
@@ -91,6 +92,7 @@ class Rec2DData {
     int _numEdge, _numVert;
     long double _valEdge, _valVert;
     static Rec2DData *_current;
+    int _remainingTri;
     
     std::set<Rec2DEdge*> _edges;
     std::set<Rec2DVertex*> _vertices;
@@ -117,7 +119,9 @@ class Rec2DData {
     std::vector<MTriangle*> _tri;
     std::vector<MQuadrangle*> _quad;
 #endif
-
+    static inline int getNumTri() {return _current->_remainingTri;}
+    static inline void setNumTri(int n) {_current->_remainingTri = n;}
+    
     static inline int getNumEndNode() {return _current->_endNodes.size();}
     static inline int getNumElement() {return _current->_elements.size();}
     static Rec2DDataChange* getNewDataChange();
@@ -257,6 +261,7 @@ class Rec2DAction {
     virtual void getNeighbourElements(std::vector<Rec2DElement*>&) const = 0;
     virtual int getNum(double shiftx, double shifty) = 0;
     virtual Rec2DElement* getRandomElement() const = 0;
+    //virtual void print() = 0;
     
   private :
     virtual void _computeGlobQual() = 0;
@@ -290,6 +295,7 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     virtual void getNeighbourElements(std::vector<Rec2DElement*>&) const;
     virtual int getNum(double shiftx, double shifty);
     virtual Rec2DElement* getRandomElement() const;
+    //virtual void print();
     
   private :
     virtual void _computeGlobQual();
@@ -310,6 +316,8 @@ class Rec2DEdge {
     void reveal();
     
     double getQual() const;
+    //double getQualL() const;
+    //double getQualO() const;
     double getWeightedQual() const;
     
     inline void addHasTri() {_addWeight(-REC2D_EDGE_QUAD); ++_boundary;}

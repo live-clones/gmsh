@@ -269,7 +269,7 @@ double Recombine2D::recombine(int depth)
   
   while (currentNode) {
     FlGui::instance()->check();
-#ifdef REC2D_DRAW // draw state at origin
+#if 0//def REC2D_DRAW // draw state at origin
     _gf->triangles = _data->_tri;
     _gf->quadrangles = _data->_quad;
     CTX::instance()->mesh.changed = ENT_ALL;
@@ -299,6 +299,11 @@ double Recombine2D::recombine(int depth)
   
   return Rec2DData::getGlobalQuality();
   //_data->printState();
+}
+
+int Recombine2D::getNumTri() const
+{
+  return _data->getNumTri();
 }
 
 void Recombine2D::clearChanges()
@@ -776,6 +781,7 @@ void Rec2DData::printActions() const
     data[tri[1]->getNum()].resize(1);
     data[tri[0]->getNum()][0] = (*it)->getReward();
     data[tri[1]->getNum()][0] = (*it)->getReward();
+    //(*it)->print();
   }
   new PView("Jmin_bad", "ElementData", Recombine2D::getGFace()->model(), data);
   Msg::Info(" ");
@@ -1010,14 +1016,14 @@ void Rec2DData::revertAssumedParities()
 double Rec2DData::getGlobalQuality()
 {
   double a = (double)_current->_valVert / (double)_current->_numVert;
-  return a * a * (double)_current->_valEdge / (double)_current->_numEdge;
+  return a * (double)_current->_valEdge / (double)_current->_numEdge;
 }
 
 double Rec2DData::getGlobalQuality(int numEdge, double valEdge,
                                    int numVert, double valVert )
 {
   double a = ((double)_current->_valVert + valVert) / (double)(_current->_numVert + numVert);
-  return a * a * ((double)_current->_valEdge + valEdge) / (double)(_current->_numEdge + numEdge);
+  return a * ((double)_current->_valEdge + valEdge) / (double)(_current->_numEdge + numEdge);
 }
 
 Rec2DAction* Rec2DData::getBestAction()
@@ -1288,6 +1294,21 @@ void Rec2DTwoTri2Quad::reveal()
     _triangles[1]->add(this);
   Rec2DData::add(this);
 }
+
+//void Rec2DTwoTri2Quad::print()
+//{
+//  Msg::Info("Printing Action %d |%d|%d|...", this, _triangles[0]->getNum(), _triangles[1]->getNum());
+//  Msg::Info("edge0 %g (%g, %g)", _edges[0]->getQual(), _edges[0]->getQualL(), _edges[0]->getQualO());
+//  Msg::Info("edge1 %g (%g, %g)", _edges[1]->getQual(), _edges[1]->getQualL(), _edges[1]->getQualO());
+//  Msg::Info("edge2 %g (%g, %g)", _edges[2]->getQual(), _edges[2]->getQualL(), _edges[2]->getQualO());
+//  Msg::Info("edge3 %g (%g, %g)", _edges[3]->getQual(), _edges[3]->getQualL(), _edges[3]->getQualO());
+//  Msg::Info("edge4 %g (%g, %g)", _edges[4]->getQual(), _edges[4]->getQualL(), _edges[4]->getQualO());
+//  Msg::Info("angles %g - %g", _vertices[0]->getAngle(), _vertices[1]->getAngle());
+//  Msg::Info("merge0 %g", _vertices[0]->getGainMerge(_triangles[0], _triangles[1]));
+//  Msg::Info("merge1 %g", _vertices[1]->getGainMerge(_triangles[0], _triangles[1]));
+//  //_vertices[0]->printGainMerge(_triangles[0], _triangles[1]);
+//  //_vertices[1]->printGainMerge(_triangles[0], _triangles[1]);
+//}
 
 void Rec2DTwoTri2Quad::_computeGlobQual()
 {
@@ -1582,10 +1603,10 @@ void Rec2DEdge::reveal()
   Rec2DData::addEdge(_weight, getWeightedQual());
 }
 
-void Rec2DEdge::_computeQual() //*
+void Rec2DEdge::_computeQual()
 {
-  double adimLength = _straightAdimLength();
   double alignment = _straightAlignment();
+  double adimLength = _straightAdimLength();
   if (adimLength > 1)
     adimLength = 1./adimLength;
   _qual = adimLength * ((double)(1-REC2D_ALIGNMENT) + (double)REC2D_ALIGNMENT * alignment);
@@ -1601,6 +1622,22 @@ double Rec2DEdge::getQual() const
   return _qual;
 }
 
+//double Rec2DEdge::getQualL() const
+//{
+//  double adimLength = _straightAdimLength();
+//  if (adimLength > 1)
+//    ;//adimLength = 1./adimLength;
+//  return adimLength;
+//}
+//
+//double Rec2DEdge::getQualO() const
+//{
+//  Msg::Info("o (%g %g) %g", Recombine2D::bgm()->getAngle(_rv0->u(), _rv0->v(), .0)
+//                          , Recombine2D::bgm()->getAngle(_rv1->u(), _rv1->v(), .0)
+//                          , atan2(_rv0->u()-_rv1->u(), _rv0->v()-_rv1->v()));
+//  return _straightAlignment();
+//}
+//
 double Rec2DEdge::getWeightedQual() const
 {
   if (_weight != .0                             &&
@@ -1670,7 +1707,7 @@ double Rec2DEdge::_straightAlignment() const
 {
   double angle0 = Recombine2D::bgm()->getAngle(_rv0->u(), _rv0->v(), .0);
   double angle1 = Recombine2D::bgm()->getAngle(_rv1->u(), _rv1->v(), .0);
-  double angleEdge = atan2(_rv0->u()-_rv1->u(), _rv0->v()-_rv1->v());
+  double angleEdge = atan2(_rv0->v()-_rv1->v(), _rv0->u()-_rv1->u());
   
   double alpha0 = angleEdge - angle0;
   double alpha1 = angleEdge - angle1;
@@ -1707,6 +1744,7 @@ Rec2DVertex::Rec2DVertex(MVertex *v)
 #ifdef REC2D_DRAW
   if (_v)
     _v->setIndex(_parity);
+    //_v->setIndex(_onWhat);
 #endif
 }
 
@@ -1729,6 +1767,7 @@ Rec2DVertex::Rec2DVertex(Rec2DVertex *rv, double ang)
 #ifdef REC2D_DRAW
   if (_v)
     _v->setIndex(_parity);
+    //_v->setIndex(_onWhat);
 #endif
 }
 
@@ -1877,7 +1916,8 @@ void Rec2DVertex::setParity(int p, bool tree)
     Rec2DData::addParity(this, _parity);
 #ifdef REC2D_DRAW
   if (_v)
-    _v->setIndex(_parity);
+    //_v->setIndex(_parity);
+    _v->setIndex(_onWhat);
 #endif
 }
 
@@ -1896,6 +1936,7 @@ void Rec2DVertex::setParityWD(int pOld, int pNew)
 #ifdef REC2D_DRAW
   if (_v)
     _v->setIndex(_parity);
+    //_v->setIndex(_onWhat);
 #endif
 }
 
@@ -1926,6 +1967,7 @@ bool Rec2DVertex::setAssumedParity(int p)
 #ifdef REC2D_DRAW
   if (_v)
     _v->setIndex(_assumedParity);
+    //_v->setIndex(_onWhat);
 #endif
   return true;
 }
@@ -2674,6 +2716,7 @@ bool Rec2DNode::makeChanges()
     return false;
   _dataChange = Rec2DData::getNewDataChange();
   _ra->apply(_dataChange);
+  Rec2DData::setNumTri(_remainingTri);
   return true;
 }
 
