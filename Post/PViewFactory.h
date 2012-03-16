@@ -20,10 +20,11 @@ template <class t> class fullMatrix;
 class PViewFactory {
   std::map<int,std::vector<double> > _values;
   std::string _name, _type;
-  int _dim,_timeStep;
+  int _dim, _timeStep;
   GModel *_model;
   public:
-  PViewFactory(std::string name, std::string type, GModel *model, int timeStep, int dim=3);
+  PViewFactory(std::string name, std::string type, GModel *model, int timeStep,
+               int dim=3);
   void setEntry(int id, const fullMatrix<double> &val);
   PView *createView();
 };

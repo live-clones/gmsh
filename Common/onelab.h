@@ -584,6 +584,7 @@ namespace onelab{
       for(std::set<parameter*>::iterator it = ps.begin(); it != ps.end(); it++)
         if(client.empty() || (*it)->hasClient(client))
           (*it)->setChanged(changed);
+      return true;
     }
     // serialize the parameter space (optinally only serialize those parameters
     // that depend on the given client)

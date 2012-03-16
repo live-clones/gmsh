@@ -1053,6 +1053,13 @@ elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS "/STACK:16777216")
 endif(WIN32 AND NOT MSVC OR CYGWIN)
 
+# force full warnings to encourage everybody to write clean(er) code
+include(CheckCxxCompilerFlag)
+check_cxx_compiler_flag("-Wall" WALL)
+if(WALL)
+  set_target_properties(gmsh lib shared PROPERTIES COMPILE_FLAGS "-Wall")
+endif(WALL)
+
 find_program(BISON bison)
 find_program(FLEX flex)
 if(BISON AND FLEX)

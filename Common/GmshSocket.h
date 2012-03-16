@@ -376,7 +376,7 @@ class GmshServer : public GmshSocket{
       }
       if(!_portno){ // retrieve name if randomly assigned port
         socklen_t addrlen = sizeof(addr_in);
-        int rc = getsockname(tmpsock, (struct sockaddr *)&addr_in, &addrlen);
+        getsockname(tmpsock, (struct sockaddr *)&addr_in, &addrlen);
         _portno = ntohs(addr_in.sin_port);
 	int pos = _sockname.find(':'); // remove trailing ' ' or '0'
         char tmp[256];

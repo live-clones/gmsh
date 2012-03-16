@@ -90,11 +90,11 @@ static void mergePostProcessingFile(const std::string &fileName)
 {
   if(!FlGui::instance()->onelab->mergeAuto()) return;
 
-  int n = PView::list.size();
+  unsigned int n = PView::list.size();
   // store old step values
   std::vector<int> steps(n, 0);
   if(FlGui::instance()->onelab->showLastStep()){
-    for(int i = 0; i < PView::list.size(); i++)
+    for(unsigned int i = 0; i < PView::list.size(); i++)
       steps[i] = (int)opt_view_nb_timestep(i, GMSH_GET, 0);
   }
 
@@ -135,7 +135,7 @@ static void mergePostProcessingFile(const std::string &fileName)
 
   // hide everything except the onelab X-Y graphs
   if(FlGui::instance()->onelab->hideNewViews()){
-    for(int i = 0; i < PView::list.size(); i++){
+    for(unsigned int i = 0; i < PView::list.size(); i++){
       if(PView::list[i]->getData()->getFileName().substr(0, 6) != "OneLab")
         PView::list[i]->getOptions()->visible = 0;
     }
@@ -143,7 +143,7 @@ static void mergePostProcessingFile(const std::string &fileName)
   else if(n != PView::list.size()){
     // if we created new views, assume we only want to see those (and the
     // onelab X-Y graphs)
-    for(int i = 0; i < n; i++){
+    for(unsigned int i = 0; i < n; i++){
       if(PView::list[i]->getData()->getFileName().substr(0, 6) != "OneLab")
         PView::list[i]->getOptions()->visible = 0;
     }
@@ -152,7 +152,7 @@ static void mergePostProcessingFile(const std::string &fileName)
   // if we added steps, go to the last one
   if(FlGui::instance()->onelab->showLastStep()){
     steps.resize(PView::list.size(), 0);
-    for(int i = 0; i < PView::list.size(); i++){
+    for(unsigned int i = 0; i < PView::list.size(); i++){
       int step = (int)opt_view_nb_timestep(i, GMSH_GET, 0);
       if(step > steps[i])
         opt_view_timestep(i, GMSH_SET|GMSH_GUI, step - 1);
@@ -160,7 +160,7 @@ static void mergePostProcessingFile(const std::string &fileName)
   }
 
   drawContext::global()->draw();
-  if(n != (int)PView::list.size())
+  if(n != PView::list.size())
     FlGui::instance()->menu->setContext(menu_post, 0);
 }
 
@@ -1199,7 +1199,7 @@ void onelabWindow::rebuildSolverList()
       hosts.push_back(opt_solver_remote_login(i, GMSH_GET, ""));
     }
   }
-  for(int i = 0; i < 5; i++){
+  for(unsigned int i = 0; i < 5; i++){
     if(i < names.size()){
       onelab::server::citer it = onelab::server::instance()->findClient(names[i]);
       if(it != onelab::server::instance()->lastClient())

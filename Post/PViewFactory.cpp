@@ -11,11 +11,11 @@
 
 PViewFactory::PViewFactory (std::string name, std::string type, GModel *model,
                             int timeStep, int dim)
- : _model(model), _name(name), _type(type), _timeStep(timeStep), _dim(dim)
+  : _name(name), _type(type), _dim(dim), _timeStep(timeStep), _model(model)
 {
 }
 
-void PViewFactory::setEntry (int id, const fullMatrix<double> &val) 
+void PViewFactory::setEntry (int id, const fullMatrix<double> &val)
 {
   std::vector<double> &vv = _values[id];
   vv.resize(val.size1()*val.size2());

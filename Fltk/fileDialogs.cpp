@@ -55,9 +55,9 @@ class flFileChooser : public Fl_File_Chooser {
   Fl_File_Input *_in;
  public:
   flFileChooser(const char *d, const char *p, int t, const char *title)
-    : Fl_File_Chooser(d, p, t, title) 
-  { 
-    _win = dynamic_cast<Fl_Window*>(newButton->parent()->parent()); 
+    : Fl_File_Chooser(d, p, t, title)
+  {
+    _win = dynamic_cast<Fl_Window*>(newButton->parent()->parent());
     _in = dynamic_cast<Fl_File_Input *>(previewButton->parent()->parent()->resizable());
   }
   void show()
@@ -95,7 +95,7 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message,
 #if defined(HAVE_NATIVE_FILE_CHOOSER)
   if(!fc) fc = new Fl_Native_File_Chooser();
   switch(type){
-  case FILE_CHOOSER_MULTI: 
+  case FILE_CHOOSER_MULTI:
     fc->type(Fl_Native_File_Chooser::BROWSE_MULTI_FILE); break;
   case FILE_CHOOSER_CREATE:
     fc->type(Fl_Native_File_Chooser::BROWSE_SAVE_FILE); break;
@@ -123,13 +123,13 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message,
   Fl_File_Chooser::show_label = "Format:";
   Fl_File_Chooser::all_files_label = "All files (*)";
   if(!fc) {
-    fc = new flFileChooser(getenv("PWD") ? "." : CTX::instance()->homeDir.c_str(), 
+    fc = new flFileChooser(getenv("PWD") ? "." : CTX::instance()->homeDir.c_str(),
                            thefilter, Fl_File_Chooser::SINGLE, message);
-    fc->position(CTX::instance()->fileChooserPosition[0], 
+    fc->position(CTX::instance()->fileChooserPosition[0],
                  CTX::instance()->fileChooserPosition[1]);
   }
   switch(type){
-  case FILE_CHOOSER_MULTI: 
+  case FILE_CHOOSER_MULTI:
     fc->type(Fl_File_Chooser::MULTI); break;
   case FILE_CHOOSER_CREATE:
     fc->type(Fl_File_Chooser::CREATE); break;
@@ -208,7 +208,7 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
-  
+
   dialog->window->label(title);
   dialog->b[0]->value(CTX::instance()->print.text);
   dialog->b[1]->value(CTX::instance()->print.background);
@@ -247,7 +247,7 @@ int latexFileDialog(const char *name)
     Fl_Button *ok, *cancel;
   };
   static _latexFileDialog *dialog = NULL;
-  
+
   if(!dialog){
     dialog = new _latexFileDialog;
     int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
@@ -262,7 +262,7 @@ int latexFileDialog(const char *name)
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
-  
+
   dialog->b->value(CTX::instance()->print.texAsEquation);
   dialog->window->show();
 
@@ -330,7 +330,7 @@ int jpegFileDialog(const char *name)
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
-  
+
   dialog->s[0]->value(CTX::instance()->print.jpegQuality);
   dialog->s[1]->value(CTX::instance()->print.jpegSmoothing);
   dialog->b[0]->value(CTX::instance()->print.text);
@@ -405,7 +405,7 @@ int mpegFileDialog(const char *name)
     dialog->v[1]->maximum(100);
     dialog->v[1]->step(1);
     dialog->v[1]->align(FL_ALIGN_RIGHT);
-    
+
     dialog->c[0] = new Fl_Check_Button
       (WB, y, 2 * BB + WB, BH, "Print background"); y += BH;
     dialog->c[0]->type(FL_TOGGLE_BUTTON);
@@ -423,7 +423,7 @@ int mpegFileDialog(const char *name)
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
-  
+
   dialog->b[0]->value(!CTX::instance()->post.animCycle);
   dialog->b[1]->value(CTX::instance()->post.animCycle);
   dialog->v[0]->value(CTX::instance()->post.animDelay);
@@ -497,7 +497,7 @@ int gifFileDialog(const char *name)
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
-  
+
   dialog->b[0]->value(CTX::instance()->print.gifDither);
   dialog->b[1]->value(CTX::instance()->print.gifInterlace);
   dialog->b[2]->value(CTX::instance()->print.gifSort);
@@ -544,25 +544,25 @@ static void activate_gl2ps_choices(int format, int quality, Fl_Check_Button *b[5
 #endif
   switch(quality){
   case 0: // raster
-    b[1]->deactivate(); 
-    b[2]->deactivate(); 
-    b[3]->deactivate(); 
+    b[1]->deactivate();
+    b[2]->deactivate();
+    b[3]->deactivate();
     b[4]->deactivate();
     break;
   case 1: // simple sort
   case 3: // unsorted
-    b[1]->activate();   
+    b[1]->activate();
     b[2]->activate();
-    b[3]->deactivate(); 
+    b[3]->deactivate();
     if(format == FORMAT_PDF || format == FORMAT_SVG)
       b[4]->deactivate();
     else
       b[4]->activate();
     break;
   case 2: // bsp sort
-    b[1]->activate();   
+    b[1]->activate();
     b[2]->activate();
-    b[3]->activate();   
+    b[3]->activate();
     if(format == FORMAT_PDF || format == FORMAT_SVG)
       b[4]->deactivate();
     else
@@ -618,7 +618,7 @@ int gl2psFileDialog(const char *name, const char *title, int format)
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
-  
+
   dialog->window->label(title);
   dialog->c->value(CTX::instance()->print.epsQuality);
   dialog->b[0]->value(CTX::instance()->print.epsCompress);
@@ -692,7 +692,7 @@ int optionsFileDialog(const char *name)
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
-  
+
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -741,7 +741,7 @@ int geoFileDialog(const char *name)
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
-  
+
   dialog->b->value(CTX::instance()->print.geoLabels ? 1 : 0);
   dialog->window->show();
 
@@ -803,7 +803,7 @@ int meshStatFileDialog(const char *name)
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
-  
+
   dialog->b[0]->value(CTX::instance()->mesh.saveAll ? 1 : 0);
   dialog->b[1]->value(CTX::instance()->print.posElementary ? 1 : 0);
   dialog->b[2]->value(CTX::instance()->print.posElement ? 1 : 0);
@@ -883,8 +883,8 @@ int mshFileDialog(const char *name)
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
-  
-  dialog->c->value((CTX::instance()->mesh.mshFileVersion == 1.0) ? 0 : 
+
+  dialog->c->value((CTX::instance()->mesh.mshFileVersion == 1.0) ? 0 :
                    CTX::instance()->mesh.binary ? 2 : 1);
   dialog->b[0]->value(CTX::instance()->mesh.saveAll ? 1 : 0);
   dialog->b[1]->value(CTX::instance()->mesh.saveParametric ? 1 : 0);
@@ -897,7 +897,7 @@ int mshFileDialog(const char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-        opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI, 
+        opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI,
                                   (dialog->c->value() == 0) ? 1.0 : 2.2);
         opt_mesh_binary(0, GMSH_SET | GMSH_GUI, (dialog->c->value() == 2) ? 1 : 0);
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
@@ -946,7 +946,7 @@ int unvFileDialog(const char *name)
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
-  
+
   dialog->b[0]->value(CTX::instance()->mesh.saveAll ? 1 : 0);
   dialog->b[1]->value(CTX::instance()->mesh.saveGroupsOfNodes ? 1 : 0);
   dialog->window->show();
@@ -958,7 +958,7 @@ int unvFileDialog(const char *name)
       if (!o) break;
       if (o == dialog->ok) {
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
-        opt_mesh_save_groups_of_nodes(0, GMSH_SET | GMSH_GUI, 
+        opt_mesh_save_groups_of_nodes(0, GMSH_SET | GMSH_GUI,
                                       dialog->b[1]->value() ? 1 : 0);
         CreateOutputFile(name, FORMAT_UNV);
         dialog->window->hide();
@@ -998,7 +998,7 @@ int bdfFileDialog(const char *name)
     {"Partition", 0, 0, 0},
     {0}
   };
-  
+
   int BBB = BB + 16; // labels too long
 
   if(!dialog){
@@ -1021,7 +1021,7 @@ int bdfFileDialog(const char *name)
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
-  
+
   dialog->c->value(CTX::instance()->mesh.bdfFieldFormat);
   dialog->d->value((CTX::instance()->mesh.saveElementTagType == 3) ? 2 :
                    (CTX::instance()->mesh.saveElementTagType == 2) ? 1 : 0);
@@ -1035,7 +1035,7 @@ int bdfFileDialog(const char *name)
       if (!o) break;
       if (o == dialog->ok) {
         opt_mesh_bdf_field_format(0, GMSH_SET | GMSH_GUI, dialog->c->value());
-        opt_mesh_save_element_tag_type(0, GMSH_SET | GMSH_GUI, 
+        opt_mesh_save_element_tag_type(0, GMSH_SET | GMSH_GUI,
                                        dialog->d->value() + 1);
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
         CreateOutputFile(name, FORMAT_BDF);
@@ -1099,7 +1099,7 @@ int genericMeshFileDialog(const char *name, const char *title, int format,
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
-  
+
   dialog->window->label(title);
   dialog->c->value(CTX::instance()->mesh.binary ? 1 : 0);
   if(binary_support)
@@ -1122,7 +1122,7 @@ int genericMeshFileDialog(const char *name, const char *title, int format,
       if (!o) break;
       if (o == dialog->ok) {
         opt_mesh_binary(0, GMSH_SET | GMSH_GUI, dialog->c->value());
-        opt_mesh_save_element_tag_type(0, GMSH_SET | GMSH_GUI, 
+        opt_mesh_save_element_tag_type(0, GMSH_SET | GMSH_GUI,
                                        dialog->d->value() + 1);
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
         CreateOutputFile(name, format);
@@ -1147,7 +1147,7 @@ static void _saveViews(const std::string &name, int which, int format, bool canA
   }
   else if(which == 0){
     int iview = FlGui::instance()->options->view.index;
-    if(iview < 0 || iview >= PView::list.size()){
+    if(iview < 0 || iview >= (int)PView::list.size()){
       Msg::Info("No or invalid current view: saving View[0]");
       iview = 0;
     }
@@ -1423,7 +1423,7 @@ void cgnsw_write_dummy_bc_cb(Fl_Widget *widget, void *data)
     dlg->checkButtonWriteNormals->deactivate();
     dlg->roundButton0NormalGeo->deactivate();
     dlg->roundButton1NormalElem->deactivate();
-  } 
+  }
 }
 
 void cgnsw_bc_location_cb(Fl_Widget *widget, void *data)
@@ -1455,7 +1455,7 @@ void cgnsw_write_normals_cb(Fl_Widget *widget, void *data)
   else {
     dlg->roundButton0NormalGeo->deactivate();
     dlg->roundButton1NormalElem->deactivate();
-  } 
+  }
 }
 
 void cgnsw_normal_source_cb(Fl_Widget *widget, void *data)
@@ -1509,7 +1509,7 @@ int cgnsFileDialog(const char *filename)
     {"Physical", 0, 0, 0},
     {0}
   };
-      
+
   static Fl_Menu_Item vectorDimMenu[] = {
     {"2", 0, 0, 0},
     {"3", 0, 0, 0},
@@ -1657,7 +1657,7 @@ int cgnsFileDialog(const char *filename)
                                         &dlg);
   dlg.checkButtonWriteNormals->align(FL_ALIGN_RIGHT);
   yr += BH;
-  
+
   // Normal source
   {
     const int GH = 2*RBH + WB;
