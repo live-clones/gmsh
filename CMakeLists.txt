@@ -1054,7 +1054,7 @@ elseif(MSVC)
 endif(WIN32 AND NOT MSVC OR CYGWIN)
 
 # force full warnings to encourage everybody to write clean(er) code
-include(CheckCxxCompilerFlag)
+include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("-Wall" WALL)
 if(WALL)
   set_target_properties(gmsh lib shared PROPERTIES COMPILE_FLAGS "-Wall")
