@@ -21,7 +21,6 @@
 #include "robustPredicates.h"
 #include "BackgroundMesh.h"
 
-// FIXME: should not introduce dependencies to Geo/ code in Numeric!
 #include "GPoint.h"
 #include "GFace.h"
 #include "GEdgeCompound.h"
@@ -167,16 +166,16 @@ int DocRecord::Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k)
                "or Mesh.RandomFactor");
     return 0;
   }
-  
+
   double pa[2] = {(double)points[h].where.h, (double)points[h].where.v};
   double pb[2] = {(double)points[i].where.h, (double)points[i].where.v};
   double pc[2] = {(double)points[j].where.h, (double)points[j].where.v};
   double pd[2] = {(double)points[k].where.h, (double)points[k].where.v};
 
-  // we use robust predicates here  
-  double result = robustPredicates::incircle(pa, pb, pc, pd) * 
+  // we use robust predicates here
+  double result = robustPredicates::incircle(pa, pb, pc, pd) *
     robustPredicates::orient2d(pa, pb, pc);
-  
+
   return (result < 0) ? 1 : 0;
 }
 
@@ -516,20 +515,20 @@ void DocRecord::ConvertDListToVoronoiData()
 {
   if (_adjacencies){
     for(int i = 0; i < numPoints; i++)
-      if (_adjacencies[i].t) 
+      if (_adjacencies[i].t)
         delete [] _adjacencies[i].t;
     delete [] _adjacencies;
-  }  
+  }
   if (_hull)delete [] _hull;
   _hullSize = CountPointsOnHull ();
   _hull = new PointNumero[_hullSize];
   ConvexHull();
   std::sort(_hull, _hull+_hullSize);
   _adjacencies = new STriangle[numPoints];
-  
-  for(PointNumero i = 0; i < numPoints; i++) 
+
+  for(PointNumero i = 0; i < numPoints; i++)
     _adjacencies[i].t = ConvertDlistToArray(&points[i].adjacent,
-                                            &_adjacencies[i].t_length);    
+                                            &_adjacencies[i].t_length);
 }
 
 void DocRecord::voronoiCell(PointNumero pt, std::vector<SPoint2> &pts) const
@@ -552,16 +551,16 @@ void DocRecord::voronoiCell(PointNumero pt, std::vector<SPoint2> &pts) const
 
 /*
   Consider N points {X_1, \dots, X_N}. We want to find the point X_P that verifies
-  
+
   min max | X_i - X_P | , i=1,\dots,N
 
   L2 norm
 
-  min \int_V || X - X_P||^2 dv 
+  min \int_V || X - X_P||^2 dv
 
-  =>  2 \int_V || X - X_P|| dv = 0 => X_P is the centroid 
+  =>  2 \int_V || X - X_P|| dv = 0 => X_P is the centroid
 
-  min \int_V || X - X_P||^{2m} dv 
+  min \int_V || X - X_P||^{2m} dv
 
   =>  2 \int_V || X - X_P||^{2m-1} dv = 0 => X_P is somewhere ...
 
@@ -599,14 +598,14 @@ void DocRecord::makePosView(std::string fileName, GFace *gf)
         fprintf(f,"SP(%g,%g,%g)  {%g};\n",pc[0],pc[1],0.0,-(double)i);
       }
     }
-    fprintf(f,"};\n");    
+    fprintf(f,"};\n");
   }
   fclose(f);
 }
 
 void DocRecord::printMedialAxis(Octree *_octree, std::string fileName, GFace *gf, GEdge *ge)
 {
-  
+
   FILE *f = fopen(fileName.c_str(),"w");
    if (_adjacencies){
     fprintf(f,"View \"medial axis\" {\n");
@@ -647,7 +646,7 @@ void DocRecord::printMedialAxis(Octree *_octree, std::string fileName, GFace *gf
         }
        }
     }
-    fprintf(f,"};\n");    
+    fprintf(f,"};\n");
   }
   fclose(f);
 
@@ -657,10 +656,10 @@ void centroidOfOrientedBox(std::vector<SPoint2> &pts, const double &angle,
                            double &xc, double &yc, double &inertia, double &area)
 {
   const int N = pts.size();
-  
+
   double sina = sin(angle);
   double cosa = cos(angle);
-  
+
   double xmin = cosa* pts[0].x()+ sina*pts[0].y();
   double xmax = cosa* pts[0].x()+ sina*pts[0].y();
   double ymin = -sina* pts[0].x()+ cosa*pts[0].y();
@@ -689,7 +688,7 @@ void centroidOfPolygon(SPoint2 &pc, std::vector<SPoint2> &pts,
   for (unsigned int j = 0; j < pts.size(); j++){
     SPoint2 &pa = pts[j];
     SPoint2 &pb = pts[(j+1)%pts.size()];
-    const double area  = triangle_area2d(pa,pb,pc);         
+    const double area  = triangle_area2d(pa,pb,pc);
     const double lc = bgm ? (*bgm)((pa.x()+pb.x()+pc.x())/3.0,
                                    (pa.y()+pb.y()+pc.y())/3.0,
                                    0.0) : 1.0;
@@ -703,16 +702,16 @@ void centroidOfPolygon(SPoint2 &pc, std::vector<SPoint2> &pts,
   for (unsigned int j = 0; j < pts.size(); j++){
     SPoint2 &pa = pts[j];
     SPoint2 &pb = pts[(j+1)%pts.size()];
-    const double area  = triangle_area2d(pa,pb,pc);     
-    
-    const double b = sqrt (  (pa.x()-pb.x())*(pa.x()-pb.x()) + 
+    const double area  = triangle_area2d(pa,pb,pc);
+
+    const double b = sqrt (  (pa.x()-pb.x())*(pa.x()-pb.x()) +
                              (pa.y()-pb.y())*(pa.y()-pb.y()) );
     const double h = 2.0 * area / b;
     const double a = fabs((pb.x()-pa.x())*(pc.x()-pa.x())*
                           (pb.y()-pa.y())*(pc.y()-pa.y()))/b;
-    
+
     const double j2 = (h*b*b*b + h*a*b*b + h*a*a*b + b*h*h*h) / 12.0;
-    
+
     center = (pa+pb+pc) * (1.0/3.0);
     const SPoint2 dx = x - center;
     inertia += j2 + area*area*(dx.x()+dx.x()+dx.y()*dx.y());
@@ -728,19 +727,19 @@ double DocRecord::Lloyd(int type)
   for(PointNumero i = 0; i < numPoints; i++) {
     PointRecord &pt = points[i];
     std::vector<SPoint2> pts;
-    voronoiCell (i,pts); 
+    voronoiCell (i,pts);
     double E, A;
-    
+
     if (!points[i].data){
       SPoint2 p (pt.where.h,pt.where.v);
-      if (type == 0)    
-        centroidOfPolygon (p,pts, cgs(i,0), cgs(i,1),E, A);              
-      else 
-        centroidOfOrientedBox (pts, 0.0, cgs(i,0),cgs(i,1),E, A);    
+      if (type == 0)
+        centroidOfPolygon (p,pts, cgs(i,0), cgs(i,1),E, A);
+      else
+        centroidOfOrientedBox (pts, 0.0, cgs(i,0),cgs(i,1),E, A);
     }
     inertia_tot += E;
-  } 
-  
+  }
+
   for(PointNumero i = 0; i < numPoints; i++) {
     if (!points[i].data){
       points[i].where.h = cgs(i,0);
@@ -819,7 +818,7 @@ void DocRecord::RemoveAllDList()
     }
 }
 
-DocRecord::DocRecord(int n) 
+DocRecord::DocRecord(int n)
   : _hullSize(0), _hull(NULL), _adjacencies(NULL),
     numPoints(n), points(NULL), numTriangles(0), triangles(NULL)
 {
@@ -855,14 +854,14 @@ void DocRecord::Voronoi()
 }
 
 void DocRecord::setPoints(fullMatrix<double> *p)
-{ 
+{
   if (numPoints != p->size1())throw;
   for (int i = 0; i < p->size1(); i++){
     x(i) = (*p)(i, 0);
     y(i) = (*p)(i, 1);
     data(i) = (*p)(i, 2) < 0  ? (void *) 1 : NULL;
   }
-} 
+}
 
 
 void DocRecord::recur_tag_triangles(int iTriangle, std::set<int>& taggedTriangles,
@@ -870,26 +869,26 @@ void DocRecord::recur_tag_triangles(int iTriangle, std::set<int>& taggedTriangle
                                     std::pair<int,int> > &edgesToTriangles)
 {
   if(taggedTriangles.find(iTriangle) != taggedTriangles.end()) return;
-	
+
   taggedTriangles.insert(iTriangle);
 
   int a = triangles[iTriangle].a;
   int b = triangles[iTriangle].b;
   int c = triangles[iTriangle].c;
   PointRecord* p[3] = {&points[a], &points[b], &points[c]};
-	
+
   for(int j=0;j<3;j++){
     if(!lookForBoundaryEdge(p[j]->data, p[(j + 1) % 3]->data)){
       std::pair<void*,void*> ab = std::make_pair
         (std::min(p[j]->data, p[(j + 1) % 3]->data),
          std::max(p[j]->data, p[(j + 1) % 3]->data));
       std::pair<int,int>& adj = (edgesToTriangles.find(ab))->second;
-      if(iTriangle == adj.first && adj.second != -1) 
+      if(iTriangle == adj.first && adj.second != -1)
         recur_tag_triangles(adj.second, taggedTriangles, edgesToTriangles);
       else
         recur_tag_triangles(adj.first, taggedTriangles, edgesToTriangles);
     }
-  }  
+  }
 }
 
 std::set<int> DocRecord::tagInterior(double x, double y)
@@ -901,7 +900,7 @@ std::set<int> DocRecord::tagInterior(double x, double y)
     int b = triangles[i].b;
     int c = triangles[i].c;
     PointRecord* p[3] = {&points[a],&points[b],&points[c]};
-    
+
     //Weisstein, Eric W. "Triangle Interior." From MathWorld--A Wolfram Web Resource.
     double x0 = points[a].where.h;
     double y0 = points[a].where.v;
@@ -909,14 +908,14 @@ std::set<int> DocRecord::tagInterior(double x, double y)
     double y1 = points[b].where.v - points[a].where.v;
     double x2 = points[c].where.h - points[a].where.h;
     double y2 = points[c].where.v - points[a].where.v;
-    double k1 = ((x*y2-x2*y)-(x0*y2-x2*y0))/(x1*y2-x2*y1); 
+    double k1 = ((x*y2-x2*y)-(x0*y2-x2*y0))/(x1*y2-x2*y1);
     double k2 = -((x*y1-x1*y)-(x0*y1-x1*y0))/(x1*y2-x2*y1);
     if(k1>0.0 && k2>0.0 && k1+k2<1.0) iFirst = i;
     for(int j=0;j<3;j++){
       std::pair<void*,void*> ab = std::make_pair
-        (std::min(p[j]->data, p[(j + 1) % 3]->data), 
+        (std::min(p[j]->data, p[(j + 1) % 3]->data),
          std::max(p[j]->data, p[(j + 1) % 3]->data));
-      std::map<std::pair<void*,void*>, std::pair<int,int> >::iterator it = 
+      std::map<std::pair<void*,void*>, std::pair<int,int> >::iterator it =
         edgesToTriangles.find(ab);
       if(it == edgesToTriangles.end()){
         edgesToTriangles[ab] = std::make_pair(i, -1);
@@ -931,8 +930,8 @@ std::set<int> DocRecord::tagInterior(double x, double y)
   return taggedTriangles;
 }
 
-void DocRecord::concave(double x,double y,GFace* gf){
-  int i;
+void DocRecord::concave(double x,double y,GFace* gf)
+{
   int index1;
   int index2;
   int index3;
@@ -944,12 +943,12 @@ void DocRecord::concave(double x,double y,GFace* gf){
   std::list<GEdge*>::iterator it1;
   std::set<int> set;
   std::set<int>::iterator it2;
-  
+
   list = gf->edges();
   replaceMeshCompound(gf,list);
   for(it1 = list.begin(); it1 != list.end(); it1++){
     edge = *it1;
-    for(i=0;i<edge->getNumMeshElements();i++){
+    for(unsigned int i = 0; i < edge->getNumMeshElements(); i++){
       element = edge->getMeshElement(i);
       vertex1 = element->getVertex(0);
       vertex2 = element->getVertex(1);
@@ -957,10 +956,10 @@ void DocRecord::concave(double x,double y,GFace* gf){
     }
   }
 
-  for(i = 0;i < numPoints; i++){
+  for(int i = 0; i < numPoints; i++){
     points[i].vicinity.clear();
   }
-	
+
   MakeMeshWithPoints();
   set = tagInterior(x,y);
   for(it2 = set.begin(); it2 != set.end(); it2++){
@@ -976,18 +975,18 @@ void DocRecord::concave(double x,double y,GFace* gf){
   }
 }
 
-bool DocRecord::contain(int index1,int index2,int index3){
-  int i;
+bool DocRecord::contain(int index1,int index2,int index3)
+{
   void* dataA;
   void* dataB;
   dataA = points[index2].data;
   dataB = points[index3].data;
-  for(i = 0; i < points[index1].vicinity.size() - 1; i = i+2){
-    if(points[index1].vicinity[i] == dataA && 
+  for(unsigned int i = 0; i < points[index1].vicinity.size() - 1; i = i+2){
+    if(points[index1].vicinity[i] == dataA &&
        points[index1].vicinity[i + 1] == dataB){
       return 1;
     }
-    else if(points[index1].vicinity[i] == dataB && 
+    else if(points[index1].vicinity[i] == dataB &&
             points[index1].vicinity[i + 1] == dataA){
       return 1;
     }
@@ -995,20 +994,22 @@ bool DocRecord::contain(int index1,int index2,int index3){
   return 0;
 }
 
-void DocRecord::add(int index1,int index2){
+void DocRecord::add(int index1,int index2)
+{
   void* data;
   data = points[index2].data;
   points[index1].vicinity.push_back(data);
 }
 
-void DocRecord::initialize(){
-  int i;
-  for(i = 0; i < numPoints; i++){
+void DocRecord::initialize()
+{
+  for(int i = 0; i < numPoints; i++){
     points[i].flag = 0;
   }
 }
 
-bool DocRecord::remove_point(int index){
+bool DocRecord::remove_point(int index)
+{
   if(points[index].flag == 0){
     points[index].flag = 1;
     return 1;
@@ -1016,20 +1017,17 @@ bool DocRecord::remove_point(int index){
   else return 0;
 }
 
-void DocRecord::remove_all(){
-  int i;
-  int index;
-  int numPoints2;
-  PointRecord* points2;
-  numPoints2 = 0;
-  for(i = 0; i < numPoints; i++){
+void DocRecord::remove_all()
+{
+  int numPoints2 = 0;
+  for(int i = 0; i < numPoints; i++){
     if(points[i].flag == 0){
       numPoints2++;
     }
   }
-  points2 = new PointRecord[numPoints2];
-  index = 0;
-  for(i = 0; i < numPoints; i++){
+  PointRecord *points2 = new PointRecord[numPoints2];
+  int index = 0;
+  for(int i = 0; i < numPoints; i++){
     if(points[i].flag == 0){
       points2[index].where.h = points[i].where.h;
       points2[index].where.v = points[i].where.v;
@@ -1044,60 +1042,47 @@ void DocRecord::remove_all(){
   numPoints = numPoints2;
 }
 
-void DocRecord::add_point(double x,double y,GFace*face){
+void DocRecord::add_point(double x,double y,GFace*face)
+{
   PointRecord point;
   point.where.h = x;
-  point.where.v = y; 
+  point.where.v = y;
   point.data = new MVertex(x, y, 0.0, (GEntity*)face, 2);
   points[numPoints] = point;
   numPoints = numPoints + 1;
 }
 
-void DocRecord::build_edges(){
-  int i;
-  int j;
-  int num;
-  int index;
-  MVertex* vertex1;
-  MVertex* vertex2;
-	
-  for( i = 0; i < numPoints; i++){
-    vertex1 = (MVertex*)points[i].data;
-    num = _adjacencies[i].t_length;
-    for(j = 0; j < num; j++){
-      index = _adjacencies[i].t[j];
-      vertex2 = (MVertex*)points[index].data;
+void DocRecord::build_edges()
+{
+  for(int i = 0; i < numPoints; i++){
+    MVertex *vertex1 = (MVertex*)points[i].data;
+    int num = _adjacencies[i].t_length;
+    for(int j = 0; j < num; j++){
+      int index = _adjacencies[i].t[j];
+      MVertex *vertex2 = (MVertex*)points[index].data;
       add_edge(vertex1, vertex2);
     }
   }
 }
 
-void DocRecord::clear_edges(){
+void DocRecord::clear_edges()
+{
   mesh_edges.clear();
 }
 
-bool DocRecord::delaunay_conformity(GFace* gf){
-  int i;
-  bool flag;
-  GEdge* edge;
-  MElement* element;
-  MVertex* vertex1;
-  MVertex* vertex2;
-  std::list<GEdge*> list;
-  std::list<GEdge*>::iterator it;
-	
-  list = gf->edges();
+bool DocRecord::delaunay_conformity(GFace* gf)
+{
+  std::list<GEdge*> list = gf->edges();
   replaceMeshCompound(gf,list);
-  for(it = list.begin(); it!= list.end(); it++){
-    edge = *it;
-    for(i = 0; i < edge->getNumMeshElements(); i++){
-      element = edge->getMeshElement(i);
-      vertex1 = element->getVertex(0);
-      vertex2 = element->getVertex(1);
-      flag = find_edge(vertex1,vertex2);
+  for(std::list<GEdge*>::iterator it = list.begin(); it!= list.end(); it++){
+    GEdge *edge = *it;
+    for(unsigned int i = 0; i < edge->getNumMeshElements(); i++){
+      MElement *element = edge->getMeshElement(i);
+      MVertex *vertex1 = element->getVertex(0);
+      MVertex *vertex2 = element->getVertex(1);
+      bool flag = find_edge(vertex1,vertex2);
       if(!flag) return false;
     }
   }
   return 1;
 }
-	

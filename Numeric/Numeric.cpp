@@ -1326,12 +1326,10 @@ void computeMeanPlaneSimple(const std::vector<SPoint3> &points, mean_plane &mean
   else{
     meanPlane.z = meanPlane.d / meanPlane.c;
   }
-
-  }
+}
 
 void projectPointToPlane(const SPoint3 &pt, SPoint3 &ptProj, const mean_plane &meanPlane)
 {
-
   double u  = pt.x();
   double v  = pt.y();
   double w  = pt.z();
@@ -1344,33 +1342,30 @@ void projectPointToPlane(const SPoint3 &pt, SPoint3 &ptProj, const mean_plane &m
   ptProj[0] =  u + a*t0;
   ptProj[1] =  v + b*t0;
   ptProj[2] =  w + c*t0;
-
 }
 
-void projectPointsToPlane(const std::vector<SPoint3> &pts, std::vector<SPoint3> &ptsProj, const mean_plane &meanPlane)
+void projectPointsToPlane(const std::vector<SPoint3> &pts, std::vector<SPoint3> &ptsProj,
+                          const mean_plane &meanPlane)
 {
-
   ptsProj.resize(pts.size());
-  for (int i= 0; i< pts.size(); i++){
+  for (unsigned int i= 0; i< pts.size(); i++){
     projectPointToPlane(pts[i],ptsProj[i], meanPlane);
   }
-
 }
 
-void transformPointsIntoOrthoBasis(const std::vector<SPoint3> &ptsProj,  std::vector<SPoint3> &pointsUV,
+void transformPointsIntoOrthoBasis(const std::vector<SPoint3> &ptsProj,
+                                   std::vector<SPoint3> &pointsUV,
 				   const SPoint3 &ptCG, const mean_plane &meanPlane)
 {
-
   pointsUV.resize(ptsProj.size());
   SVector3 normal(meanPlane.a, meanPlane.b, meanPlane.c);
   SVector3 tangent, binormal;
   buildOrthoBasis(normal, tangent, binormal);
 
-  for (int i= 0; i< ptsProj.size(); i++){
+  for (unsigned int i= 0; i< ptsProj.size(); i++){
     SVector3 pp(ptsProj[i][0]-ptCG[0],ptsProj[i][1]-ptCG[1],ptsProj[i][2]-ptCG[2]) ;
     pointsUV[i][0] = dot(pp, tangent);
     pointsUV[i][1] = dot(pp, binormal);
     pointsUV[i][2] = dot(pp, normal);
   }
-
 }
