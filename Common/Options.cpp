@@ -5716,7 +5716,7 @@ double opt_view_nb_non_empty_timestep(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(!data) return 0;
   int n = 0;
-  for(unsigned int i = 0; i < data->getNumTimeSteps(); i++)
+  for(int i = 0; i < data->getNumTimeSteps(); i++)
     if(data->hasTimeStep(i)) n++;
   return n;
 #else
