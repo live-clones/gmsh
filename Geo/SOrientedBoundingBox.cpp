@@ -10,10 +10,14 @@
 #include <math.h>
 #include <time.h>
 #include <stdlib.h>
+#include "GmshConfig.h"
 #include "SOrientedBoundingBox.h"
 #include "fullMatrix.h"
-#include "DivideAndConquer.h"
 #include "SBoundingBox3d.h"
+
+#if defined(HAVE_MESH)
+#include "DivideAndConquer.h"
+#endif
 
 double SOrientedBoundingRectangle::area()
 {
@@ -201,6 +205,7 @@ bool SOrientedBoundingBox::intersects(SOrientedBoundingBox& obb)
 
 SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertices)
 {
+#if defined(HAVE_MESH)
   int num_vertices = vertices.size();
   // First organize the data
   fullMatrix<double> data(3,num_vertices);
@@ -542,11 +547,15 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
   Msg::Info("Box axis 1 : %f %f %f",Axis1[0],Axis1[1],Axis1[2]);
   Msg::Info("Box axis 2 : %f %f %f",Axis2[0],Axis2[1],Axis2[2]);
   Msg::Info("Box axis 3 : %f %f %f",Axis3[0],Axis3[1],Axis3[2]);
-  
+
   Msg::Info("Volume : %f", size[0]*size[1]*size[2]);
   */
   return (new SOrientedBoundingBox(center,
           size[0], size[1], size[2], Axis1, Axis2, Axis3));
+#else
+  Msg::Error("SOrientedBoundingBox requires mesh module");
+  return 0;
+#endif
 }
 
 double SOrientedBoundingBox::compare(SOrientedBoundingBox& obb1, SOrientedBoundingBox& obb2)

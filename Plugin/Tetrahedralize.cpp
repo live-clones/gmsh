@@ -4,6 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <vector>
+#include "GmshConfig.h"
 #include "GModel.h"
 #include "GmshMessage.h"
 #include "Tetrahedralize.h"
@@ -46,8 +47,8 @@ class PointData {
  public:
   std::vector<double> v;
   PointData(double x, double y, double z, int numVal)
-  { 
-    v.resize(3 + numVal); 
+  {
+    v.resize(3 + numVal);
     v[0] = x;
     v[1] = y;
     v[2] = z;
@@ -130,13 +131,13 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
     p[3] = &points[out.tetrahedronlist[i * 4 + 3]];
     int numComp = 0;
     std::vector<double> *vec = 0;
-    if((int)p[0]->v.size() == 3 + 9 * numSteps && 
+    if((int)p[0]->v.size() == 3 + 9 * numSteps &&
        (int)p[1]->v.size() == 3 + 9 * numSteps &&
        (int)p[2]->v.size() == 3 + 9 * numSteps &&
        (int)p[3]->v.size() == 3 + 9 * numSteps){
       numComp = 9; data2->NbTS++; vec = &data2->TS;
     }
-    else if((int)p[0]->v.size() == 3 + 3 * numSteps && 
+    else if((int)p[0]->v.size() == 3 + 3 * numSteps &&
             (int)p[1]->v.size() == 3 + 3 * numSteps &&
             (int)p[2]->v.size() == 3 + 3 * numSteps &&
             (int)p[2]->v.size() == 3 + 3 * numSteps){
@@ -150,7 +151,7 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
     for(int nod = 0; nod < 4; nod++) vec->push_back(p[nod]->v[2]);
     for(int step = 0; step < numSteps; step++)
       for(int nod = 0; nod < 4; nod++)
-        for(int comp = 0; comp < numComp; comp++) 
+        for(int comp = 0; comp < numComp; comp++)
           vec->push_back(p[nod]->v[3 + numComp * step + comp]);
   }
 

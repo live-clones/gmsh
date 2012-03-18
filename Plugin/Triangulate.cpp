@@ -5,13 +5,17 @@
 
 #include <vector>
 #include <stdlib.h>
+#include "GmshConfig.h"
 #include "GModel.h"
 #include "discreteFace.h"
-#include "DivideAndConquer.h"
 #include "GmshMessage.h"
 #include "MVertex.h"
 #include "Triangulate.h"
 #include "Context.h"
+
+#if defined(HAVE_MESH)
+#include "DivideAndConquer.h"
+#endif
 
 StringXNumber TriangulateOptions_Number[] = {
   {GMSH_FULLRC, "View", NULL, -1.}
@@ -50,8 +54,8 @@ class PointData : public MVertex {
   std::vector<double> v;
   PointData(double x, double y, double z, int numVal)
     : MVertex(x, y, z)
-  { 
-    v.resize(3 + numVal); 
+  {
+    v.resize(3 + numVal);
     v[0] = x;
     v[1] = y;
     v[2] = z;
@@ -70,6 +74,7 @@ static void project(MVertex *v, double mat[3][3])
 
 PView *GMSH_TriangulatePlugin::execute(PView *v)
 {
+#if defined(HAVE_MESH)
   int iView = (int)TriangulateOptions_Number[0].def;
 
   PView *v1 = getView(iView, v);
@@ -128,7 +133,7 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
     doc.points[i].where.h = points[i]->x() + XX;
     doc.points[i].where.v = points[i]->y() + YY;
     doc.points[i].adjacent = NULL;
-    doc.points[i].data = (void*)points[i]; 
+    doc.points[i].data = (void*)points[i];
   }
 
   // triangulate
@@ -144,12 +149,12 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
     p[2] = (PointData*)doc.points[doc.triangles[i].c].data;
     int numComp = 0;
     std::vector<double> *vec = 0;
-    if((int)p[0]->v.size() == 3 + 9 * numSteps && 
+    if((int)p[0]->v.size() == 3 + 9 * numSteps &&
        (int)p[1]->v.size() == 3 + 9 * numSteps &&
        (int)p[2]->v.size() == 3 + 9 * numSteps){
       numComp = 9; data2->NbTT++; vec = &data2->TT;
     }
-    else if((int)p[0]->v.size() == 3 + 3 * numSteps && 
+    else if((int)p[0]->v.size() == 3 + 3 * numSteps &&
             (int)p[1]->v.size() == 3 + 3 * numSteps &&
             (int)p[2]->v.size() == 3 + 3 * numSteps){
       numComp = 3; data2->NbVT++; vec = &data2->VT;
@@ -162,7 +167,7 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
     for(int nod = 0; nod < 3; nod++) vec->push_back(p[nod]->v[2]);
     for(int step = 0; step < numSteps; step++)
       for(int nod = 0; nod < 3; nod++)
-        for(int comp = 0; comp < numComp; comp++) 
+        for(int comp = 0; comp < numComp; comp++)
           vec->push_back(p[nod]->v[3 + numComp * step + comp]);
   }
 
@@ -176,4 +181,8 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
   data2->finalize();
 
   return v2;
+#else
+  Msg::Error("Plugin(Triangulate) requires mesh module");
+  return v;
+#endif
 }
