@@ -9,4 +9,4 @@ set(SRC
 )
 
 file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
-append_gmsh_src(contrib/Tetgen "${SRC};${HDR}")
+append_gmsh_src(contrib/Tetgen1.4 "${SRC};${HDR}")
