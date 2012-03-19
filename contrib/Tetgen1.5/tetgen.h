@@ -603,8 +603,6 @@ public:
   int neighout;                                            // '-n' switch, 0.
   int voroout;                                             // '-v',switch, 0.
   int meditview;                                           // '-g' switch, 0.
-  //int gidview;                                             // '-G' switch, 0.
-  //int geomview;                                            // '-O' switch, 0.
   int vtkview;                                             // '-K' switch, 0.
   int nobound;                                             // '-B' switch, 0.
   int nonodewritten;                                       // '-N' switch, 0.
@@ -613,7 +611,6 @@ public:
   int noiterationnum;                                      // '-I' switch, 0.
   int nomerge;                                             // '-M' switch, 0.
   int nojettison;                                          // '-J' switch, 0.
-  int outbadqual;                                          // '-Z' switch, 0.
   int docheck;                                             // '-C' switch, 0.
   int quiet;                                               // '-Q' switch, 0.
   int verbose;                                             // '-V' switch, 0.
@@ -644,12 +641,8 @@ public:
   REAL minratio;                                          // after '-q', 0.0.
   REAL mindihedral;                                      // after '-qq', 5.0.
   REAL optmaxdihedral;                                  // after '-o', 165.0.
-  REAL optminslidihed;                                 // after '-oo', 175.0.  
-  //REAL alpha1;                                          // after '-m', 1.0.
-  //REAL alpha2;                                         // after '-mm', 1.0.
-  //REAL alpha3;                                        // after '-mmm', 0.6.
-  REAL outmaxdihedral;                                  // after '-Z', 180.0.
-  REAL outmindihedral;                                   // after '-ZZ', 0.0.
+  REAL optminsmtdihed;                                 // after '-oo', 175.0.
+  REAL optminslidihed;                                // after '-ooo', 179.0.  
   REAL epsilon;                                        // after '-T', 1.0e-8.
   REAL minedgelength;     // The shortest length of an edge, after '-l', 0.0.
 
@@ -710,8 +703,6 @@ public:
     neighout = 0;
     voroout = 0;
     meditview = 0;
-    //gidview = 0;
-    //geomview = 0;
     vtkview = 0;
     nobound = 0;
     nonodewritten = 0;
@@ -720,7 +711,6 @@ public:
     noiterationnum = 0;
     nomerge = 0;
     nojettison = 0;
-    outbadqual = 0;
     docheck = 0;
     quiet = 0;
     verbose = 0;
@@ -748,13 +738,9 @@ public:
     maxvolume = -1.0;
     minratio = 2.0;
     mindihedral = 0.0; // 5.0;
-    optmaxdihedral = 165.00; // without -q, default is 175.0
-    optminslidihed = 175.00; // without -q, default is 179.999
-    outmaxdihedral = 180.0;
-    outmindihedral = 0.0;
-    //alpha1 = 1.0;
-    //alpha2 = 1.0;
-    //alpha3 = 0.6;
+    optmaxdihedral = 165.00; // without -q, default is 179.0
+    optminsmtdihed = 179.00; // without -q, default is 179.999
+    optminslidihed = 179.00; // without -q, default is 179.999
     epsilon = 1.0e-8;
     minedgelength = 0.0;
     object = NODES;
@@ -1174,27 +1160,6 @@ public:
     }
   };
 
-///////////////////////////////////////////////////////////////////////////////
-//                                                                           //
-// pbcdata                                                                   //
-//                                                                           //
-// A pbcdata stores data of a periodic boundary condition defined on a pair  //
-// of facets or segments. Let f1 and f2 define a pbcgroup. 'fmark' saves the //
-// facet markers of f1 and f2;  'ss' contains two subfaces belong to f1 and  //
-// f2, respectively.  Let s1 and s2 define a segment pbcgroup. 'segid' are   //
-// the segment ids of s1 and s2; 'ss' contains two segments belong to s1 and //
-// s2, respectively. 'transmat' are two transformation matrices. transmat[0] //
-// transforms a point of f1 (or s1) into a point of f2 (or s2),  transmat[1] //
-// does the inverse.                                                         //
-//                                                                           //
-///////////////////////////////////////////////////////////////////////////////
-
-  struct pbcdata {
-    int fmark[2];
-    int segid[2];
-    face ss[2];
-    REAL transmat[2][4][4];
-  };
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
@@ -1399,7 +1364,6 @@ public:
   int point2simindex;         // Index to find a simplex adjacent to a point.
   int pointmarkindex;            // Index to find boundary marker of a point.
   int point2pbcptindex;              // Index to find a pbc point to a point.
-  //int highorderindex;    // Index to find extra nodes for highorder elements.
   int elemattribindex;          // Index to find attributes of a tetrahedron.
   int volumeboundindex;       // Index to find volume bound of a tetrahedron.
   int elemmarkerindex;              // Index to find marker of a tetrahedron.
@@ -1416,6 +1380,7 @@ public:
   long samples;               // Number of random samples for point location.
   unsigned long randomseed;                    // Current random number seed.
   REAL cosmaxdihed, cosmindihed;    // The cosine values of max/min dihedral.
+  REAL cossmtdihed;
   REAL cosslidihed;          // The cosine value of max dihedral of a sliver.
   REAL minfaceang, minfacetdihed;     // The minimum input (dihedral) angles.
   REAL sintheta_tol;                   // The tolerance for sin(small angle).
@@ -1638,9 +1603,6 @@ public:
   inline point farsorg(face& seg);
   inline point farsdest(face& seg);
 
-  void printtet(triface*);
-  void printsh(face*);
-
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
 //  Memory managment                                                         //
@@ -1692,8 +1654,6 @@ public:
   REAL insphere_s(REAL*, REAL*, REAL*, REAL*, REAL*);
   REAL orient4d_s(REAL*, REAL*, REAL*, REAL*, REAL*, 
                   REAL, REAL, REAL, REAL, REAL);
-  //bool iscollinear(REAL*, REAL*, REAL*, REAL eps);
-  //bool iscoplanar(REAL*, REAL*, REAL*, REAL*, REAL vol6, REAL eps);
 
   // Geometric calculations
   inline REAL distance(REAL* p1, REAL* p2);
@@ -1711,7 +1671,6 @@ public:
   void planelineint(REAL*, REAL*, REAL*, REAL*, REAL*, REAL*, REAL*);
   REAL tetprismvol(REAL* pa, REAL* pb, REAL* pc, REAL* pd);
 
-
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
 // Local mesh transformations                                                //
@@ -1727,7 +1686,7 @@ public:
 
   // A generalized edge flip.
   int flipnm(triface*, int n, int level, int, flipconstraints* fc);
-  int flipnm_post(triface*, int n, int nn, flipconstraints* fc);
+  int flipnm_post(triface*, int n, int nn, int, flipconstraints* fc);
 
   // Incremental flips.
   long lawsonflip3d(point, int flipflag, int, int, int flipedgeflag);
@@ -1754,7 +1713,6 @@ public:
   unsigned long randomnation(unsigned int choices);
   void randomsample(point searchpt, triface *searchtet);
   enum locateresult locate(point searchpt, triface*, int, int);
-  //bool unifypoint(point, triface*);
 
   // Incremental Delaunay construction.
   void initialdelaunay(point pa, point pb, point pc, point pd);
@@ -1921,7 +1879,8 @@ public:
 
   void recoverdelaunay();
 
-  long improvequalitybyflips(flipconstraints *fc);
+  int  gettetrahedron(point, point, point, point, triface *);
+  long improvequalitybyflips();
 
   int  smoothpoint(point smtpt, arraypool*, int ccw, optparameters *opm);
   long improvequalitybysmoothing(optparameters *opm);
@@ -1973,7 +1932,6 @@ public:
   void outmesh2vtk(char*);
 
 
-
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
 // Constructor & destructor                                                  //
@@ -1993,7 +1951,7 @@ public:
 
     dummypoint = NULL;
     flipstack = NULL;
-    unflipqueue = NULL; // flipqueue
+    unflipqueue = NULL;
     btreenode_list = NULL;
 
     cavetetlist = cavebdrylist = caveoldtetlist = NULL;
@@ -2070,13 +2028,9 @@ public:
 
   ~tetgenmesh()
   {
-    //b   = (tetgenbehavior *) NULL;
-    //in  = (tetgenio *) NULL;
-
     if (bgm != NULL) {
       delete bgm;
-    } 
-    //bgm = (tetgenmesh *) NULL; 
+    }
 
     if (tetrahedrons != (memorypool *) NULL) {
       delete tetrahedrons;
@@ -2099,14 +2053,10 @@ public:
     if (flippool != NULL) {
       delete flippool;
       delete unflipqueue;
-      //delete flipqueue;
     }
     if (dummypoint != (point) NULL) {
       delete [] dummypoint;
     }
-    //if (highordertable != (point *) NULL) {
-    //  delete [] highordertable;
-    //}
 
     if (cavetetlist != NULL) {
       delete cavetetlist;
@@ -2256,8 +2206,7 @@ inline void tetgenmesh::dissolve(triface& t) {
   t.tet[t.ver & 3] = NULL;
 }
 
-// fsym()  finds the adjacent tetrahedron; the same face and edge. Note that
-//   the edge directions are reversed. 
+// fsym()  finds the adjacent tetrahedron at the same face and the same edge.
 
 inline void tetgenmesh::fsym(triface& t1, triface& t2) {
   tetrahedron ptr = (t1).tet[(t1).ver & 3];
@@ -2427,13 +2376,13 @@ inline void tetgenmesh::setvolumebound(tetrahedron* ptr, REAL value) {
 //    These two routines use the reserved slot ptr[10].
 
 inline int tetgenmesh::elemindex(tetrahedron* ptr) {
-  //return (int) (ptr[10]);
   int *iptr = (int *) &(ptr[10]);
   return iptr[0];
 }
 
 inline void tetgenmesh::setelemindex(tetrahedron* ptr, int value) {
-  ptr[10] = (tetrahedron) value;
+  int *iptr = (int *) &(ptr[10]);
+  iptr[0] = value;
 }
 
 // Get or set a tetrahedron's marker. 
@@ -2861,8 +2810,8 @@ inline bool tetgenmesh::sinfected(face& s)
 }
 
 // smarktest(), smarktested(), sunmarktest() -- primitives to flag or unflag
-//   a subface. The last 2nd bit of ((int *) ((s).sh))[shmarkindex+1] is 
-//   flaged.
+//   a subface. 
+// The last 2nd bit of ((int *) ((s).sh))[shmarkindex+1] is flaged.
 
 inline void tetgenmesh::smarktest(face& s) 
 {
@@ -2883,7 +2832,6 @@ inline bool tetgenmesh::smarktested(face& s)
 
 // smarktest2(), smarktest2ed(), sunmarktest2() -- primitives to flag or 
 //   unflag a subface. 
-
 // The last 3rd bit of ((int *) ((s).sh))[shmarkindex+1] is flaged.
 
 inline void tetgenmesh::smarktest2(face& s) 
@@ -3241,12 +3189,10 @@ inline void tetgenmesh::setpoint2tet(point pt, tetrahedron value) {
 }
 
 inline tetgenmesh::point tetgenmesh::point2ppt(point pt) {
-  //return (point) ((tetrahedron *) (pt))[point2simindex + 3];
   return (point) ((tetrahedron *) (pt))[point2simindex + 1];
 }
 
 inline void tetgenmesh::setpoint2ppt(point pt, point value) {
-  //((tetrahedron *) (pt))[point2simindex + 3] = (tetrahedron) value;
   ((tetrahedron *) (pt))[point2simindex + 1] = (tetrahedron) value;
 }
 
@@ -3260,12 +3206,10 @@ inline void tetgenmesh::setpoint2sh(point pt, shellface value) {
 
 
 inline tetgenmesh::tetrahedron tetgenmesh::point2bgmtet(point pt) {
-  //return ((tetrahedron *) (pt))[point2simindex + 4];
   return ((tetrahedron *) (pt))[point2simindex + 3];
 }
 
 inline void tetgenmesh::setpoint2bgmtet(point pt, tetrahedron value) {
-  //((tetrahedron *) (pt))[point2simindex + 4] = value;
   ((tetrahedron *) (pt))[point2simindex + 3] = value;
 }
 
@@ -3393,33 +3337,6 @@ inline REAL tetgenmesh::distance(REAL* p1, REAL* p2)
 #define SETVECTOR3(V, a0, a1, a2) (V)[0] = (a0); (V)[1] = (a1); (V)[2] = (a2)
 
 #define SWAP2(a0, a1, tmp) (tmp) = (a0); (a0) = (a1); (a1) = (tmp)
-
-///////////////////////////////////////////////////////////////////////////////
-//                                                                           //
-// Two inline functions used in read/write VTK files.                        //
-//                                                                           //
-///////////////////////////////////////////////////////////////////////////////
-
-inline void swapBytes(unsigned char* var, int size)
-{
-  int i = 0;
-  int j = size - 1;
-  char c;
-
-  while (i < j) {
-    c = var[i]; var[i] = var[j]; var[j] = c;
-    i++, j--;
-  }
-}
-
-inline bool testIsBigEndian()
-{
-  short word = 0x4321;
-  if((*(char *)& word) != 0x21)
-    return true;
-  else 
-    return false;
-}
 
 #endif // #ifndef tetgenH
 
