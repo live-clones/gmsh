@@ -553,9 +553,6 @@ int GModel::adaptMesh(std::vector<int> technique, std::vector<simpleFunction<dou
         metric->addMetric(technique[imetric], f[imetric], parameters[imetric]);
       }
       fields->setBackgroundField(metric);
-      // int id = fields->newId();
-      // (*fields)[id] = new meshMetric(this, technique, f, parameters);
-      // fields->background_field = id;
 
       opt_mesh_lc_integration_precision(0, GMSH_SET, 1.e-4);
       opt_mesh_algo2d(0, GMSH_SET, 7.0); //bamg
@@ -572,7 +569,7 @@ int GModel::adaptMesh(std::vector<int> technique, std::vector<simpleFunction<dou
       char name[256];
       sprintf(name, "meshAdapt-%d.msh", ITER);
       writeMSH(name);
-      //metric->exportInfo(name);
+      metric->exportInfo(name);
 
       if (ITER++ >= niter)  break;
       if (ITER > 3 && fabs((double)(nbElems - nbElemsOld)) < 0.01 * nbElemsOld) break;

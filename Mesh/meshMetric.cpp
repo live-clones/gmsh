@@ -109,17 +109,26 @@ void meshMetric::intersectMetrics(){
 }
 
 void meshMetric::exportInfo(const char * fileendname){
+
+  printf("printing metric \n");
+  if (_technique == meshMetric::HESSIAN) printf("HESSIANS \n");
+  else if (_technique == meshMetric::LEVELSET) printf("LEVELSETS \n");
+  else if (_technique == meshMetric::EIGENDIRECTIONS) printf("EIGEN \n");
+
   if (needMetricUpdate) intersectMetrics();
-  std::stringstream sg,sm,sl;
-  sg << "meshmetric_gradients" << fileendname;
-  sm << "meshmetric_metric" << fileendname;
-  sl << "meshmetric_levelset" << fileendname;
+  std::stringstream sg,sm,sl,sh;
+  sg << "meshmetric_gradients_" << fileendname;
+  sm << "meshmetric_metric_" << fileendname;
+  sl << "meshmetric_levelset_" << fileendname;
+  sh << "meshmetric_hessian_" << fileendname;
   std::ofstream out_grad(sg.str().c_str());
   std::ofstream out_metric(sm.str().c_str());
   std::ofstream out_ls(sl.str().c_str());
+  std::ofstream out_hess(sh.str().c_str());
   out_grad << "View \"ls_gradient\"{" << std::endl;
   out_metric << "View \"metric\"{" << std::endl;
   out_ls << "View \"ls\"{" << std::endl;
+  out_hess << "View \"hessian\"{" << std::endl;
   std::vector<MElement*>::iterator itelem = _elements.begin();
   std::vector<MElement*>::iterator itelemen = _elements.end();
   for (;itelem!=itelemen;itelem++){
@@ -127,27 +136,41 @@ void meshMetric::exportInfo(const char * fileendname){
     out_metric << "TT(";
     out_grad << "VT(";
     out_ls << "ST(";
+    out_hess << "ST(";
     for ( int i = 0; i < e->getNumVertices(); i++) {
       MVertex *ver = e->getVertex(i);
       out_metric << ver->x() << "," << ver->y() << "," << ver->z();
       out_grad << ver->x() << "," << ver->y() << "," << ver->z();
       out_ls << ver->x() << "," << ver->y() << "," << ver->z();
+      out_hess << ver->x() << "," << ver->y() << "," << ver->z();
       if (i!=e->getNumVertices()-1){
         out_metric << ",";
         out_grad << ",";
         out_ls << ",";
+        out_hess << ",";
       }
       else{
         out_metric << "){";
         out_grad << "){";
         out_ls << "){";
+	out_hess << "){";
       }
     }
     for ( int i = 0; i < e->getNumVertices(); i++) {
       MVertex *ver = e->getVertex(i);
       out_ls << vals[ver];
-      if ((i==(e->getNumVertices()-1))) out_ls << "};" << std::endl;
-      else out_ls << ",";
+      SVector3 gradudx = dgrads[0][ver];
+      SVector3 gradudy = dgrads[1][ver];
+      SVector3 gradudz = dgrads[2][ver];
+      out_hess << (gradudx(0)+gradudy(1)+gradudz(2));
+      if ((i==(e->getNumVertices()-1))){
+	out_ls << "};" << std::endl;
+	out_hess << "};" << std::endl;
+      }
+      else {
+	out_ls << ",";
+	out_hess << ",";
+      }
       for (int k=0;k<3;k++){
         out_grad << grads[ver](k);
         if ((k==2)&&(i==(e->getNumVertices()-1)))  out_grad << "};" << std::endl;
@@ -163,9 +186,13 @@ void meshMetric::exportInfo(const char * fileendname){
   out_grad << "};" << std::endl;
   out_metric << "};" << std::endl;
   out_ls << "};" << std::endl;
+  out_hess << "};" << std::endl;
   out_grad.close();
   out_metric.close();
   out_ls.close();
+  out_hess.close();
+ 
+  //exit(1);
 }
 
 
@@ -329,21 +356,7 @@ void meshMetric::computeMetric(){
         hfrey(1,0) = hfrey(0,1) = C*gr(1)*gr(0)/(norm) + hessian(1,0)/epsGeom;
         hfrey(2,0) = hfrey(0,2) = C*gr(2)*gr(0)/(norm) + hessian(2,0)/epsGeom;
         hfrey(2,1) = hfrey(1,2) = C*gr(2)*gr(1)/(norm) + hessian(2,1)/epsGeom;
-        // hfrey(0,0) += C*gr(0)*gr(0)/norm;
-        // hfrey(1,1) += C*gr(1)*gr(1)/norm;
-        // hfrey(2,2) += C*gr(2)*gr(2)/norm;
-        // hfrey(1,0) = hfrey(0,1) = gr(1)*gr(0)/(norm) ;
-        // hfrey(2,0) = hfrey(0,2) = gr(2)*gr(0)/(norm) ;
-        // hfrey(2,1) = hfrey(1,2) = gr(2)*gr(1)/(norm) ;
       }
-      // SMetric3 sss=hessian;
-      // sss *= divEps;
-      // sss(0,0) += 1/(hmax*hmax);
-      // sss(1,1) += 1/(hmax*hmax);
-      // sss(2,2) += 1/(hmax*hmax);
-      // H = intersection(sss,hfrey);
-      // if (dist < _E) H = intersection(sss,hfrey);
-      // else H = hfrey;
       H = hfrey;
     }
     else if ((_technique == meshMetric::EIGENDIRECTIONS )||(_technique == meshMetric::EIGENDIRECTIONS_LINEARINTERP_H )){
@@ -396,16 +409,11 @@ void meshMetric::computeMetric(){
         std::vector<int> ti_index;
         for (int i=0;i<3;i++)
           if (i!=grad_index) ti_index.push_back(i);
-//        std::cout << "gr tgr t1 t2 dots_tgr_gr_t1_t2 (" << gr(0) << "," << gr(1) << "," << gr(2) << ") (" <<  ti[grad_index](0) << "," << ti[grad_index](1) << "," << ti[grad_index](2) << ") (" <<  ti[ti_index[0]](0) << "," << ti[ti_index[0]](1) << "," << ti[ti_index[0]](2) << ") (" <<  ti[ti_index[1]](0) << "," << ti[ti_index[1]](1) << "," << ti[ti_index[1]](2) << ") " << fabs(dot(ti[grad_index],gr)) << " " << (dot(ti[grad_index],ti[ti_index[0]])) << " " << (dot(ti[grad_index],ti[ti_index[1]])) << std::endl;
-
         // finally, creating the metric
         std::vector<double> eigenvals;
         eigenvals.push_back(std::min(std::max(eigenval_direction,metric_value_hmax),metric_value_hmin));// in gradient direction
         eigenvals.push_back(std::min(std::max(eigenvals_curvature[ti_index[0]],metric_value_hmax),metric_value_hmin));
         eigenvals.push_back(std::min(std::max(eigenvals_curvature[ti_index[1]],metric_value_hmax),metric_value_hmin));
-//        eigenvals.push_back(std::min(std::max(metric_value_hmax,metric_value_hmax),metric_value_hmin));
-//        eigenvals.push_back(std::min(std::max(metric_value_hmax,metric_value_hmax),metric_value_hmin));
-
         metric = SMetric3(eigenvals[0],eigenvals[1],eigenvals[2],gr,ti[ti_index[0]],ti[ti_index[1]]);
         setOfSizes[metricNumber].insert(std::make_pair(ver, std::min(std::min(1/sqrt(eigenvals[0]),1/sqrt(eigenvals[1])),1/sqrt(eigenvals[2]))));
       }
@@ -432,23 +440,9 @@ void meshMetric::computeMetric(){
       H.eig(V,S);
 
       double lambda1, lambda2, lambda3;
-      // if (dist < _E && _technique == meshMetric::FREY){
-      //   fullMatrix<double> Vhess(3,3);
-      //   fullVector<double> Shess(3);
-      //   hessian.eig(Vhess,Shess);
-      //   double h = hmin*(hmax/hmin-1)*dist/_E + hmin;
-      //   double lam1 = Shess(0);
-      //   double lam2 = Shess(1);
-      //   double lam3 = (_dim == 3)? Shess(2) : 1.;
-      //   lambda1 = lam1;
-      //   lambda2 = lam2/lambda1;
-      //   lambda3 = (_dim == 3)? lam3/lambda1: 1.0;
-      // }
-      // else{
       lambda1 = S(0);
       lambda2 = S(1);
       lambda3 = (_dim == 3)? S(2) : 1.;
-      //}
 
       if (_technique == meshMetric::HESSIAN || (dist < _E && _technique == meshMetric::FREY)){
         lambda1 = std::min(std::max(fabs(S(0))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin));
@@ -470,6 +464,8 @@ void meshMetric::computeMetric(){
       it++;
     }
   }
+
+  //exportInfo("EMI");
 
 
   //Adapt epsilon
@@ -551,36 +547,6 @@ void meshMetric::operator() (double x, double y, double z, SMetric3 &metr, GEnti
   else{
     Msg::Warning("point %g %g %g not found",x,y,z);
   }
-}
-
-void meshMetric::printMetric(const char* n){
-  if (needMetricUpdate) intersectMetrics();
-  if (!setOfMetrics.size()){
-    std::cout  << "meshMetric::printMetric : No metric defined ! " << std::endl;
-    throw;
-  }
-
-  FILE *f = fopen (n,"w");
-  fprintf(f,"View \"\"{\n");
-
-  //std::map<MVertex*,SMetric3 >::const_iterator it = _hessian.begin();
-  std::map<MVertex*,SMetric3>::const_iterator it= _nodalMetrics.begin();
-  //for (; it != _nodalMetrics.end(); ++it){
-  for (; it != _hessian.end(); ++it){
-    MVertex *v =  it->first;
-    SMetric3 h = it->second;
-    double lapl = h(0,0)+h(1,1)+h(2,2);
-    //fprintf(f, "SP(%g,%g,%g){%g};\n",  it->first->x(),it->first->y(),it->first->z(),lapl);
-    fprintf(f,"TP(%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g,%g};\n",
-        it->first->x(),it->first->y(),it->first->z(),
-        h(0,0),h(0,1),h(0,2),
-        h(1,0),h(1,1),h(1,2),
-        h(2,0),h(2,1),h(2,2)
-        );
-
-  }
-  fprintf(f,"};\n");
-  fclose (f);
 }
 
 double meshMetric::getLaplacian (MVertex *v) {

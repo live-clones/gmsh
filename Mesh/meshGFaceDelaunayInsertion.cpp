@@ -1181,6 +1181,7 @@ void bowyerWatsonFrontal(GFace *gf)
         Msg::Debug("%7d points created -- Worst tri radius is %8.3f",
                    vSizes.size(), worst->getRadius());
       double newPoint[2], metric[3];
+      //optimalPointFrontal (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
       optimalPointFrontalB (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
       insertAPoint(gf, AllTris.end(), newPoint, metric, Us, Vs, vSizes,
                    vSizesBGM, vMetricsBGM, AllTris, &ActiveTris, worst);

@@ -884,9 +884,9 @@ void Curvature::computeCurvature(GModel* model, typeOfCurvature typ)
   double t1 = Cpu();
   Msg::StatusBar(2, true, "(C) Done Computing Curvature (%g s)", t1-t0);
 
-  writeToMshFile("curvature.msh");
+  //writeToMshFile("curvature.msh");
   writeToPosFile("curvature.pos");
-  writeToVtkFile("curvature.vtk");
+  //writeToVtkFile("curvature.vtk");
 
 }
 

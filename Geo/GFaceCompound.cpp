@@ -804,21 +804,21 @@ void GFaceCompound::convexBoundary(double nTot) const
 
     }
 
-    // char name[256];
-    // sprintf(name, "myBC-%d.pos", kk);
-    // FILE * f2 = fopen(name,"w");
-    // fprintf(f2, "View \"\"{\n");
-    // for (int i = 0; i< oVert.size()-1; i++){
-    //   SPoint3 uv0 = coordinates[oVert[i]];
-    //   SPoint3 uv1 = coordinates[oVert[i+1]];
-    //   fprintf(f2, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
-    // 	      uv0.x(),uv0.y(), uv0.z(),
-    // 	      uv1.x(),uv1.y(), uv1.z(),
-    // 	      (double)i, (double)i+1);
-    // }
-    // fprintf(f2,"};\n");
-    // fclose(f2);  
-    // kk++;
+    char name[256];
+    sprintf(name, "myBC-%d.pos", kk);
+    FILE * f2 = fopen(name,"w");
+    fprintf(f2, "View \"\"{\n");
+    for (int i = 0; i< oVert.size()-1; i++){
+      SPoint3 uv0 = coordinates[oVert[i]];
+      SPoint3 uv1 = coordinates[oVert[i+1]];
+      fprintf(f2, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
+    	      uv0.x(),uv0.y(), uv0.z(),
+    	      uv1.x(),uv1.y(), uv1.z(),
+    	      (double)i, (double)i+1);
+    }
+    fprintf(f2,"};\n");
+    fclose(f2);  
+    kk++;
   
   }
 
@@ -889,16 +889,17 @@ bool GFaceCompound::parametrize() const
 
   if(allNodes.empty()) buildAllNodes();
   
-  bool success = orderVertices(_U0, _ordered, _coords);
-  if(!success) {Msg::Error("Could not order vertices on boundary");exit(1);}
-  
+  if (_type != SQUARE){
+    bool success = orderVertices(_U0, _ordered, _coords);
+    if(!success) {Msg::Error("Could not order vertices on boundary");exit(1);}
+  }
+
   // Convex parametrization
   if (_mapping == CONVEX){
     Msg::Info("Parametrizing surface %d with 'convex map'", tag()); 
     fillNeumannBCS();
     parametrize(ITERU,CONVEX); 
     parametrize(ITERV,CONVEX);
-    printStuff(11);
     if (_type==MEANPLANE){
       checkOrientation(0, true);
       // printStuff(22);
@@ -906,45 +907,45 @@ bool GFaceCompound::parametrize() const
       // parametrize(ITERU,CONVEX); 
       // parametrize(ITERV,CONVEX);
       // checkOrientation(0, true);
-      // printStuff(33);
     }
-    printStuff(44);
   }  
   // Laplace parametrization
   else if (_mapping == HARMONIC){
     Msg::Info("Parametrizing surface %d with 'harmonic map'", tag()); 
     fillNeumannBCS();
     parametrize(ITERU,HARMONIC); 
-    parametrize(ITERV,HARMONIC);
-    printStuff(111); 
+    parametrize(ITERV,HARMONIC); 
     if (_type == MEANPLANE) checkOrientation(0, true);
-    printStuff(222);
   }
   // Conformal map parametrization
   else if (_mapping == CONFORMAL){
-   
+
     fillNeumannBCS();
     std::vector<MVertex *> vert;
     bool oriented, hasOverlap;
     if (_type == SPECTRAL){
       Msg::Info("Parametrizing surface %d with 'spectral conformal map'", tag());
-      hasOverlap = parametrize_conformal_spectral();
+      parametrize_conformal_spectral();
     }
     else if (_type == FE){
       Msg::Info("Parametrizing surface %d with 'FE conformal map'", tag());
       parametrize_conformal(0, NULL, NULL);
     }
+    printStuff(55);
     oriented =  checkOrientation(0);
+    printStuff(66);
     if (!oriented)  oriented = checkOrientation(0, true);
+    printStuff(77);
     if (_type==SPECTRAL &&  (!oriented  || checkOverlap(vert)) ){
       Msg::Warning("!!! parametrization switched to 'FE conformal' map");
       parametrize_conformal(0, NULL, NULL);
       oriented = checkOrientation(0, true);
     }  
     if (!oriented || checkOverlap(vert)){
-      Msg::Warning("$$$ parametrization switched to 'harmonic' map");
-      parametrize(ITERU,HARMONIC); 
-      parametrize(ITERV,HARMONIC);
+      Msg::Warning("$$$ parametrization switched to 'convex' map");
+      _type  = UNITCIRCLE;
+      parametrize(ITERU,CONVEX); 
+      parametrize(ITERV,CONVEX);
     } 
   }
   // Radial-Basis Function parametrization
@@ -953,15 +954,9 @@ bool GFaceCompound::parametrize() const
     int variableEps = 0;
     int radFunInd = 1; // 1 MQ RBF , 0 GA
     double sizeBox = getSizeH();
-
     fullMatrix<double> Oper(3*allNodes.size(),3*allNodes.size());
     _rbf = new GRbf(sizeBox, variableEps, radFunInd, _normals, allNodes, _ordered);
-
-    //_rbf->RbfLapSurface_global_CPM_low(_rbf->getXYZ(), _rbf->getN(), Oper);
-    //_rbf->RbfLapSurface_local_CPM(true, _rbf->getXYZ(), _rbf->getN(), Oper);
     _rbf->RbfLapSurface_global_CPM_high_2(_rbf->getXYZ(), _rbf->getN(), Oper);
-    //_rbf->RbfLapSurface_local_CPM(false, _rbf->getXYZ(), _rbf->getN(),  Oper);
-
     _rbf->solveHarmonicMap(Oper, _ordered, _coords, coordinates);
   }
 
@@ -1725,15 +1720,15 @@ bool GFaceCompound::parametrize_conformal(int iter, MVertex *v1, MVertex *v2) co
   // vertices
   std::vector<MVertex *> vert;
   bool hasOverlap = checkOverlap(vert);
-  if ( hasOverlap && iter < 3){
-    Msg::Info("Loop FE conformal iter (%d) v1=%d v2=%d", iter, 
-              vert[0]->getNum(), vert[1]->getNum());
-    printStuff(100+iter);
-    return hasOverlap = parametrize_conformal(iter+1, vert[0],vert[1]);
-  }
-  else{
-    return hasOverlap;
-  }
+  // if ( hasOverlap && iter < 3){
+  //   Msg::Info("Loop FE conformal iter (%d) v1=%d v2=%d", iter, 
+  //             vert[0]->getNum(), vert[1]->getNum());
+  //   printStuff(100+iter);
+  //   return hasOverlap = parametrize_conformal(iter+1, vert[0],vert[1]);
+  // }
+  // else{
+  //   return hasOverlap;
+  // }
 }
 
 void GFaceCompound::computeNormals(std::map<MVertex*,SVector3> &normals) const

@@ -96,7 +96,6 @@ class meshMetric: public Field {
   virtual double operator() (double x, double y, double z, GEntity *ge=0) ;
   virtual void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0);
 
-  void printMetric(const char* n);
   // export pos files of fct, fct gradients (fct is the lattest fct passed to meshMetric !!) and resulting metric (intersection of all computed metrics)
   void exportInfo(const char *fileendname);
 };

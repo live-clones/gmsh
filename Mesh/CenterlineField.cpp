@@ -634,7 +634,8 @@ void Centerline::createSplitCompounds(){
     int num_gfc = NF+i+1;
     Msg::Info("Parametrize Compound Surface (%d) = %d discrete face",
               num_gfc, pf->tag());
-    GFaceCompound::typeOfCompound typ = GFaceCompound::HARMONIC_PLANE; 
+    GFaceCompound::typeOfCompound typ = GFaceCompound::CONVEX_CIRCLE; 
+    //GFaceCompound::typeOfCompound typ = GFaceCompound::HARMONIC_PLANE; 
     //GFaceCompound::typeOfMapping typ = GFaceCompound::CONFORMAL_SPECTRAL; 
     GFaceCompound *gfc = new GFaceCompound(current, num_gfc, f_compound, U0,
 					   typ, 0);
