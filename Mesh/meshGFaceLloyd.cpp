@@ -433,8 +433,8 @@ void smoothing::optimize_face(GFace* gf){
   double ratio;
   double factor;
   lpcvt obj;
-  double initial_conditions[2*triangulator.numPoints];
-  double variables_scales[2*triangulator.numPoints];
+  double* initial_conditions = static_cast<double*>(malloc(2*triangulator.numPoints*sizeof(double)));
+  double* variables_scales = static_cast<double*>(malloc(2*triangulator.numPoints*sizeof(double)));
   alglib::ae_int_t maxits;
   alglib::minlbfgsstate state;
   alglib::minlbfgsreport rep;
@@ -541,6 +541,9 @@ void smoothing::optimize_face(GFace* gf){
                            gf->additionalVertices.end());
   // clear the list of additional vertices
   gf->additionalVertices.clear();
+	
+  free(initial_conditions);
+  free(variables_scales);
 }
 
 void smoothing::optimize_model(){

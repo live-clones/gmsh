@@ -280,13 +280,13 @@ void VoronoiVertex::set_h(double new_h){
 
 Tensor::Tensor(){
   t11 = 1.0;
-  t12 = 0.0;
-  t13 = 0.0;
   t21 = 0.0;
-  t22 = 1.0;
-  t23 = 0.0;
   t31 = 0.0;
+  t12 = 0.0;
+  t22 = 1.0;
   t32 = 0.0;
+  t13 = 0.0;
+  t23 = 0.0;
   t33 = 1.0;
 }
 
@@ -296,32 +296,32 @@ void Tensor::set_t11(double new_t11){
   t11 = new_t11;
 }
 
-void Tensor::set_t12(double new_t12){
-  t12 = new_t12;
-}
-
-void Tensor::set_t13(double new_t13){
-  t13 = new_t13;
-}
-
 void Tensor::set_t21(double new_t21){
   t21 = new_t21;
-}
-
-void Tensor::set_t22(double new_t22){
-  t22 = new_t22;
-}
-
-void Tensor::set_t23(double new_t23){
-  t23 = new_t23;
 }
 
 void Tensor::set_t31(double new_t31){
   t31 = new_t31;
 }
 
+void Tensor::set_t12(double new_t12){
+  t12 = new_t12;
+}
+
+void Tensor::set_t22(double new_t22){
+  t22 = new_t22;
+}
+
 void Tensor::set_t32(double new_t32){
   t32 = new_t32;
+}
+
+void Tensor::set_t13(double new_t13){
+  t13 = new_t13;
+}
+
+void Tensor::set_t23(double new_t23){
+  t23 = new_t23;
 }
 
 void Tensor::set_t33(double new_t33){
@@ -332,32 +332,32 @@ double Tensor::get_t11(){
   return t11;
 }
 
-double Tensor::get_t12(){
-  return t12;
-}
-
-double Tensor::get_t13(){
-  return t13;
-}
-
 double Tensor::get_t21(){
   return t21;
-}
-
-double Tensor::get_t22(){
-  return t22;
-}
-
-double Tensor::get_t23(){
-  return t23;
 }
 
 double Tensor::get_t31(){
   return t31;
 }
 
+double Tensor::get_t12(){
+  return t12;
+}
+
+double Tensor::get_t22(){
+  return t22;
+}
+
 double Tensor::get_t32(){
   return t32;
+}
+
+double Tensor::get_t13(){
+  return t13;
+}
+
+double Tensor::get_t23(){
+  return t23;
 }
 
 double Tensor::get_t33(){
@@ -711,7 +711,7 @@ void LpCVT::verification(std::vector<SPoint3>& bank,std::vector<int>& movability
   std::vector<SVector3> gradients;
 
   gradients.resize(bank.size()-offset);
-  e = 0.0001;
+  e = 0.0000001;
   srand(time(NULL));
   index = rand()%(bank.size()-offset) + offset;
 
@@ -743,6 +743,7 @@ void LpCVT::verification(std::vector<SPoint3>& bank,std::vector<int>& movability
 
   printf("...%f  %f  %f\n",gradients[index-offset].x(),gradients[index-offset].y(),gradients[index-offset].z());
   printf("...%f  %f  %f\n",(right-left)/(2.0*e),(up-down)/(2.0*e),(front-back)/(2.0*e));
+  printf("...%d %d %d\n",index,bank.size(),offset);
 }
 
 void LpCVT::eval(std::vector<SPoint3>& bank,std::vector<int>& movability,int offset,std::vector<SVector3>& gradients,double& energy,int p){
@@ -858,6 +859,7 @@ void LpCVT::compute_parameters(){
 }
 
 double LpCVT::get_size(double x,double y,double z){
+  //if outside domain return 1.0 (or other value > 0.0)
   return 0.25;
 }
 
@@ -869,15 +871,15 @@ Tensor LpCVT::get_tensor(double x,double y,double z){
   t = Tensor();
 
   t.set_t11(1.0);
-  t.set_t12(0.0);
-  t.set_t13(0.0);
-
   t.set_t21(0.0);
-  t.set_t22(1.0);
-  t.set_t23(0.0);
-
   t.set_t31(0.0);
+  
+  t.set_t12(0.0);
+  t.set_t22(1.0);
   t.set_t32(0.0);
+  
+  t.set_t13(0.0);
+  t.set_t23(0.0);
   t.set_t33(1.0);
 
   return t;
@@ -1580,14 +1582,15 @@ void LpSmoother::improve_region(GRegion* gr)
 
   double initial_conditions[3*(bank.size()-offset)];
   double scales[3*(bank.size()-offset)];
-  factor = 2.0;
+  LpCVT instance;
+  factor = 0.9;
   for(i=0;i<(bank.size()-offset);i++){
     initial_conditions[i] = bank[i+offset].x();
 	initial_conditions[i+(bank.size()-offset)] = bank[i+offset].y();
 	initial_conditions[i+2*(bank.size()-offset)] = bank[i+offset].z();
-	scales[i] = factor*get_size(bank[i+offset].x(),bank[i+offset].y(),bank[i+offset].z());
-	scales[i+(bank.size()-offset)] = factor*get_size(bank[i+offset].x(),bank[i+offset].y(),bank[i+offset].z());
-	scales[i+2*(bank.size()-offset)] = factor*get_size(bank[i+offset].x(),bank[i+offset].y(),bank[i+offset].z());
+	scales[i] = factor*instance.get_size(bank[i+offset].x(),bank[i+offset].y(),bank[i+offset].z());
+	scales[i+(bank.size()-offset)] = factor*instance.get_size(bank[i+offset].x(),bank[i+offset].y(),bank[i+offset].z());
+	scales[i+2*(bank.size()-offset)] = factor*instance.get_size(bank[i+offset].x(),bank[i+offset].y(),bank[i+offset].z());
   }
   x.setcontent(3*(bank.size()-offset),initial_conditions);
   alglib_scales.setcontent(3*(bank.size()-offset),scales);
@@ -1624,10 +1627,6 @@ void LpSmoother::improve_region(GRegion* gr)
   interior_vertices.clear();
   delete octree;
 #endif
-}
-
-double LpSmoother::get_size(double x,double y,double z){
-  return 0.25;
 }
 
 int LpSmoother::get_nbr_interior_vertices(){

@@ -51,27 +51,27 @@ class VoronoiVertex{
 
 class Tensor{
  private:
-  double t11,t12,t13,t21,t22,t23,t31,t32,t33;
+  double t11,t21,t31,t12,t22,t32,t13,t23,t33;
  public:
   Tensor();
   ~Tensor();
   void set_t11(double);
-  void set_t12(double);
-  void set_t13(double);
   void set_t21(double);
-  void set_t22(double);
-  void set_t23(double);
   void set_t31(double);
+  void set_t12(double);
+  void set_t22(double);
   void set_t32(double);
+  void set_t13(double);
+  void set_t23(double);
   void set_t33(double);
   double get_t11();
-  double get_t12();
-  double get_t13();
   double get_t21();
-  double get_t22();
-  double get_t23();
   double get_t31();
+  double get_t12();
+  double get_t22();
   double get_t32();
+  double get_t13();
+  double get_t23();
   double get_t33();
 };
 
@@ -121,7 +121,6 @@ class LpSmoother{
   ~LpSmoother();
   void improve_model();
   void improve_region(GRegion*);
-  double get_size(double,double,double);
   static int get_nbr_interior_vertices();
   static MVertex* get_interior_vertex(int);
 };
