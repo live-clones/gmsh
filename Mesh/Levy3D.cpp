@@ -1580,8 +1580,8 @@ void LpSmoother::improve_region(GRegion* gr)
   epsx = 0;
   maxits = max_iter;
 
-  double initial_conditions[3*(bank.size()-offset)];
-  double scales[3*(bank.size()-offset)];
+  double* initial_conditions = static_cast<double*>(malloc(3*(bank.size()-offset)*sizeof(double)));
+  double* scales = static_cast<double*>(malloc(3*(bank.size()-offset)*sizeof(double)));
   LpCVT instance;
   factor = 0.9;
   for(i=0;i<(bank.size()-offset);i++){
@@ -1626,6 +1626,8 @@ void LpSmoother::improve_region(GRegion* gr)
   for(i=0;i<interior_vertices.size();i++) delete interior_vertices[i];
   interior_vertices.clear();
   delete octree;
+  free(initial_conditions);
+  free(scales);
 #endif
 }
 
