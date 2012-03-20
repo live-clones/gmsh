@@ -890,6 +890,7 @@ bool GFaceCompound::parametrize() const
   if(allNodes.empty()) buildAllNodes();
   
   if (_type != SQUARE){
+    printf("ordering vertices \n");
     bool success = orderVertices(_U0, _ordered, _coords);
     if(!success) {Msg::Error("Could not order vertices on boundary");exit(1);}
   }

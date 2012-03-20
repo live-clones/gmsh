@@ -10,6 +10,7 @@
 #include "GModel.h"
 #include "gmshLevelset.h"
 #include "MElementOctree.h"
+#include "Os.h"
 
 static void increaseStencil(MVertex *v, v2t_cont &adj, std::vector<MElement*> &lt){
   std::set<MElement*> stencil;
@@ -52,6 +53,8 @@ meshMetric::meshMetric(GModel *gm){
     }
   }
   _octree = new MElementOctree(_elements);
+  buildVertexToElement (_elements,_adj);
+
 }
 
 meshMetric::meshMetric(std::vector<MElement*> elements){
@@ -85,15 +88,14 @@ void meshMetric::addMetric(int technique, simpleFunction<double> *fct, std::vect
 }
 
 void meshMetric::intersectMetrics(){
+
   if (!setOfMetrics.size()){
     std::cout << " meshMetric::intersectMetrics: Can't intersect metrics, no metric registered ! " << std::endl;
     return;
   }
 
-  v2t_cont adj;
-  buildVertexToElement (_elements,adj);
-  v2t_cont :: iterator it = adj.begin();
-  for (;it != adj.end();it++) {
+  v2t_cont :: iterator it = _adj.begin();
+  for (;it != _adj.end();it++) {
     MVertex *ver = it->first;
     _nodalMetrics[ver] = setOfMetrics[0][ver];
     _detMetric[ver] = setOfDetMetric[0][ver];
@@ -109,11 +111,6 @@ void meshMetric::intersectMetrics(){
 }
 
 void meshMetric::exportInfo(const char * fileendname){
-
-  printf("printing metric \n");
-  if (_technique == meshMetric::HESSIAN) printf("HESSIANS \n");
-  else if (_technique == meshMetric::LEVELSET) printf("LEVELSETS \n");
-  else if (_technique == meshMetric::EIGENDIRECTIONS) printf("EIGEN \n");
 
   if (needMetricUpdate) intersectMetrics();
   std::stringstream sg,sm,sl,sh;
@@ -192,7 +189,6 @@ void meshMetric::exportInfo(const char * fileendname){
   out_ls.close();
   out_hess.close();
  
-  //exit(1);
 }
 
 
@@ -202,10 +198,10 @@ meshMetric::~meshMetric(){
     delete _elements[i];
 }
 
-void meshMetric::computeValues( v2t_cont adj){
+void meshMetric::computeValues(){
 
-  v2t_cont :: iterator it = adj.begin();
-  while (it != adj.end()) {
+  v2t_cont :: iterator it = _adj.begin();
+  while (it != _adj.end()) {
     std::vector<MElement*> lt = it->second;
     MVertex *ver = it->first;
     vals[ver]= (*_fct)(ver->x(),ver->y(),ver->z());
@@ -213,22 +209,111 @@ void meshMetric::computeValues( v2t_cont adj){
   }
 }
 
+//compute derivatives and second order derivatives using linear finite elements
+void meshMetric::computeHessian_FE(){
+
+  //compute FE Gradients
+  std::map<MElement*,SPoint3> gradElems;
+  for ( std::vector<MElement*>::iterator ite = _elements.begin();
+	ite != _elements.end(); ite++){
+    MElement *e  = *ite;
+    int npts;
+    IntPt *GP;
+    e->getIntegrationPoints(0, &npts, &GP);
+    const double u = GP[0].pt[0];
+    const double v = GP[0].pt[1];
+    const double w = GP[0].pt[2];
+    double grade[3];
+    double fj[256];
+    for (int k = 0; k < e->getNumVertices(); k++){
+      MVertex *v = e->getVertex(k);
+      fj[k] = (*_fct)(v->x(),v->y(),v->z());
+    }
+    e->interpolateGrad(fj, u, v, w, grade);
+    SPoint3 gr(grade[0], grade[1],grade[2]);
+    gradElems.insert(std::make_pair(e,gr));
+  }
+
+  //smooth element gradients at vertices
+  for(v2t_cont::const_iterator itv = _adj.begin(); itv!= _adj.end(); ++itv){
+    MVertex *ver = itv->first;
+    std::vector<MElement*> vElems= itv->second;
+    SVector3 gradv;
+    for (int i=0;i<vElems.size();i++){
+      MElement *e = vElems[i];    
+      gradv += gradElems[e];
+    }
+    gradv *= (1./vElems.size());;
+    double nn = norm(gradv);
+    if (nn == 0.0 || _technique == meshMetric::HESSIAN) nn = 1.0;
+    grads[ver] =gradv*(1./nn); 
+  }
+
+  if (_technique == meshMetric::LEVELSET) return;
+
+  //compute FE Hessians
+  std::map<MElement*,STensor3> hessElems;
+  for ( std::vector<MElement*>::iterator ite = _elements.begin();
+	ite != _elements.end(); ite++){
+    MElement *e  = *ite;
+    int npts;
+    IntPt *GP;
+    e->getIntegrationPoints(0, &npts, &GP);
+    const double u = GP[0].pt[0];
+    const double v = GP[0].pt[1];
+    const double w = GP[0].pt[2];
+    double gradgradx[3];
+    double gradgrady[3];
+    double gradgradz[3];
+    double gradxj[256];
+    double gradyj[256];
+    double gradzj[256];
+    for (int k = 0; k < e->getNumVertices(); k++){
+      MVertex *v = e->getVertex(k);
+      gradxj[k] = grads[v].x();
+      gradyj[k] = grads[v].y();
+      gradzj[k] = grads[v].z();
+    }
+    e->interpolateGrad(gradxj, u, v, w, gradgradx);
+    e->interpolateGrad(gradyj, u, v, w, gradgrady);
+    e->interpolateGrad(gradzj, u, v, w, gradgradz);
+    STensor3 hess;
+    hess(0,0) = gradgradx[0]; hess(0,1)= gradgrady[0]; hess(0,2) =gradgradz[0];
+    hess(1,0) = gradgradx[1]; hess(1,1)= gradgrady[1]; hess(1,2) =gradgradz[1];
+    hess(2,0) = gradgradx[2]; hess(2,1)= gradgradz[2]; hess(2,2) =gradgradz[2];
+    hessElems.insert(std::make_pair(e,hess));
+  }
+
+  //smooth element hessians at vertices
+  for(v2t_cont::const_iterator itv = _adj.begin(); itv!= _adj.end(); ++itv){
+    MVertex *ver = itv->first;
+    std::vector<MElement*> vElems= itv->second;
+    STensor3 hessv(0.0);
+    for (int i=0;i<vElems.size();i++){
+      MElement *e = vElems[i];    
+      hessv += hessElems[e];
+    }
+    hessv *= (1./vElems.size());
+    dgrads[0][ver] = SVector3(hessv(0,0), hessv(0,1),hessv(0,2));
+    dgrads[1][ver] = SVector3(hessv(1,0), hessv(1,1),hessv(1,2));
+    dgrads[2][ver] = SVector3(hessv(2,0), hessv(2,1),hessv(2,2)); 
+  }
+  
+}
+
+//compute derivatives and second order derivatives using least squares
 // u = a + b(x-x_0) + c(y-y_0) + d(z-z_0)
-void meshMetric::computeHessian( v2t_cont adj){
+void meshMetric::computeHessian_LS( ){
+  
+  //double error = 0.0;
 
   int DIM = _dim + 1;
   for (int ITER=0;ITER<DIM;ITER++){
-    v2t_cont :: iterator it = adj.begin();
-    while (it != adj.end()) {
+    v2t_cont :: iterator it = _adj.begin();
+     while (it != _adj.end()) {
       std::vector<MElement*> lt = it->second;
       MVertex *ver = it->first;
-      while (lt.size() < 11) increaseStencil(ver,adj,lt); //<7
-      // if ( ver->onWhat()->dim() < _dim ){
-      // 	while (lt.size() < 12){
-      // 	  increaseStencil(ver,adj,lt);
-      // 	}
-      // }
-
+      while (lt.size() < 13) increaseStencil(ver,_adj,lt);
       fullMatrix<double> A  (lt.size(),DIM);
       fullMatrix<double> AT (DIM,lt.size());
       fullMatrix<double> ATA (DIM,DIM);
@@ -272,8 +357,9 @@ void meshMetric::computeHessian( v2t_cont adj){
         if (norm == 0.0 || _technique == meshMetric::HESSIAN) norm = 1.0;
         grads[ver] = SVector3(gr1/norm,gr2/norm,gr3/norm);
       }
-      else
-        dgrads[ITER-1][ver] = SVector3(result(1),result(2),_dim==2? 0.0:result(3));
+      else{
+        dgrads[ITER-1][ver] = SVector3(result(1),result(2),(_dim==2)?0.0:result(3));
+      }
       ++it;
     }
     if (_technique == meshMetric::LEVELSET) break;
@@ -282,18 +368,16 @@ void meshMetric::computeHessian( v2t_cont adj){
 }
 void meshMetric::computeMetric(){
 
-  v2t_cont adj;
-  buildVertexToElement (_elements,adj);
-
   //printf("%d elements are considered in the meshMetric \n",(int)_elements.size());
 
-  computeValues(adj);
-  computeHessian(adj);
-
+  computeValues();
+  computeHessian_FE();
+  //computeHessian_LS();
+    
   int metricNumber = setOfMetrics.size();
 
-  v2t_cont :: iterator it = adj.begin();
-  while (it != adj.end()) {
+  v2t_cont :: iterator it = _adj.begin();
+  while (it != _adj.end()) {
     MVertex *ver = it->first;
     double signed_dist = vals[ver];
     double dist = fabs(signed_dist);
@@ -466,7 +550,7 @@ void meshMetric::computeMetric(){
   }
 
   //exportInfo("EMI");
-
+  //exit(1);
 
   //Adapt epsilon
   //-----------------

@@ -509,7 +509,6 @@ double discreteEdge::curvature(double par) const
   curvature.edgeNodalValues(lines[iEdge],c0, c1, 1);
   double cv = (1-tLoc)*c0 + tLoc*c1;
 
-  //printf("curv edge =%g \n", cv);
   return cv;
 
 }

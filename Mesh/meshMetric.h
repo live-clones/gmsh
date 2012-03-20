@@ -33,6 +33,7 @@ class meshMetric: public Field {
   simpleFunction<double> *_fct;
 
   std::vector<MElement*> _elements;
+  v2t_cont _adj;
   MElementOctree *_octree;
   std::map<int, MVertex*> _vertexMap;
 
@@ -78,8 +79,9 @@ class meshMetric: public Field {
     return _nodalMetrics[v];
   }
   void computeMetric() ;
-  void computeValues( v2t_cont adj);
-  void computeHessian( v2t_cont adj);
+  void computeValues();
+  void computeHessian_LS();
+  void computeHessian_FE();
 
   double getLaplacian (MVertex *v);
   virtual bool isotropic () const {return false;}
