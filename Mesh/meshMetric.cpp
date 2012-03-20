@@ -10,7 +10,7 @@
 #include "GModel.h"
 #include "gmshLevelset.h"
 #include "MElementOctree.h"
-#include "Os.h"
+#include "OS.h"
 
 static void increaseStencil(MVertex *v, v2t_cont &adj, std::vector<MElement*> &lt){
   std::set<MElement*> stencil;
