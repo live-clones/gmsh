@@ -2849,27 +2849,26 @@ void GModel::computeHomology()
     Homology* homology = new Homology(this, itp.first->first.first,
                                       itp.first->first.second,
                                       prepareToRestore);
-    CellComplex *cellcomplex = homology->createCellComplex();
-    if(cellcomplex->getSize(0)){
-      for(std::multimap<dpair, std::string>::iterator itt = itp.first;
-          itt != itp.second; itt++){
-        // restore cell complex to non-reduced state if we are reusing it
-        if(itt != itp.first) cellcomplex->restoreComplex();
-        std::string type = itt->second;
-        if(type == "Homology")
-          homology->findHomologyBasis(cellcomplex);
-        else if(type == "Cohomology")
-          homology->findCohomologyBasis(cellcomplex);
-        else
-          Msg::Error("Unknown type of homology computation: %s", type.c_str());
+
+    // do not save 0-, and n-chains, where n is the dimension of the model
+    // (usually not needed for anything, available through the plugin)
+    for(std::multimap<dpair, std::string>::iterator itt = itp.first;
+        itt != itp.second; itt++){
+      std::string type = itt->second;
+      if(type == "Homology") {
+        homology->findHomologyBasis();
+        if(this->getDim() != 1) homology->addChainsToModel(1);
+        if(this->getDim() != 2) homology->addChainsToModel(2);
       }
-      // do not save 0-, and n-chains, where n is the dimension of the model
-      // (usually not needed for anything, available through the plugin)
-      if(this->getDim() != 1) homology->addChainsToModel(1);
-      if(this->getDim() != 2) homology->addChainsToModel(2);
-      _pruneMeshVertexAssociations();
+      else if(type == "Cohomology") {
+        homology->findCohomologyBasis();
+        if(this->getDim() != 1) homology->addCochainsToModel(1);
+        if(this->getDim() != 2) homology->addCochainsToModel(2);
+      }
+      else
+        Msg::Error("Unknown type of homology computation: %s", type.c_str());
     }
-    delete cellcomplex;
+    _pruneMeshVertexAssociations();
     delete homology;
   }
 #else

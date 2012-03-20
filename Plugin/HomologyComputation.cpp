@@ -110,20 +110,16 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
 
   Homology* homology = new Homology(m, domain, subdomain);
   homology->setFileName(fileName);
-  CellComplex* cc = homology->createCellComplex();
-  if(hom != 0){
-    homology->findHomologyBasis(cc);
-  }
-  if(coh != 0){
-    cc->restoreComplex();
-    homology->findCohomologyBasis(cc);
-  }
+
+  if(hom != 0) homology->findHomologyBasis();
+  if(coh != 0) homology->findCohomologyBasis();
+
   for(unsigned int i = 0; i < dimsave.size(); i++) {
     int dim = dimsave.at(i);
-    if(dim > -1 && dim < 4) homology->addChainsToModel(dim);
+    if(dim > -1 && dim < 4 && hom != 0) homology->addChainsToModel(dim);
+    if(dim > -1 && dim < 4 && coh != 0) homology->addCochainsToModel(dim);
   }
 
-  delete cc;
   delete homology;
 
   return 0;

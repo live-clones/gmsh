@@ -11,12 +11,14 @@
 CellComplex::CellComplex(GModel* model,
 			 std::vector<MElement*>& domainElements,
 			 std::vector<MElement*>& subdomainElements,
+                         std::vector<MElement*>& immuneElements,
                          bool saveOriginalComplex) :
   _model(model), _dim(0), _simplicial(true), _saveorig(saveOriginalComplex)
 {
   _deleteCount = 0;
   _insertCells(subdomainElements, 1);
   _insertCells(domainElements, 0);
+  _immunizeCells(immuneElements);
 
   int num = 0;
   for(int dim = 0; dim < 4; dim++){
@@ -29,6 +31,7 @@ CellComplex::CellComplex(GModel* model,
       cell->saveOriginalBd();
     }
   }
+  _reduced = false;
 }
 
 bool CellComplex::_insertCells(std::vector<MElement*>& elements,
@@ -68,6 +71,18 @@ bool CellComplex::_insertCells(std::vector<MElement*>& elements,
     }
   }
   return true;
+}
+
+bool CellComplex::_immunizeCells(std::vector<MElement*>& elements)
+{
+  for(unsigned int i=0; i < elements.size(); i++){
+    MElement* element = elements.at(i);
+    Cell* cell = new Cell(element, 0);
+    int dim = cell->getDim();
+    citer cit = _cells[dim].find(cell);
+    if(cit != lastCell(dim)) (*cit)->setImmune(true);
+    delete cell;
+  }
 }
 
 CellComplex::~CellComplex()
@@ -169,8 +184,8 @@ int CellComplex::coreduction(Cell* startCell, bool omit,
     s = Q.front();
     Q.pop();
     Qset.erase(s);
-    if(s->getBoundarySize() == 1
-       && inSameDomain(s, s->firstBoundary()->first) ){
+    if(s->getBoundarySize() == 1 &&
+       inSameDomain(s, s->firstBoundary()->first)){
       s->getBoundary(bd_s);
       removeCell(s);
       bd_s.begin()->first->getCoboundary(cbd_c);
@@ -186,6 +201,7 @@ int CellComplex::coreduction(Cell* startCell, bool omit,
       enqueueCells(cbd_c, Q, Qset);
     }
   }
+  _reduced = true;
   return coreductions;
 }
 
@@ -204,7 +220,9 @@ int CellComplex::reduction(int dim, bool omit,
     while(cit != lastCell(dim-1)){
       Cell* cell = *cit;
       if(cell->getCoboundarySize() == 1 &&
-         inSameDomain(cell, cell->firstCoboundary()->first)){
+         inSameDomain(cell, cell->firstCoboundary()->first) &&
+         !cell->getImmune() &&
+         !cell->firstCoboundary()->first->getImmune()){
 	cit++;
 	if(dim == getDim() && omit){
 	  omittedCells.push_back(cell->firstCoboundary()->first);
@@ -219,6 +237,7 @@ int CellComplex::reduction(int dim, bool omit,
       cit++;
     }
   }
+  _reduced = true;
   return count;
 }
 
@@ -236,8 +255,8 @@ int CellComplex::coreduction(int dim, bool omit,
     citer cit = firstCell(dim);
     while(cit != lastCell(dim)){
       Cell* cell = *cit;
-      if( cell->getBoundarySize() == 1
-          && inSameDomain(cell, cell->firstBoundary()->first)){
+      if(cell->getBoundarySize() == 1 &&
+         inSameDomain(cell, cell->firstBoundary()->first)) {
         ++cit;
 	if(dim-1 == 0 && omit){
 	  omittedCells.push_back(cell->firstBoundary()->first);
@@ -252,6 +271,7 @@ int CellComplex::coreduction(int dim, bool omit,
       cit++;
     }
   }
+  _reduced = true;
   return count;
 }
 
@@ -289,7 +309,7 @@ int CellComplex::reduceComplex(bool docombine, bool omit)
   }
 
   Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",
-            getSize(3), getSize(2), getSize(1), getSize(0));
+             getSize(3), getSize(2), getSize(1), getSize(0));
 
   if(docombine) combine(3);
   reduction(2, false, empty);
@@ -298,8 +318,8 @@ int CellComplex::reduceComplex(bool docombine, bool omit)
   if(docombine) combine(1);
 
   Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",
-            getSize(3), getSize(2), getSize(1), getSize(0));
-
+             getSize(3), getSize(2), getSize(1), getSize(0));
+  _reduced = true;
   return 0;
 }
 
@@ -313,6 +333,7 @@ void CellComplex::removeSubdomain()
     }
   }
   for(unsigned int i = 0; i < toRemove.size(); i++) removeCell(toRemove[i]);
+  _reduced = true;
 }
 
 int CellComplex::coreduceComplex(bool docombine, bool omit)
@@ -354,7 +375,7 @@ int CellComplex::coreduceComplex(bool docombine, bool omit)
   }
 
   Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",
-            getSize(3), getSize(2), getSize(1), getSize(0));
+             getSize(3), getSize(2), getSize(1), getSize(0));
 
   if(docombine) cocombine(0);
   coreduction(1, false, empty);
@@ -364,8 +385,8 @@ int CellComplex::coreduceComplex(bool docombine, bool omit)
   coreduction(3, false, empty);
   coherent();
   Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",
-            getSize(3), getSize(2), getSize(1), getSize(0));
-
+             getSize(3), getSize(2), getSize(1), getSize(0));
+  _reduced = true;
   return 0;
 }
 
@@ -389,7 +410,7 @@ int CellComplex::combine(int dim)
       Cell* s = Q.front();
       Q.pop();
 
-      if(s->getCoboundarySize() == 2){
+      if(s->getCoboundarySize() == 2 && !s->getImmune()){
 	Cell::biter it = s->firstCoboundary();
         int or1 = it->second.get();
         Cell* c1 = it->first;
@@ -399,7 +420,7 @@ int CellComplex::combine(int dim)
         Cell* c2 = it->first;
 
         if(!(*c1 == *c2) && abs(or1) == abs(or2)
-           && inSameDomain(s, c1) && inSameDomain(s, c2)){
+           && inSameDomain(s, c1) && inSameDomain(s, c2)) {
           removeCell(s);
 
           c1->getBoundary(bd_c);
@@ -423,7 +444,7 @@ int CellComplex::combine(int dim)
   Msg::Debug("Cell complex after combining:");
   Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",
              getSize(3), getSize(2), getSize(1), getSize(0));
-
+  _reduced = true;
   return count;
 }
 
@@ -485,7 +506,7 @@ int CellComplex::cocombine(int dim)
   Msg::Debug("Cell complex after cocombining:");
   Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",
              getSize(3), getSize(2), getSize(1), getSize(0));
-
+  _reduced = true;
   return count;
 }
 
@@ -577,8 +598,9 @@ bool CellComplex::restoreComplex()
     }
     _newcells.clear();
     Msg::Info("Restored Cell Complex:");
-    Msg::Info(" %d volumes, %d faces, %d edges and %d vertices",
+    Msg::Info("%d volumes, %d faces, %d edges and %d vertices",
                getSize(3), getSize(2), getSize(1), getSize(0));
+    _reduced = false;
     return true;
   }
   else {

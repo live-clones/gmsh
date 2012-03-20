@@ -44,8 +44,12 @@ class CellComplex
 
   int _deleteCount;
 
+  bool _reduced;
+
   // for constructor
-  bool _insertCells(std::vector<MElement*>& elements,  int domain);
+  bool _insertCells(std::vector<MElement*>& elements, int domain);
+
+  bool _immunizeCells(std::vector<MElement*>& elements);
 
   // enqueue cells in queue if they are not there already
   void enqueueCells(std::map<Cell*, short int, Less_Cell>& cells,
@@ -63,6 +67,7 @@ class CellComplex
   CellComplex(GModel* model,
 	      std::vector<MElement*>& domainElements,
 	      std::vector<MElement*>& subdomainElements,
+              std::vector<MElement*>& immuneElements,
               bool saveOriginalComplex=true);
   ~CellComplex();
 
@@ -122,9 +127,11 @@ class CellComplex
   int reduceComplex(bool docombine=true, bool omit=true);
   int coreduceComplex(bool docombine=true, bool omit=true);
 
-  int eulerCharacteristic(){
-    return getSize(0) - getSize(1) + getSize(2) - getSize(3);}
-  void printEuler(){
+  bool isReduced() const { return _reduced; }
+
+  int eulerCharacteristic() {
+    return getSize(0) - getSize(1) + getSize(2) - getSize(3); }
+  void printEuler() {
     printf("Euler characteristic: %d. \n", eulerCharacteristic()); }
 
   // restore the cell complex to its original state before (co)reduction

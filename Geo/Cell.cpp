@@ -351,8 +351,6 @@ void Cell::restoreCell(){
     if(it->second.get() == 0) toRemove.push_back(it->first);
   }
   for(unsigned int i = 0; i < toRemove.size(); i++) _bd.erase(toRemove[i]);
-  _combined = false;
-  _immune = false;
 }
 
 void Cell::addBoundaryCell(int orientation, Cell* cell, bool other)
@@ -475,7 +473,7 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co)
   _num = ++_globalNum;
   _domain = c1->getDomain();
   _combined = true;
-  _immune = false;
+  _immune = (c1->getImmune() || c2->getImmune());
 
   // cells
   c1->getCells(_cells);
@@ -538,6 +536,7 @@ CombinedCell::CombinedCell(std::vector<Cell*>& cells)
   // cells
   for(unsigned int i = 0; i < cells.size(); i++){
     Cell* c = cells.at(i);
+    if(c->getImmune()) _immune = true;
     _cells[c] = 1;
   }
 }

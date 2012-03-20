@@ -20,7 +20,8 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain,
 		   bool combine, bool omit, bool smoothen) :
   _model(model), _domain(physicalDomain), _subdomain(physicalSubdomain),
   _saveOrig(saveOrig),
-  _combine(combine), _omit(omit), _smoothen(smoothen)
+  _combine(combine), _omit(omit), _smoothen(smoothen), _cellComplex(NULL),
+  _homologyComputed(false), _cohomologyComputed(false)
 {
   _fileName = "";
 
@@ -61,89 +62,121 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain,
       }
     }
   }
+  for(unsigned int i = 0; i < _imdomain.size(); i++){
+    for(int j = 0; j < 4; j++){
+      it = groups[j].find(_imdomain.at(i));
+      if(it != groups[j].end()){
+	std::vector<GEntity*> physicalGroup = (*it).second;
+	for(unsigned int k = 0; k < physicalGroup.size(); k++){
+	  _immuneEntities.push_back(physicalGroup.at(k));
+	}
+      }
+    }
+  }
 }
 
-CellComplex* Homology::createCellComplex(std::vector<GEntity*>& domainEntities,
-                                         std::vector<GEntity*>& subdomainEntities)
+void Homology::_createCellComplex()
 {
   Msg::StatusBar(2, true, "Creating cell complex...");
   double t1 = Cpu();
 
-  if(domainEntities.empty()) Msg::Error("Domain is empty");
-  if(subdomainEntities.empty()) Msg::Info("Subdomain is empty");
+  if(_domainEntities.empty()) Msg::Error("Domain is empty");
+  if(_subdomainEntities.empty()) Msg::Info("Subdomain is empty");
 
   std::vector<MElement*> domainElements;
   std::vector<MElement*> subdomainElements;
-  for(unsigned int j=0; j < domainEntities.size(); j++) {
-    for(unsigned int i=0; i < domainEntities.at(j)->getNumMeshElements(); i++){
-      MElement* element = domainEntities.at(j)->getMeshElement(i);
+  std::vector<MElement*> immuneElements;
+  for(unsigned int j=0; j < _domainEntities.size(); j++) {
+    for(unsigned int i=0; i < _domainEntities.at(j)->getNumMeshElements(); i++){
+      MElement* element = _domainEntities.at(j)->getMeshElement(i);
       domainElements.push_back(element);
     }
   }
-  for(unsigned int j=0; j < subdomainEntities.size(); j++) {
-    for(unsigned int i=0; i < subdomainEntities.at(j)->getNumMeshElements();
+  for(unsigned int j=0; j < _subdomainEntities.size(); j++) {
+    for(unsigned int i=0; i < _subdomainEntities.at(j)->getNumMeshElements();
 	i++){
-      MElement* element = subdomainEntities.at(j)->getMeshElement(i);
+      MElement* element = _subdomainEntities.at(j)->getMeshElement(i);
       subdomainElements.push_back(element);
     }
   }
+  for(unsigned int j=0; j < _immuneEntities.size(); j++) {
+    for(unsigned int i=0; i < _immuneEntities.at(j)->getNumMeshElements();
+	i++){
+      MElement* element = _immuneEntities.at(j)->getMeshElement(i);
+      immuneElements.push_back(element);
+    }
+  }
 
-  CellComplex* cellComplex =  new CellComplex(_model,
-					      domainElements,
-					      subdomainElements,
-                                              _saveOrig);
+  if(_cellComplex != NULL) delete _cellComplex;
+  _cellComplex =  new CellComplex(_model,
+                                  domainElements,
+                                  subdomainElements,
+                                  immuneElements,
+                                  _saveOrig);
 
-  if(cellComplex->getSize(0) == 0){
+  if(_cellComplex->getSize(0) == 0) {
     Msg::Error("Cell Complex is empty: check the domain and the mesh");
   }
   double t2 = Cpu();
   Msg::StatusBar(2, true, "Done creating cell complex (%g s)", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges and %d vertices",
-            cellComplex->getSize(3), cellComplex->getSize(2),
-	    cellComplex->getSize(1), cellComplex->getSize(0));
-  return cellComplex;
+            _cellComplex->getSize(3), _cellComplex->getSize(2),
+	    _cellComplex->getSize(1), _cellComplex->getSize(0));
 }
 
-CellComplex* Homology::createCellComplex()
+void Homology::_deleteChains()
 {
-  return createCellComplex(_domainEntities, _subdomainEntities);
+  for(int j = 0; j < 4; j ++) {
+    for(unsigned int i = 0; i < _chains[j].size(); i++) {
+      delete _chains[j].at(i);
+      _chains[j].clear();
+    }
+  }
+  _homologyComputed = false;
+}
+
+void Homology::_deleteCochains()
+{
+  for(int j = 0; j < 4; j ++) {
+    for(unsigned int i = 0; i < _cochains[j].size(); i++) {
+      delete _cochains[j].at(i);
+      _cochains[j].clear();
+    }
+  }
+  _cohomologyComputed = false;
 }
 
 Homology::~Homology()
 {
-  for(unsigned int i = 0; i < _chains.size(); i++)
-    delete _chains.at(i);
+  if(_cellComplex != NULL) delete _cellComplex;
+  _deleteChains();
+  _deleteCochains();
 }
 
-void Homology::findHomologyBasis(CellComplex* cellComplex)
+void Homology::findHomologyBasis()
 {
-  bool ownComplex = false;
-  if(cellComplex==NULL){
-    cellComplex = createCellComplex(_domainEntities,
-				    _subdomainEntities);
-    ownComplex = true;
-  }
-
+  if(_cellComplex == NULL) _createCellComplex();
+  if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
   Msg::StatusBar(2, true, "Reducing cell complex...");
 
   double t1 = Cpu();
-  int omitted = cellComplex->reduceComplex(_combine, _omit);
+  int omitted = _cellComplex->reduceComplex(_combine, _omit);
 
   double t2 = Cpu();
   Msg::StatusBar(2, true, "Done reducing cell complex (%g s)", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges and %d vertices",
-            cellComplex->getSize(3), cellComplex->getSize(2),
-	    cellComplex->getSize(1), cellComplex->getSize(0));
+            _cellComplex->getSize(3), _cellComplex->getSize(2),
+	    _cellComplex->getSize(1), _cellComplex->getSize(0));
 
   Msg::StatusBar(2, true, "Computing homology space basis ...");
   t1 = Cpu();
-  ChainComplex chainComplex = ChainComplex(cellComplex);
+  ChainComplex chainComplex = ChainComplex(_cellComplex);
   chainComplex.computeHomology();
   t2 = Cpu();
   Msg::StatusBar(2, true, "Done computing homology space basis (%g s)", t2 - t1);
 
-  int dim = cellComplex->getDim();
   std::string domain = _getDomainString(_domain, _subdomain);
+  _deleteChains();
   int HRank[4];
   for(int j = 0; j < 4; j++){
     HRank[j] = 0;
@@ -159,7 +192,7 @@ void Homology::findHomologyBasis(CellComplex* cellComplex)
       chainComplex.getBasisChain(chain, i, j, 3, _smoothen);
       int torsion = chainComplex.getTorsion(j,i);
       if(!chain.empty()) {
-        _createChain(chain, name);
+        _createChain(chain, name, false);
         HRank[j] = HRank[j] + 1;
         if(torsion != 1){
           Msg::Warning("H%d %d has torsion coefficient %d!",
@@ -171,8 +204,6 @@ void Homology::findHomologyBasis(CellComplex* cellComplex)
 
   if(_fileName != "") writeBasisMSH();
 
-  if(ownComplex) delete cellComplex;
-
   Msg::Info("Ranks of domain %shomology spaces:", domain.c_str());
   Msg::Info("H0 = %d", HRank[0]);
   Msg::Info("H1 = %d", HRank[1]);
@@ -182,38 +213,35 @@ void Homology::findHomologyBasis(CellComplex* cellComplex)
 
   Msg::StatusBar(2, false, "H0: %d, H1: %d, H2: %d, H3: %d",
 		 HRank[0], HRank[1], HRank[2], HRank[3]);
+  _homologyComputed = true;
 }
 
-void Homology::findCohomologyBasis(CellComplex* cellComplex)
+void Homology::findCohomologyBasis()
 {
-  bool ownComplex = false;
-  if(cellComplex==NULL){
-    cellComplex = createCellComplex(_domainEntities,
-				    _subdomainEntities);
-    ownComplex = true;
-  }
+  if(_cellComplex == NULL) _createCellComplex();
+  if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
 
   Msg::StatusBar(2, true, "Reducing cell complex...");
 
   double t1 = Cpu();
-  int omitted = cellComplex->coreduceComplex(_combine, _omit);
+  int omitted = _cellComplex->coreduceComplex(_combine, _omit);
   double t2 = Cpu();
 
   Msg::StatusBar(2, true, "Done reducing cell complex (%g s)", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges and %d vertices",
-            cellComplex->getSize(3), cellComplex->getSize(2),
-	    cellComplex->getSize(1), cellComplex->getSize(0));
+            _cellComplex->getSize(3), _cellComplex->getSize(2),
+	    _cellComplex->getSize(1), _cellComplex->getSize(0));
 
   Msg::StatusBar(2, true, "Computing cohomology space basis ...");
   t1 = Cpu();
-  ChainComplex chainComplex = ChainComplex(cellComplex);
+  ChainComplex chainComplex = ChainComplex(_cellComplex);
   chainComplex.transposeHMatrices();
   chainComplex.computeHomology(true);
   t2 = Cpu();
   Msg::StatusBar(2, true, "Done computing cohomology space basis (%g s)", t2- t1);
 
-  int dim = cellComplex->getDim();
   std::string domain = _getDomainString(_domain, _subdomain);
+  _deleteCochains();
   int HRank[4];
   for(int i = 0; i < 4; i++) HRank[i] = 0;
   for(int j = 3; j > -1; j--){
@@ -231,7 +259,7 @@ void Homology::findCohomologyBasis(CellComplex* cellComplex)
       chainComplex.getBasisChain(chain, i, j, 3, _smoothen);
       int torsion = chainComplex.getTorsion(j,i);
       if(!chain.empty()) {
-        _createChain(chain, name);
+        _createChain(chain, name, true);
         HRank[j] = HRank[j] + 1;
         if(torsion != 1){
           Msg::Warning("H%d* %d has torsion coefficient %d!", j, i, torsion);
@@ -242,8 +270,6 @@ void Homology::findCohomologyBasis(CellComplex* cellComplex)
 
   if(_fileName != "") writeBasisMSH();
 
-  if(ownComplex) delete cellComplex;
-
   Msg::Info("Ranks of domain %scohomology spaces:", domain.c_str());
   Msg::Info("H0* = %d", HRank[0]);
   Msg::Info("H1* = %d", HRank[1]);
@@ -253,19 +279,71 @@ void Homology::findCohomologyBasis(CellComplex* cellComplex)
 
   Msg::StatusBar(2, false, "H0*: %d, H1*: %d, H2*: %d, H3*: %d",
 		 HRank[0], HRank[1], HRank[2], HRank[3]);
+  _cohomologyComputed = true;
 }
 
 void Homology::addChainsToModel(int dim, bool post)
 {
-  for(unsigned int i = 0; i < _chains.size(); i++) {
-    if(dim != -1 && _chains.at(i)->getDim() == dim)
-      _chains.at(i)->addToModel(this->getModel(), post);
-    else if(dim == -1) _chains.at(i)->addToModel(this->getModel(), post);
-  }
+  if(!_homologyComputed) Msg::Warning("Homology is not computed");
+  if(dim == -1)
+    for(int j = 0; j < 4; j++)
+      for(unsigned int i = 0; i < _chains[j].size(); i++)
+        _chains[j].at(i)->addToModel(this->getModel(), post);
+  else if (dim > -1 && dim < 4)
+    for(unsigned int i = 0; i < _chains[dim].size(); i++)
+      _chains[dim].at(i)->addToModel(this->getModel(), post);
+}
+
+void Homology::addCochainsToModel(int dim, bool post)
+{
+  if(!_cohomologyComputed) Msg::Warning("Cohomology is not computed");
+  if(dim == -1)
+    for(int j = 0; j < 4; j++)
+      for(unsigned int i = 0; i < _cochains[j].size(); i++)
+        _cochains[j].at(i)->addToModel(this->getModel(), post);
+  else if (dim > -1 && dim < 4)
+    for(unsigned int i = 0; i < _cochains[dim].size(); i++)
+      _cochains[dim].at(i)->addToModel(this->getModel(), post);
+}
+
+void Homology::getHomologyBasis(int dim, std::vector<Chain<int> >& hom)
+{
+  if(dim < 0 || dim > 3) return;
+  if(!_homologyComputed) findHomologyBasis();
+
+  hom.resize(_chains[dim].size());
+  for(unsigned int i = 0; i < _chains[dim].size(); i++)
+    hom[i] = *_chains[dim].at(i);
+}
+
+void Homology::getCohomologyBasis(int dim, std::vector<Chain<int> >& coh)
+{
+  if(dim < 0 || dim > 3) return;
+  if(!_cohomologyComputed) findCohomologyBasis();
+
+  coh.resize(_cochains[dim].size());
+  for(unsigned int i = 0; i < _cochains[dim].size(); i++)
+    coh[i] = *_cochains[dim].at(i);
+}
+
+int Homology::betti(int dim)
+{
+  if(dim < 0 || dim > 3) return 0;
+  if(_homologyComputed) return _chains[dim].size();
+  if(_cohomologyComputed) return _cochains[dim].size();
+
+  findHomologyBasis();
+  return _chains[dim].size();
+}
+
+int Homology::eulerCharacteristic()
+{
+  if(_cellComplex == NULL) _createCellComplex();
+  return _cellComplex->eulerCharacteristic();
 }
 
 void Homology::_createChain(std::map<Cell*, int, Less_Cell>& preChain,
-                            std::string name)
+                            std::string name, bool co)
 {
   Chain<int>* chain = new Chain<int>();
   chain->setName(name);
@@ -279,7 +357,8 @@ void Homology::_createChain(std::map<Cell*, int, Less_Cell>& preChain,
     cell->getMeshVertices(v);
     chain->addElemChain(ElemChain(cell->getDim(), v), coeff);
   }
-  _chains.push_back(chain);
+  if(co) _cochains[chain->getDim()].push_back(chain);
+  else _chains[chain->getDim()].push_back(chain);
 }
 
 std::string Homology::_getDomainString(const std::vector<int>& domain,
@@ -331,16 +410,14 @@ void Homology::storeCells(CellComplex* cellComplex, int dim)
   for(CellComplex::citer cit = cellComplex->firstCell(dim);
       cit != cellComplex->lastCell(dim); cit++){
     Cell* cell = *cit;
-
     std::map<Cell*, int, Less_Cell > cells;
     cell->getCells(cells);
     for(Cell::citer it = cells.begin(); it != cells.end(); it++){
       Cell* subCell = it->first;
-
       std::vector<MVertex*> v;
-      cell->getMeshVertices(v);
+      subCell->getMeshVertices(v);
 
-      MElement* e = factory.create(cell->getTypeMSH(), v);
+      MElement* e = factory.create(subCell->getTypeMSH(), v);
       elements.push_back(e);
     }
   }
