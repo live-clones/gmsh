@@ -1065,7 +1065,7 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    SVector3  p1(nodes[index2[1]][0], nodes[index2[1]][1], nodes[index2[1]][2]);
    SVector3 dir_t = p1-p0;
    SVector3 dir_n1, dir_n2;
-   buildOrthoBasis(dir0,dir1,dir2);
+   buildOrthoBasis(dir_t,dir_n1,dir_n2);
 
    double lc_t = 3.*lc;
    double lam_t = 1./(lc_t*lc_t);
