@@ -64,7 +64,7 @@ GEdge *GeoFactory::addLine(GModel *gm, GVertex *start, GVertex *end)
 GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> > edges)
 {
 
-   //create line loops
+  //create line loops
   int nLoops = edges.size();
   std::vector<EdgeLoop *> vecLoops;
   for (int i=0; i< nLoops; i++){
@@ -107,9 +107,7 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
 	  for(int i = 0; i < gec.size(); i++)
 	    c->compound.push_back(gec[i]->tag());
 	}
-	else {
-	  printf("type not implemented \n"); exit(1);
-	}
+
 	c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
 	List_Add(c->Control_Points, &vertb);
 	List_Add(c->Control_Points, &verte);
@@ -121,7 +119,7 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
 	CreateReversedCurve(c);
 	List_Delete(temp);
       }
-       List_Add(temp, &numEdge);
+      List_Add(temp, &numEdge);
     }
 
     int num = gm->getMaxElementaryNumber(2) + 1+i;
@@ -144,6 +142,7 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
     int numl = vecLoops[i]->Num;
     List_Add(temp, &numl);
   }
+
   setSurfaceGeneratrices(s, temp);
   List_Delete(temp);
   End_Surface(s);

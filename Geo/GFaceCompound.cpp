@@ -15,6 +15,7 @@
 
 #if defined(HAVE_SOLVER)
 
+#include "Options.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "Numeric.h"
@@ -43,6 +44,7 @@
 #include "Curvature.h"
 #include "MPoint.h"
 #include "Numeric.h"
+#include "meshGFace.h"
 
 static void fixEdgeToValue(GEdge *ed, double value, dofManager<double> &myAssembler)
 {
@@ -423,6 +425,130 @@ static MTriangle* findInvertedTri(v2t_cont &adjv, MVertex*v0, MVertex*v1, MVerte
   return myTri;
 
 }
+
+void GFaceCompound::orientFillTris(std::list<MTriangle*> loopfillTris) const{
+
+  //check normal orientations of loopfillTris
+  bool invertTris = false;
+  std::map<MEdge, std::set<MTriangle*>, Less_Edge > edge2tris;
+  for(std::list<MTriangle*>::iterator t = loopfillTris.begin();
+      t != loopfillTris.end(); t++){
+    for (int j = 0; j < 3; j++){
+      MEdge me = (*t)->getEdge(j);
+      std::map<MEdge, std::set<MTriangle*, std::less<MTriangle*> >,
+	       Less_Edge >::iterator it = edge2tris.find(me);
+      if (it == edge2tris.end()) {
+	std::set<MTriangle*, std::less<MTriangle*> > mySet;
+	mySet.insert(*t);
+	edge2tris.insert(std::make_pair(me, mySet));
+      }
+      else{
+	std::set<MTriangle*, std::less<MTriangle*> > mySet = it->second;
+	mySet.insert(*t);
+	it->second = mySet;
+      }
+    }
+  }
+
+  int iE, si, iE2, si2;
+  std::list<GFace*>::const_iterator itf = _compound.begin();
+  for( ; itf != _compound.end(); ++itf){
+    for(unsigned int i = 0; i < (*itf)->triangles.size(); ++i){
+      MTriangle *t = (*itf)->triangles[i];
+      for (int j = 0; j < 3; j++){
+	MEdge me = t->getEdge(j);
+	std::map<MEdge, std::set<MTriangle*>, Less_Edge >::iterator it = 
+	  edge2tris.find(me);
+	if(it != edge2tris.end()){
+	  t->getEdgeInfo(me, iE,si);
+	  MTriangle* t2 = *((it->second).begin());
+	  t2->getEdgeInfo(me,iE2,si2);
+	  if(si == si2) {
+	    invertTris = true;
+	    break;
+	  }
+	}
+      }
+    } 
+  }
+  if (invertTris){
+    for (std::list<MTriangle*>::iterator it = loopfillTris.begin(); 
+           it != loopfillTris.end(); it++ )
+	(*it)->revert();
+  }
+  
+  fillTris.insert(fillTris.begin(),loopfillTris.begin(),loopfillTris.end());
+
+}
+
+void GFaceCompound::printFillTris() const{
+
+  if(CTX::instance()->mesh.saveAll){
+    if (fillTris.size() > 0){
+      char name[256];
+      std::list<GFace*>::const_iterator itf = _compound.begin();
+      sprintf(name, "fillTris-%d.pos", tag());
+      FILE * ftri = fopen(name,"w");
+      fprintf(ftri,"View \"\"{\n");
+      for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); 
+           it2 !=fillTris.end(); it2++ ){
+	MTriangle *t = (*it2);
+	fprintf(ftri,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+		t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
+		t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
+		t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
+		1., 1., 1.);
+      }
+      fprintf(ftri,"};\n");
+      fclose(ftri);
+    }
+  }
+}
+
+void GFaceCompound::fillNeumannBCS_Plane() const
+{
+
+  Msg::Info("Meshing %d interior holes with planes ", _interior_loops.size()-1);
+
+  fillTris.clear();
+  fillNodes.clear();
+
+  if (_interior_loops.size()==1 && _type != SQUARE) return;
+
+  GModel::current()->setFactory("Gmsh");
+  std::vector<std::vector<GFace *> > myFaceLoops;
+  std::vector<GFace *> myFaces;
+  for(std::list<std::list<GEdge*> >::const_iterator iloop = _interior_loops.begin(); 
+      iloop != _interior_loops.end(); iloop++){
+    std::list<MTriangle*> loopfillTris;
+    std::list<GEdge*> loop = *iloop;
+    if (loop != _U0 ){
+      std::vector<std::vector<GEdge *> > myEdgeLoops;
+      std::vector<GEdge*> myEdges;
+      for (std::list<GEdge*>::iterator itl = loop.begin(); itl != loop.end(); itl++)
+	myEdges.push_back(*itl);
+      myEdgeLoops.push_back(myEdges);
+      GFace *newFace =  GModel::current()->addPlanarFace(myEdgeLoops); 
+      fillFaces.push_back(newFace);
+      int meshingAlgo = CTX::instance()->mesh.algo2d;
+      opt_mesh_algo2d(0, GMSH_SET, 1.0); //mesh adapt
+      meshGFace mgf;
+      mgf(newFace);
+      opt_mesh_algo2d(0, GMSH_SET, meshingAlgo);
+      for(unsigned int i = 0; i < newFace->triangles.size(); ++i){
+	loopfillTris.push_back(newFace->triangles[i]);
+	fillNodes.insert(newFace->triangles[i]->getVertex(0));
+	fillNodes.insert(newFace->triangles[i]->getVertex(1));
+	fillNodes.insert(newFace->triangles[i]->getVertex(2));
+      }  
+      //mod->remove(newFace);
+    }
+    orientFillTris(loopfillTris);
+  }
+
+  printFillTris();
+
+}
 void GFaceCompound::fillNeumannBCS() const
 {
   fillTris.clear();
@@ -483,83 +609,13 @@ void GFaceCompound::fillNeumannBCS() const
 	loopfillTris.push_back(new MTriangle(v4, c, v5));
 	loopfillTris.push_back(new MTriangle(v0, v3, v1));
       }
-      
     }
-
-    //check normal orientations of loopfillTris
-    bool invertTris = false;
-    std::map<MEdge, std::set<MTriangle*>, Less_Edge > edge2tris;
-    for(std::list<MTriangle*>::iterator t = loopfillTris.begin();
-        t != loopfillTris.end(); t++){
-      for (int j = 0; j < 3; j++){
-	MEdge me = (*t)->getEdge(j);
-	std::map<MEdge, std::set<MTriangle*, std::less<MTriangle*> >,
-		 Less_Edge >::iterator it = edge2tris.find(me);
-	if (it == edge2tris.end()) {
-	  std::set<MTriangle*, std::less<MTriangle*> > mySet;
-	  mySet.insert(*t);
-	  edge2tris.insert(std::make_pair(me, mySet));
-	}
-	else{
-	  std::set<MTriangle*, std::less<MTriangle*> > mySet = it->second;
-	  mySet.insert(*t);
-	  it->second = mySet;
-	}
-    }
+    orientFillTris(loopfillTris);
   }
-    int iE, si, iE2, si2;
-    std::list<GFace*>::const_iterator itf = _compound.begin();
-    for( ; itf != _compound.end(); ++itf){
-      for(unsigned int i = 0; i < (*itf)->triangles.size(); ++i){
-	MTriangle *t = (*itf)->triangles[i];
-	for (int j = 0; j < 3; j++){
-	  MEdge me = t->getEdge(j);
-	  std::map<MEdge, std::set<MTriangle*>, Less_Edge >::iterator it = 
-            edge2tris.find(me);
-	  if(it != edge2tris.end()){
-	    t->getEdgeInfo(me, iE,si);
-	    MTriangle* t2 = *((it->second).begin());
-	    t2->getEdgeInfo(me,iE2,si2);
-	    if(si == si2) {
-	      invertTris = true;
-	      break;
-	    }
-	  }
-	}
-      } 
-    }
-    if (invertTris){
-      for (std::list<MTriangle*>::iterator it = loopfillTris.begin(); 
-           it != loopfillTris.end(); it++ )
-	(*it)->revert();
-    }
-    
-    fillTris.insert(fillTris.begin(),loopfillTris.begin(),loopfillTris.end());
-}
 
-  //printing
-  if(CTX::instance()->mesh.saveAll){
-    if (fillTris.size() > 0){
-      char name[256];
-      std::list<GFace*>::const_iterator itf = _compound.begin();
-      sprintf(name, "fillTris-%d.pos", tag());
-      FILE * ftri = fopen(name,"w");
-      fprintf(ftri,"View \"\"{\n");
-      for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); 
-           it2 !=fillTris.end(); it2++ ){
-	MTriangle *t = (*it2);
-	fprintf(ftri,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
-		t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
-		t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
-		t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
-		1., 1., 1.);
-      }
-      fprintf(ftri,"};\n");
-      fclose(ftri);
-    }
-  }
-}
+  printFillTris();
 
+}
 bool GFaceCompound::trivial() const
 {
   return false;
@@ -650,9 +706,8 @@ bool GFaceCompound::checkOrientation(int iter, bool moveBoundaries) const
   if(!oriented && iter < iterMax){
     if (moveBoundaries){
       if (iter ==0) Msg::Info("--- Flipping : moving boundaries.");
-      Msg::Info("--- Moving Boundary - iter %d -",iter);
+      Msg::Debug("--- Moving Boundary - iter %d -",iter);
       convexBoundary(nTot/fabs(nTot));
-      one2OneMap();
       printStuff(iter);
       return checkOrientation(iter+1, moveBoundaries);
     }
@@ -660,9 +715,8 @@ bool GFaceCompound::checkOrientation(int iter, bool moveBoundaries) const
       if (iter ==0) Msg::Info("--- Flipping : applying cavity checks.");
       Msg::Debug("--- Cavity Check - iter %d -",iter);
       bool success = one2OneMap();
-      if (success) return checkOrientation(iter+1, moveBoundaries);
+      if (success) return checkOrientation(iter+1);
     }
-   
   }
   else if (iter > 0 && iter < iterMax){
     Msg::Info("--- Flipping : no more flips (%d iter)", iter);
@@ -890,20 +944,20 @@ bool GFaceCompound::parametrize() const
   if(allNodes.empty()) buildAllNodes();
   
   if (_type != SQUARE){
-    printf("ordering vertices \n");
     bool success = orderVertices(_U0, _ordered, _coords);
     if(!success) {Msg::Error("Could not order vertices on boundary");exit(1);}
   }
 
+  fillNeumannBCS_Plane();
+  //fillNeumannBCS();
+
   // Convex parametrization
   if (_mapping == CONVEX){
-    Msg::Info("Parametrizing surface %d with 'convex map'", tag()); 
-    fillNeumannBCS();
+    Msg::Info("Parametrizing surface %d with 'convex map'", tag());  
     parametrize(ITERU,CONVEX); 
     parametrize(ITERV,CONVEX);
     if (_type==MEANPLANE){
       checkOrientation(0, true);
-      // printStuff(22);
       // _type = ALREADYFIXED;
       // parametrize(ITERU,CONVEX); 
       // parametrize(ITERV,CONVEX);
@@ -913,15 +967,12 @@ bool GFaceCompound::parametrize() const
   // Laplace parametrization
   else if (_mapping == HARMONIC){
     Msg::Info("Parametrizing surface %d with 'harmonic map'", tag()); 
-    fillNeumannBCS();
     parametrize(ITERU,HARMONIC); 
     parametrize(ITERV,HARMONIC); 
     if (_type == MEANPLANE) checkOrientation(0, true);
   }
   // Conformal map parametrization
   else if (_mapping == CONFORMAL){
-
-    fillNeumannBCS();
     std::vector<MVertex *> vert;
     bool oriented, hasOverlap;
     if (_type == SPECTRAL){
@@ -933,7 +984,7 @@ bool GFaceCompound::parametrize() const
       parametrize_conformal(0, NULL, NULL);
     }
     printStuff(55);
-    oriented =  checkOrientation(0);
+    oriented = checkOrientation(0);
     printStuff(66);
     if (!oriented)  oriented = checkOrientation(0, true);
     printStuff(77);
@@ -970,12 +1021,15 @@ bool GFaceCompound::parametrize() const
       _type = UNITCIRCLE;
       coordinates.clear(); 
       Octree_Delete(oct);
-      fillNeumannBCS();
       parametrize(ITERU,CONVEX);
       parametrize(ITERV,CONVEX);
       checkOrientation(0);
       buildOct();
     }
+  }
+
+  for (int i= 0; i< fillFaces.size(); i++){
+    GModel::current()->remove(fillFaces[i]);
   }
 
   return paramOK;
@@ -1250,6 +1304,7 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 
 GFaceCompound::~GFaceCompound()
 {
+  
   if(oct){
     Octree_Delete(oct);
     delete [] _gfct;

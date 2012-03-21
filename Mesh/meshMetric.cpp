@@ -372,8 +372,8 @@ void meshMetric::computeMetric(){
 
   computeValues();
   computeHessian_FE();
-  //computeHessian_LS();
-    
+  //computeHessian_LS(); 
+  
   int metricNumber = setOfMetrics.size();
 
   v2t_cont :: iterator it = _adj.begin();

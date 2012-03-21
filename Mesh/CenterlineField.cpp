@@ -634,9 +634,9 @@ void Centerline::createSplitCompounds(){
     int num_gfc = NF+i+1;
     Msg::Info("Parametrize Compound Surface (%d) = %d discrete face",
               num_gfc, pf->tag());
-    GFaceCompound::typeOfCompound typ = GFaceCompound::CONVEX_CIRCLE; 
+    //GFaceCompound::typeOfCompound typ = GFaceCompound::CONVEX_CIRCLE; 
     //GFaceCompound::typeOfCompound typ = GFaceCompound::HARMONIC_PLANE; 
-    //GFaceCompound::typeOfMapping typ = GFaceCompound::CONFORMAL_SPECTRAL; 
+    GFaceCompound::typeOfCompound typ = GFaceCompound::CONFORMAL_SPECTRAL; 
     GFaceCompound *gfc = new GFaceCompound(current, num_gfc, f_compound, U0,
 					   typ, 0);
     gfc->meshAttributes.recombine = recombine;
@@ -1008,11 +1008,10 @@ double Centerline::operator() (double x, double y, double z, GEntity *ge){
 
    double xyz[3] = {x,y,z};
 
+   //take xyz = closest point on boundary in case we are on the planar in/out faces
    bool isCompound = (ge->dim() == 2 && ge->geomType() == GEntity::CompoundSurface) ? true: false;
    std::list<GFace*> cFaces;
    if (isCompound) cFaces = ((GFaceCompound*)ge)->getCompounds();
-
-   //take xyz = closest point on boundary in case we are on the planar in/out faces
    if ( ge->dim() == 3 || (ge->dim() == 2 && ge->geomType() == GEntity::Plane) ||
 	(isCompound && (*cFaces.begin())->geomType() == GEntity::Plane) ){
      int num_neighbours = 1;
@@ -1042,13 +1041,24 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
      update_needed = false;
    }
 
-   //double lc = operator()(x,y,z,ge);
-   //metr = SMetric3(1./(lc*lc));
+   double xyz[3] = {x,y,z};
 
-   double xyz[3] = {x,y,z };
-   ANNidxArray index2 = new ANNidx[2];
-   ANNdistArray dist2 = new ANNdist[2];
+   //take xyz = closest point on boundary in case we are on the planar in/out faces
+   bool isCompound = (ge->dim() == 2 && ge->geomType() == GEntity::CompoundSurface) ? true: false;
+   std::list<GFace*> cFaces;
+   if (isCompound) cFaces = ((GFaceCompound*)ge)->getCompounds();
+   if ( ge->dim() == 3 || (ge->dim() == 2 && ge->geomType() == GEntity::Plane) ||
+	(isCompound && (*cFaces.begin())->geomType() == GEntity::Plane) ){
+     int num_neighbours = 1;
+     kdtreeR->annkSearch(xyz, num_neighbours, index, dist);
+     xyz[0] = nodesR[index[0]][0];
+     xyz[1] = nodesR[index[0]][1];
+     xyz[2] = nodesR[index[0]][2];
+   }
+
    int num_neighbours = 2;
+   ANNidxArray index2 = new ANNidx[num_neighbours];
+   ANNdistArray dist2 = new ANNdist[num_neighbours];
    kdtree->annkSearch(xyz, num_neighbours, index2, dist2);
    double d = sqrt(dist2[0]);
    double lc = 2*M_PI*d/nbPoints;
@@ -1058,7 +1068,7 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    SVector3 dir1, dir2;
    buildOrthoBasis(dir0,dir1,dir2);
 
-   double lcA = 4.*lc;
+   double lcA = 3.*lc;
    double lam1 = 1./(lcA*lcA);
    double lam2 = 1./(lc*lc);
    metr = SMetric3(lam1,lam2,lam2, dir0, dir1, dir2);
