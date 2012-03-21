@@ -122,15 +122,16 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
       List_Add(temp, &numEdge);
     }
 
-    int num = gm->getMaxElementaryNumber(2) + 1+i;
-    while (FindSurfaceLoop(num)){
-      num++;
-      if (!FindSurfaceLoop(num)) break;
+    int numl = gm->getMaxElementaryNumber(1) + i;
+    while (FindEdgeLoop(numl)){
+      numl++;
+      if (!FindEdgeLoop(numl)) break;
     }
-    sortEdgesInLoop(num, temp);
-    EdgeLoop *l = Create_EdgeLoop(num, temp);
+    sortEdgesInLoop(numl, temp);
+    EdgeLoop *l = Create_EdgeLoop(numl, temp);
     vecLoops.push_back(l);
     Tree_Add(gm->getGEOInternals()->EdgeLoops, &l);
+    l->Num = numl;
     List_Delete(temp);
   }
 

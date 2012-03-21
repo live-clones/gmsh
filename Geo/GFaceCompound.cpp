@@ -476,33 +476,34 @@ void GFaceCompound::orientFillTris(std::list<MTriangle*> loopfillTris) const{
            it != loopfillTris.end(); it++ )
 	(*it)->revert();
   }
-  
+ 
   fillTris.insert(fillTris.begin(),loopfillTris.begin(),loopfillTris.end());
 
 }
 
 void GFaceCompound::printFillTris() const{
 
-  if(CTX::instance()->mesh.saveAll){
-    if (fillTris.size() > 0){
-      char name[256];
-      std::list<GFace*>::const_iterator itf = _compound.begin();
-      sprintf(name, "fillTris-%d.pos", tag());
-      FILE * ftri = fopen(name,"w");
-      fprintf(ftri,"View \"\"{\n");
-      for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); 
-           it2 !=fillTris.end(); it2++ ){
-	MTriangle *t = (*it2);
-	fprintf(ftri,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
-		t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
-		t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
-		t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
-		1., 1., 1.);
-      }
-      fprintf(ftri,"};\n");
-      fclose(ftri);
+  if(!CTX::instance()->mesh.saveAll) return;
+
+  if (fillTris.size() > 0){
+    char name[256];
+    std::list<GFace*>::const_iterator itf = _compound.begin();
+    sprintf(name, "fillTris-%d.pos", tag());
+    FILE * ftri = fopen(name,"w");
+    fprintf(ftri,"View \"\"{\n");
+    for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); 
+	 it2 !=fillTris.end(); it2++ ){
+      MTriangle *t = (*it2);
+      fprintf(ftri,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+	      t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
+	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
+	      t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
+	      1., 1., 1.);
     }
+    fprintf(ftri,"};\n");
+    fclose(ftri);
   }
+
 }
 
 void GFaceCompound::fillNeumannBCS_Plane() const
@@ -525,8 +526,11 @@ void GFaceCompound::fillNeumannBCS_Plane() const
     if (loop != _U0 ){
       std::vector<std::vector<GEdge *> > myEdgeLoops;
       std::vector<GEdge*> myEdges;
-      for (std::list<GEdge*>::iterator itl = loop.begin(); itl != loop.end(); itl++)
+      myEdgeLoops.clear();
+      myEdges.clear();
+      for (std::list<GEdge*>::iterator itl = loop.begin(); itl != loop.end(); itl++){
 	myEdges.push_back(*itl);
+      }
       myEdgeLoops.push_back(myEdges);
       GFace *newFace =  GModel::current()->addPlanarFace(myEdgeLoops); 
       fillFaces.push_back(newFace);
@@ -541,9 +545,8 @@ void GFaceCompound::fillNeumannBCS_Plane() const
 	fillNodes.insert(newFace->triangles[i]->getVertex(1));
 	fillNodes.insert(newFace->triangles[i]->getVertex(2));
       }  
-      //mod->remove(newFace);
+      orientFillTris(loopfillTris);
     }
-    orientFillTris(loopfillTris);
   }
 
   printFillTris();
@@ -984,7 +987,7 @@ bool GFaceCompound::parametrize() const
       parametrize_conformal(0, NULL, NULL);
     }
     printStuff(55);
-    oriented = checkOrientation(0);
+    oriented = false; //checkOrientation(0);
     printStuff(66);
     if (!oriented)  oriented = checkOrientation(0, true);
     printStuff(77);
@@ -1249,8 +1252,6 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
     _mapping = CONFORMAL;
     _type = FE;
   }
- 
-
  
   nbSplit = 0;
   fillTris.clear();
