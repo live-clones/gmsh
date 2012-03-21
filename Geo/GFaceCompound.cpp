@@ -46,6 +46,13 @@
 #include "Numeric.h"
 #include "meshGFace.h"
 
+#if AE_COMPILER==AE_MSVC
+int round(double number)
+{
+    return (number >= 0) ? (int)(number + 0.5) : (int)(number - 0.5);
+}
+#endif
+
 static void fixEdgeToValue(GEdge *ed, double value, dofManager<double> &myAssembler)
 {
   myAssembler.fixVertex(ed->getBeginVertex()->mesh_vertices[0], 0, 1, value);
