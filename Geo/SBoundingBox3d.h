@@ -8,6 +8,7 @@
 
 #include <float.h>
 #include "SPoint3.h"
+#include "SVector3.h"
 
 #if defined(WIN32)
 #undef min
@@ -86,14 +87,12 @@ class SBoundingBox3d {
   SPoint3 center() const { return (MinPt + MaxPt) * .5; }
   void makeCube()
   {
-    SPoint3 len = MaxPt - MinPt;
-    double scales[3];
-    double max = -1.0;
-    for(int i = 0; i < 3; i++)
-      max = len[i] > max ? len[i] : max;
-    for(int j = 0; j < 3; j++)
-      scales[j] = max/len[j];
-    scale(scales[0],scales[1],scales[2]);
+    SVector3 len = MaxPt - MinPt;
+    SPoint3 cc = center();
+    MaxPt = cc + SPoint3(1,1,1);
+    MinPt = cc + SPoint3(-1,-1,-1);
+    double sc = len.norm() * 0.5;
+    scale (sc,sc,sc);
   }
  private:
   SPoint3 MinPt, MaxPt;

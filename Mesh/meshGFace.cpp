@@ -705,6 +705,17 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     gf->meshStatistics.status = GFace::DONE;
     return true;
   }
+  if(all_vertices.size() == 3){
+    MVertex *vv[3];
+    int i = 0;
+    for(std::set<MVertex*>::iterator it = all_vertices.begin();
+	it != all_vertices.end(); it++){
+      vv[i++] = *it;
+    }    
+    gf->triangles.push_back(new MTriangle(vv[0], vv[1], vv[2]));
+    gf->meshStatistics.status = GFace::DONE;
+    return true;
+  }
 
   // Buid a BDS_Mesh structure that is convenient for doing the actual
   // meshing procedure
@@ -734,6 +745,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   all_vertices.clear();
 
   // here check if some boundary layer nodes should be added
+
+  bbox.makeCube();
 
   // compute the bounding box in parametric space
   SVector3 dd(bbox.max(), bbox.min());
@@ -1456,6 +1469,26 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     }
   }
 
+  if(nbPointsTotal < 3){
+    Msg::Warning("Mesh Generation of Model Face %d Skipped: "
+                 "Only %d Mesh Vertices on The Contours",
+                 gf->tag(), nbPointsTotal);
+    gf->meshStatistics.status = GFace::DONE;
+    return true;
+  }
+  if(nbPointsTotal == 3){
+    MVertex *vv[3];
+    int i = 0;
+    for(std::map<BDS_Point*, MVertex*>::iterator it = recoverMap.begin();
+	it != recoverMap.end(); it++){
+      vv[i++] = it->second;
+    }    
+    gf->triangles.push_back(new MTriangle(vv[0], vv[1], vv[2]));
+    gf->meshStatistics.status = GFace::DONE;
+    return true;
+  }
+
+
   // Use a divide & conquer type algorithm to create a triangulation.
   // We add to the triangulation a box with 4 points that encloses the
   // domain.
@@ -1481,6 +1514,10 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     // Increase the size of the bounding box, add 4 points that enclose
     // the domain, use negative number to distinguish those fake
     // vertices
+
+    // FIX A BUG HERE IF THE SIZE OF THE BOX IS ZERO
+    bbox.makeCube();
+
     bbox *= 3.5;
     MVertex *bb[4];
     bb[0] = new MVertex(bbox.min().x(), bbox.min().y(), 0, 0, -1);
