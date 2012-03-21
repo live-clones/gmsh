@@ -13,7 +13,7 @@
 #define REC2D_EDGE_BASE 2
 #define REC2D_EDGE_QUAD 1
 #define REC2D_ALIGNMENT .5
-#define REC2D_NUM_SON 3
+#define REC2D_NUM_SON 6
 
 #include "GFace.h"
 #include "BackgroundMesh.h"
@@ -28,6 +28,7 @@ class Rec2DElement;
 class Rec2DAction;
 class Rec2DData;
 class Rec2DDataChange;
+class Rec2DCollapse;
 struct lessRec2DAction {
   bool operator()(Rec2DAction*, Rec2DAction*) const;
 };
@@ -206,28 +207,108 @@ class Rec2DData {
     static void revertAssumedParities();
 };
 
+enum Rec2DChangeType {
+  HideEdge, HideVertex, HideElement,
+  CreatedEdge, CreatedVertex, CreatedElement,
+  HideAction, HideActions,
+  CreatedAction, CreatedActions,
+  SwapVertInAction, SwapVertInEdge,
+  SwapEdgeInAction, SwapEdgeInElem,
+  RemoveElem, AddElem, Relocate, ChangePar, SavePar,
+  Error, Reverted
+};
+
+class Rec2DChange {
+  private : 
+    Rec2DChangeType _type;
+    void *_entity;
+    void *_info;
+  
+  public :
+    Rec2DChange() {Msg::Error("[Rec2DChange] I should not be created in this manner");}
+    Rec2DChange(Rec2DEdge*, bool toHide = false);
+    Rec2DChange(Rec2DVertex*, bool toHide = false);
+    Rec2DChange(Rec2DElement*, bool toHide = false);
+    Rec2DChange(Rec2DAction*, bool toHide = false);
+    Rec2DChange(const std::vector<Rec2DAction*>&, bool toHide = false);
+    Rec2DChange(Rec2DVertex*, int newParity, Rec2DChangeType);
+    Rec2DChange(Rec2DVertex*, SPoint2 newCoord);
+    Rec2DChange(const std::vector<Rec2DVertex*>&, Rec2DChangeType); // save Parity
+    Rec2DChange(Rec2DVertex*, const std::vector<Rec2DElement*>&,
+                Rec2DChangeType                                 ); // add or remove element in vertex
+    Rec2DChange(Rec2DVertex*, Rec2DVertex*,
+                const std::vector<Rec2DEdge*>&,
+                Rec2DChangeType                ); // swap vertex1 to vertex2 (edge)
+    Rec2DChange(Rec2DVertex*, Rec2DVertex*,
+                const std::vector<Rec2DAction*>&,
+                Rec2DChangeType                  ); // swap vertex1 to vertex2 (action)
+    Rec2DChange(Rec2DEdge*, Rec2DEdge*, Rec2DChangeType); // swap edge1 to edge2 (element)
+    Rec2DChange(Rec2DEdge*, Rec2DEdge*,
+                const std::vector<Rec2DAction*>&,
+                Rec2DChangeType                  ); // swap edge1 to edge2 (action)
+    
+    void revert();
+};
+
 class Rec2DDataChange {
   private :
-    std::vector<Rec2DEdge*> _hiddenEdge, _newEdge;
-    std::vector<Rec2DVertex*> _hiddenVertex, _newVertex;
-    std::vector<Rec2DElement*> _hiddenElement, _newElement;
-    std::vector<Rec2DAction*> _hiddenAction, _newAction;
-    std::vector<std::pair<Rec2DVertex*, SPoint2> > _oldCoordinate;
-    std::vector<std::pair<Rec2DVertex*, int> > _oldParity;
-    
+    std::vector<Rec2DChange*> _changes;
     Rec2DAction *_ra;
     
+    //std::vector<Rec2DEdge*> _hiddenEdge/*, _newEdge*/;
+    //std::vector<Rec2DVertex*> _hiddenVertex/*, _newVertex*/;
+    //std::vector<Rec2DElement*> _hiddenElement, _newElement;
+    //std::vector<Rec2DAction*> _hiddenAction, _newAction;
+    //std::vector<std::pair<Rec2DVertex*, SPoint2> > _oldCoordinate;
+    //std::vector<std::pair<Rec2DVertex*, int> > _oldParity;
+    //std::vector<std::pair<Rec2DEdge*, std::pair<Rec2DVertex*, Rec2DVertex*> > > _vertSwapE;
+    //std::vector<std::pair<Rec2DElement*, std::pair<Rec2DEdge*, Rec2DEdge*> > > _edgeSwap;
+    //std::vector<std::pair<Rec2DElement*, std::pair<Rec2DVertex*, Rec2DVertex*> > > _vertSwapEL;
+    
+    
   public :
-    void hide(Rec2DEdge*);
-    void hide(Rec2DElement*);
-    void hide(Rec2DAction*);
-    void hide(std::vector<Rec2DAction*>);
+    ~Rec2DDataChange();
     
-    void append(const Rec2DElement*);
+    inline void hide(Rec2DEdge *re) {_changes.push_back(new Rec2DChange(re, 1));}
+    inline void hide(Rec2DVertex *rv) {_changes.push_back(new Rec2DChange(rv, 1));} 
+    inline void hide(Rec2DElement *rel) {_changes.push_back(new Rec2DChange(rel, 1));}
+    inline void hide(Rec2DAction *ra) {_changes.push_back(new Rec2DChange(ra, 1));}
+    inline void hide(std::vector<Rec2DAction*> &vect) {_changes.push_back(new Rec2DChange(vect, 1));}
     
-    void changeParity(Rec2DVertex*, int);
-    void saveParity(std::vector<Rec2DVertex*>&);
-    void checkObsoleteActions();
+    inline void append(Rec2DElement *rel) {_changes.push_back(new Rec2DChange(rel));}
+    inline void append(Rec2DAction *ra) {_changes.push_back(new Rec2DChange(ra));}
+    
+    void swapFor(Rec2DEdge*, Rec2DEdge*);
+    void swapFor(Rec2DVertex*, Rec2DVertex*);
+    
+    inline void relocate(Rec2DVertex *rv, const SPoint2 &p) {
+      _changes.push_back(new Rec2DChange(rv, p));
+    }
+    inline void changeParity(Rec2DVertex *rv, int p) {
+      _changes.push_back(new Rec2DChange(rv, p, ChangePar));
+    }
+    inline void saveParity(const std::vector<Rec2DVertex*> &verts) {
+      _changes.push_back(new Rec2DChange(verts, SavePar));
+    }
+    //void checkObsoleteActions() {_changes.push_back(new Rec2DChange());}
+    
+    //void hide(Rec2DEdge*); {_elementaryChanges.push_back(new Rec2DChange(re));}
+    //void hide(Rec2DVertex*);
+    //void hide(Rec2DElement*);
+    //void hide(Rec2DAction*);
+    //void hide(std::vector<Rec2DAction*>);
+    //
+    //void append(const Rec2DElement*);
+    //void append(const Rec2DAction*);
+    //
+    //void swapFor(Rec2DEdge*, Rec2DEdge*);
+    //void swapFor(Rec2DVertex*, Rec2DVertex*);
+    //
+    //void relocate(Rec2DVertex*, double, double);
+    //
+    //void changeParity(Rec2DVertex*, int);
+    //void saveParity(std::vector<Rec2DVertex*>&);
+    void checkObsoleteActions(Rec2DVertex*const*, int size);
     
     void revert();
     
@@ -262,6 +343,11 @@ class Rec2DAction {
     virtual int getNum(double shiftx, double shifty) = 0;
     virtual Rec2DElement* getRandomElement() const = 0;
     //virtual void print() = 0;
+    virtual bool haveElem() = 0;
+    inline virtual Rec2DAction* getBase() const = 0;
+    static void removeDuplicate(std::vector<Rec2DAction*>&);
+    virtual void swap(Rec2DVertex*, Rec2DVertex*) = 0;
+    virtual void swap(Rec2DEdge*, Rec2DEdge*) = 0;
     
   private :
     virtual void _computeGlobQual() = 0;
@@ -272,6 +358,7 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     Rec2DElement *_triangles[2];
     Rec2DEdge *_edges[5]; // 4 boundary, 1 embedded
     Rec2DVertex *_vertices[4]; // 4 boundary (2 on embedded edge + 2)
+    friend class Rec2DCollapse;
     
   public :
     Rec2DTwoTri2Quad(Rec2DElement*, Rec2DElement*);
@@ -294,12 +381,67 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     virtual void getElements(std::vector<Rec2DElement*>&) const;
     virtual void getNeighbourElements(std::vector<Rec2DElement*>&) const;
     virtual int getNum(double shiftx, double shifty);
-    virtual Rec2DElement* getRandomElement() const;
+    virtual inline Rec2DElement* getRandomElement() const;
     //virtual void print();
+    virtual bool haveElem() {return true;}
+    inline virtual Rec2DAction* getBase() const {return NULL;}
+    virtual void swap(Rec2DVertex*, Rec2DVertex*);
+    virtual void swap(Rec2DEdge*, Rec2DEdge*);
     
   private :
     virtual void _computeGlobQual();
     void _doWhatYouHaveToDoWithParity(Rec2DDataChange*) const;
+};
+
+class Rec2DCollapse : public Rec2DAction {
+  private :
+    Rec2DTwoTri2Quad *_rec;
+    //Rec2DElement **const&_triangles;
+    //Rec2DEdge **const&_edges;
+    //Rec2DVertex **const&_vertices;
+    
+  public :
+    Rec2DCollapse(Rec2DTwoTri2Quad*);
+    ~Rec2DCollapse() {hide();}
+    virtual void hide();
+    virtual void reveal();
+    
+    virtual void color(int c1, int c2, int c3) const {
+      _rec->color(c1, c2, c3);
+    }
+    virtual void apply(std::vector<Rec2DVertex*> &newPar);
+    virtual void apply(Rec2DDataChange*) const;
+    
+    virtual bool isObsolete() const;
+    virtual bool isAssumedObsolete() const;
+    static bool isObsolete(const int*);
+    virtual void getAssumedParities(int*) const;
+    virtual bool whatWouldYouDo(std::map<Rec2DVertex*, std::vector<int> >&);
+    
+    virtual inline Rec2DVertex* getVertex(int i) const {
+      return _rec->getVertex(i);
+    }
+    virtual inline int getNumElement() {return 2;}
+    virtual void getElements(std::vector<Rec2DElement*> &vec) const {
+      _rec->getElements(vec);
+    }
+    virtual void getNeighbourElements(std::vector<Rec2DElement*> &vec) const {
+      _rec->getNeighbourElements(vec);
+    }
+    virtual int getNum(double shiftx, double shifty) {
+      return -1;
+    }
+    virtual inline Rec2DElement* getRandomElement() const {
+      return _rec->getRandomElement();
+    }
+    //virtual void print();
+    virtual bool haveElem() {return false;}
+    inline virtual Rec2DAction* getBase() const {return _rec;}
+    inline virtual void swap(Rec2DVertex *rv0, Rec2DVertex *rv1) {_rec->swap(rv0, rv1);}
+    inline virtual void swap(Rec2DEdge *re0, Rec2DEdge *re1) {_rec->swap(re0, re1);}
+    
+  private :
+    virtual void _computeGlobQual();
 };
 
 class Rec2DEdge {
@@ -319,6 +461,7 @@ class Rec2DEdge {
     //double getQualL() const;
     //double getQualO() const;
     double getWeightedQual() const;
+    void print() const;
     
     inline void addHasTri() {_addWeight(-REC2D_EDGE_QUAD); ++_boundary;}
     inline void remHasTri() {_addWeight(REC2D_EDGE_QUAD); --_boundary;}
@@ -329,8 +472,10 @@ class Rec2DEdge {
     inline Rec2DVertex* getVertex(int i) const {if (i) return _rv1; return _rv0;}
     Rec2DVertex* getOtherVertex(const Rec2DVertex*) const;
     static Rec2DElement* getUniqueElement(const Rec2DEdge*);
+    static void getElements(const Rec2DEdge*, Rec2DElement**);
+    void getActions(std::vector<Rec2DAction*>&) const;
     
-    void swap(Rec2DVertex *oldRV, Rec2DVertex *newRV);
+    void swap(Rec2DVertex *oldRV, Rec2DVertex *newRV, bool upVert = true);
     
   private :
     void _computeQual();
@@ -368,6 +513,7 @@ class Rec2DVertex {
     void hide();
     void reveal();
     
+    inline int getNum() const {return _v->getNum();}
     inline double getAngle() const {return _angle;}
     inline double getQual() const {return getQualDegree() + getQualAngle();}
     inline double getQualAngle() const {return _sumQualAngle/(double)_elements.size();}
@@ -388,7 +534,9 @@ class Rec2DVertex {
     void revertAssumedParity(int);
     
     inline int getNumElements() const {return _elements.size();}
+    inline void getEdges(std::vector<Rec2DEdge*> &v) const {v = _edges;}
     void getTriangles(std::set<Rec2DElement*>&) const;
+    void getElements(std::vector<Rec2DElement*>&) const;
     inline MVertex* getMVertex() const {return _v;}
     
     inline int getLastMove() const {return _lastMove;}
@@ -399,6 +547,8 @@ class Rec2DVertex {
     }
     inline double u() const {return _param[0];}
     inline double v() const {return _param[1];}
+    void relocate(SPoint2 p);
+    inline void getParam(SPoint2 *p) {*p = _param;}
     
     void add(Rec2DEdge*);
     bool has(Rec2DEdge*) const;
@@ -447,6 +597,8 @@ class Rec2DElement {
     void addNeighbour(const Rec2DEdge*, const Rec2DElement*);
     void rmvNeighbour(const Rec2DEdge*, const Rec2DElement*);
     
+    void swap(Rec2DEdge*, Rec2DEdge*);
+    
     inline MElement* getMElement() const {return _mEl;}
 #ifdef REC2D_DRAW
     MTriangle* getMTriangle() {
@@ -481,6 +633,7 @@ class Rec2DElement {
     void getMoreNeighbours(std::vector<Rec2DElement*>&) const;
     Rec2DVertex* getOtherVertex(const Rec2DVertex*, const Rec2DVertex*) const;
     static Rec2DEdge* getCommonEdge(const Rec2DElement*, const Rec2DElement*);
+    static void getElements(const Rec2DEdge*, Rec2DElement**);
     
     inline int getNum() const {return _mEl->getNum();}
     
