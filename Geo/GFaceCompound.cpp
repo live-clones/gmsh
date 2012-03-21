@@ -1784,6 +1784,7 @@ bool GFaceCompound::parametrize_conformal(int iter, MVertex *v1, MVertex *v2) co
   // vertices
   std::vector<MVertex *> vert;
   bool hasOverlap = checkOverlap(vert);
+  return hasOverlap;
   // if ( hasOverlap && iter < 3){
   //   Msg::Info("Loop FE conformal iter (%d) v1=%d v2=%d", iter, 
   //             vert[0]->getNum(), vert[1]->getNum());

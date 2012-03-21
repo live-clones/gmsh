@@ -790,7 +790,7 @@ void Centerline::createClosedVolume(){
       else boundEdges.push_back(*it);
     }
   }
-  //printf("boundEdges size =%d \n", boundEdges.size());
+
   current->setFactory("Gmsh");
   std::vector<std::vector<GFace *> > myFaceLoops;
   std::vector<GFace *> myFaces;
@@ -997,7 +997,7 @@ void Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
 
 double Centerline::operator() (double x, double y, double z, GEntity *ge){
 
-   if (update_needed){
+  if (update_needed){
      std::ifstream input;
      input.open(fileName.c_str());
      if(StatFile(fileName)) Msg::Fatal("Centerline file '%s' does not exist", fileName.c_str());
@@ -1031,8 +1031,7 @@ double Centerline::operator() (double x, double y, double z, GEntity *ge){
 
 void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge){
 
-  //printf("in operator metric  xyz centerline \n");
-   if (update_needed){
+  if (update_needed){
      std::ifstream input;
      input.open(fileName.c_str());
      if(StatFile(fileName)) Msg::Fatal("Centerline file '%s' does not exist", fileName.c_str());
@@ -1043,7 +1042,7 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
 
    double xyz[3] = {x,y,z};
 
-   //take xyz = closest point on boundary in case we are on the planar in/out faces
+   //take xyz = closest point on boundary in case we are on the planar IN/OUT FACES or in VOLUME
    bool isCompound = (ge->dim() == 2 && ge->geomType() == GEntity::CompoundSurface) ? true: false;
    std::list<GFace*> cFaces;
    if (isCompound) cFaces = ((GFaceCompound*)ge)->getCompounds();
@@ -1064,14 +1063,14 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    double lc = 2*M_PI*d/nbPoints;
    SVector3  p0(nodes[index2[0]][0], nodes[index2[0]][1], nodes[index2[0]][2]);
    SVector3  p1(nodes[index2[1]][0], nodes[index2[1]][1], nodes[index2[1]][2]);
-   SVector3 dir0 = p1-p0;
-   SVector3 dir1, dir2;
+   SVector3 dir_t = p1-p0;
+   SVector3 dir_n1, dir_n2;
    buildOrthoBasis(dir0,dir1,dir2);
 
-   double lcA = 3.*lc;
-   double lam1 = 1./(lcA*lcA);
-   double lam2 = 1./(lc*lc);
-   metr = SMetric3(lam1,lam2,lam2, dir0, dir1, dir2);
+   double lc_t = 3.*lc;
+   double lam_t = 1./(lc_t*lc_t);
+   double lam_n = 1./(lc*lc);
+   metr = SMetric3(lam_t,lam_n,lam_n, dir_t, dir_n1, dir_n2);
 
    delete[]index2;
    delete[]dist2;
