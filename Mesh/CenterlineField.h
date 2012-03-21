@@ -66,6 +66,7 @@ class Centerline : public Field{
   bool is_cut;
   bool is_closed;
 
+
   //all (unique) lines of centerlines
   std::vector<MLine*> lines;
   //the stuctured tree of the centerlines

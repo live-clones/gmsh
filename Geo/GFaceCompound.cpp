@@ -517,6 +517,7 @@ void GFaceCompound::fillNeumannBCS_Plane() const
   if (_interior_loops.size()==1 && _type != SQUARE) return;
 
   GModel::current()->setFactory("Gmsh");
+  //GModel::current()->setFactory("OpenCASCADE");
   std::vector<std::vector<GFace *> > myFaceLoops;
   std::vector<GFace *> myFaces;
   for(std::list<std::list<GEdge*> >::const_iterator iloop = _interior_loops.begin();
@@ -2246,7 +2247,7 @@ bool GFaceCompound::checkTopology() const
   double D = H;
   if (_interior_loops.size() > 0)    D =  getSizeBB(_U0);
   int AR1 = (int) checkAspectRatio();
-  int AR2 = (int) (H/D + 0.5);
+  int AR2 = (int) floor(H/D+0.5);
   int AR = std::max(AR1, AR2);
 
   if (G != 0 || Nb < 1){

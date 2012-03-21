@@ -142,6 +142,7 @@ inline void buildOrthoBasis_naive(SVector3 &dir, SVector3 &dir1, SVector3 &dir2)
    dir2.normalize();
 }
 
+//given a normal, build tangent and binormal
 inline void buildOrthoBasis(SVector3 &normal, SVector3 &tangent, SVector3 &binormal)
 {
   //pick any Unit-Vector that's not parallel to normal:
@@ -150,6 +151,26 @@ inline void buildOrthoBasis(SVector3 &normal, SVector3 &tangent, SVector3 &binor
     tangent = SVector3(0.0, 1.0, 0.0);
   else
     tangent = SVector3(1.0, 0.0, 0.0);
+
+  //build a binormal from tangent and normal:
+  binormal = crossprod(tangent, normal);
+  double t1 = binormal.normalize();
+  
+  //and correct the tangent from the binormal and the normal.
+  tangent = crossprod(normal, binormal);
+  double t2 = tangent.normalize();
+  
+  if (t1 == 0.0 || t2 == 0.0) 
+    buildOrthoBasis_naive(normal, tangent, binormal);
+
+}
+
+//given a normal and guess tangent, build  binormal
+inline void buildOrthoBasis2(SVector3 &normal, SVector3 &tangent, SVector3 &binormal)
+{
+
+  normal.normalize();
+  tangent.normalize();
 
   //build a binormal from tangent and normal:
   binormal = crossprod(tangent, normal);

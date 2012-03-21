@@ -47,7 +47,7 @@ void erase(std::vector<MLine*>& lines, MLine* l) {
 double computeLength(std::vector<MLine*> lines){
 
   double length= 0.0;
-  for (int i = 0; i< lines.size(); i++){
+  for (unsigned int i = 0; i< lines.size(); i++){
     length += lines[i]->getLength();
   }
   return length;
@@ -358,13 +358,14 @@ Centerline::~Centerline(){
   if(nodesR) annDeallocPts(nodesR);
   delete[]index;
   delete[]dist;
+  
 }
 
 void Centerline::importFile(std::string fileName){
 
   current = GModel::current();
   std::vector<GFace*> currentFaces = current->bindingsGetFaces();
-  for (int i = 0; i < currentFaces.size(); i++){
+  for (unsigned int i = 0; i < currentFaces.size(); i++){
     GFace *gf = currentFaces[i];
      if (gf->geomType() == GEntity::DiscreteSurface){
      	for(unsigned int j = 0; j < gf->triangles.size(); j++)
@@ -389,7 +390,7 @@ void Centerline::importFile(std::string fileName){
 
   int maxN = 0.0;
   std::vector<GEdge*> modEdges = mod->bindingsGetEdges();
- for (int i = 0; i < modEdges.size(); i++){
+ for (unsigned int i = 0; i < modEdges.size(); i++){
     GEdge *ge = modEdges[i];
     for(unsigned int j = 0; j < ge->lines.size(); j++){
       MLine *l = ge->lines[j];
@@ -514,7 +515,7 @@ void Centerline::distanceToSurface(){
 
   //COMPUTE WITH REVERSE ANN TREE (SURFACE POINTS IN TREE)
   std::set<MVertex*> allVS;
-  for(int j = 0; j < triangles.size(); j++)
+  for(unsigned int j = 0; j < triangles.size(); j++)
     for(int k = 0; k<3; k++) allVS.insert(triangles[j]->getVertex(k));
   int nbSNodes = allVS.size();
   nodesR = annAllocPts(nbSNodes, 3);
@@ -592,12 +593,12 @@ void Centerline::buildKdTree(){
 
  kdtree = new ANNkd_tree(nodes, nbNodes, 3);
 
- for(unsigned int i = 0; i < nbNodes; ++i){
+ for(int i = 0; i < nbNodes; ++i){
    fprintf(f, "SP(%g,%g,%g){%g};\n",
 	   nodes[i][0], nodes[i][1],nodes[i][2],1.0);
  }
  fprintf(f,"};\n");
-  fclose(f);
+ fclose(f);
 
 }
 
@@ -611,7 +612,6 @@ void Centerline::createSplitCompounds(){
 
   // Remesh new faces (Compound Lines and Compound Surfaces)
   Msg::Info("*** Starting parametrize compounds:");
-  double t0 = Cpu();
 
   //Parametrize Compound Lines
   for (int i=0; i < NE; i++){
@@ -673,7 +673,7 @@ void Centerline::cleanMesh(){
   mySplitMesh->addPhysicalEntity(2*NF+1);
   current->setPhysicalName("surface mesh", 2, 2*NF+1);
   current->add(mySplitMesh);
-  for (int i=0; i < discFaces.size(); i++){
+  for (unsigned int i=0; i < discFaces.size(); i++){
     GFace *gfc =  current->getFaceByTag(NF+i+1);
     for(unsigned int j = 0; j < gfc->triangles.size(); ++j){
       MTriangle *t = gfc->triangles[j];
@@ -710,7 +710,7 @@ void Centerline::cleanMesh(){
     GFace *gf  = current->getFaceByTag(i+1);
     current->remove(gf);
   }
-  for (int i=0; i < discFaces.size(); i++){
+  for (unsigned int i=0; i < discFaces.size(); i++){
     GFace *gfc = current->getFaceByTag(NF+i+1);
     current->remove(gfc);
   }
@@ -731,7 +731,6 @@ void Centerline::createFaces(){
   for(unsigned int i = 0; i < triangles.size(); ++i)
     for(int j = 0; j < 3; j++)
       e2e.insert(std::make_pair(triangles[i]->getEdge(j), triangles[i]));
-  int iGroup = 0;
   while(!e2e.empty()){
     std::set<MTriangle*> group;
     std::set<MEdge, Less_Edge> touched;
@@ -754,7 +753,6 @@ void Centerline::createFaces(){
   Msg::Info("Centerline action (cutMesh) has cut surface mesh in %d faces ", (int)faces.size());
 
   //create discFaces
-  int numBef = current->getMaxElementaryNumber(2) + 1;
   for(unsigned int i = 0; i < faces.size(); ++i){
     int numF = current->getMaxElementaryNumber(2) + 1;
     discreteFace *f = new discreteFace(current, numF);
@@ -762,7 +760,7 @@ void Centerline::createFaces(){
     discFaces.push_back(f);
     std::set<MVertex*> myVertices;
     std::vector<MTriangle*> myFace = faces[i];
-    for(int j= 0; j< myFace.size(); j++){
+    for(unsigned int j= 0; j< myFace.size(); j++){
       MTriangle *t = myFace[j];
       f->triangles.push_back(t);
       for (int k= 0; k< 3; k++){
@@ -794,7 +792,7 @@ void Centerline::createClosedVolume(){
   current->setFactory("Gmsh");
   std::vector<std::vector<GFace *> > myFaceLoops;
   std::vector<GFace *> myFaces;
-  for (int i = 0; i<  boundEdges.size(); i++){
+  for (unsigned int i = 0; i<  boundEdges.size(); i++){
     std::vector<std::vector<GEdge *> > myEdgeLoops;
     std::vector<GEdge *> myEdges;
     GEdge * gec = current->getEdgeByTag(NE+boundEdges[i]->tag());
@@ -867,7 +865,7 @@ void Centerline::cutMesh(){
       int nbSplit = (int)floor(AR / 3. + 0.5);
       double li  = L/nbSplit;
       double lc = 0.0;
-      for (int j= 0; j < lines.size(); j++){
+      for (unsigned int j= 0; j < lines.size(); j++){
 	lc += lines[j]->getLength();
 	if (lc > li && nbSplit > 1) {
 	  MVertex *v1 = lines[j]->getVertex(0);
@@ -1043,34 +1041,59 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    double xyz[3] = {x,y,z};
 
    //take xyz = closest point on boundary in case we are on the planar IN/OUT FACES or in VOLUME
+   bool onTubularSurface = true;
+   double ds = 0.0;
    bool isCompound = (ge->dim() == 2 && ge->geomType() == GEntity::CompoundSurface) ? true: false;
    std::list<GFace*> cFaces;
    if (isCompound) cFaces = ((GFaceCompound*)ge)->getCompounds();
    if ( ge->dim() == 3 || (ge->dim() == 2 && ge->geomType() == GEntity::Plane) ||
 	(isCompound && (*cFaces.begin())->geomType() == GEntity::Plane) ){
-     int num_neighbours = 1;
-     kdtreeR->annkSearch(xyz, num_neighbours, index, dist);
+     onTubularSurface = false;
+     kdtreeR->annkSearch(xyz, 1, index, dist);
+     ds = sqrt(dist[0]);
      xyz[0] = nodesR[index[0]][0];
      xyz[1] = nodesR[index[0]][1];
      xyz[2] = nodesR[index[0]][2];
    }
 
-   int num_neighbours = 2;
-   ANNidxArray index2 = new ANNidx[num_neighbours];
-   ANNdistArray dist2 = new ANNdist[num_neighbours];
-   kdtree->annkSearch(xyz, num_neighbours, index2, dist2);
-   double d = sqrt(dist2[0]);
-   double lc = 2*M_PI*d/nbPoints;
+   ANNidxArray index2 = new ANNidx[2];
+   ANNdistArray dist2 = new ANNdist[2];
+   kdtree->annkSearch(xyz, 2, index2, dist2);
+   double radMax = sqrt(dist2[0]);
    SVector3  p0(nodes[index2[0]][0], nodes[index2[0]][1], nodes[index2[0]][2]);
    SVector3  p1(nodes[index2[1]][0], nodes[index2[1]][1], nodes[index2[1]][2]);
-   SVector3 dir_t = p1-p0;
-   SVector3 dir_n1, dir_n2;
-   buildOrthoBasis(dir_t,dir_n1,dir_n2);
-
-   double lc_t = 3.*lc;
+   
+   //dir_a = direction along the centerline
+   //dir_n = normal direction of the disk
+   //dir_t = tangential direction of the disk
+   SVector3 dir_a = p1-p0;
+   SVector3 dir_n(x-p0.x(), y-p0.y(), z-p0.z()); 
+   SVector3 dir_t;
+   buildOrthoBasis2(dir_a, dir_n, dir_t);
+   
+   double lc = 2*M_PI*radMax/nbPoints;
+   double lc_a = 3.*lc;
+   double lc_n, lc_t;
+   if (onTubularSurface){
+     lc_n = lc_t = lc;
+   }
+   else{
+     double e = radMax/3.;
+     double hn = e/10.;
+     double rm = std::max(radMax-ds, radMax-e);
+     lc_t = 2*M_PI*rm/nbPoints;
+     //lc_n = lc_t = lc;
+     //double ratio = 1.02; //1. + (lc_t-hn)/e;
+     //printf("ratio =%g \n", ratio);
+     //lc_n = ds*(ratio-1) + hn;
+     if (ds < e) lc_n = hn; 
+     else lc_n = lc_t;
+   }
+   double lam_a = 1./(lc_a*lc_a);
+   double lam_n = 1./(lc_n*lc_n);
    double lam_t = 1./(lc_t*lc_t);
-   double lam_n = 1./(lc*lc);
-   metr = SMetric3(lam_t,lam_n,lam_n, dir_t, dir_n1, dir_n2);
+   
+   metr = SMetric3(lam_a,lam_n,lam_t, dir_a, dir_n, dir_t);
 
    delete[]index2;
    delete[]dist2;
