@@ -612,9 +612,6 @@ static void copy_vertices (GEdge* to, GEdge* from, std::map<MVertex*,MVertex*> &
     MEdgeVertex *v_to = new MEdgeVertex (gp.x(),gp.y(),gp.z(), to, gp.u() );
     to->mesh_vertices.push_back(v_to);
     _mesh_to_geom[v_from] = v_to;
-    if (v_from->getNum() == 3646) {
-      printf("FOUND IT!!\n");
-    }
   }
   //  printf("Ending Edge %d %d vertices to match\n",from->tag(),from->mesh_vertices.size());
 }
@@ -624,8 +621,6 @@ static void copy_vertices (GFace *geom, GFace *mesh, std::map<MVertex*,MVertex*>
     MVertex *v_from = mesh->mesh_vertices[i];
     double uv[2];
     GPoint gp = geom->closestPoint ( SPoint3(v_from->x(),v_from->y(),v_from->z()), uv );
-    //    printf("Original point %f %f %f\n", v_from->x(), v_from->y(), v_from->z());
-    //    printf("New point %f %f %f\n", gp.x(), gp.y(), gp.z());
     double DDD = ( v_from->x() - gp.x()) * ( v_from->x() - gp.x()) +
       ( v_from->y() - gp.y()) * ( v_from->y() - gp.y()) +
       ( v_from->z() - gp.z()) * ( v_from->z() - gp.z()) ;
@@ -723,9 +718,5 @@ int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
   copy_vertices(geom, mesh, _mesh_to_geom,coresp_v,coresp_e,coresp_f);
   copy_elements(geom, mesh, _mesh_to_geom,coresp_v,coresp_e,coresp_f);
 
-  geom->writeMSH("testing.msh", 2.2, false, true);
-
   return 1;
-
-  return 0;
 }
