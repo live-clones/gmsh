@@ -1583,7 +1583,7 @@ void LpSmoother::improve_region(GRegion* gr)
   double* initial_conditions = static_cast<double*>(malloc(3*(bank.size()-offset)*sizeof(double)));
   double* scales = static_cast<double*>(malloc(3*(bank.size()-offset)*sizeof(double)));
   LpCVT instance;
-  factor = 0.9;
+  factor = 0.5;
   for(i=0;i<(bank.size()-offset);i++){
     initial_conditions[i] = bank[i+offset].x();
 	initial_conditions[i+(bank.size()-offset)] = bank[i+offset].y();
