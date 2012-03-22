@@ -31,7 +31,7 @@ class gmshFace : public GFace {
   virtual void secondDer(const SPoint2 &, SVector3 *, SVector3 *, SVector3 *) const;
   virtual GEntity::GeomType geomType() const; 
   ModelType getNativeType() const { return GmshModel; }
-  void *getNativePtr() const { return s; }
+  void *getNativePtr() const { printf("coucuo here \n"); return s; }
   virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface=true) const;
   virtual void resetMeshAttributes();
 };

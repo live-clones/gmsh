@@ -16,7 +16,7 @@ static void increaseStencil(MVertex *v, v2t_cont &adj, std::vector<MElement*> &l
   std::set<MElement*> stencil;
   std::set<MVertex*> vs;
   stencil.insert(lt.begin(),lt.end());
-  for (int i=0;i<lt.size();i++){
+  for (unsigned int i=0;i<lt.size();i++){
     for (int j=0;j<lt[i]->getNumVertices();j++){
       MVertex *v1 = lt[i]->getVertex(j);
       if (v1 != v){
@@ -36,7 +36,7 @@ meshMetric::meshMetric(GModel *gm){
 
   if (_dim == 2){
     for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); ++fit){
-      for (int i=0;i<(*fit)->getNumMeshElements();i++){
+      for (unsigned int i=0;i<(*fit)->getNumMeshElements();i++){
         MElement *e = (*fit)->getMeshElement(i);
         MElement *copy = e->copy(_vertexMap, newP, newD);
         _elements.push_back(copy);
@@ -45,7 +45,7 @@ meshMetric::meshMetric(GModel *gm){
   }
   else if (_dim == 3){
     for (GModel::riter rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit){
-      for (int i=0;i<(*rit)->getNumMeshElements();i++){
+      for (unsigned int i=0;i<(*rit)->getNumMeshElements();i++){
         MElement *e = (*rit)->getMeshElement(i);
         MElement *copy = e->copy(_vertexMap, newP, newD);
         _elements.push_back(copy);
@@ -62,7 +62,7 @@ meshMetric::meshMetric(std::vector<MElement*> elements){
   std::map<MElement*, MElement*> newP;
   std::map<MElement*, MElement*> newD;
 
-  for (int i=0;i<elements.size();i++){
+  for (unsigned int i=0;i<elements.size();i++){
     MElement *e = elements[i];
     MElement *copy = e->copy(_vertexMap, newP, newD);
     _elements.push_back(copy);
@@ -100,7 +100,7 @@ void meshMetric::intersectMetrics(){
     _nodalMetrics[ver] = setOfMetrics[0][ver];
     _detMetric[ver] = setOfDetMetric[0][ver];
     _nodalSizes[ver] = setOfSizes[0][ver];
-    for (int i=1;i<setOfMetrics.size();i++){
+    for (unsigned int i=1;i<setOfMetrics.size();i++){
       _nodalMetrics[ver] = intersection_conserve_mostaniso(_nodalMetrics[ver],setOfMetrics[i][ver]);
       _nodalSizes[ver] = std::min(_nodalSizes[ver],setOfSizes[i][ver]);
     }
@@ -194,7 +194,7 @@ void meshMetric::exportInfo(const char * fileendname){
 
 meshMetric::~meshMetric(){
   if (_octree) delete _octree;
-  for (int i=0; i< _elements.size(); i++)
+  for (unsigned int i=0; i< _elements.size(); i++)
     delete _elements[i];
 }
 
@@ -239,7 +239,7 @@ void meshMetric::computeHessian_FE(){
     MVertex *ver = itv->first;
     std::vector<MElement*> vElems= itv->second;
     SVector3 gradv;
-    for (int i=0;i<vElems.size();i++){
+    for (unsigned int i=0;i<vElems.size();i++){
       MElement *e = vElems[i];    
       gradv += gradElems[e];
     }
@@ -289,7 +289,7 @@ void meshMetric::computeHessian_FE(){
     MVertex *ver = itv->first;
     std::vector<MElement*> vElems= itv->second;
     STensor3 hessv(0.0);
-    for (int i=0;i<vElems.size();i++){
+    for (unsigned int i=0;i<vElems.size();i++){
       MElement *e = vElems[i];    
       hessv += hessElems[e];
     }
@@ -321,7 +321,7 @@ void meshMetric::computeHessian_LS( ){
       fullVector<double> ATb (DIM);
       fullVector<double> result (DIM);
       fullMatrix<double> f (1,1);
-      for(int i = 0; i < lt.size(); i++) {
+      for(unsigned int i = 0; i < lt.size(); i++) {
         MElement *e = lt[i];
         int npts; IntPt *pts;
         SPoint3 p;
@@ -371,8 +371,8 @@ void meshMetric::computeMetric(){
   //printf("%d elements are considered in the meshMetric \n",(int)_elements.size());
 
   computeValues();
-  computeHessian_FE();
-  //computeHessian_LS(); 
+  //computeHessian_FE();
+  computeHessian_LS(); 
   
   int metricNumber = setOfMetrics.size();
 

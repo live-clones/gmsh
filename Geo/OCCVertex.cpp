@@ -87,14 +87,22 @@ SPoint2 OCCVertex::reparamOnFace(const GFace *gf, int dir) const
   while(it != l_edges.end()){
     std::list<GEdge*> l = gf->edges();
     if(std::find(l.begin(), l.end(), *it) != l.end()){
-      const TopoDS_Face *s = (TopoDS_Face*)gf->getNativePtr();
-      const TopoDS_Edge *c = (TopoDS_Edge*)(*it)->getNativePtr();
-      double s1,s0;
-      Handle(Geom2d_Curve) curve2d = BRep_Tool::CurveOnSurface(*c, *s, s0, s1);
-      if((*it)->getBeginVertex() == this)
-        return (*it)->reparamOnFace(gf, s0, dir);
-      else if((*it)->getEndVertex() == this)
-        return (*it)->reparamOnFace(gf, s1, dir);
+      if (gf->getNativeType() == GEntity::OpenCascadeModel){
+	const TopoDS_Face *s = (TopoDS_Face*)gf->getNativePtr();
+	const TopoDS_Edge *c = (TopoDS_Edge*)(*it)->getNativePtr();
+	double s1,s0;
+	Handle(Geom2d_Curve) curve2d = BRep_Tool::CurveOnSurface(*c, *s, s0, s1);
+	if((*it)->getBeginVertex() == this)
+	  return (*it)->reparamOnFace(gf, s0, dir);
+	else if((*it)->getEndVertex() == this)
+	  return (*it)->reparamOnFace(gf, s1, dir);
+      }
+      //if not OCCFace (OK for planar faces)
+      else{
+	const GPoint pt = point();
+	SPoint3 sp(pt.x(), pt.y(), pt.z());
+	gf->parFromPoint(sp);
+      }
     }
     ++it;
   }

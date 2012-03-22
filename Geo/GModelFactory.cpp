@@ -84,19 +84,19 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
 	  vertb = Create_Vertex(gvb->tag(), gvb->x(), gvb->y(), gvb->z(),
 				gvb->prescribedMeshSizeAtVertex(), 1.0);
 	  Tree_Add(gm->getGEOInternals()->Points, &vertb);
+	  vertb->Typ = MSH_POINT;
+	  vertb->Num = gvb->tag();
 	 }
 	if (!verte){
 	  verte = Create_Vertex(gve->tag(), gve->x(), gve->y(), gve->z(),
 				gve->prescribedMeshSizeAtVertex(), 1.0);
 	  Tree_Add(gm->getGEOInternals()->Points, &verte);
+	  verte->Typ = MSH_POINT;
+	  verte->Num = gve->tag();
 	}
 
-	List_T *temp = List_Create(2, 2, sizeof(int));
-	List_Add(temp, &vertb);
-	List_Add(temp, &verte);
-
 	if (ge->geomType() == GEntity::Line){
-	  c = Create_Curve(numEdge, MSH_SEGM_LINE, 1, temp, NULL, -1, -1, 0., 1.);
+	  c = Create_Curve(numEdge, MSH_SEGM_LINE, 1, NULL, NULL, -1, -1, 0., 1.);
 	}
 	else if (ge->geomType() == GEntity::DiscreteCurve){
 	  c = Create_Curve(numEdge, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0., 1.);
@@ -104,8 +104,11 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
 	else if(ge->geomType() == GEntity::CompoundCurve){
 	  c = Create_Curve(numEdge, MSH_SEGM_COMPOUND, 1, NULL, NULL, -1, -1, 0., 1.);
 	  std::vector<GEdge*> gec = ((GEdgeCompound*)ge)->getCompounds();
-	  for(int i = 0; i < gec.size(); i++)
+	  for(unsigned int i = 0; i < gec.size(); i++)
 	    c->compound.push_back(gec[i]->tag());
+	}
+	else{
+	  Msg::Info("Unknown type of curve to add to planar face ...");
 	}
 
 	c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
@@ -117,7 +120,6 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
 
 	Tree_Add(gm->getGEOInternals()->Curves, &c);
 	CreateReversedCurve(c);
-	List_Delete(temp);
       }
       List_Add(temp, &numEdge);
     }

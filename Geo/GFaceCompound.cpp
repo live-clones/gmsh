@@ -405,7 +405,6 @@ static MTriangle* findInvertedTri(v2t_cont &adjv, MVertex*v0, MVertex*v1, MVerte
 				std::map<MVertex*, SPoint3> &vCoord, double nTot)
 {
 
-  MTriangle *tri=NULL;
   v2t_cont :: iterator it = adjv.find(v1);
   std::vector<MElement*> vTri = it->second;
   MTriangle *myTri=NULL;
@@ -774,7 +773,7 @@ void GFaceCompound::convexBoundary(double nTot) const
     //start the loop
     int nbInv = 0;
     int nbInvTri = 0;
-    for(int i = 0; i < oVert.size(); i++){
+    for(unsigned int i = 0; i < oVert.size(); i++){
 
       MVertex *v0 = oVert[i];
       MVertex *v1, *v2;

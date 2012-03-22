@@ -67,43 +67,51 @@ void OCCEdge::setTrimmed(OCCFace *f)
 
 SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
 {
-  const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();
-  double t0, t1;
-  Handle(Geom2d_Curve) c2d;
 
-  if(dir == 1){
-    c2d = BRep_Tool::CurveOnSurface(c, *s, t0, t1);
+  if (face->getNativeType() != GEntity::OpenCascadeModel){
+    const GPoint pt = point(epar);
+    SPoint3 sp(pt.x(), pt.y(), pt.z());
+    return face->parFromPoint(sp);
   }
   else{
-    c2d = BRep_Tool::CurveOnSurface(c_rev, *s, t0, t1);
-  }
+    const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();
+    double t0, t1;
+    Handle(Geom2d_Curve) c2d;
+
+    if(dir == 1){
+      c2d = BRep_Tool::CurveOnSurface(c, *s, t0, t1);
+    }
+    else{
+      c2d = BRep_Tool::CurveOnSurface(c_rev, *s, t0, t1);
+    }
   
-  if(c2d.IsNull()){
-    Msg::Fatal("Reparam on face failed: curve %d is not on surface %d",
-               tag(), face->tag());
+    if(c2d.IsNull()){
+      Msg::Fatal("Reparam on face failed: curve %d is not on surface %d",
+		 tag(), face->tag());
+    }
+
+    double u, v;
+    gp_Pnt2d pnt = c2d->Value(epar);
+    pnt.Coord(u, v);
+
+    // sometimes OCC miserably fails ...
+    GPoint p1 = point(epar);
+    GPoint p2 = face->point(u, v);
+    const double dx = p1.x()-p2.x();
+    const double dy = p1.y()-p2.y();
+    const double dz = p1.z()-p2.z();
+    if(sqrt(dx * dx + dy * dy + dz * dz) > 1.e-2 * CTX::instance()->lc){
+      Msg::Warning("Reparam on face was inaccurate for curve %d on surface %d at point %g",
+		   tag(), face->tag(), epar);
+      Msg::Warning("On the face %d local (%g %g) global (%g %g %g)",
+		   face->tag(), u, v, p2.x(), p2.y(), p2.z());
+      Msg::Warning("On the edge %d local (%g) global (%g %g %g)",
+		   tag(), epar, p1.x(), p1.y(), p1.z());
+    }
+    return SPoint2(u, v);
   }
 
-  double u, v;
-  gp_Pnt2d pnt = c2d->Value(epar);
-  pnt.Coord(u, v);
-
-  // sometimes OCC miserably fails ...
-  GPoint p1 = point(epar);
-  GPoint p2 = face->point(u, v);
-  const double dx = p1.x()-p2.x();
-  const double dy = p1.y()-p2.y();
-  const double dz = p1.z()-p2.z();
-  if(sqrt(dx * dx + dy * dy + dz * dz) > 1.e-2 * CTX::instance()->lc){
-    Msg::Warning("Reparam on face was inaccurate for curve %d on surface %d at point %g",
-                 tag(), face->tag(), epar);
-    Msg::Warning("On the face %d local (%g %g) global (%g %g %g)",
-                 face->tag(), u, v, p2.x(), p2.y(), p2.z());
-    Msg::Warning("On the edge %d local (%g) global (%g %g %g)",
-                 tag(), epar, p1.x(), p1.y(), p1.z());
-  }
-  return SPoint2(u, v);
 }
-
 GPoint OCCEdge::closestPoint(const SPoint3 &qp, double &param) const
 {
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
@@ -128,15 +136,17 @@ GPoint OCCEdge::closestPoint(const SPoint3 &qp, double &param) const
 // True if the edge is a seam for the given face
 bool OCCEdge::isSeam(const GFace *face) const
 {
-  if (face->geomType() == GEntity::CompoundSurface)return false; 
+
+  if (face->geomType() == GEntity::CompoundSurface) return false;
+  if (face->getNativeType() != GEntity::OpenCascadeModel) return false;
+
   const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();
   BRepAdaptor_Surface surface(*s);
   //  printf("asking if edge %d is a seam of face %d\n",tag(),face->tag());
   //  printf("periodic %d %d\n",surface.IsUPeriodic(),surface.IsVPeriodic());
   //  if(surface.IsUPeriodic() || surface.IsVPeriodic()){
   return BRep_Tool::IsClosed(c, *s);
-  //  }
-  // return false;
+
 }
 
 GPoint OCCEdge::point(double par) const

@@ -296,6 +296,7 @@ static void remeshUnrecoveredEdges(std::map<MVertex*, BDS_Point*> &recoverMapInv
 
 static bool algoDelaunay2D(GFace *gf)
 {
+
   if(!noSeam(gf))
     return false;
 
@@ -2014,8 +2015,7 @@ void partitionAndRemesh(GFaceCompound *gf)
     GFace *gfc =  gf->model()->getFaceByTag(numf + NF + i );
     meshGFace mgf;
     mgf(gfc);
-    //gfc->lloyd(20,0);
-
+  
     for(unsigned int j = 0; j < gfc->triangles.size(); ++j){
       MTriangle *t = gfc->triangles[j];
       std::vector<MVertex *> v(3);

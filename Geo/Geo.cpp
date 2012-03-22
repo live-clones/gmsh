@@ -3503,6 +3503,11 @@ void sortEdgesInLoop(int num, List_T *edges)
   while(List_Nbr(edges) < nbEdges) {
     for(int i = 0; i < List_Nbr(temp); i++) {
       c2 = *(Curve **)List_Pointer(temp, i);
+       //reverse loop if not ordered correctly !
+      if (c1->end == c2->end){
+	Curve *c2R = CreateReversedCurve(c2);
+	c2 = c2R;
+      }
       if(c1->end == c2->beg) {
         List_Add(edges, &c2->Num);
         List_PSuppress(temp, i);
@@ -3518,8 +3523,8 @@ void sortEdgesInLoop(int num, List_T *edges)
         }
         break;
       }
-    }
-    if(j++ > nbEdges) {
+     }
+     if(j++ > nbEdges) {
       Msg::Error("Line Loop %d is wrong", num);
       break;
     }
