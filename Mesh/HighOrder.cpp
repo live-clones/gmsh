@@ -1330,7 +1330,8 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
       std::vector<MElement*> v;
       v.insert(v.begin(), (*it)->triangles.begin(), (*it)->triangles.end());
       v.insert(v.end(), (*it)->quadrangles.begin(), (*it)->quadrangles.end());
-      //      hot.applySmoothingTo(v, (*it));
+      //hot.applySmoothingTo(v, (*it));
+      //hot.applySmoothingTo(v, .1,0);
     }
     //    hot.ensureMinimumDistorsion(0.1);
     checkHighOrderTriangles("Final mesh", m, bad, worst);

@@ -204,7 +204,11 @@ void highOrderTools::computeMetricInfo(GFace *gf,
   for (int j = 0; j < nbNodes; j++){
     SPoint2 param;
     reparamMeshVertexOnFace(e->getVertex(j), gf, param);
-    Pair<SVector3,SVector3> der = gf->firstDer(param);
+    //    printf("%g %g vs %g %g %g\n",param.x(),param.y(),
+    //	   e->getVertex(j)->x(),e->getVertex(j)->y(),e->getVertex(j)->z());
+
+    Pair<SVector3,SVector3> der = gf->firstDer(param);    
+
     int XJ = j;
     int YJ = j + nbNodes;
     int ZJ = j + 2 * nbNodes;
@@ -229,6 +233,14 @@ void highOrderTools::computeMetricInfo(GFace *gf,
     D(XJ) = gp.x() - ss.x();
     D(YJ) = gp.y() - ss.y();
     D(ZJ) = gp.z() - ss.z();
+    if (e->getVertex(j)->onWhat()->dim() == 1)
+      printf("point %d on %d %d dx = %g %g %g --> %g %g %g vs. %g %g %g --> %g %g %g \n",e->getVertex(j)->getNum(),
+	     e->getVertex(j)->onWhat()->dim(),e->getVertex(j)->onWhat()->tag(),
+	     D(XJ),D(YJ),D(ZJ),
+	     gp.x(),gp.y(),gp.z(),
+	     ss.x(),ss.y(),ss.z(),
+	     e->getVertex(j)->x(),e->getVertex(j)->y(),e->getVertex(j)->z());
+    
   }
 }
 
@@ -245,7 +257,7 @@ void highOrderTools::applySmoothingTo(std::vector<MElement*> & all, GFace *gf)
   std::vector<MElement*> layer, v;
   double minD;
   getDistordedElements(all, 0.5, v, minD);
-  const int nbLayers = 3;
+  const int nbLayers = 322;
   for (int i = 0; i < nbLayers; i++){
     addOneLayer(all, v, layer);
     v.insert(v.end(), layer.begin(), layer.end());
@@ -271,6 +283,7 @@ void highOrderTools::applySmoothingTo(std::vector<MElement*> & all, GFace *gf)
 
   // fix all vertices that cannot move
   for (unsigned int i = 0; i < v.size(); i++){
+    //    moveToStraightSidedLocation(v[i]);
     for (int j = 0; j < v[i]->getNumVertices(); j++){
       MVertex *vert = v[i]->getVertex(j);
       if (vert->onWhat()->dim() < 2){
@@ -294,7 +307,7 @@ void highOrderTools::applySmoothingTo(std::vector<MElement*> & all, GFace *gf)
   double dx = dx0;
   Msg::Debug(" dx0 = %12.5E", dx0);
   int iter = 0;
-  while(1){
+  while(0){
     double dx2 = smooth_metric_(v, gf, myAssembler, verticesToMove, El);
     Msg::Debug(" dx2  = %12.5E", dx2);
     if (fabs(dx2 - dx) < 1.e-4 * dx0)break;
@@ -314,9 +327,11 @@ void highOrderTools::applySmoothingTo(std::vector<MElement*> & all, GFace *gf)
     }
     else{
       SVector3 p =  _targetLocation[(*it)];
-      (*it)->x() = p.x();
-      (*it)->y() = p.y();
-      (*it)->z() = p.z();
+      //      SVector3 p =  getSSL(*it);
+      printf("%12.5E %12.5E %12.5E %d %d\n",p.x(),p.y(),p.z(),(*it)->onWhat()->dim(),(*it)->onWhat()->tag());
+      //      (*it)->x() = p.x();
+      //      (*it)->y() = p.y();
+      //      (*it)->z() = p.z();
     }
   }
   delete lsys;
@@ -355,6 +370,8 @@ double highOrderTools::smooth_metric_(std::vector<MElement*>  & v,
       computeMetricInfo(gf, e, J32, J23, D3);
       J23K33.gemm(J23, K33, 1, 0);
       K22.gemm(J23K33, J32, 1, 0);
+      //      K33.print("K33");
+      //      K22.print("K22");
       J23K33.mult(D3, R2);
       for (int j = 0; j < n2; j++){
         Dof RDOF = El.getLocalDofR(&se, j);
@@ -376,7 +393,8 @@ double highOrderTools::smooth_metric_(std::vector<MElement*>  & v,
         SPoint2 dparam;
         myAssembler.getDofValue((*it), 0, _tag, dparam[0]);
         myAssembler.getDofValue((*it), 1, _tag, dparam[1]);
-        SPoint2 newp = param+dparam;
+	printf("%g %g -- %g %g\n",dparam[0],dparam[1],param[0],param[1]);
+	SPoint2 newp = param+dparam;
         dx += newp.x() * newp.x() + newp.y() * newp.y();
         (*it)->setParameter(0, newp.x());
         (*it)->setParameter(1, newp.y());
@@ -431,8 +449,17 @@ void highOrderTools::computeStraightSidedPositions ()
       SVector3 p1((*it)->lines[i]->getVertex(1)->x(),
           (*it)->lines[i]->getVertex(1)->y(),
           (*it)->lines[i]->getVertex(1)->z());
+
+      for (int k=0;k<2;k++){
+	if (_straightSidedLocation.find((*it)->lines[i]->getVertex(k)) == _straightSidedLocation.end()){
+	  _straightSidedLocation [(*it)->lines[i]->getVertex(k)] = k ? p1 : p0;
+	  _targetLocation[(*it)->lines[i]->getVertex(k)] = k ? p1 : p0;
+	}
+      }
+
+
       for (int j=1;j<=N;j++){
-        const double xi = (double)j/(N+1);
+        const double xi = (double)(j)/(N+1);
         //	printf("xi = %g\n",xi);
         const SVector3 straightSidedPoint = p0 *(1.-xi) + p1*xi;
         MVertex *v = (*it)->lines[i]->getVertex(j+1);
@@ -711,7 +738,7 @@ double highOrderTools::applySmoothingTo (std::vector<MElement*> &all,
 
   char sm[] = "sm.msh";
   double percentage_of_what_is_left = apply_incremental_displacement (1., all, mixed, -100000000, sm, all);
-  ensureMinimumDistorsion (all, threshold);
+  //  ensureMinimumDistorsion (all, threshold);
   return 1.;
 
   double percentage = 0.0;
