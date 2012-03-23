@@ -566,6 +566,7 @@ static void Mesh3D(GModel *m)
   double t2 = Cpu();
   CTX::instance()->meshTimer[2] = t2 - t1;
   Msg::StatusBar(2, true, "Done meshing 3D (%g s)", CTX::instance()->meshTimer[2]);
+  
 }
 
 void OptimizeMeshNetgen(GModel *m)

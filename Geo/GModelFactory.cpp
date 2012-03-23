@@ -108,7 +108,7 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
 	    c->compound.push_back(gec[i]->tag());
 	}
 	else{
-	  Msg::Info("Unknown type of curve to add to planar face ...");
+	  c = Create_Curve(numEdge, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0., 1.);
 	}
 
 	c->Control_Points = List_Create(2, 1, sizeof(Vertex *));

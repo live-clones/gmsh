@@ -444,6 +444,7 @@ void meshMetric::computeMetric(){
       H = hfrey;
     }
     else if ((_technique == meshMetric::EIGENDIRECTIONS )||(_technique == meshMetric::EIGENDIRECTIONS_LINEARINTERP_H )){
+
       double metric_value_hmax = 1./hmax/hmax;
       SVector3 gr = grads[ver];
       double norm = gr.normalize();

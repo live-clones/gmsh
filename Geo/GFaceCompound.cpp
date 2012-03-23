@@ -861,21 +861,21 @@ void GFaceCompound::convexBoundary(double nTot) const
 
     }
 
-    char name[256];
-    sprintf(name, "myBC-%d.pos", kk);
-    FILE * f2 = fopen(name,"w");
-    fprintf(f2, "View \"\"{\n");
-    for (int i = 0; i< oVert.size()-1; i++){
-      SPoint3 uv0 = coordinates[oVert[i]];
-      SPoint3 uv1 = coordinates[oVert[i+1]];
-      fprintf(f2, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
-    	      uv0.x(),uv0.y(), uv0.z(),
-    	      uv1.x(),uv1.y(), uv1.z(),
-    	      (double)i, (double)i+1);
-    }
-    fprintf(f2,"};\n");
-    fclose(f2);
-    kk++;
+    // char name[256];
+    // sprintf(name, "myBC-%d.pos", kk);
+    // FILE * f2 = fopen(name,"w");
+    // fprintf(f2, "View \"\"{\n");
+    // for (int i = 0; i< oVert.size()-1; i++){
+    //   SPoint3 uv0 = coordinates[oVert[i]];
+    //   SPoint3 uv1 = coordinates[oVert[i+1]];
+    //   fprintf(f2, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
+    // 	      uv0.x(),uv0.y(), uv0.z(),
+    // 	      uv1.x(),uv1.y(), uv1.z(),
+    // 	      (double)i, (double)i+1);
+    // }
+    // fprintf(f2,"};\n");
+    // fclose(f2);
+    // kk++;
 
   }
 

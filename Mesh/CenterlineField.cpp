@@ -861,8 +861,8 @@ void Centerline::cutMesh(){
     double D = (edges[i].minRad+edges[i].maxRad);
     double AR = L/D;
     printf("*** Centerline branch %d (AR=%d) \n", i, (int)floor(AR + 0.5));
-    if( AR > 4.0){
-      int nbSplit = (int)floor(AR / 3. + 0.5);
+    if( AR > 2.5){
+      int nbSplit = (int)floor(AR/3. + 0.5);
       double li  = L/nbSplit;
       double lc = 0.0;
       for (unsigned int j= 0; j < lines.size(); j++){
@@ -924,7 +924,7 @@ void Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
       allEdges.insert(triangles[i]->getEdge(j));
   bool closedCut = false;
   int step = 0;
-  while (!closedCut && step < 10){
+  while (!closedCut && step < 20){
     double rad = 1.2*maxRad+0.1*step*maxRad;
     std::map<MEdge,MVertex*,Less_Edge> cutEdges;
     std::set<MVertex*> cutVertices;
@@ -1074,6 +1074,7 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    double lc = 2*M_PI*radMax/nbPoints;
    double lc_a = 3.*lc;
    double lc_n, lc_t;
+
    if (onTubularSurface){
      lc_n = lc_t = lc;
    }
