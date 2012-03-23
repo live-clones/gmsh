@@ -223,6 +223,7 @@
 #define ALGO_3D_FRONTAL_DEL    5
 #define ALGO_3D_FRONTAL_HEX    6
 #define ALGO_3D_MMG3D          7
+#define ALGO_3D_RTREE          9
 
 // Meshing methods
 #define MESH_NONE         0

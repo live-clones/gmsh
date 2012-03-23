@@ -31,6 +31,7 @@
 #include "CenterlineField.h"
 #include "Field.h"
 #include "Options.h"
+#include "Simple3D.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -556,6 +557,10 @@ static void Mesh3D(GModel *m)
   FindConnectedRegions(delaunay, connected);
   for(unsigned int i = 0; i < connected.size(); i++){
     MeshDelaunayVolume(connected[i]);
+	if(CTX::instance()->mesh.algo3d==ALGO_3D_RTREE){
+	  Filler f;
+	  f.treat_region(connected[i][0]);
+	}
   }
 
   double t2 = Cpu();
