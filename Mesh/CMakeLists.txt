@@ -24,7 +24,6 @@ CenterlineField.cpp
     BoundaryLayers.cpp 
     BDS.cpp 
     HighOrder.cpp 
-      highOrderSmoother.cpp 
       highOrderTools.cpp 
     meshPartition.cpp
     meshRefine.cpp

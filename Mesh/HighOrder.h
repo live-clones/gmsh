@@ -19,16 +19,12 @@ typedef std::map<std::pair<MVertex*, MVertex*>, std::vector<MVertex*> > edgeCont
 // are the high order representation of the face
 typedef std::map<MFace, std::vector<MVertex*>, Less_Face> faceContainer;
 
-class highOrderSmoother;
-
 void SetOrder1(GModel *m);
 void SetOrderN(GModel *m, int order, bool linear=true, bool incomplete=false);
 MTriangle* setHighOrder(MTriangle *t, GFace *gf, 
                         edgeContainer &edgeVertices, 
                         faceContainer &faceVertices, 
-                        bool linear, bool incomplete, int nPts = 1, 
-                        highOrderSmoother *displ2D = 0,
-                        highOrderSmoother *displ3D = 0);
+                        bool linear, bool incomplete, int nPts = 1);
 void checkHighOrderTriangles(const char* cc, GModel *m, 
                              std::vector<MElement*> &bad, double &minJGlob);
 
