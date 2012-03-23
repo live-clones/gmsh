@@ -1027,6 +1027,8 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
       }
     }
     else {
+      throw;
+      /*
       getFaceVertices(gr, p, vf, faceVertices, edgeVertices, linear, nPts);
       ve.insert(ve.end(), vf.begin(), vf.end());
       MPyramidN incpl(p->getVertex(0), p->getVertex(1), p->getVertex(2),
@@ -1037,7 +1039,7 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
       MPyramid *n = new MPyramidN(p->getVertex(0), p->getVertex(1), p->getVertex(2),
 				  p->getVertex(3), p->getVertex(4), ve, nPts + 1);
       pyramids2.push_back(n);
-
+      */
     }
     delete p;
   }
