@@ -33,7 +33,7 @@ static int comparePosition(const void *a, const void *b)
   Vertex *w = *(Vertex **)b;
 
   // Warning: tolerance! (before 1.61, it was set to 1.e-10 * CTX::instance()->lc)
-  double eps = CTX::instance()->geom.tolerance * CTX::instance()->lc; 
+  double eps = CTX::instance()->geom.tolerance * CTX::instance()->lc;
 
   if(q->Pos.X - w->Pos.X > eps) return 1;
   if(q->Pos.X - w->Pos.X < -eps) return -1;
@@ -114,7 +114,7 @@ Vertex *Create_Vertex(int Num, double X, double Y, double Z, double lc, double u
   Vertex *pV = new Vertex(X, Y, Z, lc);
   pV->w = 1.0;
   pV->Num = Num;
-  GModel::current()->getGEOInternals()->MaxPointNum = 
+  GModel::current()->getGEOInternals()->MaxPointNum =
     std::max(GModel::current()->getGEOInternals()->MaxPointNum, Num);
   pV->u = u;
   pV->geometry = 0;
@@ -127,7 +127,7 @@ Vertex *Create_Vertex(int Num, double u, double v, gmshSurface *surf, double lc)
   Vertex *pV = new Vertex(p.x(), p.y(), p.z(), lc);
   pV->w = 1.0;
   pV->Num = Num;
-  GModel::current()->getGEOInternals()->MaxPointNum = 
+  GModel::current()->getGEOInternals()->MaxPointNum =
     std::max(GModel::current()->getGEOInternals()->MaxPointNum, Num);
   pV->u = u;
   pV->geometry = surf;
@@ -150,7 +150,7 @@ PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T *intlist)
   PhysicalGroup *p = new PhysicalGroup;
   p->Entities = List_Create(List_Nbr(intlist), 1, sizeof(int));
   p->Num = Num;
-  GModel::current()->getGEOInternals()->MaxPhysicalNum = 
+  GModel::current()->getGEOInternals()->MaxPhysicalNum =
     std::max(GModel::current()->getGEOInternals()->MaxPhysicalNum, Num);
   p->Typ = typ;
   p->Visible = 1;
@@ -177,7 +177,7 @@ EdgeLoop *Create_EdgeLoop(int Num, List_T *intlist)
   EdgeLoop *l = new EdgeLoop;
   l->Curves = List_Create(List_Nbr(intlist), 1, sizeof(int));
   l->Num = Num;
-  GModel::current()->getGEOInternals()->MaxLineLoopNum = 
+  GModel::current()->getGEOInternals()->MaxLineLoopNum =
     std::max(GModel::current()->getGEOInternals()->MaxLineLoopNum, Num);
   for(int i = 0; i < List_Nbr(intlist); i++) {
     int j;
@@ -202,7 +202,7 @@ SurfaceLoop *Create_SurfaceLoop(int Num, List_T *intlist)
   SurfaceLoop *l = new SurfaceLoop;
   l->Surfaces = List_Create(List_Nbr(intlist), 1, sizeof(int));
   l->Num = Num;
-  GModel::current()->getGEOInternals()->MaxSurfaceLoopNum = 
+  GModel::current()->getGEOInternals()->MaxSurfaceLoopNum =
     std::max(GModel::current()->getGEOInternals()->MaxSurfaceLoopNum, Num);
   for(int i = 0; i < List_Nbr(intlist); i++) {
     int j;
@@ -243,12 +243,12 @@ void End_Curve(Curve *c)
       if(c->geometry != pV->geometry){
         c->geometry = 0;
         break;
-      } 
+      }
     }
   }
-  
+
   c->degenerated = false;
-  
+
   if(c->Typ == MSH_SEGM_CIRC || c->Typ == MSH_SEGM_CIRC_INV ||
      c->Typ == MSH_SEGM_ELLI || c->Typ == MSH_SEGM_ELLI_INV) {
 
@@ -443,7 +443,7 @@ void End_Surface(Surface *s)
       if (c->geometry != s->geometry){
         s->geometry = 0;
         break;
-      } 
+      }
     }
   }
 }
@@ -470,8 +470,8 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
   pC->Extrude = NULL;
   pC->Typ = Typ;
   pC->Num = Num;
-  pC->meshMaster = Num; 
-  GModel::current()->getGEOInternals()->MaxLineNum = 
+  pC->meshMaster = Num;
+  GModel::current()->getGEOInternals()->MaxLineNum =
     std::max(GModel::current()->getGEOInternals()->MaxLineNum, Num);
   pC->Method = MESH_UNSTRUCTURED;
   pC->degre = Order;
@@ -584,9 +584,9 @@ Surface *Create_Surface(int Num, int Typ)
   pS->Num = Num;
   pS->geometry = 0;
   pS->InSphereCenter = 0;
-  pS->meshMaster = Num; 
+  pS->meshMaster = Num;
 
-  GModel::current()->getGEOInternals()->MaxSurfaceNum = 
+  GModel::current()->getGEOInternals()->MaxSurfaceNum =
     std::max(GModel::current()->getGEOInternals()->MaxSurfaceNum, Num);
   pS->Typ = Typ;
   pS->Method = MESH_UNSTRUCTURED;
@@ -622,7 +622,7 @@ Volume *Create_Volume(int Num, int Typ)
   pV->Color.type = 0;
   pV->Visible = 1;
   pV->Num = Num;
-  GModel::current()->getGEOInternals()->MaxVolumeNum = 
+  GModel::current()->getGEOInternals()->MaxVolumeNum =
     std::max(GModel::current()->getGEOInternals()->MaxVolumeNum, Num);
   pV->Typ = Typ;
   pV->Method = MESH_UNSTRUCTURED;
@@ -746,10 +746,10 @@ static int compare2Lists(List_T *List1, List_T *List2,
   if(!List_Nbr(List1) && !List_Nbr(List2))
     return 0;
 
-  if(!List_Nbr(List1) || !List_Nbr(List2) || 
+  if(!List_Nbr(List1) || !List_Nbr(List2) ||
      (List_Nbr(List1) != List_Nbr(List2)))
     return List_Nbr(List1) - List_Nbr(List2);
-  
+
   List_T *List1Prime = List_Create(List_Nbr(List1), 1, List1->size);
   List_T *List2Prime = List_Create(List_Nbr(List2), 1, List2->size);
   List_Copy(List1, List1Prime);
@@ -833,7 +833,7 @@ LevelSet *FindLevelSet(int inum)
 {
   LevelSet L, *pl;
   pl = &L;
-  pl->Num = inum; 
+  pl->Num = inum;
   if(Tree_Query(GModel::current()->getGEOInternals()->LevelSets, &pl)) {
     return pl;
   }
@@ -1400,26 +1400,26 @@ void VisibilityShape(char *str, int Type, int Mode)
   if(!strcmp(str, "all") || !strcmp(str, "*")) {
     switch (Type) {
     case 0:
-      Tree_Action(GModel::current()->getGEOInternals()->Points, vis_nod); 
-      for(GModel::viter it = GModel::current()->firstVertex(); 
+      Tree_Action(GModel::current()->getGEOInternals()->Points, vis_nod);
+      for(GModel::viter it = GModel::current()->firstVertex();
           it != GModel::current()->lastVertex(); it++)
         (*it)->setVisibility(Mode);
       break;
-    case 1: 
+    case 1:
       Tree_Action(GModel::current()->getGEOInternals()->Curves, vis_cur);
-      for(GModel::eiter it = GModel::current()->firstEdge(); 
+      for(GModel::eiter it = GModel::current()->firstEdge();
           it != GModel::current()->lastEdge(); it++)
         (*it)->setVisibility(Mode);
       break;
-    case 2: 
-      Tree_Action(GModel::current()->getGEOInternals()->Surfaces, vis_sur); 
-      for(GModel::fiter it = GModel::current()->firstFace(); 
+    case 2:
+      Tree_Action(GModel::current()->getGEOInternals()->Surfaces, vis_sur);
+      for(GModel::fiter it = GModel::current()->firstFace();
           it != GModel::current()->lastFace(); it++)
         (*it)->setVisibility(Mode);
       break;
     case 3:
-      Tree_Action(GModel::current()->getGEOInternals()->Volumes, vis_vol); 
-      for(GModel::riter it = GModel::current()->firstRegion(); 
+      Tree_Action(GModel::current()->getGEOInternals()->Volumes, vis_vol);
+      for(GModel::riter it = GModel::current()->firstRegion();
           it != GModel::current()->lastRegion(); it++)
         (*it)->setVisibility(Mode);
       break;
@@ -1457,7 +1457,7 @@ Curve *CreateReversedCurve(Curve *c)
     for(int i = 0; i < c->degre + List_Nbr(c->Control_Points) + 1; i++)
       newc->k[c->degre + List_Nbr(c->Control_Points) - i] = c->k[i];
   }
-  
+
   if(c->Typ == MSH_SEGM_CIRC)
     newc->Typ = MSH_SEGM_CIRC_INV;
   if(c->Typ == MSH_SEGM_CIRC_INV)
@@ -2092,7 +2092,7 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined)
         combined.erase(it);
     }
     List_T *tmp = List_Create(combined.size(), 10, sizeof(Shape));
-    for(std::set<Shape*, ShapeLessThan>::iterator it = combined.begin(); 
+    for(std::set<Shape*, ShapeLessThan>::iterator it = combined.begin();
         it != combined.end(); it++)
       List_Add(tmp, *it);
     List_Reset(shapesBoundary);
@@ -2138,7 +2138,7 @@ static int Extrude_ProtudePoint(int type, int ip,
                                 double T0, double T1, double T2,
                                 double A0, double A1, double A2,
                                 double X0, double X1, double X2, double alpha,
-                                Curve **pc, Curve **prc, int final, 
+                                Curve **pc, Curve **prc, int final,
                                 ExtrudeParams *e)
 {
   double matrix[4][4], T[3], Ax[3], d;
@@ -2229,8 +2229,8 @@ static int Extrude_ProtudePoint(int type, int ip,
     T[2] = pv->Pos.Z - X2;
     prosca(T, Ax, &d);
     newp->Pos.X = X0 + d * Ax[0];
-    newp->Pos.Y = X1 + d * Ax[1]; 
-    newp->Pos.Z = X2 + d * Ax[2]; 
+    newp->Pos.Y = X1 + d * Ax[1];
+    newp->Pos.Z = X2 + d * Ax[2];
     List_Add(c->Control_Points, &newp);
     List_Add(c->Control_Points, &chapeau);
     c->beg = pv;
@@ -2302,7 +2302,7 @@ static int Extrude_ProtudeCurve(int type, int ic,
                                 double T0, double T1, double T2,
                                 double A0, double A1, double A2,
                                 double X0, double X1, double X2, double alpha,
-                                Surface **ps, int final, 
+                                Surface **ps, int final,
                                 ExtrudeParams *e)
 {
   double matrix[4][4], T[3], Ax[3];
@@ -2677,7 +2677,7 @@ void ExtrudeShape(int extrude_type, int shape_type, int shape_num,
   List_Delete(tmp);
 }
 
-void ExtrudeShapes(int type, List_T *list_in, 
+void ExtrudeShapes(int type, List_T *list_in,
                    double T0, double T1, double T2,
                    double A0, double A1, double A2,
                    double X0, double X1, double X2, double alpha,
@@ -2792,10 +2792,10 @@ static int compareTwoPoints(const void *a, const void *b)
   Vertex *q = *(Vertex **)a;
   Vertex *w = *(Vertex **)b;
 
-  if(q->Typ != w->Typ) 
+  if(q->Typ != w->Typ)
     return q->Typ - w->Typ;
 
-  if(q->boundaryLayerIndex != w->boundaryLayerIndex) 
+  if(q->boundaryLayerIndex != w->boundaryLayerIndex)
     return q->boundaryLayerIndex - w->boundaryLayerIndex;
 
   return comparePosition(a, b);
@@ -2820,7 +2820,7 @@ static int compareTwoCurves(const void *a, const void *b)
 
   if(List_Nbr(c1->Control_Points) != List_Nbr(c2->Control_Points))
     return List_Nbr(c1->Control_Points) - List_Nbr(c2->Control_Points);
-  
+
   if(!List_Nbr(c1->Control_Points)){
     if(!c1->beg || !c2->beg)
       return 1;
@@ -2857,7 +2857,7 @@ static int compareTwoSurfaces(const void *a, const void *b)
   if(s1->Typ == MSH_SURF_BND_LAYER || s2->Typ == MSH_SURF_BND_LAYER){
     if(s1->Typ != s2->Typ) return s1->Typ - s2->Typ;
   }
-  
+
   // if both surfaces have no generatrices, stay on the safe side and
   // assume they are different
   if(!List_Nbr(s1->Generatrices) && !List_Nbr(s2->Generatrices))
@@ -2869,14 +2869,14 @@ static int compareTwoSurfaces(const void *a, const void *b)
 static void MaxNumPoint(void *a, void *b)
 {
   Vertex *v = *(Vertex **)a;
-  GModel::current()->getGEOInternals()->MaxPointNum = 
+  GModel::current()->getGEOInternals()->MaxPointNum =
     std::max(GModel::current()->getGEOInternals()->MaxPointNum, v->Num);
 }
 
 static void MaxNumCurve(void *a, void *b)
 {
   Curve *c = *(Curve **)a;
-  GModel::current()->getGEOInternals()->MaxLineNum = 
+  GModel::current()->getGEOInternals()->MaxLineNum =
     std::max(GModel::current()->getGEOInternals()->MaxLineNum, c->Num);
 }
 
@@ -2981,7 +2981,7 @@ static void ReplaceDuplicatePoints()
     }
   }
   List_Delete(All);
-  
+
   // Replace old points in volumes
 
   All = Tree2List(GModel::current()->getGEOInternals()->Volumes);
@@ -3151,7 +3151,7 @@ static void ReplaceDuplicateSurfaces()
   if(CTX::instance()->geom.oldNewreg) {
     GModel::current()->getGEOInternals()->MaxSurfaceNum = 0;
     Tree_Action(GModel::current()->getGEOInternals()->Surfaces, MaxNumSurface);
-  } 
+  }
 
   // Replace old surfaces in surfaces
 
@@ -3242,9 +3242,9 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2])
   PointSurface ps = {&p, s};
 
   Vertex pp = InterpolateSurface(s, uv[0], uv[1], 0, 0);
-  double d2 = 
-    (pp.Pos.X - p.Pos.X) * (pp.Pos.X - p.Pos.X) + 
-    (pp.Pos.Y - p.Pos.Y) * (pp.Pos.Y - p.Pos.Y) + 
+  double d2 =
+    (pp.Pos.X - p.Pos.X) * (pp.Pos.X - p.Pos.X) +
+    (pp.Pos.Y - p.Pos.Y) * (pp.Pos.Y - p.Pos.Y) +
     (pp.Pos.Z - p.Pos.Z) * (pp.Pos.Z - p.Pos.Z) ;
   if(d2 < 1.e-12) return true;
 
@@ -3278,8 +3278,8 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2])
         const double V = j / (double)(NSAMPLES - 1);
         Vertex pp = InterpolateSurface(s, U, V, 0, 0);
         double d2 =
-          (pp.Pos.X - p.Pos.X) * (pp.Pos.X - p.Pos.X) + 
-          (pp.Pos.Y - p.Pos.Y) * (pp.Pos.Y - p.Pos.Y) + 
+          (pp.Pos.X - p.Pos.X) * (pp.Pos.X - p.Pos.X) +
+          (pp.Pos.Y - p.Pos.Y) * (pp.Pos.Y - p.Pos.Y) +
           (pp.Pos.Z - p.Pos.Z) * (pp.Pos.Z - p.Pos.Z);
         if (d2 < dmin) {
           dmin = d2;
@@ -3504,10 +3504,12 @@ void sortEdgesInLoop(int num, List_T *edges)
     for(int i = 0; i < List_Nbr(temp); i++) {
       c2 = *(Curve **)List_Pointer(temp, i);
        //reverse loop if not ordered correctly !
+      /*
       if (c1->end == c2->end){
 	Curve *c2R = CreateReversedCurve(c2);
 	c2 = c2R;
       }
+      */
       if(c1->end == c2->beg) {
         List_Add(edges, &c2->Num);
         List_PSuppress(temp, i);
@@ -3690,7 +3692,7 @@ void GEO_Internals::free_all()
 
 void GEO_Internals::reset_physicals()
 {
-  List_Action(PhysicalGroups, Free_PhysicalGroup); 
+  List_Action(PhysicalGroups, Free_PhysicalGroup);
   List_Reset(PhysicalGroups);
 }
 
