@@ -763,7 +763,7 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
   else {
     ptin =  search4Triangle (worst, center, Us, Vs, AllTris,uv);
     //    if (!ptin){
-      //      printf("strange : %g %g seems to be out of the domain for face %d\n",center[0],center[1],gf->tag());
+    //     printf("strange : %g %g seems to be out of the domain for face %d\n",center[0],center[1],gf->tag());
     //    }
     if (ptin)inside = true;
   }
@@ -801,7 +801,7 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
 
       MTriangle *base = worst->tri();
 
-      //      Msg::Info("Point %g %g cannot be inserted because %d", center[0], center[1], p.succeeded() );
+      Msg::Info("Point %g %g cannot be inserted because %d", center[0], center[1], p.succeeded() );
 
       AllTris.erase(it);
       worst->forceRadius(-1);
@@ -817,7 +817,7 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
   }
   else {
     MTriangle *base = worst->tri();
-    /*
+    /*    
     Msg::Info("Point %g %g is outside (%g %g , %g %g , %g %g)",
 	      center[0], center[1],
 	      Us[base->getVertex(0)->getIndex()],
@@ -1312,9 +1312,10 @@ void optimalPointFrontalQuadB (GFace *gf,
 			       double metric[3]){
 
 
-  //  optimalPointFrontalQuad (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
-
+  optimalPointFrontalQuad (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
+  return;
   MTriangle *base = worst->tri();
+
   int ip1 = active_edge - 1 < 0 ? 2 : active_edge - 1;
   int ip2 = active_edge;
   int ip3 = (active_edge+1)%3;
@@ -1328,10 +1329,11 @@ void optimalPointFrontalQuadB (GFace *gf,
   double midpoint[2] = {0.5 * (P[0] + Q[0]), 0.5 * (P[1] + Q[1])};
 
   // compute background mesh data
-  double quadAngle  = backgroundMesh::current()->getAngle (midpoint[0],midpoint[1],0);
+    double quadAngle  = backgroundMesh::current()->getAngle (midpoint[0],midpoint[1],0);
+    // double quadAngle  = 0;
   double center[2];
   circumCenterInfinite (base, quadAngle,Us,Vs,center);
-
+  
   // rotate the points with respect to the angle
   double XP1 = 0.5*(Q[0] - P[0]);
   double YP1 = 0.5*(Q[1] - P[1]);
@@ -1339,23 +1341,44 @@ void optimalPointFrontalQuadB (GFace *gf,
   double yp = -XP1 * sin(quadAngle) + YP1 * cos(quadAngle);
 
   double t = 0.0;
+  double factor;
+
+  /*
+    consider a straight edge going from -x,-y to point x,y
+    the distance in infinity norm between the two points is 2x
+    if |x| > |y|
+
+    the point Q (-x,2x-y) is in infinity norm at equal distance
+    2x from the 2 points
+
+    The orthogonal projection of Q onto the line can be found as
+    P = t (x,y) , t \in R
+    (Q - P) . (x,y)  = 0 --> (-x-tx,2x-y-ty) . (x,y) = 0 --> -x^2 -tx^2 + 2xy - y^2 -t y^2 = 0
+    --> t (x^2 + y^2) = -x^2 + 2xy - y^2 --> t = - (x-y)^2 / (x^2 + y^2) = -1 + 2 xy /(x^2+y^2)
+
+    The L2 distance between Q and the line is 
+    
+     h^2 = (-x - tx)^2 + (2x-y-ty)^2 =  x^2 (1+t)^2 +   
+         
+
+   */
+
   if (fabs(xp)>=fabs(yp)){
     t = -1. + 2*fabs(xp*yp)/(xp*xp + yp*yp); 
+    factor = fabs(xp) / sqrt(xp*xp+yp*yp);
   }
   else {
     t =  1. - 2*fabs(xp*yp)/(xp*xp + yp*yp);
+    factor = fabs(yp) / sqrt(xp*xp+yp*yp);
   }
-  const double usq = 1./sqrt(2.0);
-  double factor =  usq + fabs(t) * (1.-usq);
 
-
-  //  printf("t = %lf %lf\n",t,factor);
   SVector3 P3(base->getVertex(ip1)->x(),base->getVertex(ip1)->y(),base->getVertex(ip1)->z());
   SVector3 Q3(base->getVertex(ip2)->x(),base->getVertex(ip2)->y(),base->getVertex(ip2)->z());
   SVector3 O3(base->getVertex(ip3)->x(),base->getVertex(ip3)->y(),base->getVertex(ip3)->z());
   SVector3 PMID = P3*(1.-t)*.5 + Q3*(t+1.)*.5;
   SVector3 N = crossprod (O3-P3,Q3-P3);
   SVector3 T = Q3-P3;
+  double sizeEdge = T.norm();
   N.normalize();
   T.normalize();
   SVector3 N2 = crossprod (T,N);
@@ -1369,7 +1392,8 @@ void optimalPointFrontalQuadB (GFace *gf,
     (vSizesBGM[base->getVertex(ip1)->getIndex()] +
      vSizesBGM[base->getVertex(ip2)->getIndex()] ) ;// * RATIO;
   const double a  = Extend1dMeshIn2dSurfaces() ? std::min(rhoM1, rhoM2) : rhoM2;
-  double d = a*factor;
+
+  double d = (a+sizeEdge*factor)*factor*.5;
   if (gf->geomType() == GEntity::CompoundSurface){
     GFaceCompound *gfc = dynamic_cast<GFaceCompound*> (gf);
     if (gfc){
@@ -1377,8 +1401,22 @@ void optimalPointFrontalQuadB (GFace *gf,
       if (gp.succeeded()){
 	newPoint[0] = gp.u();
 	newPoint[1] = gp.v();
+	buildMetric(gf, newPoint, metric);
 	return ;
       }
+       else {
+       	gp = gfc->intersectionWithCircle(N2*(-1.0),N,PMID,d,newPoint);
+       	if (gp.succeeded()){
+       	  Msg::Warning("--- HEY HEY -----------");
+       	  newPoint[0] = gp.u();
+       	  newPoint[1] = gp.v();
+       	  buildMetric(gf, newPoint, metric);
+       	  return ;
+       	}
+      else {
+	Msg::Warning("--- NEVER GO THERE -----------");
+      }
+            }      
     }
   }
   double uvt[3] = {newPoint[0],newPoint[1],0.0};
@@ -1395,7 +1433,7 @@ void optimalPointFrontalQuadB (GFace *gf,
     newPoint[1] = 100000;    
     Msg::Warning("--- Non optimal point found -----------");
   }
-  buildMetric(gf, newPoint, metric);
+  //  buildMetric(gf, newPoint, metric);
 }
 
 
@@ -1524,7 +1562,7 @@ void bowyerWatsonFrontalLayers(GFace *gf, bool quad)
 
 	// compute the middle point of the edge
 	double newPoint[2],metric[3]={1,0,1};
-	if (quad)optimalPointFrontalQuad (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
+	if (quad)optimalPointFrontalQuadB (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
 	else optimalPointFrontalB (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
 
 

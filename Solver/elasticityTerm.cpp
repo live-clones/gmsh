@@ -37,7 +37,7 @@ void elasticityTerm::createData(MElement *e) const
     d.w.push_back(w);
     d.weight.push_back(weight);
   }
-  printf("coucou creation of a data for %d with %d points\n",e->getTypeForMSH(),npts);
+  //  printf("coucou creation of a data for %d with %d points\n",e->getTypeForMSH(),npts);
   _data[e->getTypeForMSH()] = d;
 }
 

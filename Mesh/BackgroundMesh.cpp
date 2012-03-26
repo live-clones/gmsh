@@ -510,7 +510,8 @@ backgroundMesh::~backgroundMesh()
 }
 
 static void propagateValuesOnFace(GFace *_gf,
-                                  std::map<MVertex*,double> &dirichlet)
+                                  std::map<MVertex*,double> &dirichlet,
+				  bool in_parametric_plane = false)
 {
 #if defined(HAVE_SOLVER)
   linearSystem<double> *_lsys = 0;
@@ -541,6 +542,17 @@ static void propagateValuesOnFace(GFace *_gf,
     for (int j=0;j<3;j++)vs.insert(_gf->triangles[k]->getVertex(j));
   for (unsigned int k = 0; k < _gf->quadrangles.size(); k++)
     for (int j=0;j<4;j++)vs.insert(_gf->quadrangles[k]->getVertex(j));
+
+  std::map<MVertex*,SPoint3> theMap;
+  if ( in_parametric_plane) {
+    for (std::set<MVertex*>::iterator it = vs.begin(); it != vs.end(); ++it){
+      SPoint2 p;
+      reparamMeshVertexOnFace ( *it, _gf, p);
+      theMap[*it] = SPoint3((*it)->x(),(*it)->y(),(*it)->z());
+      (*it)->setXYZ(p.x(),p.y(),0.0);
+    }    
+  }
+
   for (std::set<MVertex*>::iterator it = vs.begin(); it != vs.end(); ++it)
     myAssembler.numberVertex(*it, 0, 1);
   
@@ -560,7 +572,13 @@ static void propagateValuesOnFace(GFace *_gf,
   for (std::set<MVertex*>::iterator it = vs.begin(); it != vs.end(); ++it){
     myAssembler.getDofValue(*it, 0, 1, dirichlet[*it]);
   }
-  
+
+  if ( in_parametric_plane) {
+    for (std::set<MVertex*>::iterator it = vs.begin(); it != vs.end(); ++it){
+      SPoint3 p = theMap[(*it)];
+      (*it)->setXYZ(p.x(),p.y(),p.z());
+    }
+  }
   delete _lsys;
 #endif
 }
@@ -686,8 +704,8 @@ void backgroundMesh::propagatecrossField(GFace *_gf)
     }
   }
   
-  propagateValuesOnFace(_gf,_cosines4);
-  propagateValuesOnFace(_gf,_sines4);
+  propagateValuesOnFace(_gf,_cosines4,false);
+  propagateValuesOnFace(_gf,_sines4,false);
   
   std::map<MVertex*,MVertex*>::iterator itv2 = _2Dto3D.begin();
   for ( ; itv2 != _2Dto3D.end(); ++itv2){

@@ -73,6 +73,12 @@ class highOrderTools
     if (it != _straightSidedLocation.end())return it->second;
     else return SVector3(v->x(),v->y(),v->z());
   }
+  inline SVector3 getTL(MVertex *v) const
+  {
+    std::map<MVertex*,SVector3>::const_iterator it =  _targetLocation.find(v);
+    if (it != _targetLocation.end())return it->second;
+    else return SVector3(v->x(),v->y(),v->z());
+  }
   void makePosViewWithJacobians(const char *nm);
 };
 

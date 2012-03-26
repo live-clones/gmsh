@@ -317,7 +317,7 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
         else {
 	  int count = u0<u1? j + 1 : nPts + 1  - (j + 1);
 	  GPoint pc = ge->point(US[count]);
-          v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge,pc.u());
+          v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge,US[count]);
 	  //	  printf("Edge %d(%g) %d(%g) new vertex %g %g at %g\n",v0->getNum(),u0,v1->getNum(),u1,v->x(),v->y(), US[count]);
         }
         temp.push_back(v);
@@ -1325,17 +1325,15 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   // printJacobians(m, "smoothness.pos");
   // m->writeMSH("SMOOTHED.msh");
   // FIXME !!
-  if (!linear){
+  if (!linear && CTX::instance()->mesh.smoothInternalEdges){
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
       std::vector<MElement*> v;
       v.insert(v.begin(), (*it)->triangles.begin(), (*it)->triangles.end());
       v.insert(v.end(), (*it)->quadrangles.begin(), (*it)->quadrangles.end());
-      //hot.applySmoothingTo(v, (*it));
-      //hot.applySmoothingTo(v, .1,0);
+      hot.applySmoothingTo(v, (*it));
     }
     //    hot.ensureMinimumDistorsion(0.1);
-    checkHighOrderTriangles("Final mesh", m, bad, worst);
-    checkHighOrderTetrahedron("Final mesh", m, bad, worst);
+    checkHighOrderTriangles("Final surface mesh", m, bad, worst);
   }
 
   // m->writeMSH("CORRECTED.msh");

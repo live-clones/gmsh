@@ -158,7 +158,7 @@ GPoint OCCEdge::point(double par) const
   }
   else if(!curve.IsNull()){
     gp_Pnt pnt = curve->Value(par);
-    return GPoint(pnt.X(), pnt.Y(), pnt.Z());
+    return GPoint(pnt.X(), pnt.Y(), pnt.Z(),this,par);
   }
   else{
     Msg::Warning("OCC Curve %d is neither a 3D curve not a trimmed curve", tag());
