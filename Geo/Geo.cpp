@@ -3468,7 +3468,7 @@ bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shape
 
 // Bunch of utility routines
 
-void sortEdgesInLoop(int num, List_T *edges)
+void sortEdgesInLoop(int num, List_T *edges, bool orient)
 {
   // This function sorts the edges in an EdgeLoop and detects any
   // subloops. Warning: the input edges are supposed to be *oriented*
@@ -3504,12 +3504,10 @@ void sortEdgesInLoop(int num, List_T *edges)
     for(int i = 0; i < List_Nbr(temp); i++) {
       c2 = *(Curve **)List_Pointer(temp, i);
        //reverse loop if not ordered correctly !
-      /*
-      if (c1->end == c2->end){
+      if (orient && c1->end == c2->end){
 	Curve *c2R = CreateReversedCurve(c2);
 	c2 = c2R;
       }
-      */
       if(c1->end == c2->beg) {
         List_Add(edges, &c2->Num);
         List_PSuppress(temp, i);

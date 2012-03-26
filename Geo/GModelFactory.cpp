@@ -129,7 +129,7 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
       numl++;
       if (!FindEdgeLoop(numl)) break;
     }
-    sortEdgesInLoop(numl, temp);
+    sortEdgesInLoop(numl, temp, true);
     EdgeLoop *l = Create_EdgeLoop(numl, temp);
     vecLoops.push_back(l);
     Tree_Add(gm->getGEOInternals()->EdgeLoops, &l);

@@ -310,7 +310,7 @@ int recognize_seg(int typ, List_T *liste, int *seg);
 int recognize_loop(List_T *liste, int *loop);
 int recognize_surfloop(List_T *liste, int *loop);
 
-void sortEdgesInLoop(int num, List_T *edges);
+void sortEdgesInLoop(int num, List_T *edges, bool orient=false);
 void setSurfaceGeneratrices(Surface *s, List_T *loops);
 void setVolumeSurfaces(Volume *v, List_T *loops);
 void setSurfaceEmbeddedPoints(Surface *s, List_T *points);
