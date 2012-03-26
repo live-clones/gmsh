@@ -535,10 +535,13 @@ void GFaceCompound::fillNeumannBCS_Plane() const
       GFace *newFace =  GModel::current()->addPlanarFace(myEdgeLoops);
       fillFaces.push_back(newFace);
       int meshingAlgo = CTX::instance()->mesh.algo2d;
+      int recombine = CTX::instance()->mesh.recombineAll; 
       opt_mesh_algo2d(0, GMSH_SET, 1.0); //mesh adapt
+      opt_mesh_recombine_all(0, GMSH_SET, 0.0); //no recombination
       meshGFace mgf;
       mgf(newFace);
       opt_mesh_algo2d(0, GMSH_SET, meshingAlgo);
+      opt_mesh_recombine_all(0, GMSH_SET, recombine);
       for(unsigned int i = 0; i < newFace->triangles.size(); ++i){
 	loopfillTris.push_back(newFace->triangles[i]);
 	fillNodes.insert(newFace->triangles[i]->getVertex(0));
