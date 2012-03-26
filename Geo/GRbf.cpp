@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 //
-// Contributed by FIXME
+// Contributed by Cecile Piret
 
 #include "GRbf.h"
 #include <math.h>
@@ -16,6 +16,7 @@
 #include "OS.h"
 #include "MVertex.h"
 #include "MVertexPositionSet.h"
+#include "linearSystem.h"
 
 #if defined(HAVE_ANN)
 #include <ANN/ANN.h>
@@ -274,7 +275,7 @@ void GRbf::computeLocalCurvature(const fullMatrix<double> &cntrs,
   if(nodesInSphere.size() == 0) buildOctree(radius);
   fullMatrix<double> curvature(cntrs.size1(), 1);
 
-  for (int i=0;i<numNodes ; ++i){
+  for (int i=0;i<numNodes ; ++i) {
     std::vector<int> &pts = nodesInSphere[i];
 
     fullMatrix<double> nodes_in_sph(pts.size(),3);
@@ -292,11 +293,10 @@ void GRbf::computeLocalCurvature(const fullMatrix<double> &cntrs,
   }
 
   std::map<MVertex*, int>::iterator itm = _mapAllV.begin();
-  for (; itm != _mapAllV.end(); itm++){
+  for (; itm != _mapAllV.end(); itm++) {
     int index = itm->second;
-    rbf_curv.insert(std::make_pair(itm->first,curvature(index,0)));
+    rbf_curv.insert(std::make_pair(itm->first, curvature(index,0)));
   }
-
 }
 
 double GRbf::evalRadialFnDer (int p, double dx, double dy, double dz, double ep)
@@ -482,7 +482,7 @@ void GRbf::RbfLapSurface_local_projection(const fullMatrix<double> &cntrs,
       local_normals(k,2)=normals(pts[k],2);
     }
     
-    RbfLapSurface_global_projection(nodes_in_sph,local_normals,LocalOper);
+    RbfLapSurface_global_projection(nodes_in_sph,local_normals, LocalOper);
 
     for (int j=0;j<pts.size() ; j++)
       Oper(i,pts[j])=LocalOper(0,j);   
@@ -571,7 +571,6 @@ void GRbf::RbfLapSurface_local_CPM(bool isLow,
     else       RbfLapSurface_global_CPM_high_2(nodes_in_sph,local_normals,LocalOper);
 
     for (int j = 0; j < nbp ; j++){
-
       Oper(i,pts[j])=LocalOper(0,j); 
       Oper(i,pts[j]+numNodes)=LocalOper(0,j+nbp); 
       Oper(i,pts[j]+2*numNodes)=LocalOper(0,j+2*nbp);
@@ -586,7 +585,82 @@ void GRbf::RbfLapSurface_local_CPM(bool isLow,
     }
    
   }
- }
+}
+
+void GRbf::RbfLapSurface_local_CPM_sparse(std::vector<MVertex*> &bndVertices, bool isLow, 
+          const fullMatrix<double> &cntrs,
+          const fullMatrix<double> &normals, linearSystem<double> &sys)
+{
+  std::set<int> bndIndices;
+  for (size_t i = 0; i < bndVertices.size(); ++i) {
+    bndIndices.insert(_mapV[bndVertices[i]]);
+  }
+  isLocal = true;
+  int numNodes = cntrs.size1();
+
+  sys.setParameter("matrix_reuse", "same_matrix");
+  sys.allocate(3 * numNodes);
+
+  buildOctree(radius);
+  setup_level_set(cntrs,normals,extendedX,surfInterp);
+
+  for (int i = 0 ; i < numNodes ; ++i) {
+    std::vector<int> &pts = nodesInSphere[i];
+    if (bndIndices.count(i) > 0) {
+      sys.insertInSparsityPattern(i, i);
+      for (int j = 0; j < pts.size(); ++j) {
+        sys.insertInSparsityPattern(i + numNodes, pts[j]);
+        sys.insertInSparsityPattern(i + 2 * numNodes, pts[j]);
+      }
+    }
+    else {
+      for (int j = 0; j < pts.size(); ++j) {
+        sys.insertInSparsityPattern(i, pts[j]);
+        sys.insertInSparsityPattern(i + numNodes, pts[j]);
+        sys.insertInSparsityPattern(i + 2 * numNodes, pts[j]);
+      }
+    }
+  }
+  for (int i=0;i<numNodes ; ++i){
+    std::vector<int> &pts = nodesInSphere[i];
+    int nbp = pts.size();
+    fullMatrix<double> nodes_in_sph(nbp,3), local_normals(nbp,3);
+    fullMatrix<double> LocalOper;
+
+    for (int k=0; k< nbp; k++){
+      nodes_in_sph(k,0) = cntrs(pts[k],0);
+      nodes_in_sph(k,1) = cntrs(pts[k],1);
+      nodes_in_sph(k,2) = cntrs(pts[k],2);
+      local_normals(k,0)=normals(pts[k],0);
+      local_normals(k,1)=normals(pts[k],1);
+      local_normals(k,2)=normals(pts[k],2);
+    }
+
+    LocalOper.setAll(0.0);
+    if (isLow) RbfLapSurface_global_CPM_low(nodes_in_sph,local_normals,LocalOper);
+    else       RbfLapSurface_global_CPM_high_2(nodes_in_sph,local_normals,LocalOper);
+
+    bool isBnd = (bndIndices.count(i) > 0);
+    if (isBnd) {
+      sys.addToMatrix(i, i, 1.); 
+    }
+    for (int j = 0; j < nbp ; j++){
+      if (!isBnd) {
+        sys.addToMatrix(i, pts[j], LocalOper(0,j)); 
+        sys.addToMatrix(i, pts[j] + numNodes, LocalOper(0,j + nbp)); 
+        sys.addToMatrix(i, pts[j] + 2 * numNodes, LocalOper(0,j + 2 * nbp)); 
+      }
+
+      sys.addToMatrix(i + numNodes, pts[j], LocalOper(nbp,j)); 
+      sys.addToMatrix(i + numNodes, pts[j] + numNodes, LocalOper(nbp,j + nbp)); 
+      sys.addToMatrix(i + numNodes, pts[j] + 2 * numNodes, LocalOper(nbp,j + 2 * nbp)); 
+
+      sys.addToMatrix(i + 2 * numNodes, pts[j], LocalOper(2 * nbp,j)); 
+      sys.addToMatrix(i + 2 * numNodes, pts[j] + numNodes, LocalOper(2 * nbp,j + nbp)); 
+      sys.addToMatrix(i + 2 * numNodes, pts[j] + 2 * numNodes, LocalOper(2 * nbp,j + 2 * nbp)); 
+    }
+  }
+}
 
 // NEW METHOD #1 CPM GLOBAL HIGH
 void GRbf::RbfLapSurface_global_CPM_high_2(const fullMatrix<double> &cntrs,
@@ -761,6 +835,103 @@ void GRbf::RbfLapSurface_global_CPM_low(const fullMatrix<double> &cntrs,
   
 }
 
+void GRbf::solveHarmonicMap_sparse(linearSystem<double> &sys, int numNodes,
+			    const std::vector<MVertex*> &bcNodes, 
+			    const std::vector<double> &coords, 
+			    std::map<MVertex*, SPoint3> &rbf_param)
+{
+  Msg::Info("*** RBF ... solving map");
+  int nb = numNodes * 3; 
+  UV.resize(nb,2);
+  for (int j = 0; j < 2; ++j) {
+    sys.zeroRightHandSide();
+    //UNIT CIRCLE
+    for (int i = 0; i < bcNodes.size(); i++) {
+      std::set<MVertex *>::iterator itN = myNodes.find(bcNodes[i]);
+      if (itN != myNodes.end()){
+        std::map<MVertex*, int>::iterator itm = _mapV.find(bcNodes[i]);
+        double theta = 2 * M_PI * coords[i];
+        int iFix = itm->second;
+        sys.addToRightHandSide(iFix, ((j == 0) ? cos(theta) : sin(theta)));
+      }
+    }
+    sys.systemSolve();
+    for (int i = 0; i < nbNodes; ++i) {
+      sys.getFromSolution(i, UV(i, j));
+    }
+  }
+
+  //SQUARE
+ // for(std::set<MVertex *>::iterator itv = myNodes.begin(); itv !=myNodes.end() ; ++itv){
+ //   MVertex *v = *itv;
+ //   if (v->getNum() == 1){ //2900){
+ //     std::map<MVertex*, int>::iterator itm = _mapV.find(v);
+ //     int iFix = itm->second;
+ //     for (int j=0;j<nb ; ++j) Oper(iFix,j) = 0.0;
+ //     Oper(iFix,iFix) = 1.0;
+ //     F(iFix,0) = 0.0;
+ //     F(iFix,1) = 0.0;
+ //   }
+ //   if (v->getNum() == 2){//1911){
+ //     std::map<MVertex*, int>::iterator itm = _mapV.find(v);
+ //     int iFix = itm->second;
+ //     for (int j=0;j<nb ; ++j) Oper(iFix,j) = 0.0;
+ //     Oper(iFix,iFix) = 1.0;
+ //     F(iFix,0) = 1.0;
+ //     F(iFix,1) = 0.0;
+ //   }
+ //   if (v->getNum() == 3){//4844){
+ //     std::map<MVertex*, int>::iterator itm = _mapV.find(v);
+ //     int iFix = itm->second;
+ //     for (int j=0;j<nb ; ++j) Oper(iFix,j) = 0.0;
+ //     Oper(iFix,iFix) = 1.0;
+ //     F(iFix,0) = 1.0;
+ //     F(iFix,1) = 1.0;
+ //   }
+ //   if (v->getNum() == 4){//3187){
+ //     std::map<MVertex*, int>::iterator itm = _mapV.find(v);
+ //     int iFix = itm->second;
+ //     for (int j=0;j<nb ; ++j) Oper(iFix,j) = 0.0;
+ //     Oper(iFix,iFix) = 1.0;
+ //     F(iFix,0) = 0.0;
+ //     F(iFix,1) = 1.0;
+ //   }
+ // }
+
+  //ANN UVtree
+  double dist_min = 1.e6;
+#if defined (HAVE_ANN)
+  ANNpointArray UVnodes = annAllocPts(nbNodes, 3);
+  for(int i = 0; i < nbNodes; i++){
+    UVnodes[i][0] = UV(i,0); 
+    UVnodes[i][1] = UV(i,1); 
+    UVnodes[i][2] = 0.0; 
+    for(int j = i+1; j < nbNodes; j++){
+      double dist = sqrt((UV(i,0)-UV(j,0))*(UV(i,0)-UV(j,0))+
+    			 (UV(i,1)-UV(j,1))*(UV(i,1)-UV(j,1)));
+      if (dist<dist_min) dist_min = dist;
+    }
+  }
+  deltaUV = 0.6*dist_min; 
+  UVkdtree = new ANNkd_tree(UVnodes, nbNodes, 3);
+#endif
+
+  //interpolate
+  fullMatrix<double> UVall(allCenters.size1(), 3);
+  evalRbfDer(0,centers,allCenters,UV,UVall);
+
+  //fill rbf_param
+  std::map<MVertex*, int>::iterator itm = _mapAllV.begin();
+  for (; itm != _mapAllV.end(); itm++){
+    int index = itm->second;
+    SPoint3 coords(UVall(index,0), UVall(index,1), 0.0);
+    rbf_param.insert(std::make_pair(itm->first,coords));
+  }
+ 
+  Msg::Info("*** RBF solved map");
+  exportParametrizedMesh(UV, nbNodes);
+}
+
 void GRbf::solveHarmonicMap(fullMatrix<double> Oper, 
 			    std::vector<MVertex*> bcNodes, 
 			    std::vector<double> coords, 
@@ -825,7 +996,7 @@ void GRbf::solveHarmonicMap(fullMatrix<double> Oper,
  // }
 
   Oper.invertInPlace();
-  Oper.mult(F,UV);
+  Oper.mult(F, UV);
 
   //ANN UVtree
   double dist_min = 1.e6;

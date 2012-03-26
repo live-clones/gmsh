@@ -16,6 +16,8 @@
 #include "MVertex.h"
 #include "Context.h"
 
+template <class t>
+class linearSystem;
 #if defined(HAVE_ANN)
 class ANNkd_tree;
 #endif
@@ -126,6 +128,10 @@ class GRbf {
 			       const fullMatrix<double> &cntrs,
 			       const fullMatrix<double> &normals,
 			       fullMatrix<double> &Oper);
+
+  void RbfLapSurface_local_CPM_sparse(std::vector<MVertex*> &bndVertices, bool isLow,
+             const fullMatrix<double> &cntrs,
+			       const fullMatrix<double> &normals, linearSystem<double> &sys);
   
   // Finds global surface differentiation matrix (method CPML)
   void RbfLapSurface_global_CPM_low(const fullMatrix<double> &cntrs,
@@ -160,6 +166,8 @@ class GRbf {
   
   void solveHarmonicMap(fullMatrix<double> Oper, std::vector<MVertex*> ordered, 
                         std::vector<double> coords, std::map<MVertex*, SPoint3> &rbf_param);
+  void solveHarmonicMap_sparse(linearSystem<double> &sys, int numNodes,const std::vector<MVertex*> &ordered, 
+                        const std::vector<double> &coords, std::map<MVertex*, SPoint3> &rbf_param);
 
  inline const fullMatrix<double> getUV() {return UV;};
  inline const fullMatrix<double> getXYZ() {return centers;};

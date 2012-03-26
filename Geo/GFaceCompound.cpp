@@ -1009,10 +1009,24 @@ bool GFaceCompound::parametrize() const
     int variableEps = 0;
     int radFunInd = 1; // 1 MQ RBF , 0 GA
     double sizeBox = getSizeH();
+    /*
     fullMatrix<double> Oper(3*allNodes.size(),3*allNodes.size());
     _rbf = new GRbf(sizeBox, variableEps, radFunInd, _normals, allNodes, _ordered);
     _rbf->RbfLapSurface_global_CPM_high_2(_rbf->getXYZ(), _rbf->getN(), Oper);
     _rbf->solveHarmonicMap(Oper, _ordered, _coords, coordinates);
+    */
+    fullMatrix<double> Oper(3*allNodes.size(),3*allNodes.size());
+
+    _rbf = new GRbf(sizeBox, variableEps, radFunInd, _normals, allNodes, _ordered);
+
+    linearSystemPETSc<double> sys;
+    #if 1
+    _rbf->RbfLapSurface_local_CPM_sparse(_ordered, false, _rbf->getXYZ(), _rbf->getN(), sys);
+    _rbf->solveHarmonicMap_sparse(sys, _rbf->getXYZ().size1()* 3,_ordered, _coords, coordinates);
+    #else
+    _rbf->RbfLapSurface_local_CPM(false, _rbf->getXYZ(), _rbf->getN(), Oper);
+    _rbf->solveHarmonicMap(Oper,_ordered, _coords, coordinates);
+    #endif
   }
 
   buildOct();
