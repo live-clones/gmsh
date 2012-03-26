@@ -269,7 +269,7 @@ void statisticsWindow::compute(bool elementQuality)
     Field *f = fields->get(fields->background_field);
     int nbEdges = edges.size();
     printf("nb edges =%d \n", nbEdges);
-    system("rm qualEdges.txt");
+    if(system("rm qualEdges.txt"));
     FILE *fp = fopen("qualEdges.txt", "w");
     std::vector<int> qualE;
     int nbS = 50;
@@ -347,7 +347,7 @@ void statisticsWindow::compute(bool elementQuality)
     FieldManager *fields = GModel::current()->getFields();
     Field *f = fields->get(fields.getBackgroundField());
     int nbEdges = edges.size();
-    system("rm qualEdges.txt");
+    if(system("rm qualEdges.txt"));
     FILE *fp = fopen("qualEdges.txt", "w");
     std::vector<int> qualE;
     int nbS = 50;

@@ -114,19 +114,28 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity*> _entities,
     if(_entities[ii]->dim() == _maxDim) {
       for(unsigned int i = 0; i < _entities[ii]->getNumMeshElements(); i++){ 
 	MElement *e = _entities[ii]->getMeshElement(i);
-	
+
 	int numNodes = e->getNumVertices();
+        if(e->getNumChildren()) numNodes = e->getNumChildren() * e->getChild(0)->getNumVertices();
 	std::vector<double> x(numNodes), y(numNodes), z(numNodes);
-	std::vector<double> *out = _data->incrementList(1, e->getType());
-	for(int nod = 0; nod < numNodes; nod++) out->push_back((e->getVertex(nod))->x()); 
-	for(int nod = 0; nod < numNodes; nod++) out->push_back((e->getVertex(nod))->y()); 
-	for(int nod = 0; nod < numNodes; nod++) out->push_back((e->getVertex(nod))->z()); 
-	
+	std::vector<double> *out = _data->incrementList(1, e->getType(), numNodes);
+        std::vector<MVertex*> nods;
+        if(!e->getNumChildren())
+          for(int i = 0; i < numNodes; i++)
+            nods.push_back(e->getVertex(i));
+        else
+          for(int i = 0; i < e->getNumChildren(); i++)
+            for(int j = 0; j < e->getChild(i)->getNumVertices(); j++)
+              nods.push_back(e->getChild(i)->getVertex(j));
+	for(int nod = 0; nod < numNodes; nod++) out->push_back((nods[nod])->x());
+	for(int nod = 0; nod < numNodes; nod++) out->push_back((nods[nod])->y());
+	for(int nod = 0; nod < numNodes; nod++) out->push_back((nods[nod])->z());
+
 	if (_maxDim == 3) fprintf(fName,"SS(");
 	else if (_maxDim == 2) fprintf(fName,"ST(");
 	std::vector<double> dist;
 	for(int j = 0; j < numNodes; j++) {
-	  MVertex *v =  e->getVertex(j);
+	  MVertex *v =  nods[j];
 	  if(j) fprintf(fName,",%.16g,%.16g,%.16g",v->x(),v->y(), v->z());
 	  else fprintf(fName,"%.16g,%.16g,%.16g", v->x(),v->y(), v->z());
 	  std::map<MVertex*, double>::iterator it = _distance_map.find(v);
@@ -157,7 +166,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   int id_face =   (int) DistanceOptions_Number[2].def;
   double type =   (double) DistanceOptions_Number[3].def;
   int  ortho =   (int) DistanceOptions_Number[6].def;
-  
+
   PView *view = new PView();
   _data = getDataList(view);
 #if defined(HAVE_SOLVER)
@@ -190,7 +199,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     Msg::Error("This plugin needs a mesh !");
     return view;
   }
-  
+
   std::vector<SPoint3> pts;
   std::vector<double> distances;
   std::vector<MVertex* > pt2Vertex;
@@ -285,13 +294,13 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     }
   printView(_entities, _distance_map);    
   }
-  
+
   // Compute PDE for distance function
   //-----------------------------------
   else if (type > 0.0){
-    
+
 #if defined(HAVE_SOLVER)
-    
+
     bool existEntity = false;
     SBoundingBox3d bbox;
     for(unsigned int i = 0; i < _entities.size(); i++){
@@ -339,24 +348,24 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 	}    
       }  
     }
-    
+
     double L = norm(SVector3(bbox.max(), bbox.min())); 
     double mu = type*L;
-    
+
     simpleFunction<double> DIFF(mu*mu), ONE(1.0);
     distanceTerm distance(GModel::current(), 1, &DIFF, &ONE);
-    
+
     for (std::vector<MElement* >::iterator it = allElems.begin(); it != allElems.end(); it++){
       SElement se((*it));
       distance.addToMatrix(*dofView, &se);
     }
     groupOfElements gr(allElems);
     distance.addToRightHandSide(*dofView, gr);
-    
+
     Msg::Info("Distance Computation: Assembly done");
     lsys->systemSolve();
     Msg::Info("Distance Computation: System solved");
-    
+
     for(std::map<MVertex*,double >::iterator itv = _distance_map.begin(); 
 	itv != _distance_map.end() ; ++itv){
       MVertex *v = itv->first;
@@ -366,9 +375,9 @@ PView *GMSH_DistancePlugin::execute(PView *v)
       double dist = -mu * log(1. - value);
       itv->second = dist;
     }
-    
+
     printView(_entities, _distance_map);
-    
+
 #endif
   }
 
@@ -376,14 +385,14 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   _data->Time.push_back(0);
   _data->setFileName(_fileName.c_str());
   _data->finalize();
-  
-  
+
+
   //compute also orthogonal vector to distance field
   // A Uortho = -C DIST 
   //------------------------------------------------
   if (ortho > 0){
 #if defined(HAVE_SOLVER)
-  
+
 #ifdef HAVE_TAUCS
   linearSystemCSRTaucs<double> *lsys2 = new linearSystemCSRTaucs<double>;
 #else
@@ -394,9 +403,9 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 #endif
   dofManager<double> myAssembler(lsys2);
   simpleFunction<double> ONE(1.0);
-  
+
   double dMax = 1.0; //EMI TO CHANGE
-  
+
   std::vector<MElement *> allElems;
   for(unsigned int ii = 0; ii < _entities.size(); ii++){
     if(_entities[ii]->dim() == _maxDim) {
@@ -418,53 +427,62 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   MElement *e = allElems[mid];
   MVertex *vFIX = e->getVertex(0);
   myAssembler.fixVertex(vFIX, 0, 1, 0.0);
-  
+
   for (std::vector<MElement* >::iterator it = allElems.begin(); it != allElems.end(); it++){
     MElement *t = *it;
     for(int k = 0; k < t->getNumVertices(); k++)
       myAssembler.numberVertex(t->getVertex(k), 0, 1);
   }
-  
+
   orthogonalTerm *ortho;
   ortho  = new orthogonalTerm(GModel::current(), 1, &ONE, &_distance_map);
   // if (type  < 0)
   //   ortho  = new orthogonalTerm(GModel::current(), 1, &ONE, view);
   // else
   //   ortho  = new orthogonalTerm(GModel::current(), 1, &ONE, dofView);
-  
+
   for (std::vector<MElement* >::iterator it = allElems.begin(); it != allElems.end(); it++){
     SElement se((*it));
     ortho->addToMatrix(myAssembler, &se);
   }
   groupOfElements gr(allElems);
   ortho->addToRightHandSide(myAssembler, gr);
-  
+
   Msg::Info("Orthogonal Computation: Assembly done");
   lsys2->systemSolve();
   Msg::Info("Orthogonal Computation: System solved");
-  
+
   PView *view2 = new PView();
   PViewDataList *data2 = getDataList(view2);
   data2->setName("ortogonal field");
-  
+
   Msg::Info("Writing  orthogonal.pos");
   FILE * f5 = fopen("orthogonal.pos","w");
   fprintf(f5,"View \"orthogonal\"{\n");
   for (std::vector<MElement* >::iterator it = allElems.begin(); it != allElems.end(); it++){
     MElement *e = *it;
-    
+
     int numNodes = e->getNumVertices();
+    if(e->getType() == TYPE_POLYG) numNodes = e->getNumChildren() * e->getChild(0)->getNumVertices();
     std::vector<double> x(numNodes), y(numNodes), z(numNodes);
-    std::vector<double> *out2 = data2->incrementList(1, e->getType());
-    for(int nod = 0; nod < numNodes; nod++) out2->push_back((e->getVertex(nod))->x()); 
-    for(int nod = 0; nod < numNodes; nod++) out2->push_back((e->getVertex(nod))->y()); 
-    for(int nod = 0; nod < numNodes; nod++) out2->push_back((e->getVertex(nod))->z()); 
-    
+    std::vector<double> *out2 = data2->incrementList(1, e->getType(), numNodes);
+    std::vector<MVertex*> nods;
+    if(!e->getNumChildren())
+      for(int i = 0; i < numNodes; i++)
+        nods.push_back(e->getVertex(i));
+    else
+      for(int i = 0; i < e->getNumChildren(); i++)
+        for(int j = 0; j < e->getChild(i)->getNumVertices(); j++)
+          nods.push_back(e->getChild(i)->getVertex(j));
+    for(int nod = 0; nod < numNodes; nod++) out2->push_back((nods[nod])->x()); 
+    for(int nod = 0; nod < numNodes; nod++) out2->push_back((nods[nod])->y()); 
+    for(int nod = 0; nod < numNodes; nod++) out2->push_back((nods[nod])->z()); 
+
     if (_maxDim == 3) fprintf(f5,"SS(");
     else if (_maxDim == 2) fprintf(f5,"ST(");
     std::vector<double> orth;
     for(int j = 0; j < numNodes; j++) {
-      MVertex *v =  e->getVertex(j);
+      MVertex *v =  nods[j];
       if(j) fprintf(f5,",%g,%g,%g",v->x(),v->y(), v->z());
       else fprintf(f5,"%g,%g,%g", v->x(),v->y(), v->z());
       double value;
@@ -488,9 +506,9 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   data2->Time.push_back(0);
   data2->setFileName("orthogonal.pos");
   data2->finalize();
-  
+
 #endif
   }
-  
+
   return view;
 }

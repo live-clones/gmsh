@@ -116,9 +116,9 @@ PView *GMSH_Scal2VecPlugin::execute(PView *v)
       if(dataRef->skipElement(0, ent, ele)) continue;
       int numComp = 3; // The 3 components of the new view: x,y,z
       int type = dataRef->getType(0, ent, ele);
-      std::vector<double> *out = dataNew->incrementList(numComp, type); // Pointer in data of the new view
-      if(!out) continue;
       int numNodes = dataRef->getNumNodes(0, ent, ele);
+      std::vector<double> *out = dataNew->incrementList(numComp, type, numNodes); // Pointer in data of the new view
+      if(!out) continue;
       double x[8], y[8], z[8], valX, valY, valZ;
       for(int nod = 0; nod < numNodes; nod++)
         dataRef->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);

@@ -87,7 +87,7 @@ PView *GMSH_ExtractElementsPlugin::execute(PView *v)
       }
       int type = data1->getType(step, ent, ele);
       int numComp = data1->getNumComponents(step, ent, ele);
-      std::vector<double> *out = data2->incrementList(numComp, type);
+      std::vector<double> *out = data2->incrementList(numComp, type, numNodes);
       std::vector<double> x(numNodes), y(numNodes), z(numNodes);
       std::vector<double> v(numNodes * numComp);
       for(int nod = 0; nod < numNodes; nod++){

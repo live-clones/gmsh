@@ -75,11 +75,11 @@ PView *GMSH_EigenvectorsPlugin::execute(PView *v)
       int numComp = data1->getNumComponents(0, ent, ele);
       if(numComp != 9) continue;
       int type = data1->getType(0, ent, ele);
-      std::vector<double> *outmin = dmin->incrementList(3, type);
-      std::vector<double> *outmid = dmid->incrementList(3, type);
-      std::vector<double> *outmax = dmax->incrementList(3, type);
-      if(!outmin || !outmid || !outmax) continue;
       int numNodes = data1->getNumNodes(0, ent, ele);
+      std::vector<double> *outmin = dmin->incrementList(3, type, numNodes);
+      std::vector<double> *outmid = dmid->incrementList(3, type, numNodes);
+      std::vector<double> *outmax = dmax->incrementList(3, type, numNodes);
+      if(!outmin || !outmid || !outmax) continue;
       double xyz[3][8];
       for(int nod = 0; nod < numNodes; nod++)
         data1->getNode(0, ent, ele, nod, xyz[0][nod], xyz[1][nod], xyz[2][nod]);

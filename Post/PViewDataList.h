@@ -31,6 +31,8 @@ class PViewDataList : public PViewData {
   std::vector<double> ST, VT, TT; // triangles
   int NbSQ, NbVQ, NbTQ;
   std::vector<double> SQ, VQ, TQ; // quadrangles
+  int NbSG, NbVG, NbTG;
+  std::vector<double> SG, VG, TG; // polygons
   int NbSS, NbVS, NbTS;
   std::vector<double> SS, VS, TS; // tetrahedra
   int NbSH, NbVH, NbTH;
@@ -39,11 +41,16 @@ class PViewDataList : public PViewData {
   std::vector<double> SI, VI, TI; // prisms
   int NbSY, NbVY, NbTY;
   std::vector<double> SY, VY, TY; // pyramids
+  int NbSD, NbVD, NbTD;
+  std::vector<double> SD, VD, TD; // polyhedra
   int NbT2, NbT3;
   std::vector<double> T2D, T3D; // 2D and 3D text strings
   std::vector<char> T2C, T3C;
+  std::vector<int> polyNumNodes[2];
+  std::vector<int> polyAgNumNodes[2];
+  int polyTotNumNodes[2];
  private:
-  int _index[24];
+  int _index[30];
   int _lastElement, _lastDimension;
   int _lastNumNodes, _lastNumComponents, _lastNumValues, _lastNumEdges, _lastType;
   double *_lastXYZ, *_lastVal;
@@ -78,10 +85,12 @@ class PViewDataList : public PViewData {
   int getNumLines(int step=-1){ return NbSL + NbVL + NbTL; }
   int getNumTriangles(int step=-1){ return NbST + NbVT + NbTT; }
   int getNumQuadrangles(int step=-1){ return NbSQ + NbVQ + NbTQ; }
+  int getNumPolygons(int step=-1){ return NbSG + NbVG + NbTG; }
   int getNumTetrahedra(int step=-1){ return NbSS + NbVS + NbTS; }
   int getNumHexahedra(int step=-1){ return NbSH + NbVH + NbTH; }
   int getNumPrisms(int step=-1){ return NbSI + NbVI + NbTI; }
   int getNumPyramids(int step=-1){ return NbSY + NbVY + NbTY; }
+  int getNumPolyhedra(int step=-1){ return NbSD + NbVD + NbTD; }
   int getNumEntities(int step=-1){ return 1; }
   int getNumElements(int step=-1, int ent=-1);
   int getDimension(int step, int ent, int ele);
@@ -109,7 +118,7 @@ class PViewDataList : public PViewData {
 
   // specific to list-based data sets
   void setOrder2(int type);
-  std::vector<double> *incrementList(int numComp, int type);
+  std::vector<double> *incrementList(int numComp, int type, int numNodes = 0);
 
   // I/O routines
   bool readPOS(FILE *fp, double version, bool binary);

@@ -60,9 +60,9 @@ PView *GMSH_DivergencePlugin::execute(PView *v)
       int numComp = data1->getNumComponents(firstNonEmptyStep, ent, ele);
       if(numComp != 3) continue;
       int type = data1->getType(firstNonEmptyStep, ent, ele);
-      std::vector<double> *out = data2->incrementList(1, type);
-      if(!out) continue;
       int numNodes = data1->getNumNodes(firstNonEmptyStep, ent, ele);
+      std::vector<double> *out = data2->incrementList(1, type, numNodes);
+      if(!out) continue;
       double x[8], y[8], z[8], val[8 * 3];
       for(int nod = 0; nod < numNodes; nod++)
         data1->getNode(firstNonEmptyStep, ent, ele, nod, x[nod], y[nod], z[nod]);

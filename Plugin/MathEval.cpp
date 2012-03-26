@@ -204,7 +204,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
       int numComp = data1->getNumComponents(timeBeg, ent, ele);
       int otherNumComp = (!otherData || octree) ? 9 :
         otherData->getNumComponents(timeBeg, ent, ele);
-      std::vector<double> *out = data2->incrementList(numComp2, type);
+      std::vector<double> *out = data2->incrementList(numComp2, type, numNodes);
       std::vector<double> w(std::max(9, otherNumComp), 0.);
       std::vector<double> x(numNodes), y(numNodes), z(numNodes);
       for(int nod = 0; nod < numNodes; nod++)

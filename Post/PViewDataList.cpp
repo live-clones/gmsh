@@ -15,14 +15,17 @@ PViewDataList::PViewDataList(bool isAdapted)
   : PViewData(), NbTimeStep(0), Min(VAL_INF), Max(-VAL_INF),
     NbSP(0), NbVP(0), NbTP(0), NbSL(0), NbVL(0), NbTL(0),
     NbST(0), NbVT(0), NbTT(0), NbSQ(0), NbVQ(0), NbTQ(0),
+    NbSG(0), NbVG(0), NbTG(0),
     NbSS(0), NbVS(0), NbTS(0), NbSH(0), NbVH(0), NbTH(0),
     NbSI(0), NbVI(0), NbTI(0), NbSY(0), NbVY(0), NbTY(0),
-    NbT2(0), NbT3(0), _lastElement(-1), _lastDimension(-1),
-    _lastNumNodes(-1), _lastNumComponents(-1), _lastNumValues(-1),
-    _lastNumEdges(-1), _lastType(-1), _lastXYZ(0), _lastVal(0),
-    _isAdapted(isAdapted)
+    NbSD(0), NbVD(0), NbTD(0), NbT2(0), NbT3(0),
+    _lastElement(-1), _lastDimension(-1), _lastNumNodes(-1), 
+    _lastNumComponents(-1), _lastNumValues(-1), _lastNumEdges(-1),
+    _lastType(-1), _lastXYZ(0), _lastVal(0), _isAdapted(isAdapted)
 {
-  for(int i = 0; i < 24; i++) _index[i] = 0;
+  for(int i = 0; i < 30; i++) _index[i] = 0;
+  polyTotNumNodes[0] = 0.; polyTotNumNodes[1] = 0.;
+  polyAgNumNodes[0].push_back(0.); polyAgNumNodes[1].push_back(0.);
 }
 
 void PViewDataList::setXY(std::vector<double> &x, std::vector<double> &y)
@@ -69,6 +72,10 @@ bool PViewDataList::finalize(bool computeMinMax, const std::string &interpolatio
   _stat(TI, 9, NbTI, 6, TYPE_PRI);
   _stat(SY, 1, NbSY, 5, TYPE_PYR); _stat(VY, 3, NbVY, 5, TYPE_PYR);
   _stat(TY, 9, NbTY, 5, TYPE_PYR);
+  _stat(SG, 1, NbSG, 3, TYPE_POLYG); _stat(VG, 3, NbVG, 3, TYPE_POLYG);
+  _stat(TG, 9, NbTG, 3, TYPE_POLYG);
+  _stat(SD, 1, NbSD, 4, TYPE_POLYH); _stat(VD, 3, NbVD, 4, TYPE_POLYH);
+  _stat(TD, 9, NbTD, 4, TYPE_POLYH);
 
   // add dummy time values if none (or too few) time values are
   // provided (e.g. using the old parsed format)
@@ -78,10 +85,11 @@ bool PViewDataList::finalize(bool computeMinMax, const std::string &interpolatio
   }
 
   // compute starting element indices
-  int nb[24] = {NbSP, NbVP, NbTP,  NbSL, NbVL, NbTL,  NbST, NbVT, NbTT,
+  int nb[30] = {NbSP, NbVP, NbTP,  NbSL, NbVL, NbTL,  NbST, NbVT, NbTT,
                 NbSQ, NbVQ, NbTQ,  NbSS, NbVS, NbTS,  NbSH, NbVH, NbTH,
-                NbSI, NbVI, NbTI,  NbSY, NbVY, NbTY};
-  for(int i = 0; i < 24; i++){
+                NbSI, NbVI, NbTI,  NbSY, NbVY, NbTY,  NbSG, NbVG, NbTG,
+                NbSD, NbVD, NbTD};
+  for(int i = 0; i < 30; i++){
     _index[i] = 0;
     for(int j = 0; j <= i; j++)
       _index[i] += nb[j];
@@ -93,18 +101,18 @@ bool PViewDataList::finalize(bool computeMinMax, const std::string &interpolatio
 }
 
 int PViewDataList::getNumScalars(int step)
-{
-  return NbSP + NbSL + NbST + NbSQ + NbSS + NbSH + NbSI + NbSY;
+{ 
+  return NbSP + NbSL + NbST + NbSQ + NbSS + NbSH + NbSI + NbSY + NbSG + NbSD;
 }
 
 int PViewDataList::getNumVectors(int step)
 {
-  return NbVP + NbVL + NbVT + NbVQ + NbVS + NbVH + NbVI + NbVY;
+  return NbVP + NbVL + NbVT + NbVQ + NbVS + NbVH + NbVI + NbVY + NbVG + NbVD; 
 }
 
 int PViewDataList::getNumTensors(int step)
 {
-  return NbTP + NbTL + NbTT + NbTQ + NbTS + NbTH + NbTI + NbTY;
+  return NbTP + NbTL + NbTT + NbTQ + NbTS + NbTH + NbTI + NbTY + NbTG + NbTD; 
 }
 
 int PViewDataList::getNumElements(int step, int ent)
@@ -207,7 +215,15 @@ void PViewDataList::_stat(std::vector<double> &list, int nbcomp, int nbelm,
   }
 
   int nb = list.size() / nbelm;
-  for(unsigned int i = 0; i < list.size(); i += nb){
+  for(unsigned int ele = 0; ele < nbelm; ele ++){
+    int i = ele * nb;
+    if(type == TYPE_POLYG || type ==  TYPE_POLYH){
+      int t = (type == TYPE_POLYG) ? 0 : 1;
+      nbnod = polyNumNodes[t][ele];
+      nb = list.size() / polyTotNumNodes[t] * nbnod;
+      i = polyAgNumNodes[t][ele] * nb / nbnod;
+      nbval = nbcomp * nbnod;
+    }
     int N = nb - 3 * nbnod;
     double *X = &list[i];
     double *Y = &list[i + 1 * nbnod];
@@ -261,10 +277,16 @@ void PViewDataList::_setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg,
   _lastNumComponents = nbcomp;
   _lastNumEdges = nbedg;
   _lastType = type;
-  int nb = list.size() / nblist;
-  _lastXYZ = &list[ele * nb];
-  _lastVal = &list[ele * nb + 3 * _lastNumNodes];
+  int nb = list.size() / nblist; // number of coords and values for the element
+  int nbAg = ele * nb; // number of coords and values before the ones of the element
+  if(type == TYPE_POLYG || type ==  TYPE_POLYH){
+    int t = (type == TYPE_POLYG) ? 0 : 1;
+    nb = list.size() / polyTotNumNodes[t] * nbnod;
+    nbAg = polyAgNumNodes[t][ele] * nb / nbnod;
+  }
   _lastNumValues = (nb - 3 * nbnod) / NbTimeStep;
+  _lastXYZ = &list[nbAg];
+  _lastVal = &list[nbAg + 3 * _lastNumNodes];
 }
 
 void PViewDataList::_setLast(int ele)
@@ -305,10 +327,22 @@ void PViewDataList::_setLast(int ele)
     else if(ele < _index[19]) _setLast(ele - _index[18], 3, 6, 3, 9, TYPE_PRI, VI, NbVI);
     else _setLast(ele - _index[19], 3, 6, 9, 9, TYPE_PRI, TI, NbTI);
   }
-  else{ // pyramids
+  else if(ele < _index[23]){ // pyramids
     if(ele < _index[21]) _setLast(ele - _index[20], 3, 5, 1, 8, TYPE_PYR, SY, NbSY);
     else if(ele < _index[22]) _setLast(ele - _index[21], 3, 5, 3, 8, TYPE_PYR, VY, NbVY);
     else _setLast(ele - _index[22], 3, 5, 9, 8, TYPE_PYR, TY, NbTY);
+  }
+  else if(ele < _index[26]){ // polygons
+    int nN = polyNumNodes[0][ele - _index[23]];
+    if(ele < _index[24]) _setLast(ele - _index[23], 2, nN, 1, nN, TYPE_POLYG, SG, NbSG);
+    else if(ele < _index[25]) _setLast(ele - _index[24], 2, nN, 3, nN, TYPE_POLYG, VG, NbVG);
+    else _setLast(ele - _index[25], 2, nN, 9, nN, TYPE_POLYG, TG, NbTG);
+  }
+  else if(ele < _index[29]){ // polyhedra
+    int nN = polyNumNodes[1][ele - _index[26]];
+    if(ele < _index[27]) _setLast(ele - _index[26], 3, nN, 1, nN*1.5, TYPE_POLYH, SD, NbSD);
+    else if(ele < _index[28]) _setLast(ele - _index[27], 3, nN, 3, nN*1.5, TYPE_POLYH, VD, NbVD);
+    else _setLast(ele - _index[28], 3, nN, 9, nN*1.5, TYPE_POLYH, TD, NbTD);
   }
 }
 
@@ -794,6 +828,9 @@ int PViewDataList::_getRawData(int idxtype, std::vector<double> **l, int **ne,
                                 int *nc, int *nn)
 {
   int type = 0;
+  // No constant nn for polygons!
+  if(idxtype > 23 && idxtype < 30)
+    Msg::Warning("No constant number of nodes for polygons and polyhedra.");
   switch(idxtype){
   case 0 : *l = &SP; *ne = &NbSP; *nc = 1; *nn = 1; type = TYPE_PNT; break;
   case 1 : *l = &VP; *ne = &NbVP; *nc = 3; *nn = 1; type = TYPE_PNT; break;
@@ -819,6 +856,12 @@ int PViewDataList::_getRawData(int idxtype, std::vector<double> **l, int **ne,
   case 21: *l = &SY; *ne = &NbSY; *nc = 1; *nn = 5; type = TYPE_PYR; break;
   case 22: *l = &VY; *ne = &NbVY; *nc = 3; *nn = 5; type = TYPE_PYR; break;
   case 23: *l = &TY; *ne = &NbTY; *nc = 9; *nn = 5; type = TYPE_PYR; break;
+  case 24: *l = &SG; *ne = &NbSG; *nc = 1; *nn = 3; type = TYPE_POLYG; break;
+  case 25: *l = &VG; *ne = &NbVG; *nc = 3; *nn = 3; type = TYPE_POLYG; break;
+  case 26: *l = &TG; *ne = &NbTG; *nc = 9; *nn = 3; type = TYPE_POLYG; break;
+  case 27: *l = &SD; *ne = &NbSD; *nc = 1; *nn = 4; type = TYPE_POLYH; break;
+  case 28: *l = &VD; *ne = &NbVD; *nc = 3; *nn = 4; type = TYPE_POLYH; break;
+  case 29: *l = &TD; *ne = &NbTD; *nc = 9; *nn = 4; type = TYPE_POLYH; break;
   default: Msg::Error("Wrong type in PViewDataList"); break;
   }
 
@@ -851,8 +894,9 @@ void PViewDataList::setOrder2(int type)
                            fs->coefficients, fs->monomials);
 }
 
-std::vector<double> *PViewDataList::incrementList(int numComp, int type)
+std::vector<double> *PViewDataList::incrementList(int numComp, int type, int numNodes)
 {
+  int nb;
   switch(type){
   case TYPE_PNT:
     if     (numComp == 1){ NbSP++; return &SP; }
@@ -893,6 +937,24 @@ std::vector<double> *PViewDataList::incrementList(int numComp, int type)
     if     (numComp == 1){ NbSY++; return &SY; }
     else if(numComp == 3){ NbVY++; return &VY; }
     else if(numComp == 9){ NbTY++; return &TY; }
+    break;
+  case TYPE_POLYG:
+    polyNumNodes[0].push_back(numNodes);
+    nb = (polyAgNumNodes[0].size()) ? polyAgNumNodes[0].back() : 0;
+    polyAgNumNodes[0].push_back(numNodes + nb);
+    polyTotNumNodes[0] += numNodes;
+    if     (numComp == 1){ NbSG++; return &SG; }
+    else if(numComp == 3){ NbVG++; return &VG; }
+    else if(numComp == 9){ NbTG++; return &TG; }
+    break;
+  case TYPE_POLYH:
+    polyNumNodes[1].push_back(numNodes);
+    nb = (polyAgNumNodes[1].size()) ? polyAgNumNodes[1].back() : 0;
+    polyAgNumNodes[1].push_back(numNodes + nb);
+    polyTotNumNodes[1] += numNodes;
+    if     (numComp == 1){ NbSD++; return &SD; }
+    else if(numComp == 3){ NbVD++; return &VD; }
+    else if(numComp == 9){ NbTD++; return &TD; }
     break;
   }
   return 0;
