@@ -977,6 +977,16 @@ void GModel::deleteMeshPartitions()
   meshPartitions.clear();
 }
 
+void GModel::store(std::vector<MVertex*> &vertices, int dim,
+          std::map<int, std::vector<MElement*> > &entityMap,
+          std::map<int, std::map<int, std::string> > &physicalMap)
+{
+  _storeVerticesInEntities(vertices);
+  _storeElementsInEntities(entityMap);
+  _storePhysicalTagsInEntities(dim, physicalMap);
+  _associateEntityWithMeshVertices();
+}
+
 void GModel::storeChain(int dim,
                         std::map<int, std::vector<MElement*> > &entityMap,
                         std::map<int, std::map<int, std::string> > &physicalMap)

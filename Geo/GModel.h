@@ -487,6 +487,11 @@ class GModel
                               std::vector<int> &elementary,
                               std::vector<int> &partition);
 
+  // for elements cut having new vertices                
+  void store(std::vector<MVertex*> &vertices, int dim,
+            std::map<int, std::vector<MElement*> > &entityMap,
+            std::map<int, std::map<int, std::string> > &physicalMap);
+
   // store mesh elements of a chain in a new elementary and physical entity
   void storeChain(int dim,
                   std::map<int, std::vector<MElement*> > &entityMap,
