@@ -10,6 +10,7 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <cassert>
 #include "GModel.h"
 #include "GmshDefines.h"
 #include "MPoint.h"
@@ -37,6 +38,8 @@
 #include "PViewData.h"
 #include "PViewDataList.h"
 #endif
+
+#define FAST_ELEMENTS 1
 
 void GModel::_storePhysicalTagsInEntities(int dim,
                                           std::map<int, std::map<int, std::string> > &map)
@@ -122,7 +125,8 @@ static MElement *createElementMSH(GModel *m, int num, int typeMSH, int physical,
   if(CTX::instance()->mesh.switchElementTags) {
     int tmp = reg;
     reg = physical;
-    physical = reg;
+//     physical = reg;
+    physical = tmp;
   }
 
   MElementFactory factory;
@@ -132,7 +136,8 @@ static MElement *createElementMSH(GModel *m, int num, int typeMSH, int physical,
     Msg::Error("Unknown type of element %d", typeMSH);
     return NULL;
   }
-
+  
+#if (FAST_ELEMENTS!=1)
   switch(e->getType()){
   case TYPE_PNT :
     elements[0][reg].push_back(e); break;
@@ -156,6 +161,7 @@ static MElement *createElementMSH(GModel *m, int num, int typeMSH, int physical,
     elements[9][reg].push_back(e); break;
   default : Msg::Error("Wrong type of element"); return NULL;
   }
+#endif
 
   int dim = e->getDim();
   if(physical && (!physicals[dim].count(reg) || !physicals[dim][reg].count(physical)))
@@ -397,7 +403,13 @@ int GModel::readMSH(const std::string &name)
 
       if(!fgets(str, sizeof(str), fp)) return 0;
       int numElements;
+      
+      std::map<int, MElement*> elems;      
       std::map<int, MElement*> parents;
+      std::map<int, MElement*> domains;
+      std::map<int, int> elemreg;
+      std::map<int, int> elemphy;
+      
       std::set<MElement*> parentsOwned;
       sscanf(str, "%d", &numElements);
       Msg::Info("%d elements", numElements);
@@ -451,33 +463,147 @@ int GModel::readMSH(const std::string &name)
           }
           MElement *p = NULL;
           bool own = false;
-          if(parent) {
-            if(parents.find(parent) == parents.end()){
-              p = getParent(parent, type, elements);
-              if(p) parents[parent] = p;
-              else Msg::Error("Parent element %d not found for element %d", parent, num);
-            }
-            else p = parents.find(parent)->second;
-            if(parentsOwned.find(p) == parentsOwned.end()) {
-              own = true;
-              parentsOwned.insert(p);
-            }
-          }
+	  
+	  // search parent element
+	  if (parent)
+	  {
+#if (FAST_ELEMENTS==1)
+	      std::map<int, MElement* >::iterator ite = elems.find(parent);
+	      if (ite == elems.end())
+		  Msg::Error("Parent element %d not found for element %d", parent, num);
+	      else
+	      {
+		  p = ite->second;
+		  parents[parent] = p;
+	      }
+	      std::set<MElement* >::iterator itpo = parentsOwned.find(p);
+	      if (itpo == parentsOwned.end())
+	      {
+		  own = true;
+		  parentsOwned.insert(p);
+	      }
+	      assert(p != NULL);
+#else
+	      std::map<int, MElement* >::iterator itp = parents.find(parent);
+	      if (itp == parents.end())
+	      {
+		  p = getParent(parent, type, elements);
+		  if (p)
+		      parents[parent] = p;
+		  else Msg::Error("Parent element %d not found for element %d", parent, num);
+	      }
+	      else
+		  p = itp->second;
+	      std::set<MElement* >::iterator itpo = parentsOwned.find(p);
+	      if (itpo == parentsOwned.end())
+	      {
+		  own = true;
+		  parentsOwned.insert(p);
+	      }
+#endif
+	  }
+          
+          // search domains
           MElement *doms[2] = {NULL, NULL};
-          if(dom1) {
+	  if(dom1)
+	  {
+#if (FAST_ELEMENTS==1)
+            std::map<int, MElement* >::iterator ite = elems.find(dom1);
+	    if (ite == elems.end())
+		    Msg::Error("Domain element %d not found for element %d", dom1, num);
+		else
+		    doms[0] = ite->second;
+
+	    ite = elems.find(dom2);
+	    if (ite != elems.end())
+		doms[1] = ite->second;
+	    
+            if(!doms[0]) Msg::Error("Domain element %d not found for element %d", dom1, num);
+            if(dom2 && !doms[1]) Msg::Error("Domain element %d not found for element %d", dom2, num);
+#else
             getDomains(dom1, dom2, type, elements, doms);
             if(!doms[0]) Msg::Error("Domain element %d not found for element %d", dom1, num);
             if(dom2 && !doms[1]) Msg::Error("Domain element %d not found for element %d", dom2, num);
-          }
+#endif
+	  }
+	            
           MElement *e = createElementMSH(this, num, type, physical, elementary,
                                          partition, vertices, elements, physicals,
                                          own, p, doms[0], doms[1]);
+	  
+#if (FAST_ELEMENTS==1)
+	  elems[num] = e;
+	  elemreg[num] = elementary;
+	  elemphy[num] = physical;
+#endif	  
+	  
           for(unsigned int j = 0; j < ghosts.size(); j++)
             _ghostCells.insert(std::pair<MElement*, short>(e, ghosts[j]));
           if(numElements > 100000)
             Msg::ProgressMeter(i + 1, numElements, "Reading elements");
           delete [] indices;
         }
+        
+#if (FAST_ELEMENTS==1)
+	for(int i = 0; i < 10; i++)
+	  elements[i].clear();
+	
+	std::map<int, MElement* >::iterator ite;
+	for (ite = elems.begin(); ite != elems.end(); ite++)
+	{	    
+	    int num = ite->first;
+	    MElement *e = ite->second;
+	    if (parents.find(num) == parents.end())
+	    {
+		  int reg;
+
+		  if (CTX::instance()->mesh.switchElementTags) {
+		      reg = elemphy[num];
+		  }
+		  else
+		  {
+		      reg = elemreg[num];
+		  }
+
+		  switch (e->getType())
+		  {
+		  case TYPE_PNT :
+		      elements[0][reg].push_back(e);
+		      break;
+		  case TYPE_LIN :
+		      elements[1][reg].push_back(e);
+		      break;
+		  case TYPE_TRI :
+		      elements[2][reg].push_back(e);
+		      break;
+		  case TYPE_QUA :
+		      elements[3][reg].push_back(e);
+		      break;
+		  case TYPE_TET :
+		      elements[4][reg].push_back(e);
+		      break;
+		  case TYPE_HEX :
+		      elements[5][reg].push_back(e);
+		      break;
+		  case TYPE_PRI :
+		      elements[6][reg].push_back(e);
+		      break;
+		  case TYPE_PYR :
+		      elements[7][reg].push_back(e);
+		      break;
+		  case TYPE_POLYG :
+		      elements[8][reg].push_back(e);
+		      break;
+		  case TYPE_POLYH :
+		      elements[9][reg].push_back(e);
+		      break;
+		  default :
+		      Msg::Error("Wrong type of element");
+		      exit(1);
+		  }
+             }
+	}
+#endif
       }
       else{
         int numElementsPartial = 0;
@@ -583,7 +709,7 @@ int GModel::readMSH(const std::string &name)
   // store the physical tags
   for(int i = 0; i < 4; i++)
     _storePhysicalTagsInEntities(i, physicals[i]);
-
+  
   fclose(fp);
 
   return postpro ? 2 : 1;
