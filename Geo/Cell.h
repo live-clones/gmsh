@@ -72,6 +72,7 @@ class Cell {
   Cell(Cell* parent, int i);
 
   int getDomain() const { return _domain; }
+  void setDomain(int domain) { _domain = domain; }
   int getNum() const { return _num; }
   void setNum(int num) { _num = num; };
   int getTypeMSH() const;

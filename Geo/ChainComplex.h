@@ -133,10 +133,8 @@ class ChainComplex
 
   // transpose the boundary operator matrices, these are boundary operator
   // matrices for the dual mesh
-  void transposeHMatrices() {
-    for(int i = 0; i < 5; i++) gmp_matrix_transp(_HMatrix[i]); }
-  void transposeHMatrix(int dim) {
-    if(dim > -1 && dim < 5) gmp_matrix_transp(_HMatrix[dim]); }
+  void transposeHMatrices();
+  void transposeHMatrix(int dim);
 
   // Compute bases for the homology groups of this chain complex
   void computeHomology(bool dual=false);

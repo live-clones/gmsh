@@ -19,7 +19,6 @@ CellComplex::CellComplex(GModel* model,
   _insertCells(subdomainElements, 1);
   _insertCells(domainElements, 0);
   _immunizeCells(immuneElements);
-
   int num = 0;
   for(int dim = 0; dim < 4; dim++){
     if(getSize(dim) != 0) _dim = dim;
@@ -48,8 +47,13 @@ bool CellComplex::_insertCells(std::vector<MElement*>& elements,
     if(type == TYPE_QUA || type == TYPE_HEX)
       _simplicial = false;
     Cell* cell = new Cell(element, domain);
-    bool insert = _cells[cell->getDim()].insert(cell).second;
-    if(!insert) delete cell;
+    std::pair<citer, bool> insert =
+      _cells[cell->getDim()].insert(cell);
+    if(!insert.second) {
+      delete cell;
+      cell = *(insert.first);
+      if(domain) cell->setDomain(domain);
+    }
   }
 
   for (int dim = 3; dim > 0; dim--){
@@ -62,6 +66,7 @@ bool CellComplex::_insertCells(std::vector<MElement*>& elements,
 	if(!insert.second) {
 	  delete newCell;
 	  newCell = *(insert.first);
+          if(domain) newCell->setDomain(domain);
 	}
 	if(domain == 0) {
 	  int ori = cell->findBdCellOrientation(newCell, i);
@@ -83,6 +88,7 @@ bool CellComplex::_immunizeCells(std::vector<MElement*>& elements)
     if(cit != lastCell(dim)) (*cit)->setImmune(true);
     delete cell;
   }
+  return true;
 }
 
 CellComplex::~CellComplex()
@@ -285,7 +291,7 @@ int CellComplex::reduceComplex(bool docombine, bool omit)
   std::vector<Cell*> empty;
   for(int i = 3; i > 0; i--) count = count + reduction(i, false, empty);
 
-  if(omit){
+  if(omit && !count){
 
     removeSubdomain();
     std::vector<Cell*> newCells;
@@ -318,7 +324,8 @@ int CellComplex::reduceComplex(bool docombine, bool omit)
   if(docombine) combine(1);
 
   Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",
-             getSize(3), getSize(2), getSize(1), getSize(0));
+  getSize(3), getSize(2), getSize(1), getSize(0));
+
   _reduced = true;
   return 0;
 }
@@ -355,7 +362,7 @@ int CellComplex::coreduceComplex(bool docombine, bool omit)
     }
   }
 
-  if(omit){
+  if(omit && !count){
     std::vector<Cell*> newCells;
     while (getSize(0) != 0){
       citer cit = firstCell(0);
@@ -386,6 +393,7 @@ int CellComplex::coreduceComplex(bool docombine, bool omit)
   coherent();
   Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",
              getSize(3), getSize(2), getSize(1), getSize(0));
+
   _reduced = true;
   return 0;
 }

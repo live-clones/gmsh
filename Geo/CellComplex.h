@@ -38,8 +38,8 @@ class CellComplex
   std::vector<Cell*> _newcells;
   std::vector<Cell*> _removedcells;
 
-  bool _simplicial;
   int _dim;
+  bool _simplicial;
   bool _saveorig;
 
   int _deleteCount;

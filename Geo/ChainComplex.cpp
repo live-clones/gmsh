@@ -38,11 +38,12 @@ ChainComplex::ChainComplex(CellComplex* cellComplex, int domain)
       if((domain == 0 && !cell->inSubdomain()) || domain == 1
 	 || (domain == 2 && cell->inSubdomain()) ){
         cols++;
-_cellIndices[dim][cell] = index;
+        _cellIndices[dim][cell] = index;
         index++;
       }
       else _cellIndices[dim][cell] = 0;
     }
+
     if(dim > 0) rows = lastCols;
     lastCols = cols;
 
@@ -54,7 +55,6 @@ _cellIndices[dim][cell] = index;
       _HMatrix[dim] = create_gmp_matrix_zero(1, cols);
       //_HMatrix[dim] = NULL;
     }
-
     else{
       mpz_t elem;
       mpz_init(elem);
@@ -115,6 +115,17 @@ ChainComplex::~ChainComplex()
     destroy_gmp_matrix(_QMatrix[i]);
     destroy_gmp_matrix(_Hbasis[i]);
   }
+}
+
+void ChainComplex::transposeHMatrices()
+{
+  for(int i = 0; i < 5; i++)
+    if(_HMatrix[i] != NULL) gmp_matrix_transp(_HMatrix[i]);
+}
+void ChainComplex::transposeHMatrix(int dim)
+{
+  if(dim > -1 && dim < 5 && _HMatrix[dim] != NULL)
+    gmp_matrix_transp(_HMatrix[dim]);
 }
 
 void ChainComplex::KerCod(int dim)
