@@ -205,7 +205,7 @@ static void RecursiveIntegration(GEdge *ge, IntPoint *from, IntPoint *to,
   double val3 = trapezoidal(&P, to);
   double err = fabs(val1 - val2 - val3);
 
-  if(((err < Prec) && (*depth > 3)) || (*depth > 25)) {
+  if(((err < Prec) && (*depth > 6)) || (*depth > 25)) {
     p1 = Points.back();
     P.p = p1.p + val2;
     Points.push_back(P);
