@@ -517,7 +517,7 @@ int GeomMeshMatcher::forceTomatch(GModel *geom, GModel *mesh, const double TOL)
   //  printf("creating edges\n");
   for (GModel::eiter it = mesh->firstEdge(); it != mesh->lastEdge(); ++it){
     //    printf("edge %d\n",(*it)->tag());
-    for (uint i=0;i<(*it)->lines.size();i++){
+    for (unsigned int i=0;i<(*it)->lines.size();i++){
       //      printf("medge %d %d\n",(*it)->lines[i]->getVertex(0)->getNum(),(*it)->lines[i]->getVertex(1)->getNum());
       MVertex *v1 = geom->getMeshVertexByTag((*it)->lines[i]->getVertex(0)->getNum());
       MVertex *v2 = geom->getMeshVertexByTag((*it)->lines[i]->getVertex(1)->getNum());
@@ -542,7 +542,7 @@ int GeomMeshMatcher::forceTomatch(GModel *geom, GModel *mesh, const double TOL)
   }
   //  printf("creating faces\n");
   for (GModel::fiter it = mesh->firstFace(); it != mesh->lastFace(); ++it){
-    for (uint i=0;i<(*it)->triangles.size();i++){
+    for (unsigned int i=0;i<(*it)->triangles.size();i++){
       MVertex *v1 = geom->getMeshVertexByTag((*it)->triangles[i]->getVertex(0)->getNum());
       MVertex *v2 = geom->getMeshVertexByTag((*it)->triangles[i]->getVertex(1)->getNum());
       MVertex *v3 = geom->getMeshVertexByTag((*it)->triangles[i]->getVertex(2)->getNum());
@@ -550,7 +550,7 @@ int GeomMeshMatcher::forceTomatch(GModel *geom, GModel *mesh, const double TOL)
       else if (v2->onWhat()->dim() == 2)((GFace*)v2->onWhat())->triangles.push_back(new MTriangle(v1,v2,v3));
       else if (v3->onWhat()->dim() == 2)((GFace*)v3->onWhat())->triangles.push_back(new MTriangle(v1,v2,v3));
     }
-    for (uint i=0;i<(*it)->quadrangles.size();i++){
+    for (unsigned int i=0;i<(*it)->quadrangles.size();i++){
       MVertex *v1 = geom->getMeshVertexByTag((*it)->quadrangles[i]->getVertex(0)->getNum());
       MVertex *v2 = geom->getMeshVertexByTag((*it)->quadrangles[i]->getVertex(1)->getNum());
       MVertex *v3 = geom->getMeshVertexByTag((*it)->quadrangles[i]->getVertex(2)->getNum());
@@ -569,7 +569,7 @@ int GeomMeshMatcher::forceTomatch(GModel *geom, GModel *mesh, const double TOL)
 static void copy_vertices (GVertex *to, GVertex *from, std::map<MVertex*,MVertex*> &_mesh_to_geom){
   if (from) {
     to->deleteMesh();
-    for (uint i=0;i<from->mesh_vertices.size();i++){
+    for (unsigned int i=0;i<from->mesh_vertices.size();i++){
       MVertex *v_from = from->mesh_vertices[i];
       MVertex *v_to = new MVertex (v_from->x(),v_from->y(),v_from->z(), to);
       to->mesh_vertices.push_back(v_to);
@@ -579,7 +579,7 @@ static void copy_vertices (GVertex *to, GVertex *from, std::map<MVertex*,MVertex
 }
 static void copy_vertices (GRegion *to, GRegion *from, std::map<MVertex*,MVertex*> &_mesh_to_geom){
   to->deleteMesh();
-  for (uint i=0;i<from->mesh_vertices.size();i++){
+  for (unsigned int i=0;i<from->mesh_vertices.size();i++){
     MVertex *v_from = from->mesh_vertices[i];
     MVertex *v_to = new MVertex (v_from->x(),v_from->y(),v_from->z(), to);
     to->mesh_vertices.push_back(v_to);
@@ -606,7 +606,7 @@ static void copy_vertices (GEdge* to, GEdge* from, std::map<MVertex*,MVertex*> &
     _mesh_to_geom[v_from] = v_to;
   }
 
-  for (uint i=0;i<from->mesh_vertices.size();i++){
+  for (unsigned int i=0;i<from->mesh_vertices.size();i++){
     MVertex *v_from = from->mesh_vertices[i];
     double t;
     GPoint gp = to->closestPoint(SPoint3(v_from->x(),v_from->y(),v_from->z()), t );
@@ -618,7 +618,7 @@ static void copy_vertices (GEdge* to, GEdge* from, std::map<MVertex*,MVertex*> &
 }
 static void copy_vertices (GFace *geom, GFace *mesh, std::map<MVertex*,MVertex*> &_mesh_to_geom){
   //  printf("Starting Face %d, with %d vertices\n", geom->tag(),  mesh->mesh_vertices.size());
-  for (uint i=0;i<mesh->mesh_vertices.size();i++){
+  for (unsigned int i=0;i<mesh->mesh_vertices.size();i++){
     MVertex *v_from = mesh->mesh_vertices[i];
     double uv[2];
     GPoint gp = geom->closestPoint ( SPoint3(v_from->x(),v_from->y(),v_from->z()), uv );
@@ -645,7 +645,7 @@ static void copy_elements (std::vector<ELEMENT*> &to,
 			   std::map<MVertex*,MVertex*> &_mesh_to_geom){
   MElementFactory toto;
   to.clear();
-  for (uint i=0;i < from.size();i++){
+  for (unsigned int i=0;i < from.size();i++){
     ELEMENT *e = from[i];
     std::vector<MVertex*> nodes;
     for(int j=0;j<e->getNumVertices();j++) {
@@ -665,11 +665,11 @@ void copy_vertices (GModel *geom, GModel *mesh, std::map<MVertex*,MVertex*> &_me
 		    std::vector<Pair<GFace*, GFace*> > *coresp_f){
 
   // copy all elements
-  for (uint i=0;i<coresp_v->size();++i)
+  for (unsigned int i=0;i<coresp_v->size();++i)
     copy_vertices((*coresp_v)[i].first(),(*coresp_v)[i].second(),_mesh_to_geom);
-  for (uint i=0;i<coresp_e->size();++i)
+  for (unsigned int i=0;i<coresp_e->size();++i)
     copy_vertices((*coresp_e)[i].first(),(*coresp_e)[i].second(),_mesh_to_geom);
-  for (uint i=0;i<coresp_f->size();++i)
+  for (unsigned int i=0;i<coresp_f->size();++i)
     copy_vertices((*coresp_f)[i].first(),(*coresp_f)[i].second(),_mesh_to_geom);
   for (GModel::riter rit = geom->firstRegion() ; rit != geom->lastRegion(); rit++)
   copy_vertices(*rit,mesh->getRegionByTag((*rit)->tag()),_mesh_to_geom);
@@ -680,13 +680,13 @@ void copy_elements (GModel *geom, GModel *mesh, std::map<MVertex*,MVertex*> &_me
 		    std::vector<Pair<GFace*, GFace*> > *coresp_f){
   // copy all elements
 
-  for (uint i=0;i<coresp_v->size();++i)
+  for (unsigned int i=0;i<coresp_v->size();++i)
     copy_elements<MPoint>((*coresp_v)[i].first()->points,(*coresp_v)[i].second()->points,_mesh_to_geom);
 
-  for (uint i=0;i<coresp_e->size();++i)
+  for (unsigned int i=0;i<coresp_e->size();++i)
     copy_elements<MLine>((*coresp_e)[i].first()->lines,(*coresp_e)[i].second()->lines,_mesh_to_geom);
 
-  for (uint i=0;i<coresp_f->size();++i){
+  for (unsigned int i=0;i<coresp_f->size();++i){
     copy_elements<MTriangle>((*coresp_f)[i].first()->triangles,(*coresp_f)[i].second()->triangles,_mesh_to_geom);
     copy_elements<MQuadrangle>((*coresp_f)[i].first()->quadrangles,(*coresp_f)[i].second()->quadrangles,_mesh_to_geom);
   }
