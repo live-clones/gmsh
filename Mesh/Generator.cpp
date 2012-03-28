@@ -557,16 +557,16 @@ static void Mesh3D(GModel *m)
   FindConnectedRegions(delaunay, connected);
   for(unsigned int i = 0; i < connected.size(); i++){
     MeshDelaunayVolume(connected[i]);
-	if(CTX::instance()->mesh.algo3d==ALGO_3D_RTREE){
-	  Filler f;
-	  f.treat_region(connected[i][0]);
-	}
+    if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE){
+      Filler f;
+      f.treat_region(connected[i][0]);
+    }
   }
 
   double t2 = Cpu();
   CTX::instance()->meshTimer[2] = t2 - t1;
   Msg::StatusBar(2, true, "Done meshing 3D (%g s)", CTX::instance()->meshTimer[2]);
-  
+
 }
 
 void OptimizeMeshNetgen(GModel *m)

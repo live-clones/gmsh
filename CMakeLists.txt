@@ -456,6 +456,12 @@ if(HAVE_FLTK OR HAVE_QT OR ENABLE_GRAPHICS)
     set_config_option(HAVE_MPEG_ENCODE "Mpeg")
   endif(ENABLE_MPEG_ENCODE)
 
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/3M)
+    add_subdirectory(contrib/3M)
+    include_directories(contrib/3M)
+    set_config_option(HAVE_3M "3M")
+  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/3M)
+
   if(ENABLE_OSMESA)
     find_library(OSMESA_LIB OSMesa)
     if(OSMESA_LIB)

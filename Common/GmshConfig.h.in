@@ -6,6 +6,7 @@
 #ifndef _GMSH_CONFIG_H_
 #define _GMSH_CONFIG_H_
 
+#cmakedefine HAVE_3M
 #cmakedefine HAVE_64BIT_SIZE_T
 #cmakedefine HAVE_ACIS
 #cmakedefine HAVE_ANN

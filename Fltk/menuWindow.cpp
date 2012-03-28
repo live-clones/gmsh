@@ -57,6 +57,9 @@ typedef unsigned long intptr_t;
 #if defined(HAVE_ONELAB)
 #include "onelab.h"
 #endif
+#if defined(HAVE_3M)
+#include "3M.h"
+#endif
 
 static void file_new_cb(Fl_Widget *w, void *data)
 {
@@ -2371,6 +2374,9 @@ static Fl_Menu_Item bar_table[] = {
 #if defined(HAVE_ONELAB)
     {"&OneLab",          0, (Fl_Callback *)solver_cb, (void*)(-1), FL_MENU_DIVIDER},
 #endif
+#if defined(HAVE_3M)
+    {"&3M",              0, (Fl_Callback *)window3M_cb, 0, FL_MENU_DIVIDER},
+#endif
     {"S&tatistics",      FL_CTRL+'i', (Fl_Callback *)statistics_cb, 0},
     {"M&essage Console", FL_CTRL+'l', (Fl_Callback *)message_cb, 0},
     {0},
@@ -2435,6 +2441,9 @@ static Fl_Menu_Item sysbar_table[] = {
     {"Manipulator",     FL_META+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0},
 #if defined(HAVE_ONELAB)
     {"OneLab",          0, (Fl_Callback *)solver_cb, (void*)(-1), FL_MENU_DIVIDER},
+#endif
+#if defined(HAVE_3M)
+    {"3M",              0, (Fl_Callback *)window3M_cb, 0, FL_MENU_DIVIDER},
 #endif
     {"Statistics",      FL_META+'i', (Fl_Callback *)statistics_cb, 0},
     {"Message Console", FL_META+'l', (Fl_Callback *)message_cb, 0},

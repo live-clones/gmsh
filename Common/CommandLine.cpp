@@ -580,8 +580,8 @@ void GetOptions(int argc, char *argv[])
             CTX::instance()->mesh.algo3d = ALGO_3D_FRONTAL_DEL;
           else if(!strncmp(argv[i], "delhex3d", 8))
             CTX::instance()->mesh.algo3d = ALGO_3D_FRONTAL_HEX;
-		  else if(!strncmp(argv[i], "rtree3d", 9))
-			CTX::instance()->mesh.algo3d = ALGO_3D_RTREE;
+          else if(!strncmp(argv[i], "rtree3d", 9))
+            CTX::instance()->mesh.algo3d = ALGO_3D_RTREE;
           else
             Msg::Fatal("Unknown mesh algorithm");
           i++;

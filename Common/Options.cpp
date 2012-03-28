@@ -5046,9 +5046,9 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
     case ALGO_3D_FRONTAL:
       FlGui::instance()->options->mesh.choice[3]->value(1);
       break;
-	case ALGO_3D_RTREE:
-	  FlGui::instance()->options->mesh.choice[3]->value(5);
-	  break;
+    case ALGO_3D_RTREE:
+      FlGui::instance()->options->mesh.choice[3]->value(5);
+      break;
     case ALGO_3D_DELAUNAY:
     default:
       FlGui::instance()->options->mesh.choice[3]->value(0);
