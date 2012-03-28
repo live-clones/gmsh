@@ -158,7 +158,7 @@ MElement *MElementOctree::find(double x, double y, double z, int dim, bool stric
     double tol = initialTol;
     while (tol < 1){
       tol *= 10;
-      MElement::setTolerance(tol);      
+      MElement::setTolerance(tol);
       std::vector<GEntity*> entities;
       _gm->getEntities(entities);
       for(unsigned int i = 0; i < entities.size(); i++){
@@ -168,12 +168,13 @@ MElement *MElementOctree::find(double x, double y, double z, int dim, bool stric
 	    if (MElementInEle(e, P)){
 	      MElement::setTolerance(initialTol);
 	      return e;
-	    }	    
+	    }
 	  }
 	}
       }
     }
     MElement::setTolerance(initialTol);
     Msg::Warning("Point %g %g %g not found",x,y,z);
-  } return NULL;
+  }
+  return NULL;
 }

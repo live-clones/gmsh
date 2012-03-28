@@ -736,14 +736,15 @@ int GModel::getNumMeshElements(unsigned c[5])
   return 0;
 }
 
-MElement *GModel::getMeshElementByCoord(SPoint3 &p, int dim)
+MElement *GModel::getMeshElementByCoord(SPoint3 &p, int dim, bool strict)
 {
   if(!_octree){
     Msg::Debug("Rebuilding mesh element octree");
     _octree = new MElementOctree(this);
   }
-  return _octree->find(p.x(), p.y(), p.z(), dim);
+  return _octree->find(p.x(), p.y(), p.z(), dim, strict);
 }
+
 std::vector<MElement*> GModel::getMeshElementsByCoord(SPoint3 &p, int dim)
 {
   if(!_octree){

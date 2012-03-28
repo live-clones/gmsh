@@ -312,8 +312,8 @@ class GModel
   int getNumMeshElements(unsigned c[5]);
 
   // access a mesh element by coordinates (using an octree search)
-  MElement *getMeshElementByCoord(SPoint3 &p, int dim = -1);
-  std::vector<MElement*> getMeshElementsByCoord(SPoint3 &p, int dim = -1);
+  MElement *getMeshElementByCoord(SPoint3 &p, int dim=-1, bool strict=true);
+  std::vector<MElement*> getMeshElementsByCoord(SPoint3 &p, int dim=-1);
 
   // access a mesh element by tag, using the element cache
   MElement *getMeshElementByTag(int n);
@@ -487,7 +487,7 @@ class GModel
                               std::vector<int> &elementary,
                               std::vector<int> &partition);
 
-  // for elements cut having new vertices                
+  // for elements cut having new vertices
   void store(std::vector<MVertex*> &vertices, int dim,
             std::map<int, std::vector<MElement*> > &entityMap,
             std::map<int, std::map<int, std::string> > &physicalMap);
