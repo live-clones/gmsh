@@ -65,7 +65,8 @@ class elasticitySolver
   FunctionSpace<double> *LagrangeMultiplierSpace;
 
   // young modulus and poisson coefficient per physical
-  std::vector<elasticField> elasticFields;
+  std::vector<elasticField> elasticFields; 
+
   std::vector<LagrangeMultiplierField> LagrangeMultiplierFields;
   // neumann BC
   std::vector<neumannBC> allNeumann;

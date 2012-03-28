@@ -203,13 +203,22 @@ bool onelab::localNetworkClient::run()
       std::string checkCommand = (ps.empty() ? "" : ps[0].getValue());
       get(ps, getName() + "/9ComputeCommand");
       std::string computeCommand = (ps.empty() ? "" : ps[0].getValue());
+    /*
       if(action == "check")
         command += " " + modelName + " " + checkCommand;
       else if(action == "compute")
         command += " " + modelName + " " + computeCommand;
+    */
+    if(action == "check")
+      command.append(" " + modelName + " " + checkCommand) ;
+    else if(action == "compute")
+      command.append(" " + modelName + " " + computeCommand);
     }
+    /*
     // append "-onelab" command line argument
     command += " " + _socketSwitch + " \"" + getName() + "\"";
+    */
+    command.append(" " + getSocketSwitch() + " " + getName() + " %s");
   }
   else{
     Msg::Info("Listening on socket '%s'", sockname.c_str());
@@ -448,16 +457,25 @@ static void initializeLoop(const std::string &level)
   onelab::server::instance()->get(numbers);
   for(unsigned int i = 0; i < numbers.size(); i++){
     if(numbers[i].getAttribute("Loop") == level){
+
       if(numbers[i].getChoices().size() > 1){
         numbers[i].setValue(numbers[i].getChoices()[0]);
         onelab::server::instance()->set(numbers[i]);
         changed = true;
       }
-      else if(numbers[i].getMin() != -onelab::parameter::maxNumber() &&
-              numbers[i].getStep()){
-        numbers[i].setValue(numbers[i].getMin());
-        onelab::server::instance()->set(numbers[i]);
-        changed = true;
+      else if(numbers[i].getStep()>0){
+	if(numbers[i].getMin() != -onelab::parameter::maxNumber()){
+	  numbers[i].setValue(numbers[i].getMin());
+	  onelab::server::instance()->set(numbers[i]);
+	  changed = true;
+	}
+      }
+      else if(numbers[i].getStep()<0){
+	if(numbers[i].getMax() != onelab::parameter::maxNumber()){
+	  numbers[i].setValue(numbers[i].getMax());
+	  onelab::server::instance()->set(numbers[i]);
+	  changed = true;
+	}
       }
     }
   }
@@ -476,6 +494,7 @@ static bool incrementLoop(const std::string &level)
   for(unsigned int i = 0; i < numbers.size(); i++){
     if(numbers[i].getAttribute("Loop") == level){
       loop = true;
+
       if(numbers[i].getChoices().size() > 1){
         // FIXME should store loopVariable attribute in the parameter
         // -- the following test will loop forever if 2 values are
@@ -492,14 +511,25 @@ static bool incrementLoop(const std::string &level)
           }
         }
       }
-      else if(numbers[i].getMax() != onelab::parameter::maxNumber() &&
-              numbers[i].getValue() < numbers[i].getMax() &&
-              numbers[i].getStep()){
-        numbers[i].setValue(numbers[i].getValue() + numbers[i].getStep());
-        onelab::server::instance()->set(numbers[i]);
-        Msg::Info("Recomputing with new step %s=%g",
-                  numbers[i].getName().c_str(), numbers[i].getValue());
-        recompute = true;
+      else if(numbers[i].getStep()>0){
+	if(numbers[i].getMax() != onelab::parameter::maxNumber() &&
+	   numbers[i].getValue() < numbers[i].getMax()){
+	  numbers[i].setValue(numbers[i].getValue() + numbers[i].getStep());
+	  onelab::server::instance()->set(numbers[i]);
+	  Msg::Info("Recomputing with new step %s=%g",
+		    numbers[i].getName().c_str(), numbers[i].getValue());
+	  recompute = true;
+	}
+      }
+      else if(numbers[i].getStep()<0){
+	if(numbers[i].getMin() != -onelab::parameter::maxNumber() &&
+	   numbers[i].getValue() > numbers[i].getMin()){
+	  numbers[i].setValue(numbers[i].getValue() + numbers[i].getStep());
+	  onelab::server::instance()->set(numbers[i]);
+	  Msg::Info("Recomputing with new step %s=%g",
+		    numbers[i].getName().c_str(), numbers[i].getValue());
+	  recompute = true;
+	}
       }
     }
   }
@@ -536,13 +566,20 @@ static bool incrementLoop()
 static std::vector<double> getRange(onelab::number &p)
 {
   std::vector<double> v;
+
   if(p.getChoices().size()){
     v = p.getChoices();
   }
   else if(p.getMin() != -onelab::parameter::maxNumber() &&
-          p.getMax() != onelab::parameter::maxNumber() && p.getStep()){
-    for(double d = p.getMin(); d <= p.getMax(); d += p.getStep())
-      v.push_back(d);
+          p.getMax() != onelab::parameter::maxNumber()){
+    if(p.getStep()>0){
+      for(double d = p.getMin(); d <= p.getMax(); d += p.getStep())
+	v.push_back(d);
+    }
+    else if(p.getStep()<0){
+      for(double d = p.getMin(); d <= p.getMax(); d -= p.getStep())
+	v.push_back(d);
+    }
   }
   return v;
 }

@@ -73,7 +73,7 @@ void GetSetFixations (elasticitySolver &e) {
 }
 */
 
-void WhatToDoNow(int argc, char *argv[], int &solve, std::string &modelName)
+void WhatToDoNow(int argc, char *argv[], int &solve, std::string &fileName)
 {
   int i =  1;
   solve = 1;
@@ -123,7 +123,8 @@ void WhatToDoNow(int argc, char *argv[], int &solve, std::string &modelName)
       }
     }
     else {
-      modelName = std::string(argv[i]);
+      std::string modelName = std::string(argv[i]);
+      fileName=modelName.substr(0,modelName.find_last_of("."));  // remove extension
       //      if (modelName)
       //      modelName = modelName + std::string(".fuk");
       i++;

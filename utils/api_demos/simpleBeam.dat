@@ -1,4 +1,18 @@
-ElasticDomain 7 100.e9 0.3
+onelab.number Material1.Create(1);
+onelab.string Material.Add(Material1); Material.Add(Material2); Material.Add(Material3);
+
+onelab.iftrue(Material1)
+onelab.number E.Create(100.e9); Nu.Create(0.3); 
+onelab.endif
+onelab.iftrue(Material2)
+onelab.number E.Create(200.e9); Nu.Create(0.25); 
+onelab.endif
+onelab.iftrue(Material3)
+onelab.number E.Create(80.e9); Nu.Create(0.5); 
+onelab.endif
+
+
+ElasticDomain 7  onelab.getValue(E) onelab.getValue(Nu);
 EdgeDisplacement 8 0 0
 EdgeDisplacement 8 1 0
 EdgeDisplacement 8 2 0

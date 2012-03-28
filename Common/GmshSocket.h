@@ -320,6 +320,7 @@ class GmshServer : public GmshSocket{
   virtual ~GmshServer(){}
   virtual int NonBlockingSystemCall(const char *str) = 0;
   virtual int NonBlockingWait(int socket, double waitint, double timeout) = 0;
+
   int Start(const char *command, const char *sockname, double timeout)
   {
     if(!sockname) throw "Invalid (null) socket name";
@@ -385,11 +386,10 @@ class GmshServer : public GmshSocket{
       }
     }
 
+    char cmd[1024];
     if(command && strlen(command)){
-      // we assume that the command line always ends with the socket name
-      std::string cmd(command);
-      cmd += " " + _sockname;
-      NonBlockingSystemCall(cmd.c_str()); // start the solver
+      sprintf(cmd,command,_sockname.c_str());
+      NonBlockingSystemCall(cmd); // starts the solver
     }
     else{
       timeout = 0.; // no command launched: don't set a timeout
