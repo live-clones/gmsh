@@ -954,8 +954,8 @@ bool GFaceCompound::parametrize() const
     if(!success) {Msg::Error("Could not order vertices on boundary");exit(1);}
   }
 
-  //fillNeumannBCS_Plane();
-  fillNeumannBCS();
+  fillNeumannBCS_Plane();
+  //fillNeumannBCS();
 
   // Convex parametrization
   if (_mapping == CONVEX){

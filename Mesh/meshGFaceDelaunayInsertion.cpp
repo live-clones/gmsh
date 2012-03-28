@@ -800,8 +800,7 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
         Us, Vs, metric) ) {
 
       MTriangle *base = worst->tri();
-
-      Msg::Info("Point %g %g cannot be inserted because %d", center[0], center[1], p.succeeded() );
+      Msg::Debug("Point %g %g cannot be inserted because %d", center[0], center[1], p.succeeded() );
 
       AllTris.erase(it);
       worst->forceRadius(-1);
@@ -810,7 +809,7 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
       return false;
     }
     else {
-      //      printf("ouf ! %d\n",AllTris.size());
+      //printf("ouf ! %d\n",AllTris.size());
       gf->mesh_vertices.push_back(v);
       return true;
     }
