@@ -1310,109 +1310,6 @@ void Rec2DChange::revert()
 
 /**  Rec2DDataChange  **/
 /***********************/
-//void Rec2DDataChange::hide(Rec2DEdge *re)
-//{
-//  _hiddenEdge.push_back(re);
-//  re->hide();
-//}
-//
-//void Rec2DDataChange::hide(Rec2DVertex *rv)
-//{
-//  _hiddenVertex.push_back(rv);
-//  rv->hide();
-//}
-//
-//void Rec2DDataChange::hide(Rec2DElement *rel)
-//{
-//  _hiddenElement.push_back(rel);
-//  rel->hide();
-//}
-//
-//void Rec2DDataChange::hide(std::vector<Rec2DAction*> actions)
-//{
-//  _hiddenAction.insert(_hiddenAction.end(), actions.begin(), actions.end());
-//  for (unsigned int i = 0; i < actions.size(); ++i) {
-//    actions[i]->hide();
-//  }
-//}
-//
-//void Rec2DDataChange::hide(Rec2DAction *action)
-//{
-//  _hiddenAction.push_back(action);
-//  action->hide();
-//}
-//
-//void Rec2DDataChange::append(const Rec2DElement *rel)
-//{
-//  _newElement.push_back((Rec2DElement*)rel);
-//}
-//
-//void Rec2DDataChange::append(const Rec2DAction *ra)
-//{
-//  _newAction.push_back((Rec2DAction*)ra);
-//}
-//
-//void Rec2DDataChange::swapFor(Rec2DEdge *re1, Rec2DEdge *re2)
-//{
-//  Rec2DElement *rel = Rec2DEdge::getUniqueElement(re1);
-//  if (!rel) {
-//    Msg::Error("[Rec2DDataChange] invalid swapping edges");
-//    return;
-//  }
-//  _edgeSwap.push_back(std::make_pair(rel, std::make_pair(re2, re1) ));
-//  rel->swap(re1, re2);
-//}
-//
-//void Rec2DDataChange::swapFor(Rec2DVertex *rv1, Rec2DVertex *rv2)
-//{
-//  std::vector<Rec2DElement*> elem;
-//  rv1->getElements(elem);
-//  for (unsigned int i = 0; i < elem.size(); ++i) {
-//    _vertSwapEL.push_back(std::make_pair(elem[i], std::make_pair(rv2, rv1) ));
-//    rv1->rmv(elem[i]);
-//  }
-//  std::vector<Rec2DEdge*> edges;
-//  rv1->getEdges(edges);
-//  for (unsigned int i = 0; i < edges.size(); ++i) {
-//    _vertSwapE.push_back(std::make_pair(edges[i], std::make_pair(rv2, rv1) ));
-//    edges[i]->swap(rv1, rv2);
-//  }
-//  for (unsigned int i = 0; i < elem.size(); ++i) {
-//    rv2->add(elem[i]);
-//  }
-//}
-//
-//void Rec2DDataChange::relocate(Rec2DVertex *rv, double u, double v)
-//{
-//  _oldCoordinate.push_back(std::make_pair(rv, SPoint2(rv->u(), rv->v())));
-//  rv->relocate(SPoint2(u, v));
-//}
-//
-//void Rec2DDataChange::changeParity(Rec2DVertex *rv, int par)
-//{
-//  for (unsigned int i = 0; i < _oldParity.size(); ++i) {
-//    if (_oldParity[i].first == rv)
-//      return;
-//  }
-//  _oldParity.push_back(std::make_pair(rv, rv->getParity()));
-//  rv->setParity(par);
-//}
-//
-//void Rec2DDataChange::saveParity(std::vector<Rec2DVertex*> &vect)
-//{
-//  int sizeOldParity = _oldParity.size();
-//  for (unsigned int i = 0; i < vect.size(); ++i) {
-//    bool notThere = true;
-//    for (int j = 0; j < sizeOldParity; ++j) {
-//      if (_oldParity[j].first == vect[i])
-//        notThere = false;
-//    }
-//    if (notThere) {
-//      _oldParity.push_back(std::make_pair(vect[i], vect[i]->getParity()));
-//    }
-//  }
-//}
-//
 void Rec2DDataChange::checkObsoleteActions(Rec2DVertex *const*verts, int size)
 {
   std::vector<Rec2DAction*> actions;
@@ -1424,56 +1321,6 @@ void Rec2DDataChange::checkObsoleteActions(Rec2DVertex *const*verts, int size)
       hide(actions[i]);
   }
 }
-
-//void Rec2DDataChange::revert()
-//{
-//  for (unsigned int i = 0; i < _oldParity.size(); ++i)
-//    _oldParity[i].first->setParity(_oldParity[i].second);
-//  for (unsigned int i = 0; i < _oldCoordinate.size(); ++i)
-//    _oldCoordinate[i].first->relocate(_oldCoordinate[i].second);
-//  
-//  for (unsigned int i = 0; i < _newAction.size(); ++i)
-//    delete _newAction[i];
-//  for (unsigned int i = 0; i < _newElement.size(); ++i)
-//    delete _newElement[i];
-//  //for (unsigned int i = 0; i < _newEdge.size(); ++i)
-//  //  delete _newEdge[i];
-//  //for (unsigned int i = 0; i < _newVertex.size(); ++i)
-//  //  delete _newVertex[i];
-//  
-//  for (unsigned int i = 0; i < _hiddenVertex.size(); ++i)
-//    _hiddenVertex[i]->reveal();
-//  for (unsigned int i = 0; i < _hiddenEdge.size(); ++i)
-//    _hiddenEdge[i]->reveal();
-//  
-//  for (unsigned int i = 0; i < _edgeSwap.size(); ++i) {
-//    _edgeSwap[i].first->swap(_edgeSwap[i].second.first,
-//                             _edgeSwap[i].second.second);
-//  }
-//  for (unsigned int i = 0; i < _vertSwapE.size(); ++i) {
-//    _vertSwapE[i].first->swap(_vertSwapE[i].second.first,
-//                             _vertSwapE[i].second.second);
-//  }
-//  for (unsigned int i = 0; i < _vertSwapEL.size(); ++i) {
-//    _vertSwapEL[i].first->swap(_vertSwapEL[i].second.first,
-//                             _vertSwapEL[i].second.second);
-//  }
-//  
-//  for (unsigned int i = 0; i < _hiddenElement.size(); ++i)
-//    _hiddenElement[i]->reveal();
-//  for (unsigned int i = 0; i < _hiddenAction.size(); ++i)
-//    _hiddenAction[i]->reveal();
-//  _oldParity.clear();
-//  _oldCoordinate.clear();
-//  //_newEdge.clear();
-//  //_newVertex.clear();
-//  _newAction.clear();
-//  _newElement.clear();
-//  _hiddenEdge.clear();
-//  _hiddenVertex.clear();
-//  _hiddenAction.clear();
-//  _hiddenElement.clear();
-//}
 
 Rec2DDataChange::~Rec2DDataChange()
 {
@@ -1825,17 +1672,10 @@ bool Rec2DTwoTri2Quad::isObsolete() const
   p[1] = _vertices[1]->getParity();
   p[2] = _vertices[2]->getParity();
   p[3] = _vertices[3]->getParity();
-  return Rec2DTwoTri2Quad::isObsolete(p);
-}
-
-bool Rec2DTwoTri2Quad::isObsolete(const int *p)
-{
-  if (p[0] && p[0]/2 == p[1]/2 && p[0]%2 != p[1]%2 ||
-      p[2] && p[2]/2 == p[3]/2 && p[2]%2 != p[3]%2 ||
-      p[0] && (p[0] == p[2] || p[0] == p[3])       ||
-      p[1] && (p[1] == p[2] || p[1] == p[3])         )
-    return true;
-  return false;
+  return (p[0] && p[0]/2 == p[1]/2 && p[0]%2 != p[1]%2 ||
+          p[2] && p[2]/2 == p[3]/2 && p[2]%2 != p[3]%2 ||
+          p[0] && (p[0] == p[2] || p[0] == p[3])       ||
+          p[1] && (p[1] == p[2] || p[1] == p[3])         );
 }
 
 void Rec2DTwoTri2Quad::getElements(std::vector<Rec2DElement*> &elem) const
@@ -2136,16 +1976,9 @@ bool Rec2DCollapse::isObsolete() const
   int p[2];
   p[0] = _rec->_vertices[0]->getParity();
   p[1] = _rec->_vertices[1]->getParity();
-  return Rec2DCollapse::isObsolete(p) ||
+  return (p[0] && p[0]/2 == p[1]/2 && p[0]%2 != p[1]%2) ||
          (_rec->_vertices[0]->getOnBoundary() &&
-          _rec->_vertices[1]->getOnBoundary()   );
-}
-
-bool Rec2DCollapse::isObsolete(const int *p)
-{
-  if (p[0] && p[0]/2 == p[1]/2 && p[0]%2 != p[1]%2)
-    return true;
-  return false;
+          _rec->_vertices[1]->getOnBoundary()   )         ;
 }
 
 bool Rec2DCollapse::whatWouldYouDo

@@ -255,17 +255,6 @@ class Rec2DDataChange {
     std::vector<Rec2DChange*> _changes;
     Rec2DAction *_ra;
     
-    //std::vector<Rec2DEdge*> _hiddenEdge/*, _newEdge*/;
-    //std::vector<Rec2DVertex*> _hiddenVertex/*, _newVertex*/;
-    //std::vector<Rec2DElement*> _hiddenElement, _newElement;
-    //std::vector<Rec2DAction*> _hiddenAction, _newAction;
-    //std::vector<std::pair<Rec2DVertex*, SPoint2> > _oldCoordinate;
-    //std::vector<std::pair<Rec2DVertex*, int> > _oldParity;
-    //std::vector<std::pair<Rec2DEdge*, std::pair<Rec2DVertex*, Rec2DVertex*> > > _vertSwapE;
-    //std::vector<std::pair<Rec2DElement*, std::pair<Rec2DEdge*, Rec2DEdge*> > > _edgeSwap;
-    //std::vector<std::pair<Rec2DElement*, std::pair<Rec2DVertex*, Rec2DVertex*> > > _vertSwapEL;
-    
-    
   public :
     ~Rec2DDataChange();
     
@@ -290,24 +279,6 @@ class Rec2DDataChange {
     inline void saveParity(const std::vector<Rec2DVertex*> &verts) {
       _changes.push_back(new Rec2DChange(verts, SavePar));
     }
-    //void checkObsoleteActions() {_changes.push_back(new Rec2DChange());}
-    
-    //void hide(Rec2DEdge*); {_elementaryChanges.push_back(new Rec2DChange(re));}
-    //void hide(Rec2DVertex*);
-    //void hide(Rec2DElement*);
-    //void hide(Rec2DAction*);
-    //void hide(std::vector<Rec2DAction*>);
-    //
-    //void append(const Rec2DElement*);
-    //void append(const Rec2DAction*);
-    //
-    //void swapFor(Rec2DEdge*, Rec2DEdge*);
-    //void swapFor(Rec2DVertex*, Rec2DVertex*);
-    //
-    //void relocate(Rec2DVertex*, double, double);
-    //
-    //void changeParity(Rec2DVertex*, int);
-    //void saveParity(std::vector<Rec2DVertex*>&);
     void checkObsoleteActions(Rec2DVertex*const*, int size);
     
     void revert();
@@ -373,7 +344,6 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     virtual void apply(Rec2DDataChange*) const;
     
     virtual bool isObsolete() const;
-    static bool isObsolete(const int*);
     
     virtual inline Rec2DVertex* getVertex(int i) const {return _vertices[i];} //-
     virtual inline int getNumElement() {return 2;}
@@ -415,7 +385,6 @@ class Rec2DCollapse : public Rec2DAction {
     virtual void apply(Rec2DDataChange*) const;
     
     virtual bool isObsolete() const;
-    static bool isObsolete(const int*);
     virtual bool whatWouldYouDo(std::map<Rec2DVertex*, std::vector<int> >&);
     
     virtual inline Rec2DVertex* getVertex(int i) const {
