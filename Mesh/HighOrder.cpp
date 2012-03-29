@@ -128,6 +128,7 @@ static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N,
     return computeEquidistantParameters0(ge,u0,uN,N,u,underRelax);
   else if (method_for_computing_intermediary_points == 1) // use projection
     return computeEquidistantParameters1(ge,u0,uN,N,u,underRelax);
+  return false;
 }
 
 static double mylength(GFace *gf, int i, double *u, double *v)
@@ -251,6 +252,7 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
     return computeEquidistantParameters0(gf,u0,uN,v0,vN,N,u,v);
   else if (method_for_computing_intermediary_points == 1) // use projection
     return computeEquidistantParameters1(gf,u0,uN,v0,vN,N,u,v);
+  return false;
 }
 
 
@@ -288,6 +290,7 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
             if(computeEquidistantParameters(ge, std::min(u0,u1), std::max(u0,u1),
                                             nPts + 2, US, relax))
               break;
+
             relax /= 2.0;
             if(relax < 1.e-2)
               break;
@@ -585,7 +588,7 @@ static void reorientQuadPoints(std::vector<MVertex*> &vtcs, int orientation,
     }
 
     order -= 2;
-    if (start >= vtcs.size()) break;
+    if (start >= (int) vtcs.size()) break;
   }
 }
 
@@ -1331,6 +1334,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
       v.insert(v.begin(), (*it)->triangles.begin(), (*it)->triangles.end());
       v.insert(v.end(), (*it)->quadrangles.begin(), (*it)->quadrangles.end());
       hot.applySmoothingTo(v, (*it));
+      //hot.applySmoothingTo(v, .1,0);
     }
     //    hot.ensureMinimumDistorsion(0.1);
     checkHighOrderTriangles("Final surface mesh", m, bad, worst);

@@ -567,9 +567,10 @@ int GeomMeshMatcher::forceTomatch(GModel *geom, GModel *mesh, const double TOL)
 }
 
 static void copy_vertices (GVertex *to, GVertex *from, std::map<MVertex*,MVertex*> &_mesh_to_geom){
+  to->deleteMesh();
   if (from) {
-    to->deleteMesh();
-    for (unsigned int i=0;i<from->mesh_vertices.size();i++){
+    //to->deleteMesh();
+    for (unsigned int i=0;i<1;i++){
       MVertex *v_from = from->mesh_vertices[i];
       MVertex *v_to = new MVertex (v_from->x(),v_from->y(),v_from->z(), to);
       to->mesh_vertices.push_back(v_to);
@@ -595,15 +596,6 @@ static void copy_vertices (GEdge* to, GEdge* from, std::map<MVertex*,MVertex*> &
   if (!to){
     Msg::Warning("Edge %d in the geometry do not match any edge of the mesh",from->tag());
     return;
-  }
-
-  if (from->getBeginVertex() == from->getEndVertex()) {
-    MVertex *v_from = from->getBeginVertex()->mesh_vertices[0];
-    double t;
-    GPoint gp = to->closestPoint(SPoint3(v_from->x(),v_from->y(),v_from->z()), t );
-    MEdgeVertex *v_to = new MEdgeVertex (gp.x(),gp.y(),gp.z(), to, gp.u() );
-    to->mesh_vertices.push_back(v_to);
-    _mesh_to_geom[v_from] = v_to;
   }
 
   for (unsigned int i=0;i<from->mesh_vertices.size();i++){
@@ -718,8 +710,6 @@ int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
   std::map<MVertex*,MVertex*> _mesh_to_geom;
   copy_vertices(geom, mesh, _mesh_to_geom,coresp_v,coresp_e,coresp_f);
   copy_elements(geom, mesh, _mesh_to_geom,coresp_v,coresp_e,coresp_f);
-
-  geom->removeDuplicateMeshVertices(1e-8);
 
   return 1;
 }
