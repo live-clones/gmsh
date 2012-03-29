@@ -203,7 +203,7 @@ void highOrderTools::computeMetricInfo(GFace *gf,
   //  printf("ELEMENT --\n");
   for (int j = 0; j < nbNodes; j++){
     SPoint2 param;
-    bool success = reparamMeshVertexOnFace(e->getVertex(j), gf, param);
+    reparamMeshVertexOnFace(e->getVertex(j), gf, param);
     //    printf("%g %g vs %g %g %g\n",param.x(),param.y(),
     //	   e->getVertex(j)->x(),e->getVertex(j)->y(),e->getVertex(j)->z());
 
@@ -441,7 +441,7 @@ void highOrderTools::computeStraightSidedPositions ()
   //  printf("coucou2\n");
   // compute stright sided positions of vertices that are classified on model edges
   for(GModel::eiter it = _gm->firstEdge(); it != _gm->lastEdge(); ++it){
-    for (int i=0;i<(*it)->lines.size();i++){
+    for (unsigned int i=0;i<(*it)->lines.size();i++){
       MLine *l = (*it)->lines[i];
       int N = l->getNumVertices()-2;
       SVector3 p0((*it)->lines[i]->getVertex(0)->x(),
@@ -467,12 +467,12 @@ void highOrderTools::computeStraightSidedPositions ()
   //  printf("coucou3\n");
   // compute stright sided positions of vertices that are classified on model faces
   for(GModel::fiter it = _gm->firstFace(); it != _gm->lastFace(); ++it){
-    for (int i=0;i<(*it)->mesh_vertices.size();i++){
+    for (unsigned int i=0;i<(*it)->mesh_vertices.size();i++){
       MVertex *v = (*it)->mesh_vertices[i];
       _targetLocation[v] = SVector3(v->x(),v->y(),v->z());
     }
 
-    for (int i=0;i<(*it)->triangles.size();i++){
+    for (unsigned int i=0;i<(*it)->triangles.size();i++){
       MTriangle *t = (*it)->triangles[i];
       MFace face = t->getFace(0);
       const polynomialBasis* fs = t->getFunctionSpace();
@@ -486,7 +486,7 @@ void highOrderTools::computeStraightSidedPositions ()
         }
       }
     }
-    for (int i=0;i<(*it)->quadrangles.size();i++){
+    for (unsigned int i=0;i<(*it)->quadrangles.size();i++){
       //      printf("coucou quad %d\n",i);
       MQuadrangle *q = (*it)->quadrangles[i];
       MFace face = q->getFace(0);
@@ -504,11 +504,11 @@ void highOrderTools::computeStraightSidedPositions ()
   }
 
   for(GModel::riter it = _gm->firstRegion(); it != _gm->lastRegion(); ++it){
-    for (int i=0;i<(*it)->mesh_vertices.size();i++){
+    for (unsigned int i=0;i<(*it)->mesh_vertices.size();i++){
       MVertex *v = (*it)->mesh_vertices[i];
       _targetLocation[v] = SVector3(v->x(),v->y(),v->z());
     }
-    for (int i=0;i<(*it)->tetrahedra.size();i++){
+    for (unsigned int i=0;i<(*it)->tetrahedra.size();i++){
       _dim = 3;
       MTetrahedron *t = (*it)->tetrahedra[i];
       MTetrahedron t_1 ((*it)->tetrahedra[i]->getVertex(0),
@@ -527,7 +527,7 @@ void highOrderTools::computeStraightSidedPositions ()
         }
       }
     }
-    for (int i=0;i<(*it)->hexahedra.size();i++){
+    for (unsigned int i=0;i<(*it)->hexahedra.size();i++){
       _dim = 3;
       MHexahedron *h = (*it)->hexahedra[i];
       MHexahedron h_1 ((*it)->hexahedra[i]->getVertex(0),
@@ -707,7 +707,7 @@ void highOrderTools::ensureMinimumDistorsion(std::vector<MElement*> &all,
     getDistordedElements(all, threshold, disto, minD);
     if (disto.empty()) break;
     Msg::Info("Fixing %d bad curved elements (worst disto %g)", disto.size(), minD);
-    for (int i = 0; i < disto.size(); i++){
+    for (unsigned int i = 0; i < disto.size(); i++){
       ensureMinimumDistorsion(disto[i], threshold);
     }
   }
@@ -717,7 +717,7 @@ double highOrderTools::applySmoothingTo (std::vector<MElement*> &all,
 					 double threshold, bool mixed)
 {
   int ITER = 0;
-  double minD, FACT = 1.0;
+  double minD;
   std::vector<MElement*> disto;
   // move the points to their straight sided locations
   for (unsigned int i = 0; i < all.size(); i++)
@@ -737,7 +737,7 @@ double highOrderTools::applySmoothingTo (std::vector<MElement*> &all,
   while(1){
     char NN[256];
     sprintf(NN,"smoothing-%d.msh",ITER++);
-    double percentage_of_what_is_left = apply_incremental_displacement (1.,all, mixed, threshold,NN,all);
+    percentage_of_what_is_left = apply_incremental_displacement (1.,all, mixed, threshold,NN,all);
     percentage += (1.-percentage) * percentage_of_what_is_left/100.;
     Msg::Info("The smoother was able to do %3d percent of the motion",(int)(percentage*100.));
     if (percentage_of_what_is_left == 0.0) break;

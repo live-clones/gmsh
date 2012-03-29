@@ -28,8 +28,8 @@ int  CSRList_Nbr(CSRList_T *liste);
 template <class scalar>
 class linearSystemCSR : public linearSystem<scalar> {
  protected:
-  bool _entriesPreAllocated;
   bool sorted;
+  bool _entriesPreAllocated;
   char *something;
   CSRList_T *_a, *_ai, *_ptr, *_jptr;
   std::vector<scalar> *_b, *_x;
