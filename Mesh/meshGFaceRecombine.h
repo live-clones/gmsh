@@ -100,6 +100,7 @@ class Rec2DData {
     std::set<Rec2DElement*> _elements;
     
     std::list<Rec2DAction*> _actions;
+    std::vector<Rec2DAction*> _hiddenActions;
     std::vector<Rec2DNode*> _endNodes;
     std::vector<Rec2DDataChange*> _changes;
     
@@ -111,10 +112,13 @@ class Rec2DData {
     Rec2DData();
     ~Rec2DData();
     
+    
+    
     void printState() const;
     void printActions() const;
     void sortActions() {_actions.sort(lessRec2DAction());}
     void drawTriangles(double shiftx, double shifty) const;
+    void drawElements(double shiftx, double shifty) const;
     void drawChanges(double shiftx, double shifty) const;
 #ifdef REC2D_DRAW
     std::vector<MTriangle*> _tri;
@@ -129,6 +133,7 @@ class Rec2DData {
     static bool revertDataChange(Rec2DDataChange*);
     static void clearChanges();
     static int getNumChanges() {return _current->_changes.size();}
+    void checkQuality() const;
     
     static double getGlobalQuality();
     static double getGlobalQuality(int numEdge, double valEdge,
@@ -144,6 +149,9 @@ class Rec2DData {
       _current->_numEdge += num;
       _current->_valEdge += (long double)val;
     }
+    static inline void addValEdge(double val) {
+      _current->_valEdge += (long double)val;
+    }
     
     static inline int getNumEdge() {return _current->_numEdge;}
     static inline double getValEdge() {return (double)_current->_valEdge;}
@@ -152,6 +160,7 @@ class Rec2DData {
     static Rec2DAction* getBestAction();
     static Rec2DAction* getRandomAction();
     static inline bool hasAction() {return !_current->_actions.empty();}
+    static void checkObsolete();
     
     typedef std::set<Rec2DEdge*>::iterator iter_re;
     typedef std::set<Rec2DVertex*>::iterator iter_rv;
@@ -178,6 +187,9 @@ class Rec2DData {
 #endif
     static inline void add(const Rec2DAction *ra) {
       _current->_actions.push_back((Rec2DAction*)ra);
+    }
+    static inline void addHidden(const Rec2DAction *ra) {
+      _current->_hiddenActions.push_back((Rec2DAction*)ra);
     }
     static void remove(const Rec2DEdge*);
     static void remove(const Rec2DVertex*);
@@ -208,13 +220,13 @@ class Rec2DData {
 };
 
 enum Rec2DChangeType {
-  HideEdge, HideVertex, HideElement,
-  CreatedEdge, CreatedVertex, CreatedElement,
-  HideAction, HideActions,
-  CreatedAction, CreatedActions,
-  SwapVertInAction, SwapVertInEdge,
-  SwapEdgeInAction, SwapEdgeInElem,
-  RemoveElem, AddElem, Relocate, ChangePar, SavePar,
+  HideEdge, HideVertex, HideElement, //0-2
+  CreatedEdge, CreatedVertex, CreatedElement, //3-5
+  HideAction, HideActions, //6-7
+  CreatedAction, CreatedActions, //8-9
+  SwapVertInAction, SwapVertInEdge, //10-11
+  SwapEdgeInAction, SwapEdgeInElem, //12-13
+  RemoveElem, AddElem, Relocate, ChangePar, SavePar, //14-18 
   Error, Reverted
 };
 
@@ -344,10 +356,13 @@ class Rec2DAction {
     virtual Rec2DElement* getRandomElement() const = 0;
     //virtual void print() = 0;
     virtual bool haveElem() = 0;
-    inline virtual Rec2DAction* getBase() const = 0;
+    virtual Rec2DAction* getBase() const = 0;
+    virtual Rec2DAction* getInfant() const = 0;
     static void removeDuplicate(std::vector<Rec2DAction*>&);
     virtual void swap(Rec2DVertex*, Rec2DVertex*) = 0;
     virtual void swap(Rec2DEdge*, Rec2DEdge*) = 0;
+    virtual void printAdress() = 0;
+    virtual void printReward() const = 0;
     
   private :
     virtual void _computeGlobQual() = 0;
@@ -359,10 +374,11 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     Rec2DEdge *_edges[5]; // 4 boundary, 1 embedded
     Rec2DVertex *_vertices[4]; // 4 boundary (2 on embedded edge + 2)
     friend class Rec2DCollapse;
+    Rec2DCollapse *_col;
     
   public :
     Rec2DTwoTri2Quad(Rec2DElement*, Rec2DElement*);
-    ~Rec2DTwoTri2Quad() {hide();}
+    ~Rec2DTwoTri2Quad() {if (_col) Msg::Error("[Rec2DTwoTri2Quad] have collapse");hide();}
     virtual void hide();
     virtual void reveal();
     
@@ -381,12 +397,15 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     virtual void getElements(std::vector<Rec2DElement*>&) const;
     virtual void getNeighbourElements(std::vector<Rec2DElement*>&) const;
     virtual int getNum(double shiftx, double shifty);
-    virtual inline Rec2DElement* getRandomElement() const;
+    virtual Rec2DElement* getRandomElement() const;
     //virtual void print();
     virtual bool haveElem() {return true;}
     inline virtual Rec2DAction* getBase() const {return NULL;}
+    inline virtual Rec2DAction* getInfant() const {return (Rec2DAction*)_col;}
     virtual void swap(Rec2DVertex*, Rec2DVertex*);
     virtual void swap(Rec2DEdge*, Rec2DEdge*);
+    virtual void printAdress() {Msg::Info(" %d", this);}
+    virtual void printReward() const;
     
   private :
     virtual void _computeGlobQual();
@@ -402,7 +421,7 @@ class Rec2DCollapse : public Rec2DAction {
     
   public :
     Rec2DCollapse(Rec2DTwoTri2Quad*);
-    ~Rec2DCollapse() {hide();}
+    ~Rec2DCollapse() {_rec->_col = NULL; hide();}
     virtual void hide();
     virtual void reveal();
     
@@ -437,8 +456,11 @@ class Rec2DCollapse : public Rec2DAction {
     //virtual void print();
     virtual bool haveElem() {return false;}
     inline virtual Rec2DAction* getBase() const {return _rec;}
+    inline virtual Rec2DAction* getInfant() const {return NULL;}
     inline virtual void swap(Rec2DVertex *rv0, Rec2DVertex *rv1) {_rec->swap(rv0, rv1);}
     inline virtual void swap(Rec2DEdge *re0, Rec2DEdge *re1) {_rec->swap(re0, re1);}
+    virtual void printAdress() {_rec->printAdress();}
+    virtual void printReward() const;
     
   private :
     virtual void _computeGlobQual();
@@ -461,6 +483,8 @@ class Rec2DEdge {
     //double getQualL() const;
     //double getQualO() const;
     double getWeightedQual() const;
+    inline int getWeight() const {return _weight;}
+    void updateQual();
     void print() const;
     
     inline void addHasTri() {_addWeight(-REC2D_EDGE_QUAD); ++_boundary;}
@@ -535,6 +559,7 @@ class Rec2DVertex {
     
     inline int getNumElements() const {return _elements.size();}
     inline void getEdges(std::vector<Rec2DEdge*> &v) const {v = _edges;}
+    void getUniqueEdges(std::vector<Rec2DEdge*>&) const;
     void getTriangles(std::set<Rec2DElement*>&) const;
     void getElements(std::vector<Rec2DElement*>&) const;
     inline MVertex* getMVertex() const {return _v;}
@@ -566,7 +591,9 @@ class Rec2DVertex {
                                   std::vector<Rec2DElement*>&            );
     
   private :
+    inline double _getQualAngle() const {return _sumQualAngle/(double)_elements.size();}
     bool _recursiveBoundParity(const Rec2DVertex *prev, int p0, int p1);
+    void _updateQualAngle();
     inline double _angle2Qual(double ang) const {
       return 1. - fabs(ang*2./M_PI - 1.);
     }
@@ -585,7 +612,7 @@ class Rec2DElement {
     Rec2DElement(MQuadrangle*, const Rec2DEdge**, Rec2DVertex **rv = NULL);
     ~Rec2DElement() {hide();}
     void hide();
-    void reveal();
+    void reveal(Rec2DVertex **rv = NULL);
     
     bool inline isTri() const {return _numEdge == 3;}
     bool inline isQuad() const {return _numEdge == 4;}
@@ -662,6 +689,7 @@ class Rec2DNode {
     void develop(int depth, double &bestEndGlobQual);
     inline bool hasSon() const {return _son[0];}
     bool makeChanges();
+    bool revertChanges();
     
     bool operator<(Rec2DNode&);
     inline Rec2DNode* getFather() const {return _father;}
