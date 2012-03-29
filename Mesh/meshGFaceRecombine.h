@@ -375,6 +375,7 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     Rec2DVertex *_vertices[4]; // 4 boundary (2 on embedded edge + 2)
     friend class Rec2DCollapse;
     Rec2DCollapse *_col;
+    double _valVert;
     
   public :
     Rec2DTwoTri2Quad(Rec2DElement*, Rec2DElement*);
@@ -479,11 +480,11 @@ class Rec2DEdge {
     void hide();
     void reveal();
     
-    double getQual() const;
     //double getQualL() const;
     //double getQualO() const;
-    double getWeightedQual() const;
+    inline double getQual() const {return _qual;}
     inline int getWeight() const {return _weight;}
+    inline double getWeightedQual() const {return _weight * _qual;}
     void updateQual();
     void print() const;
     
@@ -521,7 +522,7 @@ class Rec2DVertex {
     MVertex *_v;
     const double _angle;
     int _onWhat; // _onWhat={-1:corner,0:edge,1:face}
-    int _parity, _assumedParity, _lastMove;
+    int _parity, _assumedParity, _lastUpdate;
     double _sumQualAngle;
     std::vector<Rec2DEdge*> _edges;
     std::vector<Rec2DElement*> _elements;
@@ -564,7 +565,7 @@ class Rec2DVertex {
     void getElements(std::vector<Rec2DElement*>&) const;
     inline MVertex* getMVertex() const {return _v;}
     
-    inline int getLastMove() const {return _lastMove;}
+    inline int getLastUpdate() const {return _lastUpdate;}
     inline void getxyz(double *xyz) const {
       xyz[0] = _v->x();
       xyz[1] = _v->y();
