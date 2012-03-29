@@ -316,6 +316,7 @@ inline void tensprod(const SVector3 &a, const SVector3 &b, STensor3 &c)
         c(i,j)=a(i)*b(j);
 }
 
+
 inline double dot(const STensor3 &a, const STensor3 &b)
 {
   double prod=0;
@@ -324,6 +325,23 @@ inline double dot(const STensor3 &a, const STensor3 &b)
       prod+=a(i,j)*b(i,j);
   return prod;
 }
+
+inline SVector3 operator* (const STensor3& t, const SVector3& v){
+  SVector3 temp(0.,0.,0.);
+  for (int i=0; i<3; i++)
+    for (int j=0; j<3; j++)
+      temp[i]+= t(i,j)*v[j];
+  return temp;
+};
+
+inline SVector3 operator* (const SVector3& v, const STensor3& t){
+  SVector3 temp(0.,0.,0.);
+  for (int i=0; i<3; i++)
+    for (int j=0; j<3; j++)
+      temp[j]+= v[i]*t(i,j);
+  return temp;
+};
+
 
 inline STensor3 operator*(const STensor3 &t, double m)
 {
