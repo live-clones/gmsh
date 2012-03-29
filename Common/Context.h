@@ -33,11 +33,12 @@ struct contextMeshOptions {
   int order, secondOrderLinear, secondOrderIncomplete;
   int secondOrderExperimental, meshOnlyVisible;
   int smoothInternalEdges, minCircPoints, minCurvPoints;
+  int smoothNLayers;
+  double smoothDistoTreshold;
   int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat, saveParametric;
   int smoothNormals, reverseAllNormals, zoneDefinition, clip;
   int saveElementTagType;
   int switchElementTags;
-  int highOrderNoMetric;
   int multiplePasses;
   int cgnsImportOrder;
   std::map<int,int> algo2d_per_face;

@@ -73,9 +73,10 @@ void PrintUsage(const char *name)
   Msg::Direct("                          del3d, front3d, mmg3d)");
   Msg::Direct("  -smooth int           Set number of mesh smoothing steps");
   Msg::Direct("  -order int            Set mesh order (1, ..., 5)");
+  Msg::Direct("  -hoOptimize           Optimize high order meshes");
+  Msg::Direct("  -hoMindisto float     Minimum quality for high-order elements before optimization (0.0->1.0)");
+  Msg::Direct("  -hoNLayers int        Number of high order element layers to optimize");
   Msg::Direct("  -optimize[_netgen]    Optimize quality of tetrahedral elements");
-  Msg::Direct("  -optimize_hom         Optimize higher order meshes (in 2D)");
-  Msg::Direct("  -hom_nometric         Don't use the metric-based high-order mesh generation.");
   Msg::Direct("  -optimize_lloyd       Optimize 2D meshes using Lloyd algorithm");
   Msg::Direct("  -clscale float        Set global mesh element size scaling factor");
   Msg::Direct("  -clmin float          Set minimum mesh element size");
@@ -290,13 +291,23 @@ void GetOptions(int argc, char *argv[])
         CTX::instance()->mesh.optimizeNetgen = 1;
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "optimize_hom")) {
+      else if(!strcmp(argv[i] + 1, "hoOptimize")) {
         i++;
         opt_mesh_smooth_internal_edges(0, GMSH_SET, 1);
       }
-      else if(!strcmp(argv[i] + 1, "hom_nometric")) {
+      else if(!strcmp(argv[i] + 1, "hoMindisto")) {
         i++;
-        opt_mesh_hom_no_metric(0, GMSH_SET, 1);
+        if(argv[i])
+	  opt_mesh_ho_mindisto(0, GMSH_SET, atof(argv[i++]));
+        else
+          Msg::Fatal("Missing number");
+      }
+      else if(!strcmp(argv[i] + 1, "hoNlayers")) {
+        i++;
+        if(argv[i])
+	  opt_mesh_ho_nlayers(0, GMSH_SET, atoi(argv[i++]));
+        else
+          Msg::Fatal("Missing number");
       }
       else if(!strcmp(argv[i] + 1, "optimize_lloyd")) {
         i++;

@@ -869,9 +869,12 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. ,
     "Display mesh hexahedra?" },
-  { F|O, "HighOrderNoMetric" , opt_mesh_hom_no_metric , 0. ,
-    "Don't use metric computation to create high-order meshes." },
-
+  { F|0, "HighOrderNumLayers", opt_mesh_ho_nlayers, 3.,
+    "Number of high order mesh elements to consider for optimization."},
+  { F|O, "HighOrderOptimize" , opt_mesh_smooth_internal_edges , 0 ,
+    "Number of smoothing steps of internal edges for high order meshes" },
+  { F|O, "HighOrderSmoothingThreshold", opt_mesh_ho_mindisto, 0.5,
+    "Distorition threshold when choosing which high order element to optimize."},
 
   { F|O, "LabelSampling" , opt_mesh_label_sampling , 1. ,
     "Label sampling rate (display one label every `LabelSampling' elements)" },
@@ -1027,8 +1030,6 @@ StringXNumber MeshOptions_Number[] = {
     "Should second order vertices simply be created by linear interpolation?" },
   { F|O, "Smoothing" , opt_mesh_nb_smoothing , 1. ,
     "Number of smoothing steps applied to the final mesh" },
-  { F|O, "SmoothInternalEdges" , opt_mesh_smooth_internal_edges , 0 ,
-    "Number of smoothing steps of internal edges for high order meshes" },
   { F|O, "SmoothNormals" , opt_mesh_smooth_normals , 0. ,
     "Smooth the mesh normals?" },
   { F|O, "SmoothRatio" , opt_mesh_smooth_ratio , 1.8 ,

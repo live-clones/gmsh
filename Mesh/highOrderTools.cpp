@@ -257,9 +257,9 @@ void highOrderTools::applySmoothingTo(std::vector<MElement*> & all, GFace *gf)
   elasticityTerm El(0, 1.0, .33, _tag);
   std::vector<MElement*> layer, v;
   double minD;
-  getDistordedElements(all, 0.5, v, minD);
+  getDistordedElements(all, CTX::instance()->mesh.smoothDistoTreshold, v, minD);
   int numBad = v.size();
-  const int nbLayers = 3;
+  const int nbLayers = CTX::instance()->mesh.smoothNLayers;
   for (int i = 0; i < nbLayers; i++){
     addOneLayer(all, v, layer);
     v.insert(v.end(), layer.begin(), layer.end());

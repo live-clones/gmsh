@@ -5111,6 +5111,20 @@ double opt_mesh_smooth_internal_edges(OPT_ARGS_NUM)
   return CTX::instance()->mesh.smoothInternalEdges;
 }
 
+double opt_mesh_ho_nlayers(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.smoothNLayers = (int)val;
+  return CTX::instance()->mesh.smoothNLayers;
+}
+
+double opt_mesh_ho_mindisto(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.smoothDistoTreshold = val;
+  return CTX::instance()->mesh.smoothDistoTreshold;
+}
+
 double opt_mesh_second_order_experimental(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -5142,13 +5156,6 @@ double opt_mesh_second_order_incomplete(OPT_ARGS_NUM)
       (CTX::instance()->mesh.secondOrderIncomplete);
 #endif
   return CTX::instance()->mesh.secondOrderIncomplete;
-}
-
-double opt_mesh_hom_no_metric(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->mesh.highOrderNoMetric = (int)val;
-  return CTX::instance()->mesh.highOrderNoMetric;
 }
 
 double opt_mesh_cgns_import_order(OPT_ARGS_NUM)
