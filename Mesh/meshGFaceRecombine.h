@@ -84,8 +84,6 @@ class Recombine2D {
     double _geomAngle(const MVertex*,
                       const std::vector<GEdge*>&,
                       const std::vector<MElement*>&) const;
-    bool _remainAllQuad(const Rec2DAction *action) const;
-    bool _remainAllQuad(std::set<Rec2DElement*>&) const;
 };
 
 class Rec2DData {
@@ -105,7 +103,6 @@ class Rec2DData {
     std::vector<Rec2DDataChange*> _changes;
     
     std::map<int, std::vector<Rec2DVertex*> > _parities;
-    std::map<int, std::vector<Rec2DVertex*> > _assumedParities;
     std::map<Rec2DVertex*, int> _oldParity;
     
   public :
@@ -208,15 +205,6 @@ class Rec2DData {
       _current->_parities[p].push_back((Rec2DVertex*)rv);
     }
     static void associateParity(int pOld, int pNew, Rec2DDataChange *rdc = NULL);
-    static void removeAssumedParity(const Rec2DVertex*, int);
-    static inline void addAssumedParity(const Rec2DVertex *rv, int p) {
-      _current->_assumedParities[p].push_back((Rec2DVertex*)rv);
-    }
-    static void saveAssumedParity(const Rec2DVertex*, int);
-    static void associateAssumedParity(int pOld, int pNew,
-                                       std::vector<Rec2DVertex*>&);
-    static inline void clearAssumedParities() {_current->_oldParity.clear();}
-    static void revertAssumedParities();
 };
 
 enum Rec2DChangeType {
@@ -345,9 +333,6 @@ class Rec2DAction {
     virtual void apply(std::vector<Rec2DVertex*> &newPar) = 0;
     virtual void apply(Rec2DDataChange*) const = 0;
     virtual bool isObsolete() const = 0;
-    virtual bool isAssumedObsolete() const = 0;
-    virtual void getAssumedParities(int*) const = 0;
-    virtual bool whatWouldYouDo(std::map<Rec2DVertex*, std::vector<int> >&) = 0;
     virtual Rec2DVertex* getVertex(int) const = 0;
     virtual int getNumElement() = 0;
     virtual void getElements(std::vector<Rec2DElement*>&) const = 0;
@@ -388,10 +373,7 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     virtual void apply(Rec2DDataChange*) const;
     
     virtual bool isObsolete() const;
-    virtual bool isAssumedObsolete() const;
     static bool isObsolete(const int*);
-    virtual void getAssumedParities(int*) const;
-    virtual bool whatWouldYouDo(std::map<Rec2DVertex*, std::vector<int> >&);
     
     virtual inline Rec2DVertex* getVertex(int i) const {return _vertices[i];} //-
     virtual inline int getNumElement() {return 2;}
@@ -433,9 +415,7 @@ class Rec2DCollapse : public Rec2DAction {
     virtual void apply(Rec2DDataChange*) const;
     
     virtual bool isObsolete() const;
-    virtual bool isAssumedObsolete() const;
     static bool isObsolete(const int*);
-    virtual void getAssumedParities(int*) const;
     virtual bool whatWouldYouDo(std::map<Rec2DVertex*, std::vector<int> >&);
     
     virtual inline Rec2DVertex* getVertex(int i) const {
@@ -522,7 +502,7 @@ class Rec2DVertex {
     MVertex *_v;
     const double _angle;
     int _onWhat; // _onWhat={-1:corner,0:edge,1:face}
-    int _parity, _assumedParity, _lastUpdate;
+    int _parity, _lastUpdate;
     double _sumQualAngle;
     std::vector<Rec2DEdge*> _edges;
     std::vector<Rec2DElement*> _elements;
@@ -553,10 +533,6 @@ class Rec2DVertex {
     inline int getParity() const {return _parity;}
     void setParity(int, bool tree = false);
     void setParityWD(int pOld, int pNew);
-    int getAssumedParity() const;
-    bool setAssumedParity(int);
-    void setAssumedParityWD(int pOld, int pNew);
-    void revertAssumedParity(int);
     
     inline int getNumElements() const {return _elements.size();}
     inline void getEdges(std::vector<Rec2DEdge*> &v) const {v = _edges;}
@@ -655,7 +631,6 @@ class Rec2DElement {
     inline Rec2DAction* getAction(int i) const {return _actions[i];}
     inline void getActions(std::vector<Rec2DAction*> &v) const {v = _actions;};
     void getUniqueActions(std::vector<Rec2DAction*>&) const;
-    void getAssumedParities(int*) const;
     void getMoreEdges(std::vector<Rec2DEdge*>&) const;
     void getVertices(std::vector<Rec2DVertex*>&) const;
     void getMoreNeighbours(std::vector<Rec2DElement*>&) const;
