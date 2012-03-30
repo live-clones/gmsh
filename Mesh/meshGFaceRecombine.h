@@ -70,6 +70,7 @@ class Recombine2D {
     inline void setStrategy(int s) {_strategy = s;}
     void drawState(double shiftx, double shifty) const;
     void printState() const;
+    static void drawStateOrigin();
     
     static inline GFace* getGFace() {return _current->_gf;}
     static inline int getNumChange() {return _current->_numChange;}
@@ -109,7 +110,7 @@ class Rec2DData {
     Rec2DData();
     ~Rec2DData();
     
-    
+    static void checkEntities();
     
     void printState() const;
     void printActions() const;
@@ -214,7 +215,8 @@ enum Rec2DChangeType {
   CreatedAction, CreatedActions, //8-9
   SwapVertInAction, SwapVertInEdge, //10-11
   SwapEdgeInAction, SwapEdgeInElem, //12-13
-  RemoveElem, AddElem, Relocate, ChangePar, SavePar, //14-18 
+  RemoveElem, AddElem, Relocate, ChangePar, SavePar, //14-18
+  SwapMVertInElement,
   Error, Reverted
 };
 
@@ -242,6 +244,9 @@ class Rec2DChange {
     Rec2DChange(Rec2DVertex*, Rec2DVertex*,
                 const std::vector<Rec2DAction*>&,
                 Rec2DChangeType                  ); // swap vertex1 to vertex2 (action)
+    Rec2DChange(Rec2DVertex*, Rec2DVertex*,
+                const std::vector<Rec2DElement*>&,
+                Rec2DChangeType                  ); // swap mvertex1 to mvertex2 (element)
     Rec2DChange(Rec2DEdge*, Rec2DEdge*, Rec2DChangeType); // swap edge1 to edge2 (element)
     Rec2DChange(Rec2DEdge*, Rec2DEdge*,
                 const std::vector<Rec2DAction*>&,
@@ -290,19 +295,20 @@ class Rec2DDataChange {
 class Rec2DAction {
   protected :
     double _globQualIfExecuted;
-    int _lastUpdate;
+    int _lastUpdate, _numPointing;
     
   public :
     Rec2DAction();
     virtual ~Rec2DAction() {}
     virtual void hide() = 0;
     virtual void reveal() = 0;
+    virtual bool checkCoherence() const = 0;
     
     bool operator<(Rec2DAction&);
     double getReward();
     virtual void color(int, int, int) const = 0;
     virtual void apply(std::vector<Rec2DVertex*> &newPar) = 0;
-    virtual void apply(Rec2DDataChange*) const = 0;
+    virtual void apply(Rec2DDataChange*, std::vector<Rec2DAction*>*&) const = 0;
     virtual bool isObsolete() const = 0;
     virtual Rec2DVertex* getVertex(int) const = 0;
     virtual int getNumElement() = 0;
@@ -319,6 +325,10 @@ class Rec2DAction {
     virtual void swap(Rec2DEdge*, Rec2DEdge*) = 0;
     virtual void printAdress() = 0;
     virtual void printReward() const = 0;
+    inline void addPointing() {++_numPointing;}
+    inline void rmvPointing() {--_numPointing;}
+    inline bool getPointing() {return _numPointing;}
+    virtual void printIdentity() const = 0;
     
   private :
     virtual void _computeGlobQual() = 0;
@@ -338,10 +348,11 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     ~Rec2DTwoTri2Quad() {if (_col) Msg::Error("[Rec2DTwoTri2Quad] have collapse");hide();}
     virtual void hide();
     virtual void reveal();
+    virtual bool checkCoherence() const;
     
     virtual void color(int, int, int) const;
     virtual void apply(std::vector<Rec2DVertex*> &newPar);
-    virtual void apply(Rec2DDataChange*) const;
+    virtual void apply(Rec2DDataChange*, std::vector<Rec2DAction*>*&) const;
     
     virtual bool isObsolete() const;
     
@@ -359,6 +370,7 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     virtual void swap(Rec2DEdge*, Rec2DEdge*);
     virtual void printAdress() {Msg::Info(" %d", this);}
     virtual void printReward() const;
+    virtual void printIdentity() const;
     
   private :
     virtual void _computeGlobQual();
@@ -377,12 +389,13 @@ class Rec2DCollapse : public Rec2DAction {
     ~Rec2DCollapse() {_rec->_col = NULL; hide();}
     virtual void hide();
     virtual void reveal();
+    virtual bool checkCoherence() const {return _rec->checkCoherence();}
     
     virtual void color(int c1, int c2, int c3) const {
       _rec->color(c1, c2, c3);
     }
     virtual void apply(std::vector<Rec2DVertex*> &newPar);
-    virtual void apply(Rec2DDataChange*) const;
+    virtual void apply(Rec2DDataChange*, std::vector<Rec2DAction*>*&) const;
     
     virtual bool isObsolete() const;
     virtual bool whatWouldYouDo(std::map<Rec2DVertex*, std::vector<int> >&);
@@ -411,9 +424,11 @@ class Rec2DCollapse : public Rec2DAction {
     inline virtual void swap(Rec2DEdge *re0, Rec2DEdge *re1) {_rec->swap(re0, re1);}
     virtual void printAdress() {_rec->printAdress();}
     virtual void printReward() const;
+    virtual void printIdentity() const;
     
   private :
     virtual void _computeGlobQual();
+    bool _hasIdenticalElement() const;
 };
 
 class Rec2DEdge {
@@ -428,6 +443,8 @@ class Rec2DEdge {
     ~Rec2DEdge() {hide();}
     void hide();
     void reveal();
+    bool checkCoherence() const;
+    inline bool has(const Rec2DVertex *v) const {return v == _rv0 || v == _rv1;}
     
     //double getQualL() const;
     //double getQualO() const;
@@ -486,6 +503,7 @@ class Rec2DVertex {
     ~Rec2DVertex() {hide();}
     void hide();
     void reveal();
+    bool checkCoherence() const;
     
     inline int getNum() const {return _v->getNum();}
     inline double getAngle() const {return _angle;}
@@ -506,6 +524,7 @@ class Rec2DVertex {
     inline int getNumElements() const {return _elements.size();}
     inline void getEdges(std::vector<Rec2DEdge*> &v) const {v = _edges;}
     void getUniqueEdges(std::vector<Rec2DEdge*>&) const;
+    void getMoreNeighbourVertices(std::vector<Rec2DVertex*>&) const;
     void getTriangles(std::set<Rec2DElement*>&) const;
     void getElements(std::vector<Rec2DElement*>&) const;
     inline MVertex* getMVertex() const {return _v;}
@@ -521,13 +540,13 @@ class Rec2DVertex {
     void relocate(SPoint2 p);
     inline void getParam(SPoint2 *p) {*p = _param;}
     
-    void add(Rec2DEdge*);
-    bool has(Rec2DEdge*) const;
-    void rmv(Rec2DEdge*);
+    void add(const Rec2DEdge*);
+    bool has(const Rec2DEdge*) const;
+    void rmv(const Rec2DEdge*);
     
-    void add(Rec2DElement*);
-    bool has(Rec2DElement*) const;
-    void rmv(Rec2DElement*);
+    void add(const Rec2DElement*);
+    bool has(const Rec2DElement*) const;
+    void rmv(const Rec2DElement*);
     
     void getUniqueActions(std::vector<Rec2DAction*>&) const;
     
@@ -559,6 +578,9 @@ class Rec2DElement {
     ~Rec2DElement() {hide();}
     void hide();
     void reveal(Rec2DVertex **rv = NULL);
+    bool checkCoherence() const;
+    bool has(const Rec2DVertex*) const;
+    bool has(const Rec2DElement*) const;
     
     bool inline isTri() const {return _numEdge == 3;}
     bool inline isQuad() const {return _numEdge == 4;}
@@ -569,8 +591,10 @@ class Rec2DElement {
     void remove(const Rec2DAction*);
     void addNeighbour(const Rec2DEdge*, const Rec2DElement*);
     void rmvNeighbour(const Rec2DEdge*, const Rec2DElement*);
+    bool isNeighbour(const Rec2DEdge*, const Rec2DElement*) const;
     
     void swap(Rec2DEdge*, Rec2DEdge*);
+    void swapMVertex(Rec2DVertex*, Rec2DVertex*);
     
     inline MElement* getMElement() const {return _mEl;}
 #ifdef REC2D_DRAW
@@ -606,6 +630,7 @@ class Rec2DElement {
     Rec2DVertex* getOtherVertex(const Rec2DVertex*, const Rec2DVertex*) const;
     static Rec2DEdge* getCommonEdge(const Rec2DElement*, const Rec2DElement*);
     static void getElements(const Rec2DEdge*, Rec2DElement**);
+    bool hasIdenticalNeighbour() const;
     
     inline int getNum() const {return _mEl->getNum();}
     
@@ -620,6 +645,7 @@ class Rec2DNode {
     Rec2DAction *_ra;
     double _globalQuality, _bestEndGlobQual;
     int _remainingTri;
+    std::vector<Rec2DAction*> *_createdActions;
     
     Rec2DDataChange *_dataChange;
     
@@ -643,5 +669,57 @@ class Rec2DNode {
     inline int getNumTri() const {return _remainingTri;}
 };
 
-
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
