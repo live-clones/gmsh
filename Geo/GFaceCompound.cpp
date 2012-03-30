@@ -45,6 +45,9 @@
 #include "MPoint.h"
 #include "Numeric.h"
 #include "meshGFace.h"
+#if defined(HAVE_ANN)
+#include <ANN/ANN.h>
+#endif
 
 static void fixEdgeToValue(GEdge *ed, double value, dofManager<double> &myAssembler)
 {
@@ -936,6 +939,7 @@ bool GFaceCompound::one2OneMap() const
 
 bool GFaceCompound::parametrize() const
 {
+
   if (_compound.size() > 1) coherencePatches();
 
   bool paramOK = true;
@@ -1236,9 +1240,11 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 			     std::list<GEdge*> &U0, typeOfCompound toc,
                              int allowPartition,
 			     linearSystem<double>* lsys)
-  : GFace(m, tag), _compound(compound),  oct(0), _U0(U0),
+  : GFace(m, tag), _compound(compound),  oct(0), octNew(0), _U0(U0),
     _toc(toc), _allowPartition(allowPartition), _lsys(lsys)
 {
+
+
   ONE = new simpleFunction<double>(1.0);
   MONE = new simpleFunction<double>(-1.0);
 
@@ -1272,6 +1278,12 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 
   nbSplit = 0;
   fillTris.clear();
+
+#if defined(HAVE_ANN)
+    index = new ANNidx[2];
+    dist  = new ANNdist[2];
+#endif
+
 }
 GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 			     std::list<GEdge*> &U0, std::list<GEdge*> &V0,
@@ -1279,7 +1291,7 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 			     typeOfCompound toc,
 			     int allowPartition,
 			     linearSystem<double>* lsys)
-  : GFace(m, tag), _compound(compound),  oct(0),
+  : GFace(m, tag), _compound(compound),  oct(0), octNew(0),
     _U0(U0), _V0(V0), _U1(U1), _V1(V1),
     _toc(toc), _allowPartition(allowPartition), _lsys(lsys)
 {
@@ -1318,6 +1330,12 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 
   nbSplit = 0;
   fillTris.clear();
+
+#if defined(HAVE_ANN)
+    index = new ANNidx[2];
+    dist  = new ANNdist[2];
+#endif
+
 }
 
 GFaceCompound::~GFaceCompound()
@@ -1327,9 +1345,17 @@ GFaceCompound::~GFaceCompound()
     Octree_Delete(oct);
     delete [] _gfct;
   }
+  if(octNew) delete(octNew);
   if (_lsys)delete _lsys;
   delete ONE;
   delete MONE;
+#if defined(HAVE_ANN)
+  if(uv_kdtree) delete uv_kdtree;
+  if(nodes) annDeallocPts(nodes);
+  delete[]index;
+  delete[]dist;
+#endif
+
 }
 
 SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
@@ -1346,71 +1372,79 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
     return SPoint2(it->second.x(),it->second.y());
   }
   else{
-    double tGlob, tLoc;
-    double tL, tR;
-    int iEdge;
 
-    // getParameter Point
-    v->getParameter(0,tGlob);
+    //if(v->onWhat()->dim() == 1){
+      double tGlob, tLoc;
+      double tL, tR;
+      int iEdge;
+      
+      // getParameter Point
+      v->getParameter(0,tGlob);
 
-    // find compound Edge
-    GEdgeCompound *gec = dynamic_cast<GEdgeCompound*>(v->onWhat());
+      //find compound Edge
+      GEdgeCompound *gec = dynamic_cast<GEdgeCompound*>(v->onWhat());
 
-    if(gec){
-      // compute local parameter on Edge
-      gec->getLocalParameter(tGlob,iEdge,tLoc);
-      std::vector<GEdge*> gev = gec->getCompounds();
-      GEdge *ge = gev[iEdge];
-
-      // left and right vertex of the Edge
-      MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
-      MVertex *v1 = ge->getEndVertex()->mesh_vertices[0];
-      std::map<MVertex*,SPoint3>::iterator itL = coordinates.find(v0);
-      std::map<MVertex*,SPoint3>::iterator itR = coordinates.find(v1);
-
-      // for the Edge, find the left and right vertices of the initial
-      // 1D mesh and interpolate to find (u,v)
-      MVertex *vL = v0;
-      MVertex *vR = v1;
-      double tB = ge->parBounds(0).low();
-      double tE = ge->parBounds(0).high();
-      int j = 0;
-      tL=tB;
-      bool found = false;
-      while(j < (int)ge->mesh_vertices.size()){
-        vR = ge->mesh_vertices[j];
-        vR->getParameter(0,tR);
-        if(!vR->getParameter(0,tR)) {
-          Msg::Error("vertex vr %p not MedgeVertex", vR);
-          Msg::Exit(1);
-        }
-        if(tLoc > tL && tLoc < tR){
-          found = true;
-          itR = coordinates.find(vR);
-          if(itR == coordinates.end()){
-            Msg::Error("vertex %p (%g %g %g) not found", vR, vR->x(), vR->y(), vR->z());
-            Msg::Exit(1);
-          }
-          break;
-        }
-        else{
-          itL = coordinates.find(vR);
-          vL = vR;
-          tL = tR;
-        }
-        j++;
+      if(gec){
+	// compute local parameter on Edge
+	gec->getLocalParameter(tGlob,iEdge,tLoc);
+	std::vector<GEdge*> gev = gec->getCompounds();
+	GEdge *ge = gev[iEdge];
+	
+	// left and right vertex of the Edge
+	MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
+	MVertex *v1 = ge->getEndVertex()->mesh_vertices[0];
+	std::map<MVertex*,SPoint3>::iterator itL = coordinates.find(v0);
+	std::map<MVertex*,SPoint3>::iterator itR = coordinates.find(v1);
+	
+	// for the Edge, find the left and right vertices of the initial
+	// 1D mesh and interpolate to find (u,v)
+	MVertex *vL = v0;
+	MVertex *vR = v1;
+	double tB = ge->parBounds(0).low();
+	double tE = ge->parBounds(0).high();
+	int j = 0;
+	tL=tB;
+	bool found = false;
+	while(j < (int)ge->mesh_vertices.size()){
+	  vR = ge->mesh_vertices[j];
+	  vR->getParameter(0,tR);
+	  if(!vR->getParameter(0,tR)) {
+	    Msg::Error("vertex vr %p not MedgeVertex", vR);
+	    Msg::Exit(1);
+	  }
+	  if(tLoc > tL && tLoc < tR){
+	    found = true;
+	    itR = coordinates.find(vR);
+	    if(itR == coordinates.end()){
+	      Msg::Error("vertex %p (%g %g %g) not found", vR, vR->x(), vR->y(), vR->z());
+	      Msg::Exit(1);
+	    }
+	    break;
+	  }
+	  else{
+	    itL = coordinates.find(vR);
+	    vL = vR;
+	    tL = tR;
+	  }
+	  j++;
+	}
+	if(!found) {
+	  vR = v1;
+	  tR = tE;
+	}
+	
+	// linear interpolation between tL and tR
+	double uloc, vloc;
+	uloc = itL->second.x() + (tLoc-tL)/(tR-tL) * (itR->second.x()-itL->second.x());
+	vloc = itL->second.y() + (tLoc-tL)/(tR-tL) * (itR->second.y()-itL->second.y());
+	return SPoint2(uloc,vloc);
       }
-      if(!found) {
-        vR = v1;
-        tR = tE;
-      }
+      
+    // }
+    // else if(v->onWhat()->dim() == 2){
+    //   Msg::Debug("Get coordinates of Compound Face cannot find vertex");
+    // }
 
-      // linear interpolation between tL and tR
-      double uloc, vloc;
-      uloc = itL->second.x() + (tLoc-tL)/(tR-tL) * (itR->second.x()-itL->second.x());
-      vloc = itL->second.y() + (tLoc-tL)/(tR-tL) * (itR->second.y()-itL->second.y());
-      return SPoint2(uloc,vloc);
-    }
   }
 
   // never here
@@ -1921,6 +1955,27 @@ double GFaceCompound::locCurvature(MTriangle *t, double u, double v) const
   return fabs(t->interpolateDiv(val, u, v, 3));
 }
 
+SPoint2 GFaceCompound::parFromVertex(MVertex *v) const
+{
+  double U=0.0,V=0.0;
+  if(v->onWhat()->dim()==2 && meshStatistics.status == GFace::DONE) {
+    v->getParameter(0, U);
+    v->getParameter(1, V);
+  }
+  if ( v->onWhat()->dim()==1 || 
+       (v->onWhat()->dim()==2  && U == -1 && V==-1)){ //if MFaceVertex created on edge in bunin
+    SPoint2 sp = getCoordinates(v);
+    U = sp.x();
+    V = sp.y();
+  }
+  if (v->onWhat()->dim()==0){
+    SPoint2 sp = parFromPoint(SPoint3(v->x(), v->y(), v->z()));
+    U = sp.x();
+    V = sp.y();
+  }
+  return SPoint2(U,V);
+
+}
 SPoint2 GFaceCompound::parFromPoint(const SPoint3 &p, bool onSurface) const
 {
   if(!oct) parametrize();
@@ -1929,6 +1984,155 @@ SPoint2 GFaceCompound::parFromPoint(const SPoint3 &p, bool onSurface) const
   SPoint3 sp = it->second;
 
   return SPoint2(sp.x(), sp.y());
+}
+GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const {
+
+  //printf("in remeshed oct for par =%g %g\n", par1,par2);
+    
+  //if not meshed yet 
+  if (meshStatistics.status != GFace::DONE || triangles.size()+quadrangles.size() == 0) {
+    GPoint gp (3,3,0,this);
+    gp.setNoSuccess();
+    return gp;
+  }
+ 
+  //create new octree with new mesh elements
+  if(!octNew){
+    //printf("****************** creating new octree \n");
+    
+    //FILE * of = fopen("myOCTREE.pos","w");
+    //fprintf(of, "View \"\"{\n");
+
+    std::vector<MElement *> myElems;
+    for (int i = 0; i < triangles.size(); i++) myElems.push_back(triangles[i]);
+    for (int i = 0; i < quadrangles.size(); i++) myElems.push_back(quadrangles[i]);
+    
+    std::vector<MElement *> myParamElems;
+    std::set<SPoint2> myBCNodes;
+    for (int i = 0; i < myElems.size(); i++){
+      MElement *e = myElems[i];
+      std::vector<MVertex*> myParamVert;
+      for (unsigned int j = 0; j < e->getNumVertices(); j++){
+	MVertex *v = e->getVertex(j);
+	SPoint2 sp = parFromVertex(v);
+  	myParamVert.push_back(new MVertex(sp.x(),sp.y(), 0.0, NULL,v->getNum()));
+	if(v->onWhat()->dim()<2) myBCNodes.insert(sp);
+	XYZoct.insert(std::make_pair(v->getNum(),SPoint3(v->x(), v->y(), v->z())));
+      }
+      if(e->getType() == TYPE_TRI) 
+  	myParamElems.push_back(new MTriangle(myParamVert[0],myParamVert[1],myParamVert[2],e->getNum()));
+      else if (e->getType() == TYPE_QUA) {
+  	myParamElems.push_back(new MQuadrangle(myParamVert[0],myParamVert[1],myParamVert[2],myParamVert[3],e->getNum()));
+	// fprintf(of, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
+	// 	myParamVert[0]->x(), myParamVert[0]->y(), myParamVert[0]->z(),
+	// 	myParamVert[1]->x(), myParamVert[1]->y(), myParamVert[1]->z(),
+	// 	myParamVert[2]->x(), myParamVert[2]->y(), myParamVert[2]->z(),
+	// 	myParamVert[3]->x(), myParamVert[3]->y(), myParamVert[3]->z(),
+	// 	(double)e->getNum(), (double)e->getNum(), (double)e->getNum(), (double)e->getNum());
+      }   
+    }
+    
+    octNew = new MElementOctree(myParamElems);
+
+    //build kdtree boundary nodes in parametric space
+#if defined(HAVE_ANN)
+    //printf("creating uv kdtree %d \n", myBCNodes.size());
+    nodes = annAllocPts(myBCNodes.size(), 3);
+    std::set<SPoint2>::iterator itp = myBCNodes.begin();
+    int ind = 0;
+    while (itp != myBCNodes.end()){
+      SPoint2 pt = *itp;
+      //fprintf(of, "SP(%g,%g,%g){%g};\n", pt.x(), pt.y(), 0.0, 10000);
+      nodes[ind][0] = pt.x();
+      nodes[ind][1] = pt.y();
+      nodes[ind][2] = 0.0;
+      itp++; ind++;
+    }
+    uv_kdtree = new ANNkd_tree(nodes, myBCNodes.size(), 3);
+#endif
+
+    //fprintf(of,"};\n");
+    //fclose(of);
+
+  }
+  
+  //now find point
+  double uvw[3]={par1,par2, 0.0};
+  double UV[3];
+  double initialTol = MElement::getTolerance();
+  MElement::setTolerance(1.e-2); 
+  MElement *e = octNew->find(par1,par2, 0.0,-1,false);  
+  MElement::setTolerance(initialTol);
+  if (e){
+    e->xyz2uvw(uvw,UV);
+    double valX[8], valY[8], valZ[8];
+    for (int i=0;i<e->getNumPrimaryVertices();i++){
+      SPoint3 pt = XYZoct[e->getVertex(i)->getNum()];
+      valX[i] = pt.x();
+      valY[i] = pt.y();
+      valZ[i] = pt.z();
+    }
+    GPoint gp;
+    gp.x() = e->interpolate(valX,UV[0],UV[1],UV[2]);
+    gp.y() = e->interpolate(valY,UV[0],UV[1],UV[2]);
+    gp.z() = e->interpolate(valZ,UV[0],UV[1],UV[2]);
+    //printf("found point (UV=%g %g) %g %g %g (E=%D)\n",par1, par2, gp.x(), gp.y(), gp.z(), e->getNum());
+    return gp;
+  }
+  //if element not found find closest point
+  else{
+
+    //printf("point not found look in kdtree \n");
+    GPoint gp(0,0,0);
+
+#if defined(HAVE_ANN)
+    double pt[3] = {par1,par2,0.0};
+    uv_kdtree->annkSearch(pt, 1, index, dist);
+    SPoint3  p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
+    SPoint3  p2(nodes[index[1]][0], nodes[index[1]][1], nodes[index[1]][2]);
+    SPoint3 pnew; double d;
+    signedDistancePointLine(p1,p2, SPoint3(par1,par2,0.0), d, pnew);
+    //printf("UV=%g %g UVnew =%g %g \n", par1,par2,pnew.x(), pnew.y());
+    
+    //now find point
+    double uvw[3]={pnew.x(),pnew.y(), 0.0};
+    double UV[3];
+    MElement *e = octNew->find(pnew.x(), pnew.y(), 0.0, -1);  
+    if (e){
+      e->xyz2uvw(uvw,UV);
+      double valX[8], valY[8], valZ[8];
+      for (int i=0;i<e->getNumPrimaryVertices();i++){
+	SPoint3 pt = XYZoct[e->getVertex(i)->getNum()];
+	valX[i] = pt.x();
+	valY[i] = pt.y();
+	valZ[i] = pt.z();
+      }
+      GPoint gp;
+      gp.x() = e->interpolate(valX,UV[0],UV[1],UV[2]);
+      gp.y() = e->interpolate(valY,UV[0],UV[1],UV[2]);
+      gp.z() = e->interpolate(valZ,UV[0],UV[1],UV[2]);
+      // printf("found point after kdtree (UV=%g %g) %g %g %g (E=%D)\n",par1, par2, gp.x(), gp.y(), gp.z(), e->getNum());
+    }
+    else{
+      //printf("new point kdtree not found \n");
+      gp.setNoSuccess();
+    }
+#else
+    gp.setNoSuccess();
+#endif
+  
+    if (gp.succeeded()){
+      //printf("found closest point with ANN \n");
+      return gp;
+    }
+    else{
+      //printf("NOT found point %g %g \n", par1, par2);
+      GPoint gp (3,3,0,this);
+      gp.setNoSuccess();
+      return gp;
+    }
+  }
+    
 }
 
 GPoint GFaceCompound::point(double par1, double par2) const
@@ -1942,11 +2146,10 @@ GPoint GFaceCompound::point(double par1, double par2) const
   double U,V;
   double par[2] = {par1,par2};
   GFaceCompoundTriangle *lt;
-  getTriangle (par1, par2, &lt, U,V);
-  SPoint3 p(3, 3, 0);
+  getTriangle(par1, par2, &lt, U,V);
   if(!lt && _mapping != RBF){
-    GPoint gp (p.x(),p.y(),p.z(),this);
-    gp.setNoSuccess();
+    //printf("POINT no success %d tris %d quad \n", triangles.size(), quadrangles.size());
+    GPoint gp = pointInRemeshedOctree(par1,par2);
     return gp;
   }
   else if (!lt && _mapping == RBF){
@@ -1970,7 +2173,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
   const bool LINEARMESH = true; //false
   if(LINEARMESH){
     // linear Lagrange mesh
-    p = lt->v1*(1.-U-V) + lt->v2*U + lt->v3*V;
+    SPoint3 p = lt->v1*(1.-U-V) + lt->v2*U + lt->v3*V;
     return GPoint(p.x(),p.y(),p.z(),this,par);
   }
   else{
@@ -2181,12 +2384,19 @@ void GFaceCompound::buildOct() const
       count++;
     }
   }
+
+ // make bounding box larger up to (absolute) geometrical tolerance
+  double eps = 0.0; //CTX::instance()->geom.tolerance;
+  SPoint3 bbmin = bb.min(), bbmax = bb.max(), bbeps(eps, eps, eps);
+  bbmin -= bbeps;
+  bbmax += bbeps;
+  double origin[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
+  double ssize[3] = {bbmax.x() - bbmin.x(),
+                    bbmax.y() - bbmin.y(),
+                    bbmax.z() - bbmin.z()};
+ 
   _gfct = new GFaceCompoundTriangle[count];
-  double origin[3] = {bb.min().x(), bb.min().y(), bb.min().z()};
-  double ssize[3] = {bb.max().x() - bb.min().x(),
-                     bb.max().y() - bb.min().y(),
-                     bb.max().z() - bb.min().z()};
-  const int maxElePerBucket = 11;
+  const int maxElePerBucket = 15;
   oct = Octree_Create(maxElePerBucket, origin, ssize, GFaceCompoundBB,
                       GFaceCompoundCentroid, GFaceCompoundInEle);
 

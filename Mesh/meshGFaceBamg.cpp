@@ -259,28 +259,24 @@ void meshGFaceBamg(GFace *gf){
       //If point not found because compound edges have been remeshed and boundary triangles have changed
       //then we call our new octree
       if ( !gp.succeeded() && hasCompounds){ 
-	SPoint3 uvw(v[0],v[1], 0.0), UV;
+	double uvw[3] = {v[0],v[1], 0.0};
+	double UV[3];
 	double initialTol = MElement::getTolerance();
 	MElement::setTolerance(1.e-2); 
 	MElement *e = _octree->find(v[0],v[1], 0.0, -1);  
 	MElement::setTolerance(initialTol);
 	if (e){
 	  e->xyz2uvw(uvw,UV);
-	  double *valX = new double[e->getNumVertices()];
-	  double *valY = new double[e->getNumVertices()];
-	  double *valZ = new double[e->getNumVertices()];
-	  for (int i=0;i<e->getNumVertices();i++){
+	  double valX[8], valY[8], valZ[8];
+	  for (int i=0;i<e->getNumPrimaryVertices();i++){
 	    int numTri = e->getNum();
-	    valX[i] = gf->triangles[numTri]->getVertex(0)->x();
-	    valY[i] = gf->triangles[numTri]->getVertex(0)->y();
-	    valZ[i] = gf->triangles[numTri]->getVertex(0)->z();
+	    valX[i] = gf->triangles[numTri]->getVertex(i)->x();
+	    valY[i] = gf->triangles[numTri]->getVertex(i)->y();
+	    valZ[i] = gf->triangles[numTri]->getVertex(i)->z();
 	  }
 	  gp.x() = e->interpolate(valX,UV[0],UV[1],UV[2]);
 	  gp.y() = e->interpolate(valY,UV[0],UV[1],UV[2]);
 	  gp.z() = e->interpolate(valZ,UV[0],UV[1],UV[2]);
-	  delete [] valX;
-	  delete [] valY;
-	  delete [] valZ;
 	}
       }
       MFaceVertex *x = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, v[0], v[1]);

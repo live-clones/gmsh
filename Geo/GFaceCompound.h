@@ -20,6 +20,12 @@ template <class scalar> class simpleFunction;
 #include "meshGFaceOptimize.h"
 #include "linearSystem.h"
 #include "GRbf.h"
+#include "MElementOctree.h"
+
+#if defined(HAVE_ANN)
+#include <ANN/ANN.h>
+class ANNkd_tree;
+#endif
 
 #define AR_MAX 5 //maximal geometrical aspect ratio
 
@@ -70,6 +76,8 @@ class GFaceCompound : public GFace {
   mutable int nbT;
   mutable GFaceCompoundTriangle *_gfct;
   mutable Octree *oct;
+  mutable MElementOctree *octNew;
+  mutable std::map<int,SPoint3> XYZoct;
   mutable std::set<MVertex*> allNodes;
   mutable v2t_cont adjv;
   mutable bool mapv2Tri;
@@ -83,6 +91,12 @@ class GFaceCompound : public GFace {
   mutable std::vector<double> _coords;
   mutable std::map<MVertex*, int> _mapV;
   linearSystem <double> *_lsys;
+#if defined(HAVE_ANN)
+   mutable ANNkd_tree *uv_kdtree;
+   mutable ANNpointArray nodes;
+   ANNidxArray index;
+   ANNdistArray dist;
+#endif
   void buildOct() const ;
   void buildAllNodes() const; 
 
@@ -133,8 +147,10 @@ class GFaceCompound : public GFace {
   Range<double> parBounds(int i) const 
   { return trivial() ? (*(_compound.begin()))->parBounds(i) : Range<double>(-1, 1); }
 
-  virtual GPoint point(double par1, double par2) const;
+  GPoint point(double par1, double par2) const;
+  GPoint pointInRemeshedOctree(double par1, double par2) const;
   SPoint2 parFromPoint(const SPoint3 &p, bool onSurface=true) const;
+  SPoint2 parFromVertex(MVertex *v) const;
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &, SVector3 *, SVector3 *, SVector3 *) const; 
   virtual GEntity::GeomType geomType() const { return CompoundSurface; }

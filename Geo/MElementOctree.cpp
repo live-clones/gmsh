@@ -89,7 +89,7 @@ MElementOctree::MElementOctree(GModel *m) : _gm(m)
   Octree_Arrange(_octree);
 }
 
-MElementOctree::MElementOctree(std::vector<MElement*> &v) : _gm(0)
+MElementOctree::MElementOctree(std::vector<MElement*> &v) : _gm(0), _elems(v)
 {
   SBoundingBox3d bb;
   for (unsigned int i = 0; i < v.size(); i++){
@@ -156,7 +156,7 @@ MElement *MElementOctree::find(double x, double y, double z, int dim, bool stric
   if (!strict && _gm) {
     double initialTol = MElement::getTolerance();
     double tol = initialTol;
-    while (tol < 1){
+    while (tol < 1.){
       tol *= 10;
       MElement::setTolerance(tol);
       std::vector<GEntity*> entities;
@@ -174,7 +174,26 @@ MElement *MElementOctree::find(double x, double y, double z, int dim, bool stric
       }
     }
     MElement::setTolerance(initialTol);
-    Msg::Warning("Point %g %g %g not found",x,y,z);
+    //Msg::Warning("Point %g %g %g not found",x,y,z);
+  }
+  else if (!strict && !_gm){
+    double initialTol = MElement::getTolerance();
+    double tol = initialTol;
+    while (tol < 0.1){
+      tol *= 10.0;
+      MElement::setTolerance(tol);
+      for(unsigned int i = 0; i < _elems.size(); i++){
+	  e = _elems[i];
+	  if (dim == -1 ||  e->getDim() == dim){
+	    if (MElementInEle(e, P)){
+	      MElement::setTolerance(initialTol);
+	      return e;
+	    }
+	  }
+	}
+    }
+    MElement::setTolerance(initialTol);
+    //Msg::Warning("Point %g %g %g not found",x,y,z);
   }
   return NULL;
 }

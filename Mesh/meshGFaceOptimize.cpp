@@ -620,6 +620,7 @@ static bool _isItAGoodIdeaToMoveThatVertex (GFace *gf,
   double qualityNew[256];
 
   GPoint gp = gf->point(after);
+  if (!gp.succeeded())return false;
   SPoint3 pafter  (gp.x(),gp.y(),gp.z());
   SPoint3 pbefore (v1->x(),v1->y(),v1->z());
 
@@ -772,13 +773,19 @@ static std::vector<MVertex*> closestPathBetweenTwoDefects (v2t_cont &adj,
 
 static MVertex * createNewVertex (GFace *gf, SPoint2 p){
   GPoint gp = gf->point(p);
+  if (!gp.succeeded()) {
+    //printf("**** ARRG new vertex not created \n"); 
+    return NULL;
+  }
   return new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
 }
 static std::vector<MVertex*> saturateEdge (GFace *gf, SPoint2 p1, SPoint2 p2, int n){
   std::vector<MVertex*> pts;
   for (int i=1;i<n;i++){
     SPoint2 p = p1 + (p2-p1)*((double)i/((double)(n)));
-    pts.push_back(createNewVertex(gf,p));
+    MVertex *v = createNewVertex(gf,p);
+    if (!v){ pts.clear(); pts.resize(0); return pts;}
+    pts.push_back(v);
   }
   return pts;
 }
@@ -812,7 +819,7 @@ void createRegularMesh (GFace *gf,
 			 std::vector<MQuadrangle*> &q){
   int N = e12.size();
   int M = e23.size();
-
+ 
   //create points using transfinite interpolation
 
   std::vector<std::vector<MVertex*> > tab(M+2);
@@ -828,7 +835,7 @@ void createRegularMesh (GFace *gf,
   }
   for (int i=0;i<M;i++){
     tab[i+1][N+1] = sign23 > 0 ? e23 [i] : e23 [M-i-1];
-    tab[i+1][0] = sign41 < 0   ? e41 [i] : e41 [M-i-1];
+    tab[i+1][0]   = sign41 < 0 ? e41 [i] : e41 [M-i-1];
   }
 
   for (int i=0;i<N;i++){
@@ -847,6 +854,14 @@ void createRegularMesh (GFace *gf,
 			   c1.x(),c2.x(),c3.x(),c4.x(),u,v);
       double Vp = TRAN_QUA(p12.y(), p23.y(), p34.y(), p41.y(),
 			   c1.y(),c2.y(),c3.y(),c4.y(),u,v);
+      // printf("v1=%d v2=%d v3=%d v4=%d \n", v1->getNum(), v2->getNum(), v3->getNum(), v4->getNum());
+      // printf("c1=%g %g, c2=%g %g, c3=%g %g, c4=%g,%g \n", c1.x(),c1.y(),c2.x(),c2.y(),c3.x(),c3.y(),c4.x(),c4.y());
+      // printf("p1=%g %g, p2=%g %g, p3=%g %g, p4=%g,%g \n", p12.x(),p12.x(),p23.x(),p23.y(),p34.x(),p34.y(),p41.x(),p41.y());
+      if (p12.x() && p12.y() == -1.0) {printf("wrong param -1 \n"); exit(1);}
+      if (p23.x() && p23.y() == -1.0) {printf("wrong param -1 \n"); exit(1);}
+      if (p34.x() && p34.y() == -1.0) {printf("wrong param -1 \n"); exit(1);}
+      if (p41.x() && p41.y() == -1.0) {printf("wrong param -1 \n"); exit(1);}
+
       MVertex *vnew = createNewVertex (gf, SPoint2(Up,Vp));
       tab[j+1][i+1] = vnew;
     }
@@ -854,7 +869,6 @@ void createRegularMesh (GFace *gf,
   // create quads
   for (int i=0;i<=N;i++){
     for (int j=0;j<=M;j++){
-      //MQuadrangle *qnew = new MQuadrangle (tab[j][i],tab[j+1][i],tab[j+1][i+1],tab[j][i+1]);
       MQuadrangle *qnew = new MQuadrangle (tab[j][i],tab[j][i+1],tab[j+1][i+1],tab[j+1][i]);
       q.push_back(qnew);
     }
@@ -1163,7 +1177,6 @@ struct  quadBlob {
       else count[side]++;
     }
 
-
     if (ncorners == 3){
       
       fullVector<double> rhs(6);
@@ -1188,6 +1201,9 @@ struct  quadBlob {
       std::vector<MVertex*> e012_01 = saturateEdge (gf,p012,p01,a2);
       std::vector<MVertex*> e012_12 = saturateEdge (gf,p012,p12,a3);
       std::vector<MVertex*> e012_20 = saturateEdge (gf,p012,p20,a1);
+      if (e012_01.size() == 0) return false;
+      if (e012_12.size() == 0) return false;
+      if (e012_20.size() == 0) return false;
 
       std::vector<MVertex*> e0_01,e01_1,e1_12,e12_2,e2_20,e20_0;
       for (int i=0;i<a1-1;i++)e0_01.push_back(bnodes[i+1]);
@@ -1337,6 +1353,11 @@ struct  quadBlob {
       std::vector<MVertex*> e01234_23 = saturateEdge (gf,p01234,p23,a4);
       std::vector<MVertex*> e01234_34 = saturateEdge (gf,p01234,p34,a5);
       std::vector<MVertex*> e01234_40 = saturateEdge (gf,p01234,p40,a1);
+      if (e01234_01.size() == 0) return false;
+      if (e01234_12.size() == 0) return false;
+      if (e01234_23.size() == 0) return false;
+      if (e01234_34.size() == 0) return false;
+      if (e01234_40.size() == 0) return false;
 
       std::vector<MVertex*> e0_01,e01_1,e1_12,e12_2,e2_23,e23_3,e3_34,e34_4,e4_40,e40_0;
       for (int i=0;i<a1-1;i++)e0_01.push_back(bnodes[i+1]);
@@ -1519,6 +1540,10 @@ static int _splitFlatQuads(GFace *gf, double minQual)
 	GPoint gb2 = gf->point(pb2);
 	GPoint gb3 = gf->point(pb3);
 	GPoint gb4 = gf->point(pb4);
+	if (!gb1.succeeded())return -1;
+	if (!gb2.succeeded())return -1;
+	if (!gb3.succeeded())return -1;
+	if (!gb4.succeeded())return -1;
 	MFaceVertex *b1 = new MFaceVertex (gb1.x(),gb1.y(),gb1.z(),gf,gb1.u(), gb1.v());
 	MFaceVertex *b2 = new MFaceVertex (gb2.x(),gb2.y(),gb2.z(),gf,gb2.u(), gb2.v());
 	MFaceVertex *b3 = new MFaceVertex (gb3.x(),gb3.y(),gb3.z(),gf,gb3.u(), gb3.v());
@@ -1748,6 +1773,7 @@ struct opti_data_vertex_relocation {
   }
   void set_(double U, double V){
     GPoint gp = gf->point(U,V);
+    if (!gp.succeeded()) Msg::Error("point not OK \n");
     v->x() = gp.x();
     v->y() = gp.y();
     v->z() = gp.z();
@@ -1807,7 +1833,7 @@ static void _relocateVertexOpti(GFace *gf, MVertex *ver,
   //  if (rep.terminationtype != 4){
   //    data.set_(U,V);
   //  }
-  printf("heyhey -- end\n");
+
 }
 #endif
 
@@ -1873,7 +1899,7 @@ static void _relocateVertex(GFace *gf, MVertex *ver,
     }
     else{
 #if defined(HAVE_BFGS)
-            _relocateVertexOpti(gf, ver, lt);
+        _relocateVertexOpti(gf, ver, lt);
 #endif
     }
   }
@@ -1938,15 +1964,15 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf)
 	  ed = e2->getEdge(i);
 	  if (ed.getVertex(0) == v1 && ed.getVertex(1) != v2) v21 = ed.getVertex(1);
 	  if (ed.getVertex(1) == v1 && ed.getVertex(0) != v2) {rot2 = -1.0; v21 = ed.getVertex(0);}
-	  if (ed.getVertex(0) == v2 && ed.getVertex(1) != v1) {rot2 = -1.0;v22 = ed.getVertex(1);}
+	  if (ed.getVertex(0) == v2 && ed.getVertex(1) != v1) {rot2 = -1.0; v22 = ed.getVertex(1);}
 	  if (ed.getVertex(1) == v2 && ed.getVertex(0) != v1) v22 = ed.getVertex(0);
 	}
 	if (!v11 || !v12 || !v21 || !v22){
-	  Msg::Error("You found a BUG in the quad optimization routines of Gmsh Line %d of FILE %s",__LINE__,__FILE__);
+	  Msg::Error("Quad vertices are wrong (in edgeSwapQuads opti)");
 	  return 0;
 	}
 	if (rot1 != rot2){
-	  Msg::Error("Quads not oriented the same (in edgeSwapQuads opti)");
+	  Msg::Error("Quads are not oriented the same (in edgeSwapQuads opti)");
 	  //exit(1);
 	  return 0;
 	}

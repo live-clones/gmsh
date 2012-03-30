@@ -164,9 +164,9 @@ class MFaceVertex : public MVertex{
 
 bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, 
                            SPoint2 &param1, SPoint2 &param2);
-bool reparamMeshVertexOnFace(const MVertex *v, const GFace *gf, SPoint2 &param,
+bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
                              bool onSurface=true);
-bool reparamMeshVertexOnEdge(const MVertex *v, const GEdge *ge, double &param);
+bool reparamMeshVertexOnEdge(MVertex *v, const GEdge *ge, double &param);
 
 double angle3Vertices(MVertex *p1, MVertex *p2, MVertex *p3);
 

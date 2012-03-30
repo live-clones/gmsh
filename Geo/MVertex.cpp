@@ -263,10 +263,9 @@ static void getAllParameters(MVertex *v, GFace *gf, std::vector<SPoint2> &params
 {
   params.clear();
 
-  if (gf->geomType() == GEntity::CompoundSurface &&
-      v->onWhat()->dim() < 2){
+  if (gf->geomType() == GEntity::CompoundSurface ){
     GFaceCompound *gfc = (GFaceCompound*) gf;
-    params.push_back(gfc->getCoordinates(v));
+    params.push_back(gfc->parFromVertex(v));
     return;
   }
 
@@ -364,15 +363,22 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
 
 
 
-bool reparamMeshVertexOnFace(const MVertex *v, const GFace *gf, SPoint2 &param,
+bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
                              bool onSurface)
 {
-  if (gf->geomType() == GEntity::CompoundSurface &&
-      v->onWhat()->dim() < 2){
+
+  if (gf->geomType() == GEntity::CompoundSurface ){
     GFaceCompound *gfc = (GFaceCompound*) gf;
-    param = gfc->getCoordinates(const_cast<MVertex*>(v));
+    param = gfc->parFromVertex(v);
     return true;
   }
+
+  // if (gf->geomType() == GEntity::CompoundSurface &&
+  //     v->onWhat()->dim() < 2){
+  //    GFaceCompound *gfc = (GFaceCompound*) gf;
+  //   param = gfc->getCoordinates(const_cast<MVertex*>(v));
+  //   return true;
+  // }
 
   if(v->onWhat()->geomType() == GEntity::DiscreteCurve ||        
      v->onWhat()->geomType() == GEntity::BoundaryLayerCurve){    
@@ -416,7 +422,7 @@ bool reparamMeshVertexOnFace(const MVertex *v, const GFace *gf, SPoint2 &param,
   return true;
 }
 
-bool reparamMeshVertexOnEdge(const MVertex *v, const GEdge *ge, double &param)
+bool reparamMeshVertexOnEdge( MVertex *v, const GEdge *ge, double &param)
 {
   param = 1.e6;
   Range<double> bounds = ge->parBounds(0);
