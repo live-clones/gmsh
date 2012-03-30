@@ -34,7 +34,7 @@ struct contextMeshOptions {
   int secondOrderExperimental, meshOnlyVisible;
   int smoothInternalEdges, minCircPoints, minCurvPoints;
   int smoothNLayers;
-  double smoothDistoTreshold;
+  double smoothDistoThreshold, smoothPoissonRatio;
   int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat, saveParametric;
   int smoothNormals, reverseAllNormals, zoneDefinition, clip;
   int saveElementTagType;

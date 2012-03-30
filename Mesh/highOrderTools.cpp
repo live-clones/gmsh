@@ -254,10 +254,10 @@ void highOrderTools::applySmoothingTo(std::vector<MElement*> & all, GFace *gf)
   // compute the straight sided positions of high order nodes that are
   // on the edges of the face in the UV plane
   dofManager<double> myAssembler(lsys);
-  elasticityTerm El(0, 1.0, .33, _tag);
+  elasticityTerm El(0, 1.0, CTX::instance()->mesh.smoothPoissonRatio, _tag);
   std::vector<MElement*> layer, v;
   double minD;
-  getDistordedElements(all, CTX::instance()->mesh.smoothDistoTreshold, v, minD);
+  getDistordedElements(all, CTX::instance()->mesh.smoothDistoThreshold, v, minD);
   int numBad = v.size();
   const int nbLayers = CTX::instance()->mesh.smoothNLayers;
   for (int i = 0; i < nbLayers; i++){

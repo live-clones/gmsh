@@ -5121,8 +5121,21 @@ double opt_mesh_ho_nlayers(OPT_ARGS_NUM)
 double opt_mesh_ho_mindisto(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.smoothDistoTreshold = val;
-  return CTX::instance()->mesh.smoothDistoTreshold;
+    CTX::instance()->mesh.smoothDistoThreshold = val;
+  return CTX::instance()->mesh.smoothDistoThreshold;
+}
+
+double opt_mesh_ho_poisson(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    double ratio = val;
+    if (ratio <= -1.0)
+      ratio = -0.999;
+    else if (ratio >= 0.5)
+      ratio = 0.499;
+    CTX::instance()->mesh.smoothPoissonRatio = ratio;
+  }
+  return CTX::instance()->mesh.smoothPoissonRatio;
 }
 
 double opt_mesh_second_order_experimental(OPT_ARGS_NUM)

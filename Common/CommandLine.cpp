@@ -76,6 +76,7 @@ void PrintUsage(const char *name)
   Msg::Direct("  -hoOptimize           Optimize high order meshes");
   Msg::Direct("  -hoMindisto float     Minimum quality for high-order elements before optimization (0.0->1.0)");
   Msg::Direct("  -hoNLayers int        Number of high order element layers to optimize");
+  Msg::Direct("  -hoElasticity float   Poisson ration for the elasticity analogy (-1.0 < nu < 0.5)");
   Msg::Direct("  -optimize[_netgen]    Optimize quality of tetrahedral elements");
   Msg::Direct("  -optimize_lloyd       Optimize 2D meshes using Lloyd algorithm");
   Msg::Direct("  -clscale float        Set global mesh element size scaling factor");
@@ -299,6 +300,13 @@ void GetOptions(int argc, char *argv[])
         i++;
         if(argv[i])
 	  opt_mesh_ho_mindisto(0, GMSH_SET, atof(argv[i++]));
+        else
+          Msg::Fatal("Missing number");
+      }
+      else if(!strcmp(argv[i] + 1, "hoElasticity")) {
+        i++;
+        if(argv[i])
+	  opt_mesh_ho_poisson(0, GMSH_SET, atof(argv[i++]));
         else
           Msg::Fatal("Missing number");
       }
