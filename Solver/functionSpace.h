@@ -8,6 +8,7 @@
 
 #include "SVector3.h"
 #include "STensor3.h"
+#include "STensor33.h"
 #include "STensor43.h"
 #include <vector>
 #include <iterator>
@@ -23,6 +24,7 @@ template<class T> struct TensorialTraits
   typedef T ValType;
   typedef T GradType[3];
   typedef T HessType[3][3];
+  typedef T ThirdDevType[3][3][3];
 /*  typedef SVoid DivType;
   typedef SVoid CurlType;*/
 };
@@ -33,6 +35,7 @@ template<> struct TensorialTraits<double>
   typedef SVector3 GradType;
   typedef STensor3 HessType;
   typedef double TensProdType;
+  typedef STensor33 ThirdDevType;
 /*  typedef SVoid DivType;
   typedef SVoid CurlType;*/
 };
@@ -43,6 +46,7 @@ template<> struct TensorialTraits<SVector3>
   typedef STensor3 GradType;
   typedef STensor3 HessType;
   typedef STensor3 TensProdType;
+  typedef STensor3 ThirdDevType;
 //  typedef double DivType;
 //  typedef SVector3 CurlType;
 };
@@ -73,12 +77,16 @@ class FunctionSpace : public FunctionSpaceBase
   typedef typename TensorialTraits<T>::ValType ValType;
   typedef typename TensorialTraits<T>::GradType GradType;
   typedef typename TensorialTraits<T>::HessType HessType;
+  typedef typename TensorialTraits<T>::ThirdDevType ThirdDevType;
   virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals) = 0;
   virtual void fuvw(MElement *ele, double u, double v, double w, std::vector<ValType> &vals) {} // should return to pure virtual once all is done.
   virtual void gradf(MElement *ele, double u, double v, double w, std::vector<GradType> &grads) = 0;
   virtual void gradfuvw(MElement *ele, double u, double v, double w, std::vector<GradType> &grads) {} // should return to pure virtual once all is done.
   virtual void hessfuvw(MElement *ele, double u, double v, double w, std::vector<HessType> &hess) = 0;
   virtual void hessf(MElement *ele, double u, double v, double w,std::vector<HessType> &hess) {} //need to high order fem
+  virtual void thirdDevfuvw(MElement *ele, double u, double v, double w,std::vector<ThirdDevType> &third){}; //need to high order fem
+  virtual void thirdDevf(MElement *ele, double u, double v, double w,std::vector<ThirdDevType> &third){}; //need to high order fem
+
   virtual int getNumKeys(MElement *ele) = 0; // if one needs the number of dofs
   virtual void getKeys(MElement *ele, std::vector<Dof> &keys) = 0;
 };
