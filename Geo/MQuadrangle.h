@@ -38,7 +38,7 @@ class MQuadrangle : public MElement {
     v[2] = _v[2];
     v[3] = _v[3];
   }
-void projectInMeanPlane(double *xn, double *yn);
+  void projectInMeanPlane(double *xn, double *yn);
  public :
   MQuadrangle(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, int num=0, int part=0)
     : MElement(num, part)
@@ -132,6 +132,7 @@ void projectInMeanPlane(double *xn, double *yn);
   {
     return SPoint3(0., 0., 0.);
   }
+  virtual double getVolume();
   virtual void revert()
   {
     MVertex *tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;

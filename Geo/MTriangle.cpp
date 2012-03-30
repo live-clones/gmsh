@@ -25,6 +25,17 @@ SPoint3 MTriangle::circumcenter()
   return SPoint3(res[0], res[1], res[2]);
 }
 
+double MTriangle::getVolume()
+{
+  if(getNumVertices() > 3)
+    return MElement::getVolume();
+  SPoint3 p0(_v[0]->x(), _v[0]->y(), _v[0]->z());
+  SPoint3 p1(_v[1]->x(), _v[1]->y(), _v[1]->z());
+  SPoint3 p2(_v[2]->x(), _v[2]->y(), _v[2]->z());
+  SVector3 v1(p0, p1), v2(p0, p2);
+  return norm(crossprod(v1, v2)) / 2.;
+}
+
 double MTriangle::distoShapeMeasure()
 {
 #if defined(HAVE_MESH)

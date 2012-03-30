@@ -94,7 +94,20 @@ int MQuadrangleN::getNumEdgesRep(){ return 4 * CTX::instance()->mesh.numSubEdges
 int MQuadrangle8::getNumEdgesRep(){ return 4 * CTX::instance()->mesh.numSubEdges; }
 int MQuadrangle9::getNumEdgesRep(){ return 4 * CTX::instance()->mesh.numSubEdges; }
 
-
+double MQuadrangle::getVolume()
+{
+  if(getNumVertices() > 4)
+    return MElement::getVolume();
+  double a = _v[0]->distance(_v[1]);
+  double b = _v[1]->distance(_v[2]);
+  double c = _v[2]->distance(_v[3]);
+  double d = _v[3]->distance(_v[0]);
+  double m = _v[0]->distance(_v[2]);
+  double n = _v[1]->distance(_v[3]);
+  double mn = 2. * m * n;
+  double abcd = a*a - b*b + c*c - d*d;
+  return sqrt( mn*mn - abcd*abcd ) / 4.;
+}
 
 static void _myGetEdgeRep(MQuadrangle *q, int num, double *x, double *y, double *z,
                           SVector3 *n, int numSubEdges)

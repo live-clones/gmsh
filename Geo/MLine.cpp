@@ -65,3 +65,8 @@ double MLine::getLength()
 {
   return _v[0]->distance(_v[1]);
 }
+
+double MLine::getVolume()
+{
+  return getLength();
+}
