@@ -722,27 +722,31 @@ int geoFileDialog(const char *name)
 {
   struct _geoFileDialog{
     Fl_Window *window;
-    Fl_Check_Button *b;
+    Fl_Check_Button *b[2];
     Fl_Button *ok, *cancel;
   };
   static _geoFileDialog *dialog = NULL;
 
   if(!dialog){
     dialog = new _geoFileDialog;
-    int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "GEO Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
-    dialog->b = new Fl_Check_Button
+    dialog->b[0] = new Fl_Check_Button
       (WB, y, 2 * BB + WB, BH, "Save physical group labels"); y += BH;
-    dialog->b->type(FL_TOGGLE_BUTTON);
+    dialog->b[0]->type(FL_TOGGLE_BUTTON);
+    dialog->b[1] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Only save physical entities"); y += BH;
+    dialog->b[1]->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
 
-  dialog->b->value(CTX::instance()->print.geoLabels ? 1 : 0);
+  dialog->b[0]->value(CTX::instance()->print.geoLabels ? 1 : 0);
+  dialog->b[1]->value(CTX::instance()->print.geoOnlyPhysicals ? 1 : 0);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -751,7 +755,8 @@ int geoFileDialog(const char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-        opt_print_geo_labels(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
+        opt_print_geo_labels(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
+        opt_print_geo_only_physicals(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value() ? 1 : 0);
         CreateOutputFile(name, FORMAT_GEO);
         dialog->window->hide();
         return 1;

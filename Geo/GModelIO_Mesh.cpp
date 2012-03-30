@@ -136,7 +136,7 @@ static MElement *createElementMSH(GModel *m, int num, int typeMSH, int physical,
     Msg::Error("Unknown type of element %d", typeMSH);
     return NULL;
   }
-  
+
 #if (FAST_ELEMENTS!=1)
   switch(e->getType()){
   case TYPE_PNT :
@@ -403,13 +403,13 @@ int GModel::readMSH(const std::string &name)
 
       if(!fgets(str, sizeof(str), fp)) return 0;
       int numElements;
-      
-      std::map<int, MElement*> elems;      
+
+      std::map<int, MElement*> elems;
       std::map<int, MElement*> parents;
       std::map<int, MElement*> domains;
       std::map<int, int> elemreg;
       std::map<int, int> elemphy;
-      
+
       std::set<MElement*> parentsOwned;
       sscanf(str, "%d", &numElements);
       Msg::Info("%d elements", numElements);
@@ -463,7 +463,7 @@ int GModel::readMSH(const std::string &name)
           }
           MElement *p = NULL;
           bool own = false;
-	  
+
 	  // search parent element
 	  if (parent)
 	  {
@@ -502,7 +502,7 @@ int GModel::readMSH(const std::string &name)
 	      }
 #endif
 	  }
-          
+
           // search domains
           MElement *doms[2] = {NULL, NULL};
 	  if(dom1)
@@ -517,7 +517,7 @@ int GModel::readMSH(const std::string &name)
 	    ite = elems.find(dom2);
 	    if (ite != elems.end())
 		doms[1] = ite->second;
-	    
+
             if(!doms[0]) Msg::Error("Domain element %d not found for element %d", dom1, num);
             if(dom2 && !doms[1]) Msg::Error("Domain element %d not found for element %d", dom2, num);
 #else
@@ -526,31 +526,31 @@ int GModel::readMSH(const std::string &name)
             if(dom2 && !doms[1]) Msg::Error("Domain element %d not found for element %d", dom2, num);
 #endif
 	  }
-	            
+
           MElement *e = createElementMSH(this, num, type, physical, elementary,
                                          partition, vertices, elements, physicals,
                                          own, p, doms[0], doms[1]);
-	  
+
 #if (FAST_ELEMENTS==1)
 	  elems[num] = e;
 	  elemreg[num] = elementary;
 	  elemphy[num] = physical;
-#endif	  
-	  
+#endif
+
           for(unsigned int j = 0; j < ghosts.size(); j++)
             _ghostCells.insert(std::pair<MElement*, short>(e, ghosts[j]));
           if(numElements > 100000)
             Msg::ProgressMeter(i + 1, numElements, "Reading elements");
           delete [] indices;
         }
-        
+
 #if (FAST_ELEMENTS==1)
 	for(int i = 0; i < 10; i++)
 	  elements[i].clear();
-	
+
 	std::map<int, MElement* >::iterator ite;
 	for (ite = elems.begin(); ite != elems.end(); ite++)
-	{	    
+	{
 	    int num = ite->first;
 	    MElement *e = ite->second;
 	    if (parents.find(num) == parents.end())
@@ -709,7 +709,7 @@ int GModel::readMSH(const std::string &name)
   // store the physical tags
   for(int i = 0; i < 4; i++)
     _storePhysicalTagsInEntities(i, physicals[i]);
-  
+
   fclose(fp);
 
   return postpro ? 2 : 1;
@@ -1514,7 +1514,7 @@ int GModel::readPLY(const std::string &name)
 
 	  pEnd = pEnd3;
           std::vector<double> prop(nbView);
-	  for (int k=0; k< nbView; k++){
+	  for (int k = 0; k < nbView; k++){
 	    prop[k]=strtod(pEnd, &pEnd2);
 	    pEnd = pEnd2;
 	    properties[k].push_back(prop[k]);
@@ -1524,7 +1524,7 @@ int GModel::readPLY(const std::string &name)
 	for(int i = 0; i < nbf; i++) {
 	  if(!fgets(buffer, sizeof(buffer), fp)) break;
 	  int n[3], nbe;
-	  int nb = sscanf(buffer, "%d %d %d %d", &nbe, &n[0], &n[1], &n[2]);
+	  sscanf(buffer, "%d %d %d %d", &nbe, &n[0], &n[1], &n[2]);
 	  std::vector<MVertex*> vertices;
 	  if(!getVertices(3, n, vertexVector, vertices)) return 0;
 	  elements[0][elementary].push_back(new MTriangle(vertices));
@@ -2324,7 +2324,7 @@ int GModel::writeMAIL(const std::string &name, bool saveAll, double scalingFacto
   for(fiter it = firstFace(); it != lastFace(); ++it){
     if(saveAll || (*it)->physicals.size()){
       for(unsigned int i = 0; i < (*it)->triangles.size(); i++){
-        MTriangle *t = (*it)->triangles[i];
+        //MTriangle *t = (*it)->triangles[i];
         fprintf(fp, " %d %d %d\n", 0, 0, 0);
       }
     }
@@ -3190,7 +3190,6 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
       int v0, v1;
       char line[100000], *p, *pEnd, *pEnd2;
       int iLine = 1;
-      int num = 0;
       for (int k= 0; k < numElements; k++){
 	physicals[1][iLine][1] = "centerline";
 	if(!fgets(line, sizeof(line), fp)) return 0;

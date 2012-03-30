@@ -226,7 +226,8 @@ class CTX {
     int fileFormat, epsQuality, epsCompress, epsPS3Shading;
     int epsOcclusionCulling, epsBestRoot;
     double epsLineWidthFactor, epsPointSizeFactor;
-    int jpegQuality, jpegSmoothing, geoLabels, text, texAsEquation;
+    int jpegQuality, jpegSmoothing, geoLabels, geoOnlyPhysicals;
+    int text, texAsEquation;
     int gifDither, gifSort, gifInterlace, gifTransparent;
     int posElementary, posElement, posGamma, posEta, posRho, posDisto;
     int compositeWindows, deleteTmpFiles, background;

@@ -592,6 +592,7 @@ double opt_print_eps_point_size_factor(OPT_ARGS_NUM);
 double opt_print_jpeg_quality(OPT_ARGS_NUM);
 double opt_print_jpeg_smoothing(OPT_ARGS_NUM);
 double opt_print_geo_labels(OPT_ARGS_NUM);
+double opt_print_geo_only_physicals(OPT_ARGS_NUM);
 double opt_print_pos_elementary(OPT_ARGS_NUM);
 double opt_print_pos_element(OPT_ARGS_NUM);
 double opt_print_pos_gamma(OPT_ARGS_NUM);

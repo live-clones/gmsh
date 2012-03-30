@@ -7874,6 +7874,13 @@ double opt_print_geo_labels(OPT_ARGS_NUM)
   return CTX::instance()->print.geoLabels;
 }
 
+double opt_print_geo_only_physicals(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.geoOnlyPhysicals = (int)val;
+  return CTX::instance()->print.geoOnlyPhysicals;
+}
+
 double opt_print_pos_elementary(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

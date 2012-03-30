@@ -9,7 +9,7 @@
 #include "polynomialBasis.h"
 
 int MHexahedron::getVolumeSign()
-{ 
+{
   double mat[3][3];
   mat[0][0] = _v[1]->x() - _v[0]->x();
   mat[0][1] = _v[3]->x() - _v[0]->x();
@@ -40,7 +40,7 @@ void MHexahedron::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &r
     MVertex *v2 = _v[faces_hexa(ithFace, 2)];
     MVertex *v3 = _v[faces_hexa(ithFace, 3)];
 
-    if (v0 == face.getVertex(0) && v1 == face.getVertex(1) && 
+    if (v0 == face.getVertex(0) && v1 == face.getVertex(1) &&
         v2 == face.getVertex(2) && v3 == face.getVertex(3)){
       sign = 1; rot = 0; return;
     }
@@ -109,7 +109,7 @@ void MHexahedronN::getEdgeRep(int num, double *x, double *y, double *z, SVector3
   z[0] = pnt1.z(); z[1] = pnt2.z();
 
   // not great, but better than nothing
-  static const int f[6] = {0, 0, 0, 1, 2, 3};
+  //static const int f[6] = {0, 0, 0, 1, 2, 3};
   n[0] = n[1] = 1 ;
 }
 
@@ -196,116 +196,116 @@ static void _myGetFaceRep(MHexahedron *hex, int num, double *x, double *y, doubl
   double oy = -1. + d*iy;
 
   if (io == 0){
-    double U1 = 
-      pp[iVertex1][0] * (1.-ox)*(1-oy)*.25 + 
-      pp[iVertex2][0] * (1.+ox)*(1-oy)*.25 + 
-      pp[iVertex3][0] * (1.+ox)*(1+oy)*.25 + 
-      pp[iVertex4][0] * (1.-ox)*(1+oy)*.25; 
-    double V1 = 
-      pp[iVertex1][1] * (1.-ox)*(1-oy)*.25 + 
-      pp[iVertex2][1] * (1.+ox)*(1-oy)*.25 + 
-      pp[iVertex3][1] * (1.+ox)*(1+oy)*.25 + 
-      pp[iVertex4][1] * (1.-ox)*(1+oy)*.25; 
-    double W1 = 
-      pp[iVertex1][2] * (1.-ox)*(1-oy)*.25 + 
-      pp[iVertex2][2] * (1.+ox)*(1-oy)*.25 + 
-      pp[iVertex3][2] * (1.+ox)*(1+oy)*.25 + 
-      pp[iVertex4][2] * (1.-ox)*(1+oy)*.25; 
+    double U1 =
+      pp[iVertex1][0] * (1.-ox)*(1-oy)*.25 +
+      pp[iVertex2][0] * (1.+ox)*(1-oy)*.25 +
+      pp[iVertex3][0] * (1.+ox)*(1+oy)*.25 +
+      pp[iVertex4][0] * (1.-ox)*(1+oy)*.25;
+    double V1 =
+      pp[iVertex1][1] * (1.-ox)*(1-oy)*.25 +
+      pp[iVertex2][1] * (1.+ox)*(1-oy)*.25 +
+      pp[iVertex3][1] * (1.+ox)*(1+oy)*.25 +
+      pp[iVertex4][1] * (1.-ox)*(1+oy)*.25;
+    double W1 =
+      pp[iVertex1][2] * (1.-ox)*(1-oy)*.25 +
+      pp[iVertex2][2] * (1.+ox)*(1-oy)*.25 +
+      pp[iVertex3][2] * (1.+ox)*(1+oy)*.25 +
+      pp[iVertex4][2] * (1.-ox)*(1+oy)*.25;
 
     ox += d;
-  
-    double U2 = 
-      pp[iVertex1][0] * (1.-ox)*(1-oy)*.25 + 
-      pp[iVertex2][0] * (1.+ox)*(1-oy)*.25 + 
-      pp[iVertex3][0] * (1.+ox)*(1+oy)*.25 + 
-      pp[iVertex4][0] * (1.-ox)*(1+oy)*.25; 
-    double V2 = 
-      pp[iVertex1][1] * (1.-ox)*(1-oy)*.25 + 
-      pp[iVertex2][1] * (1.+ox)*(1-oy)*.25 + 
-      pp[iVertex3][1] * (1.+ox)*(1+oy)*.25 + 
-      pp[iVertex4][1] * (1.-ox)*(1+oy)*.25; 
-    double W2 = 
-      pp[iVertex1][2] * (1.-ox)*(1-oy)*.25 + 
-      pp[iVertex2][2] * (1.+ox)*(1-oy)*.25 + 
-      pp[iVertex3][2] * (1.+ox)*(1+oy)*.25 + 
-      pp[iVertex4][2] * (1.-ox)*(1+oy)*.25; 
+
+    double U2 =
+      pp[iVertex1][0] * (1.-ox)*(1-oy)*.25 +
+      pp[iVertex2][0] * (1.+ox)*(1-oy)*.25 +
+      pp[iVertex3][0] * (1.+ox)*(1+oy)*.25 +
+      pp[iVertex4][0] * (1.-ox)*(1+oy)*.25;
+    double V2 =
+      pp[iVertex1][1] * (1.-ox)*(1-oy)*.25 +
+      pp[iVertex2][1] * (1.+ox)*(1-oy)*.25 +
+      pp[iVertex3][1] * (1.+ox)*(1+oy)*.25 +
+      pp[iVertex4][1] * (1.-ox)*(1+oy)*.25;
+    double W2 =
+      pp[iVertex1][2] * (1.-ox)*(1-oy)*.25 +
+      pp[iVertex2][2] * (1.+ox)*(1-oy)*.25 +
+      pp[iVertex3][2] * (1.+ox)*(1+oy)*.25 +
+      pp[iVertex4][2] * (1.-ox)*(1+oy)*.25;
 
     oy += d;
-  
-    double U3 = 
-      pp[iVertex1][0] * (1.-ox)*(1-oy)*.25 + 
-      pp[iVertex2][0] * (1.+ox)*(1-oy)*.25 + 
-      pp[iVertex3][0] * (1.+ox)*(1+oy)*.25 + 
-      pp[iVertex4][0] * (1.-ox)*(1+oy)*.25; 
-    double V3 = 
-      pp[iVertex1][1] * (1.-ox)*(1-oy)*.25 + 
-      pp[iVertex2][1] * (1.+ox)*(1-oy)*.25 + 
-      pp[iVertex3][1] * (1.+ox)*(1+oy)*.25 + 
-      pp[iVertex4][1] * (1.-ox)*(1+oy)*.25; 
-    double W3 = 
-      pp[iVertex1][2] * (1.-ox)*(1-oy)*.25 + 
-      pp[iVertex2][2] * (1.+ox)*(1-oy)*.25 + 
-      pp[iVertex3][2] * (1.+ox)*(1+oy)*.25 + 
-      pp[iVertex4][2] * (1.-ox)*(1+oy)*.25; 
-    
+
+    double U3 =
+      pp[iVertex1][0] * (1.-ox)*(1-oy)*.25 +
+      pp[iVertex2][0] * (1.+ox)*(1-oy)*.25 +
+      pp[iVertex3][0] * (1.+ox)*(1+oy)*.25 +
+      pp[iVertex4][0] * (1.-ox)*(1+oy)*.25;
+    double V3 =
+      pp[iVertex1][1] * (1.-ox)*(1-oy)*.25 +
+      pp[iVertex2][1] * (1.+ox)*(1-oy)*.25 +
+      pp[iVertex3][1] * (1.+ox)*(1+oy)*.25 +
+      pp[iVertex4][1] * (1.-ox)*(1+oy)*.25;
+    double W3 =
+      pp[iVertex1][2] * (1.-ox)*(1-oy)*.25 +
+      pp[iVertex2][2] * (1.+ox)*(1-oy)*.25 +
+      pp[iVertex3][2] * (1.+ox)*(1+oy)*.25 +
+      pp[iVertex4][2] * (1.-ox)*(1+oy)*.25;
+
     hex->pnt(U1, V1, W1, pnt1);
     hex->pnt(U2, V2, W2, pnt2);
     hex->pnt(U3, V3, W3, pnt3);
-  } 
+  }
   else{
-    double U1 = 
-      pp[iVertex1][0] * (1.-ox)*(1-oy)*.25 + 
-      pp[iVertex2][0] * (1.+ox)*(1-oy)*.25 + 
-      pp[iVertex3][0] * (1.+ox)*(1+oy)*.25 + 
-      pp[iVertex4][0] * (1.-ox)*(1+oy)*.25; 
-    double V1 = 
-      pp[iVertex1][1] * (1.-ox)*(1-oy)*.25 + 
-      pp[iVertex2][1] * (1.+ox)*(1-oy)*.25 + 
-      pp[iVertex3][1] * (1.+ox)*(1+oy)*.25 + 
-      pp[iVertex4][1] * (1.-ox)*(1+oy)*.25; 
-    double W1 = 
-      pp[iVertex1][2] * (1.-ox)*(1-oy)*.25 + 
-      pp[iVertex2][2] * (1.+ox)*(1-oy)*.25 + 
-      pp[iVertex3][2] * (1.+ox)*(1+oy)*.25 + 
-      pp[iVertex4][2] * (1.-ox)*(1+oy)*.25; 
+    double U1 =
+      pp[iVertex1][0] * (1.-ox)*(1-oy)*.25 +
+      pp[iVertex2][0] * (1.+ox)*(1-oy)*.25 +
+      pp[iVertex3][0] * (1.+ox)*(1+oy)*.25 +
+      pp[iVertex4][0] * (1.-ox)*(1+oy)*.25;
+    double V1 =
+      pp[iVertex1][1] * (1.-ox)*(1-oy)*.25 +
+      pp[iVertex2][1] * (1.+ox)*(1-oy)*.25 +
+      pp[iVertex3][1] * (1.+ox)*(1+oy)*.25 +
+      pp[iVertex4][1] * (1.-ox)*(1+oy)*.25;
+    double W1 =
+      pp[iVertex1][2] * (1.-ox)*(1-oy)*.25 +
+      pp[iVertex2][2] * (1.+ox)*(1-oy)*.25 +
+      pp[iVertex3][2] * (1.+ox)*(1+oy)*.25 +
+      pp[iVertex4][2] * (1.-ox)*(1+oy)*.25;
 
     ox += d;
     oy += d;
-  
-    double U2 = 
-      pp[iVertex1][0] * (1.-ox)*(1-oy)*.25 + 
-      pp[iVertex2][0] * (1.+ox)*(1-oy)*.25 + 
-      pp[iVertex3][0] * (1.+ox)*(1+oy)*.25 + 
-      pp[iVertex4][0] * (1.-ox)*(1+oy)*.25; 
-    double V2 = 
-      pp[iVertex1][1] * (1.-ox)*(1-oy)*.25 + 
-      pp[iVertex2][1] * (1.+ox)*(1-oy)*.25 + 
-      pp[iVertex3][1] * (1.+ox)*(1+oy)*.25 + 
-      pp[iVertex4][1] * (1.-ox)*(1+oy)*.25; 
-    double W2 = 
-      pp[iVertex1][2] * (1.-ox)*(1-oy)*.25 + 
-      pp[iVertex2][2] * (1.+ox)*(1-oy)*.25 + 
-      pp[iVertex3][2] * (1.+ox)*(1+oy)*.25 + 
-      pp[iVertex4][2] * (1.-ox)*(1+oy)*.25; 
+
+    double U2 =
+      pp[iVertex1][0] * (1.-ox)*(1-oy)*.25 +
+      pp[iVertex2][0] * (1.+ox)*(1-oy)*.25 +
+      pp[iVertex3][0] * (1.+ox)*(1+oy)*.25 +
+      pp[iVertex4][0] * (1.-ox)*(1+oy)*.25;
+    double V2 =
+      pp[iVertex1][1] * (1.-ox)*(1-oy)*.25 +
+      pp[iVertex2][1] * (1.+ox)*(1-oy)*.25 +
+      pp[iVertex3][1] * (1.+ox)*(1+oy)*.25 +
+      pp[iVertex4][1] * (1.-ox)*(1+oy)*.25;
+    double W2 =
+      pp[iVertex1][2] * (1.-ox)*(1-oy)*.25 +
+      pp[iVertex2][2] * (1.+ox)*(1-oy)*.25 +
+      pp[iVertex3][2] * (1.+ox)*(1+oy)*.25 +
+      pp[iVertex4][2] * (1.-ox)*(1+oy)*.25;
 
     ox -= d;
-  
-    double U3 = 
-      pp[iVertex1][0] * (1.-ox)*(1-oy)*.25 + 
-      pp[iVertex2][0] * (1.+ox)*(1-oy)*.25 + 
-      pp[iVertex3][0] * (1.+ox)*(1+oy)*.25 + 
-      pp[iVertex4][0] * (1.-ox)*(1+oy)*.25; 
-    double V3 = 
-      pp[iVertex1][1] * (1.-ox)*(1-oy)*.25 + 
-      pp[iVertex2][1] * (1.+ox)*(1-oy)*.25 + 
-      pp[iVertex3][1] * (1.+ox)*(1+oy)*.25 + 
-      pp[iVertex4][1] * (1.-ox)*(1+oy)*.25; 
-    double W3 = 
-      pp[iVertex1][2] * (1.-ox)*(1-oy)*.25 + 
-      pp[iVertex2][2] * (1.+ox)*(1-oy)*.25 + 
-      pp[iVertex3][2] * (1.+ox)*(1+oy)*.25 + 
-      pp[iVertex4][2] * (1.-ox)*(1+oy)*.25; 
-    
+
+    double U3 =
+      pp[iVertex1][0] * (1.-ox)*(1-oy)*.25 +
+      pp[iVertex2][0] * (1.+ox)*(1-oy)*.25 +
+      pp[iVertex3][0] * (1.+ox)*(1+oy)*.25 +
+      pp[iVertex4][0] * (1.-ox)*(1+oy)*.25;
+    double V3 =
+      pp[iVertex1][1] * (1.-ox)*(1-oy)*.25 +
+      pp[iVertex2][1] * (1.+ox)*(1-oy)*.25 +
+      pp[iVertex3][1] * (1.+ox)*(1+oy)*.25 +
+      pp[iVertex4][1] * (1.-ox)*(1+oy)*.25;
+    double W3 =
+      pp[iVertex1][2] * (1.-ox)*(1-oy)*.25 +
+      pp[iVertex2][2] * (1.+ox)*(1-oy)*.25 +
+      pp[iVertex3][2] * (1.+ox)*(1+oy)*.25 +
+      pp[iVertex4][2] * (1.-ox)*(1+oy)*.25;
+
     hex->pnt(U1, V1, W1, pnt1);
     hex->pnt(U2, V2, W2, pnt2);
     hex->pnt(U3, V3, W3, pnt3);
@@ -329,6 +329,6 @@ void MHexahedronN::getFaceRep(int num, double *x, double *y, double *z, SVector3
 }
 
 int MHexahedronN::getNumFacesRep()
-{ 
+{
   return 6 * (CTX::instance()->mesh.numSubEdges * CTX::instance()->mesh.numSubEdges * 2);
 }

@@ -290,7 +290,8 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
     break;
 
   case FORMAT_GEO:
-    GModel::current()->writeGEO(fileName, CTX::instance()->print.geoLabels);
+    GModel::current()->writeGEO(fileName, CTX::instance()->print.geoLabels,
+                                CTX::instance()->print.geoOnlyPhysicals);
     break;
 
   case FORMAT_BREP:

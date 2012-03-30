@@ -374,7 +374,43 @@ class writePhysicalGroupGEO {
   }
 };
 
-int GModel::writeGEO(const std::string &name, bool printLabels)
+static bool skipRegion(GRegion *gr)
+{
+  if(gr->physicals.size()) return false;
+  return true;
+}
+
+static bool skipFace(GFace *gf)
+{
+  if(gf->physicals.size()) return false;
+  std::list<GRegion*> regions(gf->regions());
+  for(std::list<GRegion*>::iterator itr = regions.begin(); itr != regions.end(); itr++){
+    if(!skipRegion(*itr)) return false;
+  }
+  return true;
+}
+
+static bool skipEdge(GEdge *ge)
+{
+  if(ge->physicals.size()) return false;
+  std::list<GFace*> faces(ge->faces());
+  for(std::list<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++){
+    if(!skipFace(*itf)) return false;
+  }
+  return true;
+}
+
+static bool skipVertex(GVertex *gv)
+{
+  if(gv->physicals.size()) return false;
+  std::list<GEdge*> edges(gv->edges());
+  for(std::list<GEdge*>::iterator ite = edges.begin(); ite != edges.end(); ite++){
+    if(!skipEdge(*ite)) return false;
+  }
+  return true;
+}
+
+int GModel::writeGEO(const std::string &name, bool printLabels, bool onlyPhysicals)
 {
   FILE *fp = fopen(name.c_str(), "w");
 
@@ -389,16 +425,24 @@ int GModel::writeGEO(const std::string &name, bool printLabels)
       meshSizeParameters.insert(std::make_pair(val, paramName.str()));
     }
   }
+
   for(viter it = firstVertex(); it != lastVertex(); it++){
     double val = (*it)->prescribedMeshSizeAtVertex();
-    (*it)->writeGEO(fp, meshSizeParameters[val]);
+    if(!onlyPhysicals || !skipVertex(*it))
+      (*it)->writeGEO(fp, meshSizeParameters[val]);
   }
-  for(eiter it = firstEdge(); it != lastEdge(); it++)
-    (*it)->writeGEO(fp);
-  for(fiter it = firstFace(); it != lastFace(); it++)
-    (*it)->writeGEO(fp);
-  for(riter it = firstRegion(); it != lastRegion(); it++)
-    (*it)->writeGEO(fp);
+  for(eiter it = firstEdge(); it != lastEdge(); it++){
+    if(!onlyPhysicals || !skipEdge(*it))
+      (*it)->writeGEO(fp);
+  }
+  for(fiter it = firstFace(); it != lastFace(); it++){
+    if(!onlyPhysicals || !skipFace(*it))
+      (*it)->writeGEO(fp);
+  }
+  for(riter it = firstRegion(); it != lastRegion(); it++){
+    if(!onlyPhysicals || !skipRegion(*it))
+      (*it)->writeGEO(fp);
+  }
 
   std::map<int, std::string> labels;
 #if defined(HAVE_PARSER)

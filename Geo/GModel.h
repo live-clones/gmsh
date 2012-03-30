@@ -509,7 +509,8 @@ class GModel
   // Gmsh native CAD format (readGEO is static, since it can create
   // multiple models)
   static int readGEO(const std::string &name);
-  int writeGEO(const std::string &name, bool printLabels=true);
+  int writeGEO(const std::string &name, bool printLabels=true,
+               bool onlyPhysicals=false);
   int importGEOInternals();
   int exportDiscreteGEOInternals();
 
