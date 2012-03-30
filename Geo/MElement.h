@@ -235,6 +235,8 @@ class MElement
                                      int order=-1);
   virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3],
                                      int order=-1);
+  virtual void getThirdDerivativeShapeFunctions(double u, double v, double w, double s[][3][3][3],
+                                     int order=-1);
   // return the Jacobian of the element evaluated at point (u,v,w) in
   // parametric coordinates
   double getJacobian(const fullMatrix<double> &gsf, double jac[3][3]);

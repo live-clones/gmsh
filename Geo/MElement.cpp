@@ -142,6 +142,13 @@ void MElement::getHessShapeFunctions(double u, double v, double w, double s[][3]
   else Msg::Error("Function space not implemented for this type of element");
 }
 
+void MElement::getThirdDerivativeShapeFunctions(double u, double v, double w, double s[][3][3][3],
+                                     int o){
+  const polynomialBasis* fs = getFunctionSpace(o);
+  if(fs) fs->dddf(u, v, w, s);
+  else Msg::Error("Function space not implemented for this type of element");
+};
+
 SPoint3 MElement::barycenter()
 {
   SPoint3 p(0., 0., 0.);
@@ -295,7 +302,7 @@ double MElement::getJacobian(double u, double v, double w, double jac[3][3])
       jac[j][1] += ver->y() * gg[j];
       jac[j][2] += ver->z() * gg[j];
     }
-    //    printf("GSF (%d,%g %g) = %g %g \n",i,u,v,gg[0],gg[1]); 
+    //    printf("GSF (%d,%g %g) = %g %g \n",i,u,v,gg[0],gg[1]);
   }
   return _computeDeterminantAndRegularize(this, jac);
 }
@@ -1120,7 +1127,7 @@ MElement *MElement::copy(std::map<int, MVertex*> &vertexMap,
       if(vertexMap.count(numV))
         vmv.push_back(vertexMap[numV]);
       else {
-        MVertex *mv = new MVertex(v->x(), v->y(), v->z(), 0, numV); 
+        MVertex *mv = new MVertex(v->x(), v->y(), v->z(), 0, numV);
         vmv.push_back(mv);
         vertexMap[numV] = mv;
       }
