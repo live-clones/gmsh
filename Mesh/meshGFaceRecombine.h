@@ -446,8 +446,6 @@ class Rec2DEdge {
     bool checkCoherence() const;
     inline bool has(const Rec2DVertex *v) const {return v == _rv0 || v == _rv1;}
     
-    //double getQualL() const;
-    //double getQualO() const;
     inline double getQual() const {return _qual;}
     inline int getWeight() const {return _weight;}
     inline double getWeightedQual() const {return _weight * _qual;}
