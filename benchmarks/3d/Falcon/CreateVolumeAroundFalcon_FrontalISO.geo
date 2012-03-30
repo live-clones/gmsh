@@ -3,9 +3,10 @@ Mesh.Algorithm3D=4; //1-Delaunay, 4-Frontal, 5-Frontal Delaunay 6-Frontal hex, 7
 Mesh.CharacteristicLengthFactor = 1.2;
 
 Merge "SurfaceMeshAnisoCurvature.stl";
+
 CreateTopology;
 
-z0 = 1.51955;
+z0 = 0.272342;
 zmax = 15.0;
 xmin = -27.0;
 xmax = 10.32;
