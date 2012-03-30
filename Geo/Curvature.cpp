@@ -150,14 +150,14 @@ Curvature& Curvature::getInstance()
   std::list<MeshEdgeInfo>::iterator VertToEdgeListIter;
 
    _isOnBoundary.resize(_VertexToInt.size());
-   for (int i = 0; i < _VertexToInt.size(); ++i)
+   for (unsigned int i = 0; i < _VertexToInt.size(); ++i)
    {
      _isOnBoundary[i] = 0;
    }
 
    // To detect the nodes on the egdes of a geometry, we create a list of all edges on the mesh. The
    // edges which are shared by only one mesh element are boundary edges. Their nodes are tagged by 1
-   for (int i = 0; i < _VertexToInt.size(); ++i)
+   for (unsigned int i = 0; i < _VertexToInt.size(); ++i)
    {
      for (VertToEdgeListIter = _VertexToEdgeList[i].begin(); VertToEdgeListIter != _VertexToEdgeList[i].end();
                                                                                     ++VertToEdgeListIter)
@@ -177,7 +177,7 @@ Curvature& Curvature::getInstance()
    //Loop over the vector of edgelist
    for (int level = 1; level < 3; ++level)
    {
-     for (int i = 0; i < _VertexToEdgeList.size(); ++i)
+     for (unsigned int i = 0; i < _VertexToEdgeList.size(); ++i)
      {
        for (VertToEdgeListIter = _VertexToEdgeList[i].begin(); VertToEdgeListIter != _VertexToEdgeList[i].end();
                                                                                 ++VertToEdgeListIter)
@@ -235,7 +235,7 @@ Curvature& Curvature::getInstance()
    // Now we'll propagate the cuvature values from inside nodes with level = 3 close to the boundary - first
    // to nodes with level 2, then from nodes with level 2 to nodes with level 1 (on the boundary)
    _NbNeighbour.resize(_VertexToInt.size());
-   for(int i = 0; i < _NbNeighbour.size(); ++i)
+   for(unsigned int i = 0; i < _NbNeighbour.size(); ++i)
    {
      _NbNeighbour[i] = 0;
    }
@@ -243,7 +243,7 @@ Curvature& Curvature::getInstance()
    for (int level = 2; level > 0 ; --level)
    {
 
-     for (int i = 0; i< _NbNeighbour.size(); ++i)
+     for (unsigned int i = 0; i< _NbNeighbour.size(); ++i)
      {
        _NbNeighbour[i] = 0;
        if (_isOnBoundary[i] == level)
@@ -253,7 +253,7 @@ Curvature& Curvature::getInstance()
      }
 
 
-     for (int i = 0; i < _VertexToEdgeList.size(); ++i)
+     for (unsigned int i = 0; i < _VertexToEdgeList.size(); ++i)
      {
        for (VertToEdgeListIter = _VertexToEdgeList[i].begin(); VertToEdgeListIter != _VertexToEdgeList[i].end();
                                                                                 ++VertToEdgeListIter)
@@ -277,7 +277,7 @@ Curvature& Curvature::getInstance()
      // Correction for a degenerate case when a node has neighbours with the same or lower level, but zero
      // neighbours with level+1
 
-     for (int i = 0; i < _VertexToEdgeList.size(); ++i)
+     for (unsigned int i = 0; i < _VertexToEdgeList.size(); ++i)
      {
        for (VertToEdgeListIter = _VertexToEdgeList[i].begin(); VertToEdgeListIter != _VertexToEdgeList[i].end();
                                                                                 ++VertToEdgeListIter)
@@ -300,7 +300,7 @@ Curvature& Curvature::getInstance()
        }
      }
 
-     for (int i = 0; i < _isOnBoundary.size(); ++i)
+     for (unsigned int i = 0; i < _isOnBoundary.size(); ++i)
      {
        if (_isOnBoundary[i] == level)
        {
@@ -330,11 +330,11 @@ void Curvature::initializeMap()
 {
   if (! _isMapInitialized)
   {
-    for (int i = 0; i< _EntityArray.size(); ++i)
+    for (unsigned int i = 0; i< _EntityArray.size(); ++i)
     {
       GFace* face = _EntityArray[i];
 
-      for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++)
+      for (unsigned int iElem = 0; iElem < face->getNumMeshElements(); iElem++)
       {
         MElement *e = face->getMeshElement(iElem);
         const int E = e->getNum();
@@ -385,13 +385,13 @@ void Curvature::computeVertexNormals()
   _VertexArea.resize(_ElementToInt.size() );
   _VertexNormal.resize(_VertexToInt.size());
 
-  for (int i = 0; i< _EntityArray.size(); ++i)
+  for (unsigned int i = 0; i< _EntityArray.size(); ++i)
   {
     // face is a pointer to one surface of the group "FinalEntityList"
     GFace* face = _EntityArray[i];
 
     //Loop over the element all the element of the "myTag"-surface
-    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++)
+    for (unsigned int iElem = 0; iElem < face->getNumMeshElements(); iElem++)
     {
       // Pointer to one element
       MElement *e = face->getMeshElement(iElem);
@@ -448,11 +448,11 @@ void Curvature::curvatureTensor()
 
   _CurveTensor.resize(_VertexToInt.size());
 
-  for (int i = 0; i< _EntityArray.size(); ++i)
+  for (unsigned int i = 0; i< _EntityArray.size(); ++i)
   {
     GFace* face = _EntityArray[i]; //face is a pointer to one surface of the group "FinalEntityList"
 
-    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++) //Loop over the element all the element of the "myTag"-surface
+    for (unsigned int iElem = 0; iElem < face->getNumMeshElements(); iElem++) //Loop over the element all the element of the "myTag"-surface
     {
       MElement *e = face->getMeshElement(iElem);  //Pointer to one element
       const int E = _ElementToInt[e->getNum()]; //The NEW tag of the corresponding element
@@ -618,13 +618,13 @@ void Curvature::computeRusinkiewiczNormals()
   _TriangleArea.resize(_ElementToInt.size() );
   _VertexNormal.resize(_VertexToInt.size());
 
-  for (int i = 0; i< _EntityArray.size(); ++i)
+  for (unsigned int i = 0; i< _EntityArray.size(); ++i)
   {
     // face is a pointer to one surface of the group "FinalEntityList"
     GFace* face = _EntityArray[i];
 
     //Loop over the element all the element of the "myTag"-surface
-    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++)
+    for (unsigned int iElem = 0; iElem < face->getNumMeshElements(); iElem++)
     {
       // Pointer to one element
       MElement *e = face->getMeshElement(iElem);
@@ -679,11 +679,11 @@ void Curvature::computePointareas(){
   _pointareas.resize(_VertexToInt.size());
   _cornerareas.resize(_ElementToInt.size());
 
-  for (int i = 0; i< _EntityArray.size(); ++i)
+  for (unsigned int i = 0; i< _EntityArray.size(); ++i)
   {
     GFace* face = _EntityArray[i]; //face is a pointer to one surface of the group "FinalEntityList"
 
-    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++) //Loop over the element all the element of the "myTag"-surface
+    for (unsigned int iElem = 0; iElem < face->getNumMeshElements(); iElem++) //Loop over the element all the element of the "myTag"-surface
     {
       MElement *E = face->getMeshElement(iElem);  //Pointer to one element
       // The NEW tag of the corresponding element
@@ -905,16 +905,13 @@ void Curvature::buildEdgeList()
 
   _VertexToEdgeList.resize(_VertexToInt.size());
 
-  for (int i = 0; i< _EntityArray.size(); ++i)
+  for (unsigned int i = 0; i< _EntityArray.size(); ++i)
   {
     GFace* face = _EntityArray[i]; //List of all the discrete face on which we compute the curvature
 
-    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++)
+    for (unsigned int iElem = 0; iElem < face->getNumMeshElements(); iElem++)
     {
       MElement *e = face->getMeshElement(iElem);
-
-      // The NEW tag of the corresponding element
-      const int E = _ElementToInt[e->getNum()];
 
       // Pointers to vertices of triangle
       MVertex* A = e->getVertex(0);
@@ -958,7 +955,7 @@ void Curvature::buildEdgeList()
   }
 
   int NbEdges = 0;
-  for(int i = 0; i < _VertexToEdgeList.size(); ++i)
+  for(unsigned int i = 0; i < _VertexToEdgeList.size(); ++i)
   {
     NbEdges += _VertexToEdgeList[i].size();
   }
@@ -987,7 +984,7 @@ void Curvature::smoothCurvatureField(const int NbIter)
   smoothedDir2.resize(_VertexToInt.size());
 
   _NbNeighbour.resize(_VertexToInt.size());
-  for(int i = 0; i < _VertexToInt.size(); ++i)
+  for(unsigned int i = 0; i < _VertexToInt.size(); ++i)
   {
     _NbNeighbour[i] = 0;
   }
@@ -997,7 +994,7 @@ void Curvature::smoothCurvatureField(const int NbIter)
   for(int iter = 0; iter < NbIter; ++iter)
   {
 
-    for(int i = 0; i < smoothedCurvature.size(); ++i)
+    for(unsigned int i = 0; i < smoothedCurvature.size(); ++i)
     {
       smoothedCurvature[i] = 0.0;
       smoothedDir1[i] = SVector3();
@@ -1007,7 +1004,7 @@ void Curvature::smoothCurvatureField(const int NbIter)
     std::list<MeshEdgeInfo>::const_iterator edgeIterator;
 
 
-    for(int i = 0; i < _VertexToEdgeList.size(); ++i)
+    for(unsigned int i = 0; i < _VertexToEdgeList.size(); ++i)
     {
       for(edgeIterator = _VertexToEdgeList[i].begin(); edgeIterator != _VertexToEdgeList[i].end(); ++edgeIterator)
       {
@@ -1032,7 +1029,7 @@ void Curvature::smoothCurvatureField(const int NbIter)
 
 
     const double Lambda = 0.3;
-    for(int i = 0; i < _VertexCurve.size(); ++i)
+    for(unsigned int i = 0; i < _VertexCurve.size(); ++i)
     {
       _VertexCurve[i] = Lambda*_VertexCurve[i] + (1-Lambda)*smoothedCurvature[i] / _NbNeighbour[i];
       _pdir1[i] = Lambda * _pdir1[i] + (1.-Lambda)/_NbNeighbour[i] * smoothedDir1[i];
@@ -1079,11 +1076,11 @@ void Curvature::computeCurvature_Rusinkiewicz(int isMax)
   _curv2.resize(_VertexToInt.size());
   _curv12.resize(_VertexToInt.size());
 
-  for (int i = 0; i< _EntityArray.size(); ++i)
+  for (unsigned int i = 0; i< _EntityArray.size(); ++i)
   {
     GFace* face = _EntityArray[i]; //face is a pointer to one surface of the group "FinalEntityList"
 
-    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++) //Loop over the element all the element of the "myTag"-surface
+    for (unsigned int iElem = 0; iElem < face->getNumMeshElements(); iElem++) //Loop over the element all the element of the "myTag"-surface
     {
       MElement *E = face->getMeshElement(iElem);  //Pointer to one element
 
@@ -1103,7 +1100,7 @@ void Curvature::computeCurvature_Rusinkiewicz(int isMax)
     }
   }
 
-  for (int ivertex = 0; ivertex < _VertexToInt.size(); ++ivertex)
+  for (unsigned int ivertex = 0; ivertex < _VertexToInt.size(); ++ivertex)
   {
     _pdir1[ivertex] = crossprod(_pdir1[ivertex], _VertexNormal[ivertex]);
     _pdir1[ivertex].normalize();
@@ -1111,13 +1108,13 @@ void Curvature::computeCurvature_Rusinkiewicz(int isMax)
   }
 
   // Compute curvature per face:
-  for (int i = 0; i< _EntityArray.size(); ++i)
+  for (unsigned int i = 0; i< _EntityArray.size(); ++i)
   {
     //face is a pointer to one surface of the group "FinalEntityList"
     GFace* face = _EntityArray[i];
 
     //Loop over all elements of this face:
-    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++)
+    for (unsigned int iElem = 0; iElem < face->getNumMeshElements(); iElem++)
     {
       MElement *E = face->getMeshElement(iElem);  //Pointer to one element
       // The NEW tag of the corresponding element
@@ -1215,14 +1212,14 @@ void Curvature::computeCurvature_Rusinkiewicz(int isMax)
 
 
   //Compute principal directions and curvatures at each vertex
-  for (int ivertex = 0; ivertex < _VertexToInt.size(); ++ivertex)  {
+  for (unsigned int ivertex = 0; ivertex < _VertexToInt.size(); ++ivertex)  {
     diagonalize_curv(_pdir1[ivertex], _pdir2[ivertex], _curv1[ivertex], _curv12[ivertex], _curv2[ivertex],
                      _VertexNormal[ivertex], _pdir1[ivertex], _pdir2[ivertex], _curv1[ivertex], _curv2[ivertex]);
   }
 
   _VertexCurve.resize( _VertexToInt.size() );
 
-  for (int ivertex = 0; ivertex < _VertexToInt.size(); ++ivertex){
+  for (unsigned int ivertex = 0; ivertex < _VertexToInt.size(); ++ivertex){
 
     if (isMax){
       _VertexCurve[ivertex] = std::max(fabs(_curv1[ivertex]), fabs(_curv2[ivertex]));
@@ -1252,7 +1249,7 @@ void Curvature::computeCurvature_RBF()
   
   //fill set of MVertex
   std::set<MVertex*> allNodes;
-  for (int i = 0; i< _EntityArray.size(); ++i)  {
+  for (unsigned int i = 0; i< _EntityArray.size(); ++i)  {
     GFaceCompound* face = (GFaceCompound*)_EntityArray[i];
     for (unsigned iElem = 0; iElem < face->getNumMeshElements(); iElem++) {
       MElement *e = face->getMeshElement(iElem);
@@ -1647,12 +1644,12 @@ void Curvature::writeToPosFile( const std::string & filename)
 
   int idxelem = 0;
 
-  for (int i = 0; i< _EntityArray.size(); ++i) {
+  for (unsigned int i = 0; i< _EntityArray.size(); ++i) {
     GFace* face = _EntityArray[i];
 
     for (unsigned iElem = 0; iElem < face->getNumMeshElements(); iElem++){
       MElement *e = face->getMeshElement(iElem);  
-      const int E = _ElementToInt[e->getNum()]; 
+      //const int E = _ElementToInt[e->getNum()]; 
       //std::cout << "We are now looking at element Nr: " << E << std::endl;
 
       MVertex* A = e->getVertex(0);  //Pointers to vertices of triangle
@@ -1723,11 +1720,11 @@ void Curvature::writeToVtkFile( const std::string & filename)
 
   coord.resize(npoints);
 
-  for (int i = 0; i< _EntityArray.size(); ++i)
+  for (unsigned int i = 0; i< _EntityArray.size(); ++i)
   {
     GFace* face = _EntityArray[i];
 
-    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++)
+    for (unsigned int iElem = 0; iElem < face->getNumMeshElements(); iElem++)
     {
       MElement *e = face->getMeshElement(iElem);
 
@@ -1770,11 +1767,11 @@ void Curvature::writeToVtkFile( const std::string & filename)
 
   outfile << std::endl << "CELLS " << _ElementToInt.size() << " " << 4*_ElementToInt.size() << std::endl;
 
-  for (int i = 0; i< _EntityArray.size(); ++i)
+  for (unsigned int i = 0; i< _EntityArray.size(); ++i)
   {
     GFace* face = _EntityArray[i];
 
-    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++)
+    for (unsigned int iElem = 0; iElem < face->getNumMeshElements(); iElem++)
     {
       MElement *e = face->getMeshElement(iElem);
 
@@ -1795,7 +1792,7 @@ void Curvature::writeToVtkFile( const std::string & filename)
   }
 
   outfile << std::endl << "CELL_TYPES " << _ElementToInt.size() << std::endl;
-  for(int ie = 0; ie < _ElementToInt.size(); ++ie)
+  for(unsigned int ie = 0; ie < _ElementToInt.size(); ++ie)
   {
     outfile << "5" << std::endl; //Triangle is element type 5 in vtk
 
@@ -1851,15 +1848,15 @@ void Curvature::writeDirectionsToPosFile( const std::string & filename)
   outfile.open(filename.c_str());
   outfile << "View \"Curvature_DirMax \"{" << std::endl;
 
-  for (int i = 0; i< _EntityArray.size(); ++i)
+  for (unsigned int i = 0; i< _EntityArray.size(); ++i)
   {
     GFace* face = _EntityArray[i]; //face is a pointer to one surface of the group "FinalEntityList"
 
-    for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++) //Loop over the element all the element of the "myTag"-surface
+    for (unsigned int iElem = 0; iElem < face->getNumMeshElements(); iElem++) //Loop over the element all the element of the "myTag"-surface
     {
       MElement *e = face->getMeshElement(iElem);  //Pointer to one element
-      const int E = _ElementToInt[e->getNum()]; //The NEW tag of the corresponding element
 
+      //const int E = _ElementToInt[e->getNum()]; //The NEW tag of the corresponding element
       //std::cout << "We are now looking at element Nr: " << E << std::endl;
 
       MVertex* A = e->getVertex(0);  //Pointers to vertices of triangle
@@ -1902,15 +1899,15 @@ outfile << "};" << std::endl;
 
 outfile << "View \"Curvature_DirMin \"{" << std::endl;
 
-for (int i = 0; i< _EntityArray.size(); ++i)
+for (unsigned int i = 0; i< _EntityArray.size(); ++i)
 {
   GFace* face = _EntityArray[i]; //face is a pointer to one surface of the group "FinalEntityList"
 
-  for (int iElem = 0; iElem < face->getNumMeshElements(); iElem++) //Loop over the element all the element of the "myTag"-surface
+  for (unsigned int iElem = 0; iElem < face->getNumMeshElements(); iElem++) //Loop over the element all the element of the "myTag"-surface
   {
     MElement *e = face->getMeshElement(iElem);  //Pointer to one element
-    const int E = _ElementToInt[e->getNum()]; //The NEW tag of the corresponding element
 
+    //const int E = _ElementToInt[e->getNum()]; //The NEW tag of the corresponding element
     //std::cout << "We are now looking at element Nr: " << E << std::endl;
 
     MVertex* A = e->getVertex(0);  //Pointers to vertices of triangle
