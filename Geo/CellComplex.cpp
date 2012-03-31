@@ -11,6 +11,8 @@
 CellComplex::CellComplex(GModel* model,
 			 std::vector<MElement*>& domainElements,
 			 std::vector<MElement*>& subdomainElements,
+                         std::vector<MElement*>& nondomainElements,
+                         std::vector<MElement*>& nonsubdomainElements,
                          std::vector<MElement*>& immuneElements,
                          bool saveOriginalComplex) :
   _model(model), _dim(0), _simplicial(true), _saveorig(saveOriginalComplex)
@@ -18,6 +20,8 @@ CellComplex::CellComplex(GModel* model,
   _deleteCount = 0;
   _insertCells(subdomainElements, 1);
   _insertCells(domainElements, 0);
+  _removeCells(nonsubdomainElements, 1);
+  _removeCells(nondomainElements, 0);
   _immunizeCells(immuneElements);
   int num = 0;
   for(int dim = 0; dim < 4; dim++){
@@ -73,6 +77,53 @@ bool CellComplex::_insertCells(std::vector<MElement*>& elements,
 	  cell->addBoundaryCell( ori, newCell, true);
 	}
       }
+    }
+  }
+  return true;
+}
+
+bool CellComplex::_removeCells(std::vector<MElement*>& elements,
+			       int domain)
+{
+
+  std::set<Cell*, Less_Cell> removed[4];
+
+  for(unsigned int i=0; i < elements.size(); i++){
+    MElement* element = elements.at(i);
+    int type = element->getType();
+    if(type == TYPE_PYR || type == TYPE_PRI ||
+       type == TYPE_POLYG || type == TYPE_POLYH) {
+      Msg::Error("Mesh element type %d not implemented in homology solver", type);
+      return false;
+    }
+    Cell* cell = new Cell(element, domain);
+    int dim = cell->getDim();
+    citer cit = _cells[dim].find(cell);
+    if(cit != lastCell(dim)) {
+      removeCell(*cit);
+      removed[dim].insert(cell);
+    }
+    else delete cell;
+  }
+
+  for (int dim = 3; dim > 0; dim--){
+    for(citer cit = removed[dim].begin(); cit != removed[dim].end(); cit++){
+      Cell* cell = *cit;
+      for(int i = 0; i < cell->getNumBdElements(); i++){
+	Cell* newCell = new Cell(cell, i);
+
+        citer cit2 = _cells[dim-1].find(newCell);
+        if(cit2 != lastCell(dim-1)) {
+          removeCell(*cit2);
+          removed[dim-1].insert(newCell);
+        }
+        else delete newCell;
+      }
+    }
+  }
+  for (int dim = 3; dim > 0; dim--){
+    for(citer cit = removed[dim].begin(); cit != removed[dim].end(); cit++){
+      delete *cit;
     }
   }
   return true;
@@ -291,7 +342,7 @@ int CellComplex::reduceComplex(bool docombine, bool omit)
   std::vector<Cell*> empty;
   for(int i = 3; i > 0; i--) count = count + reduction(i, false, empty);
 
-  if(omit && !count){
+  if(omit){
 
     removeSubdomain();
     std::vector<Cell*> newCells;
@@ -362,7 +413,8 @@ int CellComplex::coreduceComplex(bool docombine, bool omit)
     }
   }
 
-  if(omit && !count){
+  if(omit){
+
     std::vector<Cell*> newCells;
     while (getSize(0) != 0){
       citer cit = firstCell(0);

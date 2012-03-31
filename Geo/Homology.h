@@ -30,10 +30,14 @@ class Homology
   // physical group IDs
   std::vector<int> _domain;
   std::vector<int> _subdomain;
+  std::vector<int> _nondomain;
+  std::vector<int> _nonsubdomain;
   std::vector<int> _imdomain;
   // corresponding geometrical entities
   std::vector<GEntity*> _domainEntities;
   std::vector<GEntity*> _subdomainEntities;
+  std::vector<GEntity*> _nondomainEntities;
+  std::vector<GEntity*> _nonsubdomainEntities;
   std::vector<GEntity*> _immuneEntities;
 
   // save original cell complex
@@ -60,6 +64,11 @@ class Homology
   std::vector<Chain<int>*> _cochains[4];
 
   typedef std::map<Cell*, int, Less_Cell>::iterator citer;
+
+  void _getEntities(const std::vector<int>& physicalGroups,
+                    std::vector<GEntity*>& entities);
+  void _getElements(const std::vector<GEntity*>& entities,
+                    std::vector<MElement*>& elements);
 
   // create a string describing the generator
   std::string _getDomainString(const std::vector<int>& domain,

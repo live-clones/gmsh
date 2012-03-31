@@ -36,41 +36,43 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain,
     }
   }
 
+  _getEntities(_domain, _domainEntities);
+  _getEntities(_subdomain, _subdomainEntities);
+  _getEntities(_nondomain, _nondomainEntities);
+  _getEntities(_nonsubdomain, _nonsubdomainEntities);
+  _getEntities(_imdomain, _immuneEntities);
+
+}
+
+void Homology::_getEntities(const std::vector<int>& physicalGroups,
+                            std::vector<GEntity*>& entities)
+{
+  entities.clear();
   std::map<int, std::vector<GEntity*> > groups[4];
-  model->getPhysicalGroups(groups);
+  _model->getPhysicalGroups(groups);
   std::map<int, std::vector<GEntity*> >::iterator it;
 
-  for(unsigned int i = 0; i < _domain.size(); i++){
+  for(unsigned int i = 0; i < physicalGroups.size(); i++){
     for(int j = 0; j < 4; j++){
-      it = groups[j].find(_domain.at(i));
+      it = groups[j].find(physicalGroups.at(i));
       if(it != groups[j].end()){
 	std::vector<GEntity*> physicalGroup = (*it).second;
 	for(unsigned int k = 0; k < physicalGroup.size(); k++){
-	  _domainEntities.push_back(physicalGroup.at(k));
+	  entities.push_back(physicalGroup.at(k));
 	}
       }
     }
   }
-  for(unsigned int i = 0; i < _subdomain.size(); i++){
-    for(int j = 0; j < 4; j++){
-      it = groups[j].find(_subdomain.at(i));
-      if(it != groups[j].end()){
-	std::vector<GEntity*> physicalGroup = (*it).second;
-	for(unsigned int k = 0; k < physicalGroup.size(); k++){
-	  _subdomainEntities.push_back(physicalGroup.at(k));
-	}
-      }
-    }
-  }
-  for(unsigned int i = 0; i < _imdomain.size(); i++){
-    for(int j = 0; j < 4; j++){
-      it = groups[j].find(_imdomain.at(i));
-      if(it != groups[j].end()){
-	std::vector<GEntity*> physicalGroup = (*it).second;
-	for(unsigned int k = 0; k < physicalGroup.size(); k++){
-	  _immuneEntities.push_back(physicalGroup.at(k));
-	}
-      }
+}
+
+void Homology::_getElements(const std::vector<GEntity*>& entities,
+                            std::vector<MElement*>& elements)
+{
+  elements.clear();
+  for(unsigned int j=0; j < entities.size(); j++) {
+    for(unsigned int i=0; i < entities.at(j)->getNumMeshElements(); i++){
+      MElement* element = entities.at(j)->getMeshElement(i);
+      elements.push_back(element);
     }
   }
 }
@@ -85,32 +87,22 @@ void Homology::_createCellComplex()
 
   std::vector<MElement*> domainElements;
   std::vector<MElement*> subdomainElements;
+  std::vector<MElement*> nondomainElements;
+  std::vector<MElement*> nonsubdomainElements;
   std::vector<MElement*> immuneElements;
-  for(unsigned int j=0; j < _domainEntities.size(); j++) {
-    for(unsigned int i=0; i < _domainEntities.at(j)->getNumMeshElements(); i++){
-      MElement* element = _domainEntities.at(j)->getMeshElement(i);
-      domainElements.push_back(element);
-    }
-  }
-  for(unsigned int j=0; j < _subdomainEntities.size(); j++) {
-    for(unsigned int i=0; i < _subdomainEntities.at(j)->getNumMeshElements();
-	i++){
-      MElement* element = _subdomainEntities.at(j)->getMeshElement(i);
-      subdomainElements.push_back(element);
-    }
-  }
-  for(unsigned int j=0; j < _immuneEntities.size(); j++) {
-    for(unsigned int i=0; i < _immuneEntities.at(j)->getNumMeshElements();
-	i++){
-      MElement* element = _immuneEntities.at(j)->getMeshElement(i);
-      immuneElements.push_back(element);
-    }
-  }
+
+  _getElements(_domainEntities, domainElements);
+  _getElements(_subdomainEntities, subdomainElements);
+  _getElements(_nondomainEntities, nondomainElements);
+  _getElements(_nonsubdomainEntities, nonsubdomainElements);
+  _getElements(_immuneEntities, immuneElements);
 
   if(_cellComplex != NULL) delete _cellComplex;
   _cellComplex =  new CellComplex(_model,
                                   domainElements,
                                   subdomainElements,
+                                  nondomainElements,
+                                  nonsubdomainElements,
                                   immuneElements,
                                   _saveOrig);
 

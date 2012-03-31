@@ -48,6 +48,7 @@ class CellComplex
 
   // for constructor
   bool _insertCells(std::vector<MElement*>& elements, int domain);
+  bool _removeCells(std::vector<MElement*>& elements, int domain);
 
   bool _immunizeCells(std::vector<MElement*>& elements);
 
@@ -67,6 +68,8 @@ class CellComplex
   CellComplex(GModel* model,
 	      std::vector<MElement*>& domainElements,
 	      std::vector<MElement*>& subdomainElements,
+              std::vector<MElement*>& nondomainElements,
+              std::vector<MElement*>& nonsubdomainElements,
               std::vector<MElement*>& immuneElements,
               bool saveOriginalComplex=true);
   ~CellComplex();

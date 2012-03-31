@@ -1,19 +1,15 @@
-/*********************************************************************
+/********************************************************************* 
  *
  *  Gmsh tutorial 14
  *
- *  Homology computation
+ *  Homology and cohomology computation
  *
  *********************************************************************/
-
+ 
 // Homology computation in Gmsh finds representative chains of
-// (relative) homology spaces using a mesh of a model. Those
-// representatives generate the (relative) homology spaces of the
-// model.
-
-// The generator chains are stored in a given .msh-file as physical
-// groups, whose mesh elements are oriented such that their
-// coefficients are 1 in the generator chain.
+// (relative) (co)homology space bases using a mesh of a model. 
+// The representative basis chains are stored in the mesh as 
+// physical groups of Gmsh, one for each chain. 
 
 // Create an example geometry
 
@@ -40,7 +36,7 @@ Plane Surface(15) = {13, 14};
 Extrude {0, 0, h}{ Surface{15}; }
 
 // Create physical groups, which are used to define the domain of the
-// homology computation and the subdomain of the relative homology
+// (co)homology computation and the subdomain of the relative (co)homology
 // computation.
 
 // Whole domain
@@ -60,16 +56,19 @@ Physical Surface(80) = bnd[];
 bnd[] -= {36, 44, 52, 60};
 Physical Surface(75) = bnd[];
 
-// Find generators of relative homology spaces of the domain modulo
-// the four terminals.
+// Find bases for relative homology spaces of 
+// the domain modulo the four terminals.
 Homology {{1}, {70, 71, 72, 73}};
 
-// Find the corresponding thick cuts
-Cohomology {{1}, {70, 71, 72, 73}};
-
-// Find the corresponding thin cuts, generators of relative homology
-// spaces modulo the non-terminal domain surface.
+// Find homology space bases isomorphic to the previous bases: 
+// homology spaces modulo the non-terminal domain surface,
+// a.k.a the thin cuts.
 Homology {{1}, {75}};
+
+// Find cohomology space bases isomorphic to the previous bases: 
+// cohomology spaces of the domain modulo the four terminals,
+// a.k.a the thick cuts.
+Cohomology {{1}, {70, 71, 72, 73}};
 
 // More examples:
 //  Homology {1};
