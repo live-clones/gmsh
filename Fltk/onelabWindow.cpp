@@ -457,20 +457,19 @@ static void initializeLoop(const std::string &level)
   onelab::server::instance()->get(numbers);
   for(unsigned int i = 0; i < numbers.size(); i++){
     if(numbers[i].getAttribute("Loop") == level){
-
       if(numbers[i].getChoices().size() > 1){
         numbers[i].setValue(numbers[i].getChoices()[0]);
         onelab::server::instance()->set(numbers[i]);
         changed = true;
       }
-      else if(numbers[i].getStep()>0){
+      else if(numbers[i].getStep() > 0){
 	if(numbers[i].getMin() != -onelab::parameter::maxNumber()){
 	  numbers[i].setValue(numbers[i].getMin());
 	  onelab::server::instance()->set(numbers[i]);
 	  changed = true;
 	}
       }
-      else if(numbers[i].getStep()<0){
+      else if(numbers[i].getStep() < 0){
 	if(numbers[i].getMax() != onelab::parameter::maxNumber()){
 	  numbers[i].setValue(numbers[i].getMax());
 	  onelab::server::instance()->set(numbers[i]);
@@ -511,7 +510,7 @@ static bool incrementLoop(const std::string &level)
           }
         }
       }
-      else if(numbers[i].getStep()>0){
+      else if(numbers[i].getStep() > 0){
 	if(numbers[i].getMax() != onelab::parameter::maxNumber() &&
 	   numbers[i].getValue() < numbers[i].getMax()){
 	  numbers[i].setValue(numbers[i].getValue() + numbers[i].getStep());
@@ -521,7 +520,7 @@ static bool incrementLoop(const std::string &level)
 	  recompute = true;
 	}
       }
-      else if(numbers[i].getStep()<0){
+      else if(numbers[i].getStep() < 0){
 	if(numbers[i].getMin() != -onelab::parameter::maxNumber() &&
 	   numbers[i].getValue() > numbers[i].getMin()){
 	  numbers[i].setValue(numbers[i].getValue() + numbers[i].getStep());
@@ -572,11 +571,11 @@ static std::vector<double> getRange(onelab::number &p)
   }
   else if(p.getMin() != -onelab::parameter::maxNumber() &&
           p.getMax() != onelab::parameter::maxNumber()){
-    if(p.getStep()>0){
+    if(p.getStep() > 0){
       for(double d = p.getMin(); d <= p.getMax(); d += p.getStep())
 	v.push_back(d);
     }
-    else if(p.getStep()<0){
+    else if(p.getStep() < 0){
       for(double d = p.getMin(); d <= p.getMax(); d -= p.getStep())
 	v.push_back(d);
     }

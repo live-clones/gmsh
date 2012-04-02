@@ -41,6 +41,10 @@
 #include "drawContext.h"
 #endif
 
+#if defined(HAVE_3M)
+#include "3M.h"
+#endif
+
 #define SQU(a)      ((a)*(a))
 
 static void FinishUpBoundingBox()
@@ -361,6 +365,11 @@ int MergeFile(std::string fileName, bool warnIfMissing)
 #if defined(HAVE_LIBCGNS)
   else if(ext == ".cgns" || ext == ".CGNS"){
     status = GModel::current()->readCGNS(fileName);
+  }
+#endif
+#if defined(HAVE_3M)
+  else if(ext == ".csv"){
+    status = readFile3M(fileName);
   }
 #endif
   else {
