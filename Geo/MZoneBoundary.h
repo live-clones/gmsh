@@ -324,7 +324,7 @@ class MZoneBoundary
       // ... clear the faces
       GlobalVertexData<FaceT>& ref = itBoV->second;
       size_t nf = ref.faces.size();
-      for (int i=0; i<nf; ++i) {
+      for (unsigned int i=0; i<nf; ++i) {
         ++ icount;
         FaceT* p = ref.faces[i].face;
         if (p) {

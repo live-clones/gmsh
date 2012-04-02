@@ -221,7 +221,7 @@ int edge_normal
 
   double par=0.0;
   // Note: const_cast used to match MVertex.cpp interface
-  if(!reparamMeshVertexOnEdge(vertex, gEdge, par)) return 1;
+  if(!reparamMeshVertexOnEdge(const_cast<MVertex*>(vertex), gEdge, par)) return 1;
 
   const SVector3 tangent(gEdge->firstDer(par));
                                         // Tangent to the boundary face
@@ -646,7 +646,7 @@ void updateBoVec<3, MFace>
             gFIt != useGFace.end(); ++gFIt) {
 
           SPoint2 par;
-          if(!reparamMeshVertexOnFace(vertex, *gFIt, par))
+          if(!reparamMeshVertexOnFace(const_cast<MVertex*>(vertex), *gFIt, par))
             goto getNormalFromElements;  // :P  After all that!
 
           SVector3 boNormal = (*gFIt)->normal(par);
@@ -680,7 +680,7 @@ void updateBoVec<3, MFace>
       {
         const GFace *const gFace = static_cast<const GFace*>(ent);
         SPoint2 par;
-        if(!reparamMeshVertexOnFace(vertex, gFace, par))
+        if(!reparamMeshVertexOnFace(const_cast<MVertex*>(vertex), gFace, par))
           goto getNormalFromElements;
 
         SVector3 boNormal = static_cast<const GFace*>(ent)->normal(par);
@@ -815,7 +815,6 @@ int MZoneBoundary<DIM>::interiorBoundaryVertices
 
       // Copy faces
       const int nFace = zoneVertData.faces.size();
-      int iCount=0;
       for(int iFace = 0; iFace != nFace; ++iFace) {
 
 #if (0)
@@ -902,7 +901,7 @@ int MZoneBoundary<DIM>::interiorBoundaryVertices
         &zoneVertData.faces[0];
       for(int nZFace = zoneVertData.faces.size(); nZFace--;) {
         bool foundMatch = false;
-        for(int iGFace = 0; iGFace != nGFace; ++iGFace) 
+        for(unsigned int iGFace = 0; iGFace != nGFace; ++iGFace) 
         {
           // NBN: face is now a pointer, so need to de-reference
         //if((*zFace)->first ==  globalVertData.faces[iGFace].face ) 
