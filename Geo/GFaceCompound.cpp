@@ -2059,10 +2059,10 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const {
   //now find point
   double uvw[3]={par1,par2, 0.0};
   double UV[3];
-  double initialTol = MElement::getTolerance();
-  MElement::setTolerance(1.e-2); 
-  MElement *e = octNew->find(par1,par2, 0.0,-1,false);  
-  MElement::setTolerance(initialTol);
+  //double initialTol = MElement::getTolerance();
+  //MElement::setTolerance(1.e-2); 
+  MElement *e = octNew->find(par1,par2, 0.0,-1,true);  
+  //MElement::setTolerance(initialTol);
   if (e){
     e->xyz2uvw(uvw,UV);
     double valX[8], valY[8], valZ[8];
@@ -2087,7 +2087,7 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const {
 
 #if defined(HAVE_ANN)
     double pt[3] = {par1,par2,0.0};
-    uv_kdtree->annkSearch(pt, 1, index, dist);
+    uv_kdtree->annkSearch(pt, 2, index, dist);
     SPoint3  p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
     SPoint3  p2(nodes[index[1]][0], nodes[index[1]][1], nodes[index[1]][2]);
     SPoint3 pnew; double d;

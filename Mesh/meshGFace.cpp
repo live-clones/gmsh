@@ -1876,6 +1876,7 @@ void meshGFace::operator() (GFace *gf)
   twoPassesMesh--;
   if (backgroundMesh::current()){
     backgroundMesh::unset();
+    //backgroundMesh::set(gf);
   }
   if (CTX::instance()->mesh.saveAll){
     backgroundMesh::set(gf);

@@ -460,19 +460,22 @@ backgroundMesh::backgroundMesh(GFace *_gf)
   // those triangles are local to the backgroundMesh so that
   // they do not depend on the actual mesh that can be deleted
 
+  std::set<SPoint2> myBCNodes;
   for (unsigned int i = 0; i < _gf->triangles.size(); i++){
     MTriangle *e = _gf->triangles[i];
     MVertex *news[3];
     for (int j=0;j<3;j++){
-      std::map<MVertex*,MVertex*>::iterator it = _3Dto2D.find(e->getVertex(j));
+      MVertex *v = e->getVertex(j);
+      std::map<MVertex*,MVertex*>::iterator it = _3Dto2D.find(v);
       MVertex *newv =0;
       if (it == _3Dto2D.end()){
         SPoint2 p;
-        bool success = reparamMeshVertexOnFace(e->getVertex(j), _gf, p);
+        bool success = reparamMeshVertexOnFace(v, _gf, p);
         newv = new MVertex (p.x(), p.y(), 0.0);
         _vertices.push_back(newv);
-        _3Dto2D[e->getVertex(j)] = newv;
-        _2Dto3D[newv] = e->getVertex(j);
+        _3Dto2D[v] = newv;
+        _2Dto3D[newv] = v;
+	if(v->onWhat()->dim()<2) myBCNodes.insert(p);
       }
       else newv = it->second;
       news[j] = newv;
@@ -480,6 +483,24 @@ backgroundMesh::backgroundMesh(GFace *_gf)
     _triangles.push_back(new MTriangle(news[0],news[1],news[2]));
   }
   
+#if defined(HAVE_ANN)
+  //printf("creating uv kdtree %d \n", myBCNodes.size());
+    index = new ANNidx[2];
+    dist  = new ANNdist[2];
+    nodes = annAllocPts(myBCNodes.size(), 3);
+    std::set<SPoint2>::iterator itp = myBCNodes.begin();
+    int ind = 0;
+    while (itp != myBCNodes.end()){
+      SPoint2 pt = *itp;
+      //fprintf(of, "SP(%g,%g,%g){%g};\n", pt.x(), pt.y(), 0.0, 10000);
+      nodes[ind][0] = pt.x();
+      nodes[ind][1] = pt.y();
+      nodes[ind][2] = 0.0;
+      itp++; ind++;
+    }
+    uv_kdtree = new ANNkd_tree(nodes, myBCNodes.size(), 3);
+#endif
+
   // build a search structure
   _octree = new MElementOctree(_triangles); 
   
@@ -507,6 +528,12 @@ backgroundMesh::~backgroundMesh()
   for (unsigned int i = 0; i < _vertices.size(); i++) delete _vertices[i];
   for (unsigned int i = 0; i < _triangles.size(); i++) delete _triangles[i];
   delete _octree;
+#if defined(HAVE_ANN)
+  if(uv_kdtree) delete uv_kdtree;
+  if(nodes) annDeallocPts(nodes);
+  delete[]index;
+  delete[]dist;
+#endif
 }
 
 static void propagateValuesOnFace(GFace *_gf,
@@ -772,8 +799,22 @@ double backgroundMesh::operator() (double u, double v, double w) const
   double uv2[3];
   MElement *e = _octree->find(u, v, w, 2, true);
   if (!e) {
-    Msg::Error("BGM octree: cannot find %g %g %g", u, v, w);
-    return -1000.0;//0.4;
+#if defined(HAVE_ANN)
+    //printf("BGM octree not found --> find in kdtree \n");
+    double pt[3] = {u,v,0.0};
+    uv_kdtree->annkSearch(pt, 2, index, dist);
+    SPoint3  p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
+    SPoint3  p2(nodes[index[1]][0], nodes[index[1]][1], nodes[index[1]][2]);
+    SPoint3 pnew; double d;
+    signedDistancePointLine(p1,p2, SPoint3(u,v,0.0), d, pnew);
+    double uvw[3]={pnew.x(),pnew.y(), 0.0};
+    double UV[3];
+    e = _octree->find(pnew.x(), pnew.y(), 0.0, 2, true); 
+#endif
+    if(!e){
+      Msg::Error("BGM octree: cannot find UVW=%g %g %g", u, v, w);
+      return -1000.0;//0.4;
+    }
   }
   e->xyz2uvw(uv, uv2);
   std::map<MVertex*,double>::const_iterator itv1 = _sizes.find(e->getVertex(0));
@@ -799,8 +840,22 @@ double backgroundMesh::getAngle(double u, double v, double w) const
   double uv2[3];
   MElement *e = _octree->find(u, v, w, 2, true);
   if (!e) {
-    Msg::Error("BGM octree : cannot find %g %g %g", u, v, w);
-    return 0.0;
+#if defined(HAVE_ANN)
+    //printf("BGM octree not found --> find in kdtree \n");
+    double pt[3] = {u,v,0.0};
+    uv_kdtree->annkSearch(pt, 2, index, dist);
+    SPoint3  p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
+    SPoint3  p2(nodes[index[1]][0], nodes[index[1]][1], nodes[index[1]][2]);
+    SPoint3 pnew; double d;
+    signedDistancePointLine(p1,p2, SPoint3(u,v,0.0), d, pnew);
+    double uvw[3]={pnew.x(),pnew.y(), 0.0};
+    double UV[3];
+    e = _octree->find(pnew.x(), pnew.y(), 0.0, 2,true); 
+#endif
+    if(!e){
+      Msg::Error("BGM octree angle: cannot find UVW=%g %g %g", u, v, w);
+      return -1000.0;
+    }
   }
   e->xyz2uvw(uv, uv2);
   std::map<MVertex*,double>::const_iterator itv1 = _angles.find(e->getVertex(0));

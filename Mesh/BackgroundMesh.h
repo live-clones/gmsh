@@ -11,6 +11,11 @@
 #include <list>
 #include "simpleFunction.h"
 
+#if defined(HAVE_ANN)
+#include <ANN/ANN.h>
+class ANNkd_tree;
+#endif
+
 class MElementOctree;
 class GFace;
 class GVertex;
@@ -47,6 +52,12 @@ class backgroundMesh : public simpleFunction<double>
   static backgroundMesh * _current;
   backgroundMesh(GFace *);
   ~backgroundMesh();
+#if defined(HAVE_ANN)
+   mutable ANNkd_tree *uv_kdtree;
+   mutable ANNpointArray nodes;
+   ANNidxArray index;
+   ANNdistArray dist;
+#endif
  public:
   static void set(GFace *);
   static void unset();
