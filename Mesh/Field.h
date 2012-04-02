@@ -86,6 +86,10 @@ class Field {
   virtual double operator() (double x, double y, double z, GEntity *ge=0) = 0;
   // anisotropic
   virtual void operator() (double x, double y, double z, SMetric3 &, GEntity *ge=0){}
+  
+  //temporary
+  virtual void operator()(double x,double y,double z,SVector3& v1,SVector3& v2,SVector3& v3,GEntity* ge=0){}
+  
   bool update_needed;
   //void update(){ printf("up f \n"); return;}
   virtual const char *getName() = 0;

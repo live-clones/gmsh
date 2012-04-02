@@ -1102,6 +1102,86 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    return;
 }
 
+/**************************************************/
+/******************Temporary code******************/
+/**************************************************/
+void Centerline::operator()(double x,double y,double z,SVector3& v1,SVector3& v2,SVector3& v3,GEntity* ge){
+  if(update_needed){
+    std::ifstream input;
+	input.open(fileName.c_str());
+	if(StatFile(fileName)) Msg::Fatal("Centerline file '%s' does not exist", fileName.c_str());
+	importFile(fileName);
+	buildKdTree();
+	update_needed = false;
+  }
+	
+  double xyz[3] = {x,y,z};
+	
+  //take xyz = closest point on boundary in case we are on the planar IN/OUT FACES or in VOLUME
+  bool onTubularSurface = true;
+  double ds = 0.0;
+  bool isCompound = (ge->dim() == 2 && ge->geomType() == GEntity::CompoundSurface) ? true: false;
+  std::list<GFace*> cFaces;
+  if(isCompound) cFaces = ((GFaceCompound*)ge)->getCompounds();
+  if(ge->dim()==3 || (ge->dim()==2&&ge->geomType()==GEntity::Plane) || (isCompound&&(*cFaces.begin())->geomType()==GEntity::Plane)){
+	onTubularSurface = false;
+	kdtreeR->annkSearch(xyz, 1, index, dist);
+	ds = sqrt(dist[0]);
+	xyz[0] = nodesR[index[0]][0];
+	xyz[1] = nodesR[index[0]][1];
+	xyz[2] = nodesR[index[0]][2];
+  }
+	
+  ANNidxArray index2 = new ANNidx[2];
+  ANNdistArray dist2 = new ANNdist[2];
+  kdtree->annkSearch(xyz, 2, index2, dist2);
+  double radMax = sqrt(dist2[0]);
+  SVector3  p0(nodes[index2[0]][0], nodes[index2[0]][1], nodes[index2[0]][2]);
+  SVector3  p1(nodes[index2[1]][0], nodes[index2[1]][1], nodes[index2[1]][2]);
+	
+  //dir_a = direction along the centerline
+  //dir_n = normal direction of the disk
+  //dir_t = tangential direction of the disk
+  SVector3 dir_a = p1-p0;
+  SVector3 dir_n(x-p0.x(), y-p0.y(), z-p0.z()); 
+  SVector3 dir_t;
+  buildOrthoBasis2(dir_a, dir_n, dir_t);
+	
+  double lc = 2*M_PI*radMax/nbPoints;
+  double lc_a = 3.*lc;
+  double lc_n, lc_t;
+  if(onTubularSurface){
+    lc_n = lc_t = lc;
+  }
+  else{
+    double e = radMax/3.;
+	double hn = e/10.;
+	double rm = std::max(radMax-ds, radMax-e);
+	lc_t = 2*M_PI*rm/nbPoints;
+	//lc_n = lc_t = lc;
+	//double ratio = 1.02; //1. + (lc_t-hn)/e;
+	//printf("ratio =%g \n", ratio);
+	//lc_n = ds*(ratio-1) + hn;
+	if(ds<e) lc_n = hn; 
+	else lc_n = lc_t;
+  }
+  double lam_a = 1./(lc_a*lc_a);
+  double lam_n = 1./(lc_n*lc_n);
+  double lam_t = 1./(lc_t*lc_t);
+	
+  v1 = dir_a;
+  v2 = dir_n;
+  v3 = dir_t;
+	
+  delete[]index2;
+  delete[]dist2;
+	
+  return;
+}
+/*************************************************/
+/*************************************************/
+/*************************************************/
+
 void Centerline::printSplit() const{
 
   FILE * f = fopen("mySPLIT.pos","w");
