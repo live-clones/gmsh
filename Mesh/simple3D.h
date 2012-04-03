@@ -15,14 +15,14 @@ class Filler{
  private:
   static std::vector<MVertex*> new_vertices;
   Metric get_metric(double,double,double);
-  double get_h1(double,double,double);
-  double get_h2(double,double,double);
-  double get_h3(double,double,double);
+  double get_size(double,double,double);
   Metric get_clf_metric(double,double,double,GEntity*);
-  double get_clf_h(double,double,double,GEntity*);
+  double get_clf_size(double,double,double,GEntity*);
   bool inside_domain(MElementOctree*,double,double,double);
+  bool far_from_boundary(MElementOctree*,Node*);
   void compute_parameters(Node*,GEntity*);
-  void offsprings(Node*,Node*,Node*,Node*,Node*,Node*,Node*);
+  void offsprings(GEntity*,MElementOctree*,Node*,Node*,Node*,Node*,Node*,Node*,Node*);
+  double improvement(GEntity*,MElementOctree*,SPoint3,double,SVector3);
   void print_segment(SPoint3,SPoint3,std::ofstream&);
   void print_node(Node*,std::ofstream&);
  public:
