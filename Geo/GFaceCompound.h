@@ -77,6 +77,10 @@ class GFaceCompound : public GFace {
   mutable GFaceCompoundTriangle *_gfct;
   mutable Octree *oct;
   mutable MElementOctree *octNew;
+  mutable std::vector<MVertex*> myParamVert;
+  mutable std::vector<MElement*> myParamElems;
+  mutable std::map<MVertex*,MVertex*> _3Dto2D;
+  mutable std::map<MVertex*,MVertex*> _2Dto3D;
   mutable std::map<int,SPoint3> XYZoct;
   mutable std::set<MVertex*> allNodes;
   mutable v2t_cont adjv;
