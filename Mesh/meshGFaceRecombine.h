@@ -114,6 +114,7 @@ class Rec2DData {
     
     void printState() const;
     void printActions() const;
+    static void printAction() {_current->printActions();}
     void sortActions() {_actions.sort(lessRec2DAction());}
     void drawTriangles(double shiftx, double shifty) const;
     void drawElements(double shiftx, double shifty) const;
@@ -299,7 +300,7 @@ class Rec2DAction {
     
   public :
     Rec2DAction();
-    virtual ~Rec2DAction() {}
+    virtual ~Rec2DAction() {Msg::Error("deleting %d", this);}
     virtual void hide() = 0;
     virtual void reveal() = 0;
     virtual bool checkCoherence() const = 0;
@@ -345,7 +346,7 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     
   public :
     Rec2DTwoTri2Quad(Rec2DElement*, Rec2DElement*);
-    ~Rec2DTwoTri2Quad() {if (_col) Msg::Error("[Rec2DTwoTri2Quad] have collapse");hide();}
+    ~Rec2DTwoTri2Quad() {Msg::Error("deleting %d", this);if (_col) Msg::Error("[Rec2DTwoTri2Quad] have collapse");hide();}
     virtual void hide();
     virtual void reveal();
     virtual bool checkCoherence() const;
@@ -386,7 +387,7 @@ class Rec2DCollapse : public Rec2DAction {
     
   public :
     Rec2DCollapse(Rec2DTwoTri2Quad*);
-    ~Rec2DCollapse() {_rec->_col = NULL; hide();}
+    ~Rec2DCollapse() {Msg::Error("deleting %d", this);_rec->_col = NULL; hide();}
     virtual void hide();
     virtual void reveal();
     virtual bool checkCoherence() const {return _rec->checkCoherence();}
@@ -429,6 +430,12 @@ class Rec2DCollapse : public Rec2DAction {
   private :
     virtual void _computeGlobQual();
     bool _hasIdenticalElement() const;
+    void _computeQualEdges(int &numEdge, double &valEdge,
+                           std::vector<std::pair<Rec2DVertex*, int> > &v2weight,
+                           SPoint2                                              );
+    void _computeQualVertices(double &valVert,
+                           std::vector<std::pair<Rec2DVertex*, int> > &v2weight,
+                           SPoint2                  );
 };
 
 class Rec2DEdge {
@@ -526,6 +533,7 @@ class Rec2DVertex {
     void getTriangles(std::set<Rec2DElement*>&) const;
     void getElements(std::vector<Rec2DElement*>&) const;
     inline MVertex* getMVertex() const {return _v;}
+    void getNeighbourWeight(std::vector<std::pair<Rec2DVertex*, int> >&) const;
     
     inline int getLastUpdate() const {return _lastUpdate;}
     inline void getxyz(double *xyz) const {
@@ -536,6 +544,7 @@ class Rec2DVertex {
     inline double u() const {return _param[0];}
     inline double v() const {return _param[1];}
     void relocate(SPoint2 p);
+    inline SPoint2 getParam() {return _param;}
     inline void getParam(SPoint2 *p) {*p = _param;}
     
     void add(const Rec2DEdge*);
@@ -545,6 +554,8 @@ class Rec2DVertex {
     void add(const Rec2DElement*);
     bool has(const Rec2DElement*) const;
     void rmv(const Rec2DElement*);
+    
+    void printElem() const;
     
     void getUniqueActions(std::vector<Rec2DAction*>&) const;
     
