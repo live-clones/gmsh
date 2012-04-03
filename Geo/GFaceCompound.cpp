@@ -1280,8 +1280,10 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   fillTris.clear();
 
 #if defined(HAVE_ANN)
-    index = new ANNidx[2];
-    dist  = new ANNdist[2];
+  uv_kdtree = NULL;
+  nodes = NULL;
+  index = new ANNidx[2];
+  dist  = new ANNdist[2];
 #endif
 
 }
@@ -1332,14 +1334,19 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   fillTris.clear();
 
 #if defined(HAVE_ANN)
-    index = new ANNidx[2];
-    dist  = new ANNdist[2];
+  uv_kdtree = NULL;
+  nodes = NULL;
+  index = new ANNidx[2];
+  dist  = new ANNdist[2];
 #endif
 
 }
 
 GFaceCompound::~GFaceCompound()
 {
+
+  for (unsigned int i = 0; i < myParamVert.size(); i++) delete myParamVert[i];
+  for (unsigned int i = 0; i < myParamElems.size(); i++) delete myParamElems[i];
 
   if(oct){
     Octree_Delete(oct);
@@ -1998,8 +2005,6 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const {
  
   //create new octree with new mesh elements
   if(!octNew){
-    //printf("****************** creating new octree \n");
-    
     //FILE * of = fopen("myOCTREE.pos","w");
     //fprintf(of, "View \"\"{\n");
 
@@ -2007,27 +2012,35 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const {
     for (int i = 0; i < triangles.size(); i++) myElems.push_back(triangles[i]);
     for (int i = 0; i < quadrangles.size(); i++) myElems.push_back(quadrangles[i]);
     
-    std::vector<MElement *> myParamElems;
     std::set<SPoint2> myBCNodes;
     for (int i = 0; i < myElems.size(); i++){
       MElement *e = myElems[i];
-      std::vector<MVertex*> myParamVert;
+      MVertex *news[4];
       for (unsigned int j = 0; j < e->getNumVertices(); j++){
 	MVertex *v = e->getVertex(j);
-	SPoint2 sp = parFromVertex(v);
-  	myParamVert.push_back(new MVertex(sp.x(),sp.y(), 0.0, NULL,v->getNum()));
-	if(v->onWhat()->dim()<2) myBCNodes.insert(sp);
-	XYZoct.insert(std::make_pair(v->getNum(),SPoint3(v->x(), v->y(), v->z())));
+	std::map<MVertex*,MVertex*>::iterator it = _3Dto2D.find(v);
+	MVertex *newv =0;
+	if (it == _3Dto2D.end()){
+	  SPoint2 p = parFromVertex(v);
+	  newv = new MVertex (p.x(), p.y(), 0.0);
+	  myParamVert.push_back(newv);
+	  _3Dto2D[v] = newv;
+	  _2Dto3D[newv] = v;
+	  if(v->onWhat()->dim()<2) myBCNodes.insert(p);
+	}
+	else newv = it->second;
+	news[j] = newv;
       }
+
       if(e->getType() == TYPE_TRI) 
-  	myParamElems.push_back(new MTriangle(myParamVert[0],myParamVert[1],myParamVert[2],e->getNum()));
+  	myParamElems.push_back(new MTriangle(news[0],news[1],news[2],e->getNum()));
       else if (e->getType() == TYPE_QUA) {
-  	myParamElems.push_back(new MQuadrangle(myParamVert[0],myParamVert[1],myParamVert[2],myParamVert[3],e->getNum()));
+  	myParamElems.push_back(new MQuadrangle(news[0],news[1],news[2],news[3],e->getNum()));
 	// fprintf(of, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
-	// 	myParamVert[0]->x(), myParamVert[0]->y(), myParamVert[0]->z(),
-	// 	myParamVert[1]->x(), myParamVert[1]->y(), myParamVert[1]->z(),
-	// 	myParamVert[2]->x(), myParamVert[2]->y(), myParamVert[2]->z(),
-	// 	myParamVert[3]->x(), myParamVert[3]->y(), myParamVert[3]->z(),
+	// 	news[0]->x(), news[0]->y(), news[0]->z(),
+	// 	news[1]->x(), news[1]->y(), news[1]->z(),
+	// 	news[2]->x(), news[2]->y(), news[2]->z(),
+	// 	news[3]->x(), news[3]->y(), news[3]->z(),
 	// 	(double)e->getNum(), (double)e->getNum(), (double)e->getNum(), (double)e->getNum());
       }   
     }
@@ -2036,7 +2049,6 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const {
 
     //build kdtree boundary nodes in parametric space
 #if defined(HAVE_ANN)
-    //printf("creating uv kdtree %d \n", myBCNodes.size());
     nodes = annAllocPts(myBCNodes.size(), 3);
     std::set<SPoint2>::iterator itp = myBCNodes.begin();
     int ind = 0;
@@ -2050,41 +2062,37 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const {
     }
     uv_kdtree = new ANNkd_tree(nodes, myBCNodes.size(), 3);
 #endif
-
     //fprintf(of,"};\n");
-    //fclose(of);
-
+    //fclose(of);    
   }
   
-  //now find point
+  //now use new octree to find point
   double uvw[3]={par1,par2, 0.0};
   double UV[3];
-  //double initialTol = MElement::getTolerance();
-  //MElement::setTolerance(1.e-2); 
-  MElement *e = octNew->find(par1,par2, 0.0,-1,true);  
-  //MElement::setTolerance(initialTol);
+  double initialTol = MElement::getTolerance();
+  MElement::setTolerance(1.e-2); 
+  MElement *e = octNew->find(par1,par2, 0.0,-1,false);  
+  MElement::setTolerance(initialTol);
   if (e){
     e->xyz2uvw(uvw,UV);
     double valX[8], valY[8], valZ[8];
     for (int i=0;i<e->getNumPrimaryVertices();i++){
-      SPoint3 pt = XYZoct[e->getVertex(i)->getNum()];
-      valX[i] = pt.x();
-      valY[i] = pt.y();
-      valZ[i] = pt.z();
+      MVertex *v = _2Dto3D[e->getVertex(i)];
+      valX[i] = v->x();
+      valY[i] = v->y();
+      valZ[i] = v->z();
     }
     GPoint gp;
     gp.x() = e->interpolate(valX,UV[0],UV[1],UV[2]);
     gp.y() = e->interpolate(valY,UV[0],UV[1],UV[2]);
     gp.z() = e->interpolate(valZ,UV[0],UV[1],UV[2]);
-    //printf("found point (UV=%g %g) %g %g %g (E=%D)\n",par1, par2, gp.x(), gp.y(), gp.z(), e->getNum());
+    //printf("found point in new octree (UV=%g %g) %g %g %g (E=%D)\n",par1, par2, gp.x(), gp.y(), gp.z(), e->getNum());
     return gp;
   }
-  //if element not found find closest point
+  //if element not found in new octree find closest point
   else{
-
-    //printf("point not found look in kdtree \n");
-    GPoint gp(0,0,0);
-
+    //printf("point not found on octnew --> look closest point with kdtree \n");
+    GPoint gp(50,50,50);
 #if defined(HAVE_ANN)
     double pt[3] = {par1,par2,0.0};
     uv_kdtree->annkSearch(pt, 2, index, dist);
@@ -2092,42 +2100,41 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const {
     SPoint3  p2(nodes[index[1]][0], nodes[index[1]][1], nodes[index[1]][2]);
     SPoint3 pnew; double d;
     signedDistancePointLine(p1,p2, SPoint3(par1,par2,0.0), d, pnew);
-    //printf("UV=%g %g UVnew =%g %g \n", par1,par2,pnew.x(), pnew.y());
-    
-    //now find point
+    //printf("p1=%g %g p2=%g %g \n", p1.x(), p1.y(), p2.x(), p2.y());
+    //printf("UV=%g %g UVnew =%g %g \n", par1,par2, pnew.x(), pnew.y());
+
     double uvw[3]={pnew.x(),pnew.y(), 0.0};
     double UV[3];
-    MElement *e = octNew->find(pnew.x(), pnew.y(), 0.0, -1);  
-    if (e){
+    MElement *e = octNew->find(pnew.x(), pnew.y(), 0.0,-1,true);
+    if(!e)    e = octNew->find(p1.x(), p1.y(), 0.0,-1,true);
+    if( e){
       e->xyz2uvw(uvw,UV);
       double valX[8], valY[8], valZ[8];
       for (int i=0;i<e->getNumPrimaryVertices();i++){
-	SPoint3 pt = XYZoct[e->getVertex(i)->getNum()];
-	valX[i] = pt.x();
-	valY[i] = pt.y();
-	valZ[i] = pt.z();
+	MVertex *v = _2Dto3D[e->getVertex(i)];
+	valX[i] = v->x();
+	valY[i] = v->y();
+	valZ[i] = v->z();
       }
-      GPoint gp;
       gp.x() = e->interpolate(valX,UV[0],UV[1],UV[2]);
       gp.y() = e->interpolate(valY,UV[0],UV[1],UV[2]);
       gp.z() = e->interpolate(valZ,UV[0],UV[1],UV[2]);
-      // printf("found point after kdtree (UV=%g %g) %g %g %g (E=%D)\n",par1, par2, gp.x(), gp.y(), gp.z(), e->getNum());
+      //printf("found closest point (UV=%g %g) %g %g %g \n",pnew.x(), pnew.y(), gp.y(), gp.z());
     }
     else{
-      //printf("new point kdtree not found \n");
+      printf("point not found in kdtree \n");
+      exit(1);
       gp.setNoSuccess();
     }
 #else
     gp.setNoSuccess();
 #endif
   
-    if (gp.succeeded()){
-      //printf("found closest point with ANN \n");
-      return gp;
-    }
+    if (gp.succeeded()) return gp;
     else{
-      //printf("NOT found point %g %g \n", par1, par2);
-      GPoint gp (3,3,0,this);
+      printf("NOT found point with ANN %g %g \n", par1, par2);
+      exit(1);
+      GPoint gp (30,30,30,this);
       gp.setNoSuccess();
       return gp;
     }
@@ -2154,7 +2161,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
   }
   else if (!lt && _mapping == RBF){
     if (fabs(par1) > 1 || fabs(par2) > 1){
-      GPoint gp (3,3,0,this);
+      GPoint gp (0,0,0,this);
       gp.setNoSuccess();
       return gp;
     }
@@ -2978,6 +2985,7 @@ GPoint GFaceCompound::intersectionWithCircle (const SVector3 &n1, const SVector3
   }
   GPoint pp(0);
   pp.setNoSuccess();
+  Msg::Debug("ARGG no success intersection circle"); //exit(1);
   return pp;
 }
 
