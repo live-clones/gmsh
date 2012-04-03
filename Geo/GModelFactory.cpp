@@ -16,6 +16,8 @@
 #include "MLine.h"
 #include "GModel.h"
 #include "Numeric.h"
+#include "ExtrudeParams.h"
+#include "Geo.h"
 
 GVertex *GeoFactory::addVertex(GModel *gm, double x, double y, double z, double lc)
 {
@@ -282,6 +284,101 @@ std::vector<GFace *> GeoFactory::addRuledFaces(GModel *gm,
 
   return faces;
 }
+
+GEntity* GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e, int nbLayers, double hLayer, int dir, int view)
+{
+
+  printf("coucou dans geo extrude normals \n");
+  Msg::Debug("Gmsh model (GModel) before extrude has:");
+  Msg::Debug("%d Vertices", gm->getNumVertices());
+  Msg::Debug("%d Edges", gm->getNumEdges());
+  Msg::Debug("%d Faces", gm->getNumFaces());
+  Msg::Debug("%d Regions", gm->getNumRegions());
+
+  ExtrudeParams ep;
+  printf("***** BL INDEX =%d \n", dir);
+  ep.mesh.BoundaryLayerIndex = dir;
+  ep.mesh.ViewIndex = view;
+  ep.mesh.NbLayer = 1; //this may be more general for defining different layers
+  ep.mesh.hLayer.clear();
+  ep.mesh.hLayer.push_back(hLayer);
+  ep.mesh.NbElmLayer.clear(); 
+  ep.mesh.NbElmLayer.push_back(nbLayers);
+  ep.mesh.ExtrudeMesh = true;
+
+  int type  = BOUNDARY_LAYER; //TRANSLATE;
+  double T0=0., T1=0., T2=0.;
+  double A0=0., A1=0., A2=0.;
+  double X0=0., X1=0., X2=0.,alpha=0.;
+
+  //extrude shape dans geo.cpp
+  Shape shape;
+  if(e->dim() == 0){
+    Vertex *v = FindPoint(e->tag());
+    if(!v) printf("vertex %d not found \n", e->tag());
+    shape.Num = v->Num;
+    shape.Type = v->Typ;
+  }
+  else if (e->dim() == 1){
+    ((GEdge*)e)->meshAttributes.extrude = &ep;
+    Curve *c = FindCurve(e->tag());
+    if(!c) printf("curve %d not found \n", e->tag());
+     shape.Num = c->Num;
+     shape.Type = c->Typ;
+  }
+  else if (e->dim() == 2){
+    ((GFace*)e)->meshAttributes.extrude = &ep;
+    Surface *s = FindSurface(e->tag());
+    if(!s) printf("surface %d not found \n", e->tag());
+    else printf("surface %d found type =%d\n", e->tag(), s->Typ);
+    shape.Num = s->Num;
+    shape.Type = s->Typ;
+  }
+
+  //extrude shape
+  List_T *list_out= List_Create(2, 1, sizeof(Shape));
+  List_T *tmp = List_Create(1, 1, sizeof(Shape));
+  List_Add(tmp, &shape);
+  ExtrudeShapes(type, tmp,
+                T0, T1, T2,
+                A0, A1, A2,
+                X0, X1, X2, alpha,
+                &ep,
+                list_out);
+
+  //create GEntities 
+  gm->importGEOInternals();
+
+  //return the new created entity
+  GEntity *newEnt=0;
+  if (e->dim() == 1){
+   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); it++){
+     GEdge *ge = *it;
+    if(ge->getNativeType() == GEntity::GmshModel &&
+       ge->geomType() == GEntity::BoundaryLayerCurve){
+      ExtrudeParams *ep = ge->meshAttributes.extrude;
+      if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == COPIED_ENTITY &&
+	std::abs(ep->geo.Source) ==e->tag() )
+	  newEnt = ge;
+      }
+    }
+  }
+  else if (e->dim() ==2){
+    for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++){
+      GFace *gf = *it;
+      if(gf->getNativeType() == GEntity::GmshModel &&
+	 gf->geomType() == GEntity::BoundaryLayerSurface){
+	ExtrudeParams *ep = gf->meshAttributes.extrude;
+	if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == COPIED_ENTITY 
+	   && std::abs(ep->geo.Source) == e->tag())
+	  newEnt = gf;
+      }
+    }
+  }
+
+  return newEnt;
+
+};
 
 #if defined(HAVE_OCC)
 #include "OCCIncludes.h"
@@ -557,8 +654,6 @@ GEntity *OCCFactory::extrude(GModel *gm, GEntity* base,
   const double z2 = p2[2];
 
   gp_Vec direction(gp_Pnt(x1, y1, z1), gp_Pnt(x2, y2, z2));
-  gp_Ax1 axisOfRevolution(gp_Pnt(x1, y1, z1), direction);
-
   BRepPrimAPI_MakePrism MP(*(TopoDS_Shape*)base->getNativePtr(), direction,
                            Standard_False);
   GEntity *ret = 0;

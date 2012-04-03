@@ -2199,6 +2199,13 @@ GEntity *GModel::extrude(GEntity *e, std::vector<double> p1, std::vector<double>
   return 0;
 }
 
+GEntity *GModel::extrudeBoundaryLayer(GEntity *e, int nbLayers, double hLayers, int dir, int view)
+{
+  if(_factory)
+    return _factory->extrudeBoundaryLayer(this, e, nbLayers,hLayers, dir, view);
+  return 0;
+}
+
 GEntity *GModel::addPipe(GEntity *e, std::vector<GEdge *>  edges)
 {
   if(_factory)

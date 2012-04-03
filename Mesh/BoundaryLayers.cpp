@@ -29,7 +29,7 @@ static void addExtrudeNormals(std::vector<T*> &elements, int invert,
     Msg::Error("Boundary layer index should be 0 or 1");
     return;
   }
-
+ 
   if(octree && !gouraud){ // get extrusion direction from post-processing view
     std::set<MVertex*> verts;
     for(unsigned int i = 0; i < elements.size(); i++)
@@ -45,6 +45,7 @@ static void addExtrudeNormals(std::vector<T*> &elements, int invert,
     }
   }
   else{ // get extrusion direction from Gouraud-shaded element normals
+    printf("get extrusion from normals \n");
     for(unsigned int i = 0; i < elements.size(); i++){
       MElement *ele = elements[i];
       SVector3 n(0, 0, 0);
@@ -82,6 +83,7 @@ static void addExtrudeNormals(std::set<T*> &entities,
       OctreePost *octree = 0;
 #if defined(HAVE_POST)
       if(view != -1){
+	printf("extrude normals with view %d \n", view);
         if(view >= 0 && view < (int)PView::list.size()){
           octree = new OctreePost(PView::list[view]);
           if(PView::list[view]->getData()->getNumVectors())
@@ -186,6 +188,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
           Msg::Error("Unknown source curve %d for boundary layer", ep->geo.Source);
           return 0;
         }
+	//printf("index edge (%d)  =%d \n", ge->tag(), ep->mesh.BoundaryLayerIndex);
         std::pair<bool, std::pair<int, int> > tags
           (ep->geo.Source < 0, std::pair<int, int>
            (ep->mesh.BoundaryLayerIndex, ep->mesh.ViewIndex));
@@ -207,6 +210,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
           Msg::Error("Unknown source face %d for boundary layer", ep->geo.Source);
           return 0;
         }
+	//printf("index surface (%d)  =%d \n", gf->tag(), ep->mesh.BoundaryLayerIndex);
         std::pair<bool, std::pair<int, int> > tags
           (ep->geo.Source < 0, std::pair<int, int>
            (ep->mesh.BoundaryLayerIndex, ep->mesh.ViewIndex));
@@ -218,8 +222,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
     }
   }
 
-  if(sourceEdges.empty() && sourceFaces.empty())
-    return 0;
+  if(sourceEdges.empty() && sourceFaces.empty()) return 0;
 
   // compute mesh dependencies in source faces (so we can e.g. create
   // a boundary layer on an extruded mesh)
@@ -280,6 +283,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
           vdest = ge->getEndVertex();
         }
         GPoint p = vsrc->point();
+	
         ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
                     p.x(), p.y(), p.z());
         vdest->setPosition(p);

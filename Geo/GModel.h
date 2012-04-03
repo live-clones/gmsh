@@ -450,6 +450,7 @@ class GModel
   GEntity *revolve(GEntity *e, std::vector<double> p1, std::vector<double> p2,
                    double angle);
   GEntity *extrude(GEntity *e, std::vector<double> p1, std::vector<double> p2);
+  GEntity *extrudeBoundaryLayer(GEntity *e, int nbLayers, double hLayers, int dir=1, int view=-1);
   GEntity *addPipe(GEntity *e, std::vector<GEdge *>  edges);
 
   void addRuledFaces(std::vector<std::vector<GEdge *> > edges);

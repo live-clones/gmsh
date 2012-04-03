@@ -2134,12 +2134,12 @@ void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams *e)
   List_Reset(ListOfTransformedPoints);
 }
 
-static int Extrude_ProtudePoint(int type, int ip,
-                                double T0, double T1, double T2,
-                                double A0, double A1, double A2,
-                                double X0, double X1, double X2, double alpha,
-                                Curve **pc, Curve **prc, int final,
-                                ExtrudeParams *e)
+int Extrude_ProtudePoint(int type, int ip,
+			 double T0, double T1, double T2,
+			 double A0, double A1, double A2,
+			 double X0, double X1, double X2, double alpha,
+			 Curve **pc, Curve **prc, int final,
+			 ExtrudeParams *e)
 {
   double matrix[4][4], T[3], Ax[3], d;
   Vertex V, *pv, *newp, *chapeau;
@@ -2298,12 +2298,12 @@ static int Extrude_ProtudePoint(int type, int ip,
   return chapeau->Num;
 }
 
-static int Extrude_ProtudeCurve(int type, int ic,
-                                double T0, double T1, double T2,
-                                double A0, double A1, double A2,
-                                double X0, double X1, double X2, double alpha,
-                                Surface **ps, int final,
-                                ExtrudeParams *e)
+int Extrude_ProtudeCurve(int type, int ic,
+			 double T0, double T1, double T2,
+			 double A0, double A1, double A2,
+			 double X0, double X1, double X2, double alpha,
+			 Surface **ps, int final,
+			 ExtrudeParams *e)
 {
   double matrix[4][4], T[3], Ax[3];
   Curve *CurveBeg, *CurveEnd;
@@ -2469,11 +2469,11 @@ static int Extrude_ProtudeCurve(int type, int ic,
   return chapeau->Num;
 }
 
-static int Extrude_ProtudeSurface(int type, int is,
-                                  double T0, double T1, double T2,
-                                  double A0, double A1, double A2,
-                                  double X0, double X1, double X2, double alpha,
-                                  Volume **pv, ExtrudeParams *e)
+int Extrude_ProtudeSurface(int type, int is,
+			   double T0, double T1, double T2,
+			   double A0, double A1, double A2,
+			   double X0, double X1, double X2, double alpha,
+			   Volume **pv, ExtrudeParams *e)
 {
   double matrix[4][4], T[3], Ax[3];
   Curve *c, *c2;
@@ -2684,6 +2684,7 @@ void ExtrudeShapes(int type, List_T *list_in,
                    ExtrudeParams *e,
                    List_T *list_out)
 {
+ 
   for(int i = 0; i < List_Nbr(list_in); i++){
     Shape shape;
     List_Read(list_in, i, &shape);
@@ -2753,6 +2754,7 @@ void ExtrudeShapes(int type, List_T *list_in,
         top.Num = Extrude_ProtudeSurface(type, shape.Num, T0, T1, T2,
                                          A0, A1, A2, X0, X1, X2, alpha,
                                          &pv, e);
+	printf("extruded surface =%d \n", top.Num);
         Surface *ps = FindSurface(top.Num);
         top.Type = ps ? ps->Typ : 0;
 
@@ -2761,6 +2763,7 @@ void ExtrudeShapes(int type, List_T *list_in,
           Shape body;
           body.Num = pv->Num;
           body.Type = pv->Typ;
+	  printf("extruded volume =%d \n", pv->Num);
           List_Add(list_out, &body);
           if(CTX::instance()->geom.extrudeReturnLateral){
             for(int j = 0; j < List_Nbr(pv->Surfaces); j++){
@@ -2783,6 +2786,7 @@ void ExtrudeShapes(int type, List_T *list_in,
       break;
     }
   }
+
 }
 
 // Duplicate removal

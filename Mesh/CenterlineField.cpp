@@ -326,10 +326,13 @@ Centerline::Centerline(std::string fileName): kdtree(0), kdtreeR(0), nodes(0), n
   importFile(fileName);
   buildKdTree();
   nbPoints = 25;
+  hLayer = 0.3;
+  nbElemLayer = 3;
 
   update_needed = false;
   is_cut = false;
   is_closed = false;
+  is_extruded = false;
 
 }
 Centerline::Centerline(): kdtree(0), kdtreeR(0), nodes(0), nodesR(0){
@@ -340,13 +343,21 @@ Centerline::Centerline(): kdtree(0), kdtreeR(0), nodes(0), nodesR(0){
   recombine = CTX::instance()->mesh.recombineAll;
   fileName = "centerlines.vtk";//default
   nbPoints = 25;
+  hLayer = 0.3;
+  nbElemLayer = 3;
 
   options["FileName"] = new FieldOptionString (fileName, "File name for the centerlines", &update_needed);
   options["nbPoints"] = new FieldOptionInt(nbPoints, "Number of mesh elements in a circle");
   callbacks["closeVolume"] = new FieldCallbackGeneric<Centerline>(this, &Centerline::closeVolume, "Create In/Outlet planar faces \n");
   callbacks["cutMesh"] = new FieldCallbackGeneric<Centerline>(this, &Centerline::cutMesh, "Cut the initial mesh in different mesh partitions using the centerlines \n");
+
+  callbacks["extrudeWall"] = new FieldCallbackGeneric<Centerline>(this, &Centerline::extrudeWall, "Extrude wall \n");
+  options["nbElemLayer"] = new FieldOptionInt(nbElemLayer, "Number of mesh elements the extruded layer");
+  options["hLayer"] = new FieldOptionDouble(hLayer, "Thickness (% of radius) of the extruded layer");
+
   is_cut = false;
   is_closed = false;
+  is_extruded = false;
 
 }
 
@@ -827,6 +838,14 @@ void Centerline::closeVolume(){
 
 }
 
+void Centerline::extrudeWall(){
+
+  is_extruded = true;
+  //printf("calling extrude wall \n");
+  //exit(1);
+
+}
+
 void Centerline::cutMesh(){
 
   is_cut = true;
@@ -860,9 +879,13 @@ void Centerline::cutMesh(){
     double L = edges[i].length;
     double D = (edges[i].minRad+edges[i].maxRad);
     double AR = L/D;
-    printf("*** Centerline branch %d (AR=%d) \n", i, (int)floor(AR + 0.5));
-    if( AR > 2.5){
-      int nbSplit = (int)floor(AR/3. + 0.5);
+    printf("*** Centerline branch %d (AR=%g):  ", edges[i].tag, AR);
+    printf("children (%d) = ", edges[i].children.size());
+    for (int k= 0; k< edges[i].children.size() ; k++) printf("%d ", edges[i].children[k].tag);
+    printf("\n");
+   
+    int nbSplit = (int)floor(AR/2. + 0.5); 
+    if( AR > 3.0){
       double li  = L/nbSplit;
       double lc = 0.0;
       for (unsigned int j= 0; j < lines.size(); j++){
@@ -873,7 +896,8 @@ void Centerline::cutMesh(){
 	  SVector3 pt(v1->x(), v1->y(), v1->z());
 	  SVector3 dir(v2->x()-v1->x(),v2->y()-v1->y(),v2->z()-v1->z());
 	  printf("->> cut length %d split \n",  nbSplit);
-	  cutByDisk(pt, dir, edges[i].maxRad);
+	  std::map<MLine*,double>::iterator itr = radiusl.find(lines[j]);
+	  bool cutted = cutByDisk(pt, dir, itr->second);
 	  nbSplit--;
 	  lc = 0.0;
 	}
@@ -888,7 +912,18 @@ void Centerline::cutMesh(){
       SVector3 pt(v1->x(), v1->y(), v1->z());
       SVector3 dir(v2->x()-v1->x(),v2->y()-v1->y(),v2->z()-v1->z());
       printf("-->> cut bifurcation \n");
-      cutByDisk(pt, dir, edges[i].maxRad);
+      std::map<MLine*,double>::iterator itr = radiusl.find(lines[lines.size()-1]);
+      bool cutted = cutByDisk(pt, dir, itr->second);
+      if(!cutted){
+	int l = lines.size()-1-lines.size()/(4*nbSplit);
+	v1 = lines[l]->getVertex(1);
+	v2 = lines[l]->getVertex(0);
+	pt = SVector3(v1->x(), v1->y(), v1->z());
+	dir = SVector3(v2->x()-v1->x(),v2->y()-v1->y(),v2->z()-v1->z());
+	printf("-->> cut bifurcation NEW \n");
+	itr = radiusl.find(lines[l]);
+	cutted = cutByDisk(pt, dir, itr->second);
+      }
     }
  }
 
@@ -905,11 +940,14 @@ void Centerline::cutMesh(){
   createSplitCompounds();
   if (is_closed) createClosedVolume();
 
+  //extrude wall
+  //if(is_extruded) extrudeNormalWall();
+
   Msg::Info("Splitting mesh by centerlines done ");
 
 }
 
-void Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
+bool Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
 
   double a = NORM.x();
   double b = NORM.y();
@@ -917,15 +955,17 @@ void Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
   double d = -a * PT.x() - b * PT.y() - c * PT.z();
   //printf("cut disk (R=%g)= %g %g %g %g \n", maxRad, a, b, c, d);
 
+  int maxStep = 40;
   const double EPS = 0.007;
+
   std::set<MEdge,Less_Edge> allEdges;
   for(unsigned int i = 0; i < triangles.size(); i++)
     for ( unsigned int j= 0; j <  3; j++)
       allEdges.insert(triangles[i]->getEdge(j));
   bool closedCut = false;
   int step = 0;
-  while (!closedCut && step < 20){
-    double rad = 1.2*maxRad+0.1*step*maxRad;
+  while (!closedCut && step < maxStep){
+    double rad = 1.1*maxRad+0.05*step*maxRad;
     std::map<MEdge,MVertex*,Less_Edge> cutEdges;
     std::set<MVertex*> cutVertices;
     std::vector<MTriangle*> newTris;
@@ -961,12 +1001,11 @@ void Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
       triangles.clear();
       triangles = newTris;
       theCut.insert(newCut.begin(),newCut.end());
-      //if (step > 1) printf("YOUPIIIIIIIIIIIIIIIIIIIIIII \n");
       break;
     }
     else {
-      //if (step == 9) {printf("no closed cut %d \n", (int)newCut.size()); };
       step++;
+      //if (step == maxStep) {printf("no closed cut %d \n", (int)newCut.size()); };
       // // triangles = newTris;
       // // theCut.insert(newCut.begin(),newCut.end());
       // char name[256];
@@ -987,9 +1026,15 @@ void Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
     }
   }
 
-
-
-  return;
+ 
+  if (step < maxStep){
+    //printf("cutByDisk OK step =%d  \n", step);
+    return true;
+  }
+  else {
+    //printf("cutByDisk not succeeded \n");
+    return false;
+  }
 
 }
 
@@ -1072,14 +1117,14 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    buildOrthoBasis2(dir_a, dir_n, dir_t);
    
    double lc = 2*M_PI*radMax/nbPoints;
-   double lc_a = 3.*lc;
+   double lc_a = 3.5*lc;
    double lc_n, lc_t;
 
    if (onTubularSurface){
      lc_n = lc_t = lc;
    }
    else{
-     double e = radMax/3.;
+     double e = radMax/4.;
      double hn = e/10.;
      double rm = std::max(radMax-ds, radMax-e);
      lc_t = 2*M_PI*rm/nbPoints;
@@ -1193,7 +1238,7 @@ void Centerline::printSplit() const{
       fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
 	      l->getVertex(0)->x(), l->getVertex(0)->y(), l->getVertex(0)->z(),
 	      l->getVertex(1)->x(), l->getVertex(1)->y(), l->getVertex(1)->z(),
-	      (double)i, (double)i);
+	      (double)edges[i].tag, (double)edges[i].tag);
     }
   }
   fprintf(f,"};\n");

@@ -65,7 +65,9 @@ class Centerline : public Field{
   int NF, NV, NE, NR;
   bool is_cut;
   bool is_closed;
-
+  bool is_extruded;
+  double hLayer;
+  int nbElemLayer;
 
   //all (unique) lines of centerlines
   std::vector<MLine*> lines;
@@ -144,9 +146,12 @@ class Centerline : public Field{
   //Create In and Outlet Planar Faces
   void closeVolume();
 
+  //Create extruded wall
+  void extrudeWall();
+
   // Cut the tubular structure with a disk
   // perpendicular to the tubular structure
-  void cutByDisk(SVector3 &pt, SVector3 &dir, double &maxRad);
+  bool cutByDisk(SVector3 &pt, SVector3 &dir, double &maxRad);
 
   //create discrete faces
   void createFaces();
