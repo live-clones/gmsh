@@ -338,6 +338,7 @@ int CellComplex::reduceComplex(bool docombine, bool omit)
   Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",
             getSize(3), getSize(2), getSize(1), getSize(0));
 
+  if(!getSize(0)) return 0;
   int count = 0;
   std::vector<Cell*> empty;
   for(int i = 3; i > 0; i--) count = count + reduction(i, false, empty);
@@ -400,6 +401,7 @@ int CellComplex::coreduceComplex(bool docombine, bool omit)
   Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",
             getSize(3), getSize(2), getSize(1), getSize(0));
 
+  if(!getSize(0)) return 0;
   int count = 0;
   removeSubdomain();
   std::vector<Cell*> empty;
