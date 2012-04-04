@@ -2308,7 +2308,7 @@ bool Rec2DCollapse::whatWouldYouDo
 /*****************/
 Rec2DEdge::Rec2DEdge(Rec2DVertex *rv0, Rec2DVertex *rv1)
 : _rv0(rv0), _rv1(rv1), _lastUpdate(-1),
-  _weight(REC2D_EDGE_BASE+2*REC2D_EDGE_QUAD), _boundary(-1)
+  _weight(REC2D_EDGE_BASE+2*REC2D_EDGE_QUAD)
 {
   _computeQual();
   reveal();
@@ -2397,6 +2397,13 @@ void Rec2DEdge::updateQual()
   _computeQual();
   Rec2DData::addValEdge(_weight*(_qual-oldQual));
   _lastUpdate = Recombine2D::getNumChange();
+}
+
+bool Rec2DEdge::isOnBoundary() const
+{
+  Rec2DElement *elem[2];
+  Rec2DEdge::getElements(this, elem);
+  return !elem[1];
 }
 
 Rec2DElement* Rec2DEdge::getUniqueElement(const Rec2DEdge *re)
@@ -3035,8 +3042,6 @@ void Rec2DElement::hide()
   for (int i = 0; i < _numEdge; ++i) {
     if (_numEdge == 3)
       _edges[i]->remHasTri();
-    else
-      _edges[i]->remHasQuad();
     if (_elements[i])
       _elements[i]->rmvNeighbour(_edges[i], this);
   }
@@ -3053,8 +3058,6 @@ void Rec2DElement::reveal(Rec2DVertex **rv)
   for (int i = 0; i < _numEdge; ++i) {
     if (_numEdge == 3)
       _edges[i]->addHasTri();
-    else
-      _edges[i]->addHasQuad();
     if (_elements[i])
       _elements[i]->addNeighbour(_edges[i], this);
   }
@@ -3177,8 +3180,6 @@ void Rec2DElement::add(Rec2DEdge *re)
   
   if (_numEdge == 3)
     re->addHasTri();
-  else
-    re->addHasQuad();
 }
 
 bool Rec2DElement::has(const Rec2DEdge *re) const
@@ -3281,8 +3282,6 @@ void Rec2DElement::swap(Rec2DEdge *re1, Rec2DEdge *re2)
     if (_edges[i] == re1) {
       if (_numEdge == 3)
         re1->remHasTri();
-      else
-        re1->remHasQuad();
       if (_elements[i])
         _elements[i]->rmvNeighbour(_edges[i], this);
       Rec2DElement *elem[2];
@@ -3290,8 +3289,6 @@ void Rec2DElement::swap(Rec2DEdge *re1, Rec2DEdge *re2)
       _edges[i] = (Rec2DEdge*)re2;
       if (_numEdge == 3)
         re2->addHasTri();
-      else
-        re2->addHasQuad();
       if (elem[1])
         Msg::Error("[Rec2DElement] Invalid swapping (there are %d and %d)", elem[0]->getNum(), elem[1]->getNum());
       else if (elem[0]) {
