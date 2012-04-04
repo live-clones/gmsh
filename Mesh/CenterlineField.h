@@ -148,6 +148,7 @@ class Centerline : public Field{
 
   //Create extruded wall
   void extrudeWall();
+  void extrudeBoundaryLayerWall();
 
   // Cut the tubular structure with a disk
   // perpendicular to the tubular structure

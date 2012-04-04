@@ -2753,8 +2753,7 @@ void ExtrudeShapes(int type, List_T *list_in,
         Shape top;
         top.Num = Extrude_ProtudeSurface(type, shape.Num, T0, T1, T2,
                                          A0, A1, A2, X0, X1, X2, alpha,
-                                         &pv, e);
-	printf("extruded surface =%d \n", top.Num);
+                                         &pv, e);	
         Surface *ps = FindSurface(top.Num);
         top.Type = ps ? ps->Typ : 0;
 
@@ -2763,7 +2762,6 @@ void ExtrudeShapes(int type, List_T *list_in,
           Shape body;
           body.Num = pv->Num;
           body.Type = pv->Typ;
-	  printf("extruded volume =%d \n", pv->Num);
           List_Add(list_out, &body);
           if(CTX::instance()->geom.extrudeReturnLateral){
             for(int j = 0; j < List_Nbr(pv->Surfaces); j++){

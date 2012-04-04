@@ -288,15 +288,7 @@ std::vector<GFace *> GeoFactory::addRuledFaces(GModel *gm,
 GEntity* GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e, int nbLayers, double hLayer, int dir, int view)
 {
 
-  printf("coucou dans geo extrude normals \n");
-  Msg::Debug("Gmsh model (GModel) before extrude has:");
-  Msg::Debug("%d Vertices", gm->getNumVertices());
-  Msg::Debug("%d Edges", gm->getNumEdges());
-  Msg::Debug("%d Faces", gm->getNumFaces());
-  Msg::Debug("%d Regions", gm->getNumRegions());
-
   ExtrudeParams ep;
-  printf("***** BL INDEX =%d \n", dir);
   ep.mesh.BoundaryLayerIndex = dir;
   ep.mesh.ViewIndex = view;
   ep.mesh.NbLayer = 1; //this may be more general for defining different layers
