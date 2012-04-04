@@ -316,6 +316,7 @@ class Rec2DAction {
     virtual int getNumElement() = 0;
     virtual void getElements(std::vector<Rec2DElement*>&) const = 0;
     virtual void getNeighbourElements(std::vector<Rec2DElement*>&) const = 0;
+    virtual void getNeighbElemWithActions(std::vector<Rec2DElement*>&) const = 0;
     virtual int getNum(double shiftx, double shifty) = 0;
     virtual Rec2DElement* getRandomElement() const = 0;
     //virtual void print() = 0;
@@ -362,6 +363,7 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     virtual inline int getNumElement() {return 2;}
     virtual void getElements(std::vector<Rec2DElement*>&) const;
     virtual void getNeighbourElements(std::vector<Rec2DElement*>&) const;
+    virtual void getNeighbElemWithActions(std::vector<Rec2DElement*>&) const;
     virtual int getNum(double shiftx, double shifty);
     virtual Rec2DElement* getRandomElement() const;
     //virtual void print();
@@ -411,6 +413,9 @@ class Rec2DCollapse : public Rec2DAction {
     }
     virtual void getNeighbourElements(std::vector<Rec2DElement*> &vec) const {
       _rec->getNeighbourElements(vec);
+    }
+    virtual void getNeighbElemWithActions(std::vector<Rec2DElement*> &vec) const {
+      _rec->getNeighbElemWithActions(vec);
     }
     virtual int getNum(double shiftx, double shifty) {
       return -1;

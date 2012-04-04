@@ -1918,11 +1918,26 @@ void Rec2DTwoTri2Quad::getNeighbourElements(std::vector<Rec2DElement*> &elem) co
   elem.clear();
   _triangles[0]->getMoreNeighbours(elem);
   _triangles[1]->getMoreNeighbours(elem);
-  for (unsigned int i = 0; i < elem.size(); ++i) {
+  unsigned int i = 0;
+  while (i < elem.size()) {
     if (elem[i] == _triangles[0] || elem[i] == _triangles[0]) {
       elem[i] = elem.back();
       elem.pop_back();
     }
+    else ++i;
+  }
+}
+
+void Rec2DTwoTri2Quad::getNeighbElemWithActions(std::vector<Rec2DElement*> &elem) const
+{
+  getNeighbourElements(elem);
+  unsigned int i = 0;
+  while (i < elem.size()) {
+    if (!elem[i]->getNumActions()) {
+      elem[i] = elem.back();
+      elem.pop_back();
+    }
+    else ++i;
   }
 }
 
@@ -3536,41 +3551,39 @@ Rec2DNode::Rec2DNode(Rec2DNode *father, Rec2DAction *ra,
   for (int i = 0; i < REC2D_NUMB_SONS; ++i)
     _son[i] = NULL;
   
-  std::vector<Rec2DElement*> neighbours;
-  if (_ra) {
-    if (depth)
-      _ra->getNeighbourElements(neighbours);
-    _dataChange = Rec2DData::getNewDataChange();
-    _ra->apply(_dataChange, _createdActions);
-    _ra->addPointing();
+  if (!depth && !ra) {
+    Msg::Error("[Rec2DNode] Nothing to do");
+    return;
   }
   
-  if (father)
+  if (!depth) {
+    _globalQuality = _ra->getReward();
     _remainingTri = father->getNumTri() - _ra->getNumElement();
-  else
+    _bestEndGlobQual = bestEndGlobQual = _globalQuality;
+  }
+  else {
+    std::vector<Rec2DElement*> neighbours;
+    if (_ra) {
+      _ra->getNeighbElemWithActions(neighbours);
+      _dataChange = Rec2DData::getNewDataChange();
+      _ra->apply(_dataChange, _createdActions);
+      _ra->addPointing();
+    }
     _remainingTri = Rec2DData::getNumElement();
-  _globalQuality = Rec2DData::getGlobalQuality();
-  Msg::Warning("@ %d %d %g %g", Rec2DData::getNumVert(),
-                                Rec2DData::getNumEdge(),
-                                Rec2DData::getValVert(),
-                                Rec2DData::getValEdge() );
-  
-  if (depth) {
+    _globalQuality = Rec2DData::getGlobalQuality();
+    
     Recombine2D::incNumChange();
     std::vector<Rec2DAction*> actions;
     Recombine2D::nextTreeActions(actions, neighbours);
     
     if (actions.empty()) {
       _bestEndGlobQual = _globalQuality;
-      if (depth < 0)
+      if (depth < 0) // when developping all the tree
         Rec2DData::addEndNode(this);
     }
     else {
       for (unsigned int i = 0; i < actions.size(); ++i) {
-        std::vector<Rec2DElement*> elem;
-        actions[i]->getElements(elem);
         double bestSonEGQ;
-        
         _son[i] = new Rec2DNode(this, actions[i], bestSonEGQ, depth-1);
         if (bestSonEGQ > _bestEndGlobQual) {
           _bestEndGlobQual = bestSonEGQ;
@@ -3580,18 +3593,13 @@ Rec2DNode::Rec2DNode(Rec2DNode *father, Rec2DAction *ra,
         }
       }
     }
-  }
-  else
-    _bestEndGlobQual = _globalQuality;
-  
-  bestEndGlobQual = _bestEndGlobQual;
-  
-  if (_dataChange) {
-    if (depth)
+    bestEndGlobQual = _bestEndGlobQual;
+    if (_dataChange) {
       Recombine2D::incNumChange();
-    if (!Rec2DData::revertDataChange(_dataChange))
-      Msg::Error(" 1 - don't reverted changes");
-    _dataChange = NULL;
+      if (!Rec2DData::revertDataChange(_dataChange))
+        Msg::Error(" 1 - don't reverted changes");
+      _dataChange = NULL;
+    }
   }
 }
 
@@ -3618,36 +3626,17 @@ Rec2DNode* Rec2DNode::selectBestNode()
 
 void Rec2DNode::develop(int depth, double &bestEndGlobQual)
 {
-  if (!_ra) {
-    Msg::Error("[Rec2DNode] no action in node");
-    return;
-  }
-  if (depth < 1) {
-    Msg::Error("[Rec2DNode] That should not happen :'(");
-    Msg::Error(" ");
+  if (!_ra || depth < 1 || _dataChange) {
+    Msg::Error("[Rec2DNode] should not be there");
     return;
   }
   
   _bestEndGlobQual = .0;
-  bool delChanges = !_dataChange;
   std::vector<Rec2DElement*> neighbours;
-  
-  if (_ra) {
-    _ra->getNeighbourElements(neighbours);
-    unsigned int i = 0;
-    while (i < neighbours.size()) {
-      if (!neighbours[i]->getNumActions()) {
-        neighbours[i] = neighbours.back();
-        neighbours.pop_back();
-      }
-      else
-        ++i;
-    }
-  }
-  if (delChanges) {
-    _dataChange = Rec2DData::getNewDataChange();
-    _ra->apply(_dataChange, _createdActions);
-  }
+  _ra->getNeighbElemWithActions(neighbours);
+  _dataChange = Rec2DData::getNewDataChange();
+  _ra->apply(_dataChange, _createdActions);
+  _ra->addPointing();
   
   if (_son[0]) {
     int i = 0;
@@ -3663,16 +3652,15 @@ void Rec2DNode::develop(int depth, double &bestEndGlobQual)
       ++i;
     }
   }
-  else {
+  else { 
     Recombine2D::incNumChange();
     std::vector<Rec2DAction*> actions;
     Recombine2D::nextTreeActions(actions, neighbours);
     
-    if (actions.size()) {
+    if (actions.empty())
+      _bestEndGlobQual = _globalQuality;
+    else {
       for (unsigned int i = 0; i < actions.size(); ++i) {
-        if (!actions[i]) {
-          Msg::Error("null %d/%d", i, actions.size());
-        }
         double bestSonEGQ;
         _son[i] = new Rec2DNode(this, actions[i], bestSonEGQ, depth-1);
         if (bestSonEGQ > _bestEndGlobQual) {
@@ -3683,18 +3671,12 @@ void Rec2DNode::develop(int depth, double &bestEndGlobQual)
         }
       }
     }
-    else
-      _bestEndGlobQual = _globalQuality;
   }
-  
   bestEndGlobQual = _bestEndGlobQual;
-  
-  if (delChanges) {
-    Recombine2D::incNumChange();
-    if (!Rec2DData::revertDataChange(_dataChange))
-      Msg::Error(" 1 - don't reverted changes");Msg::Error(" ");
-    _dataChange = NULL;
-  }
+  Recombine2D::incNumChange();
+  if (!Rec2DData::revertDataChange(_dataChange))
+    Msg::Error(" 1 - don't reverted changes");
+  _dataChange = NULL;
 }
 
 bool Rec2DNode::makeChanges()
