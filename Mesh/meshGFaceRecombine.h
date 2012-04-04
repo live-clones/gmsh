@@ -443,7 +443,6 @@ class Rec2DEdge {
     Rec2DVertex *_rv0, *_rv1;
     double _qual;
     int _lastUpdate, _weight;
-    int _boundary; // pourrait faire sans !
     
   public :
     Rec2DEdge(Rec2DVertex*, Rec2DVertex*);
@@ -459,11 +458,11 @@ class Rec2DEdge {
     void updateQual();
     void print() const;
     
-    inline void addHasTri() {_addWeight(-REC2D_EDGE_QUAD); ++_boundary;}
-    inline void remHasTri() {_addWeight(REC2D_EDGE_QUAD); --_boundary;}
-    inline void addHasQuad() {++_boundary;}
-    inline void remHasQuad() {--_boundary;}
-    inline bool isOnBoundary() const {return !_boundary;}
+    inline void addHasTri() {_addWeight(-REC2D_EDGE_QUAD);}
+    inline void remHasTri() {_addWeight(REC2D_EDGE_QUAD);}
+    //inline void addHasQuad() {}
+    //inline void remHasQuad() {}
+    inline bool isOnBoundary() const;
     
     inline Rec2DVertex* getVertex(int i) const {if (i) return _rv1; return _rv0;}
     Rec2DVertex* getOtherVertex(const Rec2DVertex*) const;
