@@ -95,9 +95,9 @@ class Rec2DData {
     static Rec2DData *_current;
     int _remainingTri;
     
-    std::set<Rec2DEdge*> _edges;
-    std::set<Rec2DVertex*> _vertices;
-    std::set<Rec2DElement*> _elements;
+    std::vector<Rec2DEdge*> _edges;
+    std::vector<Rec2DVertex*> _vertices;
+    std::vector<Rec2DElement*> _elements;
     
     std::list<Rec2DAction*> _actions;
     std::vector<Rec2DAction*> _hiddenActions;
@@ -162,9 +162,9 @@ class Rec2DData {
     static inline bool hasAction() {return !_current->_actions.empty();}
     static void checkObsolete();
     
-    typedef std::set<Rec2DEdge*>::iterator iter_re;
-    typedef std::set<Rec2DVertex*>::iterator iter_rv;
-    typedef std::set<Rec2DElement*>::iterator iter_rel;
+    typedef std::vector<Rec2DEdge*>::iterator iter_re;
+    typedef std::vector<Rec2DVertex*>::iterator iter_rv;
+    typedef std::vector<Rec2DElement*>::iterator iter_rel;
     static inline iter_re firstEdge() {return _current->_edges.begin();}
     static inline iter_rv firstVertex() {return _current->_vertices.begin();}
     static inline iter_rel firstElement() {return _current->_elements.begin();}
@@ -172,29 +172,19 @@ class Rec2DData {
     static inline iter_rv lastVertex() {return _current->_vertices.end();}
     static inline iter_rel lastElement() {return _current->_elements.end();}
     
-    static inline void add(const Rec2DEdge *re) {
-      _current->_edges.insert((Rec2DEdge*)re);
-    }
-    static inline void add(const Rec2DVertex *rv) {
-      _current->_vertices.insert((Rec2DVertex*)rv);
-    }
-#ifndef REC2D_DRAW
-    static inline void add(const Rec2DElement *rel) {
-      _current->_elements.insert((Rec2DElement*)rel);
-      }
-#else
-    static void add(Rec2DElement *rel);
-#endif
+    static void add(const Rec2DEdge*);
+    static void add(const Rec2DVertex*);
+    static void add(const Rec2DElement*);
     static inline void add(const Rec2DAction *ra) {
       _current->_actions.push_back((Rec2DAction*)ra);
     }
     static inline void addHidden(const Rec2DAction *ra) {
       _current->_hiddenActions.push_back((Rec2DAction*)ra);
     }
-    static void remove(const Rec2DEdge*);
-    static void remove(const Rec2DVertex*);
-    static void remove(/*const*/ Rec2DElement*);
-    static void remove(const Rec2DAction*);
+    static void rmv(const Rec2DEdge*);
+    static void rmv(const Rec2DVertex*);
+    static void rmv(const Rec2DElement*);
+    static void rmv(const Rec2DAction*);
     
     static inline void addEndNode(const Rec2DNode *rn) {
       _current->_endNodes.push_back((Rec2DNode*)rn);
@@ -444,6 +434,10 @@ class Rec2DEdge {
     double _qual;
     int _lastUpdate, _weight;
     
+    int _pos;
+    friend void Rec2DData::add(const Rec2DEdge*);
+    friend void Rec2DData::rmv(const Rec2DEdge*);
+    
   public :
     Rec2DEdge(Rec2DVertex*, Rec2DVertex*);
     ~Rec2DEdge() {hide();}
@@ -497,6 +491,10 @@ class Rec2DVertex {
     std::vector<Rec2DEdge*> _edges;
     std::vector<Rec2DElement*> _elements;
     SPoint2 _param;
+    
+    int _pos;
+    friend void Rec2DData::add(const Rec2DVertex*);
+    friend void Rec2DData::rmv(const Rec2DVertex*);
     
     static double **_qualVSnum;
     static double **_gains;
@@ -581,6 +579,10 @@ class Rec2DElement {
     Rec2DElement *_elements[4];  // NULL if no neighbour
     std::vector<Rec2DAction*> _actions;
     
+    int _pos;
+    friend void Rec2DData::add(const Rec2DElement*);
+    friend void Rec2DData::rmv(const Rec2DElement*);
+    
   public :
     Rec2DElement(MTriangle*, const Rec2DEdge**, Rec2DVertex **rv = NULL);
     Rec2DElement(MQuadrangle*, const Rec2DEdge**, Rec2DVertex **rv = NULL);
@@ -607,7 +609,7 @@ class Rec2DElement {
     
     inline MElement* getMElement() const {return _mEl;}
 #ifdef REC2D_DRAW
-    MTriangle* getMTriangle() {
+    MTriangle* getMTriangle() const {
       if (_numEdge == 3) {
         if (_mEl)
           return (MTriangle*) _mEl;
@@ -616,10 +618,10 @@ class Rec2DElement {
       }
       return NULL;
     }
-    MQuadrangle* getMQuadrangle() {
+    MQuadrangle* getMQuadrangle() const {
       if (_numEdge == 4) {
         if (!_mEl)
-          _mEl = (MElement*) _createQuad();
+          ((Rec2DElement*)this)->_mEl = (MElement*) _createQuad();
         return (MQuadrangle*) _mEl;
       }
       return NULL;

@@ -578,68 +578,80 @@ Rec2DData::~Rec2DData()
     Rec2DData::_current = NULL;
 }
 
-#ifdef REC2D_DRAW
-void Rec2DData::add(Rec2DElement *rel)
+void Rec2DData::add(const Rec2DEdge *re)
 {
-  _current->_elements.insert(rel);
+  if (re->_pos > -1) {
+    Msg::Error("[Rec2DData] edge already there");
+    return;
+  }
+  ((Rec2DEdge*)re)->_pos = _current->_edges.size();
+  _current->_edges.push_back((Rec2DEdge*)re);
+}
+
+void Rec2DData::add(const Rec2DVertex *rv)
+{
+  if (rv->_pos > -1) {
+    Msg::Error("[Rec2DData] vert %d already there (size %d)", rv, _current->_vertices.size());
+    return;
+  }
+  ((Rec2DVertex*)rv)->_pos = _current->_vertices.size();
+  _current->_vertices.push_back((Rec2DVertex*)rv);
+}
+
+void Rec2DData::add(const Rec2DElement *rel)
+{
+  if (rel->_pos > -1) {
+    Msg::Error("[Rec2DData] elem already there");
+    return;
+  }
+  ((Rec2DElement*)rel)->_pos = _current->_elements.size();
+  _current->_elements.push_back((Rec2DElement*)rel);
   
+#ifdef REC2D_DRAW
   MTriangle *t = rel->getMTriangle();
   if (t)
     _current->_tri.push_back(t);
   MQuadrangle *q = rel->getMQuadrangle();
   if (q)
     _current->_quad.push_back(q);
-  
-}
 #endif
-void Rec2DData::remove(const Rec2DEdge *re)
-{
-  /*bool b = false;
-  unsigned int i = 0;
-  while (i < _current->_edges.size()) {
-    if (_current->_edges[i] == re) {
-      _current->_edges[i] = _current->_edges.back();
-      _current->_edges.pop_back();
-      if (b)
-        Msg::Error("[Rec2DData] Two or more times same edge");
-      b = true;
-    }
-    else
-      ++i;
-  }
-  if (!b)
-    Msg::Error("[Rec2DData] No edge");
-  */
-  _current->_edges.erase((Rec2DEdge*)re);
 }
 
-void Rec2DData::remove(const Rec2DVertex *rv)
+void Rec2DData::rmv(const Rec2DEdge *re)
 {
-  _current->_vertices.erase((Rec2DVertex*)rv);
-  static int a = -1;
-  if (++a < 1)
-    Msg::Warning("FIXME Verifier element supprimŽ");
+  if (re->_pos < 0) {
+    Msg::Error("[Rec2DData] edge not there");
+    return;
+  }
+  _current->_edges.back()->_pos = re->_pos;
+  _current->_edges[re->_pos] = _current->_edges.back();
+  _current->_edges.pop_back();
+  ((Rec2DEdge*)re)->_pos = -1;
 }
 
-void Rec2DData::remove(/*const*/ Rec2DElement *rel)
+void Rec2DData::rmv(const Rec2DVertex *rv)
 {
-  /*bool b = false;
-  unsigned int i = 0;
-  while (i < _current->_elements.size()) {
-    if (_current->_elements[i] == rel) {
-      _current->_elements[i] = _current->_elements.back();
-      _current->_elements.pop_back();
-      if (b)
-        Msg::Error("[Rec2DData] Two or more times same element");
-      b = true;
-    }
-    else
-      ++i;
+  if (rv->_pos < 0) {
+    Msg::Error("[Rec2DData] vert not there");
+    return;
   }
-  if (!b)
-    Msg::Error("[Rec2DData] No element");
-  */
-  _current->_elements.erase(rel);
+  _current->_vertices.back()->_pos = rv->_pos;
+  _current->_vertices[rv->_pos] = _current->_vertices.back();
+  _current->_vertices.pop_back();
+  ((Rec2DVertex*)rv)->_pos = -1;
+}
+
+void Rec2DData::rmv(const Rec2DElement *rel)
+{
+  if (rel->_pos < 0) {
+    Msg::Error("[Rec2DData] vert not there");
+    return;
+  }
+  _current->_elements.back()->_pos = rel->_pos;
+  _current->_elements[rel->_pos] = _current->_elements.back();
+  _current->_elements.pop_back();
+  ((Rec2DElement*)rel)->_pos = -1;
+  
 #ifdef REC2D_DRAW
   MTriangle *t = rel->getMTriangle();
   if (t) {
@@ -666,7 +678,7 @@ void Rec2DData::remove(/*const*/ Rec2DElement *rel)
 #endif
 }
 
-void Rec2DData::remove(const Rec2DAction *ra)
+void Rec2DData::rmv(const Rec2DAction *ra)
 {
   std::list<Rec2DAction*>::iterator it = _current->_actions.begin();
   while (it != _current->_actions.end()) {
@@ -1597,7 +1609,7 @@ void Rec2DTwoTri2Quad::hide()
     _triangles[0]->remove(this);
   if (_triangles[1])
     _triangles[1]->remove(this);
-  Rec2DData::remove(this);
+  Rec2DData::rmv(this);
 }
 
 void Rec2DTwoTri2Quad::reveal()
@@ -1989,7 +2001,7 @@ void Rec2DCollapse::hide()
     _rec->_triangles[0]->remove(this);
   if (_rec->_triangles[1])
     _rec->_triangles[1]->remove(this);
-  Rec2DData::remove(this);
+  Rec2DData::rmv(this);
 }
 
 void Rec2DCollapse::reveal()
@@ -2308,7 +2320,7 @@ bool Rec2DCollapse::whatWouldYouDo
 /*****************/
 Rec2DEdge::Rec2DEdge(Rec2DVertex *rv0, Rec2DVertex *rv1)
 : _rv0(rv0), _rv1(rv1), _lastUpdate(-1),
-  _weight(REC2D_EDGE_BASE+2*REC2D_EDGE_QUAD)
+  _weight(REC2D_EDGE_BASE+2*REC2D_EDGE_QUAD), _pos(-1)
 {
   _computeQual();
   reveal();
@@ -2318,7 +2330,7 @@ void Rec2DEdge::hide()
 {
   _rv0->rmv(this);
   _rv1->rmv(this);
-  Rec2DData::remove(this);
+  Rec2DData::rmv(this);
   Rec2DData::addEdge(-_weight, -getWeightedQual());
 }
 
@@ -2538,7 +2550,7 @@ void Rec2DEdge::getActions(std::vector<Rec2DAction*> &actions) const
 /*******************/
 Rec2DVertex::Rec2DVertex(MVertex *v)
 : _v(v), _angle(4.*M_PI), _onWhat(1), _parity(0),
-  _lastUpdate(-1), _sumQualAngle(.0)
+  _lastUpdate(-1), _sumQualAngle(.0), _pos(-1)
 {
   reparamMeshVertexOnFace(_v, Recombine2D::getGFace(), _param);
   Rec2DData::add(this);
@@ -2553,7 +2565,7 @@ Rec2DVertex::Rec2DVertex(Rec2DVertex *rv, double ang)
 : _v(rv->_v), _angle(ang), _onWhat(-1), _parity(rv->_parity),
   _lastUpdate(rv->_lastUpdate),
   _sumQualAngle(rv->_sumQualAngle), _edges(rv->_edges),
-  _elements(rv->_elements), _param(rv->_param)
+  _elements(rv->_elements), _param(rv->_param), _pos(-1)
 {
   static int a = -1;
   if (++a < -1) Msg::Warning("FIXME Edges really necessary ?");
@@ -2580,7 +2592,7 @@ void Rec2DVertex::hide()
   if (_parity)
     Rec2DData::removeParity(this, _parity);
   
-  Rec2DData::remove(this);
+  Rec2DData::rmv(this);
   if  (_elements.size()) {
     Msg::Error("[Rec2DVertex] normal ?");
     Rec2DData::addVert(-REC2D_NUMB_VERT, -getQual());
@@ -3010,7 +3022,7 @@ void Rec2DVertex::getUniqueActions(std::vector<Rec2DAction*> &actions) const
 /**  Rec2DElement  **/
 /********************/
 Rec2DElement::Rec2DElement(MTriangle *t, const Rec2DEdge **re, Rec2DVertex **rv)
-: _mEl((MElement *)t), _numEdge(3)
+: _mEl((MElement *)t), _numEdge(3), _pos(-1)
 {
   for (int i = 0; i < 3; ++i)
     _edges[i] = (Rec2DEdge*)re[i];
@@ -3024,7 +3036,7 @@ Rec2DElement::Rec2DElement(MTriangle *t, const Rec2DEdge **re, Rec2DVertex **rv)
 }
 
 Rec2DElement::Rec2DElement(MQuadrangle *q, const Rec2DEdge **re, Rec2DVertex **rv)
-: _mEl((MElement *)q), _numEdge(4)
+: _mEl((MElement *)q), _numEdge(4), _pos(-1)
 {
   for (int i = 0; i < 4; ++i)
     _edges[i] = (Rec2DEdge*)re[i];
@@ -3050,7 +3062,7 @@ void Rec2DElement::hide()
   for (int i = 0; i < _numEdge; ++i) {
     vertices[i]->rmv(this);
   }
-  Rec2DData::remove(this);
+  Rec2DData::rmv(this);
 }
 
 void Rec2DElement::reveal(Rec2DVertex **rv)
