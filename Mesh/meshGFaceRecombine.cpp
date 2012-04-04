@@ -120,20 +120,12 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf), _strategy(0), _numChange(0)
   _data = new Rec2DData();
   
   static int po = -1;
-  if (++po < 1)
+  if (++po < 1) {
     Msg::Warning("FIXME Why {mesh 2} then {mesh 0} then {mesh 2} imply not corner vertices");
-  
-  static int pi = -1;
-  if (++pi < 1)
     Msg::Warning("FIXME Why more vertices after first mesh generation");
-  
-  static int pu = -1;
-  if (++pu < 1)
     Msg::Warning("FIXME Update of Action pointing to edge and vertex (when change)");
-  
-  static int py = -1;
-  if (++py < 1)
     Msg::Warning("FIXME Deletion of action twoTri2Quad when Collapse pointing to it");
+  }
   
   // Be able to compute geometrical angle at corners
   std::map<MVertex*, AngleData> mapCornerVert;
@@ -264,7 +256,6 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf), _strategy(0), _numChange(0)
   
   Rec2DData::checkObsolete();
   _data->printState();
-  Rec2DData::printAction();
 }
 
 Recombine2D::~Recombine2D()
@@ -782,29 +773,13 @@ void Rec2DData::checkEntities()
 
 void Rec2DData::printActions() const
 {
-  std::list<Rec2DAction*> list = _actions;
-  std::list<Rec2DAction*>::const_iterator it = list.begin();
-  for (; it != list.end(); ++it) {
-    Msg::Info("action %d", *it);
-    std::vector<Rec2DElement*> tri;
-    (*it)->getElements(tri);
-    Msg::Info("%d -> %d, %d", tri.size(), tri[0], tri[1]);
-    Msg::Info("action %d (%d, %d)", *it, tri[0]->getNum(), tri[1]->getNum());
-    Msg::Info("action %d (%d, %d) -> reward %g", *it, tri[0]->getNum(), tri[1]->getNum(), (*it)->getReward());
-  }
-  /*
-  Msg::Info("size %d", _actions.size());
+  
   std::map<int, std::vector<double> > data;
   std::list<Rec2DAction*>::const_iterator it = _actions.begin();
-  for (; it != _actions.end(); ++it) {
-    Msg::Info("action %d", *it);
-  }
   it = _actions.begin();
   for (; it != _actions.end(); ++it) {
-    Msg::Info("action %d", *it);
     std::vector<Rec2DElement*> tri;
     (*it)->getElements(tri);
-    Msg::Info("action %d (%d, %d)", *it, tri[0]->getNum(), tri[1]->getNum());
     Msg::Info("action %d (%d, %d) -> reward %g", *it, tri[0]->getNum(), tri[1]->getNum(), (*it)->getReward());
       //Msg::Info("action %d -> reward %g", *it, (*it)->getReward());
     data[tri[0]->getNum()].resize(1);
@@ -814,7 +789,7 @@ void Rec2DData::printActions() const
     //(*it)->print();
   }
   new PView("Jmin_bad", "ElementData", Recombine2D::getGFace()->model(), data);
-  Msg::Info(" ");*/
+  Msg::Info(" ");
 }
 
 int Rec2DData::getNewParity()
@@ -3595,9 +3570,10 @@ Rec2DNode::Rec2DNode(Rec2DNode *father, Rec2DAction *ra,
     }
     bestEndGlobQual = _bestEndGlobQual;
     if (_dataChange) {
-      Recombine2D::incNumChange();
       if (!Rec2DData::revertDataChange(_dataChange))
         Msg::Error(" 1 - don't reverted changes");
+      else
+        Recombine2D::incNumChange();
       _dataChange = NULL;
     }
   }
@@ -3626,17 +3602,22 @@ Rec2DNode* Rec2DNode::selectBestNode()
 
 void Rec2DNode::develop(int depth, double &bestEndGlobQual)
 {
-  if (!_ra || depth < 1 || _dataChange) {
+  if (!_ra || depth < 1) {
     Msg::Error("[Rec2DNode] should not be there");
     return;
   }
   
+  bool delChange = !_dataChange;
   _bestEndGlobQual = .0;
   std::vector<Rec2DElement*> neighbours;
-  _ra->getNeighbElemWithActions(neighbours);
-  _dataChange = Rec2DData::getNewDataChange();
-  _ra->apply(_dataChange, _createdActions);
-  _ra->addPointing();
+  if (!_son[0])
+    _ra->getNeighbElemWithActions(neighbours);
+    
+  if (!_dataChange) {
+    _dataChange = Rec2DData::getNewDataChange();
+    _ra->apply(_dataChange, _createdActions);
+    _ra->addPointing();
+  }
   
   if (_son[0]) {
     int i = 0;
@@ -3673,10 +3654,13 @@ void Rec2DNode::develop(int depth, double &bestEndGlobQual)
     }
   }
   bestEndGlobQual = _bestEndGlobQual;
-  Recombine2D::incNumChange();
-  if (!Rec2DData::revertDataChange(_dataChange))
-    Msg::Error(" 1 - don't reverted changes");
-  _dataChange = NULL;
+  if (delChange) {
+    if (!Rec2DData::revertDataChange(_dataChange))
+      Msg::Error(" 1 - don't reverted changes");
+    else
+      Recombine2D::incNumChange();
+    _dataChange = NULL;
+  }
 }
 
 bool Rec2DNode::makeChanges()
