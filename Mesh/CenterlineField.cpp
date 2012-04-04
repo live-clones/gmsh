@@ -622,7 +622,7 @@ void Centerline::createSplitCompounds(){
   NR = current->getMaxElementaryNumber(3);
 
   // Remesh new faces (Compound Lines and Compound Surfaces)
-  Msg::Info("*** Starting parametrize compounds:");
+  Msg::Info("Centerline: create split compounds:");
 
   //Parametrize Compound Lines
   for (int i=0; i < NE; i++){
@@ -630,30 +630,34 @@ void Centerline::createSplitCompounds(){
     GEdge *pe = current->getEdgeByTag(i+1);//current edge
     e_compound.push_back(pe);
     int num_gec = NE+i+1;
-    Msg::Info("Parametrize Compound Line (%d) = %d discrete edge",
+    Msg::Info("Create Compound Line (%d) = %d discrete edge",
               num_gec, pe->tag());
-    GEdgeCompound *gec = new GEdgeCompound(current, num_gec, e_compound);
-    current->add(gec);
+    GEdge *gec = current->addCompoundEdge(e_compound,num_gec);
+    //GEdgeCompound *gec = new GEdgeCompound(current, num_gec, e_compound);
+    //current->add(gec);
   }
 
   // Parametrize Compound surfaces
   std::list<GEdge*> U0;
   for (int i=0; i < NF; i++){
-    std::list<GFace*> f_compound;
+    std::vector<GFace*> f_compound;
     GFace *pf =  current->getFaceByTag(i+1);//current face
     f_compound.push_back(pf);
     int num_gfc = NF+i+1;
-    Msg::Info("Parametrize Compound Surface (%d) = %d discrete face",
+    Msg::Info("Create Compound Surface (%d) = %d discrete face",
               num_gfc, pf->tag());
-    //GFaceCompound::typeOfCompound typ = GFaceCompound::CONVEX_CIRCLE; 
-    //GFaceCompound::typeOfCompound typ = GFaceCompound::HARMONIC_PLANE; 
-    GFaceCompound::typeOfCompound typ = GFaceCompound::CONFORMAL_SPECTRAL; 
-    GFaceCompound *gfc = new GFaceCompound(current, num_gfc, f_compound, U0,
-					   typ, 0);
+
+    GFace *gfc = current->addCompoundFace(f_compound, 1, 0, num_gfc); //1=conf_spectral 4=convex_circle
+    ////GFaceCompound::typeOfCompound typ = GFaceCompound::CONVEX_CIRCLE; 
+    ////GFaceCompound::typeOfCompound typ = GFaceCompound::HARMONIC_PLANE; 
+    //GFaceCompound::typeOfCompound typ = GFaceCompound::CONFORMAL_SPECTRAL; 
+    //GFaceCompound *gfc = new GFaceCompound(current, num_gfc, f_compound, U0,typ, 0);
+    //current->add(gfc);
+
     gfc->meshAttributes.recombine = recombine;
     gfc->addPhysicalEntity(100);
     current->setPhysicalName("newsurf", 2, 100);
-    current->add(gfc);
+
   }
 
 }
@@ -833,6 +837,7 @@ void Centerline::createClosedVolume(){
 void Centerline::extrudeBoundaryLayerWall(){
   
   printf("extrude boundary layer wall %d %g \n", nbElemLayer,  hLayer);
+
   for (int i= 0; i< NF; i++){
     GFace *gf = current->getFaceByTag(NF+i+1);//at this moment compound is not meshed yet exist yet
     current->setFactory("Gmsh");

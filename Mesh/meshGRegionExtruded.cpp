@@ -243,6 +243,7 @@ void meshGRegionExtruded::operator() (GRegion *gr)
   GFace *from = gr->model()->getFaceByTag(std::abs(ep->geo.Source));
   if(!from){
     Msg::Error("Unknown source surface %d for extrusion", ep->geo.Source);
+    exit(1);
     return;
   }
 

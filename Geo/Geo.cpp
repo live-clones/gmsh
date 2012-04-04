@@ -2489,7 +2489,7 @@ int Extrude_ProtudeSurface(int type, int is,
     return 0;
 
   Msg::Debug("Extrude Surface %d", is);
-
+    
   chapeau = DuplicateSurface(ps, false);
   chapeau->Extrude = new ExtrudeParams(COPIED_ENTITY);
   chapeau->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
@@ -2512,7 +2512,7 @@ int Extrude_ProtudeSurface(int type, int is,
     c->Extrude->geo.Source = c2->Num;
     if(e)
       c->Extrude->mesh = e->mesh;
-  }
+  }   
 
   // FIXME: this is a really ugly hack for backward compatibility, so
   // that we don't screw up the old .geo files too much. (Before
@@ -2639,6 +2639,7 @@ int Extrude_ProtudeSurface(int type, int is,
   // this is done only for backward compatibility with the old
   // numbering scheme
   Tree_Suppress(GModel::current()->getGEOInternals()->Surfaces, &chapeau);
+
   chapeau->Num = NEWSURFACE();
   chapeau->meshMaster = chapeau->Num;
   GModel::current()->getGEOInternals()->MaxSurfaceNum = chapeau->Num;
@@ -2684,6 +2685,20 @@ void ExtrudeShapes(int type, List_T *list_in,
                    ExtrudeParams *e,
                    List_T *list_out)
 {
+
+   // Msg::Info("IN EXTRUDE SHAPE Geo internal model has:");
+   //  List_T *points = Tree2List(GModel::current()->getGEOInternals()->Points);
+   //  List_T *curves = Tree2List(GModel::current()->getGEOInternals()->Curves);
+   //  List_T *surfaces = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
+   //  Msg::Info("%d Vertices", List_Nbr(points));
+   //  Msg::Info("%d Edges", List_Nbr(curves));
+   //  Msg::Info("%d Faces", List_Nbr(surfaces));
+   //  for(int i = 0; i < List_Nbr(surfaces); i++) {
+   //    Surface *s;
+   //    List_Read(surfaces, i, &s);
+   //    printf("surface %d \n", s->Num);
+   //  }
+
  
   for(int i = 0; i < List_Nbr(list_in); i++){
     Shape shape;

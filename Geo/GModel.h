@@ -456,7 +456,8 @@ class GModel
   void addRuledFaces(std::vector<std::vector<GEdge *> > edges);
   GFace *addFace(std::vector<GEdge *> edges, std::vector< std::vector<double > > points);
   GFace *addPlanarFace(std::vector<std::vector<GEdge *> > edges);
-  GFace *addCompoundFace(std::vector<GFace*> faces, int typeP, int typeS);
+  GEdge *addCompoundEdge(std::vector<GEdge*> edges, int num=-1);
+  GFace *addCompoundFace(std::vector<GFace*> faces, int type, int split, int num=-1);
   GRegion *addVolume(std::vector<std::vector<GFace*> > faces);
 
   // create solid geometry primitives using the factory
