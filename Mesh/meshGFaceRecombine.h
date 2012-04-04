@@ -12,8 +12,9 @@
 
 #define REC2D_EDGE_BASE 2
 #define REC2D_EDGE_QUAD 1
+#define REC2D_NUMB_VERT 2
 #define REC2D_ALIGNMENT .5
-#define REC2D_NUM_SON 6
+#define REC2D_NUMB_SONS 6
 
 #include "GFace.h"
 #include "BackgroundMesh.h"
@@ -430,12 +431,6 @@ class Rec2DCollapse : public Rec2DAction {
   private :
     virtual void _computeGlobQual();
     bool _hasIdenticalElement() const;
-    void _computeQualEdges(int &numEdge, double &valEdge,
-                           std::vector<std::pair<Rec2DVertex*, int> > &v2weight,
-                           SPoint2                                              );
-    void _computeQualVertices(double &valVert,
-                           std::vector<std::pair<Rec2DVertex*, int> > &v2weight,
-                           SPoint2                  );
 };
 
 class Rec2DEdge {
@@ -513,10 +508,12 @@ class Rec2DVertex {
     inline int getNum() const {return _v->getNum();}
     inline double getAngle() const {return _angle;}
     inline double getQual() const {return getQualDegree() + getQualAngle();}
-    inline double getQualAngle() const {return _sumQualAngle/(double)_elements.size();}
+    inline double getQualAngle() const {return _sumQualAngle/_elements.size();}
     double getQualDegree(int numEl = -1) const;
     double getGainDegree(int) const;
     double getGainMerge(const Rec2DElement*, const Rec2DElement*) const;
+    double getGainMerge(const Rec2DVertex*) const;
+    double getGainOneElemLess() const;
     
     inline void setOnBoundary();
     inline bool getOnBoundary() const {return _onWhat < 1;}
@@ -533,7 +530,6 @@ class Rec2DVertex {
     void getTriangles(std::set<Rec2DElement*>&) const;
     void getElements(std::vector<Rec2DElement*>&) const;
     inline MVertex* getMVertex() const {return _v;}
-    void getNeighbourWeight(std::vector<std::pair<Rec2DVertex*, int> >&) const;
     
     inline int getLastUpdate() const {return _lastUpdate;}
     inline void getxyz(double *xyz) const {
@@ -544,7 +540,7 @@ class Rec2DVertex {
     inline double u() const {return _param[0];}
     inline double v() const {return _param[1];}
     void relocate(SPoint2 p);
-    inline SPoint2 getParam() {return _param;}
+    //inline SPoint2 getParam() {return _param;}
     inline void getParam(SPoint2 *p) {*p = _param;}
     
     void add(const Rec2DEdge*);
@@ -650,7 +646,7 @@ class Rec2DElement {
 class Rec2DNode {
   private :
     Rec2DNode *_father;
-    Rec2DNode *_son[REC2D_NUM_SON];
+    Rec2DNode *_son[REC2D_NUMB_SONS];
     Rec2DAction *_ra;
     double _globalQuality, _bestEndGlobQual;
     int _remainingTri;
