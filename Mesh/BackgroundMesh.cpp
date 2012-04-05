@@ -802,6 +802,7 @@ double backgroundMesh::operator() (double u, double v, double w) const
 #if defined(HAVE_ANN)
     //printf("BGM octree not found --> find in kdtree \n");
     double pt[3] = {u,v,0.0};
+
     uv_kdtree->annkSearch(pt, 2, index, dist);
     SPoint3  p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
     SPoint3  p2(nodes[index[1]][0], nodes[index[1]][1], nodes[index[1]][2]);

@@ -484,7 +484,7 @@ static void Mesh2D(GModel *m)
 	smm.optimize_face(*it);
 	int rec = 1;//(CTX::instance()->mesh.recombineAll || (*it)->meshAttributes.recombine);
 	m->writeMSH("afterLLoyd.msh");
-	if(rec){printf("recombine\n"); recombineIntoQuads(*it);}
+	if(rec) recombineIntoQuads(*it);
 	m->writeMSH("afterRecombine.msh");
       }
     }

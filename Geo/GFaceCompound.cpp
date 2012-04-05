@@ -1965,12 +1965,12 @@ double GFaceCompound::locCurvature(MTriangle *t, double u, double v) const
 SPoint2 GFaceCompound::parFromVertex(MVertex *v) const
 {
   double U=0.0,V=0.0;
-  if(v->onWhat()->dim()==2 && meshStatistics.status == GFace::DONE) {
+  if(v->onWhat()->dim()==2){// && meshStatistics.status == GFace::DONE) {
     v->getParameter(0, U);
     v->getParameter(1, V);
   }
-  if ( v->onWhat()->dim()==1 || 
-       (v->onWhat()->dim()==2  && U == -1 && V==-1)){ //if MFaceVertex created on edge in bunin
+  if (v->onWhat()->dim()==1 || 
+     (v->onWhat()->dim()==2  && U == -1 && V==-1)){ //if MFaceVertex created on edge in bunin
     SPoint2 sp = getCoordinates(v);
     U = sp.x();
     V = sp.y();

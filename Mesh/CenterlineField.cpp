@@ -836,7 +836,7 @@ void Centerline::createClosedVolume(){
 
 void Centerline::extrudeBoundaryLayerWall(){
   
-  printf("extrude boundary layer wall %d %g \n", nbElemLayer,  hLayer);
+  Msg::Info("Centerline: extrude boundary layer wall %d %g ", nbElemLayer,  hLayer);
 
   for (int i= 0; i< NF; i++){
     GFace *gf = current->getFaceByTag(NF+i+1);//at this moment compound is not meshed yet exist yet

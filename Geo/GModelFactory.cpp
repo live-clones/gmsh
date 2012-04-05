@@ -322,25 +322,23 @@ GEntity* GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e, int nbLayers, 
   else if (e->dim() == 2){
     ((GFace*)e)->meshAttributes.extrude = &ep;
     Surface *s = FindSurface(e->tag());
-
-    Msg::Info("Geo internal model has:");
-    List_T *points = Tree2List(gm->getGEOInternals()->Points);
-    List_T *curves = Tree2List(gm->getGEOInternals()->Curves);
-    List_T *surfaces = Tree2List(gm->getGEOInternals()->Surfaces);
-    Msg::Info("%d Vertices", List_Nbr(points));
-    Msg::Info("%d Edges", List_Nbr(curves));
-    Msg::Info("%d Faces", List_Nbr(surfaces));
-    for(int i = 0; i < List_Nbr(surfaces); i++) {
-      Surface *s;
-      List_Read(surfaces, i, &s);
-      printf("surface %d \n", s->Num);
-    }
+    // Msg::Info("Geo internal model has:");
+    // List_T *points = Tree2List(gm->getGEOInternals()->Points);
+    // List_T *curves = Tree2List(gm->getGEOInternals()->Curves);
+    // List_T *surfaces = Tree2List(gm->getGEOInternals()->Surfaces);
+    // Msg::Info("%d Vertices", List_Nbr(points));
+    // Msg::Info("%d Edges", List_Nbr(curves));
+    // Msg::Info("%d Faces", List_Nbr(surfaces));
+    // for(int i = 0; i < List_Nbr(surfaces); i++) {
+    //   Surface *s;
+    //   List_Read(surfaces, i, &s);
+    //   printf("surface %d \n", s->Num);
+    // }
     if(!s) {
       printf("surface %d NOT found \n", e->tag());
       exit(1);
     }
-    else printf("surface %d found type =%d\n", e->tag(), s->Typ);
-
+  
     shape.Num = s->Num;
     shape.Type = s->Typ;
   }
@@ -355,19 +353,6 @@ GEntity* GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e, int nbLayers, 
                 X0, X1, X2, alpha,
                 &ep,
                 list_out);
-
-  Msg::Info("AFTER EXTRUDE Geo internal model has:");
-  List_T *points = Tree2List(gm->getGEOInternals()->Points);
-  List_T *curves = Tree2List(gm->getGEOInternals()->Curves);
-  List_T *surfaces = Tree2List(gm->getGEOInternals()->Surfaces);
-  Msg::Info("%d Vertices", List_Nbr(points));
-  Msg::Info("%d Edges", List_Nbr(curves));
-  Msg::Info("%d Faces", List_Nbr(surfaces));
-  for(int i = 0; i < List_Nbr(surfaces); i++) {
-    Surface *s;
-    List_Read(surfaces, i, &s);
-    printf("surface %d \n", s->Num);
-  }
 
   //create GEntities 
   gm->importGEOInternals();
