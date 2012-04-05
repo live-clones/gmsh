@@ -367,18 +367,21 @@ bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
                              bool onSurface)
 {
 
+  //To use Lloyds algorithm with compound faces, 
+  //comment the first paragraph and decomment the second one	
+	
   if (gf->geomType() == GEntity::CompoundSurface ){
     GFaceCompound *gfc = (GFaceCompound*) gf;
     param = gfc->parFromVertex(v);
     return true;
   }
 
-  // if (gf->geomType() == GEntity::CompoundSurface &&
-  //     v->onWhat()->dim() < 2){
-  //    GFaceCompound *gfc = (GFaceCompound*) gf;
-  //   param = gfc->getCoordinates(const_cast<MVertex*>(v));
-  //   return true;
-  // }
+   /*if (gf->geomType() == GEntity::CompoundSurface &&
+       v->onWhat()->dim() < 2){
+      GFaceCompound *gfc = (GFaceCompound*) gf;
+     param = gfc->getCoordinates(const_cast<MVertex*>(v));
+     return true;
+   }*/
 
   if(v->onWhat()->geomType() == GEntity::DiscreteCurve ||        
      v->onWhat()->geomType() == GEntity::BoundaryLayerCurve){    
