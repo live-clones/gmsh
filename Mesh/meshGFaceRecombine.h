@@ -46,7 +46,6 @@ struct gterRec2DNode {
 struct moreRec2DNode {
   bool operator()(Rec2DNode*, Rec2DNode*) const;
 };
-
 //
 class Recombine2D {
   private :
@@ -90,6 +89,20 @@ class Recombine2D {
 
 class Rec2DData {
   private :
+    class Action {
+      public :
+        const Rec2DAction *action;
+        int position;
+        Action(const Rec2DAction *ra, unsigned int pos)
+          : action((Rec2DAction*)ra), position((int)pos) {}
+    };
+    template<class T>
+    friend void std::swap(T&, T&);
+    struct gterAction {
+      bool operator()(Action*, Action*) const;
+    };
+    
+  private :
     int _numEdge, _numVert;
     long double _valEdge, _valVert;
     static Rec2DData *_current;
@@ -99,7 +112,7 @@ class Rec2DData {
     std::vector<Rec2DVertex*> _vertices;
     std::vector<Rec2DElement*> _elements;
     
-    std::list<Rec2DAction*> _actions;
+    std::vector<Action*> _actions;
     std::vector<Rec2DAction*> _hiddenActions;
     std::vector<Rec2DNode*> _endNodes;
     std::vector<Rec2DDataChange*> _changes;
@@ -116,7 +129,7 @@ class Rec2DData {
     void printState() const;
     void printActions() const;
     static void printAction() {_current->printActions();}
-    void sortActions() {_actions.sort(lessRec2DAction());}
+    //void sortActions() {sort(_actions.begin(), _actions.end(), gterAction());}
     void drawTriangles(double shiftx, double shifty) const;
     void drawElements(double shiftx, double shifty) const;
     void drawChanges(double shiftx, double shifty) const;
@@ -159,7 +172,7 @@ class Rec2DData {
     static inline double getValVert() {return (double)_current->_valVert;}
     static Rec2DAction* getBestAction();
     static Rec2DAction* getRandomAction();
-    static inline bool hasAction() {return !_current->_actions.empty();}
+    static inline bool hasAction() {return _current->_actions.size();}
     static void checkObsolete();
     
     typedef std::vector<Rec2DEdge*>::iterator iter_re;
@@ -175,9 +188,7 @@ class Rec2DData {
     static void add(const Rec2DEdge*);
     static void add(const Rec2DVertex*);
     static void add(const Rec2DElement*);
-    static inline void add(const Rec2DAction *ra) {
-      _current->_actions.push_back((Rec2DAction*)ra);
-    }
+    static void add(const Rec2DAction*);
     static inline void addHidden(const Rec2DAction *ra) {
       _current->_hiddenActions.push_back((Rec2DAction*)ra);
     }
@@ -289,6 +300,10 @@ class Rec2DAction {
     double _globQualIfExecuted;
     int _lastUpdate, _numPointing;
     
+    void *_dataAction; // Rec2DData::Action*
+    friend void Rec2DData::add(const Rec2DAction*);
+    friend void Rec2DData::rmv(const Rec2DAction*);
+    
   public :
     Rec2DAction();
     virtual ~Rec2DAction() {Msg::Error("deleting %d", this);}
@@ -298,6 +313,7 @@ class Rec2DAction {
     
     bool operator<(Rec2DAction&);
     double getReward();
+    inline void *getDataAction() const {return _dataAction;}
     virtual void color(int, int, int) const = 0;
     virtual void apply(std::vector<Rec2DVertex*> &newPar) = 0;
     virtual void apply(Rec2DDataChange*, std::vector<Rec2DAction*>*&) const = 0;
@@ -679,7 +695,6 @@ class Rec2DNode {
     inline double getGlobQual() const {return _globalQuality;}
     inline int getNumTri() const {return _remainingTri;}
 };
-
 #endif
 
 

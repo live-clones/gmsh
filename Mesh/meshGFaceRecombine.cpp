@@ -101,6 +101,20 @@ int otherParity(int a)
   return a + 1;
 }
 
+namespace std
+{
+  template <>
+  void swap(Rec2DData::Action& a0, Rec2DData::Action& a1)
+  {
+    int pos0 = a0.position;
+    a0.position = a1.position;
+    a1.position = pos0;
+    const Rec2DAction *ra0 = a0.action;
+    a0.action = a1.action;
+    a1.action = ra0;
+  }
+}
+
 /**  Recombine2D  **/
 /*******************/
 Recombine2D::Recombine2D(GFace *gf) : _gf(gf), _strategy(0), _numChange(0)
@@ -561,6 +575,11 @@ void Recombine2D::add(MTriangle *t)
 
 /**  Rec2DData  **/
 /*****************/
+bool Rec2DData::gterAction::operator()(Action *ra1, Action *ra2) const
+{
+  return *((Rec2DAction*)ra2->action) < *((Rec2DAction*)ra1->action);
+}
+
 Rec2DData::Rec2DData()
 {
   if (Rec2DData::_current != NULL) {
@@ -615,6 +634,16 @@ void Rec2DData::add(const Rec2DElement *rel)
   if (q)
     _current->_quad.push_back(q);
 #endif
+}
+
+void Rec2DData::add(const Rec2DAction *ra)
+{
+  if (ra->_dataAction) {
+    Msg::Error("[Rec2DData] action already there");
+    return;
+  }
+  _current->_actions.push_back(new Action(ra, _current->_actions.size()));
+  ((Rec2DAction*)ra)->_dataAction = _current->_actions.back();
 }
 
 void Rec2DData::rmv(const Rec2DEdge *re)
@@ -680,18 +709,17 @@ void Rec2DData::rmv(const Rec2DElement *rel)
 
 void Rec2DData::rmv(const Rec2DAction *ra)
 {
-  std::list<Rec2DAction*>::iterator it = _current->_actions.begin();
-  while (it != _current->_actions.end()) {
-    if (*it == ra) {
-      it = _current->_actions.erase(it);
-      return;
-    }
-    else
-      ++it;
+  if (!ra->_dataAction) {
+    Msg::Error("[Rec2DData] action not there");
   }
-  static int a = -1;
-  if (++a < 1)
-  Msg::Error("[Rec2DData] removing too much action");
+  else {
+    int pos = ((Action*)ra->_dataAction)->position;
+    ((Rec2DAction*)ra)->_dataAction = NULL;
+    delete _current->_actions[pos];
+    _current->_actions[pos] = _current->_actions.back();
+    _current->_actions[pos]->position = pos;
+    _current->_actions.pop_back();
+  }
 }
 
 void Rec2DData::printState() const
@@ -773,9 +801,10 @@ void Rec2DData::checkEntities()
       return;
     }
   }
-  std::list<Rec2DAction*>::iterator ita = _current->_actions.begin();
-  for (; ita != _current->_actions.end(); ++ita) {
-    if (!(*ita)->checkCoherence()) {
+  for (unsigned int i = 0; i < _current->_actions.size(); ++i) {
+    if (_current->_actions[i]->action->getDataAction() != _current->_actions[i] ||
+        _current->_actions[i]->position != (int)i                          ||
+        !_current->_actions[i]->action->checkCoherence()                     ) {
       Msg::Error("Incoherence action");
       crash();
       return;
@@ -787,13 +816,15 @@ void Rec2DData::printActions() const
 {
   
   std::map<int, std::vector<double> > data;
-  std::list<Rec2DAction*>::const_iterator it = _actions.begin();
-  it = _actions.begin();
-  for (; it != _actions.end(); ++it) {
+  for (unsigned int i = 0; i < _actions.size(); ++i) {
     std::vector<Rec2DElement*> tri;
-    (*it)->getElements(tri);
-    Msg::Info("action %d (%d, %d) -> reward %g", *it, tri[0]->getNum(), tri[1]->getNum(), (*it)->getReward());
-      //Msg::Info("action %d -> reward %g", *it, (*it)->getReward());
+    _actions[i]->action->getElements(tri);
+    Msg::Info("action %d (%d, %d) -> reward %g",
+              _actions[i]->action,
+              tri[0]->getNum(),
+              tri[1]->getNum(),
+              ((Rec2DAction*)_actions[i]->action)->getReward());
+      //Msg::Info("action %d -> reward %g", *it, _actions[i]->getReward());
     data[tri[0]->getNum()].resize(1);
     data[tri[1]->getNum()].resize(1);
     //data[tri[0]->getNum()][0] = (*it)->getReward();
@@ -935,11 +966,11 @@ Rec2DAction* Rec2DData::getBestAction()
 {
   static int a = -1;
   if (++a < 1) Msg::Warning("FIXME implement better compute qual for collapse");
-  std::list<Rec2DAction*> actions = _current->_actions;
-  if (actions.size() == 0)
+  if (_current->_actions.size() == 0)
     return NULL;
-  return *std::max_element(actions.begin(),
-                           actions.end(), lessRec2DAction());
+  Action *ac = *std::max_element(_current->_actions.begin(),
+                                 _current->_actions.end(), gterAction());
+  return (Rec2DAction*)ac->action;
 }
 
 Rec2DAction* Rec2DData::getRandomAction()
@@ -947,20 +978,15 @@ Rec2DAction* Rec2DData::getRandomAction()
   if (_current->_actions.size() == 0)
     return NULL;
   int index = rand() % (int)_current->_actions.size();
-  std::list<Rec2DAction*>::iterator it = _current->_actions.begin();
-  static int a = -1;
-  if (++a < 1) Msg::Warning("FIXME what type is size of list ?");
-  for (int i = 0; i < index; ++i) ++it;
-  return *it;
+  return (Rec2DAction*)_current->_actions[index]->action;
 }
 
 void Rec2DData::checkObsolete()
 {
   std::vector<Rec2DAction*> obsoletes;
-  std::list<Rec2DAction*>::iterator it = _current->_actions.begin();
-  for (; it != _current->_actions.end(); ++it) {
-    if ((*it)->isObsolete())
-      obsoletes.push_back(*it);
+  for (unsigned int i = 0; i < _current->_actions.size(); ++i) {
+    if (_current->_actions[i]->action->isObsolete())
+      obsoletes.push_back((Rec2DAction*)_current->_actions[i]->action);
   }
   
   for (unsigned int i = 0; i < obsoletes.size(); ++i) {
@@ -1524,7 +1550,7 @@ bool gterRec2DAction::operator()(Rec2DAction *ra1, Rec2DAction *ra2) const
 }
 
 Rec2DAction::Rec2DAction()
-: _globQualIfExecuted(.0), _lastUpdate(-2), _numPointing(0)
+: _globQualIfExecuted(.0), _lastUpdate(-2), _numPointing(0), _dataAction(NULL)
 {
   
 }
@@ -3678,7 +3704,7 @@ bool Rec2DNode::makeChanges()
     return false;
   _dataChange = Rec2DData::getNewDataChange();
 #ifdef REC2D_DRAW // draw state at origin
-  double time = Cpu();
+  //double time = Cpu();
   _ra->color(0, 0, 200);
   CTX::instance()->mesh.changed = ENT_ALL;
   drawContext::global()->draw();
