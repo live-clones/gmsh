@@ -281,7 +281,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
 
   CTX::instance()->geom.draw = 0; // don't try to draw the model while reading
 
-#if defined(HAVE_POST)
+#if defined(HAVE_FLTK) && defined(HAVE_POST)
   int numViewsBefore = PView::list.size();
 #endif
 

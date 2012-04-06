@@ -1777,6 +1777,20 @@ double opt_general_solver_position1(OPT_ARGS_NUM)
   return CTX::instance()->solverPosition[1];
 }
 
+double opt_general_solver_size0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->solverSize[0] = (int)val;
+  return CTX::instance()->solverSize[0];
+}
+
+double opt_general_solver_size1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->solverSize[1] = (int)val;
+  return CTX::instance()->solverSize[1];
+}
+
 double opt_general_context_position0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

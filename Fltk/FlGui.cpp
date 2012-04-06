@@ -840,6 +840,8 @@ void FlGui::storeCurrentWindowsInfo()
 #if defined(HAVE_ONELAB) && (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
   CTX::instance()->solverPosition[0] = onelab->x();
   CTX::instance()->solverPosition[1] = onelab->y();
+  CTX::instance()->solverSize[0] = onelab->w();
+  CTX::instance()->solverSize[1] = onelab->h();
 #endif
   fileChooserGetPosition(&CTX::instance()->fileChooserPosition[0],
                          &CTX::instance()->fileChooserPosition[1]);

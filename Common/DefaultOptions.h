@@ -582,9 +582,13 @@ StringXNumber GeneralOptions_Number[] = {
     "Size (in pixels) of small axes" },
   { F|S, "SolverPositionX" , opt_general_solver_position0 , 650. ,
     "Horizontal position (in pixels) of the upper left corner of the solver "
-    "windows" },
+    "window" },
   { F|S, "SolverPositionY" , opt_general_solver_position1 , 150. ,
-    "Vertical position (in pixels) of the upper left corner of the solver windows" },
+    "Vertical position (in pixels) of the upper left corner of the solver window" },
+  { F|S, "SolverHeight" , opt_general_solver_size1 , 400. ,
+    "Height (in pixels) of the solver window" },
+  { F|S, "SolverWidth" , opt_general_solver_size0 , 300. ,
+    "Width (in pixels) of the solver window" },
   { F|S, "StatisticsPositionX" , opt_general_statistics_position0 , 650. ,
     "Horizontal position (in pixels) of the upper left corner of the statistic "
     "window" },

@@ -104,6 +104,8 @@ double opt_general_graphics_size0(OPT_ARGS_NUM);
 double opt_general_graphics_size1(OPT_ARGS_NUM);
 double opt_general_solver_position0(OPT_ARGS_NUM);
 double opt_general_solver_position1(OPT_ARGS_NUM);
+double opt_general_solver_size0(OPT_ARGS_NUM);
+double opt_general_solver_size1(OPT_ARGS_NUM);
 double opt_general_context_position0(OPT_ARGS_NUM);
 double opt_general_context_position1(OPT_ARGS_NUM);
 double opt_general_file_chooser_position0(OPT_ARGS_NUM);

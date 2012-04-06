@@ -36,6 +36,8 @@ class onelabWindow{
   onelabWindow(int deltaFontSize=0);
   int x(){ return _win->x(); }
   int y(){ return _win->y(); }
+  int w(){ return _win->w(); }
+  int h(){ return _win->h(); }
   void rebuildSolverList();
   void rebuildTree();
   void setButtonMode(const std::string &butt0, const std::string &butt1);

@@ -961,8 +961,8 @@ onelabWindow::onelabWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= _deltaFontSize;
 
-  int width = 29 * FL_NORMAL_SIZE;
-  int height = 15 * BH + 3 * WB;
+  int width = CTX::instance()->solverSize[0];
+  int height = CTX::instance()->solverSize[1];
 
   _win = new paletteWindow
     (width, height, CTX::instance()->nonModalWindows ? true : false, "OneLab");
