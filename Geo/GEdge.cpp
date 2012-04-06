@@ -318,11 +318,9 @@ double goldenSectionSearch(const GEdge *ge, const SPoint3 &q, double x1,
 
 GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
 {
-  //  printf("looking for closest point in curve %d to point %g %g\n",tag(),q.x(),q.y());
+  // printf("looking for closest point in curve %d to point %g %g\n",tag(),q.x(),q.y());
 
   const int nbSamples = 100;
-
-  double tolerance = 1.e-12;
 
   Range<double> interval = parBounds(0);
 
@@ -342,7 +340,7 @@ GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
     }
   }
 
-  //  printf("parameter %g as an initial guess (dist = %g)\n",topt,DMIN);
+  // printf("parameter %g as an initial guess (dist = %g)\n",topt,DMIN);
 
   if (topt == tMin)
     t = goldenSectionSearch (this, q, topt, topt + DT/2, topt + DT,  1.e-7);
@@ -352,9 +350,8 @@ GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
     t = goldenSectionSearch (this, q, topt - DT, topt, topt + DT, 1.e-7);
 
   const SVector3 dp = q - position(t);
-  const double D = dp.norm();
-
-  //  printf("after golden section parameter %g  (dist = %g)\n",t,D);
+  // const double D = dp.norm();
+  // printf("after golden section parameter %g  (dist = %g)\n",t,D);
 
   return point(t);
 }
