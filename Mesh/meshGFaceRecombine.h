@@ -52,7 +52,7 @@ class Recombine2D {
     GFace *_gf;
     backgroundMesh *_bgm;
     Rec2DData *_data;
-    static Recombine2D *_current;
+    static Recombine2D *_cur;
     
     int _strategy, _numChange;
     
@@ -72,10 +72,10 @@ class Recombine2D {
     void printState() const;
     static void drawStateOrigin();
     
-    static inline GFace* getGFace() {return _current->_gf;}
-    static inline int getNumChange() {return _current->_numChange;}
-    static inline void incNumChange() {++_current->_numChange;}
-    static inline backgroundMesh* bgm() {return _current->_bgm;}
+    static inline GFace* getGFace() {return _cur->_gf;}
+    static inline int getNumChange() {return _cur->_numChange;}
+    static inline void incNumChange() {++_cur->_numChange;}
+    static inline backgroundMesh* bgm() {return _cur->_bgm;}
     static void add(MQuadrangle *q);
     static void add(MTriangle *t);
     
@@ -105,7 +105,7 @@ class Rec2DData {
   private :
     int _numEdge, _numVert;
     long double _valEdge, _valVert;
-    static Rec2DData *_current;
+    static Rec2DData *_cur;
     int _remainingTri;
     
     std::vector<Rec2DEdge*> _edges;
@@ -128,7 +128,7 @@ class Rec2DData {
     
     void printState() const;
     void printActions() const;
-    static void printAction() {_current->printActions();}
+    static void printAction() {_cur->printActions();}
     //void sortActions() {sort(_actions.begin(), _actions.end(), gterAction());}
     void drawTriangles(double shiftx, double shifty) const;
     void drawElements(double shiftx, double shifty) const;
@@ -137,60 +137,60 @@ class Rec2DData {
     std::vector<MTriangle*> _tri;
     std::vector<MQuadrangle*> _quad;
 #endif
-    static inline int getNumTri() {return _current->_remainingTri;}
-    static inline void setNumTri(int n) {_current->_remainingTri = n;}
+    static inline int getNumTri() {return _cur->_remainingTri;}
+    static inline void setNumTri(int n) {_cur->_remainingTri = n;}
     
-    static inline int getNumEndNode() {return _current->_endNodes.size();}
-    static inline int getNumElement() {return _current->_elements.size();}
+    static inline int getNumEndNode() {return _cur->_endNodes.size();}
+    static inline int getNumElement() {return _cur->_elements.size();}
     static Rec2DDataChange* getNewDataChange();
     static bool revertDataChange(Rec2DDataChange*);
     static void clearChanges();
-    static int getNumChanges() {return _current->_changes.size();}
+    static int getNumChanges() {return _cur->_changes.size();}
     void checkQuality() const;
     
     static double getGlobalQuality();
     static double getGlobalQuality(int numEdge, double valEdge,
                                  int numVert, double valVert   );
     static inline void addVert(int num, double val) {
-      _current->_numVert += num;
-      _current->_valVert += (long double)val;
+      _cur->_numVert += num;
+      _cur->_valVert += (long double)val;
     }
     static inline void addValVert(double val) {
-      _current->_valVert += (long double)val;
+      _cur->_valVert += (long double)val;
     }
     static inline void addEdge(int num, double val) {
-      _current->_numEdge += num;
-      _current->_valEdge += (long double)val;
+      _cur->_numEdge += num;
+      _cur->_valEdge += (long double)val;
     }
     static inline void addValEdge(double val) {
-      _current->_valEdge += (long double)val;
+      _cur->_valEdge += (long double)val;
     }
     
-    static inline int getNumEdge() {return _current->_numEdge;}
-    static inline double getValEdge() {return (double)_current->_valEdge;}
-    static inline int getNumVert() {return _current->_numVert;}
-    static inline double getValVert() {return (double)_current->_valVert;}
+    static inline int getNumEdge() {return _cur->_numEdge;}
+    static inline double getValEdge() {return (double)_cur->_valEdge;}
+    static inline int getNumVert() {return _cur->_numVert;}
+    static inline double getValVert() {return (double)_cur->_valVert;}
     static Rec2DAction* getBestAction();
     static Rec2DAction* getRandomAction();
-    static inline bool hasAction() {return _current->_actions.size();}
+    static inline bool hasAction() {return _cur->_actions.size();}
     static void checkObsolete();
     
     typedef std::vector<Rec2DEdge*>::iterator iter_re;
     typedef std::vector<Rec2DVertex*>::iterator iter_rv;
     typedef std::vector<Rec2DElement*>::iterator iter_rel;
-    static inline iter_re firstEdge() {return _current->_edges.begin();}
-    static inline iter_rv firstVertex() {return _current->_vertices.begin();}
-    static inline iter_rel firstElement() {return _current->_elements.begin();}
-    static inline iter_re lastEdge() {return _current->_edges.end();}
-    static inline iter_rv lastVertex() {return _current->_vertices.end();}
-    static inline iter_rel lastElement() {return _current->_elements.end();}
+    static inline iter_re firstEdge() {return _cur->_edges.begin();}
+    static inline iter_rv firstVertex() {return _cur->_vertices.begin();}
+    static inline iter_rel firstElement() {return _cur->_elements.begin();}
+    static inline iter_re lastEdge() {return _cur->_edges.end();}
+    static inline iter_rv lastVertex() {return _cur->_vertices.end();}
+    static inline iter_rel lastElement() {return _cur->_elements.end();}
     
     static void add(const Rec2DEdge*);
     static void add(const Rec2DVertex*);
     static void add(const Rec2DElement*);
     static void add(const Rec2DAction*);
     static inline void addHidden(const Rec2DAction *ra) {
-      _current->_hiddenActions.push_back((Rec2DAction*)ra);
+      _cur->_hiddenActions.push_back((Rec2DAction*)ra);
     }
     static void rmv(const Rec2DEdge*);
     static void rmv(const Rec2DVertex*);
@@ -198,7 +198,7 @@ class Rec2DData {
     static void rmv(const Rec2DAction*);
     
     static inline void addEndNode(const Rec2DNode *rn) {
-      _current->_endNodes.push_back((Rec2DNode*)rn);
+      _cur->_endNodes.push_back((Rec2DNode*)rn);
     }
     static void sortEndNode();
     static inline void drawEndNode(int num);
@@ -206,7 +206,7 @@ class Rec2DData {
     static int getNewParity();
     static void removeParity(const Rec2DVertex*, int);
     static inline void addParity(const Rec2DVertex *rv, int p) {
-      _current->_parities[p].push_back((Rec2DVertex*)rv);
+      _cur->_parities[p].push_back((Rec2DVertex*)rv);
     }
     static void associateParity(int pOld, int pNew, Rec2DDataChange *rdc = NULL);
 };
