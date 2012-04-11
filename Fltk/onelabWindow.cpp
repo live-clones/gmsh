@@ -1091,7 +1091,7 @@ void onelabWindow::rebuildTree()
 {
   FL_NORMAL_SIZE -= _deltaFontSize;
 
-  _itemWidth = (int)(0.5 * _tree->w());
+  _itemWidth = (int)(0.45 * _tree->w());
 
   std::vector<std::string> closed;
   for (Fl_Tree_Item *n = _tree->first(); n; n = n->next())

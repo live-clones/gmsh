@@ -1164,7 +1164,7 @@ if(MAKEINFO)
                      ARGS ${TEX_DIR}/gmsh.texi WORKING_DIRECTORY ${TEX_DIR})
   add_custom_target(txt DEPENDS ${TEX_DIR}/gmsh.txt)
   add_custom_command(OUTPUT ${TEX_DIR}/gmsh.html DEPENDS ${TEX_SRC} 
-                     COMMAND ${MAKEINFO} --html --no-split
+                     COMMAND ${MAKEINFO} --html --css-ref=http://geuz.org/geuz.css --no-split
                      ARGS ${TEX_DIR}/gmsh.texi WORKING_DIRECTORY ${TEX_DIR})
   add_custom_target(html DEPENDS ${TEX_DIR}/gmsh.html)
   install(FILES ${TEX_DIR}/gmsh.html DESTINATION ${GMSH_DOC} OPTIONAL)

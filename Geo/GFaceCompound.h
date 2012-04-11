@@ -199,20 +199,20 @@ class GFaceCompound : public GFace {
 		CONVEX_CIRCLE=4,CONVEX_PLANE=5, HARMONIC_SQUARE=6, CONFORMAL_FE=7} typeOfCompound;
   typedef enum {HARMONIC=0,CONFORMAL=1, RBF=2, CONVEX=3} typeOfMapping;
   typedef enum {UNITCIRCLE, MEANPLANE, SQUARE, ALREADYFIXED,SPECTRAL, FE} typeOfIsomorphism;
- GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
-	       std::list<GEdge*> &U0, typeOfMapping typ = HARMONIC,
-	       int allowPartition=1,
-	       linearSystem<double>* lsys =0)
+  GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
+                std::list<GEdge*> &U0, typeOfMapping typ = HARMONIC,
+                int allowPartition=1,
+                linearSystem<double>* lsys =0)
     : GFace(m, tag)
   {
     Msg::Error("Gmsh has to be compiled with solver support to use GFaceCompounds");
   }
- GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
-	       std::list<GEdge*> &U0, std::list<GEdge*> &V0,
-	       std::list<GEdge*> &U1, std::list<GEdge*> &V1,
-	       typeOfCompound typ = HARMONIC_CIRCLE,
-	       int allowPartition=1,
-	       linearSystem<double>* lsys =0)
+  GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
+                std::list<GEdge*> &U0, std::list<GEdge*> &V0,
+                std::list<GEdge*> &U1, std::list<GEdge*> &V1,
+                typeOfCompound typ = HARMONIC_CIRCLE,
+                int allowPartition=1,
+                linearSystem<double>* lsys =0)
     : GFace(m, tag)
   {
     Msg::Error("Gmsh has to be compiled with solver support to use GFaceCompounds");
