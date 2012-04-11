@@ -5588,6 +5588,13 @@ double opt_mesh_clip(OPT_ARGS_NUM)
   return CTX::instance()->mesh.clip;
 }
 
+double opt_mesh_ignore_part_bound(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.ignorePartBound = (int) val;
+  return CTX::instance()->mesh.ignorePartBound;
+}
+
 double opt_solver_listen(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

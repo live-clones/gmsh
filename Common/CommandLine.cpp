@@ -93,6 +93,7 @@ void PrintUsage(const char *name)
   Msg::Direct("  -bgm file             Load background mesh from file");
   Msg::Direct("  -check                Perform various consistency checks on mesh");
   Msg::Direct("  -mpass int            Do several passes on the mesh for complex backround fields");
+  Msg::Direct("  -ignorePartBound      Ignore partitions boundaries");
 #if defined(HAVE_FLTK)
   Msg::Direct("Post-processing options:");
   Msg::Direct("  -link int             Select link mode between views (0, 1, 2, 3, 4)");
@@ -491,6 +492,10 @@ void GetOptions(int argc, char *argv[])
         }
         else
           Msg::Fatal("Missing number");
+      }
+      else if(!strcmp(argv[i] + 1, "ignorePartBound")) {
+        i++;
+        opt_mesh_ignore_part_bound(0, GMSH_SET, 1);
       }
       else if(!strcmp(argv[i] + 1, "edgelmin")) {
         i++;

@@ -43,6 +43,7 @@ struct contextMeshOptions {
   int cgnsImportOrder;
   std::map<int,int> algo2d_per_face;
   int bunin;
+  int ignorePartBound;
 };
 
 struct contextGeometryOptions {

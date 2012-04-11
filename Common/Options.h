@@ -452,6 +452,7 @@ double opt_mesh_partition_metis_algorithm(OPT_ARGS_NUM);
 double opt_mesh_partition_metis_edge_matching(OPT_ARGS_NUM);
 double opt_mesh_partition_metis_refine_algorithm(OPT_ARGS_NUM);
 double opt_mesh_clip(OPT_ARGS_NUM);
+double opt_mesh_ignore_part_bound(OPT_ARGS_NUM);
 double opt_solver_listen(OPT_ARGS_NUM);
 double opt_solver_timeout(OPT_ARGS_NUM);
 double opt_solver_plugins(OPT_ARGS_NUM);
