@@ -14,6 +14,7 @@
 #include "Numeric.h"
 #include "BackgroundMesh.h"
 #include "qualityMeasures.h"
+#include "robustPredicates.h"
 
 //#define _GMSH_PRE_ALLOCATE_STRATEGY_ 1
 class GRegion;
@@ -148,7 +149,22 @@ class MTet4
   {
     return inCircumSphere(v->x(), v->y(), v->z());
   }
-  inline double getVolume() const { return base->getVolume(); }
+  inline double getVolume() const { 
+    
+    double pa[3] = {base->getVertex(0)->x(), 
+		    base->getVertex(0)->y(), 
+		    base->getVertex(0)->z()};
+    double pb[3] = {base->getVertex(1)->x(), 
+		    base->getVertex(1)->y(),
+		    base->getVertex(1)->z()};
+    double pc[3] = {base->getVertex(2)->x(),
+		    base->getVertex(2)->y(), 
+		    base->getVertex(2)->z()};
+    double pd[3] = {base->getVertex(3)->x(),
+		    base->getVertex(3)->y(),
+		    base->getVertex(3)->z()};
+    return fabs(robustPredicates::orient3d(pa, pb, pc, pd))/6.0; 
+  }
   inline void setDeleted(bool d)
   {
     deleted = d;

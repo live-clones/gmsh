@@ -42,6 +42,7 @@ struct contextMeshOptions {
   int multiplePasses;
   int cgnsImportOrder;
   std::map<int,int> algo2d_per_face;
+  std::map<int,int> curvature_control_per_face;
   int bunin;
   int ignorePartBound;
 };

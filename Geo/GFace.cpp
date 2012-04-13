@@ -62,6 +62,19 @@ GFace::~GFace()
   deleteMesh();
 }
 
+int GFace::getCurvatureControlParameter () const
+{
+  std::map<int,int>::iterator it = CTX::instance()->mesh.curvature_control_per_face.find(tag());
+  return it == CTX::instance()->mesh.curvature_control_per_face.end() ?
+    CTX::instance()->mesh.minCircPoints : it->second ;
+}
+
+void GFace::setCurvatureControlParameter (int n)
+{
+  CTX::instance()->mesh.curvature_control_per_face[tag()] = n;
+}
+
+
 int GFace::getMeshingAlgo () const
 {
   std::map<int,int>::iterator it = CTX::instance()->mesh.algo2d_per_face.find(tag());
@@ -1220,34 +1233,52 @@ int GFace::genusGeom()
   return nSeams - single_seams.size();
 }
 
-bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
+bool GFace::fillPointCloud(double maxDist, 
+			   std::vector<SPoint3> *points,
+			   std::vector<SPoint2> *uvpoints,
                            std::vector<SVector3> *normals)
 {
-  if(!buildSTLTriangulation()){
-    Msg::Error("No STL triangulation available to fill point cloud");
-    return false;
-  }
 
   if(!points) return false;
 
-  for(unsigned int i = 0; i < stl_triangles.size(); i += 3){
-    SPoint2 &p0(stl_vertices[stl_triangles[i]]);
-    SPoint2 &p1(stl_vertices[stl_triangles[i + 1]]);
-    SPoint2 &p2(stl_vertices[stl_triangles[i + 2]]);
-
-    GPoint gp0 = point(p0);
-    GPoint gp1 = point(p1);
-    GPoint gp2 = point(p2);
-    double maxEdge = std::max(gp0.distance(gp1),
-                              std::max(gp1.distance(gp2), gp2.distance(gp0)));
-    int N = (int)(maxEdge / maxDist);
-    for(double u = 0.; u < 1.; u += 1. / N){
-      for(double v = 0.; v < 1 - u; v += 1. / N){
-        SPoint2 p = p0 * (1. - u - v) + p1 * u + p2 * v;
-        GPoint gp(point(p));
-        points->push_back(SPoint3(gp.x(), gp.y(), gp.z()));
-        if(normals) normals->push_back(normal(p));
+  if (buildSTLTriangulation()){
+    for(unsigned int i = 0; i < stl_triangles.size(); i += 3){
+      SPoint2 &p0(stl_vertices[stl_triangles[i]]);
+      SPoint2 &p1(stl_vertices[stl_triangles[i + 1]]);
+      SPoint2 &p2(stl_vertices[stl_triangles[i + 2]]);
+      
+      GPoint gp0 = point(p0);
+      GPoint gp1 = point(p1);
+      GPoint gp2 = point(p2);
+      double maxEdge = std::max(gp0.distance(gp1),
+				std::max(gp1.distance(gp2), gp2.distance(gp0)));
+      int N = (int)(maxEdge / maxDist);
+      for(double u = 0.; u < 1.; u += 1. / N){
+	for(double v = 0.; v < 1 - u; v += 1. / N){
+	  SPoint2 p = p0 * (1. - u - v) + p1 * u + p2 * v;
+	  GPoint gp(point(p));
+	  points->push_back(SPoint3(gp.x(), gp.y(), gp.z()));
+	  if (uvpoints)uvpoints->push_back(p);
+	  if(normals) normals->push_back(normal(p));
+	}
       }
+    }
+  }
+  else {
+    int N = 1000;//(int)(maxDX / maxDist);
+    Range<double> b1 = parBounds(0);
+    Range<double> b2 = parBounds(1);
+    for(int i = 0; i < N; i++) {
+      for(int j = 0; j < N; j++) {
+	double u = (double)i / (N - 1);
+	double v = (double)j / (N - 1);
+	double t1 = b1.low() + u * (b1.high() - b1.low());
+	double t2 = b2.low() + v * (b2.high() - b2.low());
+	GPoint gp = point(t1, t2);
+	points->push_back(SPoint3(gp.x(), gp.y(), gp.z()));
+	if (uvpoints)uvpoints->push_back(SPoint2(t1,t2));
+	if(normals) normals->push_back(normal(SPoint2(t1,t2)));
+      }	
     }
   }
   return true;

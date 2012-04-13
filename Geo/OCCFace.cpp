@@ -14,6 +14,7 @@
 #include "Context.h"
 
 #if defined(HAVE_OCC)
+#include <TColStd_MapIteratorOfMapOfAsciiString.hxx>
 #include <Standard_Version.hxx>
 #include <Geom_CylindricalSurface.hxx>
 #include <Geom_ConicalSurface.hxx>
@@ -25,6 +26,8 @@
 #include <Geom_Plane.hxx>
 #include <gp_Pln.hxx>
 #include <BRepMesh_FastDiscret.hxx>
+#include <BRepMesh_PDiscretRoot.hxx>
+#include <BRepMesh_DiscretFactory.hxx>
 #include <IntTools_Context.hxx>
 #include <BOPTools_Tools2D.hxx>
 #include <BOPTools_Tools3D.hxx>
@@ -336,16 +339,37 @@ bool OCCFace::buildSTLTriangulation(bool force)
 
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
-  BRepMesh_FastDiscret aMesher(0.1, 0.5, aBox, Standard_False, Standard_False, 
-                               Standard_True, Standard_False);
-#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 5)
-  aMesher.Add(s);
-#else
-  aMesher.Perform(s);
-#endif
+
+  Standard_Real aDiscret, aXmin, aYmin, aZmin, aXmax, aYmax, aZmax;
+  Standard_Real dX, dY, dZ, dMax, aCoeff, aAngle = .5;
+  aBox.Get(aXmin, aYmin, aZmin, aXmax, aYmax, aZmax);
+  dX=aXmax-aXmin;
+  dY=aYmax-aYmin;
+  dZ=aZmax-aZmin;
+  dMax=dX;
+  if (dY>dMax) {
+    dMax=dY;
+  }
+  if (dZ>dMax) {
+    dMax=dZ;
+  }
+  //                                                                                                                                      
+  aCoeff=0.1;
+  aDiscret=aCoeff*dMax;
+
+  //  std::cout << BRepMesh_DiscretFactory::Get().Names() << "\n";
+  //  const TColStd_MapOfAsciiString &aaa = BRepMesh_DiscretFactory::Get().Names();
+  //  TColStd_MapIteratorOfMapOfAsciiString It (aaa); 
+  //  for (; It.More(); It.Next()) {
+  //    std::cout << It.Key() << "\n";
+  //  }
+
+  BRepMesh_PDiscretRoot pAlgo = BRepMesh_DiscretFactory::Get().Discret(s, aDiscret, aAngle);
+  if (pAlgo)  pAlgo->Perform();
 
   TopLoc_Location loc;
   Handle(Poly_Triangulation) triangulation = BRep_Tool::Triangulation(s, loc);
+  
 
   if(triangulation.IsNull() || !triangulation->HasUVNodes()){
     if(triangulation.IsNull())

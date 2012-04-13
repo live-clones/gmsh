@@ -1134,7 +1134,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
             gf->getMeshingAlgo() == ALGO_2D_AUTO)
       bowyerWatson(gf);
     else {
-      bowyerWatson(gf);
+      bowyerWatson(gf,15000);
       meshGFaceBamg(gf);
     }
     laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing);

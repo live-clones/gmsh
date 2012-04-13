@@ -35,10 +35,9 @@
 // CTX::instance()->mesh.minCircPoints tells the minimum number of points per
 // radius of curvature
 
-SMetric3 buildMetricTangentToCurve (SVector3 &t, double curvature, double &lambda)
+SMetric3 buildMetricTangentToCurve (SVector3 &t, double l_t, double l_n)
 {
-  lambda = 1.e22;
-  if (curvature == 0.0)return SMetric3(1.e-22);
+  if (l_t == 0.0)return SMetric3(1.e-22);
   SVector3 a;
   if (t(0) <= t(1) && t(0) <= t(2)){
     a = SVector3(1,0,0);
@@ -54,45 +53,59 @@ SMetric3 buildMetricTangentToCurve (SVector3 &t, double curvature, double &lambd
   b.normalize();
   c.normalize();
   t.normalize();
-  lambda =  ((2 * M_PI) /( fabs(curvature) *  CTX::instance()->mesh.minCircPoints ) );
-  
-  SMetric3 curvMetric (1./(lambda*lambda),1.e-10,1.e-10,t,b,c);
-  //SMetric3 curvMetric (1./(lambda*lambda));
-  return curvMetric;
+  SMetric3 Metric (1./(l_t*l_t),1./(l_n*l_n),1./(l_n*l_n),t,b,c);
+  return Metric;
 }
 
-SMetric3 max_edge_curvature_metric(const GVertex *gv, double &length)
+SMetric3 buildMetricTangentToSurface (SVector3 &t1, SVector3 &t2, double l_t1, double l_t2, double l_n)
+{
+  t1.normalize();
+  t2.normalize();
+  SVector3 n = crossprod (t1,t2);
+  n.normalize();
+  SMetric3 Metric (1./(l_t1*l_t1),1./(l_t2*l_t2),1./(l_n*l_n),t1,t2,n);
+  return Metric;
+}
+
+
+SMetric3 max_edge_curvature_metric(const GVertex *gv)
 {
   SMetric3 val (1.e-12);
-  length = 1.e22;
   std::list<GEdge*> l_edges = gv->edges();
   for (std::list<GEdge*>::const_iterator ite = l_edges.begin(); 
        ite != l_edges.end(); ++ite){
     GEdge *_myGEdge = *ite;
     Range<double> range = _myGEdge->parBounds(0);      
     SMetric3 cc;
-    double l;
     if (gv == _myGEdge->getBeginVertex()) {
       SVector3 t = _myGEdge->firstDer(range.low());
       t.normalize();
-      cc = buildMetricTangentToCurve(t,_myGEdge->curvature(range.low()),l);
+      double l_t = ((2 * M_PI) /( fabs(_myGEdge->curvature(range.low())) 
+				*  CTX::instance()->mesh.minCircPoints ));      
+      double l_n = 1.e12;
+      cc = buildMetricTangentToCurve(t,l_t,l_n);
     }
     else {
       SVector3 t = _myGEdge->firstDer(range.high());
       t.normalize();
-      cc = buildMetricTangentToCurve(t,_myGEdge->curvature(range.high()),l);
+      double l_t = ((2 * M_PI) /( fabs(_myGEdge->curvature(range.high())) 
+				  *  CTX::instance()->mesh.minCircPoints ));      
+      double l_n = 1.e12;
+      cc = buildMetricTangentToCurve(t,l_t,l_n);
     }
     val = intersection(val,cc);
-    length = std::min(length,l);
   }
   return val;
 }
 
-SMetric3 max_edge_curvature_metric(const GEdge *ge, double u, double &l)
+SMetric3 max_edge_curvature_metric(const GEdge *ge, double u)
 {
   SVector3 t =  ge->firstDer(u);
   t.normalize();
-  return buildMetricTangentToCurve(t,ge->curvature(u),l);  
+  double l_t = ((2 * M_PI) /( fabs(ge->curvature(u)) 
+			      *  CTX::instance()->mesh.minCircPoints ));      
+  double l_n = 1.e12;
+  return buildMetricTangentToCurve(t,l_t,l_n);  
 }
 
 static double max_edge_curvature(const GVertex *gv)
@@ -144,35 +157,40 @@ static double max_surf_curvature(const GVertex *gv)
   return val;
 }
 
-static SMetric3 metric_based_on_surface_curvature(const GFace *gf, double u, double v)
+SMetric3 metric_based_on_surface_curvature(const GFace *gf, double u, double v, 
+					   bool surface_isotropic,
+					   double d_normal ,
+					   double d_tangent_max )
 {
-  if (gf->geomType() == GEntity::Plane)return SMetric3(1.e-6);
+  if (gf->geomType() == GEntity::Plane)return SMetric3(1.e-12);
   double cmax, cmin;
   SVector3 dirMax,dirMin;
   cmax = gf->curvatures(SPoint2(u, v),&dirMax, &dirMin, &cmax,&cmin);
-  if (cmin == 0)cmin =1.e-5;
-  if (cmax == 0)cmax =1.e-5;
+  if (cmin == 0)cmin =1.e-12;
+  if (cmax == 0)cmax =1.e-12;
   double lambda2 =  ((2 * M_PI) /( fabs(cmax) *  CTX::instance()->mesh.minCircPoints ) );
   double lambda1 =  ((2 * M_PI) /( fabs(cmin) *  CTX::instance()->mesh.minCircPoints ) );
   SVector3 Z = crossprod(dirMax,dirMin);
-
+  if (surface_isotropic) lambda2 = lambda1 = std::min(lambda2,lambda1);
+  dirMin.normalize();
+  dirMax.normalize();
+  Z.normalize();
   lambda1 = std::max(lambda1, CTX::instance()->mesh.lcMin);
   lambda2 = std::max(lambda2, CTX::instance()->mesh.lcMin);
   lambda1 = std::min(lambda1, CTX::instance()->mesh.lcMax);
   lambda2 = std::min(lambda2, CTX::instance()->mesh.lcMax);
-  /*  if (gf->tag() == 36  || gf->tag() == 62)
-    printf("%g %g -- %g %g -- %g %g %g --  %g %g %g -- %g %g %g -- %g %g\n",u,v,cmax,cmin,
-           dirMax.x(),dirMax.y(),dirMax.z(),
-           dirMin.x(),dirMin.y(),dirMin.z(),
-           Z.x(),Z.y(),Z.z(),
-           lambda1,lambda2);
-  */
-  SMetric3 curvMetric (1./(lambda1*lambda1),1./(lambda2*lambda2),1.e-5, 
+  double lambda3 = std::min(d_normal, CTX::instance()->mesh.lcMax);
+  lambda3 = std::max(lambda3, CTX::instance()->mesh.lcMin);
+  lambda1 = std::min(lambda1, d_tangent_max);
+  lambda2 = std::min(lambda2, d_tangent_max);
+
+  SMetric3 curvMetric (1./(lambda1*lambda1),1./(lambda2*lambda2),
+		       1./(lambda3*lambda3), 
                        dirMin, dirMax, Z );
   return curvMetric;
 }
 
-static SMetric3 metric_based_on_surface_curvature(const GEdge *ge, double u)
+static SMetric3 metric_based_on_surface_curvature(const GEdge *ge, double u, bool iso_surf)
 {
   const GEdgeCompound* ptrCompoundEdge = dynamic_cast<const GEdgeCompound*>(ge);
   if (ptrCompoundEdge)
@@ -200,30 +218,27 @@ static SMetric3 metric_based_on_surface_curvature(const GEdge *ge, double u)
     SMetric3 mesh_size(1.e-12);
     std::list<GFace *> faces = ge->faces();
     std::list<GFace *>::iterator it = faces.begin();
-    int count = 0;
+    // we choose the metric eigenvectors to be the ones
+    // related to the edge ...
+    SMetric3 curvMetric = max_edge_curvature_metric(ge, u);
     while(it != faces.end())
-    {
-    if (((*it)->geomType() != GEntity::CompoundSurface) &&
-        ((*it)->geomType() != GEntity::DiscreteSurface)){
-      SPoint2 par = ge->reparamOnFace((*it), u, 1);
-      SMetric3 m = metric_based_on_surface_curvature (*it, par.x(), par.y());
-      if (!count) mesh_size = m;
-      else mesh_size = intersection(mesh_size, m);
-      count++;
-    }
-    ++it;
-  }
-  double Crv = ge->curvature(u);
-  double lambda =  ((2 * M_PI) /( fabs(Crv) *  CTX::instance()->mesh.minCircPoints ) );
-  SMetric3 curvMetric (1./(lambda*lambda));
-  
-  return intersection_conserve_mostaniso(mesh_size,curvMetric);
+      {
+	if (((*it)->geomType() != GEntity::CompoundSurface) &&
+	    ((*it)->geomType() != GEntity::DiscreteSurface)){
+	  SPoint2 par = ge->reparamOnFace((*it), u, 1);
+	  SMetric3 m = metric_based_on_surface_curvature (*it, par.x(), par.y(), iso_surf);
+	  curvMetric = intersection_conserveM1(curvMetric,m);
+	}
+	++it;
+      }
+    
+    return curvMetric;
   }
 }
 
-static SMetric3 metric_based_on_surface_curvature(const GVertex *gv)
+static SMetric3 metric_based_on_surface_curvature(const GVertex *gv, bool iso_surf)
 {
-  SMetric3 mesh_size(1.e-5);
+  SMetric3 mesh_size(1.e-15);
   std::list<GEdge*> l_edges = gv->edges();
   for (std::list<GEdge*>::const_iterator ite = l_edges.begin(); 
        ite != l_edges.end(); ++ite){
@@ -239,11 +254,11 @@ static SMetric3 metric_based_on_surface_curvature(const GVertex *gv)
         if (gv == _myGEdge->getBeginVertex())
           mesh_size = intersection
             (mesh_size,
-             metric_based_on_surface_curvature(_myGEdge, bounds.low()));
+             metric_based_on_surface_curvature(_myGEdge, bounds.low(), iso_surf));
         else
           mesh_size = intersection
             (mesh_size,
-             metric_based_on_surface_curvature(_myGEdge, bounds.high()));
+             metric_based_on_surface_curvature(_myGEdge, bounds.high(), iso_surf));
     }
 
   }
@@ -262,15 +277,15 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
   switch(ge->dim()){
   case 0:
     Crv = max_edge_curvature((const GVertex *)ge);
-    Crv = std::max(max_surf_curvature((const GVertex *)ge), Crv);
-    //Crv = max_surf_curvature((const GVertex *)ge);
+    //Crv = std::max(max_surf_curvature((const GVertex *)ge), Crv);
+    //    Crv = max_surf_curvature((const GVertex *)ge);
     break;
   case 1:
     {
       GEdge *ged = (GEdge *)ge;
       Crv = ged->curvature(U);
       Crv = std::max(Crv, max_surf_curvature(ged, U));
-      //Crv = max_surf_curvature(ged, U);      
+      //      Crv = max_surf_curvature(ged, U);      
     }
     break;
   case 2:
@@ -284,12 +299,14 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
   return lc;
 }
 
-static SMetric3 LC_MVertex_CURV_ANISO(GEntity *ge, double U, double V)
+SMetric3 LC_MVertex_CURV_ANISO(GEntity *ge, double U, double V)
 {
+  bool iso_surf = CTX::instance()->mesh.lcFromCurvature == 2;
+
   switch(ge->dim()){
-  case 0: return metric_based_on_surface_curvature((const GVertex *)ge);
-  case 1: return metric_based_on_surface_curvature((const GEdge *)ge, U);
-  case 2: return metric_based_on_surface_curvature((const GFace *)ge, U, V);
+  case 0: return metric_based_on_surface_curvature((const GVertex *)ge, iso_surf);
+  case 1: return metric_based_on_surface_curvature((const GEdge *)ge, U, iso_surf);
+  case 2: return metric_based_on_surface_curvature((const GFace *)ge, U, V, iso_surf);
   }
   Msg::Error("Curvature control impossible to compute for a volume!");
   return SMetric3();
@@ -382,19 +399,20 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
 {
   // default lc (mesh size == size of the model)
   double l1 = CTX::instance()->lc;
+  const double max_lc =  CTX::instance()->mesh.lcMax;
 
   // lc from points            
-  double l2 = MAX_LC;
+  double l2 = max_lc;
   if(CTX::instance()->mesh.lcFromPoints && ge->dim() < 2) 
     l2 = LC_MVertex_PNTS(ge, U, V);
   
   // lc from curvature
-  SMetric3 l3(1./(MAX_LC*MAX_LC));
+  SMetric3 l3(1./(max_lc*max_lc));
   if(CTX::instance()->mesh.lcFromCurvature && ge->dim() < 3)
     l3 = LC_MVertex_CURV_ANISO(ge, U, V);
 
   // lc from fields
-  SMetric3 l4(1./(MAX_LC*MAX_LC));
+  SMetric3 l4(1./(max_lc*max_lc));
   FieldManager *fields = ge->model()->getFields();
   if(fields->getBackgroundField() > 0){
     Field *f = fields->get(fields->getBackgroundField());
@@ -426,8 +444,22 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
   }
   
   SMetric3 LC(1./(lc*lc));
-  SMetric3 m = intersection(intersection (l4, LC),l3);
+  SMetric3 m = intersection_conserveM1(intersection_conserveM1 (l4, LC),l3);
   //printf("%g %g %g %g %g %g\n",m(0,0),m(1,1),m(2,2),m(0,1),m(0,2),m(1,2));
+  {
+    fullMatrix<double> V(3,3);
+    fullVector<double> S(3);
+    m.eig(V,S,true);
+    if (S(0) < 0 || S(1) < 0 || S(2) < 0){
+      printf("%g %g %g\n",S(0),S(1),S(2));
+      l3.eig(V,S,true);
+      printf("%g %g %g\n",S(0),S(1),S(2));
+      l4.eig(V,S,true);
+      printf("%g %g %g\n",S(0),S(1),S(2));      
+    }
+  }
+
+
   return m;
   //  return lc * CTX::instance()->mesh.lcFactor;
 }
@@ -510,7 +542,7 @@ backgroundMesh::backgroundMesh(GFace *_gf)
   else {
     std::map<MVertex*, MVertex*>::iterator itv2 = _2Dto3D.begin();
     for ( ; itv2 != _2Dto3D.end(); ++itv2){
-      _sizes[itv2->first] = MAX_LC;
+      _sizes[itv2->first] = CTX::instance()->mesh.lcMax;
     }
   }
   // ensure that other criteria are fullfilled

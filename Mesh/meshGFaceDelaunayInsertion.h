@@ -138,7 +138,7 @@ void connectQuads(std::vector<MQua4*> &);
 void connectTriangles(std::list<MTri3*> &);
 void connectTriangles(std::vector<MTri3*> &);
 void connectTriangles(std::set<MTri3*,compareTri3Ptr> &AllTris);
-void bowyerWatson(GFace *gf);
+void bowyerWatson(GFace *gf, int MAXPNT= 1000000000);
 void bowyerWatsonFrontal(GFace *gf);
 void bowyerWatsonFrontalLayers(GFace *gf, bool quad);
 void buildBackGroundMesh (GFace *gf);

@@ -379,7 +379,7 @@ void meshGEdge::operator() (GEdge *ge)
       SVector3 der = ge->firstDer(pt.t);
       pt.xp = der.norm();
     }
-    a = smoothPrimitive(ge, CTX::instance()->mesh.smoothRatio, Points);
+    a = smoothPrimitive(ge, sqrt(CTX::instance()->mesh.smoothRatio), Points);
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }
 

@@ -71,7 +71,7 @@ SMetric3 intersection_conserve_mostaniso (const SMetric3 &m1, const SMetric3 &m2
   double ratio1 = lambda1_min/lambda1_max;
   double ratio2 = lambda2_min/lambda2_max;
 
-  if (ratio1<ratio2)
+  if (lambda1_min<lambda2_min)
     return intersection_conserveM1(m1,m2);
   else
     return intersection_conserveM1(m2,m1);

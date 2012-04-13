@@ -144,9 +144,9 @@ class BoundaryLayerField : public Field {
                    SMetric3 &metr, GEntity *ge);
  public:
   double hwall_n,hwall_t,ratio,hfar,thickness,fan_angle; 
-  double current_distance;
+  double current_distance, tgt_aniso_ratio;
   SPoint3 _closest_point;
-  int iRecombine;
+  int iRecombine, iIntersect;
   AttractorField *current_closest;
   virtual bool isotropic () const {return false;}
   virtual const char *getName();

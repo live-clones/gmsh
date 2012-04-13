@@ -309,7 +309,7 @@ void highOrderTools::applySmoothingTo(std::vector<MElement*> & all, GFace *gf)
   double dx = dx0;
   Msg::Debug(" dx0 = %12.5E", dx0);
   int iter = 0;
-  while(1){
+  while(0){
     double dx2 = smooth_metric_(v, gf, myAssembler, verticesToMove, El);
     Msg::Debug(" dx2  = %12.5E", dx2);
     if (fabs(dx2 - dx) < 1.e-4 * dx0)break;
@@ -372,7 +372,7 @@ double highOrderTools::smooth_metric_(std::vector<MElement*>  & v,
       J23K33.gemm(J23, K33, 1, 0);
       K22.gemm(J23K33, J32, 1, 0);
       //      K33.print("K33");
-      //      K22.print("K22");
+      //            K22.print("K22");
       J23K33.mult(D3, R2);
       //      R2.print("hopla");
       for (int j = 0; j < n2; j++){

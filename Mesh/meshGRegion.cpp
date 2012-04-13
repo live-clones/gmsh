@@ -526,11 +526,11 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
        CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D ||
        CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL_QUAD ||
        CTX::instance()->mesh.algo2d == ALGO_2D_BAMG){
-      sprintf(opts, "pY",  (Msg::GetVerbosity() < 3) ? 'Q':
+      sprintf(opts, "-q1.5pY",  (Msg::GetVerbosity() < 3) ? 'Q':
 	      (Msg::GetVerbosity() > 6) ? 'V': '\0');
     }
     else {
-      sprintf(opts, "pe%c",  (Msg::GetVerbosity() < 3) ? 'Q':
+      sprintf(opts, "-q3.5Ype%c",  (Msg::GetVerbosity() < 3) ? 'Q':
       	      (Msg::GetVerbosity() > 6) ? 'V': '\0');
     }
     try{
@@ -594,11 +594,13 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
    bowyerWatsonFrontalLayers(gr, false);
  else if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_HEX)
    bowyerWatsonFrontalLayers(gr, true);
- else if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D)
+ else if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D){
    refineMeshMMG(gr);
+ }
  else
-   if(!Filler::get_nbr_new_vertices() && !LpSmoother::get_nbr_interior_vertices())
+   if(!Filler::get_nbr_new_vertices() && !LpSmoother::get_nbr_interior_vertices()){
      insertVerticesInRegion(gr);
+   }
 #endif
 }
 

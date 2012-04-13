@@ -250,7 +250,9 @@ class GFace : public GEntity
 
   // add points (and optionally normals) in vectors so that two
   // points are at most maxDist apart
-  bool fillPointCloud(double maxDist, std::vector<SPoint3> *points,
+  bool fillPointCloud(double maxDist, 
+		      std::vector<SPoint3> *points,
+		      std::vector<SPoint2> *uvpoints,
                       std::vector<SVector3> *normals=0);
 
   // apply Lloyd's algorithm to the mesh
@@ -286,6 +288,8 @@ class GFace : public GEntity
 
   int getMeshingAlgo () const;
   void setMeshingAlgo (int) ;
+  int getCurvatureControlParameter () const;
+  void setCurvatureControlParameter (int) ;
 
   struct {
     mutable GEntity::MeshGenerationStatus status;

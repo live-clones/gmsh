@@ -648,7 +648,7 @@ void invert_singular_matrix3x3(double MM[3][3], double II[3][3])
 bool newton_fd(void (*func)(fullVector<double> &, fullVector<double> &, void *),
                fullVector<double> &x, void *data, double relax, double tolx)
 {
-  const int MAXIT = 50;
+  const int MAXIT = 10;
   const double EPS = 1.e-4;
   const int N = x.size();
 

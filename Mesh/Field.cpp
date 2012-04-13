@@ -35,7 +35,6 @@
 #include "ANN/ANN.h"
 #endif
 
-
 Field::~Field()
 {
   for(std::map<std::string, FieldOption*>::iterator it = options.begin();
@@ -1649,8 +1648,33 @@ class AttractorField : public Field
         annDeallocPts(zeronodes);
         delete kdtree;
       }
-      int totpoints = nodes_id.size() + (n_nodes_by_edge-2) * edges_id.size() +
-        n_nodes_by_edge * n_nodes_by_edge * faces_id.size();
+      
+      std::vector<SPoint3> points;
+      std::vector<SPoint2> uvpoints;
+      std::vector<int> offset;
+      offset.push_back(0);
+      for(std::list<int>::iterator it = faces_id.begin();
+          it != faces_id.end(); ++it) {
+        Surface *s = FindSurface(*it);
+        if(!s) {
+          GFace *f = GModel::current()->getFaceByTag(*it);
+	  if (f){
+	    SBoundingBox3d bb = f->bounds();
+	    SVector3 dd = bb.max() - bb.min();
+	    double maxDist = dd.norm() / n_nodes_by_edge ;
+	    bool success = f->fillPointCloud(maxDist, &points, &uvpoints);
+	    offset.push_back(points.size());
+	  }
+	}
+      }
+
+
+      int totpoints = 
+	nodes_id.size() + 
+	(n_nodes_by_edge-2) * edges_id.size() +
+        ((points.size()) ? points.size() : n_nodes_by_edge * n_nodes_by_edge * faces_id.size());
+      printf("%d points found in points clouds (%d edges)\n",totpoints, edges_id.size());
+
       if(totpoints){
         zeronodes = annAllocPts(totpoints, 3);
         _infos.resize(totpoints);
@@ -1676,8 +1700,7 @@ class AttractorField : public Field
       for(std::list<int>::iterator it = edges_id.begin();
           it != edges_id.end(); ++it) {
         Curve *c = FindCurve(*it);
-	GEdge *e = GModel::current()->getEdgeByTag(*it);
-        if(c && !e) {
+        if(c) {
           for(int i = 1; i < n_nodes_by_edge -1 ; i++) {
             double u = (double)i / (n_nodes_by_edge - 1);
             Vertex V = InterpolateCurve(c, u, 0);
@@ -1687,6 +1710,7 @@ class AttractorField : public Field
           }
         }
         else {
+	  GEdge *e = GModel::current()->getEdgeByTag(*it);
           if(e) {
             for(int i = 1; i < n_nodes_by_edge - 1; i++) {
               double u = (double)i / (n_nodes_by_edge - 1);
@@ -1703,6 +1727,7 @@ class AttractorField : public Field
       // This can lead to weird results as we generate attractors over
       // the whole parametric plane (we should really use a mesh,
       // e.g. a refined STL.)
+      int count = 0;
       for(std::list<int>::iterator it = faces_id.begin();
           it != faces_id.end(); ++it) {
         Surface *s = FindSurface(*it);
@@ -1720,22 +1745,33 @@ class AttractorField : public Field
         }
         else {
           GFace *f = GModel::current()->getFaceByTag(*it);
-          if(f) {
-            for(int i = 0; i < n_nodes_by_edge; i++) {
-              for(int j = 0; j < n_nodes_by_edge; j++) {
-                double u = (double)i / (n_nodes_by_edge - 1);
-                double v = (double)j / (n_nodes_by_edge - 1);
-                Range<double> b1 = ge->parBounds(0);
-                Range<double> b2 = ge->parBounds(1);
-                double t1 = b1.low() + u * (b1.high() - b1.low());
-                double t2 = b2.low() + v * (b2.high() - b2.low());
-                GPoint gp = f->point(t1, t2);
-                getCoord(gp.x(), gp.y(), gp.z(), zeronodes[k][0],
-                         zeronodes[k][1], zeronodes[k][2], f);
-		_infos[k++] = AttractorInfo(*it,2,u,v);
-              }
+          if(f) {	    
+	    if (points.size()){
+	      for(int j = offset[count]; j < offset[count+1];j++) {
+		zeronodes[k][0] = points[j].x();
+		zeronodes[k][1] = points[j].y();
+		zeronodes[k][2] = points[j].z();
+		_infos[k++] = AttractorInfo(*it,2,uvpoints[j].x(),uvpoints[j].y());
+	      }
+	      count++;
+	    }
+	    else{
+	      for(int i = 0; i < n_nodes_by_edge; i++) {
+		for(int j = 0; j < n_nodes_by_edge; j++) {
+		  double u = (double)i / (n_nodes_by_edge - 1);
+		  double v = (double)j / (n_nodes_by_edge - 1);
+		  Range<double> b1 = ge->parBounds(0);
+		  Range<double> b2 = ge->parBounds(1);
+		  double t1 = b1.low() + u * (b1.high() - b1.low());
+		  double t2 = b2.low() + v * (b2.high() - b2.low());
+		  GPoint gp = f->point(t1, t2);
+		  getCoord(gp.x(), gp.y(), gp.z(), zeronodes[k][0],
+			   zeronodes[k][1], zeronodes[k][2], f);
+		  _infos[k++] = AttractorInfo(*it,2,u,v);
+		}
+	      }
             }
-          }
+          }	  
         }
       }
       kdtree = new ANNkd_tree(zeronodes, totpoints, 3);
@@ -1766,7 +1802,9 @@ BoundaryLayerField::BoundaryLayerField()
   ratio = 1.1;
   thickness = 1.e-2;
   fan_angle = 30;
+  tgt_aniso_ratio = 1.e10;
   iRecombine = 0;
+  iIntersect = 0;
   options["NodesList"] = new FieldOptionList
     (nodes_id, "Indices of nodes in the geometric model", &update_needed);
   options["EdgesList"] = new FieldOptionList
@@ -1777,10 +1815,14 @@ BoundaryLayerField::BoundaryLayerField()
      "layer is needed", &update_needed);
   options["Quads"] = new FieldOptionInt
     (iRecombine, "Generate recombined elements in the boundary layer");
+  options["IntersectMetrics"] = new FieldOptionInt
+    (iIntersect, "Intersect metrics of all faces");
   options["hwall_n"] = new FieldOptionDouble
     (hwall_n, "Mesh Size Normal to the The Wall");
   options["fan_angle"] = new FieldOptionDouble
     (fan_angle, "Threshold angle for creating a mesh fan in the boundary layer");
+  options["AnisoMax"] = new FieldOptionDouble
+    (tgt_aniso_ratio, "Threshold angle for creating a mesh fan in the boundary layer");
   options["hwall_t"] = new FieldOptionDouble
     (hwall_t, "Mesh Size Tangent to the Wall");
   options["ratio"] = new FieldOptionDouble
@@ -1793,6 +1835,23 @@ BoundaryLayerField::BoundaryLayerField()
 
 double BoundaryLayerField::operator() (double x, double y, double z, GEntity *ge)
 {
+  
+  if (update_needed){
+    for(std::list<int>::iterator it = nodes_id.begin();
+	it != nodes_id.end(); ++it) {
+      _att_fields.push_back(new AttractorField(0,*it,100000));
+    }
+    for(std::list<int>::iterator it = edges_id.begin();
+	it != edges_id.end(); ++it) {
+      _att_fields.push_back(new AttractorField(1,*it,300000));
+    }
+    for(std::list<int>::iterator it = faces_id.begin();
+	it != faces_id.end(); ++it) {
+      _att_fields.push_back(new AttractorField(2,*it,1200));
+    }
+    update_needed = false;
+  }
+  
   double dist = 1.e22;
   AttractorField *cc;
   for (std::list<AttractorField*>::iterator it = _att_fields.begin();
@@ -1831,122 +1890,59 @@ void BoundaryLayerField::operator() (AttractorField *cc, double dist,
   const double ll2   = dist*(ratio-1) + hwall_t;
   double lc_t  = std::min(lc_n*CTX::instance()->mesh.anisoMax, std::min(ll2,hfar));
 
-  SVector3 t1,t2,t3;
-  double L1,L2,L3;
+  lc_n = std::max(lc_n, CTX::instance()->mesh.lcMin);
+  lc_n = std::min(lc_n, CTX::instance()->mesh.lcMax);
+  lc_t = std::max(lc_t, CTX::instance()->mesh.lcMin);
+  lc_t = std::min(lc_t, CTX::instance()->mesh.lcMax);
 
   std::pair<AttractorInfo,SPoint3> pp = cc->getAttractorInfo();
   if (pp.first.dim ==0){
-    L1 = lc_n;
-    L2 = lc_n;
-    L3 = lc_n;
     GVertex *v = GModel::current()->getVertexByTag(pp.first.ent);
-    t1 = SVector3(v->x() -x,v->y() -y,v->z() -z);
-    t1.normalize();
-    //      printf("%p %g %g %g\n",v,t1.x(),t1.y(),t1.z());
-    if (t1.norm() == 0)t1 = SVector3(1,0,0);
-    if (fabs(t1.x()) < fabs(t1.y()) && fabs(t1.x()) < fabs(t1.z()))
-      t2 = SVector3(1,0,0);
-    else if (fabs(t1.y()) < fabs(t1.x()) && fabs(t1.y()) < fabs(t1.z()))
-      t2 = SVector3(0,1,0);
-    else
-      t2 = SVector3(0,0,1);
-    t3 = crossprod(t1,t2);
-    t3.normalize();
-    t2 = crossprod(t3,t1);
-    //      printf("t1 %p %g %g %g\n",v,t1.x(),t1.y(),t1.z());
-    //      printf("t2 %p %g %g %g\n",v,t2.x(),t2.y(),t2.z());
-    //      printf("t3 %p %g %g %g\n",v,t3.x(),t3.y(),t3.z());
+    SVector3 t1 = SVector3(v->x() -x,v->y() -y,v->z() -z);
+    metr = buildMetricTangentToCurve(t1,lc_n,lc_n);
+    return;
   }
   else if (pp.first.dim ==1){
     GEdge *e = GModel::current()->getEdgeByTag(pp.first.ent);
-
-    // the tangent size at this point is the size of the
-    // 1D mesh at this point !
-    // hack : use curvature
-    /*
-      if(CTX::instance()->mesh.lcFromCurvature){
-      double Crv = e->curvature(pp.first.u);
-      double lc = Crv > 0 ? 2 * M_PI / Crv / CTX::instance()->mesh.minCircPoints : 1.e-22;
-      const double ll2b   = dist*(ratio-1) + lc;
-      double lc_tb  = std::min(lc_n*CTX::instance()->mesh.anisoMax, std::min(ll2b,hfar));
-      lc_t = std::min(lc_t,lc_tb);
-      }
-      */
-
-    if (dist < hwall_t){
-      L1 = lc_t;
-      L2 = lc_n;
-      L3 = lc_n;
-      t1 = e->firstDer(pp.first.u);
-      t1.normalize();
-      if (fabs(t1.x()) < fabs(t1.y()) && fabs(t1.x()) < fabs(t1.z()))
-	t2 = SVector3(1,0,0);
-      else if (fabs(t1.y()) < fabs(t1.x()) && fabs(t1.y()) < fabs(t1.z()))
-	t2 = SVector3(0,1,0);
-      else
-	t2 = SVector3(0,0,1);
-      t3 = crossprod(t1,t2);
-      t3.normalize();
-      t2 = crossprod(t3,t1);
-      //	  printf("hfar = %g lc = %g dir %g %g \n",hfar,lc,t1.x(),t1.y());
+    if (dist < thickness){
+      SVector3 t1 = e->firstDer(pp.first.u);
+      double crv = e->curvature(pp.first.u);
+      const double b = lc_t;
+      const double h = lc_n;
+      double oneOverD2 = .5/(b*b) * (1. + sqrt (1. + ( 4.*crv*crv*b*b*b*b/ (h*h*CTX::instance()->mesh.smoothRatio*CTX::instance()->mesh.smoothRatio))));
+      metr = buildMetricTangentToCurve(t1,sqrt(1./oneOverD2),lc_n);
+      return;
     }
     else {
-      L1 = lc_t;
-      L2 = lc_n;
-      L3 = lc_t;
       GPoint p = e->point(pp.first.u);
-      t2 = SVector3(p.x() -x,p.y() -y,p.z() -z);
-      if (fabs(t2.x()) < fabs(t2.y()) && fabs(t2.x()) < fabs(t2.z()))
-	  t1 = SVector3(1,0,0);
-      else if (fabs(t2.y()) < fabs(t2.x()) && fabs(t2.y()) < fabs(t2.z()))
-	t1 = SVector3(0,1,0);
-      else
-	t1 = SVector3(0,0,1);
-      t2.normalize();
-      t3 = crossprod(t1,t2);
-      t3.normalize();
-      t1 = crossprod(t3,t2);
+      SVector3 t2 = SVector3(p.x() -x,p.y() -y,p.z() -z);
+      metr = buildMetricTangentToCurve(t2,lc_t,lc_n);
+      return;
     }
   }
   else {
     GFace *gf = GModel::current()->getFaceByTag(pp.first.ent);
-
-    if (dist < hwall_t){
-      L1 = lc_n;
-      L2 = lc_t;
-      L3 = lc_t;
-      t1 = gf->normal(SPoint2(pp.first.u,pp.first.v));
-      t1.normalize();
-      if (fabs(t1.x()) < fabs(t1.y()) && fabs(t1.x()) < fabs(t1.z()))
-	t2 = SVector3(1,0,0);
-      else if (fabs(t1.y()) < fabs(t1.x()) && fabs(t1.y()) < fabs(t1.z()))
-	t2 = SVector3(0,1,0);
-      else
-	t2 = SVector3(0,0,1);
-      t3 = crossprod(t1,t2);
-      t3.normalize();
-      t2 = crossprod(t3,t1);
-      //	  printf("hfar = %g lc = %g dir %g %g \n",hfar,lc,t1.x(),t1.y());
+    if (dist < thickness){
+      double cmin, cmax;
+      SVector3 dirMax,dirMin;
+      cmax = gf->curvatures(SPoint2(pp.first.u,pp.first.v),&dirMax, &dirMin, &cmax,&cmin);
+      const double b = lc_t;
+      const double h = lc_n;
+      double oneOverD2_min = .5/(b*b) * (1. + sqrt (1. + ( 4.*cmin*cmin*b*b*b*b/ (h*h*CTX::instance()->mesh.smoothRatio*CTX::instance()->mesh.smoothRatio))));
+      double oneOverD2_max = .5/(b*b) * (1. + sqrt (1. + ( 4.*cmax*cmax*b*b*b*b/ (h*h*CTX::instance()->mesh.smoothRatio*CTX::instance()->mesh.smoothRatio))));
+      double dmin = sqrt(1./oneOverD2_min);
+      double dmax = sqrt(1./oneOverD2_max);      
+      dmin = std::min(dmin,dmax*tgt_aniso_ratio);
+      metr = buildMetricTangentToSurface(dirMin,dirMax,dmin,dmax,lc_n);
+      return;
     }
     else {
-      L1 = lc_t;
-      L2 = lc_n;
-      L3 = lc_t;
       GPoint p = gf->point(SPoint2(pp.first.u,pp.first.v));
-      t2 = SVector3(p.x() -x,p.y() -y,p.z() -z);
-      if (fabs(t2.x()) < fabs(t2.y()) && fabs(t2.x()) < fabs(t2.z()))
-	t1 = SVector3(1,0,0);
-      else if (fabs(t2.y()) < fabs(t2.x()) && fabs(t2.y()) < fabs(t2.z()))
-	t1 = SVector3(0,1,0);
-      else
-	t1 = SVector3(0,0,1);
-      t2.normalize();
-      t3 = crossprod(t1,t2);
-      t3.normalize();
-      t1 = crossprod(t3,t2);
+      SVector3 t2 = SVector3(p.x() -x,p.y() -y,p.z() -z);
+      metr = buildMetricTangentToCurve(t2,lc_n,lc_t);
+      return;
     }
   }
-  metr  = SMetric3(1./(L1*L1), 1./(L2*L2), 1./(L3*L3), t1, t2, t3);
 }
 
 void BoundaryLayerField::operator() (double x, double y, double z,
@@ -1963,7 +1959,7 @@ void BoundaryLayerField::operator() (double x, double y, double z,
     }
     for(std::list<int>::iterator it = faces_id.begin();
 	it != faces_id.end(); ++it) {
-      _att_fields.push_back(new AttractorField(2,*it,300));
+      _att_fields.push_back(new AttractorField(2,*it,1200));
     }
     update_needed = false;
   }
@@ -1978,17 +1974,19 @@ void BoundaryLayerField::operator() (double x, double y, double z,
     SPoint3 CLOSEST= (*it)->getAttractorInfo().second;
 
     SMetric3 localMetric;
-    (*this)(*it, cdist,x, y, z, localMetric, ge);
-    hop.push_back(localMetric);
-    //v = intersection(v,localMetric);
+    if (iIntersect){
+      (*this)(*it, cdist,x, y, z, localMetric, ge);
+      hop.push_back(localMetric);
+    }
     if (cdist < current_distance){
+      if (!iIntersect)(*this)(*it, cdist,x, y, z, localMetric, ge);
       current_distance = cdist;
       current_closest = *it;
       v = localMetric;
       _closest_point = CLOSEST;
     }
   }
-  //  for (int i=0;i<hop.size();i++)v = intersection_conserveM1(v,hop[i]);
+  if (iIntersect)for (int i=0;i<hop.size();i++)v = intersection_conserve_mostaniso(v,hop[i]);
   metr = v;
 }
 #endif

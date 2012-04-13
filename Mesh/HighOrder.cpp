@@ -121,7 +121,7 @@ static bool computeEquidistantParameters0(GEdge *ge, double u0, double uN, int N
   return false;
 }
 // 1 = geodesics
-static int method_for_computing_intermediary_points = 0;
+static int method_for_computing_intermediary_points = 1;
 static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N,
                                          double *u, double underRelax){
   if (method_for_computing_intermediary_points == 0) // use linear abscissa
@@ -1328,6 +1328,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   // printJacobians(m, "smoothness.pos");
   // m->writeMSH("SMOOTHED.msh");
   // FIXME !!
+  checkHighOrderTriangles("Surface mesh", m, bad, worst);
   if (!linear && CTX::instance()->mesh.smoothInternalEdges){
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
       std::vector<MElement*> v;

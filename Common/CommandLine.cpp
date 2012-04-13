@@ -532,6 +532,10 @@ void GetOptions(int argc, char *argv[])
         CTX::instance()->mesh.lcFromCurvature = 1;
         i++;
       }
+      else if(!strcmp(argv[i] + 1, "clcurviso")) {
+        CTX::instance()->mesh.lcFromCurvature = 2;
+        i++;
+      }
       else if(!strcmp(argv[i] + 1, "smooth")) {
         i++;
         if(argv[i])

@@ -802,6 +802,8 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
       MTriangle *base = worst->tri();
       Msg::Debug("Point %g %g cannot be inserted because %d", center[0], center[1], p.succeeded() );
 
+      //      Msg::Info("Point %g %g cannot be inserted because %d", center[0], center[1], p.succeeded() );
+
       AllTris.erase(it);
       worst->forceRadius(-1);
       AllTris.insert(worst);
@@ -834,7 +836,7 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
 }
 
 
-void bowyerWatson(GFace *gf)
+void bowyerWatson(GFace *gf, int MAXPNT)
 {
   std::set<MTri3*,compareTri3Ptr> AllTris;
   std::vector<double> vSizes, vSizesBGM, Us, Vs;
@@ -871,7 +873,7 @@ void bowyerWatson(GFace *gf)
         Msg::Debug("%7d points created -- Worst tri radius is %8.3f",
                    vSizes.size(), worst->getRadius());
       double center[2],metric[3],r2;
-      if (worst->getRadius() < /*1.333333/(sqrt(3.0))*/0.5 * sqrt(2.0)) break;
+      if (worst->getRadius() < /*1.333333/(sqrt(3.0))*/0.5 * sqrt(2.0) || vSizes.size() > MAXPNT) break;
       circUV(worst->tri(), Us, Vs, center, gf);
       MTriangle *base = worst->tri();
       double pa[2] = {(Us[base->getVertex(0)->getIndex()] +

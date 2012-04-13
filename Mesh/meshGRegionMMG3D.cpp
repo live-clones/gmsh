@@ -137,13 +137,13 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
     std::map<MVertex*,std::pair<double,int> >::iterator itv = LCS.find(v);
     if (itv != LCS.end()){
       mmg2gmsh[(*it)->getNum()] = *it;
-      if (CTX::instance()->mesh.lcExtendFromBoundary){
+      //if (CTX::instance()->mesh.lcExtendFromBoundary){
 	double LL = itv->second.first/itv->second.second;
 	SMetric3 l4(1./(LL*LL));
-	SMetric3 MM = intersection (l4, m);	
+	SMetric3 MM = intersection_conserve_mostaniso (l4, m);	
 	m = MM;
 	//lc = std::min(LL,lc);
-      }
+	//      }
     }
 
     sol->met[count++] = m(0,0);
@@ -185,12 +185,12 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
   
 }
 
-static void updateSizes(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol)
+static void updateSizes(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol, std::map<int,MVertex*> &mmg2gmsh)
 {
   std::list<GFace*> f = gr->faces();
-  /*
+  
   std::map<MVertex*,std::pair<double,int> > LCS;
-  if (CTX::instance()->mesh.lcExtendFromBoundary){
+  //  if (CTX::instance()->mesh.lcExtendFromBoundary){
     for (std::list<GFace*>::iterator it = f.begin(); it != f.end() ; ++it){
       for (int i=0;i<(*it)->triangles.size();i++){
 	MTriangle *t = (*it)->triangles[i];
@@ -208,26 +208,34 @@ static void updateSizes(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol)
 	}
       }
     }
-  }
-  */
+    //  }
+  
 
-  int count = 1;
-  for (int k=1 ; k<=mmg->np; k++){
-    MMG_pPoint ppt = &mmg->point[k]; 
-    if (ppt->tag & M_UNUSED) continue;
-
-    SMetric3 m = BGM_MeshMetric(gr, 0,0,ppt->c[0],ppt->c[1],ppt->c[2]);  
-    /*
-    if (CTX::instance()->mesh.lcExtendFromBoundary){
-      std::map<MVertex*,std::pair<double,int> >::iterator itv = LCS.find(v);
+    int count = 1;
+    for (int k=1 ; k<=mmg->np; k++){
+      MMG_pPoint ppt = &mmg->point[k]; 
+      if (ppt->tag & M_UNUSED) continue;
+      
+      SMetric3 m = BGM_MeshMetric(gr, 0,0,ppt->c[0],ppt->c[1],ppt->c[2]);  
+      
+      std::map<int,MVertex*>::iterator it = mmg2gmsh.find(k);
+      
+      if (it != mmg2gmsh.end() && CTX::instance()->mesh.lcExtendFromBoundary){
+	std::map<MVertex*,std::pair<double,int> >::iterator itv = LCS.find(it->second);
       if (itv != LCS.end()){
 	double LL = itv->second.first/itv->second.second;
 	SMetric3 l4(1./(LL*LL));
-	SMetric3 MM = intersection (l4, m);	
+	//	printf("adding a size %g\n",LL);
+	SMetric3 MM = intersection_conserve_mostaniso (l4, m);	
 	m = MM;
       }
     }
-    */
+    if (m.determinant() < 1.e-30){
+      m(0,0) += 1.e-12;
+      m(1,1) += 1.e-12;
+      m(2,2) += 1.e-12;
+    }
+      
     sol->met[count++] = m(0,0);
     sol->met[count++] = m(1,0);
     sol->met[count++] = m(2,0);
@@ -273,10 +281,10 @@ void refineMeshMMG(GRegion *gr)
     Msg::Info("MMG3D succeeded %d vertices %d tetrahedra",
 	      mmg->np, mmg->ne);
     // Here we should interact with BGM
-    updateSizes(gr,mmg, sol);
+    updateSizes(gr,mmg, sol,mmg2gmsh);
 
     int nTnow  = mmg->ne; 
-    if (fabs((double)(nTnow - nT)) < 0.05 * nT) break;
+    if (fabs((double)(nTnow - nT)) < 0.03 * nT) break;
   }  
 
   //char test[] = "test.mesh";  

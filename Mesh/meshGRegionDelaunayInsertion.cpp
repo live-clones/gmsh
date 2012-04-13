@@ -199,7 +199,6 @@ bool insertVertex(MVertex *v,
   while (it != shell.end()){
     MTetrahedron *tr = new MTetrahedron(it->v[0], it->v[1], it->v[2], v);
 
-    const double ONE_THIRD = 1./3.;
     double lc = .25 * (vSizes[tr->getVertex(0)->getIndex()] +
 		       vSizes[tr->getVertex(1)->getIndex()] +
 		       vSizes[tr->getVertex(2)->getIndex()] +
@@ -259,6 +258,7 @@ bool insertVertex(MVertex *v,
     return true;
   }
   else { // The cavity is NOT star shaped
+    //    printf("hola %d %g %g %22.15E\n",onePointIsTooClose, oldVolume, newVolume, 100.*fabs(oldVolume - newVolume) / oldVolume);
     for (unsigned int i = 0; i <shell.size(); i++) myFactory.Free(newTets[i]);
     delete [] newTets;      
     ittet = cavity.begin();
@@ -746,6 +746,85 @@ void optimizeMesh(GRegion *gr, const qualityMeasure4Tet &qm)
   }
 }
 
+
+static double tetcircumcenter(double a[3], double b[3], double c[3], double d[3], 
+			      double circumcenter[3], double *xi, double *eta, double *zeta){
+  double xba, yba, zba, xca, yca, zca, xda, yda, zda;
+  double balength, calength, dalength;
+  double xcrosscd, ycrosscd, zcrosscd;
+  double xcrossdb, ycrossdb, zcrossdb;
+  double xcrossbc, ycrossbc, zcrossbc;
+  double denominator;
+  double xcirca, ycirca, zcirca;
+  
+  /* Use coordinates relative to point `a' of the tetrahedron. */
+  xba = b[0] - a[0];
+  yba = b[1] - a[1];
+  zba = b[2] - a[2];
+  xca = c[0] - a[0];
+  yca = c[1] - a[1];
+  zca = c[2] - a[2];
+  xda = d[0] - a[0];
+  yda = d[1] - a[1];
+  zda = d[2] - a[2];
+  /* Squares of lengths of the edges incident to `a'. */
+  balength = xba * xba + yba * yba + zba * zba;
+  calength = xca * xca + yca * yca + zca * zca;
+  dalength = xda * xda + yda * yda + zda * zda;
+  /* Cross products of these edges. */
+  xcrosscd = yca * zda - yda * zca;
+  ycrosscd = zca * xda - zda * xca;
+  zcrosscd = xca * yda - xda * yca;
+  xcrossdb = yda * zba - yba * zda;
+  ycrossdb = zda * xba - zba * xda;
+  zcrossdb = xda * yba - xba * yda;
+  xcrossbc = yba * zca - yca * zba;
+  ycrossbc = zba * xca - zca * xba;
+  zcrossbc = xba * yca - xca * yba;
+  
+  /* Calculate the denominator of the formulae. */
+  /* Use orient3d() from http://www.cs.cmu.edu/~quake/robust.html     */
+  /*   to ensure a correctly signed (and reasonably accurate) result, */
+  /*   avoiding any possibility of division by zero.                  */
+  const double xxx =  robustPredicates::orient3d(b, c, d, a);
+  denominator = 0.5 / xxx;
+  
+  /* Calculate offset (from `a') of circumcenter. */
+  xcirca = (balength * xcrosscd + calength * xcrossdb + dalength * xcrossbc) *
+    denominator;
+  ycirca = (balength * ycrosscd + calength * ycrossdb + dalength * ycrossbc) *
+    denominator;
+  zcirca = (balength * zcrosscd + calength * zcrossdb + dalength * zcrossbc) *
+    denominator;
+  circumcenter[0] =  xcirca + a[0];
+  circumcenter[1] =  ycirca + a[1];
+  circumcenter[2] =  zcirca + a[2];
+ 
+  /*  
+ printf(" %g %g %g %g\n",
+	 sqrt((a[0]-xcirca)*(a[0]-xcirca)+(a[1]-ycirca)*(a[1]-ycirca)+(a[2]-zcirca)*(a[2]-zcirca)),
+	 sqrt((b[0]-xcirca)*(b[0]-xcirca)+(b[1]-ycirca)*(b[1]-ycirca)+(b[2]-zcirca)*(b[2]-zcirca)),
+	 sqrt((c[0]-xcirca)*(c[0]-xcirca)+(c[1]-ycirca)*(c[1]-ycirca)+(c[2]-zcirca)*(c[2]-zcirca)),
+	 sqrt((d[0]-xcirca)*(d[0]-xcirca)+(d[1]-ycirca)*(d[1]-ycirca)+(d[2]-zcirca)*(d[2]-zcirca)) );
+  */
+ 
+  if (xi != (double *) NULL) {
+    /* To interpolate a linear function at the circumcenter, define a    */
+    /*   coordinate system with a xi-axis directed from `a' to `b',      */
+    /*   an eta-axis directed from `a' to `c', and a zeta-axis directed  */
+    /*   from `a' to `d'.  The values for xi, eta, and zeta are computed */
+     /*   by Cramer's Rule for solving systems of linear equations.       */
+    *xi = (xcirca * xcrosscd + ycirca * ycrosscd + zcirca * zcrosscd) *
+      (2.0 * denominator);
+    *eta = (xcirca * xcrossdb + ycirca * ycrossdb + zcirca * zcrossdb) *
+      (2.0 * denominator);
+    *zeta = (xcirca * xcrossbc + ycirca * ycrossbc + zcirca * zcrossbc) *
+      (2.0 * denominator);
+  }
+  return xxx;
+}
+
+
 void insertVerticesInRegion (GRegion *gr) 
 {
   //printf("sizeof MTet4 = %d sizeof MTetrahedron %d sizeof(MVertex) %d\n",
@@ -836,10 +915,37 @@ void insertVerticesInRegion (GRegion *gr)
                   vSizes.size(), worst->getRadius());
       if(worst->getRadius() < 1) break;
       double center[3];
-      worst->circumcenter(center);
       double uvw[3];
-      worst->tet()->xyz2uvw(center, uvw);
-      if(worst->tet()->isInside(uvw[0], uvw[1], uvw[2])){
+      MTetrahedron *base = worst->tet();
+      double pa[3] = {base->getVertex(0)->x(), 
+		      base->getVertex(0)->y(), 
+		      base->getVertex(0)->z()};
+      double pb[3] = {base->getVertex(1)->x(), 
+		      base->getVertex(1)->y(),
+		      base->getVertex(1)->z()};
+      double pc[3] = {base->getVertex(2)->x(),
+		      base->getVertex(2)->y(), 
+		      base->getVertex(2)->z()};
+      double pd[3] = {base->getVertex(3)->x(),
+		      base->getVertex(3)->y(),
+		      base->getVertex(3)->z()};
+      
+      //      double UU,VV,WW;
+      tetcircumcenter(pa,pb,pc,pd, center,&uvw[0],&uvw[1],&uvw[2] );
+      //      worst->tet()->xyz2uvw(center, uvw);
+      //      printf("%12.5E %12.5E %12.5E -- %12.5E %12.5E %12.5E \n",
+      //	     UU,VV,WW,uvw[0],uvw[1],uvw[2]);
+      /*
+      if (!worst->tet()->isInside(uvw[0], uvw[1], uvw[2]) && 
+	  worst->getRadius() > 20){
+	uvw[0] = uvw[1] = uvw[2] = 0.25;
+	center[0] = 0.25*(pa[0]+pb[0]+pc[0]+pd[0]);
+	center[1] = 0.25*(pa[1]+pb[1]+pc[1]+pd[1]);
+	center[2] = 0.25*(pa[2]+pb[2]+pc[2]+pd[2]);
+      }
+      */
+
+      if(worst->tet()->isInside(uvw[0], uvw[1], uvw[2])){	
         MVertex *v = new MVertex(center[0], center[1], center[2], worst->onWhat());
         v->setIndex(NUM++);
         double lc1 = 
@@ -860,7 +966,8 @@ void insertVerticesInRegion (GRegion *gr)
           v->onWhat()->mesh_vertices.push_back(v);
       }
       else{
-        myFactory.changeTetRadius(allTets.begin(), 0.);
+	//	printf("point outside %12.5E %12.5E %12.5E %12.5E %12.5E\n",VV,uvw[0], uvw[1], uvw[2],1-uvw[0]-uvw[1]-uvw[2]);
+        myFactory.changeTetRadius(allTets.begin(), 0.0);
       }
     }
 
