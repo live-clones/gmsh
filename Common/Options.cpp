@@ -13,6 +13,7 @@
 #include "GModel.h"
 #include "Context.h"
 #include "Options.h"
+#include "Colors.h"
 #include "DefaultOptions.h"
 
 #if defined(HAVE_MESH)
@@ -282,19 +283,34 @@ bool ColorOption(int action, const char *category, int num,
   return true;
 }
 
-int GetColorForString(StringX4Int SX4I[], int alpha,
-                      const char *str, int *FlagError)
+int GetColorForString(int alpha, const char *str, int *FlagError)
 {
   int i = 0;
-  while(SX4I[i].str && strcmp(SX4I[i].str, str))
+  while(ColorString[i].str && strcmp(ColorString[i].str, str))
     i++;
-  *FlagError = !SX4I[i].str ? 1 : 0;
+  *FlagError = !ColorString[i].str ? 1 : 0;
   if(alpha > 0)
     return CTX::instance()->packColor
-      (SX4I[i].int1, SX4I[i].int2, SX4I[i].int3, alpha);
+      (ColorString[i].int1, ColorString[i].int2, ColorString[i].int3, alpha);
   else
     return CTX::instance()->packColor
-      (SX4I[i].int1, SX4I[i].int2, SX4I[i].int3, SX4I[i].int4);
+      (ColorString[i].int1, ColorString[i].int2, ColorString[i].int3,
+       ColorString[i].int4);
+}
+
+bool GetRGBForString(const char *str, int &r, int &g, int &b)
+{
+  int i = 0;
+  while(ColorString[i].str && strcmp(ColorString[i].str, str))
+    i++;
+  if(!ColorString[i].str){
+    r = g = b = 0;
+    return false;
+  }
+  r = ColorString[i].int1;
+  g = ColorString[i].int2;
+  b = ColorString[i].int3;
+  return true;
 }
 
 static void SetDefaultColorOptions(int num, StringXColor s[])

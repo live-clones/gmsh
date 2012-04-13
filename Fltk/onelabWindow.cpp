@@ -1007,6 +1007,23 @@ onelabWindow::onelabWindow(int deltaFontSize)
   FL_NORMAL_SIZE += _deltaFontSize;
 }
 
+static bool getFlColor(const std::string &str, Fl_Color &c)
+{
+  if(str == "1"){
+    c = FL_YELLOW;
+    return true;
+  }
+  int r, g, b;
+  if(str.size() && GetRGBForString(str.c_str(), r, g, b)){
+    c = fl_color_cube(r * (FL_NUM_RED - 1) / 255,
+                      g * (FL_NUM_GREEN - 1) / 255,
+                      b * (FL_NUM_BLUE - 1) / 255);
+    return true;
+  }
+  c = FL_BLACK;
+  return false;
+}
+
 void onelabWindow::_addParameter(onelab::number &p)
 {
   Fl_Tree_Item *n = _tree->add(p.getName().c_str());
@@ -1020,8 +1037,9 @@ void onelabWindow::_addParameter(onelab::number &p)
     but->value(p.getValue());
     but->callback(onelab_check_button_cb, (void*)n);
     n->widget(but);
-    if(p.getAttribute("Highlight").size())
-      n->labelbgcolor(FL_YELLOW);
+    Fl_Color c;
+    if(getFlColor(p.getAttribute("Highlight"), c))
+      n->labelbgcolor(c);
   }
   else{
     inputRange *but = new inputRange
@@ -1035,8 +1053,9 @@ void onelabWindow::_addParameter(onelab::number &p)
     but->choices(p.getChoices());
     but->loop(p.getAttribute("Loop"));
     but->graph(p.getAttribute("Graph"));
-    if(p.getAttribute("Highlight").size())
-      but->color(FL_YELLOW);
+    Fl_Color c;
+    if(getFlColor(p.getAttribute("Highlight"), c))
+      but->color(c);
     but->align(FL_ALIGN_RIGHT);
     but->callback(onelab_input_range_cb, (void*)n);
     but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
@@ -1078,8 +1097,9 @@ void onelabWindow::_addParameter(onelab::string &p)
   menu.push_back(it);
   but->menubutton()->copy(&menu[0]);
   but->value(p.getValue().c_str());
-  if(p.getAttribute("Highlight").size())
-    but->input()->color(FL_YELLOW);
+  Fl_Color c;
+  if(getFlColor(p.getAttribute("Highlight"), c))
+    but->input()->color(c);
   but->align(FL_ALIGN_RIGHT);
   but->callback(onelab_input_choice_cb, (void*)n);
   but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);

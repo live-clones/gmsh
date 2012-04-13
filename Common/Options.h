@@ -729,5 +729,7 @@ bool ColorOption(int action, const char *category, int num,
                  const char *name, unsigned int &val);
 
 GmshColorTable *GetColorTable(int num);
+int GetColorForString(int alpha, const char *string, int *FlagError);
+bool GetRGBForString(const char *string, int &r, int &g, int &b);
 
 #endif
