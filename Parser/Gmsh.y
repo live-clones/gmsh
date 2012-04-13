@@ -20,7 +20,6 @@
 #include "Geo.h"
 #include "GeoInterpolation.h"
 #include "Options.h"
-#include "Colors.h"
 #include "Parser.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
@@ -3424,12 +3423,12 @@ Transfinite :
         List_Delete($2);
       }
     }
-  | tMeshAlgorithm tSurface ListOfDouble FExpr tEND
+  | tMeshAlgorithm tSurface '{' RecursiveListOfDouble '}' FExpr tEND
     {
-      for(int i = 0; i < List_Nbr($3); i++){
+      for(int i = 0; i < List_Nbr($4); i++){
 	double d;
-	List_Read($3, i, &d);
-	CTX::instance()->mesh.algo2d_per_face[(int)d] = (int)$4;
+	List_Read($4, i, &d);
+	CTX::instance()->mesh.algo2d_per_face[(int)d] = (int)$6;
       }
     }
 
@@ -4233,14 +4232,14 @@ ColorExpr :
   | '{' tSTRING ',' FExpr '}'
     {
       int flag;
-      $$ = GetColorForString(ColorString, (int)$4, $2, &flag);
+      $$ = GetColorForString((int)$4, $2, &flag);
       if(flag) yymsg(0, "Unknown color '%s'", $2);
     }
 */
   | tSTRING
     {
       int flag;
-      $$ = GetColorForString(ColorString, -1, $1, &flag);
+      $$ = GetColorForString(-1, $1, &flag);
       if(flag) yymsg(0, "Unknown color '%s'", $1);
       Free($1);
     }
