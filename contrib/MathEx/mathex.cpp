@@ -327,8 +327,10 @@
          { "Tan",     tan },
          { "tanh",    tanh },
          { "Tanh",    tanh },
+#if !defined(WIN32)
          { "atanh",   atanh },
          { "Atanh",   atanh },
+#endif
          { "trunc",   trunc }, // added
          { "Trunc",   trunc },
          { "floor",   floor }, // largest integer not grather than x
