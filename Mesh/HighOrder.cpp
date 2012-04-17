@@ -121,7 +121,7 @@ static bool computeEquidistantParameters0(GEdge *ge, double u0, double uN, int N
   return false;
 }
 // 1 = geodesics
-static int method_for_computing_intermediary_points = 1;
+static int method_for_computing_intermediary_points = 0;
 static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N,
                                          double *u, double underRelax){
   if (method_for_computing_intermediary_points == 0) // use linear abscissa
@@ -534,7 +534,7 @@ static void reorientQuadPoints(std::vector<MVertex*> &vtcs, int orientation,
       start++;
     }
     else{
-      int i1,i2,i3,i4;
+      int i1(0),i2(0),i3(0),i4(0);
       if (!swap){
 	if      (orientation == 0){ i1 = 0; i2 = 1; i3 = 2; i4 = 3; }
 	else if (orientation == 1){ i1 = 3; i2 = 0; i3 = 1; i4 = 2; }
@@ -1051,8 +1051,9 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
 }
 
 template<class T>
-static void setFirstOrder(GEntity *e, std::vector<T*> &elements)
+static void setFirstOrder(GEntity *e, std::vector<T*> &elements, bool onlyVisible)
 {
+  if (onlyVisible && !e->getVisibility())return;
   std::vector<T*> elements1;
   for(unsigned int i = 0; i < elements.size(); i++){
     T *ele = elements[i];
@@ -1067,8 +1068,9 @@ static void setFirstOrder(GEntity *e, std::vector<T*> &elements)
   e->deleteVertexArrays();
 }
 
-static void removeHighOrderVertices(GEntity *e)
+static void removeHighOrderVertices(GEntity *e, bool onlyVisible)
 {
+  if (onlyVisible && !e->getVisibility())return;
   std::vector<MVertex*> v1;
   for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
     if(e->mesh_vertices[i]->getPolynomialOrder() > 1)
@@ -1079,32 +1081,32 @@ static void removeHighOrderVertices(GEntity *e)
   e->mesh_vertices = v1;
 }
 
-void SetOrder1(GModel *m)
+void SetOrder1(GModel *m,  bool onlyVisible)
 {
   m->destroyMeshCaches();
 
   // replace all elements with first order elements
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
-    setFirstOrder(*it, (*it)->lines);
+    setFirstOrder(*it, (*it)->lines, onlyVisible);
   }
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
-    setFirstOrder(*it, (*it)->triangles);
-    setFirstOrder(*it, (*it)->quadrangles);
+    setFirstOrder(*it, (*it)->triangles, onlyVisible);
+    setFirstOrder(*it, (*it)->quadrangles, onlyVisible);
   }
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
-    setFirstOrder(*it, (*it)->tetrahedra);
-    setFirstOrder(*it, (*it)->hexahedra);
-    setFirstOrder(*it, (*it)->prisms);
-    setFirstOrder(*it, (*it)->pyramids);
+    setFirstOrder(*it, (*it)->tetrahedra, onlyVisible);
+    setFirstOrder(*it, (*it)->hexahedra, onlyVisible);
+    setFirstOrder(*it, (*it)->prisms, onlyVisible);
+    setFirstOrder(*it, (*it)->pyramids, onlyVisible);
   }
 
   // remove all high order vertices
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
-    removeHighOrderVertices(*it);
+    removeHighOrderVertices(*it, onlyVisible);
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
-    removeHighOrderVertices(*it);
+    removeHighOrderVertices(*it, onlyVisible);
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
-    removeHighOrderVertices(*it);
+    removeHighOrderVertices(*it, onlyVisible);
 }
 
 void checkHighOrderTriangles(const char* cc, GModel *m,
@@ -1232,7 +1234,43 @@ void printJacobians(GModel *m, const char *nm)
   fclose(f);
 }
 
-void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
+void ElasticAnalogy ( GModel *m, double threshold, bool onlyVisible) {
+  
+  highOrderTools hot(m);
+  // now we smooth mesh the internal vertices of the faces
+  // we do that model face by model face
+  std::vector<MElement*> bad;
+  double worst;
+  checkHighOrderTriangles("Surface mesh", m, bad, worst);
+  {
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+      if (onlyVisible && !(*it)->getVisibility())continue;
+      std::vector<MElement*> v;
+      v.insert(v.begin(), (*it)->triangles.begin(), (*it)->triangles.end());
+      v.insert(v.end(), (*it)->quadrangles.begin(), (*it)->quadrangles.end());
+      hot.applySmoothingTo(v, (*it));
+    }
+  }
+  //    hot.ensureMinimumDistorsion(0.1);
+  checkHighOrderTriangles("Final surface mesh", m, bad, worst);
+
+  checkHighOrderTetrahedron("Volume Mesh", m, bad, worst);
+  {
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+      if (onlyVisible && !(*it)->getVisibility())continue;
+      std::vector<MElement*> v;
+      v.insert(v.begin(), (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
+      v.insert(v.end(), (*it)->hexahedra.begin(), (*it)->hexahedra.end());
+      v.insert(v.end(), (*it)->prisms.begin(), (*it)->prisms.end());
+      hot.applySmoothingTo(v,1.e32,false);
+    }
+  }
+
+  // m->writeMSH("CORRECTED.msh");
+}
+
+
+void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisible)
 {
   // replace all the elements in the mesh with second order elements
   // by creating unique vertices on the edges/faces of the mesh:
@@ -1249,6 +1287,8 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   //   edges (creating 8-node quads, 20-node hexas, etc., instead of
   //   9-node quads, 27-node hexas, etc.)
 
+  // - if onlyVisible is true, then only the visible entities will be curved.
+
   int nPts = order - 1;
 
   if (!linear)
@@ -1259,16 +1299,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   double t1 = Cpu();
 
   // first, make sure to remove any existsing second order vertices/elements
-  SetOrder1(m);
-
-  // m->writeMSH("BEFORE.msh");
-
-  /*
-  if(CTX::instance()->mesh.smoothInternalEdges){
-    displ2D = new highOrderSmoother(2);
-    displ3D = new highOrderSmoother(3);
-  }
-  */
+  SetOrder1(m, onlyVisible);
 
   // then create new second order vertices/elements
   edgeContainer edgeVertices;
@@ -1278,6 +1309,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
     Msg::StatusBar(2, true, "Meshing curves order %d (%i/%i)...", order, counter, m->getNumEdges());
     counter++;
+    if (onlyVisible && !(*it)->getVisibility())continue;
     setHighOrder(*it, edgeVertices, linear, nPts);
   }
 
@@ -1285,6 +1317,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
     Msg::StatusBar(2, true, "Meshing surfaces order %d (%i/%i)...", order, counter, m->getNumFaces());
     counter++;
+    if (onlyVisible && !(*it)->getVisibility())continue;
     setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts);
   }
 
@@ -1298,39 +1331,22 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   // printJacobians(m, "smoothness_b.pos");
   // m->writeMSH("RAW.msh");
 
-  /*if (displ2D){
-    checkHighOrderTriangles("Before optimization", m, bad, worst);
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
-      displ2D->optimize(*it,edgeVertices,faceVertices);
-    checkHighOrderTriangles("After optimization", m, bad, worst);
-    }
-  */
-
   counter = 1;
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
     Msg::StatusBar(2, true, "Meshing volumes order %d (%i/%i)...", order, counter, m->getNumRegions());
     counter++;
+    if (onlyVisible && !(*it)->getVisibility())continue;
     setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts);
   }
-
-/*
-  // smooth the 3D regions
-  if (displ3D){
-    checkHighOrderTetrahedron("Before optimization", m, bad, worst);
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
-      displ3D->smooth(*it);
-    checkHighOrderTetrahedron("After optimization", m, bad, worst);
-  }
-*/
 
   double t2 = Cpu();
 
   // printJacobians(m, "smoothness.pos");
-  // m->writeMSH("SMOOTHED.msh");
-  // FIXME !!
+
   checkHighOrderTriangles("Surface mesh", m, bad, worst);
   if (!linear && CTX::instance()->mesh.smoothInternalEdges){
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+      if (onlyVisible && !(*it)->getVisibility())continue;
       std::vector<MElement*> v;
       v.insert(v.begin(), (*it)->triangles.begin(), (*it)->triangles.end());
       v.insert(v.end(), (*it)->quadrangles.begin(), (*it)->quadrangles.end());
@@ -1340,7 +1356,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
     //    hot.ensureMinimumDistorsion(0.1);
     checkHighOrderTriangles("Final surface mesh", m, bad, worst);
   }
-
+  
   // m->writeMSH("CORRECTED.msh");
 
   Msg::StatusBar(2, true, "Done meshing order %d (%g s)", order, t2 - t1);

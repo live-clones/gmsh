@@ -724,9 +724,7 @@ double highOrderTools::applySmoothingTo (std::vector<MElement*> &all,
     moveToStraightSidedLocation(all[i]);
   // apply the displacement
 
-  _gm->writeMSH("straightSided.msh");
-
-  printf("argh\n");
+  // _gm->writeMSH("straightSided.msh");
 
   char sm[] = "sm.msh";
   double percentage_of_what_is_left = apply_incremental_displacement (1., all, mixed, -100000000, sm, all);

@@ -25,6 +25,7 @@ typedef unsigned long intptr_t;
 #include "pluginWindow.h"
 #include "statisticsWindow.h"
 #include "visibilityWindow.h"
+#include "highOrderToolsWindow.h"
 #include "clippingWindow.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
@@ -292,6 +293,7 @@ FlGui::FlGui(int argc, char **argv) : _openedThroughMacFinder(false)
   plugins = new pluginWindow(CTX::instance()->deltaFontSize);
   stats = new statisticsWindow(CTX::instance()->deltaFontSize);
   visibility = new visibilityWindow(CTX::instance()->deltaFontSize);
+  highordertools = new highOrderToolsWindow(CTX::instance()->deltaFontSize);
   clipping = new clippingWindow(CTX::instance()->deltaFontSize);
   manip = new manipWindow(CTX::instance()->deltaFontSize);
   geoContext = new geometryContextWindow(CTX::instance()->deltaFontSize);
@@ -831,6 +833,8 @@ void FlGui::storeCurrentWindowsInfo()
   CTX::instance()->statPosition[1] = stats->win->y();
   CTX::instance()->visPosition[0] = visibility->win->x();
   CTX::instance()->visPosition[1] = visibility->win->y();
+  CTX::instance()->hotPosition[0] = highordertools->win->x();
+  CTX::instance()->hotPosition[1] = highordertools->win->y();
   CTX::instance()->clipPosition[0] = clipping->win->x();
   CTX::instance()->clipPosition[1] = clipping->win->y();
   CTX::instance()->manipPosition[0] = manip->win->x();
@@ -877,6 +881,8 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->fields->win->iconize();
     if(FlGui::instance()->visibility->win->shown())
       FlGui::instance()->visibility->win->iconize();
+    if(FlGui::instance()->highordertools->win->shown())
+      FlGui::instance()->highordertools->win->iconize();
     if(FlGui::instance()->clipping->win->shown())
       FlGui::instance()->clipping->win->iconize();
     if(FlGui::instance()->manip->win->shown())
@@ -932,6 +938,8 @@ void window_cb(Fl_Widget *w, void *data)
 #endif
     if(FlGui::instance()->visibility->win->shown())
       FlGui::instance()->visibility->win->show();
+    if(FlGui::instance()->highordertools->win->shown())
+      FlGui::instance()->highordertools->win->show();
     if(FlGui::instance()->clipping->win->shown())
       FlGui::instance()->clipping->win->show();
     if(FlGui::instance()->manip->win->shown())

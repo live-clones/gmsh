@@ -26,6 +26,7 @@ class fieldWindow;
 class pluginWindow;
 class statisticsWindow;
 class visibilityWindow;
+class highOrderToolsWindow;
 class clippingWindow;
 class manipWindow;
 class geometryContextWindow;
@@ -58,6 +59,7 @@ class FlGui{
   pluginWindow *plugins;
   statisticsWindow *stats;
   visibilityWindow *visibility;
+  highOrderToolsWindow *highordertools;
   clippingWindow *clipping;
   manipWindow *manip;
   geometryContextWindow *geoContext;

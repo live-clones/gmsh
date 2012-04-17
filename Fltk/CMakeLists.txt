@@ -14,6 +14,7 @@ set(SRC
     pluginWindow.cpp
     statisticsWindow.cpp
     visibilityWindow.cpp
+    highOrderToolsWindow.cpp
     clippingWindow.cpp
     manipWindow.cpp
     contextWindow.cpp

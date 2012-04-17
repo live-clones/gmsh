@@ -69,7 +69,7 @@ Circle(19) = {25,23,22};
 Line(20) = {21,22};
 
 Line Loop(21) = {17,-15,18,19,-20,16};
-//Plane Surface(22) = {21};
+Plane Surface(22) = {21};
 Line Loop(23) = {11,-12,13,14,1,2,-3,4,5,6,7,-8,9,10};
 Plane Surface(24) = {23,21};
 
@@ -78,5 +78,5 @@ Physical Line(25) = {12,13,14,15,16,17,18,19,20,10};
 Physical Surface(26) = {24};
 Physical Line(27) = {10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 14, 13, 12, 11};
 Physical Line(28) = {17, 16, 20, 19, 18, 15};
-Recombine Surface {24, 22};
+//Recombine Surface {24, 22};
 Mesh.RecombinationAlgorithm=1;
