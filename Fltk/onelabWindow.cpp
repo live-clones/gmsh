@@ -203,22 +203,12 @@ bool onelab::localNetworkClient::run()
       std::string checkCommand = (ps.empty() ? "" : ps[0].getValue());
       get(ps, getName() + "/9ComputeCommand");
       std::string computeCommand = (ps.empty() ? "" : ps[0].getValue());
-    /*
       if(action == "check")
-        command += " " + modelName + " " + checkCommand;
+        command.append(" '" + modelName + "' " + checkCommand) ;
       else if(action == "compute")
-        command += " " + modelName + " " + computeCommand;
-    */
-    if(action == "check")
-      command.append(" " + modelName + " " + checkCommand) ;
-    else if(action == "compute")
-      command.append(" " + modelName + " " + computeCommand);
+        command.append(" '" + modelName + "' " + computeCommand);
     }
-    /*
-    // append "-onelab" command line argument
-    command += " " + _socketSwitch + " \"" + getName() + "\"";
-    */
-    command.append(" " + getSocketSwitch() + " " + getName() + " %s");
+    command.append(" " + getSocketSwitch() + " '" + getName() + "' %s");
   }
   else{
     Msg::Info("Listening on socket '%s'", sockname.c_str());
