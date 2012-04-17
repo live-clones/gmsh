@@ -35,6 +35,7 @@ typedef unsigned long intptr_t;
 #include "Options.h"
 #include "Context.h"
 #include "HighOrder.h"
+#include "OptHomRun.h"
 
 #if defined(HAVE_PARSER)
 #include "Parser.h"
@@ -69,9 +70,17 @@ static void highordertools_runelas_cb(Fl_Widget *w, void *data)
   bool elastic = (bool)o->butt[3]->value(); 
   double threshold = o->value[1]->value(); 
   bool onlyVisible = (bool)o->butt[1]->value(); 
-  int nLayers = (int) o->value[2]->value(); 
+  int nbLayers = (int) o->value[2]->value(); 
 
   if(elastic)ElasticAnalogy(GModel::current(), threshold, onlyVisible);
+  else  {
+    OptHomParameters p;
+    p.nbLayers = nbLayers; 
+    p.BARRIER = threshold;
+    p.onlyVisible = onlyVisible;
+    p.dim  = GModel::current()->getNumRegions()  ? 3 : 2;
+    HighOrderMeshOptimizer (GModel::current(),p);
+  }
 
   CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();

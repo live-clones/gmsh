@@ -37,6 +37,7 @@ option(ENABLE_FL_TREE "Enable FLTK tree browser widget" ${DEFAULT})
 option(ENABLE_FOURIER_MODEL "Enable Fourier geometrical models" OFF)
 option(ENABLE_GMM "Enable GMM linear algebra solvers" ${DEFAULT})
 option(ENABLE_GRAPHICS "Compile-in OpenGL graphics even if there is no GUI" OFF)
+option(ENABLE_OPTHOM "Enable optimization tool for high order meshes" ON)
 option(ENABLE_KBIPACK "Enable Kbipack for homology solver" ${DEFAULT})
 option(ENABLE_MATHEX "Enable MathEx expression parser" ${DEFAULT})
 option(ENABLE_MED "Enable MED mesh and post-processing file formats" ${DEFAULT})
@@ -108,6 +109,9 @@ set(GMSH_API
   contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h 
     contrib/kbipack/gmp_blas.h contrib/kbipack/mpz.h
   contrib/DiscreteIntegration/Integration3D.h
+  contrib/HighOrderMeshOptimizer/OptHOM.h
+  contrib/HighOrderMeshOptimizer/OptHOM_Mesh.h
+  contrib/HighOrderMeshOptimizer/ParamCoord.h
   contrib/MathEx/mathex.h)
 
 execute_process(COMMAND date "+%Y%m%d" OUTPUT_VARIABLE DATE 
@@ -507,6 +511,13 @@ if(ENABLE_DINTEGRATION)
   include_directories(contrib/DiscreteIntegration)
   set_config_option(HAVE_DINTEGRATION "DIntegration")
 endif(ENABLE_DINTEGRATION)
+
+if(ENABLE_OPTHOM)
+  add_subdirectory(contrib/HighOrderMeshOptimizer)
+  include_directories(contrib/HighOrderMeshOptimizer)
+  set_config_option(HAVE_OPTHOM "OptHom")
+endif(ENABLE_OPTHOM)
+
 
 if(ENABLE_KBIPACK)
   find_library(GMP_LIB gmp)
