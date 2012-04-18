@@ -22,8 +22,9 @@ public:
   Mesh mesh;
 
   OptHOM(GEntity *gf, std::set<MVertex*> & toFix, int method);
-  void getDistances(double &distMaxBND, double &distAvgBND, double &minJac, double &maxJac);
-  int optimize(double lambda, double lambda2, double barrier, int pInt, int itMax, double &minJ, double &maxJ);  // optimize one list of elements
+  void recalcJacDist();
+  inline void getJacDist(double &minJ, double &maxJ, double &maxD, double &avgD);
+  int optimize(double lambda, double lambda2, double barrier, int pInt, int itMax);  // optimize one list of elements
   void updateMesh(const alglib::real_1d_array &x);
   void evalObjGrad(const alglib::real_1d_array &x, double &Obj, alglib::real_1d_array &gradObj);
   void printProgress(const alglib::real_1d_array &x, double Obj);
@@ -35,7 +36,8 @@ private:
 //  double lambda, lambda2, powM, powP, invLengthScaleSq;
   double lambda, lambda2, jacBar, bTerm, invLengthScaleSq;
   int iter, progressInterv;            // Current iteration, interval of iterations for reporting
-  double initObj, initMaxD, initAvgD;  // Values for reporting
+  double initObj, initMaxDist, initAvgDist;  // Values for reporting
+  double minJac, maxJac, maxDist, avgDist;  // Values for reporting
 
   inline double setBarrierTerm(double jacBarrier) { bTerm = jacBarrier/(1.-jacBarrier); }
   inline double compute_f(double v);
@@ -74,6 +76,14 @@ inline double OptHOM::compute_f1(double v)
 //  if (v < 1.) return -powM*pow(1.-v,powM-1.);
 //  if (v < 1.) return -3.*pow(1.-v,2)*exp((long double)pow(1.-v,3));
 //  else return powP*pow(v-1.,powP-1.);
+}
+
+
+
+void OptHOM::getJacDist(double &minJ, double &maxJ, double &maxD, double &avgD)
+{
+  minJ = minJac; maxJ = maxJac; maxD = maxDist; avgD = avgDist;
+  std::cout << "getJacDist: minJac = " << minJac << ", maxJac = " << maxJac << ", maxDist = " << maxDist << ", avgDist = " << avgDist << std::endl;
 }
 
 

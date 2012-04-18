@@ -171,7 +171,7 @@ std::set<MVertex*> filter3D(GRegion *gr, int nbLayers, double _qual)
 
 void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
 {
-  int samples = 30;
+  int samples = 20;
 
 //  int method = Mesh::METHOD_RELAXBND | Mesh::METHOD_PHYSCOORD | Mesh::METHOD_PROJJAC;
 //  int method = Mesh::METHOD_FIXBND | Mesh::METHOD_PHYSCOORD | Mesh::METHOD_PROJJAC;
@@ -196,13 +196,15 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
       (*itf)->quadrangles = quas;
 
       double distMaxBND, distAvgBND, minJac, maxJac;
-      temp->getDistances(distMaxBND, distAvgBND, minJac, maxJac);
+      temp->recalcJacDist();
+      temp->getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
       //      std::ostringstream ossI;
       //      ossI << "initial_" << (*itf)->tag() << ".msh";
       //      temp->mesh.writeMSH(ossI.str().c_str());
       //      printf("--> Mesh Loaded for GFace %d :  minJ %12.5E -- maxJ %12.5E\n", (*itf)->tag(), minJac, maxJac);
       if (distMaxBND < 1.e-8 * SIZE && minJac > p.BARRIER) continue;
-      p.SUCCESS = temp->optimize(p.weightFixed, p.weightFree, p.BARRIER, samples, p.itMax, p.minJac, p.maxJac);
+      p.SUCCESS = temp->optimize(p.weightFixed, p.weightFree, p.BARRIER, samples, p.itMax);
+      temp->getJacDist(p.minJac, p.maxJac, distMaxBND, distAvgBND);
       temp->mesh.updateGEntityPositions();
       //      std::ostringstream ossF;
       //      ossF << "final_" << (*itf)->tag() << ".msh";
@@ -217,11 +219,13 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
       filter3D(*itr, p.nbLayers, p.BARRIER);
       OptHOM *temp = new OptHOM(*itr, toFix, method);
       double distMaxBND, distAvgBND, minJac, maxJac;
-      temp->getDistances(distMaxBND, distAvgBND, minJac, maxJac);
+      temp->recalcJacDist();
+      temp->getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
       //      temp->mesh.writeMSH("initial.msh");
       //      printf("--> Mesh Loaded for GRegion %d :  minJ %12.5E -- maxJ %12.5E\n", (*itr)->tag(), minJac, maxJac);
       if (distMaxBND < 1.e-8 * SIZE && minJac > p.BARRIER) continue;
-      p.SUCCESS = temp->optimize(p.weightFixed, p.weightFree, p.BARRIER, samples, p.itMax, p.minJac, p.maxJac);
+      p.SUCCESS = temp->optimize(p.weightFixed, p.weightFree, p.BARRIER, samples, p.itMax);
+      temp->getJacDist(p.minJac, p.maxJac, distMaxBND, distAvgBND);
       temp->mesh.updateGEntityPositions();
       (*itr)->tetrahedra = tets;
       //      temp->mesh.writeMSH("final.msh");
