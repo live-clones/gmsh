@@ -132,7 +132,6 @@ void OptHOM::printProgress(const alglib::real_1d_array &x, double Obj)
   if (iter % progressInterv == 0) {
     double maxD, avgD, minJ, maxJ;
     getDistances(maxD, avgD, minJ, maxJ);
-
     printf("--> Iteration %3d --- OBJ %12.5E (relative decrease = %12.5E) -- minJ = %12.5E  maxJ = %12.5E Max D = %12.5E Avg D = %12.5E\n", iter, Obj, Obj/initObj, minJ, maxJ, maxD, avgD);
   }
 
@@ -151,15 +150,8 @@ void OptHOM::OptimPass(alglib::real_1d_array &x, const alglib::real_1d_array &in
 {
 
   static const double EPSG = 0.;
-  static const double EPSF = 1.e-8;
-//  static const double EPSF = 0.;
+  static const double EPSF = 0.;
   static const double EPSX = 0.;
-//  const double EPSX = x.length()*1.e-4/sqrt(invLengthScaleSq);
-//  std::cout << "DEBUG: EPSX = " << EPSX << ", EPSX/x.length() = " << EPSX/x.length() << std::endl;
-
-//  double iGONorm = 0;
-//  for (int i=0; i<initGradObj.length(); i++) iGONorm += initGradObj[i]*initGradObj[i];
-//  const double EPSG = 1.e-2*sqrt(iGONorm);
 
   std::cout << "--- Optimization pass with jacBar = " << jacBar << ", lambda = " << lambda << ", lambda2 = " << lambda2 << std::endl;
 
@@ -187,10 +179,10 @@ void OptHOM::OptimPass(alglib::real_1d_array &x, const alglib::real_1d_array &in
   switch(int(rep.terminationtype)) {
 //  case -2: std::cout << ", because rounding errors prevented further improvement"; break;
 //  case -1: std::cout << ", because incorrect parameters were specified"; break;
-//  case 1: std::cout << ", because relative function improvement is no more than EpsF"; break;
-//  case 2: std::cout << ", because relative step is no more than EpsX"; break;
-//  case 4: std::cout << ", because gradient norm is no more than EpsG"; break;
-//  case 5: std::cout << ", because the maximum number of steps was taken"; break;
+  case 1: std::cout << ", because relative function improvement is no more than EpsF"; break;
+  case 2: std::cout << ", because relative step is no more than EpsX"; break;
+  case 4: std::cout << ", because gradient norm is no more than EpsG"; break;
+  case 5: std::cout << ", because the maximum number of steps was taken"; break;
 //  case 7: std::cout << ", because stopping conditions are too stringent, further improvement is impossible"; break;
   default: std::cout << " with code " << int(rep.terminationtype); break;
   }
@@ -227,7 +219,6 @@ int OptHOM::optimize(double weightFixed, double weightFree, double barrier_, int
   const double jacBarStart = (minJ > 0.) ? 0.9*minJ : 1.1*minJ;
   jacBar = jacBarStart;
   setBarrierTerm(jacBarStart);
-  std::cout << "DEBUG: jacBarStart = " << jacBarStart << std::endl;
 
   // Calculate initial objective function value and gradient
   initObj = 0.;

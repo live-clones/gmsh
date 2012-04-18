@@ -4,11 +4,14 @@
 #include "MTetrahedron.h"
 #include "ParamCoord.h"
 #include "OptHomMesh.h"
-#include "JacobianBasis.h"
+
+
 
 std::map<int, std::vector<double> > Mesh::_jacBez;
 
-static std::vector<double> _computeJB(const polynomialBasis *lagrange, const bezierBasis *bezier)
+
+
+std::vector<double> Mesh::computeJB(const polynomialBasis *lagrange, const bezierBasis *bezier)
 {
   int nbNodes = lagrange->points.size1();
   
@@ -36,7 +39,7 @@ static std::vector<double> _computeJB(const polynomialBasis *lagrange, const bez
         for (int j = 0; j < nbNodes; j++) {
           double Jij = dPsi(i, 0) * dPsi(j, 1) - dPsi(i, 1) * dPsi(j,0);
           for (int l = 0; l < bezier->points.size1(); l++) {
-            JB[(l * nbNodes + i) * nbNodes + j] += bezier->matrixLag2Bez(l, k) * Jij;
+            JB[indJB2DBase(nbNodes,l,i,j)] += bezier->matrixLag2Bez(l, k) * Jij;
           }
         }
       }
@@ -50,7 +53,7 @@ static std::vector<double> _computeJB(const polynomialBasis *lagrange, const bez
               + (dPsi(j, 2) * dPsi(m, 0) - dPsi(j, 0) * dPsi(m, 2)) * dPsi(i, 1)
               + (dPsi(j, 0) * dPsi(m, 1) - dPsi(j, 1) * dPsi(m, 0)) * dPsi(i, 2);
             for (int l = 0; l < bezier->points.size1(); l++) {
-              JB[(l * nbNodes + (i * nbNodes + j)) * nbNodes + m] += bezier->matrixLag2Bez(l, k) * Jijm;
+              JB[indJB3DBase(nbNodes,l,i,j,m)] += bezier->matrixLag2Bez(l, k) * Jijm;
             }
           }
         }
@@ -59,6 +62,8 @@ static std::vector<double> _computeJB(const polynomialBasis *lagrange, const bez
   }
   return JB;
 }
+
+
 
 Mesh::Mesh(GEntity *ge, std::set<MVertex*> &toFix, int method) :
     _ge(ge)
@@ -100,7 +105,7 @@ Mesh::Mesh(GEntity *ge, std::set<MVertex*> &toFix, int method) :
     const polynomialBasis *lagrange = el->getFunctionSpace();
     const bezierBasis *bezier = JacobianBasis::find(lagrange->type)->bezier;
     if (_jacBez.find(lagrange->type) == _jacBez.end()) {
-      _jacBez[lagrange->type] = _computeJB(lagrange, bezier);
+      _jacBez[lagrange->type] = computeJB(lagrange, bezier);
     }
     _nBezEl[iEl] = bezier->points.size1();
     _nNodEl[iEl] = lagrange->points.size1();
@@ -151,6 +156,8 @@ Mesh::Mesh(GEntity *ge, std::set<MVertex*> &toFix, int method) :
     std::cout << "METHOD: Using usual Jacobians" << std::endl;
   }
 }
+
+
 
 SVector3 Mesh::getNormalEl(int iEl)
 {
@@ -324,7 +331,7 @@ void Mesh::scaledJac(int iEl, std::vector<double> &sJ)
         }
         sJ[l] *= n.z();
       }
- }
+  }
   else {
     for (int l = 0; l < _nBezEl[iEl]; l++) {
       sJ[l] = 0.;
@@ -421,8 +428,8 @@ void Mesh::gradScaledJac(int iEl, std::vector<double> &gSJ)
         _pc->gXyz2gUvw(_freeVert[iFVi],_uvw[iFVi],gXyzV,gUvwV);
         for (int l = 0; l < _nBezEl[iEl]; l++) {
           gSJ[indGSJ(iEl,l,iPC)] = gUvwV[l][0];
-          if (_nPCFV[iFVi] >= 2) gSJ[indGSJ(iEl,l,iPC)] = gUvwV[l][1];
-          if (_nPCFV[iFVi] == 3) gSJ[indGSJ(iEl,l,iPC)] = gUvwV[l][2];
+          if (_nPCFV[iFVi] >= 2) gSJ[indGSJ(iEl,l,iPC+1)] = gUvwV[l][1];
+          if (_nPCFV[iFVi] == 3) gSJ[indGSJ(iEl,l,iPC+2)] = gUvwV[l][2];
         }
         iPC += _nPCFV[iFVi];
       }
@@ -430,6 +437,8 @@ void Mesh::gradScaledJac(int iEl, std::vector<double> &gSJ)
   }
 
 }
+
+
 
 void Mesh::writeMSH(const char *filename)
 {

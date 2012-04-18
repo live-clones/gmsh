@@ -129,7 +129,7 @@ std::set<MVertex*> filter3D(GRegion *gr, int nbLayers, double _qual)
       for (int j = 0; j < t->getNumVertices(); j++)
         touched.insert(t->getVertex(j));
     }
-    if (ts.size() == 1) break;
+//    if (ts.size() == 1) break;
   }
 
   //  printf("FILTER3D : %d bad tets found among %6d\n", ts.size(), gr->tetrahedra.size());

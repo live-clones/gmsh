@@ -7,6 +7,10 @@
 #include "GFace.h"
 #include "MVertex.h"
 #include "ParamCoord.h"
+#include "polynomialBasis.h"
+#include "JacobianBasis.h"
+
+
 
 class Mesh
 {
@@ -78,8 +82,11 @@ private:
   int addVert(MVertex* vert);
   int addFreeVert(MVertex* vert, const int iV, const int nPCV, std::set<MVertex*> &toFix);
   SVector3 getNormalEl(int iEl);
-  inline int indJB2D(int iEl, int l, int i, int j) { return (l*_nNodEl[iEl]+i)*_nNodEl[iEl]+j; }
-  inline int indJB3D(int iEl, int l, int i, int j, int m) { return ((l*_nNodEl[iEl]+i)*_nNodEl[iEl]+j)*_nNodEl[iEl]+m; }
+  static std::vector<double> computeJB(const polynomialBasis *lagrange, const bezierBasis *bezier);
+  static inline int indJB2DBase(int nNod, int l, int i, int j) { return (l*nNod+i)*nNod+j; }
+  inline int indJB2D(int iEl, int l, int i, int j) { return indJB2DBase(_nNodEl[iEl],l,i,j); }
+  static inline int indJB3DBase(int nNod, int l, int i, int j, int m) { return ((l*nNod+i)*nNod+j)*nNod+m; }
+  inline int indJB3D(int iEl, int l, int i, int j, int m) { return indJB3DBase(_nNodEl[iEl],l,i,j,m); }
 
 };
 
