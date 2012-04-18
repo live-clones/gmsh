@@ -1898,7 +1898,13 @@ void BoundaryLayerField::operator() (AttractorField *cc, double dist,
   std::pair<AttractorInfo,SPoint3> pp = cc->getAttractorInfo();
   if (pp.first.dim ==0){
     GVertex *v = GModel::current()->getVertexByTag(pp.first.ent);
-    SVector3 t1 = SVector3(v->x() -x,v->y() -y,v->z() -z);
+    SVector3 t1;    
+    if (dist < thickness){
+      t1 = SVector3(1,0,0);
+    }
+    else {
+      t1 = SVector3(v->x() -x,v->y() -y,v->z() -z);
+    }
     metr = buildMetricTangentToCurve(t1,lc_n,lc_n);
     return;
   }
@@ -1955,7 +1961,7 @@ void BoundaryLayerField::operator() (double x, double y, double z,
     }
     for(std::list<int>::iterator it = edges_id.begin();
 	it != edges_id.end(); ++it) {
-      _att_fields.push_back(new AttractorField(1,*it,300000));
+      _att_fields.push_back(new AttractorField(1,*it,3000));
     }
     for(std::list<int>::iterator it = faces_id.begin();
 	it != faces_id.end(); ++it) {

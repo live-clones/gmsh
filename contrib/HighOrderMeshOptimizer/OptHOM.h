@@ -23,7 +23,7 @@ public:
 
   OptHOM(GEntity *gf, std::set<MVertex*> & toFix, int method);
   void getDistances(double &distMaxBND, double &distAvgBND, double &minJac, double &maxJac);
-  int optimize(double lambda, double lambda2, double barrier, int pInt, int itMax);  // optimize one list of elements
+  int optimize(double lambda, double lambda2, double barrier, int pInt, int itMax, double &minJ, double &maxJ);  // optimize one list of elements
   void updateMesh(const alglib::real_1d_array &x);
   void evalObjGrad(const alglib::real_1d_array &x, double &Obj, alglib::real_1d_array &gradObj);
   void printProgress(const alglib::real_1d_array &x, double Obj);

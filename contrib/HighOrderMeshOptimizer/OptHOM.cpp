@@ -200,7 +200,7 @@ void OptHOM::OptimPass(alglib::real_1d_array &x, const alglib::real_1d_array &in
 
 
 
-int OptHOM::optimize(double weightFixed, double weightFree, double barrier_, int pInt, int itMax)
+int OptHOM::optimize(double weightFixed, double weightFree, double barrier_, int pInt, int itMax, double &minJ, double &maxJ)
 {
   barrier = barrier_;
   progressInterv = pInt;
@@ -221,7 +221,7 @@ int OptHOM::optimize(double weightFixed, double weightFree, double barrier_, int
   mesh.getUvw(x.getcontent());
 
   // Calculate initial performance
-  double minJ, maxJ;
+  //  double minJ, maxJ;
   getDistances(initMaxD, initAvgD, minJ, maxJ);
 
   const double jacBarStart = (minJ > 0.) ? 0.9*minJ : 1.1*minJ;

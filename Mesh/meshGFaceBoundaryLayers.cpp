@@ -276,6 +276,7 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf)
 	    }
 	    _columns->addFan (*it,ee[0],ee[1],true);
 
+	    //	    printf("fansize = %d\n",fanSize);
 	    for (int i=-1; i<=fanSize; i++){
 	      double t = (double)(i+1)/ (fanSize+1);
 	      double alpha = t * AMAX + (1.-t)* AMIN;
@@ -330,14 +331,14 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf)
 	//	  if (_dirs.size() > 1) printf("l = %g metric = %g %g %g dim %d tag %d \n",l,metric[0],metric[1],metric[2],current->onWhat()->dim(),current->onWhat()->tag());
 	//	  printf("%g %g\n",l,LL);
 	if (l >= blf->hfar){
-	  //	    printf("stopping %g %g\n",l,LL);
+	  //	  printf("stopping %g %g\n",l,LL);
 	  break;
 	}
 	//	printf("%g %g %g \n",current->x(),current->y(),blf->current_distance);
 	if (blf->current_closest != catt || blf -> current_distance <  _current_distance){
 	  SVector3 aaa (_close- blf->_closest_point);
 	  if (aaa.norm() > 8*blf->hwall_n || blf -> current_distance <  _current_distance){
-	    printf("reaching the skelton %d\n", (int) _column.size());
+	    //	    printf("reaching the skelton %d\n", (int) _column.size());
 	    delete _column[_column.size()-1];
 	    _column.erase(--_column.end());
 	    _metrics.erase(--_metrics.end());
@@ -366,6 +367,7 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf)
 	if (_column.size() > nbCol)break; // FIXME
 	p = pnew;
       }
+      //      if (_dirs.size() > 1)printf("adding column with %d nodes\n",_column.size());
       _columns->addColumn(n,*it, _column, _metrics);
     }
   }

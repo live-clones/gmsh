@@ -79,6 +79,7 @@ static void highordertools_runelas_cb(Fl_Widget *w, void *data)
     p.BARRIER = threshold;
     p.onlyVisible = onlyVisible;
     p.dim  = GModel::current()->getNumRegions()  ? 3 : 2;
+    p.itMax = (int) o->value[3]->value(); 
     HighOrderMeshOptimizer (GModel::current(),p);
   }
 
