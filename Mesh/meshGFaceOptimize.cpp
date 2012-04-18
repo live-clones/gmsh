@@ -1054,7 +1054,7 @@ struct  quadBlob {
       v2t_cont :: const_iterator it = adj.find(v);
       int ss = temp.size();
       std::vector<MElement*> elems = it->second;
-      /*
+      
       //EMI: try to orient BNodes the same as quad orientations
        for (int j=0;j<elems.size();j++){
        	 bool found  =false;
@@ -1072,33 +1072,8 @@ struct  quadBlob {
        }
        if (found) break;
        }
-      */
-       for (int j=0;j<elems.size();j++){
-       	bool found = false;
-       	for (int i=0;i<4;i++){
-       	  MEdge e = it->second[j]->getEdge(i);
-       	  if (e.getVertex(0) == v &&
-       	      inBoundary(e.getVertex(1),bnodes) &&
-       	      !inBoundary(e.getVertex(1),temp)) {
-       	    v = e.getVertex(1);
-       	    temp.push_back(e.getVertex(1));
-       	    found = true;
-       	    break;
-       	  }
-       	   else if (e.getVertex(1) == v &&
-       	    	   inBoundary(e.getVertex(0),bnodes) &&
-       	    	   !inBoundary(e.getVertex(0),temp)) {
-	     v = e.getVertex(0);
-        temp.push_back(e.getVertex(0));
-         found = true;
-         break;
-       }
-      	}
-       	if (found)break;
-       }
        
-
-       //JF this does not orient 
+       //JF this does not orient quads
       // for (int j=0;j<elems.size();j++){
       // 	bool found = false;
       // 	if(inBlob(elems[j])){
@@ -1112,14 +1087,14 @@ struct  quadBlob {
       // 	    found = true;
       // 	    break;
       // 	  }
-      // 	   //else if (e.getVertex(1) == v &&
-      // 	  //  	   inBoundary(e.getVertex(0),bnodes) &&
-      // 	  //  	   !inBoundary(e.getVertex(0),temp)) {
-      // 	  //   v = e.getVertex(0);
-      // 	  //   temp.push_back(e.getVertex(0));
-      // 	  //   found = true;
-      // 	  //   break;
-      // 	  // }
+      // 	   else if (e.getVertex(1) == v &&
+      // 	    	   inBoundary(e.getVertex(0),bnodes) &&
+      // 	    	   !inBoundary(e.getVertex(0),temp)) {
+      // 	     v = e.getVertex(0);
+      // 	     temp.push_back(e.getVertex(0));
+      // 	     found = true;
+      // 	     break;
+      // 	   }
       // 	}
       // 	}
       // 	if (found)break;

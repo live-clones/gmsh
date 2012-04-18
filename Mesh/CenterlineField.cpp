@@ -840,8 +840,10 @@ void Centerline::extrudeBoundaryLayerWall(){
 
   for (int i= 0; i< NF; i++){
     GFace *gf = current->getFaceByTag(NF+i+1);//at this moment compound is not meshed yet exist yet
+  
+    int dir = 0;
     current->setFactory("Gmsh");
-    current->extrudeBoundaryLayer(gf, nbElemLayer,  hLayer, 0, -1);
+    current->extrudeBoundaryLayer(gf, nbElemLayer,  hLayer, dir, -1);
     //view -5 to scale hLayer by radius in BoundaryLayers.cpp
   }
 

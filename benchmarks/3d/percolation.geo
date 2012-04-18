@@ -133,3 +133,4 @@ c = newsl; Surface Loop(c) = {43,-1,35,39,48,47};
 v = newv; Volume(v) = {c, holes[]};
 
 Coherence; // make sure duplicate nodes are removed when sphere_dist=0
+Field[1] = BoundaryLayer;

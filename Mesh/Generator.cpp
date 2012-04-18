@@ -29,6 +29,7 @@
 #include "Generator.h"
 #include "meshGFaceLloyd.h"
 #include "CenterlineField.h"
+#include "GFaceCompound.h"
 #include "Field.h"
 #include "Options.h"
 #include "simple3D.h"
@@ -472,7 +473,6 @@ static void Mesh2D(GModel *m)
       if(nIter++ > 10) break;
     }
   }
-
 
 #if defined(HAVE_BFGS)
   // lloyd optimization

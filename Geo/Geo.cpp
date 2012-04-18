@@ -2763,6 +2763,7 @@ void ExtrudeShapes(int type, List_T *list_in,
     case MSH_SURF_TRIC:
     case MSH_SURF_PLAN:
     case MSH_SURF_DISCRETE:
+    case MSH_SURF_COMPOUND:
       {
         Volume *pv = 0;
         Shape top;
@@ -2806,9 +2807,10 @@ void ExtrudeShapes(int type, List_T *list_in,
 
 static int compareTwoPoints(const void *a, const void *b)
 {
+ 
   Vertex *q = *(Vertex **)a;
   Vertex *w = *(Vertex **)b;
-
+  
   if(q->Typ != w->Typ)
     return q->Typ - w->Typ;
 
@@ -2871,7 +2873,8 @@ static int compareTwoSurfaces(const void *a, const void *b)
   // checking types is the "right thing" to do (see e.g. compareTwoCurves)
   // but it would break backward compatibility (see e.g. tutorial/t2.geo),
   // so let's just do it for boundary layer surfaces for now:
-  if(s1->Typ == MSH_SURF_BND_LAYER || s2->Typ == MSH_SURF_BND_LAYER){
+  if(s1->Typ == MSH_SURF_BND_LAYER || s2->Typ == MSH_SURF_BND_LAYER || 
+     s1->Typ == MSH_SURF_COMPOUND || s2->Typ == MSH_SURF_COMPOUND ){
     if(s1->Typ != s2->Typ) return s1->Typ - s2->Typ;
   }
 
@@ -3020,6 +3023,7 @@ static void ReplaceDuplicatePoints()
   Tree_Action(points2delete, Free_Vertex);
   Tree_Delete(points2delete);
   Tree_Delete(allNonDuplicatedPoints);
+ 
 }
 
 static void ReplaceDuplicateCurves()

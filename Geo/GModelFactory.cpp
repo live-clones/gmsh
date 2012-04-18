@@ -288,17 +288,17 @@ std::vector<GFace *> GeoFactory::addRuledFaces(GModel *gm,
 GEntity* GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e, int nbLayers, double hLayer, int dir, int view)
 {
 
-  ExtrudeParams ep;
-  ep.mesh.BoundaryLayerIndex = dir;
-  ep.mesh.ViewIndex = view;
-  ep.mesh.NbLayer = 1; //this may be more general for defining different layers
-  ep.mesh.hLayer.clear();
-  ep.mesh.hLayer.push_back(hLayer);
-  ep.mesh.NbElmLayer.clear(); 
-  ep.mesh.NbElmLayer.push_back(nbLayers);
-  ep.mesh.ExtrudeMesh = true;
-  ep.geo.Source = e->tag();
-
+  ExtrudeParams *ep = new  ExtrudeParams;
+  ep->mesh.BoundaryLayerIndex = dir;
+  ep->mesh.ViewIndex = view;//view -5 for centerline based extrude
+  ep->mesh.NbLayer = 1; //this may be more general for defining different layers
+  ep->mesh.hLayer.clear();
+  ep->mesh.hLayer.push_back(hLayer);
+  ep->mesh.NbElmLayer.clear(); 
+  ep->mesh.NbElmLayer.push_back(nbLayers);
+  ep->mesh.ExtrudeMesh = true;
+  ep->geo.Source = e->tag();
+ 
   int type  = BOUNDARY_LAYER; 
   double T0=0., T1=0., T2=0.;
   double A0=0., A1=0., A2=0.;
@@ -313,22 +313,22 @@ GEntity* GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e, int nbLayers, 
     shape.Type = v->Typ;
   }
   else if (e->dim() == 1){
-    ((GEdge*)e)->meshAttributes.extrude = &ep;
+    ((GEdge*)e)->meshAttributes.extrude = ep;
     Curve *c = FindCurve(e->tag());
     if(!c) printf("curve %d not found \n", e->tag());
      shape.Num = c->Num;
      shape.Type = c->Typ;
   }
   else if (e->dim() == 2){
-    ((GFace*)e)->meshAttributes.extrude = &ep;
+    ((GFace*)e)->meshAttributes.extrude = ep;
     Surface *s = FindSurface(e->tag());
-    // Msg::Info("Geo internal model has:");
-    // List_T *points = Tree2List(gm->getGEOInternals()->Points);
-    // List_T *curves = Tree2List(gm->getGEOInternals()->Curves);
-    // List_T *surfaces = Tree2List(gm->getGEOInternals()->Surfaces);
-    // Msg::Info("%d Vertices", List_Nbr(points));
-    // Msg::Info("%d Edges", List_Nbr(curves));
-    // Msg::Info("%d Faces", List_Nbr(surfaces));
+     // Msg::Info("Geo internal model has:");
+     // List_T *points = Tree2List(gm->getGEOInternals()->Points);
+     // List_T *curves = Tree2List(gm->getGEOInternals()->Curves);
+     // List_T *surfaces = Tree2List(gm->getGEOInternals()->Surfaces);
+     // Msg::Info("%d Vertices", List_Nbr(points));
+     // Msg::Info("%d Edges", List_Nbr(curves));
+     // Msg::Info("%d Faces", List_Nbr(surfaces));
     // for(int i = 0; i < List_Nbr(surfaces); i++) {
     //   Surface *s;
     //   List_Read(surfaces, i, &s);
@@ -338,7 +338,6 @@ GEntity* GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e, int nbLayers, 
       printf("surface %d NOT found \n", e->tag());
       exit(1);
     }
-  
     shape.Num = s->Num;
     shape.Type = s->Typ;
   }
@@ -351,7 +350,7 @@ GEntity* GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e, int nbLayers, 
                 T0, T1, T2,
                 A0, A1, A2,
                 X0, X1, X2, alpha,
-                &ep,
+                ep,
                 list_out);
 
   //create GEntities 

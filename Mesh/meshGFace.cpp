@@ -2118,8 +2118,11 @@ void orientMeshGFace::operator()(GFace *gf)
 
   if(gf->geomType() == GEntity::DiscreteSurface) return;
   if(gf->geomType() == GEntity::ProjectionFace) return;
-  if(gf->geomType() == GEntity::CompoundSurface) return;
   if(gf->geomType() == GEntity::BoundaryLayerSurface) return;
+  if(gf->geomType() == GEntity::CompoundSurface ) {
+    GFaceCompound *gfc = (GFaceCompound*) gf;
+    if (gfc->getCompounds().size() != 1) return;
+  }
 
   if(!gf->getNumMeshElements()) return;
 

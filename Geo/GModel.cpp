@@ -2091,23 +2091,23 @@ GEdge* GModel::addCompoundEdge(std::vector<GEdge*> edges, int num){
 
     // Curve *c = Create_Curve(num, MSH_SEGM_DISCRETE, 1,
     // 			    NULL, NULL, -1, -1, 0., 1.);
-    // List_T *points = Tree2List(getGEOInternals()->Points);
-    // GVertex *gvb = gec->getBeginVertex();
-    // GVertex *gve = gec->getEndVertex();
-    // int nb = 2 ;
-    // c->Control_Points = List_Create(nb, 1, sizeof(Vertex *));
-    // for(int i = 0; i < List_Nbr(points); i++) {
-    //   Vertex *v;
-    //   List_Read(points, i, &v);
-    //   if (v->Num == gvb->tag()) {
-    // 	List_Add(c->Control_Points, &v);
-    // 	c->beg = v;
-    //   }
-    //   if (v->Num == gve->tag()) {
-    // 	List_Add(c->Control_Points, &v);
-    // 	c->end = v;
-    //   }
-    // }
+     List_T *points = Tree2List(getGEOInternals()->Points);
+     GVertex *gvb = gec->getBeginVertex();
+     GVertex *gve = gec->getEndVertex();
+     int nb = 2 ;
+     c->Control_Points = List_Create(nb, 1, sizeof(Vertex *));
+     for(int i = 0; i < List_Nbr(points); i++) {
+       Vertex *v;
+       List_Read(points, i, &v);
+       if (v->Num == gvb->tag()) {
+     	List_Add(c->Control_Points, &v);
+     	c->beg = v;
+       }
+       if (v->Num == gve->tag()) {
+     	List_Add(c->Control_Points, &v);
+     	c->end = v;
+       }
+     }
 
     End_Curve(c);
     Tree_Add(getGEOInternals()->Curves, &c);
@@ -2145,19 +2145,34 @@ GFace* GModel::addCompoundFace(std::vector<GFace*> faces, int param, int split, 
     for(int i= 0; i< faces.size(); i++)
       s->compound.push_back(faces[i]->tag());
 
-    // Surface *s = Create_Surface(num, MSH_SURF_DISCRETE);
-    // std::list<GEdge*> edges = gfc->edges();
-    // s->Generatrices = List_Create(edges.size(), 1, sizeof(Curve *));
-    // List_T *curves = Tree2List(_geo_internals->Curves);
-    // Curve *c;
-    // for(std::list<GEdge*>::iterator ite = edges.begin(); ite != edges.end(); ite++){
-    //   for(int i = 0; i < List_Nbr(curves); i++) {
-    // 	List_Read(curves, i, &c);
-    // 	if (c->Num == (*ite)->tag()) {
-    // 	  List_Add(s->Generatrices, &c);
-    // 	}
-    //   }
-    // }
+     std::list<GEdge*> edges = gfc->edges();
+
+     //Replace edges by their compounds
+     std::set<GEdge*> mySet;
+     std::list<GEdge*>::iterator it = edges.begin();
+     while(it != edges.end()){
+       if((*it)->getCompound()){
+	 mySet.insert((*it)->getCompound());
+       }
+       else{
+	 mySet.insert(*it);
+       }
+       ++it;
+     }
+     edges.clear();
+     edges.insert(edges.begin(), mySet.begin(), mySet.end());
+
+     s->Generatrices = List_Create(edges.size(), 1, sizeof(Curve *));
+     List_T *curves = Tree2List(_geo_internals->Curves);
+     Curve *c;
+     for(std::list<GEdge*>::iterator ite = edges.begin(); ite != edges.end(); ite++){
+       for(int i = 0; i < List_Nbr(curves); i++) {
+     	List_Read(curves, i, &c);
+     	if (c->Num == (*ite)->tag()) {
+     	  List_Add(s->Generatrices, &c);
+     	}
+       }
+     }
     
     Tree_Add(_geo_internals->Surfaces, &s);
   }
