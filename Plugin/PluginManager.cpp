@@ -55,6 +55,7 @@
 #include "NearToFarField.h"
 #include "DiscretizationError.h"
 #include "Scal2Vec.h"
+#include "CutMesh.h"
 
 // for testing purposes only :-)
 #undef HAVE_DLOPEN
@@ -256,6 +257,10 @@ void PluginManager::registerDefaultPlugins()
 #if defined(HAVE_ANN)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("NearestNeighbor", GMSH_RegisterNearestNeighborPlugin()));
+#endif
+#if defined(HAVE_DINTEGRATION)
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("CutMesh", GMSH_RegisterCutMeshPlugin()));
 #endif
   }
 

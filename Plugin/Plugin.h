@@ -124,4 +124,10 @@ class GMSH_SolverPlugin : public GMSH_Plugin
   virtual bool GL_enhanceLine(int CurveId, Vertex *v1, Vertex *v2) { return false; }
 };
 
+class GMSH_MeshPlugin : public GMSH_Plugin
+{
+  inline GMSH_PLUGIN_TYPE getType() const { return GMSH_Plugin::GMSH_MESH_PLUGIN; }
+  virtual void run() {}
+};
+
 #endif

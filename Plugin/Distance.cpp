@@ -183,6 +183,10 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 
   std::vector<GEntity*> _entities;
   GModel::current()->getEntities(_entities);
+  if(!_entities.size() || !_entities[_entities.size()-1]->getMeshElement(0)){
+    Msg::Error("This plugin needs a mesh !");
+    return view;
+  }
   GEntity* ge = _entities[_entities.size()-1];
   int integrationPointTetra[2];
   integrationPointTetra[0]=0;
@@ -194,11 +198,6 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   int totNodes=numnodes + _entities[_entities.size()-1]->mesh_vertices.size();
   int order=ge->getMeshElement(0)->getPolynomialOrder();
   int totNumNodes = totNodes+ge->getNumMeshElements()*integrationPointTetra[order-1];
-
-  if (totNumNodes ==0) {
-    Msg::Error("This plugin needs a mesh !");
-    return view;
-  }
 
   std::vector<SPoint3> pts;
   std::vector<double> distances;
