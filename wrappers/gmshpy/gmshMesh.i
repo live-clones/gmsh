@@ -10,6 +10,7 @@
   #include "meshGFaceLloyd.h"
   #include "meshGFaceOptimize.h"
   #include "meshPartitionOptions.h"
+  #include "OptHomRun.h"
 #if defined(HAVE_METIS) || defined(HAVE_CHACO)
   #include "meshPartition.h"
 #endif
@@ -35,6 +36,7 @@ namespace std {
 %include "meshGFaceLloyd.h"
 %include "meshGFaceOptimize.h"
 %include "meshPartitionOptions.h"
+%include "OptHomRun.h"
 #if defined(HAVE_METIS) || defined(HAVE_CHACO)
 %include "meshPartition.h"
 #endif
