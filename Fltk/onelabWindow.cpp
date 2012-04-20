@@ -658,7 +658,7 @@ static void importPhysicalGroups(onelab::client *c, GModel *m)
            (dim == 1) ? "Line" : "Point") + num.str();
       onelab::region p(name, num.str());
       p.setDimension(dim);
-      p.setAttribute("ReadOnly", "Yes");
+      p.setReadOnly(true);
       c->set(p);
     }
   }
