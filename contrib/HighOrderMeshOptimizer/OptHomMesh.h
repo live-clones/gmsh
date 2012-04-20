@@ -37,6 +37,8 @@ public:
   inline double distSq(int iFV);
   inline void gradDistSq(int iV, std::vector<double> &gDSq);
 
+  void pcScale(int iFV, std::vector<double> &scale);          // Calc. scale of parametric coordinates for preconditioning
+
   void getUvw(double *it);
   void updateMesh(const double *it);
   void distSqToStraight(std::vector<double> &dSq);

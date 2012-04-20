@@ -39,11 +39,12 @@ private:
   double initObj, initMaxDist, initAvgDist;  // Values for reporting
   double minJac, maxJac, maxDist, avgDist;  // Values for reporting
 
-  inline double setBarrierTerm(double jacBarrier) { bTerm = jacBarrier/(1.-jacBarrier); }
+  inline void setBarrierTerm(double jacBarrier) { bTerm = jacBarrier/(1.-jacBarrier); }
   inline double compute_f(double v);
   inline double compute_f1(double v);
   bool addJacObjGrad(double &Obj, alglib::real_1d_array &gradObj);
   bool addDistObjGrad(double Fact, double Fact2, double &Obj, alglib::real_1d_array &gradObj);
+  void calcScale(alglib::real_1d_array &scale);
   void OptimPass(alglib::real_1d_array &x, const alglib::real_1d_array &initGradObj, int itMax);
 
 };
@@ -83,7 +84,6 @@ inline double OptHOM::compute_f1(double v)
 void OptHOM::getJacDist(double &minJ, double &maxJ, double &maxD, double &avgD)
 {
   minJ = minJac; maxJ = maxJac; maxD = maxDist; avgD = avgDist;
-  std::cout << "getJacDist: minJac = " << minJac << ", maxJac = " << maxJac << ", maxDist = " << maxDist << ", avgDist = " << avgDist << std::endl;
 }
 
 

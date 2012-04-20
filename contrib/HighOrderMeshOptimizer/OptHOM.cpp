@@ -149,45 +149,82 @@ void printProgressFunc(const alglib::real_1d_array &x, double Obj, void *HOInst)
 
 
 
+void OptHOM::calcScale(alglib::real_1d_array &scale)
+{
+
+  scale.setlength(mesh.nPC());
+
+  // Calculate scale
+  for (int iFV = 0; iFV < mesh.nFV(); iFV++) {
+    std::vector<double> scaleFV(mesh.nPCFV(iFV),1.);
+    mesh.pcScale(iFV,scaleFV);
+    for (int iPC = 0; iPC < mesh.nPCFV(iFV); iPC++) scale[mesh.indPCFV(iFV,iPC)] = scaleFV[iPC];
+  }
+
+  // Normalize scale vector (otherwise ALGLIB routines may fail)
+  double scaleNormSq = 0.;
+  for (int i = 0; i < mesh.nPC(); i++) scaleNormSq += scale[i]*scale[i];
+  const double scaleNorm = sqrt(scaleNormSq);
+  for (int i = 0; i < mesh.nPC(); i++) scale[i] /= scaleNorm;
+
+}
+
+
+
+
 void OptHOM::OptimPass(alglib::real_1d_array &x, const alglib::real_1d_array &initGradObj, int itMax)
 {
 
   static const double EPSG = 0.;
   static const double EPSF = 0.;
   static const double EPSX = 0.;
+  static int OPTMETHOD = 1;
 
   std::cout << "--- Optimization pass with jacBar = " << jacBar << ", lambda = " << lambda << ", lambda2 = " << lambda2 << std::endl;
 
-//  alglib::minlbfgsstate state;
-//  alglib::minlbfgsreport rep;
-  alglib::mincgstate state;
-  alglib::mincgreport rep;
-
-//  minlbfgscreate(3, x, state);
-//  minlbfgssetcond(state, EPSG, EPSF, EPSX, itMax);
-//  minlbfgssetxrep(state, true);
-  mincgcreate(x, state);
-  mincgsetcond(state, EPSG, EPSF, EPSX, itMax);
-  mincgsetxrep(state, true);
-
   iter = 0;
 
-//  alglib::minlbfgsoptimize(state, evalObjGradFunc, printProgressFunc, this);
-  alglib::mincgoptimize(state, evalObjGradFunc, printProgressFunc, this);
+  int iterationscount = 0, nfev = 0, terminationtype = -1;
+  if (OPTMETHOD == 1) {
+    alglib::mincgstate state;
+    alglib::mincgreport rep;
+    mincgcreate(x, state);
+    alglib::real_1d_array scale;
+    calcScale(scale);
+    mincgsetscale(state,scale);
+    mincgsetprecscale(state);
+    mincgsetcond(state, EPSG, EPSF, EPSX, itMax);
+    mincgsetxrep(state, true);
+    alglib::mincgoptimize(state, evalObjGradFunc, printProgressFunc, this);
+    mincgresults(state, x, rep);
+    iterationscount = rep.iterationscount;
+    nfev = rep.nfev;
+    terminationtype = rep.terminationtype;
+  }
+  else {
+    alglib::minlbfgsstate state;
+    alglib::minlbfgsreport rep;
+    minlbfgscreate(3, x, state);
+    alglib::real_1d_array scale;
+    calcScale(scale);
+    minlbfgssetscale(state,scale);
+    minlbfgssetprecscale(state);
+    minlbfgssetcond(state, EPSG, EPSF, EPSX, itMax);
+    minlbfgssetxrep(state, true);
+    alglib::minlbfgsoptimize(state, evalObjGradFunc, printProgressFunc, this);
+    minlbfgsresults(state, x, rep);
+    iterationscount = rep.iterationscount;
+    nfev = rep.nfev;
+    terminationtype = rep.terminationtype;
+  }
 
-//  minlbfgsresults(state, x, rep);
-  mincgresults(state, x, rep);
-
-  std::cout << "Optimization finalized after " << rep.iterationscount << " iterations (" << rep.nfev << " functions evaluations)";
-  switch(int(rep.terminationtype)) {
-//  case -2: std::cout << ", because rounding errors prevented further improvement"; break;
-//  case -1: std::cout << ", because incorrect parameters were specified"; break;
+  std::cout << "Optimization finalized after " << iterationscount << " iterations (" << nfev << " functions evaluations)";
+  switch(int(terminationtype)) {
   case 1: std::cout << ", because relative function improvement is no more than EpsF"; break;
   case 2: std::cout << ", because relative step is no more than EpsX"; break;
   case 4: std::cout << ", because gradient norm is no more than EpsG"; break;
   case 5: std::cout << ", because the maximum number of steps was taken"; break;
-//  case 7: std::cout << ", because stopping conditions are too stringent, further improvement is impossible"; break;
-  default: std::cout << " with code " << int(rep.terminationtype); break;
+  default: std::cout << " with code " << int(terminationtype); break;
   }
   std::cout << "." << std::endl;
 

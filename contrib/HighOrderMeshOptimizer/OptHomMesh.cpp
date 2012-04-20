@@ -440,6 +440,25 @@ void Mesh::gradScaledJac(int iEl, std::vector<double> &gSJ)
 
 
 
+void Mesh::pcScale(int iFV, std::vector<double> &scale)
+{
+
+  // Calc. derivative of x, y & z w.r.t. parametric coordinates
+  const SPoint3 dX(1.,0.,0.), dY(0.,1.,0.), dZ(0.,0.,1.);
+  SPoint3 gX, gY, gZ;
+  _pc->gXyz2gUvw(_freeVert[iFV],_uvw[iFV],dX,gX);
+  _pc->gXyz2gUvw(_freeVert[iFV],_uvw[iFV],dY,gY);
+  _pc->gXyz2gUvw(_freeVert[iFV],_uvw[iFV],dZ,gZ);
+
+  // Scale = inverse norm. of vector (dx/du, dy/du, dz/du)
+  scale[0] = 1./sqrt(gX[0]*gX[0]+gY[0]*gY[0]+gZ[0]*gZ[0]);
+  if (_nPCFV[iFV] >= 2) scale[1] = 1./sqrt(gX[1]*gX[1]+gY[1]*gY[1]+gZ[1]*gZ[1]);
+  if (_nPCFV[iFV] == 3) scale[2] = 1./sqrt(gX[2]*gX[2]+gY[2]*gY[2]+gZ[2]*gZ[2]);
+
+}
+
+
+
 void Mesh::writeMSH(const char *filename)
 {
   FILE *f = fopen(filename, "w");
