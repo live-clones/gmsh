@@ -57,6 +57,8 @@ namespace onelab{
     bool _changed;
     // should the parameter be visible in the interface?
     bool _visible;
+    // sould the paramete be "read-only" (not settable by the user)
+    bool _readOnly;
   protected:
     // optional additional attributes
     std::map<std::string, std::string> _attributes;
@@ -64,13 +66,13 @@ namespace onelab{
     parameter(const std::string &name="", const std::string &label="",
               const std::string &help="")
       : _name(name), _label(label), _help(help), _changed(true),
-        _visible(true) {}
+        _visible(true), _readOnly(false) {}
     void setName(const std::string &name){ _name = name; }
     void setLabel(const std::string &label){ _label = label; }
-    void setShortHelp(const std::string &label){ _label = label; } // deprecated
     void setHelp(const std::string &help){ _help = help; }
     void setChanged(bool changed){ _changed = changed; }
     void setVisible(bool visible){ _visible = visible; }
+    void setReadOnly(bool readOnly){ _readOnly = readOnly; }
     void setAttribute(const std::string &key, const std::string &value)
     {
       _attributes[key] = value;
@@ -92,7 +94,6 @@ namespace onelab{
     virtual std::string getType() const = 0;
     const std::string &getName() const { return _name; }
     const std::string &getLabel() const { return _label; }
-    const std::string &getShortHelp() const { return _label; } // deprecated
     const std::string &getHelp() const { return _help; }
     std::string getShortName() const
     {
@@ -109,6 +110,7 @@ namespace onelab{
     }
     bool getChanged() const { return _changed; }
     bool getVisible() const { return _visible; }
+    bool getReadOnly() const { return _readOnly; }
     std::string getAttribute(const std::string &key) const
     {
       std::map<std::string, std::string>::const_iterator it = _attributes.find(key);
@@ -122,7 +124,7 @@ namespace onelab{
     const std::set<std::string> &getClients() const { return _clients; }
     static char charSep() { return '\0'; }
     static double maxNumber() { return 1e200; }
-    static std::string version() { return "1.0"; }
+    static std::string version() { return "1.01"; }
     static std::string getNextToken(const std::string &msg,
                                     std::string::size_type &first,
                                     char separator=charSep())
@@ -157,6 +159,7 @@ namespace onelab{
               << sanitize(getLabel()) << charSep()
               << sanitize(getHelp()) << charSep()
               << (getVisible() ? 1 : 0) << charSep()
+              << (getReadOnly() ? 1 : 0) << charSep()
               << _attributes.size() << charSep();
       for(std::map<std::string, std::string>::const_iterator it = _attributes.begin();
           it != _attributes.end(); it++)
@@ -177,6 +180,7 @@ namespace onelab{
       setLabel(getNextToken(msg, pos));
       setHelp(getNextToken(msg, pos));
       setVisible(atoi(getNextToken(msg, pos).c_str()));
+      setReadOnly(atoi(getNextToken(msg, pos).c_str()));
       int numAttributes = atoi(getNextToken(msg, pos).c_str());
       for(int i = 0; i < numAttributes; i++){
         std::string key(getNextToken(msg, pos));
@@ -236,6 +240,7 @@ namespace onelab{
       setLabel(p.getLabel());
       setHelp(p.getHelp());
       setVisible(p.getVisible());
+      setReadOnly(p.getReadOnly());
       setAttributes(p.getAttributes());
       if(p.getValue() != getValue()){
         setValue(p.getValue());
@@ -298,6 +303,7 @@ namespace onelab{
       setLabel(p.getLabel());
       setHelp(p.getHelp());
       setVisible(p.getVisible());
+      setReadOnly(p.getReadOnly());
       setAttributes(p.getAttributes());
       if(p.getValue() != getValue()){
         setValue(p.getValue());
