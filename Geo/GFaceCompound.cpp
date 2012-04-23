@@ -995,7 +995,6 @@ bool GFaceCompound::parametrize() const
     }
     printStuff(55);
     oriented = false; //checkOrientation(0);
-    printStuff(66);
     if (!oriented)  oriented = checkOrientation(0, true);
     printStuff(77);
     if (_type==SPECTRAL &&  (!oriented  || checkOverlap(vert)) ){
@@ -1644,11 +1643,11 @@ bool GFaceCompound::parametrize_conformal_spectral() const
     myAssembler.numberVertex(v, 0, 2);
   }
 
-  for(std::set<MVertex *>::iterator itv = fillNodes.begin(); itv !=fillNodes.end() ; ++itv){
-    MVertex *v = *itv;
-    myAssembler.numberVertex(v, 0, 1);
-    myAssembler.numberVertex(v, 0, 2);
-  }
+  // for(std::set<MVertex *>::iterator itv = fillNodes.begin(); itv !=fillNodes.end() ; ++itv){
+  //   MVertex *v = *itv;
+  //   myAssembler.numberVertex(v, 0, 1);
+  //   myAssembler.numberVertex(v, 0, 2);
+  // }
 
   laplaceTerm laplace1(model(), 1, ONE);
   laplaceTerm laplace2(model(), 2, ONE);
@@ -1665,13 +1664,13 @@ bool GFaceCompound::parametrize_conformal_spectral() const
     }
   }
 
-  for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 != fillTris.end(); it2++){
-    SElement se((*it2));
-    laplace1.addToMatrix(myAssembler, &se);
-    laplace2.addToMatrix(myAssembler, &se);
-    cross12.addToMatrix(myAssembler, &se);
-    cross21.addToMatrix(myAssembler, &se);
-  }
+  // for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 != fillTris.end(); it2++){
+  //   SElement se((*it2));
+  //   laplace1.addToMatrix(myAssembler, &se);
+  //   laplace2.addToMatrix(myAssembler, &se);
+  //   cross12.addToMatrix(myAssembler, &se);
+  //   cross21.addToMatrix(myAssembler, &se);
+  // }
 
   double epsilon = 1.e-6;
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
@@ -2581,7 +2580,7 @@ double GFaceCompound::checkAspectRatio() const
 }
 
 void GFaceCompound::coherencePatches() const
-{
+{ 
   if (_mapping == RBF) return;
   Msg::Info("Re-orient all %d compound patches normals coherently",
             _compound.size());
@@ -2612,31 +2611,31 @@ void GFaceCompound::coherencePatches() const
 }
 
   std::set<MElement* , std::less<MElement*> > touched;
-int iE, si, iE2, si2;
-touched.insert(allElems[0]);
-while(touched.size() != allElems.size()){
-  for(unsigned int i = 0; i < allElems.size(); i++){
-    MElement *t = allElems[i];
-    std::set<MElement*, std::less<MElement*> >::iterator it2 = touched.find(t);
-    if(it2 != touched.end()){
-      for (int j = 0; j <  t->getNumEdges(); j++){
-	MEdge me = t->getEdge(j);
-	t->getEdgeInfo(me, iE,si);
-	std::map<MEdge, std::set<MElement*>, Less_Edge >::iterator it =
-	  edge2elems.find(me);
-	std::set<MElement*, std::less<MElement*> > mySet = it->second;
-	for(std::set<MElement*, std::less<MElement*> >::iterator itt = mySet.begin();
-	    itt != mySet.end(); itt++){
-	  if (*itt != t){
-	    (*itt)->getEdgeInfo(me,iE2,si2);
-	    if(si == si2)  (*itt)->revert();
-	    touched.insert(*itt);
+  int iE, si, iE2, si2;
+  touched.insert(allElems[0]);
+  while(touched.size() != allElems.size()){
+    for(unsigned int i = 0; i < allElems.size(); i++){
+      MElement *t = allElems[i];
+      std::set<MElement*, std::less<MElement*> >::iterator it2 = touched.find(t);
+      if(it2 != touched.end()){
+	for (int j = 0; j <  t->getNumEdges(); j++){
+	  MEdge me = t->getEdge(j);
+	  t->getEdgeInfo(me, iE,si);
+	  std::map<MEdge, std::set<MElement*>, Less_Edge >::iterator it =
+	    edge2elems.find(me);
+	  std::set<MElement*, std::less<MElement*> > mySet = it->second;
+	  for(std::set<MElement*, std::less<MElement*> >::iterator itt = mySet.begin();
+	      itt != mySet.end(); itt++){
+	    if (*itt != t){
+	      (*itt)->getEdgeInfo(me,iE2,si2);
+	      if(si == si2) { (*itt)->revert();}
+	      touched.insert(*itt);
+	    }
 	  }
 	}
       }
     }
   }
- }
 }
 
 void GFaceCompound::coherenceNormals()

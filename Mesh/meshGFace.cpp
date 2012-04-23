@@ -17,6 +17,7 @@
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GEdgeCompound.h"
+#include "robustPredicates.h"
 #include "GFace.h"
 #include "GModel.h"
 #include "MVertex.h"
@@ -1787,7 +1788,7 @@ void deMeshGFace::operator() (GFace *gf)
 }
 
 // for debugging, change value from -1 to -100;
-int debugSurface = -1; //-1;
+int debugSurface = -100; //-1;
 
 void meshGFace::operator() (GFace *gf)
 {
@@ -2119,12 +2120,45 @@ void orientMeshGFace::operator()(GFace *gf)
   if(gf->geomType() == GEntity::DiscreteSurface) return;
   if(gf->geomType() == GEntity::ProjectionFace) return;
   if(gf->geomType() == GEntity::BoundaryLayerSurface) return;
-  if(gf->geomType() == GEntity::CompoundSurface ) {
-    GFaceCompound *gfc = (GFaceCompound*) gf;
-    if (gfc->getCompounds().size() != 1) return;
-  }
 
   if(!gf->getNumMeshElements()) return;
+
+  if(gf->geomType() == GEntity::CompoundSurface ) return;
+  //do sthg for compound face
+  // if(gf->geomType() == GEntity::CompoundSurface ) {
+  //   GFaceCompound *gfc = (GFaceCompound*) gf;
+  //   //if (gfc->getCompounds().size() != 1) return;
+  //   //else{printf("compound face %d orient \n", gfc->tag());}
+  
+  //   std::list<GFace*> comp = gfc->getCompounds(); 
+  //   MTriangle *lt = (*comp.begin())->triangles[0];
+  //   SPoint2 c0 = gfc->getCoordinates(lt->getVertex(0));
+  //   SPoint2 c1 = gfc->getCoordinates(lt->getVertex(1));
+  //   SPoint2 c2 = gfc->getCoordinates(lt->getVertex(2));
+  //   double p0[2] = {c0[0],c0[1]};
+  //   double p1[2] = {c1[0],c1[1]};
+  //   double p2[2] = {c2[0],c2[1]};
+  //   double normal =  robustPredicates::orient2d(p0, p1, p2);
+
+  //   MElement *e = gfc->getMeshElement(0);
+  //   SPoint2 v1,v2,v3;
+  //   reparamMeshVertexOnFace(e->getVertex(0), gf, v1, false);
+  //   reparamMeshVertexOnFace(e->getVertex(1), gf, v2, false);
+  //   reparamMeshVertexOnFace(e->getVertex(2), gf, v3, false);
+  //   SVector3 C1(v1.x(), v1.y(), 0.0);
+  //   SVector3 C2(v2.x(), v2.y(), 0.0);
+  //   SVector3 C3(v3.x(), v3.y(), 0.0);
+  //   SVector3 n1 = crossprod(C2-C1,C3-C1);
+
+  //   if(normal*n1.z() < 0){
+  //     Msg::Debug("Reverting orientation of mesh in compound face %d", gf->tag());
+  //     for(unsigned int k = 0; k < gf->getNumMeshElements(); k++)
+  //   	gfc->getMeshElement(k)->revert();
+  //    }
+  //   return;
+
+  // }
+
 
   // In old versions we did not reorient transfinite surface meshes;
   // we could add the following to provide backward compatibility:
@@ -2181,7 +2215,7 @@ void orientMeshGFace::operator()(GFace *gf)
       SVector3 nf = gf->normal(param);
       SVector3 ne = e->getFace(0).normal();
       if(dot(ne, nf) < 0){
-        Msg::Debug("Reverting orientation of mesh in face %d", gf->tag());
+        Msg::Debug("Reverting 2 orientation of mesh in face %d", gf->tag());
         for(unsigned int k = 0; k < gf->getNumMeshElements(); k++)
           gf->getMeshElement(k)->revert();
       }

@@ -126,8 +126,7 @@ class GFaceCompound : public GFace {
   void getBoundingEdges();
   void getUniqueEdges(std::set<GEdge*> &_unique);
   void computeALoop(std::set<GEdge*> &_unique, std::list<GEdge*> &);
-  void getTriangle(double u, double v, GFaceCompoundTriangle **lt,
-                   double &_u, double &_v) const;
+
   virtual double locCurvature(MTriangle *t, double u, double v) const;
 
   double getSizeH() const;
@@ -160,6 +159,8 @@ class GFaceCompound : public GFace {
   virtual GEntity::GeomType geomType() const { return CompoundSurface; }
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return 0; }
+  void getTriangle(double u, double v, GFaceCompoundTriangle **lt,
+                   double &_u, double &_v) const;
   virtual SPoint2 getCoordinates(MVertex *v) const;
   virtual double curvatureMax(const SPoint2 &param) const;
   virtual double curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,

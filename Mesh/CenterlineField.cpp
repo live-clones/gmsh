@@ -647,7 +647,7 @@ void Centerline::createSplitCompounds(){
     Msg::Info("Create Compound Surface (%d) = %d discrete face",
               num_gfc, pf->tag());
 
-    GFace *gfc = current->addCompoundFace(f_compound, 1, 0, num_gfc); //1=conf_spectral 4=convex_circle
+    GFace *gfc = current->addCompoundFace(f_compound, 7, 0, num_gfc); //1=conf_spectral 4=convex_circle
     ////GFaceCompound::typeOfCompound typ = GFaceCompound::CONVEX_CIRCLE; 
     ////GFaceCompound::typeOfCompound typ = GFaceCompound::HARMONIC_PLANE; 
     //GFaceCompound::typeOfCompound typ = GFaceCompound::CONFORMAL_SPECTRAL; 
@@ -841,7 +841,14 @@ void Centerline::extrudeBoundaryLayerWall(){
   for (int i= 0; i< NF; i++){
     GFace *gf = current->getFaceByTag(NF+i+1);//at this moment compound is not meshed yet exist yet
   
-    int dir = 0;
+    int dir = 1;
+    
+    //do sthg here 
+    //MElement *e = current->getFaceByTag(i+1)->getMeshElement(i);
+
+
+    if (dir ==1 && hLayer > 0 ) hLayer *= -1.0;
+    printf("dir=%d hlayer =%g \n", dir, hLayer);
     current->setFactory("Gmsh");
     current->extrudeBoundaryLayer(gf, nbElemLayer,  hLayer, dir, -1);
     //view -5 to scale hLayer by radius in BoundaryLayers.cpp

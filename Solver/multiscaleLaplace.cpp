@@ -876,8 +876,8 @@ multiscaleLaplace::multiscaleLaplace (std::vector<MElement *> &elements,
 
   //Split the mesh in left and right
   //or Cut the mesh in left and right
-  //splitElems(elements);
-  cutElems(elements);
+  splitElems(elements);
+  //cutElems(elements);
 
 }
 
