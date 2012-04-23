@@ -72,11 +72,12 @@ static void computeMeshMetricsForBamg(GFace *gf, int numV,
 
 void meshGFaceBamg(GFace *gf){
 
-  //Replace edges by their compounds
    std::list<GEdge*> edges = gf->edges();
+   bool hasCompounds  = false;
+
+  //Replace edges by their compounds
    std::set<GEdge*> mySet;
    std::list<GEdge*>::iterator it = edges.begin();
-   bool hasCompounds  = false;
    while(it != edges.end()){
     if((*it)->getCompound()){
       hasCompounds = true;
@@ -120,6 +121,7 @@ void meshGFaceBamg(GFace *gf){
     (*it)->setIndex(index++);
    }
   }
+  //exit(1);
   int  nbFixedVertices = index;
   for(std::set<MVertex*>::iterator it = all.begin(); it!=all.end(); ++it){
     //FIXME : SEAMS should have to be taken into account here !!!
@@ -226,7 +228,7 @@ void meshGFaceBamg(GFace *gf){
     args[16] = CTX::instance()->mesh.anisoMax;
     args[ 7] = CTX::instance()->mesh.smoothRatio;
     //args[ 21] = 90.0;//cutoffrad = 90 degree
-    computeMeshMetricsForBamg (gf, nbVert, bamgMesh->vertices , mm11,mm12,mm22); 
+    computeMeshMetricsForBamg (gf, nbVert, bamgMesh->vertices, mm11,mm12,mm22); 
     
     try{
       refinedBamgMesh = Bamg(bamgMesh, args, mm11, mm12, mm22, false);

@@ -371,8 +371,8 @@ void meshMetric::computeMetric(){
   //printf("%d elements are considered in the meshMetric \n",(int)_elements.size());
 
   computeValues();
-  //computeHessian_FE();
-  computeHessian_LS(); 
+  computeHessian_FE();
+  //computeHessian_LS(); 
   
   int metricNumber = setOfMetrics.size();
 

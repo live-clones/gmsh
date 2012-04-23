@@ -374,8 +374,8 @@ bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
   }
 
   if(v->onWhat()->geomType() == GEntity::DiscreteCurve ||        
-     v->onWhat()->geomType() == GEntity::BoundaryLayerCurve){    
-    param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()), onSurface);
+     v->onWhat()->geomType() == GEntity::BoundaryLayerCurve){  
+     param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()), onSurface);
     return true;
   }
 
@@ -396,6 +396,11 @@ bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
     double t;
     v->getParameter(0, t);
     param = ge->reparamOnFace(gf, t, 1);
+    if(!v->getParameter(0,t)) {
+      Msg::Error("vertex v %p not MedgeVertex", v);
+      Msg::Exit(1);
+      //param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()), onSurface);  
+    }
 
     // shout, we are on a seam
     if(ge->isSeam(gf))
@@ -404,8 +409,7 @@ bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
   else{
     double uu, vv;
     if(v->onWhat() == gf && v->getParameter(0, uu) && v->getParameter(1, vv)){
-      //printf("%d face %d pos %g %g\n",v->getNum(),gf->tag(),uu,vv);
-      param = SPoint2(uu, vv);
+       param = SPoint2(uu, vv);
     }
     else {
       // brute force!

@@ -577,8 +577,9 @@ int GModel::adaptMesh(std::vector<int> technique, std::vector<simpleFunction<dou
       nbElemsOld = nbElems;
     }
   }
+  //adapt only upper most dimension
   else{
-
+    
     while(1) {
       Msg::Info("-- adaptMesh ITER =%d ", ITER);
       std::vector<MElement*> elements;
@@ -608,9 +609,6 @@ int GModel::adaptMesh(std::vector<int> technique, std::vector<simpleFunction<dou
         metric->addMetric(technique[imetric], f[imetric], parameters[imetric]);
       }
       fields->setBackgroundField(metric);
-      // int id = fields->newId();
-      // (*fields)[id] = new meshMetric(this, technique, f, parameters);
-      // fields->background_field = id;
 
       if (getDim() == 2){
         for (fiter fit = firstFace(); fit != lastFace(); ++fit){
@@ -632,7 +630,7 @@ int GModel::adaptMesh(std::vector<int> technique, std::vector<simpleFunction<dou
 
       nbElems = getNumMeshElements();
       if (++ITER >= niter) break;
-      if (fabs((double)(nbElems - nbElemsOld)) < 0.01 * nbElemsOld) break;
+      if (ITER > 3 && fabs((double)(nbElems - nbElemsOld)) < 0.01 * nbElemsOld) break;
 
       nbElemsOld = nbElems;
     }
