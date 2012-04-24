@@ -63,9 +63,7 @@ class Centerline : public Field{
   int nbPoints;
   double recombine;
   int NF, NV, NE, NR;
-  bool is_cut;
-  bool is_closed;
-  bool is_extruded;
+  int is_cut, is_closed, is_extruded;
   double hLayer;
   int nbElemLayer;
 
@@ -140,14 +138,14 @@ class Centerline : public Field{
   //Computes for each MLine the minRadius
   void distanceToSurface();
 
+  //actions
+  void run();
+
   // Cut the mesh in different parts of small aspect ratio
   void cutMesh();
-
   //Create In and Outlet Planar Faces
-  void closeVolume();
-
-  //Create extruded wall
-  void extrudeWall();
+  void createClosedVolume();
+  //extrude outer wall
   void extrudeBoundaryLayerWall();
 
   // Cut the tubular structure with a disk
@@ -156,7 +154,6 @@ class Centerline : public Field{
 
   //create discrete faces
   void createFaces();
-  void createClosedVolume();
   void createSplitCompounds();
 
   //Print for debugging

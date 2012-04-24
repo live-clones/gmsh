@@ -330,9 +330,9 @@ Centerline::Centerline(std::string fileName): kdtree(0), kdtreeR(0), nodes(0), n
   nbElemLayer = 3;
 
   update_needed = false;
-  is_cut = false;
-  is_closed = false;
-  is_extruded = false;
+  is_cut = 0;
+  is_closed = 0;
+  is_extruded = 0;
 
 }
 Centerline::Centerline(): kdtree(0), kdtreeR(0), nodes(0), nodesR(0){
@@ -345,19 +345,23 @@ Centerline::Centerline(): kdtree(0), kdtreeR(0), nodes(0), nodesR(0){
   nbPoints = 25;
   hLayer = 0.3;
   nbElemLayer = 3;
-  is_cut = false;
-  is_closed = false;
-  is_extruded = false;
+  is_cut = 0;
+  is_closed = 0;
+  is_extruded = 0;
 
-  callbacks["closeVolume"] = new FieldCallbackGeneric<Centerline>(this, &Centerline::closeVolume, "Create In/Outlet planar faces \n");
-  callbacks["extrudeWall"] = new FieldCallbackGeneric<Centerline>(this, &Centerline::extrudeWall, "Extrude wall \n");
-  callbacks["cutMesh"] = new FieldCallbackGeneric<Centerline>(this, &Centerline::cutMesh, "Cut the initial mesh in different mesh partitions using the centerlines \n");
+  // callbacks["closeVolume"] = new FieldCallbackGeneric<Centerline>(this, &Centerline::closeVolume, "Create In/Outlet planar faces \n");
+  // callbacks["extrudeWall"] = new FieldCallbackGeneric<Centerline>(this, &Centerline::extrudeWall, "Extrude wall \n");
+  // callbacks["cutMesh"] = new FieldCallbackGeneric<Centerline>(this, &Centerline::cutMesh, "Cut the initial mesh in different mesh partitions using the centerlines \n");
+
+  options["closeVolume"] = new FieldOptionInt(is_closed, "Action: Create In/Outlet planar faces");
+  options["extrudeWall"] = new FieldOptionInt(is_extruded, "Action: Extrude wall");
+  options["cutMesh"] = new FieldOptionInt(is_cut, "Action: Cut the initial mesh in different mesh partitions using the centerlines");
+  callbacks["run"] = new FieldCallbackGeneric<Centerline>(this, &Centerline::run, "Run actions (closeVolume, extrudeWall, cutMesh) \n");
 
   options["FileName"] = new FieldOptionString (fileName, "File name for the centerlines", &update_needed);
   options["nbPoints"] = new FieldOptionInt(nbPoints, "Number of mesh elements in a circle");
   options["nbElemLayer"] = new FieldOptionInt(nbElemLayer, "Number of mesh elements the extruded layer");
   options["hLayer"] = new FieldOptionDouble(hLayer, "Thickness (% of radius) of the extruded layer");
-
 
 }
 
@@ -615,7 +619,7 @@ void Centerline::buildKdTree(){
 
 void Centerline::createSplitCompounds(){
 
-  //number of discrete vertices, edges, faces and regions for cut mesh
+  //number of discrete vertices, edges, faces and regions for the mesh
   NV = current->getMaxElementaryNumber(0);
   NE = current->getMaxElementaryNumber(1);
   NF = current->getMaxElementaryNumber(2);
@@ -810,7 +814,9 @@ void Centerline::createClosedVolume(){
   for (unsigned int i = 0; i<  boundEdges.size(); i++){
     std::vector<std::vector<GEdge *> > myEdgeLoops;
     std::vector<GEdge *> myEdges;
-    GEdge * gec = current->getEdgeByTag(NE+boundEdges[i]->tag());
+    GEdge * gec;
+    if(is_cut) gec = current->getEdgeByTag(NE+boundEdges[i]->tag());
+    else gec = current->getEdgeByTag(boundEdges[i]->tag());
     myEdges.push_back(gec);
     myEdgeLoops.push_back(myEdges);
     GFace *newFace = current->addPlanarFace(myEdgeLoops);
@@ -851,33 +857,18 @@ void Centerline::extrudeBoundaryLayerWall(){
   if (dir ==1 && hLayer > 0 ) hLayer *= -1.0;
 
   for (int i= 0; i< NF; i++){
-    GFace *gf = current->getFaceByTag(NF+i+1);//at this moment compound is not meshed yet exist yet
+    GFace *gfc ; 
+    if (is_cut) gfc = current->getFaceByTag(NF+i+1);//at this moment compound is not meshed yet exist yet
+    else gfc = current->getFaceByTag(i+1);
     current->setFactory("Gmsh");
-    current->extrudeBoundaryLayer(gf, nbElemLayer,  hLayer, dir, -5);
+    current->extrudeBoundaryLayer(gfc, nbElemLayer,  hLayer, dir, -5);
     //view -5 to scale hLayer by radius in BoundaryLayers.cpp
   }
 
 }
 
-void Centerline::closeVolume(){
 
-  is_closed = true;
-  //printf("calling closed volume \n");
-  //exit(1);
-
-}
-
-void Centerline::extrudeWall(){
-
-  is_extruded = true;
-  //printf("calling extrude wall \n");
-  //exit(1);
-
-}
-
-void Centerline::cutMesh(){
-
-  is_cut = true;
+void Centerline::run(){
 
   if (update_needed){
     std::ifstream input;
@@ -887,6 +878,24 @@ void Centerline::cutMesh(){
     buildKdTree();
     update_needed = false;
   }
+
+  if (is_cut) cutMesh();
+  else{
+    current->createTopologyFromMesh();
+    NV = current->getMaxElementaryNumber(0);
+    NE = current->getMaxElementaryNumber(1);
+    NF = current->getMaxElementaryNumber(2);
+    NR = current->getMaxElementaryNumber(3);  
+  }
+
+  if (is_closed) createClosedVolume();
+  if (is_extruded) extrudeBoundaryLayerWall();
+
+}
+
+void Centerline::cutMesh(){
+
+  is_cut = 1;
 
   // std::vector<GFace*> currentFaces =  current->bindingsGetFaces();
   // for (int i=0; i< currentFaces.size(); i++){
@@ -967,10 +976,6 @@ void Centerline::cutMesh(){
 
   //create compounds
   createSplitCompounds();
-  if (is_closed) createClosedVolume();
-
-  //extrude wall
-  if(is_extruded) extrudeBoundaryLayerWall();
 
   Msg::Info("Splitting mesh by centerlines done ");
 
