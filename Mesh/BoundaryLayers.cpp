@@ -12,6 +12,7 @@
 #include "meshGEdge.h"
 #include "meshGFace.h"
 #include "GmshMessage.h"
+#include "Field.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -68,7 +69,7 @@ template<class T>
 static void addExtrudeNormals(std::set<T*> &entities,
                               std::map<int, infoset> &infos)
 {
-  bool normalize = true, special3dbox = false;
+  bool normalize = true, special3dbox = false, extrudeField=false;
   std::vector<OctreePost*> octrees;
 
   for(typename std::set<T*>::iterator it = entities.begin(); it != entities.end(); it++){
@@ -93,6 +94,10 @@ static void addExtrudeNormals(std::set<T*> &entities,
           // normals or at 45 degrees for multiple normals (allows to
           // build nice 3D "boxes")
           special3dbox = true;
+        }
+        else if(view == -5){
+          // Force extrusion normals with a field
+          extrudeField = true;
         }
         else
           Msg::Error("Unknown View[%d]: using normals instead", view);
@@ -131,6 +136,18 @@ static void addExtrudeNormals(std::set<T*> &entities,
             else if(it->vals[j] > 0.1) it->vals[j] = 1.;
             else it->vals[j] = 0.;
           }
+        }
+      }
+      if(extrudeField){ // force normals according to field
+        for(smooth_data::iter it = ExtrudeParams::normals[i]->begin();
+            it != ExtrudeParams::normals[i]->end(); it++){
+	  GEntity *ge = (GEntity*)(*entities.begin());
+	  FieldManager *fields = ge->model()->getFields();
+	  if(fields->getBackgroundField() > 0){
+	    Field *f = fields->get(fields->getBackgroundField());
+	    double radius = (*f)(it->x,it->y,it->z);
+	    for(int k = 0; k < 3; k++) it->vals[k] *= radius;
+	  }
         }
       }
 #if defined(HAVE_POST)

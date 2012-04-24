@@ -117,7 +117,7 @@ class Centerline : public Field{
   double operator() (double x, double y, double z, GEntity *ge=0);
   //anisotropic operator
   void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0);
-  
+
   //temporary operator where v1, v2 and v3 are three orthonormal directions
   void operator()(double x,double y,double z,SVector3& v1,SVector3& v2,SVector3& v3,GEntity* ge=0);
 	

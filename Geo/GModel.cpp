@@ -580,7 +580,7 @@ int GModel::adaptMesh(std::vector<int> technique, std::vector<simpleFunction<dou
   //adapt only upper most dimension
   else{
     
-    while(1) {
+    while(1) {  
       Msg::Info("-- adaptMesh ITER =%d ", ITER);
       std::vector<MElement*> elements;
 

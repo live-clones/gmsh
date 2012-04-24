@@ -838,19 +838,22 @@ void Centerline::extrudeBoundaryLayerWall(){
   
   Msg::Info("Centerline: extrude boundary layer wall %d %g ", nbElemLayer,  hLayer);
 
+  //orient extrude direction outward
+  int dir = 0;
+  MElement *e = current->getFaceByTag(1)->getMeshElement(0);
+  SVector3 ne = e->getFace(0).normal();
+  SVector3 ps(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z());
+  double xyz[3] = {ps.x(), ps.y(), ps.z()};
+  kdtree->annkSearch(xyz, 1, index, dist);
+  SVector3 pc(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
+  SVector3 nc = ps-pc;
+  if (dot(ne,nc) < 0) dir = 1;
+  if (dir ==1 && hLayer > 0 ) hLayer *= -1.0;
+
   for (int i= 0; i< NF; i++){
     GFace *gf = current->getFaceByTag(NF+i+1);//at this moment compound is not meshed yet exist yet
-  
-    int dir = 1;
-    
-    //do sthg here 
-    //MElement *e = current->getFaceByTag(i+1)->getMeshElement(i);
-
-
-    if (dir ==1 && hLayer > 0 ) hLayer *= -1.0;
-    printf("dir=%d hlayer =%g \n", dir, hLayer);
     current->setFactory("Gmsh");
-    current->extrudeBoundaryLayer(gf, nbElemLayer,  hLayer, dir, -1);
+    current->extrudeBoundaryLayer(gf, nbElemLayer,  hLayer, dir, -5);
     //view -5 to scale hLayer by radius in BoundaryLayers.cpp
   }
 
@@ -1078,25 +1081,31 @@ double Centerline::operator() (double x, double y, double z, GEntity *ge){
    double xyz[3] = {x,y,z};
 
    //take xyz = closest point on boundary in case we are on the planar in/out faces
-   bool isCompound = (ge->dim() == 2 && ge->geomType() == GEntity::CompoundSurface) ? true: false;
-   std::list<GFace*> cFaces;
-   if (isCompound) cFaces = ((GFaceCompound*)ge)->getCompounds();
-   if ( ge->dim() == 3 || (ge->dim() == 2 && ge->geomType() == GEntity::Plane) ||
-	(isCompound && (*cFaces.begin())->geomType() == GEntity::Plane) ){
-     int num_neighbours = 1;
-     kdtreeR->annkSearch(xyz, num_neighbours, index, dist);
-     xyz[0] = nodesR[index[0]][0];
-     xyz[1] = nodesR[index[0]][1];
-     xyz[2] = nodesR[index[0]][2];
+   bool isCompound = false;
+   if(ge){
+     if (ge->dim() == 2 && ge->geomType() == GEntity::CompoundSurface) isCompound = true; 
+     std::list<GFace*> cFaces;
+     if (isCompound) cFaces = ((GFaceCompound*)ge)->getCompounds();
+     if ( ge->dim() == 3 || (ge->dim() == 2 && ge->geomType() == GEntity::Plane) ||
+	  (isCompound && (*cFaces.begin())->geomType() == GEntity::Plane) ){
+       int num_neighbours = 1;
+       kdtreeR->annkSearch(xyz, num_neighbours, index, dist);
+       xyz[0] = nodesR[index[0]][0];
+       xyz[1] = nodesR[index[0]][1];
+       xyz[2] = nodesR[index[0]][2];
+     }
    }
 
    int num_neighbours = 1;
    kdtree->annkSearch(xyz, num_neighbours, index, dist);
    double d = sqrt(dist[0]);
    double lc = 2*M_PI*d/nbPoints;
-   return lc;
+
+   if(!ge) { return d;}
+   else  return lc;
 
 }
+
 
 void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge){
 
