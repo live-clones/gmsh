@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "OptHomMesh.h"
 #include "OptHOM.h"
+#include "GmshMessage.h"
 #include "GmshConfig.h"
 
 #ifdef HAVE_BFGS
@@ -15,17 +16,14 @@
 
 
 // Constructor
-OptHOM::OptHOM(GEntity *ge,const std::set<MElement*> &els, std::set<MVertex*> & toFix, int method) :
-       mesh(ge, els, toFix, method)
+OptHOM::OptHOM(GEntity *ge, std::set<MVertex*> & toFix, int method) :
+       mesh(ge, toFix, method)
 {
-}
+};
 
 // Contribution of the element Jacobians to the objective function value and gradients (2D version)
 bool OptHOM::addJacObjGrad(double &Obj, alglib::real_1d_array &gradObj)
 {
-
-  minJac = 1.e300;
-  maxJac = -1.e300;
 
   for (int iEl = 0; iEl < mesh.nEl(); iEl++) {
     std::vector<double> sJ(mesh.nBezEl(iEl));                   // Scaled Jacobians
@@ -37,8 +35,6 @@ bool OptHOM::addJacObjGrad(double &Obj, alglib::real_1d_array &gradObj)
       const double f1 = compute_f1(sJ[l]);
       for (int iPC = 0; iPC < mesh.nPCEl(iEl); iPC++)
         gradObj[mesh.indPCEl(iEl,iPC)] += f1*gSJ[mesh.indGSJ(iEl,l,iPC)];
-      minJac = std::min(minJac,sJ[l]);
-      maxJac = std::max(maxJac,sJ[l]);
     }
   }
 
@@ -52,22 +48,13 @@ bool OptHOM::addJacObjGrad(double &Obj, alglib::real_1d_array &gradObj)
 bool OptHOM::addDistObjGrad(double Fact, double Fact2, double &Obj, alglib::real_1d_array &gradObj)
 {
 
-  maxDist = 0;
-  avgDist = 0;
-  int nbBnd = 0;
-
   for (int iFV = 0; iFV < mesh.nFV(); iFV++) {
     const double Factor = invLengthScaleSq*(mesh.forced(iFV) ? Fact : Fact2);
-    const double dSq = mesh.distSq(iFV), dist = sqrt(dSq);
-    Obj += Factor * dSq;
+    Obj += Factor * mesh.distSq(iFV);
     std::vector<double> gDSq(mesh.nPCFV(iFV));
     mesh.gradDistSq(iFV,gDSq);
     for (int iPC = 0; iPC < mesh.nPCFV(iFV); iPC++) gradObj[mesh.indPCFV(iFV,iPC)] += Factor*gDSq[iPC];
-    maxDist = std::max(maxDist, dist);
-    avgDist += dist;
-    nbBnd++;
   }
-  if (nbBnd != 0) avgDist /= nbBnd;
 
   return true;
 
@@ -83,11 +70,8 @@ void OptHOM::evalObjGrad(const alglib::real_1d_array &x, double &Obj, alglib::re
   Obj = 0.;
   for (int i = 0; i < gradObj.length(); i++) gradObj[i] = 0.;
 
-  if (minJac > barrier) printf("INFO: reached minimum Jacobian requirement, setting null gradient\n");
-  else {
-    addJacObjGrad(Obj, gradObj);
-    addDistObjGrad(lambda, lambda2, Obj, gradObj);
-  }
+  addJacObjGrad(Obj, gradObj);
+  addDistObjGrad(lambda, lambda2, Obj, gradObj);
 
 }
 
@@ -95,30 +79,38 @@ void OptHOM::evalObjGrad(const alglib::real_1d_array &x, double &Obj, alglib::re
 
 void evalObjGradFunc(const alglib::real_1d_array &x, double &Obj, alglib::real_1d_array &gradObj, void *HOInst)
 {
-  (static_cast<OptHOM*>(HOInst))->evalObjGrad(x, Obj, gradObj);
+  OptHOM &HO = *static_cast<OptHOM*> (HOInst);
+  HO.evalObjGrad(x, Obj, gradObj);
+  double distMaxBnd, distAvgBnd, minJac, maxJac;
+  HO.getDistances(distMaxBnd, distAvgBnd, minJac, maxJac);
+  if (minJac > HO.barrier_min && maxJac < HO.barrier_max) {
+    for (int i = 0; i < gradObj.length(); ++i) {
+      gradObj[i] = 0;
+    }
+  }
 }
 
 
 
-void OptHOM::recalcJacDist()
+void OptHOM::getDistances(double &distMaxBND, double &distAvgBND, double &minJac, double &maxJac)
 {
 
-  maxDist = 0;
-  avgDist = 0;
+  distMaxBND = 0;
+  distAvgBND = 0;
   int nbBnd = 0;
 
   for (int iFV = 0; iFV < mesh.nFV(); iFV++) {
     if (mesh.forced(iFV)) {
       double dSq = mesh.distSq(iFV);
-      maxDist = std::max(maxDist, sqrt(dSq));
-      avgDist += sqrt(dSq);
+      distMaxBND = std::max(distMaxBND, sqrt(dSq));
+      distAvgBND += sqrt(dSq);
       nbBnd++;
     }
   }
-  if (nbBnd != 0) avgDist /= nbBnd;
+  if (nbBnd != 0) distAvgBND /= nbBnd;
 
-  minJac = 1.e300;
-  maxJac = -1.e300;
+  minJac = 1000;
+  maxJac = -1000;
   for (int iEl = 0; iEl < mesh.nEl(); iEl++) {
     std::vector<double> sJ(mesh.nBezEl(iEl));                   // Scaled Jacobians
     mesh.scaledJac(iEl,sJ);
@@ -136,7 +128,14 @@ void OptHOM::printProgress(const alglib::real_1d_array &x, double Obj)
 {
 
   iter++;
-  if (iter % progressInterv == 0) printf("--> Iteration %3d --- OBJ %12.5E (relative decrease = %12.5E) -- minJ = %12.5E  maxJ = %12.5E Max D = %12.5E Avg D = %12.5E\n", iter, Obj, Obj/initObj, minJac, maxJac, maxDist, avgDist);
+
+  if (iter % progressInterv == 0) {
+    double maxD, avgD, minJ, maxJ;
+    getDistances(maxD, avgD, minJ, maxJ);
+
+    printf("--> Iteration %3d --- OBJ %12.5E (relative decrease = %12.5E) -- minJ = %12.5E  maxJ = %12.5E Max D = %12.5E Avg D = %12.5E\n", iter, Obj, Obj/initObj, minJ, maxJ, maxD, avgD);
+    Msg::Debug("--> Iteration %3d --- OBJ %12.5E (relative decrease = %12.5E) -- minJ = %12.5E  maxJ = %12.5E Max D = %12.5E Avg D = %12.5E", iter, Obj, Obj/initObj, minJ, maxJ, maxD, avgD);
+  }
 
 }
 
@@ -149,92 +148,63 @@ void printProgressFunc(const alglib::real_1d_array &x, double Obj, void *HOInst)
 
 
 
-void OptHOM::calcScale(alglib::real_1d_array &scale)
-{
-
-  scale.setlength(mesh.nPC());
-
-  // Calculate scale
-  for (int iFV = 0; iFV < mesh.nFV(); iFV++) {
-    std::vector<double> scaleFV(mesh.nPCFV(iFV),1.);
-    mesh.pcScale(iFV,scaleFV);
-    for (int iPC = 0; iPC < mesh.nPCFV(iFV); iPC++) scale[mesh.indPCFV(iFV,iPC)] = scaleFV[iPC];
-  }
-
-  // Normalize scale vector (otherwise ALGLIB routines may fail)
-  double scaleNormSq = 0.;
-  for (int i = 0; i < mesh.nPC(); i++) scaleNormSq += scale[i]*scale[i];
-  const double scaleNorm = sqrt(scaleNormSq);
-  for (int i = 0; i < mesh.nPC(); i++) scale[i] /= scaleNorm;
-
-}
-
-
-
-
 void OptHOM::OptimPass(alglib::real_1d_array &x, const alglib::real_1d_array &initGradObj, int itMax)
 {
 
   static const double EPSG = 0.;
-  static const double EPSF = 0.;
+  static const double EPSF = 1.e-8;
+//  static const double EPSF = 0.;
   static const double EPSX = 0.;
-  static int OPTMETHOD = 1;
+//  const double EPSX = x.length()*1.e-4/sqrt(invLengthScaleSq);
+//  std::cout << "DEBUG: EPSX = " << EPSX << ", EPSX/x.length() = " << EPSX/x.length() << std::endl;
 
-  std::cout << "--- Optimization pass with jacBar = " << jacBar << ", lambda = " << lambda << ", lambda2 = " << lambda2 << std::endl;
+//  double iGONorm = 0;
+//  for (int i=0; i<initGradObj.length(); i++) iGONorm += initGradObj[i]*initGradObj[i];
+//  const double EPSG = 1.e-2*sqrt(iGONorm);
+
+  Msg::Debug("--- Optimization pass with jacBar = %12.5E",jacBar);
+
+//  alglib::minlbfgsstate state;
+//  alglib::minlbfgsreport rep;
+  alglib::mincgstate state;
+  alglib::mincgreport rep;
+
+//  minlbfgscreate(3, x, state);
+//  minlbfgssetcond(state, EPSG, EPSF, EPSX, itMax);
+//  minlbfgssetxrep(state, true);
+  mincgcreate(x, state);
+  mincgsetcond(state, EPSG, EPSF, EPSX, itMax);
+  mincgsetxrep(state, true);
 
   iter = 0;
 
-  int iterationscount = 0, nfev = 0, terminationtype = -1;
-  if (OPTMETHOD == 1) {
-    alglib::mincgstate state;
-    alglib::mincgreport rep;
-    mincgcreate(x, state);
-    alglib::real_1d_array scale;
-    calcScale(scale);
-    mincgsetscale(state,scale);
-    mincgsetprecscale(state);
-    mincgsetcond(state, EPSG, EPSF, EPSX, itMax);
-    mincgsetxrep(state, true);
-    alglib::mincgoptimize(state, evalObjGradFunc, printProgressFunc, this);
-    mincgresults(state, x, rep);
-    iterationscount = rep.iterationscount;
-    nfev = rep.nfev;
-    terminationtype = rep.terminationtype;
-  }
-  else {
-    alglib::minlbfgsstate state;
-    alglib::minlbfgsreport rep;
-    minlbfgscreate(3, x, state);
-    alglib::real_1d_array scale;
-    calcScale(scale);
-    minlbfgssetscale(state,scale);
-    minlbfgssetprecscale(state);
-    minlbfgssetcond(state, EPSG, EPSF, EPSX, itMax);
-    minlbfgssetxrep(state, true);
-    alglib::minlbfgsoptimize(state, evalObjGradFunc, printProgressFunc, this);
-    minlbfgsresults(state, x, rep);
-    iterationscount = rep.iterationscount;
-    nfev = rep.nfev;
-    terminationtype = rep.terminationtype;
-  }
+//  alglib::minlbfgsoptimize(state, evalObjGradFunc, printProgressFunc, this);
+  alglib::mincgoptimize(state, evalObjGradFunc, printProgressFunc, this);
 
-  std::cout << "Optimization finalized after " << iterationscount << " iterations (" << nfev << " functions evaluations)";
-  switch(int(terminationtype)) {
-  case 1: std::cout << ", because relative function improvement is no more than EpsF"; break;
-  case 2: std::cout << ", because relative step is no more than EpsX"; break;
-  case 4: std::cout << ", because gradient norm is no more than EpsG"; break;
-  case 5: std::cout << ", because the maximum number of steps was taken"; break;
-  default: std::cout << " with code " << int(terminationtype); break;
-  }
-  std::cout << "." << std::endl;
+//  minlbfgsresults(state, x, rep);
+  mincgresults(state, x, rep);
+
+  //  std::cout << "Optimization finalized after " << rep.iterationscount << " iterations (" << rep.nfev << " functions evaluations)";
+  //  switch(int(rep.terminationtype)) {
+//  case -2: std::cout << ", because rounding errors prevented further improvement"; break;
+//  case -1: std::cout << ", because incorrect parameters were specified"; break;
+//  case 1: std::cout << ", because relative function improvement is no more than EpsF"; break;
+//  case 2: std::cout << ", because relative step is no more than EpsX"; break;
+//  case 4: std::cout << ", because gradient norm is no more than EpsG"; break;
+//  case 5: std::cout << ", because the maximum number of steps was taken"; break;
+//  case 7: std::cout << ", because stopping conditions are too stringent, further improvement is impossible"; break;
+//  default: std::cout << " with code " << int(rep.terminationtype); break;
+//  }
+//  std::cout << "." << std::endl;
 
 }
 
 
 
-int OptHOM::optimize(double weightFixed, double weightFree, double barrier_, int pInt, int itMax)
+int OptHOM::optimize(double weightFixed, double weightFree, double b_min, double b_max, int pInt, int itMax, double &minJ, double &maxJ)
 {
-  barrier = barrier_;
+  barrier_min = b_min;
+  barrier_max = b_max;
   progressInterv = pInt;
 //  powM = 4;
 //  powP = 3;
@@ -253,13 +223,14 @@ int OptHOM::optimize(double weightFixed, double weightFree, double barrier_, int
   mesh.getUvw(x.getcontent());
 
   // Calculate initial performance
-  recalcJacDist();
-  initMaxDist = maxDist;
-  initAvgDist = avgDist;
+  //  double minJ, maxJ;
+  double initMaxD, initAvgD;
+  getDistances(initMaxD, initAvgD, minJ, maxJ);
 
-  const double jacBarStart = (minJac > 0.) ? 0.9*minJac : 1.1*minJac;
+  const double jacBarStart = (minJ > 0.) ? 0.9*minJ : 1.1*minJ;
   jacBar = jacBarStart;
   setBarrierTerm(jacBarStart);
+  //  std::cout << "DEBUG: jacBarStart = " << jacBarStart << std::endl;
 
   // Calculate initial objective function value and gradient
   initObj = 0.;
@@ -268,27 +239,30 @@ int OptHOM::optimize(double weightFixed, double weightFree, double barrier_, int
   for (int i = 0; i < mesh.nPC(); i++) gradObj[i] = 0.;
   evalObjGrad(x, initObj, gradObj);
 
-  std::cout << "Initial mesh: Obj = " << initObj << ", minJ = " << minJac << ", maxJ = " << maxJac << ", maxD = " << initMaxDist << ", avgD = " << initAvgDist << std::endl;
 
-  std::cout << "Start optimizing " << mesh.nEl() << " elements (" << mesh.nVert() << " vertices, "
-            << mesh.nFV() << " free vertices, " << mesh.nPC() << " variables) with barrier = " << barrier << std::endl;
+  //  std::cout << "Start optimizing with barrier = " << barrier << std::endl;
 
-  while (minJac < barrier) {
+  int ITER = 0;
+  while (minJ < barrier_min) {
     OptimPass(x, gradObj, itMax);
-    jacBar = (minJac > 0.) ? 0.9*minJac : 1.1*minJac;
+    double dumMaxD, dumAvgD;
+    getDistances(dumMaxD, dumAvgD, minJ, maxJ);
+    jacBar = (minJ > 0.) ? 0.9*minJ : 1.1*minJ;
     setBarrierTerm(jacBar);
+    if (ITER ++ > 5) break;
   }
 
-//  for (int i = 0; i<3; i++) {
-//    lambda *= 10;
-//    OptimPass(x, gradObj, itMax);
-//  }
+  //  for (int i = 0; i<3; i++) {
+  //    lambda *= 100;
+  //    OptimPass(x, gradObj, itMax);
+  //  }
 
-  double finalObj = 0.;
+  double finalObj = 0., finalMaxD, finalAvgD;
   evalObjGrad(x, finalObj, gradObj);
-  std::cout << "Final mesh: Obj = " << finalObj << ", maxD = " << maxDist << ", avgD = " << avgDist << ", minJ = " << minJac << ", maxJ = " << maxJac << std::endl;
+  getDistances(finalMaxD, finalAvgD, minJ, maxJ);
+  Msg::Info("Optimization finished : Avg distance to bnd = %12.5E MinJac %12.5E MaxJac %12.5E",finalAvgD,minJ,maxJ);
 
-  return 0;
+  return (minJ > barrier_min && maxJ < barrier_max );
 
 }
 

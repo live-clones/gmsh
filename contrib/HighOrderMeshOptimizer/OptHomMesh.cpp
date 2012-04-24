@@ -1,17 +1,15 @@
+#include "GmshMessage.h"
 #include "GRegion.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MTetrahedron.h"
 #include "ParamCoord.h"
 #include "OptHomMesh.h"
-
-
+#include "JacobianBasis.h"
 
 std::map<int, std::vector<double> > Mesh::_jacBez;
 
-
-
-std::vector<double> Mesh::computeJB(const polynomialBasis *lagrange, const bezierBasis *bezier)
+static std::vector<double> _computeJB(const polynomialBasis *lagrange, const bezierBasis *bezier)
 {
   int nbNodes = lagrange->points.size1();
   
@@ -39,7 +37,7 @@ std::vector<double> Mesh::computeJB(const polynomialBasis *lagrange, const bezie
         for (int j = 0; j < nbNodes; j++) {
           double Jij = dPsi(i, 0) * dPsi(j, 1) - dPsi(i, 1) * dPsi(j,0);
           for (int l = 0; l < bezier->points.size1(); l++) {
-            JB[indJB2DBase(nbNodes,l,i,j)] += bezier->matrixLag2Bez(l, k) * Jij;
+            JB[(l * nbNodes + i) * nbNodes + j] += bezier->matrixLag2Bez(l, k) * Jij;
           }
         }
       }
@@ -53,7 +51,7 @@ std::vector<double> Mesh::computeJB(const polynomialBasis *lagrange, const bezie
               + (dPsi(j, 2) * dPsi(m, 0) - dPsi(j, 0) * dPsi(m, 2)) * dPsi(i, 1)
               + (dPsi(j, 0) * dPsi(m, 1) - dPsi(j, 1) * dPsi(m, 0)) * dPsi(i, 2);
             for (int l = 0; l < bezier->points.size1(); l++) {
-              JB[indJB3DBase(nbNodes,l,i,j,m)] += bezier->matrixLag2Bez(l, k) * Jijm;
+              JB[(l * nbNodes + (i * nbNodes + j)) * nbNodes + m] += bezier->matrixLag2Bez(l, k) * Jijm;
             }
           }
         }
@@ -63,9 +61,7 @@ std::vector<double> Mesh::computeJB(const polynomialBasis *lagrange, const bezie
   return JB;
 }
 
-
-
-Mesh::Mesh(GEntity *ge,const std::set<MElement*> &elements, std::set<MVertex*> & toFix, int method):
+Mesh::Mesh(GEntity *ge, std::set<MVertex*> &toFix, int method) :
     _ge(ge)
 {
   _dim = _ge->dim();
@@ -73,41 +69,39 @@ Mesh::Mesh(GEntity *ge,const std::set<MElement*> &elements, std::set<MVertex*> &
   if (method & METHOD_PHYSCOORD) {
     if (_dim == 2) _pc = new ParamCoordPhys2D;
     else _pc = new ParamCoordPhys3D;
-    std::cout << "METHOD: Using physical coordinates" << std::endl;
+    Msg::Debug("METHOD: Using physical coordinates");
   }
   else if (method & METHOD_SURFCOORD)  {
     if (_dim == 2) {
       _pc = new ParamCoordSurf(_ge);
-      std::cout << "METHOD: Using surface parametric coordinates" << std::endl;
+      Msg::Debug("METHOD: Using surface parametric coordinates");
     }
-    else std::cout << "ERROR: Surface parametric coordinates only for 2D optimization" << std::endl;
+    Msg::Error("ERROR: Surface parametric coordinates only for 2D optimization");
   }
   else {
     _pc = new ParamCoordParent;
-    std::cout << "METHOD: Using parent parametric coordinates" << std::endl;
+    Msg::Debug("METHOD: Using parent parametric coordinates");
   }
 
-  if (method & METHOD_RELAXBND) std::cout << "METHOD: Relaxing boundary vertices" << std::endl;
-  else if (method & METHOD_FIXBND) std::cout << "METHOD: Fixing all boundary vertices" << std::endl;
-  else std::cout << "METHOD: Fixing vertices on geometric points and \"toFix\" boundary" << std::endl;
+  if (method & METHOD_RELAXBND)Msg::Debug("METHOD: Relaxing boundary vertices");
+  else if (method & METHOD_FIXBND) Msg::Debug("METHOD: Fixing all boundary vertices");
+  else Msg::Debug("METHOD: Fixing vertices on geometric points and \"toFix\" boundary");
 
   // Initialize elements, vertices, free vertices and element->vertices connectivity
   _nPC = 0;
-  int nElements = elements.size();
-  _el.resize(nElements);
-  _el2FV.resize(nElements);
-  _el2V.resize(nElements);
-  _nBezEl.resize(nElements);
-  _nNodEl.resize(nElements);
-  _indPCEl.resize(nElements);
-  int iEl = 0;
-  for (std::set<MElement *>::iterator it  = elements.begin(); it != elements.end(); ++it, ++iEl) {
-    MElement *el = *it;
+  _el.resize(_ge->getNumMeshElements());
+  _el2FV.resize(_ge->getNumMeshElements());
+  _el2V.resize(_ge->getNumMeshElements());
+  _nBezEl.resize(_ge->getNumMeshElements());
+  _nNodEl.resize(_ge->getNumMeshElements());
+  _indPCEl.resize(_ge->getNumMeshElements());
+  for (int iEl = 0; iEl < nEl(); iEl++) {
+    MElement *el = _ge->getMeshElement(iEl);
     _el[iEl] = el;
     const polynomialBasis *lagrange = el->getFunctionSpace();
     const bezierBasis *bezier = JacobianBasis::find(lagrange->type)->bezier;
     if (_jacBez.find(lagrange->type) == _jacBez.end()) {
-      _jacBez[lagrange->type] = computeJB(lagrange, bezier);
+      _jacBez[lagrange->type] = _computeJB(lagrange, bezier);
     }
     _nBezEl[iEl] = bezier->points.size1();
     _nNodEl[iEl] = lagrange->points.size1();
@@ -151,15 +145,13 @@ Mesh::Mesh(GEntity *ge,const std::set<MElement*> &elements, std::set<MVertex*> &
   }
   if ((_dim == 2) && (method & METHOD_PROJJAC)) {
     projJac = true;
-    std::cout << "METHOD: Using projected Jacobians" << std::endl;
+    Msg::Debug("METHOD: Using projected Jacobians");
   }
   else {
     projJac = false;
-    std::cout << "METHOD: Using usual Jacobians" << std::endl;
+    Msg::Debug("METHOD: Using usual Jacobians");
   }
 }
-
-
 
 SVector3 Mesh::getNormalEl(int iEl)
 {
@@ -264,7 +256,6 @@ void Mesh::updateMesh(const double *it)
 }
 
 
-
 void Mesh::distSqToStraight(std::vector<double> &dSq)
 {
   std::vector<SPoint3> sxyz(nVert());
@@ -333,7 +324,7 @@ void Mesh::scaledJac(int iEl, std::vector<double> &sJ)
         }
         sJ[l] *= n.z();
       }
-  }
+ }
   else {
     for (int l = 0; l < _nBezEl[iEl]; l++) {
       sJ[l] = 0.;
@@ -430,8 +421,8 @@ void Mesh::gradScaledJac(int iEl, std::vector<double> &gSJ)
         _pc->gXyz2gUvw(_freeVert[iFVi],_uvw[iFVi],gXyzV,gUvwV);
         for (int l = 0; l < _nBezEl[iEl]; l++) {
           gSJ[indGSJ(iEl,l,iPC)] = gUvwV[l][0];
-          if (_nPCFV[iFVi] >= 2) gSJ[indGSJ(iEl,l,iPC+1)] = gUvwV[l][1];
-          if (_nPCFV[iFVi] == 3) gSJ[indGSJ(iEl,l,iPC+2)] = gUvwV[l][2];
+          if (_nPCFV[iFVi] >= 2) gSJ[indGSJ(iEl,l,iPC)] = gUvwV[l][1];
+          if (_nPCFV[iFVi] == 3) gSJ[indGSJ(iEl,l,iPC)] = gUvwV[l][2];
         }
         iPC += _nPCFV[iFVi];
       }
@@ -439,27 +430,6 @@ void Mesh::gradScaledJac(int iEl, std::vector<double> &gSJ)
   }
 
 }
-
-
-
-void Mesh::pcScale(int iFV, std::vector<double> &scale)
-{
-
-  // Calc. derivative of x, y & z w.r.t. parametric coordinates
-  const SPoint3 dX(1.,0.,0.), dY(0.,1.,0.), dZ(0.,0.,1.);
-  SPoint3 gX, gY, gZ;
-  _pc->gXyz2gUvw(_freeVert[iFV],_uvw[iFV],dX,gX);
-  _pc->gXyz2gUvw(_freeVert[iFV],_uvw[iFV],dY,gY);
-  _pc->gXyz2gUvw(_freeVert[iFV],_uvw[iFV],dZ,gZ);
-
-  // Scale = inverse norm. of vector (dx/du, dy/du, dz/du)
-  scale[0] = 1./sqrt(gX[0]*gX[0]+gY[0]*gY[0]+gZ[0]*gZ[0]);
-  if (_nPCFV[iFV] >= 2) scale[1] = 1./sqrt(gX[1]*gX[1]+gY[1]*gY[1]+gZ[1]*gZ[1]);
-  if (_nPCFV[iFV] == 3) scale[2] = 1./sqrt(gX[2]*gX[2]+gY[2]*gY[2]+gZ[2]*gZ[2]);
-
-}
-
-
 
 void Mesh::writeMSH(const char *filename)
 {

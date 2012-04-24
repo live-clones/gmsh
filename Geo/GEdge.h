@@ -199,6 +199,8 @@ class GEdge : public GEntity {
   std::vector<MLine*> lines;
 
   void addLine(MLine *line){ lines.push_back(line); }
+  
+  bool computeDistanceFromMeshToGeometry (double &d2, double &dmax);
 };
 
 #endif

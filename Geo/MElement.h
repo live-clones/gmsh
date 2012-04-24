@@ -195,6 +195,8 @@ class MElement
   // compute the barycenter
   virtual SPoint3 barycenter();
   virtual SPoint3 barycenterUVW();
+  // compute the barycenter in infinity norm
+  virtual SPoint3 barycenter_infty();
 
   // revert the orientation of the element
   virtual void revert(){}

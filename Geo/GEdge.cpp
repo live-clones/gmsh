@@ -343,17 +343,59 @@ GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
   // printf("parameter %g as an initial guess (dist = %g)\n",topt,DMIN);
 
   if (topt == tMin)
-    t = goldenSectionSearch (this, q, topt, topt + DT/2, topt + DT,  1.e-7);
+    t = goldenSectionSearch (this, q, topt, topt + DT/2, topt + DT,  1.e-9);
   else if (topt == tMax)
-    t = goldenSectionSearch (this, q, topt - DT, topt - DT/2 , topt, 1.e-7);
+    t = goldenSectionSearch (this, q, topt - DT, topt - DT/2 , topt, 1.e-9);
   else
-    t = goldenSectionSearch (this, q, topt - DT, topt, topt + DT, 1.e-7);
+    t = goldenSectionSearch (this, q, topt - DT, topt, topt + DT, 1.e-9);
 
   const SVector3 dp = q - position(t);
   // const double D = dp.norm();
   // printf("after golden section parameter %g  (dist = %g)\n",t,D);
 
   return point(t);
+}
+
+bool GEdge::computeDistanceFromMeshToGeometry (double &d2, double &dmax) {
+  d2 = 0.0; dmax = 0.0;
+  if (geomType() == Line) return true;
+  if (!lines.size())return false;
+  IntPt *pts;
+  int npts;
+  lines[0]->getIntegrationPoints(2*lines[0]->getPolynomialOrder(), &npts, &pts);
+
+  for (int i=0;i<lines.size();i++){
+    MLine *l = lines[i];
+    double t[256];
+
+    for (int j=0; j< l->getNumVertices();j++){
+      MVertex *v = l->getVertex(j);
+      if (v->onWhat() == getBeginVertex()){
+	t[j] = getLowerBound();
+      }
+      else if (v->onWhat() == getEndVertex()){
+	t[j] = getUpperBound();
+      }
+      else {
+	v->getParameter(0,t[j]);
+      }
+    }
+    for (int j=0;j<npts;j++){
+      SPoint3 p;
+      l->pnt(pts[j].pt[0],0,0,p);
+      double tinit = l->interpolate(t,pts[j].pt[0],0,0);
+      GPoint pc = closestPoint(p, tinit);
+      if (!pc.succeeded())continue;
+      double dsq = 
+	(pc.x()-p.x())*(pc.x()-p.x()) + 
+	(pc.y()-p.y())*(pc.y()-p.y()) + 
+	(pc.z()-p.z())*(pc.z()-p.z());
+      d2 += pts[i].weight * fabs(l->getJacobianDeterminant(pts[j].pt[0],0,0)) * dsq;      
+      dmax = std::max(dmax,sqrt(dsq));
+    }
+  }
+  d2 = sqrt(d2);
+  return true;
 }
 
 double GEdge::parFromPoint(const SPoint3 &P) const

@@ -21,15 +21,18 @@ public:
 
   Mesh mesh;
 
-  OptHOM(GEntity *gf, const std::set<MElement*> &els, std::set<MVertex*> & toFix, int method);
-  void recalcJacDist();
-  inline void getJacDist(double &minJ, double &maxJ, double &maxD, double &avgD);
-  int optimize(double lambda, double lambda2, double barrier, int pInt, int itMax);  // optimize one list of elements
+  OptHOM(GEntity *gf, std::set<MVertex*> & toFix, int method);
+  void getDistances(double &distMaxBND, double &distAvgBND, double &minJac, double &maxJac);
+  int optimize(double lambda, double lambda2, double barrier_min, double barrier_max,int pInt, int itMax, double &minJ, double &maxJ);  // optimize one list of elements
+  //  OptHOM(GEntity *gf, const std::set<MElement*> &els, std::set<MVertex*> & toFix, int method);
+  //  void recalcJacDist();
+  //  inline void getJacDist(double &minJ, double &maxJ, double &maxD, double &avgD);
+  //  int optimize(double lambda, double lambda2, double barrier, int pInt, int itMax);  // optimize one list of elements
   void updateMesh(const alglib::real_1d_array &x);
   void evalObjGrad(const alglib::real_1d_array &x, double &Obj, alglib::real_1d_array &gradObj);
   void printProgress(const alglib::real_1d_array &x, double Obj);
 
-  double barrier;
+  double barrier_min, barrier_max;
 
 private:
 
@@ -81,10 +84,10 @@ inline double OptHOM::compute_f1(double v)
 
 
 
-void OptHOM::getJacDist(double &minJ, double &maxJ, double &maxD, double &avgD)
-{
-  minJ = minJac; maxJ = maxJac; maxD = maxDist; avgD = avgDist;
-}
+//void OptHOM::getJacDist(double &minJ, double &maxJ, double &maxD, double &avgD)
+//{
+//  minJ = minJac; maxJ = maxJac; maxD = maxDist; avgD = avgDist;
+//}
 
 
 

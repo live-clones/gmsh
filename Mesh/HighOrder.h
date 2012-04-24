@@ -29,4 +29,10 @@ MTriangle* setHighOrder(MTriangle *t, GFace *gf,
 void checkHighOrderTriangles(const char* cc, GModel *m, 
                              std::vector<MElement*> &bad, double &minJGlob);
 
+struct distanceFromMeshToGeometry_t {
+  std::map<GEntity*, double> d_max, d2;
+};
+
+void computeDistanceFromMeshToGeometry (GModel *m, distanceFromMeshToGeometry_t &dist);
+
 #endif

@@ -149,6 +149,27 @@ void MElement::getThirdDerivativeShapeFunctions(double u, double v, double w, do
   else Msg::Error("Function space not implemented for this type of element");
 };
 
+SPoint3 MElement::barycenter_infty ()
+{
+  double xmin =  getVertex(0)->x();
+  double xmax = xmin;
+  double ymin =  getVertex(0)->y();
+  double ymax = ymin;
+  double zmin =  getVertex(0)->z();
+  double zmax = zmin;
+  int n = getNumVertices();
+  for(int i = 0; i < n; i++) {
+    MVertex *v = getVertex(i);
+    xmin = std::min(xmin,v->x());
+    xmax = std::max(xmax,v->x());
+    ymin = std::min(ymin,v->y());
+    ymax = std::max(ymax,v->y());
+    zmin = std::min(zmin,v->z());
+    zmax = std::max(zmax,v->z());
+  }
+  return SPoint3(0.5*(xmin+xmax),0.5*(ymin+ymax),0.5*(zmin+zmax));
+}
+
 SPoint3 MElement::barycenter()
 {
   SPoint3 p(0., 0., 0.);

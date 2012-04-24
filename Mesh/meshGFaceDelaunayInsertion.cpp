@@ -892,7 +892,7 @@ void bowyerWatson(GFace *gf, int MAXPNT)
   {
     FieldManager *fields = gf->model()->getFields();
     BoundaryLayerField *blf = 0;
-    if(fields->getBackgroundField() > 0){
+    if(fields->getBoundaryLayerField() > 0){
       Field *bl_field = fields->get(fields->getBoundaryLayerField());
       blf = dynamic_cast<BoundaryLayerField*> (bl_field);
       if (blf && !blf->iRecombine) quadsToTriangles(gf,10000);
@@ -1208,7 +1208,7 @@ void bowyerWatsonFrontal(GFace *gf)
   {
     FieldManager *fields = gf->model()->getFields();
     BoundaryLayerField *blf = 0;
-    if(fields->getBackgroundField() > 0){
+    if(fields->getBoundaryLayerField() > 0){
       Field *bl_field = fields->get(fields->getBoundaryLayerField());
       blf = dynamic_cast<BoundaryLayerField*> (bl_field);
       if (blf && !blf->iRecombine)quadsToTriangles(gf,10000);

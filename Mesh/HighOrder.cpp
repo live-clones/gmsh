@@ -1361,3 +1361,16 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
 
   Msg::StatusBar(2, true, "Done meshing order %d (%g s)", order, t2 - t1);
 }
+
+void computeDistanceFromMeshToGeometry (GModel *m, distanceFromMeshToGeometry_t &dist) {
+  for (GModel::eiter itEdge = m->firstEdge(); itEdge != m->lastEdge(); ++itEdge) {    
+    double d2,dmax;
+    (*itEdge)->computeDistanceFromMeshToGeometry (d2,dmax);        
+    dist.d2[*itEdge] = d2;
+    dist.d_max[*itEdge] = dmax;
+  }
+
+  for (GModel::fiter itFace = m->firstFace(); itFace != m->lastFace(); ++itFace) {
+    
+  }
+}
