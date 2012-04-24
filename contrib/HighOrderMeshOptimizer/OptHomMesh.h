@@ -17,7 +17,7 @@ class Mesh
 
 public:
 
-  Mesh(GEntity *ge, std::set<MVertex*> & toFix, int method);
+  Mesh(GEntity *ge,const std::set<MElement*> &els, std::set<MVertex*> & toFix, int method);
 
   inline const int &nPC() { return _nPC; }
   inline int nVert() { return _vert.size(); }

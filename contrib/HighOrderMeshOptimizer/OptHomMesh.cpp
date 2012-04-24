@@ -65,7 +65,7 @@ std::vector<double> Mesh::computeJB(const polynomialBasis *lagrange, const bezie
 
 
 
-Mesh::Mesh(GEntity *ge, std::set<MVertex*> &toFix, int method) :
+Mesh::Mesh(GEntity *ge,const std::set<MElement*> &elements, std::set<MVertex*> & toFix, int method):
     _ge(ge)
 {
   _dim = _ge->dim();
@@ -93,14 +93,16 @@ Mesh::Mesh(GEntity *ge, std::set<MVertex*> &toFix, int method) :
 
   // Initialize elements, vertices, free vertices and element->vertices connectivity
   _nPC = 0;
-  _el.resize(_ge->getNumMeshElements());
-  _el2FV.resize(_ge->getNumMeshElements());
-  _el2V.resize(_ge->getNumMeshElements());
-  _nBezEl.resize(_ge->getNumMeshElements());
-  _nNodEl.resize(_ge->getNumMeshElements());
-  _indPCEl.resize(_ge->getNumMeshElements());
-  for (int iEl = 0; iEl < nEl(); iEl++) {
-    MElement *el = _ge->getMeshElement(iEl);
+  int nElements = elements.size();
+  _el.resize(nElements);
+  _el2FV.resize(nElements);
+  _el2V.resize(nElements);
+  _nBezEl.resize(nElements);
+  _nNodEl.resize(nElements);
+  _indPCEl.resize(nElements);
+  int iEl = 0;
+  for (std::set<MElement *>::iterator it  = elements.begin(); it != elements.end(); ++it, ++iEl) {
+    MElement *el = *it;
     _el[iEl] = el;
     const polynomialBasis *lagrange = el->getFunctionSpace();
     const bezierBasis *bezier = JacobianBasis::find(lagrange->type)->bezier;

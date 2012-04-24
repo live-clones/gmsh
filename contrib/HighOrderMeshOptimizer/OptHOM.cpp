@@ -15,10 +15,10 @@
 
 
 // Constructor
-OptHOM::OptHOM(GEntity *ge, std::set<MVertex*> & toFix, int method) :
-       mesh(ge, toFix, method)
+OptHOM::OptHOM(GEntity *ge,const std::set<MElement*> &els, std::set<MVertex*> & toFix, int method) :
+       mesh(ge, els, toFix, method)
 {
-};
+}
 
 // Contribution of the element Jacobians to the objective function value and gradients (2D version)
 bool OptHOM::addJacObjGrad(double &Obj, alglib::real_1d_array &gradObj)

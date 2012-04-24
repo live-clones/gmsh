@@ -21,7 +21,7 @@ public:
 
   Mesh mesh;
 
-  OptHOM(GEntity *gf, std::set<MVertex*> & toFix, int method);
+  OptHOM(GEntity *gf, const std::set<MElement*> &els, std::set<MVertex*> & toFix, int method);
   void recalcJacDist();
   inline void getJacDist(double &minJ, double &maxJ, double &maxD, double &avgD);
   int optimize(double lambda, double lambda2, double barrier, int pInt, int itMax);  // optimize one list of elements

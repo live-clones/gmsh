@@ -11,162 +11,106 @@
 #include "highOrderTools.h"
 #include "OptHomMesh.h"
 #include "OptHOM.h"
+#include <stack>
 
-std::set<MVertex*> filter2D(GFace *gf, int nbLayers, double _qual, bool onlytheworst = false)
+static std::set<MVertex*> filter(GEntity *gf, int nbLayers, double _qual, std::set<MElement*> &elements, bool onlytheworst = false)
 {
+  elements.clear();
   std::set<MVertex*> touched;
   std::set<MVertex*> not_touched;
-  std::set<MTriangle *> ts;
-  std::set<MQuadrangle *> qs;
-
-  if (onlytheworst) {
-    double minQ = 1.e22;
-    MQuadrangle *worst;
-    for (int i = 0; i < gf->quadrangles.size(); i++) {
-      MQuadrangle *q = gf->quadrangles[i];
-      double Q = q->distoShapeMeasure();
+  double minQ = 1e22;
+  MElement *worst;
+  for (unsigned int i = 0; i < gf->getNumMeshElements(); ++i) {
+    MElement *el = gf->getMeshElement(i);
+    double Q = el->distoShapeMeasure();
+    if (Q < _qual || Q > 1.01) {
       if (Q < minQ) {
-        worst = q;
+        worst = el;
         minQ = Q;
       }
-    }
-    qs.insert(worst);
-    for (int j = 0; j < worst->getNumVertices(); j++)
-      touched.insert(worst->getVertex(j));
-  }
-
-  else {
-    for (int i = 0; i < gf->triangles.size(); i++) {
-      MTriangle *t = gf->triangles[i];
-      double Q = t->distoShapeMeasure();
-      if (Q < _qual || Q > 1.01) {
-        ts.insert(t);
-        for (int j = 0; j < t->getNumVertices(); j++)
-          touched.insert(t->getVertex(j));
-      }
-    }
-    for (int i = 0; i < gf->quadrangles.size(); i++) {
-      MQuadrangle *q = gf->quadrangles[i];
-      double Q = q->distoShapeMeasure();
-      if (Q < _qual || Q > 1.0) {
-        qs.insert(q);
-        for (int j = 0; j < q->getNumVertices(); j++)
-          touched.insert(q->getVertex(j));
+      if (!onlytheworst) {
+        elements.insert(el);
       }
     }
   }
-  //  printf("FILTER2D : %d bad triangles found among %6d\n", ts.size(), gf->triangles.size());
-  //  printf("FILTER2D : %d bad quads     found among %6d\n", qs.size(), gf->quadrangles.size());
+  if (onlytheworst) {
+    elements.insert(worst);
+  }
+  for (std::set<MElement*>::iterator it = elements.begin(); it != elements.end(); ++it) {
+    MElement &el = **it;
+    for (int j = 0; j < el.getNumVertices(); j++)
+      touched.insert(el.getVertex(j));
+  }
+  Msg::Info("FILTER2D : %d bad elements found among %6d\n", elements.size(), gf->getNumMeshElements());
 
   // add layers of elements around bad elements
   for (int layer = 0; layer < nbLayers; layer++) {
-    for (int i = 0; i < gf->triangles.size(); i++) {
-      MTriangle *t = gf->triangles[i];
-      bool add_ = false;
-      for (int j = 0; j < t->getNumVertices(); j++) {
-        if (touched.find(t->getVertex(j)) != touched.end()) {
-          add_ = true;
+    for (unsigned int i = 0; i < gf->getNumMeshElements(); ++i) {
+      MElement *el = gf->getMeshElement(i);
+      for (int j = 0; j < el->getNumVertices(); ++j) {
+        if (touched.find(el->getVertex(j)) != touched.end()) {
+          elements.insert(el);
+          break;
         }
       }
-      if (add_) ts.insert(t);
     }
-    for (int i = 0; i < gf->quadrangles.size(); i++) {
-      bool add_ = false;
-      MQuadrangle *q = gf->quadrangles[i];
-      for (int j = 0; j < q->getNumVertices(); j++) {
-        if (touched.find(q->getVertex(j)) != touched.end()) {
-          add_ = true;
-        }
-      }
-      if (add_) qs.insert(q);
-    }
-
-    for (std::set<MTriangle*>::iterator it = ts.begin(); it != ts.end(); ++it) {
-      for (int j = 0; j < (*it)->getNumVertices(); j++) {
-        touched.insert((*it)->getVertex(j));
-      }
-    }
-    for (std::set<MQuadrangle*>::iterator it = qs.begin(); it != qs.end(); ++it) {
-      for (int j = 0; j < (*it)->getNumVertices(); j++) {
-        touched.insert((*it)->getVertex(j));
+    for (std::set<MElement *>::iterator it = elements.begin(); it != elements.end(); ++it) {
+      MElement &el = **it;
+      for (int j = 0; j < el.getNumVertices(); ++j) {
+        touched.insert(el.getVertex(j));
       }
     }
   }
-
-  for (int i = 0; i < gf->triangles.size(); i++) {
-    if (ts.find(gf->triangles[i]) == ts.end()) {
-      for (int j = 0; j < gf->triangles[i]->getNumVertices(); j++) {
-        if (touched.find(gf->triangles[i]->getVertex(j)) != touched.end()) not_touched.insert(gf->triangles[i]->getVertex(j));
+  for (unsigned int i = 0; i < gf->getNumMeshElements(); ++i) {
+    MElement &el = *gf->getMeshElement(i);
+    for (int j = 0; j < el.getNumVertices(); ++j) {
+      if (touched.find(el.getVertex(j)) == touched.end()) {
+        not_touched.insert(el.getVertex(j));
       }
     }
   }
-  for (int i = 0; i < gf->quadrangles.size(); i++) {
-    if (qs.find(gf->quadrangles[i]) == qs.end()) {
-      for (int j = 0; j < gf->quadrangles[i]->getNumVertices(); j++) {
-        if (touched.find(gf->quadrangles[i]->getVertex(j)) != touched.end()) not_touched.insert(gf->quadrangles[i]->getVertex(j));
-      }
-    }
-  }
-
-  gf->triangles.clear();
-  gf->quadrangles.clear();
-  gf->triangles.insert(gf->triangles.begin(), ts.begin(), ts.end());
-  gf->quadrangles.insert(gf->quadrangles.begin(), qs.begin(), qs.end());
 
   //  printf("FILTER2D : AFTER FILTERING %d triangles %d quads remain %d nodes on the boundary\n", gf->triangles.size(), gf->quadrangles.size(), not_touched.size());
   return not_touched;
 }
 
-std::set<MVertex*> filter3D(GRegion *gr, int nbLayers, double _qual)
+static std::vector<std::set<MElement*> > splitConnex(const std::set<MElement*> &in)
 {
-  std::set<MVertex*> touched;
-  std::set<MVertex*> not_touched;
-  std::set<MTetrahedron *> ts;
-  for (int i = 0; i < gr->tetrahedra.size(); i++) {
-    MTetrahedron *t = gr->tetrahedra[i];
-    if (t->distoShapeMeasure() < _qual) {
-      ts.insert(t);
-      for (int j = 0; j < t->getNumVertices(); j++)
-        touched.insert(t->getVertex(j));
+  std::map<int, std::vector<int> > vertex2elements;
+  std::vector<MElement *> elements(in.begin(), in.end());
+  for (size_t i = 0; i < elements.size(); ++i) {
+    for (int j = 0; j < elements[i]->getNumPrimaryVertices(); ++j) {
+      vertex2elements[elements[i]->getVertex(j)->getNum()].push_back(i);
     }
-//    if (ts.size() == 1) break;
   }
-
-  //  printf("FILTER3D : %d bad tets found among %6d\n", ts.size(), gr->tetrahedra.size());
-
-  // add layers of elements around bad elements
-  for (int layer = 0; layer < nbLayers; layer++) {
-    for (int i = 0; i < gr->tetrahedra.size(); i++) {
-      MTetrahedron *t = gr->tetrahedra[i];
-      bool add_ = false;
-      for (int j = 0; j < t->getNumVertices(); j++) {
-        if (touched.find(t->getVertex(j)) != touched.end()) {
-          add_ = true;
+  std::vector<int> colors(elements.size(), -1);
+  int color = 0;
+  for (size_t i = 0; i < elements.size(); ++i) {
+    if (colors[i] == -1) {
+      colors[i] = color;
+      std::stack<int> todo;
+      todo.push(i);
+      while (! todo.empty()) {
+        int top = todo.top();
+        todo.pop();
+        for (int j = 0; j < elements[top]->getNumPrimaryVertices(); ++j) {
+          const std::vector<int> &neighbours = vertex2elements[elements[top]->getVertex(j)->getNum()];
+          for (size_t k = 0; k < neighbours.size(); ++k) {
+            if (colors[neighbours[k]] == -1) {
+              colors[neighbours[k]] = color;
+              todo.push(neighbours[k]);
+            }
+          }
         }
       }
-      if (add_) ts.insert(t);
-    }
-
-    for (std::set<MTetrahedron*>::iterator it = ts.begin(); it != ts.end(); ++it) {
-      for (int j = 0; j < (*it)->getNumVertices(); j++) {
-        touched.insert((*it)->getVertex(j));
-      }
+      color ++;
     }
   }
-
-  for (int i = 0; i < gr->tetrahedra.size(); i++) {
-    if (ts.find(gr->tetrahedra[i]) == ts.end()) {
-      for (int j = 0; j < gr->tetrahedra[i]->getNumVertices(); j++) {
-        if (touched.find(gr->tetrahedra[i]->getVertex(j)) != touched.end()) not_touched.insert(gr->tetrahedra[i]->getVertex(j));
-      }
-    }
+  std::vector<std::set<MElement*> > splitted(color);
+  for (size_t i = 0; i < elements.size(); ++i) {
+    splitted[colors[i]].insert(elements[i]);
   }
-
-  gr->tetrahedra.clear();
-  gr->tetrahedra.insert(gr->tetrahedra.begin(), ts.begin(), ts.end());
-
-  //  printf("FILTER3D : AFTER FILTERING %d tets remain %d nodes on the boundary\n", gr->tetrahedra.size(), not_touched.size());
-  return not_touched;
+  return splitted;
 }
 
 void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
@@ -188,36 +132,29 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
     for (GModel::fiter itf = gm->firstFace(); itf != gm->lastFace(); ++itf) {
 
       if (p.onlyVisible && !(*itf)->getVisibility())continue;
-      std::vector<MTriangle*> tris = (*itf)->triangles;
-      std::vector<MQuadrangle*> quas = (*itf)->quadrangles;
-      std::set<MVertex*> toFix = filter2D(*itf, p.nbLayers, p.BARRIER);
-      OptHOM *temp = new OptHOM(*itf, toFix, method);
-      (*itf)->triangles = tris;
-      (*itf)->quadrangles = quas;
-
-      double distMaxBND, distAvgBND, minJac, maxJac;
-      temp->recalcJacDist();
-      temp->getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
-      //      std::ostringstream ossI;
-      //      ossI << "initial_" << (*itf)->tag() << ".msh";
-      //      temp->mesh.writeMSH(ossI.str().c_str());
-      //      printf("--> Mesh Loaded for GFace %d :  minJ %12.5E -- maxJ %12.5E\n", (*itf)->tag(), minJac, maxJac);
-      if (distMaxBND < 1.e-8 * SIZE && minJac > p.BARRIER) continue;
-      p.SUCCESS = temp->optimize(p.weightFixed, p.weightFree, p.BARRIER, samples, p.itMax);
-      temp->getJacDist(p.minJac, p.maxJac, distMaxBND, distAvgBND);
-      temp->mesh.updateGEntityPositions();
-      //      std::ostringstream ossF;
-      //      ossF << "final_" << (*itf)->tag() << ".msh";
-      //      temp->mesh.writeMSH(ossF.str().c_str());
+      std::set<MElement*> elements;
+      std::set<MVertex*> toFix = filter(*itf, p.nbLayers, p.BARRIER, elements);
+      std::vector<std::set<MElement*> > splitted = splitConnex(elements);
+      for (size_t i = 0; i < splitted.size(); ++i) {
+        OptHOM *temp = new OptHOM(*itf, splitted[i], toFix, method);
+        double distMaxBND, distAvgBND, minJac, maxJac;
+        temp->recalcJacDist();
+        temp->getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
+        if (distMaxBND < 1.e-8 * SIZE && minJac > p.BARRIER) continue;
+        p.SUCCESS = temp->optimize(p.weightFixed, p.weightFree, p.BARRIER, samples, p.itMax);
+        temp->getJacDist(p.minJac, p.maxJac, distMaxBND, distAvgBND);
+        temp->mesh.updateGEntityPositions();
+        delete temp;
+      }
     }
   }
   else if (p.dim == 3) {
     for (GModel::riter itr = gm->firstRegion(); itr != gm->lastRegion(); ++itr) {
       if (p.onlyVisible && !(*itr)->getVisibility())continue;
       std::vector<MTetrahedron*> tets = (*itr)->tetrahedra;
-      std::set<MVertex*> toFix;
-      filter3D(*itr, p.nbLayers, p.BARRIER);
-      OptHOM *temp = new OptHOM(*itr, toFix, method);
+      std::set<MElement*> elements;
+      std::set<MVertex*> toFix = filter(*itr, p.nbLayers, p.BARRIER, elements);
+      OptHOM *temp = new OptHOM(*itr, elements, toFix, method);
       double distMaxBND, distAvgBND, minJac, maxJac;
       temp->recalcJacDist();
       temp->getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
