@@ -81,7 +81,8 @@ class meshPartitionOptions
   
   // NODAL WEIGHT
   std::vector<int> nodalWeights;
-  std::map<int, std::vector<int> > weightMap;
+  std::map<int, std::vector<int> > vWeightMap;
+  std::map<int, int > eWeightMap;
   std::vector<int> tolerance;
     
  public:
@@ -91,7 +92,8 @@ class meshPartitionOptions
   int getNumOfPartitions(){ return num_partitions; }
   void setNumConstraints(int numConst){ ncon = numConst; }
   int getNumConstraints(){ return ncon; }
-  std::map<int, std::vector<int> > &getWeightMap(){ return weightMap; }
+  std::map<int, std::vector<int> > &getWeightMapV(){ return vWeightMap; }
+  std::map<int, int > &getWeightMapE(){ return eWeightMap; }
   void setDefaults()
   {
     partitioner = 2;

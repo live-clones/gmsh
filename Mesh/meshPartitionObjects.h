@@ -154,29 +154,6 @@ class Graph
     // Translated vertex numbers start from 1
     c2w[grVertMapIt->second.index] = i + 1;
   }
-  void computeLoads(int numParts, int numCon){
-    loads=new fullMatrix<int> (numParts,numCon);
-    for(int i=0; i<numParts;i++){
-      for(int j=0; j<partition.size(); j++){
-        if(partition[j]==i){
-          for(int k=0; k<numCon;k++){
-            (*loads)(i, k)+=vwgts[j*numCon+k];
-          }
-        }
-      }
-    }
-  }
-  void checkLoads(int numParts,  int numCon){
-    printf("******************************************************* \n");
-    for(int i=0; i<numParts;i++){
-      printf("------- PARTITION %d: [", i+1);
-      for(int j=0; j<numCon; j++){
-        printf(" %d", (*loads)(i, j));
-      }
-      printf("] -------\n");
-    }
-    printf("******************************************************* \n");
-  }
   void fillWeights(std::vector<int> wgts)
   {
     int num = 0;
@@ -186,7 +163,7 @@ class Graph
     }
   }
   // Add multiple weights on vertices of the graph given in a map between original element Numbers and their corresponding vector of weights 
-  void fillWithMultipleWeights(int ncon, std::map<int, std::vector<int> > weightMap)
+  void fillWithMultipleWeights(int ncon, std::map<int, std::vector<int> > vWeightMap, std::map<int, int> eWeightMap)
   {
     std::vector<MElement*>::iterator eIt;
     vwgts.resize(element.size()*ncon);
@@ -194,10 +171,10 @@ class Graph
     int localElNum=0;
     for(eIt=element.begin();eIt !=element.end();eIt++){
       for(int i=0; i<ncon; i++){
-        vwgts[localElNum*ncon+i]=weightMap[(*eIt)->getNum()][i+1];
+        vwgts[localElNum*ncon+i]=vWeightMap[(*eIt)->getNum()][i+1];
       }
       for(int j=xadj[localElNum];j<xadj[localElNum+1];j++){
-        adjwgts[j]+=weightMap[(*eIt)->getNum()][0];
+        adjwgts[j]+=eWeightMap[(*eIt)->getNum()];
       }
       localElNum+=1;
     }
