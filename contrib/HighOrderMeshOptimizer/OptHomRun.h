@@ -9,7 +9,6 @@ struct OptHomParameters {
   double BARRIER_MAX ; // maximum scaled jcaobian
   double weightFixed ; // weight of the energy for fixed nodes
   double weightFree ; // weight of the energy for free nodes
-  double STOP;
   int nbLayers ; // number of layers taken around a bad element
   int dim ; // which dimension to optimize
   int itMax ; // max number of iterations in the optimization process
@@ -26,7 +25,7 @@ struct OptHomParameters {
   
   OptHomParameters () 
   // default values    
-  : STOP (0.01) , BARRIER_MIN (0.1), BARRIER_MAX (2.0) , weightFixed (1.e6),  weightFree (1.e2),
+  : BARRIER_MIN (0.1), BARRIER_MAX (2.0) , weightFixed (1.e6),  weightFree (1.e2),
     nbLayers (6) , dim(3) , itMax(10000), onlyVisible(true), DistanceFactor(12), method(1), filter(1)
   {
   }

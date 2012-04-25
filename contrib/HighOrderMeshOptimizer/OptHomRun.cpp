@@ -465,7 +465,8 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
 
 	OptHOM *temp = new OptHOM(*itf, toFix, method);
 	double distMaxBND, distAvgBND, minJac, maxJac;
-	temp->getDistances(distMaxBND, distAvgBND, minJac, maxJac);
+  temp->recalcJacDist();
+  temp->getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
 	if (minJac < 1.e2)Msg::Info("Optimizing a blob of %4d elements  minJ %12.5E -- maxJ %12.5E",(*itf)->getNumMeshElements(), minJac, maxJac);
 	(*itf)->triangles = tris;
 	(*itf)->quadrangles = quas;
@@ -474,7 +475,8 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
 	temp->mesh.writeMSH(ossI.str().c_str());
 	if (minJac > p.BARRIER_MIN && maxJac < p.BARRIER_MAX) break;
 	
-	p.SUCCESS = temp->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax, p.minJac, p.maxJac);
+	p.SUCCESS = temp->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax);
+  temp->getJacDist(p.minJac, p.maxJac, distMaxBND, distAvgBND);
 	temp->mesh.updateGEntityPositions();
 	if (!p.SUCCESS) break;
 	ITER ++;
@@ -499,13 +501,13 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
 
       OptHOM *temp = new OptHOM(*itr, toFix, method);
       double distMaxBND, distAvgBND, minJac, maxJac;
-	temp->getDistances(distMaxBND, distAvgBND, minJac, maxJac);
-      // temp->recalcJacDist();
-      // temp->getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
+      temp->recalcJacDist();
+      temp->getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
       //      temp->mesh.writeMSH("initial.msh");
       //      printf("--> Mesh Loaded for GRegion %d :  minJ %12.5E -- maxJ %12.5E\n", (*itr)->tag(), minJac, maxJac);
       if (minJac > p.BARRIER_MIN  && maxJac < p.BARRIER_MAX) continue;
-      p.SUCCESS = temp->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax, p.minJac, p.maxJac);
+      p.SUCCESS = temp->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax);
+      temp->getJacDist(p.minJac, p.maxJac, distMaxBND, distAvgBND);
       temp->mesh.updateGEntityPositions();
       (*itr)->tetrahedra = tets;
       //      temp->mesh.writeMSH("final.msh");
