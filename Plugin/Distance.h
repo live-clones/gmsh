@@ -25,6 +25,7 @@ class GMSH_DistancePlugin : public GMSH_PostPlugin
   PViewDataList *_data;
  public:
   std::map<MVertex*,double > _distance_map;
+  std::map<MVertex*,SPoint3 > _closePts_map;
   GMSH_DistancePlugin(); 
   std::string getName() const { return "Distance"; }
   std::string getShortHelp() const
