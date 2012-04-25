@@ -511,7 +511,7 @@ void GFaceCompound::printFillTris() const{
 void GFaceCompound::fillNeumannBCS_Plane() const
 {
 
-  Msg::Info("Meshing %d interior holes with planes ", _interior_loops.size()-1);
+  Msg::Debug("Meshing %d interior holes with planes ", _interior_loops.size()-1);
 
   fillTris.clear();
   fillNodes.clear();
@@ -542,7 +542,7 @@ void GFaceCompound::fillNeumannBCS_Plane() const
       opt_mesh_algo2d(0, GMSH_SET, 1.0); //mesh adapt
       opt_mesh_recombine_all(0, GMSH_SET, 0.0); //no recombination
       meshGFace mgf;
-      mgf(newFace);
+      mgf(newFace,false);
       opt_mesh_algo2d(0, GMSH_SET, meshingAlgo);
       opt_mesh_recombine_all(0, GMSH_SET, recombine);
       for(unsigned int i = 0; i < newFace->triangles.size(); ++i){

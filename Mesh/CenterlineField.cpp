@@ -405,7 +405,9 @@ void Centerline::importFile(std::string fileName){
 
   int maxN = 0.0;
   std::vector<GEdge*> modEdges = mod->bindingsGetEdges();
- for (unsigned int i = 0; i < modEdges.size(); i++){
+  MVertex *vin = modEdges[0]->lines[0]->getVertex(0);
+  ptin = SPoint3(vin->x(), vin->y(), vin->z());
+  for (unsigned int i = 0; i < modEdges.size(); i++){
     GEdge *ge = modEdges[i];
     for(unsigned int j = 0; j < ge->lines.size(); j++){
       MLine *l = ge->lines[j];
@@ -660,7 +662,7 @@ void Centerline::createSplitCompounds(){
 
     gfc->meshAttributes.recombine = recombine;
     gfc->addPhysicalEntity(100);
-    current->setPhysicalName("newsurf", 2, 100);
+    current->setPhysicalName("wall", 2, 100);
 
   }
 
@@ -798,6 +800,8 @@ void Centerline::createClosedVolume(){
 
   //identify the boundary edges by looping over all discreteFaces
   std::vector<GEdge*> boundEdges;
+  double dist_inlet = 1.e6;
+  GEdge *gin = NULL;
   for (int i= 0; i< NF; i++){
     GFace *gf = current->getFaceByTag(i+1);
     std::list<GEdge*> l_edges = gf->edges();
@@ -805,9 +809,16 @@ void Centerline::createClosedVolume(){
       std::vector<GEdge*>::iterator ite = std::find(boundEdges.begin(), boundEdges.end(), *it);
       if (ite != boundEdges.end()) boundEdges.erase(ite);
       else boundEdges.push_back(*it);
+      GVertex *gv = (*it)->getBeginVertex();
+      SPoint3 pt(gv->x(), gv->y(), gv->z());
+      double dist = pt.distance(ptin);
+      if(dist < dist_inlet){
+	dist_inlet = dist;
+	gin = *it;
+      }			      
     }
   }
-
+ 
   current->setFactory("Gmsh");
   std::vector<std::vector<GFace *> > myFaceLoops;
   std::vector<GFace *> myFaces;
@@ -820,8 +831,14 @@ void Centerline::createClosedVolume(){
     myEdges.push_back(gec);
     myEdgeLoops.push_back(myEdges);
     GFace *newFace = current->addPlanarFace(myEdgeLoops);
-    newFace->addPhysicalEntity(200);
-    current->setPhysicalName("in/out", 2, 200);
+    if (gin==boundEdges[i]) {
+      newFace->addPhysicalEntity(200);
+      current->setPhysicalName("inlet", 2, 200);
+    }
+    else{
+      newFace->addPhysicalEntity(300);
+      current->setPhysicalName("outlets", 2, 300);
+    }
     myFaces.push_back(newFace);
   }
 
@@ -834,7 +851,7 @@ void Centerline::createClosedVolume(){
   myFaceLoops.push_back(myFaces);
   GRegion *reg = current->addVolume(myFaceLoops);
   reg->addPhysicalEntity(reg->tag());
-  current->setPhysicalName("newvol", 3, reg->tag());
+  current->setPhysicalName("lumenVolume", 3, reg->tag());
 
   Msg::Info("Centerline action (closeVolume) has created volume %d ", reg->tag());
 

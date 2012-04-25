@@ -1790,7 +1790,7 @@ void deMeshGFace::operator() (GFace *gf)
 // for debugging, change value from -1 to -100;
 int debugSurface = -1; //-1;
 
-void meshGFace::operator() (GFace *gf)
+void meshGFace::operator() (GFace *gf, bool print)
 {
 
   gf->model()->setCurrentMeshEntity(gf);
@@ -1846,7 +1846,8 @@ void meshGFace::operator() (GFace *gf)
     algo = "MeshAdapt";
   }
 
-  Msg::Info("Meshing surface %d (%s, %s)", gf->tag(), gf->getTypeString().c_str(), algo);
+  if (print)
+    Msg::Info("Meshing surface %d (%s, %s)", gf->tag(), gf->getTypeString().c_str(), algo);
 
   // compute loops on the fly (indices indicate start and end points
   // of a loop; loops are not yet oriented)
@@ -2127,8 +2128,6 @@ void orientMeshGFace::operator()(GFace *gf)
   //do sthg for compound face
   if(gf->geomType() == GEntity::CompoundSurface ) {
     GFaceCompound *gfc = (GFaceCompound*) gf;
-    //if (gfc->getCompounds().size() != 1) return;
-    //else{printf("compound face %d orient \n", gfc->tag());}
   
     std::list<GFace*> comp = gfc->getCompounds(); 
     MTriangle *lt = (*comp.begin())->triangles[0];

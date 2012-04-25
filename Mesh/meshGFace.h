@@ -25,7 +25,7 @@ class meshGFace {
     : repairSelfIntersecting1dMesh(r), twoPassesMesh(t), onlyInitialMesh(false)
   {
   }
-  void operator()(GFace *);
+  void operator()(GFace *, bool print=true);
   void setOnlyInitial(){ onlyInitialMesh = true; }
 };
 

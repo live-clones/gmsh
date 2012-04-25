@@ -25,6 +25,7 @@ class MTriangle;
 class discreteEdge;
 class discreteFace;
 class MElement;
+class SPoint3;
 
 // A branch of a 1D tree
 struct Branch{
@@ -67,6 +68,8 @@ class Centerline : public Field{
   double hLayer;
   int nbElemLayer;
 
+  //inlet point
+  SPoint3 ptin;
   //all (unique) lines of centerlines
   std::vector<MLine*> lines;
   //the stuctured tree of the centerlines
