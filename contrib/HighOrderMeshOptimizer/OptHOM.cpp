@@ -84,11 +84,13 @@ void OptHOM::evalObjGrad(const alglib::real_1d_array &x, double &Obj, alglib::re
   Obj = 0.;
   for (int i = 0; i < gradObj.length(); i++) gradObj[i] = 0.;
 
-  if ((minJac > barrier_min) && (maxJac < barrier_max))
+  addJacObjGrad(Obj, gradObj);
+  addDistObjGrad(lambda, lambda2, Obj, gradObj);
+
+  if ((minJac > barrier_min) && (maxJac < barrier_max)) {
     printf("INFO: reached Jacobian requirements, setting null gradient\n");
-  else {
-    addJacObjGrad(Obj, gradObj);
-    addDistObjGrad(lambda, lambda2, Obj, gradObj);
+    Obj = 0.;
+    for (int i = 0; i < gradObj.length(); i++) gradObj[i] = 0.;
   }
 
 }
