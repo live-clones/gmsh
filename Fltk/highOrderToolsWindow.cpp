@@ -41,6 +41,23 @@ typedef unsigned long intptr_t;
 #include "Parser.h"
 #endif
 
+
+static void change_completeness_cb(Fl_Widget *w, void *data){
+
+  highOrderToolsWindow *o = FlGui::instance()->highordertools;
+  bool onlyVisible = (bool)o->butt[1]->value(); 
+  if (!o->complete){
+    SetHighOrderComplete (GModel::current(), onlyVisible);
+    o->complete = 1;
+  }
+  else if (o->complete){
+    SetHighOrderInComplete (GModel::current(), onlyVisible);
+    o->complete = 0;
+  }
+  CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+  drawContext::global()->draw();
+}
+
 static void highordertools_runp_cb(Fl_Widget *w, void *data)
 {
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
@@ -76,18 +93,18 @@ static void chooseopti_cb(Fl_Widget *w, void *data){
   
   if (elastic){
     o->butt[4]->value(0); 
-    o->choice[0]->hide(); 
+    o->choice[0]->deactivate(); 
     for (int i=3;i<=6;i++)
-      o->value[i]->hide(); 
-    o->push[1]->hide();
+      o->value[i]->deactivate(); 
+    o->push[1]->deactivate();
   }
   else {
     o->butt[3]->value(0); 
-    o->push[0]->show();
-    o->choice[0]->show(); 
+    o->push[0]->activate();
+    o->choice[0]->activate(); 
     for (int i=3;i<=6;i++)
-      o->value[i]->show(); 
-    o->push[1]->show();
+      o->value[i]->activate(); 
+    o->push[1]->activate();
   }
   
 }
@@ -99,20 +116,47 @@ static void chooseopti2_cb(Fl_Widget *w, void *data){
   
   if (elastic){
     o->butt[4]->value(0); 
-    o->choice[0]->hide(); 
+    o->choice[0]->deactivate(); 
     for (int i=3;i<=6;i++)
-      o->value[i]->hide(); 
-    o->push[1]->hide();
+      o->value[i]->deactivate(); 
+    o->push[1]->deactivate();
   }
   else {
     o->butt[3]->value(0); 
-    o->push[0]->show();
-    o->choice[0]->show(); 
+    o->push[0]->activate();
+    o->choice[0]->activate(); 
     for (int i=3;i<=6;i++)
-      o->value[i]->show(); 
-    o->push[1]->show();
+      o->value[i]->activate(); 
+    o->push[1]->activate();
   }
   
+}
+
+static void getMeshInfo (GModel *gm, 
+			 int &meshOrder, 
+			 bool &complete, 
+			 bool &CAD){
+  meshOrder = -1;
+  CAD = true;
+  for (GModel::riter itr = gm->firstRegion(); itr != gm->lastRegion(); ++itr) {
+    if ((*itr)->getNumMeshElements()){
+      meshOrder = (*itr)->getMeshElement(0)->getPolynomialOrder(); 
+      complete = (meshOrder <= 2) ? 1 :  (*itr)->getMeshElement(0)->getNumVolumeVertices(); 
+      break;
+    } 
+  }
+  for (GModel::fiter itf = gm->firstFace(); itf != gm->lastFace(); ++itf) {
+    printf("%d\n",(*itf)->getNumMeshElements());
+    if ((*itf)->getNumMeshElements()){
+      if (meshOrder == -1) {
+	meshOrder = (*itf)->getMeshElement(0)->getPolynomialOrder(); 
+	complete = (meshOrder <= 2) ? 1 :  (*itf)->getMeshElement(0)->getNumFaceVertices(); 
+	if ((*itf)->geomType() == GEntity::DiscreteSurface)CAD = false;
+	printf("%d %d %d\n",meshOrder,complete, CAD);
+	break;
+      }
+    }     
+  }
 }
 
 
@@ -141,9 +185,10 @@ static void highordertools_runelas_cb(Fl_Widget *w, void *data)
     p.weightFixed =  o->value[5]->value(); 
     p.weightFree =  o->value[6]->value(); 
     p.DistanceFactor =  o->value[7]->value(); 
-    p.method =  (int)o->choice[0]->value(); 
+    p.method =  o->CAD ? (int)o->choice[0]->value() : 2; 
     p.filter =  (int)o->choice[1]->value(); 
     HighOrderMeshOptimizer (GModel::current(),p);
+    printf("CPU TIME = %4f seconds\n",p.CPU);
   }
 
 
@@ -180,6 +225,13 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
     int y = WB;
     int x = 2*WB;
 
+    output[0] = new Fl_Output
+      (x,y, IW, BH, "CAD MODEL");
+    output[0]->align(FL_ALIGN_RIGHT);
+    output[0]->value("AVAILABLE");
+
+    y += BH;
+
     butt[1] = new Fl_Check_Button
       (x,y, IW, BH, "Apply to visible entities only");
     butt[1]->type(FL_TOGGLE_BUTTON);
@@ -207,14 +259,15 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
     value[0]->maximum(10);
     value[0]->step(1);
     value[0]->align(FL_ALIGN_RIGHT);
-    value[0]->value(1);
+    value[0]->value(meshOrder);
 
     y += BH;
 
     butt[0] = new Fl_Check_Button
       (x,y, IW, BH, "Use Incomplete Elements");
     butt[0]->type(FL_TOGGLE_BUTTON);
-    butt[0]->value(0);
+    butt[0]->value(!complete);
+    butt[0]->callback(change_completeness_cb);
 
     y += BH;
 
@@ -313,7 +366,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
       };
 
       
-      static Fl_Menu_Item menu_filter[] = {
+      static Fl_Menu_Item menu_strategy[] = {
         {"GLOBAL", 0, 0, 0},
         {"BLOBS ", 0, 0, 0},
         {0}
@@ -328,8 +381,8 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
       y += BH;
       choice[1] = new Fl_Choice
-        (x,y, IW, BH, "Filter");
-      choice[1]->menu(menu_filter);
+        (x,y, IW, BH, "Strategy");
+      choice[1]->menu(menu_strategy);
       choice[1]->align(FL_ALIGN_RIGHT);
       
 
@@ -382,10 +435,17 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
 void highOrderToolsWindow::show(bool redrawOnly)
 {
+  getMeshInfo (GModel::current(),meshOrder,complete, CAD); 
+
   if(win->shown() && redrawOnly)
     win->redraw();
-  else
+  else {
+    value[0]->value(meshOrder);
+    butt[0]->value(!complete);
+    if (CAD)output[0]->value("AVAILABLE");
+    else output[0]->value("NOT AVAILABLE");
     win->show();
+  }
 }
 void highordertools_cb(Fl_Widget *w, void *data)
 {

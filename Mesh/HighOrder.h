@@ -22,6 +22,8 @@ typedef std::map<MFace, std::vector<MVertex*>, Less_Face> faceContainer;
 void SetOrder1(GModel *m, bool onlyVisible = false);
 void SetOrderN(GModel *m, int order, bool linear=true, bool incomplete=false, bool onlyVisible = false);
 void ElasticAnalogy ( GModel *m, double threshold, bool onlyVisible);
+void SetHighOrderComplete (GModel *m, bool onlyVisible); // generate complete elements
+void SetHighOrderInComplete (GModel *m, bool onlyVisible); // generate in-complete elements
 MTriangle* setHighOrder(MTriangle *t, GFace *gf, 
                         edgeContainer &edgeVertices, 
                         faceContainer &faceVertices, 

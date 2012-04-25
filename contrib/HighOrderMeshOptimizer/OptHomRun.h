@@ -21,7 +21,7 @@ struct OptHomParameters {
   // OUTPUT ------> 
   int SUCCESS ; // 0 --> success , 1 --> Not converged
   double minJac, maxJac; // after optimization, range of jacobians
-  double DT; // Time for optimization
+  double CPU; // Time for optimization
   
   OptHomParameters () 
   // default values    

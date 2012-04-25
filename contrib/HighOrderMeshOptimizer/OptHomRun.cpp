@@ -424,6 +424,9 @@ static std::vector<std::set<MElement*> > splitConnex(const std::set<MElement*> &
 
 void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
 {
+
+  clock_t t1 = clock();
+
   int samples = 20;
 
 //  int method = Mesh::METHOD_RELAXBND | Mesh::METHOD_PHYSCOORD | Mesh::METHOD_PROJJAC;
@@ -437,7 +440,7 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
   else if (p.method == 2)
     method = Mesh::METHOD_FIXBND | Mesh::METHOD_PHYSCOORD | Mesh::METHOD_PROJJAC;
 
-  printf("p.method = %d\n",p.method);
+  //  printf("p.method = %d\n",p.method);
 
 //  int method = Mesh::METHOD_SURFCOORD | Mesh::METHOD_PROJJAC;
 //  int method = Mesh::METHOD_RELAXBND | Mesh::METHOD_SURFCOORD | Mesh::METHOD_PROJJAC;
@@ -513,4 +516,6 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
       //      temp->mesh.writeMSH("final.msh");
     }
   }  
+  clock_t t2 = clock();
+  p.CPU = (double)(t2-t2)/CLOCKS_PER_SEC;
 }

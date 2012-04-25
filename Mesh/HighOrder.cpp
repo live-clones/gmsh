@@ -1374,3 +1374,97 @@ void computeDistanceFromMeshToGeometry (GModel *m, distanceFromMeshToGeometry_t 
     
   }
 }
+
+
+void SetHighOrderComplete (GModel *m, bool onlyVisible){
+  faceContainer faceVertices;
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+    if (onlyVisible && !(*it)->getVisibility())continue;
+    std::vector<MTriangle*> newT;
+    std::vector<MQuadrangle*> newQ;
+    for (int i=0;i<(*it)->triangles.size();i++){
+      MTriangle *t = (*it)->triangles[i];
+      std::vector<MVertex*> vf, vt;     
+      int nPts = t->getPolynomialOrder() - 1;
+      MTriangle TEMP (t->getVertex(0), t->getVertex(1), t->getVertex(2));
+      getFaceVertices (*it, t, t, vf, faceVertices, false, nPts);
+      for (int j=3;j<t->getNumVertices();j++)vt.push_back(t->getVertex(j));
+      vt.insert(vt.end(), vf.begin(), vf.end());
+      MTriangleN *newTr = new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
+					 vt, nPts + 1);
+      newT.push_back(newTr);
+      
+      delete t;
+    }
+    (*it)->triangles = newT;
+
+    for (int i=0;i<(*it)->quadrangles.size();i++){
+      MQuadrangle *t = (*it)->quadrangles[i];
+      std::vector<MVertex*> vf, vt;     
+      int nPts = t->getPolynomialOrder() - 1;
+      MQuadrangle TEMP (t->getVertex(0), t->getVertex(1), t->getVertex(2), t->getVertex(3));
+      getFaceVertices (*it, t, &TEMP, vf, faceVertices, false, nPts);
+      for (int j=4;j<t->getNumVertices();j++)vt.push_back(t->getVertex(j));
+      vt.insert(vt.end(), vf.begin(), vf.end());
+      newQ.push_back(new MQuadrangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2), t->getVertex(3),
+				      vt, nPts + 1));
+      
+      delete t;
+    }
+    (*it)->quadrangles = newQ;
+
+
+    std::set<MVertex*> newV;
+    for (int i=0;i<(*it)->getNumMeshElements();++i){
+      MElement *e = (*it)->getMeshElement(i);
+      for (int j=0;j<e->getNumVertices();j++)newV.insert(e->getVertex(j));
+    }
+    (*it)->mesh_vertices.clear();
+    (*it)->mesh_vertices.insert((*it)->mesh_vertices.begin(), newV.begin(), newV.end());
+
+
+  } 
+}
+
+
+void SetHighOrderInComplete (GModel *m, bool onlyVisible){
+  std::set<MVertex*> toDelete;
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+    if (onlyVisible && !(*it)->getVisibility())continue;
+    std::vector<MTriangle*> newT;
+    std::vector<MQuadrangle*> newQ;
+    for (int i=0;i<(*it)->triangles.size();i++){
+      MTriangle *t = (*it)->triangles[i];
+      std::vector<MVertex*> vt;     
+      int order = t->getPolynomialOrder();
+      for (int j=3;j<t->getNumVertices()-t->getNumFaceVertices();j++)vt.push_back(t->getVertex(j));
+      for (int j=t->getNumVertices()-t->getNumFaceVertices();j<t->getNumVertices();j++)toDelete.insert(t->getVertex(j));
+      newT.push_back(new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
+				    vt, order));
+      
+      delete t;
+    }
+    (*it)->triangles = newT;
+
+    for (int i=0;i<(*it)->quadrangles.size();i++){
+      MQuadrangle *t = (*it)->quadrangles[i];
+      std::vector<MVertex*> vt;     
+      int nPts = t->getPolynomialOrder() - 1;
+      for (int j=4;j<t->getNumVertices()-t->getNumFaceVertices();j++)vt.push_back(t->getVertex(j));
+      newQ.push_back(new MQuadrangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2), t->getVertex(3),
+				      vt, nPts + 1));      
+      delete t;
+    }
+    (*it)->quadrangles = newQ;
+    std::vector<MVertex*> newV;
+    for (int i=0;i<(*it)->mesh_vertices.size();++i){
+      if (toDelete.find((*it)->mesh_vertices[i]) == toDelete.end())
+	newV.push_back((*it)->mesh_vertices[i]);
+      else
+	delete (*it)->mesh_vertices[i];
+    }
+    (*it)->mesh_vertices = newV;
+  }
+ 
+}
+
