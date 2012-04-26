@@ -147,9 +147,9 @@ class Centerline : public Field{
   // Cut the mesh in different parts of small aspect ratio
   void cutMesh();
   //Create In and Outlet Planar Faces
-  void createClosedVolume();
+  void createClosedVolume(GEdge *gin, std::vector<GEdge*> boundEdges);
   //extrude outer wall
-  void extrudeBoundaryLayerWall();
+  void extrudeBoundaryLayerWall(GEdge *gin, std::vector<GEdge*> boundEdges);
 
   // Cut the tubular structure with a disk
   // perpendicular to the tubular structure

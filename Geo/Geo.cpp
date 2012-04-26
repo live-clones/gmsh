@@ -2685,20 +2685,6 @@ void ExtrudeShapes(int type, List_T *list_in,
                    ExtrudeParams *e,
                    List_T *list_out)
 {
-
-   // Msg::Info("IN EXTRUDE SHAPE Geo internal model has:");
-   //  List_T *points = Tree2List(GModel::current()->getGEOInternals()->Points);
-   //  List_T *curves = Tree2List(GModel::current()->getGEOInternals()->Curves);
-   //  List_T *surfaces = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
-   //  Msg::Info("%d Vertices", List_Nbr(points));
-   //  Msg::Info("%d Edges", List_Nbr(curves));
-   //  Msg::Info("%d Faces", List_Nbr(surfaces));
-   //  for(int i = 0; i < List_Nbr(surfaces); i++) {
-   //    Surface *s;
-   //    List_Read(surfaces, i, &s);
-   //    printf("surface %d \n", s->Num);
-   //  }
-
  
   for(int i = 0; i < List_Nbr(list_in); i++){
     Shape shape;

@@ -90,10 +90,11 @@ class GModelFactory {
     Msg::Error("extrude not implemented yet");
     return 0;
   }
-  virtual GEntity* extrudeBoundaryLayer(GModel *gm, GEntity *e, int nbLayers, double hLayers, int dir, int view)
+  virtual std::vector<GEntity*> extrudeBoundaryLayer(GModel *gm, GEntity *e, int nbLayers, double hLayers, int dir, int view)
   {
     Msg::Error("extrude normals not implemented yet");
-    return 0;
+    std::vector<GEntity*> empty;
+    return empty;
   }
   virtual GEntity *addPipe(GModel *gm, GEntity *base, std::vector<GEdge *> wire)
   {
@@ -182,7 +183,7 @@ class GeoFactory : public GModelFactory {
   GRegion *addVolume(GModel *gm, std::vector<std::vector<GFace *> > faces);
   GEdge *addCircleArc(GModel *gm,GVertex *begin, GVertex *center, GVertex *end);
   std::vector<GFace *> addRuledFaces(GModel *gm, std::vector<std::vector<GEdge *> > edges);
-  GEntity* extrudeBoundaryLayer(GModel *gm, GEntity *e, int nbLayers, double hLayers, int dir, int view);
+  std::vector<GEntity*> extrudeBoundaryLayer(GModel *gm, GEntity *e, int nbLayers, double hLayers, int dir, int view);
 };
 
 
