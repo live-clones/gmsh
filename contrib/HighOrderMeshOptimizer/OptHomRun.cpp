@@ -496,23 +496,36 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
   else if (p.dim == 3) {
     for (GModel::riter itr = gm->firstRegion(); itr != gm->lastRegion(); ++itr) {
       if (p.onlyVisible && !(*itr)->getVisibility())continue;
+      int ITER = 0;
+      Msg::Info("Model region %4d is considered",(*itr)->tag());
+      p.SUCCESS = true;
+      while (1){
       std::vector<MTetrahedron*> tets = (*itr)->tetrahedra;
       std::set<MVertex*> toFix;
 
       if (p.filter == 1) toFix = filter3D_boundaryLayer(*itr, p.nbLayers, p.BARRIER_MIN, p.BARRIER_MAX, p.DistanceFactor);
       else toFix = filter3D(*itr, p.nbLayers, p.BARRIER_MIN);
 
-      OptHOM *temp = new OptHOM(*itr, toFix, method);
-      double distMaxBND, distAvgBND, minJac, maxJac;
-      temp->recalcJacDist();
-      temp->getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
-      //      temp->mesh.writeMSH("initial.msh");
-      //      printf("--> Mesh Loaded for GRegion %d :  minJ %12.5E -- maxJ %12.5E\n", (*itr)->tag(), minJac, maxJac);
-      if (minJac > p.BARRIER_MIN  && maxJac < p.BARRIER_MAX) continue;
-      p.SUCCESS = temp->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax);
-      temp->getJacDist(p.minJac, p.maxJac, distMaxBND, distAvgBND);
-      temp->mesh.updateGEntityPositions();
-      (*itr)->tetrahedra = tets;
+//      if ((*itr)->tetrahedra.size() > 0) {
+        OptHOM *temp = new OptHOM(*itr, toFix, method);
+        double distMaxBND, distAvgBND, minJac, maxJac;
+        temp->recalcJacDist();
+        temp->getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
+        if (minJac < 1.e2)Msg::Info("Optimizing a blob of %4d elements  minJ %12.5E -- maxJ %12.5E",(*itr)->getNumMeshElements(), minJac, maxJac);
+        (*itr)->tetrahedra = tets;
+        std::ostringstream ossI;
+        ossI << "initial_" << (*itr)->tag() << "ITER_" << ITER << ".msh";
+        temp->mesh.writeMSH(ossI.str().c_str());
+        if (minJac > p.BARRIER_MIN  && maxJac < p.BARRIER_MAX) break;
+        p.SUCCESS = temp->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax);
+        temp->getJacDist(p.minJac, p.maxJac, distMaxBND, distAvgBND);
+        temp->mesh.updateGEntityPositions();
+        if (!p.SUCCESS) break;
+//      }
+      ITER ++;
+      }
+      Msg::Info("Model region %4d is done (%d subdomains were computed) SUCCESS %1d",(*itr)->tag(),ITER,p.SUCCESS);
+      Msg::Info("----------------------------------------------------------------");
       //      temp->mesh.writeMSH("final.msh");
     }
   }  

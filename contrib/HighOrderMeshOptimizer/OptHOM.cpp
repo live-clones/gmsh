@@ -277,15 +277,16 @@ int OptHOM::optimize(double weightFixed, double weightFree, double b_min, double
   evalObjGrad(x, initObj, gradObj);
 
 
-//  std::cout << "Start optimizing " << mesh.nEl() << " elements (" << mesh.nVert() << " vertices, "
-//            << mesh.nFV() << " free vertices, " << mesh.nPC() << " variables) with barrier = " << barrier << std::endl;
+  std::cout << "Start optimizing " << mesh.nEl() << " elements (" << mesh.nVert() << " vertices, "
+            << mesh.nFV() << " free vertices, " << mesh.nPC() << " variables) with min. barrier = " << barrier_min
+            << " and max. barrier = " << barrier_max << std::endl;
 
   int ITER = 0;
   while (minJac < barrier_min) {
     OptimPass(x, gradObj, itMax);
     jacBar = (minJac > 0.) ? 0.9*minJac : 1.1*minJac;
     setBarrierTerm(jacBar);
-    if (ITER ++ > 5) break;
+    if (ITER ++ > 10) break;
   }
 
   //  for (int i = 0; i<3; i++) {
