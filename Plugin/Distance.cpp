@@ -54,7 +54,7 @@ GMSH_DistancePlugin::GMSH_DistancePlugin()
 
 std::string GMSH_DistancePlugin::getHelp() const
 {
-  return "XXX Plugin(Distance) computes distances to physical entities in "
+  return "Plugin(Distance) computes distances to physical entities in "
     "a mesh.\n\n"
     "Define the physical entities to which the distance is computed. "
     "If Point=0, Line=0, and Surface=0, then the distance is computed "
