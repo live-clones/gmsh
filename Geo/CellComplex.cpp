@@ -433,6 +433,7 @@ int CellComplex::coreduceComplex(bool docombine, bool omit)
     for(unsigned int i = 0; i < newCells.size(); i++){
       insertCell(newCells.at(i));
     }
+
   }
 
   Msg::Debug(" %d volumes, %d faces, %d edges and %d vertices",

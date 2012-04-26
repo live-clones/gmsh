@@ -530,20 +530,20 @@ int GModel::readMSH(const std::string &name)
     MElement *e = createElementMSH(this, num, type, physical, elementary,
                                    partition, vertices, elements, physicals,
                                    own, p, doms[0], doms[1]);
-    
+
 #if (FAST_ELEMENTS==1)
 	  elems[num] = e;
 	  elemreg[num] = elementary;
 	  elemphy[num] = physical;
 #endif
-    
+
     for(unsigned int j = 0; j < ghosts.size(); j++)
       _ghostCells.insert(std::pair<MElement*, short>(e, ghosts[j]));
     if(numElements > 100000)
       Msg::ProgressMeter(i + 1, numElements, "Reading elements");
     delete [] indices;
         }
-        
+
 #if (FAST_ELEMENTS==1)
 	for(int i = 0; i < 10; i++)
 	  elements[i].clear();
@@ -3782,15 +3782,15 @@ GModel *GModel::createGModel(std::map<int, MVertex*> &vertexMap,
     nbVertices = (int)vertexIndices[i].size();
     indices = &vertexIndices[i][0];
     if(vertexVector.size()){
-      Msg::Error("Vertex not found aborting");
       if(!getVertices(nbVertices, indices, vertexVector, vertices)){
+        Msg::Error("Vertex not found aborting");
         delete gm;
         return 0;
       }
     }
     else{
-      Msg::Error("Vertex not found aborting");
       if(!getVertices(nbVertices, indices, vertexMap, vertices)){
+        Msg::Error("Vertex not found aborting");
         delete gm;
         return 0;
       }
@@ -3815,6 +3815,42 @@ GModel *GModel::createGModel(std::map<int, MVertex*> &vertexMap,
     gm->_storeVerticesInEntities(vertexMap);
 
   // store the physical tags
+  for(int i = 0; i < 4; i++)
+    gm->_storePhysicalTagsInEntities(i, physicals[i]);
+
+  return gm;
+}
+
+GModel *GModel::createGModel
+(std::map<int, std::vector<MElement*> > &entityToElementsMap,
+ std::map<int, std::vector<int> > &entityToPhysicalsMap)
+{
+  GModel* gm = new GModel();
+
+  std::map<int, MVertex*> vertexMap;
+  std::map<int, std::map<int, std::string> > physicals[4];
+  for(std::map<int, std::vector<MElement*> >::iterator it =
+        entityToElementsMap.begin(); it != entityToElementsMap.end();
+      it++) {
+    int entity = it->first;
+    for(unsigned int iE = 0; iE < it->second.size(); iE++) {
+      MElement* me = it->second[iE];
+      for(int iV = 0; iV < me->getNumVertices(); iV++) {
+        vertexMap[me->getVertex(iV)->getNum()] = me->getVertex(iV);
+      }
+      if(me->getPartition()) {
+        gm->getMeshPartitions().insert(me->getPartition());
+      }
+      std::vector<int> entityPhysicals = entityToPhysicalsMap[entity];
+      for(unsigned int i = 0; i < entityPhysicals.size(); i++) {
+        physicals[me->getDim()][entity][entityPhysicals[i]] = "unnamed";
+      }
+    }
+  }
+
+  gm->_storeElementsInEntities(entityToElementsMap);
+  gm->_associateEntityWithMeshVertices();
+  gm->_storeVerticesInEntities(vertexMap);
   for(int i = 0; i < 4; i++)
     gm->_storePhysicalTagsInEntities(i, physicals[i]);
 

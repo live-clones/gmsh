@@ -489,6 +489,13 @@ class GModel
                               std::vector<int> &elementary,
                               std::vector<int> &partition);
 
+  // create a GModel from newly created mesh elements
+  // (with their own newly created mesh vertices),
+  // and let element entities have given physical group tags
+  static GModel *createGModel
+    (std::map<int, std::vector<MElement*> > &entityToElementsMap,
+     std::map<int, std::vector<int> > &entityToPhysicalsMap);
+
   // for elements cut having new vertices
   void store(std::vector<MVertex*> &vertices, int dim,
             std::map<int, std::vector<MElement*> > &entityMap,

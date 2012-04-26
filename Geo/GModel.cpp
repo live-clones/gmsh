@@ -579,8 +579,8 @@ int GModel::adaptMesh(std::vector<int> technique, std::vector<simpleFunction<dou
   }
   //adapt only upper most dimension
   else{
-    
-    while(1) {  
+
+    while(1) {
       Msg::Info("-- adaptMesh ITER =%d ", ITER);
       std::vector<MElement*> elements;
 
@@ -2132,7 +2132,7 @@ GFace* GModel::addCompoundFace(std::vector<GFace*> faces, int param, int split, 
   if (param == 7) typ =  GFaceCompound::CONFORMAL_FE;
 
   GFaceCompound *gfc = new GFaceCompound(this, num, faces_comp, U0, typ, split);
-  
+
   //create old geo format for the compound face
   //necessary for boundary layers
   if(FindSurface(num)){
@@ -2171,7 +2171,7 @@ GFace* GModel::addCompoundFace(std::vector<GFace*> faces, int param, int split, 
      	}
        }
      }
-    
+
     Tree_Add(_geo_internals->Surfaces, &s);
   }
 
