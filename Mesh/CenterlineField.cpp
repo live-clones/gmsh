@@ -351,7 +351,7 @@ Centerline::Centerline(): kdtree(0), kdtreeR(0), nodes(0), nodesR(0){
 
   options["closeVolume"] = new FieldOptionInt(is_closed, "Action: Create In/Outlet planar faces");
   options["extrudeWall"] = new FieldOptionInt(is_extruded, "Action: Extrude wall");
-  options["cutMesh"] = new FieldOptionInt(is_cut, "Action: Cut the initial mesh in different mesh partitions using the centerlines");
+  options["reMesh"] = new FieldOptionInt(is_cut, "Action: Cut the initial mesh in different mesh partitions using the centerlines");
   callbacks["run"] = new FieldCallbackGeneric<Centerline>(this, &Centerline::run, "Run actions (closeVolume, extrudeWall, cutMesh) \n");
 
   options["FileName"] = new FieldOptionString (fileName, "File name for the centerlines", &update_needed);
@@ -651,8 +651,8 @@ void Centerline::createSplitCompounds(){
     GFace *gfc = current->addCompoundFace(f_compound, 7, 0, num_gfc); //1=conf_spectral 4=convex_circle, 7=conf_fe
 
     gfc->meshAttributes.recombine = recombine;
-    gfc->addPhysicalEntity(100);
-    current->setPhysicalName("wall", 2, 100);
+    gfc->addPhysicalEntity(1);
+    current->setPhysicalName("wall", 2, 1);//tag 1
 
   }
 
@@ -801,12 +801,12 @@ void Centerline::createClosedVolume(GEdge *gin, std::vector<GEdge*> boundEdges){
     myEdgeLoops.push_back(myEdges);
     GFace *newFace = current->addPlanarFace(myEdgeLoops);
     if (gin==boundEdges[i]) {
-      newFace->addPhysicalEntity(200);
-      current->setPhysicalName("inlet", 2, 200);
+      newFace->addPhysicalEntity(2);
+      current->setPhysicalName("inlet", 2, 2);//tag 2
     }
     else{
-      newFace->addPhysicalEntity(300);
-      current->setPhysicalName("outlets", 2, 300);
+      newFace->addPhysicalEntity(3);
+      current->setPhysicalName("outlets", 2, 3);//tag 3
     }
     myFaces.push_back(newFace);
   }
@@ -854,11 +854,11 @@ void Centerline::extrudeBoundaryLayerWall(GEdge* gin, std::vector<GEdge*> boundE
     //view -5 to scale hLayer by radius in BoundaryLayers.cpp
     std::vector<GEntity*> extrudedE = current->extrudeBoundaryLayer(gfc, nbElemLayer,  hLayer, dir, -5);
     GFace *eFace = (GFace*) extrudedE[0];
-    eFace->addPhysicalEntity(500);
-    current->setPhysicalName("outerWall", 2, 500);
+    eFace->addPhysicalEntity(5);
+    current->setPhysicalName("outerWall", 2, 5);//tag 5
     GRegion *eRegion = (GRegion*) extrudedE[1];
-    eRegion->addPhysicalEntity(600);
-    current->setPhysicalName("wallVolume", 3, 600);
+    eRegion->addPhysicalEntity(6);
+    current->setPhysicalName("wallVolume", 3, 6);//tag 6
     for (int j= 2; j < extrudedE.size(); j++){
       GFace *elFace = (GFace*) extrudedE[j];
       std::list<GEdge*> l_edges = elFace->edges();
@@ -867,12 +867,12 @@ void Centerline::extrudeBoundaryLayerWall(GEdge* gin, std::vector<GEdge*> boundE
 	if (is_cut) myEdge = current->getEdgeByTag((*it)->tag()-NE);
 	if( std::find(boundEdges.begin(), boundEdges.end(), myEdge) != boundEdges.end() ){
 	  if (myEdge==gin){
-	    elFace->addPhysicalEntity(700);
-	    current->setPhysicalName("inletRing", 2, 700);
+	    elFace->addPhysicalEntity(7);
+	    current->setPhysicalName("inletRing", 2, 7);//tag 7
 	  }
 	  else{
-	    elFace->addPhysicalEntity(800);
-	    current->setPhysicalName("outletRing", 2, 800);
+	    elFace->addPhysicalEntity(8);
+	    current->setPhysicalName("outletRings", 2, 8);//tag 8
 	  }
 	}
       } 
@@ -896,8 +896,8 @@ void Centerline::run(){
   if (is_cut) cutMesh();
   else{
     GFace *gf = current->getFaceByTag(1);
-    gf->addPhysicalEntity(100);
-    current->setPhysicalName("wall", 2, 100);
+    gf->addPhysicalEntity(1);
+    current->setPhysicalName("wall", 2, 1);//tag 1
     current->createTopologyFromMesh();
     NV = current->getMaxElementaryNumber(0);
     NE = current->getMaxElementaryNumber(1);
