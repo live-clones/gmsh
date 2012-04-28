@@ -36,5 +36,5 @@ struct distanceFromMeshToGeometry_t {
 };
 
 void computeDistanceFromMeshToGeometry (GModel *m, distanceFromMeshToGeometry_t &dist);
-
+void getMeshInfoForHighOrder (GModel *gm,    int &meshOrder,   bool &complete,  bool &CAD);
 #endif

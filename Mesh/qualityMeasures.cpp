@@ -307,15 +307,11 @@ double mesh_functional_distorsion_p2_exact(MTriangle *t)
 
 double mesh_functional_distorsion_pN(MElement *t)
 {
-  //  printf("element disto -->\n");
   const bezierBasis *jac = t->getJacobianFuncSpace()->bezier;
   fullVector<double>Ji(jac->points.size1());
-  //  printf("%d points for bez \n",jac->points.size1());
   for (int i=0;i<jac->points.size1();i++){
     double u = jac->points(i,0);
     double v = jac->points(i,1);
-
-    // JF : bezier points are defined in the [0,1] x [0,1] quad
     if (t->getType() == TYPE_QUA){
       u = -1 + 2*u;
       v = -1 + 2*v;
@@ -326,23 +322,31 @@ double mesh_functional_distorsion_pN(MElement *t)
  
   fullVector<double> Bi( jac->matrixLag2Bez.size1() );
   jac->matrixLag2Bez.mult(Ji,Bi);   
-
-  //    for (int i=0;i<jac->points.size1();i++){
-  //      printf("J(%d) = %12.5E B(%d) = %12.5E\n",i,Ji(i),i,Bi(i));
-  //    }
-
-  /*   
-  if (t->getType() == TYPE_QUA){
-    jac->matrixLag2Bez.print("lag2bez");
-    
-    jac->points.print("lagrangianNodesBezierQ");
-    t->getFunctionSpace(t->getPolynomialOrder())->points.print("lagrangianNodesQ");
-    t->getFunctionSpace(t->getPolynomialOrder())->monomials.print("MonomialsQ");
-    t->getFunctionSpace(t->getPolynomialOrder())->coefficients.print("shapeFunctionCoeffQ");
-  }
-  */
-
   return *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
+}
+
+
+void MElement::scaledJacRange(double &jmin, double &jmax)
+{
+  jmin = jmax = 1.0;
+  if (getPolynomialOrder() == 1) return;
+  const bezierBasis *jac = getJacobianFuncSpace()->bezier;
+  fullVector<double>Ji(jac->points.size1());
+  for (int i=0;i<jac->points.size1();i++){
+    double u = jac->points(i,0);
+    double v = jac->points(i,1);
+    if (getType() == TYPE_QUA){
+      u = -1 + 2*u;
+      v = -1 + 2*v;
+    }
+    
+    Ji(i) = mesh_functional_distorsion(this,u,v);   
+  }
+  
+  fullVector<double> Bi( jac->matrixLag2Bez.size1() );
+  jac->matrixLag2Bez.mult(Ji,Bi);   
+  jmin = *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
+  jmax = *std::max_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
 }
 
 

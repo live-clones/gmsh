@@ -171,6 +171,7 @@ static void GetQualityMeasure(std::vector<T*> &ele,
                               double &eta, double &etaMin, double &etaMax,
                               double &rho, double &rhoMin, double &rhoMax,
                               double &disto, double &distoMin, double &distoMax,
+                              double &scaledJacMin, double &scaledJacMax,
                               double quality[4][100])
 {
   for(unsigned int i = 0; i < ele.size(); i++){
@@ -186,10 +187,14 @@ static void GetQualityMeasure(std::vector<T*> &ele,
     rho += r;
     rhoMin = std::min(rhoMin, r);
     rhoMax = std::max(rhoMax, r);
-    double d = ele[i]->distoShapeMeasure();
+    double jmin,jmax; ele[i]->scaledJacRange(jmin,jmax);
+    double d = std::min(jmin,1./jmax);
     disto += d;
     distoMin = std::min(distoMin, d);
     distoMax = std::max(distoMax, d);
+    scaledJacMin = std::min(scaledJacMin, jmin);
+    scaledJacMax = std::max(scaledJacMax, jmax);
+
     for(int j = 0; j < 100; j++){
       if(g > j / 100. && g <= (j + 1) / 100.) quality[0][j]++;
       if(e > j / 100. && e <= (j + 1) / 100.) quality[1][j]++;
@@ -246,15 +251,16 @@ void GetStatistics(double stat[50], double quality[4][100])
     double eta=0., etaMin=1., etaMax=0.;
     double rho=0., rhoMin=1., rhoMax=0.;
     double disto=0., distoMin=1., distoMax=0.;
+    double jmin = 1.e22, jmax = -1.e22;
     double N = 0.0;
     if (m->firstRegion() == m->lastRegion()){
       for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
         GetQualityMeasure((*it)->quadrangles, gamma, gammaMin, gammaMax,
                           eta, etaMin, etaMax, rho, rhoMin, rhoMax,
-                          disto, distoMin, distoMax, quality);
+                          disto, distoMin, distoMax, jmin,jmax, quality);
         GetQualityMeasure((*it)->triangles, gamma, gammaMin, gammaMax,
                           eta, etaMin, etaMax, rho, rhoMin, rhoMax,
-                          disto, distoMin, distoMax, quality);
+                          disto, distoMin, distoMax, jmin,jmax, quality);
       }
       N = stat[7] + stat[8];
     }
@@ -262,16 +268,16 @@ void GetStatistics(double stat[50], double quality[4][100])
       for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
         GetQualityMeasure((*it)->tetrahedra, gamma, gammaMin, gammaMax,
                           eta, etaMin, etaMax, rho, rhoMin, rhoMax,
-                          disto, distoMin, distoMax, quality);
+                          disto, distoMin, distoMax, jmin,jmax, quality);
         GetQualityMeasure((*it)->hexahedra, gamma, gammaMin, gammaMax,
                           eta, etaMin, etaMax, rho, rhoMin, rhoMax,
-                          disto, distoMin, distoMax, quality);
+                          disto, distoMin, distoMax, jmin,jmax, quality);
         GetQualityMeasure((*it)->prisms, gamma, gammaMin, gammaMax,
                           eta, etaMin, etaMax, rho, rhoMin, rhoMax,
-                          disto, distoMin, distoMax,quality);
+                          disto, distoMin, distoMax,jmin,jmax, quality);
         GetQualityMeasure((*it)->pyramids, gamma, gammaMin, gammaMax,
                           eta, etaMin, etaMax, rho, rhoMin, rhoMax,
-                          disto, distoMin, distoMax, quality);
+                          disto, distoMin, distoMax, jmin,jmax, quality);
       }
       N = stat[9] + stat[10] + stat[11] + stat[12];
     }
@@ -284,6 +290,9 @@ void GetStatistics(double stat[50], double quality[4][100])
     stat[23] = rho / N ;
     stat[24] = rhoMin;
     stat[25] = rhoMax;
+
+    stat[45] = jmin;
+    stat[46] = jmax;
     stat[46] = disto / N ;
     stat[47] = distoMin;
     stat[48] = distoMax;

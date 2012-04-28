@@ -77,8 +77,10 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
 	  d[e->getNum()].push_back(e->etaShapeMeasure());
 	else if(name == "Rho3D")
 	  d[e->getNum()].push_back(e->rhoShapeMeasure());
-	else
-	  d[e->getNum()].push_back(e->distoShapeMeasure());
+	else{
+	  double jmin,jmax; e->scaledJacRange(jmin,jmax);
+	  d[e->getNum()].push_back(std::min(jmin,1./jmax));
+	}
       }
     }
 
@@ -137,7 +139,7 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
       value[num] = new Fl_Output(2 * WB, 2 * WB + 15 * BH, IW, BH, "Rho");
       value[num]->tooltip("~ min_edge_length / max_edge_length"); num++;
       value[num] = new Fl_Output(2 * WB, 2 * WB + 16 * BH, IW, BH, "Disto");
-      value[num]->tooltip("~ min (J0/J, J/J0)"); num++;
+      value[num]->tooltip("~ min (J_min/J_0, J_0/J_max)"); num++;
 
       for(int i = 0; i < 4; i++){
         int ww = 3 * FL_NORMAL_SIZE;

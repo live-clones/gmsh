@@ -1820,7 +1820,8 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
         Msg::Direct("  Rho: %g", ele->rhoShapeMeasure());
         Msg::Direct("  Gamma: %g", ele->gammaShapeMeasure());
         Msg::Direct("  Eta: %g", ele->etaShapeMeasure());
-        Msg::Direct("  Disto: %g", ele->distoShapeMeasure());
+        double jmin,jmax;ele->scaledJacRange(jmin,jmax);
+        Msg::Direct("  Scaled Jacobian Range : %g %g",jmin,jmax );
         CTX::instance()->mesh.changed = ENT_ALL;
         drawContext::global()->draw();
         FlGui::instance()->showMessages();

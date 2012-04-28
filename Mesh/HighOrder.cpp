@@ -1234,8 +1234,40 @@ void printJacobians(GModel *m, const char *nm)
   fclose(f);
 }
 
+void getMeshInfoForHighOrder (GModel *gm, 
+			      int &meshOrder, 
+			      bool &complete, 
+			      bool &CAD){
+  meshOrder = -1;
+  CAD = true;
+  for (GModel::riter itr = gm->firstRegion(); itr != gm->lastRegion(); ++itr) {
+    if ((*itr)->getNumMeshElements()){
+      meshOrder = (*itr)->getMeshElement(0)->getPolynomialOrder(); 
+      complete = (meshOrder <= 2) ? 1 :  (*itr)->getMeshElement(0)->getNumVolumeVertices(); 
+      break;
+    } 
+  }
+  for (GModel::fiter itf = gm->firstFace(); itf != gm->lastFace(); ++itf) {
+    if ((*itf)->getNumMeshElements()){
+      if (meshOrder == -1) {
+	meshOrder = (*itf)->getMeshElement(0)->getPolynomialOrder(); 
+	complete = (meshOrder <= 2) ? 1 :  (*itf)->getMeshElement(0)->getNumFaceVertices(); 
+	if ((*itf)->geomType() == GEntity::DiscreteSurface)CAD = false;
+	break;
+      }
+    }     
+  }
+}
+
+
+
+
 void ElasticAnalogy ( GModel *m, double threshold, bool onlyVisible) {
   
+  bool CAD, complete;
+  int meshOrder;
+
+  getMeshInfoForHighOrder (m,meshOrder, complete, CAD); 
   highOrderTools hot(m);
   // now we smooth mesh the internal vertices of the faces
   // we do that model face by model face
@@ -1248,7 +1280,8 @@ void ElasticAnalogy ( GModel *m, double threshold, bool onlyVisible) {
       std::vector<MElement*> v;
       v.insert(v.begin(), (*it)->triangles.begin(), (*it)->triangles.end());
       v.insert(v.end(), (*it)->quadrangles.begin(), (*it)->quadrangles.end());
-      hot.applySmoothingTo(v, (*it));
+      if (CAD)hot.applySmoothingTo(v, (*it));
+      else hot.applySmoothingTo(v, 1.e32, false);
     }
   }
   //    hot.ensureMinimumDistorsion(0.1);
@@ -1432,13 +1465,13 @@ void SetHighOrderInComplete (GModel *m, bool onlyVisible){
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
     if (onlyVisible && !(*it)->getVisibility())continue;
     std::vector<MTriangle*> newT;
-    std::vector<MQuadrangle*> newQ;
+
     for (int i=0;i<(*it)->triangles.size();i++){
       MTriangle *t = (*it)->triangles[i];
       std::vector<MVertex*> vt;     
       int order = t->getPolynomialOrder();
       for (int j=3;j<t->getNumVertices()-t->getNumFaceVertices();j++)vt.push_back(t->getVertex(j));
-      for (int j=t->getNumVertices()-t->getNumFaceVertices();j<t->getNumVertices();j++)toDelete.insert(t->getVertex(j));
+      for (int j=t->getNumVertices()-t->getNumFaceVertices();j < t->getNumVertices();j++)toDelete.insert(t->getVertex(j));
       newT.push_back(new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
 				    vt, order));
       
@@ -1446,6 +1479,7 @@ void SetHighOrderInComplete (GModel *m, bool onlyVisible){
     }
     (*it)->triangles = newT;
 
+    std::vector<MQuadrangle*> newQ;
     for (int i=0;i<(*it)->quadrangles.size();i++){
       MQuadrangle *t = (*it)->quadrangles[i];
       std::vector<MVertex*> vt;     
@@ -1456,13 +1490,18 @@ void SetHighOrderInComplete (GModel *m, bool onlyVisible){
       delete t;
     }
     (*it)->quadrangles = newQ;
+
     std::vector<MVertex*> newV;
+    int numd = 0;
     for (int i=0;i<(*it)->mesh_vertices.size();++i){
       if (toDelete.find((*it)->mesh_vertices[i]) == toDelete.end())
 	newV.push_back((*it)->mesh_vertices[i]);
-      else
+      else{
 	delete (*it)->mesh_vertices[i];
+	numd++;
+      }
     }
+    printf("%d vertices deleted\n");
     (*it)->mesh_vertices = newV;
   }
  

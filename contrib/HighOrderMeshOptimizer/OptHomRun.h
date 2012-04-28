@@ -22,6 +22,9 @@ struct OptHomParameters {
   int SUCCESS ; // 0 --> success , 1 --> Not converged
   double minJac, maxJac; // after optimization, range of jacobians
   double CPU; // Time for optimization
+
+  // is called by the optimizer at every stage of the 
+  //  virtual void progressCallback (int percetageDone) const {}
   
   OptHomParameters () 
   // default values    
@@ -32,6 +35,7 @@ struct OptHomParameters {
 };
 
 void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p);
+void OptHomMessage (const char *s, ...);
 
 
 #endif

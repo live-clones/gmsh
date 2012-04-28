@@ -12,7 +12,7 @@
 #include <FL/Fl_Multi_Browser.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Check_Button.H>
-#include <FL/Fl_Input.H>
+#include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Output.H>
 #include "GmshConfig.h"
 
@@ -26,6 +26,7 @@ class highOrderToolsWindow{
   Fl_Choice *choice[20];
   Fl_Button *push[20];
   Fl_Output *output[20];
+  Fl_Browser *messages;
  public:
   highOrderToolsWindow(int deltaFontSize=0);
   void show(bool redrawOnly);

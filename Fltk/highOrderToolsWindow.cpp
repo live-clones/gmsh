@@ -65,10 +65,7 @@ static void highordertools_runp_cb(Fl_Widget *w, void *data)
   int order = (int)o->value[0]->value();
   bool linear = !(bool)o->butt[2]->value(); 
   bool incomplete = (bool)o->butt[0]->value(); 
-  bool elastic = (bool)o->butt[3]->value(); 
-  double threshold = o->value[1]->value(); 
   bool onlyVisible = (bool)o->butt[1]->value(); 
-  int nLayers = (int) o->value[2]->value(); 
 
   if (order == 1)
     SetOrder1(GModel::current());
@@ -89,85 +86,31 @@ static void highordertools_runp_cb(Fl_Widget *w, void *data)
 
 static void chooseopti_cb(Fl_Widget *w, void *data){
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
-  bool elastic = (bool)o->butt[3]->value(); 
+  int elastic = o->choice[2]->value(); 
   
-  if (elastic){
-    o->butt[4]->value(0); 
+  if (elastic == 1){
     o->choice[0]->deactivate(); 
+    o->choice[1]->deactivate(); 
     for (int i=3;i<=6;i++)
       o->value[i]->deactivate(); 
-    o->push[1]->deactivate();
+    //   o->push[1]->deactivate();
   }
   else {
-    o->butt[3]->value(0); 
     o->push[0]->activate();
     o->choice[0]->activate(); 
+    o->choice[1]->activate(); 
     for (int i=3;i<=6;i++)
       o->value[i]->activate(); 
-    o->push[1]->activate();
+    //    o->push[1]->activate();
   }
   
 }
-
-
-static void chooseopti2_cb(Fl_Widget *w, void *data){
-  highOrderToolsWindow *o = FlGui::instance()->highordertools;
-  bool elastic = !(bool)o->butt[4]->value(); 
-  
-  if (elastic){
-    o->butt[4]->value(0); 
-    o->choice[0]->deactivate(); 
-    for (int i=3;i<=6;i++)
-      o->value[i]->deactivate(); 
-    o->push[1]->deactivate();
-  }
-  else {
-    o->butt[3]->value(0); 
-    o->push[0]->activate();
-    o->choice[0]->activate(); 
-    for (int i=3;i<=6;i++)
-      o->value[i]->activate(); 
-    o->push[1]->activate();
-  }
-  
-}
-
-static void getMeshInfo (GModel *gm, 
-			 int &meshOrder, 
-			 bool &complete, 
-			 bool &CAD){
-  meshOrder = -1;
-  CAD = true;
-  for (GModel::riter itr = gm->firstRegion(); itr != gm->lastRegion(); ++itr) {
-    if ((*itr)->getNumMeshElements()){
-      meshOrder = (*itr)->getMeshElement(0)->getPolynomialOrder(); 
-      complete = (meshOrder <= 2) ? 1 :  (*itr)->getMeshElement(0)->getNumVolumeVertices(); 
-      break;
-    } 
-  }
-  for (GModel::fiter itf = gm->firstFace(); itf != gm->lastFace(); ++itf) {
-    printf("%d\n",(*itf)->getNumMeshElements());
-    if ((*itf)->getNumMeshElements()){
-      if (meshOrder == -1) {
-	meshOrder = (*itf)->getMeshElement(0)->getPolynomialOrder(); 
-	complete = (meshOrder <= 2) ? 1 :  (*itf)->getMeshElement(0)->getNumFaceVertices(); 
-	if ((*itf)->geomType() == GEntity::DiscreteSurface)CAD = false;
-	printf("%d %d %d\n",meshOrder,complete, CAD);
-	break;
-      }
-    }     
-  }
-}
-
 
 static void highordertools_runelas_cb(Fl_Widget *w, void *data)
 {
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
   
-  int order = (int)o->value[0]->value();
-  bool linear = !(bool)o->butt[2]->value(); 
-  bool incomplete = (bool)o->butt[0]->value(); 
-  bool elastic = (bool)o->butt[3]->value(); 
+  bool elastic = o->choice[2]->value() == 1; 
   double threshold_min = o->value[1]->value(); 
   bool onlyVisible = (bool)o->butt[1]->value(); 
   int nbLayers = (int) o->value[2]->value(); 
@@ -180,7 +123,7 @@ static void highordertools_runelas_cb(Fl_Widget *w, void *data)
     p.BARRIER_MIN = threshold_min;
     p.BARRIER_MAX = threshold_max;
     p.onlyVisible = onlyVisible;
-    p.dim  = GModel::current()->getNumRegions()  ? 3 : 2;
+    p.dim  = GModel::current()->getDim();//o->meshOrder;
     p.itMax = (int) o->value[3]->value(); 
     p.weightFixed =  o->value[5]->value(); 
     p.weightFree =  o->value[6]->value(); 
@@ -196,6 +139,7 @@ static void highordertools_runelas_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
  
 }
+
 
 highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 {
@@ -342,22 +286,21 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
     }
     {
-      y += BH;
-      butt[3] = new Fl_Check_Button
-	(x,y, IW, BH, "Relocate mesh vertices through Elastic Analogy");
-      butt[3]->type(FL_TOGGLE_BUTTON);
-      butt[3]->value(0);
-      butt[3]->callback(chooseopti_cb);      
 
+      static Fl_Menu_Item menu_method[] = {
+        {"Optimization", 0, 0, 0},
+        {"ElasticAnalogy", 0, 0, 0},
+        {0}
+      };
+
+      y += BH;
+      choice[2] = new Fl_Choice
+        (x,y, IW, BH, "Algorithm");
+      choice[2]->align(FL_ALIGN_RIGHT);
+      choice[2]->menu(menu_method);
+      choice[2]->callback(chooseopti_cb);      
     }
     {
-      y += BH;
-      butt[4] = new Fl_Check_Button
-	(x,y, IW, BH, "Use Optimization for relocating mesh vertices");
-      butt[4]->type(FL_TOGGLE_BUTTON);
-      butt[4]->value(1);
-      butt[4]->callback(chooseopti2_cb);      
-
       static Fl_Menu_Item menu_objf[] = {
         {"CAD + FIXBND", 0, 0, 0},
         {"CAD + FREEBND", 0, 0, 0},
@@ -422,9 +365,14 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
     }
     
-
-    //    g->end();    
-    //    Fl_Group::current()->resizable(g);
+    y += 1.5*BH;
+    messages = new Fl_Browser
+            (x,y, width-2*x, height - y - 2*WB);
+    messages->box(FL_THIN_DOWN_BOX);
+    messages->textfont(FL_COURIER);
+    messages->textsize(FL_NORMAL_SIZE - 1);
+    messages->type(FL_MULTI_BROWSER);
+    //    messages->callback(message_browser_cb, this);
   }
 
   //  win->resizable(o);
@@ -435,7 +383,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
 void highOrderToolsWindow::show(bool redrawOnly)
 {
-  getMeshInfo (GModel::current(),meshOrder,complete, CAD); 
+  getMeshInfoForHighOrder (GModel::current(),meshOrder,complete, CAD); 
 
   if(win->shown() && redrawOnly)
     win->redraw();
@@ -443,7 +391,10 @@ void highOrderToolsWindow::show(bool redrawOnly)
     value[0]->value(meshOrder);
     butt[0]->value(!complete);
     if (CAD)output[0]->value("AVAILABLE");
-    else output[0]->value("NOT AVAILABLE");
+    else {
+      output[0]->value("NOT AVAILABLE");
+      choice[0]->value(2); 
+    }
     win->show();
   }
 }
