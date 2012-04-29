@@ -2,7 +2,7 @@
 #include <algorithm>
 #include "OptHomMesh.h"
 #include "OptHOM.h"
-#include "OptHOMRun.h"
+#include "OptHomRun.h"
 #include "GmshMessage.h"
 #include "GmshConfig.h"
 

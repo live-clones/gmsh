@@ -18,7 +18,7 @@
 
 #ifdef HAVE_FLTK
 #include "highOrderToolsWindow.h"
-#include "FLGui.h"
+#include "FlGui.h"
 #endif
 
 void OptHomMessage (const char *s, ...) {
