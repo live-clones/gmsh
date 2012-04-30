@@ -2597,12 +2597,12 @@ GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
   if(i1 == i2) return 0;
 
   std::map<std::pair<int, int>, GEdge*>::iterator it =
-    newEdges.find(std::make_pair<int, int>(i1, i2));
+    newEdges.find(std::make_pair(i1, i2));
   if(it == newEdges.end()){
     discreteEdge *ge = new discreteEdge
       (GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
     GModel::current()->add(ge);
-    newEdges[std::make_pair<int, int>(i1, i2)] = ge;
+    newEdges[std::make_pair(i1, i2)] = ge;
     return ge;
   }
   else
