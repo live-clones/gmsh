@@ -152,7 +152,7 @@ static void add_scripting(GMSH_PostPlugin *p, PView *view)
 
 static void plugin_run_cb(Fl_Widget *w, void *data)
 {
-  GMSH_PostPlugin *p = (GMSH_PostPlugin*)data;
+  GMSH_Plugin *p = (GMSH_Plugin*)data;
 
   // get the values from the GUI
   int m = p->getNbOptionsStr();
@@ -168,34 +168,40 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
     sxn->def = p->dialogBox->value[i]->value();
   }
 
-  // run on all selected views
-  bool no_view_selected = true;
-  for(int i = 1; i <= FlGui::instance()->plugins->view_browser->size(); i++) {
-    if(FlGui::instance()->plugins->view_browser->selected(i)) {
-      no_view_selected = false;
-      try{
-        if(i - 1 >= 0 && i - 1 < (int)PView::list.size()){
-          PView *view = PView::list[i - 1];
-          if(view->getData()->isRemote())
-            p->executeRemote(view);
+  if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN){
+    GMSH_PostPlugin *pp = (GMSH_PostPlugin*)p;
+    // run on all selected views
+    bool no_view_selected = true;
+    for(int i = 1; i <= FlGui::instance()->plugins->view_browser->size(); i++) {
+      if(FlGui::instance()->plugins->view_browser->selected(i)) {
+        no_view_selected = false;
+        try{
+          if(i - 1 >= 0 && i - 1 < (int)PView::list.size()){
+            PView *view = PView::list[i - 1];
+            if(view->getData()->isRemote())
+              pp->executeRemote(view);
+            else{
+              pp->execute(view);
+              add_scripting(pp, view);
+            }
+          }
           else{
-            p->execute(view);
-            add_scripting(p, view);
+            pp->execute(0);
+            add_scripting(pp, 0);
           }
         }
-        else{
-          p->execute(0);
-          add_scripting(p, 0);
+        catch(GMSH_Plugin * err) {
+          char tmp[256];
+          pp->catchErrorMessage(tmp);
+          Msg::Warning("%s", tmp);
         }
       }
-      catch(GMSH_Plugin * err) {
-        char tmp[256];
-        p->catchErrorMessage(tmp);
-        Msg::Warning("%s", tmp);
-      }
     }
+    if(no_view_selected) pp->execute(0);
   }
-  if(no_view_selected) p->execute(0);
+  else{
+    p->run();
+  }
 
   FlGui::instance()->updateViews();
   GMSH_Plugin::draw = 0;
@@ -337,7 +343,8 @@ pluginWindow::pluginWindow(int deltaFontSize)
   for(std::map<std::string, GMSH_Plugin*>::iterator it = PluginManager::
         instance()->begin(); it != PluginManager::instance()->end(); ++it) {
     GMSH_Plugin *p = it->second;
-    if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN) {
+    if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN ||
+       p->getType() == GMSH_Plugin::GMSH_MESH_PLUGIN) {
       browser->add(p->getName().c_str(), p);
       _createDialogBox(p, 2 * WB + L1 + L2, WB, width - L1 - L2 - 3 * WB, 
                        height - 2 * WB);
