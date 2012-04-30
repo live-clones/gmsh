@@ -926,29 +926,20 @@ void signedDistancesPointsTriangle(std::vector<double> &distances,
 void signedDistancePointLine(const SPoint3 &p1, const SPoint3 &p2, const SPoint3 &p,
                              double &d, SPoint3 &closePt)
 {
-  SVector3 t1 = p2 - p1;
-  const double n2t1 = dot(t1, t1);
-  SVector3 pp1 = p - p1;
-  const double t12 = dot(pp1, t1) / n2t1;
-  d = 1.e10;
-  bool found = false;
-  if (t12 >= 0 && t12 <= 1.){
-    d =  std::min(fabs(d), p.distance(p1 + (p2 - p1) * t12));
-    closePt = p1 + (p2 - p1) * t12;
-    found = true;
-  }
-  if (p.distance(p1) < fabs(d)){
+  SVector3 v12 = p2 - p1;
+  SVector3 v1p = p - p1;
+  const double alpha = dot(v1p, v12) / dot(v12, v12);
+  if (alpha <= 0.)
     closePt = p1;
-    d =  std::min(fabs(d), p.distance(p1));
-  }
-  if (p.distance(p2) < fabs(d)){
+  else if (alpha >= 1.)
     closePt = p2;
-    d =  std::min(fabs(d), p.distance(p2));
-  }
+  else
+    closePt = p1 + (p2 - p1) * alpha;
+  d = p.distance(closePt);
 }
 
-void signedDistancesPointsLine(std::vector<double>&distances,
-                               std::vector<SPoint3>&closePts,
+void signedDistancesPointsLine(std::vector<double> &distances,
+                               std::vector<SPoint3> &closePts,
                                const std::vector<SPoint3> &pts,
                                const SPoint3 &p1,
                                const SPoint3 &p2)
@@ -957,12 +948,11 @@ void signedDistancesPointsLine(std::vector<double>&distances,
   distances.resize(pts.size());
   closePts.clear();
   closePts.resize(pts.size());
-
-  double d;
-  for (unsigned int i = 0; i < pts.size();i++){
+  for (int i=0; i<pts.size(); i++) {
+    double d;
     SPoint3 closePt;
     const SPoint3 &p = pts[i];
-    signedDistancePointLine(p1,p2,p,d,closePt);
+    signedDistancePointLine(p1, p2, p, d, closePt);
     distances[i] = d;
     closePts[i] = closePt;
   }
