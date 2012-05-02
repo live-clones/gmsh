@@ -631,17 +631,21 @@ static bool _isItAGoodIdeaToMoveThatVertex (GFace *gf,
   v1->setParameter(1,after.y());
   v1->setXYZ(pafter.x(),pafter.y(),pafter.z());
 
+  bool badQuality = false;
   for (unsigned int j=0;j<e1.size();++j){
     surface_new += surfaceFaceUV(e1[j],gf);
     qualityNew[j] = (e1[j]->getNumVertices() == 4) ? e1[j]->etaShapeMeasure() : e1[j]->gammaShapeMeasure();
-    if (qualityNew[j] < 0.01)return false;
+    if (qualityNew[j] < 0.01) {
+      badQuality = true;
+      break;
+    }
   }
 
   v1->setParameter(0,before.x());
   v1->setParameter(1,before.y());
   v1->setXYZ(pbefore.x(),pbefore.y(),pbefore.z());
 
-  if ( (surface_new - surface_old)  > 1.e-10 * surface_old) {
+  if (badQuality || (surface_new - surface_old)  > 1.e-10 * surface_old) {
     return false;
   }
   return true;
@@ -1886,7 +1890,6 @@ static void _relocateVertex(GFace *gf, MVertex *ver,
       after = SPoint2(gp.u(),gp.v());
     }
     bool success = _isItAGoodIdeaToMoveThatVertex (gf,  lt, ver,before,after);
-
     if (success){
       ver->setParameter(0, after.x());
       ver->setParameter(1, after.y());
