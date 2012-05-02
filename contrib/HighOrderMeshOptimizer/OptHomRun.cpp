@@ -263,7 +263,6 @@ std::set<MVertex*> filter2D_boundaryLayer(GFace *gf,
 					  std::set<MElement*> & badasses,
             std::set<MElement*> & result
             ) {
-  
   double jmin, jmax;
   MElement *worstDown = getTheWorstElementDown(badasses.begin(),badasses.end(),jmin);
   MElement *worstUp   = getTheWorstElementUp(badasses.begin(),badasses.end(),jmax);
@@ -417,12 +416,24 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
 	//	printf("START WITH %d bad asses\n",badasses.size());
 	if (badasses.size() == 0)continue;
       }
-      while (1){
+      if (p.filter == 0) {
+        std::set<MVertex*> toFix;
+        std::set<MElement*> toOptimize;
+        toFix = filterSimple(*itf, p.nbLayers, p.BARRIER_MIN, p.BARRIER_MAX, toOptimize);
+        std::vector<std::set<MElement*> > toOptimizeSplit = splitConnex(toOptimize);
+        for (int i = 0; i < toOptimizeSplit.size(); ++i) {
+          OptHOM temp(*itf, toOptimizeSplit[i], toFix, method);
+          temp.recalcJacDist();
+          temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
+          OptHomMessage("Optimizing a blob %i/%i composed of %4d elements  minJ %12.5E -- maxJ %12.5E", i, toOptimizeSplit.size(), toOptimizeSplit[i].size(), minJac, maxJac);
+          p.SUCCESS = std::min(p.SUCCESS,temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax));
+        }
+      }
+      else while (1){
 	std::set<MVertex*> toFix;
   std::set<MElement*> toOptimize;
 
-	if (p.filter == 1) toFix = filter2D_boundaryLayer(*itf, p.nbLayers, p.BARRIER_MIN, p.BARRIER_MAX, p.DistanceFactor, badasses, toOptimize);
-	else toFix = filterSimple(*itf, p.nbLayers, p.BARRIER_MIN, p.BARRIER_MAX, toOptimize);
+	toFix = filter2D_boundaryLayer(*itf, p.nbLayers, p.BARRIER_MIN, p.BARRIER_MAX, p.DistanceFactor, badasses, toOptimize);
 	OptHOM temp(*itf, toOptimize, toFix, method);
 
 	temp.recalcJacDist();
@@ -438,7 +449,6 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
 //  temp.recalcJacDist();
 //  temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
 	temp.mesh.updateGEntityPositions();
-  if (p.filter == 0) break;
 	if (p.SUCCESS == -1) break;
 	ITER ++;
 	if (p.filter == 1 && ITER > badasses.size() * 2)break;
