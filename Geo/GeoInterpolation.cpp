@@ -149,9 +149,15 @@ static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
   double t = (u - t1) / (t2 - t1);
   Vertex *v[4];
   for(int i = 0; i < 4; i++) {
-    int k = iCurve - (periodic ? 1 : 2) + i;
-    if(k < 0) k = periodic ? k + NbControlPoints - 1 : 0;
-    if(k >= NbControlPoints) k = periodic ? k - NbControlPoints + 1: NbControlPoints - 1;
+    int k;
+    if (periodic) {
+      k = (iCurve - 1 + i) % (NbControlPoints - 1);
+      if (k < 0)
+        k += NbControlPoints - 1;
+    }
+    else {
+      k = std::max(0, std::min(iCurve - 2 + i, NbControlPoints -1));
+    }
     List_Read(Curve->Control_Points, k , &v[i]);
   }
 
