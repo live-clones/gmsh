@@ -22,7 +22,7 @@ public:
 
   Mesh mesh;
 
-  OptHOM(GEntity *gf, std::set<MVertex*> & toFix, int method);
+  OptHOM(GEntity *gf, const std::set<MElement*> &els, std::set<MVertex*> & toFix, int method);
   // returns 1 if the mesh has been optimized with success i.e. all jacobians are in the range
   // returns 0 if the mesh is valid (all jacobians positive, JMIN > 0) but JMIN < barrier_min || JMAX > barrier_max
   // returns -1 if the mesh is invalid : some jacobians cannot be made positive

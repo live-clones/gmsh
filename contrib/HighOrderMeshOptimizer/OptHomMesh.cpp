@@ -66,7 +66,7 @@ std::vector<double> Mesh::computeJB(const polynomialBasis *lagrange, const bezie
 
 
 
-Mesh::Mesh(GEntity *ge, std::set<MVertex*> &toFix, int method) :
+Mesh::Mesh(GEntity *ge, const std::set<MElement*> &els, std::set<MVertex*> &toFix, int method) :
     _ge(ge)
 {
   _dim = _ge->dim();
@@ -93,15 +93,17 @@ Mesh::Mesh(GEntity *ge, std::set<MVertex*> &toFix, int method) :
   else Msg::Debug("METHOD: Fixing vertices on geometric points and \"toFix\" boundary");
 
   // Initialize elements, vertices, free vertices and element->vertices connectivity
+  const int nElements = els.size();
   _nPC = 0;
-  _el.resize(_ge->getNumMeshElements());
-  _el2FV.resize(_ge->getNumMeshElements());
-  _el2V.resize(_ge->getNumMeshElements());
-  _nBezEl.resize(_ge->getNumMeshElements());
-  _nNodEl.resize(_ge->getNumMeshElements());
-  _indPCEl.resize(_ge->getNumMeshElements());
-  for (int iEl = 0; iEl < nEl(); iEl++) {
-    MElement *el = _ge->getMeshElement(iEl);
+  _el.resize(nElements);
+  _el2FV.resize(nElements);
+  _el2V.resize(nElements);
+  _nBezEl.resize(nElements);
+  _nNodEl.resize(nElements);
+  _indPCEl.resize(nElements);
+  int iEl = 0;
+  for(std::set<MElement*>::const_iterator it = els.begin(); it != els.end(); ++it, ++iEl) {
+    MElement *el = *it;
     _el[iEl] = el;
     const polynomialBasis *lagrange = el->getFunctionSpace();
     const bezierBasis *bezier = JacobianBasis::find(lagrange->type)->bezier;
@@ -478,7 +480,7 @@ void Mesh::writeMSH(const char *filename)
   for (int iEl = 0; iEl < nEl(); iEl++) {
 //    MElement *MEl = _el[iEl];
     fprintf(f, "%d %d 2 0 %d", iEl+1, _el[iEl]->getTypeForMSH(), _ge->tag());
-    for (int iVEl = 0; iVEl < _el2V[iEl].size(); iVEl++) fprintf(f, " %d", _el2V[iEl][iVEl] + 1);
+    for (size_t iVEl = 0; iVEl < _el2V[iEl].size(); iVEl++) fprintf(f, " %d", _el2V[iEl][iVEl] + 1);
     fprintf(f, "\n");
   }
   fprintf(f, "$EndElements\n");

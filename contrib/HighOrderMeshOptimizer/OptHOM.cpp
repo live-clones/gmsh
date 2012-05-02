@@ -16,8 +16,8 @@
 
 
 // Constructor
-OptHOM::OptHOM(GEntity *ge, std::set<MVertex*> & toFix, int method) :
-       mesh(ge, toFix, method)
+OptHOM::OptHOM(GEntity *ge, const std::set<MElement*> &els, std::set<MVertex*> & toFix, int method) :
+       mesh(ge, els, toFix, method)
 {
 };
 
