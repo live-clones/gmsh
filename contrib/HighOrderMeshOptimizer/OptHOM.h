@@ -19,7 +19,6 @@ class OptHOM
 
 public:
 
-
   Mesh mesh;
 
   OptHOM(GEntity *gf, const std::set<MElement*> &els, std::set<MVertex*> & toFix, int method);
@@ -27,9 +26,8 @@ public:
   // returns 0 if the mesh is valid (all jacobians positive, JMIN > 0) but JMIN < barrier_min || JMAX > barrier_max
   // returns -1 if the mesh is invalid : some jacobians cannot be made positive
   int optimize(double lambda, double lambda2, double barrier_min, double barrier_max, int pInt, int itMax);  // optimize one list of elements
-  void getDistances(double &distMaxBND, double &distAvgBND, double &minJac, double &maxJac);
-  //  void recalcJacDist();
-  //  inline void getJacDist(double &minJ, double &maxJ, double &maxD, double &avgD);
+  void recalcJacDist();
+  inline void getJacDist(double &minJ, double &maxJ, double &maxD, double &avgD);
   void updateMesh(const alglib::real_1d_array &x);
   void evalObjGrad(const alglib::real_1d_array &x, double &Obj, alglib::real_1d_array &gradObj);
   void printProgress(const alglib::real_1d_array &x, double Obj);
@@ -86,10 +84,10 @@ inline double OptHOM::compute_f1(double v)
 
 
 
-//void OptHOM::getJacDist(double &minJ, double &maxJ, double &maxD, double &avgD)
-//{
-//  minJ = minJac; maxJ = maxJac; maxD = maxDist; avgD = avgDist;
-//}
+void OptHOM::getJacDist(double &minJ, double &maxJ, double &maxD, double &avgD)
+{
+  minJ = minJac; maxJ = maxJac; maxD = maxDist; avgD = avgDist;
+}
 
 
 

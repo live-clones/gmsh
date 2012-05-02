@@ -424,9 +424,9 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
 	if (p.filter == 1) toFix = filter2D_boundaryLayer(*itf, p.nbLayers, p.BARRIER_MIN, p.BARRIER_MAX, p.DistanceFactor, badasses, toOptimize);
 	else toFix = filterSimple(*itf, p.nbLayers, p.BARRIER_MIN, p.BARRIER_MAX, toOptimize);
 	OptHOM temp(*itf, toOptimize, toFix, method);
-	//	temp.recalcJacDist();
 
-	temp.getDistances(distMaxBND, distAvgBND,minJac, maxJac);
+	temp.recalcJacDist();
+  temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
 	//	if (minJac < 1.e2)OptHomMessage("Optimizing a blob of %4d elements  minJ %12.5E -- maxJ %12.5E",(*itf)->getNumMeshElements(), minJac, maxJac);
 	std::ostringstream ossI;
 	ossI << "initial_" << (*itf)->tag() << "ITER_" << ITER << ".msh";
@@ -435,9 +435,10 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
 	
 	p.SUCCESS = std::min(p.SUCCESS,temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax));
 
-	temp.getDistances(distMaxBND, distAvgBND,minJac, maxJac);
-	//	temp.getJacDist(p.minJac, p.maxJac, distMaxBND, distAvgBND);
+//  temp.recalcJacDist();
+//  temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
 	temp.mesh.updateGEntityPositions();
+  if (p.filter == 0) break;
 	if (p.SUCCESS == -1) break;
 	ITER ++;
 	if (p.filter == 1 && ITER > badasses.size() * 2)break;
@@ -475,17 +476,16 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
 //      if ((*itr)->tetrahedra.size() > 0) {
         OptHOM temp(*itr, toOptimize, toFix, method);
         double distMaxBND, distAvgBND, minJac, maxJac;
-	temp.getDistances(distMaxBND, distAvgBND,minJac, maxJac);
-	//        temp.recalcJacDist();
-	//        temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
+        temp.recalcJacDist();
+        temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
         if (minJac < 1.e2)Msg::Info("Optimizing a blob of %4d elements  minJ %12.5E -- maxJ %12.5E",(*itr)->getNumMeshElements(), minJac, maxJac);
         std::ostringstream ossI;
         ossI << "initial_" << (*itr)->tag() << "ITER_" << ITER << ".msh";
         temp.mesh.writeMSH(ossI.str().c_str());
         if (minJac > p.BARRIER_MIN  && maxJac < p.BARRIER_MAX) break;
         p.SUCCESS = temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax);
-	temp.getDistances(distMaxBND, distAvgBND,minJac, maxJac);
-	//        temp.getJacDist(p.minJac, p.maxJac, distMaxBND, distAvgBND);
+        temp.recalcJacDist();
+        temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
         temp.mesh.updateGEntityPositions();
         if (!p.SUCCESS) break;
 //      }
