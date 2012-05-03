@@ -106,6 +106,30 @@ double MElement::rhoShapeMeasure()
     return 0.;
 }
 
+void MElement::scaledJacRange(double &jmin, double &jmax)
+{
+  jmin = jmax = 1.0;
+#if defined(HAVE_MESH)
+  extern double mesh_functional_distorsion(MElement*,double,double);
+  if (getPolynomialOrder() == 1) return;
+  const bezierBasis *jac = getJacobianFuncSpace()->bezier;
+  fullVector<double>Ji(jac->points.size1());
+  for (int i=0;i<jac->points.size1();i++){
+    double u = jac->points(i,0);
+    double v = jac->points(i,1);
+    if (getType() == TYPE_QUA){
+      u = -1 + 2*u;
+      v = -1 + 2*v;
+    }
+    Ji(i) = mesh_functional_distorsion(this,u,v);
+  }
+  fullVector<double> Bi( jac->matrixLag2Bez.size1() );
+  jac->matrixLag2Bez.mult(Ji,Bi);
+  jmin = *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
+  jmax = *std::max_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
+#endif
+}
+
 void MElement::getNode(int num, double &u, double &v, double &w)
 {
   // only for MElements that don't have a lookup table for this

@@ -15,7 +15,7 @@
 #include <limits>
 #include <string.h>
 
-double qmTriangle(const BDS_Point *p1, const BDS_Point *p2, const BDS_Point *p3, 
+double qmTriangle(const BDS_Point *p1, const BDS_Point *p2, const BDS_Point *p3,
                   const qualityMeasure4Triangle &cr)
 {
   return qmTriangle(p1->X, p1->Y, p1->Z, p2->X, p2->Y, p2->Z, p3->X, p3->Y, p3->Z, cr);
@@ -33,7 +33,7 @@ double qmTriangle(MTriangle*t, const qualityMeasure4Triangle &cr)
   return qmTriangle(t->getVertex(0), t->getVertex(1), t->getVertex(2), cr);
 }
 
-double qmTriangle(const MVertex *v1, const MVertex *v2, const MVertex *v3, 
+double qmTriangle(const MVertex *v1, const MVertex *v2, const MVertex *v3,
                   const qualityMeasure4Triangle &cr)
 {
   return qmTriangle(v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z(),
@@ -43,9 +43,9 @@ double qmTriangle(const MVertex *v1, const MVertex *v2, const MVertex *v3,
 // Triangle abc
 // quality is between 0 and 1
 
-double qmTriangle(const double &xa, const double &ya, const double &za, 
-                  const double &xb, const double &yb, const double &zb, 
-                  const double &xc, const double &yc, const double &zc, 
+double qmTriangle(const double &xa, const double &ya, const double &za,
+                  const double &xb, const double &yb, const double &zb,
+                  const double &xc, const double &yc, const double &zc,
                   const qualityMeasure4Triangle &cr)
 {
   double quality;
@@ -59,10 +59,10 @@ double qmTriangle(const double &xa, const double &ya, const double &za,
       norme(a);
       norme(b);
       norme(c);
-      double pva [3]; prodve(b, c, pva); const double sina = norm3(pva); 
+      double pva [3]; prodve(b, c, pva); const double sina = norm3(pva);
       double pvb [3]; prodve(c, a, pvb); const double sinb = norm3(pvb);
       double pvc [3]; prodve(a, b, pvc); const double sinc = norm3(pvc);
-      
+
       if (sina == 0.0 && sinb == 0.0 && sinc == 0.0) quality = 0.0;
       else quality = 2 * (2 * sina * sinb * sinc / (sina + sinb + sinc));
     }
@@ -84,7 +84,7 @@ double qmTriangle(const double &xa, const double &ya, const double &za,
   default:
     Msg::Error("Unknown quality measure");
     return 0.;
-  }  
+  }
 
   return quality;
 }
@@ -98,14 +98,14 @@ double qmTet(MTetrahedron *t, const qualityMeasure4Tet &cr, double *volume)
 double qmTet(const MVertex *v1, const MVertex *v2, const MVertex *v3,
              const MVertex *v4, const qualityMeasure4Tet &cr, double *volume)
 {
-  return qmTet(v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z(), 
+  return qmTet(v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z(),
                v3->x(), v3->y(), v3->z(), v4->x(), v4->y(), v4->z(), cr, volume);
 }
 
-double qmTet(const double &x1, const double &y1, const double &z1, 
-             const double &x2, const double &y2, const double &z2, 
-             const double &x3, const double &y3, const double &z3, 
-             const double &x4, const double &y4, const double &z4, 
+double qmTet(const double &x1, const double &y1, const double &z1,
+             const double &x2, const double &y2, const double &z2,
+             const double &x3, const double &y3, const double &z3,
+             const double &x4, const double &y4, const double &z4,
              const qualityMeasure4Tet &cr, double *volume)
 {
   switch(cr){
@@ -124,7 +124,7 @@ double qmTet(const double &x1, const double &y1, const double &z1,
       mat[2][1] = z3 - z1;
       mat[2][2] = z4 - z1;
       *volume = fabs(det3x3(mat)) / 6.;
-      double l = ((x2 - x1) * (x2 - x1) + 
+      double l = ((x2 - x1) * (x2 - x1) +
                   (y2 - y1) * (y2 - y1) +
                   (z2 - z1) * (z2 - z1));
       l += ((x3 - x1) * (x3 - x1) + (y3 - y1) * (y3 - y1) + (z3 - z1) * (z3 - z1));
@@ -157,19 +157,19 @@ double qmTet(const double &x1, const double &y1, const double &z1,
       double s4 = fabs(triangle_area(p1, p2, p3));
       double rhoin = 3. * fabs(*volume) / (s1 + s2 + s3 + s4);
       double l = sqrt((x2 - x1) * (x2 - x1) +
-                      (y2 - y1) * (y2 - y1) + 
+                      (y2 - y1) * (y2 - y1) +
                       (z2 - z1) * (z2 - z1));
-      l = std::max(l, sqrt((x3 - x1) * (x3 - x1) + (y3 - y1) * (y3 - y1) + 
+      l = std::max(l, sqrt((x3 - x1) * (x3 - x1) + (y3 - y1) * (y3 - y1) +
                            (z3 - z1) * (z3 - z1)));
-      l = std::max(l, sqrt((x4 - x1) * (x4 - x1) + (y4 - y1) * (y4 - y1) + 
+      l = std::max(l, sqrt((x4 - x1) * (x4 - x1) + (y4 - y1) * (y4 - y1) +
                            (z4 - z1) * (z4 - z1)));
-      l = std::max(l, sqrt((x3 - x2) * (x3 - x2) + (y3 - y2) * (y3 - y2) + 
+      l = std::max(l, sqrt((x3 - x2) * (x3 - x2) + (y3 - y2) * (y3 - y2) +
                            (z3 - z2) * (z3 - z2)));
       l = std::max(l, sqrt((x4 - x2) * (x4 - x2) + (y4 - y2) * (y4 - y2) +
                            (z4 - z2) * (z4 - z2)));
       l = std::max(l, sqrt((x3 - x4) * (x3 - x4) + (y3 - y4) * (y3 - y4) +
                            (z3 - z4) * (z3 - z4)));
-      return 2. * sqrt(6.) * rhoin / l; 
+      return 2. * sqrt(6.) * rhoin / l;
     }
     break;
   default:
@@ -181,7 +181,7 @@ double qmTet(const double &x1, const double &y1, const double &z1,
 double mesh_functional_distorsion(MElement *t, double u, double v)
 {
   // compute uncurved element jacobian d_u x and d_v x
-  double mat[3][3];  
+  double mat[3][3];
   t->getPrimaryJacobian(u, v, 0, mat);
   // t->getJacobian(u,v,0,mat);
   double v1[3] = {mat[0][0], mat[0][1], mat[0][2]};
@@ -189,27 +189,27 @@ double mesh_functional_distorsion(MElement *t, double u, double v)
   double normal1[3];
   prodve(v1, v2, normal1);
   double nn = norm3(normal1);
-  
+
   // compute uncurved element jacobian d_u x and d_v x
-  
+
   t->getJacobian(u, v, 0, mat);
   double v1b[3] = {mat[0][0], mat[0][1], mat[0][2]};
   double v2b[3] = {mat[1][0], mat[1][1], mat[1][2]};
   double normal[3];
   prodve(v1b, v2b, normal);
-  
+
   //  printf("%g %g %g -- %g %g %g - %g\n",mat[0][0], mat[0][1], mat[0][2],mat[1][0], mat[1][1], mat[1][2],nn);
 
   double sign = 1.0;
   prosca(normal1, normal, &sign);
-  //  double det = (norm3(normal) / nn)  * (sign > 0 ? 1. : -1.);  
+  //  double det = (norm3(normal) / nn)  * (sign > 0 ? 1. : -1.);
 
   //  printf("%g %g : %g : %g n1 (%g,%g,%g)\n",u,v,sign,det, normal1[0], normal1[1], normal1[2]);
   //  for (int i=0;i<t->getNumVertices();i++){
   //    printf("COORD (%d) = %g %g %g\n",i,t->getVertex(i)->x(),t->getVertex(i)->y(),t->getVertex(i)->z());
   //  }
   //  printf("n (%g,%g,%g)\n", normal1[0], normal1[1], normal1[2]);
-  
+
   return sign/(nn*nn);
 }
 
@@ -247,7 +247,7 @@ double mesh_functional_distorsion_p2_bezier_refined(MTriangle *t)
     J1,J6,J4,2*J16-0.5*(J1+J6),2*J14-0.5*(J1+J4),2*J46-0.5*(J6+J4),
     J3,J5,2*J36-0.5*(J3+J6),2*J35-0.5*(J3+J5),2*J56-0.5*(J5+J6),
     J2,2*J45-0.5*(J4+J5),2*J52-0.5*(J5+J2),2*J24-0.5*(J2+J4)};
-  return  *std::min_element(d,d+15);  
+  return  *std::min_element(d,d+15);
 }
 
 double mesh_functional_distorsion_p2_exact(MTriangle *t)
@@ -283,7 +283,7 @@ double mesh_functional_distorsion_p2_exact(MTriangle *t)
 
   if (ximin> 0 && etamin > 0 && 1-ximin-etamin>0){
     const double m4 = a+b*ximin+c*etamin+d*ximin*etamin+
-      e*ximin*ximin + f*etamin*etamin;      
+      e*ximin*ximin + f*etamin*etamin;
     /*
     if (m4 < min_interm && (m4 < .9 || m4 > 1.1)){
       printf("m4  = %g xi = %g eta  = %g min_interm = %g min_edges = %g %g %g\n",m4,ximin,etamin,min_interm, MINQ (e,b,a), MINQ (f,c,a), MINQ (-d+e+f,b-c+d-2*f,a+c+f));
@@ -317,38 +317,13 @@ double mesh_functional_distorsion_pN(MElement *t)
       v = -1 + 2*v;
     }
 
-    Ji(i) = mesh_functional_distorsion(t,u,v);   
+    Ji(i) = mesh_functional_distorsion(t,u,v);
   }
- 
+
   fullVector<double> Bi( jac->matrixLag2Bez.size1() );
-  jac->matrixLag2Bez.mult(Ji,Bi);   
+  jac->matrixLag2Bez.mult(Ji,Bi);
   return *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
 }
-
-
-void MElement::scaledJacRange(double &jmin, double &jmax)
-{
-  jmin = jmax = 1.0;
-  if (getPolynomialOrder() == 1) return;
-  const bezierBasis *jac = getJacobianFuncSpace()->bezier;
-  fullVector<double>Ji(jac->points.size1());
-  for (int i=0;i<jac->points.size1();i++){
-    double u = jac->points(i,0);
-    double v = jac->points(i,1);
-    if (getType() == TYPE_QUA){
-      u = -1 + 2*u;
-      v = -1 + 2*v;
-    }
-    
-    Ji(i) = mesh_functional_distorsion(this,u,v);   
-  }
-  
-  fullVector<double> Bi( jac->matrixLag2Bez.size1() );
-  jac->matrixLag2Bez.mult(Ji,Bi);   
-  jmin = *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
-  jmax = *std::max_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
-}
-
 
 double qmDistorsionOfMapping (MTriangle *e)
 {
@@ -404,13 +379,13 @@ double qmDistorsionOfMapping (MQuadrangle *e)
 static double mesh_functional_distorsion(MTetrahedron *t, double u, double v, double w)
 {
   // compute uncurved element jacobian d_u x and d_v x
-  double mat[3][3];  
-  t->getPrimaryJacobian(u, v, w, mat);  
+  double mat[3][3];
+  t->getPrimaryJacobian(u, v, w, mat);
   const double det1 = det3x3(mat);
   t->getJacobian(u, v, w, mat);
   const double detN = det3x3(mat);
   if (det1 == 0 || detN == 0) return 0;
-  double dist = det1 / detN; 
+  double dist = det1 / detN;
   return dist;
 }
 
@@ -422,12 +397,12 @@ double qmDistorsionOfMapping(MTetrahedron *t)
     const double u = jac->points(i,0);
     const double v = jac->points(i,1);
     const double w = jac->points(i,2);
-    Ji(i) = mesh_functional_distorsion(t,u,v,w);    
+    Ji(i) = mesh_functional_distorsion(t,u,v,w);
   }
- 
+
   fullVector<double> Bi( jac->matrixLag2Bez.size1() );
   jac->matrixLag2Bez.mult(Ji,Bi);
-  /* 
+  /*
      jac->matrixLag2Bez.print("Lag2Bez");
 
       jac->points.print("Points");
@@ -447,7 +422,7 @@ double qmTriangleAngles (MTriangle *e) {
   double den = atan(a*(M_PI/9)) + atan(a*(M_PI/9));
 
   // This matrix is used to "rotate" the triangle to get each vertex
-  // as the "origin" of the mapping in turn 
+  // as the "origin" of the mapping in turn
   double rot[3][3];
   rot[0][0]=-1; rot[0][1]=1; rot[0][2]=0;
   rot[1][0]=-1; rot[1][1]=0; rot[1][2]=0;
@@ -463,7 +438,7 @@ double qmTriangleAngles (MTriangle *e) {
     e->getPrimaryJacobian(u,v,w,mat2);
     for (int j = 0; j < i; j++) {
       matmat(rot,mat,tmp);
-      memcpy(mat, tmp, sizeof(mat)); 
+      memcpy(mat, tmp, sizeof(mat));
     }
     //get angle
     double v1[3] = {mat[0][0],  mat[0][1],  mat[0][2] };
@@ -477,7 +452,7 @@ double qmTriangleAngles (MTriangle *e) {
     double v12[3], v34[3];
     prodve(v1,v2,v12);
     prodve(v3,v4,v34);
-    norme(v12); 
+    norme(v12);
     norme(v34);
     double orientation;
     prosca(v12,v34,&orientation);
@@ -492,15 +467,15 @@ double qmTriangleAngles (MTriangle *e) {
     double angle = (x+M_PI/3)/M_PI*180;
     double quality = (atan(a*(x+M_PI/9)) + atan(a*(M_PI/9-x)))/den;
     worst_quality = std::min(worst_quality, quality);
-    
+
     // minAngle  = std::min(angle, minAngle);
     // printf("Angle %g ", angle);
     // printf("Quality %g\n",quality);
   }
   // printf("MinAngle %g ", minAngle);
   // printf("\n");
-  // return minAngle; 
- 
+  // return minAngle;
+
   return worst_quality;
 }
 
@@ -513,13 +488,13 @@ double qmQuadrangleAngles (MQuadrangle *e) {
   double den = atan(a*(M_PI/4)) + atan(a*(2*M_PI/4 - (M_PI/4)));
 
   // This matrix is used to "rotate" the triangle to get each vertex
-  // as the "origin" of the mapping in turn 
+  // as the "origin" of the mapping in turn
   double rot[3][3];
   rot[0][0]=-1; rot[0][1]=1; rot[0][2]=0;
   rot[1][0]=-1; rot[1][1]=0; rot[1][2]=0;
   rot[2][0]= 0; rot[2][1]=0; rot[2][2]=1;
   //double tmp[3][3];
-  
+
   const double u[9] = {-1,-1, 1, 1, 0,0,1,-1,0};
   const double v[9] = {-1, 1, 1,-1, -1,1,0,0,0};
 
@@ -529,7 +504,7 @@ double qmQuadrangleAngles (MQuadrangle *e) {
     e->getPrimaryJacobian(u[i],v[i],0,mat2);
     //for (int j = 0; j < i; j++) {
     //  matmat(rot,mat,tmp);
-    //  memcpy(mat, tmp, sizeof(mat)); 
+    //  memcpy(mat, tmp, sizeof(mat));
     //}
 
     //get angle
@@ -544,7 +519,7 @@ double qmQuadrangleAngles (MQuadrangle *e) {
     double v12[3], v34[3];
     prodve(v1,v2,v12);
     prodve(v3,v4,v34);
-    norme(v12); 
+    norme(v12);
     norme(v34);
     double orientation;
     prosca(v12,v34,&orientation);
