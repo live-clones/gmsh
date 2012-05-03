@@ -60,6 +60,12 @@ static void centroid(int n, double *X, double *Y, double *Z, double *c)
   c[2] *= oc;
 }
 
+static void pntBB(void *a, double *min, double *max)
+{
+  double *X = (double*) a, *Y = &X[1], *Z = &X[2];
+  minmax(1, X, Y, Z, min, max);
+}
+
 static void linBB(void *a, double *min, double *max)
 {
   double *X = (double*) a, *Y = &X[2], *Z = &X[4];
@@ -100,6 +106,11 @@ static void pyrBB(void *a, double *min, double *max)
 {
   double *X = (double*) a, *Y = &X[5], *Z = &X[10];
   minmax(5, X, Y, Z, min, max);
+}
+
+static int pntInEle(void *a, double *x)
+{
+  return 1;
 }
 
 static int linInEle(void *a, double *x)
@@ -158,6 +169,12 @@ static int pyrInEle(void *a, double *x)
   return pyr.isInside(uvw[0], uvw[1], uvw[2]);
 }
 
+static void pntCentroid(void *a, double *x)
+{
+  double *X = (double*) a, *Y = &X[1], *Z = &X[2];
+  centroid(1, X, Y, Z, x);
+}
+
 static void linCentroid(void *a, double *x)
 {
   double *X = (double*) a, *Y = &X[2], *Z = &X[4];
@@ -210,6 +227,7 @@ static void addListOfStuff(Octree *o, std::vector<double> &l, int nbelm)
 
 OctreePost::~OctreePost()
 {
+  Octree_Delete(_SP); Octree_Delete(_VP); Octree_Delete(_TP);
   Octree_Delete(_SL); Octree_Delete(_VL); Octree_Delete(_TL);
   Octree_Delete(_ST); Octree_Delete(_VT); Octree_Delete(_TT);
   Octree_Delete(_SQ); Octree_Delete(_VQ); Octree_Delete(_TQ);
@@ -231,9 +249,9 @@ OctreePost::OctreePost(PViewData *data)
 
 void OctreePost::_create(PViewData *data)
 {
-  _SL = _VL = _TL = _ST = _VT = _TT = _SQ = _VQ = _TQ = 0;
-  _SS = _VS = _TS = _SH = _VH = _TH = _SI = _VI = _TI = 0;
-  _SY = _VY = _TY = 0;
+  _SP = _VP = _TP = _SL = _VL = _TL = _ST = _VT = _TT = 0;
+  _SQ = _VQ = _TQ = _SS = _VS = _TS = _SH = _VH = _TH = 0;
+  _SI = _VI = _TI = _SY = _VY = _TY = 0;
   _theViewDataList = 0;
   _theViewDataGModel = 0;
 
@@ -263,6 +281,16 @@ void OctreePost::_create(PViewData *data)
                       bbmax.y() - bbmin.y(),
                       bbmax.z() - bbmin.z()};
     const int maxElePerBucket = 100; // memory vs. speed trade-off
+
+    _SP = Octree_Create(maxElePerBucket, min, size, pntBB, pntCentroid, pntInEle);
+    addListOfStuff(_SP, l->SP, 3 + 1 * l->getNumTimeSteps());
+    Octree_Arrange(_SP);
+    _VP = Octree_Create(maxElePerBucket, min, size, pntBB, pntCentroid, pntInEle);
+    addListOfStuff(_VP, l->VP, 3 + 3 * l->getNumTimeSteps());
+    Octree_Arrange(_VP);
+    _TP = Octree_Create(maxElePerBucket, min, size, pntBB, pntCentroid, pntInEle);
+    addListOfStuff(_TP, l->TP, 3 + 9 * l->getNumTimeSteps());
+    Octree_Arrange(_TP);
 
     _SL = Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
     addListOfStuff(_SL, l->SL, 6 + 2 * l->getNumTimeSteps());
@@ -434,6 +462,7 @@ bool OctreePost::searchScalar(double x, double y, double z, double *values,
     if(_getValue(Octree_Search(P, _ST), 2, 3, 1, P, step, values, size)) return true;
     if(_getValue(Octree_Search(P, _SQ), 2, 4, 1, P, step, values, size)) return true;
     if(_getValue(Octree_Search(P, _SL), 1, 2, 1, P, step, values, size)) return true;
+    if(_getValue(Octree_Search(P, _SP), 0, 1, 1, P, step, values, size)) return true;
   }
   else if(_theViewDataGModel){
     GModel *m = _theViewDataGModel->getModel((step < 0) ? 0 : step);
@@ -486,6 +515,7 @@ bool OctreePost::searchVector(double x, double y, double z, double *values,
     if(_getValue(Octree_Search(P, _VT), 2, 3, 3, P, step, values, size)) return true;
     if(_getValue(Octree_Search(P, _VQ), 2, 4, 3, P, step, values, size)) return true;
     if(_getValue(Octree_Search(P, _VL), 1, 2, 3, P, step, values, size)) return true;
+    if(_getValue(Octree_Search(P, _VP), 0, 1, 3, P, step, values, size)) return true;
   }
   else if(_theViewDataGModel){
     GModel *m = _theViewDataGModel->getModel((step < 0) ? 0 : step);
@@ -522,6 +552,7 @@ bool OctreePost::searchTensor(double x, double y, double z, double *values,
     if(_getValue(Octree_Search(P, _TT), 2, 3, 9, P, step, values, size)) return true;
     if(_getValue(Octree_Search(P, _TQ), 2, 4, 9, P, step, values, size)) return true;
     if(_getValue(Octree_Search(P, _TL), 1, 2, 9, P, step, values, size)) return true;
+    if(_getValue(Octree_Search(P, _TP), 0, 1, 9, P, step, values, size)) return true;
   }
   else if(_theViewDataGModel){
     GModel *m = _theViewDataGModel->getModel((step < 0) ? 0 : step);

@@ -698,6 +698,10 @@ graphicWindow::graphicWindow(bool main, int numTiles) : _autoScrollMessages(true
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
   browser->scrollbar_size(10); // thinner scrollbars
 #endif
+#if defined(__APPLE__)
+  // horizontal scrollbar is buggy on Mac when tiles are resized
+  browser->has_scrollbar(Fl_Browser_::VERTICAL);
+#endif
   tile->end();
 
   // resize the tile to match the prescribed sizes
