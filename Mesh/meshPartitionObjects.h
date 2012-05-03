@@ -166,17 +166,23 @@ class Graph
   void fillWithMultipleWeights(int ncon, std::map<int, std::vector<int> > vWeightMap, std::map<int, int> eWeightMap)
   {
     std::vector<MElement*>::iterator eIt;
-    vwgts.resize(element.size()*ncon);
-    adjwgts.resize(adjncy.size());
+    std::vector<int> local2global;
+    local2global.resize(element.size());
     int localElNum=0;
     for(eIt=element.begin();eIt !=element.end();eIt++){
+      local2global[localElNum]=(*eIt)->getNum();
+      localElNum += 1;
+    }
+
+    vwgts.resize(element.size()*ncon);
+    adjwgts.resize(adjncy.size());
+    for(int iElem = 0; iElem < element.size(); iElem++){
       for(int i=0; i<ncon; i++){
-        vwgts[localElNum*ncon+i]=vWeightMap[(*eIt)->getNum()][i+1];
+        vwgts[iElem*ncon+i]=vWeightMap[local2global[iElem]][i];
       }
-      for(int j=xadj[localElNum];j<xadj[localElNum+1];j++){
-        adjwgts[j]+=eWeightMap[(*eIt)->getNum()];
+      for(int j=xadj[iElem];j<xadj[iElem+1];j++){
+        adjwgts[j]=eWeightMap[local2global[iElem]]+eWeightMap[local2global[adjncy[j]]];
       }
-      localElNum+=1;
     }
   }
 
