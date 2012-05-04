@@ -246,7 +246,6 @@ void End_Curve(Curve *c)
       }
     }
   }
-
   c->degenerated = false;
 
   if(c->Typ == MSH_SEGM_CIRC || c->Typ == MSH_SEGM_CIRC_INV ||
@@ -535,6 +534,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
     pC->Control_Points = NULL;
     pC->beg = NULL;
     pC->end = NULL;
+    pC->degenerated = false;
     return pC;
   }
 
