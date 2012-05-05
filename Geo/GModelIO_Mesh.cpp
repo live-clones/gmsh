@@ -39,7 +39,7 @@
 #include "PViewDataList.h"
 #endif
 
-#define FAST_ELEMENTS 1
+#define FAST_ELEMENTS 0
 
 void GModel::_storePhysicalTagsInEntities(int dim,
                                           std::map<int, std::map<int, std::string> > &map)
