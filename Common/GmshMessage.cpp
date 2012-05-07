@@ -614,10 +614,11 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
     onelab::string o4(name + "/9ComputeCommand", "-3");
     o4.setVisible(false);
     _onelabClient->set(o4);
+
     std::vector<onelab::string> ps;
     _onelabClient->get(ps, name + "/Action");
     if(ps.size()){
-      Info("Performing OneLab '%s'", ps[0].getValue().c_str());
+      //Info("Performing OneLab '%s'", ps[0].getValue().c_str());
       if(ps[0].getValue() == "initialize") Exit(0);
     }
 
@@ -648,15 +649,21 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   std::vector<onelab::number> ps;
   _onelabClient->get(ps, name);
   bool noRange = true, noChoices = true, noLoop = true, noGraph = true;
-  if(ps.size()){ // use value from server
-    val[0] = ps[0].getValue();
-    // keep track of these attributes, which can be changed server-side
-    if(ps[0].getMin() != -onelab::parameter::maxNumber() ||
-       ps[0].getMax() != onelab::parameter::maxNumber() ||
-       ps[0].getStep() != 0.) noRange = false;
-    if(ps[0].getChoices().size()) noChoices = false;
-    if(ps[0].getAttribute("Loop").size()) noLoop = false;
-    if(ps[0].getAttribute("Graph").size()) noGraph = false;
+  if(ps.size()){ 
+    if(ps[0].getReadOnly()){ // use value of Gmsh
+      ps[0].setName(name);
+      ps[0].setValue(val[0]);
+    }
+    else{ // use value from server
+      val[0] = ps[0].getValue();
+      // keep track of these attributes, which can be changed server-side
+      if(ps[0].getMin() != -onelab::parameter::maxNumber() ||
+	 ps[0].getMax() != onelab::parameter::maxNumber() ||
+	 ps[0].getStep() != 0.) noRange = false;
+      if(ps[0].getChoices().size()) noChoices = false;
+      if(ps[0].getAttribute("Loop").size()) noLoop = false;
+      if(ps[0].getAttribute("Graph").size()) noGraph = false;
+    }
   }
   else{
     ps.resize(1);
@@ -682,6 +689,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
     if(copt.count("Choices")) ps[0].setChoiceLabels(copt["Choices"]);
   }
   if(fopt.count("Visible")) ps[0].setVisible(fopt["Visible"][0] ? true : false);
+  if(fopt.count("ReadOnly")) ps[0].setReadOnly(fopt["ReadOnly"][0] ? true : false);
   if(copt.count("Help")) ps[0].setHelp(copt["Help"][0]);
   if(copt.count("Label")) ps[0].setLabel(copt["Label"][0]);
   if(copt.count("ShortHelp")) ps[0].setLabel(copt["ShortHelp"][0]);

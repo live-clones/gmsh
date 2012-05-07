@@ -261,7 +261,7 @@ namespace onelab{
     }
     void update(const number &p)
     {
-      addClients(p.getClients()); // complete the list
+      addClients(p.getClients()); // complete the list of clients
       setLabel(p.getLabel());
       setHelp(p.getHelp());
       setVisible(p.getVisible());

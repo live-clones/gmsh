@@ -436,6 +436,7 @@ static void guessModelName(onelab::client *c)
     std::string name(split[0] + split[1] + ext);
     onelab::string o(c->getName() + "/1ModelName", name, "Model name");
     o.setKind("file");
+    o.setVisible(false);
     c->set(o);
   }
 }
@@ -1094,6 +1095,10 @@ void onelabWindow::_addParameter(onelab::number &p)
     Fl_Color c;
     if(getFlColor(p.getAttribute("Highlight"), c))
       but->color(c);
+    if(p.getReadOnly()){
+      getFlColor("AliceBlue", c); // rendre également la case non éditable
+      but->color(c);
+    }
     but->align(FL_ALIGN_RIGHT);
     but->callback(onelab_input_range_cb, (void*)n);
     but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
@@ -1138,6 +1143,10 @@ void onelabWindow::_addParameter(onelab::string &p)
   Fl_Color c;
   if(getFlColor(p.getAttribute("Highlight"), c))
     but->input()->color(c);
+  if(p.getReadOnly()){
+    getFlColor("ALiceBlue", c); // rendre également la case non éditable
+    but->input()->color(c);
+  }
   but->align(FL_ALIGN_RIGHT);
   but->callback(onelab_input_choice_cb, (void*)n);
   but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
