@@ -1033,21 +1033,9 @@ void onelabWindow::_addParameter(onelab::number &p)
   Fl_Tree_Item *n = _tree->add(p.getName().c_str());
   n->labelsize(FL_NORMAL_SIZE + 5);
   std::string label = p.getShortName();
+  std::vector<double> choices = p.getChoices();
   _tree->begin();
-  unsigned int numChoices = p.getChoices().size();
-  if(numChoices == 2 && p.getChoices()[0] == 0 && p.getChoices()[1] == 1){
-    // check box (boolean choice)
-    Fl_Check_Button *but = new Fl_Check_Button(1, 1, _itemWidth, 1);
-    _treeWidgets.push_back(but);
-    but->copy_label(label.c_str());
-    but->value(p.getValue());
-    but->callback(onelab_check_button_cb, (void*)n);
-    n->widget(but);
-    Fl_Color c;
-    if(getFlColor(p.getAttribute("Highlight"), c))
-      n->labelbgcolor(c);
-  }
-  else if(numChoices && numChoices == p.getValueLabels().size()){
+  if(choices.size() && choices.size() == p.getValueLabels().size()){
     // enumeration (display choices as value labels, not numbers)
     Fl_Choice *but = new Fl_Choice(1, 1, _itemWidth, 1);
     _treeWidgets.push_back(but);
@@ -1065,7 +1053,6 @@ void onelabWindow::_addParameter(onelab::number &p)
     Fl_Menu_Item it = {0};
     menu.push_back(it);
     but->copy(&menu[0]);
-    std::vector<double> choices = p.getChoices();
     for(unsigned int i = 0; i < choices.size(); i++){
       if(p.getValue() == choices[i]){
         but->value(i);
@@ -1074,6 +1061,18 @@ void onelabWindow::_addParameter(onelab::number &p)
     }
     but->align(FL_ALIGN_RIGHT);
     but->callback(onelab_choice_cb, (void*)n);
+    n->widget(but);
+    Fl_Color c;
+    if(getFlColor(p.getAttribute("Highlight"), c))
+      n->labelbgcolor(c);
+  }
+  else if(choices.size() == 2 && choices[0] == 0 && choices[1] == 1){
+    // check box (boolean choice)
+    Fl_Check_Button *but = new Fl_Check_Button(1, 1, _itemWidth, 1);
+    _treeWidgets.push_back(but);
+    but->copy_label(label.c_str());
+    but->value(p.getValue());
+    but->callback(onelab_check_button_cb, (void*)n);
     n->widget(but);
     Fl_Color c;
     if(getFlColor(p.getAttribute("Highlight"), c))
