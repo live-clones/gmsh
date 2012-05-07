@@ -3,23 +3,23 @@
 //  GEOM PARTITION : partition algorithm
 //
 //  Copyright (C) 2003  OPEN CASCADE, EADS/CCR, LIP6, CEA/DEN,
-//  CEDRAT, EDF R&D, LEG, PRINCIPIA R&D, BUREAU VERITAS 
-// 
-//  This library is free software; you can redistribute it and/or 
-//  modify it under the terms of the GNU Lesser General Public 
-//  License as published by the Free Software Foundation; either 
-//  version 2.1 of the License. 
-// 
-//  This library is distributed in the hope that it will be useful, 
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of 
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-//  Lesser General Public License for more details. 
-// 
-//  You should have received a copy of the GNU Lesser General Public 
-//  License along with this library; if not, write to the Free Software 
+//  CEDRAT, EDF R&D, LEG, PRINCIPIA R&D, BUREAU VERITAS
+//
+//  This library is free software; you can redistribute it and/or
+//  modify it under the terms of the GNU Lesser General Public
+//  License as published by the Free Software Foundation; either
+//  version 2.1 of the License.
+//
+//  This library is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//  Lesser General Public License for more details.
+//
+//  You should have received a copy of the GNU Lesser General Public
+//  License along with this library; if not, write to the Free Software
 //  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
-// 
-//  See http://www.opencascade.org/SALOME/ or email : webmaster.salome@opencascade.org 
+//
+//  See http://www.opencascade.org/SALOME/ or email : webmaster.salome@opencascade.org
 //
 //
 //
@@ -76,7 +76,7 @@ static int nbe = 0;
 
 //=======================================================================
 //function : Partition_Loop
-//purpose  : 
+//purpose  :
 //=======================================================================
 Partition_Loop::Partition_Loop()
 {
@@ -84,11 +84,11 @@ Partition_Loop::Partition_Loop()
 
 //=======================================================================
 //function : Init
-//purpose  : 
+//purpose  :
 //=======================================================================
 void Partition_Loop::Init(const TopoDS_Face& F)
 {
-  myConstEdges.Clear(); 
+  myConstEdges.Clear();
   myNewWires  .Clear();
   myNewFaces  .Clear();
   myFace = F;
@@ -96,7 +96,7 @@ void Partition_Loop::Init(const TopoDS_Face& F)
 
 //=======================================================================
 //function : AddConstEdge
-//purpose  : 
+//purpose  :
 //=======================================================================
 void Partition_Loop::AddConstEdge (const TopoDS_Edge& E)
 {
@@ -106,7 +106,7 @@ void Partition_Loop::AddConstEdge (const TopoDS_Edge& E)
 
 //=======================================================================
 //function : FindDelta
-//purpose  : 
+//purpose  :
 //=======================================================================
 static Standard_Real FindDelta(TopTools_ListOfShape& LE,
 			       const TopoDS_Face& F)
@@ -130,8 +130,8 @@ static Standard_Real FindDelta(TopTools_ListOfShape& LE,
 //=======================================================================
 //function : SelectEdge
 //purpose  : Find the edge <NE> connected <CE> by the vertex <CV> in the list <LE>.
-//           <NE> Is erased  of the list. If <CE> is too in the list <LE> 
-//			 with the same orientation, it's erased of the list 
+//           <NE> Is erased  of the list. If <CE> is too in the list <LE>
+//			 with the same orientation, it's erased of the list
 //=======================================================================
 static Standard_Boolean  SelectEdge(const TopoDS_Face&    F,
 				    const TopoDS_Edge&    CE,
@@ -150,21 +150,21 @@ static Standard_Boolean  SelectEdge(const TopoDS_Face&    F,
 
   if (LE.Extent() > 1) {
     //--------------------------------------------------------------
-    // Several possible edges.   
-    // - Test the edges differents of CE 
+    // Several possible edges.
+    // - Test the edges differents of CE
     //--------------------------------------------------------------
     Standard_Real   cf, cl, f, l;
     TopoDS_Face FForward = F;
     Handle(Geom2d_Curve) Cc, C;
     FForward.Orientation(TopAbs_FORWARD);
-			
+
     Cc = BRep_Tool::CurveOnSurface(CE,FForward,cf,cl);
     Standard_Real dist,distmin  = 100*BRep_Tool::Tolerance(CV);
     Standard_Real uc,u;
     if (CE.Orientation () == TopAbs_FORWARD) uc = cl;
     else                                     uc = cf;
 
-    gp_Pnt2d P2,PV = Cc->Value(uc); 
+    gp_Pnt2d P2,PV = Cc->Value(uc);
 
     Standard_Real delta = FindDelta(LE,FForward);
 
@@ -179,12 +179,12 @@ static Standard_Boolean  SelectEdge(const TopoDS_Face&    F,
 	if (dist <= distmin){
 	  distmin = dist;
 	}
-				
+
       }
     }
 
-    Standard_Real anglemax = - PI;
-    TopoDS_Edge   SelectedEdge;	
+    Standard_Real anglemax = - M_PI;
+    TopoDS_Edge   SelectedEdge;
     for ( itl.Initialize(LE); itl.More(); itl.Next()) {
       const TopoDS_Edge& E = TopoDS::Edge(itl.Value());
       if (!E.IsSame(CE)) {
@@ -193,7 +193,7 @@ static Standard_Boolean  SelectEdge(const TopoDS_Face&    F,
 	else                                    u = l;
 	P2 = C->Value(u);
 	dist = PV.Distance(P2);
-	if (dist <= distmin + (1./3)*delta){ 
+	if (dist <= distmin + (1./3)*delta){
 	  gp_Pnt2d PC, P;
 	  gp_Vec2d CTg1, CTg2, Tg1, Tg2;
 	  Cc->D2(uc, PC, CTg1, CTg2);
@@ -215,7 +215,7 @@ static Standard_Boolean  SelectEdge(const TopoDS_Face&    F,
 	  }
 	  if (angle >= anglemax) {
 	    anglemax = angle ;
-	    SelectedEdge = E;	
+	    SelectedEdge = E;
 	  }
 	}
       }
@@ -227,7 +227,7 @@ static Standard_Boolean  SelectEdge(const TopoDS_Face&    F,
 	LE.Remove(itl);
 	break;
       }
-    }					
+    }
   }
   else if (LE.Extent() == 1) {
     NE = TopoDS::Edge(LE.First());
@@ -241,7 +241,7 @@ static Standard_Boolean  SelectEdge(const TopoDS_Face&    F,
 
 //=======================================================================
 //function : SamePnt2d
-//purpose  : 
+//purpose  :
 //=======================================================================
 static Standard_Boolean  SamePnt2d(TopoDS_Vertex  V,
 				   TopoDS_Edge&   E1,
@@ -252,21 +252,21 @@ static Standard_Boolean  SamePnt2d(TopoDS_Vertex  V,
   gp_Pnt2d        P1,P2;
   TopoDS_Shape aLocalF = F.Oriented(TopAbs_FORWARD);
   TopoDS_Face FF = TopoDS::Face(aLocalF);
-  Handle(Geom2d_Curve) C1 = BRep_Tool::CurveOnSurface(E1,FF,f1,l1);  
-  Handle(Geom2d_Curve) C2 = BRep_Tool::CurveOnSurface(E2,FF,f2,l2);  
+  Handle(Geom2d_Curve) C1 = BRep_Tool::CurveOnSurface(E1,FF,f1,l1);
+  Handle(Geom2d_Curve) C2 = BRep_Tool::CurveOnSurface(E2,FF,f2,l2);
   if (E1.Orientation () == TopAbs_FORWARD) P1 = C1->Value(f1);
   else                                     P1 = C1->Value(l1);
-  
+
   if (E2.Orientation () == TopAbs_FORWARD) P2 = C2->Value(l2);
   else                                     P2 = C2->Value(f2);
   Standard_Real Tol  = 100*BRep_Tool::Tolerance(V);
   Standard_Real Dist = P1.Distance(P2);
-  return Dist < Tol; 
+  return Dist < Tol;
 }
 
 //=======================================================================
 //function : PurgeNewEdges
-//purpose  : 
+//purpose  :
 //=======================================================================
 static void  PurgeNewEdges(TopTools_ListOfShape& ConstEdges,
 			   const TopTools_MapOfOrientedShape&          UsedEdges)
@@ -280,18 +280,18 @@ static void  PurgeNewEdges(TopTools_ListOfShape& ConstEdges,
     else {
       it.Next();
     }
-  }  
+  }
 }
 
 //=======================================================================
 //function : StoreInMVE
-//purpose  : 
+//purpose  :
 //=======================================================================
 static void StoreInMVE (const TopoDS_Face& F,
 			TopoDS_Edge& E,
 			TopTools_DataMapOfShapeListOfShape& MVE )
 
-{ 
+{
   TopoDS_Vertex V1, V2;
   TopTools_ListOfShape Empty;
 
@@ -300,7 +300,7 @@ static void StoreInMVE (const TopoDS_Face& F,
     MVE.Bind(V1,Empty);
   }
   MVE(V1).Append(E);
-	
+
   if (!MVE.IsBound(V2)) {
     MVE.Bind(V2,Empty);
   }
@@ -309,13 +309,13 @@ static void StoreInMVE (const TopoDS_Face& F,
 
 //=======================================================================
 //function : Perform
-//purpose  : 
+//purpose  :
 //=======================================================================
 void Partition_Loop::Perform()
 {
 
   TopTools_DataMapOfShapeListOfShape MVE;
-  TopTools_DataMapIteratorOfDataMapOfShapeListOfShape Mapit, Mapit1;  
+  TopTools_DataMapIteratorOfDataMapOfShapeListOfShape Mapit, Mapit1;
   TopTools_ListIteratorOfListOfShape                  itl;
   TopoDS_Vertex                                       V1,V2;
 
@@ -328,7 +328,7 @@ void Partition_Loop::Perform()
   }
 
   //----------------------------------------------
-  // Construction of all the wires and of all the new faces. 
+  // Construction of all the wires and of all the new faces.
   //----------------------------------------------
   TopTools_MapOfOrientedShape UsedEdges;
 
@@ -348,12 +348,12 @@ void Partition_Loop::Perform()
 
     TopExp::Vertices(CE,V1,V2);
     //--------------------------------
-    // VF first vertex 
+    // VF first vertex
     //--------------------------------
-    if (CE.Orientation() == TopAbs_FORWARD) { 
+    if (CE.Orientation() == TopAbs_FORWARD) {
       CV = VF = V1;
     }
-    else  { 
+    else  {
       CV = VF = V2;
     }
     if (!MVE.IsBound(CV)) continue;
@@ -365,18 +365,18 @@ void Partition_Loop::Perform()
     }
 
     int i = 0;
-    while (!End) { 
+    while (!End) {
       //-------------------------------
       // Construction of a wire.
       //-------------------------------
       TopExp::Vertices(CE,V1,V2);
-      if (!CV.IsSame(V1)) CV = V1; else CV = V2; 
+      if (!CV.IsSame(V1)) CV = V1; else CV = V2;
       B.Add (NW,CE);
       UsedEdges.Add(CE);
 
       //--------------
       // stop test
-      //--------------			
+      //--------------
       if (!MVE.IsBound(CV) || MVE(CV).IsEmpty() || CV.IsSame(VF) ) {
 	if (CV.IsSame(VF)) {
 	  if (MVE(CV).Extent() == 1 ) MVE.UnBind(CV);
@@ -390,7 +390,7 @@ void Partition_Loop::Perform()
 	  }
 	}
 	End=Standard_True;
-      } 
+      }
 
       //--------------
       // select edge
@@ -413,14 +413,14 @@ void Partition_Loop::Perform()
     }
 
     //-----------------------------
-    // Test if the wire is closed  
+    // Test if the wire is closed
     //-----------------------------
     if (VF.IsSame(CV) && SamePnt2d(VF,EF,CE,myFace)) {
     }
     else{
       //MESSAGE ( "wire not closed" )
     }
-    myNewWires.Append (NW);			
+    myNewWires.Append (NW);
   }
 
   PurgeNewEdges(myConstEdges,UsedEdges);
@@ -430,28 +430,28 @@ void Partition_Loop::Perform()
 
 //=======================================================================
 //function : NewWires
-//purpose  : 
+//purpose  :
 //=======================================================================
-const TopTools_ListOfShape&  Partition_Loop::NewWires() const 
-{  
+const TopTools_ListOfShape&  Partition_Loop::NewWires() const
+{
   return myNewWires;
 }
 
 //=======================================================================
 //function : NewFaces
-//purpose  : 
+//purpose  :
 //=======================================================================
-const TopTools_ListOfShape&  Partition_Loop::NewFaces() const 
-{  
+const TopTools_ListOfShape&  Partition_Loop::NewFaces() const
+{
   return myNewFaces;
 }
- 
+
 //=======================================================================
 //function : WiresToFaces
-//purpose  : 
+//purpose  :
 //=======================================================================
-void  Partition_Loop::WiresToFaces() 
-{  
+void  Partition_Loop::WiresToFaces()
+{
   if (!myNewWires.IsEmpty()) {
     BRepAlgo_FaceRestrictor FR;
 
@@ -465,7 +465,7 @@ void  Partition_Loop::WiresToFaces()
     }
 
     FR.Perform();
-    
+
     if (FR.IsDone()) {
       for (; FR.More(); FR.Next()) {
 	myNewFaces.Append(FR.Current().Oriented(OriF));
