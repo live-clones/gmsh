@@ -314,4 +314,5 @@ class inputRange : public Fl_Group {
   std::string graph(){ return _graph_val; }
   void color(int col){ _input->color(col); }
   int color(){ return _input->color(); }
+  Fl_Value_Input *input(){ return _input; }
 };
