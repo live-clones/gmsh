@@ -124,7 +124,7 @@ namespace onelab{
     const std::set<std::string> &getClients() const { return _clients; }
     static char charSep() { return '\0'; }
     static double maxNumber() { return 1e200; }
-    static std::string version() { return "1.01"; }
+    static std::string version() { return "1.02"; }
     static std::string getNextToken(const std::string &msg,
                                     std::string::size_type &first,
                                     char separator=charSep())
@@ -218,6 +218,7 @@ namespace onelab{
   private:
     double _value, _min, _max, _step;
     std::vector<double> _choices;
+    std::map<double, std::string> _valueLabels;
   public:
     number(const std::string &name="", double value=0.,
            const std::string &label="", const std::string &help="")
@@ -228,12 +229,36 @@ namespace onelab{
     void setMax(double max){ _max = max; }
     void setStep(double step){ _step = step; }
     void setChoices(const std::vector<double> &choices){ _choices = choices; }
+    void setChoiceLabels(const std::vector<std::string> &labels)
+    {
+      if(labels.size() != _choices.size()) return;
+      for(unsigned int i = 0; i < _choices.size(); i++)
+        _valueLabels[_choices[i]] = labels[i];
+    }
+    void setValueLabels(const std::map<double, std::string> &valueLabels)
+    {
+      _valueLabels = valueLabels;
+    }
+    void setValueLabel(double value, const std::string &label)
+    {
+      _valueLabels[value] = label;
+    }
     std::string getType() const { return "number"; }
     double getValue() const { return _value; }
     double getMin() const { return _min; }
     double getMax() const { return _max; }
     double getStep() const { return _step; }
     const std::vector<double> &getChoices() const { return _choices; }
+    const std::map<double, std::string> &getValueLabels() const
+    {
+      return _valueLabels;
+    }
+    std::string getValueLabel(double value) const
+    {
+      std::map<double, std::string>::const_iterator it = _valueLabels.find(value);
+      if(it != _valueLabels.end()) return it->second;
+      return "";
+    }
     void update(const number &p)
     {
       addClients(p.getClients()); // complete the list
@@ -259,6 +284,12 @@ namespace onelab{
               << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << _choices[i] << charSep();
+      sstream << _valueLabels.size() << charSep();
+      for(std::map<double, std::string>::const_iterator it = _valueLabels.begin();
+          it != _valueLabels.end(); it++){
+        sstream << it->first << charSep();
+        sstream << sanitize(it->second) << charSep();
+      }
       return sstream.str();
     }
     std::string::size_type fromChar(const std::string &msg)
@@ -272,6 +303,11 @@ namespace onelab{
       _choices.resize(atoi(getNextToken(msg, pos).c_str()));
       for(unsigned int i = 0; i < _choices.size(); i++)
         _choices[i] = atof(getNextToken(msg, pos).c_str());
+      int numValueLabels = atoi(getNextToken(msg, pos).c_str());
+      for(int i = 0; i < numValueLabels; i++){
+        double value = atof(getNextToken(msg, pos).c_str());
+        _valueLabels[value] = getNextToken(msg, pos);
+      }
       return pos;
     }
   };

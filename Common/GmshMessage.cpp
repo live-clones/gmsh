@@ -677,7 +677,10 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
     ps[0].setMax(fopt["Max"][0]); ps[0].setMin(-onelab::parameter::maxNumber());
   }
   if(noRange && fopt.count("Step")) ps[0].setStep(fopt["Step"][0]);
-  if(noChoices && fopt.count("Choices")) ps[0].setChoices(fopt["Choices"]);
+  if(noChoices && fopt.count("Choices")){
+    ps[0].setChoices(fopt["Choices"]);
+    if(copt.count("Choices")) ps[0].setChoiceLabels(copt["Choices"]);
+  }
   if(fopt.count("Visible")) ps[0].setVisible(fopt["Visible"][0] ? true : false);
   if(copt.count("Help")) ps[0].setHelp(copt["Help"][0]);
   if(copt.count("Label")) ps[0].setLabel(copt["Label"][0]);

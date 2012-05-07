@@ -184,7 +184,7 @@ typedef union YYSTYPE
 {
 
 /* Line 1685 of yacc.c  */
-#line 86 "Gmsh.y"
+#line 92 "Gmsh.y"
 
   char *c;
   int i;
