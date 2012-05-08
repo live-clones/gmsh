@@ -31,9 +31,11 @@ bool OptHOM::addJacObjGrad(double &Obj, alglib::real_1d_array &gradObj)
 
   for (int iEl = 0; iEl < mesh.nEl(); iEl++) {
     std::vector<double> sJ(mesh.nBezEl(iEl));                   // Scaled Jacobians
-    mesh.scaledJac(iEl,sJ);
+    //    mesh.scaledJac(iEl,sJ);
     std::vector<double> gSJ(mesh.nBezEl(iEl)*mesh.nPCEl(iEl));  // Gradients of scaled Jacobians
-    mesh.gradScaledJac(iEl,gSJ);
+    //    mesh.gradScaledJac(iEl,gSJ);
+    mesh.scaledJacAndGradients (iEl,sJ,gSJ);
+    
     for (int l = 0; l < mesh.nBezEl(iEl); l++) {
       Obj += compute_f(sJ[l]);
       const double f1 = compute_f1(sJ[l]);
@@ -198,9 +200,9 @@ void OptHOM::OptimPass(alglib::real_1d_array &x, const alglib::real_1d_array &in
     alglib::mincgreport rep;
     mincgcreate(x, state);
     alglib::real_1d_array scale;
-    calcScale(scale);
-    mincgsetscale(state,scale);
-    mincgsetprecscale(state);
+            calcScale(scale);
+            mincgsetscale(state,scale);
+            mincgsetprecscale(state);
     mincgsetcond(state, EPSG, EPSF, EPSX, itMax);
     mincgsetxrep(state, true);
     alglib::mincgoptimize(state, evalObjGradFunc, printProgressFunc, this);
@@ -299,8 +301,8 @@ int OptHOM::optimize(double weightFixed, double weightFree, double b_min, double
 
   OptHomMessage("Optimization done Range (%g,%g)",minJac,maxJac);
 
-  if (minJac < barrier_min && maxJac > barrier_max) return 0;
-  if (minJac > 0.0) return 1;
+  if (minJac > barrier_min && maxJac < barrier_max) return 1;
+  if (minJac > 0.0) return 0;
   return -1;
 
 }

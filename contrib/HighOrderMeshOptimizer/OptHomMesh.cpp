@@ -9,7 +9,25 @@
 
 
 std::map<int, std::vector<double> > Mesh::_jacBez;
+std::map<int, fullMatrix<double> > Mesh::_gradShapeFunctions;
+std::map<int, fullMatrix<double> > Mesh::_lag2Bez;
 
+
+fullMatrix<double> Mesh::computeGSF(const polynomialBasis *lagrange, const bezierBasis *bezier)
+{
+  // bezier points are defined in the [0,1] x [0,1] quad
+  fullMatrix<double> bezierPoints = bezier->points;
+  if (lagrange->parentType == TYPE_QUA) {
+    for (int i = 0; i < bezierPoints.size1(); ++i) {
+      bezierPoints(i, 0) = -1 + 2 * bezierPoints(i, 0);
+      bezierPoints(i, 1) = -1 + 2 * bezierPoints(i, 1);
+    }
+  }
+
+  fullMatrix<double> allDPsi;
+  lagrange->df(bezierPoints, allDPsi);
+  return allDPsi;
+}
 
 
 std::vector<double> Mesh::computeJB(const polynomialBasis *lagrange, const bezierBasis *bezier)
@@ -109,6 +127,8 @@ Mesh::Mesh(GEntity *ge, const std::set<MElement*> &els, std::set<MVertex*> &toFi
     const bezierBasis *bezier = JacobianBasis::find(lagrange->type)->bezier;
     if (_jacBez.find(lagrange->type) == _jacBez.end()) {
       _jacBez[lagrange->type] = computeJB(lagrange, bezier);
+      _gradShapeFunctions[lagrange->type] = computeGSF(lagrange, bezier);
+      _lag2Bez[lagrange->type] = bezier->matrixLag2Bez;
     }
     _nBezEl[iEl] = bezier->points.size1();
     _nNodEl[iEl] = lagrange->points.size1();
@@ -300,6 +320,120 @@ void Mesh::updateGEntityPositions()
 
 }
 
+
+/*
+  A faster version that computes jacobians and their gradients
+
+  Terms of jacobian are of the form  J_{11} = dX / dU        
+
+  X = \sum \phi_j X_{j}
+
+  d J_{11} / dX_k = d \phi_k / du    
+
+ */
+
+
+
+void Mesh::scaledJacAndGradients(int iEl, std::vector<double> &sJ , std::vector<double> &gSJ) {
+  
+  if (_dim == 2 && !projJac){
+    //    printf("coucou\n");
+    gradScaledJac(iEl,gSJ);
+    scaledJac(iEl,sJ);    
+    return;
+  }
+  
+  SVector3 n ;
+  if (_dim == 2)
+    n = _normEl[iEl];
+  
+  //  std::vector<double> OLD = sJ;
+  //  std::vector<double> OLD = gSJ;
+  //  gradScaledJac(iEl,OLD);
+  //  scaledJac(iEl,OLD);
+
+  fullMatrix<double> &gsf = _gradShapeFunctions[_el[iEl]->getTypeForMSH()];
+  const fullMatrix<double> &l2b = _lag2Bez[_el[iEl]->getTypeForMSH()];
+  const int nbBez = _nBezEl[iEl];
+  const int nbNod = _nNodEl[iEl];
+  fullMatrix<double> JDJ (nbBez,3*nbNod+1);
+  fullMatrix<double> BDB (nbBez,3*nbNod+1);
+  
+  double jac[3][3];
+  for (int l = 0; l < nbBez; l++) {
+    fullMatrix<double> dPsi(gsf, l * 3, 3);
+    jac[0][0] = jac[0][1] = jac[0][2] = 0.;
+    jac[1][0] = jac[1][1] = jac[1][2] = 0.;
+    jac[2][0] = jac[2][1] = jac[2][2] = (_dim == 2) ? n.z() : 0.0;
+    const double INVJ = (_dim == 3) ? _invStraightJac[iEl] : 1.0;
+    for (int i = 0; i < nbNod; i++) {
+      int &iVi = _el2V[iEl][i];
+      const double x = _xyz[iVi].x();
+      const double y = _xyz[iVi].y();
+      const double z = _xyz[iVi].z();
+      for (int k = 0; k < 3; k++) {
+	const double gg = dPsi(i, k);
+	jac[k][0] += x * gg;
+	jac[k][1] += y * gg;
+	jac[k][2] += z * gg;
+      }
+    }
+    for (int i = 0; i < nbNod; i++) {
+      JDJ (l,i+0*nbNod) = 
+	( dPsi(i, 0) * jac[1][1] * jac[2][2] + jac[0][2] *  dPsi(i, 1) * jac[2][1] +
+	 jac[0][1] * jac[1][2] *  dPsi(i, 2) - jac[0][2] * jac[1][1] *  dPsi(i, 2) -
+	  dPsi(i, 0) * jac[1][2] * jac[2][1] - jac[0][1] *  dPsi(i, 1) * jac[2][2])
+	* INVJ; 
+      JDJ (l,i+1*nbNod) = 
+	(jac[0][0] * dPsi(i, 1) * jac[2][2] + jac[0][2] * jac[1][0] * dPsi(i, 2) +
+	 dPsi(i, 0) * jac[1][2] * jac[2][0] - jac[0][2] * dPsi(i, 1) * jac[2][0] -
+	 jac[0][0] * jac[1][2] * dPsi(i, 2) - dPsi(i, 0) * jac[1][0] * jac[2][2])
+	* INVJ; 
+      JDJ (l,i+2*nbNod) = 
+	(jac[0][0] * jac[1][1] * dPsi(i, 2) + dPsi(i, 0) * jac[1][0] * jac[2][1] +
+	 jac[0][1] * dPsi(i, 1) * jac[2][0] - dPsi(i, 0) * jac[1][1] * jac[2][0] -
+	 jac[0][0] * dPsi(i, 1) * jac[2][1] - jac[0][1] * jac[1][0] * dPsi(i, 2))
+	* INVJ; 
+    }    
+    const double dJ = 
+      jac[0][0] * jac[1][1] * jac[2][2] + jac[0][2] * jac[1][0] * jac[2][1] +
+      jac[0][1] * jac[1][2] * jac[2][0] - jac[0][2] * jac[1][1] * jac[2][0] -
+      jac[0][0] * jac[1][2] * jac[2][1] - jac[0][1] * jac[1][0] * jac[2][2];
+    JDJ(l,3*nbNod) = dJ * INVJ;        
+  }
+  
+  //  (N_b x N_b) x (N_b x 3*N_n + 1) 
+  l2b.mult(JDJ,BDB);
+
+  // the scaled jacobian
+  //  printf("ELEMENT %d\n",iEl);
+  for (int l = 0; l < nbBez; l++) {
+    sJ [l] = BDB (l,3*nbNod);    
+    //    printf("OLD %12.5E NEW %12.5E\n",OLD[l],sJ[l]);
+  }
+
+  // gradients of the scaled jacobian
+  int iPC = 0;
+  std::vector<SPoint3> gXyzV(nbBez);
+  std::vector<SPoint3> gUvwV(nbBez);
+  for (int i = 0; i < nbNod; i++) {
+    int &iFVi = _el2FV[iEl][i];
+    if (iFVi >= 0) {
+      for (int l = 0; l < nbBez; l++) {
+	gXyzV [l] = SPoint3(BDB(l,i+0*nbNod),BDB(l,i+1*nbNod),BDB(l,i+2*nbNod));
+      }
+      _pc->gXyz2gUvw(_freeVert[iFVi],_uvw[iFVi],gXyzV,gUvwV);
+      for (int l = 0; l < nbBez; l++) {
+	gSJ[indGSJ(iEl,l,iPC)] = gUvwV[l][0];
+	if (_nPCFV[iFVi] >= 2) gSJ[indGSJ(iEl,l,iPC+1)] = gUvwV[l][1];
+	if (_nPCFV[iFVi] == 3) gSJ[indGSJ(iEl,l,iPC+2)] = gUvwV[l][2];
+	//	if (fabs(OLD[indGSJ(iEl,l,iPC+2)]-gSJ[indGSJ(iEl,l,iPC+2)]) > 1.e-6)
+	//	  printf("OLD = %12.5E new = %12.5E\n",OLD[indGSJ(iEl,l,iPC+2)],gSJ[indGSJ(iEl,l,iPC+2)]);
+      }
+      iPC += _nPCFV[iFVi];
+    } 
+  }
+}
 
 
 void Mesh::scaledJac(int iEl, std::vector<double> &sJ)

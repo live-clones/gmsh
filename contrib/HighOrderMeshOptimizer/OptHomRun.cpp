@@ -374,7 +374,7 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
 
   clock_t t1 = clock();
 
-  int samples = 100;
+  int samples = 30;
 
 //  int method = Mesh::METHOD_RELAXBND | Mesh::METHOD_PHYSCOORD | Mesh::METHOD_PROJJAC;
 //  int method = Mesh::METHOD_FIXBND | Mesh::METHOD_PHYSCOORD | Mesh::METHOD_PROJJAC;
@@ -425,19 +425,20 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
           OptHOM temp(*itf, toOptimizeSplit[i], toFix, method);
           temp.recalcJacDist();
           temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
-          OptHomMessage("Optimizing a blob %i/%i composed of %4d elements  minJ %12.5E -- maxJ %12.5E", i, toOptimizeSplit.size(), toOptimizeSplit[i].size(), minJac, maxJac);
+          OptHomMessage("Optimizing a blob %i/%i composed of %4d elements  minJ %12.5E -- maxJ %12.5E", i+1, toOptimizeSplit.size(), toOptimizeSplit[i].size(), minJac, maxJac);
           p.SUCCESS = std::min(p.SUCCESS,temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax));
+	  temp.mesh.updateGEntityPositions();
         }
       }
       else while (1){
 	std::set<MVertex*> toFix;
-  std::set<MElement*> toOptimize;
+	std::set<MElement*> toOptimize;
 
 	toFix = filter2D_boundaryLayer(*itf, p.nbLayers, p.BARRIER_MIN, p.BARRIER_MAX, p.DistanceFactor, badasses, toOptimize);
 	OptHOM temp(*itf, toOptimize, toFix, method);
 
 	temp.recalcJacDist();
-  temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
+	temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
 	//	if (minJac < 1.e2)OptHomMessage("Optimizing a blob of %4d elements  minJ %12.5E -- maxJ %12.5E",(*itf)->getNumMeshElements(), minJac, maxJac);
 	std::ostringstream ossI;
 	ossI << "initial_" << (*itf)->tag() << "ITER_" << ITER << ".msh";
@@ -476,7 +477,21 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
       int ITER = 0;
       Msg::Info("Model region %4d is considered",(*itr)->tag());
       p.SUCCESS = true;
-      while (1){
+      if (p.filter == 0) {
+        std::set<MVertex*> toFix;
+        std::set<MElement*> toOptimize;
+        toFix = filterSimple(*itr, p.nbLayers, p.BARRIER_MIN, p.BARRIER_MAX, toOptimize);
+        std::vector<std::set<MElement*> > toOptimizeSplit = splitConnex(toOptimize);
+        for (int i = 0; i < toOptimizeSplit.size(); ++i) {
+          OptHOM temp(*itr, toOptimizeSplit[i], toFix, method);
+          temp.recalcJacDist();
+          temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
+          OptHomMessage("Optimizing a blob %i/%i composed of %4d elements  minJ %12.5E -- maxJ %12.5E", i+1, toOptimizeSplit.size(), toOptimizeSplit[i].size(), minJac, maxJac);
+          p.SUCCESS = std::min(p.SUCCESS,temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax));
+	  temp.mesh.updateGEntityPositions();
+        }
+      }
+      else while (1){
       std::set<MVertex*> toFix;
       std::set<MElement*> toOptimize;
 
