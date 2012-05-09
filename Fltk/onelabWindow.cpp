@@ -204,10 +204,11 @@ bool onelab::localNetworkClient::run()
       std::string checkCommand = (ps.empty() ? "" : ps[0].getValue());
       get(ps, getName() + "/9ComputeCommand");
       std::string computeCommand = (ps.empty() ? "" : ps[0].getValue());
+      if(modelName.size()) command.append(" \"" + modelName + "\"");
       if(action == "check")
-        command.append(" \"" + modelName + "\" " + checkCommand) ;
+        command.append(" "+checkCommand) ;
       else if(action == "compute")
-        command.append(" \"" + modelName + "\" " + computeCommand);
+        command.append(" "+computeCommand);
     }
     command.append(" " + getSocketSwitch() + " \"" + getName() + "\" %s");
   }
