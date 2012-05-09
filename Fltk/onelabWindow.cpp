@@ -270,41 +270,58 @@ bool onelab::localNetworkClient::run()
       {
         std::string version, type, name;
         onelab::parameter::getInfoFromChar(message, version, type, name);
-        if(type == "number"){
-          onelab::number p;
-          p.fromChar(message);
-          set(p);
+        if(onelab::parameter::version() != version){
+          Msg::Error("OneLab version mismatch (server: %s / client: %s)",
+                     onelab::parameter::version().c_str(), version.c_str());
+        }
+        else if(type == "number"){
+          onelab::number p; p.fromChar(message); set(p);
         }
         else if(type == "string"){
-          onelab::string p;
-          p.fromChar(message);
-          set(p);
+          onelab::string p; p.fromChar(message); set(p);
+        }
+        else if(type == "region"){
+          onelab::region p; p.fromChar(message); set(p);
+        }
+        else if(type == "function"){
+          onelab::function p; p.fromChar(message); set(p);
         }
         else
-          Msg::Error("FIXME not done for this parameter type: %s", type.c_str());
+          Msg::Error("Unknown OneLab parameter type: %s", type.c_str());
       }
       break;
     case GmshSocket::GMSH_PARAMETER_QUERY:
       {
         std::string version, type, name, reply;
         onelab::parameter::getInfoFromChar(message, version, type, name);
-        if(type == "number"){
-          std::vector<onelab::number> par;
-          get(par, name);
+        if(onelab::parameter::version() != version){
+          Msg::Error("OneLab version mismatch (server: %s / client: %s)",
+                     onelab::parameter::version().c_str(), version.c_str());
+        }
+        else if(type == "number"){
+          std::vector<onelab::number> par; get(par, name);
           if(par.size() == 1) reply = par[0].toChar();
         }
         else if(type == "string"){
-          std::vector<onelab::string> par;
-          get(par, name);
+          std::vector<onelab::string> par; get(par, name);
+          if(par.size() == 1) reply = par[0].toChar();
+        }
+        else if(type == "region"){
+          std::vector<onelab::region> par; get(par, name);
+          if(par.size() == 1) reply = par[0].toChar();
+        }
+        else if(type == "function"){
+          std::vector<onelab::function> par; get(par, name);
           if(par.size() == 1) reply = par[0].toChar();
         }
         else
-          Msg::Error("FIXME not done for this parameter type: %s", type.c_str());
+          Msg::Error("Unknown OneLab parameter type in query: %s", type.c_str());
+
         if(reply.size()){
           server->SendMessage(GmshSocket::GMSH_PARAMETER, reply.size(), &reply[0]);
         }
         else{
-          reply = "Parameter '" + name + "' not found";
+          reply = "OneLab parameter '" + name + "' not found";
           server->SendMessage(GmshSocket::GMSH_INFO, reply.size(), &reply[0]);
         }
       }
@@ -312,31 +329,40 @@ bool onelab::localNetworkClient::run()
     case GmshSocket::GMSH_PARAM_QUERY_ALL:
       {
         std::string version, type, name, reply;
+        std::vector<std::string> replies;
         onelab::parameter::getInfoFromChar(message, version, type, name);
-	if(type == "number"){
-	  std::vector<onelab::number> numbers;
-	  get(numbers);
+        if(onelab::parameter::version() != version){
+          Msg::Error("OneLab version mismatch (server: %s / client: %s)",
+                     onelab::parameter::version().c_str(), version.c_str());
+        }
+	else if(type == "number"){
+	  std::vector<onelab::number> numbers; get(numbers);
 	  for(std::vector<onelab::number>::iterator it = numbers.begin();
-              it != numbers.end(); it++){
-	    reply = (*it).toChar();
-	    server->SendMessage(GmshSocket::GMSH_PARAM_QUERY_ALL, reply.size(), &reply[0]);
-	  }
-	  reply = "OneLab: sent all numbers";
-	  server->SendMessage(GmshSocket::GMSH_PARAM_QUERY_END, reply.size(), &reply[0]);
-	}
-	else if(type == "string"){
-	  std::vector<onelab::string> strings;
-	  get(strings);
+              it != numbers.end(); it++) replies.push_back((*it).toChar());
+        }
+        else if(type == "string"){
+	  std::vector<onelab::string> strings; get(strings);
 	  for(std::vector<onelab::string>::iterator it = strings.begin();
-              it != strings.end(); it++){
-	    reply = (*it).toChar();
-	    server->SendMessage(GmshSocket::GMSH_PARAM_QUERY_ALL, reply.size(), &reply[0]);
-	  }
-	  reply = "OneLab: sent all strings";
-	  server->SendMessage(GmshSocket::GMSH_PARAM_QUERY_END, reply.size(), &reply[0]);
-	}
+              it != strings.end(); it++) replies.push_back((*it).toChar());
+        }
+        else if(type == "region"){
+	  std::vector<onelab::region> regions; get(regions);
+	  for(std::vector<onelab::region>::iterator it = regions.begin();
+              it != regions.end(); it++) replies.push_back((*it).toChar());
+        }
+        else if(type == "function"){
+	  std::vector<onelab::function> functions; get(functions);
+	  for(std::vector<onelab::function>::iterator it = functions.begin();
+              it != functions.end(); it++) replies.push_back((*it).toChar());
+        }
         else
-          Msg::Error("FIXME query not done for this parameter type: %s", type.c_str());
+          Msg::Error("Unknown OneLab parameter type in query: %s", type.c_str());
+
+        for(unsigned int i = 0; i < replies.size(); i++)
+          server->SendMessage
+            (GmshSocket::GMSH_PARAM_QUERY_ALL, replies[i].size(), &replies[i][0]);
+        reply = "Sent all OneLab " + type + "s";
+        server->SendMessage(GmshSocket::GMSH_PARAM_QUERY_END, reply.size(), &reply[0]);
       }
       break;
     case GmshSocket::GMSH_PROGRESS:
@@ -661,9 +687,11 @@ static void importPhysicalGroups(onelab::client *c, GModel *m)
         name = std::string("Physical") +
           ((dim == 3) ? "Volume" : (dim == 2) ? "Surface" :
            (dim == 1) ? "Line" : "Point") + num.str();
+      name.insert(0, "Gmsh/Physical groups/");
       onelab::region p(name, num.str());
       p.setDimension(dim);
       p.setReadOnly(true);
+      //p.setVisible(false);
       c->set(p);
     }
   }
@@ -1045,6 +1073,7 @@ void onelabWindow::_addParameter(onelab::number &p)
   n->labelsize(FL_NORMAL_SIZE + 5);
   _tree->begin();
   Fl_Widget *widget;
+
   if(p.getReadOnly()){
     // non-editable value
     Fl_Output *but = new Fl_Output(1, 1, _itemWidth, 1);
@@ -1123,6 +1152,7 @@ void onelabWindow::_addParameter(onelab::string &p)
   n->labelsize(FL_NORMAL_SIZE + 5);
   _tree->begin();
   Fl_Widget *widget;
+
   if(p.getReadOnly()){
     // non-editable value
     Fl_Output *but = new Fl_Output(1, 1, _itemWidth, 1);
@@ -1169,6 +1199,68 @@ void onelabWindow::_addParameter(onelab::string &p)
   _tree->end();
 }
 
+void onelabWindow::_addParameter(onelab::region &p)
+{
+  std::string label = p.getShortName();
+  std::vector<std::set<std::string> > choices = p.getChoices();
+  bool highlight = false;
+  Fl_Color c;
+  if(getFlColor(p.getAttribute("Highlight"), c)) highlight = true;
+
+  Fl_Tree_Item *n = _tree->add(p.getName().c_str());
+  n->labelsize(FL_NORMAL_SIZE + 5);
+  _tree->begin();
+  Fl_Widget *widget;
+
+  if(1){//p.getReadOnly()){
+    // non-editable value
+    Fl_Output *but = new Fl_Output(1, 1, _itemWidth, 1);
+    but->value("TODO groups");
+    if(highlight) but->color(c);
+    widget = but;
+  }
+  else{
+    // general group input
+  }
+
+  _treeWidgets.push_back(widget);
+  widget->copy_label(label.c_str());
+  widget->align(FL_ALIGN_RIGHT);
+  n->widget(widget);
+  _tree->end();
+}
+
+void onelabWindow::_addParameter(onelab::function &p)
+{
+  std::string label = p.getShortName();
+  std::vector<std::map<std::string, std::string> > choices = p.getChoices();
+  bool highlight = false;
+  Fl_Color c;
+  if(getFlColor(p.getAttribute("Highlight"), c)) highlight = true;
+
+  Fl_Tree_Item *n = _tree->add(p.getName().c_str());
+  n->labelsize(FL_NORMAL_SIZE + 5);
+  _tree->begin();
+  Fl_Widget *widget;
+
+  if(1){//p.getReadOnly()){
+    // non-editable value
+    Fl_Output *but = new Fl_Output(1, 1, _itemWidth, 1);
+    but->value("TODO function");
+    if(highlight) but->color(c);
+    widget = but;
+  }
+  else{
+    // general function input
+  }
+
+  _treeWidgets.push_back(widget);
+  widget->copy_label(label.c_str());
+  widget->align(FL_ALIGN_RIGHT);
+  n->widget(widget);
+  _tree->end();
+}
+
 void onelabWindow::rebuildTree()
 {
   FL_NORMAL_SIZE -= _deltaFontSize;
@@ -1178,6 +1270,11 @@ void onelabWindow::rebuildTree()
   std::vector<std::string> closed;
   for (Fl_Tree_Item *n = _tree->first(); n; n = n->next())
     if(n->is_close()) closed.push_back(getPath(n));
+
+  if(_treeWidgets.empty()){ // first time we build the tree
+    closed.push_back("Gmsh");
+    closed.push_back("Gmsh/Physical groups");
+  }
 
   _tree->clear();
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
@@ -1202,6 +1299,20 @@ void onelabWindow::rebuildTree()
   for(unsigned int i = 0; i < strings.size(); i++){
     if(!strings[i].getVisible()) continue;
     _addParameter(strings[i]);
+  }
+
+  std::vector<onelab::region> regions;
+  onelab::server::instance()->get(regions);
+  for(unsigned int i = 0; i < regions.size(); i++){
+    if(!regions[i].getVisible()) continue;
+    _addParameter(regions[i]);
+  }
+
+  std::vector<onelab::function> functions;
+  onelab::server::instance()->get(functions);
+  for(unsigned int i = 0; i < functions.size(); i++){
+    if(!functions[i].getVisible()) continue;
+    _addParameter(functions[i]);
   }
 
   for(Fl_Tree_Item *n = _tree->first(); n; n = n->next()){

@@ -387,10 +387,10 @@ namespace onelab{
     region(const std::string &name="",
            const std::set<std::string> &value = std::set<std::string>(),
            const std::string &label="", const std::string &help="")
-      : parameter(name, label, help), _value(value) {}
+      : parameter(name, label, help), _value(value), _dimension(-1) {}
     region(const std::string &name, const std::string &value,
            const std::string &label="", const std::string &help="")
-      : parameter(name, label, help)
+      : parameter(name, label, help), _dimension(-1)
     {
       if(value.size()) _value.insert(value);
     }
@@ -501,7 +501,40 @@ namespace onelab{
     }
     std::string toChar() const
     {
-      return "";
+      std::ostringstream sstream;
+      sstream << parameter::toChar() << _value.size() << charSep();
+      for(std::map<std::string, std::string>::const_iterator it = _value.begin();
+          it != _value.end(); it++)
+        sstream << sanitize(it->first) << charSep()
+                << sanitize(it->second) << charSep();
+      sstream << _choices.size() << charSep();
+      for(unsigned int i = 0; i < _choices.size(); i++){
+        sstream << _choices[i].size() << charSep();
+        for(std::map<std::string, std::string>::const_iterator it = _choices[i].begin();
+            it != _choices[i].end(); it++)
+          sstream << sanitize(it->first) << charSep()
+                  << sanitize(it->second) << charSep();
+      }
+      return sstream.str();
+    }
+    std::string::size_type fromChar(const std::string &msg)
+    {
+      std::string::size_type pos = parameter::fromChar(msg);
+      if(!pos) return 0;
+      int n = atoi(getNextToken(msg, pos).c_str());
+      for(int i = 0; i < n; i++){
+        std::string key = getNextToken(msg, pos);
+        _value[key] = getNextToken(msg, pos);
+      }
+      _choices.resize(atoi(getNextToken(msg, pos).c_str()));
+      for(unsigned int i = 0; i < _choices.size(); i++){
+        n = atoi(getNextToken(msg, pos).c_str());
+        for(int i = 0; i < n; i++){
+          std::string key = getNextToken(msg, pos);
+          _choices[i][key] = getNextToken(msg, pos);
+        }
+      }
+      return pos;
     }
   };
 

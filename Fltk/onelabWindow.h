@@ -32,6 +32,8 @@ class onelabWindow{
   int _itemWidth;
   void _addParameter(onelab::number &p);
   void _addParameter(onelab::string &p);
+  void _addParameter(onelab::region &p);
+  void _addParameter(onelab::function &p);
  public:
   onelabWindow(int deltaFontSize=0);
   int x(){ return _win->x(); }
