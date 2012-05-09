@@ -426,17 +426,21 @@ static std::string getMshFileName(onelab::client *c)
 
 static void guessModelName(onelab::client *c)
 {
-  std::vector<onelab::string> ps;
-  c->get(ps, c->getName() + "/1ModelName");
-  if(ps.empty()){
-    std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
-    std::string ext = "";
-    onelab::server::instance()->get(ps, c->getName() + "/FileExtension");
-    if(ps.size()) ext = ps[0].getValue();
-    std::string name(split[0] + split[1] + ext);
-    onelab::string o(c->getName() + "/1ModelName", name, "Model name");
-    o.setKind("file");
-    c->set(o);
+  std::vector<onelab::number> n;
+  c->get(n, c->getName() + "/GuessModelName");
+  if(n.size() && n[0].getValue()){
+    std::vector<onelab::string> ps;
+    c->get(ps, c->getName() + "/1ModelName");
+    if(ps.empty()){
+      std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
+      std::string ext = "";
+      onelab::server::instance()->get(ps, c->getName() + "/FileExtension");
+      if(ps.size()) ext = ps[0].getValue();
+      std::string name(split[0] + split[1] + ext);
+      onelab::string o(c->getName() + "/1ModelName", name, "Model name");
+      o.setKind("file");
+      c->set(o);
+    }
   }
 }
 
