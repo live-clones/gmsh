@@ -30,10 +30,15 @@ class onelabWindow{
   int _deltaFontSize;
   bool _stop;
   int _itemWidth;
-  void _addParameter(onelab::number &p);
-  void _addParameter(onelab::string &p);
-  void _addParameter(onelab::region &p);
-  void _addParameter(onelab::function &p);
+  template <class T> void _addParameter(T &p);
+  Fl_Widget *_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
+                                 bool highlight, Fl_Color c);
+  Fl_Widget *_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
+                                 bool highlight, Fl_Color c);
+  Fl_Widget *_addParameterWidget(onelab::region &p, Fl_Tree_Item *n,
+                                 bool highlight, Fl_Color c);
+  Fl_Widget *_addParameterWidget(onelab::function &p, Fl_Tree_Item *n,
+                                 bool highlight, Fl_Color c);
  public:
   onelabWindow(int deltaFontSize=0);
   int x(){ return _win->x(); }
