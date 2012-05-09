@@ -649,21 +649,15 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   std::vector<onelab::number> ps;
   _onelabClient->get(ps, name);
   bool noRange = true, noChoices = true, noLoop = true, noGraph = true;
-  if(ps.size()){ 
-    if(ps[0].getReadOnly()){ // use value of Gmsh
-      ps[0].setName(name);
-      ps[0].setValue(val[0]);
-    }
-    else{ // use value from server
-      val[0] = ps[0].getValue();
-      // keep track of these attributes, which can be changed server-side
-      if(ps[0].getMin() != -onelab::parameter::maxNumber() ||
-	 ps[0].getMax() != onelab::parameter::maxNumber() ||
-	 ps[0].getStep() != 0.) noRange = false;
-      if(ps[0].getChoices().size()) noChoices = false;
-      if(ps[0].getAttribute("Loop").size()) noLoop = false;
-      if(ps[0].getAttribute("Graph").size()) noGraph = false;
-    }
+  if(ps.size()){ // use value from server
+    val[0] = ps[0].getValue();
+    // keep track of these attributes, which can be changed server-side
+    if(ps[0].getMin() != -onelab::parameter::maxNumber() ||
+       ps[0].getMax() != onelab::parameter::maxNumber() ||
+       ps[0].getStep() != 0.) noRange = false;
+    if(ps[0].getChoices().size()) noChoices = false;
+    if(ps[0].getAttribute("Loop").size()) noLoop = false;
+    if(ps[0].getAttribute("Graph").size()) noGraph = false;
   }
   else{
     ps.resize(1);
