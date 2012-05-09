@@ -172,12 +172,6 @@ void OptHOM::calcScale(alglib::real_1d_array &scale)
     for (int iPC = 0; iPC < mesh.nPCFV(iFV); iPC++) scale[mesh.indPCFV(iFV,iPC)] = scaleFV[iPC];
   }
 
-  // Normalize scale vector (otherwise ALGLIB routines may fail)
-  double scaleNormSq = 0.;
-  for (int i = 0; i < mesh.nPC(); i++) scaleNormSq += scale[i]*scale[i];
-  const double scaleNorm = sqrt(scaleNormSq);
-  for (int i = 0; i < mesh.nPC(); i++) scale[i] /= scaleNorm;
-
 }
 
 
@@ -194,15 +188,16 @@ void OptHOM::OptimPass(alglib::real_1d_array &x, const alglib::real_1d_array &in
 
   iter = 0;
 
+  alglib::real_1d_array scale;
+  calcScale(scale);
+
   int iterationscount = 0, nfev = 0, terminationtype = -1;
   if (OPTMETHOD == 1) {
     alglib::mincgstate state;
     alglib::mincgreport rep;
     mincgcreate(x, state);
-    alglib::real_1d_array scale;
-            calcScale(scale);
-            mincgsetscale(state,scale);
-            mincgsetprecscale(state);
+    mincgsetscale(state,scale);
+    mincgsetprecscale(state);
     mincgsetcond(state, EPSG, EPSF, EPSX, itMax);
     mincgsetxrep(state, true);
     alglib::mincgoptimize(state, evalObjGradFunc, printProgressFunc, this);
@@ -215,8 +210,6 @@ void OptHOM::OptimPass(alglib::real_1d_array &x, const alglib::real_1d_array &in
     alglib::minlbfgsstate state;
     alglib::minlbfgsreport rep;
     minlbfgscreate(3, x, state);
-    alglib::real_1d_array scale;
-    calcScale(scale);
     minlbfgssetscale(state,scale);
     minlbfgssetprecscale(state);
     minlbfgssetcond(state, EPSG, EPSF, EPSX, itMax);
