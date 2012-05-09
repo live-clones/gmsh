@@ -3449,9 +3449,9 @@ INPUT PARAMETERS:
     A       -   matrix, array[N,N]
     IsUpper -   (optional) storage type:
                 * if True, symmetric matrix  A  is  given  by  its  upper
-                  triangle, and the lower triangle isn’t used
+                  triangle, and the lower triangle isnï¿½t used
                 * if False, symmetric matrix  A  is  given  by  its lower
-                  triangle, and the upper triangle isn’t used
+                  triangle, and the upper triangle isnï¿½t used
                 * if not given, both lower and upper  triangles  must  be
                   filled.
 
@@ -3496,9 +3496,9 @@ INPUT PARAMETERS:
     A       -   matrix, array[N,N]
     IsUpper -   (optional) storage type:
                 * if True, symmetric matrix  A  is  given  by  its  upper
-                  triangle, and the lower triangle isn’t used
+                  triangle, and the lower triangle isnï¿½t used
                 * if False, symmetric matrix  A  is  given  by  its lower
-                  triangle, and the upper triangle isn’t used
+                  triangle, and the upper triangle isnï¿½t used
                 * if not given, both lower and upper  triangles  must  be
                   filled.
 
@@ -6702,7 +6702,7 @@ lbl_24:
          * to the norm of DK
          */
         v = ae_v_dotproduct(&state->dk.ptr.p_double[0], 1, &state->dk.ptr.p_double[0], 1, ae_v_len(0,n-1));
-        state->laststep = ae_sqrt(v, _state);
+        state->laststep = 1.0/ae_sqrt(v, _state);
     }
     else
     {
@@ -11553,9 +11553,9 @@ INPUT PARAMETERS:
     A       -   matrix, array[N,N]
     IsUpper -   (optional) storage type:
                 * if True, symmetric matrix  A  is  given  by  its  upper
-                  triangle, and the lower triangle isn’t used
+                  triangle, and the lower triangle isnï¿½t used
                 * if False, symmetric matrix  A  is  given  by  its lower
-                  triangle, and the upper triangle isn’t used
+                  triangle, and the upper triangle isnï¿½t used
                 * if not given, both lower and upper  triangles  must  be
                   filled.
 
