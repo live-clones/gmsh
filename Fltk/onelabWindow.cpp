@@ -829,9 +829,9 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   do{ // enter loop
 
-    // the Gmsh client is special: it always gets executed first. (The
-    // meta-model will allow more flexibility: but in the simple GUI
-    // we can assume this)
+    // the Gmsh client is special: it always gets executed first. (A
+    // special-puropose meta-model allows more flexibility: but in the simple
+    // GUI we can assume this)
     runGmshClient(action);
 
     if(action == "compute")

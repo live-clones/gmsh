@@ -1,7 +1,7 @@
-/********************************************************************* 
+/*********************************************************************
  *
  *  Gmsh tutorial 1
- * 
+ *
  *  Variables, elementary entities (points, lines, surfaces), physical
  *  entities (points, lines, surfaces)
  *
