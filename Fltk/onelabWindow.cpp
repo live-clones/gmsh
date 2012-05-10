@@ -869,94 +869,6 @@ void onelab_cb(Fl_Widget *w, void *data)
   if(action != "initialize") FlGui::instance()->onelab->show();
 }
 
-static void onelab_check_button_cb(Fl_Widget *w, void *data)
-{
-  if(!data) return;
-  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
-  std::vector<onelab::number> numbers;
-  onelab::server::instance()->get(numbers, name);
-  if(numbers.size()){
-    Fl_Check_Button *o = (Fl_Check_Button*)w;
-    numbers[0].setValue(o->value());
-    onelab::server::instance()->set(numbers[0]);
-  }
-}
-
-static void onelab_choice_cb(Fl_Widget *w, void *data)
-{
-  if(!data) return;
-  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
-  std::vector<onelab::number> numbers;
-  onelab::server::instance()->get(numbers, name);
-  if(numbers.size()){
-    Fl_Choice *o = (Fl_Choice*)w;
-    std::vector<double> choices = numbers[0].getChoices();
-    if(o->value() < (int)choices.size()) numbers[0].setValue(choices[o->value()]);
-    onelab::server::instance()->set(numbers[0]);
-  }
-}
-
-static void onelab_input_range_cb(Fl_Widget *w, void *data)
-{
-  if(!data) return;
-  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
-  std::vector<onelab::number> numbers;
-  onelab::server::instance()->get(numbers, name);
-  if(numbers.size()){
-    inputRange *o = (inputRange*)w;
-    if(o->doCallbackOnValues()){
-      numbers[0].setValue(o->value());
-      numbers[0].setMin(o->minimum());
-      numbers[0].setMax(o->maximum());
-      numbers[0].setStep(o->step());
-      numbers[0].setChoices(o->choices());
-    }
-    o->doCallbackOnValues(true);
-    numbers[0].setAttribute("Loop", o->loop());
-    numbers[0].setAttribute("Graph", o->graph());
-    onelab::server::instance()->set(numbers[0]);
-    updateOnelabGraphs();
-  }
-}
-
-static void onelab_input_choice_cb(Fl_Widget *w, void *data)
-{
-  if(!data) return;
-  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
-  std::vector<onelab::string> strings;
-  onelab::server::instance()->get(strings, name);
-  if(strings.size()){
-    Fl_Input_Choice *o = (Fl_Input_Choice*)w;
-    strings[0].setValue(o->value());
-    onelab::server::instance()->set(strings[0]);
-  }
-}
-
-static void onelab_input_choice_file_chooser_cb(Fl_Widget *w, void *data)
-{
-  Fl_Input_Choice *but = (Fl_Input_Choice*)w->parent();
-  if(fileChooser(FILE_CHOOSER_SINGLE, "Choose", "", but->value())){
-    but->value(fileChooserGetName(1).c_str());
-    but->do_callback(but, data);
-  }
-}
-
-static void onelab_input_choice_file_edit_cb(Fl_Widget *w, void *data)
-{
-  Fl_Input_Choice *but = (Fl_Input_Choice*)w->parent();
-  std::string prog = FixWindowsPath(CTX::instance()->editor);
-  std::string file = FixWindowsPath(but->value());
-  SystemCall(ReplaceSubString("%s", file, prog));
-}
-
-static void onelab_input_choice_file_merge_cb(Fl_Widget *w, void *data)
-{
-  Fl_Input_Choice *but = (Fl_Input_Choice*)w->parent();
-  std::string file = FixWindowsPath(but->value());
-  MergeFile(file);
-  drawContext::global()->draw();
-}
-
 static void onelab_choose_executable_cb(Fl_Widget *w, void *data)
 {
   onelab::localNetworkClient *c = (onelab::localNetworkClient*)data;
@@ -1078,6 +990,56 @@ void onelabWindow::_addParameter(T &p)
   _tree->end();
 }
 
+static void onelab_number_check_button_cb(Fl_Widget *w, void *data)
+{
+  if(!data) return;
+  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
+  std::vector<onelab::number> numbers;
+  onelab::server::instance()->get(numbers, name);
+  if(numbers.size()){
+    Fl_Check_Button *o = (Fl_Check_Button*)w;
+    numbers[0].setValue(o->value());
+    onelab::server::instance()->set(numbers[0]);
+  }
+}
+
+static void onelab_number_choice_cb(Fl_Widget *w, void *data)
+{
+  if(!data) return;
+  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
+  std::vector<onelab::number> numbers;
+  onelab::server::instance()->get(numbers, name);
+  if(numbers.size()){
+    Fl_Choice *o = (Fl_Choice*)w;
+    std::vector<double> choices = numbers[0].getChoices();
+    if(o->value() < (int)choices.size()) numbers[0].setValue(choices[o->value()]);
+    onelab::server::instance()->set(numbers[0]);
+  }
+}
+
+static void onelab_number_input_range_cb(Fl_Widget *w, void *data)
+{
+  if(!data) return;
+  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
+  std::vector<onelab::number> numbers;
+  onelab::server::instance()->get(numbers, name);
+  if(numbers.size()){
+    inputRange *o = (inputRange*)w;
+    if(o->doCallbackOnValues()){
+      numbers[0].setValue(o->value());
+      numbers[0].setMin(o->minimum());
+      numbers[0].setMax(o->maximum());
+      numbers[0].setStep(o->step());
+      numbers[0].setChoices(o->choices());
+    }
+    o->doCallbackOnValues(true);
+    numbers[0].setAttribute("Loop", o->loop());
+    numbers[0].setAttribute("Graph", o->graph());
+    onelab::server::instance()->set(numbers[0]);
+    updateOnelabGraphs();
+  }
+}
+
 Fl_Widget *onelabWindow::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
                                              bool highlight, Fl_Color c)
 {
@@ -1114,7 +1076,7 @@ Fl_Widget *onelabWindow::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
         break;
       }
     }
-    but->callback(onelab_choice_cb, (void*)n);
+    but->callback(onelab_number_choice_cb, (void*)n);
     but->align(FL_ALIGN_RIGHT);
     if(highlight) n->labelbgcolor(c);
     return but;
@@ -1125,7 +1087,7 @@ Fl_Widget *onelabWindow::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
      p.getChoices()[0] == 0 && p.getChoices()[1] == 1){
     Fl_Check_Button *but = new Fl_Check_Button(1, 1, _itemWidth, 1);
     but->value(p.getValue());
-    but->callback(onelab_check_button_cb, (void*)n);
+    but->callback(onelab_number_check_button_cb, (void*)n);
     if(highlight) n->labelbgcolor(c);
     return but;
   }
@@ -1140,11 +1102,49 @@ Fl_Widget *onelabWindow::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
   but->choices(p.getChoices());
   but->loop(p.getAttribute("Loop"));
   but->graph(p.getAttribute("Graph"));
-  but->callback(onelab_input_range_cb, (void*)n);
+  but->callback(onelab_number_input_range_cb, (void*)n);
   but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
   but->align(FL_ALIGN_RIGHT);
   if(highlight) but->color(c);
   return but;
+}
+
+static void onelab_string_input_choice_cb(Fl_Widget *w, void *data)
+{
+  if(!data) return;
+  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
+  std::vector<onelab::string> strings;
+  onelab::server::instance()->get(strings, name);
+  if(strings.size()){
+    Fl_Input_Choice *o = (Fl_Input_Choice*)w;
+    strings[0].setValue(o->value());
+    onelab::server::instance()->set(strings[0]);
+  }
+}
+
+static void onelab_input_choice_file_chooser_cb(Fl_Widget *w, void *data)
+{
+  Fl_Input_Choice *but = (Fl_Input_Choice*)w->parent();
+  if(fileChooser(FILE_CHOOSER_SINGLE, "Choose", "", but->value())){
+    but->value(fileChooserGetName(1).c_str());
+    but->do_callback(but, data);
+  }
+}
+
+static void onelab_input_choice_file_edit_cb(Fl_Widget *w, void *data)
+{
+  Fl_Input_Choice *but = (Fl_Input_Choice*)w->parent();
+  std::string prog = FixWindowsPath(CTX::instance()->editor);
+  std::string file = FixWindowsPath(but->value());
+  SystemCall(ReplaceSubString("%s", file, prog));
+}
+
+static void onelab_input_choice_file_merge_cb(Fl_Widget *w, void *data)
+{
+  Fl_Input_Choice *but = (Fl_Input_Choice*)w->parent();
+  std::string file = FixWindowsPath(but->value());
+  MergeFile(file);
+  drawContext::global()->draw();
 }
 
 Fl_Widget *onelabWindow::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
@@ -1184,24 +1184,67 @@ Fl_Widget *onelabWindow::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
   menu.push_back(it);
   but->menubutton()->copy(&menu[0]);
   but->value(p.getValue().c_str());
-  but->callback(onelab_input_choice_cb, (void*)n);
+  but->callback(onelab_string_input_choice_cb, (void*)n);
   but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
   but->align(FL_ALIGN_RIGHT);
   if(highlight) but->input()->color(c);
   return but;
 }
 
+static std::string _set2string(const std::set<std::string> &s)
+{
+  std::string out;
+  for(std::set<std::string>::const_iterator it = s.begin(); it != s.end(); it++){
+    if(it != s.begin()) out += ", ";
+    out += *it;
+  }
+  return out;
+}
+
+static std::set<std::string> _string2set(const std::string &s)
+{
+  std::set<std::string> out;
+  std::string::size_type first = 0;
+  while(1){
+    std::string str = onelab::parameter::getNextToken(s, first, ',');
+    if(str.empty()) break;
+    out.insert(str);
+  }
+  return out;
+}
+
+static void onelab_region_input_cb(Fl_Widget *w, void *data)
+{
+  if(!data) return;
+  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
+  std::vector<onelab::region> regions;
+  onelab::server::instance()->get(regions, name);
+  if(regions.size()){
+    Fl_Input *o = (Fl_Input*)w;
+    regions[0].setValue(_string2set(o->value()));
+    onelab::server::instance()->set(regions[0]);
+  }
+}
+
 Fl_Widget *onelabWindow::_addParameterWidget(onelab::region &p, Fl_Tree_Item *n,
                                              bool highlight, Fl_Color c)
 {
   // non-editable value
-  //if(p.getReadOnly()){
+  if(p.getReadOnly()){
     Fl_Output *but = new Fl_Output(1, 1, _itemWidth, 1);
-    but->value("TODO groups");
+    but->value(_set2string(p.getValue()).c_str());
     but->align(FL_ALIGN_RIGHT);
     if(highlight) but->color(c);
     return but;
-  //}
+  }
+
+  // general group input -- will be improved :-)
+  Fl_Input *but = new Fl_Input(1, 1, _itemWidth, 1);
+  but->value(_set2string(p.getValue()).c_str());
+  but->align(FL_ALIGN_RIGHT);
+  but->callback(onelab_region_input_cb, (void*)n);
+  if(highlight) but->color(c);
+  return but;
 }
 
 Fl_Widget *onelabWindow::_addParameterWidget(onelab::function &p, Fl_Tree_Item *n,
