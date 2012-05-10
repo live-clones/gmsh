@@ -1201,12 +1201,21 @@ static std::string _set2string(const std::set<std::string> &s)
   return out;
 }
 
+static std::string trim(const std::string &str, const std::string& white=" ")
+{
+  size_t beg = str.find_first_not_of(white);
+  if(beg == std::string::npos) return "";
+  size_t end = str.find_last_not_of(white);
+  return str.substr(beg, end - beg + 1);
+}
+
 static std::set<std::string> _string2set(const std::string &s)
 {
   std::set<std::string> out;
   std::string::size_type first = 0;
   while(1){
-    std::string str = onelab::parameter::getNextToken(s, first, ',');
+    std::string str = trim(onelab::parameter::getNextToken(s, first, ','));
+    //str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
     if(str.empty()) break;
     out.insert(str);
   }
