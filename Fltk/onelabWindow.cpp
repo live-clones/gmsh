@@ -1064,8 +1064,8 @@ Fl_Widget *onelabWindow::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
         it != labels.end(); it++){
       char *str = strdup(it->second.c_str());
       _treeStrings.push_back(str);
-      Fl_Menu_Item it = {str, 0, 0, 0, 0};
-      menu.push_back(it);
+      Fl_Menu_Item menuItem = {str, 0, 0, 0, 0};
+      menu.push_back(menuItem);
     }
     Fl_Menu_Item it = {0};
     menu.push_back(it);
