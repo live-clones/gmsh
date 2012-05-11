@@ -37,6 +37,8 @@ void OptHomMessage (const char *s, ...) {
       FlGui::instance()->highordertools->messages->show();
     }
   }
+  else 
+    fprintf(stdout,"%s\n",str);
 #else
   fprintf(stdout,"%s\n",str);
 #endif
@@ -386,6 +388,8 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
     method = Mesh::METHOD_PROJJAC;
   else if (p.method == 2)
     method = Mesh::METHOD_FIXBND | Mesh::METHOD_PHYSCOORD | Mesh::METHOD_PROJJAC;
+  else if(p.method < 0)
+    method = -p.method;
 
   //  printf("p.method = %d\n",p.method);
 
@@ -427,7 +431,7 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
           temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
           OptHomMessage("Optimizing a blob %i/%i composed of %4d elements  minJ %12.5E -- maxJ %12.5E", i+1, toOptimizeSplit.size(), toOptimizeSplit[i].size(), minJac, maxJac);
           p.SUCCESS = std::min(p.SUCCESS,temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax));
-	  temp.mesh.updateGEntityPositions();
+          temp.mesh.updateGEntityPositions();
         }
       }
       else while (1){

@@ -99,7 +99,7 @@ Mesh::Mesh(GEntity *ge, const std::set<MElement*> &els, std::set<MVertex*> &toFi
       _pc = new ParamCoordSurf(_ge);
       Msg::Debug("METHOD: Using surface parametric coordinates");
     }
-    Msg::Error("ERROR: Surface parametric coordinates only for 2D optimization");
+    else Msg::Error("ERROR: Surface parametric coordinates only for 2D optimization");
   }
   else {
     _pc = new ParamCoordParent;
