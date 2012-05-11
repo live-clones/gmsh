@@ -154,8 +154,9 @@ class polynomialBasis
     double dfv[1256][3];
     dfm.resize (coefficients.size1(), coord.size1() * 3, false);
     int ii = 0;
+    int dimCoord = coord.size2();
     for (int iPoint=0; iPoint< coord.size1(); iPoint++) {
-      df(coord(iPoint,0), coord(iPoint, 1), coord(iPoint, 2), dfv);
+      df(coord(iPoint,0), dimCoord > 1 ? coord(iPoint, 1) : 0., dimCoord > 2 ? coord(iPoint, 2) : 0., dfv);
       for (int i = 0; i < coefficients.size1(); i++) {
         dfm(i, iPoint * 3 + 0) = dfv[i][0];
         dfm(i, iPoint * 3 + 1) = dfv[i][1];

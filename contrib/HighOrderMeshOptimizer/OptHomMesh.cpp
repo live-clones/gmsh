@@ -297,9 +297,10 @@ void Mesh::distSqToStraight(std::vector<double> &dSq)
     for (int i = 0; i < nV1; ++i) {
       sxyz[_el2V[iEl][i]] = _vert[_el2V[iEl][i]]->point();
     }
+    int dim = lagrange->points.size2();
     for (int i = nV1; i < nV; ++i) {
       double f[256];
-      lagrange1->f(lagrange->points(i, 0), lagrange->points(i, 1), lagrange->points(i, 2), f);
+      lagrange1->f(lagrange->points(i, 0), dim > 1 ? lagrange->points(i, 1) : 0., dim > 2 ? lagrange->points(i, 2) : 0., f);
       for (int j = 0; j < nV1; ++j)
         sxyz[_el2V[iEl][i]] += sxyz[_el2V[iEl][j]] * f[j];
     }
