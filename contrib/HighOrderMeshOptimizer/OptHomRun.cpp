@@ -486,6 +486,9 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
           OptHOM temp(*itr, toOptimizeSplit[i], toFix, method);
           temp.recalcJacDist();
           temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
+	  std::ostringstream ossI;
+	  ossI << "initial_" << (*itr)->tag() << "BLOB_" << i << ".msh";
+	  temp.mesh.writeMSH(ossI.str().c_str());
           OptHomMessage("Optimizing a blob %i/%i composed of %4d elements  minJ %12.5E -- maxJ %12.5E", i+1, toOptimizeSplit.size(), toOptimizeSplit[i].size(), minJac, maxJac);
           p.SUCCESS = std::min(p.SUCCESS,temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax));
 	  temp.mesh.updateGEntityPositions();

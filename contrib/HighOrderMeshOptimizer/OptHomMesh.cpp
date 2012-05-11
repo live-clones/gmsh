@@ -336,12 +336,12 @@ void Mesh::updateGEntityPositions()
 
 void Mesh::scaledJacAndGradients(int iEl, std::vector<double> &sJ , std::vector<double> &gSJ) {
   
-  if (_dim == 2 && !projJac){
-    //    printf("coucou\n");
-    gradScaledJac(iEl,gSJ);
-    scaledJac(iEl,sJ);    
-    return;
-  }
+  // if (_dim == 2 && !projJac){
+  //   //    printf("coucou\n");
+  //   gradScaledJac(iEl,gSJ);
+  //   scaledJac(iEl,sJ);    
+  //   return;
+  // }
   
   SVector3 n ;
   if (_dim == 2)
@@ -362,16 +362,18 @@ void Mesh::scaledJacAndGradients(int iEl, std::vector<double> &sJ , std::vector<
   double jac[3][3];
   for (int l = 0; l < nbBez; l++) {
     fullMatrix<double> dPsi(gsf, l * 3, 3);
+
     jac[0][0] = jac[0][1] = jac[0][2] = 0.;
     jac[1][0] = jac[1][1] = jac[1][2] = 0.;
-    jac[2][0] = jac[2][1] = jac[2][2] = (_dim == 2) ? n.z() : 0.0;
+    jac[2][0] = (_dim == 2) ? n.x() : 0.0; jac[2][1] = (_dim == 2) ? n.y() : 0.0; jac[2][2] = (_dim == 2) ? n.z() : 0.0;
+
     const double INVJ = (_dim == 3) ? _invStraightJac[iEl] : 1.0;
     for (int i = 0; i < nbNod; i++) {
       int &iVi = _el2V[iEl][i];
       const double x = _xyz[iVi].x();
       const double y = _xyz[iVi].y();
       const double z = _xyz[iVi].z();
-      for (int k = 0; k < 3; k++) {
+      for (int k = 0; k < _dim; k++) {
 	const double gg = dPsi(i, k);
 	jac[k][0] += x * gg;
 	jac[k][1] += y * gg;
