@@ -1244,7 +1244,6 @@ void lpcvt::print_segment(SPoint2 p1,SPoint2 p2,std::ofstream& file){
 
 void lpcvt::compute_parameters(GFace* gf,int p){
   double h1,h2,h3;
-  double rho1,rho2,rho3;
   double k;
   double ratio;
   double angle;
