@@ -13,6 +13,7 @@
 #include "GmshMessage.h"
 #include "polynomialBasis.h"
 #include "GaussIntegration.h"
+#include <limits>
 
 static void printClosure(polynomialBasis::clCont &fullClosure, std::vector<int> &closureRef,
                          polynomialBasis::clCont &closures)
@@ -1239,6 +1240,138 @@ static void generateFaceClosureTetFull(polynomialBasis::clCont &closureFull,
   }
 }
 
+void rotateHex(int iFace, int iRot, int iSign, double uI, double vI, double &uO, double &vO, double &wO)
+{
+  if (iSign<0){
+    double tmp=uI;
+    uI=vI;
+    vI=tmp;
+  }
+  for (int i=0; i < iRot; i++){
+    double tmp=uI;
+    uI=-vI;
+    vI=tmp;
+  }
+  switch (iFace) {
+    case 0: uO = vI; vO = uI; wO=-1; break;
+    case 1: uO = uI; vO = -1; wO=vI; break;
+    case 2: uO =-1;  vO = vI; wO=uI; break;
+    case 3: uO = 1;  vO = uI; wO=vI; break;
+    case 4: uO =-uI; vO = 1;  wO=vI; break;
+    case 5: uO =uI;  vO = vI; wO=1; break;
+  }
+}
+
+void rotateHexFull(int iFace, int iRot, int iSign, double uI, double vI, double wI, double &uO, double &vO, double &wO)
+{
+  switch (iFace) {
+    case 0: uO = uI; vO = vI; wO = wI; break;
+    case 1: uO = wI; vO = uI; wO = vI; break;
+    case 2: uO = vI; vO = wI; wO = uI; break;
+    case 3: uO = wI; vO = vI; wO =-uI; break;
+    case 4: uO = wI; vO =-uI; wO =-vI; break;
+    case 5: uO = vI; vO = uI; wO =-wI; break;
+  }
+  for (int i = 0; i < iRot; i++){
+    double tmp = uO;
+    uO = -vO;
+    vO = tmp;
+  }
+  if (iSign<0){
+    double tmp = uO;
+    uO = vO;
+    vO = tmp;
+  }
+}
+
+inline static double pow2(double x)
+{
+  return x * x;
+}
+
+/*
+static void checkClosure(int tag) {
+  printf("TYPE = %i\n", tag);
+  const polynomialBasis &fs = *polynomialBases::find(tag);
+  for (int i = 0; i < fs.closures.size(); ++i) {
+    const std::vector<int> &clRef = fs.closures[fs.closureRef[i]];
+    const std::vector<int> &cl = fs.closures[i];
+    const std::vector<int> &clFull = fs.fullClosures[i];
+    printf("i = %i\n", i);
+    for (int j = 0; j < cl.size(); ++j) {
+      printf("%3i ", clFull[clRef[j]]);
+    }
+    printf("\n");
+    for (int j = 0; j < cl.size(); ++j) {
+      printf("%3i ", cl[j]);
+    }
+    printf("\n");
+  }
+}
+*/
+
+static void generateFaceClosureHex(polynomialBasis::clCont &closure, int order, bool serendip, const fullMatrix<double> &points)
+{
+  closure.clear();
+  const polynomialBasis &fsFace = *polynomialBases::find(polynomialBasis::getTag(TYPE_QUA, order, serendip));
+  for (int iRotate = 0; iRotate < 4; iRotate++){
+    for (int iSign = 1; iSign >= -1; iSign -= 2){
+      for (int iFace = 0; iFace < 6; iFace++) {
+        polynomialBasis::closure cl;
+        cl.type = fsFace.type;
+        cl.resize(fsFace.points.size1());
+        for (int iNode = 0; iNode < cl.size(); ++iNode) {
+          double u,v,w;
+          rotateHex(iFace, iRotate, iSign, fsFace.points(iNode, 0), fsFace.points(iNode, 1), u, v, w);
+          cl[iNode] = 0;
+          double D = std::numeric_limits<double>::max();
+          for (int jNode = 0; jNode < points.size1(); ++jNode) {
+            double d = pow2(points(jNode, 0) - u) + pow2(points(jNode, 1) - v) + pow2(points(jNode, 2) - w);
+            if (d < D) {
+              cl[iNode] = jNode;
+              D = d;
+            }
+          }
+        }
+        closure.push_back(cl);
+      }
+    }
+  }
+}
+
+static void generateFaceClosureHexFull(polynomialBasis::clCont &closure,
+                                       std::vector<int> &closureRef,
+                                       int order, bool serendip, const fullMatrix<double> &points)
+{
+  closure.clear();
+  int clId = 0;
+  for (int iRotate = 0; iRotate < 4; iRotate++){
+    for (int iSign = 1; iSign >= -1; iSign -= 2){
+      for (int iFace = 0; iFace < 6; iFace++) {
+        polynomialBasis::closure cl;
+        cl.resize(points.size1());
+        for (int iNode = 0; iNode < points.size1(); ++iNode) {
+          double u,v,w;
+          rotateHexFull(iFace, iRotate, iSign, points(iNode, 0), points(iNode, 1), points(iNode, 2), u, v, w);
+          int J = 0;
+          double D = std::numeric_limits<double>::max();
+          for (int jNode = 0; jNode < points.size1(); ++jNode) {
+            double d = pow2(points(jNode, 0) - u) + pow2(points(jNode, 1) - v) + pow2(points(jNode, 2) - w);
+            if (d < D) {
+              J = jNode;
+              D = d;
+            }
+          }
+          cl[J] = iNode;
+        }
+        closure.push_back(cl);
+        closureRef.push_back(0);
+        clId ++;
+      }
+    }
+  }
+}
+
 static void getFaceClosurePrism(int iFace, int iSign, int iRotate,
                                 polynomialBasis::closure &closure, int order)
 {
@@ -1575,8 +1708,8 @@ const polynomialBasis *polynomialBases::find(int tag)
     F.dimension = 3;
     F.monomials = generatePascalHex(F.order, F.serendip);
     F.points = gmshGeneratePointsHex(F.order, F.serendip);
-    // generateFaceClosureHex(F.closures, F.order);
-    // generateFaceClosureHexFull(F.fullClosures, F.closureRef, F.order, F.serendip);
+    generateFaceClosureHex(F.closures, F.order, F.serendip, F.points);
+    generateFaceClosureHexFull(F.fullClosures, F.closureRef, F.order, F.serendip, F.points);
     break;
   }
   F.coefficients = generateLagrangeMonomialCoefficients(F.monomials, F.points);
