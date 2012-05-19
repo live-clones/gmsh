@@ -275,6 +275,7 @@ namespace onelab{
       setMax(p.getMax());
       setStep(p.getStep());
       setChoices(p.getChoices());
+      setValueLabels(p.getValueLabels());
     }
     std::string toChar() const
     {
