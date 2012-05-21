@@ -2,12 +2,12 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
-
+#include <limits>
 #include "MHexahedron.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "polynomialBasis.h"
-
+#include "MQuadrangle.h"
 int MHexahedron::getVolumeSign()
 {
   double mat[3][3];
@@ -30,6 +30,17 @@ void MHexahedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   *npts = getNGQHPts(pOrder);
   *pts = getGQHPts(pOrder);
+}
+
+double MHexahedron::getInnerRadius()
+{
+  //Only for vertically aligned elements (not inclined)
+  double innerRadius=std::numeric_limits<double>::max();
+  for (int i=0; i<getNumFaces(); i++){
+    MQuadrangle quad(getFace(i).getVertex(0), getFace(i).getVertex(1), getFace(i).getVertex(2), getFace(i).getVertex(3));
+    innerRadius=std::min(innerRadius,quad.getInnerRadius());
+  }
+  return innerRadius;
 }
 
 void MHexahedron::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) const

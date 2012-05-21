@@ -88,6 +88,7 @@ class MHexahedron : public MElement {
                  _v[faces_hexa(num, 2)],
                  _v[faces_hexa(num, 3)]);
   }
+  virtual double getInnerRadius();
   virtual void getFaceInfo (const MFace & face, int &ithFace, int &sign, int &rot)const;
   virtual int getNumFacesRep(){ return 12; }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
