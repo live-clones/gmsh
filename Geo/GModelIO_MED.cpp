@@ -349,15 +349,14 @@ int GModel::readMED(const std::string &name, int meshIndex)
       Msg::Error("Could not read MED elements");
       return 0;
     }
-    std::vector<med_int> fam(numEle);
+    std::vector<med_int> fam(numEle, 0);
 #if (MED_MAJOR_NUM == 3)
     if(MEDmeshEntityFamilyNumberRd(fid, meshName, MED_NO_DT, MED_NO_IT, MED_CELL,
                                    type, &fam[0]) < 0){
 #else
     if(MEDfamLire(fid, meshName, &fam[0], numEle, MED_MAILLE, type) < 0){
 #endif
-      Msg::Error("Could not read MED families");
-      return 0;
+      Msg::Info("No family number for elements: using 0 as default family number");
     }
     std::vector<med_int> eleTags(numEle);
 #if (MED_MAJOR_NUM == 3)
