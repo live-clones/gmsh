@@ -14,6 +14,7 @@
 #include "highOrderTools.h"
 #include "OptHomMesh.h"
 #include "OptHOM.h"
+#include "OS.h"
 #include <stack>
 
 #ifdef HAVE_FLTK
@@ -31,13 +32,13 @@ void OptHomMessage (const char *s, ...) {
   if(FlGui::available()){
     FlGui::instance()->check();
     FlGui::instance()->highordertools->messages->add(str, 0);
-    if(FlGui::instance()->highordertools->win->shown() && 
+    if(FlGui::instance()->highordertools->win->shown() &&
        FlGui::instance()->highordertools->messages->h() >= 10){
       FlGui::instance()->highordertools->messages->bottomline(FlGui::instance()->highordertools->messages->size());
       FlGui::instance()->highordertools->messages->show();
     }
   }
-  else 
+  else
     fprintf(stdout,"%s\n",str);
 #else
   fprintf(stdout,"%s\n",str);
@@ -45,7 +46,7 @@ void OptHomMessage (const char *s, ...) {
 }
 
 
-// get all elements that are neighbors 
+// get all elements that are neighbors
 
 double distMaxStraight (MElement *el){
   const polynomialBasis *lagrange = el->getFunctionSpace();
@@ -90,14 +91,14 @@ void exportMeshToDassault (GModel *gm, const std::string &fn, int dim){
     int nt = 0;
     int order  = 0;
     for (GModel::fiter itf = gm->firstFace(); itf != gm->lastFace(); ++itf){
-      std::vector<MTriangle*> &tris = (*itf)->triangles; 
+      std::vector<MTriangle*> &tris = (*itf)->triangles;
       nt += tris.size();
       if (tris.size())order = tris[0]->getPolynomialOrder();
     }
     fprintf(f,"%d %d\n",nt,(order+1)*(order+2)/2);
     int count = 1;
     for (GModel::fiter itf = gm->firstFace(); itf != gm->lastFace(); ++itf){
-      std::vector<MTriangle*> &tris = (*itf)->triangles; 
+      std::vector<MTriangle*> &tris = (*itf)->triangles;
       for (size_t i=0;i<tris.size();i++){
 	MTriangle *t = tris[i];
 	fprintf(f,"%d ",count++);
@@ -106,16 +107,16 @@ void exportMeshToDassault (GModel *gm, const std::string &fn, int dim){
 	}
 	fprintf(f,"\n");
       }
-    }    
+    }
     int ne = 0;
     for (GModel::eiter ite = gm->firstEdge(); ite != gm->lastEdge(); ++ite){
-      std::vector<MLine*> &l = (*ite)->lines; 
-      ne += l.size();      
+      std::vector<MLine*> &l = (*ite)->lines;
+      ne += l.size();
     }
     fprintf(f,"%d %d\n",ne,(order+1));
     count = 1;
     for (GModel::eiter ite = gm->firstEdge(); ite != gm->lastEdge(); ++ite){
-      std::vector<MLine*> &l = (*ite)->lines; 
+      std::vector<MLine*> &l = (*ite)->lines;
       for (size_t i=0;i<l.size();i++){
 	MLine *t = l[i];
 	fprintf(f,"%d ",count++);
@@ -131,18 +132,18 @@ void exportMeshToDassault (GModel *gm, const std::string &fn, int dim){
 
 
 
-static void getTopologicalNeighbors(int nbLayers, 
+static void getTopologicalNeighbors(int nbLayers,
 				    const std::vector<MElement*> &all,
-				    const std::vector<MElement*> &elements,  
+				    const std::vector<MElement*> &elements,
 				    std::set<MElement*> &result){
-  
+
 
   std::set<MVertex*> touched;
-  
+
   for (int i = 0; i < elements.size(); i++)
     for (int j=0;j<elements[i]->getNumVertices();j++)
       touched.insert(elements[i]->getVertex(j));
-  
+
   for (int layer = 0; layer < nbLayers; layer++) {
     for (int i = 0; i < all.size(); i++) {
       MElement *t = all[i];
@@ -199,7 +200,7 @@ static MElement * compare_worst (MElement *a, MElement *b){
   return b;
 }
 
-template <class ITERATOR> 
+template <class ITERATOR>
 MElement* getTheWorstElementDown (const ITERATOR &beg, const ITERATOR &end, double &q) {
   MElement *worst = 0;
   q = 1.e22;
@@ -209,13 +210,13 @@ MElement* getTheWorstElementDown (const ITERATOR &beg, const ITERATOR &end, doub
     double jmin,jmax;
     t->scaledJacRange(jmin,jmax);
     if (jmin < q) {
-      worst = t;q = jmin; 
-    }    
+      worst = t;q = jmin;
+    }
   }
   return worst;
 }
 
-template <class ITERATOR> 
+template <class ITERATOR>
 MElement* getTheWorstElementUp (const ITERATOR &beg, const ITERATOR &end, double &q) {
   MElement *worst = 0;
   q = -1.e22;
@@ -225,16 +226,16 @@ MElement* getTheWorstElementUp (const ITERATOR &beg, const ITERATOR &end, double
     double jmin,jmax;
     t->scaledJacRange(jmin,jmax);
     if (jmax > q) {
-      worst = t;q = jmax; 
-    }    
+      worst = t;q = jmax;
+    }
   }
   return worst;
 }
 
-static std::set<MVertex*> filterSimple(GEntity *ge, 
-					  int nbLayers, 
-					  double _qual_min, 
-					  double _qual_max, 
+static std::set<MVertex*> filterSimple(GEntity *ge,
+					  int nbLayers,
+					  double _qual_min,
+					  double _qual_max,
             std::set<MElement*> &result) {
   std::vector<MElement*> badElements, allElements;
   for (int i = 0; i < ge->getNumMeshElements(); ++i) {
@@ -245,7 +246,7 @@ static std::set<MVertex*> filterSimple(GEntity *ge,
       badElements.push_back(e);
     }
   }
-  getTopologicalNeighbors(nbLayers, allElements, badElements,result);  
+  getTopologicalNeighbors(nbLayers, allElements, badElements,result);
   std::set<MVertex*> vs;
   for (int i = 0; i < allElements.size(); i++) {
     if (result.find(allElements[i]) == result.end()) {
@@ -257,11 +258,11 @@ static std::set<MVertex*> filterSimple(GEntity *ge,
   return vs;
 }
 
-std::set<MVertex*> filter2D_boundaryLayer(GFace *gf, 
-					  int nbLayers, 
-					  double _qual_min, 
-					  double _qual_max, 
-					  double F , 
+std::set<MVertex*> filter2D_boundaryLayer(GFace *gf,
+					  int nbLayers,
+					  double _qual_min,
+					  double _qual_max,
+					  double F ,
 					  std::set<MElement*> & badasses,
             std::set<MElement*> & result
             ) {
@@ -273,19 +274,19 @@ std::set<MVertex*> filter2D_boundaryLayer(GFace *gf,
   else worst = worstUp;
 
   //  MElement *worst = compare_worst (getTheWorstElement(gf->triangles),
-  //				   getTheWorstElement(gf->quadrangles)); 
-  
+  //				   getTheWorstElement(gf->quadrangles));
+
   std::vector<MElement*> vworst; vworst.push_back(worst);
-  std::vector<MElement*> all; 
+  std::vector<MElement*> all;
   all.insert(all.begin(),gf->triangles.begin(),gf->triangles.end());
   all.insert(all.begin(),gf->quadrangles.begin(),gf->quadrangles.end());
   std::set<MElement*> result1;
-  getTopologicalNeighbors(nbLayers, all, vworst,result1);  
+  getTopologicalNeighbors(nbLayers, all, vworst,result1);
   std::set<MElement*> result2;
   getGeometricalNeighbors (worst, all, F, result2);
   intersection (result1,result2,result);
-  //  printf("intsersection(%d,%d) = %d\n",result1.size(),result2.size(),result.size()); 
-  
+  //  printf("intsersection(%d,%d) = %d\n",result1.size(),result2.size(),result.size());
+
   std::set<MVertex*> vs;
   for (int i = 0; i < all.size(); i++) {
     if (result.find(all[i]) == result.end()) {
@@ -298,29 +299,29 @@ std::set<MVertex*> filter2D_boundaryLayer(GFace *gf,
 }
 
 
-std::set<MVertex*> filter3D_boundaryLayer(GRegion *gr, 
-					  int nbLayers, 
-					  double _qual_min, 
-					  double _qual_max, 
+std::set<MVertex*> filter3D_boundaryLayer(GRegion *gr,
+					  int nbLayers,
+					  double _qual_min,
+					  double _qual_max,
 					  double F,
             std::set<MElement *> &result) {
   double jmin,jmax;
   MElement *worst = compare_worst (getTheWorstElementDown(gr->tetrahedra.begin(),gr->tetrahedra.end(),jmin),
-				   getTheWorstElementDown(gr->prisms.begin(),gr->prisms.end(),jmin)); 
-  worst = compare_worst (worst,getTheWorstElementDown(gr->hexahedra.begin(),gr->hexahedra.end(),jmin)); 
-  
+				   getTheWorstElementDown(gr->prisms.begin(),gr->prisms.end(),jmin));
+  worst = compare_worst (worst,getTheWorstElementDown(gr->hexahedra.begin(),gr->hexahedra.end(),jmin));
+
   std::vector<MElement*> vworst; vworst.push_back(worst);
-  std::vector<MElement*> all; 
+  std::vector<MElement*> all;
   all.insert(all.begin(),gr->tetrahedra.begin(),gr->tetrahedra.end());
   all.insert(all.begin(),gr->prisms.begin(),gr->prisms.end());
   all.insert(all.begin(),gr->hexahedra.begin(),gr->hexahedra.end());
   std::set<MElement*> result1;
-  getTopologicalNeighbors(nbLayers, all, vworst,result1);  
+  getTopologicalNeighbors(nbLayers, all, vworst,result1);
   std::set<MElement*> result2;
   getGeometricalNeighbors (worst, all, F, result2);
   intersection (result1,result2,result);
-  //  printf("intsersection(%d,%d) = %d\n",result1.size(),result2.size(),result.size()); 
-  
+  //  printf("intsersection(%d,%d) = %d\n",result1.size(),result2.size(),result.size());
+
   std::set<MVertex*> vs;
   for (int i = 0; i < all.size(); i++) {
     if (result.find(all[i]) == result.end()) {
@@ -374,7 +375,7 @@ static std::vector<std::set<MElement*> > splitConnex(const std::set<MElement*> &
 void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
 {
 
-  clock_t t1 = clock();
+  double t1 = Cpu();
 
   int samples = 30;
 
@@ -404,7 +405,7 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
 
   double distMaxBND, distAvgBND, minJac, maxJac;
   if (p.dim == 2) {
-    clock_t tf1 = clock();;
+    double tf1 = Cpu();;
     for (GModel::fiter itf = gm->firstFace(); itf != gm->lastFace(); ++itf) {
       if (p.onlyVisible && !(*itf)->getVisibility())continue;
       int ITER = 0;
@@ -448,7 +449,7 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
 	ossI << "initial_" << (*itf)->tag() << "ITER_" << ITER << ".msh";
 	temp.mesh.writeMSH(ossI.str().c_str());
 	if (minJac > p.BARRIER_MIN && maxJac < p.BARRIER_MAX) break;
-	
+
 	p.SUCCESS = std::min(p.SUCCESS,temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax));
 
 //  temp.recalcJacDist();
@@ -462,7 +463,7 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
 	//      ossF << "final_" << (*itf)->tag() << ".msh";
 	//      temp.mesh.writeMSH(ossF.str().c_str());
       }
-      double DTF = (double)(clock()-tf1) / CLOCKS_PER_SEC;
+      double DTF = Cpu()-tf1;
       if (p.SUCCESS == 1){
 	OptHomMessage("Optimization succeeded (CPU %g sec)",DTF);
       }
@@ -527,7 +528,7 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
       Msg::Info("----------------------------------------------------------------");
       //      temp.mesh.writeMSH("final.msh");
     }
-  }  
-  clock_t t2 = clock();
-  p.CPU = (double)(t2-t1)/CLOCKS_PER_SEC;
+  }
+  double t2 = Cpu();
+  p.CPU = t2-t1;
 }
