@@ -30,7 +30,7 @@ class GMSH_CutParametricPlugin : public GMSH_PostPlugin
   std::string getName() const { return "CutParametric"; }
   std::string getShortHelp() const
   {
-    return "Cut with the parametric curve (X(u), Y(u), Z(u))";
+    return "Cut with the parametric curve (X(u,v), Y(u,v), Z(u,v))";
   }
   std::string getHelp() const;
   int getNbOptions() const;
@@ -41,7 +41,10 @@ class GMSH_CutParametricPlugin : public GMSH_PostPlugin
 
   static double callbackMinU(int, int, double);
   static double callbackMaxU(int, int, double);
-  static double callbackN(int, int, double);
+  static double callbackNU(int, int, double);
+  static double callbackMinV(int, int, double);
+  static double callbackMaxV(int, int, double);
+  static double callbackNV(int, int, double);
   static double callbackConnect(int, int, double);
   static std::string callbackX(int, int, std::string);
   static std::string callbackY(int, int, std::string);
