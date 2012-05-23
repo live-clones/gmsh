@@ -1184,20 +1184,34 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    double lc_a = 3.5*lc;
    double lc_n, lc_t;
 
-   if (onTubularSurface){
-     lc_n = lc_t = lc;
+   if ( onTubularSurface){
+     double e = radMax/5.;
+     double hn = e/50.;
+     lc_n = hn; 
+     double crv = 1./radMax;
+     double oneOverD2 = .5/(lc*lc) * (1. + sqrt (1. + ( 4.*crv*crv*lc*lc*lc*lc/ (lc_n*lc_n*CTX::instance()->mesh.smoothRatio*CTX::instance()->mesh.smoothRatio))));
+
+     lc_n = lc_t = sqrt(1./oneOverD2);
    }
    else{
-     double e = radMax/4.;
-     double hn = e/10.;
+     /// thickness of the refined layer
+     double e = radMax/5.;
+     // small size
+     double hn = e/50.;
      double rm = std::max(radMax-ds, radMax-e);
-     lc_t = 2*M_PI*rm/nbPoints;
+
+     lc_t = lc;
+     lc_n = std::min(lc,ds*(1.3-1) + hn); 
+
+     double crv = 1./radMax;
+     double oneOverD2 = .5/(lc*lc) * (1. + sqrt (1. + ( 4.*crv*crv*lc*lc*lc*lc/ (lc_n*lc_n*CTX::instance()->mesh.smoothRatio*CTX::instance()->mesh.smoothRatio))));
+     lc_t = sqrt(1./oneOverD2);
+
+
      //lc_n = lc_t = lc;
      //double ratio = 1.02; //1. + (lc_t-hn)/e;
      //printf("ratio =%g \n", ratio);
      //lc_n = ds*(ratio-1) + hn;
-     if (ds < e) lc_n = hn; 
-     else lc_n = lc_t;
    }
    double lam_a = 1./(lc_a*lc_a);
    double lam_n = 1./(lc_n*lc_n);
