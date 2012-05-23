@@ -65,10 +65,18 @@ class Wrap{
 
 class LpCVT{
  private:
-  std::vector<VoronoiElement> clipped;
+  int gauss_num;
   fullMatrix<double> gauss_points;
   fullVector<double> gauss_weights;
-  int gauss_num;
+  std::vector<double> f_cache;
+  std::vector<double> df_dx_cache;
+  std::vector<double> df_dy_cache;
+  std::vector<double> df_dz_cache;
+  std::vector<double> rho_cache;
+  std::vector<double> drho_dx_cache;
+  std::vector<double> drho_dy_cache;
+  std::vector<double> drho_dz_cache;
+  std::vector<VoronoiElement> clipped;
  public:
   LpCVT();
   ~LpCVT();
@@ -83,6 +91,7 @@ class LpCVT{
   double h_to_rho(double,int);
   void swap();
   void get_gauss();
+  void init_caches(VoronoiElement,int);
   double F(VoronoiElement,int);
   SVector3 simple(VoronoiElement,int);
   SVector3 dF_dC1(VoronoiElement,int);
@@ -565,9 +574,7 @@ void VoronoiElement::compute_jacobian(){
 }
 
 double VoronoiElement::T(double u,double v,double w,double val1,double val2,double val3,double val4){
-  double val;
-  val = (1.0-u-v-w)*val1 + u*val2 + v*val3 + w*val4;
-  return val;
+  return (1.0-u-v-w)*val1 + u*val2 + v*val3 + w*val4;
 }
 
 void VoronoiElement::swap(){
@@ -741,9 +748,9 @@ void LpCVT::verification(std::vector<SPoint3>& bank,std::vector<int>& movability
 
   eval(bank,movability,offset,gradients,energy,p);
 
-  printf("...%f  %f  %f\n",gradients[index-offset].x(),gradients[index-offset].y(),gradients[index-offset].z());
-  printf("...%f  %f  %f\n",(right-left)/(2.0*e),(up-down)/(2.0*e),(front-back)/(2.0*e));
-  printf("...%d %d %d\n",index,bank.size(),offset);
+  printf("Finite difference : %f  %f  %f\n",(right-left)/(2.0*e),(up-down)/(2.0*e),(front-back)/(2.0*e));
+  printf("            Gauss : %f  %f  %f\n",gradients[index-offset].x(),gradients[index-offset].y(),gradients[index-offset].z());
+  printf("%d %d %d\n",index,bank.size(),offset);
 }
 
 void LpCVT::eval(std::vector<SPoint3>& bank,std::vector<int>& movability,int offset,std::vector<SVector3>& gradients,double& energy,int p){
@@ -769,6 +776,7 @@ void LpCVT::eval(std::vector<SPoint3>& bank,std::vector<int>& movability,int off
 
   for(i=0;i<clipped.size();i++){
 	if(clipped[i].get_quality()<e) continue;
+	init_caches(clipped[i],p);
     energy = energy + F(clipped[i],p);
 	grad1 = dF_dC1(clipped[i],p);
 	grad2 = dF_dC2(clipped[i],p);
@@ -954,22 +962,29 @@ void LpCVT::swap(){
 
 void LpCVT::get_gauss(){
   int order;
+  
   order = 8;
   gaussIntegration::getTetrahedron(order,gauss_points,gauss_weights);
   gauss_num = gauss_points.size1();
+	
+  f_cache.resize(gauss_num);
+  df_dx_cache.resize(gauss_num);
+  df_dy_cache.resize(gauss_num);
+  df_dz_cache.resize(gauss_num);
+  rho_cache.resize(gauss_num);
+  drho_dx_cache.resize(gauss_num);
+  drho_dy_cache.resize(gauss_num);
+  drho_dz_cache.resize(gauss_num);
 }
 
-double LpCVT::F(VoronoiElement element,int p){
+void LpCVT::init_caches(VoronoiElement element,int p){
   int i;
   double u,v,w;
   double x,y,z;
-  double energy;
-  double weight;
-  double rho;
   SPoint3 point,generator,C1,C2,C3;
   VoronoiVertex v1,v2,v3,v4;
   Tensor t;
-
+	
   v1 = element.get_v1();
   v2 = element.get_v2();
   v3 = element.get_v3();
@@ -978,9 +993,8 @@ double LpCVT::F(VoronoiElement element,int p){
   C1 = v2.get_point();
   C2 = v3.get_point();
   C3 = v4.get_point();
-  energy = 0.0;
   t = element.get_tensor();
-
+    
   for(i=0;i<gauss_num;i++){
     u = gauss_points(i,0);
 	v = gauss_points(i,1);
@@ -989,9 +1003,28 @@ double LpCVT::F(VoronoiElement element,int p){
 	y = element.T(u,v,w,generator.y(),C1.y(),C2.y(),C3.y());
 	z = element.T(u,v,w,generator.z(),C1.z(),C2.z(),C3.z());
 	point = SPoint3(x,y,z);
+	f_cache[i] = f(generator,point,t,p);
+	df_dx_cache[i] = df_dx(generator,point,t,p);
+	df_dy_cache[i] = df_dy(generator,point,t,p);
+	df_dz_cache[i] = df_dz(generator,point,t,p);
+	rho_cache[i] = h_to_rho(element.get_h(u,v,w),p);
+	drho_dx_cache[i] = (-p-3)*pow_int(1.0/element.get_h(u,v,w),p+4)*element.get_dh_dx();
+	drho_dy_cache[i] = (-p-3)*pow_int(1.0/element.get_h(u,v,w),p+4)*element.get_dh_dy();
+	drho_dz_cache[i] = (-p-3)*pow_int(1.0/element.get_h(u,v,w),p+4)*element.get_dh_dz();
+  }	
+}
+
+double LpCVT::F(VoronoiElement element,int p){
+  int i;
+  double energy;
+  double weight;
+  double rho;
+
+  energy = 0.0;
+  for(i=0;i<gauss_num;i++){
 	weight = gauss_weights(i);
-	rho = h_to_rho(element.get_h(u,v,w),p); //h_to_rho(get_size(x,y,z),p);
-	energy = energy + weight*rho*f(generator,point,t,p);
+	rho = rho_cache[i];
+	energy = energy + weight*rho*f_cache[i];
   }
   energy = element.get_jacobian()*energy;
   return energy;
@@ -999,43 +1032,22 @@ double LpCVT::F(VoronoiElement element,int p){
 
 SVector3 LpCVT::simple(VoronoiElement element,int p){
   int i;
-  double u,v,w;
-  double x,y,z;
   double comp_x,comp_y,comp_z;
   double weight;
   double rho;
   double jacobian;
-  SPoint3 point,generator,C1,C2,C3;
-  VoronoiVertex v1,v2,v3,v4;
-  Tensor t;
 
-  v1 = element.get_v1();
-  v2 = element.get_v2();
-  v3 = element.get_v3();
-  v4 = element.get_v4();
-  generator = v1.get_point();
-  C1 = v2.get_point();
-  C2 = v3.get_point();
-  C3 = v4.get_point();
   comp_x = 0.0;
   comp_y = 0.0;
   comp_z = 0.0;
   jacobian = element.get_jacobian();
-  t = element.get_tensor();
 
   for(i=0;i<gauss_num;i++){
-    u = gauss_points(i,0);
-	v = gauss_points(i,1);
-	w = gauss_points(i,2);
-	x = element.T(u,v,w,generator.x(),C1.x(),C2.x(),C3.x());
-	y = element.T(u,v,w,generator.y(),C1.y(),C2.y(),C3.y());
-	z = element.T(u,v,w,generator.z(),C1.z(),C2.z(),C3.z());
-	point = SPoint3(x,y,z);
 	weight = gauss_weights(i);
-	rho = h_to_rho(element.get_h(u,v,w),p); //h_to_rho(get_size(x,y,z),p);
-	comp_x = comp_x + weight*rho*df_dx(generator,point,t,p);
-	comp_y = comp_y + weight*rho*df_dy(generator,point,t,p);
-	comp_z = comp_z + weight*rho*df_dz(generator,point,t,p);
+	rho = rho_cache[i];
+	comp_x = comp_x + weight*rho*df_dx_cache[i];
+	comp_y = comp_y + weight*rho*df_dy_cache[i];
+	comp_z = comp_z + weight*rho*df_dz_cache[i];
   }
   comp_x = jacobian*comp_x;
   comp_y = jacobian*comp_y;
@@ -1046,7 +1058,6 @@ SVector3 LpCVT::simple(VoronoiElement element,int p){
 SVector3 LpCVT::dF_dC1(VoronoiElement element,int p){
   int i;
   double u,v,w;
-  double x,y,z;
   double comp_x,comp_y,comp_z;
   double weight;
   double rho;
@@ -1054,9 +1065,8 @@ SVector3 LpCVT::dF_dC1(VoronoiElement element,int p){
   double jacobian;
   double distance;
   double gx,gy,gz;
-  SPoint3 point,generator,C1,C2,C3;
+  SPoint3 generator,C1,C2,C3;
   VoronoiVertex v1,v2,v3,v4;
-  Tensor t;
 
   v1 = element.get_v1();
   v2 = element.get_v2();
@@ -1070,7 +1080,6 @@ SVector3 LpCVT::dF_dC1(VoronoiElement element,int p){
   comp_y = 0.0;
   comp_z = 0.0;
   jacobian = element.get_jacobian();
-  t = element.get_tensor();
   gx = generator.x();
   gy = generator.y();
   gz = generator.z();
@@ -1079,23 +1088,19 @@ SVector3 LpCVT::dF_dC1(VoronoiElement element,int p){
     u = gauss_points(i,0);
 	v = gauss_points(i,1);
 	w = gauss_points(i,2);
-	x = element.T(u,v,w,gx,C1.x(),C2.x(),C3.x());
-	y = element.T(u,v,w,gy,C1.y(),C2.y(),C3.y());
-	z = element.T(u,v,w,gz,C1.z(),C2.z(),C3.z());
-	point = SPoint3(x,y,z);
 	weight = gauss_weights(i);
-	rho = h_to_rho(element.get_h(u,v,w),p); //h_to_rho(get_size(x,y,z),p);
-	drho_dx = (-p-3)*pow_int(1.0/element.get_h(u,v,w),p+4)*element.get_dh_dx(); //get_drho_dx(x,y,z,p);
-	drho_dy = (-p-3)*pow_int(1.0/element.get_h(u,v,w),p+4)*element.get_dh_dy(); //get_drho_dy(x,y,z,p);
-	drho_dz = (-p-3)*pow_int(1.0/element.get_h(u,v,w),p+4)*element.get_dh_dz(); //get_drho_dz(x,y,z,p);
-	distance = f(point,generator,t,p);
-	comp_x = comp_x + weight*rho*df_dx(point,generator,t,p)*u*jacobian;
+	rho = rho_cache[i];
+	drho_dx = drho_dx_cache[i];
+	drho_dy = drho_dy_cache[i];
+	drho_dz = drho_dz_cache[i];
+	distance = f_cache[i];
+	comp_x = comp_x + weight*rho*df_dx_cache[i]*u*jacobian*(-1.0);
 	comp_x = comp_x + weight*rho*distance*((C2.y()-gy)*(C3.z()-gz) - (C3.y()-gy)*(C2.z()-gz));
 	comp_x = comp_x + weight*drho_dx*u*distance*jacobian;
-	comp_y = comp_y + weight*rho*df_dy(point,generator,t,p)*u*jacobian;
+	comp_y = comp_y + weight*rho*df_dy_cache[i]*u*jacobian*(-1.0);
 	comp_y = comp_y + weight*rho*distance*((C2.z()-gz)*(C3.x()-gx) - (C2.x()-gx)*(C3.z()-gz));
 	comp_y = comp_y + weight*drho_dy*u*distance*jacobian;
-	comp_z = comp_z + weight*rho*df_dz(point,generator,t,p)*u*jacobian;
+	comp_z = comp_z + weight*rho*df_dz_cache[i]*u*jacobian*(-1.0);
 	comp_z = comp_z + weight*rho*distance*((C2.x()-gx)*(C3.y()-gy) - (C3.x()-gx)*(C2.y()-gy));
 	comp_z = comp_z + weight*drho_dz*u*distance*jacobian;
   }
@@ -1105,7 +1110,6 @@ SVector3 LpCVT::dF_dC1(VoronoiElement element,int p){
 SVector3 LpCVT::dF_dC2(VoronoiElement element,int p){
   int i;
   double u,v,w;
-  double x,y,z;
   double comp_x,comp_y,comp_z;
   double weight;
   double rho;
@@ -1113,9 +1117,8 @@ SVector3 LpCVT::dF_dC2(VoronoiElement element,int p){
   double jacobian;
   double distance;
   double gx,gy,gz;
-  SPoint3 point,generator,C1,C2,C3;
+  SPoint3 generator,C1,C2,C3;
   VoronoiVertex v1,v2,v3,v4;
-  Tensor t;
 
   v1 = element.get_v1();
   v2 = element.get_v2();
@@ -1129,7 +1132,6 @@ SVector3 LpCVT::dF_dC2(VoronoiElement element,int p){
   comp_y = 0.0;
   comp_z = 0.0;
   jacobian = element.get_jacobian();
-  t = element.get_tensor();
   gx = generator.x();
   gy = generator.y();
   gz = generator.z();
@@ -1138,23 +1140,19 @@ SVector3 LpCVT::dF_dC2(VoronoiElement element,int p){
     u = gauss_points(i,0);
 	v = gauss_points(i,1);
 	w = gauss_points(i,2);
-	x = element.T(u,v,w,generator.x(),C1.x(),C2.x(),C3.x());
-	y = element.T(u,v,w,generator.y(),C1.y(),C2.y(),C3.y());
-	z = element.T(u,v,w,generator.z(),C1.z(),C2.z(),C3.z());
-	point = SPoint3(x,y,z);
 	weight = gauss_weights(i);
-	rho = h_to_rho(element.get_h(u,v,w),p); //h_to_rho(get_size(x,y,z),p);
-	drho_dx = (-p-3)*pow_int(1.0/element.get_h(u,v,w),p+4)*element.get_dh_dx(); //get_drho_dx(x,y,z,p);
-	drho_dy = (-p-3)*pow_int(1.0/element.get_h(u,v,w),p+4)*element.get_dh_dy(); //get_drho_dy(x,y,z,p);
-	drho_dz = (-p-3)*pow_int(1.0/element.get_h(u,v,w),p+4)*element.get_dh_dz(); //get_drho_dz(x,y,z,p);
-	distance = f(point,generator,t,p);
-	comp_x = comp_x + weight*rho*df_dx(point,generator,t,p)*v*jacobian;
+	rho = rho_cache[i];
+	drho_dx = drho_dx_cache[i];
+	drho_dy = drho_dy_cache[i];
+	drho_dz = drho_dz_cache[i];
+	distance = f_cache[i];
+	comp_x = comp_x + weight*rho*df_dx_cache[i]*v*jacobian*(-1.0);
 	comp_x = comp_x + weight*rho*distance*((C1.z()-gz)*(C3.y()-gy) - (C1.y()-gy)*(C3.z()-gz));
 	comp_x = comp_x + weight*drho_dx*v*distance*jacobian;
-	comp_y = comp_y + weight*rho*df_dy(point,generator,t,p)*v*jacobian;
+	comp_y = comp_y + weight*rho*df_dy_cache[i]*v*jacobian*(-1.0);
 	comp_y = comp_y + weight*rho*distance*((C1.x()-gx)*(C3.z()-gz) - (C3.x()-gx)*(C1.z()-gz));
 	comp_y = comp_y + weight*drho_dy*v*distance*jacobian;
-	comp_z = comp_z + weight*rho*df_dz(point,generator,t,p)*v*jacobian;
+	comp_z = comp_z + weight*rho*df_dz_cache[i]*v*jacobian*(-1.0);
 	comp_z = comp_z + weight*rho*distance*((C3.x()-gx)*(C1.y()-gy) - (C1.x()-gx)*(C3.y()-gy));
 	comp_z = comp_z + weight*drho_dz*v*distance*jacobian;
   }
@@ -1164,7 +1162,6 @@ SVector3 LpCVT::dF_dC2(VoronoiElement element,int p){
 SVector3 LpCVT::dF_dC3(VoronoiElement element,int p){
   int i;
   double u,v,w;
-  double x,y,z;
   double comp_x,comp_y,comp_z;
   double weight;
   double rho;
@@ -1172,9 +1169,8 @@ SVector3 LpCVT::dF_dC3(VoronoiElement element,int p){
   double jacobian;
   double distance;
   double gx,gy,gz;
-  SPoint3 point,generator,C1,C2,C3;
+  SPoint3 generator,C1,C2,C3;
   VoronoiVertex v1,v2,v3,v4;
-  Tensor t;
 
   v1 = element.get_v1();
   v2 = element.get_v2();
@@ -1188,7 +1184,6 @@ SVector3 LpCVT::dF_dC3(VoronoiElement element,int p){
   comp_y = 0.0;
   comp_z = 0.0;
   jacobian = element.get_jacobian();
-  t = element.get_tensor();
   gx = generator.x();
   gy = generator.y();
   gz = generator.z();
@@ -1197,23 +1192,19 @@ SVector3 LpCVT::dF_dC3(VoronoiElement element,int p){
     u = gauss_points(i,0);
 	v = gauss_points(i,1);
 	w = gauss_points(i,2);
-	x = element.T(u,v,w,gx,C1.x(),C2.x(),C3.x());
-	y = element.T(u,v,w,gy,C1.y(),C2.y(),C3.y());
-	z = element.T(u,v,w,gz,C1.z(),C2.z(),C3.z());
-	point = SPoint3(x,y,z);
 	weight = gauss_weights(i);
-	rho = h_to_rho(element.get_h(u,v,w),p); //h_to_rho(get_size(x,y,z),p);
-	drho_dx = (-p-3)*pow_int(1.0/element.get_h(u,v,w),p+4)*element.get_dh_dx(); //get_drho_dx(x,y,z,p);
-	drho_dy = (-p-3)*pow_int(1.0/element.get_h(u,v,w),p+4)*element.get_dh_dy(); //get_drho_dy(x,y,z,p);
-	drho_dz = (-p-3)*pow_int(1.0/element.get_h(u,v,w),p+4)*element.get_dh_dz(); //get_drho_dz(x,y,z,p);
-	distance = f(point,generator,t,p);
-	comp_x = comp_x + weight*rho*df_dx(point,generator,t,p)*w*jacobian;
+	rho = rho_cache[i];
+	drho_dx = drho_dx_cache[i];
+	drho_dy = drho_dy_cache[i];
+	drho_dz = drho_dz_cache[i];
+	distance = f_cache[i];
+	comp_x = comp_x + weight*rho*df_dx_cache[i]*w*jacobian*(-1.0);
 	comp_x = comp_x + weight*rho*distance*((C1.y()-gy)*(C2.z()-gz) - (C2.y()-gy)*(C1.z()-gz));
 	comp_x = comp_x + weight*drho_dx*w*distance*jacobian;
-	comp_y = comp_y + weight*rho*df_dy(point,generator,t,p)*w*jacobian;
+	comp_y = comp_y + weight*rho*df_dy_cache[i]*w*jacobian*(-1.0);
 	comp_y = comp_y + weight*rho*distance*((C2.x()-gx)*(C1.z()-gz) - (C1.x()-gx)*(C2.z()-gz));
 	comp_y = comp_y + weight*drho_dy*w*distance*jacobian;
-	comp_z = comp_z + weight*rho*df_dz(point,generator,t,p)*w*jacobian;
+	comp_z = comp_z + weight*rho*df_dz_cache[i]*w*jacobian*(-1.0);
 	comp_z = comp_z + weight*rho*distance*((C1.x()-gx)*(C2.y()-gy) - (C2.x()-gx)*(C1.y()-gy));
 	comp_z = comp_z + weight*drho_dz*w*distance*jacobian;
   }
@@ -1569,11 +1560,11 @@ void LpSmoother::improve_region(GRegion* gr)
   for(i=0;i<bank.size();i++) w.set_bank(bank[i],i);
   for(i=0;i<bank.size();i++) w.set_movability(movability[i],i);
 
-  //if((bank.size()-offset)>1){
-    //LpCVT obj;
-    //obj.get_gauss();
-    //obj.verification(bank,movability,offset,6);
-  //}
+  /*if((bank.size()-offset)>1){
+    LpCVT obj;
+    obj.get_gauss();
+    obj.verification(bank,movability,offset,6);
+  }*/
 
   epsg = 0;
   epsf = 0;
