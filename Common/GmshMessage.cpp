@@ -649,8 +649,11 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   std::vector<onelab::number> ps;
   _onelabClient->get(ps, name);
   bool noRange = true, noChoices = true, noLoop = true, noGraph = true;
-  if(ps.size()){ // use value from server
-    val[0] = ps[0].getValue();
+  if(ps.size()){ 
+    if(ps[0].getReadOnly())
+      ps[0].setValue(val[0]); // use value from gmsh
+    else
+      val[0] = ps[0].getValue(); // use value from server
     // keep track of these attributes, which can be changed server-side
     if(ps[0].getMin() != -onelab::parameter::maxNumber() ||
        ps[0].getMax() != onelab::parameter::maxNumber() ||
