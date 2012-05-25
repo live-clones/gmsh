@@ -8,6 +8,7 @@ class ParamCoord
 
 public:
 
+  virtual void exportParamCoord(MVertex *v, const SPoint3 &uvw) {};
   virtual int nCoord(MVertex* vert) = 0;                                                 // Number of parametric coordinates for vertex
   virtual SPoint3 getUvw(MVertex* vert) = 0;                                             // Get parametric coordinates of vertex
   virtual SPoint3 uvw2Xyz(MVertex* vert, const SPoint3 &uvw) = 0;                        // Calculate physical coordinates from parametric coordinates of vertex
@@ -89,6 +90,7 @@ class ParamCoordParent : public ParamCoord
 public:
 
   int nCoord(MVertex* vert) { return vert->onWhat()->dim(); }
+  virtual void exportParamCoord(MVertex *v, const SPoint3 &uvw);
   virtual SPoint3 getUvw(MVertex* vert);
   virtual SPoint3 uvw2Xyz(MVertex* vert, const SPoint3 &uvw);
   virtual void gXyz2gUvw(MVertex* vert, const SPoint3 &uvw, const SPoint3 &gXyz, SPoint3 &gUvw);

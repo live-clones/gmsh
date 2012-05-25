@@ -316,9 +316,10 @@ void Mesh::distSqToStraight(std::vector<double> &dSq)
 
 void Mesh::updateGEntityPositions()
 {
-
-  for (int iV = 0; iV < nVert(); iV++) _vert[iV]->setXYZ(_xyz[iV].x(),_xyz[iV].y(),_xyz[iV].z());
-
+  for (int iV = 0; iV < nVert(); iV++)
+    _vert[iV]->setXYZ(_xyz[iV].x(),_xyz[iV].y(),_xyz[iV].z()); 
+  for (int iFV = 0; iFV < nFV(); iFV++)
+    _pc->exportParamCoord(_freeVert[iFV], _uvw[iFV]);
 }
 
 
