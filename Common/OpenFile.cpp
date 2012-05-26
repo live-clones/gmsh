@@ -425,6 +425,8 @@ int MergeFile(std::string fileName, bool warnIfMissing)
   }
 #endif
 
+  Msg::ImportPhysicalsAsOnelabRegions();
+
   if(!status) Msg::Error("Error loading '%s'", fileName.c_str());
   Msg::StatusBar(2, true, "Done reading '%s'", fileName.c_str());
 

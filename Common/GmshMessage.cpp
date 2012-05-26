@@ -649,7 +649,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   std::vector<onelab::number> ps;
   _onelabClient->get(ps, name);
   bool noRange = true, noChoices = true, noLoop = true, noGraph = true;
-  if(ps.size()){ 
+  if(ps.size()){
     if(ps[0].getReadOnly())
       ps[0].setValue(val[0]); // use value from gmsh
     else
@@ -694,6 +694,34 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(noGraph && copt.count("Graph")) ps[0].setAttribute("Graph", copt["Graph"][0]);
   if(copt.count("Highlight")) ps[0].setAttribute("Highlight", copt["Highlight"][0]);
   _onelabClient->set(ps[0]);
+#endif
+}
+
+void Msg::ImportPhysicalsAsOnelabRegions()
+{
+#if defined(HAVE_ONELAB)
+  if(_onelabClient){
+    std::map<int, std::vector<GEntity*> > groups[4];
+    GModel::current()->getPhysicalGroups(groups);
+    for(int dim = 0; dim < 3; dim++){
+      for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
+          it != groups[dim].end(); it++){
+        // create "read-only" onelab region
+        std::string name = GModel::current()->getPhysicalName(dim, it->first);
+        std::ostringstream num;
+        num << it->first;
+        if(name.empty())
+          name = std::string("Physical") +
+            ((dim == 3) ? "Volume" : (dim == 2) ? "Surface" :
+             (dim == 1) ? "Line" : "Point") + num.str();
+        name.insert(0, "Gmsh/Physical groups/");
+        onelab::region p(name, num.str());
+        p.setDimension(dim);
+        p.setReadOnly(true);
+        _onelabClient->set(p);
+      }
+    }
+  }
 #endif
 }
 
