@@ -22,6 +22,8 @@ OptHOM::OptHOM(GEntity *ge, const std::set<MElement*> &els, std::set<MVertex*> &
 {
 };
 
+
+
 // Contribution of the element Jacobians to the objective function value and gradients (2D version)
 bool OptHOM::addJacObjGrad(double &Obj, alglib::real_1d_array &gradObj)
 {
@@ -31,9 +33,7 @@ bool OptHOM::addJacObjGrad(double &Obj, alglib::real_1d_array &gradObj)
 
   for (int iEl = 0; iEl < mesh.nEl(); iEl++) {
     std::vector<double> sJ(mesh.nBezEl(iEl));                   // Scaled Jacobians
-    //    mesh.scaledJac(iEl,sJ);
     std::vector<double> gSJ(mesh.nBezEl(iEl)*mesh.nPCEl(iEl));  // Gradients of scaled Jacobians
-    //    mesh.gradScaledJac(iEl,gSJ);
     mesh.scaledJacAndGradients (iEl,sJ,gSJ);
     
     for (int l = 0; l < mesh.nBezEl(iEl); l++) {
@@ -127,8 +127,9 @@ void OptHOM::recalcJacDist()
   minJac = 1.e300;
   maxJac = -1.e300;
   for (int iEl = 0; iEl < mesh.nEl(); iEl++) {
-    std::vector<double> sJ(mesh.nBezEl(iEl));                   // Scaled Jacobians
-    mesh.scaledJac(iEl,sJ);
+    std::vector<double> sJ(mesh.nBezEl(iEl));                       // Scaled Jacobians
+    std::vector<double> dumGSJ(mesh.nBezEl(iEl)*mesh.nPCEl(iEl));   // (Dummy) gradients of scaled Jacobians
+    mesh.scaledJacAndGradients (iEl,sJ,dumGSJ);
     for (int l = 0; l < mesh.nBezEl(iEl); l++) {
       minJac = std::min(minJac, sJ[l]);
       maxJac = std::max(maxJac, sJ[l]);

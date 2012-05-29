@@ -30,9 +30,6 @@ public:
   inline const int &indPCEl(int iEl, int iPC) { return _indPCEl[iEl][iPC]; }
   inline const int &nBezEl(int iEl) { return _nBezEl[iEl]; }
 
-  void scaledJac(int iEl, std::vector<double> &sJ);
-  void gradScaledJac(int iEl, std::vector<double> &gSJ);
-  // a faster version that computes both jacobians and their gradients
   void scaledJacAndGradients(int iEl, std::vector<double> &sJ, std::vector<double> &gSJ);   
   inline int indGSJ(int iEl, int l, int iPC) { return iPC*_nBezEl[iEl]+l; }
 
@@ -81,14 +78,12 @@ private:
   ParamCoord *_pc;
   bool projJac;                                 // Using "projected" Jacobians or not
 
-  static std::map<int, std::vector<double> > _jacBez;
   static std::map<int, fullMatrix<double> >  _gradShapeFunctions; // gradients of shape functions at Bezier points 
   static std::map<int, fullMatrix<double> >  _lag2Bez; // gradients of shape functions at Bezier points 
 
   int addVert(MVertex* vert);
   int addFreeVert(MVertex* vert, const int iV, const int nPCV, std::set<MVertex*> &toFix);
   SVector3 getNormalEl(int iEl);
-  static std::vector<double> computeJB(const polynomialBasis *lagrange, const bezierBasis *bezier);
   static fullMatrix<double> computeGSF(const polynomialBasis *lagrange, const bezierBasis *bezier);
   static inline int indJB2DBase(int nNod, int l, int i, int j) { return (l*nNod+i)*nNod+j; }
   inline int indJB2D(int iEl, int l, int i, int j) { return indJB2DBase(_nNodEl[iEl],l,i,j); }

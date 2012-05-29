@@ -4,6 +4,8 @@
 #include "MVertex.h"
 #include "ParamCoord.h"
 
+
+
 ParamCoordSurf::ParamCoordSurf(GEntity *ge)
 {
   if ((ge->dim() == 2) && (ge->geomType() != GEntity::DiscreteSurface)) _gf = static_cast<GFace*>(ge);
@@ -170,6 +172,8 @@ void ParamCoordParent::gXyz2gUvw(MVertex* vert, const SPoint3 &uvw, const std::v
   }
 
 }
+
+
 
 void ParamCoordParent::exportParamCoord(MVertex *v, const SPoint3 &uvw)
 {

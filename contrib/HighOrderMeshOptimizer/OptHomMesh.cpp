@@ -8,9 +8,9 @@
 
 
 
-std::map<int, std::vector<double> > Mesh::_jacBez;
 std::map<int, fullMatrix<double> > Mesh::_gradShapeFunctions;
 std::map<int, fullMatrix<double> > Mesh::_lag2Bez;
+
 
 
 fullMatrix<double> Mesh::computeGSF(const polynomialBasis *lagrange, const bezierBasis *bezier)
@@ -27,59 +27,6 @@ fullMatrix<double> Mesh::computeGSF(const polynomialBasis *lagrange, const bezie
   fullMatrix<double> allDPsi;
   lagrange->df(bezierPoints, allDPsi);
   return allDPsi;
-}
-
-
-std::vector<double> Mesh::computeJB(const polynomialBasis *lagrange, const bezierBasis *bezier)
-{
-  int nbNodes = lagrange->points.size1();
-  
-  // bezier points are defined in the [0,1] x [0,1] quad
-  fullMatrix<double> bezierPoints = bezier->points;
-  if (lagrange->parentType == TYPE_QUA) {
-    for (int i = 0; i < bezierPoints.size1(); ++i) {
-      bezierPoints(i, 0) = -1 + 2 * bezierPoints(i, 0);
-      bezierPoints(i, 1) = -1 + 2 * bezierPoints(i, 1);
-    }
-  }
-
-  fullMatrix<double> allDPsi;
-  lagrange->df(bezierPoints, allDPsi);
-  int size = bezier->points.size1();
-  std::vector<double> JB;
-  for (int d = 0; d < lagrange->dimension; ++d) {
-    size *= nbNodes;
-  }
-  JB.resize(size, 0.);
-  for (int k = 0; k < bezier->points.size1(); ++k) {
-    fullMatrix<double> dPsi(allDPsi, k * 3, 3);
-    if (lagrange->dimension == 2) {
-      for (int i = 0; i < nbNodes; i++) {
-        for (int j = 0; j < nbNodes; j++) {
-          double Jij = dPsi(i, 0) * dPsi(j, 1) - dPsi(i, 1) * dPsi(j,0);
-          for (int l = 0; l < bezier->points.size1(); l++) {
-            JB[indJB2DBase(nbNodes,l,i,j)] += bezier->matrixLag2Bez(l, k) * Jij;
-          }
-        }
-      }
-    }
-    if (lagrange->dimension == 3) {
-      for (int i = 0; i < nbNodes; i++) {
-        for (int j = 0; j < nbNodes; j++) {
-          for (int m = 0; m < nbNodes; m++) {
-            double Jijm = 
-                (dPsi(j, 1) * dPsi(m, 2) - dPsi(j, 2) * dPsi(m, 1)) * dPsi(i, 0)
-              + (dPsi(j, 2) * dPsi(m, 0) - dPsi(j, 0) * dPsi(m, 2)) * dPsi(i, 1)
-              + (dPsi(j, 0) * dPsi(m, 1) - dPsi(j, 1) * dPsi(m, 0)) * dPsi(i, 2);
-            for (int l = 0; l < bezier->points.size1(); l++) {
-              JB[indJB3DBase(nbNodes,l,i,j,m)] += bezier->matrixLag2Bez(l, k) * Jijm;
-            }
-          }
-        }
-      }
-    }
-  }
-  return JB;
 }
 
 
@@ -125,8 +72,7 @@ Mesh::Mesh(GEntity *ge, const std::set<MElement*> &els, std::set<MVertex*> &toFi
     _el[iEl] = el;
     const polynomialBasis *lagrange = el->getFunctionSpace();
     const bezierBasis *bezier = JacobianBasis::find(lagrange->type)->bezier;
-    if (_jacBez.find(lagrange->type) == _jacBez.end()) {
-      _jacBez[lagrange->type] = computeJB(lagrange, bezier);
+    if (_lag2Bez.find(lagrange->type) == _lag2Bez.end()) {
       _gradShapeFunctions[lagrange->type] = computeGSF(lagrange, bezier);
       _lag2Bez[lagrange->type] = bezier->matrixLag2Bez;
     }
@@ -437,145 +383,6 @@ void Mesh::scaledJacAndGradients(int iEl, std::vector<double> &sJ , std::vector<
       iPC += _nPCFV[iFVi];
     } 
   }
-}
-
-
-void Mesh::scaledJac(int iEl, std::vector<double> &sJ)
-{
-  const std::vector<double> &jacBez = _jacBez[_el[iEl]->getTypeForMSH()];
-  if (_dim == 2) {
-    SVector3 &n = _normEl[iEl];
-    if (projJac) {
-      for (int l = 0; l < _nBezEl[iEl]; l++) {
-        sJ[l] = 0.;
-        for (int i = 0; i < _nNodEl[iEl]; i++) {
-          int &iVi = _el2V[iEl][i];
-          for (int j = 0; j < _nNodEl[iEl]; j++) {
-            int &iVj = _el2V[iEl][j];
-            sJ[l] += jacBez[indJB2D(iEl,l,i,j)]
-                  * (_xyz[iVi].x() * _xyz[iVj].y() * n.z() - _xyz[iVi].x() * _xyz[iVj].z() * n.y()
-                     + _xyz[iVi].y() * _xyz[iVj].z() * n.x());
-          }
-        }
-      }
-    }
-    else
-      for (int l = 0; l < _nBezEl[iEl]; l++) {
-        sJ[l] = 0.;
-        for (int i = 0; i < _nNodEl[iEl]; i++) {
-          int &iVi = _el2V[iEl][i];
-          for (int j = 0; j < _nNodEl[iEl]; j++) {
-            int &iVj = _el2V[iEl][j];
-            sJ[l] += jacBez[indJB2D(iEl,l,i,j)] * _xyz[iVi].x() * _xyz[iVj].y();
-          }
-        }
-        sJ[l] *= n.z();
-      }
- }
-  else {
-    for (int l = 0; l < _nBezEl[iEl]; l++) {
-      sJ[l] = 0.;
-      for (int i = 0; i < _nNodEl[iEl]; i++) {
-        int &iVi = _el2V[iEl][i];
-        for (int j = 0; j < _nNodEl[iEl]; j++) {
-          int &iVj = _el2V[iEl][j];
-          for (int m = 0; m < _nNodEl[iEl]; m++) {
-            int &iVm = _el2V[iEl][m];
-            sJ[l] += jacBez[indJB3D(iEl,l,i,j,m)] * _xyz[iVi].x() * _xyz[iVj].y() * _xyz[iVm].z();
-          }
-        }
-      }
-      sJ[l] *= _invStraightJac[iEl];
-    }
-  }
-
-}
-
-
-
-void Mesh::gradScaledJac(int iEl, std::vector<double> &gSJ)
-{
-  const std::vector<double> &jacBez = _jacBez[_el[iEl]->getTypeForMSH()];
-  if (_dim == 2) {
-    int iPC = 0;
-    SVector3 n = _normEl[iEl];
-    if (projJac) {
-      for (int i = 0; i < _nNodEl[iEl]; i++) {
-        int &iFVi = _el2FV[iEl][i];
-        if (iFVi >= 0) {
-          std::vector<SPoint3> gXyzV(_nBezEl[iEl],SPoint3(0.,0.,0.));
-          std::vector<SPoint3> gUvwV(_nBezEl[iEl]);
-          for (int m = 0; m < _nNodEl[iEl]; m++) {
-            int &iVm = _el2V[iEl][m];
-            const double vpx = _xyz[iVm].y() * n.z() - _xyz[iVm].z() * n.y();
-            const double vpy = -_xyz[iVm].x() * n.z() + _xyz[iVm].z() * n.x();
-            const double vpz = _xyz[iVm].x() * n.y() - _xyz[iVm].y() * n.x();
-            for (int l = 0; l < _nBezEl[iEl]; l++) {
-              gXyzV[l][0] += jacBez[indJB2D(iEl,l,i,m)] * vpx;
-              gXyzV[l][1] += jacBez[indJB2D(iEl,l,i,m)] * vpy;
-              gXyzV[l][2] += jacBez[indJB2D(iEl,l,i,m)] * vpz;
-            }
-          }
-          _pc->gXyz2gUvw(_freeVert[iFVi],_uvw[iFVi],gXyzV,gUvwV);
-          for (int l = 0; l < _nBezEl[iEl]; l++) {
-            gSJ[indGSJ(iEl,l,iPC)] = gUvwV[l][0];
-            if (_nPCFV[iFVi] >= 2) gSJ[indGSJ(iEl,l,iPC+1)] = gUvwV[l][1];
-          }
-          iPC += _nPCFV[iFVi];
-        }
-      }
-    }
-    else
-      for (int i = 0; i < _nNodEl[iEl]; i++) {
-        int &iFVi = _el2FV[iEl][i];
-        if (iFVi >= 0) {
-          std::vector<SPoint3> gXyzV(_nBezEl[iEl],SPoint3(0.,0.,0.));
-          std::vector<SPoint3> gUvwV(_nBezEl[iEl]);
-          for (int m = 0; m < _nNodEl[iEl]; m++) {
-            int &iVm = _el2V[iEl][m];
-            for (int l = 0; l < _nBezEl[iEl]; l++) {
-              gXyzV[l][0] += jacBez[indJB2D(iEl,l,i,m)] * _xyz[iVm].y() * n.z();
-              gXyzV[l][1] += jacBez[indJB2D(iEl,l,m,i)] * _xyz[iVm].x() * n.z();
-            }
-          }
-          _pc->gXyz2gUvw(_freeVert[iFVi],_uvw[iFVi],gXyzV,gUvwV);
-          for (int l = 0; l < _nBezEl[iEl]; l++) {
-            gSJ[indGSJ(iEl,l,iPC)] = gUvwV[l][0];
-            if (_nPCFV[iFVi] >= 2) gSJ[indGSJ(iEl,l,iPC+1)] = gUvwV[l][1];
-          }
-          iPC += _nPCFV[iFVi];
-        }
-      }
-  }
-  else {
-    int iPC = 0;
-    for (int i = 0; i < _nNodEl[iEl]; i++) {
-      int &iFVi = _el2FV[iEl][i];
-      if (iFVi >= 0) {
-        std::vector<SPoint3> gXyzV(_nBezEl[iEl],SPoint3(0.,0.,0.));
-        std::vector<SPoint3> gUvwV(_nBezEl[iEl]);
-        for (int a = 0; a < _nNodEl[iEl]; a++) {
-          int &iVa = _el2V[iEl][a];
-          for (int b = 0; b < _nNodEl[iEl]; b++) {
-            int &iVb = _el2V[iEl][b];
-            for (int l = 0; l < _nBezEl[iEl]; l++) {
-              gXyzV[l][0] += jacBez[indJB3D(iEl,l,i,a,b)] * _xyz[iVa].y() * _xyz[iVb].z() * _invStraightJac[iEl];
-              gXyzV[l][1] += jacBez[indJB3D(iEl,l,a,i,b)] * _xyz[iVa].x() * _xyz[iVb].z() * _invStraightJac[iEl];
-              gXyzV[l][2] += jacBez[indJB3D(iEl,l,a,b,i)] * _xyz[iVa].x() * _xyz[iVb].y() * _invStraightJac[iEl];
-            }
-          }
-        }
-        _pc->gXyz2gUvw(_freeVert[iFVi],_uvw[iFVi],gXyzV,gUvwV);
-        for (int l = 0; l < _nBezEl[iEl]; l++) {
-          gSJ[indGSJ(iEl,l,iPC)] = gUvwV[l][0];
-          if (_nPCFV[iFVi] >= 2) gSJ[indGSJ(iEl,l,iPC+1)] = gUvwV[l][1];
-          if (_nPCFV[iFVi] == 3) gSJ[indGSJ(iEl,l,iPC+2)] = gUvwV[l][2];
-        }
-        iPC += _nPCFV[iFVi];
-      }
-    }
-  }
-
 }
 
 
