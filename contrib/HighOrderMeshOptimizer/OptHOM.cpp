@@ -285,7 +285,7 @@ int OptHOM::optimize(double weightFixed, double weightFree, double b_min, double
     recalcJacDist();
     jacBar = (minJac > 0.) ? 0.9*minJac : 1.1*minJac;
     setBarrierTerm(jacBar);
-    if (ITER ++ > 15) break;
+    if (ITER ++ > 50) break;
   }
 
   //  for (int i = 0; i<3; i++) {

@@ -37,12 +37,12 @@ public:
 private:
 
 //  double lambda, lambda2, powM, powP, invLengthScaleSq;
-  double lambda, lambda2, jacBar, bTerm, invLengthScaleSq;
+  double lambda, lambda2, jacBar, invLengthScaleSq;
   int iter, progressInterv;            // Current iteration, interval of iterations for reporting
   double initObj, initMaxDist, initAvgDist;  // Values for reporting
   double minJac, maxJac, maxDist, avgDist;  // Values for reporting
 
-  inline void setBarrierTerm(double jacBarrier) { bTerm = jacBarrier/(1.-jacBarrier); }
+  inline void setBarrierTerm(double jacBarrier) {jacBar = jacBarrier;}
   inline double compute_f(double v);
   inline double compute_f1(double v);
   bool addJacObjGrad(double &Obj, alglib::real_1d_array &gradObj);
@@ -57,7 +57,7 @@ private:
 inline double OptHOM::compute_f(double v)
 {
   if (v > jacBar) {
-    const double l = log((1 + bTerm) * v - bTerm);
+    const double l = log((v - jacBar) / (1 -jacBar));
     const double m = (v - 1);
     return l * l + m * m;
   }
@@ -72,9 +72,7 @@ inline double OptHOM::compute_f(double v)
 inline double OptHOM::compute_f1(double v)
 {
   if (v > jacBar) {
-    const double veps = (1 + bTerm) * v - bTerm;
-    const double m = 2 * (v - 1);
-    return m + 2 * log(veps) / veps * (1 + bTerm);
+    return 2 * (v - 1) + 2 * log((v - jacBar) / (1 - jacBar)) / (v - jacBar);
   }
   else return -1.e300;
 //  if (v < 1.) return -powM*pow(1.-v,powM-1.);

@@ -232,21 +232,13 @@ MElement* getTheWorstElementUp (const ITERATOR &beg, const ITERATOR &end, double
   return worst;
 }
 
-static std::set<MVertex*> filterSimple(GEntity *ge,
-					  int nbLayers,
-					  double _qual_min,
-					  double _qual_max,
-            std::set<MElement*> &result) {
-  std::vector<MElement*> badElements, allElements;
-  for (int i = 0; i < ge->getNumMeshElements(); ++i) {
-    MElement *e = ge->getMeshElement(i);
-    double Q = e->distoShapeMeasure();
-    allElements.push_back(e);
-    if (Q < _qual_min || Q > _qual_max) {
-      badElements.push_back(e);
-    }
-  }
-  getTopologicalNeighbors(nbLayers, allElements, badElements,result);
+static std::set<MVertex*> filterSimple(GEntity &ge, std::set<MElement*> &badElements, int nbLayers, std::set<MElement*> &result)
+{
+  std::vector<MElement*> allElements;
+  for (int i = 0; i < ge.getNumMeshElements(); ++i)
+    allElements.push_back(ge.getMeshElement(i));
+  OptHomMessage("%d bad elements", badElements.size());
+  getTopologicalNeighbors(nbLayers, allElements, std::vector<MElement*> (badElements.begin(), badElements.end()),result);
   std::set<MVertex*> vs;
   for (int i = 0; i < allElements.size(); i++) {
     if (result.find(allElements[i]) == result.end()) {
@@ -333,43 +325,80 @@ std::set<MVertex*> filter3D_boundaryLayer(GRegion *gr,
   return vs;
 }
 
-static std::vector<std::set<MElement*> > splitConnex(const std::set<MElement*> &in)
+static std::set<MVertex *> getBndVertices(std::set<MElement*> &elements, std::map<MVertex *, std::vector<MElement*> > &vertex2elements)
 {
-  std::map<int, std::vector<int> > vertex2elements;
-  std::vector<MElement *> elements(in.begin(), in.end());
-  for (size_t i = 0; i < elements.size(); ++i) {
-    for (int j = 0; j < elements[i]->getNumPrimaryVertices(); ++j) {
-      vertex2elements[elements[i]->getVertex(j)->getNum()].push_back(i);
-    }
-  }
-  std::vector<int> colors(elements.size(), -1);
-  int color = 0;
-  for (size_t i = 0; i < elements.size(); ++i) {
-    if (colors[i] == -1) {
-      colors[i] = color;
-      std::stack<int> todo;
-      todo.push(i);
-      while (! todo.empty()) {
-        int top = todo.top();
-        todo.pop();
-        for (int j = 0; j < elements[top]->getNumPrimaryVertices(); ++j) {
-          const std::vector<int> &neighbours = vertex2elements[elements[top]->getVertex(j)->getNum()];
-          for (size_t k = 0; k < neighbours.size(); ++k) {
-            if (colors[neighbours[k]] == -1) {
-              colors[neighbours[k]] = color;
-              todo.push(neighbours[k]);
-            }
+  std::set<MVertex*> bnd;
+  for (std::set<MElement*>::iterator itE = elements.begin(); itE != elements.end(); ++itE) {
+    for (int i = 0; i < (*itE)->getNumVertices(); ++i) {
+      const std::vector<MElement*> &neighbours = vertex2elements[(*itE)->getVertex(i)];
+      for (size_t k = 0; k < neighbours.size(); ++k) {
+        if (elements.find(neighbours[k]) == elements.end()) {
+          for (int j = 0; j < neighbours[k]->getNumVertices(); ++j) {
+            bnd.insert(neighbours[k]->getVertex(i));
           }
         }
       }
-      color ++;
     }
   }
-  std::vector<std::set<MElement*> > split(color);
-  for (size_t i = 0; i < elements.size(); ++i) {
-    split[colors[i]].insert(elements[i]);
+  return bnd;
+}
+
+static std::set<MElement*> getSurroundingBlob(MElement *el, int depth, std::map<MVertex *, std::vector<MElement*> > &vertex2elements)
+{
+  std::set<MElement *> blob;
+  std::set<MElement *> currentLayer, lastLayer;
+  blob.insert(el);
+  lastLayer.insert(el);
+  for (int d = 0; d < depth; ++d) {
+    for (std::set<MElement *>::iterator it = lastLayer.begin(); it != lastLayer.end(); ++it) {
+      for (int i = 0; i < (*it)->getNumVertices(); ++i){
+        const std::vector<MElement*> &neighbours = vertex2elements[(*it)->getVertex(i)];
+        for (size_t k = 0; k < neighbours.size(); ++k) {
+          if (blob.find(neighbours[k]) != blob.end())
+            continue;
+          blob.insert(neighbours[k]);
+          currentLayer.insert(neighbours[k]);
+        }
+      }
+    }
+    lastLayer = currentLayer;
   }
-  return split;
+  return blob;
+}
+
+static std::vector<std::pair<std::set<MElement*> , std::set<MVertex*> > > getConnectedBlobs(GEntity &entity, const std::set<MElement*> &badElements, int depth)
+{
+  std::map<MVertex*, std::vector<MElement *> > vertex2elements;
+  for (size_t i = 0; i < entity.getNumMeshElements(); ++i) {
+    MElement &element = *entity.getMeshElement(i);
+    for (int j = 0; j < element.getNumPrimaryVertices(); ++j) {
+      vertex2elements[element.getVertex(j)].push_back(&element);
+    }
+  }
+  std::vector<std::pair<std::set<MElement *>, std::set<MVertex*> > > result;
+  std::set<MElement *> badElementsDone;
+  for (std::set<MElement*>::const_iterator it = badElements.begin(); it != badElements.end(); ++it) {
+    if(badElementsDone.find(*it) != badElementsDone.end())
+      continue;
+    std::stack<MElement*> todo;
+    todo.push(*it);
+    result.resize(result.size() + 1);
+    while (!todo.empty()) {
+      MElement *el = todo.top();
+      todo.pop();
+      if(badElementsDone.find(el) == badElementsDone.end()) {
+        std::set<MElement*> blob = getSurroundingBlob(el, depth, vertex2elements);
+        for (std::set<MElement*>::iterator itE = blob.begin(); itE != blob.end(); ++itE) {
+          if(badElements.find(*itE) != badElements.end())
+            todo.push(*itE);
+        }
+        badElementsDone.insert(el);
+        result.back().first.insert(blob.begin(), blob.end());
+      }
+    }
+    result.back().second = getBndVertices(result.back().first, vertex2elements);
+  }
+  return result;
 }
 
 void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
@@ -382,7 +411,7 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
 //  int method = Mesh::METHOD_RELAXBND | Mesh::METHOD_PHYSCOORD | Mesh::METHOD_PROJJAC;
 //  int method = Mesh::METHOD_FIXBND | Mesh::METHOD_PHYSCOORD | Mesh::METHOD_PROJJAC;
 //  int method = Mesh::METHOD_FIXBND | Mesh::METHOD_SURFCOORD | Mesh::METHOD_PROJJAC;
-  int method;
+  int method = 0;
   if (p.method == 0)
     method = Mesh::METHOD_FIXBND | Mesh::METHOD_PROJJAC;
   else if (p.method == 1)
@@ -399,134 +428,146 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
 //  int method = Mesh::METHOD_PROJJAC;
 
   SVector3 BND(gm->bounds().max(), gm->bounds().min());
-  double SIZE = BND.norm();
 
   OptHomMessage("High order mesh optimizer starts");
 
-  double distMaxBND, distAvgBND, minJac, maxJac;
-  if (p.dim == 2) {
-    double tf1 = Cpu();;
-    for (GModel::fiter itf = gm->firstFace(); itf != gm->lastFace(); ++itf) {
-      if (p.onlyVisible && !(*itf)->getVisibility())continue;
-      int ITER = 0;
-      OptHomMessage("Optimizing Model face %4d...",(*itf)->tag());
-      p.SUCCESS = 1;
+  if (p.filter == 0) {
+    std::vector<GEntity*> entities;
+    gm->getEntities(entities);
+    for (int i = 0; i < entities.size(); ++i) {
+      double tf1 = Cpu();;
+      GEntity &entity = *entities[i];
+      if (entity.dim() != p.dim || (p.onlyVisible && !entity.getVisibility()))
+        continue;
+      OptHomMessage("Optimizing Model entity %4d...", entity.tag());
       std::set<MElement*> badasses;
-      if (p.filter == 1){
-	for (int i=0;i<(*itf)->getNumMeshElements();i++){
-	  double jmin,jmax;
-	  (*itf)->getMeshElement(i)->scaledJacRange(jmin,jmax);
-	  if (jmin < p.BARRIER_MIN || jmax > p.BARRIER_MAX)badasses.insert((*itf)->getMeshElement(i));
-	}
-	//	printf("START WITH %d bad asses\n",badasses.size());
-	if (badasses.size() == 0)continue;
+      for (int i = 0; i < entity.getNumMeshElements();i++){
+        double jmin,jmax;
+        //entity.getMeshElement(i)->scaledJacRange(jmin,jmax);
+        jmin = jmax = entity.getMeshElement(i)->distoShapeMeasure();
+        if (jmin < p.BARRIER_MIN || jmax > p.BARRIER_MAX)
+          badasses.insert(entity.getMeshElement(i));
       }
-      if (p.filter == 0) {
-        std::set<MVertex*> toFix;
-        std::set<MElement*> toOptimize;
-        toFix = filterSimple(*itf, p.nbLayers, p.BARRIER_MIN, p.BARRIER_MAX, toOptimize);
-        std::vector<std::set<MElement*> > toOptimizeSplit = splitConnex(toOptimize);
-        for (int i = 0; i < toOptimizeSplit.size(); ++i) {
-          OptHOM temp(*itf, toOptimizeSplit[i], toFix, method);
-          temp.recalcJacDist();
-          temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
-          OptHomMessage("Optimizing a blob %i/%i composed of %4d elements  minJ %12.5E -- maxJ %12.5E", i+1, toOptimizeSplit.size(), toOptimizeSplit[i].size(), minJac, maxJac);
-          p.SUCCESS = std::min(p.SUCCESS,temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax));
-          temp.mesh.updateGEntityPositions();
+      if (badasses.empty())
+        continue;
+      std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > toOptimize = getConnectedBlobs(entity, badasses, p.nbLayers);
+      //#pragma omp parallel for schedule(dynamic, 1)
+      p.SUCCESS = 1;
+      for (int i = 0; i < toOptimize.size(); ++i) {
+        OptHomMessage("Optimizing a blob %i/%i composed of %4d elements", i+1, toOptimize.size(), toOptimize[i].first.size());
+        fflush(stdout);
+        OptHOM temp(&entity, toOptimize[i].first, toOptimize[i].second, method);
+        int success = temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax);
+        temp.mesh.updateGEntityPositions();
+        if (success <= 0) {
+          std::ostringstream ossI2;
+          ossI2 << "final_" << entity.tag() << "ITER_" << i << ".msh";
+          temp.mesh.writeMSH(ossI2.str().c_str());
         }
-      }
-      else while (1){
-	std::set<MVertex*> toFix;
-	std::set<MElement*> toOptimize;
-
-	toFix = filter2D_boundaryLayer(*itf, p.nbLayers, p.BARRIER_MIN, p.BARRIER_MAX, p.DistanceFactor, badasses, toOptimize);
-	OptHOM temp(*itf, toOptimize, toFix, method);
-
-	temp.recalcJacDist();
-	temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
-	//	if (minJac < 1.e2)OptHomMessage("Optimizing a blob of %4d elements  minJ %12.5E -- maxJ %12.5E",(*itf)->getNumMeshElements(), minJac, maxJac);
-	std::ostringstream ossI;
-	ossI << "initial_" << (*itf)->tag() << "ITER_" << ITER << ".msh";
-	temp.mesh.writeMSH(ossI.str().c_str());
-	if (minJac > p.BARRIER_MIN && maxJac < p.BARRIER_MAX) break;
-
-	p.SUCCESS = std::min(p.SUCCESS,temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax));
-
-//  temp.recalcJacDist();
-//  temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
-	temp.mesh.updateGEntityPositions();
-	if (p.SUCCESS == -1) break;
-	ITER ++;
-	if (p.filter == 1 && ITER > badasses.size() * 2)break;
-
-	//      std::ostringstream ossF;
-	//      ossF << "final_" << (*itf)->tag() << ".msh";
-	//      temp.mesh.writeMSH(ossF.str().c_str());
+        //#pragma omp critical
+        p.SUCCESS = std::min(p.SUCCESS, success);
       }
       double DTF = Cpu()-tf1;
-      if (p.SUCCESS == 1){
-	OptHomMessage("Optimization succeeded (CPU %g sec)",DTF);
-      }
+      if (p.SUCCESS == 1)
+        OptHomMessage("Optimization succeeded for entity %d (CPU %g sec)", entity.tag(), DTF);
       else if (p.SUCCESS == 0)
-	OptHomMessage("Warning : Model face %4d has all jacobians positive but not all in the range CPU %g",(*itf)->tag(),DTF);
+        OptHomMessage("Warning : Model entity %4d has all jacobians positive but not all in the range CPU %g",entity.tag(),DTF);
       else if (p.SUCCESS == -1)
-	OptHomMessage("Error : Model face %4d has still negative jacobians",(*itf)->tag());
-
-      Msg::Info("---------------------------------------------------------------------------------------------------------------");
+        OptHomMessage("Error : Model entity %4d has still negative jacobians",entity.tag());
     }
-    exportMeshToDassault (gm,gm->getName() + "_opti.das", 2);
   }
-  else if (p.dim == 3) {
-    for (GModel::riter itr = gm->firstRegion(); itr != gm->lastRegion(); ++itr) {
-      if (p.onlyVisible && !(*itr)->getVisibility())continue;
-      int ITER = 0;
-      Msg::Info("Model region %4d is considered",(*itr)->tag());
-      p.SUCCESS = true;
-      if (p.filter == 0) {
-        std::set<MVertex*> toFix;
-        std::set<MElement*> toOptimize;
-        toFix = filterSimple(*itr, p.nbLayers, p.BARRIER_MIN, p.BARRIER_MAX, toOptimize);
-        std::vector<std::set<MElement*> > toOptimizeSplit = splitConnex(toOptimize);
-        for (int i = 0; i < toOptimizeSplit.size(); ++i) {
-          OptHOM temp(*itr, toOptimizeSplit[i], toFix, method);
+  else {
+    double distMaxBND, distAvgBND, minJac, maxJac;
+    if (p.dim == 2) {
+      double tf1 = Cpu();;
+      for (GModel::fiter itf = gm->firstFace(); itf != gm->lastFace(); ++itf) {
+        if (p.onlyVisible && !(*itf)->getVisibility())continue;
+        int ITER = 0;
+        OptHomMessage("Optimizing Model face %4d...",(*itf)->tag());
+        p.SUCCESS = 1;
+        std::set<MElement*> badasses;
+        for (int i=0;i<(*itf)->getNumMeshElements();i++){
+          double jmin,jmax;
+          (*itf)->getMeshElement(i)->scaledJacRange(jmin,jmax);
+          if (jmin < p.BARRIER_MIN || jmax > p.BARRIER_MAX)badasses.insert((*itf)->getMeshElement(i));
+        }
+        //	printf("START WITH %d bad asses\n",badasses.size());
+        if (badasses.size() == 0)continue;
+        while (1){
+          std::set<MVertex*> toFix;
+          std::set<MElement*> toOptimize;
+
+          toFix = filter2D_boundaryLayer(*itf, p.nbLayers, p.BARRIER_MIN, p.BARRIER_MAX, p.DistanceFactor, badasses, toOptimize);
+          OptHOM temp(*itf, toOptimize, toFix, method);
+
           temp.recalcJacDist();
           temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
-	  std::ostringstream ossI;
-	  ossI << "initial_" << (*itr)->tag() << "BLOB_" << i << ".msh";
-	  temp.mesh.writeMSH(ossI.str().c_str());
-          OptHomMessage("Optimizing a blob %i/%i composed of %4d elements  minJ %12.5E -- maxJ %12.5E", i+1, toOptimizeSplit.size(), toOptimizeSplit[i].size(), minJac, maxJac);
+          //	if (minJac < 1.e2)OptHomMessage("Optimizing a blob of %4d elements  minJ %12.5E -- maxJ %12.5E",(*itf)->getNumMeshElements(), minJac, maxJac);
+          std::ostringstream ossI;
+          ossI << "initial_" << (*itf)->tag() << "ITER_" << ITER << ".msh";
+          temp.mesh.writeMSH(ossI.str().c_str());
+          if (minJac > p.BARRIER_MIN && maxJac < p.BARRIER_MAX) break;
+
           p.SUCCESS = std::min(p.SUCCESS,temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax));
-	  temp.mesh.updateGEntityPositions();
+
+          //  temp.recalcJacDist();
+          //  temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
+          temp.mesh.updateGEntityPositions();
+          if (p.SUCCESS == -1) break;
+          ITER ++;
+          if (p.filter == 1 && ITER > badasses.size() * 2)break;
+
+          //      std::ostringstream ossF;
+          //      ossF << "final_" << (*itf)->tag() << ".msh";
+          //      temp.mesh.writeMSH(ossF.str().c_str());
         }
-      }
-      else while (1){
-      std::set<MVertex*> toFix;
-      std::set<MElement*> toOptimize;
+        double DTF = Cpu()-tf1;
+        if (p.SUCCESS == 1){
+          OptHomMessage("Optimization succeeded (CPU %g sec)",DTF);
+        }
+        else if (p.SUCCESS == 0)
+          OptHomMessage("Warning : Model face %4d has all jacobians positive but not all in the range CPU %g",(*itf)->tag(),DTF);
+        else if (p.SUCCESS == -1)
+          OptHomMessage("Error : Model face %4d has still negative jacobians",(*itf)->tag());
 
-      if (p.filter == 1) toFix = filter3D_boundaryLayer(*itr, p.nbLayers, p.BARRIER_MIN, p.BARRIER_MAX, p.DistanceFactor, toOptimize);
-      else toFix = filterSimple(*itr, p.nbLayers, p.BARRIER_MIN, p.BARRIER_MAX, toOptimize);
-
-//      if ((*itr)->tetrahedra.size() > 0) {
-        OptHOM temp(*itr, toOptimize, toFix, method);
-        double distMaxBND, distAvgBND, minJac, maxJac;
-        temp.recalcJacDist();
-        temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
-        if (minJac < 1.e2)Msg::Info("Optimizing a blob of %4d elements  minJ %12.5E -- maxJ %12.5E",(*itr)->getNumMeshElements(), minJac, maxJac);
-        std::ostringstream ossI;
-        ossI << "initial_" << (*itr)->tag() << "ITER_" << ITER << ".msh";
-        temp.mesh.writeMSH(ossI.str().c_str());
-        if (minJac > p.BARRIER_MIN  && maxJac < p.BARRIER_MAX) break;
-        p.SUCCESS = temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax);
-        temp.recalcJacDist();
-        temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
-        temp.mesh.updateGEntityPositions();
-        if (!p.SUCCESS) break;
-//      }
-      ITER ++;
+        Msg::Info("---------------------------------------------------------------------------------------------------------------");
       }
-      Msg::Info("Model region %4d is done (%d subdomains were computed) SUCCESS %1d",(*itr)->tag(),ITER,p.SUCCESS);
-      Msg::Info("----------------------------------------------------------------");
-      //      temp.mesh.writeMSH("final.msh");
+      exportMeshToDassault (gm,gm->getName() + "_opti.das", 2);
+    }
+    else if (p.dim == 3) {
+      for (GModel::riter itr = gm->firstRegion(); itr != gm->lastRegion(); ++itr) {
+        if (p.onlyVisible && !(*itr)->getVisibility())continue;
+        int ITER = 0;
+        Msg::Info("Model region %4d is considered",(*itr)->tag());
+        p.SUCCESS = true;
+        while (1){
+          std::set<MVertex*> toFix;
+          std::set<MElement*> toOptimize;
+
+          toFix = filter3D_boundaryLayer(*itr, p.nbLayers, p.BARRIER_MIN, p.BARRIER_MAX, p.DistanceFactor, toOptimize);
+
+          //      if ((*itr)->tetrahedra.size() > 0) {
+          OptHOM temp(*itr, toOptimize, toFix, method);
+          double distMaxBND, distAvgBND, minJac, maxJac;
+          temp.recalcJacDist();
+          temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
+          if (minJac < 1.e2)Msg::Info("Optimizing a blob of %4d elements  minJ %12.5E -- maxJ %12.5E",(*itr)->getNumMeshElements(), minJac, maxJac);
+          std::ostringstream ossI;
+          ossI << "initial_" << (*itr)->tag() << "ITER_" << ITER << ".msh";
+          temp.mesh.writeMSH(ossI.str().c_str());
+          if (minJac > p.BARRIER_MIN  && maxJac < p.BARRIER_MAX) break;
+          p.SUCCESS = temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax);
+          temp.recalcJacDist();
+          temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
+          temp.mesh.updateGEntityPositions();
+          if (!p.SUCCESS) break;
+          //      }
+          ITER ++;
+        }
+        Msg::Info("Model region %4d is done (%d subdomains were computed) SUCCESS %1d",(*itr)->tag(),ITER,p.SUCCESS);
+        Msg::Info("----------------------------------------------------------------");
+        //      temp.mesh.writeMSH("final.msh");
+      }
     }
   }
   double t2 = Cpu();
