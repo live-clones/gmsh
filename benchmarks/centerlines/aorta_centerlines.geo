@@ -6,7 +6,7 @@ Mesh.LcIntegrationPrecision = 1.e-3;
 //Mesh.RecombineAll = 1;
 //Mesh.Bunin = 120;
 
-Merge "aorta.stl";
+Merge "aorta2.stl";
 
 Field[1] = Centerline;
 Field[1].FileName = "centerlinesAORTA.vtk";

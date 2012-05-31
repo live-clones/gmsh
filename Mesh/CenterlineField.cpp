@@ -33,6 +33,7 @@
 #include "meshGFace.h"
 #include "meshGEdge.h"
 #include "MQuadrangle.h"
+#include "Curvature.h"
 #include "MElement.h"
 #include "Context.h"
 #if defined(HAVE_ANN)
@@ -227,7 +228,7 @@ static void recurConnectByMEdge(const MEdge &e,
 
 void cutTriangle(MTriangle *tri,
 		 std::map<MEdge,MVertex*,Less_Edge> &cutEdges,
-		 std::set<MVertex*> &cutVertices,
+		 std::vector<MVertex*> &cutVertices,
 		 std::vector<MTriangle*> &newTris,
 		 std::set<MEdge,Less_Edge> &newCut){
 
@@ -264,53 +265,52 @@ void cutTriangle(MTriangle *tri,
   else if (c[0]){
     newTris.push_back(new MTriangle (old_v0,c[0],old_v2));
     newTris.push_back(new MTriangle (old_v2,c[0],old_v1));
-    if (cutVertices.find (old_v0) != cutVertices.end()){
+    if (std::find(cutVertices.begin(), cutVertices.end(), old_v0) != cutVertices.end()){
       newCut.insert(MEdge(c[0],old_v0));
     }
-    else if (cutVertices.find (old_v1) != cutVertices.end()) {
+    else if (std::find(cutVertices.begin(), cutVertices.end(), old_v1) != cutVertices.end()) {
       newCut.insert(MEdge(c[0],old_v1));
     }
-    else if (cutVertices.find (old_v2) != cutVertices.end()){
+    else if (std::find(cutVertices.begin(), cutVertices.end(), old_v2) != cutVertices.end()){
       newCut.insert(MEdge(c[0],old_v2));
     }
   }
   else if (c[1]){
     newTris.push_back(new MTriangle (old_v1,c[1],old_v0));
     newTris.push_back(new MTriangle (old_v0,c[1],old_v2));
-    if (cutVertices.find (old_v0) != cutVertices.end()){
+    if (std::find(cutVertices.begin(), cutVertices.end(), old_v0) != cutVertices.end()){
       newCut.insert(MEdge(c[1],old_v0));
     }
-    else if (cutVertices.find (old_v1) != cutVertices.end()) {
+    else if (std::find(cutVertices.begin(), cutVertices.end(), old_v1) != cutVertices.end()) {
       newCut.insert(MEdge(old_v1, c[1]));
     }
-    else if (cutVertices.find (old_v2) != cutVertices.end()){
+    else if (std::find(cutVertices.begin(), cutVertices.end(), old_v2) != cutVertices.end()){
       newCut.insert(MEdge(c[1],old_v2));
     }
   }
   else if (c[2]){
       newTris.push_back(new MTriangle (old_v0,old_v1, c[2]));
       newTris.push_back(new MTriangle (old_v1,old_v2, c[2]));
-    if (cutVertices.find (old_v0) != cutVertices.end()){
+    if (std::find(cutVertices.begin(), cutVertices.end(), old_v0) != cutVertices.end()){
       newCut.insert(MEdge(c[2],old_v0));
     }
-    else if (cutVertices.find (old_v1) != cutVertices.end()) {
+    else if (std::find(cutVertices.begin(), cutVertices.end(), old_v1) != cutVertices.end()) {
       newCut.insert(MEdge(c[2], old_v1));
     }
-    else if (cutVertices.find (old_v2) != cutVertices.end()){
+    else if (std::find(cutVertices.begin(), cutVertices.end(), old_v2) != cutVertices.end()){
       newCut.insert(MEdge(c[2], old_v2));
     }
   }
   else {
     newTris.push_back(tri);
-    //newTris.push_back(new MTriangle (old_v0, old_v1,old_v2));
-    if (cutVertices.find (old_v0) != cutVertices.end() &&
-	cutVertices.find (old_v1) != cutVertices.end())
+    if (std::find(cutVertices.begin(), cutVertices.end(), old_v0) != cutVertices.end() &&
+	std::find(cutVertices.begin(), cutVertices.end(), old_v1) != cutVertices.end())
       newCut.insert(MEdge(old_v0,old_v1));
-    else if (cutVertices.find (old_v1) != cutVertices.end() &&
-	cutVertices.find (old_v2) != cutVertices.end())
+    else if (std::find(cutVertices.begin(), cutVertices.end(), old_v1) != cutVertices.end() &&
+	std::find(cutVertices.begin(), cutVertices.end(), old_v2) != cutVertices.end())
       newCut.insert(MEdge(old_v1,old_v2));
-    else if (cutVertices.find (old_v2) != cutVertices.end() &&
-	cutVertices.find (old_v0) != cutVertices.end())
+    else if (std::find(cutVertices.begin(), cutVertices.end(), old_v2) != cutVertices.end() &&
+	std::find(cutVertices.begin(), cutVertices.end(), old_v0) != cutVertices.end())
       newCut.insert(MEdge(old_v2,old_v0));
   }
 }
@@ -533,6 +533,7 @@ void Centerline::distanceToSurface(){
     for(int k = 0; k<3; k++) allVS.insert(triangles[j]->getVertex(k));
   int nbSNodes = allVS.size();
   nodesR = annAllocPts(nbSNodes, 3);
+  vertices.resize(nbSNodes);
   int ind = 0;
   std::set<MVertex*>::iterator itp = allVS.begin();
   while (itp != allVS.end()){
@@ -540,6 +541,7 @@ void Centerline::distanceToSurface(){
     nodesR[ind][0] = v->x();
     nodesR[ind][1] = v->y();
     nodesR[ind][2] = v->z();
+    vertices[ind] = v;
     itp++; ind++;
   }
   kdtreeR = new ANNkd_tree(nodesR, nbSNodes, 3);
@@ -884,6 +886,7 @@ void Centerline::extrudeBoundaryLayerWall(GEdge* gin, std::vector<GEdge*> boundE
 
 void Centerline::run(){
 
+  double t1 = Cpu();
   if (update_needed){
     std::ifstream input;
     input.open(fileName.c_str());
@@ -928,6 +931,9 @@ void Centerline::run(){
 
   if (is_closed)   createClosedVolume(gin, boundEdges);
   if (is_extruded) extrudeBoundaryLayerWall(gin, boundEdges);
+
+  double t2 = Cpu();
+  Msg::Info("Centerline operators computed in %g (s) ",t2-t1);
 
 }
 
@@ -1016,25 +1022,33 @@ bool Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
   int maxStep = 20;
   const double EPS = 0.007;
 
-  std::set<MEdge,Less_Edge> allEdges;
-  for(unsigned int i = 0; i < triangles.size(); i++)
-    for ( unsigned int j= 0; j <  3; j++)
-      allEdges.insert(triangles[i]->getEdge(j));
+  //std::set<MEdge,Less_Edge> allEdges;  
+  std::vector<MEdge> allEdges;
+  for(unsigned int i = 0; i < triangles.size(); i++){
+    for ( unsigned int j= 0; j <  3; j++){
+      allEdges.push_back(triangles[i]->getEdge(j));
+      //allEdges.insert(triangles[i]->getEdge(j));
+    }
+  }
+  std::unique(allEdges.begin(), allEdges.end());
+
   bool closedCut = false;
   int step = 0;
   while (!closedCut && step < maxStep){
     double rad = 1.1*maxRad+0.05*step*maxRad;
     std::map<MEdge,MVertex*,Less_Edge> cutEdges;
-    std::set<MVertex*> cutVertices;
+    std::vector<MVertex*> cutVertices;
     std::vector<MTriangle*> newTris;
     std::set<MEdge,Less_Edge> newCut;
     cutEdges.clear();
     cutVertices.clear();
     newTris.clear();
     newCut.clear();
-    for (std::set<MEdge,Less_Edge>::iterator it = allEdges.begin();
-	 it != allEdges.end() ; ++it){
-      MEdge me = *it;
+    // for (std::set<MEdge,Less_Edge>::iterator it = allEdges.begin();
+    // 	 it != allEdges.end() ; ++it){
+    // MEdge me = *it;
+    for (int j=0; j < allEdges.size(); j++){
+      MEdge me = allEdges[j];
       SVector3 P1(me.getVertex(0)->x(),me.getVertex(0)->y(), me.getVertex(0)->z());
       SVector3 P2(me.getVertex(1)->x(),me.getVertex(1)->y(), me.getVertex(1)->z());
       double V1 = a * P1.x() + b * P1.y() + c * P1.z() + d;
@@ -1045,12 +1059,12 @@ bool Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad){
       if (inters && rdist > EPS && rdist < 1.-EPS){
 	SVector3 PZ = P1+rdist*(P2-P1);
 	MVertex *newv = new MVertex (PZ.x(), PZ.y(), PZ.z());
-	if (inDisk) cutEdges.insert(std::make_pair(*it,newv));
+	if (inDisk) cutEdges.insert(std::make_pair(me,newv));
       }
       else if (inters && rdist <= EPS && inDisk )
-	cutVertices.insert(me.getVertex(0));
+	cutVertices.push_back(me.getVertex(0));
       else if (inters && rdist >= 1.-EPS && inDisk)
-	cutVertices.insert(me.getVertex(1));
+	cutVertices.push_back(me.getVertex(1));
     }
     for(unsigned int i = 0; i < triangles.size(); i++){
       cutTriangle(triangles[i], cutEdges,cutVertices, newTris, newCut);
@@ -1110,6 +1124,7 @@ double Centerline::operator() (double x, double y, double z, GEntity *ge){
    double xyz[3] = {x,y,z};
 
    //take xyz = closest point on boundary in case we are on the planar in/out faces
+   //or in the volume 
    bool isCompound = false;
    if(ge){
      if (ge->dim() == 2 && ge->geomType() == GEntity::CompoundSurface) isCompound = true; 
@@ -1127,10 +1142,17 @@ double Centerline::operator() (double x, double y, double z, GEntity *ge){
 
    int num_neighbours = 1;
    kdtree->annkSearch(xyz, num_neighbours, index, dist);
-   double d = sqrt(dist[0]);
-   double lc = 2*M_PI*d/nbPoints;
+   double rad = sqrt(dist[0]);
 
-   if(!ge) { return d;}
+   //double cmax, cmin;
+   //SVector3 dirMax,dirMin;
+   //cmax = ge->curvatures(SPoint2(u, v),&dirMax, &dirMin, &cmax,&cmin);
+   //cmax = ge->curvatureMax(SPoint2(u,v)); 
+   //double radC = 1./cmax;
+
+   double lc = 2*M_PI*rad/nbPoints;
+
+   if(!ge) { return rad;}
    else  return lc;
 
 }
@@ -1158,7 +1180,10 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    if ( ge->dim() == 3 || (ge->dim() == 2 && ge->geomType() == GEntity::Plane) ||
 	(isCompound && (*cFaces.begin())->geomType() == GEntity::Plane) ){
      onTubularSurface = false;
-     kdtreeR->annkSearch(xyz, 1, index, dist);
+   }
+
+   kdtreeR->annkSearch(xyz, 1, index, dist);
+   if (! onTubularSurface){
      ds = sqrt(dist[0]);
      xyz[0] = nodesR[index[0]][0];
      xyz[1] = nodesR[index[0]][1];
@@ -1179,6 +1204,18 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    SVector3 dir_n(xyz[0]-p0.x(), xyz[1]-p0.y(), xyz[2]-p0.z()); 
    SVector3 dir_t;
    buildOrthoBasis2(dir_a, dir_n, dir_t);
+
+   //find discrete curvature 
+   Curvature& curvature = Curvature::getInstance();
+   if( !Curvature::valueAlreadyComputed() ) {
+     Msg::Info("Need to compute discrete curvature");
+     Curvature::typeOfCurvature type = Curvature::RUSIN;
+     curvature.computeCurvature(current, type);
+   }
+   double c0;
+   curvature.vertexNodalValues(vertices[index[0]], c0,1);
+   //double crv = 1./radMax;
+   double crv = c0;
    
    double lc = 2*M_PI*radMax/nbPoints;
    double lc_a = 3.5*lc;
@@ -1188,9 +1225,7 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
      double e = radMax/5.;
      double hn = e/50.;
      lc_n = hn; 
-     double crv = 1./radMax;
      double oneOverD2 = .5/(lc*lc) * (1. + sqrt (1. + ( 4.*crv*crv*lc*lc*lc*lc/ (lc_n*lc_n*CTX::instance()->mesh.smoothRatio*CTX::instance()->mesh.smoothRatio))));
-
      lc_n = lc_t = sqrt(1./oneOverD2);
    }
    else{
@@ -1203,15 +1238,9 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
      lc_t = lc;
      lc_n = std::min(lc,ds*(1.3-1) + hn); 
 
-     double crv = 1./radMax;
      double oneOverD2 = .5/(lc*lc) * (1. + sqrt (1. + ( 4.*crv*crv*lc*lc*lc*lc/ (lc_n*lc_n*CTX::instance()->mesh.smoothRatio*CTX::instance()->mesh.smoothRatio))));
      lc_t = sqrt(1./oneOverD2);
 
-
-     //lc_n = lc_t = lc;
-     //double ratio = 1.02; //1. + (lc_t-hn)/e;
-     //printf("ratio =%g \n", ratio);
-     //lc_n = ds*(ratio-1) + hn;
    }
    double lam_a = 1./(lc_a*lc_a);
    double lam_n = 1./(lc_n*lc_n);
@@ -1224,88 +1253,6 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
 
    return;
 }
-
-//used so far by Tristan for mesh algo hex
-void Centerline::operator()(double x,double y,double z,SVector3& v1,SVector3& v2,SVector3& v3,GEntity* ge){
-
-  printf("EMI do not go here \n");
-  exit(1);
-
-  if(update_needed){
-    std::ifstream input;
-	input.open(fileName.c_str());
-	if(StatFile(fileName)) Msg::Fatal("Centerline file '%s' does not exist", fileName.c_str());
-	importFile(fileName);
-	buildKdTree();
-	update_needed = false;
-  }
-	
-  double xyz[3] = {x,y,z};
-	
-  //take xyz = closest point on boundary in case we are on the planar IN/OUT FACES or in VOLUME
-  bool onTubularSurface = true;
-  double ds = 0.0;
-  bool isCompound = (ge->dim() == 2 && ge->geomType() == GEntity::CompoundSurface) ? true: false;
-  std::list<GFace*> cFaces;
-  if(isCompound) cFaces = ((GFaceCompound*)ge)->getCompounds();
-  if(ge->dim()==3 || (ge->dim()==2&&ge->geomType()==GEntity::Plane) || (isCompound&&(*cFaces.begin())->geomType()==GEntity::Plane)){
-	onTubularSurface = false;
-	kdtreeR->annkSearch(xyz, 1, index, dist);
-	ds = sqrt(dist[0]);
-	xyz[0] = nodesR[index[0]][0];
-	xyz[1] = nodesR[index[0]][1];
-	xyz[2] = nodesR[index[0]][2];
-  }
-	
-  ANNidxArray index2 = new ANNidx[2];
-  ANNdistArray dist2 = new ANNdist[2];
-  kdtree->annkSearch(xyz, 2, index2, dist2);
-  double radMax = sqrt(dist2[0]);
-  SVector3  p0(nodes[index2[0]][0], nodes[index2[0]][1], nodes[index2[0]][2]);
-  SVector3  p1(nodes[index2[1]][0], nodes[index2[1]][1], nodes[index2[1]][2]);
-	
-  //dir_a = direction along the centerline
-  //dir_n = normal direction of the disk
-  //dir_t = tangential direction of the disk
-  SVector3 dir_a = p1-p0;
-  SVector3 dir_n(x-p0.x(), y-p0.y(), z-p0.z()); 
-  SVector3 dir_t;
-  buildOrthoBasis2(dir_a, dir_n, dir_t);
-	
-  double lc = 2*M_PI*radMax/nbPoints;
-  double lc_a = 3.*lc;
-  double lc_n, lc_t;
-  if(onTubularSurface){
-    lc_n = lc_t = lc;
-  }
-  else{
-    double e = radMax/3.;
-	double hn = e/10.;
-	double rm = std::max(radMax-ds, radMax-e);
-	lc_t = 2*M_PI*rm/nbPoints;
-	//lc_n = lc_t = lc;
-	//double ratio = 1.02; //1. + (lc_t-hn)/e;
-	//printf("ratio =%g \n", ratio);
-	//lc_n = ds*(ratio-1) + hn;
-	if(ds<e) lc_n = hn; 
-	else lc_n = lc_t;
-  }
-  double lam_a = 1./(lc_a*lc_a);
-  double lam_n = 1./(lc_n*lc_n);
-  double lam_t = 1./(lc_t*lc_t);
-	
-  v1 = dir_a;
-  v2 = dir_n;
-  v3 = dir_t;
-	
-  delete[]index2;
-  delete[]dist2;
-	
-  return;
-}
-/*************************************************/
-/*************************************************/
-/*************************************************/
 
 void Centerline::printSplit() const{
 

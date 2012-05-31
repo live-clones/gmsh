@@ -18,6 +18,7 @@
 #include "Numeric.h"
 #include "ExtrudeParams.h"
 #include "Geo.h"
+#include "GmshDefines.h"
 
 GVertex *GeoFactory::addVertex(GModel *gm, double x, double y, double z, double lc)
 {
@@ -297,7 +298,10 @@ std::vector<GEntity*> GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e, i
   ep->mesh.NbElmLayer.clear(); 
   ep->mesh.NbElmLayer.push_back(nbLayers);
   ep->mesh.ExtrudeMesh = true;
-  if (CTX::instance()->mesh.recombineAll)  ep->mesh.Recombine = true;
+  if (CTX::instance()->mesh.recombineAll){
+    ep->mesh.Recombine = true;
+    //ep->mesh.QuadToTri = QUADTRI_DBL_1 ; //QUADTRI_SNGL_1_RECOMB; //QUADTRI_SNGL_1;
+  }
   else ep->mesh.Recombine = false;
   ep->geo.Source = e->tag();
  

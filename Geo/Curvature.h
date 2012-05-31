@@ -212,6 +212,8 @@ public:
 
   void triangleNodalValuesAndDirections(MTriangle* triangle, SVector3* dMax, SVector3* dMin, double* cMax, double* cMin, int isAbs=0);
 
+  void vertexNodalValues(MVertex* A, double& c0, int isAbs=0);
+
   void edgeNodalValues(MLine* edge, double& c0, double& c1, int isAbs=0);
 
   void edgeNodalValuesAndDirections(MLine* edge, SVector3* dMax, SVector3* dMin, double* cMax, double* cMin, int isAbs=0);

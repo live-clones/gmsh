@@ -15,6 +15,7 @@
 #include <string>
 #include "Field.h"
 #include "MEdge.h"
+
 #include "meshGFaceDelaunayInsertion.h"
 class GModel;
 class GFace;
@@ -84,6 +85,7 @@ class Centerline : public Field{
 
   //the tubular surface mesh
   std::vector<MTriangle*> triangles;
+  std::vector<MVertex*> vertices;
   
   //the lines cut of the tubular mesh by planes
   std::set<MEdge,Less_Edge> theCut;
@@ -119,9 +121,6 @@ class Centerline : public Field{
   //anisotropic operator
   void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0);
 
-  //temporary operator where v1, v2 and v3 are three orthonormal directions
-  void operator()(double x,double y,double z,SVector3& v1,SVector3& v2,SVector3& v3,GEntity* ge=0);
-	
   //import the 1D mesh of the centerlines (in vtk format)
   //and fill the vector of lines
   void importFile(std::string fileName);
