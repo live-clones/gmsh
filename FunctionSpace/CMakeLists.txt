@@ -4,7 +4,6 @@
 # bugs and problems to <gmsh@geuz.org>.
 
 set(SRC
-  VectorDouble.cpp
   VectorPolynomial.cpp
   Polynomial.cpp
   Legendre.cpp
@@ -22,5 +21,5 @@ set(SRC
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
 append_gmsh_src(FunctionSpace "${SRC};${HDR}")
 
-## Compatibility wicth SmallFEM (TO BE REMOVED !!!)
+## Compatibility with SmallFEM (TO BE REMOVED !!!)
 add_sources_in_gmsh(FunctionSpace "${SRC}")

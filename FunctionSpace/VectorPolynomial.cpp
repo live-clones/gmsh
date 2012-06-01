@@ -5,10 +5,10 @@
 using namespace std;
 
 template<>
-Vector<double> Vector<Polynomial>::at(const double x, 
-				      const double y, 
-				      const double z) const{
-  Vector<double> val(N);
+fullVector<double> Vector<Polynomial>::at(const double x, 
+					  const double y, 
+					  const double z) const{
+  fullVector<double> val(N);
   
   for(int i = 0; i < N; i++)
     val(i) = v[i].at(x, y, z);

@@ -7,6 +7,7 @@ extern "C"{
 #include <cblas.h>
 }
 
+#include "fullMatrix.h"
 #include "Exception.h"
 
 /**
@@ -49,7 +50,7 @@ class Vector{
   T    get(const int i) const;
   void set(const int i, const T a);
 
-  Vector<double> at(const double x, const double y, const double z) const;
+  fullVector<double> at(const double x, const double y, const double z) const;
 
   Vector<T> operator+(const Vector<T>& other);
   Vector<T> operator-(const Vector<T>& other);
@@ -221,15 +222,6 @@ inline T Vector<T>::get(const int i) const{
 template<class T>
 inline void Vector<T>::set(const int i, const T a){
   v[i] = a;
-}
-
-//////////////////////////////////////////////////////////////////////
-// Inline Vector<double> Implementations                            //
-//////////////////////////////////////////////////////////////////////
-
-template<>
-inline double Vector<double>::dot(const Vector<double>& v) const{ 
-  return cblas_ddot(N, (*this).v, 1, v.v, 1);
 }
 
 #endif
