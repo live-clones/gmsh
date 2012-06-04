@@ -17,17 +17,13 @@
 
 class QuadNodeBasis: public BasisScalar{
  public:
+  //! Returns a new Node-Basis for Quads of the given order
+  //! @param order The order of the Basis
   QuadNodeBasis(const int order);
+
+  //! @return Deletes this Basis
+  //!
   virtual ~QuadNodeBasis(void);
 };
-
-/**
-   @fn QuadNodeBasis::QuadNodeBasis(const int order)
-   @param order The order of the Basis
-   @return Returns a new Node-Basis for Quads of the given order
-
-   @fn QuadNodeBasis::~QuadNodeBasis(void)
-   @return Deletes this Basis
-*/
 
 #endif

@@ -48,10 +48,10 @@ TriEdgeBasis::TriEdgeBasis(const int order){
 
 
   // Basis //
-  basis = new std::vector<Polynomial>[size];
+  basis = new std::vector<std::vector<Polynomial> >(size);
 
   for(int i = 0; i < size; i++)
-    basis[i].resize(3);
+    (*basis)[i].resize(3);
 
 
   // Edge Based (Nedelec) //
@@ -63,15 +63,15 @@ TriEdgeBasis::TriEdgeBasis(const int order){
     tmp[1].mul(lagrange[i]);
     tmp[2].mul(lagrange[i]);
 
-    basis[i] = lagrange[i].gradient();
+    (*basis)[i] = lagrange[i].gradient();
 
-    basis[i][0].mul(lagrange[j]);
-    basis[i][1].mul(lagrange[j]);
-    basis[i][2].mul(lagrange[j]);      
+    (*basis)[i][0].mul(lagrange[j]);
+    (*basis)[i][1].mul(lagrange[j]);
+    (*basis)[i][2].mul(lagrange[j]);      
 
-    basis[i][0].sub(tmp[0]);
-    basis[i][1].sub(tmp[1]);
-    basis[i][2].sub(tmp[2]);
+    (*basis)[i][0].sub(tmp[0]);
+    (*basis)[i][1].sub(tmp[1]);
+    (*basis)[i][2].sub(tmp[2]);
 
     i++;
   }
@@ -79,7 +79,7 @@ TriEdgeBasis::TriEdgeBasis(const int order){
   // Edge Based (High Order) //
   for(int l = 1; l < orderPlus; l++){
     for(int e = 0; e < 3; e++){
-      basis[i] = 
+      (*basis)[i] = 
 	(intLegendre[l].compose(lagrangeSub[e], lagrangeSum[e])).gradient();
 
       i++;
@@ -103,15 +103,15 @@ TriEdgeBasis::TriEdgeBasis(const int order){
       tmp[1].mul(u[l1]);
       tmp[2].mul(u[l1]);
 
-      basis[i] = u[l1].gradient();
+      (*basis)[i] = u[l1].gradient();
       
-      basis[i][0].mul(v[l2]);
-      basis[i][1].mul(v[l2]);
-      basis[i][2].mul(v[l2]);
+      (*basis)[i][0].mul(v[l2]);
+      (*basis)[i][1].mul(v[l2]);
+      (*basis)[i][2].mul(v[l2]);
 
-      basis[i][0].add(tmp[0]);
-      basis[i][1].add(tmp[1]);
-      basis[i][2].add(tmp[2]);
+      (*basis)[i][0].add(tmp[0]);
+      (*basis)[i][1].add(tmp[1]);
+      (*basis)[i][2].add(tmp[2]);
       
       i++;
     }
@@ -125,15 +125,15 @@ TriEdgeBasis::TriEdgeBasis(const int order){
       tmp[1].mul(u[l1]);
       tmp[2].mul(u[l1]);
 
-      basis[i] = u[l1].gradient();
+      (*basis)[i] = u[l1].gradient();
 
-      basis[i][0].mul(v[l2]);
-      basis[i][1].mul(v[l2]);
-      basis[i][2].mul(v[l2]);
+      (*basis)[i][0].mul(v[l2]);
+      (*basis)[i][1].mul(v[l2]);
+      (*basis)[i][2].mul(v[l2]);
 
-      basis[i][0].sub(tmp[0]);
-      basis[i][1].sub(tmp[1]);
-      basis[i][2].sub(tmp[2]);
+      (*basis)[i][0].sub(tmp[0]);
+      (*basis)[i][1].sub(tmp[1]);
+      (*basis)[i][2].sub(tmp[2]);
  
       i++;
     }
@@ -141,11 +141,11 @@ TriEdgeBasis::TriEdgeBasis(const int order){
 
   // Cell Based (Type 3) //
   for(int l = 0; l < orderMinus; l++){
-    basis[i] = basis[0];
+    (*basis)[i] = (*basis)[0];
 
-    basis[i][0].mul(v[l]);
-    basis[i][1].mul(v[l]);
-    basis[i][2].mul(v[l]);
+    (*basis)[i][0].mul(v[l]);
+    (*basis)[i][1].mul(v[l]);
+    (*basis)[i][2].mul(v[l]);
     
     i++;
   }
@@ -161,7 +161,7 @@ TriEdgeBasis::TriEdgeBasis(const int order){
 }
 
 TriEdgeBasis::~TriEdgeBasis(void){
-  delete[] basis;
+  delete basis;
 }
 
 /*
@@ -173,7 +173,7 @@ int main(void){
 
   TriEdgeBasis b(P);
   
-  const std::vector<Polynomial>* basis = b.getBasis();
+  const std::vector<std::vector<Polynomial> >& basis = b.getBasis();
   
   printf("\n");
   printf("clear all;\n");

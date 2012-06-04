@@ -24,26 +24,26 @@ TriNodeBasis::TriNodeBasis(const int order){
  
 
   // Basis //
-  basis = new Polynomial[size];
+  basis = new std::vector<Polynomial>(size);
 
   // Vertex Based (Lagrange) // 
-  basis[0] = 
+  (*basis)[0] = 
     Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0) - Polynomial(1, 0, 1, 0);
 
-  basis[1] = 
+  (*basis)[1] = 
     Polynomial(1, 1, 0, 0);
 
-  basis[2] = 
+  (*basis)[2] = 
     Polynomial(1, 0, 1, 0);
 
   
   // Lagrange Sum //
   for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3)
-    lagrangeSum[i] = basis[i] + basis[j];
+    lagrangeSum[i] = (*basis)[i] + (*basis)[j];
 
   // Lagrange Sub //
   for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3)
-    lagrangeSub[i] = basis[j] - basis[i];
+    lagrangeSub[i] = (*basis)[j] - (*basis)[i];
 
   
   // Edge Based //
@@ -51,7 +51,7 @@ TriNodeBasis::TriNodeBasis(const int order){
 
   for(int l = 1; l < order; l++){
     for(int e = 0; e < 3; e++){
-      basis[i] = 
+      (*basis)[i] = 
 	intLegendre[l].compose(lagrangeSub[e], lagrangeSum[e]);
             
       i++;
@@ -59,14 +59,14 @@ TriNodeBasis::TriNodeBasis(const int order){
   }
 
   // Cell Based //
-  Polynomial p             = basis[2] * 2 - Polynomial(1, 0, 0, 0);
+  Polynomial p             = (*basis)[2] * 2 - Polynomial(1, 0, 0, 0);
   const int  orderMinusTwo = order - 2;
   
   for(int l1 = 1; l1 < orderMinus; l1++){
     for(int l2 = 0; l2 + l1 - 1 < orderMinusTwo; l2++){
-      basis[i] = 
+      (*basis)[i] = 
 	intLegendre[l1].compose(lagrangeSub[0], lagrangeSum[0]) * 
-	   legendre[l2].compose(p) * basis[2];
+	   legendre[l2].compose(p) * (*basis)[2];
       
       i++;
     }
@@ -80,7 +80,7 @@ TriNodeBasis::TriNodeBasis(const int order){
 }
 
 TriNodeBasis::~TriNodeBasis(void){
-  delete[] basis;
+  delete basis;
 }
 
 /*
@@ -91,7 +91,7 @@ int main(void){
 
   TriNodeBasis b(P);
   
-  const Polynomial* basis = b.getBasis();
+  const std::vector<Polynomial>& basis = b.getBasis();
   
   printf("\n");
   printf("clear all;\n");

@@ -21,10 +21,10 @@ TriNedelecBasis::TriNedelecBasis(void){
     Polynomial(1, 0, 1, 0);
 
   // Basis //
-  basis = new std::vector<Polynomial>[size];
+  basis = new std::vector<std::vector<Polynomial> >(size);
 
   for(int i = 0; i < size; i++)
-    basis[i].resize(3);
+    (*basis)[i].resize(3);
 
   for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3){
     std::vector<Polynomial> tmp = lagrange[j].gradient();
@@ -32,15 +32,15 @@ TriNedelecBasis::TriNedelecBasis(void){
     tmp[1].mul(lagrange[i]);
     tmp[2].mul(lagrange[i]);
 
-    basis[i] = lagrange[i].gradient();
+    (*basis)[i] = lagrange[i].gradient();
 
-    basis[i][0].mul(lagrange[j]);
-    basis[i][1].mul(lagrange[j]);
-    basis[i][2].mul(lagrange[j]);
+    (*basis)[i][0].mul(lagrange[j]);
+    (*basis)[i][1].mul(lagrange[j]);
+    (*basis)[i][2].mul(lagrange[j]);
    
-    basis[i][0].sub(tmp[0]);
-    basis[i][1].sub(tmp[1]);
-    basis[i][2].sub(tmp[2]);
+    (*basis)[i][0].sub(tmp[0]);
+    (*basis)[i][1].sub(tmp[1]);
+    (*basis)[i][2].sub(tmp[2]);
   }
 
   // Free Temporary Sapce //
@@ -48,7 +48,7 @@ TriNedelecBasis::TriNedelecBasis(void){
 }
 
 TriNedelecBasis::~TriNedelecBasis(void){
-  delete[] basis;
+  delete basis;
 }
 
 /*
@@ -60,7 +60,7 @@ int main(void){
 
   TriNedelecBasis b;
   
-  const std::vector<Polynomial>* basis = b.getBasis();
+  const std::vector<std::vector<Polynomial> >& basis = b.getBasis();
   
   printf("\n");
   printf("clear all;\n");

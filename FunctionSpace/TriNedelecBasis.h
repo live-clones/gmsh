@@ -13,17 +13,13 @@
 
 class TriNedelecBasis: public BasisVector{
  public:
+  //! Returns a new Nedelec Basis for Triangles
+  //!
   TriNedelecBasis(void);
+  
+  //! Deletes this Basis
+  //!
   virtual ~TriNedelecBasis(void);
 };
-
-
-/**
-   @fn TriNedelecBasis::TriNedelecBasis
-   @return Returns a new Nedelec Basis for Triangles
-
-   @fn TriNedelecBasis::~TriNedelecBasis(void)
-   @return Deletes this Basis
-*/
 
 #endif

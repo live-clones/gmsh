@@ -37,22 +37,22 @@ QuadNodeBasis::QuadNodeBasis(const int order){
 
 
   // Basis //
-  basis = new Polynomial[size];
+  basis = new std::vector<Polynomial>(size);
 
   // Vertex Based (Lagrange) // 
-  basis[0] = 
+  (*basis)[0] = 
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0));
 
-  basis[1] = 
+  (*basis)[1] = 
     (Polynomial(1, 1, 0, 0)) *
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0));
 
-  basis[2] = 
+  (*basis)[2] = 
     (Polynomial(1, 1, 0, 0)) *
     (Polynomial(1, 0, 1, 0));
 
-  basis[3] = 
+  (*basis)[3] = 
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
     (Polynomial(1, 0, 1, 0));
   
@@ -61,8 +61,8 @@ QuadNodeBasis::QuadNodeBasis(const int order){
 
   for(int l = 1; l < order; l++){
     for(int e1 = 0, e2 = 1; e1 < 4; e1++, e2 = (e2 + 1) % 4){
-      basis[i] = 
-	legendre[l].compose(lifting[e2] - lifting[e1]) * (basis[e1] + basis[e2]);
+      (*basis)[i] = 
+	legendre[l].compose(lifting[e2] - lifting[e1]) * ((*basis)[e1] + (*basis)[e2]);
             
       i++;
     }
@@ -77,7 +77,7 @@ QuadNodeBasis::QuadNodeBasis(const int order){
 
   for(int l1 = 1; l1 < order; l1++){
     for(int l2 = 1; l2 < order; l2++){
-      basis[i] = legendre[l1].compose(px) * legendre[l2].compose(py);
+      (*basis)[i] = legendre[l1].compose(px) * legendre[l2].compose(py);
 
       i++;
     }
@@ -89,7 +89,7 @@ QuadNodeBasis::QuadNodeBasis(const int order){
 }
 
 QuadNodeBasis::~QuadNodeBasis(void){
-  delete[] basis;
+  delete basis;
 }
 
 /*
@@ -100,7 +100,7 @@ int main(void){
 
   QuadNodeBasis b(P);
   
-  const Polynomial* basis = b.getBasis();
+  const std::vector<Polynomial>& basis = b.getBasis();
   
   printf("\n");
   printf("clear all;\n");

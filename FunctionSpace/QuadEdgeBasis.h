@@ -17,17 +17,13 @@
 
 class QuadEdgeBasis: public BasisVector{
  public:
+  //! Returns a new Edge-Basis for Quads of the given order
+  //! @param order The order of the Basis
   QuadEdgeBasis(const int order);
+  
+  //! Deletes this Basis
+  //!
   virtual ~QuadEdgeBasis(void);
 };
-
-/**
-   @fn QuadEdgeBasis::QuadEdgeBasis(const int order)
-   @param order The order of the Basis
-   @return Returns a new Edge-Basis for Quads of the given order
-
-   @fn QuadEdgeBasis::~QuadEdgeBasis(void)
-   @return Deletes this Basis
-*/
 
 #endif

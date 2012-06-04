@@ -16,33 +16,29 @@
 
 class BasisVector: public Basis{
  protected:
-  std::vector<Polynomial>* basis;
+  std::vector<std::vector<Polynomial> >* basis;
 
  public:
+  //! Deletes this BasisVector
+  //!
   virtual ~BasisVector(void);
 
-  std::vector<Polynomial>* getBasis(void) const;
+  //! @return Returns the set of @em Polynomial%s
+  //! defining this (vectorial) Basis
+  const std::vector<std::vector<Polynomial> >& getBasis(void) const;
 
  protected:
+  //! Instantiate a new BasisVector
+  //! @warning Users can't instantiate a BasisVector
   BasisVector(void);
 };
-
-/**
-   @fn BasisVector::~BasisVector
-   @return Deletes this Basis
-
-   @fn BasisVector::getBasis
-   @return Returns the set of 
-   @em Vector%s @em of @em Polynomial%s
-   that defines this Basis
-*/
 
 //////////////////////
 // Inline Functions //
 //////////////////////
 
-inline std::vector<Polynomial>* BasisVector::getBasis(void) const{
-  return basis;
+inline const std::vector<std::vector<Polynomial> >& BasisVector::getBasis(void) const{
+  return *basis;
 }
 
 #endif
