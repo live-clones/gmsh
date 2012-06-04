@@ -3,7 +3,8 @@
 
 #include <string>
 #include <stack>
-#include "Vector.h"
+#include <vector>
+#include "fullMatrix.h"
 
 /**
    @class Polynomial
@@ -35,8 +36,8 @@ class Polynomial{
    Polynomial(void);
   ~Polynomial(void);
 
-  void               derivative(const int dim);
-  Vector<Polynomial> gradient(void) const;
+  void                    derivative(const int dim);
+  std::vector<Polynomial> gradient(void) const;
 
   double operator()
     (const double x, const double y, const double z) const;  
@@ -44,6 +45,10 @@ class Polynomial{
   double at
     (const double x, const double y, const double z) const;  
 
+  static fullVector<double> at(const std::vector<Polynomial>& P,
+			       const double x,
+			       const double y,
+			       const double z);
 
   Polynomial operator+(const Polynomial& other) const;
   Polynomial operator-(const Polynomial& other) const;
@@ -159,12 +164,20 @@ class Polynomial{
    @return Returns the @em evaluation of this
    Polynomial at (@c x, @c y, @c z)
 
-   @fn Polynomial::at
+   @fn double Polynomial::at(const double, const double, const double) const
    @param x A value
    @param y A value
    @param z A value
    @return Returns the @em evaluation of this
    Polynomial at (@c x, @c y, @c z)
+
+   @fn fullVector<double> Polynomial::at(const std::vector<Polynomial>&, const double, const double y, const double z)
+   @param P A vector of Polynomial%s
+   @param x A value
+   @param y A value
+   @param z A value
+   @return Returns a fullVector with the @em evaluation of
+   the given vector of Polynomial%s at (@c x, @c y, @c z)
 
    @fn Polynomial Polynomial::operator+(const Polynomial&) const
    @param other An other Polynomial

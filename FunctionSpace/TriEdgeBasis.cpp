@@ -48,19 +48,30 @@ TriEdgeBasis::TriEdgeBasis(const int order){
 
 
   // Basis //
-  basis = new Vector<Polynomial>[size];
+  basis = new std::vector<Polynomial>[size];
+
+  for(int i = 0; i < size; i++)
+    basis[i].resize(3);
+
 
   // Edge Based (Nedelec) //
   int i = 0;
 
   for(int j = 1; i < 3; j = (j + 1) % 3){
-    Vector<Polynomial> tmp = lagrange[j].gradient();
-    tmp.mul(lagrange[i]);
+    std::vector<Polynomial> tmp = lagrange[j].gradient();
+    tmp[0].mul(lagrange[i]);
+    tmp[1].mul(lagrange[i]);
+    tmp[2].mul(lagrange[i]);
 
     basis[i] = lagrange[i].gradient();
-    basis[i].mul(lagrange[j]);
-   
-    basis[i].sub(tmp);
+
+    basis[i][0].mul(lagrange[j]);
+    basis[i][1].mul(lagrange[j]);
+    basis[i][2].mul(lagrange[j]);      
+
+    basis[i][0].sub(tmp[0]);
+    basis[i][1].sub(tmp[1]);
+    basis[i][2].sub(tmp[2]);
 
     i++;
   }
@@ -87,13 +98,20 @@ TriEdgeBasis::TriEdgeBasis(const int order){
   // Cell Based (Type 1) //
   for(int l1 = 1; l1 < order; l1++){
     for(int l2 = 0; l2 + l1 - 1 < orderMinus; l2++){
-      Vector<Polynomial> tmp = v[l2].gradient();
-      tmp.mul(u[l1]);
+      std::vector<Polynomial> tmp = v[l2].gradient();
+      tmp[0].mul(u[l1]);
+      tmp[1].mul(u[l1]);
+      tmp[2].mul(u[l1]);
 
       basis[i] = u[l1].gradient();
-      basis[i].mul(v[l2]);
+      
+      basis[i][0].mul(v[l2]);
+      basis[i][1].mul(v[l2]);
+      basis[i][2].mul(v[l2]);
 
-      basis[i].add(tmp);
+      basis[i][0].add(tmp[0]);
+      basis[i][1].add(tmp[1]);
+      basis[i][2].add(tmp[2]);
       
       i++;
     }
@@ -102,14 +120,21 @@ TriEdgeBasis::TriEdgeBasis(const int order){
   // Cell Based (Type 2) //
   for(int l1 = 1; l1 < order; l1++){
     for(int l2 = 0; l2 + l1 - 1 < orderMinus; l2++){
-      Vector<Polynomial> tmp = v[l2].gradient();
-      tmp.mul(u[l1]);
+      std::vector<Polynomial> tmp = v[l2].gradient();
+      tmp[0].mul(u[l1]);
+      tmp[1].mul(u[l1]);
+      tmp[2].mul(u[l1]);
 
       basis[i] = u[l1].gradient();
-      basis[i].mul(v[l2]);
 
-      basis[i].sub(tmp);
-      
+      basis[i][0].mul(v[l2]);
+      basis[i][1].mul(v[l2]);
+      basis[i][2].mul(v[l2]);
+
+      basis[i][0].sub(tmp[0]);
+      basis[i][1].sub(tmp[1]);
+      basis[i][2].sub(tmp[2]);
+ 
       i++;
     }
   }
@@ -117,7 +142,10 @@ TriEdgeBasis::TriEdgeBasis(const int order){
   // Cell Based (Type 3) //
   for(int l = 0; l < orderMinus; l++){
     basis[i] = basis[0];
-    basis[i].mul(v[l]);
+
+    basis[i][0].mul(v[l]);
+    basis[i][1].mul(v[l]);
+    basis[i][2].mul(v[l]);
     
     i++;
   }
@@ -139,13 +167,13 @@ TriEdgeBasis::~TriEdgeBasis(void){
 /*
 #include <cstdio>
 int main(void){
-  const int P = 1;
+  const int P = 6;
   const double d = 0.05;
   const char x[2] = {'X', 'Y'};
 
   TriEdgeBasis b(P);
   
-  const Vector<Polynomial>* basis = b.getBasis();
+  const std::vector<Polynomial>* basis = b.getBasis();
   
   printf("\n");
   printf("clear all;\n");
@@ -165,8 +193,8 @@ int main(void){
   
   for(int i = 0; i < b.getSize(); i++){
     //printf("p(%d) = %s;\n", i + 1, basis[i].toString().c_str());
-    printf("p(%d, 1) = %s;\n", i + 1, basis[i](0).toString().c_str());
-    printf("p(%d, 2) = %s;\n", i + 1, basis[i](1).toString().c_str());
+    printf("p(%d, 1) = %s;\n", i + 1, basis[i][0].toString().c_str());
+    printf("p(%d, 2) = %s;\n", i + 1, basis[i][1].toString().c_str());
     printf("\n");
   }
   

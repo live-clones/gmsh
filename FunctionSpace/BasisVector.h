@@ -1,9 +1,9 @@
 #ifndef _BASISVECTOR_H_
 #define _BASISVECTOR_H_
 
+#include <vector>
 #include "Basis.h"
 #include "Polynomial.h"
-#include "Vector.h"
 
 /**
    @class BasisVector
@@ -16,12 +16,12 @@
 
 class BasisVector: public Basis{
  protected:
-  Vector<Polynomial>* basis;
+  std::vector<Polynomial>* basis;
 
  public:
   virtual ~BasisVector(void);
 
-  Vector<Polynomial>* getBasis(void) const;
+  std::vector<Polynomial>* getBasis(void) const;
 
  protected:
   BasisVector(void);
@@ -41,7 +41,7 @@ class BasisVector: public Basis{
 // Inline Functions //
 //////////////////////
 
-inline Vector<Polynomial>* BasisVector::getBasis(void) const{
+inline std::vector<Polynomial>* BasisVector::getBasis(void) const{
   return basis;
 }
 

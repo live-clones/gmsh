@@ -74,8 +74,12 @@ QuadEdgeBasis::QuadEdgeBasis(const int order){
 
 
   // Basis //
-  basis = new Vector<Polynomial>[size];
-  
+  basis = new std::vector<Polynomial>[size];
+
+  for(int i = 0; i < size; i++)
+    basis[i].resize(3);
+
+
   // Edge Based (Nedelec) // 
   int i = 0;
   Polynomial oneHalf(0.5, 0, 0, 0);
@@ -84,8 +88,13 @@ QuadEdgeBasis::QuadEdgeBasis(const int order){
     basis[i] = 
       (liftingSub[e]).gradient();
     
-    basis[i].mul(lagrangeSum[e]);
-    basis[i].mul(oneHalf);
+    basis[i][0].mul(lagrangeSum[e]);
+    basis[i][1].mul(lagrangeSum[e]);
+    basis[i][2].mul(lagrangeSum[e]);
+
+    basis[i][0].mul(oneHalf);
+    basis[i][1].mul(oneHalf);
+    basis[i][2].mul(oneHalf);
 
     i++;
   }
@@ -128,9 +137,9 @@ QuadEdgeBasis::QuadEdgeBasis(const int order){
   // Cell Based (Type 2) //
   for(int l1 = 1; l1 < orderPlus; l1++){
     for(int l2 = 1; l2 < orderPlus; l2++){
-      basis[i](0) =  legendreX[l1] * iLegendreY[l2];
-      basis[i](1) = iLegendreX[l1] *  legendreY[l2] * -1;
-      basis[i](2) = zero;
+      basis[i][0] =  legendreX[l1] * iLegendreY[l2];
+      basis[i][1] = iLegendreX[l1] *  legendreY[l2] * -1;
+      basis[i][2] = zero;
 
       i++;
     }
@@ -138,13 +147,13 @@ QuadEdgeBasis::QuadEdgeBasis(const int order){
 
   // Cell Based (Type 3) //
   for(int l = 1, iPlus = i + order; l < orderPlus; l++, iPlus++){
-    basis[i](0) = iLegendreY[l];
-    basis[i](1) = zero;
-    basis[i](2) = zero;
+    basis[i][0] = iLegendreY[l];
+    basis[i][1] = zero;
+    basis[i][2] = zero;
 
-    basis[iPlus](0) = zero;
-    basis[iPlus](1) = iLegendreX[l];
-    basis[iPlus](2) = zero;
+    basis[iPlus][0] = zero;
+    basis[iPlus][1] = iLegendreX[l];
+    basis[iPlus][2] = zero;
 
     i++;
   }
@@ -178,7 +187,7 @@ int main(void){
 
   QuadEdgeBasis b(P);
   
-  const Vector<Polynomial>* basis = b.getBasis();
+  const std::vector<Polynomial>* basis = b.getBasis();
   
   printf("\n");
   printf("clear all;\n");
@@ -199,7 +208,7 @@ int main(void){
 
   for(int i = 0; i < b.getSize(); i++){
     for(int j = 0; j < 2; j++)
-      printf("p(%d, %d) = %s;\n", i + 1, j + 1, basis[i](j).toString().c_str());
+      printf("p(%d, %d) = %s;\n", i + 1, j + 1, basis[i][j].toString().c_str());
     //printf("p(%d) = %s", i, basis[i].toString().c_str());
     printf("\n");
   }

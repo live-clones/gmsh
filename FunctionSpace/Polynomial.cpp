@@ -84,18 +84,18 @@ void Polynomial::derivative(const int dim){
   return;
 }
 
-Vector<Polynomial> Polynomial::gradient(void) const{
-  Vector<Polynomial> grad(3);
+vector<Polynomial> Polynomial::gradient(void) const{
+  vector<Polynomial> grad(3);
 
   // Copy Polynomial //
-  grad(0) = *this;
-  grad(1) = *this;
-  grad(2) = *this;
+  grad[0] = *this;
+  grad[1] = *this;
+  grad[2] = *this;
 
   // Derivative with respect to each direction //
-  grad(0).derivative(0);
-  grad(1).derivative(1);
-  grad(2).derivative(2);
+  grad[0].derivative(0);
+  grad[1].derivative(1);
+  grad[2].derivative(2);
   
   return grad;
 }
@@ -112,6 +112,20 @@ double Polynomial::at
 
   return val;
 }
+
+fullVector<double> Polynomial::at(const vector<Polynomial>& P,
+				  const double x,
+				  const double y,
+				  const double z){
+  fullVector<double> val(3);
+  
+  val(0) = P[0].at(x, y, z);
+  val(1) = P[1].at(x, y, z);
+  val(2) = P[2].at(x, y, z);
+
+  return val;
+}
+
 
 Polynomial Polynomial::operator+(const Polynomial& other) const{
   Polynomial newP;

@@ -21,16 +21,26 @@ TriNedelecBasis::TriNedelecBasis(void){
     Polynomial(1, 0, 1, 0);
 
   // Basis //
-  basis = new Vector<Polynomial>[size];
+  basis = new std::vector<Polynomial>[size];
+
+  for(int i = 0; i < size; i++)
+    basis[i].resize(3);
 
   for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3){
-    Vector<Polynomial> tmp = lagrange[j].gradient();
-    tmp.mul(lagrange[i]);
+    std::vector<Polynomial> tmp = lagrange[j].gradient();
+    tmp[0].mul(lagrange[i]);
+    tmp[1].mul(lagrange[i]);
+    tmp[2].mul(lagrange[i]);
 
     basis[i] = lagrange[i].gradient();
-    basis[i].mul(lagrange[j]);
+
+    basis[i][0].mul(lagrange[j]);
+    basis[i][1].mul(lagrange[j]);
+    basis[i][2].mul(lagrange[j]);
    
-    basis[i].sub(tmp);
+    basis[i][0].sub(tmp[0]);
+    basis[i][1].sub(tmp[1]);
+    basis[i][2].sub(tmp[2]);
   }
 
   // Free Temporary Sapce //
@@ -48,9 +58,9 @@ int main(void){
   const double d = 0.05;
   const char x[2] = {'X', 'Y'};
 
-  TriNedelec b;
+  TriNedelecBasis b;
   
-  const Vector<Polynomial>* basis = b.getBasis();
+  const std::vector<Polynomial>* basis = b.getBasis();
   
   printf("\n");
   printf("clear all;\n");
@@ -70,8 +80,8 @@ int main(void){
   
   for(int i = 0; i < b.getSize(); i++){
     //printf("p(%d) = %s;\n", i + 1, basis[i].toString().c_str());
-    printf("p(%d, 1) = %s;\n", i + 1, basis[i](0).toString().c_str());
-    printf("p(%d, 2) = %s;\n", i + 1, basis[i](1).toString().c_str());
+    printf("p(%d, 1) = %s;\n", i + 1, basis[i][0].toString().c_str());
+    printf("p(%d, 2) = %s;\n", i + 1, basis[i][1].toString().c_str());
     printf("\n");
   }
   

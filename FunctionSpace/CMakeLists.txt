@@ -4,7 +4,6 @@
 # bugs and problems to <gmsh@geuz.org>.
 
 set(SRC
-  VectorPolynomial.cpp
   Polynomial.cpp
   Legendre.cpp
 
