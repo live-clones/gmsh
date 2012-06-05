@@ -801,10 +801,13 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   do{ // enter loop
 
-    // the Gmsh client is special: it always gets executed first. (A
-    // special-puropose meta-model allows more flexibility: but in the simple
-    // GUI we can assume this)
-    runGmshClient(action);
+    //check whether the client is a onelab Metamodel
+    std::vector<onelab::number> n;
+    onelab::server::instance()->get(n,"HasGmsh");
+    bool metamodel = (n.size() && n[0].getValue());
+
+    // If the client is a NOT a metamodel Gmsh gets executed
+    if(!metamodel) runGmshClient(action);
 
     if(action == "compute")
       FlGui::instance()->onelab->checkForErrors("Gmsh");
@@ -827,6 +830,10 @@ void onelab_cb(Fl_Widget *w, void *data)
         FlGui::instance()->onelab->checkForErrors(c->getName());
       if(FlGui::instance()->onelab->stop()) break;
     }
+
+    // update geometry in Gmsh window which might have been by the metamodel
+    //if(metamodel)
+    runGmshClient("check"); 
 
     if(action != "initialize"){
       updateOnelabGraphs();
