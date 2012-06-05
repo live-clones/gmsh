@@ -832,8 +832,8 @@ void onelab_cb(Fl_Widget *w, void *data)
     }
 
     // update geometry in Gmsh window which might have been by the metamodel
-    //if(metamodel)
-    runGmshClient("check"); 
+    if(metamodel)
+      geometry_reload_cb(0, 0);
 
     if(action != "initialize"){
       updateOnelabGraphs();
