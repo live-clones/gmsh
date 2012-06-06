@@ -16,6 +16,7 @@
 #include "MElementOctree.h"
 #include "meshGRegion.h"
 #include "Voronoi3D.h"
+#include "directions3D.h"
 
 #if defined(HAVE_BFGS)
 #include "ap.h"
@@ -872,23 +873,22 @@ double LpCVT::get_size(double x,double y,double z){
 }
 
 Tensor LpCVT::get_tensor(double x,double y,double z){
-  double angle;
   Tensor t;
-
-  angle = atan2(z,x);
-  t = Tensor();
-
-  t.set_t11(1.0);
-  t.set_t21(0.0);
-  t.set_t31(0.0);
+  Matrix m;
+	
+  m = Frame_field::search(x,y,z);	
+	
+  t.set_t11(m.get_m11());
+  t.set_t21(m.get_m12());
+  t.set_t31(m.get_m13());
   
-  t.set_t12(0.0);
-  t.set_t22(1.0);
-  t.set_t32(0.0);
+  t.set_t12(m.get_m21());
+  t.set_t22(m.get_m22());
+  t.set_t32(m.get_m23());
   
-  t.set_t13(0.0);
-  t.set_t23(0.0);
-  t.set_t33(1.0);
+  t.set_t13(m.get_m31());
+  t.set_t23(m.get_m32());
+  t.set_t33(m.get_m33());
 
   return t;
 }
@@ -1008,9 +1008,9 @@ void LpCVT::init_caches(VoronoiElement element,int p){
 	df_dy_cache[i] = df_dy(generator,point,t,p);
 	df_dz_cache[i] = df_dz(generator,point,t,p);
 	rho_cache[i] = h_to_rho(element.get_h(u,v,w),p);
-	drho_dx_cache[i] = (-p-3)*pow_int(1.0/element.get_h(u,v,w),p+4)*element.get_dh_dx();
-	drho_dy_cache[i] = (-p-3)*pow_int(1.0/element.get_h(u,v,w),p+4)*element.get_dh_dy();
-	drho_dz_cache[i] = (-p-3)*pow_int(1.0/element.get_h(u,v,w),p+4)*element.get_dh_dz();
+	drho_dx_cache[i] = (-p-3)*rho_cache[i]*element.get_dh_dx()/element.get_h(u,v,w);
+	drho_dy_cache[i] = (-p-3)*rho_cache[i]*element.get_dh_dy()/element.get_h(u,v,w);
+	drho_dz_cache[i] = (-p-3)*rho_cache[i]*element.get_dh_dz()/element.get_h(u,v,w);
   }	
 }
 
@@ -1452,6 +1452,8 @@ void LpSmoother::improve_model(){
   GModel* model = GModel::current();
   GModel::riter it;
 
+  Frame_field::init_model();	
+	
   for(it=model->firstRegion();it!=model->lastRegion();it++)
   {
     gr = *it;
@@ -1459,6 +1461,8 @@ void LpSmoother::improve_model(){
 	  improve_region(gr);
 	}
   }
+	
+  Frame_field::clear();
 }
 
 void LpSmoother::improve_region(GRegion* gr)

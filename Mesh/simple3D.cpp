@@ -12,6 +12,7 @@
 #include <fstream>
 #include "CenterlineField.h"
 #include <algorithm>
+#include "directions3D.h"
 
 #if defined(HAVE_RTREE) 
 #include "rtree.h"
@@ -310,6 +311,8 @@ void Filler::treat_model(){
   GModel* model = GModel::current();
   GModel::riter it;
 	
+  Frame_field::init_model();	
+	
   for(it=model->firstRegion();it!=model->lastRegion();it++)
   {
     gr = *it;
@@ -317,6 +320,8 @@ void Filler::treat_model(){
 	  treat_region(gr);
 	}
   }
+	
+  Frame_field::clear();
 }
 
 void Filler::treat_region(GRegion* gr){
@@ -433,23 +438,22 @@ void Filler::treat_region(GRegion* gr){
 }
 
 Metric Filler::get_metric(double x,double y,double z){
-  double angle;
   Metric m;
+  Matrix m2;	
+  	
+  m2 = Frame_field::search(x,y,z);	
 	
-  angle = atan2(z,x);
-  m = Metric();
-	
-  m.set_m11(1.0);
-  m.set_m21(0.0);
-  m.set_m31(0.0);
+  m.set_m11(m2.get_m11());
+  m.set_m21(m2.get_m21());
+  m.set_m31(m2.get_m31());
   
-  m.set_m12(0.0);
-  m.set_m22(1.0);
-  m.set_m32(0.0);
+  m.set_m12(m2.get_m12());
+  m.set_m22(m2.get_m22());
+  m.set_m32(m2.get_m32());
   
-  m.set_m13(0.0);
-  m.set_m23(0.0);
-  m.set_m33(1.0);
+  m.set_m13(m2.get_m13());
+  m.set_m23(m2.get_m23());
+  m.set_m33(m2.get_m33());
 	
   return m;
 }
