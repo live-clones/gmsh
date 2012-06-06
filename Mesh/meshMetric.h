@@ -21,7 +21,7 @@ class STensor3;
 /**Anisotropic mesh size field based on a metric */
 class meshMetric: public Field {
  public:
-  typedef enum {LEVELSET=1,HESSIAN=2, FREY=3, EIGENDIRECTIONS=4, EIGENDIRECTIONS_LINEARINTERP_H=5} MetricComputationTechnique;
+  typedef enum {LEVELSET=1,HESSIAN=2, FREY=3, EIGENDIRECTIONS=4, EIGENDIRECTIONS_LINEARINTERP_H=5, ISOTROPIC_LINEARINTERP_H=6} MetricComputationTechnique;
  private:
   // intersect all metrics added in "setOfMetrics", preserve eigendirections of the "most anisotropic" metric
   void intersectMetrics();
@@ -72,6 +72,7 @@ class meshMetric: public Field {
   //    parameters[4] = thickness of the interface in the negative ls direction (default: =parameters[0] if not specified)
   //    parameters[3] = the required minimum number of elements to represent a circle - used for curvature-based metric (default: = 15)
   // 5: same as 4, except that the transition in band E uses linear interpolation of h, instead of linear interpolation of metric
+  // 6: fct is a LS, metric is isotropic with linear interpolation of h in band E
   void addMetric(int technique, simpleFunction<double> *fct, std::vector<double> parameters);
 
   inline SMetric3 metricAtVertex (MVertex* v) {

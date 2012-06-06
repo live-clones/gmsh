@@ -513,6 +513,13 @@ void meshMetric::computeMetric(){
 
       it++;
     }
+    else if (_technique == meshMetric::ISOTROPIC_LINEARINTERP_H){
+      SVector3 gr = grads[ver];
+      double norm = gr.normalize();
+      double h_dist = (signed_dist < _E && signed_dist > _E_moins && norm != 0.0) ? hmin + ((hmax-hmin)/_E)*dist : hmax;  // the charcteristic element size in all directions - linear interp between hmin and hmax
+      H = SMetric3(1./h_dist/h_dist);
+    }
+
 
     if (_technique != meshMetric::EIGENDIRECTIONS && _technique!=meshMetric::EIGENDIRECTIONS_LINEARINTERP_H){
 
