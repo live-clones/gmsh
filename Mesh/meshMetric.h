@@ -82,6 +82,8 @@ class meshMetric: public Field {
   void computeMetric() ;
   void computeValues();
   void computeHessian_LS();
+  void computeHessian_LS2();
+  void computeHessian_LS3();
   void computeHessian_FE();
 
   double getLaplacian (MVertex *v);

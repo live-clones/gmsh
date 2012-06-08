@@ -301,6 +301,7 @@ void meshMetric::computeHessian_FE(){
   
 }
 
+
 //compute derivatives and second order derivatives using least squares
 // u = a + b(x-x_0) + c(y-y_0) + d(z-z_0)
 void meshMetric::computeHessian_LS( ){
@@ -366,13 +367,156 @@ void meshMetric::computeHessian_LS( ){
   }
 
 }
+
+
+// Determines set of vertices to use for least squares
+std::vector<MVertex*> getLSBlob(unsigned int minNbPt, v2t_cont::iterator it, v2t_cont &adj) {
+
+//  static const double RADFACT = 3;
+//
+//  SPoint3 p0 = it->first->point();  // Vertex coordinates (center of circle)
+//
+//  double rad = 0.;
+//  for (std::vector<MElement*>::iterator itEl = it->second.begin(); itEl != it->second.end(); itEl++)
+//    rad = std::max(rad,(*itEl)->getOuterRadius());
+//  rad *= RADFACT;
+
+  std::vector<MVertex*> vv(1,it->first), bvv = vv;                                                      // Vector of vertices in blob and in boundary of blob
+  do {
+    std::set<MVertex*> nbvv;                                                                            // Set of vertices in new boundary
+    for (std::vector<MVertex*>::iterator itBV = bvv.begin(); itBV != bvv.end(); itBV++) {               // For each boundary vertex...
+      std::vector<MElement*> &adjBV = adj[*itBV];
+      for (std::vector<MElement*>::iterator itBVEl = adjBV.begin(); itBVEl != adjBV.end(); itBVEl++) {
+        for (int iV=0; iV<(*itBVEl)->getNumVertices(); iV++){                                           // ... look for adjacent vertices...
+          MVertex *v = (*itBVEl)->getVertex(iV);
+//          if ((find(vv.begin(),vv.end(),v) == vv.end()) && (p0.distance(v->point()) <= rad)) nbvv.insert(v);
+          if (find(vv.begin(),vv.end(),v) == vv.end()) nbvv.insert(v);                                  // ... and add them in the new boundary if they are not already in the blob
+        }
+      }
+    }
+    if (nbvv.empty()) bvv.clear();
+    else {
+      bvv.assign(nbvv.begin(),nbvv.end());
+      vv.insert(vv.end(),nbvv.begin(),nbvv.end());
+    }
+//  } while (!bvv.empty());
+  } while (vv.size() < minNbPt);                                                                        // Repeat until min. number of points is reached
+
+  return vv;
+
+}
+
+
+// Compute derivatives and second order derivatives using least squares
+// 2D LS system: a_i0*x^2+a_i1*x*y+a_i2*y^2+a_i3*x+a_i4*y+a_i5=b_i
+// 3D LS system: a_i0*x^2+a_i1*x*y+a_i2*x*z+a_i3*y^2+a_i4*y*z+a_i5*z^2+a_i6*x+a_i7*y+a_i8*z+a_i9=b_i
+void meshMetric::computeHessian_LS2( ){
+
+  unsigned int sysDim = (_dim == 2) ? 6 : 10;
+  unsigned int minNbPtBlob = 3*sysDim;
+
+  for (v2t_cont::iterator it = _adj.begin(); it != _adj.end(); it++) {
+    MVertex *ver = it->first;
+    std::vector<MVertex*> vv = getLSBlob(minNbPtBlob, it, _adj);
+    fullMatrix<double> A(vv.size(),sysDim), ATA(sysDim,sysDim);
+    fullVector<double> b(vv.size()), ATb(sysDim), coeffs(sysDim);
+    for(unsigned int i=0; i<vv.size(); i++) {
+      const double &x = vv[i]->x(), &y = vv[i]->y(), &z = vv[i]->z();
+      if (_dim == 2) {
+        A(i,0) = x*x; A(i,1) = x*y; A(i,2) = y*y;
+        A(i,3) = x; A(i,4) = y; A(i,5) = 1.;
+      }
+      else {
+        A(i,0) = x*x; A(i,1) = x*y; A(i,2) = x*z; A(i,3) = y*y; A(i,4) = y*z; A(i,5) = z*z;
+        A(i,6) = x; A(i,7) = y; A(i,8) = z; A(i,9) = 1.;
+      }
+      b(i) = vals[vv[i]];
+    }
+    ATA.gemmWithAtranspose(A,A,1.,0.);
+    A.multWithATranspose(b,1.,0.,ATb);
+    ATA.luSolve(ATb,coeffs);
+    const double &x = ver->x(), &y = ver->y(), &z = ver->z();
+    double d2udx2, d2udy2, d2udz2, d2udxy, d2udxz, d2udyz, dudx, dudy, dudz;
+    if (_dim == 2) {
+      d2udx2 = 2.*coeffs(0); d2udy2 = 2.*coeffs(2); d2udz2 = 0.;
+      d2udxy = coeffs(1); d2udxz = 0.; d2udyz = 0.;
+      dudx = d2udx2*x+d2udxy*y+coeffs(3);
+      dudy = d2udxy*x+d2udy2*y+coeffs(4);
+      dudz = 0.;
+    }
+    else {
+      d2udx2 = 2.*coeffs(0); d2udy2 = 2.*coeffs(3); d2udz2 = 2.*coeffs(5);
+      d2udxy = coeffs(1); d2udxz = coeffs(2); d2udyz = coeffs(4);
+      dudx = d2udx2*x+d2udxy*y+d2udxz*z+coeffs(6);
+      dudy = d2udxy*x+d2udy2*y+d2udyz*z+coeffs(7);
+      dudz = d2udxz*z+d2udyz*z+d2udz2*z+coeffs(8);
+    }
+    double duNorm = sqrt(dudx*dudx+dudy*dudy+dudz*dudz);
+    if (duNorm == 0. || _technique == meshMetric::HESSIAN) duNorm = 1.;
+    grads[ver] = SVector3(dudx/duNorm,dudy/duNorm,dudz/duNorm);
+    dgrads[0][ver] = SVector3(d2udx2,d2udxy,d2udxz);
+    dgrads[1][ver] = SVector3(d2udxy,d2udy2,d2udyz);
+    dgrads[2][ver] = SVector3(d2udxz,d2udyz,d2udz2);
+  }
+
+}
+
+
+//compute derivatives and second order derivatives using least squares
+// u = a + b(x-x_0) + c(y-y_0) + d(z-z_0)
+void meshMetric::computeHessian_LS3( ){
+
+  //double error = 0.0;
+  unsigned int sysDim = (_dim == 2) ? 6 : 10;
+  unsigned int minNbPtBlob = 2*sysDim;
+
+  int DIM = _dim + 1;
+  for (int ITER=0;ITER<DIM;ITER++){
+    v2t_cont :: iterator it = _adj.begin();
+     while (it != _adj.end()) {
+      MVertex *ver = it->first;
+      std::vector<MVertex*> vv = getLSBlob(minNbPtBlob, it, _adj);
+      fullMatrix<double> A(vv.size(),DIM), ATA(DIM,DIM);
+      fullVector<double> b(vv.size()), ATb (DIM), result(DIM);
+      for(unsigned int i = 0; i < vv.size(); i++) {
+        b(i) = (ITER == 0) ? vals[vv[i]] : grads[vv[i]](ITER-1);
+        A(i,0) = 1.0;
+        A(i,1) = vv[i]->x() - ver->x();
+        A(i,2) = vv[i]->y() - ver->y();
+        if (_dim == 3) A(i,3) = vv[i]->z() - ver->z();
+      }
+      ATA.gemmWithAtranspose(A,A,1.,0.);
+      A.multWithATranspose(b,1.,0.,ATb);
+      ATA.luSolve(ATb,result);
+      if (ITER == 0){
+        double gr1 = result(1);
+        double gr2 = result(2);
+        double gr3 = (_dim==2) ? 0.0:result(3);
+        double norm = sqrt(gr1*gr1+gr2*gr2+gr3*gr3);
+        if (norm == 0.0 || _technique == meshMetric::HESSIAN) norm = 1.0;
+        grads[ver] = SVector3(gr1/norm,gr2/norm,gr3/norm);
+      }
+      else{
+        dgrads[ITER-1][ver] = SVector3(result(1),result(2),(_dim==2)?0.0:result(3));
+      }
+      ++it;
+    }
+    if (_technique == meshMetric::LEVELSET) break;
+  }
+
+}
+
+
+
 void meshMetric::computeMetric(){
 
   //printf("%d elements are considered in the meshMetric \n",(int)_elements.size());
 
   computeValues();
-  //computeHessian_FE();
-  computeHessian_LS(); 
+//  computeHessian_FE();
+//  computeHessian_LS();
+  computeHessian_LS2();
+//  computeHessian_LS3();
   
   int metricNumber = setOfMetrics.size();
 
@@ -387,12 +531,15 @@ void meshMetric::computeMetric(){
     SVector3 gradudy = dgrads[1][ver];
     SVector3 gradudz = dgrads[2][ver];
     SMetric3 hessian;
-    hessian(0,0) = gradudx(0);
-    hessian(1,1) = gradudy(1);
-    hessian(2,2) = gradudz(2);
-    hessian(1,0) = hessian(0,1) = 0.5 * (gradudx(1) +gradudy(0));
-    hessian(2,0) = hessian(0,2) = 0.5 * (gradudx(2) +gradudz(0));
-    hessian(2,1) = hessian(1,2) = 0.5 * (gradudy(2) +gradudz(1));
+//    hessian(0,0) = gradudx(0);
+//    hessian(1,1) = gradudy(1);
+//    hessian(2,2) = gradudz(2);
+//    hessian(1,0) = hessian(0,1) = 0.5 * (gradudx(1) +gradudy(0));
+//    hessian(2,0) = hessian(0,2) = 0.5 * (gradudx(2) +gradudz(0));
+//    hessian(2,1) = hessian(1,2) = 0.5 * (gradudy(2) +gradudz(1));
+    hessian(0,0) = gradudx(0); hessian(0,1) = gradudx(1); hessian(0,2) = gradudx(2);
+    hessian(1,0) = gradudy(0); hessian(1,1) = gradudy(1); hessian(1,2) = gradudy(2);
+    hessian(2,0) = gradudz(0); hessian(2,1) = gradudz(1); hessian(2,2) = gradudz(2);
     if (_technique == meshMetric::HESSIAN){
       H = hessian;
     }
