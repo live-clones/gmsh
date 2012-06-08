@@ -615,7 +615,7 @@ int GModel::readMSH(const std::string &name)
             MElement *e = createElementMSH(this, num, type, physical, elementary,
                                            partition, vertices, elements, physicals,
                                            own, p);
-	    
+
 #if (FAST_ELEMENTS==1)
 	  elems[num] = e;
 	  elemreg[num] = elementary;
@@ -631,7 +631,7 @@ int GModel::readMSH(const std::string &name)
           delete [] data;
           numElementsPartial += numElms;
         }
-      } 
+      }
 #if (FAST_ELEMENTS==1)
 	for(int i = 0; i < 10; i++)
 	  elements[i].clear();

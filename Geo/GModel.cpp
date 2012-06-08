@@ -743,13 +743,13 @@ MElement *GModel::getMeshElementByCoord(SPoint3 &p, int dim, bool strict)
   return _octree->find(p.x(), p.y(), p.z(), dim, strict);
 }
 
-std::vector<MElement*> GModel::getMeshElementsByCoord(SPoint3 &p, int dim)
+std::vector<MElement*> GModel::getMeshElementsByCoord(SPoint3 &p, int dim, bool strict)
 {
   if(!_octree){
     Msg::Debug("Rebuilding mesh element octree");
     _octree = new MElementOctree(this);
   }
-  return _octree->findAll(p.x(), p.y(), p.z(), dim);
+  return _octree->findAll(p.x(), p.y(), p.z(), dim, strict);
 }
 
 MVertex *GModel::getMeshVertexByTag(int n)

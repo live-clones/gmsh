@@ -123,8 +123,11 @@ MElementOctree::~MElementOctree()
 }
 
 
-std::vector<MElement *> MElementOctree::findAll(double x, double y, double z, int dim)
+std::vector<MElement *> MElementOctree::findAll(double x, double y, double z, int dim, bool strict)
 {
+  double maxTol = 1.;
+  double tolIncr = 10.;
+
   double P[3] = {x, y, z};
   std::vector<void*> v;
   std::vector<MElement*> e;
@@ -133,6 +136,53 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z, in
        it != v.end(); ++it){
     MElement *el = (MElement*) *it;
     if (dim == -1 || el->getDim() == dim)e.push_back(el);
+  }
+  if (e.empty() && !strict && _gm) {
+    double initialTol = MElement::getTolerance();
+    double tol = initialTol;
+    while (tol < maxTol){
+      tol *= tolIncr;
+      MElement::setTolerance(tol);
+      std::vector<GEntity*> entities;
+      _gm->getEntities(entities);
+      for(unsigned int i = 0; i < entities.size(); i++){
+	for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+	  MElement* el = entities[i]->getMeshElement(j);
+	  if (dim == -1 ||  el->getDim() == dim){
+	    if (MElementInEle(el, P)){
+              e.push_back(el);
+	    }
+	  }
+	}
+      }
+      if(!e.empty()) {
+        MElement::setTolerance(initialTol);
+        return e;
+      }
+    }
+    MElement::setTolerance(initialTol);
+  }
+  else if (e.empty() && !strict && !_gm){
+    double initialTol = MElement::getTolerance();
+    double tol = initialTol;
+    while (tol < maxTol){
+      tol *= tolIncr;
+      MElement::setTolerance(tol);
+      for(unsigned int i = 0; i < _elems.size(); i++){
+        MElement* el = _elems[i];
+        if (dim == -1 ||  el->getDim() == dim){
+          if (MElementInEle(el, P)){
+            e.push_back(el);
+          }
+        }
+      }
+      if(!e.empty()) {
+        MElement::setTolerance(initialTol);
+        return e;
+      }
+    }
+    MElement::setTolerance(initialTol);
+    //Msg::Warning("Point %g %g %g not found",x,y,z);
   }
   return e;
 }

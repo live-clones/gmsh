@@ -11,7 +11,7 @@
 /*
  * MLine
  *
- *   0----------1 --> u
+ *   0-----+-----1 --> u
  *
  */
 class MLine : public MElement {

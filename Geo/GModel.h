@@ -313,7 +313,7 @@ class GModel
 
   // access a mesh element by coordinates (using an octree search)
   MElement *getMeshElementByCoord(SPoint3 &p, int dim=-1, bool strict=true);
-  std::vector<MElement*> getMeshElementsByCoord(SPoint3 &p, int dim=-1);
+  std::vector<MElement*> getMeshElementsByCoord(SPoint3 &p, int dim=-1, bool strict=true);
 
   // access a mesh element by tag, using the element cache
   MElement *getMeshElementByTag(int n);
