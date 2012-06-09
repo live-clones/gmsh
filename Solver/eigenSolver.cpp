@@ -105,7 +105,7 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
     Msg::Error("SLEPc diverged after %d iterations", its);
   else if(reason == EPS_DIVERGED_BREAKDOWN)
     Msg::Error("SLEPc generic breakdown in method");
-#if !(PETSC_VERSION_RELEASE == 0 || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR == 2))) // petsc-dev
+#if !(PETSC_VERSION_RELEASE == 0 || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2)))
   else if(reason == EPS_DIVERGED_NONSYMMETRIC)
     Msg::Error("The operator is nonsymmetric");
 #endif
@@ -154,7 +154,7 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
       }
        _eigenVectors.push_back(ev);
     }
-#if (PETSC_VERSION_RELEASE == 0 || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR == 2))) // petsc-dev
+#if (PETSC_VERSION_RELEASE == 0 || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2)))
     _try(VecDestroy(&xr));
     _try(VecDestroy(&xi));
 #else
@@ -163,7 +163,7 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
 #endif
   }
 
-#if (PETSC_VERSION_RELEASE == 0 || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR == 2))) // petsc-dev
+#if (PETSC_VERSION_RELEASE == 0 || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2)))
   _try(EPSDestroy(&eps));
 #else
   _try(EPSDestroy(eps));

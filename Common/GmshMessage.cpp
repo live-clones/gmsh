@@ -651,7 +651,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   bool noRange = true, noChoices = true, noLoop = true, noGraph = true;
   if(ps.size()){
     if(ps[0].getReadOnly())
-      ps[0].setValue(val[0]); // use value from gmsh
+      ps[0].setValue(val[0]); // use value from gmsh (so it is updated if necessary)
     else
       val[0] = ps[0].getValue(); // use value from server
     // keep track of these attributes, which can be changed server-side
