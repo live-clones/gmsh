@@ -45,7 +45,7 @@ void OCCFace::setup()
     TopoDS_Wire wire = TopoDS::Wire(exp2.Current());
     Msg::Debug("OCC Face %d - New Wire", tag());
     std::list<GEdge*> l_wire;
-    for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()){          
+    for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()){
       TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
       GEdge *e = getOCCEdgeByNativePtr(model(), edge);
       if(!e){
@@ -70,11 +70,11 @@ void OCCFace::setup()
       l_edges.push_back(it->ge);
       l_dirs.push_back(it->_sign);
       if (el.count() == 2){
-        it->ge->meshAttributes.minimumMeshSegments = 
+        it->ge->meshAttributes.minimumMeshSegments =
           std::max(it->ge->meshAttributes.minimumMeshSegments,2);
       }
       if (el.count() == 1){
-        it->ge->meshAttributes.minimumMeshSegments = 
+        it->ge->meshAttributes.minimumMeshSegments =
           std::max(it->ge->meshAttributes.minimumMeshSegments,3);
       }
     }
@@ -86,7 +86,7 @@ void OCCFace::setup()
   _periodic[1] = surface.IsVPeriodic();
 
   ShapeAnalysis::GetFaceUVBounds(s, umin, umax, vmin, vmax);
-  Msg::Debug("OCC Face %d with %d parameter bounds (%g,%g)(%g,%g)", 
+  Msg::Debug("OCC Face %d with %d parameter bounds (%g,%g)(%g,%g)",
              tag(), l_edges.size(), umin, umax, vmin, vmax);
   // we do that for the projections to converge on the borders of the
   // surface
@@ -100,14 +100,14 @@ void OCCFace::setup()
 
   // std::list<GEdge*>::const_iterator it = l_edges.begin();
   // for (; it != l_edges.end(); ++it){
-  //   printf("edge %d : %d %d iseam %d \n", (*it)->tag(), 
+  //   printf("edge %d : %d %d iseam %d \n", (*it)->tag(),
   //          (*it)->getBeginVertex()->tag(), (*it)->getEndVertex()->tag(),
   //          (*it)->isSeam(this));
   // }
 }
 
 Range<double> OCCFace::parBounds(int i) const
-{  
+{
   double umin2, umax2, vmin2, vmax2;
 
   ShapeAnalysis::GetFaceUVBounds(s, umin2, umax2, vmin2, vmax2);
@@ -127,8 +127,8 @@ SVector3 OCCFace::normal(const SPoint2 &param) const
   SVector3 t2(dv.X(), dv.Y(), dv.Z());
   SVector3 n(crossprod(t1, t2));
   n.normalize();
-  if (s.Orientation() == TopAbs_REVERSED) return n * (-1.);  
-  return n;  
+  if (s.Orientation() == TopAbs_REVERSED) return n * (-1.);
+  return n;
 }
 
 Pair<SVector3,SVector3> OCCFace::firstDer(const SPoint2 &param) const
@@ -163,12 +163,12 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp, const double initialGuess[2]) co
 {
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
   GeomAPI_ProjectPointOnSurf proj(pnt, occface, umin, umax, vmin, vmax);
-  
+
   if(!proj.NbPoints()){
     Msg::Error("OCC Project Point on Surface FAIL");
     return GPoint(0, 0);
   }
-  
+
   double pp[2] = {initialGuess[0],initialGuess[1]};
   proj.LowerDistanceParameters(pp[0], pp[1]);
 
@@ -190,7 +190,7 @@ SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
   if(!proj.NbPoints()){
     Msg::Error("OCC Project Point on Surface FAIL");
     return GFace::parFromPoint(qp);
-  }   
+  }
   double U, V;
   proj.LowerDistanceParameters(U, V);
   return SPoint2(U, V);
@@ -227,7 +227,7 @@ double OCCFace::curvatureMax(const SPoint2 &param) const
   if(!prop.IsCurvatureDefined()){
     return eps;
   }
-  
+
   return std::max(fabs(prop.MinCurvature()), fabs(prop.MaxCurvature()));
 }
 
@@ -264,7 +264,7 @@ double OCCFace::curvatures(const SPoint2 &param,
 }
 
 bool OCCFace::containsPoint(const SPoint3 &pt) const
-{ 
+{
   if(geomType() == Plane){
     gp_Pln pl = Handle(Geom_Plane)::DownCast(occface)->Pln();
     double n[3], c;
@@ -298,7 +298,7 @@ bool OCCFace::containsPoint(const SPoint3 &pt) const
       }
     }
     // we're inside if angle equals 2 * pi
-    if(fabs(angle) > 2 * M_PI - 0.5 && fabs(angle) < 2 * M_PI + 0.5) 
+    if(fabs(angle) > 2 * M_PI - 0.5 && fabs(angle) < 2 * M_PI + 0.5)
       return true;
     return false;
   }
@@ -307,7 +307,7 @@ bool OCCFace::containsPoint(const SPoint3 &pt) const
   return false;
 }
 
-surface_params OCCFace::getSurfaceParams() const 
+surface_params OCCFace::getSurfaceParams() const
 {
   surface_params p;
   switch(geomType()){
@@ -336,7 +336,7 @@ bool OCCFace::buildSTLTriangulation(bool force)
 
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
-  BRepMesh_FastDiscret aMesher(0.1, 0.5, aBox, Standard_False, Standard_False, 
+  BRepMesh_FastDiscret aMesher(0.1, 0.5, aBox, Standard_False, Standard_False,
                                Standard_True, Standard_False);
 #if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 5)
   aMesher.Add(s);
@@ -370,7 +370,7 @@ bool OCCFace::buildSTLTriangulation(bool force)
     Poly_Triangle triangle = (triangulation->Triangles())(i);
     int p1, p2, p3;
     triangle.Get(p1, p2, p3);
-    
+
     // orient STL mesh to get normal right
     if(i == 1){
       gp_Pnt2d gp1 = (triangulation->UVNodes())(p1);
@@ -379,7 +379,7 @@ bool OCCFace::buildSTLTriangulation(bool force)
       SPoint2 b = SPoint2(gp1.X(), gp1.Y()) + SPoint2(gp2.X(), gp2.Y()) +
         SPoint2(gp3.X(), gp3.Y());
       b *= 1. / 3.;
-      SVector3 nf = normal(b); 
+      SVector3 nf = normal(b);
       GPoint sp1 = point(gp1.X(), gp1.Y());
       GPoint sp2 = point(gp2.X(), gp2.Y());
       GPoint sp3 = point(gp3.X(), gp3.Y());
@@ -424,9 +424,14 @@ GFace *getOCCFaceByNativePtr(GModel *model, TopoDS_Face toFind)
 
 void OCCFace::replaceEdgesInternal(std::list<GEdge*> &new_edges)
 {
+#if defined(OCC_VERSION_HEX) && OCC_VERSION_HEX >= 0x060503
+  Handle(IntTools_Context) myContext = new IntTools_Context;
+#else
   IntTools_Context myContext;
+#endif
+
   // we simply replace old edges by new edges in the structure
-  
+
   // make a copy of s
   TopoDS_Face copy_of_s_forward = s;
   copy_of_s_forward.Orientation(TopAbs_FORWARD);
@@ -435,7 +440,7 @@ void OCCFace::replaceEdgesInternal(std::list<GEdge*> &new_edges)
   Handle(Geom_Surface) copy_of_occface = BRep_Tool::Surface(copy_of_s_forward, location);
   // check periodicity
   bool bIsUPeriodic = _periodic[0];
-  // get tolerance 
+  // get tolerance
   double tolerance = BRep_Tool::Tolerance(copy_of_s_forward);
 
   BRep_Builder aBB;
@@ -459,12 +464,12 @@ void OCCFace::replaceEdgesInternal(std::list<GEdge*> &new_edges)
 	OCCEdge *occEd = dynamic_cast<OCCEdge*>(*it);
 	TopoDS_Edge olde = occEd->getTopoDS_Edge();
 	if (olde.IsSame(aE)){
-	  aER = *((TopoDS_Edge*)(*it2)->getNativePtr());		  
+	  aER = *((TopoDS_Edge*)(*it2)->getNativePtr());
 	}
 	else {
 	  olde = occEd->getTopoDS_EdgeOld();
 	  if (olde.IsSame(aE)){
-	    aER = *((TopoDS_Edge*)(*it2)->getNativePtr());		  
+	    aER = *((TopoDS_Edge*)(*it2)->getNativePtr());
 	  }
 	}
       }
@@ -490,15 +495,15 @@ void OCCFace::replaceEdgesInternal(std::list<GEdge*> &new_edges)
 	      if (aUx < umin || aUx > umax) {
 		// need to rebuild
 		Handle(Geom2d_Curve) aC2Dx;
-		aBB_.UpdateEdge(aER, aC2Dx, copy_of_s_forward , BRep_Tool::Tolerance(aE)); 
+		aBB_.UpdateEdge(aER, aC2Dx, copy_of_s_forward , BRep_Tool::Tolerance(aE));
 	      }
-	    }	  
+	    }
 	  }
 	}
 	BOPTools_Tools2D::BuildPCurveForEdgeOnFace(aER, copy_of_s_forward);
-	
-	// orient image 
-	Standard_Boolean bIsToReverse = 
+
+	// orient image
+	Standard_Boolean bIsToReverse =
           BOPTools_Tools3D::IsSplitToReverse1(aER, aE, myContext);
 	if (bIsToReverse) {
 	  aER.Reverse();
