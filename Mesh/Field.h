@@ -11,14 +11,13 @@
 #include <list>
 #include "GmshConfig.h"
 #include "STensor3.h"
-
 #include <fstream>
 #include <string>
 #include <string.h>
 #include <sstream>
 
 #if defined(HAVE_POST)
-#include "PView.h"
+class PView;
 #endif
 
 class Field;
@@ -69,9 +68,9 @@ class FieldOption {
   virtual void numericalValue(double val) { throw(1); }
   virtual double numericalValue() const { throw(1); }
   virtual const std::list<int> &list() const { throw(1); }
-  virtual std::list<int> &list() { throw(1); }
-  virtual const std::string &string() const { throw(1); }
-  virtual std::string &string() { throw(1); }
+  virtual void list(std::list<int> value) { throw(1); }
+  virtual std::string string() const { throw(1); }
+  virtual void string(const std::string value) { throw(1); }
 };
 
 class Field {
@@ -98,6 +97,7 @@ class Field {
 #endif
   void putOnNewView();
   virtual std::string getDescription(){ return ""; }
+  FieldOption * getOption(const std::string optionName);
 };
 
 class FieldFactory {
@@ -163,8 +163,8 @@ class FieldOptionString : public FieldOption
   virtual FieldOptionType getType(){ return FIELD_OPTION_STRING; }
   FieldOptionString(std::string &_val, std::string _help, bool *_status=0)
     : FieldOption(_help, _status), val(_val) {}
-  std::string &string() { modified(); return val; }
-  const std::string &string() const { return val; }
+  void string(const std::string value) { modified(); val = value;}
+  std::string string() const { return val; }
   void getTextRepresentation(std::string &v_str)
   {
     std::ostringstream sstream;
@@ -216,7 +216,7 @@ class FieldOptionList : public FieldOption
   FieldOptionType getType(){ return FIELD_OPTION_LIST; }
   FieldOptionList(std::list<int> &_val, std::string _help, bool *_status=0) 
     : FieldOption(_help, _status), val(_val) {}
-  std::list<int> &list(){ modified(); return val; }
+  void list(std::list<int> value){ modified(); val = value; }
   const std::list<int>& list() const { return val; }
   void getTextRepresentation(std::string & v_str)
   {

@@ -17,6 +17,9 @@
 #include "OS.h"
 #include "Context.h"
 #include "robustPredicates.h"
+#if defined(HAVE_POST)
+#include "PView.h"
+#endif
 
 #if defined(HAVE_ONELAB)
 #include "onelab.h"

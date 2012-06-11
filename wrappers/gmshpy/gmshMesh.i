@@ -1,6 +1,7 @@
 %feature("autodoc", "1");
 %module gmshMesh
 %include std_string.i
+%include std_list.i
 
 %{
   #include "GmshConfig.h"
@@ -14,8 +15,8 @@
 #if defined(HAVE_METIS) || defined(HAVE_CHACO)
   #include "meshPartition.h"
 #endif
-  #include "meshMetric.h"
   #include "Field.h"
+  #include "meshMetric.h"
   #include "CenterlineField.h"
   #include "simple3D.h"
   #include "Voronoi3D.h"
@@ -26,8 +27,10 @@
 %}
 
 %include std_vector.i
+%include std_map.i
 namespace std {
  %template(DoubleVector) vector<double, std::allocator<double> >;
+ %template(IntList) list<int>;
 }
 
 %include "GmshConfig.h"
@@ -41,8 +44,8 @@ namespace std {
 #if defined(HAVE_METIS) || defined(HAVE_CHACO)
 %include "meshPartition.h"
 #endif
-%include "meshMetric.h"
 %include "Field.h"
+%include "meshMetric.h"
 %include "CenterlineField.h"
 %include "simple3D.h"
 %include "Voronoi3D.h"

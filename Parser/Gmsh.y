@@ -980,7 +980,7 @@ Affectation :
       if(field){
 	FieldOption *option = field->options[$6];
 	if(option){
-	  try { option->string() = $8; }
+	  try { option->string($8); }
 	  catch (...){
 	    yymsg(0, "Cannot assign a string value to  option '%s' "
 		  "in field %i of type '%s'", $6, (int)$3, field->getName());
@@ -1003,13 +1003,14 @@ Affectation :
       if(field){
 	FieldOption *option = field->options[$6];
 	if(option){
-	  std::list<int> &vl = option->list();
+	  std::list<int> vl = option->list();
 	  vl.clear();
 	  for(int i = 0; i < List_Nbr($9); i++){
 	    double id;
 	    List_Read($9, i, &id);
 	    vl.push_back((int)id);
 	  }
+    option->list(vl);
 	}
 	else
 	  yymsg(0, "Unknown option '%s' in field %i of type '%s'",

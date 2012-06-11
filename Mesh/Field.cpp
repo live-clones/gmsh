@@ -24,8 +24,10 @@
 #include "mathEvaluator.h"
 #include "BackgroundMesh.h"
 #include "CenterlineField.h"
+#include "STensor3.h"
 
 #if defined(HAVE_POST)
+#include "PView.h"
 #include "OctreePost.h"
 #include "PViewDataList.h"
 #include "MVertex.h"
@@ -43,6 +45,16 @@ Field::~Field()
   for(std::map<std::string, FieldCallback*>::iterator it = callbacks.begin();
       it != callbacks.end(); ++it)
     delete it->second;
+}
+
+FieldOption *Field::getOption(const std::string optionName)
+{
+  std::map<std::string, FieldOption*>::iterator it = options.find(optionName);
+  if (it == options.end()) {
+    Msg::Error("field option :%s does not exist", optionName.c_str());
+    return NULL;
+  }
+  return it->second;
 }
 
 void FieldManager::reset()

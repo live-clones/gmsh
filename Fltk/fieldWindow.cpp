@@ -299,7 +299,7 @@ void fieldWindow::loadFieldOptions()
       it != f->options.end(); it++){
     FieldOption *option = it->second;
     std::ostringstream vstr;
-    std::list<int>::iterator list_it;
+    std::list<int>::const_iterator list_it;
     switch(option->getType()){
     case FIELD_OPTION_STRING:
     case FIELD_OPTION_PATH:
