@@ -168,10 +168,9 @@ void fullMatrix<double>::multOnBlock(const fullMatrix<double> &b, const int ncol
 }
 
 template<>
-void fullMatrix<double>::multWithATranspose(const fullVector<double> &x, const int alpha_, const int beta_,fullVector<double> &y) const
+void fullMatrix<double>::multWithATranspose(const fullVector<double> &x, double alpha, double beta,fullVector<double> &y) const
 {
   int M = _r, N = _c, LDA = _r, INCX = 1, INCY = 1;
-  double alpha = alpha_, beta = beta_;
   F77NAME(dgemv)("T", &M, &N, &alpha, _data, &LDA, x._data, &INCX,
                  &beta, y._data, &INCY);
 

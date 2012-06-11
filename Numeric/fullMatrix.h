@@ -551,13 +551,13 @@ class fullMatrix
 #endif
   ;
 
-  void multWithATranspose(const fullVector<scalar> &x, const int alpha_, const int beta_, fullVector<scalar> &y) const
+  void multWithATranspose(const fullVector<scalar> &x, scalar alpha, scalar beta, fullVector<scalar> &y) const
 #if !defined(HAVE_BLAS)
   {
-    y.scale(beta_);
+    y.scale(beta);
     for(int j = 0; j < _c; j++)
       for(int i = 0; i < _r; i++)
-        y._data[j] += (*this)(i, j) * x(i);
+        y._data[j] += alpha * (*this)(i, j) * x(i);
   }
 #endif
   ;
