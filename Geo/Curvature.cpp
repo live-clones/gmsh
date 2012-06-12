@@ -1392,28 +1392,6 @@ void Curvature::triangleNodalValuesAndDirections(MTriangle* triangle, SVector3* 
 
   //========================================================================================================
 
-void Curvature::vertexNodalValues(MVertex* A, double& c0, int isAbs)
-   {
-     int V0 = 0;
-
-     std::map<int,int>::iterator vertexIterator;
-
-     vertexIterator = _VertexToInt.find( A->getNum() );
-     if ( vertexIterator != _VertexToInt.end() )  V0 = (*vertexIterator).second;
-     else  std::cout << "Didn't find vertex with number " << A->getNum() << " in _VertextToInt !" << std::endl;
- 
-     
-     if (isAbs){
-       c0 = std::abs(_VertexCurve[V0]); //Mean curvature in vertex 0
-      }
-     else{
-       c0 = _VertexCurve[V0]; //Mean curvature in vertex 0
-      }
-
-   }
-
-  //========================================================================================================
-
 void Curvature::edgeNodalValues(MLine* edge, double& c0, double& c1, int isAbs)
    {
      MVertex* A = edge->getVertex(0);
@@ -1454,10 +1432,6 @@ void Curvature::edgeNodalValuesAndDirections(MLine* edge, SVector3* dMax, SVecto
     int V0 = 0;
     int V1 = 0;
 
-    //LineVertices[0] is a pointer the first vertex of the edge
-    //LineVertices[1] is a pointer the second vertex of the edge
-
-
     std::map<int,int>::iterator vertexIterator;
     vertexIterator = _VertexToInt.find( LineVertices[0]->getNum() );
     if ( vertexIterator != _VertexToInt.end() )  V0 = (*vertexIterator).second;
@@ -1497,6 +1471,52 @@ void Curvature::edgeNodalValuesAndDirections(MLine* edge, SVector3* dMax, SVecto
 
       cMin[0]  = _curv2[V0];
       cMin[1]  = _curv2[V1];
+    }
+}
+  //========================================================================================================
+
+void Curvature::vertexNodalValues(MVertex* A, double& c0, int isAbs)
+   {
+     int V0 = 0;
+
+     std::map<int,int>::iterator vertexIterator;
+
+     vertexIterator = _VertexToInt.find( A->getNum() );
+     if ( vertexIterator != _VertexToInt.end() )  V0 = (*vertexIterator).second;
+     else  std::cout << "Didn't find vertex with number " << A->getNum() << " in _VertextToInt !" << std::endl;
+ 
+     
+     if (isAbs){
+       c0 = std::abs(_VertexCurve[V0]); //Mean curvature in vertex 0
+      }
+     else{
+       c0 = _VertexCurve[V0]; //Mean curvature in vertex 0
+      }
+
+   }
+
+void Curvature::vertexNodalValuesAndDirections(MVertex *A, SVector3* dMax, SVector3* dMin, double* cMax, double* cMin, int isAbs)
+{
+   
+    int V0 = 0;
+   
+    std::map<int,int>::iterator vertexIterator;
+    vertexIterator = _VertexToInt.find( A->getNum() );
+    if ( vertexIterator != _VertexToInt.end() )  V0 = (*vertexIterator).second;
+    else
+      std::cout << "Didn't find vertex with number " << A->getNum() << " in _VertextToInt !" << std::endl;
+
+    if (isAbs){
+      dMax[0] = _pdir1[V0];
+      dMin[0] = _pdir2[V0];
+      cMax[0]  = std::abs(_curv1[V0]);
+      cMin[0]  = std::abs(_curv2[V0]);
+    }
+    else{
+      dMax[0] = _pdir1[V0];
+      dMin[0] = _pdir2[V0];
+      cMax[0]  = _curv1[V0];
+      cMin[0]  = _curv2[V0];
     }
 }
 

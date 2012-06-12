@@ -30,6 +30,7 @@
 #include "discreteFace.h"
 #include "GEdgeCompound.h"
 #include "GFaceCompound.h"
+#include "BackgroundMesh.h"
 #include "meshGFace.h"
 #include "meshGEdge.h"
 #include "MQuadrangle.h"
@@ -45,6 +46,9 @@ void erase(std::vector<MLine*>& lines, MLine* l) {
   std::vector<MLine*>::iterator it = std::remove(lines.begin(), lines.end(), l);
   lines.erase(it, lines.end());
 }
+
+
+
 double computeLength(std::vector<MLine*> lines){
 
   double length= 0.0;
@@ -1175,6 +1179,7 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    bool onTubularSurface = true;
    double ds = 0.0;
    bool isCompound = (ge->dim() == 2 && ge->geomType() == GEntity::CompoundSurface) ? true: false;
+   bool onInOutlets = (ge->geomType() == GEntity::Plane) ? true: false;
    std::list<GFace*> cFaces;
    if (isCompound) cFaces = ((GFaceCompound*)ge)->getCompounds();
    if ( ge->dim() == 3 || (ge->dim() == 2 && ge->geomType() == GEntity::Plane) ||
@@ -1197,61 +1202,148 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    SVector3  p0(nodes[index2[0]][0], nodes[index2[0]][1], nodes[index2[0]][2]);
    SVector3  p1(nodes[index2[1]][0], nodes[index2[1]][1], nodes[index2[1]][2]);
    
+   delete[]index2;
+   delete[]dist2;
+
    //dir_a = direction along the centerline
    //dir_n = normal direction of the disk
    //dir_t = tangential direction of the disk
-   SVector3 dir_a = p1-p0;
-   SVector3 dir_n(xyz[0]-p0.x(), xyz[1]-p0.y(), xyz[2]-p0.z()); 
-   SVector3 dir_t;
+   SVector3 dir_a = p1-p0; dir_a.normalize();
+   SVector3 dir_n(xyz[0]-p0.x(), xyz[1]-p0.y(), xyz[2]-p0.z()); dir_n.normalize();
+   SVector3 dir_t; 
    buildOrthoBasis2(dir_a, dir_n, dir_t);
 
-   //find discrete curvature 
+   //find discrete curvature at closest vertex
    Curvature& curvature = Curvature::getInstance();
    if( !Curvature::valueAlreadyComputed() ) {
      Msg::Info("Need to compute discrete curvature");
      Curvature::typeOfCurvature type = Curvature::RUSIN;
      curvature.computeCurvature(current, type);
    }
-   double c0;
-   curvature.vertexNodalValues(vertices[index[0]], c0,1);
-   //double crv = 1./radMax;
-   double crv = c0;
-   
-   double lc = 2*M_PI*radMax/nbPoints;
-   double lc_a = 3.5*lc;
-   double lc_n, lc_t;
+   double curv, cMin, cMax;
+   SVector3 dMin, dMax;
+   curvature.vertexNodalValuesAndDirections(vertices[index[0]],&dMax, &dMin, &cMax, &cMin, 1);
+   curvature.vertexNodalValues(vertices[index[0]], curv, 0);
+   double  c0  =std::abs(curv);
+   double sign = (curv > 0.0) ? 1.0: -1.0;
 
-   if ( onTubularSurface){
-     double e = radMax/5.;
-     double hn = e/50.;
-     lc_n = hn; 
-     double oneOverD2 = .5/(lc*lc) * (1. + sqrt (1. + ( 4.*crv*crv*lc*lc*lc*lc/ (lc_n*lc_n*CTX::instance()->mesh.smoothRatio*CTX::instance()->mesh.smoothRatio))));
-     lc_n = lc_t = sqrt(1./oneOverD2);
+   double beta = CTX::instance()->mesh.smoothRatio;
+   double ratio = 1.3;
+
+   double thickness = radMax/4.;
+   double rho = 1/c0;
+   double hwall_n = thickness/20.;
+   double hwall_t = 2*M_PI*rho/nbPoints; 
+   double hfar =  radMax/4.;
+
+   double lc_a = 3.5*hwall_t;
+
+   double ll1   = ds*(ratio-1) + hwall_n;
+   double lc_n  = std::min(ll1,hfar);
+   double ll2 =  hwall_t *(rho+sign*ds)/rho ; //sign * ds*(ratio-1) + hwall_t; 
+   if (ds > thickness) ll2  = hfar; 
+   double lc_t  = std::min(lc_n*CTX::instance()->mesh.anisoMax, std::min(ll2,hfar));
+   
+   lc_n = std::max(lc_n, CTX::instance()->mesh.lcMin);
+   lc_n = std::min(lc_n, CTX::instance()->mesh.lcMax);
+   lc_t = std::max(lc_t, CTX::instance()->mesh.lcMin);
+   lc_t = std::min(lc_t, CTX::instance()->mesh.lcMax);
+ 
+  //  if ( onInOutlets){
+  //   if (ds < thickness){
+  //     double oneOverD2 = 1./(2.*rho*rho*(beta*beta-1))*(sqrt(1+ (4.*rho*rho*(beta*beta-1))/(lc_n*lc_n))-1.);
+  //     curvMetric = buildMetricTangentToCurve(dir_n, lc_n, sqrt(1./oneOverD2));
+  //   }
+  //   else {
+  //    curvMetric = buildMetricTangentToCurve(dir_n,lc_n,lc_t);
+  //   }
+  // }
+
+   //curvature metric
+   SMetric3 curvMetric;
+   if (ds < thickness)
+     curvMetric = metricBasedOnSurfaceCurvature(dMin, dMax, cMin, cMax, radMax);
+     //curvMetric = metricBasedOnSurfaceCurvatureBis(dMin, dMax, dir_n, cMin, cMax, lc_n, lc_t, lc_a, 
+     //						   radMax, ds, thickness, beta);
+   else
+     curvMetric = SMetric3(1.e-12); //1./(hfar*hfar));
+
+
+   if (onTubularSurface){
+     //double oneOverD2 = .5/(lc_t*lc_t) * (1. + sqrt (1. + ( 4.*c0*c0*lc_t*lc_t*lc_t*lc_t/ (lc_n*lc_n*beta*beta))));
+     double oneOverD2 = 1./(2.*rho*rho*(beta*beta-1))*(sqrt(1+ (4.*rho*rho*(beta*beta-1))/(lc_n*lc_n))-1.);
+     double lc_t_new = sqrt(1./oneOverD2); 
+     lc_n = lc_t =  lc_t_new;
    }
    else{
-     /// thickness of the refined layer
-     double e = radMax/5.;
-     // small size
-     double hn = e/50.;
-     double rm = std::max(radMax-ds, radMax-e);
-
-     lc_t = lc;
-     lc_n = std::min(lc,ds*(1.3-1) + hn); 
-
-     double oneOverD2 = .5/(lc*lc) * (1. + sqrt (1. + ( 4.*crv*crv*lc*lc*lc*lc/ (lc_n*lc_n*CTX::instance()->mesh.smoothRatio*CTX::instance()->mesh.smoothRatio))));
-     lc_t = sqrt(1./oneOverD2);
-
+     //double oneOverD2 = .5/(lc_t*lc_t) * (1. + sqrt (1. + ( 4.*c0*c0*lc_t*lc_t*lc_t*lc_t/ (lc_n*lc_n*beta*beta))));
+     double oneOverD2 = 1./(2.*rho*rho*(beta*beta-1))*(sqrt(1+ (4.*rho*rho*(beta*beta-1))/(lc_n*lc_n))-1.);
+     double lc_t_new =   (ds < thickness) ? sqrt(1./oneOverD2) : lc_t; 
+     lc_t =  lc_t_new;
    }
+
+   // double lc_a_curv = sqrt(dot(dir_a,curvMetric,dir_a));
+   // lc_a = std::min(lc_a, lc_a_curv);
+
    double lam_a = 1./(lc_a*lc_a);
    double lam_n = 1./(lc_n*lc_n);
    double lam_t = 1./(lc_t*lc_t);
-   
-   metr = SMetric3(lam_a,lam_n,lam_t, dir_a, dir_n, dir_t);
-
-   delete[]index2;
-   delete[]dist2;
+ 
+    //intersect metric
+    metr = SMetric3(lam_a,lam_n,lam_t, dir_a, dir_n, dir_t);
+    metr = intersection_conserveM1(metr,curvMetric);
 
    return;
+}
+
+SMetric3 Centerline::metricBasedOnSurfaceCurvature(SVector3 dirMin, SVector3 dirMax, double cmin, double cmax, double radMax){
+
+  double lcMin =  ((2 * M_PI *radMax) /( 20*nbPoints ));
+  double lcMax =  ((2 * M_PI *radMax) /( 0.25*nbPoints ));
+  if (cmin == 0) cmin =1.e-12;
+  if (cmax == 0) cmax =1.e-12;
+  double lambda2 =  ((2 * M_PI) /( fabs(cmax) *  nbPoints ) );
+  double lambda1 =  ((2 * M_PI) /( fabs(cmin) *  nbPoints ) );
+  SVector3 Z = crossprod(dirMax,dirMin);
+  dirMin.normalize();
+  dirMax.normalize();
+  Z.normalize();
+  lambda1 = std::max(lambda1, lcMin);
+  lambda2 = std::max(lambda2, lcMin);
+  lambda1 = std::min(lambda1, lcMax);
+  lambda2 = std::min(lambda2, lcMax);
+
+  SMetric3 curvMetric (1./(lambda1*lambda1),1./(lambda2*lambda2), 1.e-5, dirMin, dirMax, Z );
+
+  return curvMetric;
+}
+
+SMetric3 Centerline::metricBasedOnSurfaceCurvatureBis(SVector3 dMin, SVector3 dMax, SVector3 dir_n, 
+						      double cMin, double cMax, 
+						      double lc_n, double lc_t, double lc_a,
+						      double radMax, 
+						      double ds, double thickness, double beta){
+  SMetric3 curvMetric;
+  // if (ds < thickness){
+     if (cMin == 0) cMin =1.e-12;
+     if (cMax == 0) cMax =1.e-12;
+     double rhoMin = 1./cMin;
+     double rhoMax = 1./cMax;
+     //double hmin = 2*M_PI*rhoMin/nbPoints;  
+     //double hmax = 2*M_PI*rhoMax/nbPoints;  
+     double oneOverD2_min = 1./(2.*rhoMin*rhoMin*(beta*beta-1))*(sqrt(1+ (4.*rhoMin*rhoMin*(beta*beta-1))/(lc_n*lc_n))-1.);
+     double oneOverD2_max = 1./(2.*rhoMax*rhoMax*(beta*beta-1))*(sqrt(1+ (4.*rhoMax*rhoMax*(beta*beta-1))/(lc_n*lc_n))-1.);
+     //double oneOverD2_min = .5/(lc_t*lc_t) * (1. + sqrt (1. + ( 4.*cMin*cMin*lc_t*lc_t*lc_t*lc_t/ (lc_n*lc_n*beta*beta))));
+     //double oneOverD2_max = .5/(lc_t*lc_t) * (1. + sqrt (1. + ( 4.*cMax*cMax*lc_t*lc_t*lc_t*lc_t/ (lc_n*lc_n*beta*beta))));
+     double hmin = sqrt(1./oneOverD2_min);
+     double hmax = sqrt(1./oneOverD2_max);
+     curvMetric  = buildMetricTangentToSurface(dMin,dMax,hmin,hmax,lc_n);
+   //}
+   // else {
+   //   curvMetric  = buildMetricTangentToCurve(dir_n,lc_n,lc_t);
+   // }
+
+  return curvMetric;
 }
 
 void Centerline::printSplit() const{

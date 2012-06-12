@@ -194,7 +194,7 @@ void GRbf::buildXYZkdtree()
 
 void GRbf::buildOctree(double radius)
 {
-  printf("building octree radius = %g \n", radius);
+  //printf("building octree radius = %g \n", radius);
   SBoundingBox3d bb;
   for (int i= 0; i< nbNodes; i++)
     bb += SPoint3(centers(i,0),centers(i,1), centers(i,2));
@@ -674,7 +674,7 @@ void GRbf::RbfLapSurface_global_CPM_high_2(const fullMatrix<double> &cntrs,
 					   const fullMatrix<double> &normals,
 					   fullMatrix<double> &Oper)
 {
-  Msg::Info("*** RBF ... building Laplacian operator");
+  Msg::Debug("*** RBF ... building Laplacian operator");
   int numNodes = cntrs.size1();
   int nnTot = 3*numNodes;
   Oper.resize(nnTot,nnTot);
@@ -722,7 +722,7 @@ void GRbf::RbfLapSurface_global_CPM_high_2(const fullMatrix<double> &cntrs,
   A.invertInPlace();
   Oper.gemm(AOper, A, 1.0, 0.0);
 
-  Msg::Info("*** RBF builded Laplacian operator");
+  Msg::Debug("*** RBF builded Laplacian operator");
 }
 
 //NEW METHOD #2 CPM GLOBAL HIGH
@@ -732,7 +732,7 @@ void GRbf::RbfLapSurface_global_CPM_high(const fullMatrix<double> &cntrs,
 					const fullMatrix<double> &normals,
 					fullMatrix<double> &Oper)
 {
-  Msg::Info("*** RBF ... building Laplacian operator");
+  Msg::Debug("*** RBF ... building Laplacian operator");
   int numNodes = cntrs.size1();
   int nnTot = 3*numNodes;
   Oper.resize(numNodes,numNodes);
@@ -784,7 +784,7 @@ void GRbf::RbfLapSurface_global_CPM_high(const fullMatrix<double> &cntrs,
     }
   }
 
-  Msg::Info("*** RBF builded Laplacian operator");
+  Msg::Debug("*** RBF builded Laplacian operator");
 }
 
 void GRbf::RbfLapSurface_global_CPM_low(const fullMatrix<double> &cntrs,

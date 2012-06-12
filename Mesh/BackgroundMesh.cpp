@@ -63,6 +63,11 @@ SMetric3 buildMetricTangentToSurface (SVector3 &t1, SVector3 &t2, double l_t1, d
   t2.normalize();
   SVector3 n = crossprod (t1,t2);
   n.normalize();
+
+  l_t1 = std::max(l_t1, CTX::instance()->mesh.lcMin);
+  l_t2 = std::max(l_t2, CTX::instance()->mesh.lcMin);
+  l_t1 = std::min(l_t1, CTX::instance()->mesh.lcMax);
+  l_t2 = std::min(l_t2, CTX::instance()->mesh.lcMax);
   SMetric3 Metric (1./(l_t1*l_t1),1./(l_t2*l_t2),1./(l_n*l_n),t1,t2,n);
   return Metric;
 }

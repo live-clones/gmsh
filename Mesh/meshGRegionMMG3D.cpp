@@ -278,13 +278,13 @@ void refineMeshMMG(GRegion *gr)
     Msg::Debug("-------- GMSH LAUNCHES MMG3D ---------------");
     mmg3d::MMG_mmg3dlib(opt,mmg,sol); 
     Msg::Debug("-------- MG3D TERMINATED -------------------");
-    Msg::Info("MMG3D succeeded %d vertices %d tetrahedra",
-	      mmg->np, mmg->ne);
+    Msg::Info("MMG3D succeeded (ITER=%d) %d vertices %d tetrahedra",
+	      ITER, mmg->np, mmg->ne);
     // Here we should interact with BGM
     updateSizes(gr,mmg, sol,mmg2gmsh);
 
     int nTnow  = mmg->ne; 
-    if (fabs((double)(nTnow - nT)) < 0.03 * nT) break;
+    if (fabs((double)(nTnow - nT)) < 0.05 * nT) break;
   }  
 
   //char test[] = "test.mesh";  

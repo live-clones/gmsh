@@ -123,7 +123,7 @@ int MMG_outqua(pMesh mesh,pSol sol) {
   }
 
   /* print histo */
-  if(mesh->info.imprim < 0) {
+  //EMI if(mesh->info.imprim < 0) { 
   fprintf(stdout,"\n  -- MESH QUALITY   %d \n",rapnum);
   if ( (rapavg > 0) && (rapavg / rapnum < 100.0) )
     fprintf(stdout,"     AVERAGE QUALITY        %12.4f\n",rapavg / rapnum);
@@ -136,7 +136,7 @@ int MMG_outqua(pMesh mesh,pSol sol) {
   fprintf(stdout,"     WORST ELEMENT   %d (%d)   %d %d %d %d\n",
 	  iel,ielreal,pt->v[0],pt->v[1],pt->v[2],pt->v[3]);
 
-  if ( abs(mesh->info.imprim) < 5 )  return(0);
+  //EMI if ( abs(mesh->info.imprim) < 5 )  return(0);
 
   fprintf(stdout,"\n     HISTOGRAMM\n");
   j = 0;
@@ -154,7 +154,7 @@ int MMG_outqua(pMesh mesh,pSol sol) {
   }
 
   /* quality per interval */
-  if (j != 0) {
+  if (j != 0) { 
     fprintf(stdout,"\n");
     imax = (int)(M_MIN(3,log10(rapmax)));
 
@@ -166,8 +166,10 @@ int MMG_outqua(pMesh mesh,pSol sol) {
       fprintf(stdout,"    10**%2d < Q < 10**%2d  %7d   %6.2f %%\n",
 	      i,i+1,his01[i],100.*(his01[i]/(float)his01[0]));
     }
-  }
-  }
+    }
+
+  //}
+
   return(iout);
 }
 

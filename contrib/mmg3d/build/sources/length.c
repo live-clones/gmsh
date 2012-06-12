@@ -203,7 +203,7 @@ int MMG_prilen(pMesh mesh,pSol sol) {
       /*    /if ( dep < 0 )  break;*/
   }
 
-  if(mesh->info.imprim < 0) {
+  //if(mesh->info.imprim < 0) { //EMI
 
   fprintf(stdout,"\n  -- RESULTING EDGE LENGTHS  %d\n",navg);
   fprintf(stdout,"     AVERAGE LENGTH         %12.4f\n",lavg / (double)navg);
@@ -231,7 +231,7 @@ int MMG_prilen(pMesh mesh,pSol sol) {
 	        hl[9],100.*(hl[9]/(float)navg));
     }
   
-  }
+    //}
 
   return(1);
 }
