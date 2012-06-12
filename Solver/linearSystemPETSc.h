@@ -91,6 +91,7 @@ class linearSystemPETScBlockDouble : public linearSystem<fullMatrix<double> > {
   bool _sequential;
   public:
   void _kspCreate();
+  void print();
   virtual void addToMatrix(int row, int col, const fullMatrix<double> &val);
   virtual void addToRightHandSide(int row, const fullMatrix<double> &val);
   virtual void addToSolution(int row,  const fullMatrix<double> &val);

@@ -177,6 +177,24 @@ void linearSystemPETScBlockDouble::clear()
   _isAllocated = false;
 }
 
+void linearSystemPETScBlockDouble::print()
+{
+  _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
+  _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
+  _try(VecAssemblyBegin(_b));
+  _try(VecAssemblyEnd(_b));
+  if(Msg::GetCommRank()==0)
+    printf("a :\n");
+  MatView(_a, PETSC_VIEWER_STDOUT_WORLD);
+  if(Msg::GetCommRank()==0)
+    printf("b :\n");
+  VecView(_b, PETSC_VIEWER_STDOUT_WORLD);
+  if(Msg::GetCommRank()==0)
+    printf("x :\n");
+  VecView(_x, PETSC_VIEWER_STDOUT_WORLD);
+}
+
+
 int linearSystemPETScBlockDouble::systemSolve()
 {
   if (!_kspAllocated)
