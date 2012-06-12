@@ -329,12 +329,12 @@ static std::set<MVertex *> getBndVertices(std::set<MElement*> &elements, std::ma
 {
   std::set<MVertex*> bnd;
   for (std::set<MElement*>::iterator itE = elements.begin(); itE != elements.end(); ++itE) {
-    for (int i = 0; i < (*itE)->getNumVertices(); ++i) {
+    for (int i = 0; i < (*itE)->getNumPrimaryVertices(); ++i) {
       const std::vector<MElement*> &neighbours = vertex2elements[(*itE)->getVertex(i)];
       for (size_t k = 0; k < neighbours.size(); ++k) {
         if (elements.find(neighbours[k]) == elements.end()) {
           for (int j = 0; j < neighbours[k]->getNumVertices(); ++j) {
-            bnd.insert(neighbours[k]->getVertex(i));
+            bnd.insert(neighbours[k]->getVertex(j));
           }
         }
       }
@@ -351,7 +351,7 @@ static std::set<MElement*> getSurroundingBlob(MElement *el, int depth, std::map<
   lastLayer.insert(el);
   for (int d = 0; d < depth; ++d) {
     for (std::set<MElement *>::iterator it = lastLayer.begin(); it != lastLayer.end(); ++it) {
-      for (int i = 0; i < (*it)->getNumVertices(); ++i){
+      for (int i = 0; i < (*it)->getNumPrimaryVertices(); ++i){
         const std::vector<MElement*> &neighbours = vertex2elements[(*it)->getVertex(i)];
         for (size_t k = 0; k < neighbours.size(); ++k) {
           if (blob.find(neighbours[k]) != blob.end())
