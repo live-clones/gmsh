@@ -280,7 +280,7 @@ int linearSystemPETSc<scalar>::systemSolve()
     _try(KSPSetOperators(_ksp, _a, _a, SAME_NONZERO_PATTERN));
   else
     _try(KSPSetOperators(_ksp, _a, _a, DIFFERENT_NONZERO_PATTERN));
-  if (_matrixModified && _parameters["matrix_reuse"]!="same_matrix"){
+  if (_matrixModified && linearSystem<scalar>::_parameters["matrix_reuse"]!="same_matrix"){
     _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
     _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
   }
