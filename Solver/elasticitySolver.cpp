@@ -97,9 +97,9 @@ void elasticitySolver::exportKb()
 
 void elasticitySolver::solve()
 {
-  
+
   //linearSystemFull<double> *lsys = new linearSystemFull<double>;
-  
+
 #if defined(HAVE_TAUCS)
   linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
 #elif defined(HAVE_PETSC)
@@ -423,6 +423,9 @@ void elasticitySolver::assemble(linearSystem<double> *lsys)
 
 }
 
+void elasticitySolver::getSolutionOnElement (MElement *el, fullMatrix<double> &sol) {
+
+}
 
 #if defined(HAVE_POST)
 static void deformation(dofManager<double> *a, MElement *e,
@@ -453,7 +456,7 @@ static void deformation(dofManager<double> *a, MElement *e,
 static double vonMises(dofManager<double> *a, MElement *e,
                        double u, double v, double w,
                        double E, double nu, int _tag){
-  
+
   double valx[256];
   double valy[256];
   double valz[256];
@@ -486,10 +489,6 @@ static double vonMises(dofManager<double> *a, MElement *e,
   double s[9] = {sxx, sxy, sxz, sxy, syy, syz,sxz, syz, szz};
 
   return ComputeVonMises(s);
-}
-
-void elasticitySolver::getSolutionOnElement (MElement *el, fullMatrix<double> &sol) {
-
 }
 
 PView* elasticitySolver::buildDisplacementView (const std::string postFileName)
@@ -553,7 +552,7 @@ PView* elasticitySolver::buildStressesView (const std::string postFileName)
       MElement *e=*it;
       int nbVertex = e->getNumVertices();
       std::vector<SVector3> val(nbVertex);
-   
+
       double valx[256];
       double valy[256];
       double valz[256];
@@ -565,7 +564,7 @@ PView* elasticitySolver::buildStressesView (const std::string postFileName)
 	valy[k] =val[k](1);
 	valz[k] =val[k](2);
       }
-    
+
       double gradux[3];
       double graduy[3];
       double graduz[3];
@@ -578,7 +577,7 @@ PView* elasticitySolver::buildStressesView (const std::string postFileName)
 		       0.5 * (gradux[1] + graduy[0]),
 		       0.5 * (gradux[2] + graduz[0]),
 		       0.5 * (graduy[2] + graduz[1])};
-      
+
 
       double A = E / (1. + nu);
       double B = A * (nu / (1. - 2 * nu));
@@ -592,7 +591,7 @@ PView* elasticitySolver::buildStressesView (const std::string postFileName)
 
       std::vector<double> vec(9);
       vec[0]=sxx; vec[1]=sxy; vec[2]=sxz; vec[3]=sxy; vec[4]=syy; vec[5]=syz; vec[6]=sxz; vec[7]=syz; vec[8]=szz;
-     
+
       data[e->getNum()]=vec;
     }
   }
