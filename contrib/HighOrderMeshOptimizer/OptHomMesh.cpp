@@ -269,6 +269,85 @@ void Mesh::updateGEntityPositions()
 }
 
 
+void Mesh::metricMinAndGradients(int iEl, std::vector<double> &lambda , std::vector<double> &gradLambda)
+{
+  fullMatrix<double> &gsf = _gradShapeFunctions[_el[iEl]->getTypeForMSH()];
+  //const fullMatrix<double> &l2b = _lag2Bez[_el[iEl]->getTypeForMSH()];
+  const int nbBez = _nBezEl[iEl];
+  const int nbNod = _nNodEl[iEl];
+  fullVector<double> lambdaJ(nbBez), lambdaB(nbBez);
+  fullMatrix<double> gradLambdaJ(nbBez, 2 * nbNod);
+  fullMatrix<double> gradLambdaB(nbBez, 2 * nbNod);
+
+  // jacobian of the straight elements (only triangles for now)
+  SPoint3 *IXYZ[3] = {&_ixyz[_el2V[iEl][0]], &_ixyz[_el2V[iEl][1]], &_ixyz[_el2V[iEl][2]]};
+  double jaci[2][2] = {
+    {IXYZ[1]->x() - IXYZ[0]->x(), IXYZ[2]->x() - IXYZ[0]->x()},
+    {IXYZ[1]->y() - IXYZ[0]->y(), IXYZ[2]->y() - IXYZ[0]->y()}
+  };
+  double invJaci[2][2];
+  inv2x2(jaci, invJaci);
+  
+  for (int l = 0; l < nbBez; l++) {
+    fullMatrix<double> dPsi(gsf, l * 3, 3);
+    double jac[2][2] = {{0., 0.}, {0., 0.}};
+    for (int i = 0; i < nbNod; i++) {
+      int &iVi = _el2V[iEl][i];
+      const double dpsidx = dPsi(i, 0) * invJaci[0][0] + dPsi(i, 1) * invJaci[1][0];
+      const double dpsidy = dPsi(i, 0) * invJaci[0][1] + dPsi(i, 1) * invJaci[1][1];
+      jac[0][0] += _xyz[iVi].x() * dpsidx;
+      jac[0][1] += _xyz[iVi].x() * dpsidy;
+      jac[1][0] += _xyz[iVi].y() * dpsidx;
+      jac[1][1] += _xyz[iVi].y() * dpsidy;
+    }
+    const double dxdx = jac[0][0] * jac[0][0] + jac[0][1] * jac[0][1];
+    const double dydy = jac[1][0] * jac[1][0] + jac[1][1] * jac[1][1];
+    const double dxdy = jac[0][0] * jac[1][0] + jac[0][1] * jac[1][1];
+    const double sqr = sqrt((dxdx - dydy) * (dxdx - dydy) + 4 * dxdy * dxdy);
+    const double osqr = sqr > 1e-8 ? 1/sqr : 0;
+    lambdaJ(l) = 0.5 * (dxdx + dydy - sqr);
+    const double axx = (1 - (dxdx - dydy) * osqr) * jac[0][0] - 2 * dxdy * osqr * jac[1][0];
+    const double axy = (1 - (dxdx - dydy) * osqr) * jac[0][1] - 2 * dxdy * osqr * jac[1][1];
+    const double ayx = -2 * dxdy * osqr * jac[0][0] + (1 - (dydy - dxdx) * osqr) * jac[1][0];
+    const double ayy = -2 * dxdy * osqr * jac[0][1] + (1 - (dydy - dxdx) * osqr) * jac[1][1];
+    const double axixi   = axx * invJaci[0][0] + axy * invJaci[0][1];
+    const double aetaeta = ayx * invJaci[1][0] + ayy * invJaci[1][1];
+    const double aetaxi  = ayx * invJaci[0][0] + ayy * invJaci[0][1];
+    const double axieta  = axx * invJaci[1][0] + axy * invJaci[1][1];
+    for (int i = 0; i < nbNod; i++) {
+      gradLambdaJ(l, i + 0 * nbNod) = axixi * dPsi(i, 0) + axieta * dPsi(i, 1);
+      gradLambdaJ(l, i + 1 * nbNod) = aetaxi * dPsi(i, 0) + aetaeta * dPsi(i, 1);
+    }
+  }
+  
+  //l2b.mult(lambdaJ, lambdaB);
+  //l2b.mult(gradLambdaJ, gradLambdaB);
+  lambdaB = lambdaJ;
+  gradLambdaB = gradLambdaJ;
+
+  int iPC = 0;
+  std::vector<SPoint3> gXyzV(nbBez);
+  std::vector<SPoint3> gUvwV(nbBez);
+  for (int l = 0; l < nbBez; l++) {
+    lambda[l] = lambdaB(l);
+  }
+  for (int i = 0; i < nbNod; i++) {
+    int &iFVi = _el2FV[iEl][i];
+    if (iFVi >= 0) {
+      for (int l = 0; l < nbBez; l++) {
+        gXyzV [l] = SPoint3(gradLambdaB(l,i+0*nbNod),gradLambdaB(l,i+1*nbNod),/*BDB(l,i+2*nbNod)*/ 0.);
+      }
+      _pc->gXyz2gUvw(_freeVert[iFVi],_uvw[iFVi],gXyzV,gUvwV);
+      for (int l = 0; l < nbBez; l++) {
+        gradLambda[indGSJ(iEl,l,iPC)] = gUvwV[l][0];
+        if (_nPCFV[iFVi] >= 2) gradLambda[indGSJ(iEl,l,iPC+1)] = gUvwV[l][1];
+        if (_nPCFV[iFVi] == 3) gradLambda[indGSJ(iEl,l,iPC+2)] = gUvwV[l][2];
+      }
+      iPC += _nPCFV[iFVi];
+    }
+  }
+}
+
 /*
   A faster version that computes jacobians and their gradients
 

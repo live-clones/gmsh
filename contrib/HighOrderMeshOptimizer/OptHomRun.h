@@ -5,6 +5,7 @@ class GModel;
 
 struct OptHomParameters {
   // INPUT ------> 
+  double BARRIER_MIN_METRIC ; // minimum scaled jcaobian
   double BARRIER_MIN ; // minimum scaled jcaobian
   double BARRIER_MAX ; // maximum scaled jcaobian
   double weightFixed ; // weight of the energy for fixed nodes
@@ -28,7 +29,7 @@ struct OptHomParameters {
   
   OptHomParameters () 
   // default values    
-  : BARRIER_MIN (0.1), BARRIER_MAX (2.0) , weightFixed (1.e6),  weightFree (1.e2),
+  : BARRIER_MIN (0.1), BARRIER_MAX (2.0) , BARRIER_MIN_METRIC (-1.), weightFixed (1.e6),  weightFree (1.e2),
     nbLayers (6) , dim(3) , itMax(10000), onlyVisible(true), DistanceFactor(12), method(1), filter(1)
   {
   }

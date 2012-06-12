@@ -457,7 +457,11 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
         OptHomMessage("Optimizing a blob %i/%i composed of %4d elements", i+1, toOptimize.size(), toOptimize[i].first.size());
         fflush(stdout);
         OptHOM temp(&entity, toOptimize[i].first, toOptimize[i].second, method);
-        int success = temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax);
+        int success = temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, false, samples, p.itMax);
+        if (success >= 0 && p.BARRIER_MIN_METRIC > 0) {
+          OptHomMessage("jacobian optimization succeed, starting svd optimization");
+          success = temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN_METRIC, p.BARRIER_MAX, true, samples, p.itMax);
+        }
         temp.mesh.updateGEntityPositions();
         if (success <= 0) {
           std::ostringstream ossI2;
@@ -508,7 +512,7 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
           temp.mesh.writeMSH(ossI.str().c_str());
           if (minJac > p.BARRIER_MIN && maxJac < p.BARRIER_MAX) break;
 
-          p.SUCCESS = std::min(p.SUCCESS,temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax));
+          p.SUCCESS = std::min(p.SUCCESS,temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, false, samples, p.itMax));
 
           //  temp.recalcJacDist();
           //  temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
@@ -556,7 +560,7 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
           ossI << "initial_" << (*itr)->tag() << "ITER_" << ITER << ".msh";
           temp.mesh.writeMSH(ossI.str().c_str());
           if (minJac > p.BARRIER_MIN  && maxJac < p.BARRIER_MAX) break;
-          p.SUCCESS = temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, samples, p.itMax);
+          p.SUCCESS = temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, false, samples, p.itMax);
           temp.recalcJacDist();
           temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
           temp.mesh.updateGEntityPositions();

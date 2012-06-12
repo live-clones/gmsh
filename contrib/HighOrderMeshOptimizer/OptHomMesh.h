@@ -30,6 +30,7 @@ public:
   inline const int &indPCEl(int iEl, int iPC) { return _indPCEl[iEl][iPC]; }
   inline const int &nBezEl(int iEl) { return _nBezEl[iEl]; }
 
+  void metricMinAndGradients(int iEl, std::vector<double> &sJ, std::vector<double> &gSJ);
   void scaledJacAndGradients(int iEl, std::vector<double> &sJ, std::vector<double> &gSJ);   
   inline int indGSJ(int iEl, int l, int iPC) { return iPC*_nBezEl[iEl]+l; }
 
