@@ -1077,7 +1077,7 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int typ
         for (int k = 0; k < 3; k++) {
           vval[k][0] = xyz[i][k];
           for (int j = 0; j < 3; j++) {
-            vval[k][j+1] = V(j,k)*S(j);
+            vval[k][j+1] = V(k,j)*S(j);
           }
         }
         double lmax = std::max(S(0), std::max(S(1), S(2)));
@@ -1098,9 +1098,9 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int typ
         }
         tensor.eig(S, imS, V, rightV, false);
         for (int j = 0; j < 3; j++) {
-          vval[0][j+1] += V(j,0)*S(j)/numNodes;
-          vval[1][j+1] += V(j,1)*S(j)/numNodes;
-          vval[2][j+1] += V(j,2)*S(j)/numNodes;
+          vval[0][j+1] += V(0,j)*S(j)/numNodes;
+          vval[1][j+1] += V(1,j)*S(j)/numNodes;
+          vval[2][j+1] += V(2,j)*S(j)/numNodes;
         }
         vval[0][0] += xyz[i][0]/numNodes;
         vval[1][0] += xyz[i][1]/numNodes;
