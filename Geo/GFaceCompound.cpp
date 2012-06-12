@@ -510,6 +510,7 @@ void GFaceCompound::printFillTris() const{
 
 void GFaceCompound::fillNeumannBCS_Plane() const
 {
+#if defined(HAVE_MESH)
 
   Msg::Debug("Meshing %d interior holes with planes ", _interior_loops.size()-1);
 
@@ -538,7 +539,7 @@ void GFaceCompound::fillNeumannBCS_Plane() const
       GFace *newFace =  GModel::current()->addPlanarFace(myEdgeLoops);
       fillFaces.push_back(newFace);
       int meshingAlgo = CTX::instance()->mesh.algo2d;
-      int recombine = CTX::instance()->mesh.recombineAll; 
+      int recombine = CTX::instance()->mesh.recombineAll;
       opt_mesh_algo2d(0, GMSH_SET, 1.0); //mesh adapt
       opt_mesh_recombine_all(0, GMSH_SET, 0.0); //no recombination
       meshGFace mgf;
@@ -556,8 +557,9 @@ void GFaceCompound::fillNeumannBCS_Plane() const
   }
 
   printFillTris();
-
+#endif
 }
+
 void GFaceCompound::fillNeumannBCS() const
 {
   fillTris.clear();
@@ -1383,7 +1385,7 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
       double tGlob, tLoc;
       double tL, tR;
       int iEdge;
-      
+
       // getParameter Point
       v->getParameter(0,tGlob);
 
@@ -1395,13 +1397,13 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
 	gec->getLocalParameter(tGlob,iEdge,tLoc);
 	std::vector<GEdge*> gev = gec->getCompounds();
 	GEdge *ge = gev[iEdge];
-	
+
 	// left and right vertex of the Edge
 	MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
 	MVertex *v1 = ge->getEndVertex()->mesh_vertices[0];
 	std::map<MVertex*,SPoint3>::iterator itL = coordinates.find(v0);
 	std::map<MVertex*,SPoint3>::iterator itR = coordinates.find(v1);
-	
+
 	// for the Edge, find the left and right vertices of the initial
 	// 1D mesh and interpolate to find (u,v)
 	MVertex *vL = v0;
@@ -1438,14 +1440,14 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
 	  vR = v1;
 	  tR = tE;
 	}
-	
+
 	// linear interpolation between tL and tR
 	double uloc, vloc;
 	uloc = itL->second.x() + (tLoc-tL)/(tR-tL) * (itR->second.x()-itL->second.x());
 	vloc = itL->second.y() + (tLoc-tL)/(tR-tL) * (itR->second.y()-itL->second.y());
 	return SPoint2(uloc,vloc);
       }
-      
+
     // }
     // else if(v->onWhat()->dim() == 2){
     //   Msg::Debug("Get coordinates of Compound Face cannot find vertex");
@@ -1968,7 +1970,7 @@ SPoint2 GFaceCompound::parFromVertex(MVertex *v) const
     v->getParameter(0, U);
     v->getParameter(1, V);
   }
-  if (v->onWhat()->dim()==1 || 
+  if (v->onWhat()->dim()==1 ||
      (v->onWhat()->dim()==2  && U == -1 && V==-1)){ //if MFaceVertex created on edge in bunin
     SPoint2 sp = getCoordinates(v);
     U = sp.x();
@@ -1994,14 +1996,14 @@ SPoint2 GFaceCompound::parFromPoint(const SPoint3 &p, bool onSurface) const
 GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const {
 
   //printf("in remeshed oct for par =%g %g\n", par1,par2);
-    
-  //if not meshed yet 
+
+  //if not meshed yet
   if (meshStatistics.status != GFace::DONE || triangles.size()+quadrangles.size() == 0) {
     GPoint gp (3,3,0,this);
     gp.setNoSuccess();
     return gp;
   }
- 
+
   //create new octree with new mesh elements
   if(!octNew){
     //FILE * of = fopen("myOCTREE.pos","w");
@@ -2010,7 +2012,7 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const {
     std::vector<MElement *> myElems;
     for (int i = 0; i < triangles.size(); i++) myElems.push_back(triangles[i]);
     for (int i = 0; i < quadrangles.size(); i++) myElems.push_back(quadrangles[i]);
-    
+
     std::set<SPoint2> myBCNodes;
     for (int i = 0; i < myElems.size(); i++){
       MElement *e = myElems[i];
@@ -2031,7 +2033,7 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const {
 	news[j] = newv;
       }
 
-      if(e->getType() == TYPE_TRI) 
+      if(e->getType() == TYPE_TRI)
   	myParamElems.push_back(new MTriangle(news[0],news[1],news[2],e->getNum()));
       else if (e->getType() == TYPE_QUA) {
   	myParamElems.push_back(new MQuadrangle(news[0],news[1],news[2],news[3],e->getNum()));
@@ -2041,9 +2043,9 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const {
 	// 	news[2]->x(), news[2]->y(), news[2]->z(),
 	// 	news[3]->x(), news[3]->y(), news[3]->z(),
 	// 	(double)e->getNum(), (double)e->getNum(), (double)e->getNum(), (double)e->getNum());
-      }   
+      }
     }
-    
+
     octNew = new MElementOctree(myParamElems);
 
     //build kdtree boundary nodes in parametric space
@@ -2062,15 +2064,15 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const {
     uv_kdtree = new ANNkd_tree(nodes, myBCNodes.size(), 3);
 #endif
     //fprintf(of,"};\n");
-    //fclose(of);    
+    //fclose(of);
   }
-  
+
   //now use new octree to find point
   double uvw[3]={par1,par2, 0.0};
   double UV[3];
   double initialTol = MElement::getTolerance();
-  MElement::setTolerance(1.e-2); 
-  MElement *e = octNew->find(par1,par2, 0.0,-1,false);  
+  MElement::setTolerance(1.e-2);
+  MElement *e = octNew->find(par1,par2, 0.0,-1,false);
   MElement::setTolerance(initialTol);
   if (e){
     e->xyz2uvw(uvw,UV);
@@ -2128,7 +2130,7 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const {
 #else
     gp.setNoSuccess();
 #endif
-  
+
     if (gp.succeeded()) return gp;
     else{
       printf("NOT found point with ANN %g %g \n", par1, par2);
@@ -2138,7 +2140,7 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const {
       return gp;
     }
   }
-    
+
 }
 
 GPoint GFaceCompound::point(double par1, double par2) const
@@ -2400,7 +2402,7 @@ void GFaceCompound::buildOct() const
   double ssize[3] = {bbmax.x() - bbmin.x(),
                     bbmax.y() - bbmin.y(),
                     bbmax.z() - bbmin.z()};
- 
+
   _gfct = new GFaceCompoundTriangle[count];
   const int maxElePerBucket = 15;
   oct = Octree_Create(maxElePerBucket, origin, ssize, GFaceCompoundBB,
@@ -2580,7 +2582,7 @@ double GFaceCompound::checkAspectRatio() const
 }
 
 void GFaceCompound::coherencePatches() const
-{ 
+{
   if (_mapping == RBF) return;
   Msg::Info("Re-orient all %d compound patches normals coherently",
             _compound.size());
