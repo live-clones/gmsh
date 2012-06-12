@@ -7,16 +7,14 @@
 %{
   #include "GmshConfig.h"
 
-  #include "DivideAndConquer.h"
   #include "GaussIntegration.h"
   #include "JacobianBasis.h"
   #include "fullMatrix.h"
   #include "polynomialBasis.h"
 %}
 
-%include "DivideAndConquer.h"
 %include "GaussIntegration.h"
-%include "JacobianBasis.h"  
+%include "JacobianBasis.h"
 %include "fullMatrix.h"
 %template(fullMatrixDouble) fullMatrix<double>;
 %template(fullVectorDouble) fullVector<double>;

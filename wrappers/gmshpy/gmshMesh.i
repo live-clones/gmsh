@@ -7,6 +7,7 @@
   #include "GmshConfig.h"
 #if defined(HAVE_MESH)
   #include "Generator.h"
+  #include "DivideAndConquer.h"
   #include "highOrderTools.h"
   #include "meshGFaceLloyd.h"
   #include "meshGFaceOptimize.h"
@@ -36,6 +37,7 @@ namespace std {
 %include "GmshConfig.h"
 #if defined(HAVE_MESH)
 %include "Generator.h"
+%include "DivideAndConquer.h"
 %include "highOrderTools.h"
 %include "meshGFaceLloyd.h"
 %include "meshGFaceOptimize.h"
