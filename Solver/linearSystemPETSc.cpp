@@ -61,6 +61,7 @@ void linearSystemPETScBlockDouble::addToMatrix(int row, int col,
       modval(jj, ii) = buff;
     }
   #endif
+  _matrixModified=true;
 }
 
 void linearSystemPETScBlockDouble::addToRightHandSide(int row,
@@ -199,14 +200,17 @@ int linearSystemPETScBlockDouble::systemSolve()
 {
   if (!_kspAllocated)
     _kspCreate();
-  if (_parameters["matrix_reuse"] == "same_sparsity")
-    KSPSetOperators(_ksp, _a, _a, SAME_NONZERO_PATTERN);
-  else if (_parameters["matrix_reuse"] == "same_matrix")
+  if (!_matrixModified || _parameters["matrix_reuse"] == "same_matrix")
     KSPSetOperators(_ksp, _a, _a, SAME_PRECONDITIONER);
+  else if (_parameters["matrix_reuse"] == "same_sparsity")
+    KSPSetOperators(_ksp, _a, _a, SAME_NONZERO_PATTERN);
   else
     KSPSetOperators(_ksp, _a, _a, DIFFERENT_NONZERO_PATTERN);
-  MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY);
-  MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY);
+  if (_matrixModified && _parameters["matrix_reuse"]!="same_matrix"){
+    MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY);
+    MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY);
+  }
+  _matrixModified=false;
   VecAssemblyBegin(_b);
   VecAssemblyEnd(_b);
   KSPSolve(_ksp, _b, _x);
@@ -289,6 +293,7 @@ linearSystemPETScBlockDouble::linearSystemPETScBlockDouble(bool sequential)
   _entriesPreAllocated = false;
   _isAllocated = false;
   _kspAllocated = false;
+  _matrixModified=true;
   _sequential = sequential;
 }
 
