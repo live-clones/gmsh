@@ -209,164 +209,6 @@ void meshMetric::computeValues(){
   }
 }
 
-//compute derivatives and second order derivatives using linear finite elements
-void meshMetric::computeHessian_FE(){
-
-  //compute FE Gradients
-  std::map<MElement*,SPoint3> gradElems;
-  for ( std::vector<MElement*>::iterator ite = _elements.begin();
-	ite != _elements.end(); ite++){
-    MElement *e  = *ite;
-    int npts;
-    IntPt *GP;
-    e->getIntegrationPoints(0, &npts, &GP);
-    const double u = GP[0].pt[0];
-    const double v = GP[0].pt[1];
-    const double w = GP[0].pt[2];
-    double grade[3];
-    double fj[256];
-    for (int k = 0; k < e->getNumVertices(); k++){
-      MVertex *v = e->getVertex(k);
-      fj[k] = (*_fct)(v->x(),v->y(),v->z());
-    }
-    e->interpolateGrad(fj, u, v, w, grade);
-    SPoint3 gr(grade[0], grade[1],grade[2]);
-    gradElems.insert(std::make_pair(e,gr));
-  }
-
-  //smooth element gradients at vertices
-  for(v2t_cont::const_iterator itv = _adj.begin(); itv!= _adj.end(); ++itv){
-    MVertex *ver = itv->first;
-    std::vector<MElement*> vElems= itv->second;
-    SVector3 gradv;
-    for (unsigned int i=0;i<vElems.size();i++){
-      MElement *e = vElems[i];    
-      gradv += gradElems[e];
-    }
-    gradv *= (1./vElems.size());;
-    double nn = norm(gradv);
-    if (nn == 0.0 || _technique == meshMetric::HESSIAN) nn = 1.0;
-    grads[ver] =gradv*(1./nn); 
-  }
-
-  if (_technique == meshMetric::LEVELSET) return;
-
-  //compute FE Hessians
-  std::map<MElement*,STensor3> hessElems;
-  for ( std::vector<MElement*>::iterator ite = _elements.begin();
-	ite != _elements.end(); ite++){
-    MElement *e  = *ite;
-    int npts;
-    IntPt *GP;
-    e->getIntegrationPoints(0, &npts, &GP);
-    const double u = GP[0].pt[0];
-    const double v = GP[0].pt[1];
-    const double w = GP[0].pt[2];
-    double gradgradx[3];
-    double gradgrady[3];
-    double gradgradz[3];
-    double gradxj[256];
-    double gradyj[256];
-    double gradzj[256];
-    for (int k = 0; k < e->getNumVertices(); k++){
-      MVertex *v = e->getVertex(k);
-      gradxj[k] = grads[v].x();
-      gradyj[k] = grads[v].y();
-      gradzj[k] = grads[v].z();
-    }
-    e->interpolateGrad(gradxj, u, v, w, gradgradx);
-    e->interpolateGrad(gradyj, u, v, w, gradgrady);
-    e->interpolateGrad(gradzj, u, v, w, gradgradz);
-    STensor3 hess;
-    hess(0,0) = gradgradx[0]; hess(0,1)= gradgrady[0]; hess(0,2) =gradgradz[0];
-    hess(1,0) = gradgradx[1]; hess(1,1)= gradgrady[1]; hess(1,2) =gradgradz[1];
-    hess(2,0) = gradgradx[2]; hess(2,1)= gradgradz[2]; hess(2,2) =gradgradz[2];
-    hessElems.insert(std::make_pair(e,hess));
-  }
-
-  //smooth element hessians at vertices
-  for(v2t_cont::const_iterator itv = _adj.begin(); itv!= _adj.end(); ++itv){
-    MVertex *ver = itv->first;
-    std::vector<MElement*> vElems= itv->second;
-    STensor3 hessv(0.0);
-    for (unsigned int i=0;i<vElems.size();i++){
-      MElement *e = vElems[i];    
-      hessv += hessElems[e];
-    }
-    hessv *= (1./vElems.size());
-    dgrads[0][ver] = SVector3(hessv(0,0), hessv(0,1),hessv(0,2));
-    dgrads[1][ver] = SVector3(hessv(1,0), hessv(1,1),hessv(1,2));
-    dgrads[2][ver] = SVector3(hessv(2,0), hessv(2,1),hessv(2,2)); 
-  }
-  
-}
-
-
-//compute derivatives and second order derivatives using least squares
-// u = a + b(x-x_0) + c(y-y_0) + d(z-z_0)
-void meshMetric::computeHessian_LS( ){
-  
-  //double error = 0.0;
-
-  int DIM = _dim + 1;
-  for (int ITER=0;ITER<DIM;ITER++){
-    v2t_cont :: iterator it = _adj.begin();
-     while (it != _adj.end()) {
-      std::vector<MElement*> lt = it->second;
-      MVertex *ver = it->first;
-      while (lt.size() < 13) increaseStencil(ver,_adj,lt);
-      fullMatrix<double> A  (lt.size(),DIM);
-      fullMatrix<double> AT (DIM,lt.size());
-      fullMatrix<double> ATA (DIM,DIM);
-      fullVector<double> b   (lt.size());
-      fullVector<double> ATb (DIM);
-      fullVector<double> result (DIM);
-      fullMatrix<double> f (1,1);
-      for(unsigned int i = 0; i < lt.size(); i++) {
-        MElement *e = lt[i];
-        int npts; IntPt *pts;
-        SPoint3 p;
-        e->getIntegrationPoints(0,&npts,&pts);
-        if (ITER == 0){
-          SPoint3 p;
-          e->pnt(pts[0].pt[0],pts[0].pt[1],pts[0].pt[2],p);
-          b(i) = (*_fct)(p.x(),p.y(),p.z());
-        }
-        else {
-          double value = 0.0;
-          for (int j=0;j<e->getNumVertices();j++){
-            SVector3 gr = grads[e->getVertex(j)];
-            value += gr(ITER-1);
-          }
-          b(i) = value/(double)e->getNumVertices();
-        }
-        e->pnt(pts[0].pt[0],pts[0].pt[1],pts[0].pt[2],p);
-        A(i,0) = 1.0;
-        A(i,1) = p.x() - ver->x();
-        A(i,2) = p.y() - ver->y();
-        if (_dim == 3) A(i,3) = p.z() - ver->z();
-      }
-      AT = A.transpose();
-      AT.mult(A,ATA);
-      AT.mult(b,ATb);
-      ATA.luSolve(ATb,result);
-      if (ITER == 0){
-        double gr1 = result(1);
-        double gr2 = result(2);
-        double gr3 = (_dim==2) ? 0.0:result(3);
-        double norm = sqrt(gr1*gr1+gr2*gr2+gr3*gr3);
-        if (norm == 0.0 || _technique == meshMetric::HESSIAN) norm = 1.0;
-        grads[ver] = SVector3(gr1/norm,gr2/norm,gr3/norm);
-      }
-      else{
-        dgrads[ITER-1][ver] = SVector3(result(1),result(2),(_dim==2)?0.0:result(3));
-      }
-      ++it;
-    }
-    if (_technique == meshMetric::LEVELSET) break;
-  }
-
-}
 
 
 // Determines set of vertices to use for least squares
@@ -407,10 +249,11 @@ std::vector<MVertex*> getLSBlob(unsigned int minNbPt, v2t_cont::iterator it, v2t
 }
 
 
+
 // Compute derivatives and second order derivatives using least squares
 // 2D LS system: a_i0*x^2+a_i1*x*y+a_i2*y^2+a_i3*x+a_i4*y+a_i5=b_i
 // 3D LS system: a_i0*x^2+a_i1*x*y+a_i2*x*z+a_i3*y^2+a_i4*y*z+a_i5*z^2+a_i6*x+a_i7*y+a_i8*z+a_i9=b_i
-void meshMetric::computeHessian_LS2( ){
+void meshMetric::computeHessian(){
 
   unsigned int sysDim = (_dim == 2) ? 6 : 10;
   unsigned int minNbPtBlob = 3*sysDim;
@@ -462,46 +305,355 @@ void meshMetric::computeHessian_LS2( ){
 }
 
 
-//compute derivatives and second order derivatives using least squares
-// u = a + b(x-x_0) + c(y-y_0) + d(z-z_0)
-void meshMetric::computeHessian_LS3( ){
 
-  //double error = 0.0;
-  unsigned int sysDim = (_dim == 2) ? 6 : 10;
-  unsigned int minNbPtBlob = 2*sysDim;
+void meshMetric::computeMetricLevelSet(){
 
-  int DIM = _dim + 1;
-  for (int ITER=0;ITER<DIM;ITER++){
-    v2t_cont :: iterator it = _adj.begin();
-     while (it != _adj.end()) {
-      MVertex *ver = it->first;
-      std::vector<MVertex*> vv = getLSBlob(minNbPtBlob, it, _adj);
-      fullMatrix<double> A(vv.size(),DIM), ATA(DIM,DIM);
-      fullVector<double> b(vv.size()), ATb (DIM), result(DIM);
-      for(unsigned int i = 0; i < vv.size(); i++) {
-        b(i) = (ITER == 0) ? vals[vv[i]] : grads[vv[i]](ITER-1);
-        A(i,0) = 1.0;
-        A(i,1) = vv[i]->x() - ver->x();
-        A(i,2) = vv[i]->y() - ver->y();
-        if (_dim == 3) A(i,3) = vv[i]->z() - ver->z();
-      }
-      ATA.gemmWithAtranspose(A,A,1.,0.);
-      A.multWithATranspose(b,1.,0.,ATb);
-      ATA.luSolve(ATb,result);
-      if (ITER == 0){
-        double gr1 = result(1);
-        double gr2 = result(2);
-        double gr3 = (_dim==2) ? 0.0:result(3);
-        double norm = sqrt(gr1*gr1+gr2*gr2+gr3*gr3);
-        if (norm == 0.0 || _technique == meshMetric::HESSIAN) norm = 1.0;
-        grads[ver] = SVector3(gr1/norm,gr2/norm,gr3/norm);
-      }
-      else{
-        dgrads[ITER-1][ver] = SVector3(result(1),result(2),(_dim==2)?0.0:result(3));
-      }
-      ++it;
+  int metricNumber = setOfMetrics.size();
+
+  for (v2t_cont::iterator it=_adj.begin(); it!=_adj.end(); it++) {
+
+    MVertex *ver = it->first;
+    double signed_dist = vals[ver];
+    double dist = fabs(signed_dist);
+
+    SVector3 gradudx = dgrads[0][ver];
+    SVector3 gradudy = dgrads[1][ver];
+    SVector3 gradudz = dgrads[2][ver];
+    SMetric3 hessian;
+    hessian(0,0) = gradudx(0); hessian(0,1) = gradudx(1); hessian(0,2) = gradudx(2);
+    hessian(1,0) = gradudy(0); hessian(1,1) = gradudy(1); hessian(1,2) = gradudy(2);
+    hessian(2,0) = gradudz(0); hessian(2,1) = gradudz(1); hessian(2,2) = gradudz(2);
+
+    SVector3 gr = grads[ver];
+    SMetric3 H;
+    double norm = gr(0)*gr(0)+gr(1)*gr(1)+gr(2)*gr(2);
+    if (dist < _E && norm != 0.0){
+      double h = hmin*(hmax/hmin-1)*dist/_E + hmin;
+      double C = 1./(h*h) -1./(hmax*hmax);
+      H(0,0) += C*gr(0)*gr(0)/norm ;
+      H(1,1) += C*gr(1)*gr(1)/norm ;
+      H(2,2) += C*gr(2)*gr(2)/norm ;
+      H(1,0) = H(0,1) = C*gr(1)*gr(0)/norm ;
+      H(2,0) = H(0,2) = C*gr(2)*gr(0)/norm ;
+      H(2,1) = H(1,2) = C*gr(2)*gr(1)/norm ;
     }
-    if (_technique == meshMetric::LEVELSET) break;
+
+    fullMatrix<double> V(3,3);
+    fullVector<double> S(3);
+    H.eig(V,S);
+
+    double lambda1, lambda2, lambda3;
+    lambda1 = S(0);
+    lambda2 = S(1);
+    lambda3 = (_dim == 3)? S(2) : 1.;
+
+    SVector3 t1 (V(0,0),V(1,0),V(2,0));
+    SVector3 t2 (V(0,1),V(1,1),V(2,1));
+    SVector3 t3 (V(0,2),V(1,2),V(2,2));
+
+    SMetric3 metric(lambda1,lambda2,lambda3,t1,t2,t3);
+
+    _hessian[ver] = hessian;
+    setOfSizes[metricNumber].insert(std::make_pair(ver, std::min(std::min(1/sqrt(lambda1),1/sqrt(lambda2)),1/sqrt(lambda3))));
+    setOfMetrics[metricNumber].insert(std::make_pair(ver,metric));
+    setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(metric.determinant())));
+
+  }
+
+}
+
+
+
+void meshMetric::computeMetricHessian(){
+
+  int metricNumber = setOfMetrics.size();
+
+  for (v2t_cont::iterator it=_adj.begin(); it!=_adj.end(); it++) {
+
+    MVertex *ver = it->first;
+
+    SMetric3 H;
+    SVector3 gradudx = dgrads[0][ver];
+    SVector3 gradudy = dgrads[1][ver];
+    SVector3 gradudz = dgrads[2][ver];
+    H(0,0) = gradudx(0); H(0,1) = gradudx(1); H(0,2) = gradudx(2);
+    H(1,0) = gradudy(0); H(1,1) = gradudy(1); H(1,2) = gradudy(2);
+    H(2,0) = gradudz(0); H(2,1) = gradudz(1); H(2,2) = gradudz(2);
+
+    fullMatrix<double> V(3,3);
+    fullVector<double> S(3);
+    H.eig(V,S);
+
+    double lambda1 = std::min(std::max(fabs(S(0))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin));
+    double lambda2 = std::min(std::max(fabs(S(1))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin));
+    double lambda3 = (_dim == 3) ? std::min(std::max(fabs(S(2))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin)) : 1.;
+
+    SVector3 t1 (V(0,0),V(1,0),V(2,0));
+    SVector3 t2 (V(0,1),V(1,1),V(2,1));
+    SVector3 t3 (V(0,2),V(1,2),V(2,2));
+
+    SMetric3 metric(lambda1,lambda2,lambda3,t1,t2,t3);
+
+    _hessian[ver] = H;
+    setOfSizes[metricNumber].insert(std::make_pair(ver, std::min(std::min(1/sqrt(lambda1),1/sqrt(lambda2)),1/sqrt(lambda3))));
+    setOfMetrics[metricNumber].insert(std::make_pair(ver,metric));
+    setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(metric.determinant())));
+
+  }
+
+}
+
+
+
+void meshMetric::computeMetricFrey(){
+
+  int metricNumber = setOfMetrics.size();
+
+  for (v2t_cont::iterator it=_adj.begin(); it!=_adj.end(); it++) {
+
+    MVertex *ver = it->first;
+    double signed_dist = vals[ver];
+    double dist = fabs(signed_dist);
+
+    SVector3 gradudx = dgrads[0][ver];
+    SVector3 gradudy = dgrads[1][ver];
+    SVector3 gradudz = dgrads[2][ver];
+    SMetric3 hessian;
+    hessian(0,0) = gradudx(0); hessian(0,1) = gradudx(1); hessian(0,2) = gradudx(2);
+    hessian(1,0) = gradudy(0); hessian(1,1) = gradudy(1); hessian(1,2) = gradudy(2);
+    hessian(2,0) = gradudz(0); hessian(2,1) = gradudz(1); hessian(2,2) = gradudz(2);
+
+    SVector3 gr = grads[ver];
+    SMetric3 H(1./(hmax*hmax));
+    double norm = gr(0)*gr(0)+gr(1)*gr(1)+gr(2)*gr(2);
+    if (dist < _E && norm != 0.0){
+      double h = hmin*(hmax/hmin-1.0)*dist/_E + hmin;
+      double C = 1./(h*h) -1./(hmax*hmax);
+      double kappa = hessian(0,0)+hessian(1,1)+hessian(2,2);
+      double epsGeom = 4.0*3.14*3.14/(kappa*_Np*_Np);
+      H(0,0) += C*gr(0)*gr(0)/(norm) + hessian(0,0)/epsGeom;
+      H(1,1) += C*gr(1)*gr(1)/(norm) + hessian(1,1)/epsGeom;
+      H(2,2) += C*gr(2)*gr(2)/(norm) + hessian(2,2)/epsGeom;
+      H(1,0) = H(0,1) = C*gr(1)*gr(0)/(norm) + hessian(1,0)/epsGeom;
+      H(2,0) = H(0,2) = C*gr(2)*gr(0)/(norm) + hessian(2,0)/epsGeom;
+      H(2,1) = H(1,2) = C*gr(2)*gr(1)/(norm) + hessian(2,1)/epsGeom;
+    }
+
+    fullMatrix<double> V(3,3);
+    fullVector<double> S(3);
+    H.eig(V,S);
+
+    double lambda1, lambda2, lambda3;
+    lambda1 = S(0);
+    lambda2 = S(1);
+    lambda3 = (_dim == 3)? S(2) : 1.;
+
+    if (dist < _E) {
+      lambda1 = std::min(std::max(fabs(S(0))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin));
+      lambda2 = std::min(std::max(fabs(S(1))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin));
+      lambda3 = (_dim == 3) ? std::min(std::max(fabs(S(2))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin)) : 1.;
+    }
+
+    SVector3 t1 (V(0,0),V(1,0),V(2,0));
+    SVector3 t2 (V(0,1),V(1,1),V(2,1));
+    SVector3 t3 (V(0,2),V(1,2),V(2,2));
+
+    SMetric3 metric(lambda1,lambda2,lambda3,t1,t2,t3);
+
+    _hessian[ver] = hessian;
+    setOfSizes[metricNumber].insert(std::make_pair(ver, std::min(std::min(1/sqrt(lambda1),1/sqrt(lambda2)),1/sqrt(lambda3))));
+    setOfMetrics[metricNumber].insert(std::make_pair(ver,metric));
+    setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(metric.determinant())));
+
+  }
+
+}
+
+
+
+void meshMetric::computeMetricEigenDir(){
+
+  int metricNumber = setOfMetrics.size();
+
+  for (v2t_cont::iterator it=_adj.begin(); it!=_adj.end(); it++) {
+
+    MVertex *ver = it->first;
+    double signed_dist = vals[ver];
+    double dist = fabs(signed_dist);
+
+    SVector3 gradudx = dgrads[0][ver];
+    SVector3 gradudy = dgrads[1][ver];
+    SVector3 gradudz = dgrads[2][ver];
+    SMetric3 hessian;
+    hessian(0,0) = gradudx(0); hessian(0,1) = gradudx(1); hessian(0,2) = gradudx(2);
+    hessian(1,0) = gradudy(0); hessian(1,1) = gradudy(1); hessian(1,2) = gradudy(2);
+    hessian(2,0) = gradudz(0); hessian(2,1) = gradudz(1); hessian(2,2) = gradudz(2);
+
+    double metric_value_hmax = 1./hmax/hmax;
+    SVector3 gr = grads[ver];
+    double norm = gr.normalize();
+    SMetric3 metric;
+
+    if (signed_dist < _E && signed_dist > _E_moins && norm != 0.0){
+      // first, compute the eigenvectors of the hessian, for a curvature-based metric
+      fullMatrix<double> eigvec_hessian(3,3);
+      fullVector<double> lambda_hessian(3);
+      hessian.eig(eigvec_hessian,lambda_hessian);
+      std::vector<SVector3> ti;
+      ti.push_back(SVector3(eigvec_hessian(0,0),eigvec_hessian(1,0),eigvec_hessian(2,0)));
+      ti.push_back(SVector3(eigvec_hessian(0,1),eigvec_hessian(1,1),eigvec_hessian(2,1)));
+      ti.push_back(SVector3(eigvec_hessian(0,2),eigvec_hessian(1,2),eigvec_hessian(2,2)));
+
+      // compute the required characteristic length relative to the curvature and the distance to iso
+      double maxkappa = std::max(std::max(fabs(lambda_hessian(0)),fabs(lambda_hessian(1))),fabs(lambda_hessian(2)));
+      // epsilon is set such that the characteristic element size in the tangent direction is h = 2pi R_min/_Np = sqrt(1/metric_maxmax) = sqrt(epsilon/kappa_max)
+      double un_sur_epsilon = maxkappa/((2.*3.14/_Np)*(2.*3.14/_Np));
+      // metric curvature-based eigenvalues
+      std::vector<double> eigenvals_curvature;
+      eigenvals_curvature.push_back(fabs(lambda_hessian(0))*un_sur_epsilon);
+      eigenvals_curvature.push_back(fabs(lambda_hessian(1))*un_sur_epsilon);
+      eigenvals_curvature.push_back(fabs(lambda_hessian(2))*un_sur_epsilon);
+      // metric distance-based eigenvalue, in gradient direction
+      double metric_value_hmin = 1./hmin/hmin;
+      double eigenval_direction;
+      if (_technique==meshMetric::EIGENDIRECTIONS_LINEARINTERP_H){
+        double h_dist = hmin + ((hmax-hmin)/_E)*dist;// the charcteristic element size in the normal direction - linear interp between hmin and hmax
+        eigenval_direction = 1./h_dist/h_dist;
+      }
+      else if(_technique==meshMetric::EIGENDIRECTIONS){
+        // ... or linear interpolation between 1/h_min^2 and 1/h_max^2
+        double maximum_distance = (signed_dist>0.) ? _E : fabs(_E_moins);
+        eigenval_direction = metric_value_hmin + ((metric_value_hmax-metric_value_hmin)/maximum_distance)*dist;
+      }
+
+      // now, consider only three eigenvectors (i.e. (grad(LS), u1, u2) with u1 and u2 orthogonal vectors in the tangent plane to the LS)
+      // and imposing directly eigenvalues and directions, instead of intersecting the two metrics based on direction and curvature
+      // need to find out which one of ti's is the closest to gr, to known which eigenvalue to discard...
+      std::vector<double> grad_dot_ti;
+      for (int i=0;i<3;i++)
+        grad_dot_ti.push_back(fabs(dot(gr,ti[i])));
+      std::vector<double>::iterator itbegin = grad_dot_ti.begin();
+      std::vector<double>::iterator itmax = std::max_element(itbegin,grad_dot_ti.end());
+      int grad_index = std::distance(itbegin,itmax);
+      std::vector<int> ti_index;
+      for (int i=0;i<3;i++)
+        if (i!=grad_index) ti_index.push_back(i);
+      // finally, creating the metric
+      std::vector<double> eigenvals;
+      eigenvals.push_back(std::min(std::max(eigenval_direction,metric_value_hmax),metric_value_hmin));// in gradient direction
+      eigenvals.push_back(std::min(std::max(eigenvals_curvature[ti_index[0]],metric_value_hmax),metric_value_hmin));
+      eigenvals.push_back(std::min(std::max(eigenvals_curvature[ti_index[1]],metric_value_hmax),metric_value_hmin));
+      metric = SMetric3(eigenvals[0],eigenvals[1],eigenvals[2],gr,ti[ti_index[0]],ti[ti_index[1]]);
+      setOfSizes[metricNumber].insert(std::make_pair(ver, std::min(std::min(1/sqrt(eigenvals[0]),1/sqrt(eigenvals[1])),1/sqrt(eigenvals[2]))));
+    }
+    else{// isotropic metric !
+      SMetric3 mymetric(metric_value_hmax);
+      metric = mymetric;
+      setOfSizes[metricNumber].insert(std::make_pair(ver, hmax));
+    }
+    _hessian[ver] = hessian;
+    setOfMetrics[metricNumber].insert(std::make_pair(ver,metric));
+    setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(metric.determinant())));
+
+  }
+
+}
+
+
+
+void meshMetric::computeMetricIsoLinInterp(){
+  
+  int metricNumber = setOfMetrics.size();
+
+  for (v2t_cont::iterator it=_adj.begin(); it!=_adj.end(); it++) {
+
+    MVertex *ver = it->first;
+    double signed_dist = vals[ver];
+    double dist = fabs(signed_dist);
+
+    SVector3 gr = grads[ver];
+    double norm = gr.normalize();
+    double h_dist = (signed_dist < _E && signed_dist > _E_moins && norm != 0.0) ? hmin + ((hmax-hmin)/_E)*dist : hmax;  // the charcteristic element size in all directions - linear interp between hmin and hmax
+
+    double lambda = 1./h_dist/h_dist;
+    SMetric3 H;
+    H(0,0) = H(1,1) = lambda;
+    H(2,2) = (_dim == 3)? lambda : 1.;
+
+    _hessian[ver] = H;
+    setOfSizes[metricNumber].insert(std::make_pair(ver, lambda));
+    setOfMetrics[metricNumber].insert(std::make_pair(ver,H));
+    setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(H.determinant())));
+
+  }
+
+}
+
+
+
+void meshMetric::computeMetricScaledHessian(){
+
+  int metricNumber = setOfMetrics.size();
+
+  std::list<double> lambda1, lambda2, lambda3;
+  std::list<SVector3> t1, t2, t3;
+
+  // Compute and store eignvalues and eigenvectors of Hessian
+  for (v2t_cont::iterator it=_adj.begin(); it!=_adj.end(); it++) {
+
+    MVertex *ver = it->first;
+
+    SMetric3 H;
+    SVector3 gradudx = dgrads[0][ver];
+    SVector3 gradudy = dgrads[1][ver];
+    SVector3 gradudz = dgrads[2][ver];
+    H(0,0) = gradudx(0); H(0,1) = gradudx(1); H(0,2) = gradudx(2);
+    H(1,0) = gradudy(0); H(1,1) = gradudy(1); H(1,2) = gradudy(2);
+    H(2,0) = gradudz(0); H(2,1) = gradudz(1); H(2,2) = gradudz(2);
+
+    fullMatrix<double> V(3,3);
+    fullVector<double> S(3);
+    H.eig(V,S);
+
+    lambda1.push_back(fabs(S(0)));
+    lambda2.push_back(fabs(S(1)));
+    if (_dim == 3) lambda3.push_back(fabs(S(2)));
+
+    t1.push_back(SVector3(V(0,0),V(1,0),V(2,0)));
+    t2.push_back(SVector3(V(0,1),V(1,1),V(2,1)));
+    t3.push_back(SVector3(V(0,2),V(1,2),V(2,2)));
+
+    _hessian[ver] = H;
+
+  }
+
+  // Calculate scale factor based on max. eigenvalue and min. element length
+  const double maxLambda1 = *std::max_element(lambda1.begin(), lambda1.end());
+  const double maxLambda2 = *std::max_element(lambda2.begin(), lambda2.end());
+  double maxLambda;
+  if (_dim == 3) {
+    const double maxLambda3 = *std::max_element(lambda3.begin(),lambda3.end());
+    maxLambda = std::max(std::max(maxLambda1, maxLambda2), maxLambda3);
+  }
+  else maxLambda = std::max(maxLambda1, maxLambda2);
+  const double factor = 1./(hmin*hmin*maxLambda);
+
+  // Rescale metric
+  const double lMinBound = 1./(hmax*hmax);
+  std::list<double>::iterator itL1 = lambda1.begin(), itL2 = lambda2.begin(), itL3 = lambda3.begin();
+  std::list<SVector3>::iterator itT1 = t1.begin(), itT2 = t2.begin(), itT3 = t3.begin();
+  for (v2t_cont::iterator it=_adj.begin(); it!=_adj.end(); it++) {
+    MVertex *ver = it->first;
+    const double l1 = std::max(*itL1*factor, lMinBound);
+    const double l2 = std::max(*itL2*factor, lMinBound);
+    const double l3 = (_dim == 3) ? std::max(*itL3*factor, lMinBound) : 1.;
+    const double lMax = (_dim == 3) ? std::max(std::max(l1, l2), l3) : std::max(l1, l2);
+    SMetric3 metric(l1,l2,l3,*itT1,*itT2,*itT3);
+    setOfSizes[metricNumber].insert(std::make_pair(ver, 1./sqrt(lMax)));
+    setOfMetrics[metricNumber].insert(std::make_pair(ver,metric));
+    setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(metric.determinant())));
+    itL1++; itL2++; if (_dim == 3) itL3++;
+    itT1++; itT2++; itT3++;
   }
 
 }
@@ -513,226 +665,21 @@ void meshMetric::computeMetric(){
   //printf("%d elements are considered in the meshMetric \n",(int)_elements.size());
 
   computeValues();
-//  computeHessian_FE();
-//  computeHessian_LS();
-  computeHessian_LS2();
-//  computeHessian_LS3();
-  
-  int metricNumber = setOfMetrics.size();
+  computeHessian();
 
-  v2t_cont :: iterator it = _adj.begin();
-  while (it != _adj.end()) {
-    MVertex *ver = it->first;
-    double signed_dist = vals[ver];
-    double dist = fabs(signed_dist);
-
-    SMetric3 H;
-    SVector3 gradudx = dgrads[0][ver];
-    SVector3 gradudy = dgrads[1][ver];
-    SVector3 gradudz = dgrads[2][ver];
-    SMetric3 hessian;
-//    hessian(0,0) = gradudx(0);
-//    hessian(1,1) = gradudy(1);
-//    hessian(2,2) = gradudz(2);
-//    hessian(1,0) = hessian(0,1) = 0.5 * (gradudx(1) +gradudy(0));
-//    hessian(2,0) = hessian(0,2) = 0.5 * (gradudx(2) +gradudz(0));
-//    hessian(2,1) = hessian(1,2) = 0.5 * (gradudy(2) +gradudz(1));
-    hessian(0,0) = gradudx(0); hessian(0,1) = gradudx(1); hessian(0,2) = gradudx(2);
-    hessian(1,0) = gradudy(0); hessian(1,1) = gradudy(1); hessian(1,2) = gradudy(2);
-    hessian(2,0) = gradudz(0); hessian(2,1) = gradudz(1); hessian(2,2) = gradudz(2);
-    if (_technique == meshMetric::HESSIAN){
-      H = hessian;
-    }
-    else if (_technique == meshMetric::LEVELSET ){
-      SVector3 gr = grads[ver];
-      SMetric3 hlevelset(1./(hmax*hmax));
-      double norm = gr(0)*gr(0)+gr(1)*gr(1)+gr(2)*gr(2);
-      if (dist < _E && norm != 0.0){
-        double h = hmin*(hmax/hmin-1)*dist/_E + hmin;
-        double C = 1./(h*h) -1./(hmax*hmax);
-        hlevelset(0,0) += C*gr(0)*gr(0)/norm ;
-        hlevelset(1,1) += C*gr(1)*gr(1)/norm ;
-        hlevelset(2,2) += C*gr(2)*gr(2)/norm ;
-        hlevelset(1,0) = hlevelset(0,1) = C*gr(1)*gr(0)/norm ;
-        hlevelset(2,0) = hlevelset(0,2) = C*gr(2)*gr(0)/norm ;
-        hlevelset(2,1) = hlevelset(1,2) = C*gr(2)*gr(1)/norm ;
-      }
-      // else if (dist > _E && dist < 2.*_E  && norm != 0.0){
-      // 	double hmid = (hmax-hmin)/(1.*_E)*dist+(2.*hmin-1.*hmax);
-      // 	double C = 1./(hmid*hmid) -1./(hmax*hmax);
-      // 	hlevelset(0,0) += C*gr(0)*gr(0)/norm ;
-      // 	hlevelset(1,1) += C*gr(1)*gr(1)/norm ;
-      // 	hlevelset(2,2) += C*gr(2)*gr(2)/norm ;
-      // 	hlevelset(1,0) = hlevelset(0,1) = C*gr(1)*gr(0)/norm ;
-      // 	hlevelset(2,0) = hlevelset(0,2) = C*gr(2)*gr(0)/norm ;
-      // 	hlevelset(2,1) = hlevelset(1,2) = C*gr(2)*gr(1)/norm ;
-      // }
-      H = hlevelset;
-    }
-    //See paper Ducrot and Frey:
-    //Anisotropic levelset adaptation for accurate interface capturing,
-    //ijnmf, 2010
-    else if (_technique == meshMetric::FREY ){
-      SVector3 gr = grads[ver];
-      SMetric3 hfrey(1./(hmax*hmax));
-      double norm = gr(0)*gr(0)+gr(1)*gr(1)+gr(2)*gr(2);
-      if (dist < _E && norm != 0.0){
-        double h = hmin*(hmax/hmin-1.0)*dist/_E + hmin;
-        double C = 1./(h*h) -1./(hmax*hmax);
-        double kappa = hessian(0,0)+hessian(1,1)+hessian(2,2);
-        double epsGeom = 4.0*3.14*3.14/(kappa*_Np*_Np);
-        hfrey(0,0) += C*gr(0)*gr(0)/(norm) + hessian(0,0)/epsGeom;
-        hfrey(1,1) += C*gr(1)*gr(1)/(norm) + hessian(1,1)/epsGeom;
-        hfrey(2,2) += C*gr(2)*gr(2)/(norm) + hessian(2,2)/epsGeom;
-        hfrey(1,0) = hfrey(0,1) = C*gr(1)*gr(0)/(norm) + hessian(1,0)/epsGeom;
-        hfrey(2,0) = hfrey(0,2) = C*gr(2)*gr(0)/(norm) + hessian(2,0)/epsGeom;
-        hfrey(2,1) = hfrey(1,2) = C*gr(2)*gr(1)/(norm) + hessian(2,1)/epsGeom;
-      }
-      H = hfrey;
-    }
-    else if ((_technique == meshMetric::EIGENDIRECTIONS )||(_technique == meshMetric::EIGENDIRECTIONS_LINEARINTERP_H )){
-
-      double metric_value_hmax = 1./hmax/hmax;
-      SVector3 gr = grads[ver];
-      double norm = gr.normalize();
-      SMetric3 metric;
-
-      if (signed_dist < _E && signed_dist > _E_moins && norm != 0.0){
-        // first, compute the eigenvectors of the hessian, for a curvature-based metric
-        fullMatrix<double> eigvec_hessian(3,3);
-        fullVector<double> lambda_hessian(3);
-        hessian.eig(eigvec_hessian,lambda_hessian);
-        std::vector<SVector3> ti;
-        ti.push_back(SVector3(eigvec_hessian(0,0),eigvec_hessian(1,0),eigvec_hessian(2,0)));
-        ti.push_back(SVector3(eigvec_hessian(0,1),eigvec_hessian(1,1),eigvec_hessian(2,1)));
-        ti.push_back(SVector3(eigvec_hessian(0,2),eigvec_hessian(1,2),eigvec_hessian(2,2)));
-
-        // compute the required characteristic length relative to the curvature and the distance to iso
-        double maxkappa = std::max(std::max(fabs(lambda_hessian(0)),fabs(lambda_hessian(1))),fabs(lambda_hessian(2)));
-        // epsilon is set such that the characteristic element size in the tangent direction is h = 2pi R_min/_Np = sqrt(1/metric_maxmax) = sqrt(epsilon/kappa_max)
-        double un_sur_epsilon = maxkappa/((2.*3.14/_Np)*(2.*3.14/_Np));
-        // metric curvature-based eigenvalues
-        std::vector<double> eigenvals_curvature;
-        eigenvals_curvature.push_back(fabs(lambda_hessian(0))*un_sur_epsilon);
-        eigenvals_curvature.push_back(fabs(lambda_hessian(1))*un_sur_epsilon);
-        eigenvals_curvature.push_back(fabs(lambda_hessian(2))*un_sur_epsilon);
-        // metric distance-based eigenvalue, in gradient direction
-        double metric_value_hmin = 1./hmin/hmin;
-        double eigenval_direction;
-        if (_technique==meshMetric::EIGENDIRECTIONS_LINEARINTERP_H){
-          double h_dist = hmin + ((hmax-hmin)/_E)*dist;// the charcteristic element size in the normal direction - linear interp between hmin and hmax
-          eigenval_direction = 1./h_dist/h_dist;
-        }
-        else if(_technique==meshMetric::EIGENDIRECTIONS){
-          // ... or linear interpolation between 1/h_min^2 and 1/h_max^2
-          double maximum_distance = (signed_dist>0.) ? _E : fabs(_E_moins);
-          eigenval_direction = metric_value_hmin + ((metric_value_hmax-metric_value_hmin)/maximum_distance)*dist;
-        }
-
-        // now, consider only three eigenvectors (i.e. (grad(LS), u1, u2) with u1 and u2 orthogonal vectors in the tangent plane to the LS)
-        // and imposing directly eigenvalues and directions, instead of intersecting the two metrics based on direction and curvature
-        // need to find out which one of ti's is the closest to gr, to known which eigenvalue to discard...
-        std::vector<double> grad_dot_ti;
-        for (int i=0;i<3;i++)
-          grad_dot_ti.push_back(fabs(dot(gr,ti[i])));
-        std::vector<double>::iterator itbegin = grad_dot_ti.begin();
-        std::vector<double>::iterator itmax = std::max_element(itbegin,grad_dot_ti.end());
-        int grad_index = std::distance(itbegin,itmax);
-        std::vector<int> ti_index;
-        for (int i=0;i<3;i++)
-          if (i!=grad_index) ti_index.push_back(i);
-        // finally, creating the metric
-        std::vector<double> eigenvals;
-        eigenvals.push_back(std::min(std::max(eigenval_direction,metric_value_hmax),metric_value_hmin));// in gradient direction
-        eigenvals.push_back(std::min(std::max(eigenvals_curvature[ti_index[0]],metric_value_hmax),metric_value_hmin));
-        eigenvals.push_back(std::min(std::max(eigenvals_curvature[ti_index[1]],metric_value_hmax),metric_value_hmin));
-        metric = SMetric3(eigenvals[0],eigenvals[1],eigenvals[2],gr,ti[ti_index[0]],ti[ti_index[1]]);
-        setOfSizes[metricNumber].insert(std::make_pair(ver, std::min(std::min(1/sqrt(eigenvals[0]),1/sqrt(eigenvals[1])),1/sqrt(eigenvals[2]))));
-      }
-      else{// isotropic metric !
-        SMetric3 mymetric(metric_value_hmax);
-        metric = mymetric;
-        setOfSizes[metricNumber].insert(std::make_pair(ver, hmax));
-      }
-      _hessian[ver] = hessian;
-      setOfMetrics[metricNumber].insert(std::make_pair(ver,metric));
-      setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(metric.determinant())));
-
-      it++;
-    }
-    else if (_technique == meshMetric::ISOTROPIC_LINEARINTERP_H){
-      SVector3 gr = grads[ver];
-      double norm = gr.normalize();
-      double h_dist = (signed_dist < _E && signed_dist > _E_moins && norm != 0.0) ? hmin + ((hmax-hmin)/_E)*dist : hmax;  // the charcteristic element size in all directions - linear interp between hmin and hmax
-      H = SMetric3(1./h_dist/h_dist);
-    }
-
-
-    if (_technique != meshMetric::EIGENDIRECTIONS && _technique!=meshMetric::EIGENDIRECTIONS_LINEARINTERP_H){
-
-      //See paper Hachem and Coupez:
-      //Finite element solution to handle complex heat and fluid flows in
-      //industrial furnaces using the immersed volume technique, ijnmf, 2010
-
-      fullMatrix<double> V(3,3);
-      fullVector<double> S(3);
-      H.eig(V,S);
-
-      double lambda1, lambda2, lambda3;
-      lambda1 = S(0);
-      lambda2 = S(1);
-      lambda3 = (_dim == 3)? S(2) : 1.;
-
-      if (_technique == meshMetric::HESSIAN || (dist < _E && _technique == meshMetric::FREY)){
-        lambda1 = std::min(std::max(fabs(S(0))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin));
-        lambda2 = std::min(std::max(fabs(S(1))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin));
-        lambda3 = (_dim == 3) ? std::min(std::max(fabs(S(2))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin)) : 1.;
-      }
-
-      SVector3 t1 (V(0,0),V(1,0),V(2,0));
-      SVector3 t2 (V(0,1),V(1,1),V(2,1));
-      SVector3 t3 (V(0,2),V(1,2),V(2,2));
-
-      SMetric3 metric(lambda1,lambda2,lambda3,t1,t2,t3);
-
-      _hessian[ver] = hessian;
-      setOfSizes[metricNumber].insert(std::make_pair(ver, std::min(std::min(1/sqrt(lambda1),1/sqrt(lambda2)),1/sqrt(lambda3))));
-      setOfMetrics[metricNumber].insert(std::make_pair(ver,metric));
-      setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(metric.determinant())));
-
-      it++;
-    }
+  switch(_technique) {
+    case (LEVELSET) : computeMetricLevelSet(); break;
+    case (HESSIAN) : computeMetricHessian(); break;
+    case (FREY) : computeMetricFrey(); break;
+    case (EIGENDIRECTIONS) : computeMetricEigenDir(); break;
+    case (EIGENDIRECTIONS_LINEARINTERP_H) : computeMetricEigenDir(); break;
+    case (ISOTROPIC_LINEARINTERP_H) : computeMetricIsoLinInterp(); break;
+    case (SCALED_HESSIAN) : computeMetricScaledHessian(); break;
   }
 
-  //exportInfo("EMI");
-  //exit(1);
-
-  //Adapt epsilon
-  //-----------------
-  // dgDofContainer dofDet(groups, 1);
-  // for (int iGroup = 0; iGroup < groups->getNbElementGroups(); iGroup++){
-  //     dgGroupOfElements *group = groups->getElementGroup(iGroup);
-  //     fullMatrix<double> & detgroup = dofDet.getGroupProxy(group);
-  //     for (int iElement = 0 ; iElement < group->getNbElements(); iElement++){
-  //       MElement* e = group->getElement(iElement);
-  //         for ( int i = 0; i < e->getNumVertices(); i++) {
-  // 	    MVertex *ver = e->getVertex(i);
-  // 	    std::map<MVertex*, double >::iterator it = _detMetric.find(ver);
-  //           detgroup (i, iElement) = it->second;
-  //       }
-  //     }
-  //   }
-  // fullMatrix<double> res(1,1);
-  // dgFunctionIntegrator integ(groups, dofDet.getFunction());
-  // integ.compute(res);
-  //fprintf("integ =%g \n", res(0,0))
-
-  //Smoothing
-  //-----------
-  //smoothMetric (sol);
-  //curvatureContributionToMetric();
-
 }
+
+
 
 double meshMetric::operator() (double x, double y, double z, GEntity *ge) {
   if (needMetricUpdate) intersectMetrics();
