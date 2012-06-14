@@ -206,10 +206,8 @@ int linearSystemPETScBlockDouble::systemSolve()
     KSPSetOperators(_ksp, _a, _a, SAME_NONZERO_PATTERN);
   else
     KSPSetOperators(_ksp, _a, _a, DIFFERENT_NONZERO_PATTERN);
-  if (_matrixModified && _parameters["matrix_reuse"]!="same_matrix"){
-    MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY);
-    MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY);
-  }
+  MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY);
+  MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY);
   _matrixModified=false;
   VecAssemblyBegin(_b);
   VecAssemblyEnd(_b);
