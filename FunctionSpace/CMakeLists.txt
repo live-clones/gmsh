@@ -15,6 +15,10 @@ set(SRC
   TriNodeBasis.cpp
   TriEdgeBasis.cpp
   TriNedelecBasis.cpp
+
+  LocalFunctionSpace.cpp
+  LocalFunctionSpaceScalar.cpp
+  LocalFunctionSpaceVector.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
