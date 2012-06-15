@@ -8,13 +8,24 @@
    This class is the @em mother (by @em inheritence) of all@n
    Local Function Spaces.@n
 
-   A Local Function Space is a Basis on which we can interpolate on.
+   A Local Function Space is a Basis on which we can interpolate on.@n
+   In order to interpolate, a Local Function Space shall colaborate
+   with a Jacobian.
  */
+
+#include "Jacobian.h"
 
 class LocalFunctionSpace{
  protected:
-  bool scalar;
-  int  size;
+  typedef fullVector<double>(Jacobian::*JacMethod)
+    (const fullVector<double>&) const;
+
+  bool      scalar;
+  int       size;
+  int       type;
+
+  Jacobian* jac;
+  JacMethod transform;
 
  public:
   //! Deletes this LocalFunctionSpace
@@ -33,10 +44,24 @@ class LocalFunctionSpace{
   //! @return Returns the size of the Basis used
   int  getSize(void) const;
 
+  //! @return Returns the type of the Basis used
+  //! @li 0 for 0-form
+  //! @li 1 for 1-form
+  //! @li 2 for 2-form
+  //! @li 3 for 3-form
+  //! @todo Check if the 'form numbering' is good
+  int  getType(void) const;
+
  protected:
   //! Instantiate a new LocalFunctionSpace
   //! @warning Users can't instantiate a LocalFunctionSpace
   LocalFunctionSpace(void);
+
+  //! Selects the right transorm method for the Jacobian
+  //! @param form The @em type of the Basis used
+  void selectTransform(int form);
+
+  
 };
 
 //////////////////////
@@ -51,4 +76,7 @@ inline int LocalFunctionSpace::getSize(void) const{
   return size;
 }
 
+inline int LocalFunctionSpace::getType(void) const{
+  return type;
+}
 #endif
