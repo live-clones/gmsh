@@ -27,9 +27,9 @@ extern "C"
 std::string GMSH_NearToFarFieldPlugin::getHelp() const
 {
   return "Plugin(NearToFarField) computes the far field pattern "
-    "from the near electric and magnetic fields on a surface (regular grid) "
+    "from the near electric and magnetic fields on a surface "
     "enclosing the radiating device (antenna).\n\n"
-    "Parameters: the wavenumber, the far field distance (radious) and "
+    "Parameters: the wavenumber, the far field distance (radius) and "
     "angular discretisation, i.e. the number of divisions for "
     "phi in [0, 2*Pi] and theta in [0, Pi].\n\n"
     "If `View' < 0, the plugin is run on the current view.\n\n"
@@ -46,12 +46,12 @@ StringXNumber *GMSH_NearToFarFieldPlugin::getOption(int iopt)
   return &NearToFarFieldOptions_Number[iopt];
 }
 
-
 double GMSH_NearToFarFieldPlugin::getFarField(std::vector<element*> allElems,
-                                              std::vector<std::vector<double> > js, std::vector<std::vector<double> > ms,
-                                              double k0, double r_far, double theta, double phi)
+                                              std::vector<std::vector<double> > js,
+                                              std::vector<std::vector<double> > ms,
+                                              double k0, double r_far, double theta,
+                                              double phi)
 {
-
   // theta in [0, pi] (elevation/polar angle)
   // phi in [0, 2*pi] (azimuthal angle)
 
@@ -69,7 +69,7 @@ double GMSH_NearToFarFieldPlugin::getFarField(std::vector<element*> allElems,
 
   N.resize(numSteps); Ns.resize(numSteps);
   L.resize(numSteps); Ls.resize(numSteps);
-  for (int step=0; step<numSteps;step++){
+  for (int step = 0; step < numSteps; step++){
     N[step].resize(numComps); Ns[step].resize(numComps);
     L[step].resize(numComps); Ls[step].resize(numComps);
   }
@@ -79,7 +79,8 @@ double GMSH_NearToFarFieldPlugin::getFarField(std::vector<element*> allElems,
     element* e = allElems[ele] ;
     int numNodes = e->getNumNodes() ;
 
-    std::vector<double > valN0(numNodes*numComps),valN1(numNodes*numComps), valL0(numNodes*numComps), valL1(numNodes*numComps) ;
+    std::vector<double > valN0(numNodes*numComps), valN1(numNodes*numComps);
+    std::vector<double > valL0(numNodes*numComps), valL1(numNodes*numComps) ;
 
     for(int nod = 0; nod < numNodes; nod++){
       double x, y, z;
@@ -89,7 +90,7 @@ double GMSH_NearToFarFieldPlugin::getFarField(std::vector<element*> allElems,
       double e_jk0rr[2] = {cos(k0*rr), sin(k0*rr)} ;
 
       for(int comp = 0; comp < numComps; comp++){
-        if(i < js[0].size()){
+        if(i < (int)js[0].size()){
           valN0[numComps * nod + comp] = js[0][i] * e_jk0rr[0] - js[1][i] * e_jk0rr[1];
           valN1[numComps * nod + comp] = js[0][i] * e_jk0rr[1] + js[1][i] * e_jk0rr[0];
           valL0[numComps * nod + comp] = ms[0][i] * e_jk0rr[0] - ms[1][i] * e_jk0rr[1];
@@ -106,7 +107,7 @@ double GMSH_NearToFarFieldPlugin::getFarField(std::vector<element*> allElems,
     L[0][0] += e->integrate(&valL0[0], 3) ; L[1][0] += e->integrate(&valL1[0], 3) ;
     L[0][1] += e->integrate(&valL0[1], 3) ; L[1][1] += e->integrate(&valL1[1], 3) ;
     L[0][2] += e->integrate(&valL0[2], 3) ; L[1][2] += e->integrate(&valL1[2], 3) ;
- }
+  }
 
   // From Cartesian to spherical coordinates
   for(int step = 0; step < 2; step++){
@@ -117,7 +118,7 @@ double GMSH_NearToFarFieldPlugin::getFarField(std::vector<element*> allElems,
     Ls[step][0] = L[step][0] * sTheta * cPhi + L[step][1] * sTheta * sPhi + L[step][2] *cTheta ;
     Ls[step][1] = L[step][0] * cTheta * cPhi + L[step][1] * cTheta * sPhi - L[step][2]* sTheta ;
     Ls[step][2] =-L[step][0] * sPhi          + L[step][1] * cPhi ;
-   }
+  }
 
   // E_r radial component is negligible in far field
   double E_theta[2] ;
@@ -137,11 +138,11 @@ double GMSH_NearToFarFieldPlugin::getFarField(std::vector<element*> allElems,
   E_phi[1]   =  k0_over_4pir * ( (Ls[0][1] - Z0 * Ns[0][2]) * cos_k0r +
                                  (Ls[1][1] - Z0 * Ns[1][2]) * sin_k0r ) ;
 
-  double farF =  1./2./Z0 * ( (E_theta[0]*E_theta[0] + E_theta[1]*E_theta[1]) + (E_phi[0]*E_phi[0]+E_phi[1] *E_phi[1]) ) ;
+  double farF =  1./2./Z0 * ( (E_theta[0]*E_theta[0] + E_theta[1]*E_theta[1]) +
+                              (E_phi[0]*E_phi[0]+E_phi[1] *E_phi[1]) ) ;
 
   return farF ;
 }
-
 
 PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
 {
@@ -174,12 +175,12 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
     return v;
   }
 
-  if(eData->getNumTimeSteps()!= 2 || hData->getNumTimeSteps() != 2){
+  if(eData->getNumTimeSteps() != 2 || hData->getNumTimeSteps() != 2){
     Msg::Error("Invalid number of steps for EView or HView, fields must be complex");
     return v;
   }
 
-  // Center of the Far Field sphere
+  // center of the Far Field sphere
   double x0 = eData->getBoundingBox().center().x();
   double y0 = eData->getBoundingBox().center().y();
   double z0 = eData->getBoundingBox().center().z();
@@ -190,10 +191,7 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
     return v;
   }
 
-  // View for far field: represented on a sphere of radious determined by the size of the BoundingBox
-  PView *vf = new PView();
-  PViewDataList *dataFar = getDataList(vf);
-
+  // compute surface currents on all input elements
   std::vector<element*> allElems  ;
   std::vector<std::vector<double> > js ;
   std::vector<std::vector<double> > ms ;
@@ -206,10 +204,10 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
     for(int ele = 0; ele < eData->getNumElements(0, ent); ele++){
       if(eData->skipElement(0, ent, ele)) continue;
       if(hData->skipElement(0, ent, ele)) continue;
-      int numComp  = eData->getNumComponents(0, ent, ele);
+      int numComp = eData->getNumComponents(0, ent, ele);
       if(numComp != 3) continue ;
-
       int dim = eData->getDimension(0, ent, ele);
+      if(dim != 1 && dim != 2) continue;
       int numNodes = eData->getNumNodes(0, ent, ele);
       std::vector<double> x(numNodes), y(numNodes), z(numNodes);
       for(int nod = 0; nod < numNodes; nod++)
@@ -218,8 +216,8 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
       elementFactory factory;
       allElems.push_back(factory.create(numNodes, dim, &x[0], &y[0], &z[0], true));
 
-      double n[3] = {0.,0.,0.};
-      if(numNodes>2)
+      double n[3] = {0., 0., 0.};
+      if(numNodes > 2)
         normal3points(x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], n);
       else
         normal2points(x[0], y[0], z[0], x[1], y[1], z[1], n);
@@ -242,9 +240,15 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
     }
   }
 
-  // -------------------------------------------------------------
-  // Generating radiation pattern
-  // -------------------------------------------------------------
+  if(allElems.empty()){
+    Msg::Error("No valid elements found to compute far field");
+    return v;
+  }
+
+  // View for far field that will contain the radiation pattern
+  PView *vf = new PView();
+  PViewDataList *dataFar = getDataList(vf);
+
   double phi,   dPhi   = 2*M_PI/_NbPhi ;
   double theta, dTheta =   M_PI/_NbThe ;
   double ffmax = 0.0 ;
@@ -268,27 +272,25 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
       theta = j * dTheta ;
       allPhi[i][j] = phi ;
       allThe[i][j] = theta ;
-
       farF[i][j] = getFarField(allElems, js, ms, _k0, _r_far, theta, phi) ;
-
       ffmax = (ffmax < farF[i][j]) ? farF[i][j] : ffmax ;
     }
   }
 
   if(_normalize){
-      for (int i = 0; i <= _NbPhi; i++)
-        for (int j = 0; j <= _NbThe; j++)
-          if(ffmax!=0.0)
-            farF[i][j] /= ffmax ;
-          else
-            Msg::Warning("Far field pattern not normalized, max value = %g", ffmax);
+    for (int i = 0; i <= _NbPhi; i++)
+      for (int j = 0; j <= _NbThe; j++)
+        if(ffmax!=0.0)
+          farF[i][j] /= ffmax ;
+        else
+          Msg::Warning("Far field pattern not normalized, max value = %g", ffmax);
   }
 
-  // Constructing sphere for visualization
-  // centered at center of bb and with radious relative to the bb size
-  double r_bb[3] = { eData->getBoundingBox().max().x()-eData->getBoundingBox().min().x(),
-                     eData->getBoundingBox().max().y()-eData->getBoundingBox().min().y(),
-                     eData->getBoundingBox().max().z()-eData->getBoundingBox().min().z() };
+  // construct sphere for visualization, centered at center of bb and with
+  // radius relative to the bb size
+  double r_bb[3] = {eData->getBoundingBox().max().x()-eData->getBoundingBox().min().x(),
+                    eData->getBoundingBox().max().y()-eData->getBoundingBox().min().y(),
+                    eData->getBoundingBox().max().z()-eData->getBoundingBox().min().z()};
   double r_sph = norm3(r_bb) ;
   r_sph = (r_sph) ? r_sph/2 : 1./2. ; // radious of sphere for visu
 
@@ -307,9 +309,12 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
                        y0 + r_sph * farF[i ][j+1] * sin(allThe[i ][j+1]) * sin(allPhi[i ][j+1]),
                        z0 + r_sph * farF[i ][j+1] * cos(allThe[i ][j+1]) } ;
 
-      dataFar->SQ.push_back(P1[0]); dataFar->SQ.push_back(P2[0]);  dataFar->SQ.push_back(P3[0]); dataFar->SQ.push_back(P4[0]);
-      dataFar->SQ.push_back(P1[1]); dataFar->SQ.push_back(P2[1]);  dataFar->SQ.push_back(P3[1]); dataFar->SQ.push_back(P4[1]);
-      dataFar->SQ.push_back(P1[2]); dataFar->SQ.push_back(P2[2]);  dataFar->SQ.push_back(P3[2]); dataFar->SQ.push_back(P4[2]);
+      dataFar->SQ.push_back(P1[0]); dataFar->SQ.push_back(P2[0]);
+      dataFar->SQ.push_back(P3[0]); dataFar->SQ.push_back(P4[0]);
+      dataFar->SQ.push_back(P1[1]); dataFar->SQ.push_back(P2[1]);
+      dataFar->SQ.push_back(P3[1]); dataFar->SQ.push_back(P4[1]);
+      dataFar->SQ.push_back(P1[2]); dataFar->SQ.push_back(P2[2]);
+      dataFar->SQ.push_back(P3[2]); dataFar->SQ.push_back(P4[2]);
       (dataFar->NbSQ)++;
       if(!_dB){
         dataFar->SQ.push_back(farF[i ][j  ]);

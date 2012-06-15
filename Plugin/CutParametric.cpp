@@ -44,7 +44,7 @@ static double getU(int i)
   double minU = CutParametricOptions_Number[0].def;
   double maxU = CutParametricOptions_Number[1].def;
   int nbU = (int)CutParametricOptions_Number[2].def;
-  
+
   if(nbU == 1)
     return minU;
   else
@@ -56,7 +56,7 @@ static double getV(int i)
   double minV = CutParametricOptions_Number[3].def;
   double maxV = CutParametricOptions_Number[4].def;
   int nbV = (int)CutParametricOptions_Number[5].def;
-  
+
   if(nbV == 1)
     return minV;
   else
@@ -71,7 +71,7 @@ std::vector<double> GMSH_CutParametricPlugin::z;
 int GMSH_CutParametricPlugin::fillXYZ()
 {
   std::vector<std::string> expressions(3), variables(2);
-  for(int i = 0; i < 3; i++) 
+  for(int i = 0; i < 3; i++)
     expressions[i] = CutParametricOptions_String[i].def;
   variables[0] = "u";
   variables[1] = "v";
@@ -119,8 +119,8 @@ void GMSH_CutParametricPlugin::draw(void *context)
     }
     else{
       glBegin(GL_TRIANGLES);
-      for(unsigned int i = 0; i < nbU - 1; ++i){
-        for(unsigned int j = 0; j < nbV - 1; ++j){
+      for(int i = 0; i < nbU - 1; ++i){
+        for(int j = 0; j < nbV - 1; ++j){
           int v = i * nbV + j;
           glVertex3d(x[v], y[v], z[v]);
           glVertex3d(x[v+1], y[v+1], z[v+1]);
@@ -259,7 +259,7 @@ StringXString *GMSH_CutParametricPlugin::getOptionStr(int iopt)
 static void addInView(int connect, int i, int nbcomp, int nbtime,
                       double x0, double y0, double z0, double *res0,
                       double x, double y, double z, double *res,
-                      std::vector<double> &P, int *nP, 
+                      std::vector<double> &P, int *nP,
                       std::vector<double> &L, int *nL)
 {
   if(connect){
@@ -342,7 +342,7 @@ PView *GMSH_CutParametricPlugin::execute(PView *v)
   for(int k = 0; k < 9 * numSteps; ++k) res0[k] = res1[k] = 0.;
 
   if(nbU == 1 || nbV == 1 || !connect){
-    for(int i = 0; i < x.size(); ++i){
+    for(unsigned int i = 0; i < x.size(); ++i){
       if(i && connect){
         x0 = x1;
         y0 = y1;
@@ -375,18 +375,10 @@ PView *GMSH_CutParametricPlugin::execute(PView *v)
     for(int i = 0; i < nbU - 1; ++i){
       for(int j = 0; j < nbV - 1; ++j){
         int v = i * nbV + j;
-        x0 = x[v];
-        y0 = y[v];
-        z0 = z[v];
-        x1 = x[v+1];
-        y1 = y[v+1];
-        z1 = z[v+1];
-        x2 = x[v+nbV+1];
-        y2 = y[v+nbV+1];
-        z2 = z[v+nbV+1];
-        x3 = x[v+nbV];
-        y3 = y[v+nbV];
-        z3 = z[v+nbV];
+        x0 = x[v];       y0 = y[v];       z0 = z[v];
+        x1 = x[v+1];     y1 = y[v+1];     z1 = z[v+1];
+        x2 = x[v+nbV+1]; y2 = y[v+nbV+1]; z2 = z[v+nbV+1];
+        x3 = x[v+nbV];   y3 = y[v+nbV];   z3 = z[v+nbV];
 
         if(data1->getNumScalars()){
           o.searchScalar(x0, y0, z0, res0);
