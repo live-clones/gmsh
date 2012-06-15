@@ -25,7 +25,10 @@ class LocalFunctionSpace{
   int       type;
 
   Jacobian* jac;
-  JacMethod transform;
+  fullVector<double> (*transform)(const Jacobian&, 
+				  double, 
+				  double, 
+				  double);
 
  public:
   //! Deletes this LocalFunctionSpace
@@ -61,7 +64,24 @@ class LocalFunctionSpace{
   //! @param form The @em type of the Basis used
   void selectTransform(int form);
 
-  
+  //! Mapping of 0-form
+  //! @param jac The Jacobian to use
+  //! @param u,v,w The @em reference coordinate to map
+  //! @return Returns The mapped coordinate in the @em physical space
+  static fullVector<double> form0(const Jacobian& jac, 
+				  double u, 
+				  double v, 
+				  double w);
+
+  //! Mapping of 1-form
+  //! @param jac The Jacobian to use
+  //! @param u,v,w The @em reference coordinate to map
+  //! @return Returns The mapped coordinate in the @em physical space
+  static fullVector<double> form1(const Jacobian& jac, 
+				  double u, 
+				  double v, 
+				  double w);
+
 };
 
 //////////////////////
@@ -79,4 +99,19 @@ inline int LocalFunctionSpace::getSize(void) const{
 inline int LocalFunctionSpace::getType(void) const{
   return type;
 }
+
+inline fullVector<double> LocalFunctionSpace::form0(const Jacobian& jac,
+						    double u,
+						    double v,
+						    double w){
+  return jac.map(u, v);
+}
+
+inline fullVector<double> LocalFunctionSpace::form1(const Jacobian& jac,
+						    double u,
+						    double v,
+						    double w){
+  return jac.grad(u, v);
+}
+
 #endif

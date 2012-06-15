@@ -10,7 +10,10 @@ LocalFunctionSpaceScalar::LocalFunctionSpaceScalar(const Basis& basis){
 
   this->scalar = true;
   this->size   = b.getSize();
+  this->type   = b.getType(); 
   this->basis  = &(b.getBasis());
+
+  selectTransform(type);
 }
 
 LocalFunctionSpaceScalar::~LocalFunctionSpaceScalar(void){

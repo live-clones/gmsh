@@ -12,11 +12,11 @@ LocalFunctionSpace::~LocalFunctionSpace(void){
 void LocalFunctionSpace::selectTransform(int form){
   switch(form){
   case 0:
-    transform = jac::map;
+    transform = LocalFunctionSpace::form0;
     break;
 
   case 1:
-    transform = jac::grad;
+    transform = LocalFunctionSpace::form1;
     break;
 
   case 2:
@@ -28,7 +28,7 @@ void LocalFunctionSpace::selectTransform(int form){
     break;
  
   default:
-    throw Exception ("Unknow %d-form", from);
+    throw Exception ("Unknow %d-form", form);
     break;
   }
 }
