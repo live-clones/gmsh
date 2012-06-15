@@ -172,6 +172,8 @@ static MElement *createElementMSH(GModel *m, int num, int typeMSH, int physical,
   return e;
 }
 
+#if (FAST_ELEMENTS==0)
+
 static bool getElementsByNum(int elemNum[], std::map<int, std::vector<MElement*> > &elements,
                              bool erase, MElement *elems[], int nbElem = 1)
 {
@@ -232,6 +234,8 @@ static void getDomains(int dom1Num, int dom2Num, int type,
     return;
   }
 }
+
+#endif
 
 int GModel::readMSH(const std::string &name)
 {

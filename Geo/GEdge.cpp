@@ -285,7 +285,6 @@ double GEdge::length(const double &u0, const double &u1, const int nbQuadPoints)
   use a golden section algorithm that minimizes
 
   min_t \|x(t)-y\|
-
 */
 
 const double GOLDEN  = (1. + sqrt(5.)) / 2.;
@@ -356,7 +355,8 @@ GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
   return point(t);
 }
 
-bool GEdge::computeDistanceFromMeshToGeometry (double &d2, double &dmax) {
+bool GEdge::computeDistanceFromMeshToGeometry (double &d2, double &dmax)
+{
   d2 = 0.0; dmax = 0.0;
   if (geomType() == Line) return true;
   if (!lines.size())return false;
@@ -364,7 +364,7 @@ bool GEdge::computeDistanceFromMeshToGeometry (double &d2, double &dmax) {
   int npts;
   lines[0]->getIntegrationPoints(2*lines[0]->getPolynomialOrder(), &npts, &pts);
 
-  for (int i=0;i<lines.size();i++){
+  for (unsigned int i = 0; i < lines.size(); i++){
     MLine *l = lines[i];
     double t[256];
 
@@ -386,11 +386,11 @@ bool GEdge::computeDistanceFromMeshToGeometry (double &d2, double &dmax) {
       double tinit = l->interpolate(t,pts[j].pt[0],0,0);
       GPoint pc = closestPoint(p, tinit);
       if (!pc.succeeded())continue;
-      double dsq = 
-	(pc.x()-p.x())*(pc.x()-p.x()) + 
-	(pc.y()-p.y())*(pc.y()-p.y()) + 
+      double dsq =
+	(pc.x()-p.x())*(pc.x()-p.x()) +
+	(pc.y()-p.y())*(pc.y()-p.y()) +
 	(pc.z()-p.z())*(pc.z()-p.z());
-      d2 += pts[i].weight * fabs(l->getJacobianDeterminant(pts[j].pt[0],0,0)) * dsq;      
+      d2 += pts[i].weight * fabs(l->getJacobianDeterminant(pts[j].pt[0],0,0)) * dsq;
       dmax = std::max(dmax,sqrt(dsq));
     }
   }

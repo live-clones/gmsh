@@ -439,7 +439,7 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
   return V;
 }
 
-// Interpolation transfinie sur un quadrangle :
+// Transfinite interpolation on a quadrangle :
 // f(u,v) = (1-u)c4(v) + u c2(v) + (1-v)c1(u) + v c3(u)
 //          - [ (1-u)(1-v)s1 + u(1-v)s2 + uv s3 + (1-u)v s4 ]
 
@@ -461,14 +461,10 @@ static Vertex TransfiniteQua(Vertex c1, Vertex c2, Vertex c3, Vertex c4,
                      s1.Pos.Y, s2.Pos.Y, s3.Pos.Y, s4.Pos.Y, u, v);
   V.Pos.Z = TRAN_QUA(c1.Pos.Z, c2.Pos.Z, c3.Pos.Z, c4.Pos.Z,
                      s1.Pos.Z, s2.Pos.Z, s3.Pos.Z, s4.Pos.Z, u, v);
-  //printf("TRANQUA %f %f %f %f %f %f %f %f\n", c1.Pos.Z, c2.Pos.Z, c3.Pos.Z, c4.Pos.Z,
-  //                   s1.Pos.Z, s2.Pos.Z, s3.Pos.Z, s4.Pos.Z);
-  //printf("V.Pos.Z %f\n", V.Pos.Z);
   return (V);
 }
 
-// Interpolation transfinie sur un triangle : TRAN_QUA avec s1=s4=c4
-// f(u,v) = u c2 (v) + (1-v) c1(u) + v c3(u) - u(1-v) s2 - uv s3
+// Transfinite interpolation on a triangle :
 //
 //            s3(1,1)
 //              +
@@ -480,6 +476,12 @@ static Vertex TransfiniteQua(Vertex c1, Vertex c2, Vertex c3, Vertex c4,
 //   +----------+
 //  s1(0,0)     s2(1,0)
 
+#if 0
+
+// Old-style: TRAN_QUA with s1=s4=c4
+//
+// f(u,v) = u c2 (v) + (1-v) c1(u) + v c3(u) - u(1-v) s2 - uv s3
+//
 // u = v = 0     -----> x = c1(0) = s1 --> OK
 // u = 1 ; v = 0 -----> x = c2(0) + c1(1) - s2 =  s2 --> OK
 // u = 1 ; v = 1 -----> x = c2(1) + c3(1) - s3 =  s3 --> OK
@@ -487,20 +489,7 @@ static Vertex TransfiniteQua(Vertex c1, Vertex c2, Vertex c3, Vertex c4,
 // u = 1 --> c2(v) + (1-v) s2 + v s3 -(1-v) s2  - v s3 --> x = c2(v) --> OK
 // u = 0 --> (1-v) s1 + v s1 = s1 !!! not terrible (singular)
 
-// Transfinite approximation on a triangle
-
-// f(u,v) = (1-u) (c1(u-v) + c3(1-v)     - s1) +
-//          (u-v) (c2(v)   + c1(u)       - s2) +
-//            v   (c3(1-u) + c2(1-u+v)   - s3)
-//
-// u = v = 0 --> f(0,0) = s1 + s1 - s1     = s1
-// u = v = 1 --> f(1,1) = s3 + s3 - s3     = s3
-// u = 1 ; v = 0 --> f(1,1) = s2 + s2 - s2 = s2
-// v = 0 --> (1-u)c1(u) + u c1(u) = c1(u) --> COOL
-
 #define TRAN_TRI(c1,c2,c3,s1,s2,s3,u,v) u*c2+(1.-v)*c1+v*c3-(u*(1.-v)*s2+u*v*s3);
-
-#define TRAN_TRIB(c1,c1b,c2,c2b,c3,c3b,s1,s2,s3,u,v) (1.-u)*(c1+c3b-s1)+(u-v)*(c2+c1b-s2)+v*(c3+c2b-s3);
 
 static Vertex TransfiniteTri(Vertex c1, Vertex c2, Vertex c3,
                              Vertex s1, Vertex s2, Vertex s3, double u, double v)
@@ -516,6 +505,22 @@ static Vertex TransfiniteTri(Vertex c1, Vertex c2, Vertex c3,
                      s1.Pos.Z, s2.Pos.Z, s3.Pos.Z, u, v);
   return V;
 }
+
+#endif
+
+// New-style:
+//
+// f(u,v) = (1-u) (c1(u-v) + c3(1-v)     - s1) +
+//          (u-v) (c2(v)   + c1(u)       - s2) +
+//            v   (c3(1-u) + c2(1-u+v)   - s3)
+//
+// u = v = 0 --> f(0,0) = s1 + s1 - s1     = s1
+// u = v = 1 --> f(1,1) = s3 + s3 - s3     = s3
+// u = 1 ; v = 0 --> f(1,1) = s2 + s2 - s2 = s2
+// v = 0 --> (1-u)c1(u) + u c1(u) = c1(u) --> COOL
+
+#define TRAN_TRIB(c1,c1b,c2,c2b,c3,c3b,s1,s2,s3,u,v)\
+      (1.-u)*(c1+c3b-s1)+(u-v)*(c2+c1b-s2)+v*(c3+c2b-s3);
 
 static Vertex TransfiniteTriB(Vertex c1, Vertex c1b, Vertex c2,
 			      Vertex c2b, Vertex c3, Vertex c3b,

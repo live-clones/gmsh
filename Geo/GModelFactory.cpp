@@ -144,7 +144,7 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
   int numf  = gm->getMaxElementaryNumber(2)+1;
   Surface *s = Create_Surface(numf, MSH_SURF_PLAN);
   List_T *temp = List_Create(nLoops, nLoops, sizeof(int));
-  for (unsigned int i=0; i< nLoops; i++){
+  for (int i = 0; i < nLoops; i++){
     int numl = vecLoops[i]->Num;
     List_Add(temp, &numl);
   }
@@ -295,7 +295,7 @@ std::vector<GEntity*> GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e, i
   ep->mesh.NbLayer = 1; //this may be more general for defining different layers
   ep->mesh.hLayer.clear();
   ep->mesh.hLayer.push_back(hLayer);
-  ep->mesh.NbElmLayer.clear(); 
+  ep->mesh.NbElmLayer.clear();
   ep->mesh.NbElmLayer.push_back(nbLayers);
   ep->mesh.ExtrudeMesh = true;
   if (CTX::instance()->mesh.recombineAll){
@@ -304,8 +304,8 @@ std::vector<GEntity*> GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e, i
   }
   else ep->mesh.Recombine = false;
   ep->geo.Source = e->tag();
- 
-  int type  = BOUNDARY_LAYER; 
+
+  int type  = BOUNDARY_LAYER;
   double T0=0., T1=0., T2=0.;
   double A0=0., A1=0., A2=0.;
   double X0=0., X1=0., X2=0.,alpha=0.;
@@ -347,7 +347,7 @@ std::vector<GEntity*> GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e, i
                 ep,
                 list_out);
 
-  //create GEntities 
+  //create GEntities
   gm->importGEOInternals();
 
   //return the new created entity
@@ -368,7 +368,7 @@ std::vector<GEntity*> GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e, i
       List_Read(list_out, j, &el);
       GEdge *gel = gm->getEdgeByTag(el.Num);
       extrudedEntities.push_back((GEntity*)gel);
-    }  
+    }
   }
   else if(e->dim()==2){
     Shape s;
@@ -384,7 +384,7 @@ std::vector<GEntity*> GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e, i
       List_Read(list_out, j, &sl);
       GFace *gfl = gm->getFaceByTag(sl.Num);
       extrudedEntities.push_back((GEntity*)gfl);
-    }  
+    }
   }
 
   return extrudedEntities;
@@ -409,7 +409,7 @@ std::vector<GEntity*> GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e, i
   //     if(gf->getNativeType() == GEntity::GmshModel &&
   // 	 gf->geomType() == GEntity::BoundaryLayerSurface){
   // 	ExtrudeParams *ep = gf->meshAttributes.extrude;
-  // 	if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == COPIED_ENTITY 
+  // 	if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == COPIED_ENTITY
   // 	   && std::abs(ep->geo.Source) == e->tag())
   // 	  newEnt = gf;
   //     }

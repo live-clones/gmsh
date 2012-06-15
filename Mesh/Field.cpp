@@ -1660,7 +1660,7 @@ class AttractorField : public Field
         annDeallocPts(zeronodes);
         delete kdtree;
       }
-      
+
       std::vector<SPoint3> points;
       std::vector<SPoint2> uvpoints;
       std::vector<int> offset;
@@ -1674,17 +1674,19 @@ class AttractorField : public Field
 	    SBoundingBox3d bb = f->bounds();
 	    SVector3 dd = bb.max() - bb.min();
 	    double maxDist = dd.norm() / n_nodes_by_edge ;
-	    bool success = f->fillPointCloud(maxDist, &points, &uvpoints);
+	    f->fillPointCloud(maxDist, &points, &uvpoints);
 	    offset.push_back(points.size());
 	  }
 	}
       }
 
 
-      int totpoints = 
-	nodes_id.size() + 
+      int totpoints =
+	nodes_id.size() +
 	(n_nodes_by_edge-2) * edges_id.size() +
-        ((points.size()) ? points.size() : n_nodes_by_edge * n_nodes_by_edge * faces_id.size());
+        ((points.size()) ? points.size() :
+         n_nodes_by_edge * n_nodes_by_edge * faces_id.size());
+
       printf("%d points found in points clouds (%d edges)\n",totpoints, edges_id.size());
 
       if(totpoints){
@@ -1757,7 +1759,7 @@ class AttractorField : public Field
         }
         else {
           GFace *f = GModel::current()->getFaceByTag(*it);
-          if(f) {	    
+          if(f) {
 	    if (points.size()){
 	      for(int j = offset[count]; j < offset[count+1];j++) {
 		zeronodes[k][0] = points[j].x();
@@ -1783,7 +1785,7 @@ class AttractorField : public Field
 		}
 	      }
             }
-          }	  
+          }
         }
       }
       kdtree = new ANNkd_tree(zeronodes, totpoints, 3);
@@ -1847,7 +1849,7 @@ BoundaryLayerField::BoundaryLayerField()
 
 double BoundaryLayerField::operator() (double x, double y, double z, GEntity *ge)
 {
-  
+
   if (update_needed){
     for(std::list<int>::iterator it = nodes_id.begin();
 	it != nodes_id.end(); ++it) {
@@ -1863,7 +1865,7 @@ double BoundaryLayerField::operator() (double x, double y, double z, GEntity *ge
     }
     update_needed = false;
   }
-  
+
   double dist = 1.e22;
   AttractorField *cc;
   for (std::list<AttractorField*>::iterator it = _att_fields.begin();
@@ -1910,7 +1912,7 @@ void BoundaryLayerField::operator() (AttractorField *cc, double dist,
   double beta = CTX::instance()->mesh.smoothRatio;
   if (pp.first.dim ==0){
     GVertex *v = GModel::current()->getVertexByTag(pp.first.ent);
-    SVector3 t1;    
+    SVector3 t1;
     if (dist < thickness){
       t1 = SVector3(1,0,0);
     }
@@ -1952,7 +1954,7 @@ void BoundaryLayerField::operator() (AttractorField *cc, double dist,
       double oneOverD2_min = .5/(b*b) * (1. + sqrt (1. + ( 4.*cmin*cmin*b*b*b*b/ (h*h*beta*beta))));
       double oneOverD2_max = .5/(b*b) * (1. + sqrt (1. + ( 4.*cmax*cmax*b*b*b*b/ (h*h*beta*beta))));
       double dmin = sqrt(1./oneOverD2_min);
-      double dmax = sqrt(1./oneOverD2_max);      
+      double dmax = sqrt(1./oneOverD2_max);
       dmin = std::min(dmin,dmax*tgt_aniso_ratio);
       metr = buildMetricTangentToSurface(dirMin,dirMax,dmin,dmax,lc_n);
       return;

@@ -948,7 +948,7 @@ void signedDistancesPointsLine(std::vector<double> &distances,
   distances.resize(pts.size());
   closePts.clear();
   closePts.resize(pts.size());
-  for (int i=0; i<pts.size(); i++) {
+  for (unsigned int i = 0; i < pts.size(); i++) {
     double d;
     SPoint3 closePt;
     const SPoint3 &p = pts[i];

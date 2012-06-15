@@ -530,10 +530,12 @@ int GModel::mesh(int dimension)
 #endif
 }
 
-int GModel::adaptMesh(std::vector<int> technique, std::vector<simpleFunction<double>* > f, std::vector<std::vector<double> > parameters, int niter, bool meshAll)
+int GModel::adaptMesh(std::vector<int> technique,
+                      std::vector<simpleFunction<double>* > f,
+                      std::vector<std::vector<double> > parameters,
+                      int niter, bool meshAll)
 {
 #if defined(HAVE_MESH)
-
   if (getNumMeshElements() == 0) mesh(getDim());
   int nbElemsOld = getNumMeshElements();
   int nbElems;
@@ -549,7 +551,7 @@ int GModel::adaptMesh(std::vector<int> technique, std::vector<simpleFunction<dou
 
       fields->reset();
       meshMetric *metric = new meshMetric(this);
-      for (int imetric=0;imetric<technique.size();imetric++){
+      for (unsigned int imetric = 0; imetric < technique.size(); imetric++){
         metric->addMetric(technique[imetric], f[imetric], parameters[imetric]);
       }
       fields->setBackgroundField(metric);
@@ -601,11 +603,11 @@ int GModel::adaptMesh(std::vector<int> technique, std::vector<simpleFunction<dou
         }
       }
 
-      if (elements.size() == 0)return -1;
+      if (elements.size() == 0) return -1;
 
       fields->reset();
       meshMetric *metric = new meshMetric(this);
-      for (int imetric=0;imetric<technique.size();imetric++){
+      for (unsigned int imetric = 0; imetric < technique.size(); imetric++){
         metric->addMetric(technique[imetric], f[imetric], parameters[imetric]);
       }
       fields->setBackgroundField(metric);
@@ -1338,6 +1340,7 @@ static void recurConnectMElementsByMFace(const MFace &f,
   printf("group pf %d elements found\n",(int)group.size());
 }
 
+/*
 static void recurConnectMElementsByMFaceOld(const MFace &f,
                                          std::multimap<MFace, MElement*, Less_Face> &e2f,
                                          std::set<MElement*> &group,
@@ -1354,6 +1357,7 @@ static void recurConnectMElementsByMFaceOld(const MFace &f,
     }
   }
 }
+*/
 
 static int connectedVolumes(std::vector<MElement*> &elements,
                             std::vector<std::vector<MElement*> > &regs)
@@ -2084,7 +2088,7 @@ GEdge* GModel::addCompoundEdge(std::vector<GEdge*> edges, int num){
   }
   else{
     Curve *c = Create_Curve(num, MSH_SEGM_COMPOUND, 1, NULL, NULL, -1, -1, 0., 1.);
-    for(int i= 0; i< edges.size(); i++)
+    for(unsigned int i= 0; i < edges.size(); i++)
       c->compound.push_back(edges[i]->tag());
 
     // Curve *c = Create_Curve(num, MSH_SEGM_DISCRETE, 1,
@@ -2140,7 +2144,7 @@ GFace* GModel::addCompoundFace(std::vector<GFace*> faces, int param, int split, 
   }
   else{
     Surface *s = Create_Surface(num, MSH_SURF_COMPOUND);
-    for(int i= 0; i< faces.size(); i++)
+    for(unsigned int i= 0; i < faces.size(); i++)
       s->compound.push_back(faces[i]->tag());
 
      std::list<GEdge*> edges = gfc->edges();
