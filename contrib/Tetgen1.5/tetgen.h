@@ -1393,7 +1393,7 @@ public:
   long maxbowatcavsize, totalbowatcavsize, totaldeadtets;
   long triedgcount, triedgcopcount;
   long across_face_count, across_edge_count, across_max_count;
-  long fillregioncount;
+  long fillregioncount, missingsubfacecount, crossingtetcount;
   long cavitycount, cavityexpcount, maxcavsize, maxregionsize;
   long maxcrossfacecount, maxflipsequence;
   long dbg_ignore_facecount, dbg_unflip_facecount;
@@ -2006,7 +2006,7 @@ public:
     maxbowatcavsize = totalbowatcavsize = totaldeadtets = 0l;
     triedgcount = triedgcopcount = 0l;
     across_face_count = across_edge_count = across_max_count = 0l;
-    fillregioncount = 0l;
+    fillregioncount = missingsubfacecount = crossingtetcount = 0l;
     cavitycount = cavityexpcount = 0l;
     maxcavsize = maxregionsize = 0l;
     maxcrossfacecount = maxflipsequence = 0l;

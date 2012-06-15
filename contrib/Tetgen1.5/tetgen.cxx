@@ -17031,6 +17031,7 @@ bool tetgenmesh::formcavity(triface* searchtet, arraypool* missingshs,
   if (b->verbose > 2) {
     printf("      Form the cavity of missing region.\n"); 
   }
+  missingsubfacecount += missingshs->objects;
   // Mark this edge to avoid testing it later.
   markedge(*searchtet);
   crossedges->newindex((void **) &parytet);
@@ -17237,6 +17238,7 @@ bool tetgenmesh::formcavity(triface* searchtet, arraypool* missingshs,
     printf("      Formed cavity: %ld (%ld) cross tets (edges).\n", 
            crosstets->objects, crossedges->objects);
   }
+  crossingtetcount += crosstets->objects;
 
   // Unmark all marked edges.
   for (i = 0; i < crossedges->objects; i++) {
@@ -24331,7 +24333,7 @@ void tetgenmesh::reconstructmesh()
 
   // Subfaces will be inserted into the mesh. 
   if (in->trifacelist != NULL) {
-    // The boundary faces are given. Insert them.
+    // A .face file is given. It may contain boundary faces. Insert them.
     for (i = 0; i < in->numberoftrifaces; i++) {
       // Is it a subface?
       if (in->trifacemarkerlist != NULL) {
@@ -24406,8 +24408,9 @@ void tetgenmesh::reconstructmesh()
         } // if (bondflag)
       } // if (marker > 0)
     } // i
-  } else {
-    // No input boundary faces. Indentify subfaces from the mesh.
+  } // if (in->trifacelist)
+
+    // Indentify subfaces from the mesh.
     // Create subfaces for hull faces (if they're not subface yet) and
     //   interior faces which separate two different materials.
     eextras = in->numberoftetrahedronattributes;
@@ -24452,7 +24455,6 @@ void tetgenmesh::reconstructmesh()
       }
       tetloop.tet = tetrahedrontraverse();
     }
-  } // if (!in->trifacelist)
 
   // Connect subfaces together. 
   subfaces->traversalinit();
@@ -24492,7 +24494,7 @@ void tetgenmesh::reconstructmesh()
 
   // Segments will be introudced. 
   if (in->edgelist != NULL) {
-    // There are edges given. Insert segments.
+    // A .edge file is given. It may contain boundary edges. Insert them.
     for (i = 0; i < in->numberofedges; i++) {
       // Is it a segment?
       if (in->edgemarkerlist != NULL) {
@@ -24550,7 +24552,8 @@ void tetgenmesh::reconstructmesh()
         }
       } // if (marker != 0)
     } // i
-  } else {
+  } // if (in->edgelist)
+
     // Identify segments from the mesh. 
     // Create segments for non-manifold edges (which are shared by more 
     //   than two subfaces), and for non-coplanar edges, i.e., two subfaces
@@ -24623,7 +24626,6 @@ void tetgenmesh::reconstructmesh()
       }
       subloop.sh = shellfacetraverse(subfaces);
     }
-  } // if (!in->edgelist)
 
   // Remember the number of input segments.
   insegments = subsegs->items;
@@ -27152,13 +27154,16 @@ void tetgenmesh::recoverdelaunay()
             // Queue new faces for flips.
             for (j = 0; j < cavetetlist->objects; j++) {
               parytet = (triface *) fastlookup(cavetetlist, j);
-              for (parytet->ver = 0; parytet->ver < 4; parytet->ver++) {
-                // Avoid queue a face twice.
-                fsym(*parytet, neightet);
-                if (!facemarked(neightet)) {
-                  flippush(flipstack, parytet);
-                }
-              } // parytet->ver
+              // A queued new tet may be dead.
+              if (!isdeadtet(*parytet)) {
+                for (parytet->ver = 0; parytet->ver < 4; parytet->ver++) {
+                  // Avoid queue a face twice.
+                  fsym(*parytet, neightet);
+                  if (!facemarked(neightet)) {
+                    flippush(flipstack, parytet);
+                  }
+                } // parytet->ver
+              }
             } // j
             cavetetlist->restart();
             // Remove locally non-Delaunay faces. New non-Delaunay edges
@@ -27386,7 +27391,7 @@ long tetgenmesh::improvequalitybyflips()
               }
             }
           } // i          
-          if (!remflag > 0) {
+          if (!remflag) {
             // An unremoved bad tet. Queue it again. 
             unflipqueue->newindex((void **) &parybface);
             *parybface = *bface;
