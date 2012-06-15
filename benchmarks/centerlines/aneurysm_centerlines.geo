@@ -6,7 +6,7 @@ Mesh.LcIntegrationPrecision = 1.e-2;
 //Mesh.RecombineAll = 1;
 //Mesh.Bunin = 150;
 
-Merge "aneu_int.stl";
+Merge "aneu_ext.stl";
 
 Field[1] = Centerline;
 Field[1].FileName = "centerlinesANEU.vtk";

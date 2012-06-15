@@ -164,9 +164,6 @@ class Centerline : public Field{
   SMetric3 metricBasedOnSurfaceCurvature(SVector3 dMin, SVector3 dMax, double cMin, double cMax, double radMax, 
 					 double beta, double lc_n, double lc_t, double hwall_t);
 
-  SMetric3 metricBasedOnSurfaceCurvatureBis(SVector3 dirMin, SVector3 dirMax, SVector3 dirN, 
-					    double cmin, double cmax, double lc_n, double lc_t, double lc_a, double radMax,
-					    double ds, double thickness, double beta);
 };
 #else
 class Centerline : public Field{

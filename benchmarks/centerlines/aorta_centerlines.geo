@@ -10,7 +10,7 @@ Merge "aorta2.stl";
 
 Field[1] = Centerline;
 Field[1].FileName = "centerlinesAORTA.vtk";
-Field[1].nbPoints = 20; //33;
+Field[1].nbPoints = 30; //33;
 
 Field[1].nbElemLayer = 4;
 Field[1].hLayer = 0.2;//percent of vessel radius

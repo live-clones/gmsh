@@ -1205,14 +1205,6 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    delete[]index2;
    delete[]dist2;
 
-   //dir_a = direction along the centerline
-   //dir_n = normal direction of the disk
-   //dir_t = tangential direction of the disk
-   SVector3 dir_a = p1-p0; dir_a.normalize();
-   SVector3 dir_n(xyz[0]-p0.x(), xyz[1]-p0.y(), xyz[2]-p0.z()); dir_n.normalize();
-   SVector3 dir_t; 
-   buildOrthoBasis2(dir_a, dir_n, dir_t);
-
    //find discrete curvature at closest vertex
    Curvature& curvature = Curvature::getInstance();
    if( !Curvature::valueAlreadyComputed() ) {
@@ -1225,23 +1217,32 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    curvature.vertexNodalValuesAndDirections(vertices[index[0]],&dMax, &dMin, &cMax, &cMin, 1);
    curvature.vertexNodalValues(vertices[index[0]], curv, 0);
    double  c0  =std::abs(curv);
-   double sign = (curv > 0.0) ? 1.0: -1.0;
+   double sign = (curv > 0.0) ? -1.0: 1.0;
 
-   double beta = 1.5*CTX::instance()->mesh.smoothRatio;
-   double ratio = 1.3;
+   double beta = CTX::instance()->mesh.smoothRatio;
+   double ratio = 1.1;
 
-   double thickness = radMax/3.;
-   double rho = radMax; //1/c0;
+   double thickness = radMax/4.;
+   double rho = radMax;
    double hwall_n = thickness/30.;
    double hwall_t = 2*M_PI*rho/nbPoints; 
    double hfar =  radMax/5.;
    double lc_a = 3.*hwall_t;
 
+   //dir_a = direction along the centerline
+   //dir_n = normal direction of the disk
+   //dir_t = tangential direction of the disk
+   SVector3 dir_a = p1-p0; dir_a.normalize();
+   SVector3 dir_n(xyz[0]-p0.x(), xyz[1]-p0.y(), xyz[2]-p0.z()); dir_n.normalize();
+   SVector3 dir_t1, dir_t2, dir_a1, dir_a2; 
+   buildOrthoBasis2(dir_n, dir_t1, dir_t2);
+   buildOrthoBasis2(dir_a, dir_a1, dir_a2);
+     
    double ll1   = ds*(ratio-1) + hwall_n;
    double lc_n  = std::min(ll1,hfar);
    double ll2 =  hwall_t *(rho+sign*ds)/rho ; //sign * ds*(ratio-1) + hwall_t; 
-   if (ds > thickness) ll2  = hfar; 
-   double lc_t  = std::min(lc_n*CTX::instance()->mesh.anisoMax, std::min(ll2,hfar));
+   if (ds > thickness) ll2  =  hwall_t *(rho+sign*thickness)/rho ; //lc_a; //hfar
+   double lc_t  = std::min(lc_n*CTX::instance()->mesh.anisoMax, ll2); //std::min(ll2,hfar));
    
    lc_n = std::max(lc_n, CTX::instance()->mesh.lcMin);
    lc_n = std::min(lc_n, CTX::instance()->mesh.lcMax);
@@ -1250,52 +1251,45 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
  
    //curvature metric
    SMetric3 curvMetric;
-   if (ds < thickness)
-     curvMetric = metricBasedOnSurfaceCurvature(dMin, dMax, cMin, cMax, radMax, beta, lc_n, lc_t, hwall_t);
-     //curvMetric = metricBasedOnSurfaceCurvatureBis(dMin, dMax, dir_n, cMin, cMax, lc_n, lc_t, lc_a, radMax, ds, thickness, beta);
-   //else
-   //curvMetric = buildMetricTangentToCurve(dir_n,lc_n,lc_t);
-   //curvMetric = SMetric3(1.e-12); //1./(hfar*hfar));
-
-   double oneOverD2 = .5/(lc_t*lc_t) * (1. + sqrt (1. + ( 4.*c0*c0*lc_t*lc_t*lc_t*lc_t/ (lc_n*lc_n*beta*beta))));
-   //double oneOverD2 = 1./(2.*rho*rho*(beta*beta-1))*(sqrt(1+ (4.*rho*rho*(beta*beta-1))/(lc_n*lc_n))-1.);
-   double lc_t_new =   (ds < thickness) ? sqrt(1./oneOverD2) : lc_t; 
-
-   if (onTubularSurface) lc_n = lc_t =  lc_t_new;
-   else  lc_t =  lc_t_new;
-
-   double lc_a_curv = sqrt(1./dot(dir_a,curvMetric,dir_a));
-   if (ds < thickness) lc_a = std::min(lc_a, lc_a_curv);
-
-   double lam_a = 1./(lc_a*lc_a);
-   double lam_n = 1./(lc_n*lc_n);
-   double lam_t = 1./(lc_t*lc_t);
- 
-    //intersect metric
-    metr = SMetric3(lam_a,lam_n,lam_t, dir_a, dir_n, dir_t);
-    if (ds < thickness) metr = intersection_conserveM1(metr,curvMetric);
+   if (ds <= thickness){
+     metr = metricBasedOnSurfaceCurvature(dMin, dMax, cMin, cMax, radMax, beta, lc_n, lc_t, hwall_t);
+   }
+   else if (ds > thickness && onInOutlets){
+     curvMetric = buildMetricTangentToCurve(dir_n,lc_n,lc_t); 
+   }
+   else if (ds > thickness && !onInOutlets){
+     curvMetric = buildMetricTangentToCurve(dir_n,lc_n,lc_a); 
+     metr = SMetric3(1./(lc_a*lc_a), 1./(hfar*hfar), 1./(hfar*hfar), dir_a, dir_a1, dir_a2);   
+     metr = intersection_conserveM1(metr,curvMetric);
+   }
 
    return;
+
+   // double lc_a_curv = sqrt(1./dot(dir_a,curvMetric,dir_a));
+   // if (ds < thickness) lc_a = std::min(lc_a, lc_a_curv);
+   // return;
+
 }
 
 SMetric3 Centerline::metricBasedOnSurfaceCurvature(SVector3 dirMin, SVector3 dirMax, double cmin, double cmax, double radMax, 
 						   double beta, double lc_n, double lc_t, double hwall_t){
 
-  double lcMin =  CTX::instance()->mesh.lcMin; //((2 * M_PI *radMax) /( 30*nbPoints ));
-  double lcMax =  CTX::instance()->mesh.lcMax; //((2 * M_PI *radMax) /( 0.1*nbPoints ));
+  double lcMin = ((2 * M_PI *radMax) /( 20*nbPoints )); //CTX::instance()->mesh.lcMin;
+  double lcMax = ((2 * M_PI *radMax) /( 0.05*nbPoints)); //CTX::instance()->mesh.lcMax; //
   if (cmin == 0) cmin =1.e-12;
   if (cmax == 0) cmax =1.e-12;
   double lambda1 =  ((2 * M_PI) /( fabs(cmin) *  nbPoints ) );
   double lambda2 =  ((2 * M_PI) /( fabs(cmax) *  nbPoints ) );
 
+  double betaM = 1*beta;
   double rhoMin = 1./cmin;
   double rhoMax = 1./cmax; 
-  double oneOverD2_min = .5/(lc_t*lc_t) * (1. + sqrt (1. + ( 4.*cmin*cmin*lc_t*lc_t*lc_t*lc_t/ (lc_n*lc_n*beta*beta))));
-  double oneOverD2_max = .5/(lc_t*lc_t) * (1. + sqrt (1. + ( 4.*cmax*cmax*lc_t*lc_t*lc_t*lc_t/ (lc_n*lc_n*beta*beta))));
-  //double oneOverD2_min = 1./(2.*rhoMin*rhoMin*(beta*beta-1))*(sqrt(1+ (4.*rhoMin*rhoMin*(beta*beta-1))/(lc_n*lc_n))-1.);
-  //double oneOverD2_max = 1./(2.*rhoMax*rhoMax*(beta*beta-1))*(sqrt(1+ (4.*rhoMax*rhoMax*(beta*beta-1))/(lc_n*lc_n))-1.);
+  //double oneOverD2_min = .5/(lc_t*lc_t) * (1. + sqrt (1. + ( 4.*cmin*cmin*lc_t*lc_t*lc_t*lc_t/ (lc_n*lc_n*beta*beta))));
+  //double oneOverD2_max = .5/(lc_t*lc_t) * (1. + sqrt (1. + ( 4.*cmax*cmax*lc_t*lc_t*lc_t*lc_t/ (lc_n*lc_n*beta*beta))));
+  double oneOverD2_min = 1./(2.*rhoMin*rhoMin*(betaM*betaM-1))*(sqrt(1+ (4.*rhoMin*rhoMin*(betaM*betaM-1))/(lc_n*lc_n))-1.);
+  double oneOverD2_max = 1./(2.*rhoMax*rhoMax*(beta*beta-1))*(sqrt(1+ (4.*rhoMax*rhoMax*(beta*beta-1))/(lc_n*lc_n))-1.);
   
-  //lambda1 = sqrt(1./oneOverD2_min);
+  lambda1 = sqrt(1./oneOverD2_min);
   lambda2 = sqrt(1./oneOverD2_max);
 
   SVector3 dirNorm = crossprod(dirMax,dirMin);
@@ -1307,35 +1301,7 @@ SMetric3 Centerline::metricBasedOnSurfaceCurvature(SVector3 dirMin, SVector3 dir
   lambda1 = std::min(lambda1, lcMax);
   lambda2 = std::min(lambda2, lcMax);
 
-  SMetric3 curvMetric (1./(lambda1*lambda1),1./(lambda2*lambda2),1.e-6, dirMin, dirMax, dirNorm); // 1./(lc_n*lc_n)
-
-  return curvMetric;
-}
-
-SMetric3 Centerline::metricBasedOnSurfaceCurvatureBis(SVector3 dMin, SVector3 dMax, SVector3 dir_n, 
-						      double cMin, double cMax, 
-						      double lc_n, double lc_t, double lc_a,
-						      double radMax, 
-						      double ds, double thickness, double beta){
-  SMetric3 curvMetric;
-  // if (ds < thickness){
-     if (cMin == 0) cMin =1.e-12;
-     if (cMax == 0) cMax =1.e-12;
-     double rhoMin = 1./cMin;
-     double rhoMax = 1./cMax;
-     //double hmin = 2*M_PI*rhoMin/nbPoints;  
-     //double hmax = 2*M_PI*rhoMax/nbPoints;  
-     double oneOverD2_min = 1./(2.*rhoMin*rhoMin*(beta*beta-1))*(sqrt(1+ (4.*rhoMin*rhoMin*(beta*beta-1))/(lc_n*lc_n))-1.);
-     double oneOverD2_max = 1./(2.*rhoMax*rhoMax*(beta*beta-1))*(sqrt(1+ (4.*rhoMax*rhoMax*(beta*beta-1))/(lc_n*lc_n))-1.);
-     //double oneOverD2_min = .5/(lc_t*lc_t) * (1. + sqrt (1. + ( 4.*cMin*cMin*lc_t*lc_t*lc_t*lc_t/ (lc_n*lc_n*beta*beta))));
-     //double oneOverD2_max = .5/(lc_t*lc_t) * (1. + sqrt (1. + ( 4.*cMax*cMax*lc_t*lc_t*lc_t*lc_t/ (lc_n*lc_n*beta*beta))));
-     double hmin = sqrt(1./oneOverD2_min);
-     double hmax = sqrt(1./oneOverD2_max);
-     curvMetric  = buildMetricTangentToSurface(dMin,dMax,hmin,hmax,lc_n);
-   //}
-   // else {
-   //   curvMetric  = buildMetricTangentToCurve(dir_n,lc_n,lc_t);
-   // }
+  SMetric3 curvMetric (1./(lambda1*lambda1),1./(lambda2*lambda2), 1./(lc_n*lc_n), dirMin, dirMax, dirNorm); // 1.e-6
 
   return curvMetric;
 }
