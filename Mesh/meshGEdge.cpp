@@ -36,14 +36,14 @@ static double smoothPrimitive(GEdge *ge, double alpha,
 
     // use a gauss-seidel iteration; iterate forward and then backward;
     // convergence is usually very fast
-    for (int i=1; i< Points.size(); i++){
+    for (unsigned int i = 1; i < Points.size(); i++){
       double dh = (Points[i].xp/Points[i].lc - Points[i-1].xp/Points[i-1].lc);
       double dt = Points[i].t - Points[i-1].t;
       double dhdt =  dh/dt;
       if (dhdt / Points[i].xp > (alpha - 1.)*1.01){
 	double hnew = Points[i-1].xp / Points[i-1].lc + dt * (alpha-1) * Points[i].xp;
 	Points[i].lc = Points[i].xp / hnew;
-	count1 ++;
+	count1++;
       }
     }
 
@@ -64,7 +64,7 @@ static double smoothPrimitive(GEdge *ge, double alpha,
   }
 
   // recompute the primitive
-  for (int i = 1; i < Points.size(); i++){
+  for (int i = 1; i < (int)Points.size(); i++){
     IntPoint &pt2 = Points[i];
     IntPoint &pt1 = Points[i-1];
     pt2.p = pt1.p + (pt2.t - pt1.t) * 0.5 * (pt2.lc + pt1.lc);
@@ -273,6 +273,7 @@ void deMeshGEdge::operator() (GEdge *ge)
   ge->meshStatistics.status = GEdge::PENDING;
 }
 
+/*
 static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
 {
   char name[256];
@@ -287,6 +288,7 @@ static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
   }
   fclose(f);
 }
+*/
 
 void meshGEdge::operator() (GEdge *ge)
 {
@@ -374,7 +376,7 @@ void meshGEdge::operator() (GEdge *ge)
                       CTX::instance()->mesh.lcIntegrationPrecision);
 
     // we should maybe provide an option to disable the smoothing
-    for (int i = 0; i < Points.size(); i++){
+    for (unsigned int i = 0; i < Points.size(); i++){
       IntPoint &pt = Points[i];
       SVector3 der = ge->firstDer(pt.t);
       pt.xp = der.norm();

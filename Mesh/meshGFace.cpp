@@ -95,8 +95,8 @@ static void copyMesh(GFace *source, GFace *target)
     MVertex *vs = it->first;
     MVertex *vt = it->second;
     if (vs->onWhat()->dim() == 1){
-      bool success1 = reparamMeshVertexOnFace(vs, source, param_source[count]);
-      bool success2 = reparamMeshVertexOnFace(vt, target, param_target[count++]);
+      reparamMeshVertexOnFace(vs, source, param_source[count]);
+      reparamMeshVertexOnFace(vt, target, param_target[count++]);
       if (count == 2) break;
     }
   }
@@ -138,14 +138,14 @@ static void copyMesh(GFace *source, GFace *target)
       vt[j] = vs2vt[vs];
       if (!vt[j]){
 	SPoint2 p;
-	bool success = reparamMeshVertexOnFace(vs, source, p);
+	reparamMeshVertexOnFace(vs, source, p);
 	const double U =   c * (p.x()-s1u) + s * (p.y()-s1v) + t1u;
 	const double V =  -s * (p.x()-s1u) + c * (p.y()-s1v) + t1v;
 	for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); ++it){
 	  GEdge *te = *it;
 	  for (unsigned k = 0; k < te->lines.size(); k++){
 	    MVertex *gotcha = te->lines[k]->getVertex(0);
-	    bool success2 = reparamMeshVertexOnFace(gotcha, target, p);
+	    reparamMeshVertexOnFace(gotcha, target, p);
 	    const double D = sqrt((U - p.x()) * (U - p.x()) + (V - p.y()) * (V - p.y()));
 	    if (D < 1.e-9){
 	      vt[j] = gotcha;
@@ -450,16 +450,16 @@ void filterOverlappingElements(int dim, std::vector<MElement*> &e,
 {
   eout.clear();
   MElementOctree octree (e);
-  for (int i=0;i<e.size();++i){
+  for (unsigned int i = 0; i < e.size(); ++i){
     MElement *el = e[i];
     bool intersection = false;
     for (int j=0;j<el->getNumVertices();++j){
       MVertex *v = el->getVertex(j);
-      std::vector<MElement *> inters = octree.findAll(v->x(),v->y(),v->z(),dim);
+      std::vector<MElement *> inters = octree.findAll(v->x(), v->y(), v->z(), dim);
       std::vector<MElement *> inters2;
-      for (int k=0;k<inters.size();k++){
+      for (unsigned int k = 0; k < inters.size(); k++){
 	bool found = false;
-	for (int l=0;l<inters[k]->getNumVertices();l++){
+	for (int l = 0; l < inters[k]->getNumVertices(); l++){
 	  if (inters[k]->getVertex(l) == v)found = true;
 	}
 	if (!found)inters2.push_back(inters[k]);
@@ -502,8 +502,8 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
       MEdge dv(v1,v2);
       addOrRemove(v1,v2,bedges);
 
-      for (int SIDE = 0 ; SIDE < _columns->_normals.count(dv) ; SIDE ++){
-	edgeColumn ec =  _columns->getColumns(v1,v2,SIDE);
+      for (unsigned int SIDE = 0 ; SIDE < _columns->_normals.count(dv); SIDE ++){
+	edgeColumn ec =  _columns->getColumns(v1, v2, SIDE);
 	const BoundaryLayerData & c1 = ec._c1;
 	const BoundaryLayerData & c2 = ec._c2;
 	int N = std::min(c1._column.size(),c2._column.size());
@@ -581,25 +581,26 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
   fclose(ff2);
 
   std::vector<MElement*> els,newels,oldels;
-  for (int i=0;i<blQuads.size();i++)els.push_back(blQuads[i]);
+  for (unsigned int i = 0; i < blQuads.size();i++) els.push_back(blQuads[i]);
   filterOverlappingElements (2,els,newels,oldels);
   blQuads.clear();
-  for (int i=0;i<newels.size();i++)blQuads.push_back((MQuadrangle*)newels[i]);
-  for (int i=0;i<oldels.size();i++)delete oldels[i];
+  for (unsigned int i = 0; i < newels.size(); i++)
+    blQuads.push_back((MQuadrangle*)newels[i]);
+  for (unsigned int i = 0; i < oldels.size(); i++) delete oldels[i];
 
-  for (int i=0;i<blQuads.size();i++){
+  for (unsigned int i = 0; i < blQuads.size();i++){
     addOrRemove(blQuads[i]->getVertex(0),blQuads[i]->getVertex(1),bedges);
     addOrRemove(blQuads[i]->getVertex(1),blQuads[i]->getVertex(2),bedges);
     addOrRemove(blQuads[i]->getVertex(2),blQuads[i]->getVertex(3),bedges);
     addOrRemove(blQuads[i]->getVertex(3),blQuads[i]->getVertex(0),bedges);
-    for (int j=0;j<4;j++)
+    for (int j = 0; j < 4; j++)
       if(blQuads[i]->getVertex(j)->onWhat() == gf)verts.insert(blQuads[i]->getVertex(j));
   }
-  for (int i=0;i<blTris.size();i++){
+  for (unsigned int i = 0; i < blTris.size(); i++){
     addOrRemove(blTris[i]->getVertex(0),blTris[i]->getVertex(1),bedges);
     addOrRemove(blTris[i]->getVertex(1),blTris[i]->getVertex(2),bedges);
     addOrRemove(blTris[i]->getVertex(2),blTris[i]->getVertex(0),bedges);
-    for (int j=0;j<3;j++)
+    for (int j = 0; j < 3; j++)
       if(blTris[i]->getVertex(j)->onWhat() == gf)verts.insert(blTris[i]->getVertex(j));
   }
 
@@ -713,7 +714,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     for(std::set<MVertex*>::iterator it = all_vertices.begin();
 	it != all_vertices.end(); it++){
       vv[i++] = *it;
-    }    
+    }
     gf->triangles.push_back(new MTriangle(vv[0], vv[1], vv[2]));
     gf->meshStatistics.status = GFace::DONE;
     return true;
@@ -1184,6 +1185,7 @@ static inline double dist2(const SPoint2 &p1, const SPoint2 &p2)
   return dx * dx + dy * dy;
 }
 
+/*
 static void printMesh1d(int iEdge, int seam, std::vector<SPoint2> &m)
 {
   printf("Mesh1D for edge %d seam %d\n", iEdge, seam);
@@ -1191,6 +1193,7 @@ static void printMesh1d(int iEdge, int seam, std::vector<SPoint2> &m)
     printf("%12.5E %12.5E\n", m[i].x(), m[i].y());
   }
 }
+*/
 
 static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
                                            std::vector<BDS_Point*> &result,
@@ -1484,7 +1487,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     for(std::map<BDS_Point*, MVertex*>::iterator it = recoverMap.begin();
 	it != recoverMap.end(); it++){
       vv[i++] = it->second;
-    }    
+    }
     gf->triangles.push_back(new MTriangle(vv[0], vv[1], vv[2]));
     gf->meshStatistics.status = GFace::DONE;
     return true;
@@ -2018,7 +2021,7 @@ void partitionAndRemesh(GFaceCompound *gf)
     GFace *gfc =  gf->model()->getFaceByTag(numf + NF + i );
     meshGFace mgf;
     mgf(gfc);
-  
+
     for(unsigned int j = 0; j < gfc->triangles.size(); ++j){
       MTriangle *t = gfc->triangles[j];
       std::vector<MVertex *> v(3);
@@ -2128,8 +2131,8 @@ void orientMeshGFace::operator()(GFace *gf)
   //do sthg for compound face
   if(gf->geomType() == GEntity::CompoundSurface ) {
     GFaceCompound *gfc = (GFaceCompound*) gf;
-  
-    std::list<GFace*> comp = gfc->getCompounds(); 
+
+    std::list<GFace*> comp = gfc->getCompounds();
     MTriangle *lt = (*comp.begin())->triangles[0];
     SPoint2 c0 = gfc->getCoordinates(lt->getVertex(0));
     SPoint2 c1 = gfc->getCoordinates(lt->getVertex(1));
