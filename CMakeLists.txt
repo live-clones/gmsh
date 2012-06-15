@@ -937,12 +937,22 @@ if(WIN32 OR CYGWIN)
   list(APPEND EXTERNAL_LIBRARIES wsock32 ws2_32)
 endif(WIN32 OR CYGWIN)
 
+# disable compile optimization on some known problematic files
 check_cxx_compiler_flag("-O0" NOOPT)
 if(NOOPT)
   file(GLOB_RECURSE NON_OPTIMIZED_SRC Numeric/robustPredicates.cpp Mesh/BDS.cpp
        Parser/Gmsh.tab.cpp contrib/Tetgen*/*.cxx)
   set_source_files_properties(${NON_OPTIMIZED_SRC} COMPILE_FLAGS "-O0")
 endif(NOOPT)
+
+# force full warnings to encourage everybody to write clean(er) code
+check_cxx_compiler_flag("-Wall" WALL)
+if(WALL)
+  file(GLOB_RECURSE WALL_SRC Common/*.cpp Fltk/*.cpp FunctionSpace/*.cpp
+       Geo/*.cpp Graphics/*.cpp Mesh/*.cpp Numeric/*.cpp Parser/*.cpp
+       Plugin/*.cpp Post/*.cpp Qt/*.cpp Solver/*.cpp)
+  set_source_files_properties(${WALL_SRC} COMPILE_FLAGS "-Wall")
+endif(WALL)
 
 list(SORT CONFIG_OPTIONS)
 set(GMSH_CONFIG_OPTIONS "")
@@ -1070,12 +1080,6 @@ if(WIN32 AND NOT MSVC OR CYGWIN)
 elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS "/STACK:16777216")
 endif(WIN32 AND NOT MSVC OR CYGWIN)
-
-# force full warnings to encourage everybody to write clean(er) code
-check_cxx_compiler_flag("-Wall" WALL)
-if(WALL)
-  set_target_properties(gmsh lib shared PROPERTIES COMPILE_FLAGS "-Wall")
-endif(WALL)
 
 find_program(BISON bison)
 find_program(FLEX flex)
