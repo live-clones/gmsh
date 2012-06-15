@@ -1222,9 +1222,9 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    double beta = CTX::instance()->mesh.smoothRatio;
    double ratio = 1.1;
 
-   double thickness = radMax/4.;
+   double thickness = radMax/3.;
    double rho = radMax;
-   double hwall_n = thickness/30.;
+   double hwall_n = thickness/20.;
    double hwall_t = 2*M_PI*rho/nbPoints; 
    double hfar =  radMax/5.;
    double lc_a = 3.*hwall_t;
@@ -1234,6 +1234,7 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    //dir_t = tangential direction of the disk
    SVector3 dir_a = p1-p0; dir_a.normalize();
    SVector3 dir_n(xyz[0]-p0.x(), xyz[1]-p0.y(), xyz[2]-p0.z()); dir_n.normalize();
+   SVector3 dir_cross  = crossprod(dir_a,dir_n); dir_cross.normalize();
    SVector3 dir_t1, dir_t2, dir_a1, dir_a2; 
    buildOrthoBasis2(dir_n, dir_t1, dir_t2);
    buildOrthoBasis2(dir_a, dir_a1, dir_a2);
@@ -1258,9 +1259,12 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
      curvMetric = buildMetricTangentToCurve(dir_n,lc_n,lc_t); 
    }
    else if (ds > thickness && !onInOutlets){
+     //curvMetric = buildMetricTangentToCurve(dir_n,lc_n,lc_a); 
+     //metr = SMetric3(1./(lc_a*lc_a), 1./(hfar*hfar), 1./(hfar*hfar), dir_a, dir_a1, dir_a2); 
+     //metr = intersection_conserveM1(metr,curvMetric);  
      curvMetric = buildMetricTangentToCurve(dir_n,lc_n,lc_a); 
-     metr = SMetric3(1./(lc_a*lc_a), 1./(hfar*hfar), 1./(hfar*hfar), dir_a, dir_a1, dir_a2);   
-     metr = intersection_conserveM1(metr,curvMetric);
+     metr = SMetric3(1./(lc_a*lc_a), 1./(lc_n*lc_n), 1./(lc_t*lc_t), dir_a, dir_n, dir_cross); 
+     metr = intersection_conserveM1(metr,curvMetric);  
    }
 
    return;
