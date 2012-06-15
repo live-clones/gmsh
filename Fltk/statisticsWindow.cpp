@@ -146,9 +146,9 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
       for(int i = 0; i < 4; i++){
         int ww = 3 * FL_NORMAL_SIZE;
         new Fl_Box
-          (FL_NO_BOX, width - 3 * ww - 2 * WB, 2 * WB + (13 + i) * BH, ww, BH, "Plot:");
+          (FL_NO_BOX, width - 3 * ww - 2 * WB, 2 * WB + (13 + i) * BH, ww, BH, "Plot");
         butt[2 * i] = new Fl_Button
-          (width - 2 * ww - 2 * WB, 2 * WB + (13 + i) * BH, ww, BH, "2D");
+          (width - 2 * ww - 2 * WB, 2 * WB + (13 + i) * BH, ww, BH, "X-Y");
         butt[2 * i + 1] = new Fl_Button
           (width - ww - 2 * WB, 2 * WB + (13 + i) * BH, ww, BH, "3D");
       }
@@ -234,7 +234,7 @@ void statisticsWindow::compute(bool elementQuality)
     std::map<MVertex*, int > vert2Deg;
     for(unsigned int i = 0; i < entities.size(); i++){
       if(entities[i]->dim() < 2 ) continue;
-      //      if(entities[i]->tag() < 100) continue;
+      // if(entities[i]->tag() < 100) continue;
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
 	MElement *e =  entities[i]->getMeshElement(j);
 	for(unsigned int k = 0; k < e->getNumEdges(); k++){

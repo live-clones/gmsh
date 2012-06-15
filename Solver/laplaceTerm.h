@@ -8,19 +8,19 @@
 
 #include "helmholtzTerm.h"
 
-// \nabla \cdot k \nabla U 
+// \nabla \cdot k \nabla U
 class laplaceTerm : public helmholtzTerm<double> {
  protected:
- std::map<MVertex*, SPoint3> *_coordView;
   const int _iField;
+  std::map<MVertex*, SPoint3> *_coordView;
  public:
- laplaceTerm(GModel *gm, int iField, simpleFunction<double> *k,  
+ laplaceTerm(GModel *gm, int iField, simpleFunction<double> *k,
 	     std::map<MVertex*, SPoint3> *coord=NULL)
    : helmholtzTerm<double>(gm, iField, iField, k, 0), _iField(iField), _coordView(coord) {}
  void elementVector(SElement *se, fullVector<double> &m) const
   {
     MElement *e = se->getMeshElement();
-    int nbSF = e->getNumShapeFunctions(); 
+    int nbSF = e->getNumShapeFunctions();
 
     fullMatrix<double> *mat;
     mat = new fullMatrix<double>(nbSF, nbSF);
@@ -42,7 +42,7 @@ class laplaceTerm : public helmholtzTerm<double> {
   }
 };
 
-// a \nabla U 
+// a \nabla U
 class massTerm : public helmholtzTerm<double> {
  public:
   massTerm(GModel *gm, int iField, simpleFunction<double> *a)
