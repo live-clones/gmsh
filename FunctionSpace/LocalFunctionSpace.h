@@ -112,6 +112,7 @@ inline fullVector<double> LocalFunctionSpace::form1(const Jacobian& jac,
 						    double v,
 						    double w){
   return jac.grad(u, v);
+  //! @todo Missing Orientation !!
 }
 
 #endif

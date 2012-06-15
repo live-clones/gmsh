@@ -28,7 +28,7 @@ void LocalFunctionSpace::selectTransform(int form){
     break;
  
   default:
-    throw Exception ("Unknow %d-form", form);
+    throw Exception ("Unknown '%d-form'", form);
     break;
   }
 }

@@ -32,10 +32,14 @@ double LocalFunctionSpaceScalar::interpolate
   if(coef.size() < size)
     throw Exception("Not enough coeficients for interpolation");
 
-  double res = 0;
 
+  fullVector<double> uvw = jac->invMap(x, y);
+  double res             = 0;
+  
   for(int i = 0; i < size; ++i){
     
+    //transform(*jac, uvw(0), uvw(1), 0);
+    //! @todo Interpolation rule ...
   }
 
   return res;
