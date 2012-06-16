@@ -215,79 +215,13 @@ static bool computeCGKernelPolygon(std::map<MVertex*,SPoint3> &coordinates,
       ucg += u(*it,0);
       vcg += u(*it,1);
     }
-    ucg/=nbFinal;
-    vcg/=nbFinal;
+    ucg /= nbFinal;
+    vcg /= nbFinal;
     return true;
   }
   else{
     return false;
-    // Msg::Info("----> No Kernel for polygon: place point at CG polygon");
-    // //place at CG polygon
-    // for(std::vector<MVertex*>::iterator it = cavV.begin() ; it != cavV.end() ; ++it){
-    //   SPoint3 vsp = coordinates[*it];
-    //   ucg += vsp[0];
-    //   vcg += vsp[1];
-    // }
-    // ucg /= nbPts;
-    // vcg /= nbPts;
   }
-}
-
-static SPoint3 myNeighVert(MVertex *vCav, std::map<MVertex*,SPoint3> &coordinates,
-			   std::vector<MElement*> &vTri)
-{
-  std::set<MVertex*> vN;
-  vN.clear();
-  for(unsigned int i = 0; i  < vTri.size() ; i++) {
-    MTriangle *t = (MTriangle*) vTri[i];
-    for(int iV = 0; iV < 3; iV++) {
-      MVertex *v = t->getVertex(iV);
-      //if (v != vCav && v->onWhat()->dim() < 2) vN.insert(v);
-      if (v->onWhat()->dim() < 2) vN.insert(v);
-    }
-  }
-  if (vN.size()!=3){
-    SPoint3 vsp = coordinates[vCav];
-    return SPoint3(vsp.x(), vsp.y(), 0.0);
-  }
-
-  double ucg = 0.0;
-  double vcg = 0.0;
-  std::set<MVertex*>::iterator it = vN.begin();
-  for (; it!= vN.end(); it++){
-    SPoint3 vsp = coordinates[*it];
-    ucg += vsp.x();
-    vcg += vsp.y();
-  }
-  ucg/=3.0;  vcg/=3.0;
-  return SPoint3(ucg,vcg, 0.0);
-
-  // std::set<MVertex*>::iterator it = vN.begin();
-  // MVertex *v1 = *it; it++;
-  // MVertex *v2 = *it;
-  // SPoint3 uv0 = coordinates[vCav];
-  // SPoint3 uv1 = coordinates[v1];
-  // SPoint3 uv2 = coordinates[v2];
-  // SVector3 P0 (uv0.x(),uv0.y(), uv0.z());
-  // SVector3 P1 (uv1.x(),uv1.y(), uv1.z());
-  // SVector3 P2 (uv2.x(),uv2.y(), uv2.z());
-  // SVector3 a = P1-P0;
-  // SVector3 b = P2-P0;
-  // double a_para = dot(a,b)/norm(a);
-  // double a_perp = norm(crossprod(a,b))/norm(b);
-  // double theta = myacos(a_para/norm(a));
-  // SVector3 P3,P1b;
-  // if (theta > 0.5*M_PI){
-  //   P3= P0 + (a_para/norm(b))*b;
-  //   P1b = P1 + 1.1*(P3-P1);
-  // }
-  // else{
-  //   P3= P0 + 0.5*(P2-P0);
-  //   P1b = P1 + 1.1*(P3-P1);
-  // }
-  // SPoint3 uv1_new(P1b.x(),P1b.y(),P1b.z());
-  // return uv1_new;
-
 }
 
 static void myPolygon(std::vector<MElement*> &vTri, std::vector<MVertex*> &vPoly)
@@ -333,17 +267,16 @@ static double normalUV(MTriangle *t, std::map<MVertex*, SPoint3> &vCoord)
   SPoint3 v0 = vCoord[t->getVertex(0)];
   SPoint3 v1 = vCoord[t->getVertex(1)];
   SPoint3 v2 = vCoord[t->getVertex(2)];
-  double p0[2] = {v0[0],v0[1]};
-  double p1[2] = {v1[0],v1[1]};
-  double p2[2] = {v2[0],v2[1]};
+  double p0[2] = {v0[0], v0[1]};
+  double p1[2] = {v1[0], v1[1]};
+  double p2[2] = {v2[0], v2[1]};
   double normal =  robustPredicates::orient2d(p0, p1, p2);
 
   // SVector3 P0 (v0.x(),v0.y(), 0.0);
   // SVector3 P1 (v1.x(),v1.y(), 0.0);
   // SVector3 P2 (v2.x(),v2.y(), 0.0);
   // double normal2 = crossprod(P1-P0,P2-P1).z();
-
-  //if (normal != 0.0) normal /= std::abs(normal);
+  // if (normal != 0.0) normal /= std::abs(normal);
 
   return normal;
 }
@@ -382,7 +315,6 @@ static MVertex* findVertexInTri(v2t_cont &adjv, MVertex*v0, MVertex*v1,
 				std::map<MVertex*, SPoint3> &vCoord, double nTot,
 				bool &inverted)
 {
-
   MVertex *v2;
   v2t_cont :: iterator it0 = adjv.find(v0);
   std::vector<MElement*> vTri0 = it0->second;
@@ -404,7 +336,6 @@ static MVertex* findVertexInTri(v2t_cont &adjv, MVertex*v0, MVertex*v1,
   else inverted = false;
 
   return v2;
-
 }
 
 static MTriangle* findInvertedTri(v2t_cont &adjv, MVertex*v0, MVertex*v1, MVertex*v2,
@@ -430,7 +361,7 @@ static MTriangle* findInvertedTri(v2t_cont &adjv, MVertex*v0, MVertex*v1, MVerte
 
 void GFaceCompound::orientFillTris(std::list<MTriangle*> loopfillTris) const
 {
-  //check normal orientations of loopfillTris
+  // check normal orientations of loopfillTris
   bool invertTris = false;
   std::map<MEdge, std::set<MTriangle*>, Less_Edge > edge2tris;
   for(std::list<MTriangle*>::iterator t = loopfillTris.begin();
@@ -504,7 +435,6 @@ void GFaceCompound::printFillTris() const
     fprintf(ftri,"};\n");
     fclose(ftri);
   }
-
 }
 
 void GFaceCompound::fillNeumannBCS_Plane() const
@@ -564,7 +494,7 @@ void GFaceCompound::fillNeumannBCS() const
   fillTris.clear();
   fillNodes.clear();
 
-  //closed interior loops
+  // closed interior loops
   for(std::list<std::list<GEdge*> >::const_iterator iloop = _interior_loops.begin();
       iloop != _interior_loops.end(); iloop++){
     std::list<MTriangle*> loopfillTris;
@@ -580,8 +510,8 @@ void GFaceCompound::fillNeumannBCS() const
       double x=0.;
       double y=0.;
       double z=0.;
-      //EMI- TODO FIND KERNEL OF POLYGON AND PLACE AT CG KERNEL !
-      //IF NO KERNEL -> DO NOT FILL TRIS
+      // EMI- TODO FIND KERNEL OF POLYGON AND PLACE AT CG KERNEL !
+      // IF NO KERNEL -> DO NOT FILL TRIS
       for(int i = 0; i < nbLoop; ++i){
 	MVertex *v0 = orderedLoop[i];
 	MVertex *v1 = (i==nbLoop-1) ? orderedLoop[0]: orderedLoop[i+1];
@@ -624,7 +554,6 @@ void GFaceCompound::fillNeumannBCS() const
   }
 
   printFillTris();
-
 }
 
 bool GFaceCompound::trivial() const
@@ -761,7 +690,7 @@ void GFaceCompound::convexBoundary(double nTot) const
       orderVertices(*it, oVert,coords);
     }
 
-    //find normal of ordered loop
+    // find normal of ordered loop
     MVertex *v0 = oVert[0];
     MVertex *v1 = oVert[1];
     bool inverted;
@@ -776,7 +705,7 @@ void GFaceCompound::convexBoundary(double nTot) const
     double myN = s*crossprod(P1-P0,P2-P1).z();
     SVector3 N (0,0,myN/fabs(myN));
 
-    //start the loop
+    // start the loop
     int nbInv = 0;
     int nbInvTri = 0;
     for(unsigned int i = 0; i < oVert.size(); i++){
@@ -864,14 +793,12 @@ void GFaceCompound::convexBoundary(double nTot) const
 
     }
   }
-
 #endif
 }
 
 bool GFaceCompound::one2OneMap() const
 {
 #if defined(HAVE_MESH)
-
   if(adjv.size() == 0){
     std::vector<MTriangle*> allTri;
     std::list<GFace*>::const_iterator it = _compound.begin();
@@ -913,13 +840,11 @@ bool GFaceCompound::one2OneMap() const
   }
   if (nbRepair == 0) return false;
   else return true;
-
 #endif
 }
 
 bool GFaceCompound::parametrize() const
 {
-
   if (_compound.size() > 1) coherencePatches();
 
   bool paramOK = true;
@@ -1117,7 +1042,6 @@ double GFaceCompound::getSizeH() const
 
 double GFaceCompound::getSizeBB(const std::list<GEdge* > &elist) const
 {
-
   SBoundingBox3d bboxD;
   std::list<GEdge*>::const_iterator it = elist.begin();
   for(; it != elist.end(); it++){
@@ -1219,11 +1143,9 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 			     std::list<GEdge*> &U0, typeOfCompound toc,
                              int allowPartition,
 			     linearSystem<double>* lsys)
-  : GFace(m, tag), _compound(compound),  oct(0), octNew(0), _U0(U0),
-    _toc(toc), _allowPartition(allowPartition), _lsys(lsys)
+  : GFace(m, tag), _compound(compound), _U0(U0), oct(0), octNew(0),
+    _lsys(lsys), _toc(toc), _allowPartition(allowPartition)
 {
-
-
   ONE = new simpleFunction<double>(1.0);
   MONE = new simpleFunction<double>(-1.0);
 
@@ -1272,9 +1194,8 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 			     typeOfCompound toc,
 			     int allowPartition,
 			     linearSystem<double>* lsys)
-  : GFace(m, tag), _compound(compound),  oct(0), octNew(0),
-    _U0(U0), _V0(V0), _U1(U1), _V1(V1),
-    _toc(toc), _allowPartition(allowPartition), _lsys(lsys)
+  : GFace(m, tag), _compound(compound), _U0(U0), _V0(V0), _U1(U1), _V1(V1),
+    oct(0), octNew(0), _lsys(lsys), _toc(toc), _allowPartition(allowPartition)
 {
   ONE = new simpleFunction<double>(1.0);
   MONE = new simpleFunction<double>(-1.0);
@@ -1318,12 +1239,10 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   index = new ANNidx[2];
   dist  = new ANNdist[2];
 #endif
-
 }
 
 GFaceCompound::~GFaceCompound()
 {
-
   for (unsigned int i = 0; i < myParamVert.size(); i++) delete myParamVert[i];
   for (unsigned int i = 0; i < myParamElems.size(); i++) delete myParamElems[i];
 
@@ -1439,7 +1358,6 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
 
 void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
 {
-
   linearSystem<double> *lsys = 0;
   if (_lsys) lsys = _lsys;
   else{
@@ -1726,7 +1644,6 @@ bool GFaceCompound::parametrize_conformal_spectral() const
 
 bool GFaceCompound::parametrize_conformal(int iter, MVertex *v1, MVertex *v2) const
 {
-
   linearSystem<double> *lsys = 0;
 #if defined(HAVE_PETSC) && !defined(HAVE_TAUCS)
   lsys = new linearSystemPETSc<double>;
@@ -1971,8 +1888,9 @@ SPoint2 GFaceCompound::parFromPoint(const SPoint3 &p, bool onSurface) const
 
   return SPoint2(sp.x(), sp.y());
 }
-GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const {
 
+GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
+{
   //printf("in remeshed oct for par =%g %g\n", par1,par2);
 
   //if not meshed yet
@@ -1988,14 +1906,14 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const {
     //fprintf(of, "View \"\"{\n");
 
     std::vector<MElement *> myElems;
-    for (int i = 0; i < triangles.size(); i++) myElems.push_back(triangles[i]);
-    for (int i = 0; i < quadrangles.size(); i++) myElems.push_back(quadrangles[i]);
+    for (unsigned int i = 0; i < triangles.size(); i++) myElems.push_back(triangles[i]);
+    for (unsigned int i = 0; i < quadrangles.size(); i++) myElems.push_back(quadrangles[i]);
 
     std::set<SPoint2> myBCNodes;
-    for (int i = 0; i < myElems.size(); i++){
+    for (unsigned int i = 0; i < myElems.size(); i++){
       MElement *e = myElems[i];
       MVertex *news[4];
-      for (unsigned int j = 0; j < e->getNumVertices(); j++){
+      for (int j = 0; j < e->getNumVertices(); j++){
 	MVertex *v = e->getVertex(j);
 	std::map<MVertex*,MVertex*>::iterator it = _3Dto2D.find(v);
 	MVertex *newv =0;
@@ -2118,7 +2036,6 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const {
       return gp;
     }
   }
-
 }
 
 GPoint GFaceCompound::point(double par1, double par2) const
@@ -2146,7 +2063,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
     }
     double x, y, z;
     SVector3 dXdu, dXdv;
-    bool conv = _rbf->UVStoXYZ(par1, par2,x,y,z, dXdu, dXdv);
+    _rbf->UVStoXYZ(par1, par2,x,y,z, dXdu, dXdv);
     return GPoint(x,y,z);
   }
 
@@ -2225,8 +2142,8 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
   else if (!lt && _mapping == RBF){
     double x, y, z;
     SVector3 dXdu, dXdv  ;
-    bool conv = _rbf->UVStoXYZ(param.x(), param.y(), x,y,z, dXdu, dXdv);
-    return Pair<SVector3, SVector3>(dXdu,dXdv);
+    _rbf->UVStoXYZ(param.x(), param.y(), x, y, z, dXdu, dXdv);
+    return Pair<SVector3, SVector3>(dXdu, dXdv);
   }
 
   double mat[2][2] = {{lt->p2.x() - lt->p1.x(), lt->p3.x() - lt->p1.x()},
@@ -2236,8 +2153,8 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
   if (!det && _mapping == RBF){
     double x, y, z;
     SVector3 dXdu, dXdv  ;
-    bool conv = _rbf->UVStoXYZ(param.x(), param.y(), x,y,z, dXdu, dXdv);
-    return Pair<SVector3, SVector3>(dXdu,dXdv);
+    _rbf->UVStoXYZ(param.x(), param.y(), x, y, z, dXdu, dXdv);
+    return Pair<SVector3, SVector3>(dXdu, dXdv);
   }
 
   SVector3 dXdxi(lt->v2 - lt->v1);
@@ -2378,8 +2295,8 @@ void GFaceCompound::buildOct() const
   bbmax += bbeps;
   double origin[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
   double ssize[3] = {bbmax.x() - bbmin.x(),
-                    bbmax.y() - bbmin.y(),
-                    bbmax.z() - bbmin.z()};
+                     bbmax.y() - bbmin.y(),
+                     bbmax.z() - bbmin.z()};
 
   _gfct = new GFaceCompoundTriangle[count];
   const int maxElePerBucket = 15;
@@ -2672,7 +2589,6 @@ void GFaceCompound::coherenceNormals()
 
 void GFaceCompound::buildAllNodes() const
 {
-  int index = 0;
   std::list<GFace*>::const_iterator it = _compound.begin();
   for( ; it != _compound.end() ; ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
@@ -2773,16 +2689,15 @@ void GFaceCompound::printStuff(int iNewton) const
       //         t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
       //         K1, K2, K3);
 
-      double p0[3] = {t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z()};
-      double p1[3] = {t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z()};
-      double p2[3] = {t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z()};
-      double a_3D = fabs(triangle_area(p0, p1, p2));
-      double q0[3] = {it0->second.x(), it0->second.y(), 0.0};
-      double q1[3] = {it1->second.x(), it1->second.y(), 0.0};
-      double q2[3] = {it2->second.x(), it2->second.y(), 0.0};
-      double a_2D = fabs(triangle_area(q0, q1, q2));
-      double area = (a_3D/a_2D); //*(a_3D/a_2D);
-
+      // double p0[3] = {t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z()};
+      // double p1[3] = {t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z()};
+      // double p2[3] = {t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z()};
+      // double a_3D = fabs(triangle_area(p0, p1, p2));
+      // double q0[3] = {it0->second.x(), it0->second.y(), 0.0};
+      // double q1[3] = {it1->second.x(), it1->second.y(), 0.0};
+      // double q2[3] = {it2->second.x(), it2->second.y(), 0.0};
+      // double a_2D = fabs(triangle_area(q0, q1, q2));
+      // double area = (a_3D/a_2D); //*(a_3D/a_2D);
       // Pair<SVector3, SVector3> der = this->firstDer(SPoint2(it0->second.x(),
       //                                                       it0->second.y()));
       // double metric0e = dot(der.first(), der.first());
