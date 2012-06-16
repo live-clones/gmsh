@@ -30,17 +30,17 @@ class ANNkd_tree;
 #define AR_MAX 5 //maximal geometrical aspect ratio
 
 /*
-A GFaceCompound is a model face that is the compound of model faces.
+  A GFaceCompound is a model face that is the compound of model faces.
 
-It is assumed that all the faces of the compound have been meshed
-first. We use this discretization to solve elliptic problems on the
-compound. Those problems enable to compute the parametric
-coordinates of the mesh points. The parametrization of the compound
-consist in a triangulation in the (u,v) space with parameter values at
-nodes.
+  It is assumed that all the faces of the compound have been meshed
+  first. We use this discretization to solve elliptic problems on the
+  compound. Those problems enable to compute the parametric
+  coordinates of the mesh points. The parametrization of the compound
+  consist in a triangulation in the (u,v) space with parameter values at
+  nodes.
 
-The compound can therefore be (re)-meshed using any surface mesh
-generator of gmsh!
+  The compound can therefore be (re)-meshed using any surface mesh
+  generator of gmsh!
 */
 
 class  GFaceCompoundTriangle {
@@ -139,12 +139,12 @@ class GFaceCompound : public GFace {
 		std::list<GEdge*> &U0, typeOfCompound typ = HARMONIC_CIRCLE,
 		int allowPartition=1,
 		linearSystem<double>* lsys =0);
- GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
-	       std::list<GEdge*> &U0, std::list<GEdge*> &V0,
-	       std::list<GEdge*> &U1, std::list<GEdge*> &V1,
-	       typeOfCompound typ = HARMONIC_CIRCLE,
-	       int allowPartition=1,
-	       linearSystem<double>* lsys =0);
+  GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
+                std::list<GEdge*> &U0, std::list<GEdge*> &V0,
+                std::list<GEdge*> &U1, std::list<GEdge*> &V1,
+                typeOfCompound typ = HARMONIC_CIRCLE,
+                int allowPartition=1,
+                linearSystem<double>* lsys =0);
  ~GFaceCompound();
 
   Range<double> parBounds(int i) const

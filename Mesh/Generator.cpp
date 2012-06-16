@@ -247,55 +247,47 @@ void GetStatistics(double stat[50], double quality[4][100])
     for(int i = 0; i < 3; i++)
       for(int j = 0; j < 100; j++)
         quality[i][j] = 0.;
-    double gamma=0., gammaMin=1., gammaMax=0.;
-    double eta=0., etaMin=1., etaMax=0.;
-    double rho=0., rhoMin=1., rhoMax=0.;
-    double disto=0., distoMin=1., distoMax=0.;
+    double gamma = 0., gammaMin = 1., gammaMax = 0.;
+    double eta = 0., etaMin = 1., etaMax = 0.;
+    double rho = 0., rhoMin = 1., rhoMax = 0.;
+    double disto = 0., distoMin=1., distoMax = 0.;
     double jmin = 1.e22, jmax = -1.e22;
-    double N = 0.0;
-    if (m->firstRegion() == m->lastRegion()){
-      for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
-        GetQualityMeasure((*it)->quadrangles, gamma, gammaMin, gammaMax,
-                          eta, etaMin, etaMax, rho, rhoMin, rhoMax,
-                          disto, distoMin, distoMax, jmin,jmax, quality);
-        GetQualityMeasure((*it)->triangles, gamma, gammaMin, gammaMax,
-                          eta, etaMin, etaMax, rho, rhoMin, rhoMax,
-                          disto, distoMin, distoMax, jmin,jmax, quality);
-      }
-      N = stat[7] + stat[8];
-    }
-    else{
+
+    double N = stat[9] + stat[10] + stat[11] + stat[12];
+    if(N){ // if we have 3D elements
       for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
         GetQualityMeasure((*it)->tetrahedra, gamma, gammaMin, gammaMax,
                           eta, etaMin, etaMax, rho, rhoMin, rhoMax,
-                          disto, distoMin, distoMax, jmin,jmax, quality);
+                          disto, distoMin, distoMax, jmin, jmax, quality);
         GetQualityMeasure((*it)->hexahedra, gamma, gammaMin, gammaMax,
                           eta, etaMin, etaMax, rho, rhoMin, rhoMax,
-                          disto, distoMin, distoMax, jmin,jmax, quality);
+                          disto, distoMin, distoMax, jmin, jmax, quality);
         GetQualityMeasure((*it)->prisms, gamma, gammaMin, gammaMax,
                           eta, etaMin, etaMax, rho, rhoMin, rhoMax,
-                          disto, distoMin, distoMax,jmin,jmax, quality);
+                          disto, distoMin, distoMax,jmin, jmax, quality);
         GetQualityMeasure((*it)->pyramids, gamma, gammaMin, gammaMax,
                           eta, etaMin, etaMax, rho, rhoMin, rhoMax,
-                          disto, distoMin, distoMax, jmin,jmax, quality);
+                          disto, distoMin, distoMax, jmin, jmax, quality);
       }
-      N = stat[9] + stat[10] + stat[11] + stat[12];
     }
-    stat[17] = gamma / N ;
-    stat[18] = gammaMin;
-    stat[19] = gammaMax;
-    stat[20] = eta / N ;
-    stat[21] = etaMin;
-    stat[22] = etaMax;
-    stat[23] = rho / N ;
-    stat[24] = rhoMin;
-    stat[25] = rhoMax;
-
-    stat[45] = jmin;
-    stat[46] = jmax;
-    stat[46] = disto / N ;
-    stat[47] = distoMin;
-    stat[48] = distoMax;
+    else{ // 2D elements
+      N = stat[7] + stat[8];
+      for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
+        GetQualityMeasure((*it)->quadrangles, gamma, gammaMin, gammaMax,
+                          eta, etaMin, etaMax, rho, rhoMin, rhoMax,
+                          disto, distoMin, distoMax, jmin, jmax, quality);
+        GetQualityMeasure((*it)->triangles, gamma, gammaMin, gammaMax,
+                          eta, etaMin, etaMax, rho, rhoMin, rhoMax,
+                          disto, distoMin, distoMax, jmin, jmax, quality);
+      }
+    }
+    if(N){
+      stat[17] = gamma / N ;  stat[18] = gammaMin;  stat[19] = gammaMax;
+      stat[20] = eta / N ;    stat[21] = etaMin;    stat[22] = etaMax;
+      stat[23] = rho / N ;    stat[24] = rhoMin;    stat[25] = rhoMax;
+      stat[45] = jmin;        stat[46] = jmax;
+      stat[46] = disto / N ;  stat[47] = distoMin;  stat[48] = distoMax;
+    }
   }
 
 #if defined(HAVE_POST)

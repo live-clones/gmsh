@@ -58,19 +58,21 @@ static void fixEdgeToValue(GEdge *ed, double value, dofManager<double> &myAssemb
   }
 }
 
+/*
 static void printBound(std::vector<MVertex*> &l, int tag)
 {
   char name[256];
   sprintf(name, "myBOUND%d.pos", tag);
   FILE * xyz = fopen(name,"w");
   fprintf(xyz,"View \"\"{\n");
-  for(int i = 0; i < l.size(); i++){
+  for(unsigned int i = 0; i < l.size(); i++){
     MVertex *v = l[i];
     fprintf(xyz,"SP(%g,%g,%g){%d};\n", v->x(), v->y(), v->z(), i);
   }
   fprintf(xyz,"};\n");
   fclose(xyz);
 }
+*/
 
 static bool orderVertices(const std::list<GEdge*> &e, std::vector<MVertex*> &l,
                           std::vector<double> &coord)
@@ -229,8 +231,8 @@ static bool computeCGKernelPolygon(std::map<MVertex*,SPoint3> &coordinates,
     // ucg /= nbPts;
     // vcg /= nbPts;
   }
-
 }
+
 static SPoint3 myNeighVert(MVertex *vCav, std::map<MVertex*,SPoint3> &coordinates,
 			   std::vector<MElement*> &vTri)
 {
@@ -287,6 +289,7 @@ static SPoint3 myNeighVert(MVertex *vCav, std::map<MVertex*,SPoint3> &coordinate
   // return uv1_new;
 
 }
+
 static void myPolygon(std::vector<MElement*> &vTri, std::vector<MVertex*> &vPoly)
 {
   std::vector<MEdge> ePoly;
@@ -405,16 +408,14 @@ static MVertex* findVertexInTri(v2t_cont &adjv, MVertex*v0, MVertex*v1,
 }
 
 static MTriangle* findInvertedTri(v2t_cont &adjv, MVertex*v0, MVertex*v1, MVertex*v2,
-				std::map<MVertex*, SPoint3> &vCoord, double nTot)
+                                  std::map<MVertex*, SPoint3> &vCoord, double nTot)
 {
-
-  v2t_cont :: iterator it = adjv.find(v1);
+  v2t_cont::iterator it = adjv.find(v1);
   std::vector<MElement*> vTri = it->second;
   MTriangle *myTri=NULL;
-  bool inverted;
   for (unsigned int j = 0; j < vTri.size(); j++){
     double normTri = normalUV((MTriangle*)vTri[j], vCoord);
-    if (nTot*normTri < 0.0) { //if inverted
+    if (nTot * normTri < 0.0) {
       MVertex *vt0  = vTri[j]->getVertex(0);
       MVertex *vt1  = vTri[j]->getVertex(1);
       MVertex *vt2  = vTri[j]->getVertex(2);
@@ -425,11 +426,10 @@ static MTriangle* findInvertedTri(v2t_cont &adjv, MVertex*v0, MVertex*v1, MVerte
   }
 
   return myTri;
-
 }
 
-void GFaceCompound::orientFillTris(std::list<MTriangle*> loopfillTris) const{
-
+void GFaceCompound::orientFillTris(std::list<MTriangle*> loopfillTris) const
+{
   //check normal orientations of loopfillTris
   bool invertTris = false;
   std::map<MEdge, std::set<MTriangle*>, Less_Edge > edge2tris;
@@ -480,11 +480,10 @@ void GFaceCompound::orientFillTris(std::list<MTriangle*> loopfillTris) const{
   }
 
   fillTris.insert(fillTris.begin(),loopfillTris.begin(),loopfillTris.end());
-
 }
 
-void GFaceCompound::printFillTris() const{
-
+void GFaceCompound::printFillTris() const
+{
   if(!CTX::instance()->mesh.saveAll) return;
 
   if (fillTris.size() > 0){
@@ -573,7 +572,7 @@ void GFaceCompound::fillNeumannBCS() const
     if (loop != _U0 ){
       std::vector<MVertex*> orderedLoop;
       std::vector<double> coordsLoop;
-      bool success = orderVertices(*iloop, orderedLoop, coordsLoop);
+      orderVertices(*iloop, orderedLoop, coordsLoop);
       int nbLoop = orderedLoop.size();
 
       //--- center of Neumann interior loop
@@ -627,6 +626,7 @@ void GFaceCompound::fillNeumannBCS() const
   printFillTris();
 
 }
+
 bool GFaceCompound::trivial() const
 {
   return false;
@@ -654,7 +654,7 @@ bool GFaceCompound::checkOverlap(std::vector<MVertex *> &vert) const
     std::vector<MVertex*> orderedLoop;
     if (loop != _U0 ){
       std::vector<double> coordsLoop;
-      bool success = orderVertices(*iloop, orderedLoop, coordsLoop);
+      orderVertices(*iloop, orderedLoop, coordsLoop);
     }
     else orderedLoop = _ordered;
     int nbLoop = orderedLoop.size();
@@ -688,7 +688,6 @@ bool GFaceCompound::checkOverlap(std::vector<MVertex *> &vert) const
   }
 
   return has_overlap;
-
 }
 
 // check if the discrete harmonic map is correct by checking that all
@@ -734,8 +733,8 @@ bool GFaceCompound::checkOrientation(int iter, bool moveBoundaries) const
   }
 
   return oriented;
-
 }
+
 void GFaceCompound::convexBoundary(double nTot) const
 {
 #if defined(HAVE_MESH)
@@ -748,7 +747,6 @@ void GFaceCompound::convexBoundary(double nTot) const
     buildVertexToTriangle(allTri, adjv);
   }
 
-  int kk = 0;
   for(std::list<std::list<GEdge*> >::const_iterator it = _interior_loops.begin();
       it != _interior_loops.end(); it++){
 
@@ -817,7 +815,6 @@ void GFaceCompound::convexBoundary(double nTot) const
 	SVector3 a = P1-P0;
 	SVector3 b = P2-P0;
 	double a_para = dot(a,b)/norm(b);
-	double theta = myacos(a_para/norm(a));
 	SVector3 P3,P1b;
 	P3= P0 + (a_para/norm(b))*b;
 	P1b = P1 + 1.2*(P3-P1);
@@ -831,7 +828,6 @@ void GFaceCompound::convexBoundary(double nTot) const
 	SVector3 a = P1-P0;
 	SVector3 b = P2t-P0;
 	double b_para = dot(a,b)/norm(a);
-	double theta = myacos(b_para/norm(b));
 	SVector3 P3,P2b;
 	P3= P0 + (b_para/norm(a))*a;
 	P2b = P2t + 1.3*(P3-P2t);
@@ -859,7 +855,6 @@ void GFaceCompound::convexBoundary(double nTot) const
 	SVector3 a = P1-P0;
 	SVector3 b = P2-P0;
 	double b_para = dot(a,b)/norm(a);
-	double theta = myacos(b_para/norm(b));
 	SVector3 P3,P2b;
 	P3= P0 + (b_para/norm(a))*a;
 	P2b = P2 + 1.2*(P3-P2);
@@ -868,23 +863,6 @@ void GFaceCompound::convexBoundary(double nTot) const
       }
 
     }
-
-    // char name[256];
-    // sprintf(name, "myBC-%d.pos", kk);
-    // FILE * f2 = fopen(name,"w");
-    // fprintf(f2, "View \"\"{\n");
-    // for (int i = 0; i< oVert.size()-1; i++){
-    //   SPoint3 uv0 = coordinates[oVert[i]];
-    //   SPoint3 uv1 = coordinates[oVert[i+1]];
-    //   fprintf(f2, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
-    // 	      uv0.x(),uv0.y(), uv0.z(),
-    // 	      uv1.x(),uv1.y(), uv1.z(),
-    // 	      (double)i, (double)i+1);
-    // }
-    // fprintf(f2,"};\n");
-    // fclose(f2);
-    // kk++;
-
   }
 
 #endif
@@ -986,7 +964,7 @@ bool GFaceCompound::parametrize() const
   // Conformal map parametrization
   else if (_mapping == CONFORMAL){
     std::vector<MVertex *> vert;
-    bool oriented, hasOverlap;
+    bool oriented;
     if (_type == SPECTRAL){
       Msg::Info("Parametrizing surface %d with 'spectral conformal map'", tag());
       parametrize_conformal_spectral();
@@ -1053,7 +1031,7 @@ bool GFaceCompound::parametrize() const
     }
   }
 
-  for (int i= 0; i< fillFaces.size(); i++){
+  for (unsigned int i= 0; i< fillFaces.size(); i++){
     GModel::current()->remove(fillFaces[i]);
   }
 
@@ -1286,8 +1264,8 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   index = new ANNidx[2];
   dist  = new ANNdist[2];
 #endif
-
 }
+
 GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 			     std::list<GEdge*> &U0, std::list<GEdge*> &V0,
 			     std::list<GEdge*> &U1, std::list<GEdge*> &V1,
@@ -2393,7 +2371,7 @@ void GFaceCompound::buildOct() const
     }
   }
 
- // make bounding box larger up to (absolute) geometrical tolerance
+  // make bounding box larger up to (absolute) geometrical tolerance
   double eps = 0.0; //CTX::instance()->geom.tolerance;
   SPoint3 bbmin = bb.min(), bbmax = bb.max(), bbeps(eps, eps, eps);
   bbmin -= bbeps;
@@ -2731,7 +2709,7 @@ int GFaceCompound::genusGeom() const
 
 void GFaceCompound::printStuff(int iNewton) const
 {
-  if( !CTX::instance()->mesh.saveAll) return;
+  if(!CTX::instance()->mesh.saveAll) return;
 
   std::list<GFace*>::const_iterator it = _compound.begin();
 
@@ -2891,9 +2869,10 @@ void GFaceCompound::printStuff(int iNewton) const
 
 // useful for mesh generators ----------------------------------------
 // Intersection of a circle and a plane
-GPoint GFaceCompound::intersectionWithCircle (const SVector3 &n1, const SVector3 &n2, const SVector3 &p, const double &d, double uv[2]) const
+GPoint GFaceCompound::intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
+                                             const SVector3 &p, const double &d,
+                                             double uv[2]) const
 {
-
   SVector3 n = crossprod(n1,n2);
   n.normalize();
   for (int i=-1;i<nbT;i++){
@@ -2991,4 +2970,3 @@ GPoint GFaceCompound::intersectionWithCircle (const SVector3 &n1, const SVector3
 }
 
 #endif
-
