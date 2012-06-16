@@ -3,32 +3,32 @@ Logiciel initial: MMG3D Version 4.0
 Co-auteurs : Cecile Dobrzynski et Pascal Frey.
 Propriétaires :IPB - UPMC -INRIA.
 
-Copyright © 2004-2005-2006-2007-2008-2009-2010-2011, 
+Copyright © 2004-2005-2006-2007-2008-2009-2010-2011,
 diffusé sous les termes et conditions de la licence publique générale de GNU
-Version 3 ou toute version ultérieure.  
+Version 3 ou toute version ultérieure.
 
 Ce fichier est une partie de MMG3D.
 MMG3D est un logiciel libre ; vous pouvez le redistribuer et/ou le modifier
 suivant les termes de la licence publique générale de GNU
 Version 3 ou toute version ultérieure.
-MMG3D est distribué dans l'espoir qu'il sera utile, mais SANS 
-AUCUNE GARANTIE ; sans même garantie de valeur marchande.  
+MMG3D est distribué dans l'espoir qu'il sera utile, mais SANS
+AUCUNE GARANTIE ; sans même garantie de valeur marchande.
 Voir la licence publique générale de GNU pour plus de détails.
-MMG3D est diffusé en espérant qu’il sera utile, 
-mais SANS AUCUNE GARANTIE, ni explicite ni implicite, 
-y compris les garanties de commercialisation ou 
-d’adaptation dans un but spécifique. 
+MMG3D est diffusé en espérant qu’il sera utile,
+mais SANS AUCUNE GARANTIE, ni explicite ni implicite,
+y compris les garanties de commercialisation ou
+d’adaptation dans un but spécifique.
 Reportez-vous à la licence publique générale de GNU pour plus de détails.
-Vous devez avoir reçu une copie de la licence publique générale de GNU 
-en même temps que ce document. 
+Vous devez avoir reçu une copie de la licence publique générale de GNU
+en même temps que ce document.
 Si ce n’est pas le cas, aller voir <http://www.gnu.org/licenses/>.
-/****************************************************************************
+****************************************************************************
 Initial software: MMG3D Version 4.0
 Co-authors: Cecile Dobrzynski et Pascal Frey.
 Owners: IPB - UPMC -INRIA.
 
-Copyright © 2004-2005-2006-2007-2008-2009-2010-2011, 
-spread under the terms and conditions of the license GNU General Public License 
+Copyright © 2004-2005-2006-2007-2008-2009-2010-2011,
+spread under the terms and conditions of the license GNU General Public License
 as published Version 3, or (at your option) any later version.
 
 This file is part of MMG3D
@@ -41,7 +41,7 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
-along with MMG3D. If not, see <http://www.gnu.org/licenses/>.  
+along with MMG3D. If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************/
 typedef struct {
   double        c[3];
@@ -57,7 +57,7 @@ typedef struct {
   int           mark;
   double        qual;
   int           ref,bdryref[4];
-  unsigned char flag,edge,tabedg;  
+  unsigned char flag,edge,tabedg;
 	unsigned char bdryinfo[6];
 } MMG_Tetra;
 typedef MMG_Tetra * MMG_pTetra;
@@ -71,7 +71,7 @@ typedef MMG_Tria * MMG_pTria;
 typedef struct {
   int      np,ver;
   double   *mv,*cold;
-  short    *alpha;  
+  short    *alpha;
 } MMG_Displ;
 typedef MMG_Displ * MMG_pDispl;
 
@@ -81,7 +81,7 @@ typedef struct {
   short          imprim,option,memory,rn,rn2;
   int            bucksiz;
   double   	     delta,dt;
-  double   	     min[3],max[3];  
+  double   	     min[3],max[3];
 
 } MMG_Info;
 
@@ -104,7 +104,7 @@ typedef MMG_Mesh * MMG_pMesh;
 typedef struct {
   int      np,npfixe,npmax,ver;
   double   *met,hmin,hmax;
-  char     *name;  
+  char     *name;
   double   *metold;
   unsigned char offset;
 } MMG_Sol;

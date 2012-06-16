@@ -541,7 +541,7 @@ void smoothing::optimize_face(GFace* gf){
                            gf->additionalVertices.end());
   // clear the list of additional vertices
   gf->additionalVertices.clear();
-	
+
   free(initial_conditions);
   free(variables_scales);
 }
@@ -1145,7 +1145,7 @@ void lpcvt::clip_cells(DocRecord& triangulator,GFace* gf){
 }
 
 void lpcvt::clear(){
-  int i;
+  unsigned int i;
   for(i=0;i<fifo.size();i++){
     fifo.pop();
   }
@@ -1192,7 +1192,7 @@ void lpcvt::print_voronoi1(){
 }
 
 void lpcvt::print_voronoi2(){
-  int i;
+  unsigned int i;
   int j;
   int num;
   SPoint2 p1,p2;
@@ -1322,7 +1322,7 @@ void lpcvt::write(DocRecord& triangulator,GFace* gf,int p){
 }
 
 void lpcvt::eval(DocRecord& triangulator,std::vector<SVector3>& gradients,double& energy,int p){
-  int i;
+  unsigned int i;
   int index;
   int index1;
   int index2;
@@ -2067,7 +2067,7 @@ segment segment_list::get_segment(int index){
 }
 
 bool segment_list::add_segment(int index1,int index2,int reference){
-  int i;
+  unsigned int i;
   for(i=0;i<segments.size();i++){
 	if(segments[i].equal(index1,index2)) return 0;
   }

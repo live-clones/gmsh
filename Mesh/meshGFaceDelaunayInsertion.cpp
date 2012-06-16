@@ -27,8 +27,9 @@ double LIMIT_ = 0.5 * sqrt(2.0) * 1;
 
 int MTri3::radiusNorm = 2;
 
-// This function controls the frontal algorithm
-static bool isBoundary(MTri3 *t, double limit_, int &active){
+/*
+static bool isBoundary(MTri3 *t, double limit_, int &active)
+{
   if (t->isDeleted()) return false;
   for (active = 0; active < 3; active++){
     MTri3 *neigh = t->getNeigh(active);
@@ -36,6 +37,7 @@ static bool isBoundary(MTri3 *t, double limit_, int &active){
   }
   return false;
 }
+*/
 
 static bool isActive(MTri3 *t, double limit_, int &active)
 {
@@ -66,7 +68,6 @@ static bool isActive(MTri3 *t, double limit_, int &i, std::set<MEdge,Less_Edge> 
   return false;
 }
 
-
 static void updateActiveEdges(MTri3 *t, double limit_, std::set<MEdge,Less_Edge> &front)
 {
   if (t->isDeleted()) return;
@@ -80,7 +81,6 @@ static void updateActiveEdges(MTri3 *t, double limit_, std::set<MEdge,Less_Edge>
     }
   }
 }
-
 
 bool circumCenterMetricInTriangle(MTriangle *base, const double *metric,
                                   const std::vector<double> &Us,
@@ -259,7 +259,9 @@ int inCircumCircleAniso(GFace *gf, MTriangle *base,
   return d2 < Radius2;
 }
 
-MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric, const std::vector<double> *Us, const std::vector<double> *Vs, GFace *gf)
+MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric,
+             const std::vector<double> *Us,
+             const std::vector<double> *Vs, GFace *gf)
   : deleted(false), base(t)
 {
   neigh[0] = neigh[1] = neigh[2] = 0;
@@ -290,7 +292,8 @@ MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric, const std::vector<double
 
       double midpoint[2] = {(p1[0]+p2[0]+p3[0])/3.0,(p1[1]+p2[1]+p3[1])/3.0};
 
-      double quadAngle  =  backgroundMesh::current() ? backgroundMesh::current()->getAngle (midpoint[0],midpoint[1],0) : 0.0;
+      double quadAngle = backgroundMesh::current() ?
+        backgroundMesh::current()->getAngle (midpoint[0],midpoint[1],0) : 0.0;
 
       double x0 =  p1[0] * cos(quadAngle) + p1[1] * sin(quadAngle);
       double y0 = -p1[0] * sin(quadAngle) + p1[1] * cos(quadAngle);
@@ -316,7 +319,6 @@ MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric, const std::vector<double
     circumCenterMetricXYZ(pa, pb, pc, *metric, center, uv, circum_radius);
   }
 }
-
 
 int MTri3::inCircumCircle(const double *p) const
 {
@@ -540,7 +542,6 @@ bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
   }
   else{
     recurFindCavityAniso(gf, shell, cavity, metric, param, t, Us, Vs);
-    //    printf("RECURSIVELY FIND A CAVITY %d %d \n",shell.size(),cavity.size());
   }
 
   // check that volume is conserved
@@ -579,13 +580,15 @@ bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
     double d2 = sqrt((it->v[1]->x() - v->x()) * (it->v[1]->x() - v->x()) +
                      (it->v[1]->y() - v->y()) * (it->v[1]->y() - v->y()) +
                      (it->v[1]->z() - v->z()) * (it->v[1]->z() - v->z()));
-    const double MID[3] = {0.5*(it->v[0]->x()+it->v[1]->x()),0.5*(it->v[0]->y()+it->v[1]->y()),0.5*(it->v[0]->z()+it->v[1]->z())};
-    double d3 = sqrt((MID[0] - v->x()) * (MID[0] - v->x()) + (MID[1] - v->y()) * (MID[1] - v->y()) + (MID[2] - v->z()) * (MID[2] - v->z()));
+    const double MID[3] = {0.5*(it->v[0]->x()+it->v[1]->x()),
+                           0.5*(it->v[0]->y()+it->v[1]->y()),
+                           0.5*(it->v[0]->z()+it->v[1]->z())};
+    double d3 = sqrt((MID[0] - v->x()) * (MID[0] - v->x()) +
+                     (MID[1] - v->y()) * (MID[1] - v->y()) +
+                     (MID[2] - v->z()) * (MID[2] - v->z()));
     if ((d1 < LL * .25 || d2 < LL * .25 || d3 < LL * .25) && !force) {
-      //      printf("TOO CLOSE %g %g %g %g %g %g\n",d1,d2,d3,LL,lc,lcBGM);
       onePointIsTooClose = true;
     }
-    // if (t4->getRadius () < LIMIT_ / 2) onePointIsTooClose = true;
 
     newTris[k++] = t4;
     // all new triangles are pushed front in order to be able to
@@ -604,7 +607,6 @@ bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
       !onePointIsTooClose){
     connectTris(new_cavity.begin(), new_cavity.end());
     allTets.insert(newTris, newTris + shell.size());
-    //    printf("shell.size() = %d triangles.size() = %d \n",shell.size(),allTets.size());
     if (activeTets){
       for (std::list<MTri3*>::iterator i = new_cavity.begin(); i != new_cavity.end(); ++i){
         int active_edge;
@@ -617,10 +619,9 @@ bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
     delete [] newTris;
     return true;
   }
+
   // The cavity is NOT star shaped
   else{
-    //    printf("cavity not star shaped %22.15E vs %22.15E\n",oldVolume,newVolume);
-    //    printf("shell.size() = %d triangles.size() = %d \n",shell.size(),allTets.size());
     for (unsigned int i = 0; i < shell.size(); i++) delete newTris[i];
     delete [] newTris;
     ittet = cavity.begin();
@@ -687,26 +688,32 @@ static MTri3* search4Triangle (MTri3 *t, double pt[2],
   SPoint3 q1(pt[0],pt[1],0);
   int ITER = 0;
   while (1){
-    //    printf("%d %d %d\n",t->tri()->getVertex(0)->getIndex(),t->tri()->getVertex(1)->getIndex() ,t->tri()->getVertex(2)->getIndex());
-    SPoint3 q2((Us[t->tri()->getVertex(0)->getIndex()] +  Us[t->tri()->getVertex(1)->getIndex()] + Us[t->tri()->getVertex(2)->getIndex()])/3.0,
-	       (Vs[t->tri()->getVertex(0)->getIndex()] +  Vs[t->tri()->getVertex(1)->getIndex()] + Vs[t->tri()->getVertex(2)->getIndex()])/3.0,
+    SPoint3 q2((Us[t->tri()->getVertex(0)->getIndex()] +
+                Us[t->tri()->getVertex(1)->getIndex()] +
+                Us[t->tri()->getVertex(2)->getIndex()]) / 3.0,
+	       (Vs[t->tri()->getVertex(0)->getIndex()] +
+                Vs[t->tri()->getVertex(1)->getIndex()] +
+                Vs[t->tri()->getVertex(2)->getIndex()]) / 3.0,
 	       0);
     int i;
-    for (i=0;i<3;i++){
-      SPoint3 p1 ( Us[t->tri()->getVertex(i == 0 ? 2 : i-1)->getIndex()], Vs[t->tri()->getVertex(i == 0 ? 2 : i-1)->getIndex()], 0);
-      SPoint3 p2 ( Us[t->tri()->getVertex(i)->getIndex()], Vs[t->tri()->getVertex(i)->getIndex()], 0);
+    for (i = 0; i < 3; i++){
+      SPoint3 p1 (Us[t->tri()->getVertex(i == 0 ? 2 : i-1)->getIndex()],
+                  Vs[t->tri()->getVertex(i == 0 ? 2 : i-1)->getIndex()], 0);
+      SPoint3 p2 (Us[t->tri()->getVertex(i)->getIndex()],
+                  Vs[t->tri()->getVertex(i)->getIndex()], 0);
       double xcc[2];
-      if (intersection_segments(p1,p2,q1,q2,xcc))break;
+      if (intersection_segments(p1, p2, q1, q2, xcc)) break;
     }
-    if (i>=3)break;
-    t =  t->getNeigh(i);
-    if (!t)break;
+    if (i >= 3) break;
+    t = t->getNeigh(i);
+    if (!t) break;
     bool inside = invMapUV(t->tri(), pt, Us, Vs, uv, 1.e-8);
-    if (inside) {return t;}
-    if (ITER++ > AllTris.size())break;
+    if (inside) return t;
+    if (ITER++ > (int)AllTris.size()) break;
   }
   return 0;
-  for(std::set<MTri3*,compareTri3Ptr>::iterator itx =  AllTris.begin(); itx != AllTris.end();++itx){
+  for(std::set<MTri3*,compareTri3Ptr>::iterator itx = AllTris.begin();
+      itx != AllTris.end();++itx){
     if (!(*itx)->isDeleted()){
       inside = invMapUV((*itx)->tri(), pt, Us, Vs, uv, 1.e-8);
       if (inside){
@@ -761,15 +768,15 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
     }
   }
   else {
-    ptin =  search4Triangle (worst, center, Us, Vs, AllTris,uv);
-    //    if (!ptin){
-    //     printf("strange : %g %g seems to be out of the domain for face %d\n",center[0],center[1],gf->tag());
-    //    }
-    if (ptin)inside = true;
+    ptin = search4Triangle (worst, center, Us, Vs, AllTris,uv);
+    // if (!ptin){
+    //   printf("strange : %g %g seems to be out of the domain for face %d\n",
+    //          center[0],center[1],gf->tag());
+    // }
+    if (ptin) inside = true;
   }
 
-  //  if (!ptin)ptin = worst;
-  if ( inside) {
+  if (inside) {
     // we use here local coordinates as real coordinates
     // x,y and z will be computed hereafter
     // Msg::Info("Point is inside");
@@ -799,10 +806,8 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
        (false, gf, v, center, worst, AllTris,ActiveTris, vSizes, vSizesBGM,vMetricsBGM,
         Us, Vs, metric) ) {
 
-      MTriangle *base = worst->tri();
-      Msg::Debug("Point %g %g cannot be inserted because %d", center[0], center[1], p.succeeded() );
-
-      //      Msg::Info("Point %g %g cannot be inserted because %d", center[0], center[1], p.succeeded() );
+      Msg::Debug("Point %g %g cannot be inserted because %d",
+                 center[0], center[1], p.succeeded() );
 
       AllTris.erase(it);
       worst->forceRadius(-1);
@@ -817,8 +822,8 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
     }
   }
   else {
+    /*
     MTriangle *base = worst->tri();
-    /*    
     Msg::Info("Point %g %g is outside (%g %g , %g %g , %g %g)",
 	      center[0], center[1],
 	      Us[base->getVertex(0)->getIndex()],
@@ -834,7 +839,6 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
     return false;
   }
 }
-
 
 void bowyerWatson(GFace *gf, int MAXPNT)
 {
@@ -873,7 +877,8 @@ void bowyerWatson(GFace *gf, int MAXPNT)
         Msg::Debug("%7d points created -- Worst tri radius is %8.3f",
                    vSizes.size(), worst->getRadius());
       double center[2],metric[3],r2;
-      if (worst->getRadius() < /*1.333333/(sqrt(3.0))*/0.5 * sqrt(2.0) || vSizes.size() > MAXPNT) break;
+      if (worst->getRadius() < /*1.333333/(sqrt(3.0))*/0.5 * sqrt(2.0) ||
+          (int)vSizes.size() > MAXPNT) break;
       circUV(worst->tri(), Us, Vs, center, gf);
       MTriangle *base = worst->tri();
       double pa[2] = {(Us[base->getVertex(0)->getIndex()] +
@@ -903,11 +908,9 @@ void bowyerWatson(GFace *gf, int MAXPNT)
 }
 
 /*
-  Let's try a frontal delaunay approach now that the delaunay mesher is stable
-
-  We use the approach of Rebay (JCP 1993) that we extend to anisotropic metrics
-
-  The point isertion is done on the Voronoi Edges
+  Let's try a frontal delaunay approach now that the delaunay mesher is stable.
+  We use the approach of Rebay (JCP 1993) that we extend to anisotropic metrics.
+  The point isertion is done on the Voronoi Edges.
 */
 
 double lengthInfniteNorm(const double p[2], const double q[2],
@@ -925,7 +928,8 @@ double lengthInfniteNorm(const double p[2], const double q[2],
 
 void circumCenterInfinite (MTriangle *base, double quadAngle,
 			   const std::vector<double> &Us,
-			   const std::vector<double> &Vs, double *x) {
+			   const std::vector<double> &Vs, double *x)
+{
   double pa[2] = {Us[base->getVertex(0)->getIndex()],
                   Vs[base->getVertex(0)->getIndex()]};
   double pb[2] = {Us[base->getVertex(1)->getIndex()],
@@ -945,7 +949,6 @@ void circumCenterInfinite (MTriangle *base, double quadAngle,
   x[0] = 0.5 * (xmax-xmin);
   x[1] = 0.5 * (ymax-ymin);
 }
-
 
 static double lengthMetric(const double p[2], const double q[2],
                            const double metric[3])
@@ -987,7 +990,8 @@ double optimalPointFrontal (GFace *gf,
 			  std::vector<double> &vSizes,
 			  std::vector<double> &vSizesBGM,
 			  double newPoint[2],
-			  double metric[3]){
+			  double metric[3])
+{
   double center[2],r2;
   MTriangle *base = worst->tri();
   circUV(base, Us, Vs, center, gf);
@@ -1002,7 +1006,6 @@ double optimalPointFrontal (GFace *gf,
   // compute the middle point of the edge
   int ip1 = active_edge - 1 < 0 ? 2 : active_edge - 1;
   int ip2 = active_edge;
-  int ip3 = (active_edge+1)%3;
 
   double P[2] =  {Us[base->getVertex(ip1)->getIndex()],
 		  Vs[base->getVertex(ip1)->getIndex()]};
@@ -1037,7 +1040,8 @@ double optimalPointFrontal (GFace *gf,
   //  double d = (rhoM_hat + sqrt (rhoM_hat * rhoM_hat - p * p)) / RATIO;
 
   //const double d = 100./RATIO;
-  //  printf("(%g %g) (%g %g) %g %g %g %g %g %g\n",P[0],P[1],Q[0],Q[1],RATIO,p,q,rhoM,rhoM_hat,d);
+  //  printf("(%g %g) (%g %g) %g %g %g %g %g %g\n",
+  //          P[0],P[1],Q[0],Q[1],RATIO,p,q,rhoM,rhoM_hat,d);
   //  printf("size %12.5E\n",vSizesBGM[base->getVertex(ip1)->getIndex()]);
   const double rhoM1 = 0.5*
     (vSizes[base->getVertex(ip1)->getIndex()] +
@@ -1087,9 +1091,11 @@ void optimalPointFrontalB (GFace *gf,
 			   std::vector<double> &vSizes,
 			   std::vector<double> &vSizesBGM,
 			   double newPoint[2],
-			   double metric[3]){
+			   double metric[3])
+{
   // as a starting point, let us use the "fast algo"
-  double d = optimalPointFrontal (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
+  double d = optimalPointFrontal (gf,worst,active_edge,Us,Vs,vSizes,
+                                  vSizesBGM,newPoint,metric);
   int ip1 = active_edge - 1 < 0 ? 2 : active_edge - 1;
   int ip2 = active_edge;
   MVertex *v1 = worst->tri()->getVertex(ip1);
@@ -1134,7 +1140,6 @@ void optimalPointFrontalB (GFace *gf,
   else {
     Msg::Debug("--- Non optimal point found -----------");
   }
-  //    fclose(f);
 }
 
 void bowyerWatsonFrontal(GFace *gf)
@@ -1160,11 +1165,10 @@ void bowyerWatsonFrontal(GFace *gf)
     else if ((*it)->getRadius() < LIMIT_)break;
   }
 
-
   // insert points
   while (1){
-    
-    /*        if(ITER % 100== 0){
+
+    /* if(ITER % 100== 0){
           char name[245];
           sprintf(name,"delfr2d%d-ITER%d.pos",gf->tag(),ITER);
           _printTris (name, AllTris, Us,Vs,true);
@@ -1197,11 +1201,11 @@ void bowyerWatsonFrontal(GFace *gf)
     */
   }
 
-//   char name[245];
-//   sprintf(name,"frontal%d-real.pos", gf->tag());
-//   _printTris (name, AllTris, Us, Vs,false);
-//   sprintf(name,"frontal%d-param.pos", gf->tag());
-//   _printTris (name, AllTris, Us, Vs,true);
+  // char name[245];
+  // sprintf(name,"frontal%d-real.pos", gf->tag());
+  // _printTris (name, AllTris, Us, Vs,false);
+  // sprintf(name,"frontal%d-param.pos", gf->tag());
+  // _printTris (name, AllTris, Us, Vs,true);
   transferDataStructure(gf, AllTris, Us, Vs);
   // in case of boundary layer meshing
 #if defined(HAVE_ANN)
@@ -1217,7 +1221,6 @@ void bowyerWatsonFrontal(GFace *gf)
 #endif
 }
 
-
 void optimalPointFrontalQuad (GFace *gf,
 			      MTri3* worst,
 			      int active_edge,
@@ -1226,7 +1229,8 @@ void optimalPointFrontalQuad (GFace *gf,
 			      std::vector<double> &vSizes,
 			      std::vector<double> &vSizesBGM,
 			      double newPoint[2],
-			      double metric[3]){
+			      double metric[3])
+{
   MTriangle *base = worst->tri();
   int ip1 = active_edge - 1 < 0 ? 2 : active_edge - 1;
   int ip2 = active_edge;
@@ -1290,7 +1294,6 @@ void optimalPointFrontalQuad (GFace *gf,
     npy = temp;
   }
 
-
   newPoint[0] = midpoint[0] + cos(quadAngle) * npx - sin(quadAngle) * npy;
   newPoint[1] = midpoint[1] + sin(quadAngle) * npx + cos(quadAngle) * npy;
 
@@ -1301,7 +1304,6 @@ void optimalPointFrontalQuad (GFace *gf,
   }
 }
 
-
 void optimalPointFrontalQuadB (GFace *gf,
 			       MTri3* worst,
 			       int active_edge,
@@ -1310,9 +1312,8 @@ void optimalPointFrontalQuadB (GFace *gf,
 			       std::vector<double> &vSizes,
 			       std::vector<double> &vSizesBGM,
 			       double newPoint[2],
-			       double metric[3]){
-
-
+			       double metric[3])
+{
   optimalPointFrontalQuad (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
   return;
   MTriangle *base = worst->tri();
@@ -1325,8 +1326,6 @@ void optimalPointFrontalQuadB (GFace *gf,
 		  Vs[base->getVertex(ip1)->getIndex()]};
   double Q[2] =  {Us[base->getVertex(ip2)->getIndex()],
 		  Vs[base->getVertex(ip2)->getIndex()]};
-  double O[2] =  {Us[base->getVertex(ip3)->getIndex()],
-		  Vs[base->getVertex(ip3)->getIndex()]};
   double midpoint[2] = {0.5 * (P[0] + Q[0]), 0.5 * (P[1] + Q[1])};
 
   // compute background mesh data
@@ -1334,7 +1333,7 @@ void optimalPointFrontalQuadB (GFace *gf,
     // double quadAngle  = 0;
   double center[2];
   circumCenterInfinite (base, quadAngle,Us,Vs,center);
-  
+
   // rotate the points with respect to the angle
   double XP1 = 0.5*(Q[0] - P[0]);
   double YP1 = 0.5*(Q[1] - P[1]);
@@ -1357,15 +1356,15 @@ void optimalPointFrontalQuadB (GFace *gf,
     (Q - P) . (x,y)  = 0 --> (-x-tx,2x-y-ty) . (x,y) = 0 --> -x^2 -tx^2 + 2xy - y^2 -t y^2 = 0
     --> t (x^2 + y^2) = -x^2 + 2xy - y^2 --> t = - (x-y)^2 / (x^2 + y^2) = -1 + 2 xy /(x^2+y^2)
 
-    The L2 distance between Q and the line is 
-    
-     h^2 = (-x - tx)^2 + (2x-y-ty)^2 =  x^2 (1+t)^2 +   
-         
+    The L2 distance between Q and the line is
+
+     h^2 = (-x - tx)^2 + (2x-y-ty)^2 =  x^2 (1+t)^2 +
+
 
    */
 
   if (fabs(xp)>=fabs(yp)){
-    t = -1. + 2*fabs(xp*yp)/(xp*xp + yp*yp); 
+    t = -1. + 2*fabs(xp*yp)/(xp*xp + yp*yp);
     factor = fabs(xp) / sqrt(xp*xp+yp*yp);
   }
   else {
@@ -1386,10 +1385,10 @@ void optimalPointFrontalQuadB (GFace *gf,
   N2.normalize();
   if (dot (N2,O3-PMID) < 0) N2 = N2*(-1.0);
 
-  const double rhoM1 = 0.5 * 
+  const double rhoM1 = 0.5 *
     (vSizes[base->getVertex(ip1)->getIndex()] +
      vSizes[base->getVertex(ip2)->getIndex()] ) ;// * RATIO;
-  const double rhoM2 = 0.5 * 
+  const double rhoM2 = 0.5 *
     (vSizesBGM[base->getVertex(ip1)->getIndex()] +
      vSizesBGM[base->getVertex(ip2)->getIndex()] ) ;// * RATIO;
   const double a  = Extend1dMeshIn2dSurfaces() ? std::min(rhoM1, rhoM2) : rhoM2;
@@ -1417,7 +1416,7 @@ void optimalPointFrontalQuadB (GFace *gf,
       else {
 	Msg::Warning("--- NEVER GO THERE -----------");
       }
-            }      
+            }
     }
   }
   double uvt[3] = {newPoint[0],newPoint[1],0.0};
@@ -1431,22 +1430,21 @@ void optimalPointFrontalQuadB (GFace *gf,
   }
   else {
     newPoint[0] = -10000;
-    newPoint[1] = 100000;    
+    newPoint[1] = 100000;
     Msg::Warning("--- Non optimal point found -----------");
   }
   //  buildMetric(gf, newPoint, metric);
 }
 
-
-void buildBackGroundMesh (GFace *gf) {
-
+void buildBackGroundMesh (GFace *gf)
+{
   //  printf("build bak mesh\n");
   quadsToTriangles(gf, 100000);
 
   if (!backgroundMesh::current()) {
     std::vector<MTriangle*> TR;
     //    std::vector<MQuadrangle*> QR;
-    for(int i=0;i<gf->triangles.size();i++){
+    for(unsigned int i = 0; i < gf->triangles.size(); i++){
       TR.push_back(new MTriangle(gf->triangles[i]->getVertex(0),
 				 gf->triangles[i]->getVertex(1),
 				 gf->triangles[i]->getVertex(2)));
@@ -1540,7 +1538,7 @@ void bowyerWatsonFrontalLayers(GFace *gf, bool quad)
 
       if (!ActiveTris.size())break;
 
-      /*      if (1 || gf->tag() == 1900){      
+      /*      if (1 || gf->tag() == 1900){
 	char name[245];
 	sprintf(name,"x_GFace_%d_Layer_%d.pos",gf->tag(),ITER);
 	_printTris (name, AllTris, Us,Vs,true);
@@ -1550,30 +1548,33 @@ void bowyerWatsonFrontalLayers(GFace *gf, bool quad)
 
       MTri3 *worst = (*WORST_ITER);
       ActiveTris.erase(WORST_ITER);
-      if (!worst->isDeleted() && (ITERATION > max_layers ? isActive(worst, LIMIT_, active_edge) : isActive(worst, LIMIT_, active_edge,&_front) ) &&
+      if (!worst->isDeleted() &&
+          (ITERATION > max_layers ? isActive(worst, LIMIT_, active_edge) :
+           isActive(worst, LIMIT_, active_edge,&_front) ) &&
 	  worst->getRadius() > LIMIT_){
-	//	for (active_edge = 0 ; active_edge < 0 ; active_edge ++){
-	//	  if (active_edges[active_edge])break;
-	//	}
-	//	Msg::Info("%7d points created -- Worst tri infinite radius is %8.3f -- front size %6d",
-	//		     vSizes.size(), worst->getRadius(),_front.size());
+	// for (active_edge = 0 ; active_edge < 0 ; active_edge ++){
+	//   if (active_edges[active_edge])break;
+	// }
+	// Msg::Info("%7d points created -- Worst tri infinite radius is %8.3f -- "
+        //           "front size %6d", vSizes.size(), worst->getRadius(),_front.size());
 	if(ITER++ % 5000 == 0)
-	  Msg::Debug("%7d points created -- Worst tri infinite radius is %8.3f -- front size %6d",
-		     vSizes.size(), worst->getRadius(),_front.size());
+	  Msg::Debug("%7d points created -- Worst tri infinite radius is %8.3f -- "
+                     "front size %6d", vSizes.size(), worst->getRadius(),_front.size());
 
 	// compute the middle point of the edge
 	double newPoint[2],metric[3]={1,0,1};
-	if (quad)optimalPointFrontalQuadB (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
-	else optimalPointFrontalB (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
-
+	if (quad) optimalPointFrontalQuadB (gf,worst,active_edge,Us,Vs,vSizes,
+                                            vSizesBGM,newPoint,metric);
+	else optimalPointFrontalB (gf,worst,active_edge,Us,Vs,vSizes,
+                                   vSizesBGM,newPoint,metric);
 
 	//	printf("start INSERT A POINT %g %g \n",newPoint[0],newPoint[1]);
 	insertAPoint(gf, AllTris.end(), newPoint, 0, Us, Vs, vSizes,
 		     vSizesBGM, vMetricsBGM, AllTris, &ActiveTris, worst);
-	//      else if (!worst->isDeleted() && worst->getRadius() > LIMIT_){
-	//	ActiveTrisNotInFront.insert(worst);
-	//      }
-	//	printf("-----------------> size %d\n",AllTris.size());
+	//  else if (!worst->isDeleted() && worst->getRadius() > LIMIT_){
+	//    ActiveTrisNotInFront.insert(worst);
+	//  }
+	//  printf("-----------------> size %d\n",AllTris.size());
 
 	/*
 	  if(ITER % 1== 0){
@@ -1588,28 +1589,27 @@ void bowyerWatsonFrontalLayers(GFace *gf, bool quad)
       }
     }
     _front.clear();
-        it = ActiveTrisNotInFront.begin();
-	//it = AllTris.begin();
-        for ( ; it!=ActiveTrisNotInFront.end();++it){
-	  //    for ( ; it!=AllTris.end();++it){
+    it = ActiveTrisNotInFront.begin();
+    //it = AllTris.begin();
+    for ( ; it!=ActiveTrisNotInFront.end();++it){
+      //    for ( ; it!=AllTris.end();++it){
       if((*it)->getRadius() > LIMIT_ && isActive(*it,LIMIT_,active_edge)){
 	ActiveTris.insert(*it);
 	updateActiveEdges(*it, LIMIT_, _front);
       }
     }
-	//	Msg::Info("%d active tris %d front edges %d not in front",ActiveTris.size(),_front.size(),ActiveTrisNotInFront.size());
-    if (!ActiveTris.size())break;
+    //	Msg::Info("%d active tris %d front edges %d not in front",
+    //            ActiveTris.size(),_front.size(),ActiveTrisNotInFront.size());
+    if (!ActiveTris.size()) break;
   }
 
-     char name[245];
-  //   sprintf(name,"frontal%d-real.pos", gf->tag());
-  //   _printTris (name, AllTris, Us, Vs,false);
-     //     sprintf(name,"frontal%d-param.pos", gf->tag());
-     //     _printTris (name, AllTris, Us, Vs,true);
+  // char name[245];
+  // sprintf(name,"frontal%d-real.pos", gf->tag());
+  // _printTris (name, AllTris, Us, Vs,false);
+  // sprintf(name,"frontal%d-param.pos", gf->tag());
+  // _printTris (name, AllTris, Us, Vs,true);
   transferDataStructure(gf, AllTris, Us, Vs);
   MTri3::radiusNorm = 2;
   LIMIT_ = 0.5 * sqrt(2.0) * 1;
   backgroundMesh::unset();
 }
-
-

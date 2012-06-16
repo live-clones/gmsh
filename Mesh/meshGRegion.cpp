@@ -53,9 +53,10 @@ void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
   	itmap->second = allTets;
       }
     }
-    for (int j=0; j<4; j++){
+    for (int j = 0; j < 4; j++){
       MFace f = ele->getFace(j);
-      std::map<MFace, std::vector<MTetrahedron*>, Less_Face >::iterator itmap = face2Tet.find(f);
+      std::map<MFace, std::vector<MTetrahedron*>, Less_Face >::iterator itmap =
+        face2Tet.find(f);
       if (itmap == face2Tet.end()){
   	std::vector<MTetrahedron*>  oneTet;
   	oneTet.push_back(ele);

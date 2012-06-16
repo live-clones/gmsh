@@ -27,7 +27,7 @@ static void MMG2gmsh(GRegion *gr, MMG_pMesh mmg, std::map<int,MVertex*> &mmg2gms
 {
   std::map<int,MVertex*> kToMVertex;
   for (int k=1;k<= mmg->np ; k++){
-    MMG_pPoint ppt = &mmg->point[k]; 
+    MMG_pPoint ppt = &mmg->point[k];
     if (ppt->tag & M_UNUSED) continue;
     std::map<int,MVertex*>::iterator it = mmg2gmsh.find(ppt->ref);
     if (it == mmg2gmsh.end()){
@@ -36,10 +36,10 @@ static void MMG2gmsh(GRegion *gr, MMG_pMesh mmg, std::map<int,MVertex*> &mmg2gms
       kToMVertex[k] = v;
     }
     else kToMVertex[k] = it->second;
-  }  
-  
-  for (int k=1; k<=mmg->ne; k++) { 
-    MMG_pTetra ptetra = &mmg->tetra[k]; 
+  }
+
+  for (int k=1; k<=mmg->ne; k++) {
+    MMG_pTetra ptetra = &mmg->tetra[k];
     if ( ptetra->v[0] ){
       MVertex *v1 = kToMVertex[ptetra->v[0]];
       MVertex *v2 = kToMVertex[ptetra->v[1]];
@@ -54,26 +54,26 @@ static void MMG2gmsh(GRegion *gr, MMG_pMesh mmg, std::map<int,MVertex*> &mmg2gms
   }
 }
 
-static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol, 
+static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
                      std::map<int,MVertex*> &mmg2gmsh)
 {
   mmg->ne = gr->tetrahedra.size();
   std::set<MVertex*> allVertices;
-  for (int i=0;i< gr->tetrahedra.size() ; i++){
+  for (unsigned int i = 0; i < gr->tetrahedra.size(); i++){
     allVertices.insert(gr->tetrahedra[i]->getVertex(0));
     allVertices.insert(gr->tetrahedra[i]->getVertex(1));
     allVertices.insert(gr->tetrahedra[i]->getVertex(2));
     allVertices.insert(gr->tetrahedra[i]->getVertex(3));
   }
   mmg->np = sol->np = allVertices.size();
-  
+
   std::list<GFace*> f = gr->faces();
 
   mmg->nt = 0;
   for (std::list<GFace*>::iterator it = f.begin(); it != f.end() ; ++it){
     mmg->nt += (*it)->triangles.size();
   }
-  
+
   mmg->npmax = sol->npmax = 1000000;
   mmg->ntmax = 700000;
   mmg->nemax = 7000000;
@@ -85,15 +85,15 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
   mmg->adja = (int*)calloc(4*mmg->nemax+5,sizeof(int));
 
   sol->offset = 6;
-  sol->met = (double*)calloc(sol->npmax+1,sol->offset*sizeof(double)); 
-  sol->metold = (double*)calloc(sol->npmax+1,sol->offset*sizeof(double)); 
+  sol->met = (double*)calloc(sol->npmax+1,sol->offset*sizeof(double));
+  sol->metold = (double*)calloc(sol->npmax+1,sol->offset*sizeof(double));
 
   std::map<MVertex*,std::pair<double,int> > LCS;
   for (std::list<GFace*>::iterator it = f.begin(); it != f.end() ; ++it){
-    for (int i=0;i<(*it)->triangles.size();i++){
+    for (unsigned int i = 0; i < (*it)->triangles.size(); i++){
       MTriangle *t = (*it)->triangles[i];
       double L = t->maxEdge();
-      for (int k=0;k<3;k++){
+      for (int k = 0; k < 3; k++){
 	MVertex *v = t->getVertex(k);
 	std::map<MVertex*,std::pair<double,int> >::iterator itv = LCS.find(v);
 	if (itv != LCS.end()){
@@ -108,13 +108,13 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
   }
 
   //printf("%d vertices %d on faces\n", (int) allVertices.size(), (int) LCS.size());
-  
+
   int k=1;
   int count = 1;//sol->offset;
   std::map<int,int> gmsh2mmg_num;
   for (std::set<MVertex*>::iterator it = allVertices.begin();
        it != allVertices.end(); ++it){
-    MMG_pPoint ppt = &mmg->point[k]; 
+    MMG_pPoint ppt = &mmg->point[k];
 
     ppt->c[0] = (*it)->x();
     ppt->c[1] = (*it)->y();
@@ -123,7 +123,7 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
     gmsh2mmg_num[(*it)->getNum()] = k;
 
     MVertex *v = *it;
-    double U=0,V=0;
+    double U = 0, V = 0;
     if (v->onWhat()->dim() == 1){
       v->getParameter(0,U);
     }
@@ -131,8 +131,8 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
       v->getParameter(0,U);
       v->getParameter(1,V);
     }
-    //double lc = BGM_MeshSize(v->onWhat(), U,V,v->x(), v->y(), v->z());  
-    SMetric3 m = BGM_MeshMetric(v->onWhat(), U,V,v->x(), v->y(), v->z());  
+    //double lc = BGM_MeshSize(v->onWhat(), U,V,v->x(), v->y(), v->z());
+    SMetric3 m = BGM_MeshMetric(v->onWhat(), U,V,v->x(), v->y(), v->z());
 
     std::map<MVertex*,std::pair<double,int> >::iterator itv = LCS.find(v);
     if (itv != LCS.end()){
@@ -140,7 +140,7 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
       //if (CTX::instance()->mesh.lcExtendFromBoundary){
 	double LL = itv->second.first/itv->second.second;
 	SMetric3 l4(1./(LL*LL));
-	SMetric3 MM = intersection_conserve_mostaniso (l4, m);	
+	SMetric3 MM = intersection_conserve_mostaniso (l4, m);
 	m = MM;
 	//lc = std::min(LL,lc);
 	//      }
@@ -153,16 +153,16 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
     sol->met[count++] = m(2,1);
     sol->met[count++] = m(2,2);
     //    printf("%g %g %g %g %g %g\n",m(0,0),m(0,1),m(0,2),m(1,1),m(1,2),m(2,2));
-    
+
     //    for (int i=0; i<sol->offset; i++)  {
     //      sol->met[isol + i] = lc;
       //      printf("sol[%d] = %12.5E\n",isol + i,lc);
     //    }
     k++;
   }
-  
-  for (k=1; k<=mmg->ne; k++) { 
-    MMG_pTetra ptetra = &mmg->tetra[k]; 
+
+  for (k = 1; k <= mmg->ne; k++) {
+    MMG_pTetra ptetra = &mmg->tetra[k];
     ptetra->v[0] = gmsh2mmg_num[gr->tetrahedra[k-1]->getVertex(0)->getNum()];
     ptetra->v[1] = gmsh2mmg_num[gr->tetrahedra[k-1]->getVertex(1)->getNum()];
     ptetra->v[2] = gmsh2mmg_num[gr->tetrahedra[k-1]->getVertex(2)->getNum()];
@@ -172,27 +172,28 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
 
   k = 1;
   for (std::list<GFace*>::iterator it = f.begin(); it != f.end() ; ++it){
-    for (int i=0;i<(*it)->triangles.size();i++){
-      MMG_pTria ptriangle = &mmg->tria[k]; 
+    for (unsigned int i = 0; i < (*it)->triangles.size(); i++){
+      MMG_pTria ptriangle = &mmg->tria[k];
       ptriangle->v[0] = gmsh2mmg_num[(*it)->triangles[i]->getVertex(0)->getNum()];
       ptriangle->v[1] = gmsh2mmg_num[(*it)->triangles[i]->getVertex(1)->getNum()];
       ptriangle->v[2] = gmsh2mmg_num[(*it)->triangles[i]->getVertex(2)->getNum()];
       ptriangle->ref  = (*it)->tag();
       k++;
     }
-  } 
+  }
   //mmg->disp = 0;
-  
+
 }
 
-static void updateSizes(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol, std::map<int,MVertex*> &mmg2gmsh)
+static void updateSizes(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
+                        std::map<int,MVertex*> &mmg2gmsh)
 {
   std::list<GFace*> f = gr->faces();
-  
+
   std::map<MVertex*,std::pair<double,int> > LCS;
   //  if (CTX::instance()->mesh.lcExtendFromBoundary){
     for (std::list<GFace*>::iterator it = f.begin(); it != f.end() ; ++it){
-      for (int i=0;i<(*it)->triangles.size();i++){
+      for (unsigned int i = 0; i < (*it)->triangles.size(); i++){
 	MTriangle *t = (*it)->triangles[i];
 	double L = t->maxEdge();
 	for (int k=0;k<3;k++){
@@ -209,24 +210,24 @@ static void updateSizes(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol, std::map<int,M
       }
     }
     //  }
-  
+
 
     int count = 1;
     for (int k=1 ; k<=mmg->np; k++){
-      MMG_pPoint ppt = &mmg->point[k]; 
+      MMG_pPoint ppt = &mmg->point[k];
       if (ppt->tag & M_UNUSED) continue;
-      
-      SMetric3 m = BGM_MeshMetric(gr, 0,0,ppt->c[0],ppt->c[1],ppt->c[2]);  
-      
+
+      SMetric3 m = BGM_MeshMetric(gr, 0,0,ppt->c[0],ppt->c[1],ppt->c[2]);
+
       std::map<int,MVertex*>::iterator it = mmg2gmsh.find(k);
-      
+
       if (it != mmg2gmsh.end() && CTX::instance()->mesh.lcExtendFromBoundary){
 	std::map<MVertex*,std::pair<double,int> >::iterator itv = LCS.find(it->second);
       if (itv != LCS.end()){
 	double LL = itv->second.first/itv->second.second;
 	SMetric3 l4(1./(LL*LL));
 	//	printf("adding a size %g\n",LL);
-	SMetric3 MM = intersection_conserve_mostaniso (l4, m);	
+	SMetric3 MM = intersection_conserve_mostaniso (l4, m);
 	m = MM;
       }
     }
@@ -235,7 +236,7 @@ static void updateSizes(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol, std::map<int,M
       m(1,1) += 1.e-12;
       m(2,2) += 1.e-12;
     }
-      
+
     sol->met[count++] = m(0,0);
     sol->met[count++] = m(1,0);
     sol->met[count++] = m(2,0);
@@ -244,7 +245,7 @@ static void updateSizes(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol, std::map<int,M
     sol->met[count++] = m(2,2);
   }
   free(sol->metold);
-  sol->metold = (double*)calloc(sol->npmax+1,sol->offset*sizeof(double)); 
+  sol->metold = (double*)calloc(sol->npmax+1,sol->offset*sizeof(double));
 }
 
 static void freeMMG(MMG_pMesh mmgMesh, MMG_pSol mmgSol)
@@ -255,7 +256,7 @@ static void freeMMG(MMG_pMesh mmgMesh, MMG_pSol mmgSol)
   free(mmgMesh->tria);
   free(mmgMesh->tetra);
   free(mmgMesh);
-  //if ( mmgSol->npfixe ){  
+  //if ( mmgSol->npfixe ){
     free(mmgSol->met);
     free(mmgSol->metold);
   //}
@@ -264,38 +265,40 @@ static void freeMMG(MMG_pMesh mmgMesh, MMG_pSol mmgSol)
 
 void refineMeshMMG(GRegion *gr)
 {
-  MMG_pMesh mmg = (MMG_pMesh)calloc(1,sizeof(MMG_Mesh)); 
-  MMG_pSol  sol = (MMG_pSol)calloc(1,sizeof(MMG_Sol)); 
+  MMG_pMesh mmg = (MMG_pMesh)calloc(1,sizeof(MMG_Mesh));
+  MMG_pSol  sol = (MMG_pSol)calloc(1,sizeof(MMG_Sol));
   std::map<int,MVertex*> mmg2gmsh;
   gmsh2MMG (gr, mmg, sol,mmg2gmsh);
-  
+
   int iterMax = 11;
   for (int ITER=0;ITER<iterMax;ITER++){
-    int nT =  mmg->ne; 
+    int nT =  mmg->ne;
 
     int verb_mmg = (Msg::GetVerbosity() > 9) ? -1 : 0;
     int opt[9] = {1,0,64,0,0,0, verb_mmg , 0,0};
     Msg::Debug("-------- GMSH LAUNCHES MMG3D ---------------");
-    mmg3d::MMG_mmg3dlib(opt,mmg,sol); 
+    mmg3d::MMG_mmg3dlib(opt,mmg,sol);
     Msg::Debug("-------- MG3D TERMINATED -------------------");
     Msg::Info("MMG3D succeeded (ITER=%d) %d vertices %d tetrahedra",
 	      ITER, mmg->np, mmg->ne);
     // Here we should interact with BGM
     updateSizes(gr,mmg, sol,mmg2gmsh);
 
-    int nTnow  = mmg->ne; 
+    int nTnow  = mmg->ne;
     if (fabs((double)(nTnow - nT)) < 0.05 * nT) break;
-  }  
+  }
 
-  //char test[] = "test.mesh";  
+  //char test[] = "test.mesh";
   //MMG_saveMesh(mmg, test);
 
   gr->deleteVertexArrays();
-  for (int i=0;i<gr->tetrahedra.size();++i)delete gr->tetrahedra[i];
+  for (unsigned int i = 0; i < gr->tetrahedra.size();++i)
+    delete gr->tetrahedra[i];
   gr->tetrahedra.clear();
-  for (int i=0;i<gr->mesh_vertices.size();++i)delete gr->mesh_vertices[i];
+  for (unsigned int i = 0; i < gr->mesh_vertices.size(); ++i)
+    delete gr->mesh_vertices[i];
   gr->mesh_vertices.clear();
-  
+
   MMG2gmsh(gr, mmg, mmg2gmsh);
   freeMMG(mmg, sol);
 }

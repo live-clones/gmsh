@@ -53,7 +53,8 @@ static int diff2 (MElement *q1, MElement *q2)
   return 0;
 }
 
-static int SANITY_(GFace *gf,MQuadrangle *q1, MQuadrangle *q2, int count){
+static int SANITY_(GFace *gf,MQuadrangle *q1, MQuadrangle *q2, int count)
+{
   for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
     MQuadrangle *e1 = gf->quadrangles[i];
     MQuadrangle *e2 = q1;
@@ -458,10 +459,7 @@ static int _removeTwoQuadsNodes(GFace *gf)
   std::set<MElement*>  touched;
   std::set<MVertex*>  vtouched;
   while (it != adj.end()) {
-    bool skip=false;
-    double surfaceRef=0;
     if(it->second.size()==2 && it->first->onWhat()->dim() == 2) {
-      const std::vector<MElement*> &lt = it->second;
       MElement *q1 = it->second[0];
       MElement *q2 = it->second[1];
       if (q1->getNumVertices() == 4 &&
@@ -543,8 +541,8 @@ static bool _isItAGoodIdeaToCollapseThatVertex (GFace *gf,
 						MVertex *v1,
 						MVertex *v2,
 						MVertex *v,
-						double FACT){
-
+						double FACT)
+{
   double surface_old = surfaceFaceUV(q,gf);
   double surface_new = 0;
   //  double worst_quality_old = q->etaShapeMeasure();
@@ -604,16 +602,14 @@ static bool _isItAGoodIdeaToCollapseThatVertex (GFace *gf,
   }
 
   return true;
-
 }
-
 
 static bool _isItAGoodIdeaToMoveThatVertex (GFace *gf,
 					    const std::vector<MElement*> &e1,
 					    MVertex *v1,
 					    const SPoint2 &before,
-					    const SPoint2 &after){
-
+					    const SPoint2 &after)
+{
   double surface_old = 0;
   double surface_new = 0;
 
@@ -663,8 +659,8 @@ static int _quadWithOneVertexOnBoundary (GFace *gf,
 					 MVertex *v1,
 					 MVertex *v2,
 					 MVertex *v3,
-					 MVertex *v4){
-  //return 0;
+					 MVertex *v4)
+{
   if (v1->onWhat()->dim() < 2 &&
       v2->onWhat()->dim() == 2 &&
       v3->onWhat()->dim() == 2 &&
@@ -710,21 +706,12 @@ static int _quadWithOneVertexOnBoundary (GFace *gf,
   return 0;
 }
 
-static int  _countCommon(std::vector<MElement*> &a, std::vector<MElement*> &b) {
-  int count = 0;
-  for (unsigned int i=0;i<a.size();i++){
-    for (unsigned int j=0;j<b.size();j++){
-      if (a[i]==b[j])count++;
-    }
-  }
-  return count;
-}
-
-//see paper from Bunin
-//Guy Bunin (2006) Non-Local Topological Cleanup ,15th International Meshing Roundtable.
-//this is our interpretation of the algorithm.
+// see paper from Bunin Guy Bunin (2006) Non-Local Topological Cleanup ,15th
+// International Meshing Roundtable. This is our interpretation of the
+// algorithm.
 static std::vector<MVertex*> closestPathBetweenTwoDefects (v2t_cont &adj,
-							   v2t_cont :: iterator it) {
+							   v2t_cont :: iterator it)
+{
   // get neighboring vertices
   std::stack<std::vector<MVertex*> > paths;
 
@@ -738,8 +725,8 @@ static std::vector<MVertex*> closestPathBetweenTwoDefects (v2t_cont &adj,
     paths.pop();
     it = adj.find (path[path.size() - 1]);
     std::set<MVertex *> neigh;
-    for (int i = 0; i < it->second.size(); i++){
-      for (int j=0;j<4;j++){
+    for (unsigned int i = 0; i < it->second.size(); i++){
+      for (int j = 0; j < 4; j++){
 	MEdge e = it->second[i]->getEdge(j);
 	if (e.getVertex(0) == it->first) neigh.insert(e.getVertex(1));
 	else if (e.getVertex(1) == it->first) neigh.insert(e.getVertex(0));
@@ -778,7 +765,7 @@ static std::vector<MVertex*> closestPathBetweenTwoDefects (v2t_cont &adj,
 static MVertex * createNewVertex (GFace *gf, SPoint2 p){
   GPoint gp = gf->point(p);
   if (!gp.succeeded()) {
-    //printf("**** ARRG new vertex not created \n"); 
+    //printf("**** ARRG new vertex not created \n");
     return NULL;
   }
   return new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
@@ -820,10 +807,11 @@ void createRegularMesh (GFace *gf,
 			 std::vector<MVertex*> &e34, int sign34,
 			 MVertex *v4, SPoint2 &c4,
 			 std::vector<MVertex*> &e41, int sign41,
-			 std::vector<MQuadrangle*> &q){
+			 std::vector<MQuadrangle*> &q)
+{
   int N = e12.size();
   int M = e23.size();
- 
+
   //create points using transfinite interpolation
 
   std::vector<std::vector<MVertex*> > tab(M+2);
@@ -848,7 +836,7 @@ void createRegularMesh (GFace *gf,
       double v = (double) (j+1)/ ((double)(M+1));
       MVertex *v12 = (sign12 >0) ? e12[i] : e12 [N-1-i];
       MVertex *v23 = (sign23 >0) ? e23[j] : e23 [M-1-j];
-      MVertex *v34 = (sign34 <0) ? e34[i] : e34 [N-1-i]; 
+      MVertex *v34 = (sign34 <0) ? e34[i] : e34 [N-1-i];
       MVertex *v41 = (sign41 <0) ? e41[j] : e41 [M-1-j];
       SPoint2 p12; reparamMeshVertexOnFace(v12, gf, p12);
       SPoint2 p23; reparamMeshVertexOnFace(v23, gf, p23);
@@ -882,9 +870,9 @@ void createRegularMesh (GFace *gf,
 void updateQuadCavity (GFace *gf,
 		       v2t_cont &adj,
 		       std::vector<MElement*> &oldq,
-		       std::vector<MQuadrangle*> &newq){
-
-  for (int i=0;i<oldq.size();i++){
+		       std::vector<MQuadrangle*> &newq)
+{
+  for (unsigned int i = 0; i < oldq.size(); i++){
     gf->quadrangles.erase(std::remove(gf->quadrangles.begin(),
 				      gf->quadrangles.end(),oldq[i]));
     for (int j=0;j<4;j++){
@@ -895,7 +883,7 @@ void updateQuadCavity (GFace *gf,
     }
     //    delete oldq[i];
   }
-  for (int i=0;i<newq.size();i++){
+  for (unsigned int i = 0; i < newq.size(); i++){
     gf->quadrangles.push_back(newq[i]);
     for (int j=0;j<4;j++){
       MVertex *v = newq[i]->getVertex(j);
@@ -913,7 +901,6 @@ void updateQuadCavity (GFace *gf,
   }
 }
 
-
 struct  quadBlob {
   GFace *gf;
   int maxCavitySize;
@@ -926,19 +913,22 @@ struct  quadBlob {
   static fullMatrix<double> M3 ;
   static fullMatrix<double> M5 ;
 
-  quadBlob(v2t_cont &a, std::vector<MVertex*> & path, GFace *g, int maxC) : adj(a),gf(g),maxCavitySize(maxC),iBlob(0)
+  quadBlob(v2t_cont &a, std::vector<MVertex*> & path, GFace *g, int maxC)
+    : gf(g),maxCavitySize(maxC),iBlob(0),adj(a)
   {
     expand_blob(path);
   }
-  inline bool inBlob(MElement* e) const {
+  inline bool inBlob(MElement* e) const
+  {
     return std::find(quads.begin(), quads.end(), e) != quads.end();
   }
-  inline bool inBoundary(MVertex *v, std::vector<MVertex*> &b) const {
+  inline bool inBoundary(MVertex *v, std::vector<MVertex*> &b) const
+  {
     return std::find(b.begin(), b.end(), v) != b.end();
   }
-  inline void setBlobNumber(int number) {iBlob = number;}
-
-  static void computeMatrices(){
+  inline void setBlobNumber(int number) { iBlob = number; }
+  static void computeMatrices()
+  {
     if (matricesDone)return;
     matricesDone = true;
     M3.resize(6,6);
@@ -960,33 +950,33 @@ struct  quadBlob {
     }
     M5.invertInPlace();
   }
-
-  void expand_blob (std::vector<MVertex*> & path) {
+  void expand_blob (std::vector<MVertex*> & path)
+  {
     std::set<MElement*> e;
     e.insert(quads.begin(),quads.end());
-    for (int i=0;i<path.size();i++){
+    for (unsigned int i = 0; i < path.size(); i++){
       v2t_cont :: const_iterator it = adj.find(path[i]);
       e.insert(it->second.begin(),it->second.end());
     }
     quads.clear();
     quads.insert(quads.begin(),e.begin(),e.end());
     std::set<MVertex*> all;
-    for (int i=0;i<quads.size();i++)
-      for (int j=0;j<4;j++)
+    for (unsigned int i = 0; i < quads.size(); i++)
+      for (int j = 0; j < 4; j++)
 	all.insert(quads[i]->getVertex(j));
     nodes.clear();
     nodes.insert(nodes.begin(),all.begin(),all.end());
     bnodes.clear();
   }
-
-  void buildBoundaryNodes(){
+  void buildBoundaryNodes()
+  {
     bnodes.clear();
-    for (int i=0;i<nodes.size();i++){
+    for (unsigned int i = 0; i < nodes.size(); i++){
       v2t_cont :: const_iterator it = adj.find(nodes[i]);
       if (it->first->onWhat()->dim() < 2) bnodes.push_back(nodes[i]);
       else {
 	bool found = false;
-	for (int j=0;j<it->second.size();j++){
+	for (unsigned int j = 0; j < it->second.size(); j++){
 	  if (!inBlob(it->second[j])){
 	    found = true;
 	  }
@@ -997,28 +987,29 @@ struct  quadBlob {
       }
     }
   }
-
-  int topologicalAngle(MVertex*v) const {
+  int topologicalAngle(MVertex*v) const
+  {
     int typical = 0;
     v2t_cont :: const_iterator it = adj.find(v);
     int outside = 0;
-    for (int j=0;j<it->second.size();j++)
-      if (!inBlob(it->second[j]))outside++;
+    for (unsigned int j = 0; j < it->second.size(); j++)
+      if (!inBlob(it->second[j])) outside++;
 
-    if (v->onWhat()->dim() == 1)typical = 2;
-    else if (v->onWhat()->dim() == 0)typical = 3;
+    if (v->onWhat()->dim() == 1) typical = 2;
+    else if (v->onWhat()->dim() == 0) typical = 3;
 
     return outside - 2 + typical;
   }
-  int construct_meshable_blob (int iter) {
+  int construct_meshable_blob (int iter)
+  {
     int blobsize = quads.size();
     //printf("*** starting with a blob of size %d (ITER=%d)\n",blobsize, iter);
     while(1){
-      if(quads.size() > maxCavitySize)return 0;
-      if(quads.size() >= gf->quadrangles.size())return 0;
+      if((int)quads.size() > maxCavitySize) return 0;
+      if(quads.size() >= gf->quadrangles.size()) return 0;
       buildBoundaryNodes();
       int topo_convex_region = 1;
-      for (int i=0; i<bnodes.size();i++){
+      for (unsigned int i = 0; i < bnodes.size(); i++){
 	MVertex *v = bnodes[i];
 	// do not do anything in boundary layers !!!
 	if (v->onWhat()->dim() == 2){
@@ -1033,19 +1024,18 @@ struct  quadBlob {
 	}
       }
       if (topo_convex_region){
-	if (meshable(iter))return 1;
+	if (meshable(iter)) return 1;
 	else expand_blob(bnodes);
       }
-      if (blobsize == quads.size())return 0;
+      if (blobsize == (int)quads.size()) return 0;
       blobsize = quads.size();
     }// while 1
   }
-
-  bool orderBNodes () {
-
+  bool orderBNodes ()
+  {
     MVertex *v = 0;
     std::vector<MVertex*> temp;
-    for (int i=0;i<bnodes.size();i++){
+    for (unsigned int i = 0; i < bnodes.size(); i++){
       if (topologicalAngle(bnodes[i]) > 0){
 	v = bnodes[i];
 	break;
@@ -1058,12 +1048,12 @@ struct  quadBlob {
       v2t_cont :: const_iterator it = adj.find(v);
       int ss = temp.size();
       std::vector<MElement*> elems = it->second;
-      
+
       //EMI: try to orient BNodes the same as quad orientations
-       for (int j=0;j<elems.size();j++){
+       for (unsigned int j = 0; j < elems.size(); j++){
        	 bool found  =false;
       	if(inBlob(elems[j])){
-       	 for (int i=0;i<4;i++){
+       	 for (int i = 0; i < 4; i++){
        	   MVertex *v0 = elems[j]->getVertex(i%4);
        	   MVertex *v1 = elems[j]->getVertex((i+1)%4);
        	   if (v0 == v && inBoundary(v1,bnodes) && !inBoundary(v1,temp)) {
@@ -1076,7 +1066,7 @@ struct  quadBlob {
        }
        if (found) break;
        }
-       
+
        //JF this does not orient quads
       // for (int j=0;j<elems.size();j++){
       // 	bool found = false;
@@ -1104,11 +1094,11 @@ struct  quadBlob {
       // 	if (found)break;
       // }
 
-      if (temp.size() == ss)return false;
-      if (temp.size() == bnodes.size())break;
+       if ((int)temp.size() == ss) return false;
+      if (temp.size() == bnodes.size()) break;
     }
 
-    //change orientation 
+    //change orientation
     // bool oriented = false;
     // MVertex *vB1 = temp[0];
     // MVertex *vB2 = temp[1];
@@ -1121,29 +1111,28 @@ struct  quadBlob {
     // 	}
     // 	if (oriented) break;
     // }
-   // std::vector<MVertex*> temp2;
-   // temp2.push_back(temp[0]);
-   //  if (!oriented) {
-   //    std::reverse(temp.begin(), temp.end());
-   //    for (int i = 0; i< temp.size()-1; i++) temp2.push_back(temp[i]);
-   //    temp = temp2;
-   //  }
-    
+    // std::vector<MVertex*> temp2;
+    // temp2.push_back(temp[0]);
+    // if (!oriented) {
+    //    std::reverse(temp.begin(), temp.end());
+    //    for (int i = 0; i< temp.size()-1; i++) temp2.push_back(temp[i]);
+    //    temp = temp2;
+    // }
+
     bnodes = temp;
     return true;
   }
-
-  void printBlob(int iter, int method){
-
+  void printBlob(int iter, int method)
+  {
     if (!CTX::instance()->mesh.saveAll) return;
     char name[234];
     sprintf(name,"blob%d_%d_%d.pos", iBlob, iter, method);
     FILE *f = fopen(name,"w");
     fprintf(f,"View \"%s\" {\n",name);
-    for (int i=0;i<quads.size();i++){
+    for (unsigned int i = 0; i < quads.size(); i++){
       quads[i]->writePOS(f,true,false,false,false,false,false);
     }
-    for (int i=0;i<bnodes.size();i++){
+    for (unsigned int i = 0; i < bnodes.size(); i++){
       fprintf(f,"SP(%g,%g,%g) {%d};\n",
 	      bnodes[i]->x(),
 	      bnodes[i]->y(),
@@ -1151,16 +1140,13 @@ struct  quadBlob {
     }
     fprintf(f,"};\n");
     fclose(f);
-
   }
-
   void smooth (int);
-
-  bool meshable (int iter) {
- 
+  bool meshable (int iter)
+  {
     int ncorners = 0;
     MVertex *corners[5];
-    for (int i=0;i<bnodes.size();i++){
+    for (unsigned int i = 0; i < bnodes.size(); i++){
       if (topologicalAngle(bnodes[i]) > 0) ncorners ++;
       if (ncorners > 5)return false;
     }
@@ -1173,7 +1159,7 @@ struct  quadBlob {
     if (!orderBNodes () )return false;
     int side = -1;
     int count[5] = {0,0,0,0,0};
-    for (int i=0;i<bnodes.size();i++){
+    for (unsigned int i = 0; i < bnodes.size(); i++){
       if (topologicalAngle(bnodes[i]) > 0){
 	side++;
 	corners[side] = (bnodes[i]);
@@ -1182,7 +1168,7 @@ struct  quadBlob {
     }
 
     if (ncorners == 3){
-      
+
       fullVector<double> rhs(6);
       fullVector<double> result(6);
       rhs(3) = count[0]+1.;
@@ -1240,7 +1226,7 @@ struct  quadBlob {
 			 e012_20, -1,
 			 q);
 
-      createRegularMesh (gf,		     
+      createRegularMesh (gf,
 			 v012,p012,
 			 e012_01, +1,
 			 v01,p01,
@@ -1278,7 +1264,7 @@ struct  quadBlob {
       for (int i=0;i<a2-1;i++)e1_2.push_back(bnodes[i+1 + a1]);
       for (int i=0;i<a1-1;i++)e2_3.push_back(bnodes[i+1 + a1 + a2]);
       for (int i=0;i<a2-1;i++)e3_0.push_back(bnodes[i+1 + a1 + a2 + a1]);
-  
+
       std::vector<MQuadrangle*> q;
       createRegularMesh (gf,
       			 v0,p0,
@@ -1452,7 +1438,7 @@ fullMatrix<double> quadBlob::M5;
 
 static int _defectsRemovalBunin(GFace *gf, int maxCavitySize)
 {
-   
+
   if (maxCavitySize == 0)return 0;
   v2t_cont adj;
   std::vector<MElement*> c;
@@ -1472,7 +1458,7 @@ static int _defectsRemovalBunin(GFace *gf, int maxCavitySize)
   double t2 = Cpu();
   double C = (t2-t1);
   double A=0,B=0;
-  for (int i=0;i<defects.size();i++){
+  for (unsigned int i = 0; i < defects.size(); i++){
     it = adj.find(defects[i]);
     if (it->first->onWhat()->dim() == 2 && it->second.size() != 4 && it->second.size() != 0) {
       double t3 = Cpu();
@@ -1504,7 +1490,6 @@ static int _defectsRemovalBunin(GFace *gf, int maxCavitySize)
 // quad
 static int _splitFlatQuads(GFace *gf, double minQual)
 {
-
   v2t_cont adj;
   buildVertexToElement(gf->triangles,adj);
   buildVertexToElement(gf->quadrangles,adj);
@@ -1513,8 +1498,6 @@ static int _splitFlatQuads(GFace *gf, double minQual)
   std::vector<MQuadrangle*> added_quadrangles;
   std::set<MElement*> deleted_quadrangles;
   while (it != adj.end()) {
-    bool skip=false;
-    double surfaceRef=0;
     // split that guy if too bad
     if(it->second.size()==1 && it->first->onWhat()->dim() == 1) {
       const std::vector<MElement*> &lt = it->second;
@@ -1567,7 +1550,7 @@ static int _splitFlatQuads(GFace *gf, double minQual)
     }
     ++it;
   }
-  for (int i=0;i<gf->quadrangles.size();i++){
+  for (unsigned int i = 0; i < gf->quadrangles.size(); i++){
     if (deleted_quadrangles.find(gf->quadrangles[i]) == deleted_quadrangles.end()){
       added_quadrangles.push_back(gf->quadrangles[i]);
     }
@@ -1609,16 +1592,21 @@ static int _removeDiamonds(GFace *gf)
 	touched.find(v2) == touched.end() &&
 	touched.find(v3) == touched.end() &&
 	touched.find(v4) == touched.end() ) {
-      if (_quadWithOneVertexOnBoundary      (gf,touched,diamonds,deleted,it2->second,it4->second,it1->second,q,v1,v2,v3,v4)){}
-      else if (_quadWithOneVertexOnBoundary (gf,touched,diamonds,deleted,it3->second,it1->second,it2->second,q,v2,v3,v4,v1)){}
-      else if (_quadWithOneVertexOnBoundary (gf,touched,diamonds,deleted,it4->second,it2->second,it3->second,q,v3,v4,v1,v2)){}
-      else if (_quadWithOneVertexOnBoundary (gf,touched,diamonds,deleted,it1->second,it3->second,it4->second,q,v4,v1,v2,v3)){}
+      if (_quadWithOneVertexOnBoundary      (gf,touched,diamonds,deleted,it2->second,
+                                             it4->second,it1->second,q,v1,v2,v3,v4)){}
+      else if (_quadWithOneVertexOnBoundary (gf,touched,diamonds,deleted,it3->second,
+                                             it1->second,it2->second,q,v2,v3,v4,v1)){}
+      else if (_quadWithOneVertexOnBoundary (gf,touched,diamonds,deleted,it4->second,
+                                             it2->second,it3->second,q,v3,v4,v1,v2)){}
+      else if (_quadWithOneVertexOnBoundary (gf,touched,diamonds,deleted,it1->second,
+                                             it3->second,it4->second,q,v4,v1,v2,v3)){}
       else if (v1->onWhat()->dim() == 2 &&
 	       v2->onWhat()->dim() == 2 &&
 	       v3->onWhat()->dim() == 2 &&
 	       v4->onWhat()->dim() == 2 &&
 	       it1->second.size() ==3 &&  it3->second.size() == 3 &&
-	       _isItAGoodIdeaToCollapseThatVertex (gf, it1->second, it3->second, q, v1, v3, v3,10.)){
+	       _isItAGoodIdeaToCollapseThatVertex (gf, it1->second, it3->second,
+                                                   q, v1, v3, v3,10.)){
 	touched.insert(v1);
 	touched.insert(v2);
 	touched.insert(v3);
@@ -1637,7 +1625,8 @@ static int _removeDiamonds(GFace *gf)
 	       v1->onWhat()->dim() == 2 &&
 	       v3->onWhat()->dim() == 2 &&
 	       it1->second.size() ==3 &&  it3->second.size() == 3 &&
-	       _isItAGoodIdeaToCollapseThatVertex (gf, it1->second, it3->second, q, v1, v3, v1,10.)){
+	       _isItAGoodIdeaToCollapseThatVertex (gf, it1->second, it3->second,
+                                                   q, v1, v3, v1,10.)){
 	touched.insert(v1);
 	touched.insert(v2);
 	touched.insert(v3);
@@ -1656,7 +1645,8 @@ static int _removeDiamonds(GFace *gf)
 	       v2->onWhat()->dim() == 2 &&
 	       v4->onWhat()->dim() == 2 &&
 	       it2->second.size() == 3 && it4->second.size() == 3 &&
-	       _isItAGoodIdeaToCollapseThatVertex (gf, it2->second, it4->second, q, v2, v4, v4,10.)){
+	       _isItAGoodIdeaToCollapseThatVertex (gf, it2->second, it4->second,
+                                                   q, v2, v4, v4,10.)){
 	touched.insert(v1);
 	touched.insert(v2);
 	touched.insert(v3);
@@ -1675,7 +1665,8 @@ static int _removeDiamonds(GFace *gf)
 	       v2->onWhat()->dim() == 2 &&
 	       v4->onWhat()->dim() == 2 &&
 	       it2->second.size() == 3 && it4->second.size() == 3 &&
-	       _isItAGoodIdeaToCollapseThatVertex (gf, it2->second, it4->second, q, v2, v4, v2,10.)){
+	       _isItAGoodIdeaToCollapseThatVertex (gf, it2->second, it4->second,
+                                                   q, v2, v4, v2,10.)){
 	touched.insert(v1);
 	touched.insert(v2);
 	touched.insert(v3);
@@ -1714,7 +1705,8 @@ static int _removeDiamonds(GFace *gf)
   return diamonds.size();
 }
 
-int removeDiamonds(GFace *gf){
+int removeDiamonds(GFace *gf)
+{
   int nbRemove = 0;
   while(1){
     int x = _removeDiamonds(gf);
@@ -1725,7 +1717,8 @@ int removeDiamonds(GFace *gf){
   return nbRemove;
 }
 
-int splitFlatQuads(GFace *gf, double q){
+int splitFlatQuads(GFace *gf, double q)
+{
   int nbRemove = 0;
   while(1){
     int x = _splitFlatQuads(gf,q);
@@ -1748,14 +1741,17 @@ struct opti_data_vertex_relocation {
   MVertex *v;
   GFace *gf;
   double minq,eps;
-  opti_data_vertex_relocation (const std::vector<MElement*> & _e, MVertex * _v, GFace *_gf) : e(_e), v(_v), gf(_gf)
+  opti_data_vertex_relocation (const std::vector<MElement*> & _e,
+                               MVertex * _v, GFace *_gf)
+    : e(_e), v(_v), gf(_gf)
   {
     minq = -2;
     eps = minq / (1. - minq);
   }
-  double f() const {
+  double f() const
+  {
     double val = 0.0;
-    for (int i=0;i < e.size();i++){
+    for (unsigned int i = 0; i < e.size(); i++){
       const double q = (e[i]->getNumVertices() == 4) ? e[i]->etaShapeMeasure() :
 	e[i]->gammaShapeMeasure();
       const double dd = (1 + eps) * q - eps;
@@ -1765,7 +1761,8 @@ struct opti_data_vertex_relocation {
     }
     return val;
   }
-  void df(const double &F, const double &U, const double &V, double &dfdu, double &dfdv)  {
+  void df(const double &F, const double &U, const double &V, double &dfdu, double &dfdv)
+  {
     const double eps = 1.e-6;
     set_(U+eps,V);
     const double FU = f();
@@ -1775,7 +1772,8 @@ struct opti_data_vertex_relocation {
     dfdu = -(F-FU)/eps;
     dfdv = -(F-FV)/eps;
   }
-  void set_(double U, double V){
+  void set_(double U, double V)
+  {
     GPoint gp = gf->point(U,V);
     if (!gp.succeeded()) Msg::Error("point not OK \n");
     v->x() = gp.x();
@@ -1786,7 +1784,9 @@ struct opti_data_vertex_relocation {
   }
 };
 
-void bfgs_callback_vertex_relocation (const alglib::real_1d_array& x, double& func, alglib::real_1d_array& grad, void* ptr) {
+void bfgs_callback_vertex_relocation (const alglib::real_1d_array& x,
+                                      double& func, alglib::real_1d_array& grad, void* ptr)
+{
   opti_data_vertex_relocation* w = static_cast<opti_data_vertex_relocation*>(ptr);
   w->set_(x[0],x[1]);
   func = w->f();
@@ -1827,12 +1827,12 @@ static void _relocateVertexOpti(GFace *gf, MVertex *ver,
   minlbfgsresults(state,x,rep);
 
   double minq = 0;
-  for (int i=0;i < data.e.size();i++){
+  for (unsigned int i = 0; i < data.e.size(); i++){
     const double q = (data.e[i]->getNumVertices() == 4) ? data.e[i]->etaShapeMeasure() :
       data.e[i]->gammaShapeMeasure();
     minq = std::min(q,minq);
   }
-  if (minq < 0.01)data.set_(U,V);
+  if (minq < 0.01) data.set_(U,V);
   else printf("OKIDOKI\n");
   //  if (rep.terminationtype != 4){
   //    data.set_(U,V);
@@ -1908,9 +1908,10 @@ static void _relocateVertex(GFace *gf, MVertex *ver,
   }
 }
 
-void quadBlob::smooth (int niter) {
-  for (int i=0;i<niter;i++){
-    for (int j=0;j<nodes.size();j++){
+void quadBlob::smooth (int niter)
+{
+  for (int i = 0; i < niter; i++){
+    for (unsigned int j = 0; j < nodes.size(); j++){
       v2t_cont::iterator it = adj.find(nodes[j]);
       _relocateVertex(gf, it->first, it->second);
     }
@@ -1980,7 +1981,7 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf)
 	  return 0;
 	}
 
-	MQuadrangle *q1A, *q2A, *q1B, *q2B; 
+	MQuadrangle *q1A, *q2A, *q1B, *q2B;
 	if (rot1 > 0.0 && rot2 > 0.0){
 	  q1A = new MQuadrangle (v11,v22,v2,v12);
 	  q2A = new MQuadrangle (v22,v11,v1,v21);
@@ -1996,7 +1997,7 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf)
 	double worst_quality_A = std::min(q1A->etaShapeMeasure(),q2A->etaShapeMeasure());
 	double worst_quality_B = std::min(q1B->etaShapeMeasure(),q2B->etaShapeMeasure());
 
-	bool c1,c2,ca1,ca2,cb1,cb2;
+	bool ca1,ca2,cb1,cb2;
 	double old_surface = surfaceFaceUV(e1,gf) + surfaceFaceUV(e2,gf) ;
 	double new_surface_A = surfaceFaceUV(q1A,gf,&ca1) + surfaceFaceUV(q2A,gf,&ca2) ;
 	double new_surface_B = surfaceFaceUV(q1B,gf,&cb1) + surfaceFaceUV(q2B,gf,&cb2) ;
@@ -2052,7 +2053,8 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf)
   return COUNT;
 }
 
-static int  edgeSwapQuadsForBetterQuality ( GFace *gf ) {
+static int  edgeSwapQuadsForBetterQuality (GFace *gf)
+{
   int COUNT = 0;
   while(1){
     int k = _edgeSwapQuadsForBetterQuality (gf);
@@ -2063,12 +2065,13 @@ static int  edgeSwapQuadsForBetterQuality ( GFace *gf ) {
   return COUNT;
 }
 
-static std::vector<MVertex*> computeBoundingPoints (const std::vector<MElement*> &lt,MVertex *v = 0){
-
+static std::vector<MVertex*> computeBoundingPoints (const std::vector<MElement*> &lt,
+                                                    MVertex *v = 0)
+{
   // get boundary edges
   std::set<MEdge,Less_Edge> edges;
-  for (int i=0;i<lt.size();i++){
-    for (int j=0;j<lt[i]->getNumEdges();j++){
+  for (unsigned int i = 0; i < lt.size(); i++){
+    for (int j = 0; j < lt[i]->getNumEdges(); j++){
       std::set<MEdge,Less_Edge>::iterator it = edges.find(lt[i]->getEdge(j));
       if (it == edges.end())
 	edges.insert(lt[i]->getEdge(j));
@@ -2127,12 +2130,10 @@ static std::vector<MVertex*> computeBoundingPoints (const std::vector<MElement*>
   return result;
 }
 
-
-int postProcessExtraEdges (GFace *gf, std::vector<std::pair<MElement*,MElement*> > &toProcess){
-
+int postProcessExtraEdges (GFace *gf, std::vector<std::pair<MElement*,MElement*> > &toProcess)
+{
   // some pairs of elements that should be recombined are not neighbor elements (see our paper)
   // so we recombine them in another way (adding a new node)
-
 
   Msg::Debug("%d extra edges to be processed",(int)toProcess.size());
 
@@ -2144,7 +2145,7 @@ int postProcessExtraEdges (GFace *gf, std::vector<std::pair<MElement*,MElement*>
 
   std::set<MElement*>deleted;
 
-  for (int i=0; i<toProcess.size() ; i++){
+  for (unsigned int i = 0; i < toProcess.size(); i++){
     MElement *t1 = toProcess[i].first;
     MElement *t2 = toProcess[i].second;
     MVertex *common = 0;
@@ -2177,7 +2178,7 @@ int postProcessExtraEdges (GFace *gf, std::vector<std::pair<MElement*,MElement*>
 	// create a new vertex
 	else {
 	  SPoint2 p;
-	  bool success = reparamMeshVertexOnFace(it->first,gf, p);
+	  reparamMeshVertexOnFace(it->first,gf, p);
 	  MFaceVertex *newVertex = new MFaceVertex (it->first->x(),
 						    it->first->y(),
 						    it->first->z(),
@@ -2231,10 +2232,10 @@ int postProcessExtraEdges (GFace *gf, std::vector<std::pair<MElement*,MElement*>
 	  std::vector<MElement*> newAdj;
 	  newAdj.push_back(q1);
 	  newAdj.push_back(q2);
-	  for (int k=0;k<it->second.size();k++){
+	  for (unsigned int k = 0; k < it->second.size(); k++){
 	    if (it->second[k]->getNumVertices() == 4){
 	      newAdj.push_back(it->second[k]);
-	      for (int vv=0;vv<4;vv++){
+	      for (int vv = 0; vv < 4; vv++){
 		if (it->first == it->second[k]->getVertex(vv))
 		  it->second[k]->setVertex(vv,newVertex);
 	      }
@@ -2450,8 +2451,6 @@ int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
   }
   return nbSwapTot;
 }
-
-
 
 inline double computeEdgeAdimLength(MVertex *v1, MVertex *v2, GFace *f,
                                     const std::vector<double> &Us,
@@ -2690,7 +2689,8 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 	     it->second.first->getNumVertices() == 3){
       for (int i=0;i<2;i++){
 	MVertex *v = it->first.getVertex(i);
-	std::map<MVertex*,std::pair<MElement*,MElement*> > :: iterator itv = makeGraphPeriodic.find(v);
+	std::map<MVertex*,std::pair<MElement*,MElement*> > :: iterator itv =
+          makeGraphPeriodic.find(v);
 	if (itv == makeGraphPeriodic.end()){
 	  makeGraphPeriodic[v] = std::make_pair(it->second.first,(MElement*)0);
 	}
@@ -2725,7 +2725,7 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 
       int *elist = new int [2*ecount];
       int *elen  = new int [ecount];
-      for (int i=0;i<pairs.size();++i){
+      for (unsigned int i = 0; i < pairs.size(); ++i){
 	elist[2*i]   = t2n[pairs[i].t1];
 	elist[2*i+1] = t2n[pairs[i].t2];
 	//elen [i] =  (int) pairs[i].angle;
@@ -2733,9 +2733,9 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 	double angle = atan2(pairs[i].n1->y()-pairs[i].n2->y(),
 			     pairs[i].n1->x()-pairs[i].n2->x());
 
-	double x = .5*(pairs[i].n1->x()+pairs[i].n2->x());
-	double y = .5*(pairs[i].n1->y()+pairs[i].n2->y());
-	double opti = atan2(y,x);
+	//double x = .5*(pairs[i].n1->x()+pairs[i].n2->x());
+	//double y = .5*(pairs[i].n1->y()+pairs[i].n2->y());
+	//double opti = atan2(y,x);
 	//angle -= opti;
 	while (angle < 0 || angle > M_PI/2){
 	  if (angle < 0) angle += M_PI/2;
@@ -2811,8 +2811,9 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 	    }
 	  }
 	  if (removed.size() == 0) return _recombineIntoQuads(gf, 11);
-	  for (int i=0;i<gf->triangles.size();++i){
-	    if (removed.find(gf->triangles[i]) == removed.end())triangles2.push_back(gf->triangles[i]);
+	  for (unsigned int i = 0; i < gf->triangles.size(); ++i){
+	    if (removed.find(gf->triangles[i]) ==
+                removed.end())triangles2.push_back(gf->triangles[i]);
 	    else delete gf->triangles[i];
 	  }
 	  gf->triangles=triangles2;
@@ -2841,7 +2842,6 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 	    MElement *t2 = n2t[i2];
 	    touched.insert(t1);
 	    touched.insert(t2);
-	    int orientation = 0;
 	    MVertex *other = 0;
 	    for(int i = 0; i < 3; i++) {
 	      if (t1->getVertex(0) != t2->getVertex(i) &&
@@ -2871,15 +2871,17 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 	free(elist);
 	pairs.clear();
 	if (recur_level == 0)
-	  Msg::Debug("Perfect Match Succeeded in Quadrangulation (%g sec)",matzeit);
+	  Msg::Debug("Perfect Match Succeeded in Quadrangulation (%g sec)", matzeit);
 	else
-	  Msg::Info(" :-) Perfect Match Succeeded in Quadrangulation after Splits (%g sec)",matzeit);
+	  Msg::Info(" :-) Perfect Match Succeeded in Quadrangulation after Splits (%g sec)",
+                    matzeit);
 
       }
     }
 
 #else
-    Msg::Warning("Gmsh should be compiled with the Blossom IV code and CONCORDE in order to allow the Blossom optimization");
+    Msg::Warning("Gmsh should be compiled with the Blossom IV code and CONCORDE "
+                 "in order to allow the Blossom optimization");
 #endif
   }
 
@@ -2971,31 +2973,43 @@ void recombineIntoQuads(GFace *gf,
 	  double t6 = Cpu();
 	  int maxCavitySize = CTX::instance()->mesh.bunin;
 	  optistatus[4] = _defectsRemovalBunin(gf,maxCavitySize);
-          if(optistatus[4] && saveAll){ sprintf(NAME,"iter%dB.msh",COUNT++); gf->model()->writeMSH(NAME); }
+          if(optistatus[4] && saveAll){
+            sprintf(NAME,"iter%dB.msh",COUNT++); gf->model()->writeMSH(NAME);
+          }
 
 	  double t7 = Cpu();
 	  double t1 = Cpu();
 	  optistatus[0] = splitFlatQuads(gf, .3);
-          if(optistatus[0] && saveAll){ sprintf(NAME,"iter%dSF.msh",COUNT++); gf->model()->writeMSH(NAME);}
+          if(optistatus[0] && saveAll){
+            sprintf(NAME,"iter%dSF.msh",COUNT++); gf->model()->writeMSH(NAME);
+          }
 	  double t2 = Cpu();
 	  optistatus[1] = removeTwoQuadsNodes(gf);
-          if(optistatus[1] && saveAll){ sprintf(NAME,"iter%dTQ.msh",COUNT++); gf->model()->writeMSH(NAME);}
+          if(optistatus[1] && saveAll){
+            sprintf(NAME,"iter%dTQ.msh",COUNT++); gf->model()->writeMSH(NAME);
+          }
 	  double t3 = Cpu();
           optistatus[2] = removeDiamonds(gf);
-          if(optistatus[2] && saveAll){ sprintf(NAME,"iter%dD.msh",COUNT++); gf->model()->writeMSH(NAME); }
+          if(optistatus[2] && saveAll){
+            sprintf(NAME,"iter%dD.msh",COUNT++); gf->model()->writeMSH(NAME);
+          }
+
 	  double t4 = Cpu();
           laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
 	  double t5 = Cpu();
           optistatus[3] = edgeSwapQuadsForBetterQuality(gf);
 
-          if(optistatus[3] && saveAll){ sprintf(NAME,"iter%dS.msh",COUNT++); gf->model()->writeMSH(NAME); }
+          if(optistatus[3] && saveAll){
+            sprintf(NAME,"iter%dS.msh",COUNT++); gf->model()->writeMSH(NAME);
+          }
 	  tFQ += (t2-t1);
 	  tTQ += (t3-t2);
 	  tDI += (t4-t3);
 	  tLA += (t5-t4);
 	  tSW += (t6-t5);
 	  tBU += (t7-t6);
-          if (!(optistatus[0]+optistatus[1]+optistatus[2]+optistatus[3]+optistatus[4])) break;
+          if (!(optistatus[0]+optistatus[1]+optistatus[2]+optistatus[3]+optistatus[4]))
+            break;
 	  bool theSame = true;
 	  for (int i=0;i<5;i++){
 	    if (optistatus[i] != oldoptistatus[i])theSame = false;
@@ -3004,9 +3018,10 @@ void recombineIntoQuads(GFace *gf,
 	  if(theSame)break;
 	  if (ITER++ >= 20)break;
         }
-	Msg::Debug("Opti times FQ(%4.3f) tQ(%4.3f) DI(%4.3f) LA(%4.3f) SW(%4.3f) BUN(%4.3f)",tFQ,tTQ,tDI,tLA,tSW,tBU);
+	Msg::Debug("Opti times FQ(%4.3f) tQ(%4.3f) DI(%4.3f) LA(%4.3f) "
+                   "SW(%4.3f) BUN(%4.3f)",tFQ,tTQ,tDI,tLA,tSW,tBU);
       }
- 
+
       if(haveParam) laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
 
     }
@@ -3029,9 +3044,8 @@ void recombineIntoQuads(GFace *gf,
 
 void quadsToTriangles(GFace *gf, double minqual)
 {
-
   std::vector<MQuadrangle*> qds;
-  for (int i=0;i<gf->quadrangles.size();i++){
+  for (unsigned int i = 0; i < gf->quadrangles.size(); i++){
     MQuadrangle *q = gf->quadrangles[i];
     if (q->etaShapeMeasure() < minqual){
       MTriangle *t11 = new MTriangle (q->getVertex(0),q->getVertex(1),q->getVertex(2));
@@ -3185,24 +3199,21 @@ void Temporary::read_data(std::string file_name)
   int i,j,number;
   double x,y,z;
   MElement*element;
-  PView*view;
   PViewData*data;
   PView::readMSH(file_name,-1);
-  std::vector<PView*> list = PView::list;
-  data = list[0]->getData();
+  data = PView::list[0]->getData();
   for(i = 0;i < data->getNumEntities(0);i++)
   {
     if(data->skipEntity(0,i)) continue;
-    for(j = 0;j < data->getNumElements(0,i);j++)
-	{
-	  if(data->skipElement(0,i,j)) continue;
-	  element = data->getElement(0,i,j);
-	  number = element->getNum();
-	  data->getValue(0,i,j,0,x);
-	  data->getValue(0,i,j,1,y);
-	  data->getValue(0,i,j,2,z);
-	  gradients[number] = SVector3(x,y,z);
-	}
+    for(j = 0;j < data->getNumElements(0,i);j++){
+      if(data->skipElement(0,i,j)) continue;
+      element = data->getElement(0,i,j);
+      number = element->getNum();
+      data->getValue(0,i,j,0,x);
+      data->getValue(0,i,j,1,y);
+      data->getValue(0,i,j,2,z);
+      gradients[number] = SVector3(x,y,z);
+    }
   }
 #endif
 }
@@ -3220,6 +3231,6 @@ void Temporary::quadrilaterize(std::string file_name,double _w1,double _w2,doubl
   for(iterator = model->firstFace();iterator != model->lastFace();iterator++)
   {
     face = *iterator;
-	_recombineIntoQuads(face,1,1);
+    _recombineIntoQuads(face,1,1);
   }
 }

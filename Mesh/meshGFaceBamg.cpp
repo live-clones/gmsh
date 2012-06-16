@@ -32,7 +32,7 @@ Mesh2 *Bamg(Mesh2 *Thh, double * args,double *mm11,double *mm12,double *mm22, bo
 
 
 static void computeMeshMetricsForBamg(GFace *gf, int numV,
-                                      Vertex2 *bamgVertices,  
+                                      Vertex2 *bamgVertices,
                                       double *mm11, double *mm12, double *mm22)
 {
   //  char name[245];
@@ -48,7 +48,7 @@ static void computeMeshMetricsForBamg(GFace *gf, int numV,
     double v = bamgVertices[i][1];
     GPoint gp = gf->point(SPoint2(u, v));
     SMetric3 m = BGM_MeshMetric(gf, u, v, gp.x(), gp.y(), gp.z());
-    
+
     // compute the derivatives of the parametrization
     Pair<SVector3, SVector3> der = gf->firstDer(SPoint2(u, v));
 
@@ -65,7 +65,7 @@ static void computeMeshMetricsForBamg(GFace *gf, int numV,
     bamg::Metric M1(R(0,0),R(1,0),R(1,1));
     mm11[i] = M1.a11;
     mm12[i] = M1.a21;
-    mm22[i] = M1.a22;    
+    mm22[i] = M1.a22;
   }
 }
 
@@ -84,7 +84,7 @@ void meshGFaceBamg(GFace *gf){
       GEdge *gec = (GEdge*)(*it)->getCompound();
       mySet.insert(gec);
     }
-    else{ 
+    else{
       mySet.insert(*it);
     }
     ++it;
@@ -103,17 +103,17 @@ void meshGFaceBamg(GFace *gf){
   std::set<MVertex*> all;
   std::map<int,MVertex*> recover;
   for (unsigned int i = 0; i < gf->triangles.size(); i++){
-    for (unsigned int j = 0; j < 3; j++) 
+    for (unsigned int j = 0; j < 3; j++)
       all.insert(gf->triangles[i]->getVertex(j));
   }
 
-  Vertex2 *bamgVertices = new Vertex2[all.size()]; 
+  Vertex2 *bamgVertices = new Vertex2[all.size()];
   int index = 0;
   for(std::set<MVertex*>::iterator it = all.begin(); it!=all.end(); ++it){
-    if ((*it)->onWhat()->dim() <= 1){  
+    if ((*it)->onWhat()->dim() <= 1){
   //for(std::set<MVertex*>::iterator it = bcVertex.begin(); it!=bcVertex.end(); ++it){
     SPoint2 p;
-    bool success = reparamMeshVertexOnFace(*it, gf, p);
+    reparamMeshVertexOnFace(*it, gf, p);
     bamgVertices[index][0] = p.x();
     bamgVertices[index][1] = p.y();
     bamgVertices[index].lab = index;
@@ -127,18 +127,18 @@ void meshGFaceBamg(GFace *gf){
     //FIXME : SEAMS should have to be taken into account here !!!
     if ((*it)->onWhat()->dim() >= 2){
       SPoint2 p;
-      bool success = reparamMeshVertexOnFace(*it, gf, p);
+      reparamMeshVertexOnFace(*it, gf, p);
       bamgVertices[index][0] = p.x();
       bamgVertices[index][1] = p.y();
       recover[index] = *it;
       (*it)->setIndex(index++);
     }
   }
- 
+
   std::vector<MElement*> myParamElems;
   std::vector<MVertex*> newVert;
   Triangle2 *bamgTriangles = new Triangle2[gf->triangles.size()];
-  for (unsigned int i = 0; i < gf->triangles.size(); i++){    
+  for (unsigned int i = 0; i < gf->triangles.size(); i++){
     int nodes [3] = {gf->triangles[i]->getVertex(0)->getIndex(),
 		     gf->triangles[i]->getVertex(1)->getIndex(),
 		     gf->triangles[i]->getVertex(2)->getIndex()};
@@ -149,8 +149,8 @@ void meshGFaceBamg(GFace *gf){
     double v2(bamgVertices[nodes[1]][1]);
     double v3(bamgVertices[nodes[2]][1]);
     if (hasCompounds){
-      MVertex *vv1 = new MVertex(u1,v1,0.0); 
-      MVertex *vv2 = new MVertex(u2,v2,0.0); 
+      MVertex *vv1 = new MVertex(u1,v1,0.0);
+      MVertex *vv2 = new MVertex(u2,v2,0.0);
       MVertex *vv3 = new MVertex(u3,v3,0.0);
       newVert.push_back(vv1);
       newVert.push_back(vv2);
@@ -166,7 +166,7 @@ void meshGFaceBamg(GFace *gf){
     }
     bamgTriangles[i].init(bamgVertices, nodes, gf->tag());
   }
- 
+
   int numEdges = 0;
   for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); ++it){
       numEdges += (*it)->lines.size();
@@ -177,12 +177,13 @@ void meshGFaceBamg(GFace *gf){
   for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); ++it){
     for (unsigned int i = 0; i < (*it)->lines.size(); ++i){
       int nodes [2] = {(*it)->lines[i]->getVertex(0)->getIndex(),
-   		       (*it)->lines[i]->getVertex(1)->getIndex()};      
+   		       (*it)->lines[i]->getVertex(1)->getIndex()};
       bamgBoundary[count].init(bamgVertices, nodes, (*it)->tag());
-      bamgBoundary[count++].lab = count;
+      bamgBoundary[count].lab = count;
+      count++;
     }
   }
- 
+
   Mesh2 *bamgMesh = new Mesh2 (all.size(), gf->triangles.size(), numEdges,
 			       bamgVertices, bamgTriangles, bamgBoundary);
 
@@ -213,13 +214,13 @@ void meshGFaceBamg(GFace *gf){
     // fclose(fi);
     // //END EMI PRINT TRIS
   }
-  
+
   Mesh2 *refinedBamgMesh = 0;
   int iterMax = 11;
   for (int  k= 0; k < iterMax; k++){
-    
+
     int nbVert = bamgMesh->nv;
-    
+
     double *mm11 = new double[nbVert];
     double *mm12 = new double[nbVert];
     double *mm22 = new double[nbVert];
@@ -228,8 +229,8 @@ void meshGFaceBamg(GFace *gf){
     args[16] = CTX::instance()->mesh.anisoMax;
     args[ 7] = CTX::instance()->mesh.smoothRatio;
     //args[ 21] = 90.0;//cutoffrad = 90 degree
-    computeMeshMetricsForBamg (gf, nbVert, bamgMesh->vertices, mm11,mm12,mm22); 
-    
+    computeMeshMetricsForBamg (gf, nbVert, bamgMesh->vertices, mm11,mm12,mm22);
+
     try{
       refinedBamgMesh = Bamg(bamgMesh, args, mm11, mm12, mm22, false);
       Msg::Info("bamg succeeded %d vertices %d triangles",
@@ -242,7 +243,7 @@ void meshGFaceBamg(GFace *gf){
     delete [] mm11;
     delete [] mm12;
     delete [] mm22;
-    
+
     int nT    = bamgMesh->nt;
     int nTnow = refinedBamgMesh->nt;
 
@@ -250,7 +251,7 @@ void meshGFaceBamg(GFace *gf){
     bamgMesh = refinedBamgMesh;
     if (fabs((double)(nTnow - nT)) < 0.01 * nT) break;
   }
-  
+
   std::map<int,MVertex*> yetAnother;
   for (int i = 0; i < refinedBamgMesh->nv; i++){
     Vertex2 &v = refinedBamgMesh->vertices[i];
@@ -260,12 +261,12 @@ void meshGFaceBamg(GFace *gf){
       // }
       //If point not found because compound edges have been remeshed and boundary triangles have changed
       //then we call our new octree
-      if ( !gp.succeeded() && hasCompounds){ 
+      if ( !gp.succeeded() && hasCompounds){
 	double uvw[3] = {v[0],v[1], 0.0};
 	double UV[3];
 	double initialTol = MElement::getTolerance();
-	MElement::setTolerance(1.e-2); 
-	MElement *e = _octree->find(v[0],v[1], 0.0, -1);  
+	MElement::setTolerance(1.e-2);
+	MElement *e = _octree->find(v[0],v[1], 0.0, -1);
 	MElement::setTolerance(initialTol);
 	if (e){
 	  e->xyz2uvw(uvw,UV);
@@ -291,7 +292,7 @@ void meshGFaceBamg(GFace *gf){
     }
   }
 
-  for (unsigned int i = 0; i < gf->triangles.size(); i++){    
+  for (unsigned int i = 0; i < gf->triangles.size(); i++){
     delete gf->triangles[i];
   }
   gf->triangles.clear();
@@ -302,9 +303,9 @@ void meshGFaceBamg(GFace *gf){
     Vertex2 &v3 = t[2];
     gf->triangles.push_back(new MTriangle(yetAnother[(*refinedBamgMesh)(v1)],
 					  yetAnother[(*refinedBamgMesh)(v2)],
-					  yetAnother[(*refinedBamgMesh)(v3)]));    
+					  yetAnother[(*refinedBamgMesh)(v3)]));
   }
-  
+
   //delete pointers
   if (refinedBamgMesh) delete refinedBamgMesh;
   if ( _octree) delete  _octree;
