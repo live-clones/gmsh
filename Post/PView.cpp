@@ -91,8 +91,8 @@ PView::PView(const std::string &xname, const std::string &yname,
   _options = new PViewOptions(PViewOptions::reference);
   _options->type = PViewOptions::Plot2D;
   _options->axes = 3;
-  //_options->lineWidth = 2.;
-  //_options->pointSize = 4.;
+  _options->lineWidth = 2.;
+  _options->pointSize = 4.;
   _options->axesLabel[0] = xname;
 }
 

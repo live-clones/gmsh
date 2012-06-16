@@ -209,7 +209,7 @@ class FilterDofSet : public FilterDof
   }
   virtual void addDof(std::vector<Dof> &R)
   {
-    for(int i=0;i<R.size();i++)
+    for(unsigned int i=0;i<R.size();i++)
       this->addDof(R[i]);
   }
 };

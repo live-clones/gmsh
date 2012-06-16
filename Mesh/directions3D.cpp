@@ -110,18 +110,18 @@ void Frame_field::init_model(){
   GModel::fiter it;
   std::map<MVertex*,Matrix>::iterator it2;
   Matrix m;
-  	
+
   field.clear();
-  random.clear();	
-	
+  random.clear();
+
   for(it=model->firstFace();it!=model->lastFace();it++)
   {
     gf = *it;
 	init_face(gf);
   }
-	
+
   duplicate = annAllocPts(field.size(),3);
-  
+
   index = 0;
   for(it2=field.begin();it2!=field.end();it2++){
 	vertex = it2->first;
@@ -138,17 +138,18 @@ void Frame_field::init_model(){
 }
 
 void Frame_field::init_face(GFace* gf){
-  int i,j;
+  unsigned int i;
+  int j;
   bool ok;
   SVector3 v1,v2,v3;
   MVertex* vertex;
   MElement* element;
   MElementOctree* octree;
   Matrix m;
-	
+
   backgroundMesh::set(gf);
   octree = backgroundMesh::current()->get_octree();
-	
+
   for(i=0;i<gf->getNumMeshElements();i++){
     element = gf->getMeshElement(i);
 	for(j=0;j<element->getNumVertices();j++){
@@ -185,12 +186,12 @@ double Frame_field::get_size(GFace* gf,double x,double y){
   double ratio;
   double uv[2];
   double tab[3];
-	
+
   uv[0] = x;
   uv[1] = y;
   buildMetric(gf,uv,tab);
   ratio = 1.0/pow(tab[0]*tab[2]-tab[1]*tab[1],0.25);
-  
+
   return ratio*backgroundMesh::current()->operator()(x,y,0.0);
 }
 
@@ -207,7 +208,7 @@ bool Frame_field::translate(GFace* gf,MElementOctree* octree,MVertex* vertex,SVe
   SPoint2 point;
   GPoint gp1;
   GPoint gp2;
-	
+
   ok = true;
   k = 0.1;
   reparamMeshVertexOnFace(vertex,gf,point);
@@ -215,10 +216,10 @@ bool Frame_field::translate(GFace* gf,MElementOctree* octree,MVertex* vertex,SVe
   y = point.y();
   size = get_size(gf,x,y);
   angle = backgroundMesh::current()->getAngle(x,y,0.0);
-  
+
   delta_x = k*size*cos(angle);
   delta_y = k*size*sin(angle);
-  
+
   x1 = x + delta_x;
   y1 = y + delta_y;
   x2 = x + delta_y;
@@ -234,10 +235,10 @@ bool Frame_field::translate(GFace* gf,MElementOctree* octree,MVertex* vertex,SVe
 	y2 = y + delta_x;
 	if(!inside_domain(octree,x2,y2)) ok = false;
   }
-	
+
   if(ok){
 	gp1 = gf->point(x1,y1);
-	gp2 = gf->point(x2,y2);  
+	gp2 = gf->point(x2,y2);
     v1 = SVector3(gp1.x()-vertex->x(),gp1.y()-vertex->y(),gp1.z()-vertex->z());
     v2 = SVector3(gp2.x()-vertex->x(),gp2.y()-vertex->y(),gp2.z()-vertex->z());
   }
@@ -245,7 +246,7 @@ bool Frame_field::translate(GFace* gf,MElementOctree* octree,MVertex* vertex,SVe
     v1 = SVector3(1.0,0.0,0.0);
 	v2 = SVector3(0.0,1.0,0.0);
   }
-	
+
   return ok;
 }
 
@@ -261,27 +262,27 @@ Matrix Frame_field::search(double x,double y,double z){
   query[0] = x;
   query[1] = y;
   query[2] = z;
-	
+
   indices = new ANNidx[1];
   distances = new ANNdist[1];
-	
+
   e = 0.0;
   kd_tree->annkSearch(query,1,indices,distances,e);
   val = indices[0];
-	
+
   annDeallocPt(query);
   delete[] indices;
   delete[] distances;
-  #endif	
-	
+  #endif
+
   return random[val].second;
 }
 
 void Frame_field::print_segment(SPoint3 p1,SPoint3 p2,std::ofstream& file){
-  file << "SL (" 
+  file << "SL ("
   << p1.x() << ", " << p1.y() << ", " << p1.z() << ", "
-  << p2.x() << ", " << p2.y() << ", " << p2.z() << ")" 
-  << "{10, 20};\n";	
+  << p2.x() << ", " << p2.y() << ", " << p2.z() << ")"
+  << "{10, 20};\n";
 }
 
 void Frame_field::print_field1(){
@@ -291,15 +292,15 @@ void Frame_field::print_field1(){
   MVertex* vertex;
   std::map<MVertex*,Matrix>::iterator it;
   Matrix m;
-	
+
   k = 0.1;
   std::ofstream file("field1.pos");
   file << "View \"test\" {\n";
-  
+
   for(it=field.begin();it!=field.end();it++){
     vertex = it->first;
 	m = it->second;
-	
+
 	p = SPoint3(vertex->x(),vertex->y(),vertex->z());
 	p1 = SPoint3(vertex->x()+k*m.get_m11(),vertex->y()+k*m.get_m21(),vertex->z()+k*m.get_m31());
 	p2 = SPoint3(vertex->x()-k*m.get_m11(),vertex->y()-k*m.get_m21(),vertex->z()-k*m.get_m31());
@@ -307,7 +308,7 @@ void Frame_field::print_field1(){
 	p4 = SPoint3(vertex->x()-k*m.get_m12(),vertex->y()-k*m.get_m22(),vertex->z()-k*m.get_m32());
 	p5 = SPoint3(vertex->x()+k*m.get_m13(),vertex->y()+k*m.get_m23(),vertex->z()+k*m.get_m33());
 	p6 = SPoint3(vertex->x()-k*m.get_m13(),vertex->y()-k*m.get_m23(),vertex->z()-k*m.get_m33());
-	
+
 	print_segment(p,p1,file);
 	print_segment(p,p2,file);
 	print_segment(p,p3,file);
@@ -315,12 +316,13 @@ void Frame_field::print_field1(){
 	print_segment(p,p5,file);
 	print_segment(p,p6,file);
   }
-	
+
   file << "};\n";
 }
 
 void Frame_field::print_field2(){
-  int i,j;
+  unsigned int i;
+  int j;
   double k;
   SPoint3 p;
   SPoint3 p1,p2,p3,p4,p5,p6;
@@ -330,11 +332,11 @@ void Frame_field::print_field2(){
   GModel* model = GModel::current();
   GModel::riter it;
   Matrix m;
-	
+
   k = 0.05;
   std::ofstream file("field2.pos");
   file << "View \"test\" {\n";
-		
+
   for(it=model->firstRegion();it!=model->lastRegion();it++)
   {
     gr = *it;
@@ -352,7 +354,7 @@ void Frame_field::print_field2(){
 		  p4 = SPoint3(vertex->x()-k*m.get_m12(),vertex->y()-k*m.get_m22(),vertex->z()-k*m.get_m32());
 		  p5 = SPoint3(vertex->x()+k*m.get_m13(),vertex->y()+k*m.get_m23(),vertex->z()+k*m.get_m33());
 		  p6 = SPoint3(vertex->x()-k*m.get_m13(),vertex->y()-k*m.get_m23(),vertex->z()-k*m.get_m33());
-		  
+
 		  print_segment(p,p1,file);
 		  print_segment(p,p2,file);
 		  print_segment(p,p3,file);
@@ -363,7 +365,7 @@ void Frame_field::print_field2(){
 	  }
 	}
   }
-	
+
   file << "};\n";
 }
 

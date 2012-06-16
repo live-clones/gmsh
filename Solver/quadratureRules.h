@@ -10,7 +10,6 @@
 //
 //
 
-
 #ifndef _QUADRATURERULES_H_
 #define _QUADRATURERULES_H_
 
@@ -74,7 +73,7 @@ class GaussQuadrature : public QuadratureBase
     return npts;
   }
   // copy constructor
-  GaussQuadrature(const GaussQuadrature &other) : info(other.info), order(other.order){}
+  GaussQuadrature(const GaussQuadrature &other) : order(other.order), info(other.info){}
 };
 
 #endif //_QUADRATURERULES_H_

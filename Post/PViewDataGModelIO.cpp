@@ -59,7 +59,7 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
     else // faster since we avoid computing model bounds
       _steps.push_back(new stepData<double>(*_steps.back()));
   }
-  
+
   _steps[step]->setFileName(fileName);
   _steps[step]->setFileIndex(fileIndex);
   _steps[step]->setTime(time);
@@ -229,7 +229,7 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary, bool savemesh)
           fprintf(fp, "2\n\"%s\"\n\"INTERPOLATION_SCHEME\"\n", getName().c_str());
         else
           fprintf(fp, "1\n\"%s\"\n", getName().c_str());
-        
+
         fprintf(fp, "1\n%.16g\n", _steps[step]->getTime());
         fprintf(fp, "3\n%d\n%d\n%d\n", step, numComp, numEnt);
         for(int i = 0; i < _steps[step]->getNumData(); i++){
@@ -323,7 +323,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
   med_type_champ type;
 #if (MED_MAJOR_NUM == 3)
   med_bool localMesh;
-  if(MEDfieldInfo(fid, fileIndex + 1, name, meshName, &localMesh, &type, 
+  if(MEDfieldInfo(fid, fileIndex + 1, name, meshName, &localMesh, &type,
                   &compName[0], &compUnit[0], dtUnit, &numSteps) < 0){
 #else
   if(MEDchampInfo(fid, fileIndex + 1, name, &type, &compName[0], &compUnit[0],
@@ -339,7 +339,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
   int numCompMsh =
     (numComp <= 1) ? 1 : (numComp <= 3) ? 3 : (numComp <= 9) ? 9 : numComp;
 
-  if(numCompMsh > 9) 
+  if(numCompMsh > 9)
     Msg::Warning("More than 9 components in field: you will probably want to force "
                  "the field type to scalar, vector or tensor in the options");
 
@@ -352,14 +352,14 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 #if (MED_MAJOR_NUM == 3)
   const med_geometrie_element eleType[] =
     {MED_NONE, MED_SEG2, MED_TRIA3, MED_QUAD4, MED_TETRA4, MED_HEXA8,
-     MED_PENTA6, MED_PYRA5, MED_SEG3, MED_TRIA6, MED_QUAD9, MED_TETRA10, 
+     MED_PENTA6, MED_PYRA5, MED_SEG3, MED_TRIA6, MED_QUAD9, MED_TETRA10,
      MED_HEXA27, MED_POINT1, MED_QUAD8, MED_HEXA20, MED_PENTA15, MED_PYRA13};
   const int nodesPerEle[] =
     {0, 2, 3, 4, 4, 8, 6, 5, 3, 6, 9, 10, 27, 1, 8, 20, 15, 13};
 #else
   const med_geometrie_element eleType[] =
     {MED_NONE, MED_SEG2, MED_TRIA3, MED_QUAD4, MED_TETRA4, MED_HEXA8,
-     MED_PENTA6, MED_PYRA5, MED_SEG3, MED_TRIA6, MED_TETRA10, 
+     MED_PENTA6, MED_PYRA5, MED_SEG3, MED_TRIA6, MED_TETRA10,
      MED_POINT1, MED_QUAD8, MED_HEXA20, MED_PENTA15, MED_PYRA13};
   const int nodesPerEle[] =
     {0, 2, 3, 4, 4, 8, 6, 5, 3, 6, 10, 1, 8, 20, 15, 13};
@@ -401,11 +401,11 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
       med_entite_maillage ent = entType[pairs[pair].first];
       med_geometrie_element ele = eleType[pairs[pair].second];
       med_int numdt, numit, ngauss;
-      char dtunit[MED_TAILLE_PNOM + 1];
       med_float dt;
 #if (MED_MAJOR_NUM == 3)
       if(MEDfieldComputingStepInfo(fid, name, step + 1, &numdt, &numit, &dt) < 0){
 #else
+      char dtunit[MED_TAILLE_PNOM + 1];
       med_booleen local;
       med_int numMeshes;
       if(MEDpasdetempsInfo(fid, name, ent, ele, step + 1, &ngauss, &numdt, &numit,
@@ -445,7 +445,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 #endif
       if(numVal <= 0) continue;
 
-      _type = (ent == MED_NOEUD) ? NodeData : (ent == MED_MAILLE) ? 
+      _type = (ent == MED_NOEUD) ? NodeData : (ent == MED_MAILLE) ?
         ElementData : ElementNodeData;
       int mult = 1;
       if(ent == MED_NOEUD_MAILLE){
@@ -460,7 +460,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
       // read field data
       std::vector<double> val(numVal * numComp);
 #if (MED_MAJOR_NUM == 3)
-      if(MEDfieldValueWithProfileRd(fid, name, numdt, numit, ent, ele, MED_COMPACT_STMODE, 
+      if(MEDfieldValueWithProfileRd(fid, name, numdt, numit, ent, ele, MED_COMPACT_STMODE,
                                     profileName, MED_FULL_INTERLACE, MED_ALL_CONSTITUENT,
                                     (unsigned char*)&val[0]) < 0){
 #else
@@ -473,7 +473,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
       }
 
       Msg::Debug("MED: eletyp=%d entity=%d (0:cell, 3:node, 4:elenode) ngauss=%d "
-                 "localizationName=%s profileName=%s -- stepDataType=%d", 
+                 "localizationName=%s profileName=%s -- stepDataType=%d",
                  ele, ent, ngauss, locName, profileName, _type);
 
       // read Gauss point data
@@ -490,8 +490,8 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
           std::vector<med_float> refcoo((ele % 100) * dim);
           std::vector<med_float> gscoo(ngauss * dim);
           std::vector<med_float> wg(ngauss);
-#if (MED_MAJOR_NUM == 3)          
-          if(MEDlocalizationRd(fid, locName, MED_FULL_INTERLACE, &refcoo[0], 
+#if (MED_MAJOR_NUM == 3)
+          if(MEDlocalizationRd(fid, locName, MED_FULL_INTERLACE, &refcoo[0],
                                &gscoo[0], &wg[0]) < 0){
 #else
           if(MEDgaussLire(fid, &refcoo[0], &gscoo[0], &wg[0], MED_FULL_INTERLACE,
@@ -535,12 +535,12 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
       bool nodal = (ent == MED_NOEUD);
 #if (MED_MAJOR_NUM == 3)
       med_bool changeOfCoord;
-      med_bool geoTransform;  
-      med_int numEnt = MEDmeshnEntity(fid, meshName, MED_NO_DT, MED_NO_IT, 
-                                      nodal ? MED_NODE : MED_CELL, 
+      med_bool geoTransform;
+      med_int numEnt = MEDmeshnEntity(fid, meshName, MED_NO_DT, MED_NO_IT,
+                                      nodal ? MED_NODE : MED_CELL,
                                       nodal ? MED_NO_GEOTYPE : ele,
                                       nodal ? MED_COORDINATE : MED_CONNECTIVITY,
-                                      nodal ? MED_NO_CMODE : MED_NODAL, 
+                                      nodal ? MED_NO_CMODE : MED_NODAL,
                                       &changeOfCoord, &geoTransform);
 #else
       med_int numEnt = MEDnEntMaa(fid, meshName, nodal ? MED_COOR : MED_CONN,
@@ -550,8 +550,8 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 #endif
       std::vector<med_int> tags(numEnt);
 #if (MED_MAJOR_NUM == 3)
-      if(MEDmeshEntityNumberRd(fid, meshName, MED_NO_DT, MED_NO_IT, 
-                               nodal ? MED_NODE : MED_CELL, 
+      if(MEDmeshEntityNumberRd(fid, meshName, MED_NO_DT, MED_NO_IT,
+                               nodal ? MED_NODE : MED_CELL,
                                nodal ? MED_NO_GEOTYPE : ele, &tags[0]) < 0)
 #else
       if(MEDnumLire(fid, meshName, &tags[0], numEnt, nodal ? MED_NOEUD : MED_MAILLE,
@@ -566,7 +566,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
       if(!nodal && tags.empty()){
         for(int i = 1; i < pairs[pair].second; i++){
 #if (MED_MAJOR_NUM == 3)
-          med_int n = MEDmeshnEntity(fid, meshName, MED_NO_DT, MED_NO_IT, 
+          med_int n = MEDmeshnEntity(fid, meshName, MED_NO_DT, MED_NO_IT,
                                      MED_CELL, eleType[i], MED_CONNECTIVITY,
                                      MED_NODAL, &changeOfCoord, &geoTransform);
 #else
@@ -680,9 +680,9 @@ bool PViewDataGModel::writeMED(std::string fileName)
   }
 
 #if (MED_MAJOR_NUM == 3)
-  med_bool changeOfCoord, geoTransform;  
+  med_bool changeOfCoord, geoTransform;
   med_int numNodes = MEDmeshnEntity(fid, meshName, MED_NO_DT, MED_NO_IT, MED_NODE,
-                                    MED_NO_GEOTYPE, MED_COORDINATE, MED_NO_CMODE, 
+                                    MED_NO_GEOTYPE, MED_COORDINATE, MED_NO_CMODE,
                                     &changeOfCoord, &geoTransform);
 #else
   med_int numNodes = MEDnEntMaa(fid, meshName, MED_COOR, MED_NOEUD,
@@ -708,8 +708,8 @@ bool PViewDataGModel::writeMED(std::string fileName)
 #if (MED_MAJOR_NUM == 3)
     if(MEDfieldValueWithProfileWr(fid, fieldName, (med_int)(step + 1), MED_NO_IT,
                                   time, MED_NODE, MED_NO_GEOTYPE, MED_COMPACT_STMODE,
-                                  profileName, "", MED_FULL_INTERLACE, 
-                                  MED_ALL_CONSTITUENT, numNodes, 
+                                  profileName, "", MED_FULL_INTERLACE,
+                                  MED_ALL_CONSTITUENT, numNodes,
                                   (unsigned char*)&val[0]) < 0){
 #else
     if(MEDchampEcr(fid, meshName, fieldName, (unsigned char*)&val[0],

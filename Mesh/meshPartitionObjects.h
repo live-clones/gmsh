@@ -89,9 +89,9 @@ class Graph
   std::vector<int> adjncy;              // Connectivity between graph vertex
                                         // xadj[i] and its neighbour graph
                                         // vertices.
-  std::vector<int> vwgts;               // Weights assigned for each 
+  std::vector<int> vwgts;               // Weights assigned for each
                                         // vertex
-  std::vector<int> adjwgts;             // Weights assigned for each 
+  std::vector<int> adjwgts;             // Weights assigned for each
                                         // edge
   std::vector<int> section;             // For separate partitioning of
                                         // different parts of the mesh
@@ -100,7 +100,7 @@ class Graph
   std::vector<MElement*> element;       // The element corresponding to each
                                         // graph vertex in 'xadj'
   fullMatrix<int> *loads;                // Matrix of loads on each partition
-                                        
+
  private:
   unsigned cIndex;                      // An index for created graph vertices
                                         // (used externally)
@@ -116,7 +116,7 @@ class Graph
                                         // 'xadj'.  'adjcny' originally contains
                                         // creations indices and will need to be
                                         // translated.
-  
+
  public:
   Graph()
     : cIndex(0), numGrVert(0), totalGrVert(0)
@@ -162,7 +162,7 @@ class Graph
        num++;
     }
   }
-  // Add multiple weights on vertices of the graph given in a map between original element Numbers and their corresponding vector of weights 
+  // Add multiple weights on vertices of the graph given in a map between original element Numbers and their corresponding vector of weights
   void fillWithMultipleWeights(int ncon, std::map<int, std::vector<int> > vWeightMap, std::map<int, int> eWeightMap)
   {
     std::vector<MElement*>::iterator eIt;
@@ -176,7 +176,7 @@ class Graph
 
     vwgts.resize(element.size()*ncon);
     adjwgts.resize(adjncy.size());
-    for(int iElem = 0; iElem < element.size(); iElem++){
+    for(unsigned int iElem = 0; iElem < element.size(); iElem++){
       for(int i=0; i<ncon; i++){
         vwgts[iElem*ncon+i]=vWeightMap[local2global[iElem]][i];
       }
@@ -186,14 +186,14 @@ class Graph
     }
   }
 
-  // Add weights per element, as defined in options 
-  void fillDefaultWeights() 
+  // Add weights per element, as defined in options
+  void fillDefaultWeights()
   {
     std::vector<MElement*>::iterator eIt = element.begin();
     vwgts.resize(element.size());
     std::vector<int>::iterator wIt = vwgts.begin();
     for ( ; eIt != element.end() ; eIt++ , wIt++) {
-      
+
       switch ((*eIt)->getType()) {
       case TYPE_TRI:
         *wIt = CTX::instance()->partitionOptions.triWeight;
@@ -226,7 +226,7 @@ class Graph
   // Returns a write index for a given creation index
   int convertC2W(const int c) const { return c2w[c]; }
   // Close the adjacency arrays (also deletes c2w)
-  void close() 
+  void close()
   {
     if(numGrVert != totalGrVert) {
       Msg::Warning("Internal error - Graph vertices are missing");

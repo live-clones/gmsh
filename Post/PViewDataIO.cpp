@@ -210,7 +210,7 @@ bool PViewData::toVector(std::vector<std::vector<double> > &vec)
 
 bool PViewData::fromVector(const std::vector<std::vector<double> > &vec)
 {
-  if(vec.size() != getNumTimeSteps()){
+  if((int)vec.size() != getNumTimeSteps()){
     Msg::Error("Incompatible number of steps in vector (%d) and view (%d)",
                (int)vec.size(), getNumTimeSteps());
     return false;
@@ -227,7 +227,7 @@ bool PViewData::fromVector(const std::vector<std::vector<double> > &vec)
           if(tag) continue; // node has already been modified
           tagNode(step, ent, ele, nod, 1);
           for(int comp = 0; comp < getNumComponents(step, ent, ele); comp++){
-            if(i < vec[step].size()){
+            if(i < (int)vec[step].size()){
               setValue(step, ent, ele, nod, comp, vec[step][i++]);
             }
             else{

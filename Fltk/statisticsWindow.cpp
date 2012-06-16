@@ -63,7 +63,6 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
     new PView("Disto", "# Elements", x, y);
   }
   else{
-
     std::vector<GEntity*> entities_;
     GModel::current()->getEntities(entities_);
     std::map<int, std::vector<double> > d;
@@ -71,10 +70,8 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
       if(entities_[i]->dim() < 2) continue;
       for(unsigned int j = 0; j < entities_[i]->getNumMeshElements(); j++){
 	MElement *e = entities_[i]->getMeshElement(j);
-	if(name == "Gamma3D"){
-	  printf("gamma shape mesaure \n");
+	if(name == "Gamma3D")
 	  d[e->getNum()].push_back(e->gammaShapeMeasure());
-	}
 	else if(name == "Eta3D")
 	  d[e->getNum()].push_back(e->etaShapeMeasure());
 	else if(name == "Rho3D")
@@ -85,7 +82,6 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
 	}
       }
     }
-
     name.resize(name.size() - 2);
     new PView(name, "ElementData", GModel::current(), d);
   }

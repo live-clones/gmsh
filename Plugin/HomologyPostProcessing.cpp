@@ -112,12 +112,15 @@ bool GMSH_HomologyPostProcessingPlugin::invertIntegerMatrix
     for(int j = 0; j < n; j++)
       m(i,j) = matrix.at(i*n+j);
 
-  if(!m.invertInPlace())
+  if(!m.invertInPlace()){
     Msg::Error("Matrix is not unimodular");
+    return false;
+  }
 
   for(int i = 0; i < n; i++)
     for(int j = 0; j < n; j++)
       matrix.at(i*n+j) = m(i,j);
+  return true;
 }
 
 PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
@@ -180,7 +183,7 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   if(!parseStringOpt(2, basisPhysicals2)) return 0;
 
   if(matrixString != "I" &&
-     basisPhysicals.size() != cols &&
+     (int)basisPhysicals.size() != cols &&
      basisPhysicals2.empty()) {
     Msg::Error("Number of matrix columns and operated chains must match (%d != %d)", cols, basisPhysicals.size());
     return 0;

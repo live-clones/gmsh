@@ -1,16 +1,16 @@
-/************************************************************************************************** 
+/**************************************************************************************************
 QuadTriExtruded2D.cpp
 
 The code in this file was written by Dr. Trevor S. Strickler.
-email: <trevor.strickler@gmail.com> 
+email: <trevor.strickler@gmail.com>
 
 This file is part of the QuadTri contribution to Gmsh. QuadTri allows the conformal interface
-of quadrangle faces to triangle faces using pyramids and other mesh elements. 
+of quadrangle faces to triangle faces using pyramids and other mesh elements.
 
 See READMEQUADTRI.txt for more information. The license information is in LICENSE.txt.
 
-Trevor S. Strickler hereby transfers copyright of QuadTri files to 
-Christophe Geuzaine and J.-F. Remacle with the understanding that 
+Trevor S. Strickler hereby transfers copyright of QuadTri files to
+Christophe Geuzaine and J.-F. Remacle with the understanding that
 his contribution shall be cited appropriately.
 
 All reused or original Gmsh code is Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
@@ -21,8 +21,8 @@ Gmsh bugs and problems to <gmsh@geuz.org>.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License, Version 2,
-as published by the Free Software Foundation, or (at your option) 
-any later version, with or without the exception given in the 
+as published by the Free Software Foundation, or (at your option)
+any later version, with or without the exception given in the
 LICENSE.txt file supplied with this code and with Gmsh.
 
 This program is distributed in the hope that it will be useful,
@@ -34,29 +34,20 @@ GNU General Public License for more details.
 
 #include "QuadTriExtruded2D.h"
 
-// By Geuzaine, Remacle... 
+// By Geuzaine, Remacle...
 static void addTriangle(MVertex* v1, MVertex* v2, MVertex* v3,
-                        GFace *to, MElement* source) 
+                        GFace *to, MElement* source)
 {
   MTriangle* newTri = new MTriangle(v1, v2, v3);
   to->triangles.push_back(newTri);
 }
 
-// By Geuzaine, Remacle... 
-static void addQuadrangle(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4,
-                          GFace *to, MElement* source) 
-{
-  MQuadrangle* newQuad = new MQuadrangle(v1, v2, v3, v4);
-  to->quadrangles.push_back(newQuad);
-}
-
-
-// The function that tests whether a 2D surface is a lateral of a valid QuadToTri 
-// region and whether there are conflicts. If surface is not part of valid QuadToTri region 
-// or if there are QuadToTri conflicts, return 0.  Note that RemoveDuplicateSurfaces() 
+// The function that tests whether a 2D surface is a lateral of a valid QuadToTri
+// region and whether there are conflicts. If surface is not part of valid QuadToTri region
+// or if there are QuadToTri conflicts, return 0.  Note that RemoveDuplicateSurfaces()
 // makes this DIFFICULT. Also, the tri_quad_flag determins whether the surface
 // should be meshed with triangles or quadrangles:
-// tri_quad_values: 0 = no override, 1 = mesh as quads, 2 = mesh as triangles. 
+// tri_quad_values: 0 = no override, 1 = mesh as quads, 2 = mesh as triangles.
 // Added 2010-12-09.
 int IsValidQuadToTriLateral(GFace *face, int *tri_quad_flag, bool *detectQuadToTriLateral )
 {
@@ -69,30 +60,30 @@ int IsValidQuadToTriLateral(GFace *face, int *tri_quad_flag, bool *detectQuadToT
   ExtrudeParams *ep = face->meshAttributes.extrude;
 
   if( !ep || !ep->mesh.ExtrudeMesh || !ep->geo.Mode == EXTRUDED_ENTITY ){
-    Msg::Error("In IsValidQuadToTriLateral(), face %d is not a structured extrusion.", 
+    Msg::Error("In IsValidQuadToTriLateral(), face %d is not a structured extrusion.",
                face->tag() );
     return 0;
   }
-  
+
   GEdge *face_source = model->getEdgeByTag( std::abs( ep->geo.Source ) );
   if( !face_source ){
-    Msg::Error("In IsValidQuadToTriLateral(), face %d has no source edge.", 
+    Msg::Error("In IsValidQuadToTriLateral(), face %d has no source edge.",
                face->tag() );
   }
 
-  // It seems the member pointers to neighboring regions for extruded lateral faces are not set.  
+  // It seems the member pointers to neighboring regions for extruded lateral faces are not set.
   // For now, have to loop through
   // ALL the regions to see if the presently considered face belongs to the region and if
   // any neighboring region is QUADTRI.
-  // The following loop will find all the regions that the face bounds, and determine 
-  // whether the face is a lateral of the region (including whether the region is even extruded).  
-  // After that information is determined, function can test for QuadToTri neighbor conflicts.  
+  // The following loop will find all the regions that the face bounds, and determine
+  // whether the face is a lateral of the region (including whether the region is even extruded).
+  // After that information is determined, function can test for QuadToTri neighbor conflicts.
 
   std::vector<GRegion *> lateral_regions;
   std::vector<GRegion *> adjacent_regions;
   int numRegions = 0;
   int numLateralRegions = 0;
-  
+
   numRegions = GetNeighborRegionsOfFace(face, adjacent_regions);
   for( int i_reg = 0; i_reg < numRegions; i_reg++ ){
     GRegion *region = adjacent_regions[i_reg];
@@ -100,11 +91,11 @@ int IsValidQuadToTriLateral(GFace *face, int *tri_quad_flag, bool *detectQuadToT
     // is region in the current model's region's or is it deleted?
     if( !FindVolume( ( region->tag() ) ) )
       continue;
-   
+
     // is the region mesh extruded?
     if( !region->meshAttributes.extrude ||
         ( region->meshAttributes.extrude &&
-          !region->meshAttributes.extrude->mesh.ExtrudeMesh ) ) 
+          !region->meshAttributes.extrude->mesh.ExtrudeMesh ) )
       continue;
     if( region->meshAttributes.extrude->geo.Mode != EXTRUDED_ENTITY )
       continue;
@@ -116,9 +107,9 @@ int IsValidQuadToTriLateral(GFace *face, int *tri_quad_flag, bool *detectQuadToT
       if( region->meshAttributes.extrude->mesh.QuadToTri )
         (*detectQuadToTriLateral) = true;
     }
- 
+
   }
- 
+
   // MAIN test of whether this is even a quadToTri extrusion lateral
   // the only return 0 path that is NOT an error
   if( !(*detectQuadToTriLateral) )
@@ -134,20 +125,20 @@ int IsValidQuadToTriLateral(GFace *face, int *tri_quad_flag, bool *detectQuadToT
 
   bool detect_conflict = false;
 
-  
+
   // Set the tri_quad_flag that lets extrudeMesh override ep->Recombine;
   // tri_quad_values: 0 = no override, 1 = mesh as quads, 2 = mesh as triangles.
-    
+
   // if this face is a free surface:
-  if( adjacent_regions.size() == 1 ){ 
+  if( adjacent_regions.size() == 1 ){
     if( lateral_regions[0]->meshAttributes.extrude->mesh.QuadToTri == QUADTRI_SNGL_1_RECOMB ||
         lateral_regions[0]->meshAttributes.extrude->mesh.QuadToTri == QUADTRI_DBL_1_RECOMB )
       (*tri_quad_flag) = 1;
     else if( lateral_regions[0]->meshAttributes.extrude->mesh.QuadToTri == QUADTRI_SNGL_1 ||
              lateral_regions[0]->meshAttributes.extrude->mesh.QuadToTri == QUADTRI_DBL_1 )
       (*tri_quad_flag) = 2;
-    else 
-      (*tri_quad_flag) = 0;  
+    else
+      (*tri_quad_flag) = 0;
   }
   else if( adjacent_regions.size() > 1 ){
     GRegion *adj_region = NULL;
@@ -157,10 +148,10 @@ int IsValidQuadToTriLateral(GFace *face, int *tri_quad_flag, bool *detectQuadToT
     else
       adj_region = adjacent_regions[0];
     adj_ep = adj_region->meshAttributes.extrude;
-    
+
     // if Neighbor is Transfinite, go with the default, non-QuadTri recombine for this surface
     if( adj_region && adj_region->meshAttributes.Method == MESH_TRANSFINITE )
-       (*tri_quad_flag) = 0;  
+       (*tri_quad_flag) = 0;
     // if a neighbor
     // has no extrusion structure,
     // don't even consider QuadToTri Recomb on this face.
@@ -168,16 +159,16 @@ int IsValidQuadToTriLateral(GFace *face, int *tri_quad_flag, bool *detectQuadToT
       (*tri_quad_flag) = 2;
     // This face is the source face of a second
     // neighboring extrusion.
-    else if( adj_ep && adj_ep->mesh.ExtrudeMesh && 
-             model->getFaceByTag( std::abs( adj_ep->geo.Source ) ) == face ){ 
+    else if( adj_ep && adj_ep->mesh.ExtrudeMesh &&
+             model->getFaceByTag( std::abs( adj_ep->geo.Source ) ) == face ){
       if( lateral_regions[0]->meshAttributes.extrude->mesh.QuadToTri == QUADTRI_SNGL_1_RECOMB ||
           lateral_regions[0]->meshAttributes.extrude->mesh.QuadToTri == QUADTRI_DBL_1_RECOMB )
         (*tri_quad_flag) = 1;
       else if( lateral_regions[0]->meshAttributes.extrude->mesh.QuadToTri == QUADTRI_SNGL_1 ||
                lateral_regions[0]->meshAttributes.extrude->mesh.QuadToTri == QUADTRI_DBL_1 )
         (*tri_quad_flag) = 2;
-      else 
-        (*tri_quad_flag) = 0;  
+      else
+        (*tri_quad_flag) = 0;
     }
     // if both neighbors are structured but none of the previous apply:
     else if( adj_ep && adj_ep->mesh.ExtrudeMesh ){
@@ -194,13 +185,13 @@ int IsValidQuadToTriLateral(GFace *face, int *tri_quad_flag, bool *detectQuadToT
       else if( ep->mesh.QuadToTri == QUADTRI_DBL_1_RECOMB ||
                adj_ep && adj_ep->mesh.QuadToTri == QUADTRI_DBL_1_RECOMB )
         (*tri_quad_flag) = 1;
-      else 
+      else
         (*tri_quad_flag) = 2;
     }
     // any other adjacent surface, just default to the QuadToTri region's non-QuadToTri
     // default recombination method.  Any mistakes at this point are not this feature's.
-    else      
-      (*tri_quad_flag) = 0;  
+    else
+      (*tri_quad_flag) = 0;
   }
   // if this executes, there's a mistake here :
   else{
@@ -218,9 +209,9 @@ int IsValidQuadToTriLateral(GFace *face, int *tri_quad_flag, bool *detectQuadToT
 
 
 // The function that tests whether a surface is a QuadToTri top surface and whether
-// there are conflicts. If surface is not a top for a valid QuadToTri region or if 
-// there are QuadToTri conflicts, return 0.  Note that RemoveDuplicateSurfaces() 
-// makes this DIFFICULT. Also, the type of QuadToTri interface is placed into the 
+// there are conflicts. If surface is not a top for a valid QuadToTri region or if
+// there are QuadToTri conflicts, return 0.  Note that RemoveDuplicateSurfaces()
+// makes this DIFFICULT. Also, the type of QuadToTri interface is placed into the
 // pointer argument quadToTri. .
 // Added 2010-12-09.
 int IsValidQuadToTriTop(GFace *face, int *quadToTri, bool *detectQuadToTriTop)
@@ -230,35 +221,35 @@ int IsValidQuadToTriTop(GFace *face, int *quadToTri, bool *detectQuadToTriTop)
 
   GModel *model = face->model();
 
-  // It seems the member pointers to neighboring regions for extruded top faces are not set.  
+  // It seems the member pointers to neighboring regions for extruded top faces are not set.
   // For now, have to loop through
   // ALL the regions to see if the presently considered face belongs to the region.
-  // The following loop will find all the regions that the face bounds, and determine 
-  // whether the face is a top face of the region (including whether the region is even extruded).  
-  // After that information is determined, function can test for QuadToTri neighbor conflicts.  
+  // The following loop will find all the regions that the face bounds, and determine
+  // whether the face is a top face of the region (including whether the region is even extruded).
+  // After that information is determined, function can test for QuadToTri neighbor conflicts.
 
   std::vector<GRegion *> top_regions;
   std::vector<GRegion *> adjacent_regions;
   std::vector<GRegion *> all_regions;
   int numRegions = 0;
   int numTopRegions = 0;
-  
+
   std::set<GRegion *, GEntityLessThan>::iterator itreg;
   for( itreg = model->firstRegion(); itreg != model->lastRegion(); itreg++ )
     all_regions.push_back( (*itreg) );
 
-  for( int i_reg = 0; i_reg < all_regions.size(); i_reg++ ){
-  
+  for(unsigned int i_reg = 0; i_reg < all_regions.size(); i_reg++ ){
+
     // save time
     if( numRegions >= 2 )
       break;
-  
+
     GRegion *region = all_regions[i_reg];
 
     // is region in the current model's regions or is it deleted?
     if( !FindVolume( ( region->tag() ) ) )
       continue;
-   
+
     // does face belong to region?
     std::list<GFace *> region_faces = std::list<GFace *>( region->faces() );
     if( std::find( region_faces.begin(), region_faces.end(), face ) !=
@@ -282,41 +273,41 @@ int IsValidQuadToTriTop(GFace *face, int *quadToTri, bool *detectQuadToTriTop)
       if( region->meshAttributes.extrude->mesh.QuadToTri )
         (*detectQuadToTriTop) = true;
     }
- 
+
   }
- 
+
   // MAIN test of whether this is even a quadToTri extrusion lateral
   // the only return 0 path that is NOT an error
   if( !(*detectQuadToTriTop) )
     return 0;
 
-  
+
 
   ExtrudeParams *ep = face->meshAttributes.extrude;
 
   if(!ep){
-    Msg::Error("In IsValidQuadToTriTop(), no extrude info for surface %d.",  
+    Msg::Error("In IsValidQuadToTriTop(), no extrude info for surface %d.",
                face->tag() );
     return 0;
   }
 
   if( ep->geo.Mode != COPIED_ENTITY){
-    Msg::Error("In IsValidQuadToTriTop(), surface %d is not copied from source.",  
+    Msg::Error("In IsValidQuadToTriTop(), surface %d is not copied from source.",
                face->tag() );
     return 0;
   }
 
   if( ep->mesh.QuadToTri == 0){
     Msg::Error("In IsValidQuadToTriTop(), surface %d was determined to be the top surface "
-               "for a QuadToTri extrusion, but does not have QuadToTri parameters set within itself.",  
+               "for a QuadToTri extrusion, but does not have QuadToTri parameters set within itself.",
                face->tag() );
     return 0;
   }
 
   GFace *face_source = model->getFaceByTag(std::abs(ep->geo.Source));
   if(!face_source){
-    Msg::Error("In IsValidQuadToTriTop(), unknown source face number %d.", 
-                 face->meshAttributes.extrude->geo.Source); 
+    Msg::Error("In IsValidQuadToTriTop(), unknown source face number %d.",
+                 face->meshAttributes.extrude->geo.Source);
     return 0;
   }
 
@@ -346,7 +337,7 @@ int IsValidQuadToTriTop(GFace *face, int *quadToTri, bool *detectQuadToTriTop)
 // this function specifically meshes a quadToTri top in an unstructured way
 // return 1 if success, return 0 if failed.
 // Added 2010-12-20
-static int MeshQuadToTriTopUnstructured(GFace *from, GFace *to, 
+static int MeshQuadToTriTopUnstructured(GFace *from, GFace *to,
                                    std::set<MVertex*, MVertexLessThanLexicographic> &pos)
 {
 
@@ -356,18 +347,18 @@ static int MeshQuadToTriTopUnstructured(GFace *from, GFace *to,
 
   if( !to->meshAttributes.extrude || !to->meshAttributes.extrude->mesh.QuadToTri  )
     return 0;
-   
-  
+
+
   // in weird case of NO quads and NO tri
   if( !from->triangles.size() && !from->quadrangles.size() )
     return 0;
 
- 
+
   // make set of source edge vertices
   std::set<MVertex*, MVertexLessThanLexicographic> pos_src_edge;
   QuadToTriInsertFaceEdgeVertices(from, pos_src_edge);
 
-  // Loop through all the quads and make the triangles with diagonals running 
+  // Loop through all the quads and make the triangles with diagonals running
   // in a selected direction.
 
   to->triangles.reserve(to->triangles.size()+from->quadrangles.size()*2);
@@ -399,12 +390,12 @@ static int MeshQuadToTriTopUnstructured(GFace *from, GFace *to,
     if( verts.size() != 4 ){
       Msg::Error("During mesh of QuadToTri surface %d, %d vertices found "
                  "in quad of source surface %d.", to->tag(), verts.size(),
-                 from->tag() ); 
+                 from->tag() );
       return 0;
     }
 
     // make the element
-    MElement *element = from->quadrangles[i];  
+    MElement *element = from->quadrangles[i];
 
     // draw other diagonals to minimize difference in average edge length with diagonal length, in quadrature
 
@@ -417,12 +408,12 @@ static int MeshQuadToTriTopUnstructured(GFace *from, GFace *to,
 
     double d1 = verts[0]->distance(verts[2]);
     double d2 = verts[1]->distance(verts[3]);
-    
-    if(fabs(d1*d1-mag_sq_ave) <= fabs(d2*d2-mag_sq_ave) ){ 
+
+    if(fabs(d1*d1-mag_sq_ave) <= fabs(d2*d2-mag_sq_ave) ){
       addTriangle(verts[0],verts[1],verts[2],to,element);
       addTriangle(verts[0],verts[2],verts[3],to,element);
     }
-    else{ 
+    else{
       addTriangle(verts[1],verts[2],verts[3],to,element);
       addTriangle(verts[1],verts[3],verts[0],to,element);
     }
@@ -432,37 +423,31 @@ static int MeshQuadToTriTopUnstructured(GFace *from, GFace *to,
 }
 
 
-// This function meshes the top surface of a QuadToTri extrusion.  It returns 0 if it is given a 
-// non-quadToTri extrusion or if it fails.  
-// Args: 
-//       'GFace *to' is the top surface to mesh, 'from' is the source surface, 'pos' is a std::set  
+// This function meshes the top surface of a QuadToTri extrusion.  It returns 0 if it is given a
+// non-quadToTri extrusion or if it fails.
+// Args:
+//       'GFace *to' is the top surface to mesh, 'from' is the source surface, 'pos' is a std::set
 //       of vertex positions for the top surface.
-int MeshQuadToTriTopSurface( GFace *from, GFace *to, std::set<MVertex*, 
+int MeshQuadToTriTopSurface( GFace *from, GFace *to, std::set<MVertex*,
                              MVertexLessThanLexicographic> &pos)
 {
   if( !to->meshAttributes.extrude || !to->meshAttributes.extrude->mesh.QuadToTri  )
     return 0;
-   
+
   // if the source is all triangles, then just let this function is not needed. Return 1.
   if( from->triangles.size() && !from->quadrangles.size() )
     return 1;
-  
+
   // in weird case of NO quads and NO tri
   if( !from->triangles.size() && !from->quadrangles.size() )
     return 0;
-   
-  // record number of triangles currently in the top surface and make sure they don't change
-  // if defaulting to unstructured in either of the structured methods fail below. Otherwise, return 0.
-  unsigned int num_triangles = to->triangles.size();
-  
+
   ExtrudeParams *ep = to->meshAttributes.extrude;
   if( !ep || !ep->mesh.ExtrudeMesh || !ep->geo.Mode == COPIED_ENTITY ){
     Msg::Error("In MeshQuadToTriTopSurface(), incomplete or no "
                "extrude information for top face %d.", to->tag() );
     return 0;
-  }  
-
-  ExtrudeParams *from_ep = from->meshAttributes.extrude;
+  }
 
   // number of extrusion layers
   int num_layers = 0;
@@ -484,7 +469,7 @@ int MeshQuadToTriTopSurface( GFace *from, GFace *to, std::set<MVertex*,
     std::set<MVertex*, MVertexLessThanLexicographic> pos_src_edge;
     QuadToTriInsertFaceEdgeVertices(from, pos_src_edge);
     std::set<MVertex*, MVertexLessThanLexicographic>::iterator itp;
-     
+
     // loop through each element source quadrangle and extrude
     for(unsigned int i = 0; i < from->quadrangles.size(); i++){
       std::vector<MVertex*> verts;
@@ -513,22 +498,22 @@ int MeshQuadToTriTopSurface( GFace *from, GFace *to, std::set<MVertex*,
       if( verts.size() != 4 ){
         Msg::Error("During mesh of QuadToTri surface %d, %d vertices found "
                    "in quad of source surface %d.", to->tag(), verts.size(),
-                   from->tag() ); 
+                   from->tag() );
         return 0;
       }
 
       // make the element
-      MElement *element = from->quadrangles[i];  
- 
+      MElement *element = from->quadrangles[i];
+
       // count vertices that are on a boundary edge
       int edge_verts_count = 0;
       int skip_index = 0;
       int bnd_indices[4];
       for( int p = 0; p < element->getNumVertices(); p++ ){
         if( pos_src_edge.find( element->getVertex(p) ) != pos_src_edge.end() ){
-          edge_verts_count++; 
+          edge_verts_count++;
           bnd_indices[p] = 1;
-        }  
+        }
         else{
           skip_index = p;
           bnd_indices[p] = 0;
@@ -549,7 +534,7 @@ int MeshQuadToTriTopSurface( GFace *from, GFace *to, std::set<MVertex*,
         if( low_index < 0 ) // what if they are all degenerate?  Avoid the out-of-bounds error.
           low_index = 0;
       }
-    
+
       // lowest possible vertex pointer, regardless of if on edge or not
       else if( edge_verts_count == 4 || edge_verts_count == 0 )
         low_index = getIndexForLowestVertexPointer(verts);
@@ -557,7 +542,7 @@ int MeshQuadToTriTopSurface( GFace *from, GFace *to, std::set<MVertex*,
       addTriangle( verts[low_index],verts[(low_index+1)%verts.size()],
                    verts[(low_index+2)%verts.size()],to,element);
       addTriangle( verts[low_index],verts[(low_index+2)%verts.size()],
-                   verts[(low_index+3)%verts.size()],to,element);      
+                   verts[(low_index+3)%verts.size()],to,element);
     }
     return 1;
   }
@@ -569,14 +554,14 @@ int MeshQuadToTriTopSurface( GFace *from, GFace *to, std::set<MVertex*,
   GFace *root_source = findRootSourceFaceForFace( from );
   ExtrudeParams *ep_src = root_source->meshAttributes.extrude;
   bool struct_root = false;
-  if( root_source && 
+  if( root_source &&
       ( ep_src && ep_src->mesh.ExtrudeMesh && ep_src->geo.Mode == EXTRUDED_ENTITY ||
         root_source->meshAttributes.Method == MESH_TRANSFINITE ) )
     struct_root = true;
-  
+
   if( !struct_root && MeshQuadToTriTopUnstructured(from, to, pos) )
     return 1;
-  
+
   // And top surface for a structured double layer can be meshed quite easily
   else{
     std::set<MVertex *, MVertexLessThanLexicographic >::iterator itp;
@@ -608,14 +593,14 @@ int MeshQuadToTriTopSurface( GFace *from, GFace *to, std::set<MVertex*,
       if( verts.size() != 4 ){
         Msg::Error("During mesh of QuadToTri surface %d, %d vertices found "
                    "in quad of source surface %d.", to->tag(), verts.size(),
-                   from->tag() ); 
+                   from->tag() );
         return 0;
       }
-      
+
       // make the element
-      MElement *element = from->quadrangles[i];  
+      MElement *element = from->quadrangles[i];
       addTriangle( verts[0],verts[2], verts[3],to,element);
-      addTriangle( verts[0],verts[1], verts[2],to,element);      
+      addTriangle( verts[0],verts[1], verts[2],to,element);
     }
     return 1;
   }

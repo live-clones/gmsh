@@ -2,6 +2,9 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
+//
+// Contributor(s):
+//   Tristan Carrier
 
 #include "Voronoi3D.h"
 #include "GModel.h"
@@ -38,7 +41,7 @@ void clip::execute(){
 }
 
 void clip::execute(GRegion* gr){
-  int i;
+  unsigned int i;
   int j;
   MElement* element;
   MVertex* vertex;
@@ -60,7 +63,7 @@ void clip::execute(GRegion* gr){
   }
 
   execute(vertices2,clipped);
-  printf("%d\n",clipped.size());
+  printf("%d\n", (int)clipped.size());
 
   std::ofstream file("cells.pos");
   file << "View \"test\" {\n";
@@ -78,10 +81,10 @@ void clip::execute(GRegion* gr){
 void clip::execute(std::vector<SPoint3>& vertices,std::vector<VoronoiElement>& clipped)
 {
 #if defined(HAVE_VORO3D)
-  int i;
-  int j;
+  unsigned int i;
+  unsigned int j;
   int start;
-  int end;
+  unsigned int end;
   int index;
   int index1;
   int index2;

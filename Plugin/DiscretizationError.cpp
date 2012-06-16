@@ -50,8 +50,8 @@ PView *GMSH_DiscretizationErrorPlugin::execute(PView *v)
   double paramQuandtQuad = 2.0 / (nEdgeNodes - 1) - 10*tol;
   int i, j, k, counter;
   // used as a start estimate for u,v when performing an orthogonal projection
-  double startEstimate[2] = {0.5, 0.5}; 
-  double dx,dy,dz,distance;
+  double startEstimate[2] = {0.5, 0.5};
+  double dx, dy, dz;
 
   std::vector< std::pair<SPoint3,double> > quadDist(nEdgeNodes*nEdgeNodes);
   std::vector< std::pair<SPoint3,double> > triDist((nEdgeNodes + 1)*nEdgeNodes / 2);
@@ -72,7 +72,7 @@ PView *GMSH_DiscretizationErrorPlugin::execute(PView *v)
          itQuad != (*itFace)->quadrangles.end(); ++itQuad) {
       for (j = 0; j < nEdgeNodes; j++) { // u
         for (i = 0; i < nEdgeNodes; i++) { // v
-          (*itQuad)->pnt(-1+5*tol+paramQuandtQuad*i, -1+5*tol+paramQuandtQuad*j, 
+          (*itQuad)->pnt(-1+5*tol+paramQuandtQuad*i, -1+5*tol+paramQuandtQuad*j,
                          0.0, quadDist[j*(nEdgeNodes) + i].first);
           SPoint3 *point = &quadDist[j*(nEdgeNodes) + i].first;
           GPoint closest = (*itFace)->closestPoint(*point,startEstimate);
@@ -101,7 +101,7 @@ PView *GMSH_DiscretizationErrorPlugin::execute(PView *v)
      * 3  5  8
      * 1  2  4  7
      */
-    for (std::vector<MTriangle*>::iterator itTri = (*itFace)->triangles.begin(); 
+    for (std::vector<MTriangle*>::iterator itTri = (*itFace)->triangles.begin();
          itTri != (*itFace)->triangles.end(); ++itTri) {
       counter = 0;
       for (i = 0; i < nEdgeNodes; i++) {
@@ -117,7 +117,7 @@ PView *GMSH_DiscretizationErrorPlugin::execute(PView *v)
           counter++;
         }
       }
-      
+
       int indices[3];
       for (j = 0; j < nEdgeNodes - 1; j++) { // row in the triangle
         bool odd = false;
@@ -126,7 +126,7 @@ PView *GMSH_DiscretizationErrorPlugin::execute(PView *v)
             indices[0] = i / 2 + (j+1)*j/2;
             indices[1] = i / 2 + (j+1)*j/2 + j+1;
             indices[2] = i / 2 + (j+1)*j/2 + j+2;
-          } 
+          }
           else {
             indices[0] = (i-1)/2 + (j+1)*j/2;
             indices[1] = (i-1)/2 + (j+1)*j/2 + j+2;
@@ -141,10 +141,10 @@ PView *GMSH_DiscretizationErrorPlugin::execute(PView *v)
         }
       }
     }
-    
+
     //viusalize stuff
   }
-  
+
   data2->setName("Discretization Error");
   data2->setFileName("discretization_err.pos");
   data2->finalize();

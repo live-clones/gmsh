@@ -7,11 +7,11 @@
 #include "Numeric.h"
 
 // The SElement (Solver element) that has been sent to the function
-// contains 2 enrichments, that can enrich both shape and test functions   
+// contains 2 enrichments, that can enrich both shape and test functions
 
 void elasticityTerm::createData(MElement *e) const
 {
-  if (_data.find(e->getTypeForMSH()) != _data.end())return;  
+  if (_data.find(e->getTypeForMSH()) != _data.end())return;
   elasticityDataAtGaussPoint d;
   int nbSF = e->getNumShapeFunctions();
   int integrationOrder = 2 * (e->getPolynomialOrder() - 1) ;
@@ -73,9 +73,6 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
 
   double jac[3][3],invjac[3][3],Grads[100][3];
   for (int i = 0; i < npts; i++){
-    const double u = d.u[i];
-    const double v = d.v[i];
-    const double w = d.w[i];
     const double weight = d.weight[i];
     const fullMatrix<double> &grads = d.gradSF[i];
     const double detJ = e->getJacobian(grads, jac);
@@ -89,7 +86,7 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
       Grads[j][2] = invjac[2][0] * grads(j,0) + invjac[2][1] * grads(j,1) +
 	invjac[2][2] * grads(j,2);
     }
-    
+
 
     B.setAll(0.);
     BT.setAll(0.);
@@ -197,13 +194,13 @@ void elasticityMixedTerm::elementMatrix(SElement *se, fullMatrix<double> &m) con
   double C11 = FACT * (1 - _nu) ;
   double C12 = FACT * _nu ;
   double C44 = FACT* (1 - 2.*_nu)*.5;
-  double _K = 3*_E / (1 - 2 * _nu);
-  // FIXME : PLANE STRESS !!! 
-    //  FACT = _E / (1-_nu*_nu); 
-    //  C11  = FACT; 
-    //  C12  = _nu * FACT; 
+  //double _K = 3*_E / (1 - 2 * _nu);
+  // FIXME : PLANE STRESS !!!
+    //  FACT = _E / (1-_nu*_nu);
+    //  C11  = FACT;
+    //  C12  = _nu * FACT;
     //  C44 = (1.-_nu)*.5*FACT;
-  
+
   const double C[6][6] =
     { {C11, C12, C12,    0,   0,   0},
       {C12, C11, C12,    0,   0,   0},
@@ -251,7 +248,7 @@ void elasticityMixedTerm::elementMatrix(SElement *se, fullMatrix<double> &m) con
       }
     }
 
-    const double K2 = weight * detJ; 
+    const double K2 = weight * detJ;
 
     for (int j = 0; j < _sizeN; j++){
       for (int k = 0; k < _sizeM; k++){
@@ -261,8 +258,8 @@ void elasticityMixedTerm::elementMatrix(SElement *se, fullMatrix<double> &m) con
       }
     }
 
-    const double K3 = weight * detJ * _E/(2*(1+_nu)); 
     /*
+    const double K3 = weight * detJ * _E/(2*(1+_nu));
     for (int j = 0; j < _sizeN; j++){
       for (int k = 0; k < _sizeN; k++){
 	const double fa = (Grads[j][0] * Grads[k][0] +
@@ -288,7 +285,7 @@ void elasticityMixedTerm::elementMatrix(SElement *se, fullMatrix<double> &m) con
 
       BT(j, 3) = B(3, j) = Grads[j][1];
       BT(j, 4) = B(4, j) = Grads[j][2];
-      
+
       BDILT(j + _sizeN, 0) = BDIL(0, j + _sizeN) = Grads[j][1]/_dimension;
 
       //      BT(j + _sizeN, 0) = B(0, j + _sizeN) =            -Grads[j][0]/_dimension;
@@ -297,7 +294,7 @@ void elasticityMixedTerm::elementMatrix(SElement *se, fullMatrix<double> &m) con
 
       BT(j + _sizeN, 3) = B(3, j + _sizeN) = Grads[j][0];
       BT(j + _sizeN, 5) = B(5, j + _sizeN) = Grads[j][2];
-      
+
       BDILT(j + 2 * _sizeN, 0) = BDIL(0, j + 2 * _sizeN) = Grads[j][2]/_dimension;
 
       //      BT(j + 2 * _sizeN, 0) = B(0, j + 2 * _sizeN) =            -Grads[j][0]/_dimension;
@@ -313,7 +310,7 @@ void elasticityMixedTerm::elementMatrix(SElement *se, fullMatrix<double> &m) con
     }
 
     //    printf("BT (%d %d) x H (%d,%d) = BTH(%d,%d)\n",BT.size1(),BT.size2(), H.size1(),H.size2(),BTH.size1(),BTH.size2());
-    
+
     BTH.setAll(0.);
     BTH.gemm(BT, H);
 
@@ -325,21 +322,21 @@ void elasticityMixedTerm::elementMatrix(SElement *se, fullMatrix<double> &m) con
     //    KUP.gemm(BDILT, M, weight * detJ);
     //    KPG.gemm(MT, M, -weight * detJ);
     //    KUG.gemm(trBTH, M, weight * detJ/_dimension);
-    //    KGG.gemm(MT, M, weight * detJ * (_K)/(_dimension*_dimension));    
+    //    KGG.gemm(MT, M, weight * detJ * (_K)/(_dimension*_dimension));
 
   }
-    /*       
+    /*
             3*_sizeN  _sizeM _sizeM
 
             KUU     KUP     KUG
       m  =  KUP^t   KPP      KPG
             KUG^T    KPG^t  KGG
-      
+
      */
 
   for (int i=0;i<3*_sizeN;i++){
     for (int j=0;j<3*_sizeN;j++)
-      m(i,j) = KUU(i,j); // assemble KUU 
+      m(i,j) = KUU(i,j); // assemble KUU
 
     for (int j=0;j<_sizeM;j++){
       m(i,j+3*_sizeN) = KUP(i,j); // assemble KUP
@@ -364,6 +361,6 @@ void elasticityMixedTerm::elementMatrix(SElement *se, fullMatrix<double> &m) con
   }
   //    m.print("Mixed");
   return;
-  
+
 }
 

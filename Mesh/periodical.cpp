@@ -2,6 +2,9 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
+//
+// Contributor(s):
+//   Tristan Carrier
 
 #include "periodical.h"
 #include "GModel.h"
@@ -44,7 +47,7 @@ geo_cell::geo_cell(){}
 geo_cell::~geo_cell(){}
 
 int geo_cell::search_line(std::pair<int,int> line){
-  int i;
+  unsigned int i;
 
   for(i=0;i<lines.size();i++){
     if(lines[i].first==line.first && lines[i].second==line.second) return i;
@@ -75,7 +78,7 @@ void voroMetal3D::execute(){
 }
 
 void voroMetal3D::execute(GRegion* gr){
-  int i;
+  unsigned int i;
   int j;
   MElement* element;
   MVertex* vertex;
@@ -101,11 +104,11 @@ void voroMetal3D::execute(GRegion* gr){
 void voroMetal3D::execute(std::vector<SPoint3>& vertices)
 {
 #if defined(HAVE_VORO3D)
-  int i;
-  int j;
-  int k;
+  unsigned int i;
+  unsigned int j;
+  unsigned int k;
   int start;
-  int end;
+  unsigned int end;
   int index1;
   int index2;
   int val;
@@ -322,7 +325,7 @@ void voroMetal3D::print_geo_volume(int index1,int index2,std::ofstream& file){
 }
 
 void voroMetal3D::print_geo_line_loop(int index,std::vector<int>& indices,std::vector<int>& orientations,std::ofstream& file){
-  int i;
+  unsigned int i;
 
   file << "Line Loop(" << index << ")={";
 
@@ -336,7 +339,7 @@ void voroMetal3D::print_geo_line_loop(int index,std::vector<int>& indices,std::v
 }
 
 void voroMetal3D::print_geo_face_loop(int index,std::vector<int>& indices,std::ofstream& file){
-  int i;
+  unsigned int i;
 
   file << "Surface Loop(" << index << ")={";
 

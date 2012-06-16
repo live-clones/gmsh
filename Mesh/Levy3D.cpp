@@ -751,11 +751,11 @@ void LpCVT::verification(std::vector<SPoint3>& bank,std::vector<int>& movability
 
   printf("Finite difference : %f  %f  %f\n",(right-left)/(2.0*e),(up-down)/(2.0*e),(front-back)/(2.0*e));
   printf("            Gauss : %f  %f  %f\n",gradients[index-offset].x(),gradients[index-offset].y(),gradients[index-offset].z());
-  printf("%d %d %d\n",index,bank.size(),offset);
+  printf("%d %d %d\n",index,(int)bank.size(),offset);
 }
 
 void LpCVT::eval(std::vector<SPoint3>& bank,std::vector<int>& movability,int offset,std::vector<SVector3>& gradients,double& energy,int p){
-  int i;
+  unsigned int i;
   int index;
   int index1,index2,index3;
   int index4,index5,index6;
@@ -838,7 +838,7 @@ void LpCVT::eval(std::vector<SPoint3>& bank,std::vector<int>& movability,int off
 }
 
 void LpCVT::compute_parameters(){
-  int i;
+  unsigned int i;
   double h1,h2,h3,h4;
   Tensor t;
   VoronoiVertex v1,v2,v3,v4;
@@ -875,17 +875,17 @@ double LpCVT::get_size(double x,double y,double z){
 Tensor LpCVT::get_tensor(double x,double y,double z){
   Tensor t;
   Matrix m;
-	
-  m = Frame_field::search(x,y,z);	
-	
+
+  m = Frame_field::search(x,y,z);
+
   t.set_t11(m.get_m11());
   t.set_t21(m.get_m12());
   t.set_t31(m.get_m13());
-  
+
   t.set_t12(m.get_m21());
   t.set_t22(m.get_m22());
   t.set_t32(m.get_m23());
-  
+
   t.set_t13(m.get_m31());
   t.set_t23(m.get_m32());
   t.set_t33(m.get_m33());
@@ -954,7 +954,7 @@ double LpCVT::h_to_rho(double h,int p){
 }
 
 void LpCVT::swap(){
-  int i;
+  unsigned int i;
   for(i=0;i<clipped.size();i++){
     clipped[i].swap();
   }
@@ -962,11 +962,11 @@ void LpCVT::swap(){
 
 void LpCVT::get_gauss(){
   int order;
-  
+
   order = 8;
   gaussIntegration::getTetrahedron(order,gauss_points,gauss_weights);
   gauss_num = gauss_points.size1();
-	
+
   f_cache.resize(gauss_num);
   df_dx_cache.resize(gauss_num);
   df_dy_cache.resize(gauss_num);
@@ -984,7 +984,7 @@ void LpCVT::init_caches(VoronoiElement element,int p){
   SPoint3 point,generator,C1,C2,C3;
   VoronoiVertex v1,v2,v3,v4;
   Tensor t;
-	
+
   v1 = element.get_v1();
   v2 = element.get_v2();
   v3 = element.get_v3();
@@ -994,7 +994,7 @@ void LpCVT::init_caches(VoronoiElement element,int p){
   C2 = v3.get_point();
   C3 = v4.get_point();
   t = element.get_tensor();
-    
+
   for(i=0;i<gauss_num;i++){
     u = gauss_points(i,0);
 	v = gauss_points(i,1);
@@ -1011,7 +1011,7 @@ void LpCVT::init_caches(VoronoiElement element,int p){
 	drho_dx_cache[i] = (-p-3)*rho_cache[i]*element.get_dh_dx()/element.get_h(u,v,w);
 	drho_dy_cache[i] = (-p-3)*rho_cache[i]*element.get_dh_dy()/element.get_h(u,v,w);
 	drho_dz_cache[i] = (-p-3)*rho_cache[i]*element.get_dh_dz()/element.get_h(u,v,w);
-  }	
+  }
 }
 
 double LpCVT::F(VoronoiElement element,int p){
@@ -1452,8 +1452,8 @@ void LpSmoother::improve_model(){
   GModel* model = GModel::current();
   GModel::riter it;
 
-  Frame_field::init_model();	
-	
+  Frame_field::init_model();
+
   for(it=model->firstRegion();it!=model->lastRegion();it++)
   {
     gr = *it;
@@ -1461,14 +1461,14 @@ void LpSmoother::improve_model(){
 	  improve_region(gr);
 	}
   }
-	
+
   Frame_field::clear();
 }
 
 void LpSmoother::improve_region(GRegion* gr)
 {
 #if defined(HAVE_BFGS)
-  int i;
+  unsigned int i;
   int offset;
   double epsg;
   double epsf;

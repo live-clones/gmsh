@@ -136,7 +136,7 @@ class ScalarLagrangeFunctionSpaceOfElement : public FunctionSpace<double>
     ele->getGradShapeFunctions(u, v, w, gradsuvw);
     double jac[3][3];
     double invjac[3][3];
-    const double detJ = ele->getJacobian(u, v, w, jac); // redondant : on fait cet appel a l'exterieur
+    ele->getJacobian(u, v, w, jac); // redondant : on fait cet appel a l'exterieur
     inv3x3(jac, invjac);
     for(int i = 0; i < ndofs; ++i)
       grads.push_back(GradType(
@@ -227,7 +227,7 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
     ele->getGradShapeFunctions(u, v, w, gradsuvw);
     double jac[3][3];
     double invjac[3][3];
-    const double detJ = ele->getJacobian(u, v, w, jac); // redondant : on fait cet appel a l'exterieur
+    ele->getJacobian(u, v, w, jac); // redondant : on fait cet appel a l'exterieur
     inv3x3(jac, invjac);
     for(int i = 0; i < ndofs; ++i)
       grads.push_back(GradType(

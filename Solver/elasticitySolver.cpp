@@ -24,6 +24,7 @@
 #include "PViewData.h"
 #endif
 
+/*
 static void printLinearSystem(linearSystemCSRTaucs<double> *lsys)
 {
   int *startIndex;
@@ -50,6 +51,7 @@ static void printLinearSystem(linearSystemCSRTaucs<double> *lsys)
     std::cout<<"x "<<val<<std::endl;
   }
 }
+*/
 
 void elasticitySolver::setMesh(const std::string &meshFileName)
 {
@@ -428,6 +430,7 @@ void elasticitySolver::getSolutionOnElement (MElement *el, fullMatrix<double> &s
 }
 
 #if defined(HAVE_POST)
+/*
 static void deformation(dofManager<double> *a, MElement *e,
 			double u, double v, double w, int _tag, double *eps){
   double valx[256];
@@ -490,6 +493,7 @@ static double vonMises(dofManager<double> *a, MElement *e,
 
   return ComputeVonMises(s);
 }
+*/
 
 PView* elasticitySolver::buildDisplacementView (const std::string postFileName)
 {
