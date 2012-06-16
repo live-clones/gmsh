@@ -12,7 +12,9 @@
 #include "MElementOctree.h"
 #include "OS.h"
 
-static void increaseStencil(MVertex *v, v2t_cont &adj, std::vector<MElement*> &lt){
+/*
+static void increaseStencil(MVertex *v, v2t_cont &adj, std::vector<MElement*> &lt)
+{
   std::set<MElement*> stencil;
   std::set<MVertex*> vs;
   stencil.insert(lt.begin(),lt.end());
@@ -28,8 +30,10 @@ static void increaseStencil(MVertex *v, v2t_cont &adj, std::vector<MElement*> &l
   lt.clear();
   lt.insert(lt.begin(),stencil.begin(),stencil.end());
 }
+*/
 
-meshMetric::meshMetric(GModel *gm){
+meshMetric::meshMetric(GModel *gm)
+{
   _dim  = gm->getDim();
   std::map<MElement*, MElement*> newP;
   std::map<MElement*, MElement*> newD;
@@ -57,7 +61,8 @@ meshMetric::meshMetric(GModel *gm){
 
 }
 
-meshMetric::meshMetric(std::vector<MElement*> elements){
+meshMetric::meshMetric(std::vector<MElement*> elements)
+{
   _dim  = elements[0]->getDim();
   std::map<MElement*, MElement*> newP;
   std::map<MElement*, MElement*> newD;
@@ -71,7 +76,9 @@ meshMetric::meshMetric(std::vector<MElement*> elements){
   _octree = new MElementOctree(_elements);
 }
 
-void meshMetric::addMetric(int technique, simpleFunction<double> *fct, std::vector<double> parameters){
+void meshMetric::addMetric(int technique, simpleFunction<double> *fct,
+                           std::vector<double> parameters)
+{
   needMetricUpdate=true;
   _fct = fct;
   hmin = parameters.size() >=3 ? parameters[1] : CTX::instance()->mesh.lcMin;
@@ -87,8 +94,8 @@ void meshMetric::addMetric(int technique, simpleFunction<double> *fct, std::vect
   computeMetric();
 }
 
-void meshMetric::intersectMetrics(){
-
+void meshMetric::intersectMetrics()
+{
   if (!setOfMetrics.size()){
     std::cout << " meshMetric::intersectMetrics: Can't intersect metrics, no metric registered ! " << std::endl;
     return;
@@ -110,8 +117,8 @@ void meshMetric::intersectMetrics(){
 
 }
 
-void meshMetric::exportInfo(const char * fileendname){
-
+void meshMetric::exportInfo(const char * fileendname)
+{
   if (needMetricUpdate) intersectMetrics();
   std::stringstream sg,sm,sl,sh;
   sg << "meshmetric_gradients_" << fileendname;
@@ -188,18 +195,17 @@ void meshMetric::exportInfo(const char * fileendname){
   out_metric.close();
   out_ls.close();
   out_hess.close();
- 
 }
 
-
-meshMetric::~meshMetric(){
+meshMetric::~meshMetric()
+{
   if (_octree) delete _octree;
   for (unsigned int i=0; i< _elements.size(); i++)
     delete _elements[i];
 }
 
-void meshMetric::computeValues(){
-
+void meshMetric::computeValues()
+{
   v2t_cont :: iterator it = _adj.begin();
   while (it != _adj.end()) {
     std::vector<MElement*> lt = it->second;
@@ -209,10 +215,9 @@ void meshMetric::computeValues(){
   }
 }
 
-
-
 // Determines set of vertices to use for least squares
-std::vector<MVertex*> getLSBlob(unsigned int minNbPt, v2t_cont::iterator it, v2t_cont &adj) {
+std::vector<MVertex*> getLSBlob(unsigned int minNbPt, v2t_cont::iterator it, v2t_cont &adj)
+{
 
 //  static const double RADFACT = 3;
 //
@@ -248,13 +253,11 @@ std::vector<MVertex*> getLSBlob(unsigned int minNbPt, v2t_cont::iterator it, v2t
 
 }
 
-
-
 // Compute derivatives and second order derivatives using least squares
 // 2D LS system: a_i0*x^2+a_i1*x*y+a_i2*y^2+a_i3*x+a_i4*y+a_i5=b_i
 // 3D LS system: a_i0*x^2+a_i1*x*y+a_i2*x*z+a_i3*y^2+a_i4*y*z+a_i5*z^2+a_i6*x+a_i7*y+a_i8*z+a_i9=b_i
-void meshMetric::computeHessian(){
-
+void meshMetric::computeHessian()
+{
   unsigned int sysDim = (_dim == 2) ? 6 : 10;
   unsigned int minNbPtBlob = 3*sysDim;
 
@@ -301,13 +304,10 @@ void meshMetric::computeHessian(){
     dgrads[1][ver] = SVector3(d2udxy,d2udy2,d2udyz);
     dgrads[2][ver] = SVector3(d2udxz,d2udyz,d2udz2);
   }
-
 }
 
-
-
-void meshMetric::computeMetricLevelSet(){
-
+void meshMetric::computeMetricLevelSet()
+{
   int metricNumber = setOfMetrics.size();
 
   for (v2t_cont::iterator it=_adj.begin(); it!=_adj.end(); it++) {
@@ -362,10 +362,8 @@ void meshMetric::computeMetricLevelSet(){
 
 }
 
-
-
-void meshMetric::computeMetricHessian(){
-
+void meshMetric::computeMetricHessian()
+{
   int metricNumber = setOfMetrics.size();
 
   for (v2t_cont::iterator it=_adj.begin(); it!=_adj.end(); it++) {
@@ -403,10 +401,8 @@ void meshMetric::computeMetricHessian(){
 
 }
 
-
-
-void meshMetric::computeMetricFrey(){
-
+void meshMetric::computeMetricFrey()
+{
   int metricNumber = setOfMetrics.size();
 
   for (v2t_cont::iterator it=_adj.begin(); it!=_adj.end(); it++) {
@@ -466,13 +462,10 @@ void meshMetric::computeMetricFrey(){
     setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(metric.determinant())));
 
   }
-
 }
 
-
-
-void meshMetric::computeMetricEigenDir(){
-
+void meshMetric::computeMetricEigenDir()
+{
   int metricNumber = setOfMetrics.size();
 
   for (v2t_cont::iterator it=_adj.begin(); it!=_adj.end(); it++) {
@@ -559,10 +552,8 @@ void meshMetric::computeMetricEigenDir(){
 
 }
 
-
-
-void meshMetric::computeMetricIsoLinInterp(){
-  
+void meshMetric::computeMetricIsoLinInterp()
+{
   int metricNumber = setOfMetrics.size();
 
   for (v2t_cont::iterator it=_adj.begin(); it!=_adj.end(); it++) {
@@ -589,10 +580,8 @@ void meshMetric::computeMetricIsoLinInterp(){
 
 }
 
-
-
-void meshMetric::computeMetricScaledHessian(){
-
+void meshMetric::computeMetricScaledHessian()
+{
   int metricNumber = setOfMetrics.size();
 
   std::list<double> lambda1, lambda2, lambda3;
@@ -658,10 +647,8 @@ void meshMetric::computeMetricScaledHessian(){
 
 }
 
-
-
-void meshMetric::computeMetric(){
-
+void meshMetric::computeMetric()
+{
   //printf("%d elements are considered in the meshMetric \n",(int)_elements.size());
 
   computeValues();
@@ -679,9 +666,8 @@ void meshMetric::computeMetric(){
 
 }
 
-
-
-double meshMetric::operator() (double x, double y, double z, GEntity *ge) {
+double meshMetric::operator() (double x, double y, double z, GEntity *ge)
+{
   if (needMetricUpdate) intersectMetrics();
   if (!setOfMetrics.size()){
     std::cout  << "meshMetric::operator() : No metric defined ! " << std::endl;
@@ -705,7 +691,8 @@ double meshMetric::operator() (double x, double y, double z, GEntity *ge) {
   return 1.e22;
 }
 
-void meshMetric::operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge) {
+void meshMetric::operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge)
+{
   if (needMetricUpdate) intersectMetrics();
   if (!setOfMetrics.size()){
     std::cout  << "meshMetric::operator() : No metric defined ! " << std::endl;

@@ -42,14 +42,12 @@ void highOrderTools::moveToStraightSidedLocation(MElement *e) const
     MVertex *v = e->getVertex(i);
     std::map<MVertex*,SVector3>::const_iterator it = _straightSidedLocation.find(v);
     if (it != _straightSidedLocation.end()){
-      //      printf("move %d : %g %g -> %g %g\n",v->getNum(),v->x() ,v->y() ,  it->second.x() ,  it->second.y() );
       v->x() = it->second.x();
       v->y() = it->second.y();
       v->z() = it->second.z();
     }
   }
 }
-
 
 void highOrderTools::ensureMinimumDistorsion(MElement *e, double threshold)
 {
@@ -96,7 +94,6 @@ void highOrderTools::ensureMinimumDistorsion(MElement *e, double threshold)
   }
   //  printf("element done\n");
 }
-
 
 static void getDistordedElements(const std::vector<MElement*> &v,
 				 const double & threshold,
@@ -145,7 +142,6 @@ static void addOneLayer(const std::vector<MElement*> &v,
   }
 }
 
-
 double highOrderTools::applySmoothingTo(GFace *gf, double tres, bool mixed)
 {
   if (!gf){
@@ -158,7 +154,6 @@ double highOrderTools::applySmoothingTo(GFace *gf, double tres, bool mixed)
   //  applySmoothingTo(v,gf);
   return applySmoothingTo(v,tres, mixed);
 }
-
 
 void highOrderTools::ensureMinimumDistorsion (double threshold)
 {
@@ -179,10 +174,9 @@ void highOrderTools::ensureMinimumDistorsion (double threshold)
   ensureMinimumDistorsion(v,threshold);
 }
 
-
 /*
-   void highOrderTools::applySmoothingTo(GRegion *gr)
-   {
+void highOrderTools::applySmoothingTo(GRegion *gr)
+{
    std::vector<MElement*> v;
    v.insert(v.begin(), gr->tetrahedra.begin(),gr->tetrahedra.end());
    v.insert(v.begin(), gr->hexahedra.begin(),gr->hexahedra.end());
@@ -190,14 +184,14 @@ void highOrderTools::ensureMinimumDistorsion (double threshold)
    Msg::Info("Smoothing high order mesh : model region %d (%d elements)", gr->tag(),
    v.size());
    applySmoothingTo(v,gr);
-   }
-   */
+}
+*/
 
 void highOrderTools::computeMetricInfo(GFace *gf,
-    MElement *e,
-    fullMatrix<double> &J,
-    fullMatrix<double> &JT,
-    fullVector<double> &D)
+                                       MElement *e,
+                                       fullMatrix<double> &J,
+                                       fullMatrix<double> &JT,
+                                       fullVector<double> &D)
 {
   int nbNodes = e->getNumVertices();
   //  printf("ELEMENT --\n");
@@ -207,7 +201,7 @@ void highOrderTools::computeMetricInfo(GFace *gf,
     //    printf("%g %g vs %g %g %g\n",param.x(),param.y(),
     //	   e->getVertex(j)->x(),e->getVertex(j)->y(),e->getVertex(j)->z());
 
-    Pair<SVector3,SVector3> der = gf->firstDer(param);    
+    Pair<SVector3,SVector3> der = gf->firstDer(param);
 
     int XJ = j;
     int YJ = j + nbNodes;
@@ -229,7 +223,7 @@ void highOrderTools::computeMetricInfo(GFace *gf,
     JT(VJ,ZJ) = der.second().z();
 
     SVector3 ss = getSSL(e->getVertex(j));
-    GPoint gp = gf->point(param);      
+    GPoint gp = gf->point(param);
     D(XJ) = (gp.x() - ss.x());
     D(YJ) = (gp.y() - ss.y());
     D(ZJ) = (gp.z() - ss.z());
@@ -240,7 +234,7 @@ void highOrderTools::computeMetricInfo(GFace *gf,
 	   ss.x(),ss.y(),ss.z(),
 	   e->getVertex(j)->x(),e->getVertex(j)->y(),e->getVertex(j)->z());
     */
-    
+
   }
 }
 
@@ -339,10 +333,10 @@ void highOrderTools::applySmoothingTo(std::vector<MElement*> & all, GFace *gf)
 }
 
 double highOrderTools::smooth_metric_(std::vector<MElement*>  & v,
-    GFace *gf,
-    dofManager<double> &myAssembler,
-    std::set<MVertex*> &verticesToMove,
-    elasticityTerm &El)
+                                      GFace *gf,
+                                      dofManager<double> &myAssembler,
+                                      std::set<MVertex*> &verticesToMove,
+                                      elasticityTerm &El)
 {
   std::set<MVertex*>::iterator it;
   double dx = 0.0;
@@ -408,13 +402,13 @@ double highOrderTools::smooth_metric_(std::vector<MElement*>  & v,
   return dx;
 }
 
-
-highOrderTools::highOrderTools (GModel *gm) : _gm(gm), _dim(2), _tag(111)
+highOrderTools::highOrderTools (GModel *gm) : _gm(gm), _tag(111), _dim(2)
 {
   computeStraightSidedPositions();
 }
 
-highOrderTools::highOrderTools (GModel *gm, GModel *mesh, int order) : _gm(gm), _dim(2), _tag(111)
+highOrderTools::highOrderTools (GModel *gm, GModel *mesh, int order)
+  : _gm(gm), _tag(111), _dim(2)
 {
   GeomMeshMatcher::instance()->forceTomatch(gm,mesh,1.e-5);
   GeomMeshMatcher::instance()->destroy();
@@ -552,17 +546,18 @@ void highOrderTools::computeStraightSidedPositions ()
     }
   }
 
-  Msg::Info("highOrderTools has been set up : %d nodes are considered",_straightSidedLocation.size());
+  Msg::Info("highOrderTools has been set up : %d nodes are considered",
+            _straightSidedLocation.size());
 }
 
 // apply a displacement that does not create elements that are
 // distorted over a value "thres"
 double highOrderTools::apply_incremental_displacement (double max_incr,
-    std::vector<MElement*> & v,
-    bool mixed,
-    double thres,
-    char *meshName,
-    std::vector<MElement*> & disto)
+                                                       std::vector<MElement*> & v,
+                                                       bool mixed,
+                                                       double thres,
+                                                       char *meshName,
+                                                       std::vector<MElement*> & disto)
 {
 #ifdef HAVE_PETSC
   // assume that the mesh is OK, yet already curved
@@ -699,7 +694,7 @@ double highOrderTools::apply_incremental_displacement (double max_incr,
 
 // uncurve elements that are invalid
 void highOrderTools::ensureMinimumDistorsion(std::vector<MElement*> &all,
-    double threshold)
+                                             double threshold)
 {
   for(int tries = 0; tries < 100; tries++){
     double minD;
@@ -727,7 +722,8 @@ double highOrderTools::applySmoothingTo (std::vector<MElement*> &all,
   // _gm->writeMSH("straightSided.msh");
 
   char sm[] = "sm.msh";
-  double percentage_of_what_is_left = apply_incremental_displacement (1., all, mixed, -100000000, sm, all);
+  double percentage_of_what_is_left = apply_incremental_displacement
+    (1., all, mixed, -100000000, sm, all);
   //  ensureMinimumDistorsion (all, threshold);
   return 1.;
 
@@ -735,9 +731,11 @@ double highOrderTools::applySmoothingTo (std::vector<MElement*> &all,
   while(1){
     char NN[256];
     sprintf(NN,"smoothing-%d.msh",ITER++);
-    percentage_of_what_is_left = apply_incremental_displacement (1.,all, mixed, threshold,NN,all);
+    percentage_of_what_is_left = apply_incremental_displacement
+      (1.,all, mixed, threshold,NN,all);
     percentage += (1.-percentage) * percentage_of_what_is_left/100.;
-    Msg::Info("The smoother was able to do %3d percent of the motion",(int)(percentage*100.));
+    Msg::Info("The smoother was able to do %3d percent of the motion",
+              (int)(percentage*100.));
     if (percentage_of_what_is_left == 0.0) break;
     else if (percentage_of_what_is_left == 100.)break;
   }
@@ -749,9 +747,10 @@ double highOrderTools::applySmoothingTo (std::vector<MElement*> &all,
 }
 
 extern void printJacobians(GModel *m, const char *nm);
-void highOrderTools::makePosViewWithJacobians (const char *fn){
+
+void highOrderTools::makePosViewWithJacobians (const char *fn)
+{
   printJacobians(_gm,fn);
 }
 
 #endif
-

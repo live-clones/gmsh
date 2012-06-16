@@ -135,7 +135,7 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf)
   // assume that the initial mesh has been created i.e. that there exist
   // triangles inside the domain. Triangles are used to define
   // exterior normals
-  for (int i=0;i<gf->triangles.size();i++){
+  for (unsigned int i = 0; i < gf->triangles.size(); i++){
     SPoint2 p0,p1,p2;
     MVertex *v0 = gf->triangles[i]->getVertex(0);
     MVertex *v1 = gf->triangles[i]->getVertex(1);
@@ -230,10 +230,9 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf)
       for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
              _columns->_normals.lower_bound(e2);
 	    itm != _columns->_normals.upper_bound(e2); ++itm) N2.push_back(itm->second);
-      double LL;
       if (N1.size() == N2.size()){
 	//	if (N1.size() > 1)printf("%d sides\n",N1.size());
-	for (int SIDE = 0; SIDE < N1.size() ; SIDE++){
+	for (unsigned int SIDE = 0; SIDE < N1.size() ; SIDE++){
 	  // IF THE ANGLE IS GREATER THAN THRESHOLD, ADD DIRECTIONS !!
 	  double angle = computeAngle (gf,e1,e2,N1[SIDE],N2[SIDE]);
 	  //	  if (N1.size() > 1)printf("angle = %g\n",angle);
@@ -293,7 +292,7 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf)
     //    if (_dirs.size() > 1)printf("%d directions\n",_dirs.size());
 
     // now create the BL points
-    for (int DIR=0;DIR<_dirs.size();DIR++){
+    for (unsigned int DIR=0;DIR<_dirs.size();DIR++){
       SPoint2 p;
       SVector3 n = _dirs[DIR];
 
@@ -328,10 +327,7 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf)
 	buildMeshMetric(gf, poffset, m, metric);
 	const double l2 = n.x()*n.x()*metric[0] + 2*n.x()*n.y()*metric[1] + n.y()*n.y()*metric[2] ;
 	l = 1./sqrt(l2);
-	//	  if (_dirs.size() > 1) printf("l = %g metric = %g %g %g dim %d tag %d \n",l,metric[0],metric[1],metric[2],current->onWhat()->dim(),current->onWhat()->tag());
-	//	  printf("%g %g\n",l,LL);
 	if (l >= blf->hfar){
-	  //	  printf("stopping %g %g\n",l,LL);
 	  break;
 	}
 	//	printf("%g %g %g \n",current->x(),current->y(),blf->current_distance);
@@ -364,7 +360,7 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf)
 	//	printf("pnew %g %g new point %g %g n %g %g\n",pnew.x(),pnew.y(),gp.x(),gp.y(),n.x(),n.y());
 	_metrics.push_back(m);
 	//	const double l = n[0]*m(0,0) +;
-	if (_column.size() > nbCol)break; // FIXME
+	if ((int)_column.size() > nbCol) break; // FIXME
 	p = pnew;
       }
       //      if (_dirs.size() > 1)printf("adding column with %d nodes\n",_column.size());
@@ -381,7 +377,7 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf)
     MVertex *v = *it;
     for (int i=0;i<_columns->getNbColumns(v);i++){
       const BoundaryLayerData &data = _columns->getColumn(v,i);
-      for (int j=0;j<data._column.size();j++){
+      for (unsigned int j = 0; j < data._column.size(); j++){
 	MVertex *blv = data._column[j];
 	fprintf(f,"SP(%g,%g,%g){%d};\n",blv->x(),blv->y(),blv->z(),v->getNum());
       }

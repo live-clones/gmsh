@@ -186,7 +186,7 @@ void MPolygon::_initVertices()
         }
       }
       if(!found){
-        for(k = 0; k < multiEdges.size(); k++)
+        for(k = 0; k < (int)multiEdges.size(); k++)
           if(multiEdges[k].isInside(ed.getVertex(0)) &&
              multiEdges[k].isInside(ed.getVertex(1))){
             found = true; break;
@@ -343,7 +343,6 @@ void MLineChild::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *npts = 0;
   if(_intpt) delete [] _intpt;
   if(!_orig) return;
-  double jac[3][3];
   _intpt = new IntPt[getNGQLPts(pOrder)];
   int nptsi;
   IntPt *ptsi;
@@ -469,7 +468,6 @@ void MLineBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   MVertex v1(uvw[1][0], uvw[1][1], uvw[1][2]);
   MLine ll(&v0, &v1);
   ll.getIntegrationPoints(pOrder, &nptsi, &ptsi);
-  double jac[3][3];
   for(int ip = 0; ip < nptsi; ip++){
     const double u = ptsi[ip].pt[0];
     const double v = ptsi[ip].pt[1];
@@ -595,7 +593,7 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
                              std::map<int, int> newElemTags[4],
                              std::map<int, int> newPhysTags[4],
 			     std::map<int, int> borderElemTags[2],
-			     std::map<int, int> borderPhysTags[2], 
+			     std::map<int, int> borderPhysTags[2],
 			     int gLsTag)
 {
   int elementary = ge->tag();
@@ -623,7 +621,7 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
       lsTag = -1;
       splitElem = true;
       break;
-    } 
+    }
   }
   // int lsTag = 1; //negative ls
   // for(int k = 0; k < e->getNumVertices(); k++){
@@ -744,7 +742,7 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
                       getBorderTag(gLsTag, c, newPhysTags[2][0], borderPhysTags[1]);
         if(mf.getNumVertices() == 3){
           MFace f1 = MFace(vertexMap[mf.getVertex(0)->getNum()],
-                           vertexMap[mf.getVertex(1)->getNum()], 
+                           vertexMap[mf.getVertex(1)->getNum()],
                            vertexMap[mf.getVertex(2)->getNum()]);
           int i = elements[2][reg].size() - 1;
           for(; i >= 0; i--){
@@ -753,7 +751,7 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
             if(f1 == f2) break;
           }
           if(i < 0){
-            MTriangle *tri = new MTriangle(f1.getVertex(0), f1.getVertex(1), f1.getVertex(2)); 
+            MTriangle *tri = new MTriangle(f1.getVertex(0), f1.getVertex(1), f1.getVertex(2));
             elements[2][reg].push_back(tri);
           }
           else{
@@ -764,7 +762,7 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
         }
         else if(mf.getNumVertices() == 4){
           MFace f1 = MFace(vertexMap[mf.getVertex(0)->getNum()],
-                           vertexMap[mf.getVertex(1)->getNum()], 
+                           vertexMap[mf.getVertex(1)->getNum()],
                            vertexMap[mf.getVertex(2)->getNum()],
                            vertexMap[mf.getVertex(3)->getNum()]);
           int i;
@@ -786,7 +784,7 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
           }
         }
         if(physTag) assignLsPhysical(GM, reg, 2, physicals, physTag, gLsTag);
-      }    
+      }
     }
   }
 }
@@ -1480,7 +1478,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
         MElement *e = gmEntities[i]->getMeshElement(j);
         e->setVolumePositive();
         elementSplitMesh(e, verticesLs, gmEntities[i], gm, numEle, vertexMap, newParents,
-                         newDomains, elements, physicals, newElemTags, newPhysTags, 
+                         newDomains, elements, physicals, newElemTags, newPhysTags,
 			 borderElemTags, borderPhysTags, ls->getTag());
         cutGM->getMeshPartitions().insert(e->getPartition());
       }
@@ -1516,8 +1514,8 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
     }
 
     // Create elementary and physical for non connected border lines
-    if(borders[0].size() > nbBorders && gmEntities[i]->dim() == 2 &&
-       i == gm->getNumVertices() + gm->getNumEdges() + gm->getNumFaces() - 1){
+    if((int)borders[0].size() > nbBorders && gmEntities[i]->dim() == 2 &&
+       (int)i == gm->getNumVertices() + gm->getNumEdges() + gm->getNumFaces() - 1){
       int k = 0;
       for (std::map<int, std::vector<MElement*> >::iterator it = elements[1].begin();
            it != elements[1].end(); it++){
@@ -1530,12 +1528,12 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
         int nLR = lsLineRegs[j];
         bool havePhys = physicals[1][nLR].size();
         while(1){
-          std::vector<MElement*> conLines; 
+          std::vector<MElement*> conLines;
           conLines.push_back(elements[1][nLR][0]);
           elements[1][nLR].erase(elements[1][nLR].begin());
           MVertex *v1 = conLines[0]->getVertex(0);
           MVertex *v2 = conLines[0]->getVertex(1);
-          for(int k = 0; k < elements[1][nLR].size(); ){
+          for(unsigned int k = 0; k < elements[1][nLR].size(); ){
             MVertex *va = elements[1][nLR][k]->getVertex(0);
             MVertex *vb = elements[1][nLR][k]->getVertex(1);
             if(va == v1 || vb == v1 || va == v2 || vb == v2){
@@ -1556,11 +1554,11 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
             if(newPhys)
               assignLsPhysical(gm, newReg, 1, physicals, newPhys,
                                lines[lines.size() - 1]->lsTag());
-            for(int k = 0; k < conLines.size(); k++)
+            for(unsigned int k = 0; k < conLines.size(); k++)
               elements[1][newReg].push_back(conLines[k]);
           }
           else {
-            for(int k = 0; k < conLines.size(); k++)
+            for(unsigned int k = 0; k < conLines.size(); k++)
               elements[1][nLR].push_back(conLines[k]);
             break;
           }
@@ -1595,7 +1593,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   }
   printf("PHYS\n");
   for(int i=0;i<4;i++)
-    for(std::map<int, std::map<int, std::string> >::iterator it=physicals[i].begin();it!=physicals[i].end();it++) 
+    for(std::map<int, std::map<int, std::string> >::iterator it=physicals[i].begin();it!=physicals[i].end();it++)
       for(std::map<int, std::string>::iterator it2 = it->second.begin(); it2!=it->second.end(); it2++)
         printf(" dim=%d reg=%d phys=%d \"%s\"\n",i,it->first,it2->first,it2->second.c_str());
   printf("\n");

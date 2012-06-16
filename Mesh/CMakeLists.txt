@@ -4,10 +4,8 @@
 # bugs and problems to <gmsh@geuz.org>.
 
 set(SRC
-CenterlineField.cpp
   Generator.cpp
-  Field.cpp
-   meshGEdge.cpp 
+    meshGEdge.cpp 
       meshGEdgeExtruded.cpp
     meshGFace.cpp 
       meshGFaceTransfinite.cpp meshGFaceExtruded.cpp 
@@ -36,6 +34,8 @@ CenterlineField.cpp
     Levy3D.cpp
     periodical.cpp
     directions3D.cpp
+  Field.cpp
+    CenterlineField.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
