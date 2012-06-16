@@ -130,10 +130,11 @@ class cartesianBox {
   cartesianBox(double X0, double Y0, double Z0,
                const SVector3 &dxi, const SVector3 &deta, const SVector3 &dzeta,
                int Nxi, int Neta, int Nzeta, int level=1)
-    : _X0(X0), _Y0(Y0), _Z0(Z0),
+    : _Nxi(Nxi), _Neta(Neta), _Nzeta(Nzeta),
+      _X0(X0), _Y0(Y0), _Z0(Z0),
       _dxi(norm(dxi)), _deta(norm(deta)), _dzeta(norm(dzeta)),
       _xiAxis(dxi), _etaAxis(deta), _zetaAxis(dzeta),
-      _Nxi(Nxi), _Neta(Neta), _Nzeta(Nzeta), _level(level), _childBox(0)
+      _level(level), _childBox(0)
   {
     _xiAxis.normalize();
     _etaAxis.normalize();
@@ -177,16 +178,10 @@ class cartesianBox {
   {
 
     SVector3 DP (x - _X0, y - _Y0, z - _Z0);
-    double xa = dot(DP, _xiAxis);
-    double ya = dot(DP, _etaAxis);
-    double za = dot(DP, _zetaAxis);
 
     int t = getCellContainingPoint(x, y,z);
     int i, j, k;
     getCellIJK(t, i, j, k);
-
-    //printf("xyz = %g %g %g \n",x, y, z);
-    //printf("ijk =%d %d %d \n", i, j, k);
 
     valIter it1 = _nodalValues.find(getNodeIndex(i, j, k));
     valIter it2 = _nodalValues.find(getNodeIndex(i + 1, j, k));
