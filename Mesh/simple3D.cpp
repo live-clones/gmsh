@@ -14,9 +14,9 @@
 #include <algorithm>
 #include "directions3D.h"
 
-#if defined(HAVE_RTREE) 
+#if defined(HAVE_RTREE)
 #include "rtree.h"
-#endif 
+#endif
 
 #define k1 0.7 //k1*h is the minimal distance between two nodes
 #define k2 0.5 //k2*h is the minimal distance to the boundary
@@ -38,14 +38,14 @@ class Metric{
   void set_m32(double);
   void set_m13(double);
   void set_m23(double);
-  void set_m33(double);	
+  void set_m33(double);
   double get_m11();
   double get_m21();
   double get_m31();
-  double get_m12();	
+  double get_m12();
   double get_m22();
   double get_m32();
-  double get_m13();	
+  double get_m13();
   double get_m23();
   double get_m33();
 };
@@ -93,7 +93,7 @@ double infinity_distance(SPoint3 p1,SPoint3 p2,Metric m){
   double x1,y1,z1;
   double x2,y2,z2;
   double a,b,c,d,e,f,g,h,i;
-	
+
   a = m.get_m11();
   b = m.get_m21();
   c = m.get_m31();
@@ -103,16 +103,16 @@ double infinity_distance(SPoint3 p1,SPoint3 p2,Metric m){
   g = m.get_m13();
   h = m.get_m23();
   i = m.get_m33();
-		
+
   x1 = a*p1.x() + b*p1.y() + c*p1.z();
   y1 = d*p1.x() + e*p1.y() + f*p1.z();
   z1 = g*p1.x() + h*p1.y() + i*p1.z();
-	
+
   x2 = a*p2.x() + b*p2.y() + c*p2.z();
   y2 = d*p2.x() + e*p2.y() + f*p2.z();
   z2 = g*p2.x() + h*p2.y() + i*p2.z();
-	
-  distance = std::max(std::max(fabs(x2-x1),fabs(y2-y1)),fabs(z2-z1)); 		
+
+  distance = std::max(std::max(fabs(x2-x1),fabs(y2-y1)),fabs(z2-z1));
   return distance;
 }
 
@@ -122,13 +122,13 @@ bool rtree_callback(Node* neighbour,void* w){
   Metric m;
   Node *spawn,*parent;
   Wrapper* wrapper;
-	
+
   wrapper = static_cast<Wrapper*>(w);
   spawn = wrapper->get_spawn();
   parent = wrapper->get_parent();
   h = spawn->get_size();
   m = spawn->get_metric();
-	
+
   if(neighbour!=parent){
     distance = infinity_distance(spawn->get_point(),neighbour->get_point(),m);
 	if(distance<k1*h){
@@ -136,7 +136,7 @@ bool rtree_callback(Node* neighbour,void* w){
 	  return false;
 	}
   }
-	
+
   return true;
 }
 
@@ -310,9 +310,9 @@ void Filler::treat_model(){
   GRegion* gr;
   GModel* model = GModel::current();
   GModel::riter it;
-	
-  Frame_field::init_model();	
-	
+
+  Frame_field::init_model();
+
   for(it=model->firstRegion();it!=model->lastRegion();it++)
   {
     gr = *it;
@@ -320,13 +320,14 @@ void Filler::treat_model(){
 	  treat_region(gr);
 	}
   }
-	
+
   Frame_field::clear();
 }
 
 void Filler::treat_region(GRegion* gr){
-#if defined(HAVE_RTREE) 
-  int i,j;
+#if defined(HAVE_RTREE)
+  unsigned int i;
+  int j;
   int count;
   bool ok;
   double x,y,z;
@@ -346,7 +347,7 @@ void Filler::treat_region(GRegion* gr){
   RTree<Node*,double,3,double> rtree;
 
   octree = new MElementOctree(gr->model());
-	
+
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
 	for(j=0;j<element->getNumVertices();j++){
@@ -354,7 +355,7 @@ void Filler::treat_region(GRegion* gr){
 	  old_vertices.insert(vertex);
 	}
   }
-	
+
   for(it=old_vertices.begin();it!=old_vertices.end();it++){
 	if((*it)->onWhat()->dim()<3){
 	  boundary_vertices.push_back(*it);
@@ -407,7 +408,7 @@ void Filler::treat_region(GRegion* gr){
 		  wrapper.set_too_close(0);
 		  wrapper.set_spawn(spawn);
 		  wrapper.set_parent(parent);
-	      rtree.Search(spawn->min,spawn->max,rtree_callback,&wrapper);
+                  rtree.Search(spawn->min,spawn->max,rtree_callback,&wrapper);
 		  if(!wrapper.get_too_close()){
 		    fifo.push(spawn);
 		    rtree.Insert(spawn->min,spawn->max,spawn);
@@ -422,14 +423,14 @@ void Filler::treat_region(GRegion* gr){
 	printf("%d\n",count);
 	count++;
   }
-  
+
   deleter(gr);
   std::vector<GRegion*> regions;
   regions.push_back(gr);
   meshGRegion mesher(regions); //?
   mesher(gr); //?
   MeshDelaunayVolume(regions);
-  
+
   delete octree;
   for(i=0;i<garbage.size();i++) delete garbage[i];
   for(i=0;i<new_vertices.size();i++) delete new_vertices[i];
@@ -439,22 +440,22 @@ void Filler::treat_region(GRegion* gr){
 
 Metric Filler::get_metric(double x,double y,double z){
   Metric m;
-  Matrix m2;	
-  	
-  m2 = Frame_field::search(x,y,z);	
-	
+  Matrix m2;
+
+  m2 = Frame_field::search(x,y,z);
+
   m.set_m11(m2.get_m11());
   m.set_m21(m2.get_m21());
   m.set_m31(m2.get_m31());
-  
+
   m.set_m12(m2.get_m12());
   m.set_m22(m2.get_m22());
   m.set_m32(m2.get_m32());
-  
+
   m.set_m13(m2.get_m13());
   m.set_m23(m2.get_m23());
   m.set_m33(m2.get_m33());
-	
+
   return m;
 }
 
@@ -467,28 +468,28 @@ Metric Filler::get_clf_metric(double x,double y,double z,GEntity* ge){
   Metric m;
   Field* field;
   FieldManager* manager;
-	
+
   m = Metric();
   manager = ge->model()->getFields();
   if(manager->getBackgroundField()>0){
     field = manager->get(manager->getBackgroundField());
 	if(field){
 	  (*field)(x,y,z,v1,v2,v3,ge);
-		
-	  m.set_m11(v1.x());	
+
+	  m.set_m11(v1.x());
 	  m.set_m21(v1.y());
 	  m.set_m31(v1.z());
-		
+
 	  m.set_m12(v2.x());
 	  m.set_m22(v2.y());
 	  m.set_m32(v2.z());
-		
+
 	  m.set_m13(v3.x());
 	  m.set_m23(v3.y());
 	  m.set_m33(v3.z());
 	}
   }
-	
+
   return m;
 }
 
@@ -496,8 +497,8 @@ double Filler::get_clf_size(double x,double y,double z,GEntity* ge){
   double h;
   Field* field;
   FieldManager* manager;
-	
-  h = 0.25;	
+
+  h = 0.25;
   manager = ge->model()->getFields();
   if(manager->getBackgroundField()>0){
     field = manager->get(manager->getBackgroundField());
@@ -505,7 +506,7 @@ double Filler::get_clf_size(double x,double y,double z,GEntity* ge){
 	  h = (*field)(x,y,z,ge);
 	}
   }
-	
+
   return h;
 }
 
@@ -521,20 +522,20 @@ bool Filler::far_from_boundary(MElementOctree* octree,Node* node){
   double h;
   SPoint3 point;
   MElement *e1,*e2,*e3,*e4,*e5,*e6;
-	
+
   point = node->get_point();
   x = point.x();
   y = point.y();
   z = point.z();
   h = node->get_size();
-	
+
   e1 = (MElement*)octree->find(x+k2*h,y,z,3,true);
   e2 = (MElement*)octree->find(x-k2*h,y,z,3,true);
   e3 = (MElement*)octree->find(x,y+k2*h,z,3,true);
   e4 = (MElement*)octree->find(x,y-k2*h,z,3,true);
   e5 = (MElement*)octree->find(x,y,z+k2*h,3,true);
   e6 = (MElement*)octree->find(x,y,z-k2*h,3,true);
-	
+
   if(e1!=NULL && e2!=NULL && e3!=NULL && e4!=NULL && e5!=NULL && e6!=NULL) return 1;
   else return 0;
 }
@@ -544,14 +545,14 @@ void Filler::compute_parameters(Node* node,GEntity* ge){
   double h;
   Metric m;
   SPoint3 point;
-	
+
   point = node->get_point();
   x = point.x();
   y = point.y();
   z = point.z();
   m = get_metric(x,y,z);
   h = get_size(x,y,z);
-  
+
   node->set_size(h);
   node->set_metric(m);
   node->min[0] = x - sqrt3*h;
@@ -574,44 +575,44 @@ void Filler::offsprings(GEntity* ge,MElementOctree* octree,Node* node,Node* n1,N
   double h1,h2,h3,h4,h5,h6;
   Metric m;
   SPoint3 point;
-	
+
   point = node->get_point();
   x = point.x();
   y = point.y();
   z = point.z();
   h = node->get_size();
   m = node->get_metric();
-	
+
   h1 = improvement(ge,octree,point,h,SVector3(m.get_m11(),m.get_m21(),m.get_m31()));
   x1 = x + h1*m.get_m11();
   y1 = y + h1*m.get_m21();
   z1 = z + h1*m.get_m31();
-  
+
   h2 = improvement(ge,octree,point,h,SVector3(-m.get_m11(),-m.get_m21(),-m.get_m31()));
   x2 = x - h2*m.get_m11();
   y2 = y - h2*m.get_m21();
   z2 = z - h2*m.get_m31();
-  
+
   h3 = improvement(ge,octree,point,h,SVector3(m.get_m12(),m.get_m22(),m.get_m32()));
   x3 = x + h3*m.get_m12();
   y3 = y + h3*m.get_m22();
   z3 = z + h3*m.get_m32();
-  
+
   h4 = improvement(ge,octree,point,h,SVector3(-m.get_m12(),-m.get_m22(),-m.get_m32()));
   x4 = x - h4*m.get_m12();
   y4 = y - h4*m.get_m22();
   z4 = z - h4*m.get_m32();
-  
+
   h5 = improvement(ge,octree,point,h,SVector3(m.get_m13(),m.get_m23(),m.get_m33()));
   x5 = x + h5*m.get_m13();
   y5 = y + h5*m.get_m23();
   z5 = z + h5*m.get_m33();
-  
+
   h6 = improvement(ge,octree,point,h,SVector3(-m.get_m13(),-m.get_m23(),-m.get_m33()));
   x6 = x - h6*m.get_m13();
   y6 = y - h6*m.get_m23();
   z6 = z - h6*m.get_m33();
-	
+
   *n1 = Node(SPoint3(x1,y1,z1));
   *n2 = Node(SPoint3(x2,y2,z2));
   *n3 = Node(SPoint3(x3,y3,z3));
@@ -625,7 +626,7 @@ double Filler::improvement(GEntity* ge,MElementOctree* octree,SPoint3 point,doub
   double average;
   double h_farther;
   double coeffA,coeffB;
-	
+
   x = point.x() + h_nearer*direction.x();
   y = point.y() + h_nearer*direction.y();
   z = point.z() + h_nearer*direction.z();
@@ -633,7 +634,7 @@ double Filler::improvement(GEntity* ge,MElementOctree* octree,SPoint3 point,doub
     h_farther = get_size(x,y,z);
   }
   else h_farther = h_nearer;
-  
+
   coeffA = 1.0;
   coeffB = 0.2;
   if(h_farther>h_nearer){
@@ -648,16 +649,16 @@ double Filler::improvement(GEntity* ge,MElementOctree* octree,SPoint3 point,doub
 int Filler::get_nbr_new_vertices(){
   return new_vertices.size();
 }
- 
+
 MVertex* Filler::get_new_vertex(int i){
   return new_vertices[i];
 }
 
 void Filler::print_segment(SPoint3 p1,SPoint3 p2,std::ofstream& file){
-  file << "SL (" 
+  file << "SL ("
   << p1.x() << ", " << p1.y() << ", " << p1.z() << ", "
-  << p2.x() << ", " << p2.y() << ", " << p2.z() << ")" 
-  << "{10, 20};\n";	
+  << p2.x() << ", " << p2.y() << ", " << p2.z() << ")"
+  << "{10, 20};\n";
 }
 
 void Filler::print_node(Node* node,std::ofstream& file){
@@ -671,34 +672,34 @@ void Filler::print_node(Node* node,std::ofstream& file){
   double h;
   Metric m;
   SPoint3 point;
-	
+
   point = node->get_point();
   x = point.x();
   y = point.y();
   z = point.z();
   h = node->get_size();
   m = node->get_metric();
-	
+
   x1 = x + h*m.get_m11();
   y1 = y + h*m.get_m21();
   z1 = z + h*m.get_m31();
-  
+
   x2 = x - h*m.get_m11();
   y2 = y - h*m.get_m21();
   z2 = z - h*m.get_m31();
-  
+
   x3 = x + h*m.get_m12();
   y3 = y + h*m.get_m22();
   z3 = z + h*m.get_m32();
-  
+
   x4 = x - h*m.get_m12();
   y4 = y - h*m.get_m22();
   z4 = z - h*m.get_m32();
-  
+
   x5 = x + h*m.get_m13();
   y5 = y + h*m.get_m23();
   z5 = z + h*m.get_m33();
-  
+
   x6 = x - h*m.get_m13();
   y6 = y - h*m.get_m23();
   z6 = z - h*m.get_m33();

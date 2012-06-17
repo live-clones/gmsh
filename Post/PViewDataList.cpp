@@ -19,7 +19,7 @@ PViewDataList::PViewDataList(bool isAdapted)
     NbSS(0), NbVS(0), NbTS(0), NbSH(0), NbVH(0), NbTH(0),
     NbSI(0), NbVI(0), NbTI(0), NbSY(0), NbVY(0), NbTY(0),
     NbSD(0), NbVD(0), NbTD(0), NbT2(0), NbT3(0),
-    _lastElement(-1), _lastDimension(-1), _lastNumNodes(-1), 
+    _lastElement(-1), _lastDimension(-1), _lastNumNodes(-1),
     _lastNumComponents(-1), _lastNumValues(-1), _lastNumEdges(-1),
     _lastType(-1), _lastXYZ(0), _lastVal(0), _isAdapted(isAdapted)
 {
@@ -101,18 +101,18 @@ bool PViewDataList::finalize(bool computeMinMax, const std::string &interpolatio
 }
 
 int PViewDataList::getNumScalars(int step)
-{ 
+{
   return NbSP + NbSL + NbST + NbSQ + NbSS + NbSH + NbSI + NbSY + NbSG + NbSD;
 }
 
 int PViewDataList::getNumVectors(int step)
 {
-  return NbVP + NbVL + NbVT + NbVQ + NbVS + NbVH + NbVI + NbVY + NbVG + NbVD; 
+  return NbVP + NbVL + NbVT + NbVQ + NbVS + NbVH + NbVI + NbVY + NbVG + NbVD;
 }
 
 int PViewDataList::getNumTensors(int step)
 {
-  return NbTP + NbTL + NbTT + NbTQ + NbTS + NbTH + NbTI + NbTY + NbTG + NbTD; 
+  return NbTP + NbTL + NbTT + NbTQ + NbTS + NbTH + NbTI + NbTY + NbTG + NbTD;
 }
 
 int PViewDataList::getNumElements(int step, int ent)
@@ -215,7 +215,7 @@ void PViewDataList::_stat(std::vector<double> &list, int nbcomp, int nbelm,
   }
 
   int nb = list.size() / nbelm;
-  for(unsigned int ele = 0; ele < nbelm; ele ++){
+  for(int ele = 0; ele < nbelm; ele ++){
     int i = ele * nb;
     if(type == TYPE_POLYG || type ==  TYPE_POLYH){
       int t = (type == TYPE_POLYG) ? 0 : 1;

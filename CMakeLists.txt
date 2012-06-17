@@ -635,7 +635,7 @@ if(HAVE_MESH)
   endif(ENABLE_TETGEN AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/Tetgen1.5/tetgen.h)
   if(HAVE_TETGEN)
     message("WARNING: By including Tetgen you have to comply with Tetgen's "
-            "special licensing requirements stated in contrib/Tetgen/LICENSE.")
+            "special licensing requirements stated in contrib/Tetgen*/LICENSE.")
   endif(HAVE_TETGEN)
 endif(HAVE_MESH)
 

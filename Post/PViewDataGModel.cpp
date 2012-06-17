@@ -169,7 +169,7 @@ bool PViewDataGModel::finalize(bool computeMinMax, const std::string &interpolat
     // for which we know the interpolation: it's constant)
     int types[] = {TYPE_PNT, TYPE_LIN, TYPE_TRI, TYPE_QUA, TYPE_TET, TYPE_HEX,
                    TYPE_PRI, TYPE_PYR, TYPE_POLYG, TYPE_POLYH};
-    for(int i = 0; i < sizeof(types) / sizeof(types[0]); i++){
+    for(unsigned int i = 0; i < sizeof(types) / sizeof(types[0]); i++){
       if(!haveInterpolationMatrices(types[i])){
         MElement *e = _getOneElementOfGivenType(model, types[i]);
         if(e){
