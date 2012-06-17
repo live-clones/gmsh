@@ -1,11 +1,10 @@
+// Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
 //
-// Description : Filters for function space dof selection
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
 //
-//
-// Author:  <Eric Bechet>::<Boris Sedji>,  02/2010
-//
-// Copyright: See COPYING file that comes with this distribution
-//
+// Contributor(s):
+//   Boris Sedji
 //
 
 #include "filters.h"

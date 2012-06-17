@@ -1,13 +1,10 @@
+// Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
 //
-// C++ Template Implementations: terms
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
 //
-// Description:
-//
-//
-// Author:  <Eric Bechet>, (C) 2011
-//
-// Copyright: See COPYING file that comes with this distribution
-//
+// Contributor(s):
+//   Eric Bechet
 //
 
 #include "terms.h"
@@ -33,7 +30,7 @@ template<class T2> void LinearTermBase<T2>::get(MElement *ele, int npts, IntPt *
   }
 }
 
-template<class T2> void PlusTerm<T2>::get(MElement *ele, int npts, IntPt *GP, fullVector<T2> &v) const 
+template<class T2> void PlusTerm<T2>::get(MElement *ele, int npts, IntPt *GP, fullVector<T2> &v) const
 {
   fullVector<T2> v2;
   a->get(ele,npts,GP,v);
@@ -90,7 +87,7 @@ template<class T1> void LaplaceTerm<T1, T1>::get(MElement *ele, int npts, IntPt 
   }
 }
 
-template<class T1> void LoadTerm<T1>::get(MElement *ele, int npts, IntPt *GP, fullVector<double> &m) const 
+template<class T1> void LoadTerm<T1>::get(MElement *ele, int npts, IntPt *GP, fullVector<double> &m) const
 {
   if(ele->getParent()) ele = ele->getParent();
   int nbFF = LinearTerm<T1>::space1.getNumKeys(ele);
@@ -117,7 +114,7 @@ template<class T2> BilinearTermContract<T2> operator |(const LinearTermBase<T2>&
   return BilinearTermContract<T2>(L1,L2);
 }
 
-template<class T2> void BilinearTermContract<T2>::get(MElement *ele, int npts, IntPt *GP, fullMatrix<double> &m) const 
+template<class T2> void BilinearTermContract<T2>::get(MElement *ele, int npts, IntPt *GP, fullMatrix<double> &m) const
 {
   fullVector<T2> va;
   fullVector<T2> vb;
@@ -131,12 +128,12 @@ template<class T2> void BilinearTermContract<T2>::get(MElement *ele, int npts, I
 }
 
 
-template<class T2> void BilinearTermContractWithLaw<T2>::get(MElement *ele, int npts, IntPt *GP, fullMatrix<double> &m) const 
+template<class T2> void BilinearTermContractWithLaw<T2>::get(MElement *ele, int npts, IntPt *GP, fullMatrix<double> &m) const
 {
   BilinearTermBase::get(ele,npts,GP,m);
 }
-  
-template<class T2> void BilinearTermContractWithLaw<T2>::get(MElement *ele, int npts, IntPt *GP, std::vector<fullMatrix<double> > &mv) const 
+
+template<class T2> void BilinearTermContractWithLaw<T2>::get(MElement *ele, int npts, IntPt *GP, std::vector<fullMatrix<double> > &mv) const
 {
   std::vector<fullVector<T2> > va(npts);
   std::vector<fullVector<T2> > vb(npts);
@@ -158,7 +155,7 @@ template<class T2> PlusTerm<T2> LinearTermBase<T2>::operator +(const LinearTermB
   return PlusTerm<T2>(*this,other);
 }
 /*
-template<class T1> void GradTerm<T1>::get(MElement *ele, int npts, IntPt *GP, fullVector<typename TensorialTraits<T1>::GradType > &vec) const 
+template<class T1> void GradTerm<T1>::get(MElement *ele, int npts, IntPt *GP, fullVector<typename TensorialTraits<T1>::GradType > &vec) const
 {
   int nbFF = LinearTerm<T1,typename TensorialTraits<T1>::GradType>::space1.getNumKeys(ele);
   double jac[3][3];
@@ -178,7 +175,7 @@ template<class T1> void GradTerm<T1>::get(MElement *ele, int npts, IntPt *GP, fu
   }
 }
 */
-template<class T1> void GradTerm<T1>::get(MElement *ele, int npts, IntPt *GP, std::vector<fullVector<typename TensorialTraits<T1>::GradType > > &vvec) const 
+template<class T1> void GradTerm<T1>::get(MElement *ele, int npts, IntPt *GP, std::vector<fullVector<typename TensorialTraits<T1>::GradType > > &vvec) const
 {
   int nbFF = LinearTerm<T1,typename TensorialTraits<T1>::GradType>::space1.getNumKeys(ele);
   for(int i = 0; i < npts; i++)
@@ -196,7 +193,7 @@ template<class T1> void GradTerm<T1>::get(MElement *ele, int npts, IntPt *GP, st
 
 
 
-template<class T1> void LoadTermOnBorder<T1>::get(MElement *ele, int npts, IntPt *GP, fullVector<double> &m) const 
+template<class T1> void LoadTermOnBorder<T1>::get(MElement *ele, int npts, IntPt *GP, fullVector<double> &m) const
 {
   MElement *elep;
   if (ele->getParent()) elep = ele->getParent();

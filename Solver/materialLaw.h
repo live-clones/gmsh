@@ -1,13 +1,10 @@
+// Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
 //
-// C++ Interface: materialLaw
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
 //
-// Description: 
-//
-//
-// Author:  <Eric Bechet>, (C) 2009
-//
-// Copyright: See COPYING file that comes with this distribution
-//
+// Contributor(s):
+//   Eric Bechet
 //
 
 #ifndef _MATERIALLAW_H_
@@ -17,7 +14,7 @@ class Material
 {
  public:
   virtual ~Material() {}
-  
+
 };
 
 

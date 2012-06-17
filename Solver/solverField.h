@@ -1,15 +1,11 @@
+// Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
 //
-// C++ Interface: field
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
 //
-// Description:
+// Contributor(s):
+//   Eric Bechet
 //
-//
-// Author:  <Eric Bechet>, (C) 2009
-//
-// Copyright: See COPYING file that comes with this distribution
-//
-//
-
 
 #ifndef _SOLVERFIELD_H_
 #define _SOLVERFIELD_H_

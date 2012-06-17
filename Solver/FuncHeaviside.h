@@ -1,11 +1,10 @@
+// Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
 //
-// Description : Heaviside function based on level set discontinuity description
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
 //
-//
-// Author:  <Boris Sedji>,  01/2010
-//
-// Copyright: See COPYING file that comes with this distribution
-//
+// Contributor(s):
+//   Boris Sedji
 //
 
 #ifndef _FUNCHEAVISIDE_H_

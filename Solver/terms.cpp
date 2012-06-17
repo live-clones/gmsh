@@ -1,13 +1,10 @@
+// Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
 //
-// C++ Implementation: terms
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
 //
-// Description:
-//
-//
-// Author:  <Eric Bechet>, (C) 2011
-//
-// Copyright: See COPYING file that comes with this distribution
-//
+// Contributor(s):
+//   Eric Bechet
 //
 
 #include "terms.h"
@@ -20,7 +17,7 @@ void BilinearTermToScalarTerm::get(MElement *ele, int npts, IntPt *GP, double &v
   val = localMatrix(0, 0);
 }
 
-void BilinearTermBase::get(MElement *ele, int npts, IntPt *GP, fullMatrix<double> &m) const 
+void BilinearTermBase::get(MElement *ele, int npts, IntPt *GP, fullMatrix<double> &m) const
 {
   std::vector<fullMatrix<double> > mv(npts);
   get(ele,npts,GP,mv);
@@ -59,7 +56,7 @@ IsotropicElasticTerm::IsotropicElasticTerm(FunctionSpace<SVector3>& space1_, dou
   double C44 = (C11 - C12) / 2;
 /*  FACT = E / (1 - nu * nu); // plane stress (plates)
   C11  = FACT;
-  C12  = nu * FACT; 
+  C12  = nu * FACT;
   C44 = (1. - nu) * .5 * FACT;*/
   H.scale(0.);
   for(int i = 0; i < 3; ++i) { H(i, i) = C11; H(i + 3, i + 3) = C44; }
@@ -177,7 +174,7 @@ void LagMultTerm::get(MElement *ele, int npts, IntPt *GP, fullMatrix<double> &m)
   double jac[3][3];
   m.resize(nbFF1, nbFF2);
   m.setAll(0.);
-  for(int i = 0; i < npts; i++) 
+  for(int i = 0; i < npts; i++)
   {
     double u = GP[i].pt[0]; double v = GP[i].pt[1]; double w = GP[i].pt[2];
     const double weight = GP[i].weight; const double detJ = ele->getJacobian(u, v, w, jac);
