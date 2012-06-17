@@ -38,6 +38,8 @@ StringXNumber *GMSH_ExtractEdgesPlugin::getOption(int iopt)
   return &ExtractEdgesOptions_Number[iopt];
 }
 
+#if defined(HAVE_MESH)
+
 static void add_edge(edge_angle &ea, PViewDataList *data)
 {
   data->SL.push_back(ea.v1->x());
@@ -53,13 +55,12 @@ static void add_edge(edge_angle &ea, PViewDataList *data)
 
 PView *GMSH_ExtractEdgesPlugin::execute(PView *v)
 {
-#if defined(HAVE_MESH)
   std::vector<MTriangle*> elements;
-  for(GModel::fiter it = GModel::current()->firstFace(); 
+  for(GModel::fiter it = GModel::current()->firstFace();
       it != GModel::current()->lastFace(); ++it)
-    elements.insert(elements.end(), (*it)->triangles.begin(), 
+    elements.insert(elements.end(), (*it)->triangles.begin(),
                     (*it)->triangles.end());
-  
+
   if(elements.empty()){
     Msg::Error("No triangles in mesh to extract edges from");
     return 0;
@@ -77,12 +78,12 @@ PView *GMSH_ExtractEdgesPlugin::execute(PView *v)
   for(unsigned int i = 0; i < edges_detected.size(); i++){
     if(edges_detected[i].angle <= threshold) break;
     add_edge(edges_detected[i], data2);
-  } 
+  }
 
   if(ExtractEdgesOptions_Number[1].def){
     for(unsigned int i = 0; i < edges_lonly.size(); i++){
       add_edge(edges_lonly[i], data2);
-    } 
+    }
   }
 
   data2->setName("ExtractEdges");
@@ -90,8 +91,14 @@ PView *GMSH_ExtractEdgesPlugin::execute(PView *v)
   data2->finalize();
 
   return v2;
+}
+
 #else
+
+PView *GMSH_ExtractEdgesPlugin::execute(PView *v)
+{
   Msg::Error("Plugin(ExtractEdges) requires the mesh module");
   return v;
-#endif
 }
+
+#endif

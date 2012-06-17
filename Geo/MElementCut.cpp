@@ -484,6 +484,8 @@ void MLineBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 
 //---------------------------------------- CutMesh ----------------------------
 
+#if defined(HAVE_DINTEGRATION)
+
 static void assignPhysicals(GModel *GM, std::vector<int> &gePhysicals, int reg, int dim,
                             std::map<int, std::map<int, std::string> > physicals[4],
                             std::map<int, int> &newPhysTags, int lsTag)
@@ -788,8 +790,6 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
     }
   }
 }
-
-#if defined(HAVE_DINTEGRATION)
 
 static bool equalV(MVertex *v, const DI_Point *p)
 {

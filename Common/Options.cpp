@@ -550,8 +550,7 @@ static void PrintColorTable(int num, int diff, const char *prefix, FILE *file)
 #endif
 }
 
-//used in field options, sorry if it's already implemented somewhere else...
-static void Sanitize_String_Texi(std::string &s)
+void Sanitize_String_Texi(std::string &s)
 {
   int i = -1;
   while ((i = s.find('\n', i + 1)) >= 0){
@@ -834,9 +833,9 @@ void PrintOptionsDoc()
       it != fields.map_type_name.end(); it++){
     fprintf(file, "@item %s\n", it->first.c_str());
     Field *f = (*it->second)();
-    std::string field_description=f->getDescription();
+    std::string field_description = f->getDescription();
     Sanitize_String_Texi(field_description);
-    fprintf(file,"%s@*\n",field_description.c_str());
+    fprintf(file,"%s@*\n", field_description.c_str());
     if (!f->options.empty()) {
       fprintf(file, "Options:@*\n");
       fprintf(file, "@table @code\n");

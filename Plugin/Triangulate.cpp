@@ -49,6 +49,8 @@ StringXNumber *GMSH_TriangulatePlugin::getOption(int iopt)
   return &TriangulateOptions_Number[iopt];
 }
 
+#if defined(HAVE_MESH)
+
 class PointData : public MVertex {
  public:
   std::vector<double> v;
@@ -74,7 +76,6 @@ static void project(MVertex *v, double mat[3][3])
 
 PView *GMSH_TriangulatePlugin::execute(PView *v)
 {
-#if defined(HAVE_MESH)
   int iView = (int)TriangulateOptions_Number[0].def;
 
   PView *v1 = getView(iView, v);
@@ -181,8 +182,14 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
   data2->finalize();
 
   return v2;
+}
+
 #else
+
+PView *GMSH_TriangulatePlugin::execute(PView *v)
+{
   Msg::Error("Plugin(Triangulate) requires mesh module");
   return v;
-#endif
 }
+
+#endif

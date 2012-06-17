@@ -170,7 +170,7 @@ int ParseFile(std::string fileName, bool close, bool warnIfMissing)
     return 0;
   }
 
-#if defined(HAVE_POST)
+#if defined(HAVE_FLTK) && defined(HAVE_POST)
   int numViewsBefore = PView::list.size();
 #endif
 

@@ -907,8 +907,8 @@ void GRbf::solveHarmonicMap_sparse(linearSystem<double> &sys, int numNodes,
  // }
 
   //ANN UVtree
-  double dist_min = 1.e6;
 #if defined (HAVE_ANN)
+  double dist_min = 1.e6;
   ANNpointArray UVnodes = annAllocPts(nbNodes, 3);
   for(int i = 0; i < nbNodes; i++){
     UVnodes[i][0] = UV(i,0);
@@ -1008,8 +1008,8 @@ void GRbf::solveHarmonicMap(fullMatrix<double> Oper,
   Oper.mult(F, UV);
 
   //ANN UVtree
-  double dist_min = 1.e6;
 #if defined (HAVE_ANN)
+  double dist_min = 1.e6;
   ANNpointArray UVnodes = annAllocPts(nbNodes, 3);
   for(int i = 0; i < nbNodes; i++){
     UVnodes[i][0] = UV(i,0);
